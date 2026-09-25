@@ -14,7 +14,7 @@
 // CharacterSheet, LogBook, NoteBook, AutoMap, TravelMap, Rest,
 // CastSpell, Status, Transport, UseMagicItem, QuickSave, QuickLoad,
 // Escape - was dead. A player who bound Inventory to Shift+I in the
-// controls window (systems/controlsConfig.js:353-358 mints exactly that
+// controls window (systems/controlsConfig.js:418-423 mints exactly that
 // code) got the Status box instead and could never open the inventory
 // from the keyboard. A8's pins drove the parameter no host passed.
 import { test } from 'node:test';
@@ -32,7 +32,7 @@ const body = (f) => readFileSync(join(SCENES, f), 'utf8');
 function store() {
   const b = createBindings(); resetDefaults(b);
   clearBinding(b, 'Inventory', false);   // PAD1: the pad layout gave Inventory a secondary (View); this pin is the SINGLE-bound combo
-  setBinding(b, comboCode('ShiftLeft', 'KeyI'), 'Inventory', true);   // what controlsWindow.js:255 stages
+  setBinding(b, comboCode('ShiftLeft', 'KeyI'), 'Inventory', true);   // what controlsWindow.js:256 stages
   setBindings(b);
   return b;
 }
@@ -97,7 +97,7 @@ test('AUDIT 58 (f3/input): EVERY host that registers a keydown hands its held-ke
   // read by balanced parens (a routeKey arg list carries its own).
   const callsIn = (text) => {
     const out = [];
-    for (const m of text.matchAll(/\b(actionOf|routeKey)\(/g)) {
+    for (const m of text.matchAll(/\b(actionOf|actionsOf|routeKey)\(/g)) {   // UXB1-S: actionsOf is the hosts' read now
       let i = m.index + m[0].length, depth = 1;
       while (i < text.length && depth > 0) {
         const c = text[i];
@@ -122,8 +122,9 @@ test('AUDIT 58 (f3/input): EVERY host that registers a keydown hands its held-ke
   // ...and the arm they feed is still gated on the Set, so a future
   // host that forgets it fails LOUDLY here rather than quietly there.
   const inp = readFileSync(join(HERE, '..', 'src', 'ui', 'input.js'), 'utf8');
-  assert.match(inp, /export function actionOf\(e, keys = null\) \{\n {2}const b = bindings\(\);\n {2}if \(keys\) \{/);
+  assert.match(inp, /export function actionsOf\(e, keys = null\) \{\n {2}const b = bindings\(\);\n {2}if \(keys\) \{/);
+  assert.match(inp, /export function actionOf\(e, keys = null\) \{\n {2}return actionsOf\(e, keys\)\[0\] \?\? null;/, 'the one-answer read is the first of them');
   assert.match(inp, /export function routeKey\(e, ctx, setPlayerPos = null, keys = null\) \{/);
-  assert.match(inp, /const act = actionOf\(e, keys\);/, 'routeKey forwards it');
-  assert.match(inp, /if \(actionOf\(e, keys\) === 'QuickLoad' && !retroToggleKey\(e, keys\)\)/, 'including the arm that answers from under a window (AUDIT RETRO1 C1: never on the retro toggle\'s chord)');
+  assert.match(inp, /for \(const act of actionsOf\(e, keys\)\) \{\n\s*used = routeKeyAction\(e, act, ctx, setPlayerPos\) \|\| used;/, 'routeKey forwards it (UXB1-S: every action a shared key carries)');
+  assert.match(inp, /if \(actionsOf\(e, keys\)\.includes\('QuickLoad'\) && !retroToggleKey\(e, keys\)\)/, 'including the arm that answers from under a window (AUDIT RETRO1 C1: never on the retro toggle\'s chord)');
 });

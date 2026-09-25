@@ -16,6 +16,11 @@ opened by MW-LOAD.
 1. **Attach** (`storeMorrowindFiles`): the picked files that match
    `.bsa/.esm/.esp` or a loose asset extension go into the store, keyed
    by basename (archives, masters) or canonical data-files path (loose).
+   Since MWA4 the attached files ARE the switch: the Features home's
+   assets card (the head of the list) has Attach and Remove data and
+   nothing else, Attach builds the body for a character in play, every
+   door builds it for one made or loaded while the files are attached,
+   and Remove data is the off. MWA1's `mwArms` pref is retired.
 2. **Register** (`registerMorrowindData`, from the controller's boot):
    counts the set for the settings row and stamps the attach
    generation the rig polls.

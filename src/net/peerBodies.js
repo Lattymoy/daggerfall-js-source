@@ -18,9 +18,9 @@
 // drawThird at the peer's feet - the same sprite-box pass the player's
 // body takes (MW-D24).
 //
-// THE GATE is the host's: the enhanced skin, the player's own arms
-// switch (MWA1's `mwArms` pref - the layer is on when the arms are),
-// and Morrowind data attached. Without all three, every peer keeps the
+// THE GATE is the host's: the enhanced skin and Morrowind data
+// attached (MWA4: the files are the arms' switch - MWA1's `mwArms` pref
+// is retired). Without both, every peer keeps the
 // paperdoll (remotePlayers.js) - and a peer whose body will not build
 // (a race with no body records, a build that threw) keeps it too,
 // retried after BODY_RETRY_MS, the reason kept. Bodies are capped at

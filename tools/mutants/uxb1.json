@@ -1,0 +1,464 @@
+[
+  {
+    "name": "UXB1-A-the-film-ignores-the-pref",
+    "file": "src/main.js",
+    "old": "  if (!params.has('novideo') && !getPref('skipStartVideo')) {",
+    "new": "  if (!params.has('novideo')) {",
+    "tests": [
+      "test/uxb1a_startvideo.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-D-clear-asks-nothing-and-clears-nothing",
+    "file": "src/ui/enhancedControls.js",
+    "old": "  setUnsavedBinding(unsaved, action, null);\n  refresh();\n  repaint();\n}\n\nfunction answerPrompt(yes) {",
+    "new": "  refresh();\n  repaint();\n}\n\nfunction answerPrompt(yes) {",
+    "tests": [
+      "test/enhancedControls.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-E-the-full-size-dungeon-is-not-copied",
+    "file": "src/systems/onlineSync.js",
+    "old": "  for (const table of [ONLINE_FORCED_SETTINGS, ONLINE_LAYOUT_SETTINGS]) {",
+    "new": "  for (const table of [ONLINE_FORCED_SETTINGS]) {",
+    "tests": [
+      "test/uxb1e_onlinesync.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-E-the-sync-writes-what-already-agrees",
+    "file": "src/systems/onlineSync.js",
+    "old": "  const changed = (plan ?? []).filter((r) => !r.same);",
+    "new": "  const changed = plan ?? [];",
+    "tests": [
+      "test/uxb1e_onlinesync.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-E-the-synced-settings-are-never-saved",
+    "file": "src/systems/onlineSync.js",
+    "old": "  if (changed.some((r) => r.store === 'settings')) saveSettings();",
+    "new": "",
+    "tests": [
+      "test/uxb1e_onlinesync.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-E-an-online-page-reads-the-room-as-the-player",
+    "file": "src/systems/onlineSync.js",
+    "old": "  if (isOnlinePage(search)) return null;",
+    "new": "",
+    "tests": [
+      "test/uxb1e_onlinesync.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-H-a-skill-twice-is-taken",
+    "file": "src/systems/customClass.js",
+    "old": "  if (new Set(chosen).size !== chosen.length) return fail('A skill can only be chosen once.');",
+    "new": "",
+    "tests": [
+      "test/uxb1g_chargen.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-H-the-exclusive-pairs-gate-is-skipped",
+    "file": "src/systems/customClass.js",
+    "old": "        || cannotAdd(item, list, other)) { skipped.push(e); continue; }",
+    "new": "        ) { skipped.push(e); continue; }",
+    "tests": [
+      "test/uxb1g_chargen.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-H-the-imported-pool-reads-balanced",
+    "file": "src/ui/chargen.js",
+    "old": "    c.statPool = STAT_DEFAULT * STAT_KEYS_ORDER.length - STAT_KEYS_ORDER.reduce((n, k) => n + c.stats[k], 0);",
+    "new": "    c.statPool = 0;",
+    "tests": [
+      "test/uxb1g_chargen.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-I-the-gauge-is-a-straight-line",
+    "file": "src/systems/customClass.js",
+    "old": "export const daggerFraction = (points) => (DAGGER_Y_MAX - daggerY(points)) / (DAGGER_Y_MAX - DAGGER_Y_MIN);",
+    "new": "export const daggerFraction = (points) => Math.min(1, Math.max(0, (points + 12) / 52));",
+    "tests": [
+      "test/uxb1g_chargen.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-J-major-falls-into-the-last-column",
+    "file": "src/ui/enhancedChargen.js",
+    "old": "    const col = cols[g < 2 ? 1 : 2];",
+    "new": "    const col = cols[Math.min(2, g + (g >= 2 ? 0 : 1))];",
+    "tests": [
+      "test/uxb1g_chargen.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-K-hours-read-as-days",
+    "file": "src/systems/repairService.js",
+    "old": "  const span = c.minutesLeft >= MINUTES_PER_DAY ? `${days} day${days === 1 ? '' : 's'}` : `${hours} hour${hours === 1 ? '' : 's'}`;",
+    "new": "  const span = `${days} day${days === 1 ? '' : 's'}`;",
+    "tests": [
+      "test/uxb1k_shops.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-M-Return-answers-Yes",
+    "file": "src/ui/yesNoBox.js",
+    "old": "    if (code === 'Enter' || code === 'NumpadEnter' || code === 'confirm') this.answer(false);",
+    "new": "    if (code === 'Enter' || code === 'NumpadEnter' || code === 'confirm') this.answer(true);",
+    "tests": [
+      "test/uxb1m_privateproperty.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-M-the-click-rows-sit-a-row-high-again",
+    "file": "src/ui/talkWindow.js",
+    "old": "y0: ty - ROW_LEAD * s, y1: ty - ROW_LEAD * s + lineH });",
+    "new": "y0: ty - lineH, y1: ty });",
+    "tests": [
+      "test/uxb1m_privateproperty.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-N-the-signature-stops-seeing-the-tone",
+    "file": "src/systems/worldHover.js",
+    "old": "${f.empty ? 'e' : ''}${f.tone ? `|${f.tone}` : ''}`;",
+    "new": "${f.empty ? 'e' : ''}`;",
+    "tests": [
+      "test/uxb1n_containerplaque.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-O-yesterdays-lid-stays-searched",
+    "file": "src/systems/shopStock.js",
+    "old": "  && container.openedOn === container.stockedDate && !needsRestock(container, today);",
+    "new": "  && container.openedOn === container.stockedDate;",
+    "tests": [
+      "test/uxb1n_containerplaque.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-a-dict-walk-forgets-the-sharers",
+    "file": "src/systems/inputActions.js",
+    "old": "    for (const a of shared?.get(code) ?? NO_SHARERS) yield [code, a];\n",
+    "new": "",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-a-share-takes-the-key-from-its-owner",
+    "file": "src/systems/inputActions.js",
+    "old": "  if (!dict.has(code)) { dict.set(code, action); return; }\n  const list = shared.get(code) ?? [];",
+    "new": "  dict.set(code, action); return;\n  const list = shared.get(code) ?? [];",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-the-owner-leaving-takes-the-key-from-its-sharers",
+    "file": "src/systems/inputActions.js",
+    "old": "    if (list.length) { dict.set(code, list[0]); setShared(shared, code, list.slice(1)); }",
+    "new": "    if (false) { dict.set(code, list[0]); setShared(shared, code, list.slice(1)); }",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-a-steal-leaves-the-sharers-on-the-key",
+    "file": "src/systems/inputActions.js",
+    "old": "    (primary ? store.sharedPrimary : store.sharedSecondary)?.delete(code);\n    dict.set(code, action);",
+    "new": "    dict.set(code, action);",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-the-autofill-puts-a-shared-actions-default-back",
+    "file": "src/systems/inputActions.js",
+    "old": "  for (const [, a] of dictEntries(store, primary)) if (a === action) return;   // UXB1-S: an action on a shared key is not missing",
+    "new": "  for (const a of dict.values()) if (a === action) return;",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-the-file-forgets-the-shares",
+    "file": "src/systems/inputActions.js",
+    "old": "  if (shared) out.sharedActionKeyBinds = shared;",
+    "new": "  if (false) out.sharedActionKeyBinds = shared;",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-a-window-key-means-its-owner-alone",
+    "file": "src/systems/inputActions.js",
+    "old": "export const codeMeans = (store, code, action) => code != null && actionsForCode(store, code).includes(action);",
+    "new": "export const codeMeans = (store, code, action) => code != null && actionForCode(store, code) === action;",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-held-reads-the-owners-alone",
+    "file": "src/ui/input.js",
+    "old": "  if (b.sharedPrimary?.size) for (const [code, list] of b.sharedPrimary) if (list.includes(action) && codeDown(b, keys, code, ring)) return true;",
+    "new": "  // the primary's sharers unread",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-routeKey-dispatches-the-first-alone",
+    "file": "src/ui/input.js",
+    "old": "  for (const act of actionsOf(e, keys)) {\n    used = routeKeyAction(e, act, ctx, setPlayerPos) || used;",
+    "new": "  for (const act of actionsOf(e, keys).slice(0, 1)) {\n    used = routeKeyAction(e, act, ctx, setPlayerPos) || used;",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-the-world-ladder-runs-for-the-first-alone",
+    "file": "src/scenes/world.js",
+    "old": "    const pass = acts.length ? acts : [null];",
+    "new": "    const pass = [acts[0] ?? null];",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-a-shared-F10-flips-the-HUD-twice",
+    "file": "src/scenes/exterior.js",
+    "old": "      if (first && hudShortcutKey(e, keys)) { e.preventDefault(); return true; }",
+    "new": "      if (hudShortcutKey(e, keys)) { e.preventDefault(); return true; }",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js",
+      "test/audit64_hud.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-a-share-is-a-red-clash-again",
+    "file": "src/systems/controlsConfig.js",
+    "old": "  const internal = getDuplicates(distinct(currentDict(u).values()));",
+    "new": "  const internal = getDuplicates([...currentDict(u).values()]);",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js",
+      "test/controlswindow.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-the-apply-steals-from-a-staged-sharer",
+    "file": "src/systems/controlsConfig.js",
+    "old": "            if ((p ? u.primary : u.secondary).get(holder) !== code) dropBinding(store, code, holder, p);",
+    "new": "            dropBinding(store, code, holder, p);",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js",
+      "test/controlswindow.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-a-combo-clash-is-offered-as-a-share",
+    "file": "src/systems/controlsConfig.js",
+    "old": "    && holders.every((h) => h.action !== action && (h.primary ? u.primary : u.secondary).get(h.action) === code);",
+    "new": "    && holders.every((h) => h.action !== action);",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-a-port-row-yields-its-share",
+    "file": "src/systems/controlsConfig.js",
+    "old": "      if (code != null && [...kept].some((k) => k !== code && clashes(code, k))) dict.set(action, null);",
+    "new": "      if (code != null && [...kept].some((k) => clashes(code, k))) dict.set(action, null);",
+    "tests": [
+      "test/soc5_interact.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-the-page-never-offers-both",
+    "file": "src/ui/enhancedControls.js",
+    "old": "  if (prompt.kind === 'replace' && canShareKey(unsaved, prompt.action, prompt.code, prompt.holders)) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-the-grid-ignores-B",
+    "file": "src/ui/controlsWindow.js",
+    "old": "      const share = code === 'KeyB' && canShareKey(this.unsaved, r.action, r.code, r.holders);",
+    "new": "      const share = false;",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-a-shared-row-says-nothing",
+    "file": "src/ui/enhancedControls.js",
+    "old": "  if (also.length) main.append(el('div', 'row-sub ctl-alsos',",
+    "new": "  if (false) main.append(el('div', 'row-sub ctl-alsos',",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-the-key-states-lose-to-the-shell",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".shell .ctl-key.ctl-shared, .px-sys .ctl-key.ctl-shared { color: #6fcf8a; border-color: #6fcf8a; }\n",
+    "new": "",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-the-sticky-head-shows-the-rows-through",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".shell .card.ctl-head, .px-sys .card.ctl-head { background: #0d1014; }\n",
+    "new": "",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UXB1-F1-routeKey-dispatches-under-the-window-it-opened",
+    "file": "src/ui/input.js",
+    "old": "    if (ctx.uiOverlayActive) break;\n",
+    "new": "",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UXB1-F1-the-world-ladder-runs-on-under-its-window",
+    "file": "src/scenes/world.js",
+    "old": "      if (!upBefore && windowUp()) break;",
+    "new": "      if (!upBefore && windowUp()) { /* on */ }",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UXB1-F1-the-exterior-ladder-runs-on-under-its-window",
+    "file": "src/scenes/exterior.js",
+    "old": "      if (!upBefore && windowUp()) break;",
+    "new": "      if (!upBefore && windowUp()) { /* on */ }",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UXB1-F1-the-world-ladder-runs-on-under-a-surface",
+    "file": "src/scenes/world.js",
+    "old": "(modes?.modalWindowUp?.() ?? false) || pointerSurfaces.size > 0;",
+    "new": "(modes?.modalWindowUp?.() ?? false);",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UXB1-F2-a-second-sync-replaces-the-undo",
+    "file": "src/systems/onlineSync.js",
+    "old": "  const record = { at: now, rows: [...kept, ...rows] };",
+    "new": "  const record = { at: now, rows };",
+    "tests": [
+      "test/uxb1e_onlinesync.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UXB1-F3-the-load-seats-a-newer-builds-key",
+    "file": "src/systems/inputActions.js",
+    "old": "    if (!dict.has(code) && unknown.has(code)) { if (list.length) carried.set(code, { owner: unknown.get(code), names: list }); continue; }\n",
+    "new": "",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UXB1-F8-the-load-drops-a-newer-builds-name",
+    "file": "src/systems/inputActions.js",
+    "old": "      if (action === 'Unknown') kept.push(name);",
+    "new": "      if (action === 'Unknown') continue;",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UXB1-F3-a-rebound-key-keeps-the-carried-names",
+    "file": "src/systems/inputActions.js",
+    "old": "    if (!Object.hasOwn(owners, code) || owners[code] !== owner) continue;",
+    "new": "    if (!Object.hasOwn(owners, code)) continue;",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UXB1-F3-a-full-reset-keeps-the-carried-shares",
+    "file": "src/systems/inputActions.js",
+    "old": "    store.sharedUnknown?.clear();   // AUDIT UXB1 F3/F8: ...and the ones it carried for a newer build\n",
+    "new": "",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UXB1-F4-a-returned-lot-stands-apart",
+    "file": "src/ui/nativeTrade.js",
+    "old": "    addItem(this.hooks.shelfItems(), item);",
+    "new": "    this.hooks.shelfItems().push(item);",
+    "tests": [
+      "test/uxb1k_shops.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UXB1-F5-the-polls-forget-the-secondary-sharers",
+    "file": "src/ui/input.js",
+    "old": "  if (b.sharedSecondary?.size) for (const [code, list] of b.sharedSecondary) if (list.includes(action) && codeDown(b, keys, code, ring)) return true;\n",
+    "new": "",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UXB1-F10-the-note-forgets-the-third-answer",
+    "file": "src/systems/controlsConfig.js",
+    "old": "so the key does both as it is, without ${SHARE_KEY_LABEL}: answer No",
+    "new": "so the key does both as it is: answer No",
+    "tests": [
+      "test/enhancedControls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UXB1-a-class-name-keeps-its-control-characters",
+    "file": "src/systems/customClass.js",
+    "old": "doc.name.replace(/[\\p{Cc}\\p{Cf}]/gu, '').trim()",
+    "new": "doc.name.trim()",
+    "tests": [
+      "test/uxb1g_chargen.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UXB1-F4-the-enhanced-lot-back-beside-its-stack",
+    "file": "src/ui/enhancedTrade.js",
+    "old": "    else unstageToShelf(item);   // AUDIT UXB1 F4: the whole lot rejoins its stack",
+    "new": "    else move(item, basket, deps.shelfItems());",
+    "tests": [
+      "test/uxb1k_shops.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UXB1-F4-the-enhanced-clear-pushes",
+    "file": "src/ui/enhancedTrade.js",
+    "old": "  if (inBuy()) { while (basket.length) unstageToShelf(basket[0]); return; }",
+    "new": "  if (inBuy()) { while (basket.length) move(basket[0], basket, deps.shelfItems()); return; }",
+    "tests": [
+      "test/uxb1k_shops.test.js"
+    ]
+  }
+]

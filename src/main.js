@@ -169,7 +169,10 @@ async function boot() {
       status('main menu');
       return runEnhancedMenu();
     }, {
-      skip: params.has('nointro'),
+      // UXB1-A: the player's own Skip start video (uiPrefs skipStartVideo), beside the probes' one-visit ?nointro -
+      // and only the player's skip keeps the menu's music, as the film's own Skip intro button does.
+      skip: params.has('nointro') || !!getPref('skipStartVideo'),
+      menuMusic: !params.has('nointro') && !!getPref('skipStartVideo'),
       debug: import.meta.env.DEV && params.has('introdebug'),
       freezeAt: freeze !== null && Number.isFinite(freeze) ? Math.max(0, freeze) : null,
     });
@@ -236,7 +239,8 @@ async function boot() {
   // game. ANIM0001 is named in dataSource's KEEP diet and a pin enforces
   // that, so the warn-and-skip here is a real fallback rather than the
   // AUDIT 18 F2 silent degradation it would otherwise be.
-  if (!params.has('novideo')) {
+  // UXB1-A: and the player's Skip start video is enableVideos off for the start splash alone (the pref, uiPrefs.js).
+  if (!params.has('novideo') && !getPref('skipStartVideo')) {
     try {
       const { playVideo } = await import('./ui/videoPlayer.js');
       const { ensureAudio } = await import('./scenes/shared.js');

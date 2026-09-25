@@ -276,7 +276,8 @@ test('AUDIT CONTRIB H1 (re-aimed by KB1): a mod\'s hotkey is the mod\'s ACTION -
   assert.equal(pressed(edge, keys, 'HorseMount'), false, 'a mod switched off answers nothing on its key');
   assert.equal(actionOf({ code: 'Comma' }), null, '...and its key means nothing to a listener either');
   const b = rd('src/ui/enhancedHotbar.js');
-  assert.match(b, /const i = HOTBAR_SLOT_ACTIONS\.indexOf\(eventAction\(e\)\);/, 'the bar asks the registry which slot a key is (AUDIT KB1: through eventAction, the event\'s own read - no latch written)');
+  assert.match(b, /const i = slotOfActions\(eventActions\(e\)\);/, 'the bar asks the registry which slot a key is (AUDIT KB1: through eventAction, the event\'s own read - no latch written; UXB1-S: every action a shared key carries)');
+  assert.match(b, /const slotOfActions = \(acts\) => acts\.map\(\(a\) => HOTBAR_SLOT_ACTIONS\.indexOf\(a\)\)\.find\(\(i\) => i >= 0\) \?\? -1;/, '...the first of them that is a slot');
   assert.match(b, /if \(!bar \|\| !hotbarMode\(\) \|\| dropOwners\.size \|\| lastPaused\) return;/, 'gated on the game\'s pause, not the HUD\'s visibility');
   assert.match(rd('src/ui/hud.js'), /paused: !!cursorActive,/);
   setBindings(null);

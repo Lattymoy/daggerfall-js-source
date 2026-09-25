@@ -53,7 +53,7 @@ test('CG2: a DOM text field owns its key - the dungeon route neither routes nor 
   // through to the world - and the field's step-aside is still the
   // FIRST statement inside it, which is what this pin is about.
   assert.match(tt, /function keydown\(e, keys = null\) \{[^\n]*\n(\s*\/\/[^\n]*\n)*\s*if \(overlay && talkPaused\(\)\) \{\s*\n(\s*\/\/[^\n]*\n)*\s*if \(isTextEntryTarget\(e\.target\)\) return true;\s*\n\s*e\.preventDefault\(\);/, 'the field\'s key steps out before the preventDefault, consumed for the host');
-  assert.match(tt, /import \{ overlayAction, actionOf, isTextEntryTarget \} from '\.\.\/ui\/input\.js';/);
+  assert.match(tt, /import \{ overlayAction, actionsOf, isTextEntryTarget \} from '\.\.\/ui\/input\.js';/);   // UXB1-S: every action a shared key carries
   // the dungeon host preventDefaults on true, which is why routeKey answers false for a field
   assert.match(read('src/scenes/dungeon.js'), /if \(routeKey\(e, ctx, \(p\) => player\.spawn\(p\[0\], p\[1\], p\[2\]\), keys\)\) e\.preventDefault\(\);/);
   // KB1: the field's step-aside stands ABOVE the overlay branch now - a DOM field over the world with no overlay in

@@ -11,6 +11,9 @@ import { layoutMessageBox, drawMessageBox, messageBoxArtLoaded } from './message
 import { noticeDraw, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE1: the no-options box on the enhanced skin
 
 const PANEL = [0.05, 0.05, 0.09, 0.92];
+/** UXB1-M: a clickable row's band starts this far (native px) above its glyphs' top - half the 12 px line's lead
+ *  over a 7 px glyph, rounded down - so the band is centred on the text it answers for. */
+const ROW_LEAD = 2;
 const TEXT = [0.86, 0.82, 0.68, 1];
 const DIM = [0.55, 0.52, 0.45, 1];
 
@@ -118,7 +121,14 @@ export class ChoiceWindow {
       // Every row from bodyCount on is a clickable one: a real option
       // (its own code) or, when there are none at all, the single
       // '(continue)' row (null - click() reads that as 'confirm').
-      if (i >= bodyCount) this._hitRows.push({ code: optLines[i - bodyCount]?.code ?? null, y0: ty - lineH, y1: ty });
+      // UXB1-M: the row's band is WHERE IT IS DRAWN. drawText puts the
+      // glyphs' TOP at `ty`, and the band was [ty - lineH, ty) - the
+      // row ABOVE - so on the private-property box a click on the blank
+      // spacer answered Yes, a click on "Y - yes" answered No, and a
+      // click on "N - no" answered nothing. The band now starts a
+      // ROW_LEAD above the glyphs and is one lineH tall, so the bands
+      // tile the rows they name.
+      if (i >= bodyCount) this._hitRows.push({ code: optLines[i - bodyCount]?.code ?? null, y0: ty - ROW_LEAD * s, y1: ty - ROW_LEAD * s + lineH });
       ty += lineH;
     });
   }
