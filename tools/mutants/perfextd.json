@@ -1,0 +1,101 @@
+[
+  {
+    "name": "perfext30-ds-top-gate-dropped",
+    "file": "src/render/dynamicSkiesRenderer.js",
+    "old": "  if (_CloudTopOpacity > 0.0) {\n  float cloudTop1",
+    "new": "  {\n  float cloudTop1",
+    "tests": [
+      "test/perfextd.test.js"
+    ]
+  },
+  {
+    "name": "perfext30-ds-low-gate-dropped",
+    "file": "src/render/dynamicSkiesRenderer.js",
+    "old": "  if (_CloudOpacity > 0.0) {\n  vec2 cloudUV",
+    "new": "  {\n  vec2 cloudUV",
+    "tests": [
+      "test/perfextd.test.js"
+    ]
+  },
+  {
+    "name": "perfext30-ds-top-gated-on-the-low",
+    "file": "src/render/dynamicSkiesRenderer.js",
+    "old": "  if (_CloudTopOpacity > 0.0) {\n",
+    "new": "  if (_CloudOpacity > 0.0) {\n",
+    "tests": [
+      "test/perfextd.test.js"
+    ]
+  },
+  {
+    "name": "perfext30-ds-gate-open-at-0",
+    "file": "src/render/dynamicSkiesRenderer.js",
+    "old": "  if (_CloudOpacity > 0.0) {\n",
+    "new": "  if (_CloudOpacity >= 0.0) {\n",
+    "tests": [
+      "test/perfextd.test.js"
+    ]
+  },
+  {
+    "name": "perfext30-ds-locals-back-inside-the-top",
+    "file": "src/render/dynamicSkiesRenderer.js",
+    "old": "  float cloudThickness;\n  float pos;\n  float cloudLerpValue;\n  if (_CloudTopOpacity > 0.0) {\n",
+    "new": "  if (_CloudTopOpacity > 0.0) {\n  float cloudThickness;\n  float pos;\n  float cloudLerpValue;\n",
+    "tests": [
+      "test/perfextd.test.js"
+    ]
+  },
+  {
+    "name": "perfext30-ds-top-closed-before-its-mix",
+    "file": "src/render/dynamicSkiesRenderer.js",
+    "old": "  col.rgb = mix(col.rgb, cloudTopColor, cloudsTop * _CloudTopOpacity);\n  }\n",
+    "new": "  }\n  col.rgb = mix(col.rgb, cloudTopColor, cloudsTop * _CloudTopOpacity);\n",
+    "tests": [
+      "test/perfextd.test.js"
+    ]
+  },
+  {
+    "name": "perfext30-ds-opacity-not-zeroed-under-the-clouds",
+    "file": "src/render/dynamicSkiesRenderer.js",
+    "old": "this.cloudsExternal && (name === '_CloudTopOpacity' || name === '_CloudOpacity') ? 0 :",
+    "new": "false ? 0 :",
+    "tests": [
+      "test/perfextd.test.js"
+    ]
+  },
+  {
+    "name": "perfext30-dome-gate-dropped",
+    "file": "src/render/enhancedSky.js",
+    "old": "  if (dir.y > 0.0 && uCloudCover > 0.0) {",
+    "new": "  if (dir.y > 0.0) {",
+    "tests": [
+      "test/perfextd.test.js"
+    ]
+  },
+  {
+    "name": "perfext30-dome-gate-open-at-0",
+    "file": "src/render/enhancedSky.js",
+    "old": "  if (dir.y > 0.0 && uCloudCover > 0.0) {",
+    "new": "  if (dir.y > 0.0 && uCloudCover >= 0.0) {",
+    "tests": [
+      "test/perfextd.test.js"
+    ]
+  },
+  {
+    "name": "perfext30-dome-fbm-weight-raised",
+    "file": "src/render/enhancedSky.js",
+    "old": "p = p * 2.0 + vec2(17.1, 9.7); a *= 0.5; }",
+    "new": "p = p * 2.0 + vec2(17.1, 9.7); a *= 0.6; }",
+    "tests": [
+      "test/perfextd.test.js"
+    ]
+  },
+  {
+    "name": "perfext30-dome-deck-biased",
+    "file": "src/render/enhancedSky.js",
+    "old": "    vec2 lo = deck(dir, 1.9, uDrift, uCloudCover, uCloudSoft, 0.0);",
+    "new": "    vec2 lo = deck(dir, 1.9, uDrift, uCloudCover, uCloudSoft, 0.05);",
+    "tests": [
+      "test/perfextd.test.js"
+    ]
+  }
+]

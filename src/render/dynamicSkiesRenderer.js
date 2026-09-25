@@ -594,6 +594,31 @@ void main() {
   float newFadeEnd = -0.01;
   float cloudFadeHeight = 1.0 - saturate(Remap(dotWorldPos, vec2(newFadeStart, newFadeEnd), vec2(0.0, 1.0)));
 
+  // PERF-EXT30 (2026-09-25; two players via Mac, "fps issues in the
+  // exterior but fine in the interior" and "me too my friend.. don't
+  // know why. I got a RX6600"): A SHEET WHOSE WEIGHT IS 0 IS NOT DRAWN.
+  // Under the volumetric clouds - the default, DS2 - draw() uploads
+  // _CloudTopOpacity and _CloudOpacity as 0, and each sheet ends in
+  // mix(col.rgb, sheet, x * 0): the col it was handed. Every sky pixel
+  // still paid for both - eight taps (a diffuse pair and a normal pair
+  // each), four UnpackNormal, two BlendNormals, the remaps and the sun's
+  // rim - to multiply the answer by nothing. A sheet runs now only while
+  // its opacity is above 0. It is a SKIP THAT CHANGES NO OUTPUT, not a
+  // change to the mod: mix(c, s, 0) is c exactly for any finite s, and
+  // every shipped preset's sheet is finite (AlphaMax above AlphaCutoff in
+  // all seven, the top boost's divide by 1, the Cloudy boost's divide by
+  // 0 saturated to 1). The mod's lines inside are its own to the
+  // character, left at their indentation so they still read against the
+  // vendored source; the three locals both sheets write are declared
+  // above the pair, where the second can see them. The gate is a
+  // uniform's, so every fragment of the draw takes the same arm and the
+  // taps' implicit derivatives stay defined. ?clouds=off gives a sheet
+  // its preset's opacity (0.25 to 1.0 across the seven) and both run as
+  // they always did.
+  float cloudThickness;
+  float pos;
+  float cloudLerpValue;
+  if (_CloudTopOpacity > 0.0) {
   float cloudTop1 = texture(_CloudTopDiffuse, cloudTopUV * _CloudTopDiffuse_ST.xy + _CloudTopDiffuse_ST.zw + _WorldTime * (_CloudSpeed * cloudSpeedMultiplier) * cloudDir).x * cloudFadeHeight;
   float cloudTop2 = texture(_CloudTopDiffuse, cloudTopUV * _CloudTopDiffuse_ST.xy * _CloudBlendScale + _CloudTopDiffuse_ST.zw - _WorldTime * (_CloudBlendSpeed * cloudSpeedMultiplier) * cloudDir + vec2(.373, .47)).x * cloudFadeHeight;
 
@@ -615,9 +640,6 @@ void main() {
 
   NdotUpTop = Remap(NdotUpTop, vec2(-1.0, 1.0), vec2(1.0 - _CloudTopNormalEffect, 1.0));
 
-  float cloudThickness;
-  float pos;
-  float cloudLerpValue;
   if (normWorldPos.y > _SkyFadeEnd) {
     if (cloudsTop > 0.0) {
       vec3 normalSunPos = normalize(_WorldSpaceLightPos0.xyz);
@@ -632,7 +654,10 @@ void main() {
   cloudTopColor = cloudTopColor * NdotUpTop;
 
   col.rgb = mix(col.rgb, cloudTopColor, cloudsTop * _CloudTopOpacity);
+  }
 
+  // PERF-EXT30: the low sheet, the same skip
+  if (_CloudOpacity > 0.0) {
   vec2 cloudUV = normWorldPos.xz / (normWorldPos.y + _CloudBending);
 
   float cloud1 = texture(_CloudDiffuse, cloudUV * _CloudDiffuse_ST.xy + _CloudDiffuse_ST.zw + _WorldTime * _CloudSpeed * cloudDir).x * cloudFadeHeight;
@@ -669,6 +694,7 @@ void main() {
   cloudColor = cloudColor * NdotUp;
 
   col.rgb = mix(col.rgb, cloudColor, clouds * _CloudOpacity);
+  }
 
   // REDUCE_COLOR
   {

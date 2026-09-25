@@ -83,3 +83,30 @@ Pins: `test/perfscale.test.js` 10 (S5's string rule and both S7 pins fail
 with `src/` at the slice's commit; the counter and frameInfo pins guard
 code that commit already had). Mutants: `perfscale.json` 43 dead;
 `auditretro1.json`'s D5 re-aimed.
+
+# PERF-EXT, cluster D — the shaders stop computing what they multiply by nothing (2026-09-25)
+
+**Report** (the same two players): "fps issues in the exterior but fine in
+the interior", "me too my friend.. don't know why. I got a RX6600". And
+Mac, after PERF-SCALE: "Why are you so avoidant when it comes to
+addressing performance issues? I am not getting another player to do the
+work that youre suppose to do".
+
+**Cause, this cluster's share.** Per-pixel work the exterior's shaders
+computed and then weighed at 0. An interior draws no sky, which is part
+of the "fine in the interior" half. These are fill-rate savings - tens of
+microseconds a frame on those cards at 1080p, two to four times that at
+1440p or 4K - and not the CPU-bound frame PERF-TOWN1 measured; each is
+exact, measured on the real modules with 0 bytes different.
+
+**Fixes** (each proven by a find-and-prove pass before it was written,
+and re-measured on the change; `07-Rendering/Performance-Exterior.md`
+cluster D has the numbers and the laws):
+
+- **PERF-EXT30** - the sky stops drawing the clouds it has been told to
+  hide. Under the volumetric clouds (the default) Dynamic Skies, the
+  default sky, blended its two cloud sheets at opacity 0 and the port's
+  dome ran its two noise decks at cover 0 - eight taps and the normals'
+  arithmetic, or forty hashes, per sky pixel, for nothing. Each is
+  skipped when its weight is 0: the default sky's pass 6-9% faster on
+  SwiftShader, the dome's 11-16%, no pixel changed.
