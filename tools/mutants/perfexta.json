@@ -322,5 +322,60 @@
     "tests": [
       "test/perfexta.test.js"
     ]
+  },
+  {
+    "name": "PERF-EXT5-1-the-last-pair-weighs-as-the-first",
+    "file": "src/render/shadowPass.js",
+    "old": "  vec2 wA = 2.0 - f, wB = 1.0 + f;",
+    "new": "  vec2 wA = 2.0 - f, wB = 2.0 - f;",
+    "tests": [
+      "test/perfexta.test.js",
+      "test/perfsun_fragment.test.js",
+      "test/el2_shadows.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT5-2-a-tap-at-its-pairs-middle-not-its-split",
+    "file": "src/render/shadowPass.js",
+    "old": "  vec2 tA = (b - 0.5 + 1.0 / wA) * texelUv,",
+    "new": "  vec2 tA = (b - 0.5 + 0.5) * texelUv,",
+    "tests": [
+      "test/perfexta.test.js",
+      "test/perfsun_fragment.test.js",
+      "test/el2_shadows.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT5-3-the-second-tap-sits-a-texel-short",
+    "file": "src/render/shadowPass.js",
+    "old": " tB = (b + 1.5 + f / wB) * texelUv;",
+    "new": " tB = (b + 0.5 + f / wB) * texelUv;",
+    "tests": [
+      "test/perfexta.test.js",
+      "test/perfsun_fragment.test.js",
+      "test/el2_shadows.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT5-4-a-taps-weights-crossed-between-the-axes",
+    "file": "src/render/shadowPass.js",
+    "old": "wB.x * wA.y * texture(uSunShadow, vec4(tB.x, tA.y, lc, ref))",
+    "new": "wA.x * wB.y * texture(uSunShadow, vec4(tB.x, tA.y, lc, ref))",
+    "tests": [
+      "test/perfexta.test.js",
+      "test/perfsun_fragment.test.js",
+      "test/el2_shadows.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT5-5-the-four-taps-averaged-as-four-not-weighed-as-nine",
+    "file": "src/render/shadowPass.js",
+    "old": "  return lit / 9.0;\n}\n/** A surface that shades per fragment",
+    "new": "  return lit / 4.0;\n}\n/** A surface that shades per fragment",
+    "tests": [
+      "test/perfexta.test.js",
+      "test/perfsun_fragment.test.js",
+      "test/el2_shadows.test.js"
+    ]
   }
 ]

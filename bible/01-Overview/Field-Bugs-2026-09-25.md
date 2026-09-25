@@ -175,3 +175,9 @@ cube maps (`07-Rendering/Performance-Exterior.md`, THE SHADOWS):
   once for its sphere and again for every sub-mesh's: about 1,200-1,450
   fewer `Math.hypot` a frame on the harness town, 0.04-0.05 ms. The same
   spheres, bit for bit.
+- **PERF-EXT5** - the sun shadow's soft kernel (every tree by day, and
+  the near ground) is four hardware taps instead of nine: the same
+  texels with the same weights, five fetches a pixel fewer. What moves:
+  the card's own rounding of each tap's position, under one 255th of the
+  sun's light in a penumbra - 2 pixels of 518,400 by one step on the
+  software rasteriser.

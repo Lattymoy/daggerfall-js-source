@@ -11,9 +11,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Renderer, WORLD_FRAME } from '../src/render/renderer.js';
-import { EL_LANE } from '../src/render/enhancedLighting.js';
+import { EL_LANE, EL_MESH_FS, EL_BB_FS } from '../src/render/enhancedLighting.js';
 import * as bounds from '../src/render/bounds.js';   // a namespace: on the base the placement grid is missing, and only its pins fail
-import { sunCascadeMatrices, pointFaceMatrices, shadowFarFor, swayLean, spheresTouch, foldSignature, SHADOW_LIGHT_FLATS, SHADOW_NO_CAST_ARCHIVES } from '../src/render/shadowPass.js';
+import { sunCascadeMatrices, pointFaceMatrices, shadowFarFor, swayLean, spheresTouch, foldSignature, SHADOW_LIGHT_FLATS, SHADOW_NO_CAST_ARCHIVES, SHADOW_GLSL, SHADOW_SUN_SIZE } from '../src/render/shadowPass.js';
 import { StaticBatchBuilder, keyResolver } from '../src/render/staticBatch.js';
 
 const I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
@@ -657,4 +657,70 @@ test('PERF-EXT4: A MATRIX\'S SCALE ONCE A RECORD - recording a mesh of forty bou
   }
   assert.ok(Math.abs(r.sphere[3] - 31.7 * 2.5) < 1e-3, `the radius took the longest column, y (${r.sphere[3]})`);
   same(bounds.transformSphere(m, mesh.bounds, new Float32Array(4)), base(mesh.bounds), 'transformSphere itself');
+});
+
+// ── PERF-EXT5: the sun's 3x3 kernel in four taps ──────────────────────────
+
+/** sunShadowTap's body, sliced from the block every lane shader pastes. */
+const sunTapBody = () => {
+  const m = /float sunShadowTap\(vec3 wp, vec3 n, bool soft\) \{([\s\S]*?)\n\}/.exec(SHADOW_GLSL);
+  assert.ok(m, 'sunShadowTap is where this pin thinks it is');
+  return m[1].split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');   // the code, not its comments
+};
+
+test('PERF-EXT5: THE SUN\'S KERNEL IS FOUR TAPS - sunShadowTap fetches the map five times in all (the far cascade\'s one, the kernel\'s four; the base: a loop of nine), no loop, the four at the positions and weights the twin below proves, and every u-name in it a uniform the lane shaders declare (a local named like a uniform is how a shader goes black)', () => {
+  const body = sunTapBody();
+  assert.equal((body.match(/texture\(uSunShadow/g) ?? []).length, 5, 'one far tap and four kernel taps');
+  assert.doesNotMatch(body, /\bfor \(/, 'no loop');
+  assert.match(body, new RegExp(`vec2 st = p\\.xy \\* ${SHADOW_SUN_SIZE}\\.0 - 0\\.5;`), 'texel space, the centres on the integers');
+  assert.match(body, /vec2 b = floor\(st\), f = st - b;/);
+  assert.match(body, /vec2 wA = 2\.0 - f, wB = 1\.0 \+ f;/, 'the two pairs\' weights');
+  assert.match(body, /vec2 tA = \(b - 0\.5 \+ 1\.0 \/ wA\) \* texelUv, tB = \(b \+ 1\.5 \+ f \/ wB\) \* texelUv;/, 'each tap inside its pair where the bilinear split is the kernel\'s');
+  const taps = [...body.matchAll(/(w[AB])\.x \* (w[AB])\.y \* texture\(uSunShadow, vec4\((t[AB])\.x, (t[AB])\.y, lc, ref\)\)/g)].map((x) => x.slice(1).join(' '));
+  assert.deepEqual(taps.sort(), ['wA wA tA tA', 'wA wB tA tB', 'wB wA tB tA', 'wB wB tB tB'], 'each tap weighed by its own pair on each axis');
+  assert.match(body, /return lit \/ 9\.0;/);
+  assert.doesNotMatch(body, /\b(?:float|vec2|vec3|vec4|int|mat4)\s+u[A-Z]/, 'no local named like a uniform');
+  for (const fs of [EL_MESH_FS, EL_BB_FS]) {   // the block and the lane shader it is pasted into, which declares the eye
+    for (const name of new Set(body.match(/\bu[A-Z]\w*/g))) assert.match(fs, new RegExp(`uniform [\\w ]+ ${name}\\b`), `${name} is a uniform the shader declares`);
+  }
+});
+
+test('PERF-EXT5: THE FOUR TAPS ARE THE NINE - on random depth maps (clamped at the edges, LEQUAL, as the pass sets the sun map) the shader\'s four bilinear taps equal the base\'s nine to 1e-12 with exact sub-texel weights, and within a 255th of the sun\'s light with the 8-bit weights a D3D11-class card quantises to (truncated or rounded) - a penumbra\'s last bit at most', () => {
+  // the twin is the shader's own arithmetic: the lines it transcribes are the ones sunShadowTap runs
+  assert.match(sunTapBody(), /vec2 tA = \(b - 0\.5 \+ 1\.0 \/ wA\) \* texelUv, tB = \(b \+ 1\.5 \+ f \/ wB\) \* texelUv;/, 'sunShadowTap takes the four taps');
+  const N = 64, rand = rng(13);
+  const q = (x, mode) => (mode === 'exact' ? x : mode === 'trunc' ? Math.floor(x * 256) / 256 : Math.round(x * 256) / 256);
+  /** One hardware tap: a bilinear PCF of the 2x2 under texel-space (u, v) (centres at k + 0.5), indices clamped. */
+  const tap = (D, u, v, ref, mode) => {
+    const x = u - 0.5, y = v - 0.5, i = Math.floor(x), j = Math.floor(y), fx = q(x - i, mode), fy = q(y - j, mode);
+    const cmp = (a, b) => (ref <= D[Math.min(N - 1, Math.max(0, b)) * N + Math.min(N - 1, Math.max(0, a))] ? 1 : 0);
+    return (1 - fx) * (1 - fy) * cmp(i, j) + fx * (1 - fy) * cmp(i + 1, j) + (1 - fx) * fy * cmp(i, j + 1) + fx * fy * cmp(i + 1, j + 1);
+  };
+  /** The base's loop: nine taps a texel apart about p. */
+  const nine = (D, u, v, ref, mode) => { let lit = 0; for (let y = -1; y <= 1; y++) for (let x = -1; x <= 1; x++) lit += tap(D, u + x, v + y, ref, mode); return lit / 9; };
+  /** The shader's four, line for line (texel space: tA / texelUv). */
+  const four = (D, u, v, ref, mode) => {
+    const st = [u - 0.5, v - 0.5], b = st.map(Math.floor), f = [st[0] - b[0], st[1] - b[1]];
+    const wA = f.map((x) => 2 - x), wB = f.map((x) => 1 + x);
+    const tA = [b[0] - 0.5 + 1 / wA[0], b[1] - 0.5 + 1 / wA[1]], tB = [b[0] + 1.5 + f[0] / wB[0], b[1] + 1.5 + f[1] / wB[1]];
+    return (wA[0] * wA[1] * tap(D, tA[0], tA[1], ref, mode) + wB[0] * wA[1] * tap(D, tB[0], tA[1], ref, mode)
+      + wA[0] * wB[1] * tap(D, tA[0], tB[1], ref, mode) + wB[0] * wB[1] * tap(D, tB[0], tB[1], ref, mode)) / 9;
+  };
+  const worst = { exact: 0, trunc: 0, round: 0 };
+  let penumbra = 0;
+  for (let m = 0; m < 30; m++) {
+    const D = new Float32Array(N * N);
+    const edge = m % 2 === 0;   // half the maps an occluder's straight edge, half noise
+    const ang = rand() * Math.PI, ox = rand() * N, oy = rand() * N;
+    for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) D[j * N + i] = edge ? ((i - ox) * Math.cos(ang) + (j - oy) * Math.sin(ang) > 0 ? 0.2 : 0.9) : (rand() < 0.5 ? rand() * 0.3 : 0.5 + rand() * 0.5);
+    for (let k = 0; k < 2000; k++) {
+      const u = rand() * N, v = rand() * N, ref = 0.1 + rand() * 0.8;   // the whole map, its clamped edges included
+      for (const mode of ['exact', 'trunc', 'round']) worst[mode] = Math.max(worst[mode], Math.abs(nine(D, u, v, ref, mode) - four(D, u, v, ref, mode)));
+      const e = nine(D, u, v, ref, 'exact');
+      if (e > 0 && e < 1) penumbra++;
+    }
+  }
+  assert.ok(worst.exact < 1e-12, `exact weights: the same light (${worst.exact})`);
+  assert.ok(worst.trunc < 1 / 255 && worst.round < 1 / 255, `8-bit weights: within a 255th (truncated ${(worst.trunc * 255).toFixed(2)}, rounded ${(worst.round * 255).toFixed(2)} of one)`);
+  assert.ok(penumbra > 5000, `the samples reached the penumbrae (${penumbra})`);
 });

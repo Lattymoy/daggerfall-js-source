@@ -547,12 +547,30 @@ float sunShadowTap(vec3 wp, vec3 n, bool soft) {
   // kernel at every distance, and they are a thin slice of the frame's
   // fragments beside the ground, so nearly all of the saving stands.
   if (!soft && c >= ${SHADOW_PCF_CASCADES}) return texture(uSunShadow, vec4(p.xy, float(c), ref));
-  float lit = 0.0;
-  for (int y = -1; y <= 1; y++) {
-    for (int x = -1; x <= 1; x++) {
-      lit += texture(uSunShadow, vec4(p.xy + vec2(float(x), float(y)) * texelUv, float(c), ref));
-    }
-  }
+  // PERF-EXT5 (2026-09-25, the players' "fps issues in the exterior but
+  // fine in the interior" and "me too my friend.. don't know why. I got a
+  // RX6600"): THE 3x3 KERNEL IN FOUR TAPS, THE SAME WEIGHTS. It was nine
+  // hardware 2x2s one texel apart. Per axis they weigh the four texels
+  // under them [1-f, 1, 1, f] (f the sample's fraction past a texel
+  // centre), and two bilinear taps give exactly that: one over the first
+  // pair at weight 2-f, set 1/(2-f) of the way into it, and one over the
+  // last pair at weight 1+f, set f/(1+f) in. The kernel is separable, so
+  // four taps are the nine - the same texels, the same weights, equal in
+  // exact arithmetic. What moves: the hardware quantises each tap's
+  // sub-texel fraction (8 bits on the players' D3D11-class cards), and the
+  // four taps quantise other fractions than the nine did - under a 255th
+  // of the sun's light, in a penumbra only (0.93 of one at worst over the
+  // provers' random maps; test/perfexta.test.js's twin holds it under
+  // one), 2 of 518,400 pixels by one step on SwiftShader.
+  // Five fetches a fragment gone: every flat by day, and every lit
+  // fragment of the near cascades.
+  vec2 st = p.xy * ${SHADOW_SUN_SIZE}.0 - 0.5;
+  vec2 b = floor(st), f = st - b;
+  vec2 wA = 2.0 - f, wB = 1.0 + f;
+  vec2 tA = (b - 0.5 + 1.0 / wA) * texelUv, tB = (b + 1.5 + f / wB) * texelUv;
+  float lc = float(c);
+  float lit = wA.x * wA.y * texture(uSunShadow, vec4(tA.x, tA.y, lc, ref)) + wB.x * wA.y * texture(uSunShadow, vec4(tB.x, tA.y, lc, ref))
+    + wA.x * wB.y * texture(uSunShadow, vec4(tA.x, tB.y, lc, ref)) + wB.x * wB.y * texture(uSunShadow, vec4(tB.x, tB.y, lc, ref));
   return lit / 9.0;
 }
 /** A surface that shades per fragment: the cheap tap past SHADOW_PCF_CASCADES. */

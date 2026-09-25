@@ -178,7 +178,7 @@ test('EL2: the receiver block and the depth shaders - six uniforms, no dynamic m
   assert.match(SHADOW_GLSL, /uniform int uCasterOf\[48\];/);
   assert.match(SHADOW_GLSL, /mat4 vp = c == 0 \? uSunVP\[0\] : c == 1 \? uSunVP\[1\] : uSunVP\[2\];/, 'no dynamic index into the uniform array (EL7: three)');
   assert.match(SHADOW_GLSL, /int c = d < uSunShadowParams\.x \* 0\.9 \? 0 : d < uSunShadowParams\.y \* 0\.9 \? 1 : 2;/, 'the cascade by view distance');
-  assert.match(SHADOW_GLSL, /for \(int y = -1; y <= 1; y\+\+\)/, 'a 3x3 PCF');
+  assert.match(SHADOW_GLSL, /vec2 wA = 2\.0 - f, wB = 1\.0 \+ f;/, 'a 3x3 PCF - PERF-EXT5: in four bilinear taps that weigh its texels as its nine did');
   assert.match(SHADOW_GLSL, /float near = 0\.1;/, 'the cube near plane, the constant');
   assert.match(SHADOW_GLSL, /if \(uSunShadowParams\.w <= 0\.0\) return 1\.0;/); assert.match(SHADOW_GLSL, /if \(far <= 0\.0\) return 1\.0;/);
   assert.equal(DEPTH_FS, '#version 300 es\nprecision highp float;\nvoid main() {}');

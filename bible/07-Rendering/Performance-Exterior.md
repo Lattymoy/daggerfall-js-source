@@ -593,3 +593,66 @@ every sub-mesh's equal, `Object.is` float for float, the base's
 transform transcribed. Mutants `perfexta.json` 32-36, all dead;
 `el5.json`'s transform-scale-min and record-never-bounded re-aimed by
 content.
+
+## PERF-EXT5 - the sun's 3x3 kernel in four taps
+
+**What the frame paid.** Every flat fragment by day, at any distance
+(TREES1's soft read), and every lit fragment of the terrain, meshes,
+rigs, decals and water within the two near cascades (43 m of the eye -
+nearly all the ground on screen) ran `sunShadowTap`'s kernel: nine
+hardware 2x2 comparison taps one texel apart, 36 depth compares. Each
+tap is already a bilinear PCF over four texels (the sun map is
+COMPARE_REF_TO_TEXTURE with LINEAR filtering).
+
+**The change.** Per axis the nine taps weigh the four texels under them
+[1-f, 1, 1, f], f the sample's fraction past a texel centre. Two
+bilinear taps give exactly that: one over the first pair at weight 2-f,
+set 1/(2-f) of the way into it, and one over the last pair at weight
+1+f, set f/(1+f) in. The kernel is separable, so four taps - (2-f)(2-f),
+(1+f)(2-f), (2-f)(1+f), (1+f)(1+f), over 9 - are the nine: the same
+texels, the same weights, clamped at the edges the same way. The far
+cascade's one tap for a per-fragment surface (PERF-SUN1) is untouched,
+and so are the lanterns. The locals are t*/w*, never u* (a name that
+reads as a uniform). Both lenses' provers derived this form; it is the
+fill lens's and the shadow lens's `p4`, the same arithmetic.
+
+**What differs, exactly.** In exact arithmetic nothing (the node twins:
+3.3e-15 at worst, float rounding). On a GPU each tap's sub-texel
+fraction is quantised - 8 bits on the D3D11-class cards the players
+have - and the four taps quantise different fractions than the nine
+did, so a penumbra can move by less than one 255th of the sun's light:
+the provers' worst over random maps 0.93 of a 255th (truncated
+fractions) and 0.66 (rounded), the suite's twin 0.85 and 0.52. The
+nine taps' own quantisation error against the exact filter is of the
+same size (2.4e-3). Rendered on SwiftShader through the real renderer,
+960 x 540, the tree against the base's nine put back into every
+shader that carries the block (seven sources): 2 of 518,400 pixels
+differ, by one step.
+
+**Measured.** Five of nine fetches per affected fragment; the GPU's
+share, which the CPU-bound harness cannot see. The fill lens's harness
+(the real Renderer, EL lane, air pass, clouds and dome, 2,400 tree
+flats, SwiftShader, A/B contexts interleaved, every draw timed between
+readPixels syncs, 6 frames; relative only) on this tree: world:flats
+min 120.8 -> 111.0 ms (-8%), median 172.5 -> 163.5; world:terrain min
+167.3 -> 164.8 (within its noise on a loaded host; the prover's quiet
+run, -6.0%). At the players' 1080p-1440p, some millions of fetches a
+frame; the provers' estimates for a 4060 Ti or an RX 6600: 15-23 us at
+1080p (the fill lens), about 0.05 ms and up to 0.2 ms at 1440p (the
+shadow lens).
+Compiled and linked in headless Chromium (the shadow prover's probe of
+the repo's `perfSunShaderProbe`): the five lane FS and the five lane
+programs, and the water FS with and without the block, all ok, no GL
+error.
+
+**Pinned** (`test/perfexta.test.js`, failing on the base):
+`sunShadowTap` fetches the map five times (the far cascade's one, the
+kernel's four; the base: a loop of nine), has no loop, takes the four at
+the positions and weights the twin proves, and names no local like a
+uniform; and the twin - its lines tied to the shader's - on random
+depth maps (straight edges and noise, clamped, LEQUAL): the four equal
+the nine to 1e-12 with exact weights, within a 255th with 8-bit ones.
+`test/el2_shadows.test.js` ('a 3x3 PCF') and
+`test/perfsun_fragment.test.js` (PERF-SUN1, the kernel after the cheap
+tap) restated on the four-tap text. Mutants `perfexta.json` 37-41, all
+dead; `perfsun.json`'s PERF-SUN1 cheap-tap mutant re-aimed by content.
