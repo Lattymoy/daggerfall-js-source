@@ -9,8 +9,12 @@
 // (systems/gateSite.js) - the omen hands it over (systems/gateOmen.js standing()), and this pool stands the stone
 // where that says, every frame, in THIS scene's frame: the pixel's translation plus the spot (the streaming host's
 // own sum), so a floating-origin recentre moves the gate with the world and the collider is stood again when its
-// matrix moves. The ground is the built pixel's (the host's `heightAt`); a gate on a pixel not yet built stands
-// nowhere - the beacon too - until the pixel is.
+// matrix moves. The ground is the built pixel's (the host's `heightAt`). GATE-SEEN (2026-09-26, Mac: "Somepeople cant
+// see the gate spawn" - "No oblivion portal to enter"): a gate on a pixel NOT yet built stood nowhere, the beacon too -
+// and the streamed grid is the Land View Distance's, so from the town the omen names (2 to 4 pixels off) a player on a
+// short view saw no gate at all, and "the gate is found by looking up" was false for them. Such a gate stands its
+// BEACON alone now, on the ground the pixel will be built from (the host's `groundAt` - the terrain sampler's own
+// kernel): no stone, no collider, no light, no door, until the pixel is built and the gate stands whole.
 //
 // ITS LIFE, off the phase: RISING (it climbs out of the ground over GATE_RISE_MS, the fire and the beacon fading in),
 // SEALED (the fire an ember, the countdown to the opening), OPEN (the fire blazing, walked through or activated to
@@ -60,12 +64,15 @@ export const GATE_TEXT = Object.freeze({
  * The gate's place in the scene now: its foot (the ground under the spot, the rise already in y), its turn, how open
  * its fire is and how far it has faded in - or null when it stands nowhere. Pure.
  * @param {{day:number, px:number, py:number, spot:number[], phase:string, t:{omenAt:number, riseAt:number, openAt:number, sealAt:number, wrathAt:number}, fellAt:number|null}} g the omen's `standing()`
- * @param {{pixelTranslation:(px:number, py:number)=>number[], heightAt:(x:number, z:number)=>number, now:number}} at
+ * @param {{pixelTranslation:(px:number, py:number)=>number[], heightAt:(x:number, z:number)=>number, now:number, groundAt?:((px:number, py:number, x:number, z:number)=>number)|null}} at
  */
-export function gatePlacement(g, { pixelTranslation, heightAt, now }) {
+export function gatePlacement(g, { pixelTranslation, heightAt, now, groundAt = null }) {
   if (!g) return null;
   const [x, z] = gateSceneXZ(g, pixelTranslation(g.px, g.py));
-  const ground = heightAt(x, z);
+  let ground = heightAt(x, z);
+  // GATE-SEEN: a pixel not built yet - the beacon alone, on the ground it will be built from
+  const coarse = !Number.isFinite(ground);
+  if (coarse) ground = groundAt ? groundAt(g.px, g.py, x, z) : NaN;
   if (!Number.isFinite(ground)) return null;
   const phase = gatePhase(g.t, now, g.fellAt);
   let rise = 1, fade = 1;
@@ -77,7 +84,7 @@ export function gatePlacement(g, { pixelTranslation, heightAt, now }) {
   }
   if (phase === 'gone' || phase === 'quiet' || phase === 'omen') return null;
   const eased = rise * rise * (3 - 2 * rise);   // it heaves out of the ground and settles, not at a constant crawl
-  return { day: g.day, phase, origin: [x, ground - (1 - eased) * GATE_HEIGHT, z], ground, yaw: gateYaw(g.day), fade, risen: rise >= 1 };
+  return { day: g.day, phase, origin: [x, ground - (1 - eased) * GATE_HEIGHT, z], ground, yaw: gateYaw(g.day), fade, risen: rise >= 1, coarse };
 }
 
 /** The half-width of the fire's opening at a height over the gate's foot (the arch's own profile, as the pass reads it). */
@@ -112,12 +119,12 @@ export function gateLocal(place, p) {
  *   renderer?: any, gl?: WebGL2RenderingContext|null, collider?: () => any,
  *   standing: () => any, pixelTranslation: (px:number, py:number) => number[], heightAt: (x:number, z:number) => number,
  *   now: () => number, feet?: () => (number[]|null), say?: (text: string) => void, banner?: (text: string|null) => void,
- *   ready?: () => boolean, enter?: (gate: any) => void,
+ *   ready?: () => boolean, enter?: (gate: any) => void, groundAt?: ((px:number, py:number, x:number, z:number) => number)|null,
  * }} deps
  */
 export function createGatePool({
   renderer = null, gl = null, collider = () => null, standing, pixelTranslation, heightAt, now,
-  feet = () => null, say = () => {}, banner = () => {}, ready = () => false, enter = () => {},
+  feet = () => null, say = () => {}, banner = () => {}, ready = () => false, enter = () => {}, groundAt = null,
 }) {
   const model = buildGateModel();
   const profile = gateArchProfile(model);
@@ -157,7 +164,7 @@ export function createGatePool({
   function standCollider() {
     const col = collider();
     if (!col?.addMesh) return;
-    const want = place?.risen ? matrixOf(place) : null;
+    const want = place?.risen && !place.coarse ? matrixOf(place) : null;   // GATE-SEEN: a beacon alone stands nothing to walk into
     if (want ? sameMatrix(want, colliderAt) : colliderAt === null) return;
     col.removeBucket?.(GATE_BUCKET);
     colliderAt = null;
@@ -174,7 +181,7 @@ export function createGatePool({
   }
   /** The door: open and a relay that holds arenas, the host's; else the reason, once a while. */
   function tryEnter() {
-    if (!place || !g) return false;
+    if (!place || !g || place.coarse) return false;
     if (place.phase === 'open') {
       if (!ready()) { refuse(GATE_TEXT.notYet); return false; }
       enter({ day: g.day, near: g.near, origin: place.origin, yaw: place.yaw, px: g.px, py: g.py, spot: g.spot });
@@ -189,14 +196,14 @@ export function createGatePool({
     /** One frame: where the gate stands now, its fire's ease, its collider, the step through it, the countdown. */
     frame(dt = 0) {
       g = standing?.() ?? null;
-      place = g ? gatePlacement(g, { pixelTranslation, heightAt, now: now() }) : null;
+      place = g ? gatePlacement(g, { pixelTranslation, heightAt, now: now(), groundAt }) : null;
       const target = place?.phase === 'open' ? 1 : 0;
       open += Math.sign(target - open) * Math.min(Math.abs(target - open), GATE_OPEN_EASE * Math.max(0, dt));
       spin = (spin + gateSpinRate(open) * Math.max(0, dt)) % 1;
       if (place) { ensureMesh(); ensurePass(); }
       standCollider();
       // the step through the fire: the feet crossing its plane inside the opening, while it stands open
-      const f = place ? feet() : null;
+      const f = place && !place.coarse ? feet() : null;   // GATE-SEEN: no step, no countdown at a beacon alone
       if (f && place.phase === 'open') {
         const [lx, ly, lz] = gateLocal(place, f);
         const inside = Math.abs(lx) < openingHalfWidth(profile, Math.max(ARCH_Y0 + 0.05, ly + 0.9)) && Math.abs(lz) < GATE_STEP_M;
@@ -212,7 +219,7 @@ export function createGatePool({
     },
     /** The stone, in the host's world pass. */
     draw(r = renderer, texRemap = null) {
-      if (!place || !mesh || !r?.drawMesh) return 0;
+      if (!place || place.coarse || !mesh || !r?.drawMesh) return 0;
       r.drawMesh(mesh, matrixOf(place), texRemap);
       return 1;
     },
@@ -221,18 +228,18 @@ export function createGatePool({
     /** The fire and the beacon: one foreign pass, after the world's (the duel wall's seat). */
     drawPass(proj, view, eye, seconds, fog = null) {
       if (!place || !pass) return 0;
-      pass.draw([{ origin: place.origin, yaw: place.yaw, open, fade: place.fade, spin }], proj, view, eye, seconds, fog);
+      pass.draw([{ origin: place.origin, yaw: place.yaw, open, fade: place.fade, spin, beaconOnly: !!place.coarse }], proj, view, eye, seconds, fog);
       return pass.drawn;
     },
     /** The fire's light over the threshold, for the host's list. */
     lights() {
-      if (!place || place.fade <= 0) return NO_GATE;
+      if (!place || place.coarse || place.fade <= 0) return NO_GATE;
       return [{ x: place.origin[0], y: place.origin[1] + GATE_LIGHT_UP, z: place.origin[2], range: GATE_LIGHT_RANGE * place.fade * (0.5 + 0.5 * open) }];
     },
     /** The eye's box: the FIRE, not the stone - a player standing on the plinth is inside the gate's own bounds, and a
      *  box they stand in would win every press they made there. The opening's slab, turned with the gate. */
     targets() {
-      if (!place || !place.risen) return NO_GATE;
+      if (!place || !place.risen || place.coarse) return NO_GATE;
       return [{ key: `gate:${place.day}`, aabb: fireBox(place, profile, fireHalfW), distance: RAY_DISTANCE, reach: GATE_REACH, noSurface: true }];
     },
     /** WORLD-HOVER: the gate's name and its countdown. */

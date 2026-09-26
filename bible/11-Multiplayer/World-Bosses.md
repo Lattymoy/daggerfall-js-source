@@ -67,6 +67,9 @@ Offline there is no gate: the schedule is a fact about the shared world, and a s
 The site is the client's to find and every client finds the same one: a hash of the day over the world's own data,
 spawned dungeons' law (`world/spawnedDungeons.js`: "every player rolls the same pixels ... No relay word is needed").
 
+- **The rows**: the game's OWN locations, MAPS.BSA's (GATE-SEEN, HUB1's law): a world-data mod's additions are
+  appended past them and stand only where Replace Game Artwork is on, so reading them made the suitable lists - and
+  the day's spot - differ between two clients (Roleplay & Realism's fort).
 - **The region**: drawn from a SHUFFLE BAG over the regions that hold enough suitable pixels - every province takes
   one gate, in an order each round's rolls shuffle, before any takes a second, and a round never opens on the province
   the last one closed on. So no province holds two gates running and none is left dry for days.
@@ -126,7 +129,12 @@ the player's own and optional (MWA4), so nothing here may lean on it.
   written, its geometry fixed and its motion on uniforms, every rate whole cycles over its clock period): a slow
   fiery swirl, dark and slow while sealed, bright and fast while open, gone when it collapses.
 - **The beacon**: a column of red light straight up from the gate, several hundred metres tall, added onto the
-  frame and fogged thin but never out - the gate is found by looking up.
+  frame and fogged thin but never out - the gate is found by looking up. GATE-SEEN (2026-09-26, Mac: "Somepeople
+  cant see the gate spawn"): the gate stood on BUILT ground alone, and the streamed grid is the Land View
+  Distance's - from the omen's town, 2 to 4 pixels off, a short view built no ground there and nothing stood, the
+  beacon included. A gate on a pixel not built yet stands its beacon alone now, on the ground the pixel will be
+  built from (the terrain sampler's own kernel over WOODS.WLD, `scenes/world.js` gateGroundAt): no stone, no
+  collider, no light, no door, until the pixel is built and it stands whole.
 - **Light and sound**: a red point light (the per-light colour `setPointLights` already takes), embers rising, and a
   low roar looped at the gate.
 - **The countdown**: looked at, the World Tooltips plaque names it *Oblivion Gate - opens in 3:12* / *closes in

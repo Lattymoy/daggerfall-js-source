@@ -177,8 +177,8 @@
   {
     "name": "AUDWB-C7-a-new-empty-list-a-frame",
     "file": "src/scenes/gatePool.js",
-    "old": "      if (!place || place.fade <= 0) return NO_GATE;",
-    "new": "      if (!place || place.fade <= 0) return [];",
+    "old": "      if (!place || place.coarse || place.fade <= 0) return NO_GATE;",
+    "new": "      if (!place || place.coarse || place.fade <= 0) return [];",
     "tests": [
       "test/auditwb_world.test.js"
     ]

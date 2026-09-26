@@ -343,3 +343,33 @@ those frames, and the doll it wore as a person goes with the change
 
 `test/beastpeer.test.js` (3); `tools/mutants/beastpeer.json` 3, 3 dead.
 The local half (a Morrowind-lane player seeing their own change) is below.
+
+## GATE-SEEN: the gate is seen from afar, and every client rolls the same spot (report 10)
+
+Two causes in the code, and two things that are the design:
+
+- **The beacon needed built ground.** The gate, beacon included, stood only
+  on a terrain pixel already streamed in, and the streamed grid is the Land
+  View Distance's. The omen names a town 2 to 4 pixels from the gate, so
+  from the town a player on a short view (the classic default is 3; 1 and 2
+  stream less) saw nothing at all - "found by looking up" was false for
+  them. A gate on a pixel not built yet now stands its BEACON alone, on the
+  ground the pixel will be built from (the terrain sampler's own kernel over
+  WOODS.WLD, `scenes/world.js` gateGroundAt): no stone, collider, light or
+  door until the pixel is built (`scenes/gatePool.js`,
+  `render/gatePass.js`).
+- **Two clients could roll two spots.** The site scan read every location
+  row, and Replace Game Artwork appends a mod's locations on the clients
+  that have it on - Roleplay & Realism's Northrock Fort. Its neighbourhood
+  was barred on some clients and not others, the region's suitable list
+  changed length, and on the days that region drew the gate, `pixels[roll %
+  length]` stood it in two places. The scan reads the game's own rows now,
+  as HUB1 does (`systems/gateSite.js`).
+- **By design:** the gate lets people in only while open (20:00-22:00
+  game time - ten real minutes of each two-hour day), and a kill collapses it
+  on every screen, so a late arrival after a quick kill finds nothing until
+  the next day. A relay older than world113 answers "The gate will not
+  open to you yet."
+
+`test/gateseen.test.js` (6); `tools/mutants/gateseen.json` 10, 10 dead.
+Three older records re-aimed (wb2 x2, auditwb_world).

@@ -1,0 +1,92 @@
+[
+  {
+    "name": "GATESEEN-no-far-ground-the-defect",
+    "file": "src/scenes/gatePool.js",
+    "old": "  if (coarse) ground = groundAt ? groundAt(g.px, g.py, x, z) : NaN;\n",
+    "new": "",
+    "tests": [
+      "test/gateseen.test.js"
+    ]
+  },
+  {
+    "name": "GATESEEN-a-far-gate-is-whole",
+    "file": "src/scenes/gatePool.js",
+    "old": "risen: rise >= 1, coarse };",
+    "new": "risen: rise >= 1, coarse: false };",
+    "tests": [
+      "test/gateseen.test.js"
+    ]
+  },
+  {
+    "name": "GATESEEN-a-far-stone-drawn",
+    "file": "src/scenes/gatePool.js",
+    "old": "      if (!place || place.coarse || !mesh || !r?.drawMesh) return 0;",
+    "new": "      if (!place || !mesh || !r?.drawMesh) return 0;",
+    "tests": [
+      "test/gateseen.test.js"
+    ]
+  },
+  {
+    "name": "GATESEEN-a-far-collider",
+    "file": "src/scenes/gatePool.js",
+    "old": "const want = place?.risen && !place.coarse ? matrixOf(place) : null;",
+    "new": "const want = place?.risen ? matrixOf(place) : null;",
+    "tests": [
+      "test/gateseen.test.js"
+    ]
+  },
+  {
+    "name": "GATESEEN-a-far-light",
+    "file": "src/scenes/gatePool.js",
+    "old": "      if (!place || place.coarse || place.fade <= 0) return NO_GATE;",
+    "new": "      if (!place || place.fade <= 0) return NO_GATE;",
+    "tests": [
+      "test/gateseen.test.js"
+    ]
+  },
+  {
+    "name": "GATESEEN-a-far-target",
+    "file": "src/scenes/gatePool.js",
+    "old": "      if (!place || !place.risen || place.coarse) return NO_GATE;",
+    "new": "      if (!place || !place.risen) return NO_GATE;",
+    "tests": [
+      "test/gateseen.test.js"
+    ]
+  },
+  {
+    "name": "GATESEEN-a-far-door",
+    "file": "src/scenes/gatePool.js",
+    "old": "    if (!place || !g || place.coarse) return false;",
+    "new": "    if (!place || !g) return false;",
+    "tests": [
+      "test/gateseen.test.js"
+    ]
+  },
+  {
+    "name": "GATESEEN-the-far-fire",
+    "file": "src/render/gatePass.js",
+    "old": "      if (g.beaconOnly) continue;   // GATE-SEEN: a gate on a pixel not built yet is its beacon alone - no fire floating over the far ground\n",
+    "new": "",
+    "tests": [
+      "test/gateseen.test.js"
+    ]
+  },
+  {
+    "name": "GATESEEN-the-pool-hands-no-beacon-flag",
+    "file": "src/scenes/gatePool.js",
+    "old": ", beaconOnly: !!place.coarse }]",
+    "new": ", beaconOnly: false }]",
+    "tests": [
+      "test/gateseen.test.js"
+    ]
+  },
+  {
+    "name": "GATESEEN-the-scan-reads-every-row",
+    "file": "src/systems/gateSite.js",
+    "old": "      for (let i = 0; i < base; i++) {",
+    "new": "      for (let i = 0; i < table.length; i++) {",
+    "tests": [
+      "test/gateseen.test.js"
+    ]
+  }
+]

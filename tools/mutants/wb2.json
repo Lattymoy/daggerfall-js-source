@@ -128,8 +128,8 @@
   {
     "name": "WB2-a-collider-while-it-rises",
     "file": "src/scenes/gatePool.js",
-    "old": "    const want = place?.risen ? matrixOf(place) : null;",
-    "new": "    const want = place ? matrixOf(place) : null;",
+    "old": "    const want = place?.risen && !place.coarse ? matrixOf(place) : null;",
+    "new": "    const want = place && !place.coarse ? matrixOf(place) : null;",
     "tests": [
       "test/wb2_gate.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "WB2-a-gate-on-no-ground",
     "file": "src/scenes/gatePool.js",
-    "old": "  const ground = heightAt(x, z);\n  if (!Number.isFinite(ground)) return null;\n",
-    "new": "  const ground = heightAt(x, z);\n",
+    "old": "  if (coarse) ground = groundAt ? groundAt(g.px, g.py, x, z) : NaN;\n  if (!Number.isFinite(ground)) return null;\n",
+    "new": "  if (coarse) ground = groundAt ? groundAt(g.px, g.py, x, z) : NaN;\n",
     "tests": [
       "test/wb2_gate.test.js"
     ]

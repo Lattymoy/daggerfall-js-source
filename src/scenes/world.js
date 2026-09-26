@@ -278,7 +278,7 @@ import { totalWeight } from '../systems/inventory.js';   // HCC: PlayerEntity.Wa
 import { WAGON_KG_LIMIT } from '../systems/itemTransfer.js';   // HCC: ItemHelper.WagonKgLimit
 import { InputMessageBoxWindow } from '../ui/inputMessageBox.js';   // HCC: the horse's name (DaggerfallInputMessageBox)
 import { getBool, getInt, getFloat } from '../systems/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
-import { STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, SCALED_OCEAN_ELEVATION } from '../world/terrainSampler.js';   // GR1: the sea plane, so no blade stands in water
+import { STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, SCALED_OCEAN_ELEVATION, sampleKernel } from '../world/terrainSampler.js';   // GR1: the sea plane, so no blade stands in water
 import { restrideGrid } from '../world/terrainGen.js';   // PERF-EXT26: the restride's grid - the kernel's own law (EV4's ghost rows), on the worker or here
 import { getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
 // The start-marker arm (StreamingWorld's PositionPlayerToLocation), the
@@ -11884,11 +11884,25 @@ export async function bootWorld(canvas, renderer, params, status) {
     const idle = globalThis.requestIdleCallback ? (f) => globalThis.requestIdleCallback(f, { timeout: 4000 }) : (f) => setTimeout(f, 1500);
     idle(() => { try { gateVeil.warm(); } catch { /* the step builds it then */ } });
   };
+  /** GATE-SEEN: the ground under a spot on a pixel NOT built yet - the terrain sampler's own kernel over WOODS.WLD, the
+   *  samples the pixel will be built from (a gate stands where no location is within a pixel, so no blending moves
+   *  them). One kernel for the gate's pixel, kept while it stays the same. */
+  let _gateKernel = null, _gateKernelAt = '';
+  const gateGroundAt = (px, py, x, z) => {
+    if (!woods) return -Infinity;
+    const key = `${px},${py}`;
+    if (key !== _gateKernelAt) { _gateKernelAt = key; _gateKernel = sampleKernel(woods, px, py); }
+    const t = state.pixelTranslation(px, py);
+    const lx = x - t[0], lz = z - t[2];
+    if (!(lx >= 0 && lz >= 0 && lx <= TERRAIN_SIZE && lz <= TERRAIN_SIZE)) return -Infinity;
+    return _gateKernel(lx / heightCell, lz / heightCell) * worldHeight + t[1];
+  };
   const gatePool = gateOmen ? createGatePool({
     renderer, gl: renderer.gl, collider: () => collider,
     standing: () => gateOmen.standing(),
     pixelTranslation: (px, py) => state.pixelTranslation(px, py),
     heightAt: (x, z) => heightAt(x, z),
+    groundAt: (px, py, x, z) => gateGroundAt(px, py, x, z),   // GATE-SEEN: the beacon beyond the streamed grid
     now: () => Date.now() + _sharedOffsetMs,
     feet: () => (walkMode && playerSpawned ? player.feetAt() : null),
     say: (text) => setMidScreenText(text),
