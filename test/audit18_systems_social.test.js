@@ -16,6 +16,7 @@ import { srand } from '../src/formats/dfRandom.js';
 import { expandAnswerRecord, expandMacros, oathTextId } from '../src/systems/talkSession.js';
 import { createTownTalk } from '../src/scenes/townTalk.js';
 import { createArrestFlow, RELEASE_MINUTES } from '../src/scenes/arrestFlow.js';
+import { CourtScreenWindow, PrisonScreenWindow, PRISON_UPDATE_INTERVAL } from '../src/ui/prisonScreen.js';
 import { worldMinutes, setWorldMinutes, advanceWorldMinutes, MINUTES_PER_DAY } from '../src/systems/worldTick.js';
 import { preloadTalkArt } from '../src/ui/nativeTalk.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
@@ -164,6 +165,16 @@ test('audit18 social F4: every conversation opens on the greeting, not the follo
 
   const first = await talkTo(tt, { pos: [0, 0, 5] });
   assert.equal(first.question(building), GREET);
+  // ROAD-D D10 (8d46c3efc) moved the counter to DFU's own site:
+  // GetAnswerText climbs numQuestionsAsked (TalkManager.cs:2040) and
+  // GetQuestionText (:1298) never touches it. The window re-reads the
+  // question on every SELECTION (UpdateQuestion, DaggerfallTalkWindow.cs
+  // :1244), so a refresh before anything is asked is still the greeting...
+  assert.equal(first.question(building), GREET, 'a selection refresh asks nothing');
+  // ...and it is the ASK - SelectTopicFromTopicList's GetAnswerText, then
+  // UpdateQuestion for the new label (:1329-1333) - that turns the next
+  // question into the follow-up.
+  first.answer(building);
   assert.equal(first.question(building), FOLLOW, 'the second question in ONE conversation follows up');
   sayGoodbye(tt);
 
@@ -225,6 +236,13 @@ test('audit18 social F5: the townsperson carries their own minted name', async (
 // The court flow. A recording townTalk stub: every box the flow
 // pushes is captured with its rendered lines, which is what the
 // player actually reads.
+//
+// ROAD-B B5 (c7ffe6452) opens the COURTROOM before any box - Setup's
+// courtPanel (DaggerfallCourtWindow.cs:75-85), the one court window
+// the whole trial is pushed over. It carries no text and is not a
+// box, so it is kept out of `boxes` (test/roadb_court_backdrop.test.js
+// pins the backdrop itself). This stub has no stack and no `overlay`,
+// so courtBox takes the one-slot showOverlay door for every box.
 // ---------------------------------------------------------------
 function courtHarness({ legalRep = 0, gold = 1000, rolls, name = 'Mack Cothran' } = {}) {
   const rsc = new TextRsc().load(bytes('TEXT.RSC'));
@@ -233,23 +251,40 @@ function courtHarness({ legalRep = 0, gold = 1000, rolls, name = 'Mack Cothran' 
   const townTalk = {
     texts: (id) => rsc.plainText(id),
     locationName: 'Daggerfall',
-    showOverlay: (w, cb) => { boxes.push(w); win = w; onClosed = cb ?? null; },
+    showOverlay: (w, cb) => {
+      if (w instanceof CourtScreenWindow) return;
+      boxes.push(w); win = w; onClosed = cb ?? null;
+    },
   };
+  // E4 (12b8ffb5d): gold is PlayerEntity.GoldPieces, a COUNTER. The
+  // player's collection can no longer hold Currency, and the court
+  // reads and deducts the counter (GetGoldAmount / DeductGoldAmount),
+  // so a Currency stack here is a purse of zero.
   const playerEntity = {
     name, health: 30, crimeCommitted: CRIMES.Pickpocketing, haveShownSurrenderDialogue: true,
     legalRep: { 17: legalRep }, skills: 30, skillUses: [], stats: { personality: 50 },
-    items: [{ group: 'Currency', name: 'Gold Pieces', stackCount: gold }],
+    items: [], goldPieces: gold,
   };
   const flow = createArrestFlow({ townTalk, playerEntity, regionIndex: 17, rolls });
   // The overlay seam: a ChoiceWindow marks itself done, then its
   // action may push the next box (townTalk.js keydown).
-  const press = (code) => {
-    const cur = win;
-    cur.input(code);
+  const drain = (cur) => {
     if (win === cur && cur.done) { const cb = onClosed; onClosed = null; win = null; cb?.(); }
   };
+  const press = (code) => { const cur = win; cur.input(code); drain(cur); };
   const close = () => press('confirm');
-  return { flow, townTalk, playerEntity, boxes, press, close, lines: () => boxes.map((b) => b.lines.join('')) };
+  // ROAD-A a3 (288d32b94): a prison sentence is SERVED. State 3 lays
+  // the prison screen, and only its countdown's zero - one day per
+  // prisonUpdateInterval (:55), UpdatePrisonScreen (:465-480) - raises
+  // the clock and closes into ReleaseFromPrison. `serve` is state 100's
+  // timer run to that zero, then townTalk.frame's drain of the window.
+  const serve = () => {
+    const cur = win;
+    assert.ok(cur instanceof PrisonScreenWindow, 'serve() needs a prison sentence on screen');
+    for (let i = 0; i < cur.daysInPrison; i++) cur.tick(PRISON_UPDATE_INTERVAL);
+    drain(cur);
+  };
+  return { flow, townTalk, playerEntity, boxes, press, close, serve, lines: () => boxes.map((b) => b.lines.join('')) };
 }
 
 // ---------------------------------------------------------------
@@ -328,7 +363,7 @@ test('audit18 social F6: a guilty plea with no prison time shows no verdict reco
   plea.press('KeyG');
   assert.equal(plea.boxes.length, 1, 'only the 8050 plea prompt is ever shown');
   assert.equal(plea.playerEntity.crimeCommitted, 0, 'ReleaseFromPrison still clears the crime');
-  assert.equal(plea.playerEntity.items[0].stackCount, 900, 'the halved 100-gold fine is still deducted');
+  assert.equal(plea.playerEntity.goldPieces, 900, 'the halved 100-gold fine is still deducted');
   for (const line of plea.lines()) {
     assert.ok(!line.includes('days in prison. Starting today.'), `invented 8055 record: ${line}`);
   }
@@ -420,6 +455,7 @@ test('AUDIT 21 F8: a sentence moves the world clock, and every release costs fou
     const h = courtHarness({ legalRep: 0, gold: 0, rolls: seq(0.99, 0.99) });
     h.flow.startCourtFlow();
     h.press('KeyG');                 // plead guilty -> prison
+    h.serve();                       // the countdown to its zero, then ReleaseFromPrison
     assert.equal(h.playerEntity.crimeCommitted, 0, 'sentence served, crime cleared');
     assert.ok(worldMinutes() > 0,
       'the default flow must move the clock - it used to advance it by exactly zero');
@@ -474,6 +510,7 @@ test('AUDIT 21 F8: a sentence moves the world clock, and every release costs fou
     });
     flow2.startCourtFlow();
     ordered.press('KeyG');
+    ordered.serve();
     assert.notEqual(repDuringSkip, null, 'the sentence must actually have gone to prison');
     assert.equal(repDuringSkip, ordered.playerEntity.legalRep[17],
       'the sentence is CREDITED BEFORE the days elapse, not after');

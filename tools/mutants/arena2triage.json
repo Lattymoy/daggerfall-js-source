@@ -1,0 +1,29 @@
+[
+  {
+    "name": "ARENA2-TRIAGE-the-books-folder-by-literal-again",
+    "file": "vite.config.js",
+    "old": "const books = join(root, onDisk('BOOKS'));",
+    "new": "const books = join(root, 'BOOKS');",
+    "tests": [
+      "test/audit68_repo.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-TRIAGE-the-book-by-its-url-case",
+    "file": "vite.config.js",
+    "old": "          try { file = readdirSync(books).find((f) => f.toUpperCase() === name.toUpperCase()) ?? name; } catch { /* no books folder */ }\n",
+    "new": "",
+    "tests": [
+      "test/audit68_repo.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-TRIAGE-a-missing-book-crashes-the-door",
+    "file": "vite.config.js",
+    "old": "=== name.toUpperCase()) ?? name; } catch",
+    "new": "=== name.toUpperCase()); } catch",
+    "tests": [
+      "test/audit68_repo.test.js"
+    ]
+  }
+]
