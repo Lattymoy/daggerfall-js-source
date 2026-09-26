@@ -1,0 +1,110 @@
+[
+  {
+    "name": "HOMEOFFER-the-onward-press-asks-again",
+    "file": "src/systems/onlineHomes.js",
+    "old": "  if (isBash || asked) return null;",
+    "new": "  if (isBash) return null;",
+    "tests": [
+      "test/homeoffer.test.js"
+    ]
+  },
+  {
+    "name": "HOMEOFFER-a-bash-asks",
+    "file": "src/systems/onlineHomes.js",
+    "old": "  if (isBash || asked) return null;",
+    "new": "  if (asked) return null;",
+    "tests": [
+      "test/homeoffer.test.js"
+    ]
+  },
+  {
+    "name": "HOMEOFFER-the-owners-menu-in-every-mode",
+    "file": "src/systems/onlineHomes.js",
+    "old": "  if (door === 'own') return mode === 'info' ? 'menu' : null;",
+    "new": "  if (door === 'own') return 'menu';",
+    "tests": [
+      "test/homeoffer.test.js"
+    ]
+  },
+  {
+    "name": "HOMEOFFER-a-house-not-for-sale-offers",
+    "file": "src/systems/onlineHomes.js",
+    "old": "  if (door !== 'none' || !(price > 0)) return null;",
+    "new": "  if (door !== 'none') return null;",
+    "tests": [
+      "test/homeoffer.test.js"
+    ]
+  },
+  {
+    "name": "HOMEOFFER-anothers-home-offers",
+    "file": "src/systems/onlineHomes.js",
+    "old": "  if (door !== 'none' || !(price > 0)) return null;",
+    "new": "  if (!(price > 0)) return null;",
+    "tests": [
+      "test/homeoffer.test.js"
+    ]
+  },
+  {
+    "name": "HOMEOFFER-info-forgets-it-can-ask-again",
+    "file": "src/systems/onlineHomes.js",
+    "old": "  if (mode === 'info') return 'offer';\n",
+    "new": "",
+    "tests": [
+      "test/homeoffer.test.js"
+    ]
+  },
+  {
+    "name": "HOMEOFFER-info-alone-the-defect",
+    "file": "src/systems/onlineHomes.js",
+    "old": "  return mode === 'steal' || declined ? null : 'offer';",
+    "new": "  return null;",
+    "tests": [
+      "test/homeoffer.test.js"
+    ]
+  },
+  {
+    "name": "HOMEOFFER-a-thief-is-offered",
+    "file": "src/systems/onlineHomes.js",
+    "old": "  return mode === 'steal' || declined ? null : 'offer';",
+    "new": "  return declined ? null : 'offer';",
+    "tests": [
+      "test/homeoffer.test.js"
+    ]
+  },
+  {
+    "name": "HOMEOFFER-a-no-is-forgotten",
+    "file": "src/systems/onlineHomes.js",
+    "old": "  return mode === 'steal' || declined ? null : 'offer';",
+    "new": "  return mode === 'steal' ? null : 'offer';",
+    "tests": [
+      "test/homeoffer.test.js"
+    ]
+  },
+  {
+    "name": "HOMEOFFER-the-door-reads-no-mode",
+    "file": "src/scenes/worldModes.js",
+    "old": "mode: getInteractionMode(), price, declined",
+    "new": "mode: 'info', price, declined",
+    "tests": [
+      "test/homeoffer.test.js"
+    ]
+  },
+  {
+    "name": "HOMEOFFER-the-door-forgets-the-no",
+    "file": "src/scenes/worldModes.js",
+    "old": "declined: _homeDeclined.has(homeKeyOf(bd)), asked",
+    "new": "declined: false, asked",
+    "tests": [
+      "test/homeoffer.test.js"
+    ]
+  },
+  {
+    "name": "HOMEOFFER-the-no-is-not-remembered",
+    "file": "src/scenes/worldModes.js",
+    "old": "action: () => { _homeDeclined.add(homeKeyOf(bd)); homeOnward(hit, entries)(); } },",
+    "new": "action: () => { homeOnward(hit, entries)(); } },",
+    "tests": [
+      "test/homeoffer.test.js"
+    ]
+  }
+]

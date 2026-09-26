@@ -261,7 +261,7 @@ import { createBankAccounts, createHouses, BANK_REGION_COUNT, TRANSACTION_RESULT
 import {
   homeCandidate, homePurchasable, homeSceneName, homeDoorAnswer, homeDoorTitle, homeLockedLine, homeBelongsLine,
   homeForSaleLine, homeOfferLines, HOME_BOUGHT_LINE, homeShortLine, homeOwnerLines, homeEntryLine, homeSaleLines,
-  homeSoldLine, homeRefund, HOME_ENTRY_WORDS, HOME_BANK_LINES, buyOnlineHome, sellOnlineHome,
+  homeSoldLine, homeRefund, HOME_ENTRY_WORDS, HOME_BANK_LINES, buyOnlineHome, sellOnlineHome, homeDoorPrompt,
 } from '../systems/onlineHomes.js';
 import { HOME_ENTRIES, homePriceOk } from '../net/homeLaw.js';
 // DECOR1c: the pieces a room's owner placed (their law, and the pool that stands them in the room)
@@ -5464,11 +5464,11 @@ export function createWorldModes(host) {
           home = homeOf(bd);
           const door = homeDoorFor(bd, home);
           if (door === 'locked') { townTalk?.say?.(homeLockedLine(home)); return true; }
-          if (!isBash && !homeAsked && getInteractionMode() === 'info') {
-            if (door === 'own') { openHomeOwnerMenu(bd, home, hit, entries); return true; }
-            const price = door === 'none' ? homeOfferPrice(bd) : 0;
-            if (price) { openHomeOffer(bd, price, hit, entries); return true; }
-          }
+          // HOME-OFFER: the offer asks in any mode but Steal, once a session per house; the owner's menu is Info's
+          const price = door === 'none' ? homeOfferPrice(bd) : 0;
+          const prompt = homeDoorPrompt({ door, mode: getInteractionMode(), price, declined: _homeDeclined.has(homeKeyOf(bd)), asked: homeAsked, isBash });
+          if (prompt === 'menu') { openHomeOwnerMenu(bd, home, hit, entries); return true; }
+          if (prompt === 'offer') { openHomeOffer(bd, price, hit, entries); return true; }
           homeOpen = door !== 'none';
         }
         const unlocked = homeOpen || resolveBuildingUnlocked(bd);
@@ -5642,6 +5642,9 @@ export function createWorldModes(host) {
   // ═══ HOME1 — THE OFFER, THE OWNER'S MENU, THE SALE ═════════════════════════════════════════════════════════════
   /** The press that comes back from a home's box and goes on to the door, as Daggerfall's Info click does. */
   const homeOnward = (hit, entries) => () => { activateStaticDoor(hit, entries, false, { homeAsked: true }).catch((e) => console.error(e)); };
+  /** HOME-OFFER: the houses this player said No to this session - asked once in Grab, always in Info. */
+  const _homeDeclined = new Set();
+  const homeKeyOf = (b) => `${homeTownOf(b)}:${b?.buildingKey ?? 0}`;
   /** The purse seam's two halves a home is paid from: the purse (letters of credit too - GetGoldAmount) and the
    *  building's own region's bank account, minted on first use as the bank window mints it. */
   function homeAccount(region) {
@@ -5654,7 +5657,7 @@ export function createWorldModes(host) {
       lines: homeOfferLines(price),
       options: [
         { code: 'KeyY', label: 'Y - yes', action: () => { buyHomeAt(bd, price).catch((e) => console.error(e)); } },
-        { code: 'KeyN', label: 'N - no', action: homeOnward(hit, entries) },
+        { code: 'KeyN', label: 'N - no', action: () => { _homeDeclined.add(homeKeyOf(bd)); homeOnward(hit, entries)(); } },   // HOME-OFFER: asked once
       ],
     }));
   }

@@ -194,3 +194,22 @@ If the image showed something else - a mount in the wrong place, or missing
 - that is still open; this is the one defect the code shows.
 
 `test/weaponmount.test.js` (4); `tools/mutants/weaponmount.json` 8, 8 dead.
+
+## HOME-OFFER: a house for sale asks at its door in any mode (report 3)
+
+HOME1 made a house's offer, and its owner's menu, answer only an Info-mode
+press. Nothing on the enhanced skins says so: the interaction mode is a
+drawn word, and the default is Grab (PlayerActivate.cs:70). The bank tells
+an online player "a home is bought at its own front door", so they pressed
+the door in Grab and walked in, on Enhanced and Enhanced Plus alike. The
+houses were buyable all along; outside Info the door never asked.
+
+The offer asks in any mode but Steal now (a thief is not shopping), once a
+session per house: a No goes on through the door, as it always did, and
+that house asks no more unless it is pressed in Info, which always asks
+(`systems/onlineHomes.js` homeDoorPrompt; `scenes/worldModes.js` remembers
+the No). The owner's menu stays Info's, since an owner's press is the way
+in.
+
+`test/homeoffer.test.js` (5); `tools/mutants/homeoffer.json` 12, 12 dead.
+`test/home1.test.js`'s wiring pin re-aimed.

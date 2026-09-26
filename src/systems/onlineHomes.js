@@ -91,6 +91,26 @@ export function homeDoorAnswer(home, { partyNames = [], questSite = false } = {}
   return 'locked';
 }
 
+/**
+ * HOME-OFFER (2026-09-26, Mac: "Enhanced plus cant buy house"): WHAT A PRESS ON A HOUSE'S DOOR ASKS FIRST, if
+ * anything. HOME1 put the offer and the owner's menu behind Info mode alone, and nothing on the enhanced skins says
+ * so - the mode word is drawn, not pressed, and the default is Grab - so a player told by the bank that "a home is
+ * bought at its own front door" pressed the door and walked in, on Enhanced and Enhanced Plus alike. The offer asks
+ * now in any mode but Steal (a thief is not shopping), ONCE: a No goes on through the door, as it always did, and
+ * that house asks no more this session unless the player presses it in Info, which always asks. The owner's menu
+ * stays Info's - an owner's press is the way in.
+ *   door     - homeDoorAnswer's word;   mode - the interaction mode;   price - homeOfferPrice's (0: not for sale)
+ *   declined - this player said No to this house this session;   asked - the press IS the answer's onward step
+ * Answers 'menu', 'offer' or null (the door opens as Daggerfall's law says).
+ */
+export function homeDoorPrompt({ door, mode, price = 0, declined = false, asked = false, isBash = false }) {
+  if (isBash || asked) return null;
+  if (door === 'own') return mode === 'info' ? 'menu' : null;
+  if (door !== 'none' || !(price > 0)) return null;
+  if (mode === 'info') return 'offer';
+  return mode === 'steal' || declined ? null : 'offer';
+}
+
 /** The door's name for a home, over the building's own. */
 export const homeDoorTitle = (home) => (home.own ? 'Your home' : `${home.owner}'s home`);
 /** What a player reads at a home's door they may not open. */

@@ -4695,7 +4695,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:6726` read, on one physical line:
+`src/scenes/worldModes.js:6729` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -8703,13 +8703,16 @@ took: three town homes a character, no upkeep.
   for its owner at any hour and for whoever the owner lets in: anyone when public, a player whose party holds the
   owner when party (the handles the relay signs), and - Daggerfall's own rung - a player whose active quest is set
   in it, so a quest never strands its player. It is shut to everyone else by no pick, no bash and no Open spell, the
-  refusal "This is <owner>'s home. The door is locked." In INFO mode a house anyone may buy is its offer: "This house
+  refusal "This is <owner>'s home. The door is locked." A house anyone may buy is its offer (HOME-OFFER below): "This house
   can be your home. It costs N gold, from your purse and this region's bank account. Buy it?" - the price Daggerfall's
   bank asks for that house (its model's radius x 1280 - the model the door's own record now carries,
   `systems/talkTopics.js buildingDataForDoor`, the town directory's for the same building); Yes claims it first and takes the gold only once the claim
   lands (the purse, letters of credit too, then the region's account, as Daggerfall's PurchaseHouse pays), asking the
   purse again after the answer and giving the claim back if it can no longer be paid; No goes on to the door, as
-  Daggerfall's Info click does. A house is a candidate when it is Daggerfall's for-sale house or an ordinary
+  Daggerfall's Info click does. HOME-OFFER (2026-09-26, Mac: "Enhanced plus cant buy house"): HOME1 asked in Info
+  mode alone, which nothing on the enhanced skins says, and the default mode is Grab - so a press on a house for sale
+  walked in. The offer asks in any mode but Steal now, once a session per house outside Info (a No is remembered;
+  Info always asks) - `systems/onlineHomes.js homeDoorPrompt`, `test/homeoffer.test.js`. A house is a candidate when it is Daggerfall's for-sale house or an ordinary
   residence (House1-4) - never a faction's House2 - and is for sale when no active quest is set in it. In Info mode
   my own door is my menu: G go in, W who may enter (Only me, My party, Anyone), S sell it back - at Daggerfall's deed
   share (85%) of what the SERVICE says was paid, into the region's account, credited only once the service agrees;
