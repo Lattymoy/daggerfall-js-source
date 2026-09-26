@@ -566,7 +566,7 @@ test('S40 hosts: all four can now rest, and each supplies its own place', () => 
   assert.match(wm, /return interiorRestPlace\(\{/);
   assert.match(wm, /room: findRentedRoom\(playerEntity\.rentedRooms/);
   // H1's ledger, which both rest lanes had to leave as a constant.
-  assert.match(wm, /houseOwned: isHouseOwned\(playerEntity\.houses/);
+  assert.match(wm, /houseOwned: interiorHome \? interiorHome\.own : isHouseOwned\(playerEntity\.houses/);   // HOME1 re-aim: my online home's bed is mine too
   assert.match(wm, /guildCanRest\(guild, membershipOf/);
   assert.match(wm, /m\.type === INTERIOR_MARKER\.REST/);
   assert.match(wm, /permanentScene: !!scene && containsPermanentScene\(sceneCache\(\), scene\)/);
@@ -585,7 +585,7 @@ test('S40 hosts: all four can now rest, and each supplies its own place', () => 
     // large HUD's rest panel posts through too. Pin the WHOLE arm and
     // the door behind it - matching the action NAME alone survives a
     // `false &&` in front of it, which leaves the key dead.
-    assert.match(s, /if \(act === 'Rest'\) \{ e\.preventDefault\(\); hudCtx\.toggleRest\(\); return; \}/, f);
+    assert.match(s, /if \(act === 'Rest'\) \{ e\.preventDefault\(\); hudCtx\.toggleRest\(\); return true; \}/, f);
     assert.match(s, /toggleRest: \(\) => toggleRest\(\),/, f);
     // ...and the door is DECLARED ONCE. A match is not enough here and
     // AUDIT 26 F055/F202/F203 is why: both hosts declared `toggleRest`
@@ -1825,7 +1825,7 @@ test('S40: the quest machine ticks THROUGH a rest, which is what the sub-tick is
     'the fixed-city host no longer refuses the sub-tick');
   // ...and the ordinary tick really is gated on the overlay, which is
   // what made this reachable.
-  assert.match(src('src/scenes/world.js'), /if \(!townTalk\.overlayActive && !_loading\) questBridge\.tick\(dt\);/);
+  assert.match(src('src/scenes/world.js'), /if \(!townTalk\.overlayActive && !worldMoveBusy\(\) && !hudFade\.fadeInProgress\) questBridge\.tick\(dt\);/);   // WA1: the fade and world-move gate beside the overlay's
   assert.match(src('src/scenes/worldModes.js'), /if \(!overlayHeld\) questBridge\?\.tick\(dt\);/);
   assert.match(src('src/scenes/exterior.js'), /if \(!_overlayHeld\) questBridge\?\.tick\(dt\);/);
 });

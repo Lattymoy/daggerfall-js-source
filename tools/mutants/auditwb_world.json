@@ -1,0 +1,195 @@
+[
+  {
+    "name": "AUDWB-C1-the-sea-by-climate-alone",
+    "file": "src/systems/gateSite.js",
+    "old": "export const gateSeaPixel = (climate, byte) => climate === CLIMATES.Ocean || byte * BASE_HEIGHT_SCALE <= SCALED_OCEAN_ELEVATION;",
+    "new": "export const gateSeaPixel = (climate, byte) => climate === CLIMATES.Ocean;",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-C1-the-sea-edge-off-by-one",
+    "file": "src/systems/gateSite.js",
+    "old": "export const gateSeaPixel = (climate, byte) => climate === CLIMATES.Ocean || byte * BASE_HEIGHT_SCALE <= SCALED_OCEAN_ELEVATION;",
+    "new": "export const gateSeaPixel = (climate, byte) => climate === CLIMATES.Ocean || byte * BASE_HEIGHT_SCALE < SCALED_OCEAN_ELEVATION;",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ],
+    "equivalent": true,
+    "why": "SCALED_OCEAN_ELEVATION is fround(3.4 x 8) = 27.2 and a height byte times BASE_HEIGHT_SCALE is a multiple of 8: no byte stands on the edge, so < and <= part the same pixels (the held map's isWaterPixel reads <=, and the scan is pinned equal to it)"
+  },
+  {
+    "name": "AUDWB-C1-the-scan-blind-to-the-heights",
+    "file": "src/systems/gateSite.js",
+    "old": "      if (gateSeaPixel(maps.getClimateIndex(x, y), heightAt ? heightAt(x, y) : 255)) continue;",
+    "new": "      if (gateSeaPixel(maps.getClimateIndex(x, y), 255)) continue;",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-C1-the-coast-value-a-province",
+    "file": "src/systems/gateSite.js",
+    "old": "export const politicClaimed = (pol) => (pol >= 128 && pol < 128 + REGION_NAMES.length) || pol === 128 + 105;",
+    "new": "export const politicClaimed = (pol) => (pol >= 128 && pol < 128 + REGION_NAMES.length) || pol === 128 + 105 || pol === 64;",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-C3-the-town-named-with-the-gates-province",
+    "file": "src/systems/gateSite.js",
+    "old": "  const townRegion = town ? (REGION_NAMES[town.region] ?? '') : '';",
+    "new": "  const townRegion = town ? regionName : '';",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-C7-a-slice-that-stops-at-the-first-row",
+    "file": "src/systems/gateSite.js",
+    "old": "      do { row(); y++; } while (y < H - 1 && more());",
+    "new": "      do { row(); y++; } while (y < H - 2 && more());",
+    "tests": [
+      "test/auditwb_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-C7-a-slice-that-skips-a-row",
+    "file": "src/systems/gateSite.js",
+    "old": "      do { row(); y++; } while (y < H - 1 && more());",
+    "new": "      do { row(); y += 1 + (more() ? 0 : 0); y++; } while (y < H - 1 && more());",
+    "tests": [
+      "test/auditwb_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-C7-a-finished-scan-made-again",
+    "file": "src/systems/gateSite.js",
+    "old": "      if (done) return done;",
+    "new": "      if (done && false) return done;",
+    "tests": [
+      "test/auditwb_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-C4-the-omen-before-the-clock",
+    "file": "src/systems/gateOmen.js",
+    "old": "      if (!ready()) { readyAt = null; settled = false; current = null; return null; }",
+    "new": "      if (!ready() && false) { readyAt = null; settled = false; current = null; return null; }",
+    "tests": [
+      "test/auditwb_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-C4-no-settle",
+    "file": "src/systems/gateOmen.js",
+    "old": "        if (now() - readyAt < settleMs) { current = null; return null; }",
+    "new": "        if (now() - readyAt < 0) { current = null; return null; }",
+    "tests": [
+      "test/auditwb_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-C4-a-step-back-silences-the-settled",
+    "file": "src/systems/gateOmen.js",
+    "old": "        settled = true;",
+    "new": "        settled = false;",
+    "tests": [
+      "test/auditwb_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-C4-a-link-lost-keeps-the-settle",
+    "file": "src/systems/gateOmen.js",
+    "old": "      if (!ready()) { readyAt = null; settled = false; current = null; return null; }",
+    "new": "      if (!ready()) { readyAt = null; current = null; return null; }",
+    "tests": [
+      "test/auditwb_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-C4-a-line-said-twice-behind",
+    "file": "src/systems/gateOmen.js",
+    "old": "      if (line && (t.day !== saidDay || rank > saidRank) && !(line === 'wrath' && Number.isFinite(fell))) {",
+    "new": "      if (line && (t.day !== saidDay || rank !== saidRank) && !(line === 'wrath' && Number.isFinite(fell))) {",
+    "tests": [
+      "test/auditwb_world.test.js",
+      "test/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-C4-a-new-day-silenced-by-the-last",
+    "file": "src/systems/gateOmen.js",
+    "old": "      if (line && (t.day !== saidDay || rank > saidRank) && !(line === 'wrath' && Number.isFinite(fell))) {",
+    "new": "      if (line && rank > saidRank && !(line === 'wrath' && Number.isFinite(fell))) {",
+    "tests": [
+      "test/auditwb_world.test.js",
+      "test/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-C2-the-fog-to-black",
+    "file": "src/render/gatePass.js",
+    "old": "  o = vec4(mix(uFogColor * alpha, col * glow, f) * uFade, alpha * uFade);",
+    "new": "  o = vec4(col * glow * f * uFade, alpha * uFade);",
+    "tests": [
+      "test/auditwb_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-C2-no-fog-colour-handed",
+    "file": "src/render/gatePass.js",
+    "old": "    gl.uniform3fv(this.mu.uFogColor, fog?.color ?? NO_FOG_COLOR);",
+    "new": "    gl.uniform3fv(this.mu.uFogColor, NO_FOG_COLOR);",
+    "tests": [
+      "test/auditwb_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-C6-the-spin-by-the-clock",
+    "file": "src/render/gatePass.js",
+    "old": "      gl.uniform1f(this.mu.uSpin, Number.isFinite(g.spin) ? g.spin : gateSpinAt(t, g.open ?? 0));",
+    "new": "      gl.uniform1f(this.mu.uSpin, gateSpinAt(t, g.open ?? 0));",
+    "tests": [
+      "test/auditwb_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-C6-the-rate-unclamped",
+    "file": "src/render/gatePass.js",
+    "old": "export const gateSpinRate = (open) => MEMBRANE_TURN_SEALED_HZ + (MEMBRANE_TURN_OPEN_HZ - MEMBRANE_TURN_SEALED_HZ) * Math.max(0, Math.min(1, open));",
+    "new": "export const gateSpinRate = (open) => MEMBRANE_TURN_SEALED_HZ + (MEMBRANE_TURN_OPEN_HZ - MEMBRANE_TURN_SEALED_HZ) * open;",
+    "tests": [
+      "test/auditwb_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-C6-the-pool-spins-by-its-clock",
+    "file": "src/scenes/gatePool.js",
+    "old": "      spin = (spin + gateSpinRate(open) * Math.max(0, dt)) % 1;",
+    "new": "      spin = gateSpinRate(open) * (now() / 1000) % 1;",
+    "tests": [
+      "test/auditwb_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-C7-a-new-empty-list-a-frame",
+    "file": "src/scenes/gatePool.js",
+    "old": "      if (!place || place.fade <= 0) return NO_GATE;",
+    "new": "      if (!place || place.fade <= 0) return [];",
+    "tests": [
+      "test/auditwb_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-C7-stands-without-a-pass",
+    "file": "src/scenes/gatePool.js",
+    "old": "    stands: () => !!place && !!pass,",
+    "new": "    stands: () => !!place,",
+    "tests": [
+      "test/auditwb_world.test.js"
+    ]
+  }
+]

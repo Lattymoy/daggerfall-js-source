@@ -284,7 +284,10 @@ export class SongPlayer {
     const { secondsPerTick, durationTicks, events } = this.song;
     const aheadTicks = LOOKAHEAD_SECONDS / secondsPerTick;
     const nowTick = (this.ctx.currentTime - this._originTime) / secondsPerTick;
-    const toTick = Math.min(nowTick + aheadTicks, durationTicks + 1);
+    // AUDIT WB D4: a SEAMLESS song (written as whole bars - systems/gateScore.js) loops on its bar line: its window stops
+    // at its end, and the next pass is scheduled from there below
+    const seamless = !!this.song.seamless && this.loop && durationTicks > 0;
+    const toTick = Math.min(nowTick + aheadTicks, seamless ? durationTicks : durationTicks + 1);
 
     // AUDIT 19 F8: A STALLED TAB IS NOT A REASON TO PLAY THE PAST. A
     // background throttle can park this loop for a second or more; on the
@@ -323,6 +326,15 @@ export class SongPlayer {
       this._cursorTick = toTick;
     }
 
+    // AUDIT WB D4: the next pass of a seamless song begins where this one ends, to the tick - scheduled a lookahead
+    // ahead like any window; its tick-0 controls are scheduled at the new origin, so no gain is reset under the tail
+    if (seamless && this._cursorTick >= durationTicks) {
+      this._originTime += durationTicks * secondsPerTick;
+      this._cursorTick = 0;
+      this._state = freshChannelState();
+      this._pump();
+      return;
+    }
     // Loop: DFU replays the song when its context has not moved
     // (SongManager.UpdateSong:229), so ending in silence is wrong. Rewind
     // once the last note has had time to ring out.

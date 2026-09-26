@@ -76,7 +76,7 @@ test('AUDIT SC1: ONE MESH AT TWO PLACES - two doors of one model are both still 
   frame(draw);
   const first = frame(draw);
   assert.equal(first.staticFaces, 6, 'the cache drawn once');
-  assert.ok(first.pointDraws > 6 * (2 + 1) && first.pointDraws <= 6 * (2 + 1 + 1 + 1), `six faces of the room's two and the tile, and the doors on the faces that see them (${first.pointDraws})`);
+  assert.ok(first.pointDraws > 6 * (1 + 1) && first.pointDraws <= 6 * (1 + 1 + 1 + 1), `six faces of the room's two (one run, PERF-EXT2) and the tile, and the doors on the faces that see them (${first.pointDraws})`);
   assert.equal(first.dynFaces, 0, 'neither door is a dynamic: two placements of one mesh, each still');
   assert.equal(door._shInst.length, 2, 'two placements remembered on the mesh');
   for (let f = 0; f < 3; f++) { const st = frame(draw); assert.equal(st.pointDraws, 0, `still: frame ${f} draws nothing`); assert.equal(st.blit, 0); }

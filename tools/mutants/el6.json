@@ -74,8 +74,8 @@
   {
     "name": "resolve-ao-mix-zero",
     "file": "src/render/airPass.js",
-    "old": "    gl.uniform1f(P.resolve.uAOMix, prepared ? AIR_AO_RESOLVE : 0);",
-    "new": "    gl.uniform1f(P.resolve.uAOMix, 0);",
+    "old": "    gl.uniform1f(PR.uAOMix, prepared ? AIR_AO_RESOLVE : 0);",
+    "new": "    gl.uniform1f(PR.uAOMix, 0);",
     "tests": [
       "test/el3_air.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "resolve-ao-unit",
     "file": "src/render/airPass.js",
-    "old": "gl.uniform1i(P.resolve.uAO, 3);   // EL6",
-    "new": "gl.uniform1i(P.resolve.uAO, 0);   // EL6",
+    "old": "gl.uniform1i(PR.uAO, 3);   // EL6",
+    "new": "gl.uniform1i(PR.uAO, 0);   // EL6",
     "tests": [
       "test/el3_air.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "images-before-resolve",
     "file": "src/render/airPass.js",
-    "old": "    if (prepared) this._images();\n    else { this._blank(quad); this.measured = false; }\n    this.fresh = false;\n    gl.disable(gl.BLEND);",
-    "new": "    this._blank(quad); this.measured = false;\n    this.fresh = false;\n    gl.disable(gl.BLEND);",
+    "old": "    if (prepared) this._images();\n    else { this._blank(quad); this.measured = false; }\n    this.fresh = false;\n",
+    "new": "    this._blank(quad); this.measured = false;\n    this.fresh = false;\n",
     "tests": [
       "test/el3_air.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "lane-no-dither",
     "file": "src/render/enhancedLighting.js",
-    "old": "  return elEncode(col) + (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0;   // EL6: dithered at the byte, zero-mean - a lantern's falloff on a dark floor is bands without it",
-    "new": "  return elEncode(col);",
+    "old": "  return dwWaterFog(col, wp) + (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0;",
+    "new": "  return dwWaterFog(col, wp);",
     "tests": [
       "test/el6_field.test.js"
     ]

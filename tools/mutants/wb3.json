@@ -1,0 +1,542 @@
+[
+  {
+    "name": "WB3-the-share-off-the-claim",
+    "file": "src/net/gateBrain.js",
+    "old": "  const share = BOSS_TTK_S * dpsRef(level);",
+    "new": "  const share = BOSS_TTK_S * dpsRef(LV_MAX);",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-the-bucket-rate-off-the-claim",
+    "file": "src/net/gateBrain.js",
+    "old": "p.bucket + (Math.max(0, now - p.bucketAt) / 1000) * BUCKET_RATE_X * ref);",
+    "new": "p.bucket + (Math.max(0, now - p.bucketAt) / 1000) * BUCKET_RATE_X * dpsRef(LV_MAX));",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-the-one-blow-cap-lifted",
+    "file": "src/net/gateBrain.js",
+    "old": "  const got = Math.max(0, Math.min(d, HIT_CAP_X * ref, p.bucket, f.hp));",
+    "new": "  const got = Math.max(0, Math.min(d, p.bucket, f.hp));",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-a-late-share-added-whole",
+    "file": "src/net/gateBrain.js",
+    "old": "  f.hp += share * frac;",
+    "new": "  f.hp += share;",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-a-re-claim-raising-the-cap",
+    "file": "src/net/gateBrain.js",
+    "old": "  if (known) { if (typeof name === 'string' && name) known.name = name.slice(0, 24); return true; }",
+    "new": "  if (known && clampLv(lv) === known.lv) { if (typeof name === 'string' && name) known.name = name.slice(0, 24); return true; }",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-the-admits-ignored",
+    "file": "src/net/gateBrain.js",
+    "old": "  if (f.fell || f.wrath || !admits) return false;",
+    "new": "  if (f.fell || f.wrath) return false;",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-no-shield",
+    "file": "src/net/gateBrain.js",
+    "old": "  if (now < f.shieldUntil) return 0;",
+    "new": "  if (now < f.shieldUntil - SHIELD_MS * 10) return 0;",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-no-blow-rate",
+    "file": "src/net/gateBrain.js",
+    "old": "  if (p.rate < 1) return 0;",
+    "new": "  if (p.rate < 0) return 0;",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-a-blow-from-off-the-court",
+    "file": "src/net/gateBrain.js",
+    "old": "  if (Math.hypot(pose.x, pose.z) > COURT_R + POSE_SLACK) return 0;",
+    "new": "  if (Math.hypot(pose.x, pose.z) > COURT_R * 3 + POSE_SLACK) return 0;",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-the-reach-on-the-wrong-kind",
+    "file": "src/net/gateBrain.js",
+    "old": "  if (r === HIT_KINDS.Melee && gap > MELEE_REACH + POSE_SLACK) return 0;",
+    "new": "  if (r === HIT_KINDS.Shaft && gap > MELEE_REACH + POSE_SLACK) return 0;",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-the-top-unordered",
+    "file": "src/net/gateBrain.js",
+    "old": "    .sort((a, b) => b.dealt - a.dealt || a.joinedAt - b.joinedAt)",
+    "new": "    .sort((a, b) => a.joinedAt - b.joinedAt)",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-a-blow-after-the-fall",
+    "file": "src/net/gateBrain.js",
+    "old": "  if (!p || f.fell || f.wrath || !Number.isFinite(d) || !(d > 0)) return 0;",
+    "new": "  if (!p || f.wrath || !Number.isFinite(d) || !(d > 0)) return 0;",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-no-opening",
+    "file": "src/net/gateBrain.js",
+    "old": "    pos: [0, 0], yaw: 0, move: null, atk: null, lastA: -1, nextAt: now + OPENING_MS, seq: 0,",
+    "new": "    pos: [0, 0], yaw: 0, move: null, atk: null, lastA: -1, nextAt: now, seq: 0,",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-the-walk-said-every-beat",
+    "file": "src/net/gateBrain.js",
+    "old": "  if (m && dist(m.tx, m.tz, tx, tz) < MOVE_RESAY_M && now - m.at < MOVE_RESAY_MS) return;",
+    "new": "  if (m && dist(m.tx, m.tz, tx, tz) < 0 && now - m.at < MOVE_RESAY_MS) return;",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-the-charge-at-any-gap",
+    "file": "src/net/gateBrain.js",
+    "old": "(a.minGap <= 0 || gap >= a.minGap)",
+    "new": "(true)",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-the-dash-in-the-wind-up",
+    "file": "src/net/gateBrain.js",
+    "old": "    if (atk === ATTACKS.charge && now >= f.atk.at) {",
+    "new": "    if (atk === ATTACKS.charge && now >= f.atk.at - atk.windup) {",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-the-wrath-begun-at-midnight",
+    "file": "src/net/gateBrain.js",
+    "old": "  if (now >= f.wrathAt - wr.windup) {",
+    "new": "  if (now >= f.wrathAt) {",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-the-phase-line-off",
+    "file": "src/net/gateBrain.js",
+    "old": "f.hp / f.max <= PHASE_AT[f.phase - 1]",
+    "new": "f.hp / f.max < PHASE_AT[f.phase - 1]",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-no-shield-on-the-roar",
+    "file": "src/net/gateBrain.js",
+    "old": "    f.shieldUntil = now + SHIELD_MS;",
+    "new": "    f.shieldUntil = now;",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-no-nova-with-the-roar",
+    "file": "src/net/gateBrain.js",
+    "old": "    begin(f, ATTACKS.nova, now, null, bodies, rng, out);",
+    "new": "    void rng;",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-phase-three-cuts-the-wrath",
+    "file": "src/net/gateBrain.js",
+    "old": "(phase >= 3 && atk.id !== ATTACKS.wrath.id ? ",
+    "new": "(phase >= 3 ? ",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-a-dead-target",
+    "file": "src/net/gateBrain.js",
+    "old": "  const live = bodies.filter((b) => !b.dead && f.players[b.sub]);\n  if (!live.length) return null;",
+    "new": "  const live = bodies.filter((b) => f.players[b.sub]);\n  if (!live.length) return null;",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-no-threat-pick",
+    "file": "src/net/gateBrain.js",
+    "old": "  if (rng() < THREAT_PICK) {",
+    "new": "  if (rng() < 0) {",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-the-dead-standing",
+    "file": "src/net/gateBrain.js",
+    "old": "  for (const b of bodies) { const p = f.players[b.sub]; if (p && !b.dead) p.stoodMs += dt; }",
+    "new": "  for (const b of bodies) { const p = f.players[b.sub]; if (p) p.stoodMs += dt; }",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-the-sleep-credited-whole",
+    "file": "src/net/gateBrain.js",
+    "old": "  const dt = Math.min(STEP_MAX_MS, Math.max(0, now - f.lastTickAt));",
+    "new": "  const dt = Math.max(0, now - f.lastTickAt);",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-earned-of-the-whole-health",
+    "file": "src/net/gateBrain.js",
+    "old": "  return p.dealt >= RECEIPT_SHARE * p.share || p.stoodMs >= STOOD_SHARE * fight;",
+    "new": "  return p.dealt >= RECEIPT_SHARE * f.max || p.stoodMs >= STOOD_SHARE * fight;",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-a-dead-target-kept",
+    "file": "src/net/gateBrain.js",
+    "old": "    let target = f.target ? bodies.find((b) => b.sub === f.target && !b.dead) ?? null : null;",
+    "new": "    let target = f.target ? bodies.find((b) => b.sub === f.target) ?? null : null;",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-the-state-drops-the-shield",
+    "file": "src/net/gateBrain.js",
+    "old": "    atk: f.atk ? atkFrame(f.atk) : null, sh: f.shieldUntil, wr: f.wrathAt,",
+    "new": "    atk: f.atk ? atkFrame(f.atk) : null, wr: f.wrathAt,",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-no-second-volley",
+    "file": "src/net/gateBrain.js",
+    "old": "    if (f.phase >= 3) tg = tg.concat(",
+    "new": "    if (f.phase >= 4) tg = tg.concat(",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-the-receipt-signs-the-wrong-bytes",
+    "file": "src/net/gateReceipt.js",
+    "old": "  const sig = new Uint8Array(await subtle.sign({ name: 'Ed25519' }, privateKey, enc.encode(`${RECEIPT_V}.${body}`)));",
+    "new": "  const sig = new Uint8Array(await subtle.sign({ name: 'Ed25519' }, privateKey, enc.encode(body)));",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-an-expired-receipt-honoured",
+    "file": "src/net/gateReceipt.js",
+    "old": "  if (nowS >= claims.e) return { ok: false, why: 'expired' };",
+    "new": "  if (nowS >= claims.e + RECEIPT_TTL_S) return { ok: false, why: 'expired' };",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-the-version-not-read",
+    "file": "src/net/gateReceipt.js",
+    "old": "  if (v !== RECEIPT_V) return { ok: false, why: 'version' };",
+    "new": "  if (v !== RECEIPT_V && v !== 'v1') return { ok: false, why: 'version' };",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-an-unsigned-receipt-to-the-verifier",
+    "file": "src/net/gateReceipt.js",
+    "old": "  if (!sig64) return { ok: false, why: 'unsigned' };",
+    "new": "  if (!sig64 && false) return { ok: false, why: 'unsigned' };",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-the-shapes-overlap",
+    "file": "src/net/gateReceipt.js",
+    "old": "  if (c.n !== undefined || c.k !== undefined || c.o !== undefined) return false;",
+    "new": "  if (c.o !== undefined) return false;",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-an-extractable-key",
+    "file": "src/net/gateReceipt.js",
+    "old": "subtle.importKey('pkcs8', bytes, { name: 'Ed25519' }, false, ['sign'])",
+    "new": "subtle.importKey('pkcs8', bytes, { name: 'Ed25519' }, true, ['sign'])",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-a-bad-secret-throws",
+    "file": "src/net/gateReceipt.js",
+    "old": "  try { return await subtle.importKey('pkcs8', bytes, { name: 'Ed25519' }, false, ['sign']); } catch { return null; }",
+    "new": "  return await subtle.importKey('pkcs8', bytes, { name: 'Ed25519' }, false, ['sign']);",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-the-wire-carries-extra-fields",
+    "file": "src/net/wire.js",
+    "old": "  return { k: 'hit', q: m.q, d: m.d, r: m.r };",
+    "new": "  return { ...m, k: 'hit' };",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-a-damage-past-the-wire",
+    "file": "src/net/wire.js",
+    "old": "  if (!finite(m.d) || m.d <= 0 || m.d > GATE_DMG_WIRE_MAX) return null;",
+    "new": "  if (!finite(m.d) || m.d <= 0 || m.d > GATE_DMG_WIRE_MAX * 10) return null;",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-a-refusal-word-invented",
+    "file": "src/net/wire.js",
+    "old": "    case 'no': return GATE_NO_WORDS.includes(m.m) ? { k: 'no', m: m.m } : null;",
+    "new": "    case 'no': return typeof m.m === 'string' ? { k: 'no', m: m.m } : null;",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-the-version-door-a-deploy-early",
+    "file": "src/net/wire.js",
+    "old": "return !!m && Number(m[1]) >= GATE_RELAY_MIN; };",
+    "new": "return !!m && Number(m[1]) >= GATE_RELAY_MIN - 1; };",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-health-past-its-maximum",
+    "file": "src/net/wire.js",
+    "old": "    case 'hp': return gateHp(m.h) && gateHp(m.m) && m.h <= m.m ? ",
+    "new": "    case 'hp': return gateHp(m.h) && gateHp(m.m) ? ",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-the-worker-mints-any-day",
+    "file": "server/src/index.js",
+    "old": "    if (key.startsWith('gate:') && !(isGateRoom(key) && gateHolds(gateDayOfRoom(key), Date.now()))) return",
+    "new": "    if (key.startsWith('gate:') && false) return",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-a-newcomer-after-the-seal",
+    "file": "server/src/index.js",
+    "old": "    return gateAdmits(day, now) ? null : 'the gate is sealed';",
+    "new": "    return null;",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-a-fighter-refused-after-the-seal",
+    "file": "server/src/index.js",
+    "old": "    if (f?.players[sub]) return null;",
+    "new": "    if (f?.players[sub] && false) return null;",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-the-state-to-everyone",
+    "file": "server/src/index.js",
+    "old": "      this._send(ws, JSON.stringify({ t: 'gate', ...stateOf(f) }));",
+    "new": "      this._gateFan([stateOf(f)]);",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-the-peer-id-credited",
+    "file": "server/src/index.js",
+    "old": "      if (!joinFight(f, a.sub, a.name ?? '', m.lv, now, gateAdmits(day, now), present)) {",
+    "new": "      if (!joinFight(f, a.id, a.name ?? '', m.lv, now, gateAdmits(day, now), present)) {",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-the-beat-never-armed",
+    "file": "server/src/index.js",
+    "old": "      if (!f.fell && !f.wrath) await this._gateArm(now);",
+    "new": "      void now;",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-the-dead-strike",
+    "file": "server/src/index.js",
+    "old": "    applyHit(f, a.sub, m.d, m.r, a.pose && !a.pose.dd ? this._courtOf(a.pose) : null, now);",
+    "new": "    applyHit(f, a.sub, m.d, m.r, a.pose ? this._courtOf(a.pose) : null, now);",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-no-gate-meter",
+    "file": "server/src/index.js",
+    "old": "      if (!this._spend(ws, now, gateGate, 'gateBucket', 'gateDrops', 'too many gate frames')) return;",
+    "new": "      void gateGate;",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-a-receipt-unearned",
+    "file": "server/src/index.js",
+    "old": "      if (!earned(f, sub)) continue;",
+    "new": "      if (!earned(f, sub) && false) continue;",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-the-hub-told-nothing",
+    "file": "server/src/index.js",
+    "old": "    if (!(await this._gateTellHub({ d: f.day, at: f.fell.at, top: f.fell.top, n: f.fell.n, rc: Object.entries(f.rc ?? {}) }))) return;",
+    "new": "    if (!(await this._gateTellHub(null))) return;",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-the-fall-said-twice",
+    "file": "server/src/index.js",
+    "old": "    f.said = true;\n",
+    "new": "    f.said = false;\n",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-the-wake-forgets",
+    "file": "server/src/index.js",
+    "old": "    if (this._fight === undefined) { const v = await this.state.storage.get('gatefight');",
+    "new": "    if (this._fight === undefined) { const v = await this.state.storage.get('gatefight-not');",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-the-storage-kept",
+    "file": "server/src/index.js",
+    "old": "    if (now >= end) { this._fight = null; await this.state.storage.delete('gatefight'); return true; }",
+    "new": "    if (now >= end) { this._fight = null; return true; }",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-no-receipt-without-a-key",
+    "file": "server/src/index.js",
+    "old": "      try { f.rc[sub] = await mintReceipt(",
+    "new": "      if (!key) continue;\n      try { f.rc[sub] = await mintReceipt(",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-the-hub-hello-told-nothing",
+    "file": "server/src/index.js",
+    "old": "if (g && gateHolds(g.d, now)) this._send(ws, JSON.stringify({ t: 'gate', ...g }));",
+    "new": "if (g && false) this._send(ws, JSON.stringify({ t: 'gate', ...g }));",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-no-receipt-again-on-in",
+    "file": "server/src/index.js",
+    "old": "      const r = f.rc?.[a.sub];\n      if (r) this._send(ws, JSON.stringify({ t: 'gate', k: 'rcpt', r }));",
+    "new": "      const r = f.rc?.[a.sub];\n      void r;",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-the-session-ignores-the-version",
+    "file": "src/net/online.js",
+    "old": "      if (primary) this.gateOk = relaySupportsGate(relayV);   // WB3",
+    "new": "      if (primary) this.gateOk = true;   // WB3",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-a-gate-frame-from-a-cell",
+    "file": "src/net/online.js",
+    "old": "    if (!g || !this.gateOk || !isGateRoom(this.room) || this.status !== 'open' || !this._ws) return false;",
+    "new": "    if (!g || !this.gateOk || this.status !== 'open' || !this._ws) return false;",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WB3-the-inbound-unprojected",
+    "file": "src/net/online.js",
+    "old": "      const g = validGateOut(m);\n      if (g) this._deliver('gate', () => this.onGate?.(g, room));",
+    "new": "      const g = validGateOut(m) ? m : null;\n      if (g) this._deliver('gate', () => this.onGate?.(g, room));",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  }
+]

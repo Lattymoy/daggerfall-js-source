@@ -102,6 +102,7 @@ import { noticeHold, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE
 import { TRAVEL_OPTIONS_TEXT as TO_TEXT, format as toFormat } from '../systems/travelOptionsText.js';
 import { getDaggerfallDistance, MatchesCutOff } from '../systems/editDistance.js';
 import { checkLocationDiscovered } from './travelMapWindow.js';
+import { readGateMark, gateMarkKey, GATE_RING_CSS, GATE_LEGEND_TEXT } from './gateMapMark.js';   // WB1: the Oblivion Gate's ring, read as the party is
 import {
   buildInkModel, buildInkMarks, paintInkStatic, paintInkOverlay, zoomBand, clampView, scaleMinOf, SCALE_MAX,   // MAP-FIELD2: placeNames is inkMap's law still, but this sheet no longer inks the names
   viewCentredOn, zoomAt, toPaper, toMap, BAND_MARKS, PARTY_LABEL_STACK,
@@ -124,8 +125,9 @@ import { createTownSheet } from './townSheet.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { quadPlacement } from './quadMap.js';   // MAP3: the sheet over the held paper's corners
 import { bindings } from './input.js';
-import { actionForCode } from '../systems/inputActions.js';
+import { actionsForCode } from '../systems/inputActions.js';   // UXB1-S: every action its key carries, shared or not
 import { smoothstep } from '../systems/mathf.js';   // MAP-FIELD7: the ONE easing, so the sheet travels like everything else in the port
+import { hubMapWord, hubTitle } from '../systems/regionHubs.js';   // HUB1: a region hub's word on the label and its title in the box
 
 // ── THE SPRITE (Mac's, public/art/held-map.png) ──────────────────
 // THE SITE ROOT lives in systems/appRoot.js now (AUDIT-THUNDERLOCK
@@ -133,6 +135,7 @@ import { smoothstep } from '../systems/mathf.js';   // MAP-FIELD7: the ONE easin
 // this module to get it). Re-exported here, where MAP-FIELD put it.
 export { appRootFrom, APP_ROOT } from '../systems/appRoot.js';
 import { APP_ROOT } from '../systems/appRoot.js';
+import { retroScreenRect } from '../systems/retroMode.js';   // DISC25-B: DFU's CustomScreenRect, the pillarbox's screen
 
 export const HELD_MAP_URL = new URL('art/held-map.png', APP_ROOT ?? globalThis.document?.baseURI ?? 'https://invalid.invalid/').href;
 /** Its own pixels, and the stage's aspect. */
@@ -372,6 +375,9 @@ const CLOSE_S = 0.36;    // ...and lowers on a commit or a close, a touch quicke
 // its own half second (ui/travelMapWindow.js PARTY_POLL_S); this sheet
 // repaints cheaply, so it asks twice as often.
 const PARTY_POLL_S = 0.25;
+/** The foot's line while a sheet with no keys of its own is up. DISC25-A: a sheet that has keys says them instead
+ *  (`hint`, an optional member beside `breathes`) - the dungeon's floor keys were on no line a player could read. */
+export const MAP_HINT = 'drag to pan · scroll to zoom · Esc to close';
 /** The scale a search or a journal click-through zooms to. */
 const FOCUS_SCALE = 6;
 /** How often the breathing rings repaint the sheet while one is up. */
@@ -532,6 +538,9 @@ export class HeldMapWindow {
     this._party = [];
     this._partyKey = '';
     this._partyPoll = 0;
+    // WB1: the gate's ring - the host's `gate` read on the party's own poll; null while no gate is marked
+    this._gate = null;
+    this._gateKey = '';
     this._selected = null;  // { summary, name, x, y } - or { coords: true, ... } for a bare pixel (MAP2)
     this._panel = null;     // 'travel' | 'teleport' | null
     this._panelState = null;
@@ -565,6 +574,7 @@ export class HeldMapWindow {
     // without its search box was the first thing this caught.
     this._showChrome(['search', 'ports', 'legend', 'card'], false);
     this._sheet?.mount?.();
+    this._writeHint();   // DISC25-A
     this._tornDown = false;
     this._probeFn = () => JSON.stringify({
       phase: this._phase,
@@ -635,8 +645,8 @@ export class HeldMapWindow {
     // this one now. Both actions, on every sheet, because the tabs mean
     // one window can be entered by either key and the player should not
     // have to remember which.
-    const _act = actionForCode(bindings(), code);
-    if (code === 'Escape' || _act === 'TravelMap' || _act === 'AutoMap') {
+    const _acts = actionsForCode(bindings(), code);
+    if (code === 'Escape' || _acts.includes('TravelMap') || _acts.includes('AutoMap')) {
       e?.preventDefault?.();
       if (this._phase !== 'map') return;      // the sheet is moving: let it land
       // the diseased box steps back to the PANEL, not out of it - the
@@ -939,10 +949,19 @@ export class HeldMapWindow {
   _layout() {
     const root = this._chrome?.root;
     if (!root) return;
-    const vw = root.clientWidth || globalThis.innerWidth || 1024;
-    const vh = root.clientHeight || globalThis.innerHeight || 768;
+    // DISC25-B (kurkku on Discord: "hands on the enhanced map sprite go over the black bars in retro mode"): WHILE
+    // THE PILLARBOX IS UP, THE WINDOW STANDS INSIDE IT - DFU lays every window out in CustomScreenRect
+    // (ViewportChanger.cs:139-140), and this one's painted hands and chrome ran out over the bars. The root is inset
+    // to the pillars, so the painting, its ink, its thumbs, the top row and the foot all fit the retro screen. The
+    // Morrowind arm's lane keeps the canvas (AUDIT RETRO1 C2): the arm is the renderer's, drawn across it all.
+    const W = globalThis.innerWidth || 1024, H = globalThis.innerHeight || 768;
+    const ui = this._lane === 'hands' ? null : retroScreenRect(W, H);
+    const inset = ui ? `${ui.x}px` : '';
+    if (root.style.left !== inset) { root.style.left = inset; root.style.right = inset; }
+    const vw = ui ? ui.w : (root.clientWidth || W);
+    const vh = root.clientHeight || H;
     const dpr = globalThis.devicePixelRatio || 1;
-    const key = `${vw}x${vh}@${dpr}`;
+    const key = `${vw}x${vh}@${dpr}|${inset}`;
     if (key === this._layoutKey) return;
     this._layoutKey = key;
     let sh = vh * HELD_MAP_HEIGHT / SPRITE_ART_FOOT, sw = sh * SPRITE.w / SPRITE.h;
@@ -1047,6 +1066,7 @@ export class HeldMapWindow {
             // offline is that green with the life out of it
             color: m.online ? PARTY_MARK_CSS : PARTY_OFFLINE_CSS,
           })),
+          gate: this._gate,   // WB1
           pulse: env.pulse,
         });
       },
@@ -1104,6 +1124,7 @@ export class HeldMapWindow {
     if (!this._slot.select(id, this._view)) return false;
     leaving?.unmount?.();
     this._sheets.get(id)?.mount?.();
+    this._writeHint();           // DISC25-A: the foot says the new sheet's keys
     this._layoutKey = '';        // the new sheet's own coordinate space
     this._staticKey = '';
     this._layout();
@@ -1112,6 +1133,12 @@ export class HeldMapWindow {
     this._chrome.label.textContent = '';
     this._dirty = true;
     return true;
+  }
+
+  /** DISC25-A: the foot's line - the live sheet's own keys where it has any, the pan and the zoom where not. */
+  _writeHint() {
+    const hint = this._chrome?.hint;
+    if (hint) hint.textContent = this._sheet?.hint?.() ?? MAP_HINT;
   }
 
   _limits() {
@@ -1269,6 +1296,7 @@ export class HeldMapWindow {
         isDiscovered: (s) => this._discovered(s),   // MAP2: the ports arm before DFU's own test
         isPort: (s) => hasPort(s?.mapID ?? s?.mapId),
         nameOf: (s) => this._summaryName(s),
+        hubAt: (s) => this.deps.hubAt?.(s) ?? null,   // HUB1: online, the region's hub flies its pennant
       });
     }
     return this._model;
@@ -1362,12 +1390,18 @@ export class HeldMapWindow {
     const fx = (v) => (v - PAPER.x0) / (PAPER.x1 - PAPER.x0);
     const fy = (v) => (v - PAPER.y0) / (PAPER.y1 - PAPER.y0);
     const clamp01 = (v) => Math.min(1, Math.max(0, v));
-    return THUMB_ZONES.map((z) => ({
-      x0: clamp01(fx(z.x0)) * paperW,
-      x1: clamp01(fx(z.x1)) * paperW,
-      y0: clamp01(fy(z.y0)) * paperH,
-      y1: clamp01(fy(z.y1)) * paperH,
-    }));
+    // DISC25-A: THE THUMB ITSELF where the key has found it. A zone is drawn GENEROUSLY (its own note), so it
+    // starts well above the thumb it holds, and the floor strip, stopping above it, had room for three rows on the
+    // clear parchment of a real dungeon; the blob keyThumbPixels kept is the part a player cannot see through.
+    return THUMB_ZONES.map((z, i) => {
+      const b = this._thumbBoxes?.[i] ?? z;
+      return {
+        x0: clamp01(fx(b.x0)) * paperW,
+        x1: clamp01(fx(b.x1)) * paperW,
+        y0: clamp01(fy(b.y0)) * paperH,
+        y1: clamp01(fy(b.y1)) * paperH,
+      };
+    });
   }
 
   /** The tabs, in PAPER pixels over whatever the sheet inked. The DPR
@@ -1462,9 +1496,15 @@ export class HeldMapWindow {
     // opened during a journey, the cross keeps up with the rings
     const p = this.deps.getPlayerPixel?.();
     if (p && (p.x !== this._player.x || p.y !== this._player.y)) { this._player = { x: p.x, y: p.y }; this._dirty = true; }
+    // WB1: the gate's ring rides the same poll - its words tick each second, so its key is its own and a changed
+    // ring repaints without touching the party's labels
+    const gate = readGateMark(this.deps.gate, this._size);
+    const gateKey = gateMarkKey(gate);
+    let gateMoved = false;
+    if (gateKey !== this._gateKey) { this._gateKey = gateKey; this._gate = gate; gateMoved = true; this._dirty = true; }
     const marks = readPartyMarks(this.deps.party, this._size);
     const key = partyMarksKey(marks);
-    if (key === this._partyKey) return false;
+    if (key === this._partyKey) { if (gateMoved) this._renderLegend(); return gateMoved; }
     this._partyKey = key;
     // AUDIT SOC D2: `stack` is how many members were already standing on
     // this member's map pixel - the i-th drops i labels further down, in
@@ -1488,10 +1528,17 @@ export class HeldMapWindow {
     const leg = this._chrome?.legend;
     if (!leg) return;
     leg.innerHTML = '';
-    if (!this._party.length) { leg.classList.toggle('open', false); leg.style.display = 'none'; return; }
-    const dot = el('span', 'hmlegdot');
-    dot.style.background = this._party.some((m) => m.online) ? PARTY_MARK_CSS : PARTY_OFFLINE_CSS;
-    leg.append(dot, el('span', 'hmlegtext', PARTY_LEGEND_TEXT));
+    if (!this._party.length && !this._gate) { leg.classList.toggle('open', false); leg.style.display = 'none'; return; }
+    if (this._party.length) {
+      const dot = el('span', 'hmlegdot');
+      dot.style.background = this._party.some((m) => m.online) ? PARTY_MARK_CSS : PARTY_OFFLINE_CSS;
+      leg.append(dot, el('span', 'hmlegtext', PARTY_LEGEND_TEXT));
+    }
+    if (this._gate) {   // WB1: the ring explains itself too, while there is one
+      const dot = el('span', 'hmlegdot');
+      dot.style.background = GATE_RING_CSS;
+      leg.append(dot, el('span', 'hmlegtext', GATE_LEGEND_TEXT));
+    }
     leg.classList.toggle('open', true);
     leg.style.display = 'flex';
   }
@@ -1581,12 +1628,15 @@ export class HeldMapWindow {
       this.deps.discoveredBuildings?.(summary) ?? null,
       (t) => this.deps.buildingTypeName?.(t) ?? String(t));
     const title = this._selected.name;
+    // HUB1: what the place is to its region, online - known whether or not its buildings are
+    const hub = this.deps.hubAt?.(summary) ?? null;
+    const hubRows = hub ? [hubTitle(hub)] : [];
     if (!info) {
-      this._info = { title: '', rows: [toFormat(TO_TEXT.MsgNoKnowledge, title)], cells: [] };
+      this._info = { title: '', rows: [...hubRows, toFormat(TO_TEXT.MsgNoKnowledge, title)], cells: [] };
     } else {
       this._info = {
         title,
-        rows: info.guilds ? [info.guilds] : [],
+        rows: [...hubRows, ...(info.guilds ? [info.guilds] : [])],
         // :437-441 - two columns; the grid below is the sheet's own two
         cells: info.rows.map((r) => `${r.name}  ${r.count}`),
       };
@@ -1647,7 +1697,7 @@ export class HeldMapWindow {
     // info on the panel it stays display:none and the ROOT keeps
     // `hmmodal` on its own: the words moved, the modality did not, and
     // an empty .hmbox would paint a bordered blank over the bay
-    // (ui/enhancedStyle.js:1539 - the frame is the box's, not its
+    // (ui/enhancedStyle.js:1568 - the frame is the box's, not its
     // children's).
     const open = modal && !(this._info && onPanel);
     box.classList.toggle('open', open);
@@ -2116,7 +2166,7 @@ export class HeldMapWindow {
 
     const card = el('div', 'hmcard');
     const foot = el('div', 'hmfoot');
-    const hint = el('div', 'hmhint', 'drag to pan · scroll to zoom · Esc to close');
+    const hint = el('div', 'hmhint', MAP_HINT);
     const band = el('div', 'hmband', '');
     // SOC6: the legend, beside the hint, only while there is a mark to explain
     const legend = el('div', 'hmlegend');
@@ -2352,13 +2402,18 @@ export class HeldMapWindow {
       if (!octx || !hctx) return;
       hands.width = w; hands.height = h;
       octx.drawImage(sprite, 0, 0, w, h);
-      for (const z of THUMB_ZONES) {
+      this._thumbBoxes = THUMB_ZONES.map((z) => {
         const x0 = Math.floor(z.x0 * w), y0 = Math.floor(z.y0 * h);
         const zw = Math.ceil((z.x1 - z.x0) * w), zh = Math.ceil((z.y1 - z.y0) * h);
         const img = octx.getImageData(x0, y0, zw, zh);
         keyThumbPixels(img.data, zw, zh, z.side);
         hctx.putImageData(img, x0, y0);
-      }
+        return thumbBox(img.data, zw, zh, x0, y0, w, h);
+      });
+      // DISC25-A: the kept ink was laid out against the zones before the sprite loaded - lay it again against the
+      // thumbs the key found (the static key does not carry the hands)
+      this._staticKey = '';
+      this._dirty = true;
     } catch (e) {
       console.warn('[heldmap] the hands would not key', e);
     }
@@ -2388,8 +2443,9 @@ export class HeldMapWindow {
     if (m) {
       const name = m.name || this._summaryName(m.summary);
       const region = REGION_NAMES[m.summary.regionIndex] ?? '';
-      // UpdateRegionLabel's own "Region : Location" reading
-      return { label: region && name ? `${region} : ${name}` : name, cursor: 'pointer' };
+      // UpdateRegionLabel's own "Region : Location" reading - HUB1: and a hub's word after it, online
+      const hub = m.hub ? ` (${hubMapWord(m.hub)})` : '';
+      return { label: (region && name ? `${region} : ${name}` : name) + hub, cursor: 'pointer' };
     }
     const [mx, my] = toMap(this._view, sx, sy);
     const px = Math.floor(mx), py = Math.floor(my);
@@ -2659,6 +2715,24 @@ export function rgbaCss(rgba) {
  *
  *  Pure, in place, over one zone's RGBA bytes - the same shape as the
  *  other key, and pinned the same way. */
+/**
+ * DISC25-A: the box round the pixels keyThumbPixels KEPT in a zone (alpha above zero), as fractions of the whole
+ * sprite (`x0`, `y0`: the zone's own corner in sprite pixels; `sw`, `sh`: the sprite's size) - null where it kept
+ * nothing, so the caller falls back to the zone.
+ */
+export function thumbBox(data, zw, zh, x0, y0, sw, sh) {
+  let bx0 = Infinity, by0 = Infinity, bx1 = -Infinity, by1 = -Infinity;
+  for (let y = 0; y < zh; y++) {
+    for (let x = 0; x < zw; x++) {
+      if (!data[(y * zw + x) * 4 + 3]) continue;
+      if (x < bx0) bx0 = x; if (x > bx1) bx1 = x;
+      if (y < by0) by0 = y; if (y > by1) by1 = y;
+    }
+  }
+  if (!(bx1 >= bx0) || !(sw > 0) || !(sh > 0)) return null;
+  return { x0: (x0 + bx0) / sw, x1: (x0 + bx1 + 1) / sw, y0: (y0 + by0) / sh, y1: (y0 + by1 + 1) / sh };
+}
+
 export function keyThumbPixels(data, w, h, side = 'left', chroma = HAND_CHROMA, grow = THUMB_GROW) {
   const n = w * h;
   if (n <= 0 || data.length < 4 * n) return data;

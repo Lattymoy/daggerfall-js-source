@@ -182,9 +182,10 @@ test('SO1: the settings pane is organised - the port\'s rows sit in the categori
   assert.match(menu, /input\.type = 'range'/, 'voice controls are real sliders, not arrow steppers');
   // FT14: the Mods page is gone; the assets and the packs stand under the feature tiles instead
   const mods = menu.slice(menu.indexOf('function modsFooter('), menu.indexOf('\n}', menu.indexOf('function modsFooter(')));
-  // ONLINE-CLASS1 adds the peer-sprites card between them; the order is what
-  // this pins - the assets card, then the peers' look, then the packs' door.
-  assert.match(mods, /body\.append\(morrowindCard\(\)\);[^\n]*\n\s*body\.append\(peerSpritesCard\(\)\);[^\n]*\n\s*body\.append\(packsCard\(\)\);/);
+  // ONLINE-CLASS1 adds the peer-sprites card; the order is what this pins - the peers' look, then the packs' door.
+  // MWA4 moved the assets card that stood first to the head of the feature list (features.test.js FT14).
+  assert.match(mods, /body\.append\(peerSpritesCard\(\)\);[^\n]*\n\s*body\.append\(packsCard\(\)\);/);
+  assert.doesNotMatch(mods, /morrowindCard\(\)/);
   assert.match(menu, /await ds\.pickMusicFolder\(\); render\(\);/, 'the music pack is reachable without the launcher');
   assert.match(menu, /await ds\.pickTextureFolder\(\); render\(\);/);
   // tier is a group: live flat, the other two folded with a count, remembered on the shelf

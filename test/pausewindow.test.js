@@ -155,7 +155,7 @@ test('I3: the wiring - four hosts, one Escape door each, art preloaded', () => {
     // ARENA2 at all, so gating it on OPTN00I0 would have left a player
     // with a failed art load holding a game with no pause menu, no
     // settings and no way out.
-    const arm = src.indexOf("if (act === 'Escape' && pauseDoorReady()) { hudCtx.togglePause(); return; }");
+    const arm = src.indexOf("if (act === 'Escape' && pauseDoorReady()) { hudCtx.togglePause(); return true; }");
     assert.ok(arm > gate, `${rel} opens on Escape, inside that gate`);
     // PX26: the door takes its own options now (the dial's north lands
     // on Stats). ONE door is the law and it is unchanged - the count
@@ -250,8 +250,8 @@ test('AUDIT 65 UI-2: the classic pause window relocks on RESUME, and only on res
     // NOT the save or load DOORS - and driven through the bag the
     // PRODUCER mints, which is the whole point of this arm. All three
     // shipping pause hosts hand over saveAs + loadKey + pushWindow
-    // (world.js:7609-7616, worldModes.js:8559-8565,
-    // dungeonContext.js:5890-5896), so `saveLoadPushes` is true and the
+    // (world.js:8397-8404, worldModes.js:9133-9139,
+    // dungeonContext.js:6068-6074), so `saveLoadPushes` is true and the
     // door PUSHES the slot window: the pause window rides UNDER it,
     // `done` stays false and `_closeWith` is never reached at all. A
     // relock here would take away the cursor the slot window is for.
@@ -310,7 +310,7 @@ test('AUDIT 65 UI-2: the classic pause window relocks on RESUME, and only on res
     assert.equal(relocked, 0, 'the same on the load side');
 
     // THE QUICK-VERB FALLBACK is the other save/load shape, and it IS a
-    // resume: a host with no saveAs/loadKey seam (exterior.js:2861's bag
+    // resume: a host with no saveAs/loadKey seam (exterior.js:2868's bag
     // carries neither, so its LOAD rect runs this today) closes straight
     // back to the world and opens no window at all.
     relocked = 0;

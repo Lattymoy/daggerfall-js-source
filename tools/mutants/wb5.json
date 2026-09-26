@@ -1,0 +1,308 @@
+[
+  {
+    "name": "WB5-all-at-once",
+    "file": "src/world/gateSpew.js",
+    "old": "    out.push({ at: i * SPEW_GAP_MS,",
+    "new": "    out.push({ at: 0,",
+    "tests": [
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "WB5-toward-his-back",
+    "file": "src/world/gateSpew.js",
+    "old": "    const a = bearing + (rolls() * 2 - 1) * SPEW_SPREAD;",
+    "new": "    const a = bearing + Math.PI + (rolls() * 2 - 1) * SPEW_SPREAD;",
+    "tests": [
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "WB5-the-bounce-at-full-speed",
+    "file": "src/world/gateSpew.js",
+    "old": "    p.speedCurrent *= SPEW_BOUNCE;",
+    "new": "    p.speedCurrent *= 1;",
+    "tests": [
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "WB5-rest-never-reached",
+    "file": "src/world/gateSpew.js",
+    "old": "    if (p.speedCurrent < p.speedStart * PROJECTILE.restFraction) { p.pos = point; p.rest = true; return 'rest'; }",
+    "new": "    if (false) { p.pos = point; p.rest = true; return 'rest'; }",
+    "tests": [
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "WB5-gravity-without-the-drag",
+    "file": "src/world/gateSpew.js",
+    "old": "PROJECTILE.gravityAccel * SPEW_GRAVITY_DRAG * PROJECTILE_FIXED_DT",
+    "new": "PROJECTILE.gravityAccel * PROJECTILE_FIXED_DT",
+    "tests": [
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "WB5-the-colour-not-the-tiers",
+    "file": "src/render/spoilsGlow.js",
+    "old": "      gl.uniform3fv(U.uColor, tierColour(tier));",
+    "new": "      gl.uniform3fv(U.uColor, tierColour('magic'));",
+    "tests": [
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "WB5-the-pulse-on-every-tier",
+    "file": "src/render/spoilsGlow.js",
+    "old": "      gl.uniform1f(U.uPulse, RARITIES[tier].rank >= RARITIES.legendary.rank ? 1 : 0);",
+    "new": "      gl.uniform1f(U.uPulse, 1);",
+    "tests": [
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "WB5-the-gold-off-the-level",
+    "file": "src/systems/gateSpoils.js",
+    "old": "  const gold = Math.round(SPOILS_GOLD_PER_LEVEL * lv * (0.8 + 0.4 * rolls()));",
+    "new": "  const gold = Math.round(SPOILS_GOLD_PER_LEVEL * 10 * (0.8 + 0.4 * rolls()));",
+    "tests": [
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "WB5-the-first-piece-only-magic",
+    "file": "src/systems/gateSpoils.js",
+    "old": "  const first = rolls() < SPOILS_LEGENDARY ? 'legendary' : 'rare';",
+    "new": "  const first = rolls() < SPOILS_LEGENDARY ? 'legendary' : 'magic';",
+    "tests": [
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "WB5-ammunition-kept",
+    "file": "src/systems/gateSpoils.js",
+    "old": "    for (let n = 0; n < 32 && isAmmunition(w); n++)",
+    "new": "    for (let n = 0; n < 0 && isAmmunition(w); n++)",
+    "tests": [
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "WB5-a-piece-taken-in-the-air",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "        if (f.fly.rest && f0 && Math.hypot(",
+    "new": "        if (f0 && Math.hypot(",
+    "tests": [
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "WB5-the-take-out-of-reach",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "<= SPOILS_TAKE_M && Math.abs(f.fly.pos[1] - f0[1]) < 2) takeOne(f);",
+    "new": "<= SPOILS_TAKE_M * 3 && Math.abs(f.fly.pos[1] - f0[1]) < 2) takeOne(f);",
+    "tests": [
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "WB5-the-gather-leaving-pieces",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "      floor.forEach((f) => takeOne(f));",
+    "new": "      floor.slice(0, 1).forEach((f) => takeOne(f));",
+    "tests": [
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "WB5-the-spew-off-another-seed",
+    "file": "src/scenes/gateCourt.js",
+    "old": "    spoils.spew({ day: s.day, seed: claims.c,",
+    "new": "    spoils.spew({ day: s.day, seed: s.day,",
+    "tests": [
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "WB5-no-burst",
+    "file": "src/scenes/gateCourt.js",
+    "old": "      burst(s, t);\n",
+    "new": "      void burst;\n",
+    "tests": [
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "WB5-the-gather-forgotten",
+    "file": "src/scenes/gateCourt.js",
+    "old": "      spoils?.gather();",
+    "new": "      void spoils;",
+    "tests": [
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "WB5-the-gold-dropped",
+    "file": "src/scenes/world.js",
+    "old": "  const takeSpoil = (p) => { if (p.kind === 'gold') addGoldPieces(playerEntity, p.gold); else if (p.item) addItem(playerEntity.items, p.item); };",
+    "new": "  const takeSpoil = (p) => { if (p.item) addItem(playerEntity.items, p.item); };",
+    "tests": [
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "WB5-no-record-kept",
+    "file": "src/scenes/world.js",
+    "old": "    store: _spoilsStore,\n    who: () => characterIdOf(playerEntity),",
+    "new": "    who: () => characterIdOf(playerEntity),",
+    "tests": [
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "WB5-the-court-without-its-floor",
+    "file": "src/scenes/world.js",
+    "old": "link: gateLink, spoils: spoilsPool,",
+    "new": "link: gateLink, spoils: null,",
+    "tests": [
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "WB5-no-condition",
+    "file": "src/systems/gateSpoils.js",
+    "old": "  return mintCondition(item);\n}",
+    "new": "  return item;\n}",
+    "tests": [
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "WB5-unidentified",
+    "file": "src/systems/gateSpoils.js",
+    "old": "  item.isIdentified = true;\n",
+    "new": "",
+    "tests": [
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "WB5-the-sigil-a-renamed-gem",
+    "file": "src/systems/gateSpoils.js",
+    "old": "  return mintCondition(setItemFields({ group: 'Gems', templateIndex: SIGIL_STONE_TEMPLATE }));",
+    "new": "  return mintCondition(setItemFields({ group: 'Gems', templateIndex: 0, name: SIGIL_STONE.name, value: SIGIL_STONE.value }));",
+    "tests": [
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "WB5-a-piece-without-its-row",
+    "file": "src/systems/gateSpoils.js",
+    "old": "!templateByIndex(item?.templateIndex); n++)",
+    "new": "false; n++)",
+    "tests": [
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "WB5-the-hosts-import-pulled",
+    "file": "src/scenes/shared.js",
+    "old": "import '../systems/gateSpoils.js';",
+    "new": "// the import pulled",
+    "tests": [
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "WB5-the-devices-word-ignored",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "    return kept === day || (Array.isArray(kept) && (kept.includes(spentKey(day, acct)) || kept.includes(spentKey(day, '*'))));",
+    "new": "    return false;",
+    "tests": [
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "WB5-the-sessions-word-ignored",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "    if (spentHere.has(spentKey(day, acct))) return true;\n",
+    "new": "",
+    "tests": [
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "WB5-the-record-without-its-pieces",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "keep(SPOILS_STORE_KEY, [...recs, { day, at: wall(), who: w, pieces: list }].slice(-SPOILS_RECORDS_MAX));",
+    "new": "keep(SPOILS_STORE_KEY, [...recs, { day, at: wall(), who: w, pieces: [] }].slice(-SPOILS_RECORDS_MAX));",
+    "tests": [
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "WB5-a-save-since-ignored",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "    if (savedSince(infos, rec.who ?? who, rec.at)) continue;   // a save since holds them: it goes\n",
+    "new": "",
+    "tests": [
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "WB5-another-character-handed-them",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "    if (rec.who != null && rec.who !== who) { left.push(rec); continue; }   // another character's waits for them\n",
+    "new": "",
+    "tests": [
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "WB5-any-characters-save-counted",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "i?.characterId === who && ",
+    "new": "",
+    "tests": [
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "WB5-the-validator-skipped",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "const item = p?.kind === 'item' ? validLootItem(p.item) : null;",
+    "new": "const item = p?.kind === 'item' ? p.item : null;",
+    "tests": [
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "WB5-the-record-cleared-on-handing",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "  for (const p of rec.pieces) { const q = keptPiece(p); if (q) { take(q); n++; } }\n",
+    "new": "  for (const p of rec.pieces) { const q = keptPiece(p); if (q) { take(q); n++; } }\n  clear();\n",
+    "tests": [
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "WB5-no-recovery-in-the-main-frame",
+    "file": "src/scenes/world.js",
+    "old": "    spoilsRecoverFrame();   // WB5",
+    "new": "    // spoilsRecoverFrame();   // WB5",
+    "tests": [
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "WB5-the-record-whose-nobody",
+    "file": "src/scenes/world.js",
+    "old": "    who: () => characterIdOf(playerEntity),\n",
+    "new": "",
+    "tests": [
+      "test/wb5_gate_spoils.test.js"
+    ]
+  }
+]

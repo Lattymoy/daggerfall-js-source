@@ -61,7 +61,7 @@ test('ENHANCED AI 1: a room of triangles bakes, and a path bends around a wall',
   const cols = trianglesToColliders(P, I, { cs: AGENT.cs });
   const nav = buildNav(cols, AGENT);
   const chf = buildCompact(nav, AGENT);
-  // ANCHORED, as project-final bakes it (main.js:307): the component that
+  // ANCHORED, as project-final bakes it (main.js:313): the component that
   // holds the agents' home survives, everything else is dropped. The
   // anchor is an {x, z}; findPath's points are [x, y, z].
   buildRegions(chf, { anchor: { x: 1, z: 5 } }); buildContours(chf); buildPolyMesh(chf); buildPolyMeshDetail(chf, cols);
@@ -168,7 +168,7 @@ test('ENHANCED AI 3: the bake reads the Collider\u2019s own triangles, needs an 
 // What the body owes when the archives land: load the dungeon block
 // meshes through dungeonContext's own loader, feed them with
 // `collider.addMesh('dungeon', cpu.positions, cpu.indices, matrix)`
-// (src/scenes/dungeonContext.js:591), `bakeNavFromCollider(collider,
+// (src/scenes/dungeonContext.js:606), `bakeNavFromCollider(collider,
 // { anchor: <the entry marker's xyz> })` (src/ai/navBake.js), then assert
 // `bake.stats.polys > 0`, that the entry and every waypoint of
 // `navPath(bake, entry, firstHall)` locates via `__locatePolyIndexed`,

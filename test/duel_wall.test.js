@@ -156,7 +156,7 @@ test('DUEL1 the world host by source: the wall built in every skin (a shader tha
   const wall = w.indexOf('duelWall.draw(rings, proj, view, new Float32Array(mwv.eye), now / 1000,');
   const arrows = w.indexOf('arrows.update(dt, {');
   assert.ok(grass > 0 && wall > grass && arrows > wall, 'after the grass, before the arrows and the weapon');
-  assert.match(w, /duelWall\.draw\(rings, proj, view, new Float32Array\(mwv\.eye\), now \/ 1000,\s*\n\s*\{ mode: renderer\._fogMode, density: renderer\._fogDensity, range: renderer\._fogRange, color: renderer\._fogColor, camPos: renderer\._camPos \}\);\s*\n\s*renderer\.markForeignPass\(\);/);
+  assert.match(w, /duelWall\.draw\(rings, proj, view, new Float32Array\(mwv\.eye\), now \/ 1000,\s*\n\s*\{ mode: renderer\._fogMode, density: renderer\._fogDensity, range: renderer\._fogRange, color: renderer\._fogColor, camPos: renderer\._camPos, dw: renderer\._dwFog \}\);[^\n]*\n\s*renderer\.markForeignPass\(\);/);   // DW-C: the carved sea's fog rides with the frame's
   assert.match(w, /player\.arena = live && \(modes\?\.mode \?\? 'exterior'\) === 'exterior' \? \{ centre: campToScene\(live\.c\), radius: DUEL_RADIUS_M \} : null;/, 'every frame, off the world frame');
   assert.match(w, /else \{ out\.push\(\{ centre: campToScene\(w\.c\), radius: DUEL_RADIUS_M, alpha: w\.alpha \}\); seen\.add\(w\.s\); \}/);
   assert.match(w, /if \(seen\.has\(e\.rec\.s\)\) continue;\s*\n\s*seen\.add\(e\.rec\.s\);\s*\n\s*out\.push\(\{ centre: campToScene\(e\.rec\.c\), radius: DUEL_RADIUS_M, alpha: 0\.85 \}\);/, 'each duel once');

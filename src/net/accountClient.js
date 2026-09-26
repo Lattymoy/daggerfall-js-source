@@ -40,6 +40,12 @@
 import { HANDLE_RE } from './handleShape.js';
 import { LETTER_SUBJECT_MAX, LETTER_BODY_MAX, LETTER_LINES_MAX, LETTERS_SENT_MAX, LETTERS_PAIR_MAX } from './letterLaw.js';   // MAIL1: the letter's bounds, in the refusals' own sentences
 import { MUTE_RANGE_TEXT } from './moderation.js';   // AUDIT 68 S14-mute-range-text-duplicated: the mute's bound in the refusal's sentence, from its home
+import { RENOWN_TRACKS_MAX } from './renown.js';   // RENOWN1: the tracks' bound, in its refusal's own sentence
+import { HOME_CAP } from './homeLaw.js';   // HOME1: the cap a refusal names
+import { DECOR_CAP } from './decorLaw.js';   // DECOR1: the cap its refusal names
+import {
+  GUILD_FOUND_RENOWN, GUILD_MEMBERS_MAX, GUILD_NAME_MIN, GUILD_NAME_MAX, GUILD_RANK_NAME_MAX, GUILD_MOVE_MAX,
+} from './guildLaw.js';   // GUILD1: the bounds its refusals name
 
 /** WHERE THE SERVICE IS. Its own constant beside the relay's
  *  DEFAULT_SERVER (net/online.js), because they are two Workers and
@@ -143,6 +149,52 @@ export const REFUSALS = Object.freeze({
   'no-body': 'A letter needs some words.',
   'body-long': `A letter is at most ${LETTER_BODY_MAX} characters.`,
   'body-lines': `A letter is at most ${LETTER_LINES_MAX} lines.`,
+  // RENOWN1, Renown. Each is a build or a device the service does not believe, never a player's mistake:
+  // the words say what happened, since there is nothing to retype.
+  'renown-character': 'The account service could not tell which character earned that.',
+  'renown-xp': 'The account service refused that experience report.',
+  'renown-full': `This account already has Renown for ${RENOWN_TRACKS_MAX} characters, the most it keeps.`,
+  // HOME1, the online homes (server-account/src/homes.js). A player meets these at a front door, beside the price.
+  'homes-need-account': 'Owning a home needs a username and a password. Give this account one and you can buy one.',
+  'home-taken': 'Somebody else owns this home now.',
+  'home-cap': `A character can own at most ${HOME_CAP} homes. Sell one to buy another.`,
+  'home-rate': 'You have bought and sold a lot of homes this hour. Try again later.',
+  'no-home': 'That home is not yours any more.',
+  'bad-home': 'The account service could not tell which building that is.',
+  'home-character': 'The account service could not tell which character is buying.',
+  'bad-entry': 'The account service does not know that setting. The game may need updating.',
+  'no-session': 'You are not signed in to an account.',
+  // DECOR1: an online home's decor (server-account/src/decor.js)
+  'decor-cap': `A home holds at most ${DECOR_CAP} pieces. Remove one to place another.`,
+  'decor-taken': 'Another piece already stands under that name. Place it again.',
+  'decor-rate': 'You have placed and moved a great deal this hour. Try again later.',
+  'no-decor': 'That piece is not in your home any more.',
+  'bad-decor': 'The account service could not read that piece.',
+  // GUILD1: the guilds (server-account/src/guilds.js)
+  'guilds-need-account': 'Guilds need a username and a password. Give this account one and you can found or join one.',
+  'guild-character': 'The account service could not tell which character that is.',
+  'bad-guild': `A guild's name is ${GUILD_NAME_MIN} to ${GUILD_NAME_MAX} letters, digits, spaces, apostrophes or hyphens, and its tag 2 to 4 capitals or digits.`,
+  'guild-rate': 'You have changed a great deal in your guild this hour. Try again later.',
+  'guild-renown': `Founding a guild takes Renown ${GUILD_FOUND_RENOWN}.`,
+  'guild-already': 'This character already belongs to a guild.',
+  'guild-name-taken': 'Another guild already bears that name.',
+  'guild-tag-taken': 'Another guild already bears that tag.',
+  'no-guild': 'This character belongs to no guild.',
+  'guild-rank': 'Your rank in the guild cannot do that.',
+  'guild-full': `The guild already holds ${GUILD_MEMBERS_MAX} members.`,
+  'no-invite': 'That invitation is no longer open.',
+  'guild-master-leaves': 'Hand the guild on to another member before you leave it.',
+  'guild-treasury': 'Take the gold out of the treasury first.',
+  'no-member': 'That member is no longer in the guild.',
+  'bad-ranks': `Each rank needs a name of its own, 1 to ${GUILD_RANK_NAME_MAX} letters, digits, spaces, apostrophes or hyphens.`,
+  'bad-gold': `Gold goes in or out 1 to ${GUILD_MOVE_MAX} at a time.`,
+  'guild-treasury-full': 'The treasury can hold no more.',
+  'guild-treasury-short': 'The treasury does not hold that much.',
+  // WB5b: a gate's kill receipt carried to the service. net/gateClaims.js says nothing of these to the player - it keeps
+  // what they do not settle and lets go of what they do - but a word the service can say is a word with a sentence.
+  'no-gate-key': 'The account service cannot check a gate\'s receipt right now. It is kept and tried again.',
+  receipt: 'That gate\'s receipt was not signed by the gate, or it has run out.',
+  'not-yours': 'That gate\'s receipt names another account.',
   server: 'The account service had a problem. Try again.',
   offline: 'Could not reach the account service. Check your connection.',
 });
@@ -165,11 +217,12 @@ export const handleShapeOk = (handle) => typeof handle === 'string' && HANDLE_RE
  * @param {(url: string, init: object) => Promise<any>} io.fetch  the fetch to use
  * @param {string} [io.base]  the service's origin
  * @param {string|null} [io.secret]  the session secret, if there is one
+ * @param {boolean} [io.keepalive]  AUDIT RENOWN1 GAME-8: finish the call after the page is gone (the pagehide report)
  * @param {string} path  a `/v1/...` route
  * @param {object|null} [body]  POST body, or null for a GET
  * @returns {Promise<{ok: boolean, data?: any, error?: string, status?: number}>}
  */
-export async function call({ fetch, base = DEFAULT_ACCOUNT_SERVICE, secret = null }, path, body = null) {
+export async function call({ fetch, base = DEFAULT_ACCOUNT_SERVICE, secret = null, keepalive = false }, path, body = null) {
   const headers = { accept: 'application/json' };
   if (body) headers['content-type'] = 'application/json';
   // THE ONE PLACE A CREDENTIAL IS SENT. There is no `?secret=` branch
@@ -183,6 +236,9 @@ export async function call({ fetch, base = DEFAULT_ACCOUNT_SERVICE, secret = nul
       method: body ? 'POST' : 'GET',
       headers,
       body: body ? JSON.stringify(body) : undefined,
+      // AUDIT RENOWN1 GAME-8: a call made as the page goes (the Renown report on pagehide) asks the browser to finish
+      // it after the page is gone - through this one door, so the credential still rides the header and nowhere else
+      ...(keepalive ? { keepalive: true } : {}),
     });
   } catch {
     // A NETWORK FAILURE IS A REFUSAL, NOT A THROW. ONCRASH1's law on
@@ -198,7 +254,7 @@ export async function call({ fetch, base = DEFAULT_ACCOUNT_SERVICE, secret = nul
     // The service says `{ error: '<word>' }`. A proxy, a 502 or an
     // HTML error page says nothing we can read, and `server` is the
     // honest answer for that rather than a guess at which word it meant.
-    return { ok: false, error: typeof data?.error === 'string' ? data.error : 'server', status: res.status };
+    return { ok: false, error: typeof data?.error === 'string' ? data.error : 'server', ...(typeof data?.why === 'string' ? { why: data.why } : {}), status: res.status };   // AUDIT WB A5: and the rung, where the service names one
   }
   return { ok: true, data, status: res.status };
 }
@@ -269,7 +325,7 @@ export const muteAccount = (io, target, minutes) => call(io, '/v1/mod/mute', { t
  *  holds - this side does not get to say what goes in it, which is the
  *  whole point of the seam. A service with no signing pair answers
  *  `no-signing-key` rather than minting something the relay refuses. */
-export const mintIdentity = (io) => call(io, '/v1/auth/token', {});
+export const mintIdentity = (io, character = null) => call(io, '/v1/auth/token', character ? { character } : {});   // RENOWN1: naming the character brought online signs its Renown in
 
 // ── THE SESSION ON THIS DEVICE ──────────────────────────────────────
 
@@ -376,21 +432,29 @@ export function forgetSession(storage) {
  * The return stays the token alone: the session's contract with this
  * function is a string, and a pin holds it.
  *
+ * RENOWN1: `character` answers the id of the character being brought
+ * online (systems/characterId.js), read at EACH mint - the service signs
+ * that character's Renown into the token, and `who.level`
+ * carries it back. A getter that answers nothing mints as before.
+ *
  * @param {object} io
  * @param {(url: string, init: object) => Promise<any>} io.fetch
  * @param {any} io.storage  appStorage() in the app, a Map in a test
- * @param {((who: {name: string, kind: string, title: string|null, glyphs: string[]}) => void)|null} [io.onIssued]
+ * @param {((who: {name: string, kind: string, title: string|null, glyphs: string[], level: number|null}) => void)|null} [io.onIssued]
+ * @param {(() => string|null)|null} [io.character]
  * @returns {() => Promise<string|null>}
  */
-export function accountTokenMinter({ fetch, storage, onIssued = null }) {
+export function accountTokenMinter({ fetch, storage, onIssued = null, character = null }) {
   return async () => {
     const session = storedSession(storage);
     if (!session) return null;
-    const answer = await mintIdentity({ fetch, base: serviceBase(storage), secret: session.secret });
+    let named = null;
+    try { named = character?.() ?? null; } catch { named = null; }   // a seam that throws costs the level, never the hello
+    const answer = await mintIdentity({ fetch, base: serviceBase(storage), secret: session.secret }, typeof named === 'string' && named ? named : null);
     if (answer.ok) {
       const token = typeof answer.data?.token === 'string' ? answer.data.token : null;
       if (token) {
-        const who = { name: answer.data.name, kind: answer.data.kind, title: answer.data.title ?? null, glyphs: Array.isArray(answer.data.glyphs) ? answer.data.glyphs : [] };
+        const who = { name: answer.data.name, kind: answer.data.kind, title: answer.data.title ?? null, glyphs: Array.isArray(answer.data.glyphs) ? answer.data.glyphs : [], level: Number.isSafeInteger(answer.data.level) ? answer.data.level : null };
         adoptIdentity(storage, who);
         // A THROW HERE IS THE HOST'S AND IS NOT THE PLAYER'S. The token
         // is good and the connection is the thing that matters; a
@@ -448,6 +512,109 @@ export function accountDuels({ fetch, storage }) {
   return {
     lost: async (winner) => { const i = io(); return i ? reportDuelLoss(i, winner) : { ok: false, error: 'no-session' }; },
     record: async (id) => { const i = io(); return i ? readDuelRecord(i, id) : { ok: false, error: 'no-session' }; },
+  };
+}
+
+/** WB5b: the kill receipt the relay signed for this account, carried to
+ *  the service - `{ recorded, closed }`, or `{ recorded: false, why }`
+ *  (`claimed`, `guest`). */
+export const claimGateReceipt = (io, receipt) => call(io, '/v1/gate/claim', { receipt });
+
+/**
+ * WB5b: THE GATES' ONE CALL, bound to this device's stored session (read
+ * at each call, as the duels' are). With no session there is no account
+ * to claim for: `{ ok: false, error: 'no-session' }`, never a knock - and
+ * net/gateClaims.js keeps the receipt for when there is one.
+ */
+export function accountGates({ fetch, storage }) {
+  const io = () => { const s = storedSession(storage); return s ? { fetch, base: serviceBase(storage), secret: s.secret } : null; };
+  return {
+    claim: async (receipt) => { const i = io(); return i ? claimGateReceipt(i, receipt) : { ok: false, error: 'no-session' }; },
+    /** AUDIT WB A9: the signed-in account's id - the receipts this device may offer are its alone. */
+    me: () => storedSession(storage)?.id ?? null,
+  };
+}
+
+/** RENOWN1: what one of this account's characters earned online - `{ character, xp, level, credited, rose, order }`. */
+export const reportRenownXp = (io, character, xp, name = null, rid = null) => call(io, '/v1/renown/xp', { character, xp, name, ...(rid ? { rid } : {}) });   // AUDIT RENOWN1 DATA-4: `rid` the report's own id
+
+/**
+ * RENOWN1: THE RENOWN'S REPORT, bound to this device's stored
+ * session (read at each call, as the beat reads it). With no session
+ * there is no account to earn for: `{ ok: false, error: 'no-session' }`,
+ * never a knock.
+ */
+export function accountRenown({ fetch, storage }) {
+  const report = async (character, xp, name = null, rid = null, keepalive = false) => {
+    const s = storedSession(storage);
+    return s ? reportRenownXp({ fetch, base: serviceBase(storage), secret: s.secret, keepalive }, character, xp, name, rid) : { ok: false, error: 'no-session' };
+  };
+  return {
+    report: (character, xp, name = null, rid = null) => report(character, xp, name, rid),
+    /** AUDIT RENOWN1 GAME-8: the same report as the page goes - `keepalive`, so the browser finishes it after the page. */
+    leave: (character, xp, name = null, rid = null) => report(character, xp, name, rid, true),
+  };
+}
+
+/** A POST through `call` on this device's stored session - `no-session` when there is none, never a throw. The homes'
+ *  and the decor's doors (HOME1, DECOR1) both speak through it. */
+function sessionPost({ fetch, storage }) {
+  return async (path, body) => {
+    const s = storedSession(storage);
+    return s ? call({ fetch, base: serviceBase(storage), secret: s.secret }, path, body) : { ok: false, error: 'no-session' };
+  };
+}
+
+/**
+ * HOME1: THE ONLINE HOMES (server-account/src/homes.js) through the one door - a town's homes, the caller's own, and
+ * the three that change one. Every answer is `call`'s shape; no session is `no-session`, never a throw.
+ */
+export function accountHomes({ fetch, storage }) {
+  const post = sessionPost({ fetch, storage });
+  return {
+    town: (mapId) => post('/v1/homes/town', { mapId }),
+    mine: () => post('/v1/homes/mine', {}),
+    claim: ({ mapId, buildingKey, region, character, price }) => post('/v1/homes/claim', { mapId, buildingKey, region, character, price }),
+    release: (mapId, buildingKey) => post('/v1/homes/release', { mapId, buildingKey }),
+    entry: (mapId, buildingKey, entry) => post('/v1/homes/entry', { mapId, buildingKey, entry }),
+  };
+}
+
+/**
+ * DECOR1: AN ONLINE HOME'S DECOR (server-account/src/decor.js) through the one door - the pieces standing in a home,
+ * and the three writes, one piece each, that change them. Every answer is `call`'s shape; no session is `no-session`,
+ * never a throw.
+ */
+export function accountDecor({ fetch, storage }) {
+  const post = sessionPost({ fetch, storage });
+  return {
+    list: (mapId, buildingKey) => post('/v1/homes/decor', { mapId, buildingKey }),
+    place: ({ mapId, buildingKey, character, piece }) => post('/v1/homes/decor/place', { mapId, buildingKey, character, piece }),
+    move: ({ mapId, buildingKey, character, id, place }) => post('/v1/homes/decor/move', { mapId, buildingKey, character, id, place }),
+    remove: ({ mapId, buildingKey, character, id }) => post('/v1/homes/decor/remove', { mapId, buildingKey, character, id }),
+  };
+}
+
+/**
+ * GUILD1: THE GUILDS (server-account/src/guilds.js) through the one door - the character's guild, the account's
+ * invitations, and every change to one. Every answer is `call`'s shape; no session is `no-session`, never a throw.
+ */
+export function accountGuilds({ fetch, storage }) {
+  const post = sessionPost({ fetch, storage });
+  return {
+    mine: (character) => post('/v1/guilds/mine', { character }),
+    invites: () => post('/v1/guilds/invites', {}),
+    found: ({ character, name, tag }) => post('/v1/guilds/found', { character, name, tag }),
+    invite: (character, handle) => post('/v1/guilds/invite', { character, handle }),
+    answer: ({ character, guild, accept }) => post('/v1/guilds/answer', { character, guild, accept }),
+    leave: (character) => post('/v1/guilds/leave', { character }),
+    remove: (character, member) => post('/v1/guilds/remove', { character, member }),
+    rank: (character, member, rank) => post('/v1/guilds/rank', { character, member, rank }),
+    ranks: (character, ranks) => post('/v1/guilds/ranks', { character, ranks }),
+    deposit: (character, gold) => post('/v1/guilds/deposit', { character, gold }),
+    withdraw: (character, gold) => post('/v1/guilds/withdraw', { character, gold }),
+    handOver: (character, member) => post('/v1/guilds/handover', { character, member }),
+    disband: (character) => post('/v1/guilds/disband', { character }),
   };
 }
 

@@ -34,6 +34,7 @@
 
 import { GROUP_TEMPLATE_INDICES } from './itemTemplatesData.js';
 import { validAffix, RARITY_ORDER } from './lootRarity.js';
+import { validSigil } from './sigil.js';   // SIGIL1
 
 /** The longest string a field carries; the wire's own bound (loot.js LOOT_STR_MAX reads it). */
 export const ITEM_STR_MAX = 128;
@@ -105,6 +106,8 @@ export const ITEM_FIELDS = Object.freeze({
   rarity: oneOf(RARITY_ORDER),
   legendary: str(),
   affixes: list(validAffix),
+  // SIGIL1: an online win's sigil (systems/sigil.js) - its power, the fight that won it, what it has drunk
+  sigil: rec(validSigil),
 });
 
 /** The declared names, and those of one kind. */

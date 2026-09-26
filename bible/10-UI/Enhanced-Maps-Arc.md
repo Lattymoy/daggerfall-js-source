@@ -542,7 +542,7 @@ different spaces**, and EM4's own note argued its way into both.
 
 `autoMapData` is an FLD-header grid, and the port already knows which way
 those run — `buildGroundTilemap` reads `groundTiles[x][15 - y]` for "row
-0 nearest Z=0" (`world/rmbLayout.js:270`). `ExteriorAutomap.cs:1481` is
+0 nearest Z=0" (`world/rmbLayout.js:282`). `ExteriorAutomap.cs:1481` is
 that same law at 64 rows instead of 16, which is what the shipped
 window's "per-block row flip" is.
 
@@ -610,4 +610,19 @@ it no `holder`, so the Morrowind hands lane (MAP3) stood only on the V
 key's travel map. The holder is combat/weaponRig.js's `sheetHolderOf`
 now and every door on every host with a rig passes it; the record is
 Held-Map-Arc.md's MW-MAP1 section.
+
+---
+
+## DISC25-A (2026-09-25) - the floors are sheets, and the stairs are drawn
+
+Tannim and kurkku on Discord ("the plane you are on + stairs going down",
+"clicking stairs to move up or down a level is good"), and Mac: comprehensive
+improvements. Run over REAL dungeons for the first time, the floor model
+derived thirteen storeys for Privateer's Hold and walled every stair across
+its middle. A floor of the map is a SHEET now - a run of storeys none of which
+lies over another (`groupSheets`) - a cell is on the storey its own surface
+is nearest (`surfaceY`), the stairs between storeys are found
+(`levelField`, `storeyLinks`), drawn and taken with a press, the strip stops
+above the thumb and marks you and the way out, and the foot says the keys.
+The record is `01-Overview/Field-Bugs-2026-09-25.md` DISC25-A.
 

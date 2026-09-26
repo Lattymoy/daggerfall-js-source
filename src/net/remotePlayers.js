@@ -28,6 +28,7 @@ import { drawText, measureText } from '../ui/text.js';
 import { titleBadge, glyphMarks } from '../ui/playerBadge.js';   // ACC3: what a title and a glyph LOOK like - one home, both faces (the DOM layer reads the same module)
 import { projectToScreen } from '../player/tapRay.js';   // one home (audit24 onehome): the touch layer's own projection
 import { LOOK_ITEM_FIELDS, LOOK_GROUPS } from './wire.js';   // the look's vocabulary: the wire's own
+import { renownText } from './renown.js';   // RENOWN1: Renown's words, left of the name in the bitmap face too
 // 2026-09-17 (per-request, the NON-Morrowind peer only - net/peerBodies.js and its Morrowind body are untouched):
 // the same class-enemy sprite classic dungeon humanoids already use (Warrior, Mage, Knight, ...), driven by simple
 // moving/striking flags off the peer's synced pose instead of AI - the reusable pieces dungeonContext.js already
@@ -802,6 +803,10 @@ export class RemotePlayers {
       // DISC12 (Mac: werewolves "not wired correctly"): A PEER IN BEAST FORM IS THE BEAST. The pose's `wb` says which
       // (LycanthropyTypes 1 werewolf, 2 wereboar); the sprite is the enemy's own (MobileTypes 9 / 14), puppeted off the
       // pose like any class sprite - whatever the 'Other players' card says, since a person drawn there is a lie.
+      // PR-WW1 (2026-09-24, player report: "Werewolf morrowind sprite not showing online"): THE FALLBACK now. A beast
+      // is drawn as Eye Of The Beholder's lycanthrope by net/peerRiders.js - the art the transformed player sees on
+      // themselves - and reaches here only while that art is not up (loading, failed, or a build without it), when
+      // `bodyHeight` answers 0: the enemy sprite stands for them then, so a beast is never nothing
       const beast = peer.shown.wb | 0;
       // AUDIT CONTRIB S1: a peer with NO LOOK yet (heard by pose before its introduction - first contact, a SLAM recall)
       // keeps the doll path until the look lands: classMobileType's Thief is for a look with no class or one this build
@@ -1084,8 +1089,9 @@ export class RemotePlayers {
       // PEER - unlike `colorOf`, which is the social picture's knowledge
       // asked for by id. Both faces read it off here, so neither can
       // invent a title the other does not draw (ACC1d-MARK's own shape).
+      // RENOWN1: and Renown, the relay's stamp - left of the name in both faces
       out.push({ id: e.peer.id, name: e.peer.name ?? '', x: s.x, y: s.y,
-        title: e.peer.title ?? null, glyphs: Array.isArray(e.peer.glyphs) ? e.peer.glyphs : [],
+        title: e.peer.title ?? null, glyphs: Array.isArray(e.peer.glyphs) ? e.peer.glyphs : [], lv: e.peer.lv ?? null,
         scale: nameScaleFor(s.depth) * lens, depth: s.depth, lens });
     }
     return out;
@@ -1131,7 +1137,10 @@ export class RemotePlayers {
       // rather than after it, or a badged peer's name drifts left off
       // their own skull by half the badge.
       const marks = glyphMarks(n);
-      const run = marks ? `${n.name} ${marks}` : n.name;
+      // RENOWN1: and the level LEFT of the name, in the same run for the same reason - boxed in brackets, the one box a
+      // bitmap line can draw ("[12] Mack"; the DOM face draws a real one)
+      const lead = renownText(n.lv);
+      const run = `${lead ? `[${lead}] ` : ''}${marks ? `${n.name} ${marks}` : n.name}`;
       const tw = measureText(font.fnt, run) * s;
       // AUDIT NAME1 F13: the gap takes the HOST's scale, and only that one. NAME_GAP_PX is a clearance in SCREEN
       // pixels and this face draws in the drawing buffer's, where `scale` (ui/hud.js hudScale, the 320x200 fit) is

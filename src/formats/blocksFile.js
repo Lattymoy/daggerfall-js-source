@@ -226,6 +226,30 @@ export class BlocksFile {
     return true;
   }
 
+  /**
+   * WD1: the block as BLOCKS.BSA holds it - read fresh, past the
+   * world-data door (no building replacement laid on, no block served
+   * from JSON) and without touching the block cache. What a mod's
+   * world-data diff is taken against (formats/worldDataJson.js).
+   * @returns {object|null} the DFBlock, or null when the record fails to read.
+   */
+  readClassicBlock(block) {
+    if (block < 0 || block >= this.count) return null;
+    const bytes = this._bsa.getRecordBytes(block);
+    const name = this._bsa.getRecordName(block);
+    const rec = {
+      name, bytes, view: new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength), classic: true,
+      dfBlock: { position: this._bsa.getRecordPosition(block), index: block, name, type: this.getBlockType(block), rmbBlock: null, rdbBlock: null, rdiBlock: null },
+    };
+    const saved = this._blocks[block];
+    this._blocks[block] = rec;
+    try {
+      return this._read(block) ? rec.dfBlock : null;
+    } finally {
+      this._blocks[block] = saved;
+    }
+  }
+
   /** Discard a block from memory. */
   discardBlock(block) {
     if (block < 0 || block >= this.count) return;
@@ -463,7 +487,7 @@ export class BlocksFile {
     const recordCount = h.numBlockDataRecords;
     const subRecords = new Array(recordCount);
     let position = r.pos;
-    const door = worldDataDoor();
+    const door = rec.classic ? null : worldDataDoor();   // WD1: readClassicBlock reads past the door
     for (let i = 0; i < recordCount; i++) {
       // Check for replacement building data and use it, if found (BlocksFile.cs:848-861 - RR3b: the world-data door)
       const replacement = door?.getBuildingReplacementData(rec.name, rec.dfBlock.index, i);

@@ -151,8 +151,9 @@ test('WORLD-HOVER: only the loot keys itemise - everything else is a name', () =
   // These are PREFIXES of the keys the hosts' own *Targets() producers
   // mint, never strings written out here. `foeCorpse:`/`guardCorpse:`
   // are the two above-ground bodies, which PX21c could not reach.
-  assert.deepEqual([...ITEMISED_KEYS], ['loot:', 'corpse:', 'droppedLoot:', 'foeCorpse:', 'guardCorpse:']);
-  for (const k of ['loot:0', 'corpse:3', 'droppedLoot:9', 'foeCorpse:abc', 'guardCorpse:x']) {
+  // DW-E3: `dwFish:` is Iliac Puddle No More's fish, a DaggerfallLoot of one item.
+  assert.deepEqual([...ITEMISED_KEYS], ['loot:', 'corpse:', 'droppedLoot:', 'foeCorpse:', 'guardCorpse:', 'dwFish:']);
+  for (const k of ['loot:0', 'corpse:3', 'droppedLoot:9', 'foeCorpse:abc', 'guardCorpse:x', 'dwFish:12']) {
     assert.equal(keyItemises(k), true, k);
   }
   for (const k of ['door:2', 'person:1', 'act:1:2', 'exit:0', 'container:4', 'eotbWagon', '17', null, undefined]) {
@@ -875,7 +876,7 @@ test('AUDIT-WH H5: the location\'s name is read in the PORT\'s spelling, from ON
   assert.equal((wm.match(/currentLocationName\(\)/g) ?? []).length, 3,
     'the three above-ground arms that take it - the building exit, the city wall and (AUDIT-WH M7) the dungeon entrance');
   assert.match(wm, /staticDoorName\('buildingExit', \{ locationName: currentLocationName\(\) \}\)/, 'the building exit, from inside');
-  assert.match(wm, /staticDoorName\('dungeonEntrance', \{ locationName: currentLocationName\(\) \}\)/, 'the dungeon entrance, from outside');
+  assert.match(wm, /staticDoorName\('dungeonEntrance', \{ locationName: currentLocationName\(\), elite: !!entry\.dfLocation\?\.elite \}\)/, 'the dungeon entrance, from outside');
   assert.match(wm, /locationName: currentLocationName\(\),\n\s+buildingType: bd\.buildingType,/, 'and the shopfront the city wall arm reads');
   // ...and the DUNGEON exit names the dungeon it is in, not the
   // location under the player, so it reads its own record - in the
@@ -1024,9 +1025,9 @@ test('WORLD-HOVER: ONE precedence - the press DERIVES from raceWinner, driven ov
   // THE TIE ORDER IS THE HOSTS' ARM LADDER: camp, water, wagon, torch,
   // body, pile, ground. Driven at EXACT ties, the only distance at
   // which a precedence is observable at all.
-  const all = { camp: p('camp', 2), water: p('water', 2), wagon: p('wagon', 2), torch: p('torch', 2), corpse: p('body', 2), pile: p('pile', 2), ground: p('door', 2) };
-  const order = ['camp', 'water', 'wagon', 'torch', 'body', 'pile', 'door'];
-  const byKey = { camp: 'camp', water: 'water', wagon: 'wagon', torch: 'torch', body: 'corpse', pile: 'pile', door: 'ground' };
+  const all = { gate: p('gate', 2), camp: p('camp', 2), water: p('water', 2), wagon: p('wagon', 2), torch: p('torch', 2), corpse: p('body', 2), pile: p('pile', 2), ground: p('door', 2) };
+  const order = ['gate', 'camp', 'water', 'wagon', 'torch', 'body', 'pile', 'door'];   // WB2: the gate's fire heads the ladder
+  const byKey = { gate: 'gate', camp: 'camp', water: 'water', wagon: 'wagon', torch: 'torch', body: 'corpse', pile: 'pile', door: 'ground' };
   for (let i = 0; i < order.length; i++) {
     const bag = {};
     for (const k of order.slice(i)) bag[byKey[k]] = all[byKey[k]];
@@ -1036,7 +1037,7 @@ test('WORLD-HOVER: ONE precedence - the press DERIVES from raceWinner, driven ov
   // ── THE DIFFERENTIAL ──────────────────────────────────────────
   // The hosts' ladder, transcribed from world.js / exterior.js: camp,
   // water, wagon, torch, then the body, then the pile, then the door.
-  const pressOpens = (r) => (r.campWins ? 'camp' : r.waterWins ? 'water' : r.wagonWins ? 'wagon'
+  const pressOpens = (r) => (r.gateWins ? 'gate' : r.campWins ? 'camp' : r.waterWins ? 'water' : r.wagonWins ? 'wagon'
     : r.torchWins ? 'torch' : r.loot ? r.loot.key : r.drop ? r.drop.key : 'ground');
   let seed = 1;
   const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
@@ -1046,7 +1047,7 @@ test('WORLD-HOVER: ONE precedence - the press DERIVES from raceWinner, driven ov
   const one = (k) => { const d = D[(rnd() * D.length) | 0]; return d === Infinity ? null : { key: k, distance: d, reach: 3.2 }; };
   const bad = [];
   for (let i = 0; i < 20000; i++) {
-    const c = { corpse: one('body'), pile: one('pile'), torch: one('torch'), wagon: one('wagon'), camp: one('camp'), water: one('water') };
+    const c = { corpse: one('body'), pile: one('pile'), torch: one('torch'), wagon: one('wagon'), camp: one('camp'), water: one('water'), gate: one('gate') };
     const dd = D[(rnd() * D.length) | 0];
     const press = pressOpens(raceActivation({ ...c, doorDistance: dd }));
     const won = raceWinner({ ...c, ground: Number.isFinite(dd) ? { key: GROUND_KEY, distance: dd } : null });
@@ -1597,7 +1598,7 @@ test('AUDIT-WH2 L1-F1/F2: the door\'s word is dropped when the ray leaves it, an
   assert.equal((head.match(/return _doorText;/g) ?? []).length, 4,
     'the cache hit and all three misses hand back the same door\'s last word rather than caching a null');
   assert.doesNotMatch(head, /return null;/, 'and none of them caches the negative');
-  assert.match(arm, /_doorText = staticDoorName\('building', \{[\s\S]{0,400}?\}\);\n\s+_doorTextKey = key; _doorTextGen = gen;\n\s+return _doorText;/,
+  assert.match(arm, /_doorText = staticDoorName\('building', \{[\s\S]{0,400}?\}\);\n[\s\S]{0,400}?\n\s+_doorTextKey = key; _doorTextGen = gen; _doorTextHomes = homesV;\n\s+return _doorText;/,   // HOME1 re-aim: a home's line joins the text before the stamp, and the stamp takes the homes' version
     'the stamp is the LAST thing the success path does');
 });
 
@@ -1881,7 +1882,7 @@ test('AUDIT-WH M5/M6/M7/M10: every family the press acts on has a word, and the 
   // so `staticDoorName('dungeonEntrance')` was written, pinned, and had
   // no caller in the tree: "To Privateer's Hold" never drew once.
   assert.match(read('src/scenes/worldModes.js'),
-    /if \(entry\?\.door\?\.doorType === DOOR_TYPE\.DUNGEON_ENTRANCE\) \{\n\s+return staticDoorName\('dungeonEntrance', \{ locationName: currentLocationName\(\) \}\);/);
+    /if \(entry\?\.door\?\.doorType === DOOR_TYPE\.DUNGEON_ENTRANCE\) \{\n\s+return staticDoorName\('dungeonEntrance', \{ locationName: currentLocationName\(\), elite: !!entry\.dfLocation\?\.elite \}\);/);
 
   // AUDIT-WH2 L5-F13/F14: ...AND THE PREDICATE BEHIND `inTown`, which
   // nothing drove. `staticDoorName('dungeonExit', ...)` is exercised with
@@ -1962,7 +1963,7 @@ test('AUDIT-WH P1/P2/P5: one answer a frame, and the mod\'s own cache on the one
   // a ray and box-tests a location's buildings rather than reading a
   // table - and keyed on the two things that say "the same door, in
   // the same world".
-  assert.match(wm, /if \(_doorTextKey === key && _doorTextGen === gen\) return _doorText;/);
+  assert.match(wm, /if \(_doorTextKey === key && _doorTextGen === gen && _doorTextHomes === homesV\) return _doorText;/);   // HOME1 re-aim: a town's answer or a sale is a new word for the door
   assert.match(wm, /const gen = doorGeneration\?\.\(\) \?\? 0;/,
     'a moved origin or a streamed pixel misses the cache');
   // ...and every one of them dies with the mode.

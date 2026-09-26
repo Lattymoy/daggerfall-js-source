@@ -606,10 +606,12 @@ const touched = (store) => { store.rev = (store.rev ?? 0) + 1; };
  *  because they can collide. Nothing here narrows it. */
 
 /** THE ONE CONSTRUCTION SEAM. Both dicts are keyed CODE -> ACTION,
- *  DFU's orientation (:79-80) - a key answers to one action per dict,
- *  an action may hold several keys only via a hand-edited save file
- *  (see loadKeyBinds). `unknown`/`secondaryUnknown` (:92-93) carry a
- *  newer build's actions through a save/load cycle untouched. */
+ *  DFU's orientation (:79-80) - a key's OWNER per dict, and since
+ *  UXB1-S the actions a player chose to put beside it (`shared*`,
+ *  dictEntries); an action may hold several keys only via a
+ *  hand-edited save file (see loadKeyBinds). `unknown`/
+ *  `secondaryUnknown` (:92-93) carry a newer build's actions through a
+ *  save/load cycle untouched. */
 export function createBindings() {
   return {
     primary: new Map(),
@@ -619,6 +621,15 @@ export function createBindings() {
     removedSecondary: new Set(),   // PAD1: the same mark for the secondary dict, which carries the pad defaults
     unknown: new Map(),
     secondaryUnknown: new Map(),
+    // UXB1-S: the actions a key answers BESIDE its dict's owner - code -> [action, ...]. A code here is always a key
+    // of the same dict (its owner is `primary.get(code)`), never lists the owner, never lists an action twice.
+    sharedPrimary: new Map(),
+    sharedSecondary: new Map(),
+    // AUDIT UXB1 F3/F8: what a file's shares carried that this build could not seat - code -> { owner, names } - so an
+    // older build never strips a newer one's file, the law `unknown` keeps for owners. `owner` is the name the key's
+    // owner went by at the load; serializeKeyBinds writes `names` back while that owner still holds the key.
+    sharedUnknown: new Map(),
+    secondarySharedUnknown: new Map(),
     // GP1: the joystick dicts (:83-92) - axis name -> AxisAction,
     // AxisAction -> inverted, button code -> JoystickUIAction
     axisActions: new Map(),
@@ -626,6 +637,45 @@ export function createBindings() {
     joystickUI: new Map(),
   };
 }
+
+const NO_SHARERS = Object.freeze([]);   // AUDIT UXB1 F5: dictEntries' unshared key - not a fresh [] per key per walk
+
+/**
+ * UXB1-S (2026-09-25, the UX backlog: "Is there a reason you cannot have multiple keys bound to the same action such
+ * as jump+swim-up?", and then: "So you wont add multiple key bindings even when asked? I dont care if it goes against
+ * daggerfall"): ONE KEY, SEVERAL ACTIONS - A DEPARTURE FROM DFU, AND RECORDED AS ONE (Ledger A's UXB1 row).
+ *
+ * DFU's two dicts are KeyCode -> Action and its window refuses to close on a duplicate (CheckDuplicateKeyCodes), so a
+ * key means one thing per dict. The port keeps that orientation and every reader of it, and adds beside each dict
+ * the actions a player CHOSE to put on a key already in use (shareBinding, the Controls pages' "use for both"). The
+ * owner stays `primary.get(code)` - so everything that asks "what does this key mean" and wants one answer reads what
+ * it always read - and every question an action asks of its keys (getBinding, codesForAction, held...) walks the
+ * owner and the sharers through `dictEntries`. A key in BOTH dicts is a share too: shareBinding does not steal
+ * across dicts the way SetBinding does.
+ */
+export function* dictEntries(store, primary = true) {
+  const dict = primary ? store.primary : store.secondary;
+  const shared = primary ? store.sharedPrimary : store.sharedSecondary;
+  for (const [code, action] of dict) {
+    yield [code, action];
+    for (const a of shared?.get(code) ?? NO_SHARERS) yield [code, a];
+  }
+}
+/** UXB1-S: the actions a code answers in ONE dict - its owner, then its sharers; [] where the dict has no such key. */
+export function actionsAt(store, code, primary = true) {
+  const dict = primary ? store?.primary : store?.secondary;
+  if (!dict?.has(code)) return [];
+  return [dict.get(code), ...((primary ? store.sharedPrimary : store.sharedSecondary)?.get(code) ?? [])];
+}
+/** UXB1-S: every action a code answers, both dicts, owner first - the one-answer readers take `[0]` (actionForCode). */
+export function actionsForCode(store, code) {
+  const out = [];
+  for (const primary of [true, false]) for (const a of actionsAt(store, code, primary)) if (!out.includes(a)) out.push(a);
+  return out;
+}
+/** UXB1-S: does this code answer this action - its owner or one of its sharers? A window's own-key close asks this,
+ *  so a window opened by a shared key closes on it. */
+export const codeMeans = (store, code, action) => code != null && actionsForCode(store, code).includes(action);
 
 // ── GP1: the joystick dicts (InputManager.cs :677-700, :761-800, :814-870, :931-939) ──
 
@@ -686,27 +736,64 @@ export function setBinding(store, code, action, primary = true) {
   const dict = primary ? store.primary : store.secondary;
   const alt = primary ? store.secondary : store.primary;
   alt.delete(code);
+  (primary ? store.sharedSecondary : store.sharedPrimary)?.delete(code);   // UXB1-S: a steal takes the key from its sharers too
   clearBinding(store, action, primary);
   if (code != null) {
     if (primary) store.removedPrimary.delete(action);
     else store.removedSecondary.delete(action);   // PAD1
     dict.delete(code);
+    (primary ? store.sharedPrimary : store.sharedSecondary)?.delete(code);
     dict.set(code, action);
   }
 }
+
+/** UXB1-S: THE SHARE - `action` answers `code` BESIDE whoever holds it, in this dict or the other; nobody is stolen
+ *  from. The action's old key in this dict is let go first (one key per action per dict, as ever), and binding a
+ *  force-removed action un-removes it, as SetBinding's does. A free code is a plain bind. */
+export function shareBinding(store, code, action, primary = true) {
+  touched(store);
+  if (code == null) { clearBinding(store, action, primary); return; }
+  for (const [c, a] of [...dictEntries(store, primary)]) if (a === action && c !== code) dropBinding(store, c, action, primary);
+  if (primary) store.removedPrimary.delete(action);
+  else store.removedSecondary.delete(action);
+  seatOnKey(store, code, action, primary);
+}
+/** UXB1-S: THE SEAT, one copy (AUDIT UXB1 F3 - shareBinding and a file's load each spelled it) - the owner where the
+ *  key is free, else beside its owner; never the owner listed, never a sharer twice. */
+function seatOnKey(store, code, action, primary) {
+  const dict = primary ? store.primary : store.secondary;
+  const shared = primary ? store.sharedPrimary : store.sharedSecondary;
+  if (!dict.has(code)) { dict.set(code, action); return; }
+  const list = shared.get(code) ?? [];
+  if (dict.get(code) !== action && !list.includes(action)) shared.set(code, [...list, action]);   // already on it: nothing moves
+}
+
+/** UXB1-S: one action lets go of one code in one dict, and nobody else does - the owner leaving hands the key to its
+ *  first sharer (the order they were added). */
+export function dropBinding(store, code, action, primary = true) {
+  touched(store);
+  const dict = primary ? store.primary : store.secondary;
+  const shared = primary ? store.sharedPrimary : store.sharedSecondary;
+  const list = shared?.get(code) ?? [];
+  if (dict.get(code) === action) {
+    if (list.length) { dict.set(code, list[0]); setShared(shared, code, list.slice(1)); }
+    else dict.delete(code);
+  } else if (list.includes(action)) setShared(shared, code, list.filter((a) => a !== action));
+}
+const setShared = (shared, code, list) => { if (list.length) shared.set(code, list); else shared.delete(code); };
 
 /** ClearBinding(Actions) (:839-846) - every code the action holds in
  *  the named dict. */
 export function clearBinding(store, action, primary = true) {
   touched(store);
-  const dict = primary ? store.primary : store.secondary;
-  for (const [code, a] of [...dict]) if (a === action) dict.delete(code);
+  for (const [code, a] of [...dictEntries(store, primary)]) if (a === action) dropBinding(store, code, action, primary);   // UXB1-S: as an owner or a sharer
 }
 
 /** ClearBinding(KeyCode) (:803-811). */
 export function clearBindingByCode(store, code, primary = true) {
   touched(store);
   (primary ? store.primary : store.secondary).delete(code);
+  (primary ? store.sharedPrimary : store.sharedSecondary)?.delete(code);   // UXB1-S: and every action sharing it
 }
 
 /** AddRemovedPrimaryAction (:795-798) - the controls UI's "unbind and
@@ -728,8 +815,7 @@ export function addRemovedSecondaryAction(store, action) {
 /** GetBinding (:641-671). One-arg walks the primary dict ("first
  *  non-None KeyCode"); pass primary=false for the secondary dict. */
 export function getBinding(store, action, primary = true) {
-  const dict = primary ? store.primary : store.secondary;
-  for (const [code, a] of dict) if (a === action) return code;
+  for (const [code, a] of dictEntries(store, primary)) if (a === action) return code;   // UXB1-S: a shared key is the action's key too
   return null;
 }
 
@@ -738,7 +824,7 @@ export function getBinding(store, action, primary = true) {
  *  file loads. */
 export function getBindings(store, action) {
   const out = [];
-  for (const [code, a] of store.primary) if (a === action) out.push(code);
+  for (const [code, a] of dictEntries(store, true)) if (a === action) out.push(code);
   return out;
 }
 
@@ -764,9 +850,9 @@ export function actionForCode(store, code) {
  * ANSWERS.
  */
 export function codeForAction(store, action) {
-  for (const dict of [store?.primary, store?.secondary]) {
-    if (!dict) continue;
-    for (const [code, act] of dict) if (act === action) return code;
+  for (const primary of [true, false]) {
+    if (!(primary ? store?.primary : store?.secondary)) continue;
+    for (const [code, act] of dictEntries(store, primary)) if (act === action) return code;
   }
   return null;
 }
@@ -783,7 +869,7 @@ function testSetBinding(store, code, action, primary = true) {
   const dict = primary ? store.primary : store.secondary;
   const alt = primary ? store.secondary : store.primary;
   if (dict.has(code) || alt.has(code)) return;
-  for (const a of dict.values()) if (a === action) return;
+  for (const [, a] of dictEntries(store, primary)) if (a === action) return;   // UXB1-S: an action on a shared key is not missing
   if (primary && store.removedPrimary.has(action)) return;
   if (!primary && store.removedSecondary.has(action)) return;   // PAD1
   if (comboModifiers(store).has(code)) return;
@@ -800,6 +886,8 @@ export function resetDefaults(store, autofill = false) {
   touched(store);
   if (!autofill) {
     store.primary.clear();
+    store.sharedPrimary?.clear();   // UXB1-S: the primary's shares go with it
+    store.sharedUnknown?.clear();   // AUDIT UXB1 F3/F8: ...and the ones it carried for a newer build
     store.removedPrimary.clear();
     store.removedSecondary.clear();   // PAD1: a full reset forgets the pad marks too, and refills below
   }
@@ -850,7 +938,7 @@ export function serializeKeyBinds(store) {
   for (const [action, inv] of store.axisInversions) axisActionInversions[action] = inv ? 'True' : 'False';
   const joystickUIKeyBinds = {};
   for (const [code, action] of store.joystickUI) joystickUIKeyBinds[code] = action;
-  return {
+  const out = {
     version: KEYBINDS_VERSION,   // KB1: the port's own field - DFU's KeyBindData_v1 has none, and a file without it is v1
     actionKeyBinds,
     secondaryActionKeyBinds,
@@ -860,6 +948,26 @@ export function serializeKeyBinds(store) {
     axisActionInversions,
     joystickUIKeyBinds,
   };
+  // UXB1-S: the shares, only where there are any - a file without them is byte for byte what it was, and a build that
+  // predates them reads the owners and drops the rest (an unknown field)
+  const shared = sharesOut(store.sharedPrimary, store.sharedUnknown, actionKeyBinds);
+  if (shared) out.sharedActionKeyBinds = shared;
+  const sharedSecondary = sharesOut(store.sharedSecondary, store.secondarySharedUnknown, secondaryActionKeyBinds);
+  if (sharedSecondary) out.sharedSecondaryActionKeyBinds = sharedSecondary;
+  return out;
+}
+/** UXB1-S: one dict's shares as the file writes them - and AUDIT UXB1 F3/F8, the names the load could not seat, back
+ *  beside the key's owner while the file's owner for the key is still the one they were loaded under. A key rebound,
+ *  cleared or handed on here is this build's: its carried names go, as `unknown`'s owner does for a key bound here. */
+function sharesOut(shared, carried, owners) {
+  const lists = new Map([...(shared ?? [])].map(([c, l]) => [c, [...l]]));
+  for (const [code, { owner, names }] of carried ?? []) {
+    if (!Object.hasOwn(owners, code) || owners[code] !== owner) continue;
+    const list = lists.get(code) ?? [];
+    for (const n of names) if (!list.includes(n)) list.push(n);
+    if (list.length) lists.set(code, list);
+  }
+  return lists.size ? Object.fromEntries(lists) : null;
 }
 
 // LoadActionKeybinds (:1950-1969). Raw map-set, NOT setBinding: a
@@ -877,6 +985,32 @@ function loadActionKeybinds(store, saved, primary) {
   }
 }
 
+/** UXB1-S: a file's shares - each a known action beside the code's owner (the owner itself where the file names
+ *  none), through the one seat; an action a key already answers is not added twice. Raw, like the owners above: a
+ *  hand-edited second key loads too.
+ *  AUDIT UXB1 F3/F8: WHAT THIS BUILD CANNOT SEAT IS CARRIED, not dropped - a newer build's action name beside a known
+ *  owner, and the WHOLE list of a key whose owner is a newer build's (it sits in `unknown`, so the key is not bound
+ *  here). The load used to drop the first and seat the second's first known name as the owner - and the save that
+ *  followed wrote that name over the newer build's owner, which the `unknown` law exists to keep. */
+function loadSharedKeybinds(store, saved, primary) {
+  if (!saved || typeof saved !== 'object') return;
+  touched(store);
+  const dict = primary ? store.primary : store.secondary;
+  const unknown = primary ? store.unknown : store.secondaryUnknown;
+  const carried = primary ? store.sharedUnknown : store.secondarySharedUnknown;
+  for (const [code, names] of Object.entries(saved)) {
+    const list = (Array.isArray(names) ? names : []).filter((n) => typeof n === 'string');
+    if (!dict.has(code) && unknown.has(code)) { if (list.length) carried.set(code, { owner: unknown.get(code), names: list }); continue; }
+    const kept = [];
+    for (const name of list) {
+      const action = parseActionName(name);
+      if (action === 'Unknown') kept.push(name);
+      else seatOnKey(store, code, action, primary);
+    }
+    if (kept.length && dict.has(code)) carried.set(code, { owner: dict.get(code), names: kept });
+  }
+}
+
 /** LoadKeyBinds (:1971-2000). A removed-primary mark loads only for a
  *  KNOWN action that is not currently bound in either dict (:1983-1992).
  *  DFU's startup follows a load with resetDefaults(store, true) to
@@ -885,13 +1019,15 @@ export function loadKeyBinds(store, data) {
   if (!data) return;
   loadActionKeybinds(store, data.actionKeyBinds, true);
   loadActionKeybinds(store, data.secondaryActionKeyBinds, false);
+  loadSharedKeybinds(store, data.sharedActionKeyBinds, true);   // UXB1-S
+  loadSharedKeybinds(store, data.sharedSecondaryActionKeyBinds, false);
   if (Array.isArray(data.removedPrimaryActions)) {
     for (const name of data.removedPrimaryActions) {
       const action = parseActionName(name);
       if (action === 'Unknown') continue;
       let bound = false;
-      for (const a of store.primary.values()) if (a === action) bound = true;
-      for (const a of store.secondary.values()) if (a === action) bound = true;
+      for (const [, a] of dictEntries(store, true)) if (a === action) bound = true;
+      for (const [, a] of dictEntries(store, false)) if (a === action) bound = true;
       if (!bound) store.removedPrimary.add(action);
     }
   }
@@ -906,7 +1042,7 @@ export function loadKeyBinds(store, data) {
       const action = parseActionName(name);
       if (action === 'Unknown') continue;
       let bound = false;
-      for (const a of store.secondary.values()) if (a === action) bound = true;
+      for (const [, a] of dictEntries(store, false)) if (a === action) bound = true;
       if (!bound) store.removedSecondary.add(action);
     }
   }
@@ -981,8 +1117,8 @@ export const UNLOSEABLE_ACTIONS = Object.freeze(['SwingWeapon', 'ActivateCenterO
 /** The codes an action answers to right now, across both dicts. */
 export function codesForAction(store, action) {
   const out = [];
-  for (const dict of [store.primary, store.secondary]) {
-    for (const [code, a] of dict) if (a === action) out.push(code);
+  for (const primary of [true, false]) {
+    for (const [code, a] of dictEntries(store, primary)) if (a === action) out.push(code);   // UXB1-S: its shared keys too
   }
   return out;
 }

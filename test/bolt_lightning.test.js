@@ -200,7 +200,7 @@ test('BOLT wired: both exterior hosts feed their distant strikes and the storm o
     assert.match(s, /renderer\.setFlashLight\(sky\.lightningLight\(\) \?\? boltFrame\.flash\);/);
     assert.match(s, /\{ distantStorms\.reset\(\); stormLights\.reset\(\); \}/);
     // RETRO1: with the world image's height, so a retro frame's minimum width is its own pixels
-    assert.match(s, /if \(boltsGl && boltFrame\.bolts\.length\) \{[^\n]*\n\s*boltsGl\.draw\(boltFrame\.bolts, proj, view, new Float32Array\([^)]+\), undefined, renderer\.worldViewportPx\?\.\[3\]\);[^\n]*\n\s*renderer\.markForeignPass\(\);/);
+    assert.match(s, /if \(boltsGl && boltFrame\.bolts\.length(?: && !_dwAirOff)?\) \{[^\n]*\n\s*boltsGl\.draw\(boltFrame\.bolts, proj, view, new Float32Array\([^)]+\), undefined, renderer\.worldViewportPx\?\.\[3\]\);[^\n]*\n\s*renderer\.markForeignPass\(\);/);
     // the strikes stand round, and the ribbons face, THE EYE THE VIEW IS BUILT FROM - world.js's third-person camera
     // stands metres off the head (cam.pos), and a probe's unspawned body put it a kilometre off
     const viewEye = s.match(/const view = betterAmbience\.view\(lookAt\(([\w.]+),/)[1];

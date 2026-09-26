@@ -74,7 +74,7 @@ test('VOL1: the march by source - the air pass builds the glow from the lane\'s 
   assert.match(a, /for \(const t of \[T\.bloom, T\.shaft, T\.volOut\]\) \{ quad\(this\.programs\.box, t\); gl\.clear\(gl\.COLOR_BUFFER_BIT\); \}/, 'the three the resolve adds, black');
   assert.match(a, /this\.fresh = true;   \/\/ AUDIT VOL1/, 'set at prepare');
   assert.match(a, /vec3 c = airDecode\(texture\(uFrame, uv\)\.rgb\) \+ airDecode\(texture\(uVol, t\)\.rgb\);   \/\/ AUDIT VOL1/, 'the eye adapts to the glow it will see');
-  assert.match(a, /vec3 c = airDecode\(texture\(uFrame, uv\)\.rgb\) \+ airDecode\(texture\(uVol, vUV\)\.rgb\);/, 'and the bright pass blooms a halo\'s core');
+  assert.match(a, /vec3 c = airDecode\(texture\(uFrame, uv\)\.rgb\)\$\{glow \? ' \+ airDecode\(texture\(uVol, vUV\)\.rgb\)' : ''\};/, 'and the bright pass blooms a halo\'s core (PERF-EXT31: the bright pass built with the glow, for a frame that marched it)');
   assert.match(a, /gl\.uniform1f\(this\.programs\.box\.uStrength, this\.aoParams\[1\]\);[^\n]*\n\s*gl\.drawArrays\(gl\.TRIANGLE_STRIP, 0, 4\);\n\s*\/\/ 1b\. VOL1[^\n]*\n\s*this\._volumetrics\(f, sp, quad, depthOn\);/, 'after the AO\'s blur, before the bloom source');
   assert.match(a, /const on = !!P\.vol && this\.volOn && n > 0 && f\.scatter > 0 && !!sp;/, 'the door, a lantern, an air with a density, the pass');
   assert.match(a, /sp\.upload\(P\.vol\.shadow\);/, 'the cube maps and the caster table');
@@ -83,7 +83,7 @@ test('VOL1: the march by source - the air pass builds the glow from the lane\'s 
   assert.match(a, /float w = abs\(viewDist\(depthAt\(uv\)\) - here\) <= here \* \$\{AIR_VOL_BLUR_SHARE\} \? 1\.0 : 0\.0;/, 'a tap counts while its ray reaches within the share of the centre\'s distance');
   assert.match(a, /volBlur: P\(QUAD_VS, VOLBLUR_FS, \['uSrc', 'uTexel', 'uDepth', 'uProjInfo', 'uRect', 'uCanvas'\]\),/);
   assert.match(a, /c \+= airDecode\(texture\(uVol, wuv\)\.rgb\);   \/\/ VOL1/, 'added at the resolve, display-linear');
-  assert.match(a, /gl\.activeTexture\(gl\.TEXTURE4\); gl\.bindTexture\(gl\.TEXTURE_2D, T\.volOut\.tex\); gl\.uniform1i\(P\.resolve\.uVol, 4\);/, 'the tonemapped image');
+  assert.match(a, /gl\.activeTexture\(gl\.TEXTURE4\); gl\.bindTexture\(gl\.TEXTURE_2D, T\.volOut\.tex\); gl\.uniform1i\(PR\.uVol, 4\);/, 'the tonemapped image (PERF-EXT31: PR, the resolve built for what the frame drew)');
   assert.match(a, /if \(!on\) \{ quad\(P\.box, T\.volOut\); gl\.clearColor\(0, 0, 0, 1\); gl\.clear\(gl\.COLOR_BUFFER_BIT\);/, 'shut: the image the readers take, cleared');
   // the renderer hands the blocks over and the frame's gain and exposure
   const r = rd('src/render/renderer.js');

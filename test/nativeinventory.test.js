@@ -218,7 +218,9 @@ test('U25 / THE ONE CONSTRUCTION SEAM: ONE inventory builder per host', () => {
     // handed the very same object the window would get, and minting it
     // twice would be two identities for one pile. The law is unchanged
     // and is asserted on the hoist instead of on the property.
-    const pileAt = src.indexOf('const _hooks = droppedLootHooks(pile);');
+    // DW-E3: the streaming host's arm names a FISH's identity the same way when the one ray met a fish (a fish is
+    // a DaggerfallLoot) - one hoisted object either way, handed to the window and to quick loot alike.
+    const pileAt = src.search(/const _hooks = (?:_fish \? dwFishLootHooks\(_fish\) : )?droppedLootHooks\(pile\);/);
     assert.ok(pileAt > 0, `${f}: the pile arm no longer names its own identity`);
     const pile = src.slice(pileAt, pileAt + 1100);   // QUICK-LOOT B4: past the decline and its reasoning, to the property itself
     // G5: DaggerfallLoot's identity travels with the pile through the
@@ -504,7 +506,7 @@ test('U47: the window is the guard, not its click method - and F11 no longer goe
   // destroyed the session (AUDIT 17e F41's own failure) and F11 went
   // fullscreen. A list a lane has to remember to extend is what let that
   // happen, so the pin now asks the tree which hosts register a keydown
-  // and holds every one of them to ui/input.js:715-716's "every host
+  // and holds every one of them to ui/input.js:866-867's "every host
   // that registers a keydown calls this FIRST".
   const SCENES = join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'scenes');
   const hosts = readdirSync(SCENES).filter((f) => f.endsWith('.js')
@@ -525,6 +527,6 @@ test('U47: the window is the guard, not its click method - and F11 no longer goe
   const kd = body.slice(body.indexOf("\n  addEventListener('keydown', (e) => {"));
   assert.ok(kd.indexOf('swallowBrowserKey(e);') < kd.indexOf('if (overlay)'),
     'interior.js swallows BEFORE the overlay arm returns');
-  assert.ok(kd.indexOf('swallowBrowserKey(e);') < kd.indexOf("if (actionOf(e, keys) === 'AutoMap')"),   // FIX-F: the registry's key
+  assert.ok(kd.indexOf('swallowBrowserKey(e);') < kd.indexOf("if (actionsOf(e, keys).includes('AutoMap'))"),   // FIX-F: the registry's key; UXB1-S: shared or not
     'interior.js swallows BEFORE the automap arm returns');
 });

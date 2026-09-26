@@ -26,7 +26,7 @@ import { QUESTION_COUNT, NO_CLASS_INDEX, displayQuestion, pickQuestionIndices, a
 const QANIM_STUCK_MIN_MS = 2000;
 const QANIM_STUCK_PAD_MS = 1000;
 import { ADVANTAGE_KEYS, DISADVANTAGE_KEYS, ONLY_ONE_KEYS, MAX_ITEMS, secondaryListFor, advDisAdjustment, cannotAdd, totalAdjust, parseCareerData } from '../systems/specialAdvantages.js';   // U20b
-import { HP_MIN, HP_MAX, HP_DEFAULT, DIFFICULTY_MIN, DIFFICULTY_MAX, FREE_EDIT_MIN, FREE_EDIT_MAX, STAT_DEFAULT, difficultyPoints, availableSkills, buildCustomCareer, classAffinityIndex, repClick, repStep, repPointsToDistribute, HELP_TOPICS } from '../systems/customClass.js';   // U20a
+import { HP_MIN, HP_MAX, HP_DEFAULT, DIFFICULTY_MIN, DIFFICULTY_MAX, FREE_EDIT_MIN, FREE_EDIT_MAX, STAT_DEFAULT, difficultyPoints, availableSkills, buildCustomCareer, classAffinityIndex, repClick, repStep, repPointsToDistribute, HELP_TOPICS, parseCustomClassDoc } from '../systems/customClass.js';   // U20a; UXB1-H: the class document
 import { damageModifier, maxEncumbrance, magicResist, toHitModifier, hitPointsModifier, healingRateModifier } from '../combat/formulas.js';   // U10: the derived block
 import { tagEffect, biographySkillBonuses, digestRepChanges } from '../systems/biography.js';   // S3e
 import { fullName, getNameBank, GENDERS } from '../characters/nameHelper.js';   // U15
@@ -960,6 +960,36 @@ export class ChargenFlow {
     else c.disadvantageAdjust = totalAdjust(c.disadvantages);
   }
 
+  /** UXB1-H (2026-09-25, the UX backlog: "Export/Import class from file/clipboard."): A CLASS DOCUMENT LOADED INTO
+   *  THE BUILDER - the one door, so the view never writes `custom` (systems/customClass.js parseCustomClassDoc has
+   *  put every value through the builder's own laws first). What the windows DERIVE is derived here, never read
+   *  from the file: the freeEdit pool (the zero-sum ledger - the eight at the default 50 are a balanced 400), each
+   *  pick's difficulty and the two adjust totals (UpdateDifficultyAdjustment), and the reputation ledger. The name
+   *  meets the name box's own cap. Any open picker, window or box is closed: the builder shows the class whole. The
+   *  exit gates are untouched - an unbalanced pool or a dagger in the red loads, and Create refuses it as ever.
+   *  Answers the parse's result: `{ ok, skipped }` or `{ ok: false, error }`. */
+  customImport(input) {
+    const c = this.custom;
+    if (!c) return { ok: false, error: 'Open the class builder first.' };
+    const parsed = parseCustomClassDoc(input);
+    if (!parsed.ok) return parsed;
+    const v = parsed.value;
+    c.className = v.name.slice(0, NAME_MAX_CHARACTERS);
+    c.hp = v.hp;
+    c.skills = [...v.skills];
+    c.stats = { ...v.stats };
+    c.statPool = STAT_DEFAULT * STAT_KEYS_ORDER.length - STAT_KEYS_ORDER.reduce((n, k) => n + c.stats[k], 0);
+    c.statCursor = 0;
+    c.reps = { ...v.reps };
+    c.repPoints = repPointsToDistribute(c.reps);
+    c.advantages = v.advantages.map((x) => ({ ...x }));
+    c.disadvantages = v.disadvantages.map((x) => ({ ...x }));
+    c.advantageAdjust = totalAdjust(c.advantages);
+    c.disadvantageAdjust = totalAdjust(c.disadvantages);
+    c.sub = null; c.pickList = null; c.pickPrimary = null; c.pickSlot = null; c.box = null;
+    return { ok: true, skipped: parsed.skipped };
+  }
+
   /** ExitButton_OnMouseClick (:462-465) - CloseWindow, nothing gated. */
   advExit() {
     const c = this.custom;
@@ -1866,7 +1896,7 @@ export class ChargenFlow {
       else if (action === 'minus' || action === 'char:-') this.spendStat(-1);
       // AUDIT 58 (f3/input): + 'char:r'/'char:R', the same root cause
       // as the 'minus' line above - r and R fall inside overlayAction's
-      // typed-character class (ui/input.js:374), so the 'reroll' row
+      // typed-character class (ui/input.js:386), so the 'reroll' row
       // that used to sit in its table was unreachable and only the
       // mouse rect (ui/chargenArt.js:1480) ever reached this. The hint
       // drawn at :2059, 'R reroll', is true again. The bare 'reroll'
@@ -1955,10 +1985,29 @@ export class ChargenFlow {
    *  the selection to it by the time MouseDoubleClick reads it. */
   clickClassRow(idx, now) {
     const wasDouble = this._lastClassClick != null && (now - this._lastClassClick) < DOUBLE_CLICK_DELAY_MS;
-    this.classListIndex = idx;   // MouseClick moves the LIST's selection
+    this._selectClassRow(idx);   // MouseClick moves the LIST's selection
     this._lastClassClick = now;
     if (wasDouble) { this._lastClassClick = null; this.useClass(); }
     return true;
+  }
+
+  /**
+   * DISC24-A (2026-09-24, Quest on Discord: "When left clicking other classes the description stays the same for the
+   * original class that was double clicked previously but the `Play as a <insertClass>` changes and the class name also
+   * change at the top"): THE ONE DOOR THE LIST'S SELECTION MOVES THROUGH WHILE A DESCRIPTION CAN BE OPEN.
+   *
+   * DFU's description is a MODAL DaggerfallMessageBox pushed over the list (CreateCharClassSelect.cs :70-96), so while it
+   * is up the selection under it cannot move - the classic port keeps that (chargenArt's hit test answers only Yes/No
+   * with the box up). The enhanced skin lays the list BESIDE the box, so a row stayed clickable, and a single click moved
+   * `classListIndex` - which the header and "Play as a" read - while `classConfirm`, the text the box was opened with,
+   * stayed the old row's. Worse than a picture: Yes adopts `classListIndex`, so the player got the class on the button,
+   * not the one they had read. So the box BELONGS TO THE ROW IT WAS OPENED ON: moving the selection off that row is
+   * DFU's No (:106-109, the box dismissed, back to the list), and the new row is read the way any row is - a double click,
+   * Return or the Read button. A click on the same row leaves it open.
+   */
+  _selectClassRow(idx) {
+    if (this.classConfirm && idx !== this.classListIndex) this.classConfirm = null;
+    this.classListIndex = idx;
   }
 
   /** DaggerfallClassSelectWindow_OnItemPicked (:70-96): picking a class
@@ -2027,7 +2076,7 @@ export class ChargenFlow {
     // is a second instance.
     if (hit.setStatCursor != null) { this._setStatCursor(hit.setStatCursor); return true; }
     if (hit.setSkillCursor != null) { this.skillCursor = hit.setSkillCursor; this._syncSkillSel(); return true; }
-    if (hit.setClass != null) { this.classListIndex = hit.setClass; return true; }
+    if (hit.setClass != null) { this._selectClassRow(hit.setClass); return true; }   // DISC24-A: the one door
     if (hit.confirmClass) { this.classConfirm = null; this._acceptStandardClass(); return true; }
     if (hit.cancelClass) { this.classConfirm = null; return true; }
     // U18: the method screen's two buttons - the click sets AND closes,

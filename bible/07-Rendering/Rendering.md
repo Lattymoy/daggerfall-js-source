@@ -5,7 +5,11 @@ this section owns renderer specifics.
 
 Current (`src/render/`) - one bullet per module, pinned against the real
 directory by `test/audit18_bible_docs.test.js`:
+- `deepWatersRender.js` - DW-C: Iliac Puddle No More's own passes (jet082's shaders, term for term): the SEAFLOOR (opaque, unlit, both faces - the depth band's sand/mid/deep ramp, the climate's texture and palette, the night's ambient boost, the scene tint while the camera is over the sea, the world fog, and the column's share of the top's alpha carried onto it), the SURFACE's top and underside (the top gone while the fog's presentation is under, the underside only then), and the DISTANCE FOG's sky share - a far-plane triangle, multiply then add, over the pixels no program fogs (the fog itself is `fogGlsl.js`'s `dwWaterFog`, in every world program); `03-World/Deep-Waters.md`
 - `duelWall.js` - DUEL1: the duel ring's holographic wall - a cylinder of light added onto the frame (see-through, no depth written, cut by the ground), a grid and rising bands on the cylinder's own coordinates, fogged as the ground is; drawn for the duellists and every onlooker (net/duelSession.js the ring)
+- `gatePass.js` - WB2: the Oblivion Gate's fire and beacon, one foreign pass on the world host. The MEMBRANE: a vortex of fire masked to the arch's own opening (`world/gateModel.js gateArchProfile`, measured off the built mesh), turned without an angle (no branch cut to seam it), premultiplied so it hides what stands behind it as much as it glows - an ember sealed, a blaze open. The BEACON: a column of red light added onto the frame from over the gate's crown, soft across its width, widening with its distance so it never thins to a hair, fogged but never out (`BEACON_FOG_FLOOR`). Both on the duel wall's law - fixed geometry, placement by uniforms, every rate whole cycles over `GATE_CLOCK_PERIOD`. `tools/gatePassProbe.mjs` compiles, links and draws it in a real WebGL2 context.
+- `gateTelegraph.js` - WB4a: the Burning Court boss's telegraph, one foreign pass on the world host drawn in the dungeon arm (after the court's billboards, before drawFoes' screen quads). One quad over the court's floor and the attack's shape as the fragment's question - a cone that always holds his body, a disc about him or under each target, the lane his charge runs, the nova's ring, the whole floor - dim at the word, filling toward its edge as the wind-up runs, bright at the landing. `telegraphField` is the shader's own reading in JS, held by the pins to `net/gateStrike.js inAttack` at every point of the floor. The duel wall's law: added onto the frame, no depth written, fogged, a polygon offset off the floor it lies on. `tools/gateTelegraphProbe.mjs` compiles, links and draws it over the court in a real WebGL2 context.
+- `gateVeil.js` - WB6c: the step through an Oblivion gate - a vortex of fire over the whole screen, painted per pixel on one triangle on a canvas of its own (`ui/gateVeil.js` holds the canvas, its loop and its sounds): flame arms spiralling into a white-hot eye (log-polar value noise tiled round the circle, so no seam where the angle wraps), pouring inward and turning, embers streaking with them, soot between the arms and a dark throat round the eye. Its inner edge - the FRONT, ragged with tongues of flame - stands where `veilAt` says: closing, from past the corners to past the centre by all its raggedness; shut, the eye breathing; opening, from the centre past the corners. What the fire has not taken is tinted toward the Deadlands' red with the cover. Premultiplied; no pass of the renderer's is touched. `tools/gateVeilProbe.mjs` compiles, links and draws it in a real WebGL2 and steps the real layer through a real page.
 - `lightningBolts.js` - BOLT: a ground strike's channel drawn as ribbons of light, never thinner than a line far away, past the far plane along its own sight line (systems/lightning.js the strike)
 - `renderer.js` - WebGL2, two programs: lit solid geometry (MVP, directional
   light 0.45 + 0.55*diffuse, alpha < 0.5 discard) and Y-locked billboards
@@ -542,6 +546,8 @@ directory by `test/audit18_bible_docs.test.js`:
   in both styles, no fog is the old picture to the bit and each fog mode
   is exactly the terrain's blend (`test/disc20.test.js`).
 - `grassPixelArt.js` - GRASS-PX THE TUFT SHEET: eight 8x16 tufts (GRASS-PX4; 16x32 until 2026-09-22, and the laws are written as fractions of the tuft so the old size still builds through `buildTuftSheet({ w, h })`) built at boot from a seed (one-texel stalks bending as height squared, four tones with one highlight texel, alpha 0 or 255), their coverage mip chain (max alpha per block, never an average, down to 1x1), the pixel style's numbers (8 Hz sway, 24 lean steps, 3x tuft width, 8-step ramp, 4 tint bands) and `pixelGrass()`, the row's word; the shader edits themselves are `GRASSPX_VS_EDITS` / `GRASSPX_FS_EDITS` in labGrass.js.
+- `spoilsGlow.js` - WB5: a fallen boss's spoils at rest, each in a BEAM of its tier's colour rising from a HALO on the floor (Loot Rarity's own colours - the first place a rarity is drawn in the world), a Legendary's and an Artifact's taller and pulsing. One foreign pass drawn beside the Burning Court's telegraph (the same seam), on the duel wall's law: fixed geometry placed by uniforms, added onto the frame, no depth written, fogged.
+- `deadlands.js` - WB6a: the Deadlands round the Burning Court - THE SKY, painted per pixel on one triangle at the far plane (a churning overcast lit from below; Oblivion's VORTEX over the great tower, turning whole and pouring inward; the BEAM up into its eye; black Daedric TOWERS with horns and a crown; three rings of JAGGED RIDGES hazier the further, with falls of fire; seeded LIGHTNING in the deck), and THE SEA, a disc of moving fire (crust plates on molten channels, glowing cracks, a slow pulse) whose rim becomes exactly the sky's horizon, so no edge is ever seen. One foreign pass in the dungeon arm after the court's solid geometry and before its flats (PERF2's law: the sea depth-tested, the sky tested at the far plane and never written); and the court's own light (`courtLighting` - a trilight red above and fire-orange below, the vortex's key light from behind the boss). WB6b: THE AIR'S LIFE (`drawLife`, after the telegraph in the court's pass - one vertex a mote: embers off the sea from past the court's edge and off its braziers, turning with the drift of the air, and ash falling through it; depth-tested and never written, the ash laid over premultiplied and the embers added; the world image's own height sizes the motes, RETRO1's `worldViewportPx` as the bolts read it); a strike LIGHTS THE COURT (`courtLighting(flash)`: the trilight's sky flares and the key swings toward it); `flashOfSlot`, the one answer the sky's flash and the thunder (scenes/deadlandsAir.js) read, on slots whole over the period; and the hosts hand the relay's clock (world.js `deadlandsSeconds`), so it is one moment on every screen. The land and the floor's shards round the court are court draws, not this pass (world/deadlandsLand.js, stood by worldModes' `standDeadlands`).
 - `systems/wind.js` - **WIND1 (2026-09-02) THE WIND IS ITS OWN THING.**
   Mac: "wind should be something different from the weather. Imagine a
   time-lapse, seeing a storm rolling in as the wind kicks up, and the
@@ -805,7 +811,11 @@ directory by `test/audit18_bible_docs.test.js`:
   `RETRO_LUT_MAX_BLOCKS` a frame) and streamed into a texture allocated
   up front, a z-slab at a time (`texStorage3D` + `texSubImage3D`), a
   failed allocation caught through getError and retried when the shift
-  or retro mode changes. See `07-Rendering/Retro-Mode.md`.
+  or retro mode changes. See `07-Rendering/Retro-Mode.md`. PERF-SCALE
+  (2026-09-25): the render scale's image is this pass's too, presented
+  `smooth` (LINEAR, unsnapped, no effect); retro wins. The law of a world
+  drawn smaller and shown is `Renderer._retroBegin`'s - see PERF-SCALE
+  below.
 - `volumetricClouds.js` - VC3 THE VOLUMETRIC CLOUDS: a raymarched slab between
   two altitudes, shaped by the VC2 volumes, lit by the sun (the moon at night)
   with a short light march, driven by the eased weather row, a per-weather
@@ -853,7 +863,225 @@ See `Seasons-Iliac-Bay.md` for SIB1: RosyTheRascal's Seasons of the Iliac Bay mo
 
 `EE9-Surface-Field-Design.md` is the surface field's design - snow that builds, deforms and melts, on the chunker's own grid - written before its code, per the arc's law.
 
+## WISPS-RETURN - THE WIND WISPS ARE STREAKS AGAIN (2026-09-25)
+
+Mac, 2026-09-25: *"I want to return to the original wind wisps before
+our current design."*
+
+- **The design goes back to WIND3's.** "Our current design" was WIND5's
+  flourish (below): each wisp a 40-segment ribbon along an arched or S
+  stroke that ended in a tightening curl, swelling and thinning like a
+  pen, soft across like ink, drawn on and off along its path. "The
+  original" is the streak WIND3 shipped and WIND4 thinned: one thin quad
+  stretched along the wind's velocity, faced to the eye, faint at its
+  tail and brightest toward its head, fading in and out whole on its own
+  clock. `render/windWisps.js` draws that streak again - WIND3's two
+  stages, its six-corner quad and its streak length (`WISP_LOOK.len`
+  1.6 m plus up to 2.4, times a half plus the strength, where WIND5 took
+  2.6 plus up to 2.0 to hold a curl).
+- **WIND5's swirl is retired whole, not kept beside it.** Mac asked for
+  the design back, not for a choice, so there is one design in one
+  program, as WIND3 had: `swirl()`, the pen, the ink, the draw-on,
+  `ribbon()`, the `uCurl` uniform, the looks' `curl` and the nine
+  WISP_SEGMENTS to WISP_DRAW_TAIL constants are gone from the tree.
+- **Kept, because they were not the design.** DISC17-A's two numbers were
+  Mac's asks about the amount and the visibility, made while the
+  flourish stood but not about its shape: `WISP_MAX` 120 at a gale and
+  10 in a calm (WIND4's streaks were 650 and 52), and `WISP_LOOK`'s alpha
+  0.20/0.24, twice WIND3's. A streak at its darkest is therefore 0.44 in
+  a gale and 0.20 in a calm - WIND4's were 0.22 and 0.10; the flourish's
+  ink peaked at 0.70 on a thinner, soft-edged line. The later fixes stay
+  too: AUDIT-VC7 (G6)'s whole clock (the wobble and the life's rate in
+  whole cycles over `WISP_CLOCK_PERIOD`, the clock handed wrapped), AUDIT
+  68's exact wrap (the gust in whole 1/`WISP_GUST_DIV` steps, the travel
+  wrapped at the box times `WISP_GUST_DIV`) and its one compile and link
+  (`buildProgram`). The sandstorm's grains were always the straight quad
+  (WIND5 gave them a curl of 0) and draw exactly as they did.
+- **Pinned** by `test/wispsreturn.test.js` (3, each failing on the
+  base), on the real renderer's uploads run through both shaders' own
+  main()s (`test/wispShade.mjs`): a wisp's whole length on one line down
+  a diagonal wind at its look's length for the strength, one width end
+  to end, square to the wind and to the eye's ray, in the wind's look and
+  the sand's; WIND3's fade along it, whole across its width, times the
+  look's alpha and the life; one six-corner draw a wisp, every declared
+  uniform uploaded and nothing else, the flourish's exports gone.
+  `disc17.test.js` reads DISC17-A's darkest through the same pipeline;
+  `wind3_windworld.test.js` has its streak and clock lines back and holds
+  AUDIT-VC7's clock and the count's ramp, moved from the retired
+  `wind5_swirls.test.js`; `weather2d_sandstorm.test.js` holds the looks
+  without a curl. Mutants: `tools/mutants/wispsreturn.json` (13, all
+  dead); `wind5.json` retired; `auditvc7.json`'s six swirl records
+  retired with the code they mutated and its seven other wisp records
+  re-aimed at the suites that hold their laws now. Drawn on a real GPU by
+  `tools/wispStreakProbe.mjs` (WIND5's probe, renamed, its checks the
+  streak's: one quad a wisp, ink at a gale and less in a calm, moving,
+  and running along the wind). On SwiftShader, 7/7: a gale's ink runs
+  34.6 px along the wind to 1.5 px up it. A calm's ten wisps in the 90 m
+  box are often out of one view at one moment - over four headings and
+  three moments they laid 482 px against a gale's 9747 - so if a calm
+  should read at a glance, `WISP_FLOOR` is the dial. Not seen in the game
+  here (no game data in the container).
+
+## PERF-SCALE - A RENDER SCALE, AND THE COUNTER NAMES THE GPU (2026-09-25)
+
+Two players, relayed by Mac: "One user is reporting fps issues in the
+exterior but fine in the interior ... GPU is NVIDIA GeForce RTX 4060 Ti",
+and "me too my friend.. don't know why. I got a RX6600". Mac: "It has
+nothing to do with our updates" - FPS1 (2026-09-11) had already heard
+"the outside still has optimization issues".
+
+**What the two reports share is the frame's SIZE, not the card.** A 4060
+Ti is no weak GPU. `Renderer.beginFrame` sizes the canvas at its CSS size
+(`clientWidth` x `clientHeight`) and every world pass - the opaque world,
+the sky and its march, the water, the air's AO, bloom and shafts, the
+flats, the Morrowind and Eye Of The Beholder bodies - ran at that size
+with no cap and no dial. A 1440p window is 1.8 times a 1080p one's
+pixels, a 4K or ultrawide one 2 to 4 times, and so is a browser zoomed
+below 100% or a driver's DSR/VSR; the exterior is where the per-pixel
+work is, the interior is small and dark. And nothing on screen said
+which GPU the browser drew on - a laptop's browser on its integrated
+chip, or on SwiftShader, reads exactly like "fps issues in the exterior
+but fine in the interior".
+
+**THE LAW: ONE HOME FOR A WORLD DRAWN SMALLER AND SHOWN.** RETRO1's image
+path already drew the world into a small image and presented it
+(`Renderer._retroBegin`, `_presentRetroFrame`, `render/retroPass.js`).
+PERF-SCALE generalises it rather than writing a second copy:
+
+- The frame's world image is `kind: 'retro'` or `kind: 'scale'`
+  (`Renderer.retroFrame.kind`). With retro off and the scale below 1 the
+  image is the host's world rect in canvas pixels (the whole canvas when
+  it set none; a docked bar's strip when it did) x the scale, rounded
+  (`_scaledImage`). Every world pass draws into it - on the classic set
+  straight into the image, under the Enhanced Lighting lane into the
+  lane's frame at the image's size (its passes at that size too), which
+  resolves into the image. The first screen quad, the first-person
+  overlay, a panel or the next frame presents it, as a retro image.
+- **The present is LINEAR** (`RetroPass.present({ smooth: true })`):
+  sampled at the pixel's own spot, no 640x400 presentation snap, no
+  effect, the image's filter switched to LINEAR where it is sampled and
+  back to Point for a retro frame (only when the kind changes). An image
+  over the whole canvas writes every pixel and takes no clear; one over a
+  docked strip is drawn over a black canvas, as retro's.
+- **RETRO WINS.** The retro config is asked first; a retro frame never
+  reads the scale, and its 320x200 / 640x400 image is the world's.
+  Retro off with the scale on hands the world to the scale (the palette's
+  LUT is freed, as retro off always freed it).
+- **100% IS TODAY'S FRAME.** No image, no framebuffer, no pass, no
+  present: at a scale of 1 the frame's GL calls are the frame with no
+  scale source, call for call (`test/perfscale.test.js` S1). A session
+  that tried a smaller scale gives its memory back: the world frame that
+  draws without an image (the scale back at 100%, or retro off) frees the
+  image and its depth (`RetroPass.dropTarget`) and the lane's image-sized
+  frame (`AirPass.dropFrame('retro')` on the renderer's KEPT pass, so the
+  frame goes even when the lane was turned off in between), after the owed
+  present (`Renderer._dropWorldImage`; S7). The lane's canvas-sized frame is kept
+  under a scale frame - a menu, a map or a video over the world draws
+  into it.
+- **Screen-space kernels are the image's.** The bloom's blur and the
+  bolts' minimum width are sized in the image's pixels (the AO's radius is
+  in world units and moves with nothing), as in any window of the image's
+  size: X% of a canvas looks like a window X% as large at 100%,
+  stretched. At 50% the glow spreads twice as far on screen
+  as at 100% on the same canvas - exactly as a 1080p window's glow already
+  spread twice a 4K one's. Sizing them in canvas pixels would put a 2-tap
+  gap into a quarter-size bloom and a bolt under one image pixel.
+- **The UI is not scaled.** The HUD, the menus, the windows and the
+  first-person overlay are the 2D pass's, drawn after the present on the
+  canvas at its own size. Everything that maps a canvas pixel into the
+  world already maps through the host's rect, which the frame keeps
+  (`worldViewportRect` - the tap ray, the crosshair, the muzzle, the name
+  labels), and the passes that restore the world viewport restore the
+  image's (`worldViewportPx`: the sky, the clouds' map, the bolts' pixel
+  width, the lantern grid's rect). A sprite sized in canvas pixels is
+  sized in the image's (`retroImageSpan`, AUDIT RETRO1 C6's law, now for
+  either kind). The screenshot and the save thumbnail read the canvas
+  after the present.
+- **The setting** is the Features home's Sight row "Render scale"
+  (`systems/features.js` `render-scale`: 100%, 85%, 75%, 67%, 50%; 100%
+  the default; the player's own online - it is this screen's pixels).
+  `systems/renderScale.js` `renderScaleSetting` reads it (and a probe's
+  `?renderscale=` door, once a page) and is the renderer's source
+  (`setRenderScaleSource`, wired by `main.js` beside `setRetroSource`),
+  asked once per WORLD frame, so the tile's press lands on the next. The
+  row has no Off, and its `classic` is 100%: Daggerfall's own frame is the
+  whole window (DFU's resolution is the browser's canvas here), so FT18's
+  All off takes it there and Restore brings the player's tier back.
+
+**THE COUNTER NAMES THE GPU AND THE PIXELS.** `gpuNameOf` reads
+`WEBGL_debug_renderer_info`'s `UNMASKED_RENDERER_WEBGL` where the browser
+hands it out, `gl.RENDERER` otherwise (a masked browser answers a generic
+name there), ONCE, in the Renderer's constructor (`Renderer.gpuName`).
+`Renderer.frameInfo` is the frame's size: the world image, the canvas,
+`devicePixelRatio` and the scale ("retro" under retro mode). The FPS
+counter (`ui/fpsCounter.js`) shows two more lines while it is on -
+`gpu <name>` and `world WxH  canvas WxH  dpr N  scale N%` - read once a
+second, never while hidden; `window.__fpsStats` adds `gpu`, `world`,
+`canvas`, `dpr`, `scale` and `retro` when a probe asks. So one screenshot
+of the counter answers "which GPU" and "how many pixels". The box is
+capped at the window less its margins, and a long line wraps inside it
+(the GPU name is shown whole; `tools/fpsCounterProbe.mjs` measures it).
+
+**Not done, and why.** The canvas is still sized in CSS pixels, not
+device pixels - the port never rendered at `devicePixelRatio`, so a HiDPI
+screen was already spared 1.5-2x; the size line shows the ratio so a
+report can say so. No automatic scale: the dial is the player's, and a
+frame-time governor would move the picture under them. Ledger A row
+PERF-SCALE. Pinned: `test/perfscale.test.js` (10); `tools/mutants/perfscale.json`
+(47, all dead). Record: `01-Overview/Field-Bugs-2026-09-25.md`.
+
+**The review (2026-09-25).** Seven findings; six fixed, one recorded. A
+return to 100% (or retro off) held the image and the lane's image-sized
+frame for the session (36 MiB classic, 89 MiB under the lane, on a 4K
+canvas at 75%) - freed now, above. `renderScaleOf` matched a tier by its
+NUMBER while the Features tile matches by its STRING, so a stored
+"0.750" ran at 75% under a tile showing 100% - it matches by the string
+now. The warm had its own copy of "the scale is on" and built the present
+for a source answering 0 - both ask `Renderer._scaleOn` now. The
+frameInfo's host-rect arm, the probe's `retro`, the counter's
+"gpu unknown" and the dpr's rounding were unpinned - pinned. A paraphrase
+stood in quotation marks as the report - the report is quoted as
+written. Recorded, not changed: the screen-space kernels (above).
+
+**AUDIT BRANCH-0925 (2026-09-25, the pre-merge audit, Mac: "Audit before we
+merge").** Three findings, all fixed and pinned, each pin failing before
+its fix:
+
+- **PS-A1: All off left the render scale where it was.** The row had tiers
+  and no Off and no `classic`, so FT18's `classicSegment` answered -1 and All
+  off - "Every mod and enhancement goes to Off, or to Daggerfall's own where
+  a row has no Off" - skipped it: after All off the world was still drawn at
+  50% and stretched. The row's `classic` is 100% now (above, The setting),
+  and `test/ft18_features.test.js`'s All off test drives a 50% tile to 100%
+  and back on Restore, the renderer's source reading both.
+- **PS-A2: the lane's image-sized frame survived a lane turned off.** The
+  review's drop asked the INSTALLED air pass (`Renderer._air`), which is
+  null while the lane or the air is off, while the pass itself is kept
+  (`_airPass`, built once) with its frames. Enhanced Lighting on at 75%,
+  then off, then 100%: the 1440x810 frame (a colour image, two depths,
+  three framebuffers) was never freed, even after the lane came back, since
+  `_retroFrame` was null from then on. The drop asks the kept pass now; S7
+  walks it.
+- **PS-A4: the counter's box ran off a phone.** `white-space:pre` and no
+  width cap on a box anchored top-right: the report's own ANGLE name
+  ("ANGLE (NVIDIA, NVIDIA GeForce RTX 4060 Ti (0x00002803) Direct3D11
+  vs_5_0 ps_5_0, D3D11)") made it 728px wide - nine tenths of an 800px
+  window, 346px off a 390px phone's left edge, cutting off the "gpu" line's
+  start. Even the size line alone overflowed a phone. Capped and wrapping
+  now (S6 pins the style; `tools/fpsCounterProbe.mjs` measures twelve
+  window and GPU pairs in Chromium - four ran off the edge before, none
+  after).
+
+Also: `01-Overview/Field-Bugs-2026-09-25.md` sent players to an "Enhanced
+pane" that FT12 removed - the counter's row is Settings > Interface (or
+`?fps`).
+
 ## WIND5 - THE WIND'S FLOURISHES (2026-09-23)
+
+**Retired 2026-09-25 by WISPS-RETURN (above).** The design below is no
+longer in the tree; this is the record of what was drawn. Its suite,
+mutant list and probe went with it or were re-aimed there, and
+DISC17-A's count and alpha stand.
 
 Mac, with a sheet of calligraphic wind flourishes: "lets reduce the
 amount of wind streaks and change their design to be more swirly like
@@ -884,10 +1112,10 @@ the image".
   before. Its alpha is the look's own (doubled by DISC17-A).
 - **The sand keeps its streak.** A look carries `curl`; the sandstorm's
   is 0, so its 7000 grains are one straight quad each, as they were.
-- Pinned by `test/wind5_swirls.test.js` (the path mirrored term for term:
+- Pinned by `test/wind5_swirls.test.js` (RETIRED by WISPS-RETURN; the path mirrored term for term:
   continuous and level at the join, heading down the wind on both sides,
-  the curl's turns and tightening measured; `tools/mutants/wind5.json`
-  19/19 dead), and drawn on a real GPU by `tools/wind5SwirlProbe.mjs`
+  the curl's turns and tightening measured; `tools/mutants/wind5.json` (RETIRED)
+  19/19 dead), and drawn on a real GPU by `tools/wind5SwirlProbe.mjs` (RETIRED: renamed `tools/wispStreakProbe.mjs`)
   (6/6: compiles and links, the ribbon's vertex count drawn, a gale's
   ink, a calm's lighter, the sand's one quad, the flourishes moving;
   `--bold` for a picture of the shape).

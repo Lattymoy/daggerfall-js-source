@@ -322,7 +322,7 @@ test('ES1c clouds and dither: two decks lit by the sun, and a triangular dither 
   // one, and where.)
   assert.match(fs, /vec3 out3 = mix\(clamp\(color, 0\.0, 1\.0\), uFogColor, uFogMix\);/);
   assert.match(fs, /out3 \+= \(ign - 0\.5\) \/ 255\.0;/, 'a sub-quantisation step, never more');
-  assert.match(fs, /outColor = vec4\(out3, 1\.0\);/);
+  assert.match(fs, /outColor = vec4\(dreadGrade\(out3, uDread\), 1\.0\);/);   // EVENT1: the live event's grade, out3 itself without one
 });
 
 // ── ES1d: THE CLOUD IN FRONT OF THE SUN ───────────────────────────

@@ -1,0 +1,184 @@
+[
+  {
+    "name": "AUDWB-A2-no-grant",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "      for (const piece of list) take(piece);\n      say(SPOILS_TEXT.granted);",
+    "new": "      say(SPOILS_TEXT.granted);",
+    "tests": ["test/auditwb_spoils.test.js"]
+  },
+  {
+    "name": "AUDWB-A2-a-grant-twice",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "    grant({ day, seed, level, acct = '' }) {\n      if (spentOn(day, acct)) return false;",
+    "new": "    grant({ day, seed, level, acct = '' }) {\n      if (false) return false;",
+    "tests": ["test/auditwb_spoils.test.js"]
+  },
+  {
+    "name": "AUDWB-A2-a-grant-unrecorded",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "      const list = spoilsList(seed >>> 0, Math.max(1, level | 0));\n      spend(day, acct, list);\n      for (const piece of list) take(piece);",
+    "new": "      const list = spoilsList(seed >>> 0, Math.max(1, level | 0));\n      for (const piece of list) take(piece);",
+    "tests": ["test/auditwb_spoils.test.js"]
+  },
+  {
+    "name": "AUDWB-A2-the-receipt-not-granted",
+    "file": "src/scenes/world.js",
+    "old": "    onReceipt: (r) => { gateClaims?.add(r); grantSpoilsOutside(r); },",
+    "new": "    onReceipt: (r) => { gateClaims?.add(r); },",
+    "tests": ["test/auditwb_spoils.test.js"]
+  },
+  {
+    "name": "AUDWB-A2-granted-in-its-court",
+    "file": "src/scenes/world.js",
+    "old": "    if (!c || !spoilsPool || modes?.gateArenaDay?.() === c.d) return;",
+    "new": "    if (!c || !spoilsPool) return;",
+    "tests": ["test/auditwb_spoils.test.js"]
+  },
+  {
+    "name": "AUDWB-A9-spent-by-the-day-alone",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "export const spentKey = (day, acct) => `${day}:${acct ?? ''}`;",
+    "new": "export const spentKey = (day, acct) => `${day}:`;",
+    "tests": ["test/auditwb_spoils.test.js"]
+  },
+  {
+    "name": "AUDWB-A9-the-old-day-forgotten",
+    "file": "src/scenes/spoilsPool.js",
+    "old": " || kept.includes(spentKey(day, '*'))",
+    "new": "",
+    "tests": ["test/auditwb_spoils.test.js"]
+  },
+  {
+    "name": "AUDWB-A9-the-old-day-dropped-in-the-carry",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "Number.isSafeInteger(kept) ? [spentKey(kept, '*')] : []",
+    "new": "[]",
+    "tests": ["test/auditwb_spoils.test.js"]
+  },
+  {
+    "name": "AUDWB-A9-the-session-forgets",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "    if (spentHere.has(spentKey(day, acct))) return true;",
+    "new": "",
+    "tests": ["test/auditwb_spoils.test.js"]
+  },
+  {
+    "name": "AUDWB-A9-the-burst-by-the-day-alone",
+    "file": "src/scenes/gateCourt.js",
+    "old": "at, bearing, acct: claims.s });",
+    "new": "at, bearing });",
+    "tests": ["test/auditwb_spoils.test.js"]
+  },
+  {
+    "name": "AUDWB-A7-one-slot",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "    keep(SPOILS_STORE_KEY, [...recs, { day, at: wall(), who: w, pieces: list }].slice(-SPOILS_RECORDS_MAX));",
+    "new": "    keep(SPOILS_STORE_KEY, [{ day, at: wall(), who: w, pieces: list }]);",
+    "tests": ["test/auditwb_spoils.test.js"]
+  },
+  {
+    "name": "AUDWB-A7-unbounded",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "    keep(SPOILS_STORE_KEY, [...recs, { day, at: wall(), who: w, pieces: list }].slice(-SPOILS_RECORDS_MAX));",
+    "new": "    keep(SPOILS_STORE_KEY, [...recs, { day, at: wall(), who: w, pieces: list }]);",
+    "tests": ["test/auditwb_spoils.test.js"]
+  },
+  {
+    "name": "AUDWB-A7-anothers-record-dropped",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "    if (rec.who != null && rec.who !== who) { left.push(rec); continue; }   // another character's waits for them",
+    "new": "    if (rec.who != null && rec.who !== who) continue;",
+    "tests": ["test/auditwb_spoils.test.js"]
+  },
+  {
+    "name": "AUDWB-A7-a-saved-record-kept",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "    if (savedSince(infos, rec.who ?? who, rec.at)) continue;   // a save since holds them: it goes",
+    "new": "    if (savedSince(infos, rec.who ?? who, rec.at)) { left.push(rec); continue; }",
+    "tests": ["test/auditwb_spoils.test.js"]
+  },
+  {
+    "name": "AUDWB-A6-no-memory",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "      catch { mem.set(k, JSON.parse(JSON.stringify(v ?? null))); }",
+    "new": "      catch { /* lost */ }",
+    "tests": ["test/auditwb_spoils.test.js"]
+  },
+  {
+    "name": "AUDWB-A6-memory-over-a-landed-write",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "storage.setItem(k, JSON.stringify(v)); mem.delete(k); }",
+    "new": "storage.setItem(k, JSON.stringify(v)); }",
+    "tests": ["test/auditwb_spoils.test.js"]
+  },
+  {
+    "name": "AUDWB-A6-the-queue-with-no-memory",
+    "file": "src/net/gateClaims.js",
+    "old": "    return (Array.isArray(v) ? v : v === undefined ? memory : []).filter((r) => live(r));",
+    "new": "    return (Array.isArray(v) ? v : []).filter((r) => live(r));",
+    "tests": ["test/auditwb_spoils.test.js"]
+  },
+  {
+    "name": "AUDWB-A6-two-stores",
+    "file": "src/scenes/world.js",
+    "old": "    try { if (recoverSpoils(_spoilsStore, takeSpoil,",
+    "new": "    try { if (recoverSpoils(spoilsStore(appStorage()), takeSpoil,",
+    "tests": ["test/auditwb_spoils.test.js"]
+  },
+  {
+    "name": "AUDWB-A5-every-refusal-let-go",
+    "file": "src/net/gateClaims.js",
+    "old": "  return answer?.error === 'receipt' && !GATE_CLAIM_MENDABLE.includes(answer.why) ? 'done' : 'keep';",
+    "new": "  return answer?.error === 'receipt' ? 'done' : 'keep';",
+    "tests": ["test/auditwb_spoils.test.js", "test/wb5b_gate_claim.test.js"]
+  },
+  {
+    "name": "AUDWB-A5-the-rung-dropped-by-the-client",
+    "file": "src/net/accountClient.js",
+    "old": "...(typeof data?.why === 'string' ? { why: data.why } : {}), status: res.status };",
+    "new": "status: res.status };",
+    "tests": ["test/auditwb_spoils.test.js"]
+  },
+  {
+    "name": "AUDWB-A5-the-rung-dropped-by-the-route",
+    "file": "server-account/src/index.js",
+    "old": "        if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, ",
+    "new": "        if (r.error) return json({ error: r.error }, ",
+    "tests": ["test/auditwb_spoils.test.js", "test/wb5b_gate_claim.test.js"]
+  },
+  {
+    "name": "AUDWB-A9-anothers-offered",
+    "file": "src/net/gateClaims.js",
+    "old": "        if (!mine || live(r)?.s !== mine) continue;",
+    "new": "        if (!mine) continue;",
+    "tests": ["test/auditwb_spoils.test.js"]
+  },
+  {
+    "name": "AUDWB-A9-anothers-let-go",
+    "file": "src/net/gateClaims.js",
+    "old": "  return answer?.error === 'receipt' && !GATE_CLAIM_MENDABLE.includes(answer.why) ? 'done' : 'keep';",
+    "new": "  return (answer?.error === 'receipt' && !GATE_CLAIM_MENDABLE.includes(answer.why)) || answer?.error === 'not-yours' ? 'done' : 'keep';",
+    "tests": ["test/auditwb_spoils.test.js", "test/wb5b_gate_claim.test.js"]
+  },
+  {
+    "name": "AUDWB-A9-one-a-day-for-everyone",
+    "file": "src/net/gateClaims.js",
+    "old": "return k === r || (o?.d === c.d && o?.s === c.s); })",
+    "new": "return k === r || o?.d === c.d; })",
+    "tests": ["test/auditwb_spoils.test.js"]
+  },
+  {
+    "name": "AUDWB-A9-a-sign-in-waits-for-the-clock",
+    "file": "src/net/gateClaims.js",
+    "old": "      if (busy || (!signedIn && nowMs() - lastAt < GATE_CLAIM_RETRY_MS)) return false;",
+    "new": "      if (busy || nowMs() - lastAt < GATE_CLAIM_RETRY_MS) return false;",
+    "tests": ["test/auditwb_spoils.test.js"]
+  },
+  {
+    "name": "AUDWB-A9-me-nobody",
+    "file": "src/net/accountClient.js",
+    "old": "    me: () => storedSession(storage)?.id ?? null,",
+    "new": "    me: () => null,",
+    "tests": ["test/auditwb_spoils.test.js"]
+  }
+]

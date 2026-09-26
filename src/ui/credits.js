@@ -53,6 +53,16 @@ export const CREDITS = Object.freeze({
       vendor: Object.freeze(['raum-book']),
       link: 'https://github.com/Lattymoy/project-raum',
     }),
+    Object.freeze({
+      title: 'Daggerfall class skins',
+      // SKIN2: an art pack, not a mod (no switch, so no Features row) - Mac's ExistingClasses archive. It names no author for the pack (one folder
+      // names Kamer, for the bounty hunter), so the screen says so rather than crediting a guess; the record is open in
+      // vendor/class-skins/README.md and the registry row.
+      author: 'Unnamed (ExistingClasses)',
+      what: 'Daggerfall\u2019s own classes to wear in third person (SKIN2): the acrobat, assassin, burglar, bounty hunter, dark acolyte, Dark Brotherhood, healer, monk, nightblade, pirate and sorcerer, most in both sexes, and the vanilla adventurer - twenty redrawn sheets, chosen on your profile\u2019s Skin card beside Eye of the Beholder\u2019s sets.',
+      terms: 'Carried by the artists\u2019 permission, on Mac\u2019s word - the archive states no licence. The 1,683 pictures vendored as shipped (their names mapped to the archive\u2019s in class-skins.files.json); see vendor/class-skins/README.md for the open permission record.',
+      vendor: Object.freeze(['class-skins']),
+    }),
   ]),
   mods: Object.freeze([
     Object.freeze({
@@ -305,6 +315,48 @@ export const CREDITS = Object.freeze({
       contact: 'demifiend000, through the Nexus page (daggerfallunity mod 1374)',
       vendor: Object.freeze(['horse-cart-and-cargo']),
       link: 'https://www.nexusmods.com/daggerfallunity/mods/1374',
+    }),
+    Object.freeze({
+      title: 'Aquatic Sprites',
+      version: '1.0',
+      author: 'Cliffworms',
+      what: 'The underwater sprites Daggerfall ships and never places - weed, coral and shells - set into three of its flooded dungeon blocks, 119 of them, exactly where the author put them (AS1).',
+      terms: 'Distributed under the author’s own terms, which ask only for credit: “The mod may be distributed/translated without my authorization as long as I am credited as the author.” The author’s edits are vendored; the blocks are rebuilt from your own game files - see vendor/aquatic-sprites/README.md for the permission record.',
+      contact: 'Cliffworms, through the Nexus page (daggerfallunity mod 276)',
+      vendor: Object.freeze(['aquatic-sprites']),
+      link: 'https://www.nexusmods.com/daggerfallunity/mods/276',
+    }),
+    Object.freeze({
+      title: 'Detailed Ships',
+      version: '1.0.0',
+      author: 'Cliffworms',
+      what: 'The two ships you can own, revamped inside and out (DS1): rigging, crates and barrels, tenders, rudders and railings on deck; your quarters, the crew’s, a kitchen, a cargo hold, an armory and a shrine to Kynareth below, with sailors to talk to. The Kynareth statue is King of Worms’ and Zoran’s, as the author’s readme credits it; the pieces the mod borrows from Ninelan’s Daggerfall Expanded Textures are the port’s own stand-ins.',
+      terms: 'Distributed under the author’s own terms, which ask only for credit: “The mod may be distributed/translated without my authorization as long as I am credited as the author.” The author’s edits and drawings are vendored; the ships and the classic pictures are rebuilt from your own game files - see vendor/detailed-ships/README.md for the permission record.',
+      contact: 'Cliffworms, through the Nexus page (daggerfallunity mod 1080)',
+      vendor: Object.freeze(['detailed-ships']),
+      link: 'https://www.nexusmods.com/daggerfallunity/mods/1080',
+    }),
+    // WA1: Kamer's third - after the mill and the wilderness, which the CR1
+    // gate finds first by his name.
+    Object.freeze({
+      title: 'Warm Ashes - Ships',
+      version: '1.1',
+      author: 'Kamer',
+      what: 'Encounters on ships and ocean fast travel (WA1): a voyage by ship across the sea can be ambushed by pirates - you are put on your ship\u2019s deck with your crew, a ship lent if you own none, the raiders\u2019 vessels standing off - and once they are beaten you are set ashore where you were bound. His four quests and six ship-block variants, and his quest action, ported 1:1 off the mod\u2019s compiled script.',
+      terms: 'Ported 1:1 from the shipped bundle - the quests verbatim, the ship blocks as his edit over your own game files, the script read off its IL - see vendor/warm-ashes-ships/README.md for the permission record.',
+      contact: 'DFU Discord',
+      vendor: Object.freeze(['warm-ashes-ships']),
+      link: 'https://www.nexusmods.com/daggerfallunity/mods/985',
+    }),
+    Object.freeze({
+      title: 'Iliac Puddle No More',
+      version: '1.2.2',
+      author: 'jet082',
+      what: 'The Iliac Puddle made the Iliac Bay (DW-A to DW-D): the sea carved out under its water, a seafloor falling away from every coast to as deep as 250 metres, a surface you see from above and below, and open-water swimming - diving, surfacing, a stroke for a burst of speed, a shore to climb out onto and your breath to watch - with the deep\u2019s own fog and light. Ported 1:1 off the mod\u2019s compiled assembly.',
+      terms: 'Ported 1:1 from the shipped bundle, read off its compiled assembly; the coastline it bakes from Daggerfall\u2019s own files is rebuilt from yours - see vendor/iliac-puddle-no-more/README.md for the permission record.',
+      contact: 'jet082, through the Nexus page (daggerfallunity mod 1304)',
+      vendor: Object.freeze(['iliac-puddle-no-more']),
+      link: 'https://www.nexusmods.com/daggerfallunity/mods/1304',
     }),
   ]),
 });

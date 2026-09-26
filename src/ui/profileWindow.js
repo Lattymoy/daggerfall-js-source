@@ -28,6 +28,7 @@ import { itemLongName } from '../systems/itemInfo.js';
 import { raceDisplayName } from '../systems/talkSession.js';
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 import { duelRecordText } from '../net/duelRecord.js';   // DUEL1: the duelling record's words, the account card's own
+import { renownText } from '../net/renown.js';   // RENOWN1: Renown, left of the name
 
 export const PROFILE_STYLE_ID = 'dagger-profile-style';
 
@@ -95,13 +96,31 @@ export function profileDuelLine(record) {
   const t = duelRecordText(record);
   return t ? `Duels: ${t}` : null;
 }
+/** WB5b: their gates closed, off the same record - said only once there is one to say (a stranger's none is not news). */
+export function profileGateLine(record) {
+  const n = record && typeof record === 'object' ? record.gates?.closed : null;
+  return Number.isSafeInteger(n) && n > 0 ? `Gates closed: ${n}` : null;
+}
+/** AUDIT RENOWN1 UI-3: a view with the peer's Renown as the session knows it NOW - the level rises on a renown frame
+ *  while the card stands open, and the card showed the level it was opened with. A level the session does not know
+ *  leaves the view's own. */
+export function profileRenown(v, lv) {
+  const text = renownText(lv);
+  if (!v || !text || v.level === text) return v;
+  return { ...v, level: text, levelTitle: `Renown ${lv}` };
+}
 export function profileView({ name = null, peer = null, look = null, card = null, state = 'asking', duel = null, record = null } = {}) {
   const who = (typeof name === 'string' && name) ? name : 'Someone';
   const worn = card?.look ?? look ?? null;
   const race = typeof worn?.race === 'string' ? raceDisplayName(worn.race) : null;
   const klass = typeof worn?.class === 'string' ? worn.class : null;
+  // RENOWN1 (Mac: "having their level appear on the left side of character name and ... ingame profile"): the level the
+  // relay stamped off their signed token - never the card's own word (the card's "Level" is their Daggerfall level)
+  const lv = Number.isSafeInteger(peer?.lv) ? peer.lv : null;
   return {
     name: who,
+    level: renownText(lv),
+    levelTitle: renownText(lv) ? `Renown ${lv}` : null,
     title: titleBadge(peer),
     glyphs: glyphBadges(peer),
     line: [card ? `Level ${card.level}` : null, race, klass].filter(Boolean).join(' '),
@@ -116,6 +135,7 @@ export function profileView({ name = null, peer = null, look = null, card = null
     // service's count, read by the account the relay stamped on their card (net/duelRecord.js), never the card's word
     duel: duel && typeof duel.label === 'string' ? { label: duel.label, enabled: !!duel.enabled, why: duel.enabled ? null : (duel.why ?? null) } : null,
     duels: profileDuelLine(record),
+    gates: profileGateLine(record),
   };
 }
 
@@ -135,6 +155,10 @@ ${PIXELIFY_FIVE_FACE}
 .dfprofile-title { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; line-height: 1.4; }
 .dfprofile-name { display: inline-flex; align-items: center; gap: 6px; font-size: 19px; line-height: 1.3; overflow-wrap: anywhere; }
 .dfprofile-glyph { width: 16px; height: 16px; flex: none; }
+.dfprofile-renown { flex: none; font-size: 13px; line-height: 1.3; padding: 1px 5px; border-radius: 2px; min-width: 1.4em;
+  text-align: center; font-variant-numeric: tabular-nums; color: #f2c46b;
+  background: rgba(242, 196, 107, .1); border: 1px solid rgba(242, 196, 107, .8); }
+.dfprofile-renown:empty { display: none; }
 .dfprofile-line { font-size: 13px; color: var(--dim, #8b8578); line-height: 1.4; }
 .dfprofile-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: 14px; }
 .dfprofile-h { font-size: 11px; color: var(--dim, #8b8578); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 4px; }
@@ -196,11 +220,13 @@ export function createProfileWindow({ canOpen = () => true, onOpen = null, onClo
     if (v.title) { const t = el('div', 'dfprofile-title', v.title.text); t.style.color = cssRgba(v.title.rgba) ?? ''; head.append(t); }
     const nm = el('div', 'dfprofile-name');
     nm.id = 'dfprofile-name-node';
+    if (v.level) { const lv = el('span', 'dfprofile-renown', v.level); if (v.levelTitle) lv.title = v.levelTitle; nm.append(lv); }   // RENOWN1: left of the name
     nm.append(el('span', 'dfprofile-nametext', v.name));
     for (const g of v.glyphs) { const svg = glyphSvgNode(doc, g, 'dfprofile-glyph'); if (!svg) break; nm.append(svg); }
     head.append(nm);
     if (v.line) head.append(el('div', 'dfprofile-line', v.line));
     if (v.duels) head.append(el('div', 'dfprofile-line dfprofile-duels', v.duels));   // DUEL1: their duelling record
+    if (v.gates) head.append(el('div', 'dfprofile-line dfprofile-gates', v.gates));   // WB5b: the gates they closed
     card.append(head);
     const body = el('div', 'dfprofile-body');
     const sheet = el('div', 'dfprofile-sheet');

@@ -133,6 +133,7 @@ export function readTorchSettings(read = () => modSettingsOf(HANDHELD_TORCHES_VE
     lastLight: !!s['Handling.RememberLastLightSource'], onStow: s['Handling.OnStow'] | 0, onPick: s['Handling.OnPick'] | 0,
     stowOnSpellcasting: !!s['Handling.StowWhenSpellcasting'], stowOnClimbing: !!s['Handling.StowWhenClimbing'], stowOnSwimming: !!s['Handling.StowWhenSwimming'],
     twoHandedRelaxed: !!s['Handling.RelaxedTwoHandedWeapons'], lanternRelaxed: !!s['Handling.RelaxedLanterns'],
+    lanternsAtWaist: !!s['Handling.LanternsAtWaist'],   // HT-WAIST: the port's own switch on the mod's pane (Ledger A)
     throwStrength: Number(s['Throwing.ThrowStrength']), throwAngle: Number(s['Throwing.ThrowAngleOffset']), throwSpread: Number(s['Throwing.ThrowDispersion']),
     throwGravity: Number(s['Throwing.GravityStrength']), throwBounce: Number(s['Throwing.Bounciness']), throwScale: Number(s['Throwing.ThrowScaleSpeed']),
     throwDrawTrajectory: !!s['Throwing.ShowTrajectory'], fire: !!s['Throwing.Combustion'], fireAccuracy: s['Throwing.Accuracy'] | 0,
@@ -226,6 +227,11 @@ export function createHandheldTorches({
   const removeFromPack = (item) => { const l = items(); const i = l.indexOf(item); if (i >= 0) l.splice(i, 1); };
   const oneShot = (clip, volume = 1, pitch = 1) => audio?.playOneShot?.(clip, volume, pitch);
   const setLight = (it) => { if (ctx?.entity) setLightSource(ctx.entity, it); };   // DISC7: the one door
+  /** HT-WAIST: a lantern hung at the waist - the port's own switch (systems/playerTorch.js lanternAtWaist says
+   *  why; this is the same question off the component's own settings frame, so a pin's store drives it). It
+   *  takes no hand, so the hand law never stows it, the no-hand refusals let it through, and the first-person
+   *  hand never holds it. With the switch off every line below reads exactly as it did. */
+  const atWaist = (it) => !!w.s.lanternsAtWaist && isLantern(it);
 
   // ---- InitializeTextures (IL 0x1034): 112359 records 0 (torch) and 1 (lantern), frames until one is missing ----
   const loadTextures = (renderer) => {
@@ -255,6 +261,7 @@ export function createHandheldTorches({
   function refreshSprite() {
     if (!w.currentTexture) return;
     const l = light();
+    if (atWaist(l)) { w.offsetFrame = -1; setSheathe(); return; }   // HT-WAIST: nothing in the hand - the hand goes off the screen
     if (l) w.offsetFrame = isLantern(l) ? 4 : 0;   // the lantern frames sit at index 4 - the torch's four (0x26f4)
     w.currentTexture = w.textures[w.currentFrame + w.offsetFrame] ?? w.currentTexture;
     if (w.s.lanternRelaxed && l && isLantern(l) && !hasFreeHand()) { setGuard(); return; }
@@ -447,6 +454,11 @@ export function createHandheldTorches({
    *  would drift. Answers whether it acted; a refusal has already said
    *  why. */
   function toggleLightPress() {
+    // HT-WAIST: with no hand free the press reaches the WAIST - the lit lantern douses, or the pack's lantern
+    // lights - and nothing else. The ladder below would take a stowed or remembered torch first, light it and
+    // have the hand law stow it again the next frame: a press that visibly did nothing (the same quirk Relaxed
+    // Lanterns has in the mod, which is the mod's to keep; this switch is the port's).
+    if (w.s.lanternsAtWaist && !hasFreeHand() && waistPress()) return true;
     if (w.s.lanternRelaxed) {
       if (hasFreeHand() || contains('UselessItems2', T.Lantern)) { toggleLightSourceAction(); return true; }
     } else if (hasFreeHand()) { toggleLightSourceAction(); return true; }
@@ -477,6 +489,11 @@ export function createHandheldTorches({
       else if (contains('ReligiousItems', T.Holy_candle)) setLight(firstOf('ReligiousItems', T.Holy_candle));
       else say(MESSAGES.igniteTorchless);
     }
+    igniteTail();
+  }
+  /** ToggleLightSourceAction's last block, lifted so HT-WAIST's press lights through the same lines: the kind
+   *  remembered, the clip at half volume, the line, the sprite re-rested. */
+  function igniteTail() {
     const lit = light();
     if (lit) {
       w.lastLightTemplateIndex = lit.templateIndex;
@@ -484,6 +501,17 @@ export function createHandheldTorches({
       say(MESSAGES.ignite + torchItemWords(lit));
       refreshSprite();
     }
+  }
+  /** HT-WAIST: the toggle with no hand free - the waist's lantern and nothing else. Answers whether it acted;
+   *  false falls through to the mod's own refusal. Lighting the waist's lantern forgets a stowed light - the
+   *  hand law's first line, on the next frame, as it does for a lantern lit through Use or a quickslot. */
+  function waistPress() {
+    const l = light();
+    if (l) { if (!atWaist(l)) return false; toggleLightSourceAction(); return true; }   // douse
+    if (!contains('UselessItems2', T.Lantern)) return false;
+    setLight(firstOf('UselessItems2', T.Lantern));
+    igniteTail();
+    return true;
   }
   /** PickupLightSource's pack half (0x3d8a-0x3f9a): the pool hands the
    *  minted item over; by OnPick it lights (a free hand, or Force
@@ -513,10 +541,14 @@ export function createHandheldTorches({
    *  code (HT6 below) instead of a second copy of the rule. `l` is the
    *  light Update read at the top of the frame. */
   function handLaw(l) {
+    // HT-WAIST: a lantern lit at the waist - by the key, Use or a quickslot - IS the light, so a light stowed before
+    // it is forgotten, as the mod's own stow arm forgets it when a lantern takes its place (switch off); left
+    // remembered, the third arm below lit it over the lantern the moment a hand freed
+    if (atWaist(l)) { w.lastLightSource = null; return; }
     if (!hasFreeHand() && l && !isLantern(l)) {
       if (w.s.onStow > ON_STOW.Unequip) dropLightSource(l);
       else { w.lastLightSource = l; setLight(null); }
-    } else if (!hasFreeHand() && l && isLantern(l) && !w.s.lanternRelaxed) {
+    } else if (!hasFreeHand() && l && isLantern(l) && !w.s.lanternRelaxed) {   // (HT-WAIST: a lantern at the waist never reaches here - the early return above)
       if (!w.sheathed) say(MESSAGES.noFreeHand);
       w.lastLightSource = l; setLight(null);
     } else if (hasFreeHand() && w.lastLightSource) {
@@ -582,7 +614,7 @@ export function createHandheldTorches({
     // the sprite's frames (0x1689-0x175a): a torch's or a lantern's, a candle has none
     if (w.s.showSprite) {
       const cur = light();
-      w.offsetFrame = cur ? (isLantern(cur) ? 4 : isTorch(cur) ? 0 : -1) : -1;
+      w.offsetFrame = cur && !atWaist(cur) ? (isLantern(cur) ? 4 : isTorch(cur) ? 0 : -1) : -1;   // HT-WAIST: the waist's lantern has no hand frames - the hand slides off
       if (w.offsetFrame !== -1) {
         if (w.animationTimer > ANIMATION_TIME) {
           w.animationTimer = 0;
@@ -613,7 +645,7 @@ export function createHandheldTorches({
         else {
           const lit = light();
           // the wind-up douses the lit light - a relaxed lantern excepted (0x18d9-0x1904)
-          if (lit && !(w.s.lanternRelaxed && isLantern(lit))) setLight(null);
+          if (lit && !((w.s.lanternRelaxed || w.s.lanternsAtWaist) && isLantern(lit))) setLight(null);   // HT-WAIST: the waist's lantern stays lit through a throw too
         }
       } else say(MESSAGES.throwTorchless);
     }
@@ -750,6 +782,7 @@ export function createHandheldTorches({
     if (ctx.thirdPerson || w.isInThirdPerson) return false;
     const held = light();
     if (!held || !(isTorch(held) || isLantern(held))) return false;   // MAC-H: nothing in the hand, nothing on the screen
+    if (atWaist(held)) return false;   // HT-WAIST: the lantern hangs at the waist - the hand holds nothing
     if (!w.currentTexture?.tex) return false;
     renderer.drawScreenQuad(w.currentTexture.tex, getSpriteRect(), w.curAnimRect, tint ?? undefined);
     return true;

@@ -1,0 +1,135 @@
+[
+  {
+    "name": "WB7-a-voice-left-on-the-piano",
+    "file": "src/systems/gateScore.js",
+    "old": "    events.push({ tick: 0, type: 'programChange', channel, program: SCORE_PROGRAMS[voice] });",
+    "new": "    events.push({ tick: 0, type: 'programChange', channel, program: voice === 'brass' ? 0 : SCORE_PROGRAMS[voice] });",
+    "tests": ["test/wb7_boss_audio.test.js"]
+  },
+  {
+    "name": "WB7-the-events-out-of-order",
+    "file": "src/systems/gateScore.js",
+    "old": "  events.sort((a, b) => a.tick - b.tick || RANK[a.type] - RANK[b.type]);",
+    "new": "  events.sort((a, b) => RANK[a.type] - RANK[b.type]);",
+    "tests": ["test/wb7_boss_audio.test.js"]
+  },
+  {
+    "name": "WB7-a-note-past-the-songs-end",
+    "file": "src/systems/gateScore.js",
+    "old": "      w.note(voice, bar0 + b, beat, beats * 0.92, midiNote(n) + 12 * octave, velocity + (beat === 0 ? 10 : 0));",
+    "new": "      w.note(voice, bar0 + b, beat, beats * 2, midiNote(n) + 12 * octave, velocity + (beat === 0 ? 10 : 0));",
+    "tests": ["test/wb7_boss_audio.test.js"]
+  },
+  {
+    "name": "WB7-the-fall-left-in-minor",
+    "file": "src/systems/gateScore.js",
+    "old": "  D: { bass: 'D2', timp: 'D2', pad: ['D3', 'F#3', 'A3'], choir: ['A3', 'D4', 'F#4'],",
+    "new": "  D: { bass: 'D2', timp: 'D2', pad: ['D3', 'F3', 'A3'], choir: ['A3', 'D4', 'F4'],",
+    "tests": ["test/wb7_boss_audio.test.js"]
+  },
+  {
+    "name": "WB7-the-wrath-without-its-neapolitan",
+    "file": "src/systems/gateScore.js",
+    "old": "const WAR_C = Object.freeze(['Dm', 'Eb', 'C', 'A', 'Dm', 'Eb', 'Bb', 'A']);",
+    "new": "const WAR_C = Object.freeze(['Dm', 'Bb', 'C', 'A', 'Dm', 'Bb', 'Bb', 'A']);",
+    "tests": ["test/wb7_boss_audio.test.js"]
+  },
+  {
+    "name": "WB7-the-fall-ringing-past-its-time",
+    "file": "src/systems/gateScore.js",
+    "old": "    w.note('timpani', 4, 0, 1, 'D2', 124); w.hit('crash', 4, 0, 110);",
+    "new": "    w.note('timpani', 4, 0, 6, 'D2', 124); w.hit('crash', 4, 0, 110);",
+    "tests": ["test/wb7_boss_audio.test.js"]
+  },
+  {
+    "name": "WB7-the-fanfare-forever",
+    "file": "src/systems/gateScore.js",
+    "old": "  if (s.fell) return now - s.fell.at < SCORE_STING_MS ? GATE_SONGS.fell : SCORE_SILENCE;",
+    "new": "  if (s.fell) return GATE_SONGS.fell;",
+    "tests": ["test/wb7_boss_audio.test.js"]
+  },
+  {
+    "name": "WB7-the-wraths-warning-dropped",
+    "file": "src/systems/gateScore.js",
+    "old": "  if (Number.isFinite(s.wrathAt) && s.wrathAt - now <= SCORE_WRATH_WARN_MS) return GATE_SONGS.war3;\n",
+    "new": "",
+    "tests": ["test/wb7_boss_audio.test.js"]
+  },
+  {
+    "name": "WB7-music-over-the-wrath",
+    "file": "src/systems/gateScore.js",
+    "old": "  if (s.wrath != null) return SCORE_SILENCE;",
+    "new": "  if (false) return SCORE_SILENCE;",
+    "tests": ["test/wb7_boss_audio.test.js"]
+  },
+  {
+    "name": "WB7-the-archive-asked-for-a-made-song",
+    "file": "src/systems/music.js",
+    "old": "    let song = this._made.get(name) ?? null;",
+    "new": "    let song = null;",
+    "tests": ["test/wb7_boss_audio.test.js"]
+  },
+  {
+    "name": "WB7-junk-registered",
+    "file": "src/systems/music.js",
+    "old": "    if (typeof name !== 'string' || !name || !Array.isArray(song?.events) || !(song.secondsPerTick > 0)) return false;",
+    "new": "    if (typeof name !== 'string') return false;",
+    "tests": ["test/wb7_boss_audio.test.js"]
+  },
+  {
+    "name": "WB7-steps-while-he-stands",
+    "file": "src/scenes/gateCourt.js",
+    "old": "      if (strideRun >= BOSS_STRIDE_M) { strideRun %= BOSS_STRIDE_M; sound(BOSS_CUES.step, s, t, null); }",
+    "new": "      sound(BOSS_CUES.step, s, t, null);",
+    "tests": ["test/wb7_boss_audio.test.js"]
+  },
+  {
+    "name": "WB7-a-growl-mid-strike",
+    "file": "src/scenes/gateCourt.js",
+    "old": "    else if (striking) growlAt = Math.max(growlAt, t + 3000);\n",
+    "new": "",
+    "tests": ["test/wb7_boss_audio.test.js"]
+  },
+  {
+    "name": "WB7-a-grunt-for-every-point",
+    "file": "src/scenes/gateCourt.js",
+    "old": "hpHeard - s.hp >= s.max * HURT_SHARE && t - gruntAt >= HURT_GAP_MS",
+    "new": "hpHeard - s.hp > 0",
+    "tests": ["test/wb7_boss_audio.test.js"]
+  },
+  {
+    "name": "WB7-every-landing-quaking",
+    "file": "src/scenes/gateCourt.js",
+    "old": "t >= atk.at && QUAKE_ON.includes(A.key)) { setMark(quaked, atk);",
+    "new": "t >= atk.at) { setMark(quaked, atk);",
+    "tests": ["test/wb7_boss_audio.test.js"]
+  },
+  {
+    "name": "WB7-the-thunder-on-first-sight",
+    "file": "src/scenes/gateCourt.js",
+    "old": "if (thunderPhase > 0) sound(BOSS_CUES.thunder, s, t, null);",
+    "new": "sound(BOSS_CUES.thunder, s, t, null);",
+    "tests": ["test/wb7_boss_audio.test.js"]
+  },
+  {
+    "name": "WB7-the-thud-twice",
+    "file": "src/scenes/gateCourt.js",
+    "old": "      if (!thudCued && t >= s.fell.at + THUD_AT_MS) { thudCued = true;",
+    "new": "      if (t >= s.fell.at + THUD_AT_MS) { thudCued = true;",
+    "tests": ["test/wb7_boss_audio.test.js"]
+  },
+  {
+    "name": "WB7-the-director-fed-over-the-court",
+    "file": "src/scenes/world.js",
+    "old": "    if (!gateScoreFrame()) musicDirector.update({",
+    "new": "    if (!gateScoreFrame() || true) musicDirector.update({",
+    "tests": ["test/wb7_boss_audio.test.js"]
+  },
+  {
+    "name": "WB7-the-courts-song-left-playing-outside",
+    "file": "src/scenes/world.js",
+    "old": "      if (_scoreHeld) { _scoreHeld = false; music.stop(); }",
+    "new": "      if (_scoreHeld) { _scoreHeld = false; }",
+    "tests": ["test/wb7_boss_audio.test.js"]
+  }
+]

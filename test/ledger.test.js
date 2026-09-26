@@ -203,7 +203,7 @@ test('TC1 ledger: the six re-measured section-C rows are struck, and each names 
       file: 'src/systems/regionPower.js', built: /rumorMill\?\.addNonQuestRumor\?\./ },
     // Fast travel: transport ownership, the mint the row said nothing had.
     { head: /~~FAST TRAVEL residue~~/, slice: /TC1 2026-09-02/,
-      file: 'src/systems/shopStock.js', built: /export const TRANSPORT_SMALL_CART = 93;/ },
+      file: 'src/systems/shopStock.js', built: /add\(\{ group: 'Transportation', templateIndex: TRANSPORT_SMALL_CART \}\);/ },   // DISC24-B: the constant's home is itemTemplates.js now; the SHELVING the row names is here
     { head: /~~PatchRegionIndex legacy-save fix~~/, slice: /U32 \+ U41/,
       file: 'src/formats/mapsFile.js', built: /export function patchRegionIndex\(regionIndex, canonicalRegionName\)/ },
     { head: /~~Biography GP arm ledger note/, slice: /TC1 2026-09-02/,
@@ -341,7 +341,7 @@ test('AUDIT 58 F5 ledger: the RE-INTEGRATED road system has its own section A ro
     'and world.js holds no road wire OUTSIDE that block - every one of them is in the ungated statement above');
 
   // AUDIT 58 R1 (a): the row's own line cite RESOLVES. It read
-  // `world.js:552-555` - four lines of the ROADS 3/22 comment block - from
+  // `world.js:616-619` - four lines of the ROADS 3/22 comment block - from
   // the day it was written, and the pin above re-derived the no-gate fact
   // without ever reading the number, so the one pointer a reader is sent to
   // could name anything. The cite is now sliced and checked.

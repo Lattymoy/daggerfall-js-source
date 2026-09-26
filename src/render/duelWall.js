@@ -94,7 +94,7 @@ void main() {
   float foot = 1.0 + 0.8 * exp(-pow((h - uBelow) * 18.0, 2.0));
   float top = 1.0 - smoothstep(0.5, 1.0, h);
   float light = (0.07 + 0.45 * lines + 0.22 * bands + 0.55 * sweep) * foot * top * shimmer;
-  o = vec4(uColor * light * uAlpha * fogFactorAt(vWorld), 1.0);
+  o = vec4(dwWaterFogAdd(uColor * light * uAlpha * fogFactorAt(vWorld), vWorld), 1.0);   // DW-C: an added glow's share of the carved sea's distance fog
 }`;
 
 function mat4Multiply(out, a, b) {
@@ -118,6 +118,7 @@ export function ringVertices(segments = DUEL_WALL_SEGMENTS) {
 }
 
 const NO_FOG_RANGE = new Float32Array([0, 1]);
+const NO_WATER_FOG = new Float32Array(20);   // DW-C: uDwFog off ([0].x 0)
 const WHITE = new Float32Array([1, 1, 1]);
 
 export class DuelWallRenderer {
@@ -126,7 +127,7 @@ export class DuelWallRenderer {
     const prog = buildProgram(gl, DUEL_WALL_VS, DUEL_WALL_FS);   // AUDIT 68 S17: the one compile and link
     this.program = prog;
     this.u = {};
-    for (const n of ['uVP', 'uCentre', 'uRadius', 'uBase', 'uHeight', 'uTime', 'uColor', 'uAlpha', 'uBelow', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']) this.u[n] = gl.getUniformLocation(prog, n);
+    for (const n of ['uVP', 'uCentre', 'uRadius', 'uBase', 'uHeight', 'uTime', 'uColor', 'uAlpha', 'uBelow', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uDwFog']) this.u[n] = gl.getUniformLocation(prog, n);
     const verts = ringVertices();
     this.count = verts.length / 2;
     const vao = gl.createVertexArray();
@@ -164,6 +165,7 @@ export class DuelWallRenderer {
     gl.uniform1f(U.uFogDensity, fog?.density ?? 0);
     gl.uniform2fv(U.uFogRange, fog?.range ?? NO_FOG_RANGE);
     gl.uniform3fv(U.uCamPos, fog?.camPos ?? eye ?? WHITE);
+    if (U.uDwFog) gl.uniform4fv(U.uDwFog, fog?.dw ?? NO_WATER_FOG);   // DW-C: the frame's (renderer.setWaterFog); none handed, off
     gl.bindVertexArray(this.vao);
     gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);
     gl.depthMask(false);

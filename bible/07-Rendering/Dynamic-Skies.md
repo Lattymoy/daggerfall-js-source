@@ -528,8 +528,11 @@ cloudsDoor !== 'off'`), and under the mod its two sheets stand down the
 way the dome's decks do - `DynamicSkiesRenderer.cloudsExternal` uploads
 `_CloudTopOpacity` and `_CloudOpacity` as 0 while the material keeps
 the preset's numbers (the dome's `uCloudCover` law, one pass over).
-`?clouds=off` gives the mod its sheets back. The clouds read six
-fields of a state (`cloudLight`: sunDir, sun, masser, secunda; the
+`?clouds=off` gives the mod its sheets back. (PERF-EXT30, 2026-09-25:
+standing down is a SKIP now, not a blend at weight 0 - a sheet at
+opacity 0 is not computed, and neither is the dome's deck at cover 0;
+no output changes. `07-Rendering/Performance-Exterior.md`, cluster D.)
+The clouds read six fields of a state (`cloudLight`: sunDir, sun, masser, secunda; the
 march: cloudLit, cloudShade, horizon), and `cloudsStateUnderMod`
 (`render/dynamicSkiesBridge.js`) answers them: the port's own
 `skyState` for the colours - the eased row's lit and shade, the

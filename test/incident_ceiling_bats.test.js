@@ -101,12 +101,12 @@ test('bats 1: both spawn hosts build the capsule from the idle sprite and drop a
   // REVIEW 2026-09-05: a DELTA on the live pending array (offsetAll may
   // have recentred it during the awaits), gated off for a restore whose
   // position already IS feet.
-  assert.match(x, /const idleH = idleSpriteHeight\(tex\);\n(?:\s+\/\/[^\n]*\n)*\s+if \(groundAlign\) \{\n[\s\S]{0,700}?\n\s+\} else if \(behaviour === 'Flying' && !feetGiven\) pending\.feet\[1\] -= idleH \/ 2 \+ 0\.1;\n\s+const ai = new EnemyAI\(/,   // WOD3: CreateFoeGameObjects' own drop is the other arm
+  assert.match(x, /const idleH = idleSpriteHeight\(tex\);\n(?:\s+\/\/[^\n]*\n)*\s+if \(transformY\) \{\n[\s\S]{0,500}?\n\s+\} else if \(groundAlign\) \{\n[\s\S]{0,700}?\n\s+\} else if \(behaviour === 'Flying' && !feetGiven\) pending\.feet\[1\] -= idleH \/ 2 \+ 0\.1;\n\s+const ai = new EnemyAI\(/,   // WOD3: CreateFoeGameObjects' own drop is the other arm; DW-E4: a transform set straight is the first
     'the exterior pool reads the sprite BEFORE the AI stands, and drops a flyer from FinalizeFoe\'s lifted centre as a delta');
   // AUDIT 63 F24 widened the option bag with the revived quest link;
   // `feetGiven: true` is the clause this pin is about and still stands.
   assert.match(x, /spawnFoe\(sf\.mobileType, \[lx, sf\.y \+ yOffset, lz\], \{ gender: sf\.gender, feetGiven: true, questBehaviour, placed: !!sf\.placed \}\)/, 'restoreWorld hands back FEET and says so - no second drop per load');   // WOD3: and a placed foe restores placed
-  assert.match(x, /const pending = \{ feet: \[pos\[0\], pos\[1\] \+ \(feetGiven \|\| groundAlign \? 0 : 0\.1\), pos\[2\]\] \};/, 'and takes no walker lift either (a flyer never grounds - 0.1 per load, cumulative)');   // WOD3: nor does a ground-aligned spawn
+  assert.match(x, /const pending = \{ feet: \[pos\[0\], pos\[1\] \+ \(feetGiven \|\| groundAlign \|\| transformY \? 0 : 0\.1\), pos\[2\]\] \};/, 'and takes no walker lift either (a flyer never grounds - 0.1 per load, cumulative)');   // WOD3: nor does a ground-aligned spawn; DW-E4: nor one whose transform is set straight
   assert.match(x, /height: enemyControllerHeight\(idleH, behaviour\),/);
   assert.match(x, /org\[1\] = spriteOriginY\(f\.ai\.feet\[1\], f\.idleH, sz\.h, _bh\);/, 'the exterior draw pins a flyer\'s centre');
   // the epoch guard still stands between the texture await and the AI
@@ -230,7 +230,7 @@ test('bats review: every host passes centreOffset; the watch sizes its capsule t
   }
   // the dungeon save: stamped, and a pre-fix flyer entry judged
   assert.match(src('src/systems/spellcast.js'),
-    /if \(sphereOverlapsCapsule\(pos, radius, f\.ai\?\.feet, f\.ai\?\.height\)\) out\.push\(f\);/,
+    /if \(sphereOverlapsCapsule\(pos, radius, f\.ai\?\.feet, f\.ai\?\.height, f\.ai\?\.radius\)\) out\.push\(f\);/,
     "...and that site reads the foe's own capsule, feet and height both (ROAD-H H2)");
   assert.match(d, /feet: \[\.\.\.f\.ai\.feet\], yaw: f\.ai\.yaw, anchor: 1,/);
   assert.match(d, /if \(!keepRebuiltSpawn\(sf, f\.ai\.feet, f\.idleH, f\.mobile\?\.basics\?\.behaviour \?\? 'General', f\.marker \?\? null\)\) \{ f\.ai\.feet\[0\] = sf\.feet\[0\];/);

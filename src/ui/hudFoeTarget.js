@@ -53,5 +53,14 @@ export function foeTarget() {
   };
 }
 
+/** WHICH foe the target frame shows - the entity itself, not its name.
+ *  Two rats are two foes: the HUD's loss readout keys on this, so a
+ *  switch between same-named foes does not carry one's lost health onto
+ *  the other's bar. Null when there is no target. */
+export function foeTargetRef() {
+  const e = _foe?.entity;
+  return e && !_foe.dead ? e : null;
+}
+
 /** A host tearing down, and the tests. */
 export function clearFoeTarget() { _foe = null; _left = 0; }

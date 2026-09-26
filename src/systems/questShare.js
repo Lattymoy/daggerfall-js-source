@@ -143,7 +143,7 @@ export function canReceiveSharedQuest(machine, questLists, questName, { membersh
   if (meta?.quest?.oneTime && questLists.hasAcceptedOneTime(questName)) return { ok: false, reason: 'done' };
   if (meta?.scope === 'guild' && meta.quest.membership !== MEMBERSHIP_STATUS.Nonmember) {
     const guild = Object.values(GUILDS).find((g) => g.guildGroup === meta.group);
-    if (guild && !hasJoined(memberships, guild)) return { ok: false, reason: 'guild' };
+    if (guild && !hasJoined(memberships, guild)) return { ok: false, reason: 'guild', guild: guild.name };   // DISC25-D: WHICH guild
   }
   return { ok: true, meta };
 }
@@ -240,3 +240,22 @@ export const SHARE_REFUSAL_TEXT = Object.freeze({
   unknown: 'do not know this quest.',   // AUDIT DROPS A1: no local source to check the envelope against
   guild: 'are not a member of the guild this quest requires.',
 });
+
+/** DISC25-D: the four guilds a guild quest's catalog row can name (GUILDS), as a sentence says them. */
+export const SHARE_GUILD_NAMES = Object.freeze({
+  FightersGuild: 'the Fighters Guild', MagesGuild: 'the Mages Guild', ThievesGuild: 'the Thieves Guild', DarkBrotherhood: 'the Dark Brotherhood',
+});
+
+/**
+ * DISC25-D (Sir McMobdon on Discord: "Assumed it was cause I wasn't a part of same guild I couldn't receive the quest.
+ * But I checked i am In guild. Still cant get quest shared"): the refusal a receiver reads, naming the guild when the
+ * gate was one. "Guard the Guild" is a Mages Guild quest, and a Temple of Julianos member was told only that they
+ * were "not a member of the guild this quest requires" - true, and no use to someone who is in a guild. The rest are
+ * SHARE_REFUSAL_TEXT's own fragments; null for a reason with none.
+ * @param {{reason?: string, guild?: string}|null} result
+ */
+export function shareRefusalText(result) {
+  const named = result?.reason === 'guild' ? SHARE_GUILD_NAMES[result.guild] : null;
+  if (named) return `are not a member of ${named}, which this quest requires.`;
+  return SHARE_REFUSAL_TEXT[result?.reason] ?? null;
+}

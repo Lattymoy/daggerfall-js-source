@@ -230,7 +230,7 @@ test('audit24 wave46: every blow and every ARROW now owes all three', () => {
   // out of its host and CALLED here: a pool wired tomorrow is covered
   // tomorrow, and an unwired one is a red test the same day.
   // (The flash is the third of the three and rides in the POOLS for
-  // these two hosts - cityGuards.js:483 and exteriorFoes.js:669 both
+  // these two hosts - cityGuards.js:486 and exteriorFoes.js:725 both
   // flash on the same `dmg > 0` that calls onPlayerHurt - which is why
   // it is not inside the handlers run below.)
   const zero = () => 0;
@@ -261,11 +261,11 @@ test('audit24 wave46: every blow and every ARROW now owes all three', () => {
       assert.deepEqual(missed.billed, [], `${file} door ${i + 1}: and no health billed`);
     });
   }
-  // the dungeon's three sites are inline rather than properties (its
-  // melee resolution, its arrow arm and - AUDIT 64 F40 - the damage
-  // trap's sink), so they stay counted
+  // the dungeon's four sites are inline rather than properties (its
+  // melee resolution, its arrow arm, - AUDIT 64 F40 - the damage
+  // trap's sink and - WB4a - the Burning Court boss's blow, strikePlayer), so they stay counted
   const cries = (f) => rd(f).split('\n').filter((l) => l.trim().startsWith('playPlayerVoice(audio, playerPainVoice(')).length;
-  assert.equal(cries('src/scenes/dungeonContext.js'), 3, 'dungeon: the blow, the arrow AND the damage trap');
+  assert.equal(cries('src/scenes/dungeonContext.js'), 4, 'dungeon: the blow, the arrow, the damage trap AND the Burning Court boss\'s blow');
   // the two arrow-on-player sites, which had NONE of this
   const w = rd('src/scenes/world.js');
   const arrow = w.slice(w.indexOf('onPlayerHit: (m) =>'));

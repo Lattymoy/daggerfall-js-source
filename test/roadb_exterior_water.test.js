@@ -286,8 +286,17 @@ test('ROAD-B b3: the exterior swim latch clears submersion and the motor swim fl
 
 test('ROAD-B b3: no exterior host drives breathStep - drowning above ground is not a DFU law', () => {
   for (const host of ['scenes/world.js', 'scenes/exterior.js']) {
-    const src = readFileSync(join(SRC, host), 'utf8');
-    assert.equal(/breathStep/.test(src), false,
+    let src = readFileSync(join(SRC, host), 'utf8');
+    // DW-D (2026-09-25): Iliac Puddle No More MAKES it one - its forge writes
+    // isPlayerSubmerged for the carved sea (ApplyWaterAudioState), and
+    // PlayerEntity's breath clause reads that. The world host's one call
+    // is the sea's, on the driver's head test; nothing else may drain.
+    if (host === 'scenes/world.js') {
+      const sea = "if (breathStep(playerEntity, dwPlayer.submerged, _dwBreathState) === 'drowned')";
+      assert.equal(src.split(sea).length - 1, 1, 'the sea\'s one call, on the forged isPlayerSubmerged');
+      src = src.replace(sea, '').replace(/import \{ breathStep, setWaterBreathingRule \} from '\.\.\/systems\/breath\.js';/, '');
+    }
+    assert.equal(/breathStep\(/.test(src), false,
       `${host} must not drain breath: PlayerEnterExit.cs:420 forces isPlayerSubmerged false outdoors`);
   }
   // the dungeon host, which IS the call site, still does
@@ -322,7 +331,9 @@ test('ROAD-B b3: the splash covers BOTH water methods, not just Swimming', () =>
   // they cannot be collapsed into one.
   for (const host of ['scenes/world.js', 'scenes/exterior.js']) {
     const src = readFileSync(join(SRC, host), 'utf8');
-    assert.match(src, /_onWater = _surf\.water !== ON_EXTERIOR_WATER\.None/,
+    // DW-D: the world host reads the carved sea's forged method first - what PlayerFootsteps' FixedUpdate sees
+    // after OutdoorSwimDriverAfter - and the surface model's on a frame the driver wrote none
+    assert.match(src, /_onWater = (?:\(dwPlayer\?\.waterMethod \?\? _surf\.water\)|_surf\.water) !== ON_EXTERIOR_WATER\.None/,
       `${host}: the splash is !== None`);
   }
 });

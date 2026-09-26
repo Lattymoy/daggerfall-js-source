@@ -149,7 +149,7 @@
 //
 // Not a DFU member: Daggerfall Unity has no chat. Ledger A row (ONLINE).
 import { isTextEntryTarget, swallowBrowserKey, bindings } from './input.js';
-import { actionForCode } from '../systems/inputActions.js';
+import { actionForCode, codeMeans } from '../systems/inputActions.js';
 import { overlayOpen } from './enhancedOverlays.js';
 import { claimCursorKey } from '../player/pointerLock.js';   // KB1: while the panel stands, ActivateCursor's key is its open key and not the cursor toggle
 import { isTouchDevice } from './touch.js';
@@ -450,7 +450,7 @@ export function injectChatStyle(doc = document) {
 export const clockOf = (at) => { const d = new Date(at); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
 
 /** The action a keydown resolves to through the registry (the default; the tests hand their own in). */
-export const actionOfKey = (e) => actionForCode(bindings(), e.code);
+export const actionOfKey = (e) => (codeMeans(bindings(), e.code, CHAT_OPEN_ACTION) ? CHAT_OPEN_ACTION : actionForCode(bindings(), e.code));   // UXB1-S: the chat's key opens it, shared or not
 
 /** Is this keydown the one that opens the panel: the cursor key (CHAT_OPEN_ACTION), unmodified, not a repeat,
  *  the keyboard's own, owned by no field and no overlay, the host willing? */

@@ -1,0 +1,227 @@
+[
+  {
+    "name": "WB5b-the-account-not-checked",
+    "file": "server-account/src/accounts.js",
+    "old": "  if (c.s !== player.id) return { error: 'not-yours' };\n",
+    "new": "",
+    "tests": [
+      "test/wb5b_gate_claim.test.js"
+    ]
+  },
+  {
+    "name": "WB5b-the-guest-counted",
+    "file": "server-account/src/accounts.js",
+    "old": "  if (!player.handle) return { recorded: false, why: 'guest', ...(await gateRecordOf({ db }, player.id)) };\n",
+    "new": "",
+    "tests": [
+      "test/wb5b_gate_claim.test.js"
+    ]
+  },
+  {
+    "name": "WB5b-counted-twice",
+    "file": "server-account/src/accounts.js",
+    "old": "'INSERT OR IGNORE INTO gate_kills (day, account, boss, earned, at) VALUES (?1, ?2, ?3, ?4, ?5)'",
+    "new": "'INSERT OR REPLACE INTO gate_kills (day, account, boss, earned, at) VALUES (?1, ?2, ?3, ?4, ?5)'",
+    "tests": [
+      "test/wb5b_gate_claim.test.js"
+    ]
+  },
+  {
+    "name": "WB5b-no-key-no-refusal",
+    "file": "server-account/src/accounts.js",
+    "old": "  if (!publicKey) return { error: 'no-gate-key' };\n",
+    "new": "",
+    "tests": [
+      "test/wb5b_gate_claim.test.js"
+    ]
+  },
+  {
+    "name": "WB5b-the-route-open",
+    "file": "server-account/src/service.js",
+    "old": "export const OPEN_ROUTES = new Set(['/v1/health', '/v1/auth/guest', '/v1/auth/login', '/v1/auth/recover']);",
+    "new": "export const OPEN_ROUTES = new Set(['/v1/health', '/v1/auth/guest', '/v1/auth/login', '/v1/auth/recover', '/v1/gate/claim']);",
+    "tests": [
+      "test/wb5b_gate_claim.test.js"
+    ]
+  },
+  {
+    "name": "WB5b-the-account-view-without-gates",
+    "file": "server-account/src/index.js",
+    "old": ", gates: await gateRecordOf(ctx, who.player.id), renown:",
+    "new": ", renown:",
+    "tests": [
+      "test/wb5b_gate_claim.test.js"
+    ]
+  },
+  {
+    "name": "WB5b-the-record-without-gates",
+    "file": "server-account/src/index.js",
+    "old": ", gates: await gateRecordOf(ctx, body.id) }, 200, origin);",
+    "new": " }, 200, origin);",
+    "tests": [
+      "test/wb5b_gate_claim.test.js"
+    ]
+  },
+  {
+    "name": "WB5b-the-key-read-per-request",
+    "file": "server-account/src/signing.js",
+    "old": "  if (_gateKey !== undefined) return _gateKey;\n",
+    "new": "",
+    "tests": [
+      "test/wb5b_gate_claim.test.js"
+    ]
+  },
+  {
+    "name": "WB5b-a-kept-receipt-lost",
+    "file": "src/net/gateClaims.js",
+    "old": "  return answer?.error === 'receipt' && !GATE_CLAIM_MENDABLE.includes(answer.why) ? 'done' : 'keep';",
+    "new": "  return 'done';",
+    "tests": [
+      "test/wb5b_gate_claim.test.js"
+    ]
+  },
+  {
+    "name": "WB5b-a-settled-one-offered-again",
+    "file": "src/net/gateClaims.js",
+    "old": "      if (!c || settled.has(r)) return false;",
+    "new": "      if (!c) return false;",
+    "tests": [
+      "test/wb5b_gate_claim.test.js"
+    ]
+  },
+  {
+    "name": "WB5b-the-guest-line-every-time",
+    "file": "src/net/gateClaims.js",
+    "old": " && !guestSaid.has(r)",
+    "new": "",
+    "tests": [
+      "test/wb5b_gate_claim.test.js"
+    ]
+  },
+  {
+    "name": "WB5b-the-unsigned-kept",
+    "file": "src/net/gateClaims.js",
+    "old": "c && c.signed && c.e > nowS()",
+    "new": "c && c.e > nowS()",
+    "tests": [
+      "test/wb5b_gate_claim.test.js"
+    ]
+  },
+  {
+    "name": "WB5b-an-offer-every-frame",
+    "file": "src/net/gateClaims.js",
+    "old": "      if (busy || (!signedIn && nowMs() - lastAt < GATE_CLAIM_RETRY_MS)) return false;",
+    "new": "      if (busy || !signedIn && false) return false;",
+    "tests": [
+      "test/wb5b_gate_claim.test.js"
+    ]
+  },
+  {
+    "name": "WB5b-the-mid-offer-receipt-left",
+    "file": "src/net/gateClaims.js",
+    "old": "    if (again) { again = false; void flush(); }\n",
+    "new": "",
+    "tests": [
+      "test/wb5b_gate_claim.test.js"
+    ]
+  },
+  {
+    "name": "WB5b-two-a-day",
+    "file": "src/net/gateClaims.js",
+    "old": "k === r || (o?.d === c.d && o?.s === c.s)",
+    "new": "k === r",
+    "tests": [
+      "test/wb5b_gate_claim.test.js"
+    ]
+  },
+  {
+    "name": "WB5b-unbounded",
+    "file": "src/net/gateClaims.js",
+    "old": "keep([...list, r].slice(-GATE_CLAIMS_MAX));",
+    "new": "keep([...list, r]);",
+    "tests": [
+      "test/wb5b_gate_claim.test.js"
+    ]
+  },
+  {
+    "name": "WB5b-the-count-unsaid",
+    "file": "src/net/gateClaims.js",
+    "old": "          if (n != null) { onClosed(n); say(GATE_CLAIM_TEXT.recorded(n)); }",
+    "new": "          if (n != null) { onClosed(n); }",
+    "tests": [
+      "test/wb5b_gate_claim.test.js"
+    ]
+  },
+  {
+    "name": "WB5b-a-knock-with-no-session",
+    "file": "src/net/accountClient.js",
+    "old": "    claim: async (receipt) => { const i = io(); return i ? claimGateReceipt(i, receipt) : { ok: false, error: 'no-session' }; },",
+    "new": "    claim: async (receipt) => claimGateReceipt({ fetch, base: serviceBase(storage), secret: null }, receipt),",
+    "tests": [
+      "test/wb5b_gate_claim.test.js"
+    ]
+  },
+  {
+    "name": "WB5b-the-hook-never-called",
+    "file": "src/net/gateLink.js",
+    "old": "if (c) { receipts.set(c.d, g.r); onReceipt(g.r); }",
+    "new": "if (c) { receipts.set(c.d, g.r); }",
+    "tests": [
+      "test/wb5b_gate_claim.test.js"
+    ]
+  },
+  {
+    "name": "WB5b-a-strangers-nought-said",
+    "file": "src/ui/profileWindow.js",
+    "old": "  return Number.isSafeInteger(n) && n > 0 ? `Gates closed: ${n}` : null;",
+    "new": "  return Number.isSafeInteger(n) && n >= 0 ? `Gates closed: ${n}` : null;",
+    "tests": [
+      "test/wb5b_gate_claim.test.js"
+    ]
+  },
+  {
+    "name": "WB5b-the-gates-dropped-off-the-record",
+    "file": "src/net/duelRecord.js",
+    "old": "{ wins: d.wins, losses: d.losses, ...gates } : null;",
+    "new": "{ wins: d.wins, losses: d.losses } : null;",
+    "tests": [
+      "test/wb5b_gate_claim.test.js"
+    ]
+  },
+  {
+    "name": "WB5b-no-receipt-to-the-queue",
+    "file": "src/scenes/world.js",
+    "old": "    onReceipt: (r) => { gateClaims?.add(r); grantSpoilsOutside(r); },",
+    "new": "    onReceipt: (r) => { grantSpoilsOutside(r); },",
+    "tests": [
+      "test/wb5b_gate_claim.test.js"
+    ]
+  },
+  {
+    "name": "WB5b-no-offer-on-the-gate-frame",
+    "file": "src/scenes/world.js",
+    "old": "    gateClaims?.tick();   // WB5b",
+    "new": "    // gateClaims?.tick();   // WB5b",
+    "tests": [
+      "test/wb5b_gate_claim.test.js"
+    ]
+  },
+  {
+    "name": "WB5b-no-account-card-row",
+    "file": "src/ui/enhancedAccount.js",
+    "old": "      if (gates) row('Gates closed', gates);\n",
+    "new": "",
+    "tests": [
+      "test/wb5b_gate_claim.test.js"
+    ]
+  },
+  {
+    "name": "WB5b-half-a-pair",
+    "file": "tools/mintGateKeys.mjs",
+    "old": "  process.stdout.write(`${priv}\\n${pub}\\n`);",
+    "new": "  process.stdout.write(`${priv}\\n`);",
+    "tests": [
+      "test/wb5b_gate_claim.test.js"
+    ]
+  }
+]

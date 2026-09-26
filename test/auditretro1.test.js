@@ -257,7 +257,7 @@ test('AUDIT RETRO1 B4: under the lane a menu frame after a retro world frame res
   try {
     r.beginFrame(I, I, L, WORLD_FRAME);
     r.drawScreenQuad(null, { x: 0, y: 0, w: 1, h: 1 });
-    const resolveRect = () => r.air.programs.resolve.p.values.uRect;
+    const resolveRect = () => r.air.programs.resolve[0][0].p.values.uRect;   // PERF-EXT31: the resolve built for no glow and no shafts - both frames here
     assert.deepEqual(resolveRect(), [0, 0, 320, 200], 'the world frame: its image');
     r.beginFrame(I, I, L);   // the video player's, a menu's
     r.drawScreenQuad(null, { x: 0, y: 0, w: 1, h: 1 });
@@ -313,7 +313,7 @@ test('AUDIT RETRO1 C1: Shift-F11 under an open window loads nothing - it is the 
   routeKey(ev(false), ctx, null, new Set());
   assert.equal(loads, 1, 'F11 under a window still loads (the death screen\'s hint)');
   const w = src('scenes/world.js');
-  assert.match(w, /actionForCode\(bindings\(\), e\.code\) === 'QuickLoad' && !retroToggleKey\(e, keys\)\) \{/, 'the exterior ladder\'s own arm');
+  assert.match(w, /codeMeans\(bindings\(\), e\.code, 'QuickLoad'\) && !retroToggleKey\(e, keys\)\) \{/, 'the exterior ladder\'s own arm (UXB1-S: its key, shared or not)');
   _resetRetroPostprocessing();
 });
 

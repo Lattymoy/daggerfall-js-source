@@ -140,8 +140,12 @@ export const textureReplacementCount = () => _index.size;
 // stand-in TextureFile for them (vendorTextureStandIn) and draws the
 // decoded PNGs through the same swap arm a replacement uses.
 const _vendor = new Map();
-/** Register vendored files: [{ archive, record, frame?, dye?, gate?, load, standIn? }]
- *  where `load()` resolves to the PNG bytes. DW3: `dye` is the
+/** Register vendored files: [{ archive, record, frame?, dye?, gate?, load | build, standIn? }]
+ *  where `load()` resolves to the PNG bytes - or, WD2, `build(ctx)`
+ *  resolves to a top-down RGBA picture `{ width, height, data }` made
+ *  from the player's own classic records through `ctx.classicRgba`
+ *  (a mod's sprite that IS a classic record, or one with the author's
+ *  edits laid on it: the edit ships, the record never does). DW3: `dye` is the
  *  DyeColors value (or name) the entry answers for, GetName's way;
  *  `gate` is a predicate read at lookup - a vendored mod's art behind
  *  that mod's own switch (Diverse Weapons' icons), decoded once and
@@ -161,10 +165,10 @@ const _vendor = new Map();
 export function addVendorTextures(entries) {
   let n = 0;
   for (const e of entries ?? []) {
-    if (!Number.isFinite(e?.archive) || !Number.isFinite(e?.record) || typeof e.load !== 'function') continue;
+    if (!Number.isFinite(e?.archive) || !Number.isFinite(e?.record) || (typeof e.load !== 'function' && typeof e.build !== 'function')) continue;
     const map = e.map ?? 'Albedo';   // RRI1: a mod's helmet mask registers under TextureMap.Mask
     const key = textureKey(e.archive, e.record, e.frame ?? 0, map, e.dye ?? null);
-    _vendor.set(key, { archive: Number(e.archive), record: Number(e.record), frame: Number(e.frame ?? 0), map, dye: e.dye ?? null, gate: typeof e.gate === 'function' ? e.gate : null, lazy: e.lazy === true, fileName: e.fileName ?? key, load: e.load, standIn: e.standIn === true, offset: e.offset ?? null });   // FIELD-GUN4: a WORN stand-in needs a place on the doll, which only its registration knows; AUDIT-DW F1: `lazy` - decoded per record when asked, never by the archive's preload
+    _vendor.set(key, { archive: Number(e.archive), record: Number(e.record), frame: Number(e.frame ?? 0), map, dye: e.dye ?? null, gate: typeof e.gate === 'function' ? e.gate : null, lazy: e.lazy === true, fileName: e.fileName ?? key, load: e.load ?? null, build: typeof e.build === 'function' ? e.build : null, standIn: e.standIn === true, offset: e.offset ?? null });   // WD2: `build(ctx)` - a picture DERIVED from the player's own classic records (formats/derivedTexture.js), never a file   // FIELD-GUN4: a WORN stand-in needs a place on the doll, which only its registration knows; AUDIT-DW F1: `lazy` - decoded per record when asked, never by the archive's preload
     n++;
   }
   return n;
@@ -243,9 +247,13 @@ export function vendorTextureStandIn(archive) {
   const size = (record) => { const d = decodedOf(archive, record); return d ? { width: d.width, height: d.height } : { width: 1, height: 1 }; };
   return {
     vendor: true,
+    archive: Number(archive),   // WD2: billboardSize reads `t.archive` to lay a mod's xml scale on (billboardXml.js) - a stand-in without it lost every one
     recordCount,
     getSize: (record) => (record >= 0 && record < recordCount ? size(record) : { width: 0, height: 0 }),   // TextureFile.getSize's own out-of-range answer
-    getScale: () => ({ x: 0, y: 0 }),
+    // WD2: TextureFile.getScale's own shape, `{ width, height }` - rmbFlats' scaledBillboardSize reads those two, and the
+    // `{ x, y }` this answered made every stand-in flat NaN-sized. A mod texture carries no classic record scale: zero
+    // (MeshReader.GetBillboardMesh then leaves the size at the picture's own, and the xml scale is laid on after).
+    getScale: (record) => decodedOf(archive, record)?.recordScale ?? { width: 0, height: 0 },   // DS1: a built stand-in may carry its classic record's scale
     // FIELD-GUN4: a classic record carries its own paper-doll offset
     // and this one has nowhere else to get one, so the registration
     // supplies it. Zero stays the answer for art that is never worn -
@@ -305,6 +313,7 @@ export function hasTextureReplacement(archive, record, frame = 0, map = 'Albedo'
 export async function textureReplacementBytes(archive, record, frame = 0, map = 'Albedo', dye = null) {
   if (!hasTextureReplacement(archive, record, frame, map, dye)) return null;
   const entry = entryFor(textureKey(archive, record, frame, map, dye));
+  if (entry?.build) return null;   // WD2: a derived picture has no file to hand over - it is built, never loaded
   const load = entry?.load ?? _load;
   if (!entry || !load) return null;
   try {
@@ -333,11 +342,11 @@ export async function textureReplacementBytes(archive, record, frame = 0, map = 
 // ROAD-H H4: WHAT IS IN THIS MAP IS A COLOR32, NOT A DECODED PNG.
 //
 // The upload path is `renderer.uploadTexture(archive, record, color32)`,
-// which reads `color32.colors` and `asBytes` of it (renderer.js:2964),
+// which reads `color32.colors` and `asBytes` of it (renderer.js:3057),
 // and every texture it uploads is BOTTOM-UP - `getColor32` writes
 // `dstRow = (dstHeight - 1 - border - y) * dstWidth`
 // (baseImageFile.js:143, BaseImageFile.cs:250) and the upload leaves
-// UNPACK_FLIP_Y_WEBGL off (renderer.js:3585). A browser decode hands
+// UNPACK_FLIP_Y_WEBGL off (renderer.js:3679). A browser decode hands
 // back `{ width, height, data }` with the TOP row first, so a swap
 // stored raw was BOTH the wrong field name - `color32.colors` was
 // `undefined` and `asBytes` threw on the first swapped record a pack
@@ -359,6 +368,31 @@ export async function textureReplacementBytes(archive, record, frame = 0, map = 
 // takes the same conversion from the same module for the same reason -
 // AUDIT 62 F26).
 const _decoded = new Map();   // textureKey -> { width, height, colors } in getColor32 (bottom-up) order
+
+/** WD2: what a `build` entry derives from - the host pipeline's own
+ *  classic textures (`classicRgba(archive, record, frame)` answers a
+ *  top-down RGBA picture of the player's record, index 0 clear). Set by
+ *  scenes/dataPipeline.js when a pipeline is made; null until then, and a
+ *  build asked without one is refused (its classic art is not here). */
+let _deriveContext = null;
+export function setTextureDeriveContext(ctx) { _deriveContext = ctx ?? null; }
+/** DS1: a built picture may carry the classic record scale it is to be
+ *  sized by (`scale: { width, height }`, TextureFile.getScale's shape) - a
+ *  stand-in for a classic sprite stands as big as that sprite does. */
+const withRecordScale = (c32, picture) => { if (picture?.scale) c32.recordScale = picture.scale; return c32; };
+/** An entry's picture in the port's color32 contract - a vendored PNG
+ *  decoded, or (WD2) a derived one built - or null when it has none.
+ *  H4: both cross into color32 HERE, at the door, never at the upload sites. */
+async function entryColor32(entry, decode) {
+  if (entry.build) {
+    if (!_deriveContext) throw new Error(`${entry.fileName}: derived from classic art and no pipeline is up to read it`);
+    const picture = await entry.build(_deriveContext);
+    return picture ? withRecordScale(toColor32(picture), picture) : null;
+  }
+  const bytes = await (entry.load ?? _load)(entry.fileName);
+  if (!bytes || !bytes.byteLength) return null;
+  return toColor32(await decode(bytes));
+}
 
 /** The browser decode. Injectable because node has none of this, and
  *  the pins drive the cache rather than the DOM. */
@@ -396,9 +430,9 @@ export async function preloadTextureArchive(archive, { decode = decodePng, concu
   const todo = sources.filter(([key, entry]) => entry.archive === Number(archive) && !entry.lazy && !_decoded.has(key));
   const one = async ([key, entry]) => {
     try {
-      const bytes = await (entry.load ?? _load)(entry.fileName);
-      if (!bytes || !bytes.byteLength) return;
-      _decoded.set(key, toColor32(await decode(bytes)));   // H4: into the port's color32 contract at the door, never at the upload sites
+      const c32 = await entryColor32(entry, decode);   // WD2: a PNG decoded or a picture derived
+      if (!c32) return;
+      _decoded.set(key, c32);
       done++;
     } catch (e) {
       console.warn(`[texture] ${entry.fileName} would not decode:`, e?.message ?? e);
@@ -425,9 +459,9 @@ export function preloadTextureRecord(archive, record, frame = 0, map = 'Albedo',
     const entry = entryFor(key);
     _decoding.set(key, (async () => {
       try {
-        const bytes = await (entry.load ?? _load)(entry.fileName);
-        if (!bytes || !bytes.byteLength) return null;
-        _decoded.set(key, toColor32(await decode(bytes)));
+        const c32 = await entryColor32(entry, decode);   // WD2
+        if (!c32) return null;
+        _decoded.set(key, c32);
         return decodedTexture(archive, record, frame, map, dye);
       } catch (e) {
         console.warn(`[texture] ${entry.fileName} would not decode:`, e?.message ?? e);

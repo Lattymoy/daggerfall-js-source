@@ -69,6 +69,7 @@ const initMoveSoundTimer = (rolls) =>
 import { ENCHANTMENT_TYPES } from './enchantments.js';
 import { cureAllDiseases } from './effects.js';
 import { SOUND } from './soundClips.js';   // V4: the transformed attack voices
+import { renownHpOf } from './renownLayer.js';   // AUDIT RENOWN1 GAME-4: the online layer rides above the limiter
 import { endLycanthropyQuests } from './racialQuests.js';   // V2d: the cure's $CUREWER tombstone sweep
 
 /** LycanthropyEffect.LycanthropyCurseKey (:33). */
@@ -277,8 +278,10 @@ export function lycanthropyMagicRound(entity, { nowMinutes = 0, clockMinutes = n
     if (limit < NEED_TO_KILL_HEALTH_LIMIT_MINIMUM) limit = NEED_TO_KILL_HEALTH_LIMIT_MINIMUM;
     entity.maxHealthLimiter = limit;
     // DFU clamps through the CurrentMaxHealth property continuously;
-    // the port clamps at the fold's own cadence (recorded)
-    if ((entity.health ?? 0) > limit) entity.health = limit;
+    // the port clamps at the fold's own cadence (recorded).
+    // AUDIT RENOWN1 GAME-4: to the limit AND the online layer above it (renownLayer.js - 0 offline)
+    const ceiling = limit + renownHpOf(entity);
+    if ((entity.health ?? 0) > ceiling) entity.health = ceiling;
   } else {
     entity.maxHealthLimiter = null;
   }
@@ -289,7 +292,7 @@ export function lycanthropyMagicRound(entity, { nowMinutes = 0, clockMinutes = n
  *  with the live accessor this IS `maxHealth` (DaggerfallEntity.MaxHealth
  *  applies the limiter itself); the min stays for a plain entity. */
 export const currentMaxHealth = (entity) =>
-  Math.min(entity?.maxHealth ?? 0, entity?.maxHealthLimiter ?? Infinity);
+  Math.min(entity?.maxHealth ?? 0, (entity?.maxHealthLimiter ?? Infinity) + renownHpOf(entity));   // AUDIT RENOWN1 GAME-4: the online layer rides above the limiter
 
 /**
  * MorphSelf (:432-470), verbatim: the once-a-day gate (the Hircine
@@ -463,7 +466,7 @@ export function cureLycanthropy(entity, { nowMinutes = 0, advanceMinutes = null,
   entity.isInBeastForm = false;
   entity.maxHealthLimiter = null;
   entity.minMetalToHit = undefined;
-  entity.health = entity.rawMaxHealth ?? entity.maxHealth ?? entity.health;   // `CurrentHealth = RawMaxHealth` (:482)
+  entity.health = (entity.rawMaxHealth ?? entity.maxHealth ?? entity.health) + renownHpOf(entity);   // `CurrentHealth = RawMaxHealth` (:482). AUDIT RENOWN1 GAME-4: a full heal - and online the full maximum is raw plus the Renown layer (0 offline); the cure left a Renown 50 character at 100 of 247
   // RaiseTime(60) is SIXTY SECONDS - one classic minute, not an hour;
   // a port that read the 60 as minutes would jump the clock 60x
   advanceMinutes?.(1);

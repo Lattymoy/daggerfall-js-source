@@ -187,7 +187,7 @@ assert, asserts it again. Main's grass fog (DISC20-A) had pasted a tenth copy of
   continuation on the next line; every checkpoint needed the same hand
   mapping through the diff. That mapping belongs in the tool.
 - **Another repo's file is not this repo's file.** The cite tool matched
-  `main.js:311` in a paragraph about project-final's `main.js` as a cite
+  `main.js:317` in a paragraph about project-final's `main.js` as a cite
   into `src/main.js` and moved it. A cite qualified by another repository
   needs to be held, and the tool cannot yet tell.
 - **Cherry-picked new text keeps its worktree's numbers.** A comment a

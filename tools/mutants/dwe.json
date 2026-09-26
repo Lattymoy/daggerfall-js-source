@@ -1,0 +1,1565 @@
+[
+  {
+    "name": "DW-E1-light-work-while-not-playing",
+    "file": "src/world/deepWaterRuntime.js",
+    "old": "export function canRunLightRuntimeWork(playing) { return !!playing && resumeAt !== Infinity; }",
+    "new": "export function canRunLightRuntimeWork(playing) { return resumeAt !== Infinity; }",
+    "tests": [
+      "test/dwe_runtime.test.js"
+    ]
+  },
+  {
+    "name": "DW-E1-landed-load-leaves-no-refresh",
+    "file": "src/world/deepWaterRuntime.js",
+    "old": "export function loadFinished(realSeconds) { resumeAt = realSeconds + LOAD_GRACE_SECONDS; refreshPending = true; }",
+    "new": "export function loadFinished(realSeconds) { resumeAt = realSeconds + LOAD_GRACE_SECONDS; }",
+    "tests": [
+      "test/dwe_runtime.test.js"
+    ]
+  },
+  {
+    "name": "DW-E1-refresh-during-a-terrain-pass",
+    "file": "src/world/deepWaterRuntime.js",
+    "old": "export function canMutateTerrainData(realSeconds, playing) { return !loadGraceActive(realSeconds, playing) && !terrainUpdating; }",
+    "new": "export function canMutateTerrainData(realSeconds, playing) { return !loadGraceActive(realSeconds, playing); }",
+    "tests": [
+      "test/dwe_runtime.test.js"
+    ]
+  },
+  {
+    "name": "DW-E1-reset-keeps-the-location-count",
+    "file": "src/world/deepWaterRuntime.js",
+    "old": "function resetTransition(at, pending) {\n  locationLoads = 0;\n",
+    "new": "function resetTransition(at, pending) {\n",
+    "tests": [
+      "test/dwe_runtime.test.js"
+    ]
+  },
+  {
+    "name": "DW-E1-prune-counts-height",
+    "file": "src/world/deepWaterTransients.js",
+    "old": "      const dx = p[0] - playerPos[0], dz = p[2] - playerPos[2];\n      return dx * dx + dz * dz;",
+    "new": "      const dx = p[0] - playerPos[0], dz = p[2] - playerPos[2], dy = p[1] - playerPos[1];\n      return dx * dx + dz * dz + dy * dy;",
+    "tests": [
+      "test/dwe_runtime.test.js"
+    ]
+  },
+  {
+    "name": "DW-E1-prune-cap-takes-the-nearest",
+    "file": "src/world/deepWaterTransients.js",
+    "old": "        if (d > farSq) { farSq = d; far = i; }",
+    "new": "        if (farSq < 0 || d < farSq) { farSq = d; far = i; }",
+    "tests": [
+      "test/dwe_runtime.test.js"
+    ]
+  },
+  {
+    "name": "DW-E1-clear-destroys-the-dead-again",
+    "file": "src/world/deepWaterTransients.js",
+    "old": "      if (o && !o.destroyed()) o.destroy();\n    }\n    this.objects.length = 0;\n  }\n\n  /**\n   * Release",
+    "new": "      if (o) o.destroy();\n    }\n    this.objects.length = 0;\n  }\n\n  /**\n   * Release",
+    "tests": [
+      "test/dwe_runtime.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-open-ocean-weight",
+    "file": "src/world/underwaterDecorations.js",
+    "old": "  add(l, R(106, 2), 12); add(l, R(106, 3), 10);",
+    "new": "  add(l, R(106, 2), 11); add(l, R(106, 3), 10);",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-swamp-is-temperate",
+    "file": "src/world/underwaterDecorations.js",
+    "old": "    case 228: return WATER_BIOME.Swamp;",
+    "new": "    case 228: return WATER_BIOME.Temperate;",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-animation-stops-at-5",
+    "file": "src/world/underwaterDecorations.js",
+    "old": "export const usesArchiveAnimation = (rec) => rec.archive === 106 && rec.record >= 2 && rec.record <= 6;",
+    "new": "export const usesArchiveAnimation = (rec) => rec.archive === 106 && rec.record >= 2 && rec.record < 6;",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-seed-without-int32-wrap",
+    "file": "src/world/underwaterDecorations.js",
+    "old": "export const tileDecorationSeed = (x, y) => Math.imul(x, 73856093) ^ Math.imul(y, 19349663);",
+    "new": "export const tileDecorationSeed = (x, y) => (x * 73856093) ^ (y * 19349663);",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ],
+    "equivalent": true,
+    "why": "JS's `^` takes each operand through ToInt32, which wraps an exactly-represented product modulo 2^32 just as Math.imul does; a map pixel's coordinates (under 1000) keep x * 73856093 far under 2^53, so the two forms agree on every pixel the world has."
+  },
+  {
+    "name": "DW-E2-pass-roll-inclusive",
+    "file": "src/world/underwaterDecorations.js",
+    "old": "  if (rng.value() < f32(num - n)) n++;",
+    "new": "  if (rng.value() <= f32(num - n)) n++;",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-open-ocean-passes-rounded",
+    "file": "src/world/underwaterDecorations.js",
+    "old": "    case WATER_BIOME.OpenOcean: return Math.ceil(f32(passes * f32(1.35)));",
+    "new": "    case WATER_BIOME.OpenOcean: return Math.round(f32(passes * f32(1.35)));",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-spacing-inclusive",
+    "file": "src/world/underwaterDecorations.js",
+    "old": "        if (dx * dx + dz * dz < minSq) return false;",
+    "new": "        if (dx * dx + dz * dz <= minSq) return false;",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-shallower-floor",
+    "file": "src/world/underwaterDecorations.js",
+    "old": "export const MINIMUM_SEAFLOOR_DEPTH = 8;",
+    "new": "export const MINIMUM_SEAFLOOR_DEPTH = 7;",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-steeper-slope",
+    "file": "src/world/underwaterDecorations.js",
+    "old": "export const MAX_DECORATION_SLOPE_DEGREES = 35;",
+    "new": "export const MAX_DECORATION_SLOPE_DEGREES = 37;",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-no-surface-clearance",
+    "file": "src/world/underwaterDecorations.js",
+    "old": "      if (y >= oceanLocalY || f32(y + vh) > f32(oceanLocalY - SURFACE_DECORATION_CLEARANCE)) continue;",
+    "new": "      if (y >= oceanLocalY || f32(y + vh) > oceanLocalY) continue;",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-height-tested-at-1x",
+    "file": "src/world/underwaterDecorations.js",
+    "old": "      const vh = f32(authored * Math.max(0.01, DECORATION_SCALE_MAX));",
+    "new": "      const vh = authored;",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-animated-clearance-as-still",
+    "file": "src/world/underwaterDecorations.js",
+    "old": "export const seafloorClearance = (rec) => (usesArchiveAnimation(rec) ? ANIMATED_DECORATION_SEAFLOOR_CLEARANCE : DECORATION_SEAFLOOR_CLEARANCE);",
+    "new": "export const seafloorClearance = (rec) => DECORATION_SEAFLOOR_CLEARANCE;",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-shuffle-range-short",
+    "file": "src/world/underwaterDecorations.js",
+    "old": "    const k = rng.range(0, i + 1);",
+    "new": "    const k = rng.range(0, i);",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-no-pass-is-an-empty-list",
+    "file": "src/world/underwaterDecorations.js",
+    "old": "  if (passes <= 0) return null;",
+    "new": "  if (passes <= 0) return [];",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-padding-alpha-bar",
+    "file": "src/world/underwaterDecorations.js",
+    "old": "  if (data[i + 3] < 16) return true;",
+    "new": "  if (data[i + 3] < 15) return true;",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-padding-black-bar",
+    "file": "src/world/underwaterDecorations.js",
+    "old": "  return data[i] <= 12 && data[i + 1] <= 12 && data[i + 2] <= 12;",
+    "new": "  return data[i] <= 11 && data[i + 1] <= 12 && data[i + 2] <= 12;",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-fallback-for-105",
+    "file": "src/world/underwaterDecorations.js",
+    "old": "    else if (rec.archive === 106) h = BUBBLE_FALLBACK_VISUAL_HEIGHT;",
+    "new": "    else if (rec.archive === 105) h = BUBBLE_FALLBACK_VISUAL_HEIGHT;",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-promote-budget-inclusive",
+    "file": "src/scenes/deepWatersDecor.js",
+    "old": "      if (!canRunHeavy() || promoteMs() > PROMOTE_BUDGET_MS || processPendingBatch()) return;",
+    "new": "      if (!canRunHeavy() || promoteMs() >= PROMOTE_BUDGET_MS + 0.02 || processPendingBatch()) return;",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-player-tile-not-preserved",
+    "file": "src/scenes/deepWatersDecor.js",
+    "old": "    return batches.has(entry);\n  }",
+    "new": "    return false;\n  }",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-two-pixels-a-frame",
+    "file": "src/scenes/deepWatersDecor.js",
+    "old": "      while (workQueue.length > 0 && placed < 1) {",
+    "new": "      while (workQueue.length > 0 && placed < 2) {",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-animated-replacement-lifted",
+    "file": "src/scenes/deepWatersDecor.js",
+    "old": "          .billboards.push({ centre: [p.local[0], p.local[1], p.local[2]], width: w, height: h, start: 0 });",
+    "new": "          .billboards.push({ centre: [p.local[0], p.local[1] + h * 0.5, p.local[2]], width: w, height: h, start: 0 });",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-no-random-start-frame",
+    "file": "src/scenes/deepWatersDecor.js",
+    "old": "start: Math.floor(roll() * frames) });",
+    "new": "start: 0 });",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-suppression-ignored",
+    "file": "src/scenes/deepWatersDecor.js",
+    "old": "      if (drop) positions.splice(i, 1);",
+    "new": "      if (drop && false) positions.splice(i, 1);",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-view-column-sign",
+    "file": "src/render/deepWatersRender.js",
+    "old": "    gl.uniform3f(u.uViewCol2, -v[8], v[9], v[10]);",
+    "new": "    gl.uniform3f(u.uViewCol2, v[8], v[9], v[10]);",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-decor-no-column-share",
+    "file": "src/render/deepWatersRender.js",
+    "old": "vec3 col = dwColumn(t.xyz * uColor.xyz * tint, vWorldPos);",
+    "new": "vec3 col = t.xyz * uColor.xyz * tint;",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-column-share-halved",
+    "file": "src/render/deepWatersRender.js",
+    "old": "float t = min(behind / max(uTopVision, 1.0), 1.0);",
+    "new": "float t = min(behind / max(uTopVision, 1.0), 1.0) * 0.5;",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-decor-pixel-origin-dropped",
+    "file": "src/render/deepWatersRender.js",
+    "old": "      gl.uniform3fv(u.uPixelOrigin, it.origin);\n      for (const g of groups) {",
+    "new": "      for (const g of groups) {",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-decor-column-uniforms-dropped",
+    "file": "src/render/deepWatersRender.js",
+    "old": "    gl.uniform1i(u.uFogMode, 0);\n    this._columnUniforms(u, frame);",
+    "new": "    gl.uniform1i(u.uFogMode, 0);",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-decor-frame-column-off",
+    "file": "src/scenes/world.js",
+    "old": "dwRender.drawDecorations(_dwDecorList, dwColumnFrame(f));",
+    "new": "dwRender.drawDecorations(_dwDecorList, { ...dwColumnFrame(f), columnOn: false });",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-animated-frames-cleaned",
+    "file": "src/scenes/deepWatersDecor.js",
+    "old": "    if (kind !== 'animated') for (const img of out) clearEdgeBlackPixels(img);   // GetEdgeCleanedTexture",
+    "new": "    for (const img of out) clearEdgeBlackPixels(img);   // GetEdgeCleanedTexture",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-animated-replacement-batch-facing",
+    "file": "src/scenes/deepWatersDecor.js",
+    "old": "Math.max(1, Math.round(TEXTURE_106_FPS)), 1)",
+    "new": "Math.max(1, Math.round(TEXTURE_106_FPS)), 0)",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-facing-uniform-unset",
+    "file": "src/render/deepWatersRender.js",
+    "old": "        gl.uniform1i(u.uFacing, g.facing);\n",
+    "new": "",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-refresh-build-timed",
+    "file": "src/scenes/deepWatersHost.js",
+    "old": "        if (!disposed && isCurrent(entry)) apply(entry, r, timed);",
+    "new": "        if (!disposed && isCurrent(entry)) apply(entry, r, true);",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-near-promote-timed",
+    "file": "src/scenes/deepWatersHost.js",
+    "old": "      if (result !== undefined) apply(entry, result);",
+    "new": "      if (result !== undefined) apply(entry, result, true);",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-deferred-promote-untimed",
+    "file": "src/scenes/deepWatersHost.js",
+    "old": "      const timed = promoteDeferred.delete(entry);",
+    "new": "      const timed = (promoteDeferred.delete(entry), false);",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-mackerel-weight",
+    "file": "src/world/passiveFish.js",
+    "old": "species(9005, 'Mackerel', 46, 15,",
+    "new": "species(9005, 'Mackerel', 46, 14,",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-finulon-depth-band",
+    "file": "src/world/passiveFish.js",
+    "old": "B.OpenOcean | B.Cold, 0.6, 1, 0.8, 1.1, 1.4, 2.6)",
+    "new": "B.OpenOcean | B.Cold, 0.5, 1, 0.8, 1.1, 1.4, 2.6)",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-mackerel-dart-hold",
+    "file": "src/world/passiveFish.js",
+    "old": "0.8, 1.2, 0.9, 1.8),",
+    "new": "0.8, 1.2, 0.9, 1.9),",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-height-multiplier-unclamped",
+    "file": "src/world/passiveFish.js",
+    "old": "const minH = Math.max(f32(0.05), f32(minHeightMultiplier));",
+    "new": "const minH = f32(minHeightMultiplier);",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-depth-softness",
+    "file": "src/world/passiveFish.js",
+    "old": "export const DEPTH_EDGE_SOFTNESS = 0.18;",
+    "new": "export const DEPTH_EDGE_SOFTNESS = 0.2;",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-biome-mask-ignored",
+    "file": "src/world/passiveFish.js",
+    "old": "if ((s.biomes & biome) === 0) return 0;",
+    "new": "if ((s.biomes & biome) === 0 && false) return 0;",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-no-bare-weight-fallback",
+    "file": "src/world/passiveFish.js",
+    "old": "if (sum <= 0) return pickSpeciesByWeight(spawnable, roll);",
+    "new": "if (sum <= 0) return null;",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-slerp-unclamped",
+    "file": "src/world/passiveFish.js",
+    "old": "export function vector3Slerp(a, b, t) {\n  t = clamp01(t);\n",
+    "new": "export function vector3Slerp(a, b, t) {\n",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-slerp-axis",
+    "file": "src/world/passiveFish.js",
+    "old": "else out = rotateAbout(an, normalized(cross3(a, b)), Math.acos(d) * t);",
+    "new": "else out = rotateAbout(an, normalized(cross3(b, a)), Math.acos(d) * t);",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-school-cruise-speed",
+    "file": "src/world/passiveFish.js",
+    "old": "export const SCHOOL_CRUISE_SPEED = 0.95;",
+    "new": "export const SCHOOL_CRUISE_SPEED = 1;",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-school-flee-speed",
+    "file": "src/world/passiveFish.js",
+    "old": "export const SCHOOL_DISRUPTED_SPEED = 1.45;",
+    "new": "export const SCHOOL_DISRUPTED_SPEED = 1.5;",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-school-hold",
+    "file": "src/world/passiveFish.js",
+    "old": "export const SCHOOL_DIRECTION_HOLD = Object.freeze([2.2, 4.4]);",
+    "new": "export const SCHOOL_DIRECTION_HOLD = Object.freeze([2.2, 4.2]);",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-school-memory",
+    "file": "src/world/passiveFish.js",
+    "old": "export const SCHOOL_DISRUPTED_MEMORY_SECONDS = 3;",
+    "new": "export const SCHOOL_DISRUPTED_MEMORY_SECONDS = 2.5;",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-school-floor-clearance",
+    "file": "src/world/passiveFish.js",
+    "old": "export const SCHOOL_SEAFLOOR_CLEARANCE = 1.2;",
+    "new": "export const SCHOOL_SEAFLOOR_CLEARANCE = 1;",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-school-surface-clearance",
+    "file": "src/world/passiveFish.js",
+    "old": "export const SCHOOL_SURFACE_CLEARANCE = 1.4;",
+    "new": "export const SCHOOL_SURFACE_CLEARANCE = 1.2;",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-school-twice-a-frame",
+    "file": "src/world/passiveFish.js",
+    "old": "    if (this.lastUpdateFrame === f.frame) return;\n",
+    "new": "",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-school-flatten",
+    "file": "src/world/passiveFish.js",
+    "old": "    c[1] *= 0.15;\n",
+    "new": "    c[1] *= 0.25;\n",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-school-threat-flatten",
+    "file": "src/world/passiveFish.js",
+    "old": "const a = [awayFromPlayer[0], awayFromPlayer[1] * 0.25, awayFromPlayer[2]];",
+    "new": "const a = [awayFromPlayer[0], awayFromPlayer[1] * 0.5, awayFromPlayer[2]];",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-flee-distance",
+    "file": "src/world/passiveFish.js",
+    "old": "export const FLEE_DISTANCE = 8;",
+    "new": "export const FLEE_DISTANCE = 4;",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-cruise-speed",
+    "file": "src/world/passiveFish.js",
+    "old": "export const BASE_CRUISE_SPEED = 1.2;",
+    "new": "export const BASE_CRUISE_SPEED = 1.25;",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-flee-speed",
+    "file": "src/world/passiveFish.js",
+    "old": "export const BASE_FLEE_SPEED = 3.5;",
+    "new": "export const BASE_FLEE_SPEED = 3;",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-dart-angle",
+    "file": "src/world/passiveFish.js",
+    "old": "export const FLEE_DART_ANGLE = Object.freeze([35, 75]);",
+    "new": "export const FLEE_DART_ANGLE = Object.freeze([30, 75]);",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-fish-floor-clearance",
+    "file": "src/world/passiveFish.js",
+    "old": "export const FISH_SEAFLOOR_CLEARANCE = 0.8;",
+    "new": "export const FISH_SEAFLOOR_CLEARANCE = 1.2;",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-shallow-no-return",
+    "file": "src/world/passiveFish.js",
+    "old": "      if (this.hasLastSafePosition) this.position = [...this.lastSafePosition];\n",
+    "new": "",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-shallow-no-turn",
+    "file": "src/world/passiveFish.js",
+    "old": "      if (this.hasLastSafePosition) this.position = [...this.lastSafePosition];\n      this.swimDirection = this.swimDirection.map((c) => -c);\n",
+    "new": "      if (this.hasLastSafePosition) this.position = [...this.lastSafePosition];\n",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-distant-interval",
+    "file": "src/world/passiveFish.js",
+    "old": "export const DISTANT_UPDATE_INTERVAL = 0.25;",
+    "new": "export const DISTANT_UPDATE_INTERVAL = 0.1;",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-distant-jitter",
+    "file": "src/world/passiveFish.js",
+    "old": "if (distant) this.nextDistantUpdateTime = f.time + DISTANT_UPDATE_INTERVAL + f.roll() * 0.05;",
+    "new": "if (distant) this.nextDistantUpdateTime = f.time + DISTANT_UPDATE_INTERVAL;",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-probe-every-frame",
+    "file": "src/world/passiveFish.js",
+    "old": "    if ((f.frame + this.obstacleProbeFrameOffset) % OBSTACLE_PROBE_FRAME_INTERVAL !== 0) return false;\n",
+    "new": "",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-probe-reach",
+    "file": "src/world/passiveFish.js",
+    "old": "Math.hypot(step[0], step[1], step[2]) * 5 + COLLISION_PROBE_MARGIN);",
+    "new": "Math.hypot(step[0], step[1], step[2]) * 4 + COLLISION_PROBE_MARGIN);",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-probe-takes-step",
+    "file": "src/world/passiveFish.js",
+    "old": "    this.nextTurnTime = f.time + 0.5;\n    return true;",
+    "new": "    this.nextTurnTime = f.time + 0.5;\n    return false;",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-fish-band-ignored",
+    "file": "src/world/passiveFish.js",
+    "old": "  const lo = Math.max(s.minDepthFraction * depth, oceanY - maxY);",
+    "new": "  const lo = oceanY - maxY;",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-floor-bias-start",
+    "file": "src/world/passiveFish.js",
+    "old": "export const DEEP_FISH_FLOOR_BIAS_START = 0.55;",
+    "new": "export const DEEP_FISH_FLOOR_BIAS_START = 0.6;",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-floor-band",
+    "file": "src/world/passiveFish.js",
+    "old": "export const DEEP_FISH_FLOOR_BAND_METERS = 35;",
+    "new": "export const DEEP_FISH_FLOOR_BAND_METERS = 30;",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-ring-inner",
+    "file": "src/world/passiveFish.js",
+    "old": "export const SCHOOL_MEMBER_RADIUS = Object.freeze([1.2, 5]);",
+    "new": "export const SCHOOL_MEMBER_RADIUS = Object.freeze([1, 5]);",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-separation",
+    "file": "src/world/passiveFish.js",
+    "old": "const SCHOOL_MEMBER_MIN_SEPARATION_SQ = f32(4.84);",
+    "new": "const SCHOOL_MEMBER_MIN_SEPARATION_SQ = f32(1.44);",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-mate-depth-spread",
+    "file": "src/world/passiveFish.js",
+    "old": "pos[1] = Math.min(hi, Math.max(lo, center[1] + rangeFloat(-1, 1, f.roll)));",
+    "new": "pos[1] = Math.min(hi, Math.max(lo, center[1] + rangeFloat(-2, 2, f.roll)));",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-attempts-rounding",
+    "file": "src/world/passiveFish.js",
+    "old": "return Math.max(0, roundToInt(f32(FISH_ATTEMPTS_PER_PIXEL",
+    "new": "return Math.max(0, Math.round(f32(FISH_ATTEMPTS_PER_PIXEL",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-school-radius",
+    "file": "src/world/passiveFish.js",
+    "old": "Math.min(5, Math.max(1.2, 2.5 + schoolSize * 0.45));",
+    "new": "Math.min(5, Math.max(1.2, 2.5 + schoolSize * 0.5));",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-min-column",
+    "file": "src/world/passiveFish.js",
+    "old": "export const MINIMUM_FISH_COLUMN_DEPTH = 8;",
+    "new": "export const MINIMUM_FISH_COLUMN_DEPTH = 6;",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-icon-rounding",
+    "file": "src/world/passiveFish.js",
+    "old": "const w = Math.max(1, roundToInt(f32(src.height * f32(aspect))));",
+    "new": "const w = Math.max(1, Math.floor(f32(src.height * f32(aspect))));",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-icon-sample",
+    "file": "src/world/passiveFish.js",
+    "old": "Math.floor(((x + 0.5) / w) * src.width));",
+    "new": "Math.floor((x / w) * src.width));",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-six-a-frame",
+    "file": "src/world/passiveFish.js",
+    "old": "export const MAX_PENDING_FISH_SPAWNS_PER_FRAME = 5;",
+    "new": "export const MAX_PENDING_FISH_SPAWNS_PER_FRAME = 6;",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-cap-over-limit",
+    "file": "src/scenes/deepWatersEncounters.js",
+    "old": "const cap = () => settings().maxLive;",
+    "new": "const cap = () => settings().maxLive + 1;",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-release-keeps-count",
+    "file": "src/scenes/deepWatersEncounters.js",
+    "old": "        liveCount = Math.max(0, liveCount - g.liveOrPending);\n        g.fish.release(queueDestroy);",
+    "new": "        g.fish.release(queueDestroy);",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-departed-spawn-stands",
+    "file": "src/scenes/deepWatersEncounters.js",
+    "old": "        if (!r.group?.active) continue;\n        const fish = makeFish(",
+    "new": "        const fish = makeFish(",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-attempts-per-tick",
+    "file": "src/scenes/deepWatersEncounters.js",
+    "old": "export const FISH_ATTEMPTS_PER_PIXEL_PER_TICK = 2;",
+    "new": "export const FISH_ATTEMPTS_PER_PIXEL_PER_TICK = 3;",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-populate-radius",
+    "file": "src/scenes/deepWatersEncounters.js",
+    "old": "export const POPULATE_RADIUS = 200;",
+    "new": "export const POPULATE_RADIUS = 260;",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-despawn-radius",
+    "file": "src/scenes/deepWatersEncounters.js",
+    "old": "export const DESPAWN_RADIUS = 300;",
+    "new": "export const DESPAWN_RADIUS = 240;",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-disable-grace",
+    "file": "src/scenes/deepWatersEncounters.js",
+    "old": "export const DISABLE_CLEAR_GRACE_SECONDS = 2;",
+    "new": "export const DISABLE_CLEAR_GRACE_SECONDS = 1;",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-tick-interval",
+    "file": "src/scenes/deepWatersEncounters.js",
+    "old": "export const TICK_INTERVAL = 0.1;",
+    "new": "export const TICK_INTERVAL = 0.05;",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-destroys-a-frame",
+    "file": "src/scenes/deepWatersEncounters.js",
+    "old": "export const MAX_PENDING_DESTROYS_PER_FRAME = 12;",
+    "new": "export const MAX_PENDING_DESTROYS_PER_FRAME = 15;",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-heavy-gate-keeps",
+    "file": "src/scenes/deepWatersEncounters.js",
+    "old": "if (!canRunHeavy()) { clearEverything(); return; }",
+    "new": "if (!canRunHeavy()) { return; }",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-nearest-edge",
+    "file": "src/scenes/deepWatersEncounters.js",
+    "old": "const dz = Math.max(originZ - p[2], 0, p[2] - (originZ + size));",
+    "new": "const dz = Math.max(originZ - p[2], 0);",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-dry-populated",
+    "file": "src/scenes/deepWatersEncounters.js",
+    "old": "if (d <= POPULATE_RADIUS * POPULATE_RADIUS && isWaterPixel(e))",
+    "new": "if (d <= POPULATE_RADIUS * POPULATE_RADIUS)",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-spawns-after-tick",
+    "file": "src/scenes/deepWatersEncounters.js",
+    "old": "      pumpPendingDestroys();\n      for (const [, l] of lanes) l.spawner.pumpPendingSpawns();\n      if (f.time < nextTickTime) return;",
+    "new": "      pumpPendingDestroys();\n      if (f.time < nextTickTime) { for (const [, l] of lanes) l.spawner.pumpPendingSpawns(); return; }",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-box-depth",
+    "file": "src/scenes/deepWatersFish.js",
+    "old": "export const fishBoxDepth = (w) => Math.max(0.35, w * 0.25);",
+    "new": "export const fishBoxDepth = (w) => Math.max(0.35, w * 0.3);",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-reach",
+    "file": "src/scenes/deepWatersFish.js",
+    "old": "distance: RAY_DISTANCE, reach: TREASURE_ACTIVATION_DISTANCE, noSurface: true,",
+    "new": "distance: RAY_DISTANCE, reach: RAY_DISTANCE, noSurface: true,",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-cutoff",
+    "file": "src/scenes/deepWatersFish.js",
+    "old": "export const FISH_CUTOFF = 0.1;",
+    "new": "export const FISH_CUTOFF = 0.5;",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-shift-leaves-school",
+    "file": "src/scenes/deepWatersFish.js",
+    "old": "      for (const s of schools) for (let i = 0; i < 3; i++) s.center[i] += offset[i];\n",
+    "new": "",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-emptied-fish-stays",
+    "file": "src/scenes/deepWatersFish.js",
+    "old": "        if (!o.fish.managedUpdate(f)) remove(o);   // its loot emptied: Object.Destroy",
+    "new": "        o.fish.managedUpdate(f);",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-height-range",
+    "file": "src/scenes/deepWatersFish.js",
+    "old": "const height = species.billboardHeight * rangeFloat(species.minHeightMultiplier, species.maxHeightMultiplier, roll);",
+    "new": "const height = species.billboardHeight;",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-facing",
+    "file": "src/scenes/deepWatersFish.js",
+    "old": "g = { texture: tex, fps: 0, born: 0, facing: 2, cutoff: FISH_CUTOFF, billboards: [] };",
+    "new": "g = { texture: tex, fps: 0, born: 0, facing: 1, cutoff: FISH_CUTOFF, billboards: [] };",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-pictures-unclean",
+    "file": "src/scenes/deepWatersFish.js",
+    "old": "        clean(frame);\n",
+    "new": "",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-pictures-top-down",
+    "file": "src/scenes/deepWatersFish.js",
+    "old": "rows.set(img.data.subarray((img.height - 1 - y) * img.width * 4, (img.height - y) * img.width * 4), y * img.width * 4);",
+    "new": "rows.set(img.data.subarray(y * img.width * 4, (y + 1) * img.width * 4), y * img.width * 4);",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-no-picture-spawnable",
+    "file": "src/scenes/deepWatersFish.js",
+    "old": "filter((s) => s.spawnWeight > 0 && textures.has(s)),",
+    "new": "filter((s) => s.spawnWeight > 0),",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-icon-archive-216",
+    "file": "src/systems/deepWatersFishItems.js",
+    "old": "export const fishIconArchive = (templateIndex) => templateIndex;",
+    "new": "export const fishIconArchive = (templateIndex) => 216 + 0 * templateIndex;",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-template-remap-dropped",
+    "file": "src/systems/deepWatersFishItems.js",
+    "old": "  ...t, worldTextureArchive: fishIconArchive(t.index), worldTextureRecord: 0,",
+    "new": "  ...t,",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-group",
+    "file": "src/systems/deepWatersFishItems.js",
+    "old": "export const FISH_GROUP = 'UselessItems2';",
+    "new": "export const FISH_GROUP = 'UselessItems1';",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-icon-aspect",
+    "file": "src/systems/deepWatersFishItems.js",
+    "old": "build: async () => restoreIconAspect(await decode(await fetchBytes(s.textureName)), s.billboardAspect),",
+    "new": "build: async () => await decode(await fetchBytes(s.textureName)),",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-normalize-loses-stack",
+    "file": "src/systems/deepWatersFishItems.js",
+    "old": "    Object.assign(it, fresh, { stackCount, currentCondition, maxCondition });",
+    "new": "    Object.assign(it, fresh);",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-normalize-misses-stray",
+    "file": "src/systems/deepWatersFishItems.js",
+    "old": "if (!it || it.group === FISH_GROUP || !isFishTemplateIndex(it.templateIndex)) continue;",
+    "new": "if (!it || it.group !== FISH_GROUP || !isFishTemplateIndex(it.templateIndex)) continue;",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-no-fish-icon",
+    "file": "src/ui/nativeInventory.js",
+    "old": "return own ? { image: own, label: shown.label } : shown;",
+    "new": "return shown;",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-cutoff-per-group-ignored",
+    "file": "src/render/deepWatersRender.js",
+    "old": "gl.uniform1f(u.uCutoff, g.cutoff ?? DECORATION_CUTOFF);",
+    "new": "gl.uniform1f(u.uCutoff, DECORATION_CUTOFF);",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-foes-not-probed",
+    "file": "src/scenes/world.js",
+    "old": "    for (const pool of [exteriorFoes.foes, cityGuards.guards]) {",
+    "new": "    for (const pool of []) {",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-normalize-keeps-old-fields",
+    "file": "src/systems/deepWatersFishItems.js",
+    "old": "    for (const k of SET_ITEM_FIELDS) delete it[k];\n",
+    "new": "",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-capsule-far-crossing",
+    "file": "src/world/passiveFish.js",
+    "old": "      const t = (-b - Math.sqrt(disc)) / (2 * a);",
+    "new": "      const t = (-b + Math.sqrt(disc)) / (2 * a);",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-destroyed-queued",
+    "file": "src/scenes/deepWatersEncounters.js",
+    "old": "    if (!live(o)) return;\n    o.hide?.();",
+    "new": "    if (!o) return;\n    o.hide?.();",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-destroyed-destroyed-again",
+    "file": "src/scenes/deepWatersEncounters.js",
+    "old": "    while (n-- > 0 && pendingDestroys.length) {\n      const o = pendingDestroys.shift();\n      if (live(o)) o.destroy?.();",
+    "new": "    while (n-- > 0 && pendingDestroys.length) {\n      const o = pendingDestroys.shift();\n      o?.destroy?.();",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E3-player-feet",
+    "file": "src/scenes/world.js",
+    "old": "player.pos[1] + (player.height ?? CAPSULE_HEIGHT) / 2, player.pos[2]] : cam.pos);",
+    "new": "player.pos[1], player.pos[2]] : cam.pos);",
+    "tests": [
+      "test/dwe_fish.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-slaughterfish-weight",
+    "file": "src/world/underwaterEnemies.js",
+    "old": "[MOBILE.Slaughterfish, 60, 0, 0.7]",
+    "new": "[MOBILE.Slaughterfish, 55, 0, 0.7]",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-lich-band",
+    "file": "src/world/underwaterEnemies.js",
+    "old": "[MOBILE.Lich, 2, 0.85, 1]",
+    "new": "[MOBILE.Lich, 2, 0.8, 1]",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-rare-roster",
+    "file": "src/world/underwaterEnemies.js",
+    "old": "export const RARE_TYPES = Object.freeze([MOBILE.Ghost, MOBILE.SkeletalWarrior,",
+    "new": "export const RARE_TYPES = Object.freeze([MOBILE.SkeletalWarrior, MOBILE.Ghost,",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-guard-team",
+    "file": "src/world/underwaterEnemies.js",
+    "old": "export const TREASURE_GUARD_TEAM = 'Undead';",
+    "new": "export const TREASURE_GUARD_TEAM = 'Aquatic';",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-roster-order",
+    "file": "src/world/underwaterEnemies.js",
+    "old": "for (const t of [...DEPTH_AQUATIC_TABLE.map((e) => e.type), ...RARE_TYPES, ...BOSS_TYPES])",
+    "new": "for (const t of [...DEPTH_AQUATIC_TABLE.map((e) => e.type), ...BOSS_TYPES, ...RARE_TYPES])",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ],
+    "equivalent": true,
+    "why": "GetEnemyRoster adds each type once in its order: every rare type is already in the depth table, so the rare list adds nothing and the bosses land last either way - the mod's own loop over the rare list is kept for its sake"
+  },
+  {
+    "name": "DW-E4-band-softness",
+    "file": "src/world/underwaterEnemies.js",
+    "old": "return f32(e.weight * clamp01(f32(1 - f32(off / f32(DEPTH_EDGE_SOFTNESS)))));",
+    "new": "return f32(e.weight * clamp01(f32(1 - f32(off / f32(0.2)))));",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-nothing-weighs",
+    "file": "src/world/underwaterEnemies.js",
+    "old": "if (total <= 0) return MOBILE.Slaughterfish;",
+    "new": "if (total <= 0) return MOBILE.Dreugh;",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ],
+    "equivalent": true,
+    "why": "unreachable: the depth fraction is clamped to 0..1 and the table covers it (the Slaughterfish 0 - 0.7, the Dreugh 0.15 - 1), so the total never falls to nothing - the mod's own guard, kept"
+  },
+  {
+    "name": "DW-E4-boss-chance",
+    "file": "src/world/underwaterEnemies.js",
+    "old": "export const BOSS_SPAWN_CHANCE = 0.01;",
+    "new": "export const BOSS_SPAWN_CHANCE = 0.02;",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-boss-depth",
+    "file": "src/world/underwaterEnemies.js",
+    "old": "export const BOSS_MIN_DEPTH_FRACTION = 0.6;",
+    "new": "export const BOSS_MIN_DEPTH_FRACTION = 0.5;",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-boss-draw-everywhere",
+    "file": "src/world/underwaterEnemies.js",
+    "old": "if (depthFraction >= BOSS_MIN_DEPTH_FRACTION && roll() < BOSS_SPAWN_CHANCE) return pickBoss(roll);",
+    "new": "if (roll() < BOSS_SPAWN_CHANCE && depthFraction >= BOSS_MIN_DEPTH_FRACTION) return pickBoss(roll);",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-nymph-swims",
+    "file": "src/world/underwaterEnemies.js",
+    "old": "const FLOOR_TYPES = new Set([MOBILE.Zombie, MOBILE.SkeletalWarrior, MOBILE.IceAtronach, MOBILE.Nymph,",
+    "new": "const FLOOR_TYPES = new Set([MOBILE.Zombie, MOBILE.SkeletalWarrior, MOBILE.IceAtronach,",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-floor-clearance",
+    "file": "src/world/underwaterEnemies.js",
+    "old": "export const ENEMY_SEAFLOOR_CLEARANCE = 2.5;",
+    "new": "export const ENEMY_SEAFLOOR_CLEARANCE = 2;",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-surface-clearance",
+    "file": "src/world/underwaterEnemies.js",
+    "old": "export const ENEMY_SURFACE_CLEARANCE = 3;",
+    "new": "export const ENEMY_SURFACE_CLEARANCE = 2.5;",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-min-column",
+    "file": "src/world/underwaterEnemies.js",
+    "old": "export const MINIMUM_COLUMN_DEPTH = 4;",
+    "new": "export const MINIMUM_COLUMN_DEPTH = 3;",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-floor-foe-lift",
+    "file": "src/world/underwaterEnemies.js",
+    "old": "export const FLOOR_ENEMY_SEAFLOOR_CLEARANCE = 0.5;",
+    "new": "export const FLOOR_ENEMY_SEAFLOOR_CLEARANCE = 0.4;",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-lean-start",
+    "file": "src/world/underwaterEnemies.js",
+    "old": "export const DEEP_SWIMMER_FLOOR_BIAS_START = 0.55;",
+    "new": "export const DEEP_SWIMMER_FLOOR_BIAS_START = 0.6;",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-lean-band",
+    "file": "src/world/underwaterEnemies.js",
+    "old": "export const DEEP_SWIMMER_FLOOR_BAND_TOP = 0.35;",
+    "new": "export const DEEP_SWIMMER_FLOOR_BAND_TOP = 0.3;",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-floor-drop",
+    "file": "src/world/underwaterEnemies.js",
+    "old": "export const alignFloorEnemyY = (y, controllerHeight) => y - FLOOR_ENEMY_SEAFLOOR_CLEARANCE + controllerHeight * 0.52;",
+    "new": "export const alignFloorEnemyY = (y, controllerHeight) => y - FLOOR_ENEMY_SEAFLOOR_CLEARANCE + controllerHeight * 0.5;",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-attempts",
+    "file": "src/world/underwaterEnemies.js",
+    "old": "export const ENEMY_ATTEMPTS_PER_PIXEL = 96;",
+    "new": "export const ENEMY_ATTEMPTS_PER_PIXEL = 90;",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-roll-count-fraction",
+    "file": "src/world/underwaterEnemies.js",
+    "old": "  if (roll() < scaledCount - n) n++;\n",
+    "new": "  if (roll() <= scaledCount - n) n++;\n",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-guard-frequency",
+    "file": "src/world/underwaterEnemies.js",
+    "old": "export const ENEMY_FREQUENCY_FOR_MAX_TREASURE_GUARDS = 0.6;",
+    "new": "export const ENEMY_FREQUENCY_FOR_MAX_TREASURE_GUARDS = 0.5;",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-ring-linear",
+    "file": "src/world/underwaterEnemies.js",
+    "old": "  return Math.sqrt(f32(a + f32(f32(b - a) * f32(roll()))));",
+    "new": "  return min + (max - min) * roll();",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-behind-radius",
+    "file": "src/world/underwaterEnemies.js",
+    "old": "  if (dx * dx + dz * dz < 144) return false;",
+    "new": "  if (dx * dx + dz * dz < 100) return false;",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-behind-in-view",
+    "file": "src/world/underwaterEnemies.js",
+    "old": "  if (isBehindPlayerHeading(p, playerPos, view.forward)) return false;",
+    "new": "  if (isBehindPlayerHeading(p, playerPos, view.forward)) return true;",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-reveal-ignored",
+    "file": "src/world/underwaterEnemies.js",
+    "old": "return flatSq > view.revealDistance * view.revealDistance;",
+    "new": "return true;",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-top-margin",
+    "file": "src/world/underwaterEnemies.js",
+    "old": "if (!(v[0] < -margin) && !(v[0] > 1 + margin) && !(v[1] < -margin)) return v[1] > 1 + margin;",
+    "new": "if (!(v[0] < -margin) && !(v[0] > 1 + margin) && !(v[1] < -margin)) return false;",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-reveal-speed",
+    "file": "src/world/underwaterEnemies.js",
+    "old": "export const spawnRevealDistance = (vision, velocity) => vision + Math.hypot(velocity[0], velocity[2]) * 2;",
+    "new": "export const spawnRevealDistance = (vision, velocity) => vision + Math.hypot(velocity[0], velocity[1], velocity[2]) * 2;",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-two-a-frame",
+    "file": "src/world/underwaterEnemies.js",
+    "old": "export const MAX_PENDING_ENEMY_SPAWNS_PER_FRAME = 1;",
+    "new": "export const MAX_PENDING_ENEMY_SPAWNS_PER_FRAME = 2;",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-four-a-tick",
+    "file": "src/scenes/deepWatersEncounters.js",
+    "old": "export const ENEMY_ATTEMPTS_PER_PIXEL_PER_TICK = 4;",
+    "new": "export const ENEMY_ATTEMPTS_PER_PIXEL_PER_TICK = 3;",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-cap-ignored",
+    "file": "src/scenes/deepWatersEncounters.js",
+    "old": "        if (liveCount >= cap) { g.attemptsRemaining = 0; break; }\n        budget.n--;\n        g.attemptsRemaining--;\n        const x = origin[0] + f.roll() * TILE_WORLD_SIZE;\n        const z = origin[2] + f.roll() * TILE_WORLD_SIZE;\n        const c = resolveSpawnColumn",
+    "new": "        budget.n--;\n        g.attemptsRemaining--;\n        const x = origin[0] + f.roll() * TILE_WORLD_SIZE;\n        const z = origin[2] + f.roll() * TILE_WORLD_SIZE;\n        const c = resolveSpawnColumn",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-give-back-twice",
+    "file": "src/scenes/deepWatersEncounters.js",
+    "old": "          if (!counted || !g.active) return;",
+    "new": "          if (!g.active) return;",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-give-back-after-release",
+    "file": "src/scenes/deepWatersEncounters.js",
+    "old": "          if (!counted || !g.active) return;",
+    "new": "          if (!counted) return;",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-release-keeps-count",
+    "file": "src/scenes/deepWatersEncounters.js",
+    "old": "        liveCount = Math.max(0, liveCount - g.liveOrPending);\n        g.enemies.release(queueDestroy);",
+    "new": "        g.enemies.release(queueDestroy);",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-switch-ignored",
+    "file": "src/scenes/deepWatersEncounters.js",
+    "old": "canPopulate: () => { const s = settings(); return !!s.on && s.frequency > 0; },",
+    "new": "canPopulate: () => { const s = settings(); return s.frequency > 0; },",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-guard-boss-chance",
+    "file": "src/world/underwaterEnemies.js",
+    "old": "export const TREASURE_GUARD_BOSS_CHANCE = 0.02;",
+    "new": "export const TREASURE_GUARD_BOSS_CHANCE = 0.05;",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-guard-no-min-boss",
+    "file": "src/scenes/deepWatersEncounters.js",
+    "old": "  if (boss) count = Math.max(1, count);\n",
+    "new": "\n",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-guard-tries",
+    "file": "src/scenes/deepWatersEncounters.js",
+    "old": "while (spawned < count && tries < 8 * count + 15) {",
+    "new": "while (spawned < count && tries < 8 * count + 10) {",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-guard-no-fallback",
+    "file": "src/scenes/deepWatersEncounters.js",
+    "old": "  if (spawned === 0) {\n    const s = stand(centre[0], centre[2]);",
+    "new": "  if (spawned < 0) {\n    const s = stand(centre[0], centre[2]);",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-guard-boss-each",
+    "file": "src/scenes/deepWatersEncounters.js",
+    "old": "    if (boss && !bossSpawned) bossSpawned = true;\n",
+    "new": "\n",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-guard-heavy-gate",
+    "file": "src/scenes/deepWatersEncounters.js",
+    "old": "  if (!settings.on || !canRunHeavy || !playerPos) return 0;",
+    "new": "  if (!settings.on || !playerPos) return 0;",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-transform-lifted",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    const pending = { feet: [pos[0], pos[1] + (feetGiven || groundAlign || transformY ? 0 : 0.1), pos[2]] };",
+    "new": "    const pending = { feet: [pos[0], pos[1] + (feetGiven || groundAlign ? 0 : 0.1), pos[2]] };",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-transform-as-feet",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "        pending.feet[1] += transformY(enemyControllerHeight(idleH, behaviour)) - idleH / 2 - pos[1];",
+    "new": "        pending.feet[1] += transformY(enemyControllerHeight(idleH, behaviour)) - pos[1];",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-team-ignored",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (team) entity.team = team;\n",
+    "new": "\n",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-transient-saved",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "foes.filter((f) => !f.dead && !f.puppet && !f.transient)",
+    "new": "foes.filter((f) => !f.dead && !f.puppet)",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-no-water",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "        waterSurfaceY: waterLevelY ? () => waterLevelY() : null,   // DW-E4: blockWaterLevel, one level for the scene\n",
+    "new": "\n",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-world-not-hostile",
+    "file": "src/scenes/world.js",
+    "old": "      f.ai.makeEnemyHostileToAttacker?.(PLAYER_TARGET, walkMode ? [...player.pos] : null);\n",
+    "new": "\n",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-world-no-level",
+    "file": "src/scenes/world.js",
+    "old": "    waterLevelY: () => dwPlayer?.waterLevelY ?? null,   // DW-E4: blockWaterLevel as the deep's swim driver leaves it - every aquatic foe's WaterMove reads it\n",
+    "new": "",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-world-no-lane",
+    "file": "src/scenes/world.js",
+    "old": "    enemies: dwEnemies ? { spawner: dwEnemies, canPopulate: dwEnemies.canPopulate, attempts: ENEMY_ATTEMPTS_PER_PIXEL_PER_TICK } : null,   // DW-E4\n",
+    "new": "",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-settings-midpoint",
+    "file": "src/scenes/deepWatersHost.js",
+    "old": "    frequency: scaledSliderValue(get('General.EnemyFrequency'), 0.5),",
+    "new": "    frequency: scaledSliderValue(get('General.EnemyFrequency'), 3),",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-managed-culled",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (!f.placed && !f.managed && _playerDist > (f.campId != null ? CAMP_CULL_DISTANCE : ENCOUNTER_CULL_DISTANCE)",
+    "new": "      if (!f.placed && _playerDist > (f.campId != null ? CAMP_CULL_DISTANCE : ENCOUNTER_CULL_DISTANCE)",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-world-unmanaged",
+    "file": "src/scenes/world.js",
+    "old": "loose: true, transient: true, managed: true, team,",
+    "new": "loose: true, transient: true, team,",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  },
+  {
+    "name": "DW-E4-departed-spawn-stands",
+    "file": "src/scenes/deepWatersEncounters.js",
+    "old": "        if (!r.group?.active) continue;\n        const g = r.group;",
+    "new": "        const g = r.group;",
+    "tests": [
+      "test/dwe_enemies.test.js"
+    ]
+  }
+]

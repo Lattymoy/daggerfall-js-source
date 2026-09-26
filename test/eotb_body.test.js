@@ -351,6 +351,7 @@ test('EOTB-IL: the first-person billboard - active while FirstPersonBillboard is
   const p = b.state().placed;
   assert.equal(Number(p[2].toFixed(6)), -0.25, 'a quarter metre behind the parent along the forward (IL_4cd7)');
   assert.equal(r.batches.at(-1).rec, '0-0', 'Shadows Only (1) draws the picture as it is');
+  assert.equal(r.batches.at(-1).selfCard, true, 'DISC24-C: the player\'s own card, so the lamps cast it as drawn and every frame (render/shadowPass.js)');
   // Visible (2) faces the quad away from the camera: seen from behind, mirrored
   setModSetting(MOD, 'Graphics.FirstPersonBillboard', 2);
   try {

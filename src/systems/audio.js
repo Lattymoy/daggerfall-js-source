@@ -80,8 +80,13 @@ export class AudioEngine {
     if (!this.ctx) return null;
     // minted once per context (a re-created context invalidates it)
     if (!this._master || this._master.context !== this.ctx) {
+      // DW-D: THE LISTENER - the last node before the speakers, every bus through it (this master, the reverb's
+      // wet, the music's master): what Unity hangs on the AudioListener takes the whole mix (setListenerLowPass)
+      this._listenerIn = this.ctx.createGain();
+      this._listenerIn.connect(this.ctx.destination);
+      this._listenerFilter = null; this._listenerCut = 0;
       this._master = this.ctx.createGain();
-      this._master.connect(this.ctx.destination);
+      this._master.connect(this._listenerIn);
       // BA1 / AUDIT-BA F4: THE REVERB SEND. Unity's zone takes every AudioSource the listener stands near at its
       // reverbZoneMix (1 by default) - the music's included. The port's music runs its own master on the same
       // context (systems/songPlayer.js), so the zone is a SEND node both masters feed; setReverb hangs the
@@ -94,12 +99,14 @@ export class AudioEngine {
     return this._master;
   }
 
-  /** BA1: AudioLowPassFilter - a biquad low-pass at `cutoffHz` (Unity's default resonance Q 1). */
+  /** BA1: AudioLowPassFilter - a biquad low-pass at `cutoffHz` (Unity's default resonance Q 1). DW-D: a Web Audio
+   *  low-pass reads its Q in DECIBELS (the spec's alpha = sin w0 / (2 * 10^(Q/20))), so Unity's linear 1 is 0 here -
+   *  the 1 this held was a 1 dB peak at the cutoff. */
   _lowpass(cutoffHz) {
     const f = this.ctx.createBiquadFilter();
     f.type = 'lowpass';
     f.frequency.value = cutoffHz;
-    f.Q.value = 1;
+    f.Q.value = 0;
     return f;
   }
 
@@ -124,13 +131,31 @@ export class AudioEngine {
     conv.buffer = reverbImpulse(this.ctx, p);
     const wet = this.ctx.createGain();
     wet.gain.value = 1;
-    send.connect(conv).connect(wet).connect(this.ctx.destination);
+    send.connect(conv).connect(wet).connect(this._listenerIn);   // DW-D: through the listener, as every bus
     this._reverb = { conv, wet, preset: typeof preset === 'string' ? preset : 'custom' };
     return true;
   }
   get reverbPreset() { return this._reverb?.preset ?? null; }
   /** AUDIT-BA F4: the zone's send, for a bus that is not this master (the music's). Null with no context. */
   reverbSend() { return this._out() ? this._reverbIn : null; }
+  /** DW-D: the listener's input, for a bus that is not this master (the music's). Null with no context. */
+  listenerBus() { return this._out() ? this._listenerIn : null; }
+
+  /** DW-D: an AudioLowPassFilter on the AudioListener (Iliac Puddle No More's UnderwaterPresentationEffects: 1000 Hz
+   *  while the presentation is under the sea) - the whole mix muffled; 0 takes it off. Idempotent per cutoff. */
+  setListenerLowPass(cutoffHz) {
+    this._ensureCtx();
+    if (!this._out()) return;
+    const want = cutoffHz > 0 ? cutoffHz : 0;
+    if (want === this._listenerCut) return;
+    const bus = this._listenerIn;
+    try { bus.disconnect(); } catch { /* none */ }
+    if (this._listenerFilter) { try { this._listenerFilter.disconnect(); } catch { /* gone */ } this._listenerFilter = null; }
+    if (want) { this._listenerFilter = this._lowpass(want); bus.connect(this._listenerFilter).connect(this.ctx.destination); }
+    else bus.connect(this.ctx.destination);
+    this._listenerCut = want;
+  }
+  get listenerLowPass() { return this._listenerCut ?? 0; }
 
   /** AUDIT 18 F6: the one bootstrap every host calls.
    *
@@ -158,7 +183,7 @@ export class AudioEngine {
     setEquipSoundSink((clip) => this.playOneShot(clip));
     // NT1 (F215): the flag IS the promise - the sibling MusicService's
     // AUDIT 19 law ("a guard set before its own async work is not
-    // idempotence, it is a race with a flag on it", music.js:97-102).
+    // idempotence, it is a race with a flag on it", music.js:98-103).
     // The boolean version returned to a concurrent second caller BEFORE
     // init finished, so that caller's immediate one-shots dropped while
     // `enabled` was still false. Every caller now awaits the same boot.

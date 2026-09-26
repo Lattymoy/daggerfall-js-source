@@ -282,12 +282,13 @@ export class WodWorld {
    * @param {{mapPixelX:number, mapPixelY:number, hasLocation:boolean,
    *   mapRegionIndex:number, worldHeight:number}} tile
    * @param {?(x:number, y:number) => number} pathsPoint
+   * @param {?(prefabName:string, prefab:object, rect:object) => boolean} siteClear - ROADS-CLEAR (pickLocations)
    */
-  picksFor(tile, pathsPoint = null) {
+  picksFor(tile, pathsPoint = null, siteClear = null) {
     // WOD6: a late landing swaps the list whole, and a build awaits between its pick and its placements - the
     // instance's identity is read here, from the list the pick came from, never through its index into a newer one
     const session = this.session;
-    return pickLocations(tile, session, (name) => this.prefabs.get(name) ?? null, pathsPoint)
+    return pickLocations(tile, session, (name) => this.prefabs.get(name) ?? null, pathsPoint, siteClear)
       .map((pick) => ({ ...pick, locationID: session.locationID[pick.index] }));
   }
 

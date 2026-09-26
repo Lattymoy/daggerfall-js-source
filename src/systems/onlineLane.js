@@ -105,7 +105,7 @@ export const ONLINE_FORCED_PREFS = {
   // mount on either skin now (scenes/world.js chatStart; ui/playerTradeDoor.js) and keep their own face over the
   // classic screens, so the UI Overhaul a player chose (systems/overhauls.js) is the one they play online. Nothing
   // the room agrees on reads the skin: it is what THIS screen draws.
-  mwArms: true,   // the Morrowind arms build at boot where the archives are attached (weaponRig.js autoBuildArms guards the data); without them the doll stands, as offline
+  // MWA4: and `mwArms` left with its switch - the attached Morrowind files are the arms' switch now, online and off.
 };
 /** RF4: the registry's door - `true`/`false` forces the key online,
  *  `'player'` leaves it to the player by name. Idempotent. */
@@ -121,12 +121,14 @@ export function declareOnlinePrefs(table) {
 export const ONLINE_PLAYERS_OWN_PREFS = [
   'touchAnalogStick', 'touchGyroLook', 'touchHaptics', 'touchFullscreen',   // TI2: how this phone is held
   'showFps',          // FPS1: a diagnostic over the game
+  'skipStartVideo',   // UXB1-A: whether THIS player sits through the opening film - read at the front door, before any room
   'chatHidden',       // CHAT-R2: whether THIS player wants the chat on screen - the room does not get a say in what someone looks at
   'peerClassSprites', // 2026-09-17: how OTHER players are drawn on THIS machine (animated class sprite vs paperdoll) -
                        // purely a local rendering choice, same shape as chatHidden above; it changes nothing the room agrees on
   'peerAttackSounds', 'peerFootsteps',   // PEER-FS1: and how OTHER players are HEARD on this machine - the same local-only shape
   'nightCrickets', 'distantHowl',        // SNDREP1: whether THIS player hears the night's crickets and the far howl - an ear, nothing the room agrees on
   'heldMap',          // MAP-TOGGLE: whether THIS player's maps are the held sheet or DFU's windows - a look, nothing the room agrees on
+  'enhancedPlus', 'plusCursor', 'plusItemHover',   // PLUS1/6/7: the Plus dress, its gauntlet cursor and its hover card - what THIS screen draws (OVH3's law: the skin is the player's)
   'proceduralSky',    // EE1's legacy key, read only by the migration
 ];   // (RF4: grown by declareOnlinePrefs with the registry's 'player' answers - the dials)
 
@@ -258,6 +260,31 @@ export const ONLINE_ROOM_MOD_KEYS = Object.freeze({
   // through each other's boulders - the roads' own reason, word for
   // word. Its one switch is the room's.
   'world-of-daggerfall': Object.freeze({ Enabled: true }),
+  // DS1 (2026-09-25): the third floor. Every owner's ship stands at the SAME
+  // map pixel - (2,2) for the small, (5,5) for the large (banking.js
+  // SHIP_COORDS) - so a room's sailors share one deck, and Detailed Ships
+  // stands collidable railings, crates, tenders and rigging on it. Two
+  // players who disagree would walk two decks and pass through each
+  // other's crates; the switch is the room's. (Below decks opens no room -
+  // worldModes' ship interior is the player's own.)
+  'detailed-ships': Object.freeze({ Enabled: true }),
+  // DW-A to DW-D (2026-09-25): the fourth floor, and more than a floor. Iliac
+  // Puddle No More carves the sea out from under the terrain - the switch
+  // and the depth decide where the seafloor stands, so two players who
+  // disagree would swim over two floors (one walking on water where the
+  // other dives). Its deep-sea foes and its sunken loot are the host's
+  // foes and a roll that leaves the roller's hands (MODS-ONLINE-4's two
+  // reasons), and its swim multiplier, its stroke and the Argonians'
+  // unbounded breath are rules a room plays by (MODS-ONLINE-5): a 30x swim
+  // is a player outrunning the party's foes. Its looks - the surfaces, the
+  // fog, the fish and the weed - are each player's own.
+  'iliac-puddle-no-more': Object.freeze({
+    Enabled: true, 'General.WaterDepth': 250.0,
+    'General.SpawnUnderwaterEnemies': true, 'General.EnemyFrequency': 0.3, 'General.MaxLiveEnemies': 128,
+    'General.SeafloorLootRate': 0.5, 'General.MaxLiveLootObjects': 192, 'General.TreasureClusterRate': 0.3,
+    'General.MaxLiveTreasureClusters': 12, 'General.TreasureCove': false,
+    'General.SwimSpeedMultiplier': 1.0, 'General.EnableSwimStroke': true, 'General.ArgonianInfiniteBreath': true,
+  }),
   // MODS-ONLINE-4: the host's foes are the party's foes.
   meanerMonsters: Object.freeze({ Enabled: true }),
   pcaao: Object.freeze({ Enabled: true }),
@@ -328,6 +355,8 @@ export const ONLINE_PLAYERS_OWN_MODS = [
   'travel-options',              // my own journey; OL2 already spends no world time online
   'diverse-weapons',        // DW1: the first-person weapon's and the icons' art - drawn on your own screen and nowhere else
   'horse-cart-and-cargo',   // HCC: whose horse and wagon stand where is the player's own; the others only SEE them (the online half rides the pose and the cell's frame, never a switch of the room's ground)
+  'warm-ashes-ships',       // WA1: my own voyage's ambush - my quest, my crew and pirates (a spawner's foes, WORLD2: a peer on the same deck sees them fight), my lent ship; the pirate vessels are my blocks' variant and stand 40-140 m off in open water, where a peer without them sees sea
+  'aquatic-sprites',        // AS1: 119 flats of scenery in three flooded dungeon blocks - no collider, no action, no marker; a peer without them walks the same rooms (the editor's seven sub-degree turns of a room model are under half a degree)
 ];
 
 /** The forced value of a mod's switch on an online page, else undefined -

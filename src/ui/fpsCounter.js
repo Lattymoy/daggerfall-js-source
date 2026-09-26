@@ -11,14 +11,27 @@
 // the SCRIPT line under it (systems/frameClock.js, stamped by the
 // hosts): the main thread's share of the frame, so a slow frame can be
 // read as the GPU's or ours.
-// switch (ui prefs `showFps`, or ?fps) on every tick, so the Enhanced
-// pane's row takes effect at once and costs nothing while off: the
-// element is hidden and the loop only counts.
+// switch (ui prefs `showFps`, or ?fps) on every tick, so the row in
+// Settings > Interface takes effect at once and costs nothing while off:
+// the element is hidden and the loop only counts.
+//
+// PERF-SCALE (2026-09-25, two players via Mac: "fps issues in the
+// exterior but fine in the interior ... GPU is NVIDIA GeForce RTX 4060
+// Ti", "me too ... I got a RX6600"): TWO MORE LINES, so one screenshot of
+// the counter answers the two questions such a report opens with -
+// WHICH GPU the browser draws on (the renderer reads it once at
+// creation, Renderer.gpuName; a laptop on its integrated chip or a
+// software rasterizer shows here) and HOW MANY PIXELS the world costs
+// (the world image, the canvas, devicePixelRatio and the render scale,
+// Renderer.frameInfo). Read once a second and only while the overlay
+// shows; __fpsStats adds them when a probe asks, so hidden they cost
+// nothing (`sizeLine` is the pure half).
 //
 // The pure half (`fpsStats`) is executed by test/mwarms_fps.test.js;
 // the DOM half runs against the same stub document AUDIT 62 built.
 
 import { frameCpu } from '../systems/frameClock.js';   // PERF1: the hosts' script time
+import { frameCapSkip } from '../systems/frameCap.js';   // FPS-CAP1: the frames the cap held back are not counted
 
 const PERIOD_MS = 1000;
 
@@ -37,26 +50,48 @@ export function fpsStats(stamps) {
 }
 
 /**
+ * PERF-SCALE: the size line - the world image, the canvas, the page's
+ * devicePixelRatio and the scale ("retro" when Retro Picture Mode draws
+ * the world instead). Null without an answer.
+ * @param {{world?: number[], canvas?: number[], dpr?: number, scale?: number, retro?: boolean}|null} i
+ */
+export function sizeLine(i) {
+  if (!i || !i.world || !i.canvas) return null;
+  const dpr = Math.round((Number(i.dpr) || 1) * 100) / 100;
+  return `world ${i.world[0]}x${i.world[1]}  canvas ${i.canvas[0]}x${i.canvas[1]}  dpr ${dpr}  scale ${i.retro ? 'retro' : `${Math.round((i.scale ?? 1) * 100)}%`}`;
+}
+
+/**
  * Mount the overlay. Returns { el, tick(now), dispose() }; the tick is
  * public so a test can drive it without a frame loop.
- * @param {{enabled: () => boolean, raf?: (fn) => number}} opts
+ * @param {{enabled: () => boolean, raf?: (fn) => number, stats?: () => any, info?: () => any}} opts
+ * `info` (PERF-SCALE): the renderer's frameInfo - { gpu, world, canvas, dpr, scale, retro }.
  */
-export function mountFpsCounter({ enabled = () => true, raf = (typeof requestAnimationFrame === 'function' ? requestAnimationFrame : null), stats = null } = {}) {
+export function mountFpsCounter({ enabled = () => true, raf = (typeof requestAnimationFrame === 'function' ? requestAnimationFrame : null), stats = null, info = null } = {}) {
   const el = document.createElement('div');
   el.id = 'fps-counter';
+  // AUDIT BRANCH-0925 PS-A4: capped at the window less its margins, and a long line WRAPS inside it - a Windows ANGLE
+  // GPU name made an unwrapped box 728px wide, off a phone's left edge, cutting off the start of the "gpu" line
+  // (tools/fpsCounterProbe.mjs measures it in Chromium)
   el.style.cssText = 'position:fixed;top:calc(8px + env(safe-area-inset-top, 0px));right:calc(8px + env(safe-area-inset-right, 0px));z-index:9;padding:4px 8px;border-radius:8px;'
+    + 'max-width:calc(100vw - 16px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));box-sizing:border-box;'
     + 'font:600 13px/1.3 ui-monospace,Menlo,Consolas,monospace;color:#e9e4d9;background:rgba(14,16,19,.65);pointer-events:none;'
-    + '-webkit-user-select:none;user-select:none;white-space:pre;text-align:right;display:none';
+    + '-webkit-user-select:none;user-select:none;white-space:pre-wrap;overflow-wrap:anywhere;text-align:right;display:none';
   el.style.display = 'none';   // set on the property too: the cssText above is a string to a stub document
   document.body.appendChild(el);
   let stamps = [];
   let shown = false;
   let sumDraws = 0, sumBinds = 0, samples = 0;   // PERF3: the renderer's per-frame counts (beginFrame zeroes them), summed over the second
   let last = null;   // PERF9: the last second's numbers, for the probe
-  if (typeof globalThis.window !== 'undefined' && globalThis.window) globalThis.window.__fpsStats = () => last;
+  // PERF-SCALE: the GPU and the frame's size ride the probe's read, asked for when it asks - never on a hidden tick
+  const described = () => { const i = info?.(); return i ? { gpu: i.gpu ?? null, world: i.world ?? null, canvas: i.canvas ?? null, dpr: i.dpr ?? null, scale: i.scale ?? null, retro: !!i.retro } : null; };
+  if (typeof globalThis.window !== 'undefined' && globalThis.window) globalThis.window.__fpsStats = () => (last && info ? { ...last, ...described() } : last);
   let handle = 0;
   let live = true;
   function tick(now) {
+    // FPS-CAP1: a callback the Frame Rate Cap held back drew nothing, so it is not a frame. The host asked the same
+    // question with the same stamp (one decision per stamp, systems/frameCap.js), so this counts what the game drew.
+    if (frameCapSkip(now)) { if (live && raf) handle = raf(tick); return; }
     stamps.push(now);
     const st = stats?.();   // PERF3: one complete frame's counts, whichever side of the host's callback this tick fell
     if (st) { sumDraws += st.draws; sumBinds += st.texBinds; samples++; }
@@ -70,8 +105,11 @@ export function mountFpsCounter({ enabled = () => true, raf = (typeof requestAni
         // over the second - the GL call count is the CPU side of the GPU's
         // work, and the number the culls and the sort are meant to move.
         const gpu = samples ? `\ndraws ${Math.round(sumDraws / samples)}  binds ${Math.round(sumBinds / samples)}` : '';
+        const i = on ? info?.() : null;   // PERF-SCALE: the GPU and the size, while shown
+        const size = sizeLine(i);
         if (on) el.textContent = `${fps} fps\n${meanMs.toFixed(1)} ms  worst ${worstMs.toFixed(0)}`
-          + (cpu ? `\nscript ${cpu.meanMs.toFixed(1)} ms  worst ${cpu.worstMs.toFixed(0)}` : '') + gpu;
+          + (cpu ? `\nscript ${cpu.meanMs.toFixed(1)} ms  worst ${cpu.worstMs.toFixed(0)}` : '') + gpu
+          + (i ? `\ngpu ${i.gpu ?? 'unknown'}` : '') + (size ? `\n${size}` : '');
         // PERF9: the same numbers for a probe (tools/perfProbe.mjs) - the
         // last second's, as an object, whether or not the overlay shows.
         last = { fps, meanMs, worstMs, scriptMs: cpu?.meanMs ?? null, scriptWorstMs: cpu?.worstMs ?? null, draws: samples ? sumDraws / samples : null, binds: samples ? sumBinds / samples : null };

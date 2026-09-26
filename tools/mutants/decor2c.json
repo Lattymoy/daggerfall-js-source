@@ -1,0 +1,453 @@
+[
+  {
+    "name": "DECOR2c-the-arrows-hung",
+    "file": "src/net/decorLaw.js",
+    "old": "it.t !== DECOR_ARROW_TEMPLATE)",
+    "new": "true)",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-any-armour-hung",
+    "file": "src/net/decorLaw.js",
+    "old": "(it.g === DECOR_ARMOR_GROUP && DECOR_SHIELD_TEMPLATES.has(it.t))",
+    "new": "(it.g === DECOR_ARMOR_GROUP)",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-a-model-hung",
+    "file": "src/net/decorLaw.js",
+    "old": "if (!it || piece.model != null || !Array.isArray(piece.flat)) return false;",
+    "new": "if (!it || !Array.isArray(piece.flat)) return false;",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-no-flat-hung",
+    "file": "src/net/decorLaw.js",
+    "old": "if (!it || piece.model != null || !Array.isArray(piece.flat)) return false;",
+    "new": "if (!it || piece.model != null) return false;",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-the-frame-mirrored",
+    "file": "src/net/decorLaw.js",
+    "old": "  const r0 = [-Math.cos(yaw), 0, Math.sin(yaw)];",
+    "new": "  const r0 = [Math.cos(yaw), 0, -Math.sin(yaw)];",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-the-spin-backwards",
+    "file": "src/net/decorLaw.js",
+    "old": "    right: [r0[0] * c - u0[0] * s, r0[1] * c - u0[1] * s, r0[2] * c - u0[2] * s],\n    up: [u0[0] * c + r0[0] * s, u0[1] * c + r0[1] * s, u0[2] * c + r0[2] * s],",
+    "new": "    right: [r0[0] * c + u0[0] * s, r0[1] * c + u0[1] * s, r0[2] * c + u0[2] * s],\n    up: [u0[0] * c - r0[0] * s, u0[1] * c - r0[1] * s, u0[2] * c - r0[2] * s],",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-the-tilt-ignored",
+    "file": "src/net/decorLaw.js",
+    "old": "  const normal = [Math.sin(yaw) * cp, Math.sin(pitch), Math.cos(yaw) * cp];",
+    "new": "  const normal = [Math.sin(yaw), 0, Math.cos(yaw)];",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-a-thicker-hair",
+    "file": "src/net/decorLaw.js",
+    "old": "export const DECOR_MOUNT_LIFT = 0.02;",
+    "new": "export const DECOR_MOUNT_LIFT = 0.05;",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-the-bound-kept",
+    "file": "src/net/decorLaw.js",
+    "old": "export const DECOR_ARCHIVE_MAX = 999;",
+    "new": "export const DECOR_ARCHIVE_MAX = 511;",
+    "tests": [
+      "test/decor2c.test.js",
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-a-worn-blade-hung",
+    "file": "src/systems/decorItems.js",
+    "old": "  if (!item || item.questItem || item.equipSlot != null || isSummoned(item)) return null;\n  const descriptor = decorDescriptorOf(item);\n  if (!descriptor) return null;\n  const pic",
+    "new": "  if (!item || item.questItem || isSummoned(item)) return null;\n  const descriptor = decorDescriptorOf(item);\n  if (!descriptor) return null;\n  const pic",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-a-quest-blade-hung",
+    "file": "src/systems/decorItems.js",
+    "old": "  if (!item || item.questItem || item.equipSlot != null || isSummoned(item)) return null;\n  const descriptor = decorDescriptorOf(item);\n  if (!descriptor) return null;\n  const pic",
+    "new": "  if (!item || item.equipSlot != null || isSummoned(item)) return null;\n  const descriptor = decorDescriptorOf(item);\n  if (!descriptor) return null;\n  const pic",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-a-summoned-blade-hung",
+    "file": "src/systems/decorItems.js",
+    "old": "  if (!item || item.questItem || item.equipSlot != null || isSummoned(item)) return null;\n  const descriptor = decorDescriptorOf(item);\n  if (!descriptor) return null;\n  const pic",
+    "new": "  if (!item || item.questItem || item.equipSlot != null) return null;\n  const descriptor = decorDescriptorOf(item);\n  if (!descriptor) return null;\n  const pic",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-the-body-ignored",
+    "file": "src/systems/decorItems.js",
+    "old": "  const pic = inventoryItemImage(item, identity);\n  const flat = pic ? [pic.archive, pic.record] : null;",
+    "new": "  const pic = inventoryItemImage(item, undefined);\n  const flat = pic ? [pic.archive, pic.record] : null;",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-the-dye-the-templates",
+    "file": "src/systems/decorItems.js",
+    "old": "return itemDyeColor({ templateIndex: own.t, group, material: own.m ?? 0, artifact: own.a != null });",
+    "new": "return itemDyeColor({ templateIndex: own.t, group, material: 0, artifact: own.a != null });",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-an-artifact-dyed",
+    "file": "src/systems/decorItems.js",
+    "old": "return itemDyeColor({ templateIndex: own.t, group, material: own.m ?? 0, artifact: own.a != null });",
+    "new": "return itemDyeColor({ templateIndex: own.t, group, material: own.m ?? 0, artifact: false });",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-the-row-standing",
+    "file": "src/systems/decorItems.js",
+    "old": "light: as.light, item: as.item, storage: false, count: item.stackCount ?? 1, mount: !!hangs,",
+    "new": "light: as.light, item: as.item, storage: false, count: item.stackCount ?? 1, mount: false,",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-the-walls-heading-ignored",
+    "file": "src/systems/decorPlacer.js",
+    "old": "const heading = level ? Math.atan2(n[0], n[2]) : (Number.isFinite(camYaw) ? camYaw : 0) + Math.PI;",
+    "new": "const heading = (Number.isFinite(camYaw) ? camYaw : 0) + Math.PI;",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-a-floor-read-backwards",
+    "file": "src/systems/decorPlacer.js",
+    "old": "const heading = level ? Math.atan2(n[0], n[2]) : (Number.isFinite(camYaw) ? camYaw : 0) + Math.PI;",
+    "new": "const heading = level ? Math.atan2(n[0], n[2]) : (Number.isFinite(camYaw) ? camYaw : 0);",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-the-surfaces-tilt-ignored",
+    "file": "src/systems/decorPlacer.js",
+    "old": "round(Math.asin(Math.max(-1, Math.min(1, n[1]))) * DEG, 1), s.yaw];",
+    "new": "0, s.yaw];",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-the-spin-dropped",
+    "file": "src/systems/decorPlacer.js",
+    "old": "round(Math.asin(Math.max(-1, Math.min(1, n[1]))) * DEG, 1), s.yaw];",
+    "new": "round(Math.asin(Math.max(-1, Math.min(1, n[1]))) * DEG, 1), 0];",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-the-hair-into-the-wall",
+    "file": "src/systems/decorPlacer.js",
+    "old": "p = [0, 1, 2].map((i) => p[i] + up[i] * s.raise + n[i] * DECOR_MOUNT_LIFT);",
+    "new": "p = [0, 1, 2].map((i) => p[i] + up[i] * s.raise - n[i] * DECOR_MOUNT_LIFT);",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-the-lift-off-the-surface",
+    "file": "src/systems/decorPlacer.js",
+    "old": "p = [0, 1, 2].map((i) => p[i] + up[i] * s.raise + n[i] * DECOR_MOUNT_LIFT);",
+    "new": "p = [0, 1, 2].map((i) => p[i] + n[i] * DECOR_MOUNT_LIFT);",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-the-grid-off-the-surface",
+    "file": "src/systems/decorPlacer.js",
+    "old": "      p = [0, 1, 2].map((i) => right[i] * a + up[i] * b + n[i] * c);",
+    "new": "      p = [0, 1, 2].map((i) => right[i] * a + up[i] * b);",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-the-normal-unscaled",
+    "file": "src/systems/decorPlacer.js",
+    "old": "    const n = [normal[0] / len, normal[1] / len, normal[2] / len];",
+    "new": "    const n = [normal[0], normal[1], normal[2]];",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-a-moved-mount-from-its-heading",
+    "file": "src/systems/decorPlacer.js",
+    "old": "yaw: from ? wrapTurn((mount ? from.rot?.[2] : from.rot?.[0]) ?? 0) : 0,",
+    "new": "yaw: from ? wrapTurn((from.rot?.[0]) ?? 0) : 0,",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-a-mount-set-as-it-stands",
+    "file": "src/systems/decorPlacer.js",
+    "old": "      if (mount) return mountAt(hit, origin, id, normal, camYaw, paid);\n",
+    "new": "",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-a-billboard-hung",
+    "file": "src/scenes/decorRoom.js",
+    "old": "    if (decorIsMount(piece)) {   // DECOR2c: hung flat on its surface, as its pack picture",
+    "new": "    if (false) {   // DECOR2c: hung flat on its surface, as its pack picture",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-the-quad-unwritten",
+    "file": "src/scenes/decorRoom.js",
+    "old": "        renderer.writeDecalSlot?.(entry.mount.batch, 0, decorMountFloats(quad));\n",
+    "new": "",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-the-dye-dropped",
+    "file": "src/scenes/decorRoom.js",
+    "old": "      artOf(a, r, decorMountDye(piece.item)).then((art) => {",
+    "new": "      artOf(a, r, null).then((art) => {",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-the-quad-unscaled",
+    "file": "src/scenes/decorRoom.js",
+    "old": "        entry.size = { w: art.w * piece.scale, h: art.h * piece.scale };",
+    "new": "        entry.size = { w: art.w, h: art.h };",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-a-stale-load-hung",
+    "file": "src/scenes/decorRoom.js",
+    "old": "        if (standing.get(piece.id) !== entry || !art || !renderer?.createDecalBatch) return;",
+    "new": "        if (!art || !renderer?.createDecalBatch) return;",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-the-light-at-its-foot",
+    "file": "src/scenes/decorRoom.js",
+    "old": "        mountLight(entry, o, 0);   // a lit one's light at its middle - the centre is where it stands",
+    "new": "        mountLight(entry, o, -entry.size.h / 2);   // a lit one's light at its middle - the centre is where it stands",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-the-quad-left-behind",
+    "file": "src/scenes/decorRoom.js",
+    "old": "    if (entry.mount) { renderer?.destroyDecalBatch?.(entry.mount.batch); entry.mount = null; }   // DECOR2c\n",
+    "new": "",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-the-mounts-undrawn",
+    "file": "src/scenes/decorRoom.js",
+    "old": "    for (const e of standing.values()) if (e.mount) { r?.drawDecals?.(e.mount.batch, e.mount.tex); n++; }",
+    "new": "    for (const e of standing.values()) if (e.mount) { n++; }",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-the-target-solid",
+    "file": "src/scenes/decorRoom.js",
+    "old": "        out.push({ key, aabb: { min, max }, distance: RAY_DISTANCE, reach: DECOR_REACH, noSurface: true });",
+    "new": "        out.push({ key, aabb: { min, max }, distance: RAY_DISTANCE, reach: DECOR_REACH, meshCollider: true });",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-the-target-no-thickness",
+    "file": "src/scenes/decorRoom.js",
+    "old": "        const min = [0, 1, 2].map((i) => Math.min(...cs.map((c) => c[i])) - DECOR_MOUNT_LIFT);",
+    "new": "        const min = [0, 1, 2].map((i) => Math.min(...cs.map((c) => c[i])));",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-the-mask-kept",
+    "file": "src/scenes/decorRoom.js",
+    "old": "    const variant = uploadRecord?.(a, r, { mips: false, removeMask: true, dye });",
+    "new": "    const variant = uploadRecord?.(a, r, { mips: false, removeMask: false, dye });",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-a-missing-record-hung",
+    "file": "src/scenes/decorRoom.js",
+    "old": "    if (!t || !(r < t.recordCount)) return null;\n    const variant",
+    "new": "    if (!t) return null;\n    const variant",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-the-quad-off-centre",
+    "file": "src/scenes/decorRoom.js",
+    "old": "  const centre = [origin[0] + piece.pos[0], origin[1] + piece.pos[1], origin[2] + piece.pos[2]];",
+    "new": "  const centre = [piece.pos[0], piece.pos[1], piece.pos[2]];",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-the-ghost-unwritten",
+    "file": "src/scenes/decorTool.js",
+    "old": "      renderer?.writeDecalSlot?.(p.decal, 0, decorMountFloats(quad));\n",
+    "new": "",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-the-ghost-left",
+    "file": "src/scenes/decorTool.js",
+    "old": "    if (p?.decal) renderer?.destroyDecalBatch?.(p.decal);   // DECOR2c\n",
+    "new": "",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-the-surface-unread",
+    "file": "src/scenes/decorTool.js",
+    "old": "    p.piece = p.placer ? p.placer.pieceAt(hit.point, origin, p.id, hit.normal, cam.yaw) : null;",
+    "new": "    p.piece = p.placer ? p.placer.pieceAt(hit.point, origin, p.id) : null;",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-the-ghost-a-billboard",
+    "file": "src/scenes/decorTool.js",
+    "old": "    if (entry.mount) {   // DECOR2c: the picture itself hangs where it will hang",
+    "new": "    if (false) {   // DECOR2c: the picture itself hangs where it will hang",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-the-bar-silent",
+    "file": "src/scenes/decorTool.js",
+    "old": "    if (!p.piece) return p.entry.mount ? DECOR_MOUNT_NO_SURFACE : 'It cannot stand there.';",
+    "new": "    if (!p.piece) return 'It cannot stand there.';",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-the-ghost-undrawn",
+    "file": "src/scenes/decorTool.js",
+    "old": "    r?.drawDecals?.(p.decal, p.art.tex);\n    return true;",
+    "new": "    return true;",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-a-hung-one-moved-as-it-stands",
+    "file": "src/scenes/decorTool.js",
+    "old": "storage: false, light: decorFlatLight(piece.flat), mount: decorIsMount(piece),",
+    "new": "storage: false, light: decorFlatLight(piece.flat), mount: false,",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-the-normal-lost",
+    "file": "src/scenes/decorTool.js",
+    "old": "if (hit && Number.isFinite(hit.dist)) { d = hit.dist; normal = Array.isArray(hit.normal) ? [...hit.normal] : null; }",
+    "new": "if (hit && Number.isFinite(hit.dist)) { d = hit.dist; }",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-the-panel-says-it-stands",
+    "file": "src/ui/decorPanel.js",
+    "old": "const ownLine = (e) => (e.furnishing ? decorFurnishLine(e) : e.mount ? DECOR_MOUNT_LINE : DECOR_OWN_LINE);",
+    "new": "const ownLine = (e) => (e.furnishing ? decorFurnishLine(e) : DECOR_OWN_LINE);",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-the-host-mounts-undrawn",
+    "file": "src/scenes/worldModes.js",
+    "old": "    interiorDecor.drawMounts(renderer);   // DECOR2c: the hung weapons and shields, on the decal pass, after the solid room\n",
+    "new": "",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2c-the-host-ghost-undrawn",
+    "file": "src/scenes/worldModes.js",
+    "old": "    decorTool.drawMounts(renderer);   // DECOR2c: and the one being hung\n",
+    "new": "",
+    "tests": [
+      "test/decor2c.test.js"
+    ]
+  }
+]

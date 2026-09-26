@@ -1,0 +1,191 @@
+[
+  {
+    "name": "WATERPUDDLE-record-9-left-out-of-the-list",
+    "file": "src/world/puddleMask.js",
+    "old": "[...new Set([...SHALLOW_DRAWN, ...SHALLOW_WHOLE])]",
+    "new": "[...new Set([...SHALLOW_WHOLE])]",
+    "tests": [
+      "test/waterpuddle.test.js"
+    ]
+  },
+  {
+    "name": "WATERPUDDLE-tolerance-25",
+    "file": "src/world/puddleMask.js",
+    "old": "export const WATER_COLOUR_TOLERANCE = 24;",
+    "new": "export const WATER_COLOUR_TOLERANCE = 25;",
+    "tests": [
+      "test/waterpuddle.test.js"
+    ]
+  },
+  {
+    "name": "WATERPUDDLE-the-rule-strict",
+    "file": "src/world/puddleMask.js",
+    "old": "(r - wr) ** 2 + (g - wg) ** 2 + (b - wb) ** 2 <= t2",
+    "new": "(r - wr) ** 2 + (g - wg) ** 2 + (b - wb) ** 2 < t2",
+    "tests": [
+      "test/waterpuddle.test.js"
+    ]
+  },
+  {
+    "name": "WATERPUDDLE-patch-31",
+    "file": "src/world/puddleMask.js",
+    "old": "export const MIN_PATCH_TEXELS = 32;",
+    "new": "export const MIN_PATCH_TEXELS = 31;",
+    "tests": [
+      "test/waterpuddle.test.js"
+    ]
+  },
+  {
+    "name": "WATERPUDDLE-wet-specks-kept",
+    "file": "src/world/puddleMask.js",
+    "old": "if (patch.length < minArea && (want === 1 || !edge))",
+    "new": "if (patch.length < minArea && want === 0 && !edge)",
+    "tests": [
+      "test/waterpuddle.test.js"
+    ]
+  },
+  {
+    "name": "WATERPUDDLE-dry-edge-filled-too",
+    "file": "src/world/puddleMask.js",
+    "old": "if (patch.length < minArea && (want === 1 || !edge))",
+    "new": "if (patch.length < minArea)",
+    "tests": [
+      "test/waterpuddle.test.js"
+    ]
+  },
+  {
+    "name": "WATERPUDDLE-the-down-neighbour-lost",
+    "file": "src/world/puddleMask.js",
+    "old": "y < h - 1 ? i + w : -1]",
+    "new": "-1]",
+    "tests": [
+      "test/waterpuddle.test.js"
+    ]
+  },
+  {
+    "name": "WATERPUDDLE-the-layer-written-in-place",
+    "file": "src/world/puddleMask.js",
+    "old": "const b = bytesOf(layer).slice();",
+    "new": "const b = bytesOf(layer);",
+    "tests": [
+      "test/waterpuddle.test.js"
+    ]
+  },
+  {
+    "name": "WATERPUDDLE-the-alpha-inverted",
+    "file": "src/world/puddleMask.js",
+    "old": "b[i * 4 + 3] = wet[i] ? 255 : 0;",
+    "new": "b[i * 4 + 3] = wet[i] ? 0 : 255;",
+    "tests": [
+      "test/waterpuddle.test.js"
+    ]
+  },
+  {
+    "name": "WATERPUDDLE-no-clean",
+    "file": "src/world/puddleMask.js",
+    "old": "    cleanMask(wet, layer.width, layer.height);\n",
+    "new": "",
+    "tests": [
+      "test/waterpuddle.test.js"
+    ]
+  },
+  {
+    "name": "WATERPUDDLE-cpu-quarter-turn-the-other-way",
+    "file": "src/world/puddleMask.js",
+    "old": "case 1: return [fz, 1 - fx];",
+    "new": "case 1: return [1 - fz, fx];",
+    "tests": [
+      "test/waterpuddle.test.js"
+    ]
+  },
+  {
+    "name": "WATERPUDDLE-cpu-half-turn-lost",
+    "file": "src/world/puddleMask.js",
+    "old": "case 2: return [1 - fx, 1 - fz];",
+    "new": "case 2: return [fx, fz];",
+    "tests": [
+      "test/waterpuddle.test.js"
+    ]
+  },
+  {
+    "name": "WATERPUDDLE-cpu-edge-unclamped",
+    "file": "src/world/puddleMask.js",
+    "old": "const x = Math.min(layer.width - 1, Math.max(0, Math.floor(u * layer.width)));",
+    "new": "const x = Math.max(0, Math.floor(u * layer.width));",
+    "tests": [
+      "test/waterpuddle.test.js"
+    ]
+  },
+  {
+    "name": "WATERPUDDLE-cpu-wet-inverted",
+    "file": "src/world/puddleMask.js",
+    "old": "return bytesOf(layer)[(y * layer.width + x) * 4 + 3] >= 128;",
+    "new": "return bytesOf(layer)[(y * layer.width + x) * 4 + 3] < 128;",
+    "tests": [
+      "test/waterpuddle.test.js"
+    ]
+  },
+  {
+    "name": "WATERPUDDLE-shader-alpha-not-read",
+    "file": "src/render/waterSurface.js",
+    "old": "edge *= smoothstep(0.3, 0.7, textureGrad(uTileArr, vec3(puv, float(rec)), PUDDLE_ROT[turn] * wgx, PUDDLE_ROT[turn] * wgy).a);",
+    "new": "edge *= 1.0;",
+    "tests": [
+      "test/waterpuddle.test.js"
+    ]
+  },
+  {
+    "name": "WATERPUDDLE-shader-unturned",
+    "file": "src/render/waterSurface.js",
+    "old": "vec2 puv = PUDDLE_ROT[turn] * f + PUDDLE_TRANS[turn];",
+    "new": "vec2 puv = f;",
+    "tests": [
+      "test/waterpuddle.test.js"
+    ]
+  },
+  {
+    "name": "WATERPUDDLE-shader-trans-swapped",
+    "file": "src/render/waterSurface.js",
+    "old": "vec2(0.0, 0.0), vec2(0.0, 1.0), vec2(1.0, 1.0), vec2(1.0, 0.0)",
+    "new": "vec2(0.0, 0.0), vec2(1.0, 0.0), vec2(1.0, 1.0), vec2(0.0, 1.0)",
+    "tests": [
+      "test/waterpuddle.test.js"
+    ]
+  },
+  {
+    "name": "WATERPUDDLE-world-uploads-the-bare-layers",
+    "file": "src/scenes/world.js",
+    "old": "renderer.uploadTileArray(groundArchive, markPuddleWater(layers));",
+    "new": "renderer.uploadTileArray(groundArchive, layers);",
+    "tests": [
+      "test/waterpuddle.test.js"
+    ]
+  },
+  {
+    "name": "WATERPUDDLE-exterior-uploads-the-bare-layers",
+    "file": "src/scenes/exterior.js",
+    "old": "renderer.uploadTileArray(groundArchive, markPuddleWater(layers));",
+    "new": "renderer.uploadTileArray(groundArchive, layers);",
+    "tests": [
+      "test/waterpuddle.test.js"
+    ]
+  },
+  {
+    "name": "WATERPUDDLE-grass-refuses-the-whole-tile-again",
+    "file": "src/scenes/world.js",
+    "old": "          if (!puddle || puddleWetAt(puddle, byte, lx / 6.4 - tx, lz / 6.4 - tz)) return null;\n",
+    "new": "          return null;\n",
+    "tests": [
+      "test/waterpuddle.test.js"
+    ]
+  },
+  {
+    "name": "WATERPUDDLE-grass-never-learns-the-mask",
+    "file": "src/scenes/world.js",
+    "old": "      groundPuddles.set(groundArchive, markPuddleWater(layers));",
+    "new": "      groundPuddles.set(groundArchive, layers);",
+    "tests": [
+      "test/waterpuddle.test.js"
+    ]
+  }
+]

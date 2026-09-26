@@ -429,7 +429,7 @@ test('ROAD-H H2: explodeAt measures the PLAYER as a capsule at its LIVE height, 
 
 test('ROAD-H H2: the sweep and the player arm are wired through the one helper, and every explodeAt caller carries the height', () => {
   const sc = src('systems/spellcast.js');
-  assert.match(sc, /if \(sphereOverlapsCapsule\(pos, radius, f\.ai\?\.feet, f\.ai\?\.height\)\) out\.push\(f\);/,
+  assert.match(sc, /if \(sphereOverlapsCapsule\(pos, radius, f\.ai\?\.feet, f\.ai\?\.height, f\.ai\?\.radius\)\) out\.push\(f\);/,
     'sweepFoes measures the capsule');
   assert.ok(!/f\.ai\.feet\[1\] \+ \(f\.ai\.height \?\? 1\.8\) \/ 2, f\.ai\.feet\[2\]\];\n\s*if \(Math\.hypot/.test(sc),
     'and no longer a point at the capsule centre within the bare radius');

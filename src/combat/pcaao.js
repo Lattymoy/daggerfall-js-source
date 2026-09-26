@@ -92,6 +92,7 @@ import { conditionPercentage, itemLongName } from '../systems/itemInfo.js';
 import { effectiveUnitWeightInKg } from '../systems/inventory.js';
 import { templateByIndex } from '../systems/itemTemplates.js';
 import { enchantChanceToHitMod, isEnchantedItem, entityImprovedAdrenalineRush } from '../systems/enchantments.js';
+import { rolledTier } from '../systems/rarityTier.js';   // RARE-BREAK1: a piece off the rarity ladder, which the fading rule leaves alone (the leaf - RF1: no formula reads the ladder)
 import { entityArmorMod } from '../systems/entityMods.js';   // RF1: the enchantment channels and the port's, one read
 import { getItemHands, ITEM_HANDS } from '../characters/equipTable.js';
 import { createWeapon } from './enemyEquipment.js';
@@ -627,11 +628,19 @@ export function pcaaoSpecificWeaponConditionDamage(weapon, damageWep, materialVa
 }
 
 // ── the wear ──────────────────────────────────────────────────────
+/** RARE-BREAK1 (2026-09-25, a player's report: "blue items break, yellow items disappear. is this intended?"; Mac:
+ *  "Rarity loot breaks, not destroyed"): a piece that ROLLED its tier on the port's rarity ladder (LR1, systems/rarityTier.js -
+ *  Magic, Rare, Legendary) is not one of the mod's enchanted items. A Rare or Legendary carries ONE DFU enchantment as
+ *  the ladder's flavour, and that made the fading module take it whole on breaking while a Magic (affixes, no
+ *  enchantment) broke and stayed. It breaks and stays, repairable, like every other piece; DFU's own enchanted loot
+ *  (MAGIC.DEF, made and soul-bound items - no rolled tier) still fades as the mod says. */
+export const pcaaoFades = (item) => isEnchantedItem(item) && !rolledTier(item);
+
 /** LowerCondition(amount, owner, collection): the PLAYER's enchanted
  *  piece, under the fading module, is REMOVED from the pack when it
  *  breaks; everything else breaks as DFU's does. */
 function wear(item, owner, amount, modules, say) {
-  const removeFrom = modules.fadingEnchantedItems && isPlayer(owner) && isEnchantedItem(item) ? (owner.items ?? null) : null;
+  const removeFrom = modules.fadingEnchantedItems && isPlayer(owner) && pcaaoFades(item) ? (owner.items ?? null) : null;   // RARE-BREAK1
   lowerCondition(item, amount, owner, say, removeFrom);
 }
 /** ApplyConditionDamageThroughWeaponDamage: armour takes the damage

@@ -1,0 +1,250 @@
+Quest: WAQ_SHIP_SMALLRAID
+DisplayName:
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce>
+
+RefuseQuest:  [1001]
+<ce>           
+
+AcceptQuest:  [1002]
+<ce>           
+
+QuestFail:  [1003]
+<ce>                     
+
+QuestComplete:  [1004]
+<ce> After scavenging the bodies, you take your earnings.       
+
+Message: 1013
+<ce> You've been attacked by pirates while on
+<ce> your way to ____KnightlyGuard_!
+<ce> Your crew quickly spring into action!
+
+Message: 1014
+<ce> The attackers have been fought off. The ship 
+<ce> continues to its destination. 
+
+QBN:
+
+Clock _cooldown_ 01:00
+Clock _reset_ 00:05
+Clock _second_ 0:01
+Clock _retreat_ 1:00
+Clock _findPC_ 24:00
+Clock _wave1check_ 00:01
+Clock _wave2check_ 00:01
+Clock _wave3check_ 00:01
+Clock _bosscheck_ 00:01
+Foe _archer_ is Thief
+Foe _warrior_ is Rogue
+Foe _healer_ is Healer
+-Foe _healerp_ is Healer
+Foe _orc_ is Orc
+Foe _orcs_ is Orc_sergeant
+Foe _tiger_ is Sabretooth_tiger
+Foe _spider_ is Spider
+Foe _dragon_ is Dragonling_souless
+Foe _ally_ is Warrior
+Foe _barb_ is Barbarian
+Foe _rogue_ is Rogue
+Foe _nblade_ is Nightblade
+Foe _assassin_ is Assassin
+-Foe _thief_ is Thief
+-Foe _burglar_ is Burglar
+Foe _spells_ is Spellsword
+
+-Person _db_ faction The_Dark_Brotherhood
+-Person _Court_ faction <insert court name>
+Person _KnightlyGuard_ factionType People
+-Person _Temple_ faction Generic_Temple
+-Person _symbol_ factionType People
+
+Item _victory_ gold range 5000 to 10000
+
+
+--	Quest start-up:
+variable _cooldown_
+variable _second_
+variable _wave1check_
+start task _wave1check_
+start timer _cooldown_
+
+_reset_ task:
+end quest
+
+_cooldown_ task:
+end quest
+
+---------*Change Teams/Infight**---
+_setFoeInfight_ task:
+	daily from 00:00 to 24:00
+	change foe _archer_ infighting true
+	change foe _warrior_ infighting true
+	change foe _healer_ infighting true
+	change foe _spells_ infighting true
+	change foe _tiger_ infighting true
+	change foe _spider_ infighting true
+	change foe _assassin_ infighting true
+	change foe _dragon_ infighting true
+	change foe _nblade_ infighting true
+	change foe _rogue_ infighting true
+	change foe _orc_ infighting true
+	change foe _orcs_ infighting true
+	change foe _barb_ infighting true
+	change foe _ally_ infighting true
+	change foe _ally_ team 1
+	change foe _tiger_ team 21
+	change foe _assassin_ team 21
+	change foe _dragon_ team 21
+	change foe _spider_ team 21
+	change foe _nblade_ team 21
+	change foe _rogue_ team 21
+	change foe _archer_ team 21
+	change foe _warrior_ team 21
+	change foe _healer_ team 21
+	change foe _spells_ team 21
+	change foe _assassin_ team 21
+	change foe _nblade_ team 21
+	setvar _second_
+	clear _setFoeInfight_
+
+--------**First Wave**---
+_outcome1_ task:
+	create foe _ally_ every 0 minutes 1 times with 100% success
+	create foe _ally_ every 0 minutes 1 times with 100% success
+	create foe _ally_ every 0 minutes 1 times with 100% success
+	create foe _ally_ every 0 minutes 1 times with 100% success
+	create foe _ally_ every 0 minutes 1 times with 100% success
+	create foe _warrior_ every 0 minutes 1 times with 100% success
+	create foe _warrior_ every 0 minutes 1 times with 100% success
+	create foe _warrior_ every 0 minutes 1 times with 100% success
+	create foe _warrior_ every 0 minutes 1 times with 100% success
+	create foe _warrior_ every 0 minutes 1 times with 100% success
+	create foe _warrior_ every 0 minutes 1 times with 100% success
+	create foe _warrior_ every 0 minutes 1 times with 100% success
+	create foe _warrior_ every 0 minutes 1 times with 100% success	
+	start task _reinFoput1_
+	say 1013
+	
+_outcome2_ task:
+	create foe _ally_ every 0 minutes 1 times with 100% success
+	create foe _ally_ every 0 minutes 1 times with 100% success
+	create foe _ally_ every 0 minutes 1 times with 100% success
+	create foe _ally_ every 0 minutes 1 times with 100% success
+	create foe _ally_ every 0 minutes 1 times with 100% success
+	create foe _orc_ every 0 minutes 1 times with 100% success
+	create foe _orc_ every 0 minutes 1 times with 100% success
+	create foe _orc_ every 0 minutes 1 times with 100% success
+	create foe _orc_ every 0 minutes 1 times with 100% success
+	create foe _orc_ every 0 minutes 1 times with 100% success
+	create foe _orc_ every 0 minutes 1 times with 100% success
+	create foe _orcs_ every 0 minutes 1 times with 100% success
+	create foe _orcs_ every 0 minutes 1 times with 100% success
+	start task _reinFoput3_
+	start task _reinFoput4_
+	say 1013
+	
+_outcome3_ task:
+	create foe _ally_ every 0 minutes 1 times with 100% success
+	create foe _ally_ every 0 minutes 1 times with 100% success
+	create foe _ally_ every 0 minutes 1 times with 100% success
+	create foe _ally_ every 0 minutes 1 times with 100% success
+	create foe _ally_ every 0 minutes 1 times with 100% success
+	create foe _barb_ every 0 minutes 1 times with 100% success
+	create foe _barb_ every 0 minutes 1 times with 100% success
+	create foe _barb_ every 0 minutes 1 times with 100% success
+	create foe _barb_ every 0 minutes 1 times with 100% success
+	create foe _barb_ every 0 minutes 1 times with 100% success
+	create foe _barb_ every 0 minutes 1 times with 100% success
+	create foe _barb_ every 0 minutes 1 times with 100% success
+	create foe _barb_ every 0 minutes 1 times with 100% success
+	start task _reinFoput2_
+	say 1013
+	
+_reinFoput1_ task:
+	create foe _warrior_ every 5 minutes indefinitely with 100% success
+	
+_reinFoput2_ task:
+	create foe _barb_ every 5 minutes indefinitely with 100% success
+	
+_reinFoput3_ task:
+	create foe _orc_ every 5 minutes indefinitely with 100% success
+	
+_reinFoput4_ task:
+	create foe _orcs_ every 5 minutes indefinitely with 100% success
+
+
+_endquestproper_ task:
+killed 8 _barb_
+-legal repute -50
+remove foe _barb_
+say 1014
+clear _reinFoput2_
+Leave Ship
+
+_endquestproper2_ task:
+killed 8 _warrior_
+-legal repute -50
+remove foe _warrior_
+say 1014
+clear _reinFoput1_
+Leave Ship
+
+_endquestproper3_ task:
+killed 6 _orc_
+clear _reinFoput3_
+
+_endquestproper4_ task:
+killed 2 _orcs_
+clear _reinFoput4_
+
+_endquestproper5_ task:
+when _endquestproper3_ and _endquestproper4
+-legal repute -50
+remove foe _orc_
+remove foe _orcs_
+say 1014
+Leave Ship
+
+
+
+_wave3spawn_ task:
+	when _wave1check_
+	pick one of _outcome1_ _outcome2_ _outcome3_ _outcome1_ _outcome2_ _outcome3_ 
+	
+
+	
+_endit_ task:
+	when _cooldown_
+	end quest
+	
+----------**Reinforcements**---
+-_callformoreknights_ task:
+-killed 5 _warrior_
+
+_callfriends_ task:
+killed 5 _ally_
+create foe _ally_ every 0 minutes 1 times with 100% success
+create foe _ally_ every 0 minutes 1 times with 100% success
+create foe _ally_ every 0 minutes 1 times with 100% success
+create foe _ally_ every 0 minutes 1 times with 100% success
+create foe _ally_ every 0 minutes 1 times with 100% success
+
+_callfriends2_ task:
+killed 10 _ally_
+create foe _ally_ every 0 minutes 1 times with 100% success
+create foe _ally_ every 0 minutes 1 times with 100% success
+create foe _ally_ every 0 minutes 1 times with 100% success
+create foe _ally_ every 0 minutes 1 times with 100% success
+create foe _ally_ every 0 minutes 1 times with 100% success
+
+_callfriends3_ task:
+killed 15 _ally_
+create foe _ally_ every 0 minutes 1 times with 100% success
+create foe _ally_ every 0 minutes 1 times with 100% success
+create foe _ally_ every 0 minutes 1 times with 100% success
+create foe _ally_ every 0 minutes 1 times with 100% success
+create foe _ally_ every 0 minutes 1 times with 100% success

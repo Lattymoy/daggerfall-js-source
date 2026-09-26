@@ -167,6 +167,11 @@ export class PerfMeter {
    *  exactly what they read before this existed.
    */
   markCpu(name) { if (this.cpu) this._cpuMark(name); }
+  /** PERF-EXT24: milliseconds spent OUTSIDE the frame's spans, on its
+   *  thread - the stream build's slices, which run in their own animation
+   *  frame callback after the script frame closed and so fell in no span
+   *  at all. Added to `name`'s bucket; the open span is left alone. */
+  addCpu(name, ms) { if (this.cpu && ms > 0) this.cpuZones.set(name, (this.cpuZones.get(name) ?? 0) + ms); }
   /** PERF-CPU: close the open span, add its milliseconds to the name's
    *  bucket, and open `name`'s. The spans TILE exactly as the GPU's do,
    *  so their sum is the marked part of the frame and nothing is

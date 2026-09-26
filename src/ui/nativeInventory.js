@@ -49,7 +49,7 @@
 // systems/court.js:207 (ItemCollection.GetCreditAmount, ItemCollection
 // .cs:108-118), spent letters-before-coins with the shortfall returned
 // by deductGold at court.js:249 (DeductGoldAmount, PlayerEntity.cs
-// :1324-1354), banked at systems/banking.js:485/:498, and described by
+// :1324-1354), banked at systems/banking.js:490/:503, and described by
 // the 1007 text at systems/itemInfo.js:104. Nothing was ever owed at
 // THIS surface anyway - DaggerfallInventoryWindow.cs has no
 // letter-of-credit arm at all.
@@ -79,7 +79,7 @@ import {
 // AUDIT 26's quest arm is a rung of it and travelled with it, so the
 // window no longer carries the settings or quest-resource imports it
 // needed to run that rung itself.
-import { planStore, planTake, applyTransfer, planDropGold, WAGON_KG_LIMIT as WAGON_KG_LIMIT_LOCAL } from '../systems/itemTransfer.js';
+import { planStore, planTake, applyTransfer, planDropGold, WAGON_KG_LIMIT as WAGON_KG_LIMIT_LOCAL, HOW_MANY_ITEMS, SPLIT_INPUT_MAX, parseSplitAmount, splitRequired } from '../systems/itemTransfer.js';
 // U57: which list is the remote one, and what opening and closing
 // this window decide.
 import {
@@ -249,21 +249,14 @@ export const isIngredientTemplate = (i) => i >= 0 && i <= 77;
 // (:1546-1560) performs the transfer, with the count the player typed.
 // An unparseable or over-large answer moves nothing (:1551-1552).
 
-/** TextManager's howManyItems, formatted (:1529). */
-export const HOW_MANY_ITEMS = (max) => `Pick how many items (max ${max})?`;
-/** mb.TextBox.MaxCharacters = 8 (:1533). */
-export const SPLIT_INPUT_MAX = 8;
+// DISC25-F: the popup's words, its cap, its parse and its gate have ONE HOME now, systems/itemTransfer.js - the
+// enhanced inventory and both trade windows split stacks too, and a law typed twice is two laws (17e).
+export { HOW_MANY_ITEMS, SPLIT_INPUT_MAX } from '../systems/itemTransfer.js';
 
-const amountOf = (item) => item?.stackCount ?? 1;
 const isControlCode = (code, e = null) =>
   code === 'ControlLeft' || code === 'ControlRight'
   || e?.code === 'ControlLeft' || e?.code === 'ControlRight'
   || e?.key === 'Control';
-/** SplitStackPopup_OnGotUserInput's parse (:1549-1552): an integer in 1..max, else nothing moves. */
-const parsedAmount = (text, max) => {
-  const count = Number.parseInt(String(text), 10);
-  return Number.isInteger(count) && count >= 1 && count <= max ? count : null;
-};
 
 /** AUDIT 17e F36 - RefreshArmourValues' displayed number
  *  (PaperDoll.cs:159-173): (100 - armorValue) / 5, plus armorMod
@@ -512,6 +505,14 @@ export class NativeInventoryWindow {
    *  identity; it carries DaggerfallLoot's own three fields now
    *  (playerOwned, TextureArchive, TextureRecord). */
   _remoteTargetIcon() {
+    const shown = this._remoteTargetIconShown();
+    // DW-E3: Iliac Puddle No More's UpdateFishLootIcon (LateUpdate) - a loot target carrying a FishLootIcon has
+    // the remote panel's picture set to the fish's own icon over whatever the window drew there, its label kept
+    const own = this.hooks.loot?.remoteImage?.();
+    return own ? { image: own, label: shown.label } : shown;
+  }
+
+  _remoteTargetIconShown() {
     if (this.usingWagon) {
       return {
         container: CONTAINER_IMAGES.Wagon,
@@ -922,7 +923,7 @@ export class NativeInventoryWindow {
   /** TransferItem's split gate (:1515-1519): the amount is short of the
    *  stack, or Control is held - and only for a stack (item.IsAStack(), :1519). */
   _splitRequired(it, plan) {
-    return amountOf(it) > 1 && (plan.amount < amountOf(it) || this._controlDown);
+    return splitRequired(it, plan.amount, this._controlDown);
   }
 
   /** The popup (:1523-1536): howManyItems with the max, numeric, 8
@@ -936,7 +937,7 @@ export class NativeInventoryWindow {
       value: this._controlDown ? '0' : String(max),
       maxCharacters: SPLIT_INPUT_MAX,
       numeric: true,
-      onSubmit: (text) => { const count = parsedAmount(text, max); if (count !== null) perform(count); },
+      onSubmit: (text) => { const count = parseSplitAmount(text, max); if (count !== null) perform(count); },
     });
   }
 

@@ -28,7 +28,7 @@
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { PIXEL_STACK } from './pixelifyFive.js';
 import { getPref } from '../systems/uiPrefs.js';
-import { isTextEntryTarget, bindings, eventAction, mouseCode } from './input.js';
+import { isTextEntryTarget, bindings, eventActions, mouseCode } from './input.js';
 import { HOTBAR_SLOT_ACTIONS } from '../systems/inputActions.js';   // KB1: the ten slots are ten registry actions
 import { quickslotTag } from './quickslotTags.js';   // KB1: a slot's chip names the key its action is bound to
 import {
@@ -329,6 +329,9 @@ function showCaption(text, bad = false) {
 }
 
 /** The modifiers an event carries, as held codes - so a slot bound to a combo (Shift + 1) resolves as one. */
+/** UXB1-S: the slot a key's actions name - the first of them that is one, so a SHARED key (a slot and anything else)
+ *  still presses its slot. -1 when none is. */
+const slotOfActions = (acts) => acts.map((a) => HOTBAR_SLOT_ACTIONS.indexOf(a)).find((i) => i >= 0) ?? -1;
 function onKey(e) {
   // AUDIT CONTRIB H1: gated on the GAME's pause, not the HUD's visibility - with the HUD toggled off the keys fell
   // through to the diamond the hotbar replaces (1 drank the diamond's potion), and 5-0 did nothing
@@ -338,7 +341,7 @@ function onKey(e) {
   // someone else held - a table of its own beside the controls pane's. The slot is whatever the key MEANS now: a
   // player who moved slot 7 to a mouse button, or a pad's d-pad on slots 1-4, presses it; a digit bound to anything
   // else is simply not a slot.
-  const i = HOTBAR_SLOT_ACTIONS.indexOf(eventAction(e));   // AUDIT KB1: the event's own read - a listener writes no latch
+  const i = slotOfActions(eventActions(e));   // AUDIT KB1: the event's own read - a listener writes no latch
   if (i < 0) return;
   // The hotbar owns the digit: no host ladder below may read it too
   // (keys 1-4 are the diamond's by default, and the diamond is put away).
@@ -358,7 +361,7 @@ function onMouse(e) {
   if (typeof document === 'undefined' || !document.pointerLockElement) return;
   const code = mouseCode(e.button);
   if (!code) return;
-  const i = HOTBAR_SLOT_ACTIONS.indexOf(eventAction({ code, shiftKey: e.shiftKey, ctrlKey: e.ctrlKey, altKey: e.altKey }));
+  const i = slotOfActions(eventActions({ code, shiftKey: e.shiftKey, ctrlKey: e.ctrlKey, altKey: e.altKey }));
   if (i < 0) return;
   e.preventDefault();
   e.stopImmediatePropagation();   // the hosts' mousedown (the swing, the activate) never sees a button a slot took

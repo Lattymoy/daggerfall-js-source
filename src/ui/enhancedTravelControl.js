@@ -40,7 +40,7 @@ let host = null;
 let parts = null;
 let last = null;
 
-/** enhancedHud.js:255 - write only on a change. */
+/** enhancedHud.js:277 - write only on a change. */
 function put(node, key, value) {
   if (!node || last[key] === value) return;
   last[key] = value;
@@ -149,7 +149,7 @@ export function paintJunction(canvas, buf, { mapPixel, direction, settings, deps
   const img = ctx.createImageData(w, h);
   const out = new Uint32Array(img.data.buffer);
   // the buffer is bottom-up, as every generated map texture in this
-  // port is (ui/travelMapWindow.js:1428-1436)
+  // port is (ui/travelMapWindow.js:1438-1446)
   for (let row = 0; row < h; row++) out.set(buf.subarray((h - row - 1) * w, (h - row) * w), row * w);
   ctx.putImageData(img, 0, 0);
   return true;
@@ -184,6 +184,15 @@ export function drawEnhancedTravelControl(state = {}, hooks = {}) {
     return parts.root;
   }
   if (last.covered === true) { last.covered = false; parts.root.style.display = ''; }
+  // PLUS8: THE HUD'S SCALE, READ OFF THE HUD. The bar stands under the
+  // compass (Enhanced Plus - ui/enhancedPlusStyle.js TRAVEL_CSS), and the
+  // compass grows with --hud-scale; this panel is a sibling of `.hud` on
+  // <body>, not a child, so it never inherited the variable (AUDIT FONT
+  // F2's finding for the mid-screen label, again). The number is the one
+  // enhancedHud.js already wrote on its own host - read, not recomputed,
+  // so the clamp keeps its one home. An inline style read: no layout.
+  const scale = document.querySelector('.hud')?.style?.getPropertyValue('--hud-scale') || '1';
+  if (last.scale !== scale) { last.scale = scale; parts.root.style.setProperty('--hud-scale', scale); }
   cls(parts.root, 'rootClass', `travelpanel${state.following ? ' following' : ''}${junctionOnly ? ' junction-only' : ''}`);
   cls(parts.bar, 'barClass', junctionOnly ? 'travelpanel-bar hidden' : 'travelpanel-bar');
   put(parts.name, 'name', String(state.destination ?? ''));

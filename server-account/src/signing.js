@@ -21,6 +21,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 /* global atob */
+import { importPublicKeyB64 } from '../../src/net/identityToken.js';
 
 let _key = null;
 
@@ -44,6 +45,22 @@ export async function signingKey(env, subtle) {
   } catch { return null; }
 }
 
+/** WB5b: THE RELAY'S PUBLIC HALF - `GATE_PUBLIC_KEY`, base64url raw,
+ * the key an Oblivion Gate's kill receipts verify with
+ * (src/net/gateReceipt.js; the relay signs with GATE_SIGNING_KEY).
+ * Imported once per isolate like the private one, and NULL IS A REAL
+ * ANSWER here too: a service with no key declines every claim, and the
+ * client keeps its receipts until one is set - they carry a week. It is
+ * not a secret: it can verify a receipt and cannot sign one.
+ * @type {CryptoKey|null|undefined} undefined: not asked yet */
+let _gateKey;
+export async function gatePublicKey(env, subtle) {
+  if (_gateKey !== undefined) return _gateKey;
+  const raw = String(env.GATE_PUBLIC_KEY ?? '');
+  _gateKey = raw ? await importPublicKeyB64(raw, { subtle }) : null;
+  return _gateKey;
+}
+
 /** Drops the per-isolate cache. A test that changes the key in `env`
  *  would otherwise get the one the previous test imported. */
-export function _resetKeyForTests() { _key = null; }
+export function _resetKeyForTests() { _key = null; _gateKey = undefined; }

@@ -22,7 +22,7 @@ import {
   ACT_HZ_MAX, FOES_HZ_MAX, CHAT_HZ_MAX, ROLL_HZ_MAX, QUEST_HUB_MIN_MS, questShareGate, poseGate, whoGate, socialGate,
   partyGate, tradeGate, castGate, actGate, foesGate, chatGate, rollGate, redGate, muteGate, tokenGate, byteGate,
   HIT_ROOM_HZ_MAX, TRADE_ROOM_HZ_MAX, CAST_HZ_MAX, TRADE_ROOM_BYTES_PER_S, cardGate, CARD_HZ_MAX, PARK_HZ_MAX, parkGate,
-  pageGate, PAGE_HZ_MAX,
+  pageGate, PAGE_HZ_MAX, DUEL_HZ_MAX, RENOWN_HZ_MAX,
 } from '../src/net/wire.js';
 import { fakeRoom } from './fakeRoom.mjs';
 import { withClock, WIDE_POSE, HEAL_SPELL, PLACE_ATTACH_FIELDS, PLACE_METER_FIELDS, widestPlace } from './placeWidest.mjs';
@@ -59,6 +59,9 @@ const ARMS = [
   // HCC-PARK (main's, merged): its strikes its OWN - main's meter counted them on `pdrops`, the party pose meter's, so
   // either meter's pass forgave the other's flood
   { arm: 'park', frame: () => ({ t: 'park', data: { c: 'char-0001', a: [1, 1] } }), passes: PARK_HZ_MAX, key: 'parkDrops', max: DROP_STRIKES_MAX, why: 'too many park frames' },
+  // AUDIT RENOWN1 WIRE-4: the two arms since that neither list carried
+  { arm: 'duel', frame: (o) => ({ t: 'duel', data: { to: o, k: 'ask', s: 'abcdef' } }), passes: DUEL_HZ_MAX, key: 'duelDrops', max: DROP_STRIKES_MAX, why: 'too many duel frames' },   // DUEL1
+  { arm: 'renown', frame: () => ({ t: 'renown', order: 'v1.a.b' }), passes: RENOWN_HZ_MAX, key: 'rndrops', max: DROP_STRIKES_MAX, why: 'too many renown orders' },   // RENOWN1
 ];
 
 test('AUDIT ATTACH A2: a meter no longer rides a write the runtime can refuse - with EVERY attachment write after the hello refused, each arm\'s flood still passes its bucket and no more, and is struck out on exactly the frame past its strikes, with its own words (mutants: the meters kept nowhere, so every gate passes; the strikes never forgiven; a strike bound off by one)', () => withClock(async (tick) => {

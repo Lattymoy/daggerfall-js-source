@@ -66,8 +66,8 @@
   {
     "name": "RETRO1-pillar-not-integer",
     "file": "src/systems/retroMode.js",
-    "old": "  const pillarWidth = Math.trunc((screenW - viewWidth) / 2);",
-    "new": "  const pillarWidth = (screenW - viewWidth) / 2;",
+    "old": "  return Math.trunc((screenW - viewWidth) / 2);",
+    "new": "  return (screenW - viewWidth) / 2;",
     "tests": [
       "test/retro1.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "RETRO1-clear-not-black",
     "file": "src/render/retroPass.js",
-    "old": "      gl.clearColor(0, 0, 0, 1);\n      gl.clear(gl.COLOR_BUFFER_BIT);",
-    "new": "      gl.clearColor(0, 0, 0, 0);\n      gl.clear(gl.COLOR_BUFFER_BIT);",
+    "old": "        gl.clearColor(0, 0, 0, 1);\n        gl.clear(gl.COLOR_BUFFER_BIT);",
+    "new": "        gl.clearColor(0, 0, 0, 0);\n        gl.clear(gl.COLOR_BUFFER_BIT);",
     "tests": [
       "test/retro1.test.js"
     ]
@@ -255,7 +255,7 @@
   {
     "name": "RETRO1-no-fallback-blit",
     "file": "src/render/retroPass.js",
-    "old": "      gl.blitFramebuffer(0, 0, t.w, t.h, rect[0], rect[1], rect[0] + rect[2], rect[1] + rect[3], gl.COLOR_BUFFER_BIT, gl.NEAREST);\n",
+    "old": "        gl.blitFramebuffer(0, 0, t.w, t.h, rect[0], rect[1], rect[0] + rect[2], rect[1] + rect[3], gl.COLOR_BUFFER_BIT, smooth ? gl.LINEAR : gl.NEAREST);\n",
     "new": "",
     "tests": [
       "test/retro1.test.js"

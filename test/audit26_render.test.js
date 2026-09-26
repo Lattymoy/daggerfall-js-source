@@ -140,7 +140,8 @@ test('audit26 F033: both missile hosts flash, gated on element None and ByTouch,
     // AID1: the shared engine has a FOURTH - a friendly missile of mine meeting another player's body;
     // SPELLFX1: and a FIFTH - a peer's drawn missile meeting a body
     // DUEL1: and a SIXTH - a harmful missile of mine meeting my duel opponent's body
-    const impacts = f === 'src/scenes/hostMagic.js' ? 6 : 3;
+    // WB4b: and a SEVENTH - a harmful missile of mine meeting the Burning Court's boss
+    const impacts = f === 'src/scenes/hostMagic.js' ? 7 : 3;
     assert.equal((s.match(/(?<!function )showImpactFlash\(m, /g) ?? []).length, impacts,
       `${f} flashes at all ${impacts} impacts`);
     // the wall flash is OUTSIDE the AoE branch - DFU flashes on any

@@ -1,0 +1,488 @@
+[
+  {
+    "name": "DECOR1-cap-201",
+    "file": "src/net/decorLaw.js",
+    "old": "export const DECOR_CAP = 200;",
+    "new": "export const DECOR_CAP = 201;",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1-a-model-and-a-flat-at-once",
+    "file": "src/net/decorLaw.js",
+    "old": "if (flat === null && Number.isSafeInteger(model) && model > 0 && model <= DECOR_MODEL_MAX) {",
+    "new": "if (Number.isSafeInteger(model) && model > 0 && model <= DECOR_MODEL_MAX) {",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1-the-position-unbounded",
+    "file": "src/net/decorLaw.js",
+    "old": "if (!triple(pos, DECOR_POS_MAX) || !triple(rot, 180)) return null;",
+    "new": "if (!triple(pos, Infinity) || !triple(rot, 180)) return null;",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1-the-scale-unbounded-above",
+    "file": "src/net/decorLaw.js",
+    "old": "scale < DECOR_SCALE_MIN || scale > DECOR_SCALE_MAX",
+    "new": "scale < DECOR_SCALE_MIN",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1-a-dark-light",
+    "file": "src/net/decorLaw.js",
+    "old": "if (!fin(intensity) || intensity <= 0 ||",
+    "new": "if (!fin(intensity) || intensity < 0 ||",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1-positions-unrounded",
+    "file": "src/net/decorLaw.js",
+    "old": "return { pos: pos.map((v) => round(v, 3)),",
+    "new": "return { pos: pos.map((v) => v),",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1-the-price-floorless",
+    "file": "src/net/decorLaw.js",
+    "old": "Math.min(DECOR_PRICE_MAX, Math.max(DECOR_PRICE_MIN, Math.round(",
+    "new": "Math.min(DECOR_PRICE_MAX, Math.max(0, Math.round(",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1-the-price-unscaled",
+    "file": "src/net/decorLaw.js",
+    "old": "Math.round(DECOR_PRICE_PER_METRE * radiusMetres * scale)",
+    "new": "Math.round(DECOR_PRICE_PER_METRE * radiusMetres)",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1-the-whole-back",
+    "file": "src/net/decorLaw.js",
+    "old": "export const decorRefund = (paid) => Math.trunc((Number.isSafeInteger(paid) && paid > 0 ? paid : 0) / 2);",
+    "new": "export const decorRefund = (paid) => (Number.isSafeInteger(paid) && paid > 0 ? paid : 0);",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1-a-shrink-gives-all-back",
+    "file": "src/net/decorLaw.js",
+    "old": "return { pay: 0, refund: Math.trunc((was - now) / 2), paid: now };",
+    "new": "return { pay: 0, refund: was - now, paid: now };",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1-a-guest-places",
+    "file": "server-account/src/decor.js",
+    "old": "  if (accountKind(player) !== 'linked') return 'homes-need-account';\n",
+    "new": "",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1-anyone-owns",
+    "file": "server-account/src/decor.js",
+    "old": "const OWNS = 'EXISTS (SELECT 1 FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND char_id = ?)';",
+    "new": "const OWNS = 'EXISTS (SELECT 1 FROM homes WHERE map_id = ? AND building_key = ? AND ? IS NOT NULL AND char_id = ?)';",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1-any-character-owns",
+    "file": "server-account/src/decor.js",
+    "old": "const OWNS = 'EXISTS (SELECT 1 FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND char_id = ?)';",
+    "new": "const OWNS = 'EXISTS (SELECT 1 FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND ? IS NOT NULL)';",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1-the-cap-unread",
+    "file": "server-account/src/decor.js",
+    "old": "mapId, buildingKey, player.id, character, mapId, buildingKey, DECOR_CAP).run();",
+    "new": "mapId, buildingKey, player.id, character, mapId, buildingKey, DECOR_CAP + 1).run();",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1-the-repeat-refused",
+    "file": "server-account/src/decor.js",
+    "old": "return had && JSON.stringify(had) === JSON.stringify(p) ? { ok: true, repeat: true, piece: had } : { error: 'decor-taken' };",
+    "new": "return { error: 'decor-taken' };",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1-a-move-rewrites-what-it-is",
+    "file": "server-account/src/decor.js",
+    "old": "UPDATE home_decor SET place = ? WHERE map_id = ? AND building_key = ? AND id = ? AND ${OWNS}`)\n    .bind(placeJson(pl), ",
+    "new": "UPDATE home_decor SET place = ?, model = 99999 WHERE map_id = ? AND building_key = ? AND id = ? AND ${OWNS}`)\n    .bind(placeJson(pl), ",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1-the-rate-unread",
+    "file": "server-account/src/decor.js",
+    "old": "  if (await overRate({ db, nowS }, `decor:${player.id}`, DECOR_OPS_MAX, DECOR_OPS_WINDOW_S)) return 'decor-rate';\n",
+    "new": "",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1-a-stored-row-unprojected",
+    "file": "server-account/src/decor.js",
+    "old": "  return decorPieceOf({\n    ...place, id: row.id,",
+    "new": "  return ({\n    ...place, id: row.id,",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1-the-read-walled",
+    "file": "server-account/src/index.js",
+    "old": "        if (path === '/v1/homes/decor') {\n          const r = await decorOf(ctx, who.player, body);\n          return 'error' in r ? no(r.error, 400, origin) : json(r, 200, origin);\n        }\n",
+    "new": "",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1-the-cap-not-a-conflict",
+    "file": "server-account/src/index.js",
+    "old": "const status = r.error === 'decor-cap' || r.error === 'decor-taken' ? 409",
+    "new": "const status = r.error === 'decor-taken' ? 409",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1-client-place-route-misspelt",
+    "file": "src/net/accountClient.js",
+    "old": "post('/v1/homes/decor/place',",
+    "new": "post('/v1/homes/decor/put',",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1-client-secret-in-the-body",
+    "file": "src/net/accountClient.js",
+    "old": "place: ({ mapId, buildingKey, character, piece }) => post('/v1/homes/decor/place', { mapId, buildingKey, character, piece }),",
+    "new": "place: ({ mapId, buildingKey, character, piece }) => post('/v1/homes/decor/place', { mapId, buildingKey, character, piece, secret: storedSession(storage)?.secret }),",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1-a-marker-kept",
+    "file": "src/systems/decorCatalogue.js",
+    "old": "a === EDITOR_FLATS_ARCHIVE || r < 0",
+    "new": "r < 0",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1-the-ladder-kept",
+    "file": "src/systems/decorCatalogue.js",
+    "old": "|| id === LADDER_MODEL_ID) continue;",
+    "new": ") continue;",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1-a-non-prop-kept",
+    "file": "src/systems/decorCatalogue.js",
+    "old": "        if (m?.objectType !== PROP_MODEL_TYPE) continue;\n",
+    "new": "",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1-the-count-unkept",
+    "file": "src/systems/decorCatalogue.js",
+    "old": "    if (had) had.count++;",
+    "new": "    if (had) had.count = 1;",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1-a-container-not-storage",
+    "file": "src/systems/decorCatalogue.js",
+    "old": "storage: kind === 'storage', light, radius: null",
+    "new": "storage: false, light, radius: null",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1-a-light-dark-by-default",
+    "file": "src/systems/decorCatalogue.js",
+    "old": "  if (!Array.isArray(flat) || flat[0] !== LIGHTS_ARCHIVE) return null;",
+    "new": "  if (true) return null;",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1-a-shared-name-unnumbered",
+    "file": "src/systems/decorCatalogue.js",
+    "old": "list.forEach((e, i) => { e.name = list.length > 1 ? `${e.base} ${i + 1}` : e.base; });",
+    "new": "list.forEach((e) => { e.name = e.base; });",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1-the-kinds-unread",
+    "file": "src/systems/decorCatalogue.js",
+    "old": "    if (want && !want.has(e.kind)) return false;\n",
+    "new": "",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1-one-word-enough",
+    "file": "src/systems/decorCatalogue.js",
+    "old": "if (!words.every((w) => hay.includes(w))) return false;",
+    "new": "if (!words.some((w) => hay.includes(w))) return false;",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1-the-size-unread",
+    "file": "src/systems/decorCatalogue.js",
+    "old": "    if (size !== null && decorSize(radiusOf(e)) !== size) return false;\n",
+    "new": "",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-the-turn-misread",
+    "file": "src/scenes/decorRoom.js",
+    "old": "  const [yaw, pitch, roll] = piece.rot;",
+    "new": "  const [pitch, yaw, roll] = piece.rot;",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-a-moved-bucket-left",
+    "file": "src/scenes/decorRoom.js",
+    "old": "    unmount(standing.get(piece.id));\n",
+    "new": "    standing.get(piece.id);\n",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-a-stale-load-standing",
+    "file": "src/scenes/decorRoom.js",
+    "old": "        if (standing.get(piece.id) !== entry) return;   // moved or removed while it loaded",
+    "new": "        if (!standing.has(piece.id)) return;   // moved or removed while it loaded",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-the-light-left-burning",
+    "file": "src/scenes/decorRoom.js",
+    "old": "      if (i >= 0) lights.splice(i, 1);",
+    "new": "      if (i >= 0) void i;",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-the-flame-at-the-floor",
+    "file": "src/scenes/decorRoom.js",
+    "old": "        mountLight(entry, o, decorLightLift(piece, entry.size));",
+    "new": "        mountLight(entry, o, 0);",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-a-flat-sunk-to-its-middle",
+    "file": "src/scenes/decorRoom.js",
+    "old": "entry.batch = renderer.createBillboardBatch(a, r, entry.size, [[o[0] + piece.pos[0], o[1] + piece.pos[1], o[2] + piece.pos[2]]]);",
+    "new": "entry.batch = renderer.createBillboardBatch(a, r, entry.size, [[o[0] + piece.pos[0], o[1] + piece.pos[1] - entry.size.h / 2, o[2] + piece.pos[2]]]);",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-a-flat-unanimated",
+    "file": "src/scenes/decorRoom.js",
+    "old": "        if (armFlatAnim(entry.batch, f.t, a, r, anims, uploadRecordFrame ?? null)) entry.anims = anims;",
+    "new": "        if (armFlatAnim(entry.batch, f.t, a, r, null, uploadRecordFrame ?? null)) entry.anims = anims;",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-an-animation-outliving-its-batch",
+    "file": "src/scenes/decorRoom.js",
+    "old": "      entry.anims?.remove?.(entry.batch);",
+    "new": "      void entry.anims;",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-a-flat-at-the-raw-size",
+    "file": "src/scenes/decorRoom.js",
+    "old": "        const { w, h } = billboardSize(t, r);",
+    "new": "        const { width: w, height: h } = t.getSize(r);",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-the-items-shared",
+    "file": "src/scenes/decorRoom.js",
+    "old": "    for (const [id, list] of held) if (list.length) out[id] = list.map((it) => ({ ...it }));",
+    "new": "    for (const [id, list] of held) if (list.length) out[id] = list;",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-empty-lists-written",
+    "file": "src/scenes/decorRoom.js",
+    "old": "    for (const [id, list] of held) if (list.length) out[id] = list.map((it) => ({ ...it }));",
+    "new": "    for (const [id, list] of held) out[id] = list.map((it) => ({ ...it }));",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-the-teardown-keeps-the-items",
+    "file": "src/scenes/decorRoom.js",
+    "old": "  function destroyAll() { set([]); held = new Map(); own = new Map(); kept = []; }",
+    "new": "  function destroyAll() { set([]); own = new Map(); kept = []; }",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-the-teardown-keeps-the-kept",
+    "file": "src/scenes/decorRoom.js",
+    "old": "  function destroyAll() { set([]); held = new Map(); own = new Map(); kept = []; }",
+    "new": "  function destroyAll() { set([]); held = new Map(); own = new Map(); }",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-the-reach-lost",
+    "file": "src/scenes/decorRoom.js",
+    "old": "distance: RAY_DISTANCE, reach: DECOR_REACH, meshCollider: true });",
+    "new": "distance: RAY_DISTANCE, meshCollider: true });",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-a-flat-target-solid",
+    "file": "src/scenes/decorRoom.js",
+    "old": "out.push({ key, aabb: { min: [p[0] - hw, p[1], p[2] - hw], max: [p[0] + hw, p[1] + e.size.h, p[2] + hw] }, distance: RAY_DISTANCE, reach: DECOR_REACH, noSurface: true });",
+    "new": "out.push({ key, aabb: { min: [p[0] - hw, p[1], p[2] - hw], max: [p[0] + hw, p[1] + e.size.h, p[2] + hw] }, distance: RAY_DISTANCE, reach: DECOR_REACH, meshCollider: true });",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-the-scene-drops-the-items",
+    "file": "src/systems/sceneCache.js",
+    "old": "  decorItems: Object.fromEntries(Object.entries(d.decorItems ?? {}).map(([id, list]) => [id, (list ?? []).map((it) => ({ ...it }))])),",
+    "new": "  decorItems: {},",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-a-shallow-scene-copy",
+    "file": "src/systems/sceneCache.js",
+    "old": "    ...p, pos: [...(p.pos ?? [])], rot: [...(p.rot ?? [])], flat: p.flat ? [...p.flat] : null,",
+    "new": "    ...p, rot: [...(p.rot ?? [])], flat: p.flat ? [...p.flat] : null,",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-the-kept-record-wiped",
+    "file": "src/scenes/worldModes.js",
+    "old": "    const decor = interiorHome ? interiorDecor.kept() : interiorDecor.list();",
+    "new": "    const decor = interiorHome ? [] : interiorDecor.list();",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-a-late-answer-standing",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (visit !== _decorVisit || interiorBuilding !== b) return;",
+    "new": "      if (interiorBuilding !== b) return;",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-a-visitor-opens-a-piece",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (!decorOwnerHere()) {\n",
+    "new": "    if (false) {\n",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-offline-reads-the-service",
+    "file": "src/scenes/world.js",
+    "old": "  const homeDecor = params.has('online') ? accountDecor(",
+    "new": "  const homeDecor = true ? accountDecor(",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-a-stale-flat-standing",
+    "file": "src/scenes/decorRoom.js",
+    "old": "        if (standing.get(piece.id) !== entry || !f || !renderer?.createBillboardBatch) return;",
+    "new": "        if (!f || !renderer?.createBillboardBatch) return;",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  }
+]

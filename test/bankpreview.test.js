@@ -55,7 +55,7 @@ test('H4: the window fires the door only with a SELECTION and no result box, aft
   const chrome = body.indexOf('drawImg(renderer, _art, m, PURCHASE_PANEL_X, PURCHASE_PANEL_Y);');
   const door = body.indexOf('this.hooks.drawModelPreview?.(');
   assert.ok(chrome > 0 && door > chrome, 'the pass paints INSIDE the display rect over the chrome, so it runs after');
-  assert.ok(body.includes('if (modelIdNum != null) {'),
+  assert.ok(body.includes('if (modelIdNum != null && !this.inPort) {'),   // DROPS-AUDIT F11: and never while ported
     'SelectNone shows an empty panel (:298); F138 removed the window-local result box entirely');
   assert.ok(body.includes('x: m.ox + (PURCHASE_PANEL_X + dx) * m.s'),
     'the rect travels in CANVAS pixels - the scissor\'s frame, not native units');

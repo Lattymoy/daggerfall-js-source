@@ -38,8 +38,8 @@
   {
     "name": "WATCH1-a-watchman-goes-through-the-foes-door",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "    if (onWatch) _net.watch.hurt(f, dmg, at, dir);   // (the provenance - a peer's, not this player's - is the host's to add: world.js hands `{ fromPlayer: false, peer: true }`)\n    else damageFoe(f, dmg, at, dir, { fromPlayer: true, kind, peer: true, peerId: from });",
-    "new": "    damageFoe(f, dmg, at, dir, { fromPlayer: true, kind, peer: true, peerId: from });",
+    "old": "    if (onWatch) _net.watch.hurt(f, dmg, at, dir);   // (the provenance - a peer's, not this player's - is the host's to add: world.js hands `{ fromPlayer: false, peer: true }`)\n    else damageFoe(f, dmg, at, dir, { fromPlayer: true, kind, peer: true, peerId: from, whole: data.z === 1 });",
+    "new": "    damageFoe(f, dmg, at, dir, { fromPlayer: true, kind, peer: true, peerId: from, whole: data.z === 1 });",
     "tests": [
       "test/watch1.test.js"
     ]

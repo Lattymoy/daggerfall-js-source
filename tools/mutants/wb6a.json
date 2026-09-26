@@ -1,0 +1,182 @@
+[
+  {
+    "name": "WB6a-a-rate-off-the-whole",
+    "file": "src/render/deadlands.js",
+    "old": "const w = (turns) => ((turns / DEAD_CLOCK_PERIOD) * 2 * Math.PI).toFixed(6);",
+    "new": "const w = (turns) => ((turns / DEAD_CLOCK_PERIOD) * 2 * Math.PI * 1.01).toFixed(6);",
+    "tests": [
+      "test/wb6a_deadlands.test.js"
+    ]
+  },
+  {
+    "name": "WB6a-the-clock-unwrapped",
+    "file": "src/render/deadlands.js",
+    "old": "export const deadClock = (seconds) => ((seconds % DEAD_CLOCK_PERIOD) + DEAD_CLOCK_PERIOD) % DEAD_CLOCK_PERIOD;",
+    "new": "export const deadClock = (seconds) => seconds;",
+    "tests": [
+      "test/wb6a_deadlands.test.js"
+    ]
+  },
+  {
+    "name": "WB6a-every-slot-striking",
+    "file": "src/render/deadlands.js",
+    "old": "  if (hash01(slot * 3 + 1) < 0.45) return null;\n",
+    "new": "",
+    "tests": [
+      "test/wb6a_deadlands.test.js"
+    ]
+  },
+  {
+    "name": "WB6a-a-strike-that-never-ends",
+    "file": "src/render/deadlands.js",
+    "old": "  if (u < 0 || u >= 1) return null;",
+    "new": "  if (u < 0) return null;",
+    "tests": [
+      "test/wb6a_deadlands.test.js"
+    ]
+  },
+  {
+    "name": "WB6a-a-sea-triangle-wound-down",
+    "file": "src/render/deadlands.js",
+    "old": "      out.push(...p00, ...p11, ...p10);",
+    "new": "      out.push(...p00, ...p10, ...p11);",
+    "tests": [
+      "test/wb6a_deadlands.test.js"
+    ]
+  },
+  {
+    "name": "WB6a-the-rims-fade-dropped",
+    "file": "src/render/deadlands.js",
+    "old": "  col = mix(col, deadHorizon(normalize(vWorld - uCamPos)), rimT);\n",
+    "new": "",
+    "tests": [
+      "test/wb6a_deadlands.test.js"
+    ]
+  },
+  {
+    "name": "WB6a-the-horizon-not-the-skys",
+    "file": "src/render/deadlands.js",
+    "old": "  col = mix(col, deadHorizon(d), smoothstep(0.22, 0.0, e));",
+    "new": "  col = mix(col, mid, smoothstep(0.22, 0.0, e));",
+    "tests": [
+      "test/wb6a_deadlands.test.js"
+    ]
+  },
+  {
+    "name": "WB6a-the-lens-inverted",
+    "file": "src/render/deadlands.js",
+    "old": "    lens: [proj[0], proj[5], proj[8], proj[9]],",
+    "new": "    lens: [proj[5], proj[0], proj[8], proj[9]],",
+    "tests": [
+      "test/wb6a_deadlands.test.js"
+    ]
+  },
+  {
+    "name": "WB6a-the-ray-off-the-view",
+    "file": "src/render/deadlands.js",
+    "old": "    fwd: [-view[2], -view[6], -view[10]],",
+    "new": "    fwd: [view[2], view[6], view[10]],",
+    "tests": [
+      "test/wb6a_deadlands.test.js"
+    ]
+  },
+  {
+    "name": "WB6a-the-sky-written",
+    "file": "src/render/deadlands.js",
+    "old": "    gl.depthMask(false);\n    gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL);",
+    "new": "    gl.depthMask(true);\n    gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL);",
+    "tests": [
+      "test/wb6a_deadlands.test.js"
+    ]
+  },
+  {
+    "name": "WB6a-the-compare-left-LEQUAL",
+    "file": "src/render/deadlands.js",
+    "old": "    gl.depthFunc(gl.LESS);   // PERF2: the renderer's own compare back\n",
+    "new": "",
+    "tests": [
+      "test/wb6a_deadlands.test.js"
+    ]
+  },
+  {
+    "name": "WB6a-the-sea-never-drawn",
+    "file": "src/render/deadlands.js",
+    "old": "    if (Array.isArray(centre) && centre.length === 3 && centre.every(Number.isFinite)) {",
+    "new": "    if (false && Array.isArray(centre)) {",
+    "tests": [
+      "test/wb6a_deadlands.test.js"
+    ]
+  },
+  {
+    "name": "WB6a-the-key-from-the-arrivals-side",
+    "file": "src/render/deadlands.js",
+    "old": "    return [Math.sin(a) * Math.cos(e), Math.sin(e), -Math.cos(a) * Math.cos(e)];",
+    "new": "    return [Math.sin(a) * Math.cos(e), Math.sin(e), Math.cos(a) * Math.cos(e)];",
+    "tests": [
+      "test/wb6a_deadlands.test.js"
+    ]
+  },
+  {
+    "name": "WB6a-the-fires-light-from-above",
+    "file": "src/render/deadlands.js",
+    "old": "  ground: Object.freeze([0.72, 0.3, 0.1]),",
+    "new": "  ground: Object.freeze([0.2, 0.07, 0.05]),",
+    "tests": [
+      "test/wb6a_deadlands.test.js"
+    ]
+  },
+  {
+    "name": "WB6a-the-tower-behind-the-arrival",
+    "file": "src/render/deadlands.js",
+    "old": "export const SIGIL_TOWER = Object.freeze({ az: 0.2,",
+    "new": "export const SIGIL_TOWER = Object.freeze({ az: 3.0,",
+    "tests": [
+      "test/wb6a_deadlands.test.js"
+    ]
+  },
+  {
+    "name": "WB6a-the-ranges-haze-inverted",
+    "file": "src/render/deadlands.js",
+    "old": "  Object.freeze({ base: 0.012, rise: 0.05, freq: 5.0, sharp: 1.6, haze: 0.62 }),",
+    "new": "  Object.freeze({ base: 0.012, rise: 0.05, freq: 5.0, sharp: 1.6, haze: 0.1 }),",
+    "tests": [
+      "test/wb6a_deadlands.test.js"
+    ]
+  },
+  {
+    "name": "WB6a-the-seam-unmarked",
+    "file": "src/scenes/world.js",
+    "old": "skyGain(renderer._fogColor, COURT_FOG.color))) renderer.markForeignPass();",
+    "new": "skyGain(renderer._fogColor, COURT_FOG.color))) void 0;",
+    "tests": [
+      "test/wb6a_deadlands.test.js"
+    ]
+  },
+  {
+    "name": "WB6a-a-failure-costs-the-game",
+    "file": "src/scenes/world.js",
+    "old": "    try { _deadlands = new DeadlandsRenderer(renderer.gl); } catch (e) { console.warn('[gate] the Deadlands would not build', e?.message ?? e); _deadlands = null; }",
+    "new": "    _deadlands = new DeadlandsRenderer(renderer.gl);",
+    "tests": [
+      "test/wb6a_deadlands.test.js"
+    ]
+  },
+  {
+    "name": "WB6a-no-backdrop-in-the-arm",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (isGateArena(dungeonLoc)) host.drawGateBackdrop?.({ proj, view, eye: mwv.eye });",
+    "new": "      // if (isGateArena(dungeonLoc)) host.drawGateBackdrop?.({ proj, view, eye: mwv.eye });",
+    "tests": [
+      "test/wb6a_deadlands.test.js"
+    ]
+  },
+  {
+    "name": "WB6a-the-court-lit-as-a-dungeon",
+    "file": "src/scenes/worldModes.js",
+    "old": "const _ct = dungeonTrilight(!!renderer.lightingLane, _cl.tri);",
+    "new": "const _ct = _cl.tri;",
+    "tests": [
+      "test/wb6a_deadlands.test.js"
+    ]
+  }
+]

@@ -79,9 +79,13 @@ test('CC-REP/GRID/STEP by source: the view draws the window and presses the flow
   const builder = view.slice(view.indexOf('function customClassStage()'), view.indexOf('// ── HOW YOUR HISTORY'));
   assert.match(builder, /\['Reputations', repNote, \{ customRep: true \}\]/, 'the ReputationButton\u2019s row, with what the ledger says');
   assert.match(builder, /el\('div', 'skillpane builder'\)/, 'CC-GRID: the builder\u2019s own pane class');
-  assert.equal((builder.match(/el\('div', 'builder-col'\)/g) ?? []).length, 2, 'two columns: the skills, then the attributes and the class');
+  // RE-AIMED at UXB1-J: THREE columns now - the skills, the attributes, the class itself - which the 900px grid lays
+  // out as two (the class under the attributes) and a desk as three (enhancedStyle.js, the UXB1-J block).
+  assert.deepEqual(builder.match(/el\('div', 'builder-col b-\w+'\)/g), [
+    "el('div', 'builder-col b-skills')", "el('div', 'builder-col b-attrs')", "el('div', 'builder-col b-class')"],
+    'three columns: the skills, the attributes, the class');
   assert.match(builder, /box\.classList\.add\('span'\);/, 'the name spans both');
-  assert.match(builder, /el\('div', 'acts span'\)/, 'and so do the acts');
+  assert.match(builder, /el\('div', 'acts span b-acts'\)/, 'and so do the acts');
   const css = rd('src/ui/enhancedStyle.js');
   assert.match(css, /@media \(min-width: 900px\) \{\n\s+\.skillpane\.builder \{ max-width: 1180px; display: grid; grid-template-columns: 1fr 1fr;/, 'two columns from 900px up');
   assert.match(css, /\.skillpane\.builder > \.span \{ grid-column: 1 \/ -1; \}/);

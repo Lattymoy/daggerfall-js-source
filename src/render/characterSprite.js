@@ -43,26 +43,78 @@ export function drawCharacterSprite(renderer, canvas, rig, rigMat, proj, view, e
  *  MW-D43 already gave that its own dial while missing this pass, which
  *  is the OTHER half of the same picture and the half Mac was looking
  *  at when he said it was still wrong. */
-export function drawRigSpriteBox(renderer, canvas, mesh, rigMat, { center, halfW, halfH }, proj, view, eye, pixel = CHAR_PIXEL) {
-  const dx = center[0] - eye[0], dy = center[1] - eye[1], dz = center[2] - eye[2];
+/** PR-BOW1 (2026-09-24, player report: "Equipping a bow enlarges your
+ *  character"): `anchor`, optional - the point the picture is OF. The
+ *  ortho image is true world size, so where the quad stands sets the
+ *  figure's size on screen, and it stood at the box's CENTRE - which gear
+ *  moves. Weapon Sheathing's iron longsword runs y 2.9..59.5 out from its
+ *  grip and its long bow -38.5..46 (gripped mid-stave): the sword pushed
+ *  the Morrowind body's quad a third of a metre past the body, away from
+ *  a camera behind it, and drew the body 10-14% small, the bow 4-6%, so
+ *  going from the one to the other GREW the character. With an anchor the
+ *  picture is taken along the eye's ray to the ANCHOR (still centred on
+ *  the box, so the gear stays in the window) and the quad stands where
+ *  the anchor's own image lands on the anchor (landAnchor): every point
+ *  then draws at a place that does not depend on the box at all, so the
+ *  box is only the window and its resolution. No anchor - the voxel rigs,
+ *  whose box is the body - is exactly what stood. */
+export function drawRigSpriteBox(renderer, canvas, mesh, rigMat, { center, halfW, halfH: boxH, anchor = null }, proj, view, eye, pixel = CHAR_PIXEL) {
+  const aim = anchor && Math.hypot(anchor[0] - eye[0], anchor[1] - eye[1], anchor[2] - eye[2]) > 1e-6 ? anchor : center;   // PR-BOW1: the ray the picture is taken along
+  const dx = aim[0] - eye[0], dy = aim[1] - eye[1], dz = aim[2] - eye[2];
   const dist = Math.max(0.5, Math.hypot(dx, dy, dz));
-  const pvS = multiply(proj, view);
-  const prjY = (x, y, z) => { const w = pvS[3]*x + pvS[7]*y + pvS[11]*z + pvS[15]; return (pvS[1]*x + pvS[5]*y + pvS[9]*z + pvS[13]) / w; };
-  // AUDIT RETRO1 C6: under retro mode the world is drawn into its small image, so the sprite is sized in the IMAGE's
-  // pixels and a texel is a whole number of them - a canvas-sized texel (9 px) is 1.67 of a 200-row image's, and the
-  // sprite's texels came out 1 and 2 pixels wide and shimmered
-  const span = renderer.retroImageSpan ?? null;
-  const texel = span ? Math.max(1, Math.round(pixel * span[0] / span[1])) : pixel;
-  const screenPxH = Math.abs(prjY(center[0], center[1] + halfH, center[2]) - prjY(center[0], center[1] - halfH, center[2])) * (span ? span[0] : canvas.clientHeight) / 2;
-  const ph = Math.min(CHAR_SPRITE_RT_SIZE, Math.max(2, Math.round(screenPxH / texel)));
-  const pw = Math.min(CHAR_SPRITE_RT_SIZE, Math.max(2, Math.round(ph * halfW / halfH)));
   const camDir = [dx / dist, dy / dist, dz / dist];
+  // MWHEAD1 (2026-09-25, Mac: "The morrowind's model's head gets cut off in third person view" - the top sliced flat,
+  // the same at every zoom): THE WINDOW IS THE BOX AS THE PICTURE SEES IT. The picture is an ortho along camDir, and
+  // camDir is PITCHED - the third-person eye sits at the head (mwCamera FOCAL_HEIGHT) and looks down the ray to the
+  // body's middle. Tilted by p, a box point `v` above the centre and `h` further along the view draws at picture height
+  // v cos p + h sin p, so the box's far top corner stands above `halfH` whenever h sin p > halfH (1 - cos p). The
+  // window was the world half-height alone, so whatever stood far and high was cut: on the Morrowind body the head,
+  // which stands forward of a box centre that a sheathed longsword (PR-BOW1: y 2.9..59.5 from its grip) pulls back
+  // toward a camera behind it - a flat slice off the top of the head at every zoom. `halfW` is the box's
+  // azimuth-safe horizontal radius, so |h| <= halfW and the window below holds the whole box at any pitch; level
+  // (tilt 0) it is the world half-height, so a level look draws exactly what it did.
+  // The ray's own slope - off the true length, not `dist`: that is floored at 0.5 (an eye on the aim has no ray),
+  // which leaves camDir short of unit length for an eye closer than that, and read a close camera's pitch low.
+  const tilt = Math.min(1, Math.abs(dy) / (Math.hypot(dx, dy, dz) || 1));
+  const halfH = boxH * Math.sqrt(1 - tilt * tilt) + halfW * tilt;
   const rl = Math.hypot(camDir[0], camDir[2]) || 1;
   const right = [-camDir[2] / rl, 0, camDir[0] / rl];   // horizontal billboard right (classic Y-only rotation)
+  const at = aim === center ? center : landAnchor(center, anchor, camDir, right);   // PR-BOW1: where the quad stands
+  const pvS = multiply(proj, view);
+  const prjY = (x, y, z) => { const w = pvS[3]*x + pvS[7]*y + pvS[11]*z + pvS[15]; return (pvS[1]*x + pvS[5]*y + pvS[9]*z + pvS[13]) / w; };
+  // PR-BOW1: the resolution is read where the quad is drawn, so a texel stays `pixel` screen pixels. AUDIT RETRO1 C6:
+  // under retro mode the world is drawn into its small image, so the sprite is sized in the IMAGE's pixels and a texel
+  // is a whole number of them - a canvas-sized texel (9 px) is 1.67 of a 200-row image's, and the sprite's texels came
+  // out 1 and 2 pixels wide and shimmered
+  const span = renderer.retroImageSpan ?? null;
+  const texel = span ? Math.max(1, Math.round(pixel * span[0] / span[1])) : pixel;
+  const screenPxH = Math.abs(prjY(at[0], at[1] + halfH, at[2]) - prjY(at[0], at[1] - halfH, at[2])) * (span ? span[0] : canvas.clientHeight) / 2;
+  const ph = Math.min(CHAR_SPRITE_RT_SIZE, Math.max(2, Math.round(screenPxH / texel)));
+  const pw = Math.min(CHAR_SPRITE_RT_SIZE, Math.max(2, Math.round(ph * halfW / halfH)));
   const miniEye = [center[0] - camDir[0] * 4, center[1] - camDir[1] * 4, center[2] - camDir[2] * 4];
   const sTex = renderer.renderCharacterSprite(mesh, rigMat, ortho(halfW, halfH, 0.1, 8), lookAt(miniEye, center, [0, 1, 0]), pw, ph);
-  renderer.drawCharacterSpriteQuad(sTex, center, halfW, halfH, right, pw / CHAR_SPRITE_RT_SIZE, ph / CHAR_SPRITE_RT_SIZE);   // sample the sub-rect (fixed RT, audit fix)
-  return { center, halfW, halfH, pw, ph };
+  renderer.drawCharacterSpriteQuad(sTex, at, halfW, halfH, right, pw / CHAR_SPRITE_RT_SIZE, ph / CHAR_SPRITE_RT_SIZE);   // sample the sub-rect (fixed RT, audit fix)
+  return { center: at, halfW, halfH, pw, ph };
+}
+
+/** PR-BOW1: the quad centre that lands `anchor`'s own image ON `anchor`.
+ *  The picture is an ortho along `dir` centred on `center` - its x is the
+ *  billboard's `right`, its y lookAt's up for that axis - so a point P
+ *  sits at picture (x.(P - center), y.(P - center)); the quad draws the
+ *  picture upright, x along `right` and y along WORLD up, about its
+ *  centre Q. Q = anchor - right x.(anchor - center) - up y.(anchor - center)
+ *  puts the anchor on itself, and then every P draws at
+ *  anchor + right x.(P - anchor) + up y.(P - anchor): `center` has left
+ *  the law. With anchor = center it is center. */
+export function landAnchor(center, anchor, dir, right) {
+  const l = Math.hypot(dir[0], dir[1], dir[2]) || 1;
+  const nx = dir[0] / l, ny = dir[1] / l, nz = dir[2] / l;
+  const hl = Math.hypot(nx, nz) || 1;
+  const up = [-nx * ny / hl, hl, -nz * ny / hl];   // (-dir) x right: lookAt's y for a camera looking along dir
+  const ax = anchor[0] - center[0], ay = anchor[1] - center[1], az = anchor[2] - center[2];
+  const px = ax * right[0] + ay * right[1] + az * right[2];
+  const py = ax * up[0] + ay * up[1] + az * up[2];
+  return [anchor[0] - right[0] * px, anchor[1] - py, anchor[2] - right[2] * px];
 }
 
 /**

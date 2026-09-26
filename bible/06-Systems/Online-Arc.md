@@ -286,9 +286,9 @@ is keyed by content and shared by design. So a peer is one more
   (`host.drawPeerBodies`). A peer in a body draws no doll; its name
   rides the doll pass's own list, at the capsule's head by the race's
   height scale (MW-D34).
-- **The gate** is the host's: the enhanced skin, the player's own arms
-  switch (MWA1's `mwArms` pref - the layer is on when the arms are)
-  and Morrowind data attached. Off, every body is released and every
+- **The gate** is the host's: the enhanced skin and Morrowind data
+  attached (MWA4 retired MWA1's `mwArms` switch that stood between -
+  the files are the switch). Off, every body is released and every
   peer is a doll. The name rides the doll pass's list at the body's own
 
 ## AUDIT MWBODY (2026-09-12)
@@ -2096,7 +2096,11 @@ Stamped as the welcome is built. `RELAY_VERSION` is `world51`.
 Online pane's copy the law of what is shared; WORLD5 shared the clock
 and the sky and said nothing. One sentence: the clock and the sky are
 the world's and run on real time; a rest, a trip, a sentence or a
-lesson takes none of it; the quest clocks stand still.
+lesson takes none of it; the quest clocks stand still. [DISC25-D, 2026-09-25:
+that last clause had been false since WORLD7, which charges quest clocks
+with played time online; the pane says so now - "so a quest that waits for
+an hour of the day waits for that hour of the world. Quest timers run while
+you play."]
 
 **C13 - THE INSTALL SAT BELOW THE SEASON READS.** `bootWorld` read
 `worldMinutes()` for the climate season and the mod's four-valued one
@@ -2189,7 +2193,9 @@ the skin override is.
 `enhancedCombatVisuals`, `enhancedWater`, `pixelatedSky`; `mwArms` (the
 Morrowind arms build at boot where the archives are attached -
 `autoBuildArms` guards the data, so a machine without them wears the
-doll as offline); and every vendored mod's `Enabled` (Dynamic Skies,
+doll as offline - until MWA4 retired the switch: the attached files are
+it now, online and off, so there is nothing left to force); and every
+vendored mod's `Enabled` (Dynamic Skies,
 Seasons of the Iliac Bay, Basic Roads, Meaner Monsters, the Physical
 Combat And Armor Overhaul, Unleveled Loot). Enhanced AI is the one that
 was OFF by default as the port's opt-in departure from DFU's classic
@@ -4320,7 +4326,7 @@ room exists.
 
 **The boundary that makes that safe is `_layoutFoes`** - the dungeon
 host's index of where the layout's own run ends. Every foe past it "is
-this player's own" (`dungeonContext.js:1164`, AUDIT WORLD B2): a quest
+this player's own" (`dungeonContext.js:1209`, AUDIT WORLD B2): a quest
 foe is minted above it, never streamed, never puppet-ised by the room's
 authority switch, and never touched by a joiner's stream. So a joiner's
 quest foe really does spawn and really can be killed by the player whose
@@ -4689,7 +4695,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:6194` read, on one physical line:
+`src/scenes/worldModes.js:6726` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -4704,7 +4710,7 @@ appended its own note to the end of the line that already carried
 **Why that is an invulnerable enemy.** Online, a joiner applies no local
 damage to a layout foe - `damageFoe`'s non-authority arm hands the blow
 to the room's host through `opts.onFoeHit?.(...)` and RETURNS
-(`dungeonContext.js:4290`). With the property missing that call is a
+(`dungeonContext.js:4432`). With the property missing that call is a
 no-op on `undefined`: no damage, no frame, no warning, nothing on the
 console. Every layout foe in every online dungeon absorbed every blow
 from everyone but the room's authority, for eight slices, in silence.
@@ -4831,9 +4837,9 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:4232` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:4872` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
-  provenance argument `applySpellToFoe` hands them (`hostMagic.js:255`)
+  provenance argument `applySpellToFoe` hands them (`hostMagic.js:275`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
   Threading it touches four hosts.
 - **A building interior streams no foes at all.** `makeInteriorFoes`
@@ -7043,7 +7049,7 @@ answers that exact string in the object's sleep, no event, no wake. Only a
 CHANNEL session (chat, `presence: false`) used it. A presence session's
 liveness rode the pose.
 
-**Now (`src/net/wire.js:896`, `src/net/online.js:1673`):**
+**Now (`src/net/wire.js:947`, `src/net/online.js:1867`):**
 
 - `HEARTBEAT_MS` 5000 -> 20000. The pose goes when it MOVED (at POSE_HZ, as
   before) or every 20 s standing, as the peers' proof of life and the silence
@@ -7933,9 +7939,12 @@ is `06-Systems/Horse-Cart-And-Cargo.md` AUDIT HCC; pins in `test/hcc_pool.test.j
   the validated record and the host's `campToScene`, and converts every frame (horseCartWire's own header law:
   "a reader converts at landing and every frame after"); the foe pool's `destroy` takes the teams as
   `clearPuppets` does.
-- **The parked wagon is a box (O3).** A peer's Deployed wagon stands `hccWagon:<owner>` in my collider, re-stood
-  when its converted pose moves, gone with the owner, the sweep or a change of kind; with a box it takes the ray's
-  surface pardon.
+- **The parked wagon is a box (O3).** A peer's Deployed wagon stood `hccWagon:<owner>` in my collider, re-stood
+  when its converted pose moves, gone with the owner, the sweep or a change of kind; with a box it took the ray's
+  surface pardon. **Reversed by PR-WAGON1 (2026-09-24**, a player's report: "Players can grief other players with the
+  wagon by putting it in front of dungeon entryways and building entrances"; Mac: "Others' wagons don't block"):
+  another player's team stands no box and yields the ray (`player/activate.js firmFirst`) - Horse-Cart-And-Cargo.md
+  PR-WAGON1.
 - **The door cleans the name (O4).** `n` rides `sanitizeLabel` at the mod's 31 on both ends - printable ASCII and
   the name filter, the door a player's name and a party's place already go through.
 - **A standing horse is silent (O5).** The walk frame rode `h`, so the idle flicker (frames 5/6 at 2 fps) changed
@@ -8138,3 +8147,943 @@ place socket's frames. Main's RIDE and DISC7 put the mount on the pose (`rd`, `r
 them at their bounds and the widest place attachment measures 566 bytes. `tools/mutants/auditattach.json`: 8, 8 dead
 (the new one puts the park strikes back on `pdrops`). Main's HCC-PARK tests refilled the park bucket by writing the
 attachment, which no longer holds it; they refill the instance's meter (`_meterOf`), as every other re-aimed pin does.
+
+## HT-WAIST-NET (2026-09-24) - the others see your lantern at the waist, world108
+
+HT-WAIST hung a lit lantern at the waist (Handheld Torches' port-own `Handling.LanternsAtWaist`) and drew it swinging
+at the hip of your own Morrowind body and Eye Of The Beholder sprite; Mac asked for it to be seen on the character, and
+the others draw you in the Morrowind body (MWBODY1), so it rides the pose now. `hl` 1 while your lit light is a lantern
+hung at the waist (`systems/playerTorch.js waistLanternPoseBit`, `lanternAtWaist`'s answer), OMITTED otherwise - a pose
+without one keeps its bytes (`validPose`, validLook's `class` law); `poseChanged` sends its edge at once (a lantern lit
+or put out is never a keepalive for the relay to tier); `lerpPose` carries it. The sender is `scenes/world.js`'s pose
+arm, the one pose sender (the interiors and dungeons are its modes; `exterior.js` holds no session). A peer's body takes
+it in `PeerBodies._arm` through the rig's own `setHipLight` - bound once at the pelvis, hidden when put out, the fast
+path after, queued mid-build - and swings it off that body's stub camera. No RELAY_MIN: a pose field has never been
+gated (DISC12's `lh`/`wb`, PCORPSE1's `dd`); an older relay's `validPose` drops it and nothing closes. The HELD torch
+still rides nothing (MW-D51). Record: Handheld-Torches.md HT-WAIST ("Online: the others see it"). Pins:
+`test/htwaistnet_peers.test.js` - the door, the producer and its sender, a session through the real relay Room to the
+watcher's drawn pose, a peer's whole `createFpArm()` body hanging and hiding it, and its swing off the stub camera.
+
+## WB1 (2026-09-25, Mac: "a gate of oblivion which takes place in a large boss arena with an oversized enemy with telegraphed attacks") - the Oblivion Gate's omen; see 11-Multiplayer/World-Bosses.md
+
+The world boss arc's first slice, recorded on its own page (`11-Multiplayer/World-Bosses.md`, the design and a
+Shipped row a slice). A gate a game day on the shared clock - the omen at 17:00 with a ring on both maps and a line
+on every chat tab, the gate at 19:00, open 20:00-22:00, the wrath at midnight: HH:32:30 UTC every even hour - and its
+site a hash of the day over the map files, so the omen costs the relay nothing: no frame, no relay change, no
+`RELAY_VERSION` bump. The arena's room (`gate:<day>`) is written into the law now and admitted by no relay yet; WB3
+is the slice that teaches the relay it. Re-aimed: the two "before the dead return" source pins (`chat1`,
+`auditdrops`) take `gateFrame` into their list; `inspect1`'s ordering pin stands, the gate's frame runs after the mail.
+
+## WB2 (2026-09-25, Mac: "A gate model would be spawned with a timer that leads to a completely different area") - the Oblivion Gate stands in the world; see 11-Multiplayer/World-Bosses.md
+
+The arc's second slice: the gate's stone, fire and beacon, its pool on the world host, the countdown and the door -
+which says "not yet" until WB3 teaches the relay a gate's arena. Nothing crosses the wire: the gate is the clock's.
+Re-aimed: `peerplaque`'s tie-order pin and `worldhover`'s press-against-plaque differential take the `gate` family;
+`audit18`'s foreign-pass count is thirteen (the gate's fire and beacon, the world host alone).
+
+## WB3a (2026-09-25, Mac: "a gate of oblivion which takes place in a large boss arena with an oversized enemy with telegraphed attacks") - the gate's boss room on the relay; see 11-Multiplayer/World-Bosses.md
+
+Option B, built: the relay's object is the authority over the boss. `net/gateBrain.js` is the whole fight as pure law
+(a point, a facing, a health bar, a clock and the players' feet - the arena is a flat disc so the boss needs no game),
+stepped by the object's alarm every 250 ms while someone stands in the court and checkpointed every two seconds; a
+blow is the client's own formula, believed as far as its level claim's bucket and the socket's own pose allow; the kill
+is stamped once, each earning account gets a receipt (`net/gateReceipt.js`, the relay's first signature - unsigned
+until `GATE_SIGNING_KEY` is set) and the hub says it to everyone online through an internal door. The `gate:<day>` key
+is admitted only inside its day's window, at the Worker (no object minted) and at the hello (a newcomer while open, a
+fighter until the wrath's end). RELAY_VERSION world110 on its branch - world113 at the merge, past main's EVENT1 (world110), RENOWN1 (world111) and PARTY-TRAVEL (world112), with GATE_RELAY_MIN 113 - the bump drops every connected player once, and three files
+join the bundle. The client half so far is the session's (`gateOk`, `sendGate`, `onGate`); the arena place is WB3b.
+
+## WB3b (2026-09-25, Mac: "a gate of oblivion which takes place in a large boss arena") - the Burning Court; see 11-Multiplayer/World-Bosses.md
+
+The gate's door opens now: at a relay that runs a gate's boss room (world113; world110 on its branch), walking through the fire enters the
+Burning Court - the dungeon host's own arm with a level made in code (`world/gateArena.js`), not a fifth host. Its
+room is the gate's `gate:<day>`; the level claim goes out once per welcome; the court's words land in
+`net/gateLink.js`, which the world's gate reads for its collapse and the chat for the kill line. A death there is cast
+out before the gate, the day's end or going offline ends the court the same way, and the map, the rest, the save and
+the Recall mark are refused inside it. The boss is not drawn yet (WB4) - the relay runs him, and the court is where
+he will stand.
+
+## WB4a (2026-09-25, Mac: "an oversized enemy with telegraphed attacks (like wind ups, etc)") - the boss fights back; see 11-Multiplayer/World-Bosses.md
+
+Nothing new on the wire: the court's link already holds the relay's words, and this slice draws them. The boss stands
+where the relay says (his walk carried between its words, the charge down its lane), three times a Daedra Lord's size;
+the attack he winds up is drawn on the floor where it will land and said on his bar; and at its landing each client
+tests ITS OWN FEET against its shape - co-op's law, the struck player's machine (`net/gateStrike.js`) - and takes the
+blow through the dungeon context's own door. The relay never learns who was struck. The player's blows on him are
+WB4b.
+
+## WB4b (2026-09-25, Mac: "a large boss arena with an oversized enemy") - the boss is fought; see 11-Multiplayer/World-Bosses.md
+
+The other half of the same law: the striker's machine says the number, the room holds the health. A swing, a shaft or a
+harmful spell that meets the boss's body - his skin, his whole body, his own radius - is computed by the game's own
+formula against his stand-in, and the number goes to the court's room as the `hit` frame WB3a's relay already
+validates and caps (a sequence of its own, whole points, the kind). The ward turns a blow on this machine and nothing
+is sent. Nothing new on the wire.
+
+## WB5a (2026-09-25, Mac: "On death the boss would physically spew out per player loot") - the spoils; see 11-Multiplayer/World-Bosses.md
+
+The receipt WB3a's relay signs for an account that earned a kill carries a loot seed, and that seed is the whole of
+this player's spoils: the client rolls them (the game's own makers, Loot Rarity's own ladder), spews them out of the
+boss's chest with the thrown torch's own physics, stands each in its tier's glow and hands a piece over when the
+player walks over it - seen by this player alone, never sent. Leaving the court gathers the rest; the device keeps
+the pieces as rolled until a save of that character holds them, so a crash hands them over at the next boot, and it
+keeps the day spent, so a reconnect that re-sends the receipt spews nothing twice. Nothing new on the wire.
+
+## WB5b (2026-09-25, Mac, Option B: the relay "issues a signed kill record the account service honours") - the gates closed; see 11-Multiplayer/World-Bosses.md
+
+The receipt is carried to the account service by the account it names and counted there once
+(`server-account/src/accounts.js claimGate`, `POST /v1/gate/claim`, acct10): verified with the relay's public half
+(`GATE_PUBLIC_KEY`) and naming the session's own account, one row a (day, account). The device keeps each receipt the
+relay hands the socket until an answer settles it (`net/gateClaims.js`), offered at once and again on the gate frame no
+sooner than ten minutes after. The account card's *Gates closed* row and the Inspect card's line read the count.
+`tools/mintGateKeys.mjs` mints the pair; the relay's half is `GATE_SIGNING_KEY`. Nothing new on the wire.
+
+## WB6a (2026-09-25, Mac: "the transition and the arena needs to be an oblivion masterpiece") - the Deadlands; see 11-Multiplayer/World-Bosses.md
+
+The Burning Court's square sea and flat shell are gone: `render/deadlands.js` paints a Deadlands sky (a churning
+overcast, the vortex over the great tower with its beam, Daedric towers, jagged ranges with falls of fire, seeded
+lightning) and a disc of moving fire whose rim becomes the sky's horizon, and the court is lit as itself. Client
+only; nothing on the wire.
+
+## WB6b (2026-09-25, Mac: "Whole thing needs to feel alive") - the Deadlands' life; see 11-Multiplayer/World-Bosses.md
+
+Islands and spires out in the fire, the court's floor in floating shards, embers and ash in the air, a strike's light
+on the court and its thunder late by its distance, and the court's own air where the dungeon's drips were. The one
+online fact: the Deadlands keep the RELAY'S clock (`deadlandsSeconds` - the welcome's clock offset, WORLD5, over this
+page's monotonic clock), so every screen in the court sees and hears the same strike at the same moment. Client only;
+nothing on the wire.
+
+## WB6c (2026-09-25, Mac: "the transition and the arena needs to be an oblivion masterpiece") - the step through; see 11-Multiplayer/World-Bosses.md
+
+The gate's door and the court's way home are taken in fire - a vortex of flame closing over the screen, burning while
+the place beyond is built, opening onto it (`render/gateVeil.js`, `ui/gateVeil.js`); a court taken by force flashes.
+Online alone, as the gate is; client only; nothing on the wire.
+
+## WB7 (2026-09-25, Mac: "Proper boss audio during the boss fight") - his voice and his music; see 11-Multiplayer/World-Bosses.md
+
+The Burning Court's boss is heard - steps, growls, grunts, the ground's shock, thunder, his fall - and the court has its
+own score (`systems/gateScore.js`), chosen from the fight state the court's link already holds: his phase, the Wrath's
+time, his fall. Client only; nothing on the wire.
+
+## AUDIT WB (2026-09-25, Mac: "A proper audit on everything") - the relay's half; see 11-Multiplayer/World-Bosses.md section 11
+
+RELAY_VERSION world111 on its branch, world113 at the merge. A room's seat is a hello's now: a socket stamped as it opens, and a full room closes the ones
+silent past `HELLO_WAIT_MS` (busy, so a real client retries) before it refuses `room full`. A gate's court seats one
+socket an account, and a full fight frees the seat of an account that left without a blow or a moment stood. An `in`
+said again writes nothing; a newcomer to a fight already bled comes with an empty bucket. The kill is minted and
+written before it is said, and the hub is told until it answers; the hub keeps each account's receipt for its life and
+hands it to that account's next hello.
+
+## PARTY-TRAVEL (2026-09-25) - to the leader, and together, world110
+
+Mac: "Implementing a prompt for online to travel to party leader and the option for party members to ready up and
+travel together". Online only - both arms ask for a party first, and the party is the hub's. PARTY-REST's shape,
+mirrored: the leader's proposal rides the leader's own party pose, a member's answer rides theirs, "gathered" is the
+rest law's own near (the same place and, outdoors, within PARTY_REST_RADIUS), an offline seat is nobody here, and a
+stale vote is refused - here by identity, since a vote names the round it answers. The law is
+`systems/partyTravelLaw.js`, its session `systems/partyTravel.js` (driven by the host's seams in `scenes/world.js`, so
+the pins RUN a leader and a member against each other rather than grep the closures).
+
+**To the leader.** A member on another map pixel than the leader is offered the journey to them: unasked when they
+first see the leader (they joined, or the lead passed) and whenever the leader's pixel jumps as a journey moves it, once
+per place - the Yes/No box (`ui/yesNoBox.js`, UXB1-M: DFU's parchment on the classic skin, the enhanced card on the
+other) when they are free, a chat line naming `/leader` when a window holds the slot; the SAME box when they open the
+travel map (the standing option on both maps; No opens the map and it asks no more for a minute); and `/leader` in the
+chat. It is the map's FAST travel, priced by the map's own popup made headless over the one dep bag both maps read
+(`travelFareDeps`, lifted out of the map's builder so the fare cannot drift): the fare with the player's own toggles,
+the two-sided gold gate, the disease line, and online no world time (WORLD5). The map door's refusals come first in
+their own words (an enemy or a duel near, the sunlight rungs), and the member must be outdoors - the map opens nowhere
+else ("Step outside to travel to your party leader."). Yes reads the leader again and goes to where they are then. In
+the open air the member lands BESIDE the leader: the leader's party pose carries their feet (`wx`,`wy`,`wz`, the world
+pose's own frame, never while a journey or a load is moving them), read after the destination pixel builds - they may
+walk on while it loads - taken only while they fall inside the pixel the journey paid for, and placed by the law (a
+side whose way is clear of walls at the chest and whose floor is the leader's own level, facing them; else the
+leader's own spot; else the place's door). A leader in a dungeon or a building is travelled to at its door; an offline
+leader is refused ("Your party leader is not online.").
+
+**Together.** The leader's Begin on either map, with members gathered, is a PROPOSAL: `tv` {destination, the popup's
+three toggles as `o`, the round's shared-clock stamp `at`, `go`} on the leader's pose, and nothing is paid. Each
+gathered member is asked - "Ann wants the party to travel to Wayrest. / The journey costs N gold. / Travel with the
+party?" - with THEIR fare under the leader's toggles; Yes rides back as `tr` = the round's `at`, No as `td` (stays
+behind), and a Yes the map door or the gold refuses is staying behind with its reason, so no member can hold the
+leader. The leader is told each answer by name ("Bran is ready to travel. (2/2 ready)"). When nobody gathered is still
+waiting the party sets out (`go`), the leader's own journey begins once the pose saying so is handed on (or after
+PARTY_TRIP_GO_MS), and each member who said yes and stood gathered at the round's last open reading FOLLOWS: they wait
+until the leader's pose stands in the destination's open air, then travel and land beside them - so the party arrives
+together. The round is off when the leader walks out of where they asked (PARTY-REST16's radius), goes inside, or
+nobody answers in PARTY_READY_TIMEOUT_MS; `/travel` answers (the leader: calls it off). A walked Travel Options trip is
+never a round (the party rides it on its own feet), and without a gathered member, or through a hub from before
+world110, the leader travels alone as always.
+
+**The wire and the relay: REDEPLOY NEEDED.** `validPartyPose` carries `tv`, `tr`, `td`, `wx`/`wy`/`wz`, each omitted
+when absent or out of its law and never refusing a pose - an older client ignores them and sends none. The relay
+projects every party pose through `validPartyPose` in `parseClient`, so the deployed relay STRIPS all of them until
+world110 ships: until then the leader's client opens no round (`partyTravelOk` off the hub's welcome,
+PARTY_TRAVEL_RELAY_MIN) and the journey to the leader lands at the place's door (its pixel is the pose's own `px`/`py`).
+RELAY_VERSION world110; the widest hub attachment with every field at its bound measured under the runtime's 2 KiB.
+
+Records: `test/partytravel.test.js` (26); `tools/mutants/party-travel.json` (71, 71 dead); Systems.md counts the two
+modules.
+
+**AUDIT PARTY-TRAVEL (2026-09-25, the pre-merge review; Mac: "Audit before we merge").** Six faults found in the
+feature above, each closed with a pin that fails without it:
+- *The leader set out before "we set out" had left.* `partyFrame` handed the session every pose it COMPOSED, and
+  `sendParty` refuses one within PARTY_SEND_MS of the last - so a leader walking about (a pose a second) began the
+  journey with the pose unsent. Now only a pose the link sent counts (`world.js` partyFrame).
+- *A member who said yes and never moved was left behind.* The pose saying "we set out" rides the hub link while the
+  leader's body leaves the scene on the world link - two sockets, no order - so the last open reading could find no
+  body and call the member "too far". Gathered is now lost by WALKING AWAY: a member who stays within the radius of
+  where they were last read gathered is gathered still (the leader cannot stray from where they asked while the round
+  is open).
+- *The door was not asked again as the journey began.* Between `go` and the start the leader could step through a door
+  and be flown off the map from a building's floor. The start asks outdoors, alive and the door's refusals; a refused
+  start takes the round with it, so nobody follows. "The journey is off." is said once, not twice, when it is the
+  refusal itself.
+- *The unasked offer fired on every jump.* A Travel Options ride at its default 60x on a horse jumps two pixels a party
+  pose, and every jump was a box (or a chat line) a second. The offer is now made once the leader's pixel has held
+  still LEADER_SETTLE_MS (5 s), is kept due while the member's own journey moves them (a jump seen while loading was
+  lost), and is never made over a Travel Options walk the member is steering; a follower left behind is not offered
+  twice.
+- *A slow build told the party "did not set out".* The round left the leader's pose TRIP_FOLLOW_MS after `go` whatever
+  the leader's own journey was doing; it now stays until that journey has arrived.
+- *The party arrived inside one another.* Every follower tried the leader's east side first. Eight spots now ring the
+  leader, and each follower's seat (their place among the members who are not the leader, in the hub's order) is where
+  their search starts.
+Not changed, recorded for the owner: a gathered member who never answers still holds the round for its minute and then
+calls it off (PARTY-REST's own "cannot start until all are ready", which the task mirrors) - the leader walks away from
+them or `/travel`s it off; and a leader's client could open rounds as fast as its poses leave (the rest vote has a
+cooldown, PARTY-REST21; this has none) - the member's answer is leaving the party. No wire change: the relay deploy is
+still world110's. Records: `test/partytravel.test.js` 26 -> 32; `tools/mutants/auditpartytravel.json` (21, 21 dead),
+four `party-travel.json` records re-aimed.
+
+## EVENT1 (2026-09-25, Mac: "I wanna do a fun live event for the server. Wanna setup the infastructure for this without breaking anything. We have a lot of major updates today, but I want to turn the skies of Daggerfall into a detailed oblivion styled dread in prep for the world bosses. Red lightning and such") - a live event, staged for everyone online: the dread, world110
+
+Asked two things first: how it is switched (Mac: **a staff command** - `/event dread on|off`, the dev glyph, as /red) and who sees it (Mac: **online players only**).
+
+**The infrastructure - one word, carried by the hub.** The relay keeps no global state and fans nothing across rooms (the constructor's own note); the one room every online player holds a socket to is the hub (`chat:world`, CHAT_TABS' World link). So a live event lives there:
+
+- **Staged** by `{t:'stage', kind}` (net/wire.js: `kind` one of `LIVE_EVENTS` - `['dread']`, appended and never renamed - or `''` to end). RED1's law exactly: `parseClient` checks the shape; the relay asks the dev glyph off the VERIFIED token (a player, or a hello that types the glyph, is ignored in silence); metered on its own bucket (`eventGate`, EVENT_HZ_MAX 1) before the authority is asked; anywhere but the hub it is junk.
+- **Kept** in the hub's storage under `EVENT_KEY` (`event:live`, `{kind, at}`) - a prefix apart from every one a drain or the hub's sweep deletes, so an event outlives a quiet night and a deploy, and ends when a dev ends it. Read once per instance (`_liveEvent`); a stored word this relay does not know is none.
+- **Said** to every hub socket as `{t:'event', kind, at}` (the stager's own receipt included), and to a late joiner on the hub welcome's `ev` (absent: none; never on a region channel or a place room).
+- **The client** (`OnlineSession`): the hub's word handed on through one door (`_setEvent`, once per change) - a welcome's WHOLE (the player did not watch it come), a frame's LIVE; a hub welcome without one ends it; `leave()` ends it (online's alone). `sendStage` goes only to a relay that knows the frame (`EVENT_RELAY_MIN` 110 - an older relay CLOSES the socket on an unknown type) and only on the hub. world.js hears the event from the hub link alone and parses `/event` beside `/red`, never guarded (the relay asks the token); a relay too old is said in words.
+- **Without breaking anything:** an old client ignores the unknown frame and the welcome's extra field (its `_receive` has no final else), so it sees no event; a new client against an old relay never sends the frame and reads none. Offline, nothing is reached and every path below is its input untouched.
+
+**The dread - world/dreadSky.js.** The port draws its sky three ways (the classic panorama, its own dome, Dynamic Skies - the default) with the volumetric clouds over the last two, each keeping its colour in its own shape. So the dread is ONE COLOUR GRADE where each writes its pixel: a colour's luminance, dimmed (DREAD_DIM), read along a crimson ramp - black-maroon, blood, burning orange (DREAD_RAMP). The zenith comes out dark, the horizon glows, lit cloud edges burn, and it holds at any hour and under any weather because it reads the sky's own light. `dreadGrade` is the law; `DREAD_GLSL` is the same law generated from the same numbers, graded by each pass's `uDread` (skyRenderer, enhancedSky, dynamicSkiesRenderer, the clouds' composite - the cloud's own colour, un-premultiplied, its opacity put back). The controller (`createSkyController().setDread(w, glow)`) sets every pass's weight, grades the fog and the water's reflection on either lane, and while the dread is up the SKY wears the storm (`DREAD_SKY_WORD` 'thunder' - the dome's row, the clouds' profile, the mod's preset) while the sim's weather, the wind, the rain and their sound go on as they were. The host grades the land's key and ambient light (`dreadLight`) and dims the key by DREAD_KEY_DIM.
+
+**The red storm.** Strikes on the SHARED clock (WORLD5): slots of DREAD_SLOT_MS, each holding a strike with DREAD_STRIKE_CHANCE x the weight, its moment, place and kind read from the slot's seed - so every player online sees a strike in the same second, each around themselves, and a frame rate changes nothing; the first tick fires no backlog and a long gap walks only its last DREAD_SLOTS_MAX slots. They ride systems/lightning.js' own bolt field as the distant storms' do, with their colours on them (`color` the channel's, `flashColor` its light - the field and `createStormLights` carry both, the renderer draws each colour apart, `boltGroups`); the burning red strikes light the cloud deck (`dreadCloudGlow`, through `setDread`'s glow - the host's flash stays the storm's). Their thunder arrives its distance over the speed of sound later (`thunderOf`), from its side (`thunderSourceAt`), on both skins; the channels on the enhanced lane, as every bolt.
+
+**It fades.** `createDread`: a change the player watched walks over DREAD_FADE_S (12 s) each way; a welcome's word is whole. Interiors and dungeons draw no sky, so the dread is outside, where the sky is.
+
+**Records.** test/event1_live_event.test.js (18); tools/mutants/event1.json (44, all dead). RELAY_VERSION world110 (`test/relayversion.test.js` row); the exact-version pins moved to it; the source pins of the sky seam re-aimed to the graded forms (audit18, clockArc, DS2, VC3, WATER1, ES1c); mutant records re-aimed where their text moved (B7's welcome, WEATHER3d's composite, DISC17-B now names its one site, SURVTIERS3's two cites). DISC17-B's mutant SURVIVED the re-aim once: its pins matched ANY thunder line of the host's shape, and the dread's own line stood in for the distant storms' - so the pins now hold EVERY thunder line far from the ear, one assertion a line (disc17), and the distant storms' line by its own loop (WEATHER3d); the mutant dies. Deploying world110 drops every connected player once (the relay's own law).
+
+## PSCALE1 (2026-09-25, Mac: "So to add onto this, I want enemy difficulty, enemy numbers, etc to scale approriately with party size") - a fight weighs what the party weighs
+
+Asked three things, Mac answered: "+50% HP, +10% dmg" a player past the first; outdoors "One roll per group"; in a
+dungeon "Everyone in it" counts. Daggerfall Unity has no other players, so every foe is sized for one; this is a
+Ledger A departure (`Port-Ledger.md` section A, A FIGHT WEIGHS WHAT THE PARTY WEIGHS), and it is online's alone -
+offline the party is one and every number is DFU's. The law is `src/systems/partyScale.js`, pure, the count an
+argument. **AUDIT PSCALE1 (below) changed who counts**: a fight's weight is now its FOE'S FIGHTERS - the players who
+struck it within thirty seconds (Mac: "Whoever fights it") - and the notes marked so below are corrected there.
+
+- **Who the party is** (`scenes/world.js partySize`, 1 to PARTY_MAX 8; AUDIT PSCALE1: now the outdoor roll's count
+  alone - a fight weighs its foe's fighters). In a dungeon, everyone in that dungeon's room -
+  its layout foes are every player's there, partymates and strangers alike, so everyone who can strike them counts.
+  Outdoors, me and the partymates whose feet are within GROUP_ROLL_RADIUS (100 units, the camps' own group) - a town
+  full of strangers is not my party. Offline, or with no open room, one.
+- **Tougher.** A SHARED foe loses its damage over `partyToughness` (1 + 0.5 a player past the first: 1.5 for two, 2.5
+  for four, 4.5 for eight), taken at the damage door rather than written into the foe's maximum. The maximum is the one
+  number every client, the room's memory and a save already agree on (each rolls its own; the stream carries only the
+  health), so a toughness kept there would have leaked into a save loaded alone and a room visited by fewer. Only the
+  foe's AUTHORITY takes damage - the dungeon's host, an outdoor foe's owner; every other client's blow on a puppet is
+  sent there and returns before the door - so only the authority reads this, with its own count. The remainder is
+  carried per foe in a WeakMap (never a field a stream or a save could carry), so a party of eight's pinpricks still
+  kill: nine blows of 1 at 4.5 take two points. A quest's scripted kill (SetHealth(0), `bypassShield`) is no blow and
+  is never divided.
+- **Harder.** A SHARED foe's weapon hit and arrow on me is `partyDamageFactor` the blow (1 + 0.1 a player past the
+  first, rounded: 1.3 for four, 1.7 for eight). A hit is resolved on the victim's machine from its own copy of the
+  foe, so the victim reads it with its own count - the host's in a dungeon (everyone in the room sees the same room),
+  the owner's partymates' outdoors; a stranger passing someone else's fight is not struck harder for that party's size.
+- **More.** Outdoors every player rolled their own wanderers, so four standing together met four times the encounters
+  (each streamed to the rest as puppets). The lone encounter is now gated like the camps (`amGroupRollOwner` - the
+  lowest id among the players within the radius, which each of them computes alike): only the group's roller stands
+  it, and every lone encounter, camp and pack stands `partyExtraFoes` more (one for every two players past the first,
+  at most three: none for two, one for four, three for eight). A lone wanderer brings more of its own kind; a camp or
+  a pack draws its extras from its own members in order (`partyGroupMembers`) - a bandit gang grows by bandits. The
+  owner's spawner already refuses past MAX_ACTIVE_ENCOUNTER_FOES (8), the same number each reader stands per owner
+  (CELL_PUPPETS_MAX), so the extras never outgrow what the stream carries: the widest camp, five and three more, is
+  exactly the bound, and a group already holding foes stands fewer.
+- **Shared, and never weighed.** In a dungeon a shared foe is a layout foe (index under `_layoutFoes`, the ones
+  `foesFrame` streams) that is not my summoned ally. Outdoors it is a foe of the streamed pool (`_net` set): a
+  puppet, or my own that is not a quest's and not placed without a site; the city watch (mobile 146) answers a crime,
+  not a party, and is never weighed. A foe only I can see - a quest's wave, a dungeon rest's ambush or any other foe
+  past the layout, a building's (the interior pool has no net) - is never weighed, since nobody can help me with it.
+
+**Known limits, taken knowingly.**
+- A dungeon's count is its map's markers, shared by index with every client, and does not grow; its foes are tougher
+  and harder instead.
+- A foe's SPELLS are not weighed: their damage runs through the spell engine's effect bundles, which tick on long after
+  the cast and are shared with players' own spells.
+- ~~A player resting beside an awake player who owns the group's roll is not woken by a wanderer (CAMP1-REST's cost,
+  now the lone encounter's too): someone is on watch.~~ PAID at AUDIT PSCALE1 (COUNT-1): a rest is always its rester's
+  own roll. The election is the camps' own, over every player within the
+  radius, partymate or stranger - players standing together meet one wanderer roll between them, and the foes more
+  are sized by the roller's own party.
+- The count is read at the moment it is needed - a blow landing, a hit struck, a roll standing - so a partymate who
+  walks off mid-fight makes the next blow count for fewer; nothing already dealt is re-weighed.
+
+No relay change and no version: nothing on the wire moves (AUDIT PSCALE1 carried the fighters' count on the foe
+record, `n`); the authority weighs every blow on its foes, a peer's included, and each client weighs only the hits it
+takes (AUDIT PSCALE1 REC-10: this read "each client weighs its own blows", which is backwards). Pinned:
+`test/pscale1.test.js` (4): the law's numbers and bounds (the widest camp with its extras inside both caps); the
+outdoor pool driven - a shared foe at N 4 loses five blows of 3 as 6 (health 94), alone a blow of 3 as 3, a scripted
+kill whole, a quest foe and a placed foe with no site unweighed and a site's camp foe weighed, a puppet's hit 13 for 10 and the watch's, an ally's and a quest foe's 10, an indoor pool's foe
+unweighed; and the wiring in world.js, worldModes.js, dungeonContext.js and exteriorFoes.js by source.
+`tools/mutants/pscale1.json`.
+
+## AUDIT PSCALE1 (2026-09-25, Mac: "Lets audit this") - five lenses, thirty-two findings (twenty-nine distinct), and the count is whoever fights it
+
+Five lenses over PSCALE1 - the damage doors, the network, the count and the encounters, the records, play and balance
+- each finding reproduced by the lens (scripts that drive the real pools, the real placement law, the real election)
+and again before its fix. One of them was the design: "Everyone in it" counted every player anywhere in a dungeon, so
+**seven strangers idling in Privateer's Hold - where every new character starts - made a solo player's rats 4.5 times
+as tough and 1.7 times as hard-hitting**, and an AFK crowd could do it on purpose. Asked who should count, Mac
+answered **"Whoever fights it"**.
+
+**The count (PLAY-1, PLAY-4, NET-1, REC-10).** A foe's FIGHTERS are the players who struck it within
+PARTY_FIGHT_WINDOW_MS (thirty seconds, Renown's own assist window), strangers and partymates alike, one to eight
+(`partyScale.js noteFighter`/`foeFighters`). They are counted where every blow lands - the authority's damage door
+hears its own player's and every peer's (applyHit) - and ride the foe's record as `n` (wire.js validFoeRecord, a whole
+2..8, absent for one), so every client weighs a foe's hits by the same number. It pays four findings at once: a player
+idling across the dungeon or a silent tab never struck the foe (PLAY-1, and NET-2's effect on the count); an archer a
+hundred paces off who shoots it counts (PLAY-4 - three archers at 101 units had switched the scaling off and kept
+the Renown bonus); a dungeon split while its host is silent only ever hears my blows on my copy (NET-1 - each joiner
+had fought a private copy weighed for the whole room); and every client reads the owner's count, not its own
+(REC-10). A shared foe's Renown bonus counts no more partymates than fought it (PLAY-4's other half). The outdoor
+ROLL keeps its own count - the partymates within GROUP_ROLL_RADIUS, before any blow (`world.js partySize`, the
+dungeon arm gone); no pool or mode is handed it any more.
+
+**The doors.**
+- DOORS-1 (medium): a KILL is not a blow. Disintegrate (`sinks.hurt(left, { whole: true })`), a stat drained to zero
+  (the same flag, statMods.js) and Mehrunes' Razor's whole-health strike (`markWholeBlow`, spent at the first door) were
+  divided by the toughness - Disintegrate left a foe at 34-78 health, a zero stat took up to 4.2 s to kill. A kill
+  skips the division at both pools' doors and crosses the divert as `z: 1`, which the owner's and the host's applyHit
+  honour.
+- DOORS-2: the Ring of Namira wrote `attacker.health` straight - no toughness, no death check (a foe left at -2,
+  alive), and on a puppet a copy the next record overwrote. Each pool registers the foe's own door by entity
+  (`registerFoeDoor`); the reflection goes through it (a watchman's crime-free, as before). The reflection is the blow
+  as rolled, DFU's number - the fighters' weight on my side of it is not reflected.
+- DOORS-3: underground the flash and the pain cry read the unweighed hit while health took the weighed one; the blow
+  and the arrow are weighed once, where the damage is declared (`_weighHit`).
+- DOORS-4: `partyFoeHits` rounded with no carry, so a hit of 1-4 against a pair was never harder and a rat's 1 was
+  doubled for six to eight; the remainder is carried per victim now.
+- DOORS-5 / PLAY-6: a heal on a shared foe (the Seducer's Vampiric Touch) restored its whole amount of a pool the party
+  fights at 2.5-4.5 times; it is weighed as the damage is (`partyFoeHeals`, its own remainder).
+
+**The roll and the extras.**
+- COUNT-1 (high): the one-roll gate had no rest exemption, and a party rest's mirrors never roll - so whenever a
+  partymate with the lower id slept in the mirror, nobody rolled the whole night (a four's eight-hour rest broken 18%
+  of the time, 75% before). A rest is always its rester's own roll; the documented "awake owner" limit is gone with it.
+- PLAY-2 / PLAY-3: the vote ran over every player within reach, so a stranger with a lower id (or a hand-chosen `----`
+  id) silenced mine and set the level and the extras of mine. It runs over my PARTYMATES (`partyNear`, now with ids);
+  strangers roll their own.
+- COUNT-5 / REC-7: deferring to any lower id within reach let a chain (A, B, C sixty apart) elect A alone - C met
+  nothing. `amGroupRollOwner` is greedy by id: the lowest rolls, and each next rolls unless a chosen roller stands within
+  the radius (the camps' election too; a huddle still elects its one lowest).
+- COUNT-2 (medium): the extras copied the wanderer, so a party of eight could meet four Liches, each 4.5 times as tough.
+  A SOLITARY_TYPES foe (mobileFactions.js) stands alone, whatever the party.
+- COUNT-3: extras and a camp's members were placed in one synchronous loop and never saw each other (spawnFoe lands
+  after its awaits) - in 44% of a party of eight's wanderer encounters a foe stood inside another, in 98% of a grown
+  camp's. The pool
+  names the feet in flight (`pendingFeet`); the placing pool (`_placingPool`) tests them.
+- COUNT-4: the reader's allowance was the owner's encounter cap alone, and a camp of five and three more fills it - an
+  uncapped stand (a SoulBound's release, the Rose's Daedroth, RR's squad, a Wabbajack's change) rode and was dropped
+  unseen. CELL_PUPPETS_MAX is the cap and CELL_LOOSE_PUPPETS (4) more.
+- NET-2 (medium, older than PSCALE1): `peersNear` passed `performance.now()` to a session that stamps with
+  `Date.now()`, so a silent peer never timed out - it kept the roll and the count for as long as its socket lived. It
+  reads the session's own clock.
+- NET-3: the party's one roll stands every wanderer in the roller's pool, so one player stepping into a shop took the
+  whole fight off every other screen. A door out of the open country hands my live foes to the players outside
+  (`handOverFoes`, PDEATH-FOES's handover, now said at the modes' pre-transition too).
+
+**The records (REC-1..13).** Eleven behavioural mutants survived the shipped pins (the dungeon's count, door and blow;
+the three count hand-offs; the archer; the outdoor count; the gate; the melee swing; the remainder) - every one is
+killed by `test/auditpscale1.test.js`, which MOUNTS the host slices from comment-stripped source (the dungeon's
+helpers and door, the count, the gate and the extras, the camp, the placing pool, peersNear, the handover, the arrow
+handler) and drives the pools. The docs' misstatements are corrected: the damage rule is 10% a fighter past the
+first; the pinprick example is the 5th and 9th blows; the offline comments name the real mechanism (only my blows
+reach an offline copy).
+
+**Known limits, taken knowingly.**
+- A dungeon's count is its map's markers and does not grow; a foe's spells on a player are not weighed.
+- The first blows of a fight count only the players who have struck so far - four striking at once converge on four
+  within their first swings.
+- The party's roller's own place decides its roll: swimming, standing in a town's widened rect by day, or with a window
+  open, it stands no wanderer for a partner just outside (PLAY-2's roller-context half); the roller's level sets the
+  wanderers' band (PLAY-3's level half) - a peer's Daggerfall level is not on the wire.
+- The damage numbers (HN1) show the blow as rolled - the formula's readout, its own law; a shared foe loses it over its
+  fighters' toughness.
+- A heal on a joiner's or a reader's COPY is written unweighed until the next record carries the authority's.
+
+Relay: wire.js is in the relay's bundle, so world108's row (unshipped) is rewritten in place; the relay reads none of
+`n`. Pinned: `test/auditpscale1.test.js` (10), `test/pscale1.test.js` (4, re-aimed), and the older pins the change
+moved (audit68_dungeonctx's harness, auditworld6b's divert and cap, exteriorfoes' sink, renown1's door and bonus).
+Mutants: `tools/mutants/auditpscale1.json`, `tools/mutants/pscale1.json` (re-aimed), and restx2camp's and watch1's
+records re-aimed by content.
+
+## SIGIL1 (2026-09-25, Mac: "After this is the new online weapon system that is incorporated into our rarity enhancement") - some weapons won online carry a sigil, and it grows
+
+Mac: "weapons obtained through online play recieve a sort of sigil power that is only effective online, which also
+scales with your renown. Sigil power does not work offline. I want this system to really enhance the fantasy but not
+be insanely overpowered. This links up with both elements we have so far with scaling and renown". Asked four things,
+Mac answered "Bonus damage", "Magic and up, found online", "Bigger fights, stronger sigils" and "Five named stages";
+then, of a sigil fixed at the drop ("Makes sigil a static element"; "What if the sigil is[n't] gaurenteed in of
+itself"), chose "Chance at the drop, then grows". Daggerfall Unity has neither online play nor Renown; this is a
+Ledger A departure (`Port-Ledger.md` section A, SOME WEAPONS WON ONLINE CARRY A SIGIL, AND IT GROWS), and what a sigil
+does is online's alone. The law is `src/systems/sigil.js`.
+
+- **What a sigil is.** `item.sigil = { power, party, xp }`, a declared item field (`systems/itemFields.js`): it rides
+  a save as the item does, and the wire's loot door checks it (`validLootItem` - a forged power or rank is no item at
+  all). `power` is the per cent of damage it adds at its full rank; `party` the size of the fight that won it; `xp`
+  what it has drunk.
+- **Who gets one** (`systems/lootRarity.js stampWonWeapons`). A Magic, Rare or Legendary weapon - never ammunition, an
+  artifact (its own tier has no band), a quest's item, armour, a Common weapon, or one already marked - in a list WON
+  ONLINE: a body's at its death (the outdoor owner's kill door, the dungeon host's and the watch's; a dungeon joiner's
+  own copy when the host's stream says it fell, at the host's count; a body the room's memory hands an arrival), and a
+  treasure pile's at its mint (a dungeon's, at the build and at the hour's respawn; a World of Daggerfall camp's; a
+  tavern's, the Thieves Guild's or the Dark Brotherhood's). Online is the page's `?online`, said to the law in the
+  boot's first lines (`setSigilOnline`), before any list is minted. Shop stock, quest rewards and anything won
+  offline never carry one; a weapon never gains one after it is won and never loses one.
+- **How often, how strong.** 200 per mille alone and 40 more a fighter past the first (480 for eight). The power is in
+  the tier's band - Magic 2-5, Rare 4-8, Legendary 7-12, under half each tier's own damage affix (5-12, 10-25, 20-40) -
+  from a floor that rises a seventh of the band a fighter past the first, so eight fighting always win the top. The
+  fight is the foe's FIGHTERS (PSCALE1's count, read at the death); a pile is a fight of one.
+- **The stages.** Faint, Kindled, Bright, Radiant, Ascendant: 20, 40, 60, 80 and 100% of the power. The sigil's own
+  rank opens at 0 / 5,000 / 12,500 / 22,500 / 37,500 xp; the wielder's Renown opens the same five at 1 / 10 / 20 / 30 /
+  40; the LOWER stands. A new character's Ascendant Legendary 12 gives 2.4% (held at Faint by Renown); a Renown 40
+  wielder's new sigil gives the same 2.4% until it has grown.
+- **The drink** (`drinkSigil`; world.js `sigilDrinks`, beside the Renown tracker's two earns). Every point of Renown
+  XP I earn with the weapon in my hand (the striking hand's item) - a kill's, the party's bonus included, so a bigger
+  fight feeds it faster; a quest's - goes into its xp, never past 37,500, and a rise is said: "The sigil on your
+  Longsword brightens: Kindled.", and when my Renown holds it lower, "Your Renown holds it at Faint until Renown
+  10.". A NEW record replaces the old and the old is never written - a save's or a stream's `{ ...it }` copy shares
+  its fields. Nothing is drunk offline, online before my Renown is known, or past the hour's Renown cap as the page
+  last heard the service say so.
+- **The blow** (`sigilBlow`, registered by `entityMods.registerWeaponBlowMod` and read at the tail of FormulaHelper's
+  weapon damage - after the strength, the material and the enemy-type term, and before DFU's mod hook, its last line,
+  so Roleplay Realism's draw scales a bow's sigil with the rest of the shot). My weapon's per cent of the whole blow at a foe,
+  the fraction carried on the weapon (Faint 2.4% on blows of 10 lands a point on the 5th and the 9th). Never a duel's
+  blow (the defender resolves it with a `peer` stub, at a player), never a blow at a player, never a foe's. Offline,
+  and online before my Renown is known (`setSigilRenown`, in `renownAdopt`), a sigil is DORMANT and adds nothing.
+- **The words** (`sigilLines`, under the tier and its affixes in `rarityLines` - both skins' tooltips; an
+  unidentified weapon shows its sigil at once, since it is the port's mark and not an enchantment): "Sigil (Kindled):
+  +3.2% damage, +8% at Ascendant", then "Kindled: 7,000 / 12,500 to Bright" or "Held at Kindled by your Renown (Bright
+  at Renown 20)", then "Won in a fight of 3"; offline, "Sigil (Dormant - wakes online, with your Renown): +8% at
+  Ascendant".
+
+**Found building it: a reader lost a body's fight** (AUDIT PSCALE1's). A foe's record carries its fighters' count
+(`n`) only while it lives, and both readers (`exteriorFoes` applyPuppetRecord, `dungeonContext` applyFoeRecord) wrote
+`f._fightN = r.n ?? 1` on every record - so the death record set it to one just before `renownFoeDied` read it, and a
+joiner's or a reader's Renown party bonus for a shared kill was capped at one (the host's and the owner's were right).
+The readers now take the count off LIVE records alone, and a body keeps the fight it died in - which a joiner's stamp
+reads too.
+
+**Known limits, taken knowingly.**
+- Each copy of a dungeon body or pile rolls its own sigils, as its list is its own roll (WORLD4); the room adopts the
+  first opener's list, sigils and all.
+- A sigil is the item's, carried in a save the player holds, and a forged save can carry a forged sigil as it can a
+  forged affix. What a sigil GIVES is held by the wielder's Renown, which the account service signs.
+- The weapon in my hand when a kill pays drinks its XP, whatever landed the last blow (a spell, an ally).
+
+No relay change and no version: the relay carries no item. Pinned: `test/sigil1.test.js` (7) - the law's numbers; the
+blow (the carry, every gate, FormulaHelper's tail); the stamp; the drink and the words; the item field on the wire;
+the outdoor pool driven (a fight of four marks the body's Magic sword at 3, a reader keeps the count through the body's
+record, offline marks nothing); the hosts, the drink mounted and every other door by source. The re-aimed pins:
+renown1's and auditpscale1's kill handler and quest earn. `tools/mutants/sigil1.json` (57, all dead).
+
+## THE HOLDINGS ARC (2026-09-25, Mac: "One big thing Im trying to brain storm is giving each region's main city a natural player hub and future ownership for online guilds along with allowing online players to purchase housing in any location. Along with taking the file attached and building our own unique version instead of porting") - hubs, homes, a decorator, guilds and seats
+
+The file was Kaedius's Decorator 0.2.2 (a Daggerfall Unity mod: furniture placed in a home or ship for gold, moved,
+turned, lit, made a container). Mac asked for our own, not a port. Asked four things, Mac answered: homes are
+EXCLUSIVE - one owner per building server-wide ("World is super large. Can revisit later if needed"); homes go
+EVERYWHERE, towns and open land ("Everything"); seat ownership ALL OUT ("Wanna go all out on this" - weekly
+influence, claims paid from a treasury, and sieges); decor is GOLD PER PLACEMENT, and "rare misc artifacts and other
+items in the world can also be placed, plus sold at shops not available in the world loot pool"; and "a way to
+display your weapons". Mac left RESPAWNING AT A HUB out ("That'll be a seperate idea"), and with it the gold lost on
+death (the original pillars 5 and 6); a CARRIAGE between hubs was dropped because online fast travel is already
+instant and camping out already costs nothing. Defaults taken ("You got this. Continue"): three town homes and one
+plot a character; no upkeep yet.
+
+The slices, in order: **HUB1** the hubs (below); **HOME1** exclusive homes in any town - a server registry (the
+account service's D1: one owner a building, the character's cap), the door and the map naming the owner, entry by
+the owner's word (private, party, guild, public), visitors in the owner's room, storage the owner's alone, selling
+back; **DECOR1** the decorator - a catalogue of Daggerfall's own furniture and decor for gold a placement, moved,
+turned, scaled, snapped, lit, kept on the server for an online home and in the save for the offline house and ship;
+**DECOR2** real items placed (rare misc artifacts, world items shown as they lie in the world), a furnisher selling
+decor the loot never drops (the Furniture Store building type stands with empty shelves today), and a way to
+display the player's own weapons (asked, Mac chose "Mounted" over racks and stands in 3D: a weapon or a shield
+hangs flat on the wall as its own pack picture, DECOR2c); **GUILD1** guilds - a server entity, a tag beside the
+name, a guild chat, ranks and a roster, a guild hall that is a guild-owned home, a treasury (asked, Mac chose
+founding by "Gold and Renown", membership "Per character", ranks "Four, renamed by the guildmaster", and the
+treasury "Guildmaster only" to take from - GUILD1 below); **SEAT1** each hub a
+seat a guild can hold - weekly influence from members' Renown XP earned in the region, an unheld seat claimed with
+influence and a treasury fee, the holder's banners and colours in the city, the palace its hall, members' discounts,
+a share of the seat's fees, and the seat's circle on the map in the holder's colour; **SEAT2** sieges - the top
+challenger meets the holder in a scheduled team battle at the seat, built on the duel ring; **PLOT1** homesteads on
+open land, streamed to every player.
+
+## HUB1 (2026-09-25, Mac: the hub, "a color coded circle indicator or something along those lines for distinguishing") - every region's main city is its hub
+
+Daggerfall Unity has neither online play nor hubs; this is a Ledger A departure (`Port-Ledger.md` section A, EVERY
+REGION'S MAIN CITY IS ITS HUB), online's alone. The law is `src/systems/regionHubs.js`, pure.
+
+- **The rule** (`pickRegionHubs`), over each region's OWN rows. `MapsFile.baseLocationCount` is the count the
+  region's own MAPNAMES holds; a world-data mod's rows are appended past it and never count, so a player with
+  AssetInjection on and one with it off pick the same city. Among the settlements: the best KIND (a city over a town
+  over a village), then the one NAMED FOR ITS REGION (Daggerfall, Wayrest, Anticlere...), then the LARGEST by
+  exterior blocks, then buildings, then the lowest location index. A region with no settlement has no hub - 17 of
+  the 62 regions hold no location at all, so at most 45 stand. Daggerfall, Wayrest and Sentinel, each the city of
+  its own region, are CAPITALS. A hub is read off the boot's own pass over every location (`scenes/world.js`, the
+  game's rows collected as the location index is built), keyed by region and by the unsigned map id the room keys
+  already spell.
+- **The map** (the held map - online's own skin; the classic map is DFU's and unchanged). A hub's mark stands in a
+  COLOURED CIRCLE under its glyph (Mac: "a color coded circle indicator"): BLUE for a hub, PURPLE for a capital - the
+  colours the sheet does not already speak in (the selection's ring is gold, the player's mark red, the party's
+  green, Travel Options' mark yellow). The circle goes down before any glyph's halo, so the town reads ON the
+  colour, at every band that inks the place; names are set clear of it, and so are the neighbours' (`markReach`).
+  The label reads "Region : Location (Hub)" or "(Capital)", and the I box opens with "Hub of <region>" or "Capital
+  of the Kingdom of <region>", whether or not the player knows the town's buildings. The next slices colour more
+  circles: a player's own homes (HOME1), a held seat in its guild's colour (SEAT1).
+- **Arrival.** Walking into a hub - PlayerGPS's location-rect entry, the frame loop's own edge - says "Daggerfall,
+  capital of the Kingdom of Daggerfall." or "<City>, hub of <region>." for five seconds.
+
+Online only: offline the host hands the map no hubs and says nothing on arrival. **Known limits.** A world-data file
+that REPLACES one of the game's own rows (`location-<r>-<i>.json`) could change a size the rule reads; none ship.
+No relay change, no account change. Pinned: `test/hub1.test.js` (5) - the rule over every tie, the words, the base
+count, the ink (the circles' colours and their order under the glyphs, names and neighbours set clear), the host by
+source; `test/heldmap.test.js` HUB1 window (1) - the label and the box driven, online, capital and offline.
+`tools/mutants/hub1.json` (30).
+
+## HOME1 (2026-09-25, Mac: "allowing online players to purchase housing in any location"; asked, "Housing is exclusive", bought "At its front door", a house bought offline "Stay offline only", who walks in "Owner chooses") - a house anyone can buy at its door, and its door is its owner's
+
+Daggerfall Unity has one player and one house a region, bought at the bank; this is a Ledger A departure
+(`Port-Ledger.md` section A, AN ONLINE HOME IS ONE PLAYER'S, AND ITS DOOR IS THEIRS TO OPEN), online's alone. Mac's
+three answers: buy "At its front door" ("Click any unowned house's door and buy it there. Works in every town,
+including hamlets with no bank."); a house bought offline "Stay offline only" ("Online, the server's list is the only
+truth. The offline house keeps working offline. Nobody ever loses a house to a conflict."); who may enter, "Owner
+chooses" ("Private, Party or Public, changeable anytime. Guild is added when guilds land."). The defaults the arc
+took: three town homes a character, no upkeep.
+
+- **The registry** (`server-account/src/homes.js` over `migrations/0010_homes.sql`, its shapes `src/net/homeLaw.js`,
+  which the client reads too). A home is a building in a town: the town's unsigned map id and the building's key
+  there, the table's primary key - so a building is nobody's or one character's, never two, server-wide. It belongs
+  to one CHARACTER (the id its save carries, as Renown's tracks key on) of one REGISTERED account - a guest's device
+  can be lost with its browser, and a home held by an account nobody can sign back into would be a building gone
+  from the world - and its door names the account's handle, never the character. The claim is ONE statement that
+  lands only while the building is nobody's and the character holds fewer than HOME_CAP (3), so two claims racing
+  for one building, or for a character's last place, cannot both land; a claim sent again after a lost answer finds
+  the building already the same character's and is answered as the claim. Twenty claims an hour an account. Every
+  write names the owner in its WHERE, so another's home is exactly as absent as none (`no-home`). A town's homes are
+  any session's to read, a guest's too - whose each is, who may enter, which are the caller's own - never a price or
+  another account's character. A release answers what was paid. The account deleted, its homes go with it.
+  Routes `/v1/homes/town|mine|claim|release|entry`, POST; the deploy's smoke reads a town and refuses a guest's claim.
+- **The client's reading** (`src/systems/onlineHomes.js`): a town at a time, asked as the player walks into it
+  (`scenes/world.js`, the location rect's entry, beside HUB1's arrival line) and by any door of it, believed for a
+  minute; an unanswered ask keeps what was known and waits ten seconds before the next; a door waits at most 2.5
+  seconds for a town it has never heard from and then goes on under Daggerfall's law. `own` is read against the
+  character playing now; the account's other characters may always walk in, but a home is not theirs.
+- **Where the service's list decides.** Online, a building it names is that player's home; one it does not name -
+  or a town not heard from yet - stands under Daggerfall's own law, and that includes this character's own OFFLINE
+  house: it is a house the server never hears of, not one taken away, so it keeps its storage and its bed, and anyone
+  may still buy the building online, which then decides it (the offline house is still the character's offline).
+  The bank sells no house online: Buy House answers "Online, a home is bought at its own front door." - its list is
+  Daggerfall's house (`ui/bankWindow.js`).
+- **The door** (`scenes/worldModes.js activateStaticDoor`, BEFORE Daggerfall's lock ladder). A player's home opens
+  for its owner at any hour and for whoever the owner lets in: anyone when public, a player whose party holds the
+  owner when party (the handles the relay signs), and - Daggerfall's own rung - a player whose active quest is set
+  in it, so a quest never strands its player. It is shut to everyone else by no pick, no bash and no Open spell, the
+  refusal "This is <owner>'s home. The door is locked." In INFO mode a house anyone may buy is its offer: "This house
+  can be your home. It costs N gold, from your purse and this region's bank account. Buy it?" - the price Daggerfall's
+  bank asks for that house (its model's radius x 1280 - the model the door's own record now carries,
+  `systems/talkTopics.js buildingDataForDoor`, the town directory's for the same building); Yes claims it first and takes the gold only once the claim
+  lands (the purse, letters of credit too, then the region's account, as Daggerfall's PurchaseHouse pays), asking the
+  purse again after the answer and giving the claim back if it can no longer be paid; No goes on to the door, as
+  Daggerfall's Info click does. A house is a candidate when it is Daggerfall's for-sale house or an ordinary
+  residence (House1-4) - never a faction's House2 - and is for sale when no active quest is set in it. In Info mode
+  my own door is my menu: G go in, W who may enter (Only me, My party, Anyone), S sell it back - at Daggerfall's deed
+  share (85%) of what the SERVICE says was paid, into the region's account, credited only once the service agrees;
+  anything left inside is lost with the next clearing of the scene cache, as a sold house's is. The hover names a
+  home "Your home" or "<owner>'s home", with "Locked" when it will not open for me and no Lock Level (its lock is a
+  word, not a mechanism), and a house for sale "Can be your home: N gold"; the Info click names it the same way.
+- **The visit.** Its home is read once at the door and held for the visit (`interiorHome`): a town's answer landing
+  mid-visit moves nothing. MY home is mine as Daggerfall's owned house is - its shelves are storage, its cupboards
+  never restock, its bed is mine - and what I keep in it lives under ITS OWN scene (`homeSceneName`), never the
+  building's: offline the same building is a stranger's, whose cupboards restock the moment they are opened, and
+  under one name the first offline visit would have thrown my things away. The scene is made permanent at the
+  purchase and again at every entry (a purchase on a page never saved would otherwise leave it unkept). SOMEONE
+  ELSE'S home is not a stranger's house: its cupboards are shut ("This belongs to <owner>."), nothing restocks,
+  nothing is stolen. Any player's home has no residents and greets no one.
+- **The room.** An online home keeps its relay room (an owned offline house or a ship keeps none, as before), so its
+  owner and their guests stand in it together and its doors are shared - but the room carries NO LOOT
+  (`world/interiorShared.js`, the bag's `home`): its memory names no cupboard, a peer's word about one never lands
+  (a word about `container:3` would have overwritten the owner's chest, and then been published back as the room's),
+  and a refused act's records name none.
+- **Quests** (`systems/quest/place.js`, a departure: Daggerfall has one player): no quest picks a known player's home
+  as its residence (the towns this page has heard from).
+
+Offline nothing here exists and every door is Daggerfall's. **Known limits.** A quest set up for a town this page
+has not heard from can still pick a building that is someone's home; the quest rung then lets its player in. The
+gold is the save's, as all of it is. What a home holds lives in its owner's own save, never on the service - the
+next slices' decor (DECOR1) is the first thing kept there. No relay change. Pinned: `test/home1.test.js` (11) - the
+law, the service through the real Worker with every migration applied (one owner, the cap a character's, the repeat,
+entry, release, the cascade), the rate, the client's door to it, the client's law and registry, buying and selling,
+the room without loot, the bank online, the door's model, the wiring by source; re-aimed by content in `test/auditworld6a.test.js`,
+`test/world6.test.js`, `test/housecontainers.test.js`, `test/houses.test.js`, `test/restlodging.test.js`,
+`test/worldhover.test.js`. `tools/mutants/home1.json`.
+
+## DECOR1 (2026-09-25, Mac: "building our own unique version instead of porting" Kaedius's Decorator; decor "Gold per placement"; asked, the catalogue "Everything Daggerfall furnishes", priced "By size", opened from "A UI element that can be clicked to open the decorate panel. Allows free cam mode for placement and an intuitive scrolling menu with filters", offline "kept in the save") - the decorator, from the ground up
+
+Daggerfall Unity has no decorator; Kaedius's Decorator 0.2.2 (a Daggerfall Unity mod: furniture placed in a home or
+ship for gold, moved, turned, lit, made a container) was the file Mac attached, and Mac asked for our own. Asked,
+Mac chose: the catalogue holds EVERYTHING DAGGERFALL FURNISHES - every piece Daggerfall itself places inside its
+buildings, found in the game data and browsed with a turning preview, named where the game names them; a placement
+is priced BY SIZE (moving or turning a placed piece is free, removing one gives half back); the decorator opens from
+A CLICKABLE UI ELEMENT into a panel - "an intuitive scrolling menu with filters" - with a FREE CAMERA for placing; and
+it works in the OFFLINE house and ship too, kept in the save. The slice lands in four parts: DECOR1a the ground
+(below), DECOR1c the placed pieces in the room, DECOR1d the button, the panel and the free camera, DECOR1e the
+changes to a placed piece.
+
+**DECOR1a - the piece, the store and the catalogue** (nothing a player sees yet; the room and the panel stand on it).
+
+- **The piece** (`src/net/decorLaw.js`, read by the account service and the client). WHAT it is - one of
+  Daggerfall's own models (an ARCH3D id) or one of its flats (a TEXTURE archive and record), never both - never
+  changes once placed. WHERE it stands: its position from the building's own origin (the door matrix's translation,
+  the scene cache's 'building' frame - the same for every client and every visit), within 256 m on each axis,
+  rounded to the millimetre; its turn in degrees, yaw, pitch and roll (a tenth of one); its scale, a quarter to four times; an optional
+  light (a colour, a range of 1 to 30 m, an intensity up to 4); whether it holds things; and the gold it cost. A
+  home holds 200 pieces. THE PRICE is by size, as Daggerfall prices a house by its model's size: 150 gold a metre of
+  the piece's scaled radius, between 20 and 400; removing a piece gives half of what it cost back; a new scale pays
+  the difference when it grows and gives half the difference back when it shrinks.
+- **The store** (`server-account/src/decor.js` over `migrations/0011_home_decor.sql`). An online home's pieces live
+  on the account service so every visitor walks into the room its owner furnished. Any session reads a home's
+  pieces, a guest's too; placing, moving and removing are the owning CHARACTER's alone (the account and the
+  character, named in each write's own WHERE, so another's piece is as absent as none), one piece a write (a body far
+  inside the service's 4 KiB however full the room, and two of the owner's tabs cannot overwrite each other), 600
+  writes an hour. A placement lands only while the home holds fewer than 200; one sent again after a lost answer is
+  answered as the placement. WHAT a piece is lives in its own columns and no move touches them - a move cannot turn a
+  stool into a statue. The home released (sold, or its account deleted) takes its pieces with it. Routes
+  `/v1/homes/decor` (read) and `/v1/homes/decor/place|move|remove`; the client's door `net/accountClient.js
+  accountDecor`; the deploy's smoke reads a room and refuses a guest's placement.
+- **The catalogue** (`src/systems/decorCatalogue.js`). Every PROP model and flat Daggerfall lays out inside its town
+  blocks' buildings (BLOCKS.BSA's RMB interiors), counted, the editor's markers (TEXTURE.199) and the ladder (placed,
+  it would not be climbed) left out. Kinds by the game's own sets: beds, shop shelves, house containers, other
+  furniture, and the flat archives (lights 210, clothing 204, boxes and bottles 205, arms and armour 207, books and
+  scrolls 209, odds and ends 211, treasure 216, any other a decoration). Names are the game's where it has them - the
+  house containers (Wardrobe, Chest, Dresser...), the beds, the lights of TEXTURE.210 as Daggerfall Unity's light
+  table names them - and otherwise the kind numbered in id order. A house container holds things by default; a light
+  carries Daggerfall's own light (its range, intensity and colour). The panel's filters are here too: kinds, words
+  (every word in the name or the kind), a size band (small under half a metre of radius, large from a metre and a
+  quarter), holds-things, gives-light; most common first, cheapest first, or by name.
+
+Pinned: `test/decor1.test.js` (4 of its 7) - the law, the store through the real Worker with every migration
+applied, the client's door and the deploy, the catalogue and its filters.
+
+**DECOR1c - the placed pieces in the room** (a room whose record holds pieces now stands them; placing them is
+DECOR1d's panel).
+
+- **Standing** (`src/scenes/decorRoom.js`, one pool per room, held by the building host `src/scenes/worldModes.js`
+  and emptied with the room at all three of its teardowns). A model stands with its origin at the building's origin
+  plus its place, turned by yaw, pitch and roll, and scaled. It is its own collider bucket and its own eye target
+  under one key, `decor:<id>`, so the ray is decided by the piece's own triangles, at the reach of the room's own
+  furniture (3.2 m). It is drawn in the room's own climate. A flat is uploaded, sized (its record's own scale, and a
+  texture pack's) and animated exactly as the room's own flats are. It stands on its base, as every Daggerfall
+  billboard does, and answers the ray by its box alone (a flat has no collider). A lit piece's light joins the
+  room's own light list, sorted with the room's lamps by distance and capped by the renderer, so placed candles never
+  push out the lamps nearest the player. A TEXTURE.210 light hangs where the room's own light of that record hangs
+  (the flame, not the foot); any other flat's light hangs at its middle, a model's at its origin. A move or a
+  removal takes the old bucket, batch, animation and light with it at once. A piece moved or removed while it was
+  still loading never stands.
+- **Whose pieces stand.** An online home's are the account service's. They are asked for once a visit, after the
+  room is restored, and every visitor sees the room its owner furnished; an answer that lands after the visit ended
+  stands nothing. The offline house's and ship's are the save's. They are written into the room's scene (in the
+  building's frame, like every piece), carried through the save as copies, and stood again on the next visit; a scene
+  written before DECOR1 reads as a room with nothing placed. Online, a building the service names as a home never
+  writes its pieces into the save. The save's own record for that building is kept through the visit and written
+  back as it came, because the building can be this character's own offline house ("The offline house keeps working
+  offline").
+- **What they hold.** A storage piece opens its owner's inventory window, two-way, like a house container in an
+  owned house: never restocked, never a theft. The owner is the online home's character; elsewhere the owner of
+  Daggerfall's own house, or of a ship. Anyone else is refused, and a visitor in an online home is told whose it is,
+  as HOME1's cupboards do. What a piece holds is always the owner's save's (for an online home, under HOME1's own
+  scene for it), written to the scene as copies of the lists that hold something.
+- **Named.** Pointed at, a storage model reads as the house container's own word. Every other piece is named once
+  the decorator has read the catalogue (DECOR1d).
+
+Pinned: `test/decor1.test.js` (3 of its 7) - the pool over fakes of the host's own seams, the scene through the save
+and back, and the host's wiring. `tools/mutants/decor1.json` (54, DECOR1a's 32 among them).
+
+**DECOR1d - the decorator itself: the button, the panel, the free camera.**
+
+- **The button.** "Decorate", at the right edge of the screen, stands in a room the player may decorate - their
+  online home, or their own house or ship - whenever no window is up. With the pointer locked for looking, Enter
+  frees the cursor to press it, as every on-screen button asks.
+- **The panel** (`src/ui/decorPanel.js`). A window over the room: it sits in the room's own overlay slot (the
+  enhanced merchant panel's pattern), so it pauses the room and frees the pointer as every window does, and
+  Escape or Tab puts it away. The catalogue is read out of BLOCKS.BSA's town blocks a few blocks a frame the first
+  time the panel opens (`src/systems/decorScan.js`), and each piece's size is measured for its price: a model's
+  radius off its ARCH3D header, as the bank prices a house by its model; a flat's billboard, half its diagonal. A
+  piece whose size cannot be read has no price and is not offered. The list is filtered by kind, by words, by size,
+  by holds-things and by gives-light, and sorted most common first, cheapest first or by name. The piece pointed at
+  shows in the preview - a model turning (drawn by the renderer's second camera pass, the bank's and the
+  automap's, and copied into the panel's own canvas, the panel over the game being opaque), a flat as its own
+  picture (asked for as its row comes into view, never hundreds at once) - with its price and, when it cannot be placed, why: the gold short, the room full (200), or its size
+  still being read.
+- **Placing** (`src/scenes/decorTool.js`, `src/systems/decorPlacer.js`). Place closes the panel and flies the
+  camera. Every key press is the decorator's while it flies, read as the action it is bound to (the controls
+  registry's, so a rebinding holds), and none reaches the body, so the body stands still and nothing else fires
+  under a placement; a key's release still reaches the game, so a key held into the flight is let go of. The walk
+  keys move the eye - Jump up, Crouch down, Run faster - within 40 m of where it began, and the mouse looks, the
+  pointer locked again. The piece stands where the eye meets the room within 12 m, or hangs 3 m ahead: a model
+  lifted by its own bottom, a flat on its base. Turn Left/Right (the arrows) or the wheel turn it 15 degrees
+  (Shift: one), Float Up/Down (Page Up/Down) lift it 5 cm (Shift: one), - and = size it by a tenth, / snaps it to a
+  quarter-metre grid across the floor (the three keys no action is bound to), and a click or Interact places it and
+  pays. Escape or a right click goes back to the panel with the piece still chosen. The bar at the foot of the
+  screen says the piece, its price, why it cannot be placed now, and the keys, with a button for each. A window
+  over the flight suspends it; a press while the pointer is free only takes the pointer back and never places. In
+  third person the view is the free camera's too.
+- **Paying.** The purse first, then the region's bank account, as HOME1's homes are paid. An online home writes to
+  the account service first and pays once the service has the piece, asking the gold again after the answer: short
+  then, the piece is taken back out; refused, nothing is paid and the bar says the service's word for a few
+  seconds. The offline house and ship pay and stand the piece at once, and the room's scene carries it into the
+  save. Once the catalogue is read, every placed piece is named where the eye points at it, for a visitor too.
+
+Not yet (DECOR1e): moving, turning, resizing or removing a placed piece and the half back on removal; a home,
+house or ship sold with pieces in it; flying the camera by touch.
+
+Pinned: `test/decor1d.test.js` (13) - the scan, the placer, the panel, the button and the bar over a fake
+document, the tool over fakes of the host's seams, and the host's wiring by source. `tools/mutants/decor1d.json`
+(39).
+
+**DECOR1e - the room's own pieces changed, a room sold with its pieces, and the flight by touch.**
+
+- **In this room.** The panel has two tabs: the catalogue, and "In this room" with the count of pieces placed. The
+  room's list names each piece with what it cost, whether it holds things (and whether anything is in it), whether
+  it gives light, and the half a removal gives back. A piece chosen shows four changes - Move, Light (saying
+  whether it is lit), Holds things (saying whether it does) and Remove. The panel opens again on whichever tab it
+  was left on.
+- **Move** (`src/scenes/decorTool.js`). The same free camera as a placement, starting from the piece's own turn and
+  scale; the ghost is the piece itself, and the eye looks through the piece's own collider, so a piece nudged where
+  it stands never lands on top of itself. Moving and turning are free; resized, it costs the difference when grown
+  and gives half the difference back when shrunk (the law's `decorRescale`). The bar says "Moving <piece>" and
+  what the change costs - free, the gold, or the gold back. Placed, it stands in its own place and the panel
+  returns to the room's list with it chosen; Back leaves it as it stood. A piece whose size the catalogue has not
+  read yet is priced from what it cost, so it can still be moved.
+- **Light and Holds things** are free. A piece lit takes its catalogue piece's own light (Daggerfall's, a candle's
+  or a lamp's) and otherwise a warm lamp's. A piece made to stop holding things never does while anything is in it.
+- **Remove** gives half of what the piece cost back to the purse. A piece that holds anything is never removed -
+  what it holds would go with it - and the panel says so: "It holds things - empty it first."
+- **Online.** Every change is written to the account service first, as the owning character, and the service's
+  answer is what stands. Refused, the bar or the line gives the service's word and nothing changes. A resize is
+  paid once the service has it: short of the gold before the write, the service is never asked; short once the
+  answer came, the piece's old place is written back and nothing is paid. A removal's half is of what the SERVICE
+  says the piece cost, never the client's word.
+- **A room sold** takes its placed pieces with it, and half of what each cost comes back - truncated a piece at a
+  time, as removing each would give (`src/net/decorLaw.js` `decorSaleBack`). An online home's release reads the
+  count and the half-sum in the same batch as the going (`server-account/src/homes.js`); the one credit into the
+  region's bank pays the home's share and the pieces' half together, the offer says the pieces go too, and the sale's
+  line says how much of it was for them. An offline house's or ship's pieces are taken out of its scene when the
+  bank sells it (`takeSceneDecor` - never paid back twice), each one's half going into the account the sale pays
+  into, before the scene is dropped; what they held goes with the scene, as anything left in a sold house does.
+- **By touch.** The stick flies the eye - its throw is the pace - and the body is handed none of it; the bar's Fly
+  up and Fly down are held as Jump and Crouch are, let go when the finger lifts or a window takes the bar. On a
+  touch screen the bar stands at the top, clear of the stick and the touch layer's buttons. A tap or a swipe does
+  nothing under the flight; the bar's Place places. A gamepad's stick flies it the same way.
+
+Not yet (DECOR2): placing real items, a furnisher's shop, weapon displays.
+
+Pinned: `test/decor1e.test.js` (8) - the room's view over a fake document; a move, a resize, a light, a hold and a
+removal through the tool over fakes of the host's seams, offline and online; the touch screen's flight; the sale's
+parts, and the host's wiring by source. `test/decor1.test.js` (+1) - the service's count and half-sum at a release.
+The decorator pins' fakes have one home, `test/decorFakes.mjs` (the DECOR1d rig's pool lacked the room's own
+list and remove - a fake that lies passes a pin production would fail). `tools/mutants/decor1e.json` (60).
+
+## DECOR2 (2026-09-25, Mac: "rare misc artifacts and other items in the world can also be placed, plus sold at shops not available in the world loot pool. Also want to add a way to display your weapons"; asked, one's own item is placed "Free and can be picked back up", a room sold with them standing gives them "Back to pack", the furnisher sells Daggerfall's own furniture "delivered", and weapons are "Mounted") - the player's own things
+
+Three parts: DECOR2a the player's own things in a room, DECOR2b the furnisher, DECOR2c weapons and shields mounted.
+
+**DECOR2a - your own things in a room.**
+
+- **What can stand** (`src/systems/decorItems.js`). An item from the pack stands in a room as the picture Daggerfall
+  itself gives it in the world - the item's own picture first (an artifact's, a potion's own bottle), else its
+  template's: a statue, a painting, a gem, a book, a plant, a lit candle or torch (lit as the catalogue's are). Never
+  anything worn, a quest's item, a summoned thing, a map, coin, a vehicle, a deed, a letter of credit or the spellbook
+  (set down in a home it would be out of reach wherever the player went); weapons and armour are mounted, not stood
+  (DECOR2c); and nothing without a picture of its own.
+- **The panel** gains a third tab, "Your things", listing what in the pack can stand, each with its pack picture and
+  its count, free. Place flies the same free camera; the bar says it is free. Set down, the thing leaves the pack -
+  one of a stack, moved as a drop moves it (a lit torch stops lighting the player) - and the panel is the pack's list
+  again. In the room's list it says it is yours, and its fourth change is "Take down": back into the pack, whole.
+  Moved, turned or resized it stays free; it never holds things.
+- **The thing itself** is the save's the whole time it stands: the room keeps it by the piece's id
+  (`scenes/decorRoom.js`) and the scene carries it (`systems/sceneCache.js` decorOwn), as what a storage piece holds
+  is kept. The piece is only how the room shows it. So an online home's piece carries no free text: `item` is the
+  game's own numbers for which item it is - its template, group, material, variant, artifact and message
+  (`src/net/decorLaw.js` decorItemOf) - which the account service keeps beside what the piece is
+  (`server-account/migrations/0012_decor_items.sql`; no move rewrites it) and every visitor's client names from its
+  own data: an artifact's own name, a book's title, a plant's northern or southern. The owner reads the thing's own
+  full name ("Ruby of Fire"). The law answers no piece for an own item that costs gold or holds things, and the
+  service's move checks the whole moved piece against it, so neither can be written in.
+- **Online** the service has the piece first, and only then does the thing leave the pack: refused, it never leaves;
+  the room left or the thing gone from the pack while the service was asked, the piece is taken back out. Taken down,
+  the service lets it go first. An owner walking into their online home gets back, into the pack, any thing whose
+  piece the room no longer stands (taken down while an answer was out, or lost); a visitor never touches the save's
+  own record for a building.
+- **Sold**: a home, house or ship sold gives the owner's own things back to the pack (Mac: "Back to pack") and pays
+  half back only for the bought pieces; the offer and the sale say so.
+
+Pinned: `test/decor2a.test.js` (7), `test/decor1.test.js` (+1: the service's half). `tools/mutants/decor2a.json`
+(59).
+
+**DECOR2b - the furnisher.**
+
+- **What it sells** (`src/systems/decorFurnish.js`, `src/systems/shopStock.js`). Daggerfall's Furniture group: twenty-
+  nine items (ItemTemplates 217-245) - beds, tables and chairs in oak, cherry, mahogany and teak, curtains, pillows,
+  rugs, tapestries and skins. No loot table rolls them and no shop ever sold them: DFU's stock loop skips the group for
+  every shop, and its Furniture Stores stand with empty shelves. Here the Furniture Store stocks them by Daggerfall's
+  own stock law (a piece's rarity within the shop's quality, then the dice by its rarity) at Daggerfall's own prices;
+  the chance is the port's - fifty, the clothier's (Ledger A). No other shop stocks any of it.
+- **Delivered, never carried.** A bed weighs up to 750, so nothing bought there is carried. Both shop screens stage a
+  piece whatever it weighs, and it weighs nothing in what the player walks out with. Bought at the counter or by the
+  keyed list, stolen off the shelf from either screen, or carried out of a closed shop, it is delivered - kept with the
+  character (the save's `furnishings`) and said once for the lot: "The Oak Chair will be delivered - set it down from
+  the Decorate panel in any room you can decorate." On the shelf a piece shows its initials: Daggerfall gives the
+  group no picture but the pillows', and the enhanced lists now draw none for archive 0, as the classic drawer never
+  did (`src/ui/enhancedInventory.js` itemLine), where they would have drawn TEXTURE.000's solid colour.
+- **Set down** from "Your things", listed after the pack's, free. A pillow stands as its own picture (TEXTURE.200
+  record 11). Every other piece has no picture of its own (its row shows its kind's letters); "Choose its look" opens
+  the panel's LOOK view - the catalogue on that piece's kinds alone (a bed any of the game's beds; a table or a chair
+  any of its furniture; curtains, a rug, a tapestry or skins any furniture or decoration), every look free - and it
+  stands as the chosen look's shape with the furniture's own name and numbers (Mac: "You pick it"). The look's light
+  and holding never come with it. Back from the flight is the look view, the look still chosen; moved, it keeps its
+  look. The law lets a model carry an own item's numbers only when the item's group is Furniture
+  (`src/net/decorLaw.js` DECOR_FURNITURE_GROUP), so the service keeps it and every visitor names it.
+- **Taken down** it is delivered again - back among "Your things", never the pack. A room sold, and an online home's
+  strays, say where the furniture went. Online, as DECOR2a's: the service has the piece first, and only then does the
+  furniture leave the deliveries.
+
+Not yet: delivered furniture is not sold back (the Furniture Store buys the group only from the pack, Daggerfall's own
+table).
+
+Pinned: `test/decor2b.test.js` (9), `test/decor1.test.js` (+1: the service keeps a model with the furniture's
+numbers). `tools/mutants/decor2b.json` (75, one equivalent: DFU's own skip kept for every other shop). Five older
+records re-aimed.
+
+**DECOR2c - weapons and shields mounted.**
+
+- **What hangs** (`src/systems/decorItems.js` decorMountOf, `src/net/decorLaw.js` decorIsMount). A weapon from the pack
+  (never the arrows) or one of the four shields hangs, as its own pack picture - the owner's body's, as the pack draws
+  it (a woman's weapons are Daggerfall's archive 233, a man's 234) - with its own numbers, free, and back into the pack
+  whole when taken down, as every own thing is. Never anything worn, a quest's or a summoned one. Every client reads
+  "a mount" off the item's own numbers, so a visitor sees it hang as the owner hung it; its dye is read off the same
+  numbers (an artifact's colours its own). The law's archive bound rises from 511 to 999 so the port's own pictures -
+  Roleplay & Realism's weapons at 513 and on - hang too.
+- **Hung ON a surface** (`src/systems/decorPlacer.js`). The flight sets it where the eye meets a wall - the ray's own
+  surface normal, facing the eye - flat against it: its heading and tilt are the surface's (on a floor or a table the
+  eye's own heading, so the picture reads upright from where the owner stands), the turn spins it clockwise on the
+  surface, the grid snaps it across the surface and never off it, and the owner's lift moves it up the surface. It
+  hangs two centimetres off the surface - the blood marks' own hair. With no surface in reach, the bar says to look at
+  a wall. Moved, it keeps its spin.
+- **Drawn flat, not turned to the eye** (`src/scenes/decorRoom.js`). A mount is the one flat that never turns to the
+  eye: one quad, centred at its place and framed by its turn (`decorLaw.js` decorMountFrame - the frame's right is its
+  viewer's right, so the picture never reads mirrored), drawn on the blood marks' own decal pass (a quad lying on a
+  surface, lit by that surface's light, its clear texels cut out), after the room's solid models. Its picture is
+  uploaded as the pack's own is (the cut-out, its dye), sized as a flat of its archive is and scaled. Its eye target
+  is the box round its corners; it has no collider. During the flight the ghost is the picture itself, hanging where
+  the mount will hang.
+
+Not yet: no one has seen a mount drawn - there is no GL and no ARENA2 in this container; the frame's handedness is
+reasoned from the billboard pass's own texture and camera conventions and pinned, and is the one-look question.
+
+Pinned: `test/decor2c.test.js` (6), `test/decor1.test.js` (+1: the service keeps a mount of the port's own archive).
+`tools/mutants/decor2c.json` (50). Five older records re-aimed.
+
+
+## GUILD1 (2026-09-25, Mac: "future ownership for online guilds"; asked, founding takes "Gold and Renown", a guild is joined "Per character", its ranks are "Four, renamed by the guildmaster", and the treasury is the "Guildmaster only" to take from) - a guild the players found, and the service keeps
+
+Daggerfall's own guilds - the Fighters and Mages Guilds, the temples, the knightly orders - are the game's and are
+untouched. A guild of players is a Ledger A departure (`Port-Ledger.md` section A, A GUILD IS ITS PLAYERS'), online's
+alone. Mac's four answers: founding takes "Gold and Renown" ("10,000 gold (purse, then bank) and Renown 10 - keeps
+out throwaway guilds while any serious player can found one."); a guild is joined "Per character" ("Each character
+joins its own guild, as homes are a character's; your other characters are free to join others."); its ranks are
+"Four, renamed by the guildmaster" ("The same four tiers and powers, but the guildmaster names each rank."); and the
+treasury is "Guildmaster only" ("Any member may deposit; only the Guildmaster withdraws; every movement is logged on
+the roster."). The defaults the arc took, told to Mac: a tag of 2 to 4 capitals or digits beside the name, 50 members
+a guild, a guild chat channel.
+
+Four parts: **GUILD1a** the service (this), **GUILD1b** the guild window, **GUILD1c** the tag beside the name and the
+guild's chat (through the token and the relay), **GUILD1d** the guild hall, a guild-owned home.
+
+**GUILD1a - the guild, as the service keeps it.**
+
+- **The law** (`src/net/guildLaw.js`, which the service and the client both read). The bounds: 10,000 gold and
+  Renown 10 to found, 50 members, a name of 3 to 32 letters, digits, spaces, apostrophes and hyphens (tidied, and one
+  guild a name whatever its case or spaces - `guildNameKey`), a tag of 2 to 4 capitals or digits (upper-cased). FOUR
+  RANKS, highest first - Guildmaster (0), Officer (1), Member (2), Recruit (3) - whose POWERS are fixed: an officer
+  or the guildmaster invites, removes and moves members; any member deposits; the guildmaster alone withdraws,
+  renames the ranks, hands the guild on and disbands it. A rank acts ONLY ON RANKS BELOW ITS OWN, and a move lands
+  below its mover too and changes something (`guildMayMove`) - so an officer moves members and recruits between those
+  two and never makes an officer; a new guildmaster is made only by handing the guild on. The four rank names are the
+  guildmaster's: four different names of 1 to 20 plain characters. Gold moves 1 to 1,000,000 at a time; a treasury
+  holds at most 1,000,000,000.
+- **The store** (`server-account/src/guilds.js` over `migrations/0013_guilds.sql`). A GUILD is its id, name, name
+  key, tag (both keys UNIQUE), rank names and treasury. A MEMBER is one CHARACTER of one account - the id its save
+  carries, as Renown's tracks and the homes key on - so `(player, char_id)` is the primary key and a character is in
+  at most one guild while the account's other characters are free. The roster names each member by the account's
+  handle and by its row (`m<rowid>`), never the character's save id. An INVITATION is to an ACCOUNT: whichever of its
+  characters answers it joins. An account gone takes its memberships and invitations; a guild gone takes everything
+  of it (CASCADE).
+- **Registered accounts only**, MAIL1's and HOME1's reading: a guild held by an account nobody can sign back into is
+  a name and a tag taken out of the world. A guest reads no invitations and no guild, and every change refuses it.
+- **Founding** asks the character's Renown of the service's OWN track (`renownTracks.js`), never the client's word;
+  the character must be in no guild, the name and the tag free. The founder is the guildmaster, the rank names the
+  defaults, the treasury empty - the fee is a fee, not a deposit. The GOLD is the client's, the economy being the
+  save's: the service writes first and the client pays after, the purse then the bank (HOME1's order), and a founder
+  short of it disbands the guild it just founded (GUILD1b). A guild nobody is left in (its last member's account
+  gone) holds its name and tag for no one, and the next founder of either takes them.
+- **Invitations**: an officer or the guildmaster invites an account by its handle, while the guild has room. It stands
+  a week; the invited account reads it, and its officers see what the guild has out (a recruit or a member does not).
+  Declined, it goes. Accepted, the character joins as a RECRUIT while the guild holds fewer than 50 and the invitation
+  still stands - ONE statement - and the invitation goes with the join and only with it: a join refused (the
+  character already in a guild, the guild full) leaves it standing, for another of the account's characters or a free
+  place. A guild's invitations a week old are swept by its next one.
+- **The treasury**: any member puts gold in, the guildmaster alone takes it out, never more than it holds and never
+  past its cap - one UPDATE each. THE LEDGER IS THE SCHEMA'S: a trigger on the treasury writes every movement's line
+  (who, in or out, how much, the balance after) in the same statement as the move, from the mover and the moment the
+  move names on the guild's row - so no write, now or later, moves gold without its line, and a move that names
+  nobody is refused by the line's NOT NULL and the gold stays. The roster shows the latest fifty, newest first. A
+  DEPOSIT is the client's first: it takes the gold from the purse, then asks, and puts it back on a refusal - on a
+  refusal's WORD only, never on a lost answer, since the service may have taken it (GUILD1b). A WITHDRAWAL is the
+  service's first, then the purse's.
+- **Leaving, handing on, succession, disbanding.** A member leaves. The guildmaster leaves only a guild nobody else is
+  in, and only once its treasury is empty - and that guild goes; one with members is handed on first: the new
+  guildmaster rises and the old one becomes an officer. A guild whose guildmaster's account went is given its highest
+  rank's longest-standing member before any read or write of it. The guildmaster disbands it once the treasury is
+  empty, and everything of it goes.
+- **Every write decides on what it read.** A rank moves, and a member goes, only from the rank read (two officers
+  racing move a member once, and a member made an officer meanwhile is not an officer's to touch); a join lands only
+  while its invitation stands and the guild has room; the guildmaster's leaving counts and goes in one statement; a
+  guild is handed on only while its giver still holds it, and the giver steps down only once the new guildmaster
+  stands. Nothing reads `changes()` - each guard is the state itself.
+- **The wire**: thirteen routes (`/v1/guilds/` mine, invites, found, invite, answer, leave, remove, rank, ranks,
+  deposit, withdraw, handover, disband), POST, every one behind a session; the two reads answer any session, every
+  change refuses a guest (403). A refusal is a word, its status the kind of refusal (a bad shape 400, the wrong rank
+  or too little Renown 403, a thing not there 404, a conflict with what is 409, the hour's writes spent 429), and the
+  client says each in a sentence naming its bound (`src/net/accountClient.js` REFUSALS). 300 guild writes an hour an
+  account. The client's door is `accountGuilds` (`src/net/accountClient.js`), every answer `call`'s shape and no
+  session a word, not a throw.
+
+Not yet: nothing in the game calls the door - GUILD1b's window is the first, and it pays the founding fee, keeps the
+deposit's refund to a refusal's word, and puts a withdrawal in the purse. Migration 0013 is applied by the deploy
+(ACC1-CI); its trigger is the migrations' first, and wrangler's statement splitter keeps a trigger's `BEGIN ... END`
+whole (a port of SQLite's own `sqlite3_complete`, read in wrangler 4.140's source) - not yet run against a real D1.
+
+Pinned: `test/guild1.test.js` (9), `test/accountworker.test.js` (the tables). `tools/mutants/guild1.json` (83).

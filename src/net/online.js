@@ -72,7 +72,8 @@
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
 
-import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, sanitizeChat, chatGate, redGate, dmGate, relaySupportsDm, muteGate, subOf, mutedUntilOf, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX, questInGate, validQuestFrame, QUEST_SEND_MS, QUEST_HUB_MIN_MS, PARTY_MAX, tokenGate, validTradeData, tradeGate, tradeInGate, validCastData, castGate, castInGate, CAST_FRAME_MAX, CAST_IN_HZ_MAX, relaySupportsCast, TRADE_IN_HZ_MAX, relaySupportsTrade, TRADE_FRAME_MAX, parkGate, relaySupportsPark, PARK_CELL_MAX, PARK_KEY_RE, PARK_TTL_MS, relaySupportsChannels, CHAT_LINE_CHANNELS, partyChatInGate, PARTY_CHAT_ROOM_HZ_MAX, relaySupportsRoll, rollGate, validRollSpec, validRoll, relaySupportsEmote, validCardData, cardGate, cardInGate, CARD_FRAME_MAX, CARD_IN_HZ_MAX, relaySupportsCard, validPageData, pageGate, pageInGate, PAGE_FRAME_MAX, PAGE_IN_HZ_MAX, relaySupportsPage, validDuelData, duelGate, duelInGate, DUEL_FRAME_MAX, DUEL_IN_HZ_MAX, relaySupportsDuel } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
+import { isGateRoom } from './gateLaw.js';   // WB3: a gate's arena is one room of its own
+import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, sanitizeChat, chatGate, redGate, dmGate, relaySupportsDm, muteGate, subOf, mutedUntilOf, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX, questInGate, validQuestFrame, QUEST_SEND_MS, QUEST_HUB_MIN_MS, PARTY_MAX, tokenGate, validTradeData, tradeGate, tradeInGate, validCastData, castGate, castInGate, CAST_FRAME_MAX, CAST_IN_HZ_MAX, relaySupportsCast, TRADE_IN_HZ_MAX, relaySupportsTrade, TRADE_FRAME_MAX, parkGate, relaySupportsPark, PARK_CELL_MAX, PARK_KEY_RE, PARK_TTL_MS, relaySupportsChannels, CHAT_LINE_CHANNELS, partyChatInGate, PARTY_CHAT_ROOM_HZ_MAX, relaySupportsRoll, rollGate, validRollSpec, validRoll, relaySupportsEmote, validCardData, cardGate, cardInGate, CARD_FRAME_MAX, CARD_IN_HZ_MAX, relaySupportsCard, validPageData, pageGate, pageInGate, PAGE_FRAME_MAX, PAGE_IN_HZ_MAX, relaySupportsPage, validDuelData, duelGate, duelInGate, DUEL_FRAME_MAX, DUEL_IN_HZ_MAX, relaySupportsDuel, readRenown, renownGate, relaySupportsRenown, RENOWN_ORDER_KEEP_MS, RENOWN_RESEND_MS, lookGate, relaySupportsLook, relaySupportsPartyTravel, relaySupportsEvent, eventGate, validLiveEvent, LIVE_EVENTS, isSocialRoom, validGateIn, validGateOut, gateGate, relaySupportsGate } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
 import { validVoiceRequest, validVoicePlayback, voiceGate, voiceInGate, relaySupportsVoice } from './wire.js';
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
@@ -205,6 +206,7 @@ export function lerpPose(from, to, t) {
     ...(to.rd ? { rd: to.rd, rv: to.rv ?? 0, ...(to.hs ? { hs: 1 } : {}) } : {}),   // RIDE: the mount, discrete, omitted on foot as the wire omits it; DISC7: the half-speed bit with it
     ...(to.lh ? { lh: 1 } : {}),   // DISC12: the LEFT hand in use - discrete, omitted on the right as the wire omits it
     ...(to.wb ? { wb: to.wb } : {}),   // DISC12: the beast form - discrete, omitted in human form
+    ...(to.hl ? { hl: 1 } : {}),   // HT-WAIST-NET: the lantern at the waist - discrete, omitted without one as the wire omits it
   };
 }
 
@@ -271,6 +273,9 @@ export class OnlineSession {
     this.name = name;
     this.title = null;         // NAME-ADOPT: my own badge, as the service issued it - never asserted by this side
     this.glyphs = [];
+    this.lv = null;            // RENOWN1: my own Renown, as the service signed it (the token's `lv`, or a renown order since)
+    this._rnOrder = null;      // AUDIT RENOWN1 WIRE-2: the newest renown order this page holds - { order, lv, until }
+    this._rnSock = new WeakMap();   // AUDIT RENOWN1 WIRE-2/WIRE-3: per SOCKET - its own welcome's word on the frame, the level its room confirmed, its gate
     // ═══ ACC1d: THE IDENTITY TOKEN ═════════════════════════════════
     //
     // `mintToken` is an async () => string|null the HOST supplies - the
@@ -289,6 +294,9 @@ export class OnlineSession {
     this.onRed = null;            // RED1: (line) => void: the SERVER's own line - {text, at}, no id and no name, because nobody is speaking it
     this.onDm = null;             // TITLE-N: (line) => void: the Dungeon Master's line - {text, at}, as the server's: a voice over the game, not a player in it
     this.dmOk = false;            // TITLE-N: the relay that welcomed this socket carries /dm (relaySupportsDm) - an older one CLOSES the socket on the frame
+    this.onEvent = null;          // EVENT1: (ev, {live}) => void - the server-wide live event now ({kind, at}) or null; live: it changed while I watched (a welcome's word is not)
+    this.eventOk = false;         // EVENT1: the relay that welcomed this socket knows the `stage` frame (relaySupportsEvent) - an older one CLOSES the socket on it
+    this.liveEvent = null;        // EVENT1: the hub's live event as last said - {kind, at} or null
     this.onMuted = null;          // MOD1: ({until}) => void - the relay says I am muted until then (epoch seconds), or 0: lifted
     this.onFoes = null;           // WORLD2: (id, data) => void - the host's live foes in (a non-host's, from the room's host alone)
     this.tradeOk = false;         // TRADE1: the relay that welcomed this socket routes trade frames (relaySupportsTrade) - an older one CLOSES the socket on the frame, so nothing is sent to it
@@ -309,6 +317,10 @@ export class OnlineSession {
     this.onParks = null;          // HCC-PARK: (room, [{ k, id, name, r, ttl }]) => void - a cell's whole memory, after its welcome (an empty one included)
     this.welcomes = 0;            // AUDIT HCC-PARK (client C4): every welcome on any socket - a word sent down a socket that died before the relay read it is said again when a socket is welcomed
     this._pkbucket = null;        // HCC-PARK: my park words out, PARK_HZ_MAX a second
+    this.partyTravelOk = false;   // PARTY-TRAVEL: the hub that welcomed this socket carries the party journey's pose fields (relaySupportsPartyTravel) - an older one strips them, so no round is opened through it
+    this.lookOk = false;          // PROFILE2: the relay that welcomed my primary socket knows the `look` frame (a halo's own welcome says for the halo)
+    this._lookDirty = false;      // PROFILE2: my look changed since the sockets now open said hello - to be said again
+    this._lkbucket = null;        // PROFILE2: my looks out, LOOK_HZ_MAX a second (the relay's per-socket gate, never tripped)
     this._tbucket = null;         // TRADE1: the trade frames' own gate at home (TRADE_HZ_MAX)
     this._inCastBuckets = new Map();   // ALLY-CAST: the gate on cast frames coming in, per sender - the trade gate's shape
     this._castBucket = null;   // ALLY-CAST: my own casts out, castGate's law. CHAT-CHAN: its OWN field - this was `_cbucket`, the chat gate's own
@@ -324,6 +336,9 @@ export class OnlineSession {
     this.onDuel = null;           // DUEL1: (id, data, sub) => void - a duel frame at ME, projected by the wire's validDuelData; `sub` the sender's account as the RELAY verified it (null from a relay that stamps none)
     this._duelBucket = null;      // DUEL1: my own duel frames out - duelGate's law
     this._inDuelBuckets = new Map();   // DUEL1: the gate on duel frames coming in, per sender - the directed frames' shape (`_directedIn`)
+    this.gateOk = false;          // WB3: the relay that welcomed this socket runs a gate's boss room (relaySupportsGate) - an older one CLOSES the socket on the frame and holds no fight
+    this.onGate = null;           // WB3: (frame, room) => void - a gate room's word (the boss's state, walk, attacks, health, phase, the wrath, the kill, my receipt, a refusal) or the hub's (a kill, my receipt), projected by the wire's validGateOut
+    this._gateBucket = null;      // WB3: my own gate frames out - gateGate's law
     // name (below), so once Local chat went down this session a heal cast at a mate spent a chat line and a chat line a cast
     this._inTradeBuckets = new Map();   // TRADE1: and the gate on trade frames coming IN, per sender (AUDIT DROPS B3) - a peer is chosen by the sender, so a flood is a peer's, never the relay's
     this._inDirectedSaid = new Set();   // AUDIT 68 S14-inbound-directed-gate-dup: the kinds whose flood the console has said, once each (`_directedIn`)
@@ -365,6 +380,7 @@ export class OnlineSession {
     this._cbucket = null;      // the client's own chat gate (AUDIT CHAT A8): the relay's law, run first
     this._rbucket = null;      // RED1: and the server line's own, well under it - the relay's law again, run first
     this._dbucket = null;      // TITLE-N: the Dungeon Master's line's own - dmGate, the relay's law run first
+    this._ebucket = null;      // EVENT1: the stage's own - eventGate, the relay's law run first
     this._mbucket = null;      // MOD1: and a mute order's, the same way
     // CHAT-G: the gate on lines COMING IN, one bucket per room because
     // that is the unit the relay spends by. Room -> bucket; a room let go
@@ -452,6 +468,7 @@ export class OnlineSession {
     this._who.clear();   // AUDIT WORLD6b-iii(e) B4: the asked list goes with the room - a stranger asked here is asked at once in the next
     this.status = 'closed';
     this._setHost(null);   // AUDIT WORLD2 C2: through the one door, so the world host hears the seat go with the room
+    this._setEvent(null, false);   // EVENT1: a player who leaves the server leaves its event - it is online's alone
   }
 
   /** WORLD6b-iii(b): the HALO - the neighbouring cell rooms to hold besides my own (wire.cellHaloFor's list): a room
@@ -502,7 +519,7 @@ export class OnlineSession {
     // bodies stood, its foes trusted) and `recall`: `_askRound` walks it as it walks a stranger, the relay's join
     // answers with the look it holds now, and `_refresh` clears the flag. One ask per re-stood peer, at the who gate.
     const knew = told ? null : this._known.get(id);
-    const made = this._peer(knew ? { ...p, name: knew.name, title: knew.title, glyphs: knew.glyphs, sub: knew.sub, look: knew.look } : p, now);
+    const made = this._peer(knew ? { ...p, name: knew.name, title: knew.title, glyphs: knew.glyphs, lv: knew.lv, sub: knew.sub, look: knew.look } : p, now);
     made.told = told || !!knew;
     made.recall = !told && !!knew;
     if (told) this._remember(id, made);
@@ -518,7 +535,7 @@ export class OnlineSession {
    *  forgets by staleness, not by first sight. */
   _remember(id, p) {
     this._known.delete(id);
-    this._known.set(id, { name: p.name, title: p.title, glyphs: p.glyphs, sub: p.sub, look: p.look });   // MOD1: the account too, so a re-stood peer can still be named by /mute
+    this._known.set(id, { name: p.name, title: p.title, glyphs: p.glyphs, lv: p.lv ?? null, sub: p.sub, look: p.look });   // MOD1: the account too, so a re-stood peer can still be named by /mute   // RENOWN1: and the level
     if (this._known.size > KNOWN_MAX) this._known.delete(this._known.keys().next().value);
   }
   _held(id) { for (const s of this._rooms.values()) if (s.has(id)) return true; return false; }
@@ -654,6 +671,35 @@ export class OnlineSession {
     try { ws.send(JSON.stringify({ t: 'park', data: out })); } catch { return false; }
     this._pkbucket = gate.bucket; this.stats.sent++;
     return inCell ? 'cell' : 'room';
+  }
+
+  /** PROFILE2: MY LOOK, CHANGED MID-SESSION - a skin chosen on the pause screen, a coat put on. The look rode the hello
+   *  alone, so every room I was already in kept drawing the old one until I changed rooms. It is kept here (every hello
+   *  from now on carries it: a reconnect, a halo, the next room) and said again on every socket that already said
+   *  hello, as the `look` frame - through a relay that knows it (LOOK_RELAY_MIN; an older one closes on an unknown
+   *  frame), at most LOOK_HZ_MAX a second: a look held back by the gate goes on a later tick, and it is the LATEST
+   *  look that goes, so trying skin after skin says one. True when the look changed. */
+  setLook(look) {
+    const v = validLook(look);
+    if (!v || JSON.stringify(v) === JSON.stringify(validLook(this.look))) return false;
+    this.look = v;
+    this._lookDirty = true;
+    this._flushLook();
+    return true;
+  }
+  _flushLook() {
+    if (!this._lookDirty) return;
+    const socks = [];
+    if (this.lookOk && this.status === 'open' && this._ws) socks.push(this._ws);
+    for (const [, h] of this._halo) if (h.lookOk && h.status === 'open' && h.ws) socks.push(h.ws);
+    // nothing open that knows the frame: whatever opens next says hello with this look, so nothing is owed
+    if (!socks.length) { this._lookDirty = false; return; }
+    const gate = lookGate(this._lkbucket, this._now());
+    if (!gate.pass) return;   // held: the tick tries again
+    this._lkbucket = gate.bucket;
+    this._lookDirty = false;
+    const s = JSON.stringify({ t: 'look', look: this.look });
+    for (const ws of socks) { try { ws.send(s); this.stats.sent++; } catch { /* the close will say; its reconnect's hello carries the look */ } }
   }
 
   /** WORLD2: a blow on the host's foe out - anyone but the host (the host applies its own), in a world room. */
@@ -804,6 +850,20 @@ export class OnlineSession {
     if (s.length > DUEL_FRAME_MAX) return false;   // the relay's own door on a duel frame - over it the relay closes the socket
     try { ws.send(s); } catch { return false; }
     this._duelBucket = gate.bucket; this.stats.sent++; this.stats.duels = (this.stats.duels ?? 0) + 1;
+    return true;
+  }
+
+  /** WB3: one gate frame out - the level claim on entering the arena, or a blow on the boss - on my own room's socket
+   *  (a gate's arena is one room, no halo), through the wire's own projection, GATE_HZ_MAX a second, never at a relay
+   *  that would close the socket for it, never outside a gate room. TRUE MEANS THE FRAME LEFT THE SOCKET; false is
+   *  refused to the caller - the brain on the relay is the judge of every blow, so nothing is queued here. */
+  sendGate(frame) {
+    const g = validGateIn(frame);
+    if (!g || !this.gateOk || !isGateRoom(this.room) || this.status !== 'open' || !this._ws) return false;
+    const gate = gateGate(this._gateBucket, this._now());
+    if (!gate.pass) return false;
+    try { this._ws.send(JSON.stringify({ t: 'gate', ...g })); } catch { return false; }
+    this._gateBucket = gate.bucket; this.stats.sent++; this.stats.gates = (this.stats.gates ?? 0) + 1;
     return true;
   }
 
@@ -1071,8 +1131,9 @@ export class OnlineSession {
    *  is the service's word, and the service is trusted, but a name this
    *  side would refuse to draw for a stranger should not be drawn for
    *  me either. Answers whether anything changed.
-   *  @param {{ name?: string, title?: string|null, glyphs?: string[] }} [who] */
-  adoptIdentity({ name, title, glyphs } = {}) {
+   *  RENOWN1: and the Renown level the token was signed with (`level`), read through the wire's own bound.
+   *  @param {{ name?: string, title?: string|null, glyphs?: string[], level?: number|null }} [who] */
+  adoptIdentity({ name, title, glyphs, level } = {}) {
     let changed = false;
     if (typeof name === 'string' && name) {
       const n = sanitizeName(name);
@@ -1081,7 +1142,70 @@ export class OnlineSession {
     const b = readBadge({ title, glyphs });
     if (b.title !== (this.title ?? null)) { this.title = b.title; changed = true; }
     if (b.glyphs.join('+') !== (this.glyphs ?? []).join('+')) { this.glyphs = b.glyphs; changed = true; }
+    const lv = readRenown({ lv: level });
+    if (lv !== (this.lv ?? null)) { this.lv = lv; changed = true; }
     return changed;
+  }
+
+  /** RENOWN1: THE RENOWN A NAME WEARS, BY ID - mine, a peer's in a room, or one this session was introduced
+   *  to - or null for none (a peer whose token named no character, an older build, a stranger). Beside `badgeOf`
+   *  rather than inside it, so the chat's badge, which has no level, reads exactly what it always read. */
+  renownOf(id) {
+    if (id == null) return null;
+    if (id === this.id) return this.lv ?? null;
+    return (this.peers.get(id) ?? this._known.get(id))?.lv ?? null;
+  }
+
+  /** RENOWN1: carry a renown order the account service signed when my own level rose into EVERY room I am in - the cell
+   *  and the halo alike, since whoever can see me reads the level beside my name - and take the level as mine. Answers
+   *  whether it went down any socket now; the next room's token carries the level either way.
+   *
+   *  AUDIT RENOWN1 WIRE-2/WIRE-3: IT WAS SENT ONCE, and a rise often never reached every room. The one send went only
+   *  down sockets 'open' at that moment, behind one gate for the whole session - two rises inside a second lost the
+   *  second (the room stayed at 9 while the page said 11), a halo still minting its token was skipped and then said
+   *  hello with the old level, and a relay one version behind heard the frame on a socket whose welcome had not come
+   *  yet (the session-wide flag was the LAST relay's word) and closed it. Now the page KEEPS the newest order for its
+   *  life (RENOWN_ORDER_KEEP_MS) and each socket is its own: an order goes down a socket once ITS OWN welcome has
+   *  named a relay that knows the frame, on ITS OWN gate, and again every RENOWN_RESEND_MS until that room answers
+   *  with my level - the relay's echo (a rise, fanned) or its word that the room already holds as much (not a rise,
+   *  said to the carrier alone). A socket that opens later gets it on its welcome; one whose gate is spent gets it on
+   *  a tick. */
+  sendRenownOrder(order, lv = null) {
+    const level = readRenown({ lv });
+    if (level !== null && level > (this.lv ?? 0)) this.lv = level;   // AUDIT RENOWN1: my own level only rises in a session
+    if (typeof order !== 'string' || !order || order.length > 1024 || level === null) return false;
+    if (!this._rnOrder || level >= this._rnOrder.lv) this._rnOrder = { order, lv: level, until: this._now() + RENOWN_ORDER_KEEP_MS };
+    return this._flushRenown(this._now()) > 0;
+  }
+
+  /** AUDIT RENOWN1 WIRE-2: a socket's renown state, made fresh with the socket (a WeakMap on the socket itself, so a
+   *  halo promoted to the primary, or the primary demoted to a halo, keeps its own). */
+  _rnOf(ws) {
+    let st = this._rnSock.get(ws);
+    if (!st) this._rnSock.set(ws, st = { ok: false, lv: 0, sent: 0, at: -Infinity, bucket: null });
+    return st;
+  }
+
+  /** AUDIT RENOWN1 WIRE-2: the held order down every socket whose room has not confirmed it - on the socket's own
+   *  welcome, on a new order and on each tick. Answers how many sockets it went down. */
+  _flushRenown(now = this._now()) {
+    const o = this._rnOrder;
+    if (!o) return 0;
+    if (!(now < o.until)) { this._rnOrder = null; return 0; }   // the relay would refuse it now; the next hello carries the level
+    const frame = JSON.stringify({ t: 'renown', order: o.order });
+    let went = 0;
+    const down = (ws, open) => {
+      if (!ws || !open) return;
+      const st = this._rnOf(ws);
+      if (!st.ok || st.lv >= o.lv) return;   // no word yet that this relay knows the frame, or the room has the level
+      if (st.sent >= o.lv && now - st.at < RENOWN_RESEND_MS) return;   // this order went and has not been answered YET
+      const gate = renownGate(st.bucket, now);
+      if (!gate.pass) return;
+      try { ws.send(frame); this.stats.sent++; st.bucket = gate.bucket; st.at = now; st.sent = o.lv; went++; } catch { /* the close will say */ }
+    };
+    down(this._ws, this.status === 'open');
+    for (const [, h] of this._halo) down(h.ws, h.status === 'open');
+    return went;
   }
 
   /** CHAT-FIT (2026-09-22, Mac: "Glyphs should also show on chat names in the chat itself"): THE BADGE A NAME
@@ -1134,6 +1258,27 @@ export class OnlineSession {
     if (!this._send({ t: 'narrate', text: line })) return false;
     this._dbucket = gate.bucket;
     return true;
+  }
+
+  /** EVENT1: stage a live event for everyone online (`kind` one of LIVE_EVENTS), or end the one staged ('') - asked of
+   *  the HUB alone, the one room every online player holds, and of a relay that knows the frame (an older one CLOSES
+   *  the socket on it). Whether this player may is the relay's question, asked of the token; a refusal is silence. */
+  sendStage(kind) {
+    if (kind !== '' && !LIVE_EVENTS.includes(kind)) return false;
+    if (!this.eventOk || !isSocialRoom(this.room ?? '')) return false;
+    const gate = eventGate(this._ebucket, this._now());
+    if (!gate.pass) return false;
+    if (!this._send({ t: 'stage', kind })) return false;
+    this._ebucket = gate.bucket;
+    return true;
+  }
+
+  /** EVENT1: the one door the live event changes through - said once per change, so a repeat welcome says nothing. */
+  _setEvent(ev, live) {
+    const cur = this.liveEvent;
+    if (cur === ev || (cur && ev && cur.kind === ev.kind && cur.at === ev.at)) return;
+    this.liveEvent = ev;
+    this._deliver('event', () => this.onEvent?.(ev, { live }));
   }
 
   /** MOD1: carry a mute order the account service signed into this
@@ -1351,7 +1496,20 @@ export class OnlineSession {
       if (primary) this.cardOk = relaySupportsCard(relayV);   // INSPECT1
       if (primary) this.pageOk = relaySupportsPage(relayV);   // JOURNAL1
       if (primary) this.duelOk = relaySupportsDuel(relayV);   // DUEL1
+      if (primary) this.gateOk = relaySupportsGate(relayV);   // WB3
+      // AUDIT RENOWN1 WIRE-3: THIS SOCKET'S OWN WORD, not the session's - a halo's welcome names its own relay, and a
+      // socket whose welcome has not come is sent no renown order at all (the frame a relay behind would close it on)
+      const _rnWs = primary ? this._ws : this._halo.get(room)?.ws;
+      if (_rnWs) { this._rnOf(_rnWs).ok = relaySupportsRenown(relayV); this._flushRenown(now); }   // and a rise this room has not heard goes now
       if (primary) this.parkOk = relaySupportsPark(relayV);   // HCC-PARK: the same law for the park frame
+      if (primary) this.lookOk = relaySupportsLook(relayV);   // PROFILE2
+      if (primary) this.partyTravelOk = relaySupportsPartyTravel(relayV);   // PARTY-TRAVEL
+      else { const h = this._halo.get(room); if (h) h.lookOk = relaySupportsLook(relayV); }   // PROFILE2: a halo says for itself
+      if (primary) this.eventOk = relaySupportsEvent(relayV);   // EVENT1
+      // EVENT1: THE HUB SAYS THE LIVE EVENT ON ITS WELCOME (`ev`), and says nothing when there is none - so a hub
+      // welcome without one ENDS any event this session held (a relay restarted without it, or an old relay that
+      // knows none). Another room's welcome carries none and says nothing about it.
+      if (primary && isSocialRoom(room)) this._setEvent(validLiveEvent(m.ev) ? { kind: m.ev.kind, at: m.ev.at } : null, false);
       // merged, not wiped: a peer already known keeps where it is drawn
       const keep = new Set();
       for (const p of Array.isArray(m.peers) ? m.peers : []) {
@@ -1431,6 +1589,13 @@ export class OnlineSession {
       // (the directed frames' law), projected by the wire, addressed to ME, with the sender's account as the relay verified
       // it. The duel's law decides what it means; nothing is read from it here.
       this._directedIn(m, now, 'duel', this._inDuelBuckets, duelInGate, DUEL_IN_HZ_MAX, validDuelData, (id, d) => this.onDuel?.(id, d, subOf(m)));
+    } else if (m.t === 'gate') {
+      // WB3: a gate room's word about its boss, or the hub's about a kill - on my own room's socket or the hub's (a
+      // channel), never a halo's (a gate's arena has none, and a cell's halo has no boss), projected by the wire's own
+      // law; what it means is the arena's (and, for a kill, the gate's in the world) to decide
+      if (!primary && !isChatRoom(room)) return;
+      const g = validGateOut(m);
+      if (g) this._deliver('gate', () => this.onGate?.(g, room));
     } else if (m.t === 'park') {
       // HCC-PARK: a cell's word about one owner's parked team - on any cell socket I hold (my own cell's or a halo's:
       // a team parked across the seam stands for me too), never my own back; the name is the relay's stamp
@@ -1456,6 +1621,27 @@ export class OnlineSession {
       if (typeof m.id === 'string' && m.id !== this.id) { if (this.roomCount != null && !this.peers.has(m.id)) this.roomCount++; this._member(room, m.id, m, now); }   // ROSTER-G: a cut count follows the joins
     } else if (m.t === 'leave') {
       if (typeof m.id === 'string') { if (this.roomCount != null && this._rooms.get(room)?.has(m.id)) this.roomCount = Math.max(0, this.roomCount - 1); this._unmember(room, m.id); }   // WORLD6b-iii(b): gone from THIS room - kept while another holds it; ROSTER-G: and a cut count follows the leaves
+    } else if (m.t === 'renown') {
+      // RENOWN1: A PLAYER'S LEVEL ROSE - a signed order the relay checked against that player's own account. Only a number
+      // changes (the name layer reads it each frame), so there is nothing to gate: a peer I do not hold is ignored.
+      // AUDIT RENOWN1: A RISE ONLY RAISES. The relay fans only a level that raises the carrier's (SEC-3/WIRE-1), but two
+      // rooms that hold the same player hear the same rise at different moments - a late frame from the slower room
+      // must not step the number back (a peer's lower level after a reconnect as another character comes through the
+      // join and the welcome, never through this arm).
+      const lv = readRenown(m);
+      if (lv === null || typeof m.id !== 'string') return;
+      if (m.id === this.id) {
+        // MY OWN, from this room: the relay's echo of my rise, or its word that the room already holds as much - this
+        // room has confirmed that level, so the held order stops going down its socket (WIRE-2)
+        const ws = primary ? this._ws : this._halo.get(room)?.ws;
+        if (ws) { const st = this._rnOf(ws); if (lv > st.lv) st.lv = lv; }
+        if (lv > (this.lv ?? 0)) this.lv = lv;
+        return;
+      }
+      const p = this.peers.get(m.id);
+      if (p && lv > (p.lv ?? 0)) p.lv = lv;
+      const k = this._known.get(m.id);
+      if (k && lv > (k.lv ?? 0)) k.lv = lv;
     } else if (m.t === 'pose') {
       // WORLD6b-iii(e): a stranger's pose - a member beyond the welcome's roster, asked for.
       // SLAM6: AND STOOD WHERE IT SAYS IT IS, THIS FRAME. The pose used to be dropped until the `who` answered, and
@@ -1560,6 +1746,13 @@ export class OnlineSession {
       if (!text) return;
       if (!this._lineIn(room, null, now)) return;
       this._deliver('chat', () => this.onRed?.({ text, at: Number.isFinite(m.at) ? m.at : now }));
+    } else if (m.t === 'event') {
+      // EVENT1: THE LIVE EVENT STAGED OR ENDED, by the hub alone - known by the frame type, as the server's line is. A
+      // word this build does not know is no event (LIVE_EVENTS: a new one is safe against an old build).
+      if (!primary || !isSocialRoom(room)) return;
+      if (m.kind === '') { this._setEvent(null, true); return; }
+      const ev = { kind: m.kind, at: m.at };
+      if (validLiveEvent(ev)) this._setEvent(ev, true);
     } else if (m.t === 'dm') {
       // TITLE-N: THE DUNGEON MASTER SPEAKING - the red arm's law: known by the FRAME TYPE, no id and no name on it to
       // forge, and gated coming in on the chat line's own bucket, because the relay is the player's own choice.
@@ -1638,7 +1831,7 @@ export class OnlineSession {
     // answers a title or null and a list or empty, so nothing below
     // ever has to tell "absent" from "none".
     const { title, glyphs } = readBadge(p);
-    return { id: p.id, name: sanitizeName(p.name), title, glyphs, sub: subOf(p), look: validLook(p.look), told: true, pose, from: pose, at: now, seenAt: now, shown: pose ? { ...pose } : null };   // MOD1: `sub` the relay-verified account, what /mute names
+    return { id: p.id, name: sanitizeName(p.name), title, glyphs, lv: readRenown(p), sub: subOf(p), look: validLook(p.look), told: true, pose, from: pose, at: now, seenAt: now, shown: pose ? { ...pose } : null };   // MOD1: `sub` the relay-verified account, what /mute names   // RENOWN1: `lv` the level the relay stamped
   }
 
   /** A known peer said hello again: its name and look are the new ones, its pose arrives as any other. */
@@ -1649,6 +1842,7 @@ export class OnlineSession {
     // too, and a peer that kept the FIRST badge it was ever seen with
     // would be wearing a grant the relay has stopped vouching for.
     ({ title: p.title, glyphs: p.glyphs } = readBadge(m));
+    p.lv = readRenown(m);   // RENOWN1: the newest hello's level, whatever it is - including none
     if (subOf(m)) p.sub = subOf(m);   // MOD1: a place room's hello names no account; a channel's does - keep the one we were told
     this._remember(p.id, p);   // SLAM9: and it is kept, so a blip cannot un-introduce it
     const pose = validPose(m.pose);
@@ -1705,6 +1899,8 @@ export class OnlineSession {
       if (went) this._lastPingAt = now;
     }   // CHAT1: a channel's keepalive, answered without waking the room
     if (this.presence && this.status === 'open') this._askRound(now);   // SLAM9: the fair ask over every peer not yet introduced
+    if (this._rnOrder) this._flushRenown(now);   // AUDIT RENOWN1 WIRE-2: a rise a room has not confirmed goes again, on each socket's own gate
+    this._flushLook();   // PROFILE2: a look the gate held back
     for (const p of [...this.peers.values()]) {
       // SLAM14 B2: a peer a welcome left unnamed, and that no pose or join has confirmed since, leaves each such room
       // when the silence law hides it - the moment it would have vanished from the screen in any case

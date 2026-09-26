@@ -335,7 +335,7 @@
   {
     "name": "DUEL1-motor-teleport-yanked-back",
     "file": "src/player/motor.js",
-    "old": "    this.arena = null;   // DUEL1: a placement is never a walk out of the ring",
+    "old": "    this.arena = null;   // DUEL1: a placement is never a walk out of the ring - the host's duel law decides what it meant\n",
     "new": "",
     "tests": [
       "test/duel_wall.test.js"
@@ -362,8 +362,8 @@
   {
     "name": "DUEL1-wall-fog-ignored",
     "file": "src/render/duelWall.js",
-    "old": "  o = vec4(uColor * light * uAlpha * fogFactorAt(vWorld), 1.0);",
-    "new": "  o = vec4(uColor * light * uAlpha, 1.0);",
+    "old": "  o = vec4(dwWaterFogAdd(uColor * light * uAlpha * fogFactorAt(vWorld), vWorld), 1.0);",
+    "new": "  o = vec4(dwWaterFogAdd(uColor * light * uAlpha, vWorld), 1.0);",
     "tests": [
       "test/duel_wall.test.js"
     ]

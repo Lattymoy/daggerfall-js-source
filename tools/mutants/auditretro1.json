@@ -168,8 +168,8 @@
   {
     "name": "AUDITRETRO1-C1-shift-f11-loads-under-a-window",
     "file": "src/ui/input.js",
-    "old": "if (actionOf(e, keys) === 'QuickLoad' && !retroToggleKey(e, keys)) {",
-    "new": "if (actionOf(e, keys) === 'QuickLoad') {",
+    "old": "if (actionsOf(e, keys).includes('QuickLoad') && !retroToggleKey(e, keys)) {",
+    "new": "if (actionsOf(e, keys).includes('QuickLoad')) {",
     "tests": [
       "test/auditretro1.test.js",
       "test/fixe_deathMenu.test.js"
@@ -178,8 +178,8 @@
   {
     "name": "AUDITRETRO1-C1-the-exterior-arm-loads-too",
     "file": "src/scenes/world.js",
-    "old": "=== 'QuickLoad' && !retroToggleKey(e, keys)) {",
-    "new": "=== 'QuickLoad') {",
+    "old": "codeMeans(bindings(), e.code, 'QuickLoad') && !retroToggleKey(e, keys)) {",
+    "new": "codeMeans(bindings(), e.code, 'QuickLoad')) {",
     "tests": [
       "test/auditretro1.test.js",
       "test/fixe_deathMenu.test.js"
@@ -369,11 +369,12 @@
   {
     "name": "AUDITRETRO1-D5-a-menu-frees-the-retro-slot",
     "file": "src/render/airPass.js",
-    "old": "    if (kept) { gl.deleteTexture(kept.tex); for (const d of kept.depths) gl.deleteTexture(d); for (const f of kept.depthFbos) gl.deleteFramebuffer(f); gl.deleteFramebuffer(kept.fbo); }",
-    "new": "    { const k = this.frame; if (k) { gl.deleteTexture(k.tex); for (const d of k.depths) gl.deleteTexture(d); for (const f of k.depthFbos) gl.deleteFramebuffer(f); gl.deleteFramebuffer(k.fbo); } }",
+    "old": "    if (kept) this._deleteFrame(kept);",
+    "new": "    { const k = this.frame; if (k) this._deleteFrame(k); }",
     "tests": [
       "test/auditretro1.test.js"
-    ]
+    ],
+    "note": "PERF-SCALE (the review) re-aimed BY CONTENT: the deletion is AirPass._deleteFrame now, shared with dropFrame; same law, same killer."
   },
   {
     "name": "AUDITRETRO1-D5-the-slot-swap-keeps-a-previous",
@@ -396,8 +397,8 @@
   {
     "name": "AUDITRETRO1-D6-the-pillar-floored",
     "file": "src/systems/retroMode.js",
-    "old": "  const pillarWidth = Math.trunc((screenW - viewWidth) / 2);",
-    "new": "  const pillarWidth = (screenW - viewWidth) >> 1;",
+    "old": "  return Math.trunc((screenW - viewWidth) / 2);",
+    "new": "  return (screenW - viewWidth) >> 1;",
     "tests": [
       "test/auditretro1.test.js"
     ]
@@ -459,7 +460,7 @@
   {
     "name": "AUDITRETRO1-E7-no-warm-step",
     "file": "src/render/renderer.js",
-    "old": "      ...(this._retroSource ? [() => this._warmRetro()] : []),   // AUDIT RETRO1 E7\n",
+    "old": "      ...(this._retroSource || this._scaleSource ? [() => this._warmRetro()] : []),   // AUDIT RETRO1 E7; PERF-SCALE: the scale's present is the same program\n",
     "new": "",
     "tests": [
       "test/auditretro1.test.js"

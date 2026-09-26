@@ -74,8 +74,8 @@
   {
     "name": "C6-redraw-by-the-margin-rank",
     "file": "src/render/shadowPass.js",
-    "old": "      const due = nearestRank(casters, L, f.eye, rank) < SHADOW_NEAR_CASTERS",
-    "new": "      const due = rank < SHADOW_NEAR_CASTERS",
+    "old": "      const near = nearestRank(casters, L, f.eye, rank) < SHADOW_NEAR_CASTERS",
+    "new": "      const near = rank < SHADOW_NEAR_CASTERS",
     "tests": [
       "test/auditdisc7.test.js"
     ]

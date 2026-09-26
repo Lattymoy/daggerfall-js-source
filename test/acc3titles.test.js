@@ -99,8 +99,8 @@ test('ACC3: the founder title is a CUTOFF, so a row inserted long after any migr
   assert.deepEqual(titlesHeld({ created_at: 1 }, {}), []);
 
   // The cutoff is a real date and not a number somebody typed: the end
-  // of the day Mac asked for this.
-  assert.equal(new Date(FOUNDER_UNTIL * 1000).toISOString(), '2026-09-23T00:00:00.000Z');
+  // of the day Mac asked for this - asked again (FOUNDER2), so the later day.
+  assert.equal(new Date(FOUNDER_UNTIL * 1000).toISOString(), '2026-09-25T00:00:00.000Z');
 });
 
 test('ACC3: the sprout EXPIRES because time passed - nothing runs, nothing is cleared (mutant: a stored glyph and a cron to remove it)', () => {

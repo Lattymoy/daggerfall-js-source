@@ -1,0 +1,28 @@
+Quest: WAQ_SHIP_BASE
+DisplayName: 
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce>
+
+RefuseQuest:  [1001]
+<ce>           
+
+AcceptQuest:  [1002]
+<ce>           
+
+QuestFail:  [1003]
+<ce>                     
+
+QuestComplete:  [1004]
+<ce> 
+
+QBN:
+
+--	Quest start-up:
+start task _askplayer_
+
+_askplayer_ task:  
+	worldupdate block SHIPAA00.RMB at 1 in region 31 variant NoVariant
+	end quest

@@ -24,7 +24,7 @@ import { MELEE_DISTANCE } from '../characters/enemyMotor.js';   // single source
 import { CLASSIC_TO_UNITY_RATIO } from '../player/motor.js';   // C15 knockback units
 import { rand } from '../formats/dfRandom.js';
 import { enchantChanceToHitMod, doItemEnchantmentPayloads, PAYLOAD, isEnchantedItem, entityImprovedAdrenalineRush } from '../systems/enchantments.js';   // E1: the enchantment channels + the Strikes payload; AUDIT 39: ImprovesTalents' adrenaline flag lives in the fold's bag   // the monster multi-attack reflex gate (F2)
-import { entityArmorMod, entityWeightMult, weaponDamageMods } from '../systems/entityMods.js';   // RF1: one read per channel - DFU's enchantment channel and every enhancement fold, summed there
+import { entityArmorMod, entityWeightMult, weaponDamageMods, weaponBlowMods } from '../systems/entityMods.js';   // RF1: one read per channel - DFU's enchantment channel and every enhancement fold, summed there
 import { liveStat } from '../systems/statMods.js';   // S14: fortify-aware stat reads
 import { skillValue, SKILLS } from '../systems/skills.js';   // S3: real skills (enemies stay flat, verbatim)
 import { RACES } from '../systems/races.js';   // CalculateRacialModifiers reads the DFU-numbered race id
@@ -450,6 +450,7 @@ export function weaponAttackDamage(attacker, target, damageMod, weapon, rolls = 
   damage += WEAPON_MATERIAL_MODIFIER[weapon.material] ?? 0;   // half of the in-game display, per the source comment
   if (damage < 1) damage = 0;
   damage += bonusOrPenaltyByEnemyType(attacker, target);
+  damage = weaponBlowMods(weapon, damage, attacker, target);   // SIGIL1: the port's own over the whole blow - the online sigil, my blow at a foe - before the hook, so a bow's draw scales it too
   // "Mod hook for adjusting final damage. (no-op by default)" - the
   // stock's last line (AUDIT PCO1: Roleplay Realism's archery lands here)
   damage = adjustWeaponAttackDamage(attacker, target, damage, weaponAnimTime, weapon);
@@ -699,6 +700,12 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   // the clamped value, whatever the hit rolled.
   damageEquipment(attacker, target, damage, weapon, struck, { rolls, say });
   }   // PCO1: the stock core ends here; the tail is the callers' law
+  // ELITE DUNGEONS: an elite foe's blows land at `damageScale` times (scenes/dungeonContext.js
+  // applyEliteScaling). After either core - stock or a mod's override - so the multiplier holds
+  // whichever formula rolled the hit; the concealment break and the HUD below see the real number.
+  if (!attacker.isPlayer && damage > 0 && Number.isFinite(attacker.damageScale) && attacker.damageScale !== 1) {
+    damage = Math.max(1, Math.round(damage * attacker.damageScale));
+  }
   // AUDIT 24 (wave 31) - A LANDED HIT ENDS THE ATTACKER'S NORMAL-POWER
   // CONCEALMENT, and it was unported at every door.
   //
@@ -882,7 +889,7 @@ export const KB_UNIT = CLASSIC_TO_UNITY_RATIO / 10;   // 3.95
  *  at 350 instead of ~570 takes roughly 60% more knockback speed.
  *
  *  `items` is the foe's own list; totalWeight IS ItemCollection
- *  .GetWeight (inventory.js:339), so the kg->classic multiply and the
+ *  .GetWeight (inventory.js:351), so the kg->classic multiply and the
  *  C# (int) truncation are the only arithmetic added here. A caller
  *  with no list passes nothing and gets the old base-only answer,
  *  which is the honest value for a foe the port gives no inventory. */

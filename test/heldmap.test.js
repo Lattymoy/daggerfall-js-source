@@ -1288,6 +1288,44 @@ test('MAP1 window: the selection - a click within 16 paper px of an inked mark s
   });
 });
 
+test('HUB1 window: online a region hub\'s mark reads "Region : Location (Hub)" - "(Capital)" for a kingdom\'s own - and the I box opens with its title, known or not; offline, and on any other town, the label and the box are DFU\'s own (mutants: the word unread, the title dropped, the title only for a known town)', () => {
+  withDocument(() => {
+    const mapDict = new Map();
+    const hubTown = summaryOf(3, 3, LOCATION_TYPES.TownCity);
+    const other = summaryOf(7, 7, LOCATION_TYPES.TownCity);
+    for (const s of [hubTown, other]) mapDict.set(s.id, s);
+    const maps = { regionCount: 1, getRegion: () => ({ mapNames: ['A', 'B', 'C', 'Wayrest'] }), getPoliticIndex: () => 128 };
+    const run = (hub) => {
+      const win = open(mkWin({ mapDict, maps, ...(hub ? { hubAt: (s) => (s.mapID === hubTown.mapID ? hub : null) } : {}) }));
+      win._sheet.ensure();
+      win._view.scale = 8;
+      const at = (x) => toPaper(win._view, x + 0.5, x + 0.5);
+      const label = (x) => win._hoverLabel(...at(x))?.label;
+      win._pickAt(...at(3));
+      win._displayLocationInfo();
+      const rows = win._info?.rows ?? [];
+      win._info = null;
+      win._pickAt(...at(7));
+      win._displayLocationInfo();
+      const otherRows = win._info?.rows ?? [];
+      const out = { hubLabel: label(3), otherLabel: label(7), rows, otherRows };
+      win.dispose();
+      return out;
+    };
+    const online = run({ name: 'Wayrest', regionName: 'Daggerfall', capital: false });
+    assert.equal(online.hubLabel, 'Daggerfall : Wayrest (Hub)');
+    assert.equal(online.otherLabel, 'Daggerfall : Wayrest', 'a town that is no hub reads as DFU reads it');
+    assert.equal(online.rows[0], 'Hub of Daggerfall', 'the box opens with what the place is to its region - even knowing none of its buildings');
+    assert.ok(!online.otherRows.includes('Hub of Daggerfall'));
+    const crown = run({ name: 'Wayrest', regionName: 'Daggerfall', capital: true });
+    assert.equal(crown.hubLabel, 'Daggerfall : Wayrest (Capital)');
+    assert.equal(crown.rows[0], 'Capital of the Kingdom of Daggerfall');
+    const offline = run(null);
+    assert.equal(offline.hubLabel, 'Daggerfall : Wayrest', 'offline no hub is named');
+    assert.deepEqual(offline.rows, offline.otherRows, 'and the box is the same for both towns');
+  });
+});
+
 test('MAP1 window: pan, wheel and keys move the VIEW under a clamp, the search glides to its pick, and the layout lays the sheet on PAPER of a 4:3 stage (mutants: pan-unclamped, zoom-not-at-cursor, layout-off-paper)', () => {
   withDocument(() => {
     globalThis.innerWidth = 1600; globalThis.innerHeight = 900;
@@ -3135,13 +3173,14 @@ test('EM-BUG2: the key that opens the sheet shuts it - the AutoMap binding as we
   // EM3 and EM4 gave the same window three more doors - a dungeon's
   // plan, a town's, a building's - and every one of them is behind the
   // AutoMap key, so the key that opened the map could not shut it.
-  assert.match(held, /const _act = actionForCode\(bindings\(\), code\);\s*\n\s*if \(code === 'Escape' \|\| _act === 'TravelMap' \|\| _act === 'AutoMap'\) \{/,
+  // UXB1-S: every action the key carries - a map key a player SHARED with something else still shuts the map
+  assert.match(held, /const _acts = actionsForCode\(bindings\(\), code\);\s*\n\s*if \(code === 'Escape' \|\| _acts\.includes\('TravelMap'\) \|\| _acts\.includes\('AutoMap'\)\) \{/,
     'both map actions, and Escape, take the same door out');
   assert.doesNotMatch(held, /if \(code === 'Escape' \|\| actionForCode\(bindings\(\), code\) === 'TravelMap'\) \{/,
     'never the travel action alone again - that is the shape that shipped');
   // the action is resolved ONCE - the arm is taken on every key that
   // reaches the sheet, so this is the hot path's own lookup
-  assert.equal((held.match(/const _act = actionForCode\(bindings\(\), code\);/g) || []).length, 1);
+  assert.equal((held.match(/const _acts = actionsForCode\(bindings\(\), code\);/g) || []).length, 1);
   // ...and the classic twin has always taken its own binding back, which
   // is the law this one is keeping rather than inventing
   const classic = readFileSync(new URL('../src/ui/automapWindow.js', import.meta.url), 'utf8');
@@ -3149,7 +3188,7 @@ test('EM-BUG2: the key that opens the sheet shuts it - the AutoMap binding as we
     'ui/automapWindow.js: DFU’s own window closes on the AutoMap key');
   // the binding the sheet answers to is the PLAYER's, read live off the
   // store - a rebound map key still closes the map it opened
-  assert.match(held, /import \{[^}]*actionForCode[^}]*\} from/);
+  assert.match(held, /import \{[^}]*actionsForCode[^}]*\} from/);   // UXB1-S: every action on the key, off the store
 });
 
 // ═══ MAP-FIT1 (2026-09-22) ══════════════════════════════════════════

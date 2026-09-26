@@ -1,0 +1,29 @@
+[
+  {
+    "name": "SPAWNTRAVEL-the-name-path-back",
+    "file": "src/scenes/world.js",
+    "old": "    discoverLocation: (loc) => { if (loc?.mapId != null) discoverLocation(loc.mapId, { regionName: loc.regionName, locationName: loc.name }); },",
+    "new": "    discoverLocation: (loc) => { if (loc?.regionName && loc?.name) questWorld.discoverLocation(loc.regionName, loc.name); },",
+    "tests": [
+      "test/spawntravel.test.js"
+    ]
+  },
+  {
+    "name": "SPAWNTRAVEL-filed-without-an-id",
+    "file": "src/scenes/world.js",
+    "old": "{ if (loc?.mapId != null) discoverLocation(loc.mapId,",
+    "new": "{ if (loc) discoverLocation(loc.mapId,",
+    "tests": [
+      "test/spawntravel.test.js"
+    ]
+  },
+  {
+    "name": "SPAWNTRAVEL-the-names-dropped",
+    "file": "src/scenes/world.js",
+    "old": "discoverLocation(loc.mapId, { regionName: loc.regionName, locationName: loc.name }); },",
+    "new": "discoverLocation(loc.mapId, {}); },",
+    "tests": [
+      "test/spawntravel.test.js"
+    ]
+  }
+]

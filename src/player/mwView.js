@@ -139,6 +139,9 @@ export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = null, rayca
     eotbWagon.tick(frame.dt ?? 0, { feet, yaw, height: frame.motion?.height, cart: !!frame.cart && !eotbCartYields(), onExteriorPath: !!frame.onExteriorPath, raycast });   // DISC10: HCC's wagon, when it trails, is the one cart
     return out;
   }
+  // HT-WAIST: the Morrowind lane has the frame, so the sprite's lantern at the waist (and the light point it drew
+  // from) stands down - one line here rather than one in each of the four hosts.
+  eotbBody.standDown();
   // RIDE-POV: the saddle first, before any queued notch can cross out of the head
   mounted = !!state.riding;
   if (mounted) { mwIntoHead(); pendingClicks = 0; }

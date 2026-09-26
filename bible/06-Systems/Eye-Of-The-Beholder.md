@@ -938,3 +938,121 @@ and every host's `riding` (generative). **Mutants**
 notch kept, the rule after the flush, the wheel blind to the saddle, the
 saddle never cleared, the saddle emptying the EOTB lane too.
 
+
+## HT-WAIST (2026-09-24): a lantern at the sprite's hip - NOT the mod's
+
+Handheld Torches' port-own `Handling.LanternsAtWaist` (Handheld-Torches.md HT-WAIST; Ledger A) hangs a lit lantern at
+the waist, and Mac asked for it on this body too: "Let it be a separate animated item on movement with eye of the
+Beholder sprites also". The mod draws no light on its billboard at all - TorchOffset (IL_47df) only moves
+PlayerTorch - so this is an ADDITION beside the IL's machine, never inside it: `stepLantern` runs after the three
+Unity phases in `tick`, `drawLantern` after the body's own draw, and nothing of `PlayerBillboard`'s state is read
+but its facing (`lastMoveDirection`), its frame clock and the placed base (`place()`).
+
+- **The picture** is the Lantern template's own world texture (`templateByIndex(LANTERN_TEMPLATE)`: TEXTURE.200
+  record 10), palette-mapped with its 0xFF mask cut out (GetInventoryImage's removeMask), loaded from the player's
+  ARENA2 by `loadLanternArt` - never vendored. Handheld Torches' own lantern frames are a gloved HAND holding the
+  lantern, and cutting the lantern out would be making new art from the author's.
+- **The hang**: by its top from the sprite's right hip - half the quad's height above its base, 0.2 m out along the
+  facing's right (both with `BillboardScale`), nudged 6 cm toward the eye so it never shares the body's depth; 0.3 m
+  tall at scale 1.
+- **The swing** is `systems/lanternSwing.js`, the Morrowind body's own law, fed the sprite's walk: the speed the Move
+  tables step at along the facing, the facing's turn, and the stride phase off the frame clock. It is drawn as the
+  quad TILTED in the view plane (the billboard shader takes its right and up per call; the base is set so the top
+  stays on the hook) and SHORTENED as it swings along the line of sight.
+- **It hangs** in third person, on foot, alive and in your own form - the rider's sprite sits on a horse and the
+  beast's is another body - and it is **drawn from behind only** (HT-WAIST-BACK, below). It lights you from its middle
+  (`setPlayerWaistLightOverride`) wherever it hangs, seen or not; the point is cleared the moment it stops hanging -
+  put out, the body toggled off, the graphic off, and each frame the Morrowind lane has the view (`standDown`, called
+  from mwView's Morrowind branch).
+- **Owner**: its batch is created when first drawn (at its full size - the renderer's cull sphere is the batch's own -
+  and minted again when `BillboardScale` moves it) and destroyed when it stops hanging - not when the sprite turns its
+  front to the eye; its picture stays in the renderer's cache under `htwaist-lantern`, as the body's own sprites do.
+  With no lantern at the waist nothing of it runs - no batch, no draw (`eotb_body.test.js` reads the last batch as the
+  body's).
+
+**HT-WAIST-BACK (2026-09-24, Mac, looking at screenshots of the lantern at the hip from the front, the side, walking
+and behind: "Just have it show on the back of the sprite, not all angles. Make sure all the eye of the Beholder sprites
+get this change"; then, of the back diagonals it first let in: "It still shows on the back side angle").**
+
+- **The rule** (`player/eotbLantern.js isRearView`): the lantern's picture is drawn only from straight behind - the
+  one view that shows the sprite's back square on, orientation 4 - and from none of 0, 1, 2, 3, 5, 6, 7: not the back
+  diagonals 3 and 5, which draw the back three-quarter. It is asked of the
+  orientation UpdateBillboard last PAINTED (`shown.orientation`, the delayed repaint's), not of the one just measured,
+  so the lantern appears and goes with the picture under it.
+- **The numbering, verified.** `orientationFor` (IL_4779-IL_47a3) makes 0 the camera in front of the facing and 4 the
+  camera behind it (the EOTB-IL order: SignedAngle from the camera to the facing); the wheel draws records
+  +0 +1 +2 +3 +4 +3 +2 +1 for orientations 0-7, mirrored at 1-3 (checked against the IL, 0 of 168 deviate). Which
+  record is a back was read off the vendored art, upscaled side by side: archive 112364's idle (records 0-4), walk
+  (5-9) and armed walk (20-24), and 112372's idle (0-4) - +0 is the face, +1 the front three-quarter, +2 the profile,
+  +3 the back three-quarter (shoulder blades, the seat, the heels) and +4 the back. Every on-foot set shares the wheel,
+  so the rear view is the one drawing +4: orientation 4 (`BACK_RECORD`). `mirrorFlips` (the Mirror string's flip at 0 and 4) turns
+  a front or a back over, never one into the other. A body that has never moved faces nowhere (the IL's Vector3.zero,
+  which SignedAngle reads as 0) and paints its front: no lantern until it has turned.
+- **Unseen, it still hangs**: the swing runs on (`stepLantern` asks whether it HANGS, not whether it is drawn), the
+  batch is kept, and the light stays at the hip - so turning round neither restarts the swing nor moves the light.
+- **Every EOTB sprite**: other players drawn online as the on-foot set they chose (DISC23-B's walkers,
+  `net/peerRiders.js`) hang it too, off their pose's `hl` (HT-WAIST-NET), by the same rule, art, hang and swing law,
+  swung off their own drawn motion; their riders and beasts hang none, as yours do not. It lights nothing on their
+  side (the waist light is the local player's). Handheld-Torches.md HT-WAIST has the peers' wiring.
+- **One home**: `player/eotbLantern.js` holds everything the two share (the rule, `loadLanternArt` and the art store,
+  the hang, the swing's drive, the batch); this body keeps whether it hangs and the light.
+
+Pins: `test/htwaist_eotb.test.js` (its bodies stand with their backs to the camera now; its sideways walk is a back
+diagonal, the side view its negative case), `test/htwaistback.test.js`. Not verified in a browser (no ARENA2 here).
+
+## SKIN2 (2026-09-25): Daggerfall's classes as skins, and the Skin card's two panels
+
+Mac, with an archive of redrawn Daggerfall class sprites (ExistingClasses): *"1. Implement these as new skin options
+2. Reorganize the skin selector as 2 single panels for unmounted/mount that can be opened to view available skins"*.
+
+**The art.** Twenty sheets, vendored under `vendor/class-skins/Textures/<archive>/<archive>_<record>-<frame>.png` (1,683
+pictures, 8.2 MB), with `skins.json` listing each skin's archive, name, sex, whether it carries a bow, and every
+record's real frame count. The pack is not uniform, so the manifest counts the files rather than assuming the layout:
+the female healer casts in five frames and the bounty hunter's last ranged record has two. The vanilla adventurer's
+record 3 was numbered with a gap (0, 1, 2, 4) and was renumbered in order when unpacked. `vendor/class-skins/README.md`
+has the provenance and the archive numbers.
+
+**The art's authority, and a frame the first cut lost** (found when the PNGs were first tracked and the raster
+doctrine, `test/doctrine.test.js`, reddened on them: the suite had run before `git add`, the AUDIT-TO1 trap). The
+pack is a loose-file archive with no manifest of its own, so its authority is a listing generated from the archive,
+GrimoireUI's way: `vendor/class-skins/class-skins.files.json`, every vendored file mapped to the archive path it came
+from, the archive's sha256 beside it, and `tools/classSkinsListing.mjs` proving each vendored file is that path's
+bytes. The art moved under `Textures/` (the doctrine's directory rows hold art alone, as Eye of the Beholder's do),
+and the row is `vendor/class-skins/Textures/`. Building the listing turned up the pirate's `1529_3-1_.png`: SKIN2's
+first cut skipped it as a stray and renumbered record 3's 0, 2, 3 into three frames, and it is the walk's passing
+step between the strides 3-0 and 3-2 (checked on a contact sheet against record 2's 2-0..2-3), its underscore a
+typo. It is frame 3-1 now; the pirate's back three-quarter walks in four frames like every other record, and the
+pack is 1,683 pictures.
+
+**The layout is not the mod's.** EOTB draws a player from twelve on-foot tables of five records each. A class sheet is
+Daggerfall's enemy-class shape: 0-4 walk (4 frames), 5-9 attack (6), 10-14 hurt (1), 15-19 idle (1), 20-24 ranged or
+spell (4), and 25-29 bow (4) on the four sheets that carry one (assassin and nightblade, both sexes). The orientation
+order is the same as the mod's (checked on the art: record +2 is the profile in both), so the wheel, the mirror and the
+size law carry over. `player/classSkins.js` holds the mapping:
+
+- `CLASS_TABLE_BASE`: the walks read the walk; the ready stances read the idle (a Daggerfall foe is never unarmed);
+  death reads the hurt pose (a class sheet has no fall); the swing reads the attack; the cast reads the ranged-or-spell
+  group; the loose reads the bow where the sheet has one (`CLASS_BOW_BASE`) and the throw where it does not.
+- `classFrame`: the body's clocks keep the mod's clip lengths, and the class record's own frames are spread over them
+  in order (a four-frame walk under a two-frame armed walk shows 0 and 2; a one-frame idle is held).
+
+**One door.** A class skin is `Graphics.OnFoot` 16-35, after the mod's sixteen (`classSkinOf`). `spriteFor` asks for
+it on every on-foot table and returns the class sheet's archive, record and frame with the mod's mirror; the mounted and
+beast tables stay the mod's whatever is worn on foot. So the body, the preload, the peers (`createPeerWalkers`) and the
+Skin card all draw a class skin through the door they already used. The setting's `max` and `labels` grow by the
+classes (`classSkinLabel`: "Healer (female)", "Dark Acolyte").
+
+**Online.** The look's `eo` bound was the mod's sixteen, so a peer in a class skin would have been clamped to the
+mod's last set. The bound is now `FOOT_SKINS` (36) in `net/wire.js`. It is a literal because the relay imports that
+file and not the skin table, and `test/skin2_class_skins.test.js` pins it equal to `FOOT_SKIN_COUNT`. DISC23-B's
+separate `EOTB_FOOT_SETS` constant went into it. RELAY_VERSION is now world109; the relay deploy ships it on merge,
+which drops connected players once.
+
+**The card** (`ui/skinCard.js`). Adding the classes would have put 57 pictures down the profile, so the card is now
+two panels, ON FOOT and MOUNTED. Each one is closed to the skin being worn, showing its picture, the panel's name and
+the skin's name. Pressing a panel's head opens its grid under it (`aria-expanded`, a chevron). The on-foot grid sits
+under two headings, "Eye of the Beholder" and "Daggerfall classes" (`FOOT_GROUPS`). Only one panel is open at a time.
+Choosing a skin wears it and closes the panel on it. The open panel stays open across the window's repaints.
+
+Pins: `test/skin2_class_skins.test.js` (7), `test/disc23b_eotb_sprites.test.js` (re-aimed at the panels and the wider
+bound); mutants `tools/mutants/skin2.json` (26, all dead). Not verified in a browser (no probes).

@@ -61,7 +61,10 @@ export function createDuelRecords({ read, now = () => Date.now(), onRecord = () 
     kept.set(id, e);
     Promise.resolve().then(() => read(id)).then((r) => {
       const d = r?.ok ? r.data : null;
-      const rec = d && Number.isSafeInteger(d.wins) && Number.isSafeInteger(d.losses) ? { wins: d.wins, losses: d.losses } : null;
+      // WB5b: the gates closed ride the same answer (server-account/src/index.js `/v1/duel/record`) - absent from a
+      // service before them
+      const gates = Number.isSafeInteger(d?.gates?.closed) ? { gates: { closed: d.gates.closed } } : {};
+      const rec = d && Number.isSafeInteger(d.wins) && Number.isSafeInteger(d.losses) ? { wins: d.wins, losses: d.losses, ...gates } : null;
       e.rec = rec; e.at = now(); e.asking = false;
       onRecord(id, rec);
     }, () => { e.at = now(); e.asking = false; onRecord(id, e.rec); });

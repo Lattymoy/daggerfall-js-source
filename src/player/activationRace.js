@@ -41,6 +41,12 @@
 //     measures against everything, the townsfolk included.
 //   - AUDIT 66 F7: the torch races the door, not just the corpse and
 //     the pile.
+//   - PR-WAGON1 (2026-09-24, Mac: "Others' wagons don't block"): a pick
+//     that YIELDS - another player's wagon or horse - wins only when no
+//     other family met anything, and is never a rival. The law is
+//     player/activate.js's `firmFirst`, read here, not restated.
+
+import { firmFirst, yieldsRay } from './activate.js';
 
 /**
  * ONE PICK under the ray: what the host's pickers hand over.
@@ -48,6 +54,7 @@
  * @property {string} key       the host's own handle for the thing struck
  * @property {number} distance  along the ray
  * @property {number} reach     how near the ARM needs it; the race does not read this
+ * @property {boolean} [yields] PR-WAGON1: another player's team - it takes the ray only from nothing (activate.js firmFirst)
  */
 
 /**
@@ -64,6 +71,7 @@
  * @property {boolean} torchWins
  * @property {boolean} wagonWins      the cart beat the body, the pile, the torch AND the door (EOTB-IL)
  * @property {boolean} horseCartWins  Horse Cart and Cargo's parked wagon, following team or standing horse beat everything above (HCC)
+ * @property {boolean} gateWins       an Oblivion Gate's fire beat everything (WB2)
  * @property {boolean} campWins       a camp's fire or tent beat everything above (SURV3)
  * @property {boolean} waterWins      a fountain, well or trough beat everything above (SURV3)
  * @property {number} nonPersonRival
@@ -84,31 +92,36 @@
  * @param {RayPick|null} [opts.pile]    the nearest dropped pile
  * @param {RayPick|null} [opts.torch]   the nearest dropped light
  * @param {RayPick|null} [opts.wagon]   Eye Of The Beholder's cart (EOTB-IL: RegisterCustomActivation(41239, 3.2)), when the lane has one
- * @param {RayPick|null} [opts.horseCart]  Horse Cart and Cargo's nearest activator (HCC: the parked wagon's box, the following team's, the standing horse's - the same 3.2)
+ * @param {RayPick|null} [opts.horseCart]  Horse Cart and Cargo's nearest activator (HCC: the parked wagon's box, the following team's, the standing horse's - the same 3.2; another player's `yields`, PR-WAGON1)
  * @param {RayPick|null} [opts.camp]    the nearest camp (SURV3: a tent or a fire, RegisterCustomActivation's 3.2)
  * @param {RayPick|null} [opts.water]   the nearest water source (SURV3: the mod's fountains, wells and troughs)
+ * @param {RayPick|null} [opts.gate]    an Oblivion Gate's fire (WB2: scenes/gatePool.js targets)
  * @param {number} [opts.doorDistance]  the door / board / static-NPC set's nearest, or Infinity
  * @param {number[]} [opts.personDistances]  the street's townsfolk, by the host's own cylinder pick
  * @returns {RaceResult}
  */
 export function raceActivation({
-  corpse = null, pile = null, torch = null, wagon = null, horseCart = null, camp = null, water = null, doorDistance = Infinity, personDistances = [],
+  corpse = null, pile = null, torch = null, wagon = null, horseCart = null, camp = null, water = null, gate = null, doorDistance = Infinity, personDistances = [],
 } = {}) {
   // the body and the pile, by distance, the tie to the body
   const pileNearer = !!pile && !(corpse && corpse.distance <= pile.distance);
   const body = pileNearer ? null : corpse;
   const heap = pileNearer ? pile : null;
 
-  const lootD = body?.distance ?? Infinity;
-  const dropD = heap?.distance ?? Infinity;
-  const torchD = torch?.distance ?? Infinity;
-  const wagonD = wagon?.distance ?? Infinity;
-  const horseCartD = horseCart?.distance ?? Infinity;
-  const campD = camp?.distance ?? Infinity;
-  const waterD = water?.distance ?? Infinity;
+  // PR-WAGON1: a pick that yields is no rival - a foe or a townsperson
+  // behind another player's team takes the click, as a door does
+  const firmD = (p) => (p && !yieldsRay(p) ? p.distance : Infinity);
+  const lootD = firmD(body);
+  const dropD = firmD(heap);
+  const torchD = firmD(torch);
+  const wagonD = firmD(wagon);
+  const horseCartD = firmD(horseCart);
+  const campD = firmD(camp);
+  const waterD = firmD(water);
+  const gateD = firmD(gate);   // WB2: an Oblivion Gate's fire
 
   // what the ground must beat: everything that is not a person
-  const nonPersonRival = Math.min(lootD, dropD, torchD, wagonD, horseCartD, campD, waterD, doorDistance);
+  const nonPersonRival = Math.min(lootD, dropD, torchD, wagonD, horseCartD, campD, waterD, gateD, doorDistance);
   const rival = Math.min(nonPersonRival, ...personDistances);
 
   // ── ONE PRECEDENCE, AND IT IS `raceWinner`'S ─────────────────────
@@ -132,7 +145,7 @@ export function raceActivation({
   // the hosts' own arm order - and this function is now its first
   // reader. The plaque is its second.
   const ground = Number.isFinite(doorDistance) ? { key: GROUND_KEY, distance: doorDistance } : null;
-  const won = raceWinner({ camp, water, wagon, horseCart, torch, corpse: body, pile: heap, ground });
+  const won = raceWinner({ gate, camp, water, wagon, horseCart, torch, corpse: body, pile: heap, ground });
   const is = (p) => !!won && !!p && won === p;
 
   return {
@@ -141,6 +154,7 @@ export function raceActivation({
     torchWins: is(torch),
     wagonWins: is(wagon),
     horseCartWins: is(horseCart),
+    gateWins: is(gate),   // WB2
     campWins: is(camp),
     waterWins: is(water),
     nonPersonRival,
@@ -209,17 +223,25 @@ export const GROUND_KEY = '__ground__';
  * @returns {RayPick|null} the winning pick, with its own key and reach
  */
 export function raceWinner({
-  corpse = null, pile = null, torch = null, wagon = null, horseCart = null, camp = null, water = null, ground = null,
+  corpse = null, pile = null, torch = null, wagon = null, horseCart = null, camp = null, water = null, gate = null, ground = null,
   person = null, peer = null, foe = null,
 } = {}) {
-  let best = null;
-  // The tie order IS the precedence order; `<` keeps the earlier one.
+  // The tie order IS the precedence order; `<` keeps the earlier one (nearestInOrder, below).
   // PEER-PLAQUE1: another player (`peer`, player/socialPick.js peerRayPick) stands between the townsperson and
   // the foe - a body like the person's, measured through the same cylinder (rayPersonDistance), and the press
   // has no arm for it at all (the F key is its own gesture, SOC5), so the plaque is the only thing that races it.
   // HCC: the mod's three activators stand with the other custom activations (RegisterCustomActivation's 3.2), right
   // after Eye Of The Beholder's cart - the two carts are the same family, and the hosts test them in this order.
-  for (const p of [camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe]) {
+  // WB2: an Oblivion Gate's fire heads the custom activations - the one thing in the world a press on it can only mean
+  // PR-WAGON1: ...and another player's team, which YIELDS, is raced only when nothing firm was met (activate.js
+  // firmFirst) - a door behind their wagon is the press's and the plaque's, whichever pool picked it.
+  return firmFirst([gate, camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);
+}
+
+/** `raceWinner`'s ordering law over one list: nearest wins, and `<` keeps the earlier on a tie. */
+function nearestInOrder(picks) {
+  let best = null;
+  for (const p of picks) {
     if (!p) continue;
     if (best === null || p.distance < best.distance) best = p;
   }

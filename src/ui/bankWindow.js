@@ -91,6 +91,8 @@ const OPENS = Object.freeze({
 export const CANNOT_CARRY_GOLD = 'You cannot carry that much gold.';
 
 let _art = null;
+/** BOX1's seam, as every other art-gated window carries it. */
+export function _setBankArtForTests(art) { _art = art; }
 export async function preloadBankArt(deps) {
   if (_art) return;
   try {
@@ -245,6 +247,11 @@ export class BankWindow {
       return;
     }
     if (name === 'buyHouse') {
+      // HOME1: online the bank sells no house. Mac chose the door ("At its front door"), not the bank, for an online
+      // home - and this list is Daggerfall's own house, which the account service never hears of, so a house bought
+      // here online could be anybody's online home tomorrow. The host answers the lines; offline it answers none.
+      const online = this.hooks.onlineHomeLines?.() ?? null;
+      if (online) { this.box = { rows: online.map((text) => ({ text, center: true })), buttons: null, amount: 0, onYes: null }; return; }
       const d = buyHouseDecision({ ownsHouse: this.hooks.ownsHouse?.(), housesForSale: this.hooks.housesForSale?.() ?? 0 });
       // H2: 'pick' reaches the purchase window at last. The refusals
       // are still the law's - already own one, nothing for sale - and

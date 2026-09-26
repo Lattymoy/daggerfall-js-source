@@ -25,7 +25,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createAutomapSheet, FIT_MARGIN, READABLE_SCALE } from '../src/ui/automapSheet.js';
 import { isSheet, SHEET_MEMBERS } from '../src/ui/mapStrip.js';
-import { deriveFloors, floorTriangles } from '../src/systems/automapFloors.js';
+import { deriveFloors, floorTriangles, groupSheets, levelField, planBounds } from '../src/systems/automapFloors.js';
 import { scaleMinOf, toPaper } from '../src/ui/inkMap.js';
 
 const src = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -334,9 +334,15 @@ test('EM3: the storeys the sheet names are the floor model\'s own, over the whol
   // the floor law, or the map and the plan would disagree about which
   // storey a room is on
   const s = sheet();
-  assert.deepEqual(s.floors(), deriveFloors(floorTriangles(LEVEL)));
+  const storeys = deriveFloors(floorTriangles(LEVEL));
+  assert.deepEqual(s.storeys(), storeys);
+  // DISC25-A: and the FLOORS the strip names are the model's SHEETS over those storeys - here the two stacked rooms
+  // lie over one another, so two storeys are two floors
+  assert.deepEqual(s.floors(), groupSheets(levelField(LEVEL, storeys, { bounds: planBounds(floorTriangles(LEVEL), 1) }), storeys));
+  assert.deepEqual(s.floors().map((f) => f.storeys), [[0], [1]]);
   const text = src('src/ui/automapSheet.js');
   assert.match(text, /deriveFloors\(tris\)/, 'the storeys come from the model');
+  assert.match(text, /groupSheets\(field, floors\)/, 'and the sheets');
   assert.match(text, /floorAt\(f\.floors, /, 'and so does every "which storey is this on"');
   assert.doesNotMatch(text, /SLOPE_LIMIT_DEG|CAPSULE_HEIGHT|Math\.cos\(/, 'no threshold is re-typed here');
 });

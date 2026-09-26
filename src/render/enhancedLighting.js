@@ -284,7 +284,6 @@ float elScatter(vec3 L, float range, vec3 dir, float dist) {
 export const EL_GLSL = `
 uniform float uELExposure;   // EL1: scene exposure before the tonemap
 uniform float uELScatter;    // EL1: in-scatter gain x the fog's density (0 = no fog, no glow; VOL1: 0 on a world frame the air pass glows for)
-uniform vec3 uFogColorLin;   // PERF-FOG: the fog colour ALREADY DECODED - see elFinish
 ${BAYER_GLSL}
 ${AIR_ADAPT_GLSL}
 vec3 elDecode(vec3 c) {
@@ -435,24 +434,26 @@ vec3 elInScatter(vec3 wp) {
   }
   return acc * uELScatter;
 }
-// the lane's output: tonemap the lit surface, blend the (decoded) fog
-// colour in linear, add the tonemapped glow, encode
+// the lane's output: tonemap the lit surface, encode it, blend the fog
+// colour in DISPLAY space as the classic lane does, add the glow
 vec3 elFinish(vec3 lit, vec3 wp) {
   float ex = uELExposure * elAdapt();   // EL4: the eye's own multiplier rides the scene's exposure
   vec3 tm = elTonemapRGB(lit * ex);   // HQ1: the colour through the curve
-  // PERF-FOG (2026-09-19): THE FOG COLOUR ARRIVES DECODED. This line read
-  // elDecode(uFogColor) - three pow() calls, per fragment, on a UNIFORM.
-  // The value is the same for every pixel of the frame and it was being
-  // recomputed for every one of them, in every lane shader there is: the
-  // terrain, the meshes, the rigs and every flat in the world. GLSL has
-  // nowhere to hoist a uniform-only expression to, so the only place it
-  // can be done once is the host. The lane already carries that decoder -
-  // elDecode3, the same piecewise sRGB curve as elDecode above, which the
-  // renderer reaches through the lane it was handed - so this needs no
-  // second copy of the law, only a place to keep the answer.
-  vec3 col = mix(uFogColorLin, tm, fogFactorAt(wp));
-  col += elTonemapRGB(elInScatter(wp) * ex);   // HQ1
-  return elEncode(col) + (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0;   // EL6: dithered at the byte, zero-mean - a lantern's falloff on a dark floor is bands without it
+  // EL-DISTANCE (2026-09-25, Mac: "It almost gives this weird darkness/foggy look to distant terrian which I really
+  // dont like"): THE FOG IS BLENDED WHERE THE CLASSIC LANE BLENDS IT. This mixed the decoded fog colour into the
+  // LINEAR surface and encoded the sum. The ramp is the same fogFactorAt, but a mix in linear lands far nearer the
+  // fog colour once encoded - a surface at display 60 under a mid-grey-blue fog, 42% fogged, read 115 on the
+  // classic lane and ~140 here - so the lane's distant ground went to the fog's colour a long way before the
+  // classic lane's did: pale and flat by day, dark at dusk and at night when the fog colour is dark. Mixed in
+  // display space the lane's ground fades exactly as the classic ground does, and a fully fogged fragment is still
+  // bit for bit the fog colour (the sky's horizon). The fog colour is used as the host sends it, so no fragment
+  // decodes it (PERF-FOG's decoded uniform is gone with the need for it).
+  vec3 col = mix(uFogColor, elEncode(tm), fogFactorAt(wp));
+  // HQ1's lantern glow in the fog is light the medium ADDS, not a surface the fog covers: added in linear on top.
+  // No lantern in reach answers exactly black, and then the frame pays nothing for it.
+  vec3 glow = elTonemapRGB(elInScatter(wp) * ex);
+  if (glow.r + glow.g + glow.b > 0.0) col = elEncode(elDecode(col) + glow);
+  return dwWaterFog(col, wp) + (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0;   // EL6: dithered at the byte, zero-mean - a lantern's falloff on a dark floor is bands without it   // DW-C: the sea's distance fog on the DISPLAY colour - the mod's post effect reads the camera's finished image
 }
 `;
 
@@ -990,8 +991,10 @@ void main() {
   vec3 lit = elDecode(vColor) * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff));
   float base = uHazeHold * clamp((vDist - uFogStart) / max(uFogEnd - uFogStart, 1.0), 0.0, 1.0);
   float rim = (1.0 - uHazeHold) * smoothstep(uRimStart, uRimEnd, vDist);
-  vec3 col = mix(elTonemapRGB(lit * ex), elDecode(uFogColor), min(base + rim, 1.0));   // HQ1
-  outColor = vec4(elEncode(col) + (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0, 1.0);   // EL6: the ring's sky gradient, dithered at the byte
+  // EL-DISTANCE: the ring fades into the fog in DISPLAY space, as elFinish and the classic ring do - mixed in linear
+  // it reached the fog colour long before the streamed ground beside it
+  vec3 col = mix(elEncode(elTonemapRGB(lit * ex)), uFogColor, min(base + rim, 1.0));   // HQ1
+  outColor = vec4(col + (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0, 1.0);   // EL6: the ring's sky gradient, dithered at the byte
 }`;
 
 /** THE LANE the renderer installs (Renderer.setLightingLane): the five

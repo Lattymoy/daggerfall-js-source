@@ -747,7 +747,7 @@ the orb is, so the two answers cannot drift apart.
 **One residual, named rather than half-fixed:** the multiplayer wire
 carries a hit's `kind` (`'arrow'`), not its weapon, so a peer-owned
 puppet struck by a Thunderlock still gains a shaft on its owner's
-client (`exteriorFoes.js:2021`, `dungeonContext.js:3737`, both gated on
+client (`exteriorFoes.js:2083`, `dungeonContext.js:3874`, both gated on
 `data.ar === 1`). Fixing it means widening the hit packet, which is a
 protocol change and not this slice's.
 
@@ -1400,7 +1400,7 @@ hand and the butt 5.1 behind it.
 
 This is the one that "it attaches to the right bone" hides completely.
 `resolveWeaponParts` returned `MW_WEAPON_TYPE.None`, and
-`animWeaponType` turns None into **HandToHand** (`fpArm.js:286`) —
+`animWeaponType` turns None into **HandToHand** (`fpArm.js:288`) —
 correct for empty hands, absurd for a man holding a dwemer firearm. The
 rig played unarmed stances and the gun went along for the ride:
 `composeWeaponGroup` returned no group at all, `weaponShortGroup` the

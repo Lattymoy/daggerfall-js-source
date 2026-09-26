@@ -1,0 +1,137 @@
+[
+  {
+    "name": "DA-ELITE-SPELLS-instant-unscaled",
+    "file": "src/systems/effects.js",
+    "old": "      const n = casterDamageScaled(magnitude(e), caster?.entity);   // DROPS-AUDIT ELITE-SPELLS",
+    "new": "      const n = magnitude(e);",
+    "tests": [
+      "test/dropsaudit.test.js"
+    ]
+  },
+  {
+    "name": "DA-ELITE-SPELLS-rounds-unscaled",
+    "file": "src/systems/effects.js",
+    "old": "    const n = casterDamageScaled(effectMagnitude(a.effect, a.casterLevel, a.saveScaled ?? true, a.element, a.flag, target, rolls), a.caster);   // DROPS-AUDIT ELITE-SPELLS",
+    "new": "    const n = effectMagnitude(a.effect, a.casterLevel, a.saveScaled ?? true, a.element, a.flag, target, rolls);",
+    "tests": [
+      "test/dropsaudit.test.js"
+    ]
+  },
+  {
+    "name": "DA-ELITE-SPELLS-the-player-scaled-too",
+    "file": "src/systems/effects.js",
+    "old": "(n > 0 && ent && !ent.isPlayer && Number.isFinite(ent.damageScale)",
+    "new": "(n > 0 && ent && Number.isFinite(ent.damageScale)",
+    "tests": [
+      "test/dropsaudit.test.js"
+    ]
+  },
+  {
+    "name": "DA-ELITE-LEDGE-no-floor-test",
+    "file": "src/characters/dungeonEnemies.js",
+    "old": "          if (f == null || Math.abs(f - base) > ELITE_FLOOR_STEP) continue;",
+    "new": "          void f;",
+    "tests": [
+      "test/dropsaudit.test.js"
+    ]
+  },
+  {
+    "name": "DA-ELITE-LEDGE-no-quarter-turns",
+    "file": "src/characters/dungeonEnemies.js",
+    "old": "      for (const turn of [0, 0.5, -0.5, 1]) {",
+    "new": "      for (const turn of [0]) {",
+    "tests": [
+      "test/dropsaudit.test.js"
+    ]
+  },
+  {
+    "name": "DA-CAMP-CULL-camps-culled-at-120",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "_playerDist > (f.campId != null ? CAMP_CULL_DISTANCE : ENCOUNTER_CULL_DISTANCE)",
+    "new": "_playerDist > ENCOUNTER_CULL_DISTANCE",
+    "tests": [
+      "test/dropsaudit.test.js"
+    ]
+  },
+  {
+    "name": "DA-CAMP-CAP-remnant-groups",
+    "file": "src/scenes/world.js",
+    "old": "            if (size > room) continue;\n",
+    "new": "",
+    "tests": [
+      "test/dropsaudit.test.js"
+    ]
+  },
+  {
+    "name": "DA-F1-plain-hud-gets-loss-nodes",
+    "file": "src/ui/enhancedHud.js",
+    "old": "  const plusLoss = isEnhancedPlus();",
+    "new": "  const plusLoss = true;",
+    "tests": [
+      "test/dropsaudit.test.js"
+    ]
+  },
+  {
+    "name": "DA-F2-dialog-double-press",
+    "file": "src/ui/enhancedDialog.js",
+    "old": "if (!active || active.spent) return; active.spent = true; press(b.button); closeEnhancedDialog();",
+    "new": "press(b.button);",
+    "tests": [
+      "test/dropsaudit.test.js"
+    ]
+  },
+  {
+    "name": "DA-F3-plain-stats-dressed",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "  const detail = el('div', `px-qdetail${isEnhancedPlus() ? ' px-sys' : ''}`);",
+    "new": "  const detail = el('div', 'px-qdetail px-sys');",
+    "tests": [
+      "test/dropsaudit.test.js"
+    ]
+  },
+  {
+    "name": "DA-F5-escape-closes-the-pack",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  if (menuEl && e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeMenu(); return; }\n",
+    "new": "",
+    "tests": [
+      "test/dropsaudit.test.js"
+    ]
+  },
+  {
+    "name": "DA-F6-notice-lets-tiles-act",
+    "file": "src/ui/enhancedPort.js",
+    "old": "      if (win.box && !win.box.buttons?.length && !win.picker) { win.click?.(-1, -1); return; }\n",
+    "new": "",
+    "tests": [
+      "test/dropsaudit.test.js"
+    ]
+  },
+  {
+    "name": "DA-F9-late-picture-any-card",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "if (tipEl && tipFor === item) showTip(item, from, row);",
+    "new": "if (tipEl) showTip(item, from, row);",
+    "tests": [
+      "test/dropsaudit.test.js"
+    ]
+  },
+  {
+    "name": "DA-F10-menu-mid-drag",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "e.preventDefault(); if (drag) return; openMenu(",
+    "new": "e.preventDefault(); openMenu(",
+    "tests": [
+      "test/dropsaudit.test.js"
+    ]
+  },
+  {
+    "name": "DA-F11-preview-while-ported",
+    "file": "src/ui/bankPurchaseWindow.js",
+    "old": "    if (modelIdNum != null && !this.inPort) {",
+    "new": "    if (modelIdNum != null) {",
+    "tests": [
+      "test/dropsaudit.test.js"
+    ]
+  }
+]

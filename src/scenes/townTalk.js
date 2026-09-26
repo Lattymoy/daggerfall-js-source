@@ -43,7 +43,7 @@ import { TalkWindow } from '../ui/talkWindow.js';
 import { hudScale } from '../ui/hud.js';
 import { hudRenderEnabled } from '../ui/hudShortcuts.js';   // AUDIT 64 F37: DaggerfallHUD's Draw override covers popupText too
 import { setMidScreenText, midScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: the HUD's OTHER text surface, and its notebook tail
-import { overlayAction, actionOf, isTextEntryTarget } from '../ui/input.js';   // AUDIT 58: the mode keys read the registry, not e.code; CG2: a DOM field's key is the field's
+import { overlayAction, actionsOf, isTextEntryTarget } from '../ui/input.js';   // AUDIT 58: the mode keys read the registry, not e.code; CG2: a DOM field's key is the field's
 import { makeWindowStack, pauseWhileOpen, hidesHud } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this host's one slot; ROAD-tail: and its PAUSE
 import { hudFade } from '../ui/fadeLayer.js';   // D4: PushWindow's ClearFade
 import {
@@ -468,7 +468,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // player who moves StealMode off F1 moves the key, and an F1 they
     // have re-pointed at Inventory falls through this ladder to the
     // host's own `actionOf` and opens the pack.
-    const m = MODE_ACTIONS[actionOf(e, keys)];
+    const m = actionsOf(e, keys).map((a) => MODE_ACTIONS[a]).find(Boolean);   // UXB1-S: the mode a shared key carries, whichever of its actions it is
     if (m) {
       e.preventDefault();
       setMode(m);
@@ -1104,7 +1104,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   // U8b: the answer STRING, shared by the native talk window and the
   // fallback chain (the T3c-T3f pipeline unchanged).
   function answerText(building) {
-    const a = whereIsAnswer(topics.playerPos(), building, playerEntity.stats?.personality != null ? liveStat(playerEntity, 'personality') : 50, _talkNpc?._talkSeed ?? 0, 0, { tier: tierNow() });   // AUDIT 63 F4: LivePersonality here too, though this caller always supplies `tier` so talkTopics.js:472 never consumes it
+    const a = whereIsAnswer(topics.playerPos(), building, playerEntity.stats?.personality != null ? liveStat(playerEntity, 'personality') : 50, _talkNpc?._talkSeed ?? 0, 0, { tier: tierNow() });   // AUDIT 63 F4: LivePersonality here too, though this caller always supplies `tier` so talkTopics.js:479 never consumes it
     const raw = randomVariant(a.textId, '%hnt');
     // T4: %hnt is WHERE DFU rolls the reveal (GetKeySubjectBuildingHint
     // rides MacroHelper's %hnt), so the fork runs only when the record

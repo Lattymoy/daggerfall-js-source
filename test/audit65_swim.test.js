@@ -194,13 +194,14 @@ test('AUDIT 65 XL-1: neither exterior host assigns the latch to the motor flag -
     assert.ok(write > 0, `${host}: the latch is written to player.isPlayerSwimming`);
     // The carry is read from the SAME member, before the clear.
     const read = s.indexOf('const _wasSwimming = !!player.isPlayerSwimming;');
-    const clear = s.indexOf('applyMotorEffectFlags(player, playerEntity);');
+    const clear = s.indexOf('applyMotorEffectFlags(player, playerEntity');   // DW-D: the world host hands it the carved sea's forge
     const surf = s.indexOf('const _surf = exteriorSurfaceNow();');
     assert.ok(read > 0 && clear > 0 && read < clear, `${host}: _wasSwimming is the host flag, read before the per-frame clear`);
     assert.ok(surf > 0 && write > surf && write > clear, `${host}: the write follows the surface model and the clear`);
   }
   // And the clear itself is untouched: shared.js still writes :421.
-  assert.match(src('src/scenes/shared.js'), /player\.swimming = false;/,
+  // DW-D: ...defaulting to false - the carved sea's forge rides the same one write, never a second
+  assert.match(src('src/scenes/shared.js'), /\{ waterSurfaceY = null, swimming = false \} = \{\}\) \{\s*\n\s*player\.waterSurfaceY = waterSurfaceY;[\s\S]{0,400}?player\.swimming = !!swimming;/,
     'applyMotorEffectFlags still clears levitateMotor.IsSwimming every exterior frame');
 });
 

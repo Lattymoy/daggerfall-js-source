@@ -62,13 +62,13 @@ test('DISC23-C: an Off / On switch is a switch - its Off segment marked, the til
 test('DISC23-C: the Off is the segment that SAYS Off - Grass Density\'s is its last, and Full is on', () => {
   resetPrefs();
   setPref('grassDensity', 1);
-  let t = tile('grass-density');
+  let t = tile('grass');   // FT18: the density is the one grass row's bar
   assert.deepEqual(t.segs.map((s) => s.label), ['Full', 'Half', 'Quarter', 'Off']);
   assert.deepEqual(t.segs.map((s) => s.off), [false, false, false, true], 'the position read marked Full off');
   assert.equal(t.on, '1', 'full grass is grass - the position read had this tile off');
   assert.ok(t.bar.includes('ft-seg-switch'));
   t.press('Off');
-  t = tile('grass-density');
+  t = tile('grass');
   assert.equal(t.segs[3].pressed, true);
   assert.equal(t.on, '0', 'and no grass is off - the position read had this tile on');
   resetPrefs();
@@ -76,10 +76,10 @@ test('DISC23-C: the Off is the segment that SAYS Off - Grass Density\'s is its l
 
 test('DISC23-C: a CHOICE has no Off, so it is neither green nor red, and its feature is never off', () => {
   resetPrefs();
-  const t = tile('grass-style');
-  assert.deepEqual(t.segs.map((s) => s.label), ['Pixel', 'Smooth']);
+  const t = tile('cloud-quality');   // FT18: the grass style is a part in the grass row's drawer now; the clouds are a choice on a tile
+  assert.deepEqual(t.segs.map((s) => s.label), ['Default', 'Low', 'High']);
   assert.ok(!t.bar.includes('ft-seg-switch'), 'no fill law on a choice');
-  assert.ok(t.segs.every((s) => !s.off), 'Pixel is not "off" because it comes first');
+  assert.ok(t.segs.every((s) => !s.off), 'Default is not "off" because it comes first');
   assert.equal(t.on, '1');
   assert.deepEqual(barReading({ labels: ['Point', 'Bilinear', 'Trilinear'], at: 0 }), { off: -1, switch: false, on: true });
   assert.deepEqual(barReading({ labels: [OFF_LABEL, 'Low', 'Medium'], at: 2 }), { off: 0, switch: true, on: true });

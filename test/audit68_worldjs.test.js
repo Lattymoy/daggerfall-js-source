@@ -335,8 +335,11 @@ test('AUDIT 68 S17-ground-mean-colour: a blade\'s root is the mean of the tile\'
   const block = lift(WORLD, '    if (!grassRecords.has(groundArchive)) {', '\n    }\n');
   const groundMeanColour = new Map();
   const groundTex = { recordCount: 2, getDFBitmap: (r) => (r === 0 ? bitmap : { width: 1, height: 1, data: new Uint8Array([9]) }), getColor32: (b, a) => t.getColor32(b, a) };
-  new Function('grassRecords', 'groundArchive', 'groundTex', 'grassRecordsOf', 'groundMeanColour', 'tileMeanColour', block)(
-    new Map(), 302, groundTex, grassRecordsOf, groundMeanColour, tileMeanColour);
+  const { markPuddleWater } = await import('../src/world/puddleMask.js');
+  const groundPuddles = new Map();   // WATER-PUDDLE: the same block learns the pass's puddle mask for the blades
+  new Function('grassRecords', 'groundArchive', 'groundTex', 'grassRecordsOf', 'groundMeanColour', 'tileMeanColour', 'groundPuddles', 'markPuddleWater', block)(
+    new Map(), 302, groundTex, grassRecordsOf, groundMeanColour, tileMeanColour, groundPuddles, markPuddleWater);
+  assert.equal(groundPuddles.get(302)?.length, 2, 'and the puddle mask with them, off the same layers');
   assert.ok(groundMeanColour.has(302), 'the scene learned the archive\'s colours though the tile array was the renderer\'s already');
   near(groundMeanColour.get(302)[0], [150 / 255, 125 / 255, 100 / 255]);
   near(groundMeanColour.get(302)[1], [100 / 255, 50 / 255, 0]);

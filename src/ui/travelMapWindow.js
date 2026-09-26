@@ -104,16 +104,17 @@ import {
 import { DOT_SCALE } from './travelPathsOverlay.js';
 import { TRAVEL_OPTIONS_TEXT as TO_TEXT, format as toFormat } from '../systems/travelOptionsText.js';
 import { readPartyMarks, partyMarksKey, PARTY_DOT_RGB, PARTY_OFFLINE_DOT_RGB } from './partyMapMarks.js';   // SOC6: the party's marks, the one reading both maps share
+import { readGateMark, gateRingKey, gateRingTexels, GATE_DOT_RGB } from './gateMapMark.js';   // WB1: the Oblivion Gate's ring, on the open province's page
 import { MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, messageBoxArtLoaded } from './messageBox.js';
 import { ListPickerWindow, preloadListPickerArt, listPickerArtLoaded } from './listPicker.js';
-import { TravelPopUpWindow, preloadTravelPopUpArt, NOT_ENOUGH_GOLD_TEXT_ID } from './travelPopUp.js';
+import { TravelPopUpWindow, preloadTravelPopUpArt, NOT_ENOUGH_GOLD_TEXT_ID } from './travelPopUp.js';  import { classicScope } from './enhancedScope.js';   // PORT0: the classic map keeps its own boxes and lists
 import { TeleportPopUpWindow, preloadTeleportPopUpArt } from './teleportPopUp.js';   // G5
 import { drawText } from './text.js';
 import { bindings } from './input.js';
 import { InputMessageBoxWindow } from './inputMessageBox.js';   // CM8: Find is a pushed DaggerfallInputMessageBox
 import { firstHotkey } from '../systems/dialogShortcuts.js';   // AUDIT 64 F23: the DaggerfallShortcut table, IsUpWith's modifier mask and all
-import { actionForCode } from '../systems/inputActions.js';
+import { codeMeans } from '../systems/inputActions.js';   // UXB1-S: its own key, shared or not
 import { ImgFile } from '../formats/imgFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { TextRsc } from '../formats/textRsc.js';
@@ -316,7 +317,7 @@ let _art = null;
  *  (indices, not a texture - the region shapes are read out of it),
  *  the button sheets, the border, FMAP_PAL.COL and TEXT.RSC. */
 /** TO1: a PNG out of a vendored mod folder, in the shape `drawImg`
- *  reads. The precedent is systems/handheldTorches.js:787-792 -
+ *  reads. The precedent is systems/handheldTorches.js:820-825 -
  *  `toScreenOrder`, not `toColor32`, because this is drawn on a screen
  *  quad and the flip would stand it on its head. A file that is not
  *  there answers null and the caller draws nothing. */
@@ -515,6 +516,7 @@ export class TravelMapWindow {
     // only when a member's pixel, floor, name or presence changed.
     this._partyKey = '';
     this._partyPoll = 0;
+    this._gateKey = '';   // WB1: the ring the page last drew (its place alone - the page draws no words)
     // TO1: Travel Options' own state on this window. `_to` is the mod
     // itself (null when it is off), read ONCE per open the way DFU
     // reads `TravelOptionsMod.Instance` in the constructor
@@ -724,20 +726,27 @@ export class TravelMapWindow {
     const width5 = width * sc;
     const partyPx = packRGBA(PARTY_DOT_RGB[0], PARTY_DOT_RGB[1], PARTY_DOT_RGB[2], 255);
     const partyOffPx = packRGBA(PARTY_OFFLINE_DOT_RGB[0], PARTY_OFFLINE_DOT_RGB[1], PARTY_OFFLINE_DOT_RGB[2], 255);
-    const marks = readPartyMarks(this.deps.party, { width: MAP_WIDTH, height: MAP_HEIGHT });
-    this._partyKey = partyMarksKey(marks);
-    for (const m of marks) {
-      const x = m.px - originX, y = m.py - originY;
-      if (x < 0 || y < 0 || x >= width || y >= height) continue;
-      if (maps.getPoliticIndex(m.px, m.py) - 128 !== this.selectedRegion) continue;
+    /** One mark's texel (x, y in page coordinates) in colour `px` - on the open province's pixels alone. */
+    const plot = (x, y, px) => {
+      if (x < 0 || y < 0 || x >= width || y >= height) return;
+      if (maps.getPoliticIndex(originX + x, originY + y) - 128 !== this.selectedRegion) return;
       const offset = Math.trunc((((height - y - 1) * width) + x) * this.scale);
-      if (offset >= width * height) continue;
+      if (offset >= width * height) return;
       if (outlineOn) this._outlineBuf[offset] = outline;
-      const px = m.online ? partyPx : partyOffPx;
-      if (sc === 1) { this._dotsBuf[offset] = px; continue; }
+      if (sc === 1) { this._dotsBuf[offset] = px; return; }
       const offset5 = Math.trunc((((height - y - 1) * sc * width5) + (x * sc)) * this.scale);
       for (let yy = 1; yy < 4; yy++) for (let xx = 1; xx < 4; xx++) this._dotsBuf[offset5 + (yy * width5) + xx] = px;
+    };
+    // WB1: THE GATE'S RING, under the party - its edge band, the size of the places it stands among
+    const gate = readGateMark(this.deps.gate, { width: MAP_WIDTH, height: MAP_HEIGHT });
+    this._gateKey = gateRingKey(gate);
+    if (gate) {
+      const gatePx = packRGBA(GATE_DOT_RGB[0], GATE_DOT_RGB[1], GATE_DOT_RGB[2], 255);
+      for (const [x, y] of gateRingTexels(gate, originX, originY, width, height)) plot(x, y, gatePx);
     }
+    const marks = readPartyMarks(this.deps.party, { width: MAP_WIDTH, height: MAP_HEIGHT });
+    this._partyKey = partyMarksKey(marks);
+    for (const m of marks) plot(m.px - originX, m.py - originY, m.online ? partyPx : partyOffPx);
   }
 
   /** TO1: UpdateMapLocationDotsTextureWithPaths (:593-662) - the mod's
@@ -788,7 +797,8 @@ export class TravelMapWindow {
     if (this._partyPoll > 0) return false;
     this._partyPoll = PARTY_POLL_S;
     if (!this.regionSelected) return false;
-    if (partyMarksKey(readPartyMarks(this.deps.party, { width: MAP_WIDTH, height: MAP_HEIGHT })) === this._partyKey) return false;
+    if (partyMarksKey(readPartyMarks(this.deps.party, { width: MAP_WIDTH, height: MAP_HEIGHT })) === this._partyKey
+      && gateRingKey(readGateMark(this.deps.gate, { width: MAP_WIDTH, height: MAP_HEIGHT })) === this._gateKey) return false;   // WB1: or the ring came, went or moved
     this._updateMapLocationDotsTexture();
     return true;
   }
@@ -1533,7 +1543,7 @@ export class TravelMapWindow {
     }
     // Update's own keys (:378-425)
     // Update's toggle-closed binding and the back button (:376-386)
-    if (code === 'Escape' || actionForCode(bindings(), code) === 'TravelMap') {
+    if (code === 'Escape' || codeMeans(bindings(), code, 'TravelMap')) {
       this.closeTravelWindows();
       return;
     }
@@ -1979,4 +1989,14 @@ export function registerTravelMapConsoleCommands(deps = {}) {
   } catch (ex) {
     console.error(`Error Registering Travelmap Console commands: ${ex?.message ?? ex}`);
   }
+}
+
+// PORT0: THE CLASSIC MAP STAYS CLASSIC. A player who chose DFU's own
+// travel map in the settings (ui/mapSkin.js heldMapChosen) chose its
+// prompts and lists with it, so its draw - and the popups and pickers
+// drawn inside it - runs in the classic scope, where the enhanced
+// decision box and list stand down (ui/enhancedScope.js).
+{
+  const classicDraw = TravelMapWindow.prototype.draw;
+  TravelMapWindow.prototype.draw = function draw(...args) { return classicScope(() => classicDraw.apply(this, args)); };
 }

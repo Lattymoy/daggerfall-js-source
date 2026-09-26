@@ -27,7 +27,7 @@ import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { applySpell, maxFatigue, entityIsParalyzed, applyEnemyMotorEffectFlags, concealmentFlags } from '../systems/effects.js';   // X3: self-casts land through the effect spine   // A5: the enemy Levitate arm, the foe-target concealment closure + EntityConcealmentBehaviour's visual
 import { calculateCastCost } from '../systems/spellcost.js';   // X3: costs priced off the player (magic-15 note)
 import { silenceBlocksCast, attemptSoulTrap, SOUL_TRAP_TEXT, fillEmptyTrap } from '../systems/mysticism.js';   // X3: the enemy silence gate; X5: the soul trap's kill intercept
-import { isAzurasStarEquipped } from '../systems/artifactEffects.js';   // V3: the Star's kill capture
+import { isAzurasStarEquipped, registerFoeDoor } from '../systems/artifactEffects.js';   // V3: the Star's kill capture; AUDIT PSCALE1 DOORS-2: Namira's reflection through this pool's door
 import { EnemyAttack } from '../characters/enemyAttack.js';
 import { makeEnemyEntity, loadMonsterCareer, KNIGHT_CITYWATCH_ID } from '../characters/enemyEntity.js';   // AUDIT WATCH1 A1: the watch's own puppet allowance
 import { MobileUnit, MOBILE_DAEDRA_SEDUCER, SeducerTransformBehaviour } from '../characters/mobileUnit.js';   // A5: the Seducer transform pair + its trigger
@@ -51,6 +51,9 @@ import { CORPSE_ACTIVATION_DISTANCE, liveFoeTargets, liveFoeFor } from '../playe
 import { WEAPON_REACH } from '../combat/playerWeapon.js';   // AUDIT WATCH1 B2: a peer's melee blow on my watch lands from the player's own reach, no farther   // AUDIT WORLD6b-iii(c) A1/C7: the owner reads the taker's reach
 import { createWeapon, bowDamageArrow } from '../combat/enemyEquipment.js';   // MAC-N1: the recovered shaft is CreateWeapon's arrow, value and all   // AUDIT WORLD6b-ii B2: a puppet's weapon is its owner's word, rebuilt from the descriptor   // AUDIT WORLD6b B3/C2: a cell's record projected and its puppets capped, the wire's law
 import { mintCorpseMarker, playBodyFall, playRareDrop, corpseLootTargets, corpseEntryFor, corpseContents, takeCorpseLoot, openCorpseLoot, pileBody, sayEnemyDied, raiseEnemyDeath } from './corpseMarker.js';
+import { renownFoeStruck, renownFoeDied } from '../net/renownTracker.js';   // RENOWN1: a foe the player fought pays its Renown XP when it dies, by any hand
+import { partyFoeLoses, partyFoeHits, partyFoeHeals, noteFighter, foeFighters, takeWholeBlow, PARTY_ME } from '../systems/partyScale.js';   // PSCALE1: a shared foe weighs whoever fights it
+import { stampWonWeapons } from '../systems/lootRarity.js';   // SIGIL1: a body's weapons won online
 import { corpseName, mobileEntityName, liveEntityName } from '../systems/worldTooltips.js';   // WORLD-HOVER: "<who> (dead)", the mod's own word (.cs:526); H2: and a LIVE one's, when it is not hostile (.cs:304-312)
 import { enemyDisplayName } from '../characters/enemyBasics.js';   // GetLocalizedEnemyName, the index law in one place
 import { bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
@@ -93,6 +96,10 @@ const PUPPET_LEAP_SLACK = 2;   // the stream's x bit, decoded (no roll - the own
  *  (PlayerActivate's CorpseActivationDistance) with the pose's slack (the peer's pose is eased and a frame behind). */
 const CORPSE_TAKE_RANGE = CORPSE_ACTIVATION_DISTANCE + PUPPET_LEAP_SLACK;
 export const ENCOUNTER_CULL_DISTANCE = 120;
+/** DROPS-AUDIT CAMP-CULL: a wilderness camp's members are stood 100-150 m out (campEncounters.js
+ *  MAX_CAMP_SPAWN_DISTANCE) and see only 60 m, so the 120 m cull took most of CAMP-RING's groups on the
+ *  frame after they stood, never seen. A camp member is culled past this instead - the band and a margin. */
+export const CAMP_CULL_DISTANCE = 200;
 
 export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture, uploadRecordFrame,
   playerEntity, audio, onPlayerHurt, currentMinute, say = null, rolls = Math.random,
@@ -141,6 +148,13 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   // door. The STREET mounts (world.js, exterior.js) pass nothing and
   // keep the `() => false` fallback, which is correct there.
   isActionDoor = null,
+  // DW-E4: PlayerEnterExit.blockWaterLevel as a world height, or null
+  // (10000, no water) - the ONE level every EnemyMotor.WaterMove reads
+  // (EnemyMotor.cs:1331-1341). Outdoors it is null but while Iliac Puddle
+  // No More's swim driver holds the sea's forged level
+  // (scenes/deepWatersPlayer.js waterLevelY), so an aquatic foe swims
+  // only then, as it does under the mod. Absent: no water.
+  waterLevelY = null,
   magicHooks = null }) {  // X3-slice: { explodeAt, fireMissile } - the host's spell release seams
   const foes = [];        // { mobile, ai, attack, entity, batch, tex, archive, mobileType, dead, _encounter: true }
   const corpseBatches = [];
@@ -229,7 +243,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   // CENTRE, and `hitDist` what AlignControllerToGround's ray found below
   // it (null: nothing within 3); the drop needs the capsule the sprite
   // sizes, so it lands once the sprite has.
-  async function spawnFoe(mobileType, pos, { gender: forcedGender = null, yaw = null, questBehaviour = null, allied = false, feetGiven = false, replacing = false, puppet = null, seq = null, level = null, placed = false, groundAlign = null, site = null, loose = false } = {}) {
+  async function spawnFoe(mobileType, pos, { gender: forcedGender = null, yaw = null, questBehaviour = null, allied = false, feetGiven = false, replacing = false, puppet = null, seq = null, level = null, placed = false, groundAlign = null, site = null, loose = false, transformY = null, team = null, transient = false, managed = false } = {}) {
     // WORLD6b: a puppet is not this cap's. AUDIT 68 review (R-scenes-loose-foe-squad-capped): nor is a `loose` stand -
     // CreateFoeSpawner's (a summoning punishment, RR's expulsion squad, a Rose's Daedroth) stands however many it is
     // told in one loop, and DFU caps none of them; the cap is the encounter rolls'
@@ -239,7 +253,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     if (capped && activeCount() + spawning.filter((s) => s.capped).length >= MAX_ACTIVE_ENCOUNTER_FOES) return null;
     const basics = ENEMY_BASICS[mobileType];
     if (!basics || !basics.maleTexture) return null;
-    const pending = { feet: [pos[0], pos[1] + (feetGiven || groundAlign ? 0 : 0.1), pos[2]] };   // AUDIT 39: shifted by offsetAll until the record lands. REVIEW 2026-09-05: a restore hands back the exact saved feet (SerializableEnemy.cs:196) - a flyer never grounds, so the walker's lift would climb 0.1 per load
+    const pending = { feet: [pos[0], pos[1] + (feetGiven || groundAlign || transformY ? 0 : 0.1), pos[2]] };   // AUDIT 39: shifted by offsetAll until the record lands. REVIEW 2026-09-05: a restore hands back the exact saved feet (SerializableEnemy.cs:196) - a flyer never grounds, so the walker's lift would climb 0.1 per load
     pending.capped = capped;
     spawning.push(pending);
     const gen = epoch;   // AUDIT-39r: the world this foe is being built for
@@ -257,6 +271,8 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // frozen basics row (the STATIC table the ally-revert reads)
       // does not. Getting that wrong would ally every foe of the type.
       if (allied) { entity.team = 'PlayerAlly'; entity.mobileTeam = 'PlayerAlly'; }
+      // DW-E4: SetEnemyTeam - Entity.Team alone (the treasure guards' Undead), the MobileEnemy copy kept
+      if (team) entity.team = team;
       // AUDIT WORLD6b B14: a PUPPET carries no loot of this player's (its body is its owner's - WORLD6b-iii(c): taken under the owner's grant), wears no
       // kit of its own and casts nothing, so its stand rolls no table and draws nothing off the injectable roll or
       // the shared stream: what my neighbours stream must not move my own dice
@@ -289,7 +305,11 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // lift back with it; `feetGiven` is the restore's word that `pos`
       // already IS feet (SerializableEnemy restores the position it
       // wrote - no FinalizeFoe, no drop).
-      if (groundAlign) {
+      if (transformY) {
+        // DW-E4: the transform SET STRAIGHT after CreateEnemy (UnderwaterEnemySpawner.ConfigureSpawnedEnemy) - the
+        // caller answers where, given the capsule the sprite sizes (AlignFloorEnemyController reads its height)
+        pending.feet[1] += transformY(enemyControllerHeight(idleH, behaviour)) - idleH / 2 - pos[1];
+      } else if (groundAlign) {
         // WOD3: CreateFoeGameObjects (GameObjectHelper.cs:1243-1296) -
         // ApplyEnemySettings sizes the capsule, a walker is dropped
         // (:1270-1272), and the feet are the sprite's bottom under the
@@ -301,6 +321,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         liveSpeed: () => liveStat(entity, 'speed'),   // AUDIT 39: EnemyMotor.cs:432 re-reads LiveSpeed per FixedUpdate
         seesThroughInvisibility: basics.seesThroughInvisibility ?? false,
         behaviour, mobileId: mobileType,
+        waterSurfaceY: waterLevelY ? () => waterLevelY() : null,   // DW-E4: blockWaterLevel, one level for the scene
         height: enemyControllerHeight(idleH, behaviour),   // INCIDENT 2026-09-04: SetupDemoEnemy.cs:103-115
         centreOffset: idleH / 2,   // REVIEW 2026-09-05: transform.position = the sprite centre
         playerInside,   // EnemySenses.cs:267-269 - the host's PlayerEnterExit.IsPlayerInside picks the band
@@ -330,7 +351,10 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const mobile = new MobileUnit(mobileType, basics, (rec) => tex.getFrameCount(rec), Math.random, gender);
       const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
       const f = { mobile, ai, attack, entity, caster, batch, tex, archive, mobileType, gender, idleH, dead: false, _encounter: true, _swingSeq: 0, _mout: null, placed, site,   // WOD3; WOD7: the World of Daggerfall marker it stood for (shared online)
+        transient,   // DW-E4: CreateEnemy's LoadID 0 - SerializableEnemy registers nothing, so no save carries it
+        managed,   // DW-E4: its spawner owns its life (Iliac Puddle No More's groups release their own) - the relevance cull passes it by
         sounds: new EnemySoundSource(mobileType, rolls) };   // AUDIT 24 (wave 41): this pool made no sound at all
+      registerFoeDoor(entity, (n) => damageFoe(f, n, null, null, { fromPlayer: true, kind: 'spell' }));   // AUDIT PSCALE1 DOORS-2: a reflected blow is a blow through the one door (its death, its fighters, a puppet's owner)
       // MT-ii: THE RECORD IS THE CANDIDATE. getTargets reads `ai` and
       // `entity` off it, and its identity IS the target handle (the
       // `c === self` skip and the mutual-target write both rely on
@@ -413,7 +437,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     },
     // AUDIT 58: the SetHealth(0) door, not a damage source - like
     // hurtPlayer's bypassShield it must not be mitigated.
-    zeroFoeHealth: (f) => { if (!f.dead && !f.puppet) damageFoe(f, f.entity.health, null, null, { bypassShield: true }); },   // AUDIT WORLD6b B9
+    zeroFoeHealth: (f) => { if (!f.dead && !f.puppet) damageFoe(f, f.entity.health, null, null, { fromPlayer: false, bypassShield: true }); },   // AUDIT WORLD6b B9   // AUDIT RENOWN1 GAME-6: SetHealth(0) is nobody's blow - it paid Renown as mine, and woke the area as my attack
     spellsByIndex: () => spellsByIndex?.(),
     foeSinks: (f) => foeSinks(f),
     rolls,
@@ -459,8 +483,8 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   /** X3-slice: the per-foe sinks the cast executor feeds (the
    *  dungeon's foeSinks shape - self-casts heal/buff through these). */
   const foeSinks = (f) => ({
-    hurt: (n) => damageFoe(f, n, null, null, { fromPlayer: false, kind: 'spell' }),   // AUDIT WORLD6b-iii(a) B2: a foe's OWN spell is not my blow - a puppet's self-cast went to its owner as MY hit through this door (the dungeon's sink had the law)
-    heal: (n) => { f.entity.health = Math.min(f.entity.maxHealth ?? Infinity, f.entity.health + n); },
+    hurt: (n, o) => damageFoe(f, n, null, null, { fromPlayer: false, kind: 'spell', whole: !!o?.whole }),   // AUDIT WORLD6b-iii(a) B2: a foe's OWN spell is not my blow - a puppet's self-cast went to its owner as MY hit through this door (the dungeon's sink had the law)
+    heal: (n) => healFoe(f, n),   // AUDIT PSCALE1 DOORS-5: a heal on a shared foe is a heal of the bigger pool
     drainMagicka: (n) => { if (n > 0) f.entity.magicka = Math.max(0, (f.entity.magicka ?? 0) - n); },
     restoreMagicka: (n) => { if (n > 0) f.entity.magicka = Math.min(f.entity.maxMagicka ?? Infinity, (f.entity.magicka ?? 0) + n); },
     drainFatigue: (n) => { if (n > 0) f.entity.fatigue = Math.max(0, (f.entity.fatigue ?? 0) - n); },
@@ -561,8 +585,32 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     if (!peer) resetAllyTeamOnPlayerAttack(f.ai, f.entity, f.mobileType);
   }
 
-  function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true, bypassShield = false, kind = 'melee', peer = false, peerId = null } = {}) {
+  /** PSCALE1: a SHARED foe - one other players can see and strike (it rides this pool's stream, or it is another
+   *  player's, stood here as a puppet). Never a quest's (every member's own copy), never the watch (a crime's answer,
+   *  not a party's) and never my own summoned ally; never anything without a stream at all. */
+  const _sharedFoe = (f) => !!_net && !!f && f.mobileType !== KNIGHT_CITYWATCH_ID && f.entity?.team !== 'PlayerAlly'
+    && (!!f.puppet || (!f.isQuestFoe && !(f.placed && !f.site)));
+  /** AUDIT PSCALE1 (Mac: "Whoever fights it"): how many players fight `f` - my own foe's, counted at this door from
+   *  every blow it takes (systems/partyScale.js foeFighters); another player's puppet's, its owner's word on its record
+   *  (`n`). Kept on the foe (`_fightN`) for the readers outside this pool (the Renown bonus, the sigil's forge). */
+  const fightN = (f) => (f.puppet ? (f._fightN ?? 1) : (f._fightN = foeFighters(f, _now())));
+  /** PSCALE1: a shared foe's weapon or arrow hit on me, weighed by the players fighting it (partyFoeHits), the
+   *  remainder carried on me (AUDIT PSCALE1 DOORS-4). */
+  const partyHit = (dmg, f) => (_sharedFoe(f) ? partyFoeHits(dmg, fightN(f), playerEntity) : dmg);
+  /** AUDIT PSCALE1 DOORS-5: a heal on my foe - a shared one's over its fighters' toughness, as its damage is; a
+   *  puppet's copy is its owner's to heal (the next record says so) and keeps the heal unweighed until then. */
+  function healFoe(f, n) {
+    if (!(n > 0) || !f?.entity || f.dead) return;
+    const h = !f.puppet && _sharedFoe(f) ? partyFoeHeals(f, n, fightN(f)) : n;
+    f.entity.health = Math.min(f.entity.maxHealth ?? Infinity, f.entity.health + h);
+  }
+
+  function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true, bypassShield = false, kind = 'melee', peer = false, peerId = null, whole = false } = {}) {
     if (f.dead) return;   // AUDIT 68 S20-foe-dies-twice: a corpse takes no blow - a magic round after the killing one re-ran the whole death (notice, loot handlers, corpse)
+    if (fromPlayer && !peer) renownFoeStruck(f);   // RENOWN1: MY blow - a puppet's too, before the divert sends it to the owner
+    // AUDIT PSCALE1 DOORS-1: a KILL is not a blow - a Disintegrate, a stat drained to zero (the sinks' `whole`), the
+    // Razor's whole-health strike (its mark on the foe) - and no fighters' toughness divides it, here or at the owner
+    const _whole = whole || takeWholeBlow(f.entity);
     // WORLD6b: a PEER's blow (applyHit) is the dungeon door's law (WORLD2): no HUD mark and no reveal of this
     // player's - the striker's own rang at the striker
     if (!peer) {
@@ -589,7 +637,8 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
           ...(_pAt ? { p: [q2(_pAt[0]), q2(_pAt[1]), q2(_pAt[2])] } : {}),
           ...(knockDir ? { d: [q3(knockDir[0]), q3(knockDir[1]), q3(knockDir[2])] } : {}),
           ...(_pt != null ? { pt: _pt } : {}),   // WORLD6b-iii(e): the striker's poison rides to the owner's foe. AUDIT WORLD6b-iii(e) A3: the dose is the CALC's word - FormulaHelper doses on the calc's damage and the Strikes payload can zero the number after it (LowDamageVs), so the number gates nothing here
-          ...(kind === 'arrow' ? { ar: 1 } : {}) });   // WORLD6b-iii(e): the shaft lands in the owner's copy, where BowDamage puts it (WORLD3's spelling for the dungeon's hit)
+          ...(kind === 'arrow' ? { ar: 1 } : {}),
+          ...(_whole ? { z: 1 } : {}) });   // AUDIT PSCALE1 DOORS-1: a kill goes to the owner as a kill. WORLD6b-iii(e): the shaft lands in the owner's copy, where BowDamage puts it (WORLD3's spelling for the dungeon's hit)
       }
       return;
     }
@@ -610,7 +659,12 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     // HandleAttackFromSource runs after it unconditionally (:630), so
     // a fully absorbed blow still knocks back and still turns the foe.
     const healthDamage = bypassShield ? damage : damageShieldPool(f.entity, damage);
-    f.entity.health -= healthDamage;
+    // AUDIT PSCALE1 (Mac: "Whoever fights it"): every player's blow names a fighter - mine, and a peer's through
+    // applyHit - here where the owner hears them all
+    if (fromPlayer) noteFighter(f, peer ? peerId : PARTY_ME, _now());
+    // PSCALE1: a shared foe fights its fighters with more health - its damage over their toughness, here where the
+    // owner applies every blow (a SetHealth(0) and a kill are no blows, and stand as they were)
+    f.entity.health -= !bypassShield && !_whole && _sharedFoe(f) ? partyFoeLoses(f, healthDamage, fightN(f)) : healthDamage;
     if (f.entity.health <= 0) {
       // X5: the SOUL TRAP intercept, where EnemyEntity.SetHealth's
       // override sits (:157-177) - before the death, every source alike.
@@ -627,6 +681,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         say?.(SOUL_TRAP_TEXT.trapSuccess);
       }
       f.dead = true;
+      renownFoeDied(f);   // RENOWN1: whoever struck last - it pays me if a blow of mine is recent
       f.corpse = true;
       f._diedAt = _now();   // AUDIT WORLD6b-iii(c) C5: the roll keeps the newest bodies
       // the LIVE batch is finished the moment the foe is - batches()
@@ -640,6 +695,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // ANOTHER foe never touches the player's alert (MT-ii).
       if (isLocalPlayerTarget(f.ai?.target) && f.ai?.detected) setEnemyAlert(playerEntity, false);   // WORLD6b-ii: mine, not a peer's (AUDIT WORLD3 C3)
       if (!peer) sayEnemyDied(say, f.mobileType);   // EnemyDeath:79-83, the kill notice - mine alone (AUDIT WORLD6b B2)
+      stampWonWeapons(f.entity.items, _sharedFoe(f) ? fightN(f) : 1, { rolls });   // SIGIL1: the body's Magic+ weapons won online may carry a sigil - here, where its list lives, whoever struck last; a bigger fight, better odds
       raiseEnemyDeath(f.entity, { rolls, luck: liveStat(playerEntity, 'luck') });   // UL1: OnEnemyDeath (:139) - the corpse's items are the entity's. AUDIT VC6: a handler that ROLLS (SURV2's food) takes this pool's own stream and the player's luck, as spawnEnemyLoot does
       // AUDIT 24 (wave 38): EnemyDeath.CompleteDeath, through the one
       // home. This pool minted the marker inline at f.ai.feet - so a
@@ -782,7 +838,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     const mid = [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]];
     if (meleeHitConnects(f.ai._dist, f.ai.inSight, withinYaw(f.ai.yaw, hdx, hdz, MELEE_HIT_YAW_DEG))) {
       tallySkill(playerEntity, SKILLS.Dodging, 1);
-      const dmg = calculateAttackDamage(f.entity, playerEntity, {
+      const dmg = partyHit(calculateAttackDamage(f.entity, playerEntity, {
         weapon: wpn,
         // AUDIT 24 (wave 30): THE SPECIAL-ATTACK RIDER, which this
         // pool never passed. FormulaHelper's monster branch calls
@@ -808,11 +864,12 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         }),
         onInflictPoison: (att, tgt, pt) => inflictPoison(playerEntity, pt, false, { currentMinute: Math.floor(currentMinute()) }),
         say,
-      });
+      }), f);   // PSCALE1: harder for the party beside me
       // AUDIT 24 (wave 39): EnemyAttack.cs:406 -
       // `PlayerObject.SendMessage("RemoveHealth", damage)` - which
       // is ShowPlayerDamage.Flash's trigger. An enemy's BLOW
       // flashes the screen; the poison it carries does not.
+      // PSCALE1: `dmg` is the blow already weighed for the party beside me (partyHit, where it is declared above).
       if (dmg > 0) { onPlayerHurt?.(dmg, wpn); flashPlayerDamage(dmg); }
       // C2-slice (combat-9): a connected attack that LOST the
       // roll rings the miss sound (ApplyDamageToPlayer's else)
@@ -951,7 +1008,9 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // until a load or a teleport sweeps them (clearLive, below), and
       // SerializableEnemy saves every one; a camp's bandits are still
       // there when you come back.
-      if (!f.placed && _playerDist > ENCOUNTER_CULL_DISTANCE && !(f.ai.detected && f.ai.targetIsLocalPlayer !== false)) {
+      // DW-E4: nor a MANAGED one - the deep's foes stand, as DFU's loose enemies do, until the mod's own spawner releases
+      // them (their pixel's group leaving, the lane switched off, a transient reset); its cap bounds them, not this cull
+      if (!f.placed && !f.managed && _playerDist > (f.campId != null ? CAMP_CULL_DISTANCE : ENCOUNTER_CULL_DISTANCE) && !(f.ai.detected && f.ai.targetIsLocalPlayer !== false)) {   // DROPS-AUDIT CAMP-CULL
         releaseFoeBatch(f);
         f.dead = true;
         f.questBehaviour?.notifyDestroyed();   // B1: Destroy(gameObject) - the resource uncouples
@@ -1438,7 +1497,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
    *  teardown loses corpses on any teleport already, and DFU's own
    *  restore disables a dead record rather than re-minting it. */
   function snapshotWorld(toNative) {
-    return foes.filter((f) => !f.dead && !f.puppet).map((f) => {   // WORLD6b: a puppet is its owner's, never this save's
+    return foes.filter((f) => !f.dead && !f.puppet && !f.transient).map((f) => {   // WORLD6b: a puppet is its owner's, never this save's; DW-E4: nor a foe with no LoadID
       const wc = toNative(f.ai.feet);
       return {
         mobileType: f.mobileType, gender: f.gender,
@@ -1619,8 +1678,9 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // AUDIT WORLD6b-ii B2/B3: the attacker's terms - its level and its right-hand weapon - so a puppet's blow is this foe's
       const wpn = f.entity.weapon, wd = wpn && Number.isInteger(wpn.templateIndex) ? [wpn.templateIndex, wpn.material | 0] : null;
       const r = { i: f.seq, t: f.mobileType, x: f.gender === 'female' ? 1 : 0, f: [q2(w[0]), q2(w[1]), q2(w[2])], y: q3(f.ai.yaw), ...(Number.isFinite(f.entity.health) ? { h: Math.max(0, Math.min(FOE_HEALTH_MAX, f.entity.health)) } : {}), d: f.dead ? 1 : 0, a: f._atkA | 0, b: f._atkB ?? '', m: f.ai.moving ? 1 : 0, g, l: f.entity.level | 0, w: wd, c: f._castN | 0, s: f._castIdx | 0, u: f._castU ?? '', o: onWatch ? 0 : (f.corpse ? Math.min(255, f.entity?.items?.length | 0) : 0) };   // AUDIT WATCH1 A3: a watch body advertises NO pile - its take arm is its owner's own door (cityGuards.takeLoot), which the wire does not reach, so a peer offered the body clicked it for ever and heard nothing; WORLD6b-iii: the cast count and its spell; AUDIT WORLD6b-iii(a) A3: b/u whom the last blow/cast was at; WORLD6b-iii(c): o the body's pile
+      if (!onWatch && !f.dead && _sharedFoe(f)) { const n = fightN(f); if (n > 1) r.n = n; }   // AUDIT PSCALE1: how many fight it - every reader weighs its hits by the owner's count
       if (heirOf && !onWatch && !f.dead) { const h = heirOf(f) ?? null; f._heir = h; if (h) r.e = h; }   // AUDIT CONTRIB P1: the handover frame's heir (handOverFrame)
-      const key = `${r.f[0]},${r.f[1]},${r.f[2]},${r.y},${r.h},${r.d},${r.a},${r.b},${r.m},${r.g},${r.l},${wd ? wd.join('/') : '-'},${r.c},${r.s},${r.u},${r.o}`;
+      const key = `${r.f[0]},${r.f[1]},${r.f[2]},${r.y},${r.h},${r.d},${r.a},${r.b},${r.m},${r.g},${r.l},${wd ? wd.join('/') : '-'},${r.c},${r.s},${r.u},${r.o},${r.n}`;
       if (!full && f._sentKey === key) continue;
       f._sentKey = key;
       out.push(r); src.set(r, f);
@@ -1753,6 +1813,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       else if (!cur || cur.templateIndex !== r.w[0] || (cur.material | 0) !== r.w[1]) f.entity.weapon = createWeapon(r.w[0], r.w[1], () => 0.5);
     }
     if (r.g !== undefined) p.target = r.g;   // WORLD6b-ii: whose blow this puppet's is
+    if (r.d !== 1) f._fightN = r.n ?? 1;   // AUDIT PSCALE1: the owner's count of who fights it (a record without one: its owner alone). SIGIL1: a LIVE record's - a body's carries none, and the fight it died in was the last live count (its Renown bonus, its sigils)
     if (r.o !== undefined) { p.o = r.o; if (r.o > 0 && !(f._closedN != null && (_owners.get(f.puppet)?.n ?? 0) <= f._closedN)) f.corpseDisabled = false; }   // WORLD6b-iii(c): the body's pile, its owner's word - a refilled word re-opens it; AUDIT WORLD6b-iii(c) A7: not a word OLDER than the grant that closed it (a frame in flight at the splice)
     if (r.y !== undefined) p.yaw = r.y;
     if (r.m !== undefined) p.moving = r.m === 1;
@@ -1823,6 +1884,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     if (f.dead) return;
     if (f._pupMine && f.ai?.detected) setEnemyAlert(playerEntity, false);   // AUDIT WORLD6b-ii B6: its owner's foe was on me; the alert clears as a foe of mine would (survivors re-raise it)
     f.dead = true;
+    renownFoeDied(f);   // RENOWN1: its owner's frame says it fell - it pays me if I fought it
     f.corpse = true;
     releaseFoeBatch(f);
     mintCorpse(f);
@@ -1957,7 +2019,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     // kills is no Murder of mine - the crime stays whose it was, Multiplayer.md's lock). The knockback still lands
     // (the gate is knockDir's), the shield still absorbs, the corpse still falls and rides the next frame as `d: 1`.
     if (onWatch) _net.watch.hurt(f, dmg, at, dir);   // (the provenance - a peer's, not this player's - is the host's to add: world.js hands `{ fromPlayer: false, peer: true }`)
-    else damageFoe(f, dmg, at, dir, { fromPlayer: true, kind, peer: true, peerId: from });
+    else damageFoe(f, dmg, at, dir, { fromPlayer: true, kind, peer: true, peerId: from, whole: data.z === 1 });   // AUDIT PSCALE1 DOORS-1: a peer's kill is a kill
     // WORLD6b-iii(e): the shaft, where BowDamage puts it (:145-147) - the body's pile says so (o) and the grant carries it.
     // AUDIT WORLD6b-iii(e) A1: BOUNDED - HIT_ARROWS_MAX Arrows a body from peers' shafts, past it the blow lands and no
     // Arrow (a crafted stream minted a stack the projection refused whole, and the grant dropped the pile with it)
@@ -2025,8 +2087,10 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     _onHccClear?.();   // HCC-ONLINE: the peers' teams go with their puppets (a room change, a leave)
     _onDuelClear?.();   // DUEL1: and their rings
   }
+  /** DROPS-AUDIT CAMP-CAP: the encounter slots still free, the spawns in flight counted. */
+  const encounterRoom = () => MAX_ACTIVE_ENCOUNTER_FOES - activeCount() - spawning.filter((s) => s.capped).length;
 
-  return { foes, spawnFoe, damageFoe, handleAttackFromPlayer, attackFromPlayer, update, resolvePlayerHit, poisonFoe, batches, offsetAll, activeCount, lootTargets, hoverName, hoverContents, liveTargets, liveHoverName, takeLoot, pileBody: (key) => pileBody(corpseEntryFor(foes, key, 'foeCorpse', corpseLens)), snapshotWorld, restoreWorld, destroy,   // LOOT-STACK: a body as the loot window's tab
+  return { foes, spawnFoe, damageFoe, encounterRoom, partyHit, healFoe, pendingFeet: () => spawning.map((p) => p.feet), handleAttackFromPlayer, attackFromPlayer, update, resolvePlayerHit, poisonFoe, batches, offsetAll, activeCount, lootTargets, hoverName, hoverContents, liveTargets, liveHoverName, takeLoot, pileBody: (key) => pileBody(corpseEntryFor(foes, key, 'foeCorpse', corpseLens)), snapshotWorld, restoreWorld, destroy,   // LOOT-STACK: a body as the loot window's tab
     /** AUDIT 39: CleanupUntrackedObjects' enemy half (StreamingWorld.cs
      *  :1624-1635), which a teleport reaches too through
      *  ClearStreamingWorld -> CollectLooseObjects(true) (:993-998) -

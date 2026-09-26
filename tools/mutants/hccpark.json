@@ -263,8 +263,8 @@
   {
     "name": "RIDE-latest-word",
     "file": "src/net/peerRiders.js",
-    "old": "      const pose = peer?.shown;\n      if (!pose || !(pose.rd === POSE_RIDE.Horse",
-    "new": "      const pose = peer?.pose;\n      if (!pose || !(pose.rd === POSE_RIDE.Horse",
+    "old": "      const pose = peer?.shown;\n      if (!pose) continue;\n      // PR-WW1: a beast",
+    "new": "      const pose = peer?.pose;\n      if (!pose) continue;\n      // PR-WW1: a beast",
     "tests": [
       "test/hcc_park.test.js"
     ]

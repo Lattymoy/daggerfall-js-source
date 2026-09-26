@@ -40,6 +40,7 @@ import { wardrobeOf, equipRefusal, canModerate } from './titles.js';   // ACC3: 
 import { ID_RE, nameIsIssuable } from '../../src/net/identityToken.js';
 import { PLAY_GRACE_S } from '../../src/net/playClock.js';   // ACC4: the widest gap one beat may credit - one home both ends
 import { MUTE_MAX_MIN } from '../../src/net/moderation.js';   // MOD1: the longest mute - the command and the service agree in one place
+import { verifyReceipt } from '../../src/net/gateReceipt.js';   // WB5b: the relay's kill receipt, verified with its public half
 import {
   hashPassword, verifyPassword, needsRehash, passwordRefusal,
   mintRecoveryCode, codeForHashing,
@@ -414,10 +415,21 @@ export async function overRate({ db, nowS }, key, max = LOGIN_MAX, windowS = LOG
   // rather than from a SELECT after it, which is both a second call to
   // D1 and a window in which another request can bump the row and make
   // this caller read somebody else's number.
+  //
+  // AUDIT RENOWN1 (DATA-1, beside the hour's window it found): THE WINDOW
+  // ONLY MOVES FORWARD. `nowS` is read when a request ARRIVES, before its
+  // body, so a caller who sends headers in a window's last second and the
+  // body after the boundary lands an OLD window's start after a new one's.
+  // `window_start = excluded.window_start` took that as a fresh window and
+  // counted 1 - and the next new-window request did the same - so
+  // alternating the two reset the counter for ever (the `acct:` row stayed
+  // at 1 through 300 requests; the `login:` and `ip:` doors share this
+  // statement). A request stamped with a window already past is counted
+  // in the window that is open.
   const row = await db.prepare(`INSERT INTO rate_limits (key, window_start, count) VALUES (?, ?, 1)
     ON CONFLICT(key) DO UPDATE SET
-      count = CASE WHEN rate_limits.window_start = excluded.window_start THEN rate_limits.count + 1 ELSE 1 END,
-      window_start = excluded.window_start
+      count = CASE WHEN rate_limits.window_start >= excluded.window_start THEN rate_limits.count + 1 ELSE 1 END,
+      window_start = MAX(rate_limits.window_start, excluded.window_start)
     RETURNING count`).bind(key, start).first();
   return (row?.count ?? 0) > max;
 }
@@ -653,4 +665,55 @@ export async function reportDuelLoss({ db, nowS }, loser, winner) {
   const pair = n(await db.prepare('SELECT COUNT(*) AS n FROM duel_results WHERE loser = ?1 AND winner = ?2 AND at > ?3 - ?4').bind(loser.id, winner, nowS, DAY_S).first());
   const why = !w.handle ? 'guest' : gap > 0 ? 'gap' : pair >= DUEL_PAIR_DAY_MAX ? 'pair' : 'winner';
   return { recorded, why, ...(await duelRecordOf({ db }, loser.id)) };
+}
+
+// ═══ WB5b (2026-09-25) - THE GATES CLOSED ════════════════════════════
+//
+// Mac: "a gate of oblivion which takes place in a large boss arena", and
+// Option B - the relay's object is the authority over the boss, stamps
+// the kill and signs a receipt for each account that earned it
+// (src/net/gateReceipt.js: dealt its share of the health its own level
+// claim brought, or stood half the fight). THE ACCOUNT THE RECEIPT NAMES
+// carries it here and it is counted: the relay is the only party that
+// saw the kill, so its signature - verified with the public half this
+// service holds (GATE_PUBLIC_KEY) - is the whole of the proof, and the
+// session's account must be the receipt's `s`, so nobody claims
+// another's.
+//
+// ONCE, WHATEVER HAPPENS TO IT: gate_kills' primary key is (day,
+// account), so a second claim - another device, a retry after a lost
+// answer, a replay - lands nothing and is answered `claimed`.
+//
+// AND A RECORD IS A REGISTERED ACCOUNT'S (AUDIT DUEL1 A1's law): a
+// guest fights and loots, and its receipt is answered `guest` and not
+// counted - a guest that registers keeps its id (register() upgrades
+// the row), so the client keeps the receipt and claims it again then,
+// inside the receipt's week.
+
+/** An account's gates: `{ closed }`, counted off the rows. */
+export async function gateRecordOf({ db }, playerId) {
+  const r = await db.prepare('SELECT COUNT(*) AS n FROM gate_kills WHERE account = ?1').bind(playerId).first();
+  return { closed: Number(r?.n ?? 0) };
+}
+
+/**
+ * THE CLAIM: `receipt` verified with the relay's public half and naming `player`, one row a (day, account). Answers
+ * `{ recorded: true, closed }`, `{ recorded: false, why: 'claimed' | 'guest', closed }`, or `{ error }` -
+ * `no-gate-key` (this service holds no public half), `receipt` (not a receipt the relay signed, or expired - `why`
+ * says which rung), `not-yours` (another account's).
+ * @param {{ db: any, nowS: number, subtle: SubtleCrypto }} ctx
+ * @param {{ id: string, handle?: string|null }} player the session's account
+ * @param {unknown} receipt @param {CryptoKey|null} publicKey
+ */
+export async function claimGate({ db, nowS, subtle }, player, receipt, publicKey) {
+  if (!publicKey) return { error: 'no-gate-key' };
+  const v = await verifyReceipt(receipt, publicKey, { subtle, nowS });
+  if (!v.ok) return { error: 'receipt', why: v.why };
+  const c = v.claims;
+  if (c.s !== player.id) return { error: 'not-yours' };
+  if (!player.handle) return { recorded: false, why: 'guest', ...(await gateRecordOf({ db }, player.id)) };
+  const r = await db.prepare('INSERT OR IGNORE INTO gate_kills (day, account, boss, earned, at) VALUES (?1, ?2, ?3, ?4, ?5)')
+    .bind(c.d, player.id, c.b, c.x, nowS).run();
+  const recorded = Number(r?.meta?.changes ?? 0) > 0;
+  return recorded ? { recorded, ...(await gateRecordOf({ db }, player.id)) } : { recorded, why: 'claimed', ...(await gateRecordOf({ db }, player.id)) };
 }

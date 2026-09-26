@@ -200,14 +200,16 @@ test('AUDIT 39 #160: every rAF host WAITS on the hold instead of drawing under t
     // state is read" - it is "within 800 characters", and 800 characters
     // is room for a dozen statements. All three hosts spell the gap
     // identically, so the pin can say what is allowed: the clock's
-    // stamp, the input frame, and comment lines. Anything else - a read,
+    // stamp, the input frame, and comment lines (and, since FPS-CAP1, the
+    // Frame Rate Cap's hold, which re-arms and returns). Anything else - a read,
     // a draw, a tick - fails here, which is the sentence above.
     assert.match(s, new RegExp(
       String.raw`if \(!frameAlive\(_frameToken\)\) \{ destroyWorldPlaque\(\); return; \}[^\n]*\n`
+      + String.raw`\s+if \(frameCapSkip\(now\)\) \{ requestAnimationFrame\(frame\); return; \}[^\n]*\n`   // FPS-CAP1: the cap's hold reads nothing but the clock
       + String.raw`\s+frameBegin\(now\);[^\n]*\n`
       + String.raw`\s+beginInputFrame\([A-Za-z.]+\);[^\n]*\n`
       + String.raw`(?:\s*//[^\n]*\n)*`
-      + String.raw`\s+if \(frameHeld\(\)\) \{ frameAbort\(\); hideWorldPlaque\(\); last = now; requestAnimationFrame\(frame\); return; \}\n`
+      + String.raw`\s+if \(frameHeld\(\)\) \{ frameAbort\(\); hideWorldPlaque\(\); last = now; requestAnimationFrame\(frame\); ${h.endsWith('world.js') ? String.raw`drawGateBanner\(null\); ` : ''}return; \}\n`   // AUDIT WB C5: the world host's gate countdown is a DOM line too, and goes down on the same line as the plaque
       + String.raw`\s+const dt =`),
     `${h} waits out the video and keeps its loop`);
   }

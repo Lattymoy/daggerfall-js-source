@@ -53,6 +53,17 @@ IDENTITY_PUBLIC_KEY = "2ZbUhjpY80Hne60_ucjzCZMF0i5DsarfaWW9SDU5ei4"
 # refuses past; this may only TIGHTEN it, never widen it.
 IDENTITY_MAX_TTL_S = "300"
 
+# ═══ WB3: THE RELAY'S ONE SECRET ═══════════════════════════════════
+#
+# GATE_SIGNING_KEY is a Worker SECRET, never a var: the Ed25519 PRIVATE
+# key (PKCS8, base64) the relay signs an Oblivion Gate's kill receipts
+# with (src/net/gateReceipt.js), set once with
+# `npx wrangler secret put GATE_SIGNING_KEY` from server/. Its public
+# half is the account service's to hold (WB5), which is the only party
+# that honours a receipt. A relay WITHOUT it still runs the fight and
+# the spoils: the receipts go out unsigned, the players' loot rolls the
+# same, and the account service declines to record the kill.
+
 # AUDIT ONLINE A17: an uncaught error in the object is logged, not lost
 [observability]
 enabled = true

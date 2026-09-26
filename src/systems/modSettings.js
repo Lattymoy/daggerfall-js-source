@@ -10,6 +10,7 @@
 
 import { appStorage } from './appStorage.js';   // the one storage seam - localStorage lives there alone
 import { onlineForcedModSetting } from './onlineLane.js';   // MODS-ONLINE-2: online, the room's ground is forced and every other switch is the player's
+import { FOOT_SKIN_COUNT, CLASS_SKINS, classSkinLabel } from '../player/classSkins.js';   // SKIN2: the class skins past the mod's sixteen
 
 const STORE_KEY = 'dfjs-mod-settings';
 
@@ -124,6 +125,95 @@ export const MOD_SETTINGS = Object.freeze({
           + 'Exterior detail.” Bandit camps and forts, ruins, shrines, mountains and rock fields across the Iliac Bay, the '
           + 'ground levelled under each, with their bandits, bears and treasure - and a camp outside Privateer’s Hold.',
       }),
+    }),
+  }),
+  // AS1 (2026-09-25): AQUATIC SPRITES 1.0 (Cliffworms). No modsettings of
+  // its own - three world-data blocks, so one switch: the port's Enabled,
+  // the gate DFU's mod list is (a mod that is off is a mod DFU never
+  // loaded; scenes/modWorldData.js reads it at the door).
+  'aquatic-sprites': Object.freeze({
+    title: 'Aquatic Sprites',
+    author: 'Cliffworms',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'Cliffworms’ Aquatic Sprites 1.0, 1:1: “Adds aquatic sprites to submerged caverns.” The weed, coral '
+          + 'and shells Daggerfall ships and never places, set into three of its flooded dungeon blocks - 119 of them, '
+          + 'drawn from your own game files.',
+      }),
+    }),
+  }),
+  // DS1 (2026-09-25): DETAILED SHIPS 1.0.0 (Cliffworms). No modsettings of
+  // its own - two building records and thirteen pictures - so one switch.
+  'detailed-ships': Object.freeze({
+    title: 'Detailed Ships',
+    author: 'Cliffworms',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'Cliffworms’ Detailed Ships 1.0.0, 1:1: “Revamps the interior and exterior of player ships.” Rigging, '
+          + 'crates and barrels, tenders, rudders and railings outside; below decks, quarters for you and the crew, a '
+          + 'kitchen, a cargo hold, an armory and a shrine to Kynareth, with sailors to talk to.',
+      }),
+    }),
+  }),
+  // WA1 (2026-09-25): WARM ASHES - SHIPS 1.1 (Kamer). No modsettings of its
+  // own - a travel hook, a quest action and six world-data variants - so
+  // one switch.
+  'warm-ashes-ships': Object.freeze({
+    title: 'Warm Ashes - Ships',
+    author: 'Kamer',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'Kamer\u2019s Warm Ashes - Ships 1.1, 1:1: \u201cEncounters on Ships and Ocean Fast Travel.\u201d Cross the sea by ship '
+          + 'and one voyage in four is ambushed: you are put on your ship\u2019s deck with your crew as pirate vessels close in '
+          + '(a ship is lent if you own none), and once the boarders are beaten you are set ashore where you were bound.',
+      }),
+    }),
+  }),
+  // DW-A (2026-09-25): ILIAC PUDDLE NO MORE 1.2.2 (jet082). Its one section,
+  // General, restated flat with the section in front of each name (the
+  // Immersive Footsteps convention), in the shipped order with the shipped
+  // defaults, ranges and descriptions - the typo in "Spawn underwate
+  // enemies" is the mod's own. Plus the port's `Enabled` (MO1: on). The
+  // steppers are the Mods pane's: a metre for the depth, a twentieth on
+  // the 0..1 sliders, a quarter on the swim multiplier (its floor).
+  'iliac-puddle-no-more': Object.freeze({
+    title: 'Iliac Puddle No More',
+    author: 'jet082',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'jet082’s Iliac Puddle No More 1.2.2, 1:1: “The Iliac Puddle is now the Iliac Bay.” The sea is carved out '
+          + 'under the water - a seafloor that falls away from every coast, as deep as 250 metres - with a surface you see '
+          + 'from above and below, open-water swimming and your breath to watch, fish, weed and coral, and what lives in '
+          + 'the deep.',
+      }),
+      'General.WaterDepth': Object.freeze({ default: 250.0, min: 5.0, max: 250.0, float: true, step: 1, description: 'Maximum water depth' }),
+      'General.SpawnWaterSurfaces': Object.freeze({ default: true, description: 'Render visible water surfaces' }),
+      'General.SpawnUnderwaterEnemies': Object.freeze({ default: true, description: 'Spawn underwate enemies' }),
+      'General.EnemyFrequency': Object.freeze({ default: 0.3, min: 0.0, max: 1.0, float: true, step: 0.05, description: 'Enemy frequency rate' }),
+      'General.MaxLiveEnemies': Object.freeze({ default: 128, min: 0, max: 256, description: 'Maximum live underwater enemies' }),
+      'General.PassiveFishFrequency': Object.freeze({ default: 0.8, min: 0.0, max: 1.0, float: true, step: 0.05, description: 'Fish frequency rate' }),
+      'General.MaxLiveFish': Object.freeze({ default: 720, min: 0, max: 1080, description: 'Maximum live passive fish' }),
+      'General.SpawnUnderwaterDecorations': Object.freeze({ default: true, description: 'Decorate the seafloor' }),
+      'General.DecorationPopulateRadius': Object.freeze({ default: 2, min: 1, max: 3, description: 'Decoration spawning radius in map pixels (3 = full loaded ring, no pop-in)' }),
+      'General.DecorationFrequency': Object.freeze({ default: 0.3, min: 0.0, max: 1.0, float: true, step: 0.05, description: 'Decoration rate' }),
+      'General.MaxDecorationsPerTile': Object.freeze({ default: 1080, min: 64, max: 2160, description: 'Max decorations per map pixel (lower = better performance)' }),
+      'General.SeafloorLootRate': Object.freeze({ default: 0.5, min: 0.0, max: 1.0, float: true, step: 0.05, description: 'Random loot rate' }),
+      'General.MaxLiveLootObjects': Object.freeze({ default: 192, min: 0, max: 256, description: 'Maximum isolated loot objects' }),
+      'General.TreasureClusterRate': Object.freeze({ default: 0.3, min: 0.0, max: 1.0, float: true, step: 0.05, description: 'Wreckage treasure rate' }),
+      'General.MaxLiveTreasureClusters': Object.freeze({ default: 12, min: 0, max: 32, description: 'Maximum wrecks' }),
+      'General.TreasureCove': Object.freeze({ default: false, description: 'Increased loot multipliers + loot quality' }),
+      'General.WaterSurfaceTopTransparency': Object.freeze({ default: 0.7, min: 0.0, max: 1.0, float: true, step: 0.05, description: 'Water surface transparency from above' }),
+      'General.WaterSurfaceBottomTransparency': Object.freeze({ default: 0.2, min: 0.0, max: 1.0, float: true, step: 0.05, description: 'Water surface transparency from below' }),
+      'General.DarkerSurfaceWater': Object.freeze({ default: 0.0, min: 0.0, max: 1.0, float: true, step: 0.05, description: 'Darker surface water tint' }),
+      'General.UnderwaterFogStrength': Object.freeze({ default: 0.5, min: 0.0, max: 1.0, float: true, step: 0.05, description: 'Underwater fog strength' }),
+      'General.UnderwaterFogDistance': Object.freeze({ default: 0.3, min: 0.0, max: 1.0, float: true, step: 0.05, description: 'Underwater fog view distance' }),
+      'General.SwimSpeedMultiplier': Object.freeze({ default: 1.0, min: 0.25, max: 30.0, float: true, step: 0.25, description: 'Multiplier for outdoor swimming movement speed' }),
+      'General.EnableSwimStroke': Object.freeze({ default: true, description: 'Press Run while swimming for a burst of speed' }),
+      'General.ArgonianInfiniteBreath': Object.freeze({ default: true, description: 'Argonians never drown' }),
     }),
   }),
   // MM1: MEANER MONSTERS 1.5.2 (Ralzar). No modsettings of its own -
@@ -472,6 +562,22 @@ export const MOD_SETTINGS = Object.freeze({
       'Handling.StowWhenSwimming': Object.freeze({ default: true, description: 'Swimming stows the light: no free hand.' }),
       'Handling.RelaxedTwoHandedWeapons': Object.freeze({ default: false, description: 'Two-handed weapons will only occupy your off-hand when attacking' }),   // 3ARMS: the mod ships true; the port ships false - see the departure in Handheld-Torches.md
       'Handling.RelaxedLanterns': Object.freeze({ default: false, description: 'If enabled, will not stow lanterns when both hands are occupied' }),
+      // HT-WAIST (2026-09-24, Mac: "Let the lantern item be able to be hung
+      // at the waist instead of having to be held" - and, asked how, a
+      // switch on THIS pane, off by default; HT-WAIST-ON, the same day: "Have
+      // the lantern change on by default" - it ships ON): A DEPARTURE ON THIS PANE, AND
+      // THE FIRST KEY THE MOD DOES NOT SHIP AT ALL. Every earlier one
+      // (MODS-ON Sprite, HT4 Tab, SOC5 F, HT5 Bob, HT7 OnStow, 3ARMS) moves
+      // a shipped default; this one is the port's own switch, sitting beside the
+      // mod's RelaxedLanterns because it is that switch taken the rest of
+      // the way. Relaxed keeps a lantern lit when both hands are busy; ON,
+      // this hangs it at the waist - it never needs a free hand, is never
+      // stowed for a two-hander, a bow, a spell, a climb or a swim, the
+      // first-person hand never holds it, and the light shines from the hip
+      // (systems/playerTorch.js lanternAtWaist). Torches and candles are
+      // still held. The vendored modsettings.json is untouched; the pane's
+      // pin names this key as the port's (test/ht1_handheldtorches.test.js).
+      'Handling.LanternsAtWaist': Object.freeze({ default: true, description: 'If enabled, lanterns hang at your waist instead of being held: they never need a free hand, are never stowed, and light you from the hip. Torches and candles are still held. (This port’s own switch - the mod has none.)' }),
       'Throwing.ThrowTorchInput': Object.freeze({ default: "X", text: true, description: 'Hold to wind up a throw, release to throw a torch.' }),   // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
       'Throwing.ThrowStrength': Object.freeze({ default: 1.0, min: 0.0, max: 10.0, float: true, step: 0.25, description: 'Multiplier on the throw\u2019s speed (25 at full Strength).' }),
       'Throwing.GravityStrength': Object.freeze({ default: 1.0, min: 0.0, max: 10.0, float: true, step: 0.25, description: 'Multiplier on the thrown torch\u2019s fall.' }),
@@ -647,11 +753,14 @@ export const MOD_SETTINGS = Object.freeze({
       // Heavy Fighter F 4 and M 5, Mage F 6 and M 7, Thief Mage 8/9, Fighter Mage 10/11, Thief 12/13, Fighter Thief
       // 14/15), and the art says the rest: every even set is a woman and every odd set a man, and the five riders are
       // the fighters by their helms and boots (green-booted women, cyan-booted men - the on-foot sets' own colours).
-      'Graphics.OnFoot': Object.freeze({ default: 0, min: 0, max: 15, description: 'Sprite when on foot',
+      // SKIN2 (2026-09-25, Mac: "Implement these as new skin options"): Daggerfall's own classes follow the mod's
+      // sixteen as 16 onwards (player/classSkins.js) - the mod's range kept as its own, the port's past it.
+      'Graphics.OnFoot': Object.freeze({ default: 0, min: 0, max: FOOT_SKIN_COUNT - 1, description: 'Sprite when on foot',
         labels: Object.freeze(['Light Fighter (female)', 'Light Fighter (male)', 'Medium Fighter (female)', 'Medium Fighter (male)',
           'Heavy Fighter (female)', 'Heavy Fighter (male)', 'Mage (female)', 'Mage (male)',
           'Thief Mage (female)', 'Thief Mage (male)', 'Fighter Mage (female)', 'Fighter Mage (male)',
-          'Thief (female)', 'Thief (male)', 'Fighter Thief (female)', 'Fighter Thief (male)']) }),
+          'Thief (female)', 'Thief (male)', 'Fighter Thief (female)', 'Fighter Thief (male)',
+          ...CLASS_SKINS.map(classSkinLabel)]) }),
       'Graphics.OnHorse': Object.freeze({ default: 0, min: 0, max: 4, description: 'Sprite when riding a horse',
         labels: Object.freeze(['Light Fighter (female)', 'Medium Fighter (male)', 'Medium Fighter (female)', 'Heavy Fighter (male)', 'Heavy Fighter (female)']) }),
       'Graphics.ReadyStance': Object.freeze({ default: 2, options: Object.freeze(['Never', 'When Idle', 'When Idle or Moving']), description: 'Whether the sprite will change states when readying a weapon or spell' }),
@@ -852,6 +961,14 @@ export const MOD_SETTINGS = Object.freeze({
       'GeneralOptions.AllowWeather': Object.freeze({ default: false, description: "Allows weather effects during time accelerated travel" }),
       'GeneralOptions.AllowAnnoyingSounds': Object.freeze({ default: false, description: "Allows footstep and hoof sounds during time accelerated travel" }),
       'GeneralOptions.AllowRealGrass': Object.freeze({ default: false, description: "Allows the Real Grass mod to run during time accelerated travel" }),
+      // TRAVEL-NAV1 (2026-09-25, Mac: "Improving travel options navigation
+      // to properly route around objects and stopping before running into
+      // buildings"): THE PORT'S OWN KEY on the mod's pane, as HT-WAIST's is
+      // on Handheld Torches' - the vendored modsettings.json does not carry
+      // it and its words say so. ON: a journey steers round buildings,
+      // walls and rocks and pauses short of what it cannot pass
+      // (systems/travelSteer.js). OFF: the mod's own beeline, exactly.
+      'GeneralOptions.AvoidObstacles': Object.freeze({ default: true, description: 'Steers time accelerated travel around buildings, walls and rocks, and pauses the journey before walking into one it cannot get round. (This port’s own switch - the mod has none.)' }),
       'TimeAcceleration.DefaultStartingAcceleration': Object.freeze({ default: 4, options: Object.freeze(["1", "2", "3", "5", "10", "15", "20", "25", "30", "40", "50"]), description: "The initial time acceleration used after starting the game" }),
       'TimeAcceleration.AlwaysUseStartingAcceleration': Object.freeze({ default: false, description: "Always uses the default starting acceleration when initiating a journey, rather than value from the previous journey" }),
       'TimeAcceleration.AccelerationLimit': Object.freeze({ default: 60, min: 10, max: 100, description: "The maximum limit allowed for time acceleration, road following is limited to half this amount" }),

@@ -1549,6 +1549,10 @@ The sandstorm's look is not the wind's mark and is unchanged. Not seen
 on a screen here, since the container has no game data. The two numbers
 are the dials if it wants another step either way.
 
+WISPS-RETURN (2026-09-25, `Field-Bugs-2026-09-24.md`) put WIND3's straight
+streak back in place of the flourish. Both numbers stand; a streak at its
+darkest is 0.44 in a gale and 0.20 in a calm.
+
 ## DISC17-B: thunder cut off mid-roll
 
 **Cause.** WEATHER3d plays a distant storm's thunder from a stand-in

@@ -1,0 +1,353 @@
+[
+  {
+    "name": "DECOR1d-the-step-unbounded",
+    "file": "src/systems/decorScan.js",
+    "old": "    const end = Math.min(total, next + n);",
+    "new": "    const end = total;",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-a-dungeon-block-read",
+    "file": "src/systems/decorScan.js",
+    "old": "        if (!isTownBlock(blocks.getBlockType(next))) continue;",
+    "new": "        if (false) continue;",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-the-count-per-step",
+    "file": "src/systems/decorScan.js",
+    "old": "        if (b) collectDecor([b], collected);",
+    "new": "        if (b) { collected.clear(); collectDecor([b], collected); }",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-the-flats-not-awaited",
+    "file": "src/systems/decorScan.js",
+    "old": "      phase = 'flats';",
+    "new": "      phase = 'done';",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-a-zero-radius-kept",
+    "file": "src/systems/decorScan.js",
+    "old": "if (Number.isFinite(r) && r > 0) radii.set(key, r);",
+    "new": "if (Number.isFinite(r)) radii.set(key, r);",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-the-lift-unread",
+    "file": "src/systems/decorPlacer.js",
+    "old": "      const up = lift() + s.raise;",
+    "new": "      const up = s.raise;",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-the-grid-on-the-height",
+    "file": "src/systems/decorPlacer.js",
+    "old": "        pos: [x, hit[1] - origin[1] + up, z],",
+    "new": "        pos: [x, s.snap ? snapTo(hit[1] - origin[1] + up, DECOR_GRID) : hit[1] - origin[1] + up, z],",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-the-turn-unwrapped",
+    "file": "src/systems/decorPlacer.js",
+    "old": "    turn(deg) { s.yaw = wrapTurn(round(s.yaw + deg, 1)); },",
+    "new": "    turn(deg) { s.yaw = round(s.yaw + deg, 1); },",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-the-scale-unbounded",
+    "file": "src/systems/decorPlacer.js",
+    "old": "      s.scale = round(Math.min(DECOR_SCALE_MAX, Math.max(DECOR_SCALE_MIN, next)), 3);",
+    "new": "      s.scale = round(next, 3);",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-the-price-at-one-scale",
+    "file": "src/systems/decorPlacer.js",
+    "old": "      return radius != null && radius > 0 ? decorPrice(radius, s.scale) : null;",
+    "new": "      return radius != null && radius > 0 ? decorPrice(radius, 1) : null;",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-a-disabled-place-placing",
+    "file": "src/ui/decorPanel.js",
+    "old": "    if (!sel || place.disabled) return;",
+    "new": "    if (!sel) return;",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-the-cap-unread",
+    "file": "src/ui/decorPanel.js",
+    "old": "  if (count >= cap) return `This room already holds ${cap} pieces.`;\n",
+    "new": "",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-the-gold-unread",
+    "file": "src/ui/decorPanel.js",
+    "old": "  if (price > gold) return `You need ${price - gold} more gold.`;",
+    "new": "  if (false) return `You need ${price - gold} more gold.`;",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-a-hidden-button-opening",
+    "file": "src/ui/decorPanel.js",
+    "old": "btn.addEventListener('click', () => { if (btn.dataset.up === '1') onPress(); });",
+    "new": "btn.addEventListener('click', () => onPress());",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-the-host-never-told",
+    "file": "src/ui/decorPanel.js",
+    "old": "    if (key !== pointedKey) { pointedKey = key; onPoint(e); }",
+    "new": "    if (key !== pointedKey) { pointedKey = key; }",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-the-strafe-mirrored",
+    "file": "src/scenes/decorTool.js",
+    "old": "  const v = [f[0] * forward + Math.cos(yaw) * strafe, f[1] * forward + rise, f[2] * forward - Math.sin(yaw) * strafe];",
+    "new": "  const v = [f[0] * forward - Math.cos(yaw) * strafe, f[1] * forward + rise, f[2] * forward + Math.sin(yaw) * strafe];",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-the-leash-unread",
+    "file": "src/scenes/decorTool.js",
+    "old": "  if (dl <= DECOR_FLY_LEASH) return next;",
+    "new": "  return next;",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-a-diagonal-faster",
+    "file": "src/scenes/decorTool.js",
+    "old": "  const k = (speed * dt) / Math.max(1, len);",
+    "new": "  const k = speed * dt;",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-an-unlocked-press-placing",
+    "file": "src/scenes/decorTool.js",
+    "old": "    if (!deps.locked?.()) return;   // the press that takes the pointer back",
+    "new": "    if (false) return;   // the press that takes the pointer back",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-a-window-not-suspending",
+    "file": "src/scenes/decorTool.js",
+    "old": "    placing.suspended = overlayUp;",
+    "new": "    placing.suspended = false;",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-paying-on-a-refusal",
+    "file": "src/scenes/decorTool.js",
+    "old": "?? 'The piece could not be placed.', at: now() }; return false; }",
+    "new": "?? 'The piece could not be placed.', at: now() }; deps.wallet().pay(price); return false; }",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-the-short-piece-left-standing",
+    "file": "src/scenes/decorTool.js",
+    "old": "          await deps.homeDecor.remove?.({ mapId: r.mapId, buildingKey: r.buildingKey, character: deps.character?.(), id: piece.id });\n",
+    "new": "",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-a-left-room-stood-in",
+    "file": "src/scenes/decorTool.js",
+    "old": "        if (deps.visit?.() === visit) pool.put(",
+    "new": "        pool.put(",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-offline-placed-unpaid",
+    "file": "src/scenes/decorTool.js",
+    "old": "        deps.wallet().pay(price);\n        pool.put(piece);",
+    "new": "        pool.put(piece);",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-the-cap-unread-on-commit",
+    "file": "src/scenes/decorTool.js",
+    "old": "gold: deps.wallet().gold, count: pool.size(), cap: DECOR_CAP })) return false;",
+    "new": "gold: deps.wallet().gold, count: 0, cap: DECOR_CAP })) return false;",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-the-eye-unled",
+    "file": "src/scenes/decorTool.js",
+    "old": "    if (placing && !placing.suspended) cam.pos = [...placing.fly];",
+    "new": "    if (false) cam.pos = [...placing.fly];",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-the-flat-ghost-unmoved",
+    "file": "src/scenes/decorTool.js",
+    "old": "      p.batch.origin = [origin[0] + p.piece.pos[0], origin[1] + p.piece.pos[1], origin[2] + p.piece.pos[2]];\n",
+    "new": "",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-the-preview-in-the-wrong-box",
+    "file": "src/scenes/decorTool.js",
+    "old": "    const rect = { x: (box.left - c.left) * sx, y: (box.top - c.top) * sy, w: box.width * sx, h: box.height * sy };",
+    "new": "    const rect = { x: box.left - c.left, y: box.top - c.top, w: box.width, h: box.height };",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-the-preview-not-copied",
+    "file": "src/scenes/decorTool.js",
+    "old": "      try { ctx.drawImage(deps.canvas, rect.x, rect.y, rect.w, rect.h, 0, 0, pw, ph); } catch { /* a lost context copies nothing */ }",
+    "new": "      void ctx;",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-the-cursor-left-free",
+    "file": "src/scenes/decorTool.js",
+    "old": "    deps.cursorOff?.();   // a cursor freed",
+    "new": "    void 0;   // a cursor freed",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-the-names-never-filled",
+    "file": "src/scenes/decorTool.js",
+    "old": "    for (const e of s.entries()) deps.names?.set(e.key, e.name);",
+    "new": "    void s;",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-the-camera-unled-in-the-host",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (mode === 'interior') decorTool.cameraOverride(cam);",
+    "new": "    void 0;",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-the-view-over-the-shoulder",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (decorTool.flying()) mwv.eye = cam.pos;",
+    "new": "    void 0;",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-every-picture-at-once",
+    "file": "src/ui/decorPanel.js",
+    "old": "      else if (watcher) { r.decorThumb = () => askThumb(e, img); watcher.observe(r); } else askThumb(e, img);",
+    "new": "      else askThumb(e, img);",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-the-chosen-piece-pictureless",
+    "file": "src/ui/decorPanel.js",
+    "old": "      if (e.flat && !thumbs.has(e.key)) askThumb(e);",
+    "new": "      void 0;",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-a-release-kept-from-the-host",
+    "file": "src/scenes/decorTool.js",
+    "old": "    const act = deps.actionOf?.(e) ?? null;\n    if (act) flyHeld.delete(act);",
+    "new": "    const act = deps.actionOf?.(e) ?? null;\n    e.stopImmediatePropagation?.();\n    if (act) flyHeld.delete(act);",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-a-flight-key-never-let-go",
+    "file": "src/scenes/decorTool.js",
+    "old": "    if (act) flyHeld.delete(act);",
+    "new": "    void act;",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-the-grid-toggling-on-repeat",
+    "file": "src/scenes/decorTool.js",
+    "old": "    else if (free === 'grid' && once) placing?.placer?.toggleSnap();",
+    "new": "    else if (free === 'grid') placing?.placer?.toggleSnap();",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1d-a-turn-read-raw",
+    "file": "src/scenes/decorTool.js",
+    "old": "      case 'TurnLeft': turn(e, -1); return;",
+    "new": "      case 'TurnLeft': return;",
+    "tests": [
+      "test/decor1d.test.js"
+    ]
+  }
+]

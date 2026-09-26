@@ -1,0 +1,641 @@
+[
+  {
+    "name": "PT-round-stamp-unread",
+    "file": "src/systems/partyTravelLaw.js",
+    "old": "const at = stampOf(tv.at, now);",
+    "new": "const at = Number(tv.at) || 0;",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-round-never-lapses",
+    "file": "src/systems/partyTravelLaw.js",
+    "old": "return now - at > timeout ? null : { x: tv.x, y: tv.y, o: tv.o, at, go: null };",
+    "new": "return { x: tv.x, y: tv.y, o: tv.o, at, go: null };",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-departed-never-lapses",
+    "file": "src/systems/partyTravelLaw.js",
+    "old": "return now - go > TRIP_FOLLOW_MS ? null : { x: tv.x, y: tv.y, o: tv.o, at, go };",
+    "new": "return { x: tv.x, y: tv.y, o: tv.o, at, go };",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-go-before-at-departs",
+    "file": "src/systems/partyTravelLaw.js",
+    "old": "if (go > 0 && go >= at)",
+    "new": "if (go > 0)",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-vote-any-round",
+    "file": "src/systems/partyTravelLaw.js",
+    "old": "if (p.tr === at) return 'ready';",
+    "new": "if (p.tr != null) return 'ready';",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-decline-reads-ready",
+    "file": "src/systems/partyTravelLaw.js",
+    "old": "if (p.td === at) return 'declined';",
+    "new": "if (p.td === at) return 'ready';",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-offline-seat-gathered",
+    "file": "src/systems/partyTravelLaw.js",
+    "old": "    if (!memberPresent(m)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-sets-out-with-one-ready",
+    "file": "src/systems/partyTravelLaw.js",
+    "old": "export const tripSetsOut = (tally) => !!tally && tally.waiting.length === 0;",
+    "new": "export const tripSetsOut = (tally) => !!tally && tally.ready.length > 0;",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-count-drops-leader",
+    "file": "src/systems/partyTravelLaw.js",
+    "old": "return `${tally.ready.length + 1}/",
+    "new": "return `${tally.ready.length}/",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-offline-leader-travelled-to",
+    "file": "src/systems/partyTravelLaw.js",
+    "old": "if (!leader || leader.online === false) return { refuse: PARTY_TRAVEL_TEXT.offline };",
+    "new": "if (!leader) return { refuse: PARTY_TRAVEL_TEXT.offline };",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-indoors-travels",
+    "file": "src/systems/partyTravelLaw.js",
+    "old": "  if (!outdoors) return { refuse: PARTY_TRAVEL_TEXT.inside };\n",
+    "new": "",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-here-travels",
+    "file": "src/systems/partyTravelLaw.js",
+    "old": "  if (here && p.px === here.x && p.py === here.y) return { refuse: PARTY_TRAVEL_TEXT.here };\n",
+    "new": "",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-beside-indoors",
+    "file": "src/systems/partyTravelLaw.js",
+    "old": "if (!p || p.in !== 0 || p.px !== x || p.py !== y) return null;",
+    "new": "if (!p || p.px !== x || p.py !== y) return null;",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-beside-pixel-unchecked",
+    "file": "src/systems/partyTravelLaw.js",
+    "old": "  if (at.x !== x || at.y !== y) return null;\n",
+    "new": "",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-beside-walls-ignored",
+    "file": "src/systems/partyTravelLaw.js",
+    "old": "if (!(d > 0) || !probe.clear(at, [dx / d, 0, dz / d], d + BESIDE_REACH)) continue;",
+    "new": "if (!(d > 0)) continue;",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-beside-level-ignored",
+    "file": "src/systems/partyTravelLaw.js",
+    "old": "if (!f || !(Math.abs(f[1] - at[1]) <= BESIDE_LEVEL)) continue;",
+    "new": "if (!f) continue;",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-beside-flying-lands",
+    "file": "src/systems/partyTravelLaw.js",
+    "old": "return own && Math.abs(own[1] - at[1]) <= BESIDE_LEVEL ? { pos: own, yaw: null } : null;",
+    "new": "return own ? { pos: own, yaw: null } : null;",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-walk-is-journey",
+    "file": "src/systems/partyTravelLaw.js",
+    "old": "return Math.max(Math.abs(now.px - was.px), Math.abs(now.py - was.py)) > 1;",
+    "new": "return Math.max(Math.abs(now.px - was.px), Math.abs(now.py - was.py)) > 0;",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-wire-destination-past-map",
+    "file": "src/net/wire.js",
+    "old": "Number.isInteger(tv.x) && tv.x >= 0 && tv.x < MAP_PIXELS_X",
+    "new": "Number.isInteger(tv.x) && tv.x >= 0",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-wire-toggles-unbounded",
+    "file": "src/net/wire.js",
+    "old": "Number.isInteger(tv.o) && tv.o >= 0 && tv.o <= 7",
+    "new": "Number.isInteger(tv.o) && tv.o >= 0",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-wire-round-unrounded",
+    "file": "src/net/wire.js",
+    "old": "at: Math.round(tv.at), go:",
+    "new": "at: tv.at, go:",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-wire-yes-dropped",
+    "file": "src/net/wire.js",
+    "old": "  if (finite(p.tr) && p.tr >= 0) out.tr = Math.round(p.tr);\n",
+    "new": "",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-wire-feet-indoors",
+    "file": "src/net/wire.js",
+    "old": "if (out.in === 0 && finite(p.wx)",
+    "new": "if (finite(p.wx)",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-wire-feet-unbounded",
+    "file": "src/net/wire.js",
+    "old": "&& p.wz >= 0 && p.wz < MAP_PIXELS_Y * PIXEL_UNITS && Math.abs(p.wy) <= POSE_Y_BOUND) {",
+    "new": "&& p.wz >= 0) {",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-relay-min-old",
+    "file": "src/net/wire.js",
+    "old": "export const PARTY_TRAVEL_RELAY_MIN = 112;",
+    "new": "export const PARTY_TRAVEL_RELAY_MIN = 111;",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-link-flag-always",
+    "file": "src/net/online.js",
+    "old": "if (primary) this.partyTravelOk = relaySupportsPartyTravel(relayV);",
+    "new": "if (primary) this.partyTravelOk = true;",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-chat-travel-not-host",
+    "file": "src/net/chatCommands.js",
+    "old": "'ready', 'leader', 'travel', 'event']);",
+    "new": "'ready', 'leader', 'event']);",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-propose-through-old-hub",
+    "file": "src/systems/partyTravel.js",
+    "old": "if (!s?.party || !s.leads() || !host.relayOk() || !pick?.pixel || opts?.playerControlled) return false;",
+    "new": "if (!s?.party || !s.leads() || !pick?.pixel || opts?.playerControlled) return false;",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-propose-a-walked-trip",
+    "file": "src/systems/partyTravel.js",
+    "old": "|| !pick?.pixel || opts?.playerControlled) return false;",
+    "new": "|| !pick?.pixel) return false;",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-propose-nobody-gathered",
+    "file": "src/systems/partyTravel.js",
+    "old": "    if (!gathered.length) return false;\n",
+    "new": "",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-propose-to-here",
+    "file": "src/systems/partyTravel.js",
+    "old": "    if (pick.pixel.x === here.x && pick.pixel.y === here.y) return false;\n",
+    "new": "",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-leader-sets-out-inside",
+    "file": "src/systems/partyTravel.js",
+    "old": "if (!host.outdoors() || !host.alive()) { cancel(PARTY_TRAVEL_TEXT.off); return; }",
+    "new": "if (!host.alive()) { cancel(PARTY_TRAVEL_TEXT.off); return; }",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-leader-walks-off-with-it",
+    "file": "src/systems/partyTravel.js",
+    "old": "      if (Math.hypot(f.x - t.origin.x, f.z - t.origin.z) > host.radius) { cancel(PARTY_TRAVEL_TEXT.moved); return; }\n",
+    "new": "",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-round-never-late",
+    "file": "src/systems/partyTravel.js",
+    "old": "      if (now - t.at > PARTY_READY_TIMEOUT_MS) { cancel(PARTY_TRAVEL_TEXT.late); return; }\n",
+    "new": "",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-sets-out-over-window",
+    "file": "src/systems/partyTravel.js",
+    "old": "if (!tripSetsOut(tally) || host.busy()) return;",
+    "new": "if (!tripSetsOut(tally)) return;",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-leader-gold-unchecked",
+    "file": "src/systems/partyTravel.js",
+    "old": "const refusal = host.refusal() ?? (host.canAfford(t.computed) ? null : fareText(t.computed, false));",
+    "new": "const refusal = host.refusal();",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-leader-before-pose",
+    "file": "src/systems/partyTravel.js",
+    "old": "      if (!t.goSent && now - t.go < PARTY_TRIP_GO_MS) return;\n",
+    "new": "",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-leader-waits-for-ever",
+    "file": "src/systems/partyTravel.js",
+    "old": "if (!t.goSent && now - t.go < PARTY_TRIP_GO_MS) return;",
+    "new": "if (!t.goSent) return;",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-failed-journey-keeps-round",
+    "file": "src/systems/partyTravel.js",
+    "old": "        if (trip === t) trip = null;\n",
+    "new": "",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-yes-unrefused",
+    "file": "src/systems/partyTravel.js",
+    "old": "      why = host.refusal();\n",
+    "new": "",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-yes-unpriced",
+    "file": "src/systems/partyTravel.js",
+    "old": "if (!fare.afford) why = fareText(fare.computed, false); }",
+    "new": "}",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-far-member-asked",
+    "file": "src/systems/partyTravel.js",
+    "old": "if (host.nearLeader(lead)) { near = round.at; nearFrom = f; }",
+    "new": "if (true) { near = round.at; nearFrom = f; }",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-busy-member-boxed",
+    "file": "src/systems/partyTravel.js",
+    "old": "if (told !== round.at) { told = round.at; host.say(`${lead.name || 'The leader'} wants the party to travel to ${dest}. Type /travel to come along.`); }\n        return;",
+    "new": "if (told !== round.at) { told = round.at; host.say(`${lead.name || 'The leader'} wants the party to travel to ${dest}. Type /travel to come along.`); }",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-asked-every-tick",
+    "file": "src/systems/partyTravel.js",
+    "old": "if (near === null || asked === round.at || vote === round.at",
+    "new": "if (near === null || vote === round.at",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-vote-outlives-its-round",
+    "file": "src/systems/partyTravel.js",
+    "old": "    if (vote != null && vote !== round.at) vote = null;   // a vote names its round\n",
+    "new": "",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-ended-round-box-stands",
+    "file": "src/systems/partyTravel.js",
+    "old": "if (promptFor != null && promptFor !== 'leader' && promptFor !== round?.at) { closePrompt(); host.say(PARTY_TRAVEL_TEXT.called); }",
+    "new": "if (false) { closePrompt(); host.say(PARTY_TRAVEL_TEXT.called); }",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-follows-from-afar",
+    "file": "src/systems/partyTravel.js",
+    "old": "    if (near !== round.at) { host.say(PARTY_TRAVEL_TEXT.lost); return; }\n",
+    "new": "",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-follows-before-arrival",
+    "file": "src/systems/partyTravel.js",
+    "old": "if (!arrived && waited < TRIP_FOLLOW_MS) return;",
+    "new": "if (waited < 0) return;",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-follows-from-under-a-window",
+    "file": "src/systems/partyTravel.js",
+    "old": "    if (host.busy()) {\n      if (waited >= 2 * TRIP_FOLLOW_MS)",
+    "new": "    if (false) {\n      if (waited >= 2 * TRIP_FOLLOW_MS)",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-window-follows-for-ever",
+    "file": "src/systems/partyTravel.js",
+    "old": "if (waited >= 2 * TRIP_FOLLOW_MS) { follow = null;",
+    "new": "if (false) { follow = null;",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-follows-a-leader-who-stayed",
+    "file": "src/systems/partyTravel.js",
+    "old": "if (p && !there && p.tv?.at !== f.at) { follow = null;",
+    "new": "if (false) { follow = null;",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-follower-waits-for-ever",
+    "file": "src/systems/partyTravel.js",
+    "old": "const waited = host.clock() - f.since;",
+    "new": "const waited = 0;",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-offered-every-tick",
+    "file": "src/systems/partyTravel.js",
+    "old": "if (!offerDue || now - settledAt < LEADER_SETTLE_MS || follow || host.moving()) return;",
+    "new": "if (follow || host.moving()) return;",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-stayed-offered-again",
+    "file": "src/systems/partyTravel.js",
+    "old": "    if (stay && stay.x === p.px && stay.y === p.py) return;\n",
+    "new": "",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-bound-offered-again",
+    "file": "src/systems/partyTravel.js",
+    "old": "    if (bound && bound.x === p.px && bound.y === p.py) return;   // I am on my way there already\n",
+    "new": "",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-offer-over-a-window",
+    "file": "src/systems/partyTravel.js",
+    "old": "    if (host.busy()) return PARTY_TRAVEL_TEXT.busy;",
+    "new": "",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-offer-goes-where-leader-was",
+    "file": "src/systems/partyTravel.js",
+    "old": "journey(now, host.myToggles(), now.acct, now.name, now.loc);",
+    "new": "journey(trip0, host.myToggles(), trip0.acct, trip0.name, trip0.loc);",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-map-no-never-rests",
+    "file": "src/systems/partyTravel.js",
+    "old": "mapQuietUntil = host.clock() + LEADER_MAP_QUIET_MS; mapPending = true;",
+    "new": "mapPending = true;",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-map-opens-under-box",
+    "file": "src/systems/partyTravel.js",
+    "old": "if (mapPending && !host.busy()) { mapPending = false; host.openMap(); }",
+    "new": "if (mapPending) { mapPending = false; host.openMap(); }",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-reset-leaves-box",
+    "file": "src/systems/partyTravel.js",
+    "old": "    if (prompt) closePrompt();\n",
+    "new": "",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-reset-remembers-the-leader",
+    "file": "src/systems/partyTravel.js",
+    "old": "stay = null; bound = null; leaderSeen = null;",
+    "new": "stay = null; bound = null;",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-call-off-a-departed-round",
+    "file": "src/systems/partyTravel.js",
+    "old": "if (trip && trip.go == null) { trip = null; host.poseDirty(); return 'You call off the journey.'; }",
+    "new": "if (trip) { trip = null; host.poseDirty(); return 'You call off the journey.'; }",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-travel-always-yes",
+    "file": "src/systems/partyTravel.js",
+    "old": "answer(round.at, vote !== round.at);",
+    "new": "answer(round.at, true);",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-host-begin-never-proposes",
+    "file": "src/scenes/world.js",
+    "old": "      if (partyTravel?.propose(pick, opts, computed)) { hudFade.clearFade(); return; }",
+    "new": "      if (false) { hudFade.clearFade(); return; }",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-host-session-never-told-sent",
+    "file": "src/scenes/world.js",
+    "old": "    if (socialLink()?.sendParty(_partyPose)) partyTravel?.sent(_partyPose);",
+    "new": "    socialLink()?.sendParty(_partyPose);",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-host-no-map-offer",
+    "file": "src/scenes/world.js",
+    "old": "    if (!gotoPlace && partyTravel?.mapOffer()) return;\n",
+    "new": "",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-host-never-beside",
+    "file": "src/scenes/world.js",
+    "old": "const beside = walkMode && pick.besideAt ? partyBesideLanding(pick.besideAt(), pick.besideSeat) : null;",
+    "new": "const beside = null;",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-host-feet-mid-journey",
+    "file": "src/scenes/world.js",
+    "old": "&& walkMode && playerSpawned && !worldMoveBusy() ? partyFeetOf(player.pos) : {}),",
+    "new": "&& walkMode && playerSpawned ? partyFeetOf(player.pos) : {}),",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-host-hub-ungated",
+    "file": "src/scenes/world.js",
+    "old": "relayOk: () => !!socialLink()?.partyTravelOk,",
+    "new": "relayOk: () => true,",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-host-never-busy",
+    "file": "src/scenes/world.js",
+    "old": "    busy: () => gamePaused(),",
+    "new": "    busy: () => false,",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PT-host-fare-off-bag",
+    "file": "src/scenes/world.js",
+    "old": "const pop = new TravelPopUpWindow({ x: to.x, y: to.y }, {\n      ...travelFareDeps(),",
+    "new": "const pop = new TravelPopUpWindow({ x: to.x, y: to.y }, {",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  }
+]

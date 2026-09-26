@@ -1949,7 +1949,7 @@ test('MW-D33: a curated face wins, a missing curated id falls back, and the verd
   assert.equal(typeof at(0, undefined).head, 'string');
 });
 
-test('MW-D33: the worn verdicts reach the card - one line per piece, dressed or reasoned', () => {
+test('MW-D33: the worn verdicts reach status() - one per piece, dressed or reasoned (MWA4: no longer printed on the card)', () => {
   const pieces = [
     { kind: 'armor', templateIndex: ARMOR_ENUM.Cuirass, material: ARMOR_MATERIAL.Iron },
     { kind: 'clothing', templateIndex: 165, name: 'Short Shirt' },
@@ -1965,13 +1965,14 @@ test('MW-D33: the worn verdicts reach the card - one line per piece, dressed or 
   assert.equal(v[0].reason, null);
   assert.deepEqual(v[1].dressed, []);
   assert.match(v[1].reason, /classic sprite stands/);
-  // and the wiring: the build carries them, status exposes them, the
-  // card prints them.
+  // and the wiring: the build carries them and status exposes them. MWA4
+  // took the per-piece readout off the assets card ("reduce the amount of
+  // over explaining text") - it answers a probe's status() read now.
   const arm = readFileSync('src/combat/fpArm.js', 'utf8');
   assert.match(arm, /worn: wornVerdicts\(armor \?\? \[\], worn\),/);
   assert.match(arm, /worn: built && built\.ok \? built\.worn : null,/);
   const menu = readFileSync('src/ui/enhancedMenu.js', 'utf8');
-  assert.match(menu, /armState\.worn/);
+  assert.doesNotMatch(menu, /armState\.worn/, 'MWA4: the card keeps the failure lines alone');
 });
 
 // ═══ MW-D35: the face is MATCHED, not walked ════════════════════════
@@ -2282,7 +2283,7 @@ test('MW-D32: raceRecords reads RADT by hand-laid offsets - heights at 120, flag
 test('MW-D34: the third-person model matrix carries the measured chirality flip and adjustScale', () => {
   // MEASURED through the real composite (mwArmProbe L5b): the 3P body
   // rides drawRigSpriteBox into the world's mirrorProjectionX lens, and
-  // the port's world convention is left-handed (motor.js:696 - the
+  // the port's world convention is left-handed (motor.js:743 - the
   // player's right is +X at yaw 0), so a right-handed NIF actor placed
   // with a pure rotation reads MIRRORED on screen. The -u on the local
   // side axis is the same basis adaptation the mirror gives every
@@ -2572,7 +2573,7 @@ test('IG6: the arms are FIXED TO THE SCREEN by default - the owner\'s final call
   assert.match(arm, /const pitch = followCam \? 0 : \(cam\.pitch \|\| 0\);/,
     'the lens pitches only on the law path');
   assert.ok(!/FOLLOW_LENS_FACTOR|FOLLOW_TILT_MAX/.test(arm), 'the tilt constants are gone');
-  // The toggle is live and persistent - the pause card flips it.
+  // The toggle is live and persistent - the probe flips it (the card's switch left at MWA4).
   const inst = createFpArm();
   assert.equal(inst.followCamera(), true, 'a bare Node context (no storage) still defaults ON');
   assert.equal(inst.setFollowCamera(false), false);
@@ -2585,13 +2586,14 @@ test('IG6: the arms are FIXED TO THE SCREEN by default - the owner\'s final call
   // PERSISTED it, overriding every later default. The bump abandons
   // the stored value; the state moved to the stats block; the button
   // says what clicking DOES.
-  assert.match(arm, /const FOLLOW_CAMERA_KEY = 'dagger\.mwArmsFollowCamera2';/,
-    'the storage key is the v2 - the v1 value is abandoned, not trusted');
+  // MWA4: AND BUMPED AGAIN - the assets card keeps Attach and Remove
+  // alone, so the look-lag button and its stats row left it, and a
+  // stored look-lag would be a mode no player could leave. The v3 key
+  // lands every player on the fixed default.
+  assert.match(arm, /const FOLLOW_CAMERA_KEY = 'dagger\.mwArmsFollowCamera3';/,
+    'the storage key is the v3 - the v2 value is abandoned with its button');
   const menu = readFileSync('src/ui/enhancedMenu.js', 'utf8');
-  assert.match(menu, /fpArm\.followCamera\(\)\s*\n?\s*\? \{ label: 'Switch arms to Morrowind look-lag', onClick: \(\) => \{ fpArm\.setFollowCamera\(false\); render\(\); \} \}\s*\n?\s*: \{ label: 'Switch arms to fixed \(classic\)', onClick: \(\) => \{ fpArm\.setFollowCamera\(true\); render\(\); \} \}/,
-    'the button names the ACTION, never the current mode');
-  assert.match(menu, /\['Arms mode', fpArm\.followCamera\(\)\s*\n?\s*\? 'fixed to the screen \(classic-style\)'\s*\n?\s*: 'Morrowind look-lag'\]/,
-    'and the CURRENT mode is a stats row, where a state belongs');
+  assert.doesNotMatch(menu, /setFollowCamera|'Arms mode'/, 'MWA4: no switch and no mode row on the card');
   // The probe measures BOTH modes: the law layers with the flag off,
   // the shipped fix with it on (cy invariant under every look, the
   // clamp-hard ones included, and under the bob).
@@ -2690,8 +2692,8 @@ test('MW-D38: itemIcon is null without a build; the pack takes the model icon fi
   const arm = createFpArm();
   assert.equal(arm.itemIcon({ group: 'Weapons', templateIndex: 115, material: 0 }), null);
   const pack = readFileSync('src/ui/enhancedInventory.js', 'utf8');
-  assert.match(pack, /const src = modelIconUrl\(line\.item, 96\)\n    \|\| \(line\.image/, 'the tile does not try the model icon first');
-  assert.match(pack, /const big = modelIconUrl\(line\.item, 192\)\n    \|\| \(line\.image/, 'the detail does not try the model icon first');
+  assert.match(pack, /const src = modelIconUrl\(line\.item, 96\)\n    \|\| linePictureUrl\(line,/, 'the tile does not try the model icon first');   // DISC24-B: the classic second, through the pack's one door
+  assert.match(pack, /const big = modelIconUrl\(line\.item, 192\)\n    \|\| linePictureUrl\(line,/, 'the detail does not try the model icon first');
   assert.match(pack, /item,   \/\/ MW-D38/, 'the line no longer carries its item');
   const classic = readFileSync('src/ui/nativeInventory.js', 'utf8');
   assert.ok(!/itemIcon|modelIconUrl/.test(classic), 'the classic inventory must not know the model icons exist');
@@ -2859,8 +2861,9 @@ test('MAC-S1: ONE flush, called from every exit out of `busy`', () => {
   const takers = (src.match(/^\s*busy = true;$/gm) ?? []).length;
   const flushes = (src.match(/^\s*flushPending\(\);$/gm) ?? []).length;
   // MW-D51: the third arrived - setTorch's slow path binds the light's
-  // mesh on both rigs and takes `busy` for the fetch.
-  assert.equal(takers, 3, `a door that takes \`busy\` must flush on its way out (${takers} takers)`);
+  // mesh on both rigs and takes `busy` for the fetch. HT-WAIST: the fourth -
+  // setHipLight's slow path, the lantern at the waist on the body.
+  assert.equal(takers, 4, `a door that takes \`busy\` must flush on its way out (${takers} takers)`);
   assert.equal(flushes, takers, `every taker flushes (${flushes} flushes for ${takers} takers)`);
   // ...and setWeapon's own `finally` still does all three of its duties.
   // The file's own prose is not its wiring, so it is stripped first.

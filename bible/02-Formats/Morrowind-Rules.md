@@ -916,7 +916,7 @@ Enhanced pane's Morrowind card.
 
 NO RENDERER CHANGE WAS NEEDED, which was the surprise. The port had
 ALREADY shipped a first-person pass: renderCharacterSprite
-(render/renderer.js:1188) binds an offscreen target with its own depth
+(render/renderer.js:1208) binds an offscreen target with its own depth
 renderbuffer, clears colour and depth, SWAPS the frame's proj/view for
 ones the caller hands it, draws, and restores; drawScreenOverlayQuad
 (:987) composites it fullscreen with an alpha cut and no depth test. It
@@ -3560,7 +3560,7 @@ sound, this is the condition it must not be read past):
 
 > Nearly everything checks out against upstream, but the sorting claim states as unconditional what the code guards. Confirmed accurate: property.hpp:414-463 has Flag_Blending=0x0001, Flag_Testing=0x0200, Flag_NoSorter=0x2000, uint16 mFlags + uint8 mThreshold, and sourceBlendMode()=(mFlags>>1)&0xF, destinationBlendMode()=(mFlags>>5)&0xF, alphaTestMode()=(mFlags>>10)&0x7. getBlendMode (nifloader.cpp:1899-1928) and getTestMode (1930-1954) match the quoted tables including the SRC_ALPHA / LEQUAL defaults with Log(Debug::Info). handleAlphaTesting uses threshold/255.f, and both handlers really do removeAttribute + removeMode on the OFF branch; collectDrawableProperties (nifloader.cpp:189-211) recurses into the parent first and appends the node's own props last, so a child NiAlphaProperty genuinely cancels an ancestor's on the shared drawable stateset. The DST_ALPHA -> ONE rewrite and the objects.frag ordering (157 `gl_FragData[0].a *= diffuseColor.a * alpha * actorFade;`, 160-161 darkMap, 164 alphaTest) are verbatim correct. The defect: "blending WITHOUT the 0x2000 bit puts the drawable in the TRANSPARENT_BIN (back-to-front); with the bit set it inherits the opaque bin" drops the `if (!mPushedSorter)` guard that sits on BOTH bin calls in the quoted snippet. mPushedSorter is the enclosing NiSortAdjustNode (nifloader.cpp:329, pushed at :800-803). When one is in scope, handleAlphaBlending sets NO bin at all — it only sets hasSortAlpha — and the bin is decided later at nifloader.cpp:2943-2985 from the sorter's mode and subsorter type. That inverts the stated outcome in real cases: under SortingMode::Off a blending drawable with the sorter bit CLEAR gets setBinTraversal (bin 2, "TraversalOrderBin"), not back-to-front; and under a NiClusterAccumulator subsorter a drawable WITH the 0x2000 bit set still gets setBinBackToFront regardless of hasSortAlpha, rather than inheriting. A port that hardcodes the rule as written mis-sorts every mesh under a NiSortAdjustNode. Two smaller inaccuracies ride along: the back-to-front path outside handleAlphaBlending is setRenderBinDetails(0, "SORT_BACK_TO_FRONT"), not the TRANSPARENT_BIN hint (bin 10, DepthSortedBin); and setRenderBinToInherit() means inheriting whatever bin is in effect, which is not necessarily "the opaque bin".
 
-> The rule cannot hold here because its entire subject is absent from this codebase, and the code that actually renders the first-person player body contradicts it. This repository is /home/user/project-dagger, a JavaScript port of Daggerfall (logic from Daggerfall Unity, presentation on hand-rolled WebGL2) — not OpenMW. All three cited sources are non-existent paths: there is no components/ directory, no files/shaders/ directory, no .gitmodules, and zero .cpp/.hpp/.frag/.glsl files anywhere in the tree. A full-tree grep (excluding .git and node_modules) for NiAlphaProperty, nifloader, nifosg, and openmw returns no hits; the sole filename matching *nif* is /home/user/project-dagger/test/manifest.test.js, matching on the substring inside "manifest". Daggerfall assets are ARCH3D/CIF/IMG, never NIF, so no mFlags/mThreshold decode, blend-factor table, test-function table, stateset, or sorting bin exists to be overridden. Where it matters for a first-person player body, the real behaviour is different in kind, not just in detail. Alpha is a fixed 1-bit cutout compiled into the shaders rather than a per-material reference derived from mThreshold/255.0: `if (t.a < 0.5) discard;` at /home/user/project-dagger/src/render/renderer.js:87, :1120 and :895, with the one exception being spectral (ghost) flats at renderer.js:499, `if (tex.a < (uSpectral == 1 ? 0.1 : 0.5)) discard;`. The comment at renderer.js:1283-1287 states the governing law: classic art is a 1-bit palette cutout (index 0 transparent, everything else fully opaque), so the default discards and forces alpha 1, with a narrow `uBlendTex` opt-in for art authored outside that palette. Blending, where enabled at all, is one hard-coded pair with no factor decoding — gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA) at renderer.js:1420, :2641, :2718, overworldRenderer.js:370 and :385, and precipitation.js:168 — so there is no source/destination factor selection and therefore no DST_ALPHA-to-ONE rewrite. Because the renderer is immediate-mode WebGL2 with no stateset graph, the rule's two load-bearing behaviours have no mechanism to exist: nothing can REMOVE a blend func or alpha func from a parent's state to cancel it, and there is no noSorter bit or TRANSPARENT_BIN assignment. The specific special cases the task asked about confirm the same. The first-person viewmodel entry point, drawFirstPersonViewmodel at /home/user/project-dagger/src/render/characterSprite.js:55, is explicitly marked ON ICE (2026-08-17) with "No consumer"; the live first-person path is src/combat/fpsWeapon.js using WEAPON*.CIF sprites, and neith ...
+> The rule cannot hold here because its entire subject is absent from this codebase, and the code that actually renders the first-person player body contradicts it. This repository is /home/user/project-dagger, a JavaScript port of Daggerfall (logic from Daggerfall Unity, presentation on hand-rolled WebGL2) — not OpenMW. All three cited sources are non-existent paths: there is no components/ directory, no files/shaders/ directory, no .gitmodules, and zero .cpp/.hpp/.frag/.glsl files anywhere in the tree. A full-tree grep (excluding .git and node_modules) for NiAlphaProperty, nifloader, nifosg, and openmw returns no hits; the sole filename matching *nif* is /home/user/project-dagger/test/manifest.test.js, matching on the substring inside "manifest". Daggerfall assets are ARCH3D/CIF/IMG, never NIF, so no mFlags/mThreshold decode, blend-factor table, test-function table, stateset, or sorting bin exists to be overridden. Where it matters for a first-person player body, the real behaviour is different in kind, not just in detail. Alpha is a fixed 1-bit cutout compiled into the shaders rather than a per-material reference derived from mThreshold/255.0: `if (t.a < 0.5) discard;` at /home/user/project-dagger/src/render/renderer.js:87, :1135 and :895, with the one exception being spectral (ghost) flats at renderer.js:514, `if (tex.a < (uSpectral == 1 ? 0.1 : 0.5)) discard;`. The comment at renderer.js:1307-1311 states the governing law: classic art is a 1-bit palette cutout (index 0 transparent, everything else fully opaque), so the default discards and forces alpha 1, with a narrow `uBlendTex` opt-in for art authored outside that palette. Blending, where enabled at all, is one hard-coded pair with no factor decoding — gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA) at renderer.js:1445, :2733, :2810, overworldRenderer.js:370 and :385, and precipitation.js:168 — so there is no source/destination factor selection and therefore no DST_ALPHA-to-ONE rewrite. Because the renderer is immediate-mode WebGL2 with no stateset graph, the rule's two load-bearing behaviours have no mechanism to exist: nothing can REMOVE a blend func or alpha func from a parent's state to cancel it, and there is no noSorter bit or TRANSPARENT_BIN assignment. The specific special cases the task asked about confirm the same. The first-person viewmodel entry point, drawFirstPersonViewmodel at /home/user/project-dagger/src/render/characterSprite.js:90, is explicitly marked ON ICE (2026-08-17) with "No consumer"; the live first-person path is src/combat/fpsWeapon.js using WEAPON*.CIF sprites, and neith ...
 
 **Corrected form offered:** Same as stated for the flags, the bit fields, both lookup tables (SRC_ALPHA / LEQUAL fallbacks), alphaRef = mThreshold/255.0, the remove-on-off cancellation semantics, the DST_ALPHA -> ONE destination rewrite, and the shader ordering — but the sorting rule is conditional on there being no enclosing NiSortAdjustNode. The call site passes sort = !alphaprop->noSorter() (nifloader.cpp:2829-2830), and handleAlphaBlending's blending branch always records hasSortAlpha = sort; the bin, however, is only touched when mPushedSorter == nullptr: sort -> setRenderingHint(TRANSPARENT_BIN), !sort -> setRenderBinToInherit(), and the OFF branch also calls setRenderBinToInherit(). When an ancestor NiSortAdjustNode IS in scope, handleAlphaBlending sets no bin; the end of applyDrawableProperties (nifloader.cpp:2943-2985) assigns it instead: SortingMode::Off -> setRenderBinDetails(2, "TraversalOrderBin") no matter what the alpha flags say; Inherit/Subsort with a NiAlphaAccumulator -> setRenderBinDetails(0, "SORT_BACK_TO_FRONT") if hasSortAlpha else TraversalOrderBin; with a NiClusterAccumulator -> SORT_BACK_TO_FRONT unconditionally. Also, with no pushed sorter, a non-sorting drawable that carries a sten
 
@@ -6124,6 +6124,10 @@ owner to look-lag and persisted it - overriding every later default
 and making three rounds of fixes look unshipped. The storage key is
 bumped (dagger.mwArmsFollowCamera2 - the v1 value is abandoned), the
 button names the ACTION, and the current mode sits on the stats block.
+MWA4 (2026-09-25) took the button and the mode row off the assets card
+(it keeps Attach and Remove data alone) and bumped the key again
+(dagger.mwArmsFollowCamera3), so no player is left in a mode no switch
+can leave; the look-lag path stays in the rig for the probe.
 
 IG6c - ZERO IN, ZERO OUT. The field still held "not screen fixed"
 past the key bump, and the remaining suspect class is one this bench
@@ -6556,8 +6560,9 @@ the torch's clock through a variable - update()'s "no allocation
 after the first pack" holds with the torch lit.
 
 **Recorded, not faked.** A peer's look carries no light on the wire
-(MWBODY1's `lk`), so the peers' bodies hold none; a lantern or candle
-is the classic lane's still; the torch's own LIGHT (the LIGH radius
+(MWBODY1's `lk`), so the peers' bodies hold none (a lantern at the
+WAIST is in no hand: the pose's `hl` hangs it on them since
+HT-WAIST-NET); a lantern or candle is the classic lane's still; the torch's own LIGHT (the LIGH radius
 and colour) is not the rig's - the player torch's light already moves
 with the hand law.
 
@@ -6908,3 +6913,45 @@ now grows `built.reach` to its farthest corner and a quarter more
 composed (`drewLast()`, folded into `weaponRig.armsDrawn()`); `holdPaper`
 is refused in third person; a rebuild with no camera node lets the
 sheet go. Record: `bible/10-UI/Held-Map-Arc.md`, AUDIT-MAP2.
+
+## HT-WAIST (2026-09-24): the lantern at the waist - a part that HANGS
+
+Handheld Torches' port-own `Handling.LanternsAtWaist` (Handheld-Torches.md HT-WAIST) hangs a lit lantern at the
+waist, and the third-person body draws it there. Morrowind has no lantern on a belt - its carried lights ride
+Slot_CarriedLeft at the Shield Bone (MW-D51) - so every number is the port's own and says so.
+
+- **The record**: `pickLanternRecord` (mwFirstPerson.js), MW-D51's `pickTorchRecord` shape through one shared
+  helper - a CARRIABLE LIGH whose id names a lantern, its mesh attached (MW-D50), the shortest id first. No retail id
+  is assumed; a master with none is a note (`hiplight: ...`), never a torch in its place.
+- **The bone**: `Bip01 Pelvis` (`HIP_LIGHT_BONE`), which the retail third-person skeleton carries - Weapon
+  Sheathing's vendored `xbase_anim_sh.nif` copies its Bip01 chain, and this port's own `buildSkeleton` /
+  `poseSkeleton` put the pelvis at (0, 1.8, 76.4) in the actor's Z-up, +Y-forward, -X-left units. Resolved against
+  the skeleton with its bone addons joined (WS1's `boneProbe`), and against the live assembled skeleton on a later
+  bind. The THIRD-PERSON rig alone: the first-person arms have no hip.
+- **The hang** - a new kind of rigid part. Every other rigid part RIDES its bone (placeAtBone over the bone's
+  affine). A part carrying `hang` takes `hangAffine(at, hang)` instead: `v -> rot * (v - anchor) + hook`, where the
+  HOOK is a point fixed to the bone (`hookOnBone`: a rig-space offset from the bone's REST position, turned into the
+  bone's own frame once, so it follows the hip's walk), the ANCHOR is the part's top-centre (`hangAnchor`, over all
+  its shapes, after the mirror and rule 14's offset - the ring a lantern's handle ends in on any Z-up mesh, wherever
+  its author put the origin), and ROT is a rig-space 3x3 the owner writes each frame - plumb times the swing
+  (`systems/lanternSwing.js lanternSwingMatrix`). The rig space is the actor's own and the body only turns in yaw, so
+  plumb there is plumb in the world. `bindPartsInto` carries `hang` onto the part's pieces and effects;
+  `effectPlacement` places a hanging part's particle systems by the same affine.
+- **The hook**: `HIP_LANTERN_HOOK` = (14, 5, 9.5) off the pelvis - the RIGHT hip, clear of the one-handed scabbard
+  (`Bip01 LongBladeOneHand` at (-10.8, 7.8, 86.5), the left) and of the thigh (`Bip01 R Thigh` at x 6.6), a little
+  forward, at the scabbard's belt height.
+- **The hide**: only when not lit - NEVER the carried-left rule (it is in no hand, so a two-hander, a bow or a
+  readied spell does not put it away). The portrait shows it lit.
+- **The door**: `setHipLight` is `setTorch`'s shape with MW-TORCH's fixes (the fast compare, one bind per body,
+  `hipLightTried`, `lastBuildOpts.hipLight`, the mid-build queue, the unload reset); weaponRig hands it over per
+  frame beside the torch and in `armBuildOptsOf`.
+- **Peers** (HT-WAIST-NET, 2026-09-24): a peer's body hangs it too, off the pose's `hl` bit (world108) through the
+  same door - `PeerBodies._arm` hands the rig `!!shown.hl` each frame - and swings it off that body's own stub camera.
+  They still HOLD no light (MW-D51's "Recorded, not faked"): this one is in no hand. Handheld-Torches.md HT-WAIST.
+
+Pins: `test/htwaist_mwbody.test.js` - the pick and the resolve; the hang over the vendored retail-shaped skeleton (the
+top at the hook on the right hip, plumb under a twisted pelvis, the swing tipping it about the hook, a flame placed by
+the same hang); and a whole `createFpArm()` rig on the fixture body with a pelvis joined through the WS1 bone-addon
+door (a tiny addon NIF written by the pin): built with it, shown through a readied spell, hidden when put out, lit
+again on the fast path, swung back by a walk begun, the slow path once, a missing record or pelvis remembered, the
+mid-build queue.

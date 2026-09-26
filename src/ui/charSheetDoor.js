@@ -37,7 +37,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { isEnhanced } from '../systems/uiSkin.js';
-import { eventAction } from './input.js';   // MAC-C: the REGISTRY's answer for the two window keys
+import { eventActions } from './input.js';   // MAC-C: the REGISTRY's answer for the two window keys
 import { mountEnhancedChunk, paintChunkNotice } from './enhancedChunk.js';   // MENU1: the one lazy-chunk door, and the notice it paints when a chunk is gone
 import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it away
 import { CharSheet, LevelUpScreen, charSheetArtLoaded } from './charsheet.js';
@@ -253,8 +253,8 @@ function enhancedSheetPageOverlay(hooks, entity = null) {
     if (e.metaKey) return;
     const t = e.target;
     if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
-    const act = eventAction(e);   // AUDIT KB1: the event's own read - a sheet opened by a combo closes on it
-    if (act !== 'CharacterSheet' && !(act === 'Inventory' && hooks.inventory)) return;
+    const acts = eventActions(e);   // AUDIT KB1: the event's own read - a sheet opened by a combo closes on it; UXB1-S: every action a shared key carries
+    if (!acts.includes('CharacterSheet') && !(acts.includes('Inventory') && hooks.inventory)) return;
     // A MODAL OVERLAY OWNS ITS INPUT (U50's law, the same one
     // enhancedMenu's handler states): on CAPTURE and stopped, so the
     // host's window keydown - which would re-open the very screen this
@@ -262,7 +262,7 @@ function enhancedSheetPageOverlay(hooks, entity = null) {
     e.preventDefault();
     e.stopPropagation();
     if (e.repeat) return;   // AUDIT KB1: a held key's repeat is swallowed, not an open-shut flicker
-    const toPack = act === 'Inventory';
+    const toPack = !acts.includes('CharacterSheet');   // the pack's key crosses over; the sheet's own closes (UXB1-S: a key that is both is the sheet's)
     close();                              // the sheet's own close law runs FIRST...
     if (toPack) hooks.inventory();        // ...and this replaces the slot it just freed
   }

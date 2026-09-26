@@ -80,20 +80,20 @@ test('MAC-C: the enhanced pack reads the registry for BOTH keys', () => {
   // history nobody reads.
   const code = s.split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
   assert.ok(!/e\.key !== 'F6'/.test(code), 'the literal is gone');
-  assert.match(s, /const act = eventAction\(e\);/, 'the registry answers (AUDIT KB1: the event\'s own read)');
-  assert.match(s, /act !== 'Inventory'\) return;/, 'the pack closes on ITS action');
-  assert.match(s, /if \(act === 'CharacterSheet' && typeof deps\?\.openCharSheet === 'function'\)/, 'and crosses over on the other (JAN1: a function, asked for as one)');
+  assert.match(s, /const acts = eventActions\(e\);/, 'the registry answers (AUDIT KB1: the event\'s own read; UXB1-S: every action a shared key carries)');
+  assert.match(s, /!acts\.includes\('Inventory'\)\) return;/, 'the pack closes on ITS action');
+  assert.match(s, /if \(acts\.includes\('CharacterSheet'\) && typeof deps\?\.openCharSheet === 'function'\)/, 'and crosses over on the other (JAN1: a function, asked for as one)');
   // the ORDER is the thing: the pack's own close law runs before the
   // slot is taken, or the sheet mounts under a window about to close.
-  const arm = s.slice(s.indexOf("if (act === 'CharacterSheet'"));
+  const arm = s.slice(s.indexOf("if (acts.includes('CharacterSheet')"));
   assert.ok(arm.indexOf('const openCharSheet = deps.openCharSheet;') < arm.indexOf('onExit();') && arm.indexOf('onExit();') < arm.indexOf('\n    openCharSheet();'),
     'the hook read, then close FIRST, then replace the slot - showOverlay is a replace, not a push (JAN1: the close empties the bag the hook lived in)');
 });
 
 test('MAC-C: the enhanced sheet page has a key of its own, and gives it back', () => {
   const s = rd('src/ui/charSheetDoor.js');
-  assert.match(s, /const act = eventAction\(e\);/, 'the registry answers here too (AUDIT KB1: the event\'s own read)');
-  assert.match(s, /if \(act !== 'CharacterSheet' && !\(act === 'Inventory' && hooks\.inventory\)\) return;/,
+  assert.match(s, /const acts = eventActions\(e\);/, 'the registry answers here too (AUDIT KB1: the event\'s own read; UXB1-S: every action a shared key carries)');
+  assert.match(s, /if \(!acts\.includes\('CharacterSheet'\) && !\(acts\.includes\('Inventory'\) && hooks\.inventory\)\) return;/,
     'the sheet closes on its own key and crosses over on the pack’s, and claims nothing else');
   assert.match(s, /globalThis\.addEventListener\?\.\('keydown', onSheetKey, true\)/,
     'on CAPTURE - a modal overlay owns its input - and OPTIONAL, because node drives these hosts headless');

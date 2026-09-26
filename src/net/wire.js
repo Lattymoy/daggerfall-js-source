@@ -18,6 +18,10 @@
 //                                                       TOKEN carried the dm glyph; fanned as {t:'dm', text, at}
 //                    {t:'mute', order}                  MOD1: a mute ORDER the account service signed, carried by the moderator
 //                                                       who asked for it; the room checks the signature, not the carrier (MUTE_HZ_MAX)
+//                    {t:'renown', order}                RENOWN1: a RENOWN order the account service signed when the carrier's own
+//                                                       Renown rose; the room takes it only from the account it names (RENOWN_HZ_MAX)
+//                    {t:'stage', kind}                  EVENT1: A LIVE EVENT STAGED - only from a socket whose TOKEN carried the
+//                                                       dev glyph, in the HUB alone; kind '' ends it (EVENT_HZ_MAX)
 //                    {t:'world', data, final?}          the room's memory, from its host alone (WORLD1); final once, the farewell
 //                    {t:'foes', data}                   the host's live foes, FOES_HZ_MAX a second at most (WORLD2)
 //                    {t:'hit', data}                    a blow on the host's foe, from anyone but the host (WORLD2)
@@ -27,6 +31,8 @@
 //   room -> client:  {t:'welcome', id, peers:[{id,name,look,pose,title?,glyphs?}], host, world, now}   now: the relay's clock, ms (WORLD5)
 //                    {t:'join', id, name, look, pose, title?, glyphs?}   {t:'leave', id}
 //                    ACC3: `title` and `glyphs` are read off the hello's VERIFIED token and are absent when there is no badge
+//                    RENOWN1: and `lv`, the Renown level the token carried, absent when it carried none
+//                    {t:'renown', id, lv}               RENOWN1: a player's Renown rose - to everyone in the room, the carrier included
 //                    {t:'quest', quest:{questName, displayName, data}}   a quest shared with my party, to the hub alone (QUEST1): QUEST_HZ_MAX a second
 //                    {t:'pose', id, p}                  {t:'pong'}
 //                    {t:'chat', id, name, text, at, sub?}   to everyone who hears it, the sender included
@@ -34,6 +40,8 @@
 //                    roster rows and joins - what a moderator's /mute names, since a name is not unique and an id is.
 //                    NOT `acct`: that word is the social hub's own account (SOC1), a different id with a different law
 //                    {t:'muted', until}                 MOD1: to the muted player alone - `until` in epoch seconds, 0 when lifted
+//                    {t:'event', kind, at}              EVENT1: the server-wide live event now, to every hub socket when it is staged
+//                                                       or ended; a late joiner reads it off the hub welcome's `ev` ({kind, at}, absent: none)
 //                    {t:'host', id}                     the room's host changed (WORLD1)
 //                    {t:'world', id, data}              the room's memory, to a socket whose welcome carried none (AUDIT WORLD34 C1)
 //                    {t:'foes', id, data}               the host's live foes, to everyone but the host (WORLD2)
@@ -148,7 +156,7 @@
 // fast travel, no sentence, no ?tod, no ?timescale.
 
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap. The relay re-exports this module (server/src/relay.js), so this reaches the worker too - mat4.js imports nothing itself.
-import { TITLES, GLYPHS, GLYPHS_MAX } from './identityToken.js';   // ACC3: the badge vocabulary, closed - `badged` writes it and `readBadge` checks it back
+import { TITLES, GLYPHS, GLYPHS_MAX, renownIssuable } from './identityToken.js';   // ACC3: the badge vocabulary, closed - `badged` writes it and `readBadge` checks it back   // RENOWN1: and the level's bound, `badged` and `readRenown` alike
 import { nameAllowed } from './nameFilter.js';   // NAME-F2: the filter runs INSIDE sanitizeName, so the relay carries it - nameFilter.js imports nothing, same as mat4.js above, so the worker's graph stays flat
 import { validRollSpec, validRoll, rollDice, ROLL_DICE_MAX, ROLL_SIDES_MAX, ROLL_MOD_MAX } from './dice.js';   // DICE1: the dice's law - one home for both ends (dice.js imports nothing, so the worker's graph stays flat)
 export { validRollSpec, validRoll, rollDice, ROLL_DICE_MAX, ROLL_SIDES_MAX, ROLL_MOD_MAX };
@@ -174,6 +182,9 @@ export const POSE_HZ_MAX = 20;
 export const HELLO_HZ_MAX = 10;
 /** The most sockets one room holds; past it the upgrade is refused. */
 export const SOCKETS_MAX = 256;
+/** AUDIT WB A1: how long a socket may stand open without its hello before a full room takes its seat back. A client
+ *  says hello the moment it opens; ten seconds is a slow network, not a player. */
+export const HELLO_WAIT_MS = 10_000;
 /** The most peers a welcome carries: the nearest, in a world cell (AUDIT ONLINE A5). */
 export const ROSTER_MAX = 64;
 /** Over-rate poses dropped in a row before the socket is closed (AUDIT ONLINE A8: ungated ingress is a bill). */
@@ -248,6 +259,39 @@ export const MUTE_HZ_MAX = 1;
 /** TITLE-N: the Dungeon Master's lines a second - RED_HZ_MAX's reason: /dm reaches everyone on the World channel, and
  *  tokenGate cannot go lower than one. Its own bucket, so a DM narrating spends none of the server line's. */
 export const DM_HZ_MAX = 1;
+/** RENOWN1: renown orders a socket may carry a second. One, and far more than a level rises: the gate is only there so a
+ *  socket cannot make the room verify signatures without limit. */
+export const RENOWN_HZ_MAX = 1;
+/** AUDIT RENOWN1 (SEC-2/WIRE-1): the ROOM's renown fans a second, every carrier together. A rise is a frame to everyone
+ *  in the room, and RENOWN_HZ_MAX bounds a socket, not the room it fans to - forty sockets of one account made a room
+ *  of a hundred send 5,600 frames a second. Four: a room of honest players rises a few times an hour, so this is only a
+ *  ceiling on what many sockets can make one room say. Over it a rise is dropped unanswered, and its carrier sends it
+ *  again (RENOWN_RESEND_MS) because it has not heard its echo. */
+export const RENOWN_ROOM_HZ_MAX = 4;
+/** AUDIT RENOWN1 WIRE-2: how long after an order the client sends it again down a socket whose room has not answered
+ *  with the level - the relay's echo of the rise, or its word that the room already holds it. */
+export const RENOWN_RESEND_MS = 3_000;
+/** AUDIT RENOWN1 WIRE-2: how long the client keeps an order to send - inside the order's own minute (identityToken.js
+ *  ORDER_TTL_S, 60), with ten seconds for the clocks and the wire; past it the relay would refuse it, and the next hello
+ *  carries the level. A number and not `(ORDER_TTL_S - 10) * 1000`: identityToken.js imports this file, so its constant
+ *  is not yet made when this one is (test/auditrenown1.test.js holds the two together). */
+export const RENOWN_ORDER_KEEP_MS = 50_000;
+/**
+ * EVENT1 (2026-09-25, Mac: "I wanna do a fun live event for the server ... turn the skies of Daggerfall into a detailed
+ * oblivion styled dread in prep for the world bosses. Red lightning and such"). THE LIVE EVENTS A DEV MAY STAGE for
+ * every player online at once. A word, not a recipe: what an event LOOKS like is the client's (world/dreadSky.js), so
+ * the relay carries one of these names and nothing a stager could shape into anything else. Appended, never
+ * reordered or renamed - a client that does not know a word shows no event, so a new one is safe against an old build.
+ */
+export const LIVE_EVENTS = Object.freeze(['dread']);
+/** EVENT1: stages a second - a dev's deliberate act, and tokenGate cannot go lower (RED_HZ_MAX's reason). */
+export const EVENT_HZ_MAX = 1;
+/** EVENT1: the hub's storage key for the event staged now - its own prefix, apart from every one a drain or the hub's
+ *  sweep deletes (`hellos`, `look:`, `secret:`, `party:`, `world:`, `acct:`): an event outlives the players who saw it
+ *  begin, and ends when a dev ends it. */
+export const EVENT_KEY = 'event:live';
+/** EVENT1: a live event as the relay says it - `{kind, at}`, a known word and the relay's ms it was staged; null is none. */
+export const validLiveEvent = (e) => e != null && typeof e === 'object' && !Array.isArray(e) && LIVE_EVENTS.includes(e.kind) && Number.isSafeInteger(e.at) && e.at > 0;
 /** Over-rate chat lines dropped in a row before the socket is closed. */
 export const CHAT_STRIKES_MAX = 20;
 /** The most sockets a CHAT room holds - one room hears the whole world, so it runs deeper than a cell's. */
@@ -858,10 +902,15 @@ export const whoIdOf = (m) => (m && typeof m.id === 'string' && ID_RE.test(m.id)
  *  into a layout every client built (`i >= _layoutFoes` refuses the rest); a cell's comes from anyone and MINTS a
  *  foe per record it names, so a record is projected like a pose (validPose's own bounds on the feet) and a frame
  *  carries at most CELL_FRAME_RECORDS_MAX records (the owner's live cap plus the corpses still riding), and a
- *  reader stands at most CELL_PUPPETS_MAX live puppets per owner (MAX_ACTIVE_ENCOUNTER_FOES - the only number a
- *  legitimate owner can exceed is by quest foes, which never ride). */
+ *  reader stands at most CELL_PUPPETS_MAX live puppets per owner: the owner's encounter cap
+ *  (MAX_ACTIVE_ENCOUNTER_FOES, 8) and CELL_LOOSE_PUPPETS more. AUDIT PSCALE1 COUNT-4: the cap was the encounter cap
+ *  alone, on the reading that only quest foes (which never ride) pass it - but a LOOSE stand (a SoulBound's release,
+ *  the Sanguine Rose's Daedroth, Roleplay & Realism's squad) and a Wabbajack's replacement are outside the owner's cap
+ *  and DO ride, and a camp of five grown by a party's three more fills the eight exactly, so the reader dropped them
+ *  unseen. */
 export const CELL_FRAME_RECORDS_MAX = 64;
-export const CELL_PUPPETS_MAX = 8;
+export const CELL_LOOSE_PUPPETS = 4;
+export const CELL_PUPPETS_MAX = 8 + CELL_LOOSE_PUPPETS;
 /** AUDIT WATCH1 A1: THE WATCH HAS ITS OWN ALLOWANCE. A criminal's frame is its encounter foes AND its watch, and the
  *  watch rides behind the foes - so under one cap of eight a criminal carrying a full encounter roll streamed a watch
  *  no reader ever stood (the cap counts standing puppets, so no later frame could get one in). The watch is counted
@@ -908,6 +957,8 @@ export function validFoeRecord(r) {
   // WORLD6b-iii(c): `o` how many items the corpse's pile holds (0 a live foe, an emptied body) - a peer's body is a loot
   // target while it says more than none; the pile itself travels in the owner's GRANT (a hit frame), never here
   if (r.o !== undefined) { if (!Number.isInteger(r.o) || r.o < 0 || r.o > 255) return null; out.o = r.o; }
+  // AUDIT PSCALE1: `n` how many players fight the foe (systems/partyScale.js foeFighters) - 2..PARTY_MAX, absent for one
+  if (r.n !== undefined) { if (!Number.isInteger(r.n) || r.n < 2 || r.n > PARTY_MAX) return null; out.n = r.n; }
   // AUDIT CONTRIB P1: `e` the HEIR - on a dying owner's last frame, the survivor that owner names to take this foe over
   if (r.e !== undefined) { if (typeof r.e !== 'string' || !ID_RE.test(r.e)) return null; out.e = r.e; }
   if (r.w !== undefined) {
@@ -1065,7 +1116,7 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  carries it (`v`), and a client whose wire.js was built against another version says so on the console: the client
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
-export const RELAY_VERSION = 'world107';   // DUEL1 (2026-09-24, Mac: "When inspecting a player, they should be able to send an invite to duel"): the `duel` frame - one directed frame between two players (the invite, its answer, the start and the ring's centre, a blow, a spell, the defender's result, the end), routed like a card through a per-sender funnel of its own on its own meter, the sender's VERIFIED ACCOUNT stamped beside its id (`sub`, off the token - the loser names the winner's account by it); and the card frame carries the answerer's `sub` the same way, so a profile can read the duelling record the account service keeps for it - world107 (it was world105 on the branch; main's world105, AUDIT 68, and world106, DISC23-B, landed first). Before it: DISC23-B (2026-09-24, Gryphoth on Discord): the look's `eo` - the Eye Of The Beholder on-foot set the player chose, so a peer without a Morrowind body stands as the sprite they picked, not their class's; a look without it keeps its bytes - world106. Before it: AUDIT 68 (2026-09-24, the whole-tree sweep): no frame changes shape - the relay's own law moved (a hello is asked for its token before anything is written; a destination's own hit-byte meter; say and mute metered; idle unlisted accounts, stale party pointers and a registry's expired word swept) - world105 (it was world103 on the branch; main's world103 and world104 landed first). Before it: TITLE-N (2026-09-24, Mac): the Dungeon Master's line - `{t:'narrate', text}` in, from a socket whose token carried the `dm` glyph alone, on its own bucket (DM_HZ_MAX); `{t:'dm', text, at}` out to everyone in the room, no id and no name - and the badge vocabulary grows by four titles (Dungeon Master, Disciple, Apostle, Hierophant) and four glyphs (dm, disciple, apostle, hierophant), which the token verifier reads - world104. Before it: PCORPSE1 + RESURRECT1 + PCORPSE3 (2026-09-23, the contributor's drop, merged over DISC12): the pose's death flag (`dd` 1 on a dying player's last pose, omitted alive), and the party pose's Resurrect call (`rz` {to, at}) and fallen body (`dd` {k, x, y, z, at}), each omitted when absent; and the look's `class` widened to what a custom class may be called (letters, digits, spaces, apostrophes and hyphens, 32 long - the contributor's sprite fix) - world103 (the drop numbered them world100-102 off world99; none of those ever ran on the relay, and main's community arc deployed world102 first, so the merged graph is the one version past the deployed world102). Before it: THE SIXTH MERGE (2026-09-23): main's DISC12 is world101, so the arc's deploy is world102 - every frame below moves its RELAY_MIN gate to 102. JOURNAL1 (the same deploy): the `page` frame - a page of a player's journal shown to one player standing near them, directed like a card through the cast arm's per-sender funnel, on its own meter, never from a muted player; its words cleaned by the letter's line law, which moves here from net/letterLaw.js (`wordsLine`, `foldBlankLines`) so the letter and the page read one law. MAIL1 (the same deploy): no frame of its own - the letters are the account service's - but the characters' law left sanitizeChat as visibleText, which the letter reads too (one law, not a copy; a chat line comes out of it unchanged). THE MERGE (the same deploy): main's park meter's strikes its own (`parkDrops` - they were the party pose meter's `pdrops`, so either meter's pass forgave the other's flood). INSPECT1 (the same deploy): the `card` frame - a player's card asked for and answered, directed like a cast frame through the cast arm's own per-sender funnel onto the destination, the relay reading none of it. AUDIT ATTACH (the same deploy): every per-socket meter is the Room instance's, not its attachment's - the widest place attachment was past the runtime's 2 KiB and a write it refused froze a meter open; the attachment keeps what a wake must recompute. EMOTE1 (the same deploy): a chat line may be an ACTION (`me: true`, nothing else admitted), and the sanitizer keeps the one joiner that stands between two pictographs (a family, a profession, a flag - one emoji). DICE1 (2026-09-23, the community arc, the same deploy): the `roll` frame - a roll ASKED of the relay ({n, m, k}, net/dice.js), rolled from the relay's own CSPRNG and said to the channel it was asked on through the chat's own fan (`_sayLine`), one a second a socket. CHAT-CHAN (2026-09-23, the community arc): the region channels (`chat:region.<i>`, one room per politic region) join the whitelist, a chat line may name the `party` channel - fanned by the hub to the party's members alone on a budget of the parties' own (PARTY_CHAT_ROOM_HZ_MAX), and refused whole when it names anything else - and a cast's strikes are its own (`castDrops`, no longer the chat gate's `cdrops`) - world102. Before it: DISC12 (2026-09-23): the pose's hand-in-use bit (`lh`, the LEFT hand, omitted on the right) and beast form (`wb`, 1 werewolf 2 wereboar, omitted in human form); poseChanged sends each edge at once - world101. Before it: DISC7 (2026-09-23): the pose's half-speed bit (`hs`, mounted and moving slower than half, omitted at 0) - the peers' clop swaps as the rider's own does - world100. Before it: HCC-PARK + RIDE (2026-09-23): the `park` frame (a cell keeps a parked team past its owner's presence; the owner's registry drops the old cell's record), and the pose's mount (`rd`/`rv`, omitted on foot) - world99. Before it: SPELLFX1 (2026-09-23, the friendly-spells drop): the pose carries the cast's element (`ce`) and the arrows loosed (`ar`), so a peer's missile and shaft can be DRAWN - the Unity co-op's RpcPlayPlayerSpellCastVisual; visual only, it lands nothing, and a pose from before it reads Magic and no shafts; and the sender's cast meter a whole blast deep (CAST_BURST_MAX), since a beneficial blast is one cast and one frame per mate - world98. Before it: AUDIT ALLY-CAST (2026-09-23): the cast frame's honest bounds (level 30, byte components, a touch or a ranged target, the icon), the destination's funnel per sender - world97. Before it: ALLY-CAST (2026-09-23): the `cast` frame - a beneficial spell at a party mate, directed like a trade frame, the receiver deciding what lands - world96. Before it: AUDIT PARTY8 + AUDIT PARTY-REST (2026-09-23): the party pose carries `readyAt` (a vote's shared-clock stamp, read for freshness by every party mate), the quest fan pays in bytes (QUEST_ROOM_BYTES_PER_S), a lapse burst says the lead once and the lead passes to a seat that is online - world95. Before it: PARTY8 (2026-09-22): PARTY_MAX 4 -> 8 - a party frame's member bound, so a world93 client and this hub must not meet - world94. Before it: PARTY-REST DROP (2026-09-22): the party pose grew `rest.kind`, `voteAt`, `restEnemyAt`, `restCancelFor`/`restCancelAt`, `restStartedAt`, and `bk` is a full 32-bit key (PARTY-REST9) - world93. Before it: AUDIT DROPS (2026-09-22): the trade bytes budgeted per sender (B3), the hub's quest cooldown at half the client's floor (C1), the quest budget spent only on a share with a party to reach (C3) - world92. Before it: QUEST1 + TRADE1 + PEER-FS1 (2026-09-22, three drops in one deploy): the quest frame (a party member's quest, shared), the trade frame (a courier between two peers) and the pose's footstep byte. Before them: RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client   // RED1: the server's own red line - `say` in, `red` out, and the authority is the dev glyph the token already carried   // MOD1: the mute order (`{t:'mute', order}` in, `{t:'muted', until}` out), `sub` on chat lines and a channel's roster, the `mu` claim - world90
+export const RELAY_VERSION = 'world113';   // AUDIT WB (2026-09-25, Mac: "A proper audit on everything"), the relay's half: a seat is a hello's (a socket silent past HELLO_WAIT_MS gives its seat back to a full room), one seat an account in a gate's court, a full fight frees a seat left idle (net/gateBrain.js freeSeat), a newcomer to a bled fight comes with an empty bucket, an `in` again writes nothing, the kill kept before it is said and the hub told until it answers (GATE_TELL_RETRY_MS), each account's receipt kept by the hub for its life and handed to its next hello (gateReceiptKey), a day's gate times made once (net/gateLaw.js) - world113 (world111 on its branch and WB3 world110, neither deployed; main's EVENT1 (world110), RENOWN1 (world111) and PARTY-TRAVEL (world112) landed first), in one deploy with WB3 (2026-09-25, Mac: "a gate of oblivion which takes place in a large boss arena with an oversized enemy with telegraphed attacks", and Option B - the relay's object is the authority over the boss): THE GATE'S BOSS ROOM - the `gate` frame (`in` a level claim, `hit` a blow; the room's kinds back, validGateOut), a `gate:<day>` room the Worker opens and the hello admits only inside its day's window (net/gateLaw.js), the fight the object runs on its alarm (net/gateBrain.js - the health a claim brings and the bucket it may deal, the walk, six telegraphed attacks, three phases, the wrath) and checkpoints every two seconds, the kill said once with a receipt to each account that earned one (net/gateReceipt.js - the relay's first signature, GATE_SIGNING_KEY, unsigned without it) and the hub's world line through an internal door (GATE_INTERNAL_FELL); three files join the bundle (GATE_RELAY_MIN) - world113. Before it: PARTY-TRAVEL (2026-09-25; world110 on its branch, renumbered past main's EVENT1 (world110) and RENOWN1 (world111); Mac: "Implementing a prompt for online to travel to party leader and the option for party members to ready up and travel together"): the party pose carries the party's journey - the leader's proposal `tv` {x, y, o, at, go}, a member's answer `tr`/`td` (the round's `at`), and the leader's feet in the open air `wx`/`wy`/`wz` - each omitted when absent, never refusing a pose; the relay projects the party pose through validPartyPose, so an older relay strips all of them (the clients open no round through it: PARTY_TRAVEL_RELAY_MIN) - world110. Before it: PROFILE2 (2026-09-25, Mac: "make the profile icon visible somehow on the pause menu and allow changes"), in the same deploy: the `look` frame - a look changed mid-session said again without a new room, stored as the hello's and fanned as its join (LOOK_RELAY_MIN). SKIN2 (2026-09-25, Mac: "Implement these as new skin options"): the look's `eo` bound widens from the mod's sixteen on-foot sets to every skin the build carries (FOOT_SKINS, 36 - Daggerfall's twenty classes after the mod's sets), so a peer who picked a class skin is drawn in it rather than clamped to the mod's last set; no frame changes shape and a look without `eo` keeps its bytes - world109. Before it: HT-WAIST-NET (2026-09-24: Mac asked for the lantern at the waist to be seen on the character, and the others draw you in the Morrowind body): the pose's waist-lantern bit (`hl` 1 while the sender's lit light is a lantern hung at the waist - systems/playerTorch.js waistLanternPoseBit, lanternAtWaist's answer - omitted otherwise; poseChanged sends its edge at once; lerpPose carries it), so a peer's Morrowind body hangs the lantern at its hip (net/peerBodies.js `_arm`, the rig's own setHipLight) - world108 (it was world106 on its branch; main's DISC23-B took world106 and DUEL1 world107 first). No RELAY_MIN: a pose field is never gated (DISC12's lh/wb and PCORPSE1's dd were not) - an older relay's validPose drops it and the others see no lantern, nothing closes. Before it: DUEL1 (2026-09-24, Mac: "When inspecting a player, they should be able to send an invite to duel"): the `duel` frame - one directed frame between two players (the invite, its answer, the start and the ring's centre, a blow, a spell, the defender's result, the end), routed like a card through a per-sender funnel of its own on its own meter, the sender's VERIFIED ACCOUNT stamped beside its id (`sub`, off the token - the loser names the winner's account by it); and the card frame carries the answerer's `sub` the same way, so a profile can read the duelling record the account service keeps for it - world107 (it was world105 on the branch; main's world105, AUDIT 68, and world106, DISC23-B, landed first). Before it: DISC23-B (2026-09-24, Gryphoth on Discord): the look's `eo` - the Eye Of The Beholder on-foot set the player chose, so a peer without a Morrowind body stands as the sprite they picked, not their class's; a look without it keeps its bytes - world106. Before it: AUDIT 68 (2026-09-24, the whole-tree sweep): no frame changes shape - the relay's own law moved (a hello is asked for its token before anything is written; a destination's own hit-byte meter; say and mute metered; idle unlisted accounts, stale party pointers and a registry's expired word swept) - world105 (it was world103 on the branch; main's world103 and world104 landed first). Before it: TITLE-N (2026-09-24, Mac): the Dungeon Master's line - `{t:'narrate', text}` in, from a socket whose token carried the `dm` glyph alone, on its own bucket (DM_HZ_MAX); `{t:'dm', text, at}` out to everyone in the room, no id and no name - and the badge vocabulary grows by four titles (Dungeon Master, Disciple, Apostle, Hierophant) and four glyphs (dm, disciple, apostle, hierophant), which the token verifier reads - world104. Before it: PCORPSE1 + RESURRECT1 + PCORPSE3 (2026-09-23, the contributor's drop, merged over DISC12): the pose's death flag (`dd` 1 on a dying player's last pose, omitted alive), and the party pose's Resurrect call (`rz` {to, at}) and fallen body (`dd` {k, x, y, z, at}), each omitted when absent; and the look's `class` widened to what a custom class may be called (letters, digits, spaces, apostrophes and hyphens, 32 long - the contributor's sprite fix) - world103 (the drop numbered them world100-102 off world99; none of those ever ran on the relay, and main's community arc deployed world102 first, so the merged graph is the one version past the deployed world102). Before it: THE SIXTH MERGE (2026-09-23): main's DISC12 is world101, so the arc's deploy is world102 - every frame below moves its RELAY_MIN gate to 102. JOURNAL1 (the same deploy): the `page` frame - a page of a player's journal shown to one player standing near them, directed like a card through the cast arm's per-sender funnel, on its own meter, never from a muted player; its words cleaned by the letter's line law, which moves here from net/letterLaw.js (`wordsLine`, `foldBlankLines`) so the letter and the page read one law. MAIL1 (the same deploy): no frame of its own - the letters are the account service's - but the characters' law left sanitizeChat as visibleText, which the letter reads too (one law, not a copy; a chat line comes out of it unchanged). THE MERGE (the same deploy): main's park meter's strikes its own (`parkDrops` - they were the party pose meter's `pdrops`, so either meter's pass forgave the other's flood). INSPECT1 (the same deploy): the `card` frame - a player's card asked for and answered, directed like a cast frame through the cast arm's own per-sender funnel onto the destination, the relay reading none of it. AUDIT ATTACH (the same deploy): every per-socket meter is the Room instance's, not its attachment's - the widest place attachment was past the runtime's 2 KiB and a write it refused froze a meter open; the attachment keeps what a wake must recompute. EMOTE1 (the same deploy): a chat line may be an ACTION (`me: true`, nothing else admitted), and the sanitizer keeps the one joiner that stands between two pictographs (a family, a profession, a flag - one emoji). DICE1 (2026-09-23, the community arc, the same deploy): the `roll` frame - a roll ASKED of the relay ({n, m, k}, net/dice.js), rolled from the relay's own CSPRNG and said to the channel it was asked on through the chat's own fan (`_sayLine`), one a second a socket. CHAT-CHAN (2026-09-23, the community arc): the region channels (`chat:region.<i>`, one room per politic region) join the whitelist, a chat line may name the `party` channel - fanned by the hub to the party's members alone on a budget of the parties' own (PARTY_CHAT_ROOM_HZ_MAX), and refused whole when it names anything else - and a cast's strikes are its own (`castDrops`, no longer the chat gate's `cdrops`) - world102. Before it: DISC12 (2026-09-23): the pose's hand-in-use bit (`lh`, the LEFT hand, omitted on the right) and beast form (`wb`, 1 werewolf 2 wereboar, omitted in human form); poseChanged sends each edge at once - world101. Before it: DISC7 (2026-09-23): the pose's half-speed bit (`hs`, mounted and moving slower than half, omitted at 0) - the peers' clop swaps as the rider's own does - world100. Before it: HCC-PARK + RIDE (2026-09-23): the `park` frame (a cell keeps a parked team past its owner's presence; the owner's registry drops the old cell's record), and the pose's mount (`rd`/`rv`, omitted on foot) - world99. Before it: SPELLFX1 (2026-09-23, the friendly-spells drop): the pose carries the cast's element (`ce`) and the arrows loosed (`ar`), so a peer's missile and shaft can be DRAWN - the Unity co-op's RpcPlayPlayerSpellCastVisual; visual only, it lands nothing, and a pose from before it reads Magic and no shafts; and the sender's cast meter a whole blast deep (CAST_BURST_MAX), since a beneficial blast is one cast and one frame per mate - world98. Before it: AUDIT ALLY-CAST (2026-09-23): the cast frame's honest bounds (level 30, byte components, a touch or a ranged target, the icon), the destination's funnel per sender - world97. Before it: ALLY-CAST (2026-09-23): the `cast` frame - a beneficial spell at a party mate, directed like a trade frame, the receiver deciding what lands - world96. Before it: AUDIT PARTY8 + AUDIT PARTY-REST (2026-09-23): the party pose carries `readyAt` (a vote's shared-clock stamp, read for freshness by every party mate), the quest fan pays in bytes (QUEST_ROOM_BYTES_PER_S), a lapse burst says the lead once and the lead passes to a seat that is online - world95. Before it: PARTY8 (2026-09-22): PARTY_MAX 4 -> 8 - a party frame's member bound, so a world93 client and this hub must not meet - world94. Before it: PARTY-REST DROP (2026-09-22): the party pose grew `rest.kind`, `voteAt`, `restEnemyAt`, `restCancelFor`/`restCancelAt`, `restStartedAt`, and `bk` is a full 32-bit key (PARTY-REST9) - world93. Before it: AUDIT DROPS (2026-09-22): the trade bytes budgeted per sender (B3), the hub's quest cooldown at half the client's floor (C1), the quest budget spent only on a share with a party to reach (C3) - world92. Before it: QUEST1 + TRADE1 + PEER-FS1 (2026-09-22, three drops in one deploy): the quest frame (a party member's quest, shared), the trade frame (a courier between two peers) and the pose's footstep byte. Before them: RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client   // RED1: the server's own red line - `say` in, `red` out, and the authority is the dev glyph the token already carried   // MOD1: the mute order (`{t:'mute', order}` in, `{t:'muted', until}` out), `sub` on chat lines and a channel's roster, the `mu` claim - world90 BEFORE IT: RENOWN1 (2026-09-24, Mac: "What if the leveling system was something seperate unique to online but compatible" ... "Plus having their level appear on the left side of character name"; named: "Lets officially call this Renown"): the identity token's `lv` (the Renown level of the character the client named at the mint - net/identityToken.js checks it against RENOWN_MAX), stamped by `badged` beside the title and glyphs on every welcome row, join and roster; and the `renown` frame - `{t:'renown', order}` in, a RENOWN ORDER the account service signed when the carrier's own level rose, taken only from a socket whose verified account it names (RENOWN_HZ_MAX), `{t:'renown', id, lv}` out to the room - so a Renown level moves beside a name without a reconnect; and the mute arm now asks `verifyOrder` for a mute by name, so a renown order can never be carried to its door; AUDIT RENOWN1 (the same unshipped deploy): the arm takes only a RISE (an order that does not raise the socket's level is answered to its carrier alone and fans nothing), never in a channel or the hub, on the room's own budget (RENOWN_ROOM_HZ_MAX) - world111 (it was world108 on the branch; main's world108, HT-WAIST-NET, world109, PROFILE2 and SKIN2, and world110, EVENT1, landed first). Before it: EVENT1 (2026-09-25, Mac: "I wanna do a fun live event for the server"): the `stage` frame - a live event staged or ended by a dev-glyph socket in the hub alone, kept in the hub's storage (EVENT_KEY) until a dev ends it, fanned as `{t:'event', kind, at}` to every hub socket and said on the hub welcome (`ev`) to a late joiner (EVENT_RELAY_MIN). world109: PROFILE2 (2026-09-25, Mac: "make the profile icon visible somehow on the pause menu and allow changes"), in the same deploy: the `look` frame - a look changed mid-session said again without a new room, stored as the hello's and fanned as its join (LOOK_RELAY_MIN). SKIN2 (2026-09-25, Mac: "Implement these as new skin options"): the look's `eo` bound widens from the mod's sixteen on-foot sets to every skin the build carries (FOOT_SKINS, 36 - Daggerfall's twenty classes after the mod's sets), so a peer who picked a class skin is drawn in it rather than clamped to the mod's last set; no frame changes shape and a look without `eo` keeps its bytes - world109. Before it: HT-WAIST-NET (2026-09-24: Mac asked for the lantern at the waist to be seen on the character, and the others draw you in the Morrowind body): the pose's waist-lantern bit (`hl` 1 while the sender's lit light is a lantern hung at the waist - systems/playerTorch.js waistLanternPoseBit, lanternAtWaist's answer - omitted otherwise; poseChanged sends its edge at once; lerpPose carries it), so a peer's Morrowind body hangs the lantern at its hip (net/peerBodies.js `_arm`, the rig's own setHipLight) - world108 (it was world106 on its branch; main's DISC23-B took world106 and DUEL1 world107 first). No RELAY_MIN: a pose field is never gated (DISC12's lh/wb and PCORPSE1's dd were not) - an older relay's validPose drops it and the others see no lantern, nothing closes. Before it: DUEL1 (2026-09-24, Mac: "When inspecting a player, they should be able to send an invite to duel"): the `duel` frame - one directed frame between two players (the invite, its answer, the start and the ring's centre, a blow, a spell, the defender's result, the end), routed like a card through a per-sender funnel of its own on its own meter, the sender's VERIFIED ACCOUNT stamped beside its id (`sub`, off the token - the loser names the winner's account by it); and the card frame carries the answerer's `sub` the same way, so a profile can read the duelling record the account service keeps for it - world107 (it was world105 on the branch; main's world105, AUDIT 68, and world106, DISC23-B, landed first). Before it: DISC23-B (2026-09-24, Gryphoth on Discord): the look's `eo` - the Eye Of The Beholder on-foot set the player chose, so a peer without a Morrowind body stands as the sprite they picked, not their class's; a look without it keeps its bytes - world106. Before it: AUDIT 68 (2026-09-24, the whole-tree sweep): no frame changes shape - the relay's own law moved (a hello is asked for its token before anything is written; a destination's own hit-byte meter; say and mute metered; idle unlisted accounts, stale party pointers and a registry's expired word swept) - world105 (it was world103 on the branch; main's world103 and world104 landed first). Before it: TITLE-N (2026-09-24, Mac): the Dungeon Master's line - `{t:'narrate', text}` in, from a socket whose token carried the `dm` glyph alone, on its own bucket (DM_HZ_MAX); `{t:'dm', text, at}` out to everyone in the room, no id and no name - and the badge vocabulary grows by four titles (Dungeon Master, Disciple, Apostle, Hierophant) and four glyphs (dm, disciple, apostle, hierophant), which the token verifier reads - world104. Before it: PCORPSE1 + RESURRECT1 + PCORPSE3 (2026-09-23, the contributor's drop, merged over DISC12): the pose's death flag (`dd` 1 on a dying player's last pose, omitted alive), and the party pose's Resurrect call (`rz` {to, at}) and fallen body (`dd` {k, x, y, z, at}), each omitted when absent; and the look's `class` widened to what a custom class may be called (letters, digits, spaces, apostrophes and hyphens, 32 long - the contributor's sprite fix) - world103 (the drop numbered them world100-102 off world99; none of those ever ran on the relay, and main's community arc deployed world102 first, so the merged graph is the one version past the deployed world102). Before it: THE SIXTH MERGE (2026-09-23): main's DISC12 is world101, so the arc's deploy is world102 - every frame below moves its RELAY_MIN gate to 102. JOURNAL1 (the same deploy): the `page` frame - a page of a player's journal shown to one player standing near them, directed like a card through the cast arm's per-sender funnel, on its own meter, never from a muted player; its words cleaned by the letter's line law, which moves here from net/letterLaw.js (`wordsLine`, `foldBlankLines`) so the letter and the page read one law. MAIL1 (the same deploy): no frame of its own - the letters are the account service's - but the characters' law left sanitizeChat as visibleText, which the letter reads too (one law, not a copy; a chat line comes out of it unchanged). THE MERGE (the same deploy): main's park meter's strikes its own (`parkDrops` - they were the party pose meter's `pdrops`, so either meter's pass forgave the other's flood). INSPECT1 (the same deploy): the `card` frame - a player's card asked for and answered, directed like a cast frame through the cast arm's own per-sender funnel onto the destination, the relay reading none of it. AUDIT ATTACH (the same deploy): every per-socket meter is the Room instance's, not its attachment's - the widest place attachment was past the runtime's 2 KiB and a write it refused froze a meter open; the attachment keeps what a wake must recompute. EMOTE1 (the same deploy): a chat line may be an ACTION (`me: true`, nothing else admitted), and the sanitizer keeps the one joiner that stands between two pictographs (a family, a profession, a flag - one emoji). DICE1 (2026-09-23, the community arc, the same deploy): the `roll` frame - a roll ASKED of the relay ({n, m, k}, net/dice.js), rolled from the relay's own CSPRNG and said to the channel it was asked on through the chat's own fan (`_sayLine`), one a second a socket. CHAT-CHAN (2026-09-23, the community arc): the region channels (`chat:region.<i>`, one room per politic region) join the whitelist, a chat line may name the `party` channel - fanned by the hub to the party's members alone on a budget of the parties' own (PARTY_CHAT_ROOM_HZ_MAX), and refused whole when it names anything else - and a cast's strikes are its own (`castDrops`, no longer the chat gate's `cdrops`) - world102. Before it: DISC12 (2026-09-23): the pose's hand-in-use bit (`lh`, the LEFT hand, omitted on the right) and beast form (`wb`, 1 werewolf 2 wereboar, omitted in human form); poseChanged sends each edge at once - world101. Before it: DISC7 (2026-09-23): the pose's half-speed bit (`hs`, mounted and moving slower than half, omitted at 0) - the peers' clop swaps as the rider's own does - world100. Before it: HCC-PARK + RIDE (2026-09-23): the `park` frame (a cell keeps a parked team past its owner's presence; the owner's registry drops the old cell's record), and the pose's mount (`rd`/`rv`, omitted on foot) - world99. Before it: SPELLFX1 (2026-09-23, the friendly-spells drop): the pose carries the cast's element (`ce`) and the arrows loosed (`ar`), so a peer's missile and shaft can be DRAWN - the Unity co-op's RpcPlayPlayerSpellCastVisual; visual only, it lands nothing, and a pose from before it reads Magic and no shafts; and the sender's cast meter a whole blast deep (CAST_BURST_MAX), since a beneficial blast is one cast and one frame per mate - world98. Before it: AUDIT ALLY-CAST (2026-09-23): the cast frame's honest bounds (level 30, byte components, a touch or a ranged target, the icon), the destination's funnel per sender - world97. Before it: ALLY-CAST (2026-09-23): the `cast` frame - a beneficial spell at a party mate, directed like a trade frame, the receiver deciding what lands - world96. Before it: AUDIT PARTY8 + AUDIT PARTY-REST (2026-09-23): the party pose carries `readyAt` (a vote's shared-clock stamp, read for freshness by every party mate), the quest fan pays in bytes (QUEST_ROOM_BYTES_PER_S), a lapse burst says the lead once and the lead passes to a seat that is online - world95. Before it: PARTY8 (2026-09-22): PARTY_MAX 4 -> 8 - a party frame's member bound, so a world93 client and this hub must not meet - world94. Before it: PARTY-REST DROP (2026-09-22): the party pose grew `rest.kind`, `voteAt`, `restEnemyAt`, `restCancelFor`/`restCancelAt`, `restStartedAt`, and `bk` is a full 32-bit key (PARTY-REST9) - world93. Before it: AUDIT DROPS (2026-09-22): the trade bytes budgeted per sender (B3), the hub's quest cooldown at half the client's floor (C1), the quest budget spent only on a share with a party to reach (C3) - world92. Before it: QUEST1 + TRADE1 + PEER-FS1 (2026-09-22, three drops in one deploy): the quest frame (a party member's quest, shared), the trade frame (a courier between two peers) and the pose's footstep byte. Before them: RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client   // RED1: the server's own red line - `say` in, `red` out, and the authority is the dev glyph the token already carried   // MOD1: the mute order (`{t:'mute', order}` in, `{t:'muted', until}` out), `sub` on chat lines and a channel's roster, the `mu` claim - world90
 
 /** The listeners sorted by distance from `from`, nearest first; one with no pose yet sorts last, because a peer that
  *  has never said where it is cannot be near. The ordering is Euclidean in the POSE'S OWN FRAME, which is a cell's
@@ -1144,13 +1195,14 @@ export function poseChanged(a, b, eps = 0.01) {
     || (a.rd | 0) !== (b.rd | 0) || (a.rv | 0) !== (b.rv | 0)   // RIDE: a mount or a dismount goes out at once, as a step does
     || (a.hs | 0) !== (b.hs | 0)   // DISC7: and the clop's swap, as the rider's own swaps on its edge
     || (a.lh | 0) !== (b.lh | 0) || (a.wb | 0) !== (b.wb | 0)   // DISC12: a hand switch and a change of shape go out at once, as a draw does
-    || (a.dd | 0) !== (b.dd | 0);   // PCORPSE1: a death is news - never a keepalive for the relay to tier away
+    || (a.dd | 0) !== (b.dd | 0)   // PCORPSE1: a death is news - never a keepalive for the relay to tier away
+    || (a.hl | 0) !== (b.hl | 0);   // HT-WAIST-NET: a lantern lit at the waist, or put out, goes out at once, as a draw does
 }
 
 /** A pose the room will relay, or null. */
 export function validPose(p) {
   if (!p || typeof p !== 'object') return null;
-  const { x, y, z, yaw, pitch, mv, wd, an, as, am, sr, cn, cr, ce, ar, fk, rd, rv, hs, lh, wb, dd } = p;
+  const { x, y, z, yaw, pitch, mv, wd, an, as, am, sr, cn, cr, ce, ar, fk, rd, rv, hs, lh, wb, dd, hl } = p;
   if (![x, y, z, yaw, pitch].every(finite)) return null;
   if (Math.abs(x) > POSE_BOUND || Math.abs(z) > POSE_BOUND || Math.abs(y) > POSE_Y_BOUND) return null;
   // ONCRASH1 (2026-09-15, Mac: "reports of player browser crashing when
@@ -1197,6 +1249,13 @@ export function validPose(p) {
     // broadcast nothing - AUDIT ONLINE D12 - so this is the last thing the others hear of that body). OMITTED alive,
     // as `rd` is on foot: a living pose serializes to the bytes it always did.
     ...(dd === 1 || dd === true ? { dd: 1 } : {}),
+    // HT-WAIST-NET (2026-09-24: Mac asked for the lantern at the waist to be seen on the character, and the others
+    // draw you in the Morrowind body - MWBODY1): `hl` 1 while the player's lit light is a lantern HUNG AT THE WAIST
+    // (Handheld Torches' port-own Handling.LanternsAtWaist - systems/playerTorch.js waistLanternPoseBit), so a peer's
+    // body hangs it at the hip and swings it off its own motion (net/peerBodies.js `_arm`). A light in no hand, so it
+    // is not the held torch MW-D51 records as not carried - that still rides nothing. OMITTED otherwise (validLook's
+    // `class` law): a pose without a lantern at the waist keeps the bytes it always had.
+    ...(uint(hl, 1) ? { hl: 1 } : {}),
   };
 }
 /** RIDE: the pose's mount - `rd` 1 the horse, 2 the cart (DFU's TransportModes riding), `rv` the mounted sprite set. */
@@ -1252,11 +1311,15 @@ export function validLook(look) {
   // their mod is on, so a peer who stands no Morrowind body on my screen is drawn as the sprite they picked
   // (net/peerRiders.js createPeerWalkers) rather than their class's enemy. OMITTED when absent, `class`'s law: a look
   // without it serializes to the bytes it always did.
-  const eo = uint(look.eo, EOTB_FOOT_SETS - 1);
+  // SKIN2 (2026-09-25): and past the mod's sixteen, Daggerfall's own classes (player/classSkins.js) - the bound is every
+  // on-foot skin the build carries.
+  const eo = uint(look.eo, FOOT_SKINS - 1);
   return { race, gender, faceIndex, ...(klass ? { class: klass } : {}), ...(eo != null ? { eo } : {}), items };
 }
-/** DISC23-B: Eye Of The Beholder's on-foot sets (archives 112364-112379) - the look's `eo` bound. */
-export const EOTB_FOOT_SETS = 16;
+/** DISC23-B's `eo` bound, widened by SKIN2: every on-foot skin - Eye Of The Beholder's sixteen sets (archives
+ *  112364-112379) and Daggerfall's twenty classes after them. A literal, because the relay imports this file and not the skin table (test/skin2_class_skins.test.js pins it equal to
+ *  player/classSkins.js FOOT_SKIN_COUNT). */
+export const FOOT_SKINS = 36;
 
 /** The room's key from the request path: /room/<key>, or null. */
 export function roomOf(pathname) {
@@ -1321,7 +1384,7 @@ export function inRange(roomKey, from, to) {
   return pixelDistance(from, to) <= RANGE_PIXELS;
 }
 
-/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'roll'|'say'|'narrate'|'mute'|'world'|'foes'|'hit'|'act'|'who'|'quest'|'social'|'party'|'trade'|'cast'|'card'|'page'|'duel'|'park', ...}
+/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'roll'|'say'|'narrate'|'stage'|'mute'|'renown'|'world'|'foes'|'hit'|'act'|'who'|'quest'|'social'|'party'|'trade'|'cast'|'card'|'page'|'duel'|'park'|'look'|'gate', ...}
  *  or {error} - the caller closes on an error. INSPECT1: every arm below, named - this line had fallen seven behind
  *  (test/auditworld2.test.js derives the list from the arms now, so it cannot fall behind again - the merge with
  *  main's HCC-PARK was its first catch: the park arm, unnamed). */
@@ -1379,10 +1442,20 @@ export function parseClient(text, { hasHello = false } = {}) {
     const data = validDuelData(m.data);
     return data ? { t: 'duel', data } : { error: 'bad duel' };
   }
+  if (m.t === 'look') {   // PROFILE2: my look again, mid-session - the hello's look through the hello's own door
+    if (!hasHello) return { error: 'look before hello' };
+    const look = validLook(m.look);
+    return look ? { t: 'look', look } : { error: 'bad look' };
+  }
   if (m.t === 'park') {   // HCC-PARK: my character's parked team - nothing (no anchor), or its anchor and, when shown, its record
     if (!hasHello) return { error: 'park before hello' };
     const data = validParkData(m.data);
     return data ? { t: 'park', data } : { error: 'bad park' };
+  }
+  if (m.t === 'gate') {   // WB3: a word to a gate's boss room - the level claim on entering, or a blow on the boss - projected by validGateIn; the room's brain (net/gateBrain.js) judges every blow
+    if (!hasHello) return { error: 'gate before hello' };
+    const g = validGateIn(m);
+    return g ? { t: 'gate', ...g } : { error: 'bad gate' };
   }
   if (m.t === 'ping') return { t: 'ping' };
   if (m.t === 'hello') {
@@ -1480,12 +1553,25 @@ export function parseClient(text, { hasHello = false } = {}) {
     const text = typeof m.text === 'string' ? sanitizeChat(m.text) : '';
     return text ? { t: 'narrate', text } : { error: 'bad narrate' };
   }
+  if (m.t === 'stage') {
+    // EVENT1: A LIVE EVENT, ASKED FOR - `say`'s law exactly: the shape here (a known event, or '' to end one), and
+    // whether this socket may stage it is the relay's question, asked of the signed token it alone holds the key to.
+    if (!hasHello) return { error: 'stage before hello' };
+    return m.kind === '' || LIVE_EVENTS.includes(m.kind) ? { t: 'stage', kind: m.kind } : { error: 'bad stage' };
+  }
   if (m.t === 'mute') {
     // MOD1: THE SHAPE ONLY, as `say` is. Whether the order is real is a
     // question about a signature, and the relay alone holds the key.
     if (!hasHello) return { error: 'mute before hello' };
     return typeof m.order === 'string' && m.order.length > 0 && m.order.length <= 1024
       ? { t: 'mute', order: m.order } : { error: 'bad mute' };
+  }
+  if (m.t === 'renown') {
+    // RENOWN1: THE SHAPE ONLY, as the mute order's. Whether it is real, and whether it names the socket that carried it,
+    // are the relay's questions - a signature and the account the hello's token verified.
+    if (!hasHello) return { error: 'renown before hello' };
+    return typeof m.order === 'string' && m.order.length > 0 && m.order.length <= 1024
+      ? { t: 'renown', order: m.order } : { error: 'bad renown' };
   }
   if (m.t === 'social') {   // SOC1: a friend or party act - a KIND from SOCIAL_ACTS naming what that kind must name, and nothing else
     if (!hasHello) return { error: 'social before hello' };
@@ -1585,6 +1671,8 @@ export const voiceInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, VOICE_ROO
 export const redGate = (bucket, nowMs) => tokenGate(bucket, nowMs, RED_HZ_MAX);
 /** TITLE-N: the Dungeon Master's line's own bucket - see DM_HZ_MAX. */
 export const dmGate = (bucket, nowMs) => tokenGate(bucket, nowMs, DM_HZ_MAX);
+/** EVENT1: the stage's own bucket - see EVENT_HZ_MAX. */
+export const eventGate = (bucket, nowMs) => tokenGate(bucket, nowMs, EVENT_HZ_MAX);
 /** DICE1: a socket's rolls a second - one: a roll is a line the whole channel reads, and a table where a player can
  *  roll ten times a second until the number suits is a table nobody trusts (every roll is SAID, so the table sees each
  *  try; the gate keeps the tries readable). */
@@ -1592,6 +1680,10 @@ export const ROLL_HZ_MAX = 1;
 export const rollGate = (bucket, nowMs) => tokenGate(bucket, nowMs, ROLL_HZ_MAX);
 /** MOD1: the mute order's own bucket - see MUTE_HZ_MAX. */
 export const muteGate = (bucket, nowMs) => tokenGate(bucket, nowMs, MUTE_HZ_MAX);
+/** RENOWN1: the renown order's own bucket - see RENOWN_HZ_MAX. */
+export const renownGate = (bucket, nowMs) => tokenGate(bucket, nowMs, RENOWN_HZ_MAX);
+/** AUDIT RENOWN1: the room's own renown budget - see RENOWN_ROOM_HZ_MAX. */
+export const renownRoomGate = (bucket, nowMs) => tokenGate(bucket, nowMs, RENOWN_ROOM_HZ_MAX);
 /** SOC1: the social acts' gate - SOCIAL_HZ_MAX a second, at the hub and at home (an act the hub would refuse is never sent). */
 export const socialGate = (bucket, nowMs) => tokenGate(bucket, nowMs, SOCIAL_HZ_MAX);
 /** SOC1: the party poses' gate - PARTY_HZ_MAX a second, at the hub and at home. */
@@ -1697,8 +1789,16 @@ export function badged(row, from) {
   if (typeof t === 'string' && t) row.title = t;
   const g = from?.glyphs;
   if (Array.isArray(g) && g.length) row.glyphs = g;
+  // RENOWN1: AND THE RENOWN, beside them and by the same law: read off the verified token (or a signed level
+  // order since), absent when there is none. It is a number, so it is checked against the one bound both ends share.
+  const lv = from?.lv;
+  if (renownIssuable(lv)) row.lv = lv;
   return row;
 }
+
+/** RENOWN1: the level a row carries, as a client reads it back - `badged`'s other half, as `readBadge` is the badge's;
+ *  null for none, and for anything the bound does not admit (a stranger's word about themselves). */
+export const readRenown = (row) => (renownIssuable(row?.lv) ? row.lv : null);
 
 /** ═══ AND THE INVERSE, because a reader is half of a field ════════
  *
@@ -1940,6 +2040,29 @@ export function validPartyPose(p) {
   // shared relay clock, never a local one), unlike restEnemyAt/restCancelAt above (which are only ever
   // compared against a previously-seen copy of themselves, never against a clock).
   out.restStartedAt = finite(p.restStartedAt) ? Math.max(0, Math.round(p.restStartedAt)) : null;
+  // PARTY-TRAVEL (2026-09-25, Mac: "Implementing a prompt for online to travel to party leader and the option for party
+  // members to ready up and travel together"): the party's journey rides PARTY-REST's channel, each field OMITTED when
+  // absent or out of its law - never null, never refusing the pose - so a pose without them keeps the bytes it had and
+  // an older client that sends none still lands (systems/partyTravelLaw.js reads all of them):
+  //   `tv` - the LEADER's proposal: the destination pixel `x`,`y` (in the map, never clamped into it - a clamped
+  //     destination is some other place), the popup's three toggles as `o` (0-7, partyTravelLaw tripBits), the round's
+  //     shared-clock stamp `at` and the moment the party set out `go` (null while the round is open) - voteAt's bounds;
+  //   `tr` / `td` - a member's answer, the `at` of the round they are ready for / stay behind from - a vote names its
+  //     round, so no vote outlives it;
+  //   `wx`,`wy`,`wz` - where I stand in the open air (`in` 0 alone), in the world pose's own frame: MapsFile's X and Z
+  //     inside the map, the height with the origin's shift shed within POSE_Y_BOUND - so a member travelling to me lands
+  //     beside me. All three or none.
+  const tv = p.tv && typeof p.tv === 'object' && !Array.isArray(p.tv) ? p.tv : null;
+  if (tv && Number.isInteger(tv.x) && tv.x >= 0 && tv.x < MAP_PIXELS_X && Number.isInteger(tv.y) && tv.y >= 0 && tv.y < MAP_PIXELS_Y
+    && Number.isInteger(tv.o) && tv.o >= 0 && tv.o <= 7 && finite(tv.at) && tv.at >= 0) {
+    out.tv = { x: tv.x, y: tv.y, o: tv.o, at: Math.round(tv.at), go: finite(tv.go) && tv.go >= 0 ? Math.round(tv.go) : null };
+  }
+  if (finite(p.tr) && p.tr >= 0) out.tr = Math.round(p.tr);
+  if (finite(p.td) && p.td >= 0) out.td = Math.round(p.td);
+  if (out.in === 0 && finite(p.wx) && finite(p.wy) && finite(p.wz) && p.wx >= 0 && p.wx < MAP_PIXELS_X * PIXEL_UNITS
+    && p.wz >= 0 && p.wz < MAP_PIXELS_Y * PIXEL_UNITS && Math.abs(p.wy) <= POSE_Y_BOUND) {
+    out.wx = Math.round(p.wx); out.wy = Math.round(p.wy * 100) / 100; out.wz = Math.round(p.wz);
+  }
   return out;
 }
 
@@ -2115,6 +2238,20 @@ export const CAST_NAME_MAX = 32;
 export const CAST_RELAY_MIN = 97;
 /** HCC-PARK: the first relay that knows the `park` frame (an older one CLOSES the socket on it - the cast arm's law). */
 export const PARK_RELAY_MIN = 99;
+/** PROFILE2: the first relay that knows the `look` frame (an older one CLOSES the socket on it - the cast arm's law). */
+export const LOOK_RELAY_MIN = 109;
+/** PARTY-TRAVEL: the relay whose validPartyPose carries the journey's fields (`tv`, `tr`, `td`, `wx`/`wy`/`wz`). An older one
+ *  strips them from every party pose - nothing closes, but a leader's proposal would reach nobody and the round would
+ *  wait on answers that cannot come - so the leader's client opens a round only through a hub at this version or later
+ *  and travels alone as before through any other. The journey TO the leader needs no version: its pixel is the pose's
+ *  own `px`/`py`, and without `wx`/`wz` the arrival is the place's own door. */
+export const PARTY_TRAVEL_RELAY_MIN = 112;   // world110 on its branch; main's EVENT1 and RENOWN1 took world110-111, neither of which carries these fields
+export const relaySupportsPartyTravel = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= PARTY_TRAVEL_RELAY_MIN; };
+export const relaySupportsLook = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= LOOK_RELAY_MIN; };
+/** EVENT1: the first relay that knows the `stage` frame (an older one CLOSES the socket on it - the cast arm's law), and
+ *  the first that says a live event at all - an older relay's hub says none, so a client against it sees no event. */
+export const EVENT_RELAY_MIN = 110;
+export const relaySupportsEvent = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= EVENT_RELAY_MIN; };
 export const relaySupportsPark = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= PARK_RELAY_MIN; };
 export const relaySupportsCast = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= CAST_RELAY_MIN; };
 /** DICE1: the relay that first rolls (`{t:'roll'}` - an older one answers the frame with 'unknown message' and CLOSES the
@@ -2447,6 +2584,26 @@ const PARK_KIND_DEPLOYED = 2;
 /** The per-socket park gate. */
 export const parkGate = (bucket, now) => tokenGate(bucket, now, PARK_HZ_MAX);
 
+// ═══ PROFILE2: THE LOOK, SAID AGAIN WITHOUT A NEW ROOM ═══════════════
+//
+// Mac (2026-09-25): "make the profile icon visible somehow on the pause
+// menu and allow changes". A skin chosen on the pause screen is a look
+// changed mid-session - and the look rode the HELLO alone, so the others
+// kept drawing the old one until the next room's hello (net/online.js
+// `_member` said so: "a look is sent with the hello alone"). `look` is
+// that hello's look without the hello: from a hello'd socket in a place
+// room, stored as the hello's is and fanned as the hello's JOIN (the
+// frame every client already reads as "this peer's look is now this" -
+// online.js `_refresh`). The fan is a hello's fan, so it spends the
+// ROOM'S HELLO BUDGET (HELLO_HZ_MAX); over it the socket is refused busy
+// exactly as a hello is, and its reconnect's hello carries the new look.
+/** A socket's looks a second. The client holds a changed look until the gate would pass (LOOK_MIN_MS), so a player
+ *  trying skin after skin, or dressing piece by piece, says the LAST one - one frame, not one a click. */
+export const LOOK_HZ_MAX = 0.5;
+export const LOOK_MIN_MS = 1000 / LOOK_HZ_MAX;
+/** The per-socket look gate: one whole token, refilled at LOOK_HZ_MAX (a cap of the rate would never reach one). */
+export const lookGate = (bucket, now) => tokenGate(bucket, now, LOOK_HZ_MAX, 1);
+
 /**
  * A `park` frame's data through the door: `{ c, a?: [x, z], r?: { w?, h?, n? } }`. `c` the character (PARK_CHAR_RE);
  * no `a`: nothing of that character's is parked. `a` the anchor in natives, inside the world. `r` the team as shown: `w` a DEPLOYED wagon only ([2, x, y, z, qx, qy, qz, qw, tier, 0] - a unit
@@ -2561,6 +2718,11 @@ const DUEL_U32 = 0xFFFFFFFF;
  *  no challenge is sent through it (the Inspect card says the server cannot carry one yet). */
 export const DUEL_RELAY_MIN = 107;
 export const relaySupportsDuel = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= DUEL_RELAY_MIN; };
+/** RENOWN1: the renown frame is world111's (world108 on its branch; main's HT-WAIST-NET, PROFILE2 and EVENT1 took world108
+ *  to world110 first) - an older relay closes the socket on a frame type it does not know, so a level order goes only to
+ *  a relay whose welcome said world111 or later (DM_RELAY_MIN's reason). */
+export const RENOWN_RELAY_MIN = 111;
+export const relaySupportsRenown = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= RENOWN_RELAY_MIN; };
 export const duelGate = (bucket, nowMs) => tokenGate(bucket, nowMs, DUEL_HZ_MAX);
 export const duelInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, DUEL_IN_HZ_MAX);
 const intIn = (v, lo, hi) => Number.isInteger(v) && v >= lo && v <= hi;
@@ -2642,4 +2804,114 @@ export function validDuelData(d) {
   }
   if (JSON.stringify(out).length > DUEL_DATA_MAX) return null;
   return out;
+}
+
+// ═══ WB3: THE GATE'S BOSS ROOM ════════════════════════════════════════════════════════════════════════════════════
+//
+// (2026-09-25, Mac: "a gate of oblivion which takes place in a large boss arena with an oversized enemy with telegraphed
+// attacks (like wind ups, etc)", and Option B: the relay's Durable Object is the authority over the boss.) ONE FRAME
+// TYPE, `gate`, with a kind (bible/11-Multiplayer/World-Bosses.md section 8). The client says two things: that it came
+// in (`in` - its level CLAIM, which scales the health it brings and bounds what it may deal, net/gateBrain.js) and
+// that it struck the boss (`hit` - a sequence, the damage its own formulas made, and the blow's kind). Everything
+// else is the room's word: the brain's kinds (stepBrain's `st`, `mv`, `atk`, `hp`, `ph`, `wrath`) and the relay's own
+// (`fell` - the kill, `rcpt` - an account's receipt, `no` - a refusal in words). The room key is the gate's own
+// (`gate:<day>`, net/gateLaw.js), admitted only inside that day's window: a client cannot mint a boss the clock did
+// not raise. Every time on these frames is the RELAY's clock (the welcome's `now` - WORLD5).
+
+/** What a client may say to a gate's room. */
+export const GATE_KINDS = Object.freeze(['in', 'hit']);
+/** What the room says back (the client drops any other kind). */
+export const GATE_OUT_KINDS = Object.freeze(['st', 'mv', 'atk', 'hp', 'ph', 'wrath', 'fell', 'rcpt', 'no']);
+/** A level claim on the wire - the brain clamps it to its own 1..60; past this it is not a level at all. */
+export const GATE_LV_WIRE_MAX = 999;
+/** One blow's claimed damage on the wire - the brain caps a blow far lower (HIT_CAP_X); past this it is no blow. */
+export const GATE_DMG_WIRE_MAX = 100_000;
+/** A blow's sequence number. */
+export const GATE_SEQ_MAX = 0x7fffffff;
+/** The gate frames' own bucket: blows at the brain's GATE_HIT_HZ_MAX (4), the `in`, and slack for a spell's burst. */
+export const GATE_HZ_MAX = 8;
+export const gateGate = (bucket, nowMs) => tokenGate(bucket, nowMs, GATE_HZ_MAX);
+/** The first relay that runs a gate's boss room. An older one CLOSES the socket on the frame (the cast arm's law), and
+ *  holds no fight - so the gate's door answers "not yet" at it (scenes/gatePool.js ready). */
+export const GATE_RELAY_MIN = 113;   // world110 on its branch; main's EVENT1, RENOWN1 and PARTY-TRAVEL took world110-112, none of which holds a fight
+export const relaySupportsGate = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= GATE_RELAY_MIN; };
+/** The door between a gate's room and the hub: the kill and its receipts said to everyone online (the public worker
+ *  forwards /room/<key> alone, so no socket and no browser reaches it - HCC-PARK's doors' law). */
+export const GATE_INTERNAL_FELL = '/internal/gate/fell';
+/** AUDIT WB A10: how soon a court whose hub did not answer the kill tells it again. */
+export const GATE_TELL_RETRY_MS = 5000;
+/** AUDIT WB A4: the hub's key for an account's last receipt - kept for the receipt's own life and handed to its next hello. */
+export const gateReceiptKey = (sub) => `gaterc:${sub}`;
+/** The room's refusals, in words (the `no` kind) - a closed list, so a client says only what the relay can mean. */
+export const GATE_NO_WORDS = Object.freeze(['the gate is closed', 'the gate is sealed', 'the gate is closing', 'the court is full']);
+/** A point on the court the room names: metres about its centre - the court is 36 across, and this is its bound with room to spare. */
+export const GATE_COURT_BOUND = 64;
+/** A health the room names, whole points. */
+export const GATE_HP_MAX = 1e9;
+/** The most points one attack names (Hellfire's two volleys of five), and the most names a kill credits. */
+export const GATE_TARGETS_MAX = 10;
+export const GATE_TOP_MAX = 3;
+/** A receipt's bound and its prefix (net/gateReceipt.js RECEIPT_MAX, RECEIPT_V - pinned equal; the wire reads no more of it). */
+export const GATE_RECEIPT_MAX = 512;
+const GATE_RECEIPT_RE = /^r1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*$/;
+/** A boss's id (net/gateLaw.js GATE_BOSSES - the receipt's own shape). */
+const GATE_BOSS_RE = /^[a-z]{1,16}$/;
+
+/**
+ * A client's gate frame, projected: `{k:'in', lv}` or `{k:'hit', q, d, r}`, or null. The fields ride the frame's top
+ * level (the design's table), so the projection names each and drops everything else.
+ */
+export function validGateIn(m) {
+  if (!m || typeof m !== 'object' || !GATE_KINDS.includes(m.k)) return null;
+  if (m.k === 'in') return Number.isSafeInteger(m.lv) && m.lv >= 1 && m.lv <= GATE_LV_WIRE_MAX ? { k: 'in', lv: m.lv } : null;
+  if (!Number.isSafeInteger(m.q) || m.q < 0 || m.q > GATE_SEQ_MAX) return null;
+  if (!finite(m.d) || m.d <= 0 || m.d > GATE_DMG_WIRE_MAX) return null;
+  if (m.r !== 0 && m.r !== 1 && m.r !== 2) return null;
+  return { k: 'hit', q: m.q, d: m.d, r: m.r };
+}
+
+const gateMs = (v) => Number.isSafeInteger(v) && v > 0;
+const gateXZ = (v) => finite(v) && Math.abs(v) <= GATE_COURT_BOUND;
+const gateHp = (v) => Number.isSafeInteger(v) && v >= 0 && v <= GATE_HP_MAX;
+const gateMove = (mv) => (mv && typeof mv === 'object' && [mv.x, mv.z, mv.tx, mv.tz].every(gateXZ) && finite(mv.v) && mv.v >= 0 && mv.v <= 20 && gateMs(mv.at)
+  ? { x: mv.x, z: mv.z, tx: mv.tx, tz: mv.tz, v: mv.v, at: mv.at } : null);
+const gateAtk = (a) => {
+  if (!a || typeof a !== 'object' || !Number.isSafeInteger(a.i) || a.i < 1 || !Number.isInteger(a.a) || a.a < 0 || a.a > 15) return null;
+  if (!gateMs(a.at) || !gateXZ(a.x) || !gateXZ(a.z) || !finite(a.yw) || Math.abs(a.yw) > 8 || !Array.isArray(a.tg) || a.tg.length > GATE_TARGETS_MAX) return null;
+  if (!a.tg.every((p) => Array.isArray(p) && p.length === 2 && gateXZ(p[0]) && gateXZ(p[1]))) return null;
+  return { i: a.i, a: a.a, at: a.at, x: a.x, z: a.z, yw: a.yw, tg: a.tg.map((p) => [p[0], p[1]]) };
+};
+const gateTop = (top) => (Array.isArray(top) ? top.slice(0, GATE_TOP_MAX).filter((n) => typeof n === 'string' && n).map(sanitizeName) : []);
+const gateFell = (x) => (x && typeof x === 'object' && gateMs(x.at) && Number.isSafeInteger(x.n) && x.n >= 0 && x.n <= 4096 ? { at: x.at, top: gateTop(x.top), n: x.n } : null);
+
+/**
+ * A room's gate frame, projected for the client: the kind's own fields, bounded, or null - the session hands nothing
+ * else on (net/online.js onGate). The relay is the authority over the fight, not over this machine's memory.
+ */
+export function validGateOut(m) {
+  if (!m || typeof m !== 'object' || !GATE_OUT_KINDS.includes(m.k)) return null;
+  switch (m.k) {
+    case 'st': {
+      if (!Number.isSafeInteger(m.d) || m.d < 0 || typeof m.b !== 'string' || !GATE_BOSS_RE.test(m.b)) return null;
+      if (!Number.isInteger(m.ph) || m.ph < 1 || m.ph > 3 || !gateHp(m.h) || !gateHp(m.m) || m.h > m.m) return null;
+      if (!gateXZ(m.x) || !gateXZ(m.z) || !finite(m.yw) || Math.abs(m.yw) > 8 || !Number.isSafeInteger(m.sh) || m.sh < 0 || !gateMs(m.wr)) return null;
+      if (!Number.isSafeInteger(m.n) || m.n < 0 || m.n > 4096) return null;
+      const mv = m.mv == null ? null : gateMove(m.mv), atk = m.atk == null ? null : gateAtk(m.atk), fell = m.fell == null ? null : gateFell(m.fell);
+      if ((m.mv != null && !mv) || (m.atk != null && !atk) || (m.fell != null && !fell) || (m.wrath != null && !gateMs(m.wrath))) return null;
+      return { k: 'st', d: m.d, b: m.b, ph: m.ph, h: m.h, m: m.m, x: m.x, z: m.z, yw: m.yw, mv, atk, sh: m.sh, wr: m.wr, n: m.n, fell, wrath: m.wrath ?? null };
+    }
+    case 'mv': { const mv = gateMove(m); return mv ? { k: 'mv', ...mv } : null; }
+    case 'atk': { const a = gateAtk(m); return a ? { k: 'atk', ...a } : null; }
+    case 'hp': return gateHp(m.h) && gateHp(m.m) && m.h <= m.m ? { k: 'hp', h: m.h, m: m.m } : null;
+    case 'ph': return Number.isInteger(m.n) && m.n >= 2 && m.n <= 3 && gateMs(m.until) ? { k: 'ph', n: m.n, until: m.until } : null;
+    case 'wrath': return gateMs(m.at) ? { k: 'wrath', at: m.at } : null;
+    case 'fell': {
+      const f = gateFell(m);
+      if (!f || (m.d !== undefined && (!Number.isSafeInteger(m.d) || m.d < 0))) return null;
+      return { k: 'fell', ...f, ...(m.d !== undefined ? { d: m.d } : {}) };
+    }
+    case 'rcpt': return typeof m.r === 'string' && m.r.length <= GATE_RECEIPT_MAX && GATE_RECEIPT_RE.test(m.r) ? { k: 'rcpt', r: m.r } : null;
+    case 'no': return GATE_NO_WORDS.includes(m.m) ? { k: 'no', m: m.m } : null;
+    default: return null;
+  }
 }

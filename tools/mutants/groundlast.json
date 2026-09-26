@@ -11,8 +11,8 @@
  {
   "name": "GROUND-LAST-the-queue-never-drains",
   "file": "src/scenes/world.js",
-  "old": "    for (const p of groundQueue) {\n      const pixelMatrix = p._pixelMatrix;",
-  "new": "    for (const p of []) {\n      const pixelMatrix = p._pixelMatrix;",
+  "old": "    for (const p of groundQueue) {\n      if (p.deepWaters?.hide) continue;",
+  "new": "    for (const p of []) {\n      if (p.deepWaters?.hide) continue;",
   "tests": [
    "test/perf2.test.js"
   ]
