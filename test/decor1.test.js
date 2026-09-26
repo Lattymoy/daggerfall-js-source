@@ -517,7 +517,7 @@ test('DECOR1c the room\'s host (worldModes.js): one pool on the room\'s own coll
   assert.match(m, /targets\.push\(\.\.\.interiorDecor\.targets\(\)\);/);
   assert.match(m, /if \(key\.startsWith\('decor:'\)\) \{ activateDecor\(decorIdOfKey\(key\)\); return true; \}/);
   assert.match(m, /function decorOwnerHere\(\) \{\n    if \(interiorHome\) return interiorHome\.own;\n    const b = interiorBuilding;\n    if \(!b\) return false;\n    if \(b\.buildingType === BUILDING_TYPES\.Ship\) return ownsShip\(playerEntity\);\n    return isHouseOwned\(playerEntity\.houses \?\? \[\], b\.regionIndex \?\? 0, b\.buildingKey \?\? 0\);\n  \}/);
-  assert.match(m, /if \(!piece\?\.storage\) return;\n    if \(!decorOwnerHere\(\)\) \{\n      if \(interiorHome\) say\(homeBelongsLine\(interiorHome\)\);\n      return;\n    \}\n    const win = interiorInventory\(\{ loot: \{ items: \(\) => interiorDecor\.itemsOf\(id\) \} \}\);/);
+  assert.match(m, /if \(!piece\?\.storage\) return;\n    if \(!decorOwnerHere\(\)\) \{\n      if \(interiorHome\) say\(homeBelongsLine\(interiorHome\)\);\n      return;\n    \}\n    const win = interiorInventory\(\{ loot: \{ items: \(\) => interiorDecor\.itemsOf\(id\), storage: true \} \}\);/);   // SHIP-STORE: the owner's storage, two-way
   assert.match(m, /const t = decorNames\.get\(decorKey\(piece\)\) \?\? \(piece\.storage && piece\.model != null \? houseContainerName\(piece\.model\) : null\);/);
   assert.match(w, /const homeDecor = params\.has\('online'\) \? accountDecor\(\{ fetch: \(u, i\) => globalThis\.fetch\(u, i\), storage: appStorage\(\) \}\) : null;/);
   assert.match(w, /\n    homeDecor,   \/\/ DECOR1c/);

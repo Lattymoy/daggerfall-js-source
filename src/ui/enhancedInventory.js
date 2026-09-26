@@ -280,12 +280,12 @@ export function equippedModel(entity = {}) {
 /** What the remote side is CALLED, per DFU's four claims. The word is
  *  the port's; which claim is showing is inventorySession's. */
 export const REMOTE_TITLE = Object.freeze({
-  wagon: 'Wagon', reward: 'Choose one', container: 'Loot', ground: 'Ground',
+  wagon: 'Wagon', reward: 'Choose one', container: 'Loot', storage: 'Storage', ground: 'Ground',
 });
 /** What moving an item THERE is called. A verb per destination,
  *  because "Transfer" tells the player nothing about where. */
 export const STOW_LABEL = Object.freeze({
-  wagon: 'Stow in wagon', reward: 'Stow', container: 'Put back', ground: 'Drop',
+  wagon: 'Stow in wagon', reward: 'Stow', container: 'Put back', storage: 'Store', ground: 'Drop',
 });
 
 /**
@@ -301,7 +301,7 @@ export function remoteModel(deps = {}, state = {}) {
   const items = (remoteTarget(deps, state) ?? []).filter(Boolean);
   const kind = state.usingWagon ? 'wagon'
     : state.chooseOne ? 'reward'
-      : deps.loot ? 'container' : 'ground';
+      : deps.loot ? (deps.loot.storage === true ? 'storage' : 'container') : 'ground';   // SHIP-STORE: the player's own storage
   return {
     kind,
     title: REMOTE_TITLE[kind],
@@ -2720,7 +2720,13 @@ export function mountEnhancedInventory(hostEl, d = {}) {
   picked = null;
   // PX20b: a LOOT target opens its own frame alone; every other way in
   // (F6, the world's inventory door) opens the pack as it always did.
-  packOpen = !d.loot;
+  // SHIP-STORE (2026-09-26, Mac: "No ui to put items in storage on boat - problem for enhanced and enhanced +"):
+  // ...and so does the player's OWN STORAGE - the ship's chest, an owned house's cupboards, a placed storage piece
+  // (`loot.storage`, the host's word). MAC-M2 B made a loot session take-only ("the loot window is for taking") and
+  // left the pack no way back, which is right for a body or a stranger's shelf - and made every storage the player
+  // owns a box that could only be emptied. DFU's HouseContainers arm opens that same window two-way
+  // (PlayerActivate.cs:902-925), and the classic skin still does.
+  packOpen = !d.loot || d.loot.storage === true;
   side = d.loot ? 'remote' : 'local';
   // MAC-M2: the "that release was a drag" latch belongs to a GESTURE,
   // so it must not outlive the pane that held it - a session that ended

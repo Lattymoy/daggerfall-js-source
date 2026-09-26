@@ -14369,6 +14369,13 @@ in and never moves. That is Mac's call, recorded rather than argued
 with, and PX20b's sentence in this page has been retired to match rather
 than left standing beside it.
 
+SHIP-STORE (2026-09-26, Mac: "No ui to put items in storage on boat"):
+the player's OWN storage is the one loot session that opens beside the
+pack - the host's `loot.storage` word, on an owned cupboard or ship's
+chest and an owner's placed storage piece - because a take-only frame
+made every one of them a box that could only be emptied
+(`01-Overview/Field-Bugs-2026-09-26.md`).
+
 ### The gate is the SESSION, not the frame
 
 `deps.loot` is what opened this window, and it is what the two buttons

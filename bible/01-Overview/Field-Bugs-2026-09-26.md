@@ -149,3 +149,23 @@ The stand asks for its draw record's replacement before the upload
 the mod's picture now.
 
 `test/lampkeeper.test.js` (3); `tools/mutants/lampkeeper.json` 2, 2 dead.
+
+## SHIP-STORE: the player's own storage takes things in again (report 7)
+
+MAC-M2 B (2026-09-16, Mac: "Remove the gold and pack buttons from the looting
+menu") made the enhanced skins' loot session take-only: the pile's frame
+alone, and no way back to the pack. Right for a body or a stranger's shelf.
+But the player's OWN storage opens through that same session - the ship's
+chest (HouseContainers' "not distinguishing between ships"), an owned
+house's cupboards, a placed storage piece (DECOR1c) - so every one of them
+was a box that could only be emptied, on Enhanced and Enhanced Plus alike
+(Plus ports the same pack). The classic skin was never affected, and DFU
+opens that window two-way (PlayerActivate.cs:902-925).
+
+The host says `loot.storage` for the player's own (`scenes/worldModes.js`:
+an owned cupboard - `openLoot` without private property - and an owner's
+placed piece); that session opens beside the pack, its side titled
+Storage, with a Store verb (`ui/enhancedInventory.js`). A body, a
+stranger's cupboard and a closed shop's shelf keep MAC-M2 B's frame.
+
+`test/shipstore.test.js` (3); `tools/mutants/shipstore.json` 6, 6 dead.

@@ -978,7 +978,7 @@ test('PX20c: the name is in the title bar, the count is gone, the tiles carry th
 test('PX20b: a LOOT target opens its own frame alone - the pack is never built', () => {
   const src = read('src/ui/enhancedInventory.js');
   assert.match(src, /^let packOpen = true;$/m);
-  assert.match(src, /packOpen = !d\.loot;/, 'a loot session opens closed');
+  assert.match(src, /packOpen = !d\.loot \|\| d\.loot\.storage === true;/, 'a loot session opens closed - but the player\'s own STORAGE opens beside the pack (SHIP-STORE)');
   assert.match(src, /side = d\.loot \? 'remote' : 'local';/, '...on the side the player came for');
   // NOT BUILT, not built-and-hidden: the pack's whole body sits behind
   // the flag, so a hidden window cannot run layout or eat the tooltip.

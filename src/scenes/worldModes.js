@@ -3266,7 +3266,7 @@ export function createWorldModes(host) {
       if (interiorHome) say(homeBelongsLine(interiorHome));
       return;
     }
-    const win = interiorInventory({ loot: { items: () => interiorDecor.itemsOf(id) } });
+    const win = interiorInventory({ loot: { items: () => interiorDecor.itemsOf(id), storage: true } });   // SHIP-STORE: the owner's own storage, two-way
     if (win) interiorOverlay = win;
   }
 
@@ -6310,7 +6310,7 @@ export function createWorldModes(host) {
           const openLoot = (privateProperty = false) => {
             const before = privateProperty ? [...(c.items ?? [])] : null;
             const win = interiorInventory({
-              loot: { items: () => c.items },
+              loot: { items: () => c.items, storage: !privateProperty },   // SHIP-STORE: an owned house's or ship's cupboard is the player's storage, two-way
               onClose: () => {
                 if (!privateProperty) return;
                 const out = privatePropertyTheft({
