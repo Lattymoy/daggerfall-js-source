@@ -76,6 +76,7 @@ import { WEAPONS } from '../characters/weapons.js';
 import { materialName } from '../systems/itemInfo.js';
 import { composeWornArmor, shadowSkinRows, fpWornAdds, mwArmorRecords, mwClothingRecord, CLOTHING_NAME } from '../formats/mwItemMap.js';
 import { correctTexturePath, correctActorModelPath, wrapModes, warningImage, decodeTextureImage } from '../formats/mwTexture.js';
+import { decodeTextureOffThread } from '../formats/mwTextureClient.js';   // MW-TEXTHREAD: the preload's decodes, in the pool
 import { diffuseAt, emissiveAt } from '../formats/mwNifMesh.js';   // MWT2: the emission the pass has always resolved and never read
 import { fpLightingOn } from './fpsWeapon.js';   // MAC-P: the first-person lighting switch, shared with the classic sprite it stands in for
 import { createParticleSystem, packParticleQuads, particleDrawState, affineOfTransform, affineMul, affineApply, affineScale } from '../formats/mwParticles.js';   // MAC-Q: the torch's flame, and any other particle system a part carries
@@ -155,9 +156,19 @@ function findLoaded(archives, path) {
  *  all - and loads whatever the ladder lands on. A texture the archives
  *  do not carry loads nothing and stays the magenta warning image, which
  *  is collectArmTextures' own answer and not a new one. Skips what the
- *  decode memo already holds, so a rebuild loads nothing twice. */
+ *  decode memo already holds, so a rebuild loads nothing twice.
+ *
+ *  MW-TEXTHREAD: and it DECODES them, off this thread and several at
+ *  once (formats/mwTextureClient.js - the same decoder in a pool of
+ *  workers), into the same generation memo collectArmTextures reads, so
+ *  its synchronous decode finds every texture already answered. Only an
+ *  image is kept here; a file the ladder cannot find, or one the decoder
+ *  refuses, is left for collectArmTextures to answer with the warning
+ *  image and its reason, exactly as it always has. Without a generation
+ *  there is no memo to fill, and collectArmTextures decodes as before. */
 async function preloadArmTextures(pieces, archives, gen = null) {
   const paths = [];
+  const want = [];   // MW-TEXTHREAD: [file, path] - the memo is keyed by the file the piece names
   const seen = new Set();
   const exists = (p) => archives.some((a) => a.has(p));
   for (const piece of pieces ?? []) {
@@ -165,9 +176,20 @@ async function preloadArmTextures(pieces, archives, gen = null) {
     if (!file || seen.has(file)) continue;
     seen.add(file);
     if (gen !== null && TEXTURE_CACHE.has(`${gen}:${file}`)) continue;
-    paths.push(correctTexturePath(file, exists));
+    const path = correctTexturePath(file, exists);
+    paths.push(path);
+    want.push([file, path]);
   }
   await loadFromArchives(archives, paths);
+  if (gen === null) return;
+  await Promise.all(want.map(async ([file, path]) => {
+    const key = `${gen}:${file}`;
+    const arc = archives.find((a) => a.has(path));
+    if (!arc || (typeof arc.loaded === 'function' && !arc.loaded(path))) return;   // collectArmTextures says why
+    let image;
+    try { image = await decodeTextureOffThread(path, arc.get(path)); } catch { return; }   // the decoder's refusal is collectArmTextures' to record
+    if (!TEXTURE_CACHE.has(key)) TEXTURE_CACHE.set(key, { ok: true, path, image });
+  }));
 }
 
 /** MW-LOAD: the stage clock. performance.now() where there is one (every
@@ -924,7 +946,9 @@ function clothingColourOf(rec, parts, archives, gen) {
         const tpath = correctTexturePath(file, exists);
         const tarc = findLoaded(archives, tpath);
         if (tarc) {
-          const m0 = decodeTextureImage(tpath, tarc.get(tpath).slice()).mips[0];
+          // MW-TEXTHREAD: level 0 alone - the measure reads no other, and the chain below it is a third again of the
+          // decode (MW-LOAD's face-match finding, the same measure)
+          const m0 = decodeTextureImage(tpath, tarc.get(tpath).slice(), { levels: 1 }).mips[0];
           const f = hairFeatures(m0.rgba, m0.width, m0.height, 0);   // alpha-weighted mean
           if (f && f.colour) rgb = f.colour.map((v) => Math.round(v * 255));
         }
@@ -975,7 +999,9 @@ async function prepareClothingColours(resolve, parts, archives, gen) {
     return CLOT_COLOUR_CACHE.get(`${gen}:${rec.id}`) ?? null;
   };
   try { resolve(probe); } catch { /* the real run reports what this cannot */ }
-  for (const rec of asked) await preloadClothingColour(rec, parts, archives, gen);
+  // MW-TEXTHREAD: the candidates' reads side by side - each is two ranged reads and a parse, and the loads are
+  // deduped and concurrent (loadFromArchives), so a pool of a dozen garments no longer waits on a dozen round trips
+  await Promise.all(asked.map((rec) => preloadClothingColour(rec, parts, archives, gen)));
 }
 
 /** MW-D38: the icon cache, per data generation / record / size / dye. */
@@ -1054,7 +1080,9 @@ async function measurePart(record, archives, kind) {
   // MW-D34: by extension - the ladder legitimately answers .tga/.bmp.
   // MW-LOAD: level 0 only - it is the one level measured below, and
   // the chain under it was a third again of the decode for nothing.
-  try { img = decodeTextureImage(tpath, tarc.get(tpath).slice(), { levels: 1 }); } catch { return null; }
+  // MW-TEXTHREAD: in the pool - the same decoder, off the frame's thread
+  // (formats/mwTextureClient.js), and a refusal is still a null.
+  try { img = await decodeTextureOffThread(tpath, tarc.get(tpath), { levels: 1 }); } catch { return null; }
   const m0 = img.mips[0];
   if (kind === 'head') {
     // AUDIT 32 F1: sampled through the mesh's own UVs, so the texture's
@@ -1087,10 +1115,12 @@ export async function matchFaceFor({ race, female, faceIndex, parts, archives, d
   }
   if (!portrait) return { head: null, hair: null, reasons: [...reasons, 'the walk stands'] };
   const pools = facePools(parts, race, female);
-  const heads = [];
-  for (const rec of pools.heads) heads.push({ id: rec.id, f: await measurePart(rec, archives, 'head') });
-  const hairs = [];
-  for (const rec of pools.hairs) hairs.push({ id: rec.id, f: await measurePart(rec, archives, 'hair') });
+  // MW-TEXTHREAD: every candidate measured side by side - its reads concurrent and its decode in the pool - in the
+  // pools' own order, which matchFace's ties read
+  const [heads, hairs] = await Promise.all([
+    Promise.all(pools.heads.map(async (rec) => ({ id: rec.id, f: await measurePart(rec, archives, 'head') }))),
+    Promise.all(pools.hairs.map(async (rec) => ({ id: rec.id, f: await measurePart(rec, archives, 'hair') }))),
+  ]);
   const m = matchFace(portrait, heads, hairs, { female });
   const hex = (c) => `#${c.map((v) => Math.round(v * 255).toString(16).padStart(2, '0')).join('')}`;
   reasons.push(`portrait ${faceIndex | 0}: skin ${hex(portrait.skin)}, hair ${portrait.bald ? 'none' : hex(portrait.hair)}, `
@@ -2406,6 +2436,7 @@ export function createFpArm() {
   let pendingWeapon = null;      // PX26: the hand that arrived mid-build
   let pendingTorch = null;       // MW-D51: the light that arrived mid-build
   let pendingBuild = null;       // AUDIT MW-TORCH F6: the BUILD that arrived mid-build - an identity (a load over a load) is not dropped
+  let buildingOpts = null;       // MW-EARLY: the opts of the build in flight - whom it is building for, before anything stands
   let buildGen = 0;              // AUDIT MW-TORCH F7: bumped by unload(); a build that lands after it is discarded, never installed over the unload
   let mesh = null;
   let packed = null;
@@ -3405,6 +3436,18 @@ export function createFpArm() {
      *  Argonian save loaded over a human's standing arm kept the
      *  human's body until the pack was toggled off and on. */
     builtFor() { return built && built.ok && lastBuildOpts ? { race: lastBuildOpts.race ?? null, female: !!lastBuildOpts.female, faceIndex: lastBuildOpts.faceIndex | 0 } : null; },   // AUDIT MW-TORCH: null when nothing stands - an unloaded or refused rig was built for no one
+    /** MW-EARLY: WHO THE ARM IS BEING BUILT FOR - the identity third of
+     *  the build that will stand once the queue drains (the queued one,
+     *  else the one in flight), or null when no build is under way. The
+     *  world's load door starts the build off the save before the world
+     *  is read (weaponRig.js prebuildArmsForSave), and the restore's
+     *  autoBuildArms reaches its door while that build still runs: this
+     *  is how it knows the build under way IS its build, rather than
+     *  queueing a second of the same body behind it. */
+    buildingFor() {
+      const o = pendingBuild ?? buildingOpts;
+      return o ? { race: o.race ?? null, female: !!o.female, faceIndex: o.faceIndex | 0 } : null;
+    },
     get frames() { return frames; },
 
     async build(opts) {
@@ -3418,6 +3461,7 @@ export function createFpArm() {
       // rig being replaced go with it (the build's opts carry theirs).
       if (busy) { pendingBuild = opts; return { ok: false, stage: 'build', error: 'already building - queued behind it', queued: true }; }
       busy = true;
+      buildingOpts = opts ?? null;   // MW-EARLY
       const gen = buildGen;
       try {
         const res = await buildFpArm(opts);
@@ -3473,6 +3517,7 @@ export function createFpArm() {
         return res;
       } finally {
         busy = false;
+        buildingOpts = null;   // MW-EARLY: settled - `built` says who stands now
         // MW-D36: whoever shows the body (the pack's figure) repaints
         // when a build settles, ok or not - D32 rebuilds on every equip
         // change, asynchronously, and a panel drawn before the rebuild
@@ -3491,6 +3536,7 @@ export function createFpArm() {
       buildGen += 1;   // AUDIT MW-TORCH F7: a build in flight lands dead
       adoptMemoGeneration(memoGenOf);   // AUDIT 68 S08-fparm-gen-cache-leak: a bumped generation's memos go with the rig
       pendingBuild = null; lastBuildOpts = null;
+      buildingOpts = null;   // MW-EARLY: the build in flight lands dead, so it stands for nobody - a door after this builds again
       releaseMesh(); built = null; packed = null;
       held = null; heldMemo = null; lastFrame = null; drewLast = false;   // MAP3: the sheet goes with the rig
       releaseThirdMesh(); thirdBuilt = null; thirdPacked = null; viewMode = 'first';

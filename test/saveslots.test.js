@@ -179,7 +179,10 @@ test('SAV4: the host wiring source pins - per-character quickslots, the boot arm
   // window's saveAs share the ONE producer.
   assert.match(world, /function worldQuickSave\(saveName = QUICK_SAVE_NAME\)/);
   assert.match(world, /saveSlot\(playerEntity\.name, saveName, snap\)/);
-  assert.match(world, /: mostRecent \? \(mostRecentRestorable\(\)\?\.snap \?\? null\)\n\s*: quickLoadSlot\(playerEntity\.name, undefined, playerEntity\.characterId \?\? null\)/);
+  // MW-EARLY: the key-then-most-recent pick is pickedSaveSnap's (the boot's early arms build reads it too); the
+  // quickload's own QuickSave stays the door's third arm
+  assert.match(world, /return key != null \? loadSlot\(key\) : mostRecent \? \(mostRecentRestorable\(\)\?\.snap \?\? null\) : null;/);
+  assert.match(world, /const snap = key != null \|\| mostRecent \? pickedSaveSnap\(\{ key, mostRecent \}\)[^\n]*\n\s*: quickLoadSlot\(playerEntity\.name, undefined, playerEntity\.characterId \?\? null\)/);
   // The boot arm: a picked slot key wins, else the most-recent shape.
   assert.match(world, /\? \{ key: Number\(params\.get\('loadkey'\)\) \}\n\s*: \{ mostRecent: true \}/);
 

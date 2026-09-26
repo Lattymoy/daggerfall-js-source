@@ -128,7 +128,74 @@ level 0 (`decodeDds(bytes, { levels: 1 })` through
 `decodeTextureImage`), which is the only level the measurement reads;
 the chain below it was a third again of the work.
 
-**What it does not do.** The texture decode still runs on the main
-thread per build, and the third-person body is still built with the
-arm rather than on the first switch to third person. Both are on the
-board if the timing line says they matter on Mac's machine.
+**What it does not do.** The third-person body is still built with the
+arm rather than on the first switch to third person; it is on the
+board if the timing line says it matters on Mac's machine. (The main
+thread's texture decode, the other half of this paragraph, is
+MW-TEXTHREAD's below.)
+
+## MW-TEXTHREAD + MW-EARLY (2026-09-26) - decoded in a pool, started with the load
+
+Mac: "want to increase the load time substantially and performance.
+The player shouldnt load into the game and have to wait for the
+morrowind models to load."
+
+**Where the wait was.** Two things, both in the code, neither needing
+retail data to see. The build was asked for at the END of the world's
+boot - `autoBuildArms` after `restorePlayer`, after every archive of
+the world had been read and indexed - so the player stood in the world
+on the classic sprite (and the wheel refused third person) for the
+whole build. And every texture a build names was decoded on the
+frame's thread, one after another: MW-LOAD's own measurement is 55-59
+ms for a 1024x1024 DXT texture with its chain, 11-13 ms at 512, and a
+body with its clothes, armour and weapon names dozens.
+
+**MW-TEXTHREAD.** `formats/mwTextureClient.js` is a pool of module
+Workers (`formats/mwTextureWorker.js`, one fewer than the cores, at
+most `TEXTURE_WORKERS_MAX` 4) running the SAME decoder
+(`decodeTextureImage`), each level's pixels transferred back; the
+shape is `unityBundleClient.js`'s - an injectable factory, the bytes
+copied (never the caller's), the fallback the old path (no Worker, a
+throwing factory, a worker that dies with jobs in hand, or
+`?texturethread=off` all decode on this thread and answer the same
+image), a decoder's refusal the answer rather than a dead worker.
+`preloadArmTextures` - which every build and every swap site already
+awaits before `collectArmTextures` - now decodes what it loads through
+the pool, all at once, into the generation memo; `collectArmTextures`
+finds them answered. It keeps images alone: a file the ladder cannot
+find, or one the decoder refuses, stays `collectArmTextures`' to answer
+with the warning image and its reason, as it always has. The face
+match's candidates are measured side by side with their decodes in the
+pool, the garment colour probes' reads run side by side, and the colour
+measure decodes level 0 alone (it reads no other - the face match's
+MW-LOAD finding, the same measure).
+
+**MW-EARLY.** The world's load door knows the save it will restore the
+moment the boot begins (`bootLoadPick` - `?load`, the picked
+`?loadkey`, a classic import taking the load's place - decided once and
+read by the door), and the build needs only that character and the
+attached files. So the boot starts it there, above `status('loading
+data')`: `weaponRig.js prebuildArmsForSave(pickedSaveSnap(bootLoadPick))`
+reads the same snapshot the restore will (`pickedSaveSnap`, the door's
+own pick), makes the build's entity off it (`saveArmsEntity`: the items
+through `setItemFields` as `restorePlayer` sends them, the worn table by
+`fillEquipTable` - `rebuildEquipState`'s fill, split out so there is one
+- and the light by its index), counts a store a boot past the menu has
+not counted, and builds. The build runs under the world's own loading.
+When the restore's `autoBuildArms` reaches its door the build is under
+way: the rig says whom it is building for (`fpArm.buildingFor()`, the
+queued build's identity first), `armsStandFor` counts a build under way
+for the same race, sex and face as standing, and no second body is
+queued behind the first - which is what the old MW-TORCH F6 queue would
+have done, doubling the build. A different identity under way is still
+a no, and that door queues the right body. An unload clears it.
+
+**Not measured on retail data** - the container has no Morrowind (it is
+not freeware), so the gain is the structure's, pinned on the fixture
+rig: the arms' build now starts seconds earlier, and its decodes leave
+the frame's thread. The `[mw] arm built in N ms - archives, esm,
+meshes, textures, sweep` line on Mac's machine is the measurement to
+read next; `textures` is the span this slice moves off the thread.
+Pins: `test/mwtexthread.test.js` (7), `test/mwearly.test.js` (7);
+mutants `tools/mutants/mwtexthread.json` (14 dead) and
+`tools/mutants/mwearly.json` (13 dead).

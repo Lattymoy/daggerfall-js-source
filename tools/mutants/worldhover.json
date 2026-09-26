@@ -1056,7 +1056,7 @@
   {
     "name": "AUDIT-WH2-frameAbort-does-nothing",
     "file": "src/systems/frameClock.js",
-    "old": "export function frameAbort() { open = null; }",
+    "old": "export function frameAbort() { open = null; openAt = null; }",
     "new": "export function frameAbort() { }",
     "tests": [
       "test/worldhover.test.js"

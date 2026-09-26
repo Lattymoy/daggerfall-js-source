@@ -27,7 +27,8 @@ import { PlayerWeapon, WEAPON_REACH, setWeaponPoseProbe, weaponPoseOf } from './
 import { eotbBody } from '../player/eotbBody.js';   // EOTB5: the sprite body, for a player with no Morrowind data
 import { eotbCamera } from '../player/eotbCamera.js';
 import { racialFpsWeapon } from '../systems/lycanthropy.js';   // V4: the transformed rig's claws
-import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';   // AUDIT 17e F17; MW-D32 the worn read
+import { EQUIP_SLOTS, equipTableOf, fillEquipTable } from '../systems/equip.js';   // AUDIT 17e F17; MW-D32 the worn read; MW-EARLY: a save's worn set
+import { setItemFields } from '../systems/itemTemplates.js';   // MW-EARLY: a save's items as the restore reads them
 import { dfWornEquipment } from '../formats/mwItemMap.js';   // MW-D32
 import { ARMOR_ENUM } from './enemyEquipment.js';   // MW-D32
 import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES, fpLightingOn, WEAPON_FILE } from './fpsWeapon.js';
@@ -51,7 +52,7 @@ import { fpsSpellCasting, loadSpellCastArt, drawSpellCastHands, magicAnimFilenam
 import { fpArm, hasAmmoFor } from './fpArm.js';
 import { ammoCountFor } from '../systems/inventory.js';   // AUDIT 68 S27-ammoCount-dup: the quiver's count, from the spend law's own module
 import { getPref } from '../systems/uiPrefs.js';   // MWA1: the arms switch
-import { morrowindDataCount, morrowindDataFingerprint, registerMorrowindData } from '../scenes/dataSource.js';   // MWA1: are the archives attached; AUDIT 65 XL-6: and measured
+import { morrowindDataCount, morrowindDataFingerprint, registerMorrowindData, morrowindDataCounted, countMorrowindArchives } from '../scenes/dataSource.js';   // MWA1: are the archives attached; AUDIT 65 XL-6: and measured; MW-EARLY: and counted
 import { mwRaceId } from '../formats/mwNpc.js';   // TR2: the one race-id spelling
 import { TEMPLATES } from '../systems/useItem.js';   // MW-D51: the Torch template - the lit light the Morrowind hand holds
 import { morrowindDataGeneration } from '../scenes/dataSource.js';
@@ -155,12 +156,70 @@ export function armBuiltFor() { return fpArm.builtFor(); }
 /** MWA3: is an arm standing at all - the same read autoBuildArms's old gate made. */
 export function armsReady() { return fpArm.ready(); }
 
-export function armsStandFor(entity, { ready = () => fpArm.ready(), builtFor = () => fpArm.builtFor() } = {}) {
-  if (!ready()) return false;
-  const have = builtFor();
-  if (!have) return false;
+export function armsStandFor(entity, { ready = () => fpArm.ready(), builtFor = () => fpArm.builtFor(), buildingFor = () => fpArm.buildingFor() } = {}) {
   const want = armIdentityOf(entity);
-  return have.race === want.race && !!have.female === want.female && (have.faceIndex | 0) === want.faceIndex;
+  const same = (have) => !!have && have.race === want.race && !!have.female === want.female && (have.faceIndex | 0) === want.faceIndex;
+  // MW-EARLY: A BUILD UNDER WAY STANDS FOR WHOM IT IS BUILDING. The load
+  // door starts the build off the save before the world is read
+  // (prebuildArmsForSave), so the restore's own door arrives while it
+  // runs - and a second build of the same body queued behind it doubled
+  // the seconds the arms took. The build that will stand once the queue
+  // drains is the answer while there is one; a different identity is
+  // still a no, and its door queues the right body behind it.
+  const coming = buildingFor();
+  if (coming) return same(coming);
+  if (!ready()) return false;
+  return same(builtFor());
+}
+
+/**
+ * MW-EARLY: THE ARMS' ENTITY, READ OFF A SAVE - the four things
+ * armBuildOptsOf and autoBuildArms read of a character (race, sex and
+ * face; the worn set and the hand; the light; chargenDone), taken from
+ * the snapshot the load door is about to restore, before the world has
+ * restored it. The items go through setItemFields as restorePlayer
+ * sends them (save.js), the table is fillEquipTable's own fill of them
+ * (rebuildEquipState's, without the armor values and the listeners -
+ * this is no entity in the game, and nothing but the build ever reads
+ * it), and the light is the record at the save's lightSourceIndex, the
+ * index restorePlayer relinks. Null for a snapshot with no pack.
+ */
+export function saveArmsEntity(snap) {
+  if (!snap || !Array.isArray(snap.items)) return null;
+  const items = snap.items.map((it) => setItemFields(it));
+  const li = snap.lightSourceIndex ?? -1;
+  const e = { race: snap.race, gender: snap.gender, faceIndex: snap.faceIndex, chargenDone: snap.chargenDone, items, lightSource: li >= 0 ? (items[li] ?? null) : null };
+  fillEquipTable(equipTableOf(e), items);
+  return e;
+}
+
+/**
+ * MW-EARLY (Mac: "The player shouldnt load into the game and have to
+ * wait for the morrowind models to load"): THE ARMS START WITH THE
+ * LOAD, NOT AFTER IT. The world's load door knows which save it will
+ * restore the moment it opens - and the build needs nothing of the
+ * world, only the character and the attached files - but it was asked
+ * for at the END of bootWorld, after every archive of the world had
+ * been read and indexed and the save restored, so the player stood in
+ * the world on the classic sprite while the body built. The host calls
+ * this with that same snapshot as its boot begins; the build then runs
+ * under the world's own loading, and the restore's autoBuildArms finds
+ * it under way (armsStandFor) instead of starting it. Never throws and
+ * never blocks: a refusal is autoBuildArms's own warning.
+ */
+export async function prebuildArmsForSave(snap, { build = autoBuildArms, counted = morrowindDataCounted, count = countMorrowindArchives } = {}) {
+  let e = null;
+  try { e = saveArmsEntity(snap); } catch { e = null; }
+  if (!e) return null;
+  try {
+    // a boot that came in past the enhanced menu (a direct ?load, the classic start window) has not counted the
+    // store, and autoBuildArms's gate reads the count - the cheap names-only door the menu itself takes
+    if (!counted()) await count();
+    return await build(e);
+  } catch (err) {
+    console.warn('[arms] the early build could not start -', err?.message ?? err);
+    return null;
+  }
 }
 
 /** MWA1: THE ARMS AT BOOT. RookieG (2026-09-11): "morrowind arms did
@@ -199,7 +258,7 @@ export async function autoBuildArms(entity, { dataCount = morrowindDataCount, me
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
  *                     (dungeonContext.js:2921), townTalk.say
- *                     (exterior.js:2140, world.js:4814) and
+ *                     (exterior.js:2140, world.js:4828) and
  *                     worldModes' own interior sink (worldModes.js:459,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below

@@ -308,7 +308,7 @@ import { floorLanding } from '../player/enterExit.js';   // FixStanding for the 
 import { jumpSpeedMultiplier, isEnhancedJumping, tallySkill, SKILLS } from '../systems/skills.js';   // TO1: the avoid-encounter roll reads skillValue live (imported above, SURV6) Stealth   // AUDIT 64 F2: CheckAirControl's IsEnhancedJumping disjunct
 import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter, setAvoidDeathHook, registerDuelFell, duelSpare } from '../characters/playerEntity.js';
 import { SOUND } from '../systems/soundClips.js';
-import { createWeaponRig, autoBuildArms, armIdentityOf, armBuiltFor, armsReady, sheetHolderOf, buildArmsFor } from '../combat/weaponRig.js';   // MWA1: the arms at boot; MWA3: the identity the arm should stand for, beside the one it does
+import { createWeaponRig, autoBuildArms, armIdentityOf, armBuiltFor, armsReady, sheetHolderOf, buildArmsFor, prebuildArmsForSave } from '../combat/weaponRig.js';   // MWA1: the arms at boot; MWA3: the identity the arm should stand for, beside the one it does; MW-EARLY: and before the world is read
 import { weaponPoseOf, applyWeaponPose, mergeWeaponPose, playerMeleeCanHit } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law, and SL-2's per-field merge with the mode host's live rig
 import { ArrowFlight, playerArrowHitFoe } from '../combat/arrowFlight.js';   // C13: visible exterior arrows; AUDIT 39 (#64): and the shaft that LANDS
 import { addItem, addGoldPieces, spendAmmoFor, carriedWeight } from '../systems/inventory.js';   // E4: PlayerEntity.CarriedWeight carries the gold counter's own term
@@ -572,6 +572,20 @@ export async function bootWorld(canvas, renderer, params, status) {
   }) : null;
 
   audio.ensure(fetchBytes);   // AUDIT 18 F6: sound was booted ONLY by buildDungeonContext, so this host was silent until a dungeon was entered
+  // MW-EARLY (Mac: "The player shouldnt load into the game and have to
+  // wait for the morrowind models to load"): THE LOAD DOOR IS KNOWN HERE.
+  // The door at the end of this boot restores the save `bootLoadPick`
+  // names - ?load, the picked ?loadkey, a classic import taking the
+  // load's place - and the Morrowind build needs only that character and
+  // the attached files, none of the world. So it starts NOW, off the
+  // same snapshot the restore will read (pickedSaveSnap, the door's own
+  // pick), and runs under the world's loading instead of after it; the
+  // restore's autoBuildArms finds it under way (weaponRig.js).
+  const bootLoadPick = !params.has('load') || (params.has('classicload') && peekPendingClassicSave()) ? null
+    : params.has('loadkey')
+      ? { key: Number(params.get('loadkey')) }
+      : { mostRecent: true };
+  if (bootLoadPick) prebuildArmsForSave(pickedSaveSnap(bootLoadPick));
   status('loading data');
   const [palBytes, blocksBytes, archBytes, mapsBytes, climateBytes, politicBytes, woodsBytes] =
     await Promise.all([
@@ -7293,6 +7307,13 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  own law, Load(PlayerEntity.Name, quickSaveName)); the BOOT load
    *  arm passes mostRecent - the start window's displayMostRecentChar
    *  shape, because the interim entity has no name to key by. */
+  /** MW-EARLY: a PICKED save's snapshot - a slot by its key, else the most
+   *  recent restorable one - in ONE home, so the boot's early arms build
+   *  (above `status('loading data')`) reads exactly what the door's
+   *  restore below reads. Null when there is none. */
+  function pickedSaveSnap({ key = null, mostRecent = false } = {}) {
+    return key != null ? loadSlot(key) : mostRecent ? (mostRecentRestorable()?.snap ?? null) : null;
+  }
   async function worldQuickLoad({ mostRecent = false, key = null } = {}) {
     if (_loading) return;
     if (worldMoveBusy()) { townTalk.say('Loading is disabled while travelling.'); return; }   // AUDIT 68 S22: never a second teleport beside one in flight
@@ -7341,9 +7362,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // wedging quickload for the session.
     _loading = true;
     try {
-      const snap = key != null ? loadSlot(key)
-        : mostRecent ? (mostRecentRestorable()?.snap ?? null)
-          : quickLoadSlot(playerEntity.name, undefined, playerEntity.characterId ?? null);   // CHARID1: my own QuickSave, never a namesake's
+      const snap = key != null || mostRecent ? pickedSaveSnap({ key, mostRecent })   // MW-EARLY: the pick the boot's early build read
+        : quickLoadSlot(playerEntity.name, undefined, playerEntity.characterId ?? null);   // CHARID1: my own QuickSave, never a namesake's
       if (!snap) { townTalk.say('No saved game.'); return; }
       // MAC-L4: the table this save is READ WITH, before it is read. The
       // boot fires `loadMagicRegistries` and does not await it (every
@@ -14205,10 +14225,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     _loadedGame = true;
     status('loading the saved game');
     // SAV4: the start menu's slot window boots with the PICKED key;
-    // a bare ?load keeps the most-recent shape.
-    await worldQuickLoad(params.has('loadkey')
-      ? { key: Number(params.get('loadkey')) }
-      : { mostRecent: true });
+    // a bare ?load keeps the most-recent shape. MW-EARLY: decided once,
+    // at the boot's top, where the arms' early build read the same pick.
+    await worldQuickLoad(bootLoadPick);
   } else if (params.has('classic') && getBool('Startup', 'StartInDungeon') && startLoc.hasDungeon) {
     status('entering the dungeon');
     const entered = await modes.startInDungeon();

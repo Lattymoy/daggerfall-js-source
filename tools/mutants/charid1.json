@@ -110,8 +110,8 @@
  {
   "name": "CHARID1-the-world-host-quickloads-by-name",
   "file": "src/scenes/world.js",
-  "old": "          : quickLoadSlot(playerEntity.name, undefined, playerEntity.characterId ?? null);",
-  "new": "          : quickLoadSlot(playerEntity.name);",
+  "old": "        : quickLoadSlot(playerEntity.name, undefined, playerEntity.characterId ?? null);",
+  "new": "        : quickLoadSlot(playerEntity.name);",
   "tests": [
    "test/charid1.test.js"
   ]

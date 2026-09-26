@@ -1525,3 +1525,64 @@ pins, `el3_air.test.js`'s program count (seventeen),
 passes those frames take), and the records in `vol1.json`, `el3.json`,
 `el4.json`, `el6.json`, `auditretro2.json` and `audit68_render_a.json`
 that name the renamed lines (175 dead across the six).
+
+# SCRIPT-SPLIT — "script" on a Direct3D11 screen, and what it was not (2026-09-26)
+
+*Two players' counters via Mac ("Getting some pretty consistent poor
+performance reports from some users on exterior play, but not
+everyone"), both outdoors, both ANGLE Direct3D11: a GTX 1650 at 1920x1080,
+dpr 1, 10 fps, frame 104.3 ms, script 107.5, draws 483; an RTX 4090
+Laptop at 2560x1344, dpr 1.5, 5 fps, frame 201.6 ms, script 203.6, draws
+609. The first in the rain on a horse in the wilderness, online.*
+
+**The shape.** The script line is the whole frame on both - PERF1's
+header reads that as "ours", the main thread's - and it is EVEN (a worst
+within 7 and 4 ms of the mean): a cost every frame pays, not hitches.
+Per canvas pixel it is ~50 ns on the 1650 and ~59 ns on the 4090 Laptop,
+a card several times the 1650's - a per-pixel cost the stronger GPU does
+not pay faster. Script minus frame is 3 and 2 ms: the stream's floor
+slice (PERF-EXT24), so both were streaming.
+
+**What the headless game said** (the real game in headless Chromium on
+SwiftShader over the freeware ARENA2 - tools/fetch-data.sh, outside the
+tree - probes in the session's scratch, numbers relative): the frame's
+own JavaScript is 10-30 ms on this container's CPU while SwiftShader
+takes 0.7-3 s a frame - main thread 97-98% idle - and it does NOT move
+with the canvas: Wayrest/Knightstale at 320x180 and at 1280x720 (16x the
+pixels) both read 11-31 ms. Online over a local relay (wrangler dev on
+`server/`, a test key minting the game's and the bots' tokens), 0, 8 and
+18 bots walking around the player read script 28.0, 27.6 and 34.2 ms.
+Per frame the game issues ~4,400 GL calls (853 drawElements), uploads
+~32 KB, allocates nothing canvas-sized, and makes no synchronous read in
+the exterior frame (`readPixels` is the item-icon path's alone;
+`getError` retro's LUT build; the one per-frame `isEnabled(CULL_FACE)`
+is client-cached). So nothing in the game's own code measured here
+reaches 100 ms, and none of it scales with pixels.
+
+**The reading, and it is a hypothesis.** A per-pixel cost that is the
+whole script line on Direct3D11 and that no JavaScript here pays is time
+the main thread spends WAITING - on GPU work surfaced through Chrome's
+command buffer, or on the browser's own per-frame work - and the script
+line cannot tell that from the game's code: it is measured from the
+rAF's stamp, and Chrome stamps a frame at the display's beat, so
+anything the main thread did first is in it before the game's frame
+runs a line. SwiftShader's pipeline does not block the renderer that
+way (its frames are GPU-bound with a small script line), so this cannot
+be reproduced here.
+
+**SCRIPT-SPLIT** gives the counter the one split that settles it: under
+the script line, `in frame` (the game's own callback, a stall inside a
+GL call included), `before` (the stamp to the callback: whatever ran
+first) and `stream` (the lent build slices), which sum to it
+(`systems/frameClock.js` samples them, `ui/fpsCounter.js
+scriptSplitLine` prints them, `__fpsStats` carries them). Reading a
+report: a large `before` is the browser's or the driver's, outside the
+game's frame; a large `in frame` with `?perf=cpu`'s zones (PERF-CPU)
+names the pass whose GL calls block, and `?perf=zones` (VC6d) that
+pass's GPU time where the browser has the timer. Three things to ask an
+affected player, each a minute: Render scale 50% (PERF-SCALE - if the
+fps roughly doubles or more, the cost is the world's pixels), the
+`Compositing` and `WebGL` lines of `chrome://gpu` (a software
+compositor reads every WebGL frame back on this thread), and a counter
+screenshot with this line. Pins `test/scriptsplit.test.js` (3); mutants
+`tools/mutants/scriptsplit.json` (7 dead).

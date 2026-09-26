@@ -1,0 +1,128 @@
+[
+  {
+    "name": "MWTEX-preload-never-decodes",
+    "file": "src/combat/fpArm.js",
+    "old": "  if (gen === null) return;\n  await Promise.all(want.map(",
+    "new": "  return;\n  await Promise.all(want.map(",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "MWTEX-kept-as-a-refusal",
+    "file": "src/combat/fpArm.js",
+    "old": "if (!TEXTURE_CACHE.has(key)) TEXTURE_CACHE.set(key, { ok: true, path, image });",
+    "new": "if (!TEXTURE_CACHE.has(key)) TEXTURE_CACHE.set(key, { ok: false, path, image });",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "MWTEX-worker-transfers-nothing",
+    "file": "src/formats/mwTextureWorker.js",
+    "old": "post({ t: 'image', id: m.id, image }, image.mips.map((l) => l.rgba.buffer));",
+    "new": "post({ t: 'image', id: m.id, image });",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "MWTEX-worker-drops-levels",
+    "file": "src/formats/mwTextureWorker.js",
+    "old": "m.levels == null ? undefined : { levels: m.levels }",
+    "new": "undefined",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "MWTEX-pool-one-worker",
+    "file": "src/formats/mwTextureClient.js",
+    "old": "if ((!best || best.jobs.size > 0) && opened < size) return open() ?? best;",
+    "new": "if (!best && opened < size) return open() ?? best;",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "MWTEX-pool-transfers-the-callers-bytes",
+    "file": "src/formats/mwTextureClient.js",
+    "old": "const copy = bytes.slice();",
+    "new": "const copy = bytes;",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "MWTEX-dead-worker-drops-its-jobs",
+    "file": "src/formats/mwTextureClient.js",
+    "old": "for (const j of slot.jobs.values()) { stats.onThread++; here(j.path, j.bytes, j.levels).then(j.resolve, j.reject); }",
+    "new": "for (const j of slot.jobs.values()) { stats.onThread++; Promise.reject(new Error('dropped')).then(j.resolve, j.reject); }",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "MWTEX-throwing-factory-asked-again",
+    "file": "src/formats/mwTextureClient.js",
+    "old": "if (!slots.length) { dead = true; console.warn('[mw textures] workers unavailable; decoding on the main thread -', e?.message ?? e); }",
+    "new": "if (!slots.length) { console.warn('[mw textures] workers unavailable; decoding on the main thread -', e?.message ?? e); }",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "MWTEX-size-takes-every-core",
+    "file": "src/formats/mwTextureClient.js",
+    "old": "return Math.max(1, Math.min(TEXTURE_WORKERS_MAX, n - 1));",
+    "new": "return Math.max(1, Math.min(TEXTURE_WORKERS_MAX, n));",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "MWTEX-escape-hatch-misspelled",
+    "file": "src/formats/mwTextureClient.js",
+    "old": "/[?&]texturethread=off\\b/",
+    "new": "/[?&]texturethread=of\\b/",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "MWTEX-colour-measure-whole-chain",
+    "file": "src/combat/fpArm.js",
+    "old": "decodeTextureImage(tpath, tarc.get(tpath).slice(), { levels: 1 }).mips[0]",
+    "new": "decodeTextureImage(tpath, tarc.get(tpath).slice()).mips[0]",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "MWTEX-garments-one-by-one",
+    "file": "src/combat/fpArm.js",
+    "old": "await Promise.all(asked.map((rec) => preloadClothingColour(rec, parts, archives, gen)));",
+    "new": "for (const rec of asked) await preloadClothingColour(rec, parts, archives, gen);",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "MWTEX-face-candidates-one-by-one",
+    "file": "src/combat/fpArm.js",
+    "old": "    Promise.all(pools.heads.map(async (rec) => ({ id: rec.id, f: await measurePart(rec, archives, 'head') }))),",
+    "new": "    (async () => { const out = []; for (const rec of pools.heads) out.push({ id: rec.id, f: await measurePart(rec, archives, 'head') }); return out; })(),",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "MWTEX-face-decode-on-thread",
+    "file": "src/combat/fpArm.js",
+    "old": "try { img = await decodeTextureOffThread(tpath, tarc.get(tpath), { levels: 1 }); } catch { return null; }",
+    "new": "try { img = decodeTextureImage(tpath, tarc.get(tpath).slice(), { levels: 1 }); } catch { return null; }",
+    "tests": [
+      "test/mwload_records.test.js"
+    ]
+  }
+]

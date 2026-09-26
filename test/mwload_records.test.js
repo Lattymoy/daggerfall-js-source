@@ -293,9 +293,9 @@ test('MW-LOAD: the face verdict is kept in the derived store against the set, th
     'the key names the matcher version, the identity and the set');
   assert.match(src, /if \(kept && \(kept\.head \|\| kept\.hair\)\) \{ faceMatch = kept; FACE_MATCH_CACHE\.set\(fkey, kept\); \}/);
   assert.match(src, /if \(dkey && \(faceMatch\.head \|\| faceMatch\.hair\)\) \{\s*\n\s*try \{ await d\.storeDerivedJson\(dkey, faceMatch\); \}/);
-  // the measurement decodes level 0 only
+  // the measurement decodes level 0 only - MW-TEXTHREAD: in the texture pool, the same decoder off the frame's thread
   const measure = src.slice(src.indexOf('async function measurePart('));
-  assert.match(measure.slice(0, measure.indexOf('\n}\n')), /decodeTextureImage\(tpath, tarc\.get\(tpath\)\.slice\(\), \{ levels: 1 \}\)/);
+  assert.match(measure.slice(0, measure.indexOf('\n}\n')), /await decodeTextureOffThread\(tpath, tarc\.get\(tpath\), \{ levels: 1 \}\)/);
   // the esm loop takes the door first, the bytes second
   assert.match(src, /const records = typeof d\.loadMorrowindArmRecords === 'function' \? await d\.loadMorrowindArmRecords\(n\) : null;\s*\n\s*esmBytes\.push\(records \? \{ name: n, records \} : \{ name: n, bytes: await d\.loadMorrowindFile\(n\) \}\);/);
   assert.match(src, /if \(e\.records\) return armRecordsOf\(e\.records, kind\);/);

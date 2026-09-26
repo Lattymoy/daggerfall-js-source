@@ -46,8 +46,9 @@ test('PERF1 fpsCounter: the script line appears under the cadence once a host ha
     const c = mountFpsCounter({ enabled: () => true, raf: null });
     for (let t = 0; t <= 1020; t += 1000 / 60) c.tick(t);
     assert.doesNotMatch(c.el.textContent, /script/, 'the menu has no host loop: no script line');
-    for (let t = 1020; t <= 2040; t += 1000 / 60) { frameBegin(t); frameEnd(t + 7); c.tick(t + 1000 / 60); }
-    assert.match(c.el.textContent, /\nscript 7\.0 ms  worst 7$/, `the hosts' share: ${JSON.stringify(c.el.textContent)}`);
+    for (let t = 1020; t <= 2040; t += 1000 / 60) { frameBegin(t, t); frameEnd(t + 7); c.tick(t + 1000 / 60); }
+    // SCRIPT-SPLIT: the line's three parts under it - here the callback began on the stamp, so all seven are the frame's
+    assert.match(c.el.textContent, /\nscript 7\.0 ms  worst 7\nin frame 7\.0  before 0\.0  stream 0\.0$/, `the hosts' share: ${JSON.stringify(c.el.textContent)}`);
     c.dispose();
   } finally { globalThis.document = prev.d; _resetFrameClock(); }
 });
