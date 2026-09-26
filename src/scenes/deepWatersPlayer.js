@@ -58,6 +58,7 @@ import {
 import { UnderwaterFog } from '../render/underwaterFog.js';
 import { underwaterFogDensityMax, underwaterFogColor } from '../world/deepWaterLook.js';
 import { evaluateSwimmingSuppression, publishState, clearState } from '../systems/deepWaterPlayer.js';
+import { OVER_ENCUMBERED_LIMIT } from '../player/motor.js';   // OCEAN-STUCK: LevitateMotor's own weight test (:83)
 import { ON_EXTERIOR_WATER } from '../player/exteriorSurface.js';
 
 const lerp = (a, b, t) => a + (b - a) * Math.min(1, Math.max(0, t));
@@ -107,6 +108,11 @@ export function createDeepWatersPlayer({ host, locate, seaY, terrainGroundAt, co
   /** TryGetUsableWaterColumn. */
   const usableAt = (x, z) => { const c = columnAt(x, z); return !!c && c.depth >= WATER_CONTACT_MINIMUM_DEPTH; };
   const centreOf = (p) => p.pos[1] + p.height / 2;
+  /** OCEAN-STUCK (2026-09-26, Mac, from the Discord: "someone is stuck in the ocean"): a swimmer the weight holds
+   *  under - LevitateMotor's first arm (:81-84) drags one past 62.5 kg down and takes the float keys away, levitation
+   *  and water walking aside - never reaches the surface the shore exit asks for, and at the carved sea's coast the
+   *  floor is the carve's wall. Such a swimmer takes the exit from wherever the weight has put it. */
+  const heldUnder = (p) => (p.carriedWeight?.() ?? 0) * 4 > OVER_ENCUMBERED_LIMIT && !p.levitating && !p.waterWalking;
 
   /**
    * A downward probe the way the mod's rays see the world: the nearest of
@@ -315,8 +321,9 @@ export function createDeepWatersPlayer({ host, locate, seaY, terrainGroundAt, co
       lastDecision = d;
       guardFrameSpike(p, d.swimming, f.frameDelta ?? 0);
       if (d.swimming && p.riding) dismount();   // DismountForSwimming: off the horse or the cart
-      // the shore exit - a swimmer near the surface, not diving, outside the load grace
-      if (!f.descend && swimCheckY(centreOf(p)) >= oceanY - 0.75 && !f.loadGrace && d.swimming && tryMoveToShore(p, f, oceanY)) {
+      // the shore exit - a swimmer near the surface (OCEAN-STUCK: or one the weight holds under), not diving, outside
+      // the load grace
+      if (!f.descend && (swimCheckY(centreOf(p)) >= oceanY - 0.75 || heldUnder(p)) && !f.loadGrace && d.swimming && tryMoveToShore(p, f, oceanY)) {
         if (swim.forged) restore(p, f.now);
         clearState();
         requestStand(p);

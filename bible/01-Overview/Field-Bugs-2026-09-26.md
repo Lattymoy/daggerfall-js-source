@@ -300,3 +300,28 @@ with fists. The classic sprite lane keeps DFU's ToggleHand whole
 `02-Formats/Morrowind-Rules.md` MW-HAND).
 
 `test/mwhand.test.js` (4); `tools/mutants/mwhand.json` 6, 6 dead.
+
+## OCEAN-STUCK: a heavy swimmer is lifted out at the coast (report 11)
+
+No detail came with the report, so this is the one way to be stuck for
+good that the code shows. LevitateMotor's first arm (DFU's, AUDIT 26
+F027) drags a swimmer carrying more than 62.5 kg down and takes the float
+keys away ("You are carrying too much to stay afloat."). Iliac Puddle No
+More's only way out of the sea, the shore exit, asks for a SURFACE
+swimmer. So the weight sank the player to the carved floor, and at the
+coast that floor meets the carve's wall - metres of it - with nothing to
+lift them. Most players drown and respawn; an Argonian, who breathes
+forever there, stays. Reproduced in `test/dwd_swim.test.js`'s harness: the
+swimmer stood at the wall's foot, pushing, indefinitely.
+
+The exit now takes a swimmer the weight holds under, from wherever it
+stands (`scenes/deepWatersPlayer.js`): push at the coast and it lifts you
+onto the shore. A light swimmer is unchanged - it swims up to leave, as
+the mod asks. If the report was something else (a cliff coast with no
+walkable landing, a boat), it is still open, and the reporter's place
+and load would settle it.
+
+A departure from the mod, recorded in its Port-Ledger row and
+`03-World/Deep-Waters.md`. `test/oceanstuck.test.js` (3);
+`tools/mutants/oceanstuck.json` 3, 3 dead. `dwd.json`'s load-grace record
+re-aimed.

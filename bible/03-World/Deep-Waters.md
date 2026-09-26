@@ -96,7 +96,12 @@ motor (`beforeMove` / `afterMove`):
   grace) pushing forward at a shore: a landing 1 m ahead (then under the
   player) found by a ray from the sea + 13 m down 18 m, a walkable slope
   with no open water under it, and the capsule's centre moved to 1.5 m
-  over it by a swept move.
+  over it by a swept move. OCEAN-STUCK (2026-09-26, the port's one
+  departure here): LevitateMotor drags a swimmer past 62.5 kg down and
+  takes the float keys away, so such a swimmer never reaches the surface
+  the exit asks for and stood against the carve's wall at the coast for
+  good (an Argonian breathing forever). A swimmer the weight holds under
+  takes the exit from wherever it stands.
 - **The movement.** The Swim Speed Multiplier is a walk speed modifier
   (`AddWalkSpeedMod`) - it scales GetBaseSpeed's walk arm wherever DFU reads
   it; the stroke is Run's edge (either edge), `max(24, ceil(MaxFatigue x

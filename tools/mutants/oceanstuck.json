@@ -1,0 +1,29 @@
+[
+  {
+    "name": "OCEANSTUCK-the-weighted-swimmer-has-no-door-the-defect",
+    "file": "src/scenes/deepWatersPlayer.js",
+    "old": "(swimCheckY(centreOf(p)) >= oceanY - 0.75 || heldUnder(p))",
+    "new": "swimCheckY(centreOf(p)) >= oceanY - 0.75",
+    "tests": [
+      "test/oceanstuck.test.js"
+    ]
+  },
+  {
+    "name": "OCEANSTUCK-every-swimmer-leaves-from-the-floor",
+    "file": "src/scenes/deepWatersPlayer.js",
+    "old": "(swimCheckY(centreOf(p)) >= oceanY - 0.75 || heldUnder(p))",
+    "new": "(swimCheckY(centreOf(p)) >= oceanY - 0.75 || true)",
+    "tests": [
+      "test/oceanstuck.test.js"
+    ]
+  },
+  {
+    "name": "OCEANSTUCK-the-weight-read-backwards",
+    "file": "src/scenes/deepWatersPlayer.js",
+    "old": "(p.carriedWeight?.() ?? 0) * 4 > OVER_ENCUMBERED_LIMIT && !p.levitating",
+    "new": "(p.carriedWeight?.() ?? 0) * 4 < OVER_ENCUMBERED_LIMIT && !p.levitating",
+    "tests": [
+      "test/oceanstuck.test.js"
+    ]
+  }
+]
