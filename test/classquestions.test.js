@@ -580,6 +580,8 @@ test('F2 real seam: the constellation loads, animates, repaints and releases for
     uploadTexture: (g, name) => { uploads.push(name); return `tex:${name}`; },
     releaseTexture: (g, key) => releases.push(key),
     drawScreenQuad: () => {},
+    // CG1: the question scroll's text is clipped to its window (chargenArt.js's setScreenScissor)
+    setScreenScissor: () => {}, clearScreenScissor: () => {},
     // drawMenuBackdrop measures the LIVE context when no canvas is
     // passed (chargenArt.js:83), which is the path drawChargenNative
     // takes. A fake renderer with no gl made this test throw the moment

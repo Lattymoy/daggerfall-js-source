@@ -41,7 +41,7 @@
 | `canvas.width = canvas.clientWidth` — CSS px, **DPR 1** | `src/render/renderer.js:1448‑1064` |
 | `nativeMetrics` floors to **s=1 on every phone in both orientations** | `src/ui/nativePanel.js:29‑31` |
 | Today's launcher draws at a **hardcoded `s=2`** | `src/scenes/launcherScene.js:62`, `:82` | *(DELETED at FD1, 2026-09-11)*
-| FONT0003: `fixedWidth 5`, `fixedHeight 7`, space glyph 4 | pinned `test/audit18_ui_native.test.js:66‑70` |
+| FONT0003: `fixedWidth 5`, `fixedHeight 7`, space glyph 4 | pinned `test/audit18_ui_native.test.js:68‑70` |
 | `FNT_ASCII_START = 33`; codes < 33 draw as a space; **no arrow / ellipsis / degree / middle‑dot glyph exists** | `src/formats/fntFile.js:15`, `src/ui/text.js:158‑86` |
 | `measureText` takes `font.fnt`, returns virtual px at scale 1 | `src/ui/text.js:134‑67` |
 | `drawRect` / `shadowText` / `drawImg` consume `{s, ox, oy}` — **any** metric object works | `src/ui/nativePanel.js:77‑84` |

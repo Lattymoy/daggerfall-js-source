@@ -46,6 +46,8 @@ function recorder() {
     uploadTexture: (g, name) => `tex:${name}`,
     releaseTexture: () => {},
     drawScreenQuad: (tex, rect, uv, color) => quads.push({ tex, ...rect, uv, color }),
+    // CG1: the listbox's RectRestrictedRenderArea (nativeTalk.js's topic list) - a clip, no quad
+    setScreenScissor: () => {}, clearScreenScissor: () => {},
   };
 }
 const realFont = () => new FntFile().load(new Uint8Array(readFileSync(join(ARENA2, 'FONT0003.FNT'))));
@@ -284,10 +286,10 @@ test('audit18 ui-native F8/F9: the talk window draws panelTone and its listboxes
   const r = await talkRenderer();
   const font = makeFont(r, realFont(), 'FONT0003');
   const w = new NativeTalkWindow('Yes?', {
-    categories: () => [{ label: 'Taverns', buildings: [] }],
+    categories: () => [{ label: 'Taverns', buildings: [] }, { label: 'Temples', buildings: [] }],
     answer: () => '', tone: () => 1, setTone: () => {}, onClose: () => {}, npcName: '',
   });
-  w.click(10, 15);                        // one topic row
+  w.click(10, 15);                        // two topic rows, the first selected
   r.quads.length = 0;
   w.draw(r, { width: 320, height: 200 }, font);   // s = 1, ox = oy = 0
 
@@ -300,12 +302,17 @@ test('audit18 ui-native F8/F9: the talk window draws panelTone and its listboxes
 
   // ListBox.Draw sets label.Position = (0, -scrollIndex) INSIDE the
   // listbox rect, and TextLabel puts the shadow at +1,+1. So the
-  // topic row's TEXT starts at (6,71) and its shadow at (7,72); the
-  // conversation's greeting at (189,65) / (190,66).
+  // topic rows' TEXT starts at (6,71), the second's at (6,78) and its
+  // shadow at (7,79); the conversation's greeting at (189,65) / (190,66).
+  // The SELECTED row carries no shadow (ROAD-D D10, topicRowStyle:
+  // selectedShadowPosition is Vector2.zero) - so the first has none.
   const glyphs = r.quads.filter((q) => q.tex === 'tex:FONT0003');
   const leftmostAt = (y) => Math.min(...glyphs.filter((g) => g.y === y).map((g) => g.x));
+  const second = TALK_RECTS.topicList[1] + TOPIC_ROW_H;
   assert.equal(leftmostAt(71), TALK_RECTS.topicList[0]);
-  assert.equal(leftmostAt(72), TALK_RECTS.topicList[0] + 1);
+  assert.equal(leftmostAt(72), Infinity, 'the selected row draws no shadow');
+  assert.equal(leftmostAt(second), TALK_RECTS.topicList[0]);
+  assert.equal(leftmostAt(second + 1), TALK_RECTS.topicList[0] + 1);
   assert.equal(leftmostAt(65), TALK_RECTS.conversation[0]);
   assert.equal(leftmostAt(66), TALK_RECTS.conversation[0] + 1);
 });
