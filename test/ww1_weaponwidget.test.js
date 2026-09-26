@@ -395,7 +395,7 @@ test('WW1: OnAttackDamageCalculated and the recoil - the six conditions over hit
   assert.equal(env.widget.state, S.Idle); assert.equal(env.widget.hasCurrentAttackHit, false, 'cleared at the exit');
 });
 
-test('WW1: the bow - BowDrawback on: the draw frames 0..3 on the classic tick while the original draws, the release to the last frame with the swing sound, the dip until the cooldown; off: the instant shot from frame 3', () => {
+test('WW1: the bow - BowDrawback on: the draw frames 0..3 on the classic tick while the original draws, the release to the last frame (BOW-VOICE: in silence - the loose\'s one voice is the machine\'s bowSound), the dip until the cooldown; off: the instant shot from frame 3', () => {
   const b = bench({ weapon: SHORT_BOW, weaponType: T.Bow, anims: BOW_ANIMS });
   b.frame();
   assert.equal(b.widget.state, S.Idle); assert.equal(b.widget.frame, 0);
@@ -408,7 +408,7 @@ test('WW1: the bow - BowDrawback on: the draw frames 0..3 on the classic tick wh
   machineAttack(b.machine, 'StrikeDown');   // the release
   const shot = [];
   for (let i = 0; i < 12 && b.machine.state !== 'Idle'; i++) { b.frame(CLASSIC_UPDATE_INTERVAL); shot.push([b.widget.state, b.widget.frame]); }
-  assert.equal(b.sounds.filter(([c]) => c === SOUND.ArrowShoot).length, 1, 'the loose');
+  assert.equal(b.sounds.filter(([c]) => c === SOUND.ArrowShoot).length, 0, 'BOW-VOICE: the clone looses in silence (test/bowvoice.test.js)');
   assert.ok(shot.some(([st, fr]) => st === S.StrikeDown && fr >= 5), 'through the hit frame (the loop runs while the ORIGINAL is still loosing - the original leads the clone by a frame, so the last frame is the original\'s to end)');
   assert.ok(shot.every(([st, fr], i) => i === 0 || st !== S.StrikeDown || fr >= shot[i - 1][1]), 'monotone forward');
   assert.deepEqual(b.widget._w.offsetTarget, [0, 1], 'dipped until the cooldown');
@@ -421,7 +421,8 @@ test('WW1: the bow - BowDrawback on: the draw frames 0..3 on the classic tick wh
   assert.equal(nd.widget.state, S.StrikeDown); assert.equal(nd.widget.frame, 3, 'the drawn pose is the bow\'s idle without drawback');
   machineAttack(nd.machine, 'StrikeDown');
   for (let i = 0; i < 3; i++) nd.frame(CLASSIC_UPDATE_INTERVAL);
-  assert.equal(nd.sounds.filter(([c]) => c === SOUND.ArrowShoot).length, 1);
+  assert.equal(nd.sounds.filter(([c]) => c === SOUND.ArrowShoot).length, 0, 'BOW-VOICE: and so does the instant shot');
+  assert.ok(nd.widget.frame > 3, '...which is still loosed');
 });
 
 test('WW1: Ambidexterity - the sprite in the hand you swing with (flipped for the left, for a left-hander\'s right, for MirrorBows), the module off following Handedness alone; NoDaggerMirroredStrikes swaps a dagger\'s sideways strikes; the mirror overrides compare GetItemHands to LeftOnly as the IL does', () => {

@@ -36,15 +36,19 @@
 // NOT CARRIED, recorded: the mod's cross-mod seams (Tome of Battle's
 // reach and swing key, FPS Models' animator, the registerCustomWeapon
 // message, Vanilla Combat Event Handler's onToggleOffset) - the port
-// has none of those mods; and five DUPLICATES of laws the port already
+// has none of those mods; and six DUPLICATES of laws the port already
 // runs once, which the clone re-runs beside the original where here
 // there is only the one - the bow's out-of-arrows sheathe, the
 // unsheathe sound, the vanilla weapon's own hide, the combat-voice roll
 // at the release (hostCombat.playerAttackGrunt is FPSWeapon's own, on
-// the machine's hit) and the transformed lycanthrope's move-sound clock
-// (LycanthropyEffect's, systems/lycanthropy.js LM1). The clone's swing
-// sound at its release IS carried: it is the mod's moment, and the
-// hosts' whiff on a miss is DFU's other one, as in DFU with the mod.
+// the machine's hit), the transformed lycanthrope's move-sound clock
+// (LycanthropyEffect's, systems/lycanthropy.js LM1) and - BOW-VOICE,
+// 2026-09-26 - the bow's loose sound (FPSWeapon's own frame-4
+// PlaySwingSound: the machine's `bowSound`, which every host plays and
+// the Morrowind arm holds for its release; the clone's second ArrowShoot
+// was every shot heard twice). The clone's MELEE swing sound at its
+// release IS carried: it is the mod's moment, and the hosts' whiff on a
+// miss is DFU's other one, as in DFU with the mod.
 
 // WW-LAB: the settings and the three movement modules live in
 // weaponWidgetMotion.js now - the arithmetic with no component around
@@ -502,9 +506,9 @@ export function createWeaponWidget({
         yield FRAME;
       }
       if (machineStateIndex() === S.StrikeDown) {
-        // the release (0x45c1-0x4734): to the last frame, the cooldown clocked at the hit frame
+        // the release (0x45c1-0x4734): to the last frame, the cooldown clocked at the hit frame. BOW-VOICE: silent -
+        // the loose's one voice is the machine's `bowSound` (see the header)
         changeWeaponState(S.StrikeDown); updateWeapon();
-        playSwingSound();
         yield tick;
         while (machineStateIndex() === S.StrikeDown && w.currentFrame < BOW_NUM_FRAMES.StrikeDown - 1) {
           w.offsetTarget = [0, 0]; w.offsetCurrent = [0, 0];
@@ -523,7 +527,7 @@ export function createWeaponWidget({
       // BowDrawback off (0x481e-0x49fd): the instant shot from the drawn frame
       w.currentFrame = 3; changeWeaponState(S.StrikeDown); updateWeapon();
       yield tick;
-      playSwingSound();
+      // BOW-VOICE: the IL's PlaySwingSound here is the loose's second voice - the machine's `bowSound` is its one
       cooldownTime = w.time + getBowCooldownTime(liveSpeed());
       yield tick;
       while (w.currentFrame < BOW_NUM_FRAMES.StrikeDown - 1) { w.offsetTarget = [0, 0]; w.offsetCurrent = [0, 0]; w.currentFrame += 1; updateWeapon(); yield tick; }

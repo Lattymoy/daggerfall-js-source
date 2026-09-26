@@ -256,3 +256,28 @@ were. A save's curse burns no more from its next round.
 A Port-Ledger section A row (VAMP-DAY). `test/vampday.test.js` (5);
 `tools/mutants/vampday.json` 9, 9 dead. Three older pins re-aimed
 (passivespecials x2, disc10_vampire V1 - onto a sun-cursed career).
+
+## BOW-VOICE: one loose, one sound (report 14)
+
+ARROW2 (2026-09-23) took the second arrow out of the picture - the sprite
+bow's nocked frame standing on screen while the shaft flew. The second
+SHOT that was left is a sound. A bow's loose is FPSWeapon's own frame-4
+PlaySwingSound: the machine's `bowSound`, which every host plays as
+ArrowShoot. The Weapon Widget - on by default - played ArrowShoot again at
+its clone's release. On the sprite bow the two landed a tick apart. Under
+the Morrowind arm the machine's is held for the arm's release key
+(MW-D42d, so the twang rides the arrow) while the clone's went at the
+click - every shot heard twice, the draw's length apart, the first twang
+with no arrow. Counted on the real rig and widget: two ArrowShoots a shot
+(frames 3 and 4 on the sprite; at the click and at the release under the
+arm).
+
+The clone's bow release is silent now - a duplicate of the original's
+loose, which the port runs once, beside the five the page already lists
+(`combat/weaponWidget.js`, `05-Combat/Weapon-Widget.md`). One shot is one
+twang, with its arrow, on the sprite and under the arm, drawback on or
+off. The clone's melee swing keeps its voice.
+
+`test/bowvoice.test.js`; `tools/mutants/bowvoice.json` 3, 3 dead.
+`test/ww1_weaponwidget.test.js`'s bow pin re-aimed (the clone looses in
+silence).
