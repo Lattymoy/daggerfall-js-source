@@ -9166,13 +9166,13 @@ Pinned: `test/guild1b.test.js` (10). `tools/mutants/guild1b.json` (31).
   say the actor's character's guild NOW (`{o:'guild'}`); the guild book (`net/guildBook.js` onOrders) hands a look's
   order on when the membership it reads differs from the last one handed on - the first look always, since the page
   cannot know what its rooms were told - and the host carries it down every socket it holds (`net/online.js`
-  sendGuildOrder: after each socket's own welcome names world113, one guild frame a socket every GUILD_SEND_MS, 1.5 s -
+  sendGuildOrder: after each socket's own welcome names world115, one guild frame a socket every GUILD_SEND_MS, 1.5 s -
   wider than the relay's own one-a-second gate, so two frames the wire bunched are not one it drops - and each once
   more GUILD_RESEND_MS, 5 s, after its first, for the one it dropped anyway; a newer order in the older's place). A removal and a disbanding answer an OUT order (`{o:'guildout'}` - the
   member row, or the guild whole), carried to the hub, the one room every online player holds a socket to: it takes the
   membership off every socket of theirs and tells each, and their own client looks again and carries their none to
   their other rooms (`onGuildGone`).
-- **The relay** (world113): a `guild` order is taken only from a socket whose verified account it names, and only when
+- **The relay** (world115 - world113 on its branch, renumbered at the merge past main's AUDIT WB, world113, and the Enhanced Plus patch's PEERLIGHT/PEERFX, world114; AUDIT MERGE-PLUS E2): a `guild` order is taken only from a socket whose verified account it names, and only when
   NEWER than what the socket wears (its token's, or a later order's) - a replayed join cannot undo the leave after it;
   a tag that moved fans to a place room on the room's own budget (GUILD_ROOM_HZ_MAX), and in a channel or the hub its
   carrier alone hears it (renown's rule there). A `guildout` is believed on its signature, as a mute order is, and HELD
@@ -9181,7 +9181,7 @@ Pinned: `test/guild1b.test.js` (10). `tools/mutants/guild1b.json` (31).
   its lines ride the hub link with `ch: 'guild'` and the hub fans them to the sockets wearing the sender's guild alone,
   on the guilds' own budget (GUILD_CHAT_ROOM_HZ_MAX, 40 a second); a sender in no guild says it to nobody, and a guild
   line anywhere but the hub is junk. `/guild` or `/gu` say a line on it (`/g` stays the World's); its list is the hub's
-  peers wearing the tag, with my own row. A relay before world113 is told in words (GUILD_OLD_RELAY_TEXT). The service
+  peers wearing the tag, with my own row. A relay before world115 is told in words (GUILD_OLD_RELAY_TEXT). The service
   is acct12.
 
 Not yet: the guild hall (GUILD1d). Known and left: after a change, the hub's World roster shows the new tag to its

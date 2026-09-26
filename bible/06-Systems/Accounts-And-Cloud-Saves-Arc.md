@@ -3572,7 +3572,7 @@ come; the one face that never showed it was the player's own while playing.
   needs the level alone (the minter signs a fixed claim list). The minter hands it on (`who.xp`), and every report's
   answer carries it through `renownAnswer`'s `xp`. The page (`scenes/world.js renownXpAdopt`) takes it only upward and
   only online, and from a mint before the level, so no frame draws the new level over the old total.
-- **The service is acct11** (the mint's answer). A service before it answers no total: the box alone until the page's
+- **The service is acct12** (the mint's answer; acct11 on its branch - main's WB5b took acct11 first, so the merge renumbered it; AUDIT MERGE-PLUS E2). A service before it answers no total: the box alone until the page's
   first report is answered.
 - Pinned: `test/renown4.test.js` (7). `tools/mutants/renown4.json` (28, all dead; a total signed into the token was
   dropped as equivalent - `mintToken` signs a fixed claim list).
