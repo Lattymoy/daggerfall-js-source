@@ -59,6 +59,7 @@
  * @property {boolean} [noShadow]                     F2: a thing lying on the ground casts nothing (a loot pile)
  * @property {boolean} [selfCard]                     DISC24-C: the player's own body card - it casts as drawn
  * @property {boolean} [_dead]                        EL2: freed - a shadow record from the last frame may still hold it
+ * @property {boolean} [dwColumn]                     DW-F: the host's - one flat standing in a carved sea's column (the water column's share)
  * @property {string} [_bbKey]                        FA1/MAC4: the texture key, re-minted when a field it is made of moves (billboardKey.js)
  * @property {number|string} [_bbKeyRecord]           ...the record it was minted from
  * @property {number|null} [_bbKeyFrame]              ...the frame

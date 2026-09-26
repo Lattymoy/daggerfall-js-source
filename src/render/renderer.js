@@ -8,7 +8,8 @@
 //   - Alpha 0 texels are palette-index cutouts; the shader discards them.
 
 import { CLOUD_SHADOW_GLSL } from './cloudShadow.js';   // EE5 / VC4: the cloud shadow's reader - VC6c's one home, shared with the air pass's shafts
-import { FOG_GLSL } from './fogGlsl.js';   // AUDIT 68 S17-fog-glsl-dup: fogFactorAt's one home, for all seven world programs
+import { FOG_GLSL } from './fogGlsl.js';
+import { COLUMN_GLSL } from './columnGlsl.js';   // DW-F: the water column's share - a foe under Iliac Puddle No More's sea is in the depth texture its top reads   // AUDIT 68 S17-fog-glsl-dup: fogFactorAt's one home, for all seven world programs
 // ABOVE the first shader text on purpose: every template below is built
 // at module scope, and a block a shader interpolates has to be in hand by
 // then. The imports hoist and the leaves have no imports of their own, so
@@ -498,6 +499,7 @@ uniform vec3 uCamPos;
 ${CLOUD_SHADOW_GLSL}
 out vec4 outColor;
 ${FOG_GLSL}
+${COLUMN_GLSL}
 void main() {
   // ECV1: a chameleoned foe ripples - a slow horizontal wobble across
   // the sprite, phased per foe - so it reads as blending in, not as a
@@ -544,7 +546,8 @@ void main() {
   if (uConceal.x == 4.0) lit = vec3(0.0);   // EOTB-IL: Eye Of The Beholder's shade - Color.black at the batch's alpha (UpdateMaterial, IL_4f69)
   float alpha = uSpectral == 1 ? tex.a : 1.0;
   if (uConceal.x > 0.0) alpha = tex.a * uConceal.y;
-  outColor = vec4(dwWaterFog(mix(uFogColor, lit, fogFactorAt(vBBWorld)), vBBWorld), alpha);   // DW-C
+  // DW-F: the column's share for a flat the host found in a carved sea (the batch's switch), as the floor takes it
+  outColor = vec4(dwWaterFog(dwColumn(mix(uFogColor, lit, fogFactorAt(vBBWorld)), vBBWorld), vBBWorld), alpha);   // DW-C
 }`;
 
 // Dungeon water: one horizontal quad per watered RDB block, drawn after
@@ -979,6 +982,17 @@ export const INTERIOR_CLEAR = Object.freeze([0, 0, 0, 1.0]);
  *  bind it by uniform name, so the number lives only here. */
 export const CLOUD_SHADOW_UNIT = 15;
 
+/** DW-F: the unit the billboard programs read Iliac Puddle No More's
+ *  surface texture on, for the water column's share (COLUMN_GLSL's
+ *  uSurfaceTex) - bound by drawBillboards before every call that needs it,
+ *  never trusted to persist. 6 sits inside Dynamic Skies' nine slots and
+ *  under the lane's own (8 and up), and no billboard program samples it
+ *  otherwise: units 0 and 1 are the flat's picture and emission, 15 the
+ *  cloud shadow. */
+export const BB_SURFACE_UNIT = 6;
+/** @type {Readonly<Record<string, WebGLUniformLocation | null>>} */
+const NO_COLUMN_LOCS = Object.freeze({});
+
 export function textureParams(gl, opts = {}) {
   return opts.smooth
     ? { wrap: gl.CLAMP_TO_EDGE, filter: gl.LINEAR }
@@ -1254,6 +1268,8 @@ export class Renderer {
     // (world/deepWaterLook.js distanceFogUniforms). A FRAME's, as the cloud
     // deck is: beginFrame clears it and the exterior host sets it after.
     this._dwFog = new Float32Array(20);
+    this._dwColumn = null;   // DW-F: the water column's frame for the flats (setWaterColumn), a frame's like the fog
+    this._dwCamFwd = new Float32Array(3);
     this._fogColor = new Float32Array([0, 0, 0]);
     this._camPos = new Float32Array(3);
     this._clipY = 1e9;   // A1: the automap slice, off by default
@@ -1761,6 +1777,8 @@ export class Renderer {
     this.bbUIndirectColor = gl.getUniformLocation(this.bbProgram, 'uIndirectColor');
     this.bbUFlatWind = gl.getUniformLocation(this.bbProgram, 'uFlatWind');   // WIND3
     this.bbUSway = gl.getUniformLocation(this.bbProgram, 'uSway');   // WIND3
+    // DW-F: COLUMN_GLSL's (both lanes' flats declare it)
+    this.bbColumn = Object.fromEntries(['uColumnOn', 'uSurfaceTex', 'uDwCamFwd', 'uSeaY', 'uTopColor', 'uTopVision', 'uSurfaceScroll', 'uPixelOrigin'].map((n) => [n, gl.getUniformLocation(this.bbProgram, n)]));
     // EL1: the lane's own uniforms, per program (null on the classic set, which never declares them)
     // EL2: the shadow receiver's six ride the same table (null on the classic set)
     const elLocs = (p) => {
@@ -3833,6 +3851,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // VC6c: `_deckOwed` keeps it one moment longer, for an image the air pass still owes this frame (airPass.setCloudShadow); `_beginLane` drops it the instant that resolve is done.
     if (this._cloudShadow) { this._deckOwed = this._cloudShadow; this._cloudShadow = null; this._csStamp++; }
     this._dwFog[0] = 0;   // DW-C: the sea's distance fog is a frame's too - no interior, dungeon or panel inherits it
+    this._dwColumn = null;   // DW-F: and the water column's share over the flats
     // EV6: the shadows reset with the counters - whatever ran between
     // frames (UI passes, another context's work) is not trusted. The
     // cloud-shadow upload stamps are the same kind of claim (RS-3) and
@@ -4196,6 +4215,14 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     if (u) this._dwFog.set(u);
     else this._dwFog[0] = 0;
   }
+
+  /** DW-F: the water column's share for this frame's flats - COLUMN_GLSL's
+   *  frame ({seaY, topColor, topVision, surfaceScroll, surfaceTexture,
+   *  origin}), or null for none. After beginFrame, which clears it. A batch
+   *  takes it only when it is flagged `dwColumn` (the host's: a flat
+   *  standing in a carved sea's column, which the mod's top covers by the
+   *  depth texture it reads). */
+  setWaterColumn(c) { this._dwColumn = c ?? null; }
 
   _uploadFog(prog) {
     const gl = this.gl;
@@ -4567,10 +4594,11 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // a grid (bounds.js placementGrid), for a static batch of more than one
     // flat - a pixel-wide wood's sphere reaches every shadow in its pixel,
     // its trees do not. Never for one built dynamic: its centres move.
+    // DW-F: `dwColumn`, the host's - one flat standing in a carved sea's column (the water column's share).
     return {
       vao, indexCount: count * 6, archive, record, size, buffers: [vb, ib], origin: null, frame: null, bounds, _quads: count, _dyn: !!dynamic,
       _place: count > 1 && !dynamic ? placementGrid(centers) : null,
-      _box: undefined, sway: undefined, conceal: undefined, noShadow: undefined, selfCard: undefined, _dead: undefined, _moveScratch: undefined,
+      _box: undefined, sway: undefined, conceal: undefined, noShadow: undefined, selfCard: undefined, _dead: undefined, _moveScratch: undefined, dwColumn: undefined,
       _bbKey: undefined, _bbKeyRecord: undefined, _bbKeyFrame: undefined, _bbKeyArchive: undefined,
       _shGen: undefined, _shSeen: undefined, _shOx: NaN, _shOy: NaN, _shOz: NaN, _shFrame: undefined,
       _shRec: undefined, _shFlip: undefined, _shDyn: undefined, _shSway: undefined, _shMovedAt: undefined, _shId: undefined,
@@ -5202,6 +5230,25 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform1i(this.bbUTex, 0);
     if (this.bbUFlatWind) gl.uniform4fv(this.bbUFlatWind, this._flatWind ?? ZERO_FLAT_WIND);   // WIND3: one upload a call; uSway is the batch's
     this._uploadFog(this._bbFog);
+    // DW-F: the water column's frame, when a flat may take it (the batch's `dwColumn` turns it on, below)
+    const bc = this.bbColumn ?? NO_COLUMN_LOCS;   // a set bound before DW-F (a test's stub) declares none
+    const dwc = this._dwColumn && bc.uColumnOn ? this._dwColumn : null;
+    gl.uniform1f(bc.uColumnOn, 0);
+    let lastColumn = 0;
+    if (dwc) {
+      const v = this._view;
+      this._dwCamFwd[0] = -v[2]; this._dwCamFwd[1] = -v[6]; this._dwCamFwd[2] = -v[10];   // the camera's forward: minus the view's third row
+      gl.uniform3fv(bc.uDwCamFwd, this._dwCamFwd);
+      gl.uniform1f(bc.uSeaY, dwc.seaY);
+      gl.uniform4fv(bc.uTopColor, dwc.topColor);
+      gl.uniform1f(bc.uTopVision, dwc.topVision);
+      gl.uniform2fv(bc.uSurfaceScroll, dwc.surfaceScroll);
+      gl.uniform3fv(bc.uPixelOrigin, dwc.origin);
+      gl.uniform1i(bc.uSurfaceTex, BB_SURFACE_UNIT);
+      this._activeTexture(gl.TEXTURE0 + BB_SURFACE_UNIT);
+      gl.bindTexture(gl.TEXTURE_2D, dwc.surfaceTexture ?? null);
+      this._activeTexture(gl.TEXTURE0);
+    } else if (bc.uSurfaceTex) gl.uniform1i(bc.uSurfaceTex, BB_SURFACE_UNIT);   // a sampler of its own, never the flat's picture's unit
     // Billboards take the scene's time-of-day light (DFU's ambient-lit
     // billboards): ambient plus the Lambert-average half of the sun term.
     // Clockless scenes keep the pre-R5 full-bright flats.
@@ -5288,6 +5335,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       if (o[0] !== lastOx || o[1] !== lastOy || o[2] !== lastOz) { gl.uniform3f(this.bbUOrigin, o[0], o[1], o[2]); lastOx = o[0]; lastOy = o[1]; lastOz = o[2]; }   // PERF-EXT11
       const sw = b.sway || 0;   // WIND3: the batch's share of the lean, uploaded when it changes between batches
       if (sw !== lastSway) { gl.uniform1f(this.bbUSway, sw); lastSway = sw; }
+      const col = dwc && b.dwColumn ? 1 : 0;   // DW-F: a flat in a carved sea takes the column's share
+      if (col !== lastColumn) { gl.uniform1f(bc.uColumnOn, col); lastColumn = col; }
       this._bindVao(b.vao);
       gl.drawElements(gl.TRIANGLES, b.indexCount, gl.UNSIGNED_INT, 0);
       this.stats.draws++;

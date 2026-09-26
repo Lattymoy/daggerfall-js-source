@@ -2,8 +2,8 @@
   {
     "name": "DW-E1-light-work-while-not-playing",
     "file": "src/world/deepWaterRuntime.js",
-    "old": "export function canRunLightRuntimeWork(playing) { return !!playing && resumeAt !== Infinity; }",
-    "new": "export function canRunLightRuntimeWork(playing) { return resumeAt !== Infinity; }",
+    "old": "export function canRunLightRuntimeWork(playing) { return !!playing && !loadInProgress; }",
+    "new": "export function canRunLightRuntimeWork(playing) { return !loadInProgress; }",
     "tests": [
       "test/dwe_runtime.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "DW-E1-landed-load-leaves-no-refresh",
     "file": "src/world/deepWaterRuntime.js",
-    "old": "export function loadFinished(realSeconds) { resumeAt = realSeconds + LOAD_GRACE_SECONDS; refreshPending = true; }",
-    "new": "export function loadFinished(realSeconds) { resumeAt = realSeconds + LOAD_GRACE_SECONDS; }",
+    "old": "export function loadFinished(realSeconds) { loadInProgress = false; resumeAt = realSeconds + LOAD_GRACE_SECONDS; refreshPending = true; }",
+    "new": "export function loadFinished(realSeconds) { loadInProgress = false; resumeAt = realSeconds + LOAD_GRACE_SECONDS; }",
     "tests": [
       "test/dwe_runtime.test.js"
     ]
@@ -291,7 +291,7 @@
   },
   {
     "name": "DW-E2-column-share-halved",
-    "file": "src/render/deepWatersRender.js",
+    "file": "src/render/columnGlsl.js",
     "old": "float t = min(behind / max(uTopVision, 1.0), 1.0);",
     "new": "float t = min(behind / max(uTopVision, 1.0), 1.0) * 0.5;",
     "tests": [
@@ -310,8 +310,8 @@
   {
     "name": "DW-E2-decor-column-uniforms-dropped",
     "file": "src/render/deepWatersRender.js",
-    "old": "    gl.uniform1i(u.uFogMode, 0);\n    this._columnUniforms(u, frame);",
-    "new": "    gl.uniform1i(u.uFogMode, 0);",
+    "old": "    gl.uniform4fv(u.uColor, DECORATION_COLOR);\n    gl.uniform4fv(u.uSceneTint, frame.sceneTint);\n    this._columnUniforms(u, frame);",
+    "new": "    gl.uniform4fv(u.uColor, DECORATION_COLOR);\n    gl.uniform4fv(u.uSceneTint, frame.sceneTint);",
     "tests": [
       "test/dwe_decorations.test.js"
     ]

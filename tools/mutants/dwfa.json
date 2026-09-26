@@ -1,0 +1,353 @@
+[
+  {
+    "name": "DW-FA-replacement-empty-cached",
+    "file": "src/scenes/deepWatersDecor.js",
+    "old": "    if (!t) return null;   // AUDIT DW-F: no answer before the file is in, and none cached - a cached \"none\" outlived the load for the session\n",
+    "new": "",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-warm-before-the-file",
+    "file": "src/scenes/deepWatersDecor.js",
+    "old": "        if (!fileIn(rec.archive)) { busy = true; continue; }   // AUDIT DW-F: the kind is the file's answer, asked once it is in\n",
+    "new": "",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-arrow-skips-the-material",
+    "file": "src/systems/loot.js",
+    "old": "  const material = randomMaterial(playerLevel, rolls);\n  if (groupIndex >= 19)",
+    "new": "  if (groupIndex === 18) return createWeapon(ARROW_TEMPLATE, 0, rolls);\n  const material = randomMaterial(playerLevel, rolls);\n  if (groupIndex >= 19)",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-seafloor-ordered",
+    "file": "src/world/underwaterLoot.js",
+    "old": "column.depth < SEAFLOOR_Y_CLEARANCE) return null;",
+    "new": "!(column.depth >= SEAFLOOR_Y_CLEARANCE)) return null;",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-seafloor-sea-ordered",
+    "file": "src/world/underwaterLoot.js",
+    "old": "  if (column.oceanY - column.renderedSeafloorY < SEAFLOOR_Y_CLEARANCE) return null;",
+    "new": "  if (!(column.oceanY - column.renderedSeafloorY >= SEAFLOOR_Y_CLEARANCE)) return null;",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-wreck-ordered",
+    "file": "src/world/underwaterLoot.js",
+    "old": "!!column && column.depth >= f32(Math.max(1, waterDepth) * WRECK_MINIMUM_DEPTH_FRACTION);",
+    "new": "!!column && !(column.depth < f32(Math.max(1, waterDepth) * WRECK_MINIMUM_DEPTH_FRACTION));",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-fog-ahead-ordered",
+    "file": "src/world/underwaterLoot.js",
+    "old": "  if (reveal >= maxDistance) return null;",
+    "new": "  if (!(reveal < maxDistance)) return null;",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-cluster-rate-ordered",
+    "file": "src/world/underwaterLoot.js",
+    "old": "  if (rate <= 0) return false;",
+    "new": "  if (!(rate > 0)) return false;",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-pulse-gate-ordered",
+    "file": "src/scenes/deepWatersLoot.js",
+    "old": "    if (s.rate <= 0 && s.clusterRate <= 0) return null;",
+    "new": "    if (!(s.rate > 0) && !(s.clusterRate > 0)) return null;",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-view-the-last-pass",
+    "file": "src/scenes/world.js",
+    "old": "    const V = lookAt(eye, [eye[0] + forward[0], eye[1] + forward[1], eye[2] + forward[2]], UP_Y);",
+    "new": "    const V = renderer._view;",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-velocity-not-rebased",
+    "file": "src/scenes/world.js",
+    "old": "      if (_dwLootVel.last) for (let i = 0; i < 3; i++) _dwLootVel.last[i] += r.offset[i];",
+    "new": "",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-velocity-kept-indoors",
+    "file": "src/scenes/world.js",
+    "old": "        dwLootLetGoVelocity();   // ...and its velocity track",
+    "new": "        //   // ...and its velocity track",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-rubble-freed-on-a-rebuild",
+    "file": "src/scenes/world.js",
+    "old": "    else if (_dwRubble.has(p)) { _dwRubbleCarry.set(key, _dwRubble.get(p)); _dwRubble.delete(p); }",
+    "new": "    else if (_dwRubble.has(p)) { for (const r of [..._dwRubble.get(p)]) dwFreeRubble(r); }",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-fog-while-paused",
+    "file": "src/scenes/deepWatersPlayer.js",
+    "old": "      if (f.playing === false) return { under: false, oceanY: 0 };",
+    "new": "",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-fog-playing-unfed",
+    "file": "src/scenes/world.js",
+    "old": ", playing: dwPlaying() });",
+    "new": " });",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-stroke-while-paused",
+    "file": "src/scenes/world.js",
+    "old": "const _dwOutdoor = _dwNowPlaying && !player.waterWalking && ",
+    "new": "const _dwOutdoor = !player.waterWalking && ",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-grace-ignores-playing",
+    "file": "src/scenes/world.js",
+    "old": "loadGrace: loadGraceActive(performance.now() / 1000, _dwNowPlaying),",
+    "new": "loadGrace: loadGraceActive(performance.now() / 1000),",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-lowpass-while-paused",
+    "file": "src/scenes/world.js",
+    "old": "audio.setListenerLowPass(_dwNowPlaying && dwPlayer.swim",
+    "new": "audio.setListenerLowPass(dwPlayer.swim",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-breath-ungated",
+    "file": "src/scenes/world.js",
+    "old": "if (!_overlayHeld) _dwBreathTimer += dt;",
+    "new": "_dwBreathTimer += dt;",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-after-phase-before-the-stroke",
+    "file": "src/scenes/world.js",
+    "old": "          const _dwOutdoor = _dwNowPlaying",
+    "new": "          dwPlayer.afterMove({ now: now / 1000, player, cameraY: player.eye[1], descend: _dwDown, ascend: _dwUp, onBoat: false });\n          const _dwOutdoor = _dwNowPlaying",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-last-frame-camera",
+    "file": "src/scenes/world.js",
+    "old": "lookDir: fwd, cameraY: player.eye[1],",
+    "new": "lookDir: fwd, cameraY: cam.pos[1],",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-dungeon-splash-dropped",
+    "file": "src/scenes/world.js",
+    "old": "if (sw && dwPlaying() && sw.swimming && !sw.waterWalking)",
+    "new": "if (false && sw && dwPlaying() && sw.swimming && !sw.waterWalking)",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-saveload-no-stand",
+    "file": "src/scenes/deepWatersPlayer.js",
+    "old": "      releaseSpikeGuard(p);\n      requestStand(p);\n    },",
+    "new": "      releaseSpikeGuard(p);\n    },",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-saveload-restores",
+    "file": "src/scenes/deepWatersPlayer.js",
+    "old": "      swim.forged = false;\n      swim.resetHead(false);\n      releaseSpikeGuard(p);\n      requestStand(p);",
+    "new": "      if (swim.forged) restore(p, 0);\n      swim.resetHead(false);\n      releaseSpikeGuard(p);\n      requestStand(p);",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-saveload-onload-dropped",
+    "file": "src/scenes/world.js",
+    "old": "      if (dwPlayer) { dwPlayer.saveLoad(player); dwFlushStateChange(); }   // AUDIT DW-F: ...and OutdoorSwimDriver.OnSaveLoad on OnLoad",
+    "new": "      //   // AUDIT DW-F: ...and OutdoorSwimDriver.OnSaveLoad on OnLoad",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-fog-latch-per-frame",
+    "file": "src/scenes/world.js",
+    "old": "if (!_dwUnderFogLatch || _dwSurfaceBuilt) {",
+    "new": "if (true || !_dwUnderFogLatch || _dwSurfaceBuilt) {",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-surface-build-no-relatch",
+    "file": "src/scenes/world.js",
+    "old": "if (h.surface) _dwSurfaceBuilt = true;",
+    "new": "if (false) _dwSurfaceBuilt = true;",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-surfacelook-ignores-latch",
+    "file": "src/world/deepWaterLook.js",
+    "old": "    fogColor: undersideFogColor ?? fog,",
+    "new": "    fogColor: fog,",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-load-off-the-clock",
+    "file": "src/world/deepWaterRuntime.js",
+    "old": "export function canRunLightRuntimeWork(playing) { return !!playing && !loadInProgress; }",
+    "new": "export function canRunLightRuntimeWork(playing) { return !!playing && resumeAt !== Infinity; }",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-guard-entry-dropped",
+    "file": "src/scenes/deepWatersEncounters.js",
+    "old": "entry: c.column.entry ?? null,",
+    "new": "entry: null,",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-guards-left-on-unload",
+    "file": "src/scenes/world.js",
+    "old": "    if (collectLoose && _dwGuards.has(key)) { for (const h of _dwGuards.get(key)) h.destroy(); _dwGuards.delete(key); }",
+    "new": "",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-bb-share-dropped",
+    "file": "src/render/renderer.js",
+    "old": "outColor = vec4(dwWaterFog(dwColumn(mix(uFogColor, lit, fogFactorAt(vBBWorld)), vBBWorld), vBBWorld), alpha);",
+    "new": "outColor = vec4(dwWaterFog(mix(uFogColor, lit, fogFactorAt(vBBWorld)), vBBWorld), alpha);",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-el-bb-share-dropped",
+    "file": "src/render/enhancedLighting.js",
+    "old": "outColor = vec4(dwColumn(elFinish(lit, vBBWorld), vBBWorld), alpha);",
+    "new": "outColor = vec4(elFinish(lit, vBBWorld), alpha);",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-bb-share-after-the-sea-fog",
+    "file": "src/render/renderer.js",
+    "old": "outColor = vec4(dwWaterFog(dwColumn(mix(uFogColor, lit, fogFactorAt(vBBWorld)), vBBWorld), vBBWorld), alpha);",
+    "new": "outColor = vec4(dwColumn(dwWaterFog(mix(uFogColor, lit, fogFactorAt(vBBWorld)), vBBWorld), vBBWorld), alpha);",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-bb-every-flat",
+    "file": "src/render/renderer.js",
+    "old": "const col = dwc && b.dwColumn ? 1 : 0;",
+    "new": "const col = dwc ? 1 : 0;",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-bb-surface-on-the-picture-unit",
+    "file": "src/render/renderer.js",
+    "old": "export const BB_SURFACE_UNIT = 6;",
+    "new": "export const BB_SURFACE_UNIT = 0;",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-bb-column-frame-kept",
+    "file": "src/render/renderer.js",
+    "old": "    this._dwColumn = null;   // DW-F: and the water column's share over the flats\n",
+    "new": "",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-flag-the-beach",
+    "file": "src/scenes/world.js",
+    "old": "on = y < c.seaY && !!dwPlayer.rawColumnAt(x, z);",
+    "new": "on = y < c.seaY;",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  },
+  {
+    "name": "DW-FA-flag-unwired",
+    "file": "src/scenes/world.js",
+    "old": "    if (deepWaters && livePersonBatches.length) dwFlagColumnFlats(livePersonBatches);",
+    "new": "",
+    "tests": [
+      "test/dwf_audit.test.js"
+    ]
+  }
+]

@@ -7,6 +7,7 @@
 - The seafloor has weed, coral, rocks and the remains of sea life.
 - Seven kinds of fish swim in schools, each at its own depth. Get close to a fish to take it as an item.
 - Things live in the deep: slaughterfish, dreugh, lamia and nymphs nearer the surface, the undead and ice atronachs further down, and now and then a boss in the depths.
+- Treasure lies on the seafloor: loose piles among a little rubble, and now and then a wreck - a field of debris with several piles of loot in it, guarded by the undead. The Treasure Cove setting makes both richer.
 - Every part has its own settings: the depth, how many fish and creatures there are, the seafloor decorations, the fog, how clear the surface is, and your swim speed.
 
 ## Warm Ashes - Ships (Kamer) - new, on by default
@@ -39,7 +40,12 @@
 
 ## Fixes
 - Online: auto-travel no longer crashes the game when it stops beside a spawned dungeon ("Error finding location ...").
+- The sea at a distance no longer looks like large dark square panels with pale lines between them. It now fades into the distance haze the way the land does.
+- Along the coast, the ordinary water no longer draws a second, shallower sheet inside the deep sea, or over the bits of shore the deep sea turns back into ground.
+- Creatures under the sea, and anything dropped there, now fade into the water with depth when seen from above, the same as the seafloor around them.
+- Opening a window (the inventory, the map) while underwater no longer lets your breath run out behind it.
+- Swimming in dungeon water now makes the same swimming splashes as the open sea.
+- Loading a save no longer carries the swim state of the moment before over into the loaded game.
 
 ## Notes
-- Iliac Puddle No More's sunken loot and wrecks aren't in yet. Their settings are already listed, but they do nothing until that part arrives.
 - There's a Hole in the Bottom of the Ocean and Come Sail Away are not in this update.

@@ -434,8 +434,8 @@ test('DW-E3: a fish\'s probe meets the player\'s capsule - its side and its caps
 
 test('DW-E3: the world host - the pulse and PumpAll after the decorations, the pulse alone indoors, the fish raced with the piles and opened on the pile arm, hovered and itemised by the fish\'s own item, moved with a recentre, drawn streamed after the decorations; the loot window shows the fish\'s icon (pins)', () => {
   const w = rd('src/scenes/world.js');
-  assert.match(w, /if \(dwDecor\) \{ dwDecor\.process\(\); deepWaters\.flushPromoteTiming\(\); \}[^\n]*\n\s+if \(dwFish\) \{ _dwFishInside = false; dwFish\.pump\(dwFishFrame\(dt\)\); \}/);
-  assert.match(w, /if \(dwFish\) \{ _dwFishInside = true; dwFish\.pulse\.pump\(dwFishFrame\(dt\)\); \}/, 'indoors: the pulse only (IsPlayerInExteriorWaterContext false - cleared two seconds on)');
+  assert.match(w, /if \(dwDecor\) \{ dwDecor\.process\(\); deepWaters\.flushPromoteTiming\(\); \}[^\n]*\n\s+if \(dwFish\) \{\n\s+_dwFishInside = false;\n\s+const f = dwFishFrame\(dt\);\n\s+dwFish\.pump\(f\);/);
+  assert.match(w, /if \(dwFish\) \{\n\s+_dwFishInside = true;\n\s+const f = dwFishFrame\(dt\);\n\s+dwFish\.pulse\.pump\(f\);/, 'indoors: the pulse only (IsPlayerInExteriorWaterContext false - cleared two seconds on)');
   assert.match(w, /_pilePick = pickActivatableHit\(cam\.pos, useFwd, dwLootTargets\(\), collider\);/);
   assert.match(w, /pile: pickActivatableHit\(cam\.pos, _hd, dwLootTargets\(\), collider\),/);
   assert.match(w, /const _fish = dwFish\?\.fishFor\(dropKey\) \?\? null;[^\n]*\n\s+const pile = _fish \? null : droppedLoot\.pileFor\(dropKey\);/, 'a fish key never reaches pileFor (it reads no prefix)');

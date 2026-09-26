@@ -418,9 +418,12 @@ export function createEnemySpawner({ settings, spawnEnemy, pixelOrigin }) {
  * frequency, one of them a boss two times in a hundred - on a ring 8 to
  * 30 m round the cluster, outside the player's immediate view, 8 tries a
  * guard and 15 more; none placed, one at the centre if it is out of view.
- * They join no pixel's group and no count: the mod never tracks them.
- * `spawnGuard` answers at once (a foe that fails later is not taken back
- * from the count this returns - the port's asynchronous stand).
+ * They join no pixel's group and no count: the mod never tracks them -
+ * but each is parented to its column's terrain (SpawnTreasureGuardEnemy
+ * hands CreateEnemy the column's Parent), so it lives with that terrain:
+ * `entry` is the column's pixel. `spawnGuard` answers at once (a foe that
+ * fails later is not taken back from the count this returns - the port's
+ * asynchronous stand).
  * @param {object} o
  * @param {import('../world/passiveFish.js').FishFrame} o.f - the columns and the roll
  * @param {number[]} o.centre
@@ -429,7 +432,7 @@ export function createEnemySpawner({ settings, spawnEnemy, pixelOrigin }) {
  * @param {?number[]} o.playerPos - TryGetPlayerPosition
  * @param {number} o.vision - UnderwaterVisionDistance
  * @param {?{forward: number[], viewport: (p: number[]) => number[], revealDistance: number}} o.view - the camera
- * @param {(o: {pos: number[], type: number, team: string}) => ?object} o.spawnGuard - SpawnTreasureGuardEnemy
+ * @param {(o: {pos: number[], type: number, team: string, entry: ?object}) => ?object} o.spawnGuard - SpawnTreasureGuardEnemy
  * @returns {number} how many stood
  */
 export function trySpawnTreasureGuards({ f, centre, settings, canRunHeavy, playerPos, vision, view, spawnGuard }) {
@@ -444,20 +447,20 @@ export function trySpawnTreasureGuards({ f, centre, settings, canRunHeavy, playe
     if (!c) return null;
     const type = pickTreasureGuardType(boss, bossSpawned, f.roll);
     const pos = pickEnemyPosition(x, z, c.floorY, c.surfaceY, type, c.depthFraction, f.roll);
-    return { pos, type, outside: isOutsideImmediateView(pos, playerPos, vision, SPAWN_VIEWPORT_MARGIN, view) };
+    return { pos, type, entry: c.column.entry ?? null, outside: isOutsideImmediateView(pos, playerPos, vision, SPAWN_VIEWPORT_MARGIN, view) };
   };
   while (spawned < count && tries < 8 * count + 15) {
     tries++;
     const angle = rangeFloat(0, Math.fround(Math.PI * 2), f.roll);
     const d = pickRingDistance(TREASURE_GUARD_DISTANCE[0], TREASURE_GUARD_DISTANCE[1], f.roll);
     const s = stand(centre[0] + Math.cos(angle) * d, centre[2] + Math.sin(angle) * d);
-    if (!s || !s.outside || !spawnGuard({ pos: s.pos, type: s.type, team: TREASURE_GUARD_TEAM })) continue;
+    if (!s || !s.outside || !spawnGuard({ pos: s.pos, type: s.type, team: TREASURE_GUARD_TEAM, entry: s.entry })) continue;
     if (boss && !bossSpawned) bossSpawned = true;
     spawned++;
   }
   if (spawned === 0) {
     const s = stand(centre[0], centre[2]);
-    if (s?.outside) spawned = spawnGuard({ pos: s.pos, type: s.type, team: TREASURE_GUARD_TEAM }) ? 1 : 0;
+    if (s?.outside) spawned = spawnGuard({ pos: s.pos, type: s.type, team: TREASURE_GUARD_TEAM, entry: s.entry }) ? 1 : 0;
   }
   return spawned;
 }

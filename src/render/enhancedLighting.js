@@ -61,7 +61,8 @@ import { getPref } from '../systems/uiPrefs.js';
 import { BLOOD_ABSORB, BLOOD_F0, BLOOD_MENISCUS, WET_THICK_LO, WET_THICK_HI, INK_DEPTH, WET_DARKEN } from '../combat/bloodArt.js';   // BLOOD3: the film's own law, beside the tints it already owns
 import { isEnhanced } from '../systems/uiSkin.js';
 import { SHADOW_GLSL, shadowCacheOn } from './shadowPass.js';   // EL2: the receiver block - the sun map on the sun term, the cube map on its lantern; SC1: the cache's door
-import { FOG_GLSL as EL_FOG_GLSL } from './fogGlsl.js';   // AUDIT 68 S17-fog-glsl-dup: the fog law's one home, the classic lane's too (the lane's five interpolate it by this name)
+import { FOG_GLSL as EL_FOG_GLSL } from './fogGlsl.js';
+import { COLUMN_GLSL } from './columnGlsl.js';   // DW-F: the water column's share, the lane's flats too   // AUDIT 68 S17-fog-glsl-dup: the fog law's one home, the classic lane's too (the lane's five interpolate it by this name)
 import { AIR_ADAPT_GLSL, AIR_CONTACT_GLSL, AIR_CONTACT_RANGE_FRACTION, airOn, contactOn, glslFloat } from './airPass.js';   // EL6: no AO block - the resolve's; EL8: the contact block
 import { BAYER_GLSL, BAYER_MEAN } from './orderedDither.js';
 import { CLOUD_SHADOW_GLSL } from './cloudShadow.js';   // AUDIT 68 S16-el-cloudshadow-dup: the reader's one home, as the classic lane and the shafts take it - five hand copies were here
@@ -576,6 +577,7 @@ ${SHADOW_GLSL}
 ${AIR_CONTACT_GLSL}
 ${EL_FOG_GLSL}
 ${EL_POINT_LIT_GLSL}
+${COLUMN_GLSL}
 out vec4 outColor;
 void main() {
   vec2 uv = vUV;
@@ -601,7 +603,9 @@ void main() {
   if (uConceal.x == 4.0) lit = vec3(0.0);
   float alpha = uSpectral == 1 ? tex.a : 1.0;
   if (uConceal.x > 0.0) alpha = tex.a * uConceal.y;
-  outColor = vec4(elFinish(lit, vBBWorld), alpha);
+  // DW-F: the column's share on the finished DISPLAY colour, as the sea's own programs take it - after elFinish's
+  // dwWaterFog, which is off whenever the share is on (the camera over the sea; the fog is the camera under it)
+  outColor = vec4(dwColumn(elFinish(lit, vBBWorld), vBBWorld), alpha);
 }`;
 
 /** MAC-BUG W6 (2026-09-20, Mac: "super dark coloring instead of red") -

@@ -397,7 +397,7 @@ test('DW-E2: the decoration program is the mod\'s - the right vector off the vie
   assert.match(DECOR_FS, /vec3 tint = uSceneTint\.www \* \(uSceneTint\.xyz - vec3\(1\.0\)\) \+ vec3\(1\.0\);/);
   assert.match(DECOR_FS, /vec3 col = dwColumn\(t\.xyz \* uColor\.xyz \* tint, vWorldPos\);[^\n]*\n\s+outColor = vec4\(dwWaterFog\(col, vWorldPos\), 1\.0\);/,
     'the column\'s share, then the distance fog (the post effect is last)');
-  assert.doesNotMatch(DECOR_FS.replace(/float fogFactorAt[\s\S]*?\n}\n/, ''), /fogFactorAt\(/, 'the forward pass takes no Unity fog');
+  assert.doesNotMatch(DECOR_FS.replace(COLUMN_GLSL, '').replace(/float fogFactorAt[\s\S]*?\n}\n/, ''), /fogFactorAt\(/, 'the forward pass takes no Unity fog (the column\'s share is the top\'s colour, fogged as the top is - DW-F)');
   assert.deepEqual(DECORATION_COLOR, [1.12, 1.12, 1.12, 1]);
   assert.equal(DECORATION_CUTOFF, 0.5);
   // Unity's view is (right, up, back) by rows; the port's lookAt (DFU's left-handed world, the projection mirrored) is
@@ -462,7 +462,7 @@ test('DW-E2: seen from over the sea a decoration takes the top\'s column share, 
   // the GLSL is that function, and both programs run it before the distance fog
   assert.match(COLUMN_GLSL, /if \(uColumnOn > 0\.5 && worldPos\.y < uSeaY && uCamPos\.y > worldPos\.y\) \{/);
   assert.match(COLUMN_GLSL, /float s = clamp\(\(uSeaY - uCamPos\.y\) \/ min\(toFrag\.y, -1e-4\), 0\.0, 1\.0\);/);
-  assert.match(COLUMN_GLSL, /float behind = max\(dot\(worldPos - entry, uCamFwd\), 0\.0\);/);
+  assert.match(COLUMN_GLSL, /float behind = max\(dot\(worldPos - entry, uDwCamFwd\), 0\.0\);/);
   assert.match(COLUMN_GLSL, /float t = min\(behind \/ max\(uTopVision, 1\.0\), 1\.0\);/);
   assert.match(COLUMN_GLSL, /col = mix\(col, st, t\);/);
   assert.ok(FLOOR_FS.includes(COLUMN_GLSL) && DECOR_FS.includes(COLUMN_GLSL), 'one column, both programs');

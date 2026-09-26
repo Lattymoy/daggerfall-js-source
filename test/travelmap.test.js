@@ -311,7 +311,10 @@ test('U41: the world host mounts the art window and keeps performFastTravel\'s o
   // PIN MOVED (PERF-EXT21), 6600 -> 7400: the sweep empties the grass
   // field too - a crossing no longer does - with its own note, above the
   // needles.
-  const core = src.slice(k, k + 7400);
+  // PIN MOVED (DW-F), 7400 -> 7800: the sweep frees the rubble a rebuild
+  // carried and forgets the wrecks' guards, with their notes, above the
+  // needles.
+  const core = src.slice(k, k + 7800);
   for (const needle of ['destroyPixel(bx, by)', 'state.init(px, py)', 'awaitedBuild(first.px']) {
     assert.ok(core.includes(needle), `the core carries ${needle}`);
   }

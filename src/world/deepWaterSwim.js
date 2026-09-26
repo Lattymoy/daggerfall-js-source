@@ -9,13 +9,13 @@
 //                 1.25 s after contact is lost - and never while the
 //                 player stands on shore ground or is grounded without
 //                 diving (HasRecentCenterWaterContact);
-//   SWIMMING    - in water, and the check point under the sea by 0.1 m
-//                 (0.75 once swimming - the hysteresis), or diving, or
-//                 rising (IsPlayerAtSwimmingDepth / ShouldHoldSurfaceSwim);
+//   SWIMMING    - in water, and the check point under a line 0.1 m over
+//                 the sea (0.75 once swimming - the hysteresis), or diving,
+//                 or rising (IsPlayerAtSwimmingDepth / ShouldHoldSurfaceSwim);
 //   HEAD UNDER  - the head (centre + 0.95) 0.25 m under the sea;
-//   UNDERWATER  - the presentation's own flag: the camera under the sea
-//                 by 0.04 m, or the head under, until the camera stands
-//                 0.08 m clear again (IsPresentationUnderwater).
+//   UNDERWATER  - the presentation's own flag: the camera under a line
+//                 0.04 m over the sea, or the head under, until the camera
+//                 stands 0.08 m clear again (IsPresentationUnderwater).
 //
 // DFU swims by blockWaterLevel, and the mod forges one: the port's motor
 // takes the same number as its water surface (ForgedSwimWaterLineY), so

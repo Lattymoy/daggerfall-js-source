@@ -1714,7 +1714,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:10364 / exterior.js:3692), set
+  // host's own townTalk sink (world.js:10600 / exterior.js:3692), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -3446,7 +3446,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:16490,
+              // playerArrowHitFoe is the one copy world.js:16758,
               // exterior.js:5264 and worldModes.js:7880 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
@@ -6780,6 +6780,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // painted. ROAD-tail: that is what the stack's own pause LATCH
     // answers, so the question is asked once, in `dungeonPaused`.
     get uiOverlayActive() { return dungeonPaused(); },
+    /** AUDIT DW-F: the swimmer UnderwaterPresentationEffects.UpdateSwimSfx reads in a dungeon (it has no IsPlayerInside
+     *  test) - the capsule the last frame carried, PlayerEnterExit.IsPlayerSwimming, the water walker; null before one. */
+    swimmer() {
+      return lastPlayerFeet ? { feet: lastPlayerFeet, height: lastPlayerHeight, swimming: !!_activity.swimming, waterWalking: hasActiveEffect(playerEntity, 'waterWalking') } : null;
+    },
     hudLines() { return hudText.lines.map((l) => l.text); },   // CASTLE1 probe surface (tools/castleProbe.mjs reads the load's lines)
     /** STATUS-LIVE: ...AND THE OTHER HALF OF THAT QUESTION, which the
      *  two hosts that DRAW this context's slot need and could not ask.

@@ -1,4 +1,4 @@
-# Deep Waters - Iliac Puddle No More (DW-A to DW-E4, 2026-09-25)
+# Deep Waters - Iliac Puddle No More (DW-A to DW-F, 2026-09-25 to 2026-09-26)
 
 jet082's **Iliac Puddle No More 1.2.2** (Nexus 1304; its assembly calls
 itself *Deep Waters*), ported 1:1 off the compiled assembly - Mac,
@@ -22,7 +22,8 @@ flat sheet of water a hand deep over a flat seabed; the mod carves it out.
 | DW-E2 | THE DECORATIONS: the weed, coral, rock and dead sea life of the seafloor - the catalog, the per-pixel placement, the work's pacing, the three ways a batch stands, the edge clean, the program | `world/underwaterDecorations.js`, `scenes/deepWatersDecor.js`, `render/deepWatersRender.js` (`DECOR_VS`/`DECOR_FS`, `COLUMN_GLSL`) |
 | DW-E3 | THE FISH: the seven species and their items, the school, the fish's laws, the encounter pulse and the fish's spawner, the fish as loot, the icons, the draw | `world/passiveFish.js`, `scenes/deepWatersEncounters.js`, `scenes/deepWatersFish.js`, `systems/deepWatersFishItems.js`, `render/deepWatersRender.js` (`streamDecorations`), `tools/iliacPuddleAssets.mjs` |
 | DW-E4 | THE DEEP'S FOES: the depth table, the rare and the boss rosters, the column and the place, the foes' lane on the pulse, the treasure guards, the one water level every foe's WaterMove reads | `world/underwaterEnemies.js`, `scenes/deepWatersEncounters.js` (`createEnemySpawner`, `trySpawnTreasureGuards`), `scenes/exteriorFoes.js` (`transformY`, `team`, `transient`, `managed`, `waterLevelY`) |
-| DW-E5 | the sunken loot | (next) |
+| DW-E5 | THE SUNKEN LOOT: the pulse and its gate, the stray piles and their rubble, the wrecks - their rubble, their piles, their guards - FillRandomItem's seven kinds, the tracker and the reset; the pile a RandomTreasure container in the decorations' underwater material | `world/underwaterLoot.js`, `scenes/deepWatersLoot.js`, `scenes/droppedLoot.js` (`drawn`, `owner`, `removePile`), `scenes/deepWatersDecor.js` (`filter`, `stand`), `systems/loot.js` (`createRandomReligiousItem`, `createRandomGem`, `createRandomJewellery`) |
+| DW-F | THE CLOSE: the sea at a distance - the far ground's skirt out of the carved sea, the world's fog on the top and its column share, WATER1 off the clipped tiles - and the audit pass over the whole mod (the flats' column share, the pausing window, the execution order, the save-load reset, the dungeon splash, the latched fog colour, the load flag, the guards' terrain, the loot's camera, the texture cache, the arrow's draw) | `world/deepWaterCap.js` (`clippedTerrainIndices`), `render/deepWatersRender.js` (`TOP_FS`, `TOP_FAR_FS`, `_frameUniforms`), `render/columnGlsl.js`, `render/renderer.js` and `render/enhancedLighting.js` (the flats' share), `scenes/deepWatersPlayer.js` (`saveLoad`), `world/deepWaterRuntime.js` (the load flag), `scenes/world.js` |
 
 ## The coastline is rebuilt, not carried (DW-A)
 
@@ -41,12 +42,23 @@ stood - the author's bake is a little wetter at the coast).
 
 A carved cell's ground is the seafloor: the world host's `heightAt` answers
 the floor's own height there, so the capsule, the foes and every probe stand
-on it with no second ground. The floor's walls stand in the step between a
-carved cell and the shore as collider meshes (`host.wallBuckets`, which the
-swimmer's shore probes skip, as the mod's `IsShoreGround` refuses its own
-floor). The collider reads a heightfield STEP as no slope (restFloor and
-groundNormal take the gentler one-sided grade): a body at the step rests on
-the ground beneath it, never metres over it.
+on it with no second ground. The floor's walls stand along the pixel's edge,
+where the carve stops at the boundary (AppendHoleEdgeWalls: the border
+cells only, where the bake's hole does not run on across the boundary, and
+never on a pixel read off the local fallback) - a carved cell beside the
+shore inside a pixel has none - as collider meshes (`host.wallBuckets`,
+which the swimmer's shore probes skip, as the mod's `IsShoreGround` refuses
+its own floor). The collider reads a heightfield STEP as no slope
+(restFloor and groundNormal take the gentler one-sided grade): a body at
+the step rests on the ground beneath it, never metres over it.
+
+**The tile reads.** DFU's own TerrainNature reads `tilemapSamples[x, y]`;
+the mod indexes it `[z, x]` - the row from fracZ, as it indexes the
+heights - so every tile it reads is the tile TRANSPOSED across the pixel's
+diagonal. The port keeps the mod's reads exactly
+(`world/deepWaterClassification.js`): where they land differently from the
+heights, the only thing they add is a water-surface quad at sea level under
+ground that stands above it, which nothing sees.
 
 ## The look (DW-C)
 
@@ -67,10 +79,11 @@ motor (`beforeMove` / `afterMove`):
 - **The decisions.** In the water: the capsule's swim-check point (its
   centre + 1.25 - 0.95) within 0.75 m of the sea (1.5 while diving) over a
   usable column, held 1.25 s after contact is lost, never on shore ground.
-  Swimming: in the water and the check point 0.1 m under the sea (0.75 once
-  forged - the hysteresis), or diving, or rising. The head: the centre +
-  0.95, a quarter metre under. The presentation: the camera 0.04 m under
-  the sea or the head under, until the camera stands 0.08 m clear.
+  Swimming: in the water and the check point under a line 0.1 m OVER the
+  sea (0.75 once forged - the hysteresis), or diving, or rising. The head:
+  the centre + 0.95, a quarter metre under. The presentation: the camera
+  under a line 0.04 m over the sea or the head under, until the camera
+  stands 0.08 m clear.
 - **The forge.** The mod hands DFU a `blockWaterLevel` - the sea + 0.75 m,
   or just over a swimmer riding higher - through `WorldYToBlockWaterLevel`
   (a short, Mathf.Round's banker's tie), and the port's motor takes the
@@ -122,8 +135,12 @@ motor (`beforeMove` / `afterMove`):
 
 - **The transient reset** (OnTransientReset): a save starting to load and a
   teleport reset the transition state and tell every subscriber, in the
-  order it subscribed - the fish, the foes, the loot and the decorations
-  drop what they hold.
+  order it subscribed - the mod's InstallSubsystems subscribes the floor
+  builder's deferred list, the foes, the fish, the pulse, the decorations
+  and the loot; the port's world the decorations, the pulse (the fish and
+  the foes with it) and the loot, each clearing only its own, so the order
+  shows nowhere. The floor builder's list is the port's whole-stream queue
+  and outlives the reset (Port-Ledger (9)).
 - **The post-transition refresh**: a load landing or a teleport (the new
   game's first stand is one - StartNewCharacter teleports the player)
   leaves one pending; the first frame terrain may be touched again (no
@@ -153,7 +170,8 @@ motor (`beforeMove` / `afterMove`):
   cap (Max Decorations Per Tile); past the cap the list is shuffled and cut.
 - **The work**, as the mod paces it: the pixels within the Decoration
   Populate Radius of the player's, re-enqueued when the player crosses into
-  a new pixel; one pixel placed and one placed batch stood a frame; heavy
+  a new pixel; one placed batch stood, or else one pixel placed, a frame
+  (ProcessWorkQueue returns once a batch stands or warms); heavy
   work only, and not in a frame the floor's deferred builds already spent a
   millisecond in (DeepWaterPromoteTiming - the mod flushes the timing at
   the head of its Update, so a build made in the promote itself or in a
@@ -268,7 +286,8 @@ motor (`beforeMove` / `afterMove`):
   Enemy Frequency / 0.5, spent four a tick; an attempt draws a point, a
   column at least 4 m deep between the floor's 2.5 m and the surface's 3,
   a foe for the column's depth, and its place - the walkers (the Nymph,
-  the undead, the Atronach, the vampires and the liches) on the floor, the
+  the Zombie and the Skeletal Warrior, the Ice Atronach, the vampires and
+  the liches; the Ghost and the Wraith are no walkers) on the floor, the
   swimmers anywhere in the column, and past 0.55 of the depth leaning into
   its lowest 0.35. One stands a frame, up to Max Live Enemies; a foe that
   dies keeps its count until its pixel's group leaves.
@@ -298,12 +317,171 @@ motor (`beforeMove` / `afterMove`):
   guard and 15 more, and one at the centre when none stood. No group and
   no count holds them.
 
+## The sunken loot (DW-E5)
+
+- **The pulse** (UnderwaterLootSpawner.Pump, the last of DeepWaters.Update):
+  heavy work allowed, the Seafloor Loot Rate or the Treasure Cluster Rate
+  above nothing (0.7 and 0.1 at the sliders' midpoints), the player playing
+  in the outdoor water context, and a column 8 m deep under the player or
+  within 72 m (HasNearbyWaterColumn: the player's own column first, then
+  42, 57 and 72 m, twelve ways; asked every two seconds and its answer kept
+  between). The first frame of that pulses at
+  once; after it the player must have moved 90 m (flat) since the pulse was
+  last asked, and a pulse waits 8 s after one that stood something, 3 s
+  after one that stood nothing. Out of the context the anchor is let go, so
+  coming back pulses at once.
+- **A pulse**: the tracked piles and batches past 140 m destroyed, and the
+  farthest while more than Max Live Loot Objects (192) remain; a wreck's
+  centre forgotten past 140 m; at the cap, nothing, and the clock left as
+  it was. Then a wreck by its chance - the rate x 2 (3 in a Treasure Cove) x
+  the shore's share x the depth's, capped at 0.85, under Max Live Treasure
+  Clusters (12) - and the stray piles by their count: RollCount(2 x the rate
+  x 2 (3) x the shore x the depth), 12 at most (18 in a cove), none after a
+  wreck but in a cove. The shore's share is an eighth unless the player is
+  in or over water 8 m deep (IsPlayerInOrAboveDeepWater); the depth's is
+  Lerp(1, 2) over the column under the player against the Water Depth.
+- **A spot** (PickSpawnSpot), 18 tries: half of them a point ahead of the
+  camera's flat heading, within 45 degrees of it, just past what the player
+  can see (TryPickFogAheadPoint: the reveal distance + 2 and a random 25 m,
+  no farther than 130 m); the rest on the 42 - 72 m ring, seven in ten
+  within 110 degrees of the heading (PickSpawnAngle). Never a 48 m cell used
+  in the last 128 (WorldCellKey, RememberSpawnCell); the seafloor 2 m deep
+  under it with the rendered floor 2 m under the sea (ResolveSeafloorAt:
+  the floor + 0.08); out of the player's immediate view (DW-E4's test, a
+  0.12 margin).
+- **A pile** (SpawnLootContainer): DFU's CreateLootContainer - a
+  RandomTreasure container, the Ground picture, TEXTURE.216 at one of 25
+  records, its base on the spot, parented to the terrain the column stands
+  on, never restored by a load (DFU restores only a customDrop container) -
+  with no shadow and the decorations' underwater material on it
+  (BrightenUnderwaterBillboards: the texel x 1.12, the tint, the column's
+  share, the distance fog, the billboard shader's own 0.5 cut-out), turned
+  as a DaggerfallBillboard turns. It is `droppedLoot`'s own container - the
+  ray's target, the loot window's, the plaque's, Detect Treasure's, the
+  recentre's - drawn by the loot pass instead of a batch of its own. A
+  stray pile holds one item (FillRandomItem: a religious item a quarter of
+  the time, a potion a fifth, jewellery, a gem, clothing, a weapon, armour -
+  ItemBuilder's own calls at the player's level, gender and race; the race
+  moves only a garment's paper-doll archive, which the port's items do not
+  carry) and, three times
+  in four (19 in 20 in a cove), one or two flats of rubble 1.5 - 5 m round
+  it, never the same flat twice.
+- **A wreck** (TrySpawnTreasureCluster), on a spot at least half the Water
+  Depth deep: 24 flats of rubble over 22 m (48 in a cove) - the 17 records
+  of RubbleRecords, stood by the decorations' batch factory (FilterPlacements
+  and all) under an anchor on their terrain that the tracker holds - three to
+  five piles within 11 m of its centre, 3 m apart (six to ten in a cove), two
+  to four items each (four to eight), and the treasure guards (DW-E4's
+  TrySpawnRareEnemiesNearTreasureCluster). A wreck with neither rubble nor a
+  pile is none.
+- **The reset** (OnTransientReset, which the spawner's Install hooks): every
+  tracked pile and batch destroyed, the cells, the wrecks, the anchor and the
+  clocks forgotten. A pixel that leaves the stream takes its piles and its
+  rubble with it - DFU pools the terrain with its children instead, a
+  Port-Ledger departure; a pixel the port rebuilds (a season's re-skin, the
+  roads, a World of Daggerfall sweep - rebuilds DFU never makes) keeps both
+  where they lay.
+- **The camera** the view tests read (IsOutsideImmediateView, the guards'
+  and the spots'): the one the frame is about to draw, built at the pulse -
+  its eye, its lens - and the player's velocity is the motor's (a
+  recentre's or a door's move is none: CharacterController.velocity is set
+  by Move alone).
+- **The recentre**: the piles and the rubble move with the world, being the
+  terrains' children; the pulse's anchor and the wrecks' centres are the
+  spawner's statics in world space and stay where the world was, as they do
+  under the mod - so a crossing into a new pixel runs a pulse, and that pulse
+  forgets every wreck.
+
+## The sea at a distance (DW-F)
+
+Mac, 2026-09-26: "at a distance, the ocean seems to look like large square
+panels". Two causes, both the port's own, both closed:
+
+- **The far ground's skirt stood in the carved sea.** EV4's strided far
+  ground hangs a 40 m skirt round every pixel (`TERRAIN_SKIRT_DEPTH`, the
+  cure for the crack where a far pixel meets a near one). The clip - the
+  clipped tiles' quads left out of the ground's index set (DW-C) - kept
+  that skirt whole, so every far coastal pixel hung a pale curtain along
+  its edges, its top a hand under the surface, and through the top the
+  curtains ruled the sea into pixel squares. A skirt segment now goes when
+  every edge tile it hangs under is clipped (`clippedTerrainIndices`), as
+  the mod's discard would take its texels; a pure-ocean pixel's ground is
+  hidden whole, as before.
+- **The top took no world fog.** The port's world reaches past DFU's - the
+  streamed grid, then the far ring out to the fog's end - and all of it is
+  fogged. DW-C's read-back of TransparentWaterSurfaceTop has no fog term,
+  so the carved sea stood out of that world unfogged: a dark slab to the
+  horizon, its pixel edges showing against the fogged ground and the far
+  ring's water. The top and its far-plane arm now take the world's fog at
+  their own fragment, as the floor does. The column's share carries what
+  the top covers toward the top's colour AT THE RAY'S ENTRY, fogged as the
+  top is there, so the split sum is still the blend's; the decorations'
+  own colour still takes none. This is Port-Ledger departure (8).
+- **WATER1 lay over the carved sea.** The port's own water draws over the
+  tiles whose art is water, and it read the pixel's original TileMap: a
+  coastal pixel wore a second sheet a hand over the ground's height inside
+  the carve, and water on the tiles the cap repaints from the ground beside
+  them, where a pure-ocean pixel, hidden whole, wore none. WATER1 reads the
+  cap's TileMap now (the clip's byte is no water to it), and the original
+  again when the patch goes.
+- **Past the streamed grid** the far ring (EV8) holds its haze at 85%
+  through the middle distance, so its sea reads a shade darker than the
+  fully fogged edge of the streamed world: the ring's own design, over land
+  and sea alike, and not the mod's.
+
+## The close (DW-F)
+
+Four readers took the whole mod against the assembly after DW-E5 landed.
+What they found and the port now does:
+
+- **The deep's foes under the column.** DFU's `Daggerfall/Billboard`
+  writes the depth texture the top reads, so a foe, a corpse or a dropped
+  pile under the carved sea is covered as the floor is. Both lanes' flats
+  take `COLUMN_GLSL` (one home now, `render/columnGlsl.js`) on a batch the
+  host finds standing in a carved column (`dwFlagColumnFlats`), the surface
+  texture on a unit of its own (`BB_SURFACE_UNIT`).
+- **The pausing window.** DFU's breath runs in PlayerEntity.FixedUpdate,
+  which a pausing window's time scale 0 stops, so no breath drains behind
+  one. And every IsPlayingGame test the mod makes answers false behind any
+  window (the playing test reads every stack now): the underwater
+  presentation is none there (its fog, the underside, the light
+  suppression, the low-pass), the stroke stands down and the multiplier
+  lifts.
+- **The mod's execution order.** The stroke runs beside the motor (order
+  0) and before the driver's after phase (32000), and both read the camera
+  this frame's move left.
+- **The save-load reset** (OutdoorSwimDriver.OnSaveLoad, on both load
+  events): the state cleared, the forge dropped without Restore, and a
+  crouched save loads standing.
+- **A dungeon swimmer splashes** every 2.5 m (UpdateSwimSfxAndWeather has
+  no IsPlayerInside test).
+- **The underside's fog colour is latched** at a settings change and at
+  every surface built, as ApplySharedWaterProperties writes it.
+- **The load flag.** Light work reads SaveLoadManager.LoadInProgress
+  itself, so the load's own teleport no longer opens it mid-load.
+- **The treasure guards live with their terrain** (keyed by pixel, taken
+  by the unload).
+- **The loot's camera and velocity**: the view test's camera is the one
+  the frame is about to draw, built at the pulse, and the velocity is the
+  motor's - rebased at a crossing, let go across a door, a teleport or a
+  load.
+- **The decorations' texture source** answers no replacement before an
+  archive's file is in, and caches none - a pack's pictures and heights
+  are no longer lost to an early question.
+- **CreateRandomWeapon** draws RandomMaterial before the arrow test, as
+  ItemBuilder does, for every caller.
+- The loot's unordered compares are the C#'s own forms; the docs'
+  thresholds, reset order, pacing, walkers and walls say what the IL does.
+
 ## What is not ported, and why
 
-The Port-Ledger's section-A row for the mod carries seven departures - the
+The Port-Ledger's section-A row for the mod carries twelve departures - the
 coastline built rather than shipped, the fog per fragment, the water
 column's two draws, the peripheral-location skip (below), the recentre that
-carries the schools (below), and these two of the swimmer's:
+carries the schools (below), the world's fog on the top (above, DW-F), the
+whole stream carved, the unload that takes the mod's children, surfacing
+that gives the sky its fog colour back and the swim's odometer on the
+recentre (below, DW-F), and these two of the swimmer's:
 
 - **The forge's `isPlayerInsideDungeon`.** The mod raises DFU's dungeon flag
   for the Update window of each forged frame to borrow the dungeon arm's
@@ -342,6 +520,27 @@ it; it is ported so (the motor's `levitateMotorEnabled`).
   world's coordinates - the school's fish swim for a point 819.2 m off, and
   a fish that meets shallow water jumps back to where the old world had
   it. The port moves both with the world.
+- **The whole stream is carved** (DW-F). The mod's PumpDeferredBuilds takes
+  the nearest deferred pixel and hands it to the same nearness test
+  HandlePromote runs, which defers a far one again and builds only its
+  surface: the mod carves what the player has come within a pixel of and
+  leaves the rest of its stream vanilla (and DFU's pooling carries a floor
+  onto a recycled terrain). The port carves every streamed pixel, nearest
+  first - a carved three by three in a vanilla sea is a square seam at the
+  view's middle distance - and its deferred list outlives a transient reset.
+- **The unload takes the mod's children** (DW-F). The piles, the rubble
+  and the treasure guards are their terrain's children, which DFU
+  deactivates as it leaves the stream and carries to the pixel it is
+  recycled for; the port removes them with the unload, and keeps them
+  through the rebuilds only the port makes.
+- **Surfacing gives the sky its fog colour back** (DW-F). The mod saves the
+  fog colour after DFU's UnderwaterFog has already written its water colour,
+  and restores that on surfacing, so the fog above the sea stays DFU's
+  underwater green until DaggerfallSky next changes its sky texture; the
+  port's fog is the sky's again the frame the presentation clears.
+- **The swim's odometer rides the recentre** (DW-F). UpdateSwimSfx sums the
+  raw distance moved, so FloatingOrigin's shift mid-swim is a splash; the
+  port moves the mark with the world, the footsteps' law.
 
 ## Online
 
@@ -372,6 +571,20 @@ the items and their icons, the host, the pictures, the capsule, the world's
 wiring), `test/dwe_enemies.test.js` (the table and the rosters, the weights
 and the boss, the column and the place, the attempts and the counts, the
 view test, the spawner, the pulse's two lanes, the treasure guards, a foe
-stood by the real exterior pool, the world's wiring).
+stood by the real exterior pool, the world's wiring), `test/dwe_loot.test.js`
+(the constants and the two tables against the assembly, the pulse's rolls, the
+spot, the seafloor, the wreck's depth, the cluster's spots, the rubble, the
+item kinds, ItemBuilder's three group draws as one export, the undrawn
+container, the spawner through fakes - the gate, the anchor and the clocks,
+the cap, the cells, the shore, a stray pile, a wreck, the reset - and the
+world's wiring), `test/dwf_farsea.test.js` (the far ground's skirt against
+the edge tiles under it, the clip's ends, the top's and the far arm's fog
+and the column's share run in the shaders' own GLSL, the decorations' own
+colour unfogged, the fog handed to every program that reads it; WATER1 off
+the clipped and repainted tiles), `test/dwf_audit.test.js` (the close: each
+reader's finding against the port, behaviour where the port can run it and
+the world's wiring where it cannot).
 Mutation records: `tools/mutants/dwa.json`, `tools/mutants/dwd.json`,
-`tools/mutants/dwe.json`.
+`tools/mutants/dwe.json`, `tools/mutants/dwe5.json` (46, 46 dead),
+`tools/mutants/dwf.json` (14, 14 dead), `tools/mutants/dwfa.json` (39, 39
+dead).

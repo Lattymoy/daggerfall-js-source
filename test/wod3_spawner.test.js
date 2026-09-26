@@ -130,5 +130,5 @@ test('WOD3: the host stands what a marker answers - placed foes out of the cap, 
   assert.match(x, /const centreY = behaviour === 'Flying' \? pos\[1\] : alignControllerToGround\(pos\[1\], groundAlign\.hitDist, enemyControllerHeight\(idleH, behaviour\)\);\n\s*pending\.feet\[1\] \+= centreY - idleH \/ 2 - pos\[1\];/, 'the drop on the capsule the sprite sized, as a delta');
   assert.match(x, /if \(!f\.placed && !f\.managed && _playerDist > \(f\.campId != null \? CAMP_CULL_DISTANCE : ENCOUNTER_CULL_DISTANCE\) && /, 'never culled: DFU\'s loose foes stand until a load or a teleport sweeps them (DW-E4: a spawner-managed foe likewise)');
   assert.match(x, /placed: !!f\.placed,/, 'and across a save');
-  assert.match(rd('src/scenes/droppedLoot.js'), /function seedPile\(items, feet, icon, key = null, pixelKey = null, \{ unsaved = false \} = \{\}\)/);
+  assert.match(rd('src/scenes/droppedLoot.js'), /function seedPile\(items, feet, icon, key = null, pixelKey = null, \{ unsaved = false, drawn = true, owner = null \} = \{\}\)/);   // DW-E5: an undrawn pile, and its owner
 });

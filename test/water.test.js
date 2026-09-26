@@ -225,7 +225,7 @@ test('WATER1: both exterior hosts - the gate, the has-water skip, and the slot a
   assert.match(w, /px, py, terrain, water, tilemapTex,/, 'carried on the built pixel');
   const restride = w.slice(w.indexOf('  function restrideTerrain(p, stride'));   // PERF-EXT26: it takes the worker's grid too
   assert.match(restride.slice(0, restride.indexOf('\n  }\n')), /if \(p\.water\) \{ renderer\.destroyWaterSurface\(p\.water\); p\.water = null; \}[\s\S]*?renderer\.destroyMesh\(p\.terrain\);[\s\S]*?p\.water = waterIndices \? renderer\.createWaterSurface\(p\.terrain, waterIndices\) : null;/);
-  assert.equal((w.match(/renderer\.destroyWaterSurface\(p\.water\)/g) || []).length, 2, 'the restride and the eviction');
+  assert.equal((w.match(/renderer\.destroyWaterSurface\(p\.water\)/g) || []).length, 3, 'the restride, the eviction, and the Deep Waters cap\'s TileMap (DW-F: the clipped and repainted tiles take the sheet with them)');
   assert.match(w, /p\._visible = pixelVisible;/, 'the pixel gate\'s verdict, kept for the pass');
   const slot = w.indexOf('    if (waterOn) {\n      const wu = waterUniforms(');
   assert.ok(slot > 0, 'the pass exists');

@@ -72,6 +72,15 @@ directory by `test/audit18_bible_docs.test.js`:
   program that lights by the sun, and the air pass's shafts, which
   cannot import from the renderer that imports them. No GL, no imports.
   See `07-Rendering/Volumetric-Clouds-Arc.md`.
+- `columnGlsl.js` - DW-F THE WATER COLUMN'S SHARE: `COLUMN_GLSL`, Iliac
+  Puddle No More's top's depth-read alpha split onto what it covers (the
+  floor and the decorations in `deepWatersRender.js`, and both lanes'
+  billboard programs - DFU's own flats write the depth texture the top
+  reads, so a foe under the carved sea takes it, on a batch the host flags
+  `dwColumn`; the surface texture on `BB_SURFACE_UNIT`). Its camera forward
+  is `uDwCamFwd`, because the lane's light clusters already declare a vec4
+  `uCamFwd` in the same program. No GL; one import, the look's leaf (the
+  surface's tiling). `03-World/Deep-Waters.md`.
 - `fogGlsl.js` - AUDIT 68 THE FOG BLOCK: `FOG_GLSL`, the one `fogFactorAt`
   every world pass interpolates - renderer.js's seven programs, the water
   surface and the lighting lane's five (DS1's exp2 had been added to nine

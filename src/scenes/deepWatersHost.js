@@ -14,11 +14,18 @@
 //     texels clipped and repainted in the pixel's tilemap texture;
 //   the SURFACE - the sea's own, drawn over the floor.
 //
-// WHEN, as the mod decides it (HandlePromote): a pixel within one of the
-// player's (Chebyshev) is built as it is promoted - here, before the
-// world publishes it, so the ground under a teleport is whole the moment
-// it stands - and every other one is DEFERRED and built one at a time,
-// the nearest to the player first (PumpDeferredBuilds). The bake is
+// WHEN: a pixel within one of the player's (Chebyshev) is built as it is
+// promoted, as the mod's HandlePromote builds it - here, before the world
+// publishes it, so the ground under a teleport is whole the moment it
+// stands - and every other one is DEFERRED and built one at a time, the
+// nearest to the player first. THAT is the port's own (Port-Ledger, the
+// Iliac Puddle No More row, (9)): the mod's PumpDeferredBuilds takes the
+// nearest deferred pixel and hands it to the same nearness test, which
+// defers a far one again and builds only its surface - so the mod carves
+// the ground the player has come within a pixel of, and leaves the rest of
+// its stream vanilla; the port carves the whole stream, and its deferred
+// list, the queue that does it, outlives a transient reset (the mod's
+// Install clears its own, which holds only builds it would never make). The bake is
 // loaded when the mod initialises, before any terrain; here it may land
 // after the first pixels (a first boot builds it for seconds), and when
 // it lands every standing pixel is promoted again - the mod's own
@@ -92,6 +99,20 @@ export function deepWatersEnemySettings() {
     on: get('General.SpawnUnderwaterEnemies') === true,
     frequency: scaledSliderValue(get('General.EnemyFrequency'), 0.5),
     maxLive: Math.max(0, Math.trunc(Number(get('General.MaxLiveEnemies')))),
+    waterDepth: Math.fround(Number(get('General.WaterDepth'))),
+  };
+}
+
+/** DW-E5: DeepWaters.ApplySettings' loot reads: SeafloorLootRate (0.7 at the slider's midpoint), MaxLiveLootObjects (0 and up),
+ *  TreasureClusterRate (0.1 at the midpoint), MaxLiveTreasureClusters (0 and up), TreasureCove, WaterDepth. */
+export function deepWatersLootSettings() {
+  const get = (k) => modSetting(DEEP_WATERS_VENDOR, k);
+  return {
+    rate: scaledSliderValue(get('General.SeafloorLootRate'), Math.fround(0.7)),
+    maxLive: Math.max(0, Math.trunc(Number(get('General.MaxLiveLootObjects')))),
+    clusterRate: scaledSliderValue(get('General.TreasureClusterRate'), Math.fround(0.1)),
+    maxClusters: Math.max(0, Math.trunc(Number(get('General.MaxLiveTreasureClusters')))),
+    cove: get('General.TreasureCove') === true,
     waterDepth: Math.fround(Number(get('General.WaterDepth'))),
   };
 }

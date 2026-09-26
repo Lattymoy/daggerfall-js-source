@@ -383,6 +383,7 @@ function host({ online = null, removeSiteFoes = () => {} } = {}) {
     buildingDoors: [], doorGeneration: 0, droppedTorches: { collectPixel: () => {} }, cityGuards: { collectPixel: () => {} },
     deepWaters: null,   // DW-B: destroyPixel hands a pixel's seafloor back to the Deep Waters host - none in this rig
     dwDecor: null,   // DW-E2: and its seafloor's decorations to theirs - none in this rig either
+    _dwRubble: new Map(), _dwRubbleCarry: new Map(), _dwGuards: new Map(), dwFreeRubble: () => {},   // DW-E5 / AUDIT DW-F: the sunken loot's rubble and the wrecks' guards leave with a pixel - none in this rig
   };
   const names = Object.keys(env);
   const body = `${SLICE.wodCode}\n${SLICE.dpCode}\n

@@ -132,10 +132,13 @@ export function capDecision(mapPixelX, mapPixelY, mapData, tilemapBytes, bake) {
  * early depth test. buildTerrainIndices' layout exactly (terrainSurface.js):
  * a strided quad goes when every tile it covers is clipped (a far pixel's
  * part-clipped quad stands at the sea's height, under the surface), and a
- * strided grid's skirt stays whole.
+ * strided grid's skirt segment (EV4's, the port's own) goes when every
+ * edge tile it hangs under is clipped - the discard would take its texels
+ * too, and left whole it hung 40 m of pale curtain in the carved sea along
+ * every far coastal pixel's edges, the sea's "square panels".
  * @param {Uint8Array} bytes - the pixel's patched TileMap (z * 128 + x)
  * @param {number} [stride]
- * @returns {?Uint32Array} null when no quad is clipped
+ * @returns {?Uint32Array} null when no quad or skirt segment is clipped
  */
 export function clippedTerrainIndices(bytes, stride = 1) {
   const dim = WORLD_MAP_TILE_DIM;
@@ -154,16 +157,22 @@ export function clippedTerrainIndices(bytes, stride = 1) {
       out.push(i0, i2, i3, i0, i3, i1);
     }
   }
-  if (!dropped) return null;
   if (stride > 1) {
     const edges = [(i) => i, (i) => (g - 1) * g + i, (i) => i * g, (i) => i * g + (g - 1)];
+    // the edge tiles under each side (z * 128 + x): south row 0, north row 127, west column 0, east column 127
+    const last = dim - 1;
+    const tiles = [(t) => t, (t) => last * dim + t, (t) => t * dim, (t) => t * dim + last];
     for (let e = 0; e < 4; e++) {
-      const edge = edges[e], base = g * g + e * g;
+      const edge = edges[e], tile = tiles[e], base = g * g + e * g;
       for (let i = 0; i < q; i++) {
+        let clipped = true;
+        for (let t = i * stride; t < (i + 1) * stride; t++) if (bytes[tile(t)] !== CLIP_SENTINEL) { clipped = false; break; }
+        if (clipped) { dropped++; continue; }
         const t0 = edge(i), t1 = edge(i + 1), b0 = base + i, b1 = base + i + 1;
         out.push(t0, b0, b1, t0, b1, t1, t0, b1, b0, t0, t1, b1);
       }
     }
   }
+  if (!dropped) return null;
   return Uint32Array.from(out);
 }

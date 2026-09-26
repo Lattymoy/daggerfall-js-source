@@ -1,0 +1,128 @@
+[
+  {
+    "name": "DW-F-skirt-whole",
+    "file": "src/world/deepWaterCap.js",
+    "old": "        if (clipped) { dropped++; continue; }\n        const t0 = edge(i)",
+    "new": "        const t0 = edge(i)",
+    "tests": [
+      "test/dwf_farsea.test.js"
+    ]
+  },
+  {
+    "name": "DW-F-skirt-rows-for-columns",
+    "file": "src/world/deepWaterCap.js",
+    "old": "const tiles = [(t) => t, (t) => last * dim + t, (t) => t * dim, (t) => t * dim + last];",
+    "new": "const tiles = [(t) => t * dim, (t) => t * dim + last, (t) => t, (t) => last * dim + t];",
+    "tests": [
+      "test/dwf_farsea.test.js"
+    ]
+  },
+  {
+    "name": "DW-F-skirt-south-row-inside",
+    "file": "src/world/deepWaterCap.js",
+    "old": "const tiles = [(t) => t, ",
+    "new": "const tiles = [(t) => dim + t, ",
+    "tests": [
+      "test/dwf_farsea.test.js"
+    ]
+  },
+  {
+    "name": "DW-F-skirt-null-before-the-skirt",
+    "file": "src/world/deepWaterCap.js",
+    "old": "  if (stride > 1) {\n    const edges = [(i) => i,",
+    "new": "  if (!dropped) return null;\n  if (stride > 1) {\n    const edges = [(i) => i,",
+    "tests": [
+      "test/dwf_farsea.test.js"
+    ]
+  },
+  {
+    "name": "DW-F-top-fog-dropped",
+    "file": "src/render/deepWatersRender.js",
+    "old": "  outColor = vec4(mix(uFogColor, col, fogFactorAt(vWorldPos)), a);",
+    "new": "  outColor = vec4(col, a);",
+    "tests": [
+      "test/dwf_farsea.test.js"
+    ]
+  },
+  {
+    "name": "DW-F-far-arm-fog-dropped",
+    "file": "src/render/deepWatersRender.js",
+    "old": "  outColor = vec4(mix(uFogColor, col, fogFactorAt(vWorldPos)), 1.0);\n}`;\n\n// TransparentWaterSurfaceUnderside.",
+    "new": "  outColor = vec4(col, 1.0);\n}`;\n\n// TransparentWaterSurfaceUnderside.",
+    "tests": [
+      "test/dwf_farsea.test.js"
+    ]
+  },
+  {
+    "name": "DW-F-share-fog-dropped",
+    "file": "src/render/columnGlsl.js",
+    "old": "    st = mix(uFogColor, st, fogFactorAt(entry));\n",
+    "new": "",
+    "tests": [
+      "test/dwf_farsea.test.js"
+    ]
+  },
+  {
+    "name": "DW-F-share-fogged-at-the-fragment",
+    "file": "src/render/columnGlsl.js",
+    "old": "st = mix(uFogColor, st, fogFactorAt(entry));",
+    "new": "st = mix(uFogColor, st, fogFactorAt(worldPos));",
+    "tests": [
+      "test/dwf_farsea.test.js"
+    ]
+  },
+  {
+    "name": "DW-F-fog-to-the-floor-alone",
+    "file": "src/render/deepWatersRender.js",
+    "old": "    if (u.uFogColor) {   // the world's fog",
+    "new": "    if (u === this._programs.floor.u) {   // the world's fog",
+    "tests": [
+      "test/dwf_farsea.test.js"
+    ]
+  },
+  {
+    "name": "DW-F-decor-fog-forced-off",
+    "file": "src/render/deepWatersRender.js",
+    "old": "    gl.uniform4fv(u.uColor, DECORATION_COLOR);\n",
+    "new": "    gl.uniform4fv(u.uColor, DECORATION_COLOR);\n    gl.uniform1i(u.uFogMode, 0);\n",
+    "tests": [
+      "test/dwf_farsea.test.js"
+    ]
+  },
+  {
+    "name": "DW-F-weed-fogged",
+    "file": "src/render/deepWatersRender.js",
+    "old": "  vec3 col = dwColumn(t.xyz * uColor.xyz * tint, vWorldPos);",
+    "new": "  vec3 col = dwColumn(mix(uFogColor, t.xyz * uColor.xyz * tint, fogFactorAt(vWorldPos)), vWorldPos);",
+    "tests": [
+      "test/dwf_farsea.test.js"
+    ]
+  },
+  {
+    "name": "DW-F-water1-patch-unread",
+    "file": "src/scenes/world.js",
+    "old": "const idx = buildWaterIndices(p._dwBytes ?? p.tilemapBytes, p._stride ?? 1);",
+    "new": "const idx = buildWaterIndices(p.tilemapBytes, p._stride ?? 1);",
+    "tests": [
+      "test/dwf_farsea.test.js"
+    ]
+  },
+  {
+    "name": "DW-F-water1-not-rebuilt",
+    "file": "src/scenes/world.js",
+    "old": "    dwClipTerrain(entry);\n    dwWaterSurface(entry);\n",
+    "new": "    dwClipTerrain(entry);\n",
+    "tests": [
+      "test/dwf_farsea.test.js"
+    ]
+  },
+  {
+    "name": "DW-F-water1-restride-original",
+    "file": "src/scenes/world.js",
+    "old": "buildWaterIndices(p._dwBytes ?? p.tilemapBytes, stride)",
+    "new": "buildWaterIndices(p.tilemapBytes, stride)",
+    "tests": [
+      "test/dwf_farsea.test.js"
+    ]
+  }
+]

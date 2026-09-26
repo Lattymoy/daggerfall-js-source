@@ -136,5 +136,5 @@ test('DW-E1: the world host drives the runtime - the terrain pass is the stream\
   // IsPlayingGame: no window over the game - read late, because the gates are asked during boot's promotes, before the
   // talk host (the windows' owner) exists
   assert.match(w, /let _dwOverlayUp = \(\) => false;\n\s+const dwPlaying = \(\) => !_dwOverlayUp\(\);/);
-  assert.match(w, /_dwOverlayUp = \(\) => townTalk\.overlayActive;/);
+  assert.match(w, /const gamePaused = \(\) => townTalk\.overlayActive \|\| \(modes\?\.overlayHeld \?\? false\);\n\s+_dwOverlayUp = \(\) => gamePaused\(\);/, 'AUDIT DW-F: every stack over the frame - IsPlayingGame asks of every window, a building\'s and a dungeon\'s too');
 });

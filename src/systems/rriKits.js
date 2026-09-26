@@ -9,7 +9,7 @@
 import { mintCondition, setItemFields, templateByIndex, itemValueOf } from './itemTemplates.js';
 import { addItem, addGoldPieces } from './inventory.js';
 import { createWeapon } from '../combat/enemyEquipment.js';
-import { createRandomPotion, ITEM_GROUPS } from './loot.js';
+import { createRandomPotion, createRandomOfGroup } from './loot.js';   // DW-E5: CreateRandomGem / CreateRandomIngredient(group), one home
 import { createRandomBook } from './books.js';
 import { randomizeArmorVariant } from './shopStock.js';
 import { CLOTHING_DYES, DYE_COLORS } from '../characters/dyes.js';
@@ -88,8 +88,8 @@ function armor(templateIndex, material, rolls, variant = -1) {
 }
 const pick = (list, rolls) => list[range(rolls, 0, list.length)];
 /** ItemBuilder.CreateRandomGem (:312-319) / CreateRandomIngredient(group)
- *  (:670-699): a uniform draw over the group. */
-const randomOf = (group, rolls) => mint({ group, templateIndex: pick(ITEM_GROUPS[group], rolls) });
+ *  (:670-699): a uniform draw over the group (loot.js's createRandomOfGroup), minted. */
+const randomOf = (group, rolls) => mint(createRandomOfGroup(group, rolls));
 
 /** DFCareer.IsMaterialForbidden / IsArmorForbidden (DFCareer.cs:647,
  *  :667): `(flags & f) == f` over ForbiddenMaterials and ForbiddenArmors

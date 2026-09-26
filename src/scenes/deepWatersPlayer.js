@@ -264,6 +264,25 @@ export function createDeepWatersPlayer({ host, locate, seaY, terrainGroundAt, co
      *  then PlayerMotor.Update's own, the host's surface model, is what the late readers see too. */
     get waterMethod() { return audio.method; },
 
+    /**
+     * AUDIT DW-F: OnSaveLoad, on SaveLoadManager.OnStartLoad and again on OnLoad (after the save's crouch is back):
+     * RestoreWaterTerrainCollider (the port has no collider gate - Port-Ledger (5)), then ClearOutdoorWaterState - the
+     * suppression and the exterior context down, DeepWaterPlayer.ClearState, the fog's backup back (fog() reads the
+     * decision), and past a PlayerEnterExit: currentlyForged down WITHOUT Restore (no flag touched, no uncrouch window),
+     * DropForgeTracking (no forged dungeon here), ResetHeadWaterState(false), ReleaseSwimMotorFrameSpikeGuard and
+     * RequestStandAfterWaterExit - so a crouched save loads standing. The caller flushes the state change.
+     */
+    saveLoad(p) {
+      suppressed = false;
+      exteriorContext = false;
+      clearState();
+      lastDecision = null;
+      swim.forged = false;
+      swim.resetHead(false);
+      releaseSpikeGuard(p);
+      requestStand(p);
+    },
+
     /** Update's IsPlayerInside arm: no exterior context, the state cleared, the forge restored. */
     insideFrame(p, now) {
       audio.method = null;
@@ -406,11 +425,13 @@ export function createDeepWatersPlayer({ host, locate, seaY, terrainGroundAt, co
      * water with no swim at all. The sea is the terrain's (always known
      * outdoors), or a column's under the camera or the player when that
      * stands 12 m off it. {under, oceanY}.
-     * @param {{camera: number[], centre: number[], swimming: boolean}} f -
+     * @param {{camera: number[], centre: number[], swimming: boolean, playing?: boolean}} f -
      *   the camera and the capsule's centre, world; IsExteriorSwimming (the
-     *   host flag, the motor's swim, or its exterior water)
+     *   host flag, the motor's swim, or its exterior water); IsPlayingGame
+     *   (a pausing window up is none of it - absent reads as playing)
      */
     fogPresentation(f) {
+      if (f.playing === false) return { under: false, oceanY: 0 };   // AUDIT DW-F: !IsPlayingGame - false, the out height 0 (IL_12020, IL_1203e)
       let oceanY = seaY();
       const local = rawColumnAt(f.camera[0], f.camera[2]);
       const c = local && local.depth > 0.25 ? local : rawColumnAt(f.centre[0], f.centre[2]);

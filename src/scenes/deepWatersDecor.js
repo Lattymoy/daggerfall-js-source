@@ -153,7 +153,11 @@ export function createUnderwaterDecorations({ terrainAt, currentPixel, settings,
 
   /** UnderwaterDecorationBatchFactory.Spawn: the groups, stood on the pixel. */
   function spawn(entry, positions) {
-    positions = filterPlacements(entry, positions);
+    return standPlacements(entry, filterPlacements(entry, positions));
+  }
+
+  /** Spawn's second half (SpawnArchiveBillboards / SpawnReplacementAwareBillboards): the kept placements, stood - null for none. */
+  function standPlacements(entry, positions) {
     if (!positions.length) return null;
     const born = now();
     const groups = new Map();
@@ -270,6 +274,19 @@ export function createUnderwaterDecorations({ terrainAt, currentPixel, settings,
 
     /** The drawn batch of a pixel, or null. */
     batchOf(entry) { return batches.get(entry) ?? null; },
+
+    /**
+     * DW-E5: the factory for another spawner's placements - the sunken
+     * loot's rubble (UnderwaterLootSpawner.SpawnRubbleBatches calls
+     * UnderwaterDecorationBatchFactory.Spawn). `filter` is its
+     * FilterPlacements, in place, as the C#'s RemoveAt is; `stand` its
+     * second half, once the pictures are warm (`textures.warm`) - the
+     * handle, which the caller owns and frees (`gpu.destroy`).
+     */
+    filter: (entry, positions) => filterPlacements(entry, positions),
+    stand: (entry, positions) => standPlacements(entry, positions),
+    get textures() { return textures; },
+    destroyBatch: (h) => gpu.destroy(h),
     get pendingWorkCount() { return workQueue.length + pending.length; },
     /** Probes: the pictures' archives in, the pending batches. */
     get texturesReady() { return textures.ready(); },
@@ -307,6 +324,16 @@ export function createDecorTextureSource({ getTexture, scaledSize, replacementSi
   const failed = new Set();      // an archive that will not load (its records are never placed: a height of 0)
   const textureFile = (archive) => files.get(archive) ?? null;
   const fileOf = (archive) => Promise.resolve(getTexture(archive)).then((t) => { if (t) files.set(archive, t); return t; });
+  const fileLoads = new Map();   // archive -> its load in flight, for a record no pool names (DW-E5's piles and rubble)
+  /** The record's file is in, or settled without one - else its load is started once and the caller waits. */
+  function fileIn(archive) {
+    if (files.has(archive) || failed.has(archive)) return true;
+    if (!fileLoads.has(archive)) {
+      fileLoads.set(archive, fileOf(archive).then((t) => { if (!t) failed.add(archive); }, () => { failed.add(archive); })
+        .finally(() => fileLoads.delete(archive)));
+    }
+    return false;
+  }
   const heights = new Map();
   const replacements = new Map();
   const textures = new Map();   // key -> {tex, frames} | null (ready) ; absent: not asked
@@ -319,6 +346,7 @@ export function createDecorTextureSource({ getTexture, scaledSize, replacementSi
     const k = key(rec);
     if (replacements.has(k)) return replacements.get(k);
     const t = textureFile(rec.archive);
+    if (!t) return null;   // AUDIT DW-F: no answer before the file is in, and none cached - a cached "none" outlived the load for the session
     let info = null;
     if (t && hasReplacement(rec.archive, rec.record, 0)) {
       let frames = 1;
@@ -377,6 +405,8 @@ export function createDecorTextureSource({ getTexture, scaledSize, replacementSi
       return s.width > 0 && s.height > 0 ? scaledSize(t, rec.record) : null;
     },
     replacement: replacementOf,
+    /** DW-E5: which picture a record stands with - the classic 'archive', a 'replacement', or an 'animated' replacement's frames. */
+    kindOf,
     /** TryGetAuthoredDecorationVisualHeight, cached per record (authoredVisualHeightCache). */
     visualHeight(rec) {
       const k = key(rec);
@@ -400,6 +430,7 @@ export function createDecorTextureSource({ getTexture, scaledSize, replacementSi
       for (let i = spawn.warm; i < spawn.positions.length; i++) {
         const p = spawn.positions[i];
         const rec = { archive: p.archive, record: p.record };
+        if (!fileIn(rec.archive)) { busy = true; continue; }   // AUDIT DW-F: the kind is the file's answer, asked once it is in
         const kind = kindOf(rec);
         const k = `${key(rec)}:${kind}`;
         if (textures.has(k)) continue;

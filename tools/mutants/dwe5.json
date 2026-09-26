@@ -1,0 +1,416 @@
+[
+  {
+    "name": "DW-E5-pulse-distance",
+    "file": "src/world/underwaterLoot.js",
+    "old": "export const LOOT_PULSE_DISTANCE = 90;",
+    "new": "export const LOOT_PULSE_DISTANCE = 80;",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-pulse-interval",
+    "file": "src/world/underwaterLoot.js",
+    "old": "export const MIN_PULSE_INTERVAL_SECONDS = 8;",
+    "new": "export const MIN_PULSE_INTERVAL_SECONDS = 7;",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-retry-interval",
+    "file": "src/world/underwaterLoot.js",
+    "old": "export const FAILED_PULSE_RETRY_SECONDS = 3;",
+    "new": "export const FAILED_PULSE_RETRY_SECONDS = 4;",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-cluster-chance-cap",
+    "file": "src/world/underwaterLoot.js",
+    "old": "export const MAX_CLUSTER_CHANCE = f32(0.85);",
+    "new": "export const MAX_CLUSTER_CHANCE = f32(0.9);",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-cluster-cap-inclusive",
+    "file": "src/world/underwaterLoot.js",
+    "old": "if (s.liveClusters >= s.maxLiveClusters) return false;",
+    "new": "if (s.liveClusters > s.maxLiveClusters) return false;",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-cove-cluster-multiplier",
+    "file": "src/world/underwaterLoot.js",
+    "old": "const mult = s.cove ? TREASURE_COVE_CLUSTER_CHANCE_MULTIPLIER : NORMAL_LOOT_MULTIPLIER;",
+    "new": "const mult = NORMAL_LOOT_MULTIPLIER;",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-strays-after-a-wreck-in-a-cove",
+    "file": "src/world/underwaterLoot.js",
+    "old": "if (s.clusterSpawned && !s.cove) return 0;",
+    "new": "if (s.clusterSpawned) return 0;",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-stray-clamp",
+    "file": "src/world/underwaterLoot.js",
+    "old": "export const MAX_STRAY_LOOT_PER_PULSE = 12;",
+    "new": "export const MAX_STRAY_LOOT_PER_PULSE = 13;",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-stray-full-per-pulse",
+    "file": "src/world/underwaterLoot.js",
+    "old": "rollCount(f32(f32(f32(f32(FULL_STRAY_LOOT_PER_PULSE * rate) * mult)",
+    "new": "rollCount(f32(f32(f32(f32(rate) * mult)",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-bias-inclusive",
+    "file": "src/world/underwaterLoot.js",
+    "old": "roll() > FORWARD_BIAS_CHANCE",
+    "new": "roll() >= FORWARD_BIAS_CHANCE",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-bias-arc",
+    "file": "src/world/underwaterLoot.js",
+    "old": "export const FORWARD_SPAWN_ARC_DEGREES = 110;",
+    "new": "export const FORWARD_SPAWN_ARC_DEGREES = 100;",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-no-player-fallback",
+    "file": "src/world/underwaterLoot.js",
+    "old": "if (fx * fx + fy * fy + fz * fz < 0.001 && playerForward) { fx = playerForward[0]; fy = playerForward[1]; fz = playerForward[2]; }",
+    "new": "",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-fog-ahead-plus-two",
+    "file": "src/world/underwaterLoot.js",
+    "old": "const reveal = f32(revealDistance + 2);",
+    "new": "const reveal = f32(revealDistance);",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-fog-ahead-random-25",
+    "file": "src/world/underwaterLoot.js",
+    "old": "f32(roll() * 25)",
+    "new": "f32(roll() * 20)",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-fog-ahead-spread",
+    "file": "src/world/underwaterLoot.js",
+    "old": "const quarter = f32(Math.PI / 4);",
+    "new": "const quarter = f32(Math.PI / 3);",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-floor-lift",
+    "file": "src/world/underwaterLoot.js",
+    "old": "return { y: column.renderedSeafloorY + LOOT_FLOOR_LIFT, entry: column.entry };",
+    "new": "return { y: column.renderedSeafloorY, entry: column.entry };",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-floor-clearance",
+    "file": "src/world/underwaterLoot.js",
+    "old": "  if (column.oceanY - column.renderedSeafloorY < SEAFLOOR_Y_CLEARANCE) return null;   // bge.un (IL_1aa68)\n",
+    "new": "",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-wreck-depth",
+    "file": "src/world/underwaterLoot.js",
+    "old": "export const WRECK_MINIMUM_DEPTH_FRACTION = 0.5;",
+    "new": "export const WRECK_MINIMUM_DEPTH_FRACTION = 0.4;",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-cluster-spacing",
+    "file": "src/world/underwaterLoot.js",
+    "old": "export const CLUSTER_LOOT_MIN_SPACING = 3;",
+    "new": "export const CLUSTER_LOOT_MIN_SPACING = 2;",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-cluster-radius",
+    "file": "src/world/underwaterLoot.js",
+    "old": "export const CLUSTER_LOOT_RADIUS = 11;",
+    "new": "export const CLUSTER_LOOT_RADIUS = 12;",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-debris-radius",
+    "file": "src/world/underwaterLoot.js",
+    "old": "export const CLUSTER_DEBRIS_RADIUS = 22;",
+    "new": "export const CLUSTER_DEBRIS_RADIUS = 20;",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-cluster-treasure-count",
+    "file": "src/world/underwaterLoot.js",
+    "old": "rangeInt(cove ? 6 : 3, cove ? 11 : 6, roll)",
+    "new": "rangeInt(cove ? 6 : 2, cove ? 11 : 6, roll)",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-cluster-item-count",
+    "file": "src/world/underwaterLoot.js",
+    "old": "rangeInt(cove ? 4 : 2, cove ? 9 : 5, roll)",
+    "new": "rangeInt(cove ? 4 : 2, cove ? 9 : 6, roll)",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-cove-debris-count",
+    "file": "src/world/underwaterLoot.js",
+    "old": "(cove ? CLUSTER_DEBRIS_COUNT * 2 : CLUSTER_DEBRIS_COUNT)",
+    "new": "(CLUSTER_DEBRIS_COUNT)",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-loose-debris-range",
+    "file": "src/world/underwaterLoot.js",
+    "old": "  return rangeInt(1, 3, roll);",
+    "new": "  return rangeInt(1, 2, roll);",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-rubble-except",
+    "file": "src/world/underwaterLoot.js",
+    "old": "  if (!used || used.size >= RUBBLE_RECORDS.length) return pickRubbleRecord(roll);",
+    "new": "  return pickRubbleRecord(roll);",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-item-band",
+    "file": "src/world/underwaterLoot.js",
+    "old": "[f32(0.6), 'jewellery']",
+    "new": "[f32(0.65), 'jewellery']",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-pile-record",
+    "file": "src/world/underwaterLoot.js",
+    "old": "34, 36, 37, 38, 39, 40]);",
+    "new": "34, 35, 37, 38, 39, 40]);",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-prune-clusters",
+    "file": "src/world/underwaterLoot.js",
+    "old": "if (dx * dx + dz * dz > max) centres.splice(i, 1);",
+    "new": "if (dx * dx + dz * dz > max * 2) centres.splice(i, 1);",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-gate-depth",
+    "file": "src/world/underwaterLoot.js",
+    "old": "export const NEARBY_WATER_MINIMUM_DEPTH = 8;",
+    "new": "export const NEARBY_WATER_MINIMUM_DEPTH = 6;",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-gate-cache",
+    "file": "src/scenes/deepWatersLoot.js",
+    "old": "    if (gateCached && time < nextGateTime) return gateResult ? pos : null;\n",
+    "new": "",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-cell-memory",
+    "file": "src/scenes/deepWatersLoot.js",
+    "old": "while (recentOrder.length > MAX_REMEMBERED_SPAWN_CELLS)",
+    "new": "while (recentOrder.length > MAX_REMEMBERED_SPAWN_CELLS + 1)",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-cell-skip",
+    "file": "src/scenes/deepWatersLoot.js",
+    "old": "      if (recentCells.has(key)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-cap-returns",
+    "file": "src/scenes/deepWatersLoot.js",
+    "old": "    if (tracked.count >= s.maxLive) return;\n",
+    "new": "",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-shore-eighth",
+    "file": "src/scenes/deepWatersLoot.js",
+    "old": "? 1 : SHORE_LOOT_PULSE_MULTIPLIER;",
+    "new": "? 1 : 1;",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-first-frame-forced",
+    "file": "src/scenes/deepWatersLoot.js",
+    "old": "        tryRunLootPulse(true, pos);\n",
+    "new": "        tryRunLootPulse(false, pos);\n",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-wreck-depth-test",
+    "file": "src/scenes/deepWatersLoot.js",
+    "old": "    if (!isDeepEnoughForWreck(column(s.spot[0], s.spot[2]), settings().waterDepth)) return false;\n",
+    "new": "",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-no-guards",
+    "file": "src/scenes/deepWatersLoot.js",
+    "old": "    spawnGuards(s.spot);\n",
+    "new": "",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-cluster-spots-kept",
+    "file": "src/scenes/deepWatersLoot.js",
+    "old": "      spots.push(p);\n",
+    "new": "",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-stray-fill",
+    "file": "src/scenes/deepWatersLoot.js",
+    "old": "    fillRandomItem(c);\n    spawnLooseLootDebris(s.spot);",
+    "new": "    spawnLooseLootDebris(s.spot);",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-reset-keeps-tracked",
+    "file": "src/scenes/deepWatersLoot.js",
+    "old": "      tracked.clear();\n",
+    "new": "",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-reset-keeps-anchor",
+    "file": "src/scenes/deepWatersLoot.js",
+    "old": "      recentOrder.length = 0;\n      anchor = null;",
+    "new": "      recentOrder.length = 0;",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-undrawn-mounts",
+    "file": "src/scenes/droppedLoot.js",
+    "old": "    if (drawn) mount(pile);",
+    "new": "    mount(pile);",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-remove-keeps",
+    "file": "src/scenes/droppedLoot.js",
+    "old": "    pile.batch = null;\n    piles.splice(i, 1);",
+    "new": "    pile.batch = null;",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-religious-group",
+    "file": "src/systems/loot.js",
+    "old": "export const createRandomReligiousItem = (rolls = Math.random) => createRandomOfGroup('ReligiousItems', rolls);",
+    "new": "export const createRandomReligiousItem = (rolls = Math.random) => createRandomOfGroup('Gems', rolls);",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  },
+  {
+    "name": "DW-E5-loot-settings-rate",
+    "file": "src/scenes/deepWatersHost.js",
+    "old": "rate: scaledSliderValue(get('General.SeafloorLootRate'), Math.fround(0.7)),",
+    "new": "rate: scaledSliderValue(get('General.SeafloorLootRate'), Math.fround(0.5)),",
+    "tests": [
+      "test/dwe_loot.test.js"
+    ]
+  }
+]

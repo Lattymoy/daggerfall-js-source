@@ -26,6 +26,8 @@ way in.
 | DW-E3 | the passive fish (items 9001-9007) | `f2f733b8` | `03-World/Deep-Waters.md` |
 | DW-E4 | the deep's foes and the treasure guards | `25f05238` | `03-World/Deep-Waters.md` |
 | WATER-PUDDLE | the puddles and the one-square town water: the shallow-water records drawn where their own art is water | this branch's last commit | `07-Rendering/Water-Arc.md` |
+| DW-E5 | the sunken loot: the pulse, the stray piles and their rubble, the wrecks and their guards | `claude/funny-tesla-bhzv35` | `03-World/Deep-Waters.md` |
+| DW-F | the close: the sea at a distance (Mac: "large square panels" - the far ground's skirt out of the carved sea, the world's fog on the top, WATER1 off the clipped tiles) and the audit pass over the whole mod, four readers against the assembly (the foes' column share, the breath behind a window, the save-load reset, the dungeon splash, the load flag, the guards' terrain, the loot's camera and velocity, the texture cache, the arrow's draw) | `claude/funny-tesla-bhzv35` | `03-World/Deep-Waters.md` |
 
 Every landed mod is on by default, registered (settings, Features,
 credits, `01-Overview/Mod-Registry.md`) and placed in the online lane
@@ -33,50 +35,28 @@ credits, `01-Overview/Mod-Registry.md`) and placed in the online lane
 
 ## Left
 
-### 1. Iliac Puddle No More - DW-E5, the sunken loot
+### 1 and 2. Iliac Puddle No More - DW-E5 and DW-F: LANDED (above)
 
-The mod's last runtime lane. Its five settings are declared
-(`General.SeafloorLootRate`, `MaxLiveLootObjects`, `TreasureClusterRate`,
-`MaxLiveTreasureClusters`, `TreasureCove`) and the room owns them online,
-but nothing reads them yet; the Enabled note stops at "what lives in the
-deep" until this lands - put the wrecks and the sunken loot back into it
-then. What the reading of the assembly found:
-
-- **The container** is `RandomTreasure` (1) with
-  `InventoryContainerImages` 2 (Ground), its picture a
-  `TEXTURE.216` treasure-pile record, its LoadID from `NextUID`. DFU
-  restores only `customDrop` loot on a load, so the piles are not
-  persistent, and the mod's own reset clears them - the transient reset
-  DW-E1 already carries (`world/deepWaterTransients.js`).
-- **The items**: the port has no `ItemBuilder.CreateRandomReligiousItem`
-  or `CreateRandomJewellery` - port them 1:1 into `systems/loot.js`;
-  `CreateRandomGem`'s uniform draw already stands as `systems/rriKits.js`'s
-  private `randomOf` - lift it rather than write a second.
-  Check that the port's `createRandomArmor`/`createRandomClothing` take
-  the race the mod passes (the morphology).
-- **The debris and the rubble** stand through DW-E2's decoration batch
-  factory; `BrightenUnderwaterBillboards` is the underwater decoration
-  material on the pile's billboard; `AlignObjectBottomToWorldY` seats it.
-- **The spawner**: `HasNearbyWaterColumn(42, 72, 12 directions, 8 m)`
-  gates it every 2 s; `PickSpawnSpot` makes 18 tries (half of them
-  `TryPickFogAheadPoint(130)`, the rest `PickSpawnAngle` - 70% forward,
-  within 110 degrees - and `PickRingDistance`); `WorldCellKey` cells of
-  48 m with the last 128 remembered; `ResolveSeafloorAt` + 0.08;
-  `IsOutsideImmediateView` with a 0.12 margin (DW-E4 ported the view
-  tests, `world/underwaterEnemies.js`).
-- **The treasure clusters** call DW-E4's `trySpawnTreasureGuards`
-  (already ported, waiting for its caller).
-
-### 2. Iliac Puddle No More - DW-F, the close
-
-The registration is done (above). What is left is the close once E5 is
-in: the page's slice table (`Deep-Waters.md`, E5's row reads "(next)"), the credits line (`ui/credits.js`, "DW-A to
-DW-D"), the registry row's scope sentence, and one audit pass over the
-whole mod.
+The sunken loot is in and the mod is closed. What its close leaves for
+Mac, on the Port-Ledger row (DECLARED, awaiting Mac's read): DW-E5, and
+DW-F's departures (8) the world's fog on the top, (9) the whole stream
+carved - the mod carves only what the player has come within a pixel of,
+and a carved three by three in a vanilla sea is the square seam that was
+reported, so the port keeps its whole-stream carve - (10) the unload
+taking the mod's children, (11) surfacing giving the sky its fog colour
+back (the mod leaves DFU's underwater colour as the fog above the sea
+until the sky's texture next changes), (12) the swim's odometer riding the
+recentre; and (3) now reaching DFU's billboards (the deep's foes, their
+corpses, a pile dropped in the sea). Seen, not the mod's: past the
+streamed grid the far ring (EV8) holds its haze at 85% through the middle
+distance, so its sea reads a shade darker than the fully fogged edge of
+the streamed world - EV8's own, over land and sea alike.
 
 ### 3. There's a Hole in the Bottom of the Ocean 1.1.0 (jet082)
 
-Not started. It REQUIRES Iliac Puddle No More 1.2.2+ - the carved sea is
+Not started - and not startable here: this container holds neither its
+archive nor Come Sail Away's (Mac handed them over on 2026-09-25, to the
+branch's first session); hand them over again to begin. It REQUIRES Iliac Puddle No More 1.2.2+ - the carved sea is
 on this branch, so it can be built on it. `OceanHoles.cs` is 2,978 lines.
 What the first reading found: `StableHash(x, y, salt)` in integer maths;
 `IsPitPixel` by hash % 48; `PlacementFraction` 0.28 + (h & 0xffff) /

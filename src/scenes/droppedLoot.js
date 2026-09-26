@@ -150,15 +150,29 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
   // Daggerfall's CreateLootContainer comments its LoadID out), which
   // SerializableLootContainer.Start never registers: no save and no
   // scene cache carries it.
-  function seedPile(items, feet, icon, key = null, pixelKey = null, { unsaved = false } = {}) {   // WOD3: a pixelKey, for a scene container parented to a TERRAIN (dies with its pixel)
+  // DW-E5: `drawn` false - a container whose picture another pass draws (Iliac Puddle No More's sunken piles wear the
+  // decorations' underwater material, BrightenUnderwaterBillboards) - is every other thing a pile is (the ray's target,
+  // the loot window's, the plaque's, Detect Treasure's, the recentre's) with no batch of its own.
+  // `owner`: the spawner that tracks it (a site's carry takes its own piles, not another's).
+  function seedPile(items, feet, icon, key = null, pixelKey = null, { unsaved = false, drawn = true, owner = null } = {}) {   // WOD3: a pixelKey, for a scene container parented to a TERRAIN (dies with its pixel)
     const pile = {
       id: ++_nextId, items: items ?? [], pos: [feet[0], feet[1], feet[2]],
       archive: icon.archive, record: icon.record, batch: null, pixelKey,
-      container: true, containerKey: key, unsaved,
+      container: true, containerKey: key, unsaved, drawn, owner,
     };
     piles.push(pile);
-    mount(pile);
+    if (drawn) mount(pile);
     return pile;
+  }
+
+  /** DW-E5: Object.Destroy on one container (a spawner's tracker prunes it) - gone from the world, its batch freed. */
+  function removePile(pile) {
+    const i = piles.indexOf(pile);
+    if (i < 0) return;
+    pile.dead = true;   // AUDIT 24: an in-flight mount must not publish onto this
+    if (pile.batch) { flatAnims.remove(pile.batch); renderer.destroyBillboardBatch(pile.batch); }
+    pile.batch = null;
+    piles.splice(i, 1);
   }
 
   /** P2-slice (items-2) - CollectLooseObjects (StreamingWorld.cs
@@ -380,5 +394,7 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
   /** PX21c: what a pile HOLDS, by the same key lootTargets emits -
    *  read-only, for the hover plaque. */
   const contents = (key) => piles.find((p) => `droppedLoot:${p.id}` === key && !p.dead)?.items ?? null;
-  return { contents, dropPile, seedPile, restorePiles, collectPixel, takePixel, snapshotWorld, restoreWorld, batches, tickFlats, lootTargets, pileFor, activePiles, containerSeeded, snapshotScene, releaseEmptied, offsetAll, _piles: piles };
+  /** DW-E5: a live, drawable-elsewhere pile (not emptied into its deactivation) - the other pass's draw list. */
+  const undrawnPiles = () => piles.filter((p) => p.drawn === false && alive(p));
+  return { contents, dropPile, seedPile, removePile, restorePiles, collectPixel, takePixel, snapshotWorld, restoreWorld, batches, tickFlats, lootTargets, pileFor, activePiles, undrawnPiles, containerSeeded, snapshotScene, releaseEmptied, offsetAll, _piles: piles };
 }

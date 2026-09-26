@@ -241,8 +241,8 @@ test('audit24: two async races - an abandoned pixel build and an in-flight loot 
     'the loot mount checks its flag before publishing');
   // and every removal path raises that flag - five of them (AUDIT BRANCH (WoD) L1-3: takePixel lifts a pooled
   // terrain's piles out, and marks them as the others do)
-  assert.equal((loot.match(/\.dead = true;/g) || []).length, 5,
-    'collectPixel, takePixel, releaseEmptied, restoreWorld and restorePiles all mark');
+  assert.equal((loot.match(/\.dead = true;/g) || []).length, 6,
+    'collectPixel, takePixel, releaseEmptied, restoreWorld, restorePiles and removePile (DW-E5: the sunken loot\'s destroy) all mark');
 });
 
 test('AUDIT 39: a third race - two cold callers for one model id must not each build a mesh', () => {

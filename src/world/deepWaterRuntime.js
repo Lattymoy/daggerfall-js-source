@@ -40,7 +40,9 @@
 export const LOAD_GRACE_SECONDS = 1.5;
 export const LOCATION_LOAD_STUCK_SECONDS = 12;
 
-let resumeAt = 0;             // heavyWorkResumeTime (Infinity while a load is in progress)
+let resumeAt = 0;             // heavyWorkResumeTime (Infinity from a load's start until a teleport or its landing sets it)
+let loadInProgress = false;   // SaveLoadManager.LoadInProgress: OnStartLoad to OnLoad - AUDIT DW-F: its own word, since the
+                              // load's own teleport (SaveLoadManager.cs:1475 -> OnTeleportToCoordinates) sets the clock mid-load
 let locationLoads = 0;        // activeLocationLoads
 let lastLocationLoadAt = 0;   // lastLocationLoadIncrementTime
 let refreshPending = false;   // postTransitionRefreshPending
@@ -48,10 +50,10 @@ let terrainUpdating = false;  // terrainUpdateEventActive
 const transientResetListeners = [];
 let postTransitionRefresh = null;
 
-/** OnStartLoad: no heavy work until the load lands; no refresh pending. */
-export function loadStarted() { resetTransition(Infinity, false); }
-/** OnLoad: 1.5 s more, and the player's area refreshed after. */
-export function loadFinished(realSeconds) { resumeAt = realSeconds + LOAD_GRACE_SECONDS; refreshPending = true; }
+/** OnStartLoad: no work at all until the load lands (LoadInProgress); no refresh pending. */
+export function loadStarted() { loadInProgress = true; resetTransition(Infinity, false); }
+/** OnLoad: the load over, 1.5 s more, and the player's area refreshed after. */
+export function loadFinished(realSeconds) { loadInProgress = false; resumeAt = realSeconds + LOAD_GRACE_SECONDS; refreshPending = true; }
 /** OnTeleportToCoordinates. */
 export function teleported(realSeconds) { resetTransition(realSeconds + LOAD_GRACE_SECONDS, true); }
 /** OnCreateLocationGameObject / OnUpdateLocationGameObject: a location begins and ends its load. */
@@ -83,8 +85,8 @@ export function onTransientReset(fn) {
 /** The work PumpPostTransitionRefresh runs (UnderwaterDecorations.RefreshPlayerArea); null for none. */
 export function setPostTransitionRefresh(fn) { postTransitionRefresh = fn ?? null; }
 
-/** CanRunLightRuntimeWork: the game playing (IsPlayingGame) and no load in progress. */
-export function canRunLightRuntimeWork(playing) { return !!playing && resumeAt !== Infinity; }
+/** CanRunLightRuntimeWork: the game playing (IsPlayingGame) and no load in progress (SaveLoadManager.LoadInProgress, IL_bb35). */
+export function canRunLightRuntimeWork(playing) { return !!playing && !loadInProgress; }
 /** CanRunHeavyRuntimeWork: light work, and the grace's clock run out. */
 export function canRunHeavyRuntimeWork(realSeconds, playing) { return canRunLightRuntimeWork(playing) && realSeconds >= resumeAt; }
 
@@ -120,5 +122,5 @@ export const postTransitionRefreshPending = () => refreshPending;
 
 /** Tests: the clock back to its boot state (the subscribers stay; each test owns its own). */
 export function resetDeepWaterRuntime() {
-  resumeAt = 0; locationLoads = 0; lastLocationLoadAt = 0; refreshPending = false; terrainUpdating = false;
+  resumeAt = 0; loadInProgress = false; locationLoads = 0; lastLocationLoadAt = 0; refreshPending = false; terrainUpdating = false;
 }
