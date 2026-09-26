@@ -66,6 +66,8 @@
 // the receiver already has for an unrelated reason.
 
 import { MEMBERSHIP_STATUS, isMainQuestName } from './quest/questLists.js';
+import { TaskType } from './quest/task.js';
+import { getInnerSymbolName } from './quest/symbol.js';
 import { GUILDS, hasJoined } from './guilds.js';
 import { QUEST_FRAME_MAX } from '../net/wire.js';
 
@@ -186,26 +188,58 @@ export function receiveSharedQuest(machine, questLists, questName, data, ctx = {
   return { ok: true, quest };
 }
 
+/** SHARE-COPY (2026-09-26, "Shared Quest did not match copy"): the task types whose symbol is MINTED at parse -
+ *  `nextUid()` in task.js, DFU's own NextUID - the headless startup task EVERY quest has, and each
+ *  `until _x_ performed:` block. The number is wherever the parsing machine's counter stood, so no two parses
+ *  agree on it, and A1 compared it anyway: every share of every quest was refused. Such a task is the same task
+ *  by its TYPE and its place in the order (and a persist-until by the symbol it watches), never by its number. */
+const MINTED_TASK_TYPES = new Set([TaskType.Headless, TaskType.PersistUntil]);
+
+/** SHARE-COPY: the Place a Person's set-up mints over the SENDER's world (person.js _assignHomeTown,
+ *  `_<person>_home_`) - the questor's hall, a generic NPC's house. The receiver's shape parse is headless and
+ *  makes none, so the envelope may carry one per Person the script declares, and it must be a Place. */
+const HOME_SYMBOL = /^_(.+)_home_$/;
+
 /** AUDIT DROPS A1: does the envelope's SHAPE match `local` (a Quest the receiver parsed from its own source by
- *  the same name)? Every task's symbol and its actions' types in order, and every resource's symbol and type -
- *  answers a word for the first thing that differs, or null when they agree. Pure, so a test hands in both. */
+ *  the same name - headless, SHARE-COPY)? Every task's type and symbol and its actions' types in order, and
+ *  every resource's symbol and type - answers a word for the first thing that differs, or null when they agree.
+ *  Pure, so a test hands in both. */
 export function shapeMismatch(local, data) {
   const ref = local.getSaveData();
   const tasks = Array.isArray(data.tasks) ? data.tasks : null;
   if (!tasks || tasks.length !== ref.tasks.length) return 'tasks';
+  const taskNames = new Set();
   for (let i = 0; i < tasks.length; i++) {
     const t = tasks[i], r = ref.tasks[i];
-    if (!t || typeof t !== 'object' || t.symbol?.original !== r.symbol?.original) return 'task';
+    if (!t || typeof t !== 'object' || t.type !== r.type || typeof t.symbol?.original !== 'string') return 'task';
+    if (MINTED_TASK_TYPES.has(r.type)) {
+      // SHARE-COPY: the sender's number is KEPT - the restore keys the task by it, as a save's load does - so it
+      // must be a number; a persist-until must watch the symbol the script names
+      if (!/^\d+$/.test(t.symbol.original)) return 'task';
+      if (r.type === TaskType.PersistUntil && t.targetSymbol?.original !== r.targetSymbol?.original) return 'task';
+    } else if (t.symbol.original !== r.symbol?.original) return 'task';
+    // SHARE-COPY: and no two tasks under one name - the restore's Map would keep the last and drop a task
+    const name = getInnerSymbolName(t.symbol.original);
+    if (taskNames.has(name)) return 'task';
+    taskNames.add(name);
     const acts = Array.isArray(t.actions) ? t.actions : null;
     if (!acts || acts.length !== r.actions.length) return 'actions';
     for (let j = 0; j < acts.length; j++) if (!acts[j] || acts[j].type !== r.actions[j].type) return 'action';
   }
   const res = Array.isArray(data.resources) ? data.resources : null;
-  if (!res || res.length !== ref.resources.length) return 'resources';
+  if (!res) return 'resources';
   const want = new Map(ref.resources.map((r) => [r.symbol?.original, r.type]));
+  const persons = new Set(ref.resources.filter((r) => r.type === 'Person').map((r) => getInnerSymbolName(r.symbol?.original ?? '')));
+  const seen = new Set();
   for (const r of res) {
-    if (!r || typeof r !== 'object' || !want.has(r.symbol?.original) || want.get(r.symbol?.original) !== r.type) return 'resource';
+    const sym = r && typeof r === 'object' ? r.symbol?.original : null;
+    if (typeof sym !== 'string' || seen.has(sym)) return 'resource';
+    seen.add(sym);
+    if (want.has(sym)) { if (want.get(sym) !== r.type) return 'resource'; continue; }
+    const home = HOME_SYMBOL.exec(sym);
+    if (!home || r.type !== 'Place' || !persons.has(home[1])) return 'resource';
   }
+  for (const sym of want.keys()) if (!seen.has(sym)) return 'resources';
   return null;
 }
 

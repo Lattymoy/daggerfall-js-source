@@ -47,8 +47,8 @@
   {
     "name": "AD-A1-resource-set-not-compared",
     "file": "src/systems/questShare.js",
-    "old": "    if (!r || typeof r !== 'object' || !want.has(r.symbol?.original) || want.get(r.symbol?.original) !== r.type) return 'resource';",
-    "new": "    if (!r || typeof r !== 'object') return 'resource';",
+    "old": "    if (want.has(sym)) { if (want.get(sym) !== r.type) return 'resource'; continue; }",
+    "new": "    continue;",
     "tests": [
       "test/auditdrops.test.js"
     ]
