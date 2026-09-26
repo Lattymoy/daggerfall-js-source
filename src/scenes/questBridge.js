@@ -190,7 +190,7 @@ export const QUEST_CTX_CONTRACT = Object.freeze([
   'raiseTime', 'regionPriceAdjustment', 'releaseQuestItem',
   'relinkQuestTopics', 'removeItemFromPlayer', 'removeNpcQuestor',
   'removeProgressRumors', 'removeQuestInfoTopics', 'removeQuestRumors',
-  'removeQuestorPostMessage', 'setPlayerCrime', 'showPopup',
+  'removeQuestorPostMessage', 'setPlayerCrime', 'sharedClock', 'showPopup',
   'showPrompt', 'showPromptMulti', 'spawnCityGuards',
   'undiscoverBuilding', 'world',
 ]);
@@ -233,6 +233,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     world: ctx.world ?? null,
     nowSeconds: () => ctx.classicSeconds?.() ?? 0,
     questClockStepMax: () => ctx.questClockStepMax?.() ?? Infinity,   // WORLD7: online, a quest clock charges played time (the host's step); a host that says nothing charges every clock, DFU's own
+    sharedClock: () => !!ctx.sharedClock?.(),   // GUARD-ONLINE: online, a guarded quest's window is the player's arrival's (quest/onlineGuard.js)
     getQuestSourceLines: (name) => ctx.data.getQuestSourceLines(name),
     playerLevel: () => ctx.playerEntity?.level ?? 0,
     playerGender: () => ctx.playerEntity?.gender ?? 'male',

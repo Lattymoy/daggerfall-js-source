@@ -5,7 +5,7 @@
 // port already keeps:
 //
 //   Active quests  - QuestMachine.getAllQuestLogMessages()
-//                    (systems/quest/machine.js:671, already verbatim)
+//                    (systems/quest/machine.js:672, already verbatim)
 //   Finished quests- PlayerNotebook.getFinishedQuests()
 //   Notebook       - PlayerNotebook.getNotes()
 //   Messages       - PlayerNotebook.getMessages() (the 50-slot ring)

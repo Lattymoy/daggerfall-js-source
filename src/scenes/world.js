@@ -10179,6 +10179,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     removeQuestRumors: (uid) => rumorMill.removeQuestRumorsFromRumorMill(uid),
     classicSeconds: () => playerTicker.classicMinutes * 60,
     questClockStepMax: () => (sharedClockOn() ? PLAYED_STEP_MAX_SECONDS : Infinity),   // WORLD7: online a quest clock charges PLAYED time - one step a frame, the time away forgiven (WORLD5 stood every clock down, and no delay ever ran)
+    sharedClock: () => sharedClockOn(),   // GUARD-ONLINE: a guarded quest's window online is the player's arrival's
     playerEntity,
     // AUDIT 24 (the seven-slice sweep): three more seams the bridge has
     // declared since Q2/Q3 that this host never answered. The bridge's

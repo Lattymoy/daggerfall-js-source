@@ -105,3 +105,26 @@ the same there.
 
 `test/f5quests.test.js` (4); `tools/mutants/f5quests.json` 11, 11 dead.
 Ten older pins re-aimed to where their laws live now; the cites the moved lines shifted, moved (the CD4-gated struck rows by hand).
+
+## GUARD-ONLINE: Guard the Guild's watch starts when you arrive (report 16) - Mac's call
+
+DISC25-C (2026-09-25) found it and left it for Mac: N0B10Y03's thieves come
+`daily from 00:00 to 03:00` while the player is in the Mages Guild, and it
+pays only once that window is shut again. Online the world clock is the
+shared one - a game day is two real hours and a rest moves no world time -
+so the window came round once in two hours. Asked, Mac chose: online only,
+the watch starts about a minute after you arrive and lasts one game hour
+(five real minutes).
+
+`systems/quest/onlineGuard.js` holds the law and the one table row;
+`DailyFrom.checkTrigger` takes the arrival's window when the quest seam says
+the clock is shared (`sharedClock`, wired from both bridge hosts). Ten game
+minutes after the player is first in the watched Place (the script's own
+`_magesguild_`) the window opens, and it stands one game hour. Leaving after
+it shuts and coming back opens a new watch - a watch missed is not a quest
+lost - but a player who stays in the hall stays on a shut window, so the
+questor pays. The arrival is saved with the action. Offline, and every other
+`daily from` quest online, keeps DFU's window. Port-Ledger section A,
+GUARD-ONLINE.
+
+`test/guardonline.test.js` (4); `tools/mutants/guardonline.json` 10, 10 dead.

@@ -56,6 +56,7 @@ import { isSongFileDefined, songFileToRecordName } from '../songFiles.js';
 import { MOBILE_TEAMS } from '../../characters/enemyTargets.js';   // MT-iii: ChangeFoeTeam's enum door
 import { dfuEffectKeyOf } from '../spellEffects.js';   // QG1: CastEffectDo's key vocabulary, one home
 import { setLocationVariant, setNewLocationVariant, setBlockVariant, setBuildingVariant, makeLocationKey, NO_VARIANT } from '../worldDataVariants.js';   // RR3: WorldUpdate's registry
+import { ONLINE_GUARD_WINDOWS, guardWindowStep } from './onlineGuard.js';   // GUARD-ONLINE: a guarded quest's window online is its arrival's
 
 /** TalkManager.cs:285-291 - the dialog-link resource types. */
 export const QUEST_INFO_RESOURCE_TYPE = Object.freeze({
@@ -647,11 +648,14 @@ export class LevelCompleted extends ActionTemplate {
  *  DFU's WorldTime.Now (the machine's nowSeconds contract). */
 export class DailyFrom extends ActionTemplate {
   static typeName = 'DailyFrom';
-  get saveShape() { return [['minDailySeconds'], ['maxDailySeconds']]; }
+  // GUARD-ONLINE: the arrival's window rides the save beside C#'s two fields (a load mid-watch keeps its clock)
+  get saveShape() { return [['minDailySeconds'], ['maxDailySeconds'], ['guardAnchor'], ['guardAway']]; }
   constructor(parentQuest) {
     super(parentQuest);
     this.isTriggerCondition = true;
     this.isAlwaysOnTriggerCondition = true;
+    this.guardAnchor = null;   // GUARD-ONLINE (onlineGuard.js): when the player was first in the watched place
+    this.guardAway = false;    // ...and whether they left it after the window closed
   }
   get pattern() { return /daily from (?<hours1>\d+):(?<minutes1>\d+) to (?<hours2>\d+):(?<minutes2>\d+)/; }
   createNew(source, parentQuest) {
@@ -664,6 +668,13 @@ export class DailyFrom extends ActionTemplate {
     return action;
   }
   checkTrigger(_caller) {
+    // GUARD-ONLINE (Mac, 2026-09-26): on the shared clock a guarded quest's window is the player's arrival's, not
+    // the hour of the world's day (systems/quest/onlineGuard.js); offline, and every other quest, DFU's window
+    const win = this.parentQuest.hooks?.sharedClock?.() ? ONLINE_GUARD_WINDOWS[this.parentQuest.questName] ?? null : null;
+    if (win) {
+      const place = this.parentQuest.getPlace?.(new QuestSymbol(`_${win.place}_`)) ?? null;
+      return guardWindowStep(this, !!place?.isPlayerHere?.(), this.parentQuest.nowSeconds?.() ?? 0, win);
+    }
     const now = dateFromSeconds(this.parentQuest.nowSeconds?.() ?? 0);
     const currentDailySeconds = now.hour * 3600 + now.minute * 60;
     return currentDailySeconds >= this.minDailySeconds && currentDailySeconds <= this.maxDailySeconds;

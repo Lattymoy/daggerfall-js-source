@@ -486,9 +486,9 @@ test('ROAD-G G2 review: the cast engine raises the two ready-spell doors into TH
   // hostMagic.js:79-80 declares `onNewReadySpell` / `onCastReadySpell`
   // and is the ONLY raiser in the tree (SetReadySpell raises NEW right
   // after `readiedSpell = sp`; `done()` raises CAST on every release
-  // path, before the ready clears). machine.js:873/:879 fan them out,
+  // path, before the ready clears). machine.js:874/:880 fan them out,
   // and CastSpellDo / CastEffectDo latch on nothing else
-  // (actions.js:2702 - C# subscribes them in its constructor). This
+  // (actions.js:2713 - C# subscribes them in its constructor). This
   // host owns its own cast engine, and worldModes takes THIS instance
   // for the interior mode, so while the mount passed neither key every
   // `cast X spell do` / `cast X effect do` on this route - and in every
@@ -526,7 +526,7 @@ test('ROAD-G G2 review: the cast engine raises the two ready-spell doors into TH
 
 test('ROAD-G G2 review: questWorld answers CastSpellDo\'s two classic-spell reads', () => {
   // Without these the action self-completes at PARSE
-  // (actions.js:2756/:2763 - no effects, so C#'s template completes and
+  // (actions.js:2767/:2774 - no effects, so C#'s template completes and
   // the task can never fire), which would have left `cast X spell do`
   // dead on this route even with the doors above wired. world.js:9443's
   // pair, byte-folded on both sides exactly as MakeClassicKey folds.
@@ -569,7 +569,7 @@ test('ROAD-G G2 review: the encounter pool\'s frame seams - the tick, the draw, 
   assert.match(senses, /candidates: \(\) => exteriorFoePool\(\)\.filter\(\(f\) => !f\.dead\),/,
     'the senses walk the UNNARROWED street database, live records only');
 
-  // world.js:16080-16152's arrow shape: an enemy shaft hunts a WALKING
+  // world.js:16081-16153's arrow shape: an enemy shaft hunts a WALKING
   // player (the fly camera has no capsule), and both live pools are
   // impact candidates. `playerFeet: null` is every enemy arrow passing
   // through the player - the whole enemy arm the lane shipped.

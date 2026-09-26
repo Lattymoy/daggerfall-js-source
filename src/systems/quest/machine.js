@@ -467,6 +467,7 @@ export class QuestMachine {
       // world-data/player-state surface a running host wires (contract
       // below); the SiteLink halves are the machine's own.
       world: this.deps.world ?? null,
+      sharedClock: () => !!this.deps.sharedClock?.(),   // GUARD-ONLINE: the world's clock is the shared one (online)
       // Q3-ii: the questor click context (QuestMachine.LastNPCClicked
       // - { factionID, nameSeed, gender } | null) and factionRep's
       // GetReputation (ReputeExceedsDo reads it; an unknown faction

@@ -2382,8 +2382,8 @@ export async function bootExterior(canvas, renderer, params, status) {
     surfacePlayer,
     // QG1: the ready-spell doors - EntityEffectManager's two events
     // (hostMagic.js:79-80), which are the ONLY route into the quest
-    // machine's CastSpellDo / CastEffectDo latches (machine.js:873/:879;
-    // actions.js:2702). This host owns its own cast engine and passed
+    // machine's CastSpellDo / CastEffectDo latches (machine.js:874/:880;
+    // actions.js:2713). This host owns its own cast engine and passed
     // neither key, so on this route - and, because worldModes takes THIS
     // instance indoors, in every shop entered from it - `cast X spell do`
     // and `cast X effect do` could never latch and never fire. The other
@@ -3513,7 +3513,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     isPlayerInLocationRect: () => _musicInLocationRect(),
     playerPixel: () => _locPixel,   // F114: the quest clock's travel arm
     // QG1: CastSpellDo's two world reads, world.js:9335-9338's pair.
-    // Without them the action self-completes at parse (actions.js:2756/:2763)
+    // Without them the action self-completes at parse (actions.js:2767/:2774)
     // and a `cast X spell do` on this route could never be armed, whatever
     // the ready-spell doors above raise.
     getClassicSpellEffects: (spellID) => spellRecordOfIndex(spellID)?.effects ?? null,
@@ -3639,6 +3639,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       `${dfLocation.regionIndex}:${dfLocation.name ?? locationName}`, buildingKey, true, buildingName ?? null),
     classicSeconds: () => playerTicker.classicMinutes * 60,
     questClockStepMax: () => (sharedClockOn() ? PLAYED_STEP_MAX_SECONDS : Infinity),   // WORLD7 (AUDIT WORLD5 C10's law): the same word as world.js's - a host that says nothing charges every clock
+    sharedClock: () => sharedClockOn(),   // GUARD-ONLINE: a guarded quest's window online is the player's arrival's
     // The notebook's three header reads (PlayerNotebook's own ctx).
     dateTimeString: () => dateTimeString(dateFromClassicMinutes(playerTicker.classicMinutes)),
     midDateTimeString: () => midDateTimeString(dateFromClassicMinutes(playerTicker.classicMinutes)),
@@ -3724,13 +3725,13 @@ export async function bootExterior(canvas, renderer, params, status) {
   // (:6459) alone, so on ?exterior every HUD line this host and its
   // interior arm spoke was dropped from the journal's Messages page -
   // a page exterior.js:1102 wires up and can reach. Same moment and
-  // same order as world.js:10393/:10398, for the same reason: the
+  // same order as world.js:10394/:10399, for the same reason: the
   // notebook only exists once the bridge above is built.
   townTalk.hudMessageSink = (t) => questBridge?.notebook?.addMessage(t);
   // AUDIT 63 F5: DaggerfallTalkWindow.OnPop's notebook filing
   // (DaggerfallTalkWindow.cs:319). townTalk holds the one talk-window
   // door and no notebook; the bridge holds the notebook and is built
-  // here, so the sink is handed down at this moment - world.js:10377's
+  // here, so the sink is handed down at this moment - world.js:10378's
   // line for this host.
   townTalk.notebookSink = (tokens) => questBridge?.notebook?.addNoteTokens(tokens);
   questBridge.onInitWorld();   // QuestMachine's OnInitWorld - this route's ONE city is its world
@@ -3957,7 +3958,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // search; an empty list means an owned house never resolves even
       // in its OWN town, so this host sold every deed for nothing
       // before F26's guard and would refuse every sale after it. Same
-      // two inputs the world host uses (world.js:13772).
+      // two inputs the world host uses (world.js:13773).
       buildings: locationBuildings(dfLocation.exterior?.buildings ?? [], loc.blocks, { locationIndex: dfLocation.locationIndex ?? 0 }),
       mapId: dfLocation?.mapTableData?.mapId ?? 0,
       regionIndex: dfLocation.regionIndex ?? 0,
@@ -5235,7 +5236,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // ROAD-G G2: THE ENEMY ARM EXISTS NOW - the note here said "this
     // host mounts no bow-armed pool", which stopped being true with the
     // encounter mount above, and an archer's shaft would have flown
-    // through the player for ever. world.js:15704-15955 is the shape.
+    // through the player for ever. world.js:15705-15956 is the shape.
     arrows.update(dt, {
       // enemy arrows hunt only a WALKING player - the fly camera has no
       // capsule to hit
@@ -5491,7 +5492,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         const swing = {};   // AUDIT DISC19: one swing, one attack grunt, however many pools it is offered to
         if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound, { swing })) {
           // ROAD-G G2: encounter foes resolve AFTER the watch and
-          // BEFORE civilians - world.js:16074's order, and the order
+          // BEFORE civilians - world.js:16075's order, and the order
           // matters because a watchman standing over a quest foe must
           // still be the one the swing finds.
           if (exteriorFoes.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound, { swing })) {
