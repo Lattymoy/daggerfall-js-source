@@ -35,7 +35,7 @@ export const SKINS = Object.freeze(['enhanced', 'classic']);
 export const DEFAULT_SKIN = 'enhanced';
 
 /** The label a player reads. Never the stored token. */
-export const SKIN_NAMES = Object.freeze({ enhanced: 'Enhanced', classic: 'Classic' });
+export const SKIN_NAMES = Object.freeze({ enhanced: 'Enhanced Plus', classic: 'Classic' });   // PLUS-ONLY: the enhanced skin wears one dress, and this is its name
 
 const clean = (v) => (SKINS.includes(v) ? v : null);
 
@@ -58,18 +58,14 @@ export const isEnhanced = (search) => uiSkin(search) === 'enhanced';
 
 /** PLUS1 (2026-09-25): ENHANCED PLUS - the enhanced skin with the refreshed dress over it (the stone-and-brass kit,
  *  the Yes/No dialogs, the ported service windows, the vitals' lost chunk, the fading HUD lines, the one-frame rest
- *  window, the Ascend clicks). It is NOT a third skin: every mount site keeps asking isEnhanced(), and Plus answers
- *  yes there, so nothing Enhanced does can be missing from Plus. Only the refresh's own seams ask isEnhancedPlus(),
- *  and plain Enhanced stays exactly as it was. `?plus=1` / `?plus=0` answer for one page load, like `?skin=`, and
- *  write nothing. PLUS-DEFAULT (2026-09-25): Plus is the default now (uiPrefs' `enhancedPlus: true`); switching it
- *  off in Settings stores `false` and brings plain Enhanced back. */
-export function plusOverride(search = globalThis.location?.search ?? '') {
-  const v = new URLSearchParams(search).get('plus');
-  return v === '1' || v === 'true' ? true : v === '0' || v === 'false' ? false : null;
-}
-export const isEnhancedPlus = (search) => isEnhanced(search) && (plusOverride(search) ?? getPref('enhancedPlus') === true);
-/** Store the Plus choice; null when the shelf refused (SKIN-CARRY's law - the caller carries it on the URL). */
-export function setEnhancedPlus(on) { return setPref('enhancedPlus', !!on) === false ? null : !!on; }
+ *  window, the Ascend clicks). It is NOT a third skin: every mount site keeps asking isEnhanced(), and the refresh's
+ *  own seams ask isEnhancedPlus() - kept by that name so a reader can still find everything the refresh dresses.
+ *  PLUS-ONLY (2026-09-26, Mac: "I want to depricate the old enhanced UI entirely in favor of the new enhanced plus"):
+ *  PLAIN ENHANCED IS RETIRED. Plus is the only dress the enhanced skin wears, so the seam answers exactly what
+ *  isEnhanced() answers - no shelf key (uiPrefs' `enhancedPlus` is read by nothing now, and a player who had stored
+ *  `false` comes back in Plus), no `?plus=` override, no option on the UI Overhaul panel. Classic is untouched: every
+ *  seam still answers no on the classic skin, which is what keeps the classic canvas windows classic. */
+export const isEnhancedPlus = (search) => isEnhanced(search);
 
 /** AUDIT CONTRIB H1: THE HOTBAR IS IN FORCE - the enhanced skin with the hotbar chosen (systems/features.js
  *  'quickbar-style') - and the quickslot diamond is put AWAY, not hidden: its actions (a pad's d-pad, a rebound key)

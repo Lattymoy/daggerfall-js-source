@@ -146,7 +146,7 @@ test('GP1 the poller: buttons and bound axis keys become synthetic keys by Unity
   const prev = { w: globalThis.window, loc: globalThis.location };
   const listeners = {};
   globalThis.window = { addEventListener: (t, f) => { (listeners[t] ??= []).push(f); }, removeEventListener: () => {}, dispatchEvent: () => {} };
-  globalThis.location = { search: '?plus=0' };   // PLUS-DEFAULT: this pins the plain pad layer - Enhanced Plus's is padplus1.test.js's
+  globalThis.location = { search: '?skin=classic' };   // PLUS-ONLY: the plain pad layer is the classic skin's - Enhanced Plus's is padplus1.test.js's
   const store = createBindings(); resetDefaults(store); setBindings(store);
   setBinding(store, 'JoystickAxis10Button0', 'SwingWeapon', false);   // a trigger as a secondary swing key
   const events = []; const dispatch = (type, code) => events.push(`${type}:${code}`);
@@ -259,7 +259,7 @@ test('GP3 the controller cursor: born where the mouse last was when the pad beco
   const prev = { w: globalThis.window, loc: globalThis.location };
   const listeners = {};
   globalThis.window = { addEventListener: (t, f) => { (listeners[t] ??= []).push(f); }, removeEventListener: () => {}, dispatchEvent: () => {} };
-  globalThis.location = { search: '?plus=0' };   // PLUS-DEFAULT: this pins the plain pad layer - Enhanced Plus's is padplus1.test.js's
+  globalThis.location = { search: '?skin=classic' };   // PLUS-ONLY: the plain pad layer is the classic skin's - Enhanced Plus's is padplus1.test.js's
   const store = createBindings(); resetDefaults(store); setBindings(store);
   const evs = [];
   const canvas = { getBoundingClientRect: () => ({ left: 10, top: 20, width: 640, height: 400 }), dispatchEvent: (ev) => evs.push(ev), style: {} };

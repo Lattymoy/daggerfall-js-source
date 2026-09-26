@@ -11,7 +11,8 @@
 //
 // CLOSING: Escape / Close cancels a trade that is still being negotiated. Once the goods are in flight (`committing`) the
 // window cannot be cancelled and says so; when the session ends it shows the outcome a moment and closes itself.
-import { itemLine, linePictureUrl } from './enhancedInventory.js';
+import { itemLine, linePictureUrl, markItemFrame, wearBar } from './enhancedInventory.js';   // RARITY-UI: the pack's one frame marker; WEAR-UI: its wear bar
+import { lockRefuses, lockedText } from '../systems/itemLock.js';   // LOCK1: a locked piece is not held out
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { overlayAction, isTextEntryTarget } from './input.js';
 import { TABS, tabAccepts } from './nativeInventory.js';
@@ -75,6 +76,7 @@ export function mountEnhancedPlayerTrade(hostEl, { session, deps }) {
   const stage = (item, count = null) => {
     if (session.phase !== 'open' || session.myConfirm) return;   // AUDIT DROPS B1: confirmed = frozen
     if (entries().length >= TRADE_ITEMS_MAX) { say(`At most ${TRADE_ITEMS_MAX} items in one trade.`); render(); return; }
+    if (lockRefuses(item, 'trade')) { say(lockedText(itemLine(item, deps.entity).name)); render(); return; }   // LOCK1
     const n = count ?? Math.max(1, item.stackCount ?? 1);
     applyOffer([...entries(), { item, count: n }]);
   };
@@ -91,8 +93,11 @@ export function mountEnhancedPlayerTrade(hostEl, { session, deps }) {
 
   const row = (item, side, count = null) => {
     const line = itemLine(item, deps.entity);
-    const b = el('button', 'itemrow');
-    b.append(itemTile(line));
+    const b = markItemFrame(el('button', 'itemrow'), item);   // RARITY-UI / SIGIL-UI: an offered piece wears its tier
+    const tile = itemTile(line);
+    const bar = wearBar(item);   // WEAR-UI: and its wear
+    if (bar) { tile.append(bar); b.classList.add('hasbar'); }
+    b.append(tile);
     const mid = el('span', 'itemname');
     const n = count ?? (line.stack || 0);
     mid.append(el('span', null, line.name + (n > 1 ? ` ×${n}` : '')));

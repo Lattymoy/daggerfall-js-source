@@ -680,13 +680,15 @@ const identified = (item) => !enchanted(item) || item?.isIdentified === true;
 /** The tier line and the affix lines a tooltip or a card shows, in
  *  order: "Rare", then each affix, then the DFU enchantment's name.
  *  Empty with the switch off, for a Common item, or while the item is
- *  unidentified (then one line: the tier, and "Unidentified"). */
-export function rarityLines(item) {
+ *  unidentified (then one line: the tier, and "Unidentified").
+ *  SIGIL-UI: `sigil: false` leaves the sigil's lines out, for a card
+ *  that draws the sigil as its own block (ui/sigilCard.js). */
+export function rarityLines(item, { sigil = true } = {}) {
   if (!lootRarityOn() || !item) return [];
   const tier = rarityOf(item);
   if (tier === 'common') return [];
   const out = [RARITIES[tier].label];
-  if (!identified(item)) { out.push('Unidentified'); return [...out, ...sigilLines(item)]; }   // SIGIL1: a sigil is the port's own mark, seen at once
+  if (!identified(item)) { out.push('Unidentified'); return [...out, ...(sigil ? sigilLines(item) : [])]; }   // SIGIL1: a sigil is the port's own mark, seen at once
   for (const a of item.affixes ?? []) out.push(affixLabel(a));
   if (item.rarity && Array.isArray(item.enchantments)) {
     for (const e of item.enchantments) {
@@ -696,7 +698,7 @@ export function rarityLines(item) {
       out.push(param && param !== 'None' ? `${enchantmentName(key)}: ${param}` : enchantmentName(key ?? ''));
     }
   }
-  out.push(...sigilLines(item));   // SIGIL1: what the sigil gives in my hand, and how far it has grown
+  if (sigil) out.push(...sigilLines(item));   // SIGIL1: what the sigil gives in my hand, and how far it has grown
   const lore = item.legendary ? legendaryById(item.legendary)?.lore : null;
   if (lore) out.push(lore);
   return out;

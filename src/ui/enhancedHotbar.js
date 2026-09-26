@@ -46,6 +46,8 @@ import { controllerLook } from '../player/lookFilter.js';   // PADPLUS4: the pad
 // PADPLUS1: THE CROSSBAR (Enhanced Plus) - the same bar, grown to sixteen and laid out as two sets under LB and RB
 import { HOTBAR_CAPACITY } from '../systems/quickslots.js';
 import { isEnhancedPlus } from '../systems/uiSkin.js';
+import { rarityAttr } from '../systems/lootRarity.js';   // RARITY-UI: a slot's frame wears its item's tier
+import { validSigil } from '../systems/sigil.js';   // SIGIL-UI: and a sigil weapon's rune
 import { padFamily } from './padGlyphs.js';
 import { hdGlyphSvg, hdGlyphName } from './padGlyphsHD.js';
 import { registerCrossbar, plusCrossbarMode, crossbarCodeOf, CROSSBAR_SET, CROSSBAR_HOLD } from './plusPad.js';
@@ -333,6 +335,12 @@ function paint() {
 
 function paintSlot(s, v, entity) {
   const n = s.node;
+  // RARITY-UI / SIGIL-UI: the slot's frame wears its item's tier (the Plus sheet's [data-rarity] rules) and a sigil
+  // weapon its rune - a slot outlives its item, so both are taken off when the kind changes
+  const it = !v.empty && v.type !== 'spell' ? v.item : null;
+  const rar = it ? rarityAttr(it) : null;
+  if (rar) n.dataset.rarity = rar; else delete n.dataset.rarity;
+  if (it && validSigil(it.sigil)) n.dataset.sigil = ''; else delete n.dataset.sigil;
   n.classList.toggle('hb-empty', !!v.empty);
   n.classList.toggle('hb-gone', !!v.ghost);
   n.classList.toggle('hb-active', !!v.active);

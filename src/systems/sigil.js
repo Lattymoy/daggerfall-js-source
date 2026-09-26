@@ -223,5 +223,43 @@ export function sigilLines(item) {
   return out;
 }
 
+/**
+ * SIGIL-UI (2026-09-26, Mac: "sigil weapons need a visible indicator within the info section, something that makes it
+ * stand out, along with progress as you use it"): the same facts sigilLines says, as a MODEL a card draws - the
+ * stage it stands at in my hand, the five stages with the ones it has grown into, and how far it has drunk toward
+ * its next. `rank` is the sigil's own growth (its xp's stage); `stage` is what my Renown lets it wake to (-1 while
+ * Dormant); `held` says the Renown is the lower. `frac` is the share of the way from its rank's xp to the next one's
+ * (1 at Ascendant). Null for a weapon without a sigil.
+ * @returns {null | { rank: number, stage: number, dormant: boolean, held: boolean, name: string, pct: number,
+ *   full: number, xp: number, from: number, to: number|null, next: string|null, frac: number, party: number,
+ *   unlock: number|null, stages: Array<{ name: string, grown: boolean, awake: boolean }> }}
+ */
+export function sigilView(item) {
+  const s = item?.sigil;
+  if (!validSigil(s)) return null;
+  const rank = sigilRank(s);
+  const stage = sigilStageIn(s, _renown);
+  const dormant = stage < 0;
+  const next = SIGIL_STAGES[rank + 1] ?? null;
+  const from = SIGIL_STAGES[rank].xp;
+  const held = !dormant && rank > stage;
+  return {
+    rank, stage, dormant, held,
+    name: dormant ? 'Dormant' : SIGIL_STAGES[stage].name,
+    pct: sigilPercent(s, _renown), full: s.power,
+    xp: s.xp, from, to: next ? next.xp : null, next: next ? next.name : null,
+    frac: next ? Math.max(0, Math.min(1, (s.xp - from) / (next.xp - from))) : 1,
+    party: s.party,
+    unlock: held ? SIGIL_STAGES[stage + 1].renown : null,   // the Renown that opens its next stage in my hand
+    stages: SIGIL_STAGES.map((st, i) => ({ name: st.name, grown: i <= rank, awake: !dormant && i <= stage })),
+  };
+}
+/** The progress line a card writes under its bar: "7,420 / 12,500 to Bright", or that it is fully grown. */
+export function sigilProgressText(v) {
+  if (!v) return '';
+  if (v.to == null) return 'Fully grown';
+  return `${v.xp.toLocaleString('en-US')} / ${v.to.toLocaleString('en-US')} to ${v.next}`;
+}
+
 /** Tests only: forget the session and every weapon's carried fraction. */
 export function _resetSigilForTests() { _online = false; _renown = null; _carry = new WeakMap(); }

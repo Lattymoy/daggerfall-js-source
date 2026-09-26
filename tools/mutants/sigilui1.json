@@ -1,0 +1,74 @@
+[
+  {
+    "name": "SIGIL-UI-the-stage-off-the-growth",
+    "file": "src/systems/sigil.js",
+    "old": "  const stage = sigilStageIn(s, _renown);",
+    "new": "  const stage = _renown ? sigilRank(s) : -1;",
+    "tests": [
+      "test/sigilui1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL-UI-the-bar-from-zero",
+    "file": "src/systems/sigil.js",
+    "old": "(s.xp - from) / (next.xp - from)",
+    "new": "s.xp / next.xp",
+    "tests": [
+      "test/sigilui1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL-UI-the-held-note-dropped",
+    "file": "src/ui/sigilCard.js",
+    "old": "  if (v.held) box.append(",
+    "new": "  if (false) box.append(",
+    "tests": [
+      "test/sigilui1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL-UI-the-gems-unlit",
+    "file": "src/ui/sigilCard.js",
+    "old": "${st.awake ? ' awake' : ''}",
+    "new": "",
+    "tests": [
+      "test/sigilui1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL-UI-the-lines-doubled",
+    "file": "src/systems/lootRarity.js",
+    "old": "  if (sigil) out.push(...sigilLines(item));   // SIGIL1",
+    "new": "  out.push(...sigilLines(item));   // SIGIL1",
+    "tests": [
+      "test/sigilui1.test.js"
+    ]
+  },
+  {
+    "name": "RARITY-UI-a-tier-uncoloured",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": "[data-rarity=\"rare\"] { --rar: #e4c34f;",
+    "new": "[data-rarity=\"rare\"] { --rar: #9a9079;",
+    "tests": [
+      "test/sigilui1.test.js"
+    ]
+  },
+  {
+    "name": "RARITY-UI-the-hotbar-unmarked",
+    "file": "src/ui/enhancedHotbar.js",
+    "old": "  if (rar) n.dataset.rarity = rar; else delete n.dataset.rarity;",
+    "new": "  delete n.dataset.rarity;",
+    "tests": [
+      "test/sigilui1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL-UI-the-rune-never-drawn",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  if (validSigil(item?.sigil)) node.dataset.sigil = '';",
+    "new": "",
+    "tests": [
+      "test/sigilui1.test.js"
+    ]
+  }
+]

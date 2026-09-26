@@ -458,8 +458,11 @@ test('LR1: the skins - the native cell tints and the tooltip lists, the enhanced
   }
   const inv = read('src/ui/enhancedInventory.js');
   assert.match(inv, /name: parts\.name \|\| t\?\.name \|\| 'Unknown',/, 'the enhanced pack names through ResolveItemLongName\'s name part now (RF6; LR1: ResolveItemName inside it)');
-  assert.match(inv, /const r = rarityAttr\(item\); if \(r\) row\.dataset\.rarity = r;/, 'a row wears its tier');
-  assert.match(inv, /const lines = rarityLines\(picked\); if \(lines\.length\)/, 'the card lists the lines');
+  // RARITY-UI (2026-09-26): the row's tier goes through the pack's one frame marker (the icon's frame wears it too), and
+  // the card's list leaves the sigil to its own block under it (SIGIL-UI)
+  assert.match(inv, /markItemFrame\(row, item\);   \/\/ LR1/, 'a row wears its tier');
+  assert.match(inv, /export function markItemFrame\(node, item\) \{\n\s+const r = rarityAttr\(item\);\n\s+if \(r\) node\.dataset\.rarity = r;/, 'through the marker');
+  assert.match(inv, /const lines = rarityLines\(picked, \{ sigil: false \}\); if \(lines\.length\)/, 'the card lists the lines');
   assert.match(read('src/ui/worldPlaque.js'), /if \(r\.rarity\) row\.dataset\.rarity = r\.rarity;/);
   assert.match(read('src/ui/nativeInventory.js'), /armorLabelValue\(av\[i\] \?\? 100, entityArmorDisplayMod\(this\.hooks\.entity, i\)\)/, 'the doll\'s numbers, per part (RF1)');
   assert.match(read('src/ui/enhancedInventory.js'), /material: parts\.material \|\| null,/, 'LR4: the enhanced row names no material until identified - RF6: the long name\'s own prefix, which an unidentified item has none of');

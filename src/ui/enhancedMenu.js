@@ -2898,7 +2898,7 @@ function paneAbout(body) {
   c.append(el('p', 'meta', 'An open-source reimplementation of The Elder Scrolls II: Daggerfall.'));
   c.append(stats([
     ['Build', BUILD_TAG],
-    ['Interface', isEnhancedPlus() ? 'Enhanced Plus' : SKIN_NAMES[uiSkin()]],   // PLUS1
+    ['Interface', SKIN_NAMES[uiSkin()]],   // PLUS1; PLUS-ONLY: the enhanced skin's name IS Enhanced Plus now
     ['Settings', `${Object.values(DEFAULTS).reduce((n, s2) => n + Object.keys(s2).length, 0)} keys`],
   ]));
   body.append(c);

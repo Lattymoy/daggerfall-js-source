@@ -108,6 +108,8 @@ export const ITEM_FIELDS = Object.freeze({
   affixes: list(validAffix),
   // SIGIL1: an online win's sigil (systems/sigil.js) - its power, the fight that won it, what it has drunk
   sigil: rec(validSigil),
+  // LOCK1: the player's lock (systems/itemLock.js) - true, or absent
+  locked: bool(),
 });
 
 /** The declared names, and those of one kind. */

@@ -1097,7 +1097,7 @@ is folded off its positions. The fold's results are unchanged:
 pins stand.
 
 **The portrait.** `fpArm.figure()` draws the enhanced inventory's model
-figure (`enhancedInventory.js:1510`), which is shown in a 110:184 cell with
+figure (`enhancedInventory.js:1545`), which is shown in a 110:184 cell with
 object-fit: contain (`enhancedStyle.js:3860`). It framed `meshBounds` over
 EVERY piece, then hid the unlit torch, the arrow off the string and the
 empty holster twin, so gear it did not show still moved the frame. Its width

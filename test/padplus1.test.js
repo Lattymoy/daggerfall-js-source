@@ -98,7 +98,7 @@ test('PADPLUS1 poller under Plus: LB + A presses crossbar slot 7 and NOT activat
   const prev = globalThis.window;
   globalThis.window = { addEventListener() {}, removeEventListener() {}, dispatchEvent() {} };
   resetPrefs(); resetSettings();
-  setPref('enhancedPlus', true); setPref('plusPadLayout', 0);
+  setPref('plusPadLayout', 0);
   const store = pad1Store(); setBindings(store);
   const pressed = [], sets = [];
   registerCrossbar({ inForce: () => true, press: (i) => pressed.push(i), setActive: (s) => sets.push(s) });
@@ -158,7 +158,7 @@ test('PADPLUS2 RT under Plus: the right stick keeps looking while RT is held - C
   const prev = globalThis.window;
   globalThis.window = { addEventListener() {}, removeEventListener() {}, dispatchEvent() {} };
   resetPrefs(); resetSettings();
-  setPref('enhancedPlus', true); setPref('plusPadLayout', 0);
+  setPref('plusPadLayout', 0);
   const store = pad1Store(); setBindings(store);
   const looks = [], attacks = [];
   const pad = { connected: true, mapping: 'standard', id: 'Xbox 360 Controller (XInput STANDARD GAMEPAD)', axes: [0, 0, 0, 0], buttons: Array.from({ length: 17 }, () => ({ pressed: false, value: 0 })) };
@@ -201,7 +201,7 @@ test('PADPLUS3: B opens the pack and closes it and neither press leaks into the 
   const prev = globalThis.window;
   globalThis.window = { addEventListener() {}, removeEventListener() {}, dispatchEvent() {} };
   resetPrefs(); resetSettings();
-  setPref('enhancedPlus', true); setPref('plusPadLayout', 0);
+  setPref('plusPadLayout', 0);
   const store = pad1Store(); setBindings(store);
   const pressed = [];
   registerCrossbar({ inForce: () => true, press: (i) => pressed.push(i), setActive() {} });
@@ -269,7 +269,7 @@ test('PADPLUS4: the damage numbers\' layer (click-through, full screen) is not a
   globalThis.getComputedStyle = (n) => ({ display: 'block', visibility: 'visible', pointerEvents: n.pe ?? 'auto' });
   globalThis.window = { addEventListener() {}, removeEventListener() {}, dispatchEvent() {} };
   resetPrefs(); resetSettings();
-  setPref('enhancedPlus', true); setPref('plusPadLayout', 0);
+  setPref('plusPadLayout', 0);
   const store = pad1Store(); setBindings(store);
   const events = []; const dispatch = (t, c) => events.push(`${t}:${c}`);
   const pad = { connected: true, mapping: 'standard', id: 'Xbox 360 Controller (XInput STANDARD GAMEPAD)', axes: [0, 0, 0, 0], buttons: Array.from({ length: 17 }, () => ({ pressed: false, value: 0 })) };
@@ -304,7 +304,7 @@ test('PADPLUS5: in a window X is the quick act on what is under the cursor, and 
   globalThis.document = { elementFromPoint: () => target, body: null, querySelectorAll: () => [], getElementById: () => null };
   globalThis.window = { addEventListener() {}, removeEventListener() {}, dispatchEvent() {} };
   resetPrefs(); resetSettings();
-  setPref('enhancedPlus', true); setPref('plusPadLayout', 0);
+  setPref('plusPadLayout', 0);
   setBindings(pad1Store());
   const acted = [];
   registerQuickAct({ act: (t) => { acted.push(t); return true; }, available: () => true });
@@ -326,7 +326,7 @@ test('PADPLUS6: looking at loot, d-pad up/down move the plaque\'s highlight (hel
   const prevW = globalThis.window;
   globalThis.window = { addEventListener() {}, removeEventListener() {}, dispatchEvent() {} };
   resetPrefs(); resetSettings();
-  setPref('enhancedPlus', true); setPref('plusPadLayout', 0);
+  setPref('plusPadLayout', 0);
   const store = pad1Store(); setBindings(store);
   registerCrossbar({ inForce: () => true, press() {}, setActive() {} });
   const events = []; const dispatch = (t, c) => events.push(`${t}:${c}`);
@@ -377,7 +377,7 @@ test('PADPLUS9: d-pad down - a tap is the map (on release), a hold is the travel
   const prev = globalThis.window;
   globalThis.window = { addEventListener() {}, removeEventListener() {}, dispatchEvent() {} };
   resetPrefs(); resetSettings();
-  setPref('enhancedPlus', true); setPref('plusPadLayout', 0);
+  setPref('plusPadLayout', 0);
   const store = pad1Store(); setBindings(store);
   registerCrossbar({ inForce: () => true, press() {}, setActive() {} });
   const events = []; const dispatch = (t, c) => events.push(`${t}:${c}`);

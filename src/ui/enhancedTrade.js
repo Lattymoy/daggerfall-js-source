@@ -36,7 +36,7 @@
 // the item's texture record, or the cart's model), falling back to two
 // letters when that picture is unavailable, and never blocks on it.
 
-import { itemLine, linePictureUrl } from './enhancedInventory.js';   // RF6/MW-D38: one item model, read by both packs
+import { itemLine, linePictureUrl, markItemFrame, wearBar } from './enhancedInventory.js';   // RF6/MW-D38: one item model, read by both packs; RARITY-UI: one frame marker; WEAR-UI: one wear bar
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';
 import { overlayAction } from './input.js';
@@ -58,6 +58,7 @@ import { howManyField } from './howManyField.js';   // DISC25-F: the counter's h
 import { isTextEntryTarget } from './input.js';
 import { isSummoned, carriedWeight, totalWeight, transferAll, addItem } from '../systems/inventory.js';   // AUDIT UXB1 F4: addItem, a returning lot's merge
 import { isFurnishing } from '../systems/decorFurnish.js';   // DECOR2b: furniture is delivered, never carried
+import { lockRefuses, lockedText } from '../systems/itemLock.js';   // LOCK1: a locked piece is not for sale
 import { getBool } from '../systems/settings.js';   // UXB1-K: InstantRepairs - no clock to count down
 import { dateFromClassicMinutes, dateString } from '../systems/gameDate.js';
 import { sharedRealTimeText } from '../systems/worldTick.js';   // UXB1-K: online, the ready time in the player's own clock
@@ -228,6 +229,12 @@ function refuse(refusal) {
 }
 
 function refuseTransfer(item) {
+  // LOCK1: a locked piece is not put up for SALE - a repair or an identify still takes it, because it comes back
+  if (selling() && lockRefuses(item, 'sell')) {
+    box = { rows: [{ text: lockedText(itemLine(item, deps.entity).name), center: true }], buttons: null };
+    render();
+    return true;
+  }
   const refused = isSummoned(item) || questTransferRefused(item, {
     fromLocal: true, toWagon: false, getQuest: deps.getQuest ?? null,
   });
@@ -685,8 +692,11 @@ function itemTile(line) {
 
 function itemRow(item, from) {
   const line = itemLine(item, deps.entity);
-  const row = el('button', 'itemrow');
-  row.append(itemTile(line));
+  const row = markItemFrame(el('button', 'itemrow'), item);   // RARITY-UI / SIGIL-UI: the shelf's icons wear their tier too
+  const tile = itemTile(line);
+  const bar = wearBar(item);   // WEAR-UI: what a piece will fetch starts with how worn it is - said before the click
+  if (bar) { tile.append(bar); row.classList.add('hasbar'); }
+  row.append(tile);
   const mid = el('span', 'itemname');
   mid.append(el('span', null, line.name + (line.stack ? ` ×${line.stack}` : '')));
   const sub = [line.material, line.word].filter(Boolean).join(' · ');

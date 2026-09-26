@@ -344,7 +344,7 @@
   {
     "name": "SIGIL1-unidentified-hides-sigil",
     "file": "src/systems/lootRarity.js",
-    "old": "return [...out, ...sigilLines(item)]; }",
+    "old": "return [...out, ...(sigil ? sigilLines(item) : [])]; }",
     "new": "return out; }",
     "tests": [
       "test/sigil1.test.js"

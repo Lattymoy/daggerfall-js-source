@@ -47,11 +47,8 @@ export const PREF_DEFAULTS = Object.freeze({
   // (GrimoireUI). Read it through uiPack.js activeUiPack, which answers the URL and the skin on top of it.
   uiPack: 'none',
   // PLUS1 (2026-09-25): Enhanced Plus - the refreshed dress over the enhanced skin (systems/uiSkin.js isEnhancedPlus).
-  // PLUS-DEFAULT (2026-09-25, Mac: "Make the new enhanced plus ui default on"): ON by default. PREF1's shelf keeps only
-  // a player's choices, and picking plain Enhanced under the old `false` default stored nothing - so every player
-  // moves to Plus with this line, and picking plain Enhanced in the UI Overhaul panel from now on stores `false`
-  // and keeps it.
-  enhancedPlus: true,
+  // PLUS-ONLY (2026-09-26): `enhancedPlus`, the switch between it and plain Enhanced (PLUS-DEFAULT turned it on), is
+  // RETIRED - plain Enhanced is gone and Plus is simply the enhanced skin. A stored value is read by nothing.
   // PLUS2: Enhanced Plus's colours - a ui/enhancedFrame.js PLUS_THEMES id; 'slate' is the kit as it ships.
   plusTheme: 'slate',  plusCursor: true,   // PLUS6: the gauntlet cursor - off gives the system pointer back
   plusItemHover: true,   // PLUS7: the inventory's hover card - off keeps the right-click menu, drops the card

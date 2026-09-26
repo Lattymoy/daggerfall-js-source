@@ -2,10 +2,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { FRAME_ROLES, FRAME_CSS, frameSvg, BAND, EDGE, OUTSET } from '../src/ui/enhancedFrame.js';
-import { PLUS_CSS as ENHANCED_CSS } from '../src/ui/enhancedPlusStyle.js';   // PLUS1: the refresh's dress is the Enhanced Plus sheet
+import { PLUS_CSS as ENHANCED_CSS, OVER_KIT_CSS, ITEM_FRAME_CSS, ONLINE_DRESS_CSS } from '../src/ui/enhancedPlusStyle.js';   // PLUS1: the refresh's dress is the Enhanced Plus sheet
 
-test('FRAME1: the kit is the LAST thing in the sheet, so it dresses every screen by role', () => {
-  assert.ok(ENHANCED_CSS.trimEnd().endsWith(FRAME_CSS.trimEnd()), 'the paint kit is the very last block');
+test('FRAME1: the kit is the LAST thing in the sheet, so it dresses every screen by role - but for the layers named to stand over it (RARITY-UI\'s tier frames, PLUS-DRESS\'s online screens), in that order', () => {
+  assert.deepEqual(OVER_KIT_CSS, [ITEM_FRAME_CSS, ONLINE_DRESS_CSS]);
+  const at = ENHANCED_CSS.lastIndexOf(FRAME_CSS);
+  assert.ok(at > 0, 'the kit is in the sheet');
+  const bare = (css) => css.replace(/\/\*[^]*?\*\//g, '').replace(/\s+/g, ' ').trim();
+  assert.equal(bare(ENHANCED_CSS.slice(at + FRAME_CSS.length)), bare(OVER_KIT_CSS.join('\n')), 'nothing but the named layers follows the kit');
 });
 
 test('FRAME1: paint only - the kit never writes a width, padding or size', () => {

@@ -55,7 +55,7 @@ test('PADPLUS10 d-pad: hold left is Transport, a tap is the quest log; each hold
   const prev = globalThis.window;
   globalThis.window = { addEventListener() {}, removeEventListener() {}, dispatchEvent() {} };
   resetPrefs(); resetSettings();
-  setPref('enhancedPlus', true); setPref('plusPadLayout', 0);
+  setPref('plusPadLayout', 0);
   const store = plusStore(); setBindings(store);
   registerCrossbar({ inForce: () => true, press() {}, setActive() {} });
   const events = []; const dispatch = (t, c) => events.push(`${t}:${c}`);

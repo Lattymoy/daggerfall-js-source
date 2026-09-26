@@ -55,7 +55,8 @@ test('hudText: the rubberband speedup only engages past maxRows', () => {
 // each pin names the mutants it kills.
 import { readFileSync } from 'node:fs';
 import { drawEnhancedStatusLine, destroyEnhancedHudText, setEnhancedMidTextScale, midTextTopPx, ENHANCED_MID_TEXT_ID, ENHANCED_STATUS_ID } from '../src/ui/enhancedHudText.js';
-import { destroyEnhancedNotice, enhancedNoticeKeys, _setNoticeClockForTests, ENHANCED_NOTICE_ID, NOTICE_SLIDE_MS } from '../src/ui/enhancedNotice.js';
+import { destroyEnhancedNotice, enhancedNoticeKeys, _setNoticeClockForTests, ENHANCED_NOTICE_ID } from '../src/ui/enhancedNotice.js';
+import { TOAST_FADE_MS } from '../src/ui/enhancedFrame.js';   // PLUS-ONLY: a toast's own fade
 import { MidScreenText, MID_SCREEN_TEXT_DEFAULT_DELAY, midScreenText } from '../src/ui/midScreenText.js';
 import { ENHANCED_CSS, ENHANCED_STYLE_ID, injectEnhancedStyle } from '../src/ui/enhancedStyle.js';
 import * as enhancedStyle from '../src/ui/enhancedStyle.js';
@@ -87,7 +88,7 @@ function fakeDocument() {
 const recorder = () => ({ quads: [], drawScreenQuad(tex, rect) { this.quads.push({ tex, ...rect }); } });
 const FONT = { fnt: { fixedHeight: 9, fixedWidth: 4, glyphWidth: () => 4 }, tex: 'tex:font', cols: 16, rows: 16, cw: 8, ch: 8 };
 /** The notice module's clock, turned by hand (test/enhancedNotice.test.js's
- *  shape): a released toast's node leaves when NOTICE_SLIDE_MS fires. */
+ *  shape): a released toast's node leaves when TOAST_FADE_MS fires (PLUS-ONLY: Plus's fade). */
 function fakeClock() {
   const due = [];
   let id = 0;
@@ -101,7 +102,7 @@ function fakeClock() {
 const withSkin = (skin, fn) => {
   const had = Object.hasOwn(globalThis, 'location') ? globalThis.location : undefined;
   const hadDoc = Object.hasOwn(globalThis, 'document') ? globalThis.document : undefined;
-  globalThis.location = { search: `?skin=${skin}${skin === 'enhanced' ? '&plus=0' : ''}` };   // PLUS-DEFAULT: these pin PLAIN Enhanced's toasts (Plus fades them longer - enhancedNotice.js TOAST_FADE_MS), so they say so
+  globalThis.location = { search: `?skin=${skin}` };   // PLUS-ONLY: the enhanced skin is Plus's, so a toast leaves on its fade (TOAST_FADE_MS), a box on its slide
   const clock = fakeClock();
   try { return fn(clock); } finally {
     if (had === undefined) delete globalThis.location; else globalThis.location = had;
@@ -207,7 +208,7 @@ test('ENH-NOTICE3: under the enhanced skin each PopupText row is a TOAST in the 
     h.draw(recorder(), CANVAS, null);
     assert.equal(toasts[0].className, 'notice notice-toast notice-out', 'mutants: a spent row left standing (the face only ever grows); the popped row hidden rather than slid out');
     assert.deepEqual(rowsOf(toastsOf(doc, h)), ['You found 5 gold pieces.', 'The door is locked.']);
-    clock.fire(NOTICE_SLIDE_MS);
+    clock.fire(TOAST_FADE_MS);
     assert.ok(toasts[0].removed, 'the node leaves after the slide');
     assert.equal(toastsOf(doc, h).length, 2);
     assert.equal(toastsOf(doc, h)[0], toasts[1], 'the rows still queued kept their nodes');
@@ -215,7 +216,7 @@ test('ENH-NOTICE3: under the enhanced skin each PopupText row is a TOAST in the 
     // ...and the last pop takes the stack with it.
     h.tick(10);
     h.draw(recorder(), CANVAS, null);
-    clock.fire(NOTICE_SLIDE_MS);
+    clock.fire(TOAST_FADE_MS);
     assert.equal(stackOf(doc), null, 'mutant: the stack outlives its last panel');
     assert.deepEqual(enhancedNoticeKeys(), [], 'and no panel is left registered');
   });
@@ -407,11 +408,11 @@ test('AUDIT FONT F1: two PopupText models, two sets of toasts in ONE stack - a d
     // EVERY ALLOCATION HAS AN OWNER: a dungeon context ends inside a
     // session (scenes/dungeonContext.js destroy), and takes its toasts.
     dungeon.dispose();
-    clock.fire(NOTICE_SLIDE_MS);
+    clock.fire(TOAST_FADE_MS);
     assert.equal(toastsOf(doc, dungeon).length, 0, 'mutant: dispose a no-op, so a torn-down context\'s rows outlive it');
     assert.deepEqual(rowsOf(toastsOf(doc, town)), ['A dog barks somewhere behind you.'], 'and it takes only its own');
     town.dispose();
-    clock.fire(NOTICE_SLIDE_MS);
+    clock.fire(TOAST_FADE_MS);
     assert.equal(stackOf(doc), null, 'mutant: the stack outlives its last panel');
   });
 });

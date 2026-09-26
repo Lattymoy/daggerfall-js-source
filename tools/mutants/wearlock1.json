@@ -1,0 +1,119 @@
+[
+  {
+    "name": "WEAR-UI-every-piece-barred",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  if (item.group !== 'Weapons' && item.group !== 'Armor' && !isLightSource(item)) return null;\n",
+    "new": "",
+    "tests": [
+      "test/wearlock1.test.js"
+    ]
+  },
+  {
+    "name": "WEAR-UI-the-arrow-barred",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "!((item.maxCondition ?? 0) > 0) || isAmmunition(item) || isSurvivalItem(item)",
+    "new": "!((item.maxCondition ?? 0) > 0) || isSurvivalItem(item)",
+    "tests": [
+      "test/wearlock1.test.js"
+    ]
+  },
+  {
+    "name": "WEAR-UI-no-bar-on-the-grid",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  row.append(tileWithWear(line, row));",
+    "new": "  row.append(itemTile(line));",
+    "tests": [
+      "test/wearlock1.test.js"
+    ]
+  },
+  {
+    "name": "WEAR-UI-no-bar-on-the-body",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  b.append(tileWithWear(line, b));   // WEAR-UI: what you wear, worn down, without a hover",
+    "new": "  b.append(itemTile(line));",
+    "tests": [
+      "test/wearlock1.test.js"
+    ]
+  },
+  {
+    "name": "WEAR-UI-the-broken-track-unmarked",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "${pct <= 0 ? ' broken' : ''}",
+    "new": "",
+    "tests": [
+      "test/wearlock1.test.js"
+    ]
+  },
+  {
+    "name": "DBLEQUIP-the-pair-unguarded-by-the-clock",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "lastClick.key === key && at - lastClick.at <= DOUBLE_CLICK_MS ?",
+    "new": "lastClick.key === key ?",
+    "tests": [
+      "test/wearlock1.test.js"
+    ]
+  },
+  {
+    "name": "DBLEQUIP-a-key-press-pairing",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "if (!Number.isFinite(at) || !e.detail) {",
+    "new": "if (!Number.isFinite(at)) {",
+    "tests": [
+      "test/wearlock1.test.js"
+    ]
+  },
+  {
+    "name": "DBLEQUIP-a-single-click-undressing",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    if (equipByDoubleClick(secondClick(`worn:${fam.label}`, top.item, e))) return;",
+    "new": "    if (equipByDoubleClick(top.item)) return;",
+    "tests": [
+      "test/wearlock1.test.js"
+    ]
+  },
+  {
+    "name": "LOCK1-the-drop-unguarded",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  if (remote?.kind === 'ground' && lockRefuses(item, 'drop')) {\n",
+    "new": "  if (false) {\n",
+    "tests": [
+      "test/wearlock1.test.js"
+    ]
+  },
+  {
+    "name": "LOCK1-the-padlock-never-marked",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  if (isLocked(item)) node.dataset.locked = '';",
+    "new": "",
+    "tests": [
+      "test/wearlock1.test.js"
+    ]
+  },
+  {
+    "name": "LOCK1-unlocked-written-as-false",
+    "file": "src/systems/itemLock.js",
+    "old": "  else delete item.locked;",
+    "new": "  else item.locked = false;",
+    "tests": [
+      "test/wearlock1.test.js"
+    ]
+  },
+  {
+    "name": "LOCK1-the-wagon-closed",
+    "file": "src/systems/itemLock.js",
+    "old": "Object.freeze(['drop', 'sell', 'trade'])",
+    "new": "Object.freeze(['drop', 'sell', 'trade', 'stow'])",
+    "tests": [
+      "test/wearlock1.test.js"
+    ]
+  },
+  {
+    "name": "LOCK1-a-lock-that-sells",
+    "file": "src/ui/enhancedTrade.js",
+    "old": "  if (selling() && lockRefuses(item, 'sell')) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/wearlock1.test.js"
+    ]
+  }
+]

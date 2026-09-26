@@ -187,8 +187,8 @@ test('DISC13-B: the Bandage card offers Use, and Use heals Min(medical/3, MaxHea
   _resetModSettings();
   const e = medic([bandage()]);
   withBandageCard(e, ({ acts, press }) => {
-    // PLUS10: Enhanced Plus - the default dress since PLUS-DEFAULT - adds Info to every card, last
-    assert.deepEqual(acts(), ['Drop', 'Use', 'Info'], 'the card icebreyker saw showed Drop alone');
+    // PLUS10: Enhanced Plus - the default dress since PLUS-DEFAULT - adds Info to every card, last; LOCK1 the lock before it
+    assert.deepEqual(acts(), ['Drop', 'Use', 'Lock', 'Info'], 'the card icebreyker saw showed Drop alone');
     press('Use');
   });
   assert.equal(e.health, 35, 'medical 45 / 3 = 15 healed');
@@ -201,7 +201,7 @@ test('DISC13-B: with bandaging off the handler hands the click back, so the card
   setModSetting('roleplay-realism-items', 'bandaging', false);
   assert.equal(usableItem(bandage()), false);
   assert.equal(useItem(bandage(), [bandage()], { entity: medic([]) }).kind, 'none', 'and a Use would have said nothing');
-  withBandageCard(medic([bandage()]), ({ acts }) => assert.deepEqual(acts(), ['Drop', 'Info']));   // PLUS10's Info, as above
+  withBandageCard(medic([bandage()]), ({ acts }) => assert.deepEqual(acts(), ['Drop', 'Lock', 'Info']));   // PLUS10's Info and LOCK1's lock, as above
   setModSetting('roleplay-realism-items', 'bandaging', true);
   assert.equal(usableItem(bandage()), true, 'back on: back');
   setModSetting('roleplay-realism-items', 'Enabled', false);

@@ -83,6 +83,8 @@ import { inventoryItemImage } from '../systems/itemTemplates.js';
 import { quickslotTag, quickslotOffTag, quickslotSpellTag, tagKey, CELL_ACTIONS } from './quickslotTags.js';   // QS6: the caption's spell chip names its own action
 import { glyphSvg, padFamily } from './padGlyphs.js';
 import { hdGlyphSvg } from './padGlyphsHD.js';   // PADPLUS1: Plus draws the pad's buttons as vectors
+import { rarityAttr } from '../systems/lootRarity.js';   // RARITY-UI: a quickslot cell's frame wears its item's tier
+import { validSigil } from '../systems/sigil.js';   // SIGIL-UI: and a sigil weapon's rune
 import { controllerLook } from '../player/lookFilter.js';   // GP1's own latch: "the last input was the pad"
 import { bindings } from './input.js';
 // (breathShortThreshold lives in hud.js, imported below with compassScroll)
@@ -1086,6 +1088,15 @@ function drawSpellChip(view, tag) {
  *  that ticked is not a reason to re-request a picture. */
 function quickCell(part, slot, s) {
   const cls = part.cell.classList;
+  // RARITY-UI / SIGIL-UI: the cell's frame wears its item's tier and a sigil weapon's rune, written on a change only
+  const worn = s.socket ? null : s.item;
+  const frameKey = worn ? `${rarityAttr(worn) ?? ''}|${validSigil(worn.sigil) ? 1 : 0}` : '';
+  if (last[`${slot}Frame`] !== frameKey) {
+    last[`${slot}Frame`] = frameKey;
+    const rar = worn ? rarityAttr(worn) : null;
+    if (rar) part.cell.dataset.rarity = rar; else delete part.cell.dataset.rarity;
+    if (worn && validSigil(worn.sigil)) part.cell.dataset.sigil = ''; else delete part.cell.dataset.sigil;
+  }
   const state = `${s.socket ? 's' : ''}${s.sheathed ? 'h' : ''}${s.ghost ? 'g' : ''}`;
   if (last[`${slot}State`] !== state) {
     last[`${slot}State`] = state;

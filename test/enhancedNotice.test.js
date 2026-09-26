@@ -17,6 +17,7 @@ import {
   noticeHold, drawEnhancedToasts, releaseEnhancedToasts, enhancedToastOwners,
   _setNoticeClockForTests, ENHANCED_NOTICE_ID, NOTICE_SLIDE_MS, NOTICE_WATCHDOG_MS, NOTICE_HINT,
 } from '../src/ui/enhancedNotice.js';
+import { TOAST_FADE_MS } from '../src/ui/enhancedFrame.js';   // PLUS-ONLY: a toast's own fade
 import { ActionTextBox, ActionInputBox } from '../src/ui/actionText.js';
 import { enhancedInputBoxOwner } from '../src/ui/enhancedInputBox.js';   // AUDIT HCC U5
 import { StatusReadout } from '../src/ui/statusBox.js';   // STATUS-LIVE: the one box whose caption is not ClickAnywhereToClose
@@ -65,8 +66,8 @@ function fakeClock() {
 const withSkin = (skin, fn, { doc = fakeDocument() } = {}) => {
   const had = Object.hasOwn(globalThis, 'location') ? globalThis.location : undefined;
   const hadDoc = Object.hasOwn(globalThis, 'document') ? globalThis.document : undefined;
-  // PLUS-DEFAULT: these pins read plain Enhanced's slide; Plus's toast fade is hudtext.test.js's
-  globalThis.location = { search: `?skin=${skin}${skin === 'enhanced' ? '&plus=0' : ''}` };
+  // PLUS-ONLY: the enhanced skin is Plus's - a box leaves on its slide (NOTICE_SLIDE_MS), a toast on its fade (TOAST_FADE_MS)
+  globalThis.location = { search: `?skin=${skin}` };
   if (doc) globalThis.document = doc;
   try { return fn(doc); } finally {
     if (had === undefined) delete globalThis.location; else globalThis.location = had;
@@ -516,7 +517,7 @@ test('ENH-NOTICE3: drawEnhancedToasts - one panel per row id under the owner, re
     drawEnhancedToasts({ rows: ['b'], ids: [2] }, doc, 'town1');
     assert.equal(out[0].className, 'notice notice-toast notice-out', 'mutants: the popped row left standing; the class dropped on release');
     assert.equal(out[1].className, 'notice notice-toast notice-in', 'mutant: every toast released on a pop (index keys)');
-    clock.fire(NOTICE_SLIDE_MS);
+    clock.fire(TOAST_FADE_MS);
     assert.ok(out[0].removed);
     // hidden as one, with an EMPTY frame (HudText.hide's shape) - not released
     drawEnhancedToasts({ rows: [], ids: [], visible: false }, doc, 'town1');
@@ -601,7 +602,7 @@ test('ENH-NOTICE3 (AUDIT A2): a toast the WATCHDOG sweeps leaves its owner\'s id
     assert.deepEqual(enhancedToastOwners(), ['town1']);
     // the draws stop (a backgrounded tab, a host gone without dispose): the watchdog sweeps
     clock.fire(NOTICE_WATCHDOG_MS);
-    clock.fire(NOTICE_SLIDE_MS);
+    clock.fire(TOAST_FADE_MS);
     assert.deepEqual(enhancedNoticeKeys(), [], 'the panels went');
     assert.deepEqual(enhancedToastOwners(), [], 'mutant: the owner\'s set outlives its panels - garbage per abandoned model, and a resumed draw counting rows it has no panel for');
     // a row popped while the frame is COVERED: released, not merely hidden

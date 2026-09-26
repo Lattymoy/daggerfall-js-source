@@ -12,6 +12,13 @@ import { GATE_RING_CSS } from './gateMapMark.js';
 
 /** Where it stands: under the compass strip, centred. */
 export const GATE_BANNER_TOP = '64px';
+/** PLUS-DRESS (2026-09-26): the banner's look as a class, so a skin's sheet can dress it (ui/enhancedPlusStyle.js). */
+export const GATE_BANNER_STYLE_ID = 'dagger-gate-banner-style';
+export const GATE_BANNER_CSS = `
+.wb-gate-banner { position: fixed; left: 50%; top: ${GATE_BANNER_TOP}; transform: translateX(-50%); pointer-events: none;
+  z-index: 30; font: 600 15px 'Cormorant', Georgia, serif; letter-spacing: 0.08em; text-transform: uppercase;
+  color: ${GATE_RING_CSS}; text-shadow: 0 0 3px #000, 0 0 8px rgba(0,0,0,0.9), 0 0 14px rgba(255,70,30,0.45); white-space: nowrap; }
+`;
 
 let node = null;
 let shown = '';
@@ -21,11 +28,14 @@ export function drawGateBanner(text, { hidden = false, doc = globalThis.document
   const want = !hidden && typeof text === 'string' && text ? text : '';
   if (!node) {
     if (!want || !doc?.createElement) return;
+    if (doc.getElementById && !doc.getElementById(GATE_BANNER_STYLE_ID)) {
+      const st = doc.createElement('style');
+      st.id = GATE_BANNER_STYLE_ID;
+      st.textContent = GATE_BANNER_CSS;
+      (doc.head ?? doc.body)?.append(st);
+    }
     node = doc.createElement('div');
     node.className = 'wb-gate-banner';
-    node.style.cssText = `position:fixed;left:50%;top:${GATE_BANNER_TOP};transform:translateX(-50%);pointer-events:none;`
-      + `z-index:30;font:600 15px 'Cormorant', Georgia, serif;letter-spacing:0.08em;text-transform:uppercase;`
-      + `color:${GATE_RING_CSS};text-shadow:0 0 3px #000, 0 0 8px rgba(0,0,0,0.9), 0 0 14px rgba(255,70,30,0.45);white-space:nowrap`;
     (doc.body ?? doc.documentElement)?.append(node);
   }
   if (want === shown) return;

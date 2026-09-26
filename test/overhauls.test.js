@@ -23,7 +23,7 @@ const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 const manifest = JSON.parse(rd('vendor/grimoire-ui/grimoire-ui.files.json'));
 beforeEach(() => _resetForTests());
 
-test('OVH1: three panels, Texture, Sound and UI in that order; Texture stands EMPTY until a texture pack ships (OVH1b); Sound is Classic and Enhanced; UI is Classic, Enhanced, Enhanced Plus and GrimoireUI (mutants: a texture look back on the panel; a panel dropped)', () => {
+test('OVH1: three panels, Texture, Sound and UI in that order; Texture stands EMPTY until a texture pack ships (OVH1b); Sound is Classic and Enhanced; UI is Classic, Enhanced Plus and GrimoireUI - PLUS-ONLY retired plain Enhanced (mutants: a texture look back on the panel; a panel dropped)', () => {
   assert.deepEqual(OVERHAUL_PANELS.map((p) => p.id), ['texture', 'sound', 'ui']);
   assert.deepEqual(OVERHAUL_PANELS.map((p) => p.title), ['Texture Overhaul', 'Sound Overhaul', 'UI Overhaul']);
   const [tex, snd, ui] = OVERHAUL_PANELS;
@@ -31,8 +31,8 @@ test('OVH1: three panels, Texture, Sound and UI in that order; Texture stands EM
   assert.equal(tex.empty, 'No texture packs yet.');
   assert.equal(currentOption(tex), null);
   assert.deepEqual(snd.options.map((o) => o.id), ['classic', 'enhanced']);
-  assert.deepEqual(ui.options.map((o) => o.name), ['Classic', 'Enhanced', 'Enhanced Plus', 'GrimoireUI']);
-  assert.match(ui.options[3].by, /LordSquacquerone, version 1\.2/, 'the pack wears its author and version');
+  assert.deepEqual(ui.options.map((o) => o.name), ['Classic', 'Enhanced Plus', 'GrimoireUI']);
+  assert.match(ui.options[2].by, /LordSquacquerone, version 1\.2/, 'the pack wears its author and version');
 });
 
 test('OVH1: a Sound look reads and writes the SAME Features rows its tiles do - Classic turns both off, Enhanced both on, and a mix made on Features reads Custom, never a look (mutants: the preset writing one row; Custom read as a look)', () => {
@@ -53,7 +53,7 @@ test('OVH1: a Sound look reads and writes the SAME Features rows its tiles do - 
 
 test('OVH1/OVH2: a UI look is the skin and the pack over it - wearing one lands both on the shelf and reloads; a shelf that refuses the write carries the choice on the URL instead (SKIN-CARRY\'s law); GrimoireUI is in use only on the classic skin wearing the pack (mutants: the pack set without the skin; Classic reading GrimoireUI as in use)', () => {
   const ui = OVERHAUL_PANELS[2];
-  const [classic, , plusLook, grim] = ui.options;
+  const [classic, plusLook, grim] = ui.options;
   assert.equal(currentOption(ui), plusLook, 'the default look - PLUS-DEFAULT: Enhanced Plus');
   const r = grim.apply();
   assert.equal(r.reload, true);
@@ -213,40 +213,33 @@ test('OVH2 by source: the classic art doors ask the pack first - the HUD\'s own 
   assert.match(pd, /if \(_live\.packBg\) \{[^\n]*\n\s*const \{ tex, w, h \} = _live\.packBg, \[sx, sy\] = BG_SUBRECT;\s*renderer\.drawScreenQuad\(tex, dst,/);
 });
 
-test('PLUS1: Enhanced Plus is the enhanced skin with its own shelf key - wearing it keeps skin=enhanced and turns the key on, Enhanced turns it off again, a refused shelf carries ?plus on the URL, and each reads as in use only for its own key (mutants: Plus written as a third skin; Enhanced reading Plus as in use)', async () => {
-  const { isEnhanced, isEnhancedPlus, plusOverride } = await import('../src/systems/uiSkin.js');
+test('PLUS-ONLY: plain Enhanced is retired - the UI panel offers Classic, Enhanced Plus and GrimoireUI; Plus IS the enhanced skin, whatever a retired shelf key or `?plus=0` says, and never the classic one (mutants: the seam still reading the key; still reading ?plus; answering yes on classic)', async () => {
+  const { isEnhanced, isEnhancedPlus, SKIN_NAMES } = await import('../src/systems/uiSkin.js');
   const ui = OVERHAUL_PANELS[2];
-  const [classic, enhanced, plus] = ui.options;
+  const [classic, plus] = ui.options;
   assert.equal(plus.id, 'enhanced-plus');
-  assert.equal(currentOption(ui), plus, 'PLUS-DEFAULT: a fresh shelf is Enhanced Plus - plain Enhanced is the player\'s pick');
+  assert.equal(plus.name, 'Enhanced Plus');
+  assert.equal(SKIN_NAMES.enhanced, 'Enhanced Plus', 'the enhanced skin wears the one name everywhere it is read');
+  assert.ok(!ui.options.some((o) => o.id === 'enhanced'), 'no plain Enhanced look');
+  assert.equal(currentOption(ui), plus, 'a fresh shelf is Enhanced Plus');
   assert.equal(isEnhancedPlus(''), true);
+  setPref('enhancedPlus', false);   // a player who picked plain Enhanced before it was retired
+  assert.equal(isEnhancedPlus(''), true, 'the retired key is read by nothing - they come back in Plus');
+  assert.equal(isEnhancedPlus('?plus=0'), true, 'and a retired ?plus=0 on an old bookmark asks for nothing');
+  assert.equal(currentOption(ui), plus);
   const r = plus.apply();
   assert.equal(r.reload, true);
   assert.equal(getPref('skin'), 'enhanced', 'Plus is not a third skin');
-  assert.equal(getPref('enhancedPlus'), true);
-  assert.equal(new URL(r.url).searchParams.get('plus'), null, 'the shelf took it');
   assert.equal(isEnhanced(''), true, 'every enhanced mount site still answers yes');
-  assert.equal(isEnhancedPlus(''), true);
-  assert.equal(currentOption(ui), plus);
-  assert.equal(enhanced.isOn(), false);
-  enhanced.apply();
-  assert.equal(getPref('enhancedPlus'), false);
-  assert.equal(currentOption(ui), enhanced);
   classic.apply();
-  setPref('enhancedPlus', true);
-  assert.equal(isEnhancedPlus(''), false, 'the key means nothing on the classic skin');
+  assert.equal(isEnhancedPlus(''), false, 'never on the classic skin - its canvas windows stay classic');
   assert.equal(currentOption(ui), classic);
-  assert.equal(plusOverride('?plus=1'), true);
-  assert.equal(plusOverride('?plus=0'), false);
-  assert.equal(plusOverride('?plus=maybe'), null, 'a typo is no instruction');
-  globalThis.localStorage = { getItem: () => null, setItem: () => { throw new Error('blocked'); } };
-  try {
-    const refused = new URL(uiChoiceUrl('enhanced', 'none', 'http://x/play/', true));
-    assert.equal(refused.searchParams.get('plus'), '1');
-  } finally { delete globalThis.localStorage; }
+  const back = new URL(uiChoiceUrl('enhanced', 'none', 'http://x/play/?plus=0&nointro'));
+  assert.equal(back.searchParams.get('plus'), null, 'an old ?plus is cleared off the address with the other carriers');
+  assert.equal(back.searchParams.get('nointro'), '');
 });
 
-test('PLUS1: plain Enhanced loads none of the refresh - the enhanced sheet carries no kit, no dialog, no motion; the Plus sheet carries them all with the kit last', async () => {
+test('PLUS1: the enhanced sheet is the base and carries none of the refresh - the kit, the dialog and the motion are the Plus sheet\'s, laid over it with the kit last (PLUS-ONLY: every enhanced page lays both)', async () => {
   const { ENHANCED_CSS } = await import('../src/ui/enhancedStyle.js');
   const { PLUS_CSS } = await import('../src/ui/enhancedPlusStyle.js');
   for (const mark of ['FRAME1: THE STONE-AND-BRASS KIT', 'DLG1: THE DECISION BOX', 'WM1: WINDOWS UNFOLD', 'PORT5: THE PORTED WINDOWS', 'VB2: THE VITALS, DRESSED']) {

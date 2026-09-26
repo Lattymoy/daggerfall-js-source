@@ -5032,7 +5032,8 @@ export function injectEnhancedStyle(doc = document) {
   el.textContent = ENHANCED_CSS;
   doc.head.append(el);
   // PLUS1: ENHANCED PLUS is this sheet with the refresh laid over it - a second sheet, after this one, so its rules
-  // win by order - and the window motion with it. Plain Enhanced gets neither and is untouched.
+  // win by order - and the window motion with it. PLUS-ONLY (2026-09-26): plain Enhanced is retired, so every enhanced
+  // page lays it (isEnhancedPlus answers what isEnhanced does); the guard keeps a classic page's import sheet-free.
   if (isEnhancedPlus() && !doc.getElementById(PLUS_STYLE_ID)) {
     const plus = doc.createElement('style');
     plus.id = PLUS_STYLE_ID;

@@ -73,12 +73,23 @@
     ]
   },
   {
-    "name": "PLUS-DEFAULT-plus-off-again",
-    "file": "src/systems/uiPrefs.js",
-    "old": "  enhancedPlus: true,",
-    "new": "  enhancedPlus: false,",
+    "name": "PLUS-ONLY-the-seam-reads-plus-again",
+    "file": "src/systems/uiSkin.js",
+    "old": "export const isEnhancedPlus = (search) => isEnhanced(search);",
+    "new": "export const isEnhancedPlus = (search) => isEnhanced(search) && !/[?&]plus=0/.test(search ?? '');",
     "tests": [
       "test/overhauls.test.js"
-    ]
+    ],
+    "why": "PLUS-ONLY (2026-09-26) retired plain Enhanced, and with it PLUS-DEFAULT's switch: a retired ?plus=0 on an old bookmark must ask for nothing"
+  },
+  {
+    "name": "PLUS-ONLY-yes-on-classic",
+    "file": "src/systems/uiSkin.js",
+    "old": "export const isEnhancedPlus = (search) => isEnhanced(search);",
+    "new": "export const isEnhancedPlus = (search) => true;",
+    "tests": [
+      "test/overhauls.test.js"
+    ],
+    "why": "the seam never answers yes on the classic skin - its canvas windows stay classic"
   }
 ]

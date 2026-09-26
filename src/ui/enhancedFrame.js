@@ -16,6 +16,8 @@
 //   button   something you press: raised bevel, a lit top band and a
 //            drop - it goes brass on hover, sinks when pressed
 //   primary  the one press a screen is for: the button, in brass
+//   warn     a press that costs something (leave, remove, challenge):
+//            the button's edge in blood rather than brass
 //   tile     a pickable cell in a dense grid: the button without the
 //            drop, so a grid of fifty does not turn into noise
 //   chip     a small readout that is never pressed (HUD effects, tags)
@@ -60,7 +62,10 @@ export const TOAST_FADE_MS = 700;
 export const FRAME_ROLES = {
   window: ['.dlg-win', '.px-win', '.pack-win', '.loot-win', '.px-about', '.px-profile', '.hmbox',
     // PLUS8: the journey's bar (ui/enhancedTravelControl.js) - carved stone, brass fittings, the theme's ground
-    '.travelpanel-bar'],
+    '.travelpanel-bar',
+    // PLUS-DRESS (2026-09-26, Mac: "ensure any of the new UI elements are also a part of how enhanced plus looks"): the
+    // decorator (HOME2/DECOR1) is a whole window over the room - the pack's own carved frame, not a rounded card
+    'body .dfdecor-card'],
   // the talk panel is a .px-win whose own ground rule outweighs .px-win's
   windowGround: ['.talk-shell .talk-panel'],
   panel: ['.port-host .port-card', '.pack-shell .packdetail .card', '.pack-shell .card', '.hmcard', '.px-sys .card', '.px-sys .dcard',
@@ -81,9 +86,12 @@ export const FRAME_ROLES = {
     // selectors carry a leading body to outweigh them
     'body .dfsocial', 'body .dfprofile-card', 'body .dfchat-box',
     // PLUS7: the inventory's hover card and right-click menu
-    '.inv-tip > .card', '.inv-menu', '.inv-info > .card', '.pbind > .card'],   // PLUS10: and the Info box; PADPLUS10: the bindings window
+    '.inv-tip > .card', '.inv-menu', '.inv-info > .card', '.pbind > .card',   // PLUS10: and the Info box; PADPLUS10: the bindings window
+    // PLUS-DRESS: the online lane's newer boxes - a journal page held out (JOURNAL1), the F-menu, the party
+    // invitation and the duel challenge over the screen (DUEL1), and the decorator's placing bar
+    'body .dfpage-card', 'body .dfpeer-card', 'body .dfsocial-toast', 'body .dfduel-toast', 'body .dfdecor-bar'],
   // panels that carry a brass edge on the left as their own mark
-  panelAccent: ['.notice', '.inputbox'],
+  panelAccent: ['.notice', '.inputbox', 'body .dfsocial-toast', 'body .dfdecor-bar'],   // PLUS-DRESS: the two that wore a brass line
   button: ['.port-host .port-btn', '.inv-info .act', '.pbind .act', '.px-sys .act', '.shell .act', '.px-win .card .act', '.pack-shell .act', '.px-setwrap .act',
     '.px-setwrap .step', '.shell .step', '.wizard .bigbtn', '.wizard .reflexbtn', '.lv-pick .lv-arrow',
     '.lv-pick .lv-press', '.shell .look-arrow', '.cr-shell .cr-rm', '.px-winclose', '.talk-head .act', '.talk-say .act',
@@ -101,8 +109,13 @@ export const FRAME_ROLES = {
     // PLUS6: the shop's category tabs are buttons now (the examples' stone buttons), the chosen one brass
     '.trade-shell .packtab',
     // PLUS8: the journey bar's Map / Camp / Exit and the time stepper's two presses
-    '.travelpanel-act', '.travelpanel-step'],
-  primary: ['.lv-ok', '.hmroot .act'],
+    '.travelpanel-act', '.travelpanel-step',
+    // PLUS-DRESS: the page's, the F-menu's (its Cancel stays a line of text), the duel's and the decorator's
+    'body .dfpage-btn', 'body .dfpeer-btn:not(.cancel)', 'body .dfduel-btn', 'body .dfprofile-duel', 'body .dfdecor-btn', 'body .dfdecor-open'],
+  primary: ['.lv-ok', '.hmroot .act', 'body .dfdecor-place'],   // PLUS-DRESS: Place is what the decorator is for
+  // PLUS-DRESS: a press that COSTS something - leave or disband a guild, remove a member, challenge a player - the
+  // button in blood rather than brass (the low-health frame's red). Each is a button above as well; this is its edge.
+  warn: ['body .dfsocial-btn.warn', 'body .dfprofile-duel'],
   tile: ['.port-host .port-tile', '.port-host .port-iconcell', '.pack-shell .itemrow', '.pack-shell .equipped .wornrow', '.pack-shell .wornsock', '.wizard .racegrid button',
     '.wizard .facegrid button', '.shell .ft-tile', '.shell .ft-seg', '.shell .ft-mchip', '.shell .ft-tile-more',   // FT18: a condensed tile's parts toggle
     '.sb-shell .sb-chip', '.cr-shell .sb-chip', '.piletab',
@@ -111,7 +124,8 @@ export const FRAME_ROLES = {
     // PLUS6: the shop's shelf rows and the tavern's dishes left this role - they are the lines of a list (listRow below)
     // PLUS4: the held map's own pair of options (Speed/Passage/Rest) - a pickable cell in a row of
     // two, same as any other tile; its OWN .on state keeps its brass mark (below), not the kit's
-    '.hmpick'],
+    '.hmpick',
+    'body .dfdecor-chip'],   // PLUS-DRESS: the decorator's filters and modes - pickable cells, the chosen one brass
   chip: ['.hud-eff', '.hud-need', '.hud-qspell', '.hud-qstag', '.hud-readied', '.lv-note-key',
     '.shell .subbtn .count', '.hb .hb-caption'],
   well: ['.trade-shell .packcol', '.shell .ft-search', '.shell .ft-tile-drawer',   // FT18: the Features search and a tile's opened drawer
@@ -119,9 +133,11 @@ export const FRAME_ROLES = {
     '.talk-face', '.pack-shell .figure-doll', '.pack-shell .wornmap-doll.noart', '.shell .look-pic',
     '.shell .dcard code', '.px-setwrap .dcard code', '.px-meter', '.shell .swatch', '.px-setwrap .swatch',
     // PLUS8: the journey bar's time readout - the x40 sits in a socket between its two presses
-    '.travelpanel-accel'],
+    '.travelpanel-accel',
+    // PLUS-DRESS: the page's leaf, the decorator's list, preview, thumbnails and search, the party's portraits
+    'body .dfpage-leaf', 'body .dfdecor-list', 'body .dfdecor-preview', 'body .dfdecor-thumb', 'body .dfdecor-search', 'body .dfparty-face'],
   input: ['.shell .ft-search', '.wizard .namebox', '.sb-shell .sb-rename input', '.cr-shell .cr-compose input', '.hmsearch input',
-    'body .dfsocial-field', 'body .dfchat-input'],
+    'body .dfsocial-field', 'body .dfchat-input', 'body .dfdecor-search'],
   meterFill: ['.px-fill'],
   header: ['.port-host .port-head', '.px-win .px-tabs', '.talk-head', '.sb-shell .sb-top', '.cr-shell .sb-top', '.trade-shell .sb-top',
     '.tavern-shell .sb-top', '.pack-shell .pack-id', '.hmbox-title', '.loot-win .remotehead',
@@ -129,16 +145,19 @@ export const FRAME_ROLES = {
     // remotehead already wears, just never scoped for the trade counter's own copy of that markup
     '.trade-shell .remotehead',
     'body .dfsocial-head', 'body .dfchat-tabs', 'body .dfsocial-tabs'],
-  headerRule: ['.shell .ft-drawer-label', '.pack-shell .card h3', '.hmcard h3', '.hmcard h2', '.lv-crown', '.talk-modes', '.talk-cats'],
+  headerRule: ['.shell .ft-drawer-label', '.pack-shell .card h3', '.hmcard h3', '.hmcard h2', '.lv-crown', '.talk-modes', '.talk-cats',
+    'body .dfsocial-sec', 'body .dfpeer-name', 'body .dfdecor-head'],   // PLUS-DRESS: the Social panel's section heads (the Guild tab's), the F-menu's name
   footer: ['.port-host .port-foot', '.dlg-shell .dlg-acts', '.trade-shell .trade-footer', '.pack-shell .pack-dock', '.pack-shell .packbar', '.talk-say'],
   footerRule: ['.lv-foot', '.wizard .actionbar'],
   rule: ['.port-host .port-stat', '.px-stat', '.px-sys .row', '.shell .row', '.px-setwrap .row', '.hmresult', '.hmpair', '.cr-shell .cr-head',
-    'body .dfprofile-head', 'body .dfsocial-letterhead'],
+    'body .dfprofile-head', 'body .dfsocial-letterhead',
+    'body .dfsocial-row'],   // PLUS-DRESS: a friend's, a party seat's, a guild member's row - an engraved line under each
   // rules that sit ABOVE their content
   ruleTop: ['.px-qarch', '.wplaque-list', 'body .dfchat-form'],
   // a list whose rows are lines, not boxes: the loot window's rows
   // (they are .pack-shell .itemrow too, so this outweighs the tile role)
-  listRow: ['.pack-shell .loot-win .itemrow', '.trade-shell .itemrow'],   // PLUS6: the shop's shelf and basket rows too
+  listRow: ['.pack-shell .loot-win .itemrow', '.trade-shell .itemrow',   // PLUS6: the shop's shelf and basket rows too
+    'body .dfdecor-row'],   // PLUS-DRESS: the decorator's catalogue
   // the fading wing rules and dividers of the quest page
   wing: ['.px-qwing'],
   wingFlip: ['.px-qwing.px-flip'],
@@ -153,7 +172,12 @@ export const FRAME_ROLES = {
   qrow: ['.port-host .port-row', '.pick-shell .pick-row', '.px-qrow', '.talk-row'],
   // everything in the online lane's panels that was rounded
   square: ['body .dfsocial', 'body .dfprofile-card', 'body .dfchat-box', 'body .dfsocial-btn', 'body .dfsocial-close',
-    'body .dfprofile-close', 'body .dfsocial-field', 'body .dfchat-input'],
+    'body .dfprofile-close', 'body .dfsocial-field', 'body .dfchat-input',
+    // PLUS-DRESS: and everything the lane grew since
+    'body .dfsocial-toast', 'body .dfsocial-badge', 'body .dfsocial-letter', 'body .dfprofile-renown', 'body .dfprofile-duel',
+    'body .dfpage-card', 'body .dfpage-leaf', 'body .dfpage-btn', 'body .dfpeer-card', 'body .dfpeer-btn',
+    'body .dfduel-toast', 'body .dfduel-btn', 'body .dfdecor-card', 'body .dfdecor-open', 'body .dfdecor-search', 'body .dfdecor-chip',
+    'body .dfdecor-list', 'body .dfdecor-thumb', 'body .dfdecor-preview', 'body .dfdecor-btn', 'body .dfdecor-bar'],
 };
 
 const list = (sels, suffix = '') => sels.map((s) => `${s}${suffix}`).join(',\n');
@@ -225,6 +249,10 @@ const RAISED = `${T.stoneLit} ${T.stoneDim} ${T.stoneDark} ${T.stoneMid}`;
 const RAISED_SOFT = `${T.stoneMid} #2e2a21 ${T.stoneDark} ${T.stoneLo}`;
 const SUNK = `${T.stoneDark} ${T.stoneMid} ${T.stoneLit} ${T.stoneDim}`;
 const BRASS = `${T.brassHi} ${T.brassLo} #5c3f1a ${T.brass}`;
+// PLUS-DRESS: the warn role's edge - the low-health frame's blood (VITALS_CSS), lit from the top left like the rest
+const BLOOD = '#e0584a #5a130f #3d0d0a #b83a2e';
+const BLOOD_HI = '#ff8a76 #7a1d16 #5a130f #e0584a';
+const BLOOD_SUNK = '#3d0d0a #b83a2e #e0584a #5a130f';
 const RING = `0 0 0 1px ${T.outline}`;
 const LIT_BAND = 'linear-gradient(180deg, rgba(255,255,255,0.08) 0 2px, transparent 2px calc(100% - 3px), rgba(0,0,0,0.32) calc(100% - 3px))';
 
@@ -268,6 +296,11 @@ ${list(r.button, '.on')},
 ${list(r.button, '.primary')} {
   border-color: ${BRASS}; background-color: ${T.groundButtonHi}; background-image: ${LIT_BAND}; }
 ${list(r.primary, ':hover')}, ${list(r.primary, ':focus-visible')} { background-color: #3a2e1c; }
+/* WARN - a press that costs something: the edge in blood, brighter under the pointer (never brass), sunk while
+   held; before the disabled rule, so a warn that cannot be pressed goes flat like any other */
+${list(r.warn)} { border-color: ${BLOOD}; background-color: #241514; color: #f4dfd8; }
+${list(r.warn, ':hover:not(:disabled)')}, ${list(r.warn, ':focus-visible')} { border-color: ${BLOOD_HI}; background-color: #321b19; color: #fff3ee; }
+${list(r.warn, ':active:not(:disabled)')} { border-color: ${BLOOD_SUNK}; }
 ${list(pressable, ':active:not(:disabled)')} {
   border-color: ${SUNK}; translate: 1px 1px;
   box-shadow: ${RING}, inset 2px 2px 0 rgba(0,0,0,0.5); }

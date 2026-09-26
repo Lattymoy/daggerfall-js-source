@@ -41,8 +41,8 @@
     "tests": [
       "test/overhauls.test.js"
     ],
-    "old": "  isOn: () => uiSkin() === skin && (skin !== 'classic' || (activeUiPack()?.id ?? UI_PACK_NONE) === pack)\n    && (skin !== 'enhanced'",
-    "new": "  isOn: () => uiSkin() === skin\n    && (skin !== 'enhanced'"
+    "old": "  isOn: () => uiSkin() === skin && (skin !== 'classic' || (activeUiPack()?.id ?? UI_PACK_NONE) === pack),",
+    "new": "  isOn: () => uiSkin() === skin,"
   },
   {
     "name": "OVH-pack-worn-on-the-enhanced-skin",

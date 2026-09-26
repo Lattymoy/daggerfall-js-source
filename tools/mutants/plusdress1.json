@@ -1,0 +1,74 @@
+[
+  {
+    "name": "PLUS-DRESS-a-screen-left-out",
+    "file": "src/ui/enhancedFrame.js",
+    "old": "    'body .dfpage-card', 'body .dfpeer-card', 'body .dfsocial-toast', 'body .dfduel-toast', 'body .dfdecor-bar'],",
+    "new": "    'body .dfpeer-card', 'body .dfsocial-toast', 'body .dfduel-toast', 'body .dfdecor-bar'],",
+    "tests": [
+      "test/plusdress1.test.js"
+    ]
+  },
+  {
+    "name": "PLUS-DRESS-a-role-naming-nothing",
+    "file": "src/ui/enhancedFrame.js",
+    "old": "    'body .dfsocial-row'],",
+    "new": "    'body .dfsocial-row', 'body .dfsocial-rowz'],",
+    "tests": [
+      "test/plusdress1.test.js"
+    ]
+  },
+  {
+    "name": "PLUS-DRESS-brass-on-a-warns-hover",
+    "file": "src/ui/enhancedFrame.js",
+    "old": "${list(r.warn, ':focus-visible')} { border-color: ${BLOOD_HI};",
+    "new": "${list(r.warn, ':focus-visible')} { border-color: ${BRASS};",
+    "tests": [
+      "test/plusdress1.test.js"
+    ]
+  },
+  {
+    "name": "PLUS-DRESS-a-width-changing-edge",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": "body .dfsocial-btn { padding: 2px 6px; }",
+    "new": "body .dfsocial-btn { padding: 4px 8px; }",
+    "tests": [
+      "test/plusdress1.test.js"
+    ]
+  },
+  {
+    "name": "PLUS-DRESS-a-shorthand-edge",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": "body .dfduel-btn, body .dfdecor-btn, body .dfdecor-open { border-width: 2px; border-style: solid; }",
+    "new": "body .dfduel-btn, body .dfdecor-btn, body .dfdecor-open { border: 2px solid; }",
+    "tests": [
+      "test/plusdress1.test.js"
+    ]
+  },
+  {
+    "name": "PLUS-DRESS-the-serif-left-on-the-gate",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": "body .wb-gate-banner { ${PIXEL_FONT_CSS} font-weight: 400;",
+    "new": "body .wb-gate-banner { font-weight: 400;",
+    "tests": [
+      "test/plusdress1.test.js"
+    ]
+  },
+  {
+    "name": "PLUS-DRESS-the-paint-back-inline",
+    "file": "src/ui/gateBossBar.js",
+    "old": "  const part = (cls) => { const n = doc.createElement('div'); n.className = cls; return n; };",
+    "new": "  const part = (cls) => { const n = doc.createElement('div'); n.className = cls; n.style.cssText = 'pointer-events:none'; return n; };",
+    "tests": [
+      "test/plusdress1.test.js"
+    ]
+  },
+  {
+    "name": "PLUS-DRESS-the-bar-sheet-never-in",
+    "file": "src/ui/gateBossBar.js",
+    "old": "    st.textContent = BOSS_BAR_CSS;\n    (doc.head ?? doc.body)?.append(st);",
+    "new": "    st.textContent = BOSS_BAR_CSS;",
+    "tests": [
+      "test/plusdress1.test.js"
+    ]
+  }
+]

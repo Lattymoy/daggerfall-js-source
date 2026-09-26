@@ -33,6 +33,25 @@ export const BOSS_BAR_TEXT = Object.freeze({
 
 const css = (c) => `rgb(${Math.round(c[0] * 255)}, ${Math.round(c[1] * 255)}, ${Math.round(c[2] * 255)})`;
 
+/** PLUS-DRESS (2026-09-26): the bar's own sheet - what was written inline on each part, moved to a class so a skin's
+ *  sheet can dress it (the Enhanced Plus sheet does: ui/enhancedPlusStyle.js ONLINE_DRESS_CSS). Only what MOVES stays
+ *  inline: the fill's width, the ward shown or not, the callout's colour and the marks' places. */
+export const BOSS_BAR_STYLE_ID = 'dagger-gate-bar-style';
+export const BOSS_BAR_CSS = `
+.wb-boss-bar { position: fixed; left: 50%; top: ${BOSS_BAR_TOP}; transform: translateX(-50%); width: ${BOSS_BAR_WIDTH}px; max-width: 88vw;
+  pointer-events: none; z-index: 30; font: 600 13px 'Cormorant', Georgia, serif; letter-spacing: 0.08em; color: #f3d9c4;
+  text-shadow: 0 0 3px #000, 0 0 8px rgba(0,0,0,0.9); text-align: center; }
+.wb-boss-name { font-size: 15px; text-transform: uppercase; color: ${GATE_RING_CSS}; text-shadow: 0 0 3px #000, 0 0 10px rgba(255,70,30,0.5); }
+.wb-boss-track { position: relative; height: 12px; margin: 4px 0 3px; border: 1px solid rgba(255,120,60,0.55);
+  background: rgba(20,4,2,0.72); box-shadow: 0 0 10px rgba(0,0,0,0.8), inset 0 0 6px rgba(0,0,0,0.9); }
+.wb-boss-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 100%;
+  background: linear-gradient(180deg, #ff7a3a 0%, #c81e0c 55%, #6e0a04 100%); transition: width 180ms linear; }
+.wb-boss-mark { position: absolute; top: -2px; bottom: -2px; width: 2px; background: rgba(255,230,200,0.75); }
+.wb-boss-ward { position: absolute; inset: -2px; border: 2px solid rgba(255,220,130,0.95); box-shadow: 0 0 12px rgba(255,210,120,0.85); }
+.wb-boss-callout { font-size: 16px; text-transform: uppercase; min-height: 18px; }
+.wb-boss-foot { font-size: 12px; opacity: 0.85; }
+`;
+
 /**
  * What the bar says now, or null (no fight heard). `frac` his health's share, `marks` the phase marks, `warded` while
  * the ward stands, `callout` the attack being wound up ({ text, color } - its name in its colour), `wrath` the
@@ -59,33 +78,28 @@ let root = null, parts = null;
 let shown = { vis: '', name: '', frac: -1, warded: null, callout: '', calloutColor: '', foot: '' };
 
 function build(doc) {
-  root = doc.createElement('div');
-  root.className = 'wb-boss-bar';
-  root.style.cssText = `position:fixed;left:50%;top:${BOSS_BAR_TOP};transform:translateX(-50%);width:${BOSS_BAR_WIDTH}px;max-width:88vw;`
-    + `pointer-events:none;z-index:30;font:600 13px 'Cormorant', Georgia, serif;letter-spacing:0.08em;color:#f3d9c4;`
-    + `text-shadow:0 0 3px #000, 0 0 8px rgba(0,0,0,0.9);text-align:center`;
-  const name = doc.createElement('div');
-  name.style.cssText = `font-size:15px;text-transform:uppercase;color:${GATE_RING_CSS};text-shadow:0 0 3px #000, 0 0 10px rgba(255,70,30,0.5)`;
-  const track = doc.createElement('div');
-  track.style.cssText = 'position:relative;height:12px;margin:4px 0 3px;border:1px solid rgba(255,120,60,0.55);'
-    + 'background:rgba(20,4,2,0.72);box-shadow:0 0 10px rgba(0,0,0,0.8), inset 0 0 6px rgba(0,0,0,0.9)';
-  const fill = doc.createElement('div');
-  fill.style.cssText = 'position:absolute;left:0;top:0;bottom:0;width:100%;'
-    + 'background:linear-gradient(180deg, #ff7a3a 0%, #c81e0c 55%, #6e0a04 100%);transition:width 180ms linear';
-  const ward = doc.createElement('div');
-  ward.style.cssText = 'position:absolute;inset:-2px;border:2px solid rgba(255,220,130,0.95);'
-    + 'box-shadow:0 0 12px rgba(255,210,120,0.85);display:none';
+  if (doc.getElementById && !doc.getElementById(BOSS_BAR_STYLE_ID)) {
+    const st = doc.createElement('style');
+    st.id = BOSS_BAR_STYLE_ID;
+    st.textContent = BOSS_BAR_CSS;
+    (doc.head ?? doc.body)?.append(st);
+  }
+  const part = (cls) => { const n = doc.createElement('div'); n.className = cls; return n; };
+  root = part('wb-boss-bar');
+  const name = part('wb-boss-name');
+  const track = part('wb-boss-track');
+  const fill = part('wb-boss-fill');
+  const ward = part('wb-boss-ward');
+  ward.style.display = 'none';
   track.append(fill);
   for (const m of PHASE_AT) {
-    const tick = doc.createElement('div');
-    tick.style.cssText = `position:absolute;top:-2px;bottom:-2px;left:${(m * 100).toFixed(1)}%;width:2px;background:rgba(255,230,200,0.75)`;
+    const tick = part('wb-boss-mark');
+    tick.style.left = `${(m * 100).toFixed(1)}%`;
     track.append(tick);
   }
   track.append(ward);
-  const callout = doc.createElement('div');
-  callout.style.cssText = 'font-size:16px;text-transform:uppercase;min-height:18px';
-  const foot = doc.createElement('div');
-  foot.style.cssText = 'font-size:12px;opacity:0.85';
+  const callout = part('wb-boss-callout');
+  const foot = part('wb-boss-foot');
   root.append(name, track, callout, foot);
   (doc.body ?? doc.documentElement)?.append(root);
   parts = { name, fill, ward, callout, foot };

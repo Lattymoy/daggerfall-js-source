@@ -99,7 +99,7 @@ test('U53: encumbrance is the same expression the sheet and the classic window u
     'LIVE strength - a drained player must not be told they can carry the undrained amount');
   // ...and the OTHER half. PlayerEntity.CarriedWeight (:184) is the
   // items PLUS the gold counter's weight, and the pane composes it by
-  // hand (enhancedInventory.js:212-234) because it is handed the list
+  // hand (enhancedInventory.js:215-237) because it is handed the list
   // and not the entity - so it must still land on inventory
   // .carriedWeight's answer.
   assert.equal(m.encumbrance.now, Math.trunc(carriedWeight(e)));
@@ -2379,7 +2379,7 @@ function withDressed(search, fn) {
 const wornWords = (dom) => dom.doc.querySelectorAll('.wornslot').map((n) => n.textContent);
 
 test('PLUS9: under Enhanced Plus the chest, arms and legs are two half panels each - every worn piece shows at once', () => {
-  withDressed('?skin=enhanced&plus=1', ({ dom }) => {
+  withDressed('?skin=enhanced', ({ dom }) => {   // PLUS-ONLY: the enhanced skin is Plus's
     const pairs = dom.doc.querySelectorAll('.wornpair');
     assert.equal(pairs.length, 4, 'three split body cells and Mount | Cart (PLUS11)');
     const words = wornWords(dom);
@@ -2397,12 +2397,12 @@ test('PLUS9: under Enhanced Plus the chest, arms and legs are two half panels ea
   });
 });
 
-test('PLUS9: plain Enhanced keeps the eleven families - one Chest, one Arms, one Legs', () => {
-  withDressed('?skin=enhanced&plus=0', ({ dom }) => {   // PLUS-DEFAULT: Plus is the default dress, so plain Enhanced is asked for by name
-    assert.equal(dom.doc.querySelectorAll('.wornpair').length, 0, 'no split cells');
+test('PLUS-ONLY: plain Enhanced\'s eleven families are retired - a retired `?plus=0` asks for nothing, the pack is split', () => {
+  withDressed('?skin=enhanced&plus=0', ({ dom }) => {   // the old instruction on an old bookmark: Plus answers anyway
+    assert.equal(dom.doc.querySelectorAll('.wornpair').length, 4, 'the split cells stand (mutant: the seam still reads ?plus)');
     const words = wornWords(dom);
-    for (const w of ['Chest', 'Arms', 'Legs']) assert.ok(words.includes(w), `the "${w}" family: ${words}`);
-    assert.ok(!words.includes('Shirt'), 'and no Plus halves');
+    for (const w of ['Chest', 'Arms', 'Legs']) assert.ok(!words.includes(w), `no whole "${w}" family: ${words}`);
+    assert.ok(words.includes('Shirt'), 'the Plus halves');
   });
 });
 
@@ -2423,7 +2423,7 @@ test('PLUS10: the Info box is the classic Info popup\'s own text - the item\'s T
 // ═══ PLUS11: THE ACCESSORY SHELF (Enhanced Plus) ═════════════════
 test('PLUS11: under Plus the twelve accessory slots stand on a shelf of labelled pairs, and Mount | Cart is a cell of the grid', () => {
   const prev = globalThis.location;
-  _resetForTests(); globalThis.location = { search: '?skin=enhanced&plus=1' };
+  _resetForTests(); globalThis.location = { search: '?skin=enhanced' };   // PLUS-ONLY: the enhanced skin is Plus's
   try {
     withPack((k) => {
       for (const it of k.e.items) assert.ok(equipItem(k.e, it), `${it.name} goes on`);
