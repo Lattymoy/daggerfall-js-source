@@ -140,6 +140,11 @@ test('AUDIT 39: the guards-arrive countdown is gated on the LOCATION it started 
 
 test('guards G3: killed guards are loot targets, walk-aways are not, loot takes once', { skip: skipReal }, async () => {
   const deps = makeDeps(() => 0.9);
+  // MAC-E: the purse pin below reads the player's Items, which every
+  // PlayerEntity has and this stub never did - the old bulk take's
+  // `playerEntity.items || []` was the only thing that made one, and the
+  // window path never touches the player, so the pin threw instead.
+  deps.playerEntity.items = [];
   const g = createCityGuards(deps);
   const pool = () => [{ pos: [5, 0, 5], fwdYaw: 0, guard: true, disable: () => {} }];
   await g.spawnCityGuards(true, { playerFeet: [0, 0, 0], playerFwd: [0, 0, 1], pool: pool() });
