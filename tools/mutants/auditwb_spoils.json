@@ -65,8 +65,8 @@
   {
     "name": "AUDWB-A9-the-burst-by-the-day-alone",
     "file": "src/scenes/gateCourt.js",
-    "old": "at, bearing, acct: claims.s });",
-    "new": "at, bearing });",
+    "old": "at, bearing, acct: claims.s }))",
+    "new": "at, bearing }))",
     "tests": ["test/auditwb_spoils.test.js"]
   },
   {

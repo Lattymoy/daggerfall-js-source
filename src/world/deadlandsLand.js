@@ -101,7 +101,7 @@ function toModel(f, byArchive) {
   const recs = [...f.byRec.keys()].sort((a, b) => a - b);
   const count = recs.reduce((n, r) => n + f.byRec.get(r).p.length / 3, 0);
   const positions = new Float32Array(count * 3), normals = new Float32Array(count * 3), uvs = new Float32Array(count * 2);
-  const indices = count > 65535 ? new Uint32Array(count) : new Uint16Array(count);
+  const indices = new Uint32Array(count);   // WBX1: the renderer's one index type (renderer.createMesh) - a Uint16Array under it drew nothing
   const subMeshes = [];
   let v = 0;
   for (const rec of recs) {

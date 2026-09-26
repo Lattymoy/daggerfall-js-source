@@ -49,6 +49,8 @@ export function bossStandIn(look, name) {
   e.armorValues = new Array(7).fill(BOSS_ARMOR);
   e.maxHealth = e.health = 1e9;
   e.name = name;
+  e.spareGear = true;   // WBX6: a blow on him wears no weapon (combat/formulas.js damageEquipment)
+  e.mobileType ??= look.mobile;   // WBX7: a soul trap reads the target's mobile (systems/effects.js) - his is a Daedra Lord's, no humanoid
   return e;
 }
 
@@ -84,19 +86,42 @@ export const ATTACK_COLORS = Object.freeze({
   hellfire: Object.freeze([1.0, 0.64, 0.14]),
   nova: Object.freeze([1.0, 0.8, 0.28]),
   wrath: Object.freeze([0.9, 0.06, 0.03]),
+  // WBX5: the Burning Court's reach and Dagon's Champion's lanes
+  leap: Object.freeze([1.0, 0.42, 0.1]),
+  meteor: Object.freeze([1.0, 0.56, 0.06]),
+  spokes: Object.freeze([1.0, 0.14, 0.32]),
 });
 export const WARD_COLOR = Object.freeze([1.0, 0.86, 0.5]);
 export const EMBER_COLOR = Object.freeze([0.9, 0.32, 0.1]);
+/** WBX5: the burning ground's colour on the floor (render/gateTelegraph.js draws each pool as a filled disc). */
+export const POOL_COLOR = Object.freeze([1.0, 0.36, 0.05]);
+
+/** WBX5: THE LEAP'S FLIGHT - he is in the air this long before it lands, and this high at the top of his arc (metres). */
+export const LEAP_AIR_MS = 650;
+export const LEAP_HEIGHT = 3.2;
 
 /** Where he stands at `now`, in the court's frame: down the lane while the charge runs and at its end after (the brain
- *  carries him so, net/gateBrain.js stepBrain - the next word finds him there), else his walk from the last word. */
+ *  carries him so, net/gateBrain.js stepBrain - the next word finds him there); WBX5: through the air to where a leap
+ *  lands over its last LEAP_AIR_MS, and there after; else his walk from the last word. */
 export function bossPlace(s, now) {
   const atk = s?.atk;
   if (atk && ATTACK_BY_ID[atk.a] === ATTACKS.charge && now >= atk.at) {
     const head = chargeHead(atk, Math.min(now, atk.at + ATTACKS.charge.active));
     if (head) return head;
   }
+  if (atk && ATTACK_BY_ID[atk.a] === ATTACKS.leap && atk.tg?.[0] && now >= atk.at - LEAP_AIR_MS) {
+    const k = Math.min(1, (now - (atk.at - LEAP_AIR_MS)) / LEAP_AIR_MS), e = atk.tg[0];
+    return [atk.x + (e[0] - atk.x) * k, atk.z + (e[1] - atk.z) * k];
+  }
   return bossAt(s, now);
+}
+
+/** WBX5: how high he stands over the floor at `now` - the leap's arc over its air time, else 0 (metres). */
+export function bossHop(s, now) {
+  const atk = s?.atk;
+  if (!atk || ATTACK_BY_ID[atk.a] !== ATTACKS.leap || now < atk.at - LEAP_AIR_MS || now >= atk.at) return 0;
+  const k = (now - (atk.at - LEAP_AIR_MS)) / LEAP_AIR_MS;
+  return 4 * LEAP_HEIGHT * k * (1 - k);
 }
 
 /**
@@ -116,6 +141,8 @@ export function bossAct(s, now, hurtAt = -Infinity) {
   const atk = s.atk, A = atk ? ATTACK_BY_ID[atk.a] : null;
   if (A) {
     const tel = telegraphAt(atk, s.phase, now);
+    // WBX5: the leap in the air - his legs under him, as the charge runs
+    if (A === ATTACKS.leap && now < atk.at && now >= atk.at - LEAP_AIR_MS) return { act: 'run', anims: MOVE_ANIMS, frame: Math.floor(((now - atk.at + LEAP_AIR_MS) / 1000) * RUN_ANIM_SPEED), loop: true, atk: A.key, t: tel?.t ?? 1 };
     if (tel && now < atk.at) return { act: 'windup', anims: PRIMARY_ATTACK_ANIMS, frame: tel.t < 0.5 ? 0 : 1, loop: false, atk: A.key, t: tel.t };
     if (A === ATTACKS.charge && now < atk.at + A.active) {
       return { act: 'run', anims: MOVE_ANIMS, frame: Math.floor(((now - atk.at) / 1000) * RUN_ANIM_SPEED), loop: true, atk: A.key, t: 1 };
@@ -192,6 +219,11 @@ export const BOSS_CUES = Object.freeze({
     hellfire: Object.freeze({ id: FIRE_CAST_ID, pitch: 0.8, volume: 1.3, reach: 60, at: 'him' }),
     nova: Object.freeze({ id: FIRE_CAST_ID, pitch: 0.62, volume: 1.4, reach: 60, at: 'him' }),
     wrath: voice(B.barkSound, 0.45, 1.8),
+    // WBX5: the new three - a bark as he gathers himself to leap, the fire's cast as the meteor is called, a deep bark
+    // over the spokes' lanes
+    leap: voice(B.barkSound, 0.6, 1.5),
+    meteor: Object.freeze({ id: FIRE_CAST_ID, pitch: 0.5, volume: 1.5, reach: 70, at: 'him' }),
+    spokes: voice(B.barkSound, 0.52, 1.6),
   }),
   land: Object.freeze({
     cleave: voice(B.attackSound, 0.8),
@@ -200,6 +232,9 @@ export const BOSS_CUES = Object.freeze({
     hellfire: Object.freeze({ clip: BURNING, pitch: 0.9, volume: 1.2, reach: 40, at: 'targets' }),
     nova: Object.freeze({ clip: BURNING, pitch: 0.7, volume: 1.8, reach: 60, at: 'him' }),
     wrath: Object.freeze({ clip: BURNING, pitch: 0.5, volume: 2, reach: 120, at: 'him' }),
+    leap: voice(B.attackSound, 0.55, 1.7),
+    meteor: Object.freeze({ clip: BURNING, pitch: 0.55, volume: 2, reach: 80, at: 'targets' }),
+    spokes: Object.freeze({ clip: BURNING, pitch: 0.65, volume: 1.8, reach: 60, at: 'him' }),
   }),
   roar: voice(B.barkSound, 0.5, 1.8),
   fall: voice(B.barkSound, 0.4, 1.8),
@@ -221,5 +256,5 @@ export const BOSS_STRIDE_M = 2.8;
 export const GROWL_EVERY_MS = Object.freeze([7000, 13000]);
 export const HURT_GAP_MS = 1400;
 export const HURT_SHARE = 0.004;
-export const QUAKE_ON = Object.freeze(['slam', 'charge', 'nova', 'wrath']);
+export const QUAKE_ON = Object.freeze(['slam', 'charge', 'nova', 'wrath', 'leap', 'meteor']);   // WBX5: his leap's landing and a meteor's fall shake it too
 export const THUD_AT_MS = 1500;

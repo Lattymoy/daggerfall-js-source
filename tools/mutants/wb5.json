@@ -92,7 +92,7 @@
   {
     "name": "WB5-a-piece-taken-in-the-air",
     "file": "src/scenes/spoilsPool.js",
-    "old": "        if (f.fly.rest && f0 && Math.hypot(",
+    "old": "        if (f.fly.rest && t - f.restAt >= SPOILS_TAKE_AFTER_MS && f0 && Math.hypot(",
     "new": "        if (f0 && Math.hypot(",
     "tests": [
       "test/wb5_gate_spoils.test.js"
@@ -119,8 +119,8 @@
   {
     "name": "WB5-the-spew-off-another-seed",
     "file": "src/scenes/gateCourt.js",
-    "old": "    spoils.spew({ day: s.day, seed: claims.c,",
-    "new": "    spoils.spew({ day: s.day, seed: s.day,",
+    "old": "    if (spoils.spew({ day: s.day, seed: claims.c,",
+    "new": "    if (spoils.spew({ day: s.day, seed: s.day,",
     "tests": [
       "test/wb5_gate_spoils.test.js"
     ]

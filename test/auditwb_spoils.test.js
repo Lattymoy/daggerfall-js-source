@@ -53,7 +53,8 @@ test('AUDIT WB A2 the seams: every receipt the link folds is offered to the pool
   const fn = w.slice(w.indexOf('function grantSpoilsOutside(r) {'), w.indexOf('function grantSpoilsOutside(r) {') + 500);
   assert.match(fn, /if \(!c \|\| !spoilsPool \|\| modes\?\.gateArenaDay\?\.\(\) === c\.d\) return;/, 'in its own court the floor gives them');
   assert.match(fn, /spoilsPool\.grant\(\{ day: c\.d, seed: c\.c, level: playerEntity\.level \?\? 1, acct: c\.s \}\)/, 'the receipt\'s own seed and account');
-  assert.match(read('src/scenes/gateCourt.js'), /spoils\.spew\(\{ day: s\.day, seed: claims\.c, level: player\(\)\?\.level \?\? 1, at, bearing, acct: claims\.s \}\);/);
+  // WBX3: the burst's own seed and account - and, once the pieces have left him, whose they are said (they are nobody else's)
+  assert.match(read('src/scenes/gateCourt.js'), /if \(spoils\.spew\(\{ day: s\.day, seed: claims\.c, level: player\(\)\?\.level \?\? 1, at, bearing, acct: claims\.s \}\)\) say\(COURT_STRIKE_TEXT\.spilled\(bossOf\(s\)\.name\)\);/);
 });
 
 test('AUDIT WB A9 a receipt spent is its day AND account: two accounts on one device each have their gate; an older build\'s spent day stays spent for anyone; the list is bounded', () => {

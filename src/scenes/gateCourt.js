@@ -16,12 +16,16 @@
 // has already cued, landed and judged, and the host's doors.
 //
 // Not a DFU member. Ledger A (WB).
-import { ATTACK_BY_ID, ATTACKS, BOSS_H, BOSS_R, COURT_CENTRE, HIT_KINDS } from '../net/gateBrain.js';
-import { strikeVerdict, blowOf, strikeDamage, fireShare } from '../net/gateStrike.js';
+import { ATTACK_BY_ID, ATTACKS, BOSS_H, BOSS_R, COURT_CENTRE, HIT_KINDS, POOL_TICK_MS, PHASE_NAMES } from '../net/gateBrain.js';
+import { strikeVerdict, blowOf, strikeDamage, fireShare, landingPools, poolUnder } from '../net/gateStrike.js';
 import { GATE_BOSSES, gateBossOf } from '../net/gateLaw.js';
-import { bossAct, bossFrame, bossGlow, bossPlace, bossLookOf, bossStandIn, BOSS_CUES, GLOW_UP, BOSS_STRIDE_M, GROWL_EVERY_MS, HURT_GAP_MS, HURT_SHARE, QUAKE_ON, THUD_AT_MS } from '../world/gateBoss.js';
-import { courtToDungeon } from '../world/gateArena.js';
-import { GateTelegraphRenderer, telegraphShape } from '../render/gateTelegraph.js';
+import { bossAct, bossFrame, bossGlow, bossPlace, bossHop, bossLookOf, bossStandIn, BOSS_CUES, GLOW_UP, BOSS_STRIDE_M, GROWL_EVERY_MS, HURT_GAP_MS, HURT_SHARE, QUAKE_ON, THUD_AT_MS, POOL_COLOR, WARD_COLOR, EMBER_COLOR } from '../world/gateBoss.js';
+import { courtToDungeon, portalDoor, PORTAL_AFTER_MS, PORTAL_RISE_MS, PORTAL_DROP, COURT_TEXT } from '../world/gateArena.js';
+import { GateTelegraphRenderer, telegraphShape, markShape, poolShapes } from '../render/gateTelegraph.js';
+import { GatePassRenderer, gateSpinRate } from '../render/gatePass.js';   // WBX2: the portal's fire is the gate's own
+import { gateArchProfile, ARCH_Y0 } from '../world/gateModel.js';
+import { gateLocal, openingHalfWidth, GATE_STEP_M } from './gatePool.js';
+import { ONLINE_MINUTES_PER_MS } from '../net/wire.js';   // WBX7: a soul trap's rounds on the shared world's clock
 import { bossBarModel, drawGateBossBar } from '../ui/gateBossBar.js';
 import { readReceipt } from '../net/gateReceipt.js';
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
@@ -31,7 +35,22 @@ import { mobileBillboardSize } from '../world/rmbFlats.js';
 export const COURT_STRIKE_TEXT = Object.freeze({
   resisted: (name) => `You resist the flames of the ${name}.`,
   noSpoils: (name) => `${name}'s spoils are not yours - you did not stand the fight.`,
+  // WBX3 (Swololo on Discord: "loot was not distributed, was instantly pillaged by others"): said at the burst - every
+  // fighter's spoils are their own, on their own screen, and nobody else can see or take them
+  spilled: (name) => `${name}'s spoils spill across the floor - yours alone to take.`,
+  burning: 'burning ground',
 });
+/** WBX5: THE TURN OF A PHASE, said over the screen as he leaps into the court's heart - each phase by its name
+ *  (net/gateBrain.js PHASE_NAMES), and what it brings. */
+export const COURT_PHASE_TEXT = Object.freeze({
+  2: `${PHASE_NAMES[1]}: the ward breaks and the floor will burn - keep out of the fire.`,
+  3: `${PHASE_NAMES[2]}: he calls on Dagon - stand between the spokes of fire.`,
+});
+/** WBX7: a magic round on the shared world's clock, ms - one game minute (net/wire.js ONLINE_MINUTES_PER_MS: TimeScale
+ *  12, five seconds) - so a soul trap laid on him lasts its rounds as it would on any foe in the same world. */
+export const COURT_ROUND_MS = Math.round(1 / ONLINE_MINUTES_PER_MS);
+/** WBX4: his mark's ember, a little brighter than his glow's, so the floor under him reads at a glance. */
+export const MARK_COLOR = Object.freeze(EMBER_COLOR.map((c) => Math.min(1, c * 1.1)));
 /** WB5: his body bursts this long into his fall, and the spoils leave it (world/gateBoss.js FALL_MS is the whole fall);
  *  a receipt not come this long after it never will. */
 export const SPEW_AT_MS = 500;
@@ -69,12 +88,20 @@ export const bossOf = (s) => GATE_BOSSES.find((b) => b.id === s?.boss) ?? gateBo
  *   hudHidden?: () => boolean,
  *   send?: (hit: { q: number, d: number, r: number }) => boolean,
  *   rng?: () => number,
+ *   wayHome?: () => void,
+ *   portalDoor?: (door: any) => void,
+ *   soulTrap?: (trap: { chance: number, mobile: number, name: string }) => void,
  * }} deps
+ *   WBX2: `wayHome` takes the way home (the mode machine's step through fire - the bridge membrane's own); `portalDoor`
+ *   lays the risen portal's door into the court's exit doors, once, so the exit's own ray and name take it. WBX7:
+ *   `soulTrap` rolls a soul trap of mine still on him at his fall (the host's attemptSoulTrap - a gem filled with his soul,
+ *   and its words).
  */
 export function createGateCourt({
   renderer = null, gl = null, getTexture = null, uploadRecordFrame = null, audio = null,
   link, spoils = null, now, cam = () => null, feet = () => null, player = () => null, save = () => 100,
   strike = () => {}, say = () => {}, hudHidden = () => false, send = () => false, rng = Math.random,
+  wayHome = () => {}, portalDoor: layPortalDoor = () => {}, soulTrap = () => {},
 }) {
   let pass = null;
   try { if (gl) pass = new GateTelegraphRenderer(gl); } catch (e) { console.warn('[gate] the telegraph would not build', e?.message ?? e); pass = null; }
@@ -92,6 +119,19 @@ export function createGateCourt({
    *  next, the health last heard and his last grunt, the landing that shook the ground, the phase the thunder has
    *  answered, and whether his body has met the floor */
   let stepFrom = null, strideRun = 0, growlAt = null, hpHeard = null, gruntAt = -Infinity, quaked = noMark(), thunderPhase = 0, thudCued = false;
+  /** WBX5: the burning ground the landings this screen saw have left (net/gateStrike.js landingPools), the attack whose
+   *  pools were laid last, and when the fire under my feet last bit; WBX4: his mark on the floor, and the pools' shapes */
+  let pools = [], pooled = noMark(), burnAt = -Infinity, inFire = false, mark = null;
+  /** @type {ReadonlyArray<any>} */
+  let poolDraw = NONE;
+  const _mark = markShape([0, 0], 0, MARK_COLOR);
+  /** WBX2: the portal home once he has fallen - where it stands (the court's frame) and how far it has risen, its fire's
+   *  pass and the arch's opening (made the first time one stands), its fire's turn, my feet's side of it last frame,
+   *  and whether its door is laid and its rising said */
+  let portal = null, portalPass = null, portalTried = false, profile = null, spin = 0, portalLz = null, portalLaid = false, portalSaid = false;
+  /** WBX7: my soul trap on him - its chance (frozen at the cast) and when it runs out on the relay's clock - and whether
+   *  his fall has rolled it */
+  let trapMark = null, trapJudged = false;
   /** AUDIT WB D10: the frame's lists, refilled rather than made - the host asks for them every frame */
   const _batches = [], _lights = [];
 
@@ -99,6 +139,40 @@ export function createGateCourt({
     day = d; judged = noMark(); cued = noMark(); landed = noMark(); phaseHeard = 0; fellCued = false; wrathLanded = false;
     prevT = -Infinity; hurtAt = -Infinity; shape = null; standIn = null; spewed = false; spoilsSaid = false;
     stepFrom = null; strideRun = 0; growlAt = null; hpHeard = null; gruntAt = -Infinity; quaked = noMark(); thunderPhase = 0; thudCued = false;
+    pools = []; pooled = noMark(); burnAt = -Infinity; inFire = false; mark = null; poolDraw = [];
+    portal = null; spin = 0; portalLz = null; portalLaid = false; portalSaid = false;
+    trapMark = null; trapJudged = false;
+  }
+
+  /** WBX7: HIS FALL ROLLS MY TRAP, once - a trap of mine still running at the moment he fell (the relay's `fell.at`, not
+   *  when this screen heard of it) goes to the host's roll with his mobile, the soul a gem takes. */
+  function judgeTrap(s) {
+    if (!s.fell || trapJudged) return;
+    trapJudged = true;
+    if (trapMark && s.fell.at < trapMark.until) soulTrap({ chance: trapMark.chance, mobile: bossLookOf(s.boss).mobile, name: bossOf(s).name });
+  }
+
+  /** WBX2: THE PORTAL HOME - PORTAL_AFTER_MS into his fall it stands where he fell and rises; its door is laid into the
+   *  court's exit doors once (the ray and the plaque's name), the rising is said once, and my feet crossing its fire's
+   *  plane inside the opening take the way home (gatePool.js's own step law, the stone's plinth not under it). */
+  function portalFrame(s, t, dt) {
+    if (!s.fell || t < s.fell.at + PORTAL_AFTER_MS) { portal = null; return; }
+    const at = bossPlace(s, s.fell.at);
+    portal = { at, rise: Math.min(1, (t - s.fell.at - PORTAL_AFTER_MS) / PORTAL_RISE_MS), origin: courtToDungeon(at[0], -PORTAL_DROP, at[1]) };
+    profile ??= gateArchProfile();   // the arch's opening - the fire's shape and the step's bound, with or without a GL
+    if (!portalTried && gl) {
+      portalTried = true;
+      try { portalPass = new GatePassRenderer(gl, profile); } catch (e) { console.warn('[gate] the portal would not build', e?.message ?? e); portalPass = null; }
+    }
+    spin = (spin + gateSpinRate(1) * Math.max(0, dt)) % 1;
+    if (!portalLaid) { portalLaid = true; layPortalDoor(portalDoor(at)); }
+    if (!portalSaid) { portalSaid = true; if (t < s.fell.at + PORTAL_AFTER_MS + PORTAL_RISE_MS + 1000) say(COURT_TEXT.portal); }   // said as it rises, never long after
+    const f = feet(), e = player();
+    if (!f || !e || !(e.health > 0) || portal.rise < 1) { portalLz = null; return; }
+    const [lx, ly, lz] = gateLocal({ origin: portal.origin, yaw: 0 }, f);
+    const inside = !!profile && Math.abs(lx) < openingHalfWidth(profile, Math.max(ARCH_Y0 + 0.05, ly + 0.9)) && Math.abs(lz) < GATE_STEP_M;
+    if (inside && portalLz !== null && Math.sign(lz) !== Math.sign(portalLz) && lz !== 0) { portalLz = null; wayHome(); return; }
+    portalLz = inside ? lz : null;
   }
 
   function sound(cue, s, t, atk) {
@@ -111,14 +185,37 @@ export function createGateCourt({
     }
   }
 
-  /** A strike on me: its share of my own health, fire through my saving throw (the Wrath through nothing). */
+  /** A strike on me: its share of my own health and its base (WBX4), fire through my saving throw (the Wrath through
+   *  nothing). */
   function land(atk) {
     const e = player(), so = blowOf(atk);
     if (!e || !so || !(e.health > 0)) return;
-    let dmg = strikeDamage(so.pct, e.maxHealth);
+    let dmg = strikeDamage(so.pct, e.maxHealth, so.base);
     if (so.saved) dmg = fireShare(dmg, save(e));
     if (dmg <= 0) { say(COURT_STRIKE_TEXT.resisted(so.name)); return; }
     strike(dmg, { fire: so.el === 'fire', name: so.name });
+  }
+
+  /** WBX5: THE BURNING GROUND - a landing that leaves fire lays its pools the frame this screen sees it land (never one
+   *  it did not see: the pools are this screen's, as the verdict is); STAYING in one bites every POOL_TICK_MS - the first
+   *  bite a tick after I stepped in (or it fell under me: the landing has already struck), so a step out in time is
+   *  free - fire, through my saving throw. The burnt-out go. */
+  function burn(s, t) {
+    const atk = s.atk, A = atk ? ATTACK_BY_ID[atk.a] : null;
+    if (A && 'pool' in A && !marked(pooled, atk) && t >= atk.at) {
+      setMark(pooled, atk);
+      if (t < atk.at + Math.max(A.active, 1) + 400) for (const p of landingPools(atk)) pools.push(p);   // AUDIT WB B7's law: a landing long past is not laid now
+    }
+    if (pools.length) pools = pools.filter((p) => t < p.until);
+    const f = feet(), e = player();
+    if (!pools.length || !f || !e || !(e.health > 0) || s.fell || s.wrath != null) { inFire = false; return; }
+    const p = poolUnder(pools, f[0] - COURT_CENTRE[0], f[2] - COURT_CENTRE[2], t);
+    if (!p) { inFire = false; return; }
+    if (!inFire) { inFire = true; burnAt = t; return; }
+    if (t - burnAt < POOL_TICK_MS) return;
+    burnAt = t;
+    const dmg = fireShare(strikeDamage(p.pct, e.maxHealth, p.base), save(e));
+    if (dmg > 0) strike(dmg, { fire: true, name: COURT_STRIKE_TEXT.burning });
   }
 
   function judge(s, t) {
@@ -142,7 +239,7 @@ export function createGateCourt({
     if (A && !marked(landed, atk) && t >= atk.at) { setMark(landed, atk); if (t < atk.at + Math.max(A.active, 1) + 400) sound(BOSS_CUES.land[A.key], s, t, atk); }
     if (A && !marked(quaked, atk) && t >= atk.at && QUAKE_ON.includes(A.key)) { setMark(quaked, atk); if (t < atk.at + Math.max(A.active, 1) + 400) sound(BOSS_CUES.quake, s, t, atk); }   // WB7: the ground's shock under a heavy landing
     if (s.phase > thunderPhase) { if (thunderPhase > 0) sound(BOSS_CUES.thunder, s, t, null); thunderPhase = s.phase; }   // WB7: thunder over his roar as a phase turns
-    if (s.phase > phaseHeard) { if (phaseHeard > 0) sound(BOSS_CUES.roar, s, t, null); phaseHeard = s.phase; }
+    if (s.phase > phaseHeard) { if (phaseHeard > 0) { sound(BOSS_CUES.roar, s, t, null); if (COURT_PHASE_TEXT[s.phase]) say(COURT_PHASE_TEXT[s.phase]); } phaseHeard = s.phase; }   // WBX5: and the turn said, by its name
     if (s.fell && !fellCued) { fellCued = true; if (t < s.fell.at + FALL_CRY_LATE_MS) sound(BOSS_CUES.fall, s, t, null); }   // AUDIT WB B7: never a cry from long ago
     bodySounds(s, t, A);
   }
@@ -186,7 +283,7 @@ export function createGateCourt({
     const [x, z] = bossPlace(s, s.fell.at);
     const at = courtToDungeon(x, GLOW_UP, z), f = feet();
     const bearing = f ? Math.atan2(f[0] - at[0], f[2] - at[2]) : s.yaw;
-    spoils.spew({ day: s.day, seed: claims.c, level: player()?.level ?? 1, at, bearing, acct: claims.s });   // AUDIT WB A9: once a receipt - its day and account
+    if (spoils.spew({ day: s.day, seed: claims.c, level: player()?.level ?? 1, at, bearing, acct: claims.s })) say(COURT_STRIKE_TEXT.spilled(bossOf(s).name));   // AUDIT WB A9: once a receipt - its day and account; WBX3: and said to be theirs
   }
 
   function loadBody(s) {
@@ -205,7 +302,7 @@ export function createGateCourt({
     const act = bossAct(s, t, hurtAt);
     if (!body?.tex || act.act === 'gone') { batchShown = false; return; }
     const [x, z] = bossPlace(s, t);
-    const at = courtToDungeon(x, 0, z);
+    const at = courtToDungeon(x, bossHop(s, t), z);   // WBX5: high over the floor through a leap's arc
     const eye = cam() ?? at;
     const fr = bossFrame(act, s.yaw, at, eye, (rec) => body.tex.getFrameCount?.(rec) ?? 1);
     const rkey = `${fr.record}#${fr.frame}`;
@@ -231,11 +328,18 @@ export function createGateCourt({
       if (!s || s.day === null) { if (day !== null) this.leave(); return; }
       if (s.day !== day) reset(s.day);
       judge(s, t);
+      judgeTrap(s);   // WBX7: a soul trap of mine on him, rolled at his fall
+      burn(s, t);   // WBX5: the ground his landings left burning
       cue(s, t);
       drawBody(s, t);
       burst(s, t);
       spoils?.frame();
+      portalFrame(s, t, Number.isFinite(prevT) ? Math.max(0, t - prevT) / 1000 : 0);   // WBX2: the way home, once he has fallen
       shape = s.fell ? null : telegraphShape(s.atk, s.phase, t);
+      // WBX4: his mark under him, while he stands; WBX5: the burning ground
+      if (s.fell || s.wrath != null || bossAct(s, t, hurtAt).act === 'gone') mark = null;
+      else { const [mx, mz] = bossPlace(s, t); _mark.origin[0] = mx; _mark.origin[1] = mz; _mark.yaw = s.yaw; _mark.color = t < s.shieldUntil ? WARD_COLOR : MARK_COLOR; mark = _mark; }   // AUDIT WB D10's law: one shape, refilled
+      poolDraw = pools.length ? poolShapes(pools, t, POOL_COLOR) : NONE;
       drawGateBossBar(bossBarModel(s, t, bossOf(s)), { hidden: hudHidden() });
       prevT = t;
     },
@@ -268,6 +372,20 @@ export function createGateCourt({
     },
     /** A blow of mine landed on him: he flinches. */
     struck() { hurtAt = now(); },
+    /**
+     * WBX7: A SOUL TRAP OF MINE LAID ON HIM (the dungeon context's spell door - scenes/dungeonContext.js spellOnBoss): its
+     * chance and its rounds, kept on the relay's clock until his fall rolls it. A trap already running takes the new
+     * rounds and keeps its own chance (AddState, SoulTrap.cs:94-97 - systems/effects.js's own law). Answers whether it
+     * was kept (no fight, a fight over: nothing to keep it for).
+     * @param {{ chance?: number, rounds?: number }} [trap]
+     */
+    trapped({ chance, rounds } = {}) {
+      const s = link.state(), t = now();
+      if (!s || s.day === null || s.fell || s.wrath != null || !Number.isFinite(chance) || !(rounds > 0)) return false;
+      if (trapMark && t < trapMark.until) trapMark.until += rounds * COURT_ROUND_MS;
+      else trapMark = { chance, until: t + rounds * COURT_ROUND_MS };
+      return true;
+    },
     /** The body and the spoils, for the host's billboard pass (AUDIT WB D10: one list, refilled each frame). */
     batches() {
       _batches.length = 0;
@@ -286,12 +404,23 @@ export function createGateCourt({
     /** The telegraph and the spoils' glow, in the host's world pass (after the court and the billboards, before the
      *  foes' screen quads). Answers whether either drew (the host marks the foreign pass). */
     drawPass(proj, view, eye, seconds, fog = null) {
-      pass?.draw(shape, proj, view, eye, seconds, fog);
+      let drew = false;
+      if (pass) {
+        for (const ps of poolDraw) { pass.draw(ps, proj, view, eye, seconds, fog); drew = true; }   // WBX5: the burning ground under all
+        if (mark) { pass.draw(mark, proj, view, eye, seconds, fog); drew = true; }   // WBX4: where he stands and faces
+        if (shape) { pass.draw(shape, proj, view, eye, seconds, fog); drew = true; }
+      }
+      if (portal && portalPass) {   // WBX2: the portal home's fire and its beacon, rising where he fell
+        portalPass.draw([{ origin: portal.origin, yaw: 0, open: 1, fade: portal.rise, spin }], proj, view, eye, seconds, fog);
+        drew = drew || portalPass.drawn > 0;
+      }
       const lit = !!spoils?.drawPass(proj, view, eye, seconds, fog);
-      return (!!shape && !!pass) || lit;
+      return drew || lit;
     },
     /** What the driver holds, for the tests and the stats. */
-    state: () => ({ day, judgedI: judged.i, cuedI: cued.i, landedI: landed.i, phaseHeard, fellCued, wrathLanded, body: !!body?.tex, batch: !!batch && batchShown, shape }),
+    state: () => ({ day, judgedI: judged.i, cuedI: cued.i, landedI: landed.i, phaseHeard, fellCued, wrathLanded, body: !!body?.tex, batch: !!batch && batchShown, shape, mark, pools: pools.map((p) => ({ ...p })), portal: portal ? { at: [...portal.at], rise: portal.rise, laid: portalLaid } : null }),
+    /** WBX2: the portal home, while it stands - where (the court's frame) and how far it has risen - or null. */
+    portal: () => (portal ? { at: [...portal.at], rise: portal.rise } : null),
     /** Out of the court: the body put away, the bar hidden, the fight forgotten (the texture is kept - the next court wears it). */
     leave() {
       spoils?.gather();   // WB5: whatever is still on the floor goes into the pack - never lost to a door, a death or the day's end

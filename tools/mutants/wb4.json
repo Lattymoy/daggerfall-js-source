@@ -74,8 +74,8 @@
   {
     "name": "WB4-the-damage-off-a-fixed-health",
     "file": "src/net/gateStrike.js",
-    "old": "Math.round(pct * Math.max(1, maxHealth))",
-    "new": "Math.round(pct * 100)",
+    "old": "Math.round(pct * Math.max(1, maxHealth) + Math.max(0, base))",
+    "new": "Math.round(pct * 100 + Math.max(0, base))",
     "tests": [
       "test/wb4_gate_boss.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "WB4-the-flinch-over-a-windup",
     "file": "src/world/gateBoss.js",
-    "old": "  if (A) {\n    const tel = telegraphAt(atk, s.phase, now);\n    if (tel && now < atk.at)",
-    "new": "  if (A && !(now - hurtAt >= 0 && now - hurtAt < FLINCH_MS)) {\n    const tel = telegraphAt(atk, s.phase, now);\n    if (tel && now < atk.at)",
+    "old": "  if (A) {\n    const tel = telegraphAt(atk, s.phase, now);\n    // WBX5: the leap in the air",
+    "new": "  if (A && !(now - hurtAt >= 0 && now - hurtAt < FLINCH_MS)) {\n    const tel = telegraphAt(atk, s.phase, now);\n    // WBX5: the leap in the air",
     "tests": [
       "test/wb4_gate_boss.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "WB4-the-roar-on-first-sight",
     "file": "src/scenes/gateCourt.js",
-    "old": "if (phaseHeard > 0) sound(BOSS_CUES.roar, s, t, null);",
-    "new": "sound(BOSS_CUES.roar, s, t, null);",
+    "old": "if (phaseHeard > 0) { sound(BOSS_CUES.roar, s, t, null);",
+    "new": "{ sound(BOSS_CUES.roar, s, t, null);",
     "tests": [
       "test/wb4_gate_boss.test.js"
     ]

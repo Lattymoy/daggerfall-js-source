@@ -27,11 +27,21 @@
 // by the hub's next hello - is its spoils straight into the pack (`grant`): the court's burst was the only door, and it
 // never opened for them. The same once, the same record.
 //
+// WBX3 (2026-09-26, Mac: "Loot drops should show their sprite and have a small colored loot line that extrudes from
+// the sprite itself"): EACH PIECE IS ITSELF ON THE FLOOR. WB5 dressed every piece in a treasure pile the seed chose, so
+// a Rare blade and a Magic ring lay as the same heap of coins; now an item stands as its own picture - the one the pack
+// shows (the host's `iconOf`, ui/textureCanvas.js's own door with the item's dye) - uploaded under the port's own
+// pseudo-archive and drawn as a billboard on the floor, and its tier's line leaves the top of that picture
+// (render/spoilsGlow.js). Gold keeps its pile; a picture that will not load keeps the pile too. And a resting piece is
+// taken only SPOILS_TAKE_AFTER_MS after it came to rest (Swololo on Discord: "loot was not distributed, was instantly
+// pillaged by others before I could ever realise boss died" - the spoils are this player's alone, and a fighter
+// standing where they fell had walked over them in the second they landed).
+//
 // Not a DFU member. Ledger A (WB).
 import { rollSpoils } from '../systems/gateSpoils.js';
 import { seededRng } from '../systems/wind.js';
 import { spewLaunches, spewPiece, flySpew } from '../world/gateSpew.js';
-import { SpoilsGlowRenderer, tierColour } from '../render/spoilsGlow.js';
+import { SpoilsGlowRenderer, tierColour } from '../render/spoilsGlow.js';   // WBX3: the loot line
 import { RARITIES } from '../systems/lootRarity.js';
 import { RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS, validLootItem } from '../systems/loot.js';
 import { billboardSize } from '../world/rmbFlats.js';
@@ -40,6 +50,20 @@ import { CLIPS } from '../systems/handheldTorches.js';
 
 /** A resting piece is taken when the player's feet come within this of it (metres, across the floor). */
 export const SPOILS_TAKE_M = 1.3;
+/** WBX3: ...and no sooner than this after it came to rest - a piece landing under a fighter's feet is seen before it is
+ *  taken. */
+export const SPOILS_TAKE_AFTER_MS = 1500;
+/** WBX3: an item's picture stands this many metres a texel tall on the floor, and never taller than the most. */
+export const SPOILS_ICON_M_PER_PX = 0.022;
+export const SPOILS_ICON_MAX_M = 1.1;
+/** WBX3: the port's own pseudo-archive the pieces' pictures are uploaded under (bloodArt.js's law - 38001 the blood,
+ *  38101 the gate, 38111 the court). */
+export const SPOILS_ICON_ARCHIVE = 38121;
+/** WBX3: a picture's size on the floor, metres, from its texels - its own aspect, the most on its longer side. Pure. */
+export function iconSize(width, height) {
+  const k = Math.min(SPOILS_ICON_M_PER_PX, SPOILS_ICON_MAX_M / Math.max(1, width, height));
+  return { w: Math.max(1, width) * k, h: Math.max(1, height) * k };
+}
 /** The glow rises over this long once a piece rests. */
 export const SPOILS_RISE_MS = 400;
 /** A Rare-or-better resting piece's light: its reach and its strength. */
@@ -150,17 +174,22 @@ export function recoverSpoils(store, take, { who = null, saves = [] } = {}) {
  *   take: (piece: any) => void, say?: (text: string) => void,
  *   store?: { get: (k: string) => any, set: (k: string, v: any) => void, remove: (k: string) => void }|null,
  *   who?: () => string|null, wall?: () => number,
+ *   iconOf?: ((item: any) => Promise<{key: string, width: number, height: number, colors: ArrayLike<number>}|null>)|null,
  * }} deps
+ *   WBX3: `iconOf` answers an item's own picture - the pack's (color32 order, and a `key` naming the picture: two pieces
+ *   that look alike share one upload) - or null when it has none; without it every piece keeps its treasure pile.
  */
 export function createSpoilsPool({
   renderer = null, gl = null, getTexture = null, uploadRecordFrame = null, audio = null,
-  ray, feet = () => null, now, take, say = () => {}, store = null, who = () => null, wall = () => Date.now(),
+  ray, feet = () => null, now, take, say = () => {}, store = null, who = () => null, wall = () => Date.now(), iconOf = null,
 }) {
   let glow = null;
   try { if (gl) glow = new SpoilsGlowRenderer(gl); } catch (e) { console.warn('[gate] the spoils\' glow would not build', e?.message ?? e); glow = null; }
   /** the spew under way: its day, when it began, where it left from; each piece's flight, rest and batch */
   let rec = null, t0 = 0, from = null, launches = [];
-  /** @type {Array<{ piece: any, fly: any, left: boolean, restAt: number, taken: boolean, batch: any }>} */
+  /** WBX3: `sprite` the piece's own picture once it has loaded ({record, w, h} under SPOILS_ICON_ARCHIVE), 'none' when it
+   *  has none (gold, a picture that would not load) - then the treasure pile stands; `batchIcon` what its batch wears.
+   *  @type {Array<{ piece: any, fly: any, left: boolean, restAt: number, taken: boolean, batch: any, sprite: any, batchIcon: boolean, h: number }>} */
   let floor = [];
   let lastT = 0, tex = null, texLoading = null;
 
@@ -189,13 +218,37 @@ export function createSpoilsPool({
     if (tex || texLoading || !getTexture) return;
     texLoading = Promise.resolve().then(() => getTexture(RANDOM_TREASURE_ARCHIVE)).then((t) => { tex = t ?? null; }, () => { tex = null; });
   }
+  /** WBX3: an item's own picture, asked for once at the burst - uploaded under the pool's pseudo-archive (the upload is
+   *  keyed by the picture, so two pieces alike share it); a piece with no picture, or one that will not load, keeps its
+   *  treasure pile. A picture that lands while the pile stands swaps it on the next frame. */
+  function askSprite(f) {
+    if (f.sprite || f.piece.kind !== 'item' || !iconOf || !renderer?.uploadTexture) { f.sprite ??= 'none'; return; }
+    f.sprite = 'asked';
+    Promise.resolve().then(() => iconOf(f.piece.item)).then((img) => {
+      if (!img?.colors || !(img.width > 0) || !(img.height > 0)) { f.sprite = 'none'; return; }
+      const record = `icon:${img.key ?? floor.indexOf(f)}`;
+      renderer.uploadTexture(SPOILS_ICON_ARCHIVE, record, img);
+      f.sprite = { record, ...iconSize(img.width, img.height) };
+    }, () => { f.sprite = 'none'; });
+  }
   function batchOf(f) {
-    if (f.batch || !tex || !renderer?.createBillboardBatch) return f.batch;
+    const icon = f.sprite && typeof f.sprite === 'object';
+    if (f.batch && !icon === !f.batchIcon) return f.batch;
+    if (f.batch) { renderer?.destroyBillboardBatch?.(f.batch); f.batch = null; }   // the pile gives way to the picture
+    if (!renderer?.createBillboardBatch) return null;
     try {
-      if (!renderer.textures?.has?.(`${RANDOM_TREASURE_ARCHIVE}_${f.piece.record}#0`)) uploadRecordFrame?.(RANDOM_TREASURE_ARCHIVE, f.piece.record, 0);
-      const size = billboardSize(tex, f.piece.record);
-      f.batch = renderer.createBillboardBatch(RANDOM_TREASURE_ARCHIVE, f.piece.record, size, [[0, 0, 0]]);
-      f.batch.frame = 0;
+      if (icon) {
+        f.batch = renderer.createBillboardBatch(SPOILS_ICON_ARCHIVE, f.sprite.record, { w: f.sprite.w, h: f.sprite.h }, [[0, 0, 0]]);
+        f.h = f.sprite.h;
+      } else {
+        if (!tex) return null;
+        if (!renderer.textures?.has?.(`${RANDOM_TREASURE_ARCHIVE}_${f.piece.record}#0`)) uploadRecordFrame?.(RANDOM_TREASURE_ARCHIVE, f.piece.record, 0);
+        const size = billboardSize(tex, f.piece.record);
+        f.batch = renderer.createBillboardBatch(RANDOM_TREASURE_ARCHIVE, f.piece.record, size, [[0, 0, 0]]);
+        f.batch.frame = 0;
+        f.h = size.h;
+      }
+      f.batchIcon = icon;
       f.batch.origin = [...f.fly.pos];
     } catch { f.batch = null; }
     return f.batch;
@@ -220,9 +273,10 @@ export function createSpoilsPool({
       t0 = now(); lastT = t0; from = [...at];
       const list = spoilsList(seed >>> 0, Math.max(1, level | 0));
       launches = spewLaunches(seededRng(((seed >>> 0) ^ 0x5a5a) >>> 0), list.length, bearing);
-      floor = list.map((piece, i) => ({ piece, fly: spewPiece(from, launches[i]), left: false, restAt: 0, taken: false, batch: null }));
+      floor = list.map((piece, i) => ({ piece, fly: spewPiece(from, launches[i]), left: false, restAt: 0, taken: false, batch: null, sprite: null, batchIcon: false, h: 0 }));
       spend(day, acct, list);
       loadTex();
+      for (const f of floor) askSprite(f);   // WBX3: each item's own picture, asked for while the first pieces are still in the air
       return true;
     },
     /** AUDIT WB A2: THE SPOILS WITH NO FLOOR - a receipt that came while its court was not this player's to stand in
@@ -257,7 +311,8 @@ export function createSpoilsPool({
         }
         const b = batchOf(f);
         if (b) { b.origin[0] = f.fly.pos[0]; b.origin[1] = f.fly.pos[1]; b.origin[2] = f.fly.pos[2]; }
-        if (f.fly.rest && f0 && Math.hypot(f.fly.pos[0] - f0[0], f.fly.pos[2] - f0[2]) <= SPOILS_TAKE_M && Math.abs(f.fly.pos[1] - f0[1]) < 2) takeOne(f);
+        // WBX3: seen before it is taken - a piece may be walked over only SPOILS_TAKE_AFTER_MS after it came to rest
+        if (f.fly.rest && t - f.restAt >= SPOILS_TAKE_AFTER_MS && f0 && Math.hypot(f.fly.pos[0] - f0[0], f.fly.pos[2] - f0[2]) <= SPOILS_TAKE_M && Math.abs(f.fly.pos[1] - f0[1]) < 2) takeOne(f);
       });
     },
     /** The pieces, for the host's billboard pass (AUDIT WB D10: an empty floor - the court's every frame but a kill's -
@@ -274,12 +329,12 @@ export function createSpoilsPool({
       }
       return out;
     },
-    /** The glows, in the host's world pass. */
+    /** WBX3: the loot lines, in the host's world pass - each out of the top of its own sprite. */
     drawPass(proj, view, eye, seconds, fog = null) {
       if (!glow || !floor.length) return false;
       const t = now();
-      const glows = floor.filter((f) => !f.taken && f.fly.rest).map((f) => ({ foot: [...f.fly.pos], tier: f.piece.tier, alpha: Math.min(1, (t - f.restAt) / SPOILS_RISE_MS) }));
-      glow.draw(glows, proj, view, eye, seconds, fog);
+      const lines = floor.filter((f) => !f.taken && f.fly.rest).map((f) => ({ root: [f.fly.pos[0], f.fly.pos[1] + f.h, f.fly.pos[2]], tier: f.piece.tier, alpha: Math.min(1, (t - f.restAt) / SPOILS_RISE_MS) }));
+      glow.draw(lines, proj, view, eye, seconds, fog);
       return glow.drawn > 0;
     },
     /** Out of the court: whatever is still on its floor (or in the air) goes into the pack - the record stands until a
@@ -292,6 +347,6 @@ export function createSpoilsPool({
       return left;
     },
     /** What the pool holds, for the tests and the stats. */
-    state: () => ({ day: rec?.day ?? null, pieces: floor.map((f) => ({ kind: f.piece.kind, tier: f.piece.tier, left: f.left, rest: f.fly.rest, taken: f.taken, pos: [...f.fly.pos] })) }),
+    state: () => ({ day: rec?.day ?? null, pieces: floor.map((f) => ({ kind: f.piece.kind, tier: f.piece.tier, left: f.left, rest: f.fly.rest, taken: f.taken, pos: [...f.fly.pos], icon: !!f.batchIcon, h: f.h })) }),
   };
 }

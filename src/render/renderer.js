@@ -3782,7 +3782,14 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     buf(gl.ARRAY_BUFFER, model.uvs);
     gl.enableVertexAttribArray(2);
     gl.vertexAttribPointer(2, 2, gl.FLOAT, false, 0, 0);
-    buf(gl.ELEMENT_ARRAY_BUFFER, model.indices);
+    // WBX1 (2026-09-26, Mac: "None of the 3D geometry that was built including the oblivion interior/exterior gate
+    // are visible"): THE ONE INDEX TYPE. Every draw of a bundle - drawMesh, the shadow replays - reads its elements as
+    // gl.UNSIGNED_INT, so the element buffer holds 32-bit indices whatever the model handed in. The gate's stone, the
+    // Burning Court and the Deadlands' land were built with a Uint16Array (under 65,536 vertices each): half the bytes
+    // their draws asked for, so WebGL refused every one ("Insufficient buffer size") and the stone was never there -
+    // while the collider, which reads numbers and not bytes, stood the floor exactly where it should. Widened once,
+    // here, at upload; `triIndices` stays the model's own array (the wireframe reads its values, not its bytes).
+    buf(gl.ELEMENT_ARRAY_BUFFER, model.indices instanceof Uint32Array ? model.indices : Uint32Array.from(model.indices));
 
     this._bindVao(null);
     // EL5: the bounds the shadow replays cull by - the mesh's sphere and one

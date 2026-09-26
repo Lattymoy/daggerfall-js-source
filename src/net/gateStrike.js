@@ -30,13 +30,27 @@ export function segmentDistance(px, pz, ax, az, bx, bz) {
   return Math.hypot(px - (ax + vx * t), pz - (az + vz * t));
 }
 
+/** WBX5: the Spokes of Dagon's lanes - `n` segments from where he stood, the first along his facing, each `len` long:
+ *  [[ax, az, bx, bz], ...]. Pure. */
+export function spokeLanes(atk) {
+  const A = ATTACK_BY_ID[atk?.a];
+  if (!A || A.shape !== 'spokes') return [];
+  const out = [];
+  for (let k = 0; k < A.n; k++) {
+    const a = atk.yw + (k * 2 * Math.PI) / A.n;
+    out.push([atk.x, atk.z, atk.x + Math.sin(a) * A.len, atk.z + Math.cos(a) * A.len]);
+  }
+  return out;
+}
+
 /**
  * Is the point (px, pz) inside the attack's shape? `atk` is the wire's atk word ({a, x, z, yw, tg}).
- *   cone - within `r` of where he stood and `arc` degrees about his facing (his own body's width always in it)
- *   disc - within `r` of his feet (aim 'self') or of any of its targets (aim 'players')
- *   lane - within half its width of the line from where he stood to its end (tg[0]) - the ground his charge runs
- *   ring - between `r0` and `r1` of where he stood
- *   all  - anywhere
+ *   cone   - within `r` of where he stood and `arc` degrees about his facing (his own body's width always in it)
+ *   disc   - within `r` of his feet (aim 'self'), of any of its targets (aim 'players') or of its one spot (aim 'point')
+ *   lane   - within half its width of the line from where he stood to its end (tg[0]) - the ground his charge runs
+ *   ring   - between `r0` and `r1` of where he stood
+ *   spokes - WBX5: within half its width of any of its lanes (spokeLanes)
+ *   all    - anywhere
  * @param {{a: number, x: number, z: number, yw: number, tg: number[][]}} atk @param {number} px @param {number} pz
  */
 export function inAttack(atk, px, pz) {
@@ -45,12 +59,31 @@ export function inAttack(atk, px, pz) {
   const dx = px - atk.x, dz = pz - atk.z, d = Math.hypot(dx, dz);
   switch (A.shape) {
     case 'cone': return d <= A.r && (d <= BOSS_R || Math.abs(wrap(Math.atan2(dx, dz) - atk.yw)) <= (A.arc / 2) * DEG);
-    case 'disc': return A.aim === 'self' ? d <= A.r : (atk.tg ?? []).some((p) => Math.hypot(px - p[0], pz - p[1]) <= A.r);
+    case 'disc': return A.aim === 'self' ? d <= A.r : (A.aim === 'point' ? (atk.tg ?? []).slice(0, 1) : (atk.tg ?? [])).some((p) => Math.hypot(px - p[0], pz - p[1]) <= A.r);
     case 'lane': { const e = atk.tg?.[0]; return !!e && segmentDistance(px, pz, atk.x, atk.z, e[0], e[1]) <= A.width / 2; }
     case 'ring': return d >= A.r0 && d <= A.r1;
+    case 'spokes': return spokeLanes(atk).some((l) => segmentDistance(px, pz, l[0], l[1], l[2], l[3]) <= A.width / 2);
     case 'all': return true;
     default: return false;
   }
+}
+
+/**
+ * WBX5: THE BURNING GROUND an attack's landing leaves (net/gateBrain.js POOLS): one pool under each of its marks
+ * (Hellfire's) or at its one spot (the Meteor's), burning from the landing for the pool's span - `[{x, z, r, from, until,
+ * pct, base}]`, the court's frame. Every screen that saw the landing knows where it burns; nothing is sent. Pure.
+ */
+export function landingPools(atk) {
+  const A = ATTACK_BY_ID[atk?.a], P = A && 'pool' in A ? A.pool : null;
+  if (!P || !Number.isFinite(atk.at)) return [];
+  const spots = A.aim === 'point' ? (atk.tg ?? []).slice(0, 1) : A.aim === 'self' ? [[atk.x, atk.z]] : (atk.tg ?? []);
+  return spots.map((p) => ({ x: p[0], z: p[1], r: P.r, from: atk.at, until: atk.at + P.ms, pct: P.pct, base: P.base }));
+}
+
+/** WBX5: the burning ground under (px, pz) at `now` - the first live pool that holds the point, or null. Pure. */
+export function poolUnder(pools, px, pz, now) {
+  for (const p of pools ?? []) if (now >= p.from && now < p.until && Math.hypot(px - p.x, pz - p.z) <= p.r) return p;
+  return null;
 }
 
 /** Where the charge's head stands at `now` - the brain's own run (net/gateBrain.js stepBrain: from where he stood to
@@ -91,16 +124,16 @@ export function strikeVerdict(atk, px, pz, now, prev = -Infinity) {
   return inAttack(atk, px, pz) ? 'hit' : 'miss';
 }
 
-/** What an attack does to a player it strikes: the share of their own maximum health, its element (null plain), its
- *  name, and whether a saving throw answers it (Dagon's Wrath is answered by nothing). */
+/** What an attack does to a player it strikes: the share of their own maximum health and the points beside it (WBX4),
+ *  its element (null plain), its name, and whether a saving throw answers it (Dagon's Wrath is answered by nothing). */
 export const blowOf = (atk) => {
   const A = ATTACK_BY_ID[atk?.a];
-  return A ? { pct: A.pct, el: A.el, name: A.name, saved: A.el === 'fire' && A !== ATTACKS.wrath } : null;
+  return A ? { pct: A.pct, base: A.base ?? 0, el: A.el, name: A.name, saved: A.el === 'fire' && A !== ATTACKS.wrath } : null;
 };
 
-/** The damage a struck player takes: `pct` of their maximum health, whole points, at least one (Dagon's Wrath is more
- *  than any health - 999%). */
-export const strikeDamage = (pct, maxHealth) => Math.max(1, Math.round(pct * Math.max(1, maxHealth)));
+/** The damage a struck player takes: `pct` of their maximum health and WBX4's `base` points beside it, whole points, at
+ *  least one (Dagon's Wrath is more than any health - 999%). */
+export const strikeDamage = (pct, maxHealth, base = 0) => Math.max(1, Math.round(pct * Math.max(1, maxHealth) + Math.max(0, base)));
 
 /** A fire strike's share after the game's own saving throw (combat/spellcast.js savingThrow answers the percent of an
  *  effect that lands, 0..100). */

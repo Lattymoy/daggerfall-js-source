@@ -45,7 +45,7 @@ import {
 } from '../systems/spellcast.js';
 import { silenceBlocksCast, SILENCED_TEXT, PRESS_BUTTON_TO_FIRE_SPELL, DOOR_SPELL_TEXT, SOUL_TRAP_TEXT } from '../systems/mysticism.js';
 import { calculateCastCost, effectSchool, EFFECT_COST_TABLE } from '../systems/spellcost.js';
-import { applySpell, SPELL_REFLECTED_TEXT, hasActiveEffect } from '../systems/effects.js';
+import { applySpell, SPELL_REFLECTED_TEXT, hasActiveEffect, isSoulTrapEffect } from '../systems/effects.js';   // WBX7: a soul trap meets the court's boss too
 import { potionBundle } from '../systems/potions.js';   // U44: DrinkPotion's bundle
 import { SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { tallySkill } from '../systems/skills.js';
@@ -159,9 +159,10 @@ export function createPlayerMagic({
     return [{ duel: true, id: q.id, name: q.name ?? 'your opponent', dead: false, ai: { feet: q.feet, height: Number.isFinite(q.height) && q.height > 0 ? q.height : CAPSULE_HEIGHT } }];
   }
   /** WB4b: the court's boss as a foe-shaped mark ({boss, ai:{feet, height, radius}}) for a spell with a harmful family in
-   *  it; [] for anything else, outside a fight, or with no seam. */
+   *  it - WBX7: or a Soul Trap (Swololo on Discord: "soul trap didnt seem to work" - it passed straight through him); []
+   *  for anything else, outside a fight, or with no seam. */
   function bossMarksFor(sp) {
-    if (!bossMark || !castAtBoss || !sp || !duelSpellOf(sp)) return [];
+    if (!bossMark || !castAtBoss || !sp || !(duelSpellOf(sp) || (sp.effects ?? []).some((e) => e && isSoulTrapEffect(e)))) return [];
     let q = null;
     try { q = bossMark() ?? null; } catch { return []; }
     if (!q || !Array.isArray(q.feet) || q.feet.length !== 3 || !q.feet.every(Number.isFinite) || !(q.height > 0) || !(q.radius > 0)) return [];

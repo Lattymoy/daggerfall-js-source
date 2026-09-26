@@ -14,7 +14,7 @@ import {
   keepInCourt, dpsRef, clampLv, COURT_CENTRE, COURT_R, BOSS_R, BOSS_REACH_R, BOSS_SPEED, BRAIN_TICK_MS, CHECKPOINT_MS, OPENING_MS,
   STATE_SEND_MS, HP_SEND_MS, SHIELD_MS, PHASE_AT, PHASE3_WINDUP, BOSS_TTK_S, BUCKET_RATE_X, BUCKET_DEPTH_X, HIT_CAP_X,
   GATE_HIT_HZ_MAX, MELEE_REACH, POSE_SLACK, HIT_KINDS, ATTACKS, ATTACK_BY_ID, THREAT_PICK, RECEIPT_SHARE, STOOD_SHARE,
-  GATE_FIGHTERS_MAX, LV_MAX, TARGET_HOLD_MS,
+  GATE_FIGHTERS_MAX, LV_MAX, TARGET_HOLD_MS, TURN_BREATH_MS, wrapYaw,
 } from '../src/net/gateBrain.js';
 import { mintReceipt, verifyReceipt, readReceipt, receiptValid, importReceiptKey, RECEIPT_V, RECEIPT_MAX, RECEIPT_TTL_S } from '../src/net/gateReceipt.js';
 import { mintToken, verifyToken, _b64url } from '../src/net/identityToken.js';
@@ -153,8 +153,10 @@ test('WB3 brain: the first beats - he stands OPENING_MS, then walks at a far tar
 test('WB3 brain: the attacks\' tables - every attack\'s wind-up long enough to run clear of it from its middle at the player\'s 7.6 m/s, phase three a fifth shorter (the wrath\'s never), a Slam only with someone inside it, the last attack left out while another is open, each chosen by its weight (mutants: a wind-up shortened past escape; phase three\'s cut on the wrath)', () => {
   const RUN = 7.6;
   // from the middle of each shape to its nearest edge: half a Cleave's length, a Slam's whole radius (its middle is his
-  // feet), half a lane's width, a Hellfire's radius (it is laid under the player), half the Nova's band
-  const escape = { cleave: ATTACKS.cleave.r / 2, slam: ATTACKS.slam.r, charge: ATTACKS.charge.width / 2, hellfire: ATTACKS.hellfire.r, nova: (ATTACKS.nova.r1 - ATTACKS.nova.r0) / 2 };
+  // feet), half a lane's width, a Hellfire's radius (it is laid under the player), half the Nova's band; WBX5: a Leap's
+  // and a Meteor's whole radius (each is laid under a fighter), and half a spoke's width (its lanes are left sideways)
+  const escape = { cleave: ATTACKS.cleave.r / 2, slam: ATTACKS.slam.r, charge: ATTACKS.charge.width / 2, hellfire: ATTACKS.hellfire.r, nova: (ATTACKS.nova.r1 - ATTACKS.nova.r0) / 2,
+    leap: ATTACKS.leap.r, meteor: ATTACKS.meteor.r, spokes: ATTACKS.spokes.width / 2 };
   for (const [k, need] of Object.entries(escape)) {
     const a = ATTACKS[k];
     assert.ok(windupOf(a, 3) / 1000 * RUN >= need, `${a.name}: ${windupOf(a, 3)} ms outruns ${need} m even in phase three`);
@@ -162,13 +164,15 @@ test('WB3 brain: the attacks\' tables - every attack\'s wind-up long enough to r
     assert.equal(windupOf(a, 2), a.windup);
   }
   assert.equal(windupOf(ATTACKS.wrath, 3), ATTACKS.wrath.windup);
-  assert.deepEqual(ATTACK_BY_ID.map((a) => a.id), [0, 1, 2, 3, 4, 5]);
+  assert.deepEqual(ATTACK_BY_ID.map((a) => a.id), [0, 1, 2, 3, 4, 5, 6, 7, 8], 'WBX5: the leap, the meteor and the spokes join the six');
   assert.deepEqual(attacksFor(1, 1, 0).map((a) => a.key), ['cleave'], 'phase one, close, nobody inside the slam');
   assert.deepEqual(attacksFor(1, -1, 1).map((a) => a.key), ['cleave', 'slam'], 'a player inside his body is in reach of everything close');
   assert.deepEqual(attacksFor(1, 1, 1).map((a) => a.key), ['cleave', 'slam']);
   assert.deepEqual(attacksFor(1, 1, 1, ATTACKS.cleave.id).map((a) => a.key), ['slam'], 'not the same twice');
   assert.deepEqual(attacksFor(1, 1, 0, ATTACKS.cleave.id).map((a) => a.key), ['cleave'], 'unless nothing else is open');
-  assert.deepEqual(attacksFor(2, 20, 0).map((a) => a.key), ['charge', 'hellfire', 'nova']);
+  assert.deepEqual(attacksFor(2, 20, 0).map((a) => a.key), ['charge', 'hellfire', 'nova', 'leap', 'meteor'], 'WBX5: the Burning Court reaches the far - the leap past its gap, the meteor');
+  assert.deepEqual(attacksFor(2, 8, 0).map((a) => a.key), ['charge', 'hellfire', 'nova', 'meteor'], 'no leap at one near enough to walk to');
+  assert.ok(attacksFor(3, 20, 0).some((a) => a.key === 'spokes') && !attacksFor(2, 20, 0).some((a) => a.key === 'spokes'), 'the spokes are Dagon\'s Champion\'s alone');
   const counts = new Map();
   const rng = seeded(9);
   const can = attacksFor(2, 1, 2);
@@ -185,14 +189,35 @@ test('WB3 brain: the phases - at 66% and 33% he roars (`ph`), stands shielded SH
   assert.ok(!stepBrain(f, T0 + 100, bodies, seeded(1)).some((o) => o.k === 'ph'), 'above the line');
   f.atk = null;
   f.hp = f.max * PHASE_AT[0];
+  f.pos = [6, -4];
   const out = stepBrain(f, T0 + 5000, bodies, seeded(1));
   assert.deepEqual(out.find((o) => o.k === 'ph'), { k: 'ph', n: 2, until: T0 + 5000 + SHIELD_MS });
-  assert.equal(out.find((o) => o.k === 'atk').a, ATTACKS.nova.id, 'a nova with the roar');
-  assert.equal(applyHit(f, 's1', 10, 0, { x: 0, z: 3 }, T0 + 5000 + SHIELD_MS - 1), 0, 'blows glance');
-  assert.ok(applyHit(f, 's1', 10, 0, { x: 0, z: 3 }, T0 + 5000 + SHIELD_MS) > 0, 'and land again');
+  // WBX5: THE TURN IS A SEQUENCE - the leap into the court's heart with the roar, then the nova from there
+  const leap = out.find((o) => o.k === 'atk');
+  assert.equal(leap.a, ATTACKS.leap.id, 'the turn opens with the leap');
+  assert.deepEqual(leap.tg, [[0, 0]], 'into the court\'s heart');
+  assert.equal(applyHit(f, 's1', 10, 0, { x: 6, z: -1 }, T0 + 5000 + SHIELD_MS - 1), 0, 'blows glance');   // at his side before the leap has carried him
+  assert.ok(applyHit(f, 's1', 10, 0, { x: 6, z: -1 }, T0 + 5000 + SHIELD_MS) > 0, 'and land again');
+  let t = f.atk.until;
+  assert.ok(!stepBrain(f, t, bodies, seeded(1)).some((o) => o.k === 'atk'), 'a breath after the leap');
+  assert.deepEqual(f.pos, [0, 0], 'he came down where it landed');
+  const nova = stepBrain(f, t + TURN_BREATH_MS, bodies, seeded(1)).find((o) => o.k === 'atk');
+  assert.equal(nova.a, ATTACKS.nova.id, 'the nova as the ward breaks');
+  assert.deepEqual([nova.x, nova.z], [0, 0], 'from the heart');
   f.atk = null; f.hp = f.max * PHASE_AT[1];
-  stepBrain(f, T0 + 20000, bodies, seeded(1));
+  const o3 = stepBrain(f, T0 + 20000, bodies, seeded(1));
   assert.equal(f.phase, 3);
+  assert.equal(o3.find((o) => o.k === 'atk').a, ATTACKS.leap.id, 'the leap again');
+  t = f.atk.until; stepBrain(f, t, bodies, seeded(1));
+  const sp1 = stepBrain(f, t + TURN_BREATH_MS, bodies, seeded(1)).find((o) => o.k === 'atk');
+  assert.equal(sp1.a, ATTACKS.spokes.id, 'then the spokes');
+  t = f.atk.until; stepBrain(f, t, bodies, seeded(1));
+  const sp2 = stepBrain(f, t + TURN_BREATH_MS, bodies, seeded(1)).find((o) => o.k === 'atk');
+  assert.equal(sp2.a, ATTACKS.spokes.id, 'and the four between them');
+  assert.ok(Math.abs(wrapYaw(sp2.yw - sp1.yw) - Math.PI / 4) < 0.02, `turned an eighth: ${sp1.yw} -> ${sp2.yw}`);
+  assert.ok(Math.abs(sp2.yw) <= Math.PI + 1e-9, 'a facing the wire admits');
+  t = f.atk.until; stepBrain(f, t, bodies, seeded(1));
+  assert.equal(f.queue.length, 0, 'the turn is done');
   // phase three's Hellfire over three living players: five points at most a volley, two volleys
   const g = fightOf([10, 10, 10]);
   g.phase = 3; g.nextAt = T0; g.lastA = -1;

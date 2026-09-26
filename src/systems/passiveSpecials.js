@@ -6,9 +6,9 @@
 // darkness magery have been mintable since chargen and read by
 // nothing, and the enchantment conditions' inSunlight/inHolyPlace ctx
 // arms, which had stood open since E1 and are answered here: the two
-// readers below are wired into the enchant ctx at world.js:4625-4626
+// readers below are wired into the enchant ctx at world.js:4627-4628
 // off the host seam that worldModes.js:1142 and dungeonContext.js:2633
-// register (bible/01-Overview/Port-Ledger.md:729 strikes the pair
+// register (bible/01-Overview/Port-Ledger.md:730 strikes the pair
 // through as closed, V2c 2026-08-27).
 //
 // THE TWO FLAGS ARE SMALL LAWS, verbatim:
@@ -38,6 +38,7 @@
 import { isDayFromMinutes } from './gameDate.js';
 import { SPECIAL_ABILITY_BITS, REGENERATION_FLAGS } from './specialAdvantages.js';
 import { renownMpOf } from './renownLayer.js';   // AUDIT RENOWN1 GAME-5: the magery's third is of Daggerfall's own maximum, never the online layer
+import { regenBarred } from './courtRules.js';   // WBX6: the Burning Court keeps no regeneration
 
 // PassiveSpecialsEffect.cs:35-40, verbatim.
 export const SUN_DAMAGE_AMOUNT = 12;
@@ -111,7 +112,7 @@ export function passiveSpecialsMagicRound(entity, { nowMinutes = 0, clockMinutes
     else if (career.regeneration === REGENERATION_FLAGS.inDarkness) regenerate = !day || dungeon;
     else if (career.regeneration === REGENERATION_FLAGS.inLight) regenerate = day && !dungeon;
     else if (career.regeneration === REGENERATION_FLAGS.whileImmersed) regenerate = !!(_host?.isSwimming?.() ?? false);
-    if (regenerate) sinks?.heal?.(REGENERATE_AMOUNT);
+    if (regenerate && !regenBarred()) sinks?.heal?.(REGENERATE_AMOUNT);   // WBX6: not in the Burning Court
   }
 
   // DamageFromSunlight (:107-121): career flag OR the racial

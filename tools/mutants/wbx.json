@@ -1,0 +1,221 @@
+[
+  {
+    "name": "WBX1-the-widening-dropped",
+    "file": "src/render/renderer.js",
+    "old": "buf(gl.ELEMENT_ARRAY_BUFFER, model.indices instanceof Uint32Array ? model.indices : Uint32Array.from(model.indices));",
+    "new": "buf(gl.ELEMENT_ARRAY_BUFFER, model.indices);",
+    "tests": [
+      "test/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX1-the-gate-on-sixteen-bits",
+    "file": "src/world/gateModel.js",
+    "old": "  const indices = new Uint32Array(count);",
+    "new": "  const indices = new Uint16Array(count);",
+    "tests": [
+      "test/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX2-the-portal-at-the-heart",
+    "file": "src/scenes/gateCourt.js",
+    "old": "    const at = bossPlace(s, s.fell.at);\n    portal = {",
+    "new": "    const at = [0, 0];\n    portal = {",
+    "tests": [
+      "test/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX2-the-door-every-frame",
+    "file": "src/scenes/gateCourt.js",
+    "old": "    if (!portalLaid) { portalLaid = true; layPortalDoor(portalDoor(at)); }",
+    "new": "    layPortalDoor(portalDoor(at));",
+    "tests": [
+      "test/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX2-through-a-fire-still-rising",
+    "file": "src/scenes/gateCourt.js",
+    "old": "    if (!f || !e || !(e.health > 0) || portal.rise < 1) { portalLz = null; return; }",
+    "new": "    if (!f || !e || !(e.health > 0)) { portalLz = null; return; }",
+    "tests": [
+      "test/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX3-the-take-at-once",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "        if (f.fly.rest && t - f.restAt >= SPOILS_TAKE_AFTER_MS && f0 && Math.hypot(",
+    "new": "        if (f.fly.rest && f0 && Math.hypot(",
+    "tests": [
+      "test/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX3-the-line-from-the-floor",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "root: [f.fly.pos[0], f.fly.pos[1] + f.h, f.fly.pos[2]]",
+    "new": "root: [f.fly.pos[0], f.fly.pos[1], f.fly.pos[2]]",
+    "tests": [
+      "test/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX3-the-pile-for-every-piece",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "    const icon = f.sprite && typeof f.sprite === 'object';",
+    "new": "    const icon = false;",
+    "tests": [
+      "test/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX4-the-base-dropped",
+    "file": "src/net/gateStrike.js",
+    "old": "Math.round(pct * Math.max(1, maxHealth) + Math.max(0, base))",
+    "new": "Math.round(pct * Math.max(1, maxHealth))",
+    "tests": [
+      "test/wbx_gate_fixes.test.js",
+      "test/wb4_gate_boss.test.js"
+    ]
+  },
+  {
+    "name": "WBX4-the-chevron-behind-him",
+    "file": "src/render/gateTelegraph.js",
+    "old": "      const fx = Math.sin(sh.yaw), fz = Math.cos(sh.yaw), along = rx * fx + rz * fz, side = rx * fz - rz * fx;",
+    "new": "      const fx = -Math.sin(sh.yaw), fz = -Math.cos(sh.yaw), along = rx * fx + rz * fz, side = rx * fz - rz * fx;",
+    "tests": [
+      "test/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX4-the-mark-after-his-fall",
+    "file": "src/scenes/gateCourt.js",
+    "old": "      if (s.fell || s.wrath != null || bossAct(s, t, hurtAt).act === 'gone') mark = null;",
+    "new": "      if (s.wrath != null) mark = null;",
+    "tests": [
+      "test/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX5-the-nova-at-the-roar",
+    "file": "src/net/gateBrain.js",
+    "old": "  2: Object.freeze([Object.freeze({ a: 'leap', centre: true }), Object.freeze({ a: 'nova' })]),",
+    "new": "  2: Object.freeze([Object.freeze({ a: 'nova' })]),",
+    "tests": [
+      "test/wbx_gate_fixes.test.js",
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WBX5-the-spokes-in-phase-two",
+    "file": "src/net/gateBrain.js",
+    "old": "pct: 0.40, base: 10, el: 'fire', aim: 'self', phase: 3, range: 40, w: 2, minGap: 0 }),",
+    "new": "pct: 0.40, base: 10, el: 'fire', aim: 'self', phase: 2, range: 40, w: 2, minGap: 0 }),",
+    "tests": [
+      "test/wbx_gate_fixes.test.js",
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WBX5-a-spoke-off-its-angle",
+    "file": "src/net/gateStrike.js",
+    "old": "    const a = atk.yw + (k * 2 * Math.PI) / A.n;",
+    "new": "    const a = atk.yw + (k * Math.PI) / A.n;",
+    "tests": [
+      "test/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX5-a-bite-at-once",
+    "file": "src/scenes/gateCourt.js",
+    "old": "    if (!inFire) { inFire = true; burnAt = t; return; }",
+    "new": "    if (!inFire) { inFire = true; burnAt = -Infinity; }",
+    "tests": [
+      "test/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX5-the-pool-outliving-its-span",
+    "file": "src/net/gateStrike.js",
+    "old": "  for (const p of pools ?? []) if (now >= p.from && now < p.until && Math.hypot(px - p.x, pz - p.z) <= p.r) return p;",
+    "new": "  for (const p of pools ?? []) if (now >= p.from && Math.hypot(px - p.x, pz - p.z) <= p.r) return p;",
+    "tests": [
+      "test/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX5-the-leap-drawn-at-its-landing",
+    "file": "src/world/gateBoss.js",
+    "old": "    return [atk.x + (e[0] - atk.x) * k, atk.z + (e[1] - atk.z) * k];",
+    "new": "    return [e[0], e[1]];",
+    "tests": [
+      "test/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX5-the-turn-unsaid",
+    "file": "src/scenes/gateCourt.js",
+    "old": " if (COURT_PHASE_TEXT[s.phase]) say(COURT_PHASE_TEXT[s.phase]); }",
+    "new": " }",
+    "tests": [
+      "test/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX6-the-switch-ignored",
+    "file": "src/systems/courtRules.js",
+    "old": "export const regenBarred = () => _on;",
+    "new": "export const regenBarred = () => false;",
+    "tests": [
+      "test/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX6-the-spare-for-everyone",
+    "file": "src/combat/formulas.js",
+    "old": "  if (target?.spareGear) return;",
+    "new": "  if (target) return;",
+    "tests": [
+      "test/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX6-the-stand-in-unflagged",
+    "file": "src/world/gateBoss.js",
+    "old": "  e.spareGear = true;",
+    "new": "  e.spareGear = false;",
+    "tests": [
+      "test/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX7-a-spent-trap-rolled",
+    "file": "src/scenes/gateCourt.js",
+    "old": "    if (trapMark && s.fell.at < trapMark.until) soulTrap(",
+    "new": "    if (trapMark) soulTrap(",
+    "tests": [
+      "test/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX7-the-roll-every-frame",
+    "file": "src/scenes/gateCourt.js",
+    "old": "    if (!s.fell || trapJudged) return;",
+    "new": "    if (!s.fell) return;",
+    "tests": [
+      "test/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX7-the-recast-takes-its-chance",
+    "file": "src/scenes/gateCourt.js",
+    "old": "      if (trapMark && t < trapMark.until) trapMark.until += rounds * COURT_ROUND_MS;",
+    "new": "      if (trapMark && t < trapMark.until) trapMark = { chance, until: trapMark.until + rounds * COURT_ROUND_MS };",
+    "tests": [
+      "test/wbx_gate_fixes.test.js"
+    ]
+  }
+]

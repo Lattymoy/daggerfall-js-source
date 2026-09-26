@@ -137,7 +137,7 @@
   {
     "name": "WB4b-a-heal-reaches-him",
     "file": "src/scenes/hostMagic.js",
-    "old": "    if (!bossMark || !castAtBoss || !sp || !duelSpellOf(sp)) return [];",
+    "old": "    if (!bossMark || !castAtBoss || !sp || !(duelSpellOf(sp) || (sp.effects ?? []).some((e) => e && isSoulTrapEffect(e)))) return [];",
     "new": "    if (!bossMark || !castAtBoss || !sp) return [];",
     "tests": [
       "test/wb4b_gate_blows.test.js"

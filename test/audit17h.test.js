@@ -123,7 +123,7 @@ test('65 SL-4: reactionMods leaves the envelope - a five-wide legacy key never r
 
   // (2) on an entity that has none, one magic round re-derives them
   // eleven wide - ClearReactionMods at the head of DoMagicRound
-  // (PlayerEntity.cs:1567-1570 / enchantments.js:842), off worldTick.
+  // (PlayerEntity.cs:1567-1570 / enchantments.js:843), off worldTick.
   const fresh = player();
   fresh.isPlayer = true;
   restorePlayer(fresh, legacy);

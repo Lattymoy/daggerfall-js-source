@@ -92,12 +92,14 @@ test('WB4 the verdict: nothing before the landing; decided at the first frame on
 });
 
 test('WB4 what a strike does: a share of the struck player\'s own maximum health, at least one; fire through the saving throw, and the Wrath through nothing; the telegraph\'s clock by the phase\'s wind-up (mutants: the Wrath saved; the damage off a fixed health; phase three\'s wind-up the full one)', () => {
-  assert.deepEqual(blowOf(W('cleave')), { pct: 0.3, el: null, name: 'Cleave', saved: false });
+  assert.deepEqual(blowOf(W('cleave')), { pct: ATTACKS.cleave.pct, base: ATTACKS.cleave.base, el: null, name: 'Cleave', saved: false }, 'WBX4: a share and the points beside it');
   assert.equal(blowOf(W('hellfire')).saved, true);
   assert.equal(blowOf(W('nova')).saved, true);
   assert.equal(blowOf(W('wrath')).saved, false, 'Dagon\'s Wrath is answered by nothing');
   assert.equal(blowOf({ a: 42 }), null);
-  assert.equal(strikeDamage(0.3, 40), 12); assert.equal(strikeDamage(0.3, 400), 120, 'a level-1 and a level-30 read the same fight');
+  assert.equal(strikeDamage(0.3, 40), 12); assert.equal(strikeDamage(0.3, 400), 120, 'a level-1 and a level-30 read the same share');
+  assert.equal(strikeDamage(0.35, 40, 8), 22); assert.equal(strikeDamage(0.35, 400, 8), 148, 'WBX4: the base beside the share');
+  assert.equal(strikeDamage(0.3, 40, -5), 12, 'a base is never a heal');
   assert.equal(strikeDamage(0.001, 10), 1, 'at least one');
   assert.ok(strikeDamage(ATTACKS.wrath.pct, 900) > 900, 'more than any health');
   assert.equal(fireShare(40, 50), 20); assert.equal(fireShare(40, 0), 0); assert.equal(fireShare(40, 250), 40); assert.equal(fireShare(41, 50), 20);
@@ -350,7 +352,7 @@ test('WB4 the court\'s driver, the strikes: each attack judged once against my f
   await tick(h, 9000, state({ atk: slam }));
   assert.equal(h.struck.length, 0, 'nothing before the landing');
   await tick(h, 10005);
-  assert.deepEqual(h.struck, [[70, { fire: false, name: 'Ground Slam' }]], '35% of my 200');
+  assert.deepEqual(h.struck, [[90, { fire: false, name: 'Ground Slam' }]], 'WBX4: 40% of my 200, and its 10');
   await tick(h, 10050); await tick(h, 10100);
   assert.equal(h.struck.length, 1, 'judged once');
   const nova = W('nova', { i: 6, at: 12001 });
@@ -360,7 +362,7 @@ test('WB4 the court\'s driver, the strikes: each attack judged once against my f
   const hf = W('hellfire', { i: 7, at: 13001, tg: [[1, 1]] });
   await tick(h, 13000, state({ atk: hf, phase: 2 }));
   await tick(h, 13001);
-  assert.deepEqual(h.struck[1], [30, { fire: true, name: 'Hellfire' }], '30% of 200, halved by my throw');
+  assert.deepEqual(h.struck[1], [33, { fire: true, name: 'Hellfire' }], 'WBX4: 30% of 200 and its 6, halved by my throw');
   const r = court({ feet: [1, 0, 1], save: 0 });
   await tick(r, 13000, state({ atk: hf, phase: 2 })); await tick(r, 13001);
   assert.deepEqual(r.struck, []); assert.deepEqual(r.said, [COURT_STRIKE_TEXT.resisted('Hellfire')]);

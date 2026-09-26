@@ -41,6 +41,7 @@ import { enemyGroupOf, NEARBY } from './nearbyObjects.js';   // X8: Pacify match
 // already speak to.
 import { breakNormalPowerConcealment, handleAttackFromSource } from './concealment.js';
 import { entityAbsorbsSpells, setEnchantmentEffectDoors } from './enchantments.js';   // E1: the AbsorbsSpells fold feeds the absorption gate
+import { regenBarred } from './courtRules.js';   // WBX6: the Burning Court keeps no regeneration
 
 export { breakNormalPowerConcealment, handleAttackFromSource, NORMAL_POWER_CONCEALMENTS } from './concealment.js';
 
@@ -645,7 +646,7 @@ function runEffectRound(a, target, sinks, rolls) {
   } else if (a.kind === 'regenerate') {
     // Regenerate.MagicRound: IncreaseHealth(GetMagnitude) every round
     const n = effectMagnitude(a.effect, a.casterLevel, a.saveScaled ?? false, a.element, a.flag, target, rolls);
-    if (n > 0 && sinks.heal) sinks.heal(n);
+    if (n > 0 && sinks.heal && !regenBarred()) sinks.heal(n);   // WBX6: the Burning Court keeps no regeneration (systems/courtRules.js)
   }
 }
 
@@ -811,7 +812,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
     if (isParalyze(e) && isEntityImmuneToParalysis(target)) continue;
     // DFU requires a CASTER ENTITY on the bundle (:505) and
     // BundleType == Spell - repeated on ALL THREE gates (:509, :521,
-    // :525). D9: the enchantment arc arrived (enchantments.js:281
+    // :525). D9: the enchantment arc arrived (enchantments.js:282
     // routes CastWhenHeld through this same applySpell with caster
     // `{ entity }` and ctx.heldItem set), so the caster check alone
     // stopped being the whole gate: a HeldMagicItem bundle is

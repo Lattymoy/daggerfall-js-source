@@ -549,6 +549,42 @@ The look and the sound:
 | D9 | the sky's three ridges and the towers were worked out for every pixel, the zenith's too | skipped above `RIDGES_TOP` (0.42 rad) |
 | D10 | the court's frame made its lists, its constant places, its braziers' lights, its fog and its light arrays anew | made once, or refilled |
 
+## 12. After the first fights (WBX, 2026-09-26)
+
+Mac, after the gate's first live fights: *"So we implemented the world bosses, and it is amazing. But I definitely want to
+fix some bugs and make some detailed changes"* - five of his own:
+
+> *1. None of the 3D geometry that was built including the oblivion interior/exterior gate are visible 2. The boss muusic
+> phase doesn't play 3. Loot drops should show their sprite and have a small colored loot line that extrudes from the
+> sprite itself 4. The boss phases need to be more defined and more detailed mechanics. 5. The oblivion portal on the
+> inside should spawn inside at the end of the fight. Currently there's no way to leave after ending*
+
+and a player's seven (Swololo on Discord, "Oblivion Gate Boss Difficulty"): the damage too low ("should be hp % based
+maybe + base damage"), regeneration undoing it ("maybe disable regen in oblivion"), the boss hard to place and to read
+("maybe he should have a circle under him"), weapons broken in the fight, loot "not distributed, was instantly pillaged
+by others", soul trap dead - and "maybe it should be 1.5 times faster", which Mac turned down: *"I dont think making
+mechanics faster is the play."* Nothing here is faster than it was.
+
+| # | what | now |
+|---|---|---|
+| WBX1 | **none of the made geometry drew.** The gate's stone, the court (floor, rune ring, spires, braziers, the bridge and its way home) and the Deadlands' islands and shards were built with a `Uint16Array` of indices (under 65,536 vertices each), and every draw of a bundle reads `gl.UNSIGNED_INT` - half the bytes the draw asked for, so WebGL refused each one (`INVALID_OPERATION: Insufficient buffer size`) and nothing was there; the colliders, which read numbers and not bytes, stood the floor where it should be. Every probe had drawn the stone with its own stand-in program, never the renderer's | `renderer.createMesh` widens any element array to 32 bits once, at upload (the one index type), and the three builders hand 32 bits in. Seen through the real renderer headless: the stone, the court and the land (0 pixels before, the whole silhouette after) |
+| WBX2 | **no way home after the fight** (the bridge's membrane was part of the invisible court) | once his body is gone (`PORTAL_AFTER_MS` into his fall) the gate's own fire - its arch and its beacon, without the stone, so no plinth rises over the spoils - stands where he fell and rises over `PORTAL_RISE_MS`, *The way home tears open where he fell.*; walking through it or pressing it (its door is laid into the court's exit doors) is the way home - `gateWayHome`, the one door the bridge's membrane takes too |
+| WBX3 | **the loot**: every piece lay as the same treasure heap in a beam 8 m tall; and "pillaged by others" - the spoils were always the player's alone, but a fighter standing where they fell had walked over them the second they landed | each item stands as its own picture on the floor - the pack's (`ui/itemIconColor32.js`, `textureCanvas.js`'s own door with the item's dye), uploaded under `SPOILS_ICON_ARCHIVE` - and its tier's colour leaves the top of that sprite as a thin line (`render/spoilsGlow.js`: 0.7-2.3 m by tier, never thinner than two pixels on the screen, brightest where it leaves the sprite); gold keeps its pile. A piece is taken only `SPOILS_TAKE_AFTER_MS` after it rests, and the burst says *...spoils spill across the floor - yours alone to take.* |
+| WBX4 | **his damage and his mark** | every attack takes a larger share of the struck player's own health and `base` points beside it (Cleave 35% + 8, Slam 40% + 10, Charge 30% + 8, Hellfire 30% + 6, Nova 45% + 10, Leap 35% + 8, Meteor 50% + 12, Spokes 40% + 10) - two of his blade's or his weight's landings leave a fighter of 150 health or more low and a third ends them, and the Flame Nova and the Meteor, near half each, end anyone in two who has not healed between; and **his mark** on the floor, always: a ring about his feet a little wider than his body and a chevron before it where he faces (`render/gateTelegraph.js` kind 7), his ember, gold while the ward holds |
+| WBX5 | **the phases** | each phase has a name and a shape - **The Warden** (blade and weight: Cleave, Ground Slam, Charge), **The Burning Court** (fire and reach: Hellfire and the new **Meteor of Oblivion** leave the floor BURNING - pools that bite every second a player stays in them, the first bite a second after stepping in - the Flame Nova, and the **Crushing Leap** at whoever stands more than 10 m off), **Dagon's Champion** (the **Spokes of Dagon**: four lanes of fire from his feet). A phase's turn is a sequence: he leaps into the court's heart under his ward, then casts its signature - the Nova as the ward breaks; the spokes and at once the four between them as he becomes Dagon's Champion. The bar names the phase; the turn is said over the screen. The relay's brain (`PHASE_TURN`, three new attack ids inside the `a` bound the wire always had) - world114 |
+| WBX6 | **regeneration, and broken weapons** | the court keeps no regeneration (`systems/courtRules.js`, set by the world host each frame the court stands: the Regenerate effect's round, a RegensHealth enchantment's and a career's Regenerate Health heal nothing; a Heal, a potion or a friend's cast land as ever - nothing is wiped). A blow on him wears no gear (`combat/formulas.js damageEquipment` spares the stand-in's `spareGear` - a fight of hundreds of blows was breaking weapons) |
+| WBX7 | **soul trap**: a Soul Trap met only a spell with a harmful family, and his stand-in forgets every lasting effect | a Soul Trap reaches him; the dungeon context lays it through `applySpell` (its rounds, its chance frozen at the cast, his save, *Trap active.*) and the court keeps it on the fight's clock (a magic round a game minute - five seconds online; a recast adds rounds and keeps its chance); at his fall a trap still running is rolled by the port's own `attemptSoulTrap` - his soul into an empty gem, *Trapped soul.* / *Trap failed.* / *You have no empty soul traps!* |
+
+What did not change: the relay's caps (the fastest kill is still 75 s of the whole room at the cap), who earns a
+receipt, the telegraph law (the ground shows exactly what lands), every wind-up (phase three's fifth is as it was).
+
+Mac's second - *"The boss muusic phase doesn't play"* - **did not reproduce, and nothing was changed for it.** Played
+whole on 2026-09-26 in a real browser against a local relay (one fighter, from the step into the court to the portal
+home, `music.current` read every tick), the court held the music from its first frame: GATEWAR1 through the Warden,
+GATEWAR2 from the Burning Court's turn, GATEWAR3 from Dagon's Champion's, GATEFELL at his fall, and the overworld's own
+song after the step home. Not tried: a player's own music settings or a replacement pack, and a fight joined late. If
+it recurs, the first questions are which phase, and whether any music played at all.
+
 ## Shipped
 
 **WB1 (2026-09-25) - the omen.** `net/gateLaw.js` (the schedule, the room's key and window, the rolls, the boss table,
@@ -784,3 +820,24 @@ world half's membrane, compiled and drawn in a real WebGL2.
 
 With this the audit's confirmed findings are all fixed - 7 of the world's, 7 of the court's, 5 of the relay's, 5 of the
 spoils' and claims', 9 of the look and the sound - each pinned and mutated.
+
+**WBX (2026-09-26) - after the first fights.** Section 12 above, whole: `render/renderer.js` (the one index type),
+`world/gateModel.js`, `world/gateArena.js`, `world/deadlandsLand.js` (32-bit indices; `portalDoor`, `PORTAL_AFTER_MS`),
+`scenes/gateCourt.js` (the portal, the mark, the burning ground and its bite, the turn said, the soul trap kept and
+rolled), `scenes/spoilsPool.js` and `ui/itemIconColor32.js` (each piece its own picture, the take after rest),
+`render/spoilsGlow.js` (the line), `render/gateTelegraph.js` (the spokes, the mark, the pools), `world/gateBoss.js` (the
+leap's flight and hop, the new cues and colours, the stand-in's `spareGear` and mobile), `net/gateBrain.js` (`base`,
+`POOLS`, the three attacks, `PHASE_NAMES`, `PHASE_TURN`), `net/gateStrike.js` (`spokeLanes`, `landingPools`,
+`poolUnder`, `strikeDamage`'s base), `ui/gateBossBar.js` (the phase's name), `systems/courtRules.js` with
+`systems/effects.js`, `systems/enchantments.js` and `systems/passiveSpecials.js` (no regeneration), `combat/formulas.js`
+(no wear on him), `scenes/hostMagic.js` and `scenes/dungeonContext.js` (a Soul Trap meets him), `scenes/worldModes.js`
+(`gateWayHome`, `onBossTrap`) and `scenes/world.js` (the seams). RELAY_VERSION world114 - the brain's law moved; no
+frame changes shape. Pins `test/wbx_gate_fixes.test.js` (16); re-aimed: WB3's tables and phases, WB4's strike and the
+driver's, WB4b's mark, WB5's glow and burst, WB6c's way home, AUDIT WB A2's burst, thirteen exact-version pins, ten
+mutant records and SURVTIERS3's two cite records; mutants `tools/mutants/wbx.json` (24 dead - the take-after-rest's
+survived the first run and its pin was rebuilt to stand on the piece). Seen through the real renderer headless (the
+stone, the court and the land, 0 pixels before and whole after; the spoils' pictures with their lines out of each
+sprite's crown) and played whole in a real browser against a local relay: the court's floor under the fighter, the mark,
+the turn into the Burning Court (the leap to the heart, then the Nova) and into Dagon's Champion (the leap, the spokes
+twice), the burning ground, the score by phase, the fall, each piece in the air as its own picture, the portal rising
+where he fell, and the walk through it home.

@@ -173,8 +173,8 @@
   {
     "name": "WB3-no-nova-with-the-roar",
     "file": "src/net/gateBrain.js",
-    "old": "    begin(f, ATTACKS.nova, now, null, bodies, rng, out);",
-    "new": "    void rng;",
+    "old": "    f.queue = rest.map((e) => ({ ...e }));",
+    "new": "    f.queue = [];",
     "tests": [
       "test/wb3_gate_room.test.js"
     ]

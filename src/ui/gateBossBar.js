@@ -11,7 +11,7 @@
 // `bossBarModel` is pure - the court's state and the clock in, what the bar says out; the pins read it.
 //
 // Not a DFU member. Ledger A (WB).
-import { ATTACK_BY_ID, PHASE_AT } from '../net/gateBrain.js';
+import { ATTACK_BY_ID, PHASE_AT, PHASE_NAMES } from '../net/gateBrain.js';
 import { telegraphAt } from '../net/gateStrike.js';
 import { countdownText } from '../net/gateLaw.js';
 import { ATTACK_COLORS } from '../world/gateBoss.js';
@@ -29,6 +29,8 @@ export const BOSS_BAR_TEXT = Object.freeze({
   fallen: 'Fallen',
   wrathIn: (left) => `Dagon's Wrath in ${left}`,
   fighters: (n) => (n === 1 ? '1 in the court' : `${n} in the court`),
+  // WBX5 (Mac: "The boss phases need to be more defined"): the phase he fights in, by its number and its name
+  phase: (n) => `${['I', 'II', 'III'][Math.max(1, Math.min(3, n | 0)) - 1]} - ${PHASE_NAMES[Math.max(1, Math.min(3, n | 0)) - 1]}`,
 });
 
 const css = (c) => `rgb(${Math.round(c[0] * 255)}, ${Math.round(c[1] * 255)}, ${Math.round(c[2] * 255)})`;
@@ -52,6 +54,7 @@ export function bossBarModel(s, now, boss) {
     warded: !s.fell && now < s.shieldUntil, fallen: !!s.fell, callout,
     wrath: !s.fell && s.wrath == null && toWrath <= WRATH_WARN_MS ? BOSS_BAR_TEXT.wrathIn(countdownText(toWrath)) : null,
     fighters: s.fighters | 0,
+    phaseName: BOSS_BAR_TEXT.phase(s.phase),   // WBX5
   };
 }
 
@@ -113,7 +116,7 @@ export function drawGateBossBar(model, { hidden = false, doc = globalThis.docume
     parts.callout.textContent = callout;
     parts.callout.style.color = color;
   }
-  const foot = [BOSS_BAR_TEXT.fighters(model.fighters), model.wrath].filter(Boolean).join('  -  ');
+  const foot = [model.fallen ? null : model.phaseName, BOSS_BAR_TEXT.fighters(model.fighters), model.wrath].filter(Boolean).join('  -  ');   // WBX5: the phase first
   if (foot !== shown.foot) { shown.foot = foot; parts.foot.textContent = foot; }
 }
 

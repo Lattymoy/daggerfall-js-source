@@ -25,7 +25,7 @@
 //
 // Not a DFU member. Ledger A (WB).
 import { COURT_CENTRE, COURT_R, BOSS_REACH_R } from '../net/gateBrain.js';
-import { faces, spike, GATE_ARCHIVE, GATE_STONE_RECORD } from './gateModel.js';
+import { faces, spike, GATE_ARCHIVE, GATE_STONE_RECORD, PLINTH_H, PLINTH_STEP_H } from './gateModel.js';
 import { gateYaw } from '../net/gateLaw.js';
 
 /** The court's own textures (world/gateArt.js courtArt) - the gate's pseudo-archive's neighbour. */
@@ -82,6 +82,7 @@ export const COURT_TEXT = Object.freeze({
   castOut: 'You are cast out of the Burning Court.',
   collapse: 'The Burning Court comes apart around you.',
   lost: 'The Burning Court slips away from you - the way through is lost.',   // AUDIT WB B5: the relay's link gone for good
+  portal: 'The way home tears open where he fell.',   // WBX2: said as the portal rises
 });
 /** A brazier's fire: its colour and reach. */
 export const BRAZIER_COLOR = Object.freeze([1.0, 0.45, 0.16]);
@@ -229,7 +230,7 @@ export function buildCourtModel() {
   const recs = [...f.byRec.keys()].sort((x, yy) => x - yy);
   const count = recs.reduce((n, r) => n + f.byRec.get(r).p.length / 3, 0);
   const positions = new Float32Array(count * 3), normals = new Float32Array(count * 3), uvs = new Float32Array(count * 2);
-  const indices = count > 65535 ? new Uint32Array(count) : new Uint16Array(count);
+  const indices = new Uint32Array(count);   // WBX1: the renderer's one index type (renderer.createMesh) - a Uint16Array under it drew nothing
   const subMeshes = [];
   let v = 0;
   for (const rec of recs) {
@@ -311,6 +312,32 @@ export function courtExitDoor() {
 
 /** The ring the motor keeps a player inside (player/motor.js `arena`): the court's centre and the floor's radius. */
 export const courtRing = () => ({ centre: [...COURT_CENTRE], radius: COURT_R });
+
+/**
+ * WBX2 (2026-09-26, Mac: "The oblivion portal on the inside should spawn inside at the end of the fight. Currently
+ * there's no way to leave after ending"): THE WAY HOME, TORN OPEN WHERE HE FELL. Once his body is gone (world/gateBoss.js
+ * FALL_MS and a breath - PORTAL_AFTER_MS after his fall) the gate's own fire (render/gatePass.js, the arch's opening and
+ * its beacon, without the stone - no plinth rises over the spoils) stands on the floor where he fell and rises over
+ * PORTAL_RISE_MS; walking through it or pressing it is the way home, the same step through fire as the bridge's
+ * membrane (scenes/worldModes.js gateWayHome). The bridge's way stands as it always did; this one is where the fighters
+ * are when the fight ends, and seen from anywhere on the floor by its beacon.
+ */
+export const PORTAL_AFTER_MS = 2600;
+export const PORTAL_RISE_MS = 1500;
+/** The fire's foot: the arch's opening begins over the stone's plinth (world/gateModel.js ARCH_Y0), so the portal stands
+ *  that far down, its fire on the floor. */
+export const PORTAL_DROP = PLINTH_H + PLINTH_STEP_H;
+/** Where the portal stands (the court's frame, where he fell) as its door: an exit door record in courtExitDoor's shape
+ *  (a body tall and the opening wide, its face toward the bridge) - the exit family's ray and name take it. */
+export function portalDoor(at) {
+  const [x, y, z] = courtToDungeon(at[0], 0, at[1]);
+  return {
+    matrix: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, x, y, z, 1],
+    centre: { x: 0, y: EXIT_H / 2, z: 0 },
+    size: { x: EXIT_HALF_W * 2, y: EXIT_H, z: 1 },
+    normal: { x: 0, y: 0, z: 1 },
+  };
+}
 
 /** How far before the gate the way home lands, metres (clear of its plinth - world/gateModel.js PLINTH_R 8.2). */
 export const GATE_LANDING_M = 10;

@@ -179,6 +179,8 @@ import { createDeadlandsAir } from './deadlandsAir.js';   // WB6b: and their air
 import { createGateVeil } from '../ui/gateVeil.js';   // WB6c: the step through the gate - a vortex of fire in and out
 import { gateScoreSongs, createCourtScore, GATE_SONGS, SCORE_SILENCE } from '../systems/gateScore.js';   // WB7: the Warden's score - the court's own music
 import { createSpoilsPool, spoilsStore, recoverSpoils, SPOILS_TEXT } from './spoilsPool.js';   // WB5: a fallen boss's spoils, spewed, glowing and taken
+import { itemIconColor32 } from '../ui/itemIconColor32.js';   // WBX3: a spoil's own picture on the court's floor
+import { setCourtRules } from '../systems/courtRules.js';   // WBX6: the court's laws, switched by the frame
 import { gateRoomKey, isGateRoom, gateBossOf, gateTimes, gateAdmits, GATE_COLLAPSE_MS } from '../net/gateLaw.js';   // WB3b: the court's room, and its day's end
 import { gateLandingFor, courtRing, courtToDungeon, courtBraziers, COURT_TEXT, COURT_FOG, LAVA_Y } from '../world/gateArena.js';   // WB3b: the Burning Court's way home, its ring and its words   // WB2: the gate's countdown over the screen, near it
 import { isMainStoryDungeon } from '../world/dungeonTextures.js';   // SPAWNED-DUNGEONS1: the main story's own dungeons are never cloned
@@ -298,7 +300,7 @@ import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../sy
 import { createWeatherFront, blendTerms, soundWeather } from '../systems/weatherFront.js';   // WX2: the front reaches the ground
 import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag , raisePlayerSkills, liveEnchantFoes, liveEnchantFoeSinks, enchantFoeHost } from './shared.js';   // TP1: PlayerEntity.RaiseSkills   // EC1: the live enchant pool + its sinks router; AUDIT 58: the membership question the Wabbajack door asks too
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
-import { dispelNearby } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed)
+import { dispelNearby, attemptSoulTrap, SOUL_TRAP_TEXT } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed); WBX7: the kill's soul trap roll, for the court's boss
 import { PlayerMotor, startRestGroundedCheck, motionBagOf, MAX_FRAME_DT, CAPSULE_HEIGHT, CAPSULE_RADIUS, RIDE_EYE_HEIGHT, afloatMessageStep, CANNOT_FLOAT_HUD_SECONDS } from '../player/motor.js';   // SPELLFX1: a peer's eye when its body has not said its height
 import { travelDriveForward, travelLookaheadFor } from '../systems/travelAutopilot.js';   // TO-FIELD / AUDIT-FIELD F8: the journey's ground gate, pure so the pins can drive it   // StartRestGroundedCheck's ONE home; WW2: the one motion bag
 import { createTravelSteer, createColliderProbe, steerDrive } from '../systems/travelSteer.js';   // TRAVEL-NAV1: the journey goes round what is in its way, and stops short of what it cannot
@@ -7107,7 +7109,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // and 6pm regardless of travel type"). The two are separately
         // sourced - the racial arm off the compound race, the career
         // arm off the class's own CFG bit - which is exactly how the
-        // per-round burn already reads them (passiveSpecials.js:121).
+        // per-round burn already reads them (passiveSpecials.js:122).
         sunAverse: !!playerEntity.racialOverride?.sunDamage || careerSunDamage(playerEntity.career),
       });
       if (clamp > 0 && !sharedClockOn()) { setSyntheticTimeIncrease(true); playerTicker.advance(clamp); }   // AUDIT 63 F13: the arrival clamp is inside DFU's one shielded Update too
@@ -7209,7 +7211,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:6467), so exterior mode and a
+    // composer, dungeonContext.js:6484), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -9310,7 +9312,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:9397-9461 -
+  // worldModes answers it in BOTH modes (worldModes.js:9406-9470 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -11755,6 +11757,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     say: (text) => setMidScreenText(text),
     store: _spoilsStore,
     who: () => characterIdOf(playerEntity),
+    iconOf: itemIconColor32,   // WBX3: each piece as its own picture - the pack's
   }) : null;
   /** AUDIT WB A2: THE SPOILS WITH NO FLOOR - a receipt that comes while this player is not in its court (cast out before
    *  the kill, gone, handed it by the hub's next hello) is its spoils straight into the pack; in its court the burst
@@ -11810,6 +11813,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     say: (text) => setMidScreenText(text),
     hudHidden: () => gamePaused() || !!townTalk.hudHidden,
     send: (hit) => !!online?.sendGate?.({ k: 'hit', ...hit }),   // WB4b: a blow of mine on him, to the court's room
+    wayHome: () => { modes?.gateWayHome?.(); },   // WBX2: the portal home is the way home - the bridge membrane's own step
+    portalDoor: (door) => { modes?.dungeonCtx?.exitDoors?.push?.(door); },   // WBX2: and its door, for the exit's ray and name
+    // WBX7: a soul trap of mine still on him as he fell - the port's own kill roll (EnemyEntity.AttemptSoulTrap), his soul
+    // into an empty gem of my pack, its words; the tether's arm is not his (the relay has already killed him)
+    soulTrap: ({ chance, mobile }) => {
+      const r = attemptSoulTrap({ activeEffects: [{ kind: 'soulTrap', chance }] }, mobile, playerEntity.items ?? [], Math.random());
+      if (r.alert && SOUL_TRAP_TEXT[r.alert]) setMidScreenText(SOUL_TRAP_TEXT[r.alert]);
+      if (r.filled) surfacePlayer();
+    },
   }) : null;
   let _omenClockAt = null;   // AUDIT WB C4: when the relay's clock was first read this session (the omen's fallback wait)
   const gateOmen = params.has('online') ? createGateOmen({
@@ -13685,6 +13697,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     gateCourtLights: () => gateCourt?.lights() ?? [],   // WB4: the glow on him, in the court's light channel
     gateBoss: () => gateCourt?.target() ?? null,   // WB4b: him as a body my blows meet
     onBossHit: (hit) => !!gateCourt?.hit(hit),   // WB4b: a blow's number on him, out to the room
+    onBossTrap: (trap) => !!gateCourt?.trapped(trap),   // WBX7: a soul trap laid on him - the court rolls it at his fall
     // WB6a: the Deadlands' sea and sky, in the dungeon arm's world pass after the court's solid geometry - in the court's
     // own air (the renderer's fog as it set it for the court, the sky's light following the lane's with the fog's colour)
     drawGateBackdrop: ({ proj, view }) => {
@@ -14533,6 +14546,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     spoilsRecoverFrame();   // WB5: a boss's spoils no save holds, back to their character as it stands up - before it can save, online or not
     if (onlineOn && playerSpawned) { if (!online) onlineStart(); onlineFrame(now, dt); } else { if (!onlineOn && modes?.gateArenaDay?.() != null) ejectFromCourt(COURT_TEXT.collapse); if (player.arena) player.arena = modes?.gateArenaDay?.() != null ? courtRing() : null; }   // DUEL1: no online frame, no duel's law to hold the body - the ring is the live duel's alone; WB3b: the court's is its floor's, and offline there is no court   // ONLINE1: the pose out, the peers in - after the look is paid, before the camera is read and any mode draws
     deadlandsAirFrame();   // WB6b: after the court's ways out have run, online or not - the frame it is gone is the frame its air falls silent
+    setCourtRules(modes?.gateArenaDay?.() != null);   // WBX6: the Deadlands keep no regeneration - set before any magic round of this frame, cleared the frame the court is gone
     meterFor(renderer.gl)?.markCpu('sim');   // PERF-CPU: everything between here and the next mark is the rest of the simulation
     lookGate(gamePaused());   // a window up frees the cursor; closing re-locks
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];

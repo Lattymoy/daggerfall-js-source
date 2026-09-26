@@ -23,8 +23,16 @@ import { ATTACK_BY_ID, BOSS_R, COURT_CENTRE, COURT_R, windupOf } from '../net/ga
 import { telegraphAt } from '../net/gateStrike.js';
 import { ATTACK_COLORS } from '../world/gateBoss.js';
 
-/** The shapes, as the shader's `uKind` says them. */
-export const TELEGRAPH_KIND = Object.freeze({ cone: 0, disc: 1, discs: 2, lane: 3, ring: 4, all: 5 });
+/** The shapes, as the shader's `uKind` says them. WBX5: the Spokes of Dagon's lanes; WBX4: his mark. */
+export const TELEGRAPH_KIND = Object.freeze({ cone: 0, disc: 1, discs: 2, lane: 3, ring: 4, all: 5, spokes: 6, mark: 7 });
+/** The most lanes one spokes lays (the shader's loop bound). */
+export const TELEGRAPH_SPOKES_MAX = 8;
+/** WBX4 (2026-09-26, Swololo on Discord: "its hard to see where boss is and where he is facing, maybe he should have a
+ *  circle under him"): HIS MARK on the floor, always - a ring about his feet a little wider than his body, and a chevron
+ *  before it pointing where he faces: its ring's radius, the chevron's length and its half-width at the ring. */
+export const BOSS_MARK_R = BOSS_R + 0.35;
+export const BOSS_MARK_CHEVRON_LEN = 1.6;
+export const BOSS_MARK_CHEVRON_HALF_W = 0.85;
 /** The most discs one attack lays (Hellfire's two volleys of five in phase three - net/gateBrain.js). */
 export const TELEGRAPH_POINTS_MAX = 10;
 /** How far over the floor it lies, metres, and how far past its edge the quad reaches. */
@@ -56,12 +64,40 @@ export function telegraphShape(atk, phase, now) {
   const fadeOut = tel.since > span ? 1 - (tel.since - span) / TELEGRAPH_FLASH_MS : 1;
   const kind = A.shape === 'disc' ? (A.aim === 'self' ? TELEGRAPH_KIND.disc : TELEGRAPH_KIND.discs) : TELEGRAPH_KIND[A.shape];
   const end = atk.tg?.[0] ?? [atk.x, atk.z];
+  // WBX5: a 'point' disc is one mark (the leap's landing, the meteor's fall); the spokes' lanes are `len` long
+  const marks = A.aim === 'players' ? (atk.tg ?? []).slice(0, TELEGRAPH_POINTS_MAX) : A.aim === 'point' ? (atk.tg ?? []).slice(0, 1) : [];
   return {
-    kind, origin: [atk.x, atk.z], yaw: atk.yw, r: A.r ?? 0, halfArc: ((A.arc ?? 0) / 2) * DEG, body: BOSS_R,
+    kind, origin: [atk.x, atk.z], yaw: atk.yw, r: A.shape === 'spokes' ? A.len : A.r ?? 0, halfArc: ((A.arc ?? 0) / 2) * DEG, body: BOSS_R,
     end: [end[0], end[1]], halfW: (A.width ?? 0) / 2, r0: A.r0 ?? 0, r1: A.r1 ?? 0,
-    points: A.aim === 'players' ? (atk.tg ?? []).slice(0, TELEGRAPH_POINTS_MAX).map((p) => [p[0], p[1]]) : [],
+    points: marks.map((p) => [p[0], p[1]]), n: A.shape === 'spokes' ? Math.min(TELEGRAPH_SPOKES_MAX, A.n) : 0,
     t: tel.t, flash: tel.since >= 0 ? 1 : 0, alpha: fadeIn * Math.max(0, fadeOut), color: ATTACK_COLORS[A.key],
   };
+}
+
+/** WBX4: HIS MARK as the pass draws it - where he stands (the court's frame), his facing, in `color` (the ward's gold while
+ *  it stands, his ember otherwise). Pure. */
+export function markShape(at, yaw, color) {
+  return {
+    kind: TELEGRAPH_KIND.mark, origin: [at[0], at[1]], yaw, r: BOSS_MARK_R, halfArc: 0, body: BOSS_R, end: [at[0], at[1]],
+    halfW: BOSS_MARK_CHEVRON_HALF_W, r0: 0, r1: BOSS_MARK_CHEVRON_LEN, points: [], n: 0, t: 1, flash: 0, alpha: 1, color,
+  };
+}
+
+/** WBX5: THE BURNING GROUND as the pass draws it - live pools (net/gateStrike.js landingPools) gathered by radius, each
+ *  group one filled `discs` shape in `color`, coming up at its landing and dying down over its last second. Pure. */
+export function poolShapes(pools, now, color) {
+  const byR = new Map();
+  for (const p of pools ?? []) {
+    if (!(now >= p.from && now < p.until)) continue;
+    const g = byR.get(p.r) ?? { pts: [], alpha: 0 };
+    if (g.pts.length < TELEGRAPH_POINTS_MAX) g.pts.push([p.x, p.z]);
+    g.alpha = Math.max(g.alpha, Math.min(1, (now - p.from) / TELEGRAPH_FADE_IN_MS, (p.until - now) / 1000));
+    byR.set(p.r, g);
+  }
+  return [...byR].map(([r, g]) => ({
+    kind: TELEGRAPH_KIND.discs, origin: [0, 0], yaw: 0, r, halfArc: 0, body: BOSS_R, end: [0, 0], halfW: 0, r0: 0, r1: 0,
+    points: g.pts, n: 0, t: 1, flash: 0, alpha: g.alpha, color,
+  }));
 }
 
 const wrap = (a) => a - 2 * Math.PI * Math.floor((a + Math.PI) / (2 * Math.PI));
@@ -99,6 +135,21 @@ export function telegraphField(sh, px, pz) {
     }
     case TELEGRAPH_KIND.ring: return { inside: d >= sh.r0 && d <= sh.r1, edge: Math.min(Math.abs(d - sh.r0), Math.abs(d - sh.r1)), s: (d - sh.r0) / (sh.r1 - sh.r0) };
     case TELEGRAPH_KIND.all: { const c = Math.hypot(px, pz); return { inside: true, edge: Math.abs(COURT_R - c), s: c / COURT_R }; }
+    case TELEGRAPH_KIND.spokes: {
+      let best = Infinity, bh = 0;
+      for (let i = 0; i < sh.n; i++) {
+        const a = sh.yaw + (i * 2 * Math.PI) / sh.n, dx = Math.sin(a), dz = Math.cos(a);
+        const h = Math.max(0, Math.min(sh.r, rx * dx + rz * dz)), ld = Math.hypot(rx - dx * h, rz - dz * h);
+        if (ld < best) { best = ld; bh = h / sh.r; }
+      }
+      return { inside: best <= sh.halfW, edge: Math.abs(best - sh.halfW), s: bh };
+    }
+    case TELEGRAPH_KIND.mark: {
+      const fx = Math.sin(sh.yaw), fz = Math.cos(sh.yaw), along = rx * fx + rz * fz, side = rx * fz - rz * fx;
+      const k = (along - sh.r) / sh.r1;
+      const chevron = k >= 0 && k <= 1 && Math.abs(side) <= sh.halfW * (1 - k);
+      return { inside: chevron || d <= sh.r, edge: Math.abs(d - sh.r), s: chevron ? k : 0, chevron };
+    }
     default: return { inside: false, edge: Infinity, s: 0 };
   }
 }
@@ -172,6 +223,31 @@ void main() {
     inside = ld <= uHalfW; edge = abs(ld - uHalfW); s = h;
   } else if (uKind == 4) {
     inside = d >= uR0 && d <= uR1; edge = min(abs(d - uR0), abs(d - uR1)); s = (d - uR0) / (uR1 - uR0);
+  } else if (uKind == 6) {
+    // WBX5: the spokes - the nearest of uCount lanes from him, the first along his facing, uR long
+    float best = 1e3, bh = 0.0;
+    for (int i = 0; i < ${TELEGRAPH_SPOKES_MAX}; i++) {
+      if (i >= uCount) break;
+      float a = uYaw + float(i) * 6.283185307179586 / float(uCount);
+      vec2 dir = vec2(sin(a), cos(a));
+      float h = clamp(dot(rel, dir), 0.0, uR);
+      float ld = length(rel - dir * h);
+      if (ld < best) { best = ld; bh = h / uR; }
+    }
+    inside = best <= uHalfW; edge = abs(best - uHalfW); s = bh;
+  } else if (uKind == 7) {
+    // WBX4: his mark - a ring about his feet (uR), a faint floor inside it, and a chevron before it where he faces
+    // (uR1 long, uHalfW wide at the ring), steady: it is where he is, not what he does
+    vec2 fdir = vec2(sin(uYaw), cos(uYaw));
+    float along = dot(rel, fdir), side = rel.x * fdir.y - rel.y * fdir.x;
+    float k = (along - uR) / uR1;
+    float chev = (k >= 0.0 && k <= 1.0 && abs(side) <= uHalfW * (1.0 - k)) ? 1.0 : 0.0;
+    float ring = 1.0 - smoothstep(0.04, 0.2, abs(d - uR));
+    float floorIn = d <= uR ? 1.0 : 0.0;
+    float mark = 0.95 * ring + 0.9 * chev * (0.7 + 0.3 * (1.0 - k)) + 0.07 * floorIn;
+    if (mark < 0.001) discard;
+    o = vec4(uColor * mark * uAlpha * fogFactorAt(vWorld), 1.0);
+    return;
   } else {
     inside = true; edge = abs(uFloorR - c); s = c / uFloorR;
   }
@@ -253,7 +329,7 @@ export class GateTelegraphRenderer {
     this._pts.fill(0);
     shape.points.forEach((p, i) => { this._pts[i * 2] = p[0]; this._pts[i * 2 + 1] = p[1]; });
     gl.uniform2fv(U.uPts, this._pts);
-    gl.uniform1i(U.uCount, shape.points.length);
+    gl.uniform1i(U.uCount, shape.kind === TELEGRAPH_KIND.spokes ? (shape.n ?? 0) : shape.points.length);   // WBX5: the spokes' count rides the points' slot
     gl.uniform1f(U.uT, shape.t);
     gl.uniform1f(U.uFlash, shape.flash);
     gl.uniform1f(U.uAlpha, Math.min(1, shape.alpha));

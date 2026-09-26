@@ -93,6 +93,13 @@ export const PHASE_AT = Object.freeze([0.66, 0.33]);
 export const SHIELD_MS = 3000;
 /** Phase three's wind-ups, shortened by a fifth. */
 export const PHASE3_WINDUP = 0.8;
+/** WBX5 (2026-09-26, Mac: "The boss phases need to be more defined and more detailed mechanics"): EACH PHASE HAS A NAME
+ *  AND A SHAPE. The Warden fights with his blade and his weight alone (Cleave, Ground Slam, Charge); the Burning Court is
+ *  fire and reach (Hellfire and the Meteor leave the floor burning, the Flame Nova, the Crushing Leap at whoever stands
+ *  far off); Dagon's Champion adds the Spokes of Dagon - four lanes of fire from his feet, and then the four between
+ *  them. Not faster: Mac, of a player's ask for mechanics half again as fast, "I dont think making mechanics faster is
+ *  the play". The names are the bar's (ui/gateBossBar.js) and the turn's words (scenes/gateCourt.js). */
+export const PHASE_NAMES = Object.freeze(['The Warden', 'The Burning Court', "Dagon's Champion"]);
 
 // ── the attacks ────────────────────────────────────────────────────────
 // `shape` is what the ground shows and what a struck player's machine tests its own feet against:
@@ -101,23 +108,60 @@ export const PHASE3_WINDUP = 0.8;
 //   lane - from where he stood toward his target, `w` wide, `len` long; he runs it over `active`
 //   ring - between `r0` and `r1` around him - safe at his feet (or far across the floor from him)
 //   all  - the whole court
-// `pct` is the share of the STRUCK player's own maximum health it takes (resolved on their machine - co-op's law), `el`
-// its element (fire honours the game's own saving throw), `aim` where it is laid, `phase` the first it may come in,
-// `range` how near the target must be (metres, past his body) before it is begun, `minGap` how far at least, `w` its
-// weight in the choice. `windup` is from the word to the landing, `active` the landing's own span (the charge's run),
-// `recover` his stillness after it.
+//   spokes - WBX5: `n` lanes from his feet, `width` wide and `len` long, the first along his facing
+// `pct` is the share of the STRUCK player's own maximum health it takes (resolved on their machine - co-op's law) and
+// `base` the points it takes on top (WBX4, below), `el` its element (fire honours the game's own saving throw), `aim`
+// where it is laid ('point': WBX5, one spot - `tg[0]`), `phase` the first it may come in, `range` how near the target
+// must be (metres, past his body) before it is begun, `minGap` how far at least, `w` its weight in the choice. `windup`
+// is from the word to the landing, `active` the landing's own span (the charge's run), `recover` his stillness after it.
+// `pool` (WBX5): the burning ground its landing leaves (POOLS).
+//
+// WBX4 (2026-09-26, Swololo on Discord: "boss damage is way too low. people who were dying were under 150 health and got
+// hit by mechanic twice, should be hp % based maybe + base damage"): EVERY SHARE RAISED AND A BASE BESIDE IT. A blow was
+// a share of the struck player's own health alone, and the health came back as fast as he took it (the court now keeps
+// no regeneration - WBX6, systems/courtRules.js). Now each attack takes a larger share and `base` points more, so two of
+// his landings leave anyone low and a third ends them - still his words at every level, the base a little heavier on a
+// body with less to lose.
+/** WBX5: BURNING GROUND - the fire a landing leaves on the floor (Hellfire's under each of its marks, the Meteor's where
+ *  it fell): its radius, how long it burns, and what each POOL_TICK_MS of standing in it takes (a share and a base, fire -
+ *  the saving throw answers it). Resolved on the standing player's machine, as every strike is; the relay never learns
+ *  of it, because every screen that saw the landing knows where it burns. */
+export const POOL_TICK_MS = 1000;
+export const POOLS = Object.freeze({
+  hellfire: Object.freeze({ r: 3, ms: 6000, pct: 0.05, base: 2 }),
+  meteor: Object.freeze({ r: 5, ms: 9000, pct: 0.07, base: 3 }),
+});
 export const ATTACKS = Object.freeze({
-  cleave: Object.freeze({ id: 0, key: 'cleave', name: 'Cleave', windup: 1400, active: 200, recover: 900, shape: 'cone', r: 9, arc: 110, pct: 0.30, el: null, aim: 'target', phase: 1, range: 6, w: 3, minGap: 0 }),
-  slam: Object.freeze({ id: 1, key: 'slam', name: 'Ground Slam', windup: 1600, active: 200, recover: 1100, shape: 'disc', r: 7, pct: 0.35, el: null, aim: 'self', phase: 1, range: 4, w: 2, minGap: 0 }),
-  charge: Object.freeze({ id: 2, key: 'charge', name: 'Charge', windup: 1200, active: 900, recover: 1200, shape: 'lane', w: 2, width: 3.5, len: 22, pct: 0.25, el: null, aim: 'target', phase: 1, range: 40, minGap: 8 }),
-  hellfire: Object.freeze({ id: 3, key: 'hellfire', name: 'Hellfire', windup: 2000, active: 300, recover: 900, shape: 'disc', r: 3.5, max: 5, pct: 0.30, el: 'fire', aim: 'players', phase: 2, range: 40, w: 2, minGap: 0 }),
-  nova: Object.freeze({ id: 4, key: 'nova', name: 'Flame Nova', windup: 2200, active: 300, recover: 1300, shape: 'ring', r0: 4, r1: 30, pct: 0.40, el: 'fire', aim: 'self', phase: 2, range: 40, w: 1, minGap: 0 }),
-  wrath: Object.freeze({ id: 5, key: 'wrath', name: "Dagon's Wrath", windup: 6000, active: 500, recover: 0, shape: 'all', pct: 9.99, el: 'fire', aim: 'self', phase: 99, range: 999, w: 0, minGap: 0 }),
+  cleave: Object.freeze({ id: 0, key: 'cleave', name: 'Cleave', windup: 1400, active: 200, recover: 900, shape: 'cone', r: 9, arc: 110, pct: 0.35, base: 8, el: null, aim: 'target', phase: 1, range: 6, w: 3, minGap: 0 }),
+  slam: Object.freeze({ id: 1, key: 'slam', name: 'Ground Slam', windup: 1600, active: 200, recover: 1100, shape: 'disc', r: 7, pct: 0.40, base: 10, el: null, aim: 'self', phase: 1, range: 4, w: 2, minGap: 0 }),
+  charge: Object.freeze({ id: 2, key: 'charge', name: 'Charge', windup: 1200, active: 900, recover: 1200, shape: 'lane', w: 2, width: 3.5, len: 22, pct: 0.30, base: 8, el: null, aim: 'target', phase: 1, range: 40, minGap: 8 }),
+  hellfire: Object.freeze({ id: 3, key: 'hellfire', name: 'Hellfire', windup: 2000, active: 300, recover: 900, shape: 'disc', r: 3.5, max: 5, pct: 0.30, base: 6, el: 'fire', aim: 'players', phase: 2, range: 40, w: 2, minGap: 0, pool: POOLS.hellfire }),
+  nova: Object.freeze({ id: 4, key: 'nova', name: 'Flame Nova', windup: 2200, active: 300, recover: 1300, shape: 'ring', r0: 4, r1: 30, pct: 0.45, base: 10, el: 'fire', aim: 'self', phase: 2, range: 40, w: 1, minGap: 0 }),
+  wrath: Object.freeze({ id: 5, key: 'wrath', name: "Dagon's Wrath", windup: 6000, active: 500, recover: 0, shape: 'all', pct: 9.99, base: 0, el: 'fire', aim: 'self', phase: 99, range: 999, w: 0, minGap: 0 }),
+  // WBX5: the Burning Court's reach - he leaps at whoever stands far off, and lands on them (and at every phase's turn,
+  // into the court's heart); and a meteor falls where a fighter stands and leaves the ground burning
+  leap: Object.freeze({ id: 6, key: 'leap', name: 'Crushing Leap', windup: 1500, active: 300, recover: 900, shape: 'disc', r: 6, pct: 0.35, base: 8, el: null, aim: 'point', phase: 2, range: 40, w: 2, minGap: 10 }),
+  meteor: Object.freeze({ id: 7, key: 'meteor', name: 'Meteor of Oblivion', windup: 2800, active: 300, recover: 700, shape: 'disc', r: 6.5, pct: 0.50, base: 12, el: 'fire', aim: 'point', phase: 2, range: 40, w: 1, minGap: 0, pool: POOLS.meteor }),
+  // WBX5: Dagon's Champion's own - four lanes of fire from his feet; at the turn into his phase, the four between them
+  // follow at once (PHASE_TURN)
+  spokes: Object.freeze({ id: 8, key: 'spokes', name: 'Spokes of Dagon', windup: 1800, active: 200, recover: 500, shape: 'spokes', n: 4, width: 3.5, len: 30, pct: 0.40, base: 10, el: 'fire', aim: 'self', phase: 3, range: 40, w: 2, minGap: 0 }),
 });
 /** The attacks by their wire id. */
 export const ATTACK_BY_ID = Object.freeze(Object.values(ATTACKS).sort((a, b) => a.id - b.id));
 /** The ones he chooses among (the wrath is the clock's, not his). */
-const CHOSEN = Object.freeze([ATTACKS.cleave, ATTACKS.slam, ATTACKS.charge, ATTACKS.hellfire, ATTACKS.nova]);
+const CHOSEN = Object.freeze([ATTACKS.cleave, ATTACKS.slam, ATTACKS.charge, ATTACKS.hellfire, ATTACKS.nova, ATTACKS.leap, ATTACKS.meteor, ATTACKS.spokes]);
+/**
+ * WBX5: THE TURN OF A PHASE, as a sequence - he leaps into the court's heart (the Crushing Leap at its centre, while the
+ * ward stands) and there casts the new phase's signature: the Flame Nova as the ward breaks, the Spokes of Dagon and at
+ * once the four between them as he becomes Dagon's Champion. Each entry is an attack and, for the spokes, how far its
+ * lanes are turned from the one before.
+ */
+export const PHASE_TURN = Object.freeze({
+  2: Object.freeze([Object.freeze({ a: 'leap', centre: true }), Object.freeze({ a: 'nova' })]),
+  3: Object.freeze([Object.freeze({ a: 'leap', centre: true }), Object.freeze({ a: 'spokes' }), Object.freeze({ a: 'spokes', turn: Math.PI / 4 })]),
+});
+/** WBX5: the pause between two attacks of one turn (a sequence breathes less than a choice does). */
+export const TURN_BREATH_MS = 150;
 /** The share of aimed attacks at the player who dealt the most lately; the rest at a random living one. */
 export const THREAT_PICK = 0.6;
 /** How fast threat forgets, a share a second (a player who stopped hitting stops being the target). */
@@ -145,6 +189,9 @@ export function newFight(day, now, wrathAt, boss) {
     v: 1, day, boss, startedAt: now, wrathAt, phase: 1, shieldUntil: 0, hp: 0, max: 0,
     pos: [0, 0], yaw: 0, move: null, atk: null, lastA: -1, nextAt: now + OPENING_MS, seq: 0,
     target: null, targetAt: 0,
+    /** WBX5: a phase's turn still to come - PHASE_TURN's entries after the one in flight - and the next of them, begun
+     *  when the breath after the last is over */
+    queue: [], pending: null,
     /** @type {Record<string, {name: string, lv: number, share: number, dealt: number, clipped: number, bucket: number, bucketAt: number, rate: number, rateAt: number, stoodMs: number, joinedAt: number}>} */
     players: {},
     /** @type {Record<string, number>} sub -> decayed damage */
@@ -323,27 +370,42 @@ export function stepBrain(f, now, bodies, rng) {
     out.push({ k: 'atk', ...atkFrame(f.atk) });
     return out;
   }
-  // a phase crossed: a roar, a shield, and a nova with it (an attack in flight is superseded - the new word is the
-  // one every screen draws)
+  // a phase crossed: a roar, a shield, and the phase's turn (WBX5 PHASE_TURN - the leap into the court's heart, then its
+  // signature); an attack in flight is superseded - the new word is the one every screen draws
+  f.queue ??= [];   // a fight checkpointed before WBX5 wakes with no turn to come
   if (f.max > 0 && f.phase < 3 && f.hp / f.max <= PHASE_AT[f.phase - 1]) {
     f.phase++;
     f.shieldUntil = now + SHIELD_MS;
     f.move = null;
     out.push({ k: 'ph', n: f.phase, until: f.shieldUntil });
-    begin(f, ATTACKS.nova, now, null, bodies, rng, out);
+    const [first, ...rest] = PHASE_TURN[f.phase];
+    f.queue = rest.map((e) => ({ ...e }));
+    f.pending = null;
+    beginTurn(f, first, now, bodies, rng, out);
   }
-  // an attack in flight: the charge runs its lane over its active span; the rest hold still until their recovery ends
+  // an attack in flight: the charge runs its lane over its active span, the leap lands him where it falls; the rest hold
+  // still until their recovery ends
   if (f.atk) {
     const atk = ATTACK_BY_ID[f.atk.a];
     if (atk === ATTACKS.charge && now >= f.atk.at) {
       const k = Math.min(1, (now - f.atk.at) / atk.active), end = f.atk.tg[0];
       f.pos = keepInCourt(f.atk.x + (end[0] - f.atk.x) * k, f.atk.z + (end[1] - f.atk.z) * k);
     }
+    if (atk === ATTACKS.leap && now >= f.atk.at) f.pos = keepInCourt(f.atk.tg[0][0], f.atk.tg[0][1]);   // WBX5: he comes down where it lands
     if (now < f.atk.until) { hpFrame(f, now, out); stateFrame(f, now, out); return out; }
     f.lastA = f.atk.a;
     f.atk = null;
     f.target = null;
     f.nextAt = now + BREATH_MS;
+    // WBX5: a turn still to come goes on from here, a breath later
+    if (f.queue.length) { const next = f.queue.shift(); f.nextAt = now + TURN_BREATH_MS; f.pending = next; }
+  }
+  if (f.pending && now >= f.nextAt) {
+    const next = f.pending;
+    f.pending = null;
+    beginTurn(f, next, now, bodies, rng, out);
+    hpFrame(f, now, out); stateFrame(f, now, out);
+    return out;
   }
   // choose: a target he keeps a while, and what can be done to it from here - else walk at it
   if (now >= f.nextAt) {
@@ -395,13 +457,31 @@ function walkToward(f, target, now, out) {
   out.push({ k: 'mv', x: r2(f.move.x), z: r2(f.move.z), tx: r2(tx), tz: r2(tz), v: BOSS_SPEED, at: now });
 }
 
-/** Begin an attack: where it lands and when, said now so every screen draws the wind-up at once. */
-function begin(f, atk, now, target, bodies, rng, out) {
+/** An angle turned into [-PI, PI) - the wire bounds a facing (net/wire.js gateAtk: |yw| <= 8). */
+export const wrapYaw = (a) => { let x = (a + Math.PI) % (2 * Math.PI); if (x < 0) x += 2 * Math.PI; return x - Math.PI; };
+
+/** WBX5: one entry of a phase's turn begun: the leap into the court's heart, or the attack named, its lanes turned from
+ *  the last one's facing (the spokes' second cast). */
+function beginTurn(f, entry, now, bodies, rng, out) {
+  const atk = ATTACKS[entry.a];
+  if (!atk) return;
+  if (entry.turn) f.yaw = wrapYaw(f.yaw + entry.turn);
+  begin(f, atk, now, null, bodies, rng, out, entry.centre ? [0, 0] : null);
+}
+
+/** Begin an attack: where it lands and when, said now so every screen draws the wind-up at once. `point` (WBX5): where a
+ *  'point' attack lands when it is not the target's feet (the leap into the court's heart). */
+function begin(f, atk, now, target, bodies, rng, out, point = null) {
   const at = now + windupOf(atk, f.phase);
   let tg = [];
   if (target) f.yaw = Math.atan2(target.x - f.pos[0], target.z - f.pos[1]);
   if (atk === ATTACKS.charge) {
     tg = [keepInCourt(f.pos[0] + Math.sin(f.yaw) * atk.len, f.pos[1] + Math.cos(f.yaw) * atk.len)];
+  } else if (atk.aim === 'point') {
+    // WBX5: one spot - the leap comes down inside the ring he keeps to, a meteor falls anywhere on the floor
+    const p = point ?? (target ? [target.x, target.z] : [f.pos[0], f.pos[1]]);
+    tg = [keepInCourt(p[0], p[1], atk === ATTACKS.leap ? BOSS_REACH_R : COURT_R)];
+    if (atk === ATTACKS.leap && (tg[0][0] !== f.pos[0] || tg[0][1] !== f.pos[1])) f.yaw = Math.atan2(tg[0][0] - f.pos[0], tg[0][1] - f.pos[1]);
   } else if (atk === ATTACKS.hellfire) {
     const live = bodies.filter((b) => !b.dead && f.players[b.sub]);
     for (let i = live.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)) % (i + 1); const t = live[i]; live[i] = live[j]; live[j] = t; }

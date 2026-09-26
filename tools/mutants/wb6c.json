@@ -121,8 +121,8 @@
   {
     "name": "WB6c-the-way-home-unveiled",
     "file": "src/scenes/worldModes.js",
-    "old": "    if (isGateArena(dungeonLoc)) { stepThroughFire(async () => { if (mode === 'dungeon' && isGateArena(dungeonLoc) && aliveUnder()) pendingDungeonExit = true; return true; }); return true; }",
-    "new": "",
+    "old": "    stepThroughFire(async () => { if (mode === 'dungeon' && isGateArena(dungeonLoc) && aliveUnder()) pendingDungeonExit = true; return true; });",
+    "new": "    pendingDungeonExit = true;",
     "tests": ["test/wb6c_gate_veil.test.js"]
   },
   {

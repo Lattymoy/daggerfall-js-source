@@ -296,7 +296,7 @@ test('EC1: the world host consumes the shared law rather than a second copy of i
 
 test('AUDIT 58 (f2/hosts): the EXTERIOR host mounts the same body over its own pools', () => {
   // The third host that can hold an enchanted item and mounted nothing.
-  // `_defaultCtx` is a session singleton (enchantments.js:254-256) and
+  // `_defaultCtx` is a session singleton (enchantments.js:255-257) and
   // in a ?exterior session it stayed null for the whole boot, so every
   // arm that folds it in optional-chained into silence - CastWhenUsed
   // and CastWhenStrikes found no record and still billed 10 condition,
@@ -335,7 +335,7 @@ test('AUDIT 58 (f2/hosts): the EXTERIOR host mounts the same body over its own p
     'no site inside the mount names a host pool directly');
   // and the reflection path travels with the player's OWN sinks, which
   // is why they are hoisted here rather than inlined into the cast
-  // engine (effects.js:891/:905 heals the caster through them).
+  // engine (effects.js:892/:906 heals the caster through them).
   assert.match(ext, /const playerSpellSinks = \{/);
   assert.match(ext, /^\s*playerSinks: playerSpellSinks,$/m, 'one object, both readers');
   assert.match(mount, /^\s*playerSpellSinks,$/m);
@@ -354,7 +354,7 @@ test('AUDIT 58 (f2/hosts): the EXTERIOR host mounts the same body over its own p
   assert.match(rf, /if \(cityGuards\.guards\.includes\(f\)\) cityGuards\.removeGuard\(f\);\n\s*else exteriorFoes\.removeFoe\(f\);/, 'the watch is named by MEMBERSHIP, not by pool identity');
   assert.match(rf, /exteriorFoes\.spawnFoe\(mobileType, feet, \{ replacing: true \}\)/, 'AUDIT 62 F12: the re-stand cannot be refused by the cap');
   // ROAD-G TAIL: the arm names the watch pool ONLY for the membership route
-  // (world.js:5032's shape) - the removal, never the re-stand
+  // (world.js:5034's shape) - the removal, never the re-stand
   assert.equal((rf.match(/cityGuards\./g) || []).length, 2, 'guards.includes + removeGuard, nothing else');
   assert.equal(/cityGuards\.spawn/.test(rf), false, 'the re-stand is the encounter pool\'s');
   // (PR #59 review) pin the ARM: after the inside arm nothing returns before

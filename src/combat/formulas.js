@@ -527,6 +527,11 @@ export function dropWeaponIfTargetImmune(weapon, targetEntity) {
  *  classic never damaged shields - else to the struck part's armor
  *  slot. Breaks speak and unequip through lowerCondition. */
 export function damageEquipment(attacker, target, damage, weapon, struckBodyPart, { rolls = Math.random, say = null } = {}) {
+  // WBX6 (2026-09-26, Swololo on Discord: "I broke one and a half of a weapon during the fight"): A BLOW ON THE WARDEN
+  // OF THE BURNING GATE WEARS NOTHING. His body is a stand-in the relay judges (world/gateBoss.js bossStandIn carries
+  // `spareGear`), a fight measured in hundreds of blows, and it broke weapons it was never meant to. A departure (Ledger
+  // A, WB): every other foe wears the gear as DFU's does, and the override below is never asked for him either.
+  if (target?.spareGear) return;
   // PCO1: the registered override first (the mod's DamageEquipment,
   // which wears gear on a fist's blow too, so no `!weapon` gate here).
   const o = _overrides.get('damageEquipment');
