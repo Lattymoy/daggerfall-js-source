@@ -6976,3 +6976,31 @@ held weapons - to an empty hand it is refused without a line, as the
 shield's refusal is. Bare hands stay bare, and a shield is no weapon. The
 classic lane keeps ToggleHand whole. `test/mwhand.test.js`,
 `tools/mutants/mwhand.json`.
+
+## DECLARED DIVERGENCE (BEAST-SELF, 2026-09-26): the arm stands aside for the beast
+
+Mac: *"You dont see your self transform less your in paperdoll style
+(morrowind models need their vampire/werewolf forms)"*. The Morrowind rig
+has no werewolf body (PR-WW1 recorded it): the claws the transformed rig
+wields resolve to no Morrowind weapon (`dfWeaponToMw` answers None), so a
+Morrowind-lane player who changed stood in their human arms - bare fists -
+and their human body, while everyone else saw the beast.
+
+While the curse holds the player in the beast, the arm and the body STAND
+ASIDE (`combat/fpArm.js` setStandIn, set by the weapon rig each frame from
+`isTransformedLycanthrope`): `active()`, `thirdActive()` and
+`canThirdPerson()` answer false and the wheel's third person is refused
+without a card line. The first person is then the classic claws (the
+rig's own draw), and the third Eye Of The Beholder's lycanthrope
+(`player/mwView.js`'s other lane) - what a player without Morrowind data
+sees, and what the others see. `ready()` is untouched, so the rig keeps
+stepping the arm and it is back at once when the player turns back. At
+the edge the view carries over: the sprite camera takes the Morrowind
+camera's person and pulls out from the head; back, the Morrowind camera
+takes the sprite camera's. With Eye Of The Beholder off, the third person
+falls back to the first, as it does for any refused body.
+
+Not done: a Morrowind vampire's head (the vampire flag the body-part
+reader drops) - Daggerfall's vampire changes the face alone, which the
+classic HUD and paper doll already wear. `test/beastself.test.js`,
+`tools/mutants/beastself.json`.

@@ -373,3 +373,24 @@ Two causes in the code, and two things that are the design:
 
 `test/gateseen.test.js` (6); `tools/mutants/gateseen.json` 10, 10 dead.
 Three older records re-aimed (wb2 x2, auditwb_world).
+
+## BEAST-SELF: a Morrowind-lane player sees their own change (report 12, the local half)
+
+The Morrowind rig has no werewolf body. A Morrowind-lane player who
+transformed kept their human arms (the claws resolve to no Morrowind
+weapon, so bare fists) and their human third-person body - only a player
+in the classic sprite lane saw the beast on themselves.
+
+While the curse holds the player in the beast, the Morrowind arm and body
+stand aside (`combat/fpArm.js` setStandIn, set by the weapon rig): first
+person is the classic claws, third person Eye Of The Beholder's
+lycanthrope - the same beast the others now see (BEAST-PEER). The camera
+carries its person across the change and pulls out from the head. Turning
+back brings the Morrowind arm straight back (it was never torn down).
+`02-Formats/Morrowind-Rules.md` BEAST-SELF.
+
+Vampires: Daggerfall's vampire changes only the face (the classic HUD and
+paper doll wear it); the Morrowind head is still the person's - not done.
+
+`test/beastself.test.js` (3); `tools/mutants/beastself.json` 9, 9 dead.
+`test/fparm.test.js`'s MW-D8 pin re-aimed (the eighth term).

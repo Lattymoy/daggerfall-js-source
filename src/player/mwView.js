@@ -75,6 +75,34 @@ export function setEotbBodyReady(fn) { eotbBodyReady = typeof fn === 'function' 
  * trailing wagon is shown EOTB's cart gives way - the host says when (world.js, exterior.js).
  */
 let eotbCartYields = () => false;
+/**
+ * BEAST-SELF (2026-09-26): the Morrowind arm and body STAND ASIDE while the player is a transformed lycanthrope
+ * (combat/fpArm.js setStandIn - the data holds no beast), so this lane's other side, Eye Of The Beholder's, takes the
+ * body as it does for a player with no Morrowind data. At that edge the view carries over rather than jumping: the
+ * sprite camera takes the person the Morrowind camera stood in, and pulls out from the head, not from wherever it last
+ * stood (its eye had not been asked in the Morrowind stretch); and back, the Morrowind camera takes the sprite
+ * camera's person - when the sprite lane was the one showing the beast (with it off, the refused third person has
+ * already fallen back to the first).
+ */
+let _standInWas = false;
+let _beastInSprite = false;
+function standInEdge({ fpEye, feet, yaw, pitch }) {
+  const now = !!fpArm.standingIn?.();
+  if (now) _beastInSprite = _beastInSprite || eotbLane();
+  if (now === _standInWas) return;
+  _standInWas = now;
+  if (now) {
+    _beastInSprite = eotbLane();
+    if (!_beastInSprite) return;
+    const third = mwCamera.thirdPerson();
+    eotbCamera.toggleOffset(false);
+    eotbCamera.eye({ fpEye, feet, yaw, pitch });   // the head the view leaves from
+    if (third) eotbCamera.toggleOffset(true);
+    return;
+  }
+  if (_beastInSprite && !mounted) mwCamera.restore({ firstPerson: !eotbCamera.thirdPerson(), baseDistance: mwCamera.baseDistance() });
+  _beastInSprite = false;
+}
 export function setEotbCartYields(fn) { eotbCartYields = typeof fn === 'function' ? fn : () => false; }
 export function eotbLane() {
   if (fpArm.canThirdPerson()) return false;          // the Morrowind body wins where it exists
@@ -102,6 +130,7 @@ let pendingClicks = 0;
  * @returns {{eye:number[], thirdPerson:boolean, distance:number}}
  */
 export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = null, raycast = null, spherecast = null, ...state }) {
+  standInEdge({ fpEye, feet, yaw, pitch });   // BEAST-SELF: the view carried across the arm's stand-aside
   // EOTB4: the other lane, resolved first and returned whole - its
   // camera keeps its own ladder, its own smoothing and its own
   // obstacle casts (EOTB2), and nothing of Morrowind's runs.

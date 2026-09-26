@@ -959,7 +959,7 @@ into plan units.
 The report: *"Werewolf morrowind sprite not showing online"*.
 
 **What the player sees.** A transformed player with no Morrowind body is
-drawn in third person by Eye Of The Beholder's billboard (`mwView.js:79`
+drawn in third person by Eye Of The Beholder's billboard (`mwView.js:107`
 `eotbLane`, `:334`). Its table rule puts the transformed form first, riding
 included (`eotbBillboard.js:329` `chooseTable`, `:335`), and it draws the
 mod's lycan archives: 112380 for the werewolf, 112381 for the wereboar
@@ -1057,7 +1057,7 @@ the scene the picture takes in:
   (`characterSprite.js:109` `landAnchor`). Every point then draws at a place
   that does not depend on the box. The voxel rigs pass no anchor and draw as
   they did.
-- `drawThird` (`fpArm.js:4647`) anchors on the actor's own axis (MW x = y =
+- `drawThird` (`fpArm.js:4661`) anchors on the actor's own axis (MW x = y =
   0, where the root stands at `feet`), at the body's mid-height. That
   height is read off the drawn ranges less `CARRIED_SLOTS` (`fpArm.js:676`:
   the hand's weapon and round, the torch, the held sheet, Weapon Sheathing's
@@ -1067,7 +1067,7 @@ the scene the picture takes in:
   `foldRangeBoxes`, refolded at every upload, `:2808`).
 
 **Hosts.** Every Morrowind body in the port goes through `drawThird`. The
-local player's goes through `mwView.mwViewDrawBody` (`mwView.js:329`,
+local player's goes through `mwView.mwViewDrawBody` (`mwView.js:358`,
 `:339`), which four files call: `world.js:15790`, `exterior.js:5130`,
 `worldModes.js:7715` and `:7814` (the dungeon and the interior passes),
 and `dungeon.js:1081`. `dungeonContext.js`, the fourth motor host, builds

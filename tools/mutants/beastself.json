@@ -1,0 +1,83 @@
+[
+  {
+    "name": "BEASTSELF-the-body-crosses-for-a-beast-the-defect",
+    "file": "src/combat/fpArm.js",
+    "old": "    canThirdPerson: () => !standIn && !!(thirdBuilt && thirdBuilt.ok),",
+    "new": "    canThirdPerson: () => !!(thirdBuilt && thirdBuilt.ok),",
+    "tests": [
+      "test/beastself.test.js"
+    ]
+  },
+  {
+    "name": "BEASTSELF-the-wheel-crosses-for-a-beast",
+    "file": "src/combat/fpArm.js",
+    "old": "      if (want === 'third' && standIn) return false;   // BEAST-SELF: no Morrowind body for a beast - refused, and no refusal on the card\n",
+    "new": "",
+    "tests": [
+      "test/beastself.test.js"
+    ]
+  },
+  {
+    "name": "BEASTSELF-the-refusal-on-the-card",
+    "file": "src/combat/fpArm.js",
+    "old": "      if (want === 'third' && standIn) return false;",
+    "new": "      if (want === 'third' && standIn) { notes.push('view: standing aside'); return false; }",
+    "tests": [
+      "test/beastself.test.js"
+    ]
+  },
+  {
+    "name": "BEASTSELF-the-edge-never-answered",
+    "file": "src/combat/fpArm.js",
+    "old": "    setStandIn(v) { const was = standIn; standIn = !!v; return was !== standIn; },",
+    "new": "    setStandIn(v) { standIn = !!v; return true; },",
+    "tests": [
+      "test/beastself.test.js"
+    ]
+  },
+  {
+    "name": "BEASTSELF-the-rig-never-asks",
+    "file": "src/combat/weaponRig.js",
+    "old": "    fpArm.setStandIn?.(!!entity && isTransformedLycanthrope(entity));\n",
+    "new": "",
+    "tests": [
+      "test/beastself.test.js"
+    ]
+  },
+  {
+    "name": "BEASTSELF-the-rig-asks-the-curse-not-the-change",
+    "file": "src/combat/weaponRig.js",
+    "old": "    fpArm.setStandIn?.(!!entity && isTransformedLycanthrope(entity));",
+    "new": "    fpArm.setStandIn?.(!!entity && !!entity.racialOverride);",
+    "tests": [
+      "test/beastself.test.js"
+    ]
+  },
+  {
+    "name": "BEASTSELF-the-view-jumps",
+    "file": "src/player/mwView.js",
+    "old": "  standInEdge({ fpEye, feet, yaw, pitch });   // BEAST-SELF: the view carried across the arm's stand-aside\n",
+    "new": "",
+    "tests": [
+      "test/beastself.test.js"
+    ]
+  },
+  {
+    "name": "BEASTSELF-the-fly-in",
+    "file": "src/player/mwView.js",
+    "old": "    eotbCamera.eye({ fpEye, feet, yaw, pitch });   // the head the view leaves from\n",
+    "new": "",
+    "tests": [
+      "test/beastself.test.js"
+    ]
+  },
+  {
+    "name": "BEASTSELF-the-person-not-carried-back",
+    "file": "src/player/mwView.js",
+    "old": "  if (_beastInSprite && !mounted) mwCamera.restore(",
+    "new": "  if (false) mwCamera.restore(",
+    "tests": [
+      "test/beastself.test.js"
+    ]
+  }
+]

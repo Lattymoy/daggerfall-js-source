@@ -302,8 +302,9 @@ test('MW-D8: active() is false unless EVERY term holds - a frozen arm is not a r
   // MW-D26 widened the clip term: SOME slot playing - action, movement
   // or idle - is the same guarantee (a rig with none is the frozen bind
   // pose, and the sprite is the correct picture).
-  assert.match(src, /const active = \(\) => !!\(built && built\.ok && mesh && renderer && camera && \(actionState \|\| movementState \|\| jumpState \|\| idleState\)\s*&& viewMode === 'first'\);/,   // MW-D39 widened the clip term again: the jump slot counts
-    'built, built.ok, mesh, renderer, camera, a clip AND the first-person view - all seven');
+  // BEAST-SELF added the EIGHTH, ahead of the seven: the arm stands aside for a transformed lycanthrope (setStandIn)
+  assert.match(src, /const active = \(\) => !standIn && !!\(built && built\.ok && mesh && renderer && camera && \(actionState \|\| movementState \|\| jumpState \|\| idleState\)\s*&& viewMode === 'first'\);/,   // MW-D39 widened the clip term again: the jump slot counts
+    'not standing aside, built, built.ok, mesh, renderer, camera, a clip AND the first-person view - all eight');
 });
 
 test('MW-D8: the frame path is synchronous - no await, no dynamic import, in update or draw', () => {

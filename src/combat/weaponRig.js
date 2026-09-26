@@ -455,7 +455,11 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   // dungeon frame. The reference re-derives the state from the live
   // actor every frame (character.cpp:2296-2330); here that is two field
   // writes, so the rig that is stepping the arm re-claims it first.
-  const bindArm = () => fpArm.attach(renderer, camera);
+  const bindArm = () => {
+    fpArm.attach(renderer, camera);
+    // BEAST-SELF: the Morrowind arm and body stand aside for a transformed lycanthrope (combat/fpArm.js setStandIn)
+    fpArm.setStandIn?.(!!entity && isTransformedLycanthrope(entity));
+  };
   bindArm();
   // EOTB5: THE OTHER BODY, attached in the same breath as the arm it
   // stands in for. THE FOUR HOSTS named: exterior.js, world.js,
