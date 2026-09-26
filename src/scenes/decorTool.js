@@ -740,7 +740,7 @@ export function createDecorTool(deps) {
   function drawMounts(r = renderer) {
     const p = placing;
     if (!p || p.suspended || !p.piece || !p.decal || !p.art) return false;
-    r?.drawDecals?.(p.decal, p.art.tex);
+    (r?.drawDecalPicture ?? r?.drawDecals)?.call(r, p.decal, p.art.tex);   // WEAPON-MOUNT: the ghost is the picture it will hang as
     return true;
   }
 

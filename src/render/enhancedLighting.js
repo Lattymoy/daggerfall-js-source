@@ -662,6 +662,7 @@ uniform vec3 uMoonDir;
 uniform float uTrilight;   // BLOOD AUDIT 5: and the trilight ambient the mesh takes
 uniform vec3 uAmbientSky;
 uniform vec3 uAmbientGround;
+uniform float uPicture;   // WEAPON-MOUNT: a mounted PICTURE (the decorator's hung weapons and shields), not a film of blood
 ${CLOUD_SHADOW_GLSL}
 ${EL_GLSL}
 ${SHADOW_GLSL}
@@ -710,6 +711,10 @@ void main() {
   vec3 albedo = elDecode(vColor.rgb)
     * exp(vec3(${glslFloat(BLOOD_ABSORB[0])}, ${glslFloat(BLOOD_ABSORB[1])}, ${glslFloat(BLOOD_ABSORB[2])}) * (1.0 - thick))
     * mix(1.0, ${glslFloat(WET_DARKEN)}, clamp(vWet, 0.0, 1.0));
+  // WEAPON-MOUNT (2026-09-26, Mac: "weapons dont show in houses properly"): a picture's albedo IS its texel,
+  // decoded as every texel on this lane is - and it is flat: no film, no relief, no sheen. The blood law above read a
+  // hung sword's red channel as a thickness and drew it as a pale silhouette of itself.
+  if (uPicture > 0.5) { albedo = elDecode(t.rgb * vColor.rgb); thick = 0.0; }
   // the mark's own surface, from its own quad, facing the eye - and a
   // quad seen edge-on has no derivative to speak of, so it takes up
   // rather than NaN (BLOOD1 AUDIT 3)
@@ -753,6 +758,7 @@ void main() {
   // same test line 616 already makes before it falls back to world up -
   // without it a quad whose world derivatives are parallel hands
   // normalize() a zero vector and throws that fallback away as NaN.
+  if (uPicture > 0.5) duv = vec2(0.0);   // WEAPON-MOUNT: a picture is flat - no relief off its red channel
   if (dot(c, c) > 1e-12 && abs(uvDet) > 1e-12 && dot(duv, duv) > 0.0) {
     vec3 tu = (duy.y * dpx - dux.y * dpy) / uvDet;
     vec3 tv = (dux.x * dpy - duy.x * dpx) / uvDet;

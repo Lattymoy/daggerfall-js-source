@@ -400,7 +400,51 @@ const out = await page.evaluate(async () => {
   }
   r.setLightingLane(null);
 
+  // WEAPON-MOUNT (2026-09-26, Mac: "weapons dont show in houses properly"): the decorator hangs a weapon or a shield on
+  // THIS pass as its pack picture, under a white tint - and the pass read the texel's red as a blood film's thickness
+  // and painted the tint through it, so the picture came out a pale silhouette of itself. A GREEN picture,
+  // at noon, both sets: drawDecalPicture gives the green back; drawDecals (a mark) does not, and must not.
+  const PW = 8, PH = 8;
+  const pcol = new Uint8ClampedArray(PW * PH * 4);
+  for (let i = 0; i < PW * PH; i++) { pcol[i * 4] = 40; pcol[i * 4 + 1] = 190; pcol[i * 4 + 2] = 60; pcol[i * 4 + 3] = 255; }
+  const picTex = r.uploadTexture(778, 'picture', { colors: pcol, width: PW, height: PH });
+  const picBatch = r.createDecalBatch(1);
+  {
+    const quad = new Float32Array(4 * 10);
+    const corner = (i, x, y) => {
+      const o = i * 10;
+      quad[o] = x; quad[o + 1] = y; quad[o + 2] = 0;
+      quad[o + 3] = i === 0 || i === 1 ? 0 : 1; quad[o + 4] = i === 0 || i === 3 ? 0 : 1;
+      quad[o + 5] = 1; quad[o + 6] = 1; quad[o + 7] = 1; quad[o + 8] = 1; quad[o + 9] = 0;   // the mount's WHITE tint (decorRoom decorMountFloats)
+    };
+    corner(0, -1, -1); corner(1, -1, 1); corner(2, 1, 1); corner(3, 1, -1);
+    r.writeDecalSlot(picBatch, 0, quad);
+  }
+  const picShot = (asPicture) => {
+    r.setLighting([0.55, 0.55, 0.55], 1, [1, 0.96, 0.9]);
+    r.setPointLights(new Float32Array(0), [1, 1, 1], null);
+    const proj = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1.02, -1, 0, 0, -0.2, 0];
+    const view = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, -3, 1];
+    r.beginFrame(proj, view, SUN);
+    const gl = r.gl;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, 128, 128);
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    if (asPicture) r.drawDecalPicture(picBatch, picTex); else r.drawDecals(picBatch, picTex);
+    const px = new Uint8Array(4);
+    gl.readPixels(64, 64, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+    return [...px];
+  };
+  const pictures = [];
+  for (const [laneName, enter, leave] of [['classic', () => {}, () => {}], ['lane', async () => { const { EL_LANE } = await import('/src/render/enhancedLighting.js'); r.setLightingLane(EL_LANE); r.setExposure(1.1); }, () => r.setLightingLane(null)]]) {
+    await enter();
+    pictures.push({ lane: laneName, picture: picShot(true), film: picShot(false) });
+    leave();
+  }
+
   return {
+    pictures,   // WEAPON-MOUNT
     archive: BLOOD_ARCHIVE,
     uploaded,
     batches: fx.batches().length,
@@ -574,6 +618,13 @@ if (out.meniscus) {
     m.peak >= 12, `peak change ${m.peak}/255 between a real mark and a uniform-thickness one`);
   check('MENISCUS lane: ...and it is the WHOLE mark, not a rim lip - a pool\'s thickness is a smoothstep, and a smoothstep is steepest in the MIDDLE',
     m.body > m.rim, `body ${m.body.toFixed(2)} against rim band ${m.rim.toFixed(2)} - the record said "raised edge" until this row was written`);
+}
+for (const p of out.pictures ?? []) {
+  console.log(`  PICTURE ${p.lane.padEnd(8)} picture ${p.picture.join(',').padEnd(16)} film ${p.film.join(',')}`);
+  check(`WEAPON-MOUNT ${p.lane}: a hung picture comes back its own colour - GREEN in, green out`,
+    p.picture[1] > 90 && p.picture[1] > p.picture[0] * 1.6 && p.picture[1] > p.picture[2] * 1.6, `rgba ${p.picture.join(',')}`);
+  check(`WEAPON-MOUNT ${p.lane}: ...where the blood pass reads the same texel as a film and loses the colour - the defect`,
+    !(p.film[1] > p.film[0] * 1.6), `rgba ${p.film.join(',')}`);
 }
 check('no page errors', errors.length === 0, errors.join(' | '));
 

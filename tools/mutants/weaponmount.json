@@ -1,0 +1,58 @@
+[
+  {
+    "name": "WEAPONMOUNT-the-room-draws-a-film",
+    "file": "src/scenes/decorRoom.js",
+    "old": "(r?.drawDecalPicture ?? r?.drawDecals)?.call(r, e.mount.batch, e.mount.tex);",
+    "new": "r?.drawDecals?.(e.mount.batch, e.mount.tex);",
+    "tests": ["test/weaponmount.test.js"]
+  },
+  {
+    "name": "WEAPONMOUNT-the-ghost-draws-a-film",
+    "file": "src/scenes/decorTool.js",
+    "old": "(r?.drawDecalPicture ?? r?.drawDecals)?.call(r, p.decal, p.art.tex);",
+    "new": "r?.drawDecals?.(p.decal, p.art.tex);",
+    "tests": ["test/weaponmount.test.js"]
+  },
+  {
+    "name": "WEAPONMOUNT-the-switch-never-on",
+    "file": "src/render/renderer.js",
+    "old": "    this._decalPicture = true;\n",
+    "new": "    this._decalPicture = false;\n",
+    "tests": ["test/weaponmount.test.js"]
+  },
+  {
+    "name": "WEAPONMOUNT-the-switch-left-on",
+    "file": "src/render/renderer.js",
+    "old": "    try { this.drawDecals(batch, tex); } finally { this._decalPicture = false; }",
+    "new": "    this.drawDecals(batch, tex);",
+    "tests": ["test/weaponmount.test.js"]
+  },
+  {
+    "name": "WEAPONMOUNT-the-uniform-never-set",
+    "file": "src/render/renderer.js",
+    "old": "gl.uniform1f(d.picture, this._decalPicture ? 1 : 0);",
+    "new": "gl.uniform1f(d.picture, 0);",
+    "tests": ["test/weaponmount.test.js"]
+  },
+  {
+    "name": "WEAPONMOUNT-classic-film-kept",
+    "file": "src/render/renderer.js",
+    "old": "  if (uPicture > 0.5) rgb = t.rgb * vColor.rgb * lightAcc;\n",
+    "new": "",
+    "tests": ["test/weaponmount.test.js"]
+  },
+  {
+    "name": "WEAPONMOUNT-lane-film-kept",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  if (uPicture > 0.5) { albedo = elDecode(t.rgb * vColor.rgb); thick = 0.0; }\n",
+    "new": "",
+    "tests": ["test/weaponmount.test.js"]
+  },
+  {
+    "name": "WEAPONMOUNT-lane-relief-kept",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  if (uPicture > 0.5) duv = vec2(0.0);   // WEAPON-MOUNT: a picture is flat - no relief off its red channel\n",
+    "new": "",
+    "tests": ["test/weaponmount.test.js"]
+  }
+]

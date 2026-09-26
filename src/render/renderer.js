@@ -781,6 +781,7 @@ uniform vec3 uMoonDir;
 uniform float uTrilight;   // BLOOD AUDIT 5: and the trilight ambient (BA1), as the mesh takes it
 uniform vec3 uAmbientSky;
 uniform vec3 uAmbientGround;
+uniform float uPicture;   // WEAPON-MOUNT: a mounted PICTURE (the decorator's hung weapons and armour), not a film of blood
 ${CLOUD_SHADOW_GLSL}
 out vec4 outColor;
 ${FOG_GLSL}
@@ -856,6 +857,10 @@ void main() {
   // here than on the lane, which is W6's fault with the sign reversed.
   float thick = t.a * clamp((1.0 - t.r) / ${glslFloat(INK_DEPTH)}, 0.0, 1.0);
   vec3 rgb = vColor.rgb * exp(vec3(${glslFloat(BLOOD_ABSORB_ENCODED[0])}, ${glslFloat(BLOOD_ABSORB_ENCODED[1])}, ${glslFloat(BLOOD_ABSORB_ENCODED[2])}) * (1.0 - thick)) * lightAcc;
+  // WEAPON-MOUNT (2026-09-26, Mac: "weapons dont show in houses properly"): a picture's colour IS its texel. The
+  // film above reads the texel's red as a blood thickness and paints the tint through it, so a hung sword came out
+  // a pale lit silhouette of itself - the pack's picture with its colours thrown away.
+  if (uPicture > 0.5) rgb = t.rgb * vColor.rgb * lightAcc;
   float a = t.a * vColor.a;
   float f = fogFactorAt(vWorld);
   outColor = vec4(dwWaterFog(mix(uFogColor, rgb, f), vWorld), a);   // DW-C
@@ -3138,6 +3143,13 @@ void main() {
    *  is one prefix and draws only the slots ever touched, a wrapped one
    *  is two so the oldest marks composite first. Without it the whole
    *  capacity is drawn, in slot order. */
+  /** WEAPON-MOUNT (2026-09-26): a hung PICTURE on the decal pass - the decorator's mounted weapons and armour. The
+   *  pass's own program with its picture switch on, so a mount's texel is its colour and not a blood film's depth. */
+  drawDecalPicture(batch, tex) {
+    this._decalPicture = true;
+    try { this.drawDecals(batch, tex); } finally { this._decalPicture = false; }
+  }
+
   drawDecals(batch, tex, ranges = null) {
     if (!batch || !tex) return;
     this._close2D();   // PERF-2D: the baseline back, before anything that needs it
@@ -3149,6 +3161,7 @@ void main() {
     gl.uniformMatrix4fv(d.view, false, this._view);
     this._bindTex0(tex);   // PERF-TEX3
     gl.uniform1i(d.tex, 0);
+    gl.uniform1f(d.picture, this._decalPicture ? 1 : 0);   // WEAPON-MOUNT: a mount is a picture (drawDecalPicture); every mark is a film
     this._uploadFog(this._decal);
     // The scene's own light, so a mark on a dungeon floor is as dark as
     // the floor. Clockless scenes keep full bright, as the flats do.
@@ -3257,6 +3270,7 @@ void main() {
       pointColors: gl.getUniformLocation(P, 'uPointColors'),
       indirect: gl.getUniformLocation(P, 'uIndirect'),
       indirectColor: gl.getUniformLocation(P, 'uIndirectColor'),
+      picture: gl.getUniformLocation(P, 'uPicture'),              // WEAPON-MOUNT: a hung picture, not a blood film
       ...this._fogLocs(P),   // MAC-BUG W6: the lane's decal wants the whole fog set too, and _fogLocs is the one table that knows it
     };
   }

@@ -169,3 +169,28 @@ Storage, with a Store verb (`ui/enhancedInventory.js`). A body, a
 stranger's cupboard and a closed shop's shelf keep MAC-M2 B's frame.
 
 `test/shipstore.test.js` (3); `tools/mutants/shipstore.json` 6, 6 dead.
+
+## WEAPON-MOUNT: a hung weapon is its own picture again (report 6)
+
+The image did not arrive; this was traced from the code and proved in real
+GL. DECOR2c hangs a weapon or a shield on the blood marks' decal pass, as its
+pack picture under a white tint. Both of that pass's programs read a texel's
+red as a film's thickness and paint the tint through it (BLOOD3) - the
+classic `vColor.rgb * exp(...)`, the lane's albedo from the tint with a
+meniscus relief off the same red. So a hung sword came out a pale lit
+silhouette of itself, its colours thrown away. `tools/bloodProbe.mjs` shows
+it: a green picture drawn as a mark comes back 255,255,255 on the classic
+set, 201,197,190 on the lane.
+
+A mount is a picture now. `renderer.drawDecalPicture` is the same pass with
+its switch on for that one draw (`uPicture`), and both programs then take the
+texel as the colour: the classic straight, the lane decoded as every lane
+texel is, with no film and no relief. The room's mounts and the placement
+ghost use it (`scenes/decorRoom.js`, `scenes/decorTool.js`); the blood marks
+never do. The probe's WEAPON-MOUNT rows: green comes back green on both sets
+(54,250,76 classic; 36,169,50 lane).
+
+If the image showed something else - a mount in the wrong place, or missing
+- that is still open; this is the one defect the code shows.
+
+`test/weaponmount.test.js` (4); `tools/mutants/weaponmount.json` 8, 8 dead.

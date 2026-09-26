@@ -9000,9 +9000,12 @@ records re-aimed.
   surface, lit by that surface's light, its clear texels cut out), after the room's solid models. Its picture is
   uploaded as the pack's own is (the cut-out, its dye), sized as a flat of its archive is and scaled. Its eye target
   is the box round its corners; it has no collider. During the flight the ghost is the picture itself, hanging where
-  the mount will hang.
+  the mount will hang. WEAPON-MOUNT (2026-09-26, Mac: "weapons dont show in houses properly"): that pass read the
+  picture's red as a blood film's thickness and painted the white tint through it, so a mount came out a pale
+  silhouette of itself; a mount is drawn through `renderer.drawDecalPicture` now - the same pass with its `uPicture`
+  switch on, the texel taken as the colour, no film, no relief (`tools/bloodProbe.mjs`'s WEAPON-MOUNT rows, both sets).
 
-Not yet: no one has seen a mount drawn - there is no GL and no ARENA2 in this container; the frame's handedness is
+Not yet: no one has seen a mount drawn in a room - there is no ARENA2 in this container; the frame's handedness is
 reasoned from the billboard pass's own texture and camera conventions and pinned, and is the one-look question.
 
 Pinned: `test/decor2c.test.js` (6), `test/decor1.test.js` (+1: the service keeps a mount of the port's own archive).

@@ -247,7 +247,7 @@ export function createDecorRoom({
   /** DECOR2c: the mounts, on the host's decal pass (after the room's solid geometry, as the blood marks go). */
   function drawMounts(r = renderer) {
     let n = 0;
-    for (const e of standing.values()) if (e.mount) { r?.drawDecals?.(e.mount.batch, e.mount.tex); n++; }
+    for (const e of standing.values()) if (e.mount) { (r?.drawDecalPicture ?? r?.drawDecals)?.call(r, e.mount.batch, e.mount.tex); n++; }   // WEAPON-MOUNT: a picture, not a film
     return n;
   }
 
