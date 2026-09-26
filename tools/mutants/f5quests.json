@@ -1,0 +1,101 @@
+[
+  {
+    "name": "F5Q-the-page-drops-the-bag",
+    "file": "src/ui/charSheetDoor.js",
+    "old": "      ...(pause?.() ?? {}),\n",
+    "new": "",
+    "tests": [
+      "test/f5quests.test.js"
+    ]
+  },
+  {
+    "name": "F5Q-the-door-hands-no-bag",
+    "file": "src/ui/charSheetDoor.js",
+    "old": "return enhancedSheetPageOverlay(hooks, deps.entity, deps.pause ?? null);",
+    "new": "return enhancedSheetPageOverlay(hooks, deps.entity, null);",
+    "tests": [
+      "test/f5quests.test.js"
+    ]
+  },
+  {
+    "name": "F5Q-the-page-acts-on-resume-alone",
+    "file": "src/ui/charSheetDoor.js",
+    "old": "      onAction: pauseMenuAct(menuHooks, close),",
+    "new": "      onAction: (a) => { if (a === 'resume') close(); },",
+    "tests": [
+      "test/f5quests.test.js"
+    ]
+  },
+  {
+    "name": "F5Q-world-sheet-without-the-bag",
+    "file": "src/scenes/world.js",
+    "old": "    pause: () => pauseDoorHooks(),   // F5-QUESTS: the enhanced F5 page is the pause window - handed this host's own bag\n",
+    "new": "",
+    "tests": [
+      "test/f5quests.test.js"
+    ]
+  },
+  {
+    "name": "F5Q-exterior-sheet-without-the-bag",
+    "file": "src/scenes/exterior.js",
+    "old": "    pause: () => pauseDoorHooks(),   // F5-QUESTS: the enhanced F5 page is the pause window - handed this host's own bag\n",
+    "new": "",
+    "tests": [
+      "test/f5quests.test.js"
+    ]
+  },
+  {
+    "name": "F5Q-dungeon-sheet-drops-the-applier",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "pause: () => api.pauseHooks(pauseOpts(sheetOpts).setPlayerPos),",
+    "new": "pause: () => api.pauseHooks(),",
+    "tests": [
+      "test/f5quests.test.js"
+    ]
+  },
+  {
+    "name": "F5Q-dungeon-load-without-the-applier",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "        quickLoad: () => ctx.quickLoad?.(setPlayerPos),",
+    "new": "        quickLoad: () => ctx.quickLoad?.(null),",
+    "tests": [
+      "test/f5quests.test.js"
+    ]
+  },
+  {
+    "name": "F5Q-f5-drops-the-applier",
+    "file": "src/ui/input.js",
+    "old": "ctx.toggleCharSheet({ setPlayerPos }); return true;",
+    "new": "ctx.toggleCharSheet(); return true;",
+    "tests": [
+      "test/f5quests.test.js"
+    ]
+  },
+  {
+    "name": "F5Q-act-saves-before-the-window-is-down",
+    "file": "src/ui/pauseDoor.js",
+    "old": "  return (action) => {\n    close();\n",
+    "new": "  return (action) => {\n    if (action === 'save') hooks.quickSave?.();\n    close();\n",
+    "tests": [
+      "test/f5quests.test.js"
+    ]
+  },
+  {
+    "name": "F5Q-picked-slot-ignored",
+    "file": "src/ui/pauseDoor.js",
+    "old": "return n && typeof base.saveAs === 'function' ? base.saveAs(n) : base.quickSave?.();",
+    "new": "return base.quickSave?.();",
+    "tests": [
+      "test/f5quests.test.js"
+    ]
+  },
+  {
+    "name": "F5Q-the-sheets-doors-under-the-bag",
+    "file": "src/ui/charSheetDoor.js",
+    "old": "      ...(pause?.() ?? {}),\n      // The sheet's own buttons, onto the page PX25 built to take\n      // them. A host that hands no hook gets no button, which is the\n      // same honest refusal the classic sheet gives.\n      openPack: hooks.inventory ? () => { close(); hooks.inventory(); } : undefined,\n      openSpellbook: hooks.spellbook ? () => { close(); hooks.spellbook(); } : undefined,\n      openChronicle: hooks.logbook ? () => { close(); hooks.logbook(); } : undefined,\n      // ASCEND-ANYTIME: this page can always offer it, because this\n      // door owns the entity the button is about. A host that handed\n      // no entity gets no button, the same refusal the three above\n      // give for a door they were handed none of.\n      openAscend: entity ? openAscend : undefined,\n",
+    "new": "      // The sheet's own buttons, onto the page PX25 built to take\n      // them. A host that hands no hook gets no button, which is the\n      // same honest refusal the classic sheet gives.\n      openPack: hooks.inventory ? () => { close(); hooks.inventory(); } : undefined,\n      openSpellbook: hooks.spellbook ? () => { close(); hooks.spellbook(); } : undefined,\n      openChronicle: hooks.logbook ? () => { close(); hooks.logbook(); } : undefined,\n      // ASCEND-ANYTIME: this page can always offer it, because this\n      // door owns the entity the button is about. A host that handed\n      // no entity gets no button, the same refusal the three above\n      // give for a door they were handed none of.\n      openAscend: entity ? openAscend : undefined,\n      ...(pause?.() ?? {}),\n",
+    "tests": [
+      "test/f5quests.test.js"
+    ]
+  }
+]

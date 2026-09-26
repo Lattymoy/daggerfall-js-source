@@ -118,7 +118,7 @@ test('MAC-C: every host hands the pack a sheet door, beside the spellbook one it
   // the cross-over both call (U52's argument, applied to the host that
   // still had the builder inline).
   const dc = rd('src/scenes/dungeonContext.js');
-  assert.match(dc, /makeCharSheet\(\) \{/, 'the builder is lifted out');
+  assert.match(dc, /makeCharSheet\(sheetOpts = \{\}\) \{/, 'the builder is lifted out (F5-QUESTS: it takes the door options, for the page\'s Load)');
   assert.equal((dc.match(/createCharSheetWindow\(\{/g) ?? []).length, 1, 'and there is exactly one of it');
-  assert.match(dc, /activeOverlay = api\.makeCharSheet\(\);/, 'the toggle calls it');
+  assert.match(dc, /activeOverlay = api\.makeCharSheet\(doorOpts\);/, 'the toggle calls it');
 });

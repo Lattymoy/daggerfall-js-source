@@ -140,7 +140,7 @@ test('U43: the dungeon host opens the journal only when it can SEE quests', () =
   // where it now lives.
   const bagAt = dc.indexOf('return createCharSheetWindow({');
   assert.ok(bagAt > 0, 'the dungeon host builds its sheet through the door');
-  assert.match(dc, /activeOverlay = api\.makeCharSheet\(\);/, '...and the toggle calls that ONE builder');
+  assert.match(dc, /activeOverlay = api\.makeCharSheet\(doorOpts\);/, '...and the toggle calls that ONE builder');
   const sheetBag = dc.slice(bagAt, dc.indexOf('toggleLogbook()'));
   assert.match(sheetBag, /\.\.\.questJournalHooks\(\),/, 'and the SHEET gets them');
   assert.match(dc, /toggleLogbook\(\) \{ this\._openJournal\('activeQuests'\); \}/);

@@ -5561,6 +5561,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     rows: (id, pick) => townTalk.lines(id, pick),   // AUDIT 58: the eight attribute popups' TEXT.RSC records 0..7
     inventory: () => (inventoryDoorReady() ? makeInventoryWindow() : null),
     spellbook: makeSpellbookWindow,
+    pause: () => pauseDoorHooks(),   // F5-QUESTS: the enhanced F5 page is the pause window - handed this host's own bag
     // Q4-v: the live machine's log walk and the player's notebook
     questMessages: () => questBridge?.machine.getAllQuestLogMessages() ?? [],
     notebook: () => questBridge?.notebook ?? null,
@@ -7209,7 +7210,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:6467), so exterior mode and a
+    // composer, dungeonContext.js:6475), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -8326,6 +8327,53 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!queue.length) _streamSince = null;   // PERF-EXT24: and ends with the queue
   }
 
+  /** F5-QUESTS (2026-09-26): THIS HOST'S PAUSE BAG, one arm for both doors that mount the pause window - hudCtx.togglePause
+   *  and the F5 page (makeCharSheetWindow's `pause`, ui/charSheetDoor.js), which was handed the sheet's four
+   *  doors and nothing else, so its Quests tab never listed a quest. */
+  const pauseDoorHooks = () => ({
+    // PX25: the sheet's own doors, through this host's own arms.
+    openPack: () => { const w = makeInventoryWindow(); if (w) townTalk.showOverlay(w); },   // DISC10-E L3: a refused pack is null
+    openSpellbook: () => { const w = makeSpellbookWindow(); if (w) townTalk.showOverlay(w); },
+    openChronicle: () => { const w = makeJournalWindow('notebook'); if (w) townTalk.showOverlay(w); },
+    quickSave: worldQuickSave,
+    quickLoad: worldQuickLoad,
+    relock: () => requestLook(canvas),   // MAC1: the pointer comes back with the resume gesture (ui/pauseDoor.js)
+    // ONLINE-LOAD1: this host's own live-session flag (`online`,
+    // not `onlineOn` - see worldQuickLoad's own header for why),
+    // for the enhanced Load pane (enhancedMenu.js paneLoad) to
+    // grey itself out and say why, the same way savingPrevented
+    // already lets paneSave do for a shop mid-transaction. The real
+    // door is guarded at worldQuickLoad itself - this is the
+    // pane's read of the same signal, not a second gate.
+    loadingPrevented: () => !!online,
+    // SAV4: the slot window's seams - the pause SAVE/LOAD doors
+    // open it with these (openClassicPauseFlow builds the doors).
+    playerName: () => playerEntity.name, playerId: () => playerEntity.characterId ?? null,
+    saveAs: (saveName) => worldQuickSave(saveName),
+    loadKey: (key) => worldQuickLoad({ key }),
+    // ROAD-C C1: DFU PUSHES the slot window over the pause window
+    // (DaggerfallPauseOptionsWindow.cs:302/:308) rather than
+    // replacing it, and Cancel pops back onto it. This host's push
+    // door is townTalk's (ROAD-B B5).
+    pushWindow: (w) => townTalk.pushOverlay(w),
+    exitToMenu: exitToTitleMenu,
+    textLines: (id) => townTalk.lines(id),
+    // PX3: the pause window's Quests tab - the SAME seam the F5
+    // logbook reads (:1525).
+    questMessages: () => questBridge?.machine.getAllQuestLogMessages() ?? [],
+    // PX4: the STRUCTURED walk - per-quest name + messages for the
+    // journal's rail/detail, and the notebook's finished entries
+    // for the archive. Raw messages and raw token entries: the
+    // menu flattens, one flattener, one home.
+    // MAC-K2: the walk is the BRIDGE's now. This was one of the
+    // three copies of it (dungeonContext.js's and exterior.js's
+    // `pauseQuestLog` were the others, and that one's own comment
+    // already said two copies is two laws) - and the chronicle's
+    // Quests section needed a fourth reader, which is one more
+    // than a copied walk survives.
+    questLog: () => questBridge?.questLog() ?? { active: [], finished: [] },
+    repairQuests: () => questBridge?.repair?.() ?? null,   // QREPAIR: the Settings' Repair active quests
+  });
   const keys = new Set();
   // C9: the modal machine binds below AFTER these listeners exist -
   // the lazy read avoids the boot-time TDZ (mouse events fire during
@@ -8478,48 +8526,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       const { at: pauseAt } = pauseOpts(doorOpts);   // this host's quickLoad takes no position applier, so `setPlayerPos` is read by the dungeon context alone
       openPauseFlow((w) => townTalk.showOverlay(w), {
         at: pauseAt,   // PX26: the page the door was pressed for
-        // PX25: the sheet's own doors, through this host's own arms.
-        openPack: () => { const w = makeInventoryWindow(); if (w) townTalk.showOverlay(w); },   // DISC10-E L3: a refused pack is null
-        openSpellbook: () => { const w = makeSpellbookWindow(); if (w) townTalk.showOverlay(w); },
-        openChronicle: () => { const w = makeJournalWindow('notebook'); if (w) townTalk.showOverlay(w); },
-        quickSave: worldQuickSave,
-        quickLoad: worldQuickLoad,
-        relock: () => requestLook(canvas),   // MAC1: the pointer comes back with the resume gesture (ui/pauseDoor.js)
-        // ONLINE-LOAD1: this host's own live-session flag (`online`,
-        // not `onlineOn` - see worldQuickLoad's own header for why),
-        // for the enhanced Load pane (enhancedMenu.js paneLoad) to
-        // grey itself out and say why, the same way savingPrevented
-        // already lets paneSave do for a shop mid-transaction. The real
-        // door is guarded at worldQuickLoad itself - this is the
-        // pane's read of the same signal, not a second gate.
-        loadingPrevented: () => !!online,
-        // SAV4: the slot window's seams - the pause SAVE/LOAD doors
-        // open it with these (openClassicPauseFlow builds the doors).
-        playerName: () => playerEntity.name, playerId: () => playerEntity.characterId ?? null,
-        saveAs: (saveName) => worldQuickSave(saveName),
-        loadKey: (key) => worldQuickLoad({ key }),
-        // ROAD-C C1: DFU PUSHES the slot window over the pause window
-        // (DaggerfallPauseOptionsWindow.cs:302/:308) rather than
-        // replacing it, and Cancel pops back onto it. This host's push
-        // door is townTalk's (ROAD-B B5).
-        pushWindow: (w) => townTalk.pushOverlay(w),
-        exitToMenu: exitToTitleMenu,
-        textLines: (id) => townTalk.lines(id),
-        // PX3: the pause window's Quests tab - the SAME seam the F5
-        // logbook reads (:1525).
-        questMessages: () => questBridge?.machine.getAllQuestLogMessages() ?? [],
-        // PX4: the STRUCTURED walk - per-quest name + messages for the
-        // journal's rail/detail, and the notebook's finished entries
-        // for the archive. Raw messages and raw token entries: the
-        // menu flattens, one flattener, one home.
-        // MAC-K2: the walk is the BRIDGE's now. This was one of the
-        // three copies of it (dungeonContext.js's and exterior.js's
-        // `pauseQuestLog` were the others, and that one's own comment
-        // already said two copies is two laws) - and the chronicle's
-        // Quests section needed a fourth reader, which is one more
-        // than a copied walk survives.
-        questLog: () => questBridge?.questLog() ?? { active: [], finished: [] },
-        repairQuests: () => questBridge?.repair?.() ?? null,   // QREPAIR: the Settings' Repair active quests
+        ...pauseDoorHooks(),   // F5-QUESTS: the bag is its own arm now - F5's page is handed the same one
       });
     },
     cycleMode: (dir) => townTalk.setMode(dir > 0 ? hudLargeNextMode(getInteractionMode()) : hudLargePrevMode(getInteractionMode())),

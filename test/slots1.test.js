@@ -114,8 +114,14 @@ test('SLOTS1: the doors act on the pick - main.js sets ?loadkey for load and onl
   assert.ok(branch.indexOf("params.set('loadkey'") < branch.indexOf('return bootWorld('), 'before the boot');
   const door = rd('src/ui/pauseDoor.js');
   assert.match(door, /function enhancedPauseOverlay\(show, base\) \{/);
-  assert.match(door, /quickSave: \(\) => \{ const n = seams\?\.takePickedSaveName\?\.\(\) \?\? null; return n && typeof base\.saveAs === 'function' \? base\.saveAs\(n\) : base\.quickSave\?\.\(\); \}/);
-  assert.match(door, /quickLoad: \(\) => \{ const k = seams\?\.takePickedSaveKey\?\.\(\) \?\? null; return k != null && typeof base\.loadKey === 'function' \? base\.loadKey\(k\) : base\.quickLoad\?\.\(\); \}/);
+  // F5-QUESTS re-aimed the routing into `pauseMenuHooks`, the one home both doors that mount the pause window share
+  // (this one and ui/charSheetDoor.js's F5 page) - the law read where it lives, and both doors held to it.
+  assert.match(door, /quickSave: \(\) => \{ const n = seamsOf\(\)\?\.takePickedSaveName\?\.\(\) \?\? null; return n && typeof base\.saveAs === 'function' \? base\.saveAs\(n\) : base\.quickSave\?\.\(\); \}/);
+  assert.match(door, /quickLoad: \(\) => \{ const k = seamsOf\(\)\?\.takePickedSaveKey\?\.\(\) \?\? null; return k != null && typeof base\.loadKey === 'function' \? base\.loadKey\(k\) : base\.quickLoad\?\.\(\); \}/);
+  assert.match(door, /\.\.\.pauseMenuHooks\(base, \(\) => seams\),/, 'the pause door routes through it');
+  const sheet = rd('src/ui/charSheetDoor.js');
+  assert.match(sheet, /\}, \(\) => seams\);/, "F5's page routes through it too, over the module ITS pane came from");
+  assert.equal((sheet.match(/mount: \(mod\) => \{ seams = mod; view = mod\.mountEnhancedMenu\(host, pageOpts\(\)\); \},/g) ?? []).length, 2, "both of the F5 page's mounts keep the seams");
   assert.match(door, /if \(action === 'save'\) hooks\.quickSave\?\.\(\);\s*\n\s*else if \(action === 'load'\) hooks\.quickLoad\?\.\(\);/, 'the verbs the MAC1 pin reads, untouched');
   assert.match(door, /seams = mod;/, 'the seams come from the module the pane came from');
   const world = rd('src/scenes/world.js');

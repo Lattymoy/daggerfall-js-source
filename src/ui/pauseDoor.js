@@ -117,6 +117,51 @@ export function pauseOpts(opts) {
 }
 
 /**
+ * F5-QUESTS (2026-09-26, Mac: "Cant see quest on f5 menu but can on tab menu"): THE PAUSE WINDOW'S HOOKS, for BOTH
+ * doors that mount it - this one (Escape, the dial's Stats arm) and ui/charSheetDoor.js's F5 page, which IS this
+ * window opened on Stats (PX27). F5's page was handed the sheet's four doors and nothing else, so on it the Quests
+ * tab said "The journal is not wired into this place yet", Save and Load said there was no door, and Exit did
+ * nothing. `base` is the host's own bag; `seamsOf` answers the enhanced menu module once it has landed.
+ *
+ * SLOTS1: the enhanced Save pane names a slot and the Load pane picks one; the verbs stay the two the pin reads,
+ * and THESE arms route a picked name onto the host's saveAs and a picked key onto its loadKey - the hosts' own slot
+ * seams (SAV4) - falling back to the quick verbs where a host hands none.
+ */
+export function pauseMenuHooks(base, seamsOf) {
+  return {
+    ...base,
+    quickSave: () => { const n = seamsOf()?.takePickedSaveName?.() ?? null; return n && typeof base.saveAs === 'function' ? base.saveAs(n) : base.quickSave?.(); },
+    quickLoad: () => { const k = seamsOf()?.takePickedSaveKey?.() ?? null; return k != null && typeof base.loadKey === 'function' ? base.loadKey(k) : base.quickLoad?.(); },
+  };
+}
+
+/** F5-QUESTS: the menu's `onAction`, for both doors - the window down FIRST, then the act (U51's order: a save
+ *  answers with a HUD line, and an opaque window left up would cover it). */
+export function pauseMenuAct(hooks, close) {
+  return (action) => {
+    close();
+    // DISC22-B: opened from the classic pause window, Resume goes back to that window - the settings were a page of
+    // it, not the way out of it (save, load and exit still leave as they always do).
+    if (action === 'resume' && typeof hooks.onResume === 'function') { hooks.onResume(); return; }
+    // MAC1 (Mac, 2026-09-10: "opening menu returning to game requiring
+    // player to press buttons twice"). This close runs INSIDE the Resume
+    // click or the Escape keydown - the transient activation a
+    // pointer-lock request needs - while the hosts' look gate relocked
+    // on the NEXT frame, outside any gesture, which the browser refuses
+    // (pointerLock.js's own header). So the first click after a resume
+    // went to re-grabbing the pointer, and took SetClickDelay with it
+    // (world.js's pointerdown, PlayerActivate.cs:1050-1054), and only
+    // the second reached the world. The host's relock rides THIS
+    // gesture; the exit has no world to relock into.
+    if (action !== 'exit') hooks.relock?.();
+    if (action === 'save') hooks.quickSave?.();
+    else if (action === 'load') hooks.quickLoad?.();
+    else if (action === 'exit') hooks.exitToMenu?.();
+    // 'resume' is the close and nothing else.
+  };
+}
+
+/**
  * Open the pause screen. Same signature the four hosts have always
  * called: `show` puts the returned window in the host's overlay slot
  * (which is what stops the motor and the clock - the overlay-hold law,
@@ -175,15 +220,9 @@ function enhancedPauseOverlay(show, base) {
   let seams = null;   // the enhanced menu module, once it lands: its takePickedSaveKey / takePickedSaveName
   let ascendView = null;   // ASCEND-ANYTIME: the Ascension screen, while it has this window's place
   let ascendHost = null;
-  // SLOTS1: the enhanced Save pane names a slot and the Load pane picks
-  // one; the verbs below stay the two the pin reads, and THESE arms
-  // route a picked name onto the host's saveAs and a picked key onto
-  // its loadKey - the hosts' own slot seams (SAV4) - falling back to
-  // the quick verbs where a host hands none.
+  // SLOTS1: a picked slot rides onto the host's saveAs / loadKey - pauseMenuHooks, the one home F5's page shares.
   const hooks = {
-    ...base,
-    quickSave: () => { const n = seams?.takePickedSaveName?.() ?? null; return n && typeof base.saveAs === 'function' ? base.saveAs(n) : base.quickSave?.(); },
-    quickLoad: () => { const k = seams?.takePickedSaveKey?.() ?? null; return k != null && typeof base.loadKey === 'function' ? base.loadKey(k) : base.quickLoad?.(); },
+    ...pauseMenuHooks(base, () => seams),
     // ASCEND-ANYTIME: the Stats page draws its Ascend button only when a door hands this over, and F5's door
     // (ui/charSheetDoor.js) always did - this one never did, so the same page reached through Tab (the dial's
     // character arm) or Escape had no way in. A function declaration below: it is hoisted, so this line may name it.
@@ -283,27 +322,7 @@ function enhancedPauseOverlay(show, base) {
   // port answers a save or a load with a HUD line, and this screen is
   // an opaque div over the entire canvas, so a hook fired underneath a
   // live door would put its own confirmation out of sight.
-  const act = (action) => {
-    close();
-    // DISC22-B: opened from the classic pause window, Resume goes back to that window - the settings were a page of
-    // it, not the way out of it (save, load and exit still leave as they always do).
-    if (action === 'resume' && typeof hooks.onResume === 'function') { hooks.onResume(); return; }
-    // MAC1 (Mac, 2026-09-10: "opening menu returning to game requiring
-    // player to press buttons twice"). This close runs INSIDE the Resume
-    // click or the Escape keydown - the transient activation a
-    // pointer-lock request needs - while the hosts' look gate relocked
-    // on the NEXT frame, outside any gesture, which the browser refuses
-    // (pointerLock.js's own header). So the first click after a resume
-    // went to re-grabbing the pointer, and took SetClickDelay with it
-    // (world.js's pointerdown, PlayerActivate.cs:1050-1054), and only
-    // the second reached the world. The host's relock rides THIS
-    // gesture; the exit has no world to relock into.
-    if (action !== 'exit') hooks.relock?.();
-    if (action === 'save') hooks.quickSave?.();
-    else if (action === 'load') hooks.quickLoad?.();
-    else if (action === 'exit') hooks.exitToMenu?.();
-    // 'resume' is the close and nothing else.
-  };
+  const act = pauseMenuAct(hooks, close);   // F5-QUESTS: the one act law - F5's page shares it
 
   show(overlay);
 

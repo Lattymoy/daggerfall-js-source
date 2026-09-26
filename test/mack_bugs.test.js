@@ -36,7 +36,7 @@ test('AUDIT-MACK F2: ONE feeder per held-key Set, and every reader is on a fed o
   // matters: it asserted that every file reading `held(keys, ...)`
   // must itself write the mouse codes into that Set. `worldModes.js`
   // does not OWN a Set - it takes `keys` off the host bag
-  // (`exterior.js:3830`) - and the lender's own mousedown writes the
+  // (`exterior.js:3836`) - and the lender's own mousedown writes the
   // codes UNGATED on a listener that is never removed. The codes were
   // always there.
   //
@@ -489,7 +489,13 @@ test('MAC-L1b: the dungeon pause door reads the HOST BAG, not its own argument',
   assert.match(src, /buildDungeonContext\([^)]*opts = \{\}\)/, 'the host bag really is called `opts`');
   const at = src.indexOf('togglePause(doorOpts = {}) {');
   assert.ok(at > 0);
-  const body = src.slice(at, src.indexOf('\n    },', at)).replace(/^\s*\/\/.*$/gm, '');
+  // F5-QUESTS: the bag is its own arm (`pauseHooks`), spread by this door and handed to F5's page - so the method
+  // read here is the door AND its arm, and the door must still spread it.
+  const door = src.slice(at, src.indexOf('\n    },', at));
+  assert.match(door, /\.\.\.this\.pauseHooks\(setPlayerPos\),/, 'the door spreads the bag');
+  const arm = src.indexOf('pauseHooks(setPlayerPos = null) {');
+  assert.ok(arm > 0);
+  const body = (door + src.slice(arm, src.indexOf('\n    },', arm))).replace(/^\s*\/\/.*$/gm, '');
   assert.match(body, /questLog: \(\) => opts\.questBridge\?\.questLog\(\)/, 'the Quests tab reads the BAG');
   assert.match(body, /relock: \(\) => opts\.relock\?\.\(\)/, 'and so does the relock');
   assert.doesNotMatch(body, /\bopts = \{\}/, 'nothing in this method re-declares `opts`');

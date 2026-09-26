@@ -74,7 +74,7 @@ test('ASCEND-ANYTIME by source: the Stats page carries the door, the sheet overl
   assert.match(fn, /if \(typeof hooks\.openAscend === 'function'\) \{/, 'drawn only when a host handed the hook');
   assert.match(fn, /b\.onclick = \(\) => hooks\.openAscend\(\);/, 'it does NOT resume first: the overlay it lives in swaps in place');
   const door = read('src/ui/charSheetDoor.js');
-  assert.match(door, /return enhancedSheetPageOverlay\(hooks, deps\.entity\);/);
+  assert.match(door, /return enhancedSheetPageOverlay\(hooks, deps\.entity, deps\.pause \?\? null\);/);   // F5-QUESTS: and the host's pause bag
   assert.match(door, /openAscend: entity \? openAscend : undefined,/);
   assert.match(door, /load: \(\) => import\('\.\/enhancedLevelUp\.js'\),\s*\n\s*alive: \(\) => !fired && ascendHost === h,/, 'through the one lazy-chunk door, so a failed load says so');
   assert.match(door, /ascendView\?\.destroy\?\.\(\); \} catch \{ \/\* already gone \*\/ \}   \/\/ ASCEND-ANYTIME: the sheet key closes whatever is on top/, 'close() takes the Ascension down with the sheet');

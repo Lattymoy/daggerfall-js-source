@@ -1714,7 +1714,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:10364 / exterior.js:3692), set
+  // host's own townTalk sink (world.js:10371 / exterior.js:3698), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -3446,8 +3446,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:16490,
-              // exterior.js:5264 and worldModes.js:7880 already ran;
+              // playerArrowHitFoe is the one copy world.js:16497,
+              // exterior.js:5270 and worldModes.js:7880 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -6139,9 +6139,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     togglePause(doorOpts = {}) {
       if (activeOverlay || !pauseDoorReady()) return;
       const { at, setPlayerPos } = pauseOpts(doorOpts);
-      const ctx = this;   // the sibling save verbs on this same context
       openPauseFlow((w) => { activeOverlay = w; }, {
         at,   // PX26: the page the door was pressed for
+        ...this.pauseHooks(setPlayerPos),   // F5-QUESTS: the bag is its own arm now - F5's page is handed the same one
+      });
+    },
+    /** F5-QUESTS (2026-09-26): THIS HOST'S PAUSE BAG, one arm for both doors that mount the pause window -
+     *  togglePause above and the F5 page (makeCharSheet's `pause`, ui/charSheetDoor.js). `setPlayerPos` is the
+     *  host's position applier, the Load arm's (routeKey hands it to both doors). */
+    pauseHooks(setPlayerPos = null) {
+      const ctx = this;   // the sibling save verbs on this same context
+      return {
         // PX25: THE SHEET'S OWN DOORS, handed to the page that IS the
         // sheet. Each host passes the arms it already has; a host
         // without one passes nothing and the button never draws.
@@ -6164,7 +6172,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         repairQuests: () => opts.questBridge?.repair?.() ?? null,   // QREPAIR
         quickSave: () => ctx.quickSave?.(),
         // MAC1 J: the pointer comes back INSIDE the resume gesture
-        // (ui/pauseDoor.js:286-306). THIS CONTEXT OWNS NO CANVAS OF ITS
+        // (ui/pauseDoor.js:141-161). THIS CONTEXT OWNS NO CANVAS OF ITS
         // OWN (:4701), so the relock arrives from whichever dungeon host
         // mounted it - the way hudMessageSink is threaded (:1349) - and
         // both of them hand it in: dungeon.js's opts bag and
@@ -6196,7 +6204,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // pends on the dungeon quest mount, AUDIT 25 P0 - was paid by
         // PX17c at the top of it: the Quests tab reads THIS host's own
         // opts.questBridge machine, not a refusal.)
-      });
+      };
     },
     /** A1: the M window, in the one overlay slot (toggleCharSheet's
      *  idiom - an occupied slot refuses, the window closes itself). */
@@ -7122,7 +7130,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  host that had the builder inline. The free-slot GUARD stays on
      *  the toggle, because the toggle is the thing with a slot to
      *  guard; a cross-over has just freed one. */
-    makeCharSheet() {
+    makeCharSheet(sheetOpts = {}) {
       preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: lazy - ready by the next open at worst
       warmLevelUpWindow();   // LV1's audit: and the level-up window's chunk with it, for the same reason and on the same terms
       return createCharSheetWindow({
@@ -7131,10 +7139,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         rows: (id, pick) => textRsc?.variantLinesById(id, pick ?? Math.random) ?? [],   // AUDIT 58: the eight attribute popups' TEXT.RSC records 0..7
         inventory: () => openInventory(null),
         spellbook: makeSpellbookWindow,
+        pause: () => api.pauseHooks(pauseOpts(sheetOpts).setPlayerPos),   // F5-QUESTS: the enhanced F5 page is the pause window - handed this host's own bag
         ...questJournalHooks(),
       });
     },
-    toggleCharSheet() {
+    toggleCharSheet(doorOpts = {}) {
       if (activeOverlay) return;
       // U32: the sheet's navigation buttons.
       //
@@ -7148,7 +7157,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // charSheetHooks' refusal is still the honest answer, which is
       // why this passes the bridge's own null through rather than
       // substituting an empty list.
-      activeOverlay = api.makeCharSheet();
+      activeOverlay = api.makeCharSheet(doorOpts);   // F5-QUESTS: routeKey's position applier, for the page's Load
     },
     /** U43: the two journal doors (GameManager.cs:541-548). ONE window
      *  either way - LogBook opens it as it stands, NoteBook on the

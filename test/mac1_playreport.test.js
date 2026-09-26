@@ -473,8 +473,9 @@ const hostBagOf = (text, env = {}) => mountLiteral(`x(${literalBody(text, 'var m
 
 test('MAC1 J: the pause door relocks the pointer inside the resume gesture, and every host hands it the canvas', () => {
   const door = src('src/ui/pauseDoor.js');
-  assert.match(door, /const act = \(action\) => \{\s*\n\s*close\(\);[\s\S]{0,1400}if \(action !== 'exit'\) hooks\.relock\?\.\(\);\s*\n\s*if \(action === 'save'\) hooks\.quickSave\?\.\(\);/,
+  assert.match(door, /export function pauseMenuAct\(hooks, close\) \{\s*\n\s*return \(action\) => \{\s*\n\s*close\(\);[\s\S]{0,1400}if \(action !== 'exit'\) hooks\.relock\?\.\(\);\s*\n\s*if \(action === 'save'\) hooks\.quickSave\?\.\(\);/,
     'close first (the overlay-hold law), then relock for every exit but the one to the menu, then the hook');
+  assert.match(door, /const act = pauseMenuAct\(hooks, close\);/, 'F5-QUESTS: the pause door acts through the one law F5\'s page shares');
   const w = src('src/scenes/world.js');
   assert.match(w, /quickLoad: worldQuickLoad,\s*\n\s*relock: \(\) => requestLook\(canvas\),/, 'the world host\'s pause hooks relock through its canvas');
   assert.match(w, /quickLoad: \(\) => worldQuickLoad\(\),\s*\n\s*relock: \(\) => requestLook\(canvas\),/, '...and the host bag the interior arm rides');
@@ -497,8 +498,11 @@ test('MAC1 J: the pause door relocks the pointer inside the resume gesture, and 
   const spy = () => { const seen = []; return { seen, requestLook: (c) => { seen.push(c); } }; };
   for (const [file, text] of OUT) {
     const s = spy();
-    const hooks = mountLiteral(text, 'openPauseFlow((w) => townTalk.showOverlay(w), ', { opts: {}, requestLook: s.requestLook, canvas: `CANVAS-${file}` });
-    assert.equal(typeof hooks.relock, 'function', `${file}: its own pause door hands pauseDoor.js:301 a relock`);
+    // F5-QUESTS: the door spreads the host's bag arm (`pauseDoorHooks`, F5's page is handed the same) - held here,
+    // and the ARM is what gets built and asked.
+    assert.match(text, /openPauseFlow\(\(w\) => townTalk\.showOverlay\(w\), \{\n\s*at: pauseAt,[^\n]*\n\s*\.\.\.pauseDoorHooks\(\),/, `${file}: the door spreads its bag`);
+    const hooks = mountLiteral(text, 'const pauseDoorHooks = () => (', { opts: {}, requestLook: s.requestLook, canvas: `CANVAS-${file}` });
+    assert.equal(typeof hooks.relock, 'function', `${file}: its own pause door hands pauseDoor.js:156 a relock`);
     hooks.relock();
     assert.deepEqual(s.seen, [`CANVAS-${file}`], `${file}: ...and it relocks THIS host's canvas`);
   }
@@ -520,7 +524,9 @@ test('MAC1 J: the pause door relocks the pointer inside the resume gesture, and 
   // -> dungeonContext.togglePause). That context owns no canvas, so its
   // hook is a forward and the pin follows it all the way out.
   let reached = 0;
-  const hooks = mountLiteral(src('src/scenes/dungeonContext.js'), 'openPauseFlow((w) => { activeOverlay = w; }, ',
+  const dctx = src('src/scenes/dungeonContext.js');
+  assert.match(dctx, /openPauseFlow\(\(w\) => \{ activeOverlay = w; \}, \{\n\s*at,[^\n]*\n\s*\.\.\.this\.pauseHooks\(setPlayerPos\),/, 'F5-QUESTS: the dungeon door spreads its bag arm');
+  const hooks = mountLiteral(dctx, 'const ctx = this;   // the sibling save verbs on this same context\n      return ',
     { opts: { relock: () => { reached++; } } });
   assert.equal(typeof hooks.relock, 'function', 'dungeonContext\'s pause door hands over a relock');
   hooks.relock();

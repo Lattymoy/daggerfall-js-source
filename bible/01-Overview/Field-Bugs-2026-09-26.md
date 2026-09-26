@@ -77,3 +77,31 @@ wilderness with the sender's sites, then resynced); the shape parse never
 reading the receiver's world; A1's guard over the minted tasks and the homes.
 `tools/mutants/sharecopy.json` 11, 11 dead; `auditdrops.json`'s
 resource-set mutant re-aimed by content (9, 9 dead).
+
+## F5-QUESTS: F5's pause window had no quests (report 2)
+
+On the enhanced skin F5 opens the pause window on its Stats page (PX27) -
+the same window Tab's dial opens through the host's pause door, and the
+same window Escape opens on System. Two doors built it, and F5's door
+handed it the sheet's four buttons and nothing else. So on F5's copy the
+Quests tab said "The journal is not wired into this place yet" while
+Tab's listed every quest; its Save and Load panes said there was no door;
+its Exit did nothing (the page's `onAction` answered Resume alone). THE
+ONE CONSTRUCTION SEAM (Home.md, AUDIT 17i) by another road: one object,
+two constructors, and the second forgot.
+
+Each host's pause bag is one arm now, spread by its pause door and handed
+to its sheet builder as `pause` (`ui/charSheetDoor.js`); the page spreads
+it under the sheet's own four doors. The act and the slot seams moved out
+of the pause overlay into `pauseMenuAct` and `pauseMenuHooks`
+(`ui/pauseDoor.js`), which both doors use. THE FOUR HOSTS: world.js and
+exterior.js - `pauseDoorHooks`; dungeonContext.js - `pauseHooks(setPlayerPos)`,
+with F5 now carrying routeKey's position applier into the sheet as Escape
+carries it into the pause door (`ui/input.js`), so the page's Load places
+the player; worldModes.js (a building) borrows the world host's builder,
+so a building's F5 page wears the world host's bag - every seam the
+enhanced window reads (the quests, the saves, the relock, the exit) is
+the same there.
+
+`test/f5quests.test.js` (4); `tools/mutants/f5quests.json` 11, 11 dead.
+Ten older pins re-aimed to where their laws live now; the cites the moved lines shifted, moved (the CD4-gated struck rows by hand).

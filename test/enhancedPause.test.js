@@ -249,7 +249,12 @@ test('U51: every exit takes the screen down before it acts', () => {
   // with a HUD line, and this screen is an opaque div over the whole
   // canvas, so a hook fired under a live door hides its own answer.
   const src = read('src/ui/pauseDoor.js');
-  const act = src.slice(src.indexOf('const act = (action)'), src.indexOf('show(overlay);'));
+  // F5-QUESTS: the act is `pauseMenuAct`, the one law both doors that mount this window share - read there, and
+  // both doors held to it (F5's page did nothing on Save, Load or Exit until it did).
+  const from = src.indexOf('export function pauseMenuAct(hooks, close) {');
+  const act = src.slice(from, src.indexOf('\n}\n', from));
+  assert.match(src, /const act = pauseMenuAct\(hooks, close\);/, 'the pause door acts through it');
+  assert.match(read('src/ui/charSheetDoor.js'), /onAction: pauseMenuAct\(menuHooks, close\),/, "and so does F5's page");
   const closeAt = act.indexOf('close();');
   const saveAt = act.indexOf('quickSave');
   assert.ok(closeAt > 0, 'the exits must close the screen at all');
@@ -491,7 +496,15 @@ test('PX25: every host hands the pause window the arms it already had', () => {
   for (const host of ['src/scenes/dungeonContext.js', 'src/scenes/worldModes.js',
     'src/scenes/world.js', 'src/scenes/exterior.js']) {
     const s = read(host);
-    const call = s.slice(s.indexOf('openPauseFlow('), s.indexOf('openPauseFlow(') + 1200);
+    let call = s.slice(s.indexOf('openPauseFlow('), s.indexOf('openPauseFlow(') + 1200);
+    // F5-QUESTS: three hosts' bags are their own arm now, SPREAD into the call and handed to F5's page too - so a
+    // spread is followed to the arm it names, and the arm is read whole.
+    const spread = /\.\.\.(pauseDoorHooks\(\)|this\.pauseHooks\(setPlayerPos\)),/.exec(call);
+    if (spread) {
+      const from = s.indexOf(spread[1] === 'pauseDoorHooks()' ? 'const pauseDoorHooks = () => ({' : 'pauseHooks(setPlayerPos = null) {');
+      assert.ok(from > 0, `${host}: the arm the door spreads exists`);
+      call = s.slice(from, s.indexOf(spread[1] === 'pauseDoorHooks()' ? '\n  });\n' : '\n      };\n    },\n', from));
+    }
     for (const hook of ['openPack', 'openSpellbook', 'openChronicle']) {
       assert.ok(call.includes(`${hook}:`), `${host} hands over ${hook}`);
     }
