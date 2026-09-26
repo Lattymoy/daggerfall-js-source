@@ -37,6 +37,7 @@ export function liveStat(entity, statName, skipKind = null) {   // AUDIT SURV-TI
   const base = entity.stats?.[statName] ?? 0;
   let mod = 0;
   let survival = 0;   // AUDIT SURV-TIERS: the needs' entry, capped below against everything else
+  let curse = 0;   // VAMP-DAY: a racial override's PENALTY (the vampire's day), capped below so it never zeroes a stat
   const list = entity.activeEffects;
   if (list) {
     for (const a of list) {
@@ -47,7 +48,11 @@ export function liveStat(entity, statName, skipKind = null) {   // AUDIT SURV-TI
       // V2a: the racial override's SetStatMod channel - the curse
       // entry's map, re-applied every round by lycanthropyMagicRound
       // exactly as RacialOverrideEffect's constant pass does
-      if (a.kind === 'racialOverride') { if (!a.ended) mod += a.statMods?.[statName] ?? 0; continue; }
+      if (a.kind === 'racialOverride') {
+        const v = a.ended ? 0 : a.statMods?.[statName] ?? 0;
+        if (v < 0) curse += v; else mod += v;
+        continue;
+      }
       // V3: the artifact channel - the Mace of Molag Bal's strength
       // gain (the WIELDER's; AUDIT 39 moved the target's drain onto the
       // ordinary drainAttribute channel, where DFU's own DrainStrength
@@ -70,6 +75,11 @@ export function liveStat(entity, statName, skipKind = null) {   // AUDIT SURV-TI
   // every equip change and every magic round) - a field read, so this
   // leaf stays import-free; empty with every switch off.
   mod += entity._mods?.stats?.[statName] ?? 0;
+  // VAMP-DAY: THE CURSE'S DAY NEVER KILLS. A live 0 is death (killIfAnyLiveStatZero below), and a vampire's -20 by
+  // day on a stat of twenty or less would have killed at dawn - so its penalty stops at a live 1, against the stat
+  // without it, here where every read sees it (as DFU's DrainEffect stops at 1).
+  if (curse < 0) curse = -Math.min(-curse, Math.max(0, Math.min(Math.max(base + mod, 0), MAX_STAT_VALUE) - 1));
+  mod += curse;
   // AUDIT SURV-TIERS (the second pass): THE NEEDS' DRAIN IS CAPPED WHERE THE STAT IS READ. The minute law caps its
   // entry five above the stat as it stands (survival/needs.js applySurvivalMods) - but only once a minute, and the
   // zero-stat kill below reads every 0.2 real seconds: an ale's -2 on a live 7, then a Drain of 5 between two

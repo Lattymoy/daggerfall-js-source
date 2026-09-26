@@ -3867,6 +3867,17 @@ damage per 4th round off the career bit OR the racial override's
 compound-race flag; Light/Darkness Powered Magery writing -33% of
 RawMaxMagicka or the -10000000 unable constant.
 
+VAMP-DAY (2026-09-26, Mac: "instead of constant damage taken they
+should get reduced stats in day and get the bonus at night"; asked,
+"Day -20 / night +20") - a Port-Ledger section A departure: the sun's
+racial arm is gone. The vampire burns no more (a save's curse keeps
+its flag and burns no more either); its +20 on the seven stats (and
+an Anthotis mind) is the night's, and 06:00-18:00 by the clock the
+same stats are 20 down (`systems/vampirism.js` vampireStatMod), held
+at a live 1 where the stat is read so a dawn never kills
+(`systems/statMods.js` liveStat). Holy ground still burns, the career
+bit still burns, and the flag still keys the travel rules.
+
 THE SEAM IS REGISTERED BY THE MODE MACHINE. worldModes owns mode and
 interiorBuilding for BOTH town pages - world.js and exterior.js each
 build it at boot - so the one registration there answers all three

@@ -41,6 +41,7 @@ import {
 } from '../src/systems/worldTick.js';
 import { setPassiveSpecialsHost, SUN_DAMAGE_AMOUNT, SUN_DAMAGE_PER_ROUNDS } from '../src/systems/passiveSpecials.js';
 import { MINUTES_PER_DAY, isDayFromMinutes } from '../src/systems/gameDate.js';
+import { SPECIAL_ABILITY_BITS } from '../src/systems/specialAdvantages.js';   // VAMP-DAY: V1's burn is the career's now
 import { WEAPON_MATERIALS } from '../src/characters/weapons.js';
 import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
 import { sheetModel } from '../src/ui/enhancedCharSheet.js';
@@ -156,27 +157,34 @@ test('DISC10-D H1: a SPELL is not a weapon strike - the damage door alone feeds 
 
 // ── V1: THE CATCH-UP ROUNDS READ TODAY'S SKY ──────────────────────────────────────────────────────────────────────
 
-test('DISC10-D V1: a two-day fast travel that ARRIVES AT NIGHT burns the vampire for nothing; one that arrives by day burns every 4th round', () => {
+test('DISC10-D V1: a two-day fast travel that ARRIVES AT NIGHT burns a sun-damaged career for nothing; one that arrives by day burns every 4th round - and (VAMP-DAY) a vampire burns in neither, its catch-up reading the arrival\'s hour for its +20 or -20', () => {
   const prevHost = setPassiveSpecialsHost({ isInside: () => false, inPrison: () => false });
   try {
     const day = Math.floor(START / MINUTES_PER_DAY) + 10;
     const t0 = at(day, 19);   // 19:00, a vampire's waking hour
-    assert.equal(isDayFromMinutes(t0 + 2 * MINUTES_PER_DAY), false, 'the arrival is night');
-    setWorldMinutes(t0); resetMagicRoundMarker(t0);
-    const p = vampire(VAMPIRE_CLANS.Lyrezi, t0);
-    p.lastGameMinutes = t0;
-    const ticker = createPlayerTicker(p, {});
-    ticker.advance(2 * MINUTES_PER_DAY);   // the travel window, raised whole
-    assert.equal(Math.floor(worldMinutes()), t0 + 2 * MINUTES_PER_DAY);
-    assert.equal(p.health, 1e6, 'no sun reaches a vampire who arrives in the dark');
-    // ...and the same law by day: the live clock says day, so every 4th round of the window burns
     const t1 = at(day + 5, 1);
-    setWorldMinutes(t1); resetMagicRoundMarker(t1); p.lastGameMinutes = t1;
-    const noon = at(day + 5, 12) - t1;
-    ticker.advance(noon);
-    const rounds = noon;   // under the 2880 cap
-    const burns = Math.floor(rounds / SUN_DAMAGE_PER_ROUNDS) + ((t1 % SUN_DAMAGE_PER_ROUNDS) ? 0 : 0);
-    assert.ok(Math.abs((1e6 - p.health) - burns * SUN_DAMAGE_AMOUNT) <= SUN_DAMAGE_AMOUNT, `noon arrival: ${1e6 - p.health} ~ ${burns * SUN_DAMAGE_AMOUNT}`);
+    assert.equal(isDayFromMinutes(t0 + 2 * MINUTES_PER_DAY), false, 'the arrival is night');
+    // the two windows through the real ticker: a travel raised whole to a night arrival, then 01:00 to a noon arrival
+    const run = (p) => {
+      setWorldMinutes(t0); resetMagicRoundMarker(t0); p.lastGameMinutes = t0;
+      const ticker = createPlayerTicker(p, {});
+      ticker.advance(2 * MINUTES_PER_DAY);   // the travel window, raised whole
+      assert.equal(Math.floor(worldMinutes()), t0 + 2 * MINUTES_PER_DAY);
+      const night = { hurt: 1e6 - p.health, mod: p.racialOverride?.statMods?.strength };
+      setWorldMinutes(t1); resetMagicRoundMarker(t1); p.lastGameMinutes = t1;
+      ticker.advance(at(day + 5, 12) - t1);
+      return { night, noon: { hurt: 1e6 - p.health - night.hurt, mod: p.racialOverride?.statMods?.strength } };
+    };
+    // the law V1 pinned, on the career's DamageFromSunlight (the vampire's own sun arm is gone - VAMP-DAY)
+    const sun = run(mortal({ career: { abilityFlagsAndSpellPointsBitfield: SPECIAL_ABILITY_BITS.sunDamage } }));
+    assert.equal(sun.night.hurt, 0, 'no sun reaches one who arrives in the dark');
+    // ...and the same law by day: the live clock says day, so every 4th round of the window burns
+    const burns = Math.floor((at(day + 5, 12) - t1) / SUN_DAMAGE_PER_ROUNDS);   // under the 2880 cap
+    assert.ok(Math.abs(sun.noon.hurt - burns * SUN_DAMAGE_AMOUNT) <= SUN_DAMAGE_AMOUNT, `noon arrival: ${sun.noon.hurt} ~ ${burns * SUN_DAMAGE_AMOUNT}`);
+    // VAMP-DAY: the vampire - no burn either way, and its stats read the arrival's hour
+    const v = run(vampire(VAMPIRE_CLANS.Lyrezi, t0));
+    assert.deepEqual([v.night.hurt, v.noon.hurt], [0, 0], 'the sun burns a vampire no more');
+    assert.deepEqual([v.night.mod, v.noon.mod], [20, -20], 'a night arrival wakes strong, a noon arrival weak');
   } finally { setPassiveSpecialsHost(prevHost); }
 });
 

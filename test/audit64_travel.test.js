@@ -215,7 +215,9 @@ test('AUDIT 64 F20: the arrival clamp\'s SECOND arm is the CAREER flag', () => {
   assert.equal(careerSunDamage({ abilityFlagsAndSpellPointsBitfield: 0 }), false);
 
   // The PRODUCER, at the one caller of arrivalClampMinutes: DFU's
-  // disjunction, the same one passiveSpecials.js:121 already spells.
+  // disjunction, the same one the per-round burn spelled until VAMP-DAY
+  // took its racial arm (passiveSpecials.js:125 reads the career alone;
+  // the travel rules still read both).
   assert.match(read('src/scenes/world.js'),
     /sunAverse: !!playerEntity\.racialOverride\?\.sunDamage \|\| careerSunDamage\(playerEntity\.career\),/,
     'HasVampirism() || Career.DamageFromSunlight (DaggerfallTravelPopUp.cs:351)');

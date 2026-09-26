@@ -7107,8 +7107,8 @@ export async function bootWorld(canvas, renderer, params, status) {
         // Damage from Sunlight disadvantage never arrive between 6am
         // and 6pm regardless of travel type"). The two are separately
         // sourced - the racial arm off the compound race, the career
-        // arm off the class's own CFG bit - which is exactly how the
-        // per-round burn already reads them (passiveSpecials.js:121).
+        // arm off the class's own CFG bit (the burn read both until
+        // VAMP-DAY left it the career's: passiveSpecials.js:125).
         sunAverse: !!playerEntity.racialOverride?.sunDamage || careerSunDamage(playerEntity.career),
       });
       if (clamp > 0 && !sharedClockOn()) { setSyntheticTimeIncrease(true); playerTicker.advance(clamp); }   // AUDIT 63 F13: the arrival clamp is inside DFU's one shielded Update too

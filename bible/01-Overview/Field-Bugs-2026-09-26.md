@@ -232,3 +232,27 @@ picture turned to the eye; it hangs for everyone once they update.
 `test/armormount.test.js` (4); `tools/mutants/armormount.json` 3, 3 dead.
 `test/decor2c.test.js` re-aimed (a cuirass hangs), and its "any armour
 hung" record dropped - that is the law now.
+
+## VAMP-DAY: a vampire's day is its weak hours, not a burn (report 13) - Mac's call
+
+Both, in a way. Daggerfall's vampire has three costs: the sun burns 12
+every 4th round outside by day, holy ground burns the same, and an unfed
+vampire cannot rest. The port had all three, and the +20 to seven stats
+and +30 to the skills at every hour, so outside a dungeon by night there
+was nothing to feel. Mac asked for a trade: "instead of constant damage
+taken they should get reduced stats in day and get the bonus at night"
+(asked, "Day -20 / night +20").
+
+The sun burns a vampire no more. The curse's +20 is the night's; from
+06:00 to 18:00 by the clock, wherever the vampire stands, the same stats
+are 20 down (`systems/vampirism.js` vampireStatMod). A live stat of 0
+kills, so the day's penalty stops at a live 1 against the stat without
+it - a luck of 15 reads 1 by day, never 0 (`systems/statMods.js`). The
+character sheet no longer lists damage from sunlight. The skills' +30,
+holy ground, the feeding, the travel rules (no fast travel by day,
+arriving by night) and a career's own Damage from Sunlight stay as they
+were. A save's curse burns no more from its next round.
+
+A Port-Ledger section A row (VAMP-DAY). `test/vampday.test.js` (5);
+`tools/mutants/vampday.json` 9, 9 dead. Three older pins re-aimed
+(passivespecials x2, disc10_vampire V1 - onto a sun-cursed career).

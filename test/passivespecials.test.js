@@ -164,7 +164,7 @@ test('V2c: regeneration - the %4 cadence and all four flags', () => {
 
 // ── 5. DamageFromSunlight / DamageFromHolyPlaces (:149-203) ───────
 
-test('V2c: the sun burns the career flag OR the racial override, only in sunlight, 12 per 4th round', () => {
+test('V2c: the sun burns the career flag, only in sunlight, 12 per 4th round - and (VAMP-DAY) never the racial override', () => {
   const p = P(career({ primary: 'damage', secondary: 'fromSunlight' }));
   const { log, sinks } = sinkLog();
   passiveSpecialsMagicRound(p, { nowMinutes: noon4, sinks });
@@ -177,12 +177,13 @@ test('V2c: the sun burns the career flag OR the racial override, only in sunligh
   passiveSpecialsMagicRound(p, { nowMinutes: noon4, sinks });
   assert.equal(log.hurt, 12, 'inside: the sun cannot reach');
   setPassiveSpecialsHost(null);
-  // the RACE arm (:159-161) - the vampire's compound race flag, no career bit
+  // the RACE arm (:159-161) - the vampire's compound race flag, no career bit. VAMP-DAY (2026-09-26, Mac): the port's
+  // departure - the vampire's day is its -20 on the stats (test/vampday.test.js), and the sun no longer burns it
   const v = P();
   v.racialOverride = { sunDamage: true };
   const r = sinkLog();
   passiveSpecialsMagicRound(v, { nowMinutes: noon4, sinks: r.sinks });
-  assert.equal(r.log.hurt, SUN_DAMAGE_AMOUNT, 'the override burns without any career flag');
+  assert.equal(r.log.hurt, 0, 'the override burns no more');
 });
 
 test('V2c: holy places burn through the host\'s Temple/849 answer', () => {
@@ -257,14 +258,15 @@ test('V2c: THE POISON PIN - unable magery survives repeated rounds on the LIVE a
 
 // ── 7. THE ROUND (worldTick's order) + the vampire integration ────
 
-test('V2c: the vampire actually burns - through runMagicRoundsFor, after the enchant fold', () => {
+test('V2c: the vampire\'s noon runs through runMagicRoundsFor, after the enchant fold - and (VAMP-DAY) burns nothing: the day is its -20', () => {
   const p = P();
   createVampirismCurse(p, VAMPIRE_CLANS.Lyrezi, { now: noon4 });
-  assert.equal(p.racialOverride.sunDamage, true, 'V2b minted the flag');
+  assert.equal(p.racialOverride.sunDamage, true, 'V2b minted the flag - the travel rules still read it');
   const before = p.health;
   // a 4-minute noon window crosses exactly one %4 boundary
   runMagicRoundsFor(p, noon4, noon4 + 4, { sinks: { hurt: (n) => { p.health -= n; } } });
-  assert.equal(before - p.health, SUN_DAMAGE_AMOUNT, 'V2b\'s STILL OPEN line closes: the sun burns 12');
+  assert.equal(before - p.health, 0, 'VAMP-DAY: the sun no longer burns');
+  assert.equal(p.racialOverride.statMods.strength, -20, '...the day is the stats\' -20 instead');
   const src = read('src/systems/worldTick.js');
   const body = src.slice(src.indexOf('export function runMagicRoundsFor'));
   assert.ok(body.indexOf('enchantmentMagicRound(') < body.indexOf('passiveSpecialsMagicRound('),

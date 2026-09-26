@@ -8,7 +8,7 @@
 // arms, which had stood open since E1 and are answered here: the two
 // readers below are wired into the enchant ctx at world.js:4625-4626
 // off the host seam that worldModes.js:1142 and dungeonContext.js:2633
-// register (bible/01-Overview/Port-Ledger.md:730 strikes the pair
+// register (bible/01-Overview/Port-Ledger.md:731 strikes the pair
 // through as closed, V2c 2026-08-27).
 //
 // THE TWO FLAGS ARE SMALL LAWS, verbatim:
@@ -114,11 +114,13 @@ export function passiveSpecialsMagicRound(entity, { nowMinutes = 0, clockMinutes
     if (regenerate) sinks?.heal?.(REGENERATE_AMOUNT);
   }
 
-  // DamageFromSunlight (:107-121): career flag OR the racial
-  // override's (the vampire's compound race), every 4th round in
-  // sunlight
+  // DamageFromSunlight (:107-121): the career flag, every 4th round in
+  // sunlight. DFU's racial arm (the vampire's compound race) is gone -
+  // VAMP-DAY: the vampire's day is its -20 on the stats instead
+  // (vampirism.js vampireStatMod); its override still carries the flag
+  // for the travel rules, and a save's old curse burns no more.
   if (nowMinutes % SUN_DAMAGE_PER_ROUNDS === 0
-    && (careerSunDamage(career) || override?.sunDamage)
+    && careerSunDamage(career)
     && playerInSunlight(clockMinutes)) {
     sinks?.hurt?.(SUN_DAMAGE_AMOUNT);
   }
