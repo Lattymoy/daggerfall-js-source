@@ -325,3 +325,21 @@ A departure from the mod, recorded in its Port-Ledger row and
 `03-World/Deep-Waters.md`. `test/oceanstuck.test.js` (3);
 `tools/mutants/oceanstuck.json` 3, 3 dead. `dwd.json`'s load-grace record
 re-aimed.
+
+## BEAST-PEER: the others see the beast at the change (report 12, the peers' half)
+
+*"Wereform uses daggerfall paperdoll when others see you transform"*. On
+another player's screen a peer in beast form stands as Eye Of The
+Beholder's lycanthrope (`net/peerRiders.js`, PR-WW1) or, until that art is
+up, the beast's enemy sprite (`net/remotePlayers.js`, DISC12). Both load at
+first sight - which is the moment of the change - and until the sprite was
+built, the branch fell through to the peer's HUMAN paperdoll. So every
+transformation showed the person first, on every screen, and a peer whose
+sprite could not be built stayed the person.
+
+A beast is never the person now: while its art loads it draws nothing for
+those frames, and the doll it wore as a person goes with the change
+(`net/remotePlayers.js`). A person is untouched.
+
+`test/beastpeer.test.js` (3); `tools/mutants/beastpeer.json` 3, 3 dead.
+The local half (a Morrowind-lane player seeing their own change) is below.

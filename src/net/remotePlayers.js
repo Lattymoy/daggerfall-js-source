@@ -815,6 +815,12 @@ export class RemotePlayers {
       const mobileType = beast ? (beast === 2 ? MOBILE_TYPES.Wereboar : MOBILE_TYPES.Werewolf) : spritesOn && peer.look ? classMobileType(peer.look.class) : null;
       const bundle = mobileType != null && ENEMY_BASICS[mobileType] ? this._mobileFor(peer.id, mobileType, peer.look?.gender === 'female' ? 'female' : 'male') : null;
       if (bundle && typeof bundle.then !== 'function') { this._syncMobilePeer(peer, bundle, toScene, dt, eye); continue; }
+      // BEAST-PEER (2026-09-26, Mac: "Wereform uses daggerfall paperdoll when others see you transform"): A BEAST IS
+      // NEVER THE PERSON. The doll is the peer's HUMAN paperdoll, and it stood for a beast whenever the beast's art was
+      // still on its way - EOTB's lycanthrope and the enemy sprite both load at first sight, which is the moment of the
+      // change, on every screen. A beast whose art is not up yet draws nothing for those frames, and the doll it wore
+      // as a person goes with the change.
+      if (beast) { this._dropDoll(peer.id); continue; }
       this._syncDollPeer(peer, toScene);
     }
     for (const [id, entry] of this._batches) {
@@ -965,6 +971,14 @@ export class RemotePlayers {
     if (!this._riding.has(id)) return;
     this._riding.delete(id);
     this.deps?.audio?.setLoop3d?.(ridingLoopName(id), null);
+  }
+
+  /** BEAST-PEER: a peer's doll batch released (a mobile's is the mobile path's own). */
+  _dropDoll(id) {
+    const entry = this._batches.get(id);
+    if (entry?.kind !== 'doll') return;
+    this.renderer.destroyBillboardBatch?.(entry.batch);
+    this._batches.delete(id);
   }
 
   /** The paperdoll path, unchanged in shape from before the mobile-billboard branch existed - just factored out of
