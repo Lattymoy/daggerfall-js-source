@@ -231,7 +231,7 @@ test('RENOWN1 the worker: /v1/renown/xp behind a session, the account the sessio
   const acct = (await call('GET', '/v1/account', undefined, me.secret)).body.account;
   assert.deepEqual(acct.renown.map((x) => [x.character, x.name, x.xp, x.level]), [['char-aaaa', 'Mara', 5001, 9]]);
   assert.equal(RENOWN_CARD_TRACKS, 5);
-  assert.match(src('server-account/wrangler.toml'), /ACCOUNT_VERSION = "acct11"/);   // acct9 on the branch; main's FOUNDER2 took acct9; WB5b's gates closed moved it on (acct11)
+  assert.match(src('server-account/wrangler.toml'), /ACCOUNT_VERSION = "acct12"/);   // acct9 on the branch; main's FOUNDER2 took acct9; WB5b's gates closed moved it on (acct11); SHADOW-FANG (acct12)
   assert.match(src('.github/workflows/account-deploy.yml'), /- "src\/net\/renown\.js"/, 'the Worker bundles the curve, so a change to it deploys');
 });
 
@@ -277,7 +277,7 @@ test('RENOWN1 the wire: `badged` stamps `lv` beside the badge only within the bo
   assert.deepEqual(parseClient('{"t":"renown","order":"v1.a.b"}', { hasHello: false }), { error: 'renown before hello' });
   assert.deepEqual(parseClient('{"t":"renown"}', { hasHello: true }), { error: 'bad renown' });
   assert.deepEqual(parseClient(JSON.stringify({ t: 'renown', order: 'x'.repeat(1025) }), { hasHello: true }), { error: 'bad renown' });
-  assert.equal(RELAY_VERSION, 'world113');   // WB3 and AUDIT WB moved it on (world113 - world110 and world111 on their branch); PARTY-TRAVEL before them (world112); RENOWN1 was world111 - world108 on the branch; main's HT-WAIST-NET, PROFILE2/SKIN2 and EVENT1 took world108-110
+  assert.equal(RELAY_VERSION, 'world114');   // SHADOW-FANG's badge vocabulary moved it on (world114); WB3 and AUDIT WB moved it on (world113 - world110 and world111 on their branch); PARTY-TRAVEL before them (world112); RENOWN1 was world111 - world108 on the branch; main's HT-WAIST-NET, PROFILE2/SKIN2 and EVENT1 took world108-110
   assert.equal(RENOWN_RELAY_MIN, 111);
   assert.equal(relaySupportsRenown('world111'), true);
   assert.equal(relaySupportsRenown('world110'), false);

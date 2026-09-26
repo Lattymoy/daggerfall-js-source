@@ -158,7 +158,7 @@ test('MAIL1 law: a letter past its bound is REFUSED, never cut - one word each (
 
 test('MAIL1 service: four routes behind a session, none open; acct6; a GUEST can neither read nor write (mail-needs-account, 403) and cannot be written to; the wrong method is refused (mutants: the wall dropped; a route opened to strangers)', async () => {
   for (const r of ['/v1/mail/inbox', '/v1/mail/send', '/v1/mail/read', '/v1/mail/delete']) { assert.ok(ROUTES.has(r), r); assert.ok(!OPEN_ROUTES.has(r)); }
-  assert.equal(ACCOUNT_VERSION, 'acct11');   // acct6 was MAIL1's letters; TITLE-N's Dungeon Master and Patreon tiers moved it on (acct7); DUEL1's duelling record (acct8), FOUNDER2's cutoff again (acct9); RENOWN1's Renown, HOME1's homes, DECOR1's decor and GUILD1's guilds (acct10); WB5b's gates closed (acct11 - acct10 on its branch)
+  assert.equal(ACCOUNT_VERSION, 'acct12');   // acct6 was MAIL1's letters; TITLE-N's Dungeon Master and Patreon tiers moved it on (acct7); DUEL1's duelling record (acct8), FOUNDER2's cutoff again (acct9); RENOWN1's Renown, HOME1's homes, DECOR1's decor and GUILD1's guilds (acct10); WB5b's gates closed (acct11 - acct10 on its branch); SHADOW-FANG's title and glyph (acct12)
   const svc = await service();
   const ann = await svc.player('p_ann_0000000001', 'Ann');
   const guest = await svc.player('p_gst_0000000001', null);

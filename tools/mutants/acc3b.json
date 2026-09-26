@@ -12,8 +12,8 @@
   {
     "name": "ACC3b-2-the-title-drawn-on-the-name-line",
     "file": "src/net/remotePlayers.js",
-    "old": "        drawText(renderer, font, title.text, Math.round(n.x - tt / 2), Math.round(top - font.fnt.fixedHeight * s), s, title.rgba ?? [1, 1, 1, 1]);",
-    "new": "        drawText(renderer, font, title.text, Math.round(n.x - tt / 2), Math.round(top), s, title.rgba ?? [1, 1, 1, 1]);",
+    "old": "        const tx = Math.round(n.x - tt / 2), ty = Math.round(top - font.fnt.fixedHeight * s);",
+    "new": "        const tx = Math.round(n.x - tt / 2), ty = Math.round(top);",
     "tests": [
       "test/acc3badge.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "ACC3b-3-the-party-colour-over-the-title",
     "file": "src/net/remotePlayers.js",
-    "old": "        drawText(renderer, font, title.text, Math.round(n.x - tt / 2), Math.round(top - font.fnt.fixedHeight * s), s, title.rgba ?? [1, 1, 1, 1]);",
-    "new": "        drawText(renderer, font, title.text, Math.round(n.x - tt / 2), Math.round(top - font.fnt.fixedHeight * s), s, colorOf?.(n.id) ?? title.rgba ?? [1, 1, 1, 1]);",
+    "old": "        } else drawText(renderer, font, title.text, tx, ty, s, title.rgba ?? [1, 1, 1, 1]);",
+    "new": "        } else drawText(renderer, font, title.text, tx, ty, s, colorOf?.(n.id) ?? title.rgba ?? [1, 1, 1, 1]);",
     "tests": [
       "test/acc3badge.test.js"
     ],

@@ -45,7 +45,7 @@
 // Not a DFU member: Daggerfall Unity has no other players and no chat. Ledger A row (ONLINE).
 import { PIXELIFY_FIVE_FACE, PIXEL_STACK } from './pixelifyFive.js';   // the enhanced face, with FIX-D's five ahead of it
 import { NAME_GAP_PX, namePixelSize, nameViewportScale } from '../net/remotePlayers.js';
-import { titleBadge, glyphBadges, glyphSvgNode, cssRgba } from './playerBadge.js';   // ACC3: the same table the classic pass reads - one law, two faces   // the anchor's gap, and the size law's own two doors (AUDIT NAME1 F3)
+import { titleBadge, glyphBadges, glyphSvgNode, cssRgba, titlePaint, TITLE_PAINT_KEYS } from './playerBadge.js';   // ACC3: the same table the classic pass reads - one law, two faces   // the anchor's gap, and the size law's own two doors (AUDIT NAME1 F3)
 import { graphemesOf } from '../systems/graphemes.js';   // EMOTE1's characters, which JOURNAL1's notebook break reads too
 import { renownText } from '../net/renown.js';   // RENOWN1: Renown, left of the name
 
@@ -271,7 +271,7 @@ export function createNameLayer({ doc = document, now = () => Date.now() } = {})
     tag.append(lv, name, glyphs);
     node.append(bubble, title, tag);
     root.append(node);
-    return { node, bubble, title, tag, lv, name, glyphs, worn: null };
+    return { node, bubble, title, tag, lv, name, glyphs, worn: null, titled: null };   // SHADOW-FANG: `titled`, the title whose paint is on
   };
 
   /** ACC3: the glyph run, REBUILT ONLY WHEN IT CHANGES. A glyph set is
@@ -384,7 +384,16 @@ export function createNameLayer({ doc = document, now = () => Date.now() } = {})
         // the distinction Mac asked for.
         const badge = titleBadge(p);
         setText(tag.title, badge?.text ?? '');
-        setStyle(tag.title, 'color', badge ? (cssRgba(badge.rgba) ?? '') : '');
+        // SHADOW-FANG: the title's whole paint - its colour, or a gradient clipped to its letters - written when
+        // the TITLE changes and not every frame: a browser reads a colour back normalised (#d3193c comes back
+        // rgb(211, 25, 60)), so the diffing door would rewrite a gradient's keys on every frame for ever. Every
+        // key is written, so the next title on this tag clears what this one set.
+        const titleKey = badge?.key ?? '';
+        if (tag.titled !== titleKey) {
+          tag.titled = titleKey;
+          const paint = titlePaint(badge);
+          for (const k of TITLE_PAINT_KEYS) tag.title.style[k] = paint[k];
+        }
         setGlyphs(tag, p);
         const b = bubbles.get(p.id);
         // AUDIT NAME1 F9: a bubble is SHOWN when it can be seen. A negative age - a clock stepped backwards, a

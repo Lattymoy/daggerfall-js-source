@@ -62,8 +62,8 @@
   {
     "name": "ACC3c-7-the-card-paints-its-own-colour",
     "file": "src/ui/enhancedAccount.js",
-    "old": "        const b = el('button', `acttitle ${badgeClass('tl', key)}${worn ? ' worn' : ''}`, TITLE_TEXT[key] ?? key);",
-    "new": "        const b = el('button', `acttitle${worn ? ' worn' : ''}`, TITLE_TEXT[key] ?? key);\n        b.style.color = key === 'founder' ? '#ffc84a' : '#e2453a';",
+    "old": "        const b = el('button', `acttitle ${badgeClass('tl', key)}${worn ? ' worn' : ''}`);",
+    "new": "        const b = el('button', `acttitle${worn ? ' worn' : ''}`);\n        b.style.color = key === 'founder' ? '#ffc84a' : '#e2453a';",
     "tests": [
       "test/acc3wear.test.js",
       "test/enhancedaccount.test.js"

@@ -3551,3 +3551,35 @@ read at most three levels above the character's Renown, Mac said "Yes".
   (`scenes/world.js renownNow` - the token's word and the service's since). XP is the client's word in any case (the
   service bounds it by the report and the hour); the ceiling is the pace an honest client keeps.
 - Pinned: `test/renown3.test.js` (2), the RENOWN1 rules and wiring pins it moved. `tools/mutants/renown3.json`.
+
+## DEV3, a fourth Disciple, and SHADOW-FANG — SirMcMobdon's own (2026-09-26)
+
+Mac: "grant Tabby the developer title/glyph. Grant Flylighter the disciple title/glyph", then "SirMcMobdon gets a brand
+new title/glyph. Remove them from Apostle. The glyph needs to be like the reference shown" (a snarling wolf's head in
+profile, black, with a red eye), "Black and crimson graident for the title/glyph with the title name being Shadow
+Fang", and a Morrowind werewolf skin of their own (its own record, with the werewolf body it needs).
+
+- **The grants** (`server-account/wrangler.toml`): `DEVELOPER_HANDLES` gains Tabby (DEV3: the whole developer set, as
+  DEV2's), `DISCIPLE_HANDLES` gains Flylighter, `APOSTLE_HANDLES` is empty again, and `SHADOW_FANG_HANDLES =
+  "SirMcMobdon"` is new - TITLE-N's law, a handle list that grants the title and its glyph together and never to a
+  guest (`titles.js TIER_LISTS.shadowfang`). The Apostle title SirMcMobdon wore lapses off their next token, because a
+  stored title is worn only while it is held.
+- **The vocabulary** (`src/net/identityToken.js`, in the relay bundle): `shadowfang` joins TITLES and GLYPHS, last. An
+  older relay refuses a token carrying it (`claimsValid`), so the relay is **world114** and deploys on the same push
+  as the account service (**acct12**); both deploy themselves off main.
+- **The face** (`src/ui/playerBadge.js`): the word "Shadow Fang"; a black-to-crimson gradient (`TITLE_GRADIENT`,
+  #0d0709 to #d3193c) - "Shadow" in the black, "Fang" in the crimson; the glyph a wolf's head in profile facing right,
+  filled with the SAME stops turned round (`GLYPH_GRADIENT`, read from the title's) so the mane is crimson and the
+  face black, edged in the crimson and with a red eye over it (`GLYPH_DETAIL`); `>` for the classic face.
+- **The paint, one law on every face.** A gradient title is `titlePaint`: the gradient clipped to the letters, bold,
+  each letter edged in crimson, the text shadow off (under a clipped background a text shadow paints over the
+  letters). A crimson halo round the word was tried first and lost "Shadow" on every dark ground. The name over a
+  head writes it when the title CHANGES, not every frame (a browser reads colours back normalised, so the diffing door
+  would have rewritten it for ever); the chat line and the profile card paint through `paintTitle`; the account card's
+  button keeps the plain crimson and its word (`.acttitleword`) wears the same paint from the skin; the classic face
+  draws the word a letter at a time along the gradient over one crimson run a pixel down and right. A gradient glyph
+  is drawn by `glyphArtNode` - its own `linearGradient` (an id per node), the edge in `currentColor`, the eye on top -
+  which the account card now uses too, so the card has no svg door of its own.
+- Pinned: `test/shadowfang.test.js` (8); DEV3 and Flylighter in `test/titlen.test.js`.
+  `tools/mutants/shadowfang.json` (20, all dead) and two grant mutants in `titlen.json`; four older records re-aimed
+  by content (acc3b 2, acc3c 1, inspect1 1).

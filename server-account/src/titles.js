@@ -21,6 +21,7 @@
 //   DUNGEON MASTER, DISCIPLE, APOSTLE, HIEROPHANT (TITLE-N, 2026-09-24)
 //             your handle is in that title's own list in the config;
 //             each list grants the title AND its glyph.
+//   SHADOW FANG (SHADOW-FANG, 2026-09-26) the same, one player's own.
 //
 // WHY THAT AND NOT A `grants` TABLE. Mac asked that "all current
 // players should be granted the founder title", and the obvious
@@ -116,9 +117,12 @@ export const TIER_LISTS = Object.freeze({
   disciple: 'DISCIPLE_HANDLES',
   apostle: 'APOSTLE_HANDLES',
   hierophant: 'HIEROPHANT_HANDLES',
+  // SHADOW-FANG (2026-09-26, Mac): "SirMcMobdon gets a brand new title/glyph. Remove them from Apostle" - a title
+  // made for one player, granted the tiers' way: a list in the config, the title and its glyph together.
+  shadowfang: 'SHADOW_FANG_HANDLES',
 });
 /** The glyph each of those titles carries, in the vocabulary's words. */
-export const TIER_GLYPH = Object.freeze({ dungeonmaster: 'dm', disciple: 'disciple', apostle: 'apostle', hierophant: 'hierophant' });
+export const TIER_GLYPH = Object.freeze({ dungeonmaster: 'dm', disciple: 'disciple', apostle: 'apostle', hierophant: 'hierophant', shadowfang: 'shadowfang' });
 
 /** Does this player hold that list's title? A guest holds none, for the developer's reason. */
 export const holdsTier = (title, player, env) =>

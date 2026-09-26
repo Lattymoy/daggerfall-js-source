@@ -1,0 +1,182 @@
+[
+  {
+    "name": "SHADOWFANG-glyph-gradient-its-own-copy",
+    "file": "src/ui/playerBadge.js",
+    "old": "  shadowfang: Object.freeze([...TITLE_GRADIENT.shadowfang].reverse()),",
+    "new": "  shadowfang: Object.freeze([[...SHADOW_CRIMSON], [...SHADOW_BLACK]]),",
+    "tests": [
+      "test/shadowfang.test.js"
+    ]
+  },
+  {
+    "name": "SHADOWFANG-stops-swapped",
+    "file": "src/ui/playerBadge.js",
+    "old": "  shadowfang: Object.freeze([SHADOW_BLACK, SHADOW_CRIMSON]),",
+    "new": "  shadowfang: Object.freeze([SHADOW_CRIMSON, SHADOW_BLACK]),",
+    "tests": [
+      "test/shadowfang.test.js"
+    ]
+  },
+  {
+    "name": "SHADOWFANG-eye-the-gradients-red",
+    "file": "src/ui/playerBadge.js",
+    "old": "path: 'M9.3 4.7L11.8 5.5L9.8 6.2Z', rgba: SHADOW_EYE }",
+    "new": "path: 'M9.3 4.7L11.8 5.5L9.8 6.2Z', rgba: SHADOW_CRIMSON }",
+    "tests": [
+      "test/shadowfang.test.js"
+    ]
+  },
+  {
+    "name": "SHADOWFANG-mark-another-glyphs",
+    "file": "src/ui/playerBadge.js",
+    "old": "  shadowfang: '>',",
+    "new": "  shadowfang: '^',",
+    "tests": [
+      "test/shadowfang.test.js"
+    ]
+  },
+  {
+    "name": "SHADOWFANG-still-an-apostle",
+    "file": "server-account/wrangler.toml",
+    "old": "APOSTLE_HANDLES = \"\"",
+    "new": "APOSTLE_HANDLES = \"SirMcMobdon\"",
+    "tests": [
+      "test/shadowfang.test.js"
+    ]
+  },
+  {
+    "name": "SHADOWFANG-list-crossed",
+    "file": "server-account/src/titles.js",
+    "old": "  shadowfang: 'SHADOW_FANG_HANDLES',",
+    "new": "  shadowfang: 'APOSTLE_HANDLES',",
+    "tests": [
+      "test/shadowfang.test.js"
+    ]
+  },
+  {
+    "name": "SHADOWFANG-glyph-without-the-title",
+    "file": "server-account/src/titles.js",
+    "old": "hierophant: 'hierophant', shadowfang: 'shadowfang' });",
+    "new": "hierophant: 'hierophant', shadowfang: 'apostle' });",
+    "tests": [
+      "test/shadowfang.test.js"
+    ]
+  },
+  {
+    "name": "SHADOWFANG-vocabulary-without-the-glyph",
+    "file": "src/net/identityToken.js",
+    "old": "'apostle', 'hierophant', 'shadowfang']);   // TITLE-N: each new title has its own glyph",
+    "new": "'apostle', 'hierophant']);   // TITLE-N: each new title has its own glyph",
+    "tests": [
+      "test/shadowfang.test.js"
+    ]
+  },
+  {
+    "name": "SHADOWFANG-paint-shadow-left-on",
+    "file": "src/ui/playerBadge.js",
+    "old": "    out.textShadow = 'none';",
+    "new": "    out.textShadow = '';",
+    "tests": [
+      "test/shadowfang.test.js"
+    ]
+  },
+  {
+    "name": "SHADOWFANG-paint-edge-dropped",
+    "file": "src/ui/playerBadge.js",
+    "old": "    out.webkitTextStroke = `0.5px ${edge}`;",
+    "new": "    out.webkitTextStroke = '';",
+    "tests": [
+      "test/shadowfang.test.js"
+    ]
+  },
+  {
+    "name": "SHADOWFANG-paint-solid-leaves-gradient",
+    "file": "src/ui/playerBadge.js",
+    "old": "  const out = Object.fromEntries(TITLE_PAINT_KEYS.map((k) => [k, '']));",
+    "new": "  const out = {};",
+    "tests": [
+      "test/shadowfang.test.js"
+    ]
+  },
+  {
+    "name": "SHADOWFANG-namelayer-paints-every-frame",
+    "file": "src/ui/nameLayer.js",
+    "old": "        if (tag.titled !== titleKey) {",
+    "new": "        if (true) {",
+    "tests": [
+      "test/shadowfang.test.js"
+    ]
+  },
+  {
+    "name": "SHADOWFANG-namelayer-key-skipped",
+    "file": "src/ui/nameLayer.js",
+    "old": "          for (const k of TITLE_PAINT_KEYS) tag.title.style[k] = paint[k];",
+    "new": "          for (const k of TITLE_PAINT_KEYS.slice(1)) tag.title.style[k] = paint[k];",
+    "tests": [
+      "test/shadowfang.test.js"
+    ]
+  },
+  {
+    "name": "SHADOWFANG-one-shared-gradient-id",
+    "file": "src/ui/playerBadge.js",
+    "old": "    const id = `dfglyph-grad-${++gradientSerial}`;",
+    "new": "    const id = `dfglyph-grad-${gradientSerial}`;",
+    "tests": [
+      "test/shadowfang.test.js"
+    ]
+  },
+  {
+    "name": "SHADOWFANG-glyph-no-gradient",
+    "file": "src/ui/playerBadge.js",
+    "old": "  const stops = Array.isArray(g.gradient) && g.gradient.length > 1 ? g.gradient : null;",
+    "new": "  const stops = null;",
+    "tests": [
+      "test/shadowfang.test.js"
+    ]
+  },
+  {
+    "name": "SHADOWFANG-edge-a-fixed-colour",
+    "file": "src/ui/playerBadge.js",
+    "old": "    path.setAttribute('stroke', 'currentColor');\n    path.setAttribute('stroke-width', String(GLYPH_EDGE_W));",
+    "new": "    path.setAttribute('stroke', '#d3193c');\n    path.setAttribute('stroke-width', String(GLYPH_EDGE_W));",
+    "tests": [
+      "test/shadowfang.test.js"
+    ]
+  },
+  {
+    "name": "SHADOWFANG-card-word-unwrapped",
+    "file": "src/ui/enhancedAccount.js",
+    "old": "        b.append(el('span', 'acttitleword', TITLE_TEXT[key] ?? key));",
+    "new": "        b.textContent = TITLE_TEXT[key] ?? key;",
+    "tests": [
+      "test/shadowfang.test.js"
+    ]
+  },
+  {
+    "name": "SHADOWFANG-classic-one-tint",
+    "file": "src/net/remotePlayers.js",
+    "old": "        if (title.gradient) {",
+    "new": "        if (false) {",
+    "tests": [
+      "test/shadowfang.test.js"
+    ]
+  },
+  {
+    "name": "SHADOWFANG-classic-edge-dropped",
+    "file": "src/net/remotePlayers.js",
+    "old": "          drawText(renderer, font, title.text, tx + Math.max(1, Math.round(s)), ty + Math.max(1, Math.round(s)), s, title.rgba ?? [1, 1, 1, 1]);\n",
+    "new": "          \n",
+    "tests": [
+      "test/shadowfang.test.js"
+    ]
+  },
+  {
+    "name": "SHADOWFANG-classic-letters-reversed",
+    "file": "src/net/remotePlayers.js",
+    "old": "letters.length > 1 ? i / (letters.length - 1) : 0",
+    "new": "letters.length > 1 ? 1 - i / (letters.length - 1) : 0",
+    "tests": [
+      "test/shadowfang.test.js"
+    ]
+  }
+]

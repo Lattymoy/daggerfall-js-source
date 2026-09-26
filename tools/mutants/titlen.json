@@ -152,5 +152,23 @@
     ],
     "old": "export const FOUNDER_UNTIL = 1_790_294_400;",
     "new": "export const FOUNDER_UNTIL = 1_790_380_800;"
+  },
+  {
+    "name": "DEV3-tabby-not-granted",
+    "file": "server-account/wrangler.toml",
+    "old": "DEVELOPER_HANDLES = \"Lattymoy,trashBattery,LostMyLeg,Tabby\"",
+    "new": "DEVELOPER_HANDLES = \"Lattymoy,trashBattery,LostMyLeg\"",
+    "tests": [
+      "test/titlen.test.js"
+    ]
+  },
+  {
+    "name": "DISC-flylighter-not-granted",
+    "file": "server-account/wrangler.toml",
+    "old": "DISCIPLE_HANDLES = \"Dutchess,Satranath,Skibbster,Flylighter\"",
+    "new": "DISCIPLE_HANDLES = \"Dutchess,Satranath,Skibbster\"",
+    "tests": [
+      "test/titlen.test.js"
+    ]
   }
 ]

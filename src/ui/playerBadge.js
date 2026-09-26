@@ -73,7 +73,19 @@ export const TITLE_TEXT = Object.freeze({
   disciple: 'Disciple',              // TITLE-N: the Patreon tiers, lowest first
   apostle: 'Apostle',
   hierophant: 'Hierophant',
+  shadowfang: 'Shadow Fang',         // SHADOW-FANG (2026-09-26, Mac): SirMcMobdon's own
 });
+
+/** SHADOW-FANG (2026-09-26, Mac): "SirMcMobdon gets a brand new
+ *  title/glyph... Black and crimson graident for the title/glyph with the
+ *  title name being Shadow Fang", and the glyph "like the reference
+ *  shown" - a snarling wolf's head in profile, black, with a red eye.
+ *  The two ends of that gradient, named once: every table below that
+ *  paints Shadow Fang reads them from here. */
+const SHADOW_BLACK = Object.freeze([0.051, 0.027, 0.035, 1]);    // #0d0709 - black, a breath of blood in it
+const SHADOW_CRIMSON = Object.freeze([0.827, 0.098, 0.235, 1]);  // #d3193c
+/** The wolf's eye, the one red that is not the gradient's (the reference's). */
+const SHADOW_EYE = Object.freeze([1, 0.133, 0.18, 1]);           // #ff222e
 
 /** A title's colour, RGBA 0..1 - the same shape SOC4's PARTY_GREEN is
  *  in, so `nameLayer.cssRgba` turns it into CSS and `drawText` takes it
@@ -89,6 +101,18 @@ export const TITLE_RGBA = Object.freeze({
   disciple: Object.freeze([0.369, 0.784, 0.722, 1]),  // #5ec8b8
   apostle: Object.freeze([0.616, 0.486, 0.941, 1]),   // #9d7cf0
   hierophant: Object.freeze([0.910, 0.451, 0.749, 1]), // #e873bf
+  // SHADOW-FANG: the gradient's crimson end - the colour a face that cannot draw a gradient uses (the account
+  // card's button, the classic face's edge), and the glyph's outline
+  shadowfang: SHADOW_CRIMSON,
+});
+
+/** SHADOW-FANG: A TITLE DRAWN AS A GRADIENT - its stops, RGBA 0..1, left
+ *  to right along the word. A title named here is painted by `titlePaint`
+ *  on every DOM face and a letter at a time by the classic one; a title
+ *  that is not keeps its one colour above. "Shadow" in the black, "Fang"
+ *  in the crimson. */
+export const TITLE_GRADIENT = Object.freeze({
+  shadowfang: Object.freeze([SHADOW_BLACK, SHADOW_CRIMSON]),
 });
 
 /** A glyph's colour. The sprout is green because Mac said green; the
@@ -105,6 +129,25 @@ export const GLYPH_RGBA = Object.freeze({
   disciple: TITLE_RGBA.disciple,
   apostle: TITLE_RGBA.apostle,
   hierophant: TITLE_RGBA.hierophant,
+  shadowfang: TITLE_RGBA.shadowfang,   // SHADOW-FANG: the outline's crimson - the fill is the gradient below
+});
+
+/** SHADOW-FANG: A GLYPH FILLED WITH A GRADIENT - its title's two stops,
+ *  read from it and turned round, left to right across the 16x16 box. The
+ *  wolf faces right, so its mane takes the crimson and its face the black
+ *  its red eye burns in, as the reference's does. A glyph named here is
+ *  drawn filled, outlined in its own colour (GLYPH_RGBA) at GLYPH_EDGE_W so
+ *  the black half still reads over a night sky. */
+export const GLYPH_GRADIENT = Object.freeze({
+  shadowfang: Object.freeze([...TITLE_GRADIENT.shadowfang].reverse()),
+});
+/** The outline a gradient glyph wears, in the 16x16 box's units. */
+export const GLYPH_EDGE_W = 0.55;
+
+/** SHADOW-FANG: A SECOND SHAPE ON A GLYPH, in a colour of its own - the
+ *  wolf's eye, an angry red slit over the black. Filled, on top. */
+export const GLYPH_DETAIL = Object.freeze({
+  shadowfang: Object.freeze({ path: 'M9.3 4.7L11.8 5.5L9.8 6.2Z', rgba: SHADOW_EYE }),
 });
 
 /** THE CLASSIC FACE'S STAND-IN: one character, and it must be one the
@@ -118,6 +161,7 @@ export const GLYPH_MARK = Object.freeze({
   disciple: '~',
   apostle: '^',
   hierophant: '!',
+  shadowfang: '>',    // SHADOW-FANG: the wolf's muzzle, facing the way the glyph's does
 });
 
 /** The printable range the classic font covers. ACC1d-MARK's own bound,
@@ -145,12 +189,15 @@ export const GLYPH_PATH = Object.freeze({
   apostle: 'M8 4.5C6.5 3.5 4.5 3 1.5 3v9.5c3 0 5 .5 6.5 1.5 1.5-1 3.5-1.5 6.5-1.5V3c-3 0-5 .5-6.5 1.5zM8 4.5V14',
   // the Hierophant's crown
   hierophant: 'M2 13h12M2.5 13L1.8 5l3.6 3L8 2.5 10.6 8l3.6-3-.7 8',
+  // SHADOW-FANG: the reference's wolf, in profile facing right - the ear raised, the brow down, the jaws open on
+  // three fangs, the mane swept back in six blades and the ruff under the throat
+  shadowfang: 'M15.9 6.3Q15.8 5.5 15 5.3L11.4 4.1L9.9 3.3L8.7 0.3L6.9 3.2Q4.9 2.1 2.5 2.4Q4.2 3.2 5 4.5Q2.8 4.8 1 6.3Q3.2 6.6 4.3 7.6Q2.3 8.7 1.1 10.5Q3.2 10 4.8 10.2Q3.6 11.7 3.2 13.8Q5.2 12.2 6.8 11.9Q6.3 13.4 6.5 15.3Q7.8 13.2 9.2 12.7Q9.6 14 10.4 15.2Q10.5 12.9 11.6 12L12.9 11.3L15.1 10.7L14 10.4L13.8 9.4L13.3 10.3L9.8 8.8L11.7 8.3L12.1 9.5L12.6 8.1L14.4 7.6L14.8 8.7L15.2 7.4L15.9 7Z',
 });
 
 /** Is this glyph DRAWN as an outline rather than filled? The sprout is
  *  a shape and the brackets are strokes; said here so the layer does
  *  not have to know which is which by name. */
-export const GLYPH_STROKE = Object.freeze({ sprout: true, dev: true, mod: true, dm: true, disciple: true, apostle: true, hierophant: true });
+export const GLYPH_STROKE = Object.freeze({ sprout: true, dev: true, mod: true, dm: true, disciple: true, apostle: true, hierophant: true, shadowfang: false });
 
 /**
  * The title a peer wears, ready to draw: `{ key, text, rgba }`, or
@@ -166,7 +213,59 @@ export function titleBadge(peer) {
   if (typeof key !== 'string' || !TITLES.includes(key)) return null;
   const text = TITLE_TEXT[key];
   if (!text) return null;
-  return { key, text, rgba: TITLE_RGBA[key] ?? null };
+  return { key, text, rgba: TITLE_RGBA[key] ?? null, gradient: TITLE_GRADIENT[key] ?? null };
+}
+
+/** SHADOW-FANG: a gradient's colour at `t` along it (0 the first stop, 1
+ *  the last), RGBA 0..1 - the classic face's tint for one letter of a
+ *  gradient title, since a bitmap run takes a single tint. */
+export function gradientAt(stops, t) {
+  if (!Array.isArray(stops) || !stops.length) return null;
+  if (stops.length === 1) return stops[0];
+  const f = Math.max(0, Math.min(1, Number(t) || 0)) * (stops.length - 1);
+  const i = Math.min(stops.length - 2, Math.floor(f));
+  const k = f - i, a = stops[i], b = stops[i + 1];
+  return [0, 1, 2, 3].map((c) => a[c] + (b[c] - a[c]) * k);
+}
+
+/** A gradient's stops as a CSS linear-gradient, left to right. */
+export const cssGradient = (stops) => `linear-gradient(90deg, ${stops.map(cssRgba).join(', ')})`;
+
+/** THE STYLE PROPERTIES A DOM FACE WRITES FOR A TITLE, every one of them
+ *  every time, so a face that re-uses one element (the name over a head)
+ *  clears what the title before this one set. A one-colour title is its
+ *  `color`; a GRADIENT title (SHADOW-FANG) is the gradient clipped to the
+ *  letters, in bold so there is letter enough to carry it, with the text
+ *  shadow every face gives its titles off - under a clipped background a
+ *  text shadow paints OVER the letters - and each letter edged in the
+ *  title's own colour instead, so the black half still reads over a night
+ *  sky (a crimson halo round the word was tried first and lost "Shadow"
+ *  on every dark ground). No title: all empty. */
+export const TITLE_PAINT_KEYS = Object.freeze(['color', 'backgroundImage', 'webkitBackgroundClip', 'backgroundClip', 'webkitTextFillColor', 'webkitTextStroke', 'fontWeight', 'textShadow', 'filter']);
+export function titlePaint(badge) {
+  const out = Object.fromEntries(TITLE_PAINT_KEYS.map((k) => [k, '']));
+  if (!badge) return out;
+  out.color = cssRgba(badge.rgba) ?? '';
+  if (Array.isArray(badge.gradient) && badge.gradient.length > 1) {
+    const edge = cssRgba(badge.rgba) ?? '';
+    out.backgroundImage = cssGradient(badge.gradient);
+    out.webkitBackgroundClip = 'text';
+    out.backgroundClip = 'text';
+    out.webkitTextFillColor = 'transparent';
+    out.webkitTextStroke = `0.5px ${edge}`;
+    out.fontWeight = '700';
+    out.textShadow = 'none';
+    out.filter = 'drop-shadow(0 1px 0 #000)';
+  }
+  return out;
+}
+/** `titlePaint` written onto an element's style - the chat line's and the
+ *  profile card's title, each built fresh. (The name over a head keeps
+ *  its own diffing door and walks TITLE_PAINT_KEYS itself.) */
+export function paintTitle(node, badge) {
+  const p = titlePaint(badge);
+  for (const k of TITLE_PAINT_KEYS) node.style[k] = p[k];
+  return node;
 }
 
 /**
@@ -182,7 +281,10 @@ export function glyphBadges(peer) {
   const out = [];
   for (const key of GLYPHS) {
     if (!on.includes(key)) continue;
-    out.push({ key, mark: GLYPH_MARK[key] ?? '', rgba: GLYPH_RGBA[key] ?? null, path: GLYPH_PATH[key] ?? '' });
+    out.push({
+      key, mark: GLYPH_MARK[key] ?? '', rgba: GLYPH_RGBA[key] ?? null, path: GLYPH_PATH[key] ?? '',
+      gradient: GLYPH_GRADIENT[key] ?? null, detail: GLYPH_DETAIL[key] ?? null,   // SHADOW-FANG
+    });
   }
   return out;
 }
@@ -200,8 +302,18 @@ export function glyphBadges(peer) {
  * without anybody remembering to write one.
  */
 export const badgeClass = (kind, key) => `${kind}-${key}`;
+/** SHADOW-FANG: `titlePaint`'s properties as CSS declarations, the colour
+ *  left to the button (its border is drawn in it) - so a gradient title's
+ *  word on the card is the SAME paint as over a head, not a second one. */
+const CSS_NAME = { backgroundImage: 'background-image', webkitBackgroundClip: '-webkit-background-clip', backgroundClip: 'background-clip', webkitTextFillColor: '-webkit-text-fill-color', webkitTextStroke: '-webkit-text-stroke', fontWeight: 'font-weight', textShadow: 'text-shadow', filter: 'filter' };
+const wordCss = (t) => {
+  const p = titlePaint(titleBadge({ title: t }));
+  return Object.entries(CSS_NAME).filter(([k]) => p[k]).map(([k, css]) => `${css}: ${p[k]};`).join(' ');
+};
 export const badgeCss = () => [
   ...TITLES.map((t) => `.card button.acttitle.${badgeClass('tl', t)} { color: ${cssRgba(TITLE_RGBA[t])}; }`),
+  // SHADOW-FANG: a gradient title's word (the card wraps it in .acttitleword) - the button keeps the plain colour
+  ...TITLES.filter((t) => TITLE_GRADIENT[t]).map((t) => `.card button.acttitle.${badgeClass('tl', t)} .acttitleword { ${wordCss(t)} }`),
   ...GLYPHS.map((g) => `.card .acctglyph.${badgeClass('gl', g)} .acctglyphart { color: ${cssRgba(GLYPH_RGBA[g])}; }`),
 ].join('\n');
 
@@ -225,22 +337,75 @@ export const glyphMarks = (peer) => glyphBadges(peer).map((g) => g.mark).join(''
  * @param {number} [strokeWidth]
  */
 export function glyphSvgNode(doc, g, cls, strokeWidth = 1.8) {
+  const svg = glyphArtNode(doc, g, cls, strokeWidth);
+  if (svg && g.rgba) svg.style.color = cssRgba(g.rgba) ?? '';
+  return svg;
+}
+
+/** Each gradient a glyph defines needs an id no other node in the
+ *  document has - `url(#id)` resolves against the whole document, and a
+ *  name that left the screen would take a shared one with it. */
+let gradientSerial = 0;
+
+/**
+ * THE DRAWING ITSELF, WITH NO COLOUR OF ITS OWN: every shape the tables
+ * above paint in `currentColor`, so the caller decides the colour - the
+ * DOM faces inline (glyphSvgNode), the account card by its class (ACC3c:
+ * that card may not style itself). SHADOW-FANG: a GRADIENT glyph is
+ * filled with its stops (a `linearGradient` of its own, after the shape,
+ * so the shape stays the first child every face and pin reads) and
+ * outlined in `currentColor`; a DETAIL is drawn over it in its own colour.
+ * @param {any} doc
+ * @param {{ key: string, path: string, gradient?: any, detail?: any }} g
+ * @param {string} cls
+ * @param {number} [strokeWidth]
+ */
+export function glyphArtNode(doc, g, cls, strokeWidth = 1.8) {
   const svg = doc?.createElementNS?.('http://www.w3.org/2000/svg', 'svg');
   if (!svg) return null;
+  const NS = 'http://www.w3.org/2000/svg';
   svg.setAttribute('class', cls);
   svg.setAttribute('viewBox', '0 0 16 16');
   svg.setAttribute('aria-hidden', 'true');
-  if (g.rgba) svg.style.color = cssRgba(g.rgba) ?? '';
-  const path = doc.createElementNS('http://www.w3.org/2000/svg', 'path');
+  const path = doc.createElementNS(NS, 'path');
   path.setAttribute('d', g.path);
-  // `currentColor` on both, so the colour above is the one decision
-  if (GLYPH_STROKE[g.key]) {
-    path.setAttribute('fill', 'none');
+  const stops = Array.isArray(g.gradient) && g.gradient.length > 1 ? g.gradient : null;
+  // `currentColor` on every shape, so the caller's colour is the one decision
+  if (stops) {
+    const id = `dfglyph-grad-${++gradientSerial}`;
+    path.setAttribute('fill', `url(#${id})`);
     path.setAttribute('stroke', 'currentColor');
-    path.setAttribute('stroke-width', String(strokeWidth));
-    path.setAttribute('stroke-linecap', 'round');
+    path.setAttribute('stroke-width', String(GLYPH_EDGE_W));
     path.setAttribute('stroke-linejoin', 'round');
-  } else path.setAttribute('fill', 'currentColor');
-  svg.append(path);
+    svg.append(path);
+    const defs = doc.createElementNS(NS, 'defs');
+    const grad = doc.createElementNS(NS, 'linearGradient');
+    grad.setAttribute('id', id);
+    grad.setAttribute('gradientUnits', 'userSpaceOnUse');
+    grad.setAttribute('x1', '0'); grad.setAttribute('y1', '0'); grad.setAttribute('x2', '16'); grad.setAttribute('y2', '0');
+    stops.forEach((rgba, i) => {
+      const stop = doc.createElementNS(NS, 'stop');
+      stop.setAttribute('offset', String(i / (stops.length - 1)));
+      stop.setAttribute('stop-color', cssRgba(rgba) ?? '');
+      grad.append(stop);
+    });
+    defs.append(grad);
+    svg.append(defs);
+  } else {
+    if (GLYPH_STROKE[g.key]) {
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', 'currentColor');
+      path.setAttribute('stroke-width', String(strokeWidth));
+      path.setAttribute('stroke-linecap', 'round');
+      path.setAttribute('stroke-linejoin', 'round');
+    } else path.setAttribute('fill', 'currentColor');
+    svg.append(path);
+  }
+  if (g.detail?.path) {
+    const d = doc.createElementNS(NS, 'path');
+    d.setAttribute('d', g.detail.path);
+    d.setAttribute('fill', cssRgba(g.detail.rgba) ?? 'currentColor');
+    svg.append(d);
+  }
   return svg;
 }

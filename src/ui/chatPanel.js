@@ -155,7 +155,7 @@ import { claimCursorKey } from '../player/pointerLock.js';   // KB1: while the p
 import { isTouchDevice } from './touch.js';
 import { CHAT_MAX } from '../net/wire.js';
 import { tagOf } from '../net/chat.js';
-import { titleBadge, glyphBadges, glyphSvgNode, cssRgba, TITLE_RGBA } from './playerBadge.js';   // ACC3c: the same table the name over a head reads - a name wears one title everywhere it is drawn; cssRgba comes from HERE and not ui/nameLayer.js, which would pull the whole remote-player pass into this panel
+import { titleBadge, glyphBadges, glyphSvgNode, cssRgba, TITLE_RGBA, paintTitle } from './playerBadge.js';   // ACC3c: the same table the name over a head reads - a name wears one title everywhere it is drawn; cssRgba comes from HERE and not ui/nameLayer.js, which would pull the whole remote-player pass into this panel
 import { rosterRows, rosterTitle } from '../net/roster.js';   // CHAT-R1: who is online, in order (the cap is the model's own - AUDIT-CHATR F4: this file imported it and never used it, and lint could not see that: no-unused-vars is on for server/src and not for src)
 import { PARTY_GREEN_CSS } from '../net/social.js';   // CHAT-CHAN: the Party tab's mark wears the party's one green
 import { SHORTCODE_LIST } from '../net/chatCommands.js';   // EMOTE1: the picker offers the shortcodes' own emoji, in their order, so a pick and a :code: say the same thing
@@ -679,7 +679,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   /** ACC3c / CHAT-FIT: ONE GLYPH AS AN SVG - the roster's drawing, shared with the chat line. Null where the
    *  document has no SVG door: such a document draws NO glyph rather than throwing under somebody's name. */
   const glyphSvg = (g, cls) => glyphSvgNode(doc, g, cls);   // INSPECT1: the one drawing, ui/playerBadge.js - shared with the name over a head and the profile card
-  const titleSpan = (badge, cls) => { const t = el('span', cls, badge.text); t.style.color = cssRgba(badge.rgba) ?? ''; return t; };
+  const titleSpan = (badge, cls) => paintTitle(el('span', cls, badge.text), badge);   // SHADOW-FANG: its colour, or its gradient
   /** CHAT-FIT: the badge nodes a chat line's author wears - the title BEFORE the name, the glyphs AFTER it, the
    *  roster row's own order (ACC3c) - for a { title, glyphs } record, or none for null. */
   const badgeNodes = (peer, prefix) => {

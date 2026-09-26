@@ -25,7 +25,7 @@ import { equipTableOf } from '../systems/equip.js';
 import { createEquipTable } from '../characters/equipTable.js';
 import { CAPSULE_HEIGHT } from '../player/motor.js';
 import { drawText, measureText } from '../ui/text.js';
-import { titleBadge, glyphMarks } from '../ui/playerBadge.js';   // ACC3: what a title and a glyph LOOK like - one home, both faces (the DOM layer reads the same module)
+import { titleBadge, glyphMarks, gradientAt } from '../ui/playerBadge.js';   // ACC3: what a title and a glyph LOOK like - one home, both faces (the DOM layer reads the same module)
 import { projectToScreen } from '../player/tapRay.js';   // one home (audit24 onehome): the touch layer's own projection
 import { LOOK_ITEM_FIELDS, LOOK_GROUPS } from './wire.js';   // the look's vocabulary: the wire's own
 import { renownText } from './renown.js';   // RENOWN1: Renown's words, left of the name in the bitmap face too
@@ -1160,7 +1160,19 @@ export class RemotePlayers {
       const title = titleBadge(n);
       if (title) {
         const tt = measureText(font.fnt, title.text) * s;
-        drawText(renderer, font, title.text, Math.round(n.x - tt / 2), Math.round(top - font.fnt.fixedHeight * s), s, title.rgba ?? [1, 1, 1, 1]);
+        const tx = Math.round(n.x - tt / 2), ty = Math.round(top - font.fnt.fixedHeight * s);
+        if (title.gradient) {
+          // SHADOW-FANG: a bitmap run takes ONE tint, so a gradient title is drawn a letter at a time, each at its
+          // place along the word - over a run of the title's own colour one pixel down and right, the edge the DOM
+          // face draws round the word, without which the black half is nothing over a night sky
+          drawText(renderer, font, title.text, tx + Math.max(1, Math.round(s)), ty + Math.max(1, Math.round(s)), s, title.rgba ?? [1, 1, 1, 1]);
+          const letters = [...title.text];
+          let cx = tx;
+          letters.forEach((ch, i) => {
+            drawText(renderer, font, ch, Math.round(cx), ty, s, gradientAt(title.gradient, letters.length > 1 ? i / (letters.length - 1) : 0));
+            cx += measureText(font.fnt, ch) * s;
+          });
+        } else drawText(renderer, font, title.text, tx, ty, s, title.rgba ?? [1, 1, 1, 1]);
         drawn++;
       }
     }

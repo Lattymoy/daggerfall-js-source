@@ -21,7 +21,7 @@
 //
 // Not a DFU member: Daggerfall Unity has no other players. Ledger A (ONLINE).
 import { isTextEntryTarget } from './input.js';
-import { titleBadge, glyphBadges, glyphSvgNode, cssRgba } from './playerBadge.js';
+import { titleBadge, glyphBadges, glyphSvgNode, cssRgba, paintTitle } from './playerBadge.js';
 import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS } from './pixelifyFive.js';
 import { EQUIP_SLOTS } from '../characters/paperdoll.js';
 import { itemLongName } from '../systems/itemInfo.js';
@@ -217,7 +217,7 @@ export function createProfileWindow({ canOpen = () => true, onOpen = null, onClo
   const paint = (v) => {
     card.replaceChildren();
     const head = el('div', 'dfprofile-head');
-    if (v.title) { const t = el('div', 'dfprofile-title', v.title.text); t.style.color = cssRgba(v.title.rgba) ?? ''; head.append(t); }
+    if (v.title) head.append(paintTitle(el('div', 'dfprofile-title', v.title.text), v.title));   // SHADOW-FANG: its colour, or its gradient
     const nm = el('div', 'dfprofile-name');
     nm.id = 'dfprofile-name-node';
     if (v.level) { const lv = el('span', 'dfprofile-renown', v.level); if (v.levelTitle) lv.title = v.levelTitle; nm.append(lv); }   // RENOWN1: left of the name

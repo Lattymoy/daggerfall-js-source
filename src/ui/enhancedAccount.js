@@ -27,7 +27,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { STAGES, FIELDS, FIELD_SPEC } from './accountFlow.js';
-import { TITLE_TEXT, GLYPH_PATH, GLYPH_STROKE, glyphBadges, badgeClass } from './playerBadge.js';   // ACC3c: the SAME table the name over a head reads, so the picker shows what a player will actually wear - the COLOUR is the skin's (this card may not style itself, and a pin holds that)
+import { TITLE_TEXT, glyphBadges, glyphArtNode, badgeClass } from './playerBadge.js';   // ACC3c: the SAME table the name over a head reads, so the picker shows what a player will actually wear - the COLOUR is the skin's (this card may not style itself, and a pin holds that)
 import { duelRecordText } from '../net/duelRecord.js';   // DUEL1: the account card's K/D row
 import { renownText, renownProgressText } from '../net/renown.js';   // RENOWN1: Renown, left of the name and in its rows
 import { gateRecordText } from '../net/gateClaims.js';   // WB5b: and its gates-closed row
@@ -48,6 +48,7 @@ export const GLYPH_LABEL = Object.freeze({
   disciple: 'Disciple',   // TITLE-N: the Patreon tiers' marks, each its title's word
   apostle: 'Apostle',
   hierophant: 'Hierophant',
+  shadowfang: 'Shadow Fang',   // SHADOW-FANG: the wolf's head beside SirMcMobdon's name
 });
 
 /** ACC4: THE TWO FACTS MAC ASKED FOR, as words. Pure, so node pins
@@ -206,7 +207,10 @@ export function accountCard(doc, flow, { onClose = null } = {}) {
         // table, so the gold here and the gold over a head are one
         // fact - and this card goes on bringing no design language of
         // its own, which is the rule ACC1e was built under.
-        const b = el('button', `acttitle ${badgeClass('tl', key)}${worn ? ' worn' : ''}`, TITLE_TEXT[key] ?? key);
+        // SHADOW-FANG: the word in a span of its own, so a gradient title's paint clips to the letters and leaves
+        // the button's border in its plain colour (ui/playerBadge.js badgeCss)
+        const b = el('button', `acttitle ${badgeClass('tl', key)}${worn ? ' worn' : ''}`);
+        b.append(el('span', 'acttitleword', TITLE_TEXT[key] ?? key));
         b.type = 'button';
         b.disabled = !!flow.busy;
         b.setAttribute('aria-pressed', worn ? 'true' : 'false');
@@ -224,23 +228,10 @@ export function accountCard(doc, flow, { onClose = null } = {}) {
         // sprout is its age, the dev mark is a grant - and nothing
         // equips one, so nothing here can be pressed.
         const chip = el('span', `acctglyph ${badgeClass('gl', g.key)}`);
-        const svg = doc.createElementNS?.('http://www.w3.org/2000/svg', 'svg');
-        if (svg) {
-          svg.setAttribute('class', 'acctglyphart');
-          svg.setAttribute('viewBox', '0 0 16 16');
-          svg.setAttribute('aria-hidden', 'true');
-          const path = doc.createElementNS('http://www.w3.org/2000/svg', 'path');
-          path.setAttribute('d', GLYPH_PATH[g.key] ?? '');
-          if (GLYPH_STROKE[g.key]) {
-            path.setAttribute('fill', 'none');
-            path.setAttribute('stroke', 'currentColor');
-            path.setAttribute('stroke-width', '1.6');
-            path.setAttribute('stroke-linecap', 'round');
-            path.setAttribute('stroke-linejoin', 'round');
-          } else path.setAttribute('fill', 'currentColor');
-          svg.append(path);
-          chip.append(svg);
-        }
+        // SHADOW-FANG: the one drawing's colourless half (ui/playerBadge.js glyphArtNode) - its shapes are
+        // currentColor, which this chip's class colours; a gradient glyph brings its own fill and eye
+        const svg = glyphArtNode(doc, g, 'acctglyphart', 1.6);
+        if (svg) chip.append(svg);
         chip.append(el('span', null, GLYPH_LABEL[g.key] ?? g.key));
         row.append(chip);
       }
