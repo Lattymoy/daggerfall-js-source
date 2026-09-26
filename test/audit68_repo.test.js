@@ -44,31 +44,58 @@ test('AUDIT 68 X2-release-tag-commit: a new release tag is cut at the built comm
   }
 });
 
+/** The dev server's arena2 middleware over a fake ARENA2 folder - its two mounts. */
+async function devMounts(fake) {
+  process.env.ARENA2_PATH = fake;
+  const viteConfig = (await import(`../vite.config.js?audit68=${Date.now()}`)).default;
+  const plugin = viteConfig.plugins.find((p) => p?.name === 'arena2-dev-server');
+  const mounts = [];
+  plugin.configureServer({ middlewares: { use: (mount, fn) => mounts.push([mount, fn]) } });
+  return mounts;
+}
+/** One request to a mount: its status and body. */
+const serve = (fn, url) => new Promise((resolve, reject) => {
+  const body = [];
+  const res = new Writable({ write(chunk, _e, cb) { body.push(chunk); cb(); } });
+  res.setHeader = () => {};
+  res.statusCode = 200;
+  const t = setTimeout(() => reject(new Error(`${url}: no answer`)), 5000);
+  const done = () => { clearTimeout(t); resolve({ status: res.statusCode, body: Buffer.concat(body).toString() }); };
+  res.on('finish', done);
+  fn({ url }, res, done);
+});
+
 test('AUDIT 68 X2-devserver-eisdir-crash: a directory name answers 404 and the dev server lives', async () => {
   const fake = mkdtempSync(join(tmpdir(), 'audit68-arena2-'));
   mkdirSync(join(fake, 'BOOKS'));
   writeFileSync(join(fake, 'BOOKS', 'BOK00001.TXT'), 'a book');
-  process.env.ARENA2_PATH = fake;
   try {
-    const viteConfig = (await import(`../vite.config.js?audit68=${Date.now()}`)).default;
-    const plugin = viteConfig.plugins.find((p) => p?.name === 'arena2-dev-server');
-    const mounts = [];
-    plugin.configureServer({ middlewares: { use: (mount, fn) => mounts.push([mount, fn]) } });
-    const serve = (fn, url) => new Promise((resolve, reject) => {
-      const body = [];
-      const res = new Writable({ write(chunk, _e, cb) { body.push(chunk); cb(); } });
-      res.setHeader = () => {};
-      res.statusCode = 200;
-      const t = setTimeout(() => reject(new Error(`${url}: no answer`)), 5000);
-      const done = () => { clearTimeout(t); resolve({ status: res.statusCode, body: Buffer.concat(body).toString() }); };
-      res.on('finish', done);
-      fn({ url }, res, done);
-    });
+    const mounts = await devMounts(fake);
     for (const [mount, fn] of mounts) {
       for (const url of ['/BOOKS', '/.', '/..']) {
         assert.deepEqual(await serve(fn, url), { status: 404, body: 'not found' }, `${mount}${url} names a directory, not a file`);
       }
       assert.deepEqual(await serve(fn, '/BOK00001.TXT'), { status: 200, body: 'a book' }, `${mount}: the BOOKS fallback still serves`);
+    }
+  } finally {
+    delete process.env.ARENA2_PATH;
+    rmSync(fake, { recursive: true, force: true });
+  }
+});
+
+test('AUDIT 68 X2 (books): the BOOKS fallback finds DFU\'s own lowercase `books` folder, and a lowercase file in it', async () => {
+  // BookFile.cs:27 opens "books"; the dev server asked for 'BOOKS' by
+  // literal, so on a case-sensitive disk every book 404'd in dev
+  // (app/main.cjs already looked both up case-insensitively)
+  const fake = mkdtempSync(join(tmpdir(), 'audit68-books-'));
+  mkdirSync(join(fake, 'books'));
+  writeFileSync(join(fake, 'books', 'bok00002.txt'), 'a lowercase book');
+  try {
+    const mounts = await devMounts(fake);
+    assert.equal(mounts.length, 2, 'both doors');
+    for (const [mount, fn] of mounts) {
+      assert.deepEqual(await serve(fn, '/BOK00002.TXT'), { status: 200, body: 'a lowercase book' }, `${mount}: the books folder and its file, whatever their case`);
+      assert.deepEqual(await serve(fn, '/BOK00003.TXT'), { status: 404, body: 'not found' }, `${mount}: a book not there is still a 404`);
     }
   } finally {
     delete process.env.ARENA2_PATH;

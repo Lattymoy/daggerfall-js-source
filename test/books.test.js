@@ -350,8 +350,12 @@ test('books: the bookseller shelf mints real classic book ids', () => {
 
 test('books: ARENA2 corpus sweep - every classic book parses (gated)', (t) => {
   const arena2 = process.env.ARENA2_PATH;
-  const dir = arena2 && join(arena2, 'BOOKS');
-  if (!dir || !existsSync(dir)) { t.skip('ARENA2_PATH not set'); return; }
+  if (!arena2 || !existsSync(arena2)) { t.skip('ARENA2_PATH not set'); return; }
+  // the folder whatever the disk calls it - DFU's own is "books"
+  // (BookFile.cs:27); a literal 'BOOKS' skipped this sweep on Linux
+  const books = readdirSync(arena2).find((f) => f.toUpperCase() === 'BOOKS');
+  assert.ok(books, 'the ARENA2 folder carries its books');
+  const dir = join(arena2, books);
   let count = 0;
   for (const f of readdirSync(dir).filter((f) => /^BOK\d+\.TXT$/i.test(f))) {
     const bf = new BookFile();

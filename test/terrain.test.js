@@ -436,19 +436,22 @@ test('terrain: nature on Daggerfall environs - integration pins', { skip: skipRe
     });
   };
 
+  // Both y pins stand on the game scene's TerrainScale 1.25
+  // (TERRAIN-SCALE1); the prefab's 1.5 put them at 372.938 and 373.096.
+
   // City pixel: the expanded rect suppresses most of the pixel.
   const city = run(207, 213, true);
   assert.equal(city.length, 1237);
   assert.equal(city[0].record, 16);
   approx(city[0].x, 6.4, 1e-6);
-  approx(city[0].y, 372.938, 1e-3);
+  approx(city[0].y, 310.781, 1e-3);
   approx(city[0].z, 0, 1e-6);
 
   // Wilderness neighbor: dense woodland scatter.
   const wild = run(206, 213, false);
   assert.equal(wild.length, 5331);
   assert.equal(wild[0].record, 4);
-  approx(wild[0].y, 373.096, 1e-3);
+  approx(wild[0].y, 310.913, 1e-3);
 });
 
 test('WATER1: a sea clamped to the ocean elevation is WATER through generateTileData - float32 arithmetic, as DFU\'s', async () => {

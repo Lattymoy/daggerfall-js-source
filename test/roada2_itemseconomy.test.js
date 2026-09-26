@@ -16,7 +16,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -170,7 +170,14 @@ test('A2 (data-gated): the real BOOKS files price 300..800 off their own first f
   if (!ARENA2) return;   // corpus-gated, the repo idiom
   t.after(clearBookPrices);
   clearBookPrices();
-  const fetchBytes = async (name) => new Uint8Array(readFileSync(join(ARENA2, 'BOOKS', name)));
+  // The folder is found whatever the disk calls it: DFU opens
+  // Path.Combine(arena2, "books") (BookFile.cs:27, :96), a retail copy
+  // says BOOKS, and the host's seam keys by basename either way
+  // (dataSource.normalizeName). A literal 'BOOKS' missed every file on
+  // a case-sensitive disk, and the warm's skip swallowed each ENOENT.
+  const books = readdirSync(ARENA2).find((f) => f.toUpperCase() === 'BOOKS');
+  assert.ok(books, 'the ARENA2 folder carries its books');
+  const fetchBytes = async (name) => new Uint8Array(readFileSync(join(ARENA2, books, name)));
   const n = await loadBookPrices(fetchBytes);
   assert.ok(n > 0, 'the warm registered prices');
   assert.equal(bookPriceCount(), n);
