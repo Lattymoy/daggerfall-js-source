@@ -72,7 +72,8 @@ test('DISC19-A: a werewolf and a vampire who have lived a round come back from a
     const racial = make(p).racial;
     runMagicRoundsFor(p, T0, T0 + 5, {});   // the curse lives a few rounds before the save, as every real one does
     const strength = live(p).statMods.strength;
-    assert.ok(strength > 0, `${racial}: the advantages are on`);
+    // VAMP-DAY: a vampire's mods are the hour's - +20 by night, -20 by day (T0 is 13:30); a werewolf's are its own
+    assert.ok(racial === 'vampirism' ? strength === -20 : strength > 0, `${racial}: the curse's stat mods are on (${strength})`);
     const q = reload(p, T0 + 5);
     runMagicRoundsFor(q, T0 + 5, T0 + 8, {});
     assert.ok(live(q), `${racial}: the curse survives the first rounds after a load`);
