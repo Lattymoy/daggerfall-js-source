@@ -67,6 +67,7 @@ import { BAYER_GLSL, BAYER_MEAN } from './orderedDither.js';
 import { CLOUD_SHADOW_GLSL } from './cloudShadow.js';   // AUDIT 68 S16-el-cloudshadow-dup: the reader's one home, as the classic lane and the shafts take it - five hand copies were here
 import { CLUSTER_X, CLUSTER_Y, CLUSTER_Z, CLUSTER_LIST_W, clustersOn } from './lightClusters.js';   // LC1: the grid the lantern loop walks, and its door   // EL6: the dither at the encode - the port's one Bayer
 import { SHADE_DARK } from '../systems/concealDraw.js';   // AUDIT-EL F14: the shade's pull toward black, interpolated as the classic BB_FS does   // EL3: the ambient occlusion image by screen position, and its kill door; EL4: the adapted exposure
+import { HIT_FLASH_GLSL } from '../systems/hitFlash.js';   // HITFLASH1: the struck-red term, the classic BB_FS's own
 
 /** The lane's light cap - the classic lane's sixteen, tripled. Forty-eight
  *  vec4 + forty-eight vec3 are 96 uniform vectors; ES 3.0 guarantees 224
@@ -558,6 +559,7 @@ uniform sampler2D uTex;
 uniform sampler2D uEmissionTex;
 uniform int uSpectral;
 uniform vec4 uConceal;
+uniform float uHitFlash;   // HITFLASH1
 uniform vec3 uTint;
 uniform vec3 uBBSun;
 uniform int uPointCount;
@@ -576,6 +578,7 @@ ${SHADOW_GLSL}
 ${AIR_CONTACT_GLSL}
 ${EL_FOG_GLSL}
 ${EL_POINT_LIT_GLSL}
+${HIT_FLASH_GLSL}
 out vec4 outColor;
 void main() {
   vec2 uv = vUV;
@@ -598,6 +601,8 @@ void main() {
   vec3 sunLit = dot(uBBSun, uBBSun) > 0.0 ? uBBSun * cloudShadowAt(vBBWorld) * sunShadowSoftAt(base, vec3(0.0, 1.0, 0.0)) : vec3(0.0);
   vec3 lit = albedo * (uTint + sunLit + elPointFlat(vBBWorld, base) + elIndirectFlat(vBBWorld)) + emission;
   if (uConceal.x == 2.0) lit *= ${SHADE_DARK};   // AUDIT-EL F14: a uniform nothing uploaded read 0 - every shade a black cut-out
+  if (uConceal.x == 5.0) lit = mix(lit, vec3(0.95, 0.06, 0.04), uConceal.z);   // PEERFX3's mode, which this lane never drew
+  lit = hitFlashLit(lit, albedo + emission, uHitFlash);   // HITFLASH1: a struck body's red - the lane had no flash at all
   if (uConceal.x == 4.0) lit = vec3(0.0);
   float alpha = uSpectral == 1 ? tex.a : 1.0;
   if (uConceal.x > 0.0) alpha = tex.a * uConceal.y;

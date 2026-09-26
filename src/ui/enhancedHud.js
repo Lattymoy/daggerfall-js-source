@@ -81,6 +81,7 @@ import { requestIcon } from './textureCanvas.js';
 import { inventoryItemImage } from '../systems/itemTemplates.js';
 import { quickslotTag, quickslotOffTag, quickslotSpellTag, tagKey, CELL_ACTIONS } from './quickslotTags.js';   // QS6: the caption's spell chip names its own action
 import { glyphSvg, padFamily } from './padGlyphs.js';
+import { hdGlyphSvg } from './padGlyphsHD.js';   // PADPLUS1: Plus draws the pad's buttons as vectors
 import { controllerLook } from '../player/lookFilter.js';   // GP1's own latch: "the last input was the pad"
 import { bindings } from './input.js';
 // (breathShortThreshold lives in hud.js, imported below with compassScroll)
@@ -1125,7 +1126,7 @@ function quickTag(part, slot, t) {
   part.tag.classList.toggle('key', !!t && t.kind === 'key');
   part.tag.classList.toggle('glyph', !!t && t.kind === 'glyph');
   if (t && t.kind === 'glyph') {
-    part.img.src = glyphSvg(t.family, t.code, { size: 12 }) ?? '';
+    part.img.src = (isEnhancedPlus() ? hdGlyphSvg(t.family, t.code, { size: 32 }) : null) ?? glyphSvg(t.family, t.code, { size: 12 }) ?? '';   // PADPLUS1
     part.img.style.display = '';
     part.text.textContent = '';
   } else {

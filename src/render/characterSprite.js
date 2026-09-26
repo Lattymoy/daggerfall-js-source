@@ -58,7 +58,7 @@ export function drawCharacterSprite(renderer, canvas, rig, rigMat, proj, view, e
  *  then draws at a place that does not depend on the box at all, so the
  *  box is only the window and its resolution. No anchor - the voxel rigs,
  *  whose box is the body - is exactly what stood. */
-export function drawRigSpriteBox(renderer, canvas, mesh, rigMat, { center, halfW, halfH: boxH, anchor = null }, proj, view, eye, pixel = CHAR_PIXEL) {
+export function drawRigSpriteBox(renderer, canvas, mesh, rigMat, { center, halfW, halfH: boxH, anchor = null, hitFlash = 0 }, proj, view, eye, pixel = CHAR_PIXEL) {
   const aim = anchor && Math.hypot(anchor[0] - eye[0], anchor[1] - eye[1], anchor[2] - eye[2]) > 1e-6 ? anchor : center;   // PR-BOW1: the ray the picture is taken along
   const dx = aim[0] - eye[0], dy = aim[1] - eye[1], dz = aim[2] - eye[2];
   const dist = Math.max(0.5, Math.hypot(dx, dy, dz));
@@ -93,7 +93,7 @@ export function drawRigSpriteBox(renderer, canvas, mesh, rigMat, { center, halfW
   const pw = Math.min(CHAR_SPRITE_RT_SIZE, Math.max(2, Math.round(ph * halfW / halfH)));
   const miniEye = [center[0] - camDir[0] * 4, center[1] - camDir[1] * 4, center[2] - camDir[2] * 4];
   const sTex = renderer.renderCharacterSprite(mesh, rigMat, ortho(halfW, halfH, 0.1, 8), lookAt(miniEye, center, [0, 1, 0]), pw, ph);
-  renderer.drawCharacterSpriteQuad(sTex, at, halfW, halfH, right, pw / CHAR_SPRITE_RT_SIZE, ph / CHAR_SPRITE_RT_SIZE);   // sample the sub-rect (fixed RT, audit fix)
+  renderer.drawCharacterSpriteQuad(sTex, at, halfW, halfH, right, pw / CHAR_SPRITE_RT_SIZE, ph / CHAR_SPRITE_RT_SIZE, hitFlash);   // HITFLASH1: a struck body's red   // sample the sub-rect (fixed RT, audit fix)
   return { center: at, halfW, halfH, pw, ph };
 }
 

@@ -229,6 +229,7 @@ import { partyFoeLoses, partyFoeHits, partyFoeHeals, noteFighter, foeFighters, t
 import { renownFoeStruck, renownFoeDied, renownFoeCarry, renownFoeRevived } from '../net/renownTracker.js';   // RENOWN1: a foe the player fought pays its Renown XP when it dies, by any hand   // AUDIT RENOWN1 GAME-10: a rebuilt foe keeps my blows, a revived one forgets them
 import { lootPile } from '../player/lootStack.js';   // LOOT-STACK: the pile under the reticle, as the loot window's tabs
 import { rollLootRarity, pileSource, dungeonRarityTier, stampWonWeapons } from '../systems/lootRarity.js';   // LR1: the item ladder over every list this host mints (a foe's through hostCombat.spawnEnemyLoot, RF2)
+import { foeHitFlash, setBatchHitFlash, puppetHurtStep } from '../systems/hitFlash.js';   // HITFLASH1
 
 
 
@@ -256,7 +257,7 @@ const q3 = (v) => Math.round(v * 1000) / 1000; const GENDER_BIT = ['male', 'fema
 const HIT_POS_MAX = 1e6;
 // AUDIT FOES FOE5: the most damage one peer's blow may claim. The host TRUSTS the number (it never recomputes - the
 // striker's own calc is the game's), so without a bound any joiner could one-shot every foe in the room and empty it
-// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:2040); the dungeon
+// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:2043); the dungeon
 // had none. Past anything a legal swing, shaft or blast can roll.
 const HIT_DMG_MAX = 10000;
 /** AUDIT WORLD3 E3: can the ONE build chain actually stand this species? Both of buildFoeAt's branches need a truthy
@@ -1714,7 +1715,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:10364 / exterior.js:3692), set
+  // host's own townTalk sink (world.js:10374 / exterior.js:3692), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -3446,7 +3447,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:16490,
+              // playerArrowHitFoe is the one copy world.js:16641,
               // exterior.js:5264 and worldModes.js:7880 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
@@ -3647,7 +3648,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       else { const k = Math.min(1, dt / PUPPET_EASE_S); feet[0] += dx * k; feet[1] += dy * k; feet[2] += dz * k; }
       f.ai.yaw = p.yaw;
       f.ai.moving = p.moving || d2 > PUPPET_STILL * PUPPET_STILL;
-      f.ai.hurtKnock = p.hurt; p.hurt = false;
+      f.ai.hurtKnock = puppetHurtStep(p, f.mobile, performance.now() / 1000);   // HITFLASH1: held until the sprite can take it (a swing ate the one frame)
       if (p.strike != null) { edge = true; if (f.attack) f.attack.firedRanged = p.strike === 'ranged'; p.strike = null; }
       // WORLD3: whose blow this puppet's is - the streamed target ('.' the host, an id a peer, '' none), and whether
       // it is ME: then the mobile's damage frame and its shoot marker are mine to resolve (the mobile arm), a cast
@@ -3779,7 +3780,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   function applyFoeRecord(f, raw) {
     const r = validFoeRecord(raw);
     if (!r) return;
-    const p = f._pup ?? (f._pup = { feet: [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]], yaw: f.ai.yaw, moving: false, hurt: false, strike: null, a: null, target: null, c: null, cast: null });
+    const p = f._pup ?? (f._pup = { feet: [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]], yaw: f.ai.yaw, moving: false, hurt: false, hurtUntil: 0, strike: null, a: null, target: null, c: null, cast: null });
     if (typeof r.g === 'string') p.target = r.g;   // WORLD3: whose blow this puppet's is
     if (r.d !== 1) f._fightN = r.n ?? 1;   // AUDIT PSCALE1: the host's count of who fights it (a record without one: one). SIGIL1: a LIVE record's - a body's carries none, and the fight it died in was the last live count (its Renown bonus, its sigils)
     if (r.l !== undefined && f.mobileType >= 128) f.streamedLevel = r.l;   // AUDIT RENOWN1 GAME-3: the host's class foe's level - what its kill is worth (net/renownTracker.js renownFoeLevel)
@@ -3833,7 +3834,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!_authority || !data || typeof data !== 'object') return false;
     const i = data.i | 0, dmg = Number(data.dmg);
     const f = foes[i];
-    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:2040). The number is a peer's
+    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:2043). The number is a peer's
     // word and the host trusts it without recomputing, so an unbounded one let any joiner one-shot every foe in the
     // room - and, through the kill door, empty it. 10000 is past anything a legal swing, shaft or blast can roll.
     if (!f || i >= _layoutFoes || f.dead || !Number.isFinite(dmg) || dmg < 0 || dmg > HIT_DMG_MAX) return false;
@@ -4330,7 +4331,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // InstantiatePrefab's a fresh GameObject per saved record, so
     // EnemyEntity's `PickpocketByPlayerAttempted` default is the loaded
     // truth for every enemy. The re-minting pools match that by
-    // construction (exteriorFoes.js:1612's restoreWorld goes through
+    // construction (exteriorFoes.js:1615's restoreWorld goes through
     // spawnFoe), but this host patches the LIVE foes in place, so a
     // same-dungeon reload kept a raised latch and a failed pickpocket
     // could never be retried - falsifying the law
@@ -5581,6 +5582,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         const ecv = foeDraw(f, ecvOn, _ecvT);
         if (ecv.kind === 'hidden') continue;
         f.batch.conceal = ecv.kind === 'conceal' ? ecv.visual : null;
+        setBatchHitFlash(f.batch, foeHitFlash(f, performance.now() / 1000));   // HITFLASH1: a foe struck flashes red - any blow, mine, a peer's, or its owner's stream
+
         const out = f._mout;
         const rkey = `${out.record}#${out.frame}`;
         if (!renderer.textures.has(`${f.mobileArchive}_${rkey}`)) uploadRecordFrame(f.mobileArchive, out.record, out.frame);
@@ -6291,6 +6294,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // foe-cast and missile-impact sites call).
     applySpellToPlayer: magic.applySpellToPlayer,
     spellVisual: magic.spellVisual,   // SPELLFX1: a peer's cast, drawn in this dungeon's own engine
+    peerCandles: (list, dt) => magic.peerCandles(list, dt),   // PEERLIGHT2: the others' Light spells, in this dungeon's own engine
     /** SPELLFX1: a peer's arrow, drawn: this pool's own shaft, flagged visual - it stops on a wall or a body and lands nothing. */
     visualArrow: (from, dir) => { missiles.push({ arrow: true, visual: true, flatArchive: null, weapon: null, fromPlayer: false, shooterFoe: null, aimFoe: null, pos: [...from], dir: [...dir], age: 0, batch: null, draw: null }); return true; },
     // V3 probe surface: the ONE foe damage door. Soul Trap's kill

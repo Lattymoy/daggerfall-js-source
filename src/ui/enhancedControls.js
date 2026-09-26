@@ -72,6 +72,7 @@
 // a typing surface.
 
 import { saveKeyBinds, resetDefaults, ACTION_GROUPS, actionLabel } from '../systems/inputActions.js';
+import { peerMenuBindCard, discardPeerMenuCapture } from './peerMenuBindCard.js';   // PEERMENU1
 import { modSetting } from '../systems/modSettings.js';   // KB1: a mod's group is drawn while the mod is on
 import { bindings, mouseCode, swingMode } from './input.js';   // MAC-K1: a mouse button is a binding, so the capture must be able to take one
 import {
@@ -272,6 +273,7 @@ const act = (fn) => (...a) => { if (armed || prompt) return undefined; return fn
  */
 export function discardControlsStaging() {
   disarm();
+  discardPeerMenuCapture();   // PEERMENU1
   unsaved = null;
   dupes = { internal: new Set(), cross: new Set(), ok: true };
   prompt = null;
@@ -516,6 +518,7 @@ export function paneControls(body, { render = () => {} } = {}) {
 
   // KB1: the standard's groups, a mod's while it is on (shownGroups above).
   for (const grp of shownGroups()) group(body, grp.title, grp.rows.map((r) => [r.action, r.label]));
+  body.append(peerMenuBindCard(render));   // PEERMENU1: the player menu's press/hold bind (online only)
   body.append(fixedKeysCard());   // UXB1-F
   // TORCH-BIND (2026-09-22, a player: "Keybind changes do not stick?" -
   // the one Continue sat 53 rows above the row they had just bound, and

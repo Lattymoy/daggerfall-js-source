@@ -57,6 +57,11 @@ export function placeAudio(pan, p) {
 /** The panning model every positional source takes (see AudioEngine._panner). */
 export const PANNING_MODEL = 'HRTF';
 
+/** PEERFX1: one observer of every one-shot (index, volume) - the online layer hears "a blow landed on me" here
+ *  (net/peerFx.js isHurtClip). Null offline. */
+let _oneShotObserver = null;
+export function setOneShotObserver(fn) { _oneShotObserver = typeof fn === 'function' ? fn : null; }
+
 export class AudioEngine {
   constructor() {
     this.ctx = null;
@@ -346,6 +351,7 @@ export class AudioEngine {
    *  -319, PlayerFootsteps.cs:359-362); a WebAudio source is born per
    *  shot and dies with it, so setting it here IS the save/restore. */
   playOneShot(index, volume = 1, pitch = 1) {
+    if (_oneShotObserver) { try { _oneShotObserver(index, volume); } catch { /* an observer never stops a sound */ } }   // PEERFX1
     // SND1: the stamp the UI's generic click reads, so a press whose own
     // handler already sounded (an equip, a drink, the gold) does not ALSO
     // click. Stamped on the REQUEST, ready or not - it is "someone chose a

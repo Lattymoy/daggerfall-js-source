@@ -47,8 +47,8 @@
   {
     "name": "D23B-walker-other-set",
     "file": "src/net/peerRiders.js",
-    "old": "const s = spriteFor(r.table, view, r.frame, { onFoot: set });",
-    "new": "const s = spriteFor(r.table, view, r.frame, { onFoot: 0 });",
+    "old": "const s = spriteFor(flinch ? 'Death' : r.table, view, flinch ? 0 : r.frame, { onFoot: set });",
+    "new": "const s = spriteFor(flinch ? 'Death' : r.table, view, flinch ? 0 : r.frame, { onFoot: 0 });",
     "tests": [
       "test/disc23b_eotb_sprites.test.js"
     ]

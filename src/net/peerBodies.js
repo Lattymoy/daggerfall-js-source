@@ -365,7 +365,7 @@ export class PeerBodies {
   }
 
   /** The bodies, after the local one (the same pass, MW-D24) - the standing ones. */
-  draw(canvas, { proj, view, eye }) {
+  draw(canvas, { proj, view, eye, flashOf = null }) {
     let drawn = 0;
     for (const b of [...this._bodies.values()]) {
       if (!this._standing(b)) continue;
@@ -374,7 +374,7 @@ export class PeerBodies {
         const f = b.feet, vz = view[2] * f[0] + view[6] * f[1] + view[10] * f[2] + view[14];
         if (vz > CAPSULE_HEIGHT) continue;
       }
-      try { if (b.rig.drawThird(canvas, { proj, view, eye, feet: b.feet, yaw: b.yaw })) drawn++; } catch (e) { this._fail(b, `draw threw: ${e?.message ?? e}`); }   // AUDIT MWBODY A1
+      try { if (b.rig.drawThird(canvas, { proj, view, eye, feet: b.feet, yaw: b.yaw, hitFlash: flashOf ? flashOf(b.id) : 0 })) drawn++; } catch (e) { this._fail(b, `draw threw: ${e?.message ?? e}`); }   // AUDIT MWBODY A1; HITFLASH1: a struck body flashes red
     }
     return drawn;
   }

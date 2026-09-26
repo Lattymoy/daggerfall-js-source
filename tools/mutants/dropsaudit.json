@@ -119,8 +119,8 @@
   {
     "name": "DA-F10-menu-mid-drag",
     "file": "src/ui/enhancedInventory.js",
-    "old": "e.preventDefault(); if (drag) return; openMenu(",
-    "new": "e.preventDefault(); openMenu(",
+    "old": "row.oncontextmenu = (e) => { e.preventDefault(); if (drag) return; openMenu(item, from,",
+    "new": "row.oncontextmenu = (e) => { e.preventDefault(); openMenu(item, from,",
     "tests": [
       "test/dropsaudit.test.js"
     ]

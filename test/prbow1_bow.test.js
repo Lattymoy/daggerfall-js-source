@@ -297,10 +297,10 @@ test('PR-BOW1: the per-range boxes - folded over each piece\'s posed positions i
 test('PR-BOW1: the wiring, by source - the upload folds the per-range boxes, drawThird folds only what it draws and anchors the quad, and every body reaches it: the local one in every host through mwView, the peers through PeerBodies', () => {
   const arm = rd('src/combat/fpArm.js');
   assert.match(arm, /function uploadThirdMesh\(t\) \{[\s\S]*?foldRangeBoxes\(thirdMesh\.ranges\);[\s\S]*?return thirdMesh;/, 'every upload refolds the boxes');
-  const draw = arm.slice(arm.indexOf('    drawThird(canvas, { proj, view, eye, feet, yaw }) {'), arm.indexOf('    itemIcon(item,'));
+  const draw = arm.slice(arm.indexOf('    drawThird(canvas, { proj, view, eye, feet, yaw, hitFlash = 0 }) {'), arm.indexOf('    itemIcon(item,'));
   assert.match(draw, /visibleRangeBounds\(thirdMesh\.ranges, thirdDrawBox\)/, 'the box is the drawn ranges');
   assert.match(draw, /visibleRangeBounds\(thirdMesh\.ranges, thirdBodyBox, CARRIED_SLOTS\)/, 'the anchor height is the body\'s');
-  assert.match(draw, /drawRigSpriteBox\(renderer, canvas, thirdMesh, model, \{ center, halfW, halfH, anchor \}/, 'and the quad is anchored');
+  assert.match(draw, /drawRigSpriteBox\(renderer, canvas, thirdMesh, model, \{ center, halfW, halfH, anchor, hitFlash \}/, 'and the quad is anchored');
   assert.match(rd('src/player/mwView.js'), /fpArm\.drawThird\(canvas, \{ proj, view, eye, feet, yaw \}\)/, 'the local body, every host');
-  assert.match(rd('src/net/peerBodies.js'), /b\.rig\.drawThird\(canvas, \{ proj, view, eye, feet: b\.feet, yaw: b\.yaw \}\)/, 'every peer\'s body');
+  assert.match(rd('src/net/peerBodies.js'), /b\.rig\.drawThird\(canvas, \{ proj, view, eye, feet: b\.feet, yaw: b\.yaw, hitFlash: flashOf \? flashOf\(b\.id\) : 0 \}\)/, 'every peer\'s body');
 });

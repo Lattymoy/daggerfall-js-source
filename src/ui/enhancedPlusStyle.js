@@ -141,6 +141,8 @@ export const PLUS_FIX_CSS = `
 .trade-shell .packcol { padding: 6px 10px 18px; border: 1px solid rgba(125,116,96,0.4); }
 .trade-shell .remotehead { border-bottom: 2px solid rgba(125,116,96,0.3); padding-bottom: 10px; }
 .trade-shell .trade-detail { border-radius: 0; }
+/* PADPLUS1: the quickslot tags' pad glyphs are vectors under Plus - drawn bigger and smooth, not pixel-doubled */
+.hud-qsglyph { width: 18px; height: 18px; image-rendering: auto; }
 /* the pack's empty pages dim under their own class - the sheet's .empty is a dashed 26px component (ui/enhancedInventory.js) */
 .packtab.tabempty { opacity: 0.45; }
 /* PLUS1c: a page's COUNT reads as plainly as its name - the name's colour and size (the chosen page's yellow
@@ -320,6 +322,18 @@ body .dfchat-form .dfchat-close { min-width: 32px; padding: 4px 8px; }
   text-shadow: 1px 1px 0 #050608; cursor: pointer; }
 .inv-menu-item:hover, .inv-menu-item:focus-visible { outline: none; color: rgb(243,239,44); text-shadow: 1px 1px 0 rgb(93,77,12);
   background: linear-gradient(90deg, rgba(243,207,134,0.14), transparent 80%); box-shadow: inset 3px 0 0 ${FRAME_TONES.brass}; }
+/* PLUS10: THE INFO BOX - the classic Info popup's own text (TEXT.RSC), in the kit's stone over the pack. */
+.inv-info { position: fixed; inset: 0; z-index: 39; display: flex; align-items: center; justify-content: center;
+  padding: 16px; background: rgba(0,0,0,0.35); font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none; }
+.inv-info > .card { width: min(380px, 92vw); max-height: 86vh; overflow: auto; margin: 0; padding: 16px 18px 14px;
+  border: 2px solid; display: flex; flex-direction: column; gap: 10px; }
+.inv-info-box p { margin: 0 0 4px; font-size: 14px; line-height: 1.3; color: #e6dec6; text-shadow: 1px 1px 0 #050608; }
+.inv-info-box p.center { text-align: center; }
+.inv-info-box:first-child p:first-child { font-size: 16px; color: #efe8d6; }
+.inv-info-box.more { padding-top: 10px; border-top: 2px solid rgba(5,6,8,0.45); box-shadow: inset 0 1px 0 rgba(163,152,128,0.16); }
+.inv-info-box.more p { color: ${FRAME_TONES.brassHi}; }
+.inv-info > .card > .act { align-self: center; min-width: 120px; }
+
 
 /* PLUS5: THE PAUSE WINDOW'S RAIL AND TAB ROW (Quests/Stats/System, and Stats' own Character/
    Attributes/Skills/Advantages/Standing rail) were in FRAME_ROLES already - the kit paints their
@@ -329,6 +343,73 @@ body .dfchat-form .dfchat-close { min-width: 32px; padding: 4px 8px; }
    tint, the same weight the kit's own panel ground keeps, gives both bands a surface to sit on. */
 .px-win .px-tabs { background-color: rgba(15,17,22,0.55); }
 .px-qrail { background-color: rgba(15,17,22,0.4); }
+
+/* PLUS9: THE SPLIT WORN PANELS (ui/enhancedInventory.js WORN_FAMILIES_PLUS). Chest, arms and legs are one grid cell
+   holding two half panels - armour | clothes, left | right. Each half is a .wornrow, so the kit's tile stone, the
+   brass of the picked one, the drag and the hover card all come along; these rules only split the cell and fit it.
+   PLUS9b: with the real paper doll standing in the centre a half is only ~75px wide, so side by side the icon and
+   the name could not both fit (the name was cut to four letters, and PLUS9 had dropped the icon for it). A FILLED
+   half is now a little stack - the item's picture, its name under it on up to two lines - and its slot word goes to
+   the hover card (the cell's place says it anyway). An EMPTY half keeps the open diamond and the slot word, so the
+   player still sees where a shirt or a pauldron goes. A half wide enough for a row (a container query, not a guess at
+   the screen) lays out as the full panels do. */
+.pack-shell .equipped .wornpair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px;
+  min-width: 0; min-height: 0; container-type: inline-size; }
+.pack-shell .equipped .wornpair > .wornrow { min-width: 0; min-height: 0;
+  flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 4px 4px; text-align: center; }
+.pack-shell .wornpair > .wornrow .tile { width: 28px; height: 28px; font-size: 14px; }
+.pack-shell .wornpair > .wornrow .tile img { max-width: 28px; max-height: 28px; }
+.pack-shell .wornpair > .wornrow .worntile { font-size: 16px; line-height: 1; }
+.pack-shell .wornpair > .wornrow .worntext { width: 100%; align-items: center; gap: 1px; }
+.pack-shell .wornpair > .wornrow:not(.wornempty) .wornslot { display: none; }
+.pack-shell .wornpair > .wornrow .wornslot { font-size: 9px; letter-spacing: 0.06em; line-height: 1.15;
+  white-space: normal; text-align: center; }
+.pack-shell .wornpair > .wornrow .wornname { font-size: 10px; line-height: 1.15; text-align: center;
+  white-space: normal; overflow-wrap: anywhere; max-width: 100%;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
+.pack-shell .wornpair > .wornrow.wornempty .wornname { display: none; }   /* the open diamond and the slot word carry an empty */
+/* a pair with room for two rows (each half ~170px): icon beside the slot word and the name, like the full panels */
+@container (min-width: 346px) {
+  .pack-shell .equipped .wornpair > .wornrow { flex-direction: row; justify-content: flex-start; gap: 10px;
+    padding: 4px 10px; text-align: left; }
+  .pack-shell .wornpair > .wornrow .tile { width: 34px; height: 34px; }
+  .pack-shell .wornpair > .wornrow .tile img { max-width: 30px; max-height: 30px; }
+  .pack-shell .wornpair > .wornrow .worntext { align-items: flex-start; gap: 3px; }
+  .pack-shell .wornpair > .wornrow:not(.wornempty) .wornslot { display: block; }
+  .pack-shell .wornpair > .wornrow .wornslot, .pack-shell .wornpair > .wornrow .wornname { text-align: left; }
+  .pack-shell .wornpair > .wornrow .wornslot { font-size: 10px; letter-spacing: 0.12em; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .pack-shell .wornpair > .wornrow .wornname { font-size: 12px; }
+}
+@media (min-width: 1300px) {
+  .pack-shell .equipped .wornpair { gap: 8px; }
+}
+/* PLUS11: FIVE ROWS, NOT SIX - the accessories left the grid for the shelf, so every panel is a fifth taller.
+   The three rules mirror the enhanced sheet's own three (the map, the map in the pack's column, and that column at
+   desktop widths), one class deeper so they win. */
+.pack-shell .wornmap.plus5 { grid-template-rows: repeat(5, minmax(44px, 1fr)); }
+.pack-shell .charcol .wornmap.plus5 { grid-template-rows: repeat(5, minmax(44px, auto)); }
+@media (min-width: 1000px) { .pack-shell .charcol .wornmap.plus5 { grid-template-rows: repeat(5, minmax(48px, 1fr)); } }
+/* PLUS11: THE ACCESSORY SHELF - under the doll where Mount / Cart stood: six labelled pairs of square sockets in a
+   row, the classic shelf turned on its side. The kit paints the sockets (enhancedFrame.js tile role). */
+.pack-shell .wornshelf { display: flex; gap: 10px; margin-top: 10px; min-width: 0; padding: 0 2px; }
+.pack-shell .shelfgrp { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.pack-shell .shelfpair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; width: 100%; max-width: 116px; }
+.pack-shell .wornsock { position: relative; aspect-ratio: 1; min-width: 0; min-height: 0; max-height: 56px; margin: 0;
+  display: flex; align-items: center; justify-content: center; padding: 2px; overflow: hidden;
+  background: rgba(10,12,17,0.72); border: 2px solid rgba(125,116,96,0.35); color: #a89f88; font: inherit;
+  touch-action: pan-y; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.pack-shell button.wornsock { cursor: pointer; }
+.pack-shell .wornsock .tile { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;
+  border: 0; background: none; font-size: 13px; color: #d8cfae; }
+.pack-shell .wornsock .tile img { max-width: 100%; max-height: 100%; }
+.pack-shell .wornsock .worntile { font-size: 14px; color: rgba(125,116,96,0.55); }
+.pack-shell .wornsock.wornempty { background: rgba(0,0,0,0.18); border-color: rgba(125,116,96,0.22); }
+.pack-shell .wornsock.dragging { opacity: 0.4; }
+body.draglock .pack-shell .wornsock { touch-action: none; }
+.pack-shell .wornshelf.dragover { outline: 2px solid var(--brass); outline-offset: 3px; }
+.pack-shell .shelflabel { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #a89f88; text-shadow: 1px 1px 0 #050608; }
 `;
 
 

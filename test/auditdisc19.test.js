@@ -644,6 +644,6 @@ test('AUDIT DISC19 B1: underground the candle burns its own white - every other 
   const branch = src.slice(at, src.indexOf('\n    }\n', at));
   assert.match(branch, /const _dgColor = lanternColor\(!!renderer\.lightingLane, new Float32Array\(DUNGEON_LIGHT_COLOR\)\);/);
   assert.match(branch, /nearestLights\(dungeonCtx\.lights, cam\.pos, renderer\.maxPointLights, dungeonCtx\.flicker\.ranges, \(\) => _dgColor, DUNGEON_LIGHT_BLOCK_RANGE\),/);
-  assert.match(branch, /\n\s*dungeonCtx\.candleLight\(\), _dgTint\(playerTorchLight\([^\n]*\)\), _dgTint\(thunderlockMuzzleLight\([^\n]*\)\), \.\.\.dungeonCtx\.campLights\(\)\.map\(_dgTint\), \.\.\.dungeonCtx\.torchLights\(\)\.map\(_dgTint\)\);/);
+  assert.match(branch, /\n\s*dungeonCtx\.candleLight\(\), _dgTint\(playerTorchLight\([^\n]*\)\), _dgTint\(thunderlockMuzzleLight\([^\n]*\)\), \.\.\.\(host\.peerLights\?\.\(\) \?\? \[\]\)\.map\(_dgTint\), \.\.\.dungeonCtx\.campLights\(\)\.map\(_dgTint\), \.\.\.dungeonCtx\.torchLights\(\)\.map\(_dgTint\)\);/);
   assert.match(branch, /renderer\.setPointLights\(_dgLit\.data, null, _dgLit\.colors\);/);
 });

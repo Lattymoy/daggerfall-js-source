@@ -209,6 +209,11 @@ test('GP1 the poller: buttons and bound axis keys become synthetic keys by Unity
     gp.dispose();
     assert.equal(pickPad([null, { connected: false, mapping: 'standard' }, { connected: true, mapping: '' }]).mapping, '', 'the first connected pad, a blank mapping allowed');
     assert.equal(pickPad([{ connected: true, mapping: 'xr-standard' }]), null);
+    // HOTFIX (2026-09-25): a blank-mapping HID device enumerated BEFORE the
+    // real pad (a headset with inline media buttons, reported at index 0)
+    // must not shadow a later standard-mapping controller.
+    assert.equal(pickPad([{ connected: true, mapping: '', id: 'EPOS ADAPT 160' }, { connected: true, mapping: 'standard', id: 'Xbox 360 Controller' }]).id, 'Xbox 360 Controller', 'standard wins even when it comes second');
+    assert.equal(pickPad([{ connected: true, mapping: '', id: 'blank-only' }]).id, 'blank-only', 'blank mapping still used as a fallback when no standard pad exists');
   } finally { globalThis.window = prev.w; setBindings(null); setControllerLook(false); _resetForTests(); }
 });
 

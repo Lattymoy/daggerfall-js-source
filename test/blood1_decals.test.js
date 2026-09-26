@@ -853,7 +853,9 @@ test('BLOOD1b: EVERY splash site hands its blow over, so the rate ladder actuall
   // rrRidingContacts) - the civilian's own rung, LETHAL_HIT.
   // AUDIT-RR F15 moved the trample's site into both outdoor hosts' deps (world.js, exterior.js): thirteen.
   // DUEL1: the fourteenth - a strike of mine that landed on my duel opponent (world.js duelResultIn), the striker's blood.
-  assert.equal(sites.length, 15, `fifteen splash sites across six files - WB4b: the Burning Court boss's swing is the fifteenth (found ${sites.length})`);
+  // PEERFX1/PEERFX2: the sixteenth and seventeenth - another player's blow seen landing and another player struck
+  // (world.js peerFxPlayer's `blow` and `hurt` arms), each at the share of health the pose carries over a whole of 1.
+  assert.equal(sites.length, 17, `seventeen splash sites across six files - PEERFX1/PEERFX2's two are the sixteenth and seventeenth (found ${sites.length})`);
   for (const [f, args] of sites) {
     assert.ok(/bloodHit\(|LETHAL_HIT/.test(args),
       `${f}: a splash site that hands over no blow - the ladder would read it as a graze`);
@@ -3048,7 +3050,7 @@ test('MAC-BUG W5: the ground outside is heightAt, and surfaceHit is the ray that
     'no surface overhead when the "surface" is the ground you are under');
   assert.equal(outside.surfaceHit([0, -3, 0], [0, 1, 0], 8).normal, null);
 
-  // A DUNGEON IS UNCHANGED. dungeonContext.js:317 hands `-Infinity`,
+  // A DUNGEON IS UNCHANGED. dungeonContext.js:318 hands `-Infinity`,
   // so there is no floor to find and the answer is the bucket ray's,
   // byte for byte - which is what keeps this a second door rather
   // than a change to the first.

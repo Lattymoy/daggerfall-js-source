@@ -237,6 +237,16 @@ export function createPlayerMagic({
     onSpawn: (b) => batches.push(b),
     onRetire: (b) => { const i = batches.indexOf(b); if (i >= 0) batches.splice(i, 1); },
   });
+  // PEERLIGHT2 (2026-09-26, the player: "can the candle spell of mages also make light for others?"): ANOTHER PLAYER'S
+  // LIGHT SPELL - one candle mount per peer whose pose says the effect burns, the same mount mine is (the sprite, the
+  // wobble, the light), hung off THEIR feet and heading. Keyed by peer id; a peer gone from the list drops its sprite.
+  const peerCandleMounts = new Map();
+  const _peerCandleLights = [];
+  const mintPeerCandle = () => createMagicCandle({
+    renderer, getTexture, uploadRecord,
+    onSpawn: (b) => batches.push(b),
+    onRetire: (b) => { const i = batches.indexOf(b); if (i >= 0) batches.splice(i, 1); },
+  });
 
   // AUDIT 26 F033: the impact flash needs the same three renderer deps
   // the candle takes, and rides `batches` the same way.
@@ -976,6 +986,7 @@ export function createPlayerMagic({
      *  DIFFERENCE, recomputed next update, so no GL churn is needed. */
     offsetAll(offset) {
       candle.offsetAll(offset);
+      for (const m of peerCandleMounts.values()) m.offsetAll(offset);   // PEERLIGHT2
       impacts.offsetAll(offset);   // F033: a flash mid-animation follows the recenter too
       for (const m of missiles) {
         if (m.dead) continue;
@@ -986,6 +997,23 @@ export function createPlayerMagic({
       }
     },
     batches: () => batches,
+    /** PEERLIGHT2: the others' Light spells this frame - `list` [{ id, feet, height, forward }] (scene frame), one
+     *  mount each, the rest put out. Answers their point lights (the hosts' shape). An empty list puts them all out. */
+    peerCandles(list, dt) {
+      const want = new Set();
+      _peerCandleLights.length = 0;
+      for (const c of list ?? []) {
+        if (!c || c.id == null || !c.feet) continue;
+        want.add(c.id);
+        let m = peerCandleMounts.get(c.id);
+        if (!m) { m = mintPeerCandle(); peerCandleMounts.set(c.id, m); }
+        m.update(dt, { active: true, feet: c.feet, height: c.height, forward: c.forward });
+        const l = m.light();
+        if (l) _peerCandleLights.push(l);
+      }
+      for (const [id, m] of peerCandleMounts) if (!want.has(id)) { m.clear(); peerCandleMounts.delete(id); }
+      return _peerCandleLights;
+    },
     /** NT1 (F214) / EVERY ALLOCATION HAS AN OWNER: the engine's own
      *  teardown. A per-context engine (the dungeon's, dungeonContext
      *  mints one) dies with its scene, and a spell in flight at the
@@ -999,6 +1027,8 @@ export function createPlayerMagic({
       for (const m of missiles) retireMissile(m);
       missiles.length = 0;
       candle.clear();
+      for (const m of peerCandleMounts.values()) m.clear();   // PEERLIGHT2
+      peerCandleMounts.clear();
       impacts.clear();   // AUDIT 68 S21-magic-destroy-impacts: a flash still warming its archive is marked dead, so it publishes nothing into this dead engine
       for (const b of batches) { flatAnims.remove(b); renderer.destroyBillboardBatch(b); }
       batches.length = 0;

@@ -47,8 +47,8 @@
   {
     "name": "drawthird-no-anchor",
     "file": "src/combat/fpArm.js",
-    "old": "      drawRigSpriteBox(renderer, canvas, thirdMesh, model, { center, halfW, halfH, anchor }, proj, view, eye, MW_ARM_PIXEL);",
-    "new": "      drawRigSpriteBox(renderer, canvas, thirdMesh, model, { center, halfW, halfH }, proj, view, eye, MW_ARM_PIXEL);",
+    "old": "      drawRigSpriteBox(renderer, canvas, thirdMesh, model, { center, halfW, halfH, anchor, hitFlash }, proj, view, eye, MW_ARM_PIXEL);",
+    "new": "      drawRigSpriteBox(renderer, canvas, thirdMesh, model, { center, halfW, halfH, hitFlash }, proj, view, eye, MW_ARM_PIXEL);",
     "tests": [
       "test/prbow1_bow.test.js"
     ]

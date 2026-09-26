@@ -101,6 +101,7 @@ import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfVie
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage   // AUDIT 24 (wave 38): EnemyDeath's one home
 import { combatVisualsOn, foeDraw, markConcealedHit } from '../systems/combatVisuals.js';   // ECV1: what the enhanced skin draws for a concealed foe
 import { registerFoeDoor } from '../systems/artifactEffects.js';   // AUDIT PSCALE1 DOORS-2: Namira's reflection on a watchman through his own door
+import { foeHitFlash, setBatchHitFlash } from '../systems/hitFlash.js';   // HITFLASH1
 
 // PlayerEntity.Crimes (the two this module levies - the enum lives
 // whole in systems/court.js).
@@ -155,7 +156,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   // with no Y test. The default keeps the two street pools as they were.
   playerInside = false,
   // ROAD-G G1: GameManager.MakeEnemiesHostile over the HOST's whole
-  // area, the encounter pool's dep to the line (exteriorFoes.js:131).
+  // area, the encounter pool's dep to the line (exteriorFoes.js:132).
   // DaggerfallEntityBehaviour.cs:255-258 fires it when a NON-hostile
   // enemy is struck by the player, and Knight_CityWatch is an
   // EnemyClass - one of the two EntityTypes that walk (:250). This
@@ -674,7 +675,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  which arrowFlight.js calls unconditionally (arrowFlight.js:316)
    *  because `dealDamage` is inside its own `dmg > 0` fork - so the
    *  door is PUBLIC (the returned surface below), exactly as the
-   *  encounter pool's is (exteriorFoes.js:2093). */
+   *  encounter pool's is (exteriorFoes.js:2096). */
   function handleAttackFromPlayer(g, playerFeet = null) {
     if (!g?.ai) return;
     // DISC19-F (AUDIT DISC19): A BLOW ON A DEFENDER IS ASSAULT. The
@@ -1109,6 +1110,8 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       const ecv = foeDraw(g, ecvOn, _ecvT);
       if (ecv.kind === 'hidden') continue;
       g.batch.conceal = ecv.kind === 'conceal' ? ecv.visual : null;
+      setBatchHitFlash(g.batch, foeHitFlash(g, performance.now() / 1000));   // HITFLASH1: a foe struck flashes red - any blow, mine, a peer's, or its owner's stream
+
       const o = g._mout;
       const rkey = `${o.record}#${o.frame}`;
       if (!renderer.textures.has(`${g.archive}_${rkey}`)) uploadRecordFrame(g.archive, o.record, o.frame);

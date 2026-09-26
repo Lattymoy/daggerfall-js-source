@@ -11,8 +11,8 @@
   {
     "name": "PERF-EXT10-2-conceal-noShadow-and-selfCard-are-gained-a-walker-a-pile-and-the-card-split",
     "file": "src/render/renderer.js",
-    "old": " conceal: undefined, noShadow: undefined, selfCard: undefined, _dead: undefined,",
-    "new": " _dead: undefined,",
+    "old": " conceal: undefined, hitFlash: undefined, noShadow: undefined, selfCard: undefined, _dead: undefined,",
+    "new": " hitFlash: undefined, _dead: undefined,",
     "tests": [
       "test/perfextb.test.js"
     ]

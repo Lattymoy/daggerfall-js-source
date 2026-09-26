@@ -1038,6 +1038,9 @@ export class RemotePlayers {
   }
 
   /** The batches for the hosts' billboard pass. */
+  /** PEERFX3: a peer's drawn sprite (doll or class body), for the hurt flash; null when this layer draws none. */
+  batchOf(id) { return this._batches.get(id)?.batch ?? null; }
+
   batches() {
     const out = [];
     for (const e of this._batches.values()) out.push(e.batch);

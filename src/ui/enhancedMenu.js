@@ -135,6 +135,13 @@ import { playerEntity } from '../characters/playerEntity.js';
 // PX6: the Stats page's skill labels - the one home (systems/skills.js).
 import { SKILLS, SKILL_NAMES } from '../systems/skills.js';
 import { overlayAction, bindings } from './input.js';   // U51: Escape, through the shared table; UXB1-F: the live keys a tile names
+import { bindings as liveBindings } from './input.js';   // PADPLUS1: the store the layout reset writes
+import { resetPlusPadLayout } from './plusPad.js';   // PADPLUS1
+import { hdGlyphSvg, hdGlyphName } from './padGlyphsHD.js';   // PADPLUS1: the layout card's glyphs
+import { padFamily as livePadFamily } from './padGlyphs.js';   // PADPLUS1
+import { openPlusPadBinds, plusPadLegend } from './plusPadBinds.js';   // PADPLUS10: the controller bindings window
+import { plusBindsOpen, resetPlusDpad } from './plusPad.js';
+import { peerBindBusy } from './peerMenuBindCard.js';   // PEERMENU1   // PADPLUS10: the window over this one answers its own keys
 import { modKeyRows } from '../systems/controlsConfig.js';   // UXB1-F: a mod's keys, read-only on its tile
 import { MOD_SETTINGS, modSetting, setModSetting, isIntKey, isFloatKey, isChoiceKey, isTextKey, isTupleKey } from '../systems/modSettings.js';
 import { keyCodeForDomCode, KEYCODE_NONE } from '../systems/keyCodes.js';   // HT1: a TextKey's capture spells the key as Unity would
@@ -2768,6 +2775,7 @@ function overhaulPanel(p) {
       hrow.append(b);
     }
     card.append(hrow);
+    card.append(plusControllerRows());   // PADPLUS1
   }
   const use = el('button', 'act primary look-use', o === cur ? 'In use' : `Use ${o.name}`);
   use.type = 'button';
@@ -2783,6 +2791,65 @@ function overhaulPanel(p) {
   card.append(el('p', 'look-note', forced ? `${p.effect} ${forced}` : p.effect));
   return card;
 }
+/** PADPLUS1: THE CONTROLLER ON THE PLUS CARD - the crossbar switch, run as a toggle or a hold, the layout at a glance
+ *  in the pad's own glyphs, and the button that puts every row of it back. PADPLUS10: the legend reads the LIVE
+ *  bindings and d-pad (the player sets them in the Controller bindings window, opened here). */
+function plusControllerRows() {
+  const wrap = el('div', 'look-padplus');
+  const row = (label, opts, now, set) => {
+    const r = el('div', 'look-colours');
+    r.setAttribute('role', 'group');
+    r.setAttribute('aria-label', label);
+    r.append(el('span', 'look-colours-label', label));
+    for (const [v, word] of opts) {
+      const b = el('button', 'look-colour', word);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(now === v));
+      b.onclick = (e) => { e.stopPropagation(); set(v); render(); };
+      r.append(b);
+    }
+    return r;
+  };
+  const xb = ['on', 'off'].includes(getPref('plusCrossbar')) ? getPref('plusCrossbar') : 'auto';
+  wrap.append(row('Controller crossbar', [['auto', 'Auto'], ['on', 'On'], ['off', 'Off']], xb, (v) => setPref('plusCrossbar', v)));
+  wrap.append(row('Run on the left stick', [[true, 'Toggle'], [false, 'Hold']], getPref('plusToggleRun') !== false, (v) => setPref('plusToggleRun', v)));
+  const fam = livePadFamily() ?? 'xbox';
+  const legend = el('div', 'look-padlegend');
+  legend.setAttribute('aria-label', 'Controller layout');
+  for (const [codes, word] of plusPadLegend(liveBindings())) {
+    const it = el('div', 'look-paditem');
+    for (const c of codes) { const im = el('img'); im.src = hdGlyphSvg(fam, c, { size: 40 }) ?? ''; im.alt = hdGlyphName(fam, c); it.append(im); }
+    it.append(el('span', null, word));
+    legend.append(it);
+  }
+  wrap.append(legend);
+  // PADPLUS10: the separate window - buttons, the d-pad's tap and hold, the sticks' sensitivity
+  const binds = el('button', 'act primary look-padbinds', 'Controller bindings\u2026');
+  binds.type = 'button';
+  binds.onclick = (e) => {
+    e.stopPropagation();
+    openPlusPadBinds();
+    globalThis.addEventListener?.('plus-padbinds-closed', () => render(), { once: true });   // the legend shows what was set
+  };
+  wrap.append(binds);
+  const reset = el('button', 'act look-padreset', 'Reset controller layout');
+  reset.type = 'button';
+  reset.onclick = (e) => { e.stopPropagation(); resetPlusPadLayout(liveBindings()); resetPlusDpad(); render(); };   // PADPLUS10: and the d-pad's tap/hold
+  wrap.append(reset);
+  if (!document.getElementById('look-padplus-style')) {
+    const st = document.createElement('style');
+    st.id = 'look-padplus-style';
+    st.textContent = `.look-padlegend { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 12px; margin: 8px 0; font-size: 12px; }
+.look-paditem { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.look-paditem img { width: 20px; height: 20px; flex: 0 0 auto; }
+.look-paditem span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.look-padreset { margin: 2px 0 6px; }
+.look-padbinds { margin: 2px 8px 6px 0; }`;
+    document.head.append(st);
+  }
+  return wrap;
+}
+
 function paneOverhauls(body) {
   body.classList.add('wide');
   const grid = el('div', 'look-grid');
@@ -3699,6 +3766,8 @@ function onKey(e) {
   // gate that consults it (DaggerfallControlsWindow.cs:410) never refuses
   // a key - Escape included. Stand down; the pane stops the key itself.
   if (captureArmed()) return;
+  if (peerBindBusy()) return;   // PEERMENU1: the player-menu bind is waiting for a key (or swallowing a pad B's Back)
+  if (plusBindsOpen()) return;   // PADPLUS10: the Controller bindings window is over the menu - its Escape is its own
   const t = e.target;
   if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
   if (overlayAction(e) !== 'back') return;

@@ -224,7 +224,7 @@ test('DISC23-B: who is NOT a walker - a Morrowind body on this screen, a rider, 
 test('DISC23-B: the host - one art store, the walkers after the bodies and skipping them, their height to the name pass, swept with the rest', () => {
   const w = src('src/scenes/world.js');
   assert.match(w, /const eotbArt = createEotbArt\(\{ renderer \}\);[^\n]*\n\s*peerRiders = createPeerRiders\(\{ renderer, art: eotbArt \}\);[^\n]*\n\s*peerWalkers = createPeerWalkers\(\{ renderer, art: eotbArt, enabled: \(\) => getPref\('peerClassSprites'\) !== false \}\);/);
-  assert.match(w, /peerBodies\.sync\(afoot,[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*peerWalkers\.sync\(drawable, onlineToScene, \{ eye: cam\.pos, right: \[Math\.cos\(cam\.yaw\), 0, -Math\.sin\(cam\.yaw\)\], dt, skip: \(id\) => peerBodies\.heightOf\(id\) > 0 \}\);/);
+  assert.match(w, /peerBodies\.sync\(afoot,[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*peerWalkers\.sync\(drawable, onlineToScene, \{ eye: cam\.pos, right: \[Math\.cos\(cam\.yaw\), 0, -Math\.sin\(cam\.yaw\)\], dt, skip: \(id\) => peerBodies\.heightOf\(id\) > 0, hurt: \(id\) => peerHurtAge\(id\) < PEER_FLINCH_S \}\);/);   // PEERFX3: and a class skin's hurt pose
   assert.match(w, /bodyHeight: \(id\) => peerRiders\.heightOf\(id\) \|\| peerBodies\.heightOf\(id\) \|\| peerWalkers\.heightOf\(id\),/);
   assert.match(w, /peerWalkers\?\.offsetAll\(r\.offset\);/);
   assert.match(w, /if \(peerWalkers\) for \(const b of peerWalkers\.batches\(\)\) \{ if \(!\(cullOn && billboardOutside\(b\)\)\) allBatches\.push\(b\); \}/);

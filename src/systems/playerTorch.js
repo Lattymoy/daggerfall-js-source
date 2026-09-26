@@ -245,3 +245,42 @@ export function setPlayerWaistLightOverride(o) {
   _waistOverride = _waistPoint;
 }
 export const playerWaistLightOverride = () => _waistOverride;
+
+// PEERLIGHT1 (2026-09-26, the player: "when another player lights a torch you should be able to see them lighting
+// your way as well"): THE OTHERS' TORCHES LIGHT THE WORLD. My torch is a point light at my hand, and nothing of it
+// went over the wire - the waist-lantern bit (`hl`) hangs a lantern on a Morrowind body and lights nothing. So a
+// friend with a torch walked a dark dungeon as a dark sprite, and I saw nothing lit around them.
+//
+// THE POSE'S `lt`: the lit light's STEADY radius (the template's, whole units, 1-63) times two, plus 1 while it
+// gutters (condition under GUTTERING_CONDITION). One small integer that changes only when the light does - lit, put
+// out, swapped, or starting to gutter - so it never turns a keepalive into a send. Omitted while nothing burns.
+// The reader walks its own gutter flicker, as DFU walks the owner's.
+export const PEER_LIGHT_RADIUS_MAX = 63;
+
+/** My pose's `lt` - undefined while no light of mine burns (the wire's omission law). */
+export function torchPoseByte(entity) {
+  const st = entity?._torch, src = entity?.lightSource;
+  if (!st || !(st.range > 0) || !src) return undefined;
+  const r = Math.max(1, Math.min(PEER_LIGHT_RADIUS_MAX, Math.round(torchRange(src))));
+  return r * 2 + ((src.currentCondition ?? 0) < GUTTERING_CONDITION ? 1 : 0);
+}
+
+/** A peer's torch as a light record (the hosts' shape), off their drawn pose and feet, or null. `phase` the reader's
+ *  own gutter clock (seconds), per peer. At the hand DFU puts mine (TORCH_OFFSET), or the hip for a lantern hung at
+ *  the waist (`hl`). `carried`: a light in a hand - no glare ball over the body (MAC-T1's law). */
+export function peerTorchLight(pose, feet, phase = 0) {
+  const lt = pose?.lt | 0;
+  if (!(lt > 1) || !feet) return null;
+  let range = lt >> 1;
+  if (lt & 1) range *= (GUTTER_BASE + Math.cos(phase * 1.2) * GUTTER_SWING) / ITEM_BASED_TORCH_INTENSITY;
+  const yaw = Number.isFinite(pose.yaw) ? pose.yaw : 0;
+  const sy = Math.sin(yaw), cy = Math.cos(yaw);
+  const o = pose.hl ? LANTERN_HIP : TORCH_OFFSET;
+  return {
+    x: feet[0] - cy * o.left + sy * o.forward,
+    y: feet[1] + o.up,
+    z: feet[2] + sy * o.left + cy * o.forward,
+    range,
+    carried: true,
+  };
+}

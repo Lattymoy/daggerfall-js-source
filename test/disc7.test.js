@@ -102,12 +102,13 @@ test('ACT-MENU: the plaque draws the verbs as the loot list\'s rows, the lit one
   }
   assert.match(w, /plaquePeerAct: \(eye, dir\) => plaquePeerAct\(eye \?\? cam\.pos, dir \?\? socialFwd\(\)\),/);
   assert.match(w, /if \(peerInSight\(eye, dir\)\?\.peer\?\.id !== id\) return false;/, 'A9: re-picked on the press\'s own ray');
-  assert.match(w, /const row = plaqueRowFor\(sel\.id, id, peerActsFor\(id\)\);\s*\n\s*if \(!row\) return false;\s*\n\s*if \(row\.act\) peerAct\?\.\(row\.act\);\s*\n\s*else peerNote\?\.\(row\.refusal\);/, 'A4: re-read at the press, a refusal said');
+  assert.match(w, /const row = plaqueRowFor\(sel\.id, id, peerActsFor\(id\)\);\s*\n\s*if \(!row\) return false;\s*\n\s*if \(row\.act\) \{ peerAct\?\.\(row\.act\); peerMenuFor = null; \}[^\n]*\n\s*else peerNote\?\.\(row\.refusal\);/, 'A4: re-read at the press, a refusal said');
   assert.match(w, /onAct: \(act\) => peerAct\(act\),/, 'the card and the plaque leave by one door');
   assert.match(w, /if \(worldPlaqueOn\(\)\) \{\s*\n\s*if \(plaquePeerAct\(\)\) return true;/, 'F presses the lit verb where the plaque stands');
   assert.match(w, /if \(lit && lit\.id == null && peerIdOfKey\(lit\.key\) && plaqueLightFirst\(lit\.key\)\) return true;/, 'F lights the first row of an unlit list');
   assert.match(w, /const wall = col\?\.raycast \? col\.raycast\(eye, dir, hit\.distance\) : Infinity;\s*\n\s*return wall < hit\.distance - 0\.05 \? null : hit;/, 'A6: a wall in front of the player blocks the pick');
-  assert.match(w, /subs: \[cast, peerRelationText\(acts\)\]\.filter\(Boolean\), actions: acts \? socialPlaqueRows\(id, acts\) : \[\], actionsUnlit: true \}/);
+  assert.match(w, /subs: \[cast, peerRelationText\(acts\)\]\.filter\(Boolean\), actions: acts \? socialPlaqueRows\(id, acts\) : \[\], actionsUnlit: !acts \}/);   // PEERMENU1: the verbs wait for the bind
+  assert.match(w, /if \(peerMenuFor !== id\) return null;/);
 });
 
 test('ACT-MENU: a player\'s rows are the F-card\'s own - every act it offers, a refused one with its reason; the press re-reads the row: an offered act sends the card\'s act, a refused one says why, a gone one nothing (mutants: the refusal sent; the press not re-read)', () => {
@@ -184,7 +185,7 @@ test('DISC7 wire: the rider\'s half-speed bit rides the pose mounted and moving 
   assert.equal(poseChanged(validPose({ ...base, hs: 1 }), validPose(base)), true);
   assert.equal(lerpPose(validPose(base), validPose({ ...base, hs: 1 }), 0.5).hs, 1);
   assert.equal('hs' in lerpPose(validPose(base), validPose(base), 0.5), false);
-  assert.ok(['world100', 'world101', 'world102', 'world103', 'world104', 'world105', 'world106', 'world107', 'world108', 'world109', 'world110', 'world111', 'world112', 'world113'].includes(RELAY_VERSION), 'world100 carried hs; DISC12 moved it on (world101) with lh and wb, and the community arc (world102) with its frames and AUDIT ATTACH\'s meters');
+  assert.ok(['world100', 'world101', 'world102', 'world103', 'world104', 'world105', 'world106', 'world107', 'world108', 'world109', 'world110', 'world111', 'world112', 'world113', 'world114'].includes(RELAY_VERSION), 'world100 carried hs; DISC12 moved it on (world101) with lh and wb, and the community arc (world102) with its frames and AUDIT ATTACH\'s meters');
   assert.match(rd('src/scenes/world.js'), /hs: riding && moved && _hsLatch \? 1 : undefined,/);
   assert.match(rd('src/scenes/world.js'), /if \(movedThisFrame\) \{ _onlineMovingUntil = now \+ ONLINE_MOVE_HOLD_MS; _hsLatch = !!player\.movingLessThanHalfSpeed; \}/, 'AUDIT DISC7 B2: latched off a frame that moved');
   assert.equal('hs' in validPose({ ...base, hs: '0' }), false, 'AUDIT DISC7 B8: uint\'s law - a string zero is no bit'); assert.equal(validPose({ ...base, hs: 7 }).hs, 1);

@@ -833,6 +833,8 @@ export function quickslotSaveData() {
   // HB1: and the hotbar, on the same block - ten entries, each an item
   // kind or a spell index, exactly as the slots above key them.
   out.hotbar = hotbar.map((e) => (e ? { ...e } : null));
+  // PADPLUS1: the crossbar's six extra slots ride only when one is filled - a keyboard player's save is the ten it was
+  if (out.hotbar.slice(HOTBAR_SIZE).every((e) => !e)) out.hotbar.length = HOTBAR_SIZE;
   return out;
 }
 
@@ -848,10 +850,10 @@ export function restoreQuickslotSaveData(data) {
   // HB1: the hotbar. A save written before it carries no block and the
   // bar clears, as the slots above do for a pre-QS save.
   if (Array.isArray(data.hotbar)) {
-    data.hotbar.slice(0, HOTBAR_SIZE).forEach((e, i) => {
+    data.hotbar.slice(0, HOTBAR_CAPACITY).forEach((e, i) => {
       if (!e || typeof e !== 'object' || typeof e.name !== 'string') return;
       if (e.type === 'spell' && Number.isFinite(e.index)) hotbar[i] = { type: 'spell', index: e.index, name: e.name };
-      else if (e.type === 'item' && typeof e.key === 'string' && ['consumable', 'weapon', 'light'].includes(e.kind)) {
+      else if (e.type === 'item' && typeof e.key === 'string' && ['consumable', 'weapon', 'light', 'shield'].includes(e.kind)) {
         hotbar[i] = { type: 'item', kind: e.kind, key: e.key, name: e.name };
       }
     });
@@ -884,9 +886,13 @@ export function restoreQuickslotSaveData(data) {
 // host edited.
 
 export const HOTBAR_SIZE = 10;
+/** PADPLUS1: THE CROSSBAR'S SIXTEEN. The Enhanced Plus crossbar (ui/enhancedHotbar.js, two sets of eight under LB
+ *  and RB) is the same bar, grown: slots 1-10 are the keyboard's 1-0 and the crossbar's first ten, slots 11-16 are
+ *  the crossbar's alone. One model, so a potion dragged on with the mouse is on the pad's bar too, and one save. */
+export const HOTBAR_CAPACITY = 16;
 // KB1: the key each slot answers to is its REGISTRY action's (systems/inputActions.js HOTBAR_SLOT_ACTIONS), not a
 // table here - the fixed Digit1-Digit0 list this held was a second keymap beside the controls pane's.
-const hotbar = new Array(HOTBAR_SIZE).fill(null);
+const hotbar = new Array(HOTBAR_CAPACITY).fill(null);
 let hotbarRev = 0;   // bumped on every write, so a view can tell "changed" in one compare
 
 export const HOTBAR_TEXT = Object.freeze({
@@ -895,6 +901,12 @@ export const HOTBAR_TEXT = Object.freeze({
   added: (name, n) => `${name} is on hotbar slot ${n}.`,
   removed: (name) => `${name} is off the hotbar.`,
   full: 'The hotbar is full - drag onto a slot to replace it.',
+  // SHIELD1: the shield slot's own lines
+  shieldOn: (name) => `You strap on your ${name}.`,
+  shieldOff: (name) => `You take off your ${name}.`,
+  shieldBroken: (name) => `Your ${name} is broken.`,
+  shieldForbidden: (name) => `You cannot use your ${name}.`,
+  shieldGone: (name) => `You have no ${name}.`,
 });
 
 /** What an ITEM is to the hotbar, or null when it cannot go on one.
@@ -904,9 +916,13 @@ export function hotbarKindOf(item) {
   if (!item || typeof item !== 'object') return null;
   if (isQuickConsumable(item)) return 'consumable';
   if (isLightSource(item)) return 'light';
+  if (isShieldItem(item)) return 'shield';   // SHIELD1: a shield goes on the bar and a press straps it on
   if (item.group === 'Weapons' && item.templateIndex !== ARROW) return 'weapon';
   return null;
 }
+
+/** SHIELD1: a shield is Armor with a shield template (armorMaterials.js SHIELD_VALUES) - buckler to tower. */
+const isShieldItem = (item) => item?.group === 'Armor' && isShieldTemplate(item?.templateIndex);
 
 export function hotbarEntryForItem(item) {
   const kind = hotbarKindOf(item);
@@ -922,7 +938,7 @@ export function hotbarEntryForSpell(sp) {
 const sameEntry = (a, b) => !!a && !!b && a.type === b.type
   && (a.type === 'spell' ? a.index === b.index : a.key === b.key);
 
-const assertHot = (i) => { if (!Number.isInteger(i) || i < 0 || i >= HOTBAR_SIZE) throw new Error(`hotbar: no slot ${i}`); };
+const assertHot = (i) => { if (!Number.isInteger(i) || i < 0 || i >= HOTBAR_CAPACITY) throw new Error(`hotbar: no slot ${i}`); };
 
 /** A copy of slot i's entry, or null. */
 export const hotbarEntry = (i) => (assertHot(i), hotbar[i] ? { ...hotbar[i] } : null);
@@ -935,7 +951,7 @@ export const hotbarRevision = () => hotbarRev;
 export function setHotbarSlot(i, entry) {
   assertHot(i);
   if (!entry || (entry.type !== 'item' && entry.type !== 'spell')) return false;
-  for (let j = 0; j < HOTBAR_SIZE; j++) if (j !== i && sameEntry(hotbar[j], entry)) hotbar[j] = null;
+  for (let j = 0; j < HOTBAR_CAPACITY; j++) if (j !== i && sameEntry(hotbar[j], entry)) hotbar[j] = null;
   hotbar[i] = entry.type === 'spell'
     ? { type: 'spell', index: entry.index, name: String(entry.name ?? '') }
     : { type: 'item', kind: entry.kind, key: entry.key, name: String(entry.name ?? '') };
@@ -961,7 +977,8 @@ export function hotbarSlotOf(thing, { spell = false } = {}) {
   return hotbar.findIndex((e) => sameEntry(e, probe));
 }
 
-export const firstFreeHotbarSlot = () => hotbar.findIndex((e) => !e);
+/** The first empty slot among the first `size` (the keyboard bar's ten by default; the crossbar asks for sixteen). */
+export const firstFreeHotbarSlot = (size = HOTBAR_SIZE) => { const i = hotbar.findIndex((e) => !e); return i >= 0 && i < size ? i : -1; };
 
 /** THE VIEW: each slot resolved against the pack and the book, once.
  *
@@ -971,7 +988,7 @@ export const firstFreeHotbarSlot = () => hotbar.findIndex((e) => !e);
  *  in hand (an equipped weapon, the lit light). A SPELL slot carries the
  *  live record and `active` when it is the readied one. `ghost` is a
  *  kind the pack or the book no longer holds. */
-export function hotbarView(entity, { readiedIndex = null } = {}) {
+export function hotbarView(entity, { readiedIndex = null, size = HOTBAR_CAPACITY } = {}) {
   const pack = packOf(entity);
   const book = bookOf(entity);
   const lit = entity?.lightSource ?? null;
@@ -992,7 +1009,7 @@ export function hotbarView(entity, { readiedIndex = null } = {}) {
       if (!b.held && (isEquipped(it) || it === lit)) b.held = it;
     }
   }
-  return hotbar.map((e, i) => {
+  return hotbar.slice(0, size).map((e, i) => {
     if (!e) return { slot: i, empty: true };
     if (e.type === 'spell') {
       const spell = book.find((sp) => sp?.index === e.index) ?? null;
@@ -1079,6 +1096,7 @@ export function hotbarPress(i, { entity = null, doors = {}, say = null } = {}) {
     if (typeof doors.quickSwap !== 'function') return { kind: 'none' };
     return through('swap', { key: e.key, name: e.name }, () => doors.quickSwap(), 'equipped');
   }
+  if (e.kind === 'shield') return (_performed = hotbarShield(entity, e, say));
   // THE LIGHT THE SLOT NAMES. AUDIT CONTRIB H2: this went to the off hand's toggle, which lights whatever the MOD
   // picks (the last light used, else a lantern, a torch, a candle) and douses whatever burns - so a Candle slot lit
   // the Lantern, a Lantern slot put out a lit candle, and a slot whose light was gone lit another. It is the pack's
@@ -1087,8 +1105,57 @@ export function hotbarPress(i, { entity = null, doors = {}, say = null } = {}) {
   // door. A hand holding a shield or a weapon is refused in words, as ever.
   if (typeof doors.quickUse !== 'function') return { kind: 'none' };
   const view = quickslotView(entity);
-  if (view.off.kind === 'shield' || view.off.kind === 'weapon') { say?.(HOTBAR_TEXT.offHandFull); return { kind: 'refused' }; }
+  if (view.off.kind === 'weapon') { say?.(HOTBAR_TEXT.offHandFull); return { kind: 'refused' }; }
+  // SHIELD1: A TORCH SLOT TAKES THE SHIELD OFF FIRST ("torches in the hotbar that are supposed to swap out the
+  // shield"). The shield leaves the left hand; Handheld Torches' hand law runs on that equip change and may take its
+  // stowed light straight back up (handheldTorches.js applyHandLaw) - if that is this slot's kind, it is lit and the
+  // press is done (a toggle now would put it out again). Otherwise the pack's own Use lights it. A light that will
+  // not light puts the shield back.
+  if (view.off.kind === 'shield') {
+    const shield = view.off.item;
+    const snap = equipDelaySnapshot(entity);
+    if (!shield || oneEquipAct(() => unequipSlot(entity, EQUIP_SLOTS.LeftHand)) === null) { say?.(HOTBAR_TEXT.offHandFull); return { kind: 'refused' }; }
+    billEquipDelayOnClose(entity, snap);
+    const lit = entity?.lightSource ?? null;
+    if (lit && quickslotKey(lit) === e.key) return { kind: 'light', name: e.name };
+    const r = through('c1', { key: e.key, name: e.name }, () => doors.quickUse(1), 'light');
+    if (r.kind === 'refused' && !isEquipped(shield)) oneEquipAct(() => equipItem(entity, shield));
+    return r;
+  }
   return through('c1', { key: e.key, name: e.name }, () => doors.quickUse(1), 'light');
+}
+
+/**
+ * SHIELD1: THE SHIELD SLOT'S PRESS - strap it on, or, when it is already on, take it off (so one key both raises the
+ * shield and frees the hand for a torch). The equip is the pack's own - equipItem, one equip act, the equip delay
+ * billed as the swap bills it - so equip.js's laws stand: a two-handed weapon leaves the hands for it, a weapon in
+ * the left hand is bumped, and the change reaches every equip listener; Handheld Torches' hand law is one of them
+ * and stows a lit torch from the hand the shield just took. The beast's pack refuses, a broken or forbidden shield
+ * refuses in words.
+ */
+function hotbarShield(entity, e, say) {
+  const sup = racialSuppressInventory(entity);
+  if (sup) { say?.(sup.text); return { kind: 'refused' }; }
+  const pack = packOf(entity);
+  const mine = pack.filter((it) => quickslotKey(it) === e.key);
+  const worn = mine.find(isEquipped) ?? null;
+  const snap = equipDelaySnapshot(entity);
+  if (worn) {
+    const slot = worn.equipSlot ?? EQUIP_SLOTS.LeftHand;
+    if (oneEquipAct(() => unequipSlot(entity, slot)) === null) return { kind: 'refused' };
+    billEquipDelayOnClose(entity, snap);
+    say?.(HOTBAR_TEXT.shieldOff(itemLongName(worn)));
+    return { kind: 'unequipped', name: e.name };
+  }
+  const shield = mine.find((it) => !isBrokenItem(it)) ?? mine[0] ?? null;
+  if (!shield) { say?.(HOTBAR_TEXT.shieldGone(e.name)); return { kind: 'gone' }; }
+  if (isBrokenItem(shield)) { say?.(HOTBAR_TEXT.shieldBroken(itemLongName(shield))); return { kind: 'refused' }; }
+  if (isForbiddenEquip(entity?.career, shield)) { say?.(HOTBAR_TEXT.shieldForbidden(itemLongName(shield))); return { kind: 'refused' }; }
+  const got = oneEquipAct(() => equipItem(entity, shield));
+  if (got === null) return { kind: 'refused' };
+  billEquipDelayOnClose(entity, snap);
+  say?.(HOTBAR_TEXT.shieldOn(itemLongName(shield)));
+  return { kind: 'equipped', name: e.name };
 }
 
 /** HB1: the spell slot's press in the hotbar's CAST mode - see

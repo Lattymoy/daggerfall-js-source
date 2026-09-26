@@ -205,6 +205,10 @@ export function lerpPose(from, to, t) {
     ...(to.rd ? { rd: to.rd, rv: to.rv ?? 0, ...(to.hs ? { hs: 1 } : {}) } : {}),   // RIDE: the mount, discrete, omitted on foot as the wire omits it; DISC7: the half-speed bit with it
     ...(to.lh ? { lh: 1 } : {}),   // DISC12: the LEFT hand in use - discrete, omitted on the right as the wire omits it
     ...(to.wb ? { wb: to.wb } : {}),   // DISC12: the beast form - discrete, omitted in human form
+    ...(to.hk ? { hk: to.hk, hp: to.hp, hb: to.hb ?? 0, hq: to.hq ?? 0 } : {}),   // PEERFX1: the landed blows, whole - a count and its point
+    ...(to.hu ? { hu: to.hu, uq: to.uq ?? 20 } : {}),   // PEERFX1: and the times struck; PEERFX2: and what it cost
+    ...(to.lc ? { lc: 1 } : {}),   // PEERLIGHT2: the Light spell's candle - discrete, omitted while none burns
+    ...(to.lt ? { lt: to.lt } : {}),   // PEERLIGHT1: the torch's light - discrete, omitted while nothing burns
     ...(to.hl ? { hl: 1 } : {}),   // HT-WAIST-NET: the lantern at the waist - discrete, omitted without one as the wire omits it
   };
 }

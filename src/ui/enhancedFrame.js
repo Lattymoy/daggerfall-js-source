@@ -81,10 +81,10 @@ export const FRAME_ROLES = {
     // selectors carry a leading body to outweigh them
     'body .dfsocial', 'body .dfprofile-card', 'body .dfchat-box',
     // PLUS7: the inventory's hover card and right-click menu
-    '.inv-tip > .card', '.inv-menu'],
+    '.inv-tip > .card', '.inv-menu', '.inv-info > .card', '.pbind > .card'],   // PLUS10: and the Info box; PADPLUS10: the bindings window
   // panels that carry a brass edge on the left as their own mark
   panelAccent: ['.notice', '.inputbox'],
-  button: ['.port-host .port-btn', '.px-sys .act', '.shell .act', '.px-win .card .act', '.pack-shell .act', '.px-setwrap .act',
+  button: ['.port-host .port-btn', '.inv-info .act', '.pbind .act', '.px-sys .act', '.shell .act', '.px-win .card .act', '.pack-shell .act', '.px-setwrap .act',
     '.px-setwrap .step', '.shell .step', '.wizard .bigbtn', '.wizard .reflexbtn', '.lv-pick .lv-arrow',
     '.lv-pick .lv-press', '.shell .look-arrow', '.cr-shell .cr-rm', '.px-winclose', '.talk-head .act', '.talk-say .act',
     'body .dfsocial-btn', 'body .dfsocial-close', 'body .dfprofile-close', '.dlg-shell .dlg-btn',
@@ -103,7 +103,7 @@ export const FRAME_ROLES = {
     // PLUS8: the journey bar's Map / Camp / Exit and the time stepper's two presses
     '.travelpanel-act', '.travelpanel-step'],
   primary: ['.lv-ok', '.hmroot .act'],
-  tile: ['.port-host .port-tile', '.port-host .port-iconcell', '.pack-shell .itemrow', '.pack-shell .equipped .wornrow', '.wizard .racegrid button',
+  tile: ['.port-host .port-tile', '.port-host .port-iconcell', '.pack-shell .itemrow', '.pack-shell .equipped .wornrow', '.pack-shell .wornsock', '.wizard .racegrid button',
     '.wizard .facegrid button', '.shell .ft-tile', '.shell .ft-seg', '.shell .ft-mchip', '.shell .ft-tile-more',   // FT18: a condensed tile's parts toggle
     '.sb-shell .sb-chip', '.cr-shell .sb-chip', '.piletab',
     // PLUS3: the shop's shelf rows and the tavern's food & drink rows - the same `.itemrow` the pack

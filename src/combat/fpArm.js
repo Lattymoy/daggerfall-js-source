@@ -17,7 +17,7 @@
 //
 // HOW IT DRAWS, and why this needs no renderer change at all: the port
 // has ALREADY shipped a first-person pass. renderCharacterSprite
-// (render/renderer.js:1208) binds an offscreen target with its OWN depth
+// (render/renderer.js:1213) binds an offscreen target with its OWN depth
 // renderbuffer, clears colour AND depth, swaps the frame's proj/view for
 // ones the caller supplies, draws, and restores; drawScreenOverlayQuad
 // (:987) composites it fullscreen with an alpha cut and no depth test.
@@ -525,7 +525,7 @@ export function armReach(eye, unionBounds) {
 /**
  * PACK THE ASSEMBLY for drawCharacter's vertex stream: 9 floats per
  * vertex, [pos.xyz, colour.rgb, normal.xyz], NON-INDEXED, because
- * drawCharacter issues drawArrays (renderer.js:1121). The MW readers hand
+ * drawCharacter issues drawArrays (renderer.js:1126). The MW readers hand
  * back indexed triangles, so the indices are expanded here.
  *
  * NORMALS ARE COMPUTED, not read. poseAssembly skins positions with a
@@ -539,7 +539,7 @@ export function armReach(eye, unionBounds) {
  * left arm is lit inside-out - dark where the right arm is bright - and
  * that is a lighting bug that reads as "the mesh is wrong" rather than
  * as "the mirror is wrong". drawCharacter disables back-face culling
- * (renderer.js:1119), so the winding costs nothing else.
+ * (renderer.js:1124), so the winding costs nothing else.
  */
 export function packFpArm(pieces, out = null) {
   let tris = 0;
@@ -4644,7 +4644,7 @@ export function createFpArm() {
      * (chirality-true by MW-D23's measurement) already shows it.
      * Winding is safe: drawCharacter disables CULL_FACE.
      */
-    drawThird(canvas, { proj, view, eye, feet, yaw }) {
+    drawThird(canvas, { proj, view, eye, feet, yaw, hitFlash = 0 }) {
       if (!thirdActive() || !canvas || !feet) return false;
       const t = thirdBuilt;
       const u = 1 / MW_UNITS_PER_METER;
@@ -4700,7 +4700,7 @@ export function createFpArm() {
       // MW-D43b: the body is a Morrowind MESH, so it takes the arm's
       // dial, not the sprite standard - the same fix MW-D43 made for
       // the first-person pass and missed here.
-      drawRigSpriteBox(renderer, canvas, thirdMesh, model, { center, halfW, halfH, anchor }, proj, view, eye, MW_ARM_PIXEL);
+      drawRigSpriteBox(renderer, canvas, thirdMesh, model, { center, halfW, halfH, anchor, hitFlash }, proj, view, eye, MW_ARM_PIXEL);   // HITFLASH1: a struck peer's body flashes
       return true;
     },
 

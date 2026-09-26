@@ -50,6 +50,7 @@
  * @property {number|null} [frame]                    FA1: null for a still flat, a frame INDEX for an animated one, folded into the texture key
  * @property {number} [sway]                          WIND3: this batch's share of the wind's lean - the flora have one, nothing else does
  * @property {object|null} [conceal]                  ECV1: the concealment visual, which moves the batch into the blended pass
+ * @property {number} [hitFlash]                     HITFLASH1: a struck body's red, 0..1 - read by both billboard shaders, over any concealment
  * @property {Float32Array} [bounds]                  EL5: the sphere [cx, cy, cz, r] about the origin the shadow and air replays cull by
  * @property {number} [_quads]                        BLOOD1b: how many quads the buffer holds, so `moveBillboardBatch` cannot write past it
  * @property {boolean} [_dyn]                         BLOOD1b: born DYNAMIC_DRAW, because its centres move every frame

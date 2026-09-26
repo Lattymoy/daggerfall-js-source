@@ -27,6 +27,7 @@
 // them - a beast is never nothing. (DISC23-B's walkers leave a beast to this layer: `pose.wb` skips them.)
 import { orientationFor, frameCount, frameTime, chooseTable, speedMod, LYCAN_TICK, meleeAnimTickTime, RANGED_TICK, SPELL_TICK } from '../player/eotbBillboard.js';
 import { getMeleeWeaponAnimTime } from '../characters/weaponStates.js';
+import { EOTB_FOOT_SET_COUNT } from '../player/classSkins.js';   // PEERFX3: a class skin is a set past the mod's
 import { spriteFor, eotbSpriteUrl, spriteSize, spriteOffset, flipRows, worldOrderColors } from '../player/eotbSprite.js';
 import { decodePng } from '../systems/textureReplacement.js';
 import { POSE_RIDE } from './wire.js';
@@ -128,6 +129,7 @@ function figureLayer(art) {
     figs, drop, place,
     sweep(seen) { for (const id of [...figs.keys()]) if (!seen.has(id)) drop(id); },
     isDrawn: (id) => !!figs.get(id)?.batch,
+    batchOf: (id) => figs.get(id)?.batch ?? null,   // PEERFX3: the one sprite a hurt flash tints
     heightOf: (id) => { const r = figs.get(id); return r?.batch && r.size && r.xml ? r.size.h + r.xml.y / r.xml.scale : 0; },
     batches: () => [...figs.values()].map((r) => r.batch).filter(Boolean),
     offsetAll(offset) {
@@ -206,6 +208,7 @@ export function createPeerRiders({ renderer = null, urlFor = eotbSpriteUrl, deco
      *  layers stand nothing for them. AUDIT RIDE: a rider whose art is not up yet (or failed) is not drawn, so it keeps
      *  its doll or body - never nothing at all; PR-WW1: a beast likewise keeps DISC12's enemy sprite (remotePlayers). */
     isRiding: layer.isDrawn,
+    batchOf: layer.batchOf,   // PEERFX3
     /** The name tag's height over a rider's feet (0: not drawn) - remotePlayers' `bodyHeight` hand-off: the sprite's
      *  own top this frame (its size over the feet plus EOTB's y offset), as a body's head is its own. */
     heightOf: layer.heightOf,
@@ -270,9 +273,9 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
    * One frame: `peers`, `toScene`, `eye`, `right` and `dt` as the riders' sync; `skip(id)` a peer another layer
    * already stands (the viewer's Morrowind body).
    * @param {Array<any>} peers @param {(p: any) => number[]} toScene
-   * @param {{eye?: number[]|Float32Array|null, right?: number[], dt?: number, skip?: (id: string) => boolean}} [opts]
+   * @param {{eye?: number[]|Float32Array|null, right?: number[], dt?: number, skip?: (id: string) => boolean, hurt?: (id: string) => boolean}} [opts]
    */
-  function sync(peers, toScene, { eye = null, right = [1, 0, 0], dt = 0, skip = () => false } = {}) {
+  function sync(peers, toScene, { eye = null, right = [1, 0, 0], dt = 0, skip = () => false, hurt = () => false } = {}) {
     const on = enabled();
     const seen = new Set();
     lit.length = 0;
@@ -310,7 +313,11 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
       }
       const feet = toScene(pose);
       const view = viewOf(pose.yaw, feet, eye);
-      const s = spriteFor(r.table, view, r.frame, { onFoot: set });
+      // PEERFX3: A CLASS SKIN STRUCK SHOWS ITS HURT POSE for a moment - Daggerfall's own one-frame flinch (records
+      // 10-14, the table class skins read for Death, player/classSkins.js). Eye Of The Beholder's sets carry no hurt
+      // table (their Death is the fall), so they flinch by the red flash alone.
+      const flinch = set >= EOTB_FOOT_SET_COUNT && hurt(peer.id);
+      const s = spriteFor(flinch ? 'Death' : r.table, view, flinch ? 0 : r.frame, { onFoot: set });
       if (!s) continue;
       layer.place(r, s, feet, right, { riding: false });
       hangLantern(r, pose, feet, view, eye, right, step, ft);
@@ -356,6 +363,7 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
     /** Whether a peer stands as their chosen sprite this frame - the class sprite and the doll stand nothing for them.
      *  Not until the art is up: a walker still loading keeps what stood before. */
     isWalking: layer.isDrawn,
+    batchOf: layer.batchOf,   // PEERFX3
     heightOf: layer.heightOf,
     batches: layer.batches,
     drawLanterns,   // HT-WAIST-BACK

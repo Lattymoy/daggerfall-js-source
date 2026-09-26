@@ -344,7 +344,7 @@ test('PR-BOW1b: the wiring, by source - poseAssembly folds through foldPieceBoun
     assert.match(rd(host), /mwViewDrawBody\(canvas, \{ proj, view, eye(: mwv\.eye)?, feet: player\.bodyFeetAt\(\), yaw: cam\.yaw \}\)/, `${host} draws the body through mwView`);
   }
   assert.match(rd('src/player/mwView.js'), /return fpArm\.drawThird\(canvas, \{ proj, view, eye, feet, yaw \}\);/);
-  assert.match(rd('src/net/peerBodies.js'), /b\.rig\.drawThird\(canvas, \{ proj, view, eye, feet: b\.feet, yaw: b\.yaw \}\)/);
+  assert.match(rd('src/net/peerBodies.js'), /b\.rig\.drawThird\(canvas, \{ proj, view, eye, feet: b\.feet, yaw: b\.yaw, hitFlash: flashOf \? flashOf\(b\.id\) : 0 \}\)/);
   const page = rd('bible/01-Overview/Field-Bugs-2026-09-24.md');
   const section = page.slice(page.indexOf('## PR-BOW1:'));
   assert.ok(page.indexOf('## PR-BOW1:') > page.indexOf('## PR-WW1:'), 'the record is appended after PR-WW1\'s');

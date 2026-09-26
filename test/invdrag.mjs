@@ -25,6 +25,7 @@ export function fakeDom({ w = 1280, h = 800 } = {}) {
         remove: (...c) => { const s = new Set(n.className.split(/\s+/).filter(Boolean)); for (const x of c) s.delete(x); n.className = [...s].join(' '); },
         contains: (c) => n.className.split(/\s+/).includes(c),
         toggle: (c, on) => (on ? n.classList.add(c) : n.classList.remove(c)),
+        replace: (a, b) => { if (!n.classList.contains(a)) return false; n.classList.remove(a); n.classList.add(b); return true; },   // PLUS9: the Plus pack's empty tab swaps its class
       },
       append(...cs) { for (const c of cs) { if (c == null) continue; c.parent = n; n.children.push(c); } },
       appendChild(c) { n.append(c); return c; },

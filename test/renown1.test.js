@@ -277,7 +277,7 @@ test('RENOWN1 the wire: `badged` stamps `lv` beside the badge only within the bo
   assert.deepEqual(parseClient('{"t":"renown","order":"v1.a.b"}', { hasHello: false }), { error: 'renown before hello' });
   assert.deepEqual(parseClient('{"t":"renown"}', { hasHello: true }), { error: 'bad renown' });
   assert.deepEqual(parseClient(JSON.stringify({ t: 'renown', order: 'x'.repeat(1025) }), { hasHello: true }), { error: 'bad renown' });
-  assert.equal(RELAY_VERSION, 'world113');   // WB3 and AUDIT WB moved it on (world113 - world110 and world111 on their branch); PARTY-TRAVEL before them (world112); RENOWN1 was world111 - world108 on the branch; main's HT-WAIST-NET, PROFILE2/SKIN2 and EVENT1 took world108-110
+  assert.equal(RELAY_VERSION, 'world114');   // WB3 and AUDIT WB moved it on (world113 - world110 and world111 on their branch); PARTY-TRAVEL before them (world112); RENOWN1 was world111 - world108 on the branch; main's HT-WAIST-NET, PROFILE2/SKIN2 and EVENT1 took world108-110
   assert.equal(RENOWN_RELAY_MIN, 111);
   assert.equal(relaySupportsRenown('world111'), true);
   assert.equal(relaySupportsRenown('world110'), false);

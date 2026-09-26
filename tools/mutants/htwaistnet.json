@@ -11,8 +11,8 @@
   {
     "name": "HTWN-edge-waits-for-the-heartbeat",
     "file": "src/net/wire.js",
-    "old": "    || (a.hl | 0) !== (b.hl | 0);",
-    "new": "    || false;",
+    "old": "    || (a.hl | 0) !== (b.hl | 0)   // HT-WAIST-NET:",
+    "new": "    || false   // HT-WAIST-NET:",
     "tests": [
       "test/htwaistnet_peers.test.js"
     ]

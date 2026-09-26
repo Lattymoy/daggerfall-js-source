@@ -38,7 +38,7 @@ import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
 import { isHearthFlat, HEARTH_NEAR } from '../systems/survival/hearth.js';   // HEARTH1: which of those lanterns is a fire you could cook on, and how far one can matter
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries
-import { playerTorchLight, waistLanternPoseBit } from '../systems/playerTorch.js';   // T1; HT-WAIST-NET: the pose's lantern at the waist
+import { playerTorchLight, waistLanternPoseBit, torchPoseByte, peerTorchLight } from '../systems/playerTorch.js';   // T1; HT-WAIST-NET: the pose's lantern at the waist
 import { thunderlockMuzzleLight } from '../systems/thunderlock.js';   // FIELD-GUN13: the muzzle flash is a light the player carries, the torch's own shape
 import { applyClimate, getTerrainGroundArchive, groundIsSnowy, getNatureArchive, SEASON, climateSeasonFromMinutes, INTERIOR_SEASON } from '../world/climateSwaps.js';   // A1: the season is the calendar's, and an interior's is Summer whatever the date
 import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
@@ -194,7 +194,10 @@ import { locationCompassDirection, buildingCompassDirection, findFactionByTypeAn
 import { seasonValue, SEASONS, MINUTES_PER_DAY, dateFromClassicMinutes, dateTimeString, midDateTimeString, isDayFromMinutes } from '../systems/gameDate.js';   // AUDIT 23 (wts-1); Q4-v: the notebook's header shapes
 import { regionPriceAdjustment, worldPriceTiltOf, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from '../systems/shopStock.js';   // Q4-v: CreateGold's regional term (the shops' own producer); U41: Items.Contains(Transportation, ...)
 import { getNameBankOfRegion, getRandomFullName } from '../characters/nameHelper.js';   // AUDIT 23 (characters-5); AUDIT 58: MacroHelper.GetRandomFullName, one home
-import { createHitEffects } from './hitEffects.js';
+import { createHitEffects, setSplashObserver } from './hitEffects.js';
+import { noteMyBlow, noteMyHurt, isHurtClip, poseFx, createPeerFxPlayer } from '../net/peerFx.js';   // PEERFX1: the others see and hear my blows, and hear me struck
+import { hitFlashStrength, setBatchHitFlash, HIT_FLASH_S } from '../systems/hitFlash.js';   // HITFLASH1: a struck body's red - the peers' curve is the foes'
+import { setOneShotObserver } from '../systems/audio.js';   // PEERFX1
 import { createTownScratch, createPersonTextureKeys } from './townScratch.js';   // PERF-TOWN1: the town loop's per-frame seats, and the memoised texture key
 import { createDroppedTorches } from './droppedTorches.js';
 import { createCamps } from './camps.js';   // SURV3: the camps this host stands - the tent and the fire
@@ -264,6 +267,7 @@ import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
 import { buildingDataForDoor, locationBuildings, BUILDING_KEY_0 } from '../systems/talkTopics.js';   // E2: the shop identity   // H2: every building, with its key   // AUDIT 58: BuildingDirectory.buildingKey0, the key both ship interiors are filed under
 import { hitSoundFor, swingSoundFor, ENEMY_HIT_VOLUME, PLAYER_HIT_VOLUME } from '../systems/soundClips.js';   // AUDIT 58: DFU's two hit volumes
 import { isInvisible, entityIsParalyzed } from '../systems/effects.js';   // AUDIT 39: the S19 gate is host-agnostic in DFU
+import { hasActiveEffect } from '../systems/effects.js';   // PEERLIGHT2: my Light spell, for the pose
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
 import { boxNearPath, pointNearPath, wodSiteClear, UNITS_PER_METRE, WOD_PIECE_ROAD_CLEAR, CAMP_ROAD_CLEAR_M } from '../world/roadClearance.js';   // ROADS-CLEAR: WoD sites and pieces, and the camps, off the painted roads
 import { StreamingWorldState, TerrainSlots, worldCoordToMapPixel, locationWorldRect, isInLocationRect, mapPixelToWorldCoords, SCENE_MAP_RATIO, nearestFirstFrom } from '../world/streamingWorld.js';   // HCC: StreamingWorld.SceneMapRatio; AUDIT BRANCH (WoD) L1-3: DFU's terrain array; AUDIT 68 S22: the load list's one order
@@ -370,6 +374,7 @@ import { allyCastSpell, allyCastable, allyReachFor, allyCastTargetLine, allyCast
 import { createTradeManager, TRADE_RANGE_M, inTradeRange, tradeDistance } from '../net/tradeSession.js';   // TRADE1: the player-to-player trade's state machine (pure)
 import { createTradePack } from '../systems/tradePack.js';   // TRADE1: the trade's door into the real pack
 import { createPlayerTradeWindow, playerTradeReady } from '../ui/playerTradeDoor.js';   // TRADE1: the enhanced window two players share
+import { createPeerMenuReader } from '../systems/peerMenuBind.js';   // PEERMENU1: the player menu opens on a bind (hold E / hold A)
 import { createSocialMenu, socialPlaqueRows, plaqueRowFor } from '../ui/socialMenu.js';   // SOC5: the F-menu over that body - Add friend, Invite to party
 import { createProfileWindow, profileView, profileDuelLine, profileRenown, profileGateLine } from '../ui/profileWindow.js';   // INSPECT1: the profile the F-menu's Inspect opens
 import { createDuelManager, DUEL_RADIUS_M, DUEL_RANGE_M, DUEL_COUNTDOWN_MS, ringCentre, validRingRecord } from '../net/duelSession.js';   // DUEL1: the duel's state machine (pure)
@@ -4974,7 +4979,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2511 mounts the same one, gated on
+  // and dungeonContext.js:2512 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:6116
@@ -5063,11 +5068,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:436-441) never looks the record up in `foes`, and
+    // (exteriorFoes.js:437-442) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
-    // got exactly what removeGuard (cityGuards.js:1485-1503) gives it -
+    // got exactly what removeGuard (cityGuards.js:1488-1506) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
-    // (cityGuards.js:941) and spliced out at the end of it (:1129).
+    // (cityGuards.js:942) and spliced out at the end of it (:1132).
     // Routing by POOL MEMBERSHIP is an OWNERSHIP fix: each pool owns the
     // teardown of its own records so the two can diverge safely, and
     // removeFoe's `questBehaviour?.notifyDestroyed()` (exteriorFoes.js
@@ -7209,7 +7214,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:6467), so exterior mode and a
+    // composer, dungeonContext.js:6471), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -8539,7 +8544,12 @@ export async function bootWorld(canvas, renderer, params, status) {
   const pointerSurfaces = new Set();
   const surfaceOpen = (name) => { pointerSurfaces.add(name); setCursorActive(false); releaseLook(); };
   const surfaceClose = (name) => { pointerSurfaces.delete(name); if (!pointerSurfaces.size && !gamePaused()) requestLook(canvas); };
+  let peerMenuReader = null;   // PEERMENU1: assigned beside the peers it reads (below); a key before then is not its
+  /** PEERMENU1: the peer whose menu the bind opened (their verbs are on the plaque), or null - declared up here so the
+   *  plaque's namer (below) never reads it before it exists. */
+  let peerMenuFor = null;
   addEventListener('keydown', (e) => {
+    if (peerMenuReader && !isTextEntryTarget(e.target)) peerMenuReader.down(e.code, e.repeat);   // PEERMENU1: hears the key, never eats it (a tap of E still interacts)
     // FIX-E: QUICKLOAD WORKS FROM UNDER ANY OVERLAY - the death screen's
     // own "F11 load" hint, and the one arm ui/input.js's routeKey lets
     // through its overlay gate (the dungeon and interior hosts). This
@@ -8823,7 +8833,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // movement Set since the first host and never told the open window
   // anything; DFU's buttons hear both edges (Button.cs:79-92) and the
   // travel popup's EXIT is the deferral that needs the release.
-  addEventListener('keyup', (e) => { keys.delete(e.code); noteKeyUp(latch.edge, e.code); if (e.code === 'Escape') backButtonHeld = false; if (e.code === 'AltLeft') e.preventDefault(); townTalk.keyup(e); modes?.keyup?.(e); });   // ROAD-E E1: the up seam reaches BOTH slots this host feeds - the outer overlay and the mode machine's
+  addEventListener('keyup', (e) => { keys.delete(e.code); noteKeyUp(latch.edge, e.code); peerMenuReader?.up(e.code); if (e.code === 'Escape') backButtonHeld = false; if (e.code === 'AltLeft') e.preventDefault(); townTalk.keyup(e); modes?.keyup?.(e); });   // ROAD-E E1: the up seam reaches BOTH slots this host feeds - the outer overlay and the mode machine's
   // U45: Actions.ActivateCursor (Enter) - PlayerMouseLook.cursorActive,
   // bound since I1 with no consumer, and the flag the large HUD's
   // IsLargeHUDInteractable actually is.
@@ -10880,6 +10890,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       // that received nothing. A crash was bad; a silent soft-lock is worse. `applyDungeonFoes` already answers.
       if (modes?.applyDungeonFoes?.(id, data) && modes?.mode === 'dungeon') _foesInAt = performance.now();
     };
+    // PEERFX1: my weapon blows (a splash marked fromPlayer - melee, arrows, never a spell) and the ring of a blow on
+    // me ride the pose to the players who see me; every splash drawn here is the dedupe for theirs
+    setSplashObserver((bloodIndex, pos, hit) => { peerFxPlayer.splashed(pos); if (hit?.fromPlayer) noteMyBlow(pos, bloodIndex, hit, campToWire); });
+    setOneShotObserver((clip, volume) => { if (isHurtClip(clip, volume, PLAYER_HIT_VOLUME)) noteMyHurt(peerFxHurtShare()); });
     online.onHit = (id, data) => { if (isCellRoom(online.room)) exteriorFoes.applyHit(id, data); else modes?.applyDungeonHit?.(id, data); };   // WORLD6b: a peer's blow on my foe in the cell
     // WORLD6b: the cell's net into the encounter pool - who I am, the room the socket is in, a blow on a puppet to its
     // owner, and the two frames: the world frame's coordinates ride the wire (the pose's own law, AUDIT ONLINE D7),
@@ -13135,6 +13149,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   const peerHoverName = (key) => {
     const id = peerIdOfKey(key);
     if (!id) return null;
+    // PEERMENU1b (the player: "there should be NO popup when hovering over a player"): NOTHING ON THE LOOK. The plaque
+    // stays shut over a player until their menu is opened on them (hold E / hold A - openPeerMenu); only then does it
+    // stand, with their name and their verbs.
+    if (peerMenuFor !== id) return null;
     const name = peerName(id);
     if (!name) return null;
     const badge = online?.badgeOf?.(id) ?? null;
@@ -13153,7 +13171,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const pick = reach !== null ? (underground ? modes?.dungeonCtx?.allyInReach?.(cam.pos, socialFwd(), reach) : magic?.allyInReach?.(cam.pos, socialFwd(), reach)) ?? null : null;
     const cast = pick?.id === id ? allyCastPlaqueLine(sp.name, name) : null;
     const renown = online?.renownOf?.(id) ?? null;   // RENOWN1: their Renown, boxed left of the name as over their head (the plaque draws the box)
-    return { title: marks ? `${name} ${marks}` : name, renown, subs: [cast, peerRelationText(acts)].filter(Boolean), actions: acts ? socialPlaqueRows(id, acts) : [], actionsUnlit: true };
+    return { title: marks ? `${name} ${marks}` : name, renown, subs: [cast, peerRelationText(acts)].filter(Boolean), actions: acts ? socialPlaqueRows(id, acts) : [], actionsUnlit: !acts };   // PEERMENU1: open on this peer (the gate above) - the verbs, the first lit
   };
   /** ALLY-CAST: THE PARTY MATE UNDER THE CROSSHAIR - the F key's own pick (player/socialPick.js pickPeerInFront over
    *  peersNear(), the ray the social menu casts) at the reach the spell's range type asks (systems/allyCast.js), a
@@ -13336,9 +13354,132 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (peerInSight(eye, dir)?.peer?.id !== id) return false;
     const row = plaqueRowFor(sel.id, id, peerActsFor(id));
     if (!row) return false;
-    if (row.act) peerAct?.(row.act);
+    if (row.act) { peerAct?.(row.act); peerMenuFor = null; }   // PEERMENU1: a verb sent puts the menu away
     else peerNote?.(row.refusal);
     return true;
+  };
+  /** PEERFX1: THE OTHERS' BLOWS AND HURTS, played here - a peer's landed weapon blow rings and splashes at the point
+   *  it struck (unless the foe's owner here already drew it), a peer struck rings at their body as my own blow does. */
+  /** PEERFX3: when each peer was last struck (seconds) - the red flash and a class skin's hurt pose read it. */
+  const peerHurtAt = new Map();
+  const PEER_FLINCH_S = 0.25;   // HITFLASH1: the flash's own length is hitFlash.js's HIT_FLASH_S (0.12 s was about seven frames)
+  const peerHurtAge = (id) => { const t = peerHurtAt.get(id); return t == null ? Infinity : performance.now() / 1000 - t; };
+  /** HITFLASH1: a peer's flash now (0..1) - the foes' curve, one home. */
+  const peerFlashOf = (id) => hitFlashStrength(peerHurtAge(id));
+  /** PEERFX3 / HITFLASH1: the flash on whichever layer draws the peer (doll, class body, walker, rider) - its own
+   *  batch value now, not the concealed phase: the Enhanced Lighting lane never drew mode 5, and a flash no longer
+   *  clears a concealment the layer set. A Morrowind body takes it through its sprite quad (drawPeerBodies). */
+  const peerFlashFrame = () => {
+    for (const id of [...peerHurtAt.keys()]) {
+      const age = peerHurtAge(id);
+      const k = hitFlashStrength(age);
+      for (const layer of [remotePlayers, peerRiders, peerWalkers]) setBatchHitFlash(layer?.batchOf?.(id), k);
+      if (age > PEER_FLINCH_S && age > HIT_FLASH_S) peerHurtAt.delete(id);
+    }
+  };
+  const peerFxPlayer = createPeerFxPlayer({
+    toScene: (p) => onlineToScene(p),
+    play: {
+      flinch: (id) => { peerHurtAt.set(id, performance.now() / 1000); },   // PEERFX3
+      blow: ({ at, bloodIndex, share }) => {
+        audio.play3d(hitSoundFor({}), at, ENEMY_HIT_VOLUME, { maxDistance: 16 });
+        (modes?.liveHitEffects?.() ?? hitEffects).showBloodSplash(bloodIndex, at, null, bloodHit(share, { maxHealth: 1 }));   // BLOOD1b: the one shape - the share over a whole of 1
+      },
+      // PEERFX2: a peer struck - the same ring and splash a blow on a foe gets, on their body
+      hurt: ({ at, share }) => {
+        audio.play3d(hitSoundFor({}), at, ENEMY_HIT_VOLUME, { maxDistance: 16 });
+        (modes?.liveHitEffects?.() ?? hitEffects).showBloodSplash(0, at, null, bloodHit(share, { maxHealth: 1 }));   // BLOOD1b: the one shape - the share over a whole of 1
+      },
+    },
+  });
+  // PEERFX2: what a blow on me cost, as a share of my health - the drop since the last frame (the ring plays inside the
+  // blow, before or after the health moves, so the larger of the two readings), or unknown
+  let _peerFxHp = null;
+  const peerFxHurtShare = () => {
+    const max = playerEntity?.maxHealth, now = playerEntity?.health;
+    if (!(max > 0) || !Number.isFinite(now) || !Number.isFinite(_peerFxHp)) return null;
+    const lost = _peerFxHp - now;
+    return lost > 0 ? lost / max : null;
+  };
+  /** PEERLIGHT1: THE OTHERS' TORCHES - a point light at the hand of each player I can see whose pose says a light
+   *  burns (systems/playerTorch.js peerTorchLight), the nearest PEER_LIGHTS_MAX within PEER_LIGHT_RANGE of my eye.
+   *  They join my own torch at the head of the light list (withPlayerLights), so the scene's lamps give way first. */
+  const PEER_LIGHTS_MAX = 4, PEER_LIGHT_RANGE = 64;
+  /** PEERLIGHT2 (2026-09-26, the player: "can the candle spell of mages also make light for others?"): THE OTHERS'
+   *  LIGHT SPELLS - each visible player whose pose says `lc` gets the candle mine is (sprite, wobble and light) hung
+   *  before them off their own look (the pose's yaw/pitch ARE their camera, socialFwd's formula), in the live mode's
+   *  engine; the other engine is put out, so a candle never stands in the world I left. The nearest PEER_LIGHTS_MAX. */
+  let _peerCandleLights = [];
+  const peerCandlesFrame = (list, dt) => {
+    const want = [];
+    if (online && cam?.pos) {
+      for (const p of list ?? []) {
+        const s = p?.shown;
+        if (!s?.lc || s.dd || !online.visible(p)) continue;
+        const feet = onlineToScene(s);
+        if (!feet) continue;
+        const cp = Math.cos(s.pitch || 0);
+        const d = Math.hypot(feet[0] - cam.pos[0], feet[1] - cam.pos[1], feet[2] - cam.pos[2]);
+        if (d > PEER_LIGHT_RANGE + 15) continue;
+        want.push({ id: p.id, feet, height: peerBodies?.heightOf(p.id) || CAPSULE_HEIGHT, forward: [Math.sin(s.yaw) * cp, Math.sin(s.pitch || 0), Math.cos(s.yaw) * cp], _d: d });
+      }
+      if (want.length > PEER_LIGHTS_MAX) { want.sort((a, b) => a._d - b._d); want.length = PEER_LIGHTS_MAX; }
+    }
+    const dc = modes?.mode === 'dungeon' ? modes?.dungeonCtx : null;
+    try {
+      if (dc?.peerCandles) { magic.peerCandles?.([], dt); _peerCandleLights = dc.peerCandles(want, dt) ?? []; }
+      else _peerCandleLights = magic.peerCandles?.(want, dt) ?? [];
+    } catch (err) { _peerCandleLights = []; console.warn(`[online] a peer's candle threw: ${err?.message ?? err}`); }
+  };
+  const _peerLights = [];
+  const _peerLightPhase = new Map();
+  const peerTorchLights = () => {
+    _peerLights.length = 0;
+    if (!online || !cam?.pos) return _peerLights;
+    const now = performance.now() / 1000;
+    for (const p of online.peers.values()) {
+      if (!(p?.shown?.lt > 1) || !online.visible(p) || p.shown.dd) continue;
+      const feet = onlineToScene(p.shown);
+      if (!feet) continue;
+      let ph = _peerLightPhase.get(p.id);
+      if (ph == null) { ph = Math.random() * 6.283; _peerLightPhase.set(p.id, ph); }
+      const l = peerTorchLight(p.shown, feet, now + ph);
+      if (!l) continue;
+      const d = Math.hypot(l.x - cam.pos[0], l.y - cam.pos[1], l.z - cam.pos[2]);
+      if (d > PEER_LIGHT_RANGE + l.range) continue;
+      l._d = d;
+      _peerLights.push(l);
+    }
+    if (_peerLights.length > PEER_LIGHTS_MAX) { _peerLights.sort((a, b) => a._d - b._d); _peerLights.length = PEER_LIGHTS_MAX; }
+    for (const l of _peerCandleLights) _peerLights.push(l);   // PEERLIGHT2: and their Light spells' candles
+    if (_peerLightPhase.size > 64) _peerLightPhase.clear();
+    return _peerLights;
+  };
+  const peerFxFrame = () => {
+    _peerFxHp = playerEntity?.health ?? null;
+    if (!online) return;
+    for (const p of online.peers.values()) {
+      if (!p?.shown || !online.visible(p)) { peerFxPlayer.forget(p?.id); continue; }
+      peerFxPlayer.update(p.id, p.shown, onlineToScene(p.shown), peerBodies?.heightOf?.(p.id) || 0);
+    }
+    peerFxPlayer.frame();
+  };
+  /** PEERMENU1: THE BIND, PRESSED. The player under the crosshair (the plaque's own reach and wall rule) gets their
+   *  menu - on the plaque where it stands, else the F-card; the same player again puts it away. Nobody there: nothing. */
+  const openPeerMenu = () => {
+    if (!social || gamePaused() || !socialMenuCanOpen()) return false;
+    const hit = peerInSight(cam.pos, socialFwd());
+    if (!hit) return false;
+    const id = hit.peer.id;
+    if (worldPlaqueOn()) { peerMenuFor = peerMenuFor === id ? null : id; return true; }
+    if (socialMenu?.isOpen()) { socialMenu.hide(); return true; }
+    return socialMenu?.show({ name: peerName(id) ?? 'Someone', peerId: id, actions: peerActsFor(id) }) === true;
+  };
+  peerMenuReader = createPeerMenuReader({ onFire: () => openPeerMenu(), enabled: () => !!social && !gamePaused() });
+  /** PEERMENU1: once a frame - a hold's timer, and the menu put away when the crosshair leaves its player. */
+  const peerMenuFrame = () => {
+    peerMenuReader?.frame();
+    if (peerMenuFor && (!social || peerInSight(cam.pos, socialFwd())?.peer?.id !== peerMenuFor)) peerMenuFor = null;
   };
   const socialInteract = () => {
     if (!social) return false;
@@ -13351,6 +13492,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // (the tap's own ray), the classic skin, and a player the plaque does not name because a nearer thing won its race.
     if (worldPlaqueOn()) {
       if (plaquePeerAct()) return true;
+      // PEERMENU1: F on a player whose menu is not up opens it, as the bind does
+      const inFront = peerInSight(cam.pos, socialFwd());
+      if (inFront && peerMenuFor !== inFront.peer.id) { peerMenuFor = inFront.peer.id; return true; }
       const lit = plaqueActionSelection();
       if (lit && lit.id == null && peerIdOfKey(lit.key) && plaqueLightFirst(lit.key)) return true;
     }
@@ -13369,6 +13513,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     mail?.poll();   // MAIL1: a look at the letterbox when one is due - before the dead return, as the chat's heartbeat is
     gateFrame();   // WB1: the Oblivion Gate's omen - its line when a new moment comes, before the dead return (the omen speaks to the dead too)
     renownTracker?.tick();   // RENOWN1: what this character earned, to the account service when a report is due
+    peerMenuFrame();   // PEERMENU1: the bind's hold timer
+    peerFxFrame();   // PEERFX1: the others' blows and hurts, played
     // AUDIT ONLINE D12: the dead broadcast nothing and see no one
     if (townTalk.overlay instanceof DeathScreen || modes?.deathUp?.()) {
       if (_deathWasOnline == null) _deathWasOnline = _onlineWorldSession();   // D-ONLINE1: the modal hosts' deaths (a dungeon's, a building's) are captured here, BEFORE the leave below clears online.room
@@ -13392,7 +13538,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         const rez = social?.acct ? rezFor(social.others(), social.acct, _rezSeen) : null;
         if (rez) { resurrectInPlace(rez); return; }
       }
-      peerBodies.destroy(); remotePlayers.sync([], onlineToScene); peerRiders?.destroy(); peerWalkers?.destroy(); return;   // AUDIT RIDE: and no rider stands frozen over it either
+      peerBodies.destroy(); remotePlayers.sync([], onlineToScene); peerRiders?.destroy(); peerWalkers?.destroy(); peerCandlesFrame([], dt); return;   // PEERLIGHT2: and no candle hangs over the dead; AUDIT RIDE: and no rider stands frozen over it either
     }   // AUDIT WORLD B6: the dungeon's and the building's death screens stand in the mode's slot   // AUDIT MWBODY B7: and no body stands frozen over the death screen
     _rezSeen = null;   // AUDIT CONTRIB A6: alive - the next death takes its own snapshot of what the party's poses say
     const mode = modes?.mode ?? 'exterior';   // audit24_wave37: guarded on the OBJECT above its own declaration (the frame runs after it)
@@ -13485,13 +13631,15 @@ export async function bootWorld(canvas, renderer, params, status) {
       lh: rig.playerWeapon.usingRightHand ? undefined : 1,
       wb: (() => { const l = liveLycanthropy(playerEntity); return l?.isTransformed ? (l.infectionType | 0) || undefined : undefined; })(),
       hl: waistLanternPoseBit(playerEntity.lightSource),   // HT-WAIST-NET: a lit lantern hung at the waist, so the others' Morrowind bodies hang it at the hip - absent otherwise, the wire's omission law
+      lc: hasActiveEffect(playerEntity, 'light') ? 1 : undefined,   // PEERLIGHT2: my Light spell burns, so the others hang its candle before me - absent otherwise
+      lt: torchPoseByte(playerEntity),   // PEERLIGHT1: my lit torch/lantern/candle, so it lights the others' world around me - absent while nothing burns
     };   // the wire's move bit: 1 walking, 2 running (the peers' bodies pick the clip off it)
     if (!key) { if (online.room) online.leave(); }   // AUDIT ONLINE D4: a place the host cannot name is no room, not the old one in the wrong frame
     // AUDIT WORLD2 C8: a world room's edge is never a churn - the hold delayed every handover and let one dungeon's stream land in another
     // AUDIT WORLD6b-iii(b) B1/B8: a cell crossing is joined the moment the cell is HELD (the halo's socket promotes in
     // place - the hold bought nothing but a 500 ms strip with no socket in the cell I stood in); otherwise the hold
     else if (key !== online.room) { if (!online.room || isWorldRoom(key) || isWorldRoom(online.room) || (isCellRoom(key) && online.inRoom(key)) || now - _onlineKeySince >= ROOM_HOLD_MS) { online.setLook(composeLook(playerEntity)); online.join(key, { ...pose, ...arm }); } }   // the look re-composed: the next room's hello carries the gear worn now (PROFILE2: through setLook, so a halo the join PROMOTES - no hello of its own - is told too)
-    else online.sendPose({ ...pose, ...arm });
+    else online.sendPose({ ...pose, ...arm, ...poseFx() });   // PEERFX1: and my landed blows and the blows I took
     // WB3b: THE COURT'S ROOM HEARS MY LEVEL CLAIM once per welcome (net/gateBrain.js - the health I bring into the fight
     // and the bucket I may deal from); a reconnect's welcome says it again, and the relay keeps my first
     if (gateLink && online.gateOk && isGateRoom(online.room) && online.welcomes !== _gateInFor && online.sendGate({ k: 'in', lv: Math.max(1, playerEntity.level | 0) })) _gateInFor = online.welcomes;
@@ -13533,6 +13681,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (isCellRoom(online.room)) { const ids = ownerIds(); if (ids) hcc.sweepOwners(ids, now, FOES_STALE_MS); }   // HCC-ONLINE: a peer's team goes as their puppets and camps do - the same memoised list, the same liveness   // PERF11: the same list   // SURV3: a peer's camps go as their puppets do - the same liveness, the same answer-gate   // AUDIT WORLD6b-iii(b) C3/B5: no answer (the socket not open) is not "nobody" - it pruned every owner while the halos kept feeding frames, a spawn-and-discard loop per frame   // AUDIT WORLD6b-ii C2: ONE liveness for the owner - the peers the hunt reads (visible: a pose, in range, inside the timeout) are the peers whose puppets stand
     hcc.pruneKept(isCellRoom(online.room) ? [online.room, ...online.haloRooms()] : [], now);   // HCC-PARK: a kept team is its CELL's - it stands while I hold that cell's socket (mine or a halo's), and its welcome brings it back
     const drawable = online.drawable();
+    peerCandlesFrame(drawable, dt);   // PEERLIGHT2: the others' Light spells - candle and light, in the live mode's engine
     peerCastVisuals(drawable);   // SPELLFX1: a peer's new cast, drawn once
     // RIDE (2026-09-23, Mac: "ensure over people see others riding on horses"): a peer in the saddle is drawn as the
     // rider FIRST, so the body and the doll below stand nothing for them and their name rides over the rider
@@ -13544,7 +13693,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     peerBodies.sync(afoot, onlineToScene, dt, player.pos, { priority: (id) => !!social?.isPartyPeer(id) });   // the nearest first, the far ones asleep; AUDIT PARTY8: a party mate before a stranger
     // DISC23-B: a peer on foot who stands in no Morrowind body here stands as the Eye Of The Beholder set they chose -
     // after the bodies (a Morrowind player's own choice for everyone they meet), before the class sprite and the doll
-    peerWalkers.sync(drawable, onlineToScene, { eye: cam.pos, right: [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)], dt, skip: (id) => peerBodies.heightOf(id) > 0 });
+    peerWalkers.sync(drawable, onlineToScene, { eye: cam.pos, right: [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)], dt, skip: (id) => peerBodies.heightOf(id) > 0, hurt: (id) => peerHurtAge(id) < PEER_FLINCH_S });   // PEERFX3: a class skin's hurt pose
     // PCORPSE1: a body heard in a room this scene has left for another KIND of space (a dungeon's local frame, the
     // street's world frame) is not this scene's to draw; one heard anywhere in the overworld's cells still is
     // PCORPSE3: a party member's body their party pose tells of, that the death pose never brought me (I was between
@@ -13563,6 +13712,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     if (online.room) remotePlayers.keepCorpses((r) => r === online.room || ((isWorldRoom(r) || isCellRoom(r)) && (isWorldRoom(online.room) || isCellRoom(online.room))));   // PCORPSE2: never judged while between rooms (a cell crossing's gap) - no room is not another space
     remotePlayers.sync(drawable, onlineToScene, { bodyHeight: (id) => peerRiders.heightOf(id) || peerBodies.heightOf(id) || peerWalkers.heightOf(id), dt, eye: player.pos, poseAgeMs: (p) => online.poseAgeMs(p) });   // 2026-09-17: dt drives the class-enemy billboard path's own animation clock; eye is the local player's own position, needed for mobileOrientation's facing calculation (see remotePlayers.js _syncMobilePeer)
+    peerFlashFrame();   // PEERFX3: after every layer has (re)made its sprites this frame
   };
   /** SPELLFX1 (the Unity co-op's RpcPlayPlayerSpellCastVisual): EVERY PEER'S CAST, DRAWN. The pose already carries the
    *  cast count, its range and now its element; a count that moves on a peer I could see last frame is one cast, and
@@ -13593,7 +13743,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     if (_castSeen.size > (online?.peers.size ?? 0) + 16) for (const [id, v] of _castSeen) if (v.frame !== _castFrame) _castSeen.delete(id);
   }
-  const drawPeerBodies = (proj, view, eye) => { if (peerBodies) peerBodies.draw(canvas, { proj, view, eye }); peerWalkers?.drawLanterns(); };   // HT-WAIST-BACK: the walkers' lanterns, each on its own tilted basis, beside the bodies - every mode's pass calls this after the player's own body (the exterior here, the dungeon and the interior through host.drawPeerBodies)
+  const drawPeerBodies = (proj, view, eye) => { if (peerBodies) peerBodies.draw(canvas, { proj, view, eye, flashOf: peerFlashOf }); peerWalkers?.drawLanterns(); };   // HT-WAIST-BACK: the walkers' lanterns, each on its own tilted basis, beside the bodies - every mode's pass calls this after the player's own body (the exterior here, the dungeon and the interior through host.drawPeerBodies)
   /** FONT1 (2026-09-16, Mac: "Especially the new online interfaces font use our enhanced font"): THE SOCKET'S OWN
    *  WORD, IN THE SKIN'S FACE. The online lane is the enhanced lane whole (systems/onlineLane.js), so this line -
    *  connecting, reconnecting, refused - was the one online surface still drawn in the classic bitmap font while
@@ -13708,7 +13858,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       : Number.isFinite(gateLink?.fellAt(g.day)) ? GATE_NO_TEXT['the gate is closing']
         : !gateAdmits(g.day, Date.now() + _sharedOffsetMs) ? GATE_TEXT.sealed : null),
     drawPeerNames: ({ proj, view, eye }) => drawPeerNames(proj, view, eye),
-    drawPeerBodies: ({ proj, view, eye }) => drawPeerBodies(proj, view, eye),   // MWBODY1: the others' bodies, after the player's own
+    drawPeerBodies: ({ proj, view, eye }) => drawPeerBodies(proj, view, eye),
+    peerLights: () => peerTorchLights(),   // PEERLIGHT1: the others' torches, for the dungeon's and the interior's light lists   // MWBODY1: the others' bodies, after the player's own
     // PEER-PLAQUE1: the plaque names another player in a building and underground too - the SAME pick and the SAME
     // words the street uses, over the mode's own eye (peersNear's feet are in whichever scene stands, onlineToScene)
     // AUDIT DROPS E3: the plaque's peer pick is the F KEY's OWN RAY in every mode (`cam.pos` and the same forward
@@ -14531,7 +14682,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     last = now;
     meterFor(renderer.gl)?.markCpu('online');   // PERF-CPU
     spoilsRecoverFrame();   // WB5: a boss's spoils no save holds, back to their character as it stands up - before it can save, online or not
-    if (onlineOn && playerSpawned) { if (!online) onlineStart(); onlineFrame(now, dt); } else { if (!onlineOn && modes?.gateArenaDay?.() != null) ejectFromCourt(COURT_TEXT.collapse); if (player.arena) player.arena = modes?.gateArenaDay?.() != null ? courtRing() : null; }   // DUEL1: no online frame, no duel's law to hold the body - the ring is the live duel's alone; WB3b: the court's is its floor's, and offline there is no court   // ONLINE1: the pose out, the peers in - after the look is paid, before the camera is read and any mode draws
+    if (onlineOn && playerSpawned) { if (!online) onlineStart(); onlineFrame(now, dt); } else { if (_peerCandleLights.length) peerCandlesFrame([], dt);   /* PEERLIGHT2: offline, no one's candle stays lit */ if (!onlineOn && modes?.gateArenaDay?.() != null) ejectFromCourt(COURT_TEXT.collapse); if (player.arena) player.arena = modes?.gateArenaDay?.() != null ? courtRing() : null; }   // DUEL1: no online frame, no duel's law to hold the body - the ring is the live duel's alone; WB3b: the court's is its floor's, and offline there is no court   // ONLINE1: the pose out, the peers in - after the look is paid, before the camera is read and any mode draws
     deadlandsAirFrame();   // WB6b: after the court's ways out have run, online or not - the frame it is gone is the frame its air falls silent
     meterFor(renderer.gl)?.markCpu('sim');   // PERF-CPU: everything between here and the next mark is the rest of the simulation
     lookGate(gamePaused());   // a window up frees the cursor; closing re-locks
@@ -15740,7 +15891,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       const wodSel = wodLit ? _wodSelect(n, _wodFill(n)) : null;   // WOD2: the lanterns and the mod's lights, one selection
       // DW-D: UnderwaterPresentationEffects.SuppressPlayerTorch - EnablePlayerTorch's light dark under the fog (the fuel burns on, the light is the only thing it takes)
       const lit = withPlayerLights(wodSel ? wodSel.data : nearestLights(_sceneLights, cam.pos, renderer.maxPointLights, worldLightAnimator.ranges, null, 0, n),   // EL1: the installed set's cap (16 classic, 48 on the lane); PERF-LIGHTS: `n` is how much of the pool is live
-        magic?.candleLight(), _dwFogP?.under ? null : playerTorchLight(playerEntity, player.feetAt(), cam.yaw), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...(gatePool?.lights() ?? []), ...camps.lights(), ...droppedTorches.lights());   // X11 candle; T1 torch; HT1 the dropped lights; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does
+        magic?.candleLight(), _dwFogP?.under ? null : playerTorchLight(playerEntity, player.feetAt(), cam.yaw), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...peerTorchLights(), ...(gatePool?.lights() ?? []), ...camps.lights(), ...droppedTorches.lights());   // PEERLIGHT1: the others' torches, right after my own hand lights   // X11 candle; T1 torch; HT1 the dropped lights; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does
       if (wodSel) _wodSetLights(lit, wodSel);
       else renderer.setPointLights(lit, CITY_LIGHT_COLOR_F32);
     } else {
@@ -15751,7 +15902,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // WOD2: ...and the mod's lights, which burn at every hour.
       const wodSel = wodLit ? _wodSelect(0, _wodFill(0)) : null;
       const lit = withPlayerLights(wodSel ? wodSel.data : new Float32Array(0),
-        magic?.candleLight(), _dwFogP?.under ? null : playerTorchLight(playerEntity, player.feetAt(), cam.yaw), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...(gatePool?.lights() ?? []), ...camps.lights(), ...droppedTorches.lights());   // HT1; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does
+        magic?.candleLight(), _dwFogP?.under ? null : playerTorchLight(playerEntity, player.feetAt(), cam.yaw), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...peerTorchLights(), ...(gatePool?.lights() ?? []), ...camps.lights(), ...droppedTorches.lights());   // PEERLIGHT1: the others' torches, right after my own hand lights   // HT1; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does
       if (wodSel) _wodSetLights(lit, wodSel);
       else renderer.setPointLights(lit, CITY_LIGHT_COLOR_F32);
     }
@@ -16498,11 +16649,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // AFTER the damage fork closes (:615), so a shaft that lost the
         // roll still enrages what it hit and wakes the area. ROAD-G G1
         // (review): the WATCH carries the pair now
-        // (cityGuards.js:697-702), so this seam ROUTES by pool exactly
+        // (cityGuards.js:698-703), so this seam ROUTES by pool exactly
         // as `dealDamage` above it does, instead of excluding the
         // guards - a zero-damage shaft into a pacified watchman has to
         // reach the same door the zero-damage SWING already reaches
-        // (cityGuards.js:1216). DFU makes no pool distinction:
+        // (cityGuards.js:1219). DFU makes no pool distinction:
         // AssignBowDamageToTarget's player arm (DaggerfallMissile.cs
         // :660-688) calls WeaponDamage, so :630 runs for the shaft as
         // for the swing.

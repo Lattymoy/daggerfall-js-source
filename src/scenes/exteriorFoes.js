@@ -64,6 +64,7 @@ import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39
 import { bindQuestFoeHost } from './questFoeHost.js';   // B1: quest foes ride this pool
 import { validSites, validSiteTags, WOD_CAMP_PUPPETS_MAX, WOD_SITES_MAX, WOD_AGE_MAX } from '../world/wodShared.js';   // WOD7: a World of Daggerfall camp's foes, shared
 import { combatVisualsOn, foeDraw, markConcealedHit } from '../systems/combatVisuals.js';   // ECV1: what the enhanced skin draws for a concealed foe
+import { foeHitFlash, setBatchHitFlash, puppetHurtStep } from '../systems/hitFlash.js';   // HITFLASH1
 
 // The port's allocation-owner guards (classic self-limits through the
 // 144-minute cadence; these keep a long session bounded).
@@ -1392,6 +1393,8 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const ecv = foeDraw(f, ecvOn, _ecvT);
       if (ecv.kind === 'hidden') continue;
       f.batch.conceal = ecv.kind === 'conceal' ? ecv.visual : null;
+      setBatchHitFlash(f.batch, foeHitFlash(f, performance.now() / 1000));   // HITFLASH1: a foe struck flashes red - any blow, mine, a peer's, or its owner's stream
+
       const o = f._mout;
       const rkey = `${o.record}#${o.frame}`;
       if (!renderer.textures.has(`${f.archive}_${rkey}`)) uploadRecordFrame(f.archive, o.record, o.frame);
@@ -1798,7 +1801,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
    *  the health (a drop is the hurt one-shot), the attack once per count (a joiner latches the count it arrives with
    *  and replays nothing), death through the puppet's own fall. */
   function applyPuppetRecord(f, r) {
-    const p = f._pup ?? (f._pup = { wire: null, yaw: f.ai.yaw, moving: false, hurt: false, strike: null, a: null, target: null, at: _now(), leap: false, c: null, cast: null, h: null });
+    const p = f._pup ?? (f._pup = { wire: null, yaw: f.ai.yaw, moving: false, hurt: false, hurtUntil: 0, strike: null, a: null, target: null, at: _now(), leap: false, c: null, cast: null, h: null });
     if (r.f) {
       // AUDIT WORLD6b-ii C1: a LEAP - farther since the last record than PUPPET_LEAP times the species' own speed could
       // carry it (plus a slack) - lands no blow until the next record walks it; a dropped frame's catch-up is inside the law
@@ -1874,7 +1877,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     }
     f.ai.yaw = p.yaw;
     f.ai.moving = p.moving || d2 > PUPPET_STILL * PUPPET_STILL;
-    f.ai.hurtKnock = p.hurt; p.hurt = false;
+    f.ai.hurtKnock = puppetHurtStep(p, f.mobile, performance.now() / 1000);   // HITFLASH1: held until the sprite can take it (a swing ate the one frame)
     if (p.strike != null) { edge = true; if (f.attack) f.attack.firedRanged = p.strike.kind === 'ranged'; f._pupBlowAt = p.strike.at; p.strike = null; }   // AUDIT WORLD6b-iii(a) A3: whom THIS swing is at rides to its damage frame
     return edge;
   }

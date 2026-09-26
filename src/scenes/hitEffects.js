@@ -35,7 +35,7 @@
 // A third has no port equivalent yet rather than being unported here:
 // EnemyAttack.cs:332 is `ApplyDamageToNonPlayer`, foe-vs-foe melee,
 // which the port's pools do not do (documented at enemyCasting.js:149
-// and dungeonContext.js:1482). When friendly fire lands, its splash is
+// and dungeonContext.js:1483). When friendly fire lands, its splash is
 // `showBloodSplash(targetBloodIndex, bloodCentre(...))`.
 
 import { FlatAnim, isAnimatedFlat, IMPACT_FPS, MISSILE_FPS } from '../render/flatAnimation.js';   // AUDIT 26 F033: ImpactBillboardFramesPerSecond   // FIELD-GUN14: a flying flat's own rate, which is the missile's
@@ -88,6 +88,12 @@ export function bloodCentre(feet, height) {
  * `tick(dt)` advances them and destroys the ones that have finished;
  * `batches()` hands the host what to draw, on the flats' axis.
  */
+/** PEERFX1: ONE OBSERVER OF EVERY BLOOD SPLASH, whichever host's pool drew it - the online layer (net/peerFx.js)
+ *  hears the player's own weapon blows here (a hit marked `fromPlayer`: melee, arrows, never a spell - no spell site
+ *  splashes) to tell the players who can see it, and every splash to know one was already drawn. Null offline. */
+let _splashObserver = null;
+export function setSplashObserver(fn) { _splashObserver = typeof fn === 'function' ? fn : null; }
+
 export function createHitEffects({
   renderer, getTexture, uploadRecordFrame, onSpawn = null, onRetire = null,
   // BLOOD1a: the mark pool, HANDED IN rather than built here.
@@ -222,6 +228,7 @@ export function createHitEffects({
      *  six rows DFU gives a 2 splash differently from everything else. */
     showBloodSplash: (bloodIndex, pos, facing = null, hit = null) => {
       const entry = spawn(bloodIndex ?? 0, pos, facing);
+      if (_splashObserver && pos) { try { _splashObserver(bloodIndex ?? 0, pos, hit); } catch (e) { console.warn('[hitEffects] splash observer:', e?.message ?? e); } }   // PEERFX1
       marks?.place?.(hit?.markIndex ?? bloodIndex, pos, hit);   // BLOOD1a: the splash plays, the mark stays   // BLOOD1 AUDIT 3: a site whose SPLASH index is not the foe's (the fall sites' literal 0) names the mark's own, so the bloodless gate holds
       return entry;
     },

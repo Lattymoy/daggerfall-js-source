@@ -42,6 +42,13 @@ import { requestIcon } from './textureCanvas.js';
 import { inventoryItemImage } from '../systems/itemTemplates.js';
 import { cursorActive } from '../player/pointerLock.js';   // HB1c: the freed mouse (Enter / FreeMouse)
 import { overlayOpen } from './enhancedOverlays.js';
+import { controllerLook } from '../player/lookFilter.js';   // PADPLUS4: the pad is the live device
+// PADPLUS1: THE CROSSBAR (Enhanced Plus) - the same bar, grown to sixteen and laid out as two sets under LB and RB
+import { HOTBAR_CAPACITY } from '../systems/quickslots.js';
+import { isEnhancedPlus } from '../systems/uiSkin.js';
+import { padFamily } from './padGlyphs.js';
+import { hdGlyphSvg, hdGlyphName } from './padGlyphsHD.js';
+import { registerCrossbar, plusCrossbarMode, crossbarCodeOf, CROSSBAR_SET, CROSSBAR_HOLD } from './plusPad.js';
 
 /** The pref and its two words (systems/features.js 'quickbar-style'). */
 export const HOTBAR_PREF = 'quickbarStyle';
@@ -79,17 +86,117 @@ let keysBound = false;
 let captionTimer = null;
 const iconKeys = [];     // per slot: the kind whose picture is drawn
 
+/** PADPLUS5: THE BAR TUCKS AWAY UNDER A WINDOW (Enhanced Plus). As a drop target it stood over the foot of every
+ *  window the whole time one was open - the crossbar's two sets cover a good part of the pack. Under Plus it is
+ *  hidden while a window is up and rises only while something is being DRAGGED: an item out of the pack (the pack
+ *  says so, setHotbarDragging) or a spell out of the book or a slot off the bar (this file's own drag). */
+let extDragging = false;
+export function setHotbarDragging(on) {
+  extDragging = !!on;
+  bar?.classList.toggle('dragging', extDragging || !!hbDrag?.moved);
+}
+
 /** HB1c (Discord, 2026-09-23: "when mouse mode is on you can drag and
  *  remove skills"): THE FREED MOUSE EDITS THE BAR IN PLAY. With the cursor
  *  out of the look and no window up, the sockets take the pointer: a drag
  *  moves a slot, a drag off the bar or a right-click clears it, and a
  *  plain click presses it the way its key would. With the look held the
  *  bar is pointer-transparent again, as the whole HUD is. */
-const mouseMode = () => !!bar && hotbarMode() && !lastHidden && !dropOwners.size && cursorActive() && !overlayOpen();
+const mouseMode = () => !!bar && hotbarMode() && !lastHidden && !dropOwners.size && cursorActive() && !overlayOpen()
+  && !controllerLook();   // PADPLUS4: with the pad in hand the bar is not the mouse's to edit - no edit hint, no pointer over it
 /** Can the sockets be dragged right now - under a window, or in mouse mode? */
 const editable = () => hotbarAcceptsDrops() || mouseMode();
-const HINT_DROP = 'Drag a weapon, potion, torch or spell onto a slot. Drag a slot off the bar to clear it.';
+const HINT_DROP = 'Drag a weapon, shield, potion, torch or spell onto a slot. Drag a slot off the bar to clear it.';
 const HINT_EDIT = 'Click a slot to use it. Drag to move it, drag it off the bar or right-click to clear it.';
+const HINT_XB = 'Drag onto a slot. In play, hold LB or RB and press the button the slot shows - the d-pad alone never uses a slot.';
+
+// ── PADPLUS1: THE CROSSBAR ────────────────────────────────────────
+/** Is the bar a crossbar right now: Enhanced Plus, the hotbar chosen, and the Plus card's Crossbar switch - Auto
+ *  (a pad is connected), On, or Off. Never throws. */
+/** PADPLUS5: under Plus the bar hides beneath windows until a drag. */
+const tuckUnderWindows = () => { try { return isEnhancedPlus(); } catch { return false; } };
+
+export function crossbarMode() {
+  try {
+    if (!isEnhancedPlus() || !hotbarMode()) return false;
+    const m = plusCrossbarMode();
+    return m === 'on' || (m === 'auto' && padFamily() != null);
+  } catch { return false; }
+}
+let xbOn = false;        // the layout the nodes stand in
+let xbFamily = null;     // the glyph family the badges were drawn in
+let xbWrap = null;       // the crossbar's own container
+let rowHold = null;      // slots 11-16 while the bar is a row
+const xbSets = [];       // per set: its section node
+/** Where each position of a set stands in its 3 x 3 cluster: [cluster, row, column]. */
+const XB_GRID = Object.freeze([['dpad', 1, 2], ['dpad', 3, 2], ['dpad', 2, 1], ['dpad', 2, 3],
+  ['face', 1, 2], ['face', 2, 3], ['face', 3, 2], ['face', 2, 1]]);
+function setActiveSet(set) {
+  if (!bar) return;
+  bar.dataset.xbset = set == null ? '' : String(set);
+}
+registerCrossbar({
+  inForce: () => !!bar && xbOn && crossbarMode() && !lastPaused && !dropOwners.size,
+  press: (i) => { if (i >= 0 && i < HOTBAR_CAPACITY) pressHotbar(i); },
+  setActive: setActiveSet,
+});
+function buildCrossbar() {
+  xbWrap = el('div', 'xb-wrap');
+  rowHold = el('div', 'xb-hold');
+  for (let set = 0; set < 2; set++) {
+    if (set) xbWrap.append(el('i', 'xb-sep'));
+    const sec = el('section', 'xb-set');
+    sec.dataset.set = String(set);
+    const head = el('div', 'xb-head');
+    const g = el('img', 'xb-headglyph'); g.alt = ''; g.draggable = false;
+    head.append(g, el('span', 'xb-headword', 'Hold'));
+    const body = el('div', 'xb-body');
+    const clusters = { dpad: el('div', 'xb-cluster xb-dpad'), face: el('div', 'xb-cluster xb-face') };
+    body.append(clusters.dpad, clusters.face);
+    sec.append(head, body);
+    sec._clusters = clusters; sec._glyph = g;
+    xbSets.push(sec);
+    xbWrap.append(sec);
+  }
+}
+/** Stand the sixteen nodes where the mode says: a row of ten, or two sets of eight. */
+function layout(on) {
+  if (!bar) return;
+  const row = bar.querySelector('.hb-row');
+  if (on) {
+    if (!xbWrap) buildCrossbar();
+    for (let i = 0; i < HOTBAR_CAPACITY; i++) {
+      const set = Math.floor(i / CROSSBAR_SET), [cl, r, c] = XB_GRID[i % CROSSBAR_SET];
+      const n = slots[i].node;
+      n.style.gridRow = String(r); n.style.gridColumn = String(c);
+      xbSets[set]._clusters[cl].append(n);
+    }
+    if (xbWrap.parentNode !== bar) row.after(xbWrap);
+  } else {
+    for (let i = 0; i < HOTBAR_CAPACITY; i++) {
+      const n = slots[i].node;
+      n.style.gridRow = ''; n.style.gridColumn = '';
+      (i < HOTBAR_SIZE ? row : rowHold).append(n);
+    }
+    xbWrap?.remove();
+  }
+  bar.classList.toggle('xb', on);
+  xbFamily = null;
+  lastSig = null;
+}
+/** The glyph badges: each slot's button, each set's bumper - in the live pad's family. */
+function paintBadges() {
+  const fam = padFamily() ?? 'xbox';
+  if (xbFamily === fam) return;
+  xbFamily = fam;
+  for (let i = 0; i < HOTBAR_CAPACITY; i++) {
+    const code = crossbarCodeOf(i);
+    const b = slots[i].badge;
+    b.src = code ? (hdGlyphSvg(fam, code, { size: 40 }) ?? '') : '';
+    b.alt = code ? hdGlyphName(fam, code) : '';
+  }
+  xbSets.forEach((sec, set) => { sec._glyph.src = hdGlyphSvg(fam, CROSSBAR_HOLD[set], { size: 48 }) ?? ''; sec._glyph.alt = hdGlyphName(fam, CROSSBAR_HOLD[set]); });
+}
 
 // ── SPELL GLYPHS ──────────────────────────────────────────────────
 /** A spell has no ARENA2 icon this skin reads, so it wears its NAME as a
@@ -122,7 +229,7 @@ function build() {
   caption.setAttribute('aria-live', 'polite');
   const row = el('div', 'hb-row');
   slots = [];
-  for (let i = 0; i < HOTBAR_SIZE; i++) {
+  for (let i = 0; i < HOTBAR_CAPACITY; i++) {   // PADPLUS1: sixteen nodes; the row shows ten, the crossbar all
     const node = el('div', 'hb-slot hb-empty');
     node.dataset.slot = String(i);
     const frame = el('i', 'hb-frame');
@@ -139,10 +246,12 @@ function build() {
     const wearFill = el('i', 'hb-wearfill');
     wear.append(wearFill);
     const flash = el('i', 'hb-flash');
-    node.append(frame, face, wear, count, pip, key, flash);
+    const badge = el('img', 'xb-badge');   // PADPLUS1: the crossbar's button glyph
+    badge.alt = ''; badge.draggable = false;
+    node.append(frame, face, wear, count, pip, key, flash, badge);
     bindSlot(node, i);
-    row.append(node);
-    slots.push({ node, icon, glyph, count, key, wear, wearFill, pip });
+    if (i < HOTBAR_SIZE) row.append(node);
+    slots.push({ node, icon, glyph, count, key, wear, wearFill, pip, badge });
     iconKeys[i] = null;
   }
   hint = el('div', 'hb-hint', HINT_DROP);
@@ -198,17 +307,21 @@ function paint() {
   }
   bar.classList.toggle('on', shown);
   bar.classList.toggle('dropping', dropping);
+  bar.classList.toggle('tuck', dropping && tuckUnderWindows());   // PADPLUS5
+  const xb = crossbarMode();   // PADPLUS1
+  if (xb !== xbOn) { xbOn = xb; layout(xb); }
+  if (xb) paintBadges();
   const editing = shown && !dropping && mouseMode();
   if (bar.classList.contains('editing') !== editing) {
     bar.classList.toggle('editing', editing);
     if (!editing && hbDrag) dragEnd(false);   // the look taken back mid-drag: never mind
   }
-  const hintText = editing ? HINT_EDIT : HINT_DROP;
+  const hintText = xbOn ? HINT_XB : editing ? HINT_EDIT : HINT_DROP;
   if (hint && hint.textContent !== hintText) hint.textContent = hintText;
   if (!shown) return;
   const entity = dropping ? (dropEntity ?? liveEntity) : liveEntity;
   const readiedIndex = liveOpts.readied?.index ?? null;
-  const view = hotbarView(entity, { readiedIndex });
+  const view = hotbarView(entity, { readiedIndex, size: HOTBAR_CAPACITY });
   const rev = bindings().rev;
   if (rev !== keysRev) { keysRev = rev; slots.forEach((sl, i) => { const t = hotbarKeyOf(i) ?? ''; if (sl.key.textContent !== t) sl.key.textContent = t; }); }   // KB1: a rebind renames the chips
   const sig = `${hotbarRevision()}|${dropping ? 1 : 0}|${view.map((v) => (v.empty ? '-'
@@ -423,7 +536,7 @@ export function hotbarDropSpell(i, sp) {
 export function toggleHotbarItem(item) {
   const at = hotbarSlotOf(item);
   if (at >= 0) { clearHotbarSlot(at); lastSig = null; paint(); return HOTBAR_TEXT.removed(hotbarEntryForItem(item)?.name ?? 'It'); }
-  const free = firstFreeHotbarSlot();
+  const free = firstFreeHotbarSlot(xbOn ? HOTBAR_CAPACITY : HOTBAR_SIZE);
   if (free < 0) return HOTBAR_TEXT.full;
   hotbarDropItem(free, item);
   return HOTBAR_TEXT.added(hotbarEntryForItem(item)?.name ?? 'It', free + 1);
@@ -431,7 +544,7 @@ export function toggleHotbarItem(item) {
 export function toggleHotbarSpell(sp) {
   const at = hotbarSlotOf(sp, { spell: true });
   if (at >= 0) { clearHotbarSlot(at); lastSig = null; paint(); return HOTBAR_TEXT.removed(sp?.name ?? 'It'); }
-  const free = firstFreeHotbarSlot();
+  const free = firstFreeHotbarSlot(xbOn ? HOTBAR_CAPACITY : HOTBAR_SIZE);
   if (free < 0) return HOTBAR_TEXT.full;
   hotbarDropSpell(free, sp);
   return HOTBAR_TEXT.added(sp?.name ?? 'It', free + 1);
@@ -478,6 +591,7 @@ const onNativeDrag = (e) => { if (hbDrag && e.cancelable) e.preventDefault(); };
 function arm() {
   if (!hbDrag) return;
   hbDrag.moved = true;
+  bar?.classList.add('dragging');   // PADPLUS5: the tucked bar rises for the drop
   const g = el('div', 'hb-ghost');
   const tile = el('div', 'hb-ghosttile');
   if (hbDrag.iconSrc) { const im = el('img'); im.src = hbDrag.iconSrc; tile.append(im); }
@@ -539,6 +653,11 @@ function dragEnd(commit) {
   window.removeEventListener('pointercancel', onCancel, true);
   window.removeEventListener('touchmove', onTouchHold, { capture: true });
   window.removeEventListener('dragstart', onNativeDrag, true);
+  // PADPLUS8: HIT-TEST THE RELEASE BEFORE THE BAR GOES DOWN. Dropping 'dragging' puts the tucked bar back to
+  // pointer-events: none at once, and elementFromPoint never answers a node that takes no pointer - so the drop
+  // looked through the bar at the window under it and every spell (and slot move) landed nowhere.
+  const dropAt = d.moved && commit ? hotbarSlotAt(d.x, d.y) : -1;
+  if (!extDragging) bar?.classList.remove('dragging');   // PADPLUS5
   if (!d.moved) {
     // HB1c: a click in mouse mode that never became a drag is a PRESS.
     if (commit && d.payload.tapPress) pressHotbar(d.payload.slot);
@@ -546,7 +665,7 @@ function dragEnd(commit) {
   }
   hbDragged = true;   // the click the release raises is not a pick
   if (!commit) return;
-  const i = hotbarSlotAt(d.x, d.y);
+  const i = dropAt;
   if (d.payload.kind === 'spell') { if (i >= 0) hotbarDropSpell(i, d.payload.spell); return; }
   if (d.payload.kind === 'slot') {
     const from = d.payload.slot;
@@ -622,6 +741,51 @@ function injectHotbarStyle(doc = document) {
   s.textContent = HOTBAR_CSS;
   doc.head.append(s);
 }
+
+/** PADPLUS1: the crossbar's dress - two sets of two diamonds, the bumper that raises each over it, a glyph badge on
+ *  every socket. The held set lifts and glows brass; the other sinks back, so the eye lands on the eight live
+ *  slots. The sockets keep every .hb-slot rule (the Plus kit's stone, the strike, the spell stone). */
+const CROSSBAR_CSS = `
+/* PADPLUS5: tucked under a window, up while a drag is on */
+:root[data-plus-theme] .hb-droplayer { bottom: calc(58px + env(safe-area-inset-bottom, 0px)); }   /* clear of the pad's prompt bar */
+.hb.dropping.tuck { opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(12px);
+  transition: opacity 140ms ease-in, transform 140ms ease-in, visibility 0s linear 140ms; }
+.hb.dropping.tuck.dragging { opacity: 1; visibility: visible; pointer-events: auto; transform: none;
+  transition: opacity 120ms ease-out, transform 120ms ease-out, visibility 0s; }
+@media (prefers-reduced-motion: reduce) { .hb.dropping.tuck, .hb.dropping.tuck.dragging { transition: none; transform: none; } }
+.xb-hold { display: none; }
+.hb.xb { --xb-cell: 46px; }
+.hb.xb .hb-row { display: none; }
+.xb-wrap { display: flex; align-items: flex-end; gap: 22px; }
+.xb-set { display: flex; flex-direction: column; align-items: center; gap: 6px;
+  transition: transform 120ms ease-out, opacity 120ms, filter 120ms; transform-origin: 50% 100%; }
+.xb-head { display: flex; align-items: center; gap: 6px; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: #cbbf9e; text-shadow: 1px 1px 0 #000; }
+.xb-headglyph { width: 28px; height: 28px; display: block; filter: drop-shadow(0 1px 0 #000); }
+.xb-body { display: flex; gap: 10px; }
+.xb-cluster { display: grid; grid-template-columns: repeat(3, var(--xb-cell)); grid-template-rows: repeat(3, var(--xb-cell));
+  gap: 0; position: relative; }
+.xb-cluster::before { content: ''; grid-row: 2; grid-column: 2; align-self: center; justify-self: center; width: 12px; height: 12px;
+  transform: rotate(45deg); border: 2px solid rgba(176,138,74,0.55); background: rgba(10,10,10,0.55); }
+.hb.xb .hb-slot { width: calc(var(--xb-cell) - 4px); height: calc(var(--xb-cell) - 4px); margin: 2px; }
+.hb.xb .hb-key { display: none; }
+.xb-badge { display: none; position: absolute; left: -7px; top: -7px; width: 20px; height: 20px; pointer-events: none; z-index: 2;
+  filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.9)); }
+.hb.xb .xb-badge { display: block; }
+.hb.xb .hb-slot.hb-active::after { top: auto; bottom: -4px; }
+.xb-sep { align-self: stretch; width: 2px; margin: 26px 0 4px; background: linear-gradient(180deg, transparent, rgba(176,138,74,0.7) 20%, rgba(176,138,74,0.7) 80%, transparent);
+  box-shadow: 1px 0 0 rgba(0,0,0,0.7); }
+/* the held set */
+.hb.xb[data-xbset="0"] .xb-set[data-set="0"], .hb.xb[data-xbset="1"] .xb-set[data-set="1"] { transform: translateY(-4px) scale(1.06); }
+.hb.xb[data-xbset="0"] .xb-set[data-set="0"] .hb-frame, .hb.xb[data-xbset="1"] .xb-set[data-set="1"] .hb-frame {
+  border-color: #e8c374 #b08a4a #6b5129 #d6ad5c; box-shadow: 0 0 10px rgba(232,195,116,0.35); }
+.hb.xb[data-xbset="0"] .xb-set[data-set="0"] .xb-head, .hb.xb[data-xbset="1"] .xb-set[data-set="1"] .xb-head { color: #f4d98e; }
+.hb.xb[data-xbset="0"] .xb-set[data-set="1"], .hb.xb[data-xbset="1"] .xb-set[data-set="0"] { opacity: 0.42; filter: saturate(0.4); transform: scale(0.94); }
+.hb.xb.dropping .xb-set { opacity: 1; filter: none; transform: none; }
+@media (max-width: 900px) { .hb.xb { --xb-cell: 38px; } .xb-wrap { gap: 12px; } .xb-body { gap: 6px; } .xb-badge { width: 16px; height: 16px; left: -5px; top: -5px; } }
+@media (max-width: 560px) { .hb.xb { --xb-cell: 30px; } .xb-headglyph { width: 22px; height: 22px; } .xb-head { font-size: 9px; } }
+@media (prefers-reduced-motion: reduce) { .xb-set { transition: none; } }
+`;
 
 export const HOTBAR_CSS = `
 .hud-hotdock { display: contents; }
@@ -742,6 +906,7 @@ export const HOTBAR_CSS = `
 .hb-ghost.clearing .hb-ghosttile { border-color: var(--blood, #8c3a32); opacity: 0.7; }
 .hb-ghost.clearing .hb-ghostverb { background: var(--blood, #8c3a32); color: var(--bone, #e9e4d9); }
 
+${CROSSBAR_CSS}
 /* THE DIAMOND STANDS DOWN while the hotbar is up (one bar or the other). */
 .hud-quick.hotbarmode .hud-qdiamond, .hud-quick.hotbarmode .hud-qspell { display: none; }
 

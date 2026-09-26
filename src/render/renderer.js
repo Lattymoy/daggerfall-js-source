@@ -474,6 +474,7 @@ import { decalIndices, DECAL_FLOATS_PER_VERTEX } from '../combat/bloodDecals.js'
 import { BLOOD_ABSORB_ENCODED, INK_DEPTH } from '../combat/bloodArt.js';
 import { glslFloat } from './airPass.js';   // AUDIT BLOOD3 F9: a dial at a whole number is an INT literal in GLSL, and vec3 * int does not compile   // BLOOD3: the film's absorption - the classic mark takes the depth, the lane takes the sheen too
 import { SHADE_DARK } from '../systems/concealDraw.js';   // ECV1 / AUDIT 65 PN-3: the shade's pull toward black, interpolated into BB_FS below - the shader restated 0.12 as a second literal. The LEAF, not systems/combatVisuals.js, which re-exports it: that module's graph would take this file's closure from 13 modules to 69
+import { HIT_FLASH_GLSL } from '../systems/hitFlash.js';   // HITFLASH1: the struck-red term, shared with the lane's billboard shader and the sprite quad (a LEAF, no imports)
 
 const BB_FS = `#version 300 es
 precision highp float;
@@ -483,6 +484,7 @@ uniform sampler2D uTex;
 uniform sampler2D uEmissionTex;
 uniform int uSpectral;
 uniform vec4 uConceal;  // ECV1: x mode (0 plain, 1 chameleon, 2 shade, 3 hit reveal), y opacity, z seconds, w phase
+uniform float uHitFlash;  // HITFLASH1: a body struck, 0..1 (batch.hitFlash)
 uniform vec3 uTint; // time-of-day: ambient (+ the moon's half); VC4: the sun's half rides uBBSun so a cloud's shadow can take it
 uniform vec3 uBBSun;
 uniform int uPointCount;
@@ -498,6 +500,7 @@ uniform vec3 uCamPos;
 ${CLOUD_SHADOW_GLSL}
 out vec4 outColor;
 ${FOG_GLSL}
+${HIT_FLASH_GLSL}
 void main() {
   // ECV1: a chameleoned foe ripples - a slow horizontal wobble across
   // the sprite, phased per foe - so it reads as blending in, not as a
@@ -541,6 +544,8 @@ void main() {
   // AUDIT 65 PN-3: SHADE_DARK itself (keep it a decimal - GLSL will not
   // multiply a vec3 by an int literal).
   if (uConceal.x == 2.0) lit *= ${SHADE_DARK};
+  if (uConceal.x == 5.0) lit = mix(lit, vec3(0.95, 0.06, 0.04), uConceal.z);   // PEERFX3: a player struck flashes red for a moment (z the strength, fading)
+  lit = hitFlashLit(lit, albedo + emission, uHitFlash);   // HITFLASH1: over any concealment, never instead of it
   if (uConceal.x == 4.0) lit = vec3(0.0);   // EOTB-IL: Eye Of The Beholder's shade - Color.black at the batch's alpha (UpdateMaterial, IL_4f69)
   float alpha = uSpectral == 1 ? tex.a : 1.0;
   if (uConceal.x > 0.0) alpha = tex.a * uConceal.y;
@@ -1752,6 +1757,7 @@ export class Renderer {
     this.bbUEmissionTex = gl.getUniformLocation(this.bbProgram, 'uEmissionTex');
     this.bbUSpectral = gl.getUniformLocation(this.bbProgram, 'uSpectral');
     this.bbUConceal = gl.getUniformLocation(this.bbProgram, 'uConceal');   // ECV1
+    this.bbUHitFlash = gl.getUniformLocation(this.bbProgram, 'uHitFlash');   // HITFLASH1
     this.bbUTint = gl.getUniformLocation(this.bbProgram, 'uTint');
     this.bbUSun = gl.getUniformLocation(this.bbProgram, 'uBBSun');   // VC4
     this.bbUPointCount = gl.getUniformLocation(this.bbProgram, 'uPointCount');
@@ -2994,7 +3000,7 @@ export class Renderer {
 
   /** Composite the sprite into the world: camera-facing quad at the
    *  character's position, alpha-cut, fogged, depth-tested. */
-  drawCharacterSpriteQuad(tex, center, halfW, halfH, right, u1 = 1, v1 = 1) {
+  drawCharacterSpriteQuad(tex, center, halfW, halfH, right, u1 = 1, v1 = 1, hitFlash = 0) {
     this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     const gl = this.gl;
     this._ensureCharQuadProgram();
@@ -3011,6 +3017,7 @@ export class Renderer {
     gl.uniformMatrix4fv(c.view, false, this._view);
     this._bindTex0(tex);   // PERF-TEX3
     gl.uniform1i(c.tex, 0);
+    gl.uniform1f(c.hitFlash, hitFlash > 0 ? hitFlash : 0);   // HITFLASH1: a struck Morrowind body's red (0 for every other sprite)
     this._uploadFog(this._charQuad);
     this._bindVao(this._charQuadVAO);
     gl.bindBuffer(gl.ARRAY_BUFFER, this._charQuadVBO);
@@ -3043,12 +3050,15 @@ uniform int uFogMode;
 uniform float uFogDensity;
 uniform vec2 uFogRange;
 uniform vec3 uCamPos;
+uniform float uHitFlash;   // HITFLASH1: a Morrowind body struck
 out vec4 outColor;
 ${FOG_GLSL}
+${HIT_FLASH_GLSL}
 void main() {
   vec4 t = texture(uTex, vUV);
   if (t.a < 0.5) discard;
-  outColor = vec4(dwWaterFog(mix(uFogColor, t.rgb, fogFactorAt(vWorld)), vWorld), 1.0);   // DW-C
+  vec3 c = hitFlashLit(t.rgb, t.rgb, uHitFlash);   // HITFLASH1
+  outColor = vec4(dwWaterFog(mix(uFogColor, c, fogFactorAt(vWorld)), vWorld), 1.0);   // DW-C
 }`;
       this.charQuadProgram = this._buildProgram(vs, fs);
       const P = this.charQuadProgram;
@@ -3062,6 +3072,7 @@ void main() {
         fogRange: gl.getUniformLocation(P, 'uFogRange'),
         camPos: gl.getUniformLocation(P, 'uCamPos'),
         dwFog: gl.getUniformLocation(P, 'uDwFog'),   // DW-C
+        hitFlash: gl.getUniformLocation(P, 'uHitFlash'),   // HITFLASH1
       };
       const vao = gl.createVertexArray();
       this._bindVao(vao);
@@ -4570,7 +4581,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     return {
       vao, indexCount: count * 6, archive, record, size, buffers: [vb, ib], origin: null, frame: null, bounds, _quads: count, _dyn: !!dynamic,
       _place: count > 1 && !dynamic ? placementGrid(centers) : null,
-      _box: undefined, sway: undefined, conceal: undefined, noShadow: undefined, selfCard: undefined, _dead: undefined, _moveScratch: undefined,
+      _box: undefined, sway: undefined, conceal: undefined, hitFlash: undefined, noShadow: undefined, selfCard: undefined, _dead: undefined, _moveScratch: undefined,
       _bbKey: undefined, _bbKeyRecord: undefined, _bbKeyFrame: undefined, _bbKeyArchive: undefined,
       _shGen: undefined, _shSeen: undefined, _shOx: NaN, _shOy: NaN, _shOz: NaN, _shFrame: undefined,
       _shRec: undefined, _shFlip: undefined, _shDyn: undefined, _shSway: undefined, _shMovedAt: undefined, _shId: undefined,
@@ -5254,6 +5265,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // order and only skips the repeats it happens to have.
     let lastKey = null;
     let lastSway = null;   // WIND3
+    let lastFlash = null;   // HITFLASH1
     // PERF-EXT11 (2026-09-25, the players' "fps issues in the exterior but
     // fine in the interior"): THE SIZE AND THE ORIGIN GO UP WHEN THEY
     // CHANGE, as the sway and the key's textures already did. Both were
@@ -5288,6 +5300,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       if (o[0] !== lastOx || o[1] !== lastOy || o[2] !== lastOz) { gl.uniform3f(this.bbUOrigin, o[0], o[1], o[2]); lastOx = o[0]; lastOy = o[1]; lastOz = o[2]; }   // PERF-EXT11
       const sw = b.sway || 0;   // WIND3: the batch's share of the lean, uploaded when it changes between batches
       if (sw !== lastSway) { gl.uniform1f(this.bbUSway, sw); lastSway = sw; }
+      const hf = b.hitFlash || 0;   // HITFLASH1: a struck body's red, uploaded when it changes between batches
+      if (hf !== lastFlash) { gl.uniform1f(this.bbUHitFlash, hf); lastFlash = hf; }
       this._bindVao(b.vao);
       gl.drawElements(gl.TRIANGLES, b.indexCount, gl.UNSIGNED_INT, 0);
       this.stats.draws++;
