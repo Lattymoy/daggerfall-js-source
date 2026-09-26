@@ -281,3 +281,22 @@ off. The clone's melee swing keeps its voice.
 `test/bowvoice.test.js`; `tools/mutants/bowvoice.json` 3, 3 dead.
 `test/ww1_weaponwidget.test.js`'s bow pin re-aimed (the clone looses in
 silence).
+
+## MW-HAND: under the Morrowind arm, never an empty hand (report 5) - Mac's call
+
+The same words came in once before, and LH1 (the quickslot swap follows
+the hand in use) fixed the swap's half. The other half was the equip
+itself: DFU lets the hand in use be an empty one - H to a bare left hand is
+fists, by design, and the sprite shows which hand is up. The Morrowind arm
+draws one weapon and no second hand, so a dagger equipped in the left hand
+with the right empty, or an H to an empty left, showed fists and nothing
+said why.
+
+Asked, Mac chose "Never on an empty hand": while the Morrowind arm is
+built, the hand in use follows the weapons (right, else left), and H moves
+only between two held weapons. Bare hands and a shield alone still fight
+with fists. The classic sprite lane keeps DFU's ToggleHand whole
+(`combat/playerWeapon.js` followHeldHand, `combat/weaponRig.js`;
+`02-Formats/Morrowind-Rules.md` MW-HAND).
+
+`test/mwhand.test.js` (4); `tools/mutants/mwhand.json` 6, 6 dead.

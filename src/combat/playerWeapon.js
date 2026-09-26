@@ -304,6 +304,21 @@ export class PlayerWeapon {
   }
 
   /**
+   * MW-HAND (2026-09-26, Mac: "Weapons when swapped into left hand dont work showing fists - id say remove the ability
+   * when in morrowind since its not visible"; asked, "Never on an empty hand"): THE MORROWIND LANE'S DEPARTURE. DFU
+   * lets the hand in use be an empty one - H to a bare left hand is how a classic player fights with fists, and the
+   * sprite shows which hand is up. The Morrowind arm draws one weapon and no second hand, so there a weapon in the
+   * hand not in use was a weapon that would not show, over fists. In that lane (the rig calls this only while the arm
+   * is built) the hand in use follows the weapons: an empty hand gives way to the other when it holds one.
+   * @returns true when the hand moved.
+   */
+  followHeldHand() {
+    if (this.usingRightHand && !this.currentRightHandWeapon && this.currentLeftHandWeapon) { this.usingRightHand = false; return true; }
+    if (!this.usingRightHand && !this.currentLeftHandWeapon && this.currentRightHandWeapon) { this.usingRightHand = true; return true; }
+    return false;
+  }
+
+  /**
    * WeaponManager.ApplyWeapon (:731-757). The racial override is the
    * FIRST arm (:735-739) and returns before either hand is read - V4's
    * wereclaws, which the rig hands in. Otherwise the used hand's item

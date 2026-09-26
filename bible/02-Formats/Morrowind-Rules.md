@@ -6955,3 +6955,24 @@ the same hang); and a whole `createFpArm()` rig on the fixture body with a pelvi
 door (a tiny addon NIF written by the pin): built with it, shown through a readied spell, hidden when put out, lit
 again on the fast path, swung back by a walk begun, the slow path once, a missing record or pelvis remembered, the
 mid-build queue.
+
+## DECLARED DIVERGENCE (MW-HAND, 2026-09-26): never an empty hand
+
+Mac: *"Weapons when swapped into left hand dont work showing fists - id say
+remove the ability when in morrowind since its not visible"*; asked, "Never
+on an empty hand". DFU's hand in use may be an empty one (WeaponManager.
+ToggleHand, :702-729): H to a bare left hand is how a classic player fights
+with fists, and the sprite shows which hand is up. The Morrowind arm draws
+one weapon and no second hand, so a weapon equipped in the hand not in use
+- the left, with the right empty - was a weapon that never showed, over
+fists. LH1 (the quickslot swap follows the hand) closed the swap's half;
+the equip window's half was still open.
+
+While the arm is built (`fpArm.ready()`), the hand in use follows the
+weapons: the rig's per-frame hand read (`combat/weaponRig.js` syncWorn)
+moves an empty hand in use to the other when it holds a weapon
+(`combat/playerWeapon.js` followHeldHand), and H moves only between two
+held weapons - to an empty hand it is refused without a line, as the
+shield's refusal is. Bare hands stay bare, and a shield is no weapon. The
+classic lane keeps ToggleHand whole. `test/mwhand.test.js`,
+`tools/mutants/mwhand.json`.

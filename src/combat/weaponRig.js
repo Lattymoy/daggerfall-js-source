@@ -574,6 +574,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     const slots = entity.equip?.slots;
     if (!slots) { if (claws) playerWeapon.weapon = claws; return; }
     playerWeapon.updateHands(slots[EQUIP_SLOTS.RightHand] ?? null, slots[EQUIP_SLOTS.LeftHand] ?? null);
+    if (fpArm.ready()) playerWeapon.followHeldHand();   // MW-HAND: under the Morrowind arm, never an empty hand while the other holds a weapon
     playerWeapon.applyWeapon(claws);
   };
   const cv = typeof canvas === 'function' ? canvas : () => canvas;
@@ -1302,6 +1303,8 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       if (m.isBow && m.now < m.cooldownUntil) return false;   // AUDIT 68 S09-held-hit-dropped: Update's cooldown return (:230-233) comes before ToggleHand, as readyWeapon has it
       if (m.state !== 'Idle' || _heldHit) return false;       // isAttacking - and a shot held for the arm's release is one
       syncWorn();
+      // MW-HAND: under the Morrowind arm H moves only between two held weapons - never to an empty hand
+      if (bindWorn && fpArm.ready() && !(playerWeapon.currentRightHandWeapon && playerWeapon.currentLeftHandWeapon)) return false;
       // bindWorn:false rigs drive their own weapon (the dungeon's
       // scripted bow) - flip the hand, but do not let ApplyWeapon
       // overwrite a weapon no equip table ever supplied.
