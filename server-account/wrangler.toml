@@ -57,7 +57,7 @@ enabled = true
 [vars]
 # Answered by /health so a deploy that did not happen cannot look like
 # one that did. Kept in step with ACCOUNT_VERSION in src/service.js.
-ACCOUNT_VERSION = "acct11"
+ACCOUNT_VERSION = "acct12"
 # WB5b: THE RELAY'S PUBLIC HALF - the key an Oblivion Gate's kill
 # receipts verify with (src/net/gateReceipt.js). The relay signs with
 # its private half, GATE_SIGNING_KEY, a secret on the RELAY

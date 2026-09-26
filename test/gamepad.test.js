@@ -143,9 +143,10 @@ test('GP1 the store: defaults (Axis1/2 movement, Axis4/5 camera, A/Y/X/B the fou
 });
 
 test('GP1 the poller: buttons and bound axis keys become synthetic keys by Unity name, the movement stick presses the bound move codes and hands its throw to axes(), the UI buttons are the mouse\'s, Back is Escape only under a window, the camera stick pays the look in the hook\'s units, a swing rides the camera stick, the pad becomes the live device until the mouse moves, and everything releases when the pad goes or the setting turns off (mutant: a release dropped)', () => {
-  const prev = { w: globalThis.window };
+  const prev = { w: globalThis.window, loc: globalThis.location };
   const listeners = {};
   globalThis.window = { addEventListener: (t, f) => { (listeners[t] ??= []).push(f); }, removeEventListener: () => {}, dispatchEvent: () => {} };
+  globalThis.location = { search: '?plus=0' };   // PLUS-DEFAULT: this pins the plain pad layer - Enhanced Plus's is padplus1.test.js's
   const store = createBindings(); resetDefaults(store); setBindings(store);
   setBinding(store, 'JoystickAxis10Button0', 'SwingWeapon', false);   // a trigger as a secondary swing key
   const events = []; const dispatch = (type, code) => events.push(`${type}:${code}`);
@@ -214,7 +215,7 @@ test('GP1 the poller: buttons and bound axis keys become synthetic keys by Unity
     // must not shadow a later standard-mapping controller.
     assert.equal(pickPad([{ connected: true, mapping: '', id: 'EPOS ADAPT 160' }, { connected: true, mapping: 'standard', id: 'Xbox 360 Controller' }]).id, 'Xbox 360 Controller', 'standard wins even when it comes second');
     assert.equal(pickPad([{ connected: true, mapping: '', id: 'blank-only' }]).id, 'blank-only', 'blank mapping still used as a fallback when no standard pad exists');
-  } finally { globalThis.window = prev.w; setBindings(null); setControllerLook(false); _resetForTests(); }
+  } finally { globalThis.window = prev.w; globalThis.location = prev.loc; setBindings(null); setControllerLook(false); _resetForTests(); }
 });
 
 test('QS3 the pad\'s FAMILY: written from the pad\'s own id each tick, cleared when the pad goes and when the layer is disposed (mutant: the clear dropped, and a DualShock keeps drawing A/B/X/Y)', () => {
@@ -255,9 +256,10 @@ test('QS3 the pad\'s FAMILY: written from the pad\'s own id each tick, cleared w
 });
 
 test('GP3 the controller cursor: born where the mouse last was when the pad becomes the live device, moved by the movement stick at JoystickCursorSensitivity * 900 px/s (raw axes, up is up, clamped to the canvas) with a pointermove at each step, the three click actions as pointerdown/up at its point, all of it only under a window, a real mouse move ending it with any held click released (mutant: y unflipped, or the clamp dropped, or a click left held)', () => {
-  const prev = { w: globalThis.window };
+  const prev = { w: globalThis.window, loc: globalThis.location };
   const listeners = {};
   globalThis.window = { addEventListener: (t, f) => { (listeners[t] ??= []).push(f); }, removeEventListener: () => {}, dispatchEvent: () => {} };
+  globalThis.location = { search: '?plus=0' };   // PLUS-DEFAULT: this pins the plain pad layer - Enhanced Plus's is padplus1.test.js's
   const store = createBindings(); resetDefaults(store); setBindings(store);
   const evs = [];
   const canvas = { getBoundingClientRect: () => ({ left: 10, top: 20, width: 640, height: 400 }), dispatchEvent: (ev) => evs.push(ev), style: {} };
@@ -306,7 +308,7 @@ test('GP3 the controller cursor: born where the mouse last was when the pad beco
     assert.ok(near(gp.cursor()[0] - before, 30), '2 * 900 / 60');
     gp.dispose();
     assert.equal(canvas.style.cursor, '');
-  } finally { globalThis.window = prev.w; setBindings(null); setControllerLook(false); _resetForTests(); }
+  } finally { globalThis.window = prev.w; globalThis.location = prev.loc; setBindings(null); setControllerLook(false); _resetForTests(); }
 });
 
 test('GP1 the look filter\'s controller floor: while the pad is live the fraction never drops below 0.5 (mutant: the floor dropped)', () => {

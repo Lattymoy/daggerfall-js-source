@@ -155,6 +155,7 @@ import { claimCursorKey } from '../player/pointerLock.js';   // KB1: while the p
 import { isTouchDevice } from './touch.js';
 import { CHAT_MAX } from '../net/wire.js';
 import { tagOf } from '../net/chat.js';
+import { guildTagText } from '../net/guildLaw.js';   // GUILD1c: the guild's tag beside a name, as over a head
 import { titleBadge, glyphBadges, glyphSvgNode, cssRgba, TITLE_RGBA } from './playerBadge.js';   // ACC3c: the same table the name over a head reads - a name wears one title everywhere it is drawn; cssRgba comes from HERE and not ui/nameLayer.js, which would pull the whole remote-player pass into this panel
 import { rosterRows, rosterTitle } from '../net/roster.js';   // CHAT-R1: who is online, in order (the cap is the model's own - AUDIT-CHATR F4: this file imported it and never used it, and lint could not see that: no-unused-vars is on for server/src and not for src)
 import { PARTY_GREEN_CSS } from '../net/social.js';   // CHAT-CHAN: the Party tab's mark wears the party's one green
@@ -358,6 +359,8 @@ ${PIXELIFY_FIVE_FACE}
    at the tag's size, the glyphs after it at the roster's size. */
 .dfchat-line-title { font-size: calc(10px * var(--dfchat-scale, 1)); letter-spacing: .05em; text-transform: uppercase; margin-right: 4px; }
 .dfchat-line-glyph { width: calc(11px * var(--dfchat-scale, 1)); height: calc(11px * var(--dfchat-scale, 1)); display: inline-block; vertical-align: -1px; margin-left: 3px; }
+/* GUILD1c: the guild's tag right of the name, before the glyphs - the name layer's own steel, on a line and in the roster */
+.dfchat-line-guild, .dfchat-who-guild { flex: none; color: #a9c4dd; font-size: calc(10px * var(--dfchat-scale, 1)); letter-spacing: .04em; margin-left: 4px; }
 .dfchat-who-more { font-size: calc(11px * var(--dfchat-scale, 1)); color: var(--dim, #8b8578); padding-top: 4px; }
 /* the roster is the first thing to go when there is no width for it */
 @media (max-width: 560px) { .dfchat-who { display: none; } }
@@ -686,10 +689,12 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     const badge = titleBadge(peer);
     const before = badge ? [titleSpan(badge, `${prefix}-title`)] : [];
     const after = [];
+    const gt = guildTagText(peer?.gt);   // GUILD1c: the guild's tag first after the name, before the glyphs
+    if (gt) after.push(el('span', `${prefix}-guild`, gt));
     for (const g of glyphBadges(peer)) { const svg = glyphSvg(g, `${prefix}-glyph`); if (!svg) break; after.push(svg); }
     return { before, after };
   };
-  const badgeKeyOf = (b) => (b ? `${b.title ?? ''}|${(Array.isArray(b.glyphs) ? b.glyphs : []).join('+')}` : '');
+  const badgeKeyOf = (b) => (b ? `${b.title ?? ''}|${(Array.isArray(b.glyphs) ? b.glyphs : []).join('+')}|${b.gt ?? ''}` : '');   // GUILD1c: a tag that moved re-lays the line
   /** CHAT-FIT: a line is laid from its PARTS - time, the badge's title, the name, the badge's glyphs, the tag, the
    *  text - so the badge pass can re-lay one line when its author's badge changes, without rebuilding the list. */
   const layLine = (r) => { r.node.replaceChildren(...[r.chan, r.time, ...r.before, r.nameEl, ...r.after, r.tag, r.text].filter(Boolean)); };
@@ -871,7 +876,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     // reason SOC3 put the open menu in here. TITLE-R: the glyphs alone,
     // as the row draws them.
     // CHAT-CHAN: and the list's own word - a tab change can bring the same people under another heading
-    const key = label + '|' + total + '|' + (menuFor ?? '') + '|' + rows.map((r) => r.id + ':' + r.name + ':' + (r.me ? 1 : 0) + ':' + (r.glyphs ?? []).join('+')).join(',');
+    const key = label + '|' + total + '|' + (menuFor ?? '') + '|' + rows.map((r) => r.id + ':' + r.name + ':' + (r.me ? 1 : 0) + ':' + (r.glyphs ?? []).join('+') + ':' + (r.gt ?? '')).join(',');   // GUILD1c: and the guild's tag
     if (key === whoKey) return;
     whoKey = key;
     whoHead.textContent = rosterTitle(total, label);
@@ -897,6 +902,8 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
       // names and within chat itself"): the roster is a list of who is here - the glyphs AFTER the name are what is
       // true of each; the title a player chose to wear is theirs to show over their head and beside their lines.
       line.append(nameEl);
+      const gt = guildTagText(r.gt);   // GUILD1c: the guild's tag right of the name, as over a head
+      if (gt) line.append(el('span', 'dfchat-who-guild', gt));
       for (const g of glyphBadges(r)) {
         const svg = glyphSvg(g, 'dfchat-who-glyph');
         if (!svg) break;   // a document that cannot make one draws none, rather than throwing in a repaint

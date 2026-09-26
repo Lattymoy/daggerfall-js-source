@@ -97,6 +97,10 @@ neither, the size back after a reload, and the sheet's own size after a double c
 
 ## CHAT-CHAN - four channels: World, Region, Party, Local, and the aside out of character
 
+(GUILD1c, 2026-09-25, added a fifth tab on the Party tab's shape - Guild, on the bar while the character is in a guild,
+its lines on the hub link with `ch: 'guild'` and heard by the guild's members online alone; `/guild` or `/gu`.
+`06-Systems/Online-Arc.md` GUILD1c.)
+
 kurkku on Discord, 2026-09-23: "Global chat that everyone everywhere sees / regional chat that everyone in the region
 can see (so players in Wayrest see messages from other players in Wayrest and so on) / party chat". Addison Knox, the
 same day: "Roleplay chat channels (IC/OOC) keeps immersion intact by separating in-character dialogue from coordination
@@ -685,8 +689,8 @@ The sixth merge's conflicts showed a Ledger row whose DFU message ids read "8076
 The struck row above it still reads "8076/8077", and DFU's TalkManager.cs answers with records 8075, 8076 and 8077
 (:2029-2035). `tools/citeShift.mjs` and `tools/citeMerge.mjs` had been moving it for as far back as the history goes.
 - **CITE-SLASH.** RF3's grammar read a bare `/N` after a cite, anywhere up to the next cite, as that cite's line. So
-  "8076/8077", a sentence after `world.js:4387`, was world.js:9033 to both tools, and it moved whenever that line did.
-  A bare `/N` now continues only the chain it touches: `world.js:7446/7447`, `:13/15`. The colon forms keep RF3's
+  "8076/8077", a sentence after `world.js:4389`, was world.js:9035 to both tools, and it moved whenever that line did.
+  A bare `/N` now continues only the chain it touches: `world.js:7448/7449`, `:13/15`. The colon forms keep RF3's
   reach, because the colon says what they are.
 - **CITE-CS.** RF3 ends a cite's region at a `.cs:N` cite, but DFU's members are mostly written without their file:
   "| TalkManager.GetReactionToPlayer_0_1_2 (:689-693) |" in the Ledger's DFU column, and
@@ -743,7 +747,7 @@ Main moved thirty commits while the arc was in review. Merged, not rebased; 106 
 - **Six of main's mutant records, re-aimed by content.** Each is aimed at the site its name gives, and each dies
   against a green baseline.
   - Four SURV-TIERS records mutate line cites in source comments, and the merge had moved those cites
-    (`world.js:3715` is `:3726` now).
+    (`world.js:3717` is `:3728` now).
   - MUT-AIM found two that name two sites each:
     - DISC10-D-H1's stamp, which the hit's defaults and the kill's share;
     - DISC9's heard word, which DISC11's rain gain repeats below it.

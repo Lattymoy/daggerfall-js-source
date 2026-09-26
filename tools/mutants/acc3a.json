@@ -66,8 +66,8 @@
   {
     "name": "ACC3a-9-the-relay-believes-the-frame",
     "file": "server/src/index.js",
-    "old": "    return { name: r.claims.n, kind: r.claims.k, subject: r.claims.s, title: r.claims.t, glyphs: r.claims.g, mu, lv: r.claims.lv };",
-    "new": "    return { name: r.claims.n, kind: r.claims.k, subject: r.claims.s, title: m.title, glyphs: m.glyphs, mu, lv: r.claims.lv };",
+    "old": "    return { name: c.n, kind: c.k, subject: c.s, title: c.t, glyphs: c.g, mu, lv: c.lv, ...guild, gio: c.i };",
+    "new": "    return { name: c.n, kind: c.k, subject: c.s, title: m.title, glyphs: m.glyphs, mu, lv: c.lv, ...guild, gio: c.i };",
     "tests": ["test/acc3titles.test.js"],
     "note": "The other end of the same hole: the relay holds the public half and can verify, so the badge is only worth what the signature says. Read it off the hello and the first person to open devtools is a Developer."
   },

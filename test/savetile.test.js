@@ -207,6 +207,13 @@ test('AUDIT-312 F1: the cloud DELETE has a door, and it asks twice', () => {
   // the copy - is the worst label this menu could carry.
   assert.match(menu, /label: 'Delete backup'/);
   assert.match(menu, /label: 'Delete backup\?'/, 'a destructive act asks twice');
+  // EVERY ONE of them: the save's tile and the cloud-only card each carry
+  // the button, so one site asking twice cannot stand for the other (the
+  // A312-7 mutant lived through the lone match above while the card's
+  // copy still read true).
+  const deletes = menu.match(/label: 'Delete backup'/g) ?? [];
+  const asks = menu.match(/cloudArm === slot\s*\?\s*\{ label: 'Delete backup\?', primary: true/g) ?? [];
+  assert.equal(asks.length, deletes.length, 'every Delete backup is armed by a first press');
   // IT REMOVES THE COPY AND NEVER THE SAVE. The cloud is a backup, so
   // deleting the backup is not deleting the game.
   const cloud = rd('src/systems/cloudSaves.js');

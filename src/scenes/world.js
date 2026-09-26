@@ -99,7 +99,7 @@ import { maxFatigue, FATIGUE_MULTIPLIER, liveStat } from '../systems/statMods.js
 // finished since U7; what was missing was a host outside the dungeon
 // that opens one, and CanRest's whole town half.
 import { restDecision, getPreventedRestMessage, REST_TEXT } from '../systems/restSession.js';   // U48: the DISPATCH (DaggerfallUI.cs:651-688) above the rest window   // ROAD-B B5: GetPreventedRestMessage   // PARTY-REST5: enemiesNearby's own textId, for a follower's own relayed break
-import { isHouseOwned, shipCoords, ownsShip, assignShipToPlayer, resetShip, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS } from '../systems/banking.js';   // H1: the quest residence filter; GetShipCoords for the map-pixel scene clear; OwnsShip for the travel popup   // AUDIT 58: AssignShipToPlayer's permanent half, which the classic import owed
+import { isHouseOwned, shipCoords, ownsShip, assignShipToPlayer, resetShip, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS, createBankAccounts, BANK_REGION_COUNT } from '../systems/banking.js';   // H1: the quest residence filter; GetShipCoords for the map-pixel scene clear; OwnsShip for the travel popup   // AUDIT 58: AssignShipToPlayer's permanent half, which the classic import owed
 import {
   clearSceneCache,           // P1: SaveLoadManager.ClearSceneCache, at PlayerGPS's map-pixel seam
   createSceneCache, cacheScene, restoreCachedScene, worldSceneName, LOOT_CONTAINER_TYPES,   // A10: the ship arm's Cache/RestoreCachedScene pair (TransportManager.cs:382-398)
@@ -325,12 +325,13 @@ import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
 import { setAmbientTextHost, tickAmbientText } from '../systems/ambientText.js';   // AT2: Ambient Text's one component - this host claims it and feeds it the frame
 import { OnlineSession, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS, FOES_MS, FOES_FULL_MS, FOES_STALE_MS } from '../net/online.js';   // ONLINE1: the session; WORLD1: the room's memory
-import { accountTokenMinter, storedSession, accountPlayBeat, muteAccount, serviceBase, accountRefusalText, accountDuels, accountRenown, accountHomes, accountDecor, accountGates } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4: and the beat that counts time played
+import { accountTokenMinter, storedSession, accountPlayBeat, muteAccount, serviceBase, accountRefusalText, accountDuels, accountRenown, accountHomes, accountDecor, accountGuilds, accountGates } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4: and the beat that counts time played
 import { parseModCommand, runModCommand, mutedText, mutedNotices } from '../net/moderation.js';   // MOD1: /mute and /unmute, and the line a muted player reads
 import { startPlayClock } from '../net/playClock.js';   // ACC4: time played, knocked from here and measured by the account service's clock
 import { renownKillXp, renownQuestXp, renownPartyXp, renownText } from '../net/renown.js';   // RENOWN1: what a kill and a quest are worth, and the party's bonus (RENOWN3: read against my Renown)
 import { createRenownTracker, setRenownKillHandler, renownFoeLevel, renownAnswer, renownFoeCarry } from '../net/renownTracker.js';   // RENOWN1: what this character earns online, carried to the account service
 import { setRenownLayer } from '../systems/renownLayer.js';   // RENOWN1: the level's health and magicka, on top of Daggerfall's while online
+import { setHudRenown } from '../ui/hudRenown.js';   // RENOWN4: my own Renown and its bar, under the vitals
 import { pickRegionHubs, hubAtMapId, hubArrivalLine } from '../systems/regionHubs.js';   // HUB1: every region's main city, its hub
 import { createOnlineHomes } from '../systems/onlineHomes.js';   // HOME1: the account service's homes, one town at a time
 import { setSigilOnline, setSigilRenown, drinkSigil, sigilRiseLine } from '../systems/sigil.js';   // SIGIL1: a weapon won online carries a sigil, woken by my Renown
@@ -348,9 +349,9 @@ import { enhancedHudScale } from '../ui/enhancedHud.js';   // AUDIT NAME1 F3: th
 import { makeHitPend } from '../net/hitPend.js';   // AUDIT FOES FOE2: a blow the wire refused waits and goes
 import { PeerBodies } from '../net/peerBodies.js';   // MWBODY1: the others in the Morrowind body
 import { ChatLog, CHAT_REJOIN_MS } from '../net/chat.js';   // CHAT1: the tabs and their lines
-import { oocText, localLineHeard, nextRegionRoom, regionJoinedText, CHAN_OLD_RELAY_TEXT, ROLL_OLD_RELAY_TEXT, EMOTE_OLD_RELAY_TEXT, partyNoteTab } from '../net/chat.js';   // CHAT-CHAN: the channels' own laws (a second chat import: CHAT1's pin holds the first as it stands)
+import { oocText, localLineHeard, nextRegionRoom, regionJoinedText, CHAN_OLD_RELAY_TEXT, ROLL_OLD_RELAY_TEXT, EMOTE_OLD_RELAY_TEXT, GUILD_OLD_RELAY_TEXT, NO_GUILD_TEXT, partyNoteTab } from '../net/chat.js';   // CHAT-CHAN: the channels' own laws (a second chat import: CHAT1's pin holds the first as it stands)
 import { parseChatLine, HELP_LINES, CHAT_GREETING_TEXT, unknownCommandText, emptyCommandText, hostMisuseText, badRollText, expandShortcodes, EMOTE_LINES } from '../net/chatCommands.js';   // CHAT-CHAN: what a typed line IS; DICE1: and a roll; EMOTE1: an action, a gesture, a shortcode
-import { partyRosterSource, localRosterSource } from '../net/roster.js';   // CHAT-CHAN: the Party and Local tabs' composed lists
+import { partyRosterSource, localRosterSource, guildRosterSource } from '../net/roster.js';   // CHAT-CHAN: the Party and Local tabs' composed lists
 import { SocialState, accountId, accountSecret } from '../net/social.js';   // SOC2: the friends and the party, as the hub says them; the account the hub's hello carries; SOC3: and the two colours a name wears in the DOM - my party's green, a friend's blue
 import { SOCIAL_ROOM, PARTY_SEND_MS, chatRegionRoom } from '../net/wire.js';   // CHAT-CHAN: a region's channel
 import { cellRoomOfWire } from '../net/wire.js';   // HCC-PARK: the cell a parked team's anchor stands in
@@ -367,6 +368,7 @@ import { createChatPanel } from '../ui/chatPanel.js';   // CHAT1: the enhanced s
 import { makeVideoQueue } from '../systems/quest/videoQueue.js';   // CRUX1: the quest videos in turn
 import { createPartyPanel } from '../ui/partyPanel.js';   // SOC4: the party HUD - my party's portraits and their health / stamina / magicka
 import { MailBox, mailNoticeText } from '../net/mail.js';   // MAIL1: the letterbox the Letters tab draws and the frame polls
+import { GuildBook } from '../net/guildBook.js';   // GUILD1b: the guild the Guild tab draws
 import { createSocialPanel, TRY_AGAIN_TEXT, NO_PARTY_TEXT, LETTERS_SIGNED_OUT_TEXT } from '../ui/socialPanel.js';   // SOC3: the friends + party panel the Social button opens; AUDIT SOC B17: and its word for a refused act, so the F-menu's line and the panel's note agree
 import { glyphMarks } from '../ui/playerBadge.js';   // PEER-PLAQUE1: a badge's plain-text marks, for the plaque's title
 import { pickPeerInFront, SOCIAL_REACH, peerRayPick, peerIdOfKey, peerRelationText } from '../player/socialPick.js';   // SOC5: which body the ray struck, and how far "on their body" reaches; PEER-PLAQUE1: and the plaque's half of the same pick
@@ -4982,7 +4984,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:2512 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:6116
+  // that context through modes.dungeonCtx - so worldModes.js:6169
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -9320,7 +9322,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:9397-9461 -
+  // worldModes answers it in BOTH modes (worldModes.js:9450-9514 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -10571,7 +10573,15 @@ export async function bootWorld(canvas, renderer, params, status) {
   // SOC5's key reaches it through `hudCtx.openSocial` rather than a second copy of this reference.
   let socialPanel = null;
   let mail = null;   // MAIL1: the letterbox (net/mail.js MailBox), made with the panel that draws it
+  let guildBook = null;   // GUILD1b: the character's guild (net/guildBook.js GuildBook), made with the panel that draws it
   const socialLink = () => { const tab = chatLog?.tabs.find((t) => t.room === SOCIAL_ROOM); return tab ? (chatLinks?.get(tab.id) ?? null) : null; };
+  /** GUILD1c: a room took my guild off (a removal the hub heard, a disbanding, my own leave's echo) - the book looks
+   *  again, and a membership that moved goes to every room I hold (net/guildBook.js onOrders). */
+  const guildGone = () => { guildBook?.refresh(); };
+  /** GUILD1c: my guild's tag as the hub knows it - the Guild tab's word on whether I am in one. */
+  const myGuildTag = () => socialLink()?.gt ?? null;
+  /** GUILD1c: the Guild tab on a relay from before the guild's channel - the World link's welcome said so. */
+  const guildOld = () => { const world = chatLinks?.get('world'); return world?.status === 'open' && !world.guildOk; };
   /** SOC3 (Mac: "invite friends or other individuals"): what a click on a chat ROSTER ROW offers for that peer. The
    *  roster is the one place a stranger has a name, so it is the one place "other individuals" can be acted on -
    *  and every answer here is net/social.js's (actionsFor), including the reason a refused one carries. An act by
@@ -10769,6 +10779,12 @@ export async function bootWorld(canvas, renderer, params, status) {
   // falls and a token minted a moment before a rise must not take it back. Each rise puts the layer on at the new
   // level (systems/renownLayer.js: on top of Daggerfall's own maximums, never saved). Offline, none of this runs.
   let renownNow = null;
+  // RENOWN4: and the track's TOTAL, for my own bar (ui/hudRenown.js) - the mint's answer and every report's carry it,
+  // and like the level it only rises: a total never falls, and an answer that arrives late must not take one back.
+  let renownXp = null;
+  const renownXpAdopt = (xp) => {
+    if (onlineOn && Number.isSafeInteger(xp) && xp >= 0 && (renownXp === null || xp > renownXp)) renownXp = xp;
+  };
   const renownAdopt = (level) => {
     if (!onlineOn || !Number.isSafeInteger(level) || level < 1) return renownNow;
     if (renownNow !== null && level <= renownNow) return renownNow;
@@ -10778,6 +10794,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     return renownNow;
   };
   const adoptIssued = (who) => {
+    renownXpAdopt(who?.xp);   // RENOWN4: the total, before the level - so no frame draws the new level over the old total
     who = { ...who, level: renownAdopt(who?.level) };   // RENOWN1: the highest level this page has known, never a stale token's lower one
     online?.adoptIdentity?.(who);
     for (const link of chatLinks?.values?.() ?? []) link.adoptIdentity?.(who);
@@ -10799,6 +10816,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     earning: () => !!online,
     onAnswer: (data, sent) => {
       const a = renownAnswer(data, sent, renownSaid);   // AUDIT RENOWN1: one pure plan (net/renownTracker.js), pinned there
+      renownXpAdopt(a.xp);   // RENOWN4: the track's total, for my bar
       renownAdopt(a.level);
       if (a.order) online?.sendRenownOrder?.(a.order, a.level);   // the rooms I am in hear it now - and again until each answers
       if (a.announce !== null) { renownSaid = a.announce; townTalk.say(`Your Renown is now ${a.announce}.`); }
@@ -10820,6 +10838,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (rank != null) townTalk.say(sigilRiseLine(itemLongName(held), rank));
   };
   if (renownTracker) {
+    // RENOWN4 (Mac: "why is there no way to view my renown ingame?" and "Plus XP bar"): MY RENOWN ON MY HUD - the level,
+    // the total as the service last said it, and what is earned and not yet answered (drawn faint after the fill; none
+    // in an hour the bound has spent, since nothing earned then counts). Built only online, like the tracker.
+    setHudRenown(() => ({ level: renownNow, xp: renownXp, pending: _renownCapHour === Math.floor(Date.now() / 3_600_000) ? 0 : renownTracker.pending() }));
     globalThis.addEventListener?.('pagehide', () => { renownTracker.leave(); });   // RENOWN1: what was earned since the last report goes as the page does. AUDIT RENOWN1 GAME-8: by `keepalive`, under the report's own id
     setRenownKillHandler((foe) => { const party = 1 + (partyNear()?.length ?? 0); const xp = renownPartyXp(renownKillXp(renownFoeLevel(foe), renownNow), Number.isInteger(foe?._fightN) ? Math.min(party, foe._fightN) : party); renownTracker.earn(xp); sigilDrinks(xp); });   // AUDIT PSCALE1 PLAY-4: a shared foe's bonus counts the partymates who FOUGHT it (its fighters, systems/partyScale.js) - a partymate idling in the cell pads nothing   // RENOWN3: read against my Renown, never above it by more than RENOWN_OVER_MAX
     const paid = new Set();
@@ -11056,8 +11078,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     for (const tab of chatLog.tabs) {
       if (!tab.link) continue;   // CHAT-CHAN: the Party and Local tabs ride the hub's link and the presence session's room
       const link = new OnlineSession({ url: online.url, name: online.name, look: online.look, id: online.id, secret: online.secret, presence: false });
-      link.onChat = (line) => chatLog.push(tab.room === SOCIAL_ROOM && line.ch === 'party' ? 'party' : tab.id, line);   // CHAT-CHAN: the hub's party lines to the Party tab - by the relay's own routing word, heard only on the hub
-      link.onRoll = (line) => chatLog.push(tab.room === SOCIAL_ROOM && line.ch === 'party' ? 'party' : tab.id, line);   // DICE1: a roll lands where a line would
+      link.onChat = (line) => chatLog.push(tab.room === SOCIAL_ROOM && (line.ch === 'party' || line.ch === 'guild') ? line.ch : tab.id, line);   // CHAT-CHAN: the hub's party lines to the Party tab - by the relay's own routing word, heard only on the hub; GUILD1c: and a guild's to the Guild tab
+      link.onRoll = (line) => chatLog.push(tab.room === SOCIAL_ROOM && (line.ch === 'party' || line.ch === 'guild') ? line.ch : tab.id, line);   // DICE1: a roll lands where a line would
       // RED1: the SERVER's own line, and it lands on the log with the
       // flag set HERE - from the frame type the relay used, never from
       // anything on the frame. It rides the ordinary log, so ChatLog's
@@ -11067,6 +11089,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       link.onRed = (line) => chatLog.pushAll({ text: line.text, at: line.at, red: true });
       link.onMuted = onMuted;
       link.onRelay = onRelayVersion;
+      link.onGuildGone = guildGone;   // GUILD1c: a room took my guild off - the hub's word on a removal most of all
       if (tab.room) link.join(tab.room);   // CHAT-CHAN: the Region tab's room waits for the region and the relay (chatRegionFrame)
       chatLinks.set(tab.id, link);
       if (tab.room === SOCIAL_ROOM) link.onGate = (g) => gateLink?.word(g);   // WB3b: the hub's word of a kill, and a fighter's receipt outside the court
@@ -11091,6 +11114,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // which is a Set - so N sockets reconnecting to a new relay produce
     // ONE notice, not one each.
     online.onRelay = onRelayVersion;
+    online.onGuildGone = guildGone;   // GUILD1c
     chatPanel = createChatPanel({
       log: chatLog,
       // UNSTUCK1 (per-request): a local command, never sent to the
@@ -11313,9 +11337,32 @@ export async function bootWorld(canvas, renderer, params, status) {
       },
       onLetter: (event) => { chatLog.push(tab.id, { text: mailNoticeText(event), system: true }); },
     });
+    // GUILD1b: THE CHARACTER'S GUILD, over the account service (GUILD1a's door). Its gold is the save's: the purse first,
+    // then the bank account of the region the player stands in - HOME1's order (worldModes homeAccount), and the
+    // account minted on first use as the bank window mints it.
+    guildBook = new GuildBook({
+      door: accountGuilds({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }),
+      character: () => characterIdOf(playerEntity),
+      // GUILD1c: what the service signed, to the rooms - my guild now down every socket I hold (the tag beside my name,
+      // the hub's guild chat), and a member removed or a guild disbanded to the hub, where it reaches them
+      onOrders: ({ order, outOrder }) => {
+        if (outOrder) socialLink()?.sendGuildOut(outOrder);
+        if (order) { online?.sendGuildOrder(order); for (const link of chatLinks?.values?.() ?? []) link.sendGuildOrder(order); }
+      },
+      wallet: () => {
+        playerEntity.bankAccounts ??= createBankAccounts(BANK_REGION_COUNT);
+        const account = playerEntity.bankAccounts[_questRegionIndex() ?? 0] ?? null;
+        return {
+          gold: () => totalGoldAmount(playerEntity) + (account?.accountGold ?? 0),
+          pay: (n) => { const short = deductGold(playerEntity, n); if (account && short > 0) account.accountGold -= short; },
+          credit: (n) => { addGold(playerEntity, n); },
+        };
+      },
+    });
     socialPanel = createSocialPanel({
       social,
       mail,
+      guild: guildBook,
       send: (act) => socialLink()?.sendSocial(act) ?? false,   // false is the rate gate's answer: the panel keeps the button and says "try again"
       keepLetter: (letter) => keepLetterInJournal(letter),   // JOURNAL1: a letter kept in my journal, as a page is
       canOpen: () => !gamePaused() && !(townTalk.hudCovered || (modes?.hudCovered ?? false)),
@@ -12990,15 +13037,16 @@ export async function bootWorld(canvas, renderer, params, status) {
   // line); what stands here is which SESSION each tab rides.
   /** CHAT-CHAN: the session a tab's lines, badges and strip come from - the World and Region tabs their own links, the
    *  Party tab the hub's (the World tab's link: the hub names everyone online), the Local tab the presence session. */
-  const chatSessionOf = (tabId) => (tabId === 'local' ? online : tabId === 'party' ? chatLinks?.get('world') : chatLinks?.get(tabId)) ?? online ?? null;
+  const chatSessionOf = (tabId) => (tabId === 'local' ? online : tabId === 'party' || tabId === 'guild' ? chatLinks?.get('world') : chatLinks?.get(tabId)) ?? online ?? null;   // GUILD1c: the Guild tab the hub's too
   /** CHAT-CHAN: the roster a tab shows - its channel's members (ROSTER-G) for the World tab, and for the Region tab under
    *  the region's name; the party's seats online; those in earshot. */
   const chatRosterOf = (tabId) => {
     const s = chatSessionOf(tabId);   // CHAT-FIT: the session the lines' badges are read off - one session answers both
     if (tabId === 'party') return partyRosterSource(social?.party, s, social?.acct ?? null);
+    if (tabId === 'guild') return guildRosterSource(s, myGuildTag());   // GUILD1c: the hub's peers wearing my guild's tag
     if (tabId === 'local') return localRosterSource(s, peersNear(), player.feetAt());
     const place = chatLog?.tab(tabId)?.place ?? null;
-    return place && s ? { id: s.id, name: s.name, title: s.title, glyphs: s.glyphs, peers: s.peers, roomCount: s.roomCount, label: place } : s;
+    return place && s ? { id: s.id, name: s.name, title: s.title, glyphs: s.glyphs, gt: s.gt, peers: s.peers, roomCount: s.roomCount, label: place } : s;   // GUILD1c: my own row wears my tag
   };
   /** CHAT-CHAN: the Party and Region tabs on a relay from before the channels - the World link's welcome said so. */
   const chanOld = () => { const world = chatLinks?.get('world'); return world?.status === 'open' && !world.chanOk; };
@@ -13010,6 +13058,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     const tab = chatLog?.tab(tabId);
     if ((tabId === 'party' || tabId === 'region') && chanOld()) return CHAN_OLD_RELAY_TEXT;
     if (tabId === 'party' && !social?.party) return NO_PARTY_TEXT;
+    if (tabId === 'guild' && guildOld()) return GUILD_OLD_RELAY_TEXT;   // GUILD1c
+    if (tabId === 'guild' && !myGuildTag()) return NO_GUILD_TEXT;
     const s = tabId === 'region' && !tab?.room ? chatLinks?.get('world') : chatSessionOf(tabId);
     return s?.statusLine(tab?.label ?? 'chat') ?? null;
   };
@@ -13019,13 +13069,19 @@ export async function bootWorld(canvas, renderer, params, status) {
   const chatSend = (tabId, text, from = tabId, { me = false } = {}) => {
     const why = (line) => { chatLog.push(from, { text: line, system: true }); return false; };
     if ((tabId === 'party' || tabId === 'region') && chanOld()) return why(CHAN_OLD_RELAY_TEXT);
+    if (tabId === 'guild' && guildOld()) return why(GUILD_OLD_RELAY_TEXT);   // GUILD1c
     // EMOTE1: an action only down a session whose relay carries one - an older one would say the words bare
-    const s = tabId === 'local' ? online : tabId === 'party' ? socialLink() : chatLinks.get(tabId);
+    const s = tabId === 'local' ? online : tabId === 'party' || tabId === 'guild' ? socialLink() : chatLinks.get(tabId);
     if (me && s?.status === 'open' && !s.emoteOk) return why(EMOTE_OLD_RELAY_TEXT);
     if (tabId === 'local') return online?.sendChat(text, { me }) ?? false;
     if (tabId === 'party') {
       if (!social?.party) return why(NO_PARTY_TEXT);
       return socialLink()?.sendChat(text, { ch: 'party', me }) ?? false;   // the relay fans it to the party's members alone - my own tabs too: the echo is the receipt
+    }
+    if (tabId === 'guild') {
+      // GUILD1c: the relay fans it to the sockets wearing my guild alone - my own tabs too: the echo is the receipt
+      if (!myGuildTag()) return why(NO_GUILD_TEXT);
+      return socialLink()?.sendChat(text, { ch: 'guild', me }) ?? false;
     }
     return chatLinks.get(tabId)?.sendChat(text, { me }) ?? false;
   };
@@ -13035,10 +13091,12 @@ export async function bootWorld(canvas, renderer, params, status) {
   const chatRoll = (tabId, spec) => {
     const why = (line) => { chatLog.push(tabId, { text: line, system: true }); return false; };
     if ((tabId === 'party' || tabId === 'region') && chanOld()) return why(CHAN_OLD_RELAY_TEXT);
-    const s = tabId === 'local' ? online : tabId === 'party' ? socialLink() : chatLinks.get(tabId);
+    if (tabId === 'guild' && guildOld()) return why(GUILD_OLD_RELAY_TEXT);   // GUILD1c
+    const s = tabId === 'local' ? online : tabId === 'party' || tabId === 'guild' ? socialLink() : chatLinks.get(tabId);
     if (s?.status === 'open' && !s.rollOk) return why(ROLL_OLD_RELAY_TEXT);
     if (tabId === 'party' && !social?.party) return why(NO_PARTY_TEXT);
-    return s?.sendRoll(spec, tabId === 'party' ? { ch: 'party' } : {}) ?? false;
+    if (tabId === 'guild' && !myGuildTag()) return why(NO_GUILD_TEXT);
+    return s?.sendRoll(spec, tabId === 'party' || tabId === 'guild' ? { ch: tabId } : {}) ?? false;
   };
   /** CHAT-CHAN (kurkku: "players in Wayrest see messages from other players in Wayrest and so on"): THE REGION TAB
    *  FOLLOWS THE PLAYER - into the channel of the region they stand in (PlayerGPS.CurrentRegionIndex: the POLITIC map's
@@ -13061,6 +13119,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!chatLinks) return;
     buildPoll(performance.now());
     chatLog.setShown('party', !!social?.party);   // CHAT-P (Mac: "Party chat should only show if in a party"): the tab is on the bar while a party is
+    chatLog.setShown('guild', !!myGuildTag());   // GUILD1c: and the Guild tab while the character is in a guild
     chatRegionFrame(performance.now());   // CHAT-CHAN: before the rejoin - a region crossed moves the link, a rejoin takes it back to where it is
     for (const [tabId, link] of chatLinks) {
       const room = chatLog.tab(tabId).room;   // CHAT-CHAN: a tab whose channel is not known yet (the Region tab, before its first region) has nothing to rejoin

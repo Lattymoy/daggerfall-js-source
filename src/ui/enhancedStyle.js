@@ -2509,6 +2509,21 @@ ${badgeCss()}
 .hud-health .hud-fill { background: #d98074; }
 .hud-magicka .hud-fill { background: #6f8fd9; }
 .hud-fatigue .hud-fill { background: #74d9a0; }
+/* RENOWN4: MY RENOWN, under the vitals and as wide as their row (three tracks and two gaps) - the box every name
+   wears (ui/nameLayer.js .dfname-renown) in this HUD's square 2px frame, a thin bar in the box's own gold with what
+   is earned and not yet answered faint after the fill, and the numbers. Online only: \`.on\` while the page knows my
+   level; \`.nobar\` while it knows the level and not yet the total (a service before acct12), the box alone. */
+.hud-renown { display: none; align-items: center; gap: 8px; height: 22px; width: calc(3 * min(190px, 23vw) + 28px); }   /* RENOWN4b: 22px, the box's own height - the lift below counts it */
+.hud-renown.on { display: flex; }
+.hud-renownbox { flex: 0 0 auto; min-width: 1.6em; padding: 1px 5px; text-align: center;
+  font-size: 13px; line-height: 1.2; font-variant-numeric: tabular-nums;
+  color: #f2c46b; background: rgba(14,16,19,0.78); border: 2px solid rgba(242,196,107,0.8); }
+.hud-renown .hud-renowntrack { flex: 1 1 auto; width: auto; height: 8px; }
+.hud-renown .hud-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; height: auto; background: #f2c46b; }
+.hud-renownghost { position: absolute; left: 0; top: 0; bottom: 0; width: 0; display: block; background: rgba(242,196,107,0.35); }
+.hud-renownnum { flex: 0 0 auto; font-size: 11px; letter-spacing: 0.04em; font-variant-numeric: tabular-nums;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.9); }
+.hud-renown.nobar .hud-renowntrack, .hud-renown.nobar .hud-renownnum { display: none; }
 
 /* PX30b: THE BREATH, above the vitals - drawn only while held, and
    red below DFU's own short-on-breath line. */
@@ -2566,6 +2581,13 @@ ${badgeCss()}
    it rather than standing on it; the HUD toggles the class off the same
    pref the stick reads. */
 .hud-quick.stickclear { left: calc(156px + env(safe-area-inset-left, 0px)); }
+/* RENOWN4b (Mac: "ensure the new xp bar doesnt overlap anything"): THE RENOWN ROW LIFTS THE LINE THIS BLOCK RIDES.
+   The block's bottom is the vitals' top line and two pixels (22 + 32 x scale, above) - and the Renown row stands
+   UNDER the vitals, its 22px and the column's 10px gap, so while it is lit the vitals stand 32 x scale higher and the
+   block goes up with them. Without it the bars reached the block's column on a 1024px screen at scale 1 (on a 1280px
+   one past 1.16) and the magicka bar stood in the diamond. Under Plus the empty status row takes no gap, so the vitals
+   stand 10 x scale lower than this, and the block keeps it as air. (test/renown4b.test.js models every edge.) */
+.hud:has(.hud-renown.on) .hud-quick { bottom: calc(22px + 64px * var(--hud-scale) + env(safe-area-inset-bottom, 0px)); }
 /* The caption row: the interaction mode's word, where it already stood,
    and the readied spell beside it. CAPPED AT THE DIAMOND'S OWN WIDTH
    and wrapping, because a readied spell can be called anything and an
@@ -2780,6 +2802,7 @@ ${badgeCss()}
   .hud-bottom { bottom: 12px; gap: 8px; }
   .hud-bars { gap: 10px; }
   .hud-vital .hud-track { width: 26vw; }
+  .hud-renown { width: calc(78vw + 20px); }   /* RENOWN4: the vitals' row here - three 26vw tracks and two 10px gaps */
   /* QS3: the diamond shrinks with everything else - one number, and
      the four placements follow it. MEASURED against the touch layer's
      bottom-right column and the vitals above it at 860x400 and
@@ -2794,10 +2817,33 @@ ${badgeCss()}
        clear that layer's other row - 16 + 48 and twelve of air. */
     bottom: calc(76px + 30px * (var(--hud-scale) - 1) + env(safe-area-inset-bottom, 0px)); }
   .hud-quick.stickclear { left: calc(160px + env(safe-area-inset-left, 0px)); }
+  /* RENOWN4b: and here the Renown row lifts the vitals by its 22px and the 8px gap - the block goes up the same 30 */
+  .hud:has(.hud-renown.on) .hud-quick { bottom: calc(46px + 60px * var(--hud-scale) + env(safe-area-inset-bottom, 0px)); }
   .hud-qdiamond { margin-top: 14px; }
   .hud-qicon { max-width: 32px; max-height: 32px; }
   .hud-qwtrack, .hud-qwfill { stroke-width: 6; }
   .hud-qcount { right: 18px; bottom: 13px; font-size: 11px; }
+}
+
+/* RENOWN4b: ON A TOUCH SCREEN THE BOTTOM-RIGHT IS THE TOUCH LAYER'S (ui/touch.js: jump, sheathe, the mode and the social
+   door, from 16 to 64px up and from 16 to 280px in from the right, over the safe area) - so the Renown row does not
+   stand under the vitals there: it stands ABOVE them (the bars and the rows under them take a later place in the
+   column) and never lower than 68px, four clear of that row. Its margin makes up whatever the vitals below it do not,
+   at every scale (the column is scaled, so the margin is the clearance over the scale); the quickslot block rides
+   two pixels above the row's top, whichever of its two lines is higher at this scale (the margin's 68px, or the
+   stack's own height once that is past it) - and a row of effect or need chips under the vitals lifts it all by the
+   chips' 24px and their gap. TOUCH-FIRST is the pair the diamond's own taps use (AUDIT QS F8). */
+@media (pointer: coarse) and (hover: none) {
+  .hud-bars { order: 1; }
+  .hud-effects, .hud-needs, .hud-status { order: 2; }
+  .hud-renown { margin-bottom: max(0px, calc((46px + env(safe-area-inset-bottom, 0px)) / var(--hud-scale) - 30px)); }
+  .hud:has(.hud-renown.on) .hud-quick { bottom: calc(max(24px + 62px * var(--hud-scale), 70px + 32px * var(--hud-scale)) + env(safe-area-inset-bottom, 0px)); }
+  .hud:has(.hud-renown.on):has(.hud-eff, .hud-need) .hud-quick { bottom: calc(max(24px + 86px * var(--hud-scale), 70px + 56px * var(--hud-scale)) + env(safe-area-inset-bottom, 0px)); }
+}
+@media (pointer: coarse) and (hover: none) and (max-width: 860px) {
+  .hud-renown { margin-bottom: max(0px, calc((56px + env(safe-area-inset-bottom, 0px)) / var(--hud-scale) - 28px)); }
+  .hud:has(.hud-renown.on) .hud-quick { bottom: calc(max(14px + 58px * var(--hud-scale), 70px + 30px * var(--hud-scale)) + env(safe-area-inset-bottom, 0px)); }
+  .hud:has(.hud-renown.on):has(.hud-eff, .hud-need) .hud-quick { bottom: calc(max(14px + 82px * var(--hud-scale), 70px + 54px * var(--hud-scale)) + env(safe-area-inset-bottom, 0px)); }
 }
 
 /* PX25: the doors the F5 sheet carried, on the page that is the sheet. */

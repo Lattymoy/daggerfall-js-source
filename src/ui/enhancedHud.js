@@ -63,6 +63,7 @@ import { activeSpellIcons, maxRoundsRemaining } from './hudActiveSpells.js';
 import { liveBundles } from '../systems/mysticism.js';   // PX30: the ONE bundle walk the HUD already uses
 import { isEnhancedPlus } from '../systems/uiSkin.js';   // PLUS1: the lost chunk and the low-health frame are Enhanced Plus's
 import { getPref } from '../systems/uiPrefs.js';   // PX30c: the port's own prefs, not DFU's settings
+import { hudRenown } from './hudRenown.js';   // RENOWN4: my own Renown, under the vitals
 import { survivalHudChips } from '../systems/survival/status.js';   // SURV5: the needs strip
 import { liveVampirism } from '../systems/racialLive.js';   // AUDIT SURV C: no hunger or sleep chip on a vampire
 import { survivalOn } from '../systems/survival/switch.js';
@@ -477,6 +478,18 @@ function build(doc) {
   const health = vital('health', 'Health');
   const fatigue = vital('fatigue', 'Fatigue');
   bottom.append(bars);
+  // RENOWN4 (Mac: "why is there no way to view my renown ingame?" and "Plus XP bar"): MY RENOWN, under the vitals and
+  // as wide as them - the box every name wears, the bar to the next level with what is earned and not yet answered
+  // faint after the fill, and the numbers. Online only: the row draws only while ui/hudRenown.js has one.
+  const renown = el('div', 'hud-renown');
+  const renownBox = el('span', 'hud-renownbox');
+  const renownTrack = el('div', 'hud-track hud-renowntrack');
+  const renownFill = el('i', 'hud-fill');
+  const renownGhost = el('i', 'hud-renownghost');
+  renownTrack.append(renownFill, renownGhost);
+  const renownNum = el('span', 'hud-renownnum');
+  renown.append(renownBox, renownTrack, renownNum);
+  bottom.append(renown);
   const effects = el('div', 'hud-effects');
   const needs = el('div', 'hud-needs');   // SURV5: the needs strip, under the effects
   if (isEnhancedPlus()) {
@@ -659,6 +672,7 @@ function build(doc) {
 
   doc.body.append(root);
   return { root, compass, marks, detectMarks: [], gateMark: null, foe, foeName, foeFill, foeGhost, foeChunks, foeBladeFull, magicka, health, fatigue, effects, needs,
+    renown, renownBox, renownFill, renownGhost, renownNum,
     breath, breathFill, readied, reticle, cross, centreWord, cornerWord,
     quick, quickCells: cells, quickTags: tags, hotDock,
     spellChip: { chip: spellChip, tag: spellTag, img: spellGlyph, text: spellText, name: spellName } };
@@ -837,6 +851,19 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
     lossTick(key, part, pct, dt, CHUNK_MIN_LOSS);
     const low = key === 'health' && now > 0 && pct <= LOW_HEALTH_PCT && isEnhancedPlus();
     if (last[`${key}Low`] !== low) { last[`${key}Low`] = low; part.wrap.classList.toggle('low', low); }
+  }
+
+  // RENOWN4: MY RENOWN - the row while the page knows my level (online), its bar while it knows the total too.
+  const rv = hudRenown();
+  if (last.renownOn !== !!rv) { last.renownOn = !!rv; parts.renown.classList.toggle('on', !!rv); }
+  if (rv) {
+    put(parts.renownBox, 'renownL', String(rv.level));
+    if (last.renownBar !== rv.bar) { last.renownBar = rv.bar; parts.renown.classList.toggle('nobar', !rv.bar); }
+    width(parts.renownFill, 'renownW', rv.frac * 100);
+    const g = `${(Math.max(0, Math.min(1, rv.frac)) * 100).toFixed(1)}%`;
+    if (last.renownGL !== g) { last.renownGL = g; parts.renownGhost.style.left = g; }
+    width(parts.renownGhost, 'renownGW', rv.ghost * 100);
+    put(parts.renownNum, 'renownN', rv.text);
   }
 
   // THE BREATH. DFU's own two laws: drawn only while holding breath,

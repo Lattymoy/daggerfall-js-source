@@ -218,7 +218,7 @@ test('HOME1 the client\'s law: a home can be Daggerfall\'s for-sale house or an 
   for (const t of [BUILDING_TYPES.HouseForSale, BUILDING_TYPES.House1, BUILDING_TYPES.House2, BUILDING_TYPES.House3, BUILDING_TYPES.House4]) assert.equal(homeCandidate(b(t)), true, `type ${t}`);
   assert.equal(homeCandidate(b(BUILDING_TYPES.House2, { factionId: 42 })), false, 'a guild\'s house (the lock law keeps it for members)');
   assert.equal(homeCandidate(b(BUILDING_TYPES.House3, { factionId: 42 })), true, 'the lock law names House2 alone');
-  for (const t of [BUILDING_TYPES.House5, BUILDING_TYPES.Tavern, BUILDING_TYPES.Bank, BUILDING_TYPES.Palace, BUILDING_TYPES.Alchemist]) assert.equal(homeCandidate(b(t)), false, `type ${t}`);
+  for (const t of [BUILDING_TYPES.Tavern, BUILDING_TYPES.Bank, BUILDING_TYPES.Palace, BUILDING_TYPES.Alchemist]) assert.equal(homeCandidate(b(t)), false, `type ${t}`);   // HOME2: House5 and House6 are houses too (test/home2.test.js)
   assert.equal(homeCandidate(b(BUILDING_TYPES.House1, { buildingKey: 0 })), false, 'a building with no key is nobody\'s to own');
   assert.equal(homeCandidate(null), false);
   assert.equal(homePurchasable(b(BUILDING_TYPES.House1)), true);
@@ -423,7 +423,9 @@ test('HOME1 the wiring by source: the home answers at the door BEFORE Daggerfall
   assert.ok(gate > 0 && gate < door.indexOf('const unlocked = homeOpen || resolveBuildingUnlocked(bd);'), 'the home answers first');
   assert.match(door, /if \(door === 'locked'\) \{ townTalk\?\.say\?\.\(homeLockedLine\(home\)\); return true; \}/, 'shut: said, and the press ends - before the Open spell, the pick and the bash');
   assert.ok(door.indexOf("if (door === 'locked')") < door.indexOf('exteriorOpenSpellFor(playerEntity)'));
-  assert.match(door, /if \(!isBash && !homeAsked && getInteractionMode\(\) === 'info'\) \{\s*if \(door === 'own'\) \{ openHomeOwnerMenu\(bd, home, hit, entries\); return true; \}\s*const price = door === 'none' \? homeOfferPrice\(bd\) : 0;\s*if \(price\) \{ openHomeOffer\(bd, price, hit, entries\); return true; \}/);
+  // HOME2 moved the Info-only offer: the plaque's verbs first, and where it lists none the click's own offer - my
+  // home's menu in Info, a house's offer in any mode but Steal (test/home2.test.js holds the rest)
+  assert.match(door, /if \(verb == null\) \{\s*if \(door === 'own' && mode === 'info'\) \{ openHomeOwnerMenu\(bd, home, hit, entries\); return true; \}\s*if \(price && \(mode === 'info' \|\| !_homePassed\.has\(homeIdOf\(bd\)\)\)\) \{ openHomeOffer\(bd, price, hit, entries\); return true; \}/);
   assert.match(m, /const homeOnward = \(hit, entries\) => \(\) => \{ activateStaticDoor\(hit, entries, false, \{ homeAsked: true \}\)/, 'No and Go in come back to the door, past the menu');
   assert.match(m, /houseOwned: home !== null \|\| isHouseOwned\(/, 'no greeting from residents a home does not have');
   assert.match(m, /interiorHome = home;   \/\/ HOME1/);

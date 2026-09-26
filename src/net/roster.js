@@ -40,7 +40,7 @@
 // Not a DFU member: Daggerfall Unity has no chat and no roster.
 // Ledger A row (ONLINE).
 import { tagOf, inEarshot } from './chat.js';
-import { sanitizeName, readBadge } from './wire.js';
+import { sanitizeName, readBadge, readGuildTag } from './wire.js';   // GUILD1c: a row's guild tag, through the wire's own reader
 
 /** How many rows the panel will hold. The relay's own ROSTER_MAX
  *  bounds what a room reports; this is the drawing's own ceiling, so
@@ -52,7 +52,7 @@ export const ROSTER_ROWS_MAX = 200;
  * One drawn row: the id it is keyed by, the name as the wire allows it,
  * the tag the chat lines already show beside a name, and whether it is
  * the player's own.
- * @typedef {{ id: string, name: string, tag: string, me: boolean }} RosterRow
+ * @typedef {{ id: string, name: string, tag: string, me: boolean, title?: string|null, glyphs?: string[], gt?: string|null }} RosterRow
  */
 
 /**
@@ -64,8 +64,8 @@ export const ROSTER_ROWS_MAX = 200;
  * members are everyone online). A channel tab that is not a room of its own hands a source composed for it (the
  * Party tab its party, the Local tab those in earshot) and names it.
  * `title` and `glyphs` are my own badge (ACC3c: the relay never sends me my own row), read by the wire's readBadge.
- * @typedef {{ id?: string|null, name?: string|null, title?: any, glyphs?: any,
- *             peers?: Map<string, { id?: string|null, name?: string|null }>|null,
+ * @typedef {{ id?: string|null, name?: string|null, title?: any, glyphs?: any, gt?: string|null,
+ *             peers?: Map<string, { id?: string|null, name?: string|null, gt?: string|null }>|null,
  *             roomCount?: number|null, label?: string|null }} RosterSource
  */
 
@@ -92,7 +92,7 @@ export function rosterRows(session) {
     // else it is drawn, so a bare one here is the same name saying two
     // different things on one screen. `readBadge` rather than a second
     // spelling of the vocabulary check, for the reason it exists.
-    rows.push({ id, name: sanitizeName(name), tag: tagOf(id), me, ...readBadge(from) });
+    rows.push({ id, name: sanitizeName(name), tag: tagOf(id), me, ...readBadge(from), gt: readGuildTag(from) });   // GUILD1c: and the guild's tag, through the wire's own reader
   };
   // ME FIRST into the list, though not first in the ORDER - the sort
   // below puts the player wherever their name falls, because a roster
@@ -142,7 +142,23 @@ export function partyRosterSource(party, hub, acct) {
     const known = hub?.peers?.get?.(id) ?? null;
     peers.set(id, { ...(known ?? {}), id, name: m.name ?? known?.name ?? '' });
   }
-  return { id: hub?.id ?? null, name: hub?.name ?? '', title: hub?.title ?? null, glyphs: hub?.glyphs ?? null, peers, label: 'Party' };
+  return { id: hub?.id ?? null, name: hub?.name ?? '', title: hub?.title ?? null, glyphs: hub?.glyphs ?? null, gt: hub?.gt ?? null, peers, label: 'Party' };
+}
+
+/**
+ * GUILD1c: THE GUILD TAB'S LIST - the guild is not a room either, so its roster is composed: my own row (the hub link's,
+ * wearing my badge), and every peer the hub link knows wearing my guild's TAG - the World roster's own peers, so a row's
+ * badge and its menu are the same peer the World tab offers (a tag is one guild's: the service holds tags unique). The
+ * hub introduces at most CHAT_ROSTER_MAX to a welcome, so a member it never introduced is not listed - their lines still
+ * arrive. No tag: a list of one (the strip under the chat says why).
+ * @param {RosterSource|null|undefined} hub   the World tab's link
+ * @param {string|null} tag   my guild's tag
+ * @returns {RosterSource}
+ */
+export function guildRosterSource(hub, tag) {
+  const peers = new Map();
+  if (tag) for (const [id, p] of hub?.peers ?? []) if (p?.gt === tag) peers.set(id, p);
+  return { id: hub?.id ?? null, name: hub?.name ?? '', title: hub?.title ?? null, glyphs: hub?.glyphs ?? null, gt: hub?.gt ?? null, peers, label: 'Guild' };
 }
 
 /**
@@ -160,5 +176,5 @@ export function localRosterSource(session, near, here) {
     const known = session?.peers?.get?.(p.id);
     if (known) peers.set(p.id, known);
   }
-  return { id: session?.id ?? null, name: session?.name ?? '', title: session?.title ?? null, glyphs: session?.glyphs ?? null, peers, label: 'Nearby' };
+  return { id: session?.id ?? null, name: session?.name ?? '', title: session?.title ?? null, glyphs: session?.glyphs ?? null, gt: session?.gt ?? null, peers, label: 'Nearby' };   // GUILD1c: my own row wears my tag
 }

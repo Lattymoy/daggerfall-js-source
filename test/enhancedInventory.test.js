@@ -2398,7 +2398,7 @@ test('PLUS9: under Enhanced Plus the chest, arms and legs are two half panels ea
 });
 
 test('PLUS9: plain Enhanced keeps the eleven families - one Chest, one Arms, one Legs', () => {
-  withDressed('?skin=enhanced', ({ dom }) => {
+  withDressed('?skin=enhanced&plus=0', ({ dom }) => {   // PLUS-DEFAULT: Plus is the default dress, so plain Enhanced is asked for by name
     assert.equal(dom.doc.querySelectorAll('.wornpair').length, 0, 'no split cells');
     const words = wornWords(dom);
     for (const w of ['Chest', 'Arms', 'Legs']) assert.ok(words.includes(w), `the "${w}" family: ${words}`);

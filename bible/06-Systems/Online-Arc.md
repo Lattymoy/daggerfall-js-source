@@ -4695,7 +4695,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:6726` read, on one physical line:
+`src/scenes/worldModes.js:6779` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -4837,7 +4837,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:4877` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:4879` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:285`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -7049,7 +7049,7 @@ answers that exact string in the object's sleep, no event, no wake. Only a
 CHANNEL session (chat, `presence: false`) used it. A presence session's
 liveness rode the pose.
 
-**Now (`src/net/wire.js:947`, `src/net/online.js:1871`):**
+**Now (`src/net/wire.js:970`, `src/net/online.js:1971`):**
 
 - `HEARTBEAT_MS` 5000 -> 20000. The pose goes when it MOVED (at POSE_HZ, as
   before) or every 20 s standing, as the peers' proof of life and the silence
@@ -8740,6 +8740,39 @@ the room without loot, the bank online, the door's model, the wiring by source; 
 `test/world6.test.js`, `test/housecontainers.test.js`, `test/houses.test.js`, `test/restlodging.test.js`,
 `test/worldhover.test.js`. `tools/mutants/home1.json`.
 
+### HOME2 (2026-09-25, Mac: "We need to ensure any house can be bought"; offered the door's offer on any click but Steal and House5/House6 counted as houses - "Recommended + should use our tooltip implementation") - any house, bought through its door's own tooltip
+
+HOME1 offered a house to a click in **Info mode alone** - every other mode walked in, so a player who never switched
+to Info never met a single offer. And the account service's deploy after the merge read red: its smoke test got
+`renown/xp -> 404` from an old instance a second after `/v1/health` said acct10 - the deploy had taken (the
+migrations 0009-0013 applied, the guild trigger among them, and the live routes answered 401 minutes later), but a
+red deploy reads as a service that is not there.
+
+- **Every house type is a house** (`systems/onlineHomes.js homeCandidate`). House5 and House6 join House1-4 and the
+  for-sale house - RMBLayout.IsResidence leaves them out, Mac's call is that any house sells. A guild's House2 (the
+  Thieves Guild's, the Dark Brotherhood's) still never does: sold to one player it would shut the guild out.
+- **The door's verbs, on the plaque** (`homeBuyRows`, `homeOwnerRows`; `scenes/worldModes.js homeDoorVerbs`). Online,
+  in every mode but Steal (which picks the lock), World Tooltips' plaque over a house I could buy lists "Go in" and
+  "Buy it: N gold", and over my own home "Go in", "Who may enter: ..." and "Sell it" - ACT-MENU's rows
+  (`systems/worldHover.js`), as a player's and a horse's are: the wheel lights one, the click presses it. "Go in" is
+  first and lit, so a plain click is still a plain click. The price is the buy row's, not a line of its own. The
+  door's cached text now minds the mode and the arm (`_doorTextVerbs`), so a switch to Steal or an arm repaints it.
+- **Buying takes two presses** (`HOME_BUY_ARM_MS` 5 s): the first arms the row ("Click again to buy: N gold"), the
+  second buys, through HOME1's own purchase (the service's claim first, the gold once it lands). A wheel notch too
+  many and one click never spend thousands. "Who may enter" moves round (only me, my party, anyone) through the
+  service, said when it lands; "Sell it" opens HOME1's sale window, whose warning a row could not carry.
+- **Where the plaque lists nothing** (a touch screen, World Tooltips off - the plaque's own gate), the click offers:
+  a house's offer in any mode but Steal ("Y - buy it", "N - just go in"), once a house a session - "just go in"
+  walks in and that house does not ask again - and always in Info; my home's menu in Info, as before. The press
+  reads the lit verb for ITS door alone (`plaqueActionFor(key)`), against the door as it stands at the press.
+- **The deploy's smoke asks again** (`.github/workflows/account-deploy.yml`, `post`): a call that answers 404 is
+  asked again, seven times five seconds apart, before the deploy is failed - an old instance wrote nothing for a
+  path it does not know. Every new route's call goes through it.
+
+Pinned: `test/home2.test.js` (4) - the law, the plaque's fold executed, the door by source, the deploy; re-aimed by
+content in `test/home1.test.js` (House5, the Info-only offer) and `test/worldhover.test.js` (the door cache).
+`tools/mutants/home2.json` (16, all dead); `home1.json` and `worldhover.json` records re-aimed.
+
 ## DECOR1 (2026-09-25, Mac: "building our own unique version instead of porting" Kaedius's Decorator; decor "Gold per placement"; asked, the catalogue "Everything Daggerfall furnishes", priced "By size", opened from "A UI element that can be clicked to open the decorate panel. Allows free cam mode for placement and an intuitive scrolling menu with filters", offline "kept in the save") - the decorator, from the ground up
 
 Daggerfall Unity has no decorator; Kaedius's Decorator 0.2.2 (a Daggerfall Unity mod: furniture placed in a home or
@@ -9081,9 +9114,80 @@ guild's chat (through the token and the relay), **GUILD1d** the guild hall, a gu
   account. The client's door is `accountGuilds` (`src/net/accountClient.js`), every answer `call`'s shape and no
   session a word, not a throw.
 
-Not yet: nothing in the game calls the door - GUILD1b's window is the first, and it pays the founding fee, keeps the
-deposit's refund to a refusal's word, and puts a withdrawal in the purse. Migration 0013 is applied by the deploy
+Not yet, at GUILD1a: nothing in the game called the door - GUILD1b's window is the first (below). Migration 0013 is applied by the deploy
 (ACC1-CI); its trigger is the migrations' first, and wrangler's statement splitter keeps a trigger's `BEGIN ... END`
 whole (a port of SQLite's own `sqlite3_complete`, read in wrangler 4.140's source) - not yet run against a real D1.
 
 Pinned: `test/guild1.test.js` (9), `test/accountworker.test.js` (the tables). `tools/mutants/guild1.json` (83).
+
+**GUILD1b - the Guild tab.**
+
+- **Where**: the Social panel's fourth tab, "Guild", beside Friends, Party and Letters (`ui/socialPanel.js`), present
+  wherever the host hands the panel a guild book - online, as the Letters tab is where it has a letterbox. It opens on a
+  fresh look when the last is older than GUILD_FRESH_MS (30 s), and draws the book, never the relay's picture.
+- **The book** (`net/guildBook.js` GuildBook, made in `scenes/world.js` beside the letterbox): the character's guild as
+  the service last answered it and the account's invitations, one look at a time; no session reads as signed out and a
+  guest as a guest, each its own sentence; every act goes through GUILD1a's door as the character playing, holds the
+  tab `busy`, and ends in a fresh look, so the tab draws the service's word and never a guess.
+- **The gold's order**, the law GUILD1a set down: FOUNDING asks the purse for the fee first, lets the service found,
+  then pays - the purse, then the bank account of the region the player stands in (HOME1's order) - and a purse
+  emptied while the answer was out disbands the guild it just founded and pays nothing. A DEPOSIT leaves the purse
+  first and comes back only on the service's REFUSAL WORD; a lost answer (`offline`, `server`) may have landed, so the
+  gold does not come back and the tab says to read the ledger. A WITHDRAWAL is the treasury's first and the purse's
+  after.
+- **In no guild**: the invitations standing for the account, each joined or declined as this character (the tab's
+  badge counts them), and the founding form - a name and a tag, its cost in words, Found disabled until both are the
+  law's shape.
+- **In a guild**: its name and tag, the character's rank and the treasury; the roster, each member with what the
+  character's rank may do to them (promote or demote within the ranks below, remove, make guildmaster - the dangerous
+  ones two presses, disarmed after SOCIAL_CONFIRM_MS); invite by username and the invitations out; deposit and
+  withdraw, the ledger newest first; the rank names, the guildmaster's to change; leave, and disband. A button the rank
+  cannot press is disabled and says why - "the guildmaster's alone", "take the gold out first", "hand the guild on
+  first". Every form keeps its words across a repaint.
+
+Not yet at GUILD1b: the tag beside the name and the guild chat (GUILD1c, below), and the guild hall (GUILD1d).
+
+Pinned: `test/guild1b.test.js` (10). `tools/mutants/guild1b.json` (31).
+
+**GUILD1c - the tag beside the name, and the guild's chat** (2026-09-25, Mac: "Do guild1c").
+
+- **The guild rides the token.** The account service signs the named character's guild into its identity token - the
+  guild's id `gi`, its tag `gt` and the character's member row `gm` (the roster's `m<rowid>`), all three or none
+  (`net/identityToken.js` guildClaimsValid) - read at the mint off the roster as it stands (`server-account/src/guilds.js`
+  guildBadgeOf), and answers the tag beside the level for the page's own name. The client never says which guild. A room
+  stamps the TAG ALONE beside the name (`net/wire.js` badged); the id and the member row are the relay's, to route a
+  guild's chat and a removal by, and nobody else's to read.
+- **Where it shows**: `<HND>` right of the name, before the glyphs - over a head in both faces (`ui/nameLayer.js`; the
+  bitmap run of `net/remotePlayers.js` drawNamePoints centred on the whole of it), on a chat line and in the roster
+  (`ui/chatPanel.js`, `net/roster.js` - my own row too), and on the Inspect card (`ui/profileWindow.js`); one spelling,
+  `net/guildLaw.js` guildTagText. A peer in no guild wears the label it wore before.
+- **A membership that moves is said at once.** A token is read once, at a hello. So every guild act that moves a
+  membership answers a SIGNED ORDER (`guildOrdersOf`): founding, a join, a leave, a disbanding and the guild tab's look
+  say the actor's character's guild NOW (`{o:'guild'}`); the guild book (`net/guildBook.js` onOrders) hands a look's
+  order on when the membership it reads differs from the last one handed on - the first look always, since the page
+  cannot know what its rooms were told - and the host carries it down every socket it holds (`net/online.js`
+  sendGuildOrder: after each socket's own welcome names world113, one guild frame a socket every GUILD_SEND_MS, 1.5 s -
+  wider than the relay's own one-a-second gate, so two frames the wire bunched are not one it drops - and each once
+  more GUILD_RESEND_MS, 5 s, after its first, for the one it dropped anyway; a newer order in the older's place). A removal and a disbanding answer an OUT order (`{o:'guildout'}` - the
+  member row, or the guild whole), carried to the hub, the one room every online player holds a socket to: it takes the
+  membership off every socket of theirs and tells each, and their own client looks again and carries their none to
+  their other rooms (`onGuildGone`).
+- **The relay** (world113): a `guild` order is taken only from a socket whose verified account it names, and only when
+  NEWER than what the socket wears (its token's, or a later order's) - a replayed join cannot undo the leave after it;
+  a tag that moved fans to a place room on the room's own budget (GUILD_ROOM_HZ_MAX), and in a channel or the hub its
+  carrier alone hears it (renown's rule there). A `guildout` is believed on its signature, as a mute order is, and HELD
+  (`_guildOuts`), so a token or an order said before a removal cannot carry the member back into the guild's chat.
+- **The guild's chat**: a Guild tab beside the Party tab (`net/chat.js`), on the bar while the character is in a guild;
+  its lines ride the hub link with `ch: 'guild'` and the hub fans them to the sockets wearing the sender's guild alone,
+  on the guilds' own budget (GUILD_CHAT_ROOM_HZ_MAX, 40 a second); a sender in no guild says it to nobody, and a guild
+  line anywhere but the hub is junk. `/guild` or `/gu` say a line on it (`/g` stays the World's); its list is the hub's
+  peers wearing the tag, with my own row. A relay before world113 is told in words (GUILD_OLD_RELAY_TEXT). The service
+  is acct12.
+
+Not yet: the guild hall (GUILD1d). Known and left: after a change, the hub's World roster shows the new tag to its
+carrier alone - the others read it off their next roster (the hub fans no tag to two thousand sockets); the Guild tab's
+list names only the members the hub introduced (CHAT_ROSTER_MAX), though every member's lines arrive; and the main
+menu's profile badge does not draw the tag.
+
+Pinned: `test/guild1c.test.js` (14), and the pins the new fields moved (the badge, the attachment, the tabs, the chat
+channel lists). `tools/mutants/guild1c.json` (64, all dead).

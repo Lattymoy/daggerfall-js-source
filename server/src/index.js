@@ -179,6 +179,8 @@ import { verifyToken, verifyOrder, importPublicKeyB64, MAX_TTL_S, renownIssuable
 const SPENT_MAX = 4096;
 /** MOD1: the most accounts whose latest mute order one room remembers. */
 const ORDERS_MAX = 1024;
+/** GUILD1c: the most removals and disbandings one room remembers (`_guildOuts`). */
+const GUILD_OUTS_MAX = 1024;
 
 // ═══ WB3: THE GATE'S BOSS ROOM ═════════════════════════════════════
 //
@@ -191,7 +193,7 @@ import { isGateRoom, gateDayOfRoom, gateAdmits, gateHolds, gateTimes, gateBossOf
 import { newFight, joinFight, applyHit, stepBrain, stateOf, earned, earnedBy, COURT_CENTRE, BRAIN_TICK_MS, CHECKPOINT_MS, GATE_FIGHTERS_MAX } from '../../src/net/gateBrain.js';
 import { mintReceipt, importReceiptKey, readReceipt } from '../../src/net/gateReceipt.js';
 
-import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, dmGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate, duelGate, DUEL_HZ_MAX, renownGate, renownRoomGate, lookGate, eventGate, EVENT_KEY, validLiveEvent, gateGate, GATE_INTERNAL_FELL, SOCIAL_ROOM, validGateOut, HELLO_WAIT_MS, GATE_TELL_RETRY_MS, gateReceiptKey } from './relay.js';
+import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, dmGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate, duelGate, DUEL_HZ_MAX, renownGate, renownRoomGate, guildGate, guildRoomGate, GUILD_CHAT_ROOM_HZ_MAX, lookGate, eventGate, EVENT_KEY, validLiveEvent, gateGate, GATE_INTERNAL_FELL, SOCIAL_ROOM, validGateOut, HELLO_WAIT_MS, GATE_TELL_RETRY_MS, gateReceiptKey } from './relay.js';
 
 // AUDIT WORLD34 D4: the relay names itself in /health. SLAM13 (AUDIT SLAM A5): the name lives in net/wire.js, so the
 // welcome can carry it; /health reads it through the import above. LOCALDEV1: it is NOT re-exported from this module -
@@ -274,6 +276,14 @@ export class Room {
      *  by ORDERS_MAX, oldest out - the account row is the truth and
      *  every later token carries it, so this only has to cover the gap. */
     this._orders = new Map();
+    /** GUILD1c: THE REMOVALS AND DISBANDINGS THIS ROOM HAS APPLIED - `gi` (a guild gone) or `gi:gm` (one member gone)
+     *  -> the order's `i`, the newest kept. MOD1's `_orders` job for a guild: a hello whose token was minted before one
+     *  takes it off, and a guild order older than one changes nothing - so neither a token minted a moment before a
+     *  removal nor a replayed join inside its minute carries the member back into the guild's chat. Memory, bounded by
+     *  GUILD_OUTS_MAX, oldest out - the roster is the truth and every later token carries it. */
+    this._guildOuts = new Map();
+    this._roomGuild = null;   // GUILD1c: the room's budget for guild-tag fans (GUILD_ROOM_HZ_MAX)
+    this._guildChat = null;   // GUILD1c: the hub's budget for guild lines (GUILD_CHAT_ROOM_HZ_MAX), apart from the room's and the parties'
     this._idx = null;   // ws -> attachment, read once (A7); rebuilt when the socket set changes
     this._roomChat = null;   // AUDIT CHAT A2: the room's own chat budget - on the instance, since a sleeping room fans nothing
     this._partyChat = null;   // CHAT-CHAN: the hub's budget for party lines (PARTY_CHAT_ROOM_HZ_MAX), apart from the room's
@@ -671,6 +681,26 @@ export class Room {
     m.junk = (m.junk ?? 0) + 1;
     if (m.junk > DROP_STRIKES_MAX) this._refuse(ws, 'too many frames');
   }
+  /** GUILD1c: hold a removal (`gm`) or a disbanding (no `gm`) this room applied, the newest per key (`_guildOuts`). */
+  _holdGuildOut(gi, gm, i) {
+    const k = gm === undefined ? gi : `${gi}:${gm}`;
+    const held = this._guildOuts.get(k);
+    if (held !== undefined && held >= i) return;
+    this._guildOuts.delete(k);
+    if (this._guildOuts.size >= GUILD_OUTS_MAX) this._guildOuts.delete(this._guildOuts.keys().next().value);
+    this._guildOuts.set(k, i);
+  }
+  /** GUILD1c: whether this room heard member `gm` of guild `gi` removed, or the guild gone, AFTER `i` - a token or an
+   *  order said at `i` is older than that word and does not put the member back. */
+  _guildOutAfter(gi, gm, i) {
+    const all = this._guildOuts.get(gi);
+    const one = gm === undefined ? undefined : this._guildOuts.get(`${gi}:${gm}`);
+    return (all !== undefined && all > i) || (one !== undefined && one > i);
+  }
+  /** GUILD1c: an attachment with its guild taken off (its id, tag and member row). */
+  _unguild(a) { const b = { ...a }; delete b.gi; delete b.gt; delete b.gm; return b; }
+  /** GUILD1c: a player's guild tag as a frame - `gt` absent for none. */
+  _guildFrame(id, gt) { return JSON.stringify(gt ? { t: 'guild', id, gt } : { t: 'guild', id }); }
   /** CHAT-CHAN + DICE1: A LINE OUT, on the channel it was said on - the chat's and the roll's one fan. `frame` is the
    *  relay's own record of the line; the sender hears it back (the receipt).
    *
@@ -682,6 +712,20 @@ export class Room {
    *  party's is its seats. EVERY OTHER LINE is the room's: its budget, over which a line is dropped and nobody is
    *  struck, and its fan - everyone in a channel, those in range in a place. */
   async _sayLine(ws, a, ch, frame, now) {
+    if (ch === 'guild') {
+      // GUILD1c: A GUILD'S LINE, said on the hub link and heard by every socket there wearing the sender's guild - the
+      // verified token's, or a signed guild order's since, never the sender's word. The hub is the one room every
+      // online player holds a socket to, so its fan IS the guild online; anywhere else a guild line has no guild to
+      // reach and is junk. A sender in no guild is said to nobody. Its budget is the guilds' own.
+      if (!isSocialRoom(a.key)) { this._junk(ws); return; }
+      if (!a.gi) return;
+      const budget = tokenGate(this._guildChat, now, GUILD_CHAT_ROOM_HZ_MAX);
+      this._guildChat = budget.bucket;
+      if (!budget.pass) return;
+      const line = JSON.stringify({ ...frame, ch: 'guild' });
+      for (const [other, b] of [...this._all()]) if (b.id && b.gi === a.gi) this._send(other, line);   // the sender's own tabs too: the echo is the receipt
+      return;
+    }
     if (ch === 'party') {
       if (!isSocialRoom(a.key) || !a.acct) { this._junk(ws); return; }
       if (!a.party) return;
@@ -872,7 +916,12 @@ export class Room {
     const mu = order && order.i > r.claims.i ? order.mu : (r.claims.mu ?? 0);
     // RENOWN1: and Renown, off the same signature - `lv`
     // beside the title and glyphs, stamped by `badged` wherever they are.
-    return { name: r.claims.n, kind: r.claims.k, subject: r.claims.s, title: r.claims.t, glyphs: r.claims.g, mu, lv: r.claims.lv };
+    // GUILD1c: and the guild - its id, tag and member row, all three or none - unless this room has since heard that
+    // member removed or that guild gone, which wins over a token minted before it. `gio` is when the guild worn was
+    // said, so a guild order older than the token changes nothing.
+    const c = r.claims;
+    const guild = c.gi && !this._guildOutAfter(c.gi, c.gm, c.i) ? { gi: c.gi, gt: c.gt, gm: c.gm } : {};
+    return { name: c.n, kind: c.k, subject: c.s, title: c.t, glyphs: c.g, mu, lv: c.lv, ...guild, gio: c.i };
   }
 
   /** The verifying key, imported once. Shared by the hello and by
@@ -978,7 +1027,8 @@ export class Room {
       if (!others.length) { try { await this._sweep(); } catch (e) { console.warn('[room] sweep failed', e?.message ?? e); } await this.state.storage.put('hellos', gate.bucket); }   // an empty room forgets every look and secret an unclean close left behind - not its hello gate (AUDIT SOC A2: contained - a failed list here made every first hello into an empty hub throw before its welcome)
       await this.state.storage.put(secretKey(m.id), m.secret);
       if (!chat) { await this.state.storage.put(lookKey(m.id), m.look); this._looks.set(m.id, m.look); }   // a channel keeps no look: nobody is drawn from it
-      if (!this._setAttach(ws, { ...a, id: m.id, name: who.name, title: who.title, glyphs: who.glyphs, lv: who.lv, sub: who.subject, mu: who.mu, pose: chat ? null : m.pose, since: replaced?.since ?? now })) { this._refuse(ws, 'hello too large'); return; }   // MOD1: `sub` the verified account (what a mute names), `mu` until when it may not talk   // RENOWN1: `lv` the Renown level the token carried
+      const guild = who.gi ? { gi: who.gi, gt: who.gt, gm: who.gm } : {};   // GUILD1c: the guild the token carried, when it carried one
+      if (!this._setAttach(ws, { ...a, id: m.id, name: who.name, title: who.title, glyphs: who.glyphs, lv: who.lv, ...guild, gio: who.gio, sub: who.subject, mu: who.mu, pose: chat ? null : m.pose, since: replaced?.since ?? now })) { this._refuse(ws, 'hello too large'); return; }   // MOD1: `sub` the verified account (what a mute names), `mu` until when it may not talk   // RENOWN1: `lv` the Renown level the token carried
       // SRV-N: `v` rides EVERY welcome, a channel's included. A player in the enhanced skin holds a presence socket
       // and one chat socket per tab; whichever reconnects first after a hand deploy is the one that notices, and the
       // client's detector (net/updateNotice.js) is a Set so the rest of them say nothing. SLAM13 (AUDIT SLAM A5): and
@@ -1736,6 +1786,72 @@ export class Room {
       if (!this._setAttach(ws, { ...cur, lv: r.claims.lv })) return;
       const said = JSON.stringify({ t: 'renown', id: cur.id, lv: r.claims.lv });
       for (const [other, b] of [...this._all()]) if (b.id) this._send(other, said);   // everyone in the room, the carrier included
+    }
+    if (m.t === 'guild') {
+      // ═══ GUILD1c — A CHARACTER'S GUILD, CHANGED, CARRIED IN ════════════
+      //
+      // Mac: "Do guild1c" - the tag beside the name, and the guild's chat. The guild rides the token, and a token is
+      // spent once, on a hello - so a guild founded, joined or left in the middle of a session would sit stale beside
+      // the name (and in the hub, in the guild's chat) until the next room. The account service signs a GUILD ORDER
+      // when a membership moves - the guild the carrier's character is in NOW, or none - the player's own client
+      // carries it here, and the room checks RENOWN1's two things: the signature, and that it names THIS socket's
+      // verified account. Nobody carries another player's guild.
+      //   NEWEST WINS. An order said before what this socket already wears (its token's, or a later order's) changes
+      //   nothing, and neither does one said before a removal this room heard (`_guildOuts`) - so a replayed join
+      //   inside its minute cannot undo the leave, or the removal, that followed it. Not news: its carrier hears what
+      //   this room holds, and nobody else hears a thing.
+      //   THE TAG FANS IN A PLACE ALONE, on the room's own budget, and only when it moved; in a channel or the hub (two
+      //   thousand sockets) its carrier alone hears it, as renown's rule is there. Over the budget the change still
+      //   lands and its carrier hears it - the others read the tag off their next roster.
+      const now = Date.now();
+      if (!this._spend(ws, now, guildGate, 'gdbucket', 'gddrops', 'too many guild orders')) return;
+      if (!this._attach(ws)?.id) return;
+      await this._loadKey();
+      if (!this._verifyKey) return;
+      const r = await verifyOrder(m.order, this._verifyKey, { subtle: crypto.subtle, nowS: Math.floor(now / 1000), kind: 'guild' });
+      if (!r.ok) return;   // silently, as the renown arm refuses
+      const cur = this._attach(ws);   // read again after the awaits: the socket may have gone
+      if (!cur?.id || !cur.sub || r.claims.s !== cur.sub) return;
+      const c = r.claims;
+      if (!(c.i > (cur.gio ?? 0)) || (c.gi && this._guildOutAfter(c.gi, c.gm, c.i))) { this._send(ws, this._guildFrame(cur.id, cur.gt)); return; }
+      if (!this._setAttach(ws, { ...this._unguild(cur), ...(c.gi ? { gi: c.gi, gt: c.gt, gm: c.gm } : {}), gio: c.i })) return;
+      const said = this._guildFrame(cur.id, c.gt);
+      const place = !isChatRoom(cur.key) && !isSocialRoom(cur.key);
+      const budget = place && (cur.gt ?? null) !== (c.gt ?? null) ? guildRoomGate(this._roomGuild, now) : null;
+      if (!budget?.pass) { this._send(ws, said); return; }
+      this._roomGuild = budget.bucket;
+      for (const [other, b] of [...this._all()]) if (b.id) this._send(other, said);   // everyone in the room, the carrier included
+    }
+    if (m.t === 'guildout') {
+      // ═══ GUILD1c — A MEMBER REMOVED, OR A GUILD GONE, CARRIED IN ═══════
+      //
+      // MOD1's shape: the account service signed it for the officer who removed the member (or the guildmaster who
+      // disbanded the guild), and the room believes the signature and never asks the carrier who they are. Every
+      // socket here wearing that membership - or that guild - takes it off and hears it: in the hub, where the client
+      // carries it, that is the guild's chat closing to them wherever they stand, and their own client hearing it is
+      // what sends their rooms the tag gone. And the room holds the word (`_guildOuts`), so a token or an order said
+      // before it cannot put them back.
+      const now = Date.now();
+      if (!this._spend(ws, now, guildGate, 'gdbucket', 'gddrops', 'too many guild orders')) return;
+      await this._loadKey();
+      if (!this._verifyKey) return;
+      const r = await verifyOrder(m.order, this._verifyKey, { subtle: crypto.subtle, nowS: Math.floor(now / 1000), kind: 'guildout' });
+      if (!r.ok) return;   // silently, as the mute arm refuses
+      const { gi, gm, i } = r.claims;
+      this._holdGuildOut(gi, gm, i);
+      const gone = [];
+      for (const [other, b] of [...this._all()]) {
+        if (!b.id || b.gi !== gi || (gm !== undefined && b.gm !== gm) || !(i > (b.gio ?? 0))) continue;
+        if (this._setAttach(other, { ...this._unguild(b), gio: i })) gone.push([other, b]);
+      }
+      const place = !isChatRoom(this._attach(ws)?.key) && !isSocialRoom(this._attach(ws)?.key);
+      for (const [other, b] of gone) {
+        const said = this._guildFrame(b.id, null);
+        const budget = place ? guildRoomGate(this._roomGuild, now) : null;
+        if (!budget?.pass) { this._send(other, said); continue; }   // in a channel or the hub, or over the budget: that player alone
+        this._roomGuild = budget.bucket;
+        for (const [each, e] of [...this._all()]) if (e.id) this._send(each, said);
+      }
     }
   }
 

@@ -65,7 +65,8 @@ function fakeClock() {
 const withSkin = (skin, fn, { doc = fakeDocument() } = {}) => {
   const had = Object.hasOwn(globalThis, 'location') ? globalThis.location : undefined;
   const hadDoc = Object.hasOwn(globalThis, 'document') ? globalThis.document : undefined;
-  globalThis.location = { search: `?skin=${skin}` };
+  // PLUS-DEFAULT: these pins read plain Enhanced's slide; Plus's toast fade is hudtext.test.js's
+  globalThis.location = { search: `?skin=${skin}${skin === 'enhanced' ? '&plus=0' : ''}` };
   if (doc) globalThis.document = doc;
   try { return fn(doc); } finally {
     if (had === undefined) delete globalThis.location; else globalThis.location = had;

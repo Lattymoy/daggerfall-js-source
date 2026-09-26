@@ -142,7 +142,7 @@
   {
     "name": "DC-session-channel-door-gone",
     "file": "src/net/online.js",
-    "old": "    if (!validRollSpec(spec) || !this.rollOk) return false;\n    if (ch != null && (!CHAT_LINE_CHANNELS.includes(ch) || !this.chanOk)) return false;\n",
+    "old": "    if (!validRollSpec(spec) || !this.rollOk) return false;\n    if (ch != null && (!CHAT_LINE_CHANNELS.includes(ch) || !(ch === 'guild' ? this.guildOk : this.chanOk))) return false;   // GUILD1c\n",
     "new": "    if (!validRollSpec(spec) || !this.rollOk) return false;\n",
     "tests": ["test/dice1.test.js"],
     "note": "sendRoll's channel door, anchored on its own version door: the same line stands in sendChat above it, and CHAT-CHAN's records name that one."
@@ -150,8 +150,8 @@
   {
     "name": "DC-session-any-channel",
     "file": "src/net/online.js",
-    "old": "    if (!validRollSpec(spec) || !this.rollOk) return false;\n    if (ch != null && (!CHAT_LINE_CHANNELS.includes(ch) || !this.chanOk)) return false;\n",
-    "new": "    if (!validRollSpec(spec) || !this.rollOk) return false;\n    if (ch != null && !this.chanOk) return false;\n",
+    "old": "    if (!validRollSpec(spec) || !this.rollOk) return false;\n    if (ch != null && (!CHAT_LINE_CHANNELS.includes(ch) || !(ch === 'guild' ? this.guildOk : this.chanOk))) return false;   // GUILD1c\n",
+    "new": "    if (!validRollSpec(spec) || !this.rollOk) return false;\n    if (ch != null && !(ch === 'guild' ? this.guildOk : this.chanOk)) return false;   // GUILD1c\n",
     "tests": ["test/dice1.test.js"],
     "note": "A roll asked on a channel no relay routes leaves. The door's version half (chanOk) is not recorded: the welcome opens it and rollOk from one relay version, and ROLL_RELAY_MIN is CHAN_RELAY_MIN, so no session rolls without channels."
   },
@@ -207,7 +207,7 @@
   {
     "name": "DC-roll-on-the-wrong-tab",
     "file": "src/scenes/world.js",
-    "old": "      link.onRoll = (line) => chatLog.push(tab.room === SOCIAL_ROOM && line.ch === 'party' ? 'party' : tab.id, line);",
+    "old": "      link.onRoll = (line) => chatLog.push(tab.room === SOCIAL_ROOM && (line.ch === 'party' || line.ch === 'guild') ? line.ch : tab.id, line);",
     "new": "      link.onRoll = (line) => chatLog.push(tab.id, line);",
     "tests": ["test/dice1.test.js"]
   },

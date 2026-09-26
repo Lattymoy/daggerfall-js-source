@@ -1,0 +1,254 @@
+[
+  {
+    "name": "RENOWN4-bar-from-another-levels-total",
+    "file": "src/ui/hudRenown.js",
+    "old": "if (!Number.isSafeInteger(xp) || xp < 0 || renownForXp(xp) !== level) return",
+    "new": "if (!Number.isSafeInteger(xp) || xp < 0) return",
+    "tests": [
+      "test/renown4.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4-ghost-unclamped",
+    "file": "src/ui/hudRenown.js",
+    "old": "ghost: Math.min(1 - p.frac, more / p.need)",
+    "new": "ghost: more / p.need",
+    "tests": [
+      "test/renown4.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4-ghost-from-a-negative-pending",
+    "file": "src/ui/hudRenown.js",
+    "old": "const more = Number.isFinite(pending) && pending > 0 ? Math.trunc(pending) : 0;",
+    "new": "const more = Number.isFinite(pending) ? Math.trunc(pending) : 0;",
+    "tests": [
+      "test/renown4.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4-words-the-tracks-total",
+    "file": "src/ui/hudRenown.js",
+    "old": "text: `${grouped(p.into)} / ${grouped(p.need)} XP`",
+    "new": "text: `${grouped(p.xp)} / ${grouped(p.need)} XP`",
+    "tests": [
+      "test/renown4.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4-the-cap-divided",
+    "file": "src/ui/hudRenown.js",
+    "old": "  if (p.need <= 0) return { level, bar: true, frac: 1, ghost: 0, text: 'Highest' };\n",
+    "new": "",
+    "tests": [
+      "test/renown4.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4-no-level-still-a-row",
+    "file": "src/ui/hudRenown.js",
+    "old": "if (!Number.isSafeInteger(level) || level < 1 || level > RENOWN_MAX) return null;",
+    "new": "if (!Number.isSafeInteger(level)) return null;",
+    "tests": [
+      "test/renown4.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4-a-throw-carried-into-the-frame",
+    "file": "src/ui/hudRenown.js",
+    "old": "  } catch { return null; }\n}",
+    "new": "  } catch (e) { throw e; }\n}",
+    "tests": [
+      "test/renown4.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4-pending-unread",
+    "file": "src/ui/hudRenown.js",
+    "old": "renownHudView(s.level, s.xp, s.pending ?? 0)",
+    "new": "renownHudView(s.level, s.xp, 0)",
+    "tests": [
+      "test/renown4.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4-mint-total-dropped",
+    "file": "server-account/src/index.js",
+    "old": "          xp: track ? track.xp : null,\n",
+    "new": "          xp: null,\n",
+    "tests": [
+      "test/renown4.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4-mint-total-for-no-character",
+    "file": "server-account/src/index.js",
+    "old": "          xp: track ? track.xp : null,\n",
+    "new": "          xp: track ? track.xp : 0,\n",
+    "tests": [
+      "test/renown4.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4-new-character-no-total",
+    "file": "server-account/src/index.js",
+    "old": "?? { xp: 0, level: 1 }) : null;",
+    "new": "?? { xp: null, level: 1 }) : null;",
+    "tests": [
+      "test/renown4.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4-minter-drops-the-total",
+    "file": "src/net/accountClient.js",
+    "old": "xp: Number.isSafeInteger(answer.data.xp) && answer.data.xp >= 0 ? answer.data.xp : null,   // RENOWN4",
+    "new": "xp: null,   // RENOWN4",
+    "tests": [
+      "test/renown4.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4-minter-takes-a-negative",
+    "file": "src/net/accountClient.js",
+    "old": "xp: Number.isSafeInteger(answer.data.xp) && answer.data.xp >= 0 ? answer.data.xp : null,   // RENOWN4",
+    "new": "xp: Number.isSafeInteger(answer.data.xp) ? answer.data.xp : null,   // RENOWN4",
+    "tests": [
+      "test/renown4.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4-answer-total-dropped",
+    "file": "src/net/renownTracker.js",
+    "old": "const xp = Number.isSafeInteger(data?.xp) && data.xp >= 0 ? data.xp : null;",
+    "new": "const xp = null;",
+    "tests": [
+      "test/renown4.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4-answer-negative-taken",
+    "file": "src/net/renownTracker.js",
+    "old": "const xp = Number.isSafeInteger(data?.xp) && data.xp >= 0 ? data.xp : null;",
+    "new": "const xp = Number.isSafeInteger(data?.xp) ? data.xp : null;",
+    "tests": [
+      "test/renown4.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4-a-lower-total-taken",
+    "file": "src/scenes/world.js",
+    "old": "if (onlineOn && Number.isSafeInteger(xp) && xp >= 0 && (renownXp === null || xp > renownXp)) renownXp = xp;",
+    "new": "if (onlineOn && Number.isSafeInteger(xp) && xp >= 0) renownXp = xp;",
+    "tests": [
+      "test/renown4.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4-a-total-taken-offline",
+    "file": "src/scenes/world.js",
+    "old": "if (onlineOn && Number.isSafeInteger(xp) && xp >= 0 && (renownXp === null || xp > renownXp)) renownXp = xp;",
+    "new": "if (Number.isSafeInteger(xp) && xp >= 0 && (renownXp === null || xp > renownXp)) renownXp = xp;",
+    "tests": [
+      "test/renown4.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4-the-answers-total-unread",
+    "file": "src/scenes/world.js",
+    "old": "      renownXpAdopt(a.xp);   // RENOWN4: the track's total, for my bar\n",
+    "new": "",
+    "tests": [
+      "test/renown4.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4-the-mints-total-unread",
+    "file": "src/scenes/world.js",
+    "old": "    renownXpAdopt(who?.xp);   // RENOWN4: the total, before the level - so no frame draws the new level over the old total\n",
+    "new": "",
+    "tests": [
+      "test/renown4.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4-the-ghost-in-a-spent-hour",
+    "file": "src/scenes/world.js",
+    "old": "pending: _renownCapHour === Math.floor(Date.now() / 3_600_000) ? 0 : renownTracker.pending() }));",
+    "new": "pending: renownTracker.pending() }));",
+    "tests": [
+      "test/renown4.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4-the-getter-never-given",
+    "file": "src/scenes/world.js",
+    "old": "    setHudRenown(() => ({ level: renownNow, xp: renownXp, pending: _renownCapHour === Math.floor(Date.now() / 3_600_000) ? 0 : renownTracker.pending() }));\n",
+    "new": "",
+    "tests": [
+      "test/renown4.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4-the-row-never-lit",
+    "file": "src/ui/enhancedHud.js",
+    "old": "parts.renown.classList.toggle('on', !!rv);",
+    "new": "parts.renown.classList.toggle('on', false);",
+    "tests": [
+      "test/renown4.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4-the-ghost-from-the-bars-start",
+    "file": "src/ui/enhancedHud.js",
+    "old": "parts.renownGhost.style.left = g;",
+    "new": "parts.renownGhost.style.left = '0.0%';",
+    "tests": [
+      "test/renown4.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4-the-box-never-written",
+    "file": "src/ui/enhancedHud.js",
+    "old": "    put(parts.renownBox, 'renownL', String(rv.level));\n",
+    "new": "",
+    "tests": [
+      "test/renown4.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4-nobar-never-set",
+    "file": "src/ui/enhancedHud.js",
+    "old": "parts.renown.classList.toggle('nobar', !rv.bar);",
+    "new": "parts.renown.classList.toggle('nobar', false);",
+    "tests": [
+      "test/renown4.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4-the-row-never-placed",
+    "file": "src/ui/enhancedHud.js",
+    "old": "  renown.append(renownBox, renownTrack, renownNum);\n  bottom.append(renown);\n",
+    "new": "  renown.append(renownBox, renownTrack, renownNum);\n",
+    "tests": [
+      "test/renown4.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4-the-row-always-drawn",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".hud-renown { display: none; align-items: center;",
+    "new": ".hud-renown { display: flex; align-items: center;",
+    "tests": [
+      "test/renown4.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4-the-phone-width-drifted",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".hud-renown { width: calc(78vw + 20px); }",
+    "new": ".hud-renown { width: 80vw; }",
+    "tests": [
+      "test/renown4.test.js"
+    ]
+  }
+]

@@ -100,6 +100,11 @@ export function guildTagOf(raw) {
   return GUILD_TAG_RE.test(t) ? t : null;
 }
 
+/** GUILD1c: a guild's tag as a name wears it - "<HND>", the tag's own mark (the Renown's is a box) - or null for none
+ *  and for anything the law's shape does not admit, never upper-cased on the way: a tag drawn is the one signed. One
+ *  spelling for every face that draws it: the name over a head (both faces), a chat line, the profile card. */
+export const guildTagText = (tag) => (typeof tag === 'string' && GUILD_TAG_RE.test(tag) ? `<${tag}>` : null);
+
 /** The four rank names, each tidied - or null when any is empty, too long, or not plain words. */
 export function guildRankNamesOf(raw) {
   if (!Array.isArray(raw) || raw.length !== RANKS.length) return null;

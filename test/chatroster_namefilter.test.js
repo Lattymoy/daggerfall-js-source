@@ -623,7 +623,7 @@ test('CHAT-R2/ROSTER-G: the roster is the ACTIVE CHANNEL’s - everyone online, 
   // CHAT-CHAN: through the tab's own roster - a channel tab's link (the World's, the Region's), the presence session only
   // as the stand-in, and the Party and Local tabs their composed lists (test/chatchan.test.js drives those)
   assert.match(world, /roster: \(\) => chatRosterOf\(chatLog\?\.active\),/);
-  assert.match(world, /const chatSessionOf = \(tabId\) => \(tabId === 'local' \? online : tabId === 'party' \? chatLinks\?\.get\('world'\) : chatLinks\?\.get\(tabId\)\) \?\? online \?\? null;/);
+  assert.match(world, /const chatSessionOf = \(tabId\) => \(tabId === 'local' \? online : tabId === 'party' \|\| tabId === 'guild' \? chatLinks\?\.get\('world'\) : chatLinks\?\.get\(tabId\)\) \?\? online \?\? null;/);
   assert.match(world, /const s = chatSessionOf\(tabId\);/, 'the World and Region tabs read the session of their own channel');
   assert.match(world, /new OnlineSession\(\{ url: online\.url[^)]*presence: false \}\)/,
     'the chat links really are presence-less, which is why the roster cannot come from them');

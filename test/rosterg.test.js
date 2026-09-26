@@ -88,7 +88,7 @@ test('ROSTER-G: a channel link (presence: false) HOLDS the roster it is told - t
 test('ROSTER-G: world.js hands the panel the ACTIVE CHANNEL\'s link, with the presence session as the stand-in; and the #tag is drawn only beside a name another row shares (mutants: `online` alone, as CHAT-R1 wired it; the tag on every row, as it was)', async () => {
   const world = rd('src/scenes/world.js');
   assert.match(world, /roster: \(\) => chatRosterOf\(chatLog\?\.active\),/, 'the tab\'s own roster');   // CHAT-CHAN: through the tab
-  assert.match(world, /const chatSessionOf = \(tabId\) => \(tabId === 'local' \? online : tabId === 'party' \? chatLinks\?\.get\('world'\) : chatLinks\?\.get\(tabId\)\) \?\? online \?\? null;/, 'the tab\'s own link first, the presence session the stand-in');
+  assert.match(world, /const chatSessionOf = \(tabId\) => \(tabId === 'local' \? online : tabId === 'party' \|\| tabId === 'guild' \? chatLinks\?\.get\('world'\) : chatLinks\?\.get\(tabId\)\) \?\? online \?\? null;/, 'the tab\'s own link first, the presence session the stand-in');
   const panel = rd('src/ui/chatPanel.js');
   assert.match(panel, /if \(dup\.has\(r\.name\.toLowerCase\(\)\)\) line\.append\(el\('span', 'dfchat-who-tag', '#' \+ r\.tag\)\);/, 'the tag is conditional on a shared name (CHAT-FIT: on the row\'s one line)');
   // the relay's side, by source: a channel's welcome is built from `others` by name, cut and counted

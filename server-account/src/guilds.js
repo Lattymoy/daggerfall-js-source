@@ -45,6 +45,17 @@
 // rank's longest-standing member. A guild nobody is left in holds its
 // name and tag for no one, and gives them up to the next founder.
 //
+// ═══ GUILD1c: A CHANGE SAYS WHO IT MOVED ═══════════════════════════
+//
+// A guild rides the identity token (its id, tag and member row, read by
+// `guildBadgeOf` at the mint), so a room shows the tag beside the name
+// and routes the guild's chat by it. A token is read once, at a hello;
+// so every act that moves a membership answers what it moved, and the
+// Worker signs it: `badge` (the actor's character's guild NOW - `{}`
+// for none) becomes the order its own client carries to its rooms, and
+// `out` (a member removed, a guild disbanded) the order the hub hears,
+// whose word reaches that member wherever they stand.
+//
 // EVERY CLOCK IS AN ARGUMENT, as in accounts.js.
 // ═══════════════════════════════════════════════════════════════════
 import { accountKind, displayName, overRate } from './accounts.js';
@@ -71,6 +82,17 @@ export function mintGuildId(rand) {
 async function memberRow(db, playerId, charId) {
   return db.prepare('SELECT rowid AS rid, * FROM guild_members WHERE player = ? AND char_id = ?').bind(playerId, charId).first();
 }
+
+/** GUILD1c: THE CHARACTER'S GUILD AS A TOKEN CARRIES IT - `{ gi, gt, gm }` (the guild's id, its tag, the member row)
+ *  or null for a character in none. The mint's one read, so the tag beside a name is the roster's own row. */
+export async function guildBadgeOf({ db }, playerId, character) {
+  if (!charOk(character)) return null;
+  const r = await db.prepare('SELECT m.rowid AS rid, g.id AS gid, g.tag AS tag FROM guild_members m JOIN guilds g ON g.id = m.guild_id WHERE m.player = ? AND m.char_id = ?')
+    .bind(playerId, character).first();
+  return r ? { gi: r.gid, gt: r.tag, gm: `m${r.rid}` } : null;
+}
+/** GUILD1c: a member row as a badge. */
+const badgeOfRow = (me, tag) => ({ gi: me.guild_id, gt: tag, gm: `m${me.rid}` });
 
 /** A guild whose guildmaster is gone is given one: its highest rank's longest-standing member. A guild that has one
  *  finds its guildmaster first in that order, and is left unwritten. */
@@ -156,15 +178,16 @@ export async function foundGuild(ctx, player, { character, name, tag } = {}) {
     return { error: 'guild-already' };
   }
   const me = await memberRow(db, player.id, character);
-  return { ok: true, guild: await viewOf(db, id, me, nowS) };
+  return { ok: true, guild: await viewOf(db, id, me, nowS), badge: badgeOfRow(me, t) };   // GUILD1c: the founder wears the tag now
 }
 
 /** THE CHARACTER'S GUILD, as its member sees it - `guild: null` for a character in none. */
 export async function guildOf({ db, nowS }, player, { character } = {}) {
   const a = await actorOf(db, player, character);
-  if (a.error === 'no-guild') return { ok: true, guild: null };
+  if (a.error === 'no-guild') return { ok: true, guild: null, badge: {} };   // GUILD1c: and the look says what the rooms should read - none
   if (a.error) return a;
-  return { ok: true, guild: await viewOf(db, a.me.guild_id, a.me, nowS) };
+  const guild = await viewOf(db, a.me.guild_id, a.me, nowS);
+  return { ok: true, guild, badge: guild ? badgeOfRow(a.me, guild.tag) : {} };
 }
 
 /** THE ACCOUNT'S INVITATIONS, still standing: which guild, and who asked. Any of its characters may answer one. */
@@ -227,7 +250,8 @@ export async function answerInvite({ db, nowS }, player, { character, guild, acc
   }
   if (!joined?.meta?.changes) return { error: (await standing()) ? 'guild-full' : 'no-invite' };
   const me = await memberRow(db, player.id, character);
-  return { ok: true, guild: await viewOf(db, guild, me, nowS) };
+  const view = await viewOf(db, guild, me, nowS);
+  return { ok: true, guild: view, badge: view ? badgeOfRow(me, view.tag) : {} };   // GUILD1c: the joiner wears the tag now
 }
 
 /** LEAVE. The guildmaster leaves only a guild with nobody else in it, and only once its treasury is empty - that
@@ -239,12 +263,12 @@ export async function leaveGuild({ db }, player, { character } = {}) {
     // one statement: nobody joins between the count and the going
     const r = await db.prepare('DELETE FROM guilds WHERE id = ?1 AND treasury = 0 AND (SELECT COUNT(*) FROM guild_members WHERE guild_id = ?1) = 1')
       .bind(a.me.guild_id).run();
-    if (r?.meta?.changes) return { ok: true, disbanded: true };
+    if (r?.meta?.changes) return { ok: true, disbanded: true, badge: {} };   // GUILD1c: nobody else was in it
     const n = await db.prepare('SELECT COUNT(*) AS n FROM guild_members WHERE guild_id = ?').bind(a.me.guild_id).first();
     return { error: (n?.n ?? 0) > 1 ? 'guild-master-leaves' : 'guild-treasury' };
   }
   await db.prepare('DELETE FROM guild_members WHERE player = ? AND char_id = ?').bind(player.id, character).run();
-  return { ok: true };
+  return { ok: true, badge: {} };   // GUILD1c: the leaver wears no tag now
 }
 
 /** REMOVE A MEMBER of a lower rank - an officer's or the guildmaster's. */
@@ -257,7 +281,8 @@ export async function removeFromGuild(ctx, player, { character, member } = {}) {
   if (!guildMay(a.me.rank, 'remove') || !guildOutranks(a.me.rank, t.rank)) return { error: 'guild-rank' };
   if (await spend(ctx, player)) return { error: 'guild-rate' };
   const r = await db.prepare('DELETE FROM guild_members WHERE rowid = ? AND guild_id = ? AND rank = ?').bind(t.rid, a.me.guild_id, t.rank).run();
-  return r?.meta?.changes ? { ok: true } : { error: 'no-member' };
+  // GUILD1c: and the member it took off, for the hub - their guild's chat closes to them wherever they stand
+  return r?.meta?.changes ? { ok: true, out: { s: t.player, gi: a.me.guild_id, gm: `m${t.rid}` } } : { error: 'no-member' };
 }
 
 /** MOVE A MEMBER between the ranks below one's own. */
@@ -347,5 +372,6 @@ export async function disbandGuild({ db }, player, { character } = {}) {
   if (a.error) return a;
   if (!guildMay(a.me.rank, 'disband')) return { error: 'guild-rank' };
   const r = await db.prepare('DELETE FROM guilds WHERE id = ? AND treasury = 0').bind(a.me.guild_id).run();
-  return r?.meta?.changes ? { ok: true } : { error: 'guild-treasury' };
+  // GUILD1c: the guildmaster wears no tag now, and the hub hears the guild gone - every member's chat with it
+  return r?.meta?.changes ? { ok: true, badge: {}, out: { s: player.id, gi: a.me.guild_id } } : { error: 'guild-treasury' };
 }

@@ -121,6 +121,7 @@
 // is the first module in src/net/ to need it.
 
 import { sanitizeName, NAME_MAX } from './wire.js';
+import { GUILD_ID_RE, GUILD_TAG_RE, GUILD_MEMBER_RE } from './guildLaw.js';   // GUILD1c: a guild rides the token - the law's own three shapes
 
 /** The only version this file will read or write. It names the
  *  algorithm, so the payload cannot. */
@@ -251,7 +252,7 @@ export function nameIsIssuable(name) {
 /**
  * The claims, as they ride. Short keys because this travels in a hello
  * on every connection and the payload is base64 on top.
- * @typedef {{s: string, n: string, k: 'guest'|'linked', i: number, e: number, t?: string, g?: string[], mu?: number, lv?: number}} Claims
+ * @typedef {{s: string, n: string, k: 'guest'|'linked', i: number, e: number, t?: string, g?: string[], mu?: number, lv?: number, gi?: string, gt?: string, gm?: string}} Claims
  *   s  the account id          n  the display name
  *   k  guest or linked         i  issued at, epoch seconds
  *   e  expires at, epoch seconds
@@ -260,6 +261,8 @@ export function nameIsIssuable(name) {
  *   mu muted until, epoch seconds, absent when not muted (MOD1)
  *   lv the Renown of the character the client named at the
  *      mint, absent when it named none (RENOWN1)
+ *   gi gt gm  that character's guild - its id, its tag and its
+ *      member row - all three or none (GUILD1c)
  */
 
 /** The account id's own shape - the same one `net/social.js` already
@@ -267,6 +270,18 @@ export function nameIsIssuable(name) {
  *  this token can carry (ACC0: the existing account is ADOPTED, never
  *  replaced). */
 export const ID_RE = /^[A-Za-z0-9_-]{4,40}$/;
+
+/** GUILD1c: A CHARACTER'S GUILD ON A SIGNED SET - its id, its tag and its member row (the roster's `m<rowid>`), ALL
+ *  THREE OR NONE: a token minted for a character in no guild, or by a service before GUILD1c, carries none. Each a
+ *  string of the law's own shape and never coerced - the tag is drawn beside a name, and an array that stringifies to
+ *  one is not one. The room routes a guild's chat by the id and takes a removal off by the member row; the tag is the
+ *  only one of the three anybody else is shown. */
+export function guildClaimsValid(c) {
+  if (c?.gi === undefined && c?.gt === undefined && c?.gm === undefined) return true;
+  return typeof c.gi === 'string' && GUILD_ID_RE.test(c.gi)
+    && typeof c.gt === 'string' && GUILD_TAG_RE.test(c.gt)
+    && typeof c.gm === 'string' && GUILD_MEMBER_RE.test(c.gm);
+}
 
 /** Everything a well-formed claim set must be, before any signature is
  *  considered. Split out so the minter can refuse to sign a bad one -
@@ -297,6 +312,7 @@ export function claimsValid(c, { maxTtlS = MAX_TTL_S } = {}) {
   // RENOWN1: the level, optional the same way - absent from a token minted
   // without a character (an older build) - and within the cap when there.
   if (c.lv !== undefined && !renownIssuable(c.lv)) return false;
+  if (!guildClaimsValid(c)) return false;   // GUILD1c
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
   if (c.e <= c.i) return false;                 // a token that is born dead
   if (c.e - c.i > maxTtlS) return false;        // a minter that got greedy
@@ -307,7 +323,7 @@ export function claimsValid(c, { maxTtlS = MAX_TTL_S } = {}) {
  * MINT. The account service's half - it holds the private key and
  * nothing else does.
  *
- * @param {{s:string, n:string, k:'guest'|'linked', t?:string, g?:string[], mu?:number, lv?:number}} who
+ * @param {{s:string, n:string, k:'guest'|'linked', t?:string, g?:string[], mu?:number, lv?:number, gi?:string, gt?:string, gm?:string}} who
  * @param {CryptoKey} privateKey  an Ed25519 private key
  * @param {{subtle: SubtleCrypto, nowS: number, ttlS?: number}} env
  * @returns {Promise<string>}
@@ -322,6 +338,8 @@ export async function mintToken(who, privateKey, { subtle, nowS, ttlS = MAX_TTL_
   if (who?.g !== undefined && who.g.length) claims.g = who.g;
   if (who?.mu !== undefined) claims.mu = who.mu;   // MOD1: only while muted - an unmuted player mints the bytes they always did
   if (who?.lv !== undefined) claims.lv = who.lv;   // RENOWN1: only when the client named its character
+  // GUILD1c: only while that character is in a guild - all three, and a partial set is refused below, not trimmed
+  if (who?.gi !== undefined || who?.gt !== undefined || who?.gm !== undefined) Object.assign(claims, { gi: who.gi, gt: who.gt, gm: who.gm });
   // A BAD CLAIM SET IS REFUSED AT THE MINTER. The verifier would refuse
   // it too, but at the player's machine, where the only thing anyone
   // learns is that online is broken.
@@ -424,23 +442,30 @@ async function openSealed(token, publicKey, { subtle, nowS, skewS, valid }) {
  *  second: 'renown', a character's Renown that ROSE while its player was
  *  already in a room, carried in by that player's own client (the token
  *  that let them in said the Renown they had then). */
-export const ORDER_KINDS = Object.freeze(['mute', 'renown']);
+export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout']);   // GUILD1c: a character's guild now, and a member or a guild gone
 /** An order lives a minute - long enough to be carried to every room
  *  the moderator holds, short enough that a leaked one is stale before
  *  anyone could use it for anything but what it already said. */
 export const ORDER_TTL_S = 60;
 
 /** `{o:'mute', s, mu, i, e}` - `mu` 0 is "unmuted" - or `{o:'renown', s,
- *  lv, i, e}` (RENOWN1). Each kind carries its OWN field and never the
- *  other's, so a renown order can never be read as a mute that says
- *  nothing, nor a mute as a renown order. */
+ *  lv, i, e}` (RENOWN1), or `{o:'guild', s, gi?, gt?, gm?, i, e}` and
+ *  `{o:'guildout', s, gi, gm?, i, e}` (GUILD1c). Each kind carries its OWN
+ *  fields and never another's, so a renown order can never be read as a
+ *  mute that says nothing, nor a mute as a renown order. */
 export function orderValid(c) {
   if (!c || typeof c !== 'object' || Array.isArray(c)) return false;
   if (!ORDER_KINDS.includes(c.o)) return false;
   if (c.n !== undefined || c.k !== undefined) return false;   // an identity's fields: never on an order
   if (typeof c.s !== 'string' || !ID_RE.test(c.s)) return false;
-  if (c.o === 'mute' && (!Number.isSafeInteger(c.mu) || c.mu < 0 || c.lv !== undefined)) return false;
-  if (c.o === 'renown' && (!renownIssuable(c.lv) || c.mu !== undefined)) return false;
+  const noGuild = c.gi === undefined && c.gt === undefined && c.gm === undefined;   // GUILD1c: a guild's fields are the guild kinds' alone
+  if (c.o === 'mute' && (!Number.isSafeInteger(c.mu) || c.mu < 0 || c.lv !== undefined || !noGuild)) return false;
+  if (c.o === 'renown' && (!renownIssuable(c.lv) || c.mu !== undefined || !noGuild)) return false;
+  // GUILD1c: `guild` - the guild the carrier's character is in NOW, all three or none; `guildout` - guild `gi` lost its
+  // member `gm` (removed), or everyone (no `gm`: disbanded), and never a tag, which names nobody
+  if (c.o === 'guild' && (!guildClaimsValid(c) || c.mu !== undefined || c.lv !== undefined)) return false;
+  if (c.o === 'guildout' && (typeof c.gi !== 'string' || !GUILD_ID_RE.test(c.gi) || c.gt !== undefined
+    || (c.gm !== undefined && (typeof c.gm !== 'string' || !GUILD_MEMBER_RE.test(c.gm))) || c.mu !== undefined || c.lv !== undefined)) return false;
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
   if (c.e <= c.i || c.e - c.i > ORDER_TTL_S) return false;
   return true;
@@ -460,6 +485,28 @@ export async function mintRenownOrder({ s, lv }, privateKey, { subtle, nowS, ttl
   if (!Number.isSafeInteger(nowS)) throw new TypeError('mintRenownOrder needs an integer epoch-seconds clock');
   const claims = { o: 'renown', s, lv, i: nowS, e: nowS + ttlS };
   if (!orderValid(claims)) throw new TypeError('mintRenownOrder refused an order it could not verify');
+  return sealClaims(claims, privateKey, subtle);
+}
+
+/** GUILD1c: MINT A GUILD ORDER - the guild `s`'s character is in NOW (`gi`, `gt`, `gm`), or none, signed by the
+ *  service that just changed it (a founding, a join, a leaving, a disbanding) or read it (the guild tab's look). Its
+ *  own client carries it to the rooms it is in, as a renown order. */
+export async function mintGuildOrder({ s, gi, gt, gm }, privateKey, { subtle, nowS, ttlS = ORDER_TTL_S }) {
+  if (!Number.isSafeInteger(nowS)) throw new TypeError('mintGuildOrder needs an integer epoch-seconds clock');
+  const claims = { o: 'guild', s, i: nowS, e: nowS + ttlS };
+  if (gi !== undefined || gt !== undefined || gm !== undefined) Object.assign(claims, { gi, gt, gm });
+  if (!orderValid(claims)) throw new TypeError('mintGuildOrder refused an order it could not verify');
+  return sealClaims(claims, privateKey, subtle);
+}
+
+/** GUILD1c: MINT A GUILD-OUT ORDER - guild `gi` lost its member `gm` (removed by an officer), or everyone (no `gm`:
+ *  disbanded). Any client may carry it and the room believes the signature alone, as a mute's; `s` is the account
+ *  the member was, or the disbander's. */
+export async function mintGuildOutOrder({ s, gi, gm }, privateKey, { subtle, nowS, ttlS = ORDER_TTL_S }) {
+  if (!Number.isSafeInteger(nowS)) throw new TypeError('mintGuildOutOrder needs an integer epoch-seconds clock');
+  const claims = { o: 'guildout', s, gi, i: nowS, e: nowS + ttlS };
+  if (gm !== undefined) claims.gm = gm;
+  if (!orderValid(claims)) throw new TypeError('mintGuildOutOrder refused an order it could not verify');
   return sealClaims(claims, privateKey, subtle);
 }
 

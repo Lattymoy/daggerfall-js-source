@@ -64,8 +64,8 @@ test('ROAD-B: the swing\'s reach is the WEAPON\'s, which is inside the door acti
 // ---------------------------------------------------------------
 
 test('ROAD-B: ActivateStaticDoor is one member with two callers, as C# has it', () => {
-  assert.match(WM, /async function activateStaticDoor\(hit, entries, isBash = false, \{ homeAsked = false \} = \{\}\) \{/);   // HOME1 re-aim: the press that comes back from a home's box is the click's own, going on past the box (home1.test.js)
-  assert.match(WM, /return activateStaticDoor\(entries\[key\], entries, false\);/, 'the click, isBash false');
+  assert.match(WM, /async function activateStaticDoor\(hit, entries, isBash = false, \{ homeAsked = false, verb = null \} = \{\}\) \{/);   // HOME1 re-aim: the press that comes back from a home's box is the click's own, going on past the box (home1.test.js); HOME2: and the verb the door's plaque lit (home2.test.js)
+  assert.match(WM, /return activateStaticDoor\(entries\[key\], entries, false, \{ verb: plaqueActionFor\(key\) \}\);/, 'the click, isBash false');   // HOME2 re-aim: carrying the plaque's lit verb
   assert.match(WM, /activateStaticDoor\(hit, entries, true\)\.catch/, 'the swing, isBash true');
   // :507-509 - the bash sound, before the type routing, every door but
   // a dungeon exit, from the PLAYER (PlayerActivate's own source).

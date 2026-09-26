@@ -179,6 +179,9 @@ body .dfchat-form .dfchat-close { min-width: 32px; padding: 4px 8px; }
   max-width: min(720px, 80vw); }
 .hud-status:not(:has(> :not(:empty))) { display: none; }
 .hud-status > .hud-effects, .hud-status > .hud-needs { display: contents; }
+/* RENOWN4b: the Renown row under Plus's vitals is as wide as THEIR row - three min(190px, 23vw) tracks and Plus's two
+   16px gaps, at every width (Plus keeps its tracks and gap on a phone too) - the end caps' 4px aside. */
+.hud-renown { width: calc(3 * min(190px, 23vw) + 32px); }
 /* PLUS6: THE TRAVEL CARD'S OPTIONS, THEIR TWO FACES SWAPPED (Speed / Passage / Rest - ui/heldMap.js .hmpick).
    The CHOSEN option wore dark engraved words meant for a pale fill - but a textured theme (Stone) lays its own
    stone over every tile, the pale fill went and the pick read as dark on grey. So the two faces swap: the chosen

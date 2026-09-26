@@ -60,8 +60,9 @@ export const isEnhanced = (search) => uiSkin(search) === 'enhanced';
  *  the Yes/No dialogs, the ported service windows, the vitals' lost chunk, the fading HUD lines, the one-frame rest
  *  window, the Ascend clicks). It is NOT a third skin: every mount site keeps asking isEnhanced(), and Plus answers
  *  yes there, so nothing Enhanced does can be missing from Plus. Only the refresh's own seams ask isEnhancedPlus(),
- *  and plain Enhanced - the default - stays exactly as it was. `?plus=1` / `?plus=0` answer for one page load, like
- *  `?skin=`, and write nothing. */
+ *  and plain Enhanced stays exactly as it was. `?plus=1` / `?plus=0` answer for one page load, like `?skin=`, and
+ *  write nothing. PLUS-DEFAULT (2026-09-25): Plus is the default now (uiPrefs' `enhancedPlus: true`); switching it
+ *  off in Settings stores `false` and brings plain Enhanced back. */
 export function plusOverride(search = globalThis.location?.search ?? '') {
   const v = new URLSearchParams(search).get('plus');
   return v === '1' || v === 'true' ? true : v === '0' || v === 'false' ? false : null;

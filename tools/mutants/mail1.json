@@ -425,8 +425,8 @@
   {
     "name": "TAB-badge-not-the-box",
     "file": "src/ui/socialPanel.js",
-    "old": "id === 'letters' ? (mail?.unread ?? 0) :",
-    "new": "id === 'letters' ? 0 :",
+    "old": "id === 'letters' ? (mail?.unread ?? 0)",
+    "new": "id === 'letters' ? 0",
     "tests": [
       "test/mail1.test.js"
     ],

@@ -453,6 +453,8 @@ const find = (node, cls) => {
 
 test('QS3 the states, executed: the socket, the sheathed hand, the ghost\'s 0, and the tag chips', async () => {
   const prev = globalThis.document;
+  const prevLoc = globalThis.location;
+  globalThis.location = { search: '?plus=0' };   // PLUS-DEFAULT: the plain Enhanced HUD's 12px glyph - Plus draws padGlyphsHD's (padplus1.test.js)
   // QS5: the fake MARKS the namespace, because an SVG node minted by
   // `createElement` is an unknown HTML element that draws nothing - a fake
   // that answered the same object either way could not tell the two apart.
@@ -551,6 +553,7 @@ test('QS3 the states, executed: the socket, the sheathed hand, the ghost\'s 0, a
     setBindings(null);
     setPadFamily(null);
     globalThis.document = prev;
+    globalThis.location = prevLoc;
   }
 });
 

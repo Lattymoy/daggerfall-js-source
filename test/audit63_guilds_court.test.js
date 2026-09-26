@@ -726,7 +726,7 @@ test('AUDIT 65 MC-2: per family - who reaches for the ray, who keeps the narrow 
   const tAt = wm.indexOf('if (_hitDist > _hitReach) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }');
   assert.ok(tAt > 0, 'tryEnter carries the refusal');
   assert.ok(tAt > wm.indexOf("if (typeof key === 'string' && key.startsWith('board:')) {"));
-  assert.ok(tAt < wm.indexOf('return activateStaticDoor(entries[key], entries, false);'));
+  assert.ok(tAt < wm.indexOf('return activateStaticDoor(entries[key], entries, false, { verb: plaqueActionFor(key) });'));   // HOME2 re-aim: the click carries the verb the door's plaque lit
   const dc = read('../src/scenes/dungeonContext.js');
   assert.match(dc, /key: `loot:\$\{i\}`.*distance: RAY_DISTANCE, reach: TREASURE_ACTIVATION_DISTANCE/, 'the dungeon pile');
   assert.match(dc, /key: `corpse:\$\{i\}`.*distance: RAY_DISTANCE, reach: CORPSE_ACTIVATION_DISTANCE/, 'the dungeon body');
