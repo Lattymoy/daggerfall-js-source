@@ -335,7 +335,7 @@ import { partySizeOf, partyExtraFoes, partyGroupMembers } from '../systems/party
 import { GROUP_ROLL_RADIUS } from '../systems/campEncounters.js';   // PSCALE1: outdoors, the party a roll stands for is the camp's own group
 import { SOLITARY_TYPES } from '../characters/mobileFactions.js';   // AUDIT PSCALE1 COUNT-2: a solitary foe meets a party alone
 import { appStorage } from '../systems/appStorage.js';   // ACC1d: where that session lives - the app's store, not the tab's (a second tab is the same player)
-import { POSE_STRIKES, isWorldRoom, isCellRoom, cellHaloFor, actFrameFits, sharedClassicMinutes, wallMsForClassicMinutes } from '../net/wire.js';   // WORLD6b-iii(b): the cell seam's halo   // MAC7 #1: the swing's kind on the wire; AUDIT WORLD4 A1: whether an act frame can be said at all
+import { POSE_STRIKES, isWorldRoom, isCellRoom, cellHaloFor, actFrameFits, sharedClassicMinutes, wallMsForClassicMinutes, voiceVariantCounts } from '../net/wire.js';   // WORLD6b-iii(b): the cell seam's halo   // MAC7 #1: the swing's kind on the wire; AUDIT WORLD4 A1: whether an act frame can be said at all
 import { hasDaggerfallArrows } from '../combat/fpArm.js';   // MAC7 #2: the arrow bit on the wire - weaponRig's own read
 import { drawText } from '../ui/text.js';   // ONLINE1: the session's status line
 import { RemotePlayers, composeLook, createSightCache } from '../net/remotePlayers.js';   // ONLINE1: the others, drawn; NAME1: and the sight test their names take, cached and hysteresised (AUDIT NAME1 F2/F5)
@@ -345,7 +345,7 @@ import { makeHitPend } from '../net/hitPend.js';   // AUDIT FOES FOE2: a blow th
 import { PeerBodies } from '../net/peerBodies.js';   // MWBODY1: the others in the Morrowind body
 import { ChatLog, CHAT_REJOIN_MS } from '../net/chat.js';   // CHAT1: the tabs and their lines
 import { oocText, localLineHeard, nextRegionRoom, regionJoinedText, CHAN_OLD_RELAY_TEXT, ROLL_OLD_RELAY_TEXT, EMOTE_OLD_RELAY_TEXT, partyNoteTab } from '../net/chat.js';   // CHAT-CHAN: the channels' own laws (a second chat import: CHAT1's pin holds the first as it stands)
-import { parseChatLine, HELP_LINES, CHAT_GREETING_TEXT, unknownCommandText, emptyCommandText, hostMisuseText, badRollText, expandShortcodes, EMOTE_LINES } from '../net/chatCommands.js';   // CHAT-CHAN: what a typed line IS; DICE1: and a roll; EMOTE1: an action, a gesture, a shortcode
+import { parseChatLine, HELP_LINES, CHAT_GREETING_TEXT, unknownCommandText, emptyCommandText, hostMisuseText, badRollText, badVoiceText, expandShortcodes, EMOTE_LINES, VOICE_CHAT_COMMANDS } from '../net/chatCommands.js';   // CHAT-CHAN: what a typed line IS; DICE1: and a roll; EMOTE1: an action, a gesture, a shortcode
 import { partyRosterSource, localRosterSource } from '../net/roster.js';   // CHAT-CHAN: the Party and Local tabs' composed lists
 import { SocialState, accountId, accountSecret } from '../net/social.js';   // SOC2: the friends and the party, as the hub says them; the account the hub's hello carries; SOC3: and the two colours a name wears in the DOM - my party's green, a friend's blue
 import { SOCIAL_ROOM, PARTY_SEND_MS, chatRegionRoom } from '../net/wire.js';   // CHAT-CHAN: a region's channel
@@ -360,6 +360,8 @@ import { YesNoBoxWindow } from '../ui/yesNoBox.js';   // PARTY-TRAVEL: the journ
 import { guildFastTravel } from '../systems/guildVariants.js';   // PARTY-TRAVEL: the popup's own blessed minutes, handed over as it hands them
 import { travelMapPopUpState } from '../systems/travelMapState.js';   // PARTY-TRAVEL: the toggles my own map last left - my way of travelling to the leader
 import { createChatPanel } from '../ui/chatPanel.js';   // CHAT1: the enhanced skin's chat over the world
+import { loadMorrowindVoice, morrowindVoiceHelp } from '../systems/morrowindVoices.js';   // VOICE1: attached Morrowind Sound/Vo catalog and lazy decode
+import { VoiceChannels, voiceSoundProfile, voiceInEarshot, voiceVolume } from '../systems/voiceChannels.js';   // VOICE-CUT1/VOICE-RANGE2: one line per speaker, listener-controlled speech range/volume
 import { makeVideoQueue } from '../systems/quest/videoQueue.js';   // CRUX1: the quest videos in turn
 import { createPartyPanel } from '../ui/partyPanel.js';   // SOC4: the party HUD - my party's portraits and their health / stamina / magicka
 import { MailBox, mailNoticeText } from '../net/mail.js';   // MAIL1: the letterbox the Letters tab draws and the frame polls
@@ -10522,6 +10524,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   let peerRiders = null;   // RIDE: another player in the saddle, drawn as Eye Of The Beholder's mounted sprite (net/peerRiders.js)
   let peerWalkers = null;   // DISC23-B: another player on foot, drawn as the Eye Of The Beholder set they chose (net/peerRiders.js)
   let online = null, remotePlayers = null, peerBodies = null, nameLayer = null, nameSight = null, _onlineLast = null, _onlineKey = null, _onlineKeySince = 0, _onlineMovingUntil = 0, _onlineLookAt = -Infinity;
+  const voiceChannels = new VoiceChannels();   // VOICE-CUT1/VOICE-MOVE1: frame-owned so active positional speech can follow its speaker
   let _hsLatch = false;   // AUDIT DISC7 B2: the motor's half-speed flag off the last frame that MOVED - a stop reads it true (standing), and the move hold must not send that as a slow trot
   // D-ONLINE1 (2026-09-17, a player: "still see you have died then main menu"): `onlineFrame` LEAVES the room the
   // instant the death screen goes up (AUDIT ONLINE D12: the dead broadcast nothing and see no one), every frame,
@@ -10932,6 +10935,33 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (healed > 0) townTalk.say(`You are healed ${healed} points.`);
       surfacePlayer();
     };
+    // VOICE1: a relay-authorized speech command becomes audible from the body that spoke it.
+    // Daggerfall clips are stock DAGGER.SND indexes. Morrowind clips are symbolic Sound/Vo keys
+    // resolved only against this client's attached Data Files, then lazily decoded into AudioEngine.
+    // The sender's echo is flat so first-person camera placement cannot pan their own mouth behind them;
+    // peers use a dedicated speech falloff/volume from the listener's Audio settings.
+    //
+    // VOICE-CUT1: ONE ACTIVE LINE PER SPEAKER. A new line cuts the old one immediately, and the
+    // generation token also defeats the Morrowind decode race: if A is still loading when B arrives,
+    // A is stale when its await finishes and is never allowed to start over B. Different speakers keep
+    // independent channels and can overlap naturally.
+    online.onVoice = async ({ id, playback, mine }) => {
+      const generation = voiceChannels.replace(id);
+      const clip = playback?.source === 'df' ? playback.clip : await loadMorrowindVoice(audio, playback);
+      if (clip == null || !voiceChannels.current(id, generation)) return;
+      let handle = null;
+      const volume = voiceVolume();
+      if (volume <= 0) return;   // VOICE-RANGE2: zero is a real mute, and the replacement above already cut the old line
+      if (mine) handle = audio.playOneShotHandle?.(clip, volume) ?? null;
+      else {
+        const peer = online?.peers?.get(id);
+        if (!peer?.shown) return;
+        const at = onlineToScene(peer.shown);
+        if (!voiceInEarshot(at, player.pos)) return;
+        handle = audio.play3dHandle?.(clip, at, volume, voiceSoundProfile()) ?? null;
+      }
+      voiceChannels.attach(id, generation, handle);
+    };
     // INSPECT1: A CARD FRAME AT ME. An ASK is answered with my card - what my own sheet shows and what I wear now
     // (net/profileCard.js composeCard) - once in a while per asker (the answer gate), whoever asks: the relay routed it
     // from someone in my room, and nothing on the card is more than the room could see of me standing there, bar my
@@ -11007,6 +11037,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       for (const link of chatLinks?.values() ?? []) link.leave();
       peerBodies?.destroy();
       remotePlayers?.destroy();
+      voiceChannels.clear();   // VOICE-MOVE1: no long positional line survives the world/session teardown
       peerRiders?.destroy();   // RIDE
       peerWalkers?.destroy();   // DISC23-B
     });
@@ -11191,12 +11222,34 @@ export async function bootWorld(canvas, renderer, params, status) {
         // mended (B2's false); the list is lines to READ, so the field clears and the chat stays open ('read').
         // EMOTE1: a `:shortcode:` is its emoji in anything said - before the parse, so a gesture's name and an action
         // wear them too
-        const cmd = parseChatLine(expandShortcodes(text));
+        const cmd = parseChatLine(expandShortcodes(text), VOICE_CHAT_COMMANDS);
         const note = (line) => chatLog.push(tabId, { text: line, system: true });
         if (cmd.kind === 'help') { for (const line of HELP_LINES) note(line); return 'read'; }
         if (cmd.kind === 'emotes') { for (const line of EMOTE_LINES) note(line); return 'read'; }
         if (cmd.kind === 'me') return chatSend(tabId, cmd.text, tabId, { me: true });   // EMOTE1: an action, on this tab
         if (cmd.kind === 'emote') return chatSend('local', cmd.text, tabId, { me: true });   // EMOTE1: a gesture - the body's, so those near see it
+        if (cmd.kind === 'voicehelp') {
+          const counts = voiceVariantCounts(online.look);
+          note(`Daggerfall voices: /speech df attack 1-${counts.attack}, pain 1-${counts.pain}, death 1-${counts.death}.`);
+          note('Morrowind voices: /speech <type> <id>; expansion collections use tb_, bm_, ord_ or vampire_ prefixes. Globals: misc, special, werewolf.');
+          morrowindVoiceHelp(online.look).then((rows) => {
+            if (!rows.length) { note('No matching Morrowind Sound/Vo files are attached on this client.'); return; }
+            const groups = new Map();
+            for (const row of rows) {
+              const label = row.collection === 'global' ? 'global' : row.collection;
+              const a = groups.get(label) ?? [];
+              a.push(`${row.type} ${row.first}${row.last !== row.first ? `-${row.last}` : ''}`);
+              groups.set(label, a);
+            }
+            for (const [collection, entries] of groups) note(`Morrowind ${collection}: ${entries.join(', ')}`);
+          }).catch(() => note('Morrowind voice catalog could not be read.'));
+          return 'read';
+        }
+        if (cmd.kind === 'badvoice') { note(badVoiceText()); return false; }
+        if (cmd.kind === 'voice') {
+          if (online.status === 'open' && !online.voiceOk) { note('Voices need the server\'s next update.'); return false; }
+          return online.sendVoice(cmd.request);
+        }
         if (cmd.kind === 'unknown') { note(unknownCommandText(cmd.name)); return false; }
         if (cmd.kind === 'empty') { note(emptyCommandText(cmd.name)); return false; }
         if (cmd.kind === 'host') { note(hostMisuseText(cmd.name)); return false; }
@@ -13533,6 +13586,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (isCellRoom(online.room)) { const ids = ownerIds(); if (ids) hcc.sweepOwners(ids, now, FOES_STALE_MS); }   // HCC-ONLINE: a peer's team goes as their puppets and camps do - the same memoised list, the same liveness   // PERF11: the same list   // SURV3: a peer's camps go as their puppets do - the same liveness, the same answer-gate   // AUDIT WORLD6b-iii(b) C3/B5: no answer (the socket not open) is not "nobody" - it pruned every owner while the halos kept feeding frames, a spawn-and-discard loop per frame   // AUDIT WORLD6b-ii C2: ONE liveness for the owner - the peers the hunt reads (visible: a pose, in range, inside the timeout) are the peers whose puppets stand
     hcc.pruneKept(isCellRoom(online.room) ? [online.room, ...online.haloRooms()] : [], now);   // HCC-PARK: a kept team is its CELL's - it stands while I hold that cell's socket (mine or a halo's), and its welcome brings it back
     const drawable = online.drawable();
+    // VOICE-MOVE1: the listener already follows the camera in audio.setListener(); move the SOURCE too so
+    // a long song/line follows the remote body's interpolated pose instead of staying where /v began.
+    voiceChannels.syncPositions(online.peers, onlineToScene);
     peerCastVisuals(drawable);   // SPELLFX1: a peer's new cast, drawn once
     // RIDE (2026-09-23, Mac: "ensure over people see others riding on horses"): a peer in the saddle is drawn as the
     // rider FIRST, so the body and the doll below stand nothing for them and their name rides over the rider

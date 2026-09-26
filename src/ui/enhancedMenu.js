@@ -109,6 +109,7 @@ import { exportSavesZip, collectSlots, importSlots, entriesFromFiles, slotPathOf
 import { appStorage } from '../systems/appStorage.js';   // SP1: the store under this build - the browser's on the site, the file store in the app   // SAV4: the slot store; SLOTS1: every slot
 import { uiSkin, otherSkin, setUiSkin, SKIN_NAMES, isEnhanced, isEnhancedPlus } from '../systems/uiSkin.js';   // FD1: which boot rail
 import { getPref, setPref, isOpen, setOpen } from '../systems/uiPrefs.js';
+import { VOICE_DISTANCE_MIN, VOICE_DISTANCE_MAX, VOICE_DISTANCE_DEFAULT, VOICE_VOLUME_MIN, VOICE_VOLUME_MAX, VOICE_VOLUME_DEFAULT } from '../systems/voiceChannels.js';   // VOICE-RANGE2: client-side speech sliders in Audio settings
 import { DEFAULT_SERVER } from '../net/online.js';   // ONLINE1: the relay this port hosts, the field's placeholder   // R7: the port's own switches; SO1: the folded tiers' memory
 import { replacementCount } from '../systems/musicReplacement.js';   // M-EXT: the packs card reports what the pick covers
 import { brandMark } from './brandMark.js';   // INTRO2: Mac's supplied logo, shared with the final splash
@@ -1298,20 +1299,23 @@ function paneQuickSettings(pane) {
   // One scroll, grouped under the categories' own titles - 48 live
   // rows flat read as a wall; the dividers give the scroll a spine
   // without bringing back the chip strip this pane exists to shed.
+  //
+  // VOICE-RANGE3: the in-game System page owns the player-voice controls.
+  // They are inserted into this SAME category pass under the existing AUDIO
+  // divider, after DFU's live audio rows. No second Audio section is created.
   for (const cat of CATEGORIES) {
     const liveKeys = paneKeys(cat.id).filter((key) => tierOf(key) === 'live');   // FT13: the moved keys are not here
-    if (!liveKeys.length) continue;
+    const port = portRows(cat.id, { pause: true });
+    // VOICE-RANGE3: the two listener-side voice controls belong to the EXISTING
+    // in-game AUDIO block (the System -> Settings page), immediately after DFU's
+    // live audio rows. They deliberately do not ride the generic category hook:
+    // there is one visible Audio home, not a second place to hunt for voices.
+    const localAudio = cat.id === 'audio' ? voiceAudioRows() : [];
+    if (!liveKeys.length && !port.length && !localAudio.length) continue;
     any = true;
     list.append(pxDivider(cat.title));
     for (const key of liveKeys) put(list, settingRow(key));
-  }
-  // SO1: and the port's own rows that take effect without a reload,
-  // under the categories they live in on the main menu
-  for (const cat of CATEGORIES) {
-    const port = portRows(cat.id, { pause: true });
-    if (!port.length) continue;
-    any = true;
-    list.append(pxDivider(cat.title));
+    for (const r of localAudio) list.append(r);   // VOICE-RANGE3: under the one AUDIO divider shown in the pause/system page
     for (const r of port) list.append(r);
   }
   if (!any) list.append(empty('Nothing live here yet', 'No setting has an in-game consumer in this build.'));
@@ -1707,6 +1711,52 @@ function stepRow(key, name, note, { min, max, step: inc, fmt }) {
   ctl.append(step(-inc, '\u2039'), val, step(inc, '\u203a'));
   row.append(ctl);
   return row;
+}
+
+
+/** VOICE-RANGE2: a real range slider over the port's prefs shelf. */
+function rangePrefRow(key, name, note, { min, max, step, fallback, fmt }) {
+  const row = el('div', 'row');
+  const main = el('div', 'row-main');
+  main.append(el('div', 'row-name', name));
+  if (note) main.append(el('div', 'row-note', note));
+  row.append(main);
+
+  const ctl = el('div', 'ctl');
+  const input = el('input', 'pref-range');
+  input.type = 'range';
+  input.min = String(min);
+  input.max = String(max);
+  input.step = String(step);
+  const read = () => {
+    const n = Number(getPref(key));
+    return Number.isFinite(n) ? Math.max(min, Math.min(max, n)) : fallback;
+  };
+  input.value = String(read());
+  input.setAttribute('aria-label', name);
+  input.style.width = '150px';
+
+  const val = el('span', 'val', fmt(read()));
+  input.oninput = () => {
+    const n = Math.max(min, Math.min(max, Number(input.value)));
+    setPref(key, n);
+    val.textContent = fmt(n);
+  };
+
+  ctl.append(input, val);
+  row.append(ctl);
+  return row;
+}
+
+function voiceAudioRows() {
+  return [
+    rangePrefRow('voiceVolume', 'Player voice volume',
+      'Volume of multiplayer voice lines you hear, including your own local echo. Takes effect on the next line.',
+      { min: VOICE_VOLUME_MIN, max: VOICE_VOLUME_MAX, step: 0.05, fallback: VOICE_VOLUME_DEFAULT, fmt: (v) => `${Math.round(v * 100)}%` }),
+    rangePrefRow('voiceDistance', 'Player voice falloff distance',
+      'How far multiplayer voices carry before fading to silence. Footsteps, swings and riding keep their own shorter range.',
+      { min: VOICE_DISTANCE_MIN, max: VOICE_DISTANCE_MAX, step: 5, fallback: VOICE_DISTANCE_DEFAULT, fmt: (v) => `${Math.round(v)} m` }),
+  ];
 }
 
 /** PX30c: the enhanced HUD's scale, on the prefs shelf (see the note

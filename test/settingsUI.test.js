@@ -157,10 +157,11 @@ test('SO1: the settings pane is organised - the port\'s rows sit in the categori
   const menu = src('ui/enhancedMenu.js');
   assert.doesNotMatch(menu, /function paneEnhanced\(/, 'the Enhanced pane is gone');
   assert.doesNotMatch(menu, /inertRow\(/, 'and the row about a removed feature with it');
-  for (const fn of ['portRowsControls', 'portRowsInterface', 'morrowindCard', 'peerSpritesCard', 'packsCard', 'categoryRows', 'tierGroup']) {
+  for (const fn of ['portRowsControls', 'portRowsInterface', 'voiceAudioRows', 'morrowindCard', 'peerSpritesCard', 'packsCard', 'categoryRows', 'tierGroup']) {
     assert.match(menu, new RegExp(`function ${fn}\\(`), `${fn} exists`);
   }
   assert.match(menu, /if \(catId === 'controls'\) return portRowsControls\(opts\);[^\n]*\n\s*if \(catId === 'interface'\) return portRowsInterface\(opts\);/);
+  assert.doesNotMatch(menu, /catId === 'audio'/, 'voice sliders do not create a generic/second Audio category injection');
   // FT12: the Enhanced category is GONE from the settings rail - every switch it held is the Features home's, its test door the Test Room's
   assert.ok(!/function portRowsEnhanced\(|function featuresPointerRow\(|catId === 'enhanced'/.test(menu), 'no Enhanced category, no pointer row');
   const test = menu.slice(menu.indexOf('function paneTest('), menu.indexOf('\n}', menu.indexOf('function paneTest(')));
@@ -171,6 +172,14 @@ test('SO1: the settings pane is organised - the port\'s rows sit in the categori
   for (const k of ['touchLookSensitivity', 'touchAnalogStick', 'touchGyroLook', 'touchHaptics', 'touchFullscreen']) assert.match(ctl, new RegExp(`'${k}'`), k);
   const ui = menu.slice(menu.indexOf('function portRowsInterface('), menu.indexOf('function portRows('));
   assert.match(ui, /if \(!pause\) out\.push\(skinRow\(\)\);/); assert.match(ui, /out\.push\(hudScaleRow\(\)\);/); assert.match(ui, /prefRow\('showFps'/);
+  const quick = menu.slice(menu.indexOf('function paneQuickSettings('), menu.indexOf('/** The skin switch'));
+  assert.equal((quick.match(/list\.append\(pxDivider\(cat\.title\)\)/g) ?? []).length, 1, 'pause/System renders each category heading through one merged pass');
+  assert.match(quick, /const localAudio = cat\.id === 'audio' \? voiceAudioRows\(\) : \[\];[\s\S]*list\.append\(pxDivider\(cat\.title\)\);[\s\S]*for \(const key of liveKeys\)[\s\S]*for \(const r of localAudio\)/,
+    'voice controls are appended under the existing in-game AUDIO divider after DFU live audio rows');
+  const audio = menu.slice(menu.indexOf('function voiceAudioRows('), menu.indexOf('/** PX30c'));
+  assert.match(audio, /rangePrefRow\('voiceVolume', 'Player voice volume'/);
+  assert.match(audio, /rangePrefRow\('voiceDistance', 'Player voice falloff distance'/);
+  assert.match(menu, /input\.type = 'range'/, 'voice controls are real sliders, not arrow steppers');
   // FT14: the Mods page is gone; the assets and the packs stand under the feature tiles instead
   const mods = menu.slice(menu.indexOf('function modsFooter('), menu.indexOf('\n}', menu.indexOf('function modsFooter(')));
   // ONLINE-CLASS1 adds the peer-sprites card; the order is what this pins - the peers' look, then the packs' door.

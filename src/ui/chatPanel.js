@@ -6,14 +6,14 @@
 // buttons.
 //
 // TWO STATES. Closed: the active tab's last few lines stand over the
-// world and fade (net/chat.js peek), with a one-word hint (Enter) or,
+// world and fade (net/chat.js peek), with a one-word hint (Y by default) or,
 // on a touch device, a button. Open: a tab bar (one tab per row of
 // CHAT_TABS - the World tab alone today - a badge on each with unread
-// lines), the tab's lines, and the field. Enter opens the panel and
-// puts the caret in the field; Enter in the field sends the line and
-// closes the panel (the MMO gesture: type, send, back to the world);
-// an empty Enter and Escape close it. The touch layer's Send keeps the
-// panel open (a thumb typed it; the next line is likely).
+// lines), the tab's lines, and the field. Y (the remappable Chat action)
+// opens/focuses it. Enter sends; on desktop the field then blurs while the
+// panel stays visible, so Y -> Up -> Enter can recall and fire a recent line
+// immediately. Fifteen idle seconds close the panel; empty Enter and Escape
+// still close it explicitly. Touch Send keeps the field focused.
 //
 // THE KEYS ARE THE FIELD'S (CG2). One capture listener on the window,
 // alive while the panel exists: a key typed into the field is stopped
@@ -22,7 +22,7 @@
 // reload keys stay swallowed (ui/input.js swallowBrowserKey) so F5 in
 // the field does not destroy the session. The key UP is not stopped:
 // a key held when the panel opened leaves the ring the moment it is
-// released. Enter opens the panel only when no enhanced overlay is up
+// released. The Chat action opens the panel only when no enhanced overlay is up
 // (enhancedOverlays), no other field owns the key, the host says the
 // game is not paused (canOpen), and the event is the keyboard's own -
 // the touch layer's ⏎ button synthesizes an untrusted Enter for the
@@ -162,8 +162,12 @@ import { SHORTCODE_LIST } from '../net/chatCommands.js';   // EMOTE1: the picker
 import { getPref, setPref } from '../systems/uiPrefs.js';   // CHAT-R2: the hidden state outlives the session
 import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS, PIXEL_TEXT_SHADOW } from './pixelifyFive.js';   // FONT1: the enhanced skin's own face, unsmoothed, with Silkscreen's five
 
-/** The action whose key opens the chat: DFU's own cursor key (Enter by default), since opening frees the cursor. */
-export const CHAT_OPEN_ACTION = 'ActivateCursor';
+/** The dedicated chat action. Y by default; remappable in the enhanced controls pane. */
+export const CHAT_OPEN_ACTION = 'Chat';
+/** CHAT-HIST1: client-only sent-line recall. Kept in this panel instance only: no relay frame, no save data. */
+export const CHAT_HISTORY_MAX = 100;
+/** CHAT-POLISH1: expanded chat stays visible briefly after use, then yields the screen/pointer automatically. */
+export const CHAT_IDLE_CLOSE_MS = 15_000;
 
 /** CHAT-SIZE: the sheet's own width, which is the text's scale 1 - the scale is the dragged width over it, inside these
  *  bounds, so the width bounds are the scale's. */
@@ -480,13 +484,13 @@ export function isOpenKey(e, { canOpen = () => true, overlay = overlayOpen, acti
  * key - and when it does handle one it calls stopImmediatePropagation,
  * so neither a sibling surface nor the host's pause door sees it.
  */
-export function createChatPanel({ log, onSend, roster = null, canOpen = () => true, onOpen = null, onClose = null, above = () => false, action = actionOfKey, overlay = overlayOpen, doc = document, win = globalThis, touch = isTouchDevice(), social = null, nameColor = null, rowActions = null, badgeOf = null } = {}) {
+export function createChatPanel({ log, onSend, roster = null, canOpen = () => true, onOpen = null, onClose = null, above = () => false, action = actionOfKey, overlay = overlayOpen, doc = document, win = globalThis, touch = isTouchDevice(), social = null, nameColor = null, rowActions = null, badgeOf = null, now = () => Date.now() } = {}) {
   injectChatStyle(doc);
   const el = (tag, cls, text) => { const n = doc.createElement(tag); n.className = cls; if (text != null) n.textContent = text; return n; };
   const root = el('div', `dfchat${touch ? ' touch' : ''}`);
   root.dataset.state = 'closed';
   const peek = el('div', 'dfchat-peek');
-  const hint = el('div', 'dfchat-hint', 'Enter to chat');
+  const hint = el('div', 'dfchat-hint', 'Y to chat');   // CHAT-POLISH1: default binding; the action itself remains remappable
   const status = el('div', 'dfchat-status');
   const openBtn = el('button', 'dfchat-open', 'Chat');
   openBtn.type = 'button';
@@ -502,6 +506,34 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   const input = el('input', 'dfchat-input');
   input.type = 'text'; input.maxLength = CHAT_MAX; input.placeholder = 'Say something'; input.autocomplete = 'off'; input.spellcheck = false;
   input.setAttribute('aria-label', 'Chat');
+  // CHAT-HIST1: shell-style command/chat history. The cursor is one past the end while not browsing;
+  // the draft is whatever was in the field on the first Up, restored when Down walks past the newest line.
+  // Only accepted sends enter this array, so a disconnected/rate-limited attempt never becomes fake history.
+  const history = [];
+  let historyAt = 0, historyDraft = '';
+  let lastUseAt = now();
+  const markUse = () => { lastUseAt = now(); };
+  const historyReset = () => { historyAt = history.length; historyDraft = ''; };
+  const historyRemember = (text) => {
+    if (!text.trim()) return;
+    if (history.at(-1) !== text) history.push(text);   // consecutive duplicate sends add no useful recall stop
+    if (history.length > CHAT_HISTORY_MAX) history.splice(0, history.length - CHAT_HISTORY_MAX);
+    historyReset();
+  };
+  const historyMove = (dir) => {
+    if (!history.length) return false;
+    if (historyAt === history.length) {
+      if (dir > 0) return false;
+      historyDraft = String(input.value ?? '');
+    }
+    const next = Math.max(0, Math.min(history.length, historyAt + dir));
+    if (next === historyAt) return false;
+    historyAt = next;
+    input.value = historyAt === history.length ? historyDraft : history[historyAt];
+    const end = input.value.length;
+    input.setSelectionRange?.(end, end);
+    return true;
+  };
   const send = el('button', 'dfchat-send', 'Send'); send.type = 'submit';
   const close = el('button', 'dfchat-close', '✕'); close.type = 'button';
   close.setAttribute('aria-label', 'Close chat');
@@ -967,6 +999,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   const open = () => {
     if (!alive || log.open || !canOpen()) return false;
     log.setOpen(true);
+    markUse();
     paint(true);   // CHAT-SCROLL: an open lands on the newest line
     input.focus?.();
     onOpen?.();   // the host frees the pointer (C2) - inside the gesture that opened
@@ -977,25 +1010,35 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     setEmojiOpen(false);   // EMOTE1: the picker goes with the panel
     log.setOpen(false);
     input.blur?.();
+    historyReset();
     paint();
     onClose?.();   // and takes it back - inside the gesture that closed, the only place a lock request is honoured
     return true;
   };
-  /** The field's line out; a line the host could not send (no socket, over the rate) stays in the field and the panel stays up (B2). */
+  /** CHAT-POLISH1: a sent line clears the field but leaves the panel visible. Desktop drops focus so Y is the
+   *  explicit door back into typing; touch keeps its keyboard. Fifteen seconds without activity closes the panel. */
   const submit = ({ keep = false } = {}) => {
     const text = String(input.value ?? '');
-    const went = text.trim() ? onSend?.(log.active, text) : true;
-    if (went === false) return;
+    if (!text.trim()) { closePanel(); return; }   // an empty Enter remains an intentional close
+    const went = onSend?.(log.active, text);
+    markUse();
+    if (went === false) return;                   // refused: keep both field and focus for correction/retry
+    historyRemember(text);
     input.value = '';
-    if (!keep && went !== 'read') closePanel();
+    if (keep) input.focus?.();
+    else input.blur?.();                          // desktop: Y -> Up -> Enter is repeatable without typing a literal Y
+    paint();
   };
 
   const onKey = (e) => {
     if (e.target === input) {
+      markUse();
       // the field's key (CG2): stopped here, so the host's ring never fills from a chat line
       if (e.isComposing || e.keyCode === 229) { e.stopPropagation(); return; }   // C3: the IME's own Enter commits a candidate, not a line
       // AUDIT SOC C2/C14: a surface OVER the chat owns Escape - the key is left whole for it, and the field keeps its line
       if (e.code === 'Escape') { if (above()) { e.stopPropagation(); return; } e.preventDefault(); e.stopImmediatePropagation(); if (emojiOpen) { setEmojiOpen(false); return; } closePanel(); return; }   // EMOTE1: the picker is the innermost surface - its Escape first
+      else if (e.code === 'ArrowUp') { e.preventDefault(); historyMove(-1); }   // CHAT-HIST1: recall older accepted lines
+      else if (e.code === 'ArrowDown') { e.preventDefault(); historyMove(1); }  // CHAT-HIST1: newer line, then the draft
       else if (e.code === 'Enter' && !e.shiftKey && !e.repeat) { e.preventDefault(); submit(); }   // C6: a held Enter opened once; its repeats send nothing
       else if (e.code === 'Tab') e.preventDefault();   // C7: focus stays in the field - Tab walked it onto Send and gave the keyboard back to the game
       else swallowBrowserKey(e);
@@ -1004,7 +1047,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     }
     if (!takesKey(e)) return;
     e.preventDefault(); e.stopPropagation();
-    if (log.open) input.focus?.();   // open but the caret wandered (a tap on the canvas): the open key brings it back rather than reaching the game
+    if (log.open) { markUse(); input.focus?.(); }   // open but the caret wandered: the open key brings it back and resets the idle clock
     else open();
   };
   /** Whether a key outside the field is this panel's: the open key while it is closed (and not put away), or the
@@ -1090,7 +1133,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   show.addEventListener('click', () => { setHidden(false); open(); });
   for (const t of ['pointerdown', 'mousedown', 'click', 'touchstart']) show.addEventListener(t, (e) => e.stopPropagation());
   // a PRESS inside the panel is the panel's; a RELEASE is never stopped (C5: the host's mouseup clears its ring)
-  const swallow = (e) => e.stopPropagation();
+  const swallow = (e) => { markUse(); e.stopPropagation(); };
   for (const t of ['pointerdown', 'mousedown', 'click', 'touchstart', 'wheel', 'contextmenu']) box.addEventListener(t, swallow);
   for (const t of ['pointerdown', 'mousedown', 'click', 'touchstart']) openBtn.addEventListener(t, swallow);
   // SOC3: the closed-state Social button is outside the box, so it carries the box's own press rule - a thumb that
@@ -1127,6 +1170,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
      */
     render({ covered = false, status: line = null } = {}) {
       if (!alive) return;
+      if (log.open && now() - lastUseAt >= CHAT_IDLE_CLOSE_MS) closePanel();   // CHAT-POLISH1: idle timeout, frame-driven
       if (covered || overlay()) { if (log.open) closePanel(); if (root.style.display !== 'none') root.style.display = 'none'; return; }
       if (root.style.display !== '') root.style.display = '';
       publishFit();   // CHAT-SIZE: the screen can change under the chat (a rotate, a resized window) - said on a change only

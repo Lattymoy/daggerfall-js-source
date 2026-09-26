@@ -42,7 +42,7 @@ import worker from '../server/src/index.js';
 import { RELAY_VERSION } from '../src/net/wire.js';   // LOCALDEV1: the worker entry exports handlers alone
 import { OnlineSession, HEARTBEAT_MS, BACKOFF_MIN_MS } from '../src/net/online.js';
 import { ChatLog, CHAT_TABS, CHAT_KEEP, CHAT_FADE_MS, CHAT_PEEK, CHAT_REJOIN_MS, tagOf } from '../src/net/chat.js';
-import { createChatPanel, isOpenKey, CHAT_STYLE_ID, CHAT_OPEN_ACTION, clockOf, CHAT_CSS } from '../src/ui/chatPanel.js';
+import { createChatPanel, isOpenKey, CHAT_STYLE_ID, CHAT_OPEN_ACTION, CHAT_HISTORY_MAX, CHAT_IDLE_CLOSE_MS, clockOf, CHAT_CSS } from '../src/ui/chatPanel.js';
 import { registerOverlay, overlayOpen } from '../src/ui/enhancedOverlays.js';
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
@@ -455,8 +455,8 @@ function fakeWindow() {
 }
 const find = (n, cls, out = []) => { if (String(n.className).split(/\s+/).includes(cls)) out.push(n); for (const c of n.children) find(c, cls, out); return out; };
 const one = (n, cls) => find(n, cls)[0];
-/** The default binding's shape: Enter is ActivateCursor (inputActions.js), nothing else is. */
-const defaultAction = (e) => (e.code === 'Enter' ? 'ActivateCursor' : null);
+/** CHAT-POLISH1: Y is Chat; Enter keeps DFU's ActivateCursor action. */
+const defaultAction = (e) => (e.code === 'KeyY' ? 'Chat' : e.code === 'Enter' ? 'ActivateCursor' : null);
 
 test('CHAT1 / AUDIT CHAT: the panel - built once over the document with the sheet injected once; the cursor key (through the registry - the keyboard\'s own, no field, no overlay, the host willing) opens it, frees the pointer and puts the caret in the field; the field\'s keys are stopped before the host\'s bubble listener (the ring never fills) with the reload keys still swallowed, the IME\'s Enter left alone, a held Enter and Tab inert; Enter sends on the active tab, takes the pointer back and closes; a refused line keeps the field and the panel; an empty Enter and Escape close; a press inside the box is stopped and a release is not; a covering window or an open overlay hides and closes it; lines are text, never markup, tagged by id, the list grown not rebuilt; the badge; the touch button; destroy takes the one listener', () => {
   let clock = 50_000;
@@ -467,7 +467,7 @@ test('CHAT1 / AUDIT CHAT: the panel - built once over the document with the shee
   const pointer = [];
   const hostSaw = [];
   win.addEventListener('keydown', (e) => hostSaw.push(e.code));   // the host's shape: bubble, on the window, filling its ring
-  const panel = createChatPanel({ log, onSend: (tab, text) => { sent.push([tab, text]); return accept; }, canOpen: () => willing, onOpen: () => pointer.push('free'), onClose: () => pointer.push('lock'), action: defaultAction, doc, win, touch: false });
+  const panel = createChatPanel({ log, onSend: (tab, text) => { sent.push([tab, text]); return accept; }, canOpen: () => willing, onOpen: () => pointer.push('free'), onClose: () => pointer.push('lock'), action: defaultAction, doc, win, touch: false, now: () => clock });
   const root = doc.body.children[0];
   assert.equal(root.className, 'dfchat'); assert.equal(root.dataset.state, 'closed');
   assert.equal(root.attrs['aria-live'], undefined, 'AUDIT CHAT C9: the root is no live region - the box is the log');
@@ -480,27 +480,27 @@ test('CHAT1 / AUDIT CHAT: the panel - built once over the document with the shee
   assert.equal(win.listeners[1].t, 'keydown'); assert.equal(win.listeners[1].capture, true);
   const input = panel.input;
   assert.equal(input.tagName, 'INPUT'); assert.equal(input.maxLength, CHAT_MAX);
-  // the open key: the cursor action through the registry (C4)
-  assert.equal(CHAT_OPEN_ACTION, 'ActivateCursor');
+  // the open key: its own Chat action through the registry (Y by default)
+  assert.equal(CHAT_OPEN_ACTION, 'Chat');
   const off = () => false;
-  assert.equal(isOpenKey({ code: 'Enter', isTrusted: true, target: { tagName: 'BODY' } }, { overlay: off, action: defaultAction }), true);
-  assert.equal(isOpenKey({ code: 'KeyT', isTrusted: true, target: { tagName: 'BODY' } }, { overlay: off, action: (e) => (e.code === 'KeyT' ? 'ActivateCursor' : null) }), true, 'rebound: the chat key moves with the binding');
-  assert.equal(isOpenKey({ code: 'Enter', isTrusted: true, target: { tagName: 'BODY' } }, { overlay: off, action: (e) => (e.code === 'KeyT' ? 'ActivateCursor' : null) }), false, 'and Enter is then nothing');
-  assert.equal(isOpenKey({ code: 'Enter', isTrusted: true, target: { tagName: 'BODY' } }, { overlay: off }), true, 'the default: the registry\'s own bindings, Enter -> ActivateCursor');
-  assert.equal(isOpenKey({ code: 'Enter', isTrusted: false, target: { tagName: 'BODY' } }, { overlay: off, action: defaultAction }), false, 'the touch layer\'s synthesized Enter opens nothing');
-  assert.equal(isOpenKey({ code: 'Enter', target: { tagName: 'INPUT' } }, { overlay: off, action: defaultAction }), false, 'another field\'s Enter is the field\'s');
-  assert.equal(isOpenKey({ code: 'Enter', target: { tagName: 'BODY' } }, { overlay: () => true, action: defaultAction }), false, 'under an enhanced overlay: the overlay\'s');
-  assert.equal(isOpenKey({ code: 'Enter', target: { tagName: 'BODY' }, ctrlKey: true }, { overlay: off, action: defaultAction }), false, 'modified: not the gesture');
-  assert.equal(isOpenKey({ code: 'Enter', target: { tagName: 'BODY' }, repeat: true }, { overlay: off, action: defaultAction }), false);
+  assert.equal(isOpenKey({ code: 'KeyY', isTrusted: true, target: { tagName: 'BODY' } }, { overlay: off, action: defaultAction }), true);
+  assert.equal(isOpenKey({ code: 'KeyT', isTrusted: true, target: { tagName: 'BODY' } }, { overlay: off, action: (e) => (e.code === 'KeyT' ? 'Chat' : null) }), true, 'rebound: the chat key moves with the binding');
+  assert.equal(isOpenKey({ code: 'KeyY', isTrusted: true, target: { tagName: 'BODY' } }, { overlay: off, action: (e) => (e.code === 'KeyT' ? 'Chat' : null) }), false, 'and Y is then nothing');
+  assert.equal(isOpenKey({ code: 'KeyY', isTrusted: true, target: { tagName: 'BODY' } }, { overlay: off }), true, 'the default: the registry\'s own bindings, Y -> Chat');
+  assert.equal(isOpenKey({ code: 'KeyY', isTrusted: false, target: { tagName: 'BODY' } }, { overlay: off, action: defaultAction }), false, 'the touch layer\'s synthesized Y opens nothing');
+  assert.equal(isOpenKey({ code: 'KeyY', target: { tagName: 'INPUT' } }, { overlay: off, action: defaultAction }), false, 'another field\'s Y is the field\'s');
+  assert.equal(isOpenKey({ code: 'KeyY', target: { tagName: 'BODY' } }, { overlay: () => true, action: defaultAction }), false, 'under an enhanced overlay: the overlay\'s');
+  assert.equal(isOpenKey({ code: 'KeyY', target: { tagName: 'BODY' }, ctrlKey: true }, { overlay: off, action: defaultAction }), false, 'modified: not the gesture');
+  assert.equal(isOpenKey({ code: 'KeyY', target: { tagName: 'BODY' }, repeat: true }, { overlay: off, action: defaultAction }), false);
   willing = false;
-  let e = win.key('Enter', { target: doc.body });
+  let e = win.key('KeyY', { target: doc.body });
   assert.equal(log.open, false, 'the host unwilling (a window up): nothing opens'); assert.equal(e.stopped, false, 'and the key goes on to the host');
-  assert.deepEqual(hostSaw, ['Enter']);
+  assert.deepEqual(hostSaw, ['KeyY']);
   willing = true;
-  e = win.key('Enter', { target: doc.body, isTrusted: false });
-  assert.equal(log.open, false, 'an untrusted Enter opens nothing');
-  e = win.key('Enter', { target: doc.body });
-  assert.equal(log.open, true, 'Enter opens'); assert.equal(e.prevented, true); assert.equal(e.stopped, true, 'and the host never sees it');
+  e = win.key('KeyY', { target: doc.body, isTrusted: false });
+  assert.equal(log.open, false, 'an untrusted Y opens nothing');
+  e = win.key('KeyY', { target: doc.body });
+  assert.equal(log.open, true, 'Y opens'); assert.equal(e.prevented, true); assert.equal(e.stopped, true, 'and the host never sees it');
   assert.equal(root.dataset.state, 'open'); assert.equal(input.focused, true, 'the caret in the field');
   assert.deepEqual(pointer, ['free'], 'AUDIT CHAT C2: the pointer is freed on open');
   // the field's keys
@@ -528,18 +528,35 @@ test('CHAT1 / AUDIT CHAT: the panel - built once over the document with the shee
   e = win.key('Enter', { target: input });
   assert.equal(sent.length, 2, 'offered again');
   assert.equal(input.value, '', 'taken: the field cleared');
-  assert.equal(log.open, false, 'and the panel closes'); assert.equal(root.dataset.state, 'closed'); assert.equal(input.focused, false);
-  assert.deepEqual(pointer, ['free', 'lock'], 'the pointer taken back inside the closing gesture');
+  assert.equal(log.open, true, 'a successful send leaves the panel visible');
+  assert.equal(root.dataset.state, 'open'); assert.equal(input.focused, false, 'desktop send drops text focus so Y is the explicit door back');
+  assert.deepEqual(pointer, ['free'], 'the pointer stays with the still-open chat');
   assert.equal(e.prevented, true); assert.equal(e.stopped, true);
-  win.key('Enter', { target: doc.body }); assert.equal(log.open, true);
+
+  // CHAT-POLISH1: idle close is fifteen seconds from the last use, and Y while the panel is visible only re-focuses it.
+  clock += CHAT_IDLE_CLOSE_MS - 1;
+  panel.render();
+  assert.equal(log.open, true, 'not closed a millisecond early');
+  e = win.key('KeyY', { target: doc.body });
+  assert.equal(input.focused, true, 'Y re-focuses the still-visible panel'); assert.equal(e.stopped, true);
+  clock += CHAT_IDLE_CLOSE_MS - 1;
+  panel.render();
+  assert.equal(log.open, true, 'Y reset the idle timer');
+  clock += 1;
+  panel.render();
+  assert.equal(log.open, false, 'fifteen idle seconds closes');
+  assert.deepEqual(pointer, ['free', 'lock'], 'idle close returns the pointer');
+
+  win.key('KeyY', { target: doc.body }); assert.equal(log.open, true);
   win.key('Enter', { target: input });
-  assert.equal(sent.length, 2, 'an empty Enter sends nothing'); assert.equal(log.open, false, 'and closes');
-  win.key('Enter', { target: doc.body }); assert.equal(log.open, true);
+  assert.equal(sent.length, 2, 'an empty Enter sends nothing'); assert.equal(log.open, false, 'and remains a manual close');
+  win.key('KeyY', { target: doc.body }); assert.equal(log.open, true);
   e = win.key('Escape', { target: input });
   assert.equal(log.open, false, 'Escape closes'); assert.equal(e.stopped, true, 'and opens no pause menu');
-  win.key('Enter', { target: doc.body });
-  e = win.key('Enter', { target: doc.body, isTrusted: true });
-  assert.equal(input.focused, true, 'open with the caret wandered: the cursor key brings it back'); assert.equal(e.stopped, true);
+  win.key('KeyY', { target: doc.body });
+  input.blur();
+  e = win.key('KeyY', { target: doc.body, isTrusted: true });
+  assert.equal(input.focused, true, 'open with the caret wandered: the Chat key brings it back'); assert.equal(e.stopped, true);
   panel.close();
   // the mouse: a press is the panel's, a release is the host's (C5)
   const box = one(root, 'dfchat-box');
@@ -605,7 +622,7 @@ test('CHAT1 / AUDIT CHAT: the panel - built once over the document with the shee
     assert.equal(overlayOpen(), true);
     panel.open(); panel.render();
     assert.equal(log.open, false, 'AUDIT CHAT C1: an open overlay (the dial, a sheet) closes and hides the chat'); assert.equal(root.style.display, 'none');
-    assert.equal(win.key('Enter', { target: doc.body }).stopped, false, 'and its key is the overlay\'s');
+    assert.equal(win.key('KeyY', { target: doc.body }).stopped, false, 'and its key is the overlay\'s');
   } finally { unregister(); }
   panel.render(); assert.equal(root.style.display, '');
   // the touch layer
@@ -629,6 +646,86 @@ test('CHAT1 / AUDIT CHAT: the panel - built once over the document with the shee
 });
 
 // ── THE HOST ─────────────────────────────────────────────────────────
+
+
+test('CHAT-HIST1: Up/Down recalls accepted client-side lines, restores the unsent draft, excludes refused sends, folds consecutive duplicates and caps the session history', () => {
+  const log = new ChatLog();
+  const doc = fakeDocument(), win = fakeWindow();
+  let accept = true;
+  const sent = [];
+  const panel = createChatPanel({
+    log,
+    onSend: (_tab, line) => { sent.push(line); return accept; },
+    action: defaultAction,
+    doc, win, touch: false,
+  });
+  const input = panel.input;
+
+  panel.open();
+  input.value = '/v df attack 1';
+  win.key('Enter', { target: input });
+  assert.equal(log.open, true, 'accepted sends now leave the panel visible');
+  panel.open();
+  let e = win.key('ArrowUp', { target: input });
+  assert.equal(input.value, '/v df attack 1', 'Up recalls the newest accepted command');
+  assert.equal(e.prevented, true); assert.equal(e.stopped, true);
+  win.key('ArrowUp', { target: input });
+  assert.equal(input.value, '/v df attack 1', 'Up clamps at the oldest command');
+  win.key('ArrowDown', { target: input });
+  assert.equal(input.value, '', 'Down past the newest restores the original empty draft');
+
+  input.value = '/v hit 7 -- unfinished draft';
+  win.key('ArrowUp', { target: input });
+  assert.equal(input.value, '/v df attack 1');
+  win.key('ArrowDown', { target: input });
+  assert.equal(input.value, '/v hit 7 -- unfinished draft', 'the exact unsent draft comes back');
+
+  accept = false;
+  input.value = '/v refused 1';
+  win.key('Enter', { target: input });
+  assert.equal(input.value, '/v refused 1', 'a refused send remains editable');
+  input.value = '';
+  win.key('ArrowUp', { target: input });
+  assert.equal(input.value, '/v df attack 1', 'a refused send never enters history');
+
+  accept = true;
+  input.value = '/v hit 1';
+  win.key('Enter', { target: input });
+  panel.open();
+  win.key('ArrowUp', { target: input });
+  assert.equal(input.value, '/v hit 1');
+  win.key('ArrowUp', { target: input });
+  assert.equal(input.value, '/v df attack 1');
+  win.key('ArrowDown', { target: input });
+  assert.equal(input.value, '/v hit 1');
+  win.key('ArrowDown', { target: input });
+  assert.equal(input.value, '', 'newest -> draft is symmetric');
+
+  // Send the same newest command again: one history stop, not two identical stops.
+  input.value = '/v hit 1';
+  win.key('Enter', { target: input });
+  panel.open();
+  win.key('ArrowUp', { target: input });
+  assert.equal(input.value, '/v hit 1');
+  win.key('ArrowUp', { target: input });
+  assert.equal(input.value, '/v df attack 1', 'consecutive duplicate accepted lines collapse');
+
+  panel.destroy();
+
+  // A read-style accepted command keeps the panel open, making the cap cheap to exercise.
+  const capLog = new ChatLog();
+  const capDoc = fakeDocument(), capWin = fakeWindow();
+  const capped = createChatPanel({ log: capLog, onSend: () => 'read', action: defaultAction, doc: capDoc, win: capWin, touch: false });
+  const capInput = capped.input;
+  capped.open();
+  for (let i = 0; i < CHAT_HISTORY_MAX + 5; i++) {
+    capInput.value = `/v misc ${i}`;
+    capWin.key('Enter', { target: capInput });
+  }
+  for (let i = 0; i < CHAT_HISTORY_MAX + 10; i++) capWin.key('ArrowUp', { target: capInput });
+  assert.equal(capInput.value, '/v misc 5', 'only the newest CHAT_HISTORY_MAX accepted lines are retained');
+  capped.destroy();
+});
 
 test('CHAT1 / AUDIT CHAT: the host by source - world.js starts the chat with the presence session on the enhanced skin with a document and a relay the law admits, one channel session per tab under the same identity, a line to its tab, a typed line down the active tab with its answer, the panel unwilling under a window, the pointer freed and taken back; the frame rejoins and ticks every channel and renders with the session\'s own line before the dead return; the host\'s keydown is bubble-phase; the page\'s hide leaves every channel and keeps the panel; the dial is on the overlay stack', () => {
   const w = rd('src/scenes/world.js');

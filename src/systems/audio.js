@@ -345,7 +345,7 @@ export class AudioEngine {
    *  shot and put it back (EnemySounds.cs:172-175, FPSWeapon.cs:316
    *  -319, PlayerFootsteps.cs:359-362); a WebAudio source is born per
    *  shot and dies with it, so setting it here IS the save/restore. */
-  playOneShot(index, volume = 1, pitch = 1) {
+  _oneShotHandle(index, volume = 1, pitch = 1) {
     // SND1: the stamp the UI's generic click reads, so a press whose own
     // handler already sounded (an equip, a drink, the gold) does not ALSO
     // click. Stamped on the REQUEST, ready or not - it is "someone chose a
@@ -357,15 +357,33 @@ export class AudioEngine {
     if (globalThis.event && typeof globalThis.event.type === 'string') this.lastOneShotAt = typeof performance !== 'undefined' ? performance.now() : Date.now();
     if (!this._ready()) return undefined;
     const buf = this._buffer(index);
-    if (!buf) return undefined;
+    if (!buf) return null;
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
     src.playbackRate.value = pitch;
     const gain = this.ctx.createGain();
     gain.gain.value = volume;
     src.connect(gain).connect(this._out());
+    let done = false;
+    const finish = (stop = false) => {
+      if (done) return;
+      done = true;
+      if (stop) { try { src.stop(); } catch { /* already ended */ } }
+      try { src.disconnect(); } catch { /* already disconnected */ }
+      try { gain.disconnect(); } catch { /* already disconnected */ }
+    };
+    src.onended = () => finish(false);
     src.start();
-    return buf.duration;
+    return { duration: buf.duration, stop: () => finish(true) };
+  }
+
+  playOneShot(index, volume = 1, pitch = 1) {
+    return this._oneShotHandle(index, volume, pitch)?.duration;
+  }
+
+  /** VOICE1: an interruptible flat one-shot. Ordinary callers keep the duration-only API above. */
+  playOneShotHandle(index, volume = 1, pitch = 1) {
+    return this._oneShotHandle(index, volume, pitch);
   }
 
   /** AUDIT 58 - THE ID DOOR. SoundReader.GetSoundIndex (SoundReader.cs
@@ -521,10 +539,10 @@ export class AudioEngine {
    *  frame - the thunder fell 35 dB mid-roll, which is the abrupt end. A `far` shot keeps its offset from the listener
    *  (setListener moves it) until its clip has run out, so its distance and its bearing hold, as they do for a
    *  sound kilometres off. */
-  play3d(index, pos, volume = 1, { refDistance = 1, maxDistance = 500, distanceModel = 'inverse', pitch = 1, far = false } = {}) {
+  _play3dHandle(index, pos, volume = 1, { refDistance = 1, maxDistance = 500, distanceModel = 'inverse', pitch = 1, far = false } = {}) {
     if (!this._ready()) return undefined;
     const buf = this._buffer(index);
-    if (!buf) return undefined;
+    if (!buf) return null;
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
     src.playbackRate.value = pitch;
@@ -532,12 +550,35 @@ export class AudioEngine {
     const gain = this.ctx.createGain();
     gain.gain.value = volume;
     src.connect(gain).connect(pan).connect(this._out());
+    let done = false;
+    const finish = (stop = false) => {
+      if (done) return;
+      done = true;
+      if (stop) { try { src.stop(); } catch { /* already ended */ } }
+      try { src.disconnect(); } catch { /* already disconnected */ }
+      try { gain.disconnect(); } catch { /* already disconnected */ }
+      try { pan.disconnect(); } catch { /* already disconnected */ }
+    };
+    src.onended = () => finish(false);
     src.start();
     if (far) {   // DISC17-B: its offset from the ear, held until the clip has run out
       const L = this._listener;
       (this._far ??= []).push({ pan, off: [pos[0] - L.x, pos[1] - L.y, pos[2] - L.z], until: this.ctx.currentTime + buf.duration / pitch });
     }
-    return buf.duration;   // A3: the ambient channel's busy clock
+    return {
+      duration: buf.duration,
+      move: (p) => { if (!done) placeAudio(pan, p); },   // VOICE-MOVE1: a long one-shot stays attached to a moving speaker
+      stop: () => finish(true),
+    };
+  }
+
+  play3d(index, pos, volume = 1, opts = {}) {
+    return this._play3dHandle(index, pos, volume, opts)?.duration;   // A3: the ambient channel's busy clock
+  }
+
+  /** VOICE1: an interruptible positional one-shot. */
+  play3dHandle(index, pos, volume = 1, opts = {}) {
+    return this._play3dHandle(index, pos, volume, opts);
   }
 
   /** Looping positional source (A2 torches: DFU AddTorchAudioSource -

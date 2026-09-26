@@ -22,7 +22,7 @@
 // Not a DFU member: Daggerfall Unity has no chat. Ledger A row (ONLINE).
 
 import { parseRollSpec, ROLL_DICE_MAX, ROLL_SIDES_MAX } from './dice.js';   // DICE1: the dice's grammar
-import { LIVE_EVENTS } from './wire.js';   // EVENT1: the live events a dev may stage
+import { validVoiceRequest, LIVE_EVENTS } from './wire.js';   // VOICE1: voice request validation; EVENT1: live events a dev may stage
 
 /** The channel commands: each names the tab its text is said on. `wrap` is what the text becomes first. */
 export const CHANNEL_COMMANDS = Object.freeze([
@@ -143,7 +143,70 @@ export const SHORTCODES = Object.freeze(Object.fromEntries(SHORTCODE_LIST));
 /** EMOTE1: every `:code:` the table knows, its emoji - the rest as typed. */
 export const expandShortcodes = (text) => String(text ?? '').replace(/:([a-z0-9_+-]{1,20}):/gi, (all, code) => SHORTCODES[code.toLowerCase()] ?? all);
 /** The commands the host handles itself, before this parser is asked (their own slices pin their grammar). */
-export const HOST_COMMANDS = Object.freeze(['unstuck', 'red', 'dm', 'mute', 'unmute', 'ready', 'leader', 'travel', 'event']);   // TITLE-N: /dm, the Dungeon Master's line   // PARTY-TRAVEL: /leader and /travel   // EVENT1: /event, a dev's live event
+export const HOST_COMMANDS = Object.freeze(['unstuck', 'red', 'dm', 'mute', 'unmute', 'ready', 'leader', 'travel', 'event']);   // TITLE-N: /dm; PARTY-TRAVEL: /leader and /travel; EVENT1: /event
+/** VOICE1: /speech mirrors the OpenMW server command; /voice and /v are aliases.
+ * `/s` remains this game's established Local-chat command. A source-less command means Morrowind,
+ * preserving the familiar "/speech hello 1" shape; prepend "df" for DAGGER.SND combat voices. */
+const MW_TYPE_ALIASES = Object.freeze({
+  atk: 'attack', attack: 'attack',
+  cratk: 'crattack', crattack: 'crattack', creatureattack: 'crattack',
+  flee: 'flee', fle: 'flee',
+  follower: 'follower', flw: 'follower',
+  hello: 'hello', hlo: 'hello',
+  hit: 'hit', hurt: 'hit', pain: 'hit',
+  idle: 'idle', idl: 'idle',
+  intruder: 'intruder', int: 'intruder',
+  oppose: 'oppose', op: 'oppose',
+  service: 'service', srv: 'service',
+  thief: 'thief', thf: 'thief',
+  uniform: 'uniform', uni: 'uniform',
+  misc: 'misc', special: 'special', extras: 'special', extra: 'special',
+  werewolf: 'werewolf', wolf: 'werewolf', ww: 'werewolf',
+});
+const MW_COLLECTION_ALIASES = Object.freeze({
+  default: 'default',
+  tb: 'tb', tribunal: 'tb',
+  bm: 'bm', bloodmoon: 'bm',
+  ord: 'ord', ordinator: 'ord',
+  v: 'vampire', vamp: 'vampire', vampire: 'vampire',
+});
+const parseMwKind = (raw) => {
+  const value = String(raw ?? '').toLowerCase();
+  const global = MW_TYPE_ALIASES[value];
+  if (global === 'misc' || global === 'special' || global === 'werewolf') return { collection: 'global', type: global };
+  const split = value.indexOf('_');
+  let collection = 'default', typeWord = value;
+  if (split > 0) {
+    collection = MW_COLLECTION_ALIASES[value.slice(0, split)];
+    typeWord = value.slice(split + 1);
+    if (!collection) return null;
+  }
+  const type = MW_TYPE_ALIASES[typeWord];
+  return type && !['misc', 'special', 'werewolf'].includes(type) ? { collection, type } : null;
+};
+const parseVoiceCommand = (rest) => {
+  const words = String(rest ?? '').trim().split(/\s+/).filter(Boolean);
+  if (!words.length) return { kind: 'voicehelp' };
+  let source = words[0].toLowerCase();
+  if (source === 'daggerfall') source = 'df';
+  if (source === 'morrowind') source = 'mw';
+  if (source === 'df') {
+    const type = String(words[1] ?? '').toLowerCase();
+    const index = words[2] == null ? 1 : Number(words[2]);
+    const req = validVoiceRequest({ source: 'df', type, index });
+    return req && words.length <= 3 ? { kind: 'voice', request: req } : { kind: 'badvoice' };
+  }
+  const offset = source === 'mw' ? 1 : 0;
+  const key = parseMwKind(words[offset]);
+  const id = words[offset + 1];
+  if (!key || id == null || words.length !== offset + 2) return { kind: 'badvoice' };
+  const req = validVoiceRequest({ source: 'mw', ...key, voiceId: id });
+  return req ? { kind: 'voice', request: req } : { kind: 'badvoice' };
+};
+export const VOICE_CHAT_COMMANDS = Object.freeze([
+  Object.freeze({ names: Object.freeze(['speech', 'voice', 'v']), parse: parseVoiceCommand }),
+  Object.freeze({ names: Object.freeze(['speechhelp', 'voicehelp', 'voices']), parse: (rest) => rest ? { kind: 'badvoice' } : { kind: 'voicehelp' } }),
+]);
 /**
  * EVENT1: `/event <name> [on|off]` and `/event off` - a dev staging a live event for everyone online, or ending it.
  * `{kind}` (one of LIVE_EVENTS; '' ends the one staged), `{error}` in words for a line that names none, or null when
@@ -171,6 +234,7 @@ export const HELP_LINES = Object.freeze([
   '/me <action> - an action on this tab: /me looks around',
   '/wave, /bow, /nod ... [name] - a gesture to those near you - /emotes lists them all',
   ':smile: :sword: :heart: ... - a shortcode is its emoji',
+  '/speech, /voice or /v [mw] <type> <id> - a Morrowind voice; add df for a Daggerfall combat voice; /speechhelp lists voices',
   '/ready - your vote on a party rest',
   '/leader - travel to your party leader',
   '/travel - ready up for the leader\'s journey (the leader: call it off)',
@@ -224,6 +288,7 @@ export const unknownCommandText = (name) => `There is no /${name} command. /help
 export const emptyCommandText = (name) => `/${name} needs something to say.`;
 /** DICE1: a roll the grammar or the bounds refuse - the forms, and the bounds, in the player's words. */
 export const badRollText = (name) => `/${name} takes dice like 2d6+3, d20 or 100 - at most ${ROLL_DICE_MAX} dice of up to ${ROLL_SIDES_MAX} sides.`;
+export const badVoiceText = () => 'Voice syntax: /speech <Morrowind type> <id>, /speech mw <type> <id>, or /speech df <attack|pain|death> [variant]. Use /speechhelp for the list.';
 /** A host command in a shape its own test refused (`/red` with nothing to say, `/unstuck now`) - refused in words
  *  too: before this slice such a line fell through to the room and was said there, slash and all. */
 export const hostMisuseText = (name) => (name === 'red' ? emptyCommandText(name) : `/${name} takes nothing after it.`);

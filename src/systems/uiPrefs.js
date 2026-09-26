@@ -90,6 +90,10 @@ export const PREF_DEFAULTS = Object.freeze({
   peerClassSprites: true,
   peerAttackSounds: true,   // PEER-FS2: other players' swing sounds - on by default
   peerFootsteps: true,   // PEER-FS1: other players' footstep sounds - on by default
+  // VOICE-RANGE2: local listening preferences for server-authorized player speech.
+  // These are intentionally client-side only: each listener decides how loud/far voices carry for them.
+  voiceVolume: 1,        // 0..2 => 0..200%
+  voiceDistance: 45,     // metres, clamped by the consumer to 15..100
   nightCrickets: true,   // SNDREP1: the night crickets loop (SoundClips.AmbientCrickets) - on by default; off silences it
   distantHowl: true,     // SNDREP1: the distant howl (SoundClips.AmbientDistantHowl) - on by default; off silences it
   // WS1: `mwSheathing` (Weapon Sheathing on the third-person body) is

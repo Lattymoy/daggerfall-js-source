@@ -93,17 +93,13 @@ export const ACTIONS = Object.freeze([
   //
   // THE TOGGLE ITSELF IS NOT NEW - `ActivateCursor` is DFU's own
   // (PlayerMouseLook.cs:190-198) and the port has read it since U45.
-  // What is new is a key that is ONLY that. ActivateCursor's default
-  // is Enter, and online Enter is also the chat's open
-  // (ui/chatPanel.js CHAT_OPEN_ACTION), so the one press a player
-  // reaches for to free the mouse is the same press that opens a text
-  // box - a collision PL3 had to work around rather than resolve,
-  // because DFU's binding is DFU's. A second ACTION resolves it
-  // instead of arguing with it: Enter keeps DFU's meaning, this is the
-  // player's own, and the two are ORed at the one reader
-  // (player/pointerLock.js bindCursorToggle) so there is no second
-  // toggle to keep in step.
+  // `FreeMouse` is the port's dedicated mouse-only row; CHAT-POLISH1
+  // later gives chat its own Y action, so FreeMouse's default moves to F7.
+  // Both mouse actions still OR at the one reader (player/pointerLock.js),
+  // so there is only one cursor state to keep in step.
   'FreeMouse',
+  // CHAT-POLISH1: dedicated chat action, appended so saved/classic action indices keep their meaning.
+  'Chat',
   // KB1 (2026-09-23, Mac: "We have a lot of mods, a lot of keybinds. I really want to formalize a solid solution"):
   // EVERY KEY THAT DOES SOMETHING IN THE WORLD IS AN ACTION HERE. Appended, like every port action before them.
   //  - 'Interact': the E activate, a raw `KeyE` read in four hosts beside DFU's E-AbortSpell - one press did both.
@@ -134,7 +130,7 @@ export const ACTIONS = Object.freeze([
  *  because it draws the row (ui/enhancedControls.js over ACTION_GROUPS, the 'Online' group) and can rebind it.
  *  QS2: the three quickslot actions join it for the same reason, off the same face - the enhanced pane draws them
  *  under their own 'Quickslots' heading and the classic windows cannot draw them at all. */
-export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell', 'QuickLootAll', 'QuickLootOpen', 'FreeMouse',
+export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell', 'QuickLootAll', 'QuickLootOpen', 'FreeMouse', 'Chat',
   'Interact', 'QuickDial', 'Hotbar5', 'Hotbar6', 'Hotbar7', 'Hotbar8', 'Hotbar9', 'Hotbar10',
   'TorchToggleLight', 'TorchDrop', 'TorchThrow', 'ShoulderSwitch', 'AutoPerspective', 'FollowPaths', 'HorseMount', 'HorseSummon', 'DebugOverlay']);   // KB1   // QUICK-LOOT B4: the plaque's two, drawn in the enhanced pane under their own heading - the classic windows cannot draw them at all
 
@@ -223,28 +219,12 @@ export const DEFAULT_BINDINGS = Object.freeze([
   // rebindable rows inert in both directions.
   ['KeyP', 'QuickLootAll'],
   ['KeyJ', 'QuickLootOpen'],
-  // FREEMOUSE: Y, and it is what is LEFT rather than what is apt.
-  //
-  // The sweep QUICK-LOOT B4 ran, run again: of the twenty-six letters,
-  // DFU's own table spends A C D E F H I J L M N P Q R S T U V W Z,
-  // the port spends F (SOC5), J and P (quick loot), and the vendored
-  // mods' defaults and OFFERED CHOICES spend B (Eye Of The Beholder's
-  // SwitchShoulder), G (Handheld Torches' ManualDrop), K (Travel
-  // Options' FollowPaths choice), O and X. That leaves exactly one
-  // letter, and this is it.
-  //
-  // The obvious keys are all spoken for and each for a reason worth
-  // not undoing: Alt is Sneak, Backquote is the console, Tab is the
-  // pixel dial (PX15), and Enter is the very collision this action
-  // exists to get away from.
-  //
-  // A key that is merely free is the honest cost of a keymap this
-  // full - it is an ACTION, so a player who wants it under their
-  // thumb moves it in the controls pane, which is the whole reason
-  // this is a row rather than an `e.code` test in a host (AUDIT 58's
-  // lesson: a key-literal table there made four rebindable rows inert
-  // in both directions).
-  ['KeyY', 'FreeMouse'],
+  // CHAT-POLISH1: Y is the conventional "say" key and now belongs to
+  // Chat as a real remappable action. FreeMouse moves to F7 so the two
+  // defaults never collide; Enter keeps DFU's ActivateCursor meaning.
+  // Both remain ordinary action rows rather than literal host key tests.
+  ['F7', 'FreeMouse'],
+  ['KeyY', 'Chat'],
   // QS2: THE NUMBER ROW, which is the one place a Souls player's hand already
   // goes. Digit1-Digit4 are unspent by SetupDefaults, unspent by the port
   // (PX15's Tab, HT4's G, SOC5's F, HT's O and X are the whole of the port's
@@ -389,10 +369,11 @@ export const ACTION_GROUPS = Object.freeze([
     ['Hotbar9', 'Hotbar slot 9'], ['Hotbar10', 'Hotbar slot 10'],
   ]),
   g('Mouse', [
-    ['ActivateCursor', 'Free the mouse (offline) / open chat (online)'], ['FreeMouse', 'Free the mouse (press again to look)'],
+    ['ActivateCursor', 'Free the mouse'], ['FreeMouse', 'Free the mouse (press again to look)'],
   ]),
   g('Online', [
     ['SocialInteract', 'Interact with player'],
+    ['Chat', 'Open chat'],
   ]),
   g('Game', [
     ['QuickSave', 'Quick save'], ['QuickLoad', 'Quick load'], ['PrintScreen', 'Screenshot'], ['DebugOverlay', 'Diagnostics readout'],
@@ -1237,6 +1218,15 @@ export function migrateKeyBinds(store, fromVersion) {
   return report;
 }
 
+/** CHAT-POLISH1: migrate the exact legacy default that used Y for FreeMouse before Chat had its own action.
+ * Custom bindings are untouched; the later autofill can place FreeMouse on F7 when it is free. */
+export function migrateLegacyChatDefault(store) {
+  if (getBinding(store, 'Chat', true) != null || getBinding(store, 'Chat', false) != null) return false;
+  if (store.primary.get('KeyY') !== 'FreeMouse') return false;
+  setBinding(store, 'KeyY', 'Chat', true);
+  return true;
+}
+
 export function loadOrCreateBindings() {
   const store = createBindings();
   const ls = storage();
@@ -1245,6 +1235,7 @@ export function loadOrCreateBindings() {
     try {
       const data = JSON.parse(raw);
       loadKeyBinds(store, data);
+      const chatMigrated = migrateLegacyChatDefault(store);
       const from = Number(data?.version) || 1;
       const report = migrateKeyBinds(store, from);   // KB1: runs the autofill inside it, between its steps
       resetDefaults(store, true);
@@ -1258,7 +1249,7 @@ export function loadOrCreateBindings() {
       // MAC-D1: ...and the autofill pass above will NOT do this, by
       // design - it obeys the removal marks. This runs after it and
       // writes the repair back, so the next load starts sound.
-      if (repairUnloseableBindings(store).length) saveKeyBinds(store);
+      if (chatMigrated || repairUnloseableBindings(store).length) saveKeyBinds(store);
       return store;
     } catch { /* a corrupt file falls through to defaults */ }
   }

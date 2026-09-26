@@ -455,6 +455,149 @@ export const CHAT_LINE_CHANNELS = Object.freeze(['party']);
  *  The client gates party lines coming in on this number too (partyChatInGate): an honest hub never delivers more. */
 export const PARTY_CHAT_ROOM_HZ_MAX = 40;
 
+/** VOICE1 (2026-09-23): server-authoritative player vocalisations.
+ *
+ * Two libraries are exposed through one wire request:
+ *   - df: stock DAGGER.SND race/gender combat voices.
+ *   - mw: Morrowind Data Files/Sound/Vo entries. The sender names only a
+ *     closed collection/type/id tuple; the relay stamps the speaker's validated
+ *     race/gender onto regular Morrowind requests. Receivers resolve that
+ *     symbolic key against their own attached Morrowind archives/loose files.
+ *
+ * No arbitrary sound path or arbitrary sound id crosses from one player to
+ * another. A client may ask for a stock key; the relay decides what that key
+ * means for the body that said hello. */
+export const DF_VOICE_TYPES = Object.freeze(['attack', 'pain', 'death']);
+export const MW_VOICE_TYPES = Object.freeze(['attack', 'crattack', 'flee', 'follower', 'hello', 'hit', 'idle', 'intruder', 'oppose', 'service', 'thief', 'uniform']);
+export const MW_VOICE_COLLECTIONS = Object.freeze(['default', 'tb', 'bm', 'ord', 'vampire']);
+export const MW_VOICE_GLOBAL_TYPES = Object.freeze(['misc', 'special', 'werewolf']);
+export const VOICE_SOURCES = Object.freeze(['df', 'mw']);
+const DAGGERFALL_VOICE_RACES = Object.freeze(['Breton', 'Redguard', 'Nord', 'DarkElf', 'HighElf', 'WoodElf', 'Khajiit', 'Argonian']);
+
+const VOICE_MALE_PAIN1 = Object.freeze({
+  Breton: 390, Redguard: 393, Nord: 396, DarkElf: 399,
+  HighElf: 402, WoodElf: 405, Khajiit: 408, Argonian: 411,
+});
+const VOICE_DEATH = Object.freeze({
+  male: Object.freeze({
+    Breton: 392, Redguard: 395, Nord: 398, DarkElf: 401,
+    HighElf: 404, WoodElf: 407, Khajiit: 410, Argonian: 42,
+  }),
+  female: Object.freeze({
+    Breton: 45, Redguard: 48, Nord: 51, DarkElf: 54,
+    HighElf: 57, WoodElf: 60, Khajiit: 424, Argonian: 427,
+  }),
+});
+const VOICE_FEMALE_ATTACK = Object.freeze({
+  Breton: Object.freeze([43, 44, 53]),
+  Redguard: Object.freeze([43, 44, 53]),
+  Nord: Object.freeze([43, 44, 53]),
+  DarkElf: Object.freeze([55, 56]),
+  HighElf: Object.freeze([55, 56]),
+  WoodElf: Object.freeze([55, 56]),
+  Khajiit: Object.freeze([61, 62]),
+  Argonian: Object.freeze([425, 426]),
+});
+const VOICE_FEMALE_PAIN = Object.freeze({
+  Breton: Object.freeze([46, 52, 50]),
+  Redguard: Object.freeze([46, 52, 50]),
+  Nord: Object.freeze([46, 52, 50]),
+  DarkElf: Object.freeze([46, 52, 50]),
+  HighElf: Object.freeze([46, 52, 50]),
+  WoodElf: Object.freeze([58, 59]),
+  Khajiit: Object.freeze([58, 59]),
+  Argonian: Object.freeze([46, 52, 50]),
+});
+const voiceRace = (race) => DAGGERFALL_VOICE_RACES.includes(race) ? race : null;
+
+/** The stock Daggerfall clips this look may request for one voice type. */
+export function voiceClipsForLook(look, type) {
+  const race = voiceRace(look?.race);
+  const gender = look?.gender === 'female' ? 'female' : 'male';
+  if (!race || !DF_VOICE_TYPES.includes(type)) return [];
+  if (type === 'death') return [VOICE_DEATH[gender][race]];
+  if (gender === 'male') {
+    const p1 = VOICE_MALE_PAIN1[race];
+    return [type === 'attack' ? p1 : p1 + 1];
+  }
+  return [...(type === 'attack' ? VOICE_FEMALE_ATTACK[race] : VOICE_FEMALE_PAIN[race])];
+}
+
+const voiceId = (v) => {
+  const s = String(v ?? '').trim().toLowerCase();
+  return /^[0-9]{1,4}[a-z]?$/.test(s) ? s : null;
+};
+/** Client request shape. source='mw' carries only a closed symbolic key. */
+export function validVoiceRequest(v) {
+  if (!v || typeof v !== 'object') return null;
+  if (v.source === 'df') {
+    if (!DF_VOICE_TYPES.includes(v.type)) return null;
+    const index = Number.isInteger(v.index) ? v.index : 1;
+    return index >= 1 && index <= 3 ? { source: 'df', type: v.type, index } : null;
+  }
+  if (v.source !== 'mw') return null;
+  const id = voiceId(v.voiceId ?? v.id);
+  if (!id) return null;
+  if (MW_VOICE_GLOBAL_TYPES.includes(v.type)) return { source: 'mw', collection: 'global', type: v.type, voiceId: id };
+  const collection = MW_VOICE_COLLECTIONS.includes(v.collection) ? v.collection : 'default';
+  if (!MW_VOICE_TYPES.includes(v.type)) return null;
+  return { source: 'mw', collection, type: v.type, voiceId: id };
+}
+
+/** Daggerfall resolution: a request to the clip allowed by the hello's race/gender, or null. */
+export function voiceClipForLook(look, type, index = 1) {
+  const req = validVoiceRequest({ source: 'df', type, index });
+  if (!req) return null;
+  const clips = voiceClipsForLook(look, req.type);
+  return clips[req.index - 1] ?? null;
+}
+const VOICE_CLIP_SET = new Set([
+  ...Object.values(VOICE_MALE_PAIN1),
+  ...Object.values(VOICE_MALE_PAIN1).map((n) => n + 1),
+  ...Object.values(VOICE_DEATH.male),
+  ...Object.values(VOICE_DEATH.female),
+  ...Object.values(VOICE_FEMALE_ATTACK).flat(),
+  ...Object.values(VOICE_FEMALE_PAIN).flat(),
+]);
+export const validVoiceClip = (clip) => Number.isInteger(clip) && VOICE_CLIP_SET.has(clip) ? clip : null;
+
+/** Relay output for a validated request. Regular Morrowind lines are stamped
+ * with the speaker's hello race/gender; globals deliberately are not. */
+export function voicePlaybackForLook(look, request) {
+  const req = validVoiceRequest(request);
+  if (!req) return null;
+  if (req.source === 'df') {
+    const clip = voiceClipForLook(look, req.type, req.index);
+    return clip == null ? null : { source: 'df', clip };
+  }
+  if (req.collection === 'global') return req;
+  const race = voiceRace(look?.race);
+  if (!race) return null;
+  return { ...req, race, gender: look?.gender === 'female' ? 'female' : 'male' };
+}
+/** Receiver-side projection of the relay's voice payload. */
+export function validVoicePlayback(v) {
+  if (!v || typeof v !== 'object') return null;
+  if (v.source === 'df') {
+    const clip = validVoiceClip(v.clip);
+    return clip == null ? null : { source: 'df', clip };
+  }
+  const req = validVoiceRequest(v);
+  if (!req || req.source !== 'mw') return null;
+  if (req.collection === 'global') return req;
+  const race = voiceRace(v.race);
+  if (!race || (v.gender !== 'male' && v.gender !== 'female')) return null;
+  return { ...req, race, gender: v.gender };
+}
+/** Human-facing Daggerfall variant counts for /speechhelp. */
+export const voiceVariantCounts = (look) => Object.fromEntries(DF_VOICE_TYPES.map((type) => [type, voiceClipsForLook(look, type).length]));
+/** VOICE1/POLISH: human recall should never hit this. 50/s with a three-event burst still cuts obvious macros/floods. */
+export const VOICE_HZ_MAX = 50;
+export const VOICE_BURST_MAX = 3;
+/** Enough for a busy room of humans; still a hard room-wide flood ceiling. */
+export const VOICE_ROOM_HZ_MAX = 256;
+
+
 // SOC1 (2026-09-16, Mac: "A social button next to the chat UI ... friend other users, see if they are online/last
 // online + be able to invite friends or other individuals to the new 4 person party system"): THE HUB'S LAW.
 //
@@ -1366,6 +1509,11 @@ export function parseClient(text, { hasHello = false } = {}) {
     const p = validPose(m.p);
     return p ? { t: 'pose', p } : { error: 'bad pose' };
   }
+  if (m.t === 'voice') {
+    if (!hasHello) return { error: 'voice before hello' };
+    const req = validVoiceRequest(m);
+    return req ? { t: 'voice', ...req } : { error: 'bad voice' };
+  }
   if (m.t === 'chat') {
     if (!hasHello) return { error: 'chat before hello' };
     const text = typeof m.text === 'string' ? sanitizeChat(m.text) : '';
@@ -1516,6 +1664,9 @@ export const actGate = (bucket, nowMs) => tokenGate(bucket, nowMs, ACT_HZ_MAX);
 export const actFrameFits = (data) => JSON.stringify({ t: 'act', data }).length <= MAX_FRAME_BYTES;
 /** The chat rate gate: CHAT_HZ_MAX a second (CHAT1). */
 export const chatGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CHAT_HZ_MAX);
+/** VOICE1: the speaker's outbound voice meter and the room/client inbound fan meter. */
+export const voiceGate = (bucket, nowMs) => tokenGate(bucket, nowMs, VOICE_HZ_MAX, VOICE_BURST_MAX);
+export const voiceInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, VOICE_ROOM_HZ_MAX);
 /** RED1: the server line's own bucket, well under chat's - see RED_HZ_MAX. */
 export const redGate = (bucket, nowMs) => tokenGate(bucket, nowMs, RED_HZ_MAX);
 /** TITLE-N: the Dungeon Master's line's own bucket - see DM_HZ_MAX. */
@@ -2114,6 +2265,9 @@ export const EMOTE_RELAY_MIN = 102;   // MERGE: world102, as ROLL_RELAY_MIN
 export const DM_RELAY_MIN = 104;
 export const relaySupportsDm = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= DM_RELAY_MIN; };
 export const relaySupportsEmote = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= EMOTE_RELAY_MIN; };
+/** VOICE1: the first relay that accepts {t:'voice'} and resolves it against the hello's look. */
+export const VOICE_RELAY_MIN = 103;
+export const relaySupportsVoice = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= VOICE_RELAY_MIN; };
 export const relaySupportsRoll = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= ROLL_RELAY_MIN; };
 /** CHAT-CHAN: the relay that first routes a party's line and opens the region channels. An older one would take a
  *  `ch` it does not know as... nothing: its parse projects `{t:'chat', text}` and the party's line would be fanned to

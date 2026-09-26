@@ -41,35 +41,11 @@ test('FREEMOUSE: the action is APPENDED, parses, and displaces no index the clas
   assert.deepEqual(gridButtons().map((b) => b.action), ACTIONS.slice(2, 40));
 });
 
-test('FREEMOUSE: the default key is the one letter DFU, the port and every vendored mod all leave alone', () => {
-  const row = DEFAULT_BINDINGS.find(([, a]) => a === 'FreeMouse');
-  assert.deepEqual(row, ['KeyY', 'FreeMouse']);
-
-  // THE ELIMINATION, RUN RATHER THAN QUOTED. If a later mod or a later
-  // port action takes Y, this reddens before a player finds one press
-  // doing two things - which is exactly what HT4 was.
-  const spent = new Set(DEFAULT_BINDINGS.filter(([, a]) => a !== 'FreeMouse').map(([c]) => c));
-  assert.ok(!spent.has('KeyY'), 'nothing else defaults to Y');
-  const modKeys = new Set();
-  for (const def of Object.values(MOD_SETTINGS)) {
-    for (const k of Object.values(def.keys)) {
-      for (const v of [k.default, ...(k.options ?? [])]) {
-        if (typeof v === 'string' && /^[A-Za-z][A-Za-z0-9]*$/.test(v)) modKeys.add(`Key${v}`.replace(/^KeyKey/, 'Key'));
-      }
-    }
-  }
-  assert.ok(!modKeys.has('KeyY'), 'and no vendored mod ships or OFFERS Y - the choices count, not just the defaults');
-
-  // ...and Y really was the LAST one: every other letter is spoken for,
-  // which is why the key is what is left rather than what is apt.
-  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map((l) => `Key${l}`);
-  const free = letters.filter((c) => !spent.has(c) && !modKeys.has(c));
-  assert.deepEqual(free, ['KeyY'], 'one letter was left in the whole keymap');
-
-  // No key is spent twice, which is the check that catches a default
-  // added without the sweep above being run.
+test('FREEMOUSE: Y belongs to Chat now, so the mouse-only toggle moves to F7 without a duplicate default', () => {
+  assert.deepEqual(DEFAULT_BINDINGS.find(([, a]) => a === 'FreeMouse'), ['F7', 'FreeMouse']);
+  assert.deepEqual(DEFAULT_BINDINGS.find(([, a]) => a === 'Chat'), ['KeyY', 'Chat']);
   const codes = DEFAULT_BINDINGS.map(([c]) => c);
-  assert.equal(new Set(codes).size, codes.length);
+  assert.equal(new Set(codes).size, codes.length, 'one default action per physical key');
 });
 
 test('FREEMOUSE: the row is drawn under its OWN heading, is rebindable, and yields in the classic windows', () => {
