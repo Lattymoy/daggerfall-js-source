@@ -26,7 +26,8 @@
 // the list's own, the owner's body's (net/decorLaw.js decorIsMount;
 // scenes/decorRoom.js hangs it). Free, and back to the pack whole when
 // taken down, as every own thing is. Its dye is read off its numbers,
-// so every client wears it the same.
+// so every client wears it the same. ARMOR-MOUNT (2026-09-26): any
+// piece of armour hangs so too, not the shields alone.
 // ═══════════════════════════════════════════════════════════════════
 
 import { templateByIndex, inventoryItemImage } from './itemTemplates.js';
@@ -91,9 +92,10 @@ export function decorStandOf(item) {
 }
 
 /**
- * DECOR2c: WHAT A WEAPON OR A SHIELD HANGS AS - `{ flat, light: null, item }`, its pack picture (the list's own - the
- * owner's body's, as the pack draws it) - or null: no weapon or shield (arrows neither), anything worn, a quest's, a
- * summoned one, or a picture past what a piece may show.
+ * DECOR2c: WHAT A WEAPON OR A PIECE OF ARMOUR HANGS AS - `{ flat, light: null, item }`, its pack picture (the list's
+ * own - the owner's body's, as the pack draws it) - or null: no weapon or armour (arrows neither), anything worn, a
+ * quest's, a summoned one, or a picture past what a piece may show. ARMOR-MOUNT: armour is every piece, not the
+ * shields alone.
  */
 export function decorMountOf(item, identity = undefined) {
   if (!item || item.questItem || item.equipSlot != null || isSummoned(item)) return null;

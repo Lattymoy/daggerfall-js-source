@@ -8985,7 +8985,9 @@ records re-aimed.
 **DECOR2c - weapons and shields mounted.**
 
 - **What hangs** (`src/systems/decorItems.js` decorMountOf, `src/net/decorLaw.js` decorIsMount). A weapon from the pack
-  (never the arrows) or one of the four shields hangs, as its own pack picture - the owner's body's, as the pack draws
+  (never the arrows) or a piece of armour hangs (ARMOR-MOUNT, 2026-09-26, Mac: "Cant set down armor in house - Would
+  be awesome to display armor as well": DECOR2c hung the four shields alone, and armour never stands, so a cuirass had
+  no way into a room; every piece hangs now, `test/armormount.test.js`), as its own pack picture - the owner's body's, as the pack draws
   it (a woman's weapons are Daggerfall's archive 233, a man's 234) - with its own numbers, free, and back into the pack
   whole when taken down, as every own thing is. Never anything worn, a quest's or a summoned one. Every client reads
   "a mount" off the item's own numbers, so a visitor sees it hang as the owner hung it; its dye is read off the same
@@ -9012,7 +9014,8 @@ Not yet: no one has seen a mount drawn in a room - there is no ARENA2 in this co
 reasoned from the billboard pass's own texture and camera conventions and pinned, and is the one-look question.
 
 Pinned: `test/decor2c.test.js` (6), `test/decor1.test.js` (+1: the service keeps a mount of the port's own archive).
-`tools/mutants/decor2c.json` (50). Five older records re-aimed.
+`tools/mutants/decor2c.json` (49 - ARMOR-MOUNT took out "any armour hung", now the law; its opposite is
+`tools/mutants/armormount.json`'s). Five older records re-aimed.
 
 
 ## GUILD1 (2026-09-25, Mac: "future ownership for online guilds"; asked, founding takes "Gold and Renown", a guild is joined "Per character", its ranks are "Four, renamed by the guildmaster", and the treasury is the "Guildmaster only" to take from) - a guild the players found, and the service keeps

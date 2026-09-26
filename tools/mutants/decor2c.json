@@ -9,15 +9,6 @@
     ]
   },
   {
-    "name": "DECOR2c-any-armour-hung",
-    "file": "src/net/decorLaw.js",
-    "old": "(it.g === DECOR_ARMOR_GROUP && DECOR_SHIELD_TEMPLATES.has(it.t))",
-    "new": "(it.g === DECOR_ARMOR_GROUP)",
-    "tests": [
-      "test/decor2c.test.js"
-    ]
-  },
-  {
     "name": "DECOR2c-a-model-hung",
     "file": "src/net/decorLaw.js",
     "old": "if (!it || piece.model != null || !Array.isArray(piece.flat)) return false;",

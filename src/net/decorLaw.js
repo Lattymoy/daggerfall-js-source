@@ -81,23 +81,23 @@ export function decorItemOf(raw) {
 /** DECOR2b: Daggerfall's ItemGroups.Furniture - the furnisher's pieces, whose shape the owner chooses among the
  *  game's own models. */
 export const DECOR_FURNITURE_GROUP = 8;
-/** DECOR2c: Daggerfall's ItemGroups.Weapons and .Armor; the arrows (a weapon never hung) and the four shields (the
- *  armour that is). */
+/** DECOR2c: Daggerfall's ItemGroups.Weapons and .Armor, and the arrows (a weapon never hung). */
 export const DECOR_WEAPONS_GROUP = 3;
 export const DECOR_ARMOR_GROUP = 2;
 export const DECOR_ARROW_TEMPLATE = 131;
-export const DECOR_SHIELD_TEMPLATES = Object.freeze(new Set([109, 110, 111, 112]));
 
 /**
  * DECOR2c: A MOUNT - a piece whose item is one of the owner's weapons (arrows aside) or shields. It hangs FLAT against
  * the surface it was set on, its picture turned as `rot` says - the surface's heading and tilt, then its own turn on
  * it - where every other flat turns to the eye. Every client reads it off the item's own numbers, so a visitor sees
- * it hang as the owner hung it.
+ * it hang as the owner hung it. ARMOR-MOUNT (2026-09-26, Mac: "Cant set down armor in house - Would be awesome to
+ * display armor as well so people can run shop and show collection"): and any piece of armour - a cuirass, a helm,
+ * boots - where DECOR2c hung the shields alone; it hangs as its pack picture, as a shield does.
  */
 export function decorIsMount(piece) {
   const it = piece?.item;
   if (!it || piece.model != null || !Array.isArray(piece.flat)) return false;
-  return (it.g === DECOR_WEAPONS_GROUP && it.t !== DECOR_ARROW_TEMPLATE) || (it.g === DECOR_ARMOR_GROUP && DECOR_SHIELD_TEMPLATES.has(it.t));
+  return (it.g === DECOR_WEAPONS_GROUP && it.t !== DECOR_ARROW_TEMPLATE) || it.g === DECOR_ARMOR_GROUP;
 }
 
 /** DECOR2c: how far a mount hangs off its surface, in metres - the blood marks' own hair (combat/bloodDecals.js

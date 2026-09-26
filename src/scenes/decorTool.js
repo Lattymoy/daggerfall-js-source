@@ -62,7 +62,7 @@
 // furniture's own name and numbers, free. Taken down, it is delivered
 // again: back among "Your things", never the pack.
 //
-// DECOR2c - THE MOUNTS. A weapon or a shield among "Your things" is
+// DECOR2c - THE MOUNTS. A weapon or a piece of armour among "Your things" is
 // HUNG: the flight sets it flat on the surface the eye meets (the ray's
 // own normal - scenes/decorRoom.js frames it), the turn spins it there,
 // and the ghost is the picture itself, hanging where it will hang. No

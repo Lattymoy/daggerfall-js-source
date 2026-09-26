@@ -25,7 +25,7 @@
 // price is the law's, by the scaled size - and a piece whose size the
 // scan could not read has no price and is never placed.
 //
-// DECOR2c: A MOUNT (a weapon or a shield of the owner's own) is set
+// DECOR2c: A MOUNT (a weapon or a piece of armour of the owner's own) is set
 // ON the surface the eye meets, not above it: its heading and tilt are
 // the surface's (a floor's heading the eye's own, so the picture reads
 // upright from where the owner stands), the turn is its spin on the

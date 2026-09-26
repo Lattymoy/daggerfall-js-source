@@ -213,3 +213,22 @@ in.
 
 `test/homeoffer.test.js` (5); `tools/mutants/homeoffer.json` 12, 12 dead.
 `test/home1.test.js`'s wiring pin re-aimed.
+
+## ARMOR-MOUNT: armour goes on display (report 9)
+
+DECOR2c hung a weapon or one of the four shields, and armour never stands
+as a thing in a room (DECOR2a: weapons and armour are mounted) - so a
+cuirass, a helm or a pair of boots had no way into a room at all. Every
+piece of armour hangs now, as a shield does (`net/decorLaw.js`
+decorIsMount): its pack picture, the owner's body's, flat on the wall or
+table it is set on, free, and back to the pack whole when taken down. The
+room draws it through WEAPON-MOUNT's picture door, so it wears its own
+colours and its material's dye. Worn armour stays in the pack, as a worn
+blade does - take it off first.
+
+A client from before this change reads a hung cuirass as a standing
+picture turned to the eye; it hangs for everyone once they update.
+
+`test/armormount.test.js` (4); `tools/mutants/armormount.json` 3, 3 dead.
+`test/decor2c.test.js` re-aimed (a cuirass hangs), and its "any armour
+hung" record dropped - that is the law now.

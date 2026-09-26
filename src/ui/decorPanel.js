@@ -166,7 +166,7 @@ export function decorPlacedSub({ piece, holds }) {
 }
 /** DECOR2a: what an item in the pack says under its name in the "Your things" list. */
 export const DECOR_OWN_LINE = 'yours - free to set down, and back to your pack when taken down';
-/** DECOR2c: and a weapon or a shield there - it hangs on a wall. */
+/** DECOR2c: and a weapon or a piece of armour there (ARMOR-MOUNT) - it hangs on a wall. */
 export const DECOR_MOUNT_LINE = 'yours - free to hang on a wall, and back to your pack when taken down';
 /** The line an own entry says - a delivered piece's, a mount's, or a thing's from the pack. */
 const ownLine = (e) => (e.furnishing ? decorFurnishLine(e) : e.mount ? DECOR_MOUNT_LINE : DECOR_OWN_LINE);

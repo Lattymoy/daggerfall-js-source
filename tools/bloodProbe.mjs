@@ -400,7 +400,7 @@ const out = await page.evaluate(async () => {
   }
   r.setLightingLane(null);
 
-  // WEAPON-MOUNT (2026-09-26, Mac: "weapons dont show in houses properly"): the decorator hangs a weapon or a shield on
+  // WEAPON-MOUNT (2026-09-26, Mac: "weapons dont show in houses properly"): the decorator hangs a weapon or armour on
   // THIS pass as its pack picture, under a white tint - and the pass read the texel's red as a blood film's thickness
   // and painted the tint through it, so the picture came out a pale silhouette of itself. A GREEN picture,
   // at noon, both sets: drawDecalPicture gives the green back; drawDecals (a mark) does not, and must not.

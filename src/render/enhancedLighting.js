@@ -662,7 +662,7 @@ uniform vec3 uMoonDir;
 uniform float uTrilight;   // BLOOD AUDIT 5: and the trilight ambient the mesh takes
 uniform vec3 uAmbientSky;
 uniform vec3 uAmbientGround;
-uniform float uPicture;   // WEAPON-MOUNT: a mounted PICTURE (the decorator's hung weapons and shields), not a film of blood
+uniform float uPicture;   // WEAPON-MOUNT: a mounted PICTURE (the decorator's hung weapons and armour), not a film of blood
 ${CLOUD_SHADOW_GLSL}
 ${EL_GLSL}
 ${SHADOW_GLSL}
