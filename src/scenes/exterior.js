@@ -982,7 +982,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   //     throws (dataPipeline catches) and is warmed with the scene, so
   //     this is a coalesced wait, not a second load.
   //   - the AABB is the swept billboard box, exactly as the interior
-  //     host's static NPCs take it (interiorContext.js:421-441).
+  //     host's static NPCs take it (interiorContext.js:422-442).
   //   - E3: RMBLayout's THIRD act on one of these flats
   //     (`QuestMachine.Instance.SetupIndividualStaticNPC(go,
   //     obj.FactionID)`, :377/:453) still takes DFU's empty-machine

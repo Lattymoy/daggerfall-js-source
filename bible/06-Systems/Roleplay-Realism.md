@@ -160,7 +160,11 @@ its arms to `rrInstall.js`.
   taken, the C#'s else. The seven `197_N-0` sprites ship under
   `public/art/roleplay-realism/` on the replacement door (lazy, gated
   on variantNpcs; a classic archive, so ordinary entries), the mod's
-  XML scale beside them through `registerBillboardXml`.
+  XML scale beside them through `registerBillboardXml`. LAMP-KEEPER
+  (2026-09-26): lazy means ASKED FOR - the interior person's stand never
+  asked, so the classic 197 records drew in their place (record 6 is a
+  street lamp); it asks before the upload now
+  (`01-Overview/Field-Bugs-2026-09-26.md`).
 - **EnhancedRiding** (EnhancedRiding.cs). `CanRunUnlessRidingCart`
   (:95-99) on `transport.setCanRunOverride`: no gallop with the cart
   nor in a town unless GallopingInTowns (the host's `inTown`, `riding`,

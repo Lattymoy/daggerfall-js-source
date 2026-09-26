@@ -25,6 +25,7 @@ import { applyClimate } from '../world/climateSwaps.js';
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
 import { unityMaterialName } from '../systems/immersiveFootsteps.js';   // IF1: MaterialReader's material name, for the mod's floor walk
 import { billboardSize } from '../world/rmbFlats.js';
+import { preloadTextureRecord } from '../systems/textureReplacement.js';   // LAMP-KEEPER: a re-materialised person's art, decoded before it is drawn
 import { Collider } from '../player/collider.js';
 import { isHouseContainerModel } from '../systems/containers.js';
 import { isShopShelfModel } from '../systems/shopStock.js';   // E2
@@ -545,6 +546,12 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     return (async () => {
       const t = await getTexture(pn.drawArchive ?? pn.textureArchive);   // RR2: the re-materialised billboard, where a mod set one
       if (!t || (pn.drawRecord ?? pn.textureRecord) >= t.recordCount) return;
+      // LAMP-KEEPER (2026-09-26, Mac: "Shop keepers are lamp posts"): the mod's picture is registered LAZY (RR2 -
+      // nothing fetched at install), and a lazy record is decoded only when something ASKS for it; getTexture's
+      // archive preload skips lazy entries by design (AUDIT-DW F1). Nothing asked, so the upload below drew the
+      // classic TEXTURE.197 record in its place - and record 6 of "Kludge Town" is a street lamp: every keeper of
+      // a quality-13-plus shop or tavern stood as a lamp post, and a click on the lamp opened the shop. Ask first.
+      if (pn.drawArchive != null) await preloadTextureRecord(pn.drawArchive, pn.drawRecord ?? pn.textureRecord).catch(() => null);
       const size = billboardSize(t, pn.drawRecord ?? pn.textureRecord);
       pn.width = size.w;
       pn.height = size.h;

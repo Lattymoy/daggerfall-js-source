@@ -1,0 +1,16 @@
+[
+  {
+    "name": "LAMPKEEPER-the-stand-never-asks",
+    "file": "src/scenes/interiorContext.js",
+    "old": "      if (pn.drawArchive != null) await preloadTextureRecord(pn.drawArchive, pn.drawRecord ?? pn.textureRecord).catch(() => null);\n",
+    "new": "",
+    "tests": ["test/lampkeeper.test.js"]
+  },
+  {
+    "name": "LAMPKEEPER-asks-for-the-born-record",
+    "file": "src/scenes/interiorContext.js",
+    "old": "await preloadTextureRecord(pn.drawArchive, pn.drawRecord ?? pn.textureRecord)",
+    "new": "await preloadTextureRecord(pn.textureArchive, pn.textureRecord)",
+    "tests": ["test/lampkeeper.test.js"]
+  }
+]

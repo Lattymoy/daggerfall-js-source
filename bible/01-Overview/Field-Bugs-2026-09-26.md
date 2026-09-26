@@ -128,3 +128,24 @@ questor pays. The arrival is saved with the action. Offline, and every other
 GUARD-ONLINE.
 
 `test/guardonline.test.js` (4); `tools/mutants/guardonline.json` 10, 10 dead.
+
+## LAMP-KEEPER: the keepers that were lamp posts (report 15)
+
+Not a count - a picture. Roleplay & Realism's variant keepers (RR2) stand a
+shop or tavern keeper on archive 197 by the building's quality, and register
+the mod's seven 197 sprites LAZY (nothing fetched at install). A lazy record
+is decoded only when something asks for it - the icon doors ask - and
+`getTexture`'s archive preload skips lazy entries by design (AUDIT-DW F1).
+The interior person's stand never asked, so its upload drew the CLASSIC
+TEXTURE.197 record in the mod's place. Archive 197 is "Kludge Town", and its
+record 6 is a street lamp, which the mod's own XML scale (3 x 0.8) stretches
+into a keeper's frame: every 182_2 keeper of a shop or tavern of quality 13
+and up stood as a lamp post, and a click on it opened the shop - which read
+as "lamp posts are shopkeepers". The other variant records (0-5) drew their
+classic 197 pictures too, which are people and so passed unnoticed.
+
+The stand asks for its draw record's replacement before the upload
+(`scenes/interiorContext.js` standPerson). No keeper is removed: each draws
+the mod's picture now.
+
+`test/lampkeeper.test.js` (3); `tools/mutants/lampkeeper.json` 2, 2 dead.
