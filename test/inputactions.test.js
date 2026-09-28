@@ -7,7 +7,7 @@ import { DEFAULT_SECONDARY_BINDINGS,
   ACTIONS, DEFAULT_BINDINGS, parseActionName,
   createBindings, setBinding, clearBinding, clearBindingByCode,
   addRemovedPrimaryAction, getBinding, getBindings, actionForCode,
-  resetDefaults, serializeKeyBinds, loadKeyBinds,
+  resetDefaults, serializeKeyBinds, loadKeyBinds, migrateLegacyChatDefault,
   createActionState, addAction, hasAction, actionStarted, actionComplete, endFrame,
 } from '../src/systems/inputActions.js';
 
@@ -49,6 +49,8 @@ test('I1: the Actions enum, verbatim names and order (:324-384)', () => {
     'QuickLootAll', 'QuickLootOpen',
     // FREEMOUSE: appended past the plaque's two, like every port row.
     'FreeMouse',
+    // CHAT-POLISH1: dedicated chat action, appended after FreeMouse.
+    'Chat',
     // KB1 (2026-09-23, Mac: "formalize a solid solution" for the keybinds): every
     // key that does something in the world is an action - E's activate, the
     // dial, the hotbar's slots past the diamond's four, the vendored mods' keys
@@ -102,7 +104,7 @@ test('I1: ResetDefaults\' table, every row (:979-1032)', () => {
     // holds (it caught G, B and K in turn).
     'KeyP=QuickLootAll',
     'KeyJ=QuickLootOpen',
-    'KeyY=FreeMouse',   // FREEMOUSE: the one letter DFU, the port and every vendored mod all leave alone
+    'F7=FreeMouse', 'KeyY=Chat',   // CHAT-POLISH1: Y says something; FreeMouse moves off the chat key
     // QS2: the number row. Digit1-Digit3 are unspent by SetupDefaults, by the
     // port and by every vendored mod's TextKey defaults (the HT4 pin in
     // test/ht1_handheldtorches.test.js walks that whole set).
@@ -139,12 +141,31 @@ test('I1: ResetDefaults\' table, every row (:979-1032)', () => {
   // action below is still the only one.
   // KB1: two DFU rows unbound (the hidden console and Slide), seventeen actions appended, sixteen of them bound -
   // DebugOverlay ships unbound, a developer's key.
-  assert.equal(DEFAULT_BINDINGS.length, 66);
-  assert.equal(bound.size, 66, 'no action is defaulted twice');
-  assert.equal(ACTIONS.length, 70);
+  assert.equal(DEFAULT_BINDINGS.length, 67);
+  assert.equal(bound.size, 67, 'no action is defaulted twice');
+  assert.equal(ACTIONS.length, 71);
   assert.deepEqual(ACTIONS.filter((a) => !bound.has(a)), ['ToggleConsole', 'Slide', 'QuickSwap', 'DebugOverlay'], 'the four that ship unbound, named');
   const codes = DEFAULT_BINDINGS.map(([c]) => c);
   assert.equal(new Set(codes).size, codes.length, 'and no KEY is spent twice - the number row was free');
+});
+
+
+test('CHAT-POLISH1: the exact legacy FreeMouse=Y default migrates to Chat=Y and lets autofill put FreeMouse on F7, while custom bindings are left alone', () => {
+  const legacy = createBindings();
+  loadKeyBinds(legacy, { actionKeyBinds: { KeyY: 'FreeMouse', KeyR: 'Rest' } });
+  assert.equal(migrateLegacyChatDefault(legacy), true);
+  resetDefaults(legacy, true);
+  assert.equal(getBinding(legacy, 'Chat'), 'KeyY');
+  assert.equal(getBinding(legacy, 'FreeMouse'), 'F7');
+  assert.equal(getBinding(legacy, 'Rest'), 'KeyR');
+
+  const custom = createBindings();
+  loadKeyBinds(custom, { actionKeyBinds: { KeyG: 'FreeMouse', KeyY: 'Rest' } });
+  assert.equal(migrateLegacyChatDefault(custom), false);
+  resetDefaults(custom, true);
+  assert.equal(getBinding(custom, 'FreeMouse'), 'KeyG', 'a deliberate FreeMouse rebind stays');
+  assert.equal(getBinding(custom, 'Rest'), 'KeyY', 'the player keeps Y when it was deliberately used for something else');
+  assert.equal(getBinding(custom, 'Chat'), null, 'autofill cannot steal an occupied Y');
 });
 
 test('I1: SetBinding steals from the other dict, clears the old code, un-removes (:727-758)', () => {
@@ -186,7 +207,7 @@ test('I1: the two clears - by action walks all its codes, by code takes one (:80
 test('I1: a FULL reset clears primary and the removed list but NOT secondary (:956-960)', () => {
   const s = createBindings();
   resetDefaults(s);
-  assert.equal(s.primary.size, 66);   // KB1: DFU's 42 (its console and Slide rows unbound) plus the port's 24; SOC5: DFU's 44 plus SocialInteract; QS2: plus the three quickslot rows; QS4: plus the off hand's; QUICK-LOOT B4: plus the plaque's two; FREEMOUSE: plus the mouse toggle's own key
+  assert.equal(s.primary.size, 67);   // KB1: DFU's 42 (its console and Slide rows unbound) plus the port's 24; SOC5: DFU's 44 plus SocialInteract; QS2: plus the three quickslot rows; QS4: plus the off hand's; QUICK-LOOT B4: plus the plaque's two; FREEMOUSE: plus the mouse toggle's own key
   // a secondary binding on a code no default uses SURVIVES the reset;
   // one on a default's code is stolen back by SetBinding's alt-removal.
   // QUICK-LOOT B4: this was KeyP, chosen because no default used it -
@@ -194,19 +215,13 @@ test('I1: a FULL reset clears primary and the removed list but NOT secondary (:9
   // had gone. It moved to KeyY, the one letter DFU, the port and every
   // vendored mod all left alone.
   //
-  // FREEMOUSE (2026-09-22): AND THE SAME THING HAPPENED AGAIN, which
-  // is worth stating rather than quietly re-picking. This fixture
-  // needs a code NO default uses, and every time the port spends its
-  // last free letter this line is the first thing to notice - it is a
-  // canary for the keymap being full, not an ordinary fixture. KeyY is
-  // FreeMouse's default now, so it moves to F7: unspent by DFU's table
-  // (which stops at F9 and skips F7 and F10), unspent by the port, and
-  // not a key any vendored mod offers.
-  setBinding(s, 'F7', 'Rest', false);
+  // CHAT-POLISH1: F7 is FreeMouse now and Y is Chat, so the fixture
+  // moves to F10 - still unused by this registry's keyboard defaults.
+  setBinding(s, 'F10', 'Rest', false);
   setBinding(s, 'KeyM', 'Jump', false);   // KeyM is AutoMap's default
   addRemovedPrimaryAction(s, 'Rest');
   resetDefaults(s);
-  assert.equal(s.secondary.get('F7'), 'Rest', 'secondary survives a full reset');
+  assert.equal(s.secondary.get('F10'), 'Rest', 'secondary survives a full reset');
   assert.equal(s.secondary.has('KeyM'), false, 'but a default steals its code back');
   assert.equal(s.primary.get('KeyM'), 'AutoMap');
   assert.equal(s.removedPrimary.size, 0, 'the removed list clears');
@@ -378,5 +393,5 @@ test('MAC-D1: an action the game cannot be played without is never left addressi
   // the door every load comes through carries it
   const { readFileSync } = await import('node:fs');
   const src = readFileSync(new URL('../src/systems/inputActions.js', import.meta.url), 'utf8');
-  assert.match(src, /if \(repairUnloseableBindings\(store\)\.length\) saveKeyBinds\(store\);/, 'run after the autofill pass, and written back');
+  assert.match(src, /if \(chatMigrated \|\| repairUnloseableBindings\(store\)\.length\) saveKeyBinds\(store\);/, 'migration/repair run after autofill and are written back');
 });

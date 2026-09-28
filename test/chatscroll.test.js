@@ -127,7 +127,7 @@ test('CHAT-SCROLL: while open, a reader who scrolled up keeps their place and th
 test('CHAT-SCROLL by source: the bar and the scroll listener are the ELEMENTS\' - the panel still adds exactly one window listener (AUDIT CHAT D5, chat1\'s pin) - and an open paints with the landing flag', () => {
   const src = readFileSync(new URL('../src/ui/chatPanel.js', import.meta.url), 'utf8');
   assert.equal([...src.matchAll(/win\.addEventListener\(/g)].length, 1, 'one window listener');
-  assert.match(src, /log\.setOpen\(true\);\s*\n\s*paint\(true\);/, 'the open lands');
+  assert.match(src, /log\.setOpen\(true\);\s*\n\s*markUse\(\);\s*\n\s*paint\(true\);/, 'the open lands');
   assert.match(src, /const follow = newest \|\| listTab !== log\.active \|\| !listNodes\.length \|\| atNewest\(\);/, 'an open, a tab change and a first paint follow; otherwise the reader\'s place, measured before the rows go in');
   assert.match(src, /list\.addEventListener\('scroll', /);
   assert.match(src, /jump\.addEventListener\('click', /);

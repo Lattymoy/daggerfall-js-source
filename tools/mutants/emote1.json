@@ -184,8 +184,8 @@
   {
     "name": "EM-shortcodes-unexpanded",
     "file": "src/scenes/world.js",
-    "old": "        const cmd = parseChatLine(expandShortcodes(text));",
-    "new": "        const cmd = parseChatLine(text);",
+    "old": "        const cmd = parseChatLine(expandShortcodes(text), VOICE_CHAT_COMMANDS);",
+    "new": "        const cmd = parseChatLine(text, VOICE_CHAT_COMMANDS);",
     "tests": ["test/emote1.test.js"]
   },
   {

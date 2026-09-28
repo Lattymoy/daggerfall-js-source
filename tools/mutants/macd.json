@@ -2,8 +2,8 @@
   {
     "name": "MACD1-a-stranded-swing-is-never-repaired",
     "file": "src/systems/inputActions.js",
-    "old": "      if (repairUnloseableBindings(store).length) saveKeyBinds(store);\n",
-    "new": "",
+    "old": "      if (chatMigrated || repairUnloseableBindings(store).length) saveKeyBinds(store);\n",
+    "new": "      if (chatMigrated) saveKeyBinds(store);\n",
     "tests": [
       "test/inputactions.test.js",
       "test/audit63_items_loot.test.js",

@@ -101,7 +101,10 @@ test('SOC5: the enhanced controls window offers the action in its own group, and
   // KB1: the pane's groups are the registry's ACTION_GROUPS, and SOC5's row is the whole of the Online one -
   // which is the claim this pin makes.
   const online = ACTION_GROUPS.find((g) => g.title === 'Online');
-  assert.deepEqual(online.rows.map((r) => ({ ...r })), [{ action: 'SocialInteract', label: 'Interact with player' }]);
+  assert.deepEqual(online.rows.map((r) => ({ ...r })), [
+    { action: 'SocialInteract', label: 'Interact with player' },
+    { action: 'Chat', label: 'Open chat' },
+  ]);
   // the classic faces keep their meaning exactly, read off the windows that draw them
   const grid = gridButtons().map((b) => b.action);
   assert.deepEqual(grid, ACTIONS.slice(2, 40), 'the grid is still DFU\'s SetupKeybindButtons slice');
@@ -400,7 +403,7 @@ test('SOC5: scenes/world.js - the door on hudCtx, the ray read as the activation
   // the menu is built beside the picture, over the LIVE link, and its acts write a line
   assert.match(w, /socialMenu = createSocialMenu\(\{/);
   assert.ok(w.indexOf('const socialStart = () => {') < w.indexOf('socialMenu = createSocialMenu({'), 'built inside socialStart - so it exists exactly when `social` does');
-  assert.match(w, /const hub = socialLink\(\);\n\s*const went = hub\?\.sendSocial\(act\) === true;/, 'the act leaves through the live session, never a captured one (AUDIT SOC B17: read once, so the word after can ask whether it was open)');
+  assert.match(w, /const hub = socialLink\(\);\r?\n\s*const went = hub\?\.sendSocial\(act\) === true;/, 'the act leaves through the live session, never a captured one (AUDIT SOC B17: read once, so the word after can ask whether it was open)');
   assert.match(w, /chatLog\.push\(tab\.id, \{ text: went \? socialActText\(act\.k, who\) : \(hub\?\.status === 'open' \? TRY_AGAIN_TEXT : NOT_CONNECTED_TEXT\), system: true \}\);/, 'a word either way, on the world tab, flagged as nobody\'s line - AUDIT SOC B17: the panel\'s "try again" when the gate refused, "not connected" when there is no link to try again on');
   assert.match(w, /const NOT_CONNECTED_TEXT = 'You are not connected';/);
   assert.match(w, /Friend request sent to \$\{who\}/); assert.match(w, /Party invite sent to \$\{who\}/);

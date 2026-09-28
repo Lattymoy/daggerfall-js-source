@@ -345,10 +345,10 @@
     ]
   },
   {
-    "name": "CC-read-answer-closes",
+    "name": "CC-accepted-answer-closes",
     "file": "src/ui/chatPanel.js",
-    "old": "    if (!keep && went !== 'read') closePanel();",
-    "new": "    if (!keep) closePanel();",
+    "old": "    else input.blur?.();                          // desktop: Y -> Up -> Enter is repeatable without typing a literal Y",
+    "new": "    else closePanel();",
     "tests": [
       "test/chatchan.test.js"
     ]

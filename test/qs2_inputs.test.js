@@ -65,7 +65,7 @@ test('QS2: the three actions are APPENDED - past DFU\'s forty-four and past SOC5
   // include a row this pin is not about.
   assert.deepEqual(ACTIONS.slice(45, 52), [...QS, ...QL], 'the seven rows QS2 and QUICK-LOOT own, in this order');
   assert.equal(ACTIONS[52], 'FreeMouse', 'and FREEMOUSE\'s appended past them');
-  assert.equal(ACTIONS.length, 70, 'DFU\'s 44 + SOC5\'s 1 + QS2\'s 3 + QS4\'s 1 + QS6\'s 1 + QUICK-LOOT\'s 2 + FREEMOUSE\'s 1 + KB1\'s 17 (Interact, QuickDial, six hotbar slots, eight mod keys, DebugOverlay)');
+  assert.equal(ACTIONS.length, 71, 'DFU\'s 44 + SOC5\'s 1 + QS2\'s 3 + QS4\'s 1 + QS6\'s 1 + QUICK-LOOT\'s 2 + FREEMOUSE\'s 1 + CHAT\'s 1 + KB1\'s 17 (Interact, QuickDial, six hotbar slots, eight mod keys, DebugOverlay)');
   // Every index DFU's own enum had, it still has. This is the whole reason the
   // list is appended to and never inserted into (ui/controlsWindow.js).
   assert.equal(ACTIONS[43], 'AutoRun', 'DFU\'s last row keeps index 43');

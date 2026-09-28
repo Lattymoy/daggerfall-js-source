@@ -220,7 +220,7 @@ function fakeDocument() {
   return doc;
 }
 
-test('AUDIT KB1 (UI 1): online, Enter opens the chat and leaves the mouse; with the chat HIDDEN it frees the mouse as DFU\'s Enter does - the claim is per press (mutant: the claim for the panel\'s life)', () => {
+test('AUDIT KB1 (UI 1): online, Y opens chat without toggling the mouse; hidden chat ignores Y, while F7 still owns FreeMouse - the claim is per press (mutant: the claim for the panel\'s life)', () => {
   setBindings(defaults());
   const listeners = [];
   const prevAdd = globalThis.addEventListener;
@@ -234,18 +234,20 @@ test('AUDIT KB1 (UI 1): online, Enter opens the chat and leaves the mouse; with 
     return ev;
   };
   try {
-    bindCursorToggle({ requestPointerLock() { return Promise.resolve(); } }, () => false, (e) => (e.code === 'Enter' ? 'ActivateCursor' : e.code === 'KeyY' ? 'FreeMouse' : null));
+    bindCursorToggle({ requestPointerLock() { return Promise.resolve(); } }, () => false, (e) => (e.code === 'Enter' ? 'ActivateCursor' : e.code === 'F7' ? 'FreeMouse' : e.code === 'KeyY' ? 'Chat' : null));
     const log = new ChatLog();
-    const panel = createChatPanel({ log, onSend() {}, action: (e) => (e.code === 'Enter' ? 'ActivateCursor' : null), overlay: () => false, doc: fakeDocument(), win, touch: false });
+    const panel = createChatPanel({ log, onSend() {}, action: (e) => (e.code === 'KeyY' ? 'Chat' : null), overlay: () => false, doc: fakeDocument(), win, touch: false });
     setCursorActive(false);
-    fire('Enter');
-    assert.equal(log.open, true, 'the chat opened');
+    fire('KeyY');
+    assert.equal(log.open, true, 'Y opens the chat');
     assert.equal(cursorActive(), false, 'and the mouse did not also free');
     panel.setHidden(true);
     assert.equal(log.open, false);
-    fire('Enter');
+    fire('KeyY');
     assert.equal(log.open, false, 'hidden: the chat stays put away (CHAT-R2)...');
-    assert.equal(cursorActive(), true, '...and Enter is the game\'s again - the mouse frees');
+    assert.equal(cursorActive(), false, '...and Y remains the Chat action, not a mouse toggle');
+    fire('F7');
+    assert.equal(cursorActive(), true, 'F7 remains FreeMouse');
     panel.destroy();
   } finally {
     if (prevAdd === undefined) delete globalThis.addEventListener; else globalThis.addEventListener = prevAdd;

@@ -13,7 +13,7 @@
   {
     "name": "the-action-ships-with-no-default-key",
     "file": "src/systems/inputActions.js",
-    "old": "  ['KeyY', 'FreeMouse'],",
+    "old": "  ['F7', 'FreeMouse'],",
     "new": "",
     "tests": [
       "test/freemouse.test.js",
@@ -23,7 +23,7 @@
   {
     "name": "the-default-lands-on-a-key-a-mod-already-offers",
     "file": "src/systems/inputActions.js",
-    "old": "  ['KeyY', 'FreeMouse'],",
+    "old": "  ['F7', 'FreeMouse'],",
     "new": "  ['KeyK', 'FreeMouse'],",
     "tests": [
       "test/freemouse.test.js"
@@ -32,7 +32,7 @@
   {
     "name": "the-default-collides-with-another-port-row",
     "file": "src/systems/inputActions.js",
-    "old": "  ['KeyY', 'FreeMouse'],",
+    "old": "  ['F7', 'FreeMouse'],",
     "new": "  ['KeyJ', 'FreeMouse'],",
     "tests": [
       "test/freemouse.test.js",
@@ -53,8 +53,8 @@
   {
     "name": "the-pane-draws-no-row-so-the-key-is-unrebindable",
     "file": "src/systems/inputActions.js",
-    "old": "    ['ActivateCursor', 'Free the mouse (offline) / open chat (online)'], ['FreeMouse', 'Free the mouse (press again to look)'],",
-    "new": "    ['ActivateCursor', 'Free the mouse (offline) / open chat (online)'],",
+    "old": "    ['ActivateCursor', 'Free the mouse'], ['FreeMouse', 'Free the mouse (press again to look)'],",
+    "new": "    ['ActivateCursor', 'Free the mouse'],",
     "tests": [
       "test/freemouse.test.js",
       "test/enhancedControls.test.js",
@@ -64,8 +64,8 @@
   {
     "name": "the-row-is-hidden-under-the-online-heading",
     "file": "src/systems/inputActions.js",
-    "old": "  g('Online', [\n    ['SocialInteract', 'Interact with player'],\n  ]),",
-    "new": "  g('Online', [\n    ['SocialInteract', 'Interact with player'], ['FreeMouse', 'Free the mouse (press again to look)'],\n  ]),",
+    "old": "  g('Online', [\n    ['SocialInteract', 'Interact with player'],\n    ['Chat', 'Open chat'],\n  ]),",
+    "new": "  g('Online', [\n    ['SocialInteract', 'Interact with player'], ['FreeMouse', 'Free the mouse (press again to look)'],\n    ['Chat', 'Open chat'],\n  ]),",
     "tests": [
       "test/freemouse.test.js",
       "test/qs2_inputs.test.js",

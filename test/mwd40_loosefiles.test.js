@@ -44,7 +44,7 @@ test('MW-D40: the store keeps archives by basename and loose files by canonical 
   // the widened accept: archives, plugins, and the loose set
   assert.match(src, /\\\.\(bsa\|esm\|esp\)\$\/i\.test\(n\) \|\| MW_LOOSE_EXT\.test\(n\)/,
     'bsa/esm/esp plus loose extensions');
-  assert.match(src, /MW_LOOSE_EXT = \/\\\.\(nif\|kf\|dds\|tga\|wav\)\$\/i/, 'the loose set is exactly the mod asset kinds');
+  assert.match(src, /MW_LOOSE_EXT = \/\\\.\(nif\|kf\|dds\|tga\|wav\|mp3\)\$\/i/, 'the loose set includes the Morrowind voice format alongside the mod asset kinds');
   // loose files key by the canonical path the engine asks in; archives
   // keep their basename keys so existing attaches stay valid
   assert.ok(src.includes('MW_LOOSE_EXT.test(base) ? mwLoosePath(f.webkitRelativePath || f.name) : base'),

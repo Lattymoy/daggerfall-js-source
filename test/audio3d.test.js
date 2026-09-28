@@ -19,17 +19,18 @@ const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 function riggedEngine() {
   const param = () => ({ value: 0 });
   const panners = [];
+  const sources = [];
   const listener = { positionX: param(), positionY: param(), positionZ: param(), forwardX: param(), forwardY: param(), forwardZ: param(), upX: param(), upY: param(), upZ: param() };
   const ctx = {
     state: 'running', destination: { connect(n) { return n; } }, listener,
     createGain: () => ({ gain: param(), connect(n) { return n; }, disconnect() {} }),
     createPanner: () => { const p = { positionX: param(), positionY: param(), positionZ: param(), connect(n) { return n; }, disconnect() { p.gone = true; } }; panners.push(p); return p; },
-    createBufferSource: () => ({ buffer: null, playbackRate: param(), loop: false, connect(n) { return n; }, start() {}, stop() {}, disconnect() {} }),
+    createBufferSource: () => { const s = { buffer: null, playbackRate: param(), loop: false, connect(n) { return n; }, start() { s.started = true; }, stop() { s.stopped = true; }, disconnect() { s.gone = true; }, onended: null }; sources.push(s); return s; },
   };
   const e = new AudioEngine();
   e.ctx = ctx; e.enabled = true; e._ensureCtx = () => {};
   for (const k of [42, SOUND.HorseClop2, SOUND.HorseAndCart, SOUND.HorseClop, SOUND.AnimalHorse]) e.buffers.set(k, { duration: 0.5 });
-  return { e, panners, listener };
+  return { e, panners, listener, sources };
 }
 /** WebAudio's own azimuth sign (the spec's PannerNode algorithm): the source's projection on the listener's
  *  right, which is forward x up. Positive: the right ear. */
@@ -45,6 +46,30 @@ function screenSide(eye, target, p) {
   const x = m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12], w = m[3] * p[0] + m[7] * p[1] + m[11] * p[2] + m[15];
   return x / w;
 }
+
+
+test('VOICE-CUT1 audio: interruptible flat and positional one-shots expose stop handles without changing the old duration APIs', () => {
+  const { e, sources, panners } = riggedEngine();
+
+  const flat = e.playOneShotHandle(42, 1);
+  assert.ok(flat?.stop);
+  assert.equal(flat.duration, 0.5);
+  assert.equal(sources.at(-1).stopped, undefined);
+  flat.stop();
+  assert.equal(sources.at(-1).stopped, true);
+
+  const positional = e.play3dHandle(42, [1, 0, 3], 1, PEER_SOUND_PROFILE);
+  assert.ok(positional?.stop);
+  assert.ok(positional?.move);
+  assert.equal(positional.duration, 0.5);
+  positional.move([9, 2, 7]);
+  assert.deepEqual([panners.at(-1).positionX.value, panners.at(-1).positionY.value, panners.at(-1).positionZ.value], [9, 2, -7], 'VOICE-MOVE1: a live one-shot panner follows its speaker');
+  positional.stop();
+  assert.equal(sources.at(-1).stopped, true);
+
+  assert.equal(e.playOneShot(42, 1), 0.5, 'legacy flat callers still receive duration');
+  assert.equal(e.play3d(42, [0, 0, 1], 1), 0.5, 'legacy 3d callers still receive duration');
+});
 
 test('3D-AUDIO: a sound plays on the side of the screen it is drawn on - facing north (+Z) and facing east (+X), right is right and left is left (mutant: the handedness left unturned)', () => {
   // ahead and to one side, so the renderer's own projection can say which side of the screen it draws on
