@@ -2,8 +2,8 @@
   {
     "name": "P2-live-portrait-is-the-newest-save",
     "file": "src/ui/enhancedMenu.js",
-    "old": "const save = mode === 'pause' ? liveCharacter(playerEntity) : portraitSave(savedGames());",
-    "new": "const save = portraitSave(savedGames());",
+    "old": "const save = mode === 'pause' ? liveCharacter(playerEntity) : newestPortraitSave();",
+    "new": "const save = newestPortraitSave();",
     "tests": [
       "test/profile2_pause_profile.test.js",
       "test/profile1_badge.test.js"

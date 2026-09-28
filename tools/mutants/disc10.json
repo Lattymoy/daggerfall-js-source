@@ -551,8 +551,8 @@
   {
     "name": "DISC10-E-L3-the-street-pack-mounts-a-null",
     "file": "src/scenes/world.js",
-    "old": "        openPack: () => { const w = makeInventoryWindow(); if (w) townTalk.showOverlay(w); },   // DISC10-E L3: a refused pack is null\n",
-    "new": "        openPack: () => townTalk.showOverlay(makeInventoryWindow()),\n",
+    "old": "    openPack: () => { const w = makeInventoryWindow(); if (w) townTalk.showOverlay(w); },   // DISC10-E L3: a refused pack is null\n",
+    "new": "    openPack: () => townTalk.showOverlay(makeInventoryWindow()),\n",
     "tests": [
       "test/disc10_lycan.test.js"
     ]

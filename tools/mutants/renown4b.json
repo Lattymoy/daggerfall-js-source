@@ -1,0 +1,86 @@
+[
+  {
+    "name": "RENOWN4b-the-desk-lift-short",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "\n.hud:has(.hud-renown.on) .hud-quick { bottom: calc(22px + 64px * var(--hud-scale)",
+    "new": "\n.hud:has(.hud-renown.on) .hud-quick { bottom: calc(22px + 32px * var(--hud-scale)",
+    "tests": [
+      "test/renown4b.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4b-the-phone-lift-short",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  .hud:has(.hud-renown.on) .hud-quick { bottom: calc(46px + 60px * var(--hud-scale)",
+    "new": "  .hud:has(.hud-renown.on) .hud-quick { bottom: calc(46px + 30px * var(--hud-scale)",
+    "tests": [
+      "test/renown4b.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4b-the-row-under-the-vitals-on-touch",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "@media (pointer: coarse) and (hover: none) {\n  .hud-bars { order: 1; }\n",
+    "new": "@media (pointer: coarse) and (hover: none) {\n",
+    "tests": [
+      "test/renown4b.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4b-the-touch-margin-unscaled",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "calc((56px + env(safe-area-inset-bottom, 0px)) / var(--hud-scale) - 28px)",
+    "new": "calc(56px + env(safe-area-inset-bottom, 0px) - 28px)",
+    "tests": [
+      "test/renown4b.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4b-the-tablet-lift-one-line",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "bottom: calc(max(24px + 62px * var(--hud-scale), 70px + 32px * var(--hud-scale))",
+    "new": "bottom: calc(max(70px + 32px * var(--hud-scale), 70px + 32px * var(--hud-scale))",
+    "tests": [
+      "test/renown4b.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4b-the-plus-width-plain",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": "\n.hud-renown { width: calc(3 * min(190px, 23vw) + 32px); }",
+    "new": "\n.hud-renown { width: calc(3 * min(190px, 23vw) + 28px); }",
+    "tests": [
+      "test/renown4b.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4b-the-row-height-unset",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".hud-renown { display: none; align-items: center; gap: 8px; height: 22px; width:",
+    "new": ".hud-renown { display: none; align-items: center; gap: 8px; width:",
+    "tests": [
+      "test/renown4b.test.js",
+      "test/renown4.test.js"
+    ]
+  },
+  {
+    "name": "PLUS-ONLY-the-seam-reads-plus-again",
+    "file": "src/systems/uiSkin.js",
+    "old": "export const isEnhancedPlus = (search) => isEnhanced(search);",
+    "new": "export const isEnhancedPlus = (search) => isEnhanced(search) && !/[?&]plus=0/.test(search ?? '');",
+    "tests": [
+      "test/overhauls.test.js"
+    ],
+    "why": "PLUS-ONLY (2026-09-26) retired plain Enhanced, and with it PLUS-DEFAULT's switch: a retired ?plus=0 on an old bookmark must ask for nothing"
+  },
+  {
+    "name": "PLUS-ONLY-yes-on-classic",
+    "file": "src/systems/uiSkin.js",
+    "old": "export const isEnhancedPlus = (search) => isEnhanced(search);",
+    "new": "export const isEnhancedPlus = (search) => true;",
+    "tests": [
+      "test/overhauls.test.js"
+    ],
+    "why": "the seam never answers yes on the classic skin - its canvas windows stay classic"
+  }
+]

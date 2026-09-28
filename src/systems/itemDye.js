@@ -16,7 +16,7 @@
 // clothing item's `dye` (systems/createItem.js), and an armor's is
 // derived from its material where it is drawn (ui/paperDoll.js). This
 // is the one read.
-import { DYE_COLORS } from '../characters/dyes.js';
+import { DYE_COLORS, DYE_TARGETS } from '../characters/dyes.js';
 import { weaponDyeColor } from '../characters/weapons.js';
 import { ARMOR_MATERIAL } from './armorMaterials.js';
 
@@ -36,6 +36,16 @@ export function armorDyeColor(material) {
     case M.Daedric: return D.Daedric;
     default: return D.Unchanged;
   }
+}
+
+/** DYE-ICON: WHICH SWATCH GetItemImage's ChangeDye dyes (ItemHelper.cs:473-476) - a weapon's or a piece of armour's
+ *  metal one (never an artifact's: it wears its own colours, :473 `!item.IsArtifact`), a garment's cloth one, and
+ *  anything else none. */
+export function itemDyeTarget(item) {
+  if (!item) return null;
+  if ((item.group === 'Weapons' || item.group === 'Armor') && !item.artifact) return DYE_TARGETS.WeaponsAndArmor;
+  if (item.group === 'MensClothing' || item.group === 'WomensClothing') return DYE_TARGETS.Clothing;
+  return null;
 }
 
 /** The item's dyeColor. */

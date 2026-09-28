@@ -1092,3 +1092,17 @@ Mac: *"Lightning can be seen even when its not storming."*
   lightning is still seen from afar.
 - Pinned by `test/disc20.test.js` (D); mutants `tools/mutants/disc20.json`.
   `01-Overview/Field-Bugs-2026-09-23.md`, DISC20-D.
+
+## FLOW2 - the map's own work, cut to what it answers (2026-09-26)
+
+Mac: *"is there a way to really ensure we have a faster workflow with the same standards?"* - WEATHER3a's calibration
+gate (18,000 samples over the whole map and twenty years) was ~104 s, a quarter of it the collector. The map now reads
+a born system's headings once for the system (`hostHeadings`: a system is one frozen object for as long as the births
+cache holds it, and its birthplace never moves - every placing of it read the same twelve noise corners again), a
+front's once for all of its cells, makes a shape only for a candidate that is kept - from the very six draws it always
+took, in the order it always took them, so no candidate moves another's - and draws a noise corner without making a
+generator for one number (`wind.js seededFirst`, `seededRng`'s own first draw: one `mulberryDraw` for both). THE SAME
+BITS: a snapshot of 840 skies, 400 winds and paths, the systems near 84 places and 21 forecasts compared byte for byte
+before and after, and goldens taken under the code before it pinned in test/flow2_fast_tests.test.js (the wind and its
+path, the sky with its system's place and shape, a front's cells and where they were born). The gate runs in ~58 s.
+

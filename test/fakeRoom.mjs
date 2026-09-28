@@ -90,7 +90,8 @@ export function roomSigner(env, now = () => Date.now()) {
     if (who.g !== undefined) claims.g = who.g;
     if (who.mu !== undefined) claims.mu = who.mu;   // MOD1: a muted player's token
     if (who.lv !== undefined) claims.lv = who.lv;   // RENOWN1: the Renown level the service signed in
-    const key = `${claims.s}|${claims.n}|${claims.k}|${claims.t ?? ''}|${(claims.g ?? []).join('+')}|${claims.mu ?? ''}|${claims.lv ?? ''}`;
+    if (who.gi !== undefined || who.gt !== undefined || who.gm !== undefined) Object.assign(claims, { gi: who.gi, gt: who.gt, gm: who.gm });   // GUILD1c: the character's guild the service signed in
+    const key = `${claims.s}|${claims.n}|${claims.k}|${claims.t ?? ''}|${(claims.g ?? []).join('+')}|${claims.mu ?? ''}|${claims.lv ?? ''}|${claims.gi ?? ''}|${claims.gm ?? ''}`;
     const nowS = Math.floor(now() / 1000);
     const prev = lastI.get(key);
     let i = nowS - 1;
@@ -163,9 +164,9 @@ export function fakeRoom(key, { now = () => Date.now(), ROOMS = null } = {}) {
     // never laid on the frame - the relay ignores what a client says
     // about its own badge, and a harness that could set one on the
     // frame would be testing the wrong half forever.
-    const tok = 'tok' in over ? over.tok : await token(id, { s: over.tokenSub, n: over.name ?? String(id), t: over.title, g: over.glyphs, mu: over.mu, lv: over.lv });   // AUDIT HCC-PARK: `tokenSub` names the verified account the token carries (default acct-<id>; never a frame field - a social hello's own `acct` is the hub's) - one player in a second tab is one account under two ids
+    const tok = 'tok' in over ? over.tok : await token(id, { s: over.tokenSub, n: over.name ?? String(id), t: over.title, g: over.glyphs, mu: over.mu, lv: over.lv, gi: over.gi, gt: over.gt, gm: over.gm });   // AUDIT HCC-PARK: `tokenSub` names the verified account the token carries (default acct-<id>; never a frame field - a social hello's own `acct` is the hub's) - one player in a second tab is one account under two ids
     const frame = { t: 'hello', id, secret: 'secret-of-' + id, name: id, look, pose, ...over };
-    delete frame.title; delete frame.glyphs; delete frame.mu; delete frame.lv; delete frame.tokenSub;   // ACC3/MOD1/RENOWN1: they went into the token above; the wire has no such hello field
+    delete frame.title; delete frame.glyphs; delete frame.mu; delete frame.lv; delete frame.tokenSub; delete frame.gi; delete frame.gt; delete frame.gm;   // ACC3/MOD1/RENOWN1/GUILD1c: they went into the token above; the wire has no such hello field
     if (tok == null) delete frame.tok; else frame.tok = tok;
     return room.webSocketMessage(ws, JSON.stringify(frame));
   };

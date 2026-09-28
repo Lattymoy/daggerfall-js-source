@@ -11,3 +11,8 @@ export const ROLLED_TIERS = Object.freeze(['magic', 'rare', 'legendary']);
 
 /** Did this piece roll its tier on the ladder? Its own stamped field, nothing derived. */
 export const rolledTier = (item) => ROLLED_TIERS.includes(item?.rarity);
+
+/** AUDIT SET D3: a tier the port STAMPS on a piece - the ladder's rolled three, or the gate boss's Aetheric (SET6,
+ *  minted whole, never rolled). The fading rule leaves every one alone: an Aetheric piece a player enchanted at the
+ *  item maker faded whole on breaking, where a Legendary broke and stayed. */
+export const stampedTier = (item) => rolledTier(item) || item?.rarity === 'aetheric';

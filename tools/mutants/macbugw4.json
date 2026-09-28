@@ -38,8 +38,8 @@
   {
     "name": "MACBUGW4-5-a-clockless-scene-keeps-the-last-suns",
     "file": "src/render/renderer.js",
-    "old": "      gl.uniform3f(d.tint, 1, 1, 1);\n      gl.uniform3f(d.sun, 0, 0, 0);",
-    "new": "      gl.uniform3f(d.tint, 1, 1, 1);",
+    "old": "        gl.uniform3f(d.tint, 1, 1, 1);\n        gl.uniform3f(d.sun, 0, 0, 0);",
+    "new": "        gl.uniform3f(d.tint, 1, 1, 1);",
     "tests": [
       "test/blood1_decals.test.js"
     ]

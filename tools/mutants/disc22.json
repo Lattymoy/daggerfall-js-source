@@ -194,8 +194,8 @@
     "tests": [
       "test/disc22d_flail_icon.test.js"
     ],
-    "old": "{ scale, dye: line.image.dye, onReady }",
-    "new": "{ scale, onReady }"
+    "old": "{ scale, dye: line.image.dye, dyeTarget: line.image.dyeTarget, onReady }",
+    "new": "{ scale, dyeTarget: line.image.dyeTarget, onReady }"
   },
   {
     "name": "D22E-flag-gate-back",

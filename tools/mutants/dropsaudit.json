@@ -47,8 +47,8 @@
   {
     "name": "DA-CAMP-CULL-camps-culled-at-120",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "_playerDist > (f.campId != null ? CAMP_CULL_DISTANCE : ENCOUNTER_CULL_DISTANCE)",
-    "new": "_playerDist > ENCOUNTER_CULL_DISTANCE",
+    "old": "const _cullAt = f.campId != null ? CAMP_CULL_DISTANCE : ENCOUNTER_CULL_DISTANCE;",
+    "new": "const _cullAt = ENCOUNTER_CULL_DISTANCE;",
     "tests": [
       "test/dropsaudit.test.js"
     ]
@@ -63,10 +63,10 @@
     ]
   },
   {
-    "name": "DA-F1-plain-hud-gets-loss-nodes",
+    "name": "DA-F1-the-tracks-lose-their-loss-nodes",
     "file": "src/ui/enhancedHud.js",
-    "old": "  const plusLoss = isEnhancedPlus();",
-    "new": "  const plusLoss = true;",
+    "old": "    track.append(ghost, ...chunks); armChunks(chunks);",
+    "new": "",
     "tests": [
       "test/dropsaudit.test.js"
     ]
@@ -81,10 +81,10 @@
     ]
   },
   {
-    "name": "DA-F3-plain-stats-dressed",
+    "name": "DA-F3-the-stats-page-undressed",
     "file": "src/ui/enhancedMenu.js",
-    "old": "  const detail = el('div', `px-qdetail${isEnhancedPlus() ? ' px-sys' : ''}`);",
-    "new": "  const detail = el('div', 'px-qdetail px-sys');",
+    "old": "  const detail = el('div', 'px-qdetail px-sys');",
+    "new": "  const detail = el('div', 'px-qdetail');",
     "tests": [
       "test/dropsaudit.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "DA-F10-menu-mid-drag",
     "file": "src/ui/enhancedInventory.js",
-    "old": "e.preventDefault(); if (drag) return; openMenu(",
-    "new": "e.preventDefault(); openMenu(",
+    "old": "row.oncontextmenu = (e) => { e.preventDefault(); if (drag) return; openMenu(item, from,",
+    "new": "row.oncontextmenu = (e) => { e.preventDefault(); openMenu(item, from,",
     "tests": [
       "test/dropsaudit.test.js"
     ]

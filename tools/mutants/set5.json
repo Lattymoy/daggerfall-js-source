@@ -1,0 +1,263 @@
+[
+  {
+    "name": "SET5-a-place-off-by-one",
+    "file": "src/systems/sigilSets.js",
+    "old": "if (it && setPieceKind(it) === 'armor' && setIdOf(it) === id) out[i] = true; });",
+    "new": "if (it && setPieceKind(it) === 'armor' && setIdOf(it) === id) out[i + 1] = true; });",
+    "tests": [
+      "test/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "SET5-the-shields-place-never-lit",
+    "file": "src/systems/sigilSets.js",
+    "old": "  if (left && setPieceKind(left) === 'shield' && setIdOf(left) === id) out[SET_BODY_SLOTS.length] = true;\n",
+    "new": "",
+    "tests": [
+      "test/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "SET5-the-weapons-place-never-lit",
+    "file": "src/systems/sigilSets.js",
+    "old": "  if ([right, left].some((h) => h && setPieceKind(h) === 'weapon' && setIdOf(h) === id)) out[SET_BODY_SLOTS.length + 1] = true;\n",
+    "new": "",
+    "tests": [
+      "test/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "SET5-the-renowns-sleep-said-offline",
+    "file": "src/systems/sigilSets.js",
+    "old": "sigilRenown() == null ? 'renown'",
+    "new": "sigilRenown() == null ? 'offline'",
+    "tests": [
+      "test/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "SET5-the-lines-never-carried",
+    "file": "src/systems/lootRarity.js",
+    "old": "  if (set) out.push(...setLines(item));",
+    "new": "",
+    "tests": [
+      "test/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "SET5-the-count-of-pieces-more-off",
+    "file": "src/systems/sigilSets.js",
+    "old": "` (${t.at - v.count} more)`",
+    "new": "` (${t.at} more)`",
+    "tests": [
+      "test/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "SET5-a-recovery-shown-without-its-tier",
+    "file": "src/systems/sigilSetPowers.js",
+    "old": "  if (t.get('malacath')?.[2]) {",
+    "new": "  if (true) {",
+    "tests": [
+      "test/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "SET5-a-window-shown-as-a-recovery",
+    "file": "src/systems/sigilSetPowers.js",
+    "old": "if (st.halvedLeft) out.push({ key: 'unbroken', set: 'malacath', name: 'Unbroken', text: time(st.halvedLeft), state: 'active' });",
+    "new": "if (st.halvedLeft) out.push({ key: 'unbroken', set: 'malacath', name: 'Unbroken', text: time(st.halvedLeft), state: 'recovering' });",
+    "tests": [
+      "test/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "SET5-the-minutes-misread",
+    "file": "src/systems/sigilSetPowers.js",
+    "old": "const time = (n) => (n >= 60 ? `${Math.floor(n / 60)}:${String(n % 60).padStart(2, '0')}` : `${n}s`);",
+    "new": "const time = (n) => `${n}s`;",
+    "tests": [
+      "test/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "SET5-the-places-unlit",
+    "file": "src/ui/setCard.js",
+    "old": "const p = el('span', `set-place${on ? ' on' : ''}`);",
+    "new": "const p = el('span', 'set-place');",
+    "tests": [
+      "test/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "SET5-a-sleeping-tier-lit",
+    "file": "src/ui/setCard.js",
+    "old": "const row = el('div', `set-tier${t.awake ? ' awake' : ''}`);",
+    "new": "const row = el('div', 'set-tier awake');",
+    "tests": [
+      "test/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "SET5-the-stage-line-lost",
+    "file": "src/ui/setCard.js",
+    "old": "  if (stage) box.append(el('p', 'set-stage', stage));\n",
+    "new": "",
+    "tests": [
+      "test/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "SET5-a-pip-lit-asleep",
+    "file": "src/ui/setCard.js",
+    "old": "for (const t of st.tiers) pips.append(el('i', t.awake ? 'on' : null));",
+    "new": "for (const t of st.tiers) pips.append(el('i', 'on'));",
+    "tests": [
+      "test/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "SET5-the-press-handing-nothing",
+    "file": "src/ui/setCard.js",
+    "old": "b.onclick = (e) => { e.stopPropagation(); onPick(first); };",
+    "new": "b.onclick = (e) => { e.stopPropagation(); onPick(null); };",
+    "tests": [
+      "test/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "SET5-the-mark-never-taken-off",
+    "file": "src/ui/setCard.js",
+    "old": "  else { delete node.dataset.set; node.style?.removeProperty?.('--set-rune'); }",
+    "new": "  else { node.style?.removeProperty?.('--set-rune'); }",
+    "tests": [
+      "test/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "SET5-the-rune-left-teal",
+    "file": "src/ui/sigilRune.js",
+    "old": "encodeURIComponent(SIGIL_RUNE_TILE_SVG.replace('#72f0d8', c))",
+    "new": "encodeURIComponent(SIGIL_RUNE_TILE_SVG)",
+    "tests": [
+      "test/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "SET5-the-blows-words-on-armour",
+    "file": "src/ui/sigilCard.js",
+    "old": "box.append(el('p', 'sigil-effect', !v.blow",
+    "new": "box.append(el('p', 'sigil-effect', false",
+    "tests": [
+      "test/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "SET5-the-info-box-without-the-block",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  { const set = setCard(item, deps.entity, itemLongName); if (set) card.append(set); }   // SET5: ...and a set piece's, its set\n",
+    "new": "",
+    "tests": [
+      "test/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "SET5-the-strip-never-drawn",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  if (sets) col2.append(sets);\n",
+    "new": "",
+    "tests": [
+      "test/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "SET5-the-hotbars-key-blind-to-the-set",
+    "file": "src/ui/enhancedHotbar.js",
+    "old": "${validSigil(v.item.sigil) ? '*' : ''}${setIdOf(v.item) ?? ''}` : ''}",
+    "new": "${validSigil(v.item.sigil) ? '*' : ''}` : ''}",
+    "tests": [
+      "test/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "SET5-the-huds-chips-unwired",
+    "file": "src/scenes/world.js",
+    "old": "  setHudSetChips(setHudChips);   // SET5: the set powers' windows and recoveries, as chips after the HUD's effects\n",
+    "new": "",
+    "tests": [
+      "test/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "SET5-the-stage-line-outranked",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ".pack-shell .card .setbox p.set-stage, .inv-info .setbox p.set-stage, .setbox p.set-stage {",
+    "new": ".setbox p.set-stage {",
+    "tests": [
+      "test/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "SET5-an-unidentified-pieces-set-unsaid",
+    "file": "src/systems/lootRarity.js",
+    "old": "return [...out, ...(sigil ? setSigilLines(item) : []), ...(set ? setLines(item) : [])]; }",
+    "new": "return [...out, ...(sigil ? setSigilLines(item) : [])]; }",
+    "tests": [
+      "test/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "SET5-a-sleeping-pieces-sigil-called-faint",
+    "file": "src/systems/sigilSets.js",
+    "old": "return lines.length && _dueling && setIdOf(item) && !sigilHasBlow(item.sigil) ? ['Sigil (asleep in a duel)'] : lines;",
+    "new": "return lines;",
+    "tests": [
+      "test/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "SET5-a-set-weapons-blow-unsaid-in-a-duel",
+    "file": "src/systems/sigilSets.js",
+    "old": "return lines.length && _dueling && setIdOf(item) && !sigilHasBlow(item.sigil) ? ['Sigil (asleep in a duel)'] : lines;",
+    "new": "return lines.length && _dueling && setIdOf(item) ? ['Sigil (asleep in a duel)'] : lines;",
+    "tests": [
+      "test/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "SET5-a-duels-armour-sigil-lit",
+    "file": "src/ui/sigilCard.js",
+    "old": "const duel = setPiece && !v0.blow && setsSleep() === 'duel';",
+    "new": "const duel = false;",
+    "tests": [
+      "test/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "SET5-a-set-weapons-blow-put-to-sleep",
+    "file": "src/ui/sigilCard.js",
+    "old": "const duel = setPiece && !v0.blow && setsSleep() === 'duel';",
+    "new": "const duel = setPiece && setsSleep() === 'duel';",
+    "tests": [
+      "test/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "SET5-a-ring-called-a-sets",
+    "file": "src/ui/sigilCard.js",
+    "old": "? (!setPiece ? 'A sigil that answers no set'",
+    "new": "? (false ? 'A sigil that answers no set'",
+    "tests": [
+      "test/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "SET5-the-label-on-a-bare-div",
+    "file": "src/ui/setCard.js",
+    "old": "  strip.setAttribute('role', 'group');",
+    "new": "  // (no role)",
+    "tests": [
+      "test/set5_ui.test.js"
+    ]
+  }
+]

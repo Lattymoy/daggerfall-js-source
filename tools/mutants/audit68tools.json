@@ -67,7 +67,7 @@
   {
     "name": "AUDIT68-X5-a-signal-kills-the-harness-mid-mutant",
     "file": "tools/mutate.mjs",
-    "old": "for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => { interrupted = sig; child?.kill(sig); });\n",
+    "old": "for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => { interrupted = sig; for (const c of children) c.kill(sig); });\n",
     "new": "",
     "tests": [
       "test/audit68_tools.test.js"
@@ -76,8 +76,8 @@
   {
     "name": "AUDIT68-X5-an-unparseable-mutant-is-a-verdict",
     "file": "tools/mutate.mjs",
-    "old": "      if (!m.syntax && /\\.[cm]?js$/.test(m.file)) {",
-    "new": "      if (false) {",
+    "old": "  if (!m.syntax && /\\.[cm]?js$/.test(m.file)) {",
+    "new": "  if (false) {",
     "tests": [
       "test/audit68_tools.test.js"
     ]

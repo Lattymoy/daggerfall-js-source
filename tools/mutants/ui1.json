@@ -1,0 +1,364 @@
+[
+  {
+    "name": "UI1-no-snap",
+    "file": "src/ui/iconFit.js",
+    "old": "  if (whole >= 1 && whole / s >= SNAP) {",
+    "new": "  if (whole >= 1 && whole / s >= 1) {",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "UI1-no-cap",
+    "file": "src/ui/iconFit.js",
+    "old": "  const s = Math.min(boxDev / side, (cap > 0 ? cap : ICON_CAP) * r);",
+    "new": "  const s = boxDev / side;",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "UI1-the-ratio-ignored",
+    "file": "src/ui/iconFit.js",
+    "old": "  const r = clampDpr(dpr);",
+    "new": "  const r = 1;",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "UI1-a-zoomed-out-page-drawn-at-one",
+    "file": "src/ui/iconFit.js",
+    "old": "const DPR_MIN = 0.5, DPR_MAX = 8;",
+    "new": "const DPR_MIN = 1, DPR_MAX = 8;",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "UI1-no-sharp-prescale",
+    "file": "src/ui/iconFit.js",
+    "old": "prescale: s > 1 ? Math.ceil(s) : 1,",
+    "new": "prescale: 1,",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "UI1-the-box-by-round",
+    "file": "src/ui/iconFit.js",
+    "old": "Math.floor(box * r)",
+    "new": "Math.round(box * r)",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "UI1-an-empty-picture-answers-a-rectangle",
+    "file": "src/ui/iconFit.js",
+    "old": "  return x1 < 0 ? null : { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };",
+    "new": "  return { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "UI1-a-box-off-its-sheet",
+    "file": "src/ui/iconFit.js",
+    "old": "  loot: 30,",
+    "new": "  loot: 32,",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "UI1-the-phones-grid-box-ignored",
+    "file": "src/ui/iconFit.js",
+    "old": "(globalThis.matchMedia?.(PHONE_QUERY)?.matches ? SLOT_BOX.gridPhone : SLOT_BOX.grid)",
+    "new": "(SLOT_BOX.grid)",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "UI1-the-desktops-worn-box-ignored",
+    "file": "src/ui/iconFit.js",
+    "old": "globalThis.matchMedia?.(WIDE_QUERY)?.matches",
+    "new": "false",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "UI1-no-trim",
+    "file": "src/ui/bitmapCanvas.js",
+    "old": "(x, y) => data[(y * w + x) * 4 + 3] > TRIM_ALPHA",
+    "new": "() => true",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "UI1-the-growth-smoothed",
+    "file": "src/ui/bitmapCanvas.js",
+    "old": "paintedCanvas(bigW, bigH, false,",
+    "new": "paintedCanvas(bigW, bigH, true,",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "UI1-no-halving",
+    "file": "src/ui/bitmapCanvas.js",
+    "old": "    while (cur && cur.width >= 2 * f.outW && cur.height >= 2 * f.outH) {",
+    "new": "    while (false) {",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "UI1-the-key-blind-to-the-box",
+    "file": "src/ui/textureCanvas.js",
+    "old": "  const key = `${name}@${box}x${r}c${cap}${trim ? '' : 'w'}`;",
+    "new": "  const key = `${name}@x${r}c${cap}${trim ? '' : 'w'}`;",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "UI1-the-second-waiter-dropped",
+    "file": "src/ui/textureCanvas.js",
+    "old": "  if (fitted.has(key)) { hear(fitWaiting.get(key), onReady); return fitted.get(key); }",
+    "new": "  if (fitted.has(key)) { return fitted.get(key); }",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "UI1-the-waiter-not-heard",
+    "file": "src/ui/textureCanvas.js",
+    "old": "  if (icons.has(key)) { hear(waiting.get(key), onReady); return icons.get(key); }",
+    "new": "  if (icons.has(key)) { return icons.get(key); }",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "UI1-the-size-dropped",
+    "file": "src/ui/textureCanvas.js",
+    "old": "    width: `${pic.w}px`, height: `${pic.h}px`, maxWidth: '100%',",
+    "new": "    maxWidth: '100%',",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "UI1-no-count",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  if (line.stack && from === 'local') row.append(el('span', 'count', String(line.stack)));\n",
+    "new": "",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "UI1-the-count-on-the-loot-row",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  if (line.stack && from === 'local') row.append(",
+    "new": "  if (line.stack) row.append(",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "UI1-the-grids-box-on-the-loot-row",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "row.append(tileWithWear(line, row, from === 'remote' ? SLOT_BOX.loot : gridBox()));",
+    "new": "row.append(tileWithWear(line, row, gridBox()));",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "UI1-the-ghost-at-its-own-box",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  const tile = () => itemTile(line, gridBox(), () =>",
+    "new": "  const tile = () => itemTile(line, 38, () =>",
+    "tests": [
+      "test/ui1_slots.test.js",
+      "test/enhancedInventory.test.js"
+    ]
+  },
+  {
+    "name": "UI1-the-source-at-twice",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "(wake) => linePictureUrl(line, { scale: 1, onReady: wake })",
+    "new": "(wake) => linePictureUrl(line, { scale: 2, onReady: wake })",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "UI1-the-count-on-the-padlock",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ".pack-shell .pack-dock .itemrow[data-locked] .count { right: 16px; }",
+    "new": "",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "UI1-the-shop-at-another-surfaces-box",
+    "file": "src/ui/enhancedTrade.js",
+    "old": "linePicture(line, { box: SLOT_BOX.row, onReady: render })",
+    "new": "linePicture(line, { box: SLOT_BOX.loot, onReady: render })",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "UI1-the-broker-unfitted",
+    "file": "src/ui/brokerWindow.js",
+    "old": "requestFittedIcon(img.archive, img.record, { box: SLOT_BOX.broker,",
+    "new": "requestFittedIcon(img.archive, img.record, { box: SLOT_BOX.card,",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "UI1b-the-worn-frame-back-on-its-tile",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ".pack-shell .equipped .wornrow[data-rarity] {\n  border-color:",
+    "new": ".pack-shell .equipped .wornrow[data-rarity] .tile {\n  border-color:",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "UI1b-the-grid-given-an-inner-box",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ".pack-shell .pack-dock .itemrow .count { right: 4px;",
+    "new": ".pack-shell .pack-dock .itemrow .tile { background: rgba(3,4,6,0.4); }\n.pack-shell .pack-dock .itemrow .count { right: 4px;",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "UI1b-the-rune-off-the-panel",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ".pack-shell .pack-dock .itemrow[data-sigil]::after, .pack-shell .wornsock[data-sigil]::after,\n.pack-shell .equipped .wornrow[data-sigil]::after { right: 3px; top: 3px; }",
+    "new": ".pack-shell .pack-dock .itemrow[data-sigil]::after, .pack-shell .wornsock[data-sigil]::after { right: 3px; top: 3px; }",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "UI1b-the-padlock-twice",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ".pack-shell .equipped .wornrow[data-locked] .tile::before { content: none; }\n",
+    "new": "",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "UI1b-the-count-on-the-rune",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ".pack-shell .equipped .wornrow[data-sigil] .worncount { right: 18px; }",
+    "new": "",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UI-A1-an-inline-auto-again",
+    "file": "src/ui/textureCanvas.js",
+    "old": "objectFit: 'contain', imageRendering: '',",
+    "new": "objectFit: 'contain', imageRendering: 'auto',",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UI-A1-the-sheet-s-rule-gone",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "\nimg.fit { image-rendering: pixelated; }",
+    "new": "\n",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UI-A1-the-socket-pixel-dropped",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ".pack-shell .wornsock .tile img.fit { image-rendering: auto; }",
+    "new": ".pack-shell .wornsock .tile img.fit { image-rendering: pixelated; }",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UI-A2-the-glow-under-stone-lost",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ":root .pack-shell .equipped .wornrow[data-rarity] {",
+    "new": ".pack-shell .equipped .wornrow[data-rarity] {",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UI-A3-no-repaint-on-a-resize",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  globalThis.addEventListener?.('resize', resizeHandler);\n",
+    "new": "",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UI-A3-a-repaint-on-every-resize",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "if (sig !== fitSig) { fitSig = sig; if (host) render(); }",
+    "new": "{ fitSig = sig; if (host) render(); }",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UI-A4-the-cache-unbounded",
+    "file": "src/ui/textureCanvas.js",
+    "old": "while (fitted.size > FIT_CACHE_MAX) {",
+    "new": "while (fitted.size > Infinity) {",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UI-A6-the-ratio-capped-at-four",
+    "file": "src/ui/iconFit.js",
+    "old": "const DPR_MIN = 0.5, DPR_MAX = 8;",
+    "new": "const DPR_MIN = 0.5, DPR_MAX = 4;",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-UI1xDYE-the-fitted-name-by-the-dye-alone",
+    "file": "src/ui/textureCanvas.js",
+    "old": "  return `${archive}_${record}${token ? `_${token}` : ''}${dyed ? `_t${dyeTarget}d${dye}` : ''}`;",
+    "new": "  return `${archive}_${record}${token ? `_${token}` : ''}`;",
+    "tests": [
+      "test/ui1_slots.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-UI1xDYE-the-swatch-dropped-at-the-fitted-door",
+    "file": "src/ui/textureCanvas.js",
+    "old": "(wake) => requestIcon(archive, record, { scale: 1, dye, dyeTarget, onReady: wake })",
+    "new": "(wake) => requestIcon(archive, record, { scale: 1, dye, onReady: wake })",
+    "tests": [
+      "test/ui1_slots.test.js",
+      "test/dw3_icons.test.js"
+    ]
+  }
+]

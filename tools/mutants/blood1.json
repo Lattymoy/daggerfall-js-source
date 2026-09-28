@@ -2695,8 +2695,8 @@
   {
     "name": "AUDIT5-the-moon-is-the-flat-s-half-again",
     "file": "src/render/renderer.js",
-    "old": "      gl.uniform3f(d.tint, am[0], am[1], am[2]);\n      gl.uniform3f(d.moon, mc[0] * this._moonScale, mc[1] * this._moonScale, mc[2] * this._moonScale);",
-    "new": "      gl.uniform3f(d.tint, am[0] + mc[0] * this._moonScale * 0.5, am[1] + mc[1] * this._moonScale * 0.5, am[2] + mc[2] * this._moonScale * 0.5);\n      gl.uniform3f(d.moon, 0, 0, 0);",
+    "old": "        gl.uniform3f(d.tint, am[0], am[1], am[2]);\n        gl.uniform3f(d.moon, mc[0] * this._moonScale, mc[1] * this._moonScale, mc[2] * this._moonScale);",
+    "new": "        gl.uniform3f(d.tint, am[0] + mc[0] * this._moonScale * 0.5, am[1] + mc[1] * this._moonScale * 0.5, am[2] + mc[2] * this._moonScale * 0.5);\n        gl.uniform3f(d.moon, 0, 0, 0);",
     "tests": [
       "test/blood1_decals.test.js"
     ]

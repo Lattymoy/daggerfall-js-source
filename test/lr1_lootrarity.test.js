@@ -43,6 +43,7 @@ import '../src/world/landView.js';   // RF4: the condensed rows' lanes register 
 import '../src/world/outdoors.js';
 import '../src/systems/featureLanes.js';   // FT18: the wind, the quick slots and the blood lanes register themselves too
 import * as LR from '../src/systems/lootRarity.js';
+import { REGALIA } from '../src/systems/aetheric.js';   // SET6: the test room shows the Aetheric rung too
 import { createRandomWeapon, createRandomArmor, LOOT_ARRAY_FIELDS, validLootItem, validLootList } from '../src/systems/loot.js';   // AUDIT-LR: a container's whole list, the shape both online doors send
 import { createWeapon } from '../src/combat/enemyEquipment.js';
 import { mintCondition, itemBaseValue } from '../src/systems/itemTemplates.js';
@@ -100,8 +101,11 @@ test('LR5: the switch - ON by default (the ladder is the port\'s own game), forc
 });
 
 test('LR1: one ladder - a rolled tier is the item\'s own, an enchanted item derives Magic, an artifact is the ceiling', () => {
-  assert.deepEqual(LR.RARITY_ORDER, ['common', 'magic', 'rare', 'legendary', 'artifact']);
-  assert.deepEqual(LR.RARITY_ORDER.map((t) => LR.RARITIES[t].rank), [0, 1, 2, 3, 4]);
+  assert.deepEqual(LR.RARITY_ORDER, ['common', 'magic', 'rare', 'legendary', 'aetheric', 'artifact'], 'SET6: the Aetheric rung under the Artifact');
+  assert.deepEqual(LR.RARITY_ORDER.map((t) => LR.RARITIES[t].rank), [0, 1, 2, 3, 4, 5]);
+  assert.equal(LR.rarityOf({ ...sword(), rarity: 'aetheric' }), 'aetheric', 'SET6: an Aetheric piece wears its own field, as a Legendary does');
+  const untouched = sword();
+  assert.deepEqual(LR.applyRarity(untouched, 'aetheric', () => 0), sword(), 'SET6: nothing ROLLS the Aetheric - the ladder\'s roll leaves the piece as it was');
   assert.equal(LR.rarityOf(sword()), 'common');
   assert.equal(LR.rarityOf({ ...sword(), enchantments: [{ type: 0, param: 5 }] }), 'magic', 'a MAGIC.DEF item is Magic');
   assert.equal(LR.rarityOf({ ...sword(), customEnchantments: [{ type: 10, param: 1 }] }), 'magic', 'a made item is Magic');
@@ -453,13 +457,17 @@ test('LR1: the skins - the native cell tints and the tooltip lists, the enhanced
   assert.equal(hoverLines([r]).shown[0].rarity, null);
   assert.equal(LR.rarityColour(r), null);
   const css = read('src/ui/enhancedStyle.js');
-  for (const t of ['magic', 'rare', 'legendary', 'artifact']) {
+  for (const t of LR.RARITY_ORDER.filter((x) => x !== 'common')) {   // SET6: every tier the table holds - the Aetheric's too
     assert.match(css, new RegExp(`\\.itemrow\\[data-rarity="${t}"\\] \\.itemname > span:first-child, \\.packdetail \\.card\\[data-rarity="${t}"\\] h3, \\.wplaque-row\\[data-rarity="${t}"\\] > span:first-child \\{ color: ${LR.RARITIES[t].colour}; \\}`), `${t}'s rule carries the table's colour`);
   }
   const inv = read('src/ui/enhancedInventory.js');
   assert.match(inv, /name: parts\.name \|\| t\?\.name \|\| 'Unknown',/, 'the enhanced pack names through ResolveItemLongName\'s name part now (RF6; LR1: ResolveItemName inside it)');
-  assert.match(inv, /const r = rarityAttr\(item\); if \(r\) row\.dataset\.rarity = r;/, 'a row wears its tier');
-  assert.match(inv, /const lines = rarityLines\(picked\); if \(lines\.length\)/, 'the card lists the lines');
+  // RARITY-UI (2026-09-26): the row's tier goes through the pack's one frame marker (the icon's frame wears it too), and
+  // the card's list leaves the sigil to its own block under it (SIGIL-UI)
+  assert.match(inv, /markItemFrame\(row, item\);   \/\/ LR1/, 'a row wears its tier');
+  assert.match(inv, /export function markItemFrame\(node, item\) \{\n\s+const r = rarityAttr\(item\);\n\s+if \(r\) node\.dataset\.rarity = r;/, 'through the marker');
+  assert.match(inv, /const lines = itemPowerLines\(picked, deps, \{ set: false \}\); if \(lines\.length\)/, 'the card lists the lines (SET5: the sigil and the set draw their own blocks)');   // TRADE-INFO: rarityLines, and a DFU magic item's powers
+  assert.match(inv, /export function itemPowerLines\(item, d = deps, \{ set = true \} = \{\}\) \{\n  const lines = rarityLines\(item, \{ sigil: false, set \}\);/, 'the tier\'s lines first');
   assert.match(read('src/ui/worldPlaque.js'), /if \(r\.rarity\) row\.dataset\.rarity = r\.rarity;/);
   assert.match(read('src/ui/nativeInventory.js'), /armorLabelValue\(av\[i\] \?\? 100, entityArmorDisplayMod\(this\.hooks\.entity, i\)\)/, 'the doll\'s numbers, per part (RF1)');
   assert.match(read('src/ui/enhancedInventory.js'), /material: parts\.material \|\| null,/, 'LR4: the enhanced row names no material until identified - RF6: the long name\'s own prefix, which an unidentified item has none of');
@@ -483,7 +491,7 @@ test('LR3: the drop chime rings at the body for a Rare or better, never for Magi
   assert.match(read('src/scenes/cityGuards.js'), /playBodyFall\(audio, c\.pos\);\n\s*playRareDrop\(audio, c\.pos, g\.entity\.items\);/);
 });
 
-test('LR3: the Test Room\'s loot ladder - one door, thirty items (a Magic and a Rare of ten bases, every Legendary), the switch turned on', () => {
+test('LR3: the Test Room\'s loot ladder - one door, thirty items (a Magic and a Rare of ten bases, every Legendary) - and (SET6) Ruhn\'s Regalia whole, the Aetheric rung - the switch turned on', () => {
   off();
   assert.deepEqual(testEntryById('loot'), { preset: testEntryById('nord-warrior').preset, ride: false, loot: true });
   assert.equal(TEST_LOOT.id, 'loot');
@@ -493,7 +501,8 @@ test('LR3: the Test Room\'s loot ladder - one door, thirty items (a Magic and a 
   assert.equal(LR.lootRarityOn(), true, 'the door turns the ladder on');
   // LR6: the ladder, plus the unidentified pair - one Rare and one
   // Legendary left on the floor's own reading.
-  assert.equal(added.length, 20 + LR.LEGENDARIES.length + 2);
+  assert.equal(added.length, 20 + LR.LEGENDARIES.length + 2 + REGALIA.length);
+  assert.deepEqual(added.filter((i) => i.rarity === 'aetheric').map((i) => i.aetheric), REGALIA.map((r) => r.id), 'SET6: the nine Regalia pieces, once each');
   assert.equal(added.filter((i) => i.rarity === 'magic').length, 10);
   assert.equal(added.filter((i) => i.rarity === 'rare').length, 11);
   const legs = added.filter((i) => i.rarity === 'legendary' && i.isIdentified);

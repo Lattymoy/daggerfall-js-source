@@ -1,0 +1,156 @@
+[
+  {
+    "name": "AUDIT-GOLD-DROP-1-the-field-back-in-the-window",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    if (giving && goldEntry != null) bar.append(goldField());\n    win.append(bar);\n",
+    "new": "    win.append(bar);\n    if (giving && goldEntry != null) win.append(goldField());\n",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GOLD-DROP-1-the-count-kept-on-a-phone",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  .pack-shell .packitems { display: none; }\n",
+    "new": "",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GOLD-DROP-1-the-carry-never-gives-way",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  .pack-shell .packcarry { flex: 1 1 auto; min-width: 0; overflow: hidden; }\n",
+    "new": "  .pack-shell .packcarry { flex: 1 1 auto; }\n",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GOLD-DROP-1-a-finger-gets-32px",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  .pack-shell .packgold .goldbtn::after { content: ''; position: absolute; left: 0; right: 0; top: -8px; bottom: -8px; }",
+    "new": "  .pack-shell .packgold .goldbtn::after { content: ''; position: absolute; left: 0; right: 0; top: 0; bottom: 0; }",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GOLD-DROP-1-the-field-in-the-flow",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".pack-shell .packbar > .goldfield { position: absolute; right: 16px; bottom: calc(100% + 8px); z-index: 5;",
+    "new": ".pack-shell .packbar > .goldfield { position: static; right: 16px; bottom: calc(100% + 8px); z-index: 5;",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GOLD-DROP-1-the-field-under-the-worn-rows",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".pack-shell .packbar > .goldfield { position: absolute; right: 16px; bottom: calc(100% + 8px); z-index: 5;",
+    "new": ".pack-shell .packbar > .goldfield { position: absolute; right: 16px; bottom: calc(100% + 8px); z-index: 0;",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GOLD-DROP-1-the-footer-not-the-fields-block",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".pack-shell .packbar { position: relative; }\n",
+    "new": "",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GOLD-DROP-1-the-buttons-own-rule-gone",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".pack-shell .packgold .goldbtn { align-self: center; margin: -6px 0 -6px 12px; min-height: 32px; padding: 0 12px;\n  font-size: 12px; }\n",
+    "new": "",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GOLD-DROP-2-the-click-away-blind-to-the-field",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "e.target.closest('button, input, .goldfield')",
+    "new": "e.target.closest('button')",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GOLD-DROP-3-the-button-over-a-reward-tray",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    const giving = remote?.kind !== 'reward';\n",
+    "new": "    const giving = true;\n",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GOLD-DROP-3-the-field-over-a-reward-tray",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    if (giving && goldEntry != null) bar.append(goldField());\n",
+    "new": "    if (goldEntry != null) bar.append(goldField());\n",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GOLD-DROP-3-a-choice-hides-the-wagons-button-too",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    const giving = remote?.kind !== 'reward';\n",
+    "new": "    const giving = !session.chooseOne;\n",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GOLD-DROP-3-a-choices-gold-onto-the-ground",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    addItem(to, goldStack(plan.amount));\n",
+    "new": "    addItem(session.chooseOne ? dropped : to, goldStack(plan.amount));\n",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GOLD-DROP-5-a-worded-gold-button-back-on-the-remote-bar",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  head.append(acts);\n  col.append(head);\n",
+    "new": "  if (!deps.loot || deps.loot.storage === true) { const g = el('button', 'act', `${GOLD_VERB[remote?.kind] ?? 'Drop'} gold`); g.onclick = () => { goldEntry = goldEntry == null ? '0' : null; render(); }; acts.append(g); }\n  head.append(acts);\n  col.append(head);\n",
+    "tests": [
+      "test/golddrop.test.js",
+      "test/enhancedInventory.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GOLD-DROP-5-the-press-keeps-a-standing-notice",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "give.onclick = () => { goldEntry = goldEntry == null ? '0' : null; if (goldEntry != null) picked = null; notice = null; render(); };",
+    "new": "give.onclick = () => { goldEntry = goldEntry == null ? '0' : null; if (goldEntry != null) picked = null; render(); };",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GOLD-DROP-5-the-field-outlives-the-window",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  notice = null;\n  goldEntry = null;\n  repaints = 0;",
+    "new": "  notice = null;\n  repaints = 0;",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GOLD-DROP-5-the-wagon-hides-an-open-fields-button",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "      gold.append(give);\n",
+    "new": "      if (remote?.kind !== 'wagon' || goldEntry == null) gold.append(give);\n",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  }
+]

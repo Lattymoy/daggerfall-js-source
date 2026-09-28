@@ -25,13 +25,16 @@ import { calculateAttackDamage, dropWeaponIfTargetImmune, chooseEnemyWeapon, dam
 import { createWeapon } from '../src/combat/enemyEquipment.js';
 import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
 import { equipEnemy, applyDamageToNonPlayer } from '../src/scenes/hostCombat.js';
-import { equipTableOf, equipItem, EQUIP_SLOTS } from '../src/systems/equip.js';
+import { equipTableOf, equipItem, EQUIP_SLOTS, _wearScaleForTests } from '../src/systems/equip.js';
 import { getItemHands, ITEM_HANDS, createEquipTable, BOW_HAND_TEMPLATES } from '../src/characters/equipTable.js';
 import { ITEM_GROUPS } from '../src/characters/equipRules.js';
 import { BODY_PARTS } from '../src/systems/armorMaterials.js';
 import { mintCondition } from '../src/systems/itemTemplates.js';
 import { playerArrowHitFoe } from '../src/combat/arrowFlight.js';
 import { setValue, resetToDefaults } from '../src/systems/settings.js';
+
+// BALANCE1: this file pins DFU's / the mod's own wear verbatim, so it runs the port's wear scale at 1 (test/balance1.test.js pins the scale)
+_wearScaleForTests(1);
 
 const src = (p) => readFileSync(new URL(`../src/${p}`, import.meta.url), 'utf8');
 
@@ -291,7 +294,7 @@ test('AUDIT 58: GetItemHands READS BowLeftHandWithSwitching - both arms, and the
   assert.equal(getItemHands(bow), ITEM_HANDS.LeftOnly, 'read live, like hud.arrowCountLabel reads it');
   assert.equal(getItemHands({ group: ITEM_GROUPS.Weapons, templateIndex: 129 }), ITEM_HANDS.LeftOnly, 'the short bow too');
   assert.equal(getItemHands({ group: ITEM_GROUPS.Weapons, templateIndex: 120 }), ITEM_HANDS.Either, 'and nothing else moved');
-  // ...so the table puts it where hud.js:405-409 looks for it.
+  // ...so the table puts it where hud.js:406-410 looks for it.
   const t = createEquipTable();
   assert.equal(t.getEquipSlot(bow), EQUIP_SLOTS.LeftHand);
   const entity = { items: [] };

@@ -396,7 +396,7 @@ test('SOC5: scenes/world.js - the door on hudCtx, the ray read as the activation
   // the ray is the ACTIVATION ray's own reading, and the cylinder is the port's one test
   assert.match(w, /const fwd = \[Math\.sin\(cam\.yaw\) \* Math\.cos\(cam\.pitch\), Math\.sin\(cam\.pitch\), Math\.cos\(cam\.yaw\) \* Math\.cos\(cam\.pitch\)\];/, 'the same forward the activation site composes');
   // AUDIT DISC7 A6: through `peerInSight` - the same one law and cylinder, and a wall in front of the player blocks it
-  assert.match(w, /const peerInSight = \(eye, dir\) => \{\s*\n\s*const hit = pickPeerInFront\(eye, dir, peersNear\(\), SOCIAL_REACH, rayPersonDistance\);/, 'one law, one cylinder');
+  assert.match(w, /const peerInSight = \(eye, dir\) => \{\s*\n\s*const hit = pickPeerInFront\(eye, dir, \(peersNear\(\) \?\? \[\]\)\.filter\(\(q\) => !q\.cv\), SOCIAL_REACH, rayPersonDistance\);/, 'one law, one cylinder');
   assert.match(w, /const hit = peerInSight\(cam\.pos, socialFwd\(\)\);/, 'the host\'s own camera');   // AUDIT DROPS E3: the forward is a named function now, shared with the plaque's modal pick
   assert.match(w, /const socialFwd = \(\) => \[Math\.sin\(cam\.yaw\) \* Math\.cos\(cam\.pitch\), Math\.sin\(cam\.pitch\), Math\.cos\(cam\.yaw\) \* Math\.cos\(cam\.pitch\)\];/, 'the ray read as the activation site reads it');
   assert.equal((w.match(/rayPersonDistance\(/g) ?? []).length, 1, 'the host still calls the cylinder in exactly one place - the other site hands it to raceActivation as a list');
@@ -486,7 +486,7 @@ test('AUDIT SOC C12/C25: a refused row is READABLE - the disabled opacity is .75
 
 test('AUDIT SOC C9: the touch layer has a control for SocialInteract - one 48px button beside the mode cycle, drawn only where a host hands the hook in, calling the HOST door rather than synthesizing a key (mutants: the button always drawn, so an offline page offers a dead door; a synthesized KeyF that a rebind would break; the hook undocumented)', () => {
   const touch = rd('src/ui/touch.js');
-  assert.match(touch, /if \(hooks\.socialInteract\) button\('[^']+', edge\('right', hooks\.cycleMode \? 232 : 160\), edge\('bottom', 16\), 48, \(\) => \{ hooks\.socialInteract\(\); \}\);/,
+  assert.match(touch, /if \(hooks\.socialInteract\) socialBtn = button\('[^']+', edge\('right', hooks\.cycleMode \? 232 : 160\), edge\('bottom', 16\), 48, \(\) => \{ hooks\.socialInteract\(\); \}\);/,
     'gated by the hook, 48 like its neighbours, and the host answers for itself');
   assert.doesNotMatch(touch, /tapAction\('SocialInteract'\)/, 'never the key: F is rebindable and may be unbound outright');
   assert.match(touch, /socialInteract\?\(\)/, 'and the header documents the hook it calls');

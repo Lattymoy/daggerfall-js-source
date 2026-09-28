@@ -433,8 +433,8 @@
   {
     "name": "C9-touch-button-ungated",
     "file": "src/ui/touch.js",
-    "old": "if (hooks.socialInteract) button('\u263a',",
-    "new": "button('\u263a',",
+    "old": "if (hooks.socialInteract) socialBtn = button('\u263a',",
+    "new": "socialBtn = button('\u263a',",
     "tests": [
       "test/soc5_interact.test.js",
       "test/audit39_uicore.test.js"

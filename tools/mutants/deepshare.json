@@ -1,0 +1,114 @@
+[
+  {
+    "name": "DEEPSHARE-camps-radius",
+    "file": "src/scenes/deepWatersHost.js",
+    "old": "export const standsTheDeep = (myId, myFeet, peers, standing = true) => amGroupRollOwner(myId, myFeet, peers, standing ? DEEP_SHARE_RADIUS : DEEP_SHARE_RADIUS * DEEP_SHARE_HYSTERESIS);",
+    "new": "export const standsTheDeep = (myId, myFeet, peers) => amGroupRollOwner(myId, myFeet, peers);",
+    "tests": ["test/deepshare.test.js"]
+  },
+  {
+    "name": "DEEPSHARE-radius-not-the-populate",
+    "file": "src/scenes/deepWatersHost.js",
+    "old": "export const DEEP_SHARE_RADIUS = POPULATE_RADIUS;",
+    "new": "export const DEEP_SHARE_RADIUS = 100;",
+    "tests": ["test/deepshare.test.js"]
+  },
+  {
+    "name": "DEEPSHARE-cap-ignores-others",
+    "file": "src/scenes/deepWatersHost.js",
+    "old": "  return othersNear > 0 ? { ...s, maxLive: Math.max(0, s.maxLive - othersNear) } : s;",
+    "new": "  return s;",
+    "tests": ["test/deepshare.test.js"]
+  },
+  {
+    "name": "DEEPSHARE-cap-below-none",
+    "file": "src/scenes/deepWatersHost.js",
+    "old": "maxLive: Math.max(0, s.maxLive - othersNear) }",
+    "new": "maxLive: s.maxLive - othersNear }",
+    "tests": ["test/deepshare.test.js"]
+  },
+  {
+    "name": "DEEPSHARE-allowance-is-the-old-one",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "export const DEEP_PUPPETS_MAX = 32;",
+    "new": "export const DEEP_PUPPETS_MAX = 12;",
+    "tests": ["test/deepshare.test.js"]
+  },
+  {
+    "name": "DEEPSHARE-sender-names-none",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    const dz = out.filter((r) => src.get(r)?.managed).map((r) => r.i);",
+    "new": "    const dz = [];",
+    "tests": ["test/deepshare.test.js"]
+  },
+  {
+    "name": "DEEPSHARE-sender-names-every-foe",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    const dz = out.filter((r) => src.get(r)?.managed).map((r) => r.i);",
+    "new": "    const dz = out.map((r) => r.i);",
+    "tests": ["test/deepshare.test.js"]
+  },
+  {
+    "name": "DEEPSHARE-reader-ignores-the-names",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    const deepIds = validDeepIds(data.dz);",
+    "new": "    const deepIds = new Set();",
+    "tests": ["test/deepshare.test.js"]
+  },
+  {
+    "name": "DEEPSHARE-reader-no-deep-arm",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "deep ? livePuppetsOf(from, false, false, true) >= DEEP_PUPPETS_MAX : r.t === KNIGHT_CITYWATCH_ID",
+    "new": "r.t === KNIGHT_CITYWATCH_ID",
+    "tests": ["test/deepshare.test.js"]
+  },
+  {
+    "name": "DEEPSHARE-deep-kind-uncounted",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "const kind = (t, site, dp, qq) => (site ? 'camp' : qq ? 'quest' : dp ? 'deep' : t === KNIGHT_CITYWATCH_ID ? 'watch' : 'foe');",
+    "new": "const kind = (t, site, dp, qq) => (site ? 'camp' : qq ? 'quest' : t === KNIGHT_CITYWATCH_ID ? 'watch' : 'foe');",
+    "tests": ["test/deepshare.test.js"]
+  },
+  {
+    "name": "DEEPSHARE-pending-forgets-its-class",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      _pupPending.set(key, { ...r, _site: site, _deep: deep, _quest: qt });",
+    "new": "      _pupPending.set(key, { ...r, _site: site, _quest: qt });",
+    "tests": ["test/deepshare.test.js"]
+  },
+  {
+    "name": "DEEPSHARE-built-puppet-unflagged",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "          nf._pupDeep = !!(rec._deep ?? deep);   // DEEP-SHARE: its class as it was built\n",
+    "new": "",
+    "tests": ["test/deepshare.test.js"]
+  },
+  {
+    "name": "DEEPSHARE-near-has-no-reach",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (dx * dx + dz * dz <= radius * radius) n++;",
+    "new": "      n++;",
+    "tests": ["test/deepshare.test.js"]
+  },
+  {
+    "name": "DEEPSHARE-near-counts-every-puppet",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (!f._pupDeep || f.dead) continue;",
+    "new": "      if (f.dead) continue;",
+    "tests": ["test/deepshare.test.js"]
+  },
+  {
+    "name": "DEEPSHARE-everyone-populates",
+    "file": "src/scenes/world.js",
+    "old": "get attempts() { return _standsTheDeep() ? ENEMY_ATTEMPTS_PER_PIXEL_PER_TICK : 0; }",
+    "new": "get attempts() { return ENEMY_ATTEMPTS_PER_PIXEL_PER_TICK; }",
+    "tests": ["test/deepshare.test.js"]
+  },
+  {
+    "name": "DEEPSHARE-cap-counts-nobody",
+    "file": "src/scenes/world.js",
+    "old": "    settings: () => deepWatersEnemySettingsNear(exteriorFoes.deepPuppetsNear(player.feetAt(), DEEP_SHARE_RADIUS)),",
+    "new": "    settings: () => deepWatersEnemySettingsNear(0),",
+    "tests": ["test/deepshare.test.js"]
+  }
+]

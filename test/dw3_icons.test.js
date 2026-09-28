@@ -103,7 +103,7 @@ test('DW3 law: DaggerfallUnityItem.dyeColor as the port\'s items carry it - a we
   assert.deepEqual([M.Iron, M.Steel, M.Silver, M.Elven, M.Dwarven, M.Mithril, M.Adamantium, M.Ebony, M.Orcish, M.Daedric].map(armorDyeColor),
     [D.Iron, D.Steel, D.Silver, D.Elven, D.Dwarven, D.Mithril, D.Adamantium, D.Ebony, D.Orcish, D.Daedric]);
   // and the image carries it (GetItemImage :402 reads it first)
-  assert.deepEqual(inventoryItemImage({ group: 'Weapons', templateIndex: 113, material: WEAPON_MATERIALS.Iron, dyeColor: DYE_COLORS.Iron }), { archive: 234, record: 5, dye: DYE_COLORS.Iron });
+  assert.deepEqual(inventoryItemImage({ group: 'Weapons', templateIndex: 113, material: WEAPON_MATERIALS.Iron, dyeColor: DYE_COLORS.Iron }), { archive: 234, record: 5, dye: DYE_COLORS.Iron, dyeTarget: 1 }, 'DYE-ICON: and the metal swatch it changes');
   assert.equal(inventoryItemImage({ group: 'Books', templateIndex: 277 }).dye, DYE_COLORS.Unchanged);
 });
 
@@ -213,12 +213,12 @@ test('DW3 DOM door: requestIcon by dye - the replacement drawn as it is, keyed a
   } finally { globalThis.document = hadDocument; _resetModSettings(); clearVendorTextures(); _resetDiverseWeaponsIcons(); }
 });
 
-test('DW3 GL door: the list drawer asks the pipeline by dye and reads back the variant the upload answered - an Iron dagger and a Daedric one two textures, a silver one the shared #ui', async () => {
+test('DW3 GL door: the list drawer asks the pipeline by dye and reads back the variant the upload answered - an Iron dagger and a Daedric one two textures, a silver one its own (DYE-ICON: the classic arm dyes it by the Silver table, and its warm key is by dye and swatch - never the bare key an undyed picture has)', async () => {
   const ups = [];
   const textures = new Map();
   const icons = {
     getTexture: async () => ({ recordCount: 30, getSize: () => ({ width: 8, height: 8 }) }),
-    uploadRecord: (archive, record, opts) => { ups.push({ archive, record, ...opts }); const t = dyeToken(opts.dye); const v = t === 'Iron' || t === 'Daedric' ? `#ui_${t}` : '#ui'; textures.set(`${archive}_${record}${v}`, `gl:${v}`); return v; },
+    uploadRecord: (archive, record, opts) => { ups.push({ archive, record, ...opts }); const t = dyeToken(opts.dye); const v = t === 'Iron' || t === 'Daedric' ? `#ui_${t}` : opts.dyeTarget != null ? `#ui_dye${opts.dye}_${opts.dyeTarget}` : '#ui'; textures.set(`${archive}_${record}${v}`, `gl:${v}`); return v; },   // a replacement for two metals, the classic arm dyeing the third (dataPipeline.js)
     textures,
   };
   const drawer = makeIconDrawer(icons);
@@ -231,9 +231,9 @@ test('DW3 GL door: the list drawer asks the pipeline by dye and reads back the v
   for (const it of [iron, daedric, silver]) drawer(renderer, m, it, [0, 0, 100, 100], 0);   // cold: warms three keys
   for (let i = 0; i < 4; i++) await Promise.resolve();
   assert.deepEqual(ups.map((u) => [u.archive, u.record, u.dye, u.mips, u.removeMask]), [[234, 5, DYE_COLORS.Iron, false, true], [234, 5, DYE_COLORS.Daedric, false, true], [234, 5, DYE_COLORS.Silver, false, true]], 'three asks, by dye (GetItemImage :458), the UI variant with the mask stripped (HM1)');
-  assert.deepEqual([...drawer._warm], ['234_5_Iron', '234_5_Daedric', '234_5'], 'the warm key carries the dye; the silver one is the bare key');
+  assert.deepEqual([...drawer._warm], ['234_5_Iron_t1d15', '234_5_Daedric_t1d25', '234_5_t1d18'], 'the warm key carries the dye and the swatch it changes - the silver one too, whose name is never printed');
   for (const it of [iron, daedric, silver]) assert.ok(drawer(renderer, m, it, [0, 0, 100, 100], 0));
-  assert.deepEqual(draws, ['gl:#ui_Iron', 'gl:#ui_Daedric', 'gl:#ui'], 'each drawn from the variant its upload answered');
+  assert.deepEqual(draws, ['gl:#ui_Iron', 'gl:#ui_Daedric', 'gl:#ui_dye18_1'], 'each drawn from the variant its upload answered');
 });
 
 test('DW3 wiring: the paper doll asks by item.dyeColor and blits an imported texture as it is; the DOM callers pass the dye; the install rides the scene boot; the drawers and the pipeline forward it', () => {
@@ -243,21 +243,25 @@ test('DW3 wiring: the paper doll asks by item.dyeColor and blits an imported tex
   assert.match(doll, /loadRecord\(res\.archive, res\.record, deps\.getTexture, itemDyeColor\(it\)\)/, 'the item\'s own dyeColor, not the remap\'s (an artifact\'s is Unchanged)');
   assert.match(doll, /loadRecord\(t\.playerTextureArchive \+ \(raceByKey\(deps\.race\)\?\.morphologyIndex \?\? HUMAN_MORPHOLOGY\), t\.playerTextureRecord, deps\.getTexture, itemDyeColor\(it\)\)/, 'the cloak interior too');
   // DISC24-B: the pack's tile and detail ask through its one picture door (linePictureUrl), and the door asks by the dye
-  assert.match(rd('src/ui/enhancedInventory.js'), /if \(line\.image\) return requestIcon\(line\.image\.archive, line\.image\.record, \{ scale, dye: line\.image\.dye, onReady \}\);/);
-  assert.match(rd('src/ui/enhancedInventory.js'), /linePictureUrl\(line, \{ scale: 2, onReady: render \}\)/);
-  assert.match(rd('src/ui/enhancedInventory.js'), /function infoCard\(picked, side, ready = render\)[\s\S]*?linePictureUrl\(line, \{ scale: 4, onReady: ready \}\)/, 'PLUS7: the card redraws through its caller - the detail column by default, the hover card its own');
-  assert.match(rd('src/ui/enhancedHud.js'), /requestIcon\(image\.archive, image\.record, \{ scale: 2, dye: image\.dye, onReady:/);
+  assert.match(rd('src/ui/enhancedInventory.js'), /if \(line\.image\) return requestIcon\(line\.image\.archive, line\.image\.record, \{ scale, dye: line\.image\.dye, dyeTarget: line\.image\.dyeTarget, onReady \}\);/);   // DYE-ICON: and the swatch the dye changes
+  // UI1: the tile and the card ask the FITTED door, whose name carries the dye and whose source is the dyed door above
+  assert.match(rd('src/ui/enhancedInventory.js'), /function itemTile\(line, box, ready = render\) \{[\s\S]*?linePicture\(line, \{ box, onReady: ready \}\)/);
+  assert.match(rd('src/ui/enhancedInventory.js'), /function infoCard\(picked, side, ready = render\)[\s\S]*?linePicture\(line, \{ box: SLOT_BOX\.card, onReady: ready \}\)/, 'PLUS7: the card redraws through its caller - the detail column by default, the hover card its own');
+  assert.match(rd('src/ui/enhancedInventory.js'), /const name = line\.image \? iconName\(line\.image\.archive, line\.image\.record, line\.image\.dye, line\.image\.dyeTarget\)/, 'UI1: two dyes, two fitted pictures - and (MERGE, DYE-ICON) two swatches');
+  assert.match(rd('src/ui/enhancedHud.js'), /requestFittedIcon\(image\.archive, image\.record, \{ box, dpr, dye: image\.dye, dyeTarget: image\.dyeTarget, onReady:/);   // UI2: the diamond's picture fitted, still by the dye; DYE-ICON: and its swatch
+  assert.match(rd('src/ui/enhancedHotbar.js'), /requestFittedIcon\(image\.archive, image\.record, \{ box: fit\.box, dpr: fit\.dpr, dye: image\.dye, dyeTarget: image\.dyeTarget, onReady: again \}\)/);   // UI2 + DYE-ICON: the bar's slot the same
+  assert.match(rd('src/ui/textureCanvas.js'), /\(wake\) => requestIcon\(archive, record, \{ scale: 1, dye, dyeTarget, onReady: wake \}\)/, 'MERGE (UI1 x DYE-ICON): the fitted door asks its source by the swatch too');
   assert.match(rd('src/scenes/shared.js'), /installDiverseWeaponsIcons\(\);[^\n]*\n\s+installRoleplayRealismItems\(\);[^\n]*\n\s+installRoleplayRealism\(\);[^\n]*\n\s+const textures = storedTextureNames\(\)/, 'installed at the scene boot, before the archives load - not at worldTick\'s module scope (a TDZ through the cycle)');
   assert.ok(!/installDiverseWeaponsIcons/.test(rd('src/systems/worldTick.js')));
   for (const f of ['src/ui/itemScroller.js', 'src/ui/nativeInventory.js']) {
-    assert.match(rd(f), /icons\.uploadRecord\(img\.archive, img\.record, \{ mips: false, removeMask: true, dye: img\.dye \}\)/, f);
+    assert.match(rd(f), /icons\.uploadRecord\(img\.archive, img\.record, \{ mips: false, removeMask: true, dye: img\.dye, dyeTarget: img\.dyeTarget \}\)/, f);
     assert.match(rd(f), /sizes\.set\(key, tex\.getSize\(img\.record\)\);/, `${f}: the CLASSIC record's size (ItemListScroller.cs:440-441)`);
   }
   const pipe = rd('src/scenes/dataPipeline.js');
   assert.match(pipe, /const swap = decodedTexture\(archive, record, 0, 'Albedo', dye\);/);
-  assert.match(pipe, /const variant = mips === false \? \(swap && token \? `#ui_\$\{token\}` : '#ui'\) : undefined;/);
+  assert.match(pipe, /const variant = mips === false \? \(swap && token \? `#ui_\$\{token\}` : dyed \? `#ui_dye\$\{dye\}_\$\{dyeTarget\}` : '#ui'\) : undefined;/, 'DYE-ICON: a dyed classic picture keys apart too, by dye and swatch, apart from a replacement\'s');
   assert.match(pipe, /return variant;/);
-  assert.match(rd('src/systems/itemTemplates.js'), /return \{ archive, record, dye: itemDyeColor\(item\) \};/);
+  assert.match(rd('src/systems/itemTemplates.js'), /return \{ archive, record, dye: itemDyeColor\(item\), dyeTarget: itemDyeTarget\(item\) \};/);
   assert.match(rd('src/systems/textureReplacement.js'), /const lane = async \(\) => \{ while \(next < todo\.length\) await one\(todo\[next\+\+\]\); \};/, 'the preload runs in lanes');
   assert.equal(PRELOAD_CONCURRENCY, 8);
 });

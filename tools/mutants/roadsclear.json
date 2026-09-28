@@ -56,7 +56,7 @@
   {
     "name": "ROADS-CLEAR-the-loader-ignores-the-verdict",
     "file": "src/world/wodLocationLoader.js",
-    "old": "    if (siteClear && !siteClear(session.prefab[i], prefab, rect)) continue;\n",
+    "old": "  if (st.siteClear && !st.siteClear(session.prefab[i], prefab, rect)) return;\n",
     "new": "",
     "tests": [
       "test/roadsclear.test.js"

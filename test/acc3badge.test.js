@@ -259,7 +259,8 @@ test('ACC3b: the DOM layer puts the title above and the glyphs right of the name
   assert.equal(tag.children[0].className, 'dfname-renown');
   assert.equal(tag.children[0].textContent, '', 'no level on the point, no words on the plate');
   assert.equal(tag.children[1].className, 'dfname-who');
-  assert.equal(tag.children[2].className, 'dfname-glyphs');
+  assert.equal(tag.children[2].className, 'dfname-guild', 'GUILD1c: the guild\'s tag right of the name (empty takes no room: `.dfname-guild:empty`)');
+  assert.equal(tag.children[3].className, 'dfname-glyphs');
   const svgs = all(node, 'dfname-glyph');
   assert.equal(svgs.length, 2, 'one shape per glyph');
   assert.equal(svgs[0].ns, 'http://www.w3.org/2000/svg', 'a shape, not a letter - an emoji is whatever colour font the machine happens to have');

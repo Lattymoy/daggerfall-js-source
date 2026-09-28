@@ -1,0 +1,65 @@
+[
+  {
+    "name": "GOLD-DROP-the-button-gone",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    gold.append(give);\n",
+    "new": "",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "GOLD-DROP-the-field-never-shown",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    if (giving && goldEntry != null) bar.append(goldField());\n",
+    "new": "",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "GOLD-DROP-the-bars-button-back",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  head.append(acts);\n  col.append(head);\n",
+    "new": "  if (!deps.loot) { const g = el('button', 'act', 'Gold'); g.onclick = () => { goldEntry = goldEntry == null ? '0' : null; render(); }; acts.append(g); }\n  head.append(acts);\n  col.append(head);\n",
+    "tests": [
+      "test/enhancedInventory.test.js"
+    ]
+  },
+  {
+    "name": "GOLD-DROP-the-verb-lost",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "const verb = `${GOLD_VERB[remote?.kind] ?? 'Drop'} gold`;",
+    "new": "const verb = 'Drop gold';",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "GOLD-DROP-the-fields-verb-lost",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "const go = el('button', 'act primary', GOLD_VERB[remote?.kind] ?? 'Drop');",
+    "new": "const go = el('button', 'act primary', 'Drop');",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "GOLD-DROP-the-toggle-stuck",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "give.onclick = () => { goldEntry = goldEntry == null ? '0' : null;",
+    "new": "give.onclick = () => { goldEntry = '0';",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "GOLD-DROP-storage-gated-with-the-loot",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  packOpen = !d.loot || d.loot.storage === true;",
+    "new": "  packOpen = !d.loot;",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  }
+]

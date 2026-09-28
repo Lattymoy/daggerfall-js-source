@@ -83,12 +83,19 @@ export function seededRng(seed) {
   let a = seed >>> 0;
   return () => {
     a = (a + 0x6D2B79F5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    return mulberryDraw(a);
   };
 }
+/** mulberry32's draw from its advanced state - `seededRng`'s and `seededFirst`'s one copy. */
+function mulberryDraw(a) {
+  let t = a;
+  t = Math.imul(t ^ (t >>> 15), t | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
+/** FLOW2 (2026-09-26): `seededRng(seed)()` - a seed's first draw, the same bits - without making a generator for one
+ *  number (the weather map's value noise asks twelve of them a wind reading). */
+export const seededFirst = (seed) => mulberryDraw(((seed >>> 0) + 0x6D2B79F5) >>> 0);
 
 /**
  * The front's envelope at `sinceArrival` game minutes: 0 before the

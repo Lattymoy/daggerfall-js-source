@@ -84,7 +84,7 @@ test('bats 2: every collider.move in both motors passes this.height', () => {
     const s = src(f);
     const sites = [...s.matchAll(/this\.collider\.move\(this\.feet,[^;]*\);/g)].map((m) => m[0]);
     assert.ok(sites.length >= 1, `${f} moves through the collider`);
-    for (const site of sites) assert.match(site, /, this\.height\);$/, `${f}: ${site}`);
+    for (const site of sites) assert.match(site, /, this\.height(?:, true, FOE_KEEPS_FLOOR)?\);$/, `${f}: ${site}`);   // AUDIT (pre-merge) S2: the foe's floor flag after it
   }
   assert.equal([...src('src/characters/enemyMotor.js').matchAll(/this\.collider\.move\(/g)].length, 6, 'the six motor sites');
 });

@@ -61,6 +61,7 @@ import { artifactHook } from './artifactEffects.js';   // V3: the nine artifact 
 // in the graph; re-exported for this module's many consumers.
 import { ENCHANTMENT_TYPES } from '../formats/magicDef.js';
 import { SOCIAL_GROUP_COUNT } from '../formats/factionFile.js';   // AUDIT 63 F6: PlayerEntity.cs:128-129 sizes reactionMods at socialGroupCount = 11
+import { regenBarred } from './courtRules.js';   // WBX6: the Burning Court keeps no regeneration
 export { ENCHANTMENT_TYPES };
 
 /** EnchantmentSettings.ClassicType (DaggerfallUnityItem.cs:1316-1320).
@@ -158,7 +159,7 @@ export const isEnchantedItem = (item) => !!itemEnchantments(item);
 // ported" - and M4's catalogue is that sum's missing half, so it
 // closed here and stays closed: legacyEnchantmentValue (:222-238) is
 // the sum, over VALUE_COUNTS_BELOW (:179), spellEnchantPtCost (:214)
-// and the SoulBound/CastWhen arms, and systems/loot.js:274 prices
+// and the SoulBound/CastWhen arms, and systems/loot.js:275 prices
 // every minted legacy item through it.
 //
 // THE BOUND IS THE ENUM'S OWN ORDER (:604-605): only
@@ -277,7 +278,9 @@ const MINUTES_PER_HOUR = 60;
  *  Either way the equip stamps timeEffectsLastRerolled. */
 export function assignHeldSpell(record, entity, item, { ctx = null, nowMinutes = 0, recast = false } = {}) {
   ctx = mergeCtx(ctx);
-  _fx.removeItemPinnedEffects?.(entity, item);   // RerollItemEffects' remove-first half; idempotent on first equip
+  // ENCHANT-LOAD: no strip here - AssignBundle strips nothing (EntityEffectManager.cs:443), so an item's second
+  // Cast-When-Held power stands BESIDE its first. The remove-first half is RerollItemEffects' own, ONCE per item
+  // (:2012-2021 - enchantmentMagicRound below); stripped per ROW, each power took the one before it off.
   _fx.applySpell?.(record, entity.level ?? 1, entity, ctx?.sinks ?? {}, ctx?.rolls ?? Math.random, { entity }, { bypassSavingThrows: true, heldItem: item });
   if (!recast) {
     const skillOf = ctx?.castingSkillOf ?? ((sk) => skillValue(entity, sk));
@@ -338,6 +341,9 @@ const REGISTRY = new Map([
     flags: PAYLOAD.Used,
     used({ param, entity, item, ctx }) {
       if (item && (item.currentCondition ?? 1) <= 0) return { durabilityLoss: DURABILITY_LOSS_ON_USE };
+      // HOME-MAGIC (not DFU's: a departure, Port-Ledger A): where the host bars casting (a visitor in another's online
+      // home), the item's spell does not go - the host says why - and the item spends no durability on it
+      if (ctx?.castBarred?.()) return null;
       const record = ctx?.spellsByIndex?.()?.get?.(param);
       if (record) {
         if (record.rangeType === 0) ctx?.applySpellToSelf?.(record, entity, item);
@@ -431,7 +437,7 @@ const REGISTRY = new Map([
   [T.RegensHealth, {
     flags: PAYLOAD.Held,   // RegensHealth.cs:34 - the round tick is its held bundle's
     magicRound({ param, round, entity, ctx }) {
-      if (round % REGEN_PER_ROUNDS !== 0) return;
+      if (round % REGEN_PER_ROUNDS !== 0 || regenBarred()) return;   // WBX6: not in the Burning Court
       const regen = param === 0
         || (param === 2 && (ctx?.inDarkness?.() ?? false))
         || (param === 1 && (ctx?.inSunlight?.() ?? false));
@@ -731,7 +737,10 @@ export function doItemEnchantmentPayloads(flags, item, { entity = null, target =
     if ((flags & PAYLOAD.Strikes) && (row.flags & PAYLOAD.Strikes)) {
       const r = row.strikes?.(env);
       if (r?.strikesModulateDamage) damageOut += r.strikesModulateDamage;
-      applyResults(r, env);
+      // AUDIT WBX F2 (2026-09-26): a blow on the Oblivion Gate's boss wears no gear (WBX6 - world/gateBoss.js's stand-in
+      // carries `spareGear`), and that is every Strikes payload's bill too: a Cast When Strikes blade paid 10 a blow and
+      // the Mace of Molag Bal the blow's damage, and a fight of hundreds of blows destroyed them
+      applyResults(target?.spareGear && r?.durabilityLoss ? { ...r, durabilityLoss: 0 } : r, env);
     }
     if ((flags & PAYLOAD.Breaks) && (row.flags & PAYLOAD.Breaks)) row.breaks?.(env);
     if ((item.currentCondition ?? 1) > 0) {
@@ -806,7 +815,7 @@ function applyResults(r, env) {
  *  DFU clamps current magicka to the recomputed max after the pass
  *  (:1700-1702) - the caller owning the magicka pool applies
  *  liveMaxMagicka below and clamps the same way. */
-export function computeEnchantmentMods(entity, ctx = null) {
+export function computeEnchantmentMods(entity, ctx = null, { clampMagicka = true } = {}) {
   ctx = mergeCtx(ctx);
   const mods = {
     maxMagicka: 0, increasedArmorMod: 0, decreasedArmorMod: 0, chanceToHitMod: 0, absorbsSpells: false,
@@ -828,7 +837,7 @@ export function computeEnchantmentMods(entity, ctx = null) {
   // ExtraSpellPts for free. DFU clamps current magicka to the new max
   // after the pass (:1700-1702).
   entity.maxMagickaModifier = mods.maxMagicka;
-  if ((entity.magicka ?? 0) > (entity.maxMagicka ?? 0) && typeof entity.maxMagicka === 'number') entity.magicka = entity.maxMagicka;
+  if (clampMagicka && (entity.magicka ?? 0) > (entity.maxMagicka ?? 0) && typeof entity.maxMagicka === 'number') entity.magicka = entity.maxMagicka;
   return mods;
 }
 
@@ -849,14 +858,15 @@ export function enchantmentMagicRound(entity, round, { nowMinutes = 0, ctx = nul
   // E2: the REROLL scheduler (DoMagicRound :1745-1753 collects, player
   // only, per held item with a live pinned bundle; RerollItemEffects
   // :2001-2034 then strips those bundles and fires the RerollEffect
-  // payload if the item is still equipped, restamping the clock). The
-  // strip half lives in each row's recast (assignHeldSpell removes
-  // before it re-applies), so the port fires the payload directly.
+  // payload if the item is still equipped, restamping the clock).
+  // ENCHANT-LOAD: the strip is the ITEM's, once, before every row
+  // recasts (:2012-2021) - not each row's, which kept only the last.
   if (entity.isPlayer && entity.activeEffects?.length) {
     for (const item of items) {
       if (!entity.activeEffects.some((a) => a.heldItem === item)) continue;
       const hours = Math.floor((nowMinutes - (item.timeEffectsLastRerolled ?? nowMinutes)) / MINUTES_PER_HOUR);
       if (hours < REROLL_MINIMUM_HOURS || item.equipSlot == null) continue;
+      _fx.removeItemPinnedEffects?.(entity, item);
       doItemEnchantmentPayloads(PAYLOAD.RerollEffect, item, { entity, round, nowMinutes, ctx });
       item.timeEffectsLastRerolled = nowMinutes;
     }
@@ -868,18 +878,45 @@ export function enchantmentMagicRound(entity, round, { nowMinutes = 0, ctx = nul
  *  (:2240/:2307), discarding one whose item cannot resolve (:2312).
  *  The port's save strips pinned entries instead (they carry a live
  *  item reference) and this re-instantiates them from the worn set -
- *  a RECAST, so no durability is billed; the reroll stamp resets to
- *  the load minute (recorded phase drift, the Ledger A class). */
+ *  a RECAST, so no durability is billed.
+ *
+ *  ENCHANT-LOAD (2026-09-26, DragynDance on the Discord: "Reloading a
+ *  save with an enchanted item equipped makes you lose the enchantment
+ *  until you take it off and put it on again"). Three things a load
+ *  lost, all restored here:
+ *   - the CONSTANT fold (EnhancesSkill, StrengthensArmor, ExtraSpellPts,
+ *     AbsorbsSpells, IncreasedWeightAllowance, ImprovesTalents...). It
+ *     is derived state, never saved, and the equip table's rebuild does
+ *     not fold it (equip.js rebuildEquipState). DFU's constant pass runs
+ *     every frame (EntityEffectManager.Update); the port's ran only at
+ *     the first magic round - a game minute of UNPAUSED play, and never
+ *     while a window is up - so a load read every such item as bare
+ *     until it was taken off and put on again. It is refolded here,
+ *     WITHOUT DFU's clamp of magicka to the new maximum: an ExtraSpellPts
+ *     condition read before the world has its clock back (a season, a
+ *     moon, the undead nearby) must not cut the magicka the save holds -
+ *     the first round's fold, at the live clock, clamps as DFU does;
+ *   - every Cast-When-Held power, not just an item's last (the strip is
+ *     once per item, here and at the reroll - assignHeldSpell above);
+ *   - the item's own reroll clock: `timeEffectsLastRerolled` is saved
+ *     with the item (itemFields.js) and DFU's load keeps it. The recast
+ *     stamped the host clock instead - read BEFORE the load sets the
+ *     world's, so an earlier save held its six-hour reroll back by
+ *     however long had been played since. */
 export function restartHeldEnchantments(entity, ctx = null) {
   ctx = mergeCtx(ctx);
   const nowMinutes = ctx?.now?.() ?? 0;
-  for (const item of equippedEnchantedItems(entity)) {
+  const items = equippedEnchantedItems(entity);
+  for (const item of items) {
+    _fx.removeItemPinnedEffects?.(entity, item);
+    const at = item.timeEffectsLastRerolled ?? nowMinutes;
     for (const e of itemEnchantments(item)) {
       const row = REGISTRY.get(e.type);
       if (!row) break;   // the unknown-key abort, per item
-      if (e.type === T.CastWhenHeld) instantiateHeldSpell({ param: e.param, entity, item, ctx, nowMinutes }, true);
+      if (e.type === T.CastWhenHeld) instantiateHeldSpell({ param: e.param, entity, item, ctx, nowMinutes: at }, true);
     }
   }
+  if (entity?._enchantMods || items.length) computeEnchantmentMods(entity, ctx, { clampMagicka: false });
 }
 
 function equippedEnchantedItems(entity) {

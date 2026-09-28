@@ -47,7 +47,7 @@
 import { liveStat } from '../systems/statMods.js';   // AUDIT 23 (characters-11)
 import { damageShieldPool } from '../characters/playerEntity.js';   // AUDIT 58: DecreaseHealth's shield hook is the BASE class's (DaggerfallEntity.cs:313-328)
 import { lycanthropeAttackVoice, isTransformedLycanthrope } from '../systems/lycanthropy.js';   // V4: the beast's attack voice   // GUARD1: EnemyEntity.cs:188's FOURTH despawn term
-import { sharedClockOn, playerWeaponHitEntity } from '../systems/worldTick.js';   // MOD: the "waiting for freedom" despawn is online-only, same door as arrestFlow's guard-hit fix; DISC10-D H1: OnWeaponHitEntity's one dispatcher
+import { playerWeaponHitEntity } from '../systems/worldTick.js';   // DISC10-D H1: OnWeaponHitEntity's one dispatcher
 import { setCrimeCommitted } from '../systems/court.js';   // V4: the one crime setter (SuppressCrime)
 import { tallyCrimeGuildRequirements } from '../systems/crimeGuilds.js';   // CG2: the TG/DB tally
 import { entityIsParalyzed, applyEnemyMotorEffectFlags, concealmentFlags } from '../systems/effects.js';   // AUDIT 24 (wave 32): the watch is paralysable too   // A5: the enemy Levitate arm, the foe-target concealment closure + EntityConcealmentBehaviour's visual
@@ -60,7 +60,8 @@ import { ENEMY_BASICS } from '../characters/enemyBasics.js';
 import { copyEffectEntry } from '../systems/save.js';   // AUDIT 26 F217
 import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';
 import { MobileUnit } from '../characters/mobileUnit.js';
-import { EnemyAI, withinYaw, isBackFacing } from '../characters/enemyMotor.js';
+import { EnemyAI, withinYaw, isBackFacing, foeFrameDt } from '../characters/enemyMotor.js';
+import { spaceFoes } from '../characters/foeSpacing.js';   // FOE-SPACING: the watch keeps apart
 import { runTargetMachine, isPlayerTarget, PLAYER_TARGET, resetAllyTeamOnPlayerAttack, wireRecipient, bumpAtkCount, staticTeamOf } from '../characters/enemyTargets.js';   // AUDIT WATCH1: the wire's spellings, one home   // MT-ii   // ROAD-G G1: MakeEnemyHostileToAttacker's entity-side half, for the watch too
 import { applyDamageToNonPlayer, spawnEnemyLoot } from './hostCombat.js';   // MT-ii: EnemyAttack.ApplyDamageToNonPlayer
 import { stampWonWeapons } from '../systems/lootRarity.js';   // SIGIL1: a body's weapons won online
@@ -101,6 +102,8 @@ import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfVie
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage   // AUDIT 24 (wave 38): EnemyDeath's one home
 import { combatVisualsOn, foeDraw, markConcealedHit } from '../systems/combatVisuals.js';   // ECV1: what the enhanced skin draws for a concealed foe
 import { registerFoeDoor } from '../systems/artifactEffects.js';   // AUDIT PSCALE1 DOORS-2: Namira's reflection on a watchman through his own door
+import { foeHitFlash, setBatchHitFlash } from '../systems/hitFlash.js';   // HITFLASH1
+import { reportPlayerKill } from '../systems/playerKills.js';   // SET2: my own kills, told
 
 // PlayerEntity.Crimes (the two this module levies - the enum lives
 // whole in systems/court.js).
@@ -155,7 +158,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   // with no Y test. The default keeps the two street pools as they were.
   playerInside = false,
   // ROAD-G G1: GameManager.MakeEnemiesHostile over the HOST's whole
-  // area, the encounter pool's dep to the line (exteriorFoes.js:131).
+  // area, the encounter pool's dep to the line (exteriorFoes.js:171).
   // DaggerfallEntityBehaviour.cs:255-258 fires it when a NON-hostile
   // enemy is struck by the player, and Knight_CityWatch is an
   // EnemyClass - one of the two EntityTypes that walk (:250). This
@@ -671,10 +674,10 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  and ALL THREE of this pool's arms reach the door: the melee swing
    *  and the spell through `damageGuard`'s `fromPlayer` gate below, and
    *  the player's ARROW through the hosts' `onAttackFromPlayer` seam,
-   *  which arrowFlight.js calls unconditionally (arrowFlight.js:316)
+   *  which arrowFlight.js calls unconditionally (arrowFlight.js:317)
    *  because `dealDamage` is inside its own `dmg > 0` fork - so the
    *  door is PUBLIC (the returned surface below), exactly as the
-   *  encounter pool's is (exteriorFoes.js:2093). */
+   *  encounter pool's is (exteriorFoes.js:2275). */
   function handleAttackFromPlayer(g, playerFeet = null) {
     if (!g?.ai) return;
     // DISC19-F (AUDIT DISC19): A BLOW ON A DEFENDER IS ASSAULT. The
@@ -743,6 +746,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     g.entity.health -= healthDamage;
     if (g.entity.health <= 0) {
       g.dead = true;
+      if (fromPlayer && !peer) reportPlayerKill(g.entity, { kind: 'melee' });   // SET2: MY blow killed him (a set's "each kill")
       g.corpse = true;   // G3: only a KILLED guard is lootable (walk-aways vanish with their items)
       releaseGuardBatch(g);
       // EnemyDeath:131-136 - the clear gates on `senses.Target ==
@@ -899,13 +903,14 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     // player for the whole wait. `playerEntity.arrested` (arrestFlow's
     // own flag, set the instant the surrender is accepted and cleared
     // on every court exit) covers exactly that window, so the watch
-    // despawns for its length rather than only at the door. Offline is
-    // untouched - vanilla's own crime-clear law already stands alone
-    // there, the same way arrestFlow's fix leaves offline alone.
+    // despawns for its length rather than only at the door. JAIL-HIT
+    // (2026-09-27): offline too - the watch keeps WINFOE1's clock under
+    // the court's windows, where DFU's pushed windows stop it, so it
+    // walks away for the trial in both modes (arrestFlow's inCourt).
     // DISC19-F: a CRIME turns the town's defenders into that watch
     // first - they are guards, and the law below is theirs from here on.
     if (playerEntity.crimeCommitted) for (const g of guards) if (!g.dead && g.defender) enlistDefender(g, playerFeet);
-    if ((!playerEntity.crimeCommitted || (sharedClockOn() && playerEntity.arrested)) && !isTransformedLycanthrope(playerEntity)) {
+    if ((!playerEntity.crimeCommitted || playerEntity.arrested) && !isTransformedLycanthrope(playerEntity)) {
       for (const g of guards) if (!g.dead && !g.defender) { g.dead = true; releaseGuardBatch(g); }   // no corpse - they walk away; DISC19-F: a defender is not the crime's and leaves on the town watch's word
     }
     // AUDIT 17e F7 - PlayerEntity.cs:533-537 verbatim: the surrender
@@ -936,6 +941,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         spawnCityGuards(true, { playerFeet, playerFwd: [0, 0, 1], pool: [] });   // arrivals ride the ring fallback
       }
     }
+    spaceFoes(guards, collider, foeFrameDt(dt));   // FOE-SPACING: two watchmen in one spot are pushed apart (characters/foeSpacing.js)
     const out = [];
     for (const g of guards) {
       if (g.dead) continue;
@@ -948,7 +954,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // exemption from either.
       const _gParalyzed = entityIsParalyzed(g.entity);   // S22: the FreeAction read-time fold
       applyEnemyMotorEffectFlags(g.ai, g.entity);   // A5: Levitate.SetEnemyMotor's IsLevitating, folded from the effect's presence
-      g.ai.update(dt, playerFeet, _armed(g, senses), _gParalyzed);
+      g.ai.update(foeFrameDt(dt), playerFeet, _armed(g, senses), _gParalyzed);   // FOE-CATCHUP: three steps a frame at most
       const _tgt = _targetFeet(g, playerFeet);   // MT-ii: whatever it SELECTED
       // AUDIT 24 (wave 36): EnemySenses.cs:531-535 - ANY enemy that is
       // targeting and seeing the player raises the alert, as the last
@@ -1009,7 +1015,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // brigand.
       tickEnemySound(g.sounds, g.ai.feet, playerFeet, dt, { audio, collider, hearing: acuteHearingMultiplier(playerEntity) });
       g.mobile.frameSpeedDivisor = Math.max(1, Math.trunc((g.entity.stats?.speed ?? 50) / Math.max(8, liveStat(g.entity, 'speed'))));   // AUDIT 23 (characters-11)
-      if (!_gParalyzed && _tgt) g.attack.update(dt, g.ai, _tgt);   // MT-ii: at the SELECTED target
+      if (!_gParalyzed && _tgt) g.attack.update(foeFrameDt(dt), g.ai, _tgt);   // MT-ii: at the SELECTED target;/ AUDIT (pre-merge) P5: FOE-CATCHUP's step - the motor's clock, not the frame's (a 1 s hitch no longer swings at once)
       const seq = g.attack.swingSeq;   // AUDIT 68 S04-strike-edge-cut: EnemyAttack's own start count, the foes' one edge law
       const strikeEdge = seq !== g._swingSeq;
       g._swingSeq = seq;
@@ -1109,6 +1115,8 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       const ecv = foeDraw(g, ecvOn, _ecvT);
       if (ecv.kind === 'hidden') continue;
       g.batch.conceal = ecv.kind === 'conceal' ? ecv.visual : null;
+      setBatchHitFlash(g.batch, foeHitFlash(g, performance.now() / 1000));   // HITFLASH1: a foe struck flashes red - any blow, mine, a peer's, or its owner's stream
+
       const o = g._mout;
       const rkey = `${o.record}#${o.frame}`;
       if (!renderer.textures.has(`${g.archive}_${rkey}`)) uploadRecordFrame(g.archive, o.record, o.frame);

@@ -133,15 +133,22 @@ DW-CLIP gave the half-size shift.
 - **Cross-mod seams.** Tome of Battle's reach and swing key, FPS
   Models' animator, the `registerCustomWeapon` message, Vanilla Combat
   Event Handler's `onToggleOffset`: the port has none of those mods.
-- **Five duplicates** of laws the port runs once, which the clone runs
+- **Six duplicates** of laws the port runs once, which the clone runs
   beside the original: the bow's out-of-arrows sheathe, the unsheathe
   sound, the vanilla weapon's own hide (`ScreenWeapon.ShowWeapon =
   false` - the draw seam's order is that hide), the combat-voice roll at
   the release (the rig's `playerAttackGrunt` is FPSWeapon's own, on the
-  machine's hit), and the transformed lycanthrope's move-sound clock
-  (LycanthropyEffect's, LM1). The clone's swing sound at its release IS
-  carried: it is the mod's moment, and the hosts' whiff on a miss is
-  DFU's other one, as in DFU with the mod.
+  machine's hit), the transformed lycanthrope's move-sound clock
+  (LycanthropyEffect's, LM1), and - BOW-VOICE, 2026-09-26, Mac: "Bow is
+  still double shooting arrows" - the bow's loose sound: FPSWeapon's own
+  frame-4 PlaySwingSound is the machine's `bowSound`, which every host
+  plays as ArrowShoot and the Morrowind arm holds for its release key
+  (MW-D42d). The clone's release played ArrowShoot again, so every shot
+  was heard twice - a tick apart on the sprite, and under the arm a
+  twang at the click with no arrow, then the arrow with the second. The
+  clone looses in silence (`test/bowvoice.test.js`). Its MELEE swing
+  sound at its release IS carried: it is the mod's moment, and the
+  hosts' whiff on a miss is DFU's other one, as in DFU with the mod.
 - **The CLANG's emissive material** (above).
 - **The `lastSheathed` boot artefact.** The mod's field starts false, so
   DFU hears clip 417 once at every load of a sheathed save; the port

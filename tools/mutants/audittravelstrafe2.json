@@ -1,0 +1,101 @@
+[
+  {
+    "name": "AUDIT-TRAVEL-STRAFE2-X1-the-hand-cut-at-need",
+    "file": "src/systems/travelSteer.js",
+    "old": "inp.manual ? 0 : openWant);",
+    "new": "inp.manual ? need : openWant);",
+    "tests": [
+      "test/travelnav.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TRAVEL-STRAFE2-X2-the-hand-cut-at-a-step-past-the-standoff",
+    "file": "src/systems/travelSteer.js",
+    "old": "inp.manual ? 0 : openWant);",
+    "new": "inp.manual ? pass : openWant);",
+    "tests": [
+      "test/travelnav.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TRAVEL-STRAFE2-X3-a-REF-across-the-line-moves-the-face",
+    "file": "src/systems/travelSteer.js",
+    "old": "if (fw > 0.05) s.sBlock = Math.max(s.sBlock, f.along + c * fw);",
+    "new": "if (true) s.sBlock = Math.max(s.sBlock, f.along + c * fw);",
+    "tests": [
+      "test/travelnav.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TRAVEL-STRAFE2-X4-the-face-met-not-projected-onto-the-line",
+    "file": "src/systems/travelSteer.js",
+    "old": "if (fw > 0.05) s.sBlock = Math.max(s.sBlock, f.along + c * fw);",
+    "new": "if (fw > 0.05) s.sBlock = Math.max(s.sBlock, f.along + c);",
+    "tests": [
+      "test/travelnav.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TRAVEL-STRAFE2-X5-the-face-met-plus-a-margin",
+    "file": "src/systems/travelSteer.js",
+    "old": "if (fw > 0.05) s.sBlock = Math.max(s.sBlock, f.along + c * fw);",
+    "new": "if (fw > 0.05) s.sBlock = Math.max(s.sBlock, f.along + c * fw + 3);",
+    "tests": [
+      "test/travelnav.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TRAVEL-STRAFE2-X6-only-a-REF-near-the-line-moves-the-face",
+    "file": "src/systems/travelSteer.js",
+    "old": "if (fw > 0.05) s.sBlock = Math.max(s.sBlock, f.along + c * fw);",
+    "new": "if (fw > 0.5) s.sBlock = Math.max(s.sBlock, f.along + c * fw);",
+    "tests": [
+      "test/travelnav.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TRAVEL-STRAFE2-X7-the-nearer-arm-by-the-best-distance",
+    "file": "src/systems/travelSteer.js",
+    "old": "|| toGo <= s.goStart)) {",
+    "new": "|| toGo <= s.bestDist)) {",
+    "tests": [
+      "test/travelnav.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TRAVEL-STRAFE2-X8-the-nearer-arm-a-metre-short",
+    "file": "src/systems/travelSteer.js",
+    "old": "|| toGo <= s.goStart)) {",
+    "new": "|| toGo <= s.goStart - 1)) {",
+    "tests": [
+      "test/travelnav.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TRAVEL-STRAFE2-O1-the-hand-clears-grinding",
+    "file": "src/systems/travelSteer.js",
+    "old": "      if (s.episode) endEpisode();\n      s.bestDist = Infinity; s.noGain = 0;\n",
+    "new": "      if (s.episode) endEpisode();\n      s.bestDist = Infinity; s.noGain = 0; s.grind = 0; s.winAsked = 0; s.winMoved = 0;\n",
+    "tests": [
+      "test/travelnav.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TRAVEL-STRAFE2-O2-the-line-under-the-hand-only-in-a-detour",
+    "file": "src/systems/travelSteer.js",
+    "old": "    if (inp.manual) {\n      s.ox = inp.x; s.oz = inp.z;\n",
+    "new": "    if (inp.manual) {\n      if (s.episode) { s.ox = inp.x; s.oz = inp.z; }\n",
+    "tests": [
+      "test/travelnav.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TRAVEL-STRAFE2-O3-a-detour-ends-only-0.4-m-past-its-start",
+    "file": "src/systems/travelSteer.js",
+    "old": "(!s.episode || f.along >= s.sStart || toGo <= s.goStart)",
+    "new": "(!s.episode || f.along >= s.sStart + 0.4 || toGo <= s.goStart)",
+    "tests": [
+      "test/travelnav.test.js"
+    ]
+  }
+]

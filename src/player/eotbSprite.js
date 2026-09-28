@@ -26,7 +26,7 @@
 // drive this module through its seams rather than through the bundle.
 
 import { ORIENTATIONS, stateFor, tableArchive, spriteKey, STATE_TABLES, frameCount } from './eotbBillboard.js';
-import { classSkinOf, classRecord, classFrame } from './classSkins.js';   // SKIN2: Daggerfall's classes, past the mod's sixteen
+import { classSkinOf, classRecord, classFrame, classRecordScale } from './classSkins.js';   // SKIN2: Daggerfall's classes, past the mod's sixteen
 import { toColor32 } from '../formats/color32Order.js';   // EOTB-FLIP: the ONE row-order door a PNG crosses on its way to a world billboard
 import spriteInfo from '../../vendor/eye-of-the-beholder/spriteInfo.json' with { type: 'json' };
 
@@ -82,7 +82,10 @@ export const sizeMod = ({ riding = false, transformed = false, scale = 1 } = {})
 export function spriteOffset(archive, record) {
   const o = spriteInfo.offsets[`${archive}_${record}-0`];
   const d = spriteInfo.default;
-  return o ? { scale: o.scale ?? 1, x: o.x ?? 0, y: o.y ?? 0 } : { scale: d.scale ?? 1, x: d.x ?? 0, y: d.y ?? 0 };
+  const xml = o ? { scale: o.scale ?? 1, x: o.x ?? 0, y: o.y ?? 0 } : { scale: d.scale ?? 1, x: d.x ?? 0, y: d.y ?? 0 };
+  // ACRO-SHORT: a class sheet's record drawn at another scale carries its own (player/classSkins.js classRecordScale)
+  const k = classRecordScale(archive, record);
+  return k === 1 ? xml : { ...xml, scale: k };
 }
 
 /** [IL] The billboard's world size (IL_49dd-IL_4a15): the XML rect's

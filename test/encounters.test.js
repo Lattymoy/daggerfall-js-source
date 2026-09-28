@@ -128,7 +128,7 @@ test('encounters: the dungeon host arm - the rest loop, the sight raise, the kil
   assert.ok(i > 0 && fn.length > 200 && fn.length < 5000, 'the rest advance arm was found whole');   // AUDIT SURV B grew the arm by the needs' night   // AUDIT WORLD5 C8 grew the arm past 3000 (the span note); the bound is a runaway-slice guard, not a law
   assert.ok(fn.includes('intermittentEnemySpawn({'), 'the rest advance runs the catch-up loop');
   assert.ok(fn.includes('enemyAlertActive: !!playerEntity.enemyAlertActive'), 'gated on the alert');
-  assert.ok(fn.includes('_spawnEncounter(hit); break;'), 'one spawn per advance, as the C# break');
+  assert.ok(fn.includes('restEncounter(hit); break;'), 'one spawn per advance, as the C# break (REST-SYNC re-aim: online the room\'s, test/restsync.test.js)');
   // MT-iv restored EnemySenses:531's `Target == PlayerEntityBehaviour`
   // term: a foe brawling another foe must not hold the alert up.
   assert.ok(src.includes('&& f.ai.inSight && f.ai.detected && !f.dead) setEnemyAlert(playerEntity, true'), 'sight raises');

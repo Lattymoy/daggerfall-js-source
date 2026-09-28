@@ -116,7 +116,7 @@ test('PX30: it is a READOUT, and it is updated rather than rebuilt', () => {
   // replay at sixty times a second. Every write is guarded.
   assert.match(src, /const put = \(node, key, value\) => \{\s*\n\s*if \(last\[key\] === value\) return;/);
   assert.match(src, /const width = \(node, key, pct\) => \{[\s\S]{0,160}if \(last\[key\] === v\) return;/);
-  assert.match(src, /if \(last\.effects !== key\) \{/, 'the effect row is rebuilt only when the SET changes');
+  assert.match(src, /if \(last\.stat === key\) return;/, 'UI3: the status widget is rebuilt only when what it says changes (the effect row\'s law, kept)');
   // THE ONE BUNDLE WALK. The first draft invented a second one that
   // read a shape nothing produces, and the row came back empty.
   assert.match(src, /import \{ liveBundles \} from '\.\.\/systems\/mysticism\.js'/);

@@ -19,6 +19,7 @@ import { raceActivation, raceWinner } from '../src/player/activationRace.js';
 import { gateTimes, gateYaw, countdownText, GATE_RISE_MS, GATE_COLLAPSE_MS } from '../src/net/gateLaw.js';
 import { trs } from '../src/world/mat4.js';
 import { drawGateBanner, destroyGateBanner } from '../src/ui/gateBanner.js';
+import { composeNamer } from '../src/systems/worldHover.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
@@ -291,8 +292,13 @@ test('WB2 the door: sealed says when, open without a relay says not yet, open wi
   assert.deepEqual({ day: r.entered[0].day, near: r.entered[0].near }, { day: 721, near: 'Copperham' });
   assert.equal(r.pool.activate('camp:9'), false, 'a press on another key is never the gate\'s door');
   assert.equal(r.entered.length, 1);
-  // the plaque names it with its countdown
-  assert.equal(r.pool.hoverName('gate:721'), `Oblivion Gate (seals in ${countdownText(r.t.sealAt - r.clock.now)})`);
+  // the plaque names it, its countdown under it - SET7: a record the hover's ladder reads (composeNamer takes the first
+  // answer with a title), where a bare string named nothing at all
+  assert.deepEqual(r.pool.hoverName('gate:721'), { title: 'Oblivion Gate', subs: [`Seals in ${countdownText(r.t.sealAt - r.clock.now)}`] });
+  assert.deepEqual(composeNamer([(k) => r.pool.hoverName(k)])('gate:721')?.title, 'Oblivion Gate', 'and the ladder takes it');
+  r.clock.now = r.t.sealAt + 1000;
+  r.pool.frame(0.016);
+  assert.deepEqual(r.pool.hoverName('gate:721'), { title: 'Oblivion Gate', subs: ['Sealed'] }, 'sealed for the night: no countdown, the word');
   assert.equal(r.pool.hoverName(7), null, 'a door\'s bare number is not the gate\'s (AUDIT-WH C1)');
 });
 
@@ -355,6 +361,6 @@ test('WB2 the seams: online alone, stood before the lights, the stone in the wor
   assert.match(w, /gate: gatePool \? pickActivatableHit\(cam\.pos, _hd, gatePool\.targets\(\), collider\) : null,/, 'the plaque races it too');
   assert.match(w, /\(key\) => gatePool\?\.hoverName\(key\) \?\? null,/);
   assert.match(w, /if \(gatePool && \(modes\?\.mode \?\? 'exterior'\) !== 'exterior'\) drawGateBanner\(null\);/, 'the countdown leaves with the street');
-  assert.match(read('src/player/activationRace.js'), /firmFirst\(\[gate, camp, water,/, 'the gate heads the tie order');
+  assert.match(read('src/player/activationRace.js'), /firmFirst\(\[gate, broker, camp, water,/, 'the gate heads the tie order (SET7: the Broker who stands beside it right after)');
   assert.ok(PORTAL_CENTRE_Y > ARCH_Y0 && PORTAL_CENTRE_Y < ARCH_Y1);
 });

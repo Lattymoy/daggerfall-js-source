@@ -27,8 +27,10 @@ import { PlayerWeapon, WEAPON_REACH, setWeaponPoseProbe, weaponPoseOf } from './
 import { eotbBody } from '../player/eotbBody.js';   // EOTB5: the sprite body, for a player with no Morrowind data
 import { eotbCamera } from '../player/eotbCamera.js';
 import { racialFpsWeapon } from '../systems/lycanthropy.js';   // V4: the transformed rig's claws
-import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';   // AUDIT 17e F17; MW-D32 the worn read
+import { EQUIP_SLOTS, equipTableOf, fillEquipTable } from '../systems/equip.js';   // AUDIT 17e F17; MW-D32 the worn read; MW-EARLY: a save's worn set
+import { setItemFields } from '../systems/itemTemplates.js';   // MW-EARLY: a save's items as the restore reads them
 import { dfWornEquipment } from '../formats/mwItemMap.js';   // MW-D32
+import { ownWerewolfSkin } from '../systems/ownGlyphs.js';   // SHADOW-FANG: the skin my own werewolf wears
 import { ARMOR_ENUM } from './enemyEquipment.js';   // MW-D32
 import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES, fpLightingOn, WEAPON_FILE } from './fpsWeapon.js';
 import { loadThunderlockArt } from './thunderlockArt.js';
@@ -51,7 +53,7 @@ import { fpsSpellCasting, loadSpellCastArt, drawSpellCastHands, magicAnimFilenam
 import { fpArm, hasAmmoFor } from './fpArm.js';
 import { ammoCountFor } from '../systems/inventory.js';   // AUDIT 68 S27-ammoCount-dup: the quiver's count, from the spend law's own module
 import { getPref } from '../systems/uiPrefs.js';   // MWA1: the arms switch
-import { morrowindDataCount, morrowindDataFingerprint, registerMorrowindData } from '../scenes/dataSource.js';   // MWA1: are the archives attached; AUDIT 65 XL-6: and measured
+import { morrowindDataCount, morrowindDataFingerprint, registerMorrowindData, morrowindDataCounted, countMorrowindArchives } from '../scenes/dataSource.js';   // MWA1: are the archives attached; AUDIT 65 XL-6: and measured; MW-EARLY: and counted
 import { mwRaceId } from '../formats/mwNpc.js';   // TR2: the one race-id spelling
 import { TEMPLATES } from '../systems/useItem.js';   // MW-D51: the Torch template - the lit light the Morrowind hand holds
 import { morrowindDataGeneration } from '../scenes/dataSource.js';
@@ -97,11 +99,20 @@ import { walkSpeed } from '../player/motor.js';   // WW1: GetBaseSpeed's walk ar
  * fills made it look almost right. The test is the string compare,
  * the same one every other consumer makes.
  */
+/** WEREWOLF1: IS THIS ENTITY MORROWIND'S WEREWOLF RIGHT NOW - a transformed
+ *  lycanthrope whose curse is the wolf's (LycanthropyTypes 1). The wereboar
+ *  (2) has no Morrowind form: its person's body stands, as before. */
+export function isMwWerewolf(entity) {
+  return !!entity && isTransformedLycanthrope(entity) && ((liveLycanthropy(entity)?.infectionType | 0) === 1);
+}
+
 export function armBuildOptsOf(entity) {
   // the ammunition question is asked OF THE WEAPON, and the weapon this
   // function has is the worn one - there is no live rig here
   const worn = entity.equip?.slots?.[EQUIP_SLOTS.RightHand] ?? null;
   return {
+    werewolf: isMwWerewolf(entity),   // WEREWOLF1: a save loaded mid-transformation builds the wolf at the door
+    skin: isMwWerewolf(entity) ? ownWerewolfSkin() : null,   // SHADOW-FANG: and in its skin
     race: mwRaceId(entity.race),
     female: entity.gender === 'female',
     faceIndex: entity.faceIndex | 0,
@@ -134,7 +145,7 @@ export function buildArmsFor(entity) {
  *  the other two thirds, and setWorn/setWeapon already follow those
  *  per frame; nothing followed these. */
 export function armIdentityOf(entity) {
-  return { race: mwRaceId(entity?.race), female: entity?.gender === 'female', faceIndex: entity?.faceIndex | 0 };
+  return { race: mwRaceId(entity?.race), female: entity?.gender === 'female', faceIndex: entity?.faceIndex | 0, werewolf: isMwWerewolf(entity) };   // WEREWOLF1: and the form
 }
 
 /** MWA3 (Mac, 2026-09-16: "my character who is an argonian uses a human
@@ -155,12 +166,94 @@ export function armBuiltFor() { return fpArm.builtFor(); }
 /** MWA3: is an arm standing at all - the same read autoBuildArms's old gate made. */
 export function armsReady() { return fpArm.ready(); }
 
-export function armsStandFor(entity, { ready = () => fpArm.ready(), builtFor = () => fpArm.builtFor() } = {}) {
-  if (!ready()) return false;
-  const have = builtFor();
-  if (!have) return false;
+export function armsStandFor(entity, { ready = () => fpArm.ready(), builtFor = () => fpArm.builtFor(), buildingFor = () => fpArm.buildingFor() } = {}) {
   const want = armIdentityOf(entity);
-  return have.race === want.race && !!have.female === want.female && (have.faceIndex | 0) === want.faceIndex;
+  const same = (have) => !!have && have.race === want.race && !!have.female === want.female && (have.faceIndex | 0) === want.faceIndex
+    && !!have.werewolf === want.werewolf;   // WEREWOLF1
+  // MW-EARLY: A BUILD UNDER WAY STANDS FOR WHOM IT IS BUILDING. The load
+  // door starts the build off the save before the world is read
+  // (prebuildArmsForSave), so the restore's own door arrives while it
+  // runs - and a second build of the same body queued behind it doubled
+  // the seconds the arms took. The build that will stand once the queue
+  // drains is the answer while there is one; a different identity is
+  // still a no, and its door queues the right body behind it.
+  const coming = buildingFor();
+  if (coming) return same(coming);
+  if (!ready()) return false;
+  return same(builtFor());
+}
+
+/**
+ * MW-EARLY: THE ARMS' ENTITY, READ OFF A SAVE - the four things
+ * armBuildOptsOf and autoBuildArms read of a character (race, sex and
+ * face; the worn set and the hand; the light; chargenDone), taken from
+ * the snapshot the load door is about to restore, before the world has
+ * restored it. The items go through setItemFields as restorePlayer
+ * sends them (save.js), the table is fillEquipTable's own fill of them
+ * (rebuildEquipState's, without the armor values and the listeners -
+ * this is no entity in the game, and nothing but the build ever reads
+ * it), and the light is the record at the save's lightSourceIndex, the
+ * index restorePlayer relinks. Null for a snapshot with no pack.
+ */
+export function saveArmsEntity(snap) {
+  if (!snap || !Array.isArray(snap.items)) return null;
+  const items = snap.items.map((it) => setItemFields(it));
+  const li = snap.lightSourceIndex ?? -1;
+  const e = { race: snap.race, gender: snap.gender, faceIndex: snap.faceIndex, chargenDone: snap.chargenDone, items, lightSource: li >= 0 ? (items[li] ?? null) : null };
+  fillEquipTable(equipTableOf(e), items);
+  return e;
+}
+
+/** AUDIT MW-EARLY F1: THE EARLY DOOR'S WORD, given before its first
+ *  await. prebuildArmsForSave counts the store, and autoBuildArms then
+ *  measures it, before fpArm has a build under way to say whom it is
+ *  for (armsStandFor's first arm) - and a restore that landed in that
+ *  gap passed every gate and queued the same body a second time behind
+ *  the first. While the early door runs this holds its promise; every
+ *  other door waits it out before asking its gates, and by then the
+ *  early build stands, or never started, and the gates say which. */
+let _armsIntent = null;
+
+/**
+ * MW-EARLY (Mac: "The player shouldnt load into the game and have to
+ * wait for the morrowind models to load"): THE ARMS START WITH THE
+ * LOAD, NOT AFTER IT. The world's load door knows which save it will
+ * restore the moment it opens - and the build needs nothing of the
+ * world, only the character and the attached files - but it was asked
+ * for at the END of bootWorld, after every archive of the world had
+ * been read and indexed and the save restored, so the player stood in
+ * the world on the classic sprite while the body built. The host calls
+ * this with that same snapshot as its boot begins; the build then runs
+ * under the world's own loading, and the restore's autoBuildArms finds
+ * it built or under way (armsStandFor, after _armsIntent) instead of
+ * starting it. Never throws and never blocks: a refusal is
+ * autoBuildArms's own warning.
+ *
+ * AUDIT MW-EARLY F3: `snapOf` is the snapshot or a function that reads
+ * it, and it is read only once the store is known to carry files: the
+ * most-recent pick parses every slot to find the newest, so a player
+ * with no Morrowind data paid that parse at every load for nothing, and
+ * the host shares the one parse with its load door (world.js bootSnap).
+ */
+export async function prebuildArmsForSave(snapOf, { build = autoBuildArms, counted = morrowindDataCounted, count = countMorrowindArchives, dataCount = morrowindDataCount } = {}) {
+  let release;
+  const intent = { done: new Promise((r) => { release = r; }) };
+  _armsIntent = intent;
+  try {
+    // a boot that came in past the enhanced menu (a direct ?load, the classic start window) has not counted the
+    // store, and autoBuildArms's gate reads the count - the cheap names-only door the menu itself takes
+    if (!counted()) await count();
+    if (!(dataCount() > 0)) return null;
+    const e = saveArmsEntity(typeof snapOf === 'function' ? snapOf() : snapOf);
+    if (!e) return null;
+    return await build(e, { intent });
+  } catch (err) {
+    console.warn('[arms] the early build could not start -', err?.message ?? err);
+    return null;
+  } finally {
+    if (_armsIntent === intent) _armsIntent = null;
+    release();
+  }
 }
 
 /** MWA1: THE ARMS AT BOOT. RookieG (2026-09-11): "morrowind arms did
@@ -173,7 +266,9 @@ export function armsStandFor(entity, { ready = () => fpArm.ready(), builtFor = (
  *  load. A refusal is logged, never thrown: the arms are a departure
  *  the classic sprite stands in for. Returns the build's result, or
  *  null when nothing was asked for. */
-export async function autoBuildArms(entity, { dataCount = morrowindDataCount, measure = registerMorrowindData, measured = morrowindDataFingerprint, standing = armsStandFor } = {}) {
+export async function autoBuildArms(entity, { dataCount = morrowindDataCount, measure = registerMorrowindData, measured = morrowindDataFingerprint, standing = armsStandFor, intent = null } = {}) {
+  // AUDIT MW-EARLY F1: the early door's word first - its build may not be under way yet (`intent` is that door's own)
+  if (_armsIntent && _armsIntent !== intent) await _armsIntent.done;
   // MWA4: the attached files are the switch - MWA1's `mwArms` pref (and MWA2's On/Off row over it) is retired, and
   // Remove data is the off (ui/enhancedMenu.js morrowindCard)
   if (!entity?.chargenDone || !(dataCount() > 0) || standing(entity)) return null;
@@ -198,9 +293,9 @@ export async function autoBuildArms(entity, { dataCount = morrowindDataCount, me
  *                     The note that hosts without a HUD text layer
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
- *                     (dungeonContext.js:2921), townTalk.say
- *                     (exterior.js:2140, world.js:4814) and
- *                     worldModes' own interior sink (worldModes.js:459,
+ *                     (dungeonContext.js:3024), townTalk.say
+ *                     (exterior.js:2141, world.js:4931) and
+ *                     worldModes' own interior sink (worldModes.js:473,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below
  *                     is unreached,
@@ -300,7 +395,7 @@ export function sheetHolderOf(rig) {
   };
 }
 
-export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, camera = null, say = () => {}, spellArmed = () => false, abortSpell = () => {}, bindWorn = true, activateHeld = () => false, envHit = null, missEffect = null, collider = null, actionDown = null, torches = () => null, sheetWindowUp = () => false }) {   // HT1 (KB1): whether a registry action is held, and the hosts' dropped-torch pool   // MAP-WEAPON: whether the travel map window holds the screen   // AUDIT 28 W12: HasAction(ActivateCenterObject) - the drawn bow's un-draw; WW1: the widget's recoil doors
+export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, camera = null, say = () => {}, spellArmed = () => false, abortSpell = () => {}, bindWorn = true, activateHeld = () => false, envHit = null, missEffect = null, collider = null, actionDown = null, torches = () => null, sheetWindowUp = () => false, dropRefusal = () => null }) {   // HT1 (KB1): whether a registry action is held, and the hosts' dropped-torch pool   // MAP-WEAPON: whether the travel map window holds the screen   // AUDIT 28 W12: HasAction(ActivateCenterObject) - the drawn bow's un-draw; WW1: the widget's recoil doors
   const playerWeapon = new PlayerWeapon({});
   playerWeapon.animCtx = () => ({ entity, weaponType: weaponTypeForItem(playerWeapon.weapon), usingRightHand: playerWeapon.usingRightHand });   // AUDIT-RR F1: GetMeleeWeaponAnimTime(player, weaponType, weaponHands) - the swing clock's own ask, so RR's weaponSpeed and RRI's weaponBalance time the blow that lands, not only the widget's clone
   const poseProbe = () => ({ ...weaponPoseOf(playerWeapon), weaponType: weaponTypeForItem(playerWeapon.weapon) });   // RR1: WeaponManager.Sheathed (the pair through its one law, HARD2c) + ScreenWeapon.WeaponType
@@ -418,7 +513,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   // machine, and its Update / LateUpdate run where the widget's do. The
   // pool it drops into is the host's (scenes/droppedTorches.js), which
   // hands a picked-up light back through receivePickedUp.
-  const handheld = createHandheldTorches({ audio, say, torches });
+  const handheld = createHandheldTorches({ audio, say, torches, dropRefusal });   // HOUSE-DROP: the host's word against a light on its floor
   const handheldOn = () => modSetting('handheld-torches', 'Enabled');
   let _handheldBound = null;
   // AUDIT 66 F8: THE COMPONENT'S OWN TEARDOWN HAD NO CALLER. It holds
@@ -455,7 +550,15 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   // dungeon frame. The reference re-derives the state from the live
   // actor every frame (character.cpp:2296-2330); here that is two field
   // writes, so the rig that is stepping the arm re-claims it first.
-  const bindArm = () => fpArm.attach(renderer, camera);
+  const bindArm = () => {
+    fpArm.attach(renderer, camera);
+    // BEAST-SELF: the Morrowind arm and body stand aside while they are not the form the curse holds (combat/fpArm.js
+    // setStandIn). SHADOW-FANG (the merge): Bloodmoon's wolf IS a Morrowind beast (WEREWOLF1), so a werewolf whose wolf
+    // stands keeps them; a wolf refused or still building, a wereboar (Morrowind has none), and the wolf still standing
+    // while the person rebuilds after the turn back stand aside - never the person on a beast, nor the beast on a person
+    const beast = !!entity && isTransformedLycanthrope(entity), wolf = !!fpArm.wolfStanding?.();
+    fpArm.setStandIn?.(beast ? !(wolf && isMwWerewolf(entity)) : wolf);
+  };
   bindArm();
   // EOTB5: THE OTHER BODY, attached in the same breath as the arm it
   // stands in for. THE FOUR HOSTS named: exterior.js, world.js,
@@ -574,11 +677,13 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     const slots = entity.equip?.slots;
     if (!slots) { if (claws) playerWeapon.weapon = claws; return; }
     playerWeapon.updateHands(slots[EQUIP_SLOTS.RightHand] ?? null, slots[EQUIP_SLOTS.LeftHand] ?? null);
+    if (fpArm.ready()) playerWeapon.followHeldHand();   // MW-HAND: under the Morrowind arm, never an empty hand while the other holds a weapon
     playerWeapon.applyWeapon(claws);
   };
   const cv = typeof canvas === 'function' ? canvas : () => canvas;
   const cache = new Map();   // `${type}:${material}` -> art (null while loading)
   let _dx = 0, _dy = 0, _held = false;
+  let wolfForm = false, wolfSkin = null;   // WEREWOLF1 / SHADOW-FANG (AUDIT D5): the form handed to the rig last, and the skin read at its change
 
   function artFor(item) {
     const type = weaponTypeForItem(item);
@@ -1302,6 +1407,8 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       if (m.isBow && m.now < m.cooldownUntil) return false;   // AUDIT 68 S09-held-hit-dropped: Update's cooldown return (:230-233) comes before ToggleHand, as readyWeapon has it
       if (m.state !== 'Idle' || _heldHit) return false;       // isAttacking - and a shot held for the arm's release is one
       syncWorn();
+      // MW-HAND: under the Morrowind arm H moves only between two held weapons - never to an empty hand
+      if (bindWorn && fpArm.ready() && !(playerWeapon.currentRightHandWeapon && playerWeapon.currentLeftHandWeapon)) return false;
       // bindWorn:false rigs drive their own weapon (the dungeon's
       // scripted bow) - flip the hand, but do not let ApplyWeapon
       // overwrite a weapon no equip table ever supplied.
@@ -1362,6 +1469,19 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // (WeaponManager.cs:1059 else-arm) and at bow frame 4 (:376-380),
       // both of which ride the machine's events at the hosts now.
       fpRecheck();
+      // WEREWOLF1: THE BODY FOLLOWS THE CURSE - the wolf the moment the player transforms, the person the moment they
+      // turn back (Bloodmoon's werewolf, fpArm setWerewolf); the fast path is one boolean compare. AUDIT D1: AHEAD OF
+      // THE ready() GATE below - a wolf refused (no Bloodmoon attached) leaves no arm standing, and while this sat
+      // under the gate the turn back was never asked: the player stood in the classic sprite until the next load.
+      // setWerewolf needs only the last build's opts, which a refusal keeps, and asks nothing of a rig never built.
+      // Ahead of the hand, the worn table and the spell too, so their queue waits on the form's build rather than
+      // swapping on the body it replaces (AUDIT D3). SHADOW-FANG (AUDIT D5): the skin is read at the CHANGE - a
+      // storage read a frame is a file read in the desktop shell.
+      if (entity && !paralyzed) {
+        const wolf = isMwWerewolf(entity);
+        if (wolf !== wolfForm) { wolfForm = wolf; wolfSkin = wolf ? ownWerewolfSkin() : null; }
+        fpArm.setWerewolf(wolf, { skin: wolfSkin });
+      }
       // Paralysis freezes the arm as it freezes the swing - a clip that
       // keeps idling while the player cannot move is the animation
       // saying something the game does not mean.
@@ -1411,6 +1531,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         // cloak equipped, a gauntlet dropped - rebuilds the body in
         // those clothes. D29-D31 dressed the BUILD; this dresses the
         // GAME.
+        // WEREWOLF1: the form was handed over above, ahead of the gate; the wolf keeps this table for the way back.
         if (entity) fpArm.setWorn(dfWornEquipment(equipTableOf(entity), EQUIP_SLOTS, ARMOR_ENUM));
         // The held draw comes up when the machine leaves StrikeUp - the
         // arrow is loosed, so the arm's wind-up must stop holding at max

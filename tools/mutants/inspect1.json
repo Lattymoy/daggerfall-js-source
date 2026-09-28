@@ -323,8 +323,8 @@
   {
     "name": "INS-glyph-stroke-filled",
     "file": "src/ui/playerBadge.js",
-    "old": "  if (GLYPH_STROKE[g.key]) {\n    path.setAttribute('fill', 'none');",
-    "new": "  if (false) {\n    path.setAttribute('fill', 'none');",
+    "old": "    if (GLYPH_STROKE[g.key]) {\n      path.setAttribute('fill', 'none');",
+    "new": "    if (false) {\n      path.setAttribute('fill', 'none');",
     "tests": ["test/inspect1.test.js", "test/chatfit.test.js"],
     "note": "A stroke glyph filled solid."
   },

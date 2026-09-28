@@ -89,6 +89,10 @@ export function fallCurve(elapsed) {
 export class DeathScreen {
   constructor({ eyeHeight, capsuleHeight, onReset = null, entity = playerEntity, hint = 'ENTER end   F11 load' } = {}) {
     this.done = false;
+    // RISE-STUCK: the screen keeps the top of its host's stack until it
+    // goes - a box pushed while it is up waits beneath (ui/windowStack.js
+    // holdsTop), so the rise's replace takes THIS window, not the box.
+    this.holdsTop = true;
     this.hint = hint;   // FIX-E: a host with no quickload (the fixed city) draws no F11 - a hint that is a lie is worse than none
     // MERGE AUDIT: the death clip is the character's OWN race/gender
     // Pain3 whenever CombatVoices is on (it ships on), so the sequence

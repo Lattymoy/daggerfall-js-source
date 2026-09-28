@@ -98,7 +98,7 @@ test('A10: xzRange 0 is NO cut - every exterior and interior caller unchanged', 
 test('A10: both dungeon hosts pass the block range; the exterior/interior ones do not', () => {
   for (const host of ['src/scenes/dungeon.js', 'src/scenes/worldModes.js']) {
     const h = read(host);
-    assert.match(h, /nearestLights\([^)]*flicker\.ranges, (?:null|\(\) => _dgColor), DUNGEON_LIGHT_BLOCK_RANGE\)/,   // AUDIT DISC19: the world host's arm rides the per-light colour channel (the candle's own white)
+    assert.match(h, /nearestLights\((?:[^()]|\([^()]*\))*flicker\.ranges, (?:null|\(\) => _dgColor), DUNGEON_LIGHT_BLOCK_RANGE\)/,   // AUDIT DISC19: the world host's arm rides the per-light colour channel (the candle's own white); LA-AUDIT A5: the cap may take one light more (a bracketed term)
       `${host} culls its dungeon lights by the block range`);
     assert.match(h, /DUNGEON_LIGHT_BLOCK_RANGE/, `${host} imports the constant rather than restating 2060`);
   }
@@ -420,7 +420,7 @@ test('A10 CLOSEOUT: PlayerGPS freezes its map pixel underground (StreamingWorld.
   //
   // The port converted the player's DUNGEON-LOCAL feet through the
   // streamer's exterior origin instead. RDB block origins are signed
-  // (dungeonLayout.js:64-65, RDB_SIDE = 51.2), so the arithmetic below
+  // (dungeonLayout.js:75-76, RDB_SIDE = 51.2), so the arithmetic below
   // is not a corner case: walking one block west or south of the start
   // slides the pixel, and Privateer's Hold - the first dungeon in the
   // game - has blocks at -51.2 on both axes.

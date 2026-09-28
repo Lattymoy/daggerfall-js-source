@@ -1,6 +1,6 @@
-# Daggerfall Enhanced
+# Daggerfall Online
 
-**Daggerfall Enhanced** - an open-source reimplementation of The Elder Scrolls
+**Daggerfall Online** - an open-source reimplementation of The Elder Scrolls
 II: Daggerfall. Data layer and game logic translated from Daggerfall Unity
 (MIT, Interkarma and contributors); presentation rebuilt on hand-rolled WebGL2.
 MIT licensed, with Daggerfall Unity's notice alongside (LICENSE). The project's
@@ -22,7 +22,7 @@ with `ARENA2_PATH`.
 
 ## Support development
 
-Daggerfall Enhanced is free and open source. Active development currently
+Daggerfall Online is free and open source. Active development currently
 costs about **$600 per month** to sustain across development tooling,
 multiplayer infrastructure, testing, builds, releases, and mod compatibility
 work.

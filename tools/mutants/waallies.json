@@ -1,0 +1,25 @@
+[
+  {
+    "name": "WAALLIES-the-handle-field-again",
+    "file": "src/systems/quest/actions.js",
+    "old": "      const qrb = inst?.questBehaviour;",
+    "new": "      const qrb = inst?.behaviour;",
+    "tests": ["test/waallies.test.js", "test/enemyinfighting.test.js"],
+    "note": "The shipped bug: no record carries `behaviour`, the flag never lands, the crew stands idle."
+  },
+  {
+    "name": "WAALLIES-the-flag-always-true",
+    "file": "src/systems/quest/actions.js",
+    "old": "      if (qrb) qrb.isAttackableByAI = this.isAttackableByAI;",
+    "new": "      if (qrb) qrb.isAttackableByAI = true;",
+    "tests": ["test/waallies.test.js", "test/enemyinfighting.test.js"]
+  },
+  {
+    "name": "WAALLIES-complete-without-an-instance",
+    "file": "src/systems/quest/actions.js",
+    "old": "    for (const inst of this.parentQuest.hooks?.questFoeInstances?.(this.npcSymbol) ?? []) {\n      const qrb = inst?.questBehaviour;",
+    "new": "    this.setComplete();\n    for (const inst of this.parentQuest.hooks?.questFoeInstances?.(this.npcSymbol) ?? []) {\n      const qrb = inst?.questBehaviour;",
+    "tests": ["test/waallies.test.js", "test/enemyinfighting.test.js"],
+    "note": "C# completes inside the walk: a wave not yet standing keeps the action live."
+  }
+]

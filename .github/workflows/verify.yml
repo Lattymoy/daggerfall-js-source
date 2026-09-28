@@ -1,0 +1,87 @@
+# FLOW1 (2026-09-26, Mac: "is there a way to really ensure we have a faster workflow with the same standards?"):
+# THE ONE VERIFICATION, IN PARALLEL.
+#
+# `npm run check` ran lint, the types, the whole suite and the build one
+# after another in one job - ~7 minutes - and it ran twice for every
+# change: the PR's check, then again on main before the site deployed.
+# This is the same check, split into jobs that run at once: lint and the
+# types, the suite in four shards balanced by recorded times
+# (tools/testShards.mjs - every test file in exactly one shard), and the
+# build. Nothing is skipped and nothing is weaker: every file still runs,
+# every part must pass. The PR's check (check.yml) and the deploy
+# (deploy.yml) both call it, so they cannot drift apart.
+#
+# The shard count is in two places that must agree - the matrix and the
+# `/4` - and test/flow1_ci.test.js holds them together.
+name: verify
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: The commit to verify (empty - the caller's own).
+        type: string
+        default: ""
+      build:
+        description: Run the build as a part (the deploy builds its own site).
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  static:
+    name: lint and types
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Type-check
+        run: npm run types
+
+  test:
+    name: tests ${{ matrix.shard }}/4
+    runs-on: ubuntu-latest
+    strategy:
+      # every shard reports, so one red run shows every failing file
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Test shard ${{ matrix.shard }} of 4
+        run: node tools/testShards.mjs ${{ matrix.shard }}/4
+
+  build:
+    if: ${{ inputs.build }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build

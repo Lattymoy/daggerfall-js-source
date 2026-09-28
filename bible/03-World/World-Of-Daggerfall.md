@@ -60,6 +60,17 @@ instance list, in list order, and for each instance:
    stand at `(terrainX * 6.4 + x, averageHeight * 1923.75 + y,
    terrainY * 6.4 + z)`.
 
+**FLOW2 (2026-09-26) - the same decisions, walked on the tile's own pixel.** The port walked the whole list too: all
+227,938 instances for every tile it streamed (and ROADS-CLEAR's whole-world pin, 146,446 tiles of it, ran 130 s).
+`LocationSession.pixelIndex` keeps each map pixel's instances in list order and the list positions of every type-0
+instance; `pickLocations` walks the tile's own instances and, between two of them, asks only whether a type 0 stands
+there - the one instance of another pixel that can act (it ends the call once the tile holds a location or is sea; a
+type 2 there is skipped either way, anything else fails step 3). The verbatim scan is kept as `pickLocationsScan`,
+the law the walk is held to: equal on every pixel of the shipped lists under four tiles (the game's, no roads with a
+site refused, a tile that holds a location, the sea - 587,384 tiles, 239,059 placements), and pinned on made lists of
+types 0, 1 and 2 on and off the grid (test/flow2_fast_tests.test.js). A pixel off the 1000 x 500 grid, or a session
+with no index, walks the scan.
+
 Step 8's `hasLocation` is what makes the FIRST valid instance naming a
 pixel win it: every later type-2 instance skips at step 1. That is
 load-bearing in the shipped data - **51,355 pixels are named by more

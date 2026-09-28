@@ -1,0 +1,79 @@
+[
+  {
+    "name": "SHARECOPY-minted-symbols-compared-again",
+    "file": "src/systems/questShare.js",
+    "old": "    if (MINTED_TASK_TYPES.has(r.type)) {",
+    "new": "    if (false) {",
+    "tests": ["test/sharecopy.test.js"]
+  },
+  {
+    "name": "SHARECOPY-shape-parsed-over-the-receivers-world",
+    "file": "src/systems/quest/machine.js",
+    "old": "return this.parseQuestForLists(lines, Number(factionId) || 0, { headless: true });",
+    "new": "return this.parseQuestForLists(lines, Number(factionId) || 0, { headless: false });",
+    "tests": ["test/sharecopy.test.js"]
+  },
+  {
+    "name": "SHARECOPY-headless-keeps-the-world",
+    "file": "src/systems/quest/machine.js",
+    "old": "const hooks = headless ? { ...this._buildHooks(), world: null } : this._buildHooks();",
+    "new": "const hooks = this._buildHooks();",
+    "tests": ["test/sharecopy.test.js"]
+  },
+  {
+    "name": "SHARECOPY-a-minted-symbol-need-not-be-a-number",
+    "file": "src/systems/questShare.js",
+    "old": "      if (!/^\\d+$/.test(t.symbol.original)) return 'task';\n",
+    "new": "",
+    "tests": ["test/sharecopy.test.js"]
+  },
+  {
+    "name": "SHARECOPY-until-performed-watches-anything",
+    "file": "src/systems/questShare.js",
+    "old": "      if (r.type === TaskType.PersistUntil && t.targetSymbol?.original !== r.targetSymbol?.original) return 'task';\n",
+    "new": "",
+    "tests": ["test/sharecopy.test.js"]
+  },
+  {
+    "name": "SHARECOPY-two-tasks-one-name",
+    "file": "src/systems/questShare.js",
+    "old": "    if (taskNames.has(name)) return 'task';\n",
+    "new": "",
+    "tests": ["test/sharecopy.test.js"]
+  },
+  {
+    "name": "SHARECOPY-task-type-unchecked",
+    "file": "src/systems/questShare.js",
+    "old": "if (!t || typeof t !== 'object' || t.type !== r.type || typeof t.symbol?.original !== 'string') return 'task';",
+    "new": "if (!t || typeof t !== 'object' || typeof t.symbol?.original !== 'string') return 'task';",
+    "tests": ["test/sharecopy.test.js"]
+  },
+  {
+    "name": "SHARECOPY-a-home-for-anyone",
+    "file": "src/systems/questShare.js",
+    "old": "if (!home || r.type !== 'Place' || !persons.has(home[1])) return 'resource';",
+    "new": "if (!home || r.type !== 'Place') return 'resource';",
+    "tests": ["test/sharecopy.test.js"]
+  },
+  {
+    "name": "SHARECOPY-a-home-of-any-type",
+    "file": "src/systems/questShare.js",
+    "old": "if (!home || r.type !== 'Place' || !persons.has(home[1])) return 'resource';",
+    "new": "if (!home || !persons.has(home[1])) return 'resource';",
+    "tests": ["test/sharecopy.test.js"]
+  },
+  {
+    "name": "SHARECOPY-one-symbol-twice",
+    "file": "src/systems/questShare.js",
+    "old": "if (typeof sym !== 'string' || seen.has(sym)) return 'resource';",
+    "new": "if (typeof sym !== 'string') return 'resource';",
+    "tests": ["test/sharecopy.test.js"]
+  },
+  {
+    "name": "SHARECOPY-a-declared-resource-missing",
+    "file": "src/systems/questShare.js",
+    "old": "  for (const sym of want.keys()) if (!seen.has(sym)) return 'resources';\n",
+    "new": "",
+    "tests": ["test/sharecopy.test.js"]
+  }
+]

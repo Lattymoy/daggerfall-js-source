@@ -122,6 +122,9 @@ export const DREAD_STRIKE_CHANCE = 0.28;
 /** Where a strike lands from the player: metres, near and far. */
 export const DREAD_NEAR_M = 400;
 export const DREAD_FAR_M = 6000;
+/** ...where the near strikes end and the far begin, and how many of them are near. */
+export const DREAD_SPLIT_M = 1600;
+export const DREAD_NEAR_SHARE = 0.35;
 /** The share of strikes that reach the ground (a channel drawn); the rest light their cloud from inside. */
 export const DREAD_CG_SHARE = 0.75;
 /** The event's channel and the light a near strike throws: blood red, hot at the core. */
@@ -138,20 +141,26 @@ const slotHash = (slot) => { let h = Math.imul(slot | 0, 0x9e3779b1) ^ 0x7f4a7c1
  * kind, strength }]`, bearing radians from +z toward +x, distance metres. A slot holds a strike when its seed's first
  * draw falls under DREAD_STRIKE_CHANCE x w, at a seeded moment inside it - so every client online reads the same
  * seconds. At most DREAD_SLOTS_MAX slots (the latest). Pure.
+ *
+ * WBX8: `ring` sets where the strikes fall - `salt` (a schedule of its own: 0 is the event's), `near` and `far` (the
+ * distances, metres), `split` (where near ends and far begins) and `nearShare` (how many are near). Left out, it is
+ * the event's own ring, strike for strike.
+ * @param {number} fromMs @param {number} toMs @param {number} w
+ * @param {{salt?: number, near?: number, split?: number, far?: number, nearShare?: number}} [ring]
  */
-export function dreadStrikes(fromMs, toMs, w) {
+export function dreadStrikes(fromMs, toMs, w, { salt = 0, near: nearM = DREAD_NEAR_M, split = DREAD_SPLIT_M, far: farM = DREAD_FAR_M, nearShare = DREAD_NEAR_SHARE } = {}) {
   const out = [];
   if (!(w > 0) || !(toMs > fromMs)) return out;
   const last = Math.floor(toMs / DREAD_SLOT_MS);
   const first = Math.max(Math.floor(fromMs / DREAD_SLOT_MS), last - DREAD_SLOTS_MAX + 1);
   for (let slot = first; slot <= last; slot++) {
-    const seed = slotHash(slot);
+    const seed = (slotHash(slot) ^ salt) >>> 0;
     const r = seededRng(seed);
     if (r() >= DREAD_STRIKE_CHANCE * Math.min(1, w)) continue;
     const atMs = (slot + r()) * DREAD_SLOT_MS;
     if (atMs <= fromMs || atMs > toMs) continue;
-    const near = r() < 0.35;
-    const distance = near ? DREAD_NEAR_M + (1600 - DREAD_NEAR_M) * r() : 1600 + (DREAD_FAR_M - 1600) * r();
+    const near = r() < nearShare;
+    const distance = near ? nearM + (split - nearM) * r() : split + (farM - split) * r();
     out.push({ atMs, seed, bearing: r() * 2 * Math.PI, distance, kind: r() < DREAD_CG_SHARE ? 'cg' : 'ic', strength: 0.8 + 0.2 * r() });
   }
   return out;
@@ -163,19 +172,25 @@ export function dreadStrikes(fromMs, toMs, w) {
  * host metres with the event's colour (`[{ x, z, seed, kind, strength, color }]`, for systems/lightning.js'
  * createStormLights `distant` list), and the thunder due now (`[{ clip, volume, x, z }]`, the strike's place). The
  * first tick fires nothing (no backlog on arrival); `reset()` forgets the place (a jump, a load).
+ *
+ * WBX8: `ring` (dreadStrikes') gives a storm a schedule and a reach of its own, and a tick's `centre` ([x, _, z] host
+ * metres) is where its strikes stand round - the gate's storm gathers over the gate, wherever the eye is - with each
+ * strike's thunder from its distance to the EYE. Left out, both are the event's: round the eye, strike for strike.
+ * @param {{salt?: number, near?: number, split?: number, far?: number, nearShare?: number}} [ring]
  */
-export function createDreadStorm() {
+export function createDreadStorm(ring = undefined) {
   let lastMs = null;
   const thunder = [];   // { dueMs, clip, volume, x, z }
   return {
-    tick({ sharedMs, eye, weight }) {
+    tick({ sharedMs, eye, weight, centre = null }) {
       const strikes = [], sounds = [];
       if (lastMs !== null && sharedMs < lastMs) lastMs = null;   // the clock went back (a new offset): start again from now
       if (lastMs !== null) {
-        for (const s of dreadStrikes(lastMs, sharedMs, weight)) {
-          const x = eye[0] + Math.sin(s.bearing) * s.distance, z = eye[2] + Math.cos(s.bearing) * s.distance;
+        const c = centre ?? eye;
+        for (const s of dreadStrikes(lastMs, sharedMs, weight, ring)) {
+          const x = c[0] + Math.sin(s.bearing) * s.distance, z = c[2] + Math.cos(s.bearing) * s.distance;
           strikes.push({ x, z, seed: s.seed, kind: s.kind, strength: s.strength, color: DREAD_BOLT_COLOR });
-          const t = thunderOf(s.distance);
+          const t = thunderOf(centre ? Math.hypot(x - eye[0], z - eye[2]) : s.distance);
           if (t) thunder.push({ dueMs: s.atMs + t.delay * 1000, clip: t.clip, volume: t.volume, x, z });
         }
       }

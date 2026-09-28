@@ -67,6 +67,18 @@ an account with the wrong secret is admitted to the chat and told
 build before this slice, admitted as it always was. Both halves or
 neither: one half is `bad account`, an error like a bad id.
 
+ONE-SEAT (2026-09-27, Mac: "the player can only have one character only
+at a time"): two tabs are still two PEERS, but only one tab of a PLAYER
+(the token's verified subject - not this browser-profile account) is
+online at a time. The hub decides it: a hub hello that claims (`cl`)
+closes the player's other tabs there, and one that does not is refused
+while another tab of the player holds the hub (`06-Systems/Online-Arc.md`
+ONE-SEAT). So a friend's `peers` and a party seat's newest tab (AUDIT SOC
+B9) meet one tab of a player in the hub - of one SIGNED-IN player. Both are
+keyed by this browser-profile account, and two players signed in within one
+browser are two subjects to the relay: only the client's own BroadcastChannel
+keeps those to one tab online (AUDIT ONESEAT T7 - this said the hub did).
+
 ## SOC1 - the wire and the hub (`world78`)
 
 `src/net/wire.js`, the SOC1 section. The acts a client may send:

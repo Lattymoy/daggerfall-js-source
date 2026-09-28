@@ -80,9 +80,9 @@ test('AUDIT 62 F1: the bake carries vertex heights, and a hydrated stacked mesh 
 });
 
 test('AUDIT 62 F3: the nav cache key is versioned past the fixes and carries its anchor', () => {
-  assert.equal(NAV_BAKE_VERSION, 2);
+  assert.equal(NAV_BAKE_VERSION, 3);   // DUNGEON-SEAMS: the collider's corners moved under the same key's inputs
   const base = { key: 'loc', tris: 10, minY: -5, maxY: 3, agent: AGENT };
-  assert.match(navCacheKey(base), /^nav:v2:/);
+  assert.match(navCacheKey(base), /^nav:v3:/);
   const door = navCacheKey({ ...base, anchor: [1, 0, 1] }), pocket = navCacheKey({ ...base, anchor: [40, -6, 40] });
   assert.notEqual(door, pocket, 'a bake anchored in a teleporter pocket is not the front door’s bake');
   assert.equal(navCacheKey({ ...base, anchor: [1.1, 0, 1.2] }), door, 'the same cell is the same key');

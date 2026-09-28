@@ -66,23 +66,32 @@ test('TITLE-N grants: the Dungeon Master is SquidKamer\'s alone and Disciple is 
   const toml = rd('server-account/wrangler.toml');
   const v = (k) => new RegExp(`^${k} = "([^"]*)"$`, 'm').exec(toml)?.[1];
   assert.equal(v('DUNGEON_MASTER_HANDLES'), 'SquidKamer', 'Mac: "This goes strictly to the account SquidKamer"');
-  assert.equal(v('DISCIPLE_HANDLES'), 'Dutchess,Satranath,Skibbster', 'Mac: "The account Dutchess will recieve the Disciple title/glyph", then "Satranath please add this account as a disciple also", then "Skibbster needs to be a disciple ingame"');
-  assert.equal(v('APOSTLE_HANDLES'), 'SirMcMobdon', 'Mac (2026-09-25): "Add SirMcMobdon as an Apostle ingame title/glyph"');
-  assert.deepEqual(titlesHeld({ handle: 'sirmcmobdon', created_at: 0, registered_at: 1_900_000_000 }, { APOSTLE_HANDLES: v('APOSTLE_HANDLES') }), ['apostle'], 'SirMcMobdon: the Apostle title, case-folded');
-  assert.deepEqual(glyphsOf({ handle: 'SirMcMobdon', created_at: 0 }, { APOSTLE_HANDLES: v('APOSTLE_HANDLES') }, 10 ** 10), ['apostle'], 'and its glyph');
-  assert.equal(v('DEVELOPER_HANDLES'), 'Lattymoy,trashBattery,LostMyLeg', 'DEV2, Mac: "Give trashBattery, LostMyLeg the developer title/glyph"');
-  for (const h of ['trashbattery', 'LOSTMYLEG']) {
-    const dev = { handle: h, created_at: 0, registered_at: 1_900_000_000 };
+  assert.equal(v('DISCIPLE_HANDLES'), 'Dutchess,Satranath,Skibbster,Flylighter', 'Mac: "The account Dutchess will recieve the Disciple title/glyph", then "Satranath please add this account as a disciple also", then "Skibbster needs to be a disciple ingame", then "Grant Flylighter the disciple title/glyph"');
+  assert.deepEqual(titlesHeld({ handle: 'flylighter', created_at: 1_800_000_000, registered_at: 1_900_000_000 }, { DISCIPLE_HANDLES: v('DISCIPLE_HANDLES') }), ['disciple'], 'Flylighter: the Disciple title, case-folded');
+  assert.deepEqual(glyphsOf({ handle: 'FLYLIGHTER', created_at: 0 }, { DISCIPLE_HANDLES: v('DISCIPLE_HANDLES') }, 10 ** 10), ['disciple'], 'and its glyph');
+  // Mac (2026-09-25): "Add SirMcMobdon as an Apostle ingame title/glyph"; then (2026-09-26): "SirMcMobdon gets a brand
+  // new title/glyph. Remove them from Apostle" - Shadow Fang is theirs now (test/shadowfang.test.js), and the Apostle
+  // list is empty again
+  assert.equal(v('APOSTLE_HANDLES'), '', 'SirMcMobdon is no longer an Apostle');
+  assert.deepEqual(titlesHeld({ handle: 'sirmcmobdon', created_at: 1_800_000_000, registered_at: 1_900_000_000 }, { APOSTLE_HANDLES: v('APOSTLE_HANDLES') }), [], 'SirMcMobdon holds no Apostle title');
+  assert.deepEqual(glyphsOf({ handle: 'SirMcMobdon', created_at: 0 }, { APOSTLE_HANDLES: v('APOSTLE_HANDLES') }, 10 ** 10), [], 'and no Apostle glyph');
+  assert.equal(v('DEVELOPER_HANDLES'), 'Lattymoy,trashBattery,LostMyLeg,Tabby', 'DEV2, Mac: "Give trashBattery, LostMyLeg the developer title/glyph"; DEV3: "grant Tabby the developer title/glyph"');
+  for (const h of ['trashbattery', 'LOSTMYLEG', 'tabby']) {
+    const dev = { handle: h, created_at: 1_800_000_000, registered_at: 1_900_000_000 };   // FOUNDER3: first played after the cutoff too, so no Founder
     const denv = { DEVELOPER_HANDLES: v('DEVELOPER_HANDLES') };
     assert.deepEqual(titlesHeld(dev, denv), ['developer'], `${h}: the Developer title, case-folded`);
     assert.deepEqual(glyphsOf(dev, denv, 1_900_000_000), ['dev'], `${h}: the dev glyph`);
   }
   assert.equal(v('HIEROPHANT_HANDLES'), '', 'nobody yet');
-  assert.deepEqual(Object.keys(TIER_LISTS), NEW_TITLES);
-  assert.deepEqual(Object.values(TIER_GLYPH), NEW_GLYPHS);
+  // AUDIT B8 (SHADOW-FANG): the whole list, not a prefix of it - and every list's title and glyph IN the token's closed
+  // vocabulary: one outside it makes mintToken throw, and /v1/auth/token a 500 for every handle on that list
+  assert.deepEqual(Object.keys(TIER_LISTS), [...NEW_TITLES, 'shadowfang'], 'TITLE-N\'s four, then SHADOW-FANG\'s');
+  assert.deepEqual(Object.values(TIER_GLYPH), [...NEW_GLYPHS, 'shadowfang']);
+  for (const t of Object.keys(TIER_LISTS)) assert.ok(TITLES.includes(t), `${t}: a title the token may carry`);
+  for (const g of Object.values(TIER_GLYPH)) assert.ok(GLYPHS.includes(g), `${g}: a glyph the token may carry`);
   const env = { DUNGEON_MASTER_HANDLES: v('DUNGEON_MASTER_HANDLES'), DISCIPLE_HANDLES: v('DISCIPLE_HANDLES'), APOSTLE_HANDLES: 'Paul', HIEROPHANT_HANDLES: 'Pope, Other' };
   const nowS = 1_900_000_000;
-  const row = (handle) => ({ handle, created_at: 0, registered_at: 1_900_000_000 });
+  const row = (handle) => ({ handle, created_at: 1_800_000_000, registered_at: 1_900_000_000 });   // FOUNDER3: first played after the cutoff too, so no Founder
   assert.deepEqual(titlesHeld(row('squidkamer'), env), ['dungeonmaster'], 'the handle is case-folded');
   assert.deepEqual(glyphsOf(row('SquidKamer'), env, nowS), ['dm']);
   assert.deepEqual(titlesHeld(row('Dutchess'), env), ['disciple']);

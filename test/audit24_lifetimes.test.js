@@ -48,8 +48,9 @@ test('audit24 lifetimes: an encounter foe frees its billboard batch on BOTH ends
   const update = bodyOf(src, 'function update(dt, playerFeet, eye, senses = {})');
   // MT-ii: the cull's distance is measured to the PLAYER now (`_dist`
   // became target-relative when the pool armed), but the LIFETIME law
-  // this pin guards is unchanged - release, then mark dead.
-  assert.match(update, /_playerDist > \(f\.campId != null \? CAMP_CULL_DISTANCE : ENCOUNTER_CULL_DISTANCE\)[\s\S]{0,260}releaseFoeBatch\(f\)/,
+  // this pin guards is unchanged - release, then mark dead. AUDIT (pre-merge) Q4: the distance is named once
+  // (`_cullAt`), which a party member's nearness reads too.
+  assert.match(update, /const _cullAt = f\.campId != null \? CAMP_CULL_DISTANCE : ENCOUNTER_CULL_DISTANCE;\n\s*if \([^\n]*_playerDist > _cullAt[\s\S]{0,260}releaseFoeBatch\(f\)/,
     'the cull releases before it marks the foe dead');
   // and death - where the record STAYS in `foes` (the tail splice
   // spares corpses), so the batch would be unreachable and undead
@@ -64,7 +65,7 @@ test('audit24 lifetimes: an encounter foe frees its billboard batch on BOTH ends
   // the documentation being cut to fit the bound. V3 moved it again:
   // the Azura's Star kill-capture sits in the same gap, after the trap
   // (a filled Star must count) and before the release.
-  assert.match(dmg, /health <= 0[\s\S]{0,1700}releaseFoeBatch\(f\)/, 'death releases too');   // AUDIT WORLD6b B2: the peer arm's note sits in the same gap (a proximity bound, not a law)
+  assert.match(dmg, /health <= 0[\s\S]{0,1900}releaseFoeBatch\(f\)/, 'death releases too');   // SET2: the kill told as mine widened the gap by one line   // AUDIT WORLD6b B2: the peer arm's note sits in the same gap (a proximity bound, not a law)
   // and the intercept must sit ahead of the release, not after it
   assert.ok(dmg.indexOf('attemptSoulTrap') < dmg.indexOf('releaseFoeBatch(f)'),
     'a trap that refuses the death must not have freed the batch first');
@@ -89,7 +90,7 @@ test('audit24 lifetimes: a city guard frees its batch on both death paths, and t
   // per-frame walk over `guards` paid for them. DFU destroys the
   // walk-away watch outright (EnemyEntity.cs:184-191) and keeps only
   // the killed body. So the key is the guard's own id now, and the
-  // prune is the encounter pool's (exteriorFoes.js:1070).
+  // prune is the encounter pool's (exteriorFoes.js:1141).
   // AUDIT-WH H2 moved the spelling, not the law: the id function is
   // one const now, read by the corpse lens AND by the live-foe
   // producer the plaque races, so a guard and the body it becomes
@@ -210,7 +211,7 @@ test('audit24: the three quest settings are LIVE reads, not hardcoded falses', a
   // could flip a switch that reached nothing: adult quests were
   // filtered out whatever ChildGuard said (questLists.js:203), the
   // guild list-box arm was unreachable (offerFlow.js:156), and the
-  // journal's clocks never counted down (clock.js:164). The settings
+  // journal's clocks never counted down (clock.js:184). The settings
   // tier map's own both-ways gate now covers them; this pins the
   // BEHAVIOUR the tier map cannot see.
   const { setValue, _resetForTests } = await import('../src/systems/settings.js');
@@ -282,10 +283,12 @@ test('audit24: LOAD GAME is read by the host that now boots', () => {
   // press F11.
   // SAV4 moved the arm onto the slot store: a picked slot boots by
   // `?loadkey`, a bare ?load keeps the most-recent shape.
+  // MW-EARLY: the pick is decided ONCE at the boot's top (the arms'
+  // early build reads it there) and the door restores that same pick.
   const world = read('src/scenes/world.js');
-  assert.match(world, /if \(params\.has\('load'\)\) \{[\s\S]{0,300}await worldQuickLoad\(params\.has\('loadkey'\)/,
-    'the world host reads `load`');
-  assert.match(world, /: \{ mostRecent: true \}\);\s*\n\s*\} else if \(params\.has\('classic'\)/,
+  assert.match(world, /const bootLoadPick = !params\.has\('load'\) \|\| \(params\.has\('classicload'\) && peekPendingClassicSave\(\)\) \? null\n\s*: params\.has\('loadkey'\)\n\s*\? \{ key: Number\(params\.get\('loadkey'\)\) \}\n\s*: \{ mostRecent: true \};/,
+    'the world host reads `load` - a picked slot by its key, a bare ?load the most recent');
+  assert.match(world, /if \(params\.has\('load'\)\) \{[\s\S]{0,600}await worldQuickLoad\(\{ \.\.\.bootLoadPick, snap \}\);\s*\n\s*\} else if \(params\.has\('classic'\)/,
     'and a load takes the classic start\'s PLACE - a load is not a new game');
   assert.match(world, /!playerEntity\.chargenDone && !params\.has\('load'\)/,
     'nor does the wizard mount over the game being resumed');

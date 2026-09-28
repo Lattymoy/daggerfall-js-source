@@ -187,8 +187,8 @@ async function run(label, opts) {
     check(`${label}: the cart row is findable`, false, 'no cart row');
   }
 
-  // ── 6. GOLD IS ITS OWN CONTROL ─────────────────────────────────
-  await page.locator('#enhanced-inventory .remoteacts button', { hasText: 'Gold' }).click();
+  // ── 6. GOLD IS ITS OWN CONTROL (GOLD-DROP: the pack's own, beside the purse) ──
+  await page.locator('#enhanced-inventory .goldbtn').click();
   const field = page.locator('#enhanced-inventory .goldfield input');
   check(`${label}: the gold button opens a numeric field`, (await field.count()) === 1);
   await field.fill('400');
@@ -199,7 +199,7 @@ async function run(label, opts) {
     globalThis.__wagon.find((i) => i.group === 'Currency')?.stackCount ?? 0);
   check(`${label}: ...and landed in the wagon`, wagonGold === 400, `${wagonGold} in the wagon`);
   // AND AN OUT-OF-RANGE AMOUNT IS REFUSED OUTRIGHT, not clamped
-  await page.locator('#enhanced-inventory .remoteacts button', { hasText: 'Gold' }).click();
+  await page.locator('#enhanced-inventory .goldbtn').click();
   await page.locator('#enhanced-inventory .goldfield input').fill('99999');
   await page.locator('#enhanced-inventory .goldfield button').click();
   p = await pack(page);

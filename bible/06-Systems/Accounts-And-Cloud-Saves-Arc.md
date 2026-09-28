@@ -1510,6 +1510,33 @@ that law, unchanged. **The cloud is a third destination for a carrier
 that already works** — the page said so before any of this was built,
 and the carrier is where the merge rule stays.
 
+#### D5b — a NEWER backup is named, and restoring it is the player's press (FIELD 2026-09-27)
+
+Masta_Fu backed up his PC's QuickSave, restored it on a fresh Mac, played on and backed up again. Back on the PC
+nothing could bring the newer game down: the backup matched the PC's older slot by its identity, so it was never a
+cloud-only tile with a Download, and the slot's line read **"Backed up"** with one upload button - which pushed the
+PC's OLDER save over the Mac's newer one.
+
+- **The fact is named, not acted on.** `ui/saveTile.js` `newerBackup`: the backup is a DIFFERENT save of the slot
+  (another game minute - SP1's own identity) saved LATER (`realTime`). The line reads *"Newer backup · 12 minutes
+  ago"* (`newer`). Nothing syncs: the refusal above stands.
+- **Restore is the player's, on the Load pane, and it asks twice** (*"Restore backup"* → *"Replace with backup?"*).
+  `pullSlot(…, { replaces })` brings the backup in by SP1's law unchanged - its own number, never over a slot - and
+  only THEN removes the local copy it replaces, through the store's own delete, and only when that copy is the same
+  slot at another game minute. A failed download removes nothing; the backup's own save is never the one removed.
+  One QuickSave is left, so the quickload and the next save find the restored game.
+- **Back up again asks twice there too** (*"Replace newer backup?"*): it is the one press that loses the newer game.
+
+- **The pre-merge audit hardened it** (`01-Overview/Audit-PreMerge-0927b.md`): a failed restore's *Try again* is the
+  restore again, never a push (the first cut left one press that put the older save over the newer backup); the
+  arriving blob's own minute must be the card's, or the restore refuses `stale` and asks the listing again; the slot
+  as DRAWN rides the restore, so a copy saved since is kept; a skipped arrival removes the older copy only when this
+  character's own copy of the backup's save is here; the two-press arming is the LOCAL copy's and never outlives its
+  pane; and `newer` is later by either clock - the devices' or the game's.
+
+Pins: `test/cloudsaves.test.js` (his round trip through the real service, what a restore never removes, the menu's
+wiring) and `test/savetile.test.js`; mutants `tools/mutants/backupnewer.json` (32).
+
 ### D6 — NOT automatic, and this is a narrowing of ACC0's step 4 with a reason
 
 Step 4 says *"Upload on save"*. This slice does not do that, and the
@@ -2354,7 +2381,7 @@ ENUMERATED** applied to the one place a grant is usually a row:
 
 | | held when |
 |---|---|
-| **Founder** | `registered_at <= FOUNDER_UNTIL` (1790294400 — 2026-09-25T00:00:00Z since FOUNDER2; it was 1790121600, 2026-09-23T00:00:00Z) |
+| **Founder** | registered, and first played by `FOUNDER_UNTIL`: `min(created_at, registered_at) <= FOUNDER_UNTIL` since FOUNDER3 (it read `registered_at` alone before; 1790294400 — 2026-09-25T00:00:00Z since FOUNDER2; it was 1790121600, 2026-09-23T00:00:00Z) |
 | **Developer** | the handle is in `env.DEVELOPER_HANDLES` |
 | **sprout** | `nowS - created_at < SPROUT_S` (two weeks) |
 | **dev** | the same list as the Developer title |
@@ -3316,10 +3343,13 @@ object is the authority over the boss and signs a receipt for each account that 
   `POST /v1/duel/record` answers `gates` beside the duels. The service is `acct11` (`acct10` on its branch - RENOWN1, HOME1, DECOR1 and GUILD1 took `acct10` first).
 - **The client** (`src/net/accountClient.js accountGates`, `src/net/gateClaims.js`): no session, no knock; the device
   keeps each receipt until an answer settles it. The account card has a *Gates closed* row; the Inspect card a line.
-- **The keys.** `node tools/mintGateKeys.mjs` mints the pair in one run and writes nothing to disk. Not automated in a
-  workflow: the private half is set on the relay with `npx wrangler secret put GATE_SIGNING_KEY` from `server/`, and the
-  public half is committed into `server-account/wrangler.toml`. Until then receipts go out unsigned and are declined, and
-  the device keeps them for the week they carry.
+- **The keys.** `node tools/mintGateKeys.mjs` mints the pair in one run and writes nothing to disk. GATE-KEYS
+  (2026-09-26): the account deploy runs it, once - `.github/workflows/account-deploy.yml`, "Mint the gate receipt pair":
+  when either Worker lacks its half, one pair is minted and put as two Worker secrets, `GATE_SIGNING_KEY` on the relay
+  and `GATE_PUBLIC_KEY` here (a secret, never a var: every deploy rewrites a var, and Cloudflare refuses a secret the
+  name of a bound one). The run that mints redeploys the relay and drops every connected player once. A later step
+  proves the service holds its half (a claim with an unsigned receipt answers 400 `receipt`, never 503). Before it the
+  pair was left to a person, nobody minted it, and every receipt went out unsigned and was dropped.
 
 ## RENOWN1 — Renown, the level that exists only online (2026-09-24)
 
@@ -3551,3 +3581,240 @@ read at most three levels above the character's Renown, Mac said "Yes".
   (`scenes/world.js renownNow` - the token's word and the service's since). XP is the client's word in any case (the
   service bounds it by the report and the hour); the ceiling is the pace an honest client keeps.
 - Pinned: `test/renown3.test.js` (2), the RENOWN1 rules and wiring pins it moved. `tools/mutants/renown3.json`.
+
+## RENOWN4 — your Renown on your own HUD, with its bar (2026-09-25)
+
+Mac: "Also why is there no way to view my renown ingame?" - and "Plus XP bar". RENOWN1 put the level in the box
+beside every name, on the main menu, the profile and Inspect, and the account card's row said how far the track had
+come; the one face that never showed it was the player's own while playing.
+
+- **The row** (`src/ui/hudRenown.js renownHudView`, drawn by `src/ui/enhancedHud.js`). Under the three vitals and as
+  wide as them: the box every name wears ("12", in the name's gold), a thin bar to the next level, and "490 / 2,150
+  XP" into the level ("Highest" at the cap). Online only - the online lane is the enhanced lane, so the classic HUD
+  never needs one - and only once the page knows the level. The bar draws only for a total that is that level's; a
+  total a level behind is one the service has moved on from, and the box stands alone until the next word.
+- **The fill is the service's, the ghost is the page's.** The fill is what the service has credited. A report goes
+  once a minute, so what is earned and not yet answered (the tracker's `pending`) is drawn faint after the fill: a
+  kill shows at once, and the report turns it solid. It never pushes the fill, so a report the hour's bound cut short
+  takes the ghost back and never the bar; in an hour the page was told is spent, no ghost is drawn at all.
+- **Where the total comes from.** The mint's answer carries the named character's track total beside its level
+  (`xp`: 0 before it earns; none for a mint naming no character) - beside the token and never in it, since a room
+  needs the level alone (the minter signs a fixed claim list). The minter hands it on (`who.xp`), and every report's
+  answer carries it through `renownAnswer`'s `xp`. The page (`scenes/world.js renownXpAdopt`) takes it only upward and
+  only online, and from a mint before the level, so no frame draws the new level over the old total.
+- **The service is acct13** (the mint's answer; acct11, then acct12, on its branch - main's WB5b took acct11 first and BASE-HIDE acct12, so the merges renumbered it; AUDIT MERGE-PLUS E2). A service before it answers no total: the box alone until the page's
+  first report is answered.
+- Pinned: `test/renown4.test.js` (7). `tools/mutants/renown4.json` (28, all dead; a total signed into the token was
+  dropped as equivalent - `mintToken` signs a fixed claim list).
+
+## RENOWN4b — the XP bar overlaps nothing (2026-09-25)
+
+Mac: "ensure the new xp bar doesnt overlap anything"; asked whether to measure the page in a headless browser, "No,
+CSS math only". So the check is arithmetic over the sheet's own numbers (`test/renown4b.test.js` - the model, and pins
+holding the sheet to every number it reads), and it found two things:
+
+- **The quickslot block stood in the vitals.** Its bottom is fixed at the vitals' top line (22 + 32 x scale, QS3) -
+  and the Renown row, under the vitals, lifts that line by its own 22px and the gap. On a 1024px screen at scale 1 (on
+  a 1280px one past 1.16, on a phone past about 1.2) the magicka bar stood in the diamond. While the row is lit the
+  block now goes up by the same amount (`.hud:has(.hud-renown.on) .hud-quick`: 32 x scale on a desk, 30 on a phone).
+- **On a touch screen the row stood in the touch buttons.** The bottom-right from 16 to 64px up is `ui/touch.js`'s
+  (jump, sheathe, the mode, the social door). There the row stands ABOVE the vitals and never lower than 68px (a
+  margin divided by the scale, so it holds at every scale, with the safe area), and the block rides two pixels above
+  it - by a row of effect or need chips more when there are chips.
+- **Under Enhanced Plus** the row is as wide as Plus's vitals (16px gaps), and the model runs both dresses.
+
+The model covers 13 widths from 360 to 2560px, HUD scales 0.5 to 2, both dresses, mouse and touch, a phone's safe area,
+the touch stick's corner, and a row of chips - 1,820 cases (910 since UI3, which took the chip row off the HUD's foot
+for the status widget - test/renown4b.test.js): the row never meets the block or the buttons, never runs
+past the vitals' own span, and never pushes the vitals into the block where they stood clear without it. **Found
+while doing it and not the row's doing:** on a touch screen the vitals' own strip already reaches into the
+touch buttons' rows (the column stands 12px up, the buttons from 16), and chips under the vitals already lift them
+into the block wherever the two stand side by side (at scale 1 on a 1024px screen); both stand as they were. Not measured in a browser, by Mac's call.
+Pinned: `test/renown4b.test.js` (2); `tools/mutants/renown4b.json` (9, all dead, PLUS-DEFAULT's among them).
+
+## RENOWN-BAR — no numbers on the HUD, the bar on the middle (2026-09-26)
+
+Mac: "with the new renown xp bar, I want to remove the xp amount on the lefthand side and integrate it into the bar
+itself, then center the bar properly". The amount stood on the RIGHT and the level's box on the left, so it was asked
+which: the amount ("1,453 / 3,460 XP") into the bar, the box kept. Measured first (`tools/renownBarProbe.mjs`, the real
+HUD in Chromium): the bar's middle stood 42px left of the vitals' at a level part-way and 57px at the widest numbers -
+the box on one side, the wider readout on the other. The first cut drew the numbers in a 16px bar; having seen it, Mac:
+"Actually lets just keep the other bar and remove the xp. Just have it visible in the player profile".
+
+- **No numbers on the HUD** (`src/ui/enhancedHud.js`, `src/ui/hudRenown.js`): the row is the box and RENOWN4's thin 8px
+  bar - the fill and the ghost - and nothing else; `renownHudView` answers no words.
+- **The numbers are the profile menu's** - the account card the pause screen's portrait opens, where the duels and the
+  gates closed are (`src/ui/enhancedAccount.js`): its Renown row already said them for each of the five characters most
+  recently played ("Mara Venn - Renown 10, 490 / 2,150 XP to Renown 11", `net/renown.js renownProgressText`; RENOWN1),
+  so nothing there changed; `test/renownbar.test.js` now holds the row to its numbers.
+- **The bar is on the middle** (`src/ui/enhancedStyle.js`): the row lit is a grid of three columns - the box (36px, its
+  own width: 1.6em of 13px, 5px of padding and a 2px frame a side), the bar, and an empty column as wide as the box - so
+  the bar's middle is the row's, and the row is as wide as the vitals' and centred under them. Its 22px height is
+  RENOWN4b's, so the lifts and their model stand unchanged.
+- **Measured after**, over the real faces: the bar's middle 0.0px off the vitals' at 1440 and 1024px, on a 390px phone
+  and a phone on its side; no words in the row; the bar 8px. 128 checks, 20 shots. **Seen while doing it and not this
+  row's:** on a 390px phone the vitals' own labels already run into their percentages ("MAGICKA" into "70%").
+- Pinned: `test/renownbar.test.js` (3); `tools/mutants/renownbar.json` (6, all dead). RENOWN4's pins re-aimed at a row
+  with no words (and the cap held with nothing pending, where the words had been the only thing telling a 0 / 0 ghost);
+  its words' mutant retired with the words, the cap's and the row's re-aimed (renown4 + renown4b: 37, all dead).
+- **UI3 (2026-09-27) put the numbers back IN the bar** (Mac, the Plus UI pass: the effects to a widget of their own,
+  "which then gives more space for the XP bar and being able to fit the XP amounts inside"). With the status row gone
+  from under it (the effects are the status widget's tiles now, at the left edge), the bar is the vitals' own 20px and
+  says the level's credit over its span inside it ("5,420 / 13,800 XP"; "Highest" at the cap; `renownHudView`'s
+  `text`); the three columns, the 22px row and the profile's numbers stand. The phone's vitals, seen here, now say
+  their numbers alone. `10-UI/Slots-Hotbar-Status.md` UI3; `tools/renownBarProbe.mjs` re-aimed (160 checks, 0.0px off).
+
+## GUILD1c — a guild on the token (2026-09-25, acct13)
+
+Mac: "Do guild1c" - the guild tag beside names, and the guild's chat (`06-Systems/Online-Arc.md` GUILD1c). The token grows
+three OPTIONAL claims, all three or none (`net/identityToken.js` guildClaimsValid): `gi` the guild's id, `gt` its tag,
+`gm` the character's member row - each a string of the guild law's own shape (`net/guildLaw.js`, which joins the relay's
+bundle; it imports nothing). The mint reads them off the roster for the character the client named, as it reads the
+Renown level, and answers the tag beside the level - for a mint that asks (`guild: true`; AUDIT MERGE-PLUS A6: a build
+from before GUILD1c names its character too, and knows no guild channel); a character in none, and a mint naming none,
+carry none. Two ORDER
+kinds join `mute` and `renown`, each carrying its own fields and no other's: `guild` (the carrier's character's guild now,
+or none) and `guildout` (a member row, or a guild whole, gone). Every guild act that moves a membership answers the order
+that says so, signed in place of what it says (`guildOrdersOf`); a service with no key still acts and answers null.
+Pinned: `test/guild1c.test.js`; `tools/mutants/guild1c.json`.
+
+## BASE-HIDE — what an online home's owner took out of the room (2026-09-26)
+
+Mac: *"Remove bought houses decor - the base game decor isnt easy to decorate around when u want more in depth
+house"*. The room's own furniture - Daggerfall's prop models and flats - may be taken out by its owner and put back,
+free (`01-Overview/Field-Bugs-2026-09-26.md` BASE-HIDE). An online home's list of what is out lives here, so every
+visitor walks into the room its owner cleared.
+
+- **One row a home.** Migration 0015 adds `home_hidden` (map_id, building_key, keys), the home its primary key,
+  cascading with `homes` - a home released takes the list with it, and the next owner walks into the room as
+  Daggerfall furnished it. `keys` is a JSON array of the built-in pieces' names (`src/net/decorLaw.js decorHiddenOf`:
+  `m<placement>:<model>`, `f<flat>:<archive>.<record>`, none twice, at most 200 - one write at its widest under the
+  4 KiB body).
+- **The routes.** `/v1/homes/decor` answers `hidden` beside `pieces`, to every session. `POST /v1/homes/decor/hidden
+  { mapId, buildingKey, character, keys }` writes the list WHOLE, the owner's character alone (in the same statement,
+  as a placement is), on the decor writes' own hour; a list the law refuses is `bad-decor` (400), no such home of the
+  caller's `no-home` (404).
+- **The version.** `acct12`.
+- Pinned: `test/basehide.test.js` (the service over the real Worker and node:sqlite). `tools/mutants/basehide.json`.
+
+## DEV3, a fourth Disciple, and SHADOW-FANG — SirMcMobdon's own (2026-09-26)
+
+Mac: "grant Tabby the developer title/glyph. Grant Flylighter the disciple title/glyph", then "SirMcMobdon gets a brand
+new title/glyph. Remove them from Apostle. The glyph needs to be like the reference shown" (a snarling wolf's head in
+profile, black, with a red eye), "Black and crimson graident for the title/glyph with the title name being Shadow
+Fang", and a Morrowind werewolf skin of their own (with the werewolf body it needs - WEREWOLF1 imports it).
+
+- **The grants** (`server-account/wrangler.toml`): `DEVELOPER_HANDLES` gains Tabby (DEV3: the whole developer set, as
+  DEV2's), `DISCIPLE_HANDLES` gains Flylighter, `APOSTLE_HANDLES` is empty again, and `SHADOW_FANG_HANDLES =
+  "SirMcMobdon"` is new - TITLE-N's law, a handle list that grants the title and its glyph together and never to a
+  guest (`titles.js TIER_LISTS.shadowfang`). The Apostle title SirMcMobdon wore lapses off their next token, because a
+  stored title is worn only while it is held - and nothing wears the new one for them: Shadow Fang is HELD, and worn
+  once they press it on the account card (AUDIT B3; the patch note says so).
+- **The vocabulary** (`src/net/identityToken.js`, in the relay bundle): `shadowfang` joins TITLES and GLYPHS, last. An
+  older relay refuses a token carrying it (`claimsValid`), so the relay is **world117** and the account service
+  **acct14** (world114 and acct12 on this branch - renumbered at the merge past the Enhanced Plus patch's world114,
+  GUILD1c's world115 and the services' acct12 and acct13; world116 at that merge, then past the Oblivion Gate's WBX,
+  which took world116 on main while this branch was never opened as a pull request - the second merge, 2026-09-27); both deploy themselves off main, and the service's deploy
+  WAITS until the relay's /health serves the version wire.js names (AUDIT B1 - the two workflows started on one push
+  with nothing ordering them).
+- **The face** (`src/ui/playerBadge.js`): the word "Shadow Fang"; a black-to-crimson gradient (`TITLE_GRADIENT`,
+  #0d0709 to #d3193c) - "Shadow" in the black, "Fang" in the crimson; the glyph a wolf's head in profile facing right,
+  filled with the SAME stops turned round (`GLYPH_GRADIENT`, read from the title's) so the mane is crimson and the
+  face black, edged in the crimson and with a red eye over it (`GLYPH_DETAIL`); `>` for the classic face.
+- **The paint, one law on every face.** A gradient title is `titlePaint`: the gradient clipped to the letters, in the
+  loaded 500 face, the text shadow off (under a clipped background a text shadow paints over the letters), and an
+  edge OUTSIDE each letter - a crimson pixel right and below and a black one under (AUDIT A4: a crimson stroke ON the
+  letters with a synthesised bold read crimson in the world). A crimson halo round the word was tried first and lost
+  "Shadow" on every dark ground. The name over a
+  head writes it when the title CHANGES, not every frame (a browser reads colours back normalised, so the diffing door
+  would have rewritten it for ever); the chat line and the profile card paint through `paintTitle`; the account card's
+  button keeps the plain crimson and its word (`.acttitleword`) wears the same paint from the skin; the classic face
+  draws the word a letter at a time along the gradient over one crimson run a pixel down and right. A gradient glyph
+  is drawn by `glyphArtNode` - its own `linearGradient` (an id per node), the edge in `currentColor`, the eye on top -
+  which the account card now uses too, so the card has no svg door of its own.
+- **The skin** (WEREWOLF1, `04-Characters/Werewolf-Body.md`): the Shadow Fang glyph also dresses its holder's
+  Morrowind werewolf. A peer's comes off the glyphs their token carried; the player's own off the stored session -
+  `adoptIdentity` now keeps a token's or a wardrobe's `glyphs` there (strings, bounded; an unchanged list is not
+  written; only into the session that asked - AUDIT B4), read by `systems/ownGlyphs.js`, so it is theirs offline too
+  once the service has stated them to this device (a mint or the account card since this update).
+- Pinned: `test/shadowfang.test.js` (9); DEV3 and Flylighter in `test/titlen.test.js`.
+  `tools/mutants/shadowfang.json` (20, all dead) and two grant mutants in `titlen.json`; four older records re-aimed
+  by content (acc3b 2, acc3c 1, inspect1 1).
+- **AUDIT (2026-09-26, before the merge; `04-Characters/Werewolf-Body.md` has the werewolf's and the skin's).** Fixed:
+  **B1** the deploy race above - the last three paired deploys landed either way round, and SirMcMobdon's hello at a
+  world113 relay was refused whole; the step is pinned in `test/accountdeploy.test.js`. The relay's verifier stays
+  strict (its own law: it never repairs a claim set) - the race is fixed where it is, in the order. **B4** a late
+  identity answer was adopted into whichever session signed in after it asked (a name and glyphs - and a werewolf's
+  skin - on another account's device). **B7** a letter's glyphs were cut at a typed 8 (SHADOW-FANG made it eight of
+  eight - `GLYPHS_MAX` now), and a letter named its sender's title by its key ("shadowfang"). **B8** the tier lists
+  pinned whole and inside the vocabulary, and the widest possible token pinned inside the hello's 512-character body.
+  **A1** the profile card spread the gradient over the whole card (the word in its middle fifth - a flat maroon); the
+  title is the word's width. **A2** a closing window's ghost stripped its ids, so the wolf's gradient dangled - hollow
+  for the fold; renamed with the ghost now (`windowMotion.js renameGhostIds`). **A3** the classic face advanced its
+  letters by the MEASURED space, so the edge sat a pixel off under "Fang". **A7** the wolf's nose edge was cut at the
+  box. **A10** (the title's own bug, found on the name) a party mate's colour was rewritten every frame. Declined:
+  **A9** the account card's "the skin carries the colour" no longer holds for the wolf - its stops and its eye ARE the
+  glyph, and a skin recolouring them would be another glyph. **B2** world114 and acct12 were claimed by other open
+  branches too; busy-fermat (PEERLIGHT, GUILD1c) landed first, so the merge took the next free numbers - world116
+  with a NEW LAW row (this branch's never-deployed world114 row dropped, no deployed row rewritten) and acct14; and
+  again at the second merge (2026-09-27): WBX had taken world116, so world117 with its own row, the never-deployed
+  world116 row dropped the same way. Told
+  to Mac, not the code's: **B5** DEV3's developer glyph carries /red, /stage and /mute to whoever holds the handle
+  "Tabby".
+
+## FOUNDER3 — Founder by when an account first played (2026-09-27, acct15)
+
+Mac: "we still need to grant everyone the founder title befire the original cut off date. A lot of people are missing
+it".
+
+- **The cause.** Founder was read off `registered_at`, and registering is only the moment a player chose a name. Guests
+  had been playing since before any account could register (ACC1c, 2026-09-21), so a player here as a guest before the
+  cutoff who registered after it held nothing. That was Field-Bugs 2026-09-26b's open question (report 3,
+  DragynDance).
+- **The rule** (`server-account/src/titles.js` `firstPlayed`): a registered account holds Founder when it FIRST PLAYED
+  by `FOUNDER_UNTIL`. That is the row's `created_at`, stamped at first contact, guest or not, and kept through
+  registration's upgrade in place (0002). A row without one is judged by its registration, as before.
+  - Still derived: no row is written, as ACC3 designed.
+  - The instant does not move (2026-09-25T00:00Z, FOUNDER2's), so everyone before the original 2026-09-23 cutoff is
+    inside it and nobody who held Founder loses it.
+  - Still registered accounts only. A guest from before the cutoff holds it the moment it registers.
+  - The guard on `registered_at` stays first, because D1 gives a guest a NULL `registered_at`, which `Math.min` reads as 0.
+- **Not reached.** A player who played as a guest in one browser and registered in another has two rows and nothing
+  linking them. The account's row was first seen when it registered.
+- The account service is `acct15`, and the rule takes effect on that deploy.
+- Pins: `test/founder3.test.js` (4), including the service end to end (a guest first seen before the cutoff, registered
+  through the Worker after it, wears Founder on its signed token). ACC3's, TITLE-N's and SHADOW-FANG's non-founder
+  fixtures now first played after the cutoff too. `tools/mutants/founder3.json` has 6 mutants, all dead, and
+  ACC3a's founder mutants were re-aimed at the new line (all dead).
+
+## RECOVER-OP — a new recovery code, issued by the operator (2026-09-27)
+
+Twoddle, to Mac: "i did a stupid and have lost my password plus the code thing it gave ... is there anyway this can be
+fixed without starting a new account as i would like to keep the founders badge? I am still signed in atm". He had kept
+both in a text file in the game's folder, and an update replaced the folder.
+
+ACC1c has no way back for a player who lost both, and on purpose. Email is optional, so there is nothing to reset
+against, and a signed-in device may not change the password without the old one: a stolen device must not lock its
+owner out. So the way back is the operator's, and it is the player's own recovery with a fresh code.
+
+1. **Verify the owner.** Ask the player to send an in-game letter from the account, to the operator's account, with a
+   word the operator chose over Discord. Only a device signed in as that account can send it (MAIL1 stamps the sender
+   from the session).
+2. **Mint the code.** `node tools/reissueRecoveryCode.mjs <handle>` prints the code (for the player, privately) and its
+   hash.
+3. **Set it.** Actions, then "Account recovery" (`.github/workflows/account-recovery.yml`), then Run workflow with the
+   handle and the HASH. The code is never an input, because inputs show on the run's page. The workflow writes
+   `recovery_hash` on that one registered account and nothing else: the password, the sessions, the saves and the
+   Founder (`created_at`) are untouched. A handle that matches no account fails the run and changes nothing. It shares
+   the deploy's queue, so it never runs beside a migration.
+4. **The player recovers.** In "Forgot password", the player enters the handle and the code, then picks a new password.
+   `recover` mints a new code that only the player sees, and signs every device out. That spends the code the operator
+   saw.
+
+- The inputs reach the scripts as environment, never pasted into a `run:` line. The statement is the tool's own, and
+  the tool refuses anything that is not a username or not a hash exactly as it wrote one. A quote in a username is
+  doubled, and the account is found by `handle_lc`.
+- Pins: `test/recoverop.test.js` (4). One drives the service end to end: the operator's statement, the game's own
+  recovery with the code typed without dashes, a new code, the operator's copy dead, every earlier device signed out,
+  and the same account with its Founder. `tools/mutants/recoverop.json` has 7 mutants, all dead.
+

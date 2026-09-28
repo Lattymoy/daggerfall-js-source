@@ -15,7 +15,7 @@ const read = (p) => readFileSync(join(root, p), 'utf8');
 
 test('PERF5 pins: the context adds each static placement to the builder after its remap, action objects never, uploads on the first read, keeps drawList whole for the automap, and frees the mesh in destroy (mutant: any one dropped)', () => {
   const c = read('src/scenes/dungeonContext.js');
-  assert.match(c, /let staticBatch = null, staticBuilt = false;\n\s+const staticBuilder = new StaticBatchBuilder\(\);/);
+  assert.match(c, /let staticBatch = null, staticBuilt = false;\n\s+const staticBuilder = new StaticBatchBuilder\(\{ shadowCell: SHADOW_CELL_SIZE \}\);/);   // LA-AUDIT A1: with its shadow cells
   assert.match(c, /const texRemap = new Map\(\);\n\s+const resolveTexKey = keyResolver\(texRemap\);/, 'resolves through the level\'s remap');
   assert.match(c, /drawList\.push\(\{ mesh: gpu, matrix, key: `\$\{bi\}:\$\{p\.position\}`, aabb \}\);\n\s+\/\/ PERF5[^\n]*\n\s+if \(cpu\.normals && cpu\.uvs\) \{ staticBuilder\.add\(cpu, matrix, resolveTexKey\); drawList\[drawList\.length - 1\]\._batched = true; \}/, 'added beside the draw entry, which stays in drawList for the automap');
   const loop = c.slice(c.indexOf("if (cls === 'move') {"), c.indexOf('drawList.push({ mesh: gpu, matrix, key: `${bi}:${p.position}`, aabb });'));

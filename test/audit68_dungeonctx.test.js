@@ -20,9 +20,12 @@ import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
 import { RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE } from '../src/player/activate.js';
 import { CORPSE_ACTIVATION_DISTANCE } from '../src/scenes/hostCombat.js';
 import { renownFoeStruck, renownFoeDied } from '../src/net/renownTracker.js';   // RENOWN1: the kill door's stamps, in the harness's scope
+import { reportPlayerKill } from '../src/systems/playerKills.js';   // SET2: the kill door's third word, in the harness's scope
 import { partyFoeLoses, noteFighter, foeFighters, takeWholeBlow, PARTY_ME } from '../src/systems/partyScale.js';
 import { stampWonWeapons } from '../src/systems/lootRarity.js';   // SIGIL1: the kill door's stamp, the real one (offline: nothing marked)
 import { registerFoeDoor } from '../src/systems/artifactEffects.js';   // AUDIT PSCALE1 DOORS-2: `stand` registers the foe's door   // PSCALE1: the kill door's weight - who fights it - in the harness's scope
+import { validFoeRecord, FOE_HEALTH_MAX, FOE_LEVEL_MAX } from '../src/net/wire.js';   // AUDIT SET P-M3: the stream's door, and the record's bounds
+import { FOES_FULL_MS } from '../src/net/online.js';   // AUDIT FINAL F7: the full frame the name must outlive
 
 const D = readFileSync(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
 const AST = acorn.parse(D, { ecmaVersion: 'latest', sourceType: 'module' });
@@ -90,8 +93,9 @@ function killHarness({ foes, foeDeps = null, getTexture = async () => ({ recordC
   const state = {
     foes, foeDeps, _authority: true, _layoutFoes: foes.length, opts: {}, lastPlayerFeet: [0, 0, 0], _ecvT: 0, _ctxDead: false,
     playerEntity: { isPlayer: true, items: [], luck: 50 },
-    markFoeStruck: () => {}, markConcealedHit: () => {}, makeEnemiesHostile: () => {}, peerCandidate: () => null, renownFoeStruck, renownFoeDied,   // RENOWN1: the kill door's two stamps, the real ones (no handler: nothing paid)
+    markFoeStruck: () => {}, markConcealedHit: () => {}, makeEnemiesHostile: () => {}, peerCandidate: () => null, renownFoeStruck, renownFoeDied, reportPlayerKill,   // RENOWN1: the kill door's two stamps, the real ones (no handler: nothing paid)
     partyFoeLoses, noteFighter, foeFighters, takeWholeBlow, PARTY_ME, registerFoeDoor,   // PSCALE1: the real weight - only my own blows land here, so every foe fights one and every blow lands whole
+    ownRides: () => false,   // PSCALE-OWN / SUMMON-SYNC: nothing of mine on the own lane here
     damageShieldPool: (e, n) => n, attemptSoulTrap, fillEmptyTrap, isAzurasStarEquipped: () => false,
     hudText: { add: (l) => log.hud.push(l) }, SOUL_TRAP_TEXT: { trapSuccess: 'ok', trapFail: 'fail', trapNoneEmpty: 'none' },
     setEnemyAlert, playRareDrop: () => { log.chimes++; }, raiseEnemyDeath: () => { log.deaths++; }, liveStat: () => 50, stampWonWeapons,
@@ -108,7 +112,9 @@ function killHarness({ foes, foeDeps = null, getTexture = async () => ({ recordC
     ${declSrc('foeDrainMagicka')}
     ${declSrc('foeSinks')}
     ${fnSrc('handleAttackFromPlayer')}
+    ${declSrc('isRoomFoe')}
     ${fnSrc('_sharedFoe')}
+    ${fnSrc('_runsFoe')}
     ${fnSrc('fightN')}
     ${fnSrc('damageFoe')}
     ${fnSrc('spawnCorpse')}
@@ -425,4 +431,65 @@ test('AUDIT 68 S19-archer-hit-frame-continue: a bow shot\'s hit frame gates the 
   assert.doesNotMatch(block, /\bcontinue;/, 'a `continue` here is the foe LOOP\'s - it skipped f.mobile.update and _mobileBatches.push');
   assert.match(block, /^if \(playerFeet && f\.events\.includes\('hit'\) && !f\.attack\.firedRanged\) \{/, 'the ranged swing is gated out');
   assert.ok(block.includes('if (!f.mobile) resolveFoeMelee(f, _pf);'), 'the rig path keeps its clock');
+});
+
+/** AUDIT FINAL F7: the window a death's record names its striker for - the module's own constant, read off its text. */
+const KILLED_BY_MS = Number(/export const KILLED_BY_MS = (\d+);/.exec(D)?.[1]);
+
+test('AUDIT SET P-M3: a joiner\'s killing blow, applied at the host, is named on the dead foe\'s streamed record; the joiner it names - no other - reports the kill to its sets (the Rampage, Eventide), as the exterior owner\'s `slain` word does; the host\'s own kill names nobody, an un-death forgets the name, and the wire takes the name on a death\'s record alone (mutants: the killer never marked; the killer never streamed; every joiner told; the name kept past an un-death; a name on a live record; the name kept for as long as the body lies)', async () => {
+  // the host: the kill door marks whose blow it was
+  const rat = foeRec(), bat = foeRec({ mobileType: 3 });
+  const h = killHarness({ foes: [rat, bat] });
+  h.damageFoe(rat, 99, null, null, { peer: true, peerId: 'peer-7' });
+  await tick();
+  assert.equal(rat.dead, true);
+  assert.equal(rat._killedBy, 'peer-7', 'a joiner\'s blow');
+  h.damageFoe(bat, 99);
+  await tick();
+  assert.equal(bat._killedBy, null, 'my own blow: nobody to tell');
+  // the record: `v` on the dead foe's, and on its key
+  const rec = mount(`${fnSrc('roomRecord')} return { roomRecord };`, { q2: (x) => x, q3: (x) => x, FOE_HEALTH_MAX, FOE_LEVEL_MAX, KILLED_BY_MS, _sharedFoe: () => false, fightN: () => 1 });
+  const r = rec.roomRecord(rat, 0, true);
+  assert.equal(r.v, 'peer-7');
+  assert.ok(rat._sentKey.endsWith(',peer-7'), 'the name rides the key');
+  assert.equal('v' in rec.roomRecord(bat, 1, true), false, 'the host\'s kill names nobody');
+  assert.equal('v' in rec.roomRecord(foeRec(), 2, true), false, 'a live foe names nobody');
+  // AUDIT FINAL F7: for KILLED_BY_MS after the death, never for as long as the body lies - 453 elite corpses named by
+  // joiners broke the full frame's 64 KiB, and the host's stream was refused whole for good
+  assert.ok(KILLED_BY_MS >= 2 * FOES_FULL_MS, 'two full frames carry it');
+  rat._killedAt = performance.now() - KILLED_BY_MS - 1;
+  assert.equal('v' in rec.roomRecord(rat, 0, true), false, 'a body lain past the window names nobody');
+  assert.ok(!rat._sentKey.endsWith(',peer-7'), 'and its key says so - the next delta sheds the name');
+  rat._killedAt = performance.now();
+  assert.equal(rec.roomRecord(rat, 0, true).v, 'peer-7', 'inside it, named');
+  h.state.renownFoeRevived = () => {};   // the un-death's own renown word, outside this harness's kill door
+  h.setFoeDead(rat, false);
+  assert.equal(rat._killedBy, null, 'an un-death forgets it');
+  // the wire: a name on a death's record, a peer's id
+  assert.equal(validFoeRecord({ i: 0, d: 1, v: 'peer-7' })?.v, 'peer-7');
+  assert.equal(validFoeRecord({ i: 0, d: 0, v: 'peer-7' }), null, 'on a live record: no record');
+  assert.equal(validFoeRecord({ i: 0, d: 1, v: 'x' }), null, 'not a peer\'s id');
+  assert.equal(validFoeRecord({ i: 0, d: 1, v: 7 }), null);
+  // the joiner: only the one it names reports the kill
+  const kills = [];
+  const joiner = (self) => {
+    const foes = [foeRec(), foeRec()];
+    const state = {
+      foes, _layoutFoes: 2, _retyping: new Set(), _authority: false, validFoeRecord, opts: { selfId: () => self },
+      renownFoeDied: () => {}, reportPlayerKill: (e, info) => kills.push([self, e, info]), addCorpseFood: () => {}, stampWonWeapons: () => {},
+      liveStat: () => 50, playerEntity: { isPlayer: true, items: [] }, setFoeDead: (f, d) => { f.dead = d; }, retypeFoe: async () => false,
+    };
+    return { foes, ...mount(`${declSrc('REMOTE_KILL')} ${fnSrc('applyFoeRecord')} return { applyFoeRecord };`, state) };
+  };
+  const me = joiner('peer-7');
+  me.applyFoeRecord(me.foes[0], { i: 0, d: 1, v: 'peer-7', f: [0, 0, 0] });
+  assert.deepEqual(kills.map(([s, e, i]) => [s, e === me.foes[0].entity, i.kind]), [['peer-7', true, 'remote']], 'the named joiner: its kill');
+  me.applyFoeRecord(me.foes[0], { i: 0, d: 1, v: 'peer-7', f: [0, 0, 0] });
+  assert.equal(kills.length, 1, 'once - the next frame finds it dead');
+  me.applyFoeRecord(me.foes[1], { i: 1, d: 1, f: [0, 0, 0] });
+  assert.equal(kills.length, 1, 'a death that names nobody: no kill of mine');
+  const other = joiner('peer-9');
+  other.applyFoeRecord(other.foes[0], { i: 0, d: 1, v: 'peer-7', f: [0, 0, 0] });
+  assert.equal(kills.length, 1, 'another joiner: not its kill');
+  assert.equal(other.foes[0].dead, true, '...though it saw it fall');
 });

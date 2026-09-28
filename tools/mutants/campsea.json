@@ -1,0 +1,24 @@
+[
+  {
+    "name": "CAMPSEA-the-roll-reads-the-stale-flag",
+    "file": "src/scenes/world.js",
+    "old": "          preventEnemySpawns: playerEntity.preventEnemySpawns || _deepSuppressesSpawns() || !!(walkMode && playerSpawned && player.isPlayerSwimming),",
+    "new": "          preventEnemySpawns: playerEntity.preventEnemySpawns,",
+    "tests": ["test/campsea.test.js"],
+    "note": "The shipped bug: the flag is written after the crossing and cleared before the next, so camps stood on the seabed."
+  },
+  {
+    "name": "CAMPSEA-the-frame-flag-unwritten",
+    "file": "src/scenes/world.js",
+    "old": "    if (_deepSuppressesSpawns()) playerEntity.preventEnemySpawns = true;",
+    "new": "    if (false) playerEntity.preventEnemySpawns = true;",
+    "tests": ["test/campsea.test.js"]
+  },
+  {
+    "name": "CAMPSEA-the-camp-gate-ignores-suppression",
+    "file": "src/systems/campEncounters.js",
+    "old": "const campGateOk = (ctx) => !(ctx.inside || ctx.inLocationRect || ctx.preventEnemySpawns);",
+    "new": "const campGateOk = (ctx) => !(ctx.inside || ctx.inLocationRect);",
+    "tests": ["test/campsea.test.js"]
+  }
+]

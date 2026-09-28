@@ -40,7 +40,12 @@ test('PERF3 fpsCounter: the draws/binds line is the per-frame mean of the render
 test('PERF3 pins: the terrain block goes up once per frame stamp; the cutout billboards are sorted by key and a repeated key binds nothing; the stamp moves with beginFrame, a state restore and a moved light (mutant: the guard dropped, the sort dropped, or a stamp site missed)', () => {
   const r = read('src/render/renderer.js');
   assert.match(r, /this\._frameStamp = 0;/); assert.match(r, /this\._tFrameStamp = -1;/);
-  assert.equal((r.match(/this\._frameStamp\+\+;/g) || []).length, 3, 'beginFrame, the restore, setLightDir');
+  // LA-COST1 (2026-09-27): the three are no longer the only stamp sites - every setter and seam that moves a value in
+  // one of the four gated blocks stamps now, and test/la_cost.test.js holds that list (and derives it from the source);
+  // this pin keeps PERF3's own three by name
+  assert.ok((r.match(/this\._frameStamp\+\+;/g) || []).length >= 3, 'beginFrame, the restore, setLightDir - at least');
+  assert.match(r, /this\._frameStamp\+\+;   \/\/ PERF3: a restored state is a new frame to the terrain block/, 'the restore stamps');
+  assert.match(r, /setLightDir\(dir\) \{\n\s+this\._lightDir = dir;\n\s+this\._frameStamp\+\+;/, 'a moved light stamps');
   assert.match(r, /this\._lightDir = lightDir;\n\s+this\._frameStamp\+\+;/, 'beginFrame stamps after it takes the light');
   assert.match(r, /if \(this\._tFrameStamp !== this\._frameStamp\) \{\n\s+this\._tFrameStamp = this\._frameStamp;\n\s+gl\.uniformMatrix4fv\(this\.tUProj, false, this\._proj\);/, 'the block is behind the stamp');
   const block = r.slice(r.indexOf('if (this._tFrameStamp !== this._frameStamp) {'), r.indexOf('gl.bindTexture(gl.TEXTURE_2D_ARRAY, arrayTex);'));
@@ -69,7 +74,9 @@ test('PERF3 pins: the terrain block goes up once per frame stamp; the cutout bil
   // sharing it - routing it through the shared one is what broke MAC4's
   // record key and this very pin the first time PERF-TEX was written.
   assert.match(r, /if \(key !== lastKey\) \{\n\s+this\._activeTexture\(gl\.TEXTURE0\);\n\s+gl\.bindTexture\(gl\.TEXTURE_2D, tex\);/, 'a repeated key binds nothing');
-  assert.match(r, /opaque\.sort\(\(a, b\) => \(a\._bbKey < b\._bbKey \? -1 : a\._bbKey > b\._bbKey \? 1 : 0\)\);\n\s+for \(const b of opaque\) drawOne\(b\);/, 'the cutout pass is sorted by key');
+  // LA-COST2 (2026-09-27): sorted by bucket on the interned key id, in the string sort's own order - test/la_cost.test.js
+  // holds sortByKey to `(a, b) => (a._bbKey < b._bbKey ? -1 : a._bbKey > b._bbKey ? 1 : 0)` over random passes
+  assert.match(r, /sortByKey\(opaque\);[^\n]*\n\s+for \(const b of opaque\) drawOne\(b\);/, 'the cutout pass is sorted by key');
   assert.match(r, /blended\.sort\(\(a, b\) => d2\(b\) - d2\(a\)\);/, 'the blended pass keeps its back-to-front order');
   assert.match(r, /this\.stats\.texBinds \+= 2;\n\s+lastKey = key;/, 'the stat counts the binds that happen');
 });

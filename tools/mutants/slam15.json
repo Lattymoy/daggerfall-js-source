@@ -42,8 +42,8 @@
   {
     "name": "Z5-body-peer-wanted",
     "file": "src/net/remotePlayers.js",
-    "old": "      if (bodyH > 0) { this._shown.push({ peer, height: bodyH }); continue; }",
-    "new": "      if (bodyH > 0) { this._wanted.add(lookKey(peer.look)); this._shown.push({ peer, height: bodyH }); continue; }",
+    "old": "      if (bodyH > 0) { if (!veil) this._shown.push({ peer, height: bodyH }); continue; }",
+    "new": "      if (bodyH > 0) { this._wanted.add(lookKey(peer.look)); if (!veil) this._shown.push({ peer, height: bodyH }); continue; }",
     "tests": [
       "test/slam15.test.js"
     ]

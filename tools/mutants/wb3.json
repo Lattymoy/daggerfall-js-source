@@ -38,8 +38,8 @@
   {
     "name": "WB3-a-re-claim-raising-the-cap",
     "file": "src/net/gateBrain.js",
-    "old": "  if (known) { if (typeof name === 'string' && name) known.name = name.slice(0, 24); return true; }",
-    "new": "  if (known && clampLv(lv) === known.lv) { if (typeof name === 'string' && name) known.name = name.slice(0, 24); return true; }",
+    "old": "  if (known) { if (typeof name === 'string' && name) known.name = name.slice(0, 24); if (!f.fell && !f.wrath) { known.seenAt = now; restoreShare(f, known); } return true; }",
+    "new": "  if (known && clampLv(lv) === known.lv) { if (typeof name === 'string' && name) known.name = name.slice(0, 24); if (!f.fell && !f.wrath) { known.seenAt = now; restoreShare(f, known); } return true; }",
     "tests": [
       "test/wb3_gate_room.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "WB3-the-dash-in-the-wind-up",
     "file": "src/net/gateBrain.js",
-    "old": "    if (atk === ATTACKS.charge && now >= f.atk.at) {",
-    "new": "    if (atk === ATTACKS.charge && now >= f.atk.at - atk.windup) {",
+    "old": "  if (A === ATTACKS.charge && now >= f.atk.at) {",
+    "new": "  if (A === ATTACKS.charge && now >= f.atk.at - A.windup) {",
     "tests": [
       "test/wb3_gate_room.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "WB3-no-nova-with-the-roar",
     "file": "src/net/gateBrain.js",
-    "old": "    begin(f, ATTACKS.nova, now, null, bodies, rng, out);",
-    "new": "    void rng;",
+    "old": "    f.queue = rest.map((e) => ({ ...e }));",
+    "new": "    f.queue = [];",
     "tests": [
       "test/wb3_gate_room.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "WB3-the-dead-standing",
     "file": "src/net/gateBrain.js",
-    "old": "  for (const b of bodies) { const p = f.players[b.sub]; if (p && !b.dead) p.stoodMs += dt; }",
-    "new": "  for (const b of bodies) { const p = f.players[b.sub]; if (p) p.stoodMs += dt; }",
+    "old": "  for (const b of bodies) { const p = f.players[b.sub]; if (p && !b.dead) { p.stoodMs += dt; living = true; } }",
+    "new": "  for (const b of bodies) { const p = f.players[b.sub]; if (p) { p.stoodMs += dt; living = true; } }",
     "tests": [
       "test/wb3_gate_room.test.js"
     ]
@@ -452,7 +452,7 @@
   {
     "name": "WB3-the-hub-told-nothing",
     "file": "server/src/index.js",
-    "old": "    if (!(await this._gateTellHub({ d: f.day, at: f.fell.at, top: f.fell.top, n: f.fell.n, rc: Object.entries(f.rc ?? {}) }))) return;",
+    "old": "    if (!(await this._gateTellHub({ d: f.day, at: f.fell.at, top: f.fell.top, n: f.fell.n, rc: Object.entries(f.rc ?? {}), here: f.here ?? [] }))) return;",
     "new": "    if (!(await this._gateTellHub(null))) return;",
     "tests": [
       "test/wb3_gate_room.test.js"

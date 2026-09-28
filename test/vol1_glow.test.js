@@ -74,7 +74,8 @@ test('VOL1: the march by source - the air pass builds the glow from the lane\'s 
   assert.match(a, /for \(const t of \[T\.bloom, T\.shaft, T\.volOut\]\) \{ quad\(this\.programs\.box, t\); gl\.clear\(gl\.COLOR_BUFFER_BIT\); \}/, 'the three the resolve adds, black');
   assert.match(a, /this\.fresh = true;   \/\/ AUDIT VOL1/, 'set at prepare');
   assert.match(a, /vec3 c = airDecode\(texture\(uFrame, uv\)\.rgb\) \+ airDecode\(texture\(uVol, t\)\.rgb\);   \/\/ AUDIT VOL1/, 'the eye adapts to the glow it will see');
-  assert.match(a, /vec3 c = airDecode\(texture\(uFrame, uv\)\.rgb\)\$\{glow \? ' \+ airDecode\(texture\(uVol, vUV\)\.rgb\)' : ''\};/, 'and the bright pass blooms a halo\'s core (PERF-EXT31: the bright pass built with the glow, for a frame that marched it)');
+  assert.match(a, /vec3 glow = vec3\(0\.0\)\$\{glow \? ' \+ airDecode\(texture\(uVol, vUV\)\.rgb\)' : ''\};/, 'and the bright pass blooms a halo\'s core (PERF-EXT31: the bright pass built with the glow, for a frame that marched it; LA-POST1: added to each quarter it thresholds)');
+  assert.match(a, /vec3 c = airDecode\(texture\(uFrame, uv\)\.rgb\) \+ glow;/, 'LA-POST1: the glow joins the frame before the threshold');
   assert.match(a, /gl\.uniform1f\(this\.programs\.box\.uStrength, this\.aoParams\[1\]\);[^\n]*\n\s*gl\.drawArrays\(gl\.TRIANGLE_STRIP, 0, 4\);\n\s*\/\/ 1b\. VOL1[^\n]*\n\s*this\._volumetrics\(f, sp, quad, depthOn\);/, 'after the AO\'s blur, before the bloom source');
   assert.match(a, /const on = !!P\.vol && this\.volOn && n > 0 && f\.scatter > 0 && !!sp;/, 'the door, a lantern, an air with a density, the pass');
   assert.match(a, /sp\.upload\(P\.vol\.shadow\);/, 'the cube maps and the caster table');
@@ -90,7 +91,7 @@ test('VOL1: the march by source - the air pass builds the glow from the lane\'s 
   assert.match(r, /glsl: \{ shadow: SHADOW_GLSL, tonemap: this\._lane\.tonemapGlsl, scatter: this\._lane\.scatterGlsl \}, maxLights: this\.maxPointLights \}\);/);
   assert.match(r, /scatter: this\._scatterGain\(\), exposure: this\._exposure,/, 'in prepare');
   assert.match(r, /gl\.uniform1f\(scLoc, this\._airGlows\(\) \? 0 : this\._scatterGain\(\)\);/, 'the lane\'s own glow is 0 where the air pass glows');
-  assert.match(r, /_airGlows\(\) \{ return !!this\._air && this\._air\.fresh && this\._volumetricsWanted !== false && this\._spriteDepth === 0 && this\._studioDepth === 0 && !this\._panelSaved; \}/, 'the contact block\'s own gate, and the pass PREPARED for this frame (AUDIT VOL1: a frame that is not the world\'s keeps the lane\'s glow)');
+  assert.match(r, /_airGlows\(\) \{ return !!this\._air && !!this\._air\.programs\.vol && this\._air\.fresh && this\._volumetricsWanted !== false && this\._spriteDepth === 0 && this\._studioDepth === 0 && !this\._panelSaved; \}/, 'the contact block\'s own gate, and the pass PREPARED for this frame (AUDIT VOL1: a frame that is not the world\'s keeps the lane\'s glow; LA-POST7: and a glow shader that built)');
   assert.equal(EL_LANE.tonemapGlsl, EL_TONEMAP_GLSL); assert.equal(EL_LANE.scatterGlsl, EL_SCATTER_GLSL);
   assert.ok(EL_GLSL.includes(EL_TONEMAP_GLSL) && EL_GLSL.includes(EL_SCATTER_GLSL), 'the lane takes the same two blocks - one curve, one integral');
 });

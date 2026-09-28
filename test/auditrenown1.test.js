@@ -393,7 +393,7 @@ test('AUDIT RENOWN1 GAME-8: the page\'s last word - `leave` sends the held repor
 });
 
 test('AUDIT RENOWN1 UI-5/UI-7/WIRE-2c: the answer\'s plan - the order carried WHENEVER the service signed one, a rise announced against what was SAID (never against the page\'s level, which a token may have raised first), the hour\'s line only for a report the hour cut short (never at the cap, never for a repeat) (mutants: the order gated on the page\'s level; the announcement against the page\'s level; the cap line at the cap; the cap line for a repeat)', () => {
-  assert.deepEqual(renownAnswer({ level: 6, rose: true, order: 'v1.o.s', credited: 500 }, 500, 5), { level: 6, order: 'v1.o.s', announce: 6, capped: false });
+  assert.deepEqual(renownAnswer({ level: 6, rose: true, order: 'v1.o.s', credited: 500 }, 500, 5), { level: 6, order: 'v1.o.s', announce: 6, capped: false, xp: null });   // RENOWN4: xp null for an answer without a total
   assert.deepEqual(renownAnswer({ level: 6, rose: true, order: 'v1.o.s', credited: 500 }, 500, null).announce, 6, 'nothing said yet');
   assert.equal(renownAnswer({ level: 6, rose: true, order: 'v1.o.s', credited: 500 }, 500, 6).announce, null, 'said already');
   assert.equal(renownAnswer({ level: 6, rose: false, order: null, credited: 500 }, 500, 5).announce, null, 'no rise, nothing said');
@@ -401,7 +401,7 @@ test('AUDIT RENOWN1 UI-5/UI-7/WIRE-2c: the answer\'s plan - the order carried WH
   assert.equal(renownAnswer({ level: 6, rose: false, repeat: true, order: 'v1.o.s', credited: 0 }, 500, 5).capped, false, 'a repeat is not the hour');
   assert.equal(renownAnswer({ level: 9, credited: 100 }, 500, 9).capped, true, 'the hour cut it short');
   assert.equal(renownAnswer({ level: 50, credited: 0, max: true }, 500, 50).capped, false, 'at the cap there is no hour to speak of');
-  assert.deepEqual(renownAnswer(null, 10, null), { level: null, order: null, announce: null, capped: false });
+  assert.deepEqual(renownAnswer(null, 10, null), { level: null, order: null, announce: null, capped: false, xp: null });
   const w = src('src/scenes/world.js');
   assert.match(w, /const a = renownAnswer\(data, sent, renownSaid\);/);
   assert.match(w, /if \(a\.order\) online\?\.sendRenownOrder\?\.\(a\.order, a\.level\);/, 'the order carried on the plan\'s word alone');
@@ -442,7 +442,7 @@ test('AUDIT RENOWN1 GAME-1/GAME-7/GAME-10: the city watch never pays, whoever\'s
   assert.match(d, /if \(f\.mobileType >= 128 && Number\.isInteger\(f\.entity\?\.level\) && f\.entity\.level >= 0 && f\.entity\.level <= FOE_LEVEL_MAX\) r\.l = f\.entity\.level;/, 'GAME-3: the host streams a class foe\'s level');
   assert.match(d, /if \(r\.l !== undefined && f\.mobileType >= 128\) f\.streamedLevel = r\.l;/, 'and the joiner keeps it');
   assert.match(d, /if \(landed && !f\.dead\) renownFoeCarry\(f, rec\);/, 'a live foe rebuilt keeps my blows; a dead one\'s rebuild does not');
-  assert.match(d, /_lootAt\.delete\(`corpse:\$\{pi\}`\); \}\n\s*renownFoeRevived\(f\);/, 'un-death forgets them');
+  assert.match(d, /_lootAt\.delete\(`corpse:\$\{pi\}`\); \}\n(?:\s*if \(f\._encId != null\) \{[^\n]*\n)?\s*renownFoeRevived\(f\);/, 'un-death forgets them');   // REST-SYNC re-aim: a shared body's loot record forgotten between
   assert.match(d, /nf\.entity\.health -= missing;[^\n]*\n\s*renownFoeCarry\(f, nf\);/, 'the dungeon\'s Wabbajack carries them');
   assert.match(src('src/scenes/world.js'), /nf\.entity\.health -= missing;[^\n]*\n\s*renownFoeCarry\(f, nf\);/, 'and the street\'s');
   for (const file of ['src/scenes/exteriorFoes.js', 'src/scenes/dungeonContext.js']) {

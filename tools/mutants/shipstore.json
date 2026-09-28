@@ -1,0 +1,44 @@
+[
+  {
+    "name": "SHIPSTORE-storage-opens-alone",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  packOpen = !d.loot || d.loot.storage === true;",
+    "new": "  packOpen = !d.loot;",
+    "tests": ["test/shipstore.test.js"]
+  },
+  {
+    "name": "SHIPSTORE-every-loot-opens-the-pack",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  packOpen = !d.loot || d.loot.storage === true;",
+    "new": "  packOpen = true;",
+    "tests": ["test/shipstore.test.js"]
+  },
+  {
+    "name": "SHIPSTORE-storage-is-just-loot",
+    "file": "src/ui/enhancedInventory.js",
+    "old": ": deps.loot ? (deps.loot.storage === true ? 'storage' : 'container') : 'ground';",
+    "new": ": deps.loot ? 'container' : 'ground';",
+    "tests": ["test/shipstore.test.js"]
+  },
+  {
+    "name": "SHIPSTORE-owned-cupboard-not-storage",
+    "file": "src/scenes/worldModes.js",
+    "old": "loot: { items: () => c.items, storage: !privateProperty },",
+    "new": "loot: { items: () => c.items },",
+    "tests": ["test/shipstore.test.js"]
+  },
+  {
+    "name": "SHIPSTORE-stranger-cupboard-is-storage",
+    "file": "src/scenes/worldModes.js",
+    "old": "loot: { items: () => c.items, storage: !privateProperty },",
+    "new": "loot: { items: () => c.items, storage: true },",
+    "tests": ["test/shipstore.test.js"]
+  },
+  {
+    "name": "SHIPSTORE-decor-storage-not-storage",
+    "file": "src/scenes/worldModes.js",
+    "old": "interiorInventory({ loot: { items: () => interiorDecor.itemsOf(id), storage: true } });",
+    "new": "interiorInventory({ loot: { items: () => interiorDecor.itemsOf(id) } });",
+    "tests": ["test/shipstore.test.js"]
+  }
+]

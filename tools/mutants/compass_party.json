@@ -1,0 +1,128 @@
+[
+  {
+    "name": "COMPASS-PARTY-drawn-mate-marked-twice",
+    "file": "src/ui/partyMapMarks.js",
+    "old": "    if (!p || m.online === false || drawn.has(m.acct)) continue;",
+    "new": "    if (!p || m.online === false) continue;",
+    "tests": [
+      "test/compassparty.test.js"
+    ]
+  },
+  {
+    "name": "COMPASS-PARTY-offline-seat-marked",
+    "file": "src/ui/partyMapMarks.js",
+    "old": "    if (!p || m.online === false || drawn.has(m.acct)) continue;",
+    "new": "    if (!p || drawn.has(m.acct)) continue;",
+    "tests": [
+      "test/compassparty.test.js"
+    ]
+  },
+  {
+    "name": "COMPASS-PARTY-same-pixel-at-the-town-middle",
+    "file": "src/ui/partyMapMarks.js",
+    "old": "    if (p.px === here.x && p.py === here.y) continue;\n",
+    "new": "",
+    "tests": [
+      "test/compassparty.test.js"
+    ]
+  },
+  {
+    "name": "COMPASS-PARTY-leader-feet-ignored",
+    "file": "src/ui/partyMapMarks.js",
+    "old": "    if (p.in === 0 && Number.isFinite(p.wx) && Number.isFinite(p.wz) && fromWorld) { out.push(fromWorld(p.wx, p.wz)); continue; }\n",
+    "new": "",
+    "tests": [
+      "test/compassparty.test.js"
+    ]
+  },
+  {
+    "name": "COMPASS-PARTY-indoors-reads-the-poses",
+    "file": "src/ui/partyMapMarks.js",
+    "old": "  if (!here) return out;\n  for (const m of Array.isArray(others) ? others : []) {",
+    "new": "  for (const m of Array.isArray(others) ? others : []) {",
+    "tests": [
+      "test/compassparty.test.js"
+    ]
+  },
+  {
+    "name": "COMPASS-PARTY-classic-never-drawn",
+    "file": "src/ui/hud.js",
+    "old": "  drawPartyCompassMarks(renderer, party, playerXZ, heading01, { bx, by, bw, s });\n",
+    "new": "",
+    "tests": [
+      "test/compassparty.test.js"
+    ]
+  },
+  {
+    "name": "COMPASS-PARTY-classic-unclamped",
+    "file": "src/ui/hud.js",
+    "old": "    const lerp = Math.min(1, Math.max(0, compassMarkerLerp(t, playerXZ, heading01)));",
+    "new": "    const lerp = compassMarkerLerp(t, playerXZ, heading01);",
+    "tests": [
+      "test/compassparty.test.js"
+    ]
+  },
+  {
+    "name": "COMPASS-PARTY-classic-in-the-detect-red",
+    "file": "src/ui/hud.js",
+    "old": "      renderer.drawScreenQuad(null, { x: mx + (mw - fill) / 2, y: my + r * rowH, w: fill, h: rowH }, undefined, PARTY_GREEN);",
+    "new": "      renderer.drawScreenQuad(null, { x: mx + (mw - fill) / 2, y: my + r * rowH, w: fill, h: rowH }, undefined, [0.6, 0.09, 0.03, 1]);",
+    "tests": [
+      "test/compassparty.test.js"
+    ]
+  },
+  {
+    "name": "COMPASS-PARTY-enhanced-never-placed",
+    "file": "src/ui/enhancedHud.js",
+    "old": "  drawPartyMarks(opts.party ?? null, opts.playerXZ ?? null, heading01);   // COMPASS-PARTY\n",
+    "new": "",
+    "tests": [
+      "test/compassparty.test.js"
+    ]
+  },
+  {
+    "name": "COMPASS-PARTY-enhanced-gone-mate-stays",
+    "file": "src/ui/enhancedHud.js",
+    "old": "  for (let i = 0; i < parts.partyMarks.length; i++) {",
+    "new": "  for (let i = 0; i < list.length; i++) {",
+    "tests": [
+      "test/compassparty.test.js"
+    ]
+  },
+  {
+    "name": "COMPASS-PARTY-world-hands-none",
+    "file": "src/scenes/world.js",
+    "old": "          party: partyCompass(),   // COMPASS-PARTY: the party's marks - the bodies drawn here, the rest where their poses say\n",
+    "new": "",
+    "tests": [
+      "test/compassparty.test.js"
+    ]
+  },
+  {
+    "name": "COMPASS-PARTY-world-pixel-corner",
+    "file": "src/scenes/world.js",
+    "old": "return [t[0] + TERRAIN_SIZE / 2, t[2] + TERRAIN_SIZE / 2]; },",
+    "new": "return [t[0], t[2]]; },",
+    "tests": [
+      "test/compassparty.test.js"
+    ]
+  },
+  {
+    "name": "COMPASS-PARTY-building-hands-none",
+    "file": "src/scenes/worldModes.js",
+    "old": "          party: partyCompassPoints({ bodies: () => host.partyNear?.() ?? [] }),   // COMPASS-PARTY: the mates standing in this building\n",
+    "new": "",
+    "tests": [
+      "test/compassparty.test.js"
+    ]
+  },
+  {
+    "name": "COMPASS-PARTY-dungeon-hands-none",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "        party: partyCompassPoints({ bodies: opts.party ?? null }),   // COMPASS-PARTY: the mates standing in this dungeon, at their feet in its frame\n",
+    "new": "",
+    "tests": [
+      "test/compassparty.test.js"
+    ]
+  }
+]

@@ -1,0 +1,76 @@
+[
+  {
+    "name": "SLOTS2-the-lists-head-again",
+    "file": "src/systems/saveSlots.js",
+    "old": "  const first = firstRestorable(undefined, storage);\n  return first ? { key: first.key, snap: first.snap } : null;",
+    "new": "  const first = restorableSaves(storage)[0];\n  return first ? { key: first.key, snap: first.snap } : null;",
+    "tests": [
+      "test/slots2.test.js"
+    ]
+  },
+  {
+    "name": "SLOTS2-the-first-slot-whether-it-restores-or-not",
+    "file": "src/systems/saveSlots.js",
+    "old": "    if (snap && accept({ key, info, snap })) return { key, info, snap };",
+    "new": "    return snap && accept({ key, info, snap }) ? { key, info, snap } : null;",
+    "tests": [
+      "test/slots2.test.js"
+    ]
+  },
+  {
+    "name": "SLOTS2-a-second-order",
+    "file": "src/systems/saveSlots.js",
+    "old": "export function firstRestorable(accept = () => true, storage = store()) {\n  for (const [key, info] of slotsByRecency(storage)) {",
+    "new": "export function firstRestorable(accept = () => true, storage = store()) {\n  for (const [key, info] of enumerateSaves(storage).info) {",
+    "tests": [
+      "test/slots2.test.js"
+    ]
+  },
+  {
+    "name": "SLOTS2-the-tie-broken-by-key",
+    "file": "src/systems/saveSlots.js",
+    "old": ".sort((a, b) => (b[1].dateAndTime?.realTime ?? 0) - (a[1].dateAndTime?.realTime ?? 0));",
+    "new": ".sort((a, b) => (b[1].dateAndTime?.realTime ?? 0) - (a[1].dateAndTime?.realTime ?? 0) || b[0] - a[0]);",
+    "tests": [
+      "test/slots2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SLOTS2-S1-a-stale-slot-offered-to-the-question",
+    "file": "src/systems/saveSlots.js",
+    "old": "    if (snap && accept({ key, info, snap })) return { key, info, snap };",
+    "new": "    if (accept({ key, info, snap })) return { key, info, snap };",
+    "tests": [
+      "test/slots2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SLOTS2-S1-the-portrait-reads-every-save",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "    const hit = firstRestorable((entry) => portraitSave([saveOf(entry)]) !== null, storage);\n    return hit ? saveOf(hit) : null;",
+    "new": "    return portraitSave(restorableSaves(storage).map(saveOf));",
+    "tests": [
+      "test/slots2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SLOTS2-S1-the-newest-save-whatever-its-face",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "firstRestorable((entry) => portraitSave([saveOf(entry)]) !== null, storage)",
+    "new": "firstRestorable(() => true, storage)",
+    "tests": [
+      "test/slots2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SLOTS2-S1-the-door-reads-the-list-again",
+    "file": "src/ui/enhancedMenu.js",
+    "old": ": newestPortraitSave();",
+    "new": ": portraitSave(savedGames());",
+    "tests": [
+      "test/slots2.test.js",
+      "test/profile1_badge.test.js",
+      "test/profile2_pause_profile.test.js"
+    ]
+  }
+]

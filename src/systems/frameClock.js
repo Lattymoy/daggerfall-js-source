@@ -14,7 +14,8 @@
 const WINDOW_MS = 1000;
 
 let open = null;       // the frame in flight: its start, ms
-let samples = [];      // [end ms, busy ms] within the window
+let openAt = null;     // SCRIPT-SPLIT: when the host's callback really began (performance.now() at frameBegin)
+let samples = [];      // [end ms, busy ms, in-frame ms, before ms, stream ms] within the window
 // PERF-EXT24: the stream build's slices run in their own animation-frame
 // callback AFTER a host's frameEnd, so no sample ever held them: frameCpu,
 // the FPS counter's script ms and `?perf=cpu` all read a streaming frame
@@ -31,8 +32,12 @@ let intervalCount = 0, intervalAt = 0, lastBegin = null;
 // sample) and whatever wait let the frame in, and none of it is lent.
 let begun = 0;
 
-/** The top of a host's frame callback. */
-export function frameBegin(now) {
+/** The top of a host's frame callback. `now` is the rAF's stamp - the
+ *  frame's start, which in Chrome is the display's beat, and can be well
+ *  before this callback runs when the main thread was busy with anything
+ *  else first. SCRIPT-SPLIT: `startedAt` is when the callback itself began,
+ *  so a sample can say which of the two its milliseconds were. */
+export function frameBegin(now, startedAt = (typeof performance !== 'undefined' ? performance.now() : now)) {
   // PERF-EXT24: the rAF stamps a frame apart - the display's own period
   // (16.7 at 60 Hz, 6.9 at 144), measured rather than assumed.
   if (lastBegin != null && now > lastBegin) {
@@ -42,6 +47,7 @@ export function frameBegin(now) {
   }
   lastBegin = now;
   open = now;
+  openAt = startedAt;   // SCRIPT-SPLIT
   begun++;   // PERF-EXT24 (the review)
 }
 
@@ -116,17 +122,25 @@ export const frameMark = () => open;
  * every time a modal went up. PERF1's measurement is unchanged; only
  * the token is cleared.
  */
-export function frameAbort() { open = null; }
+export function frameAbort() { open = null; openAt = null; }
 
 /** The bottom of the same callback, before it re-arms. `now` defaults
  *  to performance.now() - the end is measured, not the rAF's stamp. */
 export function frameEnd(now = (typeof performance !== 'undefined' ? performance.now() : null)) {
-  if (open == null || now == null) { open = null; return; }
+  if (open == null || now == null) { open = null; openAt = null; return; }
   lastOwn = Math.max(0, now - open);
   const busy = lastOwn + lent;   // PERF-EXT24: and the stream's slices since the last sample
+  // SCRIPT-SPLIT: the sample's three parts, which sum to it - the host's own callback (`inFrame`), the main thread's
+  // time between the frame's stamp and that callback (`before`: whatever ran first - the browser's own work, a
+  // message, a timer, a collection), and the stream's lent slices. Clamped into the frame so they always sum.
+  const at = Math.min(Math.max(openAt ?? open, open), Math.max(open, now));
+  const inFrame = Math.max(0, now - at);
+  const before = Math.max(0, at - open);
+  const stream = lent;
   lent = 0;
   open = null;
-  samples.push([now, busy]);
+  openAt = null;
+  samples.push([now, busy, inFrame, before, stream]);
   const cut = now - WINDOW_MS;
   let i = 0;
   while (i < samples.length && samples[i][0] < cut) i++;
@@ -137,9 +151,11 @@ export function frameEnd(now = (typeof performance !== 'undefined' ? performance
  *  before any frame has been stamped. */
 export function frameCpu() {
   if (!samples.length) return null;
-  let sum = 0, worst = 0;
-  for (const [, b] of samples) { sum += b; if (b > worst) worst = b; }
-  return { meanMs: sum / samples.length, worstMs: worst, frames: samples.length };
+  let sum = 0, worst = 0, inFrame = 0, before = 0, stream = 0;
+  for (const [, b, f, w, l] of samples) { sum += b; if (b > worst) worst = b; inFrame += f; before += w; stream += l; }
+  const n = samples.length;
+  // SCRIPT-SPLIT: the mean's three parts beside it - `inFrameMs + beforeMs + streamMs === meanMs`
+  return { meanMs: sum / n, worstMs: worst, frames: n, inFrameMs: inFrame / n, beforeMs: before / n, streamMs: stream / n };
 }
 
-export function _resetFrameClock() { open = null; samples = []; lent = 0; lastOwn = 0; intervalCount = 0; intervalAt = 0; lastBegin = null; begun = 0; }
+export function _resetFrameClock() { open = null; openAt = null; samples = []; lent = 0; lastOwn = 0; intervalCount = 0; intervalAt = 0; lastBegin = null; begun = 0; }

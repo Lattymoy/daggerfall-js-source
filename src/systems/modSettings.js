@@ -194,7 +194,12 @@ export const MOD_SETTINGS = Object.freeze({
       'General.SpawnWaterSurfaces': Object.freeze({ default: true, description: 'Render visible water surfaces' }),
       'General.SpawnUnderwaterEnemies': Object.freeze({ default: true, description: 'Spawn underwate enemies' }),
       'General.EnemyFrequency': Object.freeze({ default: 0.3, min: 0.0, max: 1.0, float: true, step: 0.05, description: 'Enemy frequency rate' }),
-      'General.MaxLiveEnemies': Object.freeze({ default: 128, min: 0, max: 256, description: 'Maximum live underwater enemies' }),
+      // SEA-CAP (2026-09-26, SquidKamer: "puddle no more is too aggressive ... it summoned an army of everything"; Mac:
+      // "Yes, cap at 32"): THE PORT'S DEFAULT IS 32, not the 128 the mod ships (vendor modsettings.json). The pulse
+      // fills every sea pixel within 200 m of an outdoor player from nothing to the cap in about two seconds, each foe
+      // hostile and told where the player is, and in a browser a hundred and twenty-eight of them is a crowd the AI
+      // cannot carry. The range is the mod's own - a player offline may still raise it to 256. Ledger A.
+      'General.MaxLiveEnemies': Object.freeze({ default: 32, min: 0, max: 256, description: 'Maximum live underwater enemies' }),
       'General.PassiveFishFrequency': Object.freeze({ default: 0.8, min: 0.0, max: 1.0, float: true, step: 0.05, description: 'Fish frequency rate' }),
       'General.MaxLiveFish': Object.freeze({ default: 720, min: 0, max: 1080, description: 'Maximum live passive fish' }),
       'General.SpawnUnderwaterDecorations': Object.freeze({ default: true, description: 'Decorate the seafloor' }),

@@ -1520,7 +1520,7 @@
   {
     "name": "DW-E4-world-no-lane",
     "file": "src/scenes/world.js",
-    "old": "    enemies: dwEnemies ? { spawner: dwEnemies, canPopulate: dwEnemies.canPopulate, attempts: ENEMY_ATTEMPTS_PER_PIXEL_PER_TICK } : null,   // DW-E4\n",
+    "old": "    enemies: dwEnemies ? { spawner: dwEnemies, canPopulate: dwEnemies.canPopulate, get attempts() { return _standsTheDeep() ? ENEMY_ATTEMPTS_PER_PIXEL_PER_TICK : 0; } } : null,   // DW-E4; DEEP-SHARE: only the one standing the deep populates a pixel\n",
     "new": "",
     "tests": [
       "test/dwe_enemies.test.js"
@@ -1538,8 +1538,8 @@
   {
     "name": "DW-E4-managed-culled",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "      if (!f.placed && !f.managed && _playerDist > (f.campId != null ? CAMP_CULL_DISTANCE : ENCOUNTER_CULL_DISTANCE)",
-    "new": "      if (!f.placed && _playerDist > (f.campId != null ? CAMP_CULL_DISTANCE : ENCOUNTER_CULL_DISTANCE)",
+    "old": "      if (!f.placed && !f.managed && _playerDist > _cullAt",
+    "new": "      if (!f.placed && _playerDist > _cullAt",
     "tests": [
       "test/dwe_enemies.test.js"
     ]

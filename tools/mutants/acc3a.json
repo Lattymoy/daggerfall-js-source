@@ -2,7 +2,7 @@
   {
     "name": "ACC3a-1-founder-becomes-a-column",
     "file": "server-account/src/titles.js",
-    "old": "  if (Number.isFinite(player?.registered_at) && player.registered_at <= FOUNDER_UNTIL) held.push('founder');",
+    "old": "  if (Number.isFinite(player?.registered_at) && firstPlayed(player) <= FOUNDER_UNTIL) held.push('founder');",
     "new": "  if (player?.founder) held.push('founder');",
     "tests": ["test/acc3titles.test.js"],
     "note": "THE WHOLE DESIGN, inverted. Mac asked that 'all current players should be granted the founder title' and the obvious migration walks the table and writes a flag. A walk records a fact ONCE, at a moment nobody can re-derive: a row inserted by hand afterwards has no flag and nothing says why, a row restored from a backup has whatever the backup had, and 'who is a founder?' can only be answered by reading every row. The cutoff answers it in one line and keeps answering it."
@@ -10,16 +10,16 @@
   {
     "name": "ACC3a-2-the-cutoff-turned-exclusive",
     "file": "server-account/src/titles.js",
-    "old": "player.registered_at <= FOUNDER_UNTIL",
-    "new": "player.registered_at < FOUNDER_UNTIL",
+    "old": "firstPlayed(player) <= FOUNDER_UNTIL",
+    "new": "firstPlayed(player) < FOUNDER_UNTIL",
     "tests": ["test/acc3titles.test.js"],
     "note": "An off-by-one on a boundary nobody would ever notice by hand: an account registered in the last second of the day Mac asked for this is not a founder. The pin drives the boundary on both sides for exactly this."
   },
   {
     "name": "ACC3a-3-founder-granted-to-guests-too",
     "file": "server-account/src/titles.js",
-    "old": "  if (Number.isFinite(player?.registered_at) && player.registered_at <= FOUNDER_UNTIL) held.push('founder');",
-    "new": "  if (!Number.isFinite(player?.registered_at) || player.registered_at <= FOUNDER_UNTIL) held.push('founder');",
+    "old": "  if (Number.isFinite(player?.registered_at) && firstPlayed(player) <= FOUNDER_UNTIL) held.push('founder');",
+    "new": "  if (!Number.isFinite(player?.registered_at) || firstPlayed(player) <= FOUNDER_UNTIL) held.push('founder');",
     "tests": ["test/acc3titles.test.js"],
     "note": "Mac's own call when asked ('Registered accounts only'). A guest row is device-bound and one storage clear from gone, so a founding title on one is a title that vanishes with a cleared browser - and every new guest would mint one forever, which is the opposite of what a founding title means."
   },
@@ -66,8 +66,8 @@
   {
     "name": "ACC3a-9-the-relay-believes-the-frame",
     "file": "server/src/index.js",
-    "old": "    return { name: r.claims.n, kind: r.claims.k, subject: r.claims.s, title: r.claims.t, glyphs: r.claims.g, mu, lv: r.claims.lv };",
-    "new": "    return { name: r.claims.n, kind: r.claims.k, subject: r.claims.s, title: m.title, glyphs: m.glyphs, mu, lv: r.claims.lv };",
+    "old": "    return { name: c.n, kind: c.k, subject: c.s, title: c.t, glyphs: c.g, mu, lv: c.lv, ...guild, gio: c.i };",
+    "new": "    return { name: c.n, kind: c.k, subject: c.s, title: m.title, glyphs: m.glyphs, mu, lv: c.lv, ...guild, gio: c.i };",
     "tests": ["test/acc3titles.test.js"],
     "note": "The other end of the same hole: the relay holds the public half and can verify, so the badge is only worth what the signature says. Read it off the hello and the first person to open devtools is a Developer."
   },

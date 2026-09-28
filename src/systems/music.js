@@ -157,8 +157,9 @@ export class MusicService {
 
   /** The context only exists after a gesture, so the player is built
    *  lazily on the first play that finds one. */
-  _ensurePlayer() {
-    if (!this.enabled) return null;
+  _ensurePlayer(made = false) {
+    // AUDIT WBX W2: a song made in code needs no archive - the court's score played nothing where MIDI.BSA did not load
+    if (!this.enabled && !made) return null;
     if (this.player) return this.player;
     if (!audio.ctx) return null;
     this.player = new SongPlayer(audio.ctx, audio.listenerBus?.() ?? null, audio.reverbSend?.() ?? null);   // DW-D: through the listener, so a filter on it takes the music too
@@ -168,7 +169,7 @@ export class MusicService {
   /** Play one song BY ARCHIVE NAME. Returns false when there is no
    *  archive, no context yet, or no such song - never throws. */
   playSong(name) {
-    const player = this._ensurePlayer();
+    const player = this._ensurePlayer(this._made.has(name));
     if (!player) {
       // No context yet: remember it for the gesture hook rather than
       // dropping it. AUDIT 19: this used to be gated on `enabled`, which
@@ -257,11 +258,12 @@ export class MusicService {
   /** The MIDI.BSA path - what playSong did before replacements existed,
    *  and still the fallback for every song a pick does not cover. */
   _playBuiltIn(name) {
-    const player = this._ensurePlayer();
+    const player = this._ensurePlayer(this._made.has(name));
     if (!player) return false;
     this._audio?.stop();   // a replacement must not sound underneath
     let song = this._made.get(name) ?? null;   // WB7: a song made in code answers for its own name
     if (!song) {
+      if (!this.archive) return false;   // AUDIT WBX W2: no archive, no song of its
       const index = this.archive.getSongIndex(name);
       if (index === null || index === undefined || index < 0) {
         console.warn(`[music] no song named ${name} in MIDI.BSA`);

@@ -25,7 +25,10 @@ export function crashText(err, event = null) {
   // the throw did not have.
   const isObj = err !== null && typeof err === 'object';
   const name = isObj ? (err.name ?? '') : '';
-  const message = isObj ? (err.message ?? '') : (err == null ? '' : String(err));
+  // FIELD 2026-09-27 (michelle!!'s "CRASH (2) / unknown error"): an error event with NO error object - a
+  // cross-origin "Script error.", a worker's error bubbling to the page - still carries its own message, and
+  // this said "unknown error" over it (main.js's `|| e.message` never fires: this never returns '').
+  const message = isObj ? (err.message ?? '') : (err == null ? (event?.message ?? '') : String(err));
   const head = name && message ? `${name}: ${message}` : (message || name || 'unknown error');
   const stack = typeof err?.stack === 'string' ? err.stack : '';
   // Chrome already leads with the message; do not print it twice.

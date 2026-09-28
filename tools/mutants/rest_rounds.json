@@ -1,0 +1,83 @@
+[
+  {
+    "name": "REST-ROUNDS-online-rest-runs-no-rounds",
+    "file": "src/scenes/shared.js",
+    "old": "      if (sharedClockOn() && Number.isFinite(sharedEnd)) {",
+    "new": "      if (false && sharedClockOn() && Number.isFinite(sharedEnd)) {",
+    "tests": [
+      "test/restrounds.test.js"
+    ]
+  },
+  {
+    "name": "REST-ROUNDS-window-claimed-player-not-run",
+    "file": "src/scenes/shared.js",
+    "old": "        runMagicRoundsFor(entity, w.from, w.to, { sinks, say });\n",
+    "new": "",
+    "tests": [
+      "test/restrounds.test.js"
+    ]
+  },
+  {
+    "name": "REST-ROUNDS-foe-pools-not-fanned",
+    "file": "src/scenes/shared.js",
+    "old": "        for (const fn of subscribers) fn(w.from, w.to, 0);\n        return { classicMinutes: worldMinutes(), rounds: w.rounds, magicRoundWindow: w };",
+    "new": "        return { classicMinutes: worldMinutes(), rounds: w.rounds, magicRoundWindow: w };",
+    "tests": [
+      "test/restrounds.test.js"
+    ]
+  },
+  {
+    "name": "REST-ROUNDS-rest-arm-also-ticks-real-window",
+    "file": "src/scenes/shared.js",
+    "old": "        return { classicMinutes: worldMinutes(), rounds: w.rounds, magicRoundWindow: w };",
+    "new": "        return this.tick(0, undefined, 0);",
+    "tests": [
+      "test/restrounds.test.js"
+    ]
+  },
+  {
+    "name": "REST-ROUNDS-outdoor-rest-drops-the-end",
+    "file": "src/scenes/world.js",
+    "old": "    advanceMinutes: (n, sharedEnd) => { playerTicker.advance(n, sharedEnd); runEncounterTick(",
+    "new": "    advanceMinutes: (n, sharedEnd) => { playerTicker.advance(n); runEncounterTick(",
+    "tests": [
+      "test/restrounds.test.js"
+    ]
+  },
+  {
+    "name": "REST-ROUNDS-party-mirror-drops-the-end",
+    "file": "src/scenes/world.js",
+    "old": "    advanceMinutes: (n, sharedEnd) => { playerTicker.advance(n, sharedEnd); },",
+    "new": "    advanceMinutes: (n) => { playerTicker.advance(n); },",
+    "tests": [
+      "test/restrounds.test.js"
+    ]
+  },
+  {
+    "name": "REST-ROUNDS-interior-rest-drops-the-end",
+    "file": "src/scenes/worldModes.js",
+    "old": "    advanceMinutes: (n, sharedEnd) => { interiorTicker.advance(n, sharedEnd); host.encounterTick?.(); },",
+    "new": "    advanceMinutes: (n) => { interiorTicker.advance(n); host.encounterTick?.(); },",
+    "tests": [
+      "test/restrounds.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RISE-REST-F2-the-online-night-pays-no-needs",
+    "file": "src/scenes/shared.js",
+    "old": "        if (feed) runSurvivalMinutes(entity, start, end, feed.env, { ...feed.deps, sinks, rolls: Math.random });\n",
+    "new": "",
+    "tests": [
+      "test/restrounds.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RISE-REST-F2-the-needs-paid-on-the-worlds-clock",
+    "file": "src/scenes/shared.js",
+    "old": "        if (feed) runSurvivalMinutes(entity, start, end, feed.env, { ...feed.deps, sinks, rolls: Math.random });\n",
+    "new": "        if (feed) runSurvivalMinutes(entity, Math.floor(worldMinutes()) - minutes, Math.floor(worldMinutes()), feed.env, { ...feed.deps, sinks, rolls: Math.random });\n",
+    "tests": [
+      "test/restrounds.test.js"
+    ]
+  }
+]

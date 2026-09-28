@@ -228,8 +228,8 @@
   {
     "name": "NAME1-party-colour-dropped",
     "file": "src/ui/nameLayer.js",
-    "old": "        setStyle(tag.name, 'color', cssRgba(colorOf?.(p.id)) ?? '');",
-    "new": "        setStyle(tag.name, 'color', '');",
+    "old": "        const ink = cssRgba(colorOf?.(p.id)) ?? '';",
+    "new": "        const ink = '';",
     "tests": [
       "test/name1_bubbles.test.js"
     ]

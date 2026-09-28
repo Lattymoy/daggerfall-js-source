@@ -381,17 +381,14 @@ for (const [label, viewport, hudScale] of [
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto(`${BASE}/levelup.html?lane=notice`, { waitUntil: 'load' });
   await page.waitForSelector('#enhanced-levelnotice .lv-note', { timeout: 20000 });
-  // A LIVE BOTTOM BLOCK: the breath bar up, three effects, two needs -
-  // the rows a player levelling in a dungeon actually has - and the
-  // scale this lane is measuring at.
+  // A LIVE BOTTOM BLOCK: the breath bar up - the row a player levelling
+  // in a dungeon has over the vitals (UI3: the effects and the needs are
+  // the status widget's tiles at the left edge now, not the column's) -
+  // and the scale this lane is measuring at.
   await page.evaluate((scale) => {
     document.querySelector('.hud')?.style.setProperty('--hud-scale', String(scale));
     const br = document.querySelector('.hud-breath');
     if (br) { br.classList.add('on'); br.innerHTML = '<span class="hud-breathlabel">Breath</span><span class="hud-track"><i class="hud-fill" style="width:60%"></i></span>'; }
-    const ef = document.querySelector('.hud-effects');
-    if (ef) ef.innerHTML = ['Levitate', 'Shield', 'Free Action'].map((t) => `<span class="hud-eff">${t}</span>`).join('');
-    const nd = document.querySelector('.hud-needs');
-    if (nd) nd.innerHTML = ['Hungry', 'Cold'].map((t) => `<span class="hud-need">${t}</span>`).join('');
   }, hudScale);
   await page.waitForTimeout(80);
   const rows = (await page.locator('.lv-note').allInnerTexts()).map((s) => s.replace(/\s+/g, ' ').trim());

@@ -6,7 +6,8 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { tickPlayerMinutes } from '../src/systems/worldTick.js';
-import { FATIGUE_LOSS } from '../src/systems/statMods.js';
+import { FATIGUE_LOSS, FATIGUE_DRAIN_SCALE } from '../src/systems/statMods.js';
+const charged = (loss, mult = 1) => Math.trunc(loss * mult * FATIGUE_DRAIN_SCALE);   // BALANCE1: DFU's loss x the multiplier x exertion's scale, truncated once
 import { bootstrapRegionPower } from '../src/systems/regionPower.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -30,12 +31,13 @@ test('audit26 F083: a climbing minute drains 22, and climbing HEADS the band', (
     });
     return drained.reduce((a, b) => a + b, 0);
   };
-  assert.equal(drain({ climbing: true }), FATIGUE_LOSS.Climbing, 'the climbing arm drains 22');
+  // BALANCE1: each band is charged on exertion's scale (charged); DFU's constants stay DFU's
+  assert.equal(drain({ climbing: true }), charged(FATIGUE_LOSS.Climbing), 'the climbing arm drains 22 (on the scale)');
   assert.equal(FATIGUE_LOSS.Climbing, 22, 'ClimbingFatigueLoss (:110)');
-  assert.equal(drain({ climbing: true, running: true }), FATIGUE_LOSS.Climbing,
+  assert.equal(drain({ climbing: true, running: true }), charged(FATIGUE_LOSS.Climbing),
     'climbing HEADS the band - a running climber pays the climb rate (:405-408 order)');
-  assert.equal(drain({ running: true }), FATIGUE_LOSS.Running, 'running still 88 alone');
-  assert.equal(drain({}), FATIGUE_LOSS.Default, 'and the resting default still 11');
+  assert.equal(drain({ running: true }), charged(FATIGUE_LOSS.Running), 'running still 88 alone (on the scale)');
+  assert.equal(drain({}), charged(FATIGUE_LOSS.Default), 'and the resting default still 11 (on the scale)');
 });
 
 test('audit26 F083: every activity producer reports the climb flag', () => {

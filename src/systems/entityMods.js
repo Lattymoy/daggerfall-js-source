@@ -63,15 +63,24 @@ const _weaponMods = new Map();
 /** Register a weapon-damage modifier by name: `fn(weapon, damage) -> damage`. */
 export function registerWeaponDamageMod(name, fn) { if (typeof fn === 'function') _weaponMods.set(name, fn); else _weaponMods.delete(name); }
 const _blowMods = new Map();
-/** SIGIL1: register a modifier over a WEAPON BLOW's whole damage - `fn(weapon, damage, attacker, target) -> damage`,
+/** SIGIL1: register a modifier over a WEAPON BLOW's whole damage - `fn(weapon, damage, attacker, target, info) -> damage`,
  *  read at the tail of FormulaHelper's weapon damage (after the strength, the material and the enemy-type term, before
  *  DFU's mod hook, its last line), where the
- *  attacker and the target are known: the online sigil (systems/sigil.js) is the one that needs them. */
+ *  attacker and the target are known: the online sigil (systems/sigil.js) is the one that needs them.
+ *  SET2: `info` is what the striker's host knew and the formula could not - `{ unaware }`, the struck foe had not
+ *  noticed the striker (its AI's `detected`, read where the foe RECORD is in hand: combat/playerWeapon.js foeUnaware).
+ *  Read under EITHER core - DFU's (combat/formulas.js weaponAttackDamage) and PCAAO's (combat/pcaao.js
+ *  pcaaoWeaponAttackDamage). */
 export function registerWeaponBlowMod(name, fn) { if (typeof fn === 'function') _blowMods.set(name, fn); else _blowMods.delete(name); }
+const NO_BLOW_INFO = Object.freeze({ unaware: false });
 /** The blow's damage through every registered blow modifier, in registration order. */
-export function weaponBlowMods(weapon, damage, attacker, target) {
+export function weaponBlowMods(weapon, damage, attacker, target, info = NO_BLOW_INFO) {
   let d = damage;
-  for (const fn of _blowMods.values()) d = fn(weapon, d, attacker, target);
+  // AUDIT SET L6: a modifier that throws is skipped, as every other seam here skips one - a blow modifier now reaches a
+  // second foe's whole damage door and death (SET3's Cleave), and a throw there aborted the swing that carried it
+  for (const fn of _blowMods.values()) {
+    try { const next = fn(weapon, d, attacker, target, info ?? NO_BLOW_INFO); if (Number.isFinite(next)) d = next; } catch (e) { console.warn('[entityMods] a blow modifier threw', e?.message ?? e); }
+  }
   return d;
 }
 
@@ -98,10 +107,15 @@ export const entityModsOf = (entity) => entity?._mods ?? EMPTY_MODS;
 addEquipChangeListener(computeEntityMods);   // every equipItem/unequipItem, and the save's rebuildEquipState
 
 // ── the accessors: ONE read per channel, DFU's channel included ─────
+/** AUDIT SET P-M1: the port's armour POINTS on a struck part alone - an armour affix's, a set's - protection, positive. */
+export const entityArmorPoints = (entity, bodyPart) => entityModsOf(entity).armorParts?.[bodyPart] ?? 0;
+/** DFU's two enchantment channels alone (FormulaHelper.cs:1158's Increased + Decreased) - for a core that reads them
+ *  apart from the port's points (PCAAO's player term). */
+export const entityEnchantArmorMod = (entity) => enchantArmorMod(entity);
 /** The hit formula's armour modifier for a struck part
  *  (FormulaHelper.cs:1158's Increased + Decreased, MINUS the port's
  *  points on that part). */
-export const entityArmorMod = (entity, bodyPart) => enchantArmorMod(entity) - (entityModsOf(entity).armorParts?.[bodyPart] ?? 0);
+export const entityArmorMod = (entity, bodyPart) => enchantArmorMod(entity) - entityArmorPoints(entity, bodyPart);
 /** The paperdoll's number for a part (RefreshArmourValues' Decreased
  *  MINUS Increased, PLUS the port's points - the doll's numbers rise
  *  as armour improves). */

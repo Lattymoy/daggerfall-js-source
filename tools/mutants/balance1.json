@@ -1,0 +1,223 @@
+[
+  {
+    "name": "BALANCE1-minute-charged-unscaled",
+    "file": "src/systems/worldTick.js",
+    "old": "sinks.drainFatigue?.(Math.trunc(loss * fatigueMultiplier * FATIGUE_DRAIN_SCALE));",
+    "new": "sinks.drainFatigue?.(Math.trunc(loss * fatigueMultiplier));",
+    "tests": [
+      "test/balance1.test.js",
+      "test/audit18.test.js"
+    ]
+  },
+  {
+    "name": "BALANCE1-minute-truncated-before-the-scale",
+    "file": "src/systems/worldTick.js",
+    "old": "sinks.drainFatigue?.(Math.trunc(loss * fatigueMultiplier * FATIGUE_DRAIN_SCALE));",
+    "new": "sinks.drainFatigue?.(Math.trunc(loss * fatigueMultiplier) * FATIGUE_DRAIN_SCALE);",
+    "tests": [
+      "test/audit18.test.js"
+    ]
+  },
+  {
+    "name": "BALANCE1-jump-charged-unscaled",
+    "file": "src/systems/worldTick.js",
+    "old": "sinks.drainFatigue?.(Math.trunc(FATIGUE_LOSS.Jumping * fatigueMultiplier * FATIGUE_DRAIN_SCALE));",
+    "new": "sinks.drainFatigue?.(Math.trunc(FATIGUE_LOSS.Jumping * fatigueMultiplier));",
+    "tests": [
+      "test/balance1.test.js"
+    ]
+  },
+  {
+    "name": "BALANCE1-swing-cost-unscaled",
+    "file": "src/scenes/hostCombat.js",
+    "old": "export const SWING_FATIGUE_COST = Math.trunc(SWING_WEAPON_FATIGUE_LOSS * FATIGUE_DRAIN_SCALE);",
+    "new": "export const SWING_FATIGUE_COST = SWING_WEAPON_FATIGUE_LOSS;",
+    "tests": [
+      "test/balance1.test.js",
+      "test/audit24_wave42.test.js"
+    ]
+  },
+  {
+    "name": "BALANCE1-a-host-charges-the-raw-swing",
+    "file": "src/scenes/worldModes.js",
+    "old": "      // \"// Fatigue loss\" - unconditional, whatever the swing meets.\n      drainInteriorFatigue(SWING_FATIGUE_COST);",
+    "new": "      // \"// Fatigue loss\" - unconditional, whatever the swing meets.\n      drainInteriorFatigue(SWING_WEAPON_FATIGUE_LOSS);",
+    "tests": [
+      "test/balance1.test.js",
+      "test/audit21_hosts.test.js"
+    ]
+  },
+  {
+    "name": "BALANCE1-overload-unscaled",
+    "file": "src/systems/rrInstall.js",
+    "old": "      const owed = cost * FATIGUE_DRAIN_SCALE + (entity._rrFatigueCarry ?? 0);",
+    "new": "      const owed = cost + (entity._rrFatigueCarry ?? 0);",
+    "tests": [
+      "test/balance1.test.js",
+      "test/rr1_realism.test.js"
+    ]
+  },
+  {
+    "name": "BALANCE1-the-scale-is-one",
+    "file": "src/systems/statMods.js",
+    "old": "export const FATIGUE_DRAIN_SCALE = 0.75;",
+    "new": "export const FATIGUE_DRAIN_SCALE = 1;",
+    "tests": [
+      "test/balance1.test.js"
+    ]
+  },
+  {
+    "name": "BALANCE1-wear-floored",
+    "file": "src/systems/equip.js",
+    "old": "  return x > n && rolls() < x - n ? n + 1 : n;",
+    "new": "  return n;",
+    "tests": [
+      "test/balance1.test.js"
+    ]
+  },
+  {
+    "name": "BALANCE1-wear-rounded",
+    "file": "src/systems/equip.js",
+    "old": "  return x > n && rolls() < x - n ? n + 1 : n;",
+    "new": "  return Math.round(x);",
+    "tests": [
+      "test/balance1.test.js"
+    ]
+  },
+  {
+    "name": "BALANCE1-wear-roll-inverted",
+    "file": "src/systems/equip.js",
+    "old": "  return x > n && rolls() < x - n ? n + 1 : n;",
+    "new": "  return x > n && rolls() >= x - n ? n + 1 : n;",
+    "tests": [
+      "test/balance1.test.js"
+    ]
+  },
+  {
+    "name": "BALANCE1-wear-rolls-for-a-whole-amount",
+    "file": "src/systems/equip.js",
+    "old": "  return x > n && rolls() < x - n ? n + 1 : n;",
+    "new": "  return rolls() < x - n ? n + 1 : n;",
+    "tests": [
+      "test/balance1.test.js"
+    ]
+  },
+  {
+    "name": "BALANCE1-wear-scale-is-one",
+    "file": "src/systems/equip.js",
+    "old": "export const CONDITION_WEAR_SCALE = 0.6;",
+    "new": "export const CONDITION_WEAR_SCALE = 1;",
+    "tests": [
+      "test/balance1.test.js"
+    ]
+  },
+  {
+    "name": "BALANCE1-seam-never-restores",
+    "file": "src/systems/equip.js",
+    "old": "export function _wearScaleForTests(scale = CONDITION_WEAR_SCALE) { _wearScale = scale; }",
+    "new": "export function _wearScaleForTests(scale = 1) { _wearScale = scale; }",
+    "tests": [
+      "test/balance1.test.js"
+    ]
+  },
+  {
+    "name": "BALANCE1-dfu-wear-unscaled",
+    "file": "src/combat/formulas.js",
+    "old": "    lowerCondition(item, blowWear(amount, rolls), owner, say);",
+    "new": "    lowerCondition(item, amount, owner, say);",
+    "tests": [
+      "test/balance1.test.js"
+    ]
+  },
+  {
+    "name": "BALANCE1-overhaul-wear-unscaled",
+    "file": "src/combat/pcaao.js",
+    "old": "  lowerCondition(item, blowWear(amount, rolls), owner, say, removeFrom);",
+    "new": "  lowerCondition(item, amount, owner, say, removeFrom);",
+    "tests": [
+      "test/balance1.test.js"
+    ]
+  },
+  {
+    "name": "BALANCE1-rr-wear-unscaled",
+    "file": "src/systems/rrInstall.js",
+    "old": "(it, amount) => lowerCondition(it, blowWear(amount, rolls), owner, say)",
+    "new": "(it, amount) => lowerCondition(it, amount, owner, say)",
+    "tests": [
+      "test/balance1.test.js"
+    ]
+  },
+  {
+    "name": "BALANCE1-duel-wear-unscaled",
+    "file": "src/scenes/world.js",
+    "old": "if (amount > 0) lowerCondition(sent.weapon, blowWear(amount), playerEntity,",
+    "new": "if (amount > 0) lowerCondition(sent.weapon, amount, playerEntity,",
+    "tests": [
+      "test/balance1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0927B-F1-charge-unscaled",
+    "file": "src/systems/rrRidingHost.js",
+    "old": "- Math.trunc(FATIGUE_LOSS.Default * RR_RIDING.chargeFatigueMultiplier * FATIGUE_DRAIN_SCALE));",
+    "new": "- FATIGUE_LOSS.Default * RR_RIDING.chargeFatigueMultiplier);",
+    "tests": [
+      "test/balance1.test.js",
+      "test/rr2_realism.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0927B-F2-fraction-dropped",
+    "file": "src/systems/rrInstall.js",
+    "old": "      entity._rrFatigueCarry = Math.max(0, owed - cost);",
+    "new": "      entity._rrFatigueCarry = 0;",
+    "tests": [
+      "test/rr1_realism.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0927B-F2-no-sink-unscaled",
+    "file": "src/systems/rrInstall.js",
+    "old": "    else entity.fatigue = Math.min(maxFatigue(entity), Math.max(0, (entity.fatigue ?? 0) - cost));",
+    "new": "    else entity.fatigue = Math.min(maxFatigue(entity), Math.max(0, (entity.fatigue ?? 0) - e.fatigueEffect));",
+    "tests": [
+      "test/rr1_realism.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0927B-minute-rounded",
+    "file": "src/systems/worldTick.js",
+    "old": "sinks.drainFatigue?.(Math.trunc(loss * fatigueMultiplier * FATIGUE_DRAIN_SCALE));",
+    "new": "sinks.drainFatigue?.(Math.round(loss * fatigueMultiplier * FATIGUE_DRAIN_SCALE));",
+    "tests": [
+      "test/audit18.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0927B-jump-rounded",
+    "file": "src/systems/worldTick.js",
+    "old": "sinks.drainFatigue?.(Math.trunc(FATIGUE_LOSS.Jumping * fatigueMultiplier * FATIGUE_DRAIN_SCALE));",
+    "new": "sinks.drainFatigue?.(Math.round(FATIGUE_LOSS.Jumping * fatigueMultiplier * FATIGUE_DRAIN_SCALE));",
+    "tests": [
+      "test/audit18_hosts_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0927B-overhaul-rolls-not-handed",
+    "file": "src/combat/pcaao.js",
+    "old": "    wear(item, owner, isShield(item) ? damage : damage * 2, modules, say, rolls);",
+    "new": "    wear(item, owner, isShield(item) ? damage : damage * 2, modules, say);",
+    "tests": [
+      "test/balance1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0927B-fist-rolls-not-handed",
+    "file": "src/combat/pcaao.js",
+    "old": "  wear(item, owner, isShield(item) ? int(damage / 2) : damage, modules, say, rolls);",
+    "new": "  wear(item, owner, isShield(item) ? int(damage / 2) : damage, modules, say);",
+    "tests": [
+      "test/balance1.test.js"
+    ]
+  }
+]

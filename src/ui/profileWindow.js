@@ -21,7 +21,7 @@
 //
 // Not a DFU member: Daggerfall Unity has no other players. Ledger A (ONLINE).
 import { isTextEntryTarget } from './input.js';
-import { titleBadge, glyphBadges, glyphSvgNode, cssRgba } from './playerBadge.js';
+import { titleBadge, glyphBadges, glyphSvgNode, paintTitle } from './playerBadge.js';
 import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS } from './pixelifyFive.js';
 import { EQUIP_SLOTS } from '../characters/paperdoll.js';
 import { itemLongName } from '../systems/itemInfo.js';
@@ -29,6 +29,7 @@ import { raceDisplayName } from '../systems/talkSession.js';
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 import { duelRecordText } from '../net/duelRecord.js';   // DUEL1: the duelling record's words, the account card's own
 import { renownText } from '../net/renown.js';   // RENOWN1: Renown, left of the name
+import { guildTagText } from '../net/guildLaw.js';   // GUILD1c: the guild's tag, right of the name
 
 export const PROFILE_STYLE_ID = 'dagger-profile-style';
 
@@ -121,6 +122,7 @@ export function profileView({ name = null, peer = null, look = null, card = null
     name: who,
     level: renownText(lv),
     levelTitle: renownText(lv) ? `Renown ${lv}` : null,
+    guild: guildTagText(peer?.gt),   // GUILD1c: the tag the relay stamped off their signed token - "<HND>", or null
     title: titleBadge(peer),
     glyphs: glyphBadges(peer),
     line: [card ? `Level ${card.level}` : null, race, klass].filter(Boolean).join(' '),
@@ -152,13 +154,16 @@ ${PIXELIFY_FIVE_FACE}
   max-height: calc(100vh - 28px); overflow-y: auto; container-type: inline-size; }
 .dfprofile-card:focus { outline: none; }
 .dfprofile-head { text-align: center; padding-bottom: 8px; border-bottom: 1px solid var(--iron, #2b323b); }
-.dfprofile-title { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; line-height: 1.4; }
+.dfprofile-title { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; line-height: 1.4;
+  width: fit-content; max-width: 100%; margin-inline: auto; }   /* SHADOW-FANG (AUDIT A1): the word's own width - a gradient title's stops span the word, not the card */
 .dfprofile-name { display: inline-flex; align-items: center; gap: 6px; font-size: 19px; line-height: 1.3; overflow-wrap: anywhere; }
 .dfprofile-glyph { width: 16px; height: 16px; flex: none; }
 .dfprofile-renown { flex: none; font-size: 13px; line-height: 1.3; padding: 1px 5px; border-radius: 2px; min-width: 1.4em;
   text-align: center; font-variant-numeric: tabular-nums; color: #f2c46b;
   background: rgba(242, 196, 107, .1); border: 1px solid rgba(242, 196, 107, .8); }
 .dfprofile-renown:empty { display: none; }
+/* GUILD1c: the guild's tag right of the name, before the glyphs - the name layer's own steel */
+.dfprofile-guild { flex: none; font-size: 13px; letter-spacing: .04em; color: #a9c4dd; }
 .dfprofile-line { font-size: 13px; color: var(--dim, #8b8578); line-height: 1.4; }
 .dfprofile-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: 14px; }
 .dfprofile-h { font-size: 11px; color: var(--dim, #8b8578); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 4px; }
@@ -217,11 +222,12 @@ export function createProfileWindow({ canOpen = () => true, onOpen = null, onClo
   const paint = (v) => {
     card.replaceChildren();
     const head = el('div', 'dfprofile-head');
-    if (v.title) { const t = el('div', 'dfprofile-title', v.title.text); t.style.color = cssRgba(v.title.rgba) ?? ''; head.append(t); }
+    if (v.title) head.append(paintTitle(el('div', 'dfprofile-title', v.title.text), v.title));   // SHADOW-FANG: its colour, or its gradient
     const nm = el('div', 'dfprofile-name');
     nm.id = 'dfprofile-name-node';
     if (v.level) { const lv = el('span', 'dfprofile-renown', v.level); if (v.levelTitle) lv.title = v.levelTitle; nm.append(lv); }   // RENOWN1: left of the name
     nm.append(el('span', 'dfprofile-nametext', v.name));
+    if (v.guild) nm.append(el('span', 'dfprofile-guild', v.guild));   // GUILD1c: right of the name, before the glyphs
     for (const g of v.glyphs) { const svg = glyphSvgNode(doc, g, 'dfprofile-glyph'); if (!svg) break; nm.append(svg); }
     head.append(nm);
     if (v.line) head.append(el('div', 'dfprofile-line', v.line));

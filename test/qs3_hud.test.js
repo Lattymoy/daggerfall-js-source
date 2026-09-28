@@ -28,6 +28,7 @@ import {
   PAD_GLYPHS, PAD_FAMILIES, GLYPH_SIZE, GLYPH_AXIS_KEYS, padFamilyOf, padFamily, setPadFamily,
   unityButtonGlyph, glyphSvg, _clearGlyphCache,
 } from '../src/ui/padGlyphs.js';
+import { hdGlyphSvg } from '../src/ui/padGlyphsHD.js';   // PLUS-ONLY: the HUD's glyph under the one enhanced dress
 import { quickslotTag, quickslotOffTag, tagKey, CELL_ACTIONS, tagText } from '../src/ui/quickslotTags.js';
 import { createBindings, setBinding } from '../src/systems/inputActions.js';
 
@@ -201,7 +202,7 @@ test('QS3: the diamond is a block of its own on the HUD root, and the hand plaqu
   // this is anchored to a corner, so a corner block inside it would
   // move whenever a bar beside it changed width.
   assert.match(HUD, /const quick = el\('div', 'hud-quick'\);/);
-  assert.match(HUD, /quick\.append\(cap, diamond\);\s*\n\s*root\.append\(quick\);/);
+  assert.match(HUD, /quick\.append\(stat, cap, diamond\);\s*\n\s*root\.append\(quick\);/);   // UI3: the status widget stands on the caption
   // QS6: the caption carries the spell chip between the mode word and
   // the readied one - the diamond's four corners are the hands and the
   // consumables, and a spell is in none of them.
@@ -539,7 +540,8 @@ test('QS3 the states, executed: the socket, the sheathed hand, the ghost\'s 0, a
     drawEnhancedHud(entity, 0, 0, { weapon, weaponSheathed: false });
     assert.equal(find(tag('top'), 'hud-qstext').textContent, '', 'the letter gives way');
     assert.match(find(tag('top'), 'hud-qsglyph').src, /^data:image\/svg\+xml/);
-    assert.equal(find(tag('top'), 'hud-qsglyph').src, glyphSvg('ps', 'JoystickButton0', { size: 12 }));
+    // PLUS-ONLY (PADPLUS1): the enhanced HUD is Plus's, and Plus draws the pad's buttons as vectors (padGlyphsHD.js)
+    assert.equal(find(tag('top'), 'hud-qsglyph').src, hdGlyphSvg('ps', 'JoystickButton0', { size: 32 }));
     // ...and the mouse takes them back.
     setControllerLook(false);
     setPadFamily(null);

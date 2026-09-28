@@ -25,8 +25,8 @@ const STYLE = `
 .intro-credit p{margin:0;font-size:clamp(11px,1.15vw,15px);text-transform:uppercase;letter-spacing:.26em;text-shadow:0 2px 12px #000}
 .intro-credit img{display:block;max-width:62vw;max-height:29dvh;width:auto;height:auto;object-fit:contain;filter:drop-shadow(0 3px 14px #0008)}
 .intro-credit[data-credit=nexus] img{max-width:45vw;max-height:17dvh}
-.intro-title{position:absolute;left:50%;top:48%;width:min(86vw,1240px);opacity:0;pointer-events:none;mix-blend-mode:screen;transform-origin:50% 50%;will-change:transform,opacity,filter}
-.intro-title .enhanced-logo{display:block;width:100%;height:auto}
+.intro-title{position:absolute;left:50%;top:48%;width:min(86vw,1240px);opacity:0;pointer-events:none;transform-origin:50% 50%;will-change:transform,opacity,filter}
+.intro-title .brand-logo{display:block;width:100%;height:auto}
 .intro-title-fallback{font-size:clamp(28px,7vw,100px);text-align:center;margin:0;letter-spacing:.05em}
 .intro-light{position:absolute;inset:0;opacity:0;pointer-events:none;background:radial-gradient(ellipse at 50% 50%,#ebd3a025,transparent 58%)}
 .intro-gate{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:22px;text-align:center;background:radial-gradient(ellipse at 50% 42%,#14222dcc,#030609 75%);padding:28px;cursor:pointer}
@@ -64,7 +64,7 @@ export async function runIntro({ theme, onReveal, doc = document, freezeAt = nul
   const win = doc.defaultView;
   const reduced = win.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
   const host = make(doc, 'section'); host.id = 'intro';
-  host.setAttribute('aria-label', 'Daggerfall Enhanced introduction');
+  host.setAttribute('aria-label', 'Daggerfall Online introduction');
   const style = make(doc, 'style'); style.textContent = STYLE; host.append(style);
   const film = make(doc, 'div', 'intro-film');
   const canvas = make(doc, 'canvas', 'intro-landscape'); canvas.setAttribute('aria-hidden', 'true');
@@ -83,7 +83,7 @@ export async function runIntro({ theme, onReveal, doc = document, freezeAt = nul
   }
   const title = make(doc, 'div', 'intro-title');
   const logo = brandMark(doc); title.append(logo);
-  images.push(decodedImage(logo).then((ok) => { if (!ok) title.append(make(doc, 'h1', 'intro-title-fallback', 'Daggerfall Enhanced')); }));
+  images.push(decodedImage(logo).then((ok) => { if (!ok) title.append(make(doc, 'h1', 'intro-title-fallback', 'Daggerfall Online')); }));
   const light = make(doc, 'div', 'intro-light'); film.append(title, light);
   const gate = make(doc, 'div', 'intro-gate');
   const begin = make(doc, 'button', 'intro-begin', 'Begin'); begin.type = 'button'; begin.disabled = true;

@@ -43,9 +43,24 @@ import manifest from '../../vendor/class-skins/skins.json' with { type: 'json' }
 /** The mod's own on-foot sets (Graphics.OnFoot 0..15); a class skin is an index past them. */
 export const EOTB_FOOT_SET_COUNT = 16;
 
-/** @typedef {{archive:number, name:string, gender:string|null, bow:boolean, frames:ReadonlyArray<number>}} ClassSkin */
+/** @typedef {{archive:number, name:string, gender:string|null, bow:boolean, scale?:Readonly<Record<string, number>>, frames:ReadonlyArray<number>}} ClassSkin */
 /** @type {ReadonlyArray<ClassSkin>} */
-export const CLASS_SKINS = Object.freeze(manifest.skins.map((s) => Object.freeze({ ...s, frames: Object.freeze([...s.frames]) })));
+export const CLASS_SKINS = Object.freeze(manifest.skins.map((s) => Object.freeze({
+  ...s, frames: Object.freeze([...s.frames]), ...(s.scale ? { scale: Object.freeze({ ...s.scale }) } : {}),
+})));
+
+/**
+ * ACRO-SHORT (2026-09-27, Discord: "acrobat sprite is super short on certain angles"). A class record's XML scale -
+ * the part `TextureReplacement.SetBillboardScale` (TextureReplacement.cs:663-675) plays for a DFU billboard whose
+ * pack carries an XML beside the picture. The pack carries none (a loose-file pack), so a record drawn at another
+ * scale than its group is sized as drawn: the female acrobat's front three-quarter idle (`1524_16-0.png`) is a whole
+ * figure 81 pixels tall where the idle group's other views are 110, and she stood a quarter shorter from that side.
+ * `skins.json` holds the scale (81/110 - the group's 110), and `spriteOffset` reads it, so every caller that sizes a
+ * sprite (the body, its placement, the peers) sees it. A record with none is 1.
+ */
+export function classRecordScale(archive, record) {
+  return CLASS_SKINS.find((s) => s.archive === archive)?.scale?.[record] ?? 1;
+}
 
 /** Every on-foot set the player can wear: the mod's sixteen and the classes after them. */
 export const FOOT_SKIN_COUNT = EOTB_FOOT_SET_COUNT + CLASS_SKINS.length;

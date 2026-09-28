@@ -56,10 +56,14 @@
 // inventory slice's first job.
 // ═══════════════════════════════════════════════════════════════════
 
-import { isEnhancedPlus } from '../systems/uiSkin.js'; import { getPref } from '../systems/uiPrefs.js';   // PLUS1; PLUS7: getPref, the hover card's switch
-import { USE_PENDING } from './nativeInventory.js';
+import { getPref } from '../systems/uiPrefs.js';   // PLUS7: getPref, the hover card's switch
+import { USE_PENDING, powersRows, INFO_TEXT_POWERS } from './nativeInventory.js';   // PLUS10: the Info box's powers record
+import { itemInfoRows, questLetterName } from '../systems/itemInfo.js';   // PLUS10: the classic Info popup's own text
+import { magicPowersLines } from '../systems/itemPowers.js';   // PLUS10: %mpw
+import { CHAT_MAX } from '../net/wire.js';   // CHAT-POST: a posted item is one chat line
+import { itemIsIdentified } from '../systems/tradeModes.js';   // PLUS10: MagicPowers' identified arm
 import { PACK_PAGES, PAGE_IDS, pageOf, filterByPage } from './packPages.js';   // PX31: the pack's nine pages (the classic keeps DFU's four)
-import { useItem, isLightSource, usableItem } from '../systems/useItem.js';   // HT2: the light source's own act; Mac: Use only where the law has an arm
+import { useItem, isLightSource, usableItem, isPotionRecipe } from '../systems/useItem.js';   // PLUS10: isPotionRecipe, a recipe's second Info box   // HT2: the light source's own act; Mac: Use only where the law has an arm
 // QS2: the quickslot model (systems/quickslots.js). This screen is the ONE
 // place a slot is filled - Mac's own words, "in the enhanced menu through the
 // tooltip to slot 1/2" - and it fills one by naming the item's KIND, which is
@@ -68,13 +72,15 @@ import { isQuickConsumable, canSwapTo, quickslotOf, assignQuickslot, clearQuicks
 // HB1: the hotbar - one more drop target for the drag this pane already
 // owns, and the click path beside it. The bar is up under this window
 // only while the player has chosen it over the diamond.
-import { setHotbarDropMode, hotbarSlotNode, hotbarTakesItem, hotbarDropItem, hotbarMode, toggleHotbarItem, hotbarKeyOf } from './enhancedHotbar.js';
+import { setHotbarDropMode, hotbarSlotNode, hotbarTakesItem, hotbarDropItem, hotbarMode, toggleHotbarItem, hotbarKeyOf, setHotbarDragging } from './enhancedHotbar.js';
+import { registerQuickAct } from './plusPad.js';   // PADPLUS5: the pad's X on a row
 import { EQUIP_SLOTS } from '../characters/paperdoll.js';
 import { dfWornEquipment } from '../formats/mwItemMap.js';   // PX25
 import { hasDaggerfallArrows } from '../combat/fpArm.js';   // PX26
 import { ARMOR_ENUM } from '../combat/enemyEquipment.js';   // PX25
-import { inventoryItemImage, inventoryItemModel, templateByIndex } from '../systems/itemTemplates.js';
-import { requestIcon, paperDollDataUrl } from './textureCanvas.js';
+import { inventoryItemImage, inventoryItemModel, templateByIndex, isAmmunition } from '../systems/itemTemplates.js';   // WEAR-UI: isAmmunition, spent not worn
+import { requestIcon, paperDollDataUrl, requestFittedPicture, iconName, fittedImg } from './textureCanvas.js';
+import { SLOT_BOX, gridBox, wornBox, screenDpr } from './iconFit.js';   // UI1: the fit law's boxes and the screen's ratio
 import { requestModelIconUrl } from './modelIcon.js';   // DISC24-B
 import { modelIconUrl as modelIconUrlOf } from './itemIconUrl.js';   // MW-D38, shared with the HUD's quickslots (QS3)
 // U59: the AVATAR. The compositor is ui/paperDoll.js - the same one
@@ -104,18 +110,25 @@ import {
 import { howManyField } from './howManyField.js';   // DISC25-F: the card's field, one constructor for both counters
 import {
   openState, remoteTarget, planWagonToggle, hasCart, hasHorse, transportItem,
+  groundRefusalOf,   // HOUSE-DROP: the host's word against the ground
 } from '../systems/inventorySession.js';
 import { entityMaxEncumbrance } from '../combat/formulas.js';   // AUDIT 26: PlayerEntity.MaxEncumbrance, enchantment allowance and all
 import { liveStat } from '../systems/statMods.js';
 import { conditionWord, conditionPercentage, itemNameParts, itemLongName, itemDamageLine, itemArmourLine, itemHandsLine } from '../systems/itemInfo.js';   // RF6: the long name's two parts, ResolveItemLongName's arms once
 import { survivalInfoTokens, potionMacroName, potionRecipeIngredientNames } from '../systems/itemInfo.js';   // AUDIT SURV C: the survival items' tokens on this skin's card too
 import { isSurvivalItem } from '../systems/survival/items.js';
-import { rarityAttr, rarityLines } from '../systems/lootRarity.js';   // LR1: the row's tier attribute and the card's lines
+import { rarityAttr, rarityLines, lootRarityOn } from '../systems/lootRarity.js';   // LR1: the row's tier attribute and the card's lines
+import { sigilCard } from './sigilCard.js';   // SIGIL-UI: the sigil's own block on the card
+import { validSigil } from '../systems/sigil.js';   // SIGIL-UI: the tile's corner rune
+import { setCard, setStrip, markSetFrame } from './setCard.js';   // SET5: a set piece's set on its card, the worn sets on the doll's column, a set piece's rune
+import { isLocked, toggleLocked, lockRefuses, lockedText, LOCKED_LINE } from '../systems/itemLock.js';   // LOCK1
+import { isBound, BOUND_LINE, boundRefusesPut, boundText } from '../systems/itemBound.js';   // SS1: a bound piece says so on its card   // SS3: and goes nowhere but the wagon and the player's own storage
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
 import { repaintKeepingScroll } from './domRepaint.js';
 import { overlayAction, eventActions } from './input.js';   // MAC-C: and the REGISTRY's answer for the two window keys
 import { audio } from '../systems/audio.js';   // MAC-O6: the pack's own transfer cue - this window carried none at all
+import { dismantleStones, dismantleRefusal, dismantleWare, dismantleAsk, DISMANTLED, DISMANTLE_WORN } from '../systems/sigilBroker.js';   // SS5: a Broker ware back into stones
 import { SOUND } from '../systems/soundClips.js';
 
 import { expandRowValues } from '../systems/quest/questMacros.js';   // MACROS1: a used item's record through its own context (%map)
@@ -280,13 +293,15 @@ export function equippedModel(entity = {}) {
 /** What the remote side is CALLED, per DFU's four claims. The word is
  *  the port's; which claim is showing is inventorySession's. */
 export const REMOTE_TITLE = Object.freeze({
-  wagon: 'Wagon', reward: 'Choose one', container: 'Loot', ground: 'Ground',
+  wagon: 'Wagon', reward: 'Choose one', container: 'Loot', storage: 'Storage', ground: 'Ground',
 });
 /** What moving an item THERE is called. A verb per destination,
  *  because "Transfer" tells the player nothing about where. */
 export const STOW_LABEL = Object.freeze({
-  wagon: 'Stow in wagon', reward: 'Stow', container: 'Put back', ground: 'Drop',
+  wagon: 'Stow in wagon', reward: 'Stow', container: 'Put back', storage: 'Store', ground: 'Drop',
 });
+/** GOLD-DROP: what giving gold THERE is called - the pack's gold button and its field's submit, by destination (AUDIT GOLD-DROP 3: no reward tray - it never offers the button). */
+const GOLD_VERB = Object.freeze({ wagon: 'Stow', container: 'Drop', storage: 'Store', ground: 'Drop' });
 
 /**
  * THE REMOTE SIDE, as data. Pure, like packModel: which list is
@@ -301,7 +316,7 @@ export function remoteModel(deps = {}, state = {}) {
   const items = (remoteTarget(deps, state) ?? []).filter(Boolean);
   const kind = state.usingWagon ? 'wagon'
     : state.chooseOne ? 'reward'
-      : deps.loot ? 'container' : 'ground';
+      : deps.loot ? (deps.loot.storage === true ? 'storage' : 'container') : 'ground';   // SHIP-STORE: the player's own storage
   return {
     kind,
     title: REMOTE_TITLE[kind],
@@ -414,9 +429,20 @@ export function itemLine(item, identity = undefined) {
  *  the shop and the player trade cannot disagree on which items have a picture. Null while it loads (`onReady` fires
  *  when it lands) and for an item with neither. */
 export function linePictureUrl(line, { scale = 2, onReady = null } = {}) {
-  if (line.image) return requestIcon(line.image.archive, line.image.record, { scale, dye: line.image.dye, onReady });   // DW3: by the item's dye
+  if (line.image) return requestIcon(line.image.archive, line.image.record, { scale, dye: line.image.dye, dyeTarget: line.image.dyeTarget, onReady });   // DW3: by the item's dye
   if (line.model != null) return requestModelIconUrl(line.model, { scale, onReady });
   return null;
+}
+
+/** UI1 (bible/10-UI/Slots-Hotbar-Status.md): THE LINE'S PICTURE FITTED TO A SLOT'S BOX - `box` CSS pixels a side
+ *  (ui/iconFit.js SLOT_BOX), made at the screen's own device size: `{ src, w, h, smooth }`, or null while it is made
+ *  (`onReady` fires when it lands) and for an item with no picture. The door above at scale 1 is its source, so the
+ *  record, its dye and the cart's model are asked exactly as before; every enhanced list draws through this now. */
+export function linePicture(line, { box, onReady = null } = /** @type {any} */ ({})) {
+  if (!line.image && line.model == null) return null;
+  // MERGE (UI1 x DYE-ICON): the swatch the dye changes names the picture too - a silver blade is not the base one
+  const name = line.image ? iconName(line.image.archive, line.image.record, line.image.dye, line.image.dyeTarget) : `model${line.model}`;
+  return requestFittedPicture(name, (wake) => linePictureUrl(line, { scale: 1, onReady: wake }), { box, dpr: screenDpr(), onReady });
 }
 
 /**
@@ -551,6 +577,9 @@ let _renderedTab = null;          // PX22: the tab the current DOM shows
 let picked = null;      // the selected item object
 let side = 'local';     // which list `picked` came out of
 let notice = null;
+/** CHAT-POST: what the card says after a post. */
+export const POSTED_TEXT = 'Posted in chat.';
+export const NOT_POSTED_TEXT = 'Could not post that in chat right now.';
 /** ENH-NOTICE3: the notice panel's OWNER. A module-level object and not
  *  `_view`, because `_view` is null through the whole of the mount's
  *  first `render()` and again from the moment `unmount` nulls it - and
@@ -586,6 +615,11 @@ let qty = { item: null, text: '' };
 let onExit = () => {};
 let keyHandler = null;
 let lockHandler = null;
+/** AUDIT UI A3: a pack left open over a resize, a phone turned or a zoom - its slots' boxes and the screen's ratio, as
+ *  last painted; a change repaints it (the fitted door refits by its key). */
+let resizeHandler = null;
+let fitSig = '';
+const packFitSig = () => `${gridBox()}|${wornBox(false)}|${wornBox(true)}|${screenDpr()}`;
 // U54: how many times this screen has rebuilt itself. Every cold icon
 // repaints when it lands, which is what makes the letters give way to
 // the picture - so the count should be ROUGHLY the number of distinct
@@ -727,16 +761,25 @@ let drag = null;
  *  and a ghost clipped to the panel could not be carried off it, which
  *  is the other half of what was asked for. */
 let ghost = null;
-const ghostEnd = () => { ghost?.remove(); ghost = null; };
+const ghostEnd = () => { ghost?.remove(); ghost = null; setHotbarDragging(false); };   // PADPLUS7: the carry is over - the tucked bar goes back down
 function ghostStart(item) {
   ghostEnd();
-  ghost = el('div', 'dragghost');
-  ghost.append(itemTile(itemLine(item, deps.entity)));
+  ghost = markItemFrame(el('div', 'dragghost'), item);   // RARITY-UI: the carried tile keeps its tier in the hand
+  // UI1: THE SLOT'S OWN PICTURE, LIFTED - fitted at the grid's box, which a pack slot has already made, so the carry
+  // starts with its picture; one carried off the body (a worn panel's is smaller) takes it where the initials stood
+  // the moment it lands, never a repaint of the pack under the finger
+  const line = itemLine(item, deps.entity), g = ghost;
+  const tile = () => itemTile(line, gridBox(), () => { if (ghost === g) g.querySelector('.tile')?.replaceWith(tile()); });
+  ghost.append(tile());
   ghost.append(el('span', 'ghostact', ''));
   document.body?.appendChild(ghost);
+  // PADPLUS7: THE CARRY IS WHAT RAISES THE BAR. PADPLUS5 raised it from dragLock, which only a FINGER's hold arms -
+  // a mouse (and the pad's cursor, which is a mouse to this pane) goes straight to the ghost at 4px and never took
+  // the lock, so the tucked crossbar stayed down under every mouse and pad drag. Every carry starts a ghost.
+  setHotbarDragging(true);
 }
 /** AUDIT INV2 A3/A4: CLEAR OF THE FINGER, AND ON THE SCREEN.
- *  The ghost is a 44px tile over a verb chip, about 64px tall, and it
+ *  The ghost is a 44px tile over a verb chip, about 64px tall (56px and 76 since UI1), and it
  *  was drawn centred on the reported point - so on a touch screen the
  *  contact patch covered the bottom of the icon and ALL of the verb,
  *  which is the only thing saying what a release would do. A touch
@@ -777,9 +820,12 @@ function ghostAt(x, y, verb) {
  *  gesture that also wiped whatever the screen was saying. The plan's
  *  own `ok` is the honest answer to both, so the label is the plan's. */
 function stowIntent(item) {
+  if (remote?.kind === 'ground' && lockRefuses(item, 'drop')) return { kind: 'stow', label: null, speaks: true };   // LOCK1: released, it says why
+  if (remote && boundRefusesPut(item, remote.kind)) return { kind: 'stow', label: null, speaks: true };   // SS3: a bound piece - released, it says why
   const plan = planStore(item, {
     remote: remote.items, usingWagon: session.usingWagon, chooseOne: session.chooseOne,
     dryRun: true,   // as canStow's own note says: the quest rung WRITES, and a label must not
+    groundRefusal: groundRefusalOf(deps, session),   // HOUSE-DROP
   });
   // A refusal that speaks is still worth releasing on - the player gets
   // the sentence. One that cannot speak is shown as refused and does
@@ -811,7 +857,7 @@ function dropIntent(item, over, fromItem, source = 'local') {
       ? { kind: 'offbody', label: act.label }
       : { kind: 'none', label: '' };
   }
-  if (over?.closest?.('.wornmap')) {
+  if (over?.closest?.('.wornmap, .wornshelf')) {   // PLUS11: the shelf is the body too
     const act = localPrimaryAct(item, deps.entity);
     return act ? { kind: 'body', label: act.label } : { kind: 'nope', label: null };
   }
@@ -844,7 +890,7 @@ function dropIntent(item, over, fromItem, source = 'local') {
  *  pick - the row's own click law is untouched below that distance and
  *  suppressed above it. */
 const dragHighlight = () => {
-  for (const n of document.querySelectorAll('.dragover, .itemrow.dragging, .wornrow.dragging')) n.classList.remove('dragover', 'dragging');
+  for (const n of document.querySelectorAll('.dragover, .itemrow.dragging, .wornrow.dragging, .wornsock.dragging')) n.classList.remove('dragover', 'dragging');
 };
 /** Move the carried item to a point, and say what a release there does. */
 function dragTo(x, y) {
@@ -856,7 +902,7 @@ function dragTo(x, y) {
   const want = dropIntent(drag.item, document.elementFromPoint?.(x, y), drag.item, drag.source);
   drag.want = want;
   ghostAt(x, y, want?.label ?? null);
-  if (want?.kind === 'body') document.elementFromPoint?.(x, y)?.closest?.('.wornmap')?.classList.add('dragover');
+  if (want?.kind === 'body') document.elementFromPoint?.(x, y)?.closest?.('.wornmap, .wornshelf')?.classList.add('dragover');
   // MAC-M2: the other direction lights the DOCK - the pack is one
   // target the way the map is one, not a grid of twelve tiles.
   else if (want?.kind === 'offbody') document.elementFromPoint?.(x, y)?.closest?.('.pack-dock')?.classList.add('dragover');
@@ -886,6 +932,10 @@ function dragStop(commit) {
   const d = drag;
   drag = null;
   if (d?.hold) clearTimeout(d.hold);
+  // PADPLUS8: WHAT IS UNDER THE RELEASE, ASKED WHILE THE BAR IS STILL UP. ghostEnd() lowers the tucked crossbar
+  // (pointer-events: none at once), and elementFromPoint looks straight through a node that takes no pointer - so a
+  // release on a slot answered the window beneath it and the item never went on the bar.
+  const overAtRelease = d?.moved && commit ? document.elementFromPoint?.(d.x, d.y) ?? null : null;
   dragLock(false);
   ghostEnd();
   dragHighlight();
@@ -900,13 +950,17 @@ function dragStop(commit) {
   }
   if (!d?.moved) return;
   _dragged = true;   // the click that follows a real drag is not a pick
+  // AUDIT MERGE-PLUS C2: ...and only THAT click. A release that lands off every row (the ground, the loot window, the
+  // body, a key's cancel) has no click of its own to spend the latch, and it swallowed the next double-click's first
+  // half. The click a release makes is dispatched before any timer, so a tick is the latch's whole life.
+  setTimeout(() => { _dragged = false; }, 0);
   if (!commit) return;
   // AUDIT INV2 A-F8: the item is a reference held across time. Something
   // else can empty the pack under a live drag - a peer, a quest, a
   // script - and a stale one minted a ground pile for an item the player
   // no longer owned.
   if (!(deps.items?.() ?? []).includes(d.item)) return;
-  const want = dropIntent(d.item, document.elementFromPoint?.(d.x, d.y), d.item, d.source);
+  const want = dropIntent(d.item, overAtRelease, d.item, d.source);
   if (want?.kind === 'body') dropOnBody(d.item);
   // MAC-M2: THE SAME DOOR. A piece carried OFF the body performs the
   // act its own card offers, exactly as one carried onto it does, so
@@ -1131,6 +1185,52 @@ function dropOnBody(item) {
   use(item, null);
 }
 
+/** DBLEQUIP (2026-09-26, the players: "Double click to equip/unequip"): A SECOND CLICK ON THE SAME PIECE, QUICKLY, PUTS
+ *  IT ON OR TAKES IT OFF - the body's own act (dropOnBody: Wear, Take off, a light lit or put out), never a USE, so a
+ *  quick finger drinks no potion; a piece nothing would wear stays two picks. One click still only picks (the worn
+ *  panels' mis-click law stands: a single click never undresses). Timed by hand, as the shop's rows are
+ *  (ui/enhancedTrade.js lastRowClick): the first click re-renders the pack into fresh nodes, so the browser's own
+ *  dblclick never fires on the pair. A click with no pointer behind it (a key's, the pad's - `detail` 0) never pairs:
+ *  those hands have the card's own buttons and the pad's quick act. */
+export const DOUBLE_CLICK_MS = 500;
+let lastClick = { key: null, item: null, at: -Infinity };
+/** When this click is the second of a pair on `key`, the item the FIRST stood for (a worn panel may have cycled its
+ *  piece in between - the one taken off is the one that was clicked); else null, and this click is kept as a first. */
+function secondClick(key, item, e) {
+  const at = e?.timeStamp;
+  if (!Number.isFinite(at) || !e.detail) { lastClick = { key: null, item: null, at: -Infinity }; return null; }
+  // AUDIT MERGE-PLUS C7: and the BROWSER must count it a second click too (`detail` 2: the same spot, inside the
+  // system's own double-click time - a count that does not care that the first click repainted the node). Clicks
+  // the browser counts apart - the Mace, a take off the pile, the Mace again, all inside half a second - wore it.
+  const first = lastClick.key === key && at - lastClick.at <= DOUBLE_CLICK_MS && e.detail >= 2 ? lastClick.item : null;
+  lastClick = first ? { key: null, item: null, at: -Infinity } : { key, item, at };
+  return first;
+}
+/** AUDIT MERGE-PLUS C1: A CARD'S BUTTON STRUCK BY THE SECOND CLICK OF A PAIR NEVER PRESSES. On a phone the first tap opens
+ *  the card as a sheet over the tiles, and the second tap of a double-tap landed on whatever button was under the
+ *  thumb - Drop, five times over in the audit's run. When that pair began on the piece the card is for, it is the
+ *  double-click's (the piece goes on or comes off); any other second click is nothing. The how-many field's own
+ *  buttons are not acts, and a quick second press there still counts. */
+function pairGuard(b) {
+  const run = b.onclick;
+  b.onclick = (e) => {
+    // a press of the card's own is a click of its own: it ends any pair the row began, so a quick Lock then Unlock
+    // (the browser's pair, on a button that kept its place) is two presses and never the row's double-click
+    if ((e?.detail ?? 0) < 2) { lastClick = { key: null, item: null, at: -Infinity }; run?.(e); return; }
+    const first = lastClick.item;
+    const paired = !!first && first === picked && Number.isFinite(e.timeStamp) && e.timeStamp - lastClick.at <= DOUBLE_CLICK_MS;
+    lastClick = { key: null, item: null, at: -Infinity };
+    if (paired) equipByDoubleClick(first);
+  };
+  return b;
+}
+/** The pair's act: answers whether the piece went on or came off (false: nothing would wear it). */
+function equipByDoubleClick(item) {
+  if (!item || !localPrimaryAct(item, deps.entity)) return false;
+  dropOnBody(item);
+  return true;
+}
+
 /** Move `item` to `before`'s place in the player's own list. */
 function reorderPack(item, before) {
   const list = deps.entity?.items;
@@ -1223,6 +1323,29 @@ function use(item, collection = deps.items?.() ?? []) {
   render();
 }
 
+/**
+ * PADPLUS5: THE PAD'S QUICK ACT (X over a row). The row's own primary act, the card's first button, without the
+ * card: a worn thing comes off, a wearable goes on, a light is lit or put out, a potion or anything else is USED; on
+ * the other list it is TAKEN. Nothing new is decided here - it is the same four functions the buttons call.
+ * Answers whether it acted.
+ */
+export function inventoryQuickAct(target) {
+  const row = target?.closest?.('.itemrow');
+  const item = row?._padItem;
+  if (!item || !row.isConnected) return false;
+  if (row._padFrom === 'remote') { take(item); return true; }
+  const act = localPrimaryAct(item, deps.entity);
+  if (!act) use(item);
+  else if (act.kind === 'takeOff') takeOff(item.equipSlot);
+  else if (act.kind === 'wear') wear(item);
+  else use(item, null);   // light / douse - the equip click's UseItem with no collection (AUDIT 22 F6)
+  return true;
+}
+registerQuickAct({
+  act: inventoryQuickAct,
+  available: () => !!globalThis.document?.querySelector?.('#enhanced-inventory .itemrow'),
+});
+
 function takeOff(slot) {
   notice = null;
   unequipSlot(deps.entity, slot);
@@ -1257,6 +1380,7 @@ function canStow(item) {
   const plan = planStore(item, {
     remote: remote.items, usingWagon: session.usingWagon, chooseOne: session.chooseOne,
     dryRun: true,
+    groundRefusal: groundRefusalOf(deps, session),   // HOUSE-DROP
   });
   return plan.ok || !!plan.refusal.text;
 }
@@ -1265,7 +1389,7 @@ function canStow(item) {
  *  reason: the quest rung writes) - or 0 where it would move nothing, or is a map's interception rather than a move. */
 function splitMax(item, dir) {
   const plan = dir === 'store'
-    ? planStore(item, { remote: remote.items, usingWagon: session.usingWagon, chooseOne: session.chooseOne, dryRun: true })
+    ? planStore(item, { remote: remote.items, usingWagon: session.usingWagon, chooseOne: session.chooseOne, dryRun: true, groundRefusal: groundRefusalOf(deps, session) })
     : planTake(item, {
       bag: deps.items?.() ?? [], entity: deps.entity, mode: 'remove',
       chooseOne: session.chooseOne, usingWagon: session.usingWagon, dryRun: true,
@@ -1295,17 +1419,31 @@ function qtyField(item, max) {
 /** LOCAL -> REMOTE, through U56's ladder. */
 function stow(item) {
   notice = null;
+  // LOCK1: a locked piece does not go on the GROUND - the one place here it could be lost for good; a chest, the
+  // wagon and a reward tray are places of its own. Ahead of the ladder, and it speaks.
+  if (remote?.kind === 'ground' && lockRefuses(item, 'drop')) {
+    notice = lockedText(itemLongName(item, { getQuest: deps.getQuest ?? null }));
+    return render();
+  }
+  // SS3: a BOUND piece goes nowhere but the wagon and the player's own storage (systems/itemBound.js BOUND_KEEPS) - the
+  // ground and every container refuse it, a container being the room's once it is opened online. Ahead of the ladder,
+  // and it speaks.
+  if (remote && boundRefusesPut(item, remote.kind)) {
+    notice = boundText(itemLongName(item, { getQuest: deps.getQuest ?? null }));
+    return render();
+  }
   const to = remoteTarget(deps, sessionState());
   const plan = planStore(item, {
     remote: to, usingWagon: session.usingWagon, chooseOne: session.chooseOne,
     getQuest: deps.getQuest ?? null,
+    groundRefusal: groundRefusalOf(deps, session),   // HOUSE-DROP: a floor that refuses a drop
   });
   if (!plan.ok) return refuse(plan.refusal);
   // AUDIT INV2 B-F2: THE MAP IS AN INTERCEPTION, not a transfer. AUDIT
   // 26 F156: planStore answers `{ ok: true, map: true }` for a
   // MiscItems.Map - the reveal runs, the paper is consumed, nothing
   // lands in the destination. The classic window routes it
-  // (nativeInventory.js:893) and this one did not, so dragging a
+  // (nativeInventory.js:926) and this one did not, so dragging a
   // treasure map out of the pack dropped the paper on the floor and
   // revealed nothing.
   if (plan.map) { use(item, deps.items?.() ?? []); return; }
@@ -1315,7 +1453,7 @@ function stow(item) {
   if (amount == null) { notice = HOW_MANY_ITEMS(plan.amount); render(); return; }
   // MAC-O6: the same cue this window's `take()` gained - storing (selling,
   // banking, dropping into a wagon or a pile) is a transfer too, and
-  // planStore already hands back the sound (itemTransfer.js:221), unread
+  // planStore already hands back the sound (itemTransfer.js:225), unread
   // until now.
   audio.playOneShot(plan.sound === 'gold' ? SOUND.GoldPieces : SOUND.ButtonClick, 1);   // SND1: a take always sounds - the click, or the gold
   // PX24 (Mac: an action taken closes the tooltip): the transfer
@@ -1324,7 +1462,7 @@ function stow(item) {
   // again on the other side, and a tip that stays open after every
   // press is the quirk being fixed.
   // AUDIT INV2 B-F1: THE ENTITY AND THE PROVENANCE RIDE, as they do at
-  // the classic window's own call (nativeInventory.js:899). Without them
+  // the classic window's own call (nativeInventory.js:932). Without them
   // `clearLightSourceOnLeave` - AUDIT 26 F157's first statement inside
   // applyTransfer - is a no-op, so a LIT TORCH dropped on the ground
   // went on lighting the player from where it lay. INV2 made that a
@@ -1353,7 +1491,7 @@ function take(item) {
   });
   if (!plan.ok) return refuse(plan.refusal);
   // AUDIT INV2 B-F2: the map is an interception in EITHER direction
-  // (itemTransfer.js:243, "F156: either direction") - taking one off a
+  // (itemTransfer.js:247, "F156: either direction") - taking one off a
   // pile reveals and consumes it, exactly as stowing one does. The
   // classic window routes both; this one routed neither.
   if (plan.map) { use(item, remoteTarget(deps, sessionState())); return; }
@@ -1361,7 +1499,7 @@ function take(item) {
   if (amount == null) { notice = HOW_MANY_ITEMS(plan.amount); render(); return; }
   // MAC-O6 (report: "looting gold/items makes no sound"): DoTransferItem's
   // own cue (:1569 gold's clink, :1583 everything else), which the classic
-  // window plays (nativeInventory.js:919) and this one never did - the ONLY
+  // window plays (nativeInventory.js:952) and this one never did - the ONLY
   // difference between the two windows' calls to planTake/applyTransfer was
   // that this one dropped `plan.sound` on the floor. Played here, ahead of
   // the gold interception below, exactly as DFU's own PlayOneShot sits
@@ -1423,8 +1561,10 @@ function dropGold(text) {
   const to = remoteTarget(deps, sessionState());
   const plan = planDropGold(text, {
     carried: goldAmount(player), usingWagon: session.usingWagon, remote: to,
+    groundRefusal: groundRefusalOf(deps, session),   // HOUSE-DROP
   });
   if (plan.notice) notice = plan.notice;
+  else if (!plan.ok && plan.refusal?.reason === 'ground') notice = plan.refusal.text;   // HOUSE-DROP: the floor's refusal is said
   if (plan.ok) {
     deductGold(player, plan.amount);
     addItem(to, goldStack(plan.amount));
@@ -1502,6 +1642,12 @@ function modelFigure() {
  *  mounted this screen with - a page with no Morrowind data behind it
  *  draws the classic icon, exactly as before. */
 const modelIconUrl = (item, size) => modelIconUrlOf(item, size, deps.fpArm);
+/** UI1: the Morrowind icon as a fitted picture - rendered at the box's device size, drawn at the box (a render, so
+ *  smooth). Null where modelIconUrl is. */
+function modelPicture(item, box) {
+  const src = modelIconUrl(item, Math.round(box * screenDpr()));
+  return src ? { src, w: box, h: box, smooth: true } : null;
+}
 
 /** Drag left/right to turn the figure; a tap does nothing (display only).
  *  MF1: the move records the yaw and asks for ONE repaint on the next
@@ -1595,32 +1741,53 @@ function dollPanel(url) {
  *  HEAD and CHEST moved to the flanks, so the doll takes the WHOLE
  *  centre column, six rows tall, and the sprite is portrait at last.
  *  The two sides now say something: what you WEAR down the left, top
- *  to toe, and what you CARRY (and stand in) down the right.
- *      Head    [DOLL]   Rings
- *      Neck    [DOLL]   Tokens
- *      Cloaks  [DOLL]   R-Wpn
- *      Chest   [DOLL]   L-Wpn
- *      Arms    [DOLL]   Legs
- *      Hands   [DOLL]   Feet        */
+ *  to toe, and what you CARRY (and stand in) down the right. That
+ *  six-row table went with plain Enhanced (PLUS-DEAD, 2026-09-26); the
+ *  map is WORN_FAMILIES below, five rows, the accessories on the shelf:
+ *      Head    [DOLL]   R-Wpn
+ *      Cloaks  [DOLL]   L-Hand
+ *      Chest   [DOLL]   Legs
+ *      Arms    [DOLL]   Feet
+ *      Hands   [DOLL]   Travel      */
+/** PLUS9 (Discord, 2026-09-25 - a player's sketch over the pack): UNDER ENHANCED PLUS THREE FAMILIES SPLIT IN TWO.
+ *  The families were one panel per body part, so the shirt hid under the cuirass, the trousers under the greaves and
+ *  one pauldron under the other - a tap-to-cycle away, and a player cannot see at a glance what they are wearing.
+ *  Plus draws each of those three panels as a PAIR of half panels in the same cell: armour | clothes on the chest
+ *  and the legs, left | right on the arms (the sketch's own order). The bracers had shared the arms' panel, so
+ *  they move to Hands (gloves, bracers, bracelets - the wrist and hand jewellery together). The data is untouched:
+ *  the same rows, the same drag, the same click; only the grouping differs. */
+/** PLUS11 (the same player: "where are the amulet slots? ... maybe we can use the space mount and cart take up"):
+ *  THE ACCESSORIES GO ON A SHELF, LIKE THE CLASSIC ONE. Neck, Rings and Tokens each hid two to six slots behind one
+ *  panel and a tap-to-cycle, and Hands hid four jewellery slots under the gloves. Under Plus the twelve accessory
+ *  slots stand in a row of labelled pairs under the doll (accessoryShelf), where the Mount / Cart strip was - and
+ *  Mount | Cart moves up into the grid as one split cell, in a place the three accessory panels left. The grid is
+ *  five rows, not six, so every panel is taller. PLUS-DEAD (2026-09-26): the one table, since plain Enhanced went. */
 const WORN_FAMILIES = Object.freeze([
   { id: 'head', label: 'Head', area: '1 / 1', slots: ['Head'] },
-  { id: 'neck', label: 'Neck', area: '2 / 1', slots: ['Amulet'] },
-  { id: 'cloaks', label: 'Cloaks', area: '3 / 1', slots: ['Cloak'] },
-  { id: 'chest', label: 'Chest', area: '4 / 1', slots: ['Chest, armour', 'Chest, clothes'] },
-  { id: 'arms', label: 'Arms', area: '5 / 1', slots: ['Right arm', 'Left arm', 'Bracer'] },
-  { id: 'hands', label: 'Hands', area: '6 / 1', slots: ['Gloves', 'Bracelet'] },
-  { id: 'rings', label: 'Rings', area: '1 / 3', slots: ['Ring'] },
-  { id: 'tokens', label: 'Tokens', area: '2 / 3', slots: ['Mark', 'Crystal', 'Unnamed'] },
-  { id: 'rhand', label: 'R\u00b7Weapon', area: '3 / 3', slots: ['Right hand'] },
-  // HT5: the held light shares the off hand's panel and is listed
-  // FIRST, because the mod frees a hand to hold one - so when both are
-  // filled the torch is the thing you just did, and the weapon is one
-  // tap away on the family's own cycle.
-  { id: 'lhand', label: 'L\u00b7Hand', area: '4 / 3', slots: ['Light', 'Left hand'] },
-  { id: 'legs', label: 'Legs', area: '5 / 3', slots: ['Legs, armour', 'Legs, clothes'] },
-  { id: 'feet', label: 'Feet', area: '6 / 3', slots: ['Feet'] },
+  { id: 'cloaks', label: 'Cloaks', area: '2 / 1', slots: ['Cloak'] },
+  { id: 'chest', label: 'Chest', area: '3 / 1', slots: ['Chest, armour', 'Chest, clothes'],
+    pair: [{ id: 'chestarmor', label: 'Chest armor', slots: ['Chest, armour'] },
+      { id: 'shirt', label: 'Shirt', slots: ['Chest, clothes'] }] },
+  { id: 'arms', label: 'Arms', area: '4 / 1', slots: ['Left arm', 'Right arm'],
+    pair: [{ id: 'larm', label: 'Left arm', slots: ['Left arm'] },
+      { id: 'rarm', label: 'Right arm', slots: ['Right arm'] }] },
+  { id: 'hands', label: 'Hands', area: '5 / 1', slots: ['Gloves'] },
+  { id: 'rhand', label: 'R\u00b7Weapon', area: '1 / 3', slots: ['Right hand'] },
+  { id: 'lhand', label: 'L\u00b7Hand', area: '2 / 3', slots: ['Light', 'Left hand'] },
+  { id: 'legs', label: 'Legs', area: '3 / 3', slots: ['Legs, armour', 'Legs, clothes'],
+    pair: [{ id: 'legarmor', label: 'Leg armor', slots: ['Legs, armour'] },
+      { id: 'pants', label: 'Pants / skirt', slots: ['Legs, clothes'] }] },
+  { id: 'feet', label: 'Feet', area: '4 / 3', slots: ['Feet'] },
+  { id: 'transport', label: 'Travel', area: '5 / 3', slots: [], transport: true },
 ]);
-const DOLL_AREA = '1 / 2 / span 6 / auto';
+/** PLUS11: the shelf's pairs, in the classic shelf's order. 'Unnamed' (DFU's two nameless slots) shows only when
+ *  something is in it - U53's hidden-slot law. */
+const SHELF_GROUPS = Object.freeze([
+  { label: 'Amulets', slot: 'Amulet' }, { label: 'Rings', slot: 'Ring' }, { label: 'Bracelets', slot: 'Bracelet' },
+  { label: 'Bracers', slot: 'Bracer' }, { label: 'Marks', slot: 'Mark' }, { label: 'Crystals', slot: 'Crystal' },
+  { label: 'Other', slot: 'Unnamed', hiddenEmpty: true },
+]);
+const DOLL_AREA = '1 / 2 / span 5 / auto';
 function equippedList() {
   // PX20c (Mac: "move the name outside of the space and to the top
   // bar, remove the slots filled subtext... utilize the entire area").
@@ -1658,7 +1825,7 @@ function equippedList() {
   // PX20a: the frame belongs to the PLACEHOLDER, not to the sprite -
   // with art the figure stands on the window's own glass.
   const dollFrame = el('div', `wornmap-doll${figure || dollUrl ? ' hasart' : ' noart'}${figure ? ' model' : ''}`);
-  dollFrame.style.gridArea = DOLL_AREA;
+  dollFrame.style.gridArea = DOLL_AREA;   // PLUS11: five rows
   if (figure) {
     figure.setAttribute('role', 'img');
     figure.setAttribute('aria-label', 'Your character, as the Morrowind body wears it');
@@ -1679,76 +1846,112 @@ function equippedList() {
     if (!byLabel.has(row.label)) byLabel.set(row.label, []);
     byLabel.get(row.label).push(row);
   }
+  map.classList.add('plus5');   // PLUS11: the sheet's five-row grid
   for (const fam of WORN_FAMILIES) {
-    const rows = fam.slots.flatMap((s) => byLabel.get(s) ?? []);
-    // Slot order within a family IS the layer order: armour before
-    // clothes, arms before bracers - the first filled row is the top
-    // of the pile, the piece a body shows.
-    const filled = rows.filter((r) => r.item);
-    // AN EMPTY FAMILY IS NOT A CONTROL, so it is not a BUTTON - the
-    // law that shaped the old per-slot rows (twenty-two disabled 24px
-    // buttons on a bare character), one size up. `wornempty`, not
-    // `empty`: the stylesheet owns `.empty` as a component, the third
-    // collision of that shape in the arc after `.detail`/`.packcol`.
-    if (!filled.length) {
-      const d = el('div', 'wornrow wornempty');
-      d.title = fam.slots.join(' \u00b7 ');
-      d.style.gridArea = fam.area;
-      const txt = el('span', 'worntext');
-      txt.append(el('span', 'wornslot', fam.label), el('span', 'wornname wornempty', '\u2014'));
-      d.append(el('span', 'worntile', '\u25c7'), txt);
-      map.append(d);
+    if (fam.transport) {
+      // PLUS11: Mount | Cart, a split cell of the grid (the shelf took their strip)
+      const pair = el('div', 'wornpair');
+      pair.style.gridArea = fam.area;
+      for (const n of transportHalves()) pair.append(n);
+      map.append(pair);
       continue;
     }
-    const top = filled.find((r) => r.item === picked) ?? filled[0];
-    const line = itemLine(top.item, deps.entity);
-    const b = el('button', `wornrow${filled.some((r) => r.item === picked) ? ' on' : ''}`);
-    // MAC-M1: the WORN map's hover carries the rating too, and this is
-    // the surface Mac's second sentence is about - "not sure if armor
-    // has values either". Armour is the thing you are wearing, so the
-    // place a player asks that question is here, over the slot, not in
-    // the pack. One item per line, its number in brackets when it has
-    // one.
-    b.title = filled.map((r) => {
-      const l = itemLine(r.item, deps.entity);
-      return `${r.label}: ${l.name}${itemStatSuffix(l)}`;
-    }).join('\n');
-    b.style.gridArea = fam.area;
-    b.append(itemTile(line));
-    const txt = el('span', 'worntext');
-    txt.append(el('span', 'wornslot', fam.label), el('span', 'wornname', line.name));
-    b.append(txt);
-    if (filled.length > 1) b.append(el('span', 'worncount', String(filled.length)));
-    // MAC-M2 (Mac: "hold to drag ... doesn't work when trying to take
-    // items off your character"): A FILLED PANEL DRAGS, on the same hold
-    // and the same threshold a pack row takes. INV1 attached `dragFrom`
-    // to the LIST's rows alone and made the body a drop TARGET, so the
-    // gesture only ever ran one way: a press on the doll started no
-    // session at all, which is not a refusal a player can read - it is a
-    // dead hold. The piece carried is the one the panel SHOWS (a family
-    // cycles on the click, and the drag takes what is on top).
-    dragFrom(b, top.item, 'worn');
-    // SELECTS, never undresses (the mis-click law) - and a click on an
-    // already-picked family CYCLES to its next piece and wraps, so a
-    // family of four is four taps and all 27 slots stay reachable
-    // from eleven panels.
-    b.onclick = () => {
-      // MAC-M2: and a release that DRAGGED is not a pick here either -
-      // the same latch the list's rows consume (AUDIT INV2 A-F6).
-      // Without it every unequip-by-drag also cycled the family it left.
-      if (takeDragClick()) return;
-      // PX19i: cycle through the family, and when the cycle would
-      // land back where it started the tooltip goes AWAY instead -
-      // a single-piece family is a plain toggle.
-      const i = filled.findIndex((r) => r.item === picked);
-      const next = filled[(i + 1) % filled.length].item;
-      picked = (i >= 0 && next === picked) ? null : next;
-      pickedAt = 'worn';
-      side = 'local'; notice = null; render();
-    };
-    map.append(b);
+    if (fam.pair) {
+      // PLUS9: a split family is one cell holding two half panels, each its own family of one slot
+      const pair = el('div', 'wornpair');
+      pair.style.gridArea = fam.area;
+      for (const half of fam.pair) pair.append(wornPanel(half, byLabel, null));
+      map.append(pair);
+    } else map.append(wornPanel(fam, byLabel, fam.area));
   }
   return wrap;
+}
+
+/** One panel of the worn map - a family's top piece (clicking cycles it), or its empty plate. `area` is the grid
+ *  cell it stands in; null for a PLUS9 half panel, which its pair places. */
+function wornPanel(fam, byLabel, area) {
+  const rows = fam.slots.flatMap((s) => byLabel.get(s) ?? []);
+  // Slot order within a family IS the layer order: armour before
+  // clothes, arms before bracers - the first filled row is the top
+  // of the pile, the piece a body shows.
+  const filled = rows.filter((r) => r.item);
+  // AN EMPTY FAMILY IS NOT A CONTROL, so it is not a BUTTON - the
+  // law that shaped the old per-slot rows (twenty-two disabled 24px
+  // buttons on a bare character), one size up. `wornempty`, not
+  // `empty`: the stylesheet owns `.empty` as a component, the third
+  // collision of that shape in the arc after `.detail`/`.packcol`.
+  if (!filled.length) {
+    const d = el('div', 'wornrow wornempty');
+    d.title = fam.slots.join(' \u00b7 ');
+    if (area) d.style.gridArea = area;
+    const txt = el('span', 'worntext');
+    txt.append(el('span', 'wornslot', fam.label), el('span', 'wornname wornempty', '\u2014'));
+    d.append(el('span', 'worntile', '\u25c7'), txt);
+    return d;
+  }
+  const top = filled.find((r) => r.item === picked) ?? filled[0];
+  const line = itemLine(top.item, deps.entity);
+  const b = el('button', `wornrow${filled.some((r) => r.item === picked) ? ' on' : ''}`);
+  markItemFrame(b, top.item);   // RARITY-UI / SIGIL-UI: the piece the panel shows wears its tier and its rune
+  // MAC-M1: the WORN map's hover carries the rating too, and this is
+  // the surface Mac's second sentence is about - "not sure if armor
+  // has values either". Armour is the thing you are wearing, so the
+  // place a player asks that question is here, over the slot, not in
+  // the pack. One item per line, its number in brackets when it has
+  // one.
+  b.title = filled.map((r) => {
+    const l = itemLine(r.item, deps.entity);
+    return `${r.label}: ${l.name}${itemStatSuffix(l)}`;
+  }).join('\n');
+  if (area) b.style.gridArea = area;
+  b.append(tileWithWear(line, b, wornBox(area == null)));   // WEAR-UI: what you wear, worn down, without a hover; UI1: a half's box, or a panel's
+  const txt = el('span', 'worntext');
+  txt.append(el('span', 'wornslot', fam.label), el('span', 'wornname', line.name));
+  b.append(txt);
+  if (filled.length > 1) b.append(el('span', 'worncount', String(filled.length)));
+  // MAC-M2 (Mac: "hold to drag ... doesn't work when trying to take
+  // items off your character"): A FILLED PANEL DRAGS, on the same hold
+  // and the same threshold a pack row takes. INV1 attached `dragFrom`
+  // to the LIST's rows alone and made the body a drop TARGET, so the
+  // gesture only ever ran one way: a press on the doll started no
+  // session at all, which is not a refusal a player can read - it is a
+  // dead hold. The piece carried is the one the panel SHOWS (a family
+  // cycles on the click, and the drag takes what is on top).
+  dragFrom(b, top.item, 'worn');
+  // SELECTS, never undresses (the mis-click law) - and a click on an
+  // already-picked family CYCLES to its next piece and wraps, so a
+  // family of four is four taps and all 27 slots stay reachable
+  // from eleven panels.
+  b.onclick = (e) => {
+    // MAC-M2: and a release that DRAGGED is not a pick here either -
+    // the same latch the list's rows consume (AUDIT INV2 A-F6).
+    // Without it every unequip-by-drag also cycled the family it left.
+    if (takeDragClick()) return;
+    // DBLEQUIP: the panel's second click takes off the piece its first click stood on (keyed by the family - the
+    // first click repainted the panel). AUDIT MERGE-PLUS C5: a family of ONE only - where a panel holds two (a torch
+    // over a shield, two cloaks) a quick second tap is the cycle's, and it had put the torch out in a dungeon.
+    if (filled.length === 1 && equipByDoubleClick(secondClick(`worn:${fam.label}`, top.item, e))) return;
+    // PX19i: cycle through the family, and when the cycle would
+    // land back where it started the tooltip goes AWAY instead -
+    // a single-piece family is a plain toggle.
+    const i = filled.findIndex((r) => r.item === picked);
+    const next = filled[(i + 1) % filled.length].item;
+    picked = (i >= 0 && next === picked) ? null : next;
+    if (picked) goldEntry = null;   // AUDIT2 GOLD-DROP 2: one floater - a card put up puts the gold field away
+    pickedAt = 'worn';
+    side = 'local'; notice = null; render();
+  };
+  // PLUS9b (the player: "when hovering over equipped items it should show the info here as well"): THE WORN PANELS
+  // WEAR THE PACK'S HOVER CARD. PLUS7 gave the pack's rows the card on hover and the actions on a right-click; the
+  // panels on the body had neither, so the thing you are wearing was the one thing you could not read at a glance.
+  // The card is the piece the panel shows (the family's top); the right-click menu offers its own acts (Take off).
+  // With the card on, the browser's own title tooltip stands down, so the two never stack.
+  const hover = () => getPref('plusItemHover') !== false;
+  if (hover()) b.removeAttribute?.('title');
+  b.onmouseenter = () => { if (hover()) showTip(top.item, 'local', b); };
+  b.onmouseleave = hideTip;
+  b.oncontextmenu = (e) => { e.preventDefault(); if (drag) return; openMenu(top.item, 'local', e.clientX, e.clientY); };   // DROPS-AUDIT F10
+  return b;
 }
 
 /** PX21a (Mac: "we need to find a way to fit in the mounts/wagon in
@@ -1770,32 +1973,82 @@ const TRANSPORT = Object.freeze([
   { id: 'cart', label: 'Cart', owned: hasCart, empty: 'None' },
 ]);
 
-function transportStrip() {
+/** PLUS11: Mount and Cart as two half panels of the worn grid - the strip's own facts (the session says whether you
+ *  have one and hands back the item; the cart is the wagon's door), in a worn panel's dress. */
+function transportHalves() {
   const items = deps.items?.() ?? [];
-  const strip = el('div', 'transport');
-  for (const t of TRANSPORT) {
-    // U58's law, honoured: the SESSION answers "do you have one" and
-    // hands back the item to draw. No template index is read here.
+  return TRANSPORT.map((t) => {
     const owned = t.owned(items) ? transportItem(items, t.id) : null;
     const isCart = t.id === 'cart';
-    // A plaque that opens something is a BUTTON; one that only reports
-    // is not - the empty-family law from the worn map, one strip down.
     const node = el(isCart && owned ? 'button' : 'div',
-      `tplaque${owned ? '' : ' tempty'}${isCart && session.usingWagon ? ' on' : ''}`);
+      `wornrow${owned ? '' : ' wornempty'}${isCart && owned && session.usingWagon ? ' on' : ''}`);
     const line = owned ? itemLine(owned, deps.entity) : null;
-    node.append(line ? itemTile(line) : el('span', 'worntile', '\u25c7'));
+    node.append(line ? itemTile(line, wornBox(true)) : el('span', 'worntile', '\u25c7'));   // UI1: a half panel's box
     const txt = el('span', 'worntext');
-    txt.append(el('span', 'wornslot', t.label),
-      el('span', `wornname${owned ? '' : ' wornempty'}`, line ? line.name : t.empty));
+    txt.append(el('span', 'wornslot', t.label), el('span', `wornname${owned ? '' : ' wornempty'}`, line ? line.name : t.empty));
     node.append(txt);
+    node.title = line ? `${t.label}: ${line.name}` : `${t.label}: ${t.empty}`;
     if (isCart && owned) {
-      node.append(el('span', 'tgo', session.usingWagon ? 'Close' : 'Open'));
       node.onclick = toggleWagon;
       node.title = session.usingWagon ? 'Leave the wagon' : 'Open the wagon';
     }
-    strip.append(node);
+    return node;
+  });
+}
+
+/** PLUS11: THE ACCESSORY SHELF - twelve sockets in labelled pairs, the classic shelf's order. A filled socket is a
+ *  worn panel in small: its picture, a click to read it (the card and its acts), a drag to the pack to take it off,
+ *  the hover card and the right-click menu. An empty one is the open diamond. Dropping a ring or an amulet anywhere
+ *  on the shelf wears it, as dropping it on the map does. */
+function accessoryShelf() {
+  const shelf = el('div', 'wornshelf');
+  const bySlot = new Map();
+  for (const row of worn.rows) {
+    if (!bySlot.has(row.label)) bySlot.set(row.label, []);
+    bySlot.get(row.label).push(row);
   }
-  return strip;
+  for (const g of SHELF_GROUPS) {
+    const rows = bySlot.get(g.slot) ?? [];
+    if (g.hiddenEmpty && !rows.some((r) => r.item)) continue;
+    const grp = el('div', 'shelfgrp');
+    const pair = el('div', 'shelfpair');
+    for (const r of rows.length ? rows : [{ label: g.slot, item: null }, { label: g.slot, item: null }]) {
+      pair.append(shelfSocket(r, g));
+    }
+    grp.append(pair, el('span', 'shelflabel', g.label));
+    shelf.append(grp);
+  }
+  return shelf;
+}
+function shelfSocket(r, g) {
+  if (!r.item) {
+    const d = el('div', 'wornsock wornempty');
+    d.title = g.label;
+    d.append(el('span', 'worntile', '\u25c7'));
+    return d;
+  }
+  const item = r.item;
+  const line = itemLine(item, deps.entity);
+  const b = el('button', `wornsock${item === picked ? ' on' : ''}`);
+  markItemFrame(b, item);   // RARITY-UI / SIGIL-UI: a socket is the icon's frame
+  b.title = `${r.label}: ${line.name}${itemStatSuffix(line)}`;
+  b.append(tileWithWear(line, b, SLOT_BOX.socket));   // WEAR-UI
+  dragFrom(b, item, 'worn');   // MAC-M2's hold: off the body and into the pack
+  b.onclick = (e) => {
+    if (takeDragClick()) return;
+    if (equipByDoubleClick(secondClick(item, item, e))) return;   // DBLEQUIP: the socket's second click takes it off
+    picked = picked === item ? null : item;
+    if (picked) goldEntry = null;   // AUDIT2 GOLD-DROP 2
+    pickedAt = 'worn';
+    side = 'local'; notice = null; render();
+  };
+  // PLUS9b's card and menu, as on every worn panel
+  const hover = () => getPref('plusItemHover') !== false;
+  if (hover()) b.removeAttribute?.('title');
+  b.onmouseenter = () => { if (hover()) showTip(item, 'local', b); };
+  b.onmouseleave = hideTip;
+  b.oncontextmenu = (e) => { e.preventDefault(); if (drag) return; openMenu(item, 'local', e.clientX, e.clientY); };   // DROPS-AUDIT F10
+  return b;
 }
 
 function characterCol() {
@@ -1805,7 +2058,14 @@ function characterCol() {
   // twice. The map alone is the figure.
   const col2 = el('section', 'charcol');
   col2.append(equippedList());
-  col2.append(transportStrip());
+  // PLUS11: the accessory shelf stands where the Mount / Cart strip stood (they are a cell of the grid; PLUS-DEAD took
+  // the strip itself, which plain Enhanced alone drew)
+  col2.append(accessoryShelf());
+  // SET5: a line a worn set - its pieces of nine, its tiers' pips, its stage; a press shows that set's piece (ui/setCard.js)
+  // AUDIT FINAL F1: a set line's press is a PICK, and a pick puts the gold field away (AUDIT2 GOLD-DROP 2, main's: one floater
+  // at a time) - the line stops its click's propagation (setCard.js), so the frame's click-away never ran either
+  const sets = setStrip(deps.entity, { onPick: (it) => { picked = it; goldEntry = null; pickedAt = 'worn'; side = 'local'; notice = null; render(); } });
+  if (sets) col2.append(sets);
   return col2;
 }
 
@@ -1825,23 +2085,20 @@ function characterCol() {
  * scanning, which is what the prototype's tile was for. When the real
  * record lands the whole screen repaints and the letters give way.
  */
-function itemTile(line) {
+function itemTile(line, box, ready = render) {
   // MW-D38: the Morrowind ground mesh stands in for the sprite when a
   // body is built and the item resolves through the one map; the
   // classic icon stands otherwise. Enhanced only, like everything here.
-  const src = modelIconUrl(line.item, 96)
-    || linePictureUrl(line, { scale: 2, onReady: render });
-  if (src) {
+  // UI1: both FITTED to the surface's own box (ui/iconFit.js SLOT_BOX) - the sprite no longer drawn at twice its size
+  // and then capped at 30px by the sheet, whatever the slot around it.
+  const pic = modelPicture(line.item, box)
+    || linePicture(line, { box, onReady: ready });
+  if (pic) {
     const tile = el('span', 'tile has-icon');
-    const img = el('img');
-    img.src = src;
-    img.alt = '';
-    img.draggable = false;   // HB1b: the browser's own image drag must never start under the pane's drag
-    // NO WIDTH ATTRIBUTE. These sprites are not square - a dagger is
-    // tall and narrow, a cuirass wide - and forcing 30 across squashes
-    // every one of them. The CSS caps both axes instead, which scales
-    // to fit and keeps the shape.
-    tile.append(img);
+    // NOT SQUASHED. These sprites are not square - a dagger is tall
+    // and narrow, a cuirass wide - so the picture carries its own
+    // width and height, its longest side the box's (fittedImg).
+    tile.append(fittedImg(pic));
     // MAC-M1: the GRID's own hover, which is the most literal reading of
     // "weapon tool tips" - it said the name and nothing else.
     tile.title = line.name + itemStatSuffix(line);
@@ -1892,6 +2149,17 @@ function placeBeside(node, anchor, x, y) {
   if (top + r.height > vh - 8) top = vh - r.height - 8;
   node.style.left = `${Math.max(8, left)}px`; node.style.top = `${Math.max(8, top)}px`;
 }
+/** AUDIT SET U13: THE HOVER CARD FITS THE SCREEN. A set piece's card - its sigil block, and its set's three tiers under
+ *  the tier's own lines - stood 782px tall, and a 700px laptop lost its foot under the screen's edge. It sheds what a
+ *  glance can spare, a step at a time (the sheet's classes, in order), until it stands whole in `room`; the card a
+ *  press opens carries every word. Its content's height is `scrollHeight` - the sheet caps the box at the screen. */
+export const TIP_FITS = Object.freeze(['tip-compact', 'tip-tight']);
+export function fitTip(node, room = (globalThis.innerHeight ?? 0) - 16) {
+  for (const cls of TIP_FITS) {
+    if (!(node.scrollHeight > room)) return;
+    node.classList.add(cls);
+  }
+}
 function showTip(item, from, row) {
   if (menuEl) return;
   hideTip();
@@ -1902,6 +2170,7 @@ function showTip(item, from, row) {
   tipEl.setAttribute('role', 'tooltip');
   tipEl.append(c);
   document.body.append(tipEl);
+  fitTip(tipEl);   // AUDIT SET U13
   placeBeside(tipEl, row);
 }
 function openMenu(item, from, x, y) {
@@ -1927,12 +2196,67 @@ function openMenu(item, from, x, y) {
   menuOff = () => { document.removeEventListener('pointerdown', away, true); document.removeEventListener('keydown', key, true); };
 }
 
+/** RARITY-UI + SIGIL-UI (2026-09-26, Mac: "Rarity needs to be more noticable in the UI with the icon borders being
+ *  color coded"; "sigil weapons need a visible indicator"): what an item's FRAME wears - its tier (the sheet colours
+ *  the icon's border and sets the tier's pips by it; Common wears nothing) and, for a weapon that carries a sigil,
+ *  the rune in the tile's corner. One helper for every place this pack draws an item (the pack's rows, the loot
+ *  list, the worn panels, the shelf's sockets), so no frame can forget one of the two. */
+export function markItemFrame(node, item) {
+  const r = rarityAttr(item);
+  if (r) node.dataset.rarity = r;
+  if (validSigil(item?.sigil)) node.dataset.sigil = '';   // every frame here is a fresh node per render - nothing to take off
+  markSetFrame(node, item);   // SET5: a set piece's rune wears its set's colour (ui/setCard.js)
+  if (isLocked(item)) node.dataset.locked = '';   // LOCK1: the padlock in the picture's corner (the sheet's own)
+  return node;
+}
+
+/** WEAR-UI (2026-09-26, the players: "can you give us durability bars inside the inventory also? same way they are
+ *  visible on hotbar, so we dont need to mouse-over that much, especially us loot goblins"): THE HOTBAR'S WEAR BAR ON
+ *  EVERY PICTURE OF A PIECE THAT WEARS - the pack's tiles, the loot window's rows, the worn panels and sockets, the
+ *  shop's shelf. The pieces are the ones use wears down: a weapon, armour (a shield is armour) and a light, whose
+ *  condition is what is left to burn - the hotbar's own two kinds and the armour beside them. Never ammunition (an
+ *  arrow is spent, not worn) or a survival item (its condition is its uses, said in words on the card), and nothing
+ *  else: every template carries hit points, and a bar on every gem and book would be noise the bar exists to cut.
+ *  Green, red under the hotbar's own line; an empty bar on a blood track is a broken piece. */
+export const WEAR_WORN_PCT = 40;   // the hotbar's and the quickslot diamond's line (ui/enhancedHud.js QUICK_WORN_PCT)
+/** The share of a piece's condition left, 0..100 - or null for a piece that shows no bar. */
+export function wearPct(item) {
+  if (!item || !((item.maxCondition ?? 0) > 0) || isAmmunition(item) || isSurvivalItem(item)) return null;
+  // AUDIT MERGE-PLUS C6: and anything ENCHANTED - a ring's or a robe's powers spend its condition as they run, and at
+  // nothing the piece is gone from the pack (systems/enchantments.js), so it is the jewellery a bar matters most on
+  if (item.group !== 'Weapons' && item.group !== 'Armor' && !isLightSource(item) && !isEnchanted(item)) return null;
+  return Math.max(0, Math.min(100, conditionPercentage(item)));
+}
+/** The bar itself, for a picture to carry (null for a piece that shows none). Paint is the sheet's (.wear). */
+export function wearBar(item) {
+  const pct = wearPct(item);
+  if (pct == null) return null;
+  const bar = el('span', `wear${pct < WEAR_WORN_PCT ? ' worn' : ''}${pct <= 0 ? ' broken' : ''}`);
+  bar.setAttribute('aria-hidden', 'true');   // the words are the card's and the title's; this is the glance
+  const fill = el('i');
+  fill.style.width = `${pct}%`;
+  bar.append(fill);
+  return bar;
+}
+/** An item's picture with its wear bar in it; `holder` (the row or socket that frames it) is marked `hasbar`, so the
+ *  sheet can lift what shares the tile's foot. */
+function tileWithWear(line, holder, box) {
+  const tile = itemTile(line, box);
+  const bar = wearBar(line.item);
+  if (bar) { tile.append(bar); holder.classList.add('hasbar'); }
+  return tile;
+}
+
 function itemRow(item, from = 'local') {
   const line = itemLine(item, deps.entity);
   const row = el('button', `itemrow${picked === item && side === from ? ' on' : ''}`);
-  { const r = rarityAttr(item); if (r) row.dataset.rarity = r; }   // LR1: the tier colours the name (enhancedStyle's [data-rarity] rules)
+  markItemFrame(row, item);   // LR1: the tier colours the name (enhancedStyle's [data-rarity] rules); RARITY-UI: and the icon's frame; SIGIL-UI: the rune
   const wasPicked = picked === item && side === from;
-  row.append(itemTile(line));
+  // UI1: the grid's plate (the pack's own) or the loot window's row picture - each surface's box (ui/iconFit.js)
+  row.append(tileWithWear(line, row, from === 'remote' ? SLOT_BOX.loot : gridBox()));   // WEAR-UI: and its wear, at a glance
+  // UI1: THE STACK'S COUNT in the plate's corner - the grid hides the name (and its "x3"), and the sheet had a rule for
+  // this corner that nothing ever filled. The loot window's row says it in its name, which it shows.
+  if (line.stack && from === 'local') row.append(el('span', 'count', String(line.stack)));
   const mid = el('span', 'itemname');
   mid.append(el('span', null, line.name + (line.stack ? ` ×${line.stack}` : '')));
   const sub = [line.material, line.word, line.lit ? 'lit' : null].filter(Boolean).join(' · ');   // HT2: the classic list paints the lit row gold; this one says the word
@@ -1957,11 +2281,13 @@ function itemRow(item, from = 'local') {
   // is a click, and a drag that could also transfer would make a slip
   // a theft.
   if (from === 'local') dragFrom(row, item);
-  row.onclick = () => {
+  row.onclick = (e) => {
     // AUDIT INV1 Fb: a release that DRAGGED is not a pick. The click
     // fires after pointerup, so without this a reorder would also
     // select the row it left.
     if (takeDragClick()) return;   // AUDIT INV2 A-F6: a release that DRAGGED is not a pick
+    // DBLEQUIP: the pack's second click on the same piece wears it (or lights it); the loot side's click already takes
+    if (from === 'local' && equipByDoubleClick(secondClick(item, item, e))) return;
     // AUDIT 26: "Send click to quest system" (:2027-2037) - the FIRST
     // act of RemoteItemListScroller_OnItemClick, ahead of the
     // action-mode branch, so LOOKING at a quest item in a pile counts
@@ -1988,14 +2314,15 @@ function itemRow(item, from = 'local') {
     // puts it away (the quest-click above already fired either way,
     // exactly as DFU counts a look).
     picked = wasPicked ? null : item;
+    if (picked) goldEntry = null;   // AUDIT2 GOLD-DROP 2
     pickedAt = from === 'remote' ? 'loot' : 'dock';
     side = from; notice = null; render();
   };
-  if (isEnhancedPlus()) {   // PLUS7: hover for the card, right click for the actions
-    row.onmouseenter = () => { if (getPref('plusItemHover') !== false) showTip(item, from, row); };
-    row.onmouseleave = hideTip;
-    row.oncontextmenu = (e) => { e.preventDefault(); if (drag) return; openMenu(item, from, e.clientX, e.clientY); };   // DROPS-AUDIT F10: a touch long-press mid-drag is the drag's, not the menu's
-  }
+  row._padItem = item; row._padFrom = from;   // PADPLUS5: the row's item, for the pad's quick act
+  // PLUS7: hover for the card, right click for the actions
+  row.onmouseenter = () => { if (getPref('plusItemHover') !== false) showTip(item, from, row); };
+  row.onmouseleave = hideTip;
+  row.oncontextmenu = (e) => { e.preventDefault(); if (drag) return; openMenu(item, from, e.clientX, e.clientY); };   // DROPS-AUDIT F10: a touch long-press mid-drag is the drag's, not the menu's
   return row;
 }
 
@@ -2079,23 +2406,22 @@ function remoteCol() {
   //
   // Both are still reachable, and in the one place they read as
   // themselves: the pack. Escape or the inventory key closes the pile
-  // and opens it, with the gold field on its own remote side.
+  // and opens it, with the gold button and its field on the pack's own
+  // footer (AUDIT GOLD-DROP 4: GOLD-DROP's move, below).
   //
-  // THE GATE IS THE SESSION, not the frame. `deps.loot` is what opened
-  // this window (`packOpen = !d.loot`), so a pack opened on F6 keeps its
-  // Gold button over the ground, the wagon and a reward tray exactly as
-  // it had it - this changes the LOOT session alone.
-  if (!deps.loot) {
-    // GOLD IS NOT AN ITEM ROW. It is one stack in the pack that the list
-    // shows as a line, and DFU gives it its own button and its own
-    // numeric popup because "drop 40 of 12000" is not a click.
-    const g = el('button', 'act', 'Gold');
-    g.onclick = () => { goldEntry = goldEntry == null ? '0' : null; notice = null; render(); };
-    acts.append(g);
-  }
+  // GOLD-DROP (2026-09-26, a player: "Can't drop gold at all", "Cant put
+  // gold in containers"): AND THE GOLD BUTTON LIVES ON THE PACK NOW, where
+  // DFU keeps it (the player's own panel, :47). Here it only ever rode
+  // this bar, and this frame is built for the ground only once something
+  // lies on it (PX19c) - so a pack opened on F6 over bare ground had no
+  // way to drop gold at all, and the player's own storage (the ship's
+  // chest, a house's cupboards, a placed chest), which opens beside the
+  // pack (SHIP-STORE), was gated off with the loot. The pack's footer
+  // carries it (render below), so it is wherever the pack is and never on
+  // a body's tray - MAC-M2 B's line stands. AUDIT GOLD-DROP 3: nor over a
+  // reward tray, for the same reason (render says it).
   head.append(acts);
   col.append(head);
-  if (goldEntry != null) col.append(goldField());
   // PX21e (Mac: "in the tooltip for looting, it makes you scroll which
   // should not be a thing at all"): THE LIST IS ITS OWN BOX. The rows
   // sat directly in the column beside the head and the WHOLE WINDOW
@@ -2129,8 +2455,12 @@ function goldField() {
   input.value = goldEntry;
   input.setAttribute('aria-label', 'How much gold');
   input.oninput = () => { goldEntry = input.value; };
+  // AUDIT2 GOLD-DROP 2: THE FIELD'S OWN BACK. The pack's key handler lets a text field's keys be (typing is not a
+  // command), so Back pressed in here - the likeliest place for it - did nothing at all. The input answers it: the field
+  // goes and the pack stays, as the handler's gold arm answers Back pressed anywhere else.
+  input.onkeydown = (e) => { if (overlayAction(e) === 'back') { e.preventDefault(); e.stopPropagation(); goldEntry = null; render(); } };
   form.append(input);
-  const go = el('button', 'act primary', session.usingWagon ? 'Stow' : 'Drop');
+  const go = el('button', 'act primary', GOLD_VERB[remote?.kind] ?? 'Drop');   // GOLD-DROP: named for where it goes
   go.type = 'submit';
   form.onsubmit = (e) => { e.preventDefault(); dropGold(goldEntry); };
   form.append(go);
@@ -2148,10 +2478,9 @@ function catsCol() {
   // its place, dimmed, so the spine never shuffles under the hand.
   for (const { tab: t, label, items: rows } of model.tabs) {
     const n = rows.length;
-    const b = el('button', `packtab${t === tab ? ' on' : ''}${n ? '' : ' empty'}`, label);
-    // PLUS1: under Enhanced Plus an empty page dims under its own class - the sheet's .empty (a dashed box with 26px of
-    // padding) landed on the zero tabs and pushed them out of the three-by-three grid.
-    if (!n && isEnhancedPlus()) b.classList.replace('empty', 'tabempty');
+    // PLUS1: an empty page dims under its own class - the sheet's .empty (a dashed box with 26px of padding) landed on
+    // the zero tabs and pushed them out of the three-by-three grid.
+    const b = el('button', `packtab${t === tab ? ' on' : ''}${n ? '' : ' tabempty'}`, label);
     b.append(el('span', 'count', String(n)));
     b.onclick = () => { tab = t; picked = null; render(); };
     tabs.append(b);
@@ -2235,20 +2564,50 @@ function quickslotActs(item) {
   return [];
 }
 
+/** TRADE-INFO (2026-09-27, Discord - Tabitha: "Show enchantment stats in the inventory and trade - Enhanced+ doesn't
+ *  show enchants"): WHAT AN ITEM'S MAGIC IS, in words - the tier with its affixes and enchantments (lootRarity
+ *  rarityLines, which names a rolled item's), and for an enchanted item the tier list does not name - DFU's own magic
+ *  items and the item maker's carry no `rarity`, and with the tiers off it names none - DFU's Info box powers (itemPowers magicPowersLines, the classic
+ *  popup's own words; "powers unknown" until it is identified). The card and the trade window read this one list. */
+export function itemPowerLines(item, d = deps, { set = true } = {}) {
+  const lines = rarityLines(item, { sigil: false, set });   // SET5: the card draws the set in its own block (set: false)
+  if (item && !(item.rarity && lootRarityOn()) && isEnchanted(item)) {
+    // unidentified: DFU's "powers unknown" - unless the tier list already said "Unidentified"
+    const known = itemIsIdentified(item);
+    if (known || !lines.includes('Unidentified')) {
+      const tier = new Set(lines);   // AUDIT TRADE-INFO D6: only what the tier list said is not said twice - two like powers are two lines
+      for (const t of magicPowersLines(item, { identified: known, lines: d?.rows ?? null })) if (t && !tier.has(t)) lines.push(t);
+    }
+  }
+  return lines;
+}
+
+/** CHAT-POST (2026-09-27, Discord - Tabitha: "Link in chat / Post in chat"; "random magic items' details in chat"):
+ *  AN ITEM AS ONE CHAT LINE - its name in brackets, the headline stat (damage or armour) and its magic
+ *  (itemPowerLines), cut at a whole word to the chat's own bound (net/wire.js CHAT_MAX). A chat line is words: the
+ *  relay carries text alone, so the item travels as what a player would type to describe it. */
+export function itemChatText(item, d = deps) {
+  const line = itemLine(item, d?.entity);
+  const parts = [line.damage != null ? `Damage ${line.damage}` : null, line.armour != null ? `Armour ${line.armour}` : null,
+    ...itemPowerLines(item, d)].filter(Boolean);
+  const text = `[${line.name}]${parts.length ? ` ${parts.join(' · ')}` : ''}`;
+  if (text.length <= CHAT_MAX) return text;
+  const cut = text.slice(0, CHAT_MAX - 3);
+  return `${cut.slice(0, Math.max(cut.lastIndexOf(' '), line.name.length + 2)).replace(/[\s·]+$/, '')}...`;
+}
+
 /** PLUS7: the item's card WITHOUT its buttons - the detail column's, the hover card's. */
 function infoCard(picked, side, ready = render) {
   const line = itemLine(picked, deps.entity);
   const c = el('div', 'card');
   // The detail draws it BIGGER - this is the one place there is room
   // to see what the thing actually looks like.
-  const big = modelIconUrl(line.item, 192)
-    || linePictureUrl(line, { scale: 4, onReady: ready });
+  // UI1: fitted to the card's box, as every slot's picture is (a staff was a 408px canvas squeezed into 96)
+  const big = modelPicture(line.item, SLOT_BOX.card)
+    || linePicture(line, { box: SLOT_BOX.card, onReady: ready });
   if (big) {
-    const fig = el('div', 'bigicon');
-    const img = el('img');
-    img.src = big;
-    img.alt = '';
-    fig.append(img);
+    const fig = markItemFrame(el('div', 'bigicon'), picked);   // RARITY-UI: the big picture's frame wears the tier too
+    fig.append(fittedImg(big));
     c.append(fig);
   }
   c.append(el('h3', null, line.name));
@@ -2257,7 +2616,13 @@ function infoCard(picked, side, ready = render) {
   if (meta) c.append(el('p', 'meta', meta));
   // LR1: the tier, then each affix as a line, then the enchantment - or
   // "Unidentified" until the Identify spell or the guild reads it.
-  { const lines = rarityLines(picked); if (lines.length) { const ul = el('ul', 'rarity'); for (const l of lines) ul.append(el('li', null, l)); c.append(ul); } }
+  { const lines = itemPowerLines(picked, deps, { set: false }); if (lines.length) { const ul = el('ul', 'rarity'); for (const l of lines) ul.append(el('li', null, l)); c.append(ul); } }   // TRADE-INFO: and a DFU magic item's powers; SET5: the set draws its own block below
+  // SIGIL-UI: the sigil as its own block - the rune, the stage it wakes to in my hand, its five stages and the bar of
+  // what it has drunk toward the next (ui/sigilCard.js); the tier list above no longer carries it as three more lines
+  { const sb = sigilCard(picked); if (sb) c.append(sb); }
+  { const set = setCard(picked, deps.entity, itemLongName); if (set) c.append(set); }   // SET5: its set - the places worn, the stage, its tiers (ui/setCard.js)
+  if (isLocked(picked)) c.append(el('p', 'lockline', LOCKED_LINE));   // LOCK1
+  if (isBound(picked)) c.append(el('p', 'boundline', BOUND_LINE));   // SS1: the lock's line style, without its padlock
   const dl = el('dl', 'stats');
   const pair = (k, v) => { if (v != null) dl.append(el('dt', null, k), el('dd', null, String(v))); };
   // MAC-M1: the headline stat FIRST - a player reading this card is
@@ -2367,7 +2732,144 @@ function itemActs(picked, side, { qty = true } = {}) {
   // ghost from the moment it was made. The remote side gets none; take it
   // first, then slot it.
   if (side === 'local') for (const b of quickslotActs(picked)) acts.append(b);
+  // LOCK1: the lock, on the card and in the right-click menu alike (both are built from this row); the card stays up
+  // so the padlock is seen to close
+  if (side === 'local') {
+    const k = el('button', 'act', isLocked(picked) ? 'Unlock' : 'Lock');
+    k.onclick = () => { toggleLocked(picked); notice = null; render(); };
+    acts.append(k);
+  }
+  // SS5 (Mac: "The ability to dismantle in the inventory and recieve back sigil stones", the Broker's wares alone): a
+  // ware in the pack is DISMANTLED for a share of its price (systems/sigilBroker.js), asked first - it is gone for good.
+  // A worn one is taken off first (its primary act, beside this); a locked one says why when pressed, as its Drop does.
+  if (side === 'local' && !line.equipped && dismantleStones(picked) > 0) {
+    const d = el('button', 'act', 'Dismantle');
+    d.onclick = () => askDismantle(picked);
+    acts.append(d);
+  }
+  // PLUS10 (a player: "in classic mode it gives more detailed info about items"): INFO, under Plus. The classic
+  // window's Info mode reads the game's own TEXT.RSC record for the item (a sword, a shield, an arrow, a soul trap,
+  // a book each read differently) and, for an enchanted item, chains the "Item powers" box. The enhanced card is a
+  // summary of numbers; this button shows the classic text itself - the card's detail column and the right-click
+  // menu both carry it, because both are built from this row.
+  const info = el('button', 'act', 'Info');
+  info.onclick = () => openInfo(picked);
+  acts.append(info);
+  // CHAT-POST: the item on the chat's open tab - online, where the host hands the door (deps.postItem)
+  if (deps.canPostItem?.()) {
+    const post = el('button', 'act', 'Post in chat');
+    post.onclick = () => { notice = deps.postItem?.(itemChatText(picked)) ? POSTED_TEXT : NOT_POSTED_TEXT; render(); };
+    acts.append(post);
+  }
+  for (const b of acts.querySelectorAll('button')) if (b.classList.contains('act')) pairGuard(b);   // AUDIT MERGE-PLUS C1
   return acts;
+}
+
+/** PLUS10: the classic Info popup's boxes for an item - ShowInfoPopup's own order (nativeInventory _info): the
+ *  item's record; then a potion recipe's ingredients, or an enchanted item's powers. Each box is a list of rows. */
+export function itemInfoBoxes(item, d = deps) {
+  const rows = d?.rows;
+  if (!rows) return [[{ text: 'No item description available.', center: true }]];
+  const boxes = [itemInfoRows(item, rows, { name: questLetterName(item, d.getQuest ?? null) })];
+  if (isPotionRecipe(item)) {
+    const names = potionRecipeIngredientNames(item) ?? [];
+    if (names.length) boxes.push(names.map((text) => ({ text, center: true })));
+  } else if (isEnchanted(item)) {
+    boxes.push(powersRows(rows(INFO_TEXT_POWERS) ?? [], magicPowersLines(item, { identified: itemIsIdentified(item), lines: rows })));
+  }
+  return boxes.filter((b) => b.length);
+}
+
+let infoEl = null, infoOff = null;
+function closeInfo() { infoEl?.remove(); infoEl = null; infoOff?.(); infoOff = null; }
+let dismantleEl = null, dismantleOff = null;
+function closeDismantle() { dismantleEl?.remove(); dismantleEl = null; dismantleOff?.(); dismantleOff = null; }
+/** SS5: THE DISMANTLE'S QUESTION - the Info box's own stone window over the pack: Dismantle (or Y) does it (the ware
+ *  out, its stones in, and the pack says so); Keep, N, Enter, Escape (the pad's B) or a press outside leave the
+ *  piece. A piece the law refuses (worn, locked) is refused in words before any question is asked. The Dismantle
+ *  button never stands where the card's did, and a second click of a pair never presses it (pairGuard). */
+function askDismantle(item) {
+  hideTip(); closeMenu(); closeInfo(); closeDismantle();
+  const name = itemLongName(item, { getQuest: deps.getQuest ?? null });
+  const refusedFor = (why) => { notice = why === 'locked' ? lockedText(name) : why === 'worn' ? DISMANTLE_WORN(name) : null; refresh(); render(); };
+  const why = dismantleRefusal(item);
+  if (why) { refusedFor(why); return; }
+  const n = dismantleStones(item);
+  dismantleEl = el('div', 'inv-info inv-dismantle');
+  dismantleEl.setAttribute('role', 'alertdialog');
+  dismantleEl.setAttribute('aria-label', 'Dismantle');
+  const card = el('div', 'card');
+  const sec = el('div', 'inv-info-box');
+  for (const t of dismantleAsk(name, n)) sec.append(el('p', 'center', t));
+  card.append(sec);
+  const acts = el('div', 'acts');
+  const yes = el('button', 'act primary', 'Dismantle');
+  yes.onclick = (e) => {
+    e?.stopPropagation?.();
+    closeDismantle();
+    const r = dismantleWare(item, { items: deps.items?.() ?? [] });
+    if (!r.ok) { refusedFor(r.reason); return; }   // AUDIT SS: worn or locked since the question was asked - said, as the card says it
+    if (picked === item) picked = null;
+    notice = DISMANTLED(name, r.stones);
+    refresh();   // the pages are rebuilt from the pack, as every act here rebuilds them - the ware off its page
+    render();
+  };
+  const keep = el('button', 'act', 'Keep');
+  keep.onclick = (e) => { e?.stopPropagation?.(); closeDismantle(); };
+  acts.append(pairGuard(yes), keep);
+  card.append(acts);
+  dismantleEl.append(card);
+  dismantleEl.setAttribute('aria-modal', 'true');
+  document.body.append(dismantleEl);
+  keep.focus?.({ preventScroll: true });   // AUDIT SS: the question holds the focus - on Keep, the answer that loses nothing
+  // AUDIT SS: THE BACKDROP IS OUTSIDE. The box's root is the dimmed screen itself (.inv-info, inset 0), so every press
+  // was "inside" and a press outside never closed it; only the card is the question
+  const mine = dismantleEl;
+  const away = (e) => { if (e.target === mine || !mine.contains(e.target)) { e.stopPropagation(); closeDismantle(); } };
+  // AUDIT SS: the keys the classic question and the Yes/No card answer - Y dismantles; N, Enter (the default) and
+  // Escape keep. Only Escape answered, so a player at the keyboard could never say yes
+  const key = (e) => {
+    const yesKey = e.code === 'KeyY', keepKey = e.key === 'Escape' || e.code === 'KeyN' || e.key === 'Enter' || e.code === 'NumpadEnter';
+    if (!yesKey && !keepKey) return;
+    e.preventDefault(); e.stopPropagation();
+    if (yesKey) yes.onclick({ detail: 1, stopPropagation() {} }); else closeDismantle();
+  };
+  // AUDIT SS: the listeners are THIS question's - the close cancels a pair not yet laid. A second question asked before
+  // the first's timer ran used to take the first's pair too, and the pair it could never remove swallowed every press
+  // and every Escape for good
+  const timer = setTimeout(() => { document.addEventListener('pointerdown', away, true); document.addEventListener('keydown', key, true); }, 0);
+  dismantleOff = () => { clearTimeout(timer); document.removeEventListener('pointerdown', away, true); document.removeEventListener('keydown', key, true); };
+}
+/** PLUS10: the Info box - a small stone window over the pack; Close, Escape (the pad's B) or a click outside shut it. */
+function openInfo(item) {
+  hideTip(); closeMenu(); closeInfo();
+  const boxes = itemInfoBoxes(item);
+  infoEl = el('div', 'inv-info');
+  infoEl.setAttribute('role', 'dialog');
+  infoEl.setAttribute('aria-label', 'Item information');
+  const card = el('div', 'card');
+  boxes.forEach((box, n) => {
+    const sec = el('div', `inv-info-box${n ? ' more' : ''}`);
+    for (const r of box) {
+      const t = String(r?.text ?? r ?? '').trim();
+      if (t) sec.append(el('p', r?.center ? 'center' : null, t));
+    }
+    card.append(sec);
+  });
+  { const sb = sigilCard(item); if (sb) card.append(sb); }   // SIGIL-UI: the Info box's last word on a sigil weapon is its sigil
+  { const set = setCard(item, deps.entity, itemLongName); if (set) card.append(set); }   // SET5: ...and a set piece's, its set
+  markItemFrame(card, item);   // RARITY-UI: the box's heading line wears the tier
+  const close = el('button', 'act', 'Close');
+  close.onclick = (e) => { e.stopPropagation(); closeInfo(); };
+  card.append(close);
+  infoEl.append(card);
+  document.body.append(infoEl);
+  // AUDIT SS: the dismantle question's two laws, here too - the backdrop is outside, and the listeners are this box's
+  const mine = infoEl;
+  const away = (e) => { if (e.target === mine || !mine.contains(e.target)) { e.stopPropagation(); closeInfo(); } };
+  const key = (e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeInfo(); } };
+  const timer = setTimeout(() => { document.addEventListener('pointerdown', away, true); document.addEventListener('keydown', key, true); }, 0);
+  infoOff = () => { clearTimeout(timer); document.removeEventListener('pointerdown', away, true); document.removeEventListener('keydown', key, true); };
 }
 
 function detailCol() {
@@ -2567,7 +3069,34 @@ function render() {
     carry.append(meter);
     const gold = el('div', 'packgold');
     gold.append(el('span', 'k', 'Gold'), el('span', 'v', model.gold.toLocaleString()));
+    // GOLD-DROP: DFU's goldButton (DaggerfallInventoryWindow.cs:47, :515-517), on the pack itself - beside the purse
+    // it spends, named for where the gold goes (the ground, the wagon, the player's own storage), and the field it
+    // opens over the footer (AUDIT GOLD-DROP 1). GOLD IS NOT AN ITEM ROW: it is one stack in the pack that the list
+    // shows as a line, and DFU gives it its own button and its own numeric popup because "drop 40 of 12000" is not a
+    // click.
+    // AUDIT GOLD-DROP 3: AND NEVER OVER A REWARD TRAY. The stack goes into the list that is showing, and a tray's list
+    // is the gift's: the piece taken is the claim and the host keeps nothing else, so gold given there was lost the
+    // moment a piece was chosen or the window closed - MAC-M2 B's reason on a body. AUDIT2 GOLD-DROP 5: the gate is
+    // the TRAY, not the choice. The wagon, opened beside a tray, still takes gold and keeps it, as DFU's DropGoldPopup
+    // does (it has no choose-one check) - though no ITEM may go there while a choice is up (planStore's chooseOnePile,
+    // DFU's `!chooseOne` Remove arm).
+    const giving = remote?.kind !== 'reward';
+    if (giving) {
+      const verb = `${GOLD_VERB[remote?.kind] ?? 'Drop'} gold`;   // never the bare verb an item's Store or Drop carries
+      const give = el('button', `act goldbtn${goldEntry != null ? ' primary' : ''}`, verb);
+      give.type = 'button';
+      // AUDIT GOLD-DROP 4: not silent - SND1's one listener gives it the click every enhanced button makes, as DFU's
+      // GoldButton_OnMouseClick plays ButtonClick; the drop itself has no cue of its own, in DFU either.
+      // AUDIT2 GOLD-DROP 2: ONE FLOATER AT A TIME - opening the field puts an item's card away (and a pick puts the
+      // field away): the field floated over the card's buttons, and a card could stand over the button itself.
+      give.onclick = () => { goldEntry = goldEntry == null ? '0' : null; if (goldEntry != null) picked = null; notice = null; render(); };
+      gold.append(give);
+    }
     bar.append(el('span', 'packitems', plural(model.count, 'item')), carry, gold);
+    // AUDIT GOLD-DROP 1: the field is the FOOTER's, floated above it (the sheet's `.packbar > .goldfield`) as DFU's
+    // popup floats - in the window's flow it took ~110px from the item list, which a stacked window (641-999px wide)
+    // has about 50px of, and the dock ran under the footer
+    if (giving && goldEntry != null) bar.append(goldField());
     win.append(bar);
     if (notice && !onPanel) win.append(el('p', 'sheet-notice', notice));
     }
@@ -2594,7 +3123,7 @@ function render() {
       // After layout: anchored beside the picked element, flipped
       // left when the right edge refuses, clamped to the frame.
       requestAnimationFrame(() => {
-        const at = { worn: '.wornmap .wornrow.on', dock: '.pack-dock .itemrow.on', loot: '.loot-win .itemrow.on' }[pickedAt];
+        const at = { worn: '.wornmap .wornrow.on, .wornshelf .wornsock.on', dock: '.pack-dock .itemrow.on', loot: '.loot-win .itemrow.on' }[pickedAt];
         const on = (at && (frame.querySelector(at) ?? shell.querySelector(at)))
           ?? frame.querySelector('.wornrow.on, .itemrow.on');
         if (!on || !tip.isConnected) return;
@@ -2611,11 +3140,22 @@ function render() {
       });
     }
     // A click that lands on nothing interactive puts the tooltip away.
+    // AUDIT GOLD-DROP 2: and a FIELD is interactive. The gold field is in
+    // this frame since GOLD-DROP, so a click into its input closed the card
+    // and redrew the window under the caret - focus went to the body and the
+    // first amount typed went nowhere.
+    // AUDIT2 GOLD-DROP 2: and it puts the gold field away as it does the
+    // card - the one floater, whichever it is - so the field closes the way
+    // everything else here does, and a click into it is still its own.
     frame.addEventListener('click', (e) => {
-      if (!picked) return;
-      if (e.target.closest('.packtip') || e.target.closest('button')) return;
-      picked = null; render();
+      if (!picked && goldEntry == null) return;
+      if (e.target.closest('.packtip') || e.target.closest('button, input, .goldfield')) return;
+      picked = null; goldEntry = null; render();
     });
+    // CART-FIT (2026-09-27, Discord: "My resolution is 1366 x 768 ... I still can't see all the items"): the pack and a
+    // side window beside it (the wagon, the player's own storage) share ONE viewport - each was clamped to it alone,
+    // so side by side they wanted 1738 px and the side window ran off the right edge (enhancedStyle.js .paired)
+    if (packOpen && loot) shell.classList.add('paired');
     if (packOpen) shell.append(win);
     if (loot) shell.append(loot);
     host.append(shell);
@@ -2666,6 +3206,14 @@ function onKey(e) {
   // world (A-F4). Escape ends the drag and keeps the window; a second
   // one closes it, as it always did.
   if (overlayAction(e) === 'back' && drag) { e.preventDefault(); e.stopPropagation(); dragStop(false); return; }
+  // PLUS10: THE INFO BOX AND THE RIGHT-CLICK MENU TAKE BACK FIRST. This handler is the window's capture listener, so
+  // it hears Escape (the pad's B) before the box's own document listener - and it closed the whole pack under an
+  // open Info box. Back shuts the floater and keeps the pack, the way it ends a drag above.
+  if (overlayAction(e) === 'back' && (infoEl || menuEl || dismantleEl)) { e.preventDefault(); e.stopPropagation(); closeInfo(); closeMenu(); closeDismantle(); return; }   // SS5: and the dismantle's question
+  // AUDIT2 GOLD-DROP 2: ...AND SO DOES THE GOLD FIELD, the pack's other floater (DFU's gold popup closes on its own).
+  // Back shut the whole pack under the open field; it puts the field away now, and a second Back closes the pack.
+  // Back pressed INSIDE the field never gets here - the text guard above lets a field's keys be - so its input answers.
+  if (overlayAction(e) === 'back' && goldEntry != null) { e.preventDefault(); e.stopPropagation(); goldEntry = null; render(); return; }
   const acts = eventActions(e);   // AUDIT KB1: the event's own read - a pack opened by a combo closes on it; UXB1-S: every action a shared key carries
   if (acts.includes('CharacterSheet') && typeof deps?.openCharSheet === 'function') {
     e.preventDefault();
@@ -2720,7 +3268,13 @@ export function mountEnhancedInventory(hostEl, d = {}) {
   picked = null;
   // PX20b: a LOOT target opens its own frame alone; every other way in
   // (F6, the world's inventory door) opens the pack as it always did.
-  packOpen = !d.loot;
+  // SHIP-STORE (2026-09-26, Mac: "No ui to put items in storage on boat - problem for enhanced and enhanced +"):
+  // ...and so does the player's OWN STORAGE - the ship's chest, an owned house's cupboards, a placed storage piece
+  // (`loot.storage`, the host's word). MAC-M2 B made a loot session take-only ("the loot window is for taking") and
+  // left the pack no way back, which is right for a body or a stranger's shelf - and made every storage the player
+  // owns a box that could only be emptied. DFU's HouseContainers arm opens that same window two-way
+  // (PlayerActivate.cs:902-925), and the classic skin still does.
+  packOpen = !d.loot || d.loot.storage === true;
   side = d.loot ? 'remote' : 'local';
   // MAC-M2: the "that release was a drag" latch belongs to a GESTURE,
   // so it must not outlive the pane that held it - a session that ended
@@ -2763,6 +3317,9 @@ export function mountEnhancedInventory(hostEl, d = {}) {
   lockHandler = releaseLock;
   releaseLock();
   if (typeof document !== 'undefined') document.addEventListener('pointerlockchange', lockHandler);
+  fitSig = packFitSig();
+  resizeHandler = () => { const sig = packFitSig(); if (sig !== fitSig) { fitSig = sig; if (host) render(); } };
+  globalThis.addEventListener?.('resize', resizeHandler);
   globalThis.__pack = () => JSON.stringify({
     tab, repaints, count: model.count, worn: model.worn.size,
     side, remoteKind: remote.kind, remoteCount: remote.count,
@@ -2787,12 +3344,16 @@ export function mountEnhancedInventory(hostEl, d = {}) {
     dropped: () => dropped,
     unmount() {
       hidePlusFloaters();   // PLUS7
+      closeInfo();   // PLUS10: the Info box survives a repaint (it is about an item, not a row) but not the window
+      closeDismantle();   // SS5: nor does the dismantle's question
       // EVERY LISTENER HAS AN OWNER, and this one claims F6 - an orphan
       // eats the key that opens the pack, for the rest of the session.
       if (keyHandler) globalThis.removeEventListener('keydown', keyHandler, { capture: true });
       if (lockHandler && typeof document !== 'undefined') document.removeEventListener('pointerlockchange', lockHandler);
+      if (resizeHandler) globalThis.removeEventListener?.('resize', resizeHandler);   // AUDIT UI A3
       keyHandler = null;
       lockHandler = null;
+      resizeHandler = null;
       // MW-D36: the figure's subscription has an owner too.
       _unsubscribeFigure?.(); _unsubscribeFigure = null;
       // AUDIT INV2 A-F4: and so does a drag in flight. The ghost is the

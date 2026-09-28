@@ -79,7 +79,7 @@ test('AUDIT 68 S16-bbkey-stale-shadow-reach: the key has ONE home - billboardKey
   b.archive = 471; assert.equal(billboardKey(b), '471_4#0#2');
   for (const f of ['src/render/renderer.js', 'src/render/shadowPass.js', 'src/render/airPass.js']) {
     const src = rd(f);
-    assert.match(src, /import \{ billboardKey \} from '\.\/billboardKey\.js';/, `${f} imports the one home`);
+    assert.match(src, /import \{ billboardKey(?:, sortByKey)? \} from '\.\/billboardKey\.js';/, `${f} imports the one home`);   // LA-COST2: the renderer takes the cutout pass's sort from it too
     assert.doesNotMatch(src, /b\._bbKey \?\?|b\._bbKey = /, `${f} neither trusts nor mints a key of its own`);
   }
 });

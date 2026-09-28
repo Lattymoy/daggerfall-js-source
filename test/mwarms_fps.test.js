@@ -91,8 +91,8 @@ test('MWA3 armsStandFor: a standing arm counts only when its race, sex and face 
   assert.equal(armsStandFor(argonian, { ready: () => true, builtFor: () => ({ ...forHer, race: 'breton' }) }), false, 'a human\'s arm is not hers - the report');
   assert.equal(armsStandFor(argonian, { ready: () => true, builtFor: () => ({ ...forHer, female: false }) }), false, 'the male skeleton is not hers');
   assert.equal(armsStandFor(argonian, { ready: () => true, builtFor: () => ({ ...forHer, faceIndex: 4 }) }), false, 'another face is not hers');
-  assert.deepEqual(armIdentityOf({ race: 'DarkElf', gender: 'male', faceIndex: 7 }), { race: 'dark elf', female: false, faceIndex: 7 }, 'the identity third of armBuildOptsOf, in the ESM\'s own race spelling');
-  assert.deepEqual(armIdentityOf(null), { race: null, female: false, faceIndex: 0 }, 'no entity, no identity - never a throw at a boot door');
+  assert.deepEqual(armIdentityOf({ race: 'DarkElf', gender: 'male', faceIndex: 7 }), { race: 'dark elf', female: false, faceIndex: 7, werewolf: false }, 'the identity third of armBuildOptsOf, in the ESM\'s own race spelling');
+  assert.deepEqual(armIdentityOf(null), { race: null, female: false, faceIndex: 0, werewolf: false }, 'no entity, no identity - never a throw at a boot door');
 });
 
 test('MWA3 autoBuildArms: an arm standing for ANOTHER identity is no longer a reason to stand down - the load\'s door rebuilds (mutant: the gate reads ready() again)', async () => {
@@ -110,7 +110,7 @@ test('MWA1 pins: the hosts build at every door a made character arrives through 
   assert.equal(Object.hasOwn(PREF_DEFAULTS, 'mwArms'), false, 'MWA4: the switch is retired - the attached files are it');
   assert.equal(PREF_DEFAULTS.showFps, false, 'a diagnostic is off by default');
   const rig = read('src/combat/weaponRig.js');
-  assert.match(rig, /export async function autoBuildArms\(entity, \{ dataCount = morrowindDataCount, measure = registerMorrowindData, measured = morrowindDataFingerprint, standing = armsStandFor \} = \{\}\)/);
+  assert.match(rig, /export async function autoBuildArms\(entity, \{ dataCount = morrowindDataCount, measure = registerMorrowindData, measured = morrowindDataFingerprint, standing = armsStandFor, intent = null \} = \{\}\)/);
   assert.match(rig, /if \(measured\(\) == null\) await measure\(\)\.catch\(\(\) => 0\);\n\s+const res = await buildArmsFor\(entity\);/, 'AUDIT 65 XL-6: the store is measured before the face verdict, not parsed a dozen times');
   assert.match(rig, /if \(!entity\?\.chargenDone \|\| !\(dataCount\(\) > 0\) \|\| standing\(entity\)\) return null;/, 'the three gates, the last so a second door does not rebuild an arm that already stands FOR THIS ENTITY (MWA3: not merely a built one)');
   const w = read('src/scenes/world.js');

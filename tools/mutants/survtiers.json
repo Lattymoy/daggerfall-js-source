@@ -689,8 +689,8 @@
   {
     "name": "SURVTIERS-the-mirror-overrides-a-vital",
     "file": "src/scenes/world.js",
-    "old": "    enemiesNearby: () => false,\n    advanceMinutes: (n) => { playerTicker.advance(n); },",
-    "new": "    enemiesNearby: () => false,\n    fullyHealed: () => false,\n    advanceMinutes: (n) => { playerTicker.advance(n); },",
+    "old": "    enemiesNearby: () => false,\n    advanceMinutes: (n, sharedEnd) => { playerTicker.advance(n, sharedEnd); },",
+    "new": "    enemiesNearby: () => false,\n    fullyHealed: () => false,\n    advanceMinutes: (n, sharedEnd) => { playerTicker.advance(n, sharedEnd); },",
     "tests": [
       "test/partyrest1.test.js"
     ]
@@ -923,8 +923,8 @@
   {
     "name": "SURVTIERS-the-mirror-overrides-dead",
     "file": "src/scenes/world.js",
-    "old": "    enemiesNearby: () => false,\n    advanceMinutes: (n) => { playerTicker.advance(n); },",
-    "new": "    enemiesNearby: () => false,\n    dead: () => false,\n    advanceMinutes: (n) => { playerTicker.advance(n); },",
+    "old": "    enemiesNearby: () => false,\n    advanceMinutes: (n, sharedEnd) => { playerTicker.advance(n, sharedEnd); },",
+    "new": "    enemiesNearby: () => false,\n    dead: () => false,\n    advanceMinutes: (n, sharedEnd) => { playerTicker.advance(n, sharedEnd); },",
     "tests": [
       "test/partyrest1.test.js"
     ]
@@ -932,8 +932,8 @@
   {
     "name": "SURVTIERS-the-mirror-overrides-vitals",
     "file": "src/scenes/world.js",
-    "old": "    enemiesNearby: () => false,\n    advanceMinutes: (n) => { playerTicker.advance(n); },",
-    "new": "    enemiesNearby: () => false,\n    vitals: () => null,\n    advanceMinutes: (n) => { playerTicker.advance(n); },",
+    "old": "    enemiesNearby: () => false,\n    advanceMinutes: (n, sharedEnd) => { playerTicker.advance(n, sharedEnd); },",
+    "new": "    enemiesNearby: () => false,\n    vitals: () => null,\n    advanceMinutes: (n, sharedEnd) => { playerTicker.advance(n, sharedEnd); },",
     "tests": [
       "test/partyrest1.test.js"
     ]
@@ -959,8 +959,8 @@
   {
     "name": "SURVTIERS-the-potion-cite-falls-short",
     "file": "src/systems/potions.js",
-    "old": "exterior.js:2496) and useItem.js:316",
-    "new": "exterior.js:2496) and useItem.js:301",
+    "old": "exterior.js:2497) and useItem.js:316",
+    "new": "exterior.js:2497) and useItem.js:301",
     "tests": [
       "test/citedrift.test.js"
     ]

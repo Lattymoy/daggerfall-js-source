@@ -1,0 +1,263 @@
+[
+  {
+    "name": "BASEHIDE-a-name-any-spelling",
+    "file": "src/net/decorLaw.js",
+    "old": "export const DECOR_BASE_KEY_RE = /^(?:m(?:0|[1-9]\\d{0,3}):",
+    "new": "export const DECOR_BASE_KEY_RE = /^(?:m(?:\\d{1,4}):",
+    "tests": [
+      "test/basehide.test.js"
+    ]
+  },
+  {
+    "name": "BASEHIDE-a-name-twice",
+    "file": "src/net/decorLaw.js",
+    "old": "    if (typeof k !== 'string' || !DECOR_BASE_KEY_RE.test(k) || seen.has(k)) return null;",
+    "new": "    if (typeof k !== 'string' || !DECOR_BASE_KEY_RE.test(k)) return null;",
+    "tests": [
+      "test/basehide.test.js"
+    ]
+  },
+  {
+    "name": "BASEHIDE-no-cap",
+    "file": "src/net/decorLaw.js",
+    "old": "  if (!Array.isArray(raw) || raw.length > DECOR_HIDDEN_CAP) return null;",
+    "new": "  if (!Array.isArray(raw)) return null;",
+    "tests": [
+      "test/basehide.test.js"
+    ]
+  },
+  {
+    "name": "BASEHIDE-a-holder-taken-out",
+    "file": "src/scenes/decorBase.js",
+    "old": "    if (!p || p.hidden || holds(p)) return false;",
+    "new": "    if (!p || p.hidden) return false;",
+    "tests": [
+      "test/basehide.test.js"
+    ]
+  },
+  {
+    "name": "BASEHIDE-out-but-solid",
+    "file": "src/scenes/decorBase.js",
+    "old": "    if (p.draw) { drop(drawList, p.draw); collider?.removeBucket?.(baseBucketOf(key)); }",
+    "new": "    if (p.draw) { drop(drawList, p.draw); }",
+    "tests": [
+      "test/basehide.test.js"
+    ]
+  },
+  {
+    "name": "BASEHIDE-out-but-lit",
+    "file": "src/scenes/decorBase.js",
+    "old": "    if (p.light) drop(lights(), p.light);",
+    "new": "",
+    "tests": [
+      "test/basehide.test.js"
+    ]
+  },
+  {
+    "name": "BASEHIDE-out-but-a-target",
+    "file": "src/scenes/decorBase.js",
+    "old": "    if (p.furniture) p.furniture.hidden = true;",
+    "new": "",
+    "tests": [
+      "test/basehide.test.js"
+    ]
+  },
+  {
+    "name": "BASEHIDE-back-but-a-ghost",
+    "file": "src/scenes/decorBase.js",
+    "old": "      if (p.cpu?.positions && p.cpu?.indices) collider?.addMesh?.(baseBucketOf(key), p.cpu.positions, p.cpu.indices, p.matrix);\n",
+    "new": "",
+    "tests": [
+      "test/basehide.test.js"
+    ]
+  },
+  {
+    "name": "BASEHIDE-a-strange-name-lost",
+    "file": "src/scenes/decorBase.js",
+    "old": "      for (const k of set) if (!pieces.has(k)) stray.add(k);",
+    "new": "",
+    "tests": [
+      "test/basehide.test.js"
+    ]
+  },
+  {
+    "name": "BASEHIDE-the-list-forgets-strays",
+    "file": "src/scenes/decorBase.js",
+    "old": "      const out = new Set(stray);",
+    "new": "      const out = new Set();",
+    "tests": [
+      "test/basehide.test.js"
+    ]
+  },
+  {
+    "name": "BASEHIDE-a-stranger-clears",
+    "file": "server-account/src/decor.js",
+    "old": "  const r = await db.prepare(`INSERT INTO home_hidden (map_id, building_key, keys) SELECT ?, ?, ? WHERE ${OWNS}",
+    "new": "  const r = await db.prepare(`INSERT INTO home_hidden (map_id, building_key, keys) SELECT ?, ?, ? WHERE ${OWNS} OR 1",
+    "tests": [
+      "test/basehide.test.js"
+    ]
+  },
+  {
+    "name": "BASEHIDE-a-bad-list-kept",
+    "file": "server-account/src/decor.js",
+    "old": "  if (!hidden) return { error: 'bad-decor' };\n  const { db } = ctx;\n  const r = await db.prepare(`INSERT INTO home_hidden",
+    "new": "  const { db } = ctx;\n  const r = await db.prepare(`INSERT INTO home_hidden",
+    "tests": [
+      "test/basehide.test.js"
+    ]
+  },
+  {
+    "name": "BASEHIDE-the-list-unread",
+    "file": "server-account/src/decor.js",
+    "old": "pieces: results.map(pieceOfRow).filter(Boolean), hidden: await hiddenOf(db, mapId, buildingKey) };",
+    "new": "pieces: results.map(pieceOfRow).filter(Boolean), hidden: [] };",
+    "tests": [
+      "test/basehide.test.js"
+    ]
+  },
+  {
+    "name": "BASEHIDE-the-list-outlives-the-home",
+    "file": "server-account/migrations/0015_home_hidden.sql",
+    "old": "REFERENCES homes(map_id, building_key) ON DELETE CASCADE",
+    "new": "REFERENCES homes(map_id, building_key)",
+    "tests": [
+      "test/basehide.test.js"
+    ]
+  },
+  {
+    "name": "BASEHIDE-the-home-never-asked",
+    "file": "src/scenes/decorTool.js",
+    "old": "    if (r.kind === 'home') {\n      const res = await deps.homeDecor?.hidden?.(",
+    "new": "    if (false) {\n      const res = await deps.homeDecor?.hidden?.(",
+    "tests": [
+      "test/basehide.test.js"
+    ]
+  },
+  {
+    "name": "BASEHIDE-a-refusal-stood",
+    "file": "src/scenes/decorTool.js",
+    "old": "      if (!res?.ok) { deps.say?.(deps.refusal?.(res?.error) ?? 'The room could not be changed.'); return false; }\n",
+    "new": "",
+    "tests": [
+      "test/basehide.test.js"
+    ]
+  },
+  {
+    "name": "BASEHIDE-a-left-room-changed",
+    "file": "src/scenes/decorTool.js",
+    "old": "    if (deps.visit?.() !== visit) return false;\n    for (const k of moving) { if (out) b.hide(k); else b.show(k); }",
+    "new": "    for (const k of moving) { if (out) b.hide(k); else b.show(k); }",
+    "tests": [
+      "test/basehide.test.js"
+    ]
+  },
+  {
+    "name": "BASEHIDE-the-tool-takes-a-holder",
+    "file": "src/scenes/decorTool.js",
+    "old": "return p && p.hidden !== out && !(out && p.holds); });",
+    "new": "return p && p.hidden !== out; });",
+    "tests": [
+      "test/basehide.test.js"
+    ]
+  },
+  {
+    "name": "BASEHIDE-the-holder-button-live",
+    "file": "src/ui/decorPanel.js",
+    "old": "    baseBtn.disabled = !it || (!it.hidden && it.holds);",
+    "new": "    baseBtn.disabled = !it;",
+    "tests": [
+      "test/basehide.test.js"
+    ]
+  },
+  {
+    "name": "BASEHIDE-all-out-takes-a-holder",
+    "file": "src/ui/decorPanel.js",
+    "old": "(view?.base ?? []).filter((it) => !it.hidden && !it.holds).map((it) => it.key); if (ks.length) onBase(ks, true);",
+    "new": "(view?.base ?? []).filter((it) => !it.hidden).map((it) => it.key); if (ks.length) onBase(ks, true);",
+    "tests": [
+      "test/basehide.test.js"
+    ]
+  },
+  {
+    "name": "BASEHIDE-the-tab-uncounted",
+    "file": "src/ui/decorPanel.js",
+    "old": "      chip(`Built in (${k})`, mode === 'base', () => setMode('base')),",
+    "new": "      chip('Built in', mode === 'base', () => setMode('base')),",
+    "tests": [
+      "test/basehide.test.js"
+    ]
+  },
+  {
+    "name": "BASEHIDE-the-ladder-is-furniture",
+    "file": "src/scenes/interiorContext.js",
+    "old": " && p.modelIdNum !== LADDER_MODEL_ID && p.modelIdNum !== MACHINERY_MODEL_ID\n",
+    "new": " && p.modelIdNum !== MACHINERY_MODEL_ID\n",
+    "tests": [
+      "test/basehide.test.js"
+    ]
+  },
+  {
+    "name": "BASEHIDE-a-piece-in-the-merge",
+    "file": "src/scenes/interiorContext.js",
+    "old": "    if (!baseKey && cpu.normals && cpu.uvs) { staticBuilder.add(",
+    "new": "    if (cpu.normals && cpu.uvs) { staticBuilder.add(",
+    "tests": [
+      "test/basehide.test.js"
+    ]
+  },
+  {
+    "name": "BASEHIDE-a-piece-in-the-rooms-bucket",
+    "file": "src/scenes/interiorContext.js",
+    "old": "    collider.addMesh(baseKey ? baseBucketOf(baseKey) : 'interior', cpu.positions, cpu.indices, matrix);",
+    "new": "    collider.addMesh('interior', cpu.positions, cpu.indices, matrix);",
+    "tests": [
+      "test/basehide.test.js"
+    ]
+  },
+  {
+    "name": "BASEHIDE-a-chest-out-still-opens",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (c.hidden) return;   // BASE-HIDE: taken out of the room\n",
+    "new": "",
+    "tests": [
+      "test/basehide.test.js"
+    ]
+  },
+  {
+    "name": "BASEHIDE-a-sale-keeps-it-out",
+    "file": "src/scenes/worldModes.js",
+    "old": "    clearSceneHidden(sceneCache(), sceneName);   // BASE-HIDE: the room's own furniture comes back for its next owner\n",
+    "new": "",
+    "tests": [
+      "test/basehide.test.js"
+    ]
+  },
+  {
+    "name": "BASEHIDE-the-owners-room-unstood",
+    "file": "src/scenes/worldModes.js",
+    "old": "      interiorCtx?.base?.setHidden(Array.isArray(r.data.hidden) ? r.data.hidden : []);   // BASE-HIDE: the room its owner cleared, for everyone\n",
+    "new": "",
+    "tests": [
+      "test/basehide.test.js"
+    ]
+  },
+  {
+    "name": "BASEHIDE-the-save-forgets",
+    "file": "src/systems/sceneCache.js",
+    "old": "  hiddenBase: (Array.isArray(d.hiddenBase) ? d.hiddenBase : []).filter((k) => typeof k === 'string'),\n",
+    "new": "",
+    "tests": [
+      "test/basehide.test.js"
+    ]
+  },
+  {
+    "name": "BASEHIDE-a-sale-clears-nothing",
+    "file": "src/systems/sceneCache.js",
+    "old": "  if (d) d.hiddenBase = [];\n",
+    "new": "",
+    "tests": [
+      "test/basehide.test.js"
+    ]
+  }
+]

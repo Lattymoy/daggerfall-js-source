@@ -1,0 +1,128 @@
+[
+  {
+    "name": "AUDIT-TRAVEL-STRAFE-1-the-hand-capped-on-the-first-feeler-short",
+    "file": "src/systems/travelSteer.js",
+    "old": "const cw = corridor(f.want, Math.max(openWant, need), inp.manual ? 0 : openWant);",
+    "new": "const cw = corridor(f.want, Math.max(openWant, need), openWant);",
+    "tests": [
+      "test/travelnav.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TRAVEL-STRAFE-2-the-nearer-arm-dropped",
+    "file": "src/systems/travelSteer.js",
+    "old": "if (cw >= openWant && (!s.episode || f.along >= s.sStart || toGo <= s.goStart)) {",
+    "new": "if (cw >= openWant && (!s.episode || f.along >= s.sStart)) {",
+    "tests": [
+      "test/travelnav.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TRAVEL-STRAFE-2-the-nearer-arm-strictly-nearer",
+    "file": "src/systems/travelSteer.js",
+    "old": "|| toGo <= s.goStart)) {",
+    "new": "|| toGo < s.goStart)) {",
+    "tests": [
+      "test/travelnav.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TRAVEL-STRAFE-2-the-nearer-arm-given-slack",
+    "file": "src/systems/travelSteer.js",
+    "old": "|| toGo <= s.goStart)) {",
+    "new": "|| toGo <= s.goStart + 0.4)) {",
+    "tests": [
+      "test/travelnav.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TRAVEL-STRAFE-2-level-with-its-start-not-enough",
+    "file": "src/systems/travelSteer.js",
+    "old": "(!s.episode || f.along >= s.sStart || toGo",
+    "new": "(!s.episode || f.along > s.sStart || toGo",
+    "tests": [
+      "test/travelnav.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TRAVEL-STRAFE-2-behind-its-start-given-slack",
+    "file": "src/systems/travelSteer.js",
+    "old": "(!s.episode || f.along >= s.sStart || toGo",
+    "new": "(!s.episode || f.along >= s.sStart - 0.4 || toGo",
+    "tests": [
+      "test/travelnav.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TRAVEL-STRAFE-2-a-long-detour-let-off",
+    "file": "src/systems/travelSteer.js",
+    "old": "|| toGo <= s.goStart)) {",
+    "new": "|| toGo <= s.goStart || s.walked > 50)) {",
+    "tests": [
+      "test/travelnav.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TRAVEL-STRAFE-2-where-it-began-not-kept",
+    "file": "src/systems/travelSteer.js",
+    "old": "s.walked = 0; s.sStart = f.along; s.goStart = toGo; s.flipped = false;",
+    "new": "s.walked = 0; s.sStart = f.along; s.flipped = false;",
+    "tests": [
+      "test/travelnav.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TRAVEL-STRAFE-3-REF-seen-only-past-the-first-face",
+    "file": "src/systems/travelSteer.js",
+    "old": "if (fw > 0.05) s.sBlock = Math.max(s.sBlock, f.along + c * fw);",
+    "new": "if (false) s.sBlock = Math.max(s.sBlock, f.along + c * fw);",
+    "tests": [
+      "test/travelnav.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TRAVEL-STRAFE-3-the-first-face-let-go-for-a-nearer-one",
+    "file": "src/systems/travelSteer.js",
+    "old": "s.sBlock = Math.max(s.sBlock, f.along + c * fw);",
+    "new": "s.sBlock = f.along + c * fw;",
+    "tests": [
+      "test/travelnav.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TRAVEL-STRAFE-3-any-held-heading-moves-the-face",
+    "file": "src/systems/travelSteer.js",
+    "old": "else if (s.k === REF) {",
+    "new": "else {",
+    "tests": [
+      "test/travelnav.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TRAVEL-STRAFE-4-the-door-takes-only-a-full-throw",
+    "file": "src/systems/travelSteer.js",
+    "old": "inp.manual = !!frame.strafe;",
+    "new": "inp.manual = Math.abs(frame.strafe) >= 1;",
+    "tests": [
+      "test/travelnav.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TRAVEL-STRAFE-4-the-door-takes-only-half-a-throw",
+    "file": "src/systems/travelSteer.js",
+    "old": "inp.manual = !!frame.strafe;",
+    "new": "inp.manual = Math.abs(frame.strafe) > 0.5;",
+    "tests": [
+      "test/travelnav.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TRAVEL-STRAFE-4-the-hands-walk-charged-to-headway",
+    "file": "src/systems/travelSteer.js",
+    "old": "      if (s.episode) endEpisode();\n      s.bestDist = Infinity; s.noGain = 0;\n",
+    "new": "      if (s.episode) endEpisode();\n      s.noGain = 0;\n",
+    "tests": [
+      "test/travelnav.test.js"
+    ]
+  }
+]

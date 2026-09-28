@@ -163,6 +163,13 @@
 // in one party fought over the seat's pose - the NEWEST tab speaks for
 // the seat. C20 the picture names my own tabs (`peers`), so a second
 // tab of mine is no stranger to friend.
+//
+// ONE-SEAT (2026-09-27, Mac: "the player can only have one character only at a time. Like they shouldnt be able to
+// open multiple tabs and join as different characters"): ONE TAB OF AN ACCOUNT ONLINE, decided at the hub - the one
+// room every online tab holds - by the token's verified subject. A hub hello that CLAIMS (`cl`, a tab going online)
+// closes the account's other tabs in the hub (CLOSE_REPLACED, SEAT_ELSEWHERE said first); one that does not is a
+// reconnect, refused while another tab of the account holds the hub. The other rooms are not asked: the client that
+// honours the hub's close leaves them all (net/online.js `superseded`), and a gate's court keeps its own one seat.
 // ═══ ACC1d: THE RELAY VERIFIES THE NAME IT IS TOLD ════════════════
 //
 // THIS IMPORT IS THE EXPENSIVE LINE IN THE ARC. It puts
@@ -171,7 +178,7 @@
 // ACC0 chose two Workers so that account work would NOT cost this; the
 // token seam is the one piece that has to be paid for, and it is paid
 // once here rather than a little at a time.
-import { verifyToken, verifyOrder, importPublicKeyB64, MAX_TTL_S, renownIssuable } from '../../src/net/identityToken.js';   // MOD1: and the mute order, checked with the same key
+import { verifyToken, verifyOrder, importPublicKeyB64, MAX_TTL_S, ORDER_TTL_S, renownIssuable } from '../../src/net/identityToken.js';   // MOD1: and the mute order, checked with the same key
 /** ACC1d/F8: the most spent signatures one room remembers. Every entry
  *  expires within MAX_TTL_S and the hello gate bounds how fast they can
  *  arrive, so honest traffic never comes near this; it is here so a
@@ -179,6 +186,13 @@ import { verifyToken, verifyOrder, importPublicKeyB64, MAX_TTL_S, renownIssuable
 const SPENT_MAX = 4096;
 /** MOD1: the most accounts whose latest mute order one room remembers. */
 const ORDERS_MAX = 1024;
+/** GUILD1c: the most removals and disbandings one room remembers (`_guildOuts`). */
+const GUILD_OUTS_MAX = 1024;
+/** AUDIT MERGE-PLUS A3: where the room keeps its holds (`_guildOuts`) across a wake, and for how long one matters - a
+ *  token's or an order's whole life past it, and twice the verifier's skew: after that nothing minted before the
+ *  removal can still be carried in, and the roster (every later token) is the truth. */
+const GUILD_OUTS_KEY = 'guildouts';
+const GUILD_OUT_KEEP_S = MAX_TTL_S + ORDER_TTL_S + 60;
 
 // ═══ WB3: THE GATE'S BOSS ROOM ═════════════════════════════════════
 //
@@ -189,9 +203,9 @@ const ORDERS_MAX = 1024;
 // identityToken.js, already here). bible/11-Multiplayer/World-Bosses.md sections 5, 6 and 8.
 import { isGateRoom, gateDayOfRoom, gateAdmits, gateHolds, gateTimes, gateBossOf, GATE_COLLAPSE_MS } from '../../src/net/gateLaw.js';
 import { newFight, joinFight, applyHit, stepBrain, stateOf, earned, earnedBy, COURT_CENTRE, BRAIN_TICK_MS, CHECKPOINT_MS, GATE_FIGHTERS_MAX } from '../../src/net/gateBrain.js';
-import { mintReceipt, importReceiptKey, readReceipt } from '../../src/net/gateReceipt.js';
+import { mintReceipt, importReceiptKey, readReceipt, RECEIPT_TTL_S } from '../../src/net/gateReceipt.js';
 
-import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, dmGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate, duelGate, DUEL_HZ_MAX, renownGate, renownRoomGate, lookGate, eventGate, EVENT_KEY, validLiveEvent, gateGate, GATE_INTERNAL_FELL, SOCIAL_ROOM, validGateOut, HELLO_WAIT_MS, GATE_TELL_RETRY_MS, gateReceiptKey } from './relay.js';
+import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, dmGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, OWN_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate, duelGate, DUEL_HZ_MAX, renownGate, renownRoomGate, lookGate, eventGate, EVENT_KEY, validLiveEvent, gateGate, GATE_INTERNAL_FELL, SOCIAL_ROOM, validGateOut, HELLO_WAIT_MS, GATE_TELL_RETRY_MS, gateReceiptKey, GATE_BRAIN_MIN, GATE_HERE_HOLD_MS, guildGate, guildRoomGate, GUILD_CHAT_ROOM_HZ_MAX, SEAT_ELSEWHERE } from './relay.js';
 import { voiceGate, voiceInGate, voicePlaybackForLook } from './relay.js';
 
 // AUDIT WORLD34 D4: the relay names itself in /health. SLAM13 (AUDIT SLAM A5): the name lives in net/wire.js, so the
@@ -238,6 +252,17 @@ const newAcct = (name, now) => ({ name, seen: now, friends: [], in: [], out: [],
 const without = (list, acct) => (Array.isArray(list) ? list : []).filter((e) => (typeof e === 'string' ? e : e?.acct) !== acct);
 const hasEntry = (list, acct) => (Array.isArray(list) ? list : []).some((e) => (typeof e === 'string' ? e : e?.acct) === acct);
 /** AUDIT ATTACH: the quest share's interval gate in a meter's shape - its stamp is what `_spend` keeps as the bucket. */
+/** AUDIT (the pre-merge audit, OWN1 O3/O4): A PEER'S FRAME RE-SERIALISED FOR THE FAN - null when it cannot be or should
+ *  not be. The fan's bytes are charged BEFORE this (the sent length times the listeners, AUDIT WORLD6b A3 - a dropped
+ *  frame costs no stringify), and an honest frame round-trips at exactly that length plus the stamped id; one that
+ *  GREW (`1e20` out as twenty-one digits) fanned up to 4.4x what the room's budget was charged, and one nested deep
+ *  enough (JSON.parse takes it, stringify overflows) threw out of the socket's handler with the budget already
+ *  spent. Either is junk, counted, as a malformed frame is. */
+function fanOut(t, id, data, sentLength) {
+  let out;
+  try { out = JSON.stringify({ t, id, data }); } catch { return null; }
+  return out.length > sentLength + id.length + 8 ? null : out;
+}
 const questMeter = (at, now) => { const g = questShareGate(at, now); return { bucket: g.at, pass: g.pass }; };
 /** AUDIT SOC A5: the most account records an awake object keeps; over it the cache is emptied (storage is the truth). */
 const RECS_MAX = 4096;
@@ -275,12 +300,23 @@ export class Room {
      *  by ORDERS_MAX, oldest out - the account row is the truth and
      *  every later token carries it, so this only has to cover the gap. */
     this._orders = new Map();
+    /** GUILD1c: THE REMOVALS AND DISBANDINGS THIS ROOM HAS APPLIED - `gi` (a guild gone) or `gi:gm` (one member gone)
+     *  -> the order's `i`, the newest kept. MOD1's `_orders` job for a guild: a hello whose token was minted before one
+     *  takes it off, and a guild order older than one changes nothing - so neither a token minted a moment before a
+     *  removal nor a replayed join inside its minute carries the member back into the guild's chat. Memory, bounded by
+     *  GUILD_OUTS_MAX, oldest out - the roster is the truth and every later token carries it. */
+    this._guildOuts = new Map();
+    this._guildOutsLoad = null;   // AUDIT MERGE-PLUS A3: the storage read that fills it, once a wake
+    this._roomGuild = null;   // GUILD1c: the room's budget for guild-tag fans (GUILD_ROOM_HZ_MAX)
+    this._guildChat = null;   // GUILD1c: the hub's budget for guild lines (GUILD_CHAT_ROOM_HZ_MAX), apart from the room's and the parties'
     this._idx = null;   // ws -> attachment, read once (A7); rebuilt when the socket set changes
     this._roomChat = null;   // AUDIT CHAT A2: the room's own chat budget - on the instance, since a sleeping room fans nothing
     this._roomVoice = null;  // VOICE1: room-wide stock-voice fan budget
     this._partyChat = null;   // CHAT-CHAN: the hub's budget for party lines (PARTY_CHAT_ROOM_HZ_MAX), apart from the room's
     this._roomFoes = null;   // AUDIT WORLD2 A5: the room's foes byte budget (the frame times its listeners)
     this._roomFoesIn = null;   // AUDIT WORLD6b A3: a cell's foes INGRESS budget, spent at the door before the parse
+    this._roomOwn = null;   // OWN1: a world room's own-lane fan budget (anyone's, as a cell's foes are)
+    this._roomOwnIn = null;   // OWN1: and its ingress, spent at the door before the parse
     // AUDIT WORLD6b A1/A2: the hit funnel (AUDIT WORLD2 A6) is the DESTINATION socket's own bucket (`hbucket` among its meters), not the room's
     this._roomActs = null;   // WORLD3: the room's action-frame budget (a door, a lever, a platform moved)
     this._roomWho = null;    // AUDIT WORLD6b-iii(e) B1: the room's ask budget (WHO_ROOM_HZ_MAX) - the one arm past the hello that reads storage
@@ -384,6 +420,16 @@ export class Room {
   }
   /** SOC1: an account's hello'd sockets (ACCOUNT_TABS_MAX at most - AUDIT SOC A10), `except` one (a socket on its way out). */
   _socketsOf(acct, except = null) { const s = this._byAcct().get(acct); if (!s) return []; return except ? s.filter((ws) => ws !== except) : s; }
+  /** ONE-SEAT: the hello'd sockets of another TAB of the verified account `sub` - not `ws`, and not a socket of the
+   *  same peer id (the tab's own old socket, which a reconnect replaces). By the verified subject, never the hub's
+   *  browser-profile account: a phone and a desk signed in as one player are one player. AUDIT ONESEAT R4: and never
+   *  a socket this object already closed (a runtime may list it until the close completes), or the tab that took
+   *  the seat would find the one it closed still holding it, and its own reconnect refused. */
+  _otherTabsOf(sub, ws, id) {
+    const out = [];
+    for (const [other, b] of this._all()) if (other !== ws && b.id && b.id !== id && b.sub === sub && !this._dead.has(other) && !this._gone.has(other)) out.push(other);
+    return out;
+  }
   /** AUDIT SOC B9: the socket that SPEAKS for an account's seat - its newest hello'd tab. Two tabs of one account in one
    *  party each sent a pose a second and the other members' card and mark flipped between two places; the newest tab
    *  is the one the player is playing, and the older one's poses are kept on its attachment and fanned to nobody. */
@@ -673,6 +719,45 @@ export class Room {
     m.junk = (m.junk ?? 0) + 1;
     if (m.junk > DROP_STRIKES_MAX) this._refuse(ws, 'too many frames');
   }
+  /** GUILD1c: hold a removal (`gm`) or a disbanding (no `gm`) this room applied, the newest per key (`_guildOuts`). */
+  _holdGuildOut(gi, gm, i) {
+    const k = gm === undefined ? gi : `${gi}:${gm}`;
+    const held = this._guildOuts.get(k);
+    if (held !== undefined && held >= i) return;
+    this._guildOuts.delete(k);
+    if (this._guildOuts.size >= GUILD_OUTS_MAX) this._guildOuts.delete(this._guildOuts.keys().next().value);
+    this._guildOuts.set(k, i);
+  }
+  /** AUDIT MERGE-PLUS A3: THE HOLDS SURVIVE A WAKE. They were instance memory, and a hub hibernates or restarts
+   *  whenever it likes: a removal heard, the hub asleep, and a token minted before the removal (five minutes' life)
+   *  put the removed member back into the guild's chat for as long as that socket stayed open. The storage copy is
+   *  read once a wake, before any hold is asked, and written after each new hold, pruned to what can still matter. */
+  _loadGuildOuts(nowS = Math.floor(Date.now() / 1000)) {
+    this._guildOutsLoad ??= (async () => {
+      const kept = await this.state.storage.get(GUILD_OUTS_KEY);
+      if (!kept || typeof kept !== 'object') return;
+      for (const [k, i] of Object.entries(kept)) {
+        if (typeof k !== 'string' || !Number.isSafeInteger(i) || i < nowS - GUILD_OUT_KEEP_S) continue;
+        if (!(this._guildOuts.get(k) >= i)) this._guildOuts.set(k, i);   // a hold heard since the wake is kept if newer
+      }
+    })();
+    return this._guildOutsLoad;
+  }
+  async _saveGuildOuts(nowS) {
+    for (const [k, i] of this._guildOuts) if (i < nowS - GUILD_OUT_KEEP_S) this._guildOuts.delete(k);
+    await this.state.storage.put(GUILD_OUTS_KEY, Object.fromEntries(this._guildOuts));
+  }
+  /** GUILD1c: whether this room heard member `gm` of guild `gi` removed, or the guild gone, AFTER `i` - a token or an
+   *  order said at `i` is older than that word and does not put the member back. */
+  _guildOutAfter(gi, gm, i) {
+    const all = this._guildOuts.get(gi);
+    const one = gm === undefined ? undefined : this._guildOuts.get(`${gi}:${gm}`);
+    return (all !== undefined && all > i) || (one !== undefined && one > i);
+  }
+  /** GUILD1c: an attachment with its guild taken off (its id, tag and member row). */
+  _unguild(a) { const b = { ...a }; delete b.gi; delete b.gt; delete b.gm; return b; }
+  /** GUILD1c: a player's guild tag as a frame - `gt` absent for none. */
+  _guildFrame(id, gt) { return JSON.stringify(gt ? { t: 'guild', id, gt } : { t: 'guild', id }); }
   /** CHAT-CHAN + DICE1: A LINE OUT, on the channel it was said on - the chat's and the roll's one fan. `frame` is the
    *  relay's own record of the line; the sender hears it back (the receipt).
    *
@@ -684,6 +769,20 @@ export class Room {
    *  party's is its seats. EVERY OTHER LINE is the room's: its budget, over which a line is dropped and nobody is
    *  struck, and its fan - everyone in a channel, those in range in a place. */
   async _sayLine(ws, a, ch, frame, now) {
+    if (ch === 'guild') {
+      // GUILD1c: A GUILD'S LINE, said on the hub link and heard by every socket there wearing the sender's guild - the
+      // verified token's, or a signed guild order's since, never the sender's word. The hub is the one room every
+      // online player holds a socket to, so its fan IS the guild online; anywhere else a guild line has no guild to
+      // reach and is junk. A sender in no guild is said to nobody. Its budget is the guilds' own.
+      if (!isSocialRoom(a.key)) { this._junk(ws); return; }
+      if (!a.gi) return;
+      const budget = tokenGate(this._guildChat, now, GUILD_CHAT_ROOM_HZ_MAX);
+      this._guildChat = budget.bucket;
+      if (!budget.pass) return;
+      const line = JSON.stringify({ ...frame, ch: 'guild' });
+      for (const [other, b] of [...this._all()]) if (b.id && b.gi === a.gi) this._send(other, line);   // the sender's own tabs too: the echo is the receipt
+      return;
+    }
     if (ch === 'party') {
       if (!isSocialRoom(a.key) || !a.acct) { this._junk(ws); return; }
       if (!a.party) return;
@@ -730,8 +829,8 @@ export class Room {
    *  next hello, as a drain's is. The cursors ride storage; a full page is followed SWEEP_STEP_MS later, an empty one
    *  ACCOUNT_SWEEP_MS later from the start. */
   async _sweepHub(now) {
-    const cur = (await this.state.storage.get(['sweep:acct', 'sweep:party']));
-    const acur = cur.get('sweep:acct') ?? null, pcur = cur.get('sweep:party') ?? null;
+    const cur = (await this.state.storage.get(['sweep:acct', 'sweep:party', 'sweep:gaterc']));   // AUDIT WBX2 M9: one read
+    const acur = cur.get('sweep:acct') ?? null, pcur = cur.get('sweep:party') ?? null, gcur = cur.get('sweep:gaterc') ?? null;
     const accts = await this.state.storage.list({ prefix: 'acct:', limit: SWEEP_PAGE, ...(acur ? { startAfter: acur } : {}) });
     const dead = [], idle = []; let alast = null;
     for (const [k, r] of accts) { alast = k; const id = k.slice(5); if (unlisted(r, now) && now - (r.seen ?? 0) >= ACCOUNT_IDLE_MS && !this._socketsOf(id).length) idle.push([k, id, r.party]); }
@@ -746,9 +845,14 @@ export class Room {
       const lapsed = !p || !Array.isArray(p.members) || p.members.every((id) => !this._socketsOf(id).length && (p.away?.[id] == null || now - p.away[id] >= PARTY_OFFLINE_MS));
       if (lapsed) { dead.push(k); this._parties.set(k.slice(6), null); }
     }
+    // AUDIT WBX R8: an expired receipt kept for an account that never came back goes too - it was forgotten only by
+    // that account's own next hello
+    const kept = await this.state.storage.list({ prefix: 'gaterc:', limit: SWEEP_PAGE, ...(gcur ? { startAfter: gcur } : {}) });
+    let glast = null;
+    for (const [k, r] of kept) { glast = k; if (!r || typeof r !== 'object' || !(Number.isFinite(r.e) && now < r.e * 1000)) dead.push(k); }
     for (let i = 0; i < dead.length; i += SWEEP_PAGE) await this.state.storage.delete(dead.slice(i, i + SWEEP_PAGE));
-    const more = accts.size >= SWEEP_PAGE || parties.size >= SWEEP_PAGE;
-    await this.state.storage.put({ 'sweep:acct': accts.size >= SWEEP_PAGE ? alast : null, 'sweep:party': parties.size >= SWEEP_PAGE ? plast : null });
+    const more = accts.size >= SWEEP_PAGE || parties.size >= SWEEP_PAGE || kept.size >= SWEEP_PAGE;
+    await this.state.storage.put({ 'sweep:acct': accts.size >= SWEEP_PAGE ? alast : null, 'sweep:party': parties.size >= SWEEP_PAGE ? plast : null, 'sweep:gaterc': kept.size >= SWEEP_PAGE ? glast : null });
     await this.state.storage.setAlarm(now + (more ? SWEEP_STEP_MS : ACCOUNT_SWEEP_MS));
   }
 
@@ -874,7 +978,13 @@ export class Room {
     const mu = order && order.i > r.claims.i ? order.mu : (r.claims.mu ?? 0);
     // RENOWN1: and Renown, off the same signature - `lv`
     // beside the title and glyphs, stamped by `badged` wherever they are.
-    return { name: r.claims.n, kind: r.claims.k, subject: r.claims.s, title: r.claims.t, glyphs: r.claims.g, mu, lv: r.claims.lv };
+    // GUILD1c: and the guild - its id, tag and member row, all three or none - unless this room has since heard that
+    // member removed or that guild gone, which wins over a token minted before it. `gio` is when the guild worn was
+    // said, so a guild order older than the token changes nothing.
+    const c = r.claims;
+    if (c.gi) await this._loadGuildOuts(nowS);   // AUDIT MERGE-PLUS A3: the holds a wake left in storage
+    const guild = c.gi && !this._guildOutAfter(c.gi, c.gm, c.i) ? { gi: c.gi, gt: c.gt, gm: c.gm } : {};
+    return { name: c.n, kind: c.k, subject: c.s, title: c.t, glyphs: c.g, mu, lv: c.lv, ...guild, gio: c.i };
   }
 
   /** The verifying key, imported once. Shared by the hello and by
@@ -916,6 +1026,17 @@ export class Room {
       a = this._meterQuest(ws, a, Date.now());
       if (!a) return;
       doored = 'quest';
+    } else if (typeof message === 'string' && message.startsWith(OWN_PREFIX)) {
+      // OWN1: a world room's second lane - ANY hello'd socket's own foes (a building's, a dungeon's shared quest's), so
+      // it is budgeted at the door as a cell's stream is (anyone may send it); outside a world room it has no home
+      if (!a.id) { this._refuse(ws, 'own before hello'); return; }
+      if (!isWorldRoom(a.key)) { this._junk(ws); return; }
+      a = this._meterFoes(ws, a, Date.now());
+      if (!a) return;
+      const ingress = byteGate(this._roomOwnIn, Date.now(), message.length, FOES_ROOM_BYTES_PER_S);
+      this._roomOwnIn = ingress.bucket;
+      if (!ingress.pass) return;
+      doored = 'own';
     } else if (typeof message === 'string' && (message.length > MAX_FRAME_BYTES || message.startsWith(WORLD_PREFIX) || message.startsWith(FOES_PREFIX))) {
       const foesLike = message.startsWith(FOES_PREFIX);
       if (!a.id) { this._refuse(ws, foesLike ? 'foes before hello' : 'world before hello'); return; }
@@ -954,6 +1075,16 @@ export class Room {
       // player cast out and back) until the wrath's end. The Worker refused the key outside the window already; this is
       // the object's own word, for a socket that opened a moment before the seal.
       if (isGateRoom(a.key)) { const no = await this._gateAdmit(a.key, who.subject, now); if (no) { this._refuse(ws, no); return; } }
+      // ONE-SEAT (Mac: "the player can only have one character only at a time"): A HUB HELLO THAT DOES NOT CLAIM IS A
+      // RECONNECT, and while another tab of the same account holds the hub the seat is that tab's - refused here, before
+      // anything is written, so a tab superseded while its socket was down cannot take the seat back by reconnecting.
+      // Its own old socket (the same id) is not another tab: the reconnect below replaces it. The claim is below, once
+      // this hello has passed the refusals asked before anything is written (the token, the court, the id's secret).
+      // AUDIT ONESEAT T7: two can still come after it - an attachment too large to hold and a welcome that cannot be sent
+      // (the claimer's socket died) - and the tabs it closed are then out until a claim takes the seat again; the
+      // claimer's own is one, its claim still unspent.
+      const seatHeld = isSocialRoom(a.key) && who.subject ? this._otherTabsOf(who.subject, ws, m.id) : [];
+      if (seatHeld.length && !m.cl) { this._refuse(ws, SEAT_ELSEWHERE, CLOSE_REPLACED); return; }
       // the id's secret (A3): the first hello mints it, a later one must match
       const held = await this.state.storage.get(secretKey(m.id));
       if (held && held !== m.secret) { this._refuse(ws, 'id taken'); return; }
@@ -975,12 +1106,21 @@ export class Room {
       // account, the newest socket speaking for it), so a second socket is never a second fighter, only a seat the court
       // cannot give anyone else: the older goes, replaced, its leave said.
       if (isGateRoom(a.key) && who.subject) for (const [other, b] of [...this._all()]) if (other !== ws && b.id && b.sub === who.subject) this._refuse(other, 'replaced', CLOSE_REPLACED);
+      // ONE-SEAT: A CLAIM TAKES THE SEAT - every other tab of this account in the hub is closed, the reason said first,
+      // and its client leaves every room it holds (net/online.js `superseded`). Their leaves are said at the reap, as
+      // every close this object makes is (AUDIT WORLD34 D1).
+      if (m.cl) for (const other of seatHeld) this._refuse(other, SEAT_ELSEWHERE, CLOSE_REPLACED);
       const others = [];
       for (const [other, b] of this._all()) if (other !== ws && b.id) others.push(b);
-      if (!others.length) { try { await this._sweep(); } catch (e) { console.warn('[room] sweep failed', e?.message ?? e); } await this.state.storage.put('hellos', gate.bucket); }   // an empty room forgets every look and secret an unclean close left behind - not its hello gate (AUDIT SOC A2: contained - a failed list here made every first hello into an empty hub throw before its welcome)
+      // AUDIT ONESEAT R1: A SEAT THAT MOVED IS NOT A DRAIN. Nobody else here is an empty room only when nobody's seat
+      // carried over - a claim that closed the account's other tabs, or a reconnect that replaced its own old socket,
+      // moved a seat the room never lost, and the sweep below took every party in the hub with it (a stranger's too)
+      const carried = !!replaced || (!!m.cl && seatHeld.length > 0);
+      if (!others.length && !carried) { try { await this._sweep(); } catch (e) { console.warn('[room] sweep failed', e?.message ?? e); } await this.state.storage.put('hellos', gate.bucket); }   // an empty room forgets every look and secret an unclean close left behind - not its hello gate (AUDIT SOC A2: contained - a failed list here made every first hello into an empty hub throw before its welcome)
       await this.state.storage.put(secretKey(m.id), m.secret);
       if (!chat) { await this.state.storage.put(lookKey(m.id), m.look); this._looks.set(m.id, m.look); }   // a channel keeps no look: nobody is drawn from it
-      if (!this._setAttach(ws, { ...a, id: m.id, name: who.name, title: who.title, glyphs: who.glyphs, lv: who.lv, sub: who.subject, mu: who.mu, pose: chat ? null : m.pose, since: replaced?.since ?? now })) { this._refuse(ws, 'hello too large'); return; }   // MOD1: `sub` the verified account (what a mute names), `mu` until when it may not talk   // RENOWN1: `lv` the Renown level the token carried
+      const guild = who.gi ? { gi: who.gi, gt: who.gt, gm: who.gm } : {};   // GUILD1c: the guild the token carried, when it carried one
+      if (!this._setAttach(ws, { ...a, id: m.id, name: who.name, title: who.title, glyphs: who.glyphs, lv: who.lv, ...guild, gio: who.gio, sub: who.subject, mu: who.mu, pose: chat ? null : m.pose, since: replaced?.since ?? now })) { this._refuse(ws, 'hello too large'); return; }   // MOD1: `sub` the verified account (what a mute names), `mu` until when it may not talk   // RENOWN1: `lv` the Renown level the token carried
       // SRV-N: `v` rides EVERY welcome, a channel's included. A player in the enhanced skin holds a presence socket
       // and one chat socket per tab; whichever reconnects first after a hand deploy is the one that notices, and the
       // client's detector (net/updateNotice.js) is a Set so the rest of them say nothing. SLAM13 (AUDIT SLAM A5): and
@@ -1136,7 +1276,23 @@ export class Room {
       const budget = byteGate(this._roomFoes, now, (message.length + a.id.length + 8) * listeners.length, FOES_ROOM_BYTES_PER_S);
       this._roomFoes = budget.bucket;
       if (!budget.pass || !listeners.length) return;
-      const out = JSON.stringify({ t: 'foes', id: a.id, data: m.data });
+      const out = fanOut('foes', a.id, m.data, message.length);   // AUDIT (pre-merge) O3/O4
+      if (out == null) { this._junk(ws); return; }
+      for (const [other] of listeners) this._send(other, out);
+      return;
+    }
+    if (m.t === 'own') {
+      // OWN1: a socket's OWN foes in a world room - fanned as a cell's foes frame is (every other hello'd socket, the
+      // room's own budget, at most CELL_FRAME_RECORDS_MAX records), beside the host's stream; the relay reads none of it
+      const now = Date.now();
+      if (doored !== 'own') { if (!isWorldRoom(a.key)) { this._junk(ws); return; } a = this._meterFoes(ws, a, now); if (!a) return; }
+      if (!Array.isArray(m.data.f) || m.data.f.length > CELL_FRAME_RECORDS_MAX) { this._junk(ws); return; }
+      const listeners = [...this._all()].filter(([other, b]) => other !== ws && b.id);
+      const budget = byteGate(this._roomOwn, now, (message.length + a.id.length + 8) * listeners.length, FOES_ROOM_BYTES_PER_S);
+      this._roomOwn = budget.bucket;
+      if (!budget.pass || !listeners.length) return;
+      const out = fanOut('own', a.id, m.data, message.length);   // AUDIT (pre-merge) O3/O4
+      if (out == null) { this._junk(ws); return; }
       for (const [other] of listeners) this._send(other, out);
       return;
     }
@@ -1149,13 +1305,15 @@ export class Room {
       // in a world room to the host's alone, as WORLD2 has it
       const cell = isCellRoom(a.key);
       if (!cell && !isWorldRoom(a.key)) return;
-      const host = cell ? hitOwnerOf(m.data) : this._hostOf();
+      // OWN1: in a world room a blow on a socket's OWN foe (the frame marked `own`) goes to its owner as a cell's does
+      const owned = cell || m.data.own === 1;
+      const host = owned ? hitOwnerOf(m.data) : this._hostOf();
       if (!host || host === a.id) return;
       // AUDIT WORLD6b A1: the ROUTE is resolved before anything is spent - a `to` that names no socket in the room (a
       // peer gone, or a name a hostile client made up) delivers nothing, buys nothing, and is counted as junk (AUDIT
       // WORLD2 A4's instrument), so a stream of them is struck out; a world room's host is always a socket
       const target = [...this._all()].find(([other, b]) => other !== ws && b.id === host) ?? null;
-      if (!target) { if (cell) this._junk(ws); return; }
+      if (!target) { if (owned) this._junk(ws); return; }
       // A6: the funnel onto the destination's ONE socket - all strikers together, HIT_ROOM_HZ_MAX a second; over it
       // the blow is dropped and nobody struck. AUDIT WORLD6b A1/A2: the budget is the DESTINATION's (its own bucket,
       // among its meters), not the room's - in a cell the blows go to many owners, and one room-wide bucket let six
@@ -1165,7 +1323,8 @@ export class Room {
       const funnel = tokenGate(tm.hbucket ?? null, now, HIT_ROOM_HZ_MAX);
       tm.hbucket = funnel.bucket;
       if (!funnel.pass) return;
-      const out = JSON.stringify({ t: 'hit', id: a.id, data: m.data });
+      const out = fanOut('hit', a.id, m.data, message.length);   // AUDIT (pre-merge) O4: a nesting stringify cannot take, junk - it threw out of the handler
+      if (out == null) { this._junk(ws); return; }
       // AUDIT WORLD6b-iii(c) C3: the hit bytes - a grant carries a corpse's pile, so the arm counts bytes as the foes
       // and the acts do; over the budget the frame is dropped, nobody struck (three sockets pushed 720 KiB/s of grants
       // into one destination through an arm that counted frames alone). AUDIT 68 X8-hit-byte-budget-room-wide-starves-grants:
@@ -1318,6 +1477,13 @@ export class Room {
       // claimed level's bucket allows, from where the socket's own pose stands.
       const now = Date.now();
       if (!this._spend(ws, now, gateGate, 'gateBucket', 'gateDrops', 'too many gate frames')) return;
+      // AUDIT WBX S1: a receipt's spoils taken - the hub forgets its kept copy of that day's (its own word, the account's
+      // own socket; anywhere else a `spent` is junk, as any gate frame outside a gate room is)
+      if (m.k === 'spent') {
+        if (!isSocialRoom(a.key) || typeof a.sub !== 'string' || !a.sub) { this._junk(ws); return; }
+        try { await this._gateSpent(a.sub, m.d); } catch (e) { console.warn('[hub] gate spent failed', e?.message ?? e); }
+        return;
+      }
       if (!isGateRoom(a.key) || typeof a.sub !== 'string' || !a.sub) { this._junk(ws); return; }
       try { await this._gateFrame(ws, a, m, now); } catch (e) { console.warn('[gate] frame failed', e?.message ?? e); }
       return;
@@ -1771,6 +1937,75 @@ export class Room {
       const said = JSON.stringify({ t: 'renown', id: cur.id, lv: r.claims.lv });
       for (const [other, b] of [...this._all()]) if (b.id) this._send(other, said);   // everyone in the room, the carrier included
     }
+    if (m.t === 'guild') {
+      // ═══ GUILD1c — A CHARACTER'S GUILD, CHANGED, CARRIED IN ════════════
+      //
+      // Mac: "Do guild1c" - the tag beside the name, and the guild's chat. The guild rides the token, and a token is
+      // spent once, on a hello - so a guild founded, joined or left in the middle of a session would sit stale beside
+      // the name (and in the hub, in the guild's chat) until the next room. The account service signs a GUILD ORDER
+      // when a membership moves - the guild the carrier's character is in NOW, or none - the player's own client
+      // carries it here, and the room checks RENOWN1's two things: the signature, and that it names THIS socket's
+      // verified account. Nobody carries another player's guild.
+      //   NEWEST WINS. An order said before what this socket already wears (its token's, or a later order's) changes
+      //   nothing, and neither does one said before a removal this room heard (`_guildOuts`) - so a replayed join
+      //   inside its minute cannot undo the leave, or the removal, that followed it. Not news: its carrier hears what
+      //   this room holds, and nobody else hears a thing.
+      //   THE TAG FANS IN A PLACE ALONE, on the room's own budget, and only when it moved; in a channel or the hub (two
+      //   thousand sockets) its carrier alone hears it, as renown's rule is there. Over the budget the change still
+      //   lands and its carrier hears it - the others read the tag off their next roster.
+      const now = Date.now();
+      if (!this._spend(ws, now, guildGate, 'gdbucket', 'gddrops', 'too many guild orders')) return;
+      if (!this._attach(ws)?.id) return;
+      await this._loadKey();
+      if (!this._verifyKey) return;
+      const r = await verifyOrder(m.order, this._verifyKey, { subtle: crypto.subtle, nowS: Math.floor(now / 1000), kind: 'guild' });
+      if (!r.ok) return;   // silently, as the renown arm refuses
+      if (r.claims.gi) await this._loadGuildOuts(Math.floor(now / 1000));   // AUDIT MERGE-PLUS A3
+      const cur = this._attach(ws);   // read again after the awaits: the socket may have gone
+      if (!cur?.id || !cur.sub || r.claims.s !== cur.sub) return;
+      const c = r.claims;
+      if (!(c.i > (cur.gio ?? 0)) || (c.gi && this._guildOutAfter(c.gi, c.gm, c.i))) { this._send(ws, this._guildFrame(cur.id, cur.gt)); return; }
+      if (!this._setAttach(ws, { ...this._unguild(cur), ...(c.gi ? { gi: c.gi, gt: c.gt, gm: c.gm } : {}), gio: c.i })) return;
+      const said = this._guildFrame(cur.id, c.gt);
+      const place = !isChatRoom(cur.key) && !isSocialRoom(cur.key);
+      const budget = place && (cur.gt ?? null) !== (c.gt ?? null) ? guildRoomGate(this._roomGuild, now) : null;
+      if (!budget?.pass) { this._send(ws, said); return; }
+      this._roomGuild = budget.bucket;
+      for (const [other, b] of [...this._all()]) if (b.id) this._send(other, said);   // everyone in the room, the carrier included
+    }
+    if (m.t === 'guildout') {
+      // ═══ GUILD1c — A MEMBER REMOVED, OR A GUILD GONE, CARRIED IN ═══════
+      //
+      // MOD1's shape: the account service signed it for the officer who removed the member (or the guildmaster who
+      // disbanded the guild), and the room believes the signature and never asks the carrier who they are. Every
+      // socket here wearing that membership - or that guild - takes it off and hears it: in the hub, where the client
+      // carries it, that is the guild's chat closing to them wherever they stand, and their own client hearing it is
+      // what sends their rooms the tag gone. And the room holds the word (`_guildOuts`), so a token or an order said
+      // before it cannot put them back.
+      const now = Date.now();
+      if (!this._spend(ws, now, guildGate, 'gdbucket', 'gddrops', 'too many guild orders')) return;
+      await this._loadKey();
+      if (!this._verifyKey) return;
+      const r = await verifyOrder(m.order, this._verifyKey, { subtle: crypto.subtle, nowS: Math.floor(now / 1000), kind: 'guildout' });
+      if (!r.ok) return;   // silently, as the mute arm refuses
+      const { gi, gm, i } = r.claims;
+      await this._loadGuildOuts(Math.floor(now / 1000));   // AUDIT MERGE-PLUS A3: the storage copy first, so this write keeps it
+      this._holdGuildOut(gi, gm, i);
+      await this._saveGuildOuts(Math.floor(now / 1000));
+      const gone = [];
+      for (const [other, b] of [...this._all()]) {
+        if (!b.id || b.gi !== gi || (gm !== undefined && b.gm !== gm) || !(i > (b.gio ?? 0))) continue;
+        if (this._setAttach(other, { ...this._unguild(b), gio: i })) gone.push([other, b]);
+      }
+      const place = !isChatRoom(this._attach(ws)?.key) && !isSocialRoom(this._attach(ws)?.key);
+      for (const [other, b] of gone) {
+        const said = this._guildFrame(b.id, null);
+        const budget = place ? guildRoomGate(this._roomGuild, now) : null;
+        if (!budget?.pass) { this._send(other, said); continue; }   // in a channel or the hub, or over the budget: that player alone
+        this._roomGuild = budget.bucket;
+        for (const [each, e] of [...this._all()]) if (e.id) this._send(each, said);
+      }
+    }
   }
 
   async webSocketClose(ws, code, reason) {
@@ -1852,6 +2087,9 @@ export class Room {
     const day = gateDayOfRoom(a.key);
     let f = await this._gateFightOf();
     if (m.k === 'in') {
+      // AUDIT WBX R7: a client that does not know this brain's attacks is not let fight them (a tab loaded before the
+      // deploy judged each new one a miss) - refused in words it has, and taken out of the court by its own law
+      if (!(m.bv >= GATE_BRAIN_MIN)) { this._send(ws, JSON.stringify({ t: 'gate', k: 'no', m: 'the gate is closed' })); return; }
       if (!f) f = this._fight = newFight(day, now, gateTimes(day).wrathAt, gateBossOf(day).id);
       const joined = !f.players[a.sub];   // AUDIT WB A3: a newcomer - an `in` again (every welcome says one) changes nothing to keep
       const present = new Set();   // AUDIT WB A1: the accounts in the court now - a full fight frees an idle seat, never theirs
@@ -1872,6 +2110,9 @@ export class Room {
     if (!f || !f.players[a.sub]) { this._junk(ws); return; }
     applyHit(f, a.sub, m.d, m.r, a.pose && !a.pose.dd ? this._courtOf(a.pose) : null, now);
     if (f.fell && !f.said) await this._gateFall(f, now);
+    // AUDIT WBX R6: a blow keeps the beat as an `in` does - a court that emptied slept until its day's end, and a client
+    // that struck without a word first fought a Warden who never answered
+    else if (!f.fell && !f.wrath && !(this._beatArmedTo > now)) { this._beatArmedTo = now + BRAIN_TICK_MS; await this._gateArm(now); }
   }
   /** ONE BEAT of a gate room's alarm: the brain stepped over the bodies in the court, its frames fanned, the kill said
    *  once, the fight checkpointed - and the next beat armed while the fight lives and someone is here (a room nobody
@@ -1905,10 +2146,13 @@ export class Room {
     f.rc = {};
     for (const sub of Object.keys(f.players)) {
       if (!earned(f, sub)) continue;
-      try { f.rc[sub] = await mintReceipt({ d: f.day, b: f.boss, s: sub, c: rand32(), x: earnedBy(f, sub) }, key, { subtle: crypto.subtle, nowS }); }
+      try { f.rc[sub] = await mintReceipt({ d: f.day, b: f.boss, s: sub, c: rand32(), x: earnedBy(f, sub), l: f.players[sub].lv }, key, { subtle: crypto.subtle, nowS }); }   // AUDIT WBX S2: the level the fight admitted it at
       catch (e) { console.warn('[gate] receipt refused', e?.message ?? e); }
     }
     f.said = true;
+    // AUDIT WBX S4: who stood in the court at the kill - their spoils are its floor's, so the hub does not hand another
+    // tab of theirs the same receipt first (it keeps it for their next hello all the same)
+    f.here = [...new Set([...this._all()].filter(([, b]) => b.id && b.sub && f.rc[b.sub]).map(([, b]) => b.sub))].slice(0, GATE_FIGHTERS_MAX);
     await this._gateSave(f, now, true);
     this._gateFan([{ k: 'fell', at: f.fell.at, top: f.fell.top, n: f.fell.n }]);
     for (const [ws, b] of [...this._all()]) { const r = b.id && b.sub ? f.rc[b.sub] : null; if (r) this._send(ws, JSON.stringify({ t: 'gate', k: 'rcpt', r })); }
@@ -1917,7 +2161,7 @@ export class Room {
   /** AUDIT WB A10: the hub told of the kill, and it kept - once it has answered. */
   async _gateTellHubOnce(f, now) {
     if (f.told || !f.fell) return;
-    if (!(await this._gateTellHub({ d: f.day, at: f.fell.at, top: f.fell.top, n: f.fell.n, rc: Object.entries(f.rc ?? {}) }))) return;
+    if (!(await this._gateTellHub({ d: f.day, at: f.fell.at, top: f.fell.top, n: f.fell.n, rc: Object.entries(f.rc ?? {}), here: f.here ?? [] }))) return;
     f.told = true;
     await this._gateSave(f, now, true);
   }
@@ -1938,14 +2182,30 @@ export class Room {
     try { const res = await rooms.get(rooms.idFromName(SOCIAL_ROOM)).fetch(new Request(`https://relay.internal${GATE_INTERNAL_FELL}`, { method: 'POST', body: JSON.stringify(body) })); return !!res?.ok; }
     catch (e) { console.warn('[gate] hub', e?.message ?? e); return false; }
   }
-  /** AUDIT WB A4: the hub hands an account's kept receipt to its hello while the receipt is good, and forgets a spent
-   *  one. The client keeps one a day and the account service counts each once, so a receipt said again is harmless. */
+  /** AUDIT WB A4: the hub hands an account's kept receipt to its hello while the receipt is good, and forgets an expired
+   *  one. AUDIT WBX S1: and one its account has said is spent (`_gateSpent`) - a receipt said again was NOT harmless: a
+   *  second device's store had not spent it, and rolled its spoils again. */
   async _gateReceiptTo(ws, sub, now) {
     const k = gateReceiptKey(sub);
     const kept = await this.state.storage.get(k);
     if (!kept || typeof kept !== 'object') return;
-    if (!(Number.isFinite(kept.e) && now < kept.e * 1000) || typeof kept.r !== 'string') { await this.state.storage.delete(k); return; }
+    if (!(Number.isFinite(kept.e) && now < kept.e * 1000)) { await this.state.storage.delete(k); return; }
+    if (kept.spent) return;   // AUDIT WBX2 M3: its account's word that it is spent, kept in its place
+    if (Number.isFinite(kept.hold) && now < kept.hold) return;   // AUDIT WBX2 M4: its fighter's own court spends it first
+    if (typeof kept.r !== 'string') { await this.state.storage.delete(k); return; }
     this._send(ws, JSON.stringify({ t: 'gate', k: 'rcpt', r: kept.r }));
+  }
+  /** AUDIT WBX S1: the account's word that a day's receipt is spent - its kept copy of that day forgotten (a newer
+   *  day's is left alone). AUDIT WBX2 M3: forgotten by being REMEMBERED AS SPENT, for a receipt's life - a word that came
+   *  before the kill's own (a tell the hub missed, told again GATE_TELL_RETRY_MS later) found nothing to forget, and the
+   *  copy stored after it went to the account's every other device for a week. The mark stands in the copy's place: a
+   *  hello is handed nothing, and the kill's word stores no copy over it. */
+  async _gateSpent(sub, day, now = Date.now()) {
+    const k = gateReceiptKey(sub);
+    const kept = await this.state.storage.get(k);
+    const d = kept && typeof kept === 'object' && Number.isSafeInteger(kept.d) ? kept.d : null;
+    if (d !== null && (d > day || (d === day && kept.spent))) return;   // a newer day's is its own; said already
+    await this.state.storage.put(k, { d: day, spent: true, e: Math.floor(now / 1000) + RECEIPT_TTL_S });
   }
   /** The hub's last word of a kill (null for none) - the instance's, else storage's. */
   async _gateFellOf() {
@@ -1968,18 +2228,39 @@ export class Room {
       const r = Array.isArray(e) && typeof e[0] === 'string' ? validGateOut({ k: 'rcpt', r: e[1] }) : null;
       if (r) rc.set(e[0], r);
     }
+    // AUDIT WBX S4: the court's fighters (`here`) have theirs from the court
+    const here = new Set(Array.isArray(body.here) ? body.here.filter((x) => typeof x === 'string').slice(0, 256) : []);
     // AUDIT WB A4: EACH ACCOUNT'S RECEIPT IS KEPT, for its own life (its `e`), and handed to that account's next hello -
     // a fighter who was not online when the kill was said (cast out and gone, a dropped link) had it only if they
-    // walked back into the court while it held. One key an account, its latest receipt; 128 a write (storage's own bound)
+    // walked back into the court while it held. One key an account, its latest receipt; 128 a write (storage's own bound).
+    // AUDIT WBX2 M3: never over its account's word that this day's is spent (that word may come first), nor over a newer
+    // day's; M4: a court fighter's is kept from their hellos GATE_HERE_HOLD_MS - their court's floor spends it
+    const now = Date.now();
     const keep = [];
-    for (const [sub, r] of rc) { const c = readReceipt(r.r); if (c && c.s === sub) keep.push([gateReceiptKey(sub), { d: fell.d, r: r.r, e: c.e }]); }
-    for (let i = 0; i < keep.length; i += 128) await this.state.storage.put(Object.fromEntries(keep.slice(i, i + 128)));
+    for (const [sub, r] of rc) { const c = readReceipt(r.r); if (c && c.s === sub) keep.push([gateReceiptKey(sub), { d: fell.d, r: r.r, e: c.e, ...(here.has(sub) ? { hold: now + GATE_HERE_HOLD_MS } : {}) }, sub]); }
+    const had = new Map();
+    for (let i = 0; i < keep.length; i += 128) for (const [k, v] of await this.state.storage.get(keep.slice(i, i + 128).map(([k]) => k))) had.set(k, v);
+    const done = new Set();
+    const fresh = keep.filter(([k, , sub]) => {
+      const v = had.get(k);
+      const stale = v && typeof v === 'object' && Number.isSafeInteger(v.d) && (v.d > fell.d || (v.d === fell.d && v.spent));
+      if (stale) done.add(sub);
+      return !stale;
+    });
+    for (let i = 0; i < fresh.length; i += 128) await this.state.storage.put(Object.fromEntries(fresh.slice(i, i + 128).map(([k, v]) => [k, v])));
+    // AUDIT WBX S4: ONE TAB AN ACCOUNT, AND NOT ONE IN THE COURT. Every socket of the account was handed the receipt, so
+    // two tabs both gave its spoils (each checking a store the other had not written yet), and a tab in town gave them
+    // before the fighter's own burst on the court's floor found them already spent. Any other account's newest socket
+    // (AUDIT SOC B9's law) is handed its receipt - not one whose account has said it is spent (AUDIT WBX2 M3)
+    const newest = new Map();
     for (const [ws, b] of [...this._all()]) {
       if (!b.id) continue;
       this._send(ws, said);
-      const r = b.sub ? rc.get(b.sub) : null;
-      if (r) this._send(ws, JSON.stringify({ t: 'gate', ...r }));
+      if (!b.sub || !rc.has(b.sub) || here.has(b.sub) || done.has(b.sub)) continue;
+      const had = newest.get(b.sub);
+      if (!had || (b.since ?? 0) >= (had.b.since ?? 0)) newest.set(b.sub, { ws, b });
     }
+    for (const [sub, { ws }] of newest) this._send(ws, JSON.stringify({ t: 'gate', ...rc.get(sub) }));
     return json({ ok: true });
   }
 

@@ -48,7 +48,7 @@ export const gateSeaPixel = (climate, byte) => climate === CLIMATES.Ocean || byt
 /**
  * The world's suitable pixels, by region. `heightAt(x, y)` is the pixel's height byte (WOODS.WLD's - formats/woodsFile.js
  * getHeightMapValue); a scan with none reads the climate alone.
- * @param {{regionCount:number, getRegion:(r:number)=>any, getClimateIndex:(x:number,y:number)=>number, getPoliticIndex:(x:number,y:number)=>number, getRegionIndexAt:(x:number,y:number)=>number}} maps
+ * @param {{regionCount:number, getRegion:(r:number)=>any, getClimateIndex:(x:number,y:number)=>number, getPoliticIndex:(x:number,y:number)=>number, getRegionIndexAt:(x:number,y:number)=>number, baseLocationCount?:(r:number)=>number}} maps
  * @param {{spawnSalt?: number, heightAt?: ((x:number, y:number) => number)|null}} [o]
  * @returns {GateScan}
  */
@@ -81,7 +81,12 @@ export function gateScanner(maps, { spawnSalt = WORLD_SALT, heightAt = null } = 
       const region = maps.getRegion(r);
       const table = region?.mapTable;
       if (!table) continue;
-      for (let i = 0; i < table.length; i++) {
+      // GATE-SEEN: the game's OWN rows (HUB1's law, systems/regionHubs.js) - a world-data mod's additions are appended
+      // past them (formats/worldDataReplacement.js), and they stand only where Replace Game Artwork is on: Roleplay &
+      // Realism's fort barred a pixel's neighbourhood on one client and not another, the region's list changed length,
+      // and the day's roll picked two different spots
+      const base = typeof maps.baseLocationCount === 'function' ? Math.min(table.length, maps.baseLocationCount(r)) : table.length;
+      for (let i = 0; i < base; i++) {
         const row = table[i];
         if (!row) continue;
         const id = (row.mapId >>> 0) & 0xfffff;   // DFU's own law: the low 20 bits of a MapId ARE its pixel (y * 1000 + x)

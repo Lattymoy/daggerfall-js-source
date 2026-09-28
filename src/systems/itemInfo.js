@@ -539,7 +539,7 @@ export function itemLongName(item, opts) {
  *  no prefix. */
 export function itemNameParts(item, { getQuest = null, differentiatePlantIngredients = true } = {}) {
   const base = resolveItemName(item);
-  if (!itemIsIdentified(item) || item?.artifact || item?.legendary) return { name: base, material: '' };   // LR2: a Legendary is named like an artifact - no material prefix
+  if (!itemIsIdentified(item) || item?.artifact || item?.legendary || item?.aetheric) return { name: base, material: '' };   // LR2: a Legendary is named like an artifact - no material prefix; SET6: an Aetheric piece too ("Ruhn's Gatecleaver", never "Daedric Ruhn's...")
   if (differentiatePlantIngredients) {
     if (item?.group === 'PlantIngredients1' && item.templateIndex < 18) return { name: `${base} (northern)`, material: '' };
     if (item?.group === 'PlantIngredients2' && item.templateIndex < 18) return { name: `${base} (southern)`, material: '' };

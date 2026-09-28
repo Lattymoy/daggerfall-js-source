@@ -1,0 +1,93 @@
+[
+  {
+    "name": "FOESPACING-no-share",
+    "file": "src/characters/foeSpacing.js",
+    "old": "      const share = (FOE_SPACING_GAP - d) / 2;",
+    "new": "      const share = 0;",
+    "tests": ["test/foespacing.test.js"]
+  },
+  {
+    "name": "FOESPACING-no-soft-cap",
+    "file": "src/characters/foeSpacing.js",
+    "old": "    if (len > cap) { px *= cap / len; pz *= cap / len; }",
+    "new": "",
+    "tests": ["test/foespacing.test.js"]
+  },
+  {
+    "name": "FOESPACING-held-frame-counts",
+    "file": "src/characters/foeSpacing.js",
+    "old": "  if (n < 2 || !(dt > 0) || !collider?.move) return 0;",
+    "new": "  if (n < 2 || !collider?.move) return 0;",
+    "tests": ["test/foespacing.test.js"]
+  },
+  {
+    "name": "FOESPACING-puppets-pushed",
+    "file": "src/characters/foeSpacing.js",
+    "old": "export const spacingSkips = (f) => !!f?.dead || !!f?.puppet || !f?.ai?.feet;",
+    "new": "export const spacingSkips = (f) => !!f?.dead || !f?.ai?.feet;",
+    "tests": ["test/foespacing.test.js"]
+  },
+  {
+    "name": "FOESPACING-the-dead-pushed",
+    "file": "src/characters/foeSpacing.js",
+    "old": "export const spacingSkips = (f) => !!f?.dead || !!f?.puppet || !f?.ai?.feet;",
+    "new": "export const spacingSkips = (f) => !!f?.puppet || !f?.ai?.feet;",
+    "tests": ["test/foespacing.test.js"]
+  },
+  {
+    "name": "FOESPACING-no-vertical-test",
+    "file": "src/characters/foeSpacing.js",
+    "old": "      if (!(a[1] < b[1] + hb && b[1] < a[1] + ha)) continue;   // one above the other: no contact",
+    "new": "",
+    "tests": ["test/foespacing.test.js"]
+  },
+  {
+    "name": "FOESPACING-coincident-never-split",
+    "file": "src/characters/foeSpacing.js",
+    "old": "      else { const ang = i * 2.399963229728653 + j; ux = Math.cos(ang); uz = Math.sin(ang); }",
+    "new": "      else { ux = 0; uz = 0; }",
+    "tests": ["test/foespacing.test.js"]
+  },
+  {
+    "name": "FOESPACING-off-the-lip",
+    "file": "src/characters/foeSpacing.js",
+    "old": "    if (!airborne && ((r && !r.grounded) || !supported(collider, ai, feet))) {",
+    "new": "    if (!airborne && ((r && !r.grounded))) {",
+    "tests": ["test/foespacing.test.js"]
+  },
+  {
+    "name": "FOESPACING-flyers-as-walkers",
+    "file": "src/characters/foeSpacing.js",
+    "old": "    const airborne = !!(ai.flies || ai.swims || ai.levitating);",
+    "new": "    const airborne = false;",
+    "tests": ["test/foespacing.test.js"]
+  },
+  {
+    "name": "FOESPACING-street-pool-unspaced",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    spaceFoes(foes, collider, foeFrameDt(dt));",
+    "new": "",
+    "tests": ["test/foespacing.test.js"]
+  },
+  {
+    "name": "FOESPACING-watch-unspaced",
+    "file": "src/scenes/cityGuards.js",
+    "old": "    spaceFoes(guards, collider, foeFrameDt(dt));",
+    "new": "",
+    "tests": ["test/foespacing.test.js"]
+  },
+  {
+    "name": "FOESPACING-dungeon-unspaced",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    spaceFoes(foes, collider, foeFrameDt(dt), (f, i) => spacingSkips(f) || f._ownFrom != null || (!_authority && isRoomFoe(f, i)));",
+    "new": "",
+    "tests": ["test/foespacing.test.js"]
+  },
+  {
+    "name": "FOESPACING-dungeon-pushes-anothers-foes",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    spaceFoes(foes, collider, foeFrameDt(dt), (f, i) => spacingSkips(f) || f._ownFrom != null || (!_authority && isRoomFoe(f, i)));",
+    "new": "    spaceFoes(foes, collider, foeFrameDt(dt));",
+    "tests": ["test/foespacing.test.js"]
+  }
+]

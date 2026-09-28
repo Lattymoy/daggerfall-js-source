@@ -303,5 +303,21 @@ export function drawEscortFaces(renderer, canvas) {
   }
 }
 
+/** UI3: how far down the drawn column reaches, in the classic's own 320x200 units - 0 while no face is drawn. The
+ *  enhanced HUD's status widget keeps below it (ui/enhancedHud.js): the column stands at the top-left, where the
+ *  widget's band ends. The same sizes and places drawEscortFaces draws. */
+export function escortFacesBottom() {
+  let bottom = 0;
+  if (!_panels.length) return bottom;
+  const sizes = _panels.map((p) => (p?.special
+    ? { w: ESCORT_SPECIAL_FACE_SIZE, h: ESCORT_SPECIAL_FACE_SIZE }
+    : (p?.img ? { w: p.img.w, h: p.img.h } : null)));
+  const placed = layoutEscortFaces(sizes);
+  for (let i = 0; i < _panels.length; i++) {
+    if (_panels[i]?.img && placed[i].enabled && sizes[i]) bottom = Math.max(bottom, placed[i].y + sizes[i].h);
+  }
+  return bottom;
+}
+
 /** The tests' window into the live list. */
 export const _escortFaces = () => _faces;

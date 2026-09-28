@@ -109,16 +109,21 @@ test('SHADOW-REACH: the sun\'s cascades reach - a box BEHIND the eye toward the 
   assert.equal(sp.reaches(toward(100)), true, 'a hundred units toward the sun: in every cascade\'s column');
   assert.equal(sp.reaches(toward(500)), true, 'five hundred: still inside the depth');
   assert.equal(sp.reaches(toward(800)), false, 'past the depth: no cascade');
-  // across the light: a perpendicular in the world's x-z (lightDir has y up, so a horizontal perpendicular)
-  const px = -lightDir[2], pz = lightDir[0]; const pl = Math.hypot(px, pz);
-  assert.equal(sp.reaches(box(px / pl * 200, 0, pz / pl * 200)), true, 'two hundred across: within the far cascade\'s 240');
-  assert.equal(sp.reaches(box(px / pl * 400, 0, pz / pl * 400)), false, 'four hundred across: past every cascade');
-  assert.equal(sp.reachesSphere(px / pl * 200, 0, pz / pl * 200, 5), true);
-  assert.equal(sp.reachesSphere(px / pl * 400, 0, pz / pl * 400, 5), false);
-  assert.equal(sp.reachesSphere(px / pl * 250, 0, pz / pl * 250, 20), true, 'the radius counts: a sphere centred past the far cascade reaching back in');
-  assert.equal(sp.reachesSphere(px / pl * 250, 0, pz / pl * 250, 1), false);
-  assert.equal(sp.reaches(box(0, 0, 0), px / pl * 200, 0, pz / pl * 200), true, 'a translated box against the sun');
-  assert.equal(sp.reaches(box(0, 0, 0), px / pl * 400, 0, pz / pl * 400), false);
+  // across the light: along the box's own side axis - LA-SHADOW1 (re-aimed): the basis's up is the world's Z, so the
+  // map's x is Z x light, [-ly, lx, 0] (it was Y x light, the horizontal perpendicular [lz, 0, -lx]); a point off that
+  // axis sits diagonally in the square box, which reaches 240 * sqrt 2 at its corners
+  const px = -lightDir[1], py = lightDir[0]; const pl = Math.hypot(px, py);
+  assert.equal(sp.reaches(box(px / pl * 200, py / pl * 200, 0)), true, 'two hundred across: within the far cascade\'s 240');
+  assert.equal(sp.reaches(box(px / pl * 400, py / pl * 400, 0)), false, 'four hundred across: past every cascade');
+  assert.equal(sp.reachesSphere(px / pl * 200, py / pl * 200, 0, 5), true);
+  assert.equal(sp.reachesSphere(px / pl * 400, py / pl * 400, 0, 5), false);
+  assert.equal(sp.reachesSphere(px / pl * 250, py / pl * 250, 0, 20), true, 'the radius counts: a sphere centred past the far cascade reaching back in');
+  assert.equal(sp.reachesSphere(px / pl * 250, py / pl * 250, 0, 1), false);
+  assert.equal(sp.reaches(box(0, 0, 0), px / pl * 200, py / pl * 200, 0), true, 'a translated box against the sun');
+  assert.equal(sp.reaches(box(0, 0, 0), px / pl * 400, py / pl * 400, 0), false);
+  // and any direction across, 400 out, is past the square's corners (339)
+  const hx = -lightDir[2], hz = lightDir[0]; const hl = Math.hypot(hx, hz);
+  assert.equal(sp.reachesSphere(hx / hl * 400, 0, hz / hl * 400, 5), false, 'four hundred across in the horizontal too');
   // the sun moves: the cascades follow it, and so does the reach (the planes are the frame's, not the first frame's)
   const turned = new Float32Array([-lightDir[0], lightDir[1], -lightDir[2]]);
   const frame2 = (L) => { r.setPointLights(new Float32Array(0), new Float32Array([1, 1, 1])); r.beginFrame(I, I, L, WORLD_FRAME); draw(); r.drawScreenQuad({ id: 'ui' }, { x: 0, y: 0, w: 10, h: 10 }); };

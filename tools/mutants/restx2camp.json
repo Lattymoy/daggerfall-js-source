@@ -87,8 +87,8 @@
   {
     "name": "RESTX2-exterior-js-drops-the-sessions-end-on-the-floor",
     "file": "src/scenes/exterior.js",
-    "old": "    advanceMinutes: (n, sharedEnd) => { playerTicker.advance(n); runEncounterTick(walkMode ? player.pos : cam.pos, sharedEnd, true); },",
-    "new": "    advanceMinutes: (n, sharedEnd) => { playerTicker.advance(n); runEncounterTick(walkMode ? player.pos : cam.pos, undefined, true); },",
+    "old": "    advanceMinutes: (n, sharedEnd) => { playerTicker.advance(n, sharedEnd); runEncounterTick(walkMode ? player.pos : cam.pos, sharedEnd, true); },",
+    "new": "    advanceMinutes: (n, sharedEnd) => { playerTicker.advance(n, sharedEnd); runEncounterTick(walkMode ? player.pos : cam.pos, undefined, true); },",
     "tests": [
       "test/restx2_online_rest.test.js",
       "test/exteriorfoes.test.js"
@@ -205,7 +205,7 @@
   {
     "name": "WINFOE1-the-encounter-pool-freezes-under-a-window-again",
     "file": "src/scenes/world.js",
-    "old": "      exteriorFoes.update(dt, _pf, cam.pos, _foeSenses());   // WINFOE1: a window no longer zeroes the foes' clock",
+    "old": "      exteriorFoes.update(foeDt, _pf, cam.pos, _foeSenses());",
     "new": "      exteriorFoes.update(townTalk.overlayActive ? 0 : dt, _pf, cam.pos, _foeSenses());",
     "tests": [
       "test/winfoe1_foes_under_windows.test.js"
@@ -279,8 +279,8 @@
   {
     "name": "D-ONLINE1-the-snapshot-is-taken-after-the-leave-cleared-the-room",
     "file": "src/scenes/world.js",
-    "old": "      if (_deathWasOnline == null) _deathWasOnline = _onlineWorldSession();   // D-ONLINE1: the modal hosts' deaths (a dungeon's, a building's) are captured here, BEFORE the leave below clears online.room\n      if (online.room) {\n        // PCORPSE1: the body is left where it fell - one last pose, flagged, before the leave below takes the living figure\n        _deadMark = online._pose ? { k: online.room, x: online._pose.x, y: online._pose.y, z: online._pose.z, at: Date.now() } : null;\n        _partyComposedAt = -Infinity;\n        // PDEATH-FOES, AUDIT CONTRIB P1: my foes are the survivors' now (handOverFoes), named on my last frame BEFORE the\n        // death pose; what nobody took stays mine\n        const _handed = handOverFoes();\n        if (_handed) console.info(`[foes] handed ${_handed} foe(s) to the survivors`);\n        online.sendDeath?.();\n      }\n      if (online.room) { worldPublish(now, true); online.leave(); exteriorFoes.clearPuppets(); _foesRoom = null; }",
-    "new": "      if (online.room) {\n        // PCORPSE1: the body is left where it fell - one last pose, flagged, before the leave below takes the living figure\n        _deadMark = online._pose ? { k: online.room, x: online._pose.x, y: online._pose.y, z: online._pose.z, at: Date.now() } : null;\n        _partyComposedAt = -Infinity;\n        // PDEATH-FOES, AUDIT CONTRIB P1: my foes are the survivors' now (handOverFoes), named on my last frame BEFORE the\n        // death pose; what nobody took stays mine\n        const _handed = handOverFoes();\n        if (_handed) console.info(`[foes] handed ${_handed} foe(s) to the survivors`);\n        online.sendDeath?.();\n      }\n      if (online.room) { worldPublish(now, true); online.leave(); exteriorFoes.clearPuppets(); _foesRoom = null; }\n      if (_deathWasOnline == null) _deathWasOnline = _onlineWorldSession();",
+    "old": "      if (_deathWasOnline == null) _deathWasOnline = _onlineWorldSession();   // D-ONLINE1: the modal hosts' deaths (a dungeon's, a building's) are captured here, BEFORE the leave below clears online.room\n      if (online.room) {\n        // PCORPSE1: the body is left where it fell - one last pose, flagged, before the leave below takes the living figure\n        _deadMark = online._pose ? { k: online.room, x: online._pose.x, y: online._pose.y, z: online._pose.z, at: Date.now() } : null;\n        _partyComposedAt = -Infinity;\n        // PDEATH-FOES, AUDIT CONTRIB P1: my foes are the survivors' now (handOverFoes), named on my last frame BEFORE the\n        // death pose; what nobody took stays mine\n        const _handed = handOverFoes() || handOverRoomFoes();   // QUEST-PARTY phase 3b: or my building's\n        if (_handed) console.info(`[foes] handed ${_handed} foe(s) to the survivors`);\n        online.sendDeath?.();\n      }\n      if (online.room) { worldPublish(now, true); online.leave(); exteriorFoes.clearPuppets(); modes?.clearOwnPuppets?.(); _foesRoom = null; }",
+    "new": "      if (online.room) {\n        // PCORPSE1: the body is left where it fell - one last pose, flagged, before the leave below takes the living figure\n        _deadMark = online._pose ? { k: online.room, x: online._pose.x, y: online._pose.y, z: online._pose.z, at: Date.now() } : null;\n        _partyComposedAt = -Infinity;\n        // PDEATH-FOES, AUDIT CONTRIB P1: my foes are the survivors' now (handOverFoes), named on my last frame BEFORE the\n        // death pose; what nobody took stays mine\n        const _handed = handOverFoes() || handOverRoomFoes();   // QUEST-PARTY phase 3b: or my building's\n        if (_handed) console.info(`[foes] handed ${_handed} foe(s) to the survivors`);\n        online.sendDeath?.();\n      }\n      if (online.room) { worldPublish(now, true); online.leave(); exteriorFoes.clearPuppets(); modes?.clearOwnPuppets?.(); _foesRoom = null; }\n      if (_deathWasOnline == null) _deathWasOnline = _onlineWorldSession();",
     "tests": [
       "test/donline1_respawn.test.js",
       "test/auditworld.test.js"

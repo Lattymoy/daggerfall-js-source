@@ -1,0 +1,236 @@
+[
+  {
+    "name": "AUDIT-SET-the-mark-never-set",
+    "file": "src/systems/testRoom.js",
+    "old": "  playerEntity.testRoom = true;   // AUDIT SET D4: after the chargen, which builds the character afresh - the mark rides every save of it\n",
+    "new": "",
+    "tests": [
+      "test/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-the-mark-dropped-by-the-save",
+    "file": "src/systems/save.js",
+    "old": "  'testRoom',\n",
+    "new": "",
+    "tests": [
+      "test/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-the-refusal-never-asked",
+    "file": "src/scenes/world.js",
+    "old": "  if (testRoomOffline) { params.delete('online'); publishBootParams(params); }\n",
+    "new": "",
+    "tests": [
+      "test/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-the-most-recent-save-unread",
+    "file": "src/systems/testRoom.js",
+    "old": ": (mostRecent()?.snap ?? null);",
+    "new": ": null;",
+    "tests": [
+      "test/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-the-test-rooms-button-live",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "      disabled: !who || save.testRoom,",
+    "new": "      disabled: !who,",
+    "tests": [
+      "test/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-a-set-sigil-on-a-ring",
+    "file": "src/systems/aetheric.js",
+    "old": "    if (s.set !== undefined && !kind) return null;\n",
+    "new": "",
+    "tests": [
+      "test/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-a-blow-on-armour",
+    "file": "src/systems/aetheric.js",
+    "old": "    if (s.power !== undefined && kind !== 'weapon') return null;\n",
+    "new": "",
+    "tests": [
+      "test/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-a-regalia-sigil-on-any-daedric-piece",
+    "file": "src/systems/aetheric.js",
+    "old": "    if (s.set === REGALIA_SET && item.rarity !== AETHERIC) return null;\n",
+    "new": "",
+    "tests": [
+      "test/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-the-sigil-unprojected",
+    "file": "src/systems/aetheric.js",
+    "old": "    item.sigil = { ...(s.power !== undefined ? { power: s.power } : {}), ...(s.set !== undefined ? { set: s.set } : {}), party: s.party, xp: s.xp };\n",
+    "new": "",
+    "tests": [
+      "test/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-an-aetheric-off-its-record",
+    "file": "src/systems/aetheric.js",
+    "old": "    if (!r || item.rarity !== AETHERIC || r.group !== item.group || r.templateIndex !== item.templateIndex) return null;",
+    "new": "    if (!r) return null;",
+    "tests": [
+      "test/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-an-aetheric-of-any-metal",
+    "file": "src/systems/aetheric.js",
+    "old": "    if (item.material !== (r.group === 'Weapons' ? WEAPON_MATERIALS.Daedric : ARMOR_MATERIAL.Daedric)) return null;\n",
+    "new": "",
+    "tests": [
+      "test/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-the-marks-never-asked",
+    "file": "src/systems/loot.js",
+    "old": "  if (!validSetMarks(out)) return null;   // AUDIT SET D6: and the marks agree with the item - a set's sigil, a blow, the Aetheric\n",
+    "new": "",
+    "tests": [
+      "test/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-a-curly-apostrophe-in-the-lore",
+    "file": "src/systems/lootRarity.js",
+    "old": "giant\\'s own heart",
+    "new": "giant’s own heart",
+    "tests": [
+      "test/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-the-lines-left-to-the-cards-rule",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ".pack-shell .card .sigilbox p.sigil-effect { font-size: 13px;",
+    "new": ".pack-shell .card .sigilbox-x p.sigil-effect { font-size: 13px;",
+    "tests": [
+      "test/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-the-dormant-colour-lost",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ".pack-shell .card .sigilbox[data-stage=\"dormant\"] p.sigil-effect, .pack-shell .card .sigilbox[data-stage=\"dormant\"] p.sigil-progress { color: #9aa6a3; }\n",
+    "new": "",
+    "tests": [
+      "test/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-the-card-never-fitted",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  fitTip(tipEl);   // AUDIT SET U13\n",
+    "new": "",
+    "tests": [
+      "test/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-a-step-skipped",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "export const TIP_FITS = Object.freeze(['tip-compact', 'tip-tight']);",
+    "new": "export const TIP_FITS = Object.freeze(['tip-tight']);",
+    "tests": [
+      "test/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-shed-with-room-to-spare",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    if (!(node.scrollHeight > room)) return;",
+    "new": "    if (false) return;",
+    "tests": [
+      "test/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-the-tight-card-keeping-the-tiers-words",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ".inv-tip.tip-tight .set-tier-text, .inv-tip.tip-tight .set-role, .inv-tip.tip-tight .sigil-progress { display: none; }",
+    "new": ".inv-tip.tip-tight .set-role, .inv-tip.tip-tight .sigil-progress { display: none; }",
+    "tests": [
+      "test/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-the-wrap-never-asked",
+    "file": "src/ui/toolTip.js",
+    "old": "const rows = wrapFrom == null ? toolTipRows(text) : wrapToolTipRows(toolTipRows(text), (r) => measureText(font.fnt, r), TOOLTIP_WRAP_W, wrapFrom);",
+    "new": "const rows = toolTipRows(text);",
+    "tests": [
+      "test/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-a-continuation-unindented",
+    "file": "src/ui/toolTip.js",
+    "old": "      line = `${lead}${WRAP_INDENT}${word}`;",
+    "new": "      line = `${lead}${word}`;",
+    "tests": [
+      "test/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-a-short-row-wrapped",
+    "file": "src/ui/toolTip.js",
+    "old": "    if (i < from || !(measure(row) > maxW)) { out.push(row); continue; }\n",
+    "new": "",
+    "tests": [
+      "test/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-wrapped-past-the-width",
+    "file": "src/ui/toolTip.js",
+    "old": "if (!line || measure(next) <= maxW) { line = next; continue; }",
+    "new": "if (!line || measure(next) <= maxW * 2) { line = next; continue; }",
+    "tests": [
+      "test/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-the-name-wrapped",
+    "file": "src/ui/toolTip.js",
+    "old": "    if (i < from || !(measure(row) > maxW)) { out.push(row); continue; }",
+    "new": "    if (!(measure(row) > maxW)) { out.push(row); continue; }",
+    "tests": [
+      "test/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-every-tooltip-wrapped",
+    "file": "src/ui/toolTip.js",
+    "old": "    this.wrapFrom = wrapFrom;",
+    "new": "    this.wrapFrom = wrapFrom ?? 0;",
+    "tests": [
+      "test/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-the-item-lists-tip-unwrapped",
+    "file": "src/ui/itemScroller.js",
+    "old": "const tip = new ToolTip(null, { wrapFrom: 1 });",
+    "new": "const tip = new ToolTip();",
+    "tests": [
+      "test/auditset_c.test.js"
+    ]
+  }
+]

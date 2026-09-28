@@ -44,7 +44,6 @@
 // was not received (ui/enhancedChunk.js's whole header).
 // ═══════════════════════════════════════════════════════════════════
 
-import { isEnhancedPlus } from '../systems/uiSkin.js';   // PLUS1: the Ascend's clicks and marks are Enhanced Plus's
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { drawPixelGround } from './pixelGround.js';
 import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab, which this screen refuses while a point is unspent
@@ -204,7 +203,7 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
   plate.append(plateCount, plateKey, plateRefuse, plateHint);
   // LV2: how the stars take a click - said once, beside the pool, where it
   // takes no room from the figure (positioned out of the band's flow)
-  if (!screen?.viewOnly && isEnhancedPlus()) plate.append(el('p', 'lv-howto', STAR_HOWTO));   // PLUS1
+  if (!screen?.viewOnly) plate.append(el('p', 'lv-howto', STAR_HOWTO));   // PLUS1
   root.append(plate);
 
   // ── THE FIGURE ───────────────────────────────────────────────
@@ -246,18 +245,10 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
     // a stray click on the figure never costs a point. A right click
     // takes a point back from that star. Both go through the screen's
     // own raiseAt / lowerAt, exactly as the + and - presses do.
-    if (isEnhancedPlus()) {   // PLUS1: the select-then-spend stars are Enhanced Plus's
-      b.onclick = () => starPress(key, 1);
-      b.oncontextmenu = (e) => { e.preventDefault(); starPress(key, -1); };
-      b.title = 'Click to choose - click again to add a point - right-click to take one back';
-    } else {
-      // Enhanced: A CLICK IS SELECT-THEN-PRESS, through the screen's own input - the two moves the keyboard makes.
-      b.onclick = () => {
-        focusAt(screen, key);
-        if (raiseAt(screen, key)) refused = false;
-        paint();
-      };
-    }
+    // PLUS1: the select-then-spend stars (plain Enhanced's click-raises-at-once went with it, PLUS-DEAD)
+    b.onclick = () => starPress(key, 1);
+    b.oncontextmenu = (e) => { e.preventDefault(); starPress(key, -1); };
+    b.title = 'Click to choose - click again to add a point - right-click to take one back';
     figure.append(b);
     return { key, node: b, val, delta, gem };
   });
@@ -282,7 +273,6 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
    *  every state in this skin; the sheet stands them all down under
    *  reduced motion. */
   function starFx(key, kind) {
-    if (!isEnhancedPlus()) return;   // PLUS1: plain Enhanced leaves no effect
     const s = stars.find((x) => x.key === key);
     if (!s) return;
     const n = s.node;

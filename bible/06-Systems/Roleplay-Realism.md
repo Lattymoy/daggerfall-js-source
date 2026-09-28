@@ -43,11 +43,11 @@ after Items'), and the seams they hang on.
 | climbingRestriction: `CalculateClimbingChance` (:320-348) | FormulaHelper.cs:295-297 | `climbing.js registerClimbingChanceOverride`; the drawn weapon read through `playerWeapon.currentWeaponPose` (the rig registers the probe) |
 | weaponSpeed: `GetMeleeWeaponAnimTime` (:350-387), registered only when Items' weaponBalance is off (:171) | FormulaHelper.cs:830 | `weaponStates.registerMeleeWeaponAnimTime` - one adapter, Items' arm first, this one behind it |
 | weaponMaterials: `CalculateWeaponToHit` (:389-392) | FormulaHelper.cs:1140-1146 | `formulas.js calculateAttackDamage`, the to-hit line |
-| equipDamage: `ApplyConditionDamageThroughPhysicalHit` (:394-407) | FormulaHelper.cs:1123-1128, "Only return if override returns true" | `formulas.js damageEquipment`'s `hit` |
+| equipDamage: `ApplyConditionDamageThroughPhysicalHit` (:394-407) | FormulaHelper.cs:1123-1128, "Only return if override returns true" | `formulas.js damageEquipment`'s `hit` - BALANCE1 (2026-09-27): the x5 lands on the port's wear scale (x0.6, `equip.js blowWear`); `01-Overview/Field-Bugs-2026-09-27-phone-backup-drains.md` |
 | classicStrengthDamageBonus: `DamageModifier_classicDisplay` (:314-317) | FormulaHelper.DamageModifier | `formulas.js damageModifier` (PCO1's slot, chained) |
 | loanAmountPerLevel: `CalculateMaxBankLoan` (:98, :309-312) | FormulaHelper.cs:2008-2010 | `banking.registerMaxBankLoan` |
 | shipPorts: `IsShipAvailiable` (:610-631) | `TransportManager.ShipAvailiable`, the delegate | `ship.setShipAvailable`; `mountRig` asks with `shipLocation()` = `{ locationLoaded, portTown, onShip }` from the host (DISC13-D: it said `loaded`, which the delegate never read) |
-| encumbranceEffects: `EncumbranceEffects_OnNewMagicRound` (:580-598) | EntityEffectBroker.OnNewMagicRound | `worldTick.registerMagicRoundHook` (the fatigue) + `entityMods.registerEntityFold` (MergeDirectStatMods' channel - the speed) |
+| encumbranceEffects: `EncumbranceEffects_OnNewMagicRound` (:580-598) | EntityEffectBroker.OnNewMagicRound | `worldTick.registerMagicRoundHook` (the fatigue) + `entityMods.registerEntityFold` (MergeDirectStatMods' channel - the speed) - BALANCE1 (2026-09-27): the round's fatigue on the port's exertion scale (x0.75), its fraction carried on the entity so a light overload's 1 a minute still costs (the pre-merge audit 0927b); `01-Overview/Field-Bugs-2026-09-27-phone-backup-drains.md` |
 | bandaging: `UseBandage` (:600-608), `if (rrItemsMod == null && bandaging)` | ItemHelper.RegisterItemUseHandler | never registered - the port carries Items always; `rrBandageHeal` ported for the record |
 | autoExtinguishLight (:633-640) | PlayerEnterExit.OnPreTransition ToDungeonExterior | `worldModes` at the dungeon exit, the light's own "You douse the %it." box |
 | purificationPotion: `CureDiseasePotionRR` | `RegisterEffectTemplate(..., true)` - the recipes replaced | `potions.overridePotionRecipes` |
@@ -77,7 +77,9 @@ Read against the C#:
   whole member while its equipmentDamageEnhanced is on - in DFU too -
   so this mod's armor arm runs only when that member is DFU's own.
 - **The encumbrance penalty** reads CarriedWeight / MaxEncumbrance
-  (live strength x1.5), LiveSpeed (which already carries the previous
+  (the property: live strength x1.5 plus IncreasedWeightAllowance's
+  share and the port's weight folds - `entityMaxEncumbrance`, the
+  pack's own ceiling; ENC-CEIL, 2026-09-27, below), LiveSpeed (which already carries the previous
   round's penalty - DFU's own self-reference, kept), PermanentSpeed and
   CurrentFatigue in raw units; `Min(CurrentFatigue - 100, over * 100)`
   goes negative under 100 fatigue and DecreaseFatigue then adds - the
@@ -160,7 +162,11 @@ its arms to `rrInstall.js`.
   taken, the C#'s else. The seven `197_N-0` sprites ship under
   `public/art/roleplay-realism/` on the replacement door (lazy, gated
   on variantNpcs; a classic archive, so ordinary entries), the mod's
-  XML scale beside them through `registerBillboardXml`.
+  XML scale beside them through `registerBillboardXml`. LAMP-KEEPER
+  (2026-09-26): lazy means ASKED FOR - the interior person's stand never
+  asked, so the classic 197 records drew in their place (record 6 is a
+  street lamp); it asks before the upload now
+  (`01-Overview/Field-Bugs-2026-09-26.md`).
 - **EnhancedRiding** (EnhancedRiding.cs). `CanRunUnlessRidingCart`
   (:95-99) on `transport.setCanRunOverride`: no gallop with the cart
   nor in a town unless GallopingInTowns (the host's `inTown`, `riding`,
@@ -617,9 +623,36 @@ hosts' wiring by source. Four mutant records re-aimed by content; all
 six campaigns re-run (rr1 18 dead + 1 equivalent, rr2 28, rr3 31 + 2,
 rr3b 24, rri1 11, rri2 18).
 
+## ENC-CEIL: the penalty reads the pack's ceiling (2026-09-27)
+
+A player on Discord: *"even if I have all my gear on and a max of 502
+encumbrance it sees me as overweight when I hit past whatever my base
+is ... as soon as I hit 105 it's giving me full weight penalties"*. The
+C# divides by `playerEntity.MaxEncumbrance` (`RoleplayRealism.cs:590`),
+the property: `GetMaxEncumbrance` (`DaggerfallEntity.cs:272`,
+`:501-507`), live strength x1.5 plus `(int)(amount *
+IncreasedWeightAllowanceMultiplier)`. The port's own version of that
+property is `entityMaxEncumbrance` (`combat/formulas.js`) - the pack,
+both character sheets, the carry, trade and bank gates all read it -
+and `encumbranceOf` (`systems/rrInstall.js`) alone read the bare
+formula off live strength. So a player whose weight allowance (the
+enchantment, and the Loot Rarity weight affixes that ride the same
+multiplier, `06-Systems/Loot-Rarity.md`) lifted the pack to 502 took
+the full speed and fatigue penalty past 105 - with RR's encumbrance
+switch forced on online (`onlineLane.js`), every online player carrying
+an allowance. The seam reads `entityMaxEncumbrance(entity)` now; the
+penalty starts at 75% of the number the pack shows. Horse and cart add
+nothing to the ceiling, in DFU or in Horse Cart and Cargo - the wagon
+is its own 750 kg (`ItemHelper.WagonKgLimit`).
+
+Pinned in `test/rr1_realism.test.js` ENC-CEIL (the allowance from the
+real producer; literals off the real ceiling of 90); mutants
+`tools/mutants/enc_ceil.json` (3, all dead).
+`01-Overview/Field-Bugs-2026-09-27.md`.
+
 ## Record
 
-`vendor/roleplay-realism/`. Suites `test/rr1_realism.test.js` (11),
+`vendor/roleplay-realism/`. Suites `test/rr1_realism.test.js` (12),
 `test/rr2_realism.test.js` (12), `test/rr3_questline.test.js` (11),
 `test/rr3b_worlddata.test.js` (9), `test/auditrr.test.js` (15), `test/auditrr2.test.js` (17). Campaigns `tools/mutants/rr1.json`
 (18: 17 dead, 1 equivalent - RR1-17 went with the seam it aimed at, FGH2H-R), `tools/mutants/rr2.json` (28 dead),

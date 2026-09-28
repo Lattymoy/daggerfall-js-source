@@ -172,7 +172,7 @@
   {
     "name": "D5-LOOT-REGEN-take-says-nothing",
     "file": "src/scenes/dungeonContext.js",
-    "old": "        const _q = lootHolder(key) ? lootKeyOf(key) : null;\n        if (_q) publishLoot(_q);\n",
+    "old": "        const _q = roomLootKey(key);   // REST-SYNC: the room's name for it\n        if (_q) publishLoot(_q);\n",
     "new": "",
     "tests": [
       "test/discord5.test.js"

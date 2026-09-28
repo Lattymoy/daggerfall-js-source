@@ -44,8 +44,8 @@
   {
     "name": "MAP-POV-the-move-at-the-door-above-the-refusals",
     "file": "src/scenes/world.js",
-    "old": "    if (!gotoPlace && townTalk.overlayActive) return;\n    // W1/U61: the DOOR decides which map this skin wears.",
-    "new": "    if (!gotoPlace && townTalk.overlayActive) return;\n    mwViewFirstPerson();\n    // W1/U61: the DOOR decides which map this skin wears.",
+    "old": "    if (gotoPlace) _travelGoto = gotoPlace;\n    // AUDIT PARTY-UI 1: IsPlayerInside, dfuiOpenTravelMapWindow's FIRST",
+    "new": "    if (gotoPlace) _travelGoto = gotoPlace;\n    mwViewFirstPerson();\n    // AUDIT PARTY-UI 1: IsPlayerInside, dfuiOpenTravelMapWindow's FIRST",
     "tests": ["test/mappov.test.js"]
   }
 ]

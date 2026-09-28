@@ -47,8 +47,8 @@
   {
     "name": "FS-blast-radius-ignored",
     "file": "src/scenes/hostMagic.js",
-    "old": "      for (const t of sweepFoes(eye, EXPLOSION_RADIUS, allyMarksFor(sp))) giveToAlly(t, sp);",
-    "new": "      for (const t of allyMarksFor(sp)) giveToAlly(t, sp);",
+    "old": "      giveToAllies(sweepFoes(eye, EXPLOSION_RADIUS, allyMarksFor(sp)), sp);",
+    "new": "      giveToAllies(allyMarksFor(sp), sp);",
     "tests": [
       "test/friendlyspells.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "FS-strangers-marked",
     "file": "src/scenes/world.js",
-    "old": "    return near.filter((p) => social.isPartyPeer(p.id) && online.reachesPeer?.(p.id))",
-    "new": "    return near.filter((p) => online.reachesPeer?.(p.id))",
+    "old": "    const marks = giftablePeers(near).filter((p) => online.reachesPeer?.(p.id) && (mateOf(p.id) || strangers))",
+    "new": "    const marks = giftablePeers(near).filter((p) => online.reachesPeer?.(p.id))",
     "tests": [
       "test/friendlyspells.test.js"
     ]

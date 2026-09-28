@@ -239,8 +239,10 @@ test('TI1 touch.js: the five buttons, the gate-by-hook dial, and the three route
   // the keys no OTHER live control still wants down - because a combo
   // binding shares its modifier with the stick's Run (the fixture is in
   // test/audit62_touch.test.js, executed both ways).
-  assert.match(s, /downAction\('Jump'\)[\s\S]{0,120}upCode\(c, liveNeeds\(\)\)/, 'jump, held, on Jump\'s live code');
-  assert.match(s, /downAction\('ReadyWeapon'\)[\s\S]{0,140}upCode\(c, liveNeeds\(\)\)/, 'sheathe, held, on ReadyWeapon\'s');
+  // TOUCH-BUTTONS: jump and sheathe are the corner's two default HOLD slots (ui/touchButtons.js), each held on its
+  // action's live code and lifted against liveNeeds() - the same arm for any held action a player puts there
+  assert.match(s, /if \(action\.kind === 'hold'\) \{\s*\n\s*b = button\(action\.glyph, \.\.\.at, \(\) => \{ slotHeld\.set\(b, downAction\(action\.id\)\); \}, \(\) => \{ const c = slotHeld\.get\(b\) \?\? null; slotHeld\.delete\(b\); upCode\(c, liveNeeds\(\)\); \}\);/, 'a held slot, on its action\'s live code');
+  assert.match(read('src/ui/touchButtons.js'), /TOUCH_BUTTON_DEFAULTS = Object\.freeze\(\{ touchButton1: 'Jump', touchButton2: 'ReadyWeapon', touchButton3: 'none' \}\)/, 'jump and sheathe by default');
   assert.match(s, /on\('MoveForwards',[\s\S]*on\('Run',/, 'the stick holds the four move actions and Run');
   assert.doesNotMatch(s, /\['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ShiftLeft'\]/, 'and releases what it HOLDS, not a frozen literal list');
   assert.match(s, /createGestureRecognizer\(\{ locked: \(\) => !!hooks\.locked\?\.\(\) \}\)/, 'the recogniser takes the host\'s lock predicate');

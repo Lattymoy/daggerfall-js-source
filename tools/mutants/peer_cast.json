@@ -1,0 +1,29 @@
+[
+  {
+    "name": "PEER-CAST-unclamped",
+    "file": "src/systems/allyCast.js",
+    "old": "    level: Math.min(CAST_LEVEL_MAX, Math.max(1, Math.trunc(Number(level) || 1))),",
+    "new": "    level: Math.max(1, Math.trunc(Number(level) || 1)),",
+    "tests": [
+      "test/allycast.test.js"
+    ]
+  },
+  {
+    "name": "PEER-CAST-clamped-past-the-bound",
+    "file": "src/systems/allyCast.js",
+    "old": "    level: Math.min(CAST_LEVEL_MAX, Math.max(1, Math.trunc(Number(level) || 1))),",
+    "new": "    level: Math.min(CAST_LEVEL_MAX + 1, Math.max(1, Math.trunc(Number(level) || 1))),",
+    "tests": [
+      "test/allycast.test.js"
+    ]
+  },
+  {
+    "name": "PEER-CAST-clamped-low",
+    "file": "src/systems/allyCast.js",
+    "old": "    level: Math.min(CAST_LEVEL_MAX, Math.max(1, Math.trunc(Number(level) || 1))),",
+    "new": "    level: Math.min(CAST_LEVEL_MAX - 1, Math.max(1, Math.trunc(Number(level) || 1))),",
+    "tests": [
+      "test/allycast.test.js"
+    ]
+  }
+]

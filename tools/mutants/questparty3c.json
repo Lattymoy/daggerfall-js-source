@@ -1,0 +1,277 @@
+[
+  {
+    "name": "QP3C-layout-rides-own",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "const ownQuestTag = (f) => (!f || f._ownFrom != null || isRoomFoe(f) ? null :",
+    "new": "const ownQuestTag = (f) => (!f || f._ownFrom != null ? null :",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-puppet-rides-back",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (f._ownFrom != null || (f.dead && !f.corpse)) continue;\n      const qt = ownQuestTag(f);",
+    "new": "      if (f.dead && !f.corpse) continue;\n      const qt = f._ownFrom != null ? (ownShare()?.tagOf?.(f) ?? null) : ownQuestTag(f);",
+    "tests": ["test/questparty3c.test.js"],
+    "equivalent": true,
+    "why": "ownQuestTag refuses a puppet twice over - a party member's foe stood here carries no quest behaviour (its word is `_pupQuest`, and adoptOwn clears `_ownFrom` as it binds one) - so the loop's own skip of a puppet is a belt to that brace; the skip stays, the one door a puppet could ever reach the lane through"
+  },
+  {
+    "name": "QP3C-private-rides",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      const qt = ownQuestTag(f);\n      if (!qt && !ownLoose(f)) continue;   // SUMMON-SYNC: a shared quest's foe, or a loose stand - nothing else past the run\n      if (f._ownSeq == null) f._ownSeq = ++_ownSeq;",
+    "new": "      const qt = ownQuestTag(f) ?? { q: 'x', s: 'x' };\n      if (f._ownSeq == null) f._ownSeq = ++_ownSeq;",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-marker-unflagged",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "const fl = (f._questMarker ? 1 : 0) | (!f.dead && questTouched(f) ? 2 : 0);",
+    "new": "const fl = (!f.dead && questTouched(f) ? 2 : 0);",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-touch-unflagged",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "const fl = (f._questMarker ? 1 : 0) | (!f.dead && questTouched(f) ? 2 : 0);",
+    "new": "const fl = (f._questMarker ? 1 : 0);",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-quiet-says-all",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      const r = roomRecord(f, f._ownSeq, full || !!heirOf);",
+    "new": "      const r = roomRecord(f, f._ownSeq, true);",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-empty-full-silent",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (!out.length && !whole) return null;\n    const qf = [], lf = [];",
+    "new": "    if (!out.length) return null;\n    const qf = [], lf = [];",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-any-dungeon",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "if (typeof from !== 'string' || !from || !data || !Array.isArray(data.f) || data.k !== _locationKey) return false;\n    const share = ownShare();",
+    "new": "if (typeof from !== 'string' || !from || !data || !Array.isArray(data.f)) return false;\n    const share = ownShare();",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-stale-lands",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (Number.isFinite(data.n)) { if (data.n <= o.n) return false; o.n = data.n; }\n    o.at = performance.now();\n    const tags = validQuestTags(data.qf), loose = validLooseSeqs(data.lf);",
+    "new": "    if (Number.isFinite(data.n)) o.n = data.n;\n    o.at = performance.now();\n    const tags = validQuestTags(data.qf), loose = validLooseSeqs(data.lf);",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-stranger-stands",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (!lo && (!qt || !share?.accepts?.(from, qt))) { if (f) dropOwnPuppet(key, f); continue; }",
+    "new": "      if (!lo && !qt) { if (f) dropOwnPuppet(key, f); continue; }",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-full-keeps-all",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (data.full === 1) for (const [key, f] of [..._ownPups]) if (f._ownFrom === from && !seen.has(f._ownI)) dropOwnPuppet(key, f);",
+    "new": "    void seen;",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-no-stand-down",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (marks.length) standDownMarkerCopies(from, marks);\n    return true;",
+    "new": "    return true;",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-heir-ignored",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (f) { applyOwnRecord(f, r, share); f._heirElse = ownHeirElse(r); if (ownHeirIsMe(r)) adoptOwn(from, f, share); continue; }",
+    "new": "      if (f) { applyOwnRecord(f, r, share); continue; }",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-no-injury",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "if (f._pupQuest && !f._qHurt && Number.isFinite(h0) && Number.isFinite(r.h) && r.h < h0) { f._qHurt = true; share?.onPuppetHurt?.(f._pupQuest); }",
+    "new": "void h0;",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-injury-every-blow",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "if (f._pupQuest && !f._qHurt && Number.isFinite(h0) && Number.isFinite(r.h) && r.h < h0) {",
+    "new": "if (f._pupQuest && Number.isFinite(h0) && Number.isFinite(r.h) && r.h < h0) {",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-no-kill",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (f._pupQuest && !wasDead && f.dead) share?.onPuppetDied?.(f._pupQuest);",
+    "new": "    void wasDead;",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-drop-stays-in-pool",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    f.dead = true; f._gone = true;\n    dropCandidate(f);\n    const at = foes.indexOf(f);\n    if (at >= _layoutFoes) foes.splice(at, 1);\n  }\n  /** QUEST-PARTY phase 3c: every party member's quest foe goes",
+    "new": "    f.dead = true; f._gone = true;\n    dropCandidate(f);\n  }\n  /** QUEST-PARTY phase 3c: every party member's quest foe goes",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-clear-keeps-owners",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    _ownPendLoose.clear();\n    _ownOwners.clear();\n",
+    "new": "    _ownPendLoose.clear();\n",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-prune-keeps-gone",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (!gone && !(staleMs > 0 && now - o.at > staleMs)) continue;\n      for (const [key, f] of [..._ownPups]) {",
+    "new": "      if (alive.has(from) || !alive) continue;\n      for (const [key, f] of [..._ownPups]) {",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-prune-never-stale",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (!gone && !(staleMs > 0 && now - o.at > staleMs)) continue;\n      for (const [key, f] of [..._ownPups]) {",
+    "new": "      if (alive.has(from)) continue;\n      for (const [key, f] of [..._ownPups]) {",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-orphan-never-taken",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "        if (gone && !f.dead && f._pupQuest && !f._heirElse && share?.adoptsOrphan?.(from, f) && adoptOwn(from, f, share)) continue;   // SUMMON-SYNC: a shared quest's orphan alone - a loose stand goes with its owner, the cell's law\n        dropOwnPuppet(key, f);",
+    "new": "        dropOwnPuppet(key, f);",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-adopt-unbound",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    const b = qt ? (share?.behaviourFor?.(qt) ?? null) : null;",
+    "new": "    const b = null;",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-adopt-no-resume",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    f.ai.resumeLive?.();\n    if (f.attack?.machine) {",
+    "new": "    if (f.attack?.machine) {",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-adopt-still-puppet",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    f._ownFrom = null; f._ownI = null; f._pupQuest = null; f._ownSeq = ++_ownSeq;",
+    "new": "    f._ownI = null; f._pupQuest = null; f._ownSeq = ++_ownSeq;",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-handover-names-none",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (heirOf && !f.dead) { const h = heirOf(f) ?? null; f._heir = h; if (h) r.e = h; }",
+    "new": "      void heirOf;",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-handed-kept",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (!heir || f._ownFrom != null || f.dead) continue;\n      letGoOwn(f);",
+    "new": "      if (!heir || f._ownFrom != null || f.dead || true) continue;\n      letGoOwn(f);",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-stand-down-any-symbol",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      const theirs = mine ? marks.find((t) => t.q === mine.q && t.s === mine.s) : null;\n      if (!theirs || !questMarkerYields({ mineTouched: questTouched(f), theirsTouched: !!theirs.tc, myId: me, theirId: from })) continue;\n      questPoolOps.removeFoe(f);",
+    "new": "      const theirs = mine ? marks[0] : null;\n      if (!theirs || !questMarkerYields({ mineTouched: questTouched(f), theirsTouched: !!theirs.tc, myId: me, theirId: from })) continue;\n      questPoolOps.removeFoe(f);",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-own-hit-stranger",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "!(ownLoose(f) || (!!ownQuestTag(f) && ownPeerMayHit(id, f)))",
+    "new": "!(ownLoose(f) || !!ownQuestTag(f))",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-own-hit-private",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "!(ownLoose(f) || (!!ownQuestTag(f) && ownPeerMayHit(id, f)))",
+    "new": "!(ownLoose(f) || !!ownShare()?.peerMayHit?.(id, f))",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-own-hit-unbounded",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "ownPeerMayHit(id, f))) || !Number.isFinite(dmg) || dmg < 0 || dmg > HIT_DMG_MAX) return false;",
+    "new": "ownPeerMayHit(id, f))) || !Number.isFinite(dmg) || dmg < 0) return false;",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-own-hit-any-dungeon",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "if (!data || typeof data !== 'object' || (data.k != null && data.k !== _locationKey)) return false;\n    const i = data.i | 0, dmg = Number(data.dmg);\n    const f = foes.find(",
+    "new": "if (!data || typeof data !== 'object') return false;\n    const i = data.i | 0, dmg = Number(data.dmg);\n    const f = foes.find(",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-body-lootable",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "  function lootableBody(f) { return !!f?.dead && !!f.corpse && f._ownFrom == null; }",
+    "new": "  function lootableBody(f) { return !!f?.dead && !!f.corpse; }",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-blow-to-host",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (foe._ownFrom != null) {\n      if (fromPlayer && damage >= 0) {",
+    "new": "    if (foe._ownFrom != null && false) {\n      if (fromPlayer && damage >= 0) {",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-puppet-steps-live",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      const _puppet = (!_authority && _roomFoe) || f._ownFrom != null;",
+    "new": "      const _puppet = !_authority && _roomFoe;",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-hunt-no-party",
+    "file": "src/scenes/dungeonContext.js",
+    "old": ": (ownQuestTag(rec) ? peerCandidates().filter((c) => ownShare()?.peerMayHit?.(c.id, rec)) : []))] : null,",
+    "new": ": [])] : null,",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-save-holds-theirs",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      foes: foes.filter((f) => f._ownFrom == null).map((f) => ({",
+    "new": "      foes: foes.map((f) => ({",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-marker-stand-unflagged",
+    "file": "src/scenes/worldModes.js",
+    "old": "        marker: true,   // QUEST-PARTY phase 3c",
+    "new": "        marker: false,   // QUEST-PARTY phase 3c",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-dungeon-no-stream",
+    "file": "src/scenes/world.js",
+    "old": "    if (m !== 'interior' && m !== 'dungeon') return false;",
+    "new": "    if (m !== 'interior') return false;",
+    "tests": ["test/questparty3c.test.js"]
+  },
+  {
+    "name": "QP3C-dungeon-door-hands-nothing",
+    "file": "src/scenes/world.js",
+    "old": "    onDungeonLeave: () => { const n = handOverRoomFoes();",
+    "new": "    onDungeonLeave: () => { const n = 0;",
+    "tests": ["test/questparty3c.test.js"]
+  }
+]

@@ -90,13 +90,13 @@ test('AUDIT WORLD4 A2/B2/D1 + C4: the mint is the ONE HOME of what may be said -
   assert.match(d, /if \(canon\.startsWith\('loot:'\)\) settleLootFlat\(Number\(canon\.slice\(5\)\)\);/, 'the room\'s word');
   assert.match(d, /settleLootFlat\(i\);   \/\/ AUDIT WORLD4 C3\/D2/, 'the save\'s restore');
   assert.equal((d.match(/const bi = billboardBatches\.indexOf\(p\.batch\);/g) ?? []).length, 1, 'and ONE HOME frees a layout pile\'s flat - the other destroy in the file is droppedLoot\'s teardown, a different owner');
-  assert.match(d, /const LOOT_KEY_RE = \/\^\(loot\|corpse\):\(0\|\[1-9\]\[0-9\]\{0,4\}\)\$\/;/, 'C4: one spelling, five digits at most');
+  assert.match(d, /const LOOT_KEY_RE = \/\^\(loot\|corpse\|enc\):\(0\|\[1-9\]\[0-9\]\{0,4\}\)\$\/;/, 'C4: one spelling, five digits at most (REST-SYNC: `enc` a shared encounter\'s body)');
   assert.match(d, /function lootKeyOf\(key\) \{\s*if \(typeof key !== 'string'\) return null;\s*const m = LOOT_KEY_RE\.exec\(key\);\s*return m \? `\$\{m\[1\]\}:\$\{Number\(m\[2\]\)\}` : null;\s*\}/, 'and the canon is what lands in _lootSeen and rides the wire');
   // C4 executed on the shape of the law: the spellings the old `key.split(':')` read as one container
-  const RE = /^(loot|corpse):(0|[1-9][0-9]{0,4})$/;
+  const RE = /^(loot|corpse|enc):(0|[1-9][0-9]{0,4})$/;
   for (const alias of ['loot:0x0a', 'loot:1e1', 'loot: 10 ', 'loot:0000000010', 'loot:10.0', 'loot:+10', 'loot:-1', 'loot:999999', 'chest:1', 'loot:'])
     assert.equal(RE.test(alias), false, `${alias} is not a container key`);
-  for (const ok of ['loot:0', 'loot:10', 'corpse:99999']) assert.match(ok, RE);
+  for (const ok of ['loot:0', 'loot:10', 'corpse:99999', 'enc:1']) assert.match(ok, RE);
 });
 
 test('AUDIT WORLD4 C1/C2/C6 + D5: a container YOU have open is yours until you close it (the pack binds each loot row to the item OBJECT and never repaints, so landing the room\'s word under an open window orphaned every row and the next click took the item AND left it in the chest); a CLAIM speaks only where the room has not spoken; the claim follows the MOUNT; and the room\'s memory falls due the moment one lands', () => {
@@ -104,7 +104,7 @@ test('AUDIT WORLD4 C1/C2/C6 + D5: a container YOU have open is yours until you c
   assert.match(d, /let _lootOpenKey = null;/, 'the container this player has open');
   // DISC10-E L3 re-aim: the refusal is the inventory DOOR's now (ui/inventoryDoor.js), and the null it answers must
   // not be written over the slot its refusal box already holds - the claim still follows the MOUNT alone
-  assert.match(d, /const _k = lootHolder\(key\) \? lootKeyOf\(key\) : null;\s*const _w = openInventory\(source, onEmptied, \{ lootHooks, lootKey: _k \}\);\s*if \(_w\) activeOverlay = _w;[^\n]*\n\s*if \(_w && _k\) \{ _lootOpenKey = _k; publishLoot\(_k, \{ claim: true \}\); \}/,
+  assert.match(d, /const _k = roomLootKey\(key\);[^\n]*\n\s*const _w = openInventory\(source, onEmptied, \{ lootHooks, lootKey: _k \}\);\s*if \(_w\) activeOverlay = _w;[^\n]*\n\s*if \(_w && _k\) \{ _lootOpenKey = _k; publishLoot\(_k, \{ claim: true \}\); \}/,
     'C6: the inventory door REFUSES a transformed lycanthrope and answers null - no window, no claim');
   assert.match(d, /onClose: \(\) => \{ onEmptied\?\.\(\); if \(lootKey\) \{ _lootOpenKey = null; publishLoot\(lootKey\); \}/, 'and the window is closed before its last word goes, so the room\'s next word may land');
   assert.match(d, /if \(claim && _lootSeen\.has\(canon\)\) return false;/, 'C2: a claim never overwrites the room\'s newer word - a joiner inside the memory\'s window used to un-empty a chest for everyone');
@@ -118,14 +118,14 @@ test('AUDIT WORLD4 C1/C2/C6 + D5: a container YOU have open is yours until you c
 test('AUDIT WORLD4 D3/D4/B3: the memory says what it means and takes only what it says - no pile\'s blanket list and no FOE\'s item list (`corpse:<i>` reads exactly that array, so it was the same container vocabulary carried twice and the law was false for half of it); a `piles` field is no longer APPLIED either; and an item list off the wire is projected wherever it lands', () => {
   const d = rd('src/scenes/dungeonContext.js');
   assert.match(d, /delete w\.piles;\s*for \(const f of w\.foes\) delete f\.items;\s*w\.loot = lootRecords\(\[\.\.\._lootSeen\]\);/, 'D4: neither half of the envelope carries a container nobody has opened');
-  assert.match(d, /const sfoes = Array\.isArray\(shared\.world\.foes\) \? shared\.world\.foes\.slice\(0, _layoutFoes\)\.map\(validSharedFoe\)\.filter\(Boolean\) : \[\];[\s\S]*?applyWorld\(\{ \.\.\.shared\.world, piles: undefined, actions: acts, foes: sfoes \}, \{ truncate: false, wire: true \}\);\s*applyLoot\(shared\.world\.loot\);[^\n]*\n\s*(?:applyCampMemory\(shared\.world\.camps\);[^\n]*\n\s*)?_sharedApplied = true;/,
+  assert.match(d, /const sfoes = Array\.isArray\(shared\.world\.foes\) \? shared\.world\.foes\.slice\(0, _layoutFoes\)\.map\(validSharedFoe\) : \[\];[\s\S]*?applyWorld\(\{ \.\.\.shared\.world, piles: undefined, actions: acts, foes: sfoes \}, \{ truncate: false, wire: true \}\);\s*applyLoot\(shared\.world\.loot\);[^\n]*\n\s*(?:applyCampMemory\(shared\.world\.camps\);[^\n]*\n\s*)?_sharedApplied = true;/,
     'D3: what this client will not say, it will not hear - an old snapshot inside WORLD_TTL_MS used to blanket-replace a joiner\'s own rolls');
   assert.match(d, /function applyWorld\(w, \{ truncate = true, wire = false \} = \{\}\) \{/, 'and the wire is told from a save off disk');
   assert.match(d, /function patchFoe\(f, sf, wire = false\) \{\s*f\.entity\.health = sf\.health;/, 'B3: the per-foe body knows which it is');
-  assert.match(d, /if \(!wire\) f\.entity\.items = sf\.items\.map\(\(it\) => \(\{ \.\.\.it \}\)\);\s*else if \(sf\.items != null\) \{ const li = validLootList\(sf\.items\); if \(li\) f\.entity\.items = li; \}/,
+  assert.match(d, /if \(!wire\) f\.entity\.items = sf\.items\.map\(\(it\) => \(\{ \.\.\.it \}\)\);\s*else if \(sf\.items != null\) \{ const li = unbound\(validLootList\(sf\.items\)\); if \(li\) f\.entity\.items = li; \}/,   // SS3: projected, then without a bound piece
     'a list off the wire goes through the projection or nowhere; a record without one leaves this client\'s own roll alone');
   assert.match(d, /patchFoe\(f, sf, wire\);/, 'threaded');
-  assert.match(d, /if \(ok && foes\[i\]\) patchFoe\(foes\[i\], sf, wire\);/, 'on the rebuild too');
+  assert.match(d, /if \(ok && foes\[i\]\) \{ patchFoe\(foes\[i\], sf, wire\);/, 'on the rebuild too');   // CORPSE-GOLD: and the body's own record after it
 });
 
 test('AUDIT WORLD4: the record - the arc carries the audit, the sentences it falsified are STRUCK where they were written, and the cost it chose not to pay is written down', () => {

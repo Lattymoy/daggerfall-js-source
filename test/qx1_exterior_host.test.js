@@ -43,7 +43,7 @@ import { ensureFactionRep, changeReputation } from '../src/systems/factionRep.js
 import { findFactions, findFactionByTypeAndRegion, getPeopleOfCurrentRegion, getCourtOfCurrentRegion } from '../src/systems/talk.js';
 import { FACTION_TYPES, SOCIAL_GROUPS, GUILD_GROUPS } from '../src/formats/factionFile.js';
 import { liveVampirism } from '../src/systems/racialLive.js';
-import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender } from '../src/scenes/questFoeHost.js';
+import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender, heldSpots, holdSpotWhile } from '../src/scenes/questFoeHost.js';
 import { placeFoeFreely } from '../src/systems/quest/sceneMount.js';
 import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
 import { QuestJournalWindow, JOURNAL_RECTS } from '../src/ui/questJournal.js';
@@ -109,8 +109,10 @@ const QW_PARAMS = [
   'placeFoeEnv', 'placeFoeFreely', 'entityOccupancy', 'questFoeGender', 'ENEMY_BASICS',
   'fieldOfView', 'walkMode', 'player', 'cam', 'collider', 'exteriorFoes', 'exteriorFoePool',
   // ...and the G4 spell registry CastSpellDo reads through this host's
-  // own `getClassicSpellEffects` (world.js:9436's seam).
+  // own `getClassicSpellEffects` (world.js:9623's seam).
   'spellRecordOfIndex',
+  // QUEST-WAVE: the held spots a placement keeps until its stand lands (questFoeHost.js) - appended, as above
+  'heldSpots', 'holdSpotWhile',
 ];
 
 /**
@@ -166,6 +168,7 @@ function mountQuestWorld(opts = {}) {
     // ARG-CARRYING again: the record is BUILT from the id it was asked
     // for, so a seam that hard-codes a spell cannot pass.
     opts.spellRecordOfIndex ?? ((id) => (id === 0 ? null : { effects: [{ type: id & 0xff, subType: (id >> 8) & 0xff }] })),
+    heldSpots, holdSpotWhile,
   );
   return { world, asked, playerEntity, factionDict, dfLocation, townTalk };
 }
@@ -305,7 +308,7 @@ test('QX1 review: every faction read is the PERSISTENT store, and the Person cha
   // (4) ...and the family degrades to the charter's refusal when
   // FACTION.TXT has not loaded - never a throw on `store.dict`. The
   // People/Courts pair is left out of this arm deliberately: their
-  // expressions are world.js:9490/9492's verbatim, and talk.js's
+  // expressions are world.js:9677/9679's verbatim, and talk.js's
   // findFactions dereferences the dictionary it is handed, so the two
   // hosts share one shape there and neither invents a private guard.
   const cold = mountQuestWorld({ factionDict: null });
@@ -352,7 +355,8 @@ test('QX1 review: the CreateFoe spawn seams and the site mount are wired to this
   });
   assert.equal(outside.world.tryPlaceFoe(wave[0]), true);
   assert.equal(stood.length, 1, 'the foe is stood in this host\'s own pool');
-  assert.equal(mountQuestWorld({ modes: null }).world.tryPlaceFoe(wave[0]), true,
+  // QUEST-WAVE: its own scene (collider) - the stand above is still in flight, and a spot it holds may refuse this one
+  assert.equal(mountQuestWorld({ modes: null, collider: { ...OPEN_GROUND } }).world.tryPlaceFoe(wave[0]), true,
     'and with no mode machine at all the default is still the exterior arm');
 
   // GameManager.RaiseOnEncounterEvent - AbortRestForEnemySpawn's door,
@@ -367,7 +371,7 @@ test('QX1 review: the CreateFoe spawn seams and the site mount are wired to this
 
 // ───────── ROAD-G G2 (b): CreateFoe's OUTDOOR placement arm ─────────
 
-test('ROAD-G G2: the outdoor arm is PlaceFoeExteriorLocation - the 5/20 ring, the FOV cone, LookAt, the Flying lift', () => {
+test('ROAD-G G2: the outdoor arm is PlaceFoeExteriorLocation - the 5/20 ring, the FOV cone, LookAt, the Flying lift', async () => {
   const foe = { symbol: { name: '_foe_' }, parentQuest: { uid: 7 }, foeType: 10, gender: 1, spawnCount: 1 };
   const behaviour = { questUID: 7 };
   const handle = { foe, behaviour };
@@ -386,7 +390,9 @@ test('ROAD-G G2: the outdoor arm is PlaceFoeExteriorLocation - the 5/20 ring, th
   // 5/20 (:245-248 passes no band) and the wilderness 8/25 arm
   // (:252-257) has no reachable branch on this host at all.
   const world = mk();
-  for (let i = 0; i < 200; i++) assert.equal(world.tryPlaceFoe(handle), true);
+  // QUEST-WAVE: each stand LANDS before the next is placed (a macrotask turn) - a spot held by a stand in flight
+  // refuses the next placement of the same tick, which test/questwave.test.js pins; here the law's geometry is sampled
+  for (let i = 0; i < 200; i++) { assert.equal(world.tryPlaceFoe(handle), true); await new Promise((r) => setImmediate(r)); }
   assert.equal(stood.length, 200);
   for (const [type, pos, opts] of stood) {
     assert.equal(type, 10, 'the foe resource\'s own mobile type');
@@ -423,6 +429,7 @@ test('ROAD-G G2: the outdoor arm is PlaceFoeExteriorLocation - the 5/20 ring, th
   stood.length = 0;
   assert.equal(mk().tryPlaceFoe({ foe: { ...foe, foeType: 1 }, behaviour }), true);
   assert.equal(stood[0][1][1], 1.25 + 1.5, 'the flier lifts 1.5');
+  await new Promise((r) => setImmediate(r));   // QUEST-WAVE: the flier's stand lands, its held spot let go, before the occupancy passes below
 
   // TryPlacement returns FALSE when there is no open spot - the wave
   // stays pending and re-attempts on the next machine tick, which is
@@ -450,19 +457,19 @@ test('ROAD-G G2: the outdoor arm is PlaceFoeExteriorLocation - the 5/20 ring, th
   // testPoint, 0.65f)` (:317-321), ANY collider - so this host\'s
   // WHOLE street database is in it, the watch included, not the
   // encounter pool alone.
-  assert.match(SRC, /isOccupied: entityOccupancy\(\(f\) => f\.ai\?\.feet, exteriorFoePool, feet\),/);
+  assert.match(SRC, /isOccupied: entityOccupancy\(\(f\) => f\.ai\?\.feet, \(\) => \[\.\.\.exteriorFoePool\(\), \.\.\.heldSpots\(collider\)\], feet\),/);
   const occupied = mk({ exteriorFoePool: () => [{ ai: { feet: [100, 0, 100] } }, { ai: { feet: [0, 0, 0] } }] });
   let refusals = 0;
-  for (let i = 0; i < 60; i++) if (!occupied.tryPlaceFoe(handle)) refusals++;
+  for (let i = 0; i < 60; i++) { if (!occupied.tryPlaceFoe(handle)) refusals++; await new Promise((r) => setImmediate(r)); }   // QUEST-WAVE: each lands first
   assert.equal(refusals, 0, 'a foe standing at the player\'s own feet does not block the whole ring');
   // THE REAL BITE, and it has to be a refusal: bodies on EVERY spot in
   // the ring, and the arm answers false without standing anything.
   // REVIEW: this assertion used to be `typeof ... === 'boolean'` under
   // this same comment - tryPlaceFoe returns a boolean on every path, so
   // it could not fail for any mutant, and deleting the occupancy term
-  // from questFoeHost.js:141 outright left this file green. An
+  // from questFoeHost.js:142 outright left this file green. An
   // unfalsifiable term is not caution; it is a second law no test is
-  // holding. entityOccupancy (questFoeHost.js:149-161) hits when the
+  // holding. entityOccupancy (questFoeHost.js:150-162) hits when the
   // centre distance is under r + 0.45 with r = 0.65, and it compares
   // `feet[1] + 0.9` against the test point's y (floor + the 1.25
   // separation), so bodies at feet y 0.35 sit exactly on the probe
@@ -483,17 +490,17 @@ test('ROAD-G G2: the outdoor arm is PlaceFoeExteriorLocation - the 5/20 ring, th
 // ─── ROAD-G G2 review: the seams the lane shipped and nothing held ───
 
 test('ROAD-G G2 review: the cast engine raises the two ready-spell doors into THIS host\'s machine', () => {
-  // hostMagic.js:79-80 declares `onNewReadySpell` / `onCastReadySpell`
+  // hostMagic.js:92-93 declares `onNewReadySpell` / `onCastReadySpell`
   // and is the ONLY raiser in the tree (SetReadySpell raises NEW right
   // after `readiedSpell = sp`; `done()` raises CAST on every release
-  // path, before the ready clears). machine.js:870/:876 fan them out,
+  // path, before the ready clears). machine.js:877/:883 fan them out,
   // and CastSpellDo / CastEffectDo latch on nothing else
-  // (actions.js:2702 - C# subscribes them in its constructor). This
+  // (actions.js:2713 - C# subscribes them in its constructor). This
   // host owns its own cast engine, and worldModes takes THIS instance
   // for the interior mode, so while the mount passed neither key every
   // `cast X spell do` / `cast X effect do` on this route - and in every
-  // shop entered from it - was permanently deaf. world.js:4895-4896 and
-  // dungeonContext.js:2293-2294 wire the identical pair.
+  // shop entered from it - was permanently deaf. world.js:5017-5018 and
+  // dungeonContext.js:2394-2395 wire the identical pair.
   const doorSrc = slice('    onNewReadySpell: (sp) => questBridge',
     '    // ROAD-G G2 (a): THE THREE-ARM SHAPE');
   // ...and they are keys of the ENGINE MOUNT, not of some other bag:
@@ -526,9 +533,9 @@ test('ROAD-G G2 review: the cast engine raises the two ready-spell doors into TH
 
 test('ROAD-G G2 review: questWorld answers CastSpellDo\'s two classic-spell reads', () => {
   // Without these the action self-completes at PARSE
-  // (actions.js:2756/:2763 - no effects, so C#'s template completes and
+  // (actions.js:2767/:2774 - no effects, so C#'s template completes and
   // the task can never fire), which would have left `cast X spell do`
-  // dead on this route even with the doors above wired. world.js:9436's
+  // dead on this route even with the doors above wired. world.js:9623's
   // pair, byte-folded on both sides exactly as MakeClassicKey folds.
   const { world } = mountQuestWorld();
   assert.deepEqual(world.getClassicSpellEffects(0x105), [{ type: 5, subType: 1 }],
@@ -550,7 +557,7 @@ test('ROAD-G G2 review: the encounter pool\'s frame seams - the tick, the draw, 
   // the player, and every enemy shaft passing through him.
   const frame = slice('      const _senses = _foeSenses();',
     '      droppedLoot.tickFlats(dt);');
-  assert.ok(frame.includes('exteriorFoes.update(dt,'),
+  assert.ok(frame.includes('exteriorFoes.update(foeDt,'),   // QUEST-POPUP-PAUSE re-aim: the pools' clock (0 offline under a quest box)
     'the mounted pool DRIVES on the frame (WINFOE1, 2026-09-17: and no longer freezes under a window - the civilians still do)');
   assert.ok(frame.includes('const popDt = townTalk.overlayActive ? 0 : dt;') || slice('      const _playerStill = !!player.standing;', '      const live = ').includes('townTalk.overlayActive ? 0 : dt'),
     'WINFOE1: the population (the civilians) still freezes under the talk overlay - nobody walks away mid-talk');
@@ -569,7 +576,7 @@ test('ROAD-G G2 review: the encounter pool\'s frame seams - the tick, the draw, 
   assert.match(senses, /candidates: \(\) => exteriorFoePool\(\)\.filter\(\(f\) => !f\.dead\),/,
     'the senses walk the UNNARROWED street database, live records only');
 
-  // world.js:16073-16145's arrow shape: an enemy shaft hunts a WALKING
+  // world.js:16905-16977's arrow shape: an enemy shaft hunts a WALKING
   // player (the fly camera has no capsule), and both live pools are
   // impact candidates. `playerFeet: null` is every enemy arrow passing
   // through the player - the whole enemy arm the lane shipped.

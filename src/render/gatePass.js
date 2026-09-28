@@ -264,6 +264,7 @@ export class GatePassRenderer {
       gl.uniform3f(this.bu.uOrigin, g.origin[0], g.origin[1], g.origin[2]);
       gl.uniform1f(this.bu.uFade, Math.min(1, g.fade));
       gl.drawArrays(gl.TRIANGLES, 0, this.column.count);
+      this.drawn++;   // GATE-SEEN: a gate drawn is its beacon - a far one (beaconOnly) is nothing else
     }
     // then the membranes, premultiplied: they hide the world behind them as much as they glow
     gl.useProgram(this.membrane);
@@ -275,13 +276,13 @@ export class GatePassRenderer {
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.bindVertexArray(this.quad.vao);
     for (const g of list) {
+      if (g.beaconOnly) continue;   // GATE-SEEN: a gate on a pixel not built yet is its beacon alone - no fire floating over the far ground
       gl.uniform3f(this.mu.uOrigin, g.origin[0], g.origin[1], g.origin[2]);
       gl.uniform1f(this.mu.uYaw, g.yaw);
       gl.uniform1f(this.mu.uOpen, Math.max(0, Math.min(1, g.open ?? 0)));
       gl.uniform1f(this.mu.uFade, Math.min(1, g.fade));
       gl.uniform1f(this.mu.uSpin, Number.isFinite(g.spin) ? g.spin : gateSpinAt(t, g.open ?? 0));
       gl.drawArrays(gl.TRIANGLES, 0, this.quad.count);
-      this.drawn++;
     }
     gl.bindVertexArray(null);
     gl.enable(gl.CULL_FACE);

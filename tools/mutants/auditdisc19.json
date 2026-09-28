@@ -623,8 +623,8 @@
   {
     "name": "AUDIT-DISC19-B1-shared-colour-back",
     "file": "src/scenes/worldModes.js",
-    "old": "      renderer.setPointLights(_dgLit.data, null, _dgLit.colors);",
-    "new": "      renderer.setPointLights(_dgLit.data, _dgColor);",
+    "old": "renderer.setPointLights(_dgLit.data, null, (_dgFade && capFadePairs(_dgLit.data, _dgLit.data.length / 4 - _dgNear.data.length / 4, cam.pos, renderer.maxPointLights, _dgLit.colors)) || _dgLit.colors);",
+    "new": "renderer.setPointLights(_dgLit.data, _dgColor);",
     "tests": [
       "test/auditdisc19.test.js"
     ]

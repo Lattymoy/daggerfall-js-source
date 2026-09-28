@@ -1,0 +1,29 @@
+[
+  {
+    "name": "BEASTPEER-the-beast-drawn-as-the-person-the-defect",
+    "file": "src/net/remotePlayers.js",
+    "old": "      if (beast) { this._dropDoll(peer.id); continue; }\n",
+    "new": "",
+    "tests": [
+      "test/beastpeer.test.js"
+    ]
+  },
+  {
+    "name": "BEASTPEER-the-persons-doll-kept",
+    "file": "src/net/remotePlayers.js",
+    "old": "      if (beast) { this._dropDoll(peer.id); continue; }",
+    "new": "      if (beast) { continue; }",
+    "tests": [
+      "test/beastpeer.test.js"
+    ]
+  },
+  {
+    "name": "BEASTPEER-every-peer-dollless",
+    "file": "src/net/remotePlayers.js",
+    "old": "      if (beast) { this._dropDoll(peer.id); continue; }",
+    "new": "      if (true) { this._dropDoll(peer.id); continue; }",
+    "tests": [
+      "test/beastpeer.test.js"
+    ]
+  }
+]

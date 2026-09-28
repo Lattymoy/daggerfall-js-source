@@ -165,11 +165,11 @@ test('DISC23-A: the one reading - a body with no place in this frame is not draw
 test('DISC23-A: the hosts hand the plans the party\'s bodies - the dungeon, the building and the town, through their doors', () => {
   const world = src('src/scenes/world.js');
   // the one host reading: a party member's peer body, in this scene's frame, with its facing
-  assert.match(world, /const partyNear = \(\) => \{\s*\n\s*const near = peersNear\(\);[\s\S]*?for \(const m of social\.others\(\)\) \{\s*\n\s*const peer = near\.find\(\(p\) => m\.peers\?\.includes\(p\.id\)\);/);
+  assert.match(world, /const partyNear = \(\) => \{\s*\n(?:\s*if \(!social\?\.party\) return \[\];[^\n]*\n)?\s*const near = peersNear\(\);[\s\S]*?for \(const m of social\.others\(\)\) \{\s*\n\s*const peer = near\.find\(\(p\) => m\.peers\?\.includes\(p\.id\)\);/);
   assert.match(world, /yaw: online\?\.peers\.get\(peer\.id\)\?\.shown\?\.yaw \?\? 0 \}\);/);
   // the town: the player's own subtraction, into the location's frame
-  assert.match(world, /townParty: \(\) => partyNear\(\)\.map\(\(m\) => \(\{ \.\.\.m, feet: \[m\.feet\[0\] - t\[0\] - b\.locOrigin\[0\], m\.feet\[1\] - t\[1\] - b\.locOrigin\[1\], m\.feet\[2\] - t\[2\] - b\.locOrigin\[2\]\] \}\)\),/);
-  assert.match(world, /partyNear: \(\) => partyNear\(\),/);
+  assert.match(world, /townParty: \(\) => partyOnMaps\(\)\.map\(\(m\) => \(\{ \.\.\.m, feet: \[m\.feet\[0\] - t\[0\] - b\.locOrigin\[0\], m\.feet\[1\] - t\[1\] - b\.locOrigin\[1\], m\.feet\[2\] - t\[2\] - b\.locOrigin\[2\]\] \}\)\),/);
+  assert.match(world, /partyNear: \(\) => partyOnMaps\(\),/);   // AUDIT (pre-merge) I-E: the plans mark those drawn here
   const modes = src('src/scenes/worldModes.js');
   assert.match(modes, /selfId: \(\) => host\.selfId\?\.\(\) \?\? null, party: \(\) => host\.partyNear\?\.\(\) \?\? \[\],/, 'the dungeon\'s opts');
   assert.match(modes, /title: interiorBuilding\?\.name \?\? 'Interior',\s*\n\s*party: \(\) => host\.partyNear\?\.\(\) \?\? \[\],/, 'the building\'s map');

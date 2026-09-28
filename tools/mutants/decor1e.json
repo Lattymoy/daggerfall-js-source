@@ -11,8 +11,8 @@
   {
     "name": "DECOR1e-a-full-piece-unheld",
     "file": "src/ui/decorPanel.js",
-    "old": "    storeBtn.disabled = !it || !!it.piece.item || (it.piece.storage && it.holds);",
-    "new": "    storeBtn.disabled = !it || !!it.piece.item;",
+    "old": "    storeBtn.disabled = !it || !!it.piece.item || (it.piece.storage && it.holds) || !!it.piece.station;   // HOME-STATIONS: a station holds nothing",
+    "new": "    storeBtn.disabled = !it || !!it.piece.item || !!it.piece.station;   // HOME-STATIONS: a station holds nothing",
     "tests": [
       "test/decor1e.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "DECOR1e-the-room-view-drawing-the-catalogue",
     "file": "src/ui/decorPanel.js",
-    "old": "    if (mode === 'room') {\n      const placed = view.placed ?? [];",
-    "new": "    if (false) {\n      const placed = view.placed ?? [];",
+    "old": "    if (mode === 'room') {\n      const placed = roomed(view.placed ?? []);",
+    "new": "    if (false) {\n      const placed = roomed(view.placed ?? []);",
     "tests": [
       "test/decor1e.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "DECOR1e-the-eye-stopped-by-the-piece",
     "file": "src/scenes/decorTool.js",
-    "old": "    const through = p.editing ? [decorKeyOf(p.editing.id)] : null;",
-    "new": "    const through = null;",
+    "old": "    const skips = [...(p.editing ? [decorKeyOf(p.editing.id)] : []), ...p.inside.map((c) => c.key)];",
+    "new": "    const skips = [...p.inside.map((c) => c.key)];",
     "tests": [
       "test/decor1e.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "DECOR1e-a-late-move-standing",
     "file": "src/scenes/decorTool.js",
-    "old": "      if (deps.visit?.() === visit) pool.put(stood);",
-    "new": "      pool.put(stood);",
+    "old": "      if (price.refund > 0) deps.wallet().credit?.(price.refund);\n      if (deps.visit?.() === visit) pool.put(stood);",
+    "new": "      if (price.refund > 0) deps.wallet().credit?.(price.refund);\n      pool.put(stood);",
     "tests": [
       "test/decor1e.test.js"
     ]

@@ -662,10 +662,11 @@ test('PERF-EXT4: A MATRIX\'S SCALE ONCE A RECORD - recording a mesh of forty bou
 
 // ── PERF-EXT5: the sun's 3x3 kernel in four taps ──────────────────────────
 
-/** sunShadowTap's body, sliced from the block every lane shader pastes. */
+/** The one cascade's lookup, sliced from the block every lane shader pastes (LA-SHADOW2, re-aimed: sunShadowTap's body
+ *  moved whole into sunCascadeTap, and sunShadowTap picks and blends the cascades over it). */
 const sunTapBody = () => {
-  const m = /float sunShadowTap\(vec3 wp, vec3 n, bool soft\) \{([\s\S]*?)\n\}/.exec(SHADOW_GLSL);
-  assert.ok(m, 'sunShadowTap is where this pin thinks it is');
+  const m = /float sunCascadeTap\(int c, vec3 wp, vec3 n, bool soft\) \{([\s\S]*?)\n\}/.exec(SHADOW_GLSL);
+  assert.ok(m, 'sunCascadeTap is where this pin thinks it is');
   return m[1].split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');   // the code, not its comments
 };
 

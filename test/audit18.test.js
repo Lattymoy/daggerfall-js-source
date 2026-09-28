@@ -13,6 +13,8 @@ import { assignStartingGear } from '../src/systems/startingGear.js';
 import { KEEP } from '../src/scenes/dataSource.js';
 import { tickPlayerMinutes } from '../src/systems/worldTick.js';
 import { computeFaceUVCoordinates } from '../src/formats/faceUVTool.js';
+import { FATIGUE_DRAIN_SCALE } from '../src/systems/statMods.js';   // BALANCE1: exertion's scale on DFU's losses
+const charged = (loss, mult = 1) => Math.trunc(loss * mult * FATIGUE_DRAIN_SCALE);   // BALANCE1: DFU's loss x the multiplier x exertion's scale, truncated once
 
 const SRC = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
 const walk = (dir) => readdirSync(dir, { withFileTypes: true }).flatMap((d) =>
@@ -173,7 +175,7 @@ test('AUDIT 18 F2: every ARENA2 name live code fetches survives the ingest diet'
 });
 
 test('AUDIT 18 F2: the template-built CLASS**.CFG fetches all survive the diet', () => {
-  // dungeonContext.js:546 and chargenSession.js:95/110 build these by index.
+  // dungeonContext.js:571 and chargenSession.js:95/110 build these by index.
   for (let i = 0; i < 19; i++) {
     assert.ok(KEEP(`CLASS${String(i).padStart(2, '0')}.CFG`, true));
   }
@@ -407,7 +409,7 @@ test('AUDIT 18 F8: fatigue drains ONCE per minute-change, not once per caught-up
   // minute's fatigue. Draining per round would bill 10x here.
   const drained = { n: 0 };
   tickPlayerMinutes({ entity: tickEntity(), classicMinutes: 0, dt: 50, sinks: tickSinks(drained), rolls: () => 0.5 });
-  assert.equal(drained.n, 11, 'ten minutes of catch-up still costs one minute of fatigue');
+  assert.equal(drained.n, charged(11), 'ten minutes of catch-up still costs one minute of fatigue (DFU\'s 11, on BALANCE1\'s scale)');
   // And no minute change costs nothing at all.
   const none = { n: 0 };
   tickPlayerMinutes({ entity: tickEntity(), classicMinutes: 0.1, dt: 0.5, sinks: tickSinks(none), rolls: () => 0.5 });
@@ -420,11 +422,24 @@ test('AUDIT 18 F8: the fatigue band and Athleticism, truncated AFTER the multipl
     tickPlayerMinutes({ entity: tickEntity(), classicMinutes: 0, dt: 5, sinks: tickSinks(d), activity, fatigueMultiplier: mult, rolls: () => 0.5 });
     return d.n;
   };
-  assert.equal(run({ running: false, swimming: false }, 1.0), 11);
-  assert.equal(run({ running: true, swimming: false }, 1.0), 88);
-  // PlayerEntity.cs:405 casts to int AFTER the multiply: 11 -> 9, 88 -> 79.
-  assert.equal(run({ running: false, swimming: false }, 0.9), 9);
-  assert.equal(run({ running: true, swimming: false }, 0.9), 79);
+  assert.equal(run({ running: false, swimming: false }, 1.0), charged(11));
+  assert.equal(run({ running: true, swimming: false }, 1.0), charged(88));
+  // PlayerEntity.cs:405 casts to int AFTER the multiply: 11 -> 9, 88 -> 79 in DFU - and BALANCE1's scale rides the
+  // same multiply, truncated once (a trunc before the scale would leave a fraction, and read unlike `charged`)
+  assert.equal(run({ running: false, swimming: false }, 0.9), charged(11, 0.9));
+  assert.equal(run({ running: true, swimming: false }, 0.9), charged(88, 0.9));
+  // TRUNCATED, NOT ROUNDED (the pre-merge audit 0927b: at 0.9 the scaled 7.425 and 59.4 read the same either way, so the
+  // x0.8 rows carry the pin - 6.6 and 52.8 truncate to 6 and 52 and would round to 7 and 53)
+  assert.equal(run({ running: false, swimming: false }, 0.8), charged(11, 0.8));
+  assert.equal(run({ running: true, swimming: false }, 0.8), charged(88, 0.8));
+  // ...and whatever the scale, every row where a truncation and a rounding part is held to the truncation
+  const parting = [[11, 1], [22, 1], [44, 1], [88, 1], [11, 0.9], [88, 0.9], [11, 0.8], [88, 0.8]]
+    .filter(([l, m]) => Math.trunc(l * m * FATIGUE_DRAIN_SCALE) !== Math.round(l * m * FATIGUE_DRAIN_SCALE));
+  assert.ok(parting.length > 0, 'some row tells a trunc from a round at this scale');
+  for (const [l, m] of parting.filter(([l]) => l === 11 || l === 88)) {
+    assert.equal(run({ running: l === 88, swimming: false }, m), charged(l, m), `${l} at x${m}`);
+  }
+  // (the pre-merge audit 0927b F3: derived, not typed - a turn of the scale is its constant and balance1's pins alone)
 });
 
 test('AUDIT 18 F8: EVERY host runs the player world clock, not just the dungeon', () => {

@@ -1,6 +1,12 @@
 # Production + experimental preview deploy: GitHub Pages via Actions.
 #
-# Root always comes from main and keeps the house `npm run check` gate.
+# Root always comes from main and keeps the house `npm run check` gate -
+# FLOW1 (2026-09-26): as verify.yml's parallel jobs (lint and the types,
+# four balanced test shards) beside the site's own build, every one of
+# them on the SAME commit (the `main` job pins it: two merges in a row can
+# not deploy a tree the shards did not see). `deploy` publishes only once
+# all of them passed. The same gate as one serial `npm run check` - it
+# was ~7 minutes of every deploy, the PR's check run over again.
 # The exact-face-atlas experiment is built separately and mounted beneath
 # /preview/exact-face-atlas/ so it can be opened on a phone without merging
 # experimental rendering code into production.
@@ -29,28 +35,48 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  # the one commit every job below verifies, builds and publishes: main's
+  # head as this run began
+  main:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      sha: ${{ steps.sha.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - id: sha
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  verify:
+    needs: main
+    uses: ./.github/workflows/verify.yml
+    with:
+      ref: ${{ needs.main.outputs.sha }}
+      build: false
+
+  site:
+    needs: main
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout production
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: ${{ needs.main.outputs.sha }}
           path: production
 
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+          cache-dependency-path: production/package-lock.json
 
       - name: Install production dependencies
         run: npm ci
         working-directory: production
 
-      - name: Verify and build production
-        run: npm run check
+      - name: Build production
+        run: npm run build
         working-directory: production
 
       - name: Assemble production site
@@ -106,5 +132,13 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
+
+  deploy:
+    needs: [verify, site]
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - id: deployment
         uses: actions/deploy-pages@v4

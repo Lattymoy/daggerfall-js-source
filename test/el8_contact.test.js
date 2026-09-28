@@ -61,14 +61,16 @@ test('EL8: the constants, the door, the contact block and the table in the shade
   assert.match(AIR_CONTACT_GLSL, /if \(uContactParams\.w <= 0\.0\) return 1\.0;/, 'off is lit');
   assert.match(AIR_CONTACT_GLSL, /float len = min\(dist, uContactParams\.x\);/, 'the march stops at the light');
   assert.match(AIR_CONTACT_GLSL, /for \(int i = 1; i <= 4; i\+\+\) \{/);
-  assert.match(AIR_CONTACT_GLSL, /vec3 p = start \+ toLight \* \(len \* float\(i\) \/ 4\.0\);/, 'the steps as a float literal');
+  assert.match(AIR_CONTACT_GLSL, /vec4 dc = uPrevVP \* vec4\(toLight \* \(len \/ 4\.0\), 0\.0\);/, 'the steps as a float literal (LA-POST6: one step\'s clip-space stride)');
+  assert.match(AIR_CONTACT_GLSL, /vec4 c = c0 \+ dc \* float\(i\);/, 'LA-POST6: step i is c0 + i strides');
   // F3: the surface must have been in the previous frame where it stands, or nothing is marched
-  assert.match(AIR_CONTACT_GLSL, /vec4 c0 = uPrevVP \* vec4\(start, 1\.0\);\n  if \(c0\.w <= 0\.0\) return 1\.0;\n  vec2 uv0 = c0\.xy \/ c0\.w \* 0\.5 \+ 0\.5;\n  if \(uv0\.x < 0\.0 \|\| uv0\.x > 1\.0 \|\| uv0\.y < 0\.0 \|\| uv0\.y > 1\.0\) return 1\.0;\n  float z0 = texture\(uPrevDepth, prevDepthUV\(uv0\)\)\.r \* 2\.0 - 1\.0;\n  if \(abs\(c0\.w - uPrevProjInfo\.w \/ \(z0 \+ uPrevProjInfo\.z\)\) > uContactParams\.y\) return 1\.0;\n  for \(int i = 1;/, 'F3: the self-check before the march');
+  assert.match(AIR_CONTACT_GLSL, /vec4 c0 = uPrevVP \* vec4\(start, 1\.0\);\n  if \(c0\.w <= 0\.0\) return 1\.0;\n  vec2 uv0 = c0\.xy \/ c0\.w \* 0\.5 \+ 0\.5;\n  if \(uv0\.x < 0\.0 \|\| uv0\.x > 1\.0 \|\| uv0\.y < 0\.0 \|\| uv0\.y > 1\.0\) return 1\.0;\n  float z0 = texture\(uPrevDepth, prevDepthUV\(uv0\)\)\.r \* 2\.0 - 1\.0;\n[\s\S]*?if \(abs\(c0\.w - uPrevProjInfo\.w \/ \(z0 \+ uPrevProjInfo\.z\)\) > tol\) return 1\.0;[\s\S]*?for \(int i = 1;/, 'F3: the self-check before the march (LA-POST6: within the surface\'s own tolerance, not the thickness)');
   assert.match(AIR_CONTACT_GLSL, /float sceneDist = uPrevProjInfo\.w \/ \(z \+ uPrevProjInfo\.z\);\n\s+float behind = c\.w - sceneDist;/, 'the previous frame\'s terms; c.w is the point\'s view distance under that projection');
-  assert.match(AIR_CONTACT_GLSL, /if \(behind > 0\.02 && behind < uContactParams\.y\) return uContactParams\.z;/, 'an occluder within the thickness: the floor, not black');
+  assert.match(AIR_CONTACT_GLSL, /occ = max\(occ, smoothstep\(0\.02, 0\.1, behind\) \* \(1\.0 - smoothstep\(uContactParams\.y \* 0\.75, uContactParams\.y, behind\)\)\);/, 'an occluder within the thickness (LA-POST6: a soft claim)');
+  assert.match(AIR_CONTACT_GLSL, /return mix\(1\.0, uContactParams\.z, occ\);/, 'the floor, not black');
   for (const [name, fs] of [['mesh', EL_MESH_FS], ['terrain', EL_TERRAIN_FS], ['char', EL_CHAR_FS]]) {
     assert.ok(fs.includes(AIR_CONTACT_GLSL), `${name} carries the contact block`);
-    assert.match(fs, /int k = uCasterOf\[i\];[^\n]*\n(?:    \/\/[^\n]*\n)*    float sh = k >= 0 \? casterShadowAt\(k, uPointLights\[i\], wp, n\)[^\n]*\n      : \(k == -2 \|\| d > uPointLights\[i\]\.w \* 0\.7\) \? 1\.0[^\n]*\n      : contactShadow\(wp, n, Ln, d\);/, `${name}: the table, then the map (DISC15: of either tier) or the march - never for the hand's light, never past seven tenths of the range (F3, F5)`);
+    assert.match(fs, /int k = uCasterOf\[i\];[^\n]*\n(?:    \/\/[^\n]*\n)*    float sh = k >= 0 \? casterShadowAt\(k, uPointLights\[i\], wp, n\)[^\n]*\n      : \(k == -2 \|\| d > uPointLights\[i\]\.w \* 0\.7\) \? 1\.0[^\n]*\n      : mix\(contactShadow\(wp, n, Ln, d\), 1\.0, smoothstep\(uPointLights\[i\]\.w \* 0\.6, uPointLights\[i\]\.w \* 0\.7, d\)\);/, `${name}: the table, then the map (DISC15: of either tier) or the march - never for the hand's light, never past seven tenths of the range (F3, F5), eased out from six (LA-COST5)`);
   }
   assert.ok(EL_BB_FS.includes('elPointFlat(vBBWorld, base)') && (EL_BB_FS.match(/elPointLit\(/g) || []).length === 1, 'a flat lights by elPointFlat, which marches nowhere (its own flat would occlude it); elPointLit is defined and never called there');
   assert.match(SHADOW_GLSL, /uniform int uCasterOf\[48\];/);
@@ -108,7 +110,8 @@ test('EL8: on the fake GL - the two depths ping-pong, the previous frame\'s view
   r.beginFrame(P, I, new Float32Array([0, 1, 0]), WORLD_FRAME);
   assert.equal(ap.frame.depthIndex, 0); assert.equal(ap.frame.prevDepth, ap.frame.depths[1]);
   const fboBind = calls.findIndex((c) => c[0] === 'bindFramebuffer' && c[2] === ap.frame.fbo);
-  assert.ok(fboBind >= 0 && calls.slice(fboBind).some((c) => c[0] === 'framebufferTexture2D' && c[2] === 36096 && c[4] === ap.frame.depths[0]), 'depth 0 attached to the frame\'s framebuffer for this frame (the swap re-attaches)');
+  assert.ok(fboBind >= 0 && ap.frame.fbo === ap.frame.fbos[0], 'depth 0\'s framebuffer bound for this frame (LA-POST8: the frame keeps one framebuffer per depth)');
+  assert.ok(!calls.some((c) => c[0] === 'framebufferTexture2D'), 'LA-POST8: the swap binds - nothing is re-attached');
   assert.equal(ap.prevValid, true);
   assert.deepEqual([...ap.prevVP], [...I], 'frame 1\'s view-projection (the identity) is the previous');
   r.drawMesh(mesh(), I, null);

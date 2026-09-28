@@ -27,6 +27,7 @@
 // them - a beast is never nothing. (DISC23-B's walkers leave a beast to this layer: `pose.wb` skips them.)
 import { orientationFor, frameCount, frameTime, chooseTable, speedMod, LYCAN_TICK, meleeAnimTickTime, RANGED_TICK, SPELL_TICK } from '../player/eotbBillboard.js';
 import { getMeleeWeaponAnimTime } from '../characters/weaponStates.js';
+import { EOTB_FOOT_SET_COUNT } from '../player/classSkins.js';   // PEERFX3: a class skin is a set past the mod's
 import { spriteFor, eotbSpriteUrl, spriteSize, spriteOffset, flipRows, worldOrderColors } from '../player/eotbSprite.js';
 import { decodePng } from '../systems/textureReplacement.js';
 import { POSE_RIDE } from './wire.js';
@@ -112,6 +113,7 @@ function figureLayer(art) {
         if (r.batch) renderer?.destroyBillboardBatch?.(r.batch);
         r.batch = renderer.createBillboardBatch(s.archive, s.rec, size, [[0, 0, 0]]);
         r.batch.origin = [0, 0, 0];
+        r.batch.conceal = r.veil ?? null;   // INVIS-LOOK: a new sprite keeps the figure's draw
         r.batchKey = key;
       }
       r.size = size; r.xml = xml; r.mirror = s.mirror;
@@ -124,10 +126,17 @@ function figureLayer(art) {
       r.batch.origin[0] = feet[0] + right[0] * x; r.batch.origin[1] = feet[1] + y; r.batch.origin[2] = feet[2] + right[2] * x;
     }
   }
+  /** INVIS-LOOK (2026-09-27): a concealed peer's draw (ECV1's visual, the host's) or null - kept on the figure, so a
+   *  sprite made later takes it, and set on the batch standing now. */
+  function veil(r, v) {
+    r.veil = v ?? null;
+    if (r.batch) r.batch.conceal = r.veil;
+  }
   return {
-    figs, drop, place,
+    figs, drop, place, veil,
     sweep(seen) { for (const id of [...figs.keys()]) if (!seen.has(id)) drop(id); },
     isDrawn: (id) => !!figs.get(id)?.batch,
+    batchOf: (id) => figs.get(id)?.batch ?? null,   // PEERFX3: the one sprite a hurt flash tints
     heightOf: (id) => { const r = figs.get(id); return r?.batch && r.size && r.xml ? r.size.h + r.xml.y / r.xml.scale : 0; },
     batches: () => [...figs.values()].map((r) => r.batch).filter(Boolean),
     offsetAll(offset) {
@@ -150,14 +159,28 @@ const viewOf = (yaw, feet, eye) => orientationFor([Math.sin(yaw), 0, Math.cos(ya
 export function createPeerRiders({ renderer = null, urlFor = eotbSpriteUrl, decode = decodeUrl, enabled = () => true, clock = () => Date.now(), art = null } = {}) {
   const layer = figureLayer(art ?? createEotbArt({ renderer, urlFor, decode, clock }));
   const riders = layer.figs;   // id -> { table, frame, clock, batch, batchKey, size, xml, mirror, an, claw }
+  const deferred = [];   // WEREWOLF1 (AUDIT E4): this frame's beasts held for `settle`
+  let hScene = null, hEye = null, hRight = null, hDt = 0;   // and the frame's own placing, kept for them (no object a frame)
+  /** @type {(id: string) => object|null} */
+  let hConceal = () => null;   // INVIS-LOOK: and the frame's concealed draws, for a deferred beast too
 
   /**
    * One frame. `peers` the host's drawable list ({ id, pose, shown }), `toScene` the pose's feet in scene units, `eye`
    * the viewer's eye, `right` the viewer's camera right (the sprite's x offset runs along it, as EOTB's does).
+   * WEREWOLF1 (AUDIT E4): `defer(peer)` a beast on foot another layer may stand THIS frame (the viewer's Morrowind
+   * wolf, net/peerBodies.js) - held back, and drawn or let go by `settle` once that layer has synced. A `skip` read
+   * before it was the last frame's answer: the frame a peer transformed drew nothing, the frame its wolf first stood
+   * drew both, and the frame the wolf walked out of range drew neither.
+   * INVIS-LOOK: `conceal(id)` a concealed peer's draw (ECV1's visual, the host's) or null - read by `one`, for a
+   * deferred beast too (the frame's own, kept like its placing).
+   * @param {Array<any>} peers @param {(p: any) => number[]} toScene
+   * @param {{eye?: number[]|Float32Array|null, right?: number[], dt?: number, defer?: (peer: any) => boolean, conceal?: (id: string) => object|null}} [opts]
    */
-  function sync(peers, toScene, { eye = null, right = [1, 0, 0], dt = 0 } = {}) {
+  function sync(peers, toScene, { eye = null, right = [1, 0, 0], dt = 0, defer = () => false, conceal = () => null } = {}) {
     const on = enabled();
     const seen = new Set();
+    deferred.length = 0;
+    hScene = toScene; hEye = eye; hRight = right; hDt = dt; hConceal = conceal;
     for (const peer of on ? peers ?? [] : []) {
       // AUDIT RIDE: the SHOWN pose - the one the session eases between words, which the bodies, the dolls, the names
       // and the casts all read; the latest word ran up to a whole interval ahead of the rider's own name
@@ -168,44 +191,64 @@ export function createPeerRiders({ renderer = null, urlFor = eotbSpriteUrl, deco
       const riding = pose.rd === POSE_RIDE.Horse || pose.rd === POSE_RIDE.Cart;
       if (!beast && !riding) continue;
       seen.add(peer.id);
-      let r = riders.get(peer.id);
-      if (!r) { r = { table: null, frame: 0, clock: 0, batch: null, batchKey: null, size: null, xml: null, mirror: false, an: null, claw: null }; riders.set(peer.id, r); }
-      // PR-WW1: THE CLAW - the swing count moving on a beast plays EOTB's lycan swing once, forward, a LYCAN_TICK a
-      // frame; the count first seen is no swing (a peer met mid-fight does not claw at nothing). It is the local
-      // body's own rule (eotbBody playLycanAttack, IL): never in the saddle, and a swing while the claw plays does not
-      // restart it
-      const an = pose.an | 0;
-      if (r.claw) {
-        r.claw.t += Math.max(0, dt);
-        while (r.claw && r.claw.t >= LYCAN_TICK) { r.claw.t -= LYCAN_TICK; r.claw.i++; if (r.claw.i >= frameCount(CLAW_TABLE)) r.claw = null; }
-      }
-      if (!beast) r.claw = null;
-      else if (r.an != null && an !== r.an && !riding && !r.claw) r.claw = { i: 0, t: 0 };
-      r.an = an;
-      const table = r.claw ? CLAW_TABLE : beast ? beastTable(pose) : rideTable(pose.mv | 0);
-      if (table !== r.table) { r.table = table; r.frame = 0; r.clock = 0; }
-      const n = frameCount(table);
-      if (r.claw) r.frame = r.claw.i;
-      // EOTB's frame time: the saddle's clock for a rider (a beast in the saddle too, as LoopIdleBillboard's
-      // `riding` reads it), and PR-WW1: a beast running on foot at half the frame (speedMod, the local body's term)
-      else if (n > 1) { r.clock += Math.max(0, dt); const ft = frameTime(riding) * (beast && !riding ? speedMod({ running: pose.mv === 2 }) : 1); while (r.clock >= ft) { r.clock -= ft; r.frame = (r.frame + 1) % n; } }
-      const feet = toScene(pose);
-      // PR-WW1: the form picks the lycan archive (tableArchive: 112380, or 112381 for the wereboar); a mounted table
-      // still reads the rider's own set
-      const s = spriteFor(table, viewOf(pose.yaw, feet, eye), r.frame, { onHorse: pose.rv | 0, lycanthropyType: beast });
-      if (!s) continue;
-      // PR-WW1: the transformed forms take the saddle's size (sizeMod - one constant serves both)
-      layer.place(r, s, feet, right, beast ? { transformed: true } : { riding: true });
+      if (beast && !riding && defer(peer)) { deferred.push(peer); continue; }   // WEREWOLF1 (AUDIT E4): settled below
+      one(peer, pose, beast, riding, toScene, eye, right, dt);
     }
     layer.sweep(seen);
   }
 
+  /** WEREWOLF1 (AUDIT E4): the beasts `sync` held back, now the other layer has stood what it stands this frame - each
+   *  drawn here, or let go where `stands(id)` (its wolf is standing).
+   *  @param {(id: string) => boolean} [stands] */
+  function settle(stands = () => false) {
+    for (const peer of deferred) {
+      if (stands(peer.id)) { layer.drop(peer.id); continue; }
+      one(peer, peer.shown, peer.shown.wb | 0, false, hScene, hEye, hRight, hDt);
+    }
+    deferred.length = 0;
+  }
+
+  /** One beast or rider, this frame: its claw, its table and frame, its sprite placed. */
+  function one(peer, pose, beast, riding, toScene, eye, right, dt) {
+    let r = riders.get(peer.id);
+    if (!r) { r = { table: null, frame: 0, clock: 0, batch: null, batchKey: null, size: null, xml: null, mirror: false, an: null, claw: null, veil: null }; riders.set(peer.id, r); }
+    layer.veil(r, hConceal(peer.id));   // INVIS-LOOK: a concealed rider (or beast) is drawn translucent
+    // PR-WW1: THE CLAW - the swing count moving on a beast plays EOTB's lycan swing once, forward, a LYCAN_TICK a
+    // frame; the count first seen is no swing (a peer met mid-fight does not claw at nothing). It is the local
+    // body's own rule (eotbBody playLycanAttack, IL): never in the saddle, and a swing while the claw plays does not
+    // restart it
+    const an = pose.an | 0;
+    if (r.claw) {
+      r.claw.t += Math.max(0, dt);
+      while (r.claw && r.claw.t >= LYCAN_TICK) { r.claw.t -= LYCAN_TICK; r.claw.i++; if (r.claw.i >= frameCount(CLAW_TABLE)) r.claw = null; }
+    }
+    if (!beast) r.claw = null;
+    else if (r.an != null && an !== r.an && !riding && !r.claw) r.claw = { i: 0, t: 0 };
+    r.an = an;
+    const table = r.claw ? CLAW_TABLE : beast ? beastTable(pose) : rideTable(pose.mv | 0);
+    if (table !== r.table) { r.table = table; r.frame = 0; r.clock = 0; }
+    const n = frameCount(table);
+    if (r.claw) r.frame = r.claw.i;
+    // EOTB's frame time: the saddle's clock for a rider (a beast in the saddle too, as LoopIdleBillboard's
+    // `riding` reads it), and PR-WW1: a beast running on foot at half the frame (speedMod, the local body's term)
+    else if (n > 1) { r.clock += Math.max(0, dt); const ft = frameTime(riding) * (beast && !riding ? speedMod({ running: pose.mv === 2 }) : 1); while (r.clock >= ft) { r.clock -= ft; r.frame = (r.frame + 1) % n; } }
+    const feet = toScene(pose);
+    // PR-WW1: the form picks the lycan archive (tableArchive: 112380, or 112381 for the wereboar); a mounted table
+    // still reads the rider's own set
+    const s = spriteFor(table, viewOf(pose.yaw, feet, eye), r.frame, { onHorse: pose.rv | 0, lycanthropyType: beast });
+    if (!s) return;
+    // PR-WW1: the transformed forms take the saddle's size (sizeMod - one constant serves both)
+    layer.place(r, s, feet, right, beast ? { transformed: true } : { riding: true });
+  }
+
   return {
     sync,
+    settle,
     /** Whether a peer is DRAWN by this layer this frame - in the saddle, or PR-WW1 in beast form - so the other two
      *  layers stand nothing for them. AUDIT RIDE: a rider whose art is not up yet (or failed) is not drawn, so it keeps
      *  its doll or body - never nothing at all; PR-WW1: a beast likewise keeps DISC12's enemy sprite (remotePlayers). */
     isRiding: layer.isDrawn,
+    batchOf: layer.batchOf,   // PEERFX3
     /** The name tag's height over a rider's feet (0: not drawn) - remotePlayers' `bodyHeight` hand-off: the sprite's
      *  own top this frame (its size over the feet plus EOTB's y offset), as a body's head is its own. */
     heightOf: layer.heightOf,
@@ -270,9 +313,9 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
    * One frame: `peers`, `toScene`, `eye`, `right` and `dt` as the riders' sync; `skip(id)` a peer another layer
    * already stands (the viewer's Morrowind body).
    * @param {Array<any>} peers @param {(p: any) => number[]} toScene
-   * @param {{eye?: number[]|Float32Array|null, right?: number[], dt?: number, skip?: (id: string) => boolean}} [opts]
+   * @param {{eye?: number[]|Float32Array|null, right?: number[], dt?: number, skip?: (id: string) => boolean, hurt?: (id: string) => boolean, conceal?: (id: string) => object|null}} [opts]
    */
-  function sync(peers, toScene, { eye = null, right = [1, 0, 0], dt = 0, skip = () => false } = {}) {
+  function sync(peers, toScene, { eye = null, right = [1, 0, 0], dt = 0, skip = () => false, hurt = () => false, conceal = () => null } = {}) {
     const on = enabled();
     const seen = new Set();
     lit.length = 0;
@@ -282,7 +325,8 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
       if (!pose || !Number.isInteger(set) || pose.rd || pose.wb || pose.dd || skip(peer.id)) continue;
       seen.add(peer.id);
       let r = walkers.get(peer.id);
-      if (!r) { r = { table: null, frame: 0, clock: 0, shot: null, last: null, batch: null, batchKey: null, size: null, xml: null, mirror: false, lantern: null, pace: 0, paceFeet: null }; walkers.set(peer.id, r); }
+      if (!r) { r = { table: null, frame: 0, clock: 0, shot: null, last: null, batch: null, batchKey: null, size: null, xml: null, mirror: false, lantern: null, pace: 0, paceFeet: null, veil: null }; walkers.set(peer.id, r); }
+      layer.veil(r, conceal(peer.id));   // INVIS-LOOK: a concealed walker is drawn translucent
       // a new swing, shaft or cast plays its clip once - the FIRST sight of a peer is not an edge (their counters are
       // whatever a session of swinging left them at)
       if (r.last) {
@@ -310,7 +354,11 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
       }
       const feet = toScene(pose);
       const view = viewOf(pose.yaw, feet, eye);
-      const s = spriteFor(r.table, view, r.frame, { onFoot: set });
+      // PEERFX3: A CLASS SKIN STRUCK SHOWS ITS HURT POSE for a moment - Daggerfall's own one-frame flinch (records
+      // 10-14, the table class skins read for Death, player/classSkins.js). Eye Of The Beholder's sets carry no hurt
+      // table (their Death is the fall), so they flinch by the red flash alone.
+      const flinch = set >= EOTB_FOOT_SET_COUNT && hurt(peer.id);
+      const s = spriteFor(flinch ? 'Death' : r.table, view, flinch ? 0 : r.frame, { onFoot: set });
       if (!s) continue;
       layer.place(r, s, feet, right, { riding: false });
       hangLantern(r, pose, feet, view, eye, right, step, ft);
@@ -338,6 +386,7 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
     if (!art || !r.batch || !r.size || !eye) return;
     hangSpriteLantern(l, r.batch.origin, r.size.h, fx, fz, eye, feet, Math.atan2(-right[2], right[0]), 1, art);
     if (!isRearView(view)) return;   // not seen from straight behind: it hangs, it swings, it is not drawn
+    if (r.veil) return;   // INVIS-LOOK: nor on a concealed walker - it would hang, lit and whole, on nobody
     mintSpriteLantern(l, store.renderer);
     lit.push(l);
   }
@@ -356,6 +405,7 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
     /** Whether a peer stands as their chosen sprite this frame - the class sprite and the doll stand nothing for them.
      *  Not until the art is up: a walker still loading keeps what stood before. */
     isWalking: layer.isDrawn,
+    batchOf: layer.batchOf,   // PEERFX3
     heightOf: layer.heightOf,
     batches: layer.batches,
     drawLanterns,   // HT-WAIST-BACK

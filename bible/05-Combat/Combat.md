@@ -625,7 +625,7 @@ the DEFAULT state, because starting weapons land in the bag unequipped
 `WEAPON_SKILL[playerWeapon.weapon.name]` raw at both its swing sites
 where the exterior hosts guarded with `?.`: the strike-frame bow test
 threw on EVERY bare-handed swing (reproduced live at
-dungeonContext.js:2055 by tools/fistProbe.mjs), the melee tally on
+dungeonContext.js:2156 by tools/fistProbe.mjs), the melee tally on
 every resolved fist hit. Fixed with the rule enforced, not remembered:
 a source sweep over src/scenes fails on any unguarded
 `playerWeapon.weapon.` deref, the bare-handed path is driven
@@ -797,7 +797,7 @@ is a `baseWeight` assignment here, as it is in C#, and the monster arm
 is the pin this file was written for; the campaign's first mutant is
 exactly that plausible wrong fix.
 
-`totalWeight` (inventory.js:351) IS `ItemCollection.GetWeight`, so the
+`totalWeight` (inventory.js:356) IS `ItemCollection.GetWeight`, so the
 only arithmetic added is the x4 and C#'s truncating `(int)` cast. Four
 pools call the formula (dungeon foes, the shared host-combat arm, the
 city watch, exterior foes) and all four now hand the foe's own list
@@ -1360,19 +1360,19 @@ the step, and the dip only ever makes `|dir|` larger.
 `onAttackFromPlayer` the sentence is about is `:215`, which is where the
 sibling comment in `cityGuards.js` was pointed in the same round). The
 dungeon's three-host sentence had its `exterior.js` number re-resolved
-and its `world.js:14677` left naming a `WorldTime`/`PauseWhileOpen` note
-800 lines from the host's `onPlayerArrowHitFoe` (`world.js:16375`); all
+and its `world.js:15484` left naming a `WorldTime`/`PauseWhileOpen` note
+800 lines from the host's `onPlayerArrowHitFoe` (`world.js:17210`); all
 three halves are read in `citedrift.test.js` now, the shape AUDIT 62's
 review had to apply to `pauseWindow`/`restWindow`. And `listPicker.js`'s
 "three routers that mount a bare picker" named three lines, none of
 which was a router — the round bumped the dungeon's `:4112` to `:4113`
 mechanically, and a wrong number moved by the right offset is still
-wrong. All three are resolved by content (`townTalk.js:1241`,
-`worldModes.js:9473`, `dungeonContext.js:6825`) and pinned as a set.
+wrong. All three are resolved by content (`townTalk.js:1251`,
+`worldModes.js:9694`, `dungeonContext.js:7391`) and pinned as a set.
 
 The `worldModes.js` fix inserts one line, so cites into that host past
-it move by one: the dungeon's `worldModes.js:7988` and
-`chargenSession.js`'s `worldModes.js:9586` are bumped and pinned. Four
+it move by one: the dungeon's `worldModes.js:8206` and
+`chargenSession.js`'s `worldModes.js:9807` are bumped and pinned. Four
 `worldModes.js` cites elsewhere (`interior.js`, `world.js`,
 `tradeModes.js`, `saveWindow.js`) and `UI-Arc.md`'s notebook trio were
 ALREADY stale before this round and are left as found rather than

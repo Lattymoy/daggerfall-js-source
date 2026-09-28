@@ -2,22 +2,37 @@
   {
     "name": "RARE-BREAK1-rolled-tiers-fade-again",
     "file": "src/combat/pcaao.js",
-    "old": "export const pcaaoFades = (item) => isEnchantedItem(item) && !rolledTier(item);",
+    "old": "export const pcaaoFades = (item) => isEnchantedItem(item) && !stampedTier(item);",
     "new": "export const pcaaoFades = (item) => isEnchantedItem(item);",
-    "tests": ["test/pcaao.test.js"]
+    "tests": [
+      "test/pcaao.test.js"
+    ]
   },
   {
     "name": "RARE-BREAK1-nothing-fades",
     "file": "src/combat/pcaao.js",
-    "old": "export const pcaaoFades = (item) => isEnchantedItem(item) && !rolledTier(item);",
+    "old": "export const pcaaoFades = (item) => isEnchantedItem(item) && !stampedTier(item);",
     "new": "export const pcaaoFades = (item) => false && isEnchantedItem(item);",
-    "tests": ["test/pcaao.test.js"]
+    "tests": [
+      "test/pcaao.test.js"
+    ]
   },
   {
     "name": "RARE-BREAK1-wear-ignores-the-exemption",
     "file": "src/combat/pcaao.js",
     "old": "isPlayer(owner) && pcaaoFades(item) ? (owner.items ?? null) : null;",
     "new": "isPlayer(owner) && isEnchantedItem(item) ? (owner.items ?? null) : null;",
-    "tests": ["test/pcaao.test.js"]
+    "tests": [
+      "test/pcaao.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-an-enchanted-aetheric-fades",
+    "file": "src/systems/rarityTier.js",
+    "old": "export const stampedTier = (item) => rolledTier(item) || item?.rarity === 'aetheric';",
+    "new": "export const stampedTier = (item) => rolledTier(item);",
+    "tests": [
+      "test/pcaao.test.js"
+    ]
   }
 ]

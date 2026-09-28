@@ -526,7 +526,7 @@
   {
     "name": "the-interior-hosts-FIRST-last-resort-skips-the-door",
     "file": "src/scenes/worldModes.js",
-    "old": "        interiorOverlay = host.makeCharSheet?.() ?? createCharSheetWindow({ entity: playerEntity });",
+    "old": "        interiorOverlay = host.makeCharSheet?.(interiorSheetDoors()) ?? createCharSheetWindow({ entity: playerEntity });",
     "new": "        interiorOverlay = host.makeCharSheet?.();",
     "tests": [
       "test/orl1_leveling.test.js"

@@ -1,0 +1,283 @@
+[
+  {
+    "name": "AUDIT-SS-the-courts-exits-in-the-padded-square",
+    "file": "src/scenes/worldModes.js",
+    "old": "aabb: d.court ? courtDoorAabb(d) : doorWorldAabb(d),",
+    "new": "aabb: doorWorldAabb(d),",
+    "tests": [
+      "test/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SS-the-fires-box-too-deep",
+    "file": "src/world/gateArena.js",
+    "old": "export const COURT_DOOR_DEPTH = 0.3;",
+    "new": "export const COURT_DOOR_DEPTH = 2.45;",
+    "tests": [
+      "test/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SS-the-portal-not-the-courts",
+    "file": "src/world/gateArena.js",
+    "old": "    normal: { x: 0, y: 0, z: 1 },\n    court: true,",
+    "new": "    normal: { x: 0, y: 0, z: 1 },",
+    "tests": [
+      "test/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SS-the-offline-court-left-ungathered",
+    "file": "src/scenes/world.js",
+    "old": "ejectFromCourt(COURT_TEXT.collapse); gateCourt?.leave();",
+    "new": "ejectFromCourt(COURT_TEXT.collapse);",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SS-a-right-click-answers-the-question",
+    "file": "src/ui/nativeInventory.js",
+    "old": "      if (!right && !middle) box.click(vx, vy);",
+    "new": "      box.click(vx, vy);",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SS-the-tooltip-over-the-question",
+    "file": "src/ui/nativeInventory.js",
+    "old": "    this._tip.hide();   // AUDIT SS: the piece's tooltip drew over the question until the mouse moved\n",
+    "new": "",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SS-the-own-pile-never-offered",
+    "file": "src/ui/nativeInventory.js",
+    "old": "const ground = t === REMOTE_TARGET_TYPES.Dropped || (t === REMOTE_TARGET_TYPES.Loot && this.hooks.loot?.playerOwned === true);",
+    "new": "const ground = t === REMOTE_TARGET_TYPES.Dropped;",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SS-a-locked-ware-offered-over-its-own-pile",
+    "file": "src/ui/nativeInventory.js",
+    "old": "const n = ground && !dismantleRefusal(it) ? dismantleStones(it) : 0;",
+    "new": "const n = ground ? dismantleStones(it) : 0;",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SS-the-reward-tray-speaks",
+    "file": "src/ui/nativeInventory.js",
+    "old": "      if (t !== REMOTE_TARGET_TYPES.Merchant) {",
+    "new": "      if (true) {",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SS-a-paintings-box-fitted",
+    "file": "src/ui/nativeInventory.js",
+    "old": "const rows = box.painting ? box.rows : fitBoxRows(font, box.rows);",
+    "new": "const rows = fitBoxRows(font, box.rows);",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SS-the-enhanced-teardown-keeps-the-staged",
+    "file": "src/ui/enhancedTrade.js",
+    "old": "      if (host) clear();\n",
+    "new": "",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SS-the-classic-counter-with-no-dispose",
+    "file": "src/ui/nativeTrade.js",
+    "old": "  dispose() { if (!this.done) this._close(); }",
+    "new": "  dispose() {}",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SS-a-refused-sale-quoted",
+    "file": "src/ui/enhancedTrade.js",
+    "old": "  if (saleRefused(item)) return null;",
+    "new": "  if (false) return null;",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SS-a-refused-sale-asked-how-many",
+    "file": "src/ui/enhancedTrade.js",
+    "old": "  if (side === 'local' && saleRefused(item)) return 0;",
+    "new": "  if (false) return 0;",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SS-quick-sell-unguarded",
+    "file": "src/ui/enhancedTrade.js",
+    "old": "  if (isBound(item) || lockRefuses(item, 'sell')) return;   // AUDIT SS",
+    "new": "  // AUDIT SS",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SS-the-keyed-shelf-lists-a-bound-piece",
+    "file": "src/scenes/worldModes.js",
+    "old": "&& !isEquipped(it) && !isBound(it) && !lockRefuses(it, 'sell'));",
+    "new": "&& !isEquipped(it));",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SS-the-keyed-sale-takes-one",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (isBound(it) || lockRefuses(it, 'sell')) return 0;",
+    "new": "",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SS-a-forged-offer-sold",
+    "file": "src/systems/sigilBroker.js",
+    "old": "  if (!real || real.id !== offer.id || real.price !== offer.price) return { ok: false, reason: 'gone' };",
+    "new": "  if (!real) return { ok: false, reason: 'gone' };",
+    "tests": [
+      "test/set7_broker.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SS-the-split-unbound",
+    "file": "src/systems/inventory.js",
+    "old": "  if (stack.bound === true) picked.bound = true;",
+    "new": "",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SS-a-buildings-record-carries-a-bound-piece",
+    "file": "src/world/interiorShared.js",
+    "old": "r: unbound(t.items).map((it) => ({ ...it })),",
+    "new": "r: t.items.map((it) => ({ ...it })),",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SS-a-dungeons-record-carries-a-bound-piece",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "r: unbound(held).map((it) => ({ ...it })),",
+    "new": "r: held.map((it) => ({ ...it })),",
+    "tests": [
+      "test/ss1_stones.test.js",
+      "test/world4.test.js",
+      "test/world8.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SS-y-not-answered",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "if (yesKey) yes.onclick({ detail: 1, stopPropagation() {} }); else closeDismantle();",
+    "new": "closeDismantle();",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SS-n-not-answered",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "keepKey = e.key === 'Escape' || e.code === 'KeyN' || e.key === 'Enter' || e.code === 'NumpadEnter';",
+    "new": "keepKey = e.key === 'Escape';",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SS-the-questions-backdrop-inside",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "const away = (e) => { if (e.target === mine || !mine.contains(e.target)) { e.stopPropagation(); closeDismantle(); } };",
+    "new": "const away = (e) => { if (!mine.contains(e.target)) { e.stopPropagation(); closeDismantle(); } };",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SS-the-questions-first-listeners-left-behind",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  dismantleOff = () => { clearTimeout(timer); ",
+    "new": "  dismantleOff = () => { ",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SS-the-questions-listeners-never-removed",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  dismantleOff = () => { clearTimeout(timer); document.removeEventListener('pointerdown', away, true); document.removeEventListener('keydown', key, true); };",
+    "new": "  dismantleOff = () => { clearTimeout(timer); };",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SS-the-question-not-modal",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  dismantleEl.setAttribute('aria-modal', 'true');\n",
+    "new": "",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SS-the-press-time-refusal-silent",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    if (!r.ok) { refusedFor(r.reason); return; }",
+    "new": "    if (!r.ok) return;",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SS-the-info-boxs-first-listeners-left-behind",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  infoOff = () => { clearTimeout(timer); ",
+    "new": "  infoOff = () => { ",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SS-the-info-boxs-backdrop-inside",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "const away = (e) => { if (e.target === mine || !mine.contains(e.target)) { e.stopPropagation(); closeInfo(); } };",
+    "new": "const away = (e) => { if (!mine.contains(e.target)) { e.stopPropagation(); closeInfo(); } };",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SS-the-bound-line-under-the-cards-text",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ".card .lockline, .card .boundline, .pack-shell .card p.lockline, .pack-shell .card p.boundline {",
+    "new": ".card .lockline, .card .boundline {",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  }
+]

@@ -1,6 +1,6 @@
-# Support Daggerfall Enhanced
+# Support Daggerfall Online
 
-Daggerfall Enhanced is free, open source, and developed independently.
+Daggerfall Online is free, open source, and developed independently.
 
 Active development currently costs about **$600 per month** to sustain. That is the project's funding target.
 

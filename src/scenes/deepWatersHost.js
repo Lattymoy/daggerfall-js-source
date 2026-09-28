@@ -46,6 +46,8 @@ import { DW_OCEAN_LOCAL_Y } from '../world/deepWatersPixel.js';
 import { mapDataHasWater, isLocalPointWater } from '../world/deepWaterClassification.js';
 import { sampleDepthMeters } from '../world/deepBathymetry.js';
 import { scaledSliderValue } from '../world/deepWaterLook.js';   // DW-E2: GetScaledSliderValue, one home
+import { POPULATE_RADIUS } from './deepWatersEncounters.js';   // DEEP-SHARE: the populate radius is the share's
+import { amGroupRollOwner } from '../systems/campEncounters.js';   // DEEP-SHARE: the camps' election
 
 export const DEEP_WATERS_VENDOR = 'iliac-puddle-no-more';
 
@@ -94,6 +96,29 @@ export function deepWatersEnemySettings() {
     maxLive: Math.max(0, Math.trunc(Number(get('General.MaxLiveEnemies')))),
     waterDepth: Math.fround(Number(get('General.WaterDepth'))),
   };
+}
+
+/** DEEP-SHARE (2026-09-26, Mac: "Yes" - one player standing the sea's creatures for everyone near). Online, the
+ *  players within DEEP_SHARE_RADIUS of each other stand ONE deep: the lowest id among them, the camps' own election
+ *  (systems/campEncounters.js amGroupRollOwner); the rest see its foes through the stream, under their own allowance
+ *  (scenes/exteriorFoes.js DEEP_PUPPETS_MAX). The radius is the mod's populate radius, so a player that near the one standing
+ *  is inside a pixel it populates. One who stops being the one populates no new pixel, and what it stood stays until
+ *  it dies or its pixel is left - no foe vanishes mid-fight. Offline, or alone, a player is always the one. */
+export const DEEP_SHARE_RADIUS = POPULATE_RADIUS;
+/** AUDIT (the pre-merge audit, P2): the election's hysteresis - a player STANDING the deep keeps it until a lower id comes
+ *  within DEEP_SHARE_RADIUS; one not standing it takes it only once every lower id is past this many radii. At exactly
+ *  the radius, pose noise flipped the answer every tick, and each flip reserved a pixel's foes that stood after the
+ *  flip back (the pump stands what was reserved): a second sea beside the first. */
+export const DEEP_SHARE_HYSTERESIS = 1.25;
+export const standsTheDeep = (myId, myFeet, peers, standing = true) => amGroupRollOwner(myId, myFeet, peers, standing ? DEEP_SHARE_RADIUS : DEEP_SHARE_RADIUS * DEEP_SHARE_HYSTERESIS);
+
+/** DEEP-SHARE: the spawner's settings, its cap less the live deep foes OTHER players stand within DEEP_SHARE_RADIUS of
+ *  this one - so a handover (the old one's foes still up) or two players standing their own deeps in one pixel never
+ *  put more than one cap's worth round a player. At the cap the mod's own rule forfeits the pixel's attempts, as it
+ *  does alone. */
+export function deepWatersEnemySettingsNear(othersNear) {
+  const s = deepWatersEnemySettings();
+  return othersNear > 0 ? { ...s, maxLive: Math.max(0, s.maxLive - othersNear) } : s;
 }
 
 /** Every one of the mod's settings, as a comparable snapshot (a change to any is the LoadSettings callback). */

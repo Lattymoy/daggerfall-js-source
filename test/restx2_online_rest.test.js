@@ -169,8 +169,8 @@ test('RESTX2 by source: the free lane and the shared-clock lane are gone from th
     // RESTING GATE: the rest deps pass isResting=true, so camps/packs (MIN_CAMP_SPAWN_DISTANCE always
     // outside RESTING_DISTANCE - see encounters.js/campEncounters.js) never silently outflank the
     // enemies-nearby interrupt - they're a walking-around feature only, same as before this gate existed.
-    assert.match(h, /advanceMinutes: \(n, sharedEnd\) => \{ playerTicker\.advance\(n\); runEncounterTick\([^)]*, sharedEnd, true\); \}/, `${host}: the rest deps hand it over, flagged as a rest`);
+    assert.match(h, /advanceMinutes: \(n, sharedEnd\) => \{ playerTicker\.advance\(n, sharedEnd\); runEncounterTick\([^)]*, sharedEnd, true\); \}/, `${host}: the rest deps hand it over, flagged as a rest - to the roll and (REST-ROUNDS) to the ticker's rounds`);
   }
   assert.match(read('src/scenes/dungeonContext.js'), /advanceMinutes: \(n, sharedEnd\) => _restAdvance\(n, sharedEnd\),/, 'the dungeon\'s arm, unchanged');
-  assert.match(read('src/scenes/worldModes.js'), /advanceMinutes: \(n\) => \{ interiorTicker\.advance\(n\); host\.encounterTick\?\.\(\); \},/, 'the interior\'s arm rolls nothing inside a building and is unchanged (audit62)');
+  assert.match(read('src/scenes/worldModes.js'), /advanceMinutes: \(n, sharedEnd\) => \{ interiorTicker\.advance\(n, sharedEnd\); host\.encounterTick\?\.\(\); \},/, 'the interior\'s arm rolls nothing inside a building, and (REST-ROUNDS) its ticker takes the sub-tick\'s end for the rounds');
 });

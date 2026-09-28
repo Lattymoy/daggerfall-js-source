@@ -553,7 +553,7 @@
   {
     "name": "D25D-host-reads-the-old-table",
     "file": "src/scenes/world.js",
-    "old": "      const why = shareRefusalText(result);   // DISC25-D: a guild refusal names the guild",
+    "old": "      const why = shareRefusalText(result, quest.data?.build ?? null);   // DISC25-D: a guild refusal names the guild",
     "new": "      const why = SHARE_REFUSAL_TEXT[result.reason];",
     "tests": [
       "test/disc25d_guild_share.test.js"

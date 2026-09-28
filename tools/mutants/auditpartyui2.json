@@ -1,0 +1,128 @@
+[
+  {
+    "name": "AUDIT-PARTY-UI2-1-the-door-silent-indoors",
+    "file": "src/scenes/world.js",
+    "old": "{ townTalk.say(CANNOT_TRAVEL_INDOORS_TEXT); return; }",
+    "new": "{ return; }",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI2-1-the-words-drifted",
+    "file": "src/scenes/world.js",
+    "old": "const CANNOT_TRAVEL_INDOORS_TEXT = 'You cannot travel while indoors.';",
+    "new": "const CANNOT_TRAVEL_INDOORS_TEXT = 'You cannot travel indoors.';",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI2-1-the-target-never-armed",
+    "file": "src/scenes/world.js",
+    "old": "    if (gotoPlace) _travelGoto = gotoPlace;\n",
+    "new": "",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI2-1-the-target-dropped-by-a-refusal",
+    "file": "src/scenes/world.js",
+    "old": "{ townTalk.say(CANNOT_TRAVEL_INDOORS_TEXT); return; }",
+    "new": "{ _travelGoto = null; townTalk.say(CANNOT_TRAVEL_INDOORS_TEXT); return; }",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI2-2-the-walk-read-as-a-journey",
+    "file": "src/systems/partyTravel.js",
+    "old": "away: !!p && !host.journeying() && ",
+    "new": "away: !!p && !host.moving() && ",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI2-2-journeying-counts-the-travel-panel",
+    "file": "src/scenes/world.js",
+    "old": "    journeying: () => worldMoveBusy(),",
+    "new": "    journeying: () => worldMoveBusy() || !!travelControlUI?.isShowing,",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI2-3-the-host-outdoors-always",
+    "file": "src/scenes/world.js",
+    "old": "    outdoors: () => (modes?.mode ?? 'exterior') === 'exterior',",
+    "new": "    outdoors: () => true,",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI2-3-status-asks-who-is-gathered",
+    "file": "src/systems/partyTravel.js",
+    "old": "hub: host.relayOk(), gathered: company, held: !!t",
+    "new": "hub: host.relayOk(), gathered: host.gathered().length > 0, held: !!t",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI2-3-hub-and-gathered-swapped",
+    "file": "src/ui/socialPanel.js",
+    "old": "!st.hub ? 'Needs the server\\'s next update'\n          : st.held ? 'The party is still on its way' : !st.gathered ? 'Gather the party first' : null;",
+    "new": "!st.gathered ? 'Gather the party first'\n          : st.held ? 'The party is still on its way' : !st.hub ? 'Needs the server\\'s next update' : null;",
+    "tests": [
+      "test/soc3_socialpanel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI2-4-a-new-round-over-a-held-one",
+    "file": "src/systems/partyTravel.js",
+    "old": "    if (trip && trip.go != null) return false;\n",
+    "new": "",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI2-4-an-open-round-held-too",
+    "file": "src/systems/partyTravel.js",
+    "old": "if (trip && trip.go != null) return false;",
+    "new": "if (trip) return false;",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI2-4-held-never-said",
+    "file": "src/systems/partyTravel.js",
+    "old": "gathered: company, held: !!t };",
+    "new": "gathered: company, held: false };",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI2-4-held-unread-on-the-tab",
+    "file": "src/ui/socialPanel.js",
+    "old": " : st.held ? 'The party is still on its way'",
+    "new": "",
+    "tests": [
+      "test/soc3_socialpanel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI2-the-no-round-flags-beside-a-round",
+    "file": "src/systems/partyTravel.js",
+    "old": "set: t.go != null } };",
+    "new": "set: t.go != null }, gathered: company };",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  }
+]

@@ -1,0 +1,65 @@
+[
+  {
+    "name": "PSCALEOWN-mine-unshared",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    return isRoomFoe(f) || f._ownFrom != null || ownRides(f);   // REST-SYNC",
+    "new": "    return isRoomFoe(f) || f._ownFrom != null;   // REST-SYNC",
+    "tests": [
+      "test/pscaleown.test.js"
+    ]
+  },
+  {
+    "name": "PSCALEOWN-puppet-unshared",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    return isRoomFoe(f) || f._ownFrom != null || ownRides(f);   // REST-SYNC",
+    "new": "    return isRoomFoe(f) || ownRides(f);   // REST-SYNC",
+    "tests": [
+      "test/pscaleown.test.js"
+    ]
+  },
+  {
+    "name": "PSCALEOWN-puppet-counted-here",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "  function _runsFoe(f) { return f._ownFrom == null && (_authority || ownRides(f)); }",
+    "new": "  function _runsFoe(f) { return _authority || ownRides(f); }",
+    "tests": [
+      "test/pscaleown.test.js"
+    ]
+  },
+  {
+    "name": "PSCALEOWN-mine-counted-only-at-the-seat",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "  function _runsFoe(f) { return f._ownFrom == null && (_authority || ownRides(f)); }",
+    "new": "  function _runsFoe(f) { return f._ownFrom == null && _authority; }",
+    "tests": [
+      "test/pscaleown.test.js"
+    ]
+  },
+  {
+    "name": "PSCALEOWN-count-by-the-seat",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "  function fightN(f) { return _runsFoe(f) ?",
+    "new": "  function fightN(f) { return _authority ?",
+    "tests": [
+      "test/pscaleown.test.js"
+    ]
+  },
+  {
+    "name": "PSCALEOWN-heal-by-the-seat",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    const h = _runsFoe(f) && _sharedFoe(f) ? partyFoeHeals(f, n, fightN(f)) : n;",
+    "new": "    const h = _authority && _sharedFoe(f) ? partyFoeHeals(f, n, fightN(f)) : n;",
+    "tests": [
+      "test/pscaleown.test.js"
+    ]
+  },
+  {
+    "name": "PSCALEOWN-puppet-heal-weighed",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    const h = _runsFoe(f) && _sharedFoe(f) ? partyFoeHeals(f, n, fightN(f)) : n;",
+    "new": "    const h = _sharedFoe(f) ? partyFoeHeals(f, n, fightN(f)) : n;",
+    "tests": [
+      "test/pscaleown.test.js"
+    ]
+  }
+]

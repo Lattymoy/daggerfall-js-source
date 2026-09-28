@@ -111,14 +111,16 @@ test('MAC-C: every host hands the pack a sheet door, beside the spellbook one it
     // it stands with openSpellbook, which is the hook it is modelled on -
     // a door added anywhere else is a second bag by another name.
     const at = s.indexOf('openCharSheet: () =>');
-    const near = s.slice(Math.max(0, at - 400), at);
-    assert.match(near, /openSpellbook:/, `${f}: it belongs in the ONE builder's bag`);
+    const near = s.slice(Math.max(0, at - 1600), at);
+    // UI2: the spellbook's door rides the pack's door bag (`packDoors`, shared with a hotbar slot's Use) where a host has one
+    assert.match(near, /openSpellbook:|\.\.\.packDoors,/, `${f}: it belongs in the ONE builder's bag`);
+    if (near.includes('...packDoors,')) assert.match(s, /const packDoors = \{[\s\S]{0,900}?openSpellbook: \(\) =>/, `${f}: and the bag holds the spellbook's door`);
   }
   // ...and the dungeon's sheet has ONE construction, which the toggle and
   // the cross-over both call (U52's argument, applied to the host that
   // still had the builder inline).
   const dc = rd('src/scenes/dungeonContext.js');
-  assert.match(dc, /makeCharSheet\(\) \{/, 'the builder is lifted out');
+  assert.match(dc, /makeCharSheet\(sheetOpts = \{\}\) \{/, 'the builder is lifted out (F5-QUESTS: it takes the door options, for the page\'s Load)');
   assert.equal((dc.match(/createCharSheetWindow\(\{/g) ?? []).length, 1, 'and there is exactly one of it');
-  assert.match(dc, /activeOverlay = api\.makeCharSheet\(\);/, 'the toggle calls it');
+  assert.match(dc, /activeOverlay = api\.makeCharSheet\(doorOpts\);/, 'the toggle calls it');
 });

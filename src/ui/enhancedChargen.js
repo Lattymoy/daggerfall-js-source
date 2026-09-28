@@ -205,7 +205,7 @@ function pick(raceKey) {
 }
 
 function raceStage() {
-  const pane = el('div', 'stagebody');
+  const pane = el('div', 'stagebody stacked-short');   // the pre-merge audit (0927b): on a SHORT phone the map and its prompt scroll as one - in landscape the map had 0-30px
   pane.append(mapPane());
 
   // THE DETAIL IS ONLY A SHEET WHEN IT HAS TO BE. On a desk it is the
@@ -390,7 +390,7 @@ function classQuestionsStage() {
 // clickClassRow is still what a tap calls, double-tap included, so the
 // classic gesture keeps working for anyone who uses it.
 function classStage() {
-  const pane = el('div', 'stagebody');
+  const pane = el('div', 'stagebody stacked-short');   // the pre-merge audit (0927b): on a SHORT phone the list and its detail scroll as one - in landscape the list had 0-8px; a tall one keeps its rows, "Read about" on screen
 
   const list = el('div', 'list classlist');   // UXB1-J: two columns on a desk (enhancedStyle.js)
   for (let i = 0; i < flow.classRowCount(); i++) {
@@ -811,7 +811,7 @@ function classIoCard() {
     const acts = el('div', 'acts');
     const copy = el('button', 'act primary', 'Copy to clipboard');
     copy.onclick = async () => {
-      try { await globalThis.navigator.clipboard.writeText(classDocText()); say('Copied. Paste it into Import on any Daggerfall Enhanced character.'); }
+      try { await globalThis.navigator.clipboard.writeText(classDocText()); say('Copied. Paste it into Import on any Daggerfall Online character.'); }
       catch { say('The browser would not let this page write the clipboard - save it as a file instead.'); }
     };
     const save = el('button', 'act', 'Save as a file');
@@ -1081,7 +1081,7 @@ function ensureFaces() {
 // spent, so the primary says how many are left rather than refusing
 // silently.
 function statsStage() {
-  const pane = el('div', 'stagebody');
+  const pane = el('div', 'stagebody stacked');   // FIELD 2026-09-27: one scrolling column on a phone (enhancedStyle.js)
 
   const list = el('div', 'list');
   // CHAR1 (2026-09-15, a player through Mac: "show the total dice rolls
@@ -1276,7 +1276,7 @@ function reflexStage() {
 // sumName and sumReflexes and lets confirmSummary write them through.
 // RESTART is soft: the document survives.
 function summaryStage() {
-  const pane = el('div', 'stagebody');
+  const pane = el('div', 'stagebody stacked');   // FIELD 2026-09-27: one scrolling column on a phone (enhancedStyle.js)
 
   if (flow.poolBox) {
     const solo = el('div', 'stagebody solo');

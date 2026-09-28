@@ -223,10 +223,10 @@ test('audit24 wave32: paralysis reaches the exterior pools', () => {
   assert.ok(xf.includes('const _fParalyzed = entityIsParalyzed(f.entity);'), 'exteriorFoes reads it');
   // MT-ii wrapped the context (_armed adds the targeting closure when
   // the host supplies candidates); the paralysis argument is untouched.
-  assert.ok(xf.includes('f.ai.update(dt, playerFeet, _armed(f, senses), _fParalyzed, _fPaused);'), 'the motor is told');
+  assert.ok(xf.includes('f.ai.update(foeFrameDt(dt), playerFeet, _armed(f, senses), _fParalyzed, _fPaused);'), 'the motor is told');
   // MT-ii: the component aims at the SELECTED target (EnemyAttack
   // reads senses.Target, :199-209) and holds when there is none.
-  assert.ok(xf.includes('if (!_fParalyzed && _tgt) f.attack.update(dt, f.ai, _tgt, _fPaused);'), 'the attack machine holds');
+  assert.ok(xf.includes('if (!_fParalyzed && _tgt) f.attack.update(foeFrameDt(dt), f.ai, _tgt, _fPaused);'), 'the attack machine holds');
   // MT-ii: the caster aims at the target too, so a foe duelling
   // another foe stops hurling its fireballs at the player.
   assert.ok(xf.includes('if (_tgt && f.caster && !_fParalyzed && !_fPaused && f.ai.isHostile) {'), 'and so does casting');   // AUDIT WORLD6b-ii A1: the tick runs always (suppressed at a peer inside the caster)
@@ -244,8 +244,8 @@ test('audit24 wave32: paralysis reaches the exterior pools', () => {
 
   const cg = rd('src/scenes/cityGuards.js');
   assert.ok(cg.includes('const _gParalyzed = entityIsParalyzed(g.entity);'), 'cityGuards reads it');
-  assert.ok(cg.includes('g.ai.update(dt, playerFeet, _armed(g, senses), _gParalyzed);'), 'the motor is told');   // MT-ii: same wrap
-  assert.ok(cg.includes('if (!_gParalyzed && _tgt) g.attack.update(dt, g.ai, _tgt);'), 'the attack machine holds');   // MT-ii: same (AUDIT 68: the voided `events` binding is gone)
+  assert.ok(cg.includes('g.ai.update(foeFrameDt(dt), playerFeet, _armed(g, senses), _gParalyzed);'), 'the motor is told');   // MT-ii: same wrap
+  assert.ok(cg.includes('if (!_gParalyzed && _tgt) g.attack.update(foeFrameDt(dt), g.ai, _tgt);'), 'the attack machine holds');   // MT-ii: same (AUDIT 68: the voided `events` binding is gone)
   assert.ok(cg.includes('if (!_gParalyzed && g.mobile.doMeleeDamage && _tgt) {'), 'and no blow lands');   // MT-ii: target-gated
   assert.equal(cg.includes('senses, false)'), false, 'no literal false left behind');
 });

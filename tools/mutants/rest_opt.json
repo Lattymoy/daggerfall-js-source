@@ -1,0 +1,155 @@
+[
+  {
+    "name": "REST-OPT-wire-nr-coerced",
+    "file": "src/net/wire.js",
+    "old": "  if (p.nr === 1) out.nr = 1;",
+    "new": "  if (p.nr) out.nr = 1;",
+    "tests": [
+      "test/restopt.test.js"
+    ]
+  },
+  {
+    "name": "REST-OPT-law-leader-ignored",
+    "file": "src/systems/partyRestLaw.js",
+    "old": "  return !restsAlone(lead);",
+    "new": "  return true;",
+    "tests": [
+      "test/restopt.test.js"
+    ]
+  },
+  {
+    "name": "REST-OPT-law-mine-ignored",
+    "file": "src/systems/partyRestLaw.js",
+    "old": "  if (!mineOn) return false;\n",
+    "new": "",
+    "tests": [
+      "test/restopt.test.js"
+    ]
+  },
+  {
+    "name": "REST-OPT-law-nobody-rests-alone",
+    "file": "src/systems/partyRestLaw.js",
+    "old": "  return !!m?.p?.nr;",
+    "new": "  return false;",
+    "tests": [
+      "test/restopt.test.js"
+    ]
+  },
+  {
+    "name": "REST-OPT-switch-off-by-default",
+    "file": "src/systems/uiPrefs.js",
+    "old": "  restWithParty: true,",
+    "new": "  restWithParty: false,",
+    "tests": [
+      "test/restopt.test.js"
+    ]
+  },
+  {
+    "name": "REST-OPT-switch-not-the-players",
+    "file": "src/systems/onlineLane.js",
+    "old": "  'restWithParty',   // REST-OPT: whether I rest with my party or alone - my own say\n",
+    "new": "",
+    "tests": [
+      "test/restopt.test.js"
+    ]
+  },
+  {
+    "name": "REST-OPT-no-settings-row",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "  c.append(prefRow('restWithParty', 'Rest with my party',",
+    "new": "  c.append(prefRow('restWithParty', 'Rest with party',",
+    "tests": [
+      "test/restopt.test.js"
+    ]
+  },
+  {
+    "name": "REST-OPT-pose-never-says",
+    "file": "src/scenes/world.js",
+    "old": "      ...(!restsWithParty() || (_restAloneNight && playerEntity.isResting) ? { nr: 1 } : {}),   // REST-OPT: I rest alone - no voter, nobody to gather, no rest to mirror (AUDIT C3: and a night granted as my own stays mine to its end)\n",
+    "new": "",
+    "tests": [
+      "test/restopt.test.js"
+    ]
+  },
+  {
+    "name": "REST-OPT-host-ignores-the-leader",
+    "file": "src/scenes/world.js",
+    "old": "  const restTogether = () => partyRestsTogether(restsWithParty(), social?.party ?? null, !!social?.leads?.());",
+    "new": "  const restTogether = () => restsWithParty();",
+    "tests": [
+      "test/restopt.test.js"
+    ]
+  },
+  {
+    "name": "REST-OPT-near-unfiltered",
+    "file": "src/scenes/world.js",
+    "old": "  const nearRestMembers = (from = player.feetAt()) => nearPartyMembers(from).filter((m) => !restsAlone(m));",
+    "new": "  const nearRestMembers = (from = player.feetAt()) => nearPartyMembers(from);",
+    "tests": [
+      "test/restopt.test.js"
+    ]
+  },
+  {
+    "name": "REST-OPT-gate-asks-the-party",
+    "file": "src/scenes/world.js",
+    "old": "    if (!restTogether()) return null;   // REST-OPT: I (or the leader) rest alone - my rest is my own, as in a tavern\n",
+    "new": "",
+    "tests": [
+      "test/restopt.test.js"
+    ]
+  },
+  {
+    "name": "REST-OPT-gate-counts-the-lone",
+    "file": "src/scenes/world.js",
+    "old": "    const onlineOtherCount = social.others().filter((m) => memberPresent(m) && !restsAlone(m)).length;",
+    "new": "    const onlineOtherCount = social.others().filter(memberPresent).length;",
+    "tests": [
+      "test/restopt.test.js"
+    ]
+  },
+  {
+    "name": "REST-OPT-tally-still-mine",
+    "file": "src/scenes/world.js",
+    "old": "    if (!social?.party || modes?.insidePartyRestExempt || !restTogether()) { _partyRestVoteLastReady = null;",
+    "new": "    if (!social?.party || modes?.insidePartyRestExempt) { _partyRestVoteLastReady = null;",
+    "tests": [
+      "test/restopt.test.js"
+    ]
+  },
+  {
+    "name": "REST-OPT-pulled-into-a-night",
+    "file": "src/scenes/world.js",
+    "old": "    if (!restTogether()) return;   // REST-OPT: I rest alone - never pulled into anyone's night\n",
+    "new": "",
+    "tests": [
+      "test/restopt.test.js"
+    ]
+  },
+  {
+    "name": "REST-OPT-mirror-follows-a-lone-rest",
+    "file": "src/scenes/world.js",
+    "old": "    const restingRow = nearRestMembers().find((m) => m.p.rest);",
+    "new": "    const restingRow = nearPartyMembers().find((m) => m.p.rest);",
+    "tests": [
+      "test/restopt.test.js"
+    ]
+  },
+  {
+    "name": "REST-OPT-far-notice-for-a-lone-rest",
+    "file": "src/scenes/world.js",
+    "old": "m.p?.rest && !restsAlone(m) && m.online !== false && !nearAccount(m.acct, m.p)",
+    "new": "m.p?.rest && m.online !== false && !nearAccount(m.acct, m.p)",
+    "tests": [
+      "test/restopt.test.js"
+    ]
+  },
+  {
+    "name": "REST-OPT-ready-votes-alone",
+    "file": "src/scenes/world.js",
+    "old": "          if (!restTogether()) { chatLog.push(tabId, { text: restAloneText(restsWithParty()), system: true }); return true; }   // REST-OPT\n",
+    "new": "",
+    "tests": [
+      "test/restopt.test.js"
+    ]
+  }
+]

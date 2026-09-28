@@ -317,8 +317,8 @@
   {
     "name": "DISC7-contact-rect-never-held",
     "file": "src/render/airPass.js",
-    "old": "this.prevValid = !!this.frame; holdPrevRect(this.prevRect, this.rect, this.canvas); }",
-    "new": "this.prevValid = !!this.frame; }",
+    "old": "this.prevValid = !!this.frame && !this._cut && !jumped; holdPrevRect(this.prevRect, this.rect, this.canvas); }",
+    "new": "this.prevValid = !!this.frame && !this._cut && !jumped; }",
     "tests": [
       "test/disc7.test.js"
     ]

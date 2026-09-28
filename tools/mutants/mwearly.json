@@ -1,0 +1,219 @@
+[
+  {
+    "name": "MWEARLY-building-never-said",
+    "file": "src/combat/fpArm.js",
+    "old": "buildingOpts = opts ?? null;   // MW-EARLY",
+    "new": "buildingOpts = null;   // MW-EARLY",
+    "tests": [
+      "test/mwearly.test.js"
+    ]
+  },
+  {
+    "name": "MWEARLY-never-cleared-on-settle",
+    "file": "src/combat/fpArm.js",
+    "old": "        buildingOpts = null;   // MW-EARLY: settled",
+    "new": "        // MW-EARLY: settled",
+    "tests": [
+      "test/mwearly.test.js"
+    ]
+  },
+  {
+    "name": "MWEARLY-unload-keeps-it",
+    "file": "src/combat/fpArm.js",
+    "old": "      buildingOpts = null;   // MW-EARLY: the build in flight lands dead",
+    "new": "      // MW-EARLY: the build in flight lands dead",
+    "tests": [
+      "test/mwearly.test.js"
+    ]
+  },
+  {
+    "name": "MWEARLY-queue-ignored",
+    "file": "src/combat/fpArm.js",
+    "old": "const o = pendingBuild ?? buildingOpts;",
+    "new": "const o = buildingOpts;",
+    "tests": [
+      "test/mwearly.test.js"
+    ]
+  },
+  {
+    "name": "MWEARLY-under-way-arm-dropped",
+    "file": "src/combat/weaponRig.js",
+    "old": "  if (coming) return same(coming);",
+    "new": "  if (false) return same(coming);",
+    "tests": [
+      "test/mwearly.test.js"
+    ]
+  },
+  {
+    "name": "MWEARLY-a-different-body-lets-the-old-stand",
+    "file": "src/combat/weaponRig.js",
+    "old": "  if (coming) return same(coming);",
+    "new": "  if (coming && same(coming)) return true;",
+    "tests": [
+      "test/mwearly.test.js"
+    ]
+  },
+  {
+    "name": "MWEARLY-table-unfilled",
+    "file": "src/combat/weaponRig.js",
+    "old": "  fillEquipTable(equipTableOf(e), items);\n  return e;",
+    "new": "  equipTableOf(e);\n  return e;",
+    "tests": [
+      "test/mwearly.test.js"
+    ]
+  },
+  {
+    "name": "MWEARLY-light-dropped",
+    "file": "src/combat/weaponRig.js",
+    "old": "lightSource: li >= 0 ? (items[li] ?? null) : null };",
+    "new": "lightSource: null };",
+    "tests": [
+      "test/mwearly.test.js"
+    ]
+  },
+  {
+    "name": "MWEARLY-items-raw",
+    "file": "src/combat/weaponRig.js",
+    "old": "const items = snap.items.map((it) => setItemFields(it));\n  const li",
+    "new": "const items = snap.items.map((it) => ({ ...it }));\n  const li",
+    "tests": [
+      "test/mwearly.test.js"
+    ]
+  },
+  {
+    "name": "MWEARLY-store-never-counted",
+    "file": "src/combat/weaponRig.js",
+    "old": "    if (!counted()) await count();\n",
+    "new": "\n",
+    "tests": [
+      "test/mwearly.test.js"
+    ]
+  },
+  {
+    "name": "MWEARLY-fill-keeps-the-losers-mark",
+    "file": "src/systems/equip.js",
+    "old": "if (slots[it.equipSlot]) { delete it.equipSlot; continue; }",
+    "new": "if (slots[it.equipSlot]) { continue; }",
+    "tests": [
+      "test/mwearly.test.js"
+    ]
+  },
+  {
+    "name": "MWEARLY-boot-never-starts-it",
+    "file": "src/scenes/world.js",
+    "old": "  if (bootLoadPick) prebuildArmsForSave(bootSnap);\n",
+    "new": "",
+    "tests": [
+      "test/mwearly.test.js"
+    ]
+  },
+  {
+    "name": "MWEARLY-door-reads-its-own-pick",
+    "file": "src/scenes/world.js",
+    "old": "    const snap = bootSnap();\n    bootSnapRead = null;\n    await worldQuickLoad({ ...bootLoadPick, snap });",
+    "new": "    await worldQuickLoad({ mostRecent: true });",
+    "tests": [
+      "test/mwearly.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWEARLY-F1-no-word-given",
+    "file": "src/combat/weaponRig.js",
+    "old": "  _armsIntent = intent;\n",
+    "new": "\n",
+    "tests": [
+      "test/mwearly.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWEARLY-F1-the-restore-never-waits",
+    "file": "src/combat/weaponRig.js",
+    "old": "  if (_armsIntent && _armsIntent !== intent) await _armsIntent.done;\n",
+    "new": "\n",
+    "tests": [
+      "test/mwearly.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWEARLY-F1-the-word-outlives-the-door",
+    "file": "src/combat/weaponRig.js",
+    "old": "    if (_armsIntent === intent) _armsIntent = null;\n",
+    "new": "\n",
+    "tests": [
+      "test/mwearly.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWEARLY-F1-the-early-build-waits-on-itself",
+    "file": "src/combat/weaponRig.js",
+    "old": "return await build(e, { intent });",
+    "new": "return await build(e);",
+    "tests": [
+      "test/mwearly.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWEARLY-F3-read-with-no-files",
+    "file": "src/combat/weaponRig.js",
+    "old": "    if (!(dataCount() > 0)) return null;\n",
+    "new": "\n",
+    "tests": [
+      "test/mwearly.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWEARLY-F3-read-up-front",
+    "file": "src/combat/weaponRig.js",
+    "old": "  _armsIntent = intent;\n  try {\n",
+    "new": "  _armsIntent = intent;\n  if (typeof snapOf === 'function') snapOf();\n  try {\n",
+    "tests": [
+      "test/mwearly.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWEARLY-F3-the-early-build-parses-its-own",
+    "file": "src/scenes/world.js",
+    "old": "if (bootLoadPick) prebuildArmsForSave(bootSnap);",
+    "new": "if (bootLoadPick) prebuildArmsForSave(pickedSaveSnap(bootLoadPick));",
+    "tests": [
+      "test/mwearly.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWEARLY-F3-the-parse-kept-for-the-session",
+    "file": "src/scenes/world.js",
+    "old": "    bootSnapRead = null;\n",
+    "new": "",
+    "tests": [
+      "test/mwearly.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWEARLY-F3-the-handed-snapshot-ignored",
+    "file": "src/scenes/world.js",
+    "old": "const snap = picked ?? (key != null",
+    "new": "const snap = (key != null",
+    "tests": [
+      "test/mwearly.test.js",
+      "test/saveslots.test.js"
+    ]
+  },
+  {
+    "name": "MW-EARLY-the-form-dropped-from-the-build-under-way",
+    "file": "src/combat/fpArm.js",
+    "old": "      return o ? { race: o.race ?? null, female: !!o.female, faceIndex: o.faceIndex | 0, werewolf: !!o.werewolf } : null;",
+    "new": "      return o ? { race: o.race ?? null, female: !!o.female, faceIndex: o.faceIndex | 0 } : null;",
+    "tests": [
+      "test/mwearly.test.js"
+    ]
+  },
+  {
+    "name": "MW-EARLY-the-form-dropped-from-the-identity-compare",
+    "file": "src/combat/weaponRig.js",
+    "old": "    && !!have.werewolf === want.werewolf;   // WEREWOLF1",
+    "new": "    ;",
+    "tests": [
+      "test/mwearly.test.js"
+    ]
+  }
+]

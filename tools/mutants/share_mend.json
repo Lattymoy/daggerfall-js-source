@@ -1,0 +1,137 @@
+[
+  {
+    "name": "SHARE-MEND-uid-left-on",
+    "file": "src/systems/questShare.js",
+    "old": "    if (m.questUID === sd.questUID) delete out.questUID;\n",
+    "new": "",
+    "tests": [
+      "test/sharemend.test.js"
+    ]
+  },
+  {
+    "name": "SHARE-MEND-symbol-left-on",
+    "file": "src/systems/questShare.js",
+    "old": "    if (ownSymbol(m.placeSymbol, symbol)) delete out.placeSymbol;\n",
+    "new": "",
+    "tests": [
+      "test/sharemend.test.js"
+    ]
+  },
+  {
+    "name": "SHARE-MEND-uid-not-put-back",
+    "file": "src/systems/questShare.js",
+    "old": "    questUID: sd.questUID,\n",
+    "new": "",
+    "tests": [
+      "test/sharemend.test.js"
+    ]
+  },
+  {
+    "name": "SHARE-MEND-symbol-not-put-back",
+    "file": "src/systems/questShare.js",
+    "old": "    placeSymbol: symbol ? { original: symbol.original, name: getInnerSymbolName(symbol.original ?? '') } : null,",
+    "new": "    placeSymbol: null,",
+    "tests": [
+      "test/sharemend.test.js"
+    ]
+  },
+  {
+    "name": "SHARE-MEND-a-marker-dropped",
+    "file": "src/systems/questShare.js",
+    "old": "      for (const k of MARKER_LISTS) if (Array.isArray(sd[k])) out[k] = sd[k].map((m) => (m && typeof m === 'object' ? each(m, sd, r.symbol) : m));",
+    "new": "      for (const k of MARKER_LISTS) if (Array.isArray(sd[k])) out[k] = sd[k].filter((m) => m?.targetResources).map((m) => each(m, sd, r.symbol));",
+    "tests": [
+      "test/sharemend.test.js"
+    ]
+  },
+  {
+    "name": "SHARE-MEND-build-unstamped",
+    "file": "src/systems/questShare.js",
+    "old": "  const slim = slimShareMarkers({ ...data, build: BUILD_TAG });",
+    "new": "  const slim = slimShareMarkers({ ...data });",
+    "tests": [
+      "test/sharemend.test.js"
+    ]
+  },
+  {
+    "name": "SHARE-MEND-size-read-whole",
+    "file": "src/systems/questShare.js",
+    "old": "  const text = JSON.stringify(slim);",
+    "new": "  const text = JSON.stringify(data);",
+    "tests": [
+      "test/sharemend.test.js"
+    ]
+  },
+  {
+    "name": "SHARE-MEND-receiver-reads-slim",
+    "file": "src/systems/questShare.js",
+    "old": "  const safe = takeLocalItems(local, fullShareMarkers(data));",
+    "new": "  const safe = takeLocalItems(local, data);",
+    "tests": [
+      "test/sharemend.test.js"
+    ]
+  },
+  {
+    "name": "SHARE-MEND-restore-called-mismatch",
+    "file": "src/systems/questShare.js",
+    "old": "  if (!quest) return { ok: false, reason: 'restore' };",
+    "new": "  if (!quest) return { ok: false, reason: 'mismatch' };",
+    "tests": [
+      "test/sharemend.test.js"
+    ]
+  },
+  {
+    "name": "SHARE-MEND-senders-sentence",
+    "file": "src/systems/questShare.js",
+    "old": "  const base = RECEIVER_REFUSAL_TEXT[result?.reason] ?? SHARE_REFUSAL_TEXT[result?.reason] ?? null;",
+    "new": "  const base = SHARE_REFUSAL_TEXT[result?.reason] ?? null;",
+    "tests": [
+      "test/sharemend.test.js"
+    ]
+  },
+  {
+    "name": "SHARE-MEND-skew-when-builds-agree",
+    "file": "src/systems/questShare.js",
+    "old": "  return theirBuild === mine ? '' : ' You are on different versions of the game - both of you should reload the page.';",
+    "new": "  return ' You are on different versions of the game - both of you should reload the page.';",
+    "tests": [
+      "test/sharemend.test.js"
+    ]
+  },
+  {
+    "name": "SHARE-MEND-deliberate-swallowed",
+    "file": "src/systems/questShare.js",
+    "old": "  return !sync || fresh;",
+    "new": "  return fresh;",
+    "tests": [
+      "test/sharemend.test.js"
+    ]
+  },
+  {
+    "name": "SHARE-MEND-sync-said-every-time",
+    "file": "src/systems/questShare.js",
+    "old": "  const fresh = !said.has(key);",
+    "new": "  const fresh = true;",
+    "tests": [
+      "test/sharemend.test.js"
+    ]
+  },
+  {
+    "name": "SHARE-MEND-sync-unmarked",
+    "file": "src/scenes/world.js",
+    "old": "data: { ...prepared.data, sync: 1 } })) _questSyncSeen.set(questName, count);",
+    "new": "data: prepared.data })) _questSyncSeen.set(questName, count);",
+    "tests": [
+      "test/sharemend.test.js"
+    ]
+  },
+  {
+    "name": "SHARE-MEND-host-says-every-time",
+    "file": "src/scenes/world.js",
+    "old": "      if (!sayShareRefusal(_questRefusalSaid, acct, quest.questName, result, quest.data?.sync === 1, `${quest.data?.shareId ?? ''}|${quest.data?.build ?? ''}`)) return;\n",
+    "new": "",
+    "tests": [
+      "test/sharemend.test.js"
+    ]
+  }
+]

@@ -59,6 +59,18 @@
 // the page knows its Renown, every sigil is Dormant and adds nothing,
 // and drinks nothing. FOES ONLY: never in a duel, never a blow at a
 // player, never a peer's blow resolved here.
+//
+// ═══ SET1: A SIGIL MAY NAME A SET ══════════════════════════════════
+//
+// Mac (2026-09-26): "sigil armor sets that also come with set builds".
+// The record grows ONE optional field, `set` - the id of the set the
+// piece belongs to (systems/sigilSets.js holds the sets themselves) - and
+// `power` stops being required: a piece of ARMOUR or a SHIELD in a set
+// carries `{ set, party, xp }` and no blow, a set WEAPON carries both
+// its blow and its set, and one `xp` feeds both so no piece levels
+// twice. Every reader of `power` reads a set piece's absent power as no
+// blow at all. The ids live HERE, beside the record's shape they
+// validate; the sets' names and tiers live in sigilSets.js.
 // ═══════════════════════════════════════════════════════════════════
 
 import { PARTY_MAX } from '../net/wire.js';
@@ -87,16 +99,33 @@ export const SIGIL_STAGES = Object.freeze([
 ]);
 /** A sigil drinks no more than its last stage asks. */
 export const SIGIL_XP_MAX = SIGIL_STAGES[SIGIL_STAGES.length - 1].xp;
+/** SET1: the sets a sigil may name (systems/sigilSets.js SIGIL_SETS, in its order) - the four of the world, then the
+ *  gate boss's own. */
+export const SIGIL_SET_IDS = Object.freeze(['malacath', 'dagon', 'nocturnal', 'mora', 'ruhn']);
 
 const partyOf = (n) => (Number.isFinite(n) ? Math.max(1, Math.min(PARTY_MAX, Math.floor(n))) : 1);
+/** A fight's size as a sigil records it: whole, 1..PARTY_MAX (SET4: a set piece's record takes it the same way). */
+export const sigilParty = partyOf;
 
-/** A valid sigil record: a whole power inside the widest band, a whole party 1..PARTY_MAX, a whole xp 0..its cap. */
+/** A whole power inside the widest band - a sigil's blow. */
+const validPower = (p) => Number.isInteger(p) && p >= 1 && p <= SIGIL_POWER_MAX;
+/** A valid sigil record: a whole party 1..PARTY_MAX, a whole xp 0..its cap, and a POWER (a weapon's blow, a whole per
+ *  cent inside the widest band) or a SET (SET1: one of SIGIL_SET_IDS) or both - never neither, and neither field
+ *  present and malformed. */
 export function validSigil(s) {
-  return !!s && typeof s === 'object' && !Array.isArray(s)
-    && Number.isInteger(s.power) && s.power >= 1 && s.power <= SIGIL_POWER_MAX
-    && Number.isInteger(s.party) && s.party >= 1 && s.party <= PARTY_MAX
-    && Number.isInteger(s.xp) && s.xp >= 0 && s.xp <= SIGIL_XP_MAX;
+  if (!s || typeof s !== 'object' || Array.isArray(s)) return false;
+  if (!(Number.isInteger(s.party) && s.party >= 1 && s.party <= PARTY_MAX)) return false;
+  if (!(Number.isInteger(s.xp) && s.xp >= 0 && s.xp <= SIGIL_XP_MAX)) return false;
+  const hasPower = s.power !== undefined, hasSet = s.set !== undefined;
+  if (!hasPower && !hasSet) return false;
+  if (hasPower && !validPower(s.power)) return false;
+  if (hasSet && !SIGIL_SET_IDS.includes(s.set)) return false;
+  return true;
 }
+/** SET1: the set a sigil names, or null (a weapon sigil of no set, or a malformed record). */
+export const sigilSetId = (s) => (validSigil(s) && typeof s.set === 'string' ? s.set : null);
+/** SET1: does the sigil carry a blow - a power? (A set's armour does not.) */
+export const sigilHasBlow = (s) => validSigil(s) && validPower(s.power);
 
 /** The sigil's own rank (0..4) by its xp; 0 for a malformed record. */
 export function sigilRank(sigil) {
@@ -121,8 +150,10 @@ export function sigilStageIn(sigil, renown) {
   return cap < 0 ? -1 : Math.min(sigilRank(sigil), cap);
 }
 
-/** The per cent a sigil adds in a hand of this Renown: its power times its stage's share, 0 dormant or malformed. */
+/** The per cent a sigil adds in a hand of this Renown: its power times its stage's share, 0 dormant, malformed, or a
+ *  set piece with no blow (SET1). */
 export function sigilPercent(sigil, renown) {
+  if (!sigilHasBlow(sigil)) return 0;
   const st = sigilStageIn(sigil, renown);
   return st < 0 ? 0 : (sigil.power * SIGIL_STAGES[st].share) / 100;
 }
@@ -212,15 +243,60 @@ export function sigilLines(item) {
   const s = item?.sigil;
   if (!validSigil(s)) return [];
   const rank = sigilRank(s);
-  const full = `+${s.power}% at Ascendant`;
-  if (_renown == null) return [`Sigil (Dormant - wakes online, with your Renown): ${full}`];
+  // SET1: a set's armour carries no blow - its first line names only the stage; its set says the rest
+  // (systems/sigilSets.js setLines)
+  const blow = sigilHasBlow(s);
+  const full = blow ? `: +${s.power}% at Ascendant` : '';
+  if (_renown == null) return [`Sigil (Dormant - wakes online, with your Renown)${full}`];
   const st = sigilStageIn(s, _renown);
-  const out = [`Sigil (${SIGIL_STAGES[st].name}): +${pctText(sigilPercent(s, _renown))}% damage, ${full}`];
+  const out = [blow ? `Sigil (${SIGIL_STAGES[st].name}): +${pctText(sigilPercent(s, _renown))}% damage, +${s.power}% at Ascendant` : `Sigil (${SIGIL_STAGES[st].name})`];
   const next = SIGIL_STAGES[rank + 1];
   if (rank > st) out.push(`Held at ${SIGIL_STAGES[st].name} by your Renown (${SIGIL_STAGES[st + 1].name} at Renown ${SIGIL_STAGES[st + 1].renown})`);
   else if (next) out.push(`${SIGIL_STAGES[rank].name}: ${s.xp.toLocaleString('en-US')} / ${next.xp.toLocaleString('en-US')} to ${next.name}`);
   if (s.party > 1) out.push(`Won in a fight of ${s.party}`);
   return out;
+}
+
+/**
+ * SIGIL-UI (2026-09-26, Mac: "sigil weapons need a visible indicator within the info section, something that makes it
+ * stand out, along with progress as you use it"): the same facts sigilLines says, as a MODEL a card draws - the
+ * stage it stands at in my hand, the five stages with the ones it has grown into, and how far it has drunk toward
+ * its next. `rank` is the sigil's own growth (its xp's stage); `stage` is what my Renown lets it wake to (-1 while
+ * Dormant); `held` says the Renown is the lower. `frac` is the share of the way from its rank's xp to the next one's
+ * (1 at Ascendant). Null for a weapon without a sigil.
+ * SET1: `blow` says the sigil carries a power (a set's armour does not: its `pct` is 0 and its `full` null), and `set`
+ * names the set it belongs to, or null.
+ * @returns {null | { rank: number, stage: number, dormant: boolean, held: boolean, name: string, pct: number,
+ *   full: number|null, xp: number, from: number, to: number|null, next: string|null, frac: number, party: number,
+ *   unlock: number|null, stages: Array<{ name: string, grown: boolean, awake: boolean }>, blow: boolean,
+ *   set: string|null }}
+ */
+export function sigilView(item) {
+  const s = item?.sigil;
+  if (!validSigil(s)) return null;
+  const rank = sigilRank(s);
+  const stage = sigilStageIn(s, _renown);
+  const dormant = stage < 0;
+  const next = SIGIL_STAGES[rank + 1] ?? null;
+  const from = SIGIL_STAGES[rank].xp;
+  const held = !dormant && rank > stage;
+  return {
+    rank, stage, dormant, held,
+    name: dormant ? 'Dormant' : SIGIL_STAGES[stage].name,
+    pct: sigilPercent(s, _renown), full: sigilHasBlow(s) ? s.power : null,
+    xp: s.xp, from, to: next ? next.xp : null, next: next ? next.name : null,
+    frac: next ? Math.max(0, Math.min(1, (s.xp - from) / (next.xp - from))) : 1,
+    party: s.party,
+    unlock: held ? SIGIL_STAGES[stage + 1].renown : null,   // the Renown that opens its next stage in my hand
+    stages: SIGIL_STAGES.map((st, i) => ({ name: st.name, grown: i <= rank, awake: !dormant && i <= stage })),
+    blow: sigilHasBlow(s), set: sigilSetId(s),
+  };
+}
+/** The progress line a card writes under its bar: "7,420 / 12,500 to Bright", or that it is fully grown. */
+export function sigilProgressText(v) {
+  if (!v) return '';
+  if (v.to == null) return 'Fully grown';
+  return `${v.xp.toLocaleString('en-US')} / ${v.to.toLocaleString('en-US')} to ${v.next}`;
 }
 
 /** Tests only: forget the session and every weapon's carried fraction. */

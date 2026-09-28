@@ -30,6 +30,8 @@ export const GATE_CLAIMS_KEY = 'wb5.gateClaims';
 export const GATE_CLAIMS_MAX = 14;
 /** The least time between two offers of what is kept, ms. */
 export const GATE_CLAIM_RETRY_MS = 10 * 60 * 1000;
+/** AUDIT WBX W4: how often a frame asks who is signed in. */
+export const GATE_ME_POLL_MS = 1000;
 
 /** The words. */
 export const GATE_CLAIM_TEXT = Object.freeze({
@@ -66,8 +68,8 @@ export function gateRecordText(rec) {
 export function createGateClaims({ claim, store = null, nowS = () => Math.floor(Date.now() / 1000), nowMs = () => Date.now(), say = () => {}, onClosed = () => {}, me = () => null }) {
   /** an offer under way; a receipt that came in during it (offered as soon as it ends); the last offer's time */
   let busy = false, again = false, lastAt = -Infinity;
-  /** AUDIT WB A9: the account the last frame saw signed in (undefined before the first) */
-  let lastMe;
+  /** AUDIT WB A9: the account the last frame saw signed in (undefined before the first); AUDIT WBX W4: when it was asked */
+  let lastMe, meAt = -Infinity;
   /** the receipts settled this session (a re-send is not asked again), and the ones whose guest line was said */
   const settled = new Set(), guestSaid = new Set();
   const live = (r) => { const c = typeof r === 'string' ? readReceipt(r) : null; return c && c.signed && c.e > nowS() ? c : null; };
@@ -122,9 +124,15 @@ export function createGateClaims({ claim, store = null, nowS = () => Math.floor(
     /** A frame: what is kept is offered again once GATE_CLAIM_RETRY_MS has passed since the last offer - the first
      *  frame of a session at once, and (AUDIT WB A9) the first after another account signs in. */
     tick() {
+      if (busy) return false;
+      // AUDIT WBX W4: the session asked at most once GATE_ME_POLL_MS (a storage read and a parse every frame - on the
+      // desktop, a file read), and at once when a retry is due
+      const t = nowMs(), due = t - lastAt >= GATE_CLAIM_RETRY_MS;
+      if (!due && t - meAt < GATE_ME_POLL_MS) return false;
+      meAt = t;
       const mine = me(), signedIn = mine !== lastMe;   // AUDIT WB A9: an account signing in is asked at once, not on the clock
       lastMe = mine;
-      if (busy || (!signedIn && nowMs() - lastAt < GATE_CLAIM_RETRY_MS)) return false;
+      if (!signedIn && !due) return false;
       if (!kept().some((r) => mine && live(r)?.s === mine)) { lastAt = nowMs(); return false; }   // nothing of the signed-in account's to offer
       void flush();
       return true;

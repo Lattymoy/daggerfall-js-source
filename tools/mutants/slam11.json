@@ -86,8 +86,8 @@
   {
     "name": "U7-foes-borrows",
     "file": "server/src/index.js",
-    "old": "(message.length + a.id.length + 8) * listeners.length, FOES_ROOM_BYTES_PER_S);",
-    "new": "(message.length + a.id.length + 8) * listeners.length, FOES_ROOM_BYTES_PER_S, true);",
+    "old": "byteGate(this._roomFoes, now, (message.length + a.id.length + 8) * listeners.length, FOES_ROOM_BYTES_PER_S);",
+    "new": "byteGate(this._roomFoes, now, (message.length + a.id.length + 8) * listeners.length, FOES_ROOM_BYTES_PER_S, true);",
     "tests": [
       "test/slam11.test.js",
       "test/auditworld3.test.js",

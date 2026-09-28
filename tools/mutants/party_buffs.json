@@ -1,0 +1,218 @@
+[
+  {
+    "name": "PARTY-BUFFS-wire-no-cap",
+    "file": "src/net/wire.js",
+    "old": "    for (const e of p.fx.slice(0, PARTY_FX_MAX)) {",
+    "new": "    for (const e of p.fx) {",
+    "tests": [
+      "test/partybuffs.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-BUFFS-wire-keeps-a-bad-icon",
+    "file": "src/net/wire.js",
+    "old": "      const i = Number.isInteger(e.i) && e.i >= 0 && e.i <= CAST_ICON_MAX ? e.i : null;",
+    "new": "      const i = Number.isInteger(e.i) && e.i >= 0 ? e.i : null;",
+    "tests": [
+      "test/partybuffs.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-BUFFS-wire-coerces-the-debuff-flag",
+    "file": "src/net/wire.js",
+    "old": "      fx.push(e.d === 1 ? { i, r, n, d: 1 } : { i, r, n });",
+    "new": "      fx.push(e.d ? { i, r, n, d: 1 } : { i, r, n });",
+    "tests": [
+      "test/partybuffs.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-BUFFS-wire-rs-any-truthy",
+    "file": "src/net/wire.js",
+    "old": "  if (p.rs === 1) out.rs = 1;",
+    "new": "  if (p.rs) out.rs = 1;",
+    "tests": [
+      "test/partybuffs.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-BUFFS-compose-keeps-the-held-item",
+    "file": "src/net/partyBuffs.js",
+    "old": "    if (!b.showIcon || b.bundleType === 'HeldMagicItem') continue;",
+    "new": "    if (!b.showIcon) continue;",
+    "tests": [
+      "test/partybuffs.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-BUFFS-compose-debuffs-first",
+    "file": "src/net/partyBuffs.js",
+    "old": "  return [...buffs, ...debuffs].slice(0, PARTY_FX_MAX);",
+    "new": "  return [...debuffs, ...buffs].slice(0, PARTY_FX_MAX);",
+    "tests": [
+      "test/partybuffs.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-BUFFS-compose-rounds-of-the-first-entry",
+    "file": "src/net/partyBuffs.js",
+    "old": "    const most = (b.entries ?? []).reduce((m, e) => Math.max(m, Number(e.roundsRemaining) || 0), 0);",
+    "new": "    const most = Number(b.entries?.[0]?.roundsRemaining) || 0;",
+    "tests": [
+      "test/partybuffs.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-BUFFS-compose-a-gift-is-a-debuff",
+    "file": "src/net/partyBuffs.js",
+    "old": "    if (b.selfCast || b.ally) buffs.push({ i, r, n });",
+    "new": "    if (b.selfCast) buffs.push({ i, r, n });",
+    "tests": [
+      "test/partybuffs.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-BUFFS-compose-keeps-the-bang",
+    "file": "src/net/partyBuffs.js",
+    "old": "    const n = String(b.name ?? '').replace(/^!+/, '').slice(0, PARTY_FX_NAME_MAX);",
+    "new": "    const n = String(b.name ?? '').slice(0, PARTY_FX_NAME_MAX);",
+    "tests": [
+      "test/partybuffs.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-BUFFS-heal-floats-a-followed-rest",
+    "file": "src/net/partyBuffs.js",
+    "old": "|| prevH <= 0 || pose?.rest || pose?.rs) return 0;",
+    "new": "|| prevH <= 0 || pose?.rest) return 0;",
+    "tests": [
+      "test/partybuffs.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-BUFFS-heal-floats-a-rise-from-death",
+    "file": "src/net/partyBuffs.js",
+    "old": "|| prevH <= 0 || pose?.rest || pose?.rs) return 0;",
+    "new": "|| pose?.rest || pose?.rs) return 0;",
+    "tests": [
+      "test/partybuffs.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-BUFFS-card-row-never-drawn",
+    "file": "src/ui/partyPanel.js",
+    "old": "    setCls(card.fx, `dfparty-fx${list.length ? '' : ' off'}`);",
+    "new": "    setCls(card.fx, 'dfparty-fx off');",
+    "tests": [
+      "test/partybuffs.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-BUFFS-card-debuff-unmarked",
+    "file": "src/ui/partyPanel.js",
+    "old": "      const tile = el('span', `dfparty-fxe${e.d ? ' debuff' : ''}`);",
+    "new": "      const tile = el('span', 'dfparty-fxe');",
+    "tests": [
+      "test/partybuffs.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-BUFFS-card-rewrites-every-pose",
+    "file": "src/ui/partyPanel.js",
+    "old": "    if (key === card.fxKey) return;\n    card.fxKey = key;",
+    "new": "    card.fxKey = key;",
+    "tests": [
+      "test/partybuffs.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-BUFFS-card-art-not-in-the-key",
+    "file": "src/ui/partyPanel.js",
+    "old": "    const key = `${partyFxKey(list)}#${urls.map((u) => (u ? 1 : 0)).join('')}`;",
+    "new": "    const key = partyFxKey(list);",
+    "tests": [
+      "test/partybuffs.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-BUFFS-card-away-seat-keeps-its-effects",
+    "file": "src/ui/partyPanel.js",
+    "old": "    paintFx(card, m.online ? p?.fx : null);",
+    "new": "    paintFx(card, p?.fx);",
+    "tests": [
+      "test/partybuffs.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-BUFFS-card-heal-never-floats",
+    "file": "src/ui/partyPanel.js",
+    "old": "    if (healed > 0) floatHeal(card, healed);\n",
+    "new": "",
+    "tests": [
+      "test/partybuffs.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-BUFFS-card-heal-left-behind",
+    "file": "src/ui/partyPanel.js",
+    "old": "    node.addEventListener?.('animationend', gone);\n",
+    "new": "",
+    "tests": [
+      "test/partybuffs.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-BUFFS-hud-reading-kept-under-a-window",
+    "file": "src/ui/enhancedHud.js",
+    "old": "    last.hpSeen = null;   // PARTY-BUFFS: what a window restored (a rest, a level-up, a load, a rise) is no heal to float\n",
+    "new": "",
+    "tests": [
+      "test/partybuffs.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-BUFFS-hud-heal-never-shown",
+    "file": "src/ui/enhancedHud.js",
+    "old": "  if (heal) showNumber(heal);\n",
+    "new": "",
+    "tests": [
+      "test/partybuffs.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-BUFFS-heal-number-first-frame",
+    "file": "src/ui/hitNumbers.js",
+    "old": "  if (prev == null || !Number.isFinite(a) || !Number.isFinite(b)) return null;",
+    "new": "  if (!Number.isFinite(a) || !Number.isFinite(b)) return null;",
+    "tests": [
+      "test/partybuffs.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-BUFFS-heal-number-a-loss",
+    "file": "src/ui/hitNumbers.js",
+    "old": "  return n > 0 ? { kind: 'heal', text: `+${n}`, tag: null } : null;",
+    "new": "  return n !== 0 ? { kind: 'heal', text: `+${n}`, tag: null } : null;",
+    "tests": [
+      "test/partybuffs.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-BUFFS-host-fx-never-sent",
+    "file": "src/scenes/world.js",
+    "old": "      ...partyFxField(),   // PARTY-BUFFS: my live spell effects, for the party's cards (net/partyBuffs.js)\n",
+    "new": "",
+    "tests": [
+      "test/partybuffs.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-BUFFS-host-rest-never-said",
+    "file": "src/scenes/world.js",
+    "old": "      ...(playerEntity.isResting ? { rs: 1 } : {}),   // PARTY-BUFFS: resting, mine or followed - what I gain is the night's, no heal to float\n",
+    "new": "",
+    "tests": [
+      "test/partybuffs.test.js"
+    ]
+  }
+]

@@ -643,7 +643,7 @@ test('AUDIT DISC19 B1: underground the candle burns its own white - every other 
   const at = src.indexOf("if (mode === 'dungeon') {\n      if (pendingDungeonExit)");
   const branch = src.slice(at, src.indexOf('\n    }\n', at));
   assert.match(branch, /const _dgColor = lanternColor\(!!renderer\.lightingLane, new Float32Array\(DUNGEON_LIGHT_COLOR\)\);/);
-  assert.match(branch, /nearestLights\(dungeonCtx\.lights, cam\.pos, renderer\.maxPointLights, dungeonCtx\.flicker\.ranges, \(\) => _dgColor, DUNGEON_LIGHT_BLOCK_RANGE\),/);
-  assert.match(branch, /\n\s*dungeonCtx\.candleLight\(\), _dgTint\(playerTorchLight\([^\n]*\)\), _dgTint\(thunderlockMuzzleLight\([^\n]*\)\), \.\.\.dungeonCtx\.campLights\(\)\.map\(_dgTint\), \.\.\.dungeonCtx\.torchLights\(\)\.map\(_dgTint\)\);/);
-  assert.match(branch, /renderer\.setPointLights\(_dgLit\.data, null, _dgLit\.colors\);/);
+  assert.match(branch, /const _dgNear = nearestLights\(dungeonCtx\.lights, cam\.pos, renderer\.maxPointLights \+ \(_dgFade \? 1 : 0\), dungeonCtx\.flicker\.ranges, \(\) => _dgColor, DUNGEON_LIGHT_BLOCK_RANGE\);/);   // LA-AUDIT A5: one past the cap, for its fade
+  assert.match(branch, /\n\s*dungeonCtx\.candleLight\(\), _dgTint\(playerTorchLight\([^\n]*\)\), _dgTint\(thunderlockMuzzleLight\([^\n]*\)\), \.\.\.\(host\.peerLights\?\.\(\) \?\? \[\]\)\.map\(_dgTint\), \.\.\.dungeonCtx\.campLights\(\)\.map\(_dgTint\), \.\.\.dungeonCtx\.torchLights\(\)\.map\(_dgTint\)\);/);
+  assert.match(branch, /renderer\.setPointLights\(_dgLit\.data, null, \(_dgFade && capFadePairs\(_dgLit\.data, [^\n]*, _dgLit\.colors\)\) \|\| _dgLit\.colors\);/);   // LA-AUDIT A5: the pairs' own colours, the cap's fade on them
 });

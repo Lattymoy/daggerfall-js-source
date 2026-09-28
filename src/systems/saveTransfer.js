@@ -46,7 +46,7 @@ export const TRANSFER_SHOT_FILES = Object.freeze([
   ['Screenshot.dataurl', null],
 ]);
 /** the download's name */
-export const TRANSFER_ZIP_NAME = 'DaggerfallEnhanced-Saves.zip';
+export const TRANSFER_ZIP_NAME = 'DaggerfallOnline-Saves.zip';
 
 // ── the slots a store holds ──────────────────────────────────────
 

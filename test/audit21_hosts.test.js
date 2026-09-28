@@ -317,7 +317,7 @@ test('AUDIT 21 hosts F8: a swing costs fatigue in EVERY host that mounts a weapo
   const RIG_HOSTS = ['scenes/dungeonContext.js', 'scenes/worldModes.js'];
   for (const h of RIG_HOSTS) {
     const text = code(h);
-    assert.match(text, /SWING_WEAPON_FATIGUE_LOSS/,
+    assert.match(text, /SWING_FATIGUE_COST/,   // BALANCE1: DFU's swing loss on exertion's scale
       `${h} mounts a weapon rig and must charge the swing`);
     assert.match(text, /tallySwingSkills\(/,
       `${h} must take the tally arm - Archery AND CriticalStrike for a bow`);
@@ -325,13 +325,14 @@ test('AUDIT 21 hosts F8: a swing costs fatigue in EVERY host that mounts a weapo
   // and the interior arm must charge on BOTH paths - the bow arm used to
   // tally one skill and drain nothing, disagreeing with the dungeon's own
   const modes = code('scenes/worldModes.js');
-  const drains = [...modes.matchAll(/drainInteriorFatigue\(SWING_WEAPON_FATIGUE_LOSS\)/g)];
+  const drains = [...modes.matchAll(/drainInteriorFatigue\(SWING_FATIGUE_COST\)/g)];
   assert.equal(drains.length, 2, 'the bow arm and the melee arm each charge the swing');
   assert.doesNotMatch(modes, /tallySkill\(playerEntity, SKILLS\.Archery\)/,
     'the bow arm takes tallySwingSkills, not a single hand-picked skill');
 
   // the constant is the shared one, not a re-typed literal
   assert.match(code('scenes/hostCombat.js'), /SWING_WEAPON_FATIGUE_LOSS = 11/);
+  assert.match(code('scenes/hostCombat.js'), /SWING_FATIGUE_COST = Math\.trunc\(SWING_WEAPON_FATIGUE_LOSS \* FATIGUE_DRAIN_SCALE\)/, 'and what a swing charges is DFU\'s on exertion\'s scale (BALANCE1)');
 });
 
 test('AUDIT 21 hosts F7: every gameplay host draws the HUD', () => {

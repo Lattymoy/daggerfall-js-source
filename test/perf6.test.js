@@ -18,7 +18,7 @@ test('PERF6 pins: the interior context remaps every model before the list, adds 
   assert.ok(remapAt > 0 && remapAt < listAt, 'every model\'s remap is awaited before the list is built, so the keys resolve as drawMesh\'s do');
   assert.match(c, /const texRemap = new Map\(\);\n\s+const resolveTexKey = keyResolver\(texRemap\);/);
   assert.match(c, /let staticBatch = null, staticBuilt = false;\n\s+const staticBuilder = new StaticBatchBuilder\(\);/);
-  assert.match(c, /drawList\.push\(\{ mesh: gpu, matrix, key, aabb \}\);\n\s+\/\/ PERF6[^\n]*\n\s+if \(cpu\.normals && cpu\.uvs\) \{ staticBuilder\.add\(cpu, matrix, resolveTexKey\); drawList\[drawList\.length - 1\]\._batched = true; \}/);
+  assert.match(c, /drawList\.push\(\{ mesh: gpu, matrix, key, aabb \}\);\n\s+\/\/ PERF6[^\n]*\n\s+if \(!baseKey && cpu\.normals && cpu\.uvs\) \{ staticBuilder\.add\(cpu, matrix, resolveTexKey\); drawList\[drawList\.length - 1\]\._batched = true; \}/);   // BASE-HIDE re-aim: a furnishable room's own pieces stand one by one, never the merge (test/basehide.test.js)
   assert.match(c, /get staticBatch\(\) \{[^\n]*\n\s+if \(!staticBuilt\) \{ staticBuilt = true; const m = staticBuilder\.finish\(\); staticBatch = m \? renderer\.createMesh\(m\) : null; \}/);
   assert.match(c, /if \(staticBatch\) \{ renderer\.destroyMesh\(staticBatch\); staticBatch = null; \}/);
   assert.match(c, /dynamicDraws\.push\(\{ gpu, object: actions\.addDoor\(cpu, parent\(d\.matrix\)\) \}\);/, 'the doors stay dynamic');

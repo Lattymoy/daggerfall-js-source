@@ -218,7 +218,7 @@ test('HOME1 the client\'s law: a home can be Daggerfall\'s for-sale house or an 
   for (const t of [BUILDING_TYPES.HouseForSale, BUILDING_TYPES.House1, BUILDING_TYPES.House2, BUILDING_TYPES.House3, BUILDING_TYPES.House4]) assert.equal(homeCandidate(b(t)), true, `type ${t}`);
   assert.equal(homeCandidate(b(BUILDING_TYPES.House2, { factionId: 42 })), false, 'a guild\'s house (the lock law keeps it for members)');
   assert.equal(homeCandidate(b(BUILDING_TYPES.House3, { factionId: 42 })), true, 'the lock law names House2 alone');
-  for (const t of [BUILDING_TYPES.House5, BUILDING_TYPES.Tavern, BUILDING_TYPES.Bank, BUILDING_TYPES.Palace, BUILDING_TYPES.Alchemist]) assert.equal(homeCandidate(b(t)), false, `type ${t}`);
+  for (const t of [BUILDING_TYPES.Tavern, BUILDING_TYPES.Bank, BUILDING_TYPES.Palace, BUILDING_TYPES.Alchemist]) assert.equal(homeCandidate(b(t)), false, `type ${t}`);   // HOME2: House5 and House6 are houses too (test/home2.test.js)
   assert.equal(homeCandidate(b(BUILDING_TYPES.House1, { buildingKey: 0 })), false, 'a building with no key is nobody\'s to own');
   assert.equal(homeCandidate(null), false);
   assert.equal(homePurchasable(b(BUILDING_TYPES.House1)), true);
@@ -423,7 +423,9 @@ test('HOME1 the wiring by source: the home answers at the door BEFORE Daggerfall
   assert.ok(gate > 0 && gate < door.indexOf('const unlocked = homeOpen || resolveBuildingUnlocked(bd);'), 'the home answers first');
   assert.match(door, /if \(door === 'locked'\) \{ townTalk\?\.say\?\.\(homeLockedLine\(home\)\); return true; \}/, 'shut: said, and the press ends - before the Open spell, the pick and the bash');
   assert.ok(door.indexOf("if (door === 'locked')") < door.indexOf('exteriorOpenSpellFor(playerEntity)'));
-  assert.match(door, /if \(!isBash && !homeAsked && getInteractionMode\(\) === 'info'\) \{\s*if \(door === 'own'\) \{ openHomeOwnerMenu\(bd, home, hit, entries\); return true; \}\s*const price = door === 'none' \? homeOfferPrice\(bd\) : 0;\s*if \(price\) \{ openHomeOffer\(bd, price, hit, entries\); return true; \}/);
+  // HOME2 moved the Info-only offer: the plaque's verbs first; where it lists none, HOME-OFFER's prompt says which
+  // press asks (test/homeoffer.test.js, test/home2.test.js hold the rest) and the door does what it says
+  assert.match(door, /if \(verb == null\) \{\s*const prompt = homeDoorPrompt\(\{ door, mode, price, declined: _homeDeclined\.has\(homeIdOf\(bd\)\), asked: homeAsked, isBash \}\);\s*if \(prompt === 'menu'\) \{ openHomeOwnerMenu\(bd, home, hit, entries\); return true; \}\s*if \(prompt === 'offer'\) \{ openHomeOffer\(bd, price, hit, entries\); return true; \}/);
   assert.match(m, /const homeOnward = \(hit, entries\) => \(\) => \{ activateStaticDoor\(hit, entries, false, \{ homeAsked: true \}\)/, 'No and Go in come back to the door, past the menu');
   assert.match(m, /houseOwned: home !== null \|\| isHouseOwned\(/, 'no greeting from residents a home does not have');
   assert.match(m, /interiorHome = home;   \/\/ HOME1/);
@@ -436,7 +438,7 @@ test('HOME1 the wiring by source: the home answers at the door BEFORE Daggerfall
   assert.match(m, /\+ \(!_intShared\.home && Array\.isArray\(data\.l\) \? applyInteriorLoot\(/, 'no peer\'s word on one');
   assert.match(m, /addPermanentScene\(sceneCache\(\), homeSceneName\(mapId, bd\.buildingKey\)\);/, 'a bought home\'s scene is kept');
   assert.match(m, /removePermanentScene\(sceneCache\(\), homeSceneName\(mapId, bd\.buildingKey\)\);/, 'a sold one\'s is not');
-  assert.match(m, /displayName: home \? homeDoorTitle\(home\) : db\.displayName,/, 'the hover names it');
+  assert.match(m, /displayName: home \? homeDoorTitle\(home\) : shownBuildingName\(db, bd\.name\),/, 'the hover names it');   // EMPIRE-BANK: a bank's name now (discovery.js shownBuildingName)
   assert.match(m, /onlineHomeLines: \(\) => \(host\.onlineHomes \? HOME_BANK_LINES : null\),/);
   const w = src('src/scenes/world.js');
   assert.match(w, /const onlineHomes = params\.has\('online'\)\s*\? createOnlineHomes\(/, 'online alone, and built before any quest can ask');

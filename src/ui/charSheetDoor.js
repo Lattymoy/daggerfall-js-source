@@ -40,6 +40,7 @@ import { isEnhanced } from '../systems/uiSkin.js';
 import { eventActions } from './input.js';   // MAC-C: the REGISTRY's answer for the two window keys
 import { mountEnhancedChunk, paintChunkNotice } from './enhancedChunk.js';   // MENU1: the one lazy-chunk door, and the notice it paints when a chunk is gone
 import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it away
+import { pauseMenuHooks, pauseMenuAct } from './pauseDoor.js';   // F5-QUESTS: the pause window's own hooks and act - a cycle (pauseDoor imports this door), read only at call time
 import { CharSheet, LevelUpScreen, charSheetArtLoaded } from './charsheet.js';
 import { charSheetHooks } from './charSheetNav.js';
 import { VirtueLevelUpScreen } from './virtueLevelUp.js';   // ORL1
@@ -183,7 +184,7 @@ export function createCharSheetWindow(deps = {}) {
     // anything new. What changes is which face is inside it, and the
     // sheet's own four buttons become that page's doors, out of these
     // same hooks: PX25 built the Stats page to take them.
-    return enhancedSheetPageOverlay(hooks, deps.entity);
+    return enhancedSheetPageOverlay(hooks, deps.entity, deps.pause ?? null);   // F5-QUESTS: and the host's pause bag
   }
   return new CharSheet(deps.entity, hooks);
 }
@@ -194,9 +195,10 @@ export function createCharSheetWindow(deps = {}) {
  * enhancedMenu's; this only chooses the page and forwards the sheet's
  * own four buttons onto it.
  */
-function enhancedSheetPageOverlay(hooks, entity = null) {
+function enhancedSheetPageOverlay(hooks, entity = null, pause = null) {
   let fired = false;
   let view = null;
+  let seams = null;   // F5-QUESTS: the enhanced menu module, once it lands - the Save and Load panes' picks (SLOTS1)
   let unregister = () => {};   // PX28
   let ascendView = null;   // ASCEND-ANYTIME: the Ascension, while it has this page's place
   let ascendHost = null;
@@ -271,23 +273,31 @@ function enhancedSheetPageOverlay(hooks, entity = null) {
    *  and a second copy of this bag is two pages that drift apart the
    *  day a door is added to one of them. */
   function pageOpts() {
-    return {
-      mode: 'pause',
-      at: 'stats',
-      onAction: (a) => { if (a === 'resume') close(); },
+    // F5-QUESTS (2026-09-26, Mac: "Cant see quest on f5 menu but can on tab menu"): THE HOST'S PAUSE BAG, under the
+    // sheet's own doors. This page IS the pause window opened on Stats, and it was handed those doors and nothing
+    // else: its Quests tab said "The journal is not wired into this place yet" while the same window through Tab's
+    // dial listed every quest, its Save and Load said there was no door, and its Exit did nothing. `pause` is the
+    // function the host's own togglePause spreads, so the two doors cannot drift; the act and the slot seams are
+    // ui/pauseDoor.js's own.
+    const menuHooks = pauseMenuHooks({
+      ...(pause?.() ?? {}),
       // The sheet's own buttons, onto the page PX25 built to take
       // them. A host that hands no hook gets no button, which is the
       // same honest refusal the classic sheet gives.
-      hooks: {
-        openPack: hooks.inventory ? () => { close(); hooks.inventory(); } : undefined,
-        openSpellbook: hooks.spellbook ? () => { close(); hooks.spellbook(); } : undefined,
-        openChronicle: hooks.logbook ? () => { close(); hooks.logbook(); } : undefined,
-        // ASCEND-ANYTIME: this page can always offer it, because this
-        // door owns the entity the button is about. A host that handed
-        // no entity gets no button, the same refusal the three above
-        // give for a door they were handed none of.
-        openAscend: entity ? openAscend : undefined,
-      },
+      openPack: hooks.inventory ? () => { close(); hooks.inventory(); } : undefined,
+      openSpellbook: hooks.spellbook ? () => { close(); hooks.spellbook(); } : undefined,
+      openChronicle: hooks.logbook ? () => { close(); hooks.logbook(); } : undefined,
+      // ASCEND-ANYTIME: this page can always offer it, because this
+      // door owns the entity the button is about. A host that handed
+      // no entity gets no button, the same refusal the three above
+      // give for a door they were handed none of.
+      openAscend: entity ? openAscend : undefined,
+    }, () => seams);
+    return {
+      mode: 'pause',
+      at: 'stats',
+      onAction: pauseMenuAct(menuHooks, close),
+      hooks: menuHooks,
     };
   }
 
@@ -350,7 +360,7 @@ function enhancedSheetPageOverlay(hooks, entity = null) {
     mountEnhancedChunk({
       load: () => import('./enhancedMenu.js'),
       alive: () => !fired, host, onDismiss: close, label: 'charsheet',
-      mount: ({ mountEnhancedMenu }) => { view = mountEnhancedMenu(host, pageOpts()); },
+      mount: (mod) => { seams = mod; view = mod.mountEnhancedMenu(host, pageOpts()); },
     });
   }
 
@@ -365,7 +375,7 @@ function enhancedSheetPageOverlay(hooks, entity = null) {
   mountEnhancedChunk({
     load: () => import('./enhancedMenu.js'),
     alive: () => !fired, host, onDismiss: close, label: 'charsheet',
-    mount: ({ mountEnhancedMenu }) => { view = mountEnhancedMenu(host, pageOpts()); },
+    mount: (mod) => { seams = mod; view = mod.mountEnhancedMenu(host, pageOpts()); },
   });
   return {
     // THE HOST CONTRACT, in the hosts' own words - `input`, not

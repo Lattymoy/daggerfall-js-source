@@ -110,8 +110,8 @@
   {
     "name": "WB5b-an-offer-every-frame",
     "file": "src/net/gateClaims.js",
-    "old": "      if (busy || (!signedIn && nowMs() - lastAt < GATE_CLAIM_RETRY_MS)) return false;",
-    "new": "      if (busy || !signedIn && false) return false;",
+    "old": "      const t = nowMs(), due = t - lastAt >= GATE_CLAIM_RETRY_MS;",
+    "new": "      const t = nowMs(), due = true;",
     "tests": [
       "test/wb5b_gate_claim.test.js"
     ]

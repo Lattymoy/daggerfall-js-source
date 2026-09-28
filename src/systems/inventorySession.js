@@ -162,6 +162,16 @@ export function remoteTarget(deps = {}, state = {}) {
 // handlers (:2104-2146) and OnPop's icon arm (:689-712) are law here.
 // ═══════════════════════════════════════════════════════════════════
 
+/** HOUSE-DROP (2026-09-27, Mac relaying reports: "In houses, players can drop items and the owner cannot see them";
+ *  asked, "Block visitor drops"): the host's word against a drop, asked only when the destination IS the ground - the
+ *  session's dropped list, or a pile the player dropped before (DaggerfallLoot.playerOwned) - never a wagon, a chest, a
+ *  corpse or a merchant. Null: the ground takes it. */
+export function groundRefusalOf(deps = {}, state = {}) {
+  if (state.usingWagon || state.chooseOne) return null;
+  if (deps.loot && !deps.loot.playerOwned) return null;
+  return deps.dropRefusal?.() ?? null;
+}
+
 /** RemoteTargetTypes (:213-219), in the enum's own order. */
 export const REMOTE_TARGET_TYPES = Object.freeze({
   Dropped: 0, Wagon: 1, Loot: 2, Merchant: 3,

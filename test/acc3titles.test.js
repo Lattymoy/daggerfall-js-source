@@ -84,8 +84,8 @@ test('ACC3: the founder title is a CUTOFF, so a row inserted long after any migr
   // the difference, and it is the whole design: a row that did not
   // exist when anybody ran anything is still judged correctly.
   const early = { registered_at: FOUNDER_UNTIL - 1, created_at: 1 };
-  const onTheDot = { registered_at: FOUNDER_UNTIL, created_at: 1 };
-  const late = { registered_at: FOUNDER_UNTIL + 1, created_at: 1 };
+  const onTheDot = { registered_at: FOUNDER_UNTIL, created_at: FOUNDER_UNTIL };   // FOUNDER3: first played in the cutoff's second
+  const late = { registered_at: FOUNDER_UNTIL + 1, created_at: FOUNDER_UNTIL + 1 };   // FOUNDER3: first played after it (a row first seen before it and registered after is a founder)
   assert.deepEqual(titlesHeld(early, {}), ['founder']);
   assert.deepEqual(titlesHeld(onTheDot, {}), ['founder'], 'the cutoff is inclusive - the day Mac asked counts');
   assert.deepEqual(titlesHeld(late, {}), []);
@@ -119,7 +119,7 @@ test('ACC3: the sprout EXPIRES because time passed - nothing runs, nothing is cl
 test('ACC3: a developer is a handle in CONFIG, so taking the handle off takes the title and the glyph with it', () => {
   const env = { DEVELOPER_HANDLES: 'mack, Someone_Else' };
   assert.deepEqual([...developerHandles(env)], ['mack', 'someone_else'], 'trimmed and case-folded - handle_lc is what uniqueness is really on');
-  const dev = { handle: 'MacK', registered_at: FOUNDER_UNTIL + 1, created_at: 0 };
+  const dev = { handle: 'MacK', registered_at: FOUNDER_UNTIL + 1, created_at: FOUNDER_UNTIL + 1 };   // FOUNDER3: first played after the cutoff, so no Founder beside the Developer
   assert.ok(isDeveloper(dev, env));
   assert.deepEqual(titlesHeld(dev, env), ['developer']);
   assert.deepEqual(glyphsOf(dev, env, NOW), ['dev'], 'the glyph rides the same list as the title - one grant, two faces');
@@ -202,8 +202,8 @@ test('ACC3: the token carries the badge, and a body edited to claim one that is 
   assert.equal(claimsValid({ ...base, g: 'sprout' }), false, 'a string is not a list of glyphs');
   assert.equal(claimsValid({ ...base, g: [...GLYPHS, 'sprout'] }), false, 'more slots than there are glyphs');
   assert.equal(GLYPHS_MAX, GLYPHS.length, 'the bound is the vocabulary\'s own size, not a number somebody picked');
-  assert.deepEqual([...TITLES], ['founder', 'developer', 'dungeonmaster', 'disciple', 'apostle', 'hierophant'], 'Mac\'s two, then TITLE-N\'s Dungeon Master and the Patreon tiers lowest first');
-  assert.deepEqual([...GLYPHS], ['sprout', 'dev', 'mod', 'dm', 'disciple', 'apostle', 'hierophant'], 'MOD1 added the moderator shield, TITLE-N a glyph per new title, each last - the order is the order a name draws them in');
+  assert.deepEqual([...TITLES], ['founder', 'developer', 'dungeonmaster', 'disciple', 'apostle', 'hierophant', 'shadowfang'], 'Mac\'s two, then TITLE-N\'s Dungeon Master and the Patreon tiers lowest first, then SHADOW-FANG\'s');
+  assert.deepEqual([...GLYPHS], ['sprout', 'dev', 'mod', 'dm', 'disciple', 'apostle', 'hierophant', 'shadowfang'], 'MOD1 added the moderator shield, TITLE-N a glyph per new title, SHADOW-FANG the wolf, each last - the order is the order a name draws them in');
 });
 
 // ── THE SERVICE, end to end ─────────────────────────────────────────

@@ -81,10 +81,10 @@ test('DECOR1e the panel\'s room view: two tabs - the catalogue and "In this room
   const card = one(root, 'dfdecor-card');
   const tabs = () => all(one(root, 'dfdecor-tabs'), 'dfdecor-chip').map((t) => [t.textContent, t.getAttribute('aria-pressed')]);
   assert.equal(panel.mode(), 'catalogue');
-  assert.deepEqual(tabs(), [['Catalogue', 'true'], ['In this room (2)', 'false'], ['Your things (0)', 'false']], 'DECOR2a: the pack\'s own list the third');
+  assert.deepEqual(tabs(), [['Catalogue', 'true'], ['In this room (2)', 'false'], ['Your things (0)', 'false'], ['Built in (0)', 'false']], 'DECOR2a: the pack\'s own list the third; BASE-HIDE: the room\'s own furniture the fourth');
   roomTab(root).fire('click');
   assert.deepEqual([panel.mode(), card.dataset.mode], ['room', 'room'], 'the card wears the view (the filters and Place hidden by it)');
-  assert.deepEqual(tabs(), [['Catalogue', 'false'], ['In this room (2)', 'true'], ['Your things (0)', 'false']]);
+  assert.deepEqual(tabs(), [['Catalogue', 'false'], ['In this room (2)', 'true'], ['Your things (0)', 'false'], ['Built in (0)', 'false']]);
   const line = (r) => [one(r, 'dfdecor-row-name').textContent, one(r, 'dfdecor-row-sub').textContent, one(r, 'dfdecor-row-price').textContent];
   assert.deepEqual(rows(root).map((r) => r.dataset.key), ['c1', 'k1'], 'the room\'s pieces, not the catalogue');
   assert.deepEqual(rows(root).map(line), [

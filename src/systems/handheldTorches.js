@@ -184,7 +184,7 @@ addEquipChangeListener((entity) => _liveHandLaw?.(entity));
  *                  color32 shape and order - what `renderer.uploadTexture` reads (TEX1)
  */
 export function createHandheldTorches({
-  settings = readTorchSettings, audio = null, say = () => {}, rolls = Math.random, torches = () => null,
+  settings = readTorchSettings, audio = null, say = () => {}, rolls = Math.random, torches = () => null, dropRefusal = () => null,
   handedness = () => getInt('Controls', 'Handedness', 0, 3) === 1,
   loadSprite = defaultLoadSprite,
 } = {}) {
@@ -405,6 +405,8 @@ export function createHandheldTorches({
    *  centre, then 145 down from there; the light lands there with its
    *  condition's seconds; the pack loses it; the drop clip at the spot. */
   function dropLightSource(item) {
+    const no = dropRefusal?.() ?? null;   // HOUSE-DROP: a floor that refuses a light - said, and the light stays in hand
+    if (no) { say(no); return; }
     const cam = ctx?.camera?.();
     const col = ctx?.collider?.();
     const centre = cam?.feet ? [cam.feet[0], cam.feet[1] + 0.9, cam.feet[2]] : (cam?.pos ? [cam.pos[0], cam.pos[1] - 0.8, cam.pos[2]] : [0, 0, 0]);
@@ -423,6 +425,8 @@ export function createHandheldTorches({
   }
   /** ThrowLightSource (0x3150): the projectile from the body's centre along the camera's look. */
   function throwLightSource(item, strength) {
+    const no = dropRefusal?.() ?? null;   // HOUSE-DROP: and a thrown one lands on the same floor
+    if (no) { say(no); return; }
     const cam = ctx?.camera?.();
     const centre = cam?.feet ? [cam.feet[0], cam.feet[1] + 0.9, cam.feet[2]] : (cam?.pos ? [cam.pos[0], cam.pos[1] - 0.8, cam.pos[2]] : [0, 0, 0]);
     torches()?.spawnLightSourceProjectile(item.templateIndex, (item.currentCondition ?? 0) * SECONDS_PER_CONDITION, centre, cam?.forward ?? [0, 0, 1], strength, getFreeHand());
@@ -546,7 +550,9 @@ export function createHandheldTorches({
     // remembered, the third arm below lit it over the lantern the moment a hand freed
     if (atWaist(l)) { w.lastLightSource = null; return; }
     if (!hasFreeHand() && l && !isLantern(l)) {
-      if (w.s.onStow > ON_STOW.Unequip) dropLightSource(l);
+      // AUDIT (the pre-merge audit, I-C): a floor that refuses a drop (HOUSE-DROP, a visitor's) stows it instead - the
+      // drop arm refused and returned, so this ran every frame: the light held in a full hand, the refusal said forever
+      if (w.s.onStow > ON_STOW.Unequip && !(dropRefusal?.() ?? null)) dropLightSource(l);
       else { w.lastLightSource = l; setLight(null); }
     } else if (!hasFreeHand() && l && isLantern(l) && !w.s.lanternRelaxed) {   // (HT-WAIST: a lantern at the waist never reaches here - the early return above)
       if (!w.sheathed) say(MESSAGES.noFreeHand);
@@ -642,7 +648,7 @@ export function createHandheldTorches({
     if (pressed('TorchThrow')) {
       if (contains('UselessItems2', T.Torch)) {
         if (!hasFreeHand()) say(MESSAGES.noFreeHand);
-        else {
+        else if (!(dropRefusal?.() ?? null)) {   // AUDIT (pre-merge) I-D: a floor that refuses the throw keeps the light lit - the release says why (throwLightSource)
           const lit = light();
           // the wind-up douses the lit light - a relaxed lantern excepted (0x18d9-0x1904)
           if (lit && !((w.s.lanternRelaxed || w.s.lanternsAtWaist) && isLantern(lit))) setLight(null);   // HT-WAIST: the waist's lantern stays lit through a throw too

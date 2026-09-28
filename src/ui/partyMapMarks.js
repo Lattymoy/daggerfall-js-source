@@ -183,3 +183,39 @@ export function readPartyBodies(party) {
   }
   return out;
 }
+
+/**
+ * COMPASS-PARTY (2026-09-27, Discord - Ashley: "being able to see where party members are on compass? - just lil green
+ * marks that point in that direction"; Satranath: "Party members show up on the map but not compass"): THE POINTS THE
+ * COMPASS MARKS, in the scene's own XZ - the frame the Detect markers are measured in (ui/hud.js compassMarkerLerp).
+ *
+ * A mate whose BODY this client draws is marked where it stands (`bodies`, the plans' own dep - readPartyBodies). The
+ * rest are marked only OUTDOORS (`here`, my travel pixel; indoors it is null and the bodies are the whole answer - a
+ * building or a dungeon has no bearing to the open country), where their pose says: the leader's own feet
+ * (`wx`,`wz` - the world pose's frame, which only a leader in the open air sends; `fromWorld` turns them into this
+ * scene's) or the middle of their map pixel (`pixelCentre`). A mate in MY pixel whose body I do not draw - in a
+ * building here, or not yet streamed in - is no mark: the middle of the town is not where they are. An offline seat
+ * and a seat whose first pose has not landed are no mark either (SOC6's law: "not yet" is the truth).
+ *
+ * @param {{ bodies?: (() => any[])|null, others?: any[], here?: {x: number, y: number}|null,
+ *           fromWorld?: ((wx: number, wz: number) => number[])|null, pixelCentre?: ((px: number, py: number) => number[])|null }} [o]
+ * @returns {number[][]} one [x, z] per mark
+ */
+export function partyCompassPoints({ bodies = null, others = [], here = null, fromWorld = null, pixelCentre = null } = {}) {
+  const out = [];
+  const drawn = new Set();
+  for (const b of readPartyBodies(bodies)) {
+    if (b.acct) drawn.add(b.acct);
+    out.push([b.feet[0], b.feet[2]]);
+  }
+  if (!here) return out;
+  for (const m of Array.isArray(others) ? others : []) {
+    const p = m?.p;
+    if (!p || m.online === false || drawn.has(m.acct)) continue;
+    if (!Number.isInteger(p.px) || !Number.isInteger(p.py)) continue;
+    if (p.in === 0 && Number.isFinite(p.wx) && Number.isFinite(p.wz) && fromWorld) { out.push(fromWorld(p.wx, p.wz)); continue; }
+    if (p.px === here.x && p.py === here.y) continue;
+    if (pixelCentre) out.push(pixelCentre(p.px, p.py));
+  }
+  return out.filter((q) => Array.isArray(q) && Number.isFinite(q[0]) && Number.isFinite(q[1]));
+}

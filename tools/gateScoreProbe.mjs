@@ -92,7 +92,12 @@ try {
     if (wavAt) writeFileSync(join(wavAt, `${key}.wav`), wav(r[key].pcm, r[key].rate));
   }
   for (const key of ['war1', 'war2', 'war3', 'fell']) check(`${key}: it plays - every second of it sounding, no NaN`, r[key].nan === 0 && r[key].rms.slice(0, 10).every((x) => x > 1e-4), JSON.stringify(r[key].rms.slice(0, 10).map((x) => db(x).toFixed(0))));
-  for (const key of ['war1', 'war2', 'war3', 'fell']) check(`${key}: under the effects, never clipping`, r[key].peak < 0.9, `peak ${db(r[key].peak).toFixed(1)} dBFS`);
+  // WBX9: louder - and still under the clip at the highest MusicVolume (1.0 is twice the 0.5 this renders at: +6 dB)
+  for (const key of ['war1', 'war2', 'war3', 'fell']) check(`${key}: never clipping, even at the highest MusicVolume`, db(r[key].peak) <= -6.03, `peak ${db(r[key].peak).toFixed(1)} dBFS here, ${(db(r[key].peak) + 6.02).toFixed(1)} at full volume`);
+  // WBX9 (Mac: "The music needs to be louder and more intense"): over the game's own songs, which the same player renders
+  // at -28.7 (GDAY___D) to -41 dBFS (the dungeon's) - measured beside them when this was written; the score read
+  // -34.5 / -29.7 / -28.4 / -30.9 then, -25.6 / -22.1 / -21.5 / -22.9 now (the drums' noise moves a peak ~0.4 dB a run)
+  for (const [key, floor] of [['war1', -26.5], ['war2', -23], ['war3', -22.5], ['fell', -24]]) check(`${key}: loud - at least ${floor} dBFS`, r[key].meanDb >= floor, `${r[key].meanDb.toFixed(1)} dBFS`);
   check('the war grows with his phases', r.war2.meanDb > r.war1.meanDb && r.war3.meanDb > r.war2.meanDb - 0.5, `${r.war1.meanDb.toFixed(1)} / ${r.war2.meanDb.toFixed(1)} / ${r.war3.meanDb.toFixed(1)} dBFS`);
   // the law gives the fall SCORE_STING_MS (12.5 s): by then it has rung out
   const tail = r.fell.rms.slice(12, 20), top = Math.max(...r.fell.rms.slice(0, 8));

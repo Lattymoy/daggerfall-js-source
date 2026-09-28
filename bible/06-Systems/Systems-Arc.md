@@ -2521,7 +2521,7 @@ from the fifteen effect classes that call `new PotionRecipe(...)`:
 registered PotionMaker-only, with no `MagicSkill` and no spell-book
 description (`HealSpellPoints.cs:21-30`), and sets no `ClassicKey` at
 all. No SPELLS.STD row can name it - which is precisely what
-`effects.js:261-267` recorded when S15 undid an earlier mis-mapping of
+`effects.js:268-274` recorded when S15 undid an earlier mis-mapping of
 `(10,9)` onto it, and why the sink list has read *"restoreMagicka
 returns with potions"* ever since. It returns here. A potion bundle
 is not a spell record: DFU builds one from `EffectEntry(effect.Key,
@@ -3196,7 +3196,7 @@ collapse is a bare `RaiseTime(1 * SecondsPerHour)` (`:2429`) that
 returns; `Update` is not re-entered.
 
 The port's hosts implement that same RaiseTime as
-`playerTicker.advance(60)` (`exterior.js:1071`, `world.js:1957`), fired
+`playerTicker.advance(60)` (`exterior.js:1072`, `world.js:2048`), fired
 from inside `sinks.drainFatigue` - so it re-enters `tickPlayerMinutes`
 from inside that function's own fatigue band. The nested tick wrote the
 marker an hour ahead, the outer frame's own `setWorldMinutes` then
@@ -3354,7 +3354,7 @@ PNG through the DOM and cached `{ width, height, data }` - the shape
 pass that object straight on as a colour32
 (`const color32 = swap ?? t.getColor32(bitmap, ...)`), and
 `renderer.uploadTexture` reads `color32.colors` and calls `asBytes` on
-it (`renderer.js:3044`). `colors` was `undefined`, `asBytes` reads
+it (`renderer.js:3152`). `colors` was `undefined`, `asBytes` reads
 `.buffer` off it, and the upload threw. Every pin on this door held:
 they asserted the cache stored the object the decoder returned, by
 IDENTITY, which is precisely the assertion that cannot see a wrong
@@ -3365,7 +3365,7 @@ orientation is not its only problem".
 **And orientation was the other half.** The port's texel convention is
 bottom-up: `getColor32` writes `dstRow = (dstHeight - 1 - border - y) *
 dstWidth` (`baseImageFile.js:143`, `BaseImageFile.cs:250`), the upload
-leaves `UNPACK_FLIP_Y_WEBGL` off (`renderer.js:3034`), and `BB_VS`
+leaves `UNPACK_FLIP_Y_WEBGL` off (`renderer.js:3142`), and `BB_VS`
 samples the quad's top at v=1 (`renderer.js:368-392`). A browser decode
 is TOP row first. So a swap named correctly would still have drawn
 mirrored beside the classic art in the same batch loop - the exact
@@ -3866,6 +3866,17 @@ InLight / InWater = the motor's swimming flag); 12 sun and 12 holy
 damage per 4th round off the career bit OR the racial override's
 compound-race flag; Light/Darkness Powered Magery writing -33% of
 RawMaxMagicka or the -10000000 unable constant.
+
+VAMP-DAY (2026-09-26, Mac: "instead of constant damage taken they
+should get reduced stats in day and get the bonus at night"; asked,
+"Day -20 / night +20") - a Port-Ledger section A departure: the sun's
+racial arm is gone. The vampire burns no more (a save's curse keeps
+its flag and burns no more either); its +20 on the seven stats (and
+an Anthotis mind) is the night's, and 06:00-18:00 by the clock the
+same stats are 20 down (`systems/vampirism.js` vampireStatMod), held
+at a live 1 where the stat is read so a dawn never kills
+(`systems/statMods.js` liveStat). Holy ground still burns, the career
+bit still burns, and the flag still keys the travel rules.
 
 THE SEAM IS REGISTERED BY THE MODE MACHINE. worldModes owns mode and
 interiorBuilding for BOTH town pages - world.js and exterior.js each
@@ -4572,7 +4583,7 @@ the true clause along with the false ones is in the campaign, because
 over-retiring is the equal and opposite failure.
 
 **And one delegation pointed at a flag nobody had ever written.**
-`world.js:3281` said the dungeon-mode enchant ctx was "FLAGGED there
+`world.js:3378` said the dungeon-mode enchant ctx was "FLAGGED there
 with the rest of its enchant wiring" in `dungeonContext.js`. It was
 not. `setDefaultEnchantCtx` had exactly **one** caller in the tree, so
 the standalone `?dungeon` host ran every arm that needs a host
@@ -5028,7 +5039,7 @@ predicate read prettier.
 by the same sweep and each verified against the tree before deletion:
 the interior detect claim above; "there is nowhere to cash one yet" on
 the letter of credit, which B2 answered with `DepositAll_LOC`
-(`banking.js:488`, the window's own :377-389); "the BANKING arm stays
+(`banking.js:497`, the window's own :377-389); "the BANKING arm stays
 FLAGGED below", written nine lines above the live banking arm; and
 "every other arm is FLAGGED by name in
 `guildServiceFlow.SERVICE_DESTINATION`" after DR2 closed the last of
@@ -5550,7 +5561,7 @@ to that cite and moves under the same content check; citeMerge had
 done this since CS2 and citeShift only reported them, so the two
 regexes are one law now, exported from citeShift (`ANY_CITE`,
 `CONTINUATION`) and imported by citeMerge. (2) A TEST'S ESCAPED
-LITERAL FOLLOWS THE ROW IT PINS: `world\.js:6591` in citedrift.test.js
+LITERAL FOLLOWS THE ROW IT PINS: `world\.js:6726` in citedrift.test.js
 is a quote of a Ledger row's text; the row is STRUCK and its number
 held, and the literal used to move anyway, parting the pin from its
 row at every shift. The CLI plans every doc first, learns which
@@ -6487,7 +6498,7 @@ settles it: DFU draws both rolls, so the line goes.
 **REVIEW ROUND (2026-09-08).** Moving the line left a stale cite in
 someone else's pin. `test/audit58_pins2.test.js`'s
 "IsImmuneToDisease reads the PENDING marker" test quoted
-"`diseases.js:232 if (target.racialOverride || target.racialOverridePending)`"
+"`diseases.js:240 if (target.racialOverride || target.racialOverridePending)`"
 - the exact line this fix deleted. The pin still passes, because
 `isEntityImmuneToDisease` reads the pending marker and `inflictDisease`
 now reaches it through `startDisease`, so the record cited source that
@@ -7984,7 +7995,40 @@ the code. That law was never about enemies and is not what Mac asked
 for; the civilians still freeze under the talk overlay, and the pin
 says so. `test/winfoe1_foes_under_windows.test.js` - 1 pin; ROAD-G G2's
 review pin, the interior-foes pin and ROAD-B's indoor-watch pin
-re-aimed.
+re-aimed. **QUEST-POPUP-PAUSE (2026-09-26, Mac: "Pause them offline"):** offline, a quest's message box on top holds the pools again, as DFU's does; every other window keeps this law, and online nothing is held (`01-Overview/Field-Bugs-2026-09-26c.md`).
+
+**JAIL-HIT (2026-09-27): the trial is the one window the watch waits
+out.** Discord: *"Guards will still chase you down and kill you, even
+if you have already been to prison for the crime committed."* The
+watch's clock under a window reached the court too: ARREST-SHIELD
+withheld its blows online only, on the belief that offline the court
+"already reads as a pause" - true in DFU, whose surrender box and court
+are pushed windows that stop the world (UserInterfaceManager.cs:183-184)
+until ReleaseFromPrison clears the crime (DaggerfallCourtWindow.cs:
+482-491), false here since this slice. So offline a guard swung through
+the trial and the prison days, and on the surrender's 1 health a blow
+either killed the player inside the court or forced a second surrender
+whose court replaced the prison screen and threw its release away: the
+crime never cleared, and the watch hunted on. `scenes/arrestFlow.js`
+`inCourt` holds in both modes now (the one damage door withholds every
+blow while the box asks or the player is arrested), one trial at a
+time (`startCourtFlow` refuses a second), the surrender question ends
+with its box when another window replaces it unanswered (a flag left
+standing would be immortality), and the watch walks away for the trial
+offline as online (`scenes/cityGuards.js`). WINFOE1 is otherwise as it
+was: a rest, the pack, a status box still let a foe walk up and hit.
+
+WHAT IS DFU'S AND STAYS: a sentence gives back only half the region's
+legal reputation less one (`court.js`, PlayerEntity.cs:2301-2304,
+:2342 - a Murder leaves -11), and below -10 every game minute rolls 5%
+to charge Criminal_Conspiracy and call the watch (PlayerEntity.cs:
+498-504); a banishment rolls 10% for good (:506-511). A player with a
+bad name in a region is hunted there after the sentence in Daggerfall
+too. Pinned in `test/jailhit.test.js` (3); `arrestshield.test.js`'s
+source pin and `audit39_worldlegaltalk.test.js`'s fixture (which never
+answered its surrender box) re-aimed. Mutants
+`tools/mutants/jail_hit.json` (6, all dead).
+`01-Overview/Field-Bugs-2026-09-27.md`.
 
 ## SURV1-SURV7 - CLIMATES & CALORIES, OVERHAULED WITH PERMISSION (2026-09-18) - SHIPPED
 

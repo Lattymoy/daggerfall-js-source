@@ -1,0 +1,521 @@
+[
+  {
+    "name": "UI3-a-debuff-framed-as-a-buff",
+    "file": "src/ui/hudStatus.js",
+    "old": "key: `spell${i}`, kind: e.self || e.ally ? 'buff' : 'debuff',",
+    "new": "key: `spell${i}`, kind: 'buff',",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-an-item-blinking",
+    "file": "src/ui/hudStatus.js",
+    "old": "blink: !!e.expiring && !e.item,",
+    "new": "blink: !!e.expiring,",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-the-rounds-dropped",
+    "file": "src/ui/hudStatus.js",
+    "old": "foot: Number.isFinite(e.rounds) && !e.item ? String(e.rounds) : null,",
+    "new": "foot: null,",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-a-need-that-costs-framed-amber",
+    "file": "src/ui/hudStatus.js",
+    "old": "kind: c.level === 'danger' ? 'danger' : 'warn'",
+    "new": "kind: 'warn'",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-a-waiting-poison-shown",
+    "file": "src/ui/hudStatus.js",
+    "old": "if (a.kind === 'poison' && a.state !== 'waiting') poisoned = true;",
+    "new": "if (a.kind === 'poison') poisoned = true;",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-a-tile-a-poison",
+    "file": "src/ui/hudStatus.js",
+    "old": "if (a.kind === 'poison' && a.state !== 'waiting') poisoned = true;",
+    "new": "if (a.kind === 'poison' && a.state !== 'waiting') { poisoned = true; out.push({ key: `poison${out.length}`, name: 'Poisoned', glyph: 'poison' }); }",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-an-incubating-disease-shown",
+    "file": "src/ui/hudStatus.js",
+    "old": "else if (a.kind === 'disease' && a.incubationOver && a.disease != null",
+    "new": "else if (a.kind === 'disease' && a.disease != null",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-an-ended-one-shown",
+    "file": "src/ui/hudStatus.js",
+    "old": "    if (!a || a.ended) continue;\n",
+    "new": "    if (!a) continue;\n",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-every-temperature-a-sun",
+    "file": "src/ui/hudStatus.js",
+    "old": "return _coldWords.has(chip.text) ? 'cold' : 'hot';",
+    "new": "return 'hot';",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-a-glyph-pixel-unoutlined",
+    "file": "src/ui/hudStatus.js",
+    "old": "'.....kkbbbaakk..'",
+    "new": "'.....k.bbbaakk..'",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-the-runs-one-rect-a-pixel",
+    "file": "src/ui/hudStatus.js",
+    "old": "      while (end < row.length && row[end] === ch) end++;\n",
+    "new": "",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-the-scale-not-divided",
+    "file": "src/ui/hudStatus.js",
+    "old": "  const room = Math.floor((captionTop - Math.max(0, Number(above) || 0) - STAT_AIR) / s - STAT_LIFT);",
+    "new": "  const room = Math.floor((captionTop - Math.max(0, Number(above) || 0) - STAT_AIR) - STAT_LIFT);",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-the-air-forgotten",
+    "file": "src/ui/hudStatus.js",
+    "old": "  const room = Math.floor((captionTop - Math.max(0, Number(above) || 0) - STAT_AIR) / s - STAT_LIFT);",
+    "new": "  const room = Math.floor((captionTop - Math.max(0, Number(above) || 0)) / s - STAT_LIFT);",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-beside-from-the-caption-under-a-chat",
+    "file": "src/ui/hudStatus.js",
+    "old": "  const top = Math.max(captionTop, Math.max(0, Number(above) || 0) + STAT_AIR);",
+    "new": "  const top = captionTop;",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-beside-with-a-band-above",
+    "file": "src/ui/hudStatus.js",
+    "old": "  const side = beside > above && above < Math.min(2, n);",
+    "new": "  const side = beside > above;",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-a-strip-of-one-row-kept",
+    "file": "src/ui/hudStatus.js",
+    "old": "  const side = beside > above && above < Math.min(2, n);",
+    "new": "  const side = beside > 0 && above === 0;",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-over-what-stands-there-rather-than-aside",
+    "file": "src/ui/hudStatus.js",
+    "old": "  if (!above && !beside) return { side: false, rows: 1, columns: 1, tight: true, none: true };\n",
+    "new": "",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-names-in-a-wall-of-columns",
+    "file": "src/ui/hudStatus.js",
+    "old": "rows < STAT_TIGHT_ROWS || cols > STAT_WIDE_COLUMNS ||",
+    "new": "rows < STAT_TIGHT_ROWS ||",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-the-middle-crossed",
+    "file": "src/ui/hudStatus.js",
+    "old": "  const columns = Number.isFinite(width) ? statColumns(width, metrics) : Math.ceil(n / rows);",
+    "new": "  const columns = Math.ceil(n / rows);",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-the-fold-one-tile-short",
+    "file": "src/ui/hudStatus.js",
+    "old": "  const shown = tiles.slice(0, room - 1);",
+    "new": "  const shown = tiles.slice(0, room - 2);",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-the-widget-in-the-foot",
+    "file": "src/ui/enhancedHud.js",
+    "old": "  quick.append(stat, cap, diamond);",
+    "new": "  quick.append(cap, diamond); bottom.append(stat);",
+    "tests": [
+      "test/ui3_status.test.js",
+      "test/renown4.test.js",
+      "test/qs3_hud.test.js"
+    ]
+  },
+  {
+    "name": "UI3-rebuilt-every-frame",
+    "file": "src/ui/enhancedHud.js",
+    "old": "  if (last.stat === key) return;\n",
+    "new": "",
+    "tests": [
+      "test/ui3_status.test.js",
+      "test/enhancedHud.test.js"
+    ]
+  },
+  {
+    "name": "UI3-the-band-never-measured",
+    "file": "src/ui/enhancedHud.js",
+    "old": "  if (last.statTick === 0) measureStatBand(opts);\n",
+    "new": "",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-the-chat-ignored",
+    "file": "src/ui/enhancedHud.js",
+    "old": "const STAT_ABOVE = '.dfchat, ",
+    "new": "const STAT_ABOVE = '",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-the-escorts-ignored",
+    "file": "src/ui/enhancedHud.js",
+    "old": "  if (Number.isFinite(opts.escortBottom)) { above = Math.max(above, opts.escortBottom); besideAbove = Math.max(besideAbove, opts.escortBottom); }\n",
+    "new": "",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-the-short-tiles-never",
+    "file": "src/ui/enhancedHud.js",
+    "old": "  last.statShort = !!globalThis.matchMedia?.(STAT_SHORT_QUERY)?.matches;\n",
+    "new": "",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-never-stepped-aside",
+    "file": "src/ui/enhancedHud.js",
+    "old": "  if (last.statNone !== none) { last.statNone = none; parts.stat.classList.toggle('noroom', none); }",
+    "new": "",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-never-beside",
+    "file": "src/ui/enhancedHud.js",
+    "old": "  if (last.statSide !== side) { last.statSide = side; parts.stat.classList.toggle('side', side); }",
+    "new": "",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-beside-from-the-caption-always",
+    "file": "src/ui/enhancedHud.js",
+    "old": "  if (last.statTop !== top) { last.statTop = top; parts.stat.style.top = top; }",
+    "new": "",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-nothing-folded",
+    "file": "src/ui/enhancedHud.js",
+    "old": "  const tiles = statOverflow(all, { rows, columns });",
+    "new": "  const tiles = all;",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-a-spell-without-its-icon",
+    "file": "src/ui/enhancedHud.js",
+    "old": "    const fit = spellIconPicture(t.spell, { box, dpr, onReady: () => { last.stat = null; } });",
+    "new": "    const fit = null;",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-the-escorts-not-handed-on",
+    "file": "src/ui/hud.js",
+    "old": "      escortBottom: escortBottomPx(canvas),",
+    "new": "      escortBottom: 0,",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-the-escorts-in-the-canvas-pixels",
+    "file": "src/ui/hud.js",
+    "old": "  return native * hudScale(canvas.width, canvas.height) * (view / canvas.height);",
+    "new": "  return native * hudScale(canvas.width, canvas.height);",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-the-escorts-top-for-their-bottom",
+    "file": "src/ui/hudEscortFaces.js",
+    "old": "    if (_panels[i]?.img && placed[i].enabled && sizes[i]) bottom = Math.max(bottom, placed[i].y + sizes[i].h);",
+    "new": "    if (_panels[i]?.img && placed[i].enabled && sizes[i]) bottom = Math.max(bottom, placed[i].y);",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-the-names-kept-on-a-phone",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "@media (max-width: 640px), (max-height: 500px) { .hud-stat .hst-name { display: none; } }\n",
+    "new": "",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-the-blink-never-stilled",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  .hst-cell.blink .hst-pic { animation: none; }\n",
+    "new": "",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-the-tile-drifted-from-the-module",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".hst-tile { position: relative; flex: 0 0 auto; width: 36px; height: 36px;",
+    "new": ".hst-tile { position: relative; flex: 0 0 auto; width: 40px; height: 40px;",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-the-short-tiles-drifted",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  .hst-tile { width: 28px; height: 28px; }\n",
+    "new": "  .hst-tile { width: 30px; height: 30px; }\n",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-the-phone-s-words-kept",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": "  .hud-vlabel { display: none; }\n  .hud-vital .hud-track { justify-content: center; }\n",
+    "new": "  .hud-vital .hud-track { justify-content: center; }\n",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-the-words-with-the-pending-in-them",
+    "file": "src/ui/hudRenown.js",
+    "old": "text: `${groupedXp(p.into)} / ${groupedXp(p.need)} XP` };",
+    "new": "text: `${groupedXp(p.into + more)} / ${groupedXp(p.need)} XP` };",
+    "tests": [
+      "test/renown4.test.js",
+      "test/renownbar.test.js"
+    ]
+  },
+  {
+    "name": "UI3-the-words-the-track-s-total",
+    "file": "src/ui/hudRenown.js",
+    "old": "text: `${groupedXp(p.into)} / ${groupedXp(p.need)} XP` };",
+    "new": "text: `${groupedXp(xp)} / ${groupedXp(p.need)} XP` };",
+    "tests": [
+      "test/renown4.test.js",
+      "test/renownbar.test.js"
+    ]
+  },
+  {
+    "name": "UI3-the-cap-without-its-word",
+    "file": "src/ui/hudRenown.js",
+    "old": "  if (p.need <= 0) return { level, bar: true, frac: 1, ghost: 0, text: RENOWN_HUD_TOP };\n",
+    "new": "  if (p.need <= 0) return { level, bar: true, frac: 1, ghost: 0, text: '' };\n",
+    "tests": [
+      "test/renown4.test.js",
+      "test/renownbar.test.js"
+    ]
+  },
+  {
+    "name": "UI3-a-disease-s-name-out-of-its-place",
+    "file": "src/systems/diseases.js",
+    "old": "  'Cholera', 'Leprosy',",
+    "new": "  'Leprosy', 'Cholera',",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "UI3-the-rune-s-source-left-a-css-url",
+    "file": "src/ui/sigilRune.js",
+    "old": "export const sigilRuneTileSrc = (colour) => sigilRuneTileUrl(colour).slice(5, -2);",
+    "new": "export const sigilRuneTileSrc = (colour) => sigilRuneTileUrl(colour);",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UI-C1-the-top-block-ignored",
+    "file": "src/ui/enhancedHud.js",
+    "old": "const rects = [parts.top?.getBoundingClientRect?.(), ",
+    "new": "const rects = [",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UI-C4-the-touch-presses-ignored",
+    "file": "src/ui/enhancedHud.js",
+    "old": ", .hudstatus, .dftouch-btn';",
+    "new": ", .hudstatus';",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UI-C4-a-press-past-the-middle-counted",
+    "file": "src/ui/enhancedHud.js",
+    "old": "const right = Math.max(cap.left + 1, (Number(globalThis.innerWidth) || 0) / 2);",
+    "new": "const right = Infinity;",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UI-C4-the-presses-unnamed",
+    "file": "src/ui/touch.js",
+    "old": "    b.className = 'dftouch-btn';",
+    "new": "",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UI-the-escorts-ignored-beside",
+    "file": "src/ui/enhancedHud.js",
+    "old": " besideAbove = Math.max(besideAbove, opts.escortBottom); }",
+    "new": " }",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UI-the-band-beside-over-a-chat",
+    "file": "src/ui/enhancedHud.js",
+    "old": "let besideAbove = dia && dia.height > 0 && block ? lowest(block.right, dia.bottom) : above;",
+    "new": "let besideAbove = above;",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UI-C2-the-named-columns-across-the-middle",
+    "file": "src/ui/hudStatus.js",
+    "old": " || (Number.isFinite(width) && named > width);",
+    "new": ";",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UI-C3-a-mate-s-gift-framed-a-debuff",
+    "file": "src/ui/hudStatus.js",
+    "old": "kind: e.self || e.ally ? 'buff' : 'debuff',",
+    "new": "kind: e.self ? 'buff' : 'debuff',",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UI-C3-the-mate-s-mark-dropped",
+    "file": "src/ui/enhancedHud.js",
+    "old": "ally: !!b.ally,",
+    "new": "ally: false,",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UI-C5-the-rounds-by-name",
+    "file": "src/ui/enhancedHud.js",
+    "old": "const rounds = maxRoundsRemaining(b);",
+    "new": "const rounds = maxRoundsRemaining(bundles.findLast((x) => x.name === b.name) ?? b);",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UI-C5-an-item-s-rounds-at-its-foot",
+    "file": "src/ui/hudStatus.js",
+    "old": "foot: Number.isFinite(e.rounds) && !e.item ? String(e.rounds) : null,",
+    "new": "foot: Number.isFinite(e.rounds) ? String(e.rounds) : null,",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UI-C-the-band-kept-over-a-rotation",
+    "file": "src/ui/enhancedHud.js",
+    "old": "if (last.statVp !== vp) { last.statVp = vp; last.statTick = -1; }",
+    "new": "if (last.statVp !== vp) { last.statVp = vp; }",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UI-C-the-ratio-out-of-the-widget-s-key",
+    "file": "src/ui/enhancedHud.js",
+    "old": ".join('|')}#${dpr}#${metrics.pic}`;",
+    "new": ".join('|')}#${last.scale ?? 1}#${metrics.pic}`;",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  }
+]

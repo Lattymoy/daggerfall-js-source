@@ -117,7 +117,7 @@ test('AUDIT SC1: THE FLOATING ORIGIN - told of the crossing, the pass rebases ev
   assert.equal(sp.records[0].dynamic, true, 'a move across the crossing is a move');
   // by source: the world host says so where it shifts everything else, and the renderer forwards it
   assert.match(rd('src/scenes/world.js'), /sky\.offsetOrigin\(r\.offset\);[^\n]*\n\s*renderer\.shadowOriginShift\?\.\(r\.offset\);/, 'world.js: beside the sky\'s and the guards\'');
-  assert.match(rd('src/render/renderer.js'), /shadowOriginShift\(offset\) \{ this\._shadowPass\?\.shiftOrigin\(offset\); \}/);
+  assert.match(rd('src/render/renderer.js'), /shadowOriginShift\(offset\) \{ this\._shadowPass\?\.shiftOrigin\(offset\); this\._air\?\.shiftOrigin\(offset\); this\._frameStamp\+\+; \}/, 'the shadow pass told (LA-POST6: and the air\'s held view-projections; LA-AUDIT C1: and the stamp moved)');
 });
 
 test('AUDIT SC1: a batch built DYNAMIC is a dynamic from its first sight (moveBillboardBatch rewrites its vertices with the origin left null), and a flat whose FRAME changes has moved (its silhouette is the frame\'s) (mutants: `_dyn` ignored; the frame left out of the memory)', () => {

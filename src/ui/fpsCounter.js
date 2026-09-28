@@ -62,6 +62,25 @@ export function sizeLine(i) {
 }
 
 /**
+ * SCRIPT-SPLIT (2026-09-26, two players via Mac: "script 107.5 ms" of a
+ * 104.3 ms frame on a GTX 1650, "script 203.6 ms" of 201.6 on an RTX 4090
+ * Laptop - outdoors, every frame, both ANGLE Direct3D11): THE SCRIPT LINE'S
+ * THREE PARTS, so one screenshot says whose milliseconds they are. The
+ * script time is measured from the rAF's stamp, and Chrome stamps a frame
+ * at the display's beat - so a main thread busy with anything else first
+ * (the browser's own work for the last frame, a message, a timer, a
+ * collection) is in it before the game's frame has run a line. `in frame`
+ * is the game's own callback (a stall inside a GL call included), `before`
+ * the time between the stamp and that callback, `stream` the world build's
+ * slices lent to the frame (PERF-EXT24). Pure; null with no clock.
+ * @param {{inFrameMs?: number, beforeMs?: number, streamMs?: number}|null} cpu
+ */
+export function scriptSplitLine(cpu) {
+  if (!cpu || !Number.isFinite(cpu.inFrameMs)) return '';
+  return `\nin frame ${cpu.inFrameMs.toFixed(1)}  before ${cpu.beforeMs.toFixed(1)}  stream ${cpu.streamMs.toFixed(1)}`;
+}
+
+/**
  * Mount the overlay. Returns { el, tick(now), dispose() }; the tick is
  * public so a test can drive it without a frame loop.
  * @param {{enabled: () => boolean, raf?: (fn) => number, stats?: () => any, info?: () => any}} opts
@@ -108,11 +127,12 @@ export function mountFpsCounter({ enabled = () => true, raf = (typeof requestAni
         const i = on ? info?.() : null;   // PERF-SCALE: the GPU and the size, while shown
         const size = sizeLine(i);
         if (on) el.textContent = `${fps} fps\n${meanMs.toFixed(1)} ms  worst ${worstMs.toFixed(0)}`
-          + (cpu ? `\nscript ${cpu.meanMs.toFixed(1)} ms  worst ${cpu.worstMs.toFixed(0)}` : '') + gpu
+          + (cpu ? `\nscript ${cpu.meanMs.toFixed(1)} ms  worst ${cpu.worstMs.toFixed(0)}` : '') + scriptSplitLine(cpu) + gpu
           + (i ? `\ngpu ${i.gpu ?? 'unknown'}` : '') + (size ? `\n${size}` : '');
         // PERF9: the same numbers for a probe (tools/perfProbe.mjs) - the
         // last second's, as an object, whether or not the overlay shows.
-        last = { fps, meanMs, worstMs, scriptMs: cpu?.meanMs ?? null, scriptWorstMs: cpu?.worstMs ?? null, draws: samples ? sumDraws / samples : null, binds: samples ? sumBinds / samples : null };
+        last = { fps, meanMs, worstMs, scriptMs: cpu?.meanMs ?? null, scriptWorstMs: cpu?.worstMs ?? null, draws: samples ? sumDraws / samples : null, binds: samples ? sumBinds / samples : null,
+          scriptInFrameMs: cpu?.inFrameMs ?? null, scriptBeforeMs: cpu?.beforeMs ?? null, scriptStreamMs: cpu?.streamMs ?? null };   // SCRIPT-SPLIT
       }
       stamps = [now];
       sumDraws = 0; sumBinds = 0; samples = 0;   // PERF3

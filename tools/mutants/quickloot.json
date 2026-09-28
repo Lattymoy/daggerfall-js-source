@@ -2,8 +2,8 @@
   {
     "name": "QUICK-LOOT-the-fold-does-not-clamp-to-the-last-row",
     "file": "src/systems/worldHover.js",
-    "old": "    row = Math.max(floor, Math.min(rows - 1, (at >= 0 ? at : prev.row) + d));",
-    "new": "    row = Math.max(floor, (at >= 0 ? at : prev.row) + d);",
+    "old": "Math.max(floor, Math.min(rows - 1, (at >= 0 ? at : prev.row) + d));",
+    "new": "Math.max(floor, (at >= 0 ? at : prev.row) + d);",
     "tests": [
       "test/quickloot.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "QUICK-LOOT-the-fold-wraps-instead-of-stopping",
     "file": "src/systems/worldHover.js",
-    "old": "    row = Math.max(floor, Math.min(rows - 1, (at >= 0 ? at : prev.row) + d));",
-    "new": "    row = ((((at >= 0 ? at : prev.row) + d) % rows) + rows) % rows;",
+    "old": "Math.max(floor, Math.min(rows - 1, (at >= 0 ? at : prev.row) + d));",
+    "new": "((((at >= 0 ? at : prev.row) + d) % rows) + rows) % rows;",
     "tests": [
       "test/quickloot.test.js"
     ]

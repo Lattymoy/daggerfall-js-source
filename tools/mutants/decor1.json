@@ -335,8 +335,8 @@
   {
     "name": "DECOR1c-a-flat-sunk-to-its-middle",
     "file": "src/scenes/decorRoom.js",
-    "old": "entry.batch = renderer.createBillboardBatch(a, r, entry.size, [[o[0] + piece.pos[0], o[1] + piece.pos[1], o[2] + piece.pos[2]]]);",
-    "new": "entry.batch = renderer.createBillboardBatch(a, r, entry.size, [[o[0] + piece.pos[0], o[1] + piece.pos[1] - entry.size.h / 2, o[2] + piece.pos[2]]]);",
+    "old": "entry.batch = renderer.createBillboardBatch(da, dr, drawn, [[o[0] + piece.pos[0], o[1] + piece.pos[1], o[2] + piece.pos[2]]]);",
+    "new": "entry.batch = renderer.createBillboardBatch(da, dr, drawn, [[o[0] + piece.pos[0], o[1] + piece.pos[1] - entry.size.h / 2, o[2] + piece.pos[2]]]);",
     "tests": [
       "test/decor1.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "DECOR1c-a-flat-unanimated",
     "file": "src/scenes/decorRoom.js",
-    "old": "        if (armFlatAnim(entry.batch, f.t, a, r, anims, uploadRecordFrame ?? null)) entry.anims = anims;",
-    "new": "        if (armFlatAnim(entry.batch, f.t, a, r, null, uploadRecordFrame ?? null)) entry.anims = anims;",
+    "old": "        if (!pic && armFlatAnim(entry.batch, f.t, a, r, anims, uploadRecordFrame ?? null)) entry.anims = anims;",
+    "new": "        if (!pic && armFlatAnim(entry.batch, f.t, a, r, null, uploadRecordFrame ?? null)) entry.anims = anims;",
     "tests": [
       "test/decor1.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "DECOR1c-a-late-answer-standing",
     "file": "src/scenes/worldModes.js",
-    "old": "      if (visit !== _decorVisit || interiorBuilding !== b) return;",
-    "new": "      if (interiorBuilding !== b) return;",
+    "old": "      live: () => visit === _decorVisit && interiorBuilding === b && _decorListed !== visit,",
+    "new": "      live: () => interiorBuilding === b && _decorListed !== visit,",
     "tests": [
       "test/decor1.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "DECOR1c-a-visitor-opens-a-piece",
     "file": "src/scenes/worldModes.js",
-    "old": "    if (!decorOwnerHere()) {\n",
-    "new": "    if (false) {\n",
+    "old": "  function activateDecor(id) {\n    const piece = interiorDecor.pieceOf(id);\n    if (piece?.station) { useDecorStation(piece); return; }   // HOME-STATIONS\n    if (!piece?.storage) return;\n    if (!decorOwnerHere()) {\n",
+    "new": "  function activateDecor(id) {\n    const piece = interiorDecor.pieceOf(id);\n    if (piece?.station) { useDecorStation(piece); return; }   // HOME-STATIONS\n    if (!piece?.storage) return;\n    if (false) {\n",
     "tests": [
       "test/decor1.test.js"
     ]

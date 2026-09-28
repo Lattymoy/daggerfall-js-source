@@ -45,9 +45,10 @@
 // Not a DFU member: Daggerfall Unity has no other players and no chat. Ledger A row (ONLINE).
 import { PIXELIFY_FIVE_FACE, PIXEL_STACK } from './pixelifyFive.js';   // the enhanced face, with FIX-D's five ahead of it
 import { NAME_GAP_PX, namePixelSize, nameViewportScale } from '../net/remotePlayers.js';
-import { titleBadge, glyphBadges, glyphSvgNode, cssRgba } from './playerBadge.js';   // ACC3: the same table the classic pass reads - one law, two faces   // the anchor's gap, and the size law's own two doors (AUDIT NAME1 F3)
+import { titleBadge, glyphBadges, glyphSvgNode, cssRgba, titlePaint, TITLE_PAINT_KEYS } from './playerBadge.js';   // ACC3: the same table the classic pass reads - one law, two faces   // the anchor's gap, and the size law's own two doors (AUDIT NAME1 F3)
 import { graphemesOf } from '../systems/graphemes.js';   // EMOTE1's characters, which JOURNAL1's notebook break reads too
 import { renownText } from '../net/renown.js';   // RENOWN1: Renown, left of the name
+import { guildTagText } from '../net/guildLaw.js';   // GUILD1c: the guild's tag, right of the name
 
 export const NAME_STYLE_ID = 'dagger-names-style';
 
@@ -178,6 +179,14 @@ export const NAME_CSS = `${PIXELIFY_FIVE_FACE}
    decided. An empty run takes no room and no gap. */
 .dfname-glyphs { display: flex; align-items: center; gap: .18em; }
 .dfname-glyphs:empty { display: none; }
+/* GUILD1c - THE GUILD'S TAG, right of the name, before the glyphs: "<HND>"
+   in angle brackets, the tag's own mark (the Renown's box is square), a
+   little smaller than the name and in a cool steel so it reads as the
+   company a player keeps - never the party's green, a title's colour or
+   the Renown's amber. Empty takes no room: a peer in no guild wears
+   exactly the label it wore before. */
+.dfname-guild { font-size: .82em; letter-spacing: .04em; color: #a9c4dd; }
+.dfname-guild:empty { display: none; }
 /* RENOWN1 - THE RENOWN, LEFT OF THE NAME (Mac: "having their
    level appear on the left side of character name"). A small plate in
    the row the name and glyphs already are, so the whole run stays
@@ -268,10 +277,13 @@ export function createNameLayer({ doc = document, now = () => Date.now() } = {})
     name.className = 'dfname-who';
     const glyphs = doc.createElement('span');
     glyphs.className = 'dfname-glyphs';
-    tag.append(lv, name, glyphs);
+    // GUILD1c: the guild's tag right of the name, before the glyphs
+    const guild = doc.createElement('span');
+    guild.className = 'dfname-guild';
+    tag.append(lv, name, guild, glyphs);
     node.append(bubble, title, tag);
     root.append(node);
-    return { node, bubble, title, tag, lv, name, glyphs, worn: null };
+    return { node, bubble, title, tag, lv, name, guild, glyphs, worn: null, titled: null, inked: undefined };   // SHADOW-FANG: `titled`, the title whose paint is on; AUDIT A10: `inked`, the name's colour as written
   };
 
   /** ACC3: the glyph run, REBUILT ONLY WHEN IT CHANGES. A glyph set is
@@ -343,7 +355,7 @@ export function createNameLayer({ doc = document, now = () => Date.now() } = {})
     /** AUDIT NAME1 F3: `viewport` is the world viewport's HEIGHT in CSS px and `hudScale` the player's own HUD
      *  scale (ui/enhancedHud.js enhancedHudScale). Both are taken by VALUE rather than through
      *  `scale(var(--hud-scale))`, because that variable is set on #enhanced-hud and this layer is a body sibling
-     *  of it - the damage numbers' own layer has the same problem and enhancedHud.js:951 solves it the same way,
+     *  of it - the damage numbers' own layer has the same problem and enhancedHud.js:804 solves it the same way,
      *  by writing the number where it is needed. Neither is passed on a probe host, and there the law is exactly
      *  the reference frame's: NAME_BASE_PX * the point's scale. */
     render({ points = [], log = null, covered = false, colorOf = null, viewport = null, hudScale = 1 } = {}) {
@@ -376,7 +388,11 @@ export function createNameLayer({ doc = document, now = () => Date.now() } = {})
         setStyle(tag.node, 'fontSize', `${namePixelSize(p.scale ?? 1, vp, hudScale).toFixed(1)}px`);
         setText(tag.lv, renownText(p.lv) ?? '');   // RENOWN1: "12" in its box, or nothing
         setText(tag.name, p.name ?? '');
-        setStyle(tag.name, 'color', cssRgba(colorOf?.(p.id)) ?? '');
+        setText(tag.guild, guildTagText(p.gt) ?? '');   // GUILD1c: "<HND>", or nothing
+        // AUDIT A10 (SHADOW-FANG's audit, the title's own bug on the name): a browser reads a hex colour back as rgb(),
+        // so the diffing door rewrote a party mate's green every frame - written when it CHANGES, as the title is
+        const ink = cssRgba(colorOf?.(p.id)) ?? '';
+        if (tag.inked !== ink) { tag.inked = ink; tag.name.style.color = ink; }
         // ACC3: the title above, in ITS colour, and the glyphs beside.
         // `colorOf` is deliberately not asked for either: the party's
         // green says "this is my party" about a NAME, and gold says
@@ -384,7 +400,16 @@ export function createNameLayer({ doc = document, now = () => Date.now() } = {})
         // the distinction Mac asked for.
         const badge = titleBadge(p);
         setText(tag.title, badge?.text ?? '');
-        setStyle(tag.title, 'color', badge ? (cssRgba(badge.rgba) ?? '') : '');
+        // SHADOW-FANG: the title's whole paint - its colour, or a gradient clipped to its letters - written when
+        // the TITLE changes and not every frame: a browser reads a colour back normalised (#d3193c comes back
+        // rgb(211, 25, 60)), so the diffing door would rewrite a gradient's keys on every frame for ever. Every
+        // key is written, so the next title on this tag clears what this one set.
+        const titleKey = badge?.key ?? '';
+        if (tag.titled !== titleKey) {
+          tag.titled = titleKey;
+          const paint = titlePaint(badge);
+          for (const k of TITLE_PAINT_KEYS) tag.title.style[k] = paint[k];
+        }
         setGlyphs(tag, p);
         const b = bubbles.get(p.id);
         // AUDIT NAME1 F9: a bubble is SHOWN when it can be seen. A negative age - a clock stepped backwards, a

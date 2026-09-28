@@ -1,0 +1,571 @@
+[
+  {
+    "name": "SS1-the-row-unstacked",
+    "file": "src/systems/gateSpoils.js",
+    "old": "  stackable: true,\n  bound: true,\n}]);",
+    "new": "  bound: true,\n}]);",
+    "tests": [
+      "test/ss1_stones.test.js",
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SS1-the-row-unbound",
+    "file": "src/systems/gateSpoils.js",
+    "old": "  stackable: true,\n  bound: true,\n}]);",
+    "new": "  stackable: true,\n}]);",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS1-a-record-unbinding-its-row",
+    "file": "src/systems/itemBound.js",
+    "old": "export const isBound = (/** @type {any} */ item) => item?.bound === true || templateByIndex(item?.templateIndex)?.bound === true;",
+    "new": "export const isBound = (/** @type {any} */ item) => item?.bound === true || (item?.bound !== false && templateByIndex(item?.templateIndex)?.bound === true);",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS1-the-table-takes-a-bound-piece",
+    "file": "src/systems/tradePack.js",
+    "old": "  if (isBound(item)) return BOUND_TRADE_TEXT;   // SS1\n",
+    "new": "",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS1-a-peers-bound-lot-taken",
+    "file": "src/systems/tradePack.js",
+    "old": "unwire(records) { const items = validLootList(records); return items && !items.some(isBound) ? items : null; },",
+    "new": "unwire(records) { const items = validLootList(records); return items; },",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS1-the-purse-counted-by-record",
+    "file": "src/systems/sigilBroker.js",
+    "old": "export const stoneCount = (items) => stonesIn(items).reduce((n, it) => n + Math.max(1, it.stackCount ?? 1), 0);",
+    "new": "export const stoneCount = (items) => stonesIn(items).length;",
+    "tests": [
+      "test/set7_broker.test.js"
+    ]
+  },
+  {
+    "name": "SS1-the-locked-purse-counted-by-record",
+    "file": "src/scenes/world.js",
+    "old": "locked: () => stoneCount(lockedStonesIn(playerEntity.items ?? [])),",
+    "new": "locked: () => lockedStonesIn(playerEntity.items ?? []).length,",
+    "tests": [
+      "test/set7_broker_world.test.js"
+    ]
+  },
+  {
+    "name": "SS1-a-stack-taken-whole",
+    "file": "src/systems/sigilBroker.js",
+    "old": "    const count = Math.min(left, Math.max(1, item.stackCount ?? 1));",
+    "new": "    const count = Math.max(1, item.stackCount ?? 1);",
+    "tests": [
+      "test/set7_broker.test.js"
+    ]
+  },
+  {
+    "name": "SS1-the-drawn-stack-left-whole",
+    "file": "src/systems/sigilBroker.js",
+    "old": "    else item.stackCount = have - count;",
+    "new": "    else item.stackCount = have;",
+    "tests": [
+      "test/set7_broker.test.js"
+    ]
+  },
+  {
+    "name": "SS1-the-carry-gate-asked-with-the-drawn-stack-whole",
+    "file": "src/systems/sigilBroker.js",
+    "old": "    else if (t.count < Math.max(1, it.stackCount ?? 1)) rest.push({ ...it, stackCount: it.stackCount - t.count });",
+    "new": "    else if (t.count < Math.max(1, it.stackCount ?? 1)) rest.push(it);",
+    "tests": [
+      "test/set7_broker.test.js"
+    ]
+  },
+  {
+    "name": "SS1-an-emptied-stack-kept-in-the-load",
+    "file": "src/systems/sigilBroker.js",
+    "old": "    if (!t) rest.push(it);",
+    "new": "    if (!t || t.count >= Math.max(1, it.stackCount ?? 1)) rest.push(it);",
+    "tests": [
+      "test/set7_broker.test.js"
+    ]
+  },
+  {
+    "name": "SS1-the-fold-never-run",
+    "file": "src/systems/save.js",
+    "old": "    const n = restackStones(list);",
+    "new": "    const n = 0;",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS1-the-fold-before-the-relinks",
+    "file": "src/systems/save.js",
+    "old": "  rebuildEquipState(entity);\n",
+    "new": "  for (const list of [entity.items, entity.wagonItems]) restackStones(list);\n  rebuildEquipState(entity);\n",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS1-the-wagon-left-unfolded",
+    "file": "src/systems/save.js",
+    "old": "  for (const list of [entity.items, entity.wagonItems]) {\n    const n = restackStones(list);",
+    "new": "  for (const list of [entity.items]) {\n    const n = restackStones(list);",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS1-the-fold-merging-locked-into-unlocked",
+    "file": "src/systems/gateSpoils.js",
+    "old": "    const into = list.findIndex((held, j) => j < i && isSigilStone(held) && stacksWith(held, it));",
+    "new": "    const into = list.findIndex((held, j) => j < i && isSigilStone(held));",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS1-the-fold-losing-a-count",
+    "file": "src/systems/gateSpoils.js",
+    "old": "    list[into].stackCount = (list[into].stackCount ?? 1) + (it.stackCount ?? 1);",
+    "new": "    list[into].stackCount = (list[into].stackCount ?? 1) + 1;",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS1-the-card-line-missing",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  if (isBound(picked)) c.append(el('p', 'boundline', BOUND_LINE));   // SS1: the lock's line style, without its padlock",
+    "new": "",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS2-the-price-column-sized-by-its-text",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ".broker-offer { display: grid; grid-template-columns: 48px minmax(0, 1fr) 112px 148px;",
+    "new": ".broker-offer { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto 148px;",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS3-the-ground-takes-a-bound-piece",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  if (remote && boundRefusesPut(item, remote.kind)) {\n    notice = boundText(",
+    "new": "  if (false) {\n    notice = boundText(",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS3-the-drag-promising-a-bound-drop",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  if (remote && boundRefusesPut(item, remote.kind)) return { kind: 'stow', label: null, speaks: true };",
+    "new": "",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS3-the-classic-ground-takes-a-bound-piece",
+    "file": "src/ui/nativeInventory.js",
+    "old": "        if (boundRefusesPut(it, kind)) {",
+    "new": "        if (false) {",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS3-the-wagon-closed-to-a-bound-piece",
+    "file": "src/systems/itemBound.js",
+    "old": "export const BOUND_KEEPS = Object.freeze(['wagon', 'storage']);",
+    "new": "export const BOUND_KEEPS = Object.freeze(['storage']);",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS3-the-owners-storage-closed",
+    "file": "src/systems/itemBound.js",
+    "old": "export const BOUND_KEEPS = Object.freeze(['wagon', 'storage']);",
+    "new": "export const BOUND_KEEPS = Object.freeze(['wagon']);",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS3-the-classic-owners-storage-read-as-elsewhere",
+    "file": "src/ui/nativeInventory.js",
+    "old": "t === REMOTE_TARGET_TYPES.Loot && this.hooks.loot?.storage === true ? 'storage' : 'elsewhere';",
+    "new": "t === REMOTE_TARGET_TYPES.Loot && this.hooks.loot?.storage === 'yes' ? 'storage' : 'elsewhere';",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS3-a-peers-list-keeps-a-bound-piece",
+    "file": "src/systems/itemBound.js",
+    "old": "export const unbound = (/** @type {any[] | null} */ list) => (Array.isArray(list) ? list.filter((it) => !isBound(it)) : list);",
+    "new": "export const unbound = (/** @type {any[] | null} */ list) => list;",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS3-a-buildings-container-lands-a-bound-piece",
+    "file": "src/world/interiorShared.js",
+    "old": "    const items = unbound(validLootList(rec.r));",
+    "new": "    const items = validLootList(rec.r);",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS3-a-dungeons-container-lands-a-bound-piece",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      const items = unbound(validLootList(rec.r));",
+    "new": "      const items = validLootList(rec.r);",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS3-a-body-on-the-wire-lands-a-bound-piece",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "const li = unbound(validLootList(sf.items));",
+    "new": "const li = validLootList(sf.items);",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS3-a-peers-grant-lands-a-bound-piece",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      const grant = unbound(validLootList(data.grant));",
+    "new": "      const grant = validLootList(data.grant);",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS4-the-mark-ignored",
+    "file": "src/systems/itemBound.js",
+    "old": "export const isBound = (/** @type {any} */ item) => item?.bound === true || templateByIndex(item?.templateIndex)?.bound === true;",
+    "new": "export const isBound = (/** @type {any} */ item) => templateByIndex(item?.templateIndex)?.bound === true;",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS4-a-ware-unbound",
+    "file": "src/systems/sigilBroker.js",
+    "old": "const offer = (kind, set, price, item) => { item.bound = true; item.stonesPaid = price; offers.push(",
+    "new": "const offer = (kind, set, price, item) => { item.stonesPaid = price; offers.push(",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS4-the-broker-card-silent",
+    "file": "src/ui/brokerWindow.js",
+    "old": "      if (isBound(o.item)) card.append(el('p', 'boundline', BOUND_LINE));",
+    "new": "      if (isBound(o.item) && false) card.append(el('p', 'boundline', BOUND_LINE));",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS4-the-enhanced-counter-sells-a-bound-piece",
+    "file": "src/ui/enhancedTrade.js",
+    "old": "  if (selling() && isBound(item)) {",
+    "new": "  if (selling() && isBound(item) && false) {",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS4-the-enhanced-sell-magic-sells-a-bound-piece",
+    "file": "src/ui/enhancedTrade.js",
+    "old": "  if (selling() && isBound(item)) {",
+    "new": "  if (mode === 'Sell' && isBound(item)) {",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS4-the-binding-closing-the-enhanced-smith",
+    "file": "src/ui/enhancedTrade.js",
+    "old": "  if (selling() && isBound(item)) {",
+    "new": "  if (isBound(item)) {",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS4-the-classic-counter-sells-a-bound-piece",
+    "file": "src/ui/nativeTrade.js",
+    "old": "    if ((this.mode === 'Sell' || this.mode === 'SellMagic') && isBound(item)) {",
+    "new": "    if ((this.mode === 'Sell' || this.mode === 'SellMagic') && isBound(item) && false) {",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS4-the-classic-sell-magic-sells-a-bound-piece",
+    "file": "src/ui/nativeTrade.js",
+    "old": "    if ((this.mode === 'Sell' || this.mode === 'SellMagic') && isBound(item)) {",
+    "new": "    if (this.mode === 'Sell' && isBound(item)) {",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS4-the-binding-closing-the-classic-smith",
+    "file": "src/ui/nativeTrade.js",
+    "old": "    if ((this.mode === 'Sell' || this.mode === 'SellMagic') && isBound(item)) {",
+    "new": "    if (isBound(item)) {",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS5-a-ware-unpriced",
+    "file": "src/systems/sigilBroker.js",
+    "old": "{ item.bound = true; item.stonesPaid = price; offers.push(",
+    "new": "{ item.bound = true; offers.push(",
+    "tests": [
+      "test/ss1_stones.test.js",
+      "test/set7_broker.test.js"
+    ]
+  },
+  {
+    "name": "SS5-the-whole-price-back",
+    "file": "src/systems/sigilBroker.js",
+    "old": "export const BROKER_DISMANTLE_SHARE = 0.5;",
+    "new": "export const BROKER_DISMANTLE_SHARE = 1;",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS5-the-floor-gone",
+    "file": "src/systems/sigilBroker.js",
+    "old": "? Math.max(1, Math.floor(paid * BROKER_DISMANTLE_SHARE)) : 0;",
+    "new": "? Math.floor(paid * BROKER_DISMANTLE_SHARE) : 0;",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS5-a-peers-price-pays",
+    "file": "src/systems/sigilBroker.js",
+    "old": "return item?.bound === true && Number.isSafeInteger(paid) && paid > 0",
+    "new": "return Number.isSafeInteger(paid) && paid > 0",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS5-a-worn-ware-dismantled",
+    "file": "src/systems/sigilBroker.js",
+    "old": "  if (isEquipped(item)) return 'worn';\n",
+    "new": "",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS5-a-locked-ware-dismantled",
+    "file": "src/systems/sigilBroker.js",
+    "old": "  if (isLocked(item)) return 'locked';\n",
+    "new": "",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS5-the-ware-kept",
+    "file": "src/systems/sigilBroker.js",
+    "old": "  items.splice(items.indexOf(item), 1);\n  addItem(items, Object.assign(sigilStone(), { stackCount: stones }));",
+    "new": "  addItem(items, Object.assign(sigilStone(), { stackCount: stones }));",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS5-no-stones-back",
+    "file": "src/systems/sigilBroker.js",
+    "old": "  addItem(items, Object.assign(sigilStone(), { stackCount: stones }));\n",
+    "new": "",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS5-the-enhanced-card-without-dismantle",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  if (side === 'local' && !line.equipped && dismantleStones(picked) > 0) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS5-the-card-dismantling-a-worn-ware",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  if (side === 'local' && !line.equipped && dismantleStones(picked) > 0) {",
+    "new": "  if (side === 'local' && dismantleStones(picked) > 0) {",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS5-the-question-left-standing",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    e?.stopPropagation?.();\n    closeDismantle();\n    const r = dismantleWare(",
+    "new": "    e?.stopPropagation?.();\n    const r = dismantleWare(",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS5-keep-dismantles",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  keep.onclick = (e) => { e?.stopPropagation?.(); closeDismantle(); };",
+    "new": "  keep.onclick = (e) => { e?.stopPropagation?.(); closeDismantle(); dismantleWare(item, { items: deps.items?.() ?? [] }); };",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS5-the-lock-unsaid",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "const refusedFor = (why) => { notice = why === 'locked' ? lockedText(name) : why === 'worn' ? DISMANTLE_WORN(name) : null; refresh(); render(); };",
+    "new": "const refusedFor = (why) => { notice = null; refresh(); render(); };",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS5-the-enhanced-dismantle-unsaid",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    notice = DISMANTLED(name, r.stones);",
+    "new": "    notice = null;",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS5-back-closing-the-pack-under-the-question",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "(infoEl || menuEl || dismantleEl)",
+    "new": "(infoEl || menuEl)",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS5-the-classic-ground-never-offers",
+    "file": "src/ui/nativeInventory.js",
+    "old": "const n = ground && !dismantleRefusal(it) ? dismantleStones(it) : 0;",
+    "new": "const n = 0;",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS5-the-classic-offer-in-a-chest",
+    "file": "src/ui/nativeInventory.js",
+    "old": "const n = ground && !dismantleRefusal(it) ? dismantleStones(it) : 0;",
+    "new": "const n = !dismantleRefusal(it) ? dismantleStones(it) : 0;",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS5-the-classic-yes-unsaid",
+    "file": "src/ui/nativeInventory.js",
+    "old": "        if (r.ok) this.boxes = [{ rows: [{ text: DISMANTLED(name, r.stones), center: true }] }];",
+    "new": "        void r;",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS5-the-answered-box-left-standing",
+    "file": "src/ui/nativeInventory.js",
+    "old": "      if (box.done && this.inputBox === box) this.inputBox = null;",
+    "new": "",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS5-the-pages-left-stale",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    refresh();   // the pages are rebuilt from the pack, as every act here rebuilds them - the ware off its page\n",
+    "new": "",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS5-a-long-row-left-whole",
+    "file": "src/ui/messageBox.js",
+    "old": "  if (!fnt || !Array.isArray(lines)) return lines;\n  return lines.flatMap((l) => {",
+    "new": "  return lines;\n  return lines.flatMap((l) => {",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS5-the-fit-too-narrow",
+    "file": "src/ui/messageBox.js",
+    "old": "export const BOX_FIT_W = 14 * SLICE - 2 * MARGIN;",
+    "new": "export const BOX_FIT_W = 12 * SLICE - 2 * MARGIN;",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS5-the-packs-box-unfitted",
+    "file": "src/ui/nativeInventory.js",
+    "old": "      const rows = box.painting ? box.rows : fitBoxRows(font, box.rows);",
+    "new": "      const rows = box.rows;",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS5-the-counters-box-unfitted",
+    "file": "src/ui/nativeTrade.js",
+    "old": "layoutMessageBox(font, fitBoxRows(font, this.box.rows), buttons);",
+    "new": "layoutMessageBox(font, this.box.rows, buttons);",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  },
+  {
+    "name": "SS5-the-yes-no-box-unfitted",
+    "file": "src/ui/yesNoBox.js",
+    "old": "layoutMessageBox(font, fitBoxRows(font, this.rows), [MB_BUTTONS.Yes, MB_BUTTONS.No]);",
+    "new": "layoutMessageBox(font, this.rows, [MB_BUTTONS.Yes, MB_BUTTONS.No]);",
+    "tests": [
+      "test/ss1_stones.test.js"
+    ]
+  }
+]

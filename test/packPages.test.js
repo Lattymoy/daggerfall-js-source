@@ -80,7 +80,7 @@ test('PX31: the pack draws the pages; the classic keeps DFU\'s four', () => {
   assert.match(src, /import \{ PACK_PAGES, PAGE_IDS, pageOf, filterByPage \} from '\.\/packPages\.js';/);
   assert.doesNotMatch(src.replace(/^\s*(\/\/|\*|\/\*).*$/gm, ''), /filterByTab\(|\bTABS\b/, 'the pack no longer reads the four (its prose may still name them)');
   assert.match(src, /tabs: PACK_PAGES\.map\(\(\[tab, label\]\) => \(\{ tab, label, items: filterByPage\(items, tab\) \}\)\)/);
-  assert.match(src, /for \(const \{ tab: t, label, items: rows \} of model\.tabs\) \{\s*\n\s*const n = rows\.length;\s*\n\s*const b = el\('button', `packtab\$\{t === tab \? ' on' : ''\}\$\{n \? '' : ' empty'\}`, label\);/, 'each page by its label, dimmed when empty');
+  assert.match(src, /for \(const \{ tab: t, label, items: rows \} of model\.tabs\) \{\s*\n\s*const n = rows\.length;\s*\n(?:\s*\/\/[^\n]*\n)*\s*const b = el\('button', `packtab\$\{t === tab \? ' on' : ''\}\$\{n \? '' : ' tabempty'\}`, label\);/, 'each page by its label, dimmed when empty');
   assert.match(src, /tab = pageOf\(taken\);/, 'the page follows what arrived');
   const css = read('src/ui/enhancedStyle.js');
   assert.match(css, /\.packtab\.empty \{ opacity: 0\.45; \}/);

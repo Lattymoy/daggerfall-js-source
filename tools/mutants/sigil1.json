@@ -101,8 +101,8 @@
   {
     "name": "SIGIL1-forged-power-taken",
     "file": "src/systems/sigil.js",
-    "old": "&& Number.isInteger(s.power) && s.power >= 1 && s.power <= SIGIL_POWER_MAX",
-    "new": "&& Number.isInteger(s.power) && s.power >= 1",
+    "old": "p >= 1 && p <= SIGIL_POWER_MAX;",
+    "new": "p >= 1;",
     "tests": [
       "test/sigil1.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SIGIL1-forged-rank-taken",
     "file": "src/systems/sigil.js",
-    "old": "&& Number.isInteger(s.xp) && s.xp >= 0 && s.xp <= SIGIL_XP_MAX;",
-    "new": "&& Number.isInteger(s.xp) && s.xp >= 0;",
+    "old": "s.xp >= 0 && s.xp <= SIGIL_XP_MAX)) return false;",
+    "new": "s.xp >= 0)) return false;",
     "tests": [
       "test/sigil1.test.js"
     ]
@@ -245,7 +245,7 @@
   {
     "name": "SIGIL1-dormant-shows-power",
     "file": "src/systems/sigil.js",
-    "old": "if (_renown == null) return [`Sigil (Dormant - wakes online, with your Renown): ${full}`];",
+    "old": "if (_renown == null) return [`Sigil (Dormant - wakes online, with your Renown)${full}`];",
     "new": "if (_renown == null) return [];",
     "tests": [
       "test/sigil1.test.js"
@@ -254,8 +254,8 @@
   {
     "name": "SIGIL1-blow-mods-ignored",
     "file": "src/systems/entityMods.js",
-    "old": "for (const fn of _blowMods.values()) d = fn(weapon, d, attacker, target);",
-    "new": "void _blowMods;",
+    "old": "try { const next = fn(weapon, d, attacker, target, info ?? NO_BLOW_INFO); if (Number.isFinite(next)) d = next; }",
+    "new": "try { void fn; }",
     "tests": [
       "test/sigil1.test.js"
     ]
@@ -263,7 +263,7 @@
   {
     "name": "SIGIL1-formula-tail-dropped",
     "file": "src/combat/formulas.js",
-    "old": "damage = weaponBlowMods(weapon, damage, attacker, target);",
+    "old": "damage = weaponBlowMods(weapon, damage, attacker, target, info);",
     "new": "void weaponBlowMods;",
     "tests": [
       "test/sigil1.test.js"
@@ -317,8 +317,8 @@
   {
     "name": "SIGIL1-stamp-twice",
     "file": "src/systems/lootRarity.js",
-    "old": "it.questItem || it.sigil) continue;",
-    "new": "it.questItem) continue;",
+    "old": "isAmmunition(it) || it.questItem || it.sigil) continue;",
+    "new": "isAmmunition(it) || it.questItem) continue;",
     "tests": [
       "test/sigil1.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "SIGIL1-tooltip-lines-dropped",
     "file": "src/systems/lootRarity.js",
-    "old": "out.push(...sigilLines(item));",
-    "new": "void sigilLines;",
+    "old": "out.push(...setSigilLines(item));",
+    "new": "void setSigilLines;",
     "tests": [
       "test/sigil1.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "SIGIL1-unidentified-hides-sigil",
     "file": "src/systems/lootRarity.js",
-    "old": "return [...out, ...sigilLines(item)]; }",
-    "new": "return out; }",
+    "old": "return [...out, ...(sigil ? setSigilLines(item) : []), ...(set ? setLines(item) : [])]; }",
+    "new": "return [...out, ...(set ? setLines(item) : [])]; }",
     "tests": [
       "test/sigil1.test.js"
     ]
@@ -504,7 +504,7 @@
   {
     "name": "SIGIL1-drinks-past-the-cap",
     "file": "src/scenes/world.js",
-    "old": "    if (_renownCapHour === Math.floor(Date.now() / 3_600_000)) return;\n",
+    "old": "    if (_renownCapHour === renownHour()) return;\n",
     "new": "",
     "tests": [
       "test/sigil1.test.js"
@@ -512,9 +512,27 @@
   },
   {
     "name": "SIGIL1-rise-unsaid",
+    "file": "src/systems/sigilSets.js",
+    "old": "lines.push(sigilRiseLine(nameOf(held), rank));",
+    "new": "void nameOf;",
+    "tests": [
+      "test/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-the-drink-off-the-streets-rig",
     "file": "src/scenes/world.js",
-    "old": "    if (rank != null) townTalk.say(sigilRiseLine(itemLongName(held), rank));",
-    "new": "    void sigilRiseLine, itemLongName, rank;",
+    "old": "const held = (modes?.liveArm?.()?.rig ?? weaponRig).playerWeapon?.strikingWeapon ?? null;",
+    "new": "const held = weaponRig.playerWeapon?.strikingWeapon ?? null;",
+    "tests": [
+      "test/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-the-hour-off-this-machines-clock",
+    "file": "src/scenes/world.js",
+    "old": "const renownHour = () => Math.floor((Date.now() + _sharedOffsetMs) / 3_600_000);",
+    "new": "const renownHour = () => Math.floor(Date.now() / 3_600_000);",
     "tests": [
       "test/sigil1.test.js"
     ]

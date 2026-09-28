@@ -1,0 +1,110 @@
+[
+  {
+    "name": "AUDIT2-DECOR-SHELL-1-the-skip-stops-the-push",
+    "file": "src/player/collider.js",
+    "old": "if (skip?.has(bkey)) continue;",
+    "new": "if (skip?.has(bkey)) break;",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-DECOR-SHELL-1-a-fourth-push",
+    "file": "src/scenes/decorTool.js",
+    "old": "if (i >= DECOR_FLY_PUSHES) return from;",
+    "new": "if (i > DECOR_FLY_PUSHES) return from;",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-DECOR-SHELL-1-the-pending-load-asked-every-frame",
+    "file": "src/scenes/decorTool.js",
+    "old": "    models.set(id, null);\n",
+    "new": "",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-DECOR-SHELL-2-the-lift-kept-while-hung",
+    "file": "src/systems/decorPlacer.js",
+    "old": "      if (hang && s.raise > 0) s.raise = 0;\n",
+    "new": "",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-DECOR-SHELL-2-a-hung-piece-raised",
+    "file": "src/systems/decorPlacer.js",
+    "old": "if (hang && s.raise > 0) s.raise = 0;",
+    "new": "if (hang && s.raise < 0) s.raise = 0;",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-DECOR-SHELL-7-the-wait-never-grows",
+    "file": "src/scenes/decorRoom.js",
+    "old": "stand(Math.min(2 * wait, DECOR_LIST_RETRY_MAX_MS))",
+    "new": "stand(wait)",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-DECOR-SHELL-7-the-wait-unbounded",
+    "file": "src/scenes/decorRoom.js",
+    "old": "stand(Math.min(2 * wait, DECOR_LIST_RETRY_MAX_MS))",
+    "new": "stand(2 * wait)",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-DECOR-SHELL-8-the-piece-never-looked-through",
+    "file": "src/scenes/decorTool.js",
+    "old": "    if (inSkin(p.fly, b)) p.inside.push({ key: decorKeyOf(piece.id), box: b });",
+    "new": "    if (inSkin(p.fly, b)) void b;",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-DECOR-SHELL-8-the-look-not-through-it",
+    "file": "src/scenes/decorTool.js",
+    "old": "    const hit = eyeHit(deps.collider?.(), p.fly, lookDir(cam.yaw, cam.pitch), through);",
+    "new": "    const hit = eyeHit(deps.collider?.(), p.fly, lookDir(cam.yaw, cam.pitch), p.editing ? [decorKeyOf(p.editing.id)] : null);",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-DECOR-SHELL-8-never-solid-again",
+    "file": "src/scenes/decorTool.js",
+    "old": "    p.inside = p.inside.filter((c) => inSkin(p.fly, c.box));",
+    "new": "    p.inside = p.inside.filter(() => true);",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-DECOR-SHELL-8-solid-at-its-box-not-its-skin",
+    "file": "src/scenes/decorTool.js",
+    "old": "const inSkin = (q, b) => [0, 1, 2].every((i) => q[i] >= b[i] - DECOR_FLY_SKIN && q[i] <= b[i + 3] + DECOR_FLY_SKIN);",
+    "new": "const inSkin = (q, b) => [0, 1, 2].every((i) => q[i] >= b[i] && q[i] <= b[i + 3]);",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-DECOR-SHELL-8-the-online-piece-never-looked-through",
+    "file": "src/scenes/decorTool.js",
+    "old": "        if (deps.visit?.() === visit) standRound(p, decorPieceOf(res.data?.piece) ?? piece);",
+    "new": "        if (deps.visit?.() === visit) pool.put(decorPieceOf(res.data?.piece) ?? piece);",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  }
+]

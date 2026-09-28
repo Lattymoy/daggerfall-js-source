@@ -1,0 +1,389 @@
+[
+  {
+    "name": "STATION-ROWS-truthy-rows",
+    "file": "src/systems/guildServiceFlow.js",
+    "old": "export const isServiceBox = (answer) => Array.isArray(answer?.rows);",
+    "new": "export const isServiceBox = (answer) => !!answer?.rows;",
+    "tests": [
+      "test/stationrows.test.js"
+    ]
+  },
+  {
+    "name": "STATION-ROWS-popup-duck",
+    "file": "src/ui/guildServiceWindow.js",
+    "old": "if (isServiceBox(r)) { this._push({ ...r, closesWindow: !!r.closesWindow }); return; }   // STATION-ROWS",
+    "new": "if (r?.rows) { this._push({ ...r, closesWindow: !!r.closesWindow }); return; }   // STATION-ROWS",
+    "tests": [
+      "test/stationrows.test.js"
+    ]
+  },
+  {
+    "name": "STATION-ROWS-station-duck",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (isServiceBox(flow)) {   // STATION-ROWS",
+    "new": "    if (flow?.rows) {   // STATION-ROWS",
+    "tests": [
+      "test/stationrows.test.js"
+    ]
+  },
+  {
+    "name": "STATION-FEES-first-pass",
+    "file": "src/net/decorLaw.js",
+    "old": "alchemy: 50_000, spells: 100_000, enchant: 200_000",
+    "new": "alchemy: 5_000, spells: 10_000, enchant: 20_000",
+    "tests": [
+      "test/homestations.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-LIVE-keystroke-unread",
+    "file": "src/ui/socialPanel.js",
+    "old": "f.addEventListener('input', () => { onInput(f.value); paintLiveBtns(); });",
+    "new": "f.addEventListener('input', () => { onInput(f.value); });",
+    "tests": [
+      "test/guildlive.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-LIVE-state-unwritten",
+    "file": "src/ui/socialPanel.js",
+    "old": "      if (b.disabled !== !enabled) b.disabled = !enabled;\n",
+    "new": "",
+    "tests": [
+      "test/guildlive.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-LIVE-dead-press-acts",
+    "file": "src/ui/socialPanel.js",
+    "old": "b.addEventListener('click', () => { if (!b.disabled) run?.(); });",
+    "new": "b.addEventListener('click', () => { run?.(); });",
+    "tests": [
+      "test/guildlive.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-WRAP-no-wrap",
+    "file": "src/ui/socialPanel.js",
+    "old": "    r.className += ' wrap';\n    const acts = el('div', 'dfsocial-rowacts');",
+    "new": "    const acts = el('div', 'dfsocial-rowacts');",
+    "tests": [
+      "test/guildlive.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-WRAP-acts-on-row",
+    "file": "src/ui/socialPanel.js",
+    "old": "        const racts = rowActs(r);   // GUILD-WRAP",
+    "new": "        const racts = r;   // GUILD-WRAP",
+    "tests": [
+      "test/guildlive.test.js"
+    ]
+  },
+  {
+    "name": "HOME-MAGIC-click-unbarred",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    if (barredHere()) return false;   // HOME-MAGIC: a spell readied outside is not fired inside another's home\n",
+    "new": "",
+    "tests": [
+      "test/homemagic.test.js"
+    ]
+  },
+  {
+    "name": "HOME-MAGIC-ready-unbarred",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    if (barredHere()) return false;   // HOME-MAGIC: before every other gate, a free ready's too (an item's spell)\n",
+    "new": "",
+    "tests": [
+      "test/homemagic.test.js"
+    ]
+  },
+  {
+    "name": "HOME-MAGIC-item-self-unbarred",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    if (barredHere()) return null;   // HOME-MAGIC: an item's spell on its user is a cast too\n",
+    "new": "",
+    "tests": [
+      "test/homemagic.test.js"
+    ]
+  },
+  {
+    "name": "HOME-MAGIC-item-spends",
+    "file": "src/systems/enchantments.js",
+    "old": "      if (ctx?.castBarred?.()) return null;\n",
+    "new": "",
+    "tests": [
+      "test/homemagic.test.js"
+    ]
+  },
+  {
+    "name": "HOME-MAGIC-owner-barred",
+    "file": "src/scenes/worldModes.js",
+    "old": "const visitorMagicRefusal = () => (visitorDropRefusal() ? HOME_VISITOR_MAGIC_TEXT : null);",
+    "new": "const visitorMagicRefusal = () => (interiorHome && mode === 'interior' ? HOME_VISITOR_MAGIC_TEXT : null);",
+    "tests": [
+      "test/homemagic.test.js"
+    ]
+  },
+  {
+    "name": "EMPIRE-BANK-region-online",
+    "file": "src/world/buildingNames.js",
+    "old": "      b = isOnlinePage() ? EMPIRE_BANK_OF : regionName;   // EMPIRE-BANK",
+    "new": "      b = regionName;   // EMPIRE-BANK",
+    "tests": [
+      "test/empirebank.test.js"
+    ]
+  },
+  {
+    "name": "EMPIRE-BANK-whole-loan",
+    "file": "src/systems/banking.js",
+    "old": "  return isOnlinePage() ? Math.floor(cap / EMPIRE_LOAN_DIVISOR) : cap;",
+    "new": "  return cap;",
+    "tests": [
+      "test/empirebank.test.js"
+    ]
+  },
+  {
+    "name": "EMPIRE-BANK-override-skipped",
+    "file": "src/systems/banking.js",
+    "old": "  const cap = _maxLoanOverride?.(level) ?? level * LOAN_MAX_PER_LEVEL;\n  return isOnlinePage()",
+    "new": "  const cap = level * LOAN_MAX_PER_LEVEL;\n  return isOnlinePage()",
+    "tests": [
+      "test/empirebank.test.js"
+    ]
+  },
+  {
+    "name": "EMPIRE-BANK-live-any-building",
+    "file": "src/systems/discovery.js",
+    "old": "  if (rec.buildingType === BUILDING_TYPES.Bank && !rec.isOverrideName && typeof live === 'string' && live) return live;",
+    "new": "  if (!rec.isOverrideName && typeof live === 'string' && live) return live;",
+    "tests": [
+      "test/empirebank.test.js"
+    ]
+  },
+  {
+    "name": "EMPIRE-BANK-teller-classic",
+    "file": "src/ui/enhancedPorts.js",
+    "old": "    const empire = isOnlinePage();",
+    "new": "    const empire = false;",
+    "tests": [
+      "test/empirebank.test.js"
+    ]
+  },
+  {
+    "name": "MW-ASSIGN-mod-weapon-none",
+    "file": "src/formats/mwFirstPerson.js",
+    "old": "  return MOD_WEAPON_TO_MW[idx] ?? MW_WEAPON_TYPE.None;   // MW-ASSIGN: a mod's weapon of a classic shape",
+    "new": "  return MW_WEAPON_TYPE.None;   // MW-ASSIGN: a mod's weapon of a classic shape",
+    "tests": [
+      "test/mwassign.test.js"
+    ]
+  },
+  {
+    "name": "MW-ASSIGN-mod-armour-rowless",
+    "file": "src/formats/mwItemMap.js",
+    "old": "  const row = armorRowOf(templateIndex);   // MW-ASSIGN: a mod's piece by the classic row of its shape",
+    "new": "  const row = DF_ARMOR_ROWS[templateIndex];   // MW-ASSIGN: a mod's piece by the classic row of its shape",
+    "tests": [
+      "test/mwassign.test.js"
+    ]
+  },
+  {
+    "name": "MW-ASSIGN-mod-armour-unworn",
+    "file": "src/formats/mwItemMap.js",
+    "old": "    if (item && typeof item.templateIndex === 'number' && armorRowOf(item.templateIndex)) {   // MW-ASSIGN: a mod's pieces are worn too",
+    "new": "    if (item && typeof item.templateIndex === 'number' && item.templateIndex in DF_ARMOR_ROWS) {   // MW-ASSIGN: a mod's pieces are worn too",
+    "tests": [
+      "test/mwassign.test.js"
+    ]
+  },
+  {
+    "name": "MW-ASSIGN-vambrace-side",
+    "file": "src/formats/mwItemMap.js",
+    "old": "  525: Object.freeze({ tokens: ['bracer', 'gauntlet'], sides: ['left'] }),",
+    "new": "  525: Object.freeze({ tokens: ['bracer', 'gauntlet'], sides: ['right'] }),",
+    "tests": [
+      "test/mwassign.test.js"
+    ]
+  },
+  {
+    "name": "MW-ASSIGN-own-model-unasked",
+    "file": "src/combat/fpArm.js",
+    "old": "        if (own) return { id: own.id, model: own.model };\n",
+    "new": "",
+    "tests": [
+      "test/mwassign.test.js"
+    ]
+  },
+  {
+    "name": "MW-ASSIGN-stand-classic",
+    "file": "src/scenes/decorRoom.js",
+    "old": "      const mw = decorStandsOwn(piece) ? standArtOf(piece.item) : Promise.resolve(null);",
+    "new": "      const mw = Promise.resolve(null);",
+    "tests": [
+      "test/mwassign.test.js"
+    ]
+  },
+  {
+    "name": "MW-ASSIGN-stand-kept",
+    "file": "src/scenes/decorRoom.js",
+    "old": "    for (const k of wasStand) renderer?.releaseTexture?.(MW_STAND_ARCHIVE, k);\n",
+    "new": "",
+    "tests": [
+      "test/mwassign.test.js"
+    ]
+  },
+  {
+    "name": "DECOR-FLIP-half-turn",
+    "file": "src/net/decorLaw.js",
+    "old": "  return Number.isFinite(yaw) && Math.abs(yaw) > 90;",
+    "new": "  return Number.isFinite(yaw) && Math.abs(yaw) > 180;",
+    "tests": [
+      "test/decorflip.test.js"
+    ]
+  },
+  {
+    "name": "DECOR-FLIP-mount-mirrored",
+    "file": "src/net/decorLaw.js",
+    "old": "  if (!piece || piece.model != null || !Array.isArray(piece.flat) || decorIsMount(piece)) return false;",
+    "new": "  if (!piece || piece.model != null || !Array.isArray(piece.flat)) return false;",
+    "tests": [
+      "test/decorflip.test.js"
+    ]
+  },
+  {
+    "name": "DECOR-FLIP-room-unflipped",
+    "file": "src/scenes/decorRoom.js",
+    "old": "entry.batch = renderer.createBillboardBatch(da, dr, drawn, [[o[0] + piece.pos[0], o[1] + piece.pos[1], o[2] + piece.pos[2]]]);",
+    "new": "entry.batch = renderer.createBillboardBatch(da, dr, entry.size, [[o[0] + piece.pos[0], o[1] + piece.pos[1], o[2] + piece.pos[2]]]);",
+    "tests": [
+      "test/decorflip.test.js"
+    ]
+  },
+  {
+    "name": "DECOR-FLIP-ghost-unflipped",
+    "file": "src/scenes/decorTool.js",
+    "old": " * (decorFlatMirrored(p.piece) ? -1 : 1), h: p.flatSize.h * sc };",
+    "new": ", h: p.flatSize.h * sc };",
+    "tests": [
+      "test/decorflip.test.js"
+    ]
+  },
+  {
+    "name": "DECOR-ROOMS-wall-joins",
+    "file": "src/systems/decorRooms.js",
+    "old": "        if (d >= size - 1e-6) join(i, j);",
+    "new": "        join(i, j);",
+    "tests": [
+      "test/decorrooms.test.js"
+    ]
+  },
+  {
+    "name": "DECOR-ROOMS-no-headroom",
+    "file": "src/systems/decorRooms.js",
+    "old": "      if (head >= DECOR_ROOM_HEADROOM && Number.isFinite(head)) {",
+    "new": "      if (Number.isFinite(head)) {",
+    "tests": [
+      "test/decorrooms.test.js"
+    ]
+  },
+  {
+    "name": "DECOR-ROOMS-roof-a-floor",
+    "file": "src/systems/decorRooms.js",
+    "old": "      if (head >= DECOR_ROOM_HEADROOM && Number.isFinite(head)) {",
+    "new": "      if (head >= DECOR_ROOM_HEADROOM) {",
+    "tests": [
+      "test/decorrooms.test.js"
+    ]
+  },
+  {
+    "name": "DECOR-ROOMS-nook-a-room",
+    "file": "src/systems/decorRooms.js",
+    "old": "filter(([, g]) => g.length >= DECOR_ROOM_MIN_CELLS)",
+    "new": "filter(([, g]) => g.length >= 1)",
+    "tests": [
+      "test/decorrooms.test.js"
+    ]
+  },
+  {
+    "name": "DECOR-ROOMS-on-the-wall",
+    "file": "src/systems/decorRooms.js",
+    "old": "  const x0 = ok ? box.min[0] + (spanX - (nx - 1) * size) / 2 + DECOR_ROOM_OFFSET : 0;",
+    "new": "  const x0 = ok ? box.min[0] + (spanX - (nx - 1) * size) / 2 - size / 2 : 0;",
+    "tests": [
+      "test/decorrooms.test.js"
+    ]
+  },
+  {
+    "name": "DECOR-ROOMS-flight-at-eye",
+    "file": "src/scenes/decorTool.js",
+    "old": "    return want && (!here || here.id !== want.id) ? [...want.eye] : eye;",
+    "new": "    return eye;",
+    "tests": [
+      "test/decorrooms.test.js"
+    ]
+  },
+  {
+    "name": "DECOR-ROOMS-no-tabs",
+    "file": "src/ui/decorPanel.js",
+    "old": "    if (!roomsUp()) return [];\n    const placed = view.placed ?? [];",
+    "new": "    return [];\n    const placed = view.placed ?? [];",
+    "tests": [
+      "test/decorrooms.test.js"
+    ]
+  },
+  {
+    "name": "DECOR-ROOMS-lists-unfiltered",
+    "file": "src/ui/decorPanel.js",
+    "old": "  const roomed = (list) => (roomsUp() ? list.filter((it) => it.room == null || it.room === view.roomId) : list);",
+    "new": "  const roomed = (list) => list;",
+    "tests": [
+      "test/decorrooms.test.js"
+    ]
+  },
+  {
+    "name": "DECOR-ROOMS-never-stepped",
+    "file": "src/scenes/decorTool.js",
+    "old": "      ensureRooms().step();   // DECOR-ROOMS: a few rays a frame until the house's rooms are found\n",
+    "new": "",
+    "tests": [
+      "test/decorrooms.test.js"
+    ]
+  },
+  {
+    "name": "DECOR-MODFLATS-the-bound-back-at-999",
+    "file": "src/net/decorLaw.js",
+    "old": "export const DECOR_ARCHIVE_MAX = 99_999;",
+    "new": "export const DECOR_ARCHIVE_MAX = 999;",
+    "tests": [
+      "test/decormodflats.test.js"
+    ]
+  },
+  {
+    "name": "DECOR-MODFLATS-the-old-four-turns",
+    "file": "src/ui/textureCanvas.js",
+    "old": "  await settling.get(key);   // in flight: until it lands or misses; a miss already known: at once\n",
+    "new": "  await getArchive(archive);\n  for (let i = 0; i < 4; i++) await Promise.resolve();\n",
+    "tests": [
+      "test/decormodflats.test.js"
+    ]
+  },
+  {
+    "name": "DECOR-MODFLATS-the-throw-unsettled",
+    "file": "src/ui/textureCanvas.js",
+    "old": "}).catch((e) => { missed(); console.warn(`[icons] ${archive}_${record} would not draw`, e); });",
+    "new": "}).catch((e) => { console.warn(`[icons] ${archive}_${record} would not draw`, e); });",
+    "tests": [
+      "test/decormodflats.test.js"
+    ]
+  },
+  {
+    "name": "DECOR-MODFLATS-a-miss-unsettled",
+    "file": "src/ui/textureCanvas.js",
+    "old": "  const missed = () => { waiting.delete(key); settling.delete(key); settle(); };",
+    "new": "  const missed = () => { waiting.delete(key); settling.delete(key); };",
+    "tests": [
+      "test/decormodflats.test.js"
+    ]
+  }
+]

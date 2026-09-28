@@ -1,0 +1,245 @@
+[
+  {
+    "name": "SET2-the-word-dropped-at-the-formula",
+    "file": "src/combat/formulas.js",
+    "old": "weaponAttackDamage(attacker, target, damageModifiers, weapon, rolls, weaponAnimTime, { unaware: !!unaware });",
+    "new": "weaponAttackDamage(attacker, target, damageModifiers, weapon, rolls, weaponAnimTime, { unaware: false });",
+    "tests": [
+      "test/set2_seams.test.js"
+    ]
+  },
+  {
+    "name": "SET2-the-swings-word-missing",
+    "file": "src/combat/playerWeapon.js",
+    "old": "        unaware: foeUnaware(foe),   // SET2: the foe had not noticed me - read here, where its AI is in hand\n",
+    "new": "",
+    "tests": [
+      "test/set2_seams.test.js"
+    ]
+  },
+  {
+    "name": "SET2-the-shafts-word-missing",
+    "file": "src/combat/arrowFlight.js",
+    "old": "    unaware: foeUnaware(foe),   // SET2: a shaft at a foe that had not noticed me - Nightfall Strike's \"arrows too\"\n",
+    "new": "",
+    "tests": [
+      "test/set2_seams.test.js"
+    ]
+  },
+  {
+    "name": "SET2-a-puppet-unaware",
+    "file": "src/combat/playerWeapon.js",
+    "old": "export const foeUnaware = (foe) => !!foe?.ai && !foe.puppet && foe.ai.detected === false;",
+    "new": "export const foeUnaware = (foe) => !!foe?.ai && foe.ai.detected === false;",
+    "tests": [
+      "test/set2_seams.test.js"
+    ]
+  },
+  {
+    "name": "SET2-the-core-not-handed-the-word",
+    "file": "src/combat/formulas.js",
+    "old": "playerReflexes, notes, unaware })",
+    "new": "playerReflexes, notes })",
+    "tests": [
+      "test/set2_seams.test.js"
+    ]
+  },
+  {
+    "name": "SET2-pcaao-roll-layer-left-out",
+    "file": "src/combat/pcaao.js",
+    "old": "  let damage = weaponDamageMods(weapon, range(weaponMinDamage(weapon.templateIndex), weaponMaxDamage(weapon.templateIndex), rolls)) + damageModifier;",
+    "new": "  let damage = range(weaponMinDamage(weapon.templateIndex), weaponMaxDamage(weapon.templateIndex), rolls) + damageModifier;",
+    "tests": [
+      "test/set2_seams.test.js"
+    ]
+  },
+  {
+    "name": "SET2-pcaao-blow-layer-left-out",
+    "file": "src/combat/pcaao.js",
+    "old": "  damage = weaponBlowMods(weapon, damage, attacker, target, info);   // SET2: the stock's place for them (formulas.js weaponAttackDamage) - before the mod hook\n",
+    "new": "",
+    "tests": [
+      "test/set2_seams.test.js"
+    ]
+  },
+  {
+    "name": "SET2-the-modifier-never-applied",
+    "file": "src/characters/playerEntity.js",
+    "old": "    dmg = playerDamageMods(entity, dmg);\n",
+    "new": "",
+    "tests": [
+      "test/set2_seams.test.js"
+    ]
+  },
+  {
+    "name": "SET2-the-say-on-the-sethealth-door",
+    "file": "src/characters/playerEntity.js",
+    "old": "  const portSays = !bypassShield && !spare;",
+    "new": "  const portSays = !spare;",
+    "tests": [
+      "test/set2_seams.test.js"
+    ]
+  },
+  {
+    "name": "SET2-the-listener-never-told",
+    "file": "src/characters/playerEntity.js",
+    "old": "  if (portSays) tellHurt(entity, dmg, before, entity.health);\n",
+    "new": "",
+    "tests": [
+      "test/set2_seams.test.js"
+    ]
+  },
+  {
+    "name": "SET2-the-struck-listeners-never-told",
+    "file": "src/combat/formulas.js",
+    "old": "    for (const fn of _playerStruckListeners.values()) { try { fn(attacker, target, damage); } catch { /* a set is not the blow's problem */ } }\n",
+    "new": "",
+    "tests": [
+      "test/set2_seams.test.js"
+    ]
+  },
+  {
+    "name": "SET2-the-outdoor-report-dropped",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (fromPlayer && !peer) reportPlayerKill(f.entity, { kind });   // SET2: MY blow killed it (a set's \"each kill\")\n",
+    "new": "",
+    "tests": [
+      "test/set2_seams.test.js"
+    ]
+  },
+  {
+    "name": "SET2-a-peers-kill-told-as-mine",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (fromPlayer && !peer) reportPlayerKill(foe.entity, { kind });",
+    "new": "      reportPlayerKill(foe.entity, { kind });",
+    "tests": [
+      "test/set2_seams.test.js"
+    ]
+  },
+  {
+    "name": "SET2-a-foes-cast-made-cheaper",
+    "file": "src/characters/enemyCasting.js",
+    "old": "calculateCastCost(spell, playerEntity, { portMods: false }).sp",
+    "new": "calculateCastCost(spell, playerEntity).sp",
+    "tests": [
+      "test/set2_seams.test.js"
+    ]
+  },
+  {
+    "name": "SET2-the-cost-under-1",
+    "file": "src/systems/spellcost.js",
+    "old": "if (Number.isFinite(n)) sp = Math.max(1, Math.round(n));",
+    "new": "if (Number.isFinite(n)) sp = Math.round(n);",
+    "tests": [
+      "test/set2_seams.test.js"
+    ]
+  },
+  {
+    "name": "SET2-the-headroom-gate-skipped",
+    "file": "src/systems/absorption.js",
+    "old": "  if (cost > available) return 0;\n",
+    "new": "",
+    "tests": [
+      "test/set2_seams.test.js"
+    ]
+  },
+  {
+    "name": "SET2-a-zero-source-rolled",
+    "file": "src/systems/absorption.js",
+    "old": "    if (c > 0 && Math.floor(rolls() * 100) < c) return cost;",
+    "new": "    if (Math.floor(rolls() * 100) < c) return cost;",
+    "tests": [
+      "test/set2_seams.test.js"
+    ]
+  },
+  {
+    "name": "SET2-the-door-never-published",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    setPlayerDoor(_door);\n",
+    "new": "",
+    "tests": [
+      "test/set2_seams.test.js"
+    ]
+  },
+  {
+    "name": "SET2-a-hurt-not-mine",
+    "file": "src/scenes/hostMagic.js",
+    "old": "foeSinks(t, true)?.hurt?.(Math.round(n), { fromPlayer: true });",
+    "new": "foeSinks(t, false)?.hurt?.(Math.round(n), { fromPlayer: false });",
+    "tests": [
+      "test/set2_seams.test.js"
+    ]
+  },
+  {
+    "name": "SET2-the-duel-unsaid",
+    "file": "src/scenes/world.js",
+    "old": "    setSetsDueling(!!duelMgr.live);   // SET2: a duel (its countdown too) - every set sleeps while it stands (systems/sigilSets.js)\n",
+    "new": "",
+    "tests": [
+      "test/set2_seams.test.js"
+    ]
+  },
+  {
+    "name": "SET2-a-throw-aborting-the-blow",
+    "file": "src/systems/entityMods.js",
+    "old": "    try { const next = fn(weapon, d, attacker, target, info ?? NO_BLOW_INFO); if (Number.isFinite(next)) d = next; } catch (e) { console.warn('[entityMods] a blow modifier threw', e?.message ?? e); }",
+    "new": "    const next = fn(weapon, d, attacker, target, info ?? NO_BLOW_INFO); if (Number.isFinite(next)) d = next;",
+    "tests": [
+      "test/set2_seams.test.js"
+    ]
+  },
+  {
+    "name": "SET2-a-nan-kept",
+    "file": "src/systems/entityMods.js",
+    "old": "if (Number.isFinite(next)) d = next; }",
+    "new": "d = next; }",
+    "tests": [
+      "test/set2_seams.test.js"
+    ]
+  },
+  {
+    "name": "SET2-the-strike-listeners-never-told",
+    "file": "src/combat/formulas.js",
+    "old": "    for (const fn of _playerStrikeListeners.values()) { try { fn(attacker, target, damage, weapon); } catch { /* a set is not the blow's problem */ } }\n",
+    "new": "",
+    "tests": [
+      "test/set2_seams.test.js"
+    ]
+  },
+  {
+    "name": "SET2-a-miss-told",
+    "file": "src/combat/formulas.js",
+    "old": "if (attacker.isPlayer && !attacker.peer && !target.isPlayer && damage > 0) {",
+    "new": "if (attacker.isPlayer && !attacker.peer && !target.isPlayer) {",
+    "tests": [
+      "test/set2_seams.test.js"
+    ]
+  },
+  {
+    "name": "SET2-a-blow-at-a-player-told",
+    "file": "src/combat/formulas.js",
+    "old": "if (attacker.isPlayer && !attacker.peer && !target.isPlayer && damage > 0) {",
+    "new": "if (attacker.isPlayer && !attacker.peer && damage > 0) {",
+    "tests": [
+      "test/set2_seams.test.js"
+    ]
+  },
+  {
+    "name": "SET2-a-peers-blow-told",
+    "file": "src/combat/formulas.js",
+    "old": "if (attacker.isPlayer && !attacker.peer && !target.isPlayer && damage > 0) {",
+    "new": "if (attacker.isPlayer && !target.isPlayer && damage > 0) {",
+    "tests": [
+      "test/set2_seams.test.js"
+    ]
+  },
+  {
+    "name": "SET2-a-foes-blow-told",
+    "file": "src/combat/formulas.js",
+    "old": "if (attacker.isPlayer && !attacker.peer && !target.isPlayer && damage > 0) {",
+    "new": "if (!attacker.peer && !target.isPlayer && damage > 0) {",
+    "tests": [
+      "test/set2_seams.test.js"
+    ]
+  }
+]

@@ -199,7 +199,7 @@ export function uiScrollMovement(h, v, { deadzone = 0.1, invertH = false, invert
 export function controllerSettings() {
   return {
     enabled: getBool('Controls', 'EnableController'),
-    deadzone: getFloat('Controls', 'JoystickDeadzone', 0, 1),
+    deadzone: getFloat('Controls', 'JoystickDeadzone', 0, 0.9),   // AUDIT PAD-SETTINGS A3: DFU's slider's own top - at 1.0 no stick moves
     threshold: getFloat('Controls', 'JoystickMovementThreshold', 0.05, 1),
     lookSensitivity: getFloat('Controls', 'JoystickLookSensitivity', 0.1, 4),
     cursorSensitivity: getFloat('Controls', 'JoystickCursorSensitivity', 0.1, 4),

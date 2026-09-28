@@ -92,8 +92,8 @@
   {
     "name": "PERF-FLICKER-the-shadow-takes-the-lanterns-live-range-again-so-the-flicker-rebuilds-six-faces-a-frame",
     "file": "src/render/shadowPass.js",
-    "old": "      const far = shadowFarFor(L[i * 4 + 3]);",
-    "new": "      const far = L[i * 4 + 3];",
+    "old": "farOf[rank] = same ? heldShadowFar(sl[o + 3], L[i * 4 + 3]) : shadowFarFor(L[i * 4 + 3]);",
+    "new": "farOf[rank] = L[i * 4 + 3];",
     "tests": [
       "test/perfon2_peercull.test.js",
       "test/el2_shadows.test.js",
@@ -138,9 +138,9 @@
   },
   {
     "name": "PERF-LIGHTS-the-host-mints-a-light-object-a-lantern-a-frame-again",
-    "file": "src/scenes/world.js",
-    "old": "          const e = _sceneLights[n] ?? (_sceneLights[n] = { x: 0, y: 0, z: 0 });",
-    "new": "          const e = (_sceneLights[n] = { x: 0, y: 0, z: 0 });",
+    "file": "src/world/cityLights.js",
+    "old": "      const e = pool[n] ?? (pool[n] = { x: 0, y: 0, z: 0 });",
+    "new": "      const e = (pool[n] = { x: 0, y: 0, z: 0 });",
     "tests": [
       "test/perfon2_peercull.test.js"
     ]

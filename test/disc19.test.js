@@ -72,7 +72,8 @@ test('DISC19-A: a werewolf and a vampire who have lived a round come back from a
     const racial = make(p).racial;
     runMagicRoundsFor(p, T0, T0 + 5, {});   // the curse lives a few rounds before the save, as every real one does
     const strength = live(p).statMods.strength;
-    assert.ok(strength > 0, `${racial}: the advantages are on`);
+    // VAMP-DAY: a vampire's mods are the hour's - +20 by night, -20 by day (T0 is 13:30); a werewolf's are its own
+    assert.ok(racial === 'vampirism' ? strength === -20 : strength > 0, `${racial}: the curse's stat mods are on (${strength})`);
     const q = reload(p, T0 + 5);
     runMagicRoundsFor(q, T0 + 5, T0 + 8, {});
     assert.ok(live(q), `${racial}: the curse survives the first rounds after a load`);
@@ -143,7 +144,8 @@ test('DISC19-B: the world host\'s dungeon frame lights the DUNGEON engine\'s can
   const branch = src.slice(at, src.indexOf('\n    }\n', at));
   assert.ok(at > 0 && branch.includes('dungeonCtx.drawFoes('), 'the branch was found whole');
   const lights = branch.slice(branch.indexOf('const _dgLit = withPlayerLights('));
-  assert.match(lights.slice(0, lights.indexOf('renderer.setClearColor')), /^const _dgLit = withPlayerLights\(\n(?:\s*\/\/[^\n]*\n)*\s*nearestLights\([^\n]*\n\s*dungeonCtx\.candleLight\(\), _dgTint\(playerTorchLight\(/);   // AUDIT DISC19: the pair channel, the candle untinted
+  assert.match(lights.slice(0, lights.indexOf('renderer.setClearColor')), /^const _dgLit = withPlayerLights\(\n(?:\s*\/\/[^\n]*\n)*\s*_dgNear,[^\n]*\n\s*dungeonCtx\.candleLight\(\), _dgTint\(playerTorchLight\(/);   // AUDIT DISC19: the pair channel, the candle untinted (LA-AUDIT A5: the selection is _dgNear, one past the cap for its fade)
+  assert.match(branch, /const _dgNear = nearestLights\(dungeonCtx\.lights, [^\n]*, \(\) => _dgColor, DUNGEON_LIGHT_BLOCK_RANGE\);/, 'the selection rides the pair channel');
   assert.ok(!branch.includes('magic?.candleLight()') && !branch.includes('magic.candleLight()'), 'this host\'s own engine is not updated underground');
   assert.ok(!/\bmagic\??\.update\(/.test(branch), 'and nothing here updates it - so its candle is never the dungeon\'s');
   assert.match(rd('src/scenes/dungeonContext.js'), /candleLight: \(\) => magic\.candleLight\(\),/, 'the context hands out its own engine\'s candle');
@@ -196,7 +198,7 @@ test('DISC19-C: the online exit autosave writes every slot of a living player an
   assert.deepEqual(exitAutosaveNames({ ...p, health: 0 }, { storage }), [], 'dead: none');
   // and the handler writes only through that answer, with every host's death read
   const w = rd('src/scenes/world.js');
-  const at = w.indexOf("addEventListener('beforeunload', () => {\n    if (!online || !playerSpawned) return;");
+  const at = w.search(/addEventListener\('beforeunload', \(\) => \{\n(?:\s*\/\/[^\n]*\n)*\s*if \(!online \|\| !playerSpawned\b/);   // AUDIT ONESEAT H4: its guard asks the seat too, a comment above it
   const handler = w.slice(at, w.indexOf('\n  });', at));
   assert.ok(at > 0, 'the online exit autosave was found');
   assert.match(handler, /for \(const saveName of exitAutosaveNames\(playerEntity, \{ deathUp: townTalk\.overlay instanceof DeathScreen \|\| !!modes\?\.deathUp\?\.\(\) \}\)\) save\(saveName\);/);
@@ -345,7 +347,7 @@ test('DISC19-F: the player\'s swing spares a defender while the monsters\' pool 
 
 test('DISC19-F by source: the host runs the town watch after the pools move, resolves the swing watch -> monsters -> defenders -> townsfolk, and keeps camps out of every location\'s rect', () => {
   const w = rd('src/scenes/world.js');
-  assert.match(w, /exteriorFoes\.update\(dt, _pf, cam\.pos, _foeSenses\(\)\);[^\n]*\n\s*livePersonBatches\.push\(\.\.\.exteriorFoes\.batches\(\)\);\n\s*if \(playerSpawned\) _townWatchFrame\(dt\);/);
+  assert.match(w, /exteriorFoes\.update\(foeDt, _pf, cam\.pos, _foeSenses\(\)\);[^\n]*\n\s*livePersonBatches\.push\(\.\.\.exteriorFoes\.batches\(\)\);\n\s*if \(playerSpawned\) _townWatchFrame\(foeDt\);/);   // QUEST-POPUP-PAUSE re-aim: the pools' clock
   assert.match(w, /enabled: getPref\('townWatch'\) !== false && !isTransformedLycanthrope\(playerEntity\),\n\s*inTown: _isPlayerInTownStrict\(\), crime: !!playerEntity\.crimeCommitted,/);   // AUDIT DISC19: the whole frame is townWatch.runTownWatchFrame, pinned there
   const swingAt = w.indexOf("guardHitSound, { spareDefenders: true, swing })) {");
   const order = ['guardHitSound, { spareDefenders: true, swing })) {', 'if (exteriorFoes.resolvePlayerHit(', "guardHitSound, { defendersOnly: true, swing }))", 'cityGuards.resolveCivilianHit('].map((k) => w.indexOf(k, swingAt));

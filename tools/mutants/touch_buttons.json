@@ -1,0 +1,86 @@
+[
+  {
+    "name": "TOUCH-BUTTONS-attack-under-a-window",
+    "file": "src/ui/touch.js",
+    "old": "() => { if (hooks.paused?.()) return; const s = attackStroke(); attacking = b;",
+    "new": "() => { const s = attackStroke(); attacking = b;",
+    "tests": ["test/touchbuttons.test.js"]
+  },
+  {
+    "name": "TOUCH-BUTTONS-attack-never-released",
+    "file": "src/ui/touch.js",
+    "old": "            afterFrames(() => { if (attacking === b && attackSeq === mine) { attacking = null; hooks.attack(0, 0, false); } });",
+    "new": "            afterFrames(() => {});",
+    "tests": ["test/touchbuttons.test.js"]
+  },
+  {
+    "name": "TOUCH-BUTTONS-attack-on-a-host-with-none",
+    "file": "src/ui/touch.js",
+    "old": "    const actions = touchButtonSlots(getPref).filter((a) => a.kind !== 'attack' || typeof hooks.attack === 'function');",
+    "new": "    const actions = touchButtonSlots(getPref);",
+    "tests": ["test/touchbuttons.test.js", "test/audit39_uicore.test.js"]
+  },
+  {
+    "name": "TOUCH-BUTTONS-relaid-under-a-finger",
+    "file": "src/ui/touch.js",
+    "old": "    if (!slotHeld.size && !attacking) layoutCorner();",
+    "new": "    layoutCorner();",
+    "tests": ["test/touchbuttons.test.js"]
+  },
+  {
+    "name": "TOUCH-BUTTONS-never-relaid",
+    "file": "src/ui/touch.js",
+    "old": "    if (!slotHeld.size && !attacking) layoutCorner();",
+    "new": "",
+    "tests": ["test/touchbuttons.test.js"]
+  },
+  {
+    "name": "TOUCH-BUTTONS-held-slot-not-a-live-need",
+    "file": "src/ui/touch.js",
+    "old": "    for (const c of slotHeld.values()) for (const k of codesOf(c)) s.add(k);",
+    "new": "",
+    "tests": ["test/touchbuttons.test.js", "test/audit62_touch.test.js"]
+  },
+  {
+    "name": "TOUCH-BUTTONS-tap-slot-held-instead",
+    "file": "src/ui/touch.js",
+    "old": "        b = button(action.glyph, ...at, () => tapAction(action.id));",
+    "new": "        b = button(action.glyph, ...at, () => { downAction(action.id); });",
+    "tests": ["test/touchbuttons.test.js"]
+  },
+  {
+    "name": "TOUCH-BUTTONS-gap-moves-the-default-corner",
+    "file": "src/ui/touchButtons.js",
+    "old": "export const TOUCH_CORNER_GAP = 12;",
+    "new": "export const TOUCH_CORNER_GAP = 16;",
+    "tests": ["test/touchbuttons.test.js", "test/renown4b.test.js"]
+  },
+  {
+    "name": "TOUCH-BUTTONS-unknown-reads-none",
+    "file": "src/ui/touchButtons.js",
+    "old": "  return TOUCH_BUTTON_SLOTS.map((slot) => touchButtonAction(getPref?.(slot)) ?? BY_ID.get(TOUCH_BUTTON_DEFAULTS[slot]));",
+    "new": "  return TOUCH_BUTTON_SLOTS.map((slot) => touchButtonAction(getPref?.(slot)) ?? BY_ID.get('none'));",
+    "tests": ["test/touchbuttons.test.js"]
+  },
+  {
+    "name": "TOUCH-BUTTONS-stroke-under-the-threshold",
+    "file": "src/ui/touchButtons.js",
+    "old": "export const ATTACK_STROKE_PX = 40;",
+    "new": "export const ATTACK_STROKE_PX = 4;",
+    "tests": ["test/touchbuttons.test.js"]
+  },
+  {
+    "name": "TOUCH-BUTTONS-stroke-always-one-way",
+    "file": "src/ui/touchButtons.js",
+    "old": "  const way = CLICK_ATTACK_DIRECTIONS[Math.min(CLICK_ATTACK_DIRECTIONS.length - 1, Math.floor(rolls() * CLICK_ATTACK_DIRECTIONS.length))];",
+    "new": "  const way = CLICK_ATTACK_DIRECTIONS[0];",
+    "tests": ["test/touchbuttons.test.js"]
+  },
+  {
+    "name": "TOUCH-BUTTONS-list-does-not-wrap",
+    "file": "src/ui/touchButtons.js",
+    "old": "  return TOUCH_BUTTON_ACTIONS[(((i + step) % n) + n) % n].id;",
+    "new": "  return TOUCH_BUTTON_ACTIONS[Math.min(n - 1, Math.max(0, i + step))].id;",
+    "tests": ["test/touchbuttons.test.js"]
+  }
+]

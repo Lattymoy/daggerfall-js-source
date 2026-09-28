@@ -22,6 +22,16 @@
 //              then quiet: the court is the Deadlands' air alone.
 // Each loops (the player's own law) but GATEFELL, which the law stops once it has sounded.
 //
+// WBX9 (2026-09-26, Mac: "The music needs to be louder and more intense"): LOUDER - every voice's level raised and each
+// song played SCORE_LEVEL over the player's own (systems/songPlayer.js `song.level`: the game's songs stand at 1), so the
+// fight sounds over the Deadlands' air and the dungeon's tracks it replaces, its peaks still under the clip at the
+// highest MusicVolume (tools/gateScoreProbe.mjs measures both); MORE INTENSE - no song waits to begin: the strings,
+// the brass stabs and the whole kit from the first bar, the theme from the ninth, the choir from the ninth in the first
+// song and from the first after; the ostinato driving in sixteenths as the phases turn (a bar's last beat in the first,
+// every other bar's second half in the second, every bar whole in the third), the orchestra hit and the timpani on more
+// beats, the kit's fills every fourth bar, the third song's choir chanting on the beat. The key, the tempos, the themes
+// and the law are as they were.
+//
 // THE LAW (`courtScoreFor`): no fight, no score (the host's music director stands); a fight, the war song of his phase
 // (the third from SCORE_WRATH_WARN_MS before the Wrath); his fall, GATEFELL for SCORE_STING_MS, then silence.
 // Pure: the relay's clock in, a song's name (or SCORE_SILENCE, or null) out.
@@ -37,6 +47,10 @@ export const SCORE_SILENCE = 'silence';
  *  fanfare is given before the court falls quiet (its four bars and a hit at 92 BPM, 11.1 s, and their ring). */
 export const SCORE_WRATH_WARN_MS = 60000;
 export const SCORE_STING_MS = 12500;
+/** AUDIT WBX W3: how long after the court asks for the fanfare it begins - the song before it fades out first
+ *  (systems/music.js MUSIC_FADE_OUT_S) and the player starts a beat on (systems/songPlayer.js' 0.06 s) - so its time is
+ *  counted from its own first note, and its last hit is never under the fade. */
+export const SCORE_STING_LEAD_MS = 1560;
 
 /** GM programs (gmSynth.js FM bank - the per-program articulations matter: 45, 47, 55 and 14 are struck or plucked). */
 export const SCORE_PROGRAMS = Object.freeze({ ostinato: 45, bass: 32, strings: 48, brass: 61, choir: 52, organ: 19, timpani: 47, hit: 55, bells: 14 });
@@ -44,8 +58,13 @@ export const SCORE_PROGRAMS = Object.freeze({ ostinato: 45, bass: 32, strings: 4
 export const SCORE_CHANNELS = Object.freeze({ ostinato: 0, bass: 1, strings: 2, brass: 3, choir: 4, organ: 5, timpani: 6, hit: 7, bells: 8, kit: 9 });
 /** Each voice's level (CC7) and place (CC10, 64 the middle) - the ostinato and the strings a little apart. */
 const MIX = Object.freeze({
-  ostinato: [108, 50], bass: [90, 64], strings: [92, 80], brass: [114, 60], choir: [100, 70], organ: [62, 64], timpani: [106, 64], hit: [100, 64], bells: [92, 76],
+  ostinato: [116, 50], bass: [110, 64], strings: [108, 80], brass: [122, 60], choir: [114, 70], organ: [86, 64], timpani: [112, 64], hit: [110, 64], bells: [96, 76],
 });
+/** WBX9: the kit's level (CC7 on channel 9). */
+const KIT_LEVEL = 114;
+/** WBX9: each song over the player's own level (systems/songPlayer.js `song.level`; the game's songs stand at 1) - the
+ *  war growing with his phases, the fall's fanfare over them. Measured through the real player: tools/gateScoreProbe.mjs. */
+export const SCORE_LEVEL = Object.freeze({ war1: 1.42, war2: 1.6, war3: 1.64, fell: 1.7 });
 /** GM kit keys (gmSynth.js DRUMS). */
 const KIT = Object.freeze({ kick: 36, snare: 38, lowTom: 41, hat: 42, highFloorTom: 43, lowMidTom: 47, hiMidTom: 48, crash: 49, chinese: 52, tambourine: 54, crash2: 57, surdo: 87 });
 
@@ -111,7 +130,7 @@ const RANK = { programChange: 0, controller: 0, noteOn: 1 };
  * `write(w)` lays its notes with `w.note(voice, bar, beat, beats, name, velocity)` and `w.hit(key, bar, beat,
  * velocity)`; every voice gets its program, level and place at tick 0.
  */
-function makeSong(name, bpm, bars, write) {
+function makeSong(name, bpm, bars, write, level = 1) {
   const events = [];
   const tick = (bar, beat) => Math.round((bar * 4 + beat) * SCORE_TPQ);
   const w = {
@@ -128,23 +147,25 @@ function makeSong(name, bpm, bars, write) {
     events.push({ tick: 0, type: 'controller', channel, controller: 7, value: level });
     events.push({ tick: 0, type: 'controller', channel, controller: 10, value: pan });
   }
-  events.push({ tick: 0, type: 'controller', channel: SCORE_CHANNELS.kit, controller: 7, value: 118 });
+  events.push({ tick: 0, type: 'controller', channel: SCORE_CHANNELS.kit, controller: 7, value: KIT_LEVEL });
   events.sort((a, b) => a.tick - b.tick || RANK[a.type] - RANK[b.type]);
   // AUDIT WB D4: a song written as whole bars loops on its bar line (systems/songPlayer.js `seamless`) - the player's
   // classic rewind rings a second past the end first, and the war songs fell silent that long at every pass
-  return { name, beatsPerMinute: bpm, secondsPerTick: 60 / (bpm * SCORE_TPQ), events, durationTicks: bars * 4 * SCORE_TPQ, seamless: true };
+  return { name, beatsPerMinute: bpm, secondsPerTick: 60 / (bpm * SCORE_TPQ), events, durationTicks: bars * 4 * SCORE_TPQ, seamless: true, level };
 }
 
-/** The ostinato, the bass and the pads under a chord for one bar. `density` 1 eighths, 2 sixteenths in the last beat. */
-function underBar(w, bar, chord, { pads = true, strings = false, choir = false, organ = 1, busy = false, vel = 1 } = {}) {
+/** The ostinato, the bass and the pads under a chord for one bar. `busy` sixteenths in the last beat; WBX9 `drive`
+ *  sixteenths from that beat on (0 the whole bar, 2 its second half). */
+function underBar(w, bar, chord, { pads = true, strings = false, choir = false, organ = 1, busy = false, drive = null, vel = 1 } = {}) {
   const c = CHORDS[chord];
-  c.ost.forEach((n, i) => w.note('ostinato', bar, i * 0.5, 0.42, n, (i % 2 === 0 ? 96 : 76) * vel));
-  if (busy) for (let i = 0; i < 4; i++) w.note('ostinato', bar, 3 + i * 0.25, 0.2, c.ost[(i * 3) % 8], 82 * vel);
-  w.note('bass', bar, 0, 1.8, c.bass, 96 * vel);
-  w.note('bass', bar, 2, 1.8, c.bass, 88 * vel);
-  if (pads && organ > 0) for (const n of c.pad) w.note('organ', bar, 0, 4, n, 70 * organ);
-  if (strings) for (const n of c.pad) w.note('strings', bar, 0, 4, midiNote(n) + 12, 78 * vel);
-  if (choir) for (const n of c.choir) w.note('choir', bar, 0, 4, n, 84 * vel);
+  const from = drive ?? (busy ? 3 : 4);   // the beat the sixteenths take over from
+  c.ost.forEach((n, i) => { if (i * 0.5 < from) w.note('ostinato', bar, i * 0.5, 0.42, n, (i % 2 === 0 ? 100 : 82) * vel); });
+  for (let i = 0; i < (4 - from) * 4; i++) w.note('ostinato', bar, from + i * 0.25, 0.2, c.ost[(i * 3) % 8], (i % 4 === 0 ? 98 : 84) * vel);
+  w.note('bass', bar, 0, 1.8, c.bass, 104 * vel);
+  w.note('bass', bar, 2, 1.8, c.bass, 96 * vel);
+  if (pads && organ > 0) for (const n of c.pad) w.note('organ', bar, 0, 4, n, 80 * organ);
+  if (strings) for (const n of c.pad) w.note('strings', bar, 0, 4, midiNote(n) + 12, 90 * vel);
+  if (choir) for (const n of c.choir) w.note('choir', bar, 0, 4, n, 96 * vel);
 }
 
 /** A theme's eight bars from `bar0`, over `voice`, shifted `octave` octaves. */
@@ -158,107 +179,124 @@ function themeBars(w, bar0, theme, voice, velocity, octave = 0) {
   });
 }
 
-/** GATEWAR1 - he wakes: 32 bars, the groove, the stabs, the theme, the theme with the choir under it. */
+/** GATEWAR1 - he wakes: 32 bars, the groove, the stabs and the strings from the first bar, the theme from the ninth
+ *  with the choir under it, the theme again over the strings, then with the choir an octave below. WBX9: nothing
+ *  waits - the whole band from the first bar. */
 function war1() {
   return makeSong(GATE_SONGS.war1, 132, 32, (w) => {
     for (let bar = 0; bar < 32; bar++) {
       const chord = WAR_A[bar % 8], c = CHORDS[chord];
-      underBar(w, bar, chord, { strings: bar >= 8, choir: bar >= 24, organ: bar < 8 ? 0.8 : 1 });
-      w.note('timpani', bar, 0, 1, c.timp, 112);
-      if (bar % 4 === 3) { for (const [b, n] of [[2.5, c.timp], [3, c.timp], [3.5, 'A2']]) w.note('timpani', bar, b, 0.45, n, 104); }
-      if (bar >= 4 && bar % 2 === 0) for (const n of c.stab) w.note('brass', bar, 0, 0.9, n, 108);
-      if (bar % 8 === 0) { for (const n of c.stab) w.note('hit', bar, 0, 1, n, 110); w.note('bells', bar, 0, 3, 'D5', 86); }
-      // the kit: the low end of it, a soft backbeat, the hat on the eighths, a crash each fourth bar
-      if (bar % 2 === 0) w.hit('surdo', bar, 0, 84);
-      for (const b of [0, 1.5, 2]) w.hit('kick', bar, b, b === 0 ? 100 : 86);
-      for (const b of [3, 3.5]) w.hit('lowTom', bar, b, b === 3 ? 86 : 74);
-      for (const b of [1, 3]) w.hit('snare', bar, b, 88);
-      for (let i = 0; i < 8; i++) w.hit('hat', bar, i * 0.5, i % 2 ? 36 : 54);
-      if (bar % 4 === 0) w.hit('crash', bar, 0, 96);
+      underBar(w, bar, chord, { strings: true, choir: bar >= 8, busy: bar % 4 === 3 });
+      w.note('timpani', bar, 0, 1, c.timp, 108);
+      w.note('timpani', bar, 2, 1, c.timp, 96);
+      if (bar % 4 === 3) { for (const [b, n] of [[2.5, c.timp], [3, c.timp], [3.5, 'A2']]) w.note('timpani', bar, b, 0.45, n, 106); }
+      // the brass: a stab on the one and the and-of-two - every bar before the theme, every other bar under it
+      if (bar < 8 || bar % 2 === 0) for (const n of c.stab) { w.note('brass', bar, 0, 0.9, n, 112); w.note('brass', bar, 1.5, 0.45, n, 98); }
+      if (bar % 4 === 0) for (const n of c.stab) w.note('hit', bar, 0, 1, n, 104);
+      if (bar % 8 === 0) w.note('bells', bar, 0, 3, 'D5', 92);
+      // the kit: the low end, the backbeat, the hat on the eighths, a fill into every fourth bar, a crash on each
+      w.hit('surdo', bar, 0, bar % 2 === 0 ? 96 : 84);
+      for (const b of [0, 1.5, 2, 2.5]) w.hit('kick', bar, b, b === 0 ? 108 : 92);
+      for (const b of [1, 3]) w.hit('snare', bar, b, 100);
+      for (let i = 0; i < 8; i++) w.hit('hat', bar, i * 0.5, i % 2 ? 44 : 62);
+      if (bar % 4 === 3) ['lowMidTom', 'lowMidTom', 'highFloorTom', 'lowTom'].forEach((k, i) => w.hit(k, bar, 3 + i * 0.25, 88 + i * 6));
+      if (bar % 4 === 0) w.hit('crash', bar, 0, 94);
     }
-    themeBars(w, 16, THEME_A, 'brass', 104);
-    themeBars(w, 24, THEME_A, 'brass', 110);
-    themeBars(w, 24, THEME_A, 'strings', 80, 1);
-  });
+    themeBars(w, 8, THEME_A, 'brass', 112);
+    themeBars(w, 16, THEME_A, 'brass', 116);
+    themeBars(w, 16, THEME_A, 'strings', 96, 1);
+    themeBars(w, 24, THEME_A, 'brass', 120);
+    themeBars(w, 24, THEME_A, 'choir', 100, -1);
+  }, SCORE_LEVEL.war1);
 }
 
-/** GATEWAR2 - the ward breaks: 32 bars, the choir from the first, the kit rolling into every fourth bar, the theme
- *  dotted and high. */
+/** GATEWAR2 - the ward breaks: 32 bars, the choir from the first, the ostinato driving in sixteenths through every
+ *  other bar's second half, the kit rolling into every fourth bar, the theme dotted and high. */
 function war2() {
   return makeSong(GATE_SONGS.war2, 138, 32, (w) => {
     for (let bar = 0; bar < 32; bar++) {
       const chord = WAR_A[bar % 8], c = CHORDS[chord];
-      underBar(w, bar, chord, { strings: true, choir: true, busy: bar % 4 === 3 });
-      w.note('timpani', bar, 0, 1, c.timp, 116);
-      w.note('timpani', bar, 2, 1, c.timp, 100);
-      if (bar % 2 === 0) for (const n of c.stab) w.note('hit', bar, 0, 1, n, 104);
-      if (bar % 4 === 0) w.note('bells', bar, 0, 3, 'A4', 80);
-      if (bar % 2 === 0) w.hit('surdo', bar, 0, 90);
-      for (const b of [0, 0.75, 1.5, 2, 2.75]) w.hit('kick', bar, b, b === 0 ? 104 : 88);
-      for (const b of [1, 3]) { w.hit('snare', bar, b, 98); w.hit('tambourine', bar, b, 62); }
-      for (let i = 0; i < 16; i++) w.hit('hat', bar, i * 0.25, i % 4 === 0 ? 58 : 38);
-      if (bar % 4 === 3) { const toms = ['hiMidTom', 'hiMidTom', 'lowMidTom', 'lowMidTom', 'highFloorTom', 'highFloorTom', 'lowTom', 'lowTom']; toms.forEach((k, i) => w.hit(k, bar, 2 + i * 0.25, 80 + i * 5)); }
-      else for (const b of [3, 3.5]) w.hit('lowTom', bar, b, 90);
-      if (bar % 2 === 0) w.hit('crash', bar, 0, 100);
+      underBar(w, bar, chord, { strings: true, choir: true, drive: bar % 2 === 1 ? 2 : 3 });
+      w.note('timpani', bar, 0, 1, c.timp, 110);
+      w.note('timpani', bar, 1.5, 0.5, c.timp, 94);
+      w.note('timpani', bar, 2, 1, c.timp, 104);
+      for (const n of c.stab) { w.note('hit', bar, 0, 1, n, 104); if (bar % 2 === 1) w.note('hit', bar, 2.5, 0.5, n, 98); }
+      if (bar % 4 === 0) w.note('bells', bar, 0, 3, 'A4', 88);
+      w.hit('surdo', bar, 0, 96);
+      for (const b of [0, 0.75, 1.5, 2, 2.75, 3.5]) w.hit('kick', bar, b, b === 0 ? 108 : 92);
+      for (const b of [1, 3]) { w.hit('snare', bar, b, 104); w.hit('tambourine', bar, b, 70); }
+      for (let i = 0; i < 16; i++) w.hit('hat', bar, i * 0.25, i % 4 === 0 ? 62 : 42);
+      if (bar % 4 === 3) { const toms = ['hiMidTom', 'hiMidTom', 'lowMidTom', 'lowMidTom', 'highFloorTom', 'highFloorTom', 'lowTom', 'lowTom']; toms.forEach((k, i) => w.hit(k, bar, 2 + i * 0.25, 84 + i * 5)); }
+      else for (const b of [3, 3.5]) w.hit('lowTom', bar, b, 94);
+      if (bar % 2 === 0) w.hit('crash', bar, 0, 96);
     }
-    themeBars(w, 0, THEME_B, 'brass', 108);
-    themeBars(w, 8, THEME_B, 'brass', 112);
-    themeBars(w, 16, THEME_A, 'brass', 104, 1);
-    themeBars(w, 24, THEME_B, 'brass', 116);
-    themeBars(w, 24, THEME_B, 'choir', 88, -1);
-  });
+    themeBars(w, 0, THEME_B, 'brass', 112);
+    themeBars(w, 8, THEME_B, 'brass', 116);
+    themeBars(w, 8, THEME_B, 'strings', 92, 1);
+    themeBars(w, 16, THEME_A, 'brass', 110, 1);
+    themeBars(w, 16, THEME_A, 'strings', 96);
+    themeBars(w, 24, THEME_B, 'brass', 120);
+    themeBars(w, 24, THEME_B, 'choir', 98, -1);
+  }, SCORE_LEVEL.war2);
 }
 
-/** GATEWAR3 - his wrath: 32 bars on the Neapolitan, the kick on every beat, the theme at the top. */
+/** GATEWAR3 - his wrath: 32 bars on the Neapolitan, the ostinato driving in sixteenths through every bar, the timpani
+ *  on every eighth, the kick on every beat, the choir chanting on the beat, the theme at the top. */
 function war3() {
   return makeSong(GATE_SONGS.war3, 150, 32, (w) => {
     for (let bar = 0; bar < 32; bar++) {
       const chord = WAR_C[bar % 8], c = CHORDS[chord];
-      underBar(w, bar, chord, { strings: true, choir: true, busy: true, organ: 1.2, vel: 1.05 });
-      for (let i = 0; i < 8; i++) w.note('timpani', bar, i * 0.5, 0.4, i % 4 === 3 ? 'A2' : c.timp, i === 0 ? 124 : 96);
-      for (const n of c.stab) { w.note('hit', bar, 0, 1, n, 116); if (bar % 2 === 1) w.note('hit', bar, 3.5, 0.5, n, 104); }
-      if (bar % 4 === 0) { w.note('bells', bar, 0, 2, 'D5', 92); w.note('bells', bar, 2, 2, 'Ab4', 84); }   // the tritone, tolled
-      w.hit('surdo', bar, 0, 96);
-      for (let b = 0; b < 4; b++) w.hit('kick', bar, b, b === 0 ? 108 : 92);
-      for (const b of [1, 3]) { w.hit('snare', bar, b, 110); w.hit('tambourine', bar, b, 70); }
-      for (let i = 0; i < 16; i++) w.hit('hat', bar, i * 0.25, i % 2 ? 40 : 60);
-      if (bar % 2 === 0) w.hit('crash', bar, 0, 108);
-      if (bar % 4 === 3) { w.hit('chinese', bar, 3, 96); ['hiMidTom', 'lowMidTom', 'highFloorTom', 'lowTom'].forEach((k, i) => { w.hit(k, bar, 2 + i * 0.25, 96); w.hit(k, bar, 2.125 + i * 0.25, 84); }); }
+      underBar(w, bar, chord, { strings: true, choir: false, drive: 0, organ: 1.2, vel: 1.05 });
+      // the choir chants the chord on every beat, the first strongest
+      for (let b = 0; b < 4; b++) for (const n of c.choir) w.note('choir', bar, b, 0.9, n, b === 0 ? 106 : 92);
+      for (let i = 0; i < 8; i++) w.note('timpani', bar, i * 0.5, 0.4, i % 4 === 3 ? 'A2' : c.timp, i === 0 ? 110 : 96);
+      for (const n of c.stab) { w.note('hit', bar, 0, 1, n, 106); w.note('hit', bar, 2.5, 0.5, n, 100); if (bar % 2 === 1) w.note('hit', bar, 3.5, 0.5, n, 100); }
+      if (bar % 4 === 0) { w.note('bells', bar, 0, 2, 'D5', 96); w.note('bells', bar, 2, 2, 'Ab4', 90); }   // the tritone, tolled
+      w.hit('surdo', bar, 0, 100);
+      for (let b = 0; b < 4; b++) w.hit('kick', bar, b, b === 0 ? 110 : 96);
+      if (bar % 4 === 3) for (const b of [0.5, 1.5, 2.5, 3.5]) w.hit('kick', bar, b, 88);   // the kick on every eighth into each fourth bar
+      for (const b of [1, 3]) { w.hit('snare', bar, b, 112); w.hit('tambourine', bar, b, 76); }
+      for (let i = 0; i < 16; i++) w.hit('hat', bar, i * 0.25, i % 2 ? 44 : 64);
+      if (bar % 2 === 0) w.hit('crash', bar, 0, 98);
+      if (bar % 4 === 3) { w.hit('chinese', bar, 3, 100); ['hiMidTom', 'lowMidTom', 'highFloorTom', 'lowTom'].forEach((k, i) => { w.hit(k, bar, 2 + i * 0.25, 100); w.hit(k, bar, 2.125 + i * 0.25, 88); }); }
     }
-    themeBars(w, 0, THEME_C, 'brass', 112);
-    themeBars(w, 8, THEME_C, 'brass', 116);
-    themeBars(w, 8, THEME_C, 'strings', 84, -1);
-    themeBars(w, 16, THEME_B, 'brass', 112);
-    themeBars(w, 24, THEME_C, 'brass', 120);
-    themeBars(w, 24, THEME_C, 'choir', 92, -1);
-  });
+    themeBars(w, 0, THEME_C, 'brass', 114);
+    themeBars(w, 8, THEME_C, 'brass', 118);
+    themeBars(w, 8, THEME_C, 'strings', 96, -1);
+    themeBars(w, 16, THEME_B, 'brass', 116);
+    themeBars(w, 16, THEME_B, 'strings', 94);
+    themeBars(w, 24, THEME_C, 'brass', 122);
+    themeBars(w, 24, THEME_C, 'strings', 100, -1);
+  }, SCORE_LEVEL.war3);
 }
 
 /** GATEFELL - he falls: a timpani roll into D major, fanfare, choir and bells, four bars; then eight bars' quiet (the
  *  law stops it long before it could come round again). */
 function fell() {
   return makeSong(GATE_SONGS.fell, 92, 12, (w) => {
-    for (let i = 0; i < 16; i++) w.note('timpani', 0, i * 0.25, 0.24, 'D2', 50 + i * 4.5);   // the roll, rising
-    for (const n of ['A3', 'D4', 'F#4']) w.note('choir', 0, 2, 2, n, 64);
+    for (let i = 0; i < 16; i++) w.note('timpani', 0, i * 0.25, 0.24, 'D2', 56 + i * 4);   // the roll, rising
+    for (const n of ['A3', 'D4', 'F#4']) w.note('choir', 0, 2, 2, n, 82);
     const D = CHORDS.D;
-    for (const n of D.stab) w.note('hit', 1, 0, 1.5, n, 124);
-    w.note('timpani', 1, 0, 1, 'D2', 124);
-    w.hit('crash', 1, 0, 118); w.hit('kick', 1, 0, 110); w.hit('surdo', 1, 0, 100);
+    for (const n of D.stab) w.note('hit', 1, 0, 1.5, n, 112);
+    w.note('timpani', 1, 0, 1, 'D2', 112);
+    w.hit('crash', 1, 0, 104); w.hit('kick', 1, 0, 112); w.hit('surdo', 1, 0, 104);
     /** @type {Array<[string, number, number]>} */
     const call = [['D4', 0, 0.5], ['F#4', 0.5, 0.5], ['A4', 1, 1], ['D5', 2, 2]];
     /** @type {Array<[string, number, number]>} */
     const answer = [['A4', 0, 1], ['B4', 1, 1], ['A4', 2, 1], ['F#4', 3, 1]];
-    for (const [n, b, len] of call) w.note('brass', 1, b, len * 0.95, n, 120);
-    for (const [n, b, len] of answer) w.note('brass', 2, b, len * 0.95, n, 112);
-    w.note('brass', 3, 0, 4, 'D5', 118);
-    for (const n of D.pad) { w.note('organ', 1, 0, 12, n, 80); w.note('strings', 1, 0, 12, midiNote(n) + 12, 84); }
-    for (const n of D.choir) w.note('choir', 1, 0, 12, n, 92);
-    w.note('bass', 1, 0, 12, 'D2', 116);
-    w.note('bells', 1, 0, 4, 'D5', 96); w.note('bells', 3, 0, 2, 'A4', 88); w.note('bells', 3, 2, 2, 'D5', 92);
-    w.note('timpani', 3, 0, 1, 'D2', 118);
-    for (let i = 0; i < 8; i++) w.note('timpani', 3, 2 + i * 0.25, 0.24, 'D2', 70 + i * 6);
-    w.note('timpani', 4, 0, 1, 'D2', 124); w.hit('crash', 4, 0, 110);
-  });
+    // WBX9: the call and its answer on the brass and, an octave over it, the strings
+    for (const [n, b, len] of call) { w.note('brass', 1, b, len * 0.95, n, 124); w.note('strings', 1, b, len * 0.95, midiNote(n) + 12, 100); }
+    for (const [n, b, len] of answer) { w.note('brass', 2, b, len * 0.95, n, 118); w.note('strings', 2, b, len * 0.95, midiNote(n) + 12, 96); }
+    w.note('brass', 3, 0, 4, 'D5', 122);
+    for (const n of D.pad) { w.note('organ', 1, 0, 12, n, 94); w.note('strings', 3, 0, 5, midiNote(n) + 12, 100); }   // held into the last hit, never past it
+    for (const n of D.choir) w.note('choir', 1, 0, 12, n, 108);
+    w.note('bass', 1, 0, 12, 'D2', 118);
+    w.note('bells', 1, 0, 4, 'D5', 100); w.note('bells', 3, 0, 2, 'A4', 92); w.note('bells', 3, 2, 2, 'D5', 96);
+    w.note('timpani', 3, 0, 1, 'D2', 116);
+    for (let i = 0; i < 8; i++) w.note('timpani', 3, 2 + i * 0.25, 0.24, 'D2', 76 + i * 5);
+    w.note('timpani', 4, 0, 1, 'D2', 112); w.hit('crash', 4, 0, 102); w.hit('kick', 4, 0, 104);
+    for (const n of D.stab) w.note('hit', 4, 0, 1, n, 108);
+  }, SCORE_LEVEL.fell);
 }
 
 let _songs = null;
@@ -291,7 +329,7 @@ export function createCourtScore() {
       const law = courtScoreFor(s, now);
       if (law === null) { stingAt = null; day = null; return null; }
       if (s.day !== day) { day = s.day; stingAt = null; }
-      if (law === GATE_SONGS.fell && stingAt === null) stingAt = now;
+      if (law === GATE_SONGS.fell && stingAt === null) stingAt = now + SCORE_STING_LEAD_MS;   // AUDIT WBX W3: from when it sounds
       if (stingAt !== null && s.fell) return now - stingAt < SCORE_STING_MS ? GATE_SONGS.fell : SCORE_SILENCE;
       return law;
     },

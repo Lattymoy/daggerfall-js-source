@@ -266,7 +266,7 @@ test('AUDIT SURV C: what the player is told - a vampire\'s strip has no hunger o
   assert.equal(itemLine({ templateIndex: 1, group: 0, name: 'Dagger' }).survival, null, 'and nothing on a dagger');
   assert.match(survivalInfoTokens(skin).map((r) => r.text).join('\n'), /Weight: [0-9.]+ kilograms/, 'DFU\'s word, shortened by the panel alone');
   assert.equal(isSurvivalItem(skin), true);
-  assert.match(ENHANCED_CSS, /\.hud-needs:empty\s*\{\s*display:\s*none;?\s*\}/, 'no gap for an empty strip');
+  assert.match(ENHANCED_CSS, /\.hud-stat:empty\s*\{\s*display:\s*none;?\s*\}/, 'no gap for an empty widget (UI3: the needs are its tiles)');
   const hud = read('src/ui/enhancedHud.js');
   assert.match(hud, /survivalHudChips\(vitals, Math\.floor\(worldMinutes\(\)\), \{ vampire: !!liveVampirism\(vitals\), endurance: liveStat\(vitals, 'endurance'\) \}\)/);
   // Mac (review): "Hide wear for non wearables. Same for use for non-usables"

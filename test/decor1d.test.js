@@ -542,7 +542,7 @@ test('DECOR1d the host (worldModes.js, world.js) by source: one tool on the room
   assert.match(m, /pool: interiorDecor, names: decorNames,/);
   assert.match(m, /collider: \(\) => interiorCtx\?\.collider \?\? null, origin: \(\) => buildingOrigin\(\), eye: \(\) => cam\.pos,/);
   assert.match(m, /openSlot: \(o\) => \{ interiorOverlay = o; \}, closeSlot: \(o\) => \{ if \(interiorOverlay === o\) interiorOverlay = null; \},/);
-  assert.match(m, /if \(mode !== 'interior' \|\| !b \|\| !decorOwnerHere\(\)\) return null;\n    if \(interiorHome\) return \{ kind: 'home', where: 'Your home', mapId: homeTownOf\(b\), buildingKey: b\.buildingKey \};/);
+  assert.match(m, /if \(mode !== 'interior' \|\| !b \|\| !decorOwnerHere\(\)\) return null;\n(?:    \/\/[^\n]*\n)*    if \(interiorHome && _decorListed !== _decorVisit\) return null;\n    if \(interiorHome\) return \{ kind: 'home', where: 'Your home', mapId: homeTownOf\(b\), buildingKey: b\.buildingKey \};/);
   assert.match(m, /isTownBlock: \(t\) => t === BLOCK_TYPES\.Rmb,/);
   assert.match(m, /return r > 0 \? r \* GLOBAL_SCALE : null;/);
   assert.match(m, /return Math\.hypot\(size\.w, size\.h\) \/ 2;/);

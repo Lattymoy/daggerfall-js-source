@@ -48,6 +48,7 @@ export class MwBsaFile {
     this._bytes = bytes;
     this._blob = null;
     this._loaded = new Map();
+    this._loading = new Map();   // AUDIT MW-TEXTHREAD F5: the reads in flight, by key
     const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
     if (bytes.byteLength < 12) throw new Error('MwBsaFile: too small to be a BSA');
     const { dirSize, fileCount } = MwBsaFile._header(view);
@@ -88,6 +89,7 @@ export class MwBsaFile {
     a._bytes = null;
     a._blob = blob;
     a._loaded = new Map();
+    a._loading = new Map();
     a._readDirectory(dirBytes, new DataView(dirBytes.buffer, dirBytes.byteOffset, dirBytes.byteLength), dirSize, fileCount);
     return a;
   }
@@ -171,6 +173,12 @@ export class MwBsaFile {
    * MW-LOAD: the entry's bytes, by range off the Blob (cached, so a
    * second load is the first's answer), or `get`'s answer off a whole
    * buffer. The one async door.
+   *
+   * AUDIT MW-TEXTHREAD F5: and a load asked while the same entry's read
+   * is IN FLIGHT is that read's answer. The cache above answers only
+   * once the bytes land; MW-TEXTHREAD set the build's measures running
+   * side by side, and two garments or two heads sharing a mesh or a
+   * texture each missed it and read the same range twice.
    * @param {string} path
    * @returns {Promise<Uint8Array>}
    */
@@ -181,13 +189,19 @@ export class MwBsaFile {
     if (this._bytes) return this.get(path);
     const hit = this._loaded.get(key);
     if (hit) return hit;
+    const flying = this._loading.get(key);
+    if (flying) return flying;
     const start = this._dataStart + entry.offset;
     if (start + entry.size > this._blob.size) {
       throw new Error(`MwBsaFile: entry overruns archive: ${path}`);
     }
-    const bytes = new Uint8Array(await this._blob.slice(start, start + entry.size).arrayBuffer());
-    this._loaded.set(key, bytes);
-    return bytes;
+    const read = this._blob.slice(start, start + entry.size).arrayBuffer().then((buf) => {
+      const bytes = new Uint8Array(buf);
+      this._loaded.set(key, bytes);
+      return bytes;
+    }).finally(() => { this._loading.delete(key); });   // a failed read is not kept: the next ask reads again
+    this._loading.set(key, read);
+    return read;
   }
 
   /** MW-LOAD: load every path in `paths` that this archive carries. */

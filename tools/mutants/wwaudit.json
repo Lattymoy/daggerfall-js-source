@@ -1,0 +1,452 @@
+[
+  {
+    "name": "WWAUDIT-D1-form-under-the-ready-gate",
+    "file": "src/combat/weaponRig.js",
+    "old": "      if (entity && !paralyzed) {\n        const wolf = isMwWerewolf(entity);",
+    "new": "      if (entity && !paralyzed && fpArm.ready()) {\n        const wolf = isMwWerewolf(entity);",
+    "tests": [
+      "test/werewolf1.test.js"
+    ],
+    "note": "THE BLOCKER (lenses C and D): a wolf refused (no Bloodmoon) leaves no arm standing, and the form asked only of a standing arm never turned back - the classic sprite until the next load."
+  },
+  {
+    "name": "WWAUDIT-D5-skin-read-every-frame",
+    "file": "src/combat/weaponRig.js",
+    "old": "        if (wolf !== wolfForm) { wolfForm = wolf; wolfSkin = wolf ? ownWerewolfSkin() : null; }",
+    "new": "        wolfForm = wolf; wolfSkin = wolf ? ownWerewolfSkin() : null;",
+    "tests": [
+      "test/werewolf1.test.js"
+    ],
+    "note": "A storage read a frame while transformed - a file read in the desktop shell, and a transient null flipped the skin and rebuilt the wolf twice. Dies to the source pin (the skin read is not observable otherwise)."
+  },
+  {
+    "name": "WWAUDIT-D4-queued-build-clears-the-form",
+    "file": "src/combat/fpArm.js",
+    "old": "        if (pendingBuild) pendingBuild = { ...pendingBuild, werewolf: want, skin: wantSkin };\n        else pendingWerewolf = { want, skin: wantSkin };",
+    "new": "        pendingWerewolf = { want, skin: wantSkin };",
+    "tests": [
+      "test/werewolf1.test.js"
+    ],
+    "note": "A door's build queued behind the one in flight cleared the newer form - the door's stale wolf built, the turn back lost."
+  },
+  {
+    "name": "WWAUDIT-D6-form-dropped-before-the-first-build",
+    "file": "src/combat/fpArm.js",
+    "old": "      if (busy) {\n        if (pendingBuild) pendingBuild",
+    "new": "      if (!lastBuildOpts) return false;\n      if (busy) {\n        if (pendingBuild) pendingBuild",
+    "tests": [
+      "test/werewolf1.test.js"
+    ],
+    "note": "The opts asked for before the queue: a form asked during the very first build was dropped."
+  },
+  {
+    "name": "WWAUDIT-D7-the-wolf-holds-a-weapon",
+    "file": "src/combat/fpArm.js",
+    "old": "      if (built.werewolf) return false;\n      const key = fpWeaponKey(item, hasAmmo);",
+    "new": "      const key = fpWeaponKey(item, hasAmmo);",
+    "tests": [
+      "test/werewolf1.test.js"
+    ],
+    "note": "setWeapon had no wolf gate (setTorch and setHipLight did): a weapon a door handed the wolf was attached and skinned."
+  },
+  {
+    "name": "WWAUDIT-D3-the-claws-a-weapon",
+    "file": "src/combat/fpArm.js",
+    "old": "  const hand = item && item.werecreatureClaws ? null : item;",
+    "new": "  const hand = item;",
+    "tests": [
+      "test/werewolf1.test.js"
+    ],
+    "note": "The claws keyed as an Iron weapon: a weapon swap on every transformation, the equip replayed on a body about to be replaced."
+  },
+  {
+    "name": "WWAUDIT-E6-the-wolf-readies-a-spell",
+    "file": "src/combat/fpArm.js",
+    "old": "      if (!built || !built.ok || spellReady === want || (want && built.werewolf)) return false;",
+    "new": "      if (!built || !built.ok || spellReady === want) return false;",
+    "tests": [
+      "test/werewolf1.test.js"
+    ],
+    "note": "\"Werewolfs can not cast spells\" (mechanicsmanagerimp.cpp:1888)."
+  },
+  {
+    "name": "WWAUDIT-E6-the-wolf-casts",
+    "file": "src/combat/fpArm.js",
+    "old": "      if (!built || !built.ok || built.werewolf) return false;\n      // AUDIT WORLD C2",
+    "new": "      if (!built || !built.ok) return false;\n      // AUDIT WORLD C2",
+    "tests": [
+      "test/werewolf1.test.js"
+    ],
+    "note": "The turn back is cast in beast form: the cast latched a spell stance on the wolf that the next frame tore down."
+  },
+  {
+    "name": "WWAUDIT-D2-skin-left-to-the-frame",
+    "file": "src/combat/fpArm.js",
+    "old": "    if (arm.ok && werewolf) await preskinTextures(arm.pieces, textures, skin);",
+    "new": "",
+    "tests": [
+      "test/shadowfangskin.test.js"
+    ],
+    "note": "The skin painted in the frame that first hung the mesh: a 1024-square texture half a second's stall on every screen at every transformation."
+  },
+  {
+    "name": "WWAUDIT-D2-skin-memo-per-call",
+    "file": "src/combat/fpArm.js",
+    "old": "  let per = SKINNED_MIPS.get(image);\n  if (!per) { per = new Map(); SKINNED_MIPS.set(image, per); }",
+    "new": "  const per = new Map(); SKINNED_MIPS.set(image, per);",
+    "tests": [
+      "test/shadowfangskin.test.js"
+    ],
+    "note": "The copies kept per call (as they were per rig): a rebuild, a peer's wolf and a second rig paint again."
+  },
+  {
+    "name": "WWAUDIT-F2-eye-by-colour-alone",
+    "file": "src/characters/werewolfSkin.js",
+    "old": "    if (area < k.min || area > most) continue;",
+    "new": "",
+    "tests": [
+      "test/shadowfangskin.test.js"
+    ],
+    "note": "THE BLOB'S SIZE: without it golden, wheat, amber and auburn fur burned eye-red in blotches (lens F measured 5-77% of a coat)."
+  },
+  {
+    "name": "WWAUDIT-F2-eye-strands",
+    "file": "src/characters/werewolfSkin.js",
+    "old": "    if (area / (bw * bh) < k.fill || Math.max(bw, bh) > k.aspect * Math.min(bw, bh)) continue;",
+    "new": "",
+    "tests": [
+      "test/shadowfangskin.test.js"
+    ],
+    "note": "A strand of the eye's colour taken for an eye."
+  },
+  {
+    "name": "WWAUDIT-F2-eye-in-a-crowd",
+    "file": "src/characters/werewolfSkin.js",
+    "old": "    if (!rc || crowd > k.crowd * (rc + crowd) || sum / area - rs / rc < k.lift) continue;",
+    "new": "    if (!rc || sum / area - rs / rc < k.lift) continue;",
+    "tests": [
+      "test/shadowfangskin.test.js"
+    ],
+    "note": "A highlight among highlights taken for an eye."
+  },
+  {
+    "name": "WWAUDIT-F2-eye-no-glow",
+    "file": "src/characters/werewolfSkin.js",
+    "old": "    if (!rc || crowd > k.crowd * (rc + crowd) || sum / area - rs / rc < k.lift) continue;",
+    "new": "    if (!rc || crowd > k.crowd * (rc + crowd)) continue;",
+    "tests": [
+      "test/shadowfangskin.test.js"
+    ],
+    "note": "A blob no brighter than its fur taken for an eye."
+  },
+  {
+    "name": "WWAUDIT-F2-eyes-on-the-body",
+    "file": "src/characters/werewolfSkin.js",
+    "old": "    eyes: isEyeTexture(file) || isEyeTexture(shape) ? 'all' : head ? 'colour' : 'none',",
+    "new": "    eyes: isEyeTexture(file) || isEyeTexture(shape) ? 'all' : 'colour',",
+    "tests": [
+      "test/shadowfangskin.test.js"
+    ],
+    "note": "The eye rule on the body's fur, not the head's texture alone."
+  },
+  {
+    "name": "WWAUDIT-F2-no-red-eye",
+    "file": "src/characters/werewolfSkin.js",
+    "old": "  return (v > 0.7 && s > 0.55 && hue >= 40 && hue <= 200) || (v > 0.8 && s > 0.7 && (hue >= 350 || hue <= 10));",
+    "new": "  return v > 0.7 && s > 0.55 && hue >= 40 && hue <= 200;",
+    "tests": [
+      "test/shadowfangskin.test.js"
+    ],
+    "note": "An eye already red not found - blackened with the fur."
+  },
+  {
+    "name": "WWAUDIT-F2-pupil-lit",
+    "file": "src/characters/werewolfSkin.js",
+    "old": "      const q = 0.25 + 0.75 * Math.min(1, l / 0.6);",
+    "new": "      const q = 1;",
+    "tests": [
+      "test/shadowfangskin.test.js"
+    ],
+    "note": "An eye texture red whole, its pupil lost."
+  },
+  {
+    "name": "WWAUDIT-F3-tips-absolute",
+    "file": "src/characters/werewolfSkin.js",
+    "old": "    const tip = tips ? smooth(tipLo, tipHi, l) * k.tip[2] : 0;",
+    "new": "    const tip = smooth(0.5, 0.85, l) * k.tip[2];",
+    "tests": [
+      "test/shadowfangskin.test.js"
+    ],
+    "note": "A fixed brightness for the tips: a blond or a cream wolf red all over (lens F: cream's mean (132,39,53))."
+  },
+  {
+    "name": "WWAUDIT-F4-the-law-per-level",
+    "file": "src/characters/werewolfSkin.js",
+    "old": "    const rgba = downsampleLevel(prev.rgba, prev.width, prev.height, m.width, m.height);",
+    "new": "    const rgba = shadowFangPixels(m.rgba, m.width, m.height, opts);",
+    "tests": [
+      "test/shadowfangskin.test.js"
+    ],
+    "note": "The law run on each level apart: the edging faded with distance, a cut's fringe grew a texel a level, the colour popped."
+  },
+  {
+    "name": "WWAUDIT-F4-level-alpha-lost",
+    "file": "src/characters/werewolfSkin.js",
+    "old": "    for (let i = 3; i < rgba.length; i += 4) rgba[i] = m.rgba[i];",
+    "new": "",
+    "tests": [
+      "test/shadowfangskin.test.js"
+    ],
+    "note": "A level's own alpha (its cut) replaced by its parent's mean."
+  },
+  {
+    "name": "WWAUDIT-F6-fringe-on-opaque",
+    "file": "src/characters/werewolfSkin.js",
+    "old": "  const near = cut && !allEye ? besideACut(A, w, h, wrapS, wrapT) : null;",
+    "new": "  const near = !allEye ? besideACut(A, w, h, wrapS, wrapT) : null;",
+    "tests": [
+      "test/shadowfangskin.test.js"
+    ],
+    "note": "A crimson line round every UV island's padding on an opaque texture."
+  },
+  {
+    "name": "WWAUDIT-F6-its-own-fringe",
+    "file": "src/characters/werewolfSkin.js",
+    "old": "    const fringe = near && a >= 128 && near[i] ? k.fringe : 0;",
+    "new": "    const fringe = near && near[i] ? k.fringe : 0;",
+    "tests": [
+      "test/shadowfangskin.test.js"
+    ],
+    "note": "A semi-transparent texel its own fringe, always crimson."
+  },
+  {
+    "name": "WWAUDIT-F7-fringe-never-wraps",
+    "file": "src/characters/werewolfSkin.js",
+    "old": "  const cx = tapsOf(w, 1, wrapS), cy = tapsOf(h, 1, wrapT);",
+    "new": "  const cx = tapsOf(w, 1, false), cy = tapsOf(h, 1, false);",
+    "tests": [
+      "test/shadowfangskin.test.js"
+    ],
+    "note": "The fringe clamped where the texture wraps."
+  },
+  {
+    "name": "WWAUDIT-F7-mean-with-the-holes",
+    "file": "src/characters/werewolfSkin.js",
+    "old": "        if (A[j] >= 128) { s += L[j]; c++; }",
+    "new": "        s += L[j]; c++;",
+    "tests": [
+      "test/shadowfangskin.test.js"
+    ],
+    "note": "A transparent texel's colour lent to the fur round it."
+  },
+  {
+    "name": "WWAUDIT-F13-short-level-zero-filled",
+    "file": "src/characters/werewolfSkin.js",
+    "old": "  if (mips.some((m) => !m?.rgba || m.rgba.length < m.width * m.height * 4)) return mips;\n",
+    "new": "",
+    "tests": [
+      "test/shadowfangskin.test.js"
+    ],
+    "note": "A level short of its size read past its end - zeros."
+  },
+  {
+    "name": "WWAUDIT-E1-the-look-in-the-wolf",
+    "file": "src/net/peerBodies.js",
+    "old": "`wolf|${wolfLookKey(look)}|${werewolfSkinOf(glyphs) ?? ''}`",
+    "new": "`wolf|${lookKey(look)}|${werewolfSkinOf(glyphs) ?? ''}`",
+    "tests": [
+      "test/werewolf1.test.js"
+    ],
+    "note": "The person's gear in the wolf's key: the transformation's own unequip rebuilt the standing wolf ten seconds on."
+  },
+  {
+    "name": "WWAUDIT-E2-the-refusal-retried",
+    "file": "src/net/peerBodies.js",
+    "old": "    if (b.wolf && res && !res.ok && res.stage === 'skeleton') this._wolfRefused = { reason };\n",
+    "new": "",
+    "tests": [
+      "test/werewolf1.test.js"
+    ],
+    "note": "No Bloodmoon: a wolf rig made, refused and warned every BODY_RETRY_MS for ever, evicting the farthest body each time."
+  },
+  {
+    "name": "WWAUDIT-E3-the-flip-unthrottled",
+    "file": "src/net/peerBodies.js",
+    "old": "          if (b.byForm && now - b.born < BODY_REBUILD_MS) this._formWait.set(id, b.born + BODY_REBUILD_MS);\n",
+    "new": "",
+    "tests": [
+      "test/werewolf1.test.js"
+    ],
+    "note": "A `wb` flipped every pose: a rig and a build a flip, holding the one build queue."
+  },
+  {
+    "name": "WWAUDIT-E4-the-settle-dropped",
+    "file": "src/scenes/world.js",
+    "old": "    peerRiders.settle((id) => peerBodies.wolfStands(id));",
+    "new": "",
+    "tests": [
+      "test/werewolf1.test.js"
+    ],
+    "note": "The deferred wolves never drawn by the riders."
+  },
+  {
+    "name": "WWAUDIT-C2-modl-required",
+    "file": "src/formats/mwFirstPerson.js",
+    "old": "  return e.id && (e.model || e.parts.length) ? e : null;",
+    "new": "  return e.id && e.model ? e : null;",
+    "tests": [
+      "test/werewolf1.test.js"
+    ],
+    "note": "A robe with no MODL dropped: the whole wolf refused on data that carries it."
+  },
+  {
+    "name": "WWAUDIT-C2-version-left",
+    "file": "src/formats/mwFirstPerson.js",
+    "old": "export const ARM_RECORDS_VERSION = 3;",
+    "new": "export const ARM_RECORDS_VERSION = 2;",
+    "tests": [
+      "test/werewolf1.test.js"
+    ],
+    "note": "A derived record set extracted before C2 served its robe-less list for ever."
+  },
+  {
+    "name": "WWAUDIT-C4-a-man-in-a-cnam",
+    "file": "src/formats/mwItemMap.js",
+    "old": "    const body = (female && ref.female ? pick(ref.female) : null) ?? pick(ref.male);\n    out.push",
+    "new": "    const body = (ref.female ? pick(ref.female) : null) ?? pick(ref.male);\n    out.push",
+    "tests": [
+      "test/werewolf1.test.js"
+    ],
+    "note": "A man wearing a CNAM-only part addPartGroup never reads."
+  },
+  {
+    "name": "WWAUDIT-C4-a-miss-claims-nothing",
+    "file": "src/formats/mwItemMap.js",
+    "old": "          claim(ref.part, prio, null);\n          continue;",
+    "new": "          continue;",
+    "tests": [
+      "test/werewolf1.test.js"
+    ],
+    "note": "A robe reference nothing answers claimed nothing: the head not held, WerewolfHead drawn where OpenMW draws none."
+  },
+  {
+    "name": "WWAUDIT-C7-bloodmoon-not-named",
+    "file": "src/combat/fpArm.js",
+    "old": "      worn.notes.push(esmNames.some((n) => /^bloodmoon\\.esm$/i.test(n))",
+    "new": "      worn.notes.push(false",
+    "tests": [
+      "test/werewolf1.test.js"
+    ],
+    "note": "Bloodmoon.esm attached and naming no robe noted as not attached."
+  },
+  {
+    "name": "WWAUDIT-C7-the-base-named",
+    "file": "src/combat/fpArm.js",
+    "old": "        error: werewolf ? `no werewolf animation file - ${animSourceName(skeletonPath)} is not in your archives`\n          : `no first-person",
+    "new": "        error: false ? `no werewolf animation file - ${animSourceName(skeletonPath)} is not in your archives`\n          : `no first-person",
+    "tests": [
+      "test/werewolf1.test.js"
+    ],
+    "note": "The wolf's missing .kf named as the base's."
+  },
+  {
+    "name": "WWAUDIT-B4-any-session-adopts",
+    "file": "src/net/accountClient.js",
+    "old": "  if (typeof secret === 'string' && was.secret !== secret) return false;\n",
+    "new": "",
+    "tests": [
+      "test/shadowfangskin.test.js"
+    ],
+    "note": "A late answer adopted into the account signed in after it: one account's name and glyphs (and skin) on another's device."
+  },
+  {
+    "name": "WWAUDIT-B1-the-relay-not-waited-for",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "      - name: Wait for the relay to serve this push's version",
+    "new": "      - name: Wait for nothing",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ],
+    "note": "The service deployed before the relay could verify what it signs: a new glyph refused whole, terminal on the presence socket."
+  },
+  {
+    "name": "WWAUDIT-B8-a-list-outside-the-vocabulary",
+    "file": "server-account/src/titles.js",
+    "old": "shadowfang: 'SHADOW_FANG_HANDLES'",
+    "new": "shadowfangs: 'SHADOW_FANG_HANDLES'",
+    "tests": [
+      "test/titlen.test.js"
+    ],
+    "note": "A tier list naming a title the token cannot carry: mintToken throws, a 500 for every handle on it."
+  },
+  {
+    "name": "WWAUDIT-A1-the-card-wide-title",
+    "file": "src/ui/profileWindow.js",
+    "old": "  width: fit-content; max-width: 100%; margin-inline: auto; }",
+    "new": "  }",
+    "tests": [
+      "test/shadowfang.test.js"
+    ],
+    "note": "The gradient spread over the 450px card, the word in its middle fifth - a flat maroon."
+  },
+  {
+    "name": "WWAUDIT-A2-ids-stripped",
+    "file": "src/ui/windowMotion.js",
+    "old": "  for (const el of els) if (el.id) { renamed.set(el.id, el.id + tag); el.id += tag; }",
+    "new": "  for (const el of els) if (el.id) el.id = '';",
+    "tests": [
+      "test/shadowfang.test.js"
+    ],
+    "note": "The ghost's gradient ids stripped: the closing window's wolf hollow."
+  },
+  {
+    "name": "WWAUDIT-A7-the-nose-cut",
+    "file": "src/ui/playerBadge.js",
+    "old": "    svg.setAttribute('overflow', 'visible');",
+    "new": "",
+    "tests": [
+      "test/shadowfang.test.js"
+    ],
+    "note": "The edge past the 16-unit box clipped at the wolf's nose."
+  },
+  {
+    "name": "WWAUDIT-A10-colour-diffed-against-a-read-back",
+    "file": "src/ui/nameLayer.js",
+    "old": "        if (tag.inked !== ink) { tag.inked = ink; tag.name.style.color = ink; }",
+    "new": "        tag.name.style.color = ink;",
+    "tests": [
+      "test/shadowfang.test.js"
+    ],
+    "note": "A party mate's green rewritten every frame (a browser reads a hex back as rgb())."
+  },
+  {
+    "name": "WWAUDIT-A3-letters-by-measure",
+    "file": "src/net/remotePlayers.js",
+    "old": "            cx += adv ?? measureText(font.fnt, ch) * s;",
+    "new": "            cx += measureText(font.fnt, ch) * s;",
+    "tests": [
+      "test/shadowfang.test.js"
+    ],
+    "note": "The classic face's letters advanced by the measured space: the edge under \"Fang\" a pixel off."
+  },
+  {
+    "name": "WWAUDIT-A4-the-edge-on-the-letters",
+    "file": "src/ui/playerBadge.js",
+    "old": "    out.fontWeight = '500';",
+    "new": "    out.fontWeight = '700'; out.webkitTextStroke = `0.5px ${edge}`;",
+    "tests": [
+      "test/shadowfang.test.js"
+    ],
+    "note": "The crimson stroke ON the letters with a synthesised bold: in the world the word read crimson, the black 4-15% of \"Shadow\"."
+  },
+  {
+    "name": "WWAUDIT-B7-letter-glyphs-by-hand",
+    "file": "src/net/mail.js",
+    "old": "slice(0, GLYPHS_MAX)",
+    "new": "slice(0, 8)",
+    "tests": [
+      "test/shadowfang.test.js"
+    ],
+    "note": "A letter's glyphs bounded by a typed 8 - SHADOW-FANG made it eight of eight."
+  }
+]

@@ -25,6 +25,17 @@ import { transformPoint } from './mat4.js';
 
 export { RDB_SIDE };
 
+/**
+ * CRUX-DOOR (2026-09-27, Discord: in the Mantellan Crux "when reaching entrance to the Fire Skull Room after touching
+ * the big crystal, it will not go there, instead it leads back to outside"). A block's `exitDoors` is DFU's own
+ * misnomer (RDBLayout.cs:37): EVERY door face of every model the block places - building (74), dungeon-entrance
+ * (56/331) and dungeon-exit (95) alike. Only a DungeonExit door leaves a dungeon (PlayerActivate.cs:649; an entrance
+ * door wants the player outside, :640, and a building door's TransitionExterior finds no interior, :634), and only
+ * an exit door gets a collider (DaggerfallStaticDoors.cs:44-66) - so the model's own action (the Crux's Teleport)
+ * answers the click on any other.
+ */
+export const isDungeonExitDoor = (door) => door?.doorType === DOOR_TYPE.DUNGEON_EXIT;
+
 const OVERLAP_TOLERANCE = 1.4;
 
 /**
@@ -102,7 +113,7 @@ function removeOverlappingDoors(blocks) {
   // exit per collection (block) but keeps scanning collections, verbatim.
   for (const b of blocks) {
     for (const door of b.layout.exitDoors) {
-      if (door.doorType === DOOR_TYPE.DUNGEON_EXIT) {
+      if (isDungeonExitDoor(door)) {
         registry.push(transformPoint(door.matrix, door.centre.x, door.centre.y, door.centre.z));
         break;
       }

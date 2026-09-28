@@ -1,0 +1,105 @@
+name: Account recovery
+
+# RECOVER-OP (2026-09-27) - A NEW RECOVERY CODE, SET BY THE OPERATOR, for a
+# player who lost both the password and the code (Twoddle). Run by hand from
+# the Actions tab, after the owner has been verified:
+#
+#   1. node tools/reissueRecoveryCode.mjs <handle>   mints the code and its hash
+#   2. this workflow, with that handle and the HASH  sets it on that account
+#   3. the player spends the code in "Forgot password", picks a password, and
+#      is shown a new code - which kills the one the operator saw.
+#
+# It writes `recovery_hash` on one registered account and nothing else: not
+# the password, not the sessions, not the saves. The CODE is never an input -
+# inputs show in the run's page - only its hash, which is no secret.
+
+on:
+  workflow_dispatch:
+    inputs:
+      handle:
+        description: "The account's username"
+        required: true
+        type: string
+      hash:
+        description: "The new code's HASH from tools/reissueRecoveryCode.mjs (never the code itself)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+# Never beside a deploy's migrations: the deploy's own group, queued.
+concurrency:
+  group: account-deploy
+  cancel-in-progress: false
+
+jobs:
+  reissue:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      DB_NAME: daggerfall-accounts
+      WRANGLER: npx --yes wrangler@4
+      # The inputs reach the scripts as ENVIRONMENT, never pasted into them: an
+      # input spliced into a `run:` line is a shell command anybody can type.
+      HANDLE: ${{ inputs.handle }}
+      HASH: ${{ inputs.hash }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Refuse to start without a token
+        run: |
+          if [ -z "${CLOUDFLARE_API_TOKEN}" ]; then
+            echo "::error::secrets.CLOUDFLARE_API_TOKEN is not set for this repository - nothing else in this job can work"
+            exit 1
+          fi
+
+      # The tool checks the username's shape and the hash's form, and folds
+      # the username as the service does - the statement is the tested one
+      # (test/recoverop.test.js), not one written again here.
+      - name: Write the statement
+        run: |
+          set -euo pipefail
+          node tools/reissueRecoveryCode.mjs --sql "$HANDLE" "$HASH" > "$RUNNER_TEMP/reissue.sql"
+
+      # The deploy's own resolution (account-deploy.yml), read-only: this job
+      # never creates a database.
+      - name: Resolve the database id into the runner's copy of the config
+        run: |
+          set -euo pipefail
+          id=$($WRANGLER d1 list --json | jq -r --arg n "$DB_NAME" 'map(select(.name == $n)) | .[0].uuid // .[0].id // empty')
+          if [ -z "$id" ]; then
+            echo "::error::there is no database named $DB_NAME"
+            exit 1
+          fi
+          echo "::add-mask::$id"
+          toml=server-account/wrangler.toml
+          sentinel='resolved-by-account-deploy-workflow'
+          grep -q "$sentinel" "$toml" || { echo "::error::$toml no longer carries the sentinel"; exit 1; }
+          sed -i "s|\"$sentinel\"|\"$id\"|" "$toml"
+          if grep -q "$sentinel" "$toml"; then
+            echo "::error::the sentinel survived the substitution"
+            exit 1
+          fi
+
+      # RETURNING names the row the statement changed; none is a refusal, and
+      # nothing was written.
+      - name: Set the new code's hash on that account
+        working-directory: server-account
+        run: |
+          set -euo pipefail
+          out=$($WRANGLER d1 execute "$DB_NAME" --remote --json --command "$(cat "$RUNNER_TEMP/reissue.sql")")
+          n=$(echo "$out" | jq -r '[.[] | (.results // [])[]] | length')
+          if [ "$n" != "1" ]; then
+            echo "::error::no registered account is named $HANDLE - nothing was changed"
+            exit 1
+          fi
+          echo "the new recovery code is set on $HANDLE; the old one no longer works"

@@ -560,8 +560,8 @@
   {
     "name": "PT-travel-always-yes",
     "file": "src/systems/partyTravel.js",
-    "old": "answer(round.at, vote !== round.at);",
-    "new": "answer(round.at, true);",
+    "old": "answer(round.at, yes == null ? vote !== round.at : !!yes), said: true",
+    "new": "answer(round.at, true), said: true",
     "tests": [
       "test/partytravel.test.js"
     ]

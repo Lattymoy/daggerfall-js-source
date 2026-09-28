@@ -13,14 +13,46 @@
 // makeLookGate is the per-host reconciler between the overlay state
 // and the lock: a window up RELEASES the lock so the cursor can click
 // it (DFU frees the mouse for every window - Escape must never be the
-// only way in), and the window closing re-locks (the closing keypress
-// or click is the transient user activation requestPointerLock needs;
-// a refusal is covered by the hosts' relock-on-gesture arms).
+// only way in), and the window closing re-locks (a closing click, or a
+// key other than Escape, is the transient user activation
+// requestPointerLock needs; a refusal is covered by the hosts'
+// relock-on-gesture arms).
+//
+// ESC-LOCK (2026-09-27, Mac: "when you hit esc to leave a menu, your
+// cursor remains on the screen instead of returning to the game"; a
+// tester: "U have to hit escape 2 times to get pause menu up now").
+// TWO BROWSER RULES this file used to assume away. (1) While the
+// pointer is locked, the Escape press is the BROWSER's: it ends the
+// lock and the page never sees the key (Chrome consumes the keydown;
+// Firefox unlocks on the keyup) - so the first Escape only freed the
+// cursor and the second opened the pause. `bindCursorToggle` now reads
+// a lock loss the page did not ask for as that swallowed press and
+// delivers it (below). (2) Escape is NOT a user activation (HTML's
+// activation-triggering input events exclude it, and a keyup is never
+// one), and once the user has ended a lock the browser grants the next
+// only with one - so every relock inside an Escape close was refused,
+// and the cursor stayed until a click or another key. No page can
+// change (2) in a browser tab: the next click or key takes the look
+// back, as before. The desktop app can: its shell grants the gesture
+// (`shellRelock` below, app/main.cjs).
 
 import { isTextEntryTarget } from '../ui/input.js';   // PL2: a typed field's Enter is the field's (CG2)
 import { overlayOpen } from '../ui/enhancedOverlays.js';   // PL3: an enhanced overlay up (the dial, the pack) owns Enter too
 
 let _errBound = false;
+const nowMs = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+
+// ESC-LOCK: the page's own releases, stamped, so a lock loss the page
+// asked for is never read as the player's Escape.
+let _pageReleaseAt = -Infinity;
+/** A lock loss within this long of a page release is the page's. */
+export const PAGE_RELEASE_MS = 500;
+/** How long the delivery waits for a browser that DOES hand the page
+ *  its Escape, and for a window the loss belonged to, to show. */
+export const ESCAPE_DELIVERY_MS = 60;
+/** A real Escape keydown this close to the loss was delivered - the
+ *  page has it, and a second would close what the first opened. */
+export const REAL_ESCAPE_MS = 300;
 
 // U45 - PlayerMouseLook.cursorActive (:32, :185-213), THE TOGGLE THAT
 // HAD NO CONSUMER. `ActivateCursor` has been bound to Enter in the
@@ -107,7 +139,11 @@ export function bindCursorToggle(canvas, isWindowUp = () => false, actionsOf = n
   // is a fresh PlayerMouseLook (cursorActive is an instance field,
   // :32) - so the bind is the reset.
   setCursorActive(false);
+  let lastRealEscape = -Infinity;   // ESC-LOCK (1), below
   const onKey = (e) => {
+    // ESC-LOCK (1): a real Escape the browser DID hand the page is noted first, whatever is up - the loss that follows
+    // it is then not delivered a second time. The browser's own unlock key, read raw on purpose (KB1's reservation).
+    if (e.code === 'Escape' && e.isTrusted !== false && !e.dagSynthetic) lastRealEscape = nowMs();
     if (isWindowUp()) return;
     // PL3: the enhanced overlays the host's predicate never saw - the
     // pixel dial (Tab) and whatever it opened - own Enter while they
@@ -151,6 +187,35 @@ export function bindCursorToggle(canvas, isWindowUp = () => false, actionsOf = n
   // bubble listener can pop the window, so a press under a window is
   // the window's and only a press with nothing up is the toggle.
   addEventListener('keydown', onKey, true);
+  // ESC-LOCK (1): THE PRESS THE BROWSER ATE. The lock was held on this
+  // canvas, it is gone, the page did not release it (releaseLook's
+  // stamp), nothing is up to have taken it (a window, an enhanced
+  // overlay - they release it themselves on mount), the player did not
+  // free the cursor, and the page still has the focus (a lock lost to
+  // another window or tab is no key at all): that is the player's
+  // Escape, and it is delivered as the pad delivers its buttons
+  // (ui/gamepadInput.js synth - on the document, a keydown and its
+  // keyup), so the hosts' ladders open the pause on the ONE press. It
+  // waits ESCAPE_DELIVERY_MS for the browser that hands the page its
+  // own Escape - that one is not delivered twice.
+  let held = typeof document !== 'undefined' && document.pointerLockElement === canvas;
+  let pending = null;
+  const quiet = () => isWindowUp() || overlayOpen() || _cursorActive || !pageHasFocus();
+  const onLockChange = () => {
+    const now = typeof document !== 'undefined' && document.pointerLockElement === canvas;
+    const lost = held && !now;
+    held = now;
+    if (!lost) return;
+    const at = nowMs();
+    if (at - _pageReleaseAt < PAGE_RELEASE_MS || quiet()) return;
+    if (pending) clearTimeout(pending);
+    pending = setTimeout(() => {
+      pending = null;
+      if (held || quiet() || nowMs() - lastRealEscape < REAL_ESCAPE_MS + ESCAPE_DELIVERY_MS) return;
+      deliverEscape();
+    }, ESCAPE_DELIVERY_MS);
+  };
+  if (typeof document !== 'undefined') document.addEventListener?.('pointerlockchange', onLockChange);
   // PL3: THE NET. A click that lands on the page itself - the canvas,
   // or the body beside it - with nothing up, no cursor activated and no
   // lock held is the player asking for the game back; take the lock
@@ -167,14 +232,60 @@ export function bindCursorToggle(canvas, isWindowUp = () => false, actionsOf = n
     requestLook(canvas);
   };
   if (typeof document !== 'undefined') document.addEventListener?.('pointerdown', onDown, true);
-  return () => { removeEventListener('keydown', onKey, true); if (typeof document !== 'undefined') document.removeEventListener?.('pointerdown', onDown, true); };
+  return () => {
+    removeEventListener('keydown', onKey, true);
+    if (pending) { clearTimeout(pending); pending = null; }
+    if (typeof document !== 'undefined') {
+      document.removeEventListener?.('pointerdown', onDown, true);
+      document.removeEventListener?.('pointerlockchange', onLockChange);
+    }
+  };
+}
+
+/** Does the page have the focus - a lock lost to another window is no key. */
+function pageHasFocus() {
+  if (typeof document === 'undefined') return false;
+  if (document.visibilityState && document.visibilityState !== 'visible') return false;
+  return typeof document.hasFocus === 'function' ? document.hasFocus() : true;
+}
+
+/** ESC-LOCK (1): the swallowed Escape, delivered - a keydown and its
+ *  keyup on the document, the pad's own route (ui/gamepadInput.js
+ *  synth, PAD1: the document's listeners and then the window's). */
+function deliverEscape() {
+  if (typeof KeyboardEvent !== 'function') return;
+  const target = globalThis.document ?? globalThis;
+  for (const type of ['keydown', 'keyup']) {
+    const e = new KeyboardEvent(type, { code: 'Escape', key: 'Escape', bubbles: true, cancelable: true });
+    e.dagSynthetic = true;
+    target.dispatchEvent(e);
+  }
+}
+
+// ESC-LOCK (2): THE DESKTOP APP'S GESTURE. A request the browser refused
+// (an Escape close after the player ended the lock - rule (2) above) is
+// asked of the shell once: app/preload.cjs `relockPointer` has the main
+// process run `__daggerRelock` as a user gesture
+// (webContents.executeJavaScript's userGesture), which is exactly the
+// activation the Escape could not give. Once per SHELL_RELOCK_MS, so a
+// request the shell cannot win either is not asked again in a loop. A
+// browser tab has no shell and waits for the next click or key.
+export const SHELL_RELOCK_MS = 1000;
+let _shellRelockAt = -Infinity;
+function shellRelock(canvas) {
+  const shell = globalThis.daggerShell;
+  if (typeof shell?.relockPointer !== 'function' || _cursorActive) return;
+  const at = nowMs();
+  if (at - _shellRelockAt < SHELL_RELOCK_MS) return;
+  _shellRelockAt = at;
+  globalThis.__daggerRelock = () => { globalThis.__daggerRelock = null; requestLook(canvas); };
+  try { shell.relockPointer(); } catch { /* a shell without the bridge is a tab */ }
 }
 
 // PL3: the moment of the last honoured request - the look gate's grace
 // (below) reads it.
 let _lastRequestAt = -Infinity;
 export const RELOCK_GRACE_MS = 150;
-const nowMs = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
 export function requestLook(canvas) {
   // The precedence above: a cursor the player activated is not taken
@@ -201,10 +312,10 @@ export function requestLook(canvas) {
     const p = canvas.requestPointerLock({ unadjustedMovement: true });
     if (p && typeof p.catch === 'function') {
       p.catch((err) => {
-        if (err?.name !== 'NotSupportedError') return;
+        if (err?.name !== 'NotSupportedError') { shellRelock(canvas); return; }   // ESC-LOCK (2)
         try {
           const q = canvas.requestPointerLock();
-          if (q && typeof q.catch === 'function') q.catch(() => {});
+          if (q && typeof q.catch === 'function') q.catch(() => shellRelock(canvas));
         } catch { /* non-fatal */ }
       });
     }
@@ -216,6 +327,7 @@ export function requestLook(canvas) {
 /** Exit pointer lock (no-op when not held). */
 export function releaseLook() {
   if (typeof document !== 'undefined' && document.pointerLockElement) {
+    _pageReleaseAt = nowMs();   // ESC-LOCK: the page's own release is never the player's Escape
     try { document.exitPointerLock(); } catch { /* non-fatal */ }
   }
 }

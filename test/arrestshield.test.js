@@ -90,10 +90,11 @@ test('ARREST-SHIELD by source: ONE predicate answers "am I in a trial", and the 
   // The question is named once. A second copy is a second chance to
   // disagree with the first - which is exactly how the guard arm and
   // the rest of the world came to disagree in the first place.
-  assert.match(af, /const inCourt = \(\) => sharedClockOn\(\) && \(awaitingSurrenderAnswer \|\| playerEntity\.arrested\);/);
+  // JAIL-HIT (2026-09-27): in BOTH modes - offline the watch keeps WINFOE1's clock under the court's windows too
+  assert.match(af, /const inCourt = \(\) => awaitingSurrenderAnswer \|\| !!playerEntity\.arrested;/);
   assert.match(af, /registerPlayerDamageVeto\(inCourt\);/, 'the one damage door consults the flow that owns the question');
   assert.match(af, /if \(inCourt\(\)\) return true;/, 'and the guard arm reads the SAME predicate, not a copy');
-  assert.equal((af.match(/sharedClockOn\(\) && \(awaitingSurrenderAnswer/g) ?? []).length, 1, 'said once');
+  assert.equal((af.match(/awaitingSurrenderAnswer \|\| !!playerEntity\.arrested/g) ?? []).length, 1, 'said once');
   // The teardown: a stale closure over a dead entity must never shield
   // a live one.
   assert.match(af, /function dispose\(\) \{ registerPlayerDamageVeto\(null\); \}/);

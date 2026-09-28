@@ -128,8 +128,11 @@ export const ONLINE_PLAYERS_OWN_PREFS = [
   'peerAttackSounds', 'peerFootsteps',   // PEER-FS1: and how OTHER players are HEARD on this machine - the same local-only shape
   'nightCrickets', 'distantHowl',        // SNDREP1: whether THIS player hears the night's crickets and the far howl - an ear, nothing the room agrees on
   'heldMap',          // MAP-TOGGLE: whether THIS player's maps are the held sheet or DFU's windows - a look, nothing the room agrees on
-  'enhancedPlus', 'plusCursor', 'plusItemHover',   // PLUS1/6/7: the Plus dress, its gauntlet cursor and its hover card - what THIS screen draws (OVH3's law: the skin is the player's)
+  'plusCursor', 'plusItemHover',   // PLUS6/7: the Plus dress's gauntlet cursor and its hover card - what THIS screen draws (OVH3's law: the skin is the player's; PLUS-ONLY retired `enhancedPlus`)
+  'plusToggleRun',    // PADPLUS1: whether THIS player's Run button latches - how this pad is held, nothing the room agrees on
   'proceduralSky',    // EE1's legacy key, read only by the migration
+  'restWithParty',   // REST-OPT: whether I rest with my party or alone - my own say
+  'acceptStrangerSpells',   // SPELL-GIFT: whether a stranger's healing and protective spells land on THIS player - their own say
 ];   // (RF4: grown by declareOnlinePrefs with the registry's 'player' answers - the dials)
 
 /** DISC22-A (2026-09-24, Mac: "repair magical items should be enabled by default and required online"): THE DFU
@@ -280,7 +283,7 @@ export const ONLINE_ROOM_MOD_KEYS = Object.freeze({
   // fog, the fish and the weed - are each player's own.
   'iliac-puddle-no-more': Object.freeze({
     Enabled: true, 'General.WaterDepth': 250.0,
-    'General.SpawnUnderwaterEnemies': true, 'General.EnemyFrequency': 0.3, 'General.MaxLiveEnemies': 128,
+    'General.SpawnUnderwaterEnemies': true, 'General.EnemyFrequency': 0.3, 'General.MaxLiveEnemies': 32,   // SEA-CAP: the port's default (modSettings.js), the room's too
     'General.SeafloorLootRate': 0.5, 'General.MaxLiveLootObjects': 192, 'General.TreasureClusterRate': 0.3,
     'General.MaxLiveTreasureClusters': 12, 'General.TreasureCove': false,
     'General.SwimSpeedMultiplier': 1.0, 'General.EnableSwimStroke': true, 'General.ArgonianInfiniteBreath': true,

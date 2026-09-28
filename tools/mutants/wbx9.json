@@ -1,0 +1,66 @@
+[
+  {
+    "name": "WBX9-the-level-ignored",
+    "file": "src/systems/songPlayer.js",
+    "old": "    if (this._level) this._level.gain.value = songLevel(song);",
+    "new": "    void songLevel;",
+    "tests": [
+      "test/wbx9_gate_score.test.js"
+    ]
+  },
+  {
+    "name": "WBX9-a-missing-level-as-nothing",
+    "file": "src/systems/songPlayer.js",
+    "old": "export const songLevel = (song) => (Number.isFinite(song?.level) && song.level > 0 ? Math.min(SONG_LEVEL_MAX, song.level) : 1);",
+    "new": "export const songLevel = (song) => (Number.isFinite(song?.level) && song.level > 0 ? Math.min(SONG_LEVEL_MAX, song.level) : 0);",
+    "tests": [
+      "test/wbx9_gate_score.test.js"
+    ]
+  },
+  {
+    "name": "WBX9-the-channels-past-the-level",
+    "file": "src/systems/songPlayer.js",
+    "old": "      g.connect(this._level ?? this._fader ?? this._master);",
+    "new": "      g.connect(this._fader ?? this._master);",
+    "tests": [
+      "test/wbx9_gate_score.test.js",
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "WBX9-a-song-without-its-level",
+    "file": "src/systems/gateScore.js",
+    "old": "durationTicks: bars * 4 * SCORE_TPQ, seamless: true, level };",
+    "new": "durationTicks: bars * 4 * SCORE_TPQ, seamless: true };",
+    "tests": [
+      "test/wbx9_gate_score.test.js"
+    ]
+  },
+  {
+    "name": "WBX9-the-wars-levels-upside-down",
+    "file": "src/systems/gateScore.js",
+    "old": "export const SCORE_LEVEL = Object.freeze({ war1: 1.42, war2: 1.6, war3: 1.64, fell: 1.7 });",
+    "new": "export const SCORE_LEVEL = Object.freeze({ war1: 1.64, war2: 1.6, war3: 1.42, fell: 1.7 });",
+    "tests": [
+      "test/wbx9_gate_score.test.js"
+    ]
+  },
+  {
+    "name": "WBX9-the-first-songs-strings-held-back",
+    "file": "src/systems/gateScore.js",
+    "old": "      underBar(w, bar, chord, { strings: true, choir: bar >= 8, busy: bar % 4 === 3 });",
+    "new": "      underBar(w, bar, chord, { strings: bar >= 8, choir: bar >= 8, busy: bar % 4 === 3 });",
+    "tests": [
+      "test/wbx9_gate_score.test.js"
+    ]
+  },
+  {
+    "name": "WBX9-the-thirds-drive-lost",
+    "file": "src/systems/gateScore.js",
+    "old": "      underBar(w, bar, chord, { strings: true, choir: false, drive: 0, organ: 1.2, vel: 1.05 });",
+    "new": "      underBar(w, bar, chord, { strings: true, choir: false, busy: true, organ: 1.2, vel: 1.05 });",
+    "tests": [
+      "test/wbx9_gate_score.test.js"
+    ]
+  }
+]

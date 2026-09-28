@@ -469,8 +469,8 @@ test('rest: the world host carries the ENCOUNTER roll through a rested night', (
   // its block body.
   const wd = scan(src('scenes/world.js'), 'createRestDeps(playerEntity, {');
   assert.match(wd.value('advanceMinutes'), /runEncounterTick\(/, 'the roll rides inside the advance');
-  assert.match(wd.value('advanceMinutes'), /playerTicker\.advance\(n\)/, 'and rides ON the clock, not instead of it');
-  assert.ok(wd.value('advanceMinutes').indexOf('playerTicker.advance(n)')
+  assert.match(wd.value('advanceMinutes'), /playerTicker\.advance\(n, sharedEnd\)/, 'and rides ON the clock, not instead of it');   // REST-ROUNDS: with the sub-tick's end
+  assert.ok(wd.value('advanceMinutes').indexOf('playerTicker.advance(n, sharedEnd)')
     < wd.value('advanceMinutes').indexOf('runEncounterTick('),
     'the minutes pass before the roll asks how many passed');
   // ROAD-G TAIL (2026-09-05): the ?town page HAS the pool now (ROAD-G G2
@@ -478,7 +478,7 @@ test('rest: the world host carries the ENCOUNTER roll through a rested night', (
   // one per streaming host, each riding its own rest advance.
   const ed = scan(src('scenes/exterior.js'), 'createRestDeps(playerEntity, {');
   assert.match(ed.value('advanceMinutes'), /runEncounterTick\(/, 'the fixed city rolls the rested night too');
-  assert.match(ed.value('advanceMinutes'), /playerTicker\.advance\(n\)/);
-  assert.ok(ed.value('advanceMinutes').indexOf('playerTicker.advance(n)') < ed.value('advanceMinutes').indexOf('runEncounterTick('));
+  assert.match(ed.value('advanceMinutes'), /playerTicker\.advance\(n, sharedEnd\)/);
+  assert.ok(ed.value('advanceMinutes').indexOf('playerTicker.advance(n, sharedEnd)') < ed.value('advanceMinutes').indexOf('runEncounterTick('));
   assert.deepEqual(modulesMatching(/runEncounterTick/), ['scenes/exterior.js', 'scenes/world.js']);
 });

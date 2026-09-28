@@ -7,6 +7,11 @@
 // Prints and keeps nothing. NOTHING IS EVER WRITTEN TO DISK, and
 // test/wb5b_gate_claim.test.js reads this file to keep it that way.
 //
+// GATE-KEYS (2026-09-26): THE ACCOUNT DEPLOY RUNS THIS, ONCE. Its step
+// "Mint the gate receipt pair" (.github/workflows/account-deploy.yml)
+// reads --pipe and puts both halves as Worker secrets whenever either is
+// missing, so nobody has to; by hand it is the same two `secret put`s.
+//
 //   GATE_SIGNING_KEY  the RELAY's secret, base64 PKCS8 - the key a kill
 //                     receipt is signed with (src/net/gateReceipt.js).
 //                     `npx wrangler secret put GATE_SIGNING_KEY` from
@@ -14,8 +19,10 @@
 //                     line a shell will remember.
 //   GATE_PUBLIC_KEY   base64url raw, and NOT a secret - it can verify a
 //                     receipt and cannot sign one. It is the ACCOUNT
-//                     SERVICE's (server-account/wrangler.toml [vars]),
-//                     the one party that honours a receipt.
+//                     SERVICE's, the one party that honours a receipt: a
+//                     Worker secret there too (`npx wrangler secret put
+//                     GATE_PUBLIC_KEY` from server-account/), never a var
+//                     - a var is rewritten by every deploy.
 //
 // THE MIRROR OF THE IDENTITY PAIR (tools/mintIdentityKeys.mjs): there the
 // account service signs and the relay verifies; here the relay signs,
@@ -51,7 +58,7 @@ if (process.argv.includes('--pipe')) {
 
 console.log('\n── GATE_SIGNING_KEY (secret - the RELAY: `npx wrangler secret put GATE_SIGNING_KEY` from server/) ──\n');
 console.log(priv);
-console.log('\n── GATE_PUBLIC_KEY (not secret - server-account/wrangler.toml [vars]) ──\n');
+console.log('\n── GATE_PUBLIC_KEY (not secret - the ACCOUNT SERVICE: `npx wrangler secret put GATE_PUBLIC_KEY` from server-account/) ──\n');
 console.log(pub);
 console.log(`\n(${pub.length}-char base64url public key; the private half is base64 PKCS8.)`);
 console.log('Nothing was written to disk. Both halves are this one pair: set the private one on the relay and');

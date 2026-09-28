@@ -30,7 +30,7 @@ import { swingSoundFor, SOUND, registerSwingSound } from '../src/systems/soundCl
 import { itemEnchantmentPower, armorEnchantmentMultiplier } from '../src/systems/enchanting.js';
 import { createRandomWeapon, createRandomArmor } from '../src/systems/loot.js';
 import { SKILLS } from '../src/systems/skills.js';
-import { DYE_COLORS } from '../src/characters/dyes.js';
+import { DYE_COLORS, DYE_TARGETS } from '../src/characters/dyes.js';
 import { raceByKey } from '../src/systems/races.js';
 import {
   clearVendorTextures, vendorTextureCount, isVendorArchive, vendorRecordCount, vendorTextureStandIn, hasTextureReplacement, preloadTextureRecord, preloadTextureArchive, decodedTexture,
@@ -120,8 +120,8 @@ test('RRI1 the two weapons: ItemArchersAxe (513) and ItemLightFlail (514) throug
     assert.equal(weaponTypeForItem(flail), WEAPON_TYPES.Flail);
     assert.equal(equipSoundFor(axe), SOUND.EquipAxe); assert.equal(equipSoundFor(flail), SOUND.EquipFlail);
     assert.equal(swingSoundFor(axe), SOUND.SwingMediumPitch); assert.equal(swingSoundFor(flail), SOUND.SwingMediumPitch);
-    assert.deepEqual(inventoryItemImage(axe), { archive: 513, record: 0, dye: DYE_COLORS.Iron }, 'InventoryTextureArchive is the template index; the record the template\'s');
-    assert.deepEqual(inventoryItemImage(flail, { gender: 'female', race: 'Breton' }), { archive: 514, record: 0, dye: DYE_COLORS.Steel }, 'no female archive-1 for a custom weapon');
+    assert.deepEqual(inventoryItemImage(axe), { archive: 513, record: 0, dye: DYE_COLORS.Iron, dyeTarget: DYE_TARGETS.WeaponsAndArmor }, 'InventoryTextureArchive is the template index; the record the template\'s (DYE-ICON: and the metal swatch its dye changes)');
+    assert.deepEqual(inventoryItemImage(flail, { gender: 'female', race: 'Breton' }), { archive: 514, record: 0, dye: DYE_COLORS.Steel, dyeTarget: DYE_TARGETS.WeaponsAndArmor }, 'no female archive-1 for a custom weapon');
     const doll = paperdollItemImage({ ...axe, equipSlot: EQUIP_SLOTS.RightHand }, { gender: 'male', race: 'Breton' });
     assert.deepEqual([doll.archive, doll.record, doll.dye], [513, 1, DYE_COLORS.Iron], 'an Either-hand weapon worn right takes record + 1 (ItemHelper.cs:412-414)');
     assert.equal(paperdollItemImage({ ...axe, equipSlot: EQUIP_SLOTS.LeftHand }).record, 0);
@@ -198,8 +198,8 @@ test('RRI1 InventoryTextureRecord: the chain set by material on the body\'s arch
     const her = { gender: 'female', race: 'Breton' }, him = { gender: 'male', race: 'Breton' };
     const body = (id) => armorArchive(id.gender, raceByKey(id.race).morphologyIndex);
     // the chain set: the template's archive (the body's), record by material
-    assert.deepEqual(inventoryItemImage({ group: 'Armor', templateIndex: 515, material: M.Leather }, her), { archive: body(her), record: 3, dye: DYE_COLORS.Unchanged });
-    assert.deepEqual(inventoryItemImage({ group: 'Armor', templateIndex: 515, material: M.Iron }, him), { archive: body(him), record: 7, dye: DYE_COLORS.Iron });
+    assert.deepEqual(inventoryItemImage({ group: 'Armor', templateIndex: 515, material: M.Leather }, her), { archive: body(her), record: 3, dye: DYE_COLORS.Unchanged, dyeTarget: DYE_TARGETS.WeaponsAndArmor });
+    assert.deepEqual(inventoryItemImage({ group: 'Armor', templateIndex: 515, material: M.Iron }, him), { archive: body(him), record: 7, dye: DYE_COLORS.Iron, dyeTarget: DYE_TARGETS.WeaponsAndArmor });
     assert.equal(inventoryItemImage({ group: 'Armor', templateIndex: 516, material: M.Chain }, her).record, 11, 'Chausses: chain-family materials draw 11');
     assert.equal(inventoryItemImage({ group: 'Armor', templateIndex: 516, material: M.Leather }, her).record, 10);
     assert.equal(inventoryItemImage({ group: 'Armor', templateIndex: 516, material: M.Silver }, her).record, 16);

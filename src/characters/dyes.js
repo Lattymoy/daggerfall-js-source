@@ -264,6 +264,17 @@ export function getDyeColorTable(dye, target) {
   return null;
 }
 
+/** DYE-ICON: ImageProcessing.ChangeDye over a whole indexed picture - every index through applyDyeToIndex below, into
+ *  a COPY (the cached record keeps its own, as changeMask's does). The picture as it came only for no target or no
+ *  dye: ChangeDye has no Unchanged arm, and 18 (Unchanged = Chain = Silver) on a weapon or armour is the SILVER
+ *  table - a silver sword, a chain hauberk, leather armour - never the swatch itself (a garment's 18 is). */
+export function changeDyeBitmap(bitmap, dye, target) {
+  if (!bitmap?.data || target == null || dye == null || dye === '') return bitmap;
+  const data = new Uint8Array(bitmap.data.length);
+  for (let i = 0; i < data.length; i++) data[i] = applyDyeToIndex(bitmap.data[i], dye, target);
+  return { ...bitmap, data };
+}
+
 /** Verbatim ChangeDye on a single palette index. */
 export function applyDyeToIndex(index, dye, target) {
   const start = target === DYE_TARGETS.Clothing ? 0x60 : 0x70;

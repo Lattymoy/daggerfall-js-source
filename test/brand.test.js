@@ -27,6 +27,14 @@
 // becomes a second app beside the first. Each is a move outside this
 // tree, so each is pinned as deliberately unchanged rather than left to
 // look like an oversight.
+//
+// BR4 - DAGGERFALL ONLINE (2026-09-27, Mac: "I want to rebrand Daggerfall:
+// Enhanced to Daggerfall Online across every surface of the game and
+// website. The logo attached is the new temporary logo ... (Don't forget
+// about the intro video also)"). The same surfaces again, pinned HERE
+// again: NAME below is the only line that says what the product is called,
+// and the old name is swept for in both its whole and its split forms.
+// The logo is Mac's own transparent cut, drawn with no blend mode.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -38,7 +46,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
 
 /** The name, and the one sentence that says what it is. */
-const NAME = 'Daggerfall Enhanced';
+const NAME = 'Daggerfall Online';
 const TAGLINE = 'An open-source reimplementation of The Elder Scrolls II: Daggerfall';
 
 test('BR1: every surface the player reads carries the one name', () => {
@@ -48,7 +56,7 @@ test('BR1: every surface the player reads carries the one name', () => {
   // BR3 (Mac, 2026-09-14): the landing page's wordmark is TYPE again - one
   // word over a tracked sub-line, the shape ES1's door has always had -
   // after BR2's one day as an uploaded logo.
-  assert.match(landing, /<h1 class="wordmark">Daggerfall<small>Enhanced<\/small><\/h1>/, 'the wordmark');
+  assert.match(landing, /<h1 class="wordmark">Daggerfall<small>Online<\/small><\/h1>/, 'the wordmark');
   assert.doesNotMatch(landing, /<img\s/, 'and no image stands in for it (BR3)');
   // THE WORDMARK SPLITS THE NAME ACROSS TWO ELEMENTS, so no adjacency
   // sweep can ever see it whole: the front door rendered DAGGERFALL over
@@ -60,9 +68,9 @@ test('BR1: every surface the player reads carries the one name', () => {
   // wordmark. The landing page and archived prototypes keep BR3's type.
   assert.match(read('src/ui/enhancedMenu.js'), /mark\.append\(brandMark\(\)\)/,
     'the front door uses the same accessible mark as the cinematic');
-  assert.match(read('src/ui/brandMark.js'), /Daggerfall Enhanced/);
+  assert.match(read('src/ui/brandMark.js'), new RegExp(`'The Elder Scrolls II: ${NAME}'`), 'the mark\'s own alt text');
   for (const proto of ['menu-pixel.html', 'menu-redesign.html']) {
-    assert.match(read(proto), /<h1 class="wordmark">Daggerfall<small>Enhanced<\/small><\/h1>/, `${proto}'s wordmark`);
+    assert.match(read(proto), /<h1 class="wordmark">Daggerfall<small>Online<\/small><\/h1>/, `${proto}'s wordmark`);
   }
   assert.match(landing, new RegExp(`<span>${NAME}</span>`), 'and the footer');
   assert.match(read('play/index.html'), new RegExp(`<title>${NAME}</title>`), 'the game\'s own page');
@@ -74,7 +82,7 @@ test('BR1: every surface the player reads carries the one name', () => {
   const app = JSON.parse(read('app/package.json'));
   assert.equal(app.productName, NAME, 'the desktop shell');
   assert.equal(app.build.productName, NAME, 'and what electron-builder stamps into the installer');
-  assert.match(app.build.artifactName, /^DaggerfallEnhanced-/, 'and the download\'s filename');
+  assert.match(app.build.artifactName, /^DaggerfallOnline-/, 'and the download\'s filename');
 
   const mainCjs = read('app/main.cjs');
   assert.match(mainCjs, new RegExp(`title: '${NAME}',`), 'the desktop window title');
@@ -165,4 +173,96 @@ test('BR1: what the rebrand deliberately did NOT touch, and why', () => {
   assert.match(read('app/main.cjs'),
     /else app\.setPath\('userData', path\.join\(app\.getPath\('appData'\), 'Daggerfall JavaScript'\)\);/,
     'the desktop shell keeps writing where it already wrote - a rebrand is a name, not a migration');
+});
+
+test('BR4: the intro and the doors carry the name too', () => {
+  const intro = read('src/ui/introScreen.js');
+  assert.match(intro, new RegExp(`host\\.setAttribute\\('aria-label', '${NAME} introduction'\\)`), 'what a screen reader hears as the film opens');
+  assert.match(intro, new RegExp(`'intro-title-fallback', '${NAME}'`), 'and the title the film draws if the logo cannot load');
+  assert.match(read('src/ui/enhancedMenu.js'), new RegExp(`homeMark\\.setAttribute\\('aria-label', '${NAME} — main menu'\\)`), 'the masthead\'s way home');
+  assert.match(read('src/systems/saveTransfer.js'), /TRANSFER_ZIP_NAME = 'DaggerfallOnline-Saves\.zip'/, 'the saves a player carries away are named for it');
+  assert.match(read('src/systems/customClass.js'), new RegExp(`That is not a ${NAME} class file\\.`), 'the class importer\'s refusal');
+  assert.match(read('src/ui/enhancedChargen.js'), new RegExp(`Paste it into Import on any ${NAME} character\\.`), 'and its copy note');
+  assert.match(read('SUPPORT.md'), new RegExp(`^# Support ${NAME}\\n`), 'the support page\'s first line');
+});
+
+test('BR4: the logo is Mac\u2019s transparent cut, and nothing blends it away', () => {
+  // INTRO2's logo was a JPEG on black, and every surface drew it with
+  // mix-blend-mode: screen to lose the black. The Online logo carries its
+  // own alpha and is MADE of black - the outlines round every letter, the
+  // ONLINE lettering on the banner - so screen would erase the art itself.
+  const mark = read('src/ui/brandMark.js');
+  assert.match(mark, /new URL\('\.\.\/assets\/branding\/daggerfall-online\.png', import\.meta\.url\)/, 'the one asset');
+  assert.match(mark, /image\.className = 'brand-logo';/);
+  const intro = read('src/ui/introScreen.js'), style = read('src/ui/enhancedStyle.js');
+  const introTitle = intro.match(/\.intro-title\{[^}]*\}/)[0];
+  assert.doesNotMatch(introTitle, /mix-blend-mode/, 'the film draws it as it is');
+  const logoRule = style.match(/\n\.brand-logo \{[^}]*\}/)[0];
+  assert.doesNotMatch(logoRule, /mix-blend-mode/, 'and so do the doors');
+  // The file's last 81 of 850 rows are empty canvas: the doors pull what
+  // follows up over them, as a % of the WIDTH (2112).
+  assert.match(style, /\.px-wordmark \.brand-logo, \.brand-home \.brand-logo \{ margin-bottom: calc\(-100% \* 81 \/ 2112\); \}/);
+});
+
+test('BR4: no surface still says the old name - whole, or split across a wordmark', () => {
+  // The BR1 sweep, for the name BR1 gave it. Case-sensitive, so Mac's
+  // lower-case "keep the daggerfall Enhanced title" (the landing page's
+  // and its test's quote of him) is no hit; the capitalised survivors are
+  // named below. The bible is the record of what the project was called
+  // when, and is not swept.
+  let hits = '';
+  try {
+    // Nor are the mutant records: a record's `new` is the old name ON
+    // PURPOSE - it is how tools/mutants/br4.json proves this sweep fails.
+    hits = execFileSync('git', ['grep', '-n', '-E', 'Daggerfall ?Enhanced|DaggerfallEnhanced', '--', ':!bible', ':!test/brand.test.js', ':!tools/mutants'],
+      { cwd: root, encoding: 'utf8' }).trim();
+  } catch (e) {
+    assert.equal(e.status, 1, `git grep failed: ${e.stderr || e.message}`);
+  }
+  // THE SURVIVORS ARE WORDS SOMEONE SAID OR WROTE DOWN AT THE TIME, each
+  // named: a player's Discord question (REL2), Mac's BR3 ruling as the
+  // landing test quotes it, REL2's record of the file the release
+  // actually carried, and the patch notes announcing the rename - which
+  // cannot say what the game is now called without saying what it was.
+  // None is a surface. (The sweep reads git's INDEX: the first run of
+  // this pin went green with those notes and br4.json on disk but not
+  // yet added, and red in CI on the commit that carried them.)
+  const SAID = [
+    /^test\/relwin1\.test\.js:[23]:\/\/ /,
+    /^test\/relwin1\.test\.js:9:\/\/ `artifactName`, so both wrote DaggerfallEnhanced-<v>-win-x64\.exe/,
+    /^test\/landing\.test\.js:\d+:\s*\/\/ logo to the original Daggerfall Enhanced text"\)/,
+    /^PATCH-NOTES-Daggerfall-Online\.md:\d+:- Daggerfall Enhanced is now \*\*Daggerfall Online\*\* - /,
+    /^PATCH-NOTES-Daggerfall-Online\.md:\d+:.*, so you can delete "Daggerfall Enhanced\.app" once you have moved over\.$/,
+  ];
+  const survivors = hits.split('\n').filter((l) => l && !SAID.some((re) => re.test(l))).join('\n');
+  assert.equal(survivors, '', `the old name survives:\n${survivors}`);
+
+  let split = '';
+  try {
+    split = execFileSync('git', ['grep', '-n', '-E', "<small>Enhanced</small>|el\\('small', null, 'Enhanced'\\)", '--', ':!bible', ':!test/brand.test.js', ':!tools/mutants'],
+      { cwd: root, encoding: 'utf8' }).trim();
+  } catch (e) {
+    assert.equal(e.status, 1, `git grep failed: ${e.stderr || e.message}`);
+  }
+  assert.equal(split, '', `a wordmark still spells the old name across two elements:\n${split}`);
+});
+
+test('BR4: what the rebrand deliberately did NOT touch, and why', () => {
+  // "ENHANCED" IS ALSO THE SKIN. Enhanced Plus, Enhanced lighting, the
+  // Enhanced pane: those are the port's own departures, named before and
+  // apart from the product, and they keep their names.
+  assert.match(read('src/systems/uiSkin.js'), /enhanced: 'Enhanced Plus'/, 'the UI skin is not the brand');
+  // A FILE FORMAT IS A KEY. Every class a player has exported says
+  // `daggerfall-enhanced/custom-class` inside it; rename the constant and
+  // each of those files is refused on import.
+  assert.match(read('src/systems/customClass.js'), /export const CLASS_FILE_FORMAT = 'daggerfall-enhanced\/custom-class';/,
+    'exported class files keep importing');
+  // THE ADDRESSES OTHER PEOPLE HOLD. The Patreon page and the Discord
+  // invite are accounts outside the tree, as the domain was for BR1.
+  assert.ok(read('index.html').includes('https://www.patreon.com/c/dfenhanced'), 'the Patreon page is where it is');
+  assert.ok(read('index.html').includes('https://discord.gg/dfenhanced'), 'and so is the Discord');
+  // The desktop shell's install identity and storage root, as BR1 left them.
+  assert.match(read('app/package.json'), /"appId": "dev\.daggerfalljs\.app"/, 'an update installs over the copy that is there');
+  assert.match(read('app/main.cjs'), /app\.setPath\('userData', path\.join\(app\.getPath\('appData'\), 'Daggerfall JavaScript'\)\)/,
+    'and the saves stay where they are');
 });

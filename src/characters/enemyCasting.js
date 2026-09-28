@@ -284,7 +284,7 @@ export function castEnemySpell(f, spell, {
 } = {}) {
   if (!noSpellPointCost && silenceBlocksCast(f.entity)) return false;
   if (!noSpellPointCost) {
-    const cost = calculateCastCost(spell, playerEntity).sp;
+    const cost = calculateCastCost(spell, playerEntity, { portMods: false }).sp;   // SET2: a foe's cast is priced with no port modifier of mine
     f.entity.magicka = Math.max(0, (f.entity.magicka ?? 0) - cost);
   }
   // AUDIT 62 F21: GetAimPosition (DaggerfallMissile.cs:513-525) is

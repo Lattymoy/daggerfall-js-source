@@ -686,8 +686,8 @@
   {
     "name": "GUILD1-the-mine-refusal-unmapped",
     "file": "server-account/src/index.js",
-    "old": "          return 'error' in r ? no(r.error, GUILD_STATUS[r.error] ?? 400, origin) : json(r, 200, origin);",
-    "new": "          return 'error' in r ? no(r.error, 400, origin) : json(r, 200, origin);",
+    "old": "          return 'error' in r ? no(r.error, GUILD_STATUS[r.error] ?? 400, origin) : json(await guildOrdersOf(r, who.player.id, env, subtle, nowS), 200, origin);",
+    "new": "          return 'error' in r ? no(r.error, 400, origin) : json(await guildOrdersOf(r, who.player.id, env, subtle, nowS), 200, origin);",
     "tests": [
       "test/guild1.test.js"
     ]

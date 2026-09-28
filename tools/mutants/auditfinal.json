@@ -1,0 +1,148 @@
+[
+  {
+    "name": "AUDIT-FINAL-F1-the-strip-s-pick-keeps-the-field",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "onPick: (it) => { picked = it; goldEntry = null; pickedAt = 'worn';",
+    "new": "onPick: (it) => { picked = it; pickedAt = 'worn';",
+    "tests": [
+      "test/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FINAL-F2-the-picture-keyed-by-its-kind-alone",
+    "file": "src/ui/enhancedHotbar.js",
+    "old": "${image ? `#${iconName(image.archive, image.record, image.dye, image.dyeTarget)}` : ''}",
+    "new": "",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FINAL-F2-the-dye-out-of-the-bar-s-signature",
+    "file": "src/ui/enhancedHotbar.js",
+    "old": "      + `|${v.item && v.type !== 'spell' ? itemDyeColor(v.item) ?? '' : ''}`",
+    "new": "",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FINAL-F3-the-swatch-out-of-the-floor-s-key",
+    "file": "src/ui/itemIconColor32.js",
+    "old": "  return `${img?.archive}_${img?.record}${token ? `_${token}` : ''}${dyed ? `_t${dyeTarget}d${dye}` : ''}`;",
+    "new": "  return `${img?.archive}_${img?.record}${token ? `_${token}` : ''}`;",
+    "tests": [
+      "test/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FINAL-F3-the-floor-asked-undyed",
+    "file": "src/ui/itemIconColor32.js",
+    "old": "dye: img.dye, dyeTarget: img.dyeTarget ?? null });",
+    "new": "dye: img.dye });",
+    "tests": [
+      "test/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FINAL-F4-the-offer-drawn-for-nobody",
+    "file": "src/ui/brokerWindow.js",
+    "old": "inventoryItemImage(item, wearer ?? undefined)",
+    "new": "inventoryItemImage(item)",
+    "tests": [
+      "test/set7_broker.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FINAL-F7-the-name-kept-for-as-long-as-the-body-lies",
+    "file": "src/scenes/dungeonContext.js",
+    "old": " && performance.now() - (f._killedAt ?? -Infinity) <= KILLED_BY_MS) r.v = f._killedBy;",
+    "new": ") r.v = f._killedBy;",
+    "tests": [
+      "test/audit68_dungeonctx.test.js",
+      "test/elitepscale.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FINAL-F8-a-built-room-character-let-online",
+    "file": "src/systems/testRoom.js",
+    "old": "  if (params.has('test') && testEntryById(params.get('test'))) return true;\n",
+    "new": "",
+    "tests": [
+      "test/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FINAL-F9-the-check-s-own-parse",
+    "file": "src/scenes/world.js",
+    "old": "testRoomOnlineRefused(params, { snap: bootSnap });",
+    "new": "testRoomOnlineRefused(params, { loadSlot, mostRecent: mostRecentRestorable });",
+    "tests": [
+      "test/auditset_c.test.js",
+      "test/mwearly.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FINAL-F10-the-mark-taken-only-by-a-landed-hurt",
+    "file": "src/systems/sigilSetPowers.js",
+    "old": "  _pending = landedBlow();\n",
+    "new": "  _pending = _blow;\n",
+    "tests": [
+      "test/set3_powers.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FINAL-F10-the-door-never-opens",
+    "file": "src/characters/playerEntity.js",
+    "old": "  tellDoorOpen(entity);   // AUDIT FINAL F10: first - whatever the door says below, this call is its word\n",
+    "new": "",
+    "tests": [
+      "test/set3_powers.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FINAL-F10-the-weighed-blow-never-the-door-s-word",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "else { playerBlowCameToNothing(playerEntity); audio",
+    "new": "else { audio",
+    "tests": [
+      "test/set3_powers.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FINAL-F10-the-weighed-arrow-never-the-door-s-word",
+    "file": "src/scenes/world.js",
+    "old": "} else playerBlowCameToNothing(playerEntity);   // AUDIT FINAL F10",
+    "new": "}   // AUDIT FINAL F10",
+    "tests": [
+      "test/set3_powers.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FINAL-F11-cleave-through-a-wall",
+    "file": "src/systems/sigilSetPowers.js",
+    "old": "    if (door.clear && !door.clear(struck.ai.feet, f.ai.feet)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/set3_powers.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FINAL-F12-the-ally-left-to-a-peer-s-blow",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    if (f.entity?.team === 'PlayerAlly') return false;\n    const onWatch = !foes.includes(f);",
+    "new": "    const onWatch = !foes.includes(f);",
+    "tests": [
+      "test/auditworld6b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FINAL-the-Regalia-s-fire-back-at-the-band-s-top",
+    "file": "src/systems/aetheric.js",
+    "old": "const fire = () => ({ id: 'resist', param: 'fire', value: REGALIA_FIRE_RESIST });",
+    "new": "const fire = () => ({ id: 'resist', param: 'fire', value: top('resist') });",
+    "tests": [
+      "test/set6_aetheric.test.js"
+    ]
+  }
+]

@@ -127,14 +127,17 @@ export function _resetRenownKillsForTests() { _struck = new WeakMap(); _onKill =
  *   `announce` a level the service says ROSE and the page has not said yet ("Your Renown is now N.") - against what
  *              was SAID, never against the page's level, for the same reason;
  *   `capped`   whether the hour's bound cut this report short: never at the cap's total (`max`), where there is no
- *              hour to speak of, and never for a repeat (a report already credited, answered again).
+ *              hour to speak of, and never for a repeat (a report already credited, answered again);
+ *   `xp`       RENOWN4: the track's total as the service now holds it, for the page's own bar (ui/hudRenown.js) -
+ *              null for an answer without one.
  */
 export function renownAnswer(data, sent, said = null) {
   const level = Number.isSafeInteger(data?.level) && data.level >= 1 ? data.level : null;
   const order = typeof data?.order === 'string' && data.order ? data.order : null;
   const announce = level !== null && data?.rose === true && (said === null || level > said) ? level : null;
   const capped = Number.isSafeInteger(data?.credited) && data.credited < sent && !data?.max && !data?.repeat;
-  return { level, order, announce, capped };
+  const xp = Number.isSafeInteger(data?.xp) && data.xp >= 0 ? data.xp : null;
+  return { level, order, announce, capped, xp };
 }
 
 /** The service's refusals that will not change by trying again: this character (or this build) cannot report. */

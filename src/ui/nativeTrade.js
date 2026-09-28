@@ -39,7 +39,7 @@ import { HOW_MANY_ITEMS, SPLIT_INPUT_MAX, parseSplitAmount, splitRequired } from
 import { InputMessageBoxWindow } from './inputMessageBox.js';   // DISC25-F: ...pushed as CM5 pushes it for the pack
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
-import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
+import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, fitBoxRows } from './messageBox.js';
 import {
   MODE_ACTION_ART, SELL_GOLD_ART, modeActionArt,
   tradeCost, getTradePrice, tradeDecision, sellProceeds,
@@ -64,6 +64,9 @@ import { questTransferRefused, SMALL_CART_TEMPLATE, INV_RECTS, TABS, tabAccepts 
 import { expandGuildMacros } from '../systems/guildServiceActions.js';
 import { firstName } from '../systems/talkSession.js';   // MACRO-4: %pct's shop arm
 import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
+import { lockRefuses, lockedText } from '../systems/itemLock.js';   // AUDIT MERGE-PLUS C3: the player's lock holds at this counter too
+import { isBound, boundText } from '../systems/itemBound.js';   // SS4: and so does a binding
+import { itemLongName } from '../systems/itemInfo.js';   // AUDIT MERGE-PLUS C3: the refusal names the piece
 
 /** A8: the mode action button's Hotkey is chosen by the WINDOW MODE
  *  (:325-344) - one button, four letters. Inventory mode assigns none
@@ -532,6 +535,18 @@ export class NativeTradeWindow {
    *  `from` is localItems at every one of those calls and the remote
    *  side is the staged lot, never the wagon. */
   _refuseTransfer(item) {
+    // AUDIT MERGE-PLUS C3: a LOCKED piece is not put up for sale on this skin either (LOCK1 - systems/itemLock.js, the
+    // port's own); a repair or an identify still takes it, because it comes back
+    if ((this.mode === 'Sell' || this.mode === 'SellMagic') && lockRefuses(item, 'sell')) {
+      this.box = { rows: [{ text: lockedText(itemLongName(item, { getQuest: this.hooks.getQuest ?? null })), center: true }], buttons: null };
+      return true;
+    }
+    // SS4: a BOUND piece is not put up for sale on this skin either (systems/itemBound.js); a repair or an identify still
+    // takes it, because it comes back
+    if ((this.mode === 'Sell' || this.mode === 'SellMagic') && isBound(item)) {
+      this.box = { rows: [{ text: boundText(itemLongName(item, { getQuest: this.hooks.getQuest ?? null })), center: true }], buttons: null };
+      return true;
+    }
     const refused = isSummoned(item) || questTransferRefused(item, {
       fromLocal: true, toWagon: false, getQuest: this.hooks.getQuest ?? null,
     });
@@ -737,6 +752,10 @@ export class NativeTradeWindow {
     this._clear();
     this.done = true;
   }
+
+  /** AUDIT SS: a host's teardown (a death, a building left, a load - worldModes.js `dispose?.()` over its windows) is
+   *  an exit too: OnPop's ClearSelectedItems puts back what is staged, which a window with no dispose stranded. */
+  dispose() { if (!this.done) this._close(); }
 
   /** DoModeAction -> ShowTradePopup (:954-998, :1100-1134). */
   _modeAction() {
@@ -1024,7 +1043,7 @@ export class NativeTradeWindow {
     // why this draws last and the window is not closed to show it.
     if (this.box) {
       const buttons = this.box.buttons === 'YesNo' ? [MB_BUTTONS.Yes, MB_BUTTONS.No] : [];
-      this._boxLayout = layoutMessageBox(font, this.box.rows, buttons);
+      this._boxLayout = layoutMessageBox(font, fitBoxRows(font, this.box.rows), buttons);   // SS5: a long row wraps on the screen
       drawMessageBox(renderer, m, font, this._boxLayout);
     } else this._boxLayout = null;
     if (this.inputBox) this.inputBox.draw(renderer, canvas, font);   // DISC25-F: the pushed how-many box, over the panel

@@ -50,8 +50,45 @@
  *  `wait` is AUDIT-312 F2's: a card written before CHARID1 has no
  *  character id, so it cannot be filed in the cloud YET - it is adopted
  *  the first time its character loads. That is a sentence to read, not
- *  a failure and not a button. */
-export const CLOUD_STATES = Object.freeze(['off', 'none', 'saved', 'busy', 'bad', 'wait', 'only']);
+ *  a failure and not a button.
+ *
+ *  `newer` is FIELD 2026-09-27's (Masta_Fu): the backup is a LATER save
+ *  of this slot than the one on this device - made on another device,
+ *  after this one last saved - and the line says so rather than
+ *  "Backed up", which told him his PC's older QuickSave was the safe
+ *  copy while its only button pushed that older save over the newer. */
+export const CLOUD_STATES = Object.freeze(['off', 'none', 'saved', 'busy', 'bad', 'wait', 'only', 'newer']);
+
+/**
+ * FIELD 2026-09-27 — IS THE BACKUP A LATER SAVE OF THIS SLOT?
+ *
+ * Masta_Fu backed up his PC's QuickSave, restored it on his Mac, played
+ * on, saved and backed up again. On the PC the backup matched the local
+ * slot by its identity (character, save name), so the tile read
+ * "Backed up" and offered only "Back up again" - which pushes the PC's
+ * OLDER save over the Mac's newer one. Nothing ever compared the two.
+ *
+ * A DIFFERENT SAVE is SP1's own identity law (saveTransfer.js
+ * `sameSave`): the same slot at a different GAME MINUTE is a different
+ * save. A LATER one is the one saved later in the world, by the clocks
+ * that stamped each save (`realTime`, ms). This names the fact for the
+ * player and decides nothing - bible ACC2 D5 refused a sync that takes
+ * the newer by itself, and it still does: the restore is the player's
+ * press (ui/enhancedMenu.js), and `pullSlot` never overwrites a slot.
+ *
+ * @param {{gameTime?: number, realTime?: number}|null|undefined} card  the service's row
+ * @param {{gameTime?: number, realTime?: number}|null|undefined} local  this device's slot's `dateAndTime`
+ */
+export function newerBackup(card, local) {
+  const g = card?.gameTime, lg = local?.gameTime;
+  // the same save (or one side's minute unknown - a card from before ACC2 carried it, a caller with no local
+  // time handed none) is never "newer": it reads as it always read
+  if (!Number.isFinite(g) || !Number.isFinite(lg) || g === lg) return false;
+  // LATER BY EITHER CLOCK (the pre-merge audit, 0927b B6): `realTime` is two devices' clocks, and a PC two hours fast
+  // read the Mac's newer game as the older one - "Backed up", and the one-press upload over it again. The world's own
+  // clock (the game minute) cannot be skewed. Either saying "later" names it and guards the upload.
+  return (card?.realTime ?? 0) > (local?.realTime ?? 0) || g > lg;
+}
 
 /**
  * ═══ THE CLOUD LINE'S STATE, DECIDED WHERE NODE CAN REACH IT ═══════
@@ -71,15 +108,17 @@ export const CLOUD_STATES = Object.freeze(['off', 'none', 'saved', 'busy', 'bad'
  * @param {object} [q]
  * @param {boolean} [q.signedIn]     there is an account on this device
  * @param {string|null} [q.characterId]  CHARID1's id, or null on a legacy card
- * @param {{bytes?: number, updatedAt?: number}|null} [q.card]  the service's own row for this slot
+ * @param {{bytes?: number, updatedAt?: number, gameTime?: number, realTime?: number}|null} [q.card]  the service's own row for this slot
  * @param {boolean} [q.busy]         a push is in flight for THIS slot
  * @param {string|null} [q.error]    the refusal the last push for THIS slot ended in
  * @param {number} [q.nowS]          seconds, as the card's `updatedAt` is
  * @param {boolean} [q.local]        ACC2c: is there a slot on THIS DEVICE under this card? Default true,
  *        so every caller written before that slice reads exactly what it read.
+ * @param {{gameTime?: number, realTime?: number}|null} [q.localTime]  FIELD 2026-09-27: when this device's slot
+ *        was saved (its SaveInfo `dateAndTime`) - a later save in the backup is `newer`. Absent, it reads as before.
  * @returns {{state: string, when: string|null, error: string|null}}
  */
-export function cloudStateOf({ signedIn = false, characterId = null, card = null, busy = false, error = null, nowS = 0, local = true } = {}) {
+export function cloudStateOf({ signedIn = false, characterId = null, card = null, busy = false, error = null, nowS = 0, local = true, localTime = null } = {}) {
   if (!signedIn) return { state: 'off', when: null, error: null };
   // ACC2c — A CARD WITH NO SAVE UNDER IT IS ITS OWN LADDER, kept whole
   // rather than threaded through the one below, because every rung of
@@ -105,7 +144,11 @@ export function cloudStateOf({ signedIn = false, characterId = null, card = null
   // A card alone is an upload that died between the row and the blob,
   // and the service keeps that visible on purpose - reading it as a
   // backup is how a player trusts a restore that cannot happen.
-  if (card && (card.bytes ?? 0) > 0) return { state: 'saved', when: agoText(card.updatedAt, nowS), error: null };
+  if (card && (card.bytes ?? 0) > 0) {
+    // FIELD 2026-09-27: a LATER save of this slot is not "Backed up" - it is the other device's newer game
+    if (newerBackup(card, localTime)) return { state: 'newer', when: agoText(card.updatedAt, nowS), error: null };
+    return { state: 'saved', when: agoText(card.updatedAt, nowS), error: null };
+  }
   return { state: 'none', when: null, error: null };
 }
 
@@ -281,6 +324,9 @@ export function saveTile(doc, save, { actions = [], cloud = null, face = null, c
       // under a tile whose only copy is the backup would be telling a
       // player they have two of something they have one of.
       only: cloud.when ? `Only in your backup · ${cloud.when}` : 'Only in your backup',
+      // FIELD 2026-09-27: the backup is a LATER save of this slot, from another device - the line says which copy
+      // is ahead, because "Backed up" here told a player his older save was the safe one.
+      newer: cloud.when ? `Newer backup · ${cloud.when}` : 'Newer backup',
     }[state];
     bar.append(el('span', 'svsay', said));
     for (const a of cloud.actions ?? []) bar.append(actionButton(el, a));

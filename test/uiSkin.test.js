@@ -87,37 +87,38 @@ test('a corrupt stored value falls to the default, never throws', () => {
 // FD1 (2026-09-11): the classic SettingsWindow and its footer are
 // DELETED; the classic skin opens on this same door with the Begin
 // rail, and the way back is the door's own switch - the pin below.
-test('FD1: the CLASSIC skin opens on the same door, whose switch is its way back', () => {
+test('FD1: the CLASSIC skin opens on the same door, whose Overhauls page is its way back', () => {
   const src = readFileSync(new URL('../src/ui/enhancedMenu.js', import.meta.url), 'utf8');
   assert.match(src, /const SECTIONS_CLASSIC = \['Begin', 'Online', 'Settings', 'Features', 'Overhauls', 'About'\]/);   // OVH1   // FT16
   assert.match(src, /sections = mode === 'pause' \? SECTIONS_PAUSE : isEnhanced\(\) \? SECTIONS_BOOT : SECTIONS_CLASSIC;/);
   assert.ok(!existsSync(new URL('../src/ui/settingsWindow.js', import.meta.url)), 'the keyed screen is gone');
 });
 
-test('the ENHANCED menu carries a way back to classic - on the door itself (U62), and in settings', () => {
-  // the screen moved to src/ui/ when the game started mounting it;
-  // src/tools/enhancedMenu.js is the prototype HOST now and carries
-  // no screen of its own
+test('MENU-TOGGLE: the menu\'s Enhanced/Classic toggle is retired - the door\'s pair, the Settings row and its help are gone, and the interface is chosen on the Overhauls page alone, which every rail carries (mutants: the pair back on the door, the row back in Interface)', () => {
+  // U62 (Mac, 2026-08-27: "make it more loud") put a switch under the brand and on the home's foot, beside the
+  // Settings row; MENU-TOGGLE (2026-09-26, Mac: "We really need to remove the enhanced/classic menu toggle and ensure
+  // all the UI is linked up properly") retired all three. PLUS-ONLY had already made the UI Overhaul card the choice
+  // of the three looks (Classic, Enhanced Plus, GrimoireUI), and a second switch offering two of them drifted from it.
   const src = readFileSync(new URL('../src/ui/enhancedMenu.js', import.meta.url), 'utf8');
-  assert.match(src, /function skinRow\(\)/);
-  // U62 (Mac: "make it more loud"): ONE door for every control that
-  // switches - switchSkin stores and reloads without the override -
-  // and the brand block draws the switch where the word ENHANCED sat.
-  assert.match(src, /export function switchSkin\(to = otherSkin\(uiSkin\(\)\)\) \{/);
-  assert.match(src, /setUiSkin\(to\);/);
-  assert.match(src, /searchParams\.delete\('skin'\)/);
-  assert.equal((src.match(/searchParams\.delete\('skin'\)/g) ?? []).length, 1, 'one place drops the override: switchSkin');
-  assert.match(src, /b\.onclick = \(\) => switchSkin\(\);/, 'the settings row uses it');
-  assert.match(src, /export function skinSwitch\(\) \{/);
-  assert.match(src, /brand\.append\(skinSwitch\(\)\);/, 'the switch sits under the brand');
-  assert.doesNotMatch(src, /brand\.append\(el\('div', 'sub', 'Enhanced'\)\)/, 'the word alone is gone - it is the control now');
-  assert.match(src, /for \(const skin of \['enhanced', 'classic'\]\)/, 'both skins are shown, always');
-  assert.match(src, /b\.setAttribute\('aria-pressed', String\(skin === current\)\);/, 'the one in effect is pressed');
-  assert.match(src, /if \(skin !== current\) switchSkin\(skin\);/, 'pressing the other switches; the lit one is inert');
-  assert.match(src, /el\('div', 'skinhint', 'switch anytime'\)/, 'and it says it can be switched');
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
+  for (const gone of [/function skinSwitch\(/, /function switchSkin\(/, /function skinRow\(/, /'ui:skin'/, /'switch anytime'/, /skinopt/]) {
+    assert.doesNotMatch(code, gone, `${gone} is retired`);
+  }
+  assert.match(code, /foot\.append\(build, about\);/, 'the home\'s foot: build and About');
+  assert.doesNotMatch(code, /brand\.append\(skin/, 'nothing under the brand but the brand');
+  // every rail carries the one door
+  for (const rail of ['SECTIONS_BOOT', 'SECTIONS_CLASSIC', 'SECTIONS_PAUSE']) {
+    assert.match(src, new RegExp(`const ${rail} = \\[[^\\]]*'Overhauls'`), `${rail} carries Overhauls`);
+  }
+  assert.match(code, /overhauls: paneOverhauls,/);
+  // and the door's law has one home: the UI card's choice stores the skin and reloads, carrying a refused write on
+  // the URL (SKIN-CARRY)
+  const ovh = readFileSync(new URL('../src/systems/overhauls.js', import.meta.url), 'utf8');
+  assert.match(ovh, /if \(setUiSkin\(skin\) === null\) url\.searchParams\.set\('skin', skin\);/);
+  assert.equal((src.match(/setUiSkin\(/g) ?? []).length, 0, 'the menu writes no skin of its own');
   const css = readFileSync(new URL('../src/ui/enhancedStyle.js', import.meta.url), 'utf8');
-  assert.match(css, /\.skinopt\.on \{ color: var\(--brass\); border-color: var\(--brass\)/, 'the one in effect is brass');
-  assert.match(css, /\.skinopt \{ min-height: 44px; padding: 8px 14px; \}/, 'a thumb\'s target on a phone');
+  assert.doesNotMatch(css, /\.skinopt|\.skinswitch/, 'no rule for a control that is gone');
+  assert.match(css, /\.px-foot \.px-about \{ grid-column: 3; \}/, 'About keeps the right of the foot');
 });
 
 

@@ -1,0 +1,51 @@
+[
+  {
+    "name": "SQUEEZE1-no-body-is-tall",
+    "file": "src/player/collider.js",
+    "old": "    const tall = height > RIDE_HEIGHT || !!this._keepFloor;",
+    "new": "    const tall = false;",
+    "tests": ["test/squeeze1.test.js"]
+  },
+  {
+    "name": "SQUEEZE1-the-floor-never-read",
+    "file": "src/player/collider.js",
+    "old": "        if (lo.grounded) lowFloor = low[1];\n",
+    "new": "",
+    "tests": ["test/squeeze1.test.js"]
+  },
+  {
+    "name": "SQUEEZE1-the-head-push-keeps-the-last-word",
+    "file": "src/player/collider.js",
+    "old": "    if (feet[1] < floorFeet) feet[1] = floorFeet;",
+    "new": "",
+    "tests": ["test/squeeze1.test.js"]
+  },
+  {
+    "name": "SQUEEZE1-the-revert-sinks-it",
+    "file": "src/player/collider.js",
+    "old": "feet[1] = Math.max(entryY, floorFeet); break;",
+    "new": "feet[1] = entryY; break;",
+    "tests": ["test/squeeze1.test.js"]
+  },
+  {
+    "name": "SQUEEZE1-grounded-not-merged",
+    "file": "src/player/collider.js",
+    "old": "        out.grounded = out.grounded || lo.grounded;\n",
+    "new": "",
+    "tests": ["test/squeeze1.test.js"]
+  },
+  {
+    "name": "SQUEEZE1-held-in-the-air",
+    "file": "src/player/collider.js",
+    "old": "        if (lo.grounded) lowFloor = low[1];",
+    "new": "        lowFloor = Math.max(lowFloor, low[1]);",
+    "tests": ["test/squeeze1.test.js"]
+  },
+  {
+    "name": "SQUEEZE1-the-player-tall-too",
+    "file": "src/player/collider.js",
+    "old": "    const tall = height > RIDE_HEIGHT || !!this._keepFloor;",
+    "new": "    const tall = height > 1;",
+    "tests": ["test/squeeze1.test.js"]
+  }
+]

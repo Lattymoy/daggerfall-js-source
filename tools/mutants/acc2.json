@@ -162,8 +162,8 @@
   {
     "name": "ACC2b-17-already-here-is-reported-as-a-failure",
     "file": "src/systems/cloudSaves.js",
-    "old": "  if (r.skipped) return { ok: true, key: null, skipped: true };",
-    "new": "  if (false) return { ok: true, key: null, skipped: true };",
+    "old": ": r.skipped ? { ok: true, key: null, skipped: true } : null;",
+    "new": ": false ? { ok: true, key: null, skipped: true } : null;",
     "tests": [
       "test/cloudsaves.test.js"
     ],

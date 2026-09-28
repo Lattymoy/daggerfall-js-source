@@ -31,7 +31,7 @@ export const LABELS = Object.freeze({
   "Controls/JoystickCursorSensitivity": "Gamepad Cursor Speed",
   "Controls/JoystickDeadzone": "Gamepad Stick Deadzone",
   "Controls/JoystickLookSensitivity": "Gamepad Look Speed",
-  "Controls/JoystickMovementThreshold": "Gamepad Movement Deadzone",
+  "Controls/JoystickMovementThreshold": "Gamepad Movement Threshold",
   "Controls/MouseLookSensitivity": "Mouse Sensitivity",
   "Controls/MouseLookSmoothingFactor": "Look Smoothing",
   "Controls/MovementAcceleration": "Gradual Start And Stop",

@@ -47,8 +47,8 @@
   {
     "name": "AD-A1-resource-set-not-compared",
     "file": "src/systems/questShare.js",
-    "old": "    if (!r || typeof r !== 'object' || !want.has(r.symbol?.original) || want.get(r.symbol?.original) !== r.type) return 'resource';",
-    "new": "    if (!r || typeof r !== 'object') return 'resource';",
+    "old": "    if (want.has(sym)) { if (want.get(sym) !== r.type) return 'resource'; continue; }",
+    "new": "    continue;",
     "tests": [
       "test/auditdrops.test.js"
     ]
@@ -221,8 +221,8 @@
   {
     "name": "AD-C1-seen-moves-on-a-refused-share",
     "file": "src/scenes/world.js",
-    "old": "      if (prepared.ok && socialLink()?.shareQuest({ questName: prepared.questName, displayName: prepared.displayName, data: prepared.data })) _questSyncSeen.set(questName, count);",
-    "new": "      _questSyncSeen.set(questName, count);\n      if (prepared.ok) socialLink()?.shareQuest({ questName: prepared.questName, displayName: prepared.displayName, data: prepared.data });",
+    "old": "      if (prepared.ok && socialLink()?.shareQuest({ questName: prepared.questName, displayName: prepared.displayName, data: { ...prepared.data, sync: 1 } })) _questSyncSeen.set(questName, count);",
+    "new": "      _questSyncSeen.set(questName, count);\n      if (prepared.ok) socialLink()?.shareQuest({ questName: prepared.questName, displayName: prepared.displayName, data: { ...prepared.data, sync: 1 } });",
     "tests": [
       "test/auditdrops.test.js"
     ]
@@ -369,8 +369,8 @@
   {
     "name": "AD-F-quest-frame-cap-loosened-at-the-door",
     "file": "src/net/wire.js",
-    "old": "export function frameCap(text) { return text.startsWith(WORLD_PREFIX) ? WORLD_FRAME_MAX : text.startsWith(FOES_PREFIX) ? FOES_FRAME_MAX : text.startsWith(QUEST_PREFIX) ? QUEST_FRAME_MAX : MAX_FRAME_BYTES; }",
-    "new": "export function frameCap(text) { return text.startsWith(WORLD_PREFIX) ? WORLD_FRAME_MAX : text.startsWith(FOES_PREFIX) ? FOES_FRAME_MAX : text.startsWith(QUEST_PREFIX) ? QUEST_FRAME_MAX * 4 : MAX_FRAME_BYTES; }",
+    "old": "export function frameCap(text) { return text.startsWith(WORLD_PREFIX) ? WORLD_FRAME_MAX : text.startsWith(FOES_PREFIX) || text.startsWith(OWN_PREFIX) ? FOES_FRAME_MAX : text.startsWith(QUEST_PREFIX) ? QUEST_FRAME_MAX : MAX_FRAME_BYTES; }",
+    "new": "export function frameCap(text) { return text.startsWith(WORLD_PREFIX) ? WORLD_FRAME_MAX : text.startsWith(FOES_PREFIX) || text.startsWith(OWN_PREFIX) ? FOES_FRAME_MAX : text.startsWith(QUEST_PREFIX) ? QUEST_FRAME_MAX * 4 : MAX_FRAME_BYTES; }",
     "tests": [
       "test/auditdrops.test.js"
     ],

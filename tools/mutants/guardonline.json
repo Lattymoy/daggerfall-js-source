@@ -1,0 +1,72 @@
+[
+  {
+    "name": "GUARDONLINE-offline-too",
+    "file": "src/systems/quest/actions.js",
+    "old": "const win = this.parentQuest.hooks?.sharedClock?.() ? ONLINE_GUARD_WINDOWS[this.parentQuest.questName] ?? null : null;",
+    "new": "const win = ONLINE_GUARD_WINDOWS[this.parentQuest.questName] ?? null;",
+    "tests": ["test/guardonline.test.js"]
+  },
+  {
+    "name": "GUARDONLINE-never-online",
+    "file": "src/systems/quest/actions.js",
+    "old": "const win = this.parentQuest.hooks?.sharedClock?.() ? ONLINE_GUARD_WINDOWS[this.parentQuest.questName] ?? null : null;",
+    "new": "const win = null;",
+    "tests": ["test/guardonline.test.js"]
+  },
+  {
+    "name": "GUARDONLINE-the-place-not-read",
+    "file": "src/systems/quest/actions.js",
+    "old": "return guardWindowStep(this, !!place?.isPlayerHere?.(), this.parentQuest.nowSeconds?.() ?? 0, win);",
+    "new": "return guardWindowStep(this, true, this.parentQuest.nowSeconds?.() ?? 0, win);",
+    "tests": ["test/guardonline.test.js"]
+  },
+  {
+    "name": "GUARDONLINE-no-delay",
+    "file": "src/systems/quest/onlineGuard.js",
+    "old": "  return t >= win.delaySeconds;\n",
+    "new": "  return t >= 0;\n",
+    "tests": ["test/guardonline.test.js"]
+  },
+  {
+    "name": "GUARDONLINE-reopens-while-staying",
+    "file": "src/systems/quest/onlineGuard.js",
+    "old": "    if (!s.guardAway) return false;   // still in the hall since it closed: shut, so the questor can pay\n",
+    "new": "",
+    "tests": ["test/guardonline.test.js"]
+  },
+  {
+    "name": "GUARDONLINE-never-reopens",
+    "file": "src/systems/quest/onlineGuard.js",
+    "old": "    s.guardAnchor = now;   // back after it closed: a new watch\n",
+    "new": "",
+    "tests": ["test/guardonline.test.js"]
+  },
+  {
+    "name": "GUARDONLINE-starts-without-arriving",
+    "file": "src/systems/quest/onlineGuard.js",
+    "old": "    if (!here) return false;\n    s.guardAnchor = now;   // the arrival\n",
+    "new": "    s.guardAnchor = now;   // the arrival\n",
+    "tests": ["test/guardonline.test.js"]
+  },
+  {
+    "name": "GUARDONLINE-the-window-an-hour-short",
+    "file": "src/systems/quest/onlineGuard.js",
+    "old": "N0B10Y03: Object.freeze({ place: 'magesguild', delaySeconds: 10 * 60, lengthSeconds: 60 * 60 }),",
+    "new": "N0B10Y03: Object.freeze({ place: 'magesguild', delaySeconds: 10 * 60, lengthSeconds: 30 * 60 }),",
+    "tests": ["test/guardonline.test.js"]
+  },
+  {
+    "name": "GUARDONLINE-not-saved",
+    "file": "src/systems/quest/actions.js",
+    "old": "get saveShape() { return [['minDailySeconds'], ['maxDailySeconds'], ['guardAnchor'], ['guardAway']]; }",
+    "new": "get saveShape() { return [['minDailySeconds'], ['maxDailySeconds']]; }",
+    "tests": ["test/guardonline.test.js"]
+  },
+  {
+    "name": "GUARDONLINE-machine-says-offline",
+    "file": "src/systems/quest/machine.js",
+    "old": "      sharedClock: () => !!this.deps.sharedClock?.(),",
+    "new": "      sharedClock: () => false,",
+    "tests": ["test/guardonline.test.js"]
+  }
+]

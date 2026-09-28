@@ -38,6 +38,9 @@
    "name": "Acrobat",
    "gender": "female",
    "bow": false,
+   "scale": {
+    "16": 0.7363636363636363
+   },
    "frames": [
     4,
     4,

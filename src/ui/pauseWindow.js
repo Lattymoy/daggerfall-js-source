@@ -183,7 +183,7 @@ export class PauseOptionsWindow {
     // GameManager.cs:515-518, and ActionComplete is the RELEASE edge
     // (InputManager.cs:634-637) - so its opening release is spent before
     // the window exists and :186's bare `GetKeyUp` is safe there. Every
-    // host here opens on the key DOWN (world.js:8778, exterior.js:3125,
+    // host here opens on the key DOWN (world.js:8961, exterior.js:3136,
     // ui/input.js:598) and then routes that same key's release into the
     // window it just mounted, so the release door closes only a window
     // whose own press it saw.
@@ -252,7 +252,7 @@ export class PauseOptionsWindow {
     this.isCloseWindowDeferred = false;
     this._click();   // ContinueButton's sound, which this port's two close doors share
     this._closeWith();
-    // MAC1 J, the classic twin (ui/pauseDoor.js:286-306): the close runs
+    // MAC1 J, the classic twin (ui/pauseDoor.js:141-163): the close runs
     // inside this click/keyup, the activation requestPointerLock needs.
     this.hooks.relock?.();
   }
@@ -269,7 +269,7 @@ export class PauseOptionsWindow {
     if (inRect(R.continue, vx, vy)) {
       this._click();
       this._closeWith();
-      // MAC1 J, the classic twin (ui/pauseDoor.js:286-306): the close runs
+      // MAC1 J, the classic twin (ui/pauseDoor.js:141-163): the close runs
       // inside this click/keyup, the activation requestPointerLock needs.
       // On the RESUME exits, never on the shared `_closeWith`: the SAVE
       // and LOAD arms below travel it to OPEN the slot window, and the
@@ -410,7 +410,7 @@ export class PauseOptionsWindow {
     // the version line, right-aligned at the top (:146-152) - the
     // PORT's identity, not DFU's VersionInfo strings (Ledger A, THE
     // PAUSE WINDOW'S VERSION LINE IS THE PORT'S OWN BUILD TAG)
-    const ver = `Daggerfall Enhanced ${BUILD_TAG}`;   // BR1: the PRODUCT's name here, not the working name - this line is the whole of the branding surface a player sees in game
+    const ver = `Daggerfall Online ${BUILD_TAG}`;   // BR1: the PRODUCT's name here, not the working name - this line is the whole of the branding surface a player sees in game
     shadowText(renderer, font, ver, m, 320 - 2 - measureText(font.fnt, ver), 2,
       { color: [0.75, 0.75, 0.75, 1] });
     // the stacked box (exit confirm / note), the U23 shape: laid out
@@ -498,7 +498,7 @@ export function openClassicPauseFlow(show, hooks = {}) {
     // MAC1 J: a COMPLETED save or load drains the whole stack back to
     // the HUD, inside the slot window's own click - so this exit is a
     // resume too, and the enhanced twin relocks on exactly it
-    // (ui/pauseDoor.js:301 fires for 'save' and 'load', not 'exit').
+    // (ui/pauseDoor.js:158 fires for 'save' and 'load', not 'exit').
     popToHUD: push ? () => { win?._closeWith(); hooks.relock?.(); } : null,
     ...extra,
   });

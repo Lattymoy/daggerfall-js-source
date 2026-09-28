@@ -1,9 +1,9 @@
 {
   "name": "daggerfall-js-app",
-  "productName": "Daggerfall Enhanced",
+  "productName": "Daggerfall Online",
   "private": true,
   "version": "0.1.0",
-  "description": "Daggerfall Enhanced - the downloadable desktop shell. Loads the same dist/ the website deploys; adds ARENA2-from-disk and file-backed saves.",
+  "description": "Daggerfall Online - the downloadable desktop shell. Loads the same dist/ the website deploys; adds ARENA2-from-disk and file-backed saves.",
   "author": "Lattymoy",
   "homepage": "https://daggerfalljs.dev/",
   "repository": {
@@ -22,8 +22,8 @@
   },
   "build": {
     "appId": "dev.daggerfalljs.app",
-    "productName": "Daggerfall Enhanced",
-    "artifactName": "DaggerfallEnhanced-${version}-${os}-${arch}.${ext}",
+    "productName": "Daggerfall Online",
+    "artifactName": "DaggerfallOnline-${version}-${os}-${arch}.${ext}",
     "directories": {
       "output": "release"
     },
@@ -58,13 +58,13 @@
       ]
     },
     "nsis": {
-      "artifactName": "DaggerfallEnhanced-${version}-win-${arch}-setup.${ext}",
+      "artifactName": "DaggerfallOnline-${version}-win-${arch}-setup.${ext}",
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "perMachine": false
     },
     "portable": {
-      "artifactName": "DaggerfallEnhanced-${version}-win-${arch}-portable.${ext}"
+      "artifactName": "DaggerfallOnline-${version}-win-${arch}-portable.${ext}"
     },
     "mac": {
       "target": [

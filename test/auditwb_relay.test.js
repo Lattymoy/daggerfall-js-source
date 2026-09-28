@@ -6,10 +6,12 @@
 // section 11.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { newFight, joinFight, freeSeat, applyHit, BUCKET_DEPTH_X, dpsRef, GATE_FIGHTERS_MAX, COURT_CENTRE, BRAIN_TICK_MS, HIT_KINDS } from '../src/net/gateBrain.js';
+import { newFight, joinFight, freeSeat, applyHit, BUCKET_DEPTH_X, dpsRef, GATE_FIGHTERS_MAX, COURT_CENTRE, BRAIN_TICK_MS, HIT_KINDS, RECEIPT_SHARE, SEAT_KEEP_MS } from '../src/net/gateBrain.js';
 import { readReceipt } from '../src/net/gateReceipt.js';
 import { gateTimes, gateRoomKey } from '../src/net/gateLaw.js';
-import { SOCKETS_MAX, HELLO_WAIT_MS, CLOSE_BUSY, CLOSE_REPLACED, GATE_TELL_RETRY_MS, gateReceiptKey, SOCIAL_ROOM } from '../src/net/wire.js';
+import {
+  SOCKETS_MAX, HELLO_WAIT_MS, CLOSE_BUSY, CLOSE_REPLACED, GATE_TELL_RETRY_MS, gateReceiptKey, SOCIAL_ROOM, GATE_BRAIN_V, GATE_HERE_HOLD_MS,
+} from '../src/net/wire.js';
 import { fakeRoom, fakeRooms } from './fakeRoom.mjs';
 
 const DAY = 200;
@@ -81,7 +83,8 @@ test('AUDIT WB A1 a full fight frees a seat left idle - never one present, never
   const f = newFight(7, 0, 10_000_000, 'ruhn');
   for (let i = 0; i < GATE_FIGHTERS_MAX; i++) assert.ok(joinFight(f, `s${i}`, `P${i}`, 10, 0, true));
   f.hp = f.max * 0.5;
-  f.players.s0.dealt = 5; f.players.s1.stoodMs = 1000;
+  // AUDIT WBX R2: a part worth a seat - a blow worth RECEIPT_SHARE of its share, or SEAT_KEEP_MS stood
+  f.players.s0.dealt = RECEIPT_SHARE * f.players.s0.share; f.players.s1.stoodMs = SEAT_KEEP_MS;
   const everyone = new Set(Object.keys(f.players));
   assert.equal(joinFight(f, 'late', 'L', 10, 0, true, everyone), false, 'all present: full');
   assert.equal(joinFight(f, 'late', 'L', 10, 0, true), false, 'no word of who is present: nothing freed');
@@ -97,17 +100,22 @@ test('AUDIT WB A1 a full fight frees a seat left idle - never one present, never
   assert.equal(Object.keys(f.players).length, GATE_FIGHTERS_MAX);
   assert.equal(freeSeat(f, new Set()), true);
   assert.equal(freeSeat({ players: {}, threat: {}, max: 0, hp: 0 }, new Set()), false);
+  // AUDIT WBX R2: one beat stood, or one blow of nothing, holds no seat - 256 throwaway accounts held the court for the day
+  const g = newFight(7, 0, 10_000_000, 'ruhn');
+  for (let i = 0; i < GATE_FIGHTERS_MAX; i++) joinFight(g, `h${i}`, `H${i}`, 10, 0, true);
+  for (const p of Object.values(g.players)) { p.stoodMs = 250; p.dealt = 1e-300; }
+  assert.ok(joinFight(g, 'honest', 'Honest', 10, 0, true, new Set()), 'a hog\'s seat is freed for an honest fighter');
 });
 
 test('AUDIT WB A1 the court tells the fight who is in it: a newcomer to a full fight takes the seat of one gone, never of one here', async () => {
   await withGate(async ({ r, say }) => {
     const a = r.connect(); await r.hello(a, 'peer-0001', at(0, 3));
-    await say(a, { k: 'in', lv: 10 });
+    await say(a, { k: 'in', lv: 10, bv: GATE_BRAIN_V });
     const f = r.room._fight;
     for (let i = 0; f && Object.keys(f.players).length < GATE_FIGHTERS_MAX; i++) joinFight(f, `gone-${i}`, 'G', 10, 0, true);
     assert.equal(Object.keys(f.players)[0], 'acct-peer-0001', 'the one here is the first seat - idle, as a fresh fighter is');
     const b = r.connect(); await r.hello(b, 'peer-0002', at(0, 3));
-    await say(b, { k: 'in', lv: 10 });
+    await say(b, { k: 'in', lv: 10, bv: GATE_BRAIN_V });
     assert.equal(gates(b, 'no').length, 0, 'admitted - the court is not full of the gone');
     assert.ok(f.players['acct-peer-0001'], 'the one here kept');
     assert.ok(f.players['acct-peer-0002']);
@@ -135,12 +143,12 @@ test('AUDIT WB A3 an `in` said again (every welcome says one) writes nothing; a 
     const put = r.state.storage.put.bind(r.state.storage);
     r.state.storage.put = async (k, v) => { if (k === 'gatefight') writes++; return put(k, v); };
     const a = r.connect(); await r.hello(a, 'peer-0001', at(0, 3));
-    await say(a, { k: 'in', lv: 10 });
+    await say(a, { k: 'in', lv: 10, bv: GATE_BRAIN_V });
     assert.equal(writes, 1, 'the newcomer kept');
-    for (let i = 0; i < 5; i++) await say(a, { k: 'in', lv: 10 });
+    for (let i = 0; i < 5; i++) await say(a, { k: 'in', lv: 10, bv: GATE_BRAIN_V });
     assert.equal(writes, 1, 'the same fighter again: nothing to keep');
     const b = r.connect(); await r.hello(b, 'peer-0002', at(0, 3));
-    await say(b, { k: 'in', lv: 10 });
+    await say(b, { k: 'in', lv: 10, bv: GATE_BRAIN_V });
     assert.equal(writes, 2);
   });
 });
@@ -150,7 +158,7 @@ test('AUDIT WB A10 the kill is kept before it is said, and the hub is told until
     const hub = world.room(SOCIAL_ROOM);
     const h = hub.connect(); await hub.hello(h, 'peer-0009');
     const a = r.connect(); await r.hello(a, 'peer-0001', at(0, 3));
-    await say(a, { k: 'in', lv: 10 });
+    await say(a, { k: 'in', lv: 10, bv: GATE_BRAIN_V });
     await tick(2);
     // the order: when the fight is written with its kill, nothing of the kill has been said
     let saidAtWrite = null;
@@ -184,7 +192,7 @@ test('AUDIT WB A4 the hub keeps each account\'s receipt for its life and hands i
   await withGate(async ({ world, r, tick, say, set, now }) => {
     const hub = world.room(SOCIAL_ROOM);
     const a = r.connect(); await r.hello(a, 'peer-0001', at(0, 3));
-    await say(a, { k: 'in', lv: 10 });
+    await say(a, { k: 'in', lv: 10, bv: GATE_BRAIN_V });
     await tick(2);
     r.room._fight.players['acct-peer-0001'].stoodMs = 1e9;   // stood the whole fight
     r.room._fight.hp = 1;
@@ -192,7 +200,7 @@ test('AUDIT WB A4 the hub keeps each account\'s receipt for its life and hands i
     const mine = gates(a, 'rcpt')[0]?.r;
     assert.ok(mine, 'earned');
     const kept = hub.store.get(gateReceiptKey('acct-peer-0001'));
-    assert.deepEqual(kept, { d: DAY, r: mine, e: readReceipt(mine).e });
+    assert.deepEqual(kept, { d: DAY, r: mine, e: readReceipt(mine).e, hold: now() + GATE_HERE_HOLD_MS }, 'kept - AUDIT WBX2 M4: and held from their hellos while their own court spends it');
     // away when it was said: the next hub hello - hours later, the gate long gone - is handed it
     set(TT.wrathAt + 3 * 3600_000);
     const back = hub.connect(); await hub.hello(back, 'peer-0001', null, { name: 'peer-0001b' });

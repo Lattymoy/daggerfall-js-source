@@ -1,0 +1,344 @@
+[
+  {
+    "name": "AUDIT-DECOR-SHELL-1-an-uncut-step-unkept",
+    "file": "src/scenes/decorTool.js",
+    "old": "  if (!first.normal) return flyKeep(collider, from, first.at, skip);",
+    "new": "  if (!first.normal) return first.at;",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-1-the-slid-end-unkept",
+    "file": "src/scenes/decorTool.js",
+    "old": "  return flyKeep(collider, from, cut(first.at, [first.at[0] + slide[0], first.at[1] + slide[1], first.at[2] + slide[2]]).at, skip);",
+    "new": "  return cut(first.at, [first.at[0] + slide[0], first.at[1] + slide[1], first.at[2] + slide[2]]).at;",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-1-the-push-gone",
+    "file": "src/scenes/decorTool.js",
+    "old": "  if (typeof collider._resolveSphere === 'function') {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-1-the-push-through-nothing",
+    "file": "src/scenes/decorTool.js",
+    "old": "collider._resolveSphere(q, radius, {}, Infinity, false, false, through);",
+    "new": "collider._resolveSphere(q, radius, {}, Infinity, false, false, null);",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-1-the-look-at-the-push-radius",
+    "file": "src/scenes/decorTool.js",
+    "old": "pushed([p[0], p[1], p[2]], DECOR_FLY_SKIN - DECOR_FLY_GIVE)",
+    "new": "pushed([p[0], p[1], p[2]], DECOR_FLY_SKIN)",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-1-no-look",
+    "file": "src/scenes/decorTool.js",
+    "old": "for (let i = 1; pushed([p[0], p[1], p[2]], DECOR_FLY_SKIN - DECOR_FLY_GIVE); i++) {",
+    "new": "for (let i = 1; false; i++) {",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-1-one-push",
+    "file": "src/scenes/decorTool.js",
+    "old": "export const DECOR_FLY_PUSHES = 3;",
+    "new": "export const DECOR_FLY_PUSHES = 1;",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-1-two-pushes",
+    "file": "src/scenes/decorTool.js",
+    "old": "export const DECOR_FLY_PUSHES = 3;",
+    "new": "export const DECOR_FLY_PUSHES = 2;",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-1-the-unsettled-kept",
+    "file": "src/scenes/decorTool.js",
+    "old": "        if (i >= DECOR_FLY_PUSHES) return from;",
+    "new": "        if (i >= DECOR_FLY_PUSHES) break;",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-1-no-reach-ray",
+    "file": "src/scenes/decorTool.js",
+    "old": "  return hit && Number.isFinite(hit.dist) && hit.dist <= reach ? from : end;",
+    "new": "  return end;",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-1-the-reach-ray-through-the-moved-piece",
+    "file": "src/scenes/decorTool.js",
+    "old": "reach, skip ? { skip } : null); } catch { hit = null; }",
+    "new": "reach, null); } catch { hit = null; }",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-1-a-still-eye-pushed",
+    "file": "src/scenes/decorTool.js",
+    "old": "  if (!(Math.hypot(at[0] - from[0], at[1] - from[1], at[2] - from[2]) > 1e-9)) return at;\n",
+    "new": "",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-1-the-sphere-pushed-by-the-moved-piece",
+    "file": "src/player/collider.js",
+    "old": "      if (skip?.has(bkey)) continue;   // AUDIT DECOR-SHELL 1\n",
+    "new": "",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-5-the-slide-uncut",
+    "file": "src/scenes/decorTool.js",
+    "old": "  return flyKeep(collider, from, cut(first.at, [first.at[0] + slide[0], first.at[1] + slide[1], first.at[2] + slide[2]]).at, skip);",
+    "new": "  return flyKeep(collider, from, [first.at[0] + slide[0], first.at[1] + slide[1], first.at[2] + slide[2]], skip);",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-5-the-reach-without-the-skin",
+    "file": "src/scenes/decorTool.js",
+    "old": "if (!hit || !Number.isFinite(hit.dist) || hit.dist - DECOR_FLY_SKIN >= len) return { at: b, normal: null, rest: null };",
+    "new": "if (!hit || !Number.isFinite(hit.dist) || hit.dist >= len) return { at: b, normal: null, rest: null };",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-5-the-ray-to-the-step-alone",
+    "file": "src/scenes/decorTool.js",
+    "old": "hit = collider.raycastHit(a, dir, len + DECOR_FLY_SKIN, skip ? { skip } : null);",
+    "new": "hit = collider.raycastHit(a, dir, len, skip ? { skip } : null);",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-5-the-clamp-gone",
+    "file": "src/scenes/decorTool.js",
+    "old": "const k = Math.max(0, hit.dist - DECOR_FLY_SKIN);",
+    "new": "const k = hit.dist - DECOR_FLY_SKIN;",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-5-the-normal-unscaled",
+    "file": "src/systems/decorPlacer.js",
+    "old": "const hang = nl > 0 && normal[1] / nl < -DECOR_HANG_NY;",
+    "new": "const hang = nl > 0 && normal[1] < -DECOR_HANG_NY;",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-5-the-bound-at-0.2",
+    "file": "src/systems/decorPlacer.js",
+    "old": "export const DECOR_HANG_NY = 0.5;",
+    "new": "export const DECOR_HANG_NY = 0.2;",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-2-a-failed-list-stood",
+    "file": "src/scenes/decorRoom.js",
+    "old": "    if (r?.ok && Array.isArray(r.data?.pieces)) stand(r); else again();",
+    "new": "    stand(r);",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-2-a-refusal-never-asked-again",
+    "file": "src/scenes/decorRoom.js",
+    "old": "    if (r?.ok && Array.isArray(r.data?.pieces)) stand(r); else again();",
+    "new": "    if (r?.ok && Array.isArray(r.data?.pieces)) stand(r);",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-2-a-throw-never-asked-again",
+    "file": "src/scenes/decorRoom.js",
+    "old": "  }).catch(again);",
+    "new": "  }).catch(() => {});",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-2-the-wait-never-grows",
+    "file": "src/scenes/decorRoom.js",
+    "old": "wait: Math.min(2 * wait, DECOR_LIST_RETRY_MAX_MS)",
+    "new": "wait",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-2-the-wait-unbounded",
+    "file": "src/scenes/decorRoom.js",
+    "old": "askDecorList({ ask, live, stand, later, wait: Math.min(2 * wait, DECOR_LIST_RETRY_MAX_MS) })",
+    "new": "askDecorList({ ask, live, stand, later, wait: 2 * wait })",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-2-a-left-visit-asked-again",
+    "file": "src/scenes/decorRoom.js",
+    "old": "    if (live()) later(() => {",
+    "new": "    later(() => {",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-2-a-retry-after-the-visit",
+    "file": "src/scenes/decorRoom.js",
+    "old": "later(() => { if (live()) askDecorList(",
+    "new": "later(() => { askDecorList(",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-2-a-late-answer-stood",
+    "file": "src/scenes/decorRoom.js",
+    "old": "    if (!live()) return;\n    if (r?.ok",
+    "new": "    if (r?.ok",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-2-the-gate-open-before-the-list",
+    "file": "src/scenes/worldModes.js",
+    "old": "    const visit = _decorVisit;\n    askDecorList({",
+    "new": "    const visit = _decorVisit;\n    _decorListed = visit;\n    askDecorList({",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-2-the-list-asked-after-it-stood",
+    "file": "src/scenes/worldModes.js",
+    "old": "      live: () => visit === _decorVisit && interiorBuilding === b && _decorListed !== visit,",
+    "new": "      live: () => visit === _decorVisit && interiorBuilding === b,",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-2-the-list-waited-for-forever",
+    "file": "src/net/accountClient.js",
+    "old": "    list: (mapId, buildingKey) => waited('/v1/homes/decor', { mapId, buildingKey }),",
+    "new": "    list: (mapId, buildingKey) => post('/v1/homes/decor', { mapId, buildingKey }),",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-2-the-wait-dropped",
+    "file": "src/net/accountClient.js",
+    "old": "fetch(url, { ...init, signal: wait() })",
+    "new": "fetch(url, { ...init })",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-3-a-throw-kept-for-good",
+    "file": "src/scenes/decorTool.js",
+    "old": "    }, failed);\n",
+    "new": "    }, () => {});\n",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-3-no-mesh-kept-for-good",
+    "file": "src/scenes/decorTool.js",
+    "old": "      else failed();\n",
+    "new": "",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-3-asked-every-frame",
+    "file": "src/scenes/decorTool.js",
+    "old": "    if (now() - (modelFailed.get(id) ?? -Infinity) < DECOR_MODEL_RETRY_MS) return null;\n",
+    "new": "",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-3-never-asked-again",
+    "file": "src/scenes/decorTool.js",
+    "old": "const failed = () => { models.delete(id); modelFailed.set(id, now()); };",
+    "new": "const failed = () => { modelFailed.set(id, now()); };",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-3-a-standing-piece-never-asked-again",
+    "file": "src/scenes/decorRoom.js",
+    "old": "        if (!m.gpu) { /** @type {any} */ (later(() => stand(Math.min(2 * wait, DECOR_LIST_RETRY_MAX_MS)), wait))?.unref?.(); return; }",
+    "new": "        if (!m.gpu) return;",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-4-a-hung-piece-raised",
+    "file": "src/systems/decorPlacer.js",
+    "old": "const up = hang ? drop() + s.raise : lift() + s.raise;",
+    "new": "const up = hang ? drop() + Math.abs(s.raise) : lift() + s.raise;",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DECOR-SHELL-4-a-hung-piece-never-lowered",
+    "file": "src/systems/decorPlacer.js",
+    "old": "drop() + s.raise",
+    "new": "drop()",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  }
+]

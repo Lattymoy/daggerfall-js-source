@@ -295,7 +295,7 @@ test('UXB1-H: the card - Export copies the document and saves it as a named file
     assert.ok(field, 'a box to paste into');
     field.value = '{"format":"nope"}';
     buttonNamed(card(), 'Load').click();
-    assert.match(text(byClass(host, 'classio-note')[0]), /not a Daggerfall Enhanced class file/);
+    assert.match(text(byClass(host, 'classio-note')[0]), /not a Daggerfall Online class file/);
     assert.equal(flow.custom.className, 'Spellsword');
     // the clipboard's class loads, and the card closes on it
     clip = JSON.stringify({ ...JSON.parse(clip), name: 'Battlemage' });

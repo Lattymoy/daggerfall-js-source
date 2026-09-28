@@ -1,16 +1,17 @@
 // INTRO2: one asset for the title, the front door and its section masthead.
-// Mac's supplied 19956.png is JPEG data; preserved byte for byte, with its
-// real extension. Screen blending removes its black backing at draw time.
-export const ENHANCED_LOGO_URL = new URL('../assets/branding/daggerfall-enhanced.jpg', import.meta.url).href;
-export const ENHANCED_LOGO_ALT = 'The Elder Scrolls II: Daggerfall Enhanced';
+// BR4 (Mac, 2026-09-27): Daggerfall Online's temporary logo - his own cut,
+// with real alpha, preserved byte for byte. It draws as it is: no blend
+// mode, because its black outlines and the ONLINE lettering are the art.
+export const BRAND_LOGO_URL = new URL('../assets/branding/daggerfall-online.png', import.meta.url).href;
+export const BRAND_LOGO_ALT = 'The Elder Scrolls II: Daggerfall Online';
 
 export function brandMark(doc = document) {
   const image = doc.createElement('img');
-  image.src = ENHANCED_LOGO_URL;
-  image.alt = ENHANCED_LOGO_ALT;
-  image.className = 'enhanced-logo';
-  image.width = 1536;
-  image.height = 512;
+  image.src = BRAND_LOGO_URL;
+  image.alt = BRAND_LOGO_ALT;
+  image.className = 'brand-logo';
+  image.width = 2112;
+  image.height = 850;
   image.draggable = false;
   return image;
 }

@@ -1,0 +1,264 @@
+[
+  {
+    "name": "WEREWOLF1-base-kf-kept",
+    "file": "src/formats/mwFirstPerson.js",
+    "old": "  return animSourcesFor(werewolf ? null : FP_BASE_MODEL, skeletonPath, exists);",
+    "new": "  return animSourcesFor(FP_BASE_MODEL, skeletonPath, exists);",
+    "tests": [
+      "test/werewolf1.test.js"
+    ]
+  },
+  {
+    "name": "WEREWOLF1-tp-base-kf-added",
+    "file": "src/combat/fpArm.js",
+    "old": "    const sourcePaths = tpAnimSources(skeletonPath, exists, { werewolf });",
+    "new": "    const sourcePaths = tpAnimSources(skeletonPath, exists);",
+    "tests": [
+      "test/werewolf1.test.js"
+    ]
+  },
+  {
+    "name": "WEREWOLF1-beast-column-first",
+    "file": "src/combat/fpArm.js",
+    "old": "  if (werewolf) return WOLFSKIN_1ST;",
+    "new": "  if (werewolf && !beast && !female) return WOLFSKIN_1ST;",
+    "tests": [
+      "test/werewolf1.test.js"
+    ]
+  },
+  {
+    "name": "WEREWOLF1-robe-reserves-dropped",
+    "file": "src/formats/mwItemMap.js",
+    "old": "      for (const part of RESERVES[piece.reserve] ?? []) claim(part, prio, null);\n",
+    "new": "\n",
+    "tests": [
+      "test/werewolf1.test.js"
+    ]
+  },
+  {
+    "name": "WEREWOLF1-head-filtered-by-race",
+    "file": "src/formats/mwFirstPerson.js",
+    "old": "  for (const p of parts ?? []) byId.set(String(p.id || '').toLowerCase(), p);",
+    "new": "  for (const p of parts ?? []) if (p.race === 'fprace') byId.set(String(p.id || '').toLowerCase(), p);",
+    "tests": [
+      "test/werewolf1.test.js"
+    ]
+  },
+  {
+    "name": "WEREWOLF1-plain-record-for-a-chest",
+    "file": "src/formats/mwItemMap.js",
+    "old": "    return plain && FP_FALLBACK_PARTS.has(plain.slot) ? plain : null;",
+    "new": "    return plain ?? null;",
+    "tests": [
+      "test/werewolf1.test.js"
+    ]
+  },
+  {
+    "name": "WEREWOLF1-1st-ignored",
+    "file": "src/formats/mwItemMap.js",
+    "old": "    const found = bodyById.get(`${id}${ext}`);",
+    "new": "    const found = firstPerson ? null : bodyById.get(`${id}${ext}`);",
+    "tests": [
+      "test/werewolf1.test.js"
+    ]
+  },
+  {
+    "name": "WEREWOLF1-race-rows-kept",
+    "file": "src/combat/fpArm.js",
+    "old": "    const rows = werewolf ? [] : armReport(parts, race, female);",
+    "new": "    const rows = armReport(parts, race, female);",
+    "tests": [
+      "test/werewolf1.test.js"
+    ]
+  },
+  {
+    "name": "WEREWOLF1-wolf-holds-things",
+    "file": "src/combat/fpArm.js",
+    "old": "  if (werewolf) { weapon = null; hasAmmo = false; ammoCount = null; torch = false; hipLight = false; sheathing = false; }",
+    "new": "  if (werewolf) { weapon = null; }",
+    "tests": [
+      "test/werewolf1.test.js"
+    ]
+  },
+  {
+    "name": "WEREWOLF1-person-built-in-its-place",
+    "file": "src/combat/fpArm.js",
+    "old": "    settingsSkeleton = fpSkeletonPath({ female, beast, werewolf });",
+    "new": "    settingsSkeleton = fpSkeletonPath({ female, beast });",
+    "tests": [
+      "test/werewolf1.test.js"
+    ]
+  },
+  {
+    "name": "WEREWOLF1-rig-compare-dropped",
+    "file": "src/combat/fpArm.js",
+    "old": "      if (want === !!lastBuildOpts.werewolf && wantSkin === (lastBuildOpts.skin ?? null)) return false;\n",
+    "new": "\n",
+    "tests": [
+      "test/werewolf1.test.js"
+    ]
+  },
+  {
+    "name": "WEREWOLF1-table-rebuilt-on-the-wolf",
+    "file": "src/combat/fpArm.js",
+    "old": "      if (lastBuildOpts.werewolf) { lastBuildOpts = { ...lastBuildOpts, armor: pieces }; return false; }\n",
+    "new": "\n",
+    "tests": [
+      "test/werewolf1.test.js"
+    ]
+  },
+  {
+    "name": "WEREWOLF1-refusal-a-dead-end",
+    "file": "src/combat/fpArm.js",
+    "old": "      if (!lastBuildOpts) return false;\n      if (want === !!lastBuildOpts.werewolf",
+    "new": "      if (!built || !built.ok || !lastBuildOpts) return false;\n      if (want === !!lastBuildOpts.werewolf",
+    "tests": [
+      "test/werewolf1.test.js"
+    ]
+  },
+  {
+    "name": "WEREWOLF1-torch-on-the-wolf",
+    "file": "src/combat/fpArm.js",
+    "old": "      if (built.werewolf) { if (lastBuildOpts) lastBuildOpts.torch = want; return false; }   // WEREWOLF1: the wolf holds no torch; kept for the way back\n",
+    "new": "\n",
+    "tests": [
+      "test/werewolf1.test.js"
+    ]
+  },
+  {
+    "name": "WEREWOLF1-wereboar-a-wolf",
+    "file": "src/combat/weaponRig.js",
+    "old": "  return !!entity && isTransformedLycanthrope(entity) && ((liveLycanthropy(entity)?.infectionType | 0) === 1);",
+    "new": "  return !!entity && isTransformedLycanthrope(entity) && ((liveLycanthropy(entity)?.infectionType | 0) >= 1);",
+    "tests": [
+      "test/werewolf1.test.js"
+    ]
+  },
+  {
+    "name": "WEREWOLF1-per-frame-door-dropped",
+    "file": "src/combat/weaponRig.js",
+    "old": "        fpArm.setWerewolf(wolf, { skin: wolfSkin });\n",
+    "new": "\n",
+    "tests": [
+      "test/werewolf1.test.js"
+    ]
+  },
+  {
+    "name": "WEREWOLF1-identity-without-the-form",
+    "file": "src/combat/weaponRig.js",
+    "old": "    && !!have.werewolf === want.werewolf;   // WEREWOLF1",
+    "new": "    ;",
+    "tests": [
+      "test/werewolf1.test.js"
+    ]
+  },
+  {
+    "name": "WEREWOLF1-form-change-held",
+    "file": "src/net/peerBodies.js",
+    "old": "(!!b.wolf !== peerIsWolf(peer.shown) || now - b.builtAt >= BODY_REBUILD_MS)",
+    "new": "(now - b.builtAt >= BODY_REBUILD_MS)",
+    "tests": [
+      "test/werewolf1.test.js"
+    ]
+  },
+  {
+    "name": "WEREWOLF1-peer-wereboar-a-wolf",
+    "file": "src/net/peerBodies.js",
+    "old": "export const peerIsWolf = (shown) => (shown?.wb | 0) === 1;",
+    "new": "export const peerIsWolf = (shown) => (shown?.wb | 0) >= 1;",
+    "tests": [
+      "test/werewolf1.test.js"
+    ]
+  },
+  {
+    "name": "WEREWOLF1-peer-wolf-holds-the-sword",
+    "file": "src/net/peerBodies.js",
+    "old": "      const want = b.wolf ? null : peerWeaponOf(look, shown);",
+    "new": "      const want = peerWeaponOf(look, shown);",
+    "tests": [
+      "test/werewolf1.test.js"
+    ]
+  },
+  {
+    "name": "WEREWOLF1-peer-wolf-casts",
+    "file": "src/net/peerBodies.js",
+    "old": "    b.rig.readySpell?.(!b.wolf && !!shown.sr);",
+    "new": "    b.rig.readySpell?.(!!shown.sr);",
+    "tests": [
+      "test/werewolf1.test.js"
+    ]
+  },
+  {
+    "name": "WEREWOLF1-peer-wolf-lantern",
+    "file": "src/net/peerBodies.js",
+    "old": "    b.rig.setHipLight?.(!b.wolf && !!shown.hl);",
+    "new": "    b.rig.setHipLight?.(!!shown.hl);",
+    "tests": [
+      "test/werewolf1.test.js"
+    ]
+  },
+  {
+    "name": "WEREWOLF1-riders-skip-dropped",
+    "file": "src/net/peerRiders.js",
+    "old": "      if (beast && !riding && defer(peer)) { deferred.push(peer); continue; }   // WEREWOLF1 (AUDIT E4): settled below\n",
+    "new": "\n",
+    "tests": [
+      "test/werewolf1.test.js"
+    ]
+  },
+  {
+    "name": "WEREWOLF1-wolf-kept-out-of-the-bodies",
+    "file": "src/scenes/world.js",
+    "old": "const afoot = seen.filter((d) => !peerRiders.isRiding(d.id) && !d.shown?.wb || (peerIsWolf(d.shown) && !d.shown.rd));",
+    "new": "const afoot = seen.filter((d) => !peerRiders.isRiding(d.id) && !d.shown?.wb);",
+    "tests": [
+      "test/werewolf1.test.js"
+    ]
+  },
+  {
+    "name": "WEREWOLF1-garment-pool-left-open",
+    "file": "src/formats/mwItemMap.js",
+    "old": "!c.enchanted && c.id !== WEREWOLF_ROBE_ID && c.model)",
+    "new": "!c.enchanted && c.model)",
+    "tests": [
+      "test/werewolf1.test.js"
+    ]
+  },
+  {
+    "name": "WEREWOLF1-MERGE-the-standing-wolf-stood-aside",
+    "file": "src/combat/weaponRig.js",
+    "old": "fpArm.setStandIn?.(beast ? !(wolf && isMwWerewolf(entity)) : wolf);",
+    "new": "fpArm.setStandIn?.(beast ? true : wolf);",
+    "tests": [
+      "test/werewolf1.test.js"
+    ],
+    "note": "BEAST-SELF's own law, unreconciled: Bloodmoon's wolf never drawn"
+  },
+  {
+    "name": "WEREWOLF1-MERGE-the-wrong-beast-kept",
+    "file": "src/combat/weaponRig.js",
+    "old": "beast ? !(wolf && isMwWerewolf(entity)) : wolf",
+    "new": "beast ? !wolf : wolf",
+    "tests": [
+      "test/werewolf1.test.js"
+    ]
+  },
+  {
+    "name": "WEREWOLF1-MERGE-the-wolf-kept-for-the-person",
+    "file": "src/combat/weaponRig.js",
+    "old": "beast ? !(wolf && isMwWerewolf(entity)) : wolf)",
+    "new": "beast ? !(wolf && isMwWerewolf(entity)) : false)",
+    "tests": [
+      "test/werewolf1.test.js"
+    ]
+  },
+  {
+    "name": "WEREWOLF1-MERGE-any-rig-the-wolf",
+    "file": "src/combat/fpArm.js",
+    "old": "    wolfStanding: () => !!(built && built.ok && built.werewolf),",
+    "new": "    wolfStanding: () => !!(built && built.ok),",
+    "tests": [
+      "test/werewolf1.test.js"
+    ]
+  }
+]

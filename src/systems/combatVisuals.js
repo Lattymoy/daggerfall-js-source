@@ -134,3 +134,41 @@ export function foePhase(foe) {
   if (foe._ecvPhase === undefined) foe._ecvPhase = (_phaseCount++ * GOLDEN_ANGLE) % (2 * Math.PI);
   return foe._ecvPhase;
 }
+
+/**
+ * INVIS-LOOK (2026-09-27, Mac: "Give invisibility the same invisibility
+ * we give enemies in enhanced AI. That transparent look"). ANOTHER
+ * PLAYER, CONCEALED. INVIS-NET put a player's concealment on the pose
+ * (`cv`: 1 invisible, 2 blending, 4 a shade) and drew a concealed peer
+ * as the A5 law draws a concealed foe - not at all. On this lane a peer
+ * is drawn as this lane draws a concealed foe: Chameleon's translucent
+ * shimmer and ripple, a shade's dark silhouette. THE ONE DEPARTURE IS
+ * INVISIBILITY, asked for: a foe's is not drawn (the Orc Shaman's spell
+ * stays stronger than the imp's), a player's takes the shimmer - the
+ * transparent look - so invisible over blending over shade still holds,
+ * with the invisible drawn as the blend. No hit reveal: a blow on a peer
+ * lands on their own screen. Off (the classic skin, the pref, the kill
+ * switch) it is INVIS-NET's law - not drawn.
+ *
+ * @param {number} bits the shown pose's `cv`
+ * @param {boolean} on combatVisualsOn(), read once a frame
+ * @param {number} t the host's seconds
+ * @param {string} id the peer's id - its phase, so two peers do not shimmer in step
+ * @returns {{kind: 'plain'} | {kind: 'hidden'} | {kind: 'conceal', visual: object}}
+ */
+export function peerDraw(bits, on, t, id) {
+  const b = bits & 7;
+  if (!b) return PLAIN;
+  if (!on) return HIDDEN;
+  return { kind: 'conceal', visual: concealVisual({ blending: (b & 3) !== 0, shade: (b & 4) !== 0 }, { t, phase: peerPhase(id) }) };
+}
+
+/** INVIS-LOOK: a peer's shimmer phase - its id hashed onto the golden
+ *  angle, so it holds frame to frame with nothing kept and no random
+ *  draw. */
+export function peerPhase(id) {
+  const s = String(id ?? '');
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return ((h >>> 0) * GOLDEN_ANGLE) % (2 * Math.PI);
+}

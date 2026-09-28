@@ -50,19 +50,14 @@ async function run(label, opts) {
     check(`${label}: the ${want.toLowerCase()} door is on the rail`, doors.includes(want), doors.join(' / '));
   }
 
-  const sw = await page.evaluate(() => {
-    const on = document.querySelector('.skinswitch .skinopt.on'), off = document.querySelector('.skinswitch .skinopt:not(.on)');
-    const hint = document.querySelector('.skinswitch .skinhint');
-    const inFoot = Boolean(document.querySelector('.px-foot .skinswitch'));
-    return on && off ? { on: on.textContent, off: off.textContent, pressed: on.getAttribute('aria-pressed'), inFoot,
-      h: Math.round(Math.max(on.getBoundingClientRect().height, off.getBoundingClientRect().height)),
-      hintHidden: !hint || getComputedStyle(hint).display === 'none',
-      lit: getComputedStyle(on).color } : null;
+  // MENU-TOGGLE (2026-09-26): the door's Enhanced/Classic pair is retired - the interface is the Overhauls page's -
+  // so the foot is build on the left and About on the right, and nothing between them
+  const foot = await page.evaluate(() => {
+    const about = document.querySelector('.px-foot .px-about');
+    const b = about?.getBoundingClientRect();
+    return { toggle: Boolean(document.querySelector('.skinswitch, .skinopt')), right: b ? Math.round(innerWidth - b.right) : null };
   });
-  check(`${label}: the skin switch is dead centre of the foot, Enhanced lit, Classic a press away`,
-    sw?.on === 'Enhanced' && sw?.off === 'Classic' && sw?.pressed === 'true' && sw?.hintHidden
-    && sw?.inFoot && sw?.h >= 44 && sw?.lit === 'rgb(243, 239, 44)', JSON.stringify(sw));
-  if (label === 'phone') check('phone: the switch is a thumb\'s target', sw?.h >= 44, `${sw?.h}px`);
+  check(`${label}: the foot carries no skin toggle, and About stands at its right`, !foot.toggle && foot.right != null && foot.right <= 24, JSON.stringify(foot));
   check(`${label}: the folder pick has NOT been asked for`,
     (await page.locator('#pick').count()) === 0);
 
@@ -182,7 +177,7 @@ await run('phone', { ...devices['Pixel 5'] });
   // FT14 took Mods off this rail and FT16 took Controls into Settings;
   // this line still expected both, which is the third thing in this
   // file that had gone stale unnoticed.
-  check('classic: the enhanced door mounts with the classic rail', JSON.stringify(st.sections) === JSON.stringify(['begin', 'online', 'settings', 'features', 'about']), JSON.stringify(st.sections));
+  check('classic: the enhanced door mounts with the classic rail', JSON.stringify(st.sections) === JSON.stringify(['begin', 'online', 'settings', 'features', 'overhauls', 'about']), JSON.stringify(st.sections));
   await page.locator('.px-menu .door-begin').click();
   await page.locator('#enhanced-menu .act.primary', { hasText: 'Begin' }).click();   // FD1: the door opens the Begin pane; its button starts
   const picked = await page.waitForSelector('#pick', { timeout: 15000 }).then(() => true, () => false);
@@ -190,25 +185,28 @@ await run('phone', { ...devices['Pixel 5'] });
   await ctx.close();
 }
 
-// 5. THE PRESS (U62). Pressing Classic on the door STORES the choice
-//    and reloads with no ?skin= on the URL - onto the classic door,
-//    which gates the data before its menu. A fresh context, so the
-//    stored choice is this context's alone, and it is cleared after.
+// 5. THE PRESS (U62; MENU-TOGGLE: the Overhauls page's UI card is the one door now). Using Classic on the card
+//    STORES the choice and reloads with no ?skin= on the URL - onto the classic door, which gates the data before
+//    its menu. A fresh context, so the stored choice is this context's alone, and it is cleared after.
 {
   const ctx = await browser.newContext({ viewport: { width: 1400, height: 900 } });
   const page = await ctx.newPage();
   await page.goto(`${BASE}/play/?nointro`, { waitUntil: 'load' });
   await page.waitForSelector('.px-menu button', { timeout: 20000 });
-  await page.locator('.skinswitch .skinopt:not(.on)').click();
+  await page.locator('.px-menu button').filter({ hasText: /Overhauls/ }).first().click();
+  const ui = page.locator('.look-panel[data-panel="ui"]');
+  await ui.waitFor({ timeout: 20000 });
+  for (let i = 0; i < 3 && (await ui.locator('.look-name').innerText()).trim() !== 'Classic'; i++) await ui.locator('.look-arrow').last().click();
+  await ui.locator('.look-use').click();
   // FD1: the classic door is this same screen with the Begin rail; the pick rises behind Begin
   await page.waitForSelector('.px-menu .door-begin', { timeout: 20000 });
   await page.locator('.px-menu .door-begin').click();
   await page.locator('#enhanced-menu .act.primary', { hasText: 'Begin' }).click();   // FD1: the pane's own Begin
   const picked = await page.waitForSelector('#pick', { timeout: 15000 }).then(() => true, () => false);
-  check('press Classic: the classic door opens, data first', picked && (await page.locator('#enhanced-menu').count()) === 0);
-  check('press Classic: the URL carries no override - the choice is STORED', !new URL(page.url()).searchParams.has('skin'));
+  check('use Classic on the UI card: the classic door opens, data first', picked && (await page.locator('#enhanced-menu').count()) === 0);
+  check('use Classic: the URL carries no override - the choice is STORED', !new URL(page.url()).searchParams.has('skin'));
   const stored = await page.evaluate(async () => { const { uiSkin } = await import('/src/systems/uiSkin.js'); return uiSkin(''); });
-  check('press Classic: uiSkin reads classic with no URL at all', stored === 'classic');
+  check('use Classic: uiSkin reads classic with no URL at all', stored === 'classic');
   await page.evaluate(() => localStorage.clear());
   await ctx.close();
 }

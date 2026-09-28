@@ -105,9 +105,16 @@ export const ITEM_FIELDS = Object.freeze({
   // the port's own (loot rarity, LR1-LR4)
   rarity: oneOf(RARITY_ORDER),
   legendary: str(),
+  aetheric: str(),   // SET6: an Aetheric piece's record (systems/aetheric.js) - Ruhn's Regalia
   affixes: list(validAffix),
   // SIGIL1: an online win's sigil (systems/sigil.js) - its power, the fight that won it, what it has drunk
   sigil: rec(validSigil),
+  // LOCK1: the player's lock (systems/itemLock.js) - true, or absent
+  locked: bool(),
+  // SS4: a piece bound to its owner by how it was won (systems/itemBound.js - the Sigil Broker's wares) - true, or absent
+  bound: bool(),
+  // SS5: the Sigil Stones the Broker took for a ware (systems/sigilBroker.js brokerStock) - its dismantle's measure
+  stonesPaid: int({ min: 1 }),
 });
 
 /** The declared names, and those of one kind. */

@@ -84,6 +84,13 @@ export function rampFader(ctx, fader, level, seconds) {
  *  played at a fifth of itself (0.22 x the 0.5 default). */
 export const trackGain = () => (musicMuted ? 0 : getFloat('Controls', 'MusicVolume', 0, 1));
 
+/** WBX9 (2026-09-26, Mac: "The music needs to be louder and more intense"): A SONG'S OWN LEVEL - a song may carry
+ *  `level`, how far over the player's own it is played (systems/gateScore.js: the boss fight's score, over the dungeon
+ *  tracks it stands in for). One gain between the channels and the fader, set as the song starts; every song MIDI.BSA
+ *  holds carries none and plays at exactly 1, as it always has. Clamped to (0, SONG_LEVEL_MAX]. Pure. */
+export const SONG_LEVEL_MAX = 4;
+export const songLevel = (song) => (Number.isFinite(song?.level) && song.level > 0 ? Math.min(SONG_LEVEL_MAX, song.level) : 1);
+
 /** Lead given to a loop's new origin. It must be SMALLER than the
  *  lookahead: the re-pump schedules [now, now + lookahead), so a lead of a
  *  full lookahead makes that window exactly empty and the repeat starts a
@@ -217,6 +224,7 @@ export class SongPlayer {
     this._voices = [];
     this._master = null;
     this._fader = null;   // DISC20-B: built with the master
+    this._level = null;   // WBX9: built with the master
     this._destination = destination;
   }
 
@@ -229,6 +237,9 @@ export class SongPlayer {
     this._fader = this.ctx.createGain();   // DISC20-B: the transition's own gain, under the volume
     this._fader.gain.value = 1;
     this._fader.connect(this._master);
+    this._level = this.ctx.createGain();   // WBX9: the song's own level, under the fader
+    this._level.gain.value = 1;
+    this._level.connect(this._fader);
   }
 
   /** DISC20-B: ramp the fader to `level` over `seconds` (see rampFader). */
@@ -250,6 +261,7 @@ export class SongPlayer {
     if (this.playing && this.song === song) return true;
     this.stop();
     this._ensureMaster();
+    if (this._level) this._level.gain.value = songLevel(song);   // WBX9: the song's own level - 1 for every song but the ones that carry one
     this.song = song;
     // Computed once per song, not per window: the pedal map is a pure
     // function of the event list and the scheduler re-enters constantly.
@@ -510,7 +522,7 @@ export class SongPlayer {
     if (!g) {
       g = this.ctx.createGain();
       g.gain.value = this._state[channel]?.volume ?? 1;
-      g.connect(this._fader ?? this._master);   // DISC20-B: through the fader
+      g.connect(this._level ?? this._fader ?? this._master);   // DISC20-B: through the fader; WBX9: and the song's own level before it
       this._chGains[channel] = g;
     }
     return g;

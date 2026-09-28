@@ -216,9 +216,11 @@ test('DISC24-B: the enhanced lists (pack, detail, shop, player trade) picture th
 
   // every enhanced list reads the door, not its own copy of the ternary
   const ROOT = new URL('..', import.meta.url);
+  // UI1: through the FITTED door (linePicture), whose source is this one at scale 1 - the cart's bake included
   for (const f of ['src/ui/enhancedTrade.js', 'src/ui/enhancedPlayerTrade.js']) {
-    assert.match(readFileSync(new URL(f, ROOT), 'utf8'), /linePictureUrl\(line, \{ scale: 2,/, f);
+    assert.match(readFileSync(new URL(f, ROOT), 'utf8'), /linePicture\(line, \{ box: SLOT_BOX\.row,/, f);
   }
   const inv = readFileSync(new URL('src/ui/enhancedInventory.js', ROOT), 'utf8');
-  assert.equal((inv.match(/linePictureUrl\(line, \{ scale: [24], onReady: (?:render|ready) \}\)/g) ?? []).length, 2, 'the pack\'s tile and its detail card');
+  assert.equal((inv.match(/linePicture\(line, \{ box(?:: SLOT_BOX\.card)?, onReady: ready \}\)/g) ?? []).length, 2, 'the pack\'s tile and its detail card');
+  assert.match(inv, /requestFittedPicture\(name, \(wake\) => linePictureUrl\(line, \{ scale: 1, onReady: wake \}\),/, 'the fitted door asks this one');
 });

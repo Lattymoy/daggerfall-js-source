@@ -20,18 +20,20 @@ const read = (p) => readFileSync(join(root, p), 'utf8');
 
 test('WINFOE1: the four enemy pools drive on the frame\'s own dt under a window; the two populations still freeze under the talk overlay; the encounter roll and the interior door-opening keep their gates', () => {
   const w = read('src/scenes/world.js');
-  assert.match(w, /livePersonBatches\.push\(\.\.\.cityGuards\.update\(dt,\s*\n\s*walkMode && playerSpawned \? player\.pos : cam\.pos, cam\.pos, _foeSenses\(\)\)\);/, 'world.js: the watch');
-  assert.match(w, /exteriorFoes\.update\(dt, _pf, cam\.pos, _foeSenses\(\)\);/, 'world.js: the encounter pool');
+  // QUEST-POPUP-PAUSE (2026-09-26): the one exception - offline, a quest box on top holds them (quest_popup_pause.test.js)
+  assert.match(w, /const foeDt = _questBoxHoldsFoes\(\) \? 0 : dt;\n\s*livePersonBatches\.push\(\.\.\.cityGuards\.update\(foeDt,\s*\n\s*walkMode && playerSpawned \? player\.pos : cam\.pos, cam\.pos, _foeSenses\(\)\)\);/, 'world.js: the watch');
+  assert.match(w, /exteriorFoes\.update\(foeDt, _pf, cam\.pos, _foeSenses\(\)\);/, 'world.js: the encounter pool');
   assert.match(w, /const live = p\.population\.update\(townTalk\.overlayActive \? 0 : dt, local, cam\.yaw, local, isDay,/, 'world.js: the civilians still freeze');
   assert.match(w, /if \(!townTalk\.overlayActive\) runEncounterTick\(_pf\);/, 'world.js: the frame\'s roll stays gated - under a rest the SESSION drives it, through advanceMinutes');
   const e = read('src/scenes/exterior.js');
-  assert.match(e, /const guardBatches = cityGuards\.update\(dt,\s*\n\s*walkMode \? player\.pos : cam\.pos, eye, _senses\);/, 'exterior.js: the watch');
-  assert.match(e, /exteriorFoes\.update\(dt,\s*\n\s*walkMode \? player\.pos : cam\.pos, eye, _senses\);/, 'exterior.js: the encounter pool');
+  assert.match(e, /const foeDt = _questBoxHoldsFoes\(\) \? 0 : dt;[^\n]*\n\s*const guardBatches = cityGuards\.update\(foeDt,\s*\n\s*walkMode \? player\.pos : cam\.pos, eye, _senses\);/, 'exterior.js: the watch');
+  assert.match(e, /exteriorFoes\.update\(foeDt,\s*\n\s*walkMode \? player\.pos : cam\.pos, eye, _senses\);/, 'exterior.js: the encounter pool');
   assert.match(e, /const popDt = townTalk\.overlayActive \? 0 : dt;/, 'exterior.js: the civilians still freeze');
   assert.match(e, /if \(!townTalk\.overlayActive\) runEncounterTick\(walkMode \? player\.pos : cam\.pos\);/, 'exterior.js: the frame\'s roll stays gated');
   const m = read('src/scenes/worldModes.js');
-  assert.match(m, /interiorFoes\.update\(dt, player\.pos, cam\.pos, _interiorSenses\(\)\);/, 'worldModes.js: the interior pool');
-  assert.match(m, /const _guardBatches = interiorGuards\.update\(dt, player\.pos, cam\.pos,/, 'worldModes.js: the indoor watch');
+  assert.match(m, /const foeDt = host\.questBoxHoldsFoes\?\.\(\) \? 0 : dt;/, 'worldModes.js: the host\'s quest-box read, nothing else');
+  assert.match(m, /interiorFoes\.update\(foeDt, player\.pos, cam\.pos, _interiorSenses\(\)\);/, 'worldModes.js: the interior pool');
+  assert.match(m, /const _guardBatches = interiorGuards\.update\(foeDt, player\.pos, cam\.pos,/, 'worldModes.js: the indoor watch');
   assert.match(m, /if \(!overlayHeld\) openInteriorDoors\(interiorFoes\.foes\);/, 'worldModes.js: a foe still opens no door under a window - the door law is the mode\'s, not the pool\'s');
   for (const [name, h] of [['world.js', w], ['exterior.js', e], ['worldModes.js', m]]) {
     assert.ok(!/(?:Foes|Guards)\.update\((?:townTalk\.overlayActive|overlayHeld) \? 0 : dt/.test(h), `${name}: no enemy pool is frozen by a window any more`);

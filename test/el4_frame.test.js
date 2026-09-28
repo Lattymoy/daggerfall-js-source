@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url';
 import {
   AIR_ADAPT_UNIT, AIR_LUM_SIZE, AIR_ADAPT_KEY, AIR_ADAPT_MIN, AIR_ADAPT_MAX, AIR_ADAPT_OPEN, AIR_ADAPT_CLOSE,
   AIR_LUM_LOG_RANGE, AIR_ADAPT_LOG_RANGE, AIR_BRIGHT_THRESHOLD, AIR_VIGNETTE, AIR_CONTRAST, AIR_ADAPT_MAX_DT,
-  packLog, unpackLog, adaptStep, AIR_ADAPT_GLSL, AirPass,
+  packLog, unpackLog, adaptStep, AIR_ADAPT_GLSL, AIR_CONTACT_GLSL, AirPass,
 } from '../src/render/airPass.js';
 import { setFrameTarget, frameTarget, withTarget, finishVolume } from '../src/render/renderTarget.js';
 import {
@@ -60,10 +60,11 @@ test('EL4: the constants and the encodings - log luminance over 16 stops, the mu
   assert.deepEqual([...AIR_LUM_LOG_RANGE], [-12, 4]); assert.deepEqual([...AIR_ADAPT_LOG_RANGE], [-2, 2]);
   assert.equal(AIR_BRIGHT_THRESHOLD, 0.85); assert.equal(AIR_VIGNETTE, 0.28); assert.equal(AIR_CONTRAST, 1.04); assert.equal(AIR_ADAPT_MAX_DT, 0.1);
   for (const x of [0.001, 0.02, 0.18, 1, 4, 15]) assert.ok(near(unpackLog(packLog(x, AIR_LUM_LOG_RANGE), AIR_LUM_LOG_RANGE), x, x * 1e-9), `round trip ${x}`);
-  assert.equal(packLog(1, AIR_ADAPT_LOG_RANGE), 0.5, 'a multiplier of 1 is the midpoint - the byte 128 the images start at');
+  assert.equal(packLog(1, AIR_ADAPT_LOG_RANGE), 0.5, 'a multiplier of 1 is the midpoint - the high byte 128 the images start at (LA-POST4: [128, 0] at sixteen bits)');
   assert.equal(packLog(0, AIR_LUM_LOG_RANGE), 0, 'black clamps to the floor'); assert.equal(packLog(1e9, AIR_LUM_LOG_RANGE), 1);
-  assert.match(AIR_ADAPT_GLSL, /uniform sampler2D uAdapt;/);
-  assert.match(AIR_ADAPT_GLSL, /return exp2\(texture\(uAdapt, vec2\(0\.5\)\)\.r \* 4\.0 \+ \(-2\.0\)\);/, 'the shader decodes the same range');
+  assert.match(AIR_ADAPT_GLSL, /uniform highp sampler2D uAdapt;/);   // LA-AUDIT B5: sixteen bits, at a precision that holds them
+  assert.match(AIR_ADAPT_GLSL, /return exp2\(airAdaptLog2\(texture\(uAdapt, vec2\(0\.5\)\)\)\);/, 'the shader decodes the image');
+  assert.match(AIR_ADAPT_GLSL, /return \(floor\(t\.r \* 255\.0 \+ 0\.5\) \* 256\.0 \+ floor\(t\.g \* 255\.0 \+ 0\.5\)\) \/ 65535\.0 \* 4\.0 \+ \(-2\.0\);/, 'over the same range (LA-POST4: at sixteen bits, R the high byte and G the low; LA-AUDIT B5: each byte rounded first)');
 });
 
 test('EL4: the adaptation step - toward key over luminance, clamped, slow into the dark and fast into the light, the step bounded, converging', () => {
@@ -144,9 +145,18 @@ test('EL4: proper dark dungeons and the glints - the ambient scaled once under t
     // loop now - it was rebuilt per light, up to 48 times a fragment,
     // and the wet Fresnel below needs it by name anyway. Same value,
     // same half vector.
-    assert.match(fs, /vec3 V = normalize\(uCamPos - wp\);\s*\n\s*vec3 H = normalize\(Ln \+ V\);/, `${name}: the half vector, off one eye vector`);
+    // LA-COST4 (2026-09-27): F5/F6 named it and left it one line above the
+    // half vector, INSIDE the loop - still once a light. It stands before
+    // the loop now, once a fragment, and only where the cell holds a light.
+    assert.match(fs, /int cellCount = int\(cell\.y\);\n(?:  \/\/[^\n]*\n)*  vec3 V = cellCount > 0 \? normalize\(uCamPos - wp\) : vec3\(0\.0\);\n  for \(int j = 0;/, `${name}: one eye vector a fragment, before the loop`);
+    assert.match(fs, /\n    vec3 H = normalize\(Ln \+ V\);/, `${name}: the half vector, off that one eye vector`);
+    // LA-POST6 (merged beside LA-COST4): the contact block the shader pastes builds its own, for the surface's slope to
+    // the eye - counted apart, the lit block's is the one this pins
+    assert.ok(fs.includes(AIR_CONTACT_GLSL), `${name}: pastes the contact block`);
+    assert.equal((fs.replace(AIR_CONTACT_GLSL, '').match(/normalize\(uCamPos - wp\)/g) || []).length, 1, `${name}: the eye vector is built once in the lit block (LA-COST4)`);
     assert.doesNotMatch(fs, /normalize\(Ln \+ normalize\(uCamPos - wp\)\)/, `${name}: never rebuilt inside the loop`);
-    assert.match(fs, /float spec = pow\(max\(dot\(n, H\), 0\.0\), 24\.0\) \* 0\.12;/, `${name}: the gloss and the strength`);
+    assert.match(fs, /float spec = elSpecLobe\(max\(dot\(n, H\), 0\.0\)\) \* 0\.12;/, `${name}: the gloss and the strength (LA-COST4: the lobe by repeated squaring)`);
+    assert.match(fs, /float elSpecLobe\(float x\) \{ float x2 = x \* x; float x4 = x2 \* x2; float x8 = x4 \* x4; float x16 = x8 \* x8; return x16 \* x8; \}/, `${name}: x^24 - EL_SPEC_GLOSS's chain`);
     assert.match(fs, /\(max\(dot\(n, Ln\), 0\.0\) \+ spec\) \* uPointColors\[i\]/, `${name}: the glint in the lantern's colour, under its shadow and falloff`);
   }
   const flat = /vec3 elPointFlat\([\s\S]*?\n\}/.exec(EL_BB_FS)[0];
@@ -190,7 +200,7 @@ test('EL4: the frame lifecycle on the fake GL - bound for the world pass, every 
   assert.equal(frameTarget(), ap.frame.fbo, 'and the frame target the passes restore to');
   assert.equal(r._frameFbo, ap.frame.fbo);
   assert.equal(ap.adaptIndex, 0);
-  assert.equal(calls.filter((c) => c[0] === 'texImage2D' && c[3] === 1 && c[4] === 1 && c[9]?.[0] === 128 && c[9]?.[3] === 255).length, 2, 'both 1x1 eye images start at the multiplier 1 (the byte 128)');
+  assert.equal(calls.filter((c) => c[0] === 'texImage2D' && c[3] === 1 && c[4] === 1 && c[9]?.[0] === 128 && c[9]?.[1] === 0 && c[9]?.[3] === 255).length, 2, 'both 1x1 eye images start at the multiplier 1 (LA-POST4: the sixteen-bit midpoint, high byte 128 and low 0)');
   assert.ok(calls.some((c) => c[0] === 'uniform1i' && c[1] === 'uAdapt' && c[2] === 11), 'the mesh program reads the eye');
   const clear = calls.findIndex((c) => c[0] === 'clear' && c[1] === 16384 + 256);
   const bindBefore = calls.slice(0, clear).filter((c) => c[0] === 'bindFramebuffer').at(-1);

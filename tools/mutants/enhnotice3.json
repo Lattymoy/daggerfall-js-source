@@ -771,8 +771,8 @@
   {
     "name": "AUDIT4-A10-the-toast-loses-its-dark",
     "file": "src/ui/enhancedStyle.js",
-    "old": "  background: rgba(10,12,17,0.82);",
-    "new": "  background: rgba(10,12,17,0.06);",
+    "old": "border-left-color: rgba(243,239,44,0.55);\n  background: rgba(10,12,17,0.82);",
+    "new": "border-left-color: rgba(243,239,44,0.55);\n  background: rgba(10,12,17,0.06);",
     "tests": [
       "test/hudtext.test.js"
     ]

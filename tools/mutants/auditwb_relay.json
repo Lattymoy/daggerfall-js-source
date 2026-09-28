@@ -65,29 +65,29 @@
   {
     "name": "AUDWB-A1-a-present-seat-freed",
     "file": "src/net/gateBrain.js",
-    "old": "    if (present.has(sub) || p.dealt > 0 || p.stoodMs > 0) continue;",
-    "new": "    if (p.dealt > 0 || p.stoodMs > 0) continue;",
+    "old": "    if (present.has(sub) || p.dealt >= RECEIPT_SHARE * p.share || p.stoodMs >= SEAT_KEEP_MS) continue;",
+    "new": "    if (p.dealt >= RECEIPT_SHARE * p.share || p.stoodMs >= SEAT_KEEP_MS) continue;",
     "tests": ["test/auditwb_relay.test.js"]
   },
   {
     "name": "AUDWB-A1-a-strikers-seat-freed",
     "file": "src/net/gateBrain.js",
-    "old": "    if (present.has(sub) || p.dealt > 0 || p.stoodMs > 0) continue;",
-    "new": "    if (present.has(sub) || p.stoodMs > 0) continue;",
+    "old": "    if (present.has(sub) || p.dealt >= RECEIPT_SHARE * p.share || p.stoodMs >= SEAT_KEEP_MS) continue;",
+    "new": "    if (present.has(sub) || p.stoodMs >= SEAT_KEEP_MS) continue;",
     "tests": ["test/auditwb_relay.test.js"]
   },
   {
     "name": "AUDWB-A1-a-standers-seat-freed",
     "file": "src/net/gateBrain.js",
-    "old": "    if (present.has(sub) || p.dealt > 0 || p.stoodMs > 0) continue;",
-    "new": "    if (present.has(sub) || p.dealt > 0) continue;",
+    "old": "    if (present.has(sub) || p.dealt >= RECEIPT_SHARE * p.share || p.stoodMs >= SEAT_KEEP_MS) continue;",
+    "new": "    if (present.has(sub) || p.dealt >= RECEIPT_SHARE * p.share) continue;",
     "tests": ["test/auditwb_relay.test.js"]
   },
   {
     "name": "AUDWB-A1-the-fraction-lost",
     "file": "src/net/gateBrain.js",
-    "old": "    f.hp = f.max * frac;",
-    "new": "    f.hp = Math.min(f.hp, f.max);",
+    "old": "  f.hp = f.max * frac;\n  if (!(f.max > 0)) f.idle = frac;",
+    "new": "  f.hp = Math.min(f.hp, f.max);\n  if (!(f.max > 0)) f.idle = frac;",
     "tests": ["test/auditwb_relay.test.js"]
   },
   {
@@ -128,15 +128,15 @@
   {
     "name": "AUDWB-A10-said-before-kept",
     "file": "server/src/index.js",
-    "old": "    f.said = true;\n    await this._gateSave(f, now, true);\n    this._gateFan([{ k: 'fell', at: f.fell.at, top: f.fell.top, n: f.fell.n }]);",
-    "new": "    this._gateFan([{ k: 'fell', at: f.fell.at, top: f.fell.top, n: f.fell.n }]);\n    f.said = true;\n    await this._gateSave(f, now, true);",
+    "old": "    await this._gateSave(f, now, true);\n    this._gateFan([{ k: 'fell', at: f.fell.at, top: f.fell.top, n: f.fell.n }]);",
+    "new": "    this._gateFan([{ k: 'fell', at: f.fell.at, top: f.fell.top, n: f.fell.n }]);\n    await this._gateSave(f, now, true);",
     "tests": ["test/auditwb_relay.test.js"]
   },
   {
     "name": "AUDWB-A10-told-unanswered",
     "file": "server/src/index.js",
-    "old": "    if (!(await this._gateTellHub({ d: f.day, at: f.fell.at, top: f.fell.top, n: f.fell.n, rc: Object.entries(f.rc ?? {}) }))) return;",
-    "new": "    await this._gateTellHub({ d: f.day, at: f.fell.at, top: f.fell.top, n: f.fell.n, rc: Object.entries(f.rc ?? {}) });",
+    "old": "    if (!(await this._gateTellHub({ d: f.day, at: f.fell.at, top: f.fell.top, n: f.fell.n, rc: Object.entries(f.rc ?? {}), here: f.here ?? [] }))) return;",
+    "new": "    await this._gateTellHub({ d: f.day, at: f.fell.at, top: f.fell.top, n: f.fell.n, rc: Object.entries(f.rc ?? {}), here: f.here ?? [] });",
     "tests": ["test/auditwb_relay.test.js"]
   },
   {
@@ -163,7 +163,7 @@
   {
     "name": "AUDWB-A4-the-receipts-not-kept",
     "file": "server/src/index.js",
-    "old": "    for (let i = 0; i < keep.length; i += 128) await this.state.storage.put(Object.fromEntries(keep.slice(i, i + 128)));",
+    "old": "    for (let i = 0; i < fresh.length; i += 128) await this.state.storage.put(Object.fromEntries(fresh.slice(i, i + 128).map(([k, v]) => [k, v])));",
     "new": "",
     "tests": ["test/auditwb_relay.test.js"]
   },
@@ -177,15 +177,15 @@
   {
     "name": "AUDWB-A4-a-spent-receipt-handed",
     "file": "server/src/index.js",
-    "old": "    if (!(Number.isFinite(kept.e) && now < kept.e * 1000) || typeof kept.r !== 'string') { await this.state.storage.delete(k); return; }",
-    "new": "    if (typeof kept.r !== 'string') { await this.state.storage.delete(k); return; }",
+    "old": "    if (!(Number.isFinite(kept.e) && now < kept.e * 1000)) { await this.state.storage.delete(k); return; }\n    if (kept.spent) return;",
+    "new": "    if (kept.spent) return;",
     "tests": ["test/auditwb_relay.test.js"]
   },
   {
     "name": "AUDWB-A4-a-spent-receipt-kept",
     "file": "server/src/index.js",
-    "old": "    if (!(Number.isFinite(kept.e) && now < kept.e * 1000) || typeof kept.r !== 'string') { await this.state.storage.delete(k); return; }",
-    "new": "    if (!(Number.isFinite(kept.e) && now < kept.e * 1000) || typeof kept.r !== 'string') { return; }",
+    "old": "    if (!(Number.isFinite(kept.e) && now < kept.e * 1000)) { await this.state.storage.delete(k); return; }\n    if (kept.spent) return;",
+    "new": "    if (!(Number.isFinite(kept.e) && now < kept.e * 1000)) { return; }\n    if (kept.spent) return;",
     "tests": ["test/auditwb_relay.test.js"]
   },
   {

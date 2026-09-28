@@ -1,0 +1,65 @@
+[
+  {
+    "name": "TRAVEL-STRAFE-the-line-kept-under-the-hand",
+    "file": "src/systems/travelSteer.js",
+    "old": "    if (inp.manual) {\n      s.ox = inp.x; s.oz = inp.z;\n",
+    "new": "    if (inp.manual) {\n",
+    "tests": [
+      "test/travelnav.test.js"
+    ]
+  },
+  {
+    "name": "TRAVEL-STRAFE-the-hand-counted-as-no-headway",
+    "file": "src/systems/travelSteer.js",
+    "old": "      if (s.episode) endEpisode();\n      s.bestDist = Infinity; s.noGain = 0;\n    }\n",
+    "new": "      if (s.episode) endEpisode();\n    }\n",
+    "tests": [
+      "test/travelnav.test.js"
+    ]
+  },
+  {
+    "name": "TRAVEL-STRAFE-the-detour-left-running",
+    "file": "src/systems/travelSteer.js",
+    "old": "      s.ox = inp.x; s.oz = inp.z;\n      if (s.episode) endEpisode();\n",
+    "new": "      s.ox = inp.x; s.oz = inp.z;\n",
+    "tests": [
+      "test/travelnav.test.js"
+    ]
+  },
+  {
+    "name": "TRAVEL-STRAFE-a-detour-under-the-hand",
+    "file": "src/systems/travelSteer.js",
+    "old": "      if (inp.manual) return go(out, inp, f.want, cw, reach);",
+    "new": "      if (false) return go(out, inp, f.want, cw, reach);",
+    "tests": [
+      "test/travelnav.test.js"
+    ]
+  },
+  {
+    "name": "TRAVEL-STRAFE-a-detour-ended-behind-its-start",
+    "file": "src/systems/travelSteer.js",
+    "old": "if (cw >= openWant && (!s.episode || f.along >= s.sStart || toGo <= s.goStart)) {",
+    "new": "if (cw >= openWant) {",
+    "tests": [
+      "test/travelnav.test.js"
+    ]
+  },
+  {
+    "name": "TRAVEL-STRAFE-the-door-drops-it",
+    "file": "src/systems/travelSteer.js",
+    "old": "inp.manual = !!frame.strafe;",
+    "new": "inp.manual = false;",
+    "tests": [
+      "test/travelnav.test.js"
+    ]
+  },
+  {
+    "name": "TRAVEL-STRAFE-the-host-drops-it",
+    "file": "src/scenes/world.js",
+    "old": "travelNavFrame.strafe = _travelDrive && !_overlayHeld && !_seasonHeld && !paralyzed ? axes.strafe : 0;",
+    "new": "travelNavFrame.strafe = 0;",
+    "tests": [
+      "test/travelnav.test.js"
+    ]
+  }
+]

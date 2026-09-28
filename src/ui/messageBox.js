@@ -203,6 +203,33 @@ export const buttonArtRegistered = (record) => _buttonArt.has(record);
 
 const roundUpSlice = (v) => (v > MIN_BOX_SIDE ? Math.ceil(v / SLICE) * SLICE : MIN_BOX_SIDE);
 
+/** SS5: THE WIDEST ROW A BOX HOLDS ON THE SCREEN - fourteen slices (308) on the 320-px panel, less the two margins. One
+ *  wider rounds the parchment up to fifteen (330), past both edges. */
+export const BOX_FIT_W = 14 * SLICE - 2 * MARGIN;
+/** SS5: a box's rows as the screen can hold them. UpdatePanelSizes sizes the parchment to its widest row and never
+ *  wraps - the rows are the caller's, and a TEXT.RSC record comes broken to fit - so a sentence the port writes at
+ *  runtime and that names a long piece ("Ebony Guardian's Right Pauldron of Skill is bound to you - ...") stood past
+ *  the screen's edges. Each plain row wider than `width` is word-wrapped under itself in its own alignment (the talk
+ *  window's greedy rule, talkWindow.js wrapText); a row that fits - every row a box drew before - a blank row and a
+ *  tab-stopped row are left as they are. A departure, recorded in Port-Ledger.md section A: a DFU record whose macros
+ *  expand a row past the screen (a long shop's name in a trade offer) wraps too; a painting's box is never fitted. */
+export function fitBoxRows(font, lines, width = BOX_FIT_W) {
+  const fnt = font?.fnt;
+  if (!fnt || !Array.isArray(lines)) return lines;
+  return lines.flatMap((l) => {
+    const text = typeof l === 'string' ? l : l?.text;
+    if (typeof text !== 'string' || Array.isArray(l?.cells) || measureText(fnt, text) <= width) return [l];
+    const out = [];
+    let line = '';
+    for (const w of text.split(' ')) {
+      const probe = line ? `${line} ${w}` : w;
+      if (line && measureText(fnt, probe) > width) { out.push(line); line = w; } else line = probe;
+    }
+    if (line) out.push(line);
+    return out.map((t) => (typeof l === 'string' ? t : { ...l, text: t }));
+  });
+}
+
 /** MultiFormatTextLabel.LayoutTextElements (:316-378) over a TOKEN
  *  array - linesById's row law, but starting from tokens a caller
  *  already holds rather than from record bytes. TEXT tokens APPEND to

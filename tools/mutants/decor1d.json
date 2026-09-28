@@ -47,8 +47,8 @@
   {
     "name": "DECOR1d-the-lift-unread",
     "file": "src/systems/decorPlacer.js",
-    "old": "      const up = lift() + s.raise;",
-    "new": "      const up = s.raise;",
+    "old": "      const up = hang ? drop() + s.raise : lift() + s.raise;",
+    "new": "      const up = hang ? drop() + s.raise : 0 + s.raise;",
     "tests": [
       "test/decor1d.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "DECOR1d-a-left-room-stood-in",
     "file": "src/scenes/decorTool.js",
-    "old": "        if (deps.visit?.() === visit) pool.put(",
-    "new": "        pool.put(",
+    "old": "        if (deps.visit?.() === visit) standRound(",
+    "new": "        standRound(",
     "tests": [
       "test/decor1d.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "DECOR1d-offline-placed-unpaid",
     "file": "src/scenes/decorTool.js",
-    "old": "        deps.wallet().pay(price);\n        pool.put(piece);",
-    "new": "        pool.put(piece);",
+    "old": "        deps.wallet().pay(price);\n        standRound(p, piece);",
+    "new": "        standRound(p, piece);",
     "tests": [
       "test/decor1d.test.js"
     ]

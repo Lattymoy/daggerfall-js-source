@@ -110,8 +110,8 @@
   {
     "name": "DISC20-B-the-synth-bypasses-the-fader",
     "file": "src/systems/songPlayer.js",
-    "old": "g.connect(this._fader ?? this._master);   // DISC20-B: through the fader",
-    "new": "g.connect(this._master);   // DISC20-B: through the fader",
+    "old": "g.connect(this._level ?? this._fader ?? this._master);",
+    "new": "g.connect(this._master);",
     "tests": [
       "test/disc20.test.js"
     ]

@@ -273,7 +273,7 @@ test('AUDIT MW-TORCH F6/F7: a build arriving mid-build is queued and runs (the n
   assert.equal(second.queued, true, 'the second is queued behind the first, not refused');
   assert.equal((await first).ok, true);
   await settle(() => arm.builtFor() && arm.builtFor().faceIndex === 2);
-  assert.deepEqual(arm.builtFor(), { race: 'fprace', female: false, faceIndex: 2 }, 'the queued build ran and its identity stands');
+  assert.deepEqual(arm.builtFor(), { race: 'fprace', female: false, faceIndex: 2, werewolf: false }, 'the queued build ran and its identity stands');
   assert.equal(arm.ready(), true);
   // F7
   const inFlight = arm.build({ race: 'fprace', faceIndex: 5, deps });

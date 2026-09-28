@@ -1,0 +1,344 @@
+[
+  {
+    "name": "AQP-D1-dispel-takes-a-puppet",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (f._ownFrom != null || (!_authority && isRoomFoe(f))) return;\n      f.dead = true;\n      f._diedAt ??= _wallNow();",
+    "new": "      f.dead = true;\n      f._diedAt ??= _wallNow();",
+    "tests": [
+      "test/questparty3c.test.js"
+    ]
+  },
+  {
+    "name": "AQP-D1-own-puppet-half",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (f._ownFrom != null || (!_authority && isRoomFoe(f))) return;\n      f.dead = true;",
+    "new": "      if ((!_authority && isRoomFoe(f))) return;\n      f.dead = true;",
+    "tests": [
+      "test/questparty3c.test.js"
+    ]
+  },
+  {
+    "name": "AQP-D1-room-half",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (f._ownFrom != null || (!_authority && isRoomFoe(f))) return;\n      f.dead = true;",
+    "new": "      if (f._ownFrom != null) return;\n      f.dead = true;",
+    "tests": [
+      "test/questparty3c.test.js"
+    ]
+  },
+  {
+    "name": "AQP-D2-dungeon-stale-adopts",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "        if (gone && !f.dead && f._pupQuest && !f._heirElse && share?.adoptsOrphan?.(from, f)",
+    "new": "        if (!f.dead && f._pupQuest && !f._heirElse && share?.adoptsOrphan?.(from, f)",
+    "tests": [
+      "test/questparty3c.test.js"
+    ]
+  },
+  {
+    "name": "AQP-D2-dungeon-second-heir",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "        if (gone && !f.dead && f._pupQuest && !f._heirElse && share?.adoptsOrphan?.(from, f)",
+    "new": "        if (gone && !f.dead && f._pupQuest && share?.adoptsOrphan?.(from, f)",
+    "tests": [
+      "test/questparty3c.test.js"
+    ]
+  },
+  {
+    "name": "AQP-D2-dungeon-mark-dropped",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (f) { applyOwnRecord(f, r, share); f._heirElse = ownHeirElse(r); if (ownHeirIsMe(r))",
+    "new": "      if (f) { applyOwnRecord(f, r, share); if (ownHeirIsMe(r))",
+    "tests": [
+      "test/questparty3c.test.js"
+    ]
+  },
+  {
+    "name": "AQP-D2-dungeon-never-given-back",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (took) { _ownAdopted.delete(key); if (r.d !== 1 && !took.dead && !took._gone) letGoOwn(took); }",
+    "new": "      if (took) { _ownAdopted.delete(key); }",
+    "tests": [
+      "test/questparty3c.test.js"
+    ]
+  },
+  {
+    "name": "AQP-D2-dungeon-taken-unrecorded",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    _ownAdopted.set(key, f);   // AUDIT (pre-merge) D2",
+    "new": "    // AUDIT (pre-merge) D2",
+    "tests": [
+      "test/questparty3c.test.js"
+    ]
+  },
+  {
+    "name": "AQP-F3-dungeon-pending-heir-lost",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    const heirOrphan = kept && !_ctxDead",
+    "new": "    const heirOrphan = false && kept && !_ctxDead",
+    "tests": [
+      "test/questparty3c.test.js"
+    ]
+  },
+  {
+    "name": "AQP-F3-dungeon-room-change-kept",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    const heirOrphan = kept && !_ctxDead",
+    "new": "    const heirOrphan = true && !_ctxDead",
+    "tests": [
+      "test/questparty3c.test.js"
+    ]
+  },
+  {
+    "name": "AQP-D3-injury-off-my-roll",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    const wasDead = f.dead, h0 = f._pupH;",
+    "new": "    const wasDead = f.dead, h0 = f.entity?.health;",
+    "tests": [
+      "test/questparty3c.test.js"
+    ]
+  },
+  {
+    "name": "AQP-D4-spacing-pushes-own-puppets",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "spacingSkips(f) || f._ownFrom != null || (!_authority && isRoomFoe(f, i))",
+    "new": "spacingSkips(f) || (!_authority && isRoomFoe(f, i))",
+    "tests": [
+      "test/foespacing.test.js"
+    ]
+  },
+  {
+    "name": "AQP-D5-dungeon-marker-forgotten",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (qt?.mk) f._questMarker = true;   // AUDIT (pre-merge) D5",
+    "new": "    // AUDIT (pre-merge) D5",
+    "tests": [
+      "test/questparty3c.test.js"
+    ]
+  },
+  {
+    "name": "AQP-D5-dungeon-handed-record-marks",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (qt?.mk && r.d !== 1 && !r.e) marks.push(qt);",
+    "new": "      if (qt?.mk && r.d !== 1) marks.push(qt);",
+    "tests": [
+      "test/questparty3c.test.js"
+    ]
+  },
+  {
+    "name": "AQP-Q3-dungeon-no-kept-word",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (qt && !b) f._keptTag = { q: qt.q, s: qt.s };   // AUDIT (pre-merge) Q3",
+    "new": "    // AUDIT (pre-merge) Q3",
+    "tests": [
+      "test/questparty3c.test.js"
+    ]
+  },
+  {
+    "name": "AQP-Q3-dungeon-kept-word-unread",
+    "file": "src/scenes/dungeonContext.js",
+    "old": ": (f._keptTag ?? null));   // AUDIT (pre-merge) Q3",
+    "new": ": null);   // AUDIT (pre-merge) Q3",
+    "tests": [
+      "test/questparty3c.test.js"
+    ]
+  },
+  {
+    "name": "AQP-Q3-dungeon-kept-word-anyone-hits",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "(f._keptTag ? !!ownShare()?.accepts?.(id, f._keptTag) :",
+    "new": "(f._keptTag ? true :",
+    "tests": [
+      "test/questparty3c.test.js"
+    ]
+  },
+  {
+    "name": "AQP-D6-ally-takes-peer-blows",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "if (!f || f.dead || f.entity?.team === 'PlayerAlly' || !(ownLoose(f)",
+    "new": "if (!f || f.dead || !(ownLoose(f)",
+    "tests": [
+      "test/summonsync.test.js"
+    ]
+  },
+  {
+    "name": "AQP-touched-dungeon-my-roll",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (qt?.tc) f._qTouched = true; else if (qt && Number.isFinite(f.entity?.health) && f.entity.health > 0) f.entity.maxHealth = f.entity.health;",
+    "new": "    if (qt?.tc) f._qTouched = true;",
+    "tests": [
+      "test/questparty3c.test.js"
+    ]
+  },
+  {
+    "name": "AQP-Q6-dollar-refused",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "const QUEST_WORD_RE = /^[A-Za-z0-9_.$-]{1,64}$/;",
+    "new": "const QUEST_WORD_RE = /^[A-Za-z0-9_.-]{1,64}$/;",
+    "tests": [
+      "test/questparty2.test.js"
+    ]
+  },
+  {
+    "name": "AQP-D2-cell-stale-adopts",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "        if (gone && f._pupQuest && !f.dead && !f._heirElse && _questShare?.adoptsOrphan?.(from, f)",
+    "new": "        if (f._pupQuest && !f.dead && !f._heirElse && _questShare?.adoptsOrphan?.(from, f)",
+    "tests": [
+      "test/questparty2.test.js"
+    ]
+  },
+  {
+    "name": "AQP-D2-cell-second-heir",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "        if (gone && f._pupQuest && !f.dead && !f._heirElse && _questShare?.adoptsOrphan?.(from, f)",
+    "new": "        if (gone && f._pupQuest && !f.dead && _questShare?.adoptsOrphan?.(from, f)",
+    "tests": [
+      "test/questparty2.test.js"
+    ]
+  },
+  {
+    "name": "AQP-D2-cell-mark-dropped",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "        else { applyPuppetRecord(f, r); f._heirElse = heirElse(r); if (heirIsMe(r))",
+    "new": "        else { applyPuppetRecord(f, r); if (heirIsMe(r))",
+    "tests": [
+      "test/questparty2.test.js"
+    ]
+  },
+  {
+    "name": "AQP-D2-cell-never-given-back",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (took) { _adopted.delete(key); if (r.d !== 1 && !took.dead && !took._gone) letGo(took); }",
+    "new": "      if (took) { _adopted.delete(key); }",
+    "tests": [
+      "test/questparty2.test.js"
+    ]
+  },
+  {
+    "name": "AQP-D2-cell-taken-unrecorded",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    _adopted.set(origin, f);   // AUDIT (pre-merge) D2",
+    "new": "    // AUDIT (pre-merge) D2",
+    "tests": [
+      "test/questparty2.test.js"
+    ]
+  },
+  {
+    "name": "AQP-F3-cell-pending-heir-lost",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "          const heirOrphan = (!owner || owner.gen !== gen) && !!kept && heirIsMe(kept);",
+    "new": "          const heirOrphan = false;",
+    "tests": [
+      "test/questparty2.test.js"
+    ]
+  },
+  {
+    "name": "AQP-Q3-cell-no-kept-word",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (b) bindQuestFoeHost(f, b, questPoolOps); else f._keptTag = { q: qt.q, s: qt.s };",
+    "new": "      if (b) bindQuestFoeHost(f, b, questPoolOps);",
+    "tests": [
+      "test/questparty2.test.js"
+    ]
+  },
+  {
+    "name": "AQP-Q3-cell-kept-word-unread",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": ": isPrivateQuestFoe(f) ? (_questShare?.tagOf?.(f) ?? null) : (f._keptTag ?? null));",
+    "new": ": isPrivateQuestFoe(f) ? (_questShare?.tagOf?.(f) ?? null) : null);",
+    "tests": [
+      "test/questparty2.test.js"
+    ]
+  },
+  {
+    "name": "AQP-Q3-cell-kept-word-anyone-hits",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "(f._keptTag ? !!_questShare?.accepts?.(id, f._keptTag) :",
+    "new": "(f._keptTag ? true :",
+    "tests": [
+      "test/questparty2.test.js"
+    ]
+  },
+  {
+    "name": "AQP-F1-cell-marker-forgotten",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (qt.mk) f._questMarker = true;\n      takeTouched(f, qt);",
+    "new": "      takeTouched(f, qt);",
+    "tests": [
+      "test/questparty2.test.js"
+    ]
+  },
+  {
+    "name": "AQP-F1-cell-handed-record-marks",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (qt?.mk && r.d !== 1 && !r.e) liveMarks.push(qt);",
+    "new": "      if (qt?.mk && r.d !== 1) liveMarks.push(qt);",
+    "tests": [
+      "test/questparty2.test.js"
+    ]
+  },
+  {
+    "name": "AQP-F1-save-drops-marker",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "        questMarker: !!f._questMarker,",
+    "new": "        questMarker: false,",
+    "tests": [
+      "test/questparty2.test.js"
+    ]
+  },
+  {
+    "name": "AQP-F1-restore-drops-marker",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "        if (sf.questMarker === true) f._questMarker = true;   // AUDIT (pre-merge) F1",
+    "new": "        // AUDIT (pre-merge) F1",
+    "tests": [
+      "test/questparty2.test.js"
+    ]
+  },
+  {
+    "name": "AQP-touched-cell-my-roll",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    if (qt?.tc) f._qTouched = true;\n    else if (Number.isFinite(f.entity?.health) && f.entity.health > 0) f.entity.maxHealth = f.entity.health;",
+    "new": "    if (qt?.tc) f._qTouched = true;",
+    "tests": [
+      "test/questparty2.test.js"
+    ]
+  },
+  {
+    "name": "AQP-Q5-quest-body-offers-pile",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "o: onWatch || _questLike(f) ? 0 :",
+    "new": "o: onWatch ? 0 :",
+    "tests": [
+      "test/questparty2.test.js"
+    ]
+  },
+  {
+    "name": "AQP-Q4-cull-takes-the-partys-fight",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": " && !(_qTag(f) && partyNearFoe(f, _cullAt))) {",
+    "new": ") {",
+    "tests": [
+      "test/questparty2.test.js"
+    ]
+  },
+  {
+    "name": "AQP-Q7-stale-sharer",
+    "file": "src/scenes/world.js",
+    "old": "  const _liveSharer = (q) => (questBridge?.machine?.hasSharedQuestNamed?.(q) ? (_questSharer.get(q) ?? null) : null);",
+    "new": "  const _liveSharer = (q) => (_questSharer.get(q) ?? null);",
+    "tests": [
+      "test/questparty2.test.js"
+    ]
+  },
+  {
+    "name": "AQP-D8-adoption-unbounded",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (live >= QUEST_PUPPETS_MAX + CELL_LOOSE_PUPPETS) return 0;",
+    "new": "    if (live >= Infinity) return 0;",
+    "tests": [
+      "test/questparty3c.test.js"
+    ]
+  }
+]

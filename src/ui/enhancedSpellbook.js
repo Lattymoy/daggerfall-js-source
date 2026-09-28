@@ -39,6 +39,9 @@ import {
 import { effectByKey } from '../systems/spellEffects.js';   // the classic book's own source (spellbookWindow.js:120)
 import { spellQuickslot, setSpellQuickslot, clearSpellQuickslot } from '../systems/quickslots.js';   // HOTSLOT: the book is where a spell is slotted
 import { TARGET_DESCRIPTIONS, ELEMENT_DESCRIPTIONS } from './spellIcons.js';
+import { spellIconPicture } from './enhancedArt.js';   // UI2: the spell's own icon, carried onto the hotbar
+/** UI2: the hotbar ghost's picture box - its 46px tile inside the 2px frame, less two a side. */
+const SPELL_DRAG_BOX = 38;
 // HB1: the hotbar. With it chosen over the diamond, the book is where a
 // spell goes onto it - dragged off the rail, or by the button that stood
 // for the diamond's spell slot.
@@ -67,7 +70,7 @@ let deleting = null;   // AUDIT 39: DeleteButton's deleteSpellIndex - the row th
  * `spellEffects` hands back the effect RECORDS, not just their type -
  * every one carries `magnitudeBaseLow/High` with their per-level
  * step, `durationBase/Mod/PerLevel`, and `chanceBase/Mod/PerLevel`
- * (systems/effects.js:501-509 reads exactly these). The first draft
+ * (systems/effects.js:508-516 reads exactly these). The first draft
  * printed the two NAMES and threw the rest away, which is the same
  * fault the chronicle's flattened date was: the data was already
  * there.
@@ -177,6 +180,7 @@ function render() {
   const wrap = el('div', 'px-journal');
   const rail = el('div', 'px-qrail');
   for (const r of rows) {
+    if (hotbarAcceptsDrops()) spellIconPicture(r.spell?.icon, { box: SPELL_DRAG_BOX });   // UI2: warmed, so a drag starts with it
     const b = el('button', `px-qrow sb-row${r.i === picked ? ' on' : ''}`);
     b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(r.name));
     b.append(el('span', 'sb-cost', String(r.cost)));
@@ -184,7 +188,9 @@ function render() {
     // crosses at 4px, a finger on a hold, so a click is still a pick.
     b.onpointerdown = (e) => {
       if (!hotbarAcceptsDrops() || deleting !== null) return;
-      beginHotbarDrag(e, { kind: 'spell', spell: r.spell }, { sigil: spellSigil(r.name), element: r.spell?.element ?? null });
+      // UI2: and carries the spell's own icon, as its slot will show it
+      beginHotbarDrag(e, { kind: 'spell', spell: r.spell }, { sigil: spellSigil(r.name), element: r.spell?.element ?? null,
+        icon: spellIconPicture(r.spell?.icon, { box: SPELL_DRAG_BOX }) });
     };
     b.onclick = () => {
       if (takeHotbarDragClick()) return;   // the release of a drag is not a pick

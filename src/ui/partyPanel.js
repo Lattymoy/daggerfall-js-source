@@ -66,6 +66,8 @@ import { isTouchDevice } from './touch.js';
 import { PARTY_GREEN_CSS, lastOnlineText } from '../net/social.js';   // one home for the green - "should turn green"
 import { PARTY_MAX } from '../net/wire.js';   // PARTY8: the seat count in the title
 import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS, PIXEL_TEXT_SHADOW } from './pixelifyFive.js';   // FONT1: the enhanced skin's own face, unsmoothed, with Silkscreen's five
+import { partyFxKey, partyFxAbbrev, partyHealOf } from '../net/partyBuffs.js';   // PARTY-BUFFS: a member's own effects, and the heal they gained
+import { spellIconUrl } from './enhancedArt.js';   // PARTY-BUFFS: the spell's own icon, cut from ICON00I0 as the enhanced spellbook cuts it
 
 export const PARTY_STYLE_ID = 'dagger-party-style';
 
@@ -120,7 +122,7 @@ ${PIXELIFY_FIVE_FACE}
 .dfparty-list { display: flex; flex-direction: column; gap: 3px; }
 /* PARTY8-B: QUIET ROWS - no plate behind a card (no border, no fill, no blur: seven boxed cards were fourteen edges
    over the world). A row is a portrait, a name and thin lines under it; the text carries the HUD's hard shadow. */
-.dfparty-card { display: flex; gap: 6px; padding: 3px 0; }
+.dfparty-card { position: relative; display: flex; gap: 6px; padding: 3px 0; }   /* relative: PARTY-BUFFS' heal floats off it */
 /* away: the whole card goes quiet - the portrait too, so a grey face is never mistaken for a live one */
 .dfparty-card.away { opacity: .46; filter: grayscale(1); }
 .dfparty-face { flex: none; box-sizing: content-box; width: ${FACE_BOX_W}px; height: ${FACE_BOX_H}px; overflow: hidden;   /* AUDIT PARTY8: the sheet's border-box took the 1px border out of the plate and squashed a 31-wide head */
@@ -169,6 +171,24 @@ ${PIXELIFY_FIVE_FACE}
 .dfparty-where { font-size: 9px; line-height: 1.2; color: var(--dim, #8b8578); text-shadow: 2px 2px 0 rgba(0,0,0,0.85);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dfparty-where.off { display: none; }
+/* PARTY-BUFFS (2026-09-27, Tabitha: "buff timers or SOME sort of indicator that we have placed a buff on a party teammate
+   [preferably on their party portrait]"): the member's own live effects, under the bars - the spell's icon (its words
+   while the art is on its way) with the rounds left over its corner, a debuff outlined in the health's red. Drawn
+   only while there are any, so a party with nothing on it is still names and bars. */
+.dfparty-fx { display: flex; flex-wrap: wrap; gap: 2px; }
+.dfparty-fx.off { display: none; }
+.dfparty-fxe { position: relative; width: 16px; height: 16px; flex: none; box-sizing: border-box;
+  background: rgba(0,0,0,.55); box-shadow: 0 0 0 1px rgba(0,0,0,.6); }
+.dfparty-fxe.debuff { box-shadow: 0 0 0 1px #e2554c; }
+.dfparty-fxe img { display: block; width: 16px; height: 16px; image-rendering: pixelated; }
+.dfparty-fxw { display: block; font-size: 7px; line-height: 16px; text-align: center; color: var(--bone, #e9e4d9); overflow: hidden; }
+.dfparty-fxr { position: absolute; right: -1px; bottom: -2px; font-size: 7px; line-height: 1; color: #fff;
+  text-shadow: 1px 1px 0 #000, -1px 0 0 #000; font-variant-numeric: tabular-nums; }
+/* ...and a heal the member gained: "+N" in green, rising off the health bar and gone (Tabitha: "floating Heal numbers") */
+@keyframes dfparty-heal { 0% { opacity: 0; transform: translateY(4px); } 15% { opacity: 1; } 100% { opacity: 0; transform: translateY(-14px); } }
+.dfparty-heal { position: absolute; left: ${FACE_BOX_W + 8}px; top: 2px; font-size: 11px; font-weight: 600; color: #7ee07a;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.85); animation: dfparty-heal 1.2s ease-out forwards; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .dfparty-heal { animation-name: dfparty-heal-still; } @keyframes dfparty-heal-still { 0%, 80% { opacity: 1; } 100% { opacity: 0; } } }
 `;
 
 /** The sheet, once (ui/chatPanel.js injectChatStyle's own shape). */
@@ -271,8 +291,11 @@ export function createFaceLoader({ fetchBytes, palette } = {}) {
  * The returned panel: `render({ covered })` once a frame from the host, `setHidden(covered)` for the same word said
  * on its own, and `destroy()`.
  */
-export function createPartyPanel({ social, doc = document, art = null, faceLoader = null, touch = isTouchDevice(), here = null } = {}) {
+export function createPartyPanel({ social, doc = document, art = null, faceLoader = null, touch = isTouchDevice(), here = null, fxIcon = null } = {}) {
   injectPartyStyle(doc);
+  // PARTY-BUFFS: an effect's icon - the enhanced spellbook's own cut of ICON00I0 (null until the sheet lands); a seam
+  // so the pins can hand one in without loading the sheet
+  const iconOf = fxIcon ?? ((i) => { try { return spellIconUrl(i); } catch { return null; } });
   // PARTY8-B: my own place, as the host last composed it (scenes/world.js partyFrame's pose) - read, never composed
   // here (AUDIT SOC B18: composing a pose reads the travel pixel and the location index, and this runs per frame)
   const herePose = () => here?.() ?? null;
@@ -315,6 +338,9 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
     const v = !!value;
     if (v === covered) return;
     covered = v;
+    // AUDIT PARTY-BUFFS B8: what a card saw before my window covered it is no measure of a heal after - a mate's rest
+    // that ended under it (its flag gone) floated "+40" the frame the window closed
+    if (covered) for (const c of cards.values()) c.hpH = null;
     applyVisible();
   };
 
@@ -389,13 +415,45 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
     const thin = el('div', 'dfparty-thin');
     thin.append(vitals[1].row, vitals[2].row);
     bars.append(vitals[0].row, thin);
-    body.append(head, bars, where);
+    const fx = el('div', 'dfparty-fx off');   // PARTY-BUFFS: the member's own live effects, drawn only while there are any
+    body.append(head, bars, fx, where);
     node.append(facebox, body);
     // AUDIT PARTY8: the flare's class comes OFF when the animation ends - a class left on the fill replays it whenever the
     // root comes back from display:none (a window closing) or the row is re-inserted (a seat joining): every seat that
     // took any hit this session flashed at once
     for (const slot of vitals) slot.fill.addEventListener?.('animationend', () => setCls(slot.fill, 'dfparty-fill'));
-    return { node, facebox, pix, name, lead, where, hp, vitals, faceKey: null, drawn: null, away: null, hpPct: null, hpH: null, hitFlip: false };
+    return { node, facebox, pix, name, lead, where, hp, vitals, fx, fxKey: '#', faceKey: null, drawn: null, away: null, hpPct: null, hpH: null, hitFlip: false };
+  };
+
+  /** PARTY-BUFFS: the member's own effects row, rewritten only when what it says moved (the icon, the rounds, the
+   *  row): each a 16px tile - the spell's icon, or its first letters while the art is on its way - with the rounds
+   *  left over its corner and the whole name and rounds on its title. None: the row is not drawn. */
+  const paintFx = (card, fx) => {
+    const list = Array.isArray(fx) ? fx : [];
+    const urls = list.map((e) => iconOf(e.i));
+    // the art's arrival is in the key too, so the letters give way to the icon on the next pose after it lands
+    const key = `${partyFxKey(list)}#${urls.map((u) => (u ? 1 : 0)).join('')}`;
+    if (key === card.fxKey) return;
+    card.fxKey = key;
+    card.fx.replaceChildren?.();
+    list.forEach((e, k) => {
+      const tile = el('span', `dfparty-fxe${e.d ? ' debuff' : ''}`);
+      const url = urls[k];
+      if (url) { const img = doc.createElement('img'); img.src = url; img.alt = ''; tile.append(img); }
+      else tile.append(el('span', 'dfparty-fxw', partyFxAbbrev(e.n)));
+      tile.append(el('span', 'dfparty-fxr', String(e.r)));
+      tile.setAttribute('title', `${e.n || 'Spell'} - ${e.r} rounds${e.d ? ' (harmful)' : ''}`);
+      card.fx.append(tile);
+    });
+    setCls(card.fx, `dfparty-fx${list.length ? '' : ' off'}`);
+  };
+  /** PARTY-BUFFS: "+N" off the health bar - one node, gone when it has risen. */
+  const floatHeal = (card, n) => {
+    const node = el('span', 'dfparty-heal', `+${n}`);
+    card.node.append(node);
+    const gone = () => node.remove?.();
+    node.addEventListener?.('animationend', gone);
+    setTimeout(gone, 1500);
   };
 
   /** One member onto one card - written PART BY PART, and only where the part differs. */
@@ -431,7 +489,11 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
       card.hitFlip = !card.hitFlip;
       setCls(card.vitals[0].fill, `dfparty-fill ${card.hitFlip ? 'hit' : 'hit2'}`);
     }
+    // PARTY-BUFFS: a heal they gained floats up off the bar as "+N" (not while they rest, never on a first pose)
+    const healed = m.online ? partyHealOf(card.hpH, p) : 0;
+    if (healed > 0) floatHeal(card, healed);
     card.hpH = h;
+    paintFx(card, m.online ? p?.fx : null);
     card.hpPct = pct;
     const key = p ? faceKeyOf(p) : null;
     if (key !== card.faceKey) {

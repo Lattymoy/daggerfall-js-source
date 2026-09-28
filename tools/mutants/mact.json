@@ -29,8 +29,8 @@
   {
     "name": "MACT-the-torch-record-says-nothing",
     "file": "src/systems/playerTorch.js",
-    "old": "    carried: true,\n  };",
-    "new": "    carried: false,\n  };",
+    "old": "turns it into a per-light mask.\n    carried: true,\n  };",
+    "new": "turns it into a per-light mask.\n    carried: false,\n  };",
     "tests": [
       "test/mact_bugs.test.js"
     ]

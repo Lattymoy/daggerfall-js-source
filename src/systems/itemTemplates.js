@@ -12,7 +12,7 @@ import { GROUP_TEMPLATE_INDICES } from './itemTemplatesData.js';
 import { WAGON_MODEL_ID } from './horseCartLaw.js';   // DISC24-B: the cart's picture is the wagon's model
 import TEMPLATES_JSON from '../characters/itemTemplates.json' with { type: 'json' };
 import { playerArchiveFor, resolvePaperdollRecord } from '../characters/paperdollArt.js';   // AUDIT 17f: SetRace, one home; NT3 (F006): the record law too
-import { itemDyeColor } from './itemDye.js';
+import { itemDyeColor, itemDyeTarget } from './itemDye.js';
 import { customItemClass, rriVariantFields, rriStoredWeight } from './rriItems.js';   // RRI1: DFU's custom-item dispatch, asked first   // DW3: GetItemImage's `color = (int)item.dyeColor` (ItemHelper.cs:402) rides the image
 
 export { GROUP_TEMPLATE_INDICES };
@@ -298,7 +298,7 @@ export function inventoryItemImage(item, identity = undefined) {
     const bodyArchive = playerArchiveFor(item, t, identity);
     const archive = cls.inventoryTextureArchive ?? bodyArchive;
     const record = cls.inventoryTextureRecord ? cls.inventoryTextureRecord(item, { playerTextureArchive: bodyArchive }) : t.playerTextureRecord;
-    return { archive, record, dye: itemDyeColor(item) };
+    return { archive, record, dye: itemDyeColor(item), dyeTarget: itemDyeTarget(item) };
   }
   let archive, record;
   if (usesWorldTexture(item, t)) {
@@ -361,6 +361,7 @@ export function inventoryItemImage(item, identity = undefined) {
   if (archive === 0 && record === 0) { archive = t.worldTextureArchive; record = t.worldTextureRecord; }
   // DW3: the DYE rides the image - GetItemImage reads item.dyeColor
   // first (:402) and asks the replacement door by it (:453, :458), so
-  // an icon door that draws this must ask by it too.
-  return { archive, record, dye: itemDyeColor(item) };
+  // an icon door that draws this must ask by it too. DYE-ICON: and the
+  // swatch its classic arm dyes (:473-476), which that door changes.
+  return { archive, record, dye: itemDyeColor(item), dyeTarget: itemDyeTarget(item) };
 }

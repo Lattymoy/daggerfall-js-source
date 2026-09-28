@@ -65,8 +65,8 @@
   {
     "name": "contact-glsl-thin",
     "file": "src/render/airPass.js",
-    "old": "    if (behind > 0.02 && behind < uContactParams.y) return uContactParams.z;",
-    "new": "    if (behind > 0.02) return uContactParams.z;",
+    "old": "    occ = max(occ, smoothstep(0.02, ${glslFloat(0.02 + AIR_CONTACT_RAMP)}, behind) * (1.0 - smoothstep(uContactParams.y * 0.75, uContactParams.y, behind)));",
+    "new": "    occ = max(occ, smoothstep(0.02, ${glslFloat(0.02 + AIR_CONTACT_RAMP)}, behind));",
     "tests": [
       "test/el8_contact.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "frame-depth-not-attached",
     "file": "src/render/airPass.js",
-    "old": "    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, f.depth, 0);\n    setFrameTarget(f.fbo);",
-    "new": "    setFrameTarget(f.fbo);",
+    "old": "    f.fbo = f.fbos[f.depthIndex];",
+    "new": "    f.fbo = f.fbos[f.depthIndex ^ 1];",
     "tests": [
       "test/el8_contact.test.js"
     ]
@@ -101,7 +101,7 @@
   {
     "name": "prepare-no-prev",
     "file": "src/render/airPass.js",
-    "old": "    if (this.f) { this.prevVP.set(this._vp); this.prevProjInfo.set(this.projInfo); this.prevValid = !!this.frame; holdPrevRect(this.prevRect, this.rect, this.canvas); }\n",
+    "old": "    if (this.f) { this.prevVP.set(this._vp); this.prevProjInfo.set(this.projInfo); this.prevValid = !!this.frame && !this._cut && !jumped; holdPrevRect(this.prevRect, this.rect, this.canvas); }\n",
     "new": "",
     "tests": [
       "test/el8_contact.test.js"
@@ -110,8 +110,8 @@
   {
     "name": "prepare-prev-is-current",
     "file": "src/render/airPass.js",
-    "old": "    if (this.f) { this.prevVP.set(this._vp); this.prevProjInfo.set(this.projInfo); this.prevValid = !!this.frame; holdPrevRect(this.prevRect, this.rect, this.canvas); }\n    this.f = f;\n    this.fresh = true;   // AUDIT VOL1: a world frame's inputs, for this resolve alone\n    this.rect.set(f.viewport);\n    projInfo(f.proj, this.projInfo);\n    multiply(f.proj, f.view, this._vp);",
-    "new": "    this.f = f;\n    this.fresh = true;   // AUDIT VOL1: a world frame's inputs, for this resolve alone\n    this.rect.set(f.viewport);\n    projInfo(f.proj, this.projInfo);\n    multiply(f.proj, f.view, this._vp);\n    this.prevVP.set(this._vp); this.prevProjInfo.set(this.projInfo); this.prevValid = !!this.frame;",
+    "old": "    if (this.f) { this.prevVP.set(this._vp); this.prevProjInfo.set(this.projInfo); this.prevValid = !!this.frame && !this._cut && !jumped; holdPrevRect(this.prevRect, this.rect, this.canvas); }\n    this._cut = false;\n    this._prevEyeSet = !!e;\n    if (e) { pe[0] = e[0]; pe[1] = e[1]; pe[2] = e[2]; }\n    this.f = f;\n    this.fresh = true;   // AUDIT VOL1: a world frame's inputs, for this resolve alone\n    this.rect.set(f.viewport);\n    projInfo(f.proj, this.projInfo);\n    multiply(f.proj, f.view, this._vp);",
+    "new": "    this._cut = false;\n    this._prevEyeSet = !!e;\n    if (e) { pe[0] = e[0]; pe[1] = e[1]; pe[2] = e[2]; }\n    this.f = f;\n    this.fresh = true;   // AUDIT VOL1: a world frame's inputs, for this resolve alone\n    this.rect.set(f.viewport);\n    projInfo(f.proj, this.projInfo);\n    multiply(f.proj, f.view, this._vp);\n    this.prevVP.set(this._vp); this.prevProjInfo.set(this.projInfo); this.prevValid = !!this.frame;",
     "tests": [
       "test/el8_contact.test.js"
     ]
@@ -137,7 +137,7 @@
   {
     "name": "lane-no-contact",
     "file": "src/render/enhancedLighting.js",
-    "old": "      : contactShadow(wp, n, Ln, d);",
+    "old": "      : mix(contactShadow(wp, n, Ln, d), 1.0, smoothstep(uPointLights[i].w * ${glslFloat(EL_CONTACT_FADE_START)}, uPointLights[i].w * ${glslFloat(AIR_CONTACT_RANGE_FRACTION)}, d));",
     "new": "      : 1.0;",
     "tests": [
       "test/el8_contact.test.js"

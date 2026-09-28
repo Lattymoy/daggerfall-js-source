@@ -716,7 +716,7 @@ Ignoring') - permanent by parity, recorded in the coverage pin.
   faction-listener slot (addFactionListener first-claim-wins /
   removeFactionListener at dispose; PlayerActivate.StaticNPCClick
   reads the map - :1534, the only consumer in the DFU tree, and
-  wired at src/scenes/worldModes.js:605). activeFactionPersons walks NON-COMPLETE quests only -
+  wired at src/scenes/worldModes.js:619). activeFactionPersons walks NON-COMPLETE quests only -
   completed quests must not lock an NPC out (QuestMachine.cs:1085).
   The non-individual parse throw carries the TEMPLATE-SetComplete
   quirk; its sibling's does not.
@@ -1422,10 +1422,10 @@ triage: 25 kills at fails=5+ (one at fails=7 - the `| 0` int32 rail
 broke three pins at once), 2 survivors at the baseline 4, both
 PROVEN equivalents:
 
-- questBridge.js:66 `rawZ ?? 0 -> ?? 1`: the hash's only read of
+- questBridge.js:67 `rawZ ?? 0 -> ?? 1`: the hash's only read of
   rawZ is `z >> 2`, and `1 >> 2 === 0 === 0 >> 2` - for any record
   LACKING rawZ the mutated default is arithmetically invisible.
-- questBridge.js:73 `(pn.flags ?? 0) -> (?? 1)` in the gender arm:
+- questBridge.js:74 `(pn.flags ?? 0) -> (?? 1)` in the gender arm:
   gender reads bit 5 alone, and `1 & 32 === 0 === 0 & 32` - Male
   either way, every path.
 
@@ -1453,7 +1453,7 @@ spamming the same questor does not re-pulse the task. DFU makes you go
 click someone else and come back.
 
 The port carries `lastNPCClicked` as an NPCData-shaped OBJECT LITERAL,
-and both hosts mint a fresh one at every click - worldModes.js:1281's
+and both hosts mint a fresh one at every click - worldModes.js:1348's
 quest-flat arm builds `{ hash, flags, factionID, nameSeed, gender,
 buildingKey, mapID }` inline, and questBridge.clickNpc runs
 `staticNpcData(pn, sceneCtx)`. So `lastClicked === this.clickMemory`
@@ -2808,7 +2808,7 @@ banker and guild clerk in Daggerfall reached `TalkManager` with an
 empty name. Two things read it:
 
 - the greeting says the NPC's name once reaction is above zero, and
-  "stranger" below it (`townTalk.js:560`). Every static NPC in the
+  "stranger" below it (`townTalk.js:565`). Every static NPC in the
   game stayed a stranger no matter how well liked.
 - `topicTree`'s same-building-static test (`:558`) matches a topic
   caption against that name, so it never matched.
@@ -2902,7 +2902,7 @@ has never allowed. Expanding in place now. (The caller-side
 `PlayerActivate.StaticNPCClick:1534`. `TalkManager.cs` does not
 contain the word `Listener`. Three port comments named TalkManager as
 the reader and marked the wiring `(Q4 wires)` - over a reader the port
-already ships, at `worldModes.js:605`. A pending marker over shipped
+already ships, at `worldModes.js:619`. A pending marker over shipped
 work is worse than no marker at all: it sends the next reader looking
 for work that is done, in a file that never had it. Four sites
 corrected, the bible's copy included.
@@ -5470,7 +5470,7 @@ lesson one host over.
 **What did NOT ship:** PlayerEntity.Update's per-minute *intermittent
 spawn* roll (:486-492) still has no caller on this route. It is not
 this pool's dependency — it is a loop that carries the passive-guard
-spawns and the NPC-guard conversion with it (world.js:4367-4460) — and
+spawns and the NPC-guard conversion with it (world.js:4484-4577) — and
 it is named at the mount so the absence reads as a fact.
 
 **(c) The find-place seam's absence, narrowed to one sentence.**
@@ -5489,17 +5489,17 @@ knows its one city outright.
 This host owns a cast engine of its own, and `worldModes` takes *that
 instance* for the interior mode, so it covers the shops entered from
 `?exterior` too. It passed neither of `EntityEffectManager`'s two
-ready-spell events (`hostMagic.js:79-80`), and those two doors are the
+ready-spell events (`hostMagic.js:92-93`), and those two doors are the
 *only* route into the machine's `CastSpellDo` / `CastEffectDo` latches
-(`machine.js:870`/`:853`; C# subscribes them in the action's
+(`machine.js:877`/`:860`; C# subscribes them in the action's
 constructor). Every `cast X spell do` and `cast X effect do` on this
 whole route could therefore never latch and never fire. The pair the
-other two engine-owning hosts wire (`world.js:4752-4753`,
-`dungeonContext.js:2293-2294`) is wired here now, and with it
+other two engine-owning hosts wire (`world.js:4869-4870`,
+`dungeonContext.js:2394-2395`) is wired here now, and with it
 `CastSpellDo`'s two world reads — `getClassicSpellEffects` and the
-byte-folded `spellHasMatchForClassicEffect` (`world.js:9319-9322`),
+byte-folded `spellHasMatchForClassicEffect` (`world.js:9504-9507`),
 absent which the action self-completes at *parse*
-(`actions.js:2756`/`:2763`) and the task can never arm at all.
+(`actions.js:2767`/`:2774`) and the task can never arm at all.
 
 Pins: 5 in `test/qx1_exterior_host.test.js` (the placement law RUN over
 the real `placeFoeFreely` with a stubbed world — the FOV cone bounded on
@@ -6277,6 +6277,35 @@ says which of those it is.
 throws leaves the parent alive and its good child starting, logged in
 ParseQuest's words; the queue plays in turn and a failure releases the
 next; every seam by source. `tools/mutants/crux1.json`: 8, 8 dead.
+
+## CRUX-DOOR - A DOOR IN THE CRUX IS NOT A WAY OUT (2026-09-27, Discord, "Final Main Quest Dungeon")
+
+Seanobi: *"In the Mantellan Crux (final MQ dungeon) when reaching entrance to the Fire Skull Room after touching the
+big crystal, it will not go there, instead it leads back to outside."* The door was named "To High Rock sea coast
+Region" - the host's name for a dungeon exit.
+
+A block's `exitDoors` is DFU's own misnomer (`RDBLayout.cs:37`, `:621`, `:637`): every door face of every model the
+block places, whatever its type - building (texture archive 74), dungeon-entrance (56/331), dungeon-exit (95). The
+port's layout builds the same list (`world/rdbLayout.js`), and the dungeon host copied every entry into its exits
+(`scenes/dungeonContext.js`), each an `exit:` target named "To <region> Region" whose click left the dungeon
+(`scenes/worldModes.js`). Only a DungeonExit door leaves (`PlayerActivate.cs:649` - an entrance door wants the
+player outside, `:640`, and a building door's TransitionExterior finds no interior, `:634`), and only an exit door
+gets a collider (`DaggerfallStaticDoors.cs:44-66`), so in DFU the click falls through to the model's own action -
+the Crux's Teleport, which the port has (`world/actionSystem.js`). Here the padded door box took the ray first and
+threw the player onto the sea pixel outside. `world/dungeonLayout.js isDungeonExitDoor` is the one reading of the
+type (the overlap registry reads it too), and the host keeps a block's DungeonExit doors alone; the court's and the
+portal's made doors join after, as before. The facing on entry and the wagon's near-exit test read the same list,
+so both follow DFU's filter now (`PlayerEnterExit.cs:937`, `DaggerfallInventoryWindow.cs:1114`).
+
+Neither DFU nor the port treats the Crux's doors by quest state - a player who travelled there met the same door as
+one sent by S0000016. NOT VERIFIED WITHOUT ARENA2: which model and archive the reporter's door is. If it is a
+baked archive-95 face (the model-58051 kind DFU's own comment names), DFU exits there too and this is not the fix;
+the ARENA2-gated pin to add is the Crux laid out with its static doors by type. One leftover: World Tooltips names
+a building-type door inside a dungeon "To <location>" (its .cs:764-767); the port no longer names those.
+
+Pinned in `test/crux_door.test.js` (2: a synthetic block through the real `layoutRdbBlock` and `dfMeshToModel` -
+the list carries all three faces and one survives; the host's copy loop skips the rest). Mutants
+`tools/mutants/crux_door.json` (4, all dead). `01-Overview/Field-Bugs-2026-09-27.md`.
 
 ## DISC6-B - THE KILL THAT NEVER COUNTED (2026-09-23, Discord through Mac: "Theres no quest notification when you killed all monsters and no quest update in the log")
 

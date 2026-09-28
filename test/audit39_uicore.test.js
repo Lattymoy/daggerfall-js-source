@@ -132,7 +132,11 @@ test('AUDIT 39 F127 / TI1: the drag hook is live - the swipe calls it, and no bu
   // FONT1 re-pinned: `enhanced` joined it - the skin flag that puts the layer's text in the pixel face (the classic skin keeps system-ui)
   assert.match(touch, /@param hooks \{ look\(dx,dy\), attack\?\(dx,dy,held\), tap\?\(x,y\), locked\?\(\), dial\?, enhanced\?, cycleMode\?\(\), socialInteract\?\(\), overlayActive\?\(\), paused\?\(\) \}/,
     'the header documents exactly the hooks the layer calls (AUDIT 62 F7 added `paused`, the pause predicate the mouse arms always carried)');
-  assert.match(touch, /if \(hooks\.socialInteract\) button\(/, '...and the social button is drawn only where a host hands the hook in');
+  assert.match(touch, /if \(hooks\.socialInteract\) socialBtn = button\(/, '...and the social button is drawn only where a host hands the hook in');
+  // TOUCH-BUTTONS (2026-09-27, Discord: "I would much rather use a button to attack"): the one button that calls the
+  // drag seam is a corner slot the PLAYER chose Attack for - never by default (TI1's two stand there), and never on a
+  // host with no attack hook, where it would be a door that opens nothing.
+  assert.match(touch, /filter\(\(a\) => a\.kind !== 'attack' \|\| typeof hooks\.attack === 'function'\)/, 'no Attack slot where the host has no attack');
   assert.match(touch, /const face = hooks\.enhanced \? `font-weight:500;font-size:15px;\$\{PIXEL_FONT_CSS\}` : 'font:600 15px system-ui,-apple-system,"Segoe UI",sans-serif';/, 'FONT1: the enhanced skin\'s layer is in the pixel face, the classic skin\'s in the system face');
   // AUDIT FONT F5: ALL FOUR HOSTS, not one. FONT1 wired `enhanced` in
   // scenes/world.js alone and this pin read that one file, so on

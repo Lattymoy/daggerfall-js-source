@@ -138,7 +138,7 @@ test('PH2: the snap descends a quantum at a time from the feet, accepts a hair o
   assert.doesNotMatch(src, /const probe = \[feet\[0\], feet\[1\] - STEP_OFFSET, feet\[2\]\];/, 'the whole-STEP_OFFSET teleport probe is gone');
   assert.match(src, /const floorAbove = oneWayFloor && d < radius && !wallAbove && dy \/ d <= -GROUND_NY;/, 'PH1: the one-way floor');
   assert.match(src, /this\._resolveSphere\(low, CAPSULE_RADIUS, out, standCeil, true\);/, 'the lower sphere\'s');
-  assert.match(src, /this\._resolveSphere\(high, CAPSULE_RADIUS, out, standCeil, axis === 0\);/, 'never the head\'s');
+  assert.match(src, /this\._resolveSphere\(high, CAPSULE_RADIUS, out, standCeil, axis === 0, tall && axis !== 0\);/, 'never the head\'s (AUDIT pre-merge S1: and a floor-keeping body\'s head never grounds at all)');
   // a ledge deeper than STEP_OFFSET is a fall, as MAC3 pins for terrain
   const col = dungeonFloor();
   const low = quad(-10, -(STEP_OFFSET + 0.3), 20, 10, -(STEP_OFFSET + 0.3), 20, 10, -(STEP_OFFSET + 0.3), 40, -10, -(STEP_OFFSET + 0.3), 40);

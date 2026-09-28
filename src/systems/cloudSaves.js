@@ -51,7 +51,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import {
-  SAVE_DATA_PREFIX, SAVE_INFO_PREFIX, SAVE_SHOT_PREFIX, firstFreeKey,
+  SAVE_DATA_PREFIX, SAVE_INFO_PREFIX, SAVE_SHOT_PREFIX, firstFreeKey, saveInfoOf, deleteSave, enumerateSaves,
 } from './saveSlots.js';
 import { importSlots } from './saveTransfer.js';
 import { serviceBase, storedSession, forgetSession, accountRefusalText } from '../net/accountClient.js';
@@ -80,6 +80,9 @@ export const CLOUD_REFUSALS = Object.freeze({
   // saveTransfer's importSlots leaves nothing half done when this
   // happens, which is why it is a message and not a broken slot.
   'no-room': 'There is no room on this device for that save.',
+  // The pre-merge audit (0927b B2): a RESTORE found the backup changed since the list was drawn - another device backed
+  // up between the listing and the press. Nothing was replaced; the list is asked again.
+  'stale': 'Your backup changed since this list was drawn. Look again before restoring.',
 });
 
 /** A sentence for anything either end can refuse with. */
@@ -242,8 +245,26 @@ export async function pushSlot(io, storage, key) {
  * Then SP1's law does the rest: `importSlots` decides the number, skips
  * a save the store already holds, and writes the card LAST so a quota
  * failure leaves nothing half done.
+ *
+ * FIELD 2026-09-27 — `replaces`: THE PLAYER'S RESTORE OVER AN OLDER COPY.
+ * Masta_Fu's PC held an older QuickSave of the slot his Mac had backed
+ * up later, and there was no way to bring the newer one back. The
+ * restore is still SP1's arrival (the backup takes its own number, and
+ * never writes over a slot - bible ACC2 D5 unchanged); the local copy it
+ * replaces goes only AFTER the backup is in the store, through the
+ * store's own delete, and only when it is the same slot at a different
+ * game minute - so a failed download removes nothing and the backup's
+ * own copy is never the one removed. It is the menu's second press.
+ *
+ * `replaces` is { key, gameTime, realTime } - the local slot AS IT WAS
+ * DRAWN. The pre-merge audit (0927b) found three ways the press could
+ * act on something other than what the player saw: the service's blob
+ * changed after the listing (B2 - checked here, against the blob's own
+ * minute), the local slot was saved again (B3 - its stamp must be the
+ * one drawn), and a skipped arrival whose "same save" was a namesake's
+ * (B4 - this character's own copy of the backup's save must be here).
  */
-export async function pullSlot(io, storage, cloudCard) {
+export async function pullSlot(io, storage, cloudCard, { replaces = null } = {}) {
   if (!io) return { ok: false, error: 'signed-out' };
   const characterId = cloudCard?.characterId;
   const saveName = cloudCard?.saveName;
@@ -251,6 +272,10 @@ export async function pullSlot(io, storage, cloudCard) {
 
   const data = await ask(io, slotPath(characterId, saveName, 'data'));
   if (!data.ok) return data;
+  // B2: A RESTORE CHECKS WHAT ARRIVED, not the card on screen - the blob is the service's NOW and the card the listing's;
+  // another device's push between the two would have the older copy replaced by a save that is not the newer one, filed
+  // under the card's minute. (A Download keeps ACC2c's arrival as it was - nothing is removed there.)
+  if (replaces != null && Number.isFinite(cloudCard.gameTime) && minuteOf(data.text) !== cloudCard.gameTime) return { ok: false, error: 'stale' };
   const shot = await ask(io, slotPath(characterId, saveName, 'shot'));
 
   const info = {
@@ -265,14 +290,36 @@ export async function pullSlot(io, storage, cloudCard) {
     [{ n: firstFreeKey(storage), data: data.text, info: JSON.stringify(info), shot: shot.ok ? shot.text : null }],
     storage,
   );
-  if (r.imported.length) return { ok: true, key: r.imported[0] };
   // SKIPPED IS NOT A FAILURE. SP1's law skips a save the store already
   // holds, and a player who presses Restore on a save they already have
   // has lost nothing - saying "already here" is the truth and an error
   // is not.
-  if (r.skipped) return { ok: true, key: null, skipped: true };
-  return { ok: false, error: 'no-room' };
+  const done = r.imported.length ? { ok: true, key: r.imported[0] } : r.skipped ? { ok: true, key: null, skipped: true } : null;
+  if (!done) return { ok: false, error: 'no-room' };
+  if (replaces != null) done.replaced = dropReplaced(storage, replaces, cloudCard, done.key);   // FIELD 2026-09-27: the backup is here - now the older copy goes
+  return done;
 }
+
+/** A save blob's own game minute, as saveSlots.js stamps its card (`Math.floor(snap.classicMinutes)`); NaN unread. */
+const minuteOf = (text) => { try { return Math.floor(JSON.parse(text)?.classicMinutes ?? 0); } catch { return NaN; } };
+
+/** FIELD 2026-09-27: the local slot a player's restore replaces - removed only when it IS that slot (character,
+ *  save name), NOT the backup's save (a different game minute, SP1's identity), STILL what was drawn (B3), and - when
+ *  the arrival was skipped - with this character's own copy of the backup's save in the store (B4); by the store's
+ *  own delete. */
+function dropReplaced(storage, replaces, card, landedKey) {
+  const key = replaces?.key;
+  const info = saveInfoOf(key, storage);
+  if (!info || slotKeyOf(info) !== slotKeyOf(card)) return false;
+  if ((info.dateAndTime?.gameTime ?? -1) === (card?.gameTime ?? -1)) return false;
+  if (info.dateAndTime?.gameTime !== replaces.gameTime || info.dateAndTime?.realTime !== replaces.realTime) return false;   // B3
+  if (landedKey == null && !holdsSave(storage, card, key)) return false;   // B4
+  return deleteSave(key, storage);
+}
+
+/** B4: is THIS character's copy of the card's save (its slot, its minute) in the store, beside `except`? */
+const holdsSave = (storage, card, except) => [...enumerateSaves(storage).info.entries()]
+  .some(([k, i]) => k !== except && slotKeyOf(i) === slotKeyOf(card) && i.dateAndTime?.gameTime === card?.gameTime);
 
 /**
  * ACC2c — THE CARDS THIS DEVICE HAS NO SAVE FOR.

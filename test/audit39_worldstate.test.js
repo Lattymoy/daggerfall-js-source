@@ -35,7 +35,7 @@ test('AUDIT 39 #59: the two above-ground hosts gate the motor and the weapon on 
   // and exteriorFoes' castParalyze mints the spell out of the
   // wilderness encounter tables - so a landed paralysis was inert.
   for (const [name, s] of HOSTS) {
-    assert.match(s, /import \{ isInvisible, entityIsParalyzed \} from '\.\.\/systems\/effects\.js';/,
+    assert.match(s, /import \{ isInvisible, entityIsParalyzed(?:, concealBits)? \} from '\.\.\/systems\/effects\.js';/,
       `${name}: the read-time fold (DaggerfallEntity.IsParalyzed + the FreeAction immunity)`);
     assert.match(s, /const paralyzed = entityIsParalyzed\(playerEntity\);/,
       `${name}: one read per frame, above the motor and the weapon rig`);
@@ -122,7 +122,7 @@ test('AUDIT 39r: the interior arrow that lands on the player flashes the screen'
 // ---------------------------------------------------------------------
 
 test('AUDIT 39 #152: no host hides drawHud behind the classic HUD art', () => {
-  // hud.js:421-446 runs playerDamageFlash and the enhanced DOM branch
+  // hud.js:422-447 runs playerDamageFlash and the enhanced DOM branch
   // ABOVE its own `if (!art) return;` - "the enhanced HUD reads no
   // ARENA2, and a player whose HUD art failed to load still has
   // vitals". Three hosts wrapped the whole call in `if (hudArt)`, and
@@ -403,7 +403,7 @@ test('AUDIT 39 #159: the travel map refuses with enemies nearby, before the raci
 
 test('AUDIT 39 #130: the exterior host\'s attack TAP defers to a readied spell like its other three doors', () => {
   // WeaponManager.cs:244-263 hands the click to the ready spell before
-  // it handles any attack; touch.js:233 already promises the tap casts.
+  // it handles any attack; touch.js:234 already promises the tap casts.
   // TI1 (2026-09-05): the tap-to-attack button is gone - the touch
   // SWIPE is the attack now, and it carries the same gate in front of
   // the drag seam, held-edge only (a release must reach the rig).

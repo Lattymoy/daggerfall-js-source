@@ -302,17 +302,17 @@ export function makeIconDrawer(icons, identityOf = null) {
     // DW3: the DYE is part of the ask (GetItemImage :458 imports by
     // item.dyeColor), so it is part of this key; the upload answers
     // which GL variant it went under - a dyed replacement its own, the
-    // classic the shared `#ui`. The size stays the CLASSIC record's
+    // classic the shared `#ui` (DYE-ICON: a dyed one its own). The size stays the CLASSIC record's
     // (ItemListScroller.cs:440-441: the panel is sized from the base
     // image and the texture, imported or not, is drawn into it).
     const token = dyeToken(img.dye);
-    const key = `${img.archive}_${img.record}${token ? `_${token}` : ''}`;
+    const key = `${img.archive}_${img.record}${token ? `_${token}` : ''}${img.dyeTarget != null ? `_t${img.dyeTarget}d${img.dye}` : ''}`;   // DYE-ICON: and the swatch the dye changes - a silver blade (18, no name) is not an artifact
     if (!warm.has(key)) {
       warm.add(key);
       icons.getTexture(img.archive).then(async (tex) => {
         if (img.record < tex.recordCount) {
           await preloadIconRecord(icons, img);   // AUDIT-DW F1: this record's replacement, decoded when it is drawn - not the archive's 280 before the first classic icon
-          const variant = icons.uploadRecord(img.archive, img.record, { mips: false, removeMask: true, dye: img.dye });   // REVIEW 2026-09-05: item art is UI art - ImageReader.cs:59, no mip chain; HM1: GetInventoryImage strips the 0xFF mask (the helm's halo)
+          const variant = icons.uploadRecord(img.archive, img.record, { mips: false, removeMask: true, dye: img.dye, dyeTarget: img.dyeTarget });   // REVIEW 2026-09-05: item art is UI art - ImageReader.cs:59, no mip chain; HM1: GetInventoryImage strips the 0xFF mask (the helm's halo)
           glKeys.set(key, `${img.archive}_${img.record}${variant ?? '#ui'}`);
           sizes.set(key, tex.getSize(img.record));
         }
@@ -398,7 +398,7 @@ export function scrollerToolTipText(item, { getQuest = null, books = true } = {}
  *  `show(null, ...)` is the pointer leaving every button, which is
  *  DFU's OnMouseLeave clearing the shared tip. */
 export function makeSlotToolTip() {
-  const tip = new ToolTip();
+  const tip = new ToolTip(null, { wrapFrom: 1 });   // AUDIT SET U2: the lines under the name are the port's (its tier's, sigil's, set's) and wrap; the name is DFU's
   return {
     tip,
     /** The item under the cursor, or null to clear. */

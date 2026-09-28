@@ -427,10 +427,12 @@ test('EVENT1 host: world.js hears the event from the HUB link alone, walks it ea
   assert.match(world, /if \(tab\.room === SOCIAL_ROOM\) link\.onEvent = \(ev, o\) => dread\.set\(ev, o\);/);
   assert.equal((world.match(/\.onEvent = /g) ?? []).length, 1, 'no other session sets the event');
   assert.match(world, /const dreadW = dread\.tick\(dt\);/);
-  assert.match(world, /sky\.setDread\(dreadW, dreadCloudGlow\(boltFrame\.bolts\)\);/, 'the grade and the red strikes\' glow, once the strikes are known');
-  assert.ok(world.indexOf('sky.setDread(dreadW,') > world.indexOf('boltFrame = isEnhanced()') && world.indexOf('sky.setDread(dreadW,') < world.indexOf('sky.use(('), 'after the bolts, before the sky\'s frame');
-  assert.match(world, /dreadLight\(withMoonAmbient\([\s\S]*?\), dreadW\), sunScale\(minute\) \* wxNow\.sun \* flash \* sky\.sunFactor\(\) \* \(1 - DREAD_KEY_DIM \* dreadW\)/);
-  assert.match(world, /dreadLight\(SUN_RIG_COLOR, dreadW\)\);/);
+  // WBX8: the sky, its light and the key's dim take the event's weight, or an Oblivion Gate's where that is the greater
+  assert.match(world, /const skyDreadW = Math\.max\(dreadW, gateSky\?\.weight \?\? 0\);/);
+  assert.match(world, /sky\.setDread\(skyDreadW, dreadCloudGlow\(boltFrame\.bolts\)\);/, 'the grade and the red strikes\' glow, once the strikes are known');
+  assert.ok(world.indexOf('sky.setDread(skyDreadW,') > world.indexOf('boltFrame = isEnhanced()') && world.indexOf('sky.setDread(skyDreadW,') < world.indexOf('sky.use(('), 'after the bolts, before the sky\'s frame');
+  assert.match(world, /dreadLight\(withMoonAmbient\([\s\S]*?\), skyDreadW\), sunScale\(minute\) \* wxNow\.sun \* flash \* sky\.sunFactor\(\) \* \(1 - DREAD_KEY_DIM \* skyDreadW\)/);
+  assert.match(world, /dreadLight\(SUN_RIG_COLOR, skyDreadW\)\);/);
   assert.match(world, /dreadStorm\.tick\(\{ sharedMs: Date\.now\(\) \+ _sharedOffsetMs, eye: mwv\.eye, weight: dreadW \}\)/, 'on the shared clock');
   assert.match(world, /if \(isEnhanced\(\)\) for \(const s of ds\.strikes\) struckFar\.push\(\{ \.\.\.s, flashColor: DREAD_FLASH_COLOR \}\);/);
   assert.match(world, /flash: flash - 1, pos:/, 'the host\'s flash is the storm\'s alone');

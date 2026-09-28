@@ -394,10 +394,23 @@ void main() {
   gl_Position = uProj * uView * vec4(world, 1.0);
 }`;
 
+/** LA-COST3 (2026-09-27, Mac: "a deep audit on the enhanced lighting system ... performance improvements"): BB_VS
+ *  WITH A LANE'S ADDITIONS - `ext.head` (declarations) before main, `ext.main` (statements) at main's end, after every
+ *  line that places the vertex - or BB_VS itself with none. A lane computes a per-QUAD term where the quad is
+ *  (enhancedLighting.js EL_BB_VS_EXT: the flat's sun, once a corner instead of once a fragment) and the vertex lands
+ *  exactly where BB_VS lands it: EL1's law that the vertex shaders are the renderer's own stands, text and all. The
+ *  shadow and air passes take BB_VS itself.
+ *  @param {{ head: string, main: string }|null} [ext] */
+export function bbVertexShader(ext = null) {
+  if (!ext) return BB_VS;
+  const at = BB_VS.indexOf('void main() {'), end = BB_VS.lastIndexOf('}');
+  return `${BB_VS.slice(0, at)}${ext.head}\n${BB_VS.slice(at, end)}${ext.main}\n${BB_VS.slice(end)}`;
+}
+
 import { createClusterSpace, buildLightClusters, CLUSTER_GRID_W, CLUSTER_GRID_H, CLUSTER_LIST_W, CLUSTER_LIST_ROWS, CLUSTER_X, CLUSTER_Y, CLUSTER_NEAR, CLUSTER_Z_SCALE, CLUSTER_GRID_UNIT, CLUSTER_LIST_UNIT } from './lightClusters.js';   // LC1: the lantern loop's grid
 import { ShadowPass, SHADOW_GLSL } from './shadowPass.js';   // EL7: the receiver block, for the water surface's lane program
 import { boundsOf, spherePlanes, batchVisible, batchSphere, ZERO_ORIGIN, placementGrid, quadHalfDiagonal } from './bounds.js';   // PERF-EXT1: and a batch's placement grid; the review: and the half-diagonal's one home
-import { billboardKey } from './billboardKey.js';   // AUDIT 68 S16-bbkey-stale-shadow-reach: the batch's texture key - one home with the two replays
+import { billboardKey, sortByKey } from './billboardKey.js';   // AUDIT 68 S16-bbkey-stale-shadow-reach: the batch's texture key - one home with the two replays; LA-COST2: and the cutout pass's sort by it
 import { cullDisabled } from './frustum.js';   // PERF-CROWD2: the billboard pass culls for every host, so no host can forget to
 import { getPref } from '../systems/uiPrefs.js';   // GRAIN2: the ground-sharpness dial, read where the tile array is built
 
@@ -474,6 +487,7 @@ import { decalIndices, DECAL_FLOATS_PER_VERTEX } from '../combat/bloodDecals.js'
 import { BLOOD_ABSORB_ENCODED, INK_DEPTH } from '../combat/bloodArt.js';
 import { glslFloat } from './airPass.js';   // AUDIT BLOOD3 F9: a dial at a whole number is an INT literal in GLSL, and vec3 * int does not compile   // BLOOD3: the film's absorption - the classic mark takes the depth, the lane takes the sheen too
 import { SHADE_DARK } from '../systems/concealDraw.js';   // ECV1 / AUDIT 65 PN-3: the shade's pull toward black, interpolated into BB_FS below - the shader restated 0.12 as a second literal. The LEAF, not systems/combatVisuals.js, which re-exports it: that module's graph would take this file's closure from 13 modules to 69
+import { HIT_FLASH_GLSL } from '../systems/hitFlash.js';   // HITFLASH1: the struck-red term, shared with the lane's billboard shader and the sprite quad (a LEAF, no imports)
 
 const BB_FS = `#version 300 es
 precision highp float;
@@ -483,6 +497,7 @@ uniform sampler2D uTex;
 uniform sampler2D uEmissionTex;
 uniform int uSpectral;
 uniform vec4 uConceal;  // ECV1: x mode (0 plain, 1 chameleon, 2 shade, 3 hit reveal), y opacity, z seconds, w phase
+uniform float uHitFlash;  // HITFLASH1: a body struck, 0..1 (batch.hitFlash)
 uniform vec3 uTint; // time-of-day: ambient (+ the moon's half); VC4: the sun's half rides uBBSun so a cloud's shadow can take it
 uniform vec3 uBBSun;
 uniform int uPointCount;
@@ -498,6 +513,7 @@ uniform vec3 uCamPos;
 ${CLOUD_SHADOW_GLSL}
 out vec4 outColor;
 ${FOG_GLSL}
+${HIT_FLASH_GLSL}
 void main() {
   // ECV1: a chameleoned foe ripples - a slow horizontal wobble across
   // the sprite, phased per foe - so it reads as blending in, not as a
@@ -541,6 +557,8 @@ void main() {
   // AUDIT 65 PN-3: SHADE_DARK itself (keep it a decimal - GLSL will not
   // multiply a vec3 by an int literal).
   if (uConceal.x == 2.0) lit *= ${SHADE_DARK};
+  if (uConceal.x == 5.0) lit = mix(lit, vec3(0.95, 0.06, 0.04), uConceal.z);   // PEERFX3: a player struck flashes red for a moment (z the strength, fading)
+  lit = hitFlashLit(lit, albedo + emission, uHitFlash);   // HITFLASH1: over any concealment, never instead of it
   if (uConceal.x == 4.0) lit = vec3(0.0);   // EOTB-IL: Eye Of The Beholder's shade - Color.black at the batch's alpha (UpdateMaterial, IL_4f69)
   float alpha = uSpectral == 1 ? tex.a : 1.0;
   if (uConceal.x > 0.0) alpha = tex.a * uConceal.y;
@@ -781,6 +799,7 @@ uniform vec3 uMoonDir;
 uniform float uTrilight;   // BLOOD AUDIT 5: and the trilight ambient (BA1), as the mesh takes it
 uniform vec3 uAmbientSky;
 uniform vec3 uAmbientGround;
+uniform float uPicture;   // WEAPON-MOUNT: a mounted PICTURE (the decorator's hung weapons and armour), not a film of blood
 ${CLOUD_SHADOW_GLSL}
 out vec4 outColor;
 ${FOG_GLSL}
@@ -856,6 +875,10 @@ void main() {
   // here than on the lane, which is W6's fault with the sign reversed.
   float thick = t.a * clamp((1.0 - t.r) / ${glslFloat(INK_DEPTH)}, 0.0, 1.0);
   vec3 rgb = vColor.rgb * exp(vec3(${glslFloat(BLOOD_ABSORB_ENCODED[0])}, ${glslFloat(BLOOD_ABSORB_ENCODED[1])}, ${glslFloat(BLOOD_ABSORB_ENCODED[2])}) * (1.0 - thick)) * lightAcc;
+  // WEAPON-MOUNT (2026-09-26, Mac: "weapons dont show in houses properly"): a picture's colour IS its texel. The
+  // film above reads the texel's red as a blood thickness and paints the tint through it, so a hung sword came out
+  // a pale lit silhouette of itself - the pack's picture with its colours thrown away.
+  if (uPicture > 0.5) rgb = t.rgb * vColor.rgb * lightAcc;
   float a = t.a * vColor.a;
   float f = fogFactorAt(vWorld);
   outColor = vec4(dwWaterFog(mix(uFogColor, rgb, f), vWorld), a);   // DW-C
@@ -1207,7 +1230,7 @@ export class Renderer {
     this.stats = { draws: 0, programBinds: 0, vaoBinds: 0, texBinds: 0, bbCulled: 0 };   // PERF-CROWD2: the billboards this frame did NOT submit
     this._perf = perfOn() ? setMeter(gl, new PerfMeter(gl, perfZones(), perfCpu())) : null;   // EL8: `?perf` - a GPU-timed line every PERF_EVERY world frames; VC6d: `?perf=zones` per pass, and the meter is findable by its context (the sky's march marks its own span); PERF-CPU: `?perf=cpu` tiles the same zones on the MAIN THREAD's clock, which is the one a script-bound frame is losing
     this._perfOpen = false;   // AUDIT 68 S16-perf-no-resolve-leak: a world frame's meter frame begun and not yet closed (_perfClose)
-    this._frameStamp = 0;      // PERF3: bumped by beginFrame (and the state restores) - the terrain program's frame-constant block is uploaded once per stamp
+    this._frameStamp = 0;      // PERF3: bumped by beginFrame (and the state restores) - the terrain program's frame-constant block is uploaded once per stamp; LA-COST1: and the billboard's, the decal's and the character's, and bumped by every setter and seam that moves a value in any of the four (the law: test/la_cost.test.js)
     // PERF-CROWD2 (2026-09-19): THE BILLBOARD PASS CULLS, so that no host
     // has to remember to. PERF-ON2 found the peers submitted uncut and
     // PERF-CROWD found the whole town beside them - and then the same
@@ -1228,6 +1251,18 @@ export class Renderer {
     this._bbPv = new Float32Array(16);
     this._bbCullOff = cullDisabled();   // the ?cull=off door, read once
     this._tFrameStamp = -1;
+    // LA-COST1 (2026-09-27): the stamp each of the other three programs' frame blocks last went up under (drawBillboards,
+    // drawDecals, drawCharacter) - PERF3's `_tFrameStamp`, three more times
+    this._bbFrameStamp = -1;
+    this._dFrameStamp = -1;
+    this._cFrameStamp = -1;
+    // LA-COST1: the decoded point colours' memo - `_pointColorDec` holds the first `_pointColorDecCount` lights'
+    // colours decoded under lane `_pointColorDecLane` while `_pointColorDecGen` is `_pointColorGen`, which every writer
+    // of the colours bumps (setPointLights, setFlashLight, setLightingLane)
+    this._pointColorGen = 0;
+    this._pointColorDecGen = -1;
+    this._pointColorDecCount = 0;
+    this._pointColorDecLane = null;
     this._windowEmission = new Float32Array([0, 0, 0]);
     this._pointLights = new Float32Array(0); // vec4 per light [x,y,z,range]
     this._flashLight = null;   // DS1: the storm's flash, composed in by setFlashLight
@@ -1614,13 +1649,14 @@ export class Renderer {
 
   /** EL1: compile one world program set from its four fragment shaders
    *  (the vertex shaders are the renderer's own - a lane changes how a
-   *  fragment is lit, never how a vertex lands). */
+   *  fragment is lit, never how a vertex lands; LA-COST3: a lane may ADD a
+   *  per-quad term to the billboard's, bbVertexShader, and places nothing). */
   _buildWorldSet(src) {
     return {
       key: src.key,
       mesh: this._buildProgram(VS, src.meshFs),
       char: this._buildProgram(CHAR_VS, src.charFs),
-      bb: this._buildProgram(BB_VS, src.bbFs),
+      bb: this._buildProgram(bbVertexShader(src.bbVs), src.bbFs),   // LA-COST3: a lane may add to the billboard VS (its flat's sun, once a quad)
       terrain: this._buildProgram(TERRAIN_VS, src.terrainFs),
       // MAC-BUG W6: the decal is the set's FIFTH program. A set that brings
       // no twin lights its marks on the classic one - which is the exact
@@ -1632,11 +1668,36 @@ export class Renderer {
       // and an upload of forty-eight into a vec4[16] is an INVALID_OPERATION
       // and an unlit mark - so the cut is the program's, never the lane's.
       decalLights: src.decalFs ? (src.maxLights ?? CLASSIC_MAX_LIGHTS) : CLASSIC_MAX_LIGHTS,
+      locate: null,   // LA-COST7: its programs' uniform locations, looked up once (_locations)
     };
   }
 
+  /** LA-COST7 (2026-09-27, Mac: "performance improvements"): THE SET'S LOCATIONS, LOOKED UP ONCE. _installWorldSet
+   *  runs on every lane swap and TWICE in every panel frame - AUDIT-EL F7 puts the classic set in for the automap's
+   *  bracket or the bank's preview and the lane's back after it - and each time it asked GL again for 270 uniform
+   *  locations (a string lookup and a fresh WebGLUniformLocation apiece) whose answers could not have changed: a
+   *  program's locations are fixed when it links, and a world set's five programs are linked once, when the set is
+   *  built, and kept for its life (nothing re-links them; a new lane key builds a new set). So the tables are read
+   *  through this: gl.getUniformLocation behind a memo per (program, name), kept ON the set - it goes with the set,
+   *  and a new set brings its own - so every table line reads exactly as it did, and only the first install of a set
+   *  asks GL anything. `set` is the one being installed (_fogLocs and _decalLocs, called from the install alone,
+   *  take the installed one). */
+  _locations(set = this._worldSet) {
+    if (set.locate) return set.locate;
+    const gl = this.gl, byProgram = new Map();
+    return (set.locate = {
+      getUniformLocation(program, name) {
+        let byName = byProgram.get(program);
+        if (!byName) byProgram.set(program, (byName = new Map()));
+        let loc = byName.get(name);
+        if (loc === undefined) byName.set(name, (loc = gl.getUniformLocation(program, name)));   // null (undeclared) is an answer too, and kept
+        return loc;
+      },
+    });
+  }
+
   _fogLocs(program) {
-    const gl = this.gl;
+    const gl = this._locations();   // LA-COST7: the installed set's memo
     return {
       fogColor: gl.getUniformLocation(program, 'uFogColor'),
       fogMode: gl.getUniformLocation(program, 'uFogMode'),
@@ -1655,9 +1716,11 @@ export class Renderer {
    *  location the draw paths read is looked up again here, and every
    *  "already uploaded" claim (the terrain's frame block, the cloud
    *  shadow stamps, the emission colour shadow, the bound-program
-   *  shadow) is dropped, because they were the OLD set's. */
+   *  shadow) is dropped, because they were the OLD set's. (LA-COST7: looked
+   *  up through the set's memo - GL is asked on the set's first install
+   *  only, and every later one reads the same answers back.) */
   _installWorldSet(set) {
-    const gl = this.gl;
+    const gl = this._locations(set);   // LA-COST7: every lookup below, memoized on the set
     this._worldSet = set;
     this.program = set.mesh;
     this.uProj = gl.getUniformLocation(this.program, 'uProj');
@@ -1752,6 +1815,7 @@ export class Renderer {
     this.bbUEmissionTex = gl.getUniformLocation(this.bbProgram, 'uEmissionTex');
     this.bbUSpectral = gl.getUniformLocation(this.bbProgram, 'uSpectral');
     this.bbUConceal = gl.getUniformLocation(this.bbProgram, 'uConceal');   // ECV1
+    this.bbUHitFlash = gl.getUniformLocation(this.bbProgram, 'uHitFlash');   // HITFLASH1
     this.bbUTint = gl.getUniformLocation(this.bbProgram, 'uTint');
     this.bbUSun = gl.getUniformLocation(this.bbProgram, 'uBBSun');   // VC4
     this.bbUPointCount = gl.getUniformLocation(this.bbProgram, 'uPointCount');
@@ -1779,6 +1843,7 @@ export class Renderer {
     };
     this._el = { mesh: elLocs(set.mesh), char: elLocs(set.char), bb: elLocs(set.bb), terrain: elLocs(set.terrain), decal: elLocs(set.decal) };   // MAC-BUG W6: the decal's lane uniforms ride the same table
     this._tFrameStamp = -1;
+    this._bbFrameStamp = -1; this._dFrameStamp = -1; this._cFrameStamp = -1;   // LA-COST1: the other three blocks were the old set's programs'
     this._csUploaded = {};
     this._emissionColorUp = null;
     this._forgetTextureShadows();   // the set is rebuilt, so every unit it bound is the new set's to claim
@@ -1836,6 +1901,9 @@ export class Renderer {
     // a light list stored under the other cap is re-cut to this one
     if (this._pointLights.length > n * 4) this._pointLights = this._pointLights.subarray ? this._pointLights.subarray(0, n * 4) : this._pointLights.slice(0, n * 4);
     if (this._pointColors && this._pointColors.length > n * 3) this._pointColors = this._pointColors.subarray ? this._pointColors.subarray(0, n * 3) : this._pointColors.slice(0, n * 3);
+    // LA-COST1: the colours re-cut and their decode's buffer maybe new - the memo is no lane's now. (The four frame
+    // blocks were forgotten above: _installWorldSet forgets the units, and _syncAir moves the stamp.)
+    this._pointColorGen++;
   }
 
   /** EL1: the installed lane (EL_LANE) or null - what a host hands the far
@@ -1847,10 +1915,11 @@ export class Renderer {
   /** EL3: the page's air door (syncLightingLane reads `?air=off`): the
    *  AirPass rides a lane that asks for it AND this. */
   setAir(on) { this._airWanted = !!on; this._syncAir(); }
-  /** EL8: the contact shadows' door (`?contact=off`); on by default. */
-  setContact(on) { this._contactWanted = !!on; }
-  /** VOL1: the lanterns' glow marched through their shadows by the air pass (`?volumetrics=off` restores the lane's analytic glow per fragment). */
-  setVolumetrics(on) { this._volumetricsWanted = !!on; if (this._airPass) this._airPass.volOn = this._volumetricsWanted; }
+  /** EL8: the contact shadows' door (`?contact=off`); on by default. LA-COST1: the contact block is in every lane
+   *  program's frame block, so the door moves the stamp. */
+  setContact(on) { this._contactWanted = !!on; this._frameStamp++; }
+  /** VOL1: the lanterns' glow marched through their shadows by the air pass (`?volumetrics=off` restores the lane's analytic glow per fragment). LA-COST1: the lane's own glow gain (uELScatter) follows the door - the stamp moves. */
+  setVolumetrics(on) { this._volumetricsWanted = !!on; if (this._airPass) this._airPass.volOn = this._volumetricsWanted; this._frameStamp++; }
   /** VC7b: the haze march's door - `?haze=off` (syncLightingLane reads it). */
   setHaze(on) { this._hazeWanted = !!on; if (this._airPass) this._airPass.hazeOn = this._hazeWanted; }
   /** EL1: the in-scatter gain folded with the fog's density (zero with the fog off, so clear air glows nowhere). */
@@ -1858,7 +1927,7 @@ export class Renderer {
   /** VOL1: does the air pass draw this frame's glow - a world frame the pass was prepared for and has not yet resolved
    *  (AUDIT VOL1: `fresh` - a frame that is not the world's, the water lab's say, and a world draw after the resolve keep
    *  the lane's own glow), with the door open, outside a sprite pass, a bake and a panel. */
-  _airGlows() { return !!this._air && this._air.fresh && this._volumetricsWanted !== false && this._spriteDepth === 0 && this._studioDepth === 0 && !this._panelSaved; }
+  _airGlows() { return !!this._air && !!this._air.programs.vol && this._air.fresh && this._volumetricsWanted !== false && this._spriteDepth === 0 && this._studioDepth === 0 && !this._panelSaved; }   // LA-POST7: and the glow's shader BUILT - a GL that refused it (`vol: null`) marches nothing, and the lane's own glow zeroed here left the air with none at all
   /** LC1: the clustered loop's door - `?clusters=off` walks every light in every fragment (syncLightingLane reads it). */
   setClusters(on) { this._clustersWanted = !!on; }
   /** SC1: the static shadow cache's door - `?shadowcache=off` replays every caster at the cadence, as before (syncLightingLane reads it). */
@@ -1868,8 +1937,12 @@ export class Renderer {
    *  records every caster there is (a building's interior: nothing view-culled) calls it each frame before beginFrame;
    *  the world frame consumes it, so a host that does not ask never has it. */
   everyLightCasts() { this._everyLightNow = true; }
-  /** AUDIT SC1: the host's floating origin moved by `offset` - every remembered placement follows it (ShadowPass.shiftOrigin). */
-  shadowOriginShift(offset) { this._shadowPass?.shiftOrigin(offset); }
+  /** AUDIT SC1: the host's floating origin moved by `offset` - every remembered placement follows it (ShadowPass.shiftOrigin).
+   *  LA-AUDIT C1 (lens C measured it): and the stamp moves - the air's held view-projection is one of the lane blocks'
+   *  uploads (uPrevVP), so a shift between beginFrame and a draw left the billboard, decal, character and terrain
+   *  blocks the pre-shift matrix for the rest of the frame, the march reprojecting 819 units off. The one host calls it
+   *  before beginFrame today; the stamp makes the order not matter. */
+  shadowOriginShift(offset) { this._shadowPass?.shiftOrigin(offset); this._air?.shiftOrigin(offset); this._frameStamp++; }   // LA-POST6: and the air's held view-projections - the contact march reprojects the moved world by them
   /** SHADOW-REACH: would a caster whose world box is `box` (+ the translation) cast into this frame's shadow maps - a
    *  host asks for what its VIEW cull rejected, and records it (below) rather than drawing it. False with no pass. */
   shadowReach(box, ox = 0, oy = 0, oz = 0) { return this._casting && this._shadows.reaches(box, ox, oy, oz); }
@@ -1958,6 +2031,7 @@ export class Renderer {
       this._air.hazeOn = this._hazeWanted !== false;   // VC7b
     }
     else { if (this._air) { this._air.release(); this._frameFbo = null; } this._air = null; }
+    this._frameStamp++;   // LA-COST1: the eye, the contact block and the glow's gate are the air pass's - a new or a gone one moves every block
   }
   /** EL4: the adaptation image, for a foreign pass that exposes on the lane (the far ring). */
   get adaptTexture() { return this._air?.adaptTexture ?? null; }
@@ -1965,8 +2039,8 @@ export class Renderer {
   get air() { return this._air; }
 
   /** EL1: the lane's exposure - a scene-wide gain before the tonemap.
-   *  Shadowed and uploaded with the frame; inert on the classic set. */
-  setExposure(v) { this._exposure = v > 0 ? v : 1; }
+   *  Shadowed and uploaded with the frame; inert on the classic set. LA-COST1: the stamp moves with it. */
+  setExposure(v) { this._exposure = v > 0 ? v : 1; this._frameStamp++; }
 
   /** EL1: a host colour as the installed set wants it - the classic set
    *  takes it as given, the lane takes it decoded to linear (into one of
@@ -2278,7 +2352,7 @@ export class Renderer {
     // unshadowed, once), and the room's own, recorded below, are replayed from the next frame on.
     const everyLight = this._everyLightNow;
     if (this._everyLightNow && !this._everyLightPrev) sp.discard();
-    this._everyLightPrev = this._everyLightNow; this._everyLightNow = false;
+    if (this._everyLightNow !== this._everyLightPrev) { this._air?.invalidatePrev(); } this._everyLightPrev = this._everyLightNow; this._everyLightNow = false;   // LA-POST6: a door crossed either way is a cut - the air's contact march has no previous frame of this room (its prepare is below)
     sp.render({
       eye: this._camPos, lightDir, sunScale: this._sunScale, pointLights: this._pointLights, carried: this._pointCarried,   // MAC-T1
       textures: this.textures, isSpectral: isSpectralArchive, bindVao, everyLight,
@@ -2441,6 +2515,13 @@ export class Renderer {
     this._sq = {};
     this._tArrayTex = null;
     this._tTileSize = null;
+    // LA-COST1 (2026-09-27): THE FOUR FRAME BLOCKS ARE A TEXTURE SHADOW TOO. Each binds the lane's images - the three
+    // shadow arrays, the eye, the previous depth, the grid - on units 8 to 14 and then trusts them until the stamp
+    // moves; a foreign pass binds its own there (the far ring its 1x1 on unit 11 when the air is off - LA-AUDIT C3: not
+    // Dynamic Skies, whose 2D binds on 0 to 8 leave unit 8's 2D array, the lo tier, where it was) and the resolve
+    // binds the eye's next image. Every seam that forgets the units forgets the blocks with them, so the next draw of
+    // each program binds its images again. (Their UNIFORM values are the programs' own and survive any pass.)
+    this._frameStamp++;
   }
 
   /** Hand the baseline back, if a run is open. Idempotent, and cheap
@@ -2698,24 +2779,33 @@ export class Renderer {
     if (this._casting && this._spriteDepth === 0 && this._studioDepth === 0) this._shadows.recordCharacter(mesh, modelMatrix);   // EL7: the rigs cast - never from the sprite target or the studio bake
     this._use(this.charProgram);
     this._uploadCloudShadow('char');   // VC4
-    gl.uniformMatrix4fv(c.proj, false, this._proj);
-    gl.uniformMatrix4fv(c.view, false, this._view);
     gl.uniformMatrix4fv(c.model, false, modelMatrix);
-    gl.uniform3fv(c.lightDir, this._lightDir);
-    gl.uniform3fv(c.ambient, this._c3(this._ambient));
-    gl.uniform1f(c.sunScale, this._sunScale);
-    gl.uniform3fv(c.sunColor, this._c3(this._sunColor));
-    gl.uniform3fv(c.moonDir, this._moonDir);
-    gl.uniform1f(c.moonScale, this._moonScale);
-    gl.uniform3fv(c.moonColor, this._c3(this._moonColor));
-    const count = this._pointLights.length / 4;
-    gl.uniform1i(c.pointCount, count);
-    if (count > 0) gl.uniform4fv(c.pointLights, this._pointLights);
-    if (count > 0) gl.uniform3fv(c.pointColors, this._pointColorData(count));
-    gl.uniform4fv(c.indirect, this._indirect);
-    gl.uniform3fv(c.indirectColor, this._c3(this._indirectColor));
-    this._uploadFog(this._charFog);
-    this._uploadEl('char');   // EL1
+    // LA-COST1 (2026-09-27, Mac: "performance improvements"): THE FRAME BLOCK, ONCE A STAMP - PERF3's terrain law on
+    // the character program. Every rig re-sent the camera, the sun, the moon, forty-eight lights and their colours,
+    // the indirect, the fog and the lane's block (the three shadow arrays, the sun's matrices, the caster table, the
+    // eye, the contact block, the grid) - about sixty calls a body, the model matrix the only one that is the body's.
+    // A sprite pass (_renderCharacterSprite) draws this program under its own camera and light, so it forgets the
+    // block on the way in and on the way out.
+    if (this._cFrameStamp !== this._frameStamp) {
+      this._cFrameStamp = this._frameStamp;
+      gl.uniformMatrix4fv(c.proj, false, this._proj);
+      gl.uniformMatrix4fv(c.view, false, this._view);
+      gl.uniform3fv(c.lightDir, this._lightDir);
+      gl.uniform3fv(c.ambient, this._c3(this._ambient));
+      gl.uniform1f(c.sunScale, this._sunScale);
+      gl.uniform3fv(c.sunColor, this._c3(this._sunColor));
+      gl.uniform3fv(c.moonDir, this._moonDir);
+      gl.uniform1f(c.moonScale, this._moonScale);
+      gl.uniform3fv(c.moonColor, this._c3(this._moonColor));
+      const count = this._pointLights.length / 4;
+      gl.uniform1i(c.pointCount, count);
+      if (count > 0) gl.uniform4fv(c.pointLights, this._pointLights);
+      if (count > 0) gl.uniform3fv(c.pointColors, this._pointColorData(count));
+      gl.uniform4fv(c.indirect, this._indirect);
+      gl.uniform3fv(c.indirectColor, this._c3(this._indirectColor));
+      this._uploadFog(this._charFog);
+      this._uploadEl('char');   // EL1
+    }
     gl.disable(gl.CULL_FACE);
     this._bindVao(mesh.vao);
     // MW-D11: a textured mesh carries RANGES - one per piece, each with
@@ -2906,6 +2996,11 @@ export class Renderer {
     if (sd) { this._cloudShadow = null; this._csStamp++; }
     this._proj = proj; this._view = view; this._fogMode = 0; this._dwFog[0] = 0;
     this._spriteDepth++;   // AUDIT-EL F2
+    // LA-COST1: the character block this draw uploads is the SPRITE's - its camera, no fog, its light (MAC-P's
+    // viewmodel, PX23's studio, both set before this), the contact and the grid off - so the block the world's
+    // rigs uploaded is forgotten on the way in, and this one on the way out (the finally). Only the character
+    // program draws in here, and the borrows are all put back, so the other three blocks stand.
+    this._cFrameStamp = -1;
     // AUDIT 65 RS-2: EVERY borrow above is returned in ONE finally, the
     // GL state first and the JS caches after. drawCharacter dereferences
     // the mesh (`mesh.vao`, `mesh.ranges`), so it can throw, and the
@@ -2932,6 +3027,7 @@ export class Renderer {
       gl.clearColor(cc[0], cc[1], cc[2], cc[3]);
       this._proj = sp; this._view = sv; this._fogMode = sf; this._dwFog[0] = sw;
       this._spriteDepth--;   // AUDIT-EL F2
+      this._cFrameStamp = -1;   // LA-COST1: the sprite's block is no world rig's
       if (sd) { this._cloudShadow = sd; this._csStamp++; }
     }
     return cs.tex;
@@ -2978,6 +3074,9 @@ export class Renderer {
         if (saved.cloudShadow) { this._cloudShadow = saved.cloudShadow; this._csStamp++; }   // VC4: the frame's deck back
       }
       if (studio) this._studioDepth--;   // AUDIT-EL F1: the eye back after the light
+      // LA-COST1: the bake bound the bare image on the eye's unit (AUDIT-EL F1) - a UNIT, every lane program's - so
+      // every frame block binds the eye's own image again at its next draw
+      if (studio) this._frameStamp++;
     }
     const cs = this._charSpriteRT();
     gl.bindFramebuffer(gl.FRAMEBUFFER, cs.fbo);
@@ -2994,7 +3093,11 @@ export class Renderer {
 
   /** Composite the sprite into the world: camera-facing quad at the
    *  character's position, alpha-cut, fogged, depth-tested. */
-  drawCharacterSpriteQuad(tex, center, halfW, halfH, right, u1 = 1, v1 = 1) {
+  /** INVIS-LOOK (2026-09-27): `conceal`, optional - ECV1's visual ({ mode, alpha, t, phase }, systems/combatVisuals.js)
+   *  for a CONCEALED peer's Morrowind body (net/peerBodies.js drawVeiled): the billboard shader's own look on this
+   *  quad (the blend's ripple and opacity, the shade's dark), BLENDED with no depth write, as the billboards' concealed
+   *  phase draws a concealed foe. None, and the quad is the opaque cut-out it always was. */
+  drawCharacterSpriteQuad(tex, center, halfW, halfH, right, u1 = 1, v1 = 1, hitFlash = 0, conceal = null) {
     this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     const gl = this.gl;
     this._ensureCharQuadProgram();
@@ -3011,12 +3114,17 @@ export class Renderer {
     gl.uniformMatrix4fv(c.view, false, this._view);
     this._bindTex0(tex);   // PERF-TEX3
     gl.uniform1i(c.tex, 0);
+    gl.uniform1f(c.hitFlash, hitFlash > 0 ? hitFlash : 0);   // HITFLASH1: a struck Morrowind body's red (0 for every other sprite)
     this._uploadFog(this._charQuad);
+    gl.uniform4f(c.conceal, conceal ? conceal.mode : 0, conceal ? conceal.alpha : 0, conceal ? conceal.t : 0, conceal ? conceal.phase : 0);   // INVIS-LOOK: plain unless a concealed body says otherwise
+    gl.uniform2f(c.span, u1, v1);   // INVIS-LOOK: the RT's sub-rect, so the ripple is the sprite's own
     this._bindVao(this._charQuadVAO);
     gl.bindBuffer(gl.ARRAY_BUFFER, this._charQuadVBO);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, v);
     gl.disable(gl.CULL_FACE);
+    if (conceal) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false); }   // INVIS-LOOK: the billboards' blended phase, its state
     gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+    if (conceal) { gl.depthMask(true); gl.disable(gl.BLEND); }
     this.stats.texBinds++; this.stats.draws++;
     gl.enable(gl.CULL_FACE);
     this._bindVao(null);
@@ -3043,12 +3151,26 @@ uniform int uFogMode;
 uniform float uFogDensity;
 uniform vec2 uFogRange;
 uniform vec3 uCamPos;
+uniform vec4 uConceal;   // INVIS-LOOK: ECV1's record - the mode, the opacity, the clock, the phase (0: plain)
+uniform vec2 uSpan;      // INVIS-LOOK: the sub-rect of the RT the picture fills
+uniform float uHitFlash;   // HITFLASH1: a Morrowind body struck
 out vec4 outColor;
 ${FOG_GLSL}
+${HIT_FLASH_GLSL}
 void main() {
-  vec4 t = texture(uTex, vUV);
-  if (t.a < 0.5) discard;
-  outColor = vec4(dwWaterFog(mix(uFogColor, t.rgb, fogFactorAt(vWorld)), vWorld), 1.0);   // DW-C
+  // INVIS-LOOK: the billboard shader's ripple (BB_FS), measured in the picture's own span of the RT
+  vec2 uv = vUV;
+  if (uConceal.x == 1.0) {
+    vec2 n = vUV / max(uSpan, vec2(1e-6));
+    uv.x += sin(n.y * 28.0 + uConceal.z * 7.0 + uConceal.w) * 0.008 * uSpan.x;
+    if (uv.x < 0.0 || uv.x > uSpan.x) discard;
+  }
+  vec4 t = texture(uTex, uv);
+  if (t.a < (uConceal.x > 0.0 ? 0.1 : 0.5)) discard;
+  vec3 rgb = t.rgb;
+  if (uConceal.x == 2.0) rgb *= ${SHADE_DARK};   // INVIS-LOOK: a shade, ECV1's dark
+  rgb = hitFlashLit(rgb, t.rgb, uHitFlash);   // HITFLASH1: over any concealment, never instead of it (the billboards' law)
+  outColor = vec4(dwWaterFog(mix(uFogColor, rgb, fogFactorAt(vWorld)), vWorld), uConceal.x > 0.0 ? t.a * uConceal.y : 1.0);   // DW-C
 }`;
       this.charQuadProgram = this._buildProgram(vs, fs);
       const P = this.charQuadProgram;
@@ -3062,6 +3184,9 @@ void main() {
         fogRange: gl.getUniformLocation(P, 'uFogRange'),
         camPos: gl.getUniformLocation(P, 'uCamPos'),
         dwFog: gl.getUniformLocation(P, 'uDwFog'),   // DW-C
+        conceal: gl.getUniformLocation(P, 'uConceal'),   // INVIS-LOOK
+        span: gl.getUniformLocation(P, 'uSpan'),   // INVIS-LOOK
+        hitFlash: gl.getUniformLocation(P, 'uHitFlash'),   // HITFLASH1
       };
       const vao = gl.createVertexArray();
       this._bindVao(vao);
@@ -3138,6 +3263,13 @@ void main() {
    *  is one prefix and draws only the slots ever touched, a wrapped one
    *  is two so the oldest marks composite first. Without it the whole
    *  capacity is drawn, in slot order. */
+  /** WEAPON-MOUNT (2026-09-26): a hung PICTURE on the decal pass - the decorator's mounted weapons and armour. The
+   *  pass's own program with its picture switch on, so a mount's texel is its colour and not a blood film's depth. */
+  drawDecalPicture(batch, tex) {
+    this._decalPicture = true;
+    try { this.drawDecals(batch, tex); } finally { this._decalPicture = false; }
+  }
+
   drawDecals(batch, tex, ranges = null) {
     if (!batch || !tex) return;
     this._close2D();   // PERF-2D: the baseline back, before anything that needs it
@@ -3145,65 +3277,73 @@ void main() {
     this._use(this.decalProgram);
     this._uploadCloudShadow('decal');   // MAC-BUG W6 / BLOOD1 AUDIT 3: the mark takes the cloud's shadow as the flat beside it does, on both programs
     const d = this._decal;
-    gl.uniformMatrix4fv(d.proj, false, this._proj);
-    gl.uniformMatrix4fv(d.view, false, this._view);
     this._bindTex0(tex);   // PERF-TEX3
-    gl.uniform1i(d.tex, 0);
-    this._uploadFog(this._decal);
-    // The scene's own light, so a mark on a dungeon floor is as dark as
-    // the floor. Clockless scenes keep full bright, as the flats do.
-    //
-    // MAC-BUG W4: and it is the FLATS' light, term for term - the same
-    // ambient + moon-half tint, the same sun half, the same point
-    // lights and the same indirect the billboard pass uploads a few
-    // hundred lines below. Ambient alone was a mark darker than
-    // anything it could possibly lie on.
-    if (this._clockLit) {
-      // AUDIT PERF-SUN/FOG F4's lesson, honoured here rather than
-      // rediscovered: THREE COLOURS, THREE SCRATCHES. Two decodes into
-      // one scratch is the bug that pass carried for the whole world's
-      // flats until an audit found it.
-      const am = this._c3(this._ambient, this._decA);
-      const mc = this._c3(this._moonColor, this._decB);
-      const sc = this._c3(this._sunColor, this._decC);
-      // BLOOD AUDIT 5: THE BARE AMBIENT - the moon is its own term by N.L
-      // now, as the mesh has it (W4 folded the moon's Lambert half in
-      // here, and a wall mark facing away from Masser glowed at night).
-      gl.uniform3f(d.tint, am[0], am[1], am[2]);
-      gl.uniform3f(d.moon, mc[0] * this._moonScale, mc[1] * this._moonScale, mc[2] * this._moonScale);
-      // BLOOD AUDIT 4: THE WHOLE SUN, not the flat's half - the shader
-      // takes N.L off the quad's own normal now, as the mesh under the
-      // mark does (MESH_FS's uSunColor * (uSunScale * diff)).
-      gl.uniform3f(d.sun, sc[0] * this._sunScale, sc[1] * this._sunScale, sc[2] * this._sunScale);
-    } else {
-      gl.uniform3f(d.tint, 1, 1, 1);
-      gl.uniform3f(d.sun, 0, 0, 0);
-      gl.uniform3f(d.moon, 0, 0, 0);
+    gl.uniform1f(d.picture, this._decalPicture ? 1 : 0);   // WEAPON-MOUNT: a mount is a picture (drawDecalPicture); every mark is a film - the CALL's, beside the atlas (LA-COST1's block below is the frame's)
+    // LA-COST1 (2026-09-27, Mac: "performance improvements"): THE FRAME BLOCK, ONCE A STAMP (PERF3's law). Every call
+    // re-sent the camera, the fog, the scene's light, forty-eight lights and their colours and the lane's block - and
+    // an interior makes one call a hung weapon (DECOR2c's mounts) beside the blood pool's. The atlas above is the
+    // call's own; everything below is the frame's.
+    if (this._dFrameStamp !== this._frameStamp) {
+      this._dFrameStamp = this._frameStamp;
+      gl.uniformMatrix4fv(d.proj, false, this._proj);
+      gl.uniformMatrix4fv(d.view, false, this._view);
+      gl.uniform1i(d.tex, 0);
+      this._uploadFog(this._decal);
+      // The scene's own light, so a mark on a dungeon floor is as dark as
+      // the floor. Clockless scenes keep full bright, as the flats do.
+      //
+      // MAC-BUG W4: and it is the FLATS' light, term for term - the same
+      // ambient + moon-half tint, the same sun half, the same point
+      // lights and the same indirect the billboard pass uploads a few
+      // hundred lines below. Ambient alone was a mark darker than
+      // anything it could possibly lie on.
+      if (this._clockLit) {
+        // AUDIT PERF-SUN/FOG F4's lesson, honoured here rather than
+        // rediscovered: THREE COLOURS, THREE SCRATCHES. Two decodes into
+        // one scratch is the bug that pass carried for the whole world's
+        // flats until an audit found it.
+        const am = this._c3(this._ambient, this._decA);
+        const mc = this._c3(this._moonColor, this._decB);
+        const sc = this._c3(this._sunColor, this._decC);
+        // BLOOD AUDIT 5: THE BARE AMBIENT - the moon is its own term by N.L
+        // now, as the mesh has it (W4 folded the moon's Lambert half in
+        // here, and a wall mark facing away from Masser glowed at night).
+        gl.uniform3f(d.tint, am[0], am[1], am[2]);
+        gl.uniform3f(d.moon, mc[0] * this._moonScale, mc[1] * this._moonScale, mc[2] * this._moonScale);
+        // BLOOD AUDIT 4: THE WHOLE SUN, not the flat's half - the shader
+        // takes N.L off the quad's own normal now, as the mesh under the
+        // mark does (MESH_FS's uSunColor * (uSunScale * diff)).
+        gl.uniform3f(d.sun, sc[0] * this._sunScale, sc[1] * this._sunScale, sc[2] * this._sunScale);
+      } else {
+        gl.uniform3f(d.tint, 1, 1, 1);
+        gl.uniform3f(d.sun, 0, 0, 0);
+        gl.uniform3f(d.moon, 0, 0, 0);
+      }
+      if (d.lightDir) gl.uniform3fv(d.lightDir, this._lightDir);   // BLOOD AUDIT 4
+      if (d.moonDir) gl.uniform3fv(d.moonDir, this._moonDir);      // BLOOD AUDIT 5
+      // BLOOD AUDIT 5: the trilight ambient (BA1), as drawMesh uploads it
+      const tri = this._ambientTri;
+      gl.uniform1f(d.trilight, tri ? 1 : 0);
+      if (tri) { gl.uniform3fv(d.ambientSky, this._c3(tri.sky)); gl.uniform3fv(d.ambientGround, this._c3(tri.ground)); }
+      // MAC-BUG W4 pinned this as "a fifth classic program with no lane
+      // twin", cutting to the classic sixteen under the lane's forty-eight.
+      // MAC-BUG W6 gave it the twin (enhancedLighting.js EL_DECAL_FS), so
+      // the cap is the INSTALLED DECAL PROGRAM'S - sixteen on the classic
+      // one, forty-eight on the lane's - and a mark under the seventeenth
+      // lantern in a forty-eight-light hall is lit by all of them, as the
+      // chunk above it is. BLOOD1 AUDIT 3: the program's cap and not the
+      // lane's, because a lane that brings no twin runs the classic
+      // program under forty-eight lanterns (the set's `decalLights`).
+      const dCount = Math.min(this._pointLights.length >> 2, this._decalLights);
+      gl.uniform1i(d.pointCount, dCount);
+      if (dCount > 0) {
+        gl.uniform4fv(d.pointLights, this._pointLights.subarray ? this._pointLights.subarray(0, dCount * 4) : this._pointLights.slice(0, dCount * 4));   // BLOOD1 AUDIT 3: drawTerrain's own guard - a host handing a plain array
+        gl.uniform3fv(d.pointColors, this._pointColorData(dCount));   // already cut to the slot count (AUDIT-EL F3)
+      }
+      gl.uniform4fv(d.indirect, this._indirect);
+      gl.uniform3fv(d.indirectColor, this._c3(this._indirectColor));
+      this._uploadEl('decal');   // MAC-BUG W6: the exposure, the in-scatter, the shadow maps and the eye - what makes the lane's mark the lane's (a no-op on the classic set)
     }
-    if (d.lightDir) gl.uniform3fv(d.lightDir, this._lightDir);   // BLOOD AUDIT 4
-    if (d.moonDir) gl.uniform3fv(d.moonDir, this._moonDir);      // BLOOD AUDIT 5
-    // BLOOD AUDIT 5: the trilight ambient (BA1), as drawMesh uploads it
-    const tri = this._ambientTri;
-    gl.uniform1f(d.trilight, tri ? 1 : 0);
-    if (tri) { gl.uniform3fv(d.ambientSky, this._c3(tri.sky)); gl.uniform3fv(d.ambientGround, this._c3(tri.ground)); }
-    // MAC-BUG W4 pinned this as "a fifth classic program with no lane
-    // twin", cutting to the classic sixteen under the lane's forty-eight.
-    // MAC-BUG W6 gave it the twin (enhancedLighting.js EL_DECAL_FS), so
-    // the cap is the INSTALLED DECAL PROGRAM'S - sixteen on the classic
-    // one, forty-eight on the lane's - and a mark under the seventeenth
-    // lantern in a forty-eight-light hall is lit by all of them, as the
-    // chunk above it is. BLOOD1 AUDIT 3: the program's cap and not the
-    // lane's, because a lane that brings no twin runs the classic
-    // program under forty-eight lanterns (the set's `decalLights`).
-    const dCount = Math.min(this._pointLights.length >> 2, this._decalLights);
-    gl.uniform1i(d.pointCount, dCount);
-    if (dCount > 0) {
-      gl.uniform4fv(d.pointLights, this._pointLights.subarray ? this._pointLights.subarray(0, dCount * 4) : this._pointLights.slice(0, dCount * 4));   // BLOOD1 AUDIT 3: drawTerrain's own guard - a host handing a plain array
-      gl.uniform3fv(d.pointColors, this._pointColorData(dCount));   // already cut to the slot count (AUDIT-EL F3)
-    }
-    gl.uniform4fv(d.indirect, this._indirect);
-    gl.uniform3fv(d.indirectColor, this._c3(this._indirectColor));
-    this._uploadEl('decal');   // MAC-BUG W6: the exposure, the in-scatter, the shadow maps and the eye - what makes the lane's mark the lane's (a no-op on the classic set)
     this._bindVao(batch.vao);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -3239,7 +3379,7 @@ void main() {
    *  name; the lane's adds its own, which _uploadEl and the shadow, cloud
    *  and fog tables look up by the same route the other four take). */
   _decalLocs(P) {
-    const gl = this.gl;
+    const gl = this._locations();   // LA-COST7: the installed set's memo
     return {
       proj: gl.getUniformLocation(P, 'uProj'),
       view: gl.getUniformLocation(P, 'uView'),
@@ -3257,6 +3397,7 @@ void main() {
       pointColors: gl.getUniformLocation(P, 'uPointColors'),
       indirect: gl.getUniformLocation(P, 'uIndirect'),
       indirectColor: gl.getUniformLocation(P, 'uIndirectColor'),
+      picture: gl.getUniformLocation(P, 'uPicture'),              // WEAPON-MOUNT: a hung picture, not a blood film
       ...this._fogLocs(P),   // MAC-BUG W6: the lane's decal wants the whole fog set too, and _fogLocs is the one table that knows it
     };
   }
@@ -3782,7 +3923,29 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     buf(gl.ARRAY_BUFFER, model.uvs);
     gl.enableVertexAttribArray(2);
     gl.vertexAttribPointer(2, 2, gl.FLOAT, false, 0, 0);
-    buf(gl.ELEMENT_ARRAY_BUFFER, model.indices);
+    // WBX1 (2026-09-26, Mac: "None of the 3D geometry that was built including the oblivion interior/exterior gate
+    // are visible"): THE ONE INDEX TYPE. Every draw of a bundle - drawMesh, the shadow replays - reads its elements as
+    // gl.UNSIGNED_INT, so the element buffer holds 32-bit indices whatever the model handed in. The gate's stone, the
+    // Burning Court and the Deadlands' land were built with a Uint16Array (under 65,536 vertices each): half the bytes
+    // their draws asked for, so WebGL refused every one ("Insufficient buffer size") and the stone was never there -
+    // while the collider, which reads numbers and not bytes, stood the floor exactly where it should. Widened once,
+    // here, at upload; `triIndices` stays the model's own array (the wireframe reads its values, not its bytes).
+    buf(gl.ELEMENT_ARRAY_BUFFER, model.indices instanceof Uint32Array ? model.indices : Uint32Array.from(model.indices));
+    // LA-AUDIT A1: a static batch's shadow cells (staticBatch.js shadowCells) - the same triangles by grid cell, in their
+    // own index buffer on a second VAO over the same three vertex buffers (_ensureWireMesh's shape). Only the shadow
+    // replays bind it; each cell's sphere is measured here, as the sub-meshes' are below.
+    let shadowVao = null, shadowCells = null;
+    if (model.shadowIndices) {
+      shadowVao = gl.createVertexArray();
+      this._bindVao(shadowVao);
+      for (let a = 0; a < 3; a++) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffers[a]);
+        gl.enableVertexAttribArray(a);
+        gl.vertexAttribPointer(a, a === 2 ? 2 : 3, gl.FLOAT, false, 0, 0);
+      }
+      buf(gl.ELEMENT_ARRAY_BUFFER, model.shadowIndices);
+      shadowCells = model.shadowCells.map((c) => ({ ...c, _bounds: boundsOf(model.positions, model.shadowIndices, c.startIndex, c.primitiveCount * 3) }));
+    }
 
     this._bindVao(null);
     // EL5: the bounds the shadow replays cull by - the mesh's sphere and one
@@ -3806,7 +3969,9 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // first time a mesh is drawn in the automap's wireframe mode. A
     // bundle built without it simply cannot be wireframed (drawMeshWire
     // draws nothing), which is the honest answer for a hand-built one.
-    return { vao, subMeshes, buffers, triIndices: model.indices, bounds };
+    const bundle = /** @type {any} */ ({ vao, subMeshes, buffers, triIndices: model.indices, bounds });
+    if (shadowVao) { bundle.shadowVao = shadowVao; bundle.shadowCells = shadowCells; }   // LA-AUDIT A1
+    return bundle;
   }
 
   /** INCIDENT 2026-09-04: CameraClearManager.cs:23-25/:51-57 - inside,
@@ -4099,6 +4264,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    *  moonlightTerm's output or null; null (day, classic sky, indoors)
    *  zeroes the scale and every shader's moon term is a no-op. */
   setMoonlight(moon) {
+    this._frameStamp++;   // LA-COST1: the moon rides the billboard's tint, the decal's and the character's terms and the terrain's
     if (!moon) { this._moonScale = 0; return; }
     this._moonScale = moon.scale;
     this._moonDir[0] = moon.dir[0]; this._moonDir[1] = moon.dir[1]; this._moonDir[2] = moon.dir[2];
@@ -4156,13 +4322,13 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform3fv(this.uLight3Color, this._c3(this._light3Color));
   }
 
-  /** Time-of-day lighting: ambient color, sun scale, sun color. */
+  /** Time-of-day lighting: ambient color, sun scale, sun color. LA-AUDIT C2: kept, not copied (setPointLights'). */
   setLighting(ambient, sunScale, sunColor, trilight = null) {
     this._ambient = ambient;
     this._sunScale = sunScale;
     if (sunColor) this._sunColor = sunColor;
     this._clockLit = true;
-    this.setAmbientTrilight(trilight);   // BA1: every other caller's light is Flat, so a dungeon's trilight cannot outlive the dungeon
+    this.setAmbientTrilight(trilight);   // BA1: every other caller's light is Flat, so a dungeon's trilight cannot outlive the dungeon; LA-COST1: and it moves the stamp, for the ambient and the sun above too
   }
 
   /** BA1: RenderSettings.ambientMode = Trilight with its three colours (FoggyDungeonsMod.cs:106-112), on
@@ -4170,6 +4336,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    *  the equator, which is `setLighting`'s ambient (the caller hands the equator there). null is Flat again. */
   setAmbientTrilight(tri) {
     this._ambientTri = tri ? { sky: new Float32Array(tri.sky), ground: new Float32Array(tri.ground) } : null;
+    this._frameStamp++;   // LA-COST1: the decal's block takes the trilight (BLOOD AUDIT 5)
   }
   _uploadTrilight() {
     const gl = this.gl;
@@ -4180,21 +4347,33 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
 
   /** Distance fog for every world pass. mode 'off'|'linear'|'exp'|'exp2'
    *  (DS1: 'exp2' is Unity's ExponentialSquared, exp(-(density*d)^2) -
-   *  Dynamic Skies ships its overcast, rainy and snowy fog in it). */
+   *  Dynamic Skies ships its overcast, rainy and snowy fog in it). LA-AUDIT C2: `color` kept, not copied (setPointLights'). */
   setFog(mode, density, start, end, color) {
     this._fogMode = mode === 'linear' ? 1 : mode === 'exp' ? 2 : mode === 'exp2' ? 3 : 0;
     this._fogDensity = density;
     this._fogRange[0] = start;
     this._fogRange[1] = end;
     if (color) this._fogColor = color;
+    this._frameStamp++;   // LA-COST1: the fog, and the lane's in-scatter gain folded with it, ride every frame block
   }
 
   /** DW-C: Iliac Puddle No More's distance fog for this frame - the twenty
    *  floats world/deepWaterLook.js distanceFogUniforms packs, or null for
-   *  none. After beginFrame, which clears it: it is a frame's. */
+   *  none. After beginFrame, which clears it: it is a frame's.
+   *
+   *  LA-COST6 (2026-09-27, found by the audit of Mac's "a deep audit on the enhanced lighting system"): UNDER THE SEA,
+   *  THE BUILDINGS HAD NO FOG. The mesh program takes its fog from beginFrame alone - and beginFrame CLEARS this (a
+   *  frame's, as the deck is) and the world host sets it after, from the frame's own camera (beginDeepWatersFrame).
+   *  The terrain, the flats and the rigs upload their fog at their draws, so they wore the sea's murk; every building,
+   *  wall and model drew clear through it, a town standing sharp in the fog it was sunk in. So it goes to the mesh
+   *  program here, at once - setClipY's seam, for the same reason (a value set after beginFrame that the mesh must
+   *  see this frame) - and the stamp moves for the four blocks that carry it. */
   setWaterFog(u) {
     if (u) this._dwFog.set(u);
     else this._dwFog[0] = 0;
+    this._frameStamp++;   // LA-COST1
+    const loc = this._solidFog?.dwFog;   // LA-COST6: null where the mesh program never reads it; a bare prototype has no table
+    if (loc) { this._use(this.program); this.gl.uniform4fv(loc, this._dwFog); }
   }
 
   _uploadFog(prog) {
@@ -4284,7 +4463,9 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    *  LT1: `colors` is the optional per-light channel - flat vec3s of
    *  colour x intensity in the SAME order as `data` (AddLight's second
    *  switch, interiorLightProperties). Absent, every light wears the
-   *  shared `color` - the exterior lantern path, unchanged. */
+   *  shared `color` - the exterior lantern path, unchanged.
+   *  LA-AUDIT C2: the arrays are KEPT, not copied, and the lane's frame blocks read them when the stamp moves (LA-COST1),
+   *  so a host that writes one in place mid-frame must hand it here again - as every host does, with a fresh array. */
   setPointLights(data, color, colors = null) {
     const n = this.maxPointLights;   // EL1: the installed set's cap
     // MAC-T1: the carried mask is a property of the composed array, and `subarray` returns a fresh view without it -
@@ -4294,6 +4475,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._pointLights = data.subarray ? data.subarray(0, n * 4) : data;
     if (color) this._pointColor = color;
     this._pointColors = colors ? (colors.subarray ? colors.subarray(0, n * 3) : colors) : null;
+    this._pointColorGen++;   // LA-COST1: the colours' decode is due again (the memo in _pointColorData)
+    this._frameStamp++;      // LA-COST1: and every frame block carries the lights
   }
 
   /** DS1: THE LIGHTNING FLASH - Dynamic Skies' LightningFlash point light
@@ -4329,11 +4512,26 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       for (let i = 0; i < keep; i++) { c[3 + i * 3] = this._pointColor[0]; c[4 + i * 3] = this._pointColor[1]; c[5 + i * 3] = this._pointColor[2]; }
     }
     this._pointColors = c.subarray(0, (keep + 1) * 3);
+    this._pointColorGen++;   // LA-COST1: the flash's colour first - the memo's decode is due again (the scratch is written in place)
+    this._frameStamp++;      // LA-COST1
   }
 
   /** LT1: the vec3 array a frame uploads - the host's per-light colours
-   *  when given, else the shared colour splatted across the count. */
+   *  when given, else the shared colour splatted across the count.
+   *
+   *  LA-COST1 (2026-09-27, Mac: "a deep audit on the enhanced lighting system ... performance improvements"): DECODED
+   *  ONCE PER CHANGE. On the lane every program's upload decoded the whole list again - three Math.pow a light, 144 for
+   *  forty-eight - at beginFrame, every terrain block, and every billboard, decal and character call: an interior's
+   *  eight flat calls and a hung weapon's decal each paid it for the array the frame had set once. The decode is kept
+   *  (`_pointColorDec`, which it always wrote) under the colours' generation, which setPointLights, setFlashLight and
+   *  setLightingLane move, and the lane it was decoded by; a later ask for no more lights than were decoded takes the
+   *  prefix, as a light's colour decodes alone. The borrows (the studio, the viewmodel) swap the positions and never
+   *  the colours, so they need no word here. */
   _pointColorData(count, raw = false) {
+    const lane = this._lane;
+    if (lane && !raw && this._pointColorDecGen === this._pointColorGen && this._pointColorDecLane === lane && this._pointColorDecCount >= count) {
+      return this._pointColorDec.subarray(0, count * 3);   // LA-COST1: the memo - decodeN's own view of the same buffer
+    }
     let out;
     if (this._pointColors) out = count * 3 < this._pointColors.length ? this._pointColors.subarray(0, count * 3) : this._pointColors;   // AUDIT-EL F3: cut to the program's slots
     else {
@@ -4343,7 +4541,10 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       }
       out = s.subarray(0, count * 3);
     }
-    return this._lane && !raw ? this._lane.decodeN(out, this._pointColorDec, count) : out;   // EL1: linear for the lane; `raw` for a classic-space program under it (the water)
+    if (!lane || raw) return out;   // EL1: `raw` for a classic-space program under the lane (the water)
+    const dec = lane.decodeN(out, this._pointColorDec, count);   // EL1: linear for the lane
+    this._pointColorDecGen = this._pointColorGen; this._pointColorDecLane = lane; this._pointColorDecCount = count;   // LA-COST1
+    return dec;
   }
 
   /**
@@ -4432,6 +4633,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._indirect[0] = pos[0]; this._indirect[1] = pos[1]; this._indirect[2] = pos[2];
     this._indirect[3] = range;
     this._indirectColor = scaledColor;
+    this._frameStamp++;   // LA-COST1: every frame block carries the indirect light
   }
 
   /** Upload an emission mask for (archive, record): a getWindowColors32
@@ -4538,7 +4740,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // CARRY. This literal minted eleven, and the rest arrived later in
     // whatever order a path first touched them - a producer's `_box`,
     // `sway`, `conceal`, `noShadow`, `selfCard`; the shadow record's ten
-    // `_sh*`; the key's four `_bbKey*`; the signature's `_shId`; a move's
+    // `_sh*`; the key's four `_bbKey*` (LA-COST2: five, its interned id); the signature's `_shId`; a move's
     // `_shMovedAt`; a gib's `_moveScratch`; a free's `_dead`. Every order is
     // its own hidden class to V8: three by day and five at night in the
     // synthetic town, twelve to fifteen with the game's mix of producers. So every
@@ -4570,8 +4772,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     return {
       vao, indexCount: count * 6, archive, record, size, buffers: [vb, ib], origin: null, frame: null, bounds, _quads: count, _dyn: !!dynamic,
       _place: count > 1 && !dynamic ? placementGrid(centers) : null,
-      _box: undefined, sway: undefined, conceal: undefined, noShadow: undefined, selfCard: undefined, _dead: undefined, _moveScratch: undefined,
-      _bbKey: undefined, _bbKeyRecord: undefined, _bbKeyFrame: undefined, _bbKeyArchive: undefined,
+      _box: undefined, sway: undefined, conceal: undefined, hitFlash: undefined, noShadow: undefined, selfCard: undefined, _dead: undefined, _moveScratch: undefined,
+      _bbKey: undefined, _bbKeyId: undefined, _bbKeyRecord: undefined, _bbKeyFrame: undefined, _bbKeyArchive: undefined,
       _shGen: undefined, _shSeen: undefined, _shOx: NaN, _shOy: NaN, _shOz: NaN, _shFrame: undefined,
       _shRec: undefined, _shFlip: undefined, _shDyn: undefined, _shSway: undefined, _shMovedAt: undefined, _shId: undefined,
     };
@@ -4657,6 +4859,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     mesh._dead = true;   // EL2: a shadow record from the last frame may still hold it
     for (const b of mesh.buffers) gl.deleteBuffer(b);
     gl.deleteVertexArray(mesh.vao);
+    if (mesh.shadowVao) gl.deleteVertexArray(mesh.shadowVao);   // LA-AUDIT A1: its index buffer is one of mesh.buffers
     // c2/S6: the wireframe cache is the mesh's, and dies with it
     if (mesh._wire) {
       gl.deleteBuffer(mesh._wire.ebo);
@@ -5195,50 +5398,63 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     if (bbCull) spherePlanes(mat4Multiply(this._proj, this._view, this._bbPv), this._bbPlanes);
     this._use(this.bbProgram);
     this._uploadCloudShadow('bb');   // VC4
-    gl.uniformMatrix4fv(this.bbUProj, false, this._proj);
-    gl.uniformMatrix4fv(this.bbUView, false, this._view);
+    // LA-COST1: THE CALL'S OWN - the basis the host hands this call (the peers', the lantern card's, each their own)
+    // and the wind, which the host sets for its flats' call and not with the frame
     gl.uniform3fv(this.bbURight, camRight);
     gl.uniform3fv(this.bbUUp, camUp);
-    gl.uniform1i(this.bbUTex, 0);
     if (this.bbUFlatWind) gl.uniform4fv(this.bbUFlatWind, this._flatWind ?? ZERO_FLAT_WIND);   // WIND3: one upload a call; uSway is the batch's
-    this._uploadFog(this._bbFog);
-    // Billboards take the scene's time-of-day light (DFU's ambient-lit
-    // billboards): ambient plus the Lambert-average half of the sun term.
-    // Clockless scenes keep the pre-R5 full-bright flats.
-    if (this._clockLit) {
-      // EV5: the flats have no normals, so the moon takes the same
-      // Lambert-average half the sun does - a scalar on the tint.
-      // EL1: under the lane the two terms are decoded FIRST and added in
-      // linear (_c3 on each, into the two scratch triples).
-      // AUDIT PERF-SUN/FOG F4 (2026-09-19, pre-existing): THREE COLOURS,
-      // THREE SCRATCHES. `mc` and `sc` were both handed `_decB`, so they
-      // were the SAME Float32Array - and `sc`'s decode overwrote `mc`'s
-      // contents before the very next statement read `mc`. The billboard
-      // tint's MOON term was therefore computed from the SUN's colour, on
-      // every flat in the world. This is the only site in the file that
-      // holds more than one decoded colour live at once, which is why it
-      // is the only one that could have it; found by the audit that had
-      // just pinned PERF-FOG's decoded fog (gone since EL-DISTANCE) against the same hazard one method away.
-      const am = this._c3(this._ambient, this._decA), mc = this._c3(this._moonColor, this._decB), sc = this._c3(this._sunColor, this._decC);
-      gl.uniform3f(
-        this.bbUTint,
-        am[0] + mc[0] * this._moonScale * 0.5,
-        am[1] + mc[1] * this._moonScale * 0.5,
-        am[2] + mc[2] * this._moonScale * 0.5
-      );
-      gl.uniform3f(this.bbUSun, sc[0] * this._sunScale * 0.5, sc[1] * this._sunScale * 0.5, sc[2] * this._sunScale * 0.5);   // VC4: the sun's half, shadowed in the shader
-    } else {
-      gl.uniform3f(this.bbUTint, 1, 1, 1);
-      gl.uniform3f(this.bbUSun, 0, 0, 0);
+    // LA-COST1 (2026-09-27, Mac: "a deep audit on the enhanced lighting system ... performance improvements"): THE
+    // FRAME BLOCK, ONCE A STAMP - PERF3's terrain law on the billboard program. Every call re-sent the camera, the fog,
+    // the tint and the sun, forty-eight lights and their colours (decoded again: 144 Math.pow), the indirect, and the
+    // lane's block - the three shadow arrays, the sun's matrices, the caster table, the eye, the contact block and the
+    // grid: sixty-odd GL calls, and an interior makes eight of these calls a frame (its flats, blood, torches, decor,
+    // drops, foes, watch and spells), none of which moved a value in it. A uniform is the PROGRAM's and holds until the
+    // next upload to it, so the block goes up on the first call after the stamp moves - a frame, a restore, a setter
+    // that changes a value in it, a seam that forgets the units (_forgetTextureShadows) - and is skipped after.
+    if (this._bbFrameStamp !== this._frameStamp) {
+      this._bbFrameStamp = this._frameStamp;
+      gl.uniformMatrix4fv(this.bbUProj, false, this._proj);
+      gl.uniformMatrix4fv(this.bbUView, false, this._view);
+      gl.uniform1i(this.bbUTex, 0);
+      this._uploadFog(this._bbFog);
+      // Billboards take the scene's time-of-day light (DFU's ambient-lit
+      // billboards): ambient plus the Lambert-average half of the sun term.
+      // Clockless scenes keep the pre-R5 full-bright flats.
+      if (this._clockLit) {
+        // EV5: the flats have no normals, so the moon takes the same
+        // Lambert-average half the sun does - a scalar on the tint.
+        // EL1: under the lane the two terms are decoded FIRST and added in
+        // linear (_c3 on each, into the two scratch triples).
+        // AUDIT PERF-SUN/FOG F4 (2026-09-19, pre-existing): THREE COLOURS,
+        // THREE SCRATCHES. `mc` and `sc` were both handed `_decB`, so they
+        // were the SAME Float32Array - and `sc`'s decode overwrote `mc`'s
+        // contents before the very next statement read `mc`. The billboard
+        // tint's MOON term was therefore computed from the SUN's colour, on
+        // every flat in the world. This is the only site in the file that
+        // holds more than one decoded colour live at once, which is why it
+        // is the only one that could have it; found by the audit that had
+        // just pinned PERF-FOG's decoded fog (gone since EL-DISTANCE) against the same hazard one method away.
+        const am = this._c3(this._ambient, this._decA), mc = this._c3(this._moonColor, this._decB), sc = this._c3(this._sunColor, this._decC);
+        gl.uniform3f(
+          this.bbUTint,
+          am[0] + mc[0] * this._moonScale * 0.5,
+          am[1] + mc[1] * this._moonScale * 0.5,
+          am[2] + mc[2] * this._moonScale * 0.5
+        );
+        gl.uniform3f(this.bbUSun, sc[0] * this._sunScale * 0.5, sc[1] * this._sunScale * 0.5, sc[2] * this._sunScale * 0.5);   // VC4: the sun's half, shadowed in the shader
+      } else {
+        gl.uniform3f(this.bbUTint, 1, 1, 1);
+        gl.uniform3f(this.bbUSun, 0, 0, 0);
+      }
+      const bbCount = this._pointLights.length >> 2;
+      gl.uniform1i(this.bbUPointCount, bbCount);
+      if (bbCount > 0) gl.uniform4fv(this.bbUPointLights, this._pointLights);
+      if (bbCount > 0) gl.uniform3fv(this.bbUPointColors, this._pointColorData(bbCount));
+      gl.uniform4fv(this.bbUIndirect, this._indirect);
+      gl.uniform3fv(this.bbUIndirectColor, this._c3(this._indirectColor));
+      this._uploadEl('bb');   // EL1
+      gl.uniform1i(this.bbUEmissionTex, 1);
     }
-    const bbCount = this._pointLights.length >> 2;
-    gl.uniform1i(this.bbUPointCount, bbCount);
-    if (bbCount > 0) gl.uniform4fv(this.bbUPointLights, this._pointLights);
-    if (bbCount > 0) gl.uniform3fv(this.bbUPointColors, this._pointColorData(bbCount));
-    gl.uniform4fv(this.bbUIndirect, this._indirect);
-    gl.uniform3fv(this.bbUIndirectColor, this._c3(this._indirectColor));
-    this._uploadEl('bb');   // EL1
-    gl.uniform1i(this.bbUEmissionTex, 1);
     gl.disable(gl.CULL_FACE);
     // Two phases: opaque flats first (classic cutout), then SPECTRAL
     // batches blended with depth-writes off - ghosts keep their 180
@@ -5252,8 +5468,12 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // record across forty pixels used to bind its textures forty times
     // and now binds them once. The blended pass keeps its back-to-front
     // order and only skips the repeats it happens to have.
+    // LA-COST2: order-free but for an exact depth TIE, where the first
+    // drawn keeps the pixel - so the sort is by bucket now and gives the
+    // very order the string sort gave (billboardKey.js sortByKey).
     let lastKey = null;
     let lastSway = null;   // WIND3
+    let lastFlash = null;   // HITFLASH1
     // PERF-EXT11 (2026-09-25, the players' "fps issues in the exterior but
     // fine in the interior"): THE SIZE AND THE ORIGIN GO UP WHEN THEY
     // CHANGE, as the sway and the key's textures already did. Both were
@@ -5288,6 +5508,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       if (o[0] !== lastOx || o[1] !== lastOy || o[2] !== lastOz) { gl.uniform3f(this.bbUOrigin, o[0], o[1], o[2]); lastOx = o[0]; lastOy = o[1]; lastOz = o[2]; }   // PERF-EXT11
       const sw = b.sway || 0;   // WIND3: the batch's share of the lean, uploaded when it changes between batches
       if (sw !== lastSway) { gl.uniform1f(this.bbUSway, sw); lastSway = sw; }
+      const hf = b.hitFlash || 0;   // HITFLASH1: a struck body's red, uploaded when it changes between batches
+      if (hf !== lastFlash) { gl.uniform1f(this.bbUHitFlash, hf); lastFlash = hf; }
       this._bindVao(b.vao);
       gl.drawElements(gl.TRIANGLES, b.indexCount, gl.UNSIGNED_INT, 0);
       this.stats.draws++;
@@ -5309,7 +5531,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       billboardKey(b);
       opaque.push(b);
     }
-    opaque.sort((a, b) => (a._bbKey < b._bbKey ? -1 : a._bbKey > b._bbKey ? 1 : 0));
+    sortByKey(opaque);   // LA-COST2: the key order the string sort gave (a depth tie keeps its first-drawn flat), by bucket (billboardKey.js)
     for (const b of opaque) drawOne(b);
     opaque.length = 0;
     // The BLENDED phase: the spectral batches and (ECV1) the concealed

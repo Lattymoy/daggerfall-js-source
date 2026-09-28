@@ -124,7 +124,7 @@ test('ID1: the interior host mounts its own pool, with no pixel key', () => {
   // ROAD-G G5 widened this door: the icon and the replaced container's
   // x/z ride OnPop too. The pixel key is still NULL - that third
   // argument IS TrackLooseObject, and an interior has no map pixel.
-  assert.match(m, /interiorDropped\.dropPile\(items, containerDropPos\(at, interiorDropFeet\(\)\), null, icon\),/,
+  assert.match(m, /interiorDropped\.dropPile\(items, containerDropPos\(at, interiorDropFeet\(\)\), null, icon\)[,;]/,   // HOUSE-DROP: a block body now (a visitor's drop goes back to the pack first)
     'the pixel key stays null - that argument IS TrackLooseObject');
   assert.match(m, /onDrop: \(items, icon = null, at = null\) =>/, 'and OnPop hands both halves through');
   // FindGroundPosition, on the INTERIOR collider
@@ -159,7 +159,7 @@ test('ID1: the piles are picked up, drawn, cached, restored and freed', () => {
   // GetSaveData has no empty guard (SerializableLootContainer.cs:55-77)
   // and an emptied scene-built container must ride it.
   assert.match(m, /const droppedPiles = interiorDropped\.snapshotScene\(\)\.map\(/, 'CacheScene builds them');   // TERRAIN-SCALE1: in the building's own frame
-  assert.match(m, /return \{ lootContainers, actionDoors, droppedPiles, droppedTorches, decor, decorItems, decorOwn, frame: 'building', terrainScale: STREAMING_TERRAIN_SCALE \};/,
+  assert.match(m, /return \{ lootContainers, actionDoors, droppedPiles, droppedTorches, decor, decorItems, decorOwn, hiddenBase, frame: 'building', terrainScale: STREAMING_TERRAIN_SCALE, guildShelves \};/,   // GUILD-SHELF: the day's guild shelves last
     'and RETURNS them - a built list the state does not carry is not cached at all');
   assert.match(m, /interiorDropped\.restorePiles\(data\.droppedPiles \? data\.droppedPiles\.map\(\(p\) => \(\{ \.\.\.p, pos: place\(p\.pos\) \}\)\) : data\.droppedPiles\);/, 'RestoreCachedScene brings them back');   // TERRAIN-SCALE1: placed in this visit's frame; none is still a clear
   // BOTH teardowns free them - the door exit and the quest-teleport /

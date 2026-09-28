@@ -158,9 +158,18 @@ export function effectCost(e, casterSkillOf) {
   return { gold, sp: Math.trunc(gold * (110 - skill) / 400) };
 }
 
+// SET2 (Mora's Mantle's Waters of Oblivion, bible/11-Multiplayer/Sigil-Sets.md): THE PORT'S SAY OVER A PLAYER'S COST.
+// Named modifiers, `fn(entity, sp) -> sp`, over the spell points a PLAYER's cast costs after DFU's floor - read by every
+// door that prices the player's cast (the ready, the charge, the spellbook's and the HUD's figures all come through
+// here), and by NONE that prices a foe's: enemyCasting.js prices a foe's cast with the player's own skills (its
+// recorded quirk), so it asks with `portMods: false` and a set of mine never makes a foe's spell cheaper. A modifier
+// never takes a cost under 1.
+const _costMods = new Map();
+export function registerSpellCostMod(name, fn) { if (typeof fn === 'function') _costMods.set(name, fn); else _costMods.delete(name); }
+
 /** The full casting cost of a classic spell record for a caster:
- *  per-effect sums, target multiplier, the floor. */
-export function calculateCastCost(spell, casterEntity) {
+ *  per-effect sums, target multiplier, the floor. SET2: and the port's cost modifiers, for a player's own cast. */
+export function calculateCastCost(spell, casterEntity, { portMods = true } = {}) {
   const skillOf = (id) => skillValue(casterEntity, id);
   let gold = 0, sp = 0;
   for (const e of spell.effects) {
@@ -181,6 +190,11 @@ export function calculateCastCost(spell, casterEntity) {
   // full skill-scaled cost.
   if (spell.minimumCastingCost) sp = CAST_COST_FLOOR;
   if (sp < CAST_COST_FLOOR) sp = CAST_COST_FLOOR;
+  if (portMods && casterEntity?.isPlayer && _costMods.size) {
+    for (const fn of _costMods.values()) {
+      try { const n = fn(casterEntity, sp); if (Number.isFinite(n)) sp = Math.max(1, Math.round(n)); } catch { /* a set is not the cast's problem */ }
+    }
+  }
   return { gold, sp };
 }
 

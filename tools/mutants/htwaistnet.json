@@ -11,8 +11,8 @@
   {
     "name": "HTWN-edge-waits-for-the-heartbeat",
     "file": "src/net/wire.js",
-    "old": "    || (a.hl | 0) !== (b.hl | 0);",
-    "new": "    || false;",
+    "old": "    || (a.hl | 0) !== (b.hl | 0)   // HT-WAIST-NET:",
+    "new": "    || false   // HT-WAIST-NET:",
     "tests": [
       "test/htwaistnet_peers.test.js"
     ]
@@ -56,7 +56,7 @@
   {
     "name": "HTWN-peer-body-never-asks",
     "file": "src/net/peerBodies.js",
-    "old": "    b.rig.setHipLight?.(!!shown.hl);\n",
+    "old": "    b.rig.setHipLight?.(!b.wolf && !!shown.hl);   // WEREWOLF1: and hangs nothing at the hip\n",
     "new": "",
     "tests": [
       "test/htwaistnet_peers.test.js",
@@ -66,8 +66,8 @@
   {
     "name": "HTWN-peer-bit-inverted",
     "file": "src/net/peerBodies.js",
-    "old": "b.rig.setHipLight?.(!!shown.hl);",
-    "new": "b.rig.setHipLight?.(!shown.hl);",
+    "old": "b.rig.setHipLight?.(!b.wolf && !!shown.hl);",
+    "new": "b.rig.setHipLight?.(!b.wolf && !shown.hl);",
     "tests": [
       "test/htwaistnet_peers.test.js"
     ]

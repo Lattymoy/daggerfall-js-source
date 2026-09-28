@@ -14,13 +14,14 @@
 // This is the whole design and it is the repo's own law (DERIVED OVER
 // ENUMERATED) applied to the one place a grant is usually a row:
 //
-//   FOUNDER   you registered before FOUNDER_UNTIL.
+//   FOUNDER   your registered account first played by FOUNDER_UNTIL.
 //   DEVELOPER your handle is in the service's DEVELOPER_HANDLES.
 //   SPROUT    your account is younger than SPROUT_S.
 //   DEV       the same list as the Developer title.
 //   DUNGEON MASTER, DISCIPLE, APOSTLE, HIEROPHANT (TITLE-N, 2026-09-24)
 //             your handle is in that title's own list in the config;
 //             each list grants the title AND its glyph.
+//   SHADOW FANG (SHADOW-FANG, 2026-09-26) the same, one player's own.
 //
 // WHY THAT AND NOT A `grants` TABLE. Mac asked that "all current
 // players should be granted the founder title", and the obvious
@@ -63,7 +64,13 @@ import { TITLES, GLYPHS } from '../../src/net/identityToken.js';
  *  closed it is a founder too, with no row written. After it the title is
  *  closed again (TITLE-R's law). A guest still holds none: nothing to
  *  compare, and a founding title on a row one storage clear from gone was
- *  never anybody's. */
+ *  never anybody's.
+ *
+ *  FOUNDER3 (2026-09-27, Mac: "we still need to grant everyone the founder
+ *  title befire the original cut off date. A lot of people are missing
+ *  it"): the SAME instant, read off when the account FIRST PLAYED rather
+ *  than when it registered (`firstPlayed`, below). The instant does not
+ *  move, in either direction: nobody who holds it loses it. */
 export const FOUNDER_UNTIL = 1_790_294_400;
 
 /** How long the sprout stays on a new account: two weeks, in seconds,
@@ -116,9 +123,12 @@ export const TIER_LISTS = Object.freeze({
   disciple: 'DISCIPLE_HANDLES',
   apostle: 'APOSTLE_HANDLES',
   hierophant: 'HIEROPHANT_HANDLES',
+  // SHADOW-FANG (2026-09-26, Mac): "SirMcMobdon gets a brand new title/glyph. Remove them from Apostle" - a title
+  // made for one player, granted the tiers' way: a list in the config, the title and its glyph together.
+  shadowfang: 'SHADOW_FANG_HANDLES',
 });
 /** The glyph each of those titles carries, in the vocabulary's words. */
-export const TIER_GLYPH = Object.freeze({ dungeonmaster: 'dm', disciple: 'disciple', apostle: 'apostle', hierophant: 'hierophant' });
+export const TIER_GLYPH = Object.freeze({ dungeonmaster: 'dm', disciple: 'disciple', apostle: 'apostle', hierophant: 'hierophant', shadowfang: 'shadowfang' });
 
 /** Does this player hold that list's title? A guest holds none, for the developer's reason. */
 export const holdsTier = (title, player, env) =>
@@ -144,6 +154,16 @@ export const isModerator = (player, env) =>
  *  stays the moderator list's alone: the dev mark already says more. */
 export const canModerate = (player, env) => isModerator(player, env) || isDeveloper(player, env);
 
+/** FOUNDER3: WHEN THIS ACCOUNT FIRST PLAYED. Founder was read off
+ *  `registered_at`, and registering is only the moment a player chose a
+ *  name: a player here as a guest since before the cutoff who registered
+ *  after it held nothing (Field-Bugs 2026-09-26b, report 3). `created_at`
+ *  is stamped at a row's first contact, guest or not, and registering is
+ *  an upgrade IN PLACE of that same row (0002), so it is still there. A
+ *  row without one is judged by its registration, as before. */
+const firstPlayed = (player) =>
+  Math.min(player.registered_at, Number.isFinite(player.created_at) ? player.created_at : Infinity);
+
 /**
  * THE TITLES THIS PLAYER HOLDS, in the order they are offered.
  * @param {any} player the row
@@ -154,8 +174,11 @@ export function titlesHeld(player, env) {
   // FOUNDER IS FOR REGISTERED ACCOUNTS (Mac's own call when asked
   // whether guests count): a guest row is device-bound and one storage
   // clear from gone, so a founding title on one is a title that
-  // vanishes with a cleared browser and was never anybody's.
-  if (Number.isFinite(player?.registered_at) && player.registered_at <= FOUNDER_UNTIL) held.push('founder');
+  // vanishes with a cleared browser and was never anybody's. FOUNDER3:
+  // judged by when the account first played, so that guest holds it the
+  // moment it registers. The guard stays first: D1 gives a guest a NULL
+  // `registered_at`, and Math.min reads null as 0.
+  if (Number.isFinite(player?.registered_at) && firstPlayed(player) <= FOUNDER_UNTIL) held.push('founder');
   if (isDeveloper(player, env)) held.push('developer');
   for (const t of Object.keys(TIER_LISTS)) if (holdsTier(t, player, env)) held.push(t);   // TITLE-N
   return held;

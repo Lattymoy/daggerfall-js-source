@@ -277,7 +277,7 @@
   {
     "name": "DW3-6-the-list-drawer-forgets-the-dye-in-its-key",
     "file": "src/ui/itemScroller.js",
-    "old": "    const key = `${img.archive}_${img.record}${token ? `_${token}` : ''}`;",
+    "old": "    const key = `${img.archive}_${img.record}${token ? `_${token}` : ''}${img.dyeTarget != null ? `_t${img.dyeTarget}d${img.dye}` : ''}`;",
     "new": "    const key = `${img.archive}_${img.record}`;",
     "tests": [
       "test/dw3_icons.test.js"

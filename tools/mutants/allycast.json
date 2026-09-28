@@ -11,7 +11,7 @@
   {
     "name": "AC-receiver-keeps-everything",
     "file": "src/systems/allyCast.js",
-    "old": "  const effects = d.effects.filter(allyEffect).slice(0, MAX_EFFECTS_PER_SPELL);",
+    "old": "  const effects = d.effects.filter(stranger ? strangerEffect : allyEffect).slice(0, MAX_EFFECTS_PER_SPELL);",
     "new": "  const effects = d.effects.slice(0, MAX_EFFECTS_PER_SPELL);",
     "tests": [
       "test/allycast.test.js"
@@ -128,8 +128,8 @@
   {
     "name": "AC-receiver-trusts-anyone",
     "file": "src/scenes/world.js",
-    "old": "    online.onCast = (id, d) => {\n      if (!social?.isPartyPeer(id)) return;",
-    "new": "    online.onCast = (id, d) => {",
+    "old": "      const mate = !!social?.isPartyPeer(id);",
+    "new": "      const mate = true;",
     "tests": [
       "test/allycast.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "AAC-host-pick-throws-through",
     "file": "src/scenes/hostMagic.js",
-    "old": "    try { ally = allyTarget(eye, dir, reach) ?? null; } catch { return null; }",
-    "new": "    ally = allyTarget(eye, dir, reach) ?? null;",
+    "old": "    try { ally = allyTarget(eye, dir, reach, sp) ?? null; } catch { return null; }",
+    "new": "    ally = allyTarget(eye, dir, reach, sp) ?? null;",
     "tests": [
       "test/allycast.test.js"
     ]
@@ -254,7 +254,7 @@
   {
     "name": "AAC-host-casteronly-instant",
     "file": "src/scenes/hostMagic.js",
-    "old": "      if (!free && allyCastable(sp) && allyInReach(lastAim?.eye ?? null, lastAim?.dir ?? null, ALLY_TOUCH_REACH)) { say(PRESS_BUTTON_TO_FIRE_SPELL); return true; }\n",
+    "old": "      if (!free && allyCastable(sp) && allyInReach(lastAim?.eye ?? null, lastAim?.dir ?? null, ALLY_TOUCH_REACH, sp)) { say(PRESS_BUTTON_TO_FIRE_SPELL); return true; }\n",
     "new": "",
     "tests": [
       "test/allycast.test.js"
@@ -290,8 +290,8 @@
   {
     "name": "AAC-receiver-heals-the-line-last",
     "file": "src/scenes/world.js",
-    "old": "      townTalk.say(allyCastTargetLine(who, spell.name));\n      const before = playerEntity.health;\n      magic.applySpellToPlayer(spell, d.level, null, { allyCast: true });",
-    "new": "      const before = playerEntity.health;\n      magic.applySpellToPlayer(spell, d.level, null, { allyCast: true });\n      townTalk.say(allyCastTargetLine(who, spell.name));",
+    "old": "      if (loud) townTalk.say(allyCastTargetLine(who, spell.name));\n      const before = playerEntity.health;\n      magic.applySpellToPlayer(spell, d.level, null, { allyCast: true, strangerCast: !mate });",
+    "new": "      const before = playerEntity.health;\n      magic.applySpellToPlayer(spell, d.level, null, { allyCast: true, strangerCast: !mate });\n      if (loud) townTalk.say(allyCastTargetLine(who, spell.name));",
     "tests": [
       "test/allycast.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "AAC-plaque-promises-unreachable",
     "file": "src/scenes/world.js",
-    "old": "    const cast = pick?.id === id ? allyCastPlaqueLine(sp.name, name) : null;",
-    "new": "    const cast = reach !== null ? allyCastPlaqueLine(sp.name, name) : null;",
+    "old": "    const name = pick?.id === id ? peerName(id) : null;",
+    "new": "    const name = reach !== null ? peerName(id) : null;",
     "tests": [
       "test/allycast.test.js"
     ]
@@ -317,7 +317,7 @@
   {
     "name": "AAC-dungeon-engine-blind",
     "file": "src/scenes/worldModes.js",
-    "old": "          allyTarget: (eye, dir, reach) => host.allyTarget?.(eye, dir, reach) ?? null,",
+    "old": "          allyTarget: (eye, dir, reach, sp) => host.allyTarget?.(eye, dir, reach, sp) ?? null,",
     "new": "          allyTarget: () => null,",
     "tests": [
       "test/allycast.test.js"

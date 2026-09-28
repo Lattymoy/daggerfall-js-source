@@ -1,0 +1,281 @@
+[
+  {
+    "name": "INVISLOOK-invisible-hidden",
+    "file": "src/systems/combatVisuals.js",
+    "old": "concealVisual({ blending: (b & 3) !== 0, shade: (b & 4) !== 0 }, { t, phase: peerPhase(id) })",
+    "new": "concealVisual({ blending: (b & 2) !== 0, shade: (b & 4) !== 0 }, { t, phase: peerPhase(id) })",
+    "tests": [
+      "test/invislook.test.js"
+    ]
+  },
+  {
+    "name": "INVISLOOK-classic-draws",
+    "file": "src/systems/combatVisuals.js",
+    "old": "  if (!on) return HIDDEN;\n  return { kind: 'conceal', visual: concealVisual(",
+    "new": "  if (false) return HIDDEN;\n  return { kind: 'conceal', visual: concealVisual(",
+    "tests": [
+      "test/invislook.test.js"
+    ]
+  },
+  {
+    "name": "INVISLOOK-shade-unread",
+    "file": "src/systems/combatVisuals.js",
+    "old": "blending: (b & 3) !== 0, shade: (b & 4) !== 0 }",
+    "new": "blending: (b & 3) !== 0, shade: false }",
+    "tests": [
+      "test/invislook.test.js"
+    ]
+  },
+  {
+    "name": "INVISLOOK-one-phase-for-all",
+    "file": "src/systems/combatVisuals.js",
+    "old": "{ t, phase: peerPhase(id) })",
+    "new": "{ t, phase: 0 })",
+    "tests": [
+      "test/invislook.test.js"
+    ]
+  },
+  {
+    "name": "INVISLOOK-phase-ignores-the-id",
+    "file": "src/systems/combatVisuals.js",
+    "old": "h = (h * 31 + s.charCodeAt(i)) | 0;",
+    "new": "h = 0;",
+    "tests": [
+      "test/invislook.test.js"
+    ]
+  },
+  {
+    "name": "INVISLOOK-doll-plain",
+    "file": "src/net/remotePlayers.js",
+    "old": "    entry.batch.conceal = veil;   // INVIS-LOOK: the renderer's blended phase, or plain",
+    "new": "    entry.batch.conceal = null;   // INVIS-LOOK: the renderer's blended phase, or plain",
+    "tests": [
+      "test/invislook.test.js"
+    ]
+  },
+  {
+    "name": "INVISLOOK-sprite-plain",
+    "file": "src/net/remotePlayers.js",
+    "old": "    entry.batch.conceal = veil;   // INVIS-LOOK\n",
+    "new": "    entry.batch.conceal = null;   // INVIS-LOOK\n",
+    "tests": [
+      "test/invislook.test.js"
+    ]
+  },
+  {
+    "name": "INVISLOOK-doll-named",
+    "file": "src/net/remotePlayers.js",
+    "old": "    if (!veil) this._shown.push({ peer, height: entry.doll.h });",
+    "new": "    this._shown.push({ peer, height: entry.doll.h });",
+    "tests": [
+      "test/invislook.test.js"
+    ]
+  },
+  {
+    "name": "INVISLOOK-body-named",
+    "file": "src/net/remotePlayers.js",
+    "old": "      if (bodyH > 0) { if (!veil) this._shown.push({ peer, height: bodyH }); continue; }",
+    "new": "      if (bodyH > 0) { this._shown.push({ peer, height: bodyH }); continue; }",
+    "tests": [
+      "test/invislook.test.js"
+    ]
+  },
+  {
+    "name": "INVISLOOK-rider-plain",
+    "file": "src/net/peerRiders.js",
+    "old": "    layer.veil(r, hConceal(peer.id));   // INVIS-LOOK: a concealed rider (or beast) is drawn translucent",
+    "new": "    // INVIS-LOOK: a concealed rider (or beast) is drawn translucent",
+    "tests": [
+      "test/invislook.test.js"
+    ]
+  },
+  {
+    "name": "INVISLOOK-walker-plain",
+    "file": "src/net/peerRiders.js",
+    "old": "      layer.veil(r, conceal(peer.id));   // INVIS-LOOK: a concealed walker is drawn translucent",
+    "new": "      // INVIS-LOOK: a concealed walker is drawn translucent",
+    "tests": [
+      "test/invislook.test.js"
+    ]
+  },
+  {
+    "name": "INVISLOOK-new-sprite-plain",
+    "file": "src/net/peerRiders.js",
+    "old": "        r.batch.conceal = r.veil ?? null;   // INVIS-LOOK: a new sprite keeps the figure's draw",
+    "new": "        // INVIS-LOOK: a new sprite keeps the figure's draw",
+    "tests": [
+      "test/invislook.test.js"
+    ]
+  },
+  {
+    "name": "INVISLOOK-veil-never-lifted",
+    "file": "src/net/peerRiders.js",
+    "old": "    if (r.batch) r.batch.conceal = r.veil;\n",
+    "new": "    if (r.batch && r.veil) r.batch.conceal = r.veil;\n",
+    "tests": [
+      "test/invislook.test.js"
+    ]
+  },
+  {
+    "name": "INVISLOOK-lantern-on-nobody",
+    "file": "src/net/peerRiders.js",
+    "old": "    if (r.veil) return;   // INVIS-LOOK",
+    "new": "    if (false) return;   // INVIS-LOOK",
+    "tests": [
+      "test/invislook.test.js"
+    ]
+  },
+  {
+    "name": "INVISLOOK-body-in-both-passes",
+    "file": "src/net/peerBodies.js",
+    "old": "      if (!this._standing(b) || !b.veil !== !veiled) continue;",
+    "new": "      if (!this._standing(b)) continue;",
+    "tests": [
+      "test/invislook.test.js"
+    ]
+  },
+  {
+    "name": "INVISLOOK-body-veil-unread",
+    "file": "src/net/peerBodies.js",
+    "old": "      b.veil = conceal ? (conceal(id) ?? null) : null;",
+    "new": "      b.veil = null;",
+    "tests": [
+      "test/invislook.test.js"
+    ]
+  },
+  {
+    "name": "INVISLOOK-late-pass-no-camera",
+    "file": "src/net/peerBodies.js",
+    "old": "    this._cam = { canvas, proj, view, eye, flashOf };\n",
+    "new": "    \n",
+    "tests": [
+      "test/invislook.test.js"
+    ]
+  },
+  {
+    "name": "INVISLOOK-body-drawn-plain",
+    "file": "src/net/peerBodies.js",
+    "old": "hitFlash: flashOf ? flashOf(b.id) : 0, conceal: b.veil ?? null })",
+    "new": "hitFlash: flashOf ? flashOf(b.id) : 0, conceal: null })",
+    "tests": [
+      "test/invislook.test.js"
+    ]
+  },
+  {
+    "name": "INVISLOOK-quad-opaque",
+    "file": "src/render/renderer.js",
+    "old": "    if (conceal) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false); }",
+    "new": "    if (false) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false); }",
+    "tests": [
+      "test/invislook.test.js"
+    ]
+  },
+  {
+    "name": "INVISLOOK-quad-depth-left-off",
+    "file": "src/render/renderer.js",
+    "old": "    if (conceal) { gl.depthMask(true); gl.disable(gl.BLEND); }",
+    "new": "    if (conceal) { gl.disable(gl.BLEND); }",
+    "tests": [
+      "test/invislook.test.js"
+    ]
+  },
+  {
+    "name": "INVISLOOK-quad-look-unsent",
+    "file": "src/render/renderer.js",
+    "old": "    gl.uniform4f(c.conceal, conceal ? conceal.mode : 0, conceal ? conceal.alpha : 0, conceal ? conceal.t : 0, conceal ? conceal.phase : 0);",
+    "new": "    gl.uniform4f(c.conceal, 0, 0, 0, 0);",
+    "tests": [
+      "test/invislook.test.js"
+    ]
+  },
+  {
+    "name": "INVISLOOK-quad-span-whole",
+    "file": "src/render/renderer.js",
+    "old": "    gl.uniform2f(c.span, u1, v1);",
+    "new": "    gl.uniform2f(c.span, 1, 1);",
+    "tests": [
+      "test/invislook.test.js"
+    ]
+  },
+  {
+    "name": "INVISLOOK-fs-half-cut",
+    "file": "src/render/renderer.js",
+    "old": "  if (t.a < (uConceal.x > 0.0 ? 0.1 : 0.5)) discard;",
+    "new": "  if (t.a < 0.5) discard;",
+    "tests": [
+      "test/invislook.test.js"
+    ]
+  },
+  {
+    "name": "INVISLOOK-fs-opaque",
+    "file": "src/render/renderer.js",
+    "old": "fogFactorAt(vWorld)), vWorld), uConceal.x > 0.0 ? t.a * uConceal.y : 1.0);",
+    "new": "fogFactorAt(vWorld)), vWorld), 1.0);",
+    "tests": [
+      "test/invislook.test.js"
+    ]
+  },
+  {
+    "name": "INVISLOOK-fs-shade-bright",
+    "file": "src/render/renderer.js",
+    "old": "  if (uConceal.x == 2.0) rgb *= ${SHADE_DARK};   // INVIS-LOOK: a shade, ECV1's dark",
+    "new": "  // INVIS-LOOK: a shade, ECV1's dark",
+    "tests": [
+      "test/invislook.test.js"
+    ]
+  },
+  {
+    "name": "INVISLOOK-fs-ripple-rt-wide",
+    "file": "src/render/renderer.js",
+    "old": "    uv.x += sin(n.y * 28.0 + uConceal.z * 7.0 + uConceal.w) * 0.008 * uSpan.x;",
+    "new": "    uv.x += sin(n.y * 28.0 + uConceal.z * 7.0 + uConceal.w) * 0.008;",
+    "tests": [
+      "test/invislook.test.js"
+    ]
+  },
+  {
+    "name": "INVISLOOK-fs-edge-rt-wide",
+    "file": "src/render/renderer.js",
+    "old": "    if (uv.x < 0.0 || uv.x > uSpan.x) discard;",
+    "new": "    if (uv.x < 0.0 || uv.x > 1.0) discard;",
+    "tests": [
+      "test/invislook.test.js"
+    ]
+  },
+  {
+    "name": "INVISLOOK-host-never-veils",
+    "file": "src/scenes/world.js",
+    "old": "      if (look.kind === 'conceal') _veils.set(d.id, look.visual);",
+    "new": "      // INVIS-LOOK: no look",
+    "tests": [
+      "test/invislook.test.js"
+    ]
+  },
+  {
+    "name": "INVISLOOK-exterior-no-late-pass",
+    "file": "src/scenes/world.js",
+    "old": "    drawVeiledPeerBodies();   // INVIS-LOOK",
+    "new": "    // drawVeiledPeerBodies();   // INVIS-LOOK",
+    "tests": [
+      "test/invislook.test.js"
+    ]
+  },
+  {
+    "name": "INVISLOOK-interior-no-late-pass",
+    "file": "src/scenes/worldModes.js",
+    "old": "    host.drawVeiledPeerBodies?.();   // INVIS-LOOK",
+    "new": "    // host.drawVeiledPeerBodies?.();   // INVIS-LOOK",
+    "tests": [
+      "test/invislook.test.js"
+    ]
+  },
+  {
+    "name": "INVISLOOK-dungeon-no-late-pass",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    opts.lateWorldDraw?.();\n",
+    "new": "    \n",
+    "tests": [
+      "test/invislook.test.js"
+    ]
+  }
+]

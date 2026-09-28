@@ -1,0 +1,56 @@
+[
+  {
+    "name": "JAIL-HIT-online-only-again",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "  const inCourt = () => awaitingSurrenderAnswer || !!playerEntity.arrested;",
+    "new": "  const inCourt = () => sharedClockOn() && (awaitingSurrenderAnswer || !!playerEntity.arrested);",
+    "tests": [
+      "test/jailhit.test.js"
+    ]
+  },
+  {
+    "name": "JAIL-HIT-box-and-trial",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "  const inCourt = () => awaitingSurrenderAnswer || !!playerEntity.arrested;",
+    "new": "  const inCourt = () => awaitingSurrenderAnswer && !!playerEntity.arrested;",
+    "tests": [
+      "test/jailhit.test.js"
+    ]
+  },
+  {
+    "name": "JAIL-HIT-nested-court",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "    if (playerEntity.arrested) return;\n",
+    "new": "",
+    "tests": [
+      "test/jailhit.test.js"
+    ]
+  },
+  {
+    "name": "JAIL-HIT-box-thrown-away-still-asks",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "      box.dispose = () => { if (!box.done) awaitingSurrenderAnswer = false; };",
+    "new": "      box.dispose = () => {};",
+    "tests": [
+      "test/jailhit.test.js"
+    ]
+  },
+  {
+    "name": "JAIL-HIT-answered-box-reopens",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "      box.dispose = () => { if (!box.done) awaitingSurrenderAnswer = false; };",
+    "new": "      box.dispose = () => { awaitingSurrenderAnswer = !box.done; };",
+    "tests": [
+      "test/jailhit.test.js"
+    ]
+  },
+  {
+    "name": "JAIL-HIT-watch-stays-offline",
+    "file": "src/scenes/cityGuards.js",
+    "old": "    if ((!playerEntity.crimeCommitted || playerEntity.arrested) && !isTransformedLycanthrope(playerEntity)) {",
+    "new": "    if ((!playerEntity.crimeCommitted) && !isTransformedLycanthrope(playerEntity)) {",
+    "tests": [
+      "test/jailhit.test.js"
+    ]
+  }
+]

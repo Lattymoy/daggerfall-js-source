@@ -78,7 +78,11 @@ test('AUDIT 39 #37: the dungeon\'s leaner infection host leaves with the dungeon
 
 test('AUDIT 39 #38: the dungeon pause doors call THIS host\'s builders, not members it never had', () => {
   const at = DC.indexOf('openPauseFlow(');
-  const call = DC.slice(at, at + 1200);
+  // F5-QUESTS: the pause door spreads its bag arm, `pauseHooks` (F5's page is handed the same) - the arms are read
+  // there, and the door must still spread it.
+  assert.match(DC.slice(at, at + 400), /\.\.\.this\.pauseHooks\(setPlayerPos\),/, 'the door spreads the bag arm');
+  const arm = DC.indexOf('pauseHooks(setPlayerPos = null) {');
+  const call = DC.slice(arm, arm + 1600);
   assert.match(call, /openPack: \(\) => \{ const w = openInventory\(null\); if \(w\) activeOverlay = w; \},/);
   assert.match(call, /openChronicle: \(\) => \{ const w = makeJournalWindow\('notebook'\); if \(w\) activeOverlay = w; \},/);
   // The names that were never there: the whole file, not just the call.

@@ -25,7 +25,7 @@
 // price is the law's, by the scaled size - and a piece whose size the
 // scan could not read has no price and is never placed.
 //
-// DECOR2c: A MOUNT (a weapon or a shield of the owner's own) is set
+// DECOR2c: A MOUNT (a weapon or a piece of armour of the owner's own) is set
 // ON the surface the eye meets, not above it: its heading and tilt are
 // the surface's (a floor's heading the eye's own, so the picture reads
 // upright from where the owner stands), the turn is its spin on the
@@ -46,6 +46,8 @@ export const DECOR_RAISE_MAX = 3;
 export const DECOR_RAISE_MIN = -1;
 export const DECOR_SCALE_STEP = 1.1;
 export const DECOR_GRID = 0.25;
+/** DECOR-SHELL: a face whose normal (the eye's, facing it) points this far down is hung from, never stood on. */
+export const DECOR_HANG_NY = 0.5;
 
 /** A turn wrapped into (-180, 180]. */
 export function wrapTurn(deg) {
@@ -73,6 +75,12 @@ export function createDecorPlacer(entry, { radius = null, box = null, from = nul
     if (entry.model == null || !box) return 0;
     const b = transformedAabb(box, trs(0, 0, 0, 0, s.yaw, 0, s.scale, s.scale, s.scale));
     return -b[1];
+  }
+  /** DECOR-SHELL: how far BELOW a surface point a model's origin hangs - its top at the point, turned and scaled. */
+  function drop() {
+    if (entry.model == null || !box) return 0;
+    const b = transformedAabb(box, trs(0, 0, 0, 0, s.yaw, 0, s.scale, s.scale, s.scale));
+    return -b[4];
   }
 
   /** DECOR2c: THE MOUNT for a surface point and its `normal` (the eye's hit's, facing the eye), or null with no surface. */
@@ -131,7 +139,19 @@ export function createDecorPlacer(entry, { radius = null, box = null, from = nul
       const paid = this.price();
       if (paid == null || !hit || !origin) return null;
       if (mount) return mountAt(hit, origin, id, normal, camYaw, paid);
-      const up = lift() + s.raise;
+      // DECOR-SHELL (a player: "its model disappearing"): A FACE THAT LOOKS DOWN - a ceiling, a shelf's underside - is
+      // HUNG FROM, never stood on. A model stood on the ceiling the eye met from below stood above it, out of the room,
+      // where only a camera flown through the ceiling could see it; now its top touches the face, as a lamp's chain
+      // would. A flat has no top the placer knows, and does not hang: it cannot stand there.
+      const nl = normal ? Math.hypot(normal[0], normal[1], normal[2]) : 0;
+      const hang = nl > 0 && normal[1] / nl < -DECOR_HANG_NY;
+      if (hang && entry.model == null) return null;
+      // AUDIT DECOR-SHELL 4: the owner's lift is world-up and kept from surface to surface (to three metres), so a hung
+      // piece raised went into the face it hangs from, or wholly through it and out of the room: it is only lowered.
+      // AUDIT2 DECOR-SHELL 2: and the lift it carried in is let go as it hangs - kept, the first Lower presses only wore
+      // it down (twenty of them from a metre, sixty from the most) while the piece stayed at the face
+      if (hang && s.raise > 0) s.raise = 0;
+      const up = hang ? drop() + s.raise : lift() + s.raise;
       let x = hit[0] - origin[0];
       let z = hit[2] - origin[2];
       if (s.snap) { x = snapTo(x, DECOR_GRID); z = snapTo(z, DECOR_GRID); }
@@ -139,7 +159,7 @@ export function createDecorPlacer(entry, { radius = null, box = null, from = nul
         id, model: entry.model ?? null, flat: entry.flat ? [entry.flat[0], entry.flat[1]] : null, item: entry.item ?? null,
         pos: [x, hit[1] - origin[1] + up, z], rot: [s.yaw, 0, 0], scale: s.scale,
         light: entry.light ? { ...entry.light, color: [...entry.light.color] } : null,
-        storage: !!entry.storage, paid,
+        storage: !!entry.storage, paid, ...(entry.station ? { station: entry.station } : {}),   // AUDIT HOME-STATIONS S1: a moved station keeps its craft
       });
     },
   };

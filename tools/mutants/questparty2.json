@@ -1,0 +1,79 @@
+[
+  {
+    "name": "QP2-orphan-taken-from-afar",
+    "file": "src/scenes/questFoeHost.js",
+    "old": "  if (!near(myFeet)) return false;\n",
+    "new": "",
+    "tests": ["test/questparty2.test.js"]
+  },
+  {
+    "name": "QP2-a-far-member-ranks",
+    "file": "src/scenes/questFoeHost.js",
+    "old": "Array.isArray(p.feet) && near(p.feet) && String(p.id) < me) return false;",
+    "new": "Array.isArray(p.feet) && String(p.id) < me) return false;",
+    "tests": ["test/questparty2.test.js"]
+  },
+  {
+    "name": "QP2-the-highest-id-takes-it",
+    "file": "src/scenes/questFoeHost.js",
+    "old": "Array.isArray(p.feet) && near(p.feet) && String(p.id) < me) return false;",
+    "new": "Array.isArray(p.feet) && near(p.feet) && String(p.id) > me) return false;",
+    "tests": ["test/questparty2.test.js"]
+  },
+  {
+    "name": "QP2-behaviour-over-nothing",
+    "file": "src/scenes/questFoeHost.js",
+    "old": "  b.assignResource(foe);\n  return b;",
+    "new": "  return b;",
+    "tests": ["test/questparty2.test.js"]
+  },
+  {
+    "name": "QP2-taken-foe-unbound",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "if (b) bindQuestFoeHost(f, b, questPoolOps); else f._keptTag = { q: qt.q, s: qt.s };",
+    "new": "if (!b) f._keptTag = { q: qt.q, s: qt.s };",
+    "tests": ["test/questparty2.test.js"]
+  },
+  {
+    "name": "QP2-taken-foe-still-a-partners",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "const qt = f._pupQuest; f._pupQuest = null;",
+    "new": "const qt = f._pupQuest;",
+    "tests": ["test/questparty2.test.js"]
+  },
+  {
+    "name": "QP2-orphans-vanish",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "        if (gone && f._pupQuest && !f.dead && !f._heirElse && _questShare?.adoptsOrphan?.(from, f) && adopt(from, f)) continue;\n",
+    "new": "",
+    "tests": ["test/questparty2.test.js"]
+  },
+  {
+    "name": "QP2-every-orphan-taken",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "        if (gone && f._pupQuest && !f.dead && !f._heirElse && _questShare?.adoptsOrphan?.(from, f) && adopt(from, f)) continue;",
+    "new": "        if (!f.dead && _questShare?.adoptsOrphan?.(from, f) && adopt(from, f)) continue;",
+    "tests": ["test/questparty2.test.js"]
+  },
+  {
+    "name": "QP2-world-a-stranger-heir",
+    "file": "src/scenes/world.js",
+    "old": " if ((isPrivateQuestFoe(f) || f._keptTag) && !social?.isPartyPeer(q.id)) continue; const d = Math.hypot(at[0] - q.feet[0], at[2] - q.feet[2]); if (d < best) { best = d; id = q.id; } } return id; };   // QUEST-PARTY phase 2",
+    "new": " const d = Math.hypot(at[0] - q.feet[0], at[2] - q.feet[2]); if (d < best) { best = d; id = q.id; } } return id; };   // QUEST-PARTY phase 2",
+    "tests": ["test/questparty2.test.js"]
+  },
+  {
+    "name": "QP2-world-no-binding",
+    "file": "src/scenes/world.js",
+    "old": "    behaviourFor: (tag) => questBehaviourFor(questBridge?.machine, tag),\n",
+    "new": "",
+    "tests": ["test/questparty2.test.js"]
+  },
+  {
+    "name": "QP2-world-no-party-no-matter",
+    "file": "src/scenes/world.js",
+    "old": "    adoptsOrphan: (from, f) => !!social?.party && adoptsOrphanQuestFoe(",
+    "new": "    adoptsOrphan: (from, f) => adoptsOrphanQuestFoe(",
+    "tests": ["test/questparty2.test.js"]
+  }
+]

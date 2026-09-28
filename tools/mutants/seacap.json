@@ -1,0 +1,24 @@
+[
+  {
+    "name": "SEACAP-the-mod-s-128-again",
+    "file": "src/systems/modSettings.js",
+    "old": "      'General.MaxLiveEnemies': Object.freeze({ default: 32, min: 0, max: 256, description: 'Maximum live underwater enemies' }),",
+    "new": "      'General.MaxLiveEnemies': Object.freeze({ default: 128, min: 0, max: 256, description: 'Maximum live underwater enemies' }),",
+    "tests": ["test/seacap.test.js"]
+  },
+  {
+    "name": "SEACAP-the-room-forces-128",
+    "file": "src/systems/onlineLane.js",
+    "old": "'General.MaxLiveEnemies': 32,",
+    "new": "'General.MaxLiveEnemies': 128,",
+    "tests": ["test/seacap.test.js", "test/modsonline.test.js"]
+  },
+  {
+    "name": "SEACAP-the-range-shut-at-the-default",
+    "file": "src/systems/modSettings.js",
+    "old": "Object.freeze({ default: 32, min: 0, max: 256, description: 'Maximum live underwater enemies' })",
+    "new": "Object.freeze({ default: 32, min: 0, max: 32, description: 'Maximum live underwater enemies' })",
+    "tests": ["test/seacap.test.js"],
+    "note": "A player offline keeps the mod's whole range."
+  }
+]

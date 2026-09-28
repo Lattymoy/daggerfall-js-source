@@ -1,0 +1,37 @@
+[
+  {
+    "name": "FOECATCHUP-six-steps-again",
+    "file": "src/characters/enemyMotor.js",
+    "old": "export const FOE_MAX_FRAME_DT = 3 * FIXED_DT;",
+    "new": "export const FOE_MAX_FRAME_DT = 6 * FIXED_DT;",
+    "tests": ["test/foecatchup.test.js"]
+  },
+  {
+    "name": "FOECATCHUP-no-cap",
+    "file": "src/characters/enemyMotor.js",
+    "old": "export const foeFrameDt = (dt) => Math.min(dt, FOE_MAX_FRAME_DT);",
+    "new": "export const foeFrameDt = (dt) => dt;",
+    "tests": ["test/foecatchup.test.js"]
+  },
+  {
+    "name": "FOECATCHUP-the-street-pool-uncapped",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      f.ai.update(foeFrameDt(dt), playerFeet, _armed(f, senses), _fParalyzed, _fPaused);",
+    "new": "      f.ai.update(dt, playerFeet, _armed(f, senses), _fParalyzed, _fPaused);",
+    "tests": ["test/foecatchup.test.js"]
+  },
+  {
+    "name": "FOECATCHUP-the-watch-uncapped",
+    "file": "src/scenes/cityGuards.js",
+    "old": "      g.ai.update(foeFrameDt(dt), playerFeet, _armed(g, senses), _gParalyzed);",
+    "new": "      g.ai.update(dt, playerFeet, _armed(g, senses), _gParalyzed);",
+    "tests": ["test/foecatchup.test.js"]
+  },
+  {
+    "name": "FOECATCHUP-the-dungeon-uncapped",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      f.ai.update(foeFrameDt(dt), _pf, _armed(f, _senses, _roomFoe), _fParalyzed, _fPaused);",
+    "new": "      f.ai.update(dt, _pf, _armed(f, _senses, _roomFoe), _fParalyzed, _fPaused);",
+    "tests": ["test/foecatchup.test.js"]
+  }
+]

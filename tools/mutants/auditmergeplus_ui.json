@@ -1,0 +1,155 @@
+[
+  {
+    "name": "MERGE-PLUS-D1-the-insertion-mark-lost-on-a-tier",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ".pack-shell .pack-dock .itemrow[data-rarity].dragover {\n  box-shadow: 0 0 0 1px #050608, inset 0 2px 0 #c08a3e, inset 0 0 12px rgba(var(--rar-rgb),0.2); }\n",
+    "new": "",
+    "tests": [
+      "test/auditmergeplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-PLUS-D1-the-picked-socket-unmarked",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ".pack-shell .wornsock[data-rarity].on { border-color: var(--rar-hi); outline-color: rgba(var(--rar-rgb),0.7);\n  background-image: linear-gradient(180deg, rgba(243,207,134,0.14) 0 2px, rgba(192,138,62,0.08) 2px);\n  box-shadow: 0 0 0 1px #050608, 0 0 12px rgba(var(--rar-rgb),0.55), inset 0 0 16px rgba(var(--rar-rgb),0.32); }\n",
+    "new": "",
+    "tests": [
+      "test/auditmergeplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-PLUS-D1-the-socket-target-unmarked",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ".pack-shell .wornsock[data-rarity].dragover { box-shadow: 0 0 0 1px #050608, inset 0 2px 0 #c08a3e, inset 0 0 10px rgba(var(--rar-rgb),0.3); }\n",
+    "new": "",
+    "tests": [
+      "test/auditmergeplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-PLUS-D1-the-strike-under-the-tier",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ".hb .hb-slot[data-rarity].hb-strike .hb-frame { border-color: #f3cf86 #c08a3e #7a5424 #f3cf86; }\n",
+    "new": "",
+    "tests": [
+      "test/auditmergeplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-PLUS-D1-the-refusal-under-the-tier",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ".hb .hb-slot[data-rarity].hb-deny .hb-frame { border-color: var(--blood, #8c3a32); }\n",
+    "new": "",
+    "tests": [
+      "test/auditmergeplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-PLUS-D1-the-drop-target-under-the-tier",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ".hb .hb-slot[data-rarity].dragover .hb-frame { border-color: var(--verdigris, #4e7f72); border-style: solid; }\n",
+    "new": "",
+    "tests": [
+      "test/auditmergeplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-PLUS-D1-the-refused-ghost-gold",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ".dragghost.refused[data-rarity] .tile.has-icon, .dragghost.refused[data-rarity] .tile { border-color: var(--blood, #8c3a32);\n  box-shadow: 0 0 10px rgba(140,58,50,0.55); }\n",
+    "new": "",
+    "tests": [
+      "test/auditmergeplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-PLUS-D2-the-cap-left-at-28px",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ".pack-shell .loot-win .itemrow[data-rarity] .tile img, .trade-shell .itemrow[data-rarity] .tile img,\n.ptrade-shell .itemrow[data-rarity] .tile img { max-width: 100%; max-height: 100%; }\n",
+    "new": "",
+    "tests": [
+      "test/auditmergeplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-PLUS-D3-the-stone-dim-word-unset",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": "  --dim: ${STONE_DIM}; text-shadow: 1px 1px 0 rgba(5,6,8,0.85); }",
+    "new": "  text-shadow: 1px 1px 0 rgba(5,6,8,0.85); }",
+    "tests": [
+      "test/auditmergeplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-PLUS-D3-the-reason-left-grey",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": "export const STONE_WORD = '#fbf8f0';",
+    "new": "export const STONE_WORD = '#c8c2b4';",
+    "tests": [
+      "test/auditmergeplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-PLUS-D3-the-amber-left-dim",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": "export const STONE_AMBER = '#ffd98a';",
+    "new": "export const STONE_AMBER = '#d9a441';",
+    "tests": [
+      "test/auditmergeplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-PLUS-D4-the-blood-edge-before-the-stone",
+    "file": "src/ui/enhancedFrame.js",
+    "old": "${list(pressable, ':active:not(:disabled)')} {\n  border-color: ${SUNK}; translate: 1px 1px;\n  box-shadow: ${RING}, inset 2px 2px 0 rgba(0,0,0,0.5); }\n${list(r.warn, ':active:not(:disabled)')} { border-color: ${BLOOD_SUNK}; }\n",
+    "new": "${list(r.warn, ':active:not(:disabled)')} { border-color: ${BLOOD_SUNK}; }\n${list(pressable, ':active:not(:disabled)')} {\n  border-color: ${SUNK}; translate: 1px 1px;\n  box-shadow: ${RING}, inset 2px 2px 0 rgba(0,0,0,0.5); }\n",
+    "tests": [
+      "test/auditmergeplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-PLUS-D4-the-band-left-to-the-kit",
+    "file": "src/ui/enhancedFrame.js",
+    "old": "${list(r.warn)} { border-color: ${BLOOD}; background-color: #241514; background-image: ${LIT_BAND}; color: #f4dfd8; }",
+    "new": "${list(r.warn)} { border-color: ${BLOOD}; background-color: #241514; color: #f4dfd8; }",
+    "tests": [
+      "test/auditmergeplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-PLUS-D5-the-rune-a-mask-again",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": "  background: ${SIGIL_RUNE_TILE_URL} center / contain no-repeat;\n  animation: sigil-breathe",
+    "new": "  background: var(--sigil); -webkit-mask: ${SIGIL_RUNE_TILE_URL} center / contain no-repeat; mask: ${SIGIL_RUNE_TILE_URL} center / contain no-repeat;\n  filter: drop-shadow(0 0 3px rgba(var(--sigil-rgb),0.9)) drop-shadow(1px 1px 0 #050608);\n  animation: sigil-breathe",
+    "tests": [
+      "test/auditmergeplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-PLUS-D6-the-list-rows-bare",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ".hud-qdiamond .hud-qcell[data-sigil]:not(.socket) .hud-qbody::after,\n.pack-shell .loot-win .itemrow[data-sigil] .tile::after, .trade-shell .itemrow[data-sigil] .tile::after,\n.ptrade-shell .itemrow[data-sigil] .tile::after, .dragghost[data-sigil] .tile::after {\n  content: '';",
+    "new": ".hud-qdiamond .hud-qcell[data-sigil]:not(.socket) .hud-qbody::after {\n  content: '';",
+    "tests": [
+      "test/auditmergeplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-PLUS-D7-the-label-left-to-collapse",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".panes .row > .row-main, .px-setwrap .row > .row-main { min-width: min-content; }\n",
+    "new": "",
+    "tests": [
+      "test/auditmergeplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-PLUS-D8-the-card-s-emblem-plain",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".look-pic[data-look=\"enhanced\"] .look-emblem, .look-pic[data-look=\"enhanced-plus\"] .look-emblem { color",
+    "new": ".look-pic[data-look=\"enhanced\"] .look-emblem { color",
+    "tests": [
+      "test/auditmergeplus_ui.test.js"
+    ]
+  }
+]

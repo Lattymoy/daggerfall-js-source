@@ -26,22 +26,33 @@ export const GATE_STATE_EMPTY = Object.freeze({
  * One word folded into the court's state. `st` replaces everything it names; the rest move their own fields; an
  * attack's word supersedes the one in flight (the relay's law - one attack at a time); a word from another day's
  * gate than the state's is not this fight's and changes nothing but a whole state (a new court).
+ * AUDIT WBX F4: a walk's word ends the attack before it (the brain says `mv` only when none is in flight) - a charge
+ * kept in the state held him drawn at its lane's end while he walked. AUDIT WBX F3: his fall freezes him WHERE HE FELL
+ * (`place` at the kill's moment - the court's own bossPlace, which knows a charge's head and a leap's flight) - the
+ * fold cleared the move and kept where the last word BEGAN, and the body, the spoils and the portal home stood at a
+ * leap's or a charge's start, up to 30 m from him.
  * @param {Readonly<GateState>} s @param {any} g a validGateOut projection @param {number} now
+ * @param {(s: Readonly<GateState>, now: number) => number[]} [place]
  * @returns {Readonly<GateState>}
  */
-export function foldGate(s, g, now) {
+export function foldGate(s, g, now, place = bossAt) {
   if (!g) return s;
   if (g.k === 'st') {
     return { day: g.d, boss: g.b, phase: g.ph, hp: g.h, max: g.m, x: g.x, z: g.z, yaw: g.yw, move: g.mv, atk: g.atk, shieldUntil: g.sh, wrathAt: g.wr, fighters: g.n, fell: g.fell, wrath: g.wrath, heardAt: now };
   }
   if (s.day === null) return s;   // nothing but a whole state starts a fight
   switch (g.k) {
-    case 'mv': return { ...s, move: { x: g.x, z: g.z, tx: g.tx, tz: g.tz, v: g.v, at: g.at }, x: g.x, z: g.z, yaw: g.v > 0 ? Math.atan2(g.tx - g.x, g.tz - g.z) : s.yaw, heardAt: now };
+    case 'mv': return { ...s, atk: null, move: { x: g.x, z: g.z, tx: g.tx, tz: g.tz, v: g.v, at: g.at }, x: g.x, z: g.z, yaw: g.v > 0 ? Math.atan2(g.tx - g.x, g.tz - g.z) : s.yaw, heardAt: now };
     case 'atk': return { ...s, atk: { i: g.i, a: g.a, at: g.at, x: g.x, z: g.z, yw: g.yw, tg: g.tg }, move: null, x: g.x, z: g.z, yaw: g.yw, heardAt: now };
     case 'hp': return { ...s, hp: g.h, max: g.m, heardAt: now };
     case 'ph': return { ...s, phase: g.n, shieldUntil: g.until, heardAt: now };
     case 'wrath': return { ...s, wrath: g.at, atk: null, heardAt: now };
-    case 'fell': return g.d !== undefined && g.d !== s.day ? s : { ...s, fell: { at: g.at, top: g.top, n: g.n }, hp: 0, atk: null, move: null, heardAt: now };
+    case 'fell': {
+      if (g.d !== undefined && g.d !== s.day) return s;
+      if (s.fell) return { ...s, heardAt: now };   // said again (the hub's echo): he has already fallen where he fell
+      const [x, z] = place(s, g.at);
+      return { ...s, fell: { at: g.at, top: g.top, n: g.n }, x, z, hp: 0, atk: null, move: null, heardAt: now };
+    }
     default: return s;
   }
 }
@@ -68,15 +79,25 @@ export const GATE_NO_TEXT = Object.freeze({
   'the court is full': 'The Burning Court can hold no more.',
 });
 
+/** GATE-RELOAD (2026-09-26, volo on Discord: "the oblivion gate is bugged rn" - "you cant enter it" - "it kicks you out
+ *  instantly"): what the room's refusal of my `in` MEANS when it says the gate is closed. The relay says that word in a
+ *  `no` for one reason alone - AUDIT WBX R7, a game that does not know its brain's law (`bv` below GATE_BRAIN_MIN: a tab
+ *  loaded before the relay's deploy, a desktop copy whose update waits for the app to quit) - while the gate stands open
+ *  (a closed window is refused at the hello, as an `error`, and never gets this far). "The gate is closed." in front of
+ *  an open gate sent the players back through it, and out again, and to Discord. */
+export const GATE_OUTDATED_TEXT = 'Your game is older than this gate - save, then reload (or update the app) to enter.';
+/** The words a refusal of my `in` (a `no`) is said and taken out of the court in. */
+export const gateRefusalText = (word) => (word === 'the gate is closed' ? GATE_OUTDATED_TEXT : GATE_NO_TEXT[word] ?? word);
+
 /**
  * The link: the state, the falls by day, the receipts by day, and the words said.
- * @param {{now: () => number, say?: (text: string) => void, onFell?: (day: number, fell: {at: number, top: string[], n: number}) => void, onReceipt?: (receipt: string) => void, onRefused?: (why: string) => void}} deps
+ * @param {{now: () => number, say?: (text: string) => void, onFell?: (day: number, fell: {at: number, top: string[], n: number}) => void, onReceipt?: (receipt: string) => void, onRefused?: (why: string) => void, place?: (s: Readonly<GateState>, now: number) => number[]}} deps
  *   `onReceipt` is told every receipt the relay hands this socket - the same one again after a reconnect or from the hub
  *   (WB5b: net/gateClaims.js carries it to the account service, and keeps one a day). AUDIT WB B5: `onRefused` is told
  *   the relay's refusal of my `in` (its word, net/wire.js GATE_NO_WORDS) - the court this player stands in is not theirs
  *   to fight in, and the host takes them out of it.
  */
-export function createGateLink({ now, say = () => {}, onFell = () => {}, onReceipt = () => {}, onRefused = () => {} }) {
+export function createGateLink({ now, say = () => {}, onFell = () => {}, onReceipt = () => {}, onRefused = () => {}, place = bossAt }) {
   /** @type {Readonly<GateState>} */
   let state = GATE_STATE_EMPTY;
   const falls = new Map();     // day -> {at, top, n}
@@ -86,13 +107,13 @@ export function createGateLink({ now, say = () => {}, onFell = () => {}, onRecei
      *  moves the court for a kill of its own day alone. */
     word(g) {
       if (!g) return;
-      if (g.k === 'no') { say(GATE_NO_TEXT[g.m] ?? g.m); onRefused(g.m); return; }
+      if (g.k === 'no') { say(gateRefusalText(g.m)); onRefused(g.m); return; }   // GATE-RELOAD: in what the word means
       if (g.k === 'rcpt') { const c = readReceipt(g.r); if (c) { receipts.set(c.d, g.r); onReceipt(g.r); } return; }   // one a day: the receipt says which
       if (g.k === 'fell') {
         const day = g.d ?? state.day;
         if (Number.isSafeInteger(day) && !falls.has(day)) { const f = { at: g.at, top: g.top, n: g.n }; falls.set(day, f); onFell(day, f); }
       }
-      state = foldGate(state, g, now());
+      state = foldGate(state, g, now(), place);
     },
     /** The court's state now. */
     state: () => state,

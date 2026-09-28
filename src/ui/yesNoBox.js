@@ -17,7 +17,7 @@
 //   - The KEYS are DFU's on both: Y and N (the buttons' DaggerfallShortcut hotkeys, :377); Return presses the DEFAULT
 //     button, which for YesNo is NO (AddCommonButtons :630-632, Update :313-324); and Escape does nothing, because a
 //     box with buttons cannot be cancelled (AddButton :383, AllowCancel = false).
-import { layoutMessageBox, drawMessageBox, messageBoxArtLoaded, messageBoxHit, MB_BUTTONS } from './messageBox.js';
+import { layoutMessageBox, drawMessageBox, messageBoxArtLoaded, messageBoxHit, MB_BUTTONS, fitBoxRows } from './messageBox.js';
 import { nativeMetrics } from './nativePanel.js';
 import { ChoiceWindow } from './talkWindow.js';
 import { isEnhanced } from '../systems/uiSkin.js';
@@ -146,7 +146,7 @@ export class YesNoBoxWindow {
     if (isEnhanced() && typeof document !== 'undefined' && drawFace(this, this.rows)) { this._carded = true; return; }
     if (messageBoxArtLoaded() && font) {
       const m = nativeMetrics(canvas);
-      const box = layoutMessageBox(font, this.rows, [MB_BUTTONS.Yes, MB_BUTTONS.No]);
+      const box = layoutMessageBox(font, fitBoxRows(font, this.rows), [MB_BUTTONS.Yes, MB_BUTTONS.No]);   // SS5: a long row wraps on the screen
       if (drawMessageBox(renderer, m, font, box)) { this._box = box; return; }
     }
     this._box = null;

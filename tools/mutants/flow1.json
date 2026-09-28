@@ -1,0 +1,101 @@
+[
+  {
+    "name": "FLOW1-a-file-dealt-twice",
+    "file": "tools/testShards.mjs",
+    "old": "const order = [...new Set(files)].sort(",
+    "new": "const order = [...files, ...files.slice(0, 1)].sort(",
+    "tests": [
+      "test/flow1_ci.test.js"
+    ]
+  },
+  {
+    "name": "FLOW1-the-heaviest-shard-fed",
+    "file": "tools/testShards.mjs",
+    "old": "if (shards[k].ms < shards[best].ms) best = k;",
+    "new": "if (shards[k].ms > shards[best].ms) best = k;",
+    "tests": [
+      "test/flow1_ci.test.js"
+    ]
+  },
+  {
+    "name": "FLOW1-an-unknown-file-left-out",
+    "file": "tools/testShards.mjs",
+    "old": "  for (const f of order) {",
+    "new": "  for (const f of order.filter((g) => g in times)) {",
+    "tests": [
+      "test/flow1_ci.test.js"
+    ]
+  },
+  {
+    "name": "FLOW1-a-shard-left-out-of-the-matrix",
+    "file": ".github/workflows/verify.yml",
+    "old": "        shard: [1, 2, 3, 4]",
+    "new": "        shard: [1, 2, 3]",
+    "tests": [
+      "test/flow1_ci.test.js"
+    ]
+  },
+  {
+    "name": "FLOW1-the-aggregate-skipped-on-failure",
+    "file": ".github/workflows/check.yml",
+    "old": "    if: ${{ always() }}\n    needs: [verify]",
+    "new": "    needs: [verify]",
+    "tests": [
+      "test/flow1_ci.test.js"
+    ]
+  },
+  {
+    "name": "FLOW1-the-deploy-before-the-verification",
+    "file": ".github/workflows/deploy.yml",
+    "old": "    needs: [verify, site]",
+    "new": "    needs: [site]",
+    "tests": [
+      "test/flow1_ci.test.js"
+    ]
+  },
+  {
+    "name": "FLOW1-a-job-on-main-not-the-pin",
+    "file": ".github/workflows/deploy.yml",
+    "old": "          ref: ${{ needs.main.outputs.sha }}\n          path: production",
+    "new": "          ref: main\n          path: production",
+    "tests": [
+      "test/flow1_ci.test.js"
+    ]
+  },
+  {
+    "name": "FLOW3-a-module-two-imports-away-missed",
+    "file": "tools/testChanged.mjs",
+    "old": "for (const d of deps) if (!seen.has(d)) { seen.add(d); stack.push(d); }",
+    "new": "for (const d of deps) if (!seen.has(d)) { seen.add(d); }",
+    "tests": [
+      "test/flow1_ci.test.js"
+    ]
+  },
+  {
+    "name": "FLOW3-a-pin-that-names-it-missed",
+    "file": "tools/testChanged.mjs",
+    "old": "if (changed.some((f) => text.includes(f)) || names.some((n) => text.includes(n))) chosen.push(t);",
+    "new": "if (false) chosen.push(t);",
+    "tests": [
+      "test/flow1_ci.test.js"
+    ]
+  },
+  {
+    "name": "FLOW4-every-record-in-place",
+    "file": "tools/mutate.mjs",
+    "old": "const inPlace = (m) => !!m && (m.tests.some((f) => fails.has(f)) || LINKED.has(m.file.split(/[\\\\/]/)[0]));",
+    "new": "const inPlace = (m) => !!m;",
+    "tests": [
+      "test/flow1_ci.test.js"
+    ]
+  },
+  {
+    "name": "FLOW4-the-baseline-unread",
+    "file": "tools/mutate.mjs",
+    "old": "      if (r.status !== 0) fails.add(f);",
+    "new": "      void r;",
+    "tests": [
+      "test/flow1_ci.test.js"
+    ]
+  }
+]

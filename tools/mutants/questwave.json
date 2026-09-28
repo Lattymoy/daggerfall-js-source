@@ -1,0 +1,45 @@
+[
+  {
+    "name": "QUESTWAVE-nothing-held",
+    "file": "src/scenes/questFoeHost.js",
+    "old": "  set.add(held);\n  const release = () => { set.delete(held); };",
+    "new": "  const release = () => { set.delete(held); };",
+    "tests": ["test/questwave.test.js"],
+    "note": "The shipped heap: a wave placed in one tick sees none of its own in-flight stands."
+  },
+  {
+    "name": "QUESTWAVE-never-released",
+    "file": "src/scenes/questFoeHost.js",
+    "old": "  const release = () => { set.delete(held); };",
+    "new": "  const release = () => {};",
+    "tests": ["test/questwave.test.js"]
+  },
+  {
+    "name": "QUESTWAVE-a-throw-keeps-the-hold",
+    "file": "src/scenes/questFoeHost.js",
+    "old": "  try { landing = stand(); } catch (err) { release(); throw err; }",
+    "new": "  landing = stand();",
+    "tests": ["test/questwave.test.js"]
+  },
+  {
+    "name": "QUESTWAVE-the-hold-off-the-tested-point",
+    "file": "src/scenes/questFoeHost.js",
+    "old": "  const held = { ai: { feet: [spot.x, spot.y - 0.9, spot.z], height: 1.8 } };   // a capsule centred on the tested point",
+    "new": "  const held = { ai: { feet: [spot.x, spot.y + 5, spot.z], height: 1.8 } };   // a capsule centred on the tested point",
+    "tests": ["test/questwave.test.js"]
+  },
+  {
+    "name": "QUESTWAVE-the-street-arm-asks-no-holds",
+    "file": "src/scenes/world.js",
+    "old": "        isOccupied: entityOccupancy((f) => f.ai?.feet, () => [...exteriorFoePool(), ...heldSpots(collider)], feet),",
+    "new": "        isOccupied: entityOccupancy((f) => f.ai?.feet, () => exteriorFoePool(), feet),",
+    "tests": ["test/questwave.test.js", "test/audit62_hosts.test.js"]
+  },
+  {
+    "name": "QUESTWAVE-the-dungeon-arm-holds-nothing",
+    "file": "src/scenes/worldModes.js",
+    "old": "      holdSpotWhile(dungeonCtx.collider, spot, () => dungeonCtx.spawnQuestFoe({",
+    "new": "      ((_c, _s, f) => f())(dungeonCtx.collider, spot, () => dungeonCtx.spawnQuestFoe({",
+    "tests": ["test/questwave.test.js"]
+  }
+]

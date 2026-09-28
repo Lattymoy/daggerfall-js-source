@@ -97,6 +97,12 @@ Ledger A's PCO1 row records it; `test/pcaao.test.js` pins it.
 - The soft-material multiplier and the crit multiplier apply to the
   WHOLE blow, backstab included, before the wear and the reduction; the
   wear is charged on the PRE-reduction damage.
+- **BALANCE1 (2026-09-27, Mac: durability "drain[s] a little too fast")**:
+  the mod's wear amounts stay the mod's, and what a piece LOSES is x0.6
+  (`equip.js CONDITION_WEAR_SCALE`, through the one `wear` sink; the
+  fraction rolled so the average is exact). Measured first: this mod's
+  wear ran ~2.8x DFU's on a weapon per landed hit and ~15x on armour. A
+  departure: Ledger A, `01-Overview/Field-Bugs-2026-09-27-phone-backup-drains.md`.
 - A left-hand item that is not a shield still goes through the shield
   roll (the C# never asks IsShield there); `GetShieldProtectedBodyParts`
   answers nothing for it, so it rolls the weak spot.

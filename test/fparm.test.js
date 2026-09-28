@@ -302,8 +302,9 @@ test('MW-D8: active() is false unless EVERY term holds - a frozen arm is not a r
   // MW-D26 widened the clip term: SOME slot playing - action, movement
   // or idle - is the same guarantee (a rig with none is the frozen bind
   // pose, and the sprite is the correct picture).
-  assert.match(src, /const active = \(\) => !!\(built && built\.ok && mesh && renderer && camera && \(actionState \|\| movementState \|\| jumpState \|\| idleState\)\s*&& viewMode === 'first'\);/,   // MW-D39 widened the clip term again: the jump slot counts
-    'built, built.ok, mesh, renderer, camera, a clip AND the first-person view - all seven');
+  // BEAST-SELF added the EIGHTH, ahead of the seven: the arm stands aside for a transformed lycanthrope (setStandIn)
+  assert.match(src, /const active = \(\) => !standIn && !!\(built && built\.ok && mesh && renderer && camera && \(actionState \|\| movementState \|\| jumpState \|\| idleState\)\s*&& viewMode === 'first'\);/,   // MW-D39 widened the clip term again: the jump slot counts
+    'not standing aside, built, built.ok, mesh, renderer, camera, a clip AND the first-person view - all eight');
 });
 
 test('MW-D8: the frame path is synchronous - no await, no dynamic import, in update or draw', () => {
@@ -1447,12 +1448,12 @@ test('MW-D27: the faceIndex THREAD is unbroken, swept at the source', () => {
 
 // ═══ MW-D28: THE ITEM MAP ═══════════════════════════════════════════
 import {
-  DF_TO_MW_ARMOR_MATERIAL, DF_ARMOR_ROWS, DECLARED_SPRITE_WEAPONS,
+  DF_TO_MW_ARMOR_MATERIAL, DF_ARMOR_ROWS, DECLARED_SPRITE_WEAPONS, MOD_ARMOR_ROWS,
   mwArmorRecords, itemMapCoverage, mwItemReport,
   ARMO_PART, composeWornArmor, shadowSkinRows, dfWornArmor, dfWornEquipment,
   MW_CLOTHING_TYPE, DF_CLOTHING_ROWS, mwClothingRecord, fpWornAdds,
 } from '../src/formats/mwItemMap.js';
-import { armorRecords, clothingRecords, raceBeastFlag, pickWeaponRecord, facePools } from '../src/formats/mwFirstPerson.js';
+import { armorRecords, clothingRecords, raceBeastFlag, pickWeaponRecord, facePools, MOD_WEAPON_TO_MW } from '../src/formats/mwFirstPerson.js';
 import { OWN_MW_MODELS } from '../src/characters/ownWeaponModels.js';   // FIELD-GUN-MW2: counted off the table, not typed
 import { ARMOR_ENUM } from '../src/combat/enemyEquipment.js';
 import { ARMOR_MATERIAL } from '../src/systems/armorMaterials.js';
@@ -1471,7 +1472,9 @@ test('MW-D28: the map is TOTAL - every DF equippable x material answers, or the 
   // THE PORT'S OWN (FIELD-GUN-MW2) - counted off the table rather than
   // typed, because that table's whole defect was being outside a
   // population somebody had counted by hand.
-  assert.equal(cover.length, 19 * 10 + 11 * 13 + 76 + Object.keys(OWN_MW_MODELS).length);
+  // MW-ASSIGN: and every weapon and armour template a MOD adds, every material of each - counted off their tables too
+  assert.equal(cover.length, 19 * 10 + 11 * 13 + 76 + Object.keys(OWN_MW_MODELS).length + Object.keys(MOD_WEAPON_TO_MW).length * 10 + Object.keys(MOD_ARMOR_ROWS).length * 13);
+  assert.equal(cover.filter((c) => c.via === 'mod weapon' || c.via === 'mod armor').length, 2 * 10 + 12 * 13, 'Roleplay & Realism Items\' two weapons and twelve pieces are asked');
   // FIELD-GUN-MW2: and the port's own weapons are IN it. The census
   // walked `WEAPONS` - DFU's frozen eighteen - so the Dwarven
   // Thunderlock (template 560, minted at runtime) was never asked
@@ -1602,7 +1605,7 @@ test('AUDIT 29 F1: the derivation is WIRED - beast defaults to the data, the opt
   assert.match(arm, /if \(rrec && rrec\.radt\) beast = rrec\.beast;/, 'the RADT rule is gone');
   // and the skeleton must resolve AFTER the answer exists.
   const gate = arm.indexOf('if (beast === null) {');
-  const skel = arm.indexOf('settingsSkeleton = fpSkeletonPath({ female, beast })');
+  const skel = arm.indexOf('settingsSkeleton = fpSkeletonPath({ female, beast, werewolf })');   // WEREWOLF1: the form beside the answer
   assert.ok(gate > 0 && skel > gate, 'the skeleton is chosen before the data can say beast');
 });
 
@@ -1716,7 +1719,8 @@ test('MW-D29: the thread is unbroken - the menu reads the equip table, the build
   // the third person receives verdicts, the fp build filters and
   // shadows from the same result.
   assert.match(arm, /buildTpBody\(\{ race, female, beast, faceIndex, faceMatch, weapon, hasAmmo, worn,/);
-  assert.match(arm, /for \(const add of fpWornAdds\(worn\.adds\)\)/, 'the fp build does not wear the filtered adds');
+  assert.match(arm, /const fpAdds = werewolf \? firstPersonPartGroup\(robe, parts, female\)\.adds : fpWornAdds\(worn\.adds\);/, 'the fp build does not filter the adds (WEREWOLF1: the wolf\'s robe takes addPartGroup\'s own first-person ladder instead)');
+  assert.match(arm, /for \(const add of fpAdds\)/, 'the fp build does not wear the filtered adds');
   assert.match(arm, /shadowSkinRows\(\n      wanted\.filter/, 'the fp skin does not take the shadows');
   // TR2: the worn read lives in weaponRig's opts home now; the menu
   // reaches it through buildArmsFor (swept in the MW-D27 pin above).
@@ -2692,8 +2696,9 @@ test('MW-D38: itemIcon is null without a build; the pack takes the model icon fi
   const arm = createFpArm();
   assert.equal(arm.itemIcon({ group: 'Weapons', templateIndex: 115, material: 0 }), null);
   const pack = readFileSync('src/ui/enhancedInventory.js', 'utf8');
-  assert.match(pack, /const src = modelIconUrl\(line\.item, 96\)\n    \|\| linePictureUrl\(line,/, 'the tile does not try the model icon first');   // DISC24-B: the classic second, through the pack's one door
-  assert.match(pack, /const big = modelIconUrl\(line\.item, 192\)\n    \|\| linePictureUrl\(line,/, 'the detail does not try the model icon first');
+  assert.match(pack, /const pic = modelPicture\(line\.item, box\)\n    \|\| linePicture\(line,/, 'the tile does not try the model icon first');   // DISC24-B: the classic second, through the pack's one door; UI1: both fitted to the box
+  assert.match(pack, /const big = modelPicture\(line\.item, SLOT_BOX\.card\)\n    \|\| linePicture\(line,/, 'the detail does not try the model icon first');
+  assert.match(pack, /function modelPicture\(item, box\) \{\n {2}const src = modelIconUrl\(item, Math\.round\(box \* screenDpr\(\)\)\);/, 'UI1: the model rendered at the box\'s device size');
   assert.match(pack, /item,   \/\/ MW-D38/, 'the line no longer carries its item');
   const classic = readFileSync('src/ui/nativeInventory.js', 'utf8');
   assert.ok(!/itemIcon|modelIconUrl/.test(classic), 'the classic inventory must not know the model icons exist');
@@ -3086,7 +3091,7 @@ test('AUDIT 36 F2: an INSTANT self-cast animates - the cast latches its own stan
   const hm = readFileSync('src/scenes/hostMagic.js', 'utf8');
   // AUDIT ALLY-CAST A1: the instant arm arms instead when a party mate is in touch reach; with nobody there it is
   // the same synchronous castInput, which is the case F2 exists for.
-  assert.match(hm, /if \(sp\.rangeType === 0\) \{\n(?:\s*\/\/[^\n]*\n)*\s*if \(!free && allyCastable\(sp\) && allyInReach\([^\n]*\n\s*if \(!free && hasResurrect\(sp\)\)[^\n]*\n\s*return castInput\(null, null\) !== false;\n\s*\}/,   // AUDIT CONTRIB H3: the instant cast is the ready's answer   // RESURRECT1: the dead's own arm beside the ally's
+  assert.match(hm, /if \(sp\.rangeType === 0\) \{\n(?:\s*\/\/[^\n]*\n)*\s*if \(!free && allyCastable\(sp\) && allyInReach\([^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*if \(!free && allyCastable\(sp\) && allyNear\([^\n]*\n\s*if \(!free && hasResurrect\(sp\)\)[^\n]*\n\s*return castInput\(null, null\) !== false;\n\s*\}/,   // SPELL-GIFT: the near arm between   // AUDIT CONTRIB H3: the instant cast is the ready's answer   // RESURRECT1: the dead's own arm beside the ally's
     'the CasterOnly instant cast is the case F2 exists for');
   // ROAD-E6 folded the four release arms' identical tail into one
   // `done` closure - RaiseOnCastReadySpell (:2129) still runs BEFORE

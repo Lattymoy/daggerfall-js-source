@@ -302,7 +302,9 @@ test('DISC20-B: the fader - the song runs through a gain of its own under the vo
     assert.ok(calls.length > 0 && calls.every((c) => c[0] === p._master.tag), `${P.name}: the volume writes the master alone - a fade under way is not cancelled`);
   }
   const sp = new SongPlayer(ctx); sp._ensureMaster(); sp._state = [];
-  assert.deepEqual(sp._channelGain(0).to, [sp._fader], 'every channel of the synth runs through the fader');
+  // WBX9: through the song's own level first (systems/songPlayer.js songLevel - 1 for every song but the boss score's)
+  assert.deepEqual(sp._channelGain(0).to, [sp._level], 'every channel of the synth runs through the song\'s level...');
+  assert.deepEqual(sp._level.to, [sp._fader], '...and the level through the fader');
   const ap = new AudioSongPlayer(ctx);
   ap.play({ duration: 60 });
   assert.deepEqual(ap._source.to, [ap._fader], 'a pack\'s track runs through the fader');
@@ -516,4 +518,23 @@ test('DISC20-C: the world host asks the pool to re-stand over every pixel it bui
   const call = s.indexOf('hccGroundMoved(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE);');
   assert.ok(set > 0 && call > set && call - set < 6000, 'after the pixel is published, over its own bounds');
   assert.match(s.slice(call - 200, call), /if \(hccGroundMoved\) \{\s+const t = state\.pixelTranslation\(px, py\);\s+$/);
+});
+
+test('AUDIT pre-merge I-B executed: a concealed owner\'s team is concealed with it - the classic lane\'s hidden owner\'s following wagon rolls unseen and its parked one stays a wagon in the world; the enhanced lane\'s is drawn; the horse takes the owner\'s look (by source)', async () => {
+  const { pool } = await hccPool({ groundAt: () => 50 });
+  const toScene = (q) => [(q[0] - 100000) / 40, q[1], (q[2] - 200000) / 40];
+  pool.applyOwner('follow', { w: [3, 101200, 70, 201200, 0, 0, 0, 1, 25, 0], h: [101200, 70, 201320, 0, 1, 1] }, toScene, 1);
+  pool.applyOwner('parked', { w: [2, 100400, 62, 200400, 0, 0, 0, 1, 25, 0], h: [100400, 62, 200520, 0, 1, 0] }, toScene, 1);
+  await settle();
+  const looks = new Map();
+  pool.setPeerLook((id) => looks.get(id) ?? null);
+  const drawn = () => { pool.frame(1 / 30, [0, 51, 0]); return pool.draw({ drawMesh() {} }); };
+  assert.equal(drawn(), 2, 'both drawn while nobody is concealed');
+  looks.set('follow', 'hidden'); looks.set('parked', 'hidden');
+  assert.equal(drawn(), 1, 'the hidden owner\'s following wagon rolls unseen with it; the parked one is a wagon in the world');
+  looks.set('follow', { mode: 1, alpha: 0.3, t: 0, phase: 0 });
+  assert.equal(drawn(), 2, 'the enhanced lane draws its owner - and the wagon with it');
+  const src = readFileSync(new URL('../src/scenes/horseCartPool.js', import.meta.url), 'utf8');
+  assert.match(src, /if \(_stillReady && !p\.hidden\) \{ const b = horseBatch\(owner\); if \(b\) \{ poseHorseBatch\([^\n]*\); b\.conceal = p\.look; \} \}\n\s*else if \(p\.hidden\) dropHorseBatch\(owner\);/, 'the horse: nowhere for a hidden owner, in its look for a concealed one');
+  assert.match(readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8'), /hcc\.setPeerLook\(\(id\) => \(_hiddenPeers\.has\(id\) \? 'hidden' : \(_veils\.get\(id\) \?\? null\)\)\);/, 'the host hands the peers\' looks');
 });

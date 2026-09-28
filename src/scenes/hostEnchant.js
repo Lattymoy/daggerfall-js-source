@@ -30,7 +30,7 @@ import { worldMinutes } from '../systems/worldTick.js';
 import { getBool } from '../systems/settings.js';
 import { seasonValue, SEASONS, dateFromClassicMinutes, lunarPhasesFromMinutes, LUNAR_PHASES } from '../systems/gameDate.js';
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
-import { placeFoeEnv, entityOccupancy } from './questFoeHost.js';
+import { placeFoeEnv, entityOccupancy, heldSpots, holdSpotWhile } from './questFoeHost.js';   // QUEST-WAVE: the held spots' one home
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
 
 /** The law REFUSES a spot DFU would have rejected - no floor under it,
@@ -41,12 +41,12 @@ import { ENEMY_BASICS } from '../characters/enemyBasics.js';
  *  corridor must not spin here. */
 export const LOOSE_FOE_PLACE_ATTEMPTS = 12;
 
-/** AUDIT 68 S21-loose-foe-stacking: the spots handed to a pool whose spawn has not landed yet, per scene (keyed by
- *  its collider). PlaceFoeFreely's OverlapSphere meets every placed foe's collider; here a spawn is async (the
- *  career fetch, the texture warm) and the record joins its pool only afterwards, so a squad stood in one loop
- *  (RR's expulsion wave) saw none of its own and stood foes inside each other. A spot is taken the moment it is
- *  chosen and released when the spawn settles. */
-const _pendingSpots = new WeakMap();
+/* AUDIT 68 S21-loose-foe-stacking: the spots handed to a pool whose spawn has not landed yet, per scene (keyed by
+ * its collider). PlaceFoeFreely's OverlapSphere meets every placed foe's collider; here a spawn is async (the
+ * career fetch, the texture warm) and the record joins its pool only afterwards, so a squad stood in one loop
+ * (RR's expulsion wave) saw none of its own and stood foes inside each other. A spot is taken the moment it is
+ * chosen and released when the spawn settles. QUEST-WAVE moved the set to questFoeHost.js (heldSpots), where the
+ * quest arms hold theirs too - one set a scene. */
 
 /** SD1: stand a loose foe - SoulBound's break release, the Sanguine
  *  Rose's Daedroth - through DFU's OWN placement law.
@@ -66,8 +66,7 @@ const _pendingSpots = new WeakMap();
 export function standLooseFoe({ collider, feet, yawRad, fovDegrees, foes, spawn },
   mobileType, { allied = false, lineOfSightCheck = true, minDistance = 4, maxDistance = 20, attempts = LOOSE_FOE_PLACE_ATTEMPTS } = {}) {   // AUDIT-RR F4: CreateFoeSpawner's own distances and its attempt budget ride in (GameObjectHelper.cs:1314 - the defaults are its own)
   if (!feet || !collider || !spawn) return null;
-  let pending = _pendingSpots.get(collider);
-  if (!pending) _pendingSpots.set(collider, (pending = new Set()));
+  const pending = heldSpots(collider);
   const env = placeFoeEnv({
     collider,
     // origin at the controller centre, as tryPlaceFoe has it - DFU
@@ -87,12 +86,7 @@ export function standLooseFoe({ collider, feet, yawRad, fovDegrees, foes, spawn 
   const fly = (ENEMY_BASICS[mobileType]?.behaviour ?? 'General') === 'Flying';
   const pos = [spot.x, fly ? spot.y + 1.5 : spot.y, spot.z];
   const yaw = Math.atan2(feet[0] - spot.x, feet[2] - spot.z);   // LookAt player
-  const held = { ai: { feet: [spot.x, spot.y - 0.9, spot.z], height: 1.8 } };   // a capsule centred on the point the law tested
-  pending.add(held);
-  const release = () => { pending.delete(held); };
-  let landing;
-  try { landing = spawn(mobileType, pos, { yawRad: yaw, allied }); } catch (err) { release(); throw err; }
-  return Promise.resolve(landing).catch(() => null).finally(release);
+  return holdSpotWhile(collider, spot, () => spawn(mobileType, pos, { yawRad: yaw, allied })).catch(() => null);   // a capsule centred on the point the law tested
 }
 
 /**
@@ -137,6 +131,7 @@ export function createEnchantCtx({
   replaceFoe = null,
   isResting = () => !!playerEntity?.isResting,
   travelUIShowing = () => false,
+  bossSpell = null,
 } = {}) {
   return {
     spellsByIndex,
@@ -169,6 +164,7 @@ export function createEnchantCtx({
     inSunlight: () => playerInSunlight(),
     inHolyPlace: () => playerInHolyPlace(),
     applySpellToSelf: (record, _entity, item) => magic.castByItemSelf(record, item),   // D9: bundle.CastByItem (CastWhenUsed.cs:136)
+    castBarred: () => magic.barCast?.() === true,   // HOME-MAGIC: a place that bars casting bars an item's, and it spends nothing
     setReadySpell: (record) => magic.readySpell(record, { free: true }),
     applySpellToTarget: (record, attacker, target) => {
       // X11: the caster travels WITH ITS SINKS. Spell Reflection sends
@@ -183,6 +179,9 @@ export function createEnchantCtx({
         return af ? { entity: attacker, sinks: foeSinks(af) } : { entity: attacker };
       };
       if (target === playerEntity) { magic.applySpellToPlayer(record, attacker?.level ?? 1, casterOf()); return; }
+      // AUDIT WBX F2: a Cast When Strikes spell on the Oblivion Gate's boss goes by the court's own spell door (the host's
+      // `bossSpell` - scenes/dungeonContext.js spellOnBoss): his stand-in is no foe of the list, and the spell went nowhere
+      if (target?.spareGear) { bossSpell?.(record); return; }
       const f = foes().find((x) => !x.dead && x.entity === target);
       if (!f) return;
       // AUDIT 68 S21-strike-landing-dup: the cast paths' ONE foe landing (the Soul Trap line, the Calm/Charm flag,

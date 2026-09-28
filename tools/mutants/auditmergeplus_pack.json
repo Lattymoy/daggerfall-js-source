@@ -1,0 +1,173 @@
+[
+  {
+    "name": "MERGE-PLUS-C1-the-card-unguarded",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  for (const b of acts.querySelectorAll('button')) if (b.classList.contains('act')) pairGuard(b);   // AUDIT MERGE-PLUS C1\n",
+    "new": "",
+    "tests": [
+      "test/auditmergeplus_pack.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-PLUS-C1-the-pair-swallowed-unworn",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    if (paired) equipByDoubleClick(first);\n",
+    "new": "",
+    "tests": [
+      "test/auditmergeplus_pack.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-PLUS-C1-the-guard-blind-to-the-clock",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "first === picked && Number.isFinite(e.timeStamp) && e.timeStamp - lastClick.at <= DOUBLE_CLICK_MS;",
+    "new": "first === picked;",
+    "tests": [
+      "test/auditmergeplus_pack.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-PLUS-C1-the-guard-blind-to-the-piece",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "const paired = !!first && first === picked && ",
+    "new": "const paired = !!first && ",
+    "tests": [
+      "test/auditmergeplus_pack.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-PLUS-C2-the-drag-latch-outlives-its-click",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  setTimeout(() => { _dragged = false; }, 0);\n",
+    "new": "",
+    "tests": [
+      "test/auditmergeplus_pack.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-PLUS-C3-the-classic-Remove-unguarded",
+    "file": "src/ui/nativeInventory.js",
+    "old": "      if (lockRefuses(it, 'drop') && remoteTargetType(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }) === REMOTE_TARGET_TYPES.Dropped) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/auditmergeplus_pack.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-PLUS-C3-the-lock-closing-the-wagon",
+    "file": "src/ui/nativeInventory.js",
+    "old": "lockRefuses(it, 'drop') && remoteTargetType(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }) === REMOTE_TARGET_TYPES.Dropped",
+    "new": "lockRefuses(it, 'drop')",
+    "tests": [
+      "test/auditmergeplus_pack.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-PLUS-C3-the-classic-sale-unguarded",
+    "file": "src/ui/nativeTrade.js",
+    "old": "    if ((this.mode === 'Sell' || this.mode === 'SellMagic') && lockRefuses(item, 'sell')) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/auditmergeplus_pack.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-PLUS-C3-Sell-Magic-unguarded",
+    "file": "src/ui/nativeTrade.js",
+    "old": "(this.mode === 'Sell' || this.mode === 'SellMagic') && lockRefuses",
+    "new": "this.mode === 'Sell' && lockRefuses",
+    "tests": [
+      "test/auditmergeplus_pack.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-PLUS-C3-the-lock-refusing-the-smith",
+    "file": "src/ui/nativeTrade.js",
+    "old": "(this.mode === 'Sell' || this.mode === 'SellMagic') && lockRefuses(item, 'sell')",
+    "new": "lockRefuses(item, 'sell')",
+    "tests": [
+      "test/auditmergeplus_pack.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-PLUS-C4-a-lock-blind-stack",
+    "file": "src/systems/inventory.js",
+    "old": "    (a.locked === true) === (b.locked === true);",
+    "new": "    true;",
+    "tests": [
+      "test/auditmergeplus_pack.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-PLUS-C4-the-split-unlocked",
+    "file": "src/systems/inventory.js",
+    "old": "  if (stack.locked === true) picked.locked = true;   // AUDIT MERGE-PLUS C4: the part split off keeps the stack's lock\n",
+    "new": "",
+    "tests": [
+      "test/auditmergeplus_pack.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-PLUS-C5-the-pair-on-any-family",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    if (filled.length === 1 && equipByDoubleClick(secondClick(`worn:${fam.label}`, top.item, e))) return;",
+    "new": "    if (equipByDoubleClick(secondClick(`worn:${fam.label}`, top.item, e))) return;",
+    "tests": [
+      "test/auditmergeplus_pack.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-PLUS-C6-the-enchanted-piece-unbarred",
+    "file": "src/ui/enhancedInventory.js",
+    "old": " && !isLightSource(item) && !isEnchanted(item)) return null;",
+    "new": " && !isLightSource(item)) return null;",
+    "tests": [
+      "test/auditmergeplus_pack.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-PLUS-C7-the-pair-on-this-panes-clock-alone",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "at - lastClick.at <= DOUBLE_CLICK_MS && e.detail >= 2 ? lastClick.item : null;",
+    "new": "at - lastClick.at <= DOUBLE_CLICK_MS ? lastClick.item : null;",
+    "tests": [
+      "test/auditmergeplus_pack.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-PLUS-C8-the-slot-blind-to-its-frame",
+    "file": "src/ui/enhancedHotbar.js",
+    "old": "      + `|${v.item && v.type !== 'spell' ? `${rarityAttr(v.item) ?? ''}${validSigil(v.item.sigil) ? '*' : ''}${setIdOf(v.item) ?? ''}` : ''}`   // SET5: and its set\n",
+    "new": "",
+    "tests": [
+      "test/auditmergeplus_pack.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-PLUS-C8-the-tier-out-of-the-signature",
+    "file": "src/ui/enhancedHotbar.js",
+    "old": "`${rarityAttr(v.item) ?? ''}${validSigil(v.item.sigil) ? '*' : ''}${setIdOf(v.item) ?? ''}`",
+    "new": "`${validSigil(v.item.sigil) ? '*' : ''}${setIdOf(v.item) ?? ''}`",
+    "tests": [
+      "test/auditmergeplus_pack.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-PLUS-C8-the-rune-out-of-the-signature",
+    "file": "src/ui/enhancedHotbar.js",
+    "old": "`${rarityAttr(v.item) ?? ''}${validSigil(v.item.sigil) ? '*' : ''}${setIdOf(v.item) ?? ''}`",
+    "new": "`${rarityAttr(v.item) ?? ''}${setIdOf(v.item) ?? ''}`",
+    "tests": [
+      "test/auditmergeplus_pack.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-PLUS-C1-a-press-leaves-the-row-pair-open",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "if ((e?.detail ?? 0) < 2) { lastClick = { key: null, item: null, at: -Infinity }; run?.(e); return; }",
+    "new": "if ((e?.detail ?? 0) < 2) { run?.(e); return; }",
+    "tests": [
+      "test/auditmergeplus_pack.test.js"
+    ]
+  }
+]

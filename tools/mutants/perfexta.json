@@ -245,7 +245,7 @@
   {
     "name": "PERF-EXT3-7-the-ranks-ask-at-the-lanterns-live-range-not-the-shadows-far",
     "file": "src/render/shadowPass.js",
-    "old": "cp[rank * 4 + 3] = shadowFarFor(L[i * 4 + 3]);",
+    "old": "cp[rank * 4 + 3] = farOf[rank];",
     "new": "cp[rank * 4 + 3] = L[i * 4 + 3];",
     "tests": [
       "test/perfexta.test.js"
@@ -370,8 +370,8 @@
   {
     "name": "PERF-EXT5-5-the-four-taps-averaged-as-four-not-weighed-as-nine",
     "file": "src/render/shadowPass.js",
-    "old": "  return lit / 9.0;\n}\n/** A surface that shades per fragment",
-    "new": "  return lit / 4.0;\n}\n/** A surface that shades per fragment",
+    "old": "  return lit / 9.0;\n}\n// LA-SHADOW2 (2026-09-27",
+    "new": "  return lit / 4.0;\n}\n// LA-SHADOW2 (2026-09-27",
     "tests": [
       "test/perfexta.test.js",
       "test/perfsun_fragment.test.js",

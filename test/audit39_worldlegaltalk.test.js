@@ -54,14 +54,17 @@ test('AUDIT 39 (#21): the arrest flow reads its region live when the host hands 
     haveShownSurrenderDialogue: false, legalRep: {},
   };
   let region = 3;
+  let box = null;
   const flow = createArrestFlow({
-    townTalk: { texts: () => null, showOverlay: () => {} },
+    townTalk: { texts: () => null, showOverlay: (w) => { box = w; } },
     playerEntity: player,
     regionIndex: () => region,
   });
   const loss = REPUTATION_LOSS_PER_CRIME[CRIMES.Murder];
   flow.onGuardHit(1, () => {});
   assert.equal(player.legalRep[3], -loss, 'the crime is filed where it happened');
+  // the surrender box is answered - "N - fight on" (JAIL-HIT: an unanswered box withholds every blow, in both modes)
+  box.input('KeyN');
   // fast travel, then commit the same crime again
   region = 9;
   player.haveShownSurrenderDialogue = false;

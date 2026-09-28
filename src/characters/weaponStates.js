@@ -75,6 +75,12 @@ export const THUNDERLOCK_NUM_FRAMES = Object.freeze({
 // cannot end before the eighth tick.
 export const LEFT_UNARMED_ANIMS = Object.freeze([0, 1, 2, 3, 4, 2, 1, 0]);
 
+/** WeaponManager.cs:343 - Random.Range((int)UpRight, (int)DownRight + 1)
+ *  over MouseDirections {None, UpLeft, Up, UpRight, Left, Right,
+ *  DownLeft, Down, DownRight}: indices 3..8. The swing-mode click's draw (combat/playerWeapon.js, which re-exports
+ *  it) and the touch Attack button's (ui/touchButtons.js attackStroke) - one table. */
+export const CLICK_ATTACK_DIRECTIONS = Object.freeze(['UpRight', 'Left', 'Right', 'DownLeft', 'Down', 'DownRight']);
+
 // WeaponManager.TrackMouseAttack verbatim: 15deg radial sections.
 // Note gesture tracking emits only SIX directions (UpLeft/UpRight
 // exist solely for the click-attack random roll).

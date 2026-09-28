@@ -142,7 +142,7 @@
   {
     "name": "PSCALE1-outdoor-quest-foe-weighed",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "(!!f.puppet || (!f.isQuestFoe && !(f.placed && !f.site)))",
+    "old": "(!!f.puppet || ((!isPrivateQuestFoe(f) || !!_qTag(f)) && !(f.placed && !f.site)))",
     "new": "(!!f.puppet || !(f.placed && !f.site))",
     "tests": [
       "test/pscale1.test.js",
@@ -152,8 +152,8 @@
   {
     "name": "PSCALE1-outdoor-private-placed-weighed",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "(!!f.puppet || (!f.isQuestFoe && !(f.placed && !f.site)))",
-    "new": "(!!f.puppet || !f.isQuestFoe)",
+    "old": "(!!f.puppet || ((!isPrivateQuestFoe(f) || !!_qTag(f)) && !(f.placed && !f.site)))",
+    "new": "(!!f.puppet || (!isPrivateQuestFoe(f) || !!_qTag(f)))",
     "tests": [
       "test/pscale1.test.js",
       "test/auditpscale1.test.js"
@@ -162,8 +162,8 @@
   {
     "name": "PSCALE1-outdoor-site-camp-unweighed",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "(!!f.puppet || (!f.isQuestFoe && !(f.placed && !f.site)))",
-    "new": "(!!f.puppet || (!f.isQuestFoe && !f.placed))",
+    "old": "(!!f.puppet || ((!isPrivateQuestFoe(f) || !!_qTag(f)) && !(f.placed && !f.site)))",
+    "new": "(!!f.puppet || ((!isPrivateQuestFoe(f) || !!_qTag(f)) && !f.placed))",
     "tests": [
       "test/pscale1.test.js",
       "test/auditpscale1.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "PSCALE1-outdoor-puppet-hit-unweighed",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "(!!f.puppet || (!f.isQuestFoe && !(f.placed && !f.site)))",
-    "new": "(!f.puppet && !f.isQuestFoe && !(f.placed && !f.site))",
+    "old": "(!!f.puppet || ((!isPrivateQuestFoe(f) || !!_qTag(f)) && !(f.placed && !f.site)))",
+    "new": "(!f.puppet && (!isPrivateQuestFoe(f) || !!_qTag(f)) && !(f.placed && !f.site))",
     "tests": [
       "test/pscale1.test.js",
       "test/auditpscale1.test.js"
@@ -232,8 +232,8 @@
   {
     "name": "PSCALE1-dungeon-past-the-layout-weighed",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    const i = foes.indexOf(f);\n    return i >= 0 && i < _layoutFoes;\n  }\n  /** AUDIT PSCALE1",
-    "new": "    const i = foes.indexOf(f);\n    return i >= 0;\n  }\n  /** AUDIT PSCALE1",
+    "old": "    return isRoomFoe(f) || f._ownFrom != null || ownRides(f);   // REST-SYNC: and a rest's encounter, which the room now shares; PSCALE-OWN: and a shared quest's, on the own lane; SUMMON-SYNC: and a loose stand",
+    "new": "    return foes.includes(f) || f._ownFrom != null || ownRides(f);   // REST-SYNC: and a rest's encounter, which the room now shares; PSCALE-OWN: and a shared quest's, on the own lane; SUMMON-SYNC: and a loose stand",
     "tests": [
       "test/pscale1.test.js",
       "test/auditpscale1.test.js"
@@ -242,8 +242,8 @@
   {
     "name": "PSCALE1-dungeon-ally-weighed",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    if (!f || f.entity?.team === 'PlayerAlly') return false;\n    const i = foes.indexOf(f);",
-    "new": "    if (!f) return false;\n    const i = foes.indexOf(f);",
+    "old": "    if (!f || f.entity?.team === 'PlayerAlly') return false;\n    return isRoomFoe(f) || f._ownFrom",
+    "new": "    if (!f) return false;\n    return isRoomFoe(f) || f._ownFrom",
     "tests": [
       "test/pscale1.test.js",
       "test/auditpscale1.test.js"

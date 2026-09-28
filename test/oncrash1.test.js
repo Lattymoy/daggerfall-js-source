@@ -340,7 +340,7 @@ test('ONCRASH1 A3: validSharedFoe IS the memory\'s door - every field by its own
 test('ONCRASH1 A2/A3/B4a: the three doors a stranger\'s foe comes through - the memory\'s records projected and the latch taken LAST, the dungeon\'s stream through the wire\'s own door (mutants: the latch back in front of the apply; the foes left raw; validFoeRecord dropped from the stream)', () => {
   const d = code('src/scenes/dungeonContext.js');
   // A3: the memory's foes projected, like its actions
-  assert.match(d, /shared\.world\.foes\.slice\(0, _layoutFoes\)\.map\(validSharedFoe\)\.filter\(Boolean\)/, 'the memory\'s foe records go through the wire');
+  assert.match(d, /shared\.world\.foes\.slice\(0, _layoutFoes\)\.map\(validSharedFoe\)/, 'the memory\'s foe records go through the wire');   // CORPSE-GOLD: a refused one a hole at its index, not filtered out
   // A2: the latch is the LAST thing - a throw half way leaves it DOWN and the host's next publish retries
   const body = d.slice(d.indexOf('restoreSharedWorld(shared)'));
   const applyAt = body.indexOf('applyLoot(shared.world.loot)');

@@ -61,6 +61,7 @@ import { calculateCost, calculateTradePrice } from '../src/systems/shopStock.js'
 import { calculateItemRepairCost } from '../src/systems/repairService.js';
 import { normalizeReputations } from '../src/systems/court.js';
 import { createFactionRep, setReputation } from '../src/systems/factionRep.js';
+import { _wearScaleForTests } from '../src/systems/equip.js';   // BALANCE1: DFU's wear, read unscaled
 import { dfuFile } from './dfuRoot.mjs';   // PY1: DFU_PATH, then the in-tree sparse clone
 
 const seq = (...v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };
@@ -266,10 +267,15 @@ test('AUDIT 58: the condition-damage floor roll is exactly 20%', () => {
   const att = dude(), tgt = dude();
   const w = mintCondition({ group: 'Weapons', name: 'Saber', templateIndex: 117, material: 2 });
   const w0 = w.currentCondition;
-  damageEquipment(att, tgt, 4, w, BODY_PARTS.Chest, { rolls: () => 0.195 });
-  assert.equal(w.currentCondition, w0 - 1, 'roll 19 is UNDER 20: the amount floors to 1');
-  damageEquipment(att, tgt, 4, w, BODY_PARTS.Chest, { rolls: () => 0.205 });
-  assert.equal(w.currentCondition, w0 - 1, 'roll 20 is NOT under 20: nothing');
+  // BALANCE1 (the pre-merge audit 0927b F3): DFU's roll, read at the port's wear scale 1 - at 0.6 the 0.195 below also
+  // rounded the scaled point UP, so this pin passed by that coincidence rather than by the floor roll it names
+  _wearScaleForTests(1);
+  try {
+    damageEquipment(att, tgt, 4, w, BODY_PARTS.Chest, { rolls: () => 0.195 });
+    assert.equal(w.currentCondition, w0 - 1, 'roll 19 is UNDER 20: the amount floors to 1');
+    damageEquipment(att, tgt, 4, w, BODY_PARTS.Chest, { rolls: () => 0.205 });
+    assert.equal(w.currentCondition, w0 - 1, 'roll 20 is NOT under 20: nothing');
+  } finally { _wearScaleForTests(); }
 });
 
 // ── 7: the automap containment skin ───────────────────────────────────

@@ -14,7 +14,17 @@
 // pixel id when there is a map to draw, and the save shape below
 // already keys by that one string.
 
-import { isResidence } from '../world/buildingNames.js';   // RMBLayout.IsResidence (:753-760), House1-House4
+import { isResidence, BUILDING_TYPES } from '../world/buildingNames.js';   // RMBLayout.IsResidence (:753-760), House1-House4
+
+/** EMPIRE-BANK: the name a discovered building is SHOWN by, on its door and its plate - its stored one, but a BANK's is
+ *  its name now (`live`, the directory's) wherever no quest renamed it: online every bank is the Empire's
+ *  (world/buildingNames.js EMPIRE_BANK_OF), and a bank discovered before - or on the other side of the online door -
+ *  would otherwise keep the other side's name in the save for good. */
+export function shownBuildingName(rec, live = null) {
+  if (!rec) return '';
+  if (rec.buildingType === BUILDING_TYPES.Bank && !rec.isOverrideName && typeof live === 'string' && live) return live;
+  return rec.displayName ?? '';
+}
 
 let _discovered = new Map();   // locationId -> Map(buildingKey -> record)
 

@@ -306,7 +306,7 @@ test('seducer pins: the hosts stand the behaviour, fold CanFly, and bill the win
   for (const [file, f] of [['src/scenes/dungeonContext.js', 'f'], ['src/scenes/exteriorFoes.js', 'f']]) {
     const src = rd(file);
     assert.ok(src.includes('SeducerTransformBehaviour('), `${file}: SetupDemoEnemy.cs:191-195 - the component is added at setup`);
-    assert.ok(src.includes(`${f}.seducer?.update(dt,`), `${file}: the trigger runs each frame`);
+    assert.ok(src.includes(`${f}.seducer?.update(foeFrameDt(dt),`), `${file}: the trigger runs each frame (AUDIT pre-merge P5: on the capped clock)`);
     // EnemyMotor.CanFly (:837-845) is a LIVE read of Enemy.Behaviour.
     assert.ok(src.includes(`if (${f}.seducer) ${f}.ai.flies = ${f}.mobile.basics.behaviour === 'Flying' || ${f}.mobile.basics.behaviour === 'Spectral';`),
       `${file}: CanFly re-reads the behaviour the transform rewrites`);

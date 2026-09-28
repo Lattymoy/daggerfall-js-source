@@ -469,7 +469,8 @@ import {
 } from '../src/systems/cloudSaves.js';
 import { SESSION_KEY, REFUSALS } from '../src/net/accountClient.js';
 import { SAVE_DATA_PREFIX, SAVE_INFO_PREFIX, SAVE_SHOT_PREFIX } from '../src/systems/characterId.js';
-import { saveSlot, enumerateSaves } from '../src/systems/saveSlots.js';
+import { saveSlot, enumerateSaves, findSave, saveInfoOf } from '../src/systems/saveSlots.js';
+import { cloudStateOf } from '../src/ui/saveTile.js';
 
 /** The slots a store really holds, by saveSlots.js's own enumeration -
  *  SAV4's law that a slot is only real with its card, asked of the module
@@ -811,7 +812,7 @@ test('ACC2c: the DOWNLOAD reaches a player - the pane, the act and the one sente
   // function was written, pinned end to end above, and reached by
   // nothing.
   assert.match(menu, /import \{[^}]*\bpullSlot\b[^}]*\} from '\.\.\/systems\/cloudSaves\.js'/);
-  assert.match(menu, /function download\(card\) \{\s*runCloud\(card, \(io\) => pullSlot\(io, appStorage\(\), card\)\);/,
+  assert.match(menu, /function download\(card\) \{\s*runCloud\(card, \(io\) => pullSlot\(io, appStorage\(\), card\), 'download'\);/,
     'Download pulls - and through `runCloud`, so it is busy under its own slot and its refusal is the service\'s own word');
   assert.match(menu, /label: 'Download',\s*primary: true,/);
 
@@ -840,4 +841,195 @@ test('ACC2c: the DOWNLOAD reaches a player - the pane, the act and the one sente
   assert.match(forCard, /cloudArm = slot; render\(\);/, 'and it arms first - one press cannot destroy anything');
   assert.match(forCard, /local: false,/, 'the state is cloudStateOf\'s own, not a second ladder written here');
   assert.doesNotMatch(forCard, /label: 'Back up/, 'nothing offers to push a slot this device does not have');
+});
+
+// ════════════════════════════════════════════════════════════════════
+// FIELD 2026-09-27 (Masta_Fu, "Save backup not working"): "When I
+// installed to my MAC i was able to instantly recover my backup ...
+// When I switch to my pc no matter how many times I back up it will not
+// recover on the PC side." The PC held an OLDER QuickSave of the slot
+// the Mac had backed up later: the backup matched it by identity, the
+// tile read "Backed up", its one upload pushed the older save over the
+// newer, and a download was offered only for a slot with no local copy.
+// ════════════════════════════════════════════════════════════════════
+
+test('FIELD 2026-09-27: his round trip through the REAL service - PC backs up, the Mac restores, plays on and backs up; the PC sees a NEWER backup and its restore brings the Mac\'s game back as the one QuickSave (mutants: the restore never removes the older copy; the older copy removed before the backup lands)', async () => {
+  const { storage: pc, io } = await client();
+  const T = 1_758_400_000_000, day = 86_400_000;
+  putLocal(pc, 0, { dateAndTime: { gameTime: 1000, realTime: T } }, { data: '{"pc":1}' });
+  assert.equal((await pushSlot(io, pc, 0)).ok, true, '1. back up save on PC');
+
+  // 2. the Mac: an empty store, the backup is its own tile, Download
+  const mac = fakeStorage();
+  mac.setItem(SESSION_KEY, pc.getItem(SESSION_KEY));
+  const first = (await cloudList(io)).saves;
+  assert.equal(cloudOnly(first, []).length, 1, 'a fresh install sees it as only in the backup');
+  const onMac = await pullSlot(io, mac, first[0]);
+  assert.equal(onMac.ok, true);
+  // 3-4. progress, save and exit, back up again - the Mac's save keeps the PC's character id (CHARID1), same slot
+  putLocal(mac, onMac.key, { dateAndTime: { gameTime: 2000, realTime: T + day } }, { data: '{"classicMinutes":2000,"mac":2}' });
+  assert.equal((await pushSlot(io, mac, onMac.key)).ok, true);
+
+  // 5. the PC: the backup MATCHES its slot (so no cloud-only tile) - and is now named for what it is
+  const card = (await cloudList(io)).saves[0];
+  assert.equal(cloudOnly([card], [{ characterId: CHAR, saveName: 'QuickSave' }]).length, 0, 'the local slot has its line, not a tile');
+  const local = saveInfoOf(0, pc);
+  assert.equal(cloudStateOf({ signedIn: true, characterId: CHAR, card, localTime: local.dateAndTime, nowS: card.updatedAt }).state, 'newer',
+    'the tile says the backup is ahead rather than "Backed up"');
+
+  // THE RESTORE: the backup arrives by SP1's law, then the older copy it replaces goes
+  const back = await pullSlot(io, pc, card, { replaces: { key: 0, ...local.dateAndTime } });
+  assert.equal(back.ok, true, back.error);
+  assert.notEqual(back.key, 0, 'it took its own number - an arrival never writes over a slot (bible ACC2 D5)');
+  assert.equal(back.replaced, true);
+  const slots = slotsIn(pc);
+  assert.equal(slots.length, 1, 'ONE QuickSave: no older twin left for a quickload or the next save to pick');
+  assert.equal(slots[0].key, back.key);
+  assert.equal(slots[0].info.dateAndTime.gameTime, 2000, 'the Mac\'s game');
+  assert.equal(pc.getItem(SAVE_DATA_PREFIX + back.key), '{"classicMinutes":2000,"mac":2}');
+  assert.equal(findSave('Nystul', 'QuickSave', pc, CHAR), back.key, 'the quickload and the next QuickSave find the restored one');
+  // ...and the line now reads as it should: this device holds the backup's save
+  assert.equal(cloudStateOf({ signedIn: true, characterId: CHAR, card, localTime: saveInfoOf(back.key, pc).dateAndTime, nowS: card.updatedAt }).state, 'saved');
+});
+
+test('FIELD 2026-09-27: what a restore never removes - the backup\'s own save, another slot or character, a copy saved again since, a namesake\'s skip, and anything when the download fails, the store is full or the backup changed (the pre-merge audit 0927b B2-B4; mutants: each guard dropped; the removal before the no-room answer; the skip trusted)', async () => {
+  const { storage, io } = await client();
+  const blob = (m, x = 1) => JSON.stringify({ classicMinutes: m, x });
+  const stamp = (key, gameTime, realTime) => ({ key, gameTime, realTime });
+  putLocal(storage, 0, { dateAndTime: { gameTime: 2000, realTime: 5 } }, { data: blob(2000) });
+  assert.equal((await pushSlot(io, storage, 0)).ok, true);
+  const card = (await cloudList(io)).saves[0];
+
+  // THE SAME SAVE: the store already holds it (skipped), and the slot named is that very save - it stays
+  const same = await pullSlot(io, storage, card, { replaces: stamp(0, 2000, 5) });
+  assert.equal(same.ok, true);
+  assert.equal(same.skipped, true);
+  assert.equal(same.replaced, false);
+  assert.ok(saveInfoOf(0, storage), 'the backup\'s own save is never the one removed');
+  // ...nor when it is filed under the character's OLD name, which SP1's "already here" (it matches names) does not know:
+  // the backup arrives beside it, and the copy at the backup's own minute is still never removed
+  const renamed = fakeStorage();
+  putLocal(renamed, 0, { characterName: 'Nystul the Elder', dateAndTime: { gameTime: 2000, realTime: 5 } }, { data: blob(2000) });
+  const twin = await pullSlot(io, renamed, card, { replaces: stamp(0, 2000, 5) });
+  assert.equal(twin.ok, true);
+  assert.notEqual(twin.key, null, 'it arrived - the names differ');
+  assert.equal(twin.replaced, false, 'the same game minute is the same save, whatever it is called');
+  assert.ok(saveInfoOf(0, renamed));
+
+  // ANOTHER SLOT named by mistake - another save name, or ANOTHER CHARACTER's QuickSave - stays
+  const other = fakeStorage();
+  putLocal(other, 3, { saveName: 'Before the dragon', dateAndTime: { gameTime: 10, realTime: 1 } });
+  putLocal(other, 4, { characterId: 'd00d0000-1111-2222-3333-444455556666', dateAndTime: { gameTime: 10, realTime: 1 } });
+  for (const key of [3, 4]) {
+    const r = await pullSlot(io, other, card, { replaces: stamp(key, 10, 1) });
+    assert.equal(r.ok, true);
+    assert.equal(r.replaced, false, `slot ${key} is not this backup's slot`);
+  }
+  assert.ok(saveInfoOf(3, other) && saveInfoOf(4, other), 'both untouched');
+
+  // B3: A COPY SAVED AGAIN SINCE THE LIST WAS DRAWN (another tab, a quicksave) is not the one the player chose to
+  // replace - the backup arrives beside it and it stays
+  const again = fakeStorage();
+  putLocal(again, 0, { dateAndTime: { gameTime: 3000, realTime: 9 } });
+  const b3 = await pullSlot(io, again, card, { replaces: stamp(0, 1000, 1) });
+  assert.equal(b3.ok, true);
+  assert.equal(b3.replaced, false);
+  assert.equal(slotsIn(again).length, 2, 'the newer local save is kept beside the arrival');
+
+  // B4: A SKIP BY A NAMESAKE. SP1's "already here" matches the character's NAME, so another Nystul's QuickSave at the
+  // backup's minute skips the arrival - and this Nystul's older copy must not go with nothing arriving
+  const namesake = fakeStorage();
+  putLocal(namesake, 0, { dateAndTime: { gameTime: 1000, realTime: 1 } });
+  putLocal(namesake, 1, { characterId: 'd00d0000-1111-2222-3333-444455556666', dateAndTime: { gameTime: 2000, realTime: 2 } });
+  const b4 = await pullSlot(io, namesake, card, { replaces: stamp(0, 1000, 1) });
+  assert.equal(b4.skipped, true);
+  assert.equal(b4.replaced, false, 'a namesake\'s save is not this character\'s backup');
+  assert.ok(saveInfoOf(0, namesake), 'the older copy stays - it is still the only one of this character');
+  // ...while THIS character's own copy of the backup's save, already here, completes the restore
+  const own = fakeStorage();
+  putLocal(own, 0, { dateAndTime: { gameTime: 1000, realTime: 1 } });
+  putLocal(own, 5, { dateAndTime: { gameTime: 2000, realTime: 5 } });
+  const b4own = await pullSlot(io, own, card, { replaces: stamp(0, 1000, 1) });
+  assert.equal(b4own.skipped, true);
+  assert.equal(b4own.replaced, true, 'the backup\'s save is here as this character\'s, so the older copy goes');
+  assert.deepEqual(slotsIn(own).map((x) => x.key), [5]);
+
+  // A FULL STORE (lens 4's finding): the arrival fails, and the older copy must not go first
+  const full = fakeStorage();
+  putLocal(full, 0, { dateAndTime: { gameTime: 1000, realTime: 1 } });
+  const write = full.setItem;
+  full.setItem = (k, v) => { if (String(k).startsWith(SAVE_DATA_PREFIX)) throw new Error('QuotaExceededError'); write(k, v); };
+  const nope = await pullSlot(io, full, card, { replaces: stamp(0, 1000, 1) });
+  assert.deepEqual(nope, { ok: false, error: 'no-room' });
+  assert.ok(saveInfoOf(0, full), 'the player\'s only copy is kept');
+
+  // B2: THE BACKUP CHANGED SINCE THE LIST WAS DRAWN - another device pushed an OLDER save between the listing and the
+  // press. The blob that arrives is not the card's save, so nothing is filed under the card and nothing is removed
+  const pc = fakeStorage();
+  putLocal(pc, 0, { dateAndTime: { gameTime: 1000, realTime: 1 } });
+  const tab = fakeStorage();
+  tab.setItem(SESSION_KEY, storage.getItem(SESSION_KEY));
+  putLocal(tab, 0, { dateAndTime: { gameTime: 500, realTime: 7 } }, { data: blob(500) });
+  assert.equal((await pushSlot(io, tab, 0)).ok, true);
+  const stale = await pullSlot(io, pc, card, { replaces: stamp(0, 1000, 1) });
+  assert.deepEqual(stale, { ok: false, error: 'stale' });
+  assert.deepEqual(slotsIn(pc).map((x) => x.key), [0], 'kept, and nothing mislabelled arrived');
+
+  // A FAILED DOWNLOAD REMOVES NOTHING: the backup gone from the service between the listing and the press
+  const failed = fakeStorage();
+  putLocal(failed, 0, { dateAndTime: { gameTime: 1000, realTime: 1 } });
+  assert.equal((await removeCloudSlot(io, card)).ok, true);
+  const miss = await pullSlot(io, failed, card, { replaces: stamp(0, 1000, 1) });
+  assert.equal(miss.ok, false);
+  assert.ok(saveInfoOf(0, failed), 'nothing was removed');
+
+  // THE REMOVAL IS THE STORE'S OWN DELETE, after the import - never a write around the carrier
+  const s = src('src/systems/cloudSaves.js');
+  const pull = s.slice(s.indexOf('export async function pullSlot'), s.indexOf('function dropReplaced'));
+  assert.ok(pull.indexOf('importSlots(') < pull.indexOf('dropReplaced('), 'the import comes first');
+  assert.match(s, /function dropReplaced\(storage, replaces, card, landedKey\) \{[\s\S]*?return deleteSave\(key, storage\);\n\}/);
+  assert.doesNotMatch(pull, /setItem\(|removeItem\(/);
+});
+
+test('FIELD 2026-09-27: the menu names a newer backup and asks twice before either act that replaces a copy - Restore (on the Load pane, ACC2c\'s door for a download) and Back up again; a failed act\'s Try again is THAT act; an armed press is this copy\'s and never outlives its pane (the pre-merge audit 0927b B1, B5; mutants: the local time never handed; the restore on one press; the upload over a newer backup on one press; Try again pushing whatever failed; the arming by slot; the restore offered on the Save pane)', () => {
+  const menu = src('src/ui/enhancedMenu.js');
+  assert.match(menu, /dateAndTime: entry\.info\?\.dateAndTime \?\? null,/, 'each slot carries when this device saved it');
+  assert.match(menu, /localTime: save\.dateAndTime,/, 'and the state is asked with it');
+  const newer = menu.slice(menu.indexOf("    case 'newer':"), menu.indexOf("    default:   // 'none'"));
+  assert.ok(newer.length > 0, 'the menu answers the state');
+  assert.match(newer, /if \(restore\) \{\s*line\.actions\.push\(cloudArm === `restore\|\$\{save\.key\}`\s*\? \{ label: 'Replace with backup\?', primary: true, onClick: \(\) => restoreBackup\(save, card\) \}\s*: \{ label: 'Restore backup', primary: true, onClick: \(\) => \{ cloudArm = `restore\|\$\{save\.key\}`; render\(\); \} \}\);/,
+    'Restore arms on the first press and restores on the second - armed by THIS local copy');
+  assert.match(newer, /line\.actions\.push\(guardedPush\(save, 'Back up again'\)\);/);
+  assert.match(menu, /function guardedPush\(save, label\) \{\s*return cloudArm === `push\|\$\{save\.key\}`\s*\? \{ label: 'Replace newer backup\?', onClick: \(\) => \{ cloudArm = null; backUp\(save\); \} \}\s*: \{ label, onClick: \(\) => \{ cloudArm = `push\|\$\{save\.key\}`; render\(\); \} \};\s*\}/,
+    'the older save goes over the newer backup only on a second press');
+  // B1: TRY AGAIN IS THE ACT THAT FAILED, and a push over a newer backup still asks twice
+  const bad = menu.slice(menu.indexOf("    case 'bad': {"), menu.indexOf("    case 'saved':"));
+  assert.match(bad, /const act = cloudWhy\?\.slot === slot \? cloudWhy\.act : 'push';/);
+  assert.match(bad, /if \(act === 'restore'\) \{\s*if \(restore && newerBackup\(card, save\.dateAndTime\)\) line\.actions\.push\(\{ label: 'Try again', onClick: \(\) => restoreBackup\(save, card\) \}\);\s*\}/);
+  assert.match(bad, /else if \(act === 'delete'\) line\.actions\.push\(\{ label: 'Try again', onClick: \(\) => removeBackup\(save\) \}\);/);
+  assert.match(bad, /else if \(newerBackup\(card, save\.dateAndTime\)\) line\.actions\.push\(guardedPush\(save, 'Try again'\)\);/);
+  assert.match(menu, /function runCloud\(save, call, act = 'push'\) \{/);
+  assert.match(menu, /if \(!r\.ok\) cloudWhy = \{ slot, key: save\?\.key, error: r\.error, act \};/, 'the refusal remembers its act, and its copy');
+  // a RESTORE's refusal is its one copy's - a twin under the same slot is not offered a one-press restore over itself
+  assert.match(menu, /error: cloudWhy\?\.slot === slot && \(cloudWhy\.act !== 'restore' \|\| cloudWhy\.key === save\.key\) \? cloudWhy\.error : null,/);
+  // a STALE refusal is answered by the fresh listing, and no refusal outlives its visit
+  assert.match(menu, /if \(cloudWhy\?\.error === 'stale'\) cloudWhy = null;/);
+  assert.match(menu.slice(menu.indexOf('export function mountEnhancedMenu')), /^\s*cloudWhy = null;/m);
+  for (const [fn, act] of [['backUp', 'push'], ['removeBackup', 'delete'], ['restoreBackup', 'restore'], ['download', 'download']]) {
+    const body = menu.slice(menu.indexOf(`function ${fn}(`), menu.indexOf('\n}', menu.indexOf(`function ${fn}(`)));
+    assert.match(body, new RegExp(`, '${act}'\\);`), `${fn} runs as '${act}'`);
+  }
+  // B3: the slot AS DRAWN rides the restore
+  assert.match(menu, /const replaces = \{ key: save\.key, gameTime: save\.dateAndTime\?\.gameTime, realTime: save\.dateAndTime\?\.realTime \};\s*runCloud\(save, \(io\) => pullSlot\(io, appStorage\(\), card, \{ replaces \}\), 'restore'\);/);
+  // B5: an armed press never outlives its pane - the section rail and the System rail both disarm
+  assert.match(menu, /section = id; pickedKey = null; sheetOpen = false; confirming = null; cloudArm = null; render\(\);/);
+  assert.match(menu, /sysSec = id; confirming = null; sheetOpen = false; pickedKey = null; cloudArm = null; render\(\);/);
+  // ONE PANE offers the restore: Load, where ACC2c put the download - and no other by default, the options handed whole
+  assert.match(menu, /function cloudFor\(save, \{ restore = false \} = \{\}\) \{/);
+  assert.match(menu, /function tileOf\(save, \{ actions, current = false, restore = false \}\) \{/);
+  assert.match(menu, /cloud: cloudFor\(save, \{ restore \}\),/);
+  assert.match(menu, /for \(const save of saves\) grid\.append\(tileOf\(save, forSave\(save\)\)\);/, 'tileGrid hands each pane\'s options through whole');
+  assert.equal((menu.match(/restore: true,/g) ?? []).length, 1);
+  const load = menu.slice(menu.indexOf('function paneLoad'), menu.indexOf('// SP1 (2026-09-21'));
+  assert.match(load, /restore: true,/, 'and that pane is paneLoad');
 });

@@ -222,7 +222,7 @@ test('WORLD5: the hosts by source - the shared clock installed at the boot befor
   assert.match(w, /if \(clamp > 0 && !sharedClockOn\(\)\) \{ setSyntheticTimeIncrease\(true\); playerTicker\.advance\(clamp\); \}/, 'no arrival clamp');
   assert.match(w, /questClockStepMax: \(\) => \(sharedClockOn\(\) \? PLAYED_STEP_MAX_SECONDS : Infinity\),/, 'the bridge\'s dep (WORLD7: the played step, not the stand-down)');
   const sh = rd('src/scenes/shared.js');
-  assert.match(sh, /advance\(minutes\) \{\s*if \(!\(minutes > 0\)\) return null;\s*(?:\/\/[^\n]*\n\s*)*if \(sharedClockOn\(\)\) return this\.tick\(0, undefined, 0\);/, 'RaiseTime under the shared clock runs the owed rounds and fabricates nothing');
+  assert.match(sh, /advance\(minutes, sharedEnd = null\) \{\s*if \(!\(minutes > 0\)\) return null;\s*(?:\/\/[^\n]*\n\s*)*if \(sharedClockOn\(\) && Number\.isFinite\(sharedEnd\)\) \{\n(?:(?! {6}\}\n)[^\n]*\n)*? {6}\}\n\s*(?:\/\/[^\n]*\n\s*)*if \(sharedClockOn\(\)\) return this\.tick\(0, undefined, 0\);/, 'RaiseTime under the shared clock runs the owed rounds and fabricates nothing - REST-ROUNDS: only a rest\'s sub-tick brings a minute of its own');
   assert.match(sh, /sharedMinutes: \(\) => \(sharedClockOn\(\) \? worldMinutes\(\) : null\),/, 'every host\'s rest deps pace by the clock');
   assert.match(rd('src/scenes/questBridge.js'), /questClockStepMax: \(\) => ctx\.questClockStepMax\?\.\(\) \?\? Infinity,/);
   const m = rd('src/systems/quest/machine.js');

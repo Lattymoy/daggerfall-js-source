@@ -37,6 +37,7 @@ export function liveStat(entity, statName, skipKind = null) {   // AUDIT SURV-TI
   const base = entity.stats?.[statName] ?? 0;
   let mod = 0;
   let survival = 0;   // AUDIT SURV-TIERS: the needs' entry, capped below against everything else
+  let curse = 0;   // VAMP-DAY: a racial override's PENALTY (the vampire's day), capped below so it never zeroes a stat
   const list = entity.activeEffects;
   if (list) {
     for (const a of list) {
@@ -47,7 +48,11 @@ export function liveStat(entity, statName, skipKind = null) {   // AUDIT SURV-TI
       // V2a: the racial override's SetStatMod channel - the curse
       // entry's map, re-applied every round by lycanthropyMagicRound
       // exactly as RacialOverrideEffect's constant pass does
-      if (a.kind === 'racialOverride') { if (!a.ended) mod += a.statMods?.[statName] ?? 0; continue; }
+      if (a.kind === 'racialOverride') {
+        const v = a.ended ? 0 : a.statMods?.[statName] ?? 0;
+        if (v < 0) curse += v; else mod += v;
+        continue;
+      }
       // V3: the artifact channel - the Mace of Molag Bal's strength
       // gain (the WIELDER's; AUDIT 39 moved the target's drain onto the
       // ordinary drainAttribute channel, where DFU's own DrainStrength
@@ -70,6 +75,11 @@ export function liveStat(entity, statName, skipKind = null) {   // AUDIT SURV-TI
   // every equip change and every magic round) - a field read, so this
   // leaf stays import-free; empty with every switch off.
   mod += entity._mods?.stats?.[statName] ?? 0;
+  // VAMP-DAY: THE CURSE'S DAY NEVER KILLS. A live 0 is death (killIfAnyLiveStatZero below), and a vampire's -20 by
+  // day on a stat of twenty or less would have killed at dawn - so its penalty stops at a live 1, against the stat
+  // without it, here where every read sees it (as DFU's DrainEffect stops at 1).
+  if (curse < 0) curse = -Math.min(-curse, Math.max(0, Math.min(Math.max(base + mod, 0), MAX_STAT_VALUE) - 1));
+  mod += curse;
   // AUDIT SURV-TIERS (the second pass): THE NEEDS' DRAIN IS CAPPED WHERE THE STAT IS READ. The minute law caps its
   // entry five above the stat as it stands (survival/needs.js applySurvivalMods) - but only once a minute, and the
   // zero-stat kill below reads every 0.2 real seconds: an ale's -2 on a live 7, then a Drain of 5 between two
@@ -186,3 +196,17 @@ export function maxBreath(entity) {
 export const FATIGUE_LOSS = Object.freeze({
   Default: 11, Climbing: 22, Running: 88, Swimming: 44, Jumping: 11,
 });
+
+/** BALANCE 2026-09-27 (Mac: "I want to adjust fatigue drain and durability
+ *  drain. Just needs some balancing. Currently things drain a little too
+ *  fast"): EXERTION COSTS A QUARTER LESS. The losses above stay DFU's
+ *  verbatim, and measured as DFU's (a full bar at STR/END 50 walks 48.5
+ *  real minutes and runs 6.1); this is the port's scale on what exertion
+ *  CHARGES - the minute's walk, climb, run and failed swim, a jump, a
+ *  swing (hostCombat SWING_FATIGUE_COST), Roleplay Realism's overload
+ *  (its fraction carried) and Enhanced Riding's charge - applied where
+ *  each is charged, inside the truncation DFU gives its own multiplier. NOT exertion, so not scaled: fatigue DAMAGE
+ *  (spells, poisons, diseases), training's fixed cost, survival's needs
+ *  (their own tier setting) and the deep's swim stroke (a burst bought on
+ *  purpose). A departure: Ledger A, BALANCE1. */
+export const FATIGUE_DRAIN_SCALE = 0.75;

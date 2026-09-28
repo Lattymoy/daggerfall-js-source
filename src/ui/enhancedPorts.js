@@ -12,6 +12,8 @@
 // choose classic for (the travel map and its popups) are not here.
 
 import { isEnhancedPlus } from '../systems/uiSkin.js';   // PLUS1: the ported windows are Enhanced Plus's
+import { isOnlinePage } from '../systems/onlineLane.js';   // EMPIRE-BANK
+import { EMPIRE_BANK_OF } from '../world/buildingNames.js';
 import { portWindow, centreOf } from './enhancedPort.js';
 import { itemIconUrl, itemName, spellIconUrl, paintFrame } from './enhancedArt.js';
 import { serviceLabel } from '../systems/guildServiceFlow.js';
@@ -85,8 +87,10 @@ const bank = {
     const busy = w.transactionType !== TRANSACTION_TYPE.None;
     const btn = (name, label, extra = {}) => ({ label, act: press(name), disabled: busy || (w.enabled ? w.enabled(name) === false : false), ...extra });
     const city = w.hooks.cityName?.();
+    // EMPIRE-BANK: online, every bank is the Empire's - the branch's town beneath it
+    const empire = isOnlinePage();
     return {
-      title: city ? `Bank of ${city}` : 'The Bank', sub: w.hooks.regionName?.() ?? '', size: 'medium',
+      title: empire ? `Bank of ${EMPIRE_BANK_OF}` : city ? `Bank of ${city}` : 'The Bank', sub: (empire ? city || w.hooks.regionName?.() : w.hooks.regionName?.()) ?? '', size: 'medium',
       blocks: [
         { type: 'stats', items: [
           ['Account balance', L.account], ['Gold carried', L.inventory],

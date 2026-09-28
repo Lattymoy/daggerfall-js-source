@@ -26,7 +26,8 @@
 // the list's own, the owner's body's (net/decorLaw.js decorIsMount;
 // scenes/decorRoom.js hangs it). Free, and back to the pack whole when
 // taken down, as every own thing is. Its dye is read off its numbers,
-// so every client wears it the same.
+// so every client wears it the same. ARMOR-MOUNT (2026-09-26): any
+// piece of armour hangs so too, not the shields alone.
 // ═══════════════════════════════════════════════════════════════════
 
 import { templateByIndex, inventoryItemImage } from './itemTemplates.js';
@@ -35,8 +36,8 @@ import { getMagicItemTemplates, ITEM_GROUP_NAME_BY_CLASS } from './loot.js';
 import { TEMPLATES, isMap } from './useItem.js';
 import { isSummoned } from './inventory.js';
 import { decorFlatLight } from './decorCatalogue.js';
-import { itemDyeColor } from './itemDye.js';
-import { decorItemOf, decorIsMount, DECOR_ARCHIVE_MAX, DECOR_RECORD_MAX } from '../net/decorLaw.js';
+import { itemDyeColor, itemDyeTarget } from './itemDye.js';
+import { decorItemOf, decorIsMount, DECOR_ARCHIVE_MAX, DECOR_RECORD_MAX, DECOR_ARTIFACT_UNKNOWN } from '../net/decorLaw.js';
 
 /** The groups whose items never stand as themselves: weapons and armour are mounted (DECOR2c); a vehicle is no thing
  *  one carries, coin is a counter, and a deed or a quest's own item is not the player's to set down. */
@@ -65,7 +66,8 @@ export function decorDescriptorOf(item) {
   if (!item) return null;
   const g = ITEM_GROUP_NAME_BY_CLASS.indexOf(item.group);
   const bits = item.artifactIndexBitfield ?? 0;
-  const a = item.artifact && (bits & 1) ? bits >> 1 : null;
+  // AUDIT DYE-ICON 7: an artifact with no index recorded is one all the same - it hung as its base item, dyed
+  const a = item.artifact ? ((bits & 1) ? bits >> 1 : DECOR_ARTIFACT_UNKNOWN) : null;
   const p = (item.group === 'Paintings' || item.group === 'Books') && Number.isSafeInteger(item.message) ? item.message : null;
   return decorItemOf({
     t: item.templateIndex, g: g >= 0 ? g : null,
@@ -91,9 +93,10 @@ export function decorStandOf(item) {
 }
 
 /**
- * DECOR2c: WHAT A WEAPON OR A SHIELD HANGS AS - `{ flat, light: null, item }`, its pack picture (the list's own - the
- * owner's body's, as the pack draws it) - or null: no weapon or shield (arrows neither), anything worn, a quest's, a
- * summoned one, or a picture past what a piece may show.
+ * DECOR2c: WHAT A WEAPON OR A PIECE OF ARMOUR HANGS AS - `{ flat, light: null, item }`, its pack picture (the list's
+ * own - the owner's body's, as the pack draws it) - or null: no weapon or armour (arrows neither), anything worn, a
+ * quest's, a summoned one, or a picture past what a piece may show. ARMOR-MOUNT: armour is every piece, not the
+ * shields alone.
  */
 export function decorMountOf(item, identity = undefined) {
   if (!item || item.questItem || item.equipSlot != null || isSummoned(item)) return null;
@@ -114,6 +117,24 @@ export function decorMountDye(d) {
   if (!own) return null;
   const group = own.g != null ? ITEM_GROUP_NAME_BY_CLASS[own.g] ?? null : null;
   return itemDyeColor({ templateIndex: own.t, group, material: own.m ?? 0, artifact: own.a != null });
+}
+
+/** MW-MOUNT: the item a mount's numbers name, as the one item map reads an item (fpArm.js iconRecordOf: the group,
+ *  the template, the material) - so every client that has a Morrowind build hangs the same record's picture. */
+export function decorMountItem(d) {
+  const own = decorItemOf(d);
+  if (!own) return null;
+  const group = own.g != null ? ITEM_GROUP_NAME_BY_CLASS[own.g] ?? null : null;
+  return { group, templateIndex: own.t, material: own.m ?? 0, variant: own.v ?? 0, artifact: own.a != null };
+}
+
+/** DYE-ICON: the swatch that dye changes on a mount's picture - the pack's own (itemDye.js itemDyeTarget), off its
+ *  numbers alone: a weapon's or armour's metal, never an artifact's. */
+export function decorMountDyeTarget(d) {
+  const own = decorItemOf(d);
+  if (!own) return null;
+  const group = own.g != null ? ITEM_GROUP_NAME_BY_CLASS[own.g] ?? null : null;
+  return itemDyeTarget({ group, artifact: own.a != null });
 }
 
 /**

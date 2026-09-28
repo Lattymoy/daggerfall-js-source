@@ -1,0 +1,248 @@
+[
+  {
+    "name": "LA-SHADOW1-1-the-sun-snapped-at-the-origin-again",
+    "file": "src/render/shadowPass.js",
+    "old": "      sunCascadeMatrices(f.eye, f.lightDir, this._sunVPNew, this._sunAnchor);",
+    "new": "      sunCascadeMatrices(f.eye, f.lightDir, this._sunVPNew);",
+    "tests": [
+      "test/la_shadow.test.js"
+    ]
+  },
+  {
+    "name": "LA-SHADOW1-2-the-anchor-left-behind-by-the-recentre",
+    "file": "src/render/shadowPass.js",
+    "old": "    this._sunAnchor[0] += offset[0]; this._sunAnchor[1] += offset[1]; this._sunAnchor[2] += offset[2];",
+    "new": "",
+    "tests": [
+      "test/la_shadow.test.js"
+    ]
+  },
+  {
+    "name": "LA-SHADOW1-3-the-anchor-follows-the-eye-every-frame",
+    "file": "src/render/shadowPass.js",
+    "old": "  if (dx * dx + dy * dy + dz * dz <= SUN_ANCHOR_HOLD * SUN_ANCHOR_HOLD) return false;",
+    "new": "  if (false) return false;",
+    "tests": [
+      "test/la_shadow.test.js"
+    ]
+  },
+  {
+    "name": "LA-SHADOW1-4-the-anchor-not-rounded-in-y",
+    "file": "src/render/shadowPass.js",
+    "old": "  anchor[1] = Math.round(eye[1] / SUN_ANCHOR_STEP) * SUN_ANCHOR_STEP;",
+    "new": "  anchor[1] = eye[1];",
+    "tests": [
+      "test/la_shadow.test.js"
+    ]
+  },
+  {
+    "name": "LA-SHADOW1-5-the-up-flips-at-noon-again",
+    "file": "src/render/shadowPass.js",
+    "old": "  const up = Math.abs(lightDir[2]) < 0.9 ? Z_UP : Y_UP;   // LA-SHADOW1: never along the sun's path",
+    "new": "  const up = Math.abs(lightDir[1]) > 0.99 ? Z_UP : Y_UP;",
+    "tests": [
+      "test/la_shadow.test.js",
+      "test/el2_shadows.test.js"
+    ]
+  },
+  {
+    "name": "LA-SHADOW1-6-the-snap-reads-the-anchor-in-x-alone",
+    "file": "src/render/shadowPass.js",
+    "old": "    const ay = (vp[1] * anchor[0] + vp[5] * anchor[1] + vp[9] * anchor[2] + vp[13]) * half;",
+    "new": "    const ay = (vp[1] * anchor[0] + vp[13]) * half;",
+    "tests": [
+      "test/la_shadow.test.js"
+    ]
+  },
+  {
+    "name": "LA-SHADOW2-1-the-hard-line-again",
+    "file": "src/render/shadowPass.js",
+    "old": "  return t > 0.0 ? mix(lit, sunCascadeTap(c + 1, wp, n, soft), t) : lit;",
+    "new": "  return lit;",
+    "tests": [
+      "test/la_shadow.test.js"
+    ]
+  },
+  {
+    "name": "LA-SHADOW2-2-the-far-box-edge-again",
+    "file": "src/render/shadowPass.js",
+    "old": "  if (c == 2) return t >= 1.0 ? 1.0 : mix(sunCascadeTap(2, wp, n, soft), 1.0, t);",
+    "new": "  if (c == 2) return sunCascadeTap(2, wp, n, soft);",
+    "tests": [
+      "test/la_shadow.test.js"
+    ]
+  },
+  {
+    "name": "LA-SHADOW2-3-the-band-past-the-line",
+    "file": "src/render/shadowPass.js",
+    "old": "  float t = smoothstep(r * ${(0.9 - SUN_CASCADE_BAND).toFixed(2)}, r * 0.9, d);",
+    "new": "  float t = smoothstep(r * 0.9, r * ${(0.9 + SUN_CASCADE_BAND).toFixed(2)}, d);",
+    "tests": [
+      "test/la_shadow.test.js"
+    ]
+  },
+  {
+    "name": "LA-SHADOW2-4-the-band-drops-soft",
+    "file": "src/render/shadowPass.js",
+    "old": "  float lit = sunCascadeTap(c, wp, n, soft);",
+    "new": "  float lit = sunCascadeTap(c, wp, n, false);",
+    "tests": [
+      "test/la_shadow.test.js",
+      "test/perfsun_fragment.test.js"
+    ]
+  },
+  {
+    "name": "LA-SHADOW3-1-the-dungeon-arm-does-not-ask",
+    "file": "src/scenes/worldModes.js",
+    "old": "      renderer.everyLightCasts();   // LA-SHADOW3: the level is drawn whole below (no view cull) - every torch keeps a shadow map, none lights through the rock as the nearest eight change (DISC15's rooms)\n",
+    "new": "",
+    "tests": [
+      "test/disc15.test.js"
+    ]
+  },
+  {
+    "name": "LA-SHADOW3-2-the-dev-route-does-not-ask",
+    "file": "src/scenes/dungeon.js",
+    "old": "    renderer.everyLightCasts();   // LA-SHADOW3: the level is drawn whole below - every torch keeps a shadow map (worldModes.js's dungeon arm)\n",
+    "new": "",
+    "tests": [
+      "test/disc15.test.js"
+    ]
+  },
+  {
+    "name": "LA-SHADOW4-1-the-eight-re-round-the-live-range",
+    "file": "src/render/shadowPass.js",
+    "old": "farOf[rank] = same ? heldShadowFar(sl[o + 3], L[i * 4 + 3]) : shadowFarFor(L[i * 4 + 3]);",
+    "new": "farOf[rank] = shadowFarFor(L[i * 4 + 3]);",
+    "tests": [
+      "test/la_shadow.test.js"
+    ]
+  },
+  {
+    "name": "LA-SHADOW4-2-the-lo-tier-re-rounds-the-live-range",
+    "file": "src/render/shadowPass.js",
+    "old": "      const far = same ? heldShadowFar(sl[o + 3], L[i * 4 + 3]) : shadowFarFor(L[i * 4 + 3]);   // LA-SHADOW4: held across the flicker",
+    "new": "      const far = shadowFarFor(L[i * 4 + 3]);",
+    "tests": [
+      "test/la_shadow.test.js"
+    ]
+  },
+  {
+    "name": "LA-SHADOW4-3-the-hold-never-lets-go",
+    "file": "src/render/shadowPass.js",
+    "old": "export const heldShadowFar = (held, range) => (held >= range && held - range < SHADOW_FAR_HOLD ? held : shadowFarFor(range));",
+    "new": "export const heldShadowFar = (held, range) => (held >= range ? held : shadowFarFor(range));",
+    "tests": [
+      "test/la_shadow.test.js"
+    ]
+  },
+  {
+    "name": "LA-SHADOW4-4-the-hold-keeps-a-far-inside-the-range",
+    "file": "src/render/shadowPass.js",
+    "old": "export const heldShadowFar = (held, range) => (held >= range && held - range < SHADOW_FAR_HOLD ? held : shadowFarFor(range));",
+    "new": "export const heldShadowFar = (held, range) => (held > 0 && Math.abs(held - range) < SHADOW_FAR_HOLD ? held : shadowFarFor(range));",
+    "tests": [
+      "test/la_shadow.test.js"
+    ]
+  },
+  {
+    "name": "LA-SHADOW4-5-the-word-without-its-far",
+    "file": "src/render/shadowPass.js",
+    "old": "export const casterWord = (slot, far) => slot | ((far / SHADOW_FAR_QUANTUM) << SHADOW_CASTER_FAR_SHIFT);",
+    "new": "export const casterWord = (slot, far) => slot;",
+    "tests": [
+      "test/la_shadow.test.js"
+    ]
+  },
+  {
+    "name": "LA-SHADOW4-6-the-shader-reads-the-slot-as-the-whole-word",
+    "file": "src/render/shadowPass.js",
+    "old": "  int s = k & 255;\n  return s < ${SHADOW_POINT_CASTERS} ? pointShadowAt(s, wp, n)",
+    "new": "  int s = k;\n  return s < ${SHADOW_POINT_CASTERS} ? pointShadowAt(s, wp, n)",
+    "tests": [
+      "test/la_shadow.test.js",
+      "test/disc15.test.js"
+    ]
+  },
+  {
+    "name": "LA-SHADOW4-7-the-air-reads-the-far-off-the-live-range",
+    "file": "src/render/shadowPass.js",
+    "old": "pointShadowLoOne(s - ${SHADOW_POINT_CASTERS}, float(k >> ${SHADOW_CASTER_FAR_SHIFT}) * ${SHADOW_FAR_QUANTUM}.0, L, wp);",
+    "new": "pointShadowLoOne(s - ${SHADOW_POINT_CASTERS}, ceil(L.w / 4.0) * 4.0, L, wp);",
+    "tests": [
+      "test/la_shadow.test.js"
+    ]
+  },
+  {
+    "name": "LA-LIGHTS1-1-the-pool-index-names-the-flicker-again",
+    "file": "src/world/cityLights.js",
+    "old": "      ranges[n] = animRanges[(slot0 + j) % animRanges.length];",
+    "new": "      ranges[n] = animRanges[n % animRanges.length];",
+    "tests": [
+      "test/la_shadow.test.js"
+    ]
+  },
+  {
+    "name": "LA-LIGHTS1-2-the-slot-ignores-the-row",
+    "file": "src/world/cityLights.js",
+    "old": "export const lanternSlot = (px, py) => (Math.imul(px | 0, 73856093) ^ Math.imul(py | 0, 19349663)) >>> 0;",
+    "new": "export const lanternSlot = (px, py) => (Math.imul(px | 0, 73856093)) >>> 0;",
+    "tests": [
+      "test/la_shadow.test.js"
+    ]
+  },
+  {
+    "name": "LA-LIGHTS1-3-the-selection-reads-the-animator-by-index",
+    "file": "src/scenes/world.js",
+    "old": "nearestLights(_sceneLights, cam.pos, renderer.maxPointLights + (renderer.lightingLane ? 1 : 0), _litRanges, null, 0, n)",
+    "new": "nearestLights(_sceneLights, cam.pos, renderer.maxPointLights + (renderer.lightingLane ? 1 : 0), worldLightAnimator.ranges, null, 0, n)",
+    "tests": [
+      "test/la_shadow.test.js"
+    ]
+  },
+  {
+    "name": "LA-LIGHTS2-1-the-cap-cuts-again",
+    "file": "src/world/cityLights.js",
+    "old": "  if (count <= cap || lead >= cap) return null;",
+    "new": "  if (true) return null;",
+    "tests": [
+      "test/la_shadow.test.js"
+    ]
+  },
+  {
+    "name": "LA-LIGHTS2-2-the-share-read-from-the-wrong-side",
+    "file": "src/world/cityLights.js",
+    "old": "Math.max(0, Math.min(1, (cut - dist(i)) / fade));",
+    "new": "Math.max(0, Math.min(1, 1 - (cut - dist(i)) / fade));",
+    "tests": [
+      "test/la_shadow.test.js"
+    ]
+  },
+  {
+    "name": "LA-LIGHTS2-3-the-hands-lights-fade-too",
+    "file": "src/world/cityLights.js",
+    "old": "    const share = i < lead ? 1 : Math.max(0,",
+    "new": "    const share = Math.max(0,",
+    "tests": [
+      "test/la_shadow.test.js"
+    ]
+  },
+  {
+    "name": "LA-LIGHTS2-4-no-lantern-picked-past-the-cap",
+    "file": "src/scenes/world.js",
+    "old": "renderer.maxPointLights + (renderer.lightingLane ? 1 : 0), _litRanges, null, 0, n);",
+    "new": "renderer.maxPointLights, _litRanges, null, 0, n);",
+    "tests": [
+      "test/la_shadow.test.js"
+    ]
+  },
+  {
+    "name": "LA-LIGHTS2-5-the-faded-colours-never-handed-over",
+    "file": "src/scenes/world.js",
+    "old": "renderer.lightingLane ? capFadeColors(lit, lit.length / 4 - _lanterns.length / 4, cam.pos, renderer.maxPointLights, CITY_LIGHT_COLOR_F32) : null);",
+    "new": "null);",
+    "tests": [
+      "test/la_shadow.test.js"
+    ]
+  }
+]

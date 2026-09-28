@@ -2,22 +2,22 @@
   {
     "name": "AUDWB-A2-no-grant",
     "file": "src/scenes/spoilsPool.js",
-    "old": "      for (const piece of list) take(piece);\n      say(SPOILS_TEXT.granted);",
-    "new": "      say(SPOILS_TEXT.granted);",
+    "old": "      for (const piece of list) take(piece);",
+    "new": "      void list;",
     "tests": ["test/auditwb_spoils.test.js"]
   },
   {
     "name": "AUDWB-A2-a-grant-twice",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    grant({ day, seed, level, acct = '' }) {\n      if (spentOn(day, acct)) return false;",
-    "new": "    grant({ day, seed, level, acct = '' }) {\n      if (false) return false;",
+    "old": "    grant({ day, seed, level, acct = '' }) {\n      if (spentOn(day, acct)) { if (spentBy(day, acct)) said(day); return false; }",
+    "new": "    grant({ day, seed, level, acct = '' }) {\n      if (false) { if (spentBy(day, acct)) said(day); return false; }",
     "tests": ["test/auditwb_spoils.test.js"]
   },
   {
     "name": "AUDWB-A2-a-grant-unrecorded",
     "file": "src/scenes/spoilsPool.js",
-    "old": "      const list = spoilsList(seed >>> 0, Math.max(1, level | 0));\n      spend(day, acct, list);\n      for (const piece of list) take(piece);",
-    "new": "      const list = spoilsList(seed >>> 0, Math.max(1, level | 0));\n      for (const piece of list) take(piece);",
+    "old": "      const list = spoilsList(seed >>> 0, Math.max(1, level | 0));\n      const id = spend(day, acct, list);\n      for (const piece of list) take(piece);",
+    "new": "      const list = spoilsList(seed >>> 0, Math.max(1, level | 0));\n      const id = null;\n      for (const piece of list) take(piece);",
     "tests": ["test/auditwb_spoils.test.js"]
   },
   {
@@ -58,29 +58,29 @@
   {
     "name": "AUDWB-A9-the-session-forgets",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    if (spentHere.has(spentKey(day, acct))) return true;",
-    "new": "",
+    "old": "  function spentOn(day, acct) {\n    if (spentHere.has(spentKey(day, acct))) return true;",
+    "new": "  function spentOn(day, acct) {",
     "tests": ["test/auditwb_spoils.test.js"]
   },
   {
     "name": "AUDWB-A9-the-burst-by-the-day-alone",
     "file": "src/scenes/gateCourt.js",
-    "old": "at, bearing, acct: claims.s });",
-    "new": "at, bearing });",
+    "old": "at, bearing, acct: claims.s }))",
+    "new": "at, bearing }))",
     "tests": ["test/auditwb_spoils.test.js"]
   },
   {
     "name": "AUDWB-A7-one-slot",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    keep(SPOILS_STORE_KEY, [...recs, { day, at: wall(), who: w, pieces: list }].slice(-SPOILS_RECORDS_MAX));",
-    "new": "    keep(SPOILS_STORE_KEY, [{ day, at: wall(), who: w, pieces: list }]);",
+    "old": "    keep(SPOILS_STORE_KEY, [...recs, { v: SPOILS_RECORD_V, id, day, at, who: w, pieces: list }].slice(-SPOILS_RECORDS_MAX));",
+    "new": "    keep(SPOILS_STORE_KEY, [{ v: SPOILS_RECORD_V, id, day, at, who: w, pieces: list }]);",
     "tests": ["test/auditwb_spoils.test.js"]
   },
   {
     "name": "AUDWB-A7-unbounded",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    keep(SPOILS_STORE_KEY, [...recs, { day, at: wall(), who: w, pieces: list }].slice(-SPOILS_RECORDS_MAX));",
-    "new": "    keep(SPOILS_STORE_KEY, [...recs, { day, at: wall(), who: w, pieces: list }]);",
+    "old": "    keep(SPOILS_STORE_KEY, [...recs, { v: SPOILS_RECORD_V, id, day, at, who: w, pieces: list }].slice(-SPOILS_RECORDS_MAX));",
+    "new": "    keep(SPOILS_STORE_KEY, [...recs, { v: SPOILS_RECORD_V, id, day, at, who: w, pieces: list }]);",
     "tests": ["test/auditwb_spoils.test.js"]
   },
   {
@@ -93,9 +93,11 @@
   {
     "name": "AUDWB-A7-a-saved-record-kept",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    if (savedSince(infos, rec.who ?? who, rec.at)) continue;   // a save since holds them: it goes",
-    "new": "    if (savedSince(infos, rec.who ?? who, rec.at)) { left.push(rec); continue; }",
-    "tests": ["test/auditwb_spoils.test.js"]
+    "old": "    if (rec.v !== SPOILS_RECORD_V && savedSince(infos, rec.who ?? who, rec.at)) continue;   // a save since holds them: it goes",
+    "new": "    if (rec.v !== SPOILS_RECORD_V && savedSince(infos, rec.who ?? who, rec.at)) { left.push(rec); continue; }",
+    "tests": ["test/auditwb_spoils.test.js",
+      "test/wb5_gate_spoils.test.js"
+    ]
   },
   {
     "name": "AUDWB-A6-no-memory",
@@ -170,8 +172,8 @@
   {
     "name": "AUDWB-A9-a-sign-in-waits-for-the-clock",
     "file": "src/net/gateClaims.js",
-    "old": "      if (busy || (!signedIn && nowMs() - lastAt < GATE_CLAIM_RETRY_MS)) return false;",
-    "new": "      if (busy || nowMs() - lastAt < GATE_CLAIM_RETRY_MS) return false;",
+    "old": "      if (!signedIn && !due) return false;",
+    "new": "      if (!due) return false;",
     "tests": ["test/auditwb_spoils.test.js"]
   },
   {

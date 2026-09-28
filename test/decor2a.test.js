@@ -8,7 +8,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { decorItemOf, decorWhatOf, decorPieceOf, DECOR_CAP } from '../src/net/decorLaw.js';
+import { decorItemOf, decorWhatOf, decorPieceOf, DECOR_CAP, DECOR_ARTIFACT_UNKNOWN } from '../src/net/decorLaw.js';
 import { decorEditPrice } from '../src/scenes/decorTool.js';
 import {
   decorStandOf, decorItemFlat, decorDescriptorOf, decorItemName, decorOwnEntry, decorOwnBackLine, DECOR_OWN_NEVER_GROUPS, DECOR_OWN_KEPT_BACK,
@@ -83,7 +83,7 @@ test('DECOR2a what of the pack can stand, and as what: a statue, a painting, a g
   assert.deepEqual(decorItemFlat({ templateIndex: 83, group: 'UselessItems1' }), [205, 11], 'else the template\'s');
   const star = { templateIndex: 0, group: 'Gems', artifact: true, artifactIndexBitfield: (9 << 1) | 1, worldTextureArchive: 432, worldTextureRecord: 9 };
   assert.deepEqual(decorStandOf(star), { flat: [432, 9], light: null, item: { t: 0, g: 14, m: null, v: null, a: 9, p: null } });
-  assert.equal(decorDescriptorOf({ ...star, artifactIndexBitfield: 18 })?.a, null, 'an index without its flag bit is no index');
+  assert.equal(decorDescriptorOf({ ...star, artifactIndexBitfield: 18 })?.a, DECOR_ARTIFACT_UNKNOWN, 'an index without its flag bit is no index - an artifact all the same (AUDIT DYE-ICON 7)');
   // names from the numbers alone
   const artifacts = Array.from({ length: 12 }, (_, i) => ({ type: 1, name: i === 9 ? 'Azura\'s Star' : `Artifact ${i}` }));
   try {
@@ -361,13 +361,13 @@ test('DECOR2a the host (worldModes.js) by source: the tool\'s pack is the player
   assert.match(m, /return applyTransfer\(item, \{ ok: true, amount: 1 \}, pack, \[\], \{ entity: playerEntity, fromLocal: true \}\) \?\? null;/, 'as a drop moves it');
   assert.match(m, /function decorPackGive\(item\) \{\n\s*if \(isFurnishing\(item\)\) \{ decorHome\(item\)\.push\(item\); return; \}\n\s*playerEntity\.items \?\?= \[\];\n\s*addItem\(playerEntity\.items, item\);/);   // DECOR2b: furniture first
   assert.match(m, /const decorOwn = interiorDecor\.ownSnapshot\(\);/);
-  assert.match(m, /decor, decorItems, decorOwn, frame: 'building'/);
+  assert.match(m, /decor, decorItems, decorOwn, hiddenBase, frame: 'building'/);
   assert.match(m, /interiorDecor\.setItems\(data\.decorItems\);\n\s*interiorDecor\.setOwn\(data\.decorOwn\);/);
   assert.match(m, /interiorDecor\.set\(pieces\);\n\s*if \(interiorHome\?\.own\) decorReturnStrays\(pieces\);/, 'the owner alone');
   assert.match(m, /for \(const id of interiorDecor\.ownIds\(\)\) \{\n\s*if \(standing\.has\(id\)\) continue;\n\s*const item = interiorDecor\.takeOwn\(id\);\n\s*if \(item\) \{ decorPackGive\(item\); back\.push\(item\); \}/);
   assert.match(m, /const kept = interiorDecor\.ownOf\(piece\.id\);\n\s*const n = \(kept \? itemLongName\(kept\) : null\) \|\| decorItemName\(piece\.item\);/);
   assert.match(m, /const own = takeSceneOwn\(sceneCache\(\), sceneName\);[^\n]*\n\s*for \(const item of own\) decorPackGive\(item\);/, 'a sold house or ship');
   assert.match(m, /const own = takeSceneOwn\(sceneCache\(\), homeSceneName\(mapId, bd\.buildingKey\)\);[^\n]*\n\s*for \(const item of own\) decorPackGive\(item\);\n\s*removePermanentScene\(sceneCache\(\), homeSceneName\(mapId, bd\.buildingKey\)\);/, 'an online home, before its scene goes');
-  assert.match(m, /iconUrl: \(a, r, dye = null\) => loadIcon\(a, r, \{ scale: 1, dye \}\),/);
+  assert.match(m, /iconUrl: \(a, r, dye = null, dyeTarget = null\) => loadIcon\(a, r, \{ scale: 1, dye, dyeTarget \}\),/);
   assert.equal(chipNamed != null, true);
 });

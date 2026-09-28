@@ -961,7 +961,7 @@ export class PlayerMotor {
       //
       // The pass condition is `!Number.isFinite(dist)`, not a
       // comparison against the distance: collider.sphereCast
-      // (collider.js:647) returns Infinity ONLY on a clear sweep and a
+      // (collider.js:663) returns Infinity ONLY on a clear sweep and a
       // finite dist (0 on a start-overlap) for any hit, which is
       // exactly Unity's boolean. One accepted deviation: Unity's
       // SphereCast ignores colliders overlapping the START sphere, so a
@@ -1336,7 +1336,7 @@ export class PlayerMotor {
     // next FixedUpdate (PlayerMotor.cs:278) out of the collisionFlags
     // ClimbingMotor.cs:767 writes after its own controller.Move, so the
     // collider's LIVE grounded written above IS DFU's answer, one step
-    // lagged on both sides (the SWIM branch is the one that latches: Player-Arc.md:1866).
+    // lagged on both sides (the SWIM branch is the one that latches: Player-Arc.md:1877).
     this.standing = this.grounded;   // PlayerMotor.cs:325 - moveDirection zeroed, so :113-125 collapses to grounded
     this.movingLessThanHalfSpeed = this.grounded
       ? true

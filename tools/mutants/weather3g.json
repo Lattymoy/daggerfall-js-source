@@ -10,7 +10,7 @@
  {"name": "WEATHER3g-cells-not-rigid", "file": "src/systems/weatherMap.js",
   "old": "  return [host.bornX + px * speed + (b.ox ?? 0), host.bornZ + pz * speed + (b.oz ?? 0)];", "new": "  return [host.bornX + px * speed, host.bornZ + pz * speed];", "tests": ["test/weather3g_fronts.test.js"]},
  {"name": "WEATHER3g-cells-ignore-land", "file": "src/systems/weatherMap.js",
-  "old": "    if (!law || keep * ceiling >= law.weight[type] * diurnal(type, hour, season)) continue;\n    out.push(Object.freeze({\n      type, id: `${front.id}/${i}`,", "new": "    if (!law) continue;\n    out.push(Object.freeze({\n      type, id: `${front.id}/${i}`,", "tests": ["test/weather3g_fronts.test.js", "test/weather3a_weathermap.test.js"]},
+  "old": "    if (!law || keep * ceiling >= law.weight[type] * diurnal(type, hour, season)) continue;\n    const shape = shapeOf(type, u1, u2, u3, u4, u5, u6);\n    out.push(Object.freeze({\n      type, id: `${front.id}/${i}`,", "new": "    if (!law) continue;\n    const shape = shapeOf(type, u1, u2, u3, u4, u5, u6);\n    out.push(Object.freeze({\n      type, id: `${front.id}/${i}`,", "tests": ["test/weather3g_fronts.test.js", "test/weather3a_weathermap.test.js"]},
  {"name": "WEATHER3g-front-covers-only-rain", "file": "src/systems/weatherMap.js",
   "old": "      const nu = core[type] + mu[cell];", "new": "      const nu = core[type];", "tests": ["test/weather3a_weathermap.test.js"]},
  {"name": "WEATHER3g-cells-linear", "file": "src/systems/weatherMap.js",

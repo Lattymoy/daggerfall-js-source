@@ -313,8 +313,8 @@
   {
     "name": "QS6-F4-the-cell-lamp-is-not-in-the-blocks-signature-so-it-never-goes-out",
     "file": "src/ui/enhancedHud.js",
-    "old": "    quickslotCycling() ?? '',\n  ].join('~');",
-    "new": "  ].join('~');",
+    "old": "    quickslotCycling() ?? '',\n",
+    "new": "",
     "tests": [
       "test/qs3_hud.test.js"
     ]

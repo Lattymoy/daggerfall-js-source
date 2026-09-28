@@ -119,8 +119,8 @@
   {
     "name": "vol-core-does-not-bloom",
     "file": "src/render/airPass.js",
-    "old": "  vec3 c = airDecode(texture(uFrame, uv).rgb)${glow ? ' + airDecode(texture(uVol, vUV).rgb)' : ''};",
-    "new": "  vec3 c = airDecode(texture(uFrame, uv).rgb);",
+    "old": "  vec3 glow = vec3(0.0)${glow ? ' + airDecode(texture(uVol, vUV).rgb)' : ''};",
+    "new": "  vec3 glow = vec3(0.0);",
     "tests": [
       "test/vol1_glow.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "vol-gate-blind-to-fresh",
     "file": "src/render/renderer.js",
-    "old": "  _airGlows() { return !!this._air && this._air.fresh && this._volumetricsWanted !== false",
-    "new": "  _airGlows() { return !!this._air && this._volumetricsWanted !== false",
+    "old": "  _airGlows() { return !!this._air && !!this._air.programs.vol && this._air.fresh && this._volumetricsWanted !== false",
+    "new": "  _airGlows() { return !!this._air && !!this._air.programs.vol && this._volumetricsWanted !== false",
     "tests": [
       "test/vol1_glow.test.js"
     ]

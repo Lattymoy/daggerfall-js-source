@@ -90,6 +90,14 @@ export const isDiseasePermanent = (data) => data.daysOfSymptomsMin === PERMANENT
  *  the health status box once incubation is over - that UI pends. */
 export const contractedMessageRecord = (diseaseType) => 100 + diseaseType;
 
+/** UI3: each disease's name, as its own contracted message says it (TEXT.RSC 100-116: "You have contracted Witches'
+ *  Pox.", "...the Plague, a very serious...") - the name the Status box tells a player once incubation is over, and so
+ *  the one the HUD's status widget may show from then (ui/hudStatus.js). Indexed by Diseases id. */
+export const DISEASE_NAMES = Object.freeze([
+  "Witches' Pox", 'Plague', 'Yellow Fever', 'Stomach Rot', 'Consumption', 'Brain Fever', 'Swamp Rot', "Caliron's Curse",
+  'Cholera', 'Leprosy', 'Wound Rot', 'Red Death', 'Blood Rot', 'Typhoid Fever', 'Dementia', 'Chrondiasis', 'Wizard Fever',
+]);
+
 /** TextManager "youFeelSomewhatBad" - the daily-tick HUD alert. */
 export const YOU_FEEL_SOMEWHAT_BAD = 'You feel somewhat bad.';
 

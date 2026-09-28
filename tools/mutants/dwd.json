@@ -92,8 +92,8 @@
   {
     "name": "DW-D-shore-exit-ignores-the-load-grace",
     "file": "src/scenes/deepWatersPlayer.js",
-    "old": "swimCheckY(centreOf(p)) >= oceanY - 0.75 && !f.loadGrace && d.swimming",
-    "new": "swimCheckY(centreOf(p)) >= oceanY - 0.75 && d.swimming",
+    "old": "|| heldUnder(p)) && !f.loadGrace && d.swimming",
+    "new": "|| heldUnder(p)) && d.swimming",
     "tests": [
       "test/dwd_swim.test.js"
     ]

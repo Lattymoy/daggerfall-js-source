@@ -142,6 +142,28 @@ export function surfaceHeightAt(heightmapData, lx, lz, stride = 1) {
 }
 
 /**
+ * NATURE-GROUND (2026-09-26, Ilvi on the Discord: "I encountered a lot of
+ * floating sprites across Illiac Bay"): HOW FAR THE DRAWN GROUND AT
+ * (lx, lz) LIES OFF A LOCATION'S PLANE - up (+) or down (-). A location
+ * stands on the pixel's average height (world.js `locLocal`), and
+ * blendLocationTerrain writes that average only inside the location's
+ * rect: the band outside it, out to the pixel's edge, is only EASED
+ * toward it. A tree or a bush the block lays in that band stood on the
+ * plane, over ground that falls away or rises through it.
+ *
+ * The plane is read the way the rect holds it - the average as the
+ * Float32 sample it was written as - so inside the rect this answers
+ * exactly 0 and nothing there moves.
+ * @param {Float32Array} heightmapData the pixel's blended samples
+ * @param {number} avg the normalized average the blend flattened to
+ * @param {number} lx pixel-local x
+ * @param {number} lz pixel-local z
+ */
+export function groundOffPlane(heightmapData, avg, lx, lz) {
+  return surfaceHeightAt(heightmapData, lx, lz) - Math.fround(avg) * (MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE);
+}
+
+/**
  * Build the height grid for one pixel: positions + normals over the
  * 129x129 samples, pixel-local frame (x/z in [0, 819.2]).
  *

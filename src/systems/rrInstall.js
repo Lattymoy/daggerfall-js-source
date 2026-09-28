@@ -6,7 +6,7 @@
 // port writes at install (the Features row says "when the game next
 // loads"). The laws themselves are systems/rrRealism.js; this module is
 // the one that imports the seams they hang on.
-import { registerFormulaOverride, formulaOverride, maxEncumbrance } from '../combat/formulas.js';
+import { registerFormulaOverride, formulaOverride, entityMaxEncumbrance } from '../combat/formulas.js';
 import { registerClimbingChanceOverride } from '../player/climbing.js';
 import { currentWeaponPose } from '../combat/playerWeapon.js';
 import { WEAPON_TYPES } from '../combat/fpsWeapon.js';
@@ -21,8 +21,8 @@ import { ENEMY_BASICS } from '../characters/enemyBasics.js';
 import { setUnderworldRule, setGuildExpelledHook } from './guilds.js';
 import { registerMerchantService } from './guildServices.js';
 import { carriedWeight } from './inventory.js';
-import { liveStat, maxFatigue } from './statMods.js';
-import { equipTableOf, EQUIP_SLOTS, lowerCondition } from './equip.js';
+import { liveStat, maxFatigue, FATIGUE_DRAIN_SCALE } from './statMods.js';
+import { equipTableOf, EQUIP_SLOTS, lowerCondition, blowWear } from './equip.js';
 import { getItemHands, ITEM_HANDS } from '../characters/equipTable.js';
 import { rriAnimTimeOverride } from './rriKits.js';
 import { rriModule } from './rriItems.js';
@@ -75,9 +75,17 @@ export function installRoleplayRealism() {
   registerMagicRoundHook('roleplay-realism-encumbrance', (entity, { sinks } = {}) => {
     const e = encumbranceOf(entity);
     if (!e) return;
-    // DecreaseFatigue(fatigueEffect, false): raw units, no multiplier; SetFatigue clamps
-    if (sinks?.drainFatigue && e.fatigueEffect > 0) sinks.drainFatigue(e.fatigueEffect);
-    else entity.fatigue = Math.min(maxFatigue(entity), Math.max(0, (entity.fatigue ?? 0) - e.fatigueEffect));   // AUDIT-RR F8: SetFatigue's two clamps (DaggerfallEntity.cs:350-360)
+    // DecreaseFatigue(fatigueEffect, false): raw units, no multiplier; SetFatigue clamps. BALANCE1: an overload's
+    // drain is exertion, on the port's scale (statMods FATIGUE_DRAIN_SCALE). AUDIT (pre-merge 0927b) F2: the fraction is
+    // CARRIED - the effect is 1 a minute at 76% load, and truncating 0.75 made a light overload free (2 -> 1, 3 -> 2)
+    let cost = e.fatigueEffect;
+    if (cost > 0) {
+      const owed = cost * FATIGUE_DRAIN_SCALE + (entity._rrFatigueCarry ?? 0);
+      cost = Math.floor(owed + 1e-9);   // the epsilon: a scale that is not a binary fraction (0.6, 0.7) leaves 0.9999... and lost a point in five
+      entity._rrFatigueCarry = Math.max(0, owed - cost);   // transient, as the running tally's is: never saved, at most a point
+    }
+    if (sinks?.drainFatigue && cost > 0) sinks.drainFatigue(cost);
+    else entity.fatigue = Math.min(maxFatigue(entity), Math.max(0, (entity.fatigue ?? 0) - cost));   // AUDIT-RR F8: SetFatigue's two clamps (DaggerfallEntity.cs:350-360)
   });
   registerEntityFold('roleplay-realism-encumbrance', (entity) => {
     const e = encumbranceOf(entity);
@@ -124,8 +132,8 @@ export function installRoleplayRealism() {
   registerFormulaOverride('calculateWeaponToHit', (weapon) => (rrModule('weaponMaterials') ? rrWeaponToHit(weapon) : undefined));
 
   // equipDamage (:182-185): ApplyConditionDamageThroughPhysicalHit
-  registerFormulaOverride('applyConditionDamageThroughPhysicalHit', (item, owner, damage, { say = null } = {}) =>
-    (rrModule('equipDamage') ? rrConditionDamageThroughPhysicalHit(item, damage, (it, amount) => lowerCondition(it, amount, owner, say)) : false));
+  registerFormulaOverride('applyConditionDamageThroughPhysicalHit', (item, owner, damage, { say = null, rolls = Math.random } = {}) =>
+    (rrModule('equipDamage') ? rrConditionDamageThroughPhysicalHit(item, damage, (it, amount) => lowerCondition(it, blowWear(amount, rolls), owner, say)) : false));   // BALANCE1: a blow's wear on the port's scale
 
   // enemyAppearance (:186-189): EnemyBasics written at Awake - here at install, while the switch is on
   if (rrModule('enemyAppearance')) applyEnemyAppearance(ENEMY_BASICS);
@@ -173,14 +181,17 @@ export function installRoleplayRealism() {
 }
 
 /** EncumbranceEffects_OnNewMagicRound's reads (RoleplayRealism.cs:582-590):
- *  CarriedWeight / MaxEncumbrance (live strength x 1.5), LiveSpeed,
+ *  CarriedWeight / MaxEncumbrance, LiveSpeed,
  *  PermanentSpeed, CurrentFatigue - under the guards the port can answer
  *  (not resting, alive; a paused game or a fade runs no round here). */
 function encumbranceOf(entity) {
   if (!rrModule('encumbranceEffects') || !entity?.isPlayer || !entity?.stats || entity.isResting || !((entity.health ?? 0) > 0) || syntheticTimeIncrease()) return null;   // AUDIT-RR2 G20: `!EntityEffectBroker.SyntheticTimeIncrease` (:587) - a fast travel's catch-up rounds drain nothing   // AUDIT-RR F5: the C# reads GameManager.Instance.PlayerEntity alone (:582) - a foe's loot is not its burden
   return rrEncumbranceEffect({
     carriedWeight: carriedWeight(entity),
-    maxEncumbrance: maxEncumbrance(liveStat(entity, 'strength')),
+    // ENC-CEIL (2026-09-27): `playerEntity.MaxEncumbrance` (:590) is the PROPERTY - GetMaxEncumbrance, live strength
+    // x1.5 plus IncreasedWeightAllowance's share (DaggerfallEntity.cs:272, :501-507) - the pack's own ceiling, not the
+    // bare formula: a player carrying 502 was penalised in full past 105
+    maxEncumbrance: entityMaxEncumbrance(entity),
     liveSpeed: liveStat(entity, 'speed'),
     permanentSpeed: entity.stats.speed ?? 50,
     currentFatigue: entity.fatigue ?? 0,

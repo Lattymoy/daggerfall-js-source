@@ -1,0 +1,38 @@
+[
+  {
+    "name": "ROGUEIMP-the-marker-a-centre",
+    "file": "src/scenes/worldModes.js",
+    "old": "        gender, questBehaviour: behaviour, feetGiven: true,\n",
+    "new": "        gender, questBehaviour: behaviour,\n",
+    "tests": [
+      "test/rogueimp.test.js"
+    ]
+  },
+  {
+    "name": "ROGUEIMP-no-lift",
+    "file": "src/scenes/worldModes.js",
+    "old": "interiorCtx.parentPt(position.x, position.y + INTERIOR_MARKER_FEET_LIFT, position.z)",
+    "new": "interiorCtx.parentPt(position.x, position.y, position.z)",
+    "tests": [
+      "test/rogueimp.test.js"
+    ]
+  },
+  {
+    "name": "ROGUEIMP-the-lift-zero",
+    "file": "src/scenes/worldModes.js",
+    "old": "export const INTERIOR_MARKER_FEET_LIFT = 0.1;",
+    "new": "export const INTERIOR_MARKER_FEET_LIFT = 0;",
+    "tests": [
+      "test/rogueimp.test.js"
+    ]
+  },
+  {
+    "name": "ROGUEIMP-feet-still-dropped",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      } else if (behaviour === 'Flying' && !feetGiven) pending.feet[1] -= idleH / 2 + 0.1;",
+    "new": "      } else if (behaviour === 'Flying') pending.feet[1] -= idleH / 2 + 0.1;",
+    "tests": [
+      "test/rogueimp.test.js"
+    ]
+  }
+]

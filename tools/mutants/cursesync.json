@@ -1,0 +1,93 @@
+[
+  {
+    "name": "CS-world-quest-another",
+    "file": "src/scenes/questFoeHost.js",
+    "old": "export const WORLD_QUESTS = Object.freeze(['S0000977']);",
+    "new": "export const WORLD_QUESTS = Object.freeze(['S0000976']);",
+    "tests": ["test/cursesync.test.js"]
+  },
+  {
+    "name": "CS-private-ignores-the-world",
+    "file": "src/scenes/questFoeHost.js",
+    "old": "export const isPrivateQuestFoe = (f) => !!f?.questBehaviour && !isWorldQuestFoe(f);",
+    "new": "export const isPrivateQuestFoe = (f) => !!f?.questBehaviour;",
+    "tests": ["test/cursesync.test.js"]
+  },
+  {
+    "name": "CS-name-test-case-sensitive",
+    "file": "src/systems/quest/machine.js",
+    "old": "return list.some((x) => x.toLowerCase() === n); };",
+    "new": "return list.some((x) => x === n); };",
+    "tests": ["test/cursesync.test.js"]
+  },
+  {
+    "name": "CS-protected-case-sensitive",
+    "file": "src/systems/quest/machine.js",
+    "old": "const isProtectedQuest = (quest) => questNameIn(PROTECTED_QUESTS, quest.questName);",
+    "new": "const isProtectedQuest = (quest) => PROTECTED_QUESTS.includes(quest.questName);",
+    "tests": ["test/cursesync.test.js"]
+  },
+  {
+    "name": "CS-world-answer-forgotten",
+    "file": "src/scenes/questFoeHost.js",
+    "old": "    w = questNameIn(WORLD_QUESTS, n);\n    _worldOf.set(b, w);",
+    "new": "    w = questNameIn(WORLD_QUESTS, n);",
+    "tests": ["test/cursesync.test.js"]
+  },
+  {
+    "name": "CS-unknown-held-private",
+    "file": "src/scenes/questFoeHost.js",
+    "old": "    if (n == null) return false;",
+    "new": "    if (n == null) { _worldOf.set(b, false); return false; }",
+    "tests": ["test/cursesync.test.js"]
+  },
+  {
+    "name": "CS-start-quest-number-misnamed",
+    "file": "src/systems/quest/actions.js",
+    "old": "this.questName = `S${String(this.questIndex1).padStart(7, '0')}`;",
+    "new": "this.questName = `S${String(this.questIndex1).padStart(6, '0')}`;",
+    "tests": ["test/cursesync.test.js"]
+  },
+  {
+    "name": "CS-name-no-uid-fallback",
+    "file": "src/scenes/questFoeHost.js",
+    "old": "  const quest = b.targetQuest ?? b.machine?.getQuest?.(b.questUID) ?? null;",
+    "new": "  const quest = b.targetQuest ?? null;",
+    "tests": ["test/cursesync.test.js"]
+  },
+  {
+    "name": "CS-stream-any-quest-private",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "  const _questLike = (f) => !!f && (isPrivateQuestFoe(f) || !!f._keptTag);",
+    "new": "  const _questLike = (f) => !!f && (!!f.isQuestFoe || !!f._keptTag);",
+    "tests": ["test/cursesync.test.js"]
+  },
+  {
+    "name": "CS-shared-foe-any-quest-private",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "&& (!!f.puppet || ((!isPrivateQuestFoe(f) || !!_qTag(f)) && !(f.placed && !f.site)));",
+    "new": "&& (!!f.puppet || ((!f.isQuestFoe || !!_qTag(f)) && !(f.placed && !f.site)));",
+    "tests": ["test/cursesync.test.js"]
+  },
+  {
+    "name": "CS-party-word-of-any-quest",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "  const _qTag = (f) => (!f || f.puppet ? null : isPrivateQuestFoe(f) ? (_questShare?.tagOf?.(f) ?? null) : (f._keptTag ?? null));",
+    "new": "  const _qTag = (f) => (!f || f.puppet ? null : f.isQuestFoe ? (_questShare?.tagOf?.(f) ?? null) : (f._keptTag ?? null));",
+    "tests": ["test/cursesync.test.js"]
+  },
+  {
+    "name": "CS-cell-heir-party-only",
+    "file": "src/scenes/world.js",
+    "old": "if (f.entity?.team === 'PlayerAlly' || f.managed) return null; const at = f.ai?.feet; if (!at) return null; let id = null, best = Infinity; for (const q of near) { if ((isPrivateQuestFoe(f) || f._keptTag)",
+    "new": "if (f.entity?.team === 'PlayerAlly' || f.managed) return null; const at = f.ai?.feet; if (!at) return null; let id = null, best = Infinity; for (const q of near) { if ((f.isQuestFoe || f._keptTag)",
+    "tests": ["test/cursesync.test.js"]
+  },
+  {
+    "name": "CS-room-heir-party-only",
+    "file": "src/scenes/world.js",
+    "old": "if (f.entity?.team === 'PlayerAlly') return null; const at = f.ai?.feet; if (!at) return null; let id = null, best = Infinity; for (const q of near) { if ((isPrivateQuestFoe(f) || f._keptTag)",
+    "new": "if (f.entity?.team === 'PlayerAlly') return null; const at = f.ai?.feet; if (!at) return null; let id = null, best = Infinity; for (const q of near) { if ((f.isQuestFoe || f._keptTag)",
+    "tests": ["test/cursesync.test.js"]
+  }
+]

@@ -14,8 +14,9 @@
 > next slices. This page is the co-op design the arc grows into; where
 > the two disagree, the arc is what runs.
 
-Co-op for Daggerfall Enhanced (BR1; the page was written while the
-public name was Daggerfall JavaScript). Locked with Mac on 2026-09-01
+Co-op for Daggerfall Online (BR4; the page was written while the
+public name was Daggerfall JavaScript, and BR1 renamed it Daggerfall
+Enhanced). Locked with Mac on 2026-09-01
 after a survey of what the port actually has; the three decisions below
 are his, the reasoning under each is why they are the version that
 ships.
@@ -46,7 +47,7 @@ and not by anyone's save.
 Each player's quest state, dialogue state, travel map and history are
 their own. You walk together; the story you are in is yours.
 
-Why: the save envelope (`systems/save.js:789`) already splits the world
+Why: the save envelope (`systems/save.js:800`) already splits the world
 from the player - `position, pose, classicMinutes, world, locationKey`
 on one side; `quest, talk, travelMap, escortingFaces, interior` on the
 other. That line IS the replication boundary. A shared campaign would
@@ -59,6 +60,16 @@ copy of the target, and a quest NPC one player has already dealt with
 may still stand for the other. That is Borderlands' rule and it is the
 rule here.
 
+**The one exception - QUEST-PARTY (2026-09-26, Mac: "Party shares them"): the FOES of a quest the party SHARED.** A
+shared quest is still a copy each (QUEST1) and the quest engine is still untouched; but its foes ride the party's
+stream. The member who shared it stands them while near, the party sees and fights the same ones, each member's copy
+counts the injuries and the kills it sees, and no one outside the party sees them, strikes them or is hunted by them.
+In the open air, in a building and in a dungeon, and a host who leaves hands them to the party (phases 1-3 - a quest
+marker's foe stands once for the party).
+`06-Systems/Online-Arc.md` (QUEST-PARTY).
+
+**And a world quest's - CURSE-SYNC (2026-09-27).** S0000977, the Curse of Daggerfall, is no player's story: every character runs it and no task counts its foes, so the ghosts and wraiths it stands in Daggerfall's streets at night ride the cell as an encounter's do - everyone sees them, strikes them and is hunted by them. `06-Systems/Online-Arc.md` (CURSE-SYNC).
+
 ### 2. The host's browser is the server
 
 One player hosts. Their browser runs the world - enemies, time,
@@ -68,7 +79,7 @@ introduces peers and relays bytes; it runs no game.
 
 Why, and this is the constraint that decides everything: **lockstep is
 impossible here.** The frame loop is `requestAnimationFrame` with a
-variable `dt` (`scenes/world.js:10096`) and 110 source files call
+variable `dt` (`scenes/world.js:10293`) and 110 source files call
 `Math.random` unseeded. Two clients cannot simulate the same world in
 parallel and agree, and making them able to would mean a fixed-step
 deterministic rewrite of the simulation. So one authority owns the

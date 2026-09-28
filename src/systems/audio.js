@@ -57,6 +57,11 @@ export function placeAudio(pan, p) {
 /** The panning model every positional source takes (see AudioEngine._panner). */
 export const PANNING_MODEL = 'HRTF';
 
+/** PEERFX1: one observer of every one-shot (index, volume) - the online layer hears "a blow landed on me" here
+ *  (net/peerFx.js isHurtClip). Null offline. */
+let _oneShotObserver = null;
+export function setOneShotObserver(fn) { _oneShotObserver = typeof fn === 'function' ? fn : null; }
+
 export class AudioEngine {
   constructor() {
     this.ctx = null;
@@ -378,6 +383,7 @@ export class AudioEngine {
   }
 
   playOneShot(index, volume = 1, pitch = 1) {
+    if (_oneShotObserver) { try { _oneShotObserver(index, volume); } catch { /* an observer never stops a sound */ } }   // PEERFX1
     return this._oneShotHandle(index, volume, pitch)?.duration;
   }
 

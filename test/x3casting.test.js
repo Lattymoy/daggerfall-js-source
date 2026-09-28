@@ -102,7 +102,7 @@ test('x3 wiring: the pool spawns casters, the decision drives the shared executo
   // MT-ii: the decision aims at the SELECTED target, and reads that
   // target's own entity - a foe duelling another foe no longer picks
   // its school off the player's effects, nor releases at them.
-  assert.ok(xf.includes('f.caster.update(dt, f.ai, f.attack, _tgt, _castTargetEntity);'), 'the decision rides beside the attack machine');   // AUDIT WORLD6b-iii(a) C10: anchored at the call's end - a sixth argument would read as playerEntity
+  assert.ok(xf.includes('f.caster.update(foeFrameDt(dt), f.ai, f.attack, _tgt, _castTargetEntity);'), 'the decision rides beside the attack machine (AUDIT pre-merge P5: on its capped clock)');   // AUDIT WORLD6b-iii(a) C10: anchored at the call's end - a sixth argument would read as playerEntity
   assert.ok(xf.includes('if (dec) castSpellFrom(f, dec.spell, playerFeet, false, { aimAt: castAimAt(f, playerFeet) });'), 'and releases through the ONE executor, AT the target');   // WORLD6b-iii: a peer target aims the missile at the peer
   // wave 30: the deps of that executor are bound ONCE for this pool - the
   // decision and the spider/scorpion paralyze rider share the binding.

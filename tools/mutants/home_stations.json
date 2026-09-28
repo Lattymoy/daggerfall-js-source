@@ -1,0 +1,128 @@
+[
+  {
+    "name": "HOME-STATIONS-any-word-taken",
+    "file": "src/net/decorLaw.js",
+    "old": "  if (station !== null && (!DECOR_STATIONS.includes(station) || storage)) return null;",
+    "new": "  if (station !== null && storage) return null;",
+    "tests": [
+      "test/homestations.test.js"
+    ]
+  },
+  {
+    "name": "HOME-STATIONS-holds-and-serves",
+    "file": "src/net/decorLaw.js",
+    "old": "  if (station !== null && (!DECOR_STATIONS.includes(station) || storage)) return null;",
+    "new": "  if (station !== null && !DECOR_STATIONS.includes(station)) return null;",
+    "tests": [
+      "test/homestations.test.js"
+    ]
+  },
+  {
+    "name": "HOME-STATIONS-key-always-written",
+    "file": "src/net/decorLaw.js",
+    "old": "storage, paid, ...(station ? { station } : {}) };",
+    "new": "storage, paid, station };",
+    "tests": [
+      "test/homestations.test.js"
+    ]
+  },
+  {
+    "name": "HOME-STATIONS-own-item-serves",
+    "file": "src/net/decorLaw.js",
+    "old": "(place.paid !== 0 || place.storage || place.station))) return null;",
+    "new": "(place.paid !== 0 || place.storage))) return null;",
+    "tests": [
+      "test/homestations.test.js"
+    ]
+  },
+  {
+    "name": "HOME-STATIONS-licence-unpaid",
+    "file": "src/scenes/decorTool.js",
+    "old": "    if (fee > 0) deps.wallet().pay(fee);\n",
+    "new": "",
+    "tests": [
+      "test/homestations.test.js"
+    ]
+  },
+  {
+    "name": "HOME-STATIONS-paid-short",
+    "file": "src/scenes/decorTool.js",
+    "old": "    if (fee > (deps.wallet?.().gold ?? 0)) { deps.say?.(decorStationGoldLine(want)); return false; }\n",
+    "new": "",
+    "tests": [
+      "test/homestations.test.js"
+    ]
+  },
+  {
+    "name": "HOME-STATIONS-paid-for-a-dropped-craft",
+    "file": "src/scenes/decorTool.js",
+    "old": "    if ((stood.station ?? null) !== want) { deps.say?.(DECOR_STATION_UNKEPT); return false; }",
+    "new": "    if (false) { deps.say?.(DECOR_STATION_UNKEPT); return false; }",
+    "tests": [
+      "test/homestations.test.js"
+    ]
+  },
+  {
+    "name": "HOME-STATIONS-refund-on-unmaking",
+    "file": "src/scenes/decorTool.js",
+    "old": "    if (fee > 0) deps.wallet().pay(fee);",
+    "new": "    if (fee > 0) deps.wallet().pay(fee); else deps.wallet().credit?.(DECOR_STATION_FEES[piece.station] / 2);",
+    "tests": [
+      "test/homestations.test.js"
+    ]
+  },
+  {
+    "name": "HOME-STATIONS-station-holds-things",
+    "file": "src/ui/decorPanel.js",
+    "old": "(it.piece.storage && it.holds) || !!it.piece.station;",
+    "new": "(it.piece.storage && it.holds);",
+    "tests": [
+      "test/homestations.test.js"
+    ]
+  },
+  {
+    "name": "HOME-STATIONS-storage-made-a-station",
+    "file": "src/ui/decorPanel.js",
+    "old": "    stationPick.disabled = !it || !!it.piece.item || it.piece.storage;",
+    "new": "    stationPick.disabled = !it;",
+    "tests": [
+      "test/homestations.test.js"
+    ]
+  },
+  {
+    "name": "HOME-STATIONS-chooser-stuck",
+    "file": "src/ui/decorPanel.js",
+    "old": "stationOffer = DECOR_STATIONS[(DECOR_STATIONS.indexOf(stationOffer) + 1) % DECOR_STATIONS.length];",
+    "new": "stationOffer = DECOR_STATIONS[0];",
+    "tests": [
+      "test/homestations.test.js"
+    ]
+  },
+  {
+    "name": "HOME-STATIONS-never-pressed",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (piece?.station) { useDecorStation(piece); return; }   // HOME-STATIONS\n",
+    "new": "",
+    "tests": [
+      "test/homestations.test.js"
+    ]
+  },
+  {
+    "name": "HOME-STATIONS-any-visitor-served",
+    "file": "src/scenes/worldModes.js",
+    "old": "  function useDecorStation(piece) {\n    if (!decorOwnerHere()) {",
+    "new": "  function useDecorStation(piece) {\n    if (false) {",
+    "tests": [
+      "test/homestations.test.js"
+    ]
+  },
+  {
+    "name": "HOME-STATIONS-service-drops-the-craft",
+    "file": "server-account/src/decor.js",
+    "old": "JSON.stringify({ pos, rot, scale, light, storage, paid, ...(station ? { station } : {}) });",
+    "new": "JSON.stringify({ pos, rot, scale, light, storage, paid });",
+    "tests": [
+      "test/homestations.test.js"
+    ]
+  }
+]

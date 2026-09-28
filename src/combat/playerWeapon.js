@@ -75,10 +75,10 @@ export const INTERIM_WEAPON = Object.freeze({
  * The verbatim hit rule against one foe. `inView` and `losClear` are
  * provided by the caller (projection + collider live scene-side).
  */
-/** WeaponManager.cs:343 - Random.Range((int)UpRight, (int)DownRight + 1)
- *  over MouseDirections {None, UpLeft, Up, UpRight, Left, Right,
- *  DownLeft, Down, DownRight}: indices 3..8. */
-export const CLICK_ATTACK_DIRECTIONS = Object.freeze(['UpRight', 'Left', 'Right', 'DownLeft', 'Down', 'DownRight']);
+// WeaponManager.cs:343's click draw lives in characters/weaponStates.js beside the gesture's own ways (AUDIT
+// TOUCH-BUTTONS A7: the touch Attack button draws from it too, and the door's menu reads that module)
+import { CLICK_ATTACK_DIRECTIONS } from '../characters/weaponStates.js';
+export { CLICK_ATTACK_DIRECTIONS };
 
 export function playerMeleeCanHit(dist, inView, losClear) {
   return dist <= WEAPON_REACH && inView && losClear;
@@ -301,6 +301,21 @@ export class PlayerWeapon {
     }
     this.currentRightHandWeapon = rightHandItem ?? null;
     this.currentLeftHandWeapon = left;
+  }
+
+  /**
+   * MW-HAND (2026-09-26, Mac: "Weapons when swapped into left hand dont work showing fists - id say remove the ability
+   * when in morrowind since its not visible"; asked, "Never on an empty hand"): THE MORROWIND LANE'S DEPARTURE. DFU
+   * lets the hand in use be an empty one - H to a bare left hand is how a classic player fights with fists, and the
+   * sprite shows which hand is up. The Morrowind arm draws one weapon and no second hand, so there a weapon in the
+   * hand not in use was a weapon that would not show, over fists. In that lane (the rig calls this only while the arm
+   * is built) the hand in use follows the weapons: an empty hand gives way to the other when it holds one.
+   * @returns true when the hand moved.
+   */
+  followHeldHand() {
+    if (this.usingRightHand && !this.currentRightHandWeapon && this.currentLeftHandWeapon) { this.usingRightHand = false; return true; }
+    if (!this.usingRightHand && !this.currentLeftHandWeapon && this.currentRightHandWeapon) { this.usingRightHand = true; return true; }
+    return false;
   }
 
   /**
@@ -614,6 +629,7 @@ export class PlayerWeapon {
     const strike = (foe) => {
       const damage = calculateAttackDamage(playerCombat, foe.entity, {
         ...playerAttackOptions(this.strikingWeapon, this.machine.state, backstabOf(foe), rolls), say,   // DISC10-E L2: the hand's item, never the claws marker
+        unaware: foeUnaware(foe),   // SET2: the foe had not noticed me - read here, where its AI is in hand
         // C2-slice (AUDIT 23 combat-11): the PLAYER's poisoned blade
         // infects ITS victim - the formulas clear the weapon's poison
         // either way, so without this hook the dose vanished unspent.
@@ -652,6 +668,13 @@ export class PlayerWeapon {
  *  onto chanceToHitMod, damage INTO the damage call (before the
  *  skeletal rules and the <1 floor) - not post-hoc. Backstab rides
  *  its own: chance onto chanceToHitMod, x3 roll AFTER the damage. */
+/** SET2 (Nocturnal's Shroud's Nightfall Strike, bible/11-Multiplayer/Sigil-Sets.md): has this foe NOT noticed the
+ *  player - its AI's own `detected` (characters/enemyMotor.js: sight, earshot and stealth, vetoed by the illusion
+ *  effects) is false. Read where the foe RECORD is in hand (the swing here, the arrow in arrowFlight.js): the formula is
+ *  handed the entity, which knows nothing of its AI. A PUPPET (a foe another player's machine runs) is never unaware
+ *  here - its AI is its owner's, and what this machine holds of it is not a word about whether it saw me. */
+export const foeUnaware = (foe) => !!foe?.ai && !foe.puppet && foe.ai.detected === false;
+
 export function playerAttackOptions(weapon, machineState, backstabChance = 0, rolls = Math.random) {
   const swing = SWING_MODS[machineState] ?? { damage: 0, toHit: 0 };
   return { weapon, damageMod: swing.damage, toHitMod: swing.toHit, backstabChance, rolls };

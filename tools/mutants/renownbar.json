@@ -1,0 +1,69 @@
+[
+  {
+    "name": "UI3-the-words-gone-from-the-bar",
+    "file": "src/ui/enhancedHud.js",
+    "old": "  renownTrack.append(renownFill, renownGhost, renownNum);\n",
+    "new": "  renownTrack.append(renownFill, renownGhost);\n",
+    "tests": [
+      "test/renownbar.test.js",
+      "test/renown4.test.js"
+    ]
+  },
+  {
+    "name": "UI3-the-words-stale",
+    "file": "src/ui/enhancedHud.js",
+    "old": "    put(parts.renownNum, 'renownT', rv.text);   // UI3: the XP in the bar\n",
+    "new": "",
+    "tests": [
+      "test/renownbar.test.js",
+      "test/renown4.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN-BAR-the-mirror-column-dropped",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".hud-renown.on { display: grid; grid-template-columns: 36px minmax(0, 1fr) 36px; }",
+    "new": ".hud-renown.on { display: grid; grid-template-columns: 36px minmax(0, 1fr); }",
+    "tests": [
+      "test/renownbar.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN-BAR-the-row-a-flex-again",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".hud-renown.on { display: grid;",
+    "new": ".hud-renown.on { display: flex;",
+    "tests": [
+      "test/renownbar.test.js",
+      "test/renown4.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN-BAR-the-columns-narrower-than-the-box",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "grid-template-columns: 36px minmax(0, 1fr) 36px; }",
+    "new": "grid-template-columns: 30px minmax(0, 1fr) 30px; }",
+    "tests": [
+      "test/renownbar.test.js"
+    ]
+  },
+  {
+    "name": "UI3-the-bar-thin-again",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".hud-renown .hud-renowntrack { width: auto; height: 20px;",
+    "new": ".hud-renown .hud-renowntrack { width: auto; height: 8px;",
+    "tests": [
+      "test/renownbar.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN-BAR-the-profile-row-loses-its-numbers",
+    "file": "src/ui/enhancedAccount.js",
+    "old": " - Renown ${t.level}, ${renownProgressText(t.xp)}`);",
+    "new": " - Renown ${t.level}`);",
+    "tests": [
+      "test/renownbar.test.js",
+      "test/renown1.test.js"
+    ]
+  }
+]

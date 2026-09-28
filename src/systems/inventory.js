@@ -239,7 +239,10 @@ export function stacksWith(a, b) {
     (a.material ?? 0) === (b.material ?? 0) &&
     (a.message ?? 0) === (b.message ?? 0) &&
     (a.potionRecipeKey ?? 0) === (b.potionRecipeKey ?? 0) &&
-    (a.timeForItemToDisappear ?? 0) === (b.timeForItemToDisappear ?? 0);
+    (a.timeForItemToDisappear ?? 0) === (b.timeForItemToDisappear ?? 0) &&
+    // AUDIT MERGE-PLUS C4 (LOCK1 - the port's own field, Ledger A): a locked stack merges only with a locked one. Thirty
+    // locked arrows stowed in a wagon holding five came out as thirty-five unlocked, and dropped.
+    (a.locked === true) === (b.locked === true);
 }
 
 /** ItemCollection.AddItem (ItemCollection.cs:217-252): merge into an
@@ -337,6 +340,8 @@ export function splitStack(list, stack, numberToPick, { rolls = Math.random } = 
     message: stack.group === 'Paintings' ? rollPaintingMessage(rolls) : 0,
     stackCount: numberToPick,
   });
+  if (stack.locked === true) picked.locked = true;   // AUDIT MERGE-PLUS C4: the part split off keeps the stack's lock
+  if (stack.bound === true) picked.bound = true;   // AUDIT SS: and its binding (systems/itemBound.js) - never the Broker's price, which a dismantle pays out of
   list.push(picked);                              // AddItem(noStack: true)
   stack.stackCount = count - numberToPick;
   return picked;

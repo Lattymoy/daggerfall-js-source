@@ -89,6 +89,26 @@ export function matchTimeValue(text) {
  *  when it comes back - the character off the world, a window held) and is forgiven. Offline there is no bound: a rest or a trip charges its whole span, DFU's own. */
 export const PLAYED_STEP_MAX_SECONDS = 30 * 60;
 
+/**
+ * DEAD-CLOCK (2026-09-26, KimNix on the Discord: "the quest keeps resting its time"): WHETHER A CLOCK'S END CAN CHANGE
+ * ANYTHING. A finished clock sets the task of its own name (`_triggerTask`); that task runs actions, or a `when` reads
+ * it, or an `until ... performed` waits on it. A clock none of that names is a script's leftover - N0B20Y02's
+ * `_oneday_` (`Clock _oneday_ 1.03:00`, `variable _oneday_`, read by nothing) - and the journal's "Time remains",
+ * which counts down the tightest running clock, counted it down between the trance's three hours and the punishment's
+ * seven days: the time seemed to reset twice. An action the registry could not read counts as an action.
+ */
+export function clockCounts(quest, clock) {
+  const name = clock?.symbol?.name;
+  const task = name ? quest?.tasks?.get(name) : null;
+  if (!task) return false;
+  if (task.actions.some((a) => !a.isTriggerCondition) || task.pendingActionLines?.length) return true;
+  for (const t of quest.tasks.values()) {
+    if (t.targetSymbol?.name === name) return true;   // until _x_ performed
+    for (const a of t.actions) if (a.evaluations?.some((e) => new QuestSymbol(e.task).name === name)) return true;   // when _x_ / and _x_ / or not _x_ (the script's spelling, `_x_`)
+  }
+  return false;
+}
+
 export class Clock extends QuestResource {
   constructor(parentQuest, line = null) {
     super(parentQuest);

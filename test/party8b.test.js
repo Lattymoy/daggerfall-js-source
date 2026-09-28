@@ -208,7 +208,8 @@ test('PARTY8-B: the sheet - no plate behind a card (no border, fill, blur or rad
   panel.render({});
   const bran = panel.cardFor('acct-Bran');
   const body = bran.node.children[1];
-  assert.deepEqual(body.children.map((c) => c.className), ['dfparty-head', 'dfparty-bars', 'dfparty-where off']);
+  // PARTY-BUFFS: the effects row sits between the bars and the place, drawn only while the member has any
+  assert.deepEqual(body.children.map((c) => c.className), ['dfparty-head', 'dfparty-bars', 'dfparty-fx off', 'dfparty-where off']);
   assert.deepEqual(body.children[0].children.map((c) => c.className), ['dfparty-name', 'dfparty-lead off', 'dfparty-hp blank']);
   assert.deepEqual(body.children[1].children.map((c) => c.className), ['dfparty-vital health', 'dfparty-thin']);
   assert.deepEqual(body.children[1].children[1].children.map((c) => c.className), ['dfparty-vital fatigue', 'dfparty-vital magicka']);

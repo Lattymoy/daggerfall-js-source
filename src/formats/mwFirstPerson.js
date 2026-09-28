@@ -1098,7 +1098,11 @@ function readClothing(bytes, rec) {
       e.type = new DataView(bytes.buffer, bytes.byteOffset + sub.start, 4).getUint32(0, true);
     } else readPartRef(bytes, sub, e, 'CLOT');
   }
-  return e.id && e.model ? e : null;
+  // WEREWOLF1 (AUDIT C2): A GARMENT WORN BY ITS PARTS NEEDS NO GROUND MESH. Clothing::load requires NAME and CTDT and
+  // reads MODL as optional (components/esm3/loadclot.cpp), and "werewolfrobe" is a technical item - never shown, never
+  // dropped - so a record with part references and no MODL is kept; dropped, the whole wolf was refused on data that
+  // carries it. The Daggerfall garment pool still asks for a model (mwItemMap mwClothingRecord).
+  return e.id && (e.model || e.parts.length) ? e : null;
 }
 
 export function clothingRecords(bytes) {
@@ -1211,7 +1215,7 @@ export const ARM_GMST_IDS = Object.freeze([GMST_SNEAK_DELTA]);
 /** MW-LOAD: the SHAPE of extractArmRecords' answer. Bumped whenever a
  *  reader above changes what it returns, so a derived set written by
  *  an older build is refused and re-extracted rather than read wrong. */
-export const ARM_RECORDS_VERSION = 2;   // MW-D51: + the LIGH records (a set without them is re-extracted)
+export const ARM_RECORDS_VERSION = 3;   // MW-D51: + the LIGH records (a set without them is re-extracted); WEREWOLF1 (AUDIT C2): a CLOT with parts and no MODL is kept
 
 /**
  * MW-LOAD: EVERY record the arm build reads, in ONE pass of the master.
@@ -1378,8 +1382,17 @@ export function dfWeaponToMw(item, weaponsTable) {
   for (const [name, tmpl] of Object.entries(weaponsTable ?? {})) {
     if (tmpl === idx && name in DF_TO_MW_WEAPON) return DF_TO_MW_WEAPON[name];
   }
-  return MW_WEAPON_TYPE.None;
+  return MOD_WEAPON_TO_MW[idx] ?? MW_WEAPON_TYPE.None;   // MW-ASSIGN: a mod's weapon of a classic shape
 }
+
+/** MW-ASSIGN (2026-09-27, Discord: "Some sprites not assigned morrowind skin"): THE WEAPONS A MOD ADDS, by template -
+ *  Roleplay & Realism Items' Archer's Axe (ItemArchersAxe: one-handed, either hand) and Light Flail (ItemLightFlail: a
+ *  flail, as the classic one maps). Outside DFU's frozen WEAPONS, so the walk above never met them: in Morrowind first
+ *  person they drew EMPTY HANDS, and their icon and a wall's mount stood as the classic picture. */
+export const MOD_WEAPON_TO_MW = Object.freeze({
+  513: MW_WEAPON_TYPE.AxeOneHand,     // Archer's Axe
+  514: MW_WEAPON_TYPE.BluntOneHand,   // Light Flail
+});
 
 export function pickWeaponRecord(records, type, material = null, { has = null } = {}) {
   // AUDIT MW-A F3: id-sorted, for the face's own reason (D27) - file
@@ -1547,6 +1560,24 @@ export function facePools(parts, race, female) {
       .slice().sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   };
   return { heads: pool('head'), hairs: pool('hair') };
+}
+
+/** WEREWOLF1: THE WEREWOLF'S HEAD AND HAIR - the BODY records `WerewolfHead`
+ *  and `WerewolfHair`, looked up BY ID and nothing else (updateNpcBase,
+ *  npcanimation.cpp:475-494: no race, sex, part or flag test; the actor's
+ *  own head and hair are ignored), the last .esm to carry one winning (the
+ *  load order). Third person only (:650-656). Every other slot is empty:
+ *  getBodyParts answers nothing for a werewolf (:1200-1203), and the body
+ *  is the robe's (mwItemMap composeWornArmor, a `record` piece). */
+export const WEREWOLF_HEAD_ID = 'werewolfhead';
+export const WEREWOLF_HAIR_ID = 'werewolfhair';
+export function werewolfHeadRows(parts) {
+  const byId = new Map();
+  for (const p of parts ?? []) byId.set(String(p.id || '').toLowerCase(), p);
+  return [
+    { slot: 'head', record: byId.get(WEREWOLF_HEAD_ID) ?? null },
+    { slot: 'hair', record: byId.get(WEREWOLF_HAIR_ID) ?? null },
+  ];
 }
 
 export function playerBodyRows(parts, race, female, { beast = false, faceIndex = 0, faceTable = FACE_TABLE, faceMatch = null } = {}) {
@@ -2196,6 +2227,7 @@ export function bindPartsInto(assembly, parts) {
                 ? (part.inheritOffsetFrom === 'sheath' ? sheathBoneOffset : null)   // WS1: a bare instance under the scabbard's node
                 : (bound.boneOffset || null),
             uvs: batch.uvs || null, colors: batch.colors || null, material: batch.material || null,
+            shape: batch.name || null,   // SHADOW-FANG (AUDIT F2): the shape's own name - a skinned piece keeps its batch, a rigid one only this (an eye names itself)
             positions: new Float32Array(batch.positions.length), indices: batch.indices });
         }
         // MAC-Q: THE PART'S PARTICLE SYSTEMS ride the same placement its
@@ -2675,8 +2707,8 @@ export function animSourceName(model) {
  * REVERSE. `exists` is the archive probe; a source the archive lacks is
  * dropped here rather than refused, exactly as addSingleAnimSource does.
  */
-export function fpAnimSources(skeletonPath, exists) {
-  return animSourcesFor(FP_BASE_MODEL, skeletonPath, exists);
+export function fpAnimSources(skeletonPath, exists, { werewolf = false } = {}) {
+  return animSourcesFor(werewolf ? null : FP_BASE_MODEL, skeletonPath, exists);
 }
 
 /** MW-D24: the reference's own unit bridge - constants.hpp:10,
@@ -2695,14 +2727,18 @@ export const TP_BASE_MODEL = 'meshes/xbase_anim.nif';
  *  actor's own skeleton when it differs (npcanimation.cpp:532-533). The
  *  kf name is the model with its extension swapped and NOTHING else -
  *  no "x" is inserted (animation.cpp:651-654). */
-export function tpAnimSources(skeletonPath, exists) {
-  return animSourcesFor(TP_BASE_MODEL, skeletonPath, exists);
+export function tpAnimSources(skeletonPath, exists, { werewolf = false } = {}) {
+  return animSourcesFor(werewolf ? null : TP_BASE_MODEL, skeletonPath, exists);
 }
 
+/** WEREWOLF1: A WEREWOLF HAS ONE SOURCE, ITS OWN. updateNpcBase leaves the
+ *  base empty for a werewolf (`if (!isWerewolf)`, npcanimation.cpp:503-510),
+ *  so neither xbase_anim.kf nor xbase_anim.1st.kf is added - only the wolf
+ *  skeleton's own .kf (:529-533), in both views. `baseModel` null is that. */
 function animSourcesFor(baseModel, skeletonPath, exists) {
   const out = [];
-  const base = animSourceName(baseModel);
-  if (exists(base)) out.push(base);
+  const base = baseModel ? animSourceName(baseModel) : null;
+  if (base && exists(base)) out.push(base);
   const own = animSourceName(skeletonPath);
   if (own !== base && exists(own)) out.push(own);
   return out;

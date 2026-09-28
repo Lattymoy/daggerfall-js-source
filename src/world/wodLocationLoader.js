@@ -66,6 +66,17 @@ const f32 = Math.fround;
 
 // ── the session list ─────────────────────────────────────────────────
 
+/** FLOW2: the map's pixel grid every instance's worldX/worldY names (Daggerfall's 1000 x 500). */
+const PIX_W = 1000, PIX_H = 500;
+/** A pixel's slot in the grid, or -1 off it (an instance there can meet no tile the grid holds). */
+const pixelSlot = (x, y) => (Number.isInteger(x) && Number.isInteger(y) && x >= 0 && y >= 0 && x < PIX_W && y < PIX_H ? y * PIX_W + x : -1);
+/** Whether a type-0 instance stands strictly between list positions `a` and `b` (`t0` ascending). */
+function type0Between(t0, a, b) {
+  let lo = 0, hi = t0.length;
+  while (lo < hi) { const mid = (lo + hi) >> 1; if (t0[mid] <= a) lo = mid + 1; else hi = mid; }
+  return lo < t0.length && t0[lo] < b;
+}
+
 /**
  * The instance list, as LocationLoader holds it: `locationInstance`
  * (:12), appended to region by region and never cleared - a list for
@@ -95,6 +106,23 @@ export class LocationSession {
   }
 
   hasRegion(region) { return this.regions.includes(region); }
+
+  /** FLOW2: each map pixel's instances in list order (`first[slot]`, then `next[i]`), and every type-0 instance's list
+   *  position, ascending - what `pickLocations` needs to walk one pixel with every decision the full scan makes. Built
+   *  when first asked, and again once a region has been appended. */
+  pixelIndex() {
+    if (this._pix && this._pixCount === this.count) return this._pix;
+    const first = new Int32Array(PIX_W * PIX_H).fill(-1), next = new Int32Array(this.count).fill(-1);
+    const type0 = [];
+    for (let i = this.count - 1; i >= 0; i--) {
+      const p = pixelSlot(this.worldX[i], this.worldY[i]);
+      if (p >= 0) { next[i] = first[p]; first[p] = i; }
+      if (this.type[i] === 0) type0.push(i);
+    }
+    this._pix = { first, next, type0: Int32Array.from(type0.reverse()) };
+    this._pixCount = this.count;
+    return this._pix;
+  }
 
   _grow(extra) {
     const need = this.count + extra;
@@ -170,51 +198,91 @@ export class LocationSession {
  *   rect:{x:number,y:number,width:number,height:number}}>}
  */
 export function pickLocations(tile, session, getPrefab, pathsPoint = null, siteClear = null) {
-  const out = [];
-  let hasLocation = !!tile.hasLocation;
-  const ocean = WOD_OCEAN_REGIONS.includes(tile.mapRegionIndex) && tile.worldHeight <= 2;
-  const { worldX, worldY, terrainX, terrainY, type } = session;
+  // FLOW2 (2026-09-26, Mac: "is there a way to really ensure we have a faster workflow with the same standards?"): the
+  // list is walked on the tile's own pixel alone - every decision the scan below makes, not its 228k-entry pass a tile
+  const idx = typeof session.pixelIndex === 'function' ? session.pixelIndex() : null;
+  const p = idx ? pixelSlot(tile.mapPixelX, tile.mapPixelY) : -1;
+  if (p < 0) return pickLocationsScan(tile, session, getPrefab, pathsPoint, siteClear);
+  const st = pickState(tile, getPrefab, pathsPoint, siteClear);
+  const { type } = session;
+  let prev = -1;
+  for (let i = idx.first[p]; i >= 0; i = idx.next[i]) {
+    // the scan's instances between this pixel's last and this one stand on other pixels: of those only a type 0 acts
+    // (:103-134 - it ends the call once the tile holds a location, or is sea); a type 2 there is skipped either way,
+    // and every other type fails the pixel test (:136-137)
+    if ((st.hasLocation || st.ocean) && type0Between(idx.type0, prev, i)) return st.out;
+    prev = i;
+    const t = type[i];
+    if (st.hasLocation) { if (t === 0) return st.out; else if (t === 2) continue; }
+    if (st.ocean) { if (t === 0) return st.out; else if (t === 2) continue; }
+    considerInstance(st, session, i, t);
+  }
+  return st.out;
+}
+
+/**
+ * AddLocation's loop VERBATIM (:91-256): the whole list scanned for the tile. The law `pickLocations`' pixel walk is
+ * held to (test/flow2_fast_tests.test.js), and the walk itself for a session without the index or a pixel off the map.
+ * Same parameters and answer as `pickLocations`.
+ * @param {{mapPixelX:number, mapPixelY:number, hasLocation:boolean, mapRegionIndex:number, worldHeight:number}} tile
+ * @param {LocationSession} session
+ * @param {(name:string) => ?{height:number,width:number}} getPrefab
+ * @param {?(x:number, y:number) => number} [pathsPoint]
+ * @param {?(prefabName:string, prefab:object, rect:object) => boolean} [siteClear]
+ */
+export function pickLocationsScan(tile, session, getPrefab, pathsPoint = null, siteClear = null) {
+  const st = pickState(tile, getPrefab, pathsPoint, siteClear);
+  const { worldX, worldY, type } = session;
   const px = tile.mapPixelX, py = tile.mapPixelY;
-  let pathsDataPoint = 0;
   for (let i = 0; i < session.count; i++) {
     const t = type[i];
     // :103-115 - a tile that already holds a location: a type-0
     // instance ANYWHERE in the list ends the whole call; type 2 skips.
-    if (hasLocation) {
-      if (t === 0) return out;
+    if (st.hasLocation) {
+      if (t === 0) return st.out;
       else if (t === 2) continue;
     }
     // :117-134 - the sea: the same two arms.
-    if (ocean) {
-      if (t === 0) return out;
+    if (st.ocean) {
+      if (t === 0) return st.out;
       else if (t === 2) continue;
     }
     // :136-137
     if (px !== worldX[i] || py !== worldY[i]) continue;
-    // :139-143
-    const tx = terrainX[i], ty = terrainY[i];
-    if (tx <= 0 || ty <= 0 || (tx > 128 || ty > 128)) continue;
-    // :146-151 - Basic Roads' road|track mask at the instance's pixel.
-    if (pathsPoint) pathsDataPoint = pathsPoint(worldX[i], worldY[i]) & 0xff;
-    if (pathsDataPoint !== 0) continue;
-    // :154-160
-    const prefab = getPrefab(session.prefab[i]);
-    if (prefab == null) continue;
-    // :162-172 - NB the C# pairs terrainX with the prefab's HEIGHT and
-    // terrainY with its WIDTH here, the transpose of the rect below.
-    if ((tx + prefab.height > 128 || ty + prefab.width > 128)) continue;
-    if ((tx + prefab.height > 127 || ty + prefab.width > 127)) continue;
-    const rect = { x: tx, y: ty, width: prefab.width, height: prefab.height };
-    // ROADS-CLEAR (2026-09-25, Mac: "Camps, mountains from WOD, shouldnt be placed on roads"): the mod asks only
-    // this pixel's byte (:146-151), and a site's pieces reach into the next pixel's road - the port asks the site
-    if (siteClear && !siteClear(session.prefab[i], prefab, rect)) continue;
-    // :175-230 - types 0 and 2 run the identical smoothing arm and set
-    // hasLocation; any other type places its objects unsmoothed.
-    const flatten = t === 0 || t === 2;
-    if (flatten) hasLocation = true;
-    out.push({ index: i, prefab, flatten, rect });
+    considerInstance(st, session, i, t);
   }
-  return out;
+  return st.out;
+}
+
+/** The loop's state for one tile (FLOW2: the scan's and the walk's). */
+function pickState(tile, getPrefab, pathsPoint, siteClear) {
+  return { out: [], hasLocation: !!tile.hasLocation, ocean: WOD_OCEAN_REGIONS.includes(tile.mapRegionIndex) && tile.worldHeight <= 2, pathsDataPoint: 0, getPrefab, pathsPoint, siteClear };
+}
+
+/** The loop's body for an instance on the tile's own pixel (:139-230) - FLOW2: one copy, the scan's and the walk's. */
+function considerInstance(st, session, i, t) {
+  // :139-143
+  const tx = session.terrainX[i], ty = session.terrainY[i];
+  if (tx <= 0 || ty <= 0 || (tx > 128 || ty > 128)) return;
+  // :146-151 - Basic Roads' road|track mask at the instance's pixel.
+  if (st.pathsPoint) st.pathsDataPoint = st.pathsPoint(session.worldX[i], session.worldY[i]) & 0xff;
+  if (st.pathsDataPoint !== 0) return;
+  // :154-160
+  const prefab = st.getPrefab(session.prefab[i]);
+  if (prefab == null) return;
+  // :162-172 - NB the C# pairs terrainX with the prefab's HEIGHT and
+  // terrainY with its WIDTH here, the transpose of the rect below.
+  if ((tx + prefab.height > 128 || ty + prefab.width > 128)) return;
+  if ((tx + prefab.height > 127 || ty + prefab.width > 127)) return;
+  const rect = { x: tx, y: ty, width: prefab.width, height: prefab.height };
+  // ROADS-CLEAR (2026-09-25, Mac: "Camps, mountains from WOD, shouldnt be placed on roads"): the mod asks only
+  // this pixel's byte (:146-151), and a site's pieces reach into the next pixel's road - the port asks the site
+  if (st.siteClear && !st.siteClear(session.prefab[i], prefab, rect)) return;
+  // :175-230 - types 0 and 2 run the identical smoothing arm and set
+  // hasLocation; any other type places its objects unsmoothed.
+  const flatten = t === 0 || t === 2;
+  if (flatten) st.hasLocation = true;
+  st.out.push({ index: i, prefab, flatten, rect });
 }
 
 // ── the smoothing arm ────────────────────────────────────────────────

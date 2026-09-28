@@ -290,7 +290,7 @@ test('RR2 the trample and the charge on the hosts: the contacts each frame, the 
   const rh = rd('src/systems/rrRidingHost.js');
   assert.match(rh, /latch\.pickpocketAttempted = true;/, 'PickpocketByPlayerAttempted, the latch (AUDIT-RR2 G24: the pickpocket\'s own)');
   assert.match(rh, /f\.ai\.knockbackSpeed = RR_RIDING\.chargeKnockback; f\.ai\.knockbackDir = \[\.\.\.direction\];/);
-  assert.match(rh, /playerEntity\.fatigue = Math\.max\(0, \(playerEntity\.fatigue \?\? 0\) - FATIGUE_LOSS\.Default \* RR_RIDING\.chargeFatigueMultiplier\);/);
+  assert.match(rh, /playerEntity\.fatigue = Math\.max\(0, \(playerEntity\.fatigue \?\? 0\) - Math\.trunc\(FATIGUE_LOSS\.Default \* RR_RIDING\.chargeFatigueMultiplier \* FATIGUE_DRAIN_SCALE\)\);/);   // BALANCE1 (the pre-merge audit 0927b F1): a charge is exertion
   assert.match(rh, /rrChargeDamage\(\{ minBase: handToHandMinDamage\(h2h\), maxBase: handToHandMaxDamage\(h2h\), agility: liveStat\(playerEntity, 'agility'\), willpower: liveStat\(playerEntity, 'willpower'\), roll: rolls\(\) \}\)/);
   assert.match(rh, /if \(isGuardRecord\(f\)\) hurtGuard\(f, damage, at\);\s*else damageFoe\(f, damage, at\);/, 'AUDIT-RR F17: DamageHealthFromSource - no knock direction handed to the weapon path');
   assert.match(rh, /const out = rrTrampleOutcome\(\{ isGuard: !!person\.guard, female: person\.gender === GENDERS\.Female \}\);/);

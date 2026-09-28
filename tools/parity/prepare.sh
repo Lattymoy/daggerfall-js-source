@@ -73,10 +73,10 @@ done
 #                 determinant and Xi/Yi/Zi to double. Vector3 is ALREADY
 #                 double in DFU (API/Vector3.cs:35-45, :151-160, :508-520,
 #                 :583-597), so nothing in the basis walk is touched.
-#                 The audit-18 F4 pin (test/audit18.test.js:195) carries
+#                 The audit-18 F4 pin (test/audit18.test.js:197) carries
 #                 expected values dumped from exactly this build; before
 #                 E8 the edit lived only in a scratchpad tree, so the
-#                 "re-runnable" claim on Port-Ledger row :654 was not true
+#                 "re-runnable" claim on Port-Ledger row :662 was not true
 #                 of anything in the repo. It is now.
 echo "== applying the harness patches =="
 for f in Arch3dFile BlocksFile DFBlock SpellRecord DaggerfallSpellReader FaceUVTool; do

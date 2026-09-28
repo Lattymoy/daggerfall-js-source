@@ -76,7 +76,7 @@
  {
   "name": "F3-self-check-dropped",
   "file": "src/render/airPass.js",
-  "old": "  if (abs(c0.w - uPrevProjInfo.w / (z0 + uPrevProjInfo.z)) > uContactParams.y) return 1.0;",
+  "old": "  if (abs(c0.w - uPrevProjInfo.w / (z0 + uPrevProjInfo.z)) > tol) return 1.0;",
   "new": "",
   "tests": [
    "test/el8_contact.test.js"

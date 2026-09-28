@@ -102,7 +102,7 @@ test('AUDIT WB B5 the link tells its host the relay\'s refusal of my `in`, with 
 
 test('AUDIT WB B5 the seams: the door asked again once the fire has closed; a refused `in` and a socket closed for good take the player out before the gate', () => {
   const world = read('src/scenes/world.js');
-  assert.match(world, /onRefused: \(why\) => \{ if \(modes\?\.gateArenaDay\?\.\(\) != null\) ejectFromCourt\(GATE_NO_TEXT\[why\] \?\? why\); \},/);
+  assert.match(world, /onRefused: \(why\) => \{ if \(modes\?\.gateArenaDay\?\.\(\) != null\) ejectFromCourt\(gateRefusalText\(why\)\); \},/);   // GATE-RELOAD: in what the word means (net/gateLink.js gateRefusalText)
   assert.match(world, /else if \(courtDay != null && online\?\.terminal\) ejectFromCourt\(GATE_NO_TEXT\[online\.error\] \?\? COURT_TEXT\.lost\);/);
   const refusal = world.slice(world.indexOf('gateRefusal: (g) =>'), world.indexOf('gateRefusal: (g) =>') + 400);
   assert.match(refusal, /!online\?\.gateOk \|\| online\?\.terminal \? GATE_TEXT\.notYet/, 'no relay to hold it');

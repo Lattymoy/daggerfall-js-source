@@ -160,7 +160,7 @@ test('DISC21-C: the weapon a new character equips sits sheathed in the main cell
   assert.equal(quickslotHand(rig, store, { controller: false, family: 'xbox' }).readyKey, 'Z', 'the keyboard: its key');
   assert.match(rd('src/ui/quickslotTags.js'), /pad = \{ controller: controllerLook\(\) && !!padFamily\(\), family: padFamily\(\) \?\? 'xbox' \}/, 'the default reads GP1\'s latch, as the chip does');
   // every host reads the rig in the player's hands - the interior mode hands its own
-  for (const [path, hand] of [['src/scenes/world.js', /hand: \(\) => quickslotHand\(rig\),/], ['src/scenes/exterior.js', /hand: \(\) => quickslotHand\(rig\) \}/], ['src/scenes/dungeonContext.js', /hand: \(\) => quickslotHand\(weaponRig\) \}/]]) {
+  for (const [path, hand] of [['src/scenes/world.js', /hand: \(\) => quickslotHand\(rig\),/], ['src/scenes/exterior.js', /hand: \(\) => quickslotHand\(rig\), \.\.\.packDoors \}/], ['src/scenes/dungeonContext.js', /hand: \(\) => quickslotHand\(weaponRig\), \.\.\.packDoors \}/]]) {   // UI2: beside the pack's window doors
     assert.match(rd(path), hand, `${path}: the empty press reads the hand`);
   }
   assert.match(rd('src/scenes/world.js'), /const quickUse = \(n, rig = weaponRig\) => \{/);

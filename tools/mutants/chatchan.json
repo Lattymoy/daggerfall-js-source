@@ -83,7 +83,7 @@
   {
     "name": "CC-party-line-before-the-welcome",
     "file": "src/net/online.js",
-    "old": "    // it - an older one projects `{t:'chat', text}` and would fan the party's line to everyone online\n    if (ch != null && (!CHAT_LINE_CHANNELS.includes(ch) || !this.chanOk)) return false;",
+    "old": "    // it - an older one projects `{t:'chat', text}` and would fan the party's line to everyone online\n    if (ch != null && (!CHAT_LINE_CHANNELS.includes(ch) || !(ch === 'guild' ? this.guildOk : this.chanOk))) return false;",
     "new": "    // it - an older one projects `{t:'chat', text}` and would fan the party's line to everyone online\n    if (ch != null && !CHAT_LINE_CHANNELS.includes(ch)) return false;",
     "tests": [
       "test/chatchan.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "CC-unknown-channel-sent",
     "file": "src/net/online.js",
-    "old": "    // it - an older one projects `{t:'chat', text}` and would fan the party's line to everyone online\n    if (ch != null && (!CHAT_LINE_CHANNELS.includes(ch) || !this.chanOk)) return false;",
-    "new": "    // it - an older one projects `{t:'chat', text}` and would fan the party's line to everyone online\n    if (ch != null && !this.chanOk) return false;",
+    "old": "    // it - an older one projects `{t:'chat', text}` and would fan the party's line to everyone online\n    if (ch != null && (!CHAT_LINE_CHANNELS.includes(ch) || !(ch === 'guild' ? this.guildOk : this.chanOk))) return false;",
+    "new": "    // it - an older one projects `{t:'chat', text}` and would fan the party's line to everyone online\n    if (ch != null && !(ch === 'guild' ? this.guildOk : this.chanOk)) return false;",
     "tests": [
       "test/chatchan.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "CC-party-lines-on-the-room-bucket",
     "file": "src/net/online.js",
-    "old": "    const g = ch === 'party' ? partyChatInGate(this._inPartyChat, now) : chatInGate(this._inChat.get(room), now);",
-    "new": "    const g = chatInGate(this._inChat.get(room), now);",
+    "old": "    const g = ch === 'party' ? partyChatInGate(this._inPartyChat, now) : ch === 'guild' ? guildChatInGate(this._inGuildChat, now) : chatInGate(this._inChat.get(room), now);",
+    "new": "    const g = ch === 'guild' ? guildChatInGate(this._inGuildChat, now) : chatInGate(this._inChat.get(room), now);",
     "tests": [
       "test/chatchan.test.js"
     ]

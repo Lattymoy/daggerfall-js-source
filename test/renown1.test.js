@@ -231,7 +231,7 @@ test('RENOWN1 the worker: /v1/renown/xp behind a session, the account the sessio
   const acct = (await call('GET', '/v1/account', undefined, me.secret)).body.account;
   assert.deepEqual(acct.renown.map((x) => [x.character, x.name, x.xp, x.level]), [['char-aaaa', 'Mara', 5001, 9]]);
   assert.equal(RENOWN_CARD_TRACKS, 5);
-  assert.match(src('server-account/wrangler.toml'), /ACCOUNT_VERSION = "acct11"/);   // acct9 on the branch; main's FOUNDER2 took acct9; WB5b's gates closed moved it on (acct11)
+  assert.match(src('server-account/wrangler.toml'), /ACCOUNT_VERSION = "acct16"/);   // acct9 on the branch; main's FOUNDER2 took acct9; WB5b's gates closed moved it on (acct11); BASE-HIDE (acct12); RENOWN4 and GUILD1c (acct13 - acct11 and acct12 on their branch); SHADOW-FANG (acct14 - acct12 on its branch); FOUNDER3 (acct15); FOUNDER3 (acct15), then HOME-STATIONS (acct16 - acct15 on its branch)
   assert.match(src('.github/workflows/account-deploy.yml'), /- "src\/net\/renown\.js"/, 'the Worker bundles the curve, so a change to it deploys');
 });
 
@@ -244,7 +244,7 @@ test('RENOWN1 the token and the order: `lv` optional and within 1..50 when there
   assert.ok(claimsValid({ ...id, lv: 50 }));
   for (const lv of [0, 51, 1.5, '9', null]) assert.equal(claimsValid({ ...id, lv }), false, `lv ${lv}`);
   assert.equal(renownIssuable(12), true);
-  assert.deepEqual([...ORDER_KINDS], ['mute', 'renown']);
+  assert.deepEqual([...ORDER_KINDS], ['mute', 'renown', 'guild', 'guildout']);   // GUILD1c: a character's guild now, and a member or a guild gone
   const lvOrder = { o: 'renown', s: 'acct-mara', lv: 9, i: T0, e: T0 + 30 };
   assert.ok(orderValid(lvOrder));
   assert.equal(orderValid({ ...lvOrder, mu: 0 }), false, 'a renown order carrying a mute is neither');
@@ -277,7 +277,7 @@ test('RENOWN1 the wire: `badged` stamps `lv` beside the badge only within the bo
   assert.deepEqual(parseClient('{"t":"renown","order":"v1.a.b"}', { hasHello: false }), { error: 'renown before hello' });
   assert.deepEqual(parseClient('{"t":"renown"}', { hasHello: true }), { error: 'bad renown' });
   assert.deepEqual(parseClient(JSON.stringify({ t: 'renown', order: 'x'.repeat(1025) }), { hasHello: true }), { error: 'bad renown' });
-  assert.equal(RELAY_VERSION, 'world113');   // WB3 and AUDIT WB moved it on (world113 - world110 and world111 on their branch); PARTY-TRAVEL before them (world112); RENOWN1 was world111 - world108 on the branch; main's HT-WAIST-NET, PROFILE2/SKIN2 and EVENT1 took world108-110
+  assert.equal(RELAY_VERSION, 'world121');   // ONE-SEAT moved it on last (world121 - world119, then world120, on its branch, renumbered past main's AUDIT SET (world119) and PARTY-BUFFS + REST-OPT (world120) at the merges: a hub hello's claim - one tab of an account online); before it PARTY-BUFFS + REST-OPT + the batch audit (world120 - world119, world120 and world121 on their branch, renumbered past main AUDIT SET at the merge: fx, rs and nr on the party pose, TRADE_REV_MAX and REST_OPT_RELAY_MIN named); before it AUDIT SET (world119 - world117 on its branch, renumbered past main's SHADOW-FANG (world117) and OWN1 + INVIS-NET (world118) at the merge: the dungeon foe record carries `v`, the joiner whose blow killed it); OWN1 + INVIS-NET moved it on before (world118 - world114 on its branch, renumbered past main's world114-117: the own lane and the pose's concealment bits); SHADOW-FANG's badge vocabulary moved it on (world117 - world114 on its branch, world116 at its first merge; main's Oblivion Gate WBX took world116 first); the Oblivion Gate's WBX5, AUDIT WBX and AUDIT WBX2 moved it on (world116 - world114 on its branch, renumbered past main's Enhanced Plus patch (world114) and GUILD1c (world115)); GUILD1c moved it on (world115 - world113 on its branch; the Enhanced Plus patch's pose fields took world114 first); WB3 and AUDIT WB moved it on (world113 - world110 and world111 on their branch); PARTY-TRAVEL before them (world112); RENOWN1 was world111 - world108 on the branch; main's HT-WAIST-NET, PROFILE2/SKIN2 and EVENT1 took world108-110
   assert.equal(RENOWN_RELAY_MIN, 111);
   assert.equal(relaySupportsRenown('world111'), true);
   assert.equal(relaySupportsRenown('world110'), false);
@@ -406,7 +406,7 @@ test('RENOWN1 the client\'s calls: the minter names the character it is bringing
   const issued = [];
   const mint = accountTokenMinter({ fetch, storage, onIssued: (w) => issued.push(w), character: () => 'char-aaaa' });
   assert.equal(await mint(), 'v1.t.s');
-  assert.deepEqual(JSON.parse(sent[0].init.body), { character: 'char-aaaa' });
+  assert.deepEqual(JSON.parse(sent[0].init.body), { character: 'char-aaaa', guild: true }, 'AUDIT MERGE-PLUS A6: and this build asks for the guild');
   assert.equal(issued[0].level, 7);
   const plain = accountTokenMinter({ fetch, storage });
   await plain();
@@ -450,10 +450,10 @@ test('RENOWN1 a foe you fought: it pays once when it dies within RENOWN_ASSIST_M
   // THE DOORS: my blow stamps and every death asks - in both foe pools, a copy's death included; the watch never
   const ex = src('src/scenes/exteriorFoes.js'), dg = src('src/scenes/dungeonContext.js'), cg = src('src/scenes/cityGuards.js');
   assert.match(ex, /if \(f\.dead\) return;[^\n]*\n\s+if \(fromPlayer && !peer\) renownFoeStruck\(f\);/, 'the outdoor door stamps my blow before a puppet\'s divert');
-  assert.match(ex, /f\.dead = true;\n\s+renownFoeDied\(f\);\s+\/\/ RENOWN1: whoever struck last/);
+  assert.match(ex, /f\.dead = true;\n(?:\s+if \(fromPlayer && !peer\) reportPlayerKill\([^\n]*\n)?\s+renownFoeDied\(f\);\s+\/\/ RENOWN1: whoever struck last/);   // SET2: the kill told as mine may stand between
   assert.match(ex, /function puppetDie\(f\) \{[\s\S]{0,400}?f\.dead = true;\n\s+renownFoeDied\(f\);/, 'an owner\'s foe that fell');
   assert.match(dg, /if \(foe\.dead\) return;\n\s+if \(fromPlayer && !peer\) renownFoeStruck\(foe\);/, 'the dungeon door stamps a joiner\'s blow before the divert');
-  assert.match(dg, /foe\.dead = true;\n\s+renownFoeDied\(foe\);/);
+  assert.match(dg, /foe\.dead = true;\n(?:\s+if \(fromPlayer && !peer\) reportPlayerKill\([^\n]*\n)?\s+renownFoeDied\(foe\);/);   // SET2: as above
   assert.match(dg, /if \(r\.d === 1\) \{ if \(!f\.dead\) \{[^}]*renownFoeDied\(f\); \}/, 'a joiner\'s copy that the host\'s frame says fell');
   assert.doesNotMatch(cg, /renownFoe/, 'the city watch pays nothing: the law calls it murder');
 });
@@ -583,7 +583,7 @@ test('RENOWN1 over a head: the box stands FIRST in the name row - "12" in its bo
   const layer = createNameLayer({ doc, now: () => 1000 });
   layer.render({ points: [{ id: 'peer-0001', name: 'Mack', x: 400, y: 300, scale: 1, title: null, glyphs: [], lv: 12 }, { id: 'peer-0002', name: 'Eve', x: 300, y: 300, scale: 1, title: null, glyphs: [] }] });
   const tag = find(layer.tagFor('peer-0001').node, 'dfname-tag');
-  assert.deepEqual(tag.children.map((c) => c.className), ['dfname-renown', 'dfname-who', 'dfname-glyphs']);
+  assert.deepEqual(tag.children.map((c) => c.className), ['dfname-renown', 'dfname-who', 'dfname-guild', 'dfname-glyphs']);   // GUILD1c: the guild's tag between the name and the glyphs
   assert.equal(tag.children[0].textContent, '12');
   assert.match(src('src/ui/nameLayer.js'), /\.dfname-renown \{[^}]*border: 1px solid rgba\(242, 196, 107, \.8\);/, 'a box: a full border round the number');
   assert.equal(tag.children[1].textContent, 'Mack');
@@ -596,7 +596,8 @@ test('RENOWN1 over a head: the box stands FIRST in the name row - "12" in its bo
   try {
     rp.drawNamePoints({ draw: (...a) => drawn.push(a) }, font, [{ id: 'p', name: 'Mack', x: 100, y: 100, scale: 1, title: null, glyphs: [], lv: 12 }], 1);
   } catch { /* a stub font may not draw - the source pin below holds the run */ }
-  assert.match(src('src/net/remotePlayers.js'), /const lead = renownText\(n\.lv\);\n\s+const run = `\$\{lead \? `\[\$\{lead\}\] ` : ''\}\$\{marks \? `\$\{n\.name\} \$\{marks\}` : n\.name\}`;/, 'the run the label is centred on starts with the level, boxed in brackets');
+  // GUILD1c: the name in the run is `named` - the name and the guild's tag after it
+  assert.match(src('src/net/remotePlayers.js'), /const lead = renownText\(n\.lv\);\n(?:\s*\/\/[^\n]*\n)*\s+const named = [^\n]*\n\s+const run = `\$\{lead \? `\[\$\{lead\}\] ` : ''\}\$\{marks \? `\$\{named\} \$\{marks\}` : named\}`;/, 'the run the label is centred on starts with the level, boxed in brackets');
   assert.match(src('src/net/remotePlayers.js'), /lv: e\.peer\.lv \?\? null,/, 'the point carries the peer\'s level to both faces');
 });
 

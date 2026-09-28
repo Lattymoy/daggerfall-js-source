@@ -149,7 +149,8 @@ await page.mouse.down();
 await page.mouse.move(20, 20, { steps: 8 });   // off the panel: a ground drop
 await page.mouse.up();
 const bar2 = await page.$$eval('#enhanced-inventory .remoteacts .act', (ns) => ns.map((n) => n.textContent));
-check('B2: the normal pack’s ground frame still carries Gold', bar2.includes('Gold'), JSON.stringify(bar2));
+const gold2 = await page.$$eval('#enhanced-inventory .goldbtn', (ns) => ns.map((n) => n.textContent));
+check('B2: the normal pack still carries Gold - GOLD-DROP: on its own footer', gold2.length === 1, JSON.stringify(gold2));
 check('B2: and never a Pack button', !bar2.includes('Pack'), JSON.stringify(bar2));
 
 check('no page errors', errors.length === 0, errors.join(' | '));

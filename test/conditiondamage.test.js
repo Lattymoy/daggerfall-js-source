@@ -5,7 +5,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { damageEquipment, calculateAttackDamage } from '../src/combat/formulas.js';
-import { equipItem, equipTableOf, armorValuesOf, EQUIP_SLOTS, lowerCondition } from '../src/systems/equip.js';
+import { equipItem, equipTableOf, armorValuesOf, EQUIP_SLOTS, lowerCondition, _wearScaleForTests } from '../src/systems/equip.js';
+
+// BALANCE1: this file pins DFU's wear verbatim, so it runs the port's wear scale at 1 (test/balance1.test.js pins the scale)
+_wearScaleForTests(1);
 import { BODY_PARTS } from '../src/systems/armorMaterials.js';
 import { mintCondition } from '../src/systems/itemTemplates.js';
 

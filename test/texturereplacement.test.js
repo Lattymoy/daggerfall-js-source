@@ -172,7 +172,7 @@ test('texture: the pipeline decodes AHEAD and overrides SYNCHRONOUSLY', () => {
   assert.match(p, /const swap = decodedTexture\(archive, record, 0, 'Albedo', dye\);/);
   // INCIDENT 2026-09-04: the record door carries the caller's alphaIndex
   // choice - a mesh material is opaque (-1), a flat cuts index 0.
-  assert.match(p, /const color32 = swap \?\? t\.getColor32\(removeMask \? changeMask\(bitmap\) : bitmap, opaque \? -1 : 0\);/);
+  assert.match(p, /const color32 = swap \?\? t\.getColor32\(dyed \? changeDyeBitmap\(masked, dye, dyeTarget\) : masked, opaque \? -1 : 0\);/);   // DYE-ICON: the classic arm's mask and dye ride `masked`
   assert.match(p, /renderer\.uploadTexture\(archive, record, color32, variant !== undefined \? \{ opaque, mips, variant, replacement \} : \{ opaque, mips, replacement \}\);/);
   assert.match(p, /const swapFrame = decodedTexture\(archive, record, frame\);/);
   assert.match(p, /const color32 = swapFrame \?\? t\.getColor32\(bitmap, 0\);/);

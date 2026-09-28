@@ -15,7 +15,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { SHADOW_GLSL, SHADOW_CASCADES, SHADOW_PCF_CASCADES, SHADOW_SUN_SIZE, ShadowPass } from '../src/render/shadowPass.js';
-import { EL_MESH_FS, EL_TERRAIN_FS, EL_CHAR_FS, EL_BB_FS } from '../src/render/enhancedLighting.js';
+import { EL_MESH_FS, EL_TERRAIN_FS, EL_CHAR_FS, EL_BB_FS, EL_LANE } from '../src/render/enhancedLighting.js';
 import { waterSurfaceFs } from '../src/render/waterSurface.js';
 import { floraSwayOn, floraSwayOf, swayDisabled } from '../src/systems/windDrive.js';
 
@@ -134,12 +134,16 @@ test('PERF-SUN2: a FLAT has no normal, so its gate is the sun’s own share of t
   // zero. uBBSun IS the sun's whole share, so this is a uniform branch:
   // free, coherent, and it takes out the entire night.
   const bb = EL_BB_FS.split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
-  assert.match(bb, /vec3 sunLit = dot\(uBBSun, uBBSun\) > 0\.0 \? uBBSun \* cloudShadowAt\(vBBWorld\) \* sunShadowSoftAt\(base, vec3\(0\.0, 1\.0, 0\.0\)\) : vec3\(0\.0\);/);
+  // LA-COST3 (2026-09-27): the map is read by the lane's billboard VERTEX shader now, once a quad - and the gate went
+  // with it: at night that stage reads nothing either, and the fragment's cloud read stays behind the same gate
+  assert.match(bb, /vec3 sunLit = dot\(uBBSun, uBBSun\) > 0\.0 \? uBBSun \* cloudShadowAt\(vBBWorld\) \* vBBSunVis : vec3\(0\.0\);/);
+  assert.match(EL_LANE.bbVs.main, /vBBSunVis = dot\(uBBSun, uBBSun\) > 0\.0 \? sunShadowSoftAt\(vBBBase \+ vec3\(0\.0, 0\.5, 0\.0\), vec3\(0\.0, 1\.0, 0\.0\)\) : 1\.0;/, 'the vertex stage takes the same gate');
   assert.match(bb, /uTint \+ sunLit \+ elPointFlat/, 'and it enters the sum exactly where the product did');
-  assert.doesNotMatch(bb, /uBBSun \* cloudShadowAt\(vBBWorld\) \* sunShadowSoftAt\(base[^)]*\)\) \+ elPointFlat/, 'the inline product is gone');
+  assert.doesNotMatch(bb, /uBBSun \* cloudShadowAt\(vBBWorld\) \* (?:sunShadowSoftAt\(base[^)]*\)\)|vBBSunVis) \+ elPointFlat/, 'the inline product is gone');
   // the shadow is still read at the flat's BASE, once for the whole
-  // sprite - a sprite in its own map would shadow itself (EL2)
-  assert.match(bb, /sunShadowSoftAt\(base, vec3\(0\.0, 1\.0, 0\.0\)\)/);
+  // sprite - a sprite in its own map would shadow itself (EL2); LA-COST3: the base the fragment's elPointFlat reads
+  assert.match(bb, /vec3 base = vBBBase \+ vec3\(0\.0, 0\.5, 0\.0\);/);
+  assert.match(EL_LANE.bbVs.main, /sunShadowSoftAt\(vBBBase \+ vec3\(0\.0, 0\.5, 0\.0\), vec3\(0\.0, 1\.0, 0\.0\)\)/);
 });
 
 test('PERF-SUN: the tree sway is CLEARED as a suspect - the lean is baked at build, not decided a frame', () => {
@@ -267,7 +271,11 @@ test('TREES1: a FLAT keeps the kernel at every distance, because it samples once
   // be asked of what is left when the block is taken out.
   const body = (raw) => raw.replace(SHADOW_GLSL, '').split('\n').map((l) => l.replace(/\/\/.*$/, '')).join('\n');
   const bb = body(EL_BB_FS);
-  assert.match(bb, /sunShadowSoftAt\(base, vec3\(0\.0, 1\.0, 0\.0\)\)/, 'the flat reads the soft one');
+  // LA-COST3 (2026-09-27): the flat's read is its vertex shader's now (once a quad, EL_BB_VS_EXT) - the soft one there
+  const bbVs = body(EL_LANE.bbVs.head + EL_LANE.bbVs.main);
+  assert.match(bbVs, /sunShadowSoftAt\(vBBBase \+ vec3\(0\.0, 0\.5, 0\.0\), vec3\(0\.0, 1\.0, 0\.0\)\)/, 'the flat reads the soft one');
+  assert.ok(!/[^t]sunShadowAt\(/.test(bbVs), 'and never the cheap one, at the vertex either');
+  assert.ok(!/sunShadow(?:Soft)?At\(/.test(bb), 'the flat’s fragment reads no sun map at all');
   assert.doesNotMatch(bb, /(?<!Soft)At\(base[^)]*\)\s*:/, '...and never the cheap one');
   assert.ok(!/[^t]sunShadowAt\(/.test(bb), 'no call to the cheap lookup survives in the flat\u2019s own body');
   for (const [n, raw] of [['mesh', EL_MESH_FS], ['terrain', EL_TERRAIN_FS], ['char', EL_CHAR_FS]]) {
@@ -281,7 +289,9 @@ test('TREES1: a FLAT keeps the kernel at every distance, because it samples once
   // and the soft path really is the kernel, for EVERY cascade - a `soft`
   // that still fell through to the cheap tap somewhere would be the bug
   // this fixes, wearing the name of the fix
-  const tap = /float sunShadowTap\(vec3 wp, vec3 n, bool soft\) \{([\s\S]*?)\n\}/.exec(SHADOW_GLSL);
+  // LA-SHADOW2 (re-aimed): the one cascade's lookup is sunCascadeTap now, and sunShadowTap hands `soft` through to it
+  assert.match(SHADOW_GLSL, /float sunShadowTap\(vec3 wp, vec3 n, bool soft\) \{[\s\S]*?sunCascadeTap\(c, wp, n, soft\)[\s\S]*?sunCascadeTap\(c \+ 1, wp, n, soft\)/, 'the pick hands soft through, to both cascades of a band');
+  const tap = /float sunCascadeTap\(int c, vec3 wp, vec3 n, bool soft\) \{([\s\S]*?)\n\}/.exec(SHADOW_GLSL);
   assert.ok(tap, 'the body is where this pin thinks it is');
   assert.equal((tap[1].match(/return texture\(uSunShadow/g) ?? []).length, 1, 'exactly one early return, and it is behind !soft');
   assert.match(tap[1], /return lit \/ 9\.0;/, 'and the kernel is what everything else reaches');

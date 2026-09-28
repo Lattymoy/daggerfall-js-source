@@ -171,7 +171,7 @@ function openDb() {
     // and on the title bar the status convention already uses.
     req.onblocked = () => {
       console.warn('[dataSource] database upgrade blocked - close other tabs running this game');
-      try { document.title = 'Daggerfall Enhanced - close other game tabs to continue'; } catch { /* no-DOM host */ }
+      try { document.title = 'Daggerfall Online - close other game tabs to continue'; } catch { /* no-DOM host */ }
     };
   });
 }
@@ -965,7 +965,7 @@ export const ASSET_PICKER_Z = 40;
 /** MWFIX: is the asset picker on screen? A modal opened FROM another
  *  overlay has to be able to say so, because the opener may own the
  *  keyboard - the enhanced shell takes Escape on `globalThis` in
- *  CAPTURE and stops it (enhancedMenu.js:3840), which is right for a
+ *  CAPTURE and stops it (enhancedMenu.js:3972), which is right for a
  *  screen with nothing above it and wrong the moment something is.
  *  Its own stated law is that a modal overlay owns its input; this is
  *  how the one above it says "that's me". */
@@ -1309,7 +1309,7 @@ export async function ensureArena2() {
     ui.style.cssText = 'position:fixed;inset:0;background:#111;color:#ddd;font:14px monospace;display:flex;align-items:center;justify-content:center;z-index:10';
     ui.innerHTML = `
       <div style="max-width:460px;text-align:center;border:1px solid #444;padding:24px" id="dz">
-        <h2 style="margin-top:0">Daggerfall Enhanced</h2>
+        <h2 style="margin-top:0">Daggerfall Online</h2>
         <p>Daggerfall's game data is freeware but can't be bundled.</p>
         <p>Select your <b>ARENA2</b> folder (or drop it here) - it's stored
         locally in your browser, picked once.</p>

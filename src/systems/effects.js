@@ -41,6 +41,7 @@ import { enemyGroupOf, NEARBY } from './nearbyObjects.js';   // X8: Pacify match
 // already speak to.
 import { breakNormalPowerConcealment, handleAttackFromSource } from './concealment.js';
 import { entityAbsorbsSpells, setEnchantmentEffectDoors } from './enchantments.js';   // E1: the AbsorbsSpells fold feeds the absorption gate
+import { regenBarred } from './courtRules.js';   // WBX6: the Burning Court keeps no regeneration
 
 export { breakNormalPowerConcealment, handleAttackFromSource, NORMAL_POWER_CONCEALMENTS } from './concealment.js';
 
@@ -180,6 +181,12 @@ export const isMagicallyConcealed = (en) => isInvisible(en) || isBlending(en) ||
 export const concealmentFlags = (en) => ({
   invisible: isInvisible(en), blending: isBlending(en), shade: isAShade(en),
 });
+
+/** INVIS-NET (2026-09-27): THE SAME THREE, ON THE WIRE - the pose's `cv` (net/wire.js validPose): 1 invisible, 2
+ *  blending, 4 a shade; 0 (omitted) for none. The sender packs its own entity's; a reader unpacks a peer's for the
+ *  foes' senses (a peer candidate's concealment() closure) and for the draw. */
+export const concealBits = (en) => (isInvisible(en) ? 1 : 0) | (isBlending(en) ? 2 : 0) | (isAShade(en) ? 4 : 0);
+export const concealFlagsOfBits = (bits) => ({ invisible: !!(bits & 1), blending: !!(bits & 2), shade: !!(bits & 4) });
 
 /**
  * Levitate.SetEnemyMotor (Levitate.cs:140-154) - the ENEMY half of
@@ -538,8 +545,8 @@ export const CURE_KINDS = Object.freeze(['disease', 'poison', 'paralyze']);   //
  *  them. The three named wrappers below are the members DFU actually
  *  exposes, and the temple's cure-disease service (U24) calls the
  *  first one directly - not through a spell. */
-export function cureAllOfKind(target, kind) {
-  if (target?.activeEffects) target.activeEffects = target.activeEffects.filter((a) => a.kind !== kind);
+export function cureAllOfKind(target, kind, keepInfections = false) {
+  if (target?.activeEffects) target.activeEffects = target.activeEffects.filter((a) => a.kind !== kind || (keepInfections && !!a.infection));
 }
 export const cureAllDiseases = (t) => cureAllOfKind(t, 'disease');
 export const cureAllPoisons = (t) => cureAllOfKind(t, 'poison');
@@ -645,7 +652,7 @@ function runEffectRound(a, target, sinks, rolls) {
   } else if (a.kind === 'regenerate') {
     // Regenerate.MagicRound: IncreaseHealth(GetMagnitude) every round
     const n = effectMagnitude(a.effect, a.casterLevel, a.saveScaled ?? false, a.element, a.flag, target, rolls);
-    if (n > 0 && sinks.heal) sinks.heal(n);
+    if (n > 0 && sinks.heal && !regenBarred()) sinks.heal(n);   // WBX6: the Burning Court keeps no regeneration (systems/courtRules.js)
   }
 }
 
@@ -811,7 +818,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
     if (isParalyze(e) && isEntityImmuneToParalysis(target)) continue;
     // DFU requires a CASTER ENTITY on the bundle (:505) and
     // BundleType == Spell - repeated on ALL THREE gates (:509, :521,
-    // :525). D9: the enchantment arc arrived (enchantments.js:281
+    // :525). D9: the enchantment arc arrived (enchantments.js:284
     // routes CastWhenHeld through this same applySpell with caster
     // `{ entity }` and ctx.heldItem set), so the caster check alone
     // stopped being the whole gate: a HeldMagicItem bundle is
@@ -1201,7 +1208,9 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
         out.saved = (out.saved ?? 0) + 1;
         continue;
       }
-      cureAllOfKind(target, CURE_KINDS[e.subType]);
+      // AUDIT SPELL-GIFT B6: a STRANGER's Cure Disease leaves an incubating infection be (systems/infection.js stores
+      // one as a disease) - a player choosing the curse lost it for good to anyone passing with a Cure
+      cureAllOfKind(target, CURE_KINDS[e.subType], ctx?.strangerCast === true);
       pushInstantMarker(target, CURE_MARKER_KINDS[e.subType], e);   // after the removal pass, as AssignBundle adds before MagicRound cures
       out.cured = (out.cured ?? 0) + 1;
       continue;
@@ -1437,7 +1446,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
     //
     // The "until attacked" half already exists here - every foe damage
     // door re-hostiles a pacified target (MakeEnemyHostileToAttacker),
-    // which enemyMotor.js:422 has anticipated by name since the
+    // which enemyMotor.js:434 has anticipated by name since the
     // C-slice.
     //
     // Chance-only, no magnitude, TargetFlags_Other - so it takes the

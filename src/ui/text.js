@@ -176,7 +176,8 @@ export function makeFont(renderer, fnt, name) {
   return font;
 }
 
-/** Draw text at pixel (x, y) top-left, integer scale, RGBA tint. */
+/** Draw text at pixel (x, y) top-left, integer scale, RGBA tint. Answers the advance it drew (the width DrawText laid
+ *  out - a drawn space is FixedWidth - 1, measureText's FixedWidth). */
 export function drawText(renderer, font, text, x, y, scale = 1, color = [1, 1, 1, 1]) {
   let cx = x;
   const { fnt } = font;
@@ -191,7 +192,7 @@ export function drawText(renderer, font, text, x, y, scale = 1, color = [1, 1, 1
       }
       cx += (g.advance * sdfRatio(fnt) + SDF_GLYPH_SPACING) * scale;
     }
-    return;
+    return cx - x;   // SHADOW-FANG (AUDIT A3): the drawn advance, as the bitmap arm answers it
   }
   // PERF-ON (2026-09-15, Mac: "the more people that are online, the
   // worse fps becomes"): ONE DRAW A STRING, not one a glyph.

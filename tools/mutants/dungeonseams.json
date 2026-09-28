@@ -1,0 +1,198 @@
+[
+  {
+    "name": "DUNGEON-SEAMS-the-pipeline-draws-the-raw-mesh",
+    "file": "src/scenes/dataPipeline.js",
+    "old": "    const dfMesh = patchSeams(modelIdNum, arch.getMesh(index));",
+    "new": "    const dfMesh = arch.getMesh(index);",
+    "tests": [
+      "test/dungeonseams.test.js"
+    ]
+  },
+  {
+    "name": "DUNGEON-SEAMS-the-archives-mesh-written",
+    "file": "src/world/arch3dSeams.js",
+    "old": "  return {\n    ...dfMesh,\n    subMeshes: dfMesh.subMeshes.map((sm) => ({\n      ...sm,\n      planes: sm.planes.map((pl) => ({ ...pl, points: pl.points.map((p) => movedPoint(p, rules)) })),\n    })),\n  };",
+    "new": "  for (const sm of dfMesh.subMeshes) for (const pl of sm.planes) pl.points = pl.points.map((p) => movedPoint(p, rules));\n  return dfMesh;",
+    "tests": [
+      "test/dungeonseams.test.js"
+    ]
+  },
+  {
+    "name": "DUNGEON-SEAMS-a-corner-edited-in-place",
+    "file": "src/world/arch3dSeams.js",
+    "old": "        if (out === p) out = { ...p };\n",
+    "new": "",
+    "tests": [
+      "test/dungeonseams.test.js"
+    ]
+  },
+  {
+    "name": "DUNGEON-SEAMS-a-near-value-taken",
+    "file": "src/world/arch3dSeams.js",
+    "old": "if (Math.abs(v - Number(from)) <= POINT_EPS) {",
+    "new": "if (Math.abs(v - Number(from)) <= 1) {",
+    "tests": [
+      "test/dungeonseams.test.js"
+    ]
+  },
+  {
+    "name": "DUNGEON-SEAMS-a-stray-matched-on-two-axes",
+    "file": "src/world/arch3dSeams.js",
+    "old": " && Math.abs(out.y - r.at[1]) <= STRAY_EPS",
+    "new": "",
+    "tests": [
+      "test/dungeonseams.test.js"
+    ]
+  },
+  {
+    "name": "DUNGEON-SEAMS-the-texture-lost",
+    "file": "src/world/arch3dSeams.js",
+    "old": "out = { ...out, x: r.to[0], y: r.to[1], z: r.to[2] };",
+    "new": "out = { x: r.to[0], y: r.to[1], z: r.to[2], nx: out.nx, ny: out.ny, nz: out.nz, u: 0, v: 0 };",
+    "tests": [
+      "test/dungeonseams.test.js"
+    ]
+  },
+  {
+    "name": "DUNGEON-SEAMS-the-sloped-stair-dropped",
+    "file": "src/world/arch3dSeams.js",
+    "old": "  63026: SLOPED_STAIR,\n",
+    "new": "  63027: SLOPED_STAIR,\n",
+    "tests": [
+      "test/dungeonseams.test.js"
+    ]
+  },
+  {
+    "name": "DUNGEON-SEAMS-the-vault-corner-on-the-grid",
+    "file": "src/world/arch3dSeams.js",
+    "old": "[-64, -95.996, -128]",
+    "new": "[-64, -96, -128]",
+    "tests": [
+      "test/dungeonseams.test.js"
+    ]
+  },
+  {
+    "name": "DUNGEON-SEAMS-the-round-room-on-the-plane-only",
+    "file": "src/world/arch3dSeams.js",
+    "old": "point([61.688, -126, 256.617], [64, -126, 256])",
+    "new": "point([61.688, -126, 256.617], [61.688, -126, 256])",
+    "why": "killed by the census against the player's own data (ARENA2_PATH): a corner moved onto the corridor's plane but not its corner leaves the slit",
+    "tests": [
+      "test/dungeonseams.test.js"
+    ]
+  },
+  {
+    "name": "DUNGEON-SEAMS-the-L-one-flight",
+    "file": "src/world/arch3dSeams.js",
+    "old": "59004: [side('x', [[26, 24]]), side('z', [[-26, -24]]), ",
+    "new": "59004: [side('x', [[26, 24]]), ",
+    "why": "killed by the census against the player's own data (ARENA2_PATH)",
+    "tests": [
+      "test/dungeonseams.test.js"
+    ]
+  },
+  {
+    "name": "DUNGEON-SEAMS-the-census-counts-open-space",
+    "file": "tools/seamCensus.mjs",
+    "old": "if (worst > SEAM_HAIR && worst <= SEAM_REACH) {",
+    "new": "if (worst > SEAM_HAIR) {",
+    "tests": [
+      "test/dungeonseams.test.js"
+    ]
+  },
+  {
+    "name": "DUNGEON-SEAMS-the-census-blind-to-a-slit",
+    "file": "tools/seamCensus.mjs",
+    "old": "export const SEAM_REACH = 0.06;",
+    "new": "export const SEAM_REACH = 0.02;",
+    "tests": [
+      "test/dungeonseams.test.js"
+    ]
+  },
+  {
+    "name": "DUNGEON-SEAMS-a-flight-moved-off-its-wall",
+    "file": "src/world/arch3dSeams.js",
+    "old": "  67025: [side('x', [[63, 64], [-63, -64]])],",
+    "new": "  67025: [side('x', [[63, 61], [-63, -61]])],",
+    "tests": [
+      "test/dungeonseams.test.js"
+    ],
+    "why": "killed by the census against the player's own data (ARENA2_PATH): the treads' ends move away from their walls, onto nothing (the landing measure)"
+  },
+  {
+    "name": "DUNGEON-SEAMS-the-landing-flight-centred",
+    "file": "src/world/arch3dSeams.js",
+    "old": "  56000: [side('x', [[120, 124], [122, 124]]), side('z', [[120, 122], [-120, -122]])],",
+    "new": "  56000: [side('x', [[120, 122], [-120, -122]]), side('z', [[120, 122], [-120, -122]])],",
+    "tests": [
+      "test/dungeonseams.test.js"
+    ],
+    "why": "killed by the census against the player's own data (ARENA2_PATH): its -x ends pushed into the wall they already met, its +x ends still short"
+  },
+  {
+    "name": "DUNGEON-SEAMS-the-posts-left-floating",
+    "file": "src/world/arch3dSeams.js",
+    "old": "  63022: [side('y', [[-2, 0], [-1, 0], [-124, -126]])],",
+    "new": "  63023: [side('y', [[-2, 0], [-1, 0], [-124, -126]])],",
+    "tests": [
+      "test/dungeonseams.test.js"
+    ]
+  },
+  {
+    "name": "DUNGEON-SEAMS-the-L-foot-left-standing",
+    "file": "src/world/arch3dSeams.js",
+    "old": "side('x', [[-166, -168], [38, 40]]), side('y', [[-2, 0]])]",
+    "new": "side('x', [[-166, -168], [38, 40]])]",
+    "tests": [
+      "test/dungeonseams.test.js"
+    ],
+    "why": "killed by the census against the player's own data (ARENA2_PATH)"
+  },
+  {
+    "name": "DUNGEON-SEAMS-a-twin-left-bare",
+    "file": "src/world/arch3dSeams.js",
+    "old": "  63234: ROUND_ROOM,\n",
+    "new": "  63235: ROUND_ROOM,\n",
+    "tests": [
+      "test/dungeonseams.test.js"
+    ]
+  },
+  {
+    "name": "DUNGEON-SEAMS-the-exit-door-laid-everywhere",
+    "file": "tools/seamCensus.mjs",
+    "old": "const lay = layoutRdbBlock(block, 0, false, getModelPre);",
+    "new": "const lay = layoutRdbBlock(block, 0, true, getModelPre);",
+    "tests": [
+      "test/dungeonseams.test.js"
+    ],
+    "why": "killed by the census against the player's own data (ARENA2_PATH)"
+  },
+  {
+    "name": "DUNGEON-SEAMS-a-landing-measured-against-its-own-face",
+    "file": "tools/seamCensus.mjs",
+    "old": "if (g.placement === pi && g.rawDf.some((q) => q[0] === r.x && q[1] === r.y && q[2] === r.z)) continue;",
+    "new": "if (g.placement === pi && g.df.some((q) => q[0] === p.x && q[1] === p.y && q[2] === p.z)) continue;",
+    "tests": [
+      "test/dungeonseams.test.js"
+    ],
+    "why": "killed by the census against the player's own data (ARENA2_PATH): a corner that lands on a wall already there (61017) reads as landing on nothing"
+  },
+  {
+    "name": "DUNGEON-SEAMS-the-stray-tolerance-loose",
+    "file": "src/world/arch3dSeams.js",
+    "old": "export const STRAY_EPS = 0.002;",
+    "new": "export const STRAY_EPS = 0.5;",
+    "tests": [
+      "test/dungeonseams.test.js"
+    ]
+  },
+  {
+    "name": "DUNGEON-SEAMS-the-nav-bake-served-stale",
+    "file": "src/ai/navClient.js",
+    "old": "export const NAV_BAKE_VERSION = 3;",
+    "new": "export const NAV_BAKE_VERSION = 2;",
+    "tests": [
+      "test/audit62_enhancedai.test.js"
+    ]
+  }
+]

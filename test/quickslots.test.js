@@ -405,7 +405,7 @@ test('HB1: one kind per slot, a press goes through the diamond\'s door and leave
   assert.equal(HB.hotbarKindOf(p), 'consumable');
   assert.equal(HB.hotbarKindOf(d), 'weapon');
   assert.equal(HB.hotbarKindOf(torch()), 'light');
-  assert.equal(HB.hotbarKindOf(shield()), null);
+  assert.equal(HB.hotbarKindOf(shield()), 'shield');   // SHIELD1 (2026-09-25): a shield goes on the bar now - test/shield1.test.js
   HB.setHotbarSlot(0, HB.hotbarEntryForItem(p));
   HB.setHotbarSlot(4, HB.hotbarEntryForItem(p));   // a MOVE, not a copy
   assert.equal(HB.hotbarEntry(0), null);

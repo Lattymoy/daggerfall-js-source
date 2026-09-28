@@ -1,0 +1,614 @@
+[
+  {
+    "name": "ONESEAT-reconnect-not-refused",
+    "file": "server/src/index.js",
+    "old": "      if (seatHeld.length && !m.cl) { this._refuse(ws, SEAT_ELSEWHERE, CLOSE_REPLACED); return; }\n",
+    "new": "",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-claim-refused-too",
+    "file": "server/src/index.js",
+    "old": "if (seatHeld.length && !m.cl) {",
+    "new": "if (seatHeld.length) {",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-no-supersede",
+    "file": "server/src/index.js",
+    "old": "      if (m.cl) for (const other of seatHeld) this._refuse(other, SEAT_ELSEWHERE, CLOSE_REPLACED);\n",
+    "new": "",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-every-room",
+    "file": "server/src/index.js",
+    "old": "const seatHeld = isSocialRoom(a.key) && who.subject ?",
+    "new": "const seatHeld = who.subject ?",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-by-browser-account",
+    "file": "server/src/index.js",
+    "old": "b.id !== id && b.sub === sub && !this._dead.has(other)",
+    "new": "b.id !== id && b.acct === sub && !this._dead.has(other)",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-own-socket-counted",
+    "file": "server/src/index.js",
+    "old": "b.id && b.id !== id && b.sub === sub && !this._dead",
+    "new": "b.id && b.sub === sub && !this._dead",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-claim-dropped-at-door",
+    "file": "src/net/wire.js",
+    "old": "      hello.cl = 1;\n",
+    "new": "",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-any-claim",
+    "file": "src/net/wire.js",
+    "old": "      if (m.cl !== 1) return { error: 'bad claim' };\n",
+    "new": "",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-claim-never-sent",
+    "file": "src/net/online.js",
+    "old": "    if (this.claim) frame.cl = 1;",
+    "new": "    if (false) frame.cl = 1;",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-claim-never-spent",
+    "file": "src/net/online.js",
+    "old": "      if (primary) this.claim = false;   // ONE-SEAT",
+    "new": "      // ONE-SEAT",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-close-not-sticky",
+    "file": "src/net/online.js",
+    "old": "if (code === CLOSE_REPLACED) { this.superseded = true; this.terminal = true;",
+    "new": "if (code === CLOSE_REPLACED) { this.terminal = true;",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-join-open",
+    "file": "src/net/online.js",
+    "old": "    if (this.superseded) return;   // ONE-SEAT: the seat is another tab's",
+    "new": "    // ONE-SEAT: the seat is another tab's",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-rejoin-open",
+    "file": "src/net/online.js",
+    "old": "    if (this.superseded) return false;   // ONE-SEAT: a superseded session",
+    "new": "    // ONE-SEAT: a superseded session",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-resume-no-claim",
+    "file": "src/net/online.js",
+    "old": "    this.claim = !!claim;",
+    "new": "    this.claim = false;",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-supersede-marks-only",
+    "file": "src/net/online.js",
+    "old": "  supersede() {\n    this.leave();\n",
+    "new": "  supersede() {\n",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-lock-hold-not-asked",
+    "file": "src/net/oneSeat.js",
+    "old": "      if (!held) return;\n",
+    "new": "",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-lock-own-word",
+    "file": "src/net/oneSeat.js",
+    "old": "if (!m || m.t !== 'seat' || m.n === nonce || !Number.isFinite(m.at)) return;",
+    "new": "if (!m || m.t !== 'seat' || !Number.isFinite(m.at)) return;",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-lock-lost-kept",
+    "file": "src/net/oneSeat.js",
+    "old": "      held = false;\n      try { onLost(); }",
+    "new": "      try { onLost(); }",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-here-never-drawn",
+    "file": "src/ui/chatPanel.js",
+    "old": "      const cls = act ? 'dfchat-here on' : 'dfchat-here';",
+    "new": "      const cls = 'dfchat-here';",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-here-not-wired",
+    "file": "src/ui/chatPanel.js",
+    "old": "      hereRun = act ? act.run : null;",
+    "new": "      hereRun = null;",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-hub-no-claim",
+    "file": "src/scenes/world.js",
+    "old": "      if (tab.room === SOCIAL_ROOM) link.claim = true;\n",
+    "new": "",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-lock-never-claimed",
+    "file": "src/scenes/world.js",
+    "old": "    if (online.url) seatLock.claim();",
+    "new": "    if (online.url) void 0;",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-frame-not-asked",
+    "file": "src/scenes/world.js",
+    "old": "    if (seatOut()) {\n      if (!_seatLeft) leaveSeat(now);\n",
+    "new": "    if (false) {\n      if (!_seatLeft) leaveSeat(now);\n",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-leave-no-handover",
+    "file": "src/scenes/world.js",
+    "old": "        const handed = handOverFoes() || handOverRoomFoes();",
+    "new": "        const handed = 0;",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-renown-in-any-tab",
+    "file": "src/scenes/world.js",
+    "old": "    earning: () => !!online && !seatOut(),",
+    "new": "    earning: () => !!online,",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-take-no-claim",
+    "file": "src/scenes/world.js",
+    "old": "      link.resume({ claim: room === SOCIAL_ROOM });",
+    "new": "      link.resume();",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-links-not-marked",
+    "file": "src/scenes/world.js",
+    "old": "    for (const link of chatLinks?.values?.() ?? []) link.supersede();\n",
+    "new": "",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-session-silent",
+    "file": "src/net/online.js",
+    "old": " this._deliver('superseded', () => this.onSuperseded?.()); return; }",
+    "new": " return; }",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-hidden-tab-lingers",
+    "file": "src/scenes/world.js",
+    "old": "      link.onSuperseded = () => seatLostNow();",
+    "new": "      link.onSuperseded = () => {};",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-lost-word-waits-for-a-frame",
+    "file": "src/scenes/world.js",
+    "old": "    _seatOut = true;\n    try { leaveSeat(performance.now()); }",
+    "new": "    _seatOut = true;\n    try { void 0; }",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-words-never-said",
+    "file": "src/scenes/world.js",
+    "old": "        chatNotice(SEAT_NOTICE);\n",
+    "new": "",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-taken-back-says-nothing-next-time",
+    "file": "src/scenes/world.js",
+    "old": "_seatOut = false; _seatLeft = false; _seatSaid = false;",
+    "new": "_seatOut = false; _seatLeft = false;",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-leave-closes-first",
+    "file": "src/scenes/world.js",
+    "old": "    online?.supersede();\n    for (const link of chatLinks?.values?.() ?? []) link.supersede();\n    exteriorFoes.clearPuppets();",
+    "new": "    for (const link of chatLinks?.values?.() ?? []) link.supersede();\n    exteriorFoes.clearPuppets();",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-R1-moved-seat-swept",
+    "file": "server/src/index.js",
+    "old": "      if (!others.length && !carried) {",
+    "new": "      if (!others.length) {",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-R1-drain-never-swept",
+    "file": "server/src/index.js",
+    "old": "      if (!others.length && !carried) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-R1-reconnect-not-carried",
+    "file": "server/src/index.js",
+    "old": "const carried = !!replaced || (!!m.cl && seatHeld.length > 0);",
+    "new": "const carried = !!m.cl && seatHeld.length > 0;",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-R1-claim-not-carried",
+    "file": "server/src/index.js",
+    "old": "const carried = !!replaced || (!!m.cl && seatHeld.length > 0);",
+    "new": "const carried = !!replaced;",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-R4-closed-counted",
+    "file": "server/src/index.js",
+    "old": " && !this._dead.has(other) && !this._gone.has(other)) out.push(other);",
+    "new": ") out.push(other);",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-R4-reaped-counted",
+    "file": "server/src/index.js",
+    "old": " && !this._gone.has(other)) out.push(other);",
+    "new": ") out.push(other);",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-R4-unreaped-counted",
+    "file": "server/src/index.js",
+    "old": "&& !this._dead.has(other) && !this._gone",
+    "new": "&& !this._gone",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-T7-claim-before-secret",
+    "file": "server/src/index.js",
+    "old": "if (held && held !== m.secret) { this._refuse(ws, 'id taken'); return; }",
+    "new": "if (held && held !== m.secret) { if (m.cl) for (const other of seatHeld) this._refuse(other, SEAT_ELSEWHERE, CLOSE_REPLACED); this._refuse(ws, 'id taken'); return; }",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-H1-press-not-swallowed",
+    "file": "src/ui/chatPanel.js",
+    "old": "  for (const t of ['pointerdown', 'mousedown', 'click', 'touchstart']) here.addEventListener(t, swallow);\n",
+    "new": "",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-T6-here-off-the-root",
+    "file": "src/ui/chatPanel.js",
+    "old": "root.append(peek, hint, status, here, openBtn,",
+    "new": "root.append(peek, hint, status, openBtn,",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-T6-here-hidden-in-render",
+    "file": "src/ui/chatPanel.js",
+    "old": "      const cls = act ? 'dfchat-here on' : 'dfchat-here';",
+    "new": "      const cls = act && !hidden ? 'dfchat-here on' : 'dfchat-here';",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-T6-here-hidden-by-a-rule",
+    "file": "src/ui/chatPanel.js",
+    "old": ".dfchat[data-hidden=\"1\"] .dfchat-show { display: inline-flex; }",
+    "new": ".dfchat[data-hidden=\"1\"] .dfchat-show { display: inline-flex; }\n.dfchat[data-hidden=\"1\"] .dfchat-here { display: none; }",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-H2-resume-over-live",
+    "file": "src/net/online.js",
+    "old": "    if (!this.superseded) return;   // AUDIT ONESEAT H2",
+    "new": "    // AUDIT ONESEAT H2",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-H2-last-word-uncontained",
+    "file": "src/scenes/world.js",
+    "old": "} catch (e) { console.error('[online] the seat\\'s last word could not be said - leaving anyway:', e); }",
+    "new": "} catch (e) { throw e; }",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-H6-duel-kept",
+    "file": "src/scenes/world.js",
+    "old": "    try { duelLeaveNow(); } catch { /* no duel built, none to end */ }\n    online?.supersede();",
+    "new": "    online?.supersede();",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-H5-others-things-kept",
+    "file": "src/scenes/world.js",
+    "old": "    camps.sweepOwners(new Set(), now); hcc.pruneKept([], now);\n",
+    "new": "",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-H3-sigil-awake",
+    "file": "src/scenes/world.js",
+    "old": "    setSigilOnline(false); setRenownLayer(playerEntity, null);",
+    "new": "    setRenownLayer(playerEntity, null);",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-H3-layer-kept",
+    "file": "src/scenes/world.js",
+    "old": "    setSigilOnline(false); setRenownLayer(playerEntity, null);",
+    "new": "    setSigilOnline(false);",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-H3-never-back",
+    "file": "src/scenes/world.js",
+    "old": "    setSigilOnline(true); setSigilRenown(renownNow); setRenownLayer(playerEntity, renownNow); computeEntityMods(playerEntity);   // AUDIT ONESEAT H3: online again (SET3: the sets' tiers with it)\n",
+    "new": "",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-H3-layer-adopted-out",
+    "file": "src/scenes/world.js",
+    "old": "    if (!seatOut()) setRenownLayer(playerEntity, level);",
+    "new": "    setRenownLayer(playerEntity, level);",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-H4-exit-save-out",
+    "file": "src/scenes/world.js",
+    "old": "    if (!online || !playerSpawned || seatOut()) return;",
+    "new": "    if (!online || !playerSpawned) return;",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-C1-claim-standing",
+    "file": "src/net/online.js",
+    "old": "  get claim() { return this._claimAt != null && this._now() - this._claimAt <= CLAIM_TTL_MS; }",
+    "new": "  get claim() { return this._claimAt != null; }",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-C4-no-stamp-asked",
+    "file": "src/net/oneSeat.js",
+    "old": "      if (m.at < at || (m.at === at && String(m.n) < nonce)) { say(); return; }   // the older claim gives way - the other tab's\n",
+    "new": "",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-C4-older-not-answered",
+    "file": "src/net/oneSeat.js",
+    "old": "{ say(); return; }",
+    "new": "return;",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-C4-stamp-the-clock-alone",
+    "file": "src/net/oneSeat.js",
+    "old": "      at = seen = Math.max(now(), seen + 1);",
+    "new": "      at = seen = now();",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-C5-hub-link-alone",
+    "file": "src/scenes/world.js",
+    "old": "      link.onSuperseded = () => seatLostNow();",
+    "new": "      if (tab.room === SOCIAL_ROOM) link.onSuperseded = () => seatLostNow();",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-C3-lock-without-relay",
+    "file": "src/scenes/world.js",
+    "old": "    if (online.url) seatLock.claim();",
+    "new": "    seatLock.claim();",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-T1-supersede-not-terminal",
+    "file": "src/net/online.js",
+    "old": "    this.superseded = true;\n    this.terminal = true; this.terminalAt = this._now();\n",
+    "new": "    this.superseded = true;\n",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-T1-take-room-from-link",
+    "file": "src/scenes/world.js",
+    "old": "      const room = chatLog?.tab(tabId)?.room ?? null;",
+    "new": "      const room = link.room ?? null;",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-T1-leave-guard-never",
+    "file": "src/scenes/world.js",
+    "old": "    if (online?.room) {\n      try {\n        const handed",
+    "new": "    if (online?.room && false) {\n      try {\n        const handed",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-T1-last-word-commented",
+    "file": "src/scenes/world.js",
+    "old": "        worldPublish(now, true);\n      } catch (e) { console.error('[online] the seat",
+    "new": "        // worldPublish(now, true);\n      } catch (e) { console.error('[online] the seat",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-T1-puppets-kept",
+    "file": "src/scenes/world.js",
+    "old": "    exteriorFoes.clearPuppets(); modes?.clearOwnPuppets?.(); _foesRoom = null;\n    // AUDIT ONESEAT H5",
+    "new": "    // AUDIT ONESEAT H5",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-T1-riders-kept",
+    "file": "src/scenes/world.js",
+    "old": "        setMidScreenText(SEAT_MID_TEXT);\n      }\n      peerBodies.destroy(); remotePlayers.sync([], onlineToScene); peerRiders?.destroy(); peerWalkers?.destroy();",
+    "new": "        setMidScreenText(SEAT_MID_TEXT);\n      }\n      peerBodies.destroy(); remotePlayers.sync([], onlineToScene);",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-MERGE-set-tiers-kept-out",
+    "file": "src/scenes/world.js",
+    "old": "setRenownLayer(playerEntity, null); computeEntityMods(playerEntity);",
+    "new": "setRenownLayer(playerEntity, null);",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "ONESEAT-MERGE-set-tiers-not-back",
+    "file": "src/scenes/world.js",
+    "old": "setRenownLayer(playerEntity, renownNow); computeEntityMods(playerEntity);",
+    "new": "setRenownLayer(playerEntity, renownNow);",
+    "tests": [
+      "test/oneseat.test.js"
+    ]
+  }
+]

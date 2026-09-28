@@ -98,7 +98,7 @@ test('OVH4: world.js - ONLINE-REST1\'s classic arm is gone from all five party-r
   const follow = w.slice(w.indexOf('// OVH4: a mirror opens on either skin'), w.indexOf('const win = createRestWindow(partyRestMirrorDeps('));
   assert.ok(follow.length > 0 && !/isEnhanced\(\)/.test(follow), 'the follow tick opens a mirror on either skin');
   // the ONE question: a party, outside a tavern/temple/guild hall - the gate's own two
-  assert.match(w, /const partyRestHere = \(\) => !!social\?\.party && !modes\?\.insidePartyRestExempt;/);
+  assert.match(w, /const partyRestHere = \(\) => !!social\?\.party && !modes\?\.insidePartyRestExempt && restTogether\(\);/);   // REST-OPT: and a rest alone is my own
   assert.match(w, /const outdoorRestDeps = createRestDeps\(playerEntity, \{[^]*?partyRest: \(\) => partyRestHere\(\),/, 'the outdoor rest asks it');
   assert.match(body('const partyRestMirrorDeps = (restKind, targetAcct) => {'), /\.\.\.outdoorRestDeps,\s*\n\s*partyRest: \(\) => true,/, 'a mirror IS a party\'s rest');
   assert.match(w, /partyRestHere: \(\) => partyRestHere\(\),/, 'the mode machine is handed it');

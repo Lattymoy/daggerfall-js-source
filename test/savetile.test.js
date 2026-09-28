@@ -19,7 +19,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
-import { saveTile, agoText, tileLine, tileWhen, initialOf, CLOUD_STATES, cloudStateOf, saveFromCard } from '../src/ui/saveTile.js';
+import { saveTile, agoText, tileLine, tileWhen, initialOf, CLOUD_STATES, cloudStateOf, saveFromCard, newerBackup } from '../src/ui/saveTile.js';
 import { dateFromClassicMinutes, dateString } from '../src/systems/gameDate.js';   // ACC2c: the two calls a LOCAL tile's date comes from, handed to the card's conversion so there is one reading of `gameTime`
 
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -121,7 +121,8 @@ test('TILE2/ACC2: the cloud line, and the state that draws NONE of it', () => {
   // ACC2c appended `only` (a save whose ONLY copy is the backup), the same
   // way AUDIT-312 F2 appended `wait`: at the END, so nothing that reads this
   // list positionally moves, and named here so a seventh cannot arrive quietly.
-  assert.deepEqual(CLOUD_STATES, ['off', 'none', 'saved', 'busy', 'bad', 'wait', 'only']);
+  // FIELD 2026-09-27 appended `newer` (the backup is a later save of this slot) the same way.
+  assert.deepEqual(CLOUD_STATES, ['off', 'none', 'saved', 'busy', 'bad', 'wait', 'only', 'newer']);
 
   assert.equal(text(saveTile(fakeDoc(), SAVE, { cloud: { state: 'none' } }), 'svsay'), 'Not backed up');
   assert.equal(text(saveTile(fakeDoc(), SAVE, { cloud: { state: 'saved' } }), 'svsay'), 'Backed up');
@@ -188,7 +189,7 @@ test('AUDIT-312 F3: the cloud line\'s STATE is decided where a pin can reach it'
   assert.doesNotMatch(menu, /save\.saveName \?\? ''\}`;/, 'the menu writes no second slot key');
   // THE LISTING IS ASKED AGAIN, NEVER PATCHED: one answer about what
   // the cloud holds, and it comes from the cloud.
-  assert.match(menu, /if \(r\.ok\) \{ cloudAsked = false; ensureCloud\(\); \}/);
+  assert.match(menu, /if \(r\.ok \|\| r\.error === 'stale'\) \{ cloudAsked = false; ensureCloud\(\); \}/);   // the pre-merge audit 0927b B2: a stale restore asks again too
   // ...and the latch is per VISIT, which means a fresh mount clears it.
   assert.match(menu.slice(menu.indexOf('export function mountEnhancedMenu')), /^\s*cloudAsked = false;$/m);
 });
@@ -207,6 +208,13 @@ test('AUDIT-312 F1: the cloud DELETE has a door, and it asks twice', () => {
   // the copy - is the worst label this menu could carry.
   assert.match(menu, /label: 'Delete backup'/);
   assert.match(menu, /label: 'Delete backup\?'/, 'a destructive act asks twice');
+  // EVERY ONE of them: the save's tile and the cloud-only card each carry
+  // the button, so one site asking twice cannot stand for the other (the
+  // A312-7 mutant lived through the lone match above while the card's
+  // copy still read true).
+  const deletes = menu.match(/label: 'Delete backup'/g) ?? [];
+  const asks = menu.match(/cloudArm === slot\s*\?\s*\{ label: 'Delete backup\?', primary: true/g) ?? [];
+  assert.equal(asks.length, deletes.length, 'every Delete backup is armed by a first press');
   // IT REMOVES THE COPY AND NEVER THE SAVE. The cloud is a backup, so
   // deleting the backup is not deleting the game.
   const cloud = rd('src/systems/cloudSaves.js');
@@ -286,7 +294,7 @@ test('TILE2: ONE tile for THREE panes, and the classes it draws belong to nobody
   // The drift this retired: three hand-rolled copies of the same four
   // lines is how three panes come to disagree about what a save is.
   assert.doesNotMatch(menu, /function slotCard\(/, 'the old per-pane card is gone');
-  assert.match(menu, /import \{ saveTile, cloudStateOf, saveFromCard \} from '\.\/saveTile\.js'/);
+  assert.match(menu, /import \{ saveTile, cloudStateOf, saveFromCard, newerBackup \} from '\.\/saveTile\.js'/);   // + the newer-backup question (FIELD 2026-09-27, 0927b B1)
   // AUDIT-312 F3: and the DECISION comes from there too, rather than
   // being re-inlined into a module no pin can drive. The gate is that
   // the menu asks; the arithmetic itself is pinned above.
@@ -456,4 +464,42 @@ test('ACC2c: `only` is its own cloud state and its own ladder - a card with no s
   assert.equal(byClass(t, 'svcloud')[0].className, 'svcloud is-only', 'and it wears its own class, so the skin can colour it apart from a backed-up local save');
   const noWhen = saveTile(fakeDoc(), { name: 'N' }, { cloud: { state: 'only', when: null, actions: [] } });
   assert.equal(text(noWhen, 'svsay'), 'Only in your backup');
+});
+
+test('FIELD 2026-09-27 (Masta_Fu): a backup that is a LATER save of this slot is `newer`, not "Backed up" - a different game minute, saved later; the same save, an older one or an unknown minute reads as it always read (mutants: the minute test dropped; the later test dropped or reversed; the state never asked)', () => {
+  // HIS CASE: the PC's QuickSave at minute 1000, saved at T; the Mac restored it, played on to minute 2000 and
+  // backed that up at T + 1 day. On the PC the backup matched the slot by identity and read "Backed up".
+  const T = 1_758_400_000_000, day = 86_400_000;
+  const pc = { gameTime: 1000, realTime: T };
+  const mac = { bytes: 4096, gameTime: 2000, realTime: T + day, updatedAt: (T + day) / 1000 };
+  assert.equal(newerBackup(mac, pc), true);
+  const nowS = (T + day) / 1000 + 720;
+  assert.deepEqual(cloudStateOf({ signedIn: true, characterId: 'c1', card: mac, localTime: pc, nowS }),
+    { state: 'newer', when: '12 minutes ago', error: null }, 'his tile: the Mac\'s backup is ahead');
+
+  // THE SAME SAVE IS NOT NEWER - SP1's identity is the game minute, and a clock that stamped the upload later changes
+  // nothing about which game it is (the PC's own backup of its own save).
+  assert.equal(newerBackup({ ...mac, gameTime: 1000 }, pc), false);
+  assert.equal(cloudStateOf({ signedIn: true, characterId: 'c1', card: { ...mac, gameTime: 1000 }, localTime: pc, nowS }).state, 'saved');
+  // AN OLDER BACKUP is the ordinary case after playing on: this device's save is the later one by BOTH clocks, and
+  // "Back up again" is the right press - it reads as it always did.
+  assert.equal(newerBackup({ ...mac, gameTime: 500, realTime: T - day }, pc), false);
+  assert.equal(newerBackup({ ...mac, gameTime: 500, realTime: T }, pc), false, 'saved at the same moment is not later');
+  // LATER BY EITHER CLOCK (the pre-merge audit 0927b B6): a PC two hours fast reads the Mac's save as the earlier one by
+  // the devices' clocks - but the world's minute says it is ahead, and that cannot be skewed
+  assert.equal(newerBackup({ ...mac, realTime: T - 3_600_000 }, pc), true, 'a skewed clock: the game minute still names it');
+  assert.equal(newerBackup({ ...mac, gameTime: 500 }, pc), true, 'a rolled-back game saved later: the upload over it still asks twice');
+  // UNKNOWN IS NOT NEWER: a caller with no local time (every caller before this), or a card with no minute.
+  assert.equal(cloudStateOf({ signedIn: true, characterId: 'c1', card: mac, nowS }).state, 'saved');
+  assert.equal(newerBackup({ bytes: 1, realTime: T + day }, pc), false);
+  assert.equal(newerBackup(mac, { realTime: T }), false);
+  // ...and the rungs above it still win: a push in flight, a refusal, an unfinished upload.
+  assert.equal(cloudStateOf({ signedIn: true, characterId: 'c1', card: mac, localTime: pc, busy: true }).state, 'busy');
+  assert.equal(cloudStateOf({ signedIn: true, characterId: 'c1', card: mac, localTime: pc, error: 'too-large' }).state, 'bad');
+  assert.equal(cloudStateOf({ signedIn: true, characterId: 'c1', card: { ...mac, bytes: 0 }, localTime: pc }).state, 'none');
+
+  // THE SENTENCE says which copy is ahead.
+  assert.equal(text(saveTile(fakeDoc(), SAVE, { cloud: { state: 'newer', when: '12 minutes ago' } }), 'svsay'), 'Newer backup · 12 minutes ago');
+  assert.equal(text(saveTile(fakeDoc(), SAVE, { cloud: { state: 'newer' } }), 'svsay'), 'Newer backup');
+  assert.equal(byClass(saveTile(fakeDoc(), SAVE, { cloud: { state: 'newer' } }), 'svcloud')[0].className, 'svcloud is-newer');
 });

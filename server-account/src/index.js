@@ -58,7 +58,7 @@
 // RENOWN1, Renown. The caller's own character, by the id its
 // save carries; the level rides the token when the mint names one:
 //   POST /v1/renown/xp { character, xp, name?, rid? } -> { character, xp, level, credited, rose, order, max?, repeat? }
-//   POST /v1/auth/token { character? }    -> { ..., level }
+//   POST /v1/auth/token { character? }    -> { ..., level, xp }   (RENOWN4: xp, the track's total)
 //
 // ACC2, and every one of them needs a REGISTERED account (the wall):
 //   GET    /v1/saves                                   -> { saves[] }
@@ -103,7 +103,7 @@ import {
   duelRecordOf, reportDuelLoss, gateRecordOf, claimGate,
   ACCOUNT_MAX, ACCOUNT_WINDOW_S,
 } from './accounts.js';
-import { mintToken, mintOrder, mintRenownOrder, MAX_TTL_S, TOKEN_V, ID_RE } from '../../src/net/identityToken.js';
+import { mintToken, mintOrder, mintRenownOrder, mintGuildOrder, mintGuildOutOrder, MAX_TTL_S, TOKEN_V, ID_RE } from '../../src/net/identityToken.js';
 import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES, savePathOf, SAVE_MAX_BYTES, SHOT_MAX_BYTES } from './service.js';
 import { listSaves, putCard, putBlob, getBlob, deleteSave, saveCardOf } from './saves.js';
 import { signingKey, gatePublicKey } from './signing.js';
@@ -113,9 +113,9 @@ import { reportRenownXp, renownTrackOf, renownTracksOf, renownCharacterOk } from
 import { claimHome, releaseHome, setHomeEntry, homesInTown, homesOf } from './homes.js';   // HOME1: the online homes' routes
 import {
   foundGuild, guildOf, invitesOf, inviteToGuild, answerInvite, leaveGuild, removeFromGuild, rankGuildMember, renameGuildRanks,
-  depositToGuild, withdrawFromGuild, handOverGuild, disbandGuild,
-} from './guilds.js';   // GUILD1: the guilds' routes
-import { decorOf, placeDecor, moveDecor, removeDecor } from './decor.js';   // DECOR1: an online home's decor
+  depositToGuild, withdrawFromGuild, handOverGuild, disbandGuild, guildBadgeOf,
+} from './guilds.js';   // GUILD1: the guilds' routes; GUILD1c: the guild a token carries
+import { decorOf, placeDecor, moveDecor, removeDecor, hideDecorBase } from './decor.js';   // DECOR1: an online home's decor; BASE-HIDE: what its owner took out
 
 // THIS MODULE EXPORTS `default` AND NOTHING ELSE, and that is a
 // runtime requirement rather than a preference: in a module Worker
@@ -147,6 +147,19 @@ const GUILD_STATUS = Object.freeze({
   'guild-treasury': 409, 'guild-treasury-full': 409, 'guild-treasury-short': 409,
   'guild-rate': 429,
 });
+/** GUILD1c: A GUILD ACT'S ANSWER WITH ITS ORDERS SIGNED in place of what they say (guilds.js). `badge` - the actor's
+ *  character's guild now, `{}` for none - becomes `order`, which the actor's own client carries to the rooms it is in;
+ *  `out` - a member removed, or the guild disbanded - becomes `outOrder`, which the client carries to the hub, whose
+ *  word reaches that member wherever they stand. A service with no key still acts, answering null for either: the rooms
+ *  read the change off the next token. */
+async function guildOrdersOf(r, s, env, subtle, nowS) {
+  const { badge, out, ...answer } = r;
+  if (badge === undefined && out === undefined) return answer;
+  const key = await signingKey(env, subtle);
+  if (badge !== undefined) answer.order = key ? await mintGuildOrder({ s, ...badge }, key, { subtle, nowS }) : null;
+  if (out !== undefined) answer.outOrder = key ? await mintGuildOutOrder(out, key, { subtle, nowS }) : null;
+  return answer;
+}
 
 /** A body's bytes, or null past `max` - refused on the length it
  *  ANNOUNCES before a byte is read, and on the bytes that ARRIVE as
@@ -342,9 +355,19 @@ export default {
         // (1 for a character that has earned nothing yet). The client's
         // word is only WHICH of its own characters; the number is this
         // service's. A mint naming none (an older build) carries none.
-        const lv = renownCharacterOk(body.character) ? ((await renownTrackOf(ctx, who.player.id, body.character))?.level ?? 1) : undefined;
+        // RENOWN4: and the track's TOTAL beside it in the answer (never in the token - a room needs the level, not the
+        // XP): the page's own bar is drawn from it the moment the character comes online (ui/hudRenown.js).
+        const track = renownCharacterOk(body.character) ? ((await renownTrackOf(ctx, who.player.id, body.character)) ?? { xp: 0, level: 1 }) : null;
+        const lv = track ? track.level : undefined;
+        // GUILD1c: AND THE GUILD, the named character's - its id, its tag and its member row off the roster as it
+        // stands now - so a room reads the tag beside the name off the signature, and routes the guild's chat to its
+        // own members alone. The client never says which guild; a mint naming no character carries none.
+        // AUDIT MERGE-PLUS A6: AND ONLY A MINT THAT ASKS (`guild: true`). A build from before GUILD1c names its character
+        // too (RENOWN1), and a token wearing a guild is what the hub routes the guild's lines to - that build knows no
+        // guild channel and filed them on its World tab, where a reply goes to everyone. It wears no guild instead.
+        const guild = renownCharacterOk(body.character) && body.guild === true ? await guildBadgeOf(ctx, who.player.id, body.character) : null;
         const token = await mintToken(
-          { s: who.player.id, n: displayName(who.player), k: accountKind(who.player), ...wardrobe, mu, lv },
+          { s: who.player.id, n: displayName(who.player), k: accountKind(who.player), ...wardrobe, mu, lv, ...(guild ?? {}) },
           key, { subtle, nowS },
         );
         return json({
@@ -355,6 +378,8 @@ export default {
           glyphs: wardrobe.g,
           mutedUntil: mu ?? 0,
           level: lv ?? null,
+          xp: track ? track.xp : null,
+          guild: guild ? guild.gt : null,   // GUILD1c: the tag my own name wears, beside the token as the level is
           expiresAt: nowS + MAX_TTL_S,
         }, 200, origin);
       }
@@ -462,7 +487,8 @@ export default {
           // DECOR1: a piece placed, moved or removed - the owner's character's alone (decor.js)
           const r = path === '/v1/homes/decor/place' ? await placeDecor(ctx, who.player, body)
             : path === '/v1/homes/decor/move' ? await moveDecor(ctx, who.player, body)
-              : await removeDecor(ctx, who.player, body);
+              : path === '/v1/homes/decor/hidden' ? await hideDecorBase(ctx, who.player, body)   // BASE-HIDE
+                : await removeDecor(ctx, who.player, body);
           if (!('error' in r)) return json(r, 200, origin);
           const status = r.error === 'decor-cap' || r.error === 'decor-taken' ? 409
             : r.error === 'decor-rate' ? 429
@@ -488,7 +514,7 @@ export default {
         if (request.method !== 'POST') return no('method', 405, origin);
         if (path === '/v1/guilds/mine') {
           const r = await guildOf(ctx, who.player, body);
-          return 'error' in r ? no(r.error, GUILD_STATUS[r.error] ?? 400, origin) : json(r, 200, origin);
+          return 'error' in r ? no(r.error, GUILD_STATUS[r.error] ?? 400, origin) : json(await guildOrdersOf(r, who.player.id, env, subtle, nowS), 200, origin);
         }
         if (path === '/v1/guilds/invites') return json(await invitesOf(ctx, who.player), 200, origin);
         if (accountKind(who.player) !== 'linked') return no('guilds-need-account', 403, origin);
@@ -500,7 +526,7 @@ export default {
         }[path];
         if (!act) return no('not-found', 404, origin);
         const r = await act(ctx, who.player, body);
-        if (!('error' in r)) return json(r, 200, origin);
+        if (!('error' in r)) return json(await guildOrdersOf(r, who.player.id, env, subtle, nowS), 200, origin);
         return no(r.error, GUILD_STATUS[r.error] ?? 400, origin);
       }
 

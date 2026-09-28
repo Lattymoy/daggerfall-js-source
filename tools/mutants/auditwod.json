@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-WOD-M1-placed-rides",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "if (f.puppet || f.isQuestFoe || (f.placed && !f.site) || (f.dead && !f.corpse)) continue;",
-    "new": "if (f.puppet || f.isQuestFoe || (f.dead && !f.corpse)) continue;",
+    "old": "if (f.puppet || (_questLike(f) && !qt) || (f.placed && !f.site) || (f.dead && !f.corpse)) continue;",
+    "new": "if (f.puppet || (_questLike(f) && !qt) || (f.dead && !f.corpse)) continue;",
     "tests": [
       "test/audit_wod_branch.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-WOD-M1-placed-hunts-peers",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "...(f.placed && !f.site ? [] : peerCandidates())",
-    "new": "...peerCandidates()",
+    "old": "...(f.placed && !f.site ? [] : _questLike(f) ? questPeerCandidates(f) : peerCandidates())",
+    "new": "...(_questLike(f) ? questPeerCandidates(f) : peerCandidates())",
     "tests": [
       "test/audit_wod_branch.test.js"
     ]

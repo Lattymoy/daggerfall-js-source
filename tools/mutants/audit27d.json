@@ -1,0 +1,531 @@
+[
+  {
+    "name": "AUDIT-A1-lift-at-once",
+    "file": "src/ui/touch.js",
+    "old": "afterFrames(() => { if (attacking === b && attackSeq === mine) { attacking = null; hooks.attack(0, 0, false); } });",
+    "new": "if (attacking === b) { attacking = null; hooks.attack(0, 0, false); }",
+    "tests": [
+      "test/touchbuttons.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A1-stale-lift-lets-go",
+    "file": "src/ui/touch.js",
+    "old": "if (attacking === b && attackSeq === mine) {",
+    "new": "if (attacking === b) {",
+    "tests": [
+      "test/touchbuttons.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A2-escape-on-the-field",
+    "file": "src/ui/menuPad.js",
+    "old": "if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable === true)) { target.blur?.(); target = doc.body; }",
+    "new": "",
+    "tests": [
+      "test/menupad.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A3-row-to-one",
+    "file": "src/ui/settingsLaw.js",
+    "old": "'Controls/JoystickDeadzone': { min: 0, max: 0.9,",
+    "new": "'Controls/JoystickDeadzone': { min: 0, max: 1,",
+    "tests": [
+      "test/menupad.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A3-clamp-to-one",
+    "file": "src/systems/gamepad.js",
+    "old": "deadzone: getFloat('Controls', 'JoystickDeadzone', 0, 0.9),",
+    "new": "deadzone: getFloat('Controls', 'JoystickDeadzone', 0, 1),",
+    "tests": [
+      "test/menupad.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A5-lost-kept",
+    "file": "src/ui/menuPad.js",
+    "old": "    if (held) { state.lastEl = held; state.lastRect = ui.candidates().find((c) => c.el === held)?.rect ?? null; state.lostAt = null; }\n",
+    "new": "",
+    "tests": [
+      "test/menupad.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A6-larger-axis-alone",
+    "file": "src/ui/menuPad.js",
+    "old": "  if (prev && still[prev]) return prev;\n",
+    "new": "",
+    "tests": [
+      "test/menupad.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A7-left-folds-up",
+    "file": "src/ui/touchButtons.js",
+    "old": "Left: [-1, 0]",
+    "new": "Left: [-1, -1]",
+    "tests": [
+      "test/touchbuttons.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A9-called-a-deadzone",
+    "file": "src/ui/settingsCopy.js",
+    "old": "\"Controls/JoystickMovementThreshold\": \"Gamepad Movement Threshold\",",
+    "new": "\"Controls/JoystickMovementThreshold\": \"Gamepad Movement Deadzone\",",
+    "tests": [
+      "test/menupad.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A10-key-without-inputs",
+    "file": "src/scenes/worldModes.js",
+    "old": "guildShelf(`BuyMagicItems|${sellsSoulGems ? 1 : 0}|${playerLevel}|${gender}`,",
+    "new": "guildShelf('BuyMagicItems',",
+    "tests": [
+      "test/guildshelf.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A10-stale-day-kept",
+    "file": "src/systems/shopStock.js",
+    "old": "  if (store) for (const k of Object.keys(store)) if (store[k]?.day !== today) delete store[k];",
+    "new": "",
+    "tests": [
+      "test/guildshelf.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-B1-duel-opponent-giftable",
+    "file": "src/scenes/world.js",
+    "old": "!(duelMgr.fighting && p.id === duelMgr.opponent)\n    && ",
+    "new": "",
+    "tests": [
+      "test/audit27d.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-B1-receiver-takes-the-opponents",
+    "file": "src/scenes/world.js",
+    "old": "      if (duelMgr.fighting && id === duelMgr.opponent) return;   // AUDIT SPELL-GIFT B1: the duel's own law - a beneficial spell stays home\n",
+    "new": "",
+    "tests": [
+      "test/audit27d.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-B2-every-mark-arms",
+    "file": "src/scenes/hostMagic.js",
+    "old": "      if (!m.mate) continue;\n",
+    "new": "",
+    "tests": [
+      "test/spellgift.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-B2-mate-word-lost",
+    "file": "src/scenes/hostMagic.js",
+    "old": "ally: true, mate: q.mate !== false, id: q.id,",
+    "new": "ally: true, id: q.id,",
+    "tests": [
+      "test/spellgift.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-B3-concealed-stranger-giftable",
+    "file": "src/scenes/world.js",
+    "old": "\n    && !(p.cv && !(social?.party && social.isPartyPeer(p.id))));",
+    "new": ");",
+    "tests": [
+      "test/audit27d.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-B4-first-entry",
+    "file": "src/systems/absorption.js",
+    "old": "    if (chance > best) best = chance;",
+    "new": "    return chance;",
+    "tests": [
+      "test/audit27d.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-B5-join-order",
+    "file": "src/scenes/world.js",
+    "old": "    return [...marks.filter((m) => m.mate), ...marks.filter((m) => !m.mate)];",
+    "new": "    return marks;",
+    "tests": [
+      "test/audit27d.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-B6-flag-never-read",
+    "file": "src/systems/effects.js",
+    "old": "cureAllOfKind(target, CURE_KINDS[e.subType], ctx?.strangerCast === true);",
+    "new": "cureAllOfKind(target, CURE_KINDS[e.subType]);",
+    "tests": [
+      "test/spellgift.test.js",
+      "test/audit27d.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-B6-flag-never-passed",
+    "file": "src/scenes/world.js",
+    "old": "{ allyCast: true, strangerCast: !mate }",
+    "new": "{ allyCast: true }",
+    "tests": [
+      "test/audit27d.test.js",
+      "test/allycast.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-B7-from-anywhere",
+    "file": "src/scenes/world.js",
+    "old": "      if (!mate && !(peersNear() ?? []).some((p) => p.id === id)) return;\n",
+    "new": "",
+    "tests": [
+      "test/audit27d.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-B7-said-every-time",
+    "file": "src/scenes/world.js",
+    "old": "const loud = mate || !(t - (_strangerCastSaid.get(id) ?? -Infinity) < STRANGER_CAST_SAY_MS);",
+    "new": "const loud = true;",
+    "tests": [
+      "test/audit27d.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-B8-covered-card-remembers",
+    "file": "src/ui/partyPanel.js",
+    "old": "    if (covered) for (const c of cards.values()) c.hpH = null;\n",
+    "new": "",
+    "tests": [
+      "test/partybuffs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-C1-switch-read-raw",
+    "file": "src/scenes/world.js",
+    "old": "const restsWithParty = () => getPref('restWithParty') !== false || !socialLink()?.restOptOk;",
+    "new": "const restsWithParty = () => getPref('restWithParty') !== false;",
+    "tests": [
+      "test/audit27d.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-C1-welcome-word-dropped",
+    "file": "src/net/online.js",
+    "old": "      if (primary) this.restOptOk = relaySupportsRestOpt(relayV);   // REST-OPT (AUDIT C1)\n",
+    "new": "",
+    "tests": [
+      "test/audit27d.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-C1-hub-too-old",
+    "file": "src/net/wire.js",
+    "old": "export const REST_OPT_RELAY_MIN = 120;",
+    "new": "export const REST_OPT_RELAY_MIN = 119;",
+    "tests": [
+      "test/audit27d.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-C1-restTogether-raw",
+    "file": "src/scenes/world.js",
+    "old": "partyRestsTogether(restsWithParty(), social?.party ?? null, !!social?.leads?.());",
+    "new": "partyRestsTogether(getPref('restWithParty') !== false, social?.party ?? null, !!social?.leads?.());",
+    "tests": [
+      "test/audit27d.test.js",
+      "test/restopt.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-C2-awake-mate-a-camp",
+    "file": "src/systems/partyRestLaw.js",
+    "old": "  return !!m?.p?.rs && (restsAlone(m) || !mineTogether);",
+    "new": "  return restsAlone(m) || !mineTogether;",
+    "tests": [
+      "test/audit27d.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-C2-never-a-camp",
+    "file": "src/systems/partyRestLaw.js",
+    "old": "  return !!m?.p?.rs && (restsAlone(m) || !mineTogether);",
+    "new": "  return false;",
+    "tests": [
+      "test/audit27d.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-C2-gate-skips-every-mate",
+    "file": "src/scenes/world.js",
+    "old": "const camp = social?.isPartyPeer(p.id) ? otherPartyCamp(p.id) : true;",
+    "new": "const camp = !social?.isPartyPeer(p.id);",
+    "tests": [
+      "test/partyrest1.test.js",
+      "test/audit27d.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-C3-grant-word-lost",
+    "file": "src/scenes/world.js",
+    "old": "    _restAloneNight = !restTogether();   // REST-OPT (AUDIT C3): a night granted as my own stays my own - a leader who turns the switch back on mid-night pulls nobody into it\n",
+    "new": "",
+    "tests": [
+      "test/audit27d.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-C3-mirror-left-alone",
+    "file": "src/scenes/world.js",
+    "old": "    _restAloneNight = false;   // REST-OPT (AUDIT C3): a followed night is the party's\n",
+    "new": "",
+    "tests": [
+      "test/audit27d.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-C3-pose-forgets-the-night",
+    "file": "src/scenes/world.js",
+    "old": "(_restAloneNight && playerEntity.isResting)",
+    "new": "false",
+    "tests": [
+      "test/restopt.test.js",
+      "test/audit27d.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-C4-concealed-mate-marked",
+    "file": "src/scenes/world.js",
+    "old": ".filter((m) => !m.peers?.some((id) => _hiddenPeers.has(id)))",
+    "new": "",
+    "tests": [
+      "test/compassparty.test.js",
+      "test/audit27d.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-C6-walk-first",
+    "file": "src/scenes/world.js",
+    "old": "    if (!social?.party) return [];   // AUDIT COMPASS-PARTY C6: no walk of the room's players out of a party - the compass asks every frame\n",
+    "new": "",
+    "tests": [
+      "test/audit27d.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-F4-in-settings",
+    "file": "src/systems/partyRestLaw.js",
+    "old": "Turn on \"Rest with my party\" (Features, Other players) to rest with them.",
+    "new": "Turn on \"Rest with my party\" in Settings to rest with them.",
+    "tests": [
+      "test/audit27d.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-D1-frame-alone",
+    "file": "src/net/tradeSession.js",
+    "old": "\n      || tradeCommitBytes({ items: wired, g, to: this.peer, s: this.sid, r: this.rev + 1 }) > TRADE_DATA_MAX",
+    "new": "",
+    "tests": [
+      "test/tradeinfo.test.js",
+      "test/audit27d.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-D1-revision-now",
+    "file": "src/net/tradeSession.js",
+    "old": "o: TRADE_REV_MAX, items, g }).length;",
+    "new": "o: 0, items, g }).length;",
+    "tests": [
+      "test/tradeinfo.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-D2-no-reader",
+    "file": "src/scenes/world.js",
+    "old": ",\n        rows: (id, pick) => townTalk.lines(id, pick) });",
+    "new": " });",
+    "tests": [
+      "test/tradeinfo.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-D3-mend-first",
+    "file": "src/systems/questShare.js",
+    "old": "  if (!data || typeof data !== 'object' || data.questName !== questName) return { ok: false, reason: 'mismatch' };\n  const local",
+    "new": "  if (!data || typeof data !== 'object' || data.questName !== questName) return { ok: false, reason: 'mismatch' };\n  data = fullShareMarkers(data);\n  const local",
+    "tests": [
+      "test/sharemend.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-D4-every-failure-gone",
+    "file": "src/systems/questShare.js",
+    "old": "return { ok: false, reason: still && !still.questComplete && !still.questTombstoned ? 'restore' : 'gone' };",
+    "new": "return { ok: false, reason: 'gone' };",
+    "tests": [
+      "test/sharemend.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-D4-every-failure-restore",
+    "file": "src/systems/questShare.js",
+    "old": "return { ok: false, reason: still && !still.questComplete && !still.questTombstoned ? 'restore' : 'gone' };",
+    "new": "return { ok: false, reason: 'restore' };",
+    "tests": [
+      "test/sharemend.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-D5-deliberate-unrecorded",
+    "file": "src/systems/questShare.js",
+    "old": "  said.add(key);\n  return !sync || fresh;",
+    "new": "  if (sync) said.add(key);\n  return !sync || fresh;",
+    "tests": [
+      "test/sharemend.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-D5-copy-out-of-key",
+    "file": "src/systems/questShare.js",
+    "old": "|${result?.guild ?? ''}|${copy}`;",
+    "new": "|${result?.guild ?? ''}`;",
+    "tests": [
+      "test/sharemend.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-D6-repeat-dropped",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "if (t && !tier.has(t)) lines.push(t);",
+    "new": "if (t && !lines.includes(t)) lines.push(t);",
+    "tests": [
+      "test/tradeinfo.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-S1-ghost-without-craft",
+    "file": "src/scenes/decorTool.js",
+    "old": ", station: editing.station ?? null }",
+    "new": " }",
+    "tests": [
+      "test/homestations.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-S1-placer-drops-craft",
+    "file": "src/systems/decorPlacer.js",
+    "old": ", ...(entry.station ? { station: entry.station } : {})",
+    "new": "",
+    "tests": [
+      "test/homestations.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-S2-no-guard",
+    "file": "src/scenes/decorTool.js",
+    "old": "    if (stationBusy.has(piece.id)) return false;\n",
+    "new": "",
+    "tests": [
+      "test/homestations.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-S2-rollback-unsaid",
+    "file": "src/scenes/decorTool.js",
+    "old": "        deps.say?.(DECOR_STATION_GOLD_WENT);\n",
+    "new": "",
+    "tests": [
+      "test/homestations.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-S3-craft-out-of-signature",
+    "file": "src/ui/decorPanel.js",
+    "old": ":${it.piece.station ?? ''}:",
+    "new": ":",
+    "tests": [
+      "test/homestations.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-S3-act-re-read",
+    "file": "src/ui/decorPanel.js",
+    "old": "    const what = stationBtn.dataset.what;\n",
+    "new": "    const what = decorStationWords(it.piece, stationOffer).what;\n",
+    "tests": [
+      "test/homestations.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-S4-unmake-at-once",
+    "file": "src/ui/decorPanel.js",
+    "old": "return armed ? { pick, act: 'Press again to unmake - nothing back', what: 'station:none' } : { pick, act: 'Unmake station (nothing back)', what: 'arm' };",
+    "new": "return { pick, act: 'Unmake station (nothing back)', what: 'station:none' };",
+    "tests": [
+      "test/homestations.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-S5-side-does-not-scroll",
+    "file": "src/ui/decorPanel.js",
+    "old": "min-height: 0; overflow-y: auto; }",
+    "new": "min-height: 0; }",
+    "tests": [
+      "test/homestations.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-S6-change-unsaid",
+    "file": "src/ui/decorPanel.js",
+    "old": "  if (piece?.station) return { pick, act: `Change station - ${gold} (no refund)`, what: `station:${kind}` };\n",
+    "new": "",
+    "tests": [
+      "test/homestations.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-S6-licence-back-unsaid",
+    "file": "src/ui/decorPanel.js",
+    "old": "${it.piece.station ? ' (the station licence is not)' : ''}",
+    "new": "",
+    "tests": [
+      "test/homestations.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-S7-refusal-silent",
+    "file": "src/scenes/worldModes.js",
+    "old": "for (const t of lines.length ? lines : [DECOR_STATION_REFUSED]) say(t);",
+    "new": "for (const t of lines) say(t);",
+    "tests": [
+      "test/homestations.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-S8-hover-unnamed",
+    "file": "src/scenes/worldModes.js",
+    "old": "return t ? { title: craft ? `${t} (${craft})` : t } : craft ? { title: craft } : null;",
+    "new": "return t ? { title: t } : null;",
+    "tests": [
+      "test/homestations.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-S9-unnamed-for-a-reader",
+    "file": "src/ui/decorPanel.js",
+    "old": "    stationPick.setAttribute('aria-label', `Station craft: ${words.pick.replace(/^Station: | >$/g, '')} - press for the next`);   // AUDIT HOME-STATIONS S9\n",
+    "new": "",
+    "tests": [
+      "test/homestations.test.js"
+    ]
+  }
+]

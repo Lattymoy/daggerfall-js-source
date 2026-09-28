@@ -168,11 +168,10 @@ export function createArrestFlow({
    *  client has open - which is right for a fight (an inventory tab
    *  must not stop a swing), but the surrender box, and every later
    *  court box, are not a fight the player is choosing to pause: they
-   *  are THIS interception's own moment. Offline that moment already
-   *  reads as a pause (nothing else in a single-player world is
-   *  moving either way), but online other clients' guards are real,
-   *  server-clocked actors that don't know a local Y/N box is up, so
-   *  without this a guard can land several more full-damage hits
+   *  are THIS interception's own moment. Online other clients' guards
+   *  are real, server-clocked actors that don't know a local Y/N box
+   *  is up, and offline the watch keeps WINFOE1's clock too (JAIL-HIT,
+   *  below), so without this a guard can land several more full-damage hits
    *  while the player is still reading the box - and once accepted,
    *  through the whole court sequence below (verdict, sentencing),
    *  the player can still be standing in the street. `awaitingSurrenderAnswer`
@@ -205,8 +204,22 @@ export function createArrestFlow({
    * the same shape as the shield pool that already sits there. A
    * second copy of "am I in a trial" is a second chance to disagree
    * with the first, so `onGuardHit` reads THIS and nothing of its own.
+   *
+   * JAIL-HIT (2026-09-27, Discord: "Guards will still chase you down
+   * and kill you, even if you have already been to prison for the
+   * crime committed"). The shield was ONLINE-only on the belief that
+   * offline the court "already reads as a pause" - true in DFU, whose
+   * surrender box and court are pushed windows that stop the world
+   * (UserInterfaceManager.cs:183-184) until ReleaseFromPrison clears
+   * the crime (DaggerfallCourtWindow.cs:482-491), and false here since
+   * WINFOE1 put the watch on the frame's clock under any window. So
+   * offline the watch swung through the trial and the prison days: a
+   * blow on the surrender's 1 health killed the player inside the
+   * court, or forced a SECOND surrender whose court replaced the prison
+   * screen and its release - the crime never cleared and the watch
+   * hunted on. The trial is DFU's paused window in both modes now.
    */
-  const inCourt = () => sharedClockOn() && (awaitingSurrenderAnswer || playerEntity.arrested);
+  const inCourt = () => awaitingSurrenderAnswer || !!playerEntity.arrested;
   registerPlayerDamageVeto(inCourt);
 
   function onGuardHit(dmg, applyDamage) {
@@ -216,13 +229,18 @@ export function createArrestFlow({
       playerEntity.haveShownSurrenderDialogue = true;
       lowerRepForCrime(playerEntity, region(), crimeId());
       awaitingSurrenderAnswer = true;
-      townTalk.showOverlay(new ChoiceWindow({
+      const box = new ChoiceWindow({
         lines: text(TEXT_SURRENDER, 'Halt! You are under arrest. Do you surrender?'),
         options: [
           { code: 'KeyY', label: 'Y - surrender', action: () => { awaitingSurrenderAnswer = false; if (surrenderToCityGuards(playerEntity, region(), true, { setHealth1: () => { playerEntity.health = 1; } })) startCourtFlow(); } },
           { code: 'KeyN', label: 'N - fight on', action: () => { awaitingSurrenderAnswer = false; applyDamage(); } },
         ],
-      }));
+      });
+      // JAIL-HIT: the question is the box's. A box thrown away unanswered - another window REPLACED it, and
+      // townTalk.showOverlay disposes the outgoing - ends the question with it: a flag left standing would withhold
+      // every blow for the rest of the session, offline now as online
+      box.dispose = () => { if (!box.done) awaitingSurrenderAnswer = false; };
+      townTalk.showOverlay(box);
       return true;
     }
     // Shown before: a fatal blow forces the surrender attempt
@@ -268,6 +286,9 @@ export function createArrestFlow({
   }
 
   function startCourtFlow() {
+    // JAIL-HIT: one trial at a time - DFU's court is a modal window, so nothing reaches a second surrender while one
+    // stands; a nested court here would replace the first's screen and drop its release
+    if (playerEntity.arrested) return;
     // PlayerEntity.CourtWindow (:2341) sets `arrested` immediately before
     // the court window opens, and DaggerfallCourtWindow.OnPop (:435)
     // clears it. Its ONE consumer is the music: SongManager checks

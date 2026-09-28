@@ -150,7 +150,8 @@ export const wagonFullGoldText = (n) => `Your wagon could only hold ${n} gold pi
  * @returns {{ok:true, amount:number, notice:string|null}
  *          |{ok:false, refusal:object, notice:string|null}}
  */
-export function planDropGold(text, { carried = 0, usingWagon = false, remote = [] } = {}) {
+export function planDropGold(text, { carried = 0, usingWagon = false, remote = [], groundRefusal = null } = {}) {
+  if (groundRefusal && !usingWagon) return { ok: false, refusal: { reason: 'ground', text: groundRefusal }, notice: null };   // HOUSE-DROP: gold on a floor that refuses it
   // A numeric field of 8 opening on "0": anything that is not a run of
   // digits is not a number, and 0 fails the range below.
   const asked = /^[0-9]+$/.test(String(text)) ? Number(text) : 0;
@@ -183,9 +184,12 @@ export function planDropGold(text, { carried = 0, usingWagon = false, remote = [
  * @returns {{ok:false, refusal:object}|{ok:true, amount:number, sound:'click'}}
  */
 export function planStore(item, {
-  remote = [], usingWagon = false, chooseOne = null, getQuest = null, dryRun = false,
+  remote = [], usingWagon = false, chooseOne = null, getQuest = null, dryRun = false, groundRefusal = null,
 } = {}) {
   if (!item) return { ok: false, refusal: REFUSAL.missing };
+  // HOUSE-DROP (2026-09-27): the ground itself refuses - the window hands the host's word (inventorySession
+  // groundRefusalOf) only when the destination IS the ground, so a wagon, a chest and a trade are untouched
+  if (groundRefusal) return { ok: false, refusal: { reason: 'ground', text: groundRefusal } };
   if (item.group === 'Transportation') return { ok: false, refusal: REFUSAL.transport };
   if (isSummoned(item)) return { ok: false, refusal: REFUSAL.summoned };
   // AUDIT 26 F156: THE MAP ARM (:1471-1478), between the summoned

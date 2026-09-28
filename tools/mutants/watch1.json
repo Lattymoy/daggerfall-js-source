@@ -128,7 +128,7 @@
   {
     "name": "AUDIT-WATCH1-A3-a-watch-body-advertises-its-pile",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "o: onWatch ? 0 : (f.corpse ? Math.min(255, f.entity?.items?.length | 0) : 0) }",
+    "old": "o: onWatch || _questLike(f) ? 0 : (f.corpse ? Math.min(255, f.entity?.items?.length | 0) : 0) }",
     "new": "o: f.corpse ? Math.min(255, f.entity?.items?.length | 0) : 0 }",
     "tests": [
       "test/watch1.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-WATCH1-A1-one-cap-for-foes-and-watch",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "      if (!site && (r.t === KNIGHT_CITYWATCH_ID ? livePuppetsOf(from, true) >= CELL_WATCH_PUPPETS_MAX : livePuppetsOf(from) >= CELL_PUPPETS_MAX)) continue;",
-    "new": "      if (!site && (livePuppetsOf(from) + livePuppetsOf(from, true) >= CELL_PUPPETS_MAX)) continue;",
+    "old": "      if (!site && (qt ? livePuppetsOf(from, false, false, false, true) >= QUEST_PUPPETS_MAX : deep ? livePuppetsOf(from, false, false, true) >= DEEP_PUPPETS_MAX : r.t === KNIGHT_CITYWATCH_ID ? livePuppetsOf(from, true) >= CELL_WATCH_PUPPETS_MAX : livePuppetsOf(from) >= CELL_PUPPETS_MAX)) continue;",
+    "new": "      if (!site && (qt ? livePuppetsOf(from, false, false, false, true) >= QUEST_PUPPETS_MAX : deep ? livePuppetsOf(from, false, false, true) >= DEEP_PUPPETS_MAX : livePuppetsOf(from) + livePuppetsOf(from, true) >= CELL_PUPPETS_MAX)) continue;",
     "tests": [
       "test/watch1.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "AUDIT-WATCH1-A1-the-watch-allowance-is-unbounded",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "      if (!site && (r.t === KNIGHT_CITYWATCH_ID ? livePuppetsOf(from, true) >= CELL_WATCH_PUPPETS_MAX : livePuppetsOf(from) >= CELL_PUPPETS_MAX)) continue;",
-    "new": "      if (!site && (r.t !== KNIGHT_CITYWATCH_ID && livePuppetsOf(from) >= CELL_PUPPETS_MAX)) continue;",
+    "old": "      if (!site && (qt ? livePuppetsOf(from, false, false, false, true) >= QUEST_PUPPETS_MAX : deep ? livePuppetsOf(from, false, false, true) >= DEEP_PUPPETS_MAX : r.t === KNIGHT_CITYWATCH_ID ? livePuppetsOf(from, true) >= CELL_WATCH_PUPPETS_MAX : livePuppetsOf(from) >= CELL_PUPPETS_MAX)) continue;",
+    "new": "      if (!site && (qt ? livePuppetsOf(from, false, false, false, true) >= QUEST_PUPPETS_MAX : deep ? livePuppetsOf(from, false, false, true) >= DEEP_PUPPETS_MAX : r.t !== KNIGHT_CITYWATCH_ID && livePuppetsOf(from) >= CELL_PUPPETS_MAX)) continue;",
     "tests": [
       "test/watch1.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "AUDIT-WATCH1-A1-the-count-does-not-tell-the-watch-apart",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "    const kind = (t, site) => (site ? 'camp' : t === KNIGHT_CITYWATCH_ID ? 'watch' : 'foe');",
-    "new": "    const kind = (t, site) => (site ? 'camp' : 'foe');",
+    "old": "const kind = (t, site, dp, qq) => (site ? 'camp' : qq ? 'quest' : dp ? 'deep' : t === KNIGHT_CITYWATCH_ID ? 'watch' : 'foe');",
+    "new": "const kind = (t, site, dp, qq) => (site ? 'camp' : qq ? 'quest' : dp ? 'deep' : 'foe');",
     "tests": [
       "test/watch1.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "AUDIT-WATCH1-G1-a-removed-watchman-still-rides",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "      if (f.puppet || f.isQuestFoe || (f.placed && !f.site) || (f.dead && !f.corpse)) continue;",
-    "new": "      if (f.puppet || f.isQuestFoe || (f.placed && !f.site)) continue;",
+    "old": "      if (f.puppet || (_questLike(f) && !qt) || (f.placed && !f.site) || (f.dead && !f.corpse)) continue;",
+    "new": "      if (f.puppet || (_questLike(f) && !qt) || (f.placed && !f.site)) continue;",
     "tests": [
       "test/watch1.test.js"
     ]
@@ -301,7 +301,7 @@
   {
     "name": "AUDIT-ALL-A1-a-pending-builds-species-is-the-latest-word",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "      if (_pupPending.has(key)) { _pupPending.set(key, { ...r, t: _pupPending.get(key).t, _site: _pupPending.get(key)._site }); continue; }",
+    "old": "      if (_pupPending.has(key)) { _pupPending.set(key, { ...r, t: _pupPending.get(key).t, _site: _pupPending.get(key)._site, _deep: _pupPending.get(key)._deep, _quest: _pupPending.get(key)._quest }); continue; }",
     "new": "      if (_pupPending.has(key)) { _pupPending.set(key, r); continue; }",
     "tests": [
       "test/watch1.test.js"

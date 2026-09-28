@@ -13,7 +13,7 @@ import { weaponTypeForItem, WEAPON_TYPES } from '../src/combat/fpsWeapon.js';
 import { blendLocationTerrain } from '../src/world/terrainTiles.js';
 import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE } from '../src/world/terrainSampler.js';
 import { tileWeight } from '../src/world/cityNavigation.js';
-import { AIR_GLARE_SLACK } from '../src/render/airPass.js';
+import { AIR_GLARE_SLACK, AIR_GLARE_TAPS } from '../src/render/airPass.js';
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 
@@ -129,14 +129,15 @@ test('JAN1 (sky): the streaming host grounds a walker on the TERRAIN, not the lo
   assert.match(rd('src/scenes/exterior.js'), /groundY: \(x, z\) => collider\.heightAt\(x, z\)/, 'both hosts on one law: the collider\'s floor');
 });
 
-test('JAN1 (glare): the lantern glare needs a flame under it AND nothing in front of it - EL7\'s presence rule stands (a city light sits at the top of its flat), and a surface nearer than the light at the light\'s own pixel is an occluder whatever the seven taps found (the half BUGS-5 F4\'s narrowing left)', () => {
+test('JAN1 (glare): the lantern glare needs a flame under it AND nothing in front of it - EL7\'s presence rule stands (a city light sits at the top of its flat), and a surface nearer than the light at the light\'s own pixel is an occluder whatever the footprint\'s taps found (the half BUGS-5 F4\'s narrowing left)', () => {
   const a = rd('src/render/airPass.js');
-  assert.match(a, /return abs\(viewDist\(depthAt\(uv\)\) - lantern\) <= \$\{glslFloat\(AIR_GLARE_SLACK\)\} \? 1\.0 : 0\.0;/, 'EL7: presence, at seven taps');
-  assert.match(a, /vec2 cuv = ndc\.xy \* 0\.5 \+ 0\.5;\s*\n\s*if \(cuv == clamp\(cuv, vec2\(0\.0\), vec2\(1\.0\)\) && viewDist\(depthAt\(cuv\)\) < lantern - \$\{glslFloat\(AIR_GLARE_SLACK\)\}\) vis = 0\.0;/, 'and the veto at the light\'s own pixel, after the sum');
-  assert.ok(a.indexOf('vec2 cuv = ndc.xy * 0.5 + 0.5;') > a.indexOf(') / 7.0;'), 'the veto reads the sum it zeroes');
+  assert.match(a, /: 1\.0 - smoothstep\(\$\{glslFloat\(AIR_GLARE_SLACK \/ 2\)\}, \$\{glslFloat\(AIR_GLARE_SLACK\)\}, abs\(d - lantern\)\);/, 'EL7: presence, at every tap (LA-POST2: soft, filtered)');
+  assert.match(a, /return hide \? smoothstep\(\$\{glslFloat\(AIR_GLARE_SLACK\)\}, \$\{glslFloat\(2 \* AIR_GLARE_SLACK\)\}, lantern - d\)/, 'the veto: a surface nearer than the light by past the slack hides it (LA-POST2: whole by twice the slack)');
+  assert.match(a, /vec2 cuv = ndc\.xy \* 0\.5 \+ 0\.5;\s*\n\s*if \(cuv == clamp\(cuv, vec2\(0\.0\), vec2\(1\.0\)\)\) vis \*= 1\.0 - filtered\(cuv, lantern, true\);/, 'and the veto at the light\'s own pixel, after the sum');
+  assert.ok(a.indexOf('vec2 cuv = ndc.xy * 0.5 + 0.5;') > a.indexOf('vis = sum / '), 'the veto reads the sum it scales');
   assert.equal(AIR_GLARE_SLACK, 0.25);
-  // the geometry, in JS: a lamp 0.6 under an attic floor at 6 units, the eye 1.5 up, pitched down. The seven taps are
-  // view-space offsets of +-s and +-2s about the light; an oblique floor sweeps a wide range of depths across them.
+  // the geometry, in JS: a lamp 0.6 under an attic floor at 6 units, the eye 1.5 up, pitched down. The taps are
+  // view-space offsets about the light (AIR_GLARE_TAPS, in half-sizes s); an oblique floor sweeps a wide range of depths across them.
   const floorY = 0, lampY = -0.6, eyeY = 1.5, dist = 6, s = 0.25 * Math.sqrt(15) / 2;
   let anyTap = false, allVetoed = true;
   for (let pitchDeg = 5; pitchDeg <= 80; pitchDeg += 1) {
@@ -149,10 +150,11 @@ test('JAN1 (glare): the lantern glare needs a flame under it AND nothing in fron
     // Y_rel = floorY - eyeY where its world-y component Dy = vy cos + vz sin is heading down; the planar depth of the
     // hit is t * lantern (view z scales with t). A ray that never comes down meets the sky.
     const floorDepthAt = (vy, vz) => { const Dy = vy * c + vz * sn; if (!(Dy < 0)) return Infinity; const t = (floorY - eyeY) / Dy; return t * (-vz); };
-    const taps = [[0, 0], [0, s], [0, 2 * s], [0, -s], [0, -2 * s], [s, 0], [-s, 0]].map(([, dy]) => floorDepthAt(L.vy + dy, L.vz));
-    const tapHits = taps.filter((d) => Number.isFinite(d) && Math.abs(d - lantern) <= AIR_GLARE_SLACK).length;
-    if (tapHits > 0) { anyTap = true; if (!(taps[0] < lantern - AIR_GLARE_SLACK)) allVetoed = false; }
+    const taps = AIR_GLARE_TAPS.map(([, ty]) => floorDepthAt(L.vy + ty * s, L.vz));
+    const centre = floorDepthAt(L.vy, L.vz);   // the light's own pixel, where the veto reads
+    const tapHits = taps.filter((d) => Number.isFinite(d) && Math.abs(d - lantern) < AIR_GLARE_SLACK).length;
+    if (tapHits > 0) { anyTap = true; if (!(centre < lantern - 2 * AIR_GLARE_SLACK)) allVetoed = false; }
   }
   assert.ok(anyTap, 'some pitch lands a tap within the slack of the lamp\'s depth through the floor - the bug exists');
-  assert.ok(allVetoed, 'and at every such pitch the floor at the light\'s own pixel is nearer than the light by more than the slack - the veto kills it');
+  assert.ok(allVetoed, 'and at every such pitch the floor at the light\'s own pixel is nearer than the light by more than twice the slack - the soft veto hides it whole');
 });

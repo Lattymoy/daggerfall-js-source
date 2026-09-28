@@ -175,7 +175,7 @@ test('ROAD-H tail (review): ALL THREE ArrowFlight hosts feed the player\'s LIVE 
     ['src/scenes/worldModes.js', 'interiorArrows'],
   ]) {
     const s = src(f);
-    const at = s.indexOf(`${name}.update(dt, {`);
+    const at = Math.max(s.indexOf(`${name}.update(dt, {`), s.indexOf(`${name}.update(foeDt, {`));   // AUDIT (pre-merge) P6: world.js's on the quest box's held clock
     assert.notEqual(at, -1, `${f}: ${name}.update is no longer the flight's tick`);
     assert.match(s.slice(at, at + 400), /playerFeet: [^\n]*\n\s*playerHeight: player\.height,/,
       `${f}: the flight is handed the LIVE capsule (player.height), not the standing constant`);

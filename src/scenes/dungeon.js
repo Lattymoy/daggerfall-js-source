@@ -33,7 +33,7 @@ import { MapsFile } from '../formats/mapsFile.js';
 import { DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR, DUNGEON_LIGHT_BLOCK_RANGE } from '../world/dungeonLights.js';   // A10: the block-range cut
 import { syncLightingLane, lanternColor, dungeonAmbient, dungeonTrilight, dungeonFog } from '../render/enhancedLighting.js';   // EL1; EL4: the dark; AUDIT-EL F6: the fog with it
 import { INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
-import { nearestLights } from '../world/cityLights.js';
+import { nearestLights, capFadeColors } from '../world/cityLights.js';   // LA-AUDIT A5: the dungeon's cap fades
 import { withPlayerLights } from './magicCandle.js';   // X11/T1
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { thunderlockMuzzleLight } from '../systems/thunderlock.js';   // FIELD-GUN13: the muzzle flash is a light the player carries, the torch's own shape
@@ -138,9 +138,9 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // below, after this context; null falls to standing defaults.
       motorState: () => (_motorRef ? { eyeLevel: _motorRef.eye[1] - _motorRef.pos[1], capsule: _motorRef.height } : null),
       // MAC1 J: this host's canvas, for the pause door's relock. The
-      // context owns none of its own (dungeonContext.js:6487), so each
+      // context owns none of its own (dungeonContext.js:7046), so each
       // dungeon host hands its own in and the resume gesture carries
-      // the pointer back with it (ui/pauseDoor.js:286-306).
+      // the pointer back with it (ui/pauseDoor.js:141-163).
       relock: () => requestLook(canvas) });
 
   // U21: the menu's LOAD GAME. The context is built, so restore into
@@ -1069,13 +1069,15 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // dry state; this is the per-frame one, and DUNGEON_FOG is the same
     // DungeonFogSettings written there (WeatherManager.cs:77).
     { const _fog = dungeonFog(lightingOn, betterAmbience.dungeonFog() ?? DUNGEON_FOG); applyFog(renderer, ctx.underwaterFogSettings?.(cam.pos[1], player.pos, _fog) ?? _fog); }   // AUDIT-EL F6: the fog colour under the lane's dark   // BA1: FoggyDungeons' linear fog is the base the water murk overrides
-    renderer.setPointLights(
-      // A10: DungeonLightHandler's XZ block range culls first, the
-      // 16-slot shader cap picks from what survives (dungeonLights.js
-      // carries the composition and why that order).
-      withPlayerLights(nearestLights(ctx.lights, cam.pos, renderer.maxPointLights, ctx.flicker.ranges, null, DUNGEON_LIGHT_BLOCK_RANGE),   // EL1: the installed set's cap
-        ctx.candleLight?.(), playerTorchLight(playerEntity, player.feetAt(), cam.yaw), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...ctx.campLights(), ...ctx.torchLights()),   // X11 candle; T1 torch; HT1 the dropped lights; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does
-      DUNGEON_LANTERN_F32);
+    // A10: DungeonLightHandler's XZ block range culls first, the
+    // 16-slot shader cap picks from what survives (dungeonLights.js
+    // carries the composition and why that order). LA-AUDIT A5: on the
+    // lane, one torch past the cap, for the cap's fade (worldModes.js's arm).
+    const _near = nearestLights(ctx.lights, cam.pos, renderer.maxPointLights + (renderer.lightingLane ? 1 : 0), ctx.flicker.ranges, null, DUNGEON_LIGHT_BLOCK_RANGE);   // EL1: the installed set's cap
+    const _lit = withPlayerLights(_near,
+      ctx.candleLight?.(), playerTorchLight(playerEntity, player.feetAt(), cam.yaw), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...ctx.campLights(), ...ctx.torchLights());   // X11 candle; T1 torch; HT1 the dropped lights; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does
+    renderer.setPointLights(_lit, DUNGEON_LANTERN_F32, renderer.lightingLane ? capFadeColors(_lit, _lit.length / 4 - _near.length / 4, cam.pos, renderer.maxPointLights, DUNGEON_LANTERN_F32) : null);
+    renderer.everyLightCasts();   // LA-SHADOW3: the level is drawn whole below - every torch keeps a shadow map (worldModes.js's dungeon arm)
     renderer.setWorldViewport(worldViewportRect(canvas.clientWidth, canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME);   // AUDIT-EL F5: a WORLD frame - the lane replays its records for this one
     if (walkMode) mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.bodyFeetAt(), yaw: cam.yaw });   // MW-D24; DISC18: the body at the capsule's own feet, not the camera's smoothed ones

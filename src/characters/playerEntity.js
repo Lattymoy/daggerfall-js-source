@@ -2,8 +2,8 @@
 // place). These initial values are the PRE-CHARGEN state only:
 // createCharacter (systems/chargen) rolls the real career the first
 // time a chargen-running context boots, and every host runs it
-// through systems/chargenSession.js - dungeonContext.js:2175,
-// world.js:3896, exterior.js:1390 and applyHeadlessChargen for the
+// through systems/chargenSession.js - dungeonContext.js:2276,
+// world.js:4011, exterior.js:1391 and applyHeadlessChargen for the
 // test room (AUDIT 23).
 //
 // NOT A GAP (recorded): the stand-ins below - flat skills 30,
@@ -39,7 +39,7 @@ export const playerEntity = {
   armorValues: [100, 100, 100, 100, 100, 100, 100],
   skills: 30,       // the header's stand-in, and a HANDLED shape: permanentSkillValue (skills.js:72) returns a numeric `skills` whole, so no reader ever indexes it
   stats: { strength: 50, agility: 50, luck: 50 },
-  fatigue: 3200,    // (Str 50 + End 0) x 64 over the stand-in stats above - maxFatigue's own arithmetic (statMods.js:159), no dropped term; applyCharacter re-derives it from the rolled stats (S15)
+  fatigue: 3200,    // (Str 50 + End 0) x 64 over the stand-in stats above - maxFatigue's own arithmetic (statMods.js:169), no dropped term; applyCharacter re-derives it from the rolled stats (S15)
   items: [],        // the inventory (S2); gold rides as a Currency stack
   // THE ONE CONSTRUCTION SEAM, sixth occurrence (U24). DFU's
   // PlayerEntity is constructed WITH its skill-use counters, and
@@ -67,7 +67,7 @@ export const playerEntity = {
   // took the member back out, so the ABSENT state became reachable
   // after a boot load or a classic import and the eleven-wide
   // guarantee AUDIT 63 F6 bought had to come from the constructor
-  // instead. The three `??=` mints downstream (enchantments.js:674
+  // instead. The three `??=` mints downstream (enchantments.js:680
   // and :825, artifactEffects.js:151) and talk.js's
   // ensureReactionState stay as the belt to this brace.
   reactionMods: new Array(SOCIAL_GROUP_COUNT).fill(0),
@@ -190,6 +190,53 @@ let _duelFell = null;
 export function registerDuelFell(fn) { _duelFell = typeof fn === 'function' ? fn : null; }
 export const duelSpare = (entity) => { _duelFell?.(entity); };
 
+// ── SET2: THE PORT'S OWN SAY OVER A BLOW ON THE PLAYER ──────────────
+// Sigil sets (bible/11-Multiplayer/Sigil-Sets.md) have three things to say about damage the player takes, and this is
+// the ONE door every source comes through (a foe's blow, a spell, a fall, a poison's round), so they are said here, each
+// a named registry like the entity folds' (a name re-registered replaces, `null` removes):
+//   - a DAMAGE MODIFIER: `fn(entity, dmg) -> dmg`, over the damage before the shield pool (Malacath's Unbroken halves);
+//   - a DEATH SAVE: `fn(entity, dmg) -> boolean`, asked when the damage would take a live player to zero - one that
+//     answers true leaves them at 1 instead, before the guild's avoid-death is asked (Malacath's Unbroken itself);
+//   - a HURT LISTENER: `fn(entity, { dmg, before, after })`, told after the damage lands (Ruhn's Wrath of the Warden).
+// NONE of them is asked on a SetHealth(0) door (`bypassShield`: drowning and the exhaustion collapse mean death, not
+// damage) or on a duel's own blow (`spare`: the duel's floor is its law), and a veto or a shield that takes the whole
+// blow leaves them all untold.
+const _damageMods = new Map();
+const _deathSaves = new Map();
+const _hurtListeners = new Map();
+const namedRegistry = (map) => (name, fn) => { if (typeof fn === 'function') map.set(name, fn); else map.delete(name); };
+export const registerPlayerDamageMod = namedRegistry(_damageMods);
+export const registerPlayerDeathSave = namedRegistry(_deathSaves);
+export const registerPlayerHurtListener = namedRegistry(_hurtListeners);
+// AUDIT FINAL F10: THE DOOR OPENS - a DOOR-OPEN LISTENER, `fn(entity)`, told FIRST on every call, before the veto (a
+// SetHealth(0) door and a duel's too): each call is one hurt's word, so a foe's blow its door never landed - the veto, a
+// halving to nothing, a Shield that took it whole, or a party's weighing that called no door at all
+// (playerBlowCameToNothing) - leaves no mark for the next hurt, a spell's or a fall's, to be read as that blow.
+const _doorOpen = new Map();
+export const registerPlayerDoorOpen = namedRegistry(_doorOpen);
+function tellDoorOpen(entity) {
+  for (const fn of _doorOpen.values()) { try { fn(entity); } catch { /* a set is not the blow's problem */ } }
+}
+/** A foe's blow at me came to nothing before any door was called (a shared foe's, weighed to nothing for the party
+ *  beside me - partyScale.js partyFoeHits): the door's word on it all the same. */
+export function playerBlowCameToNothing(entity) { tellDoorOpen(entity); }
+/** The damage through every registered modifier, in registration order - a modifier that throws is skipped. */
+export function playerDamageMods(entity, dmg) {
+  let d = dmg;
+  for (const fn of _damageMods.values()) {
+    try { const n = fn(entity, d); if (Number.isFinite(n)) d = Math.max(0, n); } catch { /* a set is not the blow's problem */ }
+  }
+  return d;
+}
+/** Does any registered death save take this blow? The first that answers true, in registration order. */
+function playerDeathSaved(entity, dmg) {
+  for (const fn of _deathSaves.values()) { try { if (fn(entity, dmg) === true) return true; } catch { /* as above */ } }
+  return false;
+}
+function tellHurt(entity, dmg, before, after) {
+  for (const fn of _hurtListeners.values()) { try { fn(entity, { dmg, before, after }); } catch { /* as above */ } }
+}
+
 /**
  * DUEL1: `spare` - A DUEL'S BLOW NEVER KILLS. Mac: "Loser drops to 1HP". A blow that would take a live player to zero
  * leaves them at ONE instead, and `spare(entity)` is told (the duel's law: the side that falls says so and has lost);
@@ -198,8 +245,14 @@ export const duelSpare = (entity) => { _duelFell?.(entity); };
  * the ring - kills as it always has.
  */
 export function hurtPlayer(entity, dmg, { bypassShield = false, spare = null } = {}) {
+  tellDoorOpen(entity);   // AUDIT FINAL F10: first - whatever the door says below, this call is its word
   if (playerDamageWithheld()) return false;   // ARREST-SHIELD: before the shield pool AND before the SetHealth(0) door
   if (!(dmg > 0)) return false;
+  const portSays = !bypassShield && !spare;   // SET2: never on a SetHealth(0) door, never on a duel's blow
+  if (portSays) {
+    dmg = playerDamageMods(entity, dmg);
+    if (!(dmg > 0)) return false;
+  }
   // X1: THE SHIELD POOL (Shield.cs DamageShield :78-98) sits in front
   // of the health subtraction, on the ONE door every damage source
   // already comes through. All-or-overflow per hit: a hit no larger
@@ -223,8 +276,19 @@ export function hurtPlayer(entity, dmg, { bypassShield = false, spare = null } =
     try { spare(entity); } catch { /* the duel's word is not the blow's problem */ }
     return false;
   }
+  // SET2: THE DEATH SAVE - damage that would take a live player to zero is asked of the registered saves first; one
+  // that takes it leaves them at 1, and the blow is told as what it did (the health it took, down to 1).
+  if (portSays && wasAlive && entity.health - dmg < 1 && playerDeathSaved(entity, dmg)) {
+    const was = entity.health;
+    entity.health = 1;
+    surfacePlayer();
+    tellHurt(entity, was - 1, was, 1);
+    return false;
+  }
+  const before = entity.health;
   entity.health = Math.max(0, entity.health - dmg);
   surfacePlayer();
+  if (portSays) tellHurt(entity, dmg, before, entity.health);
   // The TRANSITION, not the state. Firing on every call that finds health at
   // zero means an effect still ticking after the killing round re-presents the
   // screen once per round - the dungeon's version hid that behind an

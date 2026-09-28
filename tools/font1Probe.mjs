@@ -263,7 +263,7 @@ const MEASURE_HUDTEXT = () => {
     v.append(el('div', 'hud-track'));
     bars.append(v);
   }
-  bottom.append(bars, el('div', 'hud-effects'));
+  bottom.append(bars);   // UI3: the column ends at the vitals (and the Renown row online) - the effects are the status widget's
   hud.append(bottom);
   const mid = el('div', 'hudmid', 'Interaction is now in talk mode.');
   document.body.append(mid);

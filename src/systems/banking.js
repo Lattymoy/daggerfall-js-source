@@ -39,6 +39,7 @@
 
 import { CRIMES } from './court.js';
 import { BUILDING_TYPES, isResidence } from '../world/buildingNames.js';   // H1: the houses-for-sale filter
+import { isOnlinePage } from './onlineLane.js';   // EMPIRE-BANK: online, the Empire lends a tenth
 import { GOLD_PIECE_WEIGHT_KG, letterOfCredit } from './inventory.js';
 import {
   DAYS_PER_YEAR, DAYS_PER_MONTH, MINUTES_PER_DAY,
@@ -446,7 +447,15 @@ export function setDefaulted(accounts, regionIndex, defaulted) {
 // RR1: `if (TryGetOverride("CalculateMaxBankLoan", out del)) return del();` (FormulaHelper.cs:2008-2010) - Roleplay & Realism's loanAmountPerLevel
 let _maxLoanOverride = null;
 export function registerMaxBankLoan(fn) { _maxLoanOverride = typeof fn === 'function' ? fn : null; }
-export const calculateMaxBankLoan = (level) => _maxLoanOverride?.(level) ?? level * LOAN_MAX_PER_LEVEL;
+/** EMPIRE-BANK (2026-09-27, Discord: "For online mode, the bank of daggerfall becomes the bank of the empire. The
+ *  empire has come and has reduced loans substantially (90%)"): ONLINE, THE EMPIRE LENDS A TENTH - of whatever the cap
+ *  is (DFU's level x 50,000, or Roleplay & Realism's per-level choice, which the lane keeps on online), rounded down.
+ *  The interest and the year to repay are the classic ones; offline the law is untouched. A departure (Port-Ledger A). */
+export const EMPIRE_LOAN_DIVISOR = 10;
+export const calculateMaxBankLoan = (level) => {
+  const cap = _maxLoanOverride?.(level) ?? level * LOAN_MAX_PER_LEVEL;
+  return isOnlinePage() ? Math.floor(cap / EMPIRE_LOAN_DIVISOR) : cap;
+};
 /** CalculateBankLoanRepayment (:2017-2024) - `(int)(amount + amount *
  *  .1)`, a FLOAT sum truncated once at the end. */
 export const calculateBankLoanRepayment = (amount) => Math.trunc(amount + amount * 0.1);
@@ -747,7 +756,7 @@ export function bankingStatusRows(accounts, { regionName = () => '' } = {}) {
 //    the permanent-scene set, so housesForSale, allocateHouseToPlayer
 //    and sellHouse above are live; H2/H4 brought the BUY UI itself -
 //    DaggerfallBankPurchasePopUp is ui/bankPurchaseWindow.js
-//    (BankPurchaseWindow :102), mounted at scenes/worldModes.js:2879
+//    (BankPurchaseWindow :102), mounted at scenes/worldModes.js:2958
 //    openPurchase with drawBankModelPreview (:1938) as the dedicated
 //    3D model panel, and ui/bankWindow.js:246-259 routes BUY HOUSE's
 //    'pick' into it (a host without the window still falls back to

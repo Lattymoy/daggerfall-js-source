@@ -6,7 +6,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { createCourtScore, courtScoreFor, gateScoreSongs, GATE_SONGS, SCORE_SILENCE, SCORE_STING_MS } from '../src/systems/gateScore.js';
+import { createCourtScore, courtScoreFor, gateScoreSongs, GATE_SONGS, SCORE_SILENCE, SCORE_STING_MS, SCORE_STING_LEAD_MS } from '../src/systems/gateScore.js';
 import { MusicService, MUSIC_FADE_OUT_S, MUSIC_FADE_IN_S } from '../src/systems/music.js';
 import { SongPlayer } from '../src/systems/songPlayer.js';
 import { createGateCourt } from '../src/scenes/gateCourt.js';
@@ -30,8 +30,9 @@ test('AUDIT WB D2 the fanfare begun here plays whole, from its own start - a kil
   assert.equal(sc.want(fight({ fell, hp: 0 }), 104_000), GATE_SONGS.fell);
   assert.equal(courtScoreFor(fight({ fell, hp: 0 }), 104_000 + SCORE_STING_MS - 4001), GATE_SONGS.fell);
   assert.equal(courtScoreFor(fight({ fell, hp: 0 }), 104_000 + SCORE_STING_MS - 1), SCORE_SILENCE, 'the law alone cuts it 4 s short');
-  assert.equal(sc.want(fight({ fell, hp: 0 }), 104_000 + SCORE_STING_MS - 1), GATE_SONGS.fell, 'played whole here');
-  assert.equal(sc.want(fight({ fell, hp: 0 }), 104_000 + SCORE_STING_MS), SCORE_SILENCE);
+  // AUDIT WBX W3: counted from its own first note - SCORE_STING_LEAD_MS after the court asked for it (the war song's fade)
+  assert.equal(sc.want(fight({ fell, hp: 0 }), 104_000 + SCORE_STING_LEAD_MS + SCORE_STING_MS - 1), GATE_SONGS.fell, 'played whole here');
+  assert.equal(sc.want(fight({ fell, hp: 0 }), 104_000 + SCORE_STING_LEAD_MS + SCORE_STING_MS), SCORE_SILENCE);
   // a player who comes to the court long after his fall hears no fanfare at all
   const late = createCourtScore();
   assert.equal(late.want(fight({ fell, hp: 0 }), fell.at + SCORE_STING_MS + 60_000), SCORE_SILENCE);

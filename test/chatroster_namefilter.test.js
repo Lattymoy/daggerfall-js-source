@@ -345,7 +345,7 @@ test('NAME-F2: the filter is in the RELAY’s graph, and the entry pane is the o
   const code = pane.replace(/^\s*\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');   // its own prose is not its wiring
   assert.equal((code.match(/entryVerdict\(/g) ?? []).length, 0, 'the ladder is not walked here at all');
   assert.match(code, /const who = storedSession\(appStorage\(\)\);/, 'what the pane reads is the SESSION');
-  assert.match(code, /disabled: !who,/, 'and signed out is a dead button, not a warning beside a live one');
+  assert.match(code, /disabled: !who(?: \|\| save\.testRoom)?,/, 'and signed out is a dead button, not a warning beside a live one (AUDIT SET D4: a Test Room character\'s too)');
 });
 
 test('AUDIT-CHATR F6: the Online pane\u2019s copy says what sanitizeName actually does', () => {
@@ -623,7 +623,7 @@ test('CHAT-R2/ROSTER-G: the roster is the ACTIVE CHANNEL’s - everyone online, 
   // CHAT-CHAN: through the tab's own roster - a channel tab's link (the World's, the Region's), the presence session only
   // as the stand-in, and the Party and Local tabs their composed lists (test/chatchan.test.js drives those)
   assert.match(world, /roster: \(\) => chatRosterOf\(chatLog\?\.active\),/);
-  assert.match(world, /const chatSessionOf = \(tabId\) => \(tabId === 'local' \? online : tabId === 'party' \? chatLinks\?\.get\('world'\) : chatLinks\?\.get\(tabId\)\) \?\? online \?\? null;/);
+  assert.match(world, /const chatSessionOf = \(tabId\) => \(tabId === 'local' \? online : tabId === 'party' \|\| tabId === 'guild' \? chatLinks\?\.get\('world'\) : chatLinks\?\.get\(tabId\)\) \?\? online \?\? null;/);
   assert.match(world, /const s = chatSessionOf\(tabId\);/, 'the World and Region tabs read the session of their own channel');
   assert.match(world, /new OnlineSession\(\{ url: online\.url[^)]*presence: false \}\)/,
     'the chat links really are presence-less, which is why the roster cannot come from them');

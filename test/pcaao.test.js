@@ -35,11 +35,15 @@ import {
 import { calculateAttackDamage, damageModifier, damageEquipment, formulaOverride, registerFormulaOverride, adjustWeaponHitChanceMod, adjustWeaponAttackDamage, weaponAttackDamage } from '../src/combat/formulas.js';
 import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
 import { makeEnemyEntity } from '../src/characters/enemyEntity.js';
-import { EQUIP_SLOTS, equipTableOf } from '../src/systems/equip.js';
+import { EQUIP_SLOTS, equipTableOf, _wearScaleForTests } from '../src/systems/equip.js';
 import { MOD_SETTINGS, setModSetting, _resetModSettings } from '../src/systems/modSettings.js';
 import { RR_VENDOR, rrAdjustWeaponHitChanceMod, rrAdjustWeaponAttackDamage } from '../src/systems/rrRealism.js';
 import { CREDITS } from '../src/ui/credits.js';
 import { SKILLS } from '../src/systems/skills.js';
+import { newMods } from '../src/systems/entityMods.js';   // AUDIT SET P-M1: the port's points, as the fold writes them
+
+// BALANCE1: this file pins DFU's / the mod's own wear verbatim, so it runs the port's wear scale at 1 (test/balance1.test.js pins the scale)
+_wearScaleForTests(1);
 
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const ALL_ON = { Enabled: true, equipmentDamageEnhanced: true, fadingEnchantedItems: true, fixedStrengthDamageModifier: true, armorHitFormulaRedone: true, criticalStrikesIncreaseDamage: true, conditionBasedEffectiveness: true, softMaterialRequirements: true };
@@ -82,9 +86,17 @@ test('PCO1: DamageModifier is ten points a point, and the weapon\'s hit bonus is
   assert.equal(pcaaoWeaponToHit({ material: 9 }), 14); assert.equal(pcaaoWeaponToHit({ material: 0 }), 0); assert.equal(pcaaoWeaponToHit({ material: 1 }), 2);
 });
 
-test('PCO1: the hit\'s helpers - armour, adrenaline, stat diffs, skills, adjustments', () => {
+test('PCO1: the hit\'s helpers - armour, adrenaline, stat diffs, skills, adjustments; AUDIT SET P-M1 the port\'s armour points protect (mutants: AUDIT-SET-the-points-as-exposure)', () => {
   const p = mkPlayer(); const mon = monster(0); const cls = classEnemy(17);
   assert.equal(pcaaoArmorToHit(p, 3), 100, 'the player: 100 less the enchantment channels, whatever the part');
+  // AUDIT SET P-M1: the port's points on the struck part - an armour affix's, a set's - protect under this core as under the
+  // stock one (formulas.js: armour value + Increased + Decreased - points); DFU's channels keep the mod's own sign
+  const armoured = mkPlayer();
+  armoured._mods = { ...newMods(), armorParts: [0, 0, 0, 4, 0, 0, 0] };
+  assert.equal(pcaaoArmorToHit(armoured, 3), 96, 'four points on the chest: four harder to hit there');
+  assert.equal(pcaaoArmorToHit(armoured, 2), 100, 'none on the other parts');
+  armoured._enchantMods = { increasedArmorMod: -5, decreasedArmorMod: 0 };
+  assert.equal(pcaaoArmorToHit(armoured, 3), 101, 'a Strengthens item: the mod\'s own 100 - Increased - Decreased, verbatim, beside the points');
   assert.equal(pcaaoArmorToHit(cls, 3), 60, 'a class enemy: a flat 60');
   mon.armorValues = [10, 20, 30, 40, 50, 60, 70];
   assert.equal(pcaaoArmorToHit(mon, 4), 50, 'a monster: its part');
@@ -271,7 +283,7 @@ test('PCO1: the fading module DESTROYS the player\'s enchanted piece on breaking
   assert.deepEqual(say, [['My Longsword Could Use A Sharpening', 2], ["My Mace's Shaft Is Nearly Split In Two", 2], ['The Bowstring On My Long Bow Nearly Snapped From That', 2]]);
 });
 
-test('RARE-BREAK1: a Rare or Legendary piece off the rarity ladder breaks and STAYS under the fading module; DFU\'s own enchanted piece still fades', () => {
+test('RARE-BREAK1: a Rare or Legendary piece off the rarity ladder breaks and STAYS under the fading module; DFU\'s own enchanted piece still fades; AUDIT SET D3: so does an Aetheric piece a player enchanted (mutants: RARE-BREAK1-rolled-tiers-fade-again; RARE-BREAK1-nothing-fades; AUDIT-SET-an-enchanted-aetheric-fades)', () => {
   const foe = classEnemy(17); foe.stats = stats({ strength: 60 });
   const sword = { group: 'Weapons', templateIndex: 120, material: 1, flags: 0, maxCondition: 1000, currentCondition: 1000 };
   const wearOnly = modsOf({ armorHitFormulaRedone: false });
@@ -286,6 +298,7 @@ test('RARE-BREAK1: a Rare or Legendary piece off the rarity ladder breaks and ST
   assert.equal(breakOn({ rarity: 'rare' }), true, 'a Rare (yellow) piece stays in the pack, broken');
   assert.equal(breakOn({ rarity: 'legendary', legendary: 'x' }), true, 'so does a Legendary');
   assert.equal(breakOn({}), false, 'DFU\'s own enchanted piece (no rolled tier) is destroyed, as the mod says');
+  assert.equal(breakOn({ rarity: 'aetheric', aetheric: 'ruhn-crown' }), true, 'AUDIT SET D3: an Aetheric piece enchanted at the item maker breaks and stays, as a Legendary does');
   assert.equal(pcaaoFades({ enchantments: [{ type: 5, param: 1 }], rarity: 'rare' }), false);
   assert.equal(pcaaoFades({ enchantments: [{ type: 5, param: 1 }] }), true);
   assert.equal(pcaaoFades({ rarity: 'magic' }), false, 'a Magic (blue) piece carries no enchantment at all');
@@ -521,7 +534,7 @@ test('AUDIT PCO1: the archery arm registers on the STOCK path too - InitMod regi
   const f = rd('src/combat/formulas.js');
   assert.match(f, /if \(weapon\) chanceToHitMod = adjustWeaponHitChanceMod\(attacker, target, chanceToHitMod, weaponAnimTime, weapon\);/, 'after CalculateWeaponToHit');
   assert.match(f, /damage = adjustWeaponAttackDamage\(attacker, target, damage, weaponAnimTime, weapon\);\n\s+return damage;\n\}/, 'CalculateWeaponAttackDamage\'s last line');
-  assert.match(f, /weaponAttackDamage\(attacker, target, damageModifiers, weapon, rolls, weaponAnimTime\)/, 'the stock core hands the draw down');
+  assert.match(f, /weaponAttackDamage\(attacker, target, damageModifiers, weapon, rolls, weaponAnimTime, \{ unaware: !!unaware \}\)/, 'the stock core hands the draw down (SET2: and the host\'s word the foe had not noticed me)');
 });
 
 test('AUDIT PCO1: a CLASS enemy\'s bare fists deal nothing under the overhaul - CalculateHandToHandAttackDamage gives a non-player only its damageModifier, which is 0 for anyone but the player (bug for bug; a knight whose sword the wear broke fights for 0)', () => {

@@ -235,7 +235,8 @@ export function renownText(level) {
   return String(level);
 }
 
-const grouped = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+/** A count with its thousands marked ("12,500") - the profile's row and the HUD's bar (ui/hudRenown.js) alike. */
+export const groupedXp = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
 /** A track's progress in words: "1,234 / 5,510 XP to Renown 10", or "the highest there is" at the cap (AUDIT RENOWN1
  *  UI-6: the account card's row names the level before it - "Old Hand - Renown 50, Renown 50 - the highest" said it
@@ -243,5 +244,5 @@ const grouped = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 export function renownProgressText(xp) {
   const p = renownProgress(xp);
   if (p.level >= RENOWN_MAX) return 'the highest there is';
-  return `${grouped(p.into)} / ${grouped(p.need)} XP to Renown ${p.level + 1}`;
+  return `${groupedXp(p.into)} / ${groupedXp(p.need)} XP to Renown ${p.level + 1}`;
 }

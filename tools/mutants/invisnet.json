@@ -1,0 +1,107 @@
+[
+  {
+    "name": "INVIS-door-drops-it",
+    "file": "src/net/wire.js",
+    "old": "    ...(uint(cv, 7) ? { cv: uint(cv, 7) } : {}),",
+    "new": "    ...{},",
+    "tests": ["test/invisnet.test.js"]
+  },
+  {
+    "name": "INVIS-one-bit",
+    "file": "src/net/wire.js",
+    "old": "    ...(uint(cv, 7) ? { cv: uint(cv, 7) } : {}),",
+    "new": "    ...(uint(cv, 1) ? { cv: uint(cv, 1) } : {}),",
+    "tests": ["test/invisnet.test.js"]
+  },
+  {
+    "name": "INVIS-no-edge",
+    "file": "src/net/wire.js",
+    "old": "    || (a.cv | 0) !== (b.cv | 0);   // INVIS-NET",
+    "new": "    || false;   // INVIS-NET",
+    "tests": ["test/invisnet.test.js"]
+  },
+  {
+    "name": "INVIS-blend-drops-it",
+    "file": "src/net/online.js",
+    "old": "    ...(to.cv ? { cv: to.cv } : {}),",
+    "new": "    ...{},",
+    "tests": ["test/invisnet.test.js"]
+  },
+  {
+    "name": "INVIS-blend-bit-wrong",
+    "file": "src/systems/effects.js",
+    "old": "| (isBlending(en) ? 2 : 0) |",
+    "new": "| (isBlending(en) ? 4 : 0) |",
+    "tests": ["test/invisnet.test.js"]
+  },
+  {
+    "name": "INVIS-shade-unread",
+    "file": "src/systems/effects.js",
+    "old": "shade: !!(bits & 4) });",
+    "new": "shade: !!(bits & 2) });",
+    "tests": ["test/invisnet.test.js"]
+  },
+  {
+    "name": "INVIS-never-sent",
+    "file": "src/scenes/world.js",
+    "old": "      cv: concealBits(playerEntity) || undefined,",
+    "new": "      cv: undefined,",
+    "tests": ["test/invisnet.test.js"]
+  },
+  {
+    "name": "INVIS-drawn-anyway",
+    "file": "src/scenes/world.js",
+    "old": "      if (look.kind === 'hidden') { _hiddenPeers.add(d.id); continue; }   // INVIS-NET: the classic lane - the concealed stand nowhere here",
+    "new": "      // INVIS-NET: the classic lane - the concealed stand nowhere here",
+    "tests": ["test/invisnet.test.js"]
+  },
+  {
+    "name": "INVIS-foes-blind-to-it",
+    "file": "src/scenes/world.js",
+    "old": ", cv: p.shown?.cv | 0 });",
+    "new": ", cv: 0 });",
+    "tests": ["test/invisnet.test.js"]
+  },
+  {
+    "name": "INVIS-pressed-anyway",
+    "file": "src/scenes/world.js",
+    "old": "pickPeerInFront(eye, dir, (peersNear() ?? []).filter((q) => !q.cv)",
+    "new": "pickPeerInFront(eye, dir, (peersNear() ?? [])",
+    "tests": ["test/invisnet.test.js"]
+  },
+  {
+    "name": "INVIS-dungeon-cand-never-moves",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      c.health = 1;\n      c.cv = q.cv | 0;",
+    "new": "      c.health = 1;",
+    "tests": ["test/invisnet.test.js"]
+  },
+  {
+    "name": "INVIS-dungeon-cand-open",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "health: 1, cv: 0, concealment: () => concealFlagsOfBits(c.cv) };",
+    "new": "health: 1, cv: 0, concealment: () => ({}) };",
+    "tests": ["test/invisnet.test.js"]
+  },
+  {
+    "name": "INVIS-exterior-cand-never-moves",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      c.health = 1;\n      c.cv = q.cv | 0;",
+    "new": "      c.health = 1;",
+    "tests": ["test/invisnet.test.js"]
+  },
+  {
+    "name": "INVIS-exterior-cand-open",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "health: 1, cv: 0, concealment: () => concealFlagsOfBits(c.cv) };",
+    "new": "health: 1, cv: 0, concealment: () => ({}) };",
+    "tests": ["test/invisnet.test.js"]
+  },
+  {
+    "name": "INVIS-candle-for-all",
+    "file": "src/scenes/world.js",
+    "old": "    peerCandlesFrame(seen, dt);",
+    "new": "    peerCandlesFrame(drawable, dt);",
+    "tests": ["test/invisnet.test.js"]
+  }
+]

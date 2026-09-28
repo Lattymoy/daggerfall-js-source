@@ -40,6 +40,7 @@ import { SOUND } from '../systems/soundClips.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, latchBoxRows } from './messageBox.js';
 import { noticeFrame, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
 import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
+import { isServiceBox } from '../systems/guildServiceFlow.js';   // STATION-ROWS: a box is rows that are a list
 
 /** The window's DaggerfallShortcut.Buttons, in ctor ADD order
  *  (:82-103) - which is the order Panel.ProcessHotkeySequences asks.
@@ -105,7 +106,7 @@ export class CovenWindow {
       // (poor / failed / greeting), which stacks in the dead one's
       // place - the guild popup's own chaining shape.
       const next = b.onYes?.();
-      if (next?.rows) this.boxes.unshift({ ...next });
+      if (isServiceBox(next)) this.boxes.unshift({ ...next });
       // a dispatched Yes (the film window, the offer chain) replaced
       // this window in the overlay slot; nothing to stack.
       if (next === null) this._close();
@@ -118,7 +119,7 @@ export class CovenWindow {
 
   _summon() {
     const r = this.hooks.onSummon?.();
-    if (r?.rows) { this.boxes.push({ ...r }); return; }
+    if (isServiceBox(r)) { this.boxes.push({ ...r }); return; }   // STATION-ROWS
     if (r?.dispatched || r === null) this._close();
   }
 

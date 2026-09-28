@@ -360,8 +360,8 @@
   {
     "name": "WORLD-HOVER-raceWinner-tie-order-inverted",
     "file": "src/player/activationRace.js",
-    "old": "  return firmFirst([gate, camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
-    "new": "  return firmFirst([foe, peer, person, ground, pile, corpse, torch, horseCart, wagon, water, camp], nearestInOrder);",
+    "old": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
+    "new": "  return firmFirst([foe, peer, person, ground, pile, corpse, torch, horseCart, wagon, water, camp, broker, gate], nearestInOrder);",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -495,8 +495,8 @@
   {
     "name": "WORLD-HOVER-a-foe-beats-a-townsperson-on-a-tie",
     "file": "src/player/activationRace.js",
-    "old": "  return firmFirst([gate, camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
-    "new": "  return firmFirst([gate, camp, water, wagon, horseCart, torch, corpse, pile, ground, foe, peer, person], nearestInOrder);",
+    "old": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
+    "new": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, torch, corpse, pile, ground, foe, peer, person], nearestInOrder);",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -504,8 +504,8 @@
   {
     "name": "WORLD-HOVER-a-townsperson-beats-the-door-on-a-tie",
     "file": "src/player/activationRace.js",
-    "old": "  return firmFirst([gate, camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
-    "new": "  return firmFirst([gate, camp, water, wagon, horseCart, torch, corpse, pile, person, peer, ground, foe], nearestInOrder);",
+    "old": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
+    "new": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, torch, corpse, pile, person, peer, ground, foe], nearestInOrder);",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -810,8 +810,8 @@
   {
     "name": "WORLD-HOVER-the-door-text-cache-ignores-the-generation",
     "file": "src/scenes/worldModes.js",
-    "old": "      if (_doorTextKey === key && _doorTextGen === gen && _doorTextHomes === homesV) return _doorText;",
-    "new": "      if (_doorTextKey === key && _doorTextHomes === homesV) return _doorText;",
+    "old": "      if (_doorTextKey === key && _doorTextGen === gen && _doorTextHomes === homesV && _doorTextVerbs === verbsSig) return _doorText;",
+    "new": "      if (_doorTextKey === key && _doorTextHomes === homesV && _doorTextVerbs === verbsSig) return _doorText;",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -819,8 +819,8 @@
   {
     "name": "WORLD-HOVER-the-door-text-is-resolved-every-frame-again",
     "file": "src/scenes/worldModes.js",
-    "old": "      const gen = doorGeneration?.() ?? 0;\n      const homesV = host.onlineHomes?.version?.() ?? 0;\n      if (_doorTextKey === key && _doorTextGen === gen && _doorTextHomes === homesV) return _doorText;\n",
-    "new": "      const gen = doorGeneration?.() ?? 0;\n      const homesV = host.onlineHomes?.version?.() ?? 0;\n",
+    "old": "      const verbsSig = homeVerbsSig();\n      if (_doorTextKey === key && _doorTextGen === gen && _doorTextHomes === homesV && _doorTextVerbs === verbsSig) return _doorText;\n",
+    "new": "      const verbsSig = homeVerbsSig();\n",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -1056,7 +1056,7 @@
   {
     "name": "AUDIT-WH2-frameAbort-does-nothing",
     "file": "src/systems/frameClock.js",
-    "old": "export function frameAbort() { open = null; }",
+    "old": "export function frameAbort() { open = null; openAt = null; }",
     "new": "export function frameAbort() { }",
     "tests": [
       "test/worldhover.test.js"

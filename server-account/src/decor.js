@@ -30,11 +30,11 @@
 import { accountKind, overRate } from './accounts.js';
 import { CHAR_ID_RE } from './service.js';
 import { homeMapIdOk, homeBuildingKeyOk } from '../../src/net/homeLaw.js';
-import { DECOR_CAP, DECOR_ID_RE, DECOR_OPS_MAX, DECOR_OPS_WINDOW_S, decorPieceOf, decorPlaceOf } from '../../src/net/decorLaw.js';
+import { DECOR_CAP, DECOR_ID_RE, DECOR_OPS_MAX, DECOR_OPS_WINDOW_S, decorPieceOf, decorPlaceOf, decorHiddenOf } from '../../src/net/decorLaw.js';
 
 /** The home is the caller's character's: map, key, account, character. */
 const OWNS = 'EXISTS (SELECT 1 FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND char_id = ?)';
-const placeJson = ({ pos, rot, scale, light, storage, paid }) => JSON.stringify({ pos, rot, scale, light, storage, paid });
+const placeJson = ({ pos, rot, scale, light, storage, paid, station }) => JSON.stringify({ pos, rot, scale, light, storage, paid, ...(station ? { station } : {}) });   // HOME-STATIONS: the craft, when it serves one
 
 /** A stored row as a piece - projected again on the way out, so a row the law would refuse is never handed out.
  *  DECOR2a: `item` (migration 0012) is the owner's own item's descriptor, or NULL. */
@@ -72,7 +72,34 @@ export async function decorOf({ db }, _player, { mapId, buildingKey } = {}) {
   if (!homeMapIdOk(mapId) || !homeBuildingKeyOk(buildingKey)) return { error: 'bad-home' };
   const { results = [] } = await db.prepare(`SELECT * FROM home_decor WHERE map_id = ? AND building_key = ?
     ORDER BY placed_at, id LIMIT ?`).bind(mapId, buildingKey, DECOR_CAP).all();
-  return { mapId, buildingKey, pieces: results.map(pieceOfRow).filter(Boolean) };
+  return { mapId, buildingKey, pieces: results.map(pieceOfRow).filter(Boolean), hidden: await hiddenOf(db, mapId, buildingKey) };
+}
+
+/** BASE-HIDE: what the home's owner took out of the room (migration 0015) - projected on the way out, so a list the law
+ *  would refuse is handed out as none. */
+async function hiddenOf(db, mapId, buildingKey) {
+  const row = await db.prepare('SELECT keys FROM home_hidden WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey).first();
+  if (!row) return [];
+  try { return decorHiddenOf(JSON.parse(row.keys)) ?? []; } catch { return []; }
+}
+
+/**
+ * BASE-HIDE: WHAT IS TAKEN OUT OF THE ROOM, written whole - the list the owner's client now stands (decorLaw.js
+ * decorHiddenOf: every name a built-in piece's, none twice, at most DECOR_HIDDEN_CAP). The owner's alone, in the same
+ * statement; free, so it asks the hour's writes as a placement does and nothing else.
+ * @param {{db: any, nowS: number}} ctx
+ */
+export async function hideDecorBase(ctx, player, { mapId, buildingKey, character, keys } = {}) {
+  const shut = await writeDoor(ctx, player, { mapId, buildingKey, character });
+  if (shut) return { error: shut };
+  const hidden = decorHiddenOf(keys);
+  if (!hidden) return { error: 'bad-decor' };
+  const { db } = ctx;
+  const r = await db.prepare(`INSERT INTO home_hidden (map_id, building_key, keys) SELECT ?, ?, ? WHERE ${OWNS}
+    ON CONFLICT (map_id, building_key) DO UPDATE SET keys = excluded.keys`)
+    .bind(mapId, buildingKey, JSON.stringify(hidden), mapId, buildingKey, player.id, character).run();
+  if (!r?.meta?.changes) return { error: 'no-home' };
+  return { ok: true, hidden };
 }
 
 /**

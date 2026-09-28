@@ -1,0 +1,74 @@
+[
+  {
+    "name": "ESC-LOCK-never-delivered",
+    "file": "src/player/pointerLock.js",
+    "old": "      deliverEscape();\n",
+    "new": "",
+    "tests": [
+      "test/esclock.test.js"
+    ]
+  },
+  {
+    "name": "ESC-LOCK-page-release-unstamped",
+    "file": "src/player/pointerLock.js",
+    "old": "    _pageReleaseAt = nowMs();   // ESC-LOCK: the page's own release is never the player's Escape\n",
+    "new": "",
+    "tests": [
+      "test/esclock.test.js"
+    ]
+  },
+  {
+    "name": "ESC-LOCK-focus-ignored",
+    "file": "src/player/pointerLock.js",
+    "old": "  const quiet = () => isWindowUp() || overlayOpen() || _cursorActive || !pageHasFocus();",
+    "new": "  const quiet = () => isWindowUp() || overlayOpen() || _cursorActive;",
+    "tests": [
+      "test/esclock.test.js"
+    ]
+  },
+  {
+    "name": "ESC-LOCK-real-escape-unnoted",
+    "file": "src/player/pointerLock.js",
+    "old": "    if (e.code === 'Escape' && e.isTrusted !== false && !e.dagSynthetic) lastRealEscape = nowMs();",
+    "new": "    if (e.code === 'Escape' && e.isTrusted === false && !e.dagSynthetic) lastRealEscape = nowMs();",
+    "tests": [
+      "test/esclock.test.js"
+    ]
+  },
+  {
+    "name": "ESC-LOCK-relocked-still-delivered",
+    "file": "src/player/pointerLock.js",
+    "old": "      if (held || quiet() || nowMs() - lastRealEscape < REAL_ESCAPE_MS + ESCAPE_DELIVERY_MS) return;",
+    "new": "      if (quiet() || nowMs() - lastRealEscape < REAL_ESCAPE_MS + ESCAPE_DELIVERY_MS) return;",
+    "tests": [
+      "test/esclock.test.js"
+    ]
+  },
+  {
+    "name": "ESC-LOCK-shell-asked-in-a-loop",
+    "file": "src/player/pointerLock.js",
+    "old": "  if (at - _shellRelockAt < SHELL_RELOCK_MS) return;\n",
+    "new": "",
+    "tests": [
+      "test/esclock.test.js"
+    ]
+  },
+  {
+    "name": "ESC-LOCK-shell-not-a-gesture",
+    "file": "app/main.cjs",
+    "old": "e.sender.executeJavaScript('globalThis.__daggerRelock?.()', true)",
+    "new": "e.sender.executeJavaScript('globalThis.__daggerRelock?.()', false)",
+    "tests": [
+      "test/esclock.test.js"
+    ]
+  },
+  {
+    "name": "ESC-LOCK-pending-outlives-host",
+    "file": "src/player/pointerLock.js",
+    "old": "    if (pending) { clearTimeout(pending); pending = null; }\n",
+    "new": "",
+    "tests": [
+      "test/esclock.test.js"
+    ]
+  }
+]

@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 import {
   SOCIAL_ROOM, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX,
   SOCIAL_ROOM_HZ_MAX, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, PARTY_IN_HZ_MAX, PARTY_HZ_MAX, PARTY_MAX, INBOUND_FRAME_MAX, WORLD_FRAME_MAX, ROSTER_MAX, MAX_FRAME_BYTES,
-  PARTY_LOC_MAX, NAME_MAX, RELAY_VERSION, validPartyPose, validSocialAct, validSocialFrame,
+  PARTY_LOC_MAX, NAME_MAX, RELAY_VERSION, validPartyPose, validSocialAct, validSocialFrame, PARTY_FX_MAX, PARTY_FX_NAME_MAX,
 } from '../src/net/wire.js';
 import { fakeRoom } from './fakeRoom.mjs';
 import { SocialState, PARTY_GREEN_CSS, FRIEND_CSS } from '../src/net/social.js';
@@ -238,7 +238,14 @@ test('AUDIT SOC (the attachment): the widest attachment a hub socket carries - t
   const a = await join('a', { name: 'N'.repeat(NAME_MAX) });
   const b = await join('b');
   await act(a, { k: 'party.invite', peer: 'peer-b' }); tick(); await act(b, { k: 'party.accept', party: a.att.party }); tick();
-  await pose(a, { ...P, loc: 'L'.repeat(PARTY_LOC_MAX), px: 999, py: 499, h: 9999, hm: 9999, f: 9999, fm: 9999, m: 9999, mm: 9999 }); tick();
+  // AUDIT (the batch's cross-cutting audit, F6): AND THE POSE AT ITS WIDEST - every effect PARTY-BUFFS carries at its longest
+  // name, the rest flags, a rest and a vote - which the first cut of this pin never sent, so the attachment's growth
+  // (1371 bytes before the batch, 1865 after it at the widest) was never measured against the runtime's cap
+  const fx = Array.from({ length: PARTY_FX_MAX }, (_, k) => ({ i: 60 + k, r: 9999, n: `Spell${k}`.padEnd(PARTY_FX_NAME_MAX, 'x'), d: 1 }));
+  await pose(a, { ...P, loc: 'L'.repeat(PARTY_LOC_MAX), px: 999, py: 499, h: 9999, hm: 9999, f: 9999, fm: 9999, m: 9999, mm: 9999, fx, rs: 1, nr: 1,
+    rest: { mode: 2, hoursRemaining: 99, totalHours: 99, kind: 'rough' }, restPending: { mode: 2, hours: 99 }, ready: true, readyAt: 1.79e12, voteAt: 1.79e12,
+    restEnemyAt: 1.79e12, restStartedAt: 1.79e12 }); tick();
+  assert.equal(a.att.pm?.fx?.length, PARTY_FX_MAX, 'the widest pose is the one stored');
   for (let i = 0; i < 5; i++) { await act(a, { k: 'party.kick', acct: 'acct-zz' }); await r.ping(a); await pose(a); }   // the buckets and the strike counts written
   assert.equal(a.closed, null, 'never "hello too large" or a failed write');
   assert.ok(a.meters.sbucket && a.meters.pbucket && a.meters.bucket, 'the buckets written - among its meters');

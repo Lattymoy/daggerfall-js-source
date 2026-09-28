@@ -79,6 +79,22 @@ export const paintsPreviousWindow = (win) => !!win && win.previousWindow === tru
  *  else in the port does, so no DFU window's behaviour moves. */
 export const hidesHud = (win) => !!win && win.hidesHud === true;
 
+/** RISE-STUCK (Discord, 2026-09-27, Ninilac: "I clicked 'rise now' but
+ *  the death screen didn't go away, so I waited for the timer and it
+ *  still didn't go away when it reached 0"). A window that KEEPS THE
+ *  TOP until it closes itself - the death screen, the port's own window
+ *  (DFU's PlayerDeath is no window, so no DFU window's behaviour moves).
+ *
+ *  A box pushed over it buried it: the box took the input and the tick,
+ *  the enhanced veil (DOM, over the canvas) hid the box, and the
+ *  online rise - which REPLACES the top (world.js respawnOnlinePlayer's
+ *  ActionTextBox) - replaced the box instead, so the death screen came
+ *  back when that closed with its one reset already spent: Enter, the
+ *  plate and the countdown all dead for good. pushWindow suspends such a
+ *  push BENEATH the window that holds the top; it comes up when the
+ *  death screen goes. */
+export const holdsTop = (win) => !!win && win.holdsTop === true;
+
 /**
  * Build a stack.
  *
@@ -115,9 +131,10 @@ export function makeWindowStack({ hud = null, onTop = null, onWindowChange = nul
     onTop?.(t);
   };
 
-  /** AddWindow (:179-186). */
-  function addWindow(win) {
-    windows.push(win);
+  /** AddWindow (:179-186). RISE-STUCK: `at` is where it goes - the top
+   *  but for a window slipped beneath one that holds it. */
+  function addWindow(win, at = windows.length) {
+    windows.splice(at, 0, win);
     win.onPush?.();
     if (pauseWhileOpen(win)) gamePaused = true;
   }
@@ -167,9 +184,17 @@ export function makeWindowStack({ hud = null, onTop = null, onWindowChange = nul
      *  (test/roadb_host_pause.test.js sweeps for it). */
     depth: () => windows.length - (hud ? 1 : 0),
 
-    /** PushWindow (:79-91). */
+    /** PushWindow (:79-91). RISE-STUCK: over a window that holds the
+     *  top (`holdsTop`) the push is suspended beneath it instead - the
+     *  top, and so the host's slot, does not move. */
     pushWindow(win) {
       if (!win) return false;
+      const t = top();
+      if (holdsTop(t) && !isHud(t)) {
+        addWindow(win, windows.length - 1);
+        onWindowChange?.();
+        return true;
+      }
       addWindow(win);
       clearActions?.();
       publishTop();
@@ -209,6 +234,17 @@ export function makeWindowStack({ hud = null, onTop = null, onWindowChange = nul
      *  (DaggerfallCourtWindow.cs:224). */
     eachCoveredWindow(fn) {
       for (let i = 0; i < windows.length - 1; i++) if (!isHud(windows[i])) fn(windows[i], i);
+    },
+
+    /** AUDIT RISE-REST F3: the covered windows the TOP lets paint - all
+     *  of them, as above, but none beneath a window that holds the top.
+     *  A box waiting under the death screen was drawn every frame: through
+     *  the classic wash, and on the enhanced skin as the notice stack's
+     *  DOM (z-index 31) floating over the veil (18) - read, and not
+     *  answerable. The death screen is the whole screen until it goes. */
+    eachPaintedBeneath(fn) {
+      if (holdsTop(top())) return;
+      api.eachCoveredWindow(fn);
     },
 
     /** AUDIT 64 F35 (review round) - IS THE HUD PAINTED THIS FRAME?

@@ -64,13 +64,72 @@ export function unevenScaleNormalMatrix(m) {
   ]);
 }
 
+/**
+ * LA-AUDIT A1 (2026-09-27, the audit before LA's merge; lens A measured it): THE SHADOW CELLS. LA-SHADOW3 gave every
+ * dungeon light a lo map, six faces of the level's static casters each, and the level is PERF5's one mesh: one
+ * sub-mesh per texture, laid end to end, each spanning the level. So the replay's sub-mesh cull passed them all and
+ * every face drew about 0.85 of the level. Scourg Barrow's entry frame replayed 23.1M indices (253 levels) against
+ * the base's 3.8M, and one light moving past the eight cost 455k a frame. A depth face reads no texture, so the
+ * texture grouping means nothing to it. The same triangles, sorted by the grid cell their centroid falls in, go into
+ * a second index buffer with one range per cell (createMesh measures each cell's sphere), and the shadow replays cull
+ * by cell. The lit pass's buffer is untouched, byte for byte. Within a cell the triangles keep the merge's order,
+ * and the cells run y, then z, then x, so neighbours along x stay adjacent and a replay draws them as one run.
+ * @param {Float32Array} positions the merge's vertices
+ * @param {Uint32Array} indices the merge's triangles
+ * @param {number} size the cell's side, in world units
+ * @returns {{ indices: Uint32Array, cells: Array<{ startIndex: number, primitiveCount: number }> }}
+ */
+export function shadowCells(positions, indices, size) {
+  const tris = indices.length / 3;
+  const key = new Float64Array(tris);
+  const at = new Int32Array(tris * 3);
+  let minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxZ = -Infinity;
+  for (let t = 0; t < tris; t++) {
+    const a = indices[t * 3] * 3, b = indices[t * 3 + 1] * 3, c = indices[t * 3 + 2] * 3;
+    const x = Math.floor((positions[a] + positions[b] + positions[c]) / (3 * size));
+    const y = Math.floor((positions[a + 1] + positions[b + 1] + positions[c + 1]) / (3 * size));
+    const z = Math.floor((positions[a + 2] + positions[b + 2] + positions[c + 2]) / (3 * size));
+    at[t * 3] = x; at[t * 3 + 1] = y; at[t * 3 + 2] = z;
+    if (x < minX) minX = x; if (x > maxX) maxX = x;
+    if (y < minY) minY = y;
+    if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
+  }
+  const nx = maxX - minX + 1, nz = maxZ - minZ + 1;
+  const count = new Map();
+  for (let t = 0; t < tris; t++) {
+    const k = ((at[t * 3 + 1] - minY) * nz + (at[t * 3 + 2] - minZ)) * nx + (at[t * 3] - minX);
+    key[t] = k;
+    count.set(k, (count.get(k) ?? 0) + 1);
+  }
+  const next = new Map(), cells = [];
+  let start = 0;
+  for (const k of [...count.keys()].sort((p, q) => p - q)) {
+    const n = /** @type {number} */ (count.get(k));
+    next.set(k, start);
+    cells.push({ startIndex: start * 3, primitiveCount: n });
+    start += n;
+  }
+  const out = new Uint32Array(indices.length);
+  for (let t = 0; t < tris; t++) {
+    const s = /** @type {number} */ (next.get(key[t]));
+    next.set(key[t], s + 1);
+    out[s * 3] = indices[t * 3]; out[s * 3 + 1] = indices[t * 3 + 1]; out[s * 3 + 2] = indices[t * 3 + 2];
+  }
+  return { indices: out, cells };
+}
+
+/** LA-AUDIT A1: the dungeon's cell side - under a third of a block (RDB_SIDE, 51.2), about a dungeon light's reach. */
+export const SHADOW_CELL_SIZE = 16;
+
 export class StaticBatchBuilder {
-  constructor() {
+  /** @param {{ shadowCell?: number }} [opts] shadowCell: LA-AUDIT A1's cell side; 0 (the default) builds no cells */
+  constructor({ shadowCell = 0 } = {}) {
     this.chunks = [];        // [{positions, normals, uvs, base}] one per model, already transformed
     this.groups = new Map(); // resolved key -> [Uint32Array index runs, already offset by base]
     this.vertexCount = 0;
     this.triangles = 0;
     this.models = 0;
+    this.shadowCell = shadowCell;
   }
 
   /**
@@ -181,6 +240,11 @@ export class StaticBatchBuilder {
     }
     const merged = /** @type {any} */ ({ positions, normals, uvs, indices, subMeshes, vertexCount: this.vertexCount, triangles: this.triangles, models: this.models });
     if (withBounds) merged.bounds = { whole, subs };
+    if (this.shadowCell > 0) {   // LA-AUDIT A1
+      yield;
+      const c = shadowCells(positions, indices, this.shadowCell);
+      merged.shadowIndices = c.indices; merged.shadowCells = c.cells;
+    }
     return merged;
   }
 }

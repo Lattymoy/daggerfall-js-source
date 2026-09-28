@@ -183,8 +183,10 @@ test('SURV5: by source - the four hosts chain the third box, the enhanced HUD ca
   // by a host that forgets it.
   assert.match(read('src/ui/statusBox.js'), /if \(survival\) rows\.push\('', \.\.\.survivalStatusRows\(entity, survival\.minutes, survival\)\);/);
   const hud = read('src/ui/enhancedHud.js');
-  assert.match(hud, /const needs = el\('div', 'hud-needs'\);/); assert.match(hud, /const chips = survivalOn\(\) \? survivalHudChips\(vitals, Math\.floor\(worldMinutes\(\)\), \{ vampire: !!liveVampirism\(vitals\), endurance: liveStat\(vitals, 'endurance'\) \}\) : \[\];/);
-  assert.match(read('src/ui/enhancedStyle.js'), /\.hud-need\.danger \{/);
+  // UI3: the needs are the status widget's tiles - a felt need amber, one that costs red
+  assert.match(hud, /const needs = survivalOn\(\) \? survivalHudChips\(vitals, Math\.floor\(worldMinutes\(\)\), \{ vampire: !!liveVampirism\(vitals\), endurance: liveStat\(vitals, 'endurance'\) \}\) : \[\];/);
+  assert.match(hud, /const all = statusTiles\(\{ spells, powers, afflictions: afflictionRows\(vitals\), needs \}\);/);
+  assert.match(read('src/ui/enhancedStyle.js'), /\.hst-cell\.danger \{/);
   const wm = read('src/scenes/worldModes.js');
   assert.match(wm, /climateIndex: \(\) => host\.climateIndex\?\.\(\) \?\? 232,\s*\n\s*advanceMinutes: \(n\) => interiorTicker\.advance\(n\),\s*\n\s*endurance: \(\) => liveStat\(playerEntity, 'endurance'\),/);
   assert.match(read('src/scenes/world.js'), /climateIndex: \(\) => maps\.getClimateIndex\(playerTravelPixel\(\)\.x, playerTravelPixel\(\)\.y\),   \/\/ SURV5/);

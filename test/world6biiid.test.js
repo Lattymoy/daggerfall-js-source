@@ -6,13 +6,18 @@
 // punishment (the summoner's own trial), and the watch called into it (a crime's, the player's own - the guards
 // item). Every foe a building can hold is the player's own, so the building's room streams nothing, and a frame in it
 // lands nothing. These pins say so by source, so the residual cannot be re-opened as an omission.
+// QUEST-PARTY phase 3b (2026-09-26, Mac: "Dungeons and buildings") REOPENED IT, ON PURPOSE: a partner in the same shop
+// saw me fight air, and a party's shared quest foe in a building stood a copy each. The facts above stand - every foe a
+// building holds is still its player's own - and that is exactly the cell's law (WORLD6b: each player streams its own),
+// which the relay's own lane (OWN1) now carries in a world room. So the building streams its players' own foes on that
+// lane, and the HOST's frame in a world room is still the dungeon's alone.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 
-test('WORLD6b-iii(d): a building streams no foes BY THE LOCK - the interior pool has exactly three spawners (a quest\'s, the summon\'s, the watch\'s), all the player\'s own; the world host streams a world room\'s frame from the dungeon alone and lands a world room\'s frame on the dungeon alone; the record says why', () => {
+test('WORLD6b-iii(d), reopened by QUEST-PARTY phase 3b: the interior pool has exactly three spawners (a quest\'s, the summon\'s, the watch\'s), all the player\'s own - so a building\'s foes ride the room\'s OWN lane, each player\'s its own; the world host still streams a world room\'s HOST frame from the dungeon alone and lands one on the dungeon alone; the record says why', () => {
   const wm = rd('src/scenes/worldModes.js');
   const sites = [...wm.matchAll(/interiorFoes\??\.spawnFoe\(/g)].length;
   // AUDIT 68 S23-coven-punishment-interior-only: the summon's punishment
@@ -22,7 +27,10 @@ test('WORLD6b-iii(d): a building streams no foes BY THE LOCK - the interior pool
   assert.match(wm, /const type = MOBILE_TYPES\[DAEDRIC_FOES\[Math\.floor\(rolls\(\) \* DAEDRIC_FOES\.length\)\]\];/, 'the summon\'s punishment');
   assert.match(wm, /interiorFoes\.spawnFoe\(foe\.foeType, /, 'the quest\'s CreateFoe');
   assert.match(wm, /return interiorFoes\.spawnFoe\(mobileType, feet, \{ replacing: true \}\);/, 'the enchant replace of one of those');
-  assert.doesNotMatch(wm, /interiorFoes\.setNet\(/, 'no net is ever installed on the interior pool: nothing of it rides');
+  // QUEST-PARTY phase 3b: the net is the host's (the own lane), installed once a session is open, the watch behind the foes
+  assert.equal((wm.match(/interiorFoes\.setNet\(/g) ?? []).length, 1, 'one net for the interior pool');
+  assert.match(wm, /const net = host\.interiorFoesNet\?\.\(\) \?\? null;\n\s*if \(!net\) return;\n\s*interiorFoes\.setNet\(\{\n\s*\.\.\.net,/, 'the host\'s net, none offline');
+  assert.match(wm, /watch: \{ list: \(\) => interiorGuards\?\.guards \?\? \[\], hurt: \(g, dmg, at, dir\) => interiorGuards\?\.hurtGuard\(g, dmg, at, dir, \{ fromPlayer: false, peer: true \}\) \},/, 'WATCH1\'s law indoors');
   const w = rd('src/scenes/world.js');
   assert.match(w, /const frame = cell \? \(\(modes\?\.mode \?\? 'exterior'\) === 'exterior' \? exteriorFoes\.foesFrame\(full, _hccDirty\) : null\) : modes\?\.dungeonFoesFrame\?\.\(full\);/, 'a world room\'s frame is the dungeon\'s alone - a building\'s host streams nothing');
   assert.match(w, /if \(isCellRoom\(online\.room\)\) \{ if \(\(modes\?\.mode \?\? 'exterior'\) === 'exterior'\) exteriorFoes\.applyFoes\(id, data\); return; \}[\s\S]*?if \(modes\?\.applyDungeonFoes\?\.\(id, data\) && modes\?\.mode === 'dungeon'\) _foesInAt = performance\.now\(\);/, 'a world room\'s frame lands on the dungeon alone - in a building it lands nothing');
@@ -31,4 +39,5 @@ test('WORLD6b-iii(d): a building streams no foes BY THE LOCK - the interior pool
   assert.match(rd('bible/04-Characters/Characters-Arc.md'), /\*\*A building interior carries NO STATIC ENEMIES in DFU\.\*\*/, 'the fact the interior pool is built on');
   assert.match(rd('bible/11-Multiplayer/Multiplayer.md'), /### 1\. Quests stay separate/, 'the lock');
   assert.match(rd('bible/06-Systems/Online-Arc.md'), /### 6b-iii\(d\): buildings' foes - none, by the lockbook/, 'the record');
+  assert.match(rd('bible/06-Systems/Online-Arc.md'), /## QUEST-PARTY phase 3b - A BUILDING'S FOES RIDE THE ROOM'S OWN LANE/, 'and the record that reopened it');
 });

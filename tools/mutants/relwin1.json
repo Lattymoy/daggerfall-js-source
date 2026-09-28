@@ -2,8 +2,8 @@
   {
     "name": "REL2-portable-shares-the-installer-name",
     "file": "app/package.json",
-    "old": "      \"artifactName\": \"DaggerfallEnhanced-${version}-win-${arch}-portable.${ext}\"",
-    "new": "      \"artifactName\": \"DaggerfallEnhanced-${version}-win-${arch}-setup.${ext}\"",
+    "old": "      \"artifactName\": \"DaggerfallOnline-${version}-win-${arch}-portable.${ext}\"",
+    "new": "      \"artifactName\": \"DaggerfallOnline-${version}-win-${arch}-setup.${ext}\"",
     "tests": [
       "test/relwin1.test.js"
     ]
@@ -11,7 +11,7 @@
   {
     "name": "REL2-portable-falls-back-to-the-one-name",
     "file": "app/package.json",
-    "old": "    \"portable\": {\n      \"artifactName\": \"DaggerfallEnhanced-${version}-win-${arch}-portable.${ext}\"\n    },",
+    "old": "    \"portable\": {\n      \"artifactName\": \"DaggerfallOnline-${version}-win-${arch}-portable.${ext}\"\n    },",
     "new": "    \"portable\": {},",
     "tests": [
       "test/relwin1.test.js"

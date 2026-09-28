@@ -382,7 +382,7 @@ test('QG1 seams: the ready-spell doors are raised by the cast engine and routed 
 test('QG1 seams: the two world reads stand on questWorld, byte-folded like MakeClassicKey', () => {
   // ROAD-G G2 (review): both hosts that mount a machine over a real
   // city answer them. Absent, CastSpellDo self-completes at PARSE
-  // (actions.js:2756/:2763) and the task can never fire, whatever the
+  // (actions.js:2767/:2774) and the task can never fire, whatever the
   // ready-spell doors raise.
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const world = readSrc(f);

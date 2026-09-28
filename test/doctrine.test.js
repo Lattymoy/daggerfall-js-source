@@ -46,7 +46,7 @@ const PUBLIC_ALLOWLIST = new Map([
   ['src/assets/intro/interkarma.webp', 'U65 credit artwork identifying Interkarma / Daggerfall Unity; recovered unchanged'],
   ['src/assets/intro/nexus.webp', 'U65 credit artwork identifying Nexus Mods; recovered unchanged'],
   ['src/assets/intro/theme.mp3', 'U65 original theme recording; recovered unchanged at Mac\'s request'],
-  ['src/assets/branding/daggerfall-enhanced.jpg', 'Mac\'s supplied 19956.png, 2026-09-18; original JPEG bytes, no ARENA2 data'],
+  ['src/assets/branding/daggerfall-online.png', 'BR4: Mac\'s supplied Daggerfall Online logo, 2026-09-27, his own cut with alpha; original PNG bytes, no ARENA2 data'],
   // THE SITE'S PICTURES (U60c) WERE RETIRED with the DA site cleanup
   // (Mac, 2026-08-31): the landing page carries no raster at all now -
   // landing.test.js pins <img> absent - so the three menu screens,

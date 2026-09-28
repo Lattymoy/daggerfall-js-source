@@ -9,15 +9,6 @@
     ]
   },
   {
-    "name": "DECOR2c-any-armour-hung",
-    "file": "src/net/decorLaw.js",
-    "old": "(it.g === DECOR_ARMOR_GROUP && DECOR_SHIELD_TEMPLATES.has(it.t))",
-    "new": "(it.g === DECOR_ARMOR_GROUP)",
-    "tests": [
-      "test/decor2c.test.js"
-    ]
-  },
-  {
     "name": "DECOR2c-a-model-hung",
     "file": "src/net/decorLaw.js",
     "old": "if (!it || piece.model != null || !Array.isArray(piece.flat)) return false;",
@@ -74,7 +65,7 @@
   {
     "name": "DECOR2c-the-bound-kept",
     "file": "src/net/decorLaw.js",
-    "old": "export const DECOR_ARCHIVE_MAX = 999;",
+    "old": "export const DECOR_ARCHIVE_MAX = 99_999;",
     "new": "export const DECOR_ARCHIVE_MAX = 511;",
     "tests": [
       "test/decor2c.test.js",
@@ -255,8 +246,8 @@
   {
     "name": "DECOR2c-the-dye-dropped",
     "file": "src/scenes/decorRoom.js",
-    "old": "      artOf(a, r, decorMountDye(piece.item)).then((art) => {",
-    "new": "      artOf(a, r, null).then((art) => {",
+    "old": "loadMountArt(deps, flat[0], flat[1], decorMountDye(d), decorMountDyeTarget(d))",
+    "new": "loadMountArt(deps, flat[0], flat[1], null, decorMountDyeTarget(d))",
     "tests": [
       "test/decor2c.test.js"
     ]
@@ -300,7 +291,7 @@
   {
     "name": "DECOR2c-the-mounts-undrawn",
     "file": "src/scenes/decorRoom.js",
-    "old": "    for (const e of standing.values()) if (e.mount) { r?.drawDecals?.(e.mount.batch, e.mount.tex); n++; }",
+    "old": "    for (const e of standing.values()) if (e.mount) { (r?.drawDecalPicture ?? r?.drawDecals)?.call(r, e.mount.batch, e.mount.tex); n++; }   // WEAPON-MOUNT: a picture, not a film",
     "new": "    for (const e of standing.values()) if (e.mount) { n++; }",
     "tests": [
       "test/decor2c.test.js"
@@ -327,8 +318,8 @@
   {
     "name": "DECOR2c-the-mask-kept",
     "file": "src/scenes/decorRoom.js",
-    "old": "    const variant = uploadRecord?.(a, r, { mips: false, removeMask: true, dye });",
-    "new": "    const variant = uploadRecord?.(a, r, { mips: false, removeMask: false, dye });",
+    "old": "    const variant = uploadRecord?.(a, r, { mips: false, removeMask: true, dye, dyeTarget });",
+    "new": "    const variant = uploadRecord?.(a, r, { mips: false, removeMask: false, dye, dyeTarget });",
     "tests": [
       "test/decor2c.test.js"
     ]
@@ -336,8 +327,8 @@
   {
     "name": "DECOR2c-a-missing-record-hung",
     "file": "src/scenes/decorRoom.js",
-    "old": "    if (!t || !(r < t.recordCount)) return null;\n    const variant",
-    "new": "    if (!t) return null;\n    const variant",
+    "old": "    if (!t || !(r < t.recordCount)) return null;\n    // MOUNT-LAZY",
+    "new": "    if (!t) return null;\n    // MOUNT-LAZY",
     "tests": [
       "test/decor2c.test.js"
     ]
@@ -399,7 +390,7 @@
   {
     "name": "DECOR2c-the-ghost-undrawn",
     "file": "src/scenes/decorTool.js",
-    "old": "    r?.drawDecals?.(p.decal, p.art.tex);\n    return true;",
+    "old": "    (r?.drawDecalPicture ?? r?.drawDecals)?.call(r, p.decal, p.art.tex);   // WEAPON-MOUNT: the ghost is the picture it will hang as\n    return true;",
     "new": "    return true;",
     "tests": [
       "test/decor2c.test.js"

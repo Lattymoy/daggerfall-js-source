@@ -126,7 +126,9 @@ test('audit24 wave20: SetupIndividualStaticNPC is wired at AddPeople, not merely
   // PlayerEnterExit.cs:800 reaches AddQuestResourceObjects only AFTER
   // DoLayout returns, so the bootstrap behaviours exist before the
   // marker walk asks IsAlreadyInjected.
-  assert.ok(call < ic.indexOf('for (const flat of interior.flats)'),
+  // BASE-HIDE re-aim: the flats loop names each flat's index (a furnishable room stands its flats one by one)
+  const flats = ic.indexOf('for (const [fi, flat] of interior.flats.entries())');
+  assert.ok(flats > 0 && call < flats,
     'and does it during layout, before the flats batch');
   // PIN MOVED (ROAD review-p): the bare `setActive(active) { pn.active
   // = !!active; }` literal is gone, because a flag write is only half

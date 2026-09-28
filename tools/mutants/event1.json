@@ -272,8 +272,8 @@
   {
     "name": "EVENT1-storm-first-tick-backlog",
     "file": "src/world/dreadSky.js",
-    "old": "      if (lastMs !== null) {\n        for (const s of dreadStrikes(lastMs, sharedMs, weight)) {",
-    "new": "      {\n        for (const s of dreadStrikes(lastMs ?? sharedMs - DREAD_SLOTS_MAX * DREAD_SLOT_MS, sharedMs, weight)) {",
+    "old": "      if (lastMs !== null) {\n        const c = centre ?? eye;\n        for (const s of dreadStrikes(lastMs, sharedMs, weight, ring)) {",
+    "new": "      {\n        const c = centre ?? eye;\n        for (const s of dreadStrikes(lastMs ?? sharedMs - DREAD_SLOTS_MAX * DREAD_SLOT_MS, sharedMs, weight, ring)) {",
     "tests": [
       "test/event1_live_event.test.js"
     ]

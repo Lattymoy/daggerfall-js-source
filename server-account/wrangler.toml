@@ -57,17 +57,19 @@ enabled = true
 [vars]
 # Answered by /health so a deploy that did not happen cannot look like
 # one that did. Kept in step with ACCOUNT_VERSION in src/service.js.
-ACCOUNT_VERSION = "acct11"
-# WB5b: THE RELAY'S PUBLIC HALF - the key an Oblivion Gate's kill
-# receipts verify with (src/net/gateReceipt.js). The relay signs with
-# its private half, GATE_SIGNING_KEY, a secret on the RELAY
-# (server/wrangler.toml says so). NOT a secret: it can verify a receipt
-# and cannot sign one, which is why it is a var and committed, as the
-# identity key's public half is on the relay's side. Both halves come
-# from ONE run of `node tools/mintGateKeys.mjs`. EMPTY IS A LEGAL STATE:
-# every claim is declined (`no-gate-key`), and the client keeps its
-# receipts for the week they carry.
-GATE_PUBLIC_KEY = ""
+ACCOUNT_VERSION = "acct16"
+# WB5b: THE RELAY'S PUBLIC HALF, GATE_PUBLIC_KEY - the key an Oblivion
+# Gate's kill receipts verify with (src/net/gateReceipt.js) - is NOT a
+# var here. GATE-KEYS (2026-09-26): the account deploy mints the pair
+# once (.github/workflows/account-deploy.yml, "Mint the gate receipt
+# pair") and puts this half as a SECRET on this Worker, the private one,
+# GATE_SIGNING_KEY, on the relay's. A key that can only verify hides
+# nothing, but a var is rewritten from this file by every deploy, the
+# job cannot commit one, and Cloudflare refuses a secret the name of a
+# bound var - so no line here may name it. WB5b's empty var sat here
+# unminted, and no gate kill was ever counted. Unset is still a legal
+# state: every claim is declined (`no-gate-key`), and the client keeps
+# its receipts for the week they carry.
 # The site that may call this. "*" while nothing is live; it is narrowed
 # to the real origin before a single account exists.
 ALLOWED_ORIGIN = "*"
@@ -87,7 +89,9 @@ ALLOWED_ORIGIN = "*"
 # DEV2 (2026-09-24, Mac: "Give trashBattery, LostMyLeg the developer
 # title/glyph"): the list grants the whole developer set - the title,
 # the glyph, /red, and /mute and /unmute (titles.js canModerate).
-DEVELOPER_HANDLES = "Lattymoy,trashBattery,LostMyLeg"
+# DEV3 (2026-09-26, Mac: "grant Tabby the developer title/glyph"): the
+# fourth, with the same whole set.
+DEVELOPER_HANDLES = "Lattymoy,trashBattery,LostMyLeg,Tabby"
 # MOD1: THE MODERATORS - the blue shield beside the name, and /mute and
 # /unmute in chat. Comma-separated handles, case-insensitive, the same
 # as the line above; a developer may already moderate without being
@@ -103,10 +107,18 @@ DUNGEON_MASTER_HANDLES = "SquidKamer"
 # TITLE-N: the three Patreon tiers, lowest first - each list grants its
 # title and its glyph. Dutchess and Satranath are the first Disciples (Mac); a tier that
 # lapses is a handle taken off, gone from that player's next token.
-DISCIPLE_HANDLES = "Dutchess,Satranath,Skibbster"
-# 2026-09-25, Mac: "Add SirMcMobdon as an Apostle ingame title/glyph".
-APOSTLE_HANDLES = "SirMcMobdon"
+# 2026-09-26, Mac: "Grant Flylighter the disciple title/glyph".
+DISCIPLE_HANDLES = "Dutchess,Satranath,Skibbster,Flylighter"
+# 2026-09-25, Mac: "Add SirMcMobdon as an Apostle ingame title/glyph";
+# 2026-09-26, Mac: "SirMcMobdon gets a brand new title/glyph. Remove them
+# from Apostle" - the list is empty again, and the grant is the line below.
+APOSTLE_HANDLES = ""
 HIEROPHANT_HANDLES = ""
+# SHADOW-FANG (2026-09-26, Mac): Shadow Fang - the black-and-crimson title,
+# the wolf's-head glyph beside the name and the werewolf's own skin, one
+# player's. The same law as the tiers: a handle here grants the title and
+# the glyph, and taking it off takes both on the next token.
+SHADOW_FANG_HANDLES = "SirMcMobdon"
 
 [[d1_databases]]
 binding = "DB"

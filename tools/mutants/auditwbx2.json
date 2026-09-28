@@ -1,0 +1,150 @@
+[
+  {
+    "name": "AUDWBX2-M1-the-save-heard-online-alone",
+    "file": "src/scenes/world.js",
+    "old": "  onSlotSaved((characterId) => { try { spoilsPool.saved(characterId);",
+    "new": "  if (gateLink) onSlotSaved((characterId) => { try { spoilsPool.saved(characterId);",
+    "tests": [
+      "test/auditwbx2.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX2-M1-the-keeper-online-alone",
+    "file": "src/scenes/world.js",
+    "old": "  const spoilsPool = createSpoilsPool({",
+    "new": "  const spoilsPool = gateLink && createSpoilsPool({",
+    "tests": [
+      "test/auditwbx2.test.js",
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX2-M2-the-fraction-forgotten",
+    "file": "src/net/gateBrain.js",
+    "old": "  if (!(f.max > 0)) f.idle = frac;",
+    "new": "  void frac;",
+    "tests": [
+      "test/auditwbx2.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX2-M2-nothing-taken-as-whole",
+    "file": "src/net/gateBrain.js",
+    "old": "Number.isFinite(f.idle) ? f.idle : 1);",
+    "new": "1);",
+    "tests": [
+      "test/auditwbx2.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX2-M3-the-mark-handed-over",
+    "file": "server/src/index.js",
+    "old": "    if (kept.spent) return;   // AUDIT WBX2 M3: its account's word that it is spent, kept in its place\n",
+    "new": "",
+    "tests": [
+      "test/auditwbx2.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX2-M3-the-copy-over-the-mark",
+    "file": "server/src/index.js",
+    "old": "(v.d > fell.d || (v.d === fell.d && v.spent));",
+    "new": "(v.d > fell.d);",
+    "tests": [
+      "test/auditwbx2.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX2-M3-the-marked-handed-at-the-kill",
+    "file": "server/src/index.js",
+    "old": "      if (!b.sub || !rc.has(b.sub) || here.has(b.sub) || done.has(b.sub)) continue;",
+    "new": "      if (!b.sub || !rc.has(b.sub) || here.has(b.sub)) continue;",
+    "tests": [
+      "test/auditwbx2.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX2-M3-the-word-lost-before-the-copy",
+    "file": "server/src/index.js",
+    "old": "    if (d !== null && (d > day || (d === day && kept.spent))) return;   // a newer day's is its own; said already\n",
+    "new": "    if (d === null) return;\n",
+    "tests": [
+      "test/auditwbx2.test.js",
+      "test/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX2-M4-the-hold-never-read",
+    "file": "server/src/index.js",
+    "old": "    if (Number.isFinite(kept.hold) && now < kept.hold) return;   // AUDIT WBX2 M4: its fighter's own court spends it first\n",
+    "new": "",
+    "tests": [
+      "test/auditwbx2.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX2-M4-the-hold-never-set",
+    "file": "server/src/index.js",
+    "old": "...(here.has(sub) ? { hold: now + GATE_HERE_HOLD_MS } : {})",
+    "new": "...({})",
+    "tests": [
+      "test/auditwbx2.test.js",
+      "test/auditwb_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX2-M5-the-relay-lands-at-once",
+    "file": "src/net/gateBrain.js",
+    "old": "  } else if (A === ATTACKS.leap) { const p = leapAt(f.atk, now); if (p) f.pos = keepInCourt(p[0], p[1]); }",
+    "new": "  } else if (A === ATTACKS.leap && now >= f.atk.at) { const p = leapAt(f.atk, now); if (p) f.pos = keepInCourt(p[0], p[1]); }",
+    "tests": [
+      "test/auditwbx2.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX2-M5-the-screen-its-own-flight",
+    "file": "src/world/gateBoss.js",
+    "old": "  const leap = atk ? leapAt(atk, now) : null;",
+    "new": "  const leap = atk && now >= atk.at ? leapAt(atk, now) : null;",
+    "tests": [
+      "test/auditwbx2.test.js",
+      "test/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX2-M6-the-word-for-any-mark",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "      if (spentOn(day, acct)) { if (spentBy(day, acct)) said(day); return false; }   // AUDIT WBX S1: spent - said so again, for a hub that missed it",
+    "new": "      if (spentOn(day, acct)) { said(day); return false; }   // AUDIT WBX S1: spent - said so again, for a hub that missed it",
+    "tests": [
+      "test/auditwbx2.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX2-M6-any-mark-its-own",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "    return Array.isArray(kept) && kept.includes(spentKey(day, acct));",
+    "new": "    return true;",
+    "tests": [
+      "test/auditwbx2.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX2-M7-the-first-stand-only",
+    "file": "src/scenes/gatePool.js",
+    "old": "    const f = feet();\n    if (f && g && inGateRoot(place, f)) landBefore(g);",
+    "new": "    const f = standCollider.once ? null : feet();\n    standCollider.once = true;\n    if (f && g && inGateRoot(place, f)) landBefore(g);",
+    "tests": [
+      "test/auditwbx2.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX2-M8-the-beat-its-own-flight",
+    "file": "src/net/gateBrain.js",
+    "old": "    settleAt(f, now);   // the charge down its lane, the leap through the air (WBX5) - AUDIT WBX2 M8: the kill's own rule, one copy",
+    "new": "    if (ATTACK_BY_ID[f.atk.a] !== ATTACKS.leap || now >= f.atk.at) settleAt(f, now);",
+    "tests": [
+      "test/auditwbx2.test.js"
+    ]
+  }
+]

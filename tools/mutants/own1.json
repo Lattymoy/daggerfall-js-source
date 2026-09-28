@@ -1,0 +1,137 @@
+[
+  {
+    "name": "OWN1-cap-is-the-small-one",
+    "file": "src/net/wire.js",
+    "old": "text.startsWith(FOES_PREFIX) || text.startsWith(OWN_PREFIX) ? FOES_FRAME_MAX",
+    "new": "text.startsWith(FOES_PREFIX) ? FOES_FRAME_MAX",
+    "tests": ["test/own1.test.js"]
+  },
+  {
+    "name": "OWN1-parse-cap-small",
+    "file": "src/net/wire.js",
+    "old": "if (m.t !== 'world' && m.t !== 'foes' && m.t !== 'own' && m.t !== 'quest' && text.length > MAX_FRAME_BYTES)",
+    "new": "if (m.t !== 'world' && m.t !== 'foes' && m.t !== 'quest' && text.length > MAX_FRAME_BYTES)",
+    "tests": ["test/own1.test.js"]
+  },
+  {
+    "name": "OWN1-parse-cap-none",
+    "file": "src/net/wire.js",
+    "old": "if ((m.t === 'foes' || m.t === 'own') && text.length > FOES_FRAME_MAX)",
+    "new": "if (m.t === 'foes' && text.length > FOES_FRAME_MAX)",
+    "tests": ["test/own1.test.js"]
+  },
+  {
+    "name": "OWN1-parse-no-arm",
+    "file": "src/net/wire.js",
+    "old": "if (m.t === 'foes' || m.t === 'hit' || m.t === 'act' || m.t === 'own') {",
+    "new": "if (m.t === 'foes' || m.t === 'hit' || m.t === 'act') {",
+    "tests": ["test/own1.test.js"]
+  },
+  {
+    "name": "OWN1-gate-too-early",
+    "file": "src/net/wire.js",
+    "old": "export const OWN_RELAY_MIN = 118;",
+    "new": "export const OWN_RELAY_MIN = 117;",
+    "tests": ["test/own1.test.js"]
+  },
+  {
+    "name": "OWN1-relay-cell-lane",
+    "file": "server/src/index.js",
+    "old": "      if (!isWorldRoom(a.key)) { this._junk(ws); return; }\n      a = this._meterFoes(ws, a, Date.now());\n      if (!a) return;\n      const ingress = byteGate(this._roomOwnIn,",
+    "new": "      a = this._meterFoes(ws, a, Date.now());\n      if (!a) return;\n      const ingress = byteGate(this._roomOwnIn,",
+    "tests": ["test/own1.test.js"]
+  },
+  {
+    "name": "OWN1-relay-no-record-bound",
+    "file": "server/src/index.js",
+    "old": "if (!Array.isArray(m.data.f) || m.data.f.length > CELL_FRAME_RECORDS_MAX) { this._junk(ws); return; }\n      const listeners = [...this._all()].filter(([other, b]) => other !== ws && b.id);\n      const budget = byteGate(this._roomOwn,",
+    "new": "if (!Array.isArray(m.data.f)) { this._junk(ws); return; }\n      const listeners = [...this._all()].filter(([other, b]) => other !== ws && b.id);\n      const budget = byteGate(this._roomOwn,",
+    "tests": ["test/own1.test.js"]
+  },
+  {
+    "name": "OWN1-relay-records-optional",
+    "file": "server/src/index.js",
+    "old": "if (!Array.isArray(m.data.f) || m.data.f.length > CELL_FRAME_RECORDS_MAX) { this._junk(ws); return; }\n      const listeners = [...this._all()].filter(([other, b]) => other !== ws && b.id);\n      const budget = byteGate(this._roomOwn,",
+    "new": "if (Array.isArray(m.data.f) && m.data.f.length > CELL_FRAME_RECORDS_MAX) { this._junk(ws); return; }\n      const listeners = [...this._all()].filter(([other, b]) => other !== ws && b.id);\n      const budget = byteGate(this._roomOwn,",
+    "tests": ["test/own1.test.js"]
+  },
+  {
+    "name": "OWN1-relay-echo",
+    "file": "server/src/index.js",
+    "old": "const listeners = [...this._all()].filter(([other, b]) => other !== ws && b.id);\n      const budget = byteGate(this._roomOwn,",
+    "new": "const listeners = [...this._all()].filter(([other, b]) => b.id);\n      const budget = byteGate(this._roomOwn,",
+    "tests": ["test/own1.test.js"]
+  },
+  {
+    "name": "OWN1-relay-own-hit-to-host",
+    "file": "server/src/index.js",
+    "old": "const owned = cell || m.data.own === 1;",
+    "new": "const owned = cell;",
+    "tests": ["test/own1.test.js"]
+  },
+  {
+    "name": "OWN1-relay-unroutable-free",
+    "file": "server/src/index.js",
+    "old": "if (!target) { if (owned) this._junk(ws); return; }",
+    "new": "if (!target) { if (cell) this._junk(ws); return; }",
+    "tests": ["test/own1.test.js"]
+  },
+  {
+    "name": "OWN1-session-any-relay",
+    "file": "src/net/online.js",
+    "old": "if (primary) this.ownOk = relaySupportsOwn(relayV);",
+    "new": "if (primary) this.ownOk = true;",
+    "tests": ["test/own1.test.js"]
+  },
+  {
+    "name": "OWN1-session-own-in-a-cell",
+    "file": "src/net/online.js",
+    "old": "if (!this.ownOk || !isWorldRoom(this.room) || !this._ws || this.status !== 'open') return false;",
+    "new": "if (!this.ownOk || !this._ws || this.status !== 'open') return false;",
+    "tests": ["test/own1.test.js"]
+  },
+  {
+    "name": "OWN1-session-own-hit-old-relay",
+    "file": "src/net/online.js",
+    "old": "if (owned ? (!this.ownOk || !isWorldRoom(this.room) ||",
+    "new": "if (owned ? (!isWorldRoom(this.room) ||",
+    "tests": ["test/own1.test.js"]
+  },
+  {
+    "name": "OWN1-session-own-hit-at-myself",
+    "file": "src/net/online.js",
+    "old": "if (owned ? (!this.ownOk || !isWorldRoom(this.room) || !hitOwnerOf(data) || hitOwnerOf(data) === this.id ||",
+    "new": "if (owned ? (!this.ownOk || !isWorldRoom(this.room) || !hitOwnerOf(data) ||",
+    "tests": ["test/own1.test.js"],
+    "equivalent": true,
+    "why": "the peers map never holds my own id - the welcome's rows, a join and a pose each skip it before `_member` - so `!this.peers.has(hitOwnerOf(data))` refuses the same blow; the cell arm beside it carries the same pair"
+  },
+  {
+    "name": "OWN1-session-own-hit-stranger",
+    "file": "src/net/online.js",
+    "old": "hitOwnerOf(data) === this.id || !this.peers.has(hitOwnerOf(data))) : cell ?",
+    "new": "hitOwnerOf(data) === this.id) : cell ?",
+    "tests": ["test/own1.test.js"]
+  },
+  {
+    "name": "OWN1-session-hears-strangers",
+    "file": "src/net/online.js",
+    "old": "m.id !== this.id && this.peers.has(m.id) && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this._deliver('own',",
+    "new": "m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this._deliver('own',",
+    "tests": ["test/own1.test.js"]
+  },
+  {
+    "name": "OWN1-session-hears-itself",
+    "file": "src/net/online.js",
+    "old": "isWorldRoom(this.room) && m.id !== this.id && this.peers.has(m.id) && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this._deliver('own',",
+    "new": "isWorldRoom(this.room) && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this._deliver('own',",
+    "tests": ["test/own1.test.js"]
+  },
+  {
+    "name": "OWN1-session-own-blow-host-only",
+    "file": "src/net/online.js",
+    "old": "if ((isCellRoom(this.room) || m.data?.own === 1 ? hitOwnerOf(m.data) === this.id : this.isHost())",
+    "new": "if ((isCellRoom(this.room) ? hitOwnerOf(m.data) === this.id : this.isHost())",
+    "tests": ["test/own1.test.js"]
+  }
+]

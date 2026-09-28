@@ -282,7 +282,7 @@ test('DW-E4: the exterior pool stands a deep foe where the mod sets its transfor
 
 test('DW-E4: the world host - the foes\' lane on the pulse, four attempts; a foe stood through the exterior pool with its transform set, hostile to the player, not saved, the tracker\'s entry at once; every exterior foe reads the level the swim driver leaves; the settings (pins)', () => {
   const w = rd('src/scenes/world.js');
-  assert.match(w, /enemies: dwEnemies \? \{ spawner: dwEnemies, canPopulate: dwEnemies\.canPopulate, attempts: ENEMY_ATTEMPTS_PER_PIXEL_PER_TICK \} : null,/);
+  assert.match(w, /enemies: dwEnemies \? \{ spawner: dwEnemies, canPopulate: dwEnemies\.canPopulate, get attempts\(\) \{ return _standsTheDeep\(\) \? ENEMY_ATTEMPTS_PER_PIXEL_PER_TICK : 0; \} \} : null,/);   // DEEP-SHARE re-aim: the four attempts are the one standing the deep's
   assert.match(w, /exteriorFoes\.spawnFoe\(type, pos, \{ yaw: 0, loose: true, transient: true, managed: true, team, transformY: \(h\) => \(floor \? alignFloorEnemyY\(pos\[1\], h\) : pos\[1\]\) \}\)/);
   assert.match(w, /f\.ai\.makeEnemyHostileToAttacker\?\.\(PLAYER_TARGET, walkMode \? \[\.\.\.player\.pos\] : null\);/, 'ConfigureSpawnedEnemy: MakeEnemyHostileToAttacker(the player)');
   assert.match(w, /if \(o\.gone\) \{ exteriorFoes\.removeFoe\(f\); return; \}/, 'released while it stood: removed as it lands');

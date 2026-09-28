@@ -139,7 +139,7 @@ test('AUDIT 58: all three foe damage doors consult the Shield pool, and the zero
     const s = src(file);
     assert.ok(s.includes(sub), `${file} consults the pool before the subtraction`);
     assert.ok(!/\.entity\.health -= damage;/.test(s), `${file} no longer subtracts the RAW damage`);
-    assert.ok(/import \{ damageShieldPool \}|damageShieldPool, setDeathPresenter/.test(s), `${file} imports the one home`);
+    assert.ok(/import \{ damageShieldPool(?:, [\w, ]+)? \}|damageShieldPool, setDeathPresenter/.test(s), `${file} imports the one home`);   // AUDIT FINAL F10: beside playerBlowCameToNothing
   }
   // the SetHealth(0) door says bypassShield, the hurtPlayer idiom
   for (const file of ['scenes/dungeonContext.js', 'scenes/exteriorFoes.js']) {

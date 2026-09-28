@@ -8,12 +8,12 @@ import { TextureFile } from '../formats/textureFile.js'; import { changeMask } f
 import { FlatsFile } from '../formats/flatsFile.js';   // NPC1: captions + portrait indices
 import { isExteriorWindow } from '../world/climateSwaps.js';
 import { isEmissive, FIRE_WALLS_ARCHIVE } from '../world/emissiveTextures.js';   // TextureReader's auto-emissive table (lit lanterns, fireplaces, fire daedra)
-import { dfMeshToModel } from '../world/meshReader.js';
+import { dfMeshToModel } from '../world/meshReader.js'; import { patchSeams } from '../world/arch3dSeams.js';   // DUNGEON-SEAMS (one line: the cites below stand)
 import { fetchBytes, texName } from './shared.js';
 import { decodedTexture, preloadTextureArchive, isVendorArchive, vendorTextureStandIn, setTextureDeriveContext } from '../systems/textureReplacement.js';   // M-TEX: user-supplied textures override the classic ones
 import { classicRecordRgba } from '../formats/derivedTexture.js';   // WD2: a mod sprite rebuilt from the player's own record
 import { customModelFor } from '../world/customModels.js';   // DS1: models no ARCH3D carries
-import { dyeToken } from '../characters/dyes.js';   // DW3: the per-dye UI variant
+import { dyeToken, changeDyeBitmap } from '../characters/dyes.js';   // DW3: the per-dye UI variant; DYE-ICON: and the classic arm's ChangeDye
 import { ROTOR, MACHINERY, MACHINERY_MODEL_ID, MACHINERY_CHILDREN, PLANK_GEAR, ROLLER } from '../world/windmillMesh.js';   // WM2b/WM2d/WM4b: the vendored mill and its machinery, uploaded like any other model
 import { skinnedBody } from '../world/windmills.js';   // WM2e: its walls and roof follow the climate
 import { flatFaceOverride } from '../characters/staticNpc.js';   // RR2: FLATS.CFG's dictionary, as a mod rewrites it
@@ -119,7 +119,7 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     const t = textureFiles.get(archive);
     return { width: t.getWidth(record), height: t.getHeight(record) };
   };
-  const uploadRecord = (archive, record, { opaque = false, mips, removeMask = false, dye = null } = {}) => {   // DW3: `dye` - GetItemImage asks the replacement by the item's dye (ItemHelper.cs:458); the icon uploads under a per-dye variant and answers which   // REVIEW 2026-09-05: `mips: false` for item icons (ImageReader.cs:59 builds UI art with no chain); HM1: `removeMask` = ItemHelper's GetItemImage(removeMask: true), the item icons' door - 0xFF becomes the cutout before the upload
+  const uploadRecord = (archive, record, { opaque = false, mips, removeMask = false, dye = null, dyeTarget = null } = {}) => {   // DYE-ICON: `dyeTarget` - the swatch the classic arm dyes (itemDye.js itemDyeTarget)   // DW3: `dye` - GetItemImage asks the replacement by the item's dye (ItemHelper.cs:458); the icon uploads under a per-dye variant and answers which   // REVIEW 2026-09-05: `mips: false` for item icons (ImageReader.cs:59 builds UI art with no chain); HM1: `removeMask` = ItemHelper's GetItemImage(removeMask: true), the item icons' door - 0xFF becomes the cutout before the upload
     const t = textureFiles.get(archive);
     const bitmap = t.getDFBitmap(record, 0);
     // Spectral archives (ghost/wraith/Lysandus) take the verbatim
@@ -146,10 +146,23 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     // fallback (GetName :729-730 appends the dye; a bare file answers a
     // bare ask, which is a dye of Unchanged). A dyed swap is uploaded
     // under its own UI variant, so an Iron dagger and a Daedric one are
-    // two textures; a classic upload keeps the shared `#ui` key.
+    // two textures; an undyed classic upload keeps the shared `#ui` key.
     const token = dyeToken(dye);
     const swap = decodedTexture(archive, record, 0, 'Albedo', dye);
-    const variant = mips === false ? (swap && token ? `#ui_${token}` : '#ui') : undefined;
+    // DYE-ICON: GetItemImage's CLASSIC arm (ItemHelper.cs:466-477) - no
+    // replacement answered, so the picture is the archive's own, its
+    // mask stripped and then CHANGEDYE'D: a weapon's or a piece of
+    // armour's metal swatch, a garment's cloth one, by the item's dye.
+    // The port drew the base swatch whatever the metal, so a Daedric
+    // dagger in the pack and hung on a wall was the plain one (Mac, the
+    // house: "others are daedric but show steel"). 18 is dyed too - it is
+    // Silver's table on a metal (dyes.js changeDyeBitmap), though its
+    // name is never printed. A dyed picture keys apart under its own UI
+    // variant, by dye and swatch, never a replacement's `#ui_<Dye>`: the
+    // first upload of a key is every later asker's (renderer.js), and a
+    // replacement decoded after a classic dyed upload must still land.
+    const dyed = mips === false && !swap && dyeTarget != null && dye != null && dye !== '';
+    const variant = mips === false ? (swap && token ? `#ui_${token}` : dyed ? `#ui_dye${dye}_${dyeTarget}` : '#ui') : undefined;
     // INCIDENT (2026-09-04, the see-through lines in dungeon walls): a
     // MODEL texture is opaque. DaggerfallMesh.cs:141/:169 fetch a mesh's
     // material through MaterialReader.GetMaterial(archive, record) whose
@@ -159,7 +172,8 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     // palette index 0 transparent. This one door served both, so every
     // index-0 mortar run in a wall texture became a slit the model
     // shader discarded, and the room behind it showed through.
-    const color32 = swap ?? t.getColor32(removeMask ? changeMask(bitmap) : bitmap, opaque ? -1 : 0);   // HM1: a clone - the cached record keeps its mask for the doll
+    const masked = swap ? null : removeMask ? changeMask(bitmap) : bitmap;   // HM1: a clone - the cached record keeps its mask for the doll
+    const color32 = swap ?? t.getColor32(dyed ? changeDyeBitmap(masked, dye, dyeTarget) : masked, opaque ? -1 : 0);   // DYE-ICON: the mask first, then the dye (:467-474)
     // AUDIT RETRO1 A4: a replacement is flagged - TextureReader's retro arm (no mip chain) never reaches TryImportTexture's
     const replacement = !!swap;
     renderer.uploadTexture(archive, record, color32, variant !== undefined ? { opaque, mips, variant, replacement } : { opaque, mips, replacement });
@@ -265,7 +279,7 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
       gpuMeshes.set(modelIdNum, null);
       return null;
     }
-    const dfMesh = arch.getMesh(index);
+    const dfMesh = patchSeams(modelIdNum, arch.getMesh(index));   // DUNGEON-SEAMS: the holes in Daggerfall's own stairs and ceilings closed - on a copy, the archive's mesh is shared
     for (const sm of dfMesh.subMeshes) await getTexture(sm.textureArchive);
     const model = dfMeshToModel(dfMesh, getTextureSize);
     for (const sm of model.subMeshes) uploadRecord(sm.textureArchive, sm.textureRecord, { opaque: true });   // a mesh material: alphaIndex -1

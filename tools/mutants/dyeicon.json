@@ -1,0 +1,164 @@
+[
+  {
+    "name": "DYE-ICON-the-swatch-ignored",
+    "file": "src/characters/dyes.js",
+    "old": "for (let i = 0; i < data.length; i++) data[i] = applyDyeToIndex(bitmap.data[i], dye, target);",
+    "new": "for (let i = 0; i < data.length; i++) data[i] = bitmap.data[i];",
+    "tests": [
+      "test/dyeicon.test.js"
+    ]
+  },
+  {
+    "name": "DYE-ICON-the-source-edited",
+    "file": "src/characters/dyes.js",
+    "old": "  const data = new Uint8Array(bitmap.data.length);\n  for (let i = 0; i < data.length; i++) data[i] = applyDyeToIndex",
+    "new": "  const data = bitmap.data;\n  for (let i = 0; i < data.length; i++) data[i] = applyDyeToIndex",
+    "tests": [
+      "test/dyeicon.test.js"
+    ]
+  },
+  {
+    "name": "DYE-ICON-18-skipped-as-Unchanged",
+    "file": "src/characters/dyes.js",
+    "old": "if (!bitmap?.data || target == null || dye == null || dye === '') return bitmap;",
+    "new": "if (!bitmap?.data || target == null || dyeToken(dye) === '') return bitmap;",
+    "tests": [
+      "test/dyeicon.test.js"
+    ]
+  },
+  {
+    "name": "DYE-ICON-no-target-dyed-anyway",
+    "file": "src/characters/dyes.js",
+    "old": "if (!bitmap?.data || target == null || dye == null || dye === '') return bitmap;",
+    "new": "if (!bitmap?.data || dye == null || dye === '') return bitmap;",
+    "tests": [
+      "test/dyeicon.test.js"
+    ]
+  },
+  {
+    "name": "DYE-ICON-the-artifact-dyed",
+    "file": "src/systems/itemDye.js",
+    "old": "if ((item.group === 'Weapons' || item.group === 'Armor') && !item.artifact) return DYE_TARGETS.WeaponsAndArmor;",
+    "new": "if (item.group === 'Weapons' || item.group === 'Armor') return DYE_TARGETS.WeaponsAndArmor;",
+    "tests": [
+      "test/dyeicon.test.js"
+    ]
+  },
+  {
+    "name": "DYE-ICON-the-clothing-on-the-metal-table",
+    "file": "src/systems/itemDye.js",
+    "old": "if (item.group === 'MensClothing' || item.group === 'WomensClothing') return DYE_TARGETS.Clothing;",
+    "new": "if (item.group === 'MensClothing' || item.group === 'WomensClothing') return DYE_TARGETS.WeaponsAndArmor;",
+    "tests": [
+      "test/dyeicon.test.js"
+    ]
+  },
+  {
+    "name": "DYE-ICON-the-image-without-it",
+    "file": "src/systems/itemTemplates.js",
+    "old": "  // swatch its classic arm dyes (:473-476), which that door changes.\n  return { archive, record, dye: itemDyeColor(item), dyeTarget: itemDyeTarget(item) };",
+    "new": "  // swatch its classic arm dyes (:473-476), which that door changes.\n  return { archive, record, dye: itemDyeColor(item) };",
+    "tests": [
+      "test/dyeicon.test.js"
+    ]
+  },
+  {
+    "name": "DYE-ICON-the-dye-dropped",
+    "file": "src/scenes/dataPipeline.js",
+    "old": "t.getColor32(dyed ? changeDyeBitmap(masked, dye, dyeTarget) : masked, opaque ? -1 : 0);",
+    "new": "t.getColor32(masked, opaque ? -1 : 0);",
+    "tests": [
+      "test/dyeicon.test.js"
+    ]
+  },
+  {
+    "name": "DYE-ICON-the-dyed-picture-under-#ui",
+    "file": "src/scenes/dataPipeline.js",
+    "old": ": dyed ? `#ui_dye${dye}_${dyeTarget}` : '#ui') : undefined;",
+    "new": ": '#ui') : undefined;",
+    "tests": [
+      "test/dyeicon.test.js"
+    ]
+  },
+  {
+    "name": "DYE-ICON-the-pipeline-skipping-18",
+    "file": "src/scenes/dataPipeline.js",
+    "old": "const dyed = mips === false && !swap && dyeTarget != null && dye != null && dye !== '';",
+    "new": "const dyed = mips === false && !swap && dyeTarget != null && token !== '';",
+    "tests": [
+      "test/dyeicon.test.js"
+    ]
+  },
+  {
+    "name": "DYE-ICON-the-two-sharing-a-key",
+    "file": "src/scenes/dataPipeline.js",
+    "old": "(swap && token ? `#ui_${token}` : dyed ? `#ui_dye${dye}_${dyeTarget}` : '#ui')",
+    "new": "((swap || dyed) && token ? `#ui_${token}` : '#ui')",
+    "tests": [
+      "test/dyeicon.test.js"
+    ]
+  },
+  {
+    "name": "DYE-ICON-the-DOM-door-undyed",
+    "file": "src/ui/textureCanvas.js",
+    "old": "const bmp = changeDyeBitmap(changeMask(got.file.getDFBitmap(record, 0)), dye, dyeTarget);",
+    "new": "const bmp = changeMask(got.file.getDFBitmap(record, 0));",
+    "tests": [
+      "test/dyeicon.test.js"
+    ]
+  },
+  {
+    "name": "DYE-ICON-the-DOM-key-by-name-alone",
+    "file": "src/ui/textureCanvas.js",
+    "old": "_${scale}${token ? `_${token}` : ''}${dyed ? `_t${dyeTarget}d${dye}` : ''}`;",
+    "new": "_${scale}${token ? `_${token}` : ''}`;",
+    "tests": [
+      "test/dyeicon.test.js"
+    ]
+  },
+  {
+    "name": "DYE-ICON-the-enhanced-door-asking-undyed",
+    "file": "src/ui/enhancedArt.js",
+    "old": "{ scale: 2, dye: img.dye, dyeTarget: img.dyeTarget }",
+    "new": "{ scale: 2, dye: img.dye }",
+    "tests": [
+      "test/dyeicon.test.js"
+    ]
+  },
+  {
+    "name": "DYE-ICON-the-list-warm-key-by-name-alone",
+    "file": "src/ui/itemScroller.js",
+    "old": "${img.dyeTarget != null ? `_t${img.dyeTarget}d${img.dye}` : ''}`;",
+    "new": "`;",
+    "tests": [
+      "test/dyeicon.test.js"
+    ]
+  },
+  {
+    "name": "DYE-ICON-the-list-asking-undyed",
+    "file": "src/ui/nativeInventory.js",
+    "old": "{ mips: false, removeMask: true, dye: img.dye, dyeTarget: img.dyeTarget }",
+    "new": "{ mips: false, removeMask: true, dye: img.dye }",
+    "tests": [
+      "test/dyeicon.test.js"
+    ]
+  },
+  {
+    "name": "MOUNT-LAZY-the-preload-dropped",
+    "file": "src/scenes/decorRoom.js",
+    "old": "    await preloadTextureRecord(a, r, 0, 'Albedo', dye);\n",
+    "new": "",
+    "tests": [
+      "test/dyeicon.test.js"
+    ]
+  },
+  {
+    "name": "MOUNT-LAZY-the-dye-dropped-from-the-preload",
+    "file": "src/scenes/decorRoom.js",
+    "old": "await preloadTextureRecord(a, r, 0, 'Albedo', dye);",
+    "new": "await preloadTextureRecord(a, r, 0, 'Albedo');",
+    "tests": [
+      "test/dyeicon.test.js"
+    ]
+  }
+]

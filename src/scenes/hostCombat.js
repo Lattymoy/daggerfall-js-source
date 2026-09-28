@@ -24,7 +24,7 @@ import { generateItems, addEnemyLootExtras, enemyLootTableKey } from '../systems
 import { conditionBasedPricesOn, randomConditionLootItems } from '../systems/rriRealism.js';   // RRI2: EnemyEntity.OnLootSpawned's subscriber
 import { isHumanoid } from '../systems/survival/loot.js';   // MOD: the same humanoid test SURV2's corpse food already draws its line with
 import { rollCorpseLoot } from '../systems/lootRarity.js';   // RF2: and the port's, after it
-import { liveStat } from '../systems/statMods.js';   // RF2: the player's live luck for the roll   // AUDIT 58: ItemHelper's EquipItem half - a foe's equip table is what DamageEquipment's struck side reads
+import { liveStat, FATIGUE_DRAIN_SCALE } from '../systems/statMods.js';   // RF2: the player's live luck for the roll   // AUDIT 58: ItemHelper's EquipItem half - a foe's equip table is what DamageEquipment's struck side reads
 import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { swingSoundFor, hitSoundFor, ENEMY_HIT_VOLUME } from '../systems/soundClips.js';
 import { bloodCentre } from './hitEffects.js';   // AUDIT 62 F19: EnemyAttack.cs:326-328's one home, the same law the four player-melee sites cite
@@ -204,6 +204,10 @@ export function equipEnemy(entity, mobileType, playerLevel, rolls = Math.random,
 /** "According to DF Chronicles and verified in classic." Spent on
  *  EVERY swing that reaches the hit frame, hit or miss. */
 export const SWING_WEAPON_FATIGUE_LOSS = 11;
+/** BALANCE1 (2026-09-27, Mac: fatigue "drain[s] a little too fast"): what a
+ *  swing CHARGES here - DFU's 11 above, on the port's exertion scale
+ *  (statMods FATIGUE_DRAIN_SCALE), truncated as the minute's drain is. */
+export const SWING_FATIGUE_COST = Math.trunc(SWING_WEAPON_FATIGUE_LOSS * FATIGUE_DRAIN_SCALE);
 
 /** The tally half of the same block: the weapon's own skill (or
  *  HandToHand for a bare-handed/werecreature swing) AND CriticalStrike,

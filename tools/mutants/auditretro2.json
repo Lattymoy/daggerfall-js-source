@@ -398,10 +398,10 @@
     ]
   },
   {
-    "name": "AUDITRETRO2-I6-the-bright-pass-reads-the-world-rect",
+    "name": "AUDITRETRO2-I6-the-resolve-reads-the-world-rect",
     "file": "src/render/airPass.js",
-    "old": "    gl.uniform4fv(PB.uRect, rect);",
-    "new": "    gl.uniform4fv(PB.uRect, this.rect);",
+    "old": "    gl.uniform4fv(PR.uRect, rect);",
+    "new": "    gl.uniform4fv(PR.uRect, this.rect);",
     "tests": [
       "test/auditretro2.test.js"
     ]

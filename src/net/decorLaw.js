@@ -32,9 +32,14 @@ export const DECOR_CAP = 200;
 export const DECOR_ID_RE = /^[A-Za-z0-9_-]{1,24}$/;
 /** ARCH3D model ids run to six digits; TEXTURE records below 512, and archives below 512 - DECOR2c: or the port's own
  *  past them (Roleplay & Realism's weapons and armour, 513 to 526; Climates & Calories', 532 to 539), so a mounted
- *  weapon of theirs shows its own picture. */
+ *  weapon of theirs shows its own picture.
+ *  DECOR-MODFLATS (2026-09-27, Discord: "Above #49 decorations stopped working. Most sprites decorations are invisable
+ *  above this number"): or a MOD's, to five digits. The catalogue is read out of the world's own blocks, and the ships
+ *  Detailed Ships lays in them carry its own flats (archives 1210 and 1230) and the DET flats the port stands in (10009
+ *  to 10027) - "Decoration 49" onward, numbered after the classic ones. The bound refused every one: the piece being
+ *  placed was never a piece, so its picture never stood and Place did nothing. */
 export const DECOR_MODEL_MAX = 999_999;
-export const DECOR_ARCHIVE_MAX = 999;
+export const DECOR_ARCHIVE_MAX = 99_999;
 export const DECOR_RECORD_MAX = 511;
 /** How far from the building's origin a piece may stand, on each axis, in metres - wider than any interior. */
 export const DECOR_POS_MAX = 256;
@@ -62,6 +67,11 @@ const triple = (a, max) => Array.isArray(a) && a.length === 3 && a.every((v) => 
 
 /** DECOR2a: item template ids run below ten thousand (Daggerfall's 288, the port's own above them). */
 export const DECOR_TEMPLATE_MAX = 9_999;
+/** AUDIT DYE-ICON 7: the artifact `a` of one whose index was never recorded (a classic save's whose name
+ *  legacyArtifactIndexBitfieldCheck could not read back) - an artifact all the same, never dyed. Within the law's own
+ *  bound and past every artifact MAGIC.DEF lists, so the service and an older client take it as it is: an artifact,
+ *  named by its template. */
+export const DECOR_ARTIFACT_UNKNOWN = 255;
 
 /**
  * DECOR2a: THE OWNER'S OWN ITEM a piece shows - never free text, only the game's own numbers, which every client names
@@ -81,23 +91,34 @@ export function decorItemOf(raw) {
 /** DECOR2b: Daggerfall's ItemGroups.Furniture - the furnisher's pieces, whose shape the owner chooses among the
  *  game's own models. */
 export const DECOR_FURNITURE_GROUP = 8;
-/** DECOR2c: Daggerfall's ItemGroups.Weapons and .Armor; the arrows (a weapon never hung) and the four shields (the
- *  armour that is). */
+/** DECOR2c: Daggerfall's ItemGroups.Weapons and .Armor, and the arrows (a weapon never hung). */
 export const DECOR_WEAPONS_GROUP = 3;
 export const DECOR_ARMOR_GROUP = 2;
 export const DECOR_ARROW_TEMPLATE = 131;
-export const DECOR_SHIELD_TEMPLATES = Object.freeze(new Set([109, 110, 111, 112]));
 
 /**
  * DECOR2c: A MOUNT - a piece whose item is one of the owner's weapons (arrows aside) or shields. It hangs FLAT against
  * the surface it was set on, its picture turned as `rot` says - the surface's heading and tilt, then its own turn on
  * it - where every other flat turns to the eye. Every client reads it off the item's own numbers, so a visitor sees
- * it hang as the owner hung it.
+ * it hang as the owner hung it. ARMOR-MOUNT (2026-09-26, Mac: "Cant set down armor in house - Would be awesome to
+ * display armor as well so people can run shop and show collection"): and any piece of armour - a cuirass, a helm,
+ * boots - where DECOR2c hung the shields alone; it hangs as its pack picture, as a shield does.
  */
 export function decorIsMount(piece) {
   const it = piece?.item;
   if (!it || piece.model != null || !Array.isArray(piece.flat)) return false;
-  return (it.g === DECOR_WEAPONS_GROUP && it.t !== DECOR_ARROW_TEMPLATE) || (it.g === DECOR_ARMOR_GROUP && DECOR_SHIELD_TEMPLATES.has(it.t));
+  return (it.g === DECOR_WEAPONS_GROUP && it.t !== DECOR_ARROW_TEMPLATE) || it.g === DECOR_ARMOR_GROUP;
+}
+
+/** DECOR-FLIP (2026-09-27, Discord: "Some sprites flipped (allow rotation)"): A FLAT TURNED HALF ROUND FACES THE OTHER
+ *  WAY. A billboard turns to the eye whatever its record says, so the one turn a picture has is WHICH WAY it faces:
+ *  turned more than a quarter either way (the placement's own turn, kept in the record's yaw as a model's is), it is
+ *  drawn mirrored - a sprite that faced left faces right. A mount hangs by its own frame (its turn is its spin on the
+ *  surface) and a model turns in earnest; neither mirrors. */
+export function decorFlatMirrored(piece) {
+  if (!piece || piece.model != null || !Array.isArray(piece.flat) || decorIsMount(piece)) return false;
+  const yaw = Number(piece.rot?.[0]);
+  return Number.isFinite(yaw) && Math.abs(yaw) > 90;
 }
 
 /** DECOR2c: how far a mount hangs off its surface, in metres - the blood marks' own hair (combat/bloodDecals.js
@@ -159,20 +180,38 @@ export function decorLightOf(raw) {
   return { color: color.map((c) => round(c, 3)), range: round(range, 2), intensity: round(intensity, 2) };
 }
 
+/** HOME-STATIONS (2026-09-27, Discord - Tabitha: "CRAFTABLE / PURCHASABLE CRAFT / GUILD STATIONS [Spellmaking, Alchemy,
+ *  Enchanting] FOR HOMES / SHIPS"): the three crafts a placed piece may be made to serve - the guilds' own makers
+ *  (DFU's MakePotions, MakeSpells and MakeMagicItems services), at home. */
+export const DECOR_STATIONS = Object.freeze(['alchemy', 'spells', 'enchant']);
+/** What a station costs to make, once - a licence for the craft in that piece, not the piece's own price (`paid`), so
+ *  nothing of it comes back when the piece is removed or the room sold. STATION-FEES (2026-09-27, Discord: "Make
+ *  crafting stations in interiors way more expensive"): ten times the first pass (5,000, 10,000 and 20,000) - a
+ *  guild's maker at home is a hall's worth of gold, not an afternoon's. */
+export const DECOR_STATION_FEES = Object.freeze({ alchemy: 50_000, spells: 100_000, enchant: 200_000 });
+/** The guild service each craft opens - the same maker windows the Mages Guild and the temples offer (worldModes.js
+ *  openServiceFlow's destinations). */
+export const DECOR_STATION_SERVICES = Object.freeze({ alchemy: 'guildServicePotionMaker', spells: 'guildServiceSpellMaker', enchant: 'guildServiceItemMaker' });
+/** A station's name, as the panel and the room say it. */
+export const DECOR_STATION_NAMES = Object.freeze({ alchemy: 'Alchemy station', spells: 'Spellmaking station', enchant: 'Enchanting station' });
+
 /**
  * WHERE a piece stands and what it cost - the half a move may change - projected and rounded (a millimetre, a tenth
- * of a degree; `rot` is [yaw, pitch, roll]), or null. `light` null is no light; `storage` whether it holds things.
+ * of a degree; `rot` is [yaw, pitch, roll]), or null. `light` null is no light; `storage` whether it holds things;
+ * HOME-STATIONS: `station` the craft it serves (DECOR_STATIONS), carried only when it serves one - a piece holds
+ * things or serves a craft, never both (one press, one thing it does).
  */
 export function decorPlaceOf(raw) {
   if (!raw || typeof raw !== 'object') return null;
-  const { pos, rot, scale, light = null, storage = false, paid } = raw;
+  const { pos, rot, scale, light = null, storage = false, paid, station = null } = raw;
   if (!triple(pos, DECOR_POS_MAX) || !triple(rot, 180)) return null;
   if (!fin(scale) || scale < DECOR_SCALE_MIN || scale > DECOR_SCALE_MAX) return null;
   if (typeof storage !== 'boolean') return null;
+  if (station !== null && (!DECOR_STATIONS.includes(station) || storage)) return null;
   if (!Number.isSafeInteger(paid) || paid < 0 || paid > DECOR_PRICE_MAX) return null;
   const lit = light === null ? null : decorLightOf(light);
   if (light !== null && !lit) return null;
-  return { pos: pos.map((v) => round(v, 3)), rot: rot.map((v) => round(v, 1)), scale: round(scale, 3), light: lit, storage, paid };
+  return { pos: pos.map((v) => round(v, 3)), rot: rot.map((v) => round(v, 1)), scale: round(scale, 3), light: lit, storage, paid, ...(station ? { station } : {}) };
 }
 
 /** A WHOLE piece - its id, what it is, where it stands - projected, or null. DECOR2a: the owner's own item costs
@@ -182,7 +221,7 @@ export function decorPieceOf(raw) {
   if (typeof raw?.id !== 'string' || !DECOR_ID_RE.test(raw.id)) return null;
   const what = decorWhatOf(raw);
   const place = decorPlaceOf(raw);
-  if (!what || !place || (what.item && (place.paid !== 0 || place.storage))) return null;
+  if (!what || !place || (what.item && (place.paid !== 0 || place.storage || place.station))) return null;   // HOME-STATIONS: one's own item serves no craft
   return { id: raw.id, ...what, ...place };
 }
 
@@ -214,4 +253,48 @@ export function mintDecorId(rand = Math.random) {
   let s = '';
   for (let i = 0; i < 12; i++) s += Math.floor(rand() * 36).toString(36);
   return s;
+}
+
+// ═══ BASE-HIDE (2026-09-26) — THE ROOM'S OWN FURNITURE, TAKEN OUT ══
+//
+// Mac: "Remove bought houses decor - the base game decor isnt easy to
+// decorate around when u want more in depth house". What Daggerfall
+// furnished a room with - each prop model and each flat its interior
+// lays - may be TAKEN OUT by the room's owner, and put back, free. A
+// piece is named by the layout itself: `m<placement>:<model>` for the
+// interior's prop placement at that index, `f<flat>:<archive>.<record>`
+// for its flat at that index (world/interiorLayout.js's two lists, in
+// the block's own order - the same room names the same pieces on every
+// visit and every client, as the automap's `int:<pi>` does), the model
+// or the picture riding in the name so a key can never name another
+// piece of another layout. A room keeps the list of what is taken out:
+// the offline house's and ship's in the save, an online home's on the
+// account service (server-account/src/decor.js), so every visitor walks
+// into the room its owner cleared. Pure, as the rest of this file is.
+
+/** One built-in piece's name - `m<placement>:<model>` or `f<flat>:<archive>.<record>`, every number canonical. */
+export const DECOR_BASE_KEY_RE = /^(?:m(?:0|[1-9]\d{0,3}):(?:0|[1-9]\d{0,5})|f(?:0|[1-9]\d{0,3}):(?:0|[1-9]\d{0,2})\.(?:0|[1-9]\d{0,2}))$/;
+/** How many built-in pieces one room may keep taken out - more than any interior lays, and a whole list at its widest
+ *  (sixteen bytes a name) still one write under the service's 4 KiB body (service.js MAX_BODY_BYTES). */
+export const DECOR_HIDDEN_CAP = 200;
+export const decorBaseModelKey = (placement, model) => `m${placement}:${model}`;
+export const decorBaseFlatKey = (flat, archive, record) => `f${flat}:${archive}.${record}`;
+/** A built-in piece's name read back: `{ model }` or `{ flat: [archive, record] }`, or null for no such name. */
+export function decorBaseWhat(key) {
+  if (typeof key !== 'string' || !DECOR_BASE_KEY_RE.test(key)) return null;
+  const at = key.indexOf(':');
+  if (key[0] === 'm') return { model: Number(key.slice(at + 1)) };
+  const [a, r] = key.slice(at + 1).split('.').map(Number);
+  return { flat: [a, r] };
+}
+/** The list a room keeps taken out, as the law takes it: every key a built-in piece's name, none twice, in order,
+ *  at most DECOR_HIDDEN_CAP - or null (an array is refused whole, never half kept). */
+export function decorHiddenOf(raw) {
+  if (!Array.isArray(raw) || raw.length > DECOR_HIDDEN_CAP) return null;
+  const seen = new Set();
+  for (const k of raw) {
+    if (typeof k !== 'string' || !DECOR_BASE_KEY_RE.test(k) || seen.has(k)) return null;
+    seen.add(k);
+  }
+  return [...seen].sort();
 }

@@ -1,0 +1,272 @@
+[
+  {
+    "name": "MWTEX-preload-never-decodes",
+    "file": "src/combat/fpArm.js",
+    "old": "  if (gen === null) return;\n  await Promise.all(want.map(",
+    "new": "  return;\n  await Promise.all(want.map(",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "MWTEX-kept-as-a-refusal",
+    "file": "src/combat/fpArm.js",
+    "old": "if (!TEXTURE_CACHE.has(key)) TEXTURE_CACHE.set(key, { ok: true, path, image });",
+    "new": "if (!TEXTURE_CACHE.has(key)) TEXTURE_CACHE.set(key, { ok: false, path, image });",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "MWTEX-worker-transfers-nothing",
+    "file": "src/formats/mwTextureWorker.js",
+    "old": "post({ t: 'image', id: m.id, image }, image.mips.map((l) => l.rgba.buffer));",
+    "new": "post({ t: 'image', id: m.id, image });",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "MWTEX-worker-drops-levels",
+    "file": "src/formats/mwTextureWorker.js",
+    "old": "m.levels == null ? undefined : { levels: m.levels }",
+    "new": "undefined",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "MWTEX-pool-one-worker",
+    "file": "src/formats/mwTextureClient.js",
+    "old": "if ((!best || best.jobs.size > 0) && opened < size) return open() ?? best;",
+    "new": "if (!best && opened < size) return open() ?? best;",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "MWTEX-pool-transfers-the-callers-bytes",
+    "file": "src/formats/mwTextureClient.js",
+    "old": "const copy = bytes.slice();",
+    "new": "const copy = bytes;",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "MWTEX-dead-worker-drops-its-jobs",
+    "file": "src/formats/mwTextureClient.js",
+    "old": "for (const j of slot.jobs.values()) { stats.onThread++; here(j.path, j.bytes, j.levels).then(j.resolve, j.reject); }",
+    "new": "for (const j of slot.jobs.values()) { stats.onThread++; Promise.reject(new Error('dropped')).then(j.resolve, j.reject); }",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "MWTEX-throwing-factory-asked-again",
+    "file": "src/formats/mwTextureClient.js",
+    "old": "if (!slots.length) { dead = true; console.warn('[mw textures] workers unavailable; decoding on the main thread -', e?.message ?? e); }",
+    "new": "if (!slots.length) { console.warn('[mw textures] workers unavailable; decoding on the main thread -', e?.message ?? e); }",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "MWTEX-size-takes-every-core",
+    "file": "src/formats/mwTextureClient.js",
+    "old": "return Math.max(1, Math.min(TEXTURE_WORKERS_MAX, n - 1));",
+    "new": "return Math.max(1, Math.min(TEXTURE_WORKERS_MAX, n));",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "MWTEX-escape-hatch-misspelled",
+    "file": "src/formats/mwTextureClient.js",
+    "old": "/[?&]texturethread=off\\b/",
+    "new": "/[?&]texturethread=of\\b/",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "MWTEX-colour-measure-whole-chain",
+    "file": "src/combat/fpArm.js",
+    "old": "decodeTextureImage(tpath, tarc.get(tpath).slice(), { levels: 1 }).mips[0]",
+    "new": "decodeTextureImage(tpath, tarc.get(tpath).slice()).mips[0]",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "MWTEX-garments-one-by-one",
+    "file": "src/combat/fpArm.js",
+    "old": "await inLanes(once, (rec) => preloadClothingColour(rec, parts, archives, gen));",
+    "new": "for (const rec of once) await preloadClothingColour(rec, parts, archives, gen);",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "MWTEX-face-candidates-one-by-one",
+    "file": "src/combat/fpArm.js",
+    "old": "    async ([rec, kind]) => ({ id: rec.id, f: await measurePart(rec, archives, kind) }));",
+    "new": "    async ([rec, kind]) => ({ id: rec.id, f: await measurePart(rec, archives, kind) }), 1);",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "MWTEX-face-decode-on-thread",
+    "file": "src/combat/fpArm.js",
+    "old": "try { img = await decodeTextureOffThread(tpath, tarc.get(tpath), { levels: 1 }); } catch { return null; }",
+    "new": "try { img = decodeTextureImage(tpath, tarc.get(tpath).slice(), { levels: 1 }); } catch { return null; }",
+    "tests": [
+      "test/mwload_records.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWTEX-F2-the-preload-only-loads",
+    "file": "src/combat/fpArm.js",
+    "old": "  if (!CLOT_COLOUR_CACHE.has(key)) CLOT_COLOUR_CACHE.set(key, rgb);\n}",
+    "new": "}",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWTEX-F2-the-refusal-measured-again-here",
+    "file": "src/combat/fpArm.js",
+    "old": "catch (err) { if (!err?.decoderError) return; rgb = null; }",
+    "new": "catch { return; }",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWTEX-F2-the-pool-decodes-the-whole-chain",
+    "file": "src/combat/fpArm.js",
+    "old": "(await decodeTextureOffThread(tpath, tarc.get(tpath), { levels: 1 })).mips[0]",
+    "new": "(await decodeTextureOffThread(tpath, tarc.get(tpath))).mips[0]",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWTEX-F4-the-refusal-dropped",
+    "file": "src/combat/fpArm.js",
+    "old": "      if (err?.decoderError && !TEXTURE_CACHE.has(key)) TEXTURE_CACHE.set(key, { ok: false, path, error: err.message, image: warningImage() });\n",
+    "new": "",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWTEX-F4-every-failure-kept",
+    "file": "src/combat/fpArm.js",
+    "old": "if (err?.decoderError && !TEXTURE_CACHE.has(key))",
+    "new": "if (!TEXTURE_CACHE.has(key))",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWTEX-F5-a-read-in-flight-read-again",
+    "file": "src/formats/mwBsaFile.js",
+    "old": "    if (flying) return flying;\n",
+    "new": "",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWTEX-F5-a-failed-read-kept",
+    "file": "src/formats/mwBsaFile.js",
+    "old": "}).finally(() => { this._loading.delete(key); });",
+    "new": "});",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWTEX-F5-each-garment-as-often-as-asked",
+    "file": "src/combat/fpArm.js",
+    "old": "const once = asked.filter((rec) => !seen.has(rec.id) && seen.add(rec.id));",
+    "new": "const once = asked;",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWTEX-F5-every-measure-at-once",
+    "file": "src/combat/fpArm.js",
+    "old": "Math.max(1, Math.min(lanes, list.length))",
+    "new": "Math.max(1, list.length)",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWTEX-F5-one-lane",
+    "file": "src/combat/fpArm.js",
+    "old": "Math.max(1, Math.min(lanes, list.length))",
+    "new": "1",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWTEX-F5-answers-in-landing-order",
+    "file": "src/combat/fpArm.js",
+    "old": "  const out = new Array(list.length);\n  let next = 0;\n  const lane = async () => { while (next < list.length) { const i = next++; out[i] = await fn(list[i]); } };",
+    "new": "  const out = [];\n  let next = 0;\n  const lane = async () => { while (next < list.length) { next++; out.push(await fn(list[next - 1])); } };",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWTEX-F6-never-let-go",
+    "file": "src/formats/mwTextureClient.js",
+    "old": "for (const s of slots.filter((x) => x.jobs.size === 0)) {",
+    "new": "for (const s of []) {",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWTEX-F6-a-retired-worker-counted-dead",
+    "file": "src/formats/mwTextureClient.js",
+    "old": "        opened--;\n",
+    "new": "",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWTEX-F6-quiet-while-a-job-is-in-hand",
+    "file": "src/formats/mwTextureClient.js",
+    "old": "if (idle !== null || !slots.length || slots.some((s) => s.jobs.size > 0)) return;",
+    "new": "if (idle !== null || !slots.length) return;",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWTEX-F6-a-new-job-leaves-the-quiet-running",
+    "file": "src/formats/mwTextureClient.js",
+    "old": "      wake();\n      return new Promise(",
+    "new": "      return new Promise(",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWTEX-F6-an-answer-starts-no-quiet",
+    "file": "src/formats/mwTextureClient.js",
+    "old": "        else j.reject(Object.assign(new Error(m.message ?? 'mw texture worker error'), { decoderError: true }));\n        rest();\n",
+    "new": "        else j.reject(Object.assign(new Error(m.message ?? 'mw texture worker error'), { decoderError: true }));\n",
+    "tests": [
+      "test/mwtexthread.test.js"
+    ]
+  }
+]

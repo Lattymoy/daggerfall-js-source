@@ -1,0 +1,57 @@
+[
+  {
+    "name": "CORPSE-GOLD-no-body-word-after-the-rebuild",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "{ patchFoe(foes[i], sf, wire); applyLoot(bodyRecords(w.loot, i)); }",
+    "new": "{ patchFoe(foes[i], sf, wire); }",
+    "tests": [
+      "test/corpsegold.test.js"
+    ]
+  },
+  {
+    "name": "CORPSE-GOLD-the-word-before-the-death",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "{ patchFoe(foes[i], sf, wire); applyLoot(bodyRecords(w.loot, i)); }",
+    "new": "{ applyLoot(bodyRecords(w.loot, i)); patchFoe(foes[i], sf, wire); }",
+    "tests": [
+      "test/corpsegold.test.js"
+    ]
+  },
+  {
+    "name": "CORPSE-GOLD-the-whole-list-again",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "{ patchFoe(foes[i], sf, wire); applyLoot(bodyRecords(w.loot, i)); }",
+    "new": "{ patchFoe(foes[i], sf, wire); applyLoot(w.loot); }",
+    "tests": [
+      "test/corpsegold.test.js"
+    ]
+  },
+  {
+    "name": "CORPSE-GOLD-any-corpse-record",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    return Array.isArray(list) ? list.filter((rec) => lootKeyOf(rec?.k) === key) : [];",
+    "new": "    return Array.isArray(list) ? list.filter((rec) => lootKeyOf(rec?.k)?.startsWith('corpse:')) : [];",
+    "tests": [
+      "test/corpsegold.test.js"
+    ]
+  },
+  {
+    "name": "CORPSE-GOLD-the-gap-closed-again",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      const sfoes = Array.isArray(shared.world.foes) ? shared.world.foes.slice(0, _layoutFoes).map(validSharedFoe) : [];",
+    "new": "      const sfoes = Array.isArray(shared.world.foes) ? shared.world.foes.slice(0, _layoutFoes).map(validSharedFoe).filter(Boolean) : [];",
+    "tests": [
+      "test/corpsegold.test.js",
+      "test/respawn1.test.js"
+    ]
+  },
+  {
+    "name": "CORPSE-GOLD-the-hole-not-skipped",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (!f || !sf) return;   // CORPSE-GOLD: a record the restore refused is a hole at its own index",
+    "new": "      if (!f) return;   // CORPSE-GOLD: a record the restore refused is a hole at its own index",
+    "tests": [
+      "test/corpsegold.test.js"
+    ]
+  }
+]

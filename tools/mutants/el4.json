@@ -74,8 +74,8 @@
   {
     "name": "glsl-adapt-range",
     "file": "src/render/airPass.js",
-    "old": "  return exp2(texture(uAdapt, vec2(0.5)).r * ${AIR_ADAPT_LOG_RANGE[1] - AIR_ADAPT_LOG_RANGE[0]}.0 + (${AIR_ADAPT_LOG_RANGE[0]}.0));",
-    "new": "  return exp2(texture(uAdapt, vec2(0.5)).r * 4.0);",
+    "old": "  return (floor(t.r * 255.0 + 0.5) * 256.0 + floor(t.g * 255.0 + 0.5)) / ${glslFloat(AIR_ADAPT_STEPS)} * ${glslFloat(AIR_ADAPT_LOG_RANGE[1] - AIR_ADAPT_LOG_RANGE[0])} + (${glslFloat(AIR_ADAPT_LOG_RANGE[0])});",
+    "new": "  return (floor(t.r * 255.0 + 0.5) * 256.0 + floor(t.g * 255.0 + 0.5)) / ${glslFloat(AIR_ADAPT_STEPS)} * ${glslFloat(AIR_ADAPT_LOG_RANGE[1] - AIR_ADAPT_LOG_RANGE[0])};",
     "tests": [
       "test/el4_frame.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "frame-target-not-set",
     "file": "src/render/airPass.js",
-    "old": "    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, f.depth, 0);\n    setFrameTarget(f.fbo);",
-    "new": "    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, f.depth, 0);",
+    "old": "    gl.bindFramebuffer(gl.FRAMEBUFFER, f.fbo);\n    setFrameTarget(f.fbo);",
+    "new": "    gl.bindFramebuffer(gl.FRAMEBUFFER, f.fbo);",
     "tests": [
       "test/el4_frame.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "adapt-images-start-dark",
     "file": "src/render/airPass.js",
-    "old": "    const one = Math.round(packLog(1, AIR_ADAPT_LOG_RANGE) * 255);",
-    "new": "    const one = 0;",
+    "old": "    const [hi, lo] = packAdapt(1);",
+    "new": "    const [hi, lo] = [0, 0];",
     "tests": [
       "test/el4_frame.test.js"
     ]

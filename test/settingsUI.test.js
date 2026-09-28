@@ -166,12 +166,12 @@ test('SO1: the settings pane is organised - the port\'s rows sit in the categori
   assert.ok(!/function portRowsEnhanced\(|function featuresPointerRow\(|catId === 'enhanced'/.test(menu), 'no Enhanced category, no pointer row');
   const test = menu.slice(menu.indexOf('function paneTest('), menu.indexOf('\n}', menu.indexOf('function paneTest(')));
   assert.match(test, /outdoors\.append\(outdoorsTestRow\(\)\);/, 'the outdoors test door is the Test Room\'s (boot only, as the Test Room is)');
-  // the touch knobs under Controls, where a finger's device looks; the skin, the HUD size and the FPS counter under Interface
+  // the touch knobs under Controls, where a finger's device looks; the HUD size and the FPS counter under Interface (MENU-TOGGLE: the skin is the Overhauls page's)
   const ctl = menu.slice(menu.indexOf('function portRowsControls('), menu.indexOf('function portRowsInterface('));
   assert.match(ctl, /if \(!isTouchDevice\(\)\) return out;/);
   for (const k of ['touchLookSensitivity', 'touchAnalogStick', 'touchGyroLook', 'touchHaptics', 'touchFullscreen']) assert.match(ctl, new RegExp(`'${k}'`), k);
   const ui = menu.slice(menu.indexOf('function portRowsInterface('), menu.indexOf('function portRows('));
-  assert.match(ui, /if \(!pause\) out\.push\(skinRow\(\)\);/); assert.match(ui, /out\.push\(hudScaleRow\(\)\);/); assert.match(ui, /prefRow\('showFps'/);
+  assert.match(ui, /const out = \[\];\n\s*out\.push\(hudScaleRow\(\)\);/, 'the HUD size heads Interface now'); assert.doesNotMatch(ui, /skinRow/); assert.match(ui, /prefRow\('showFps'/);
   const quick = menu.slice(menu.indexOf('function paneQuickSettings('), menu.indexOf('/** The skin switch'));
   assert.equal((quick.match(/list\.append\(pxDivider\(cat\.title\)\)/g) ?? []).length, 1, 'pause/System renders each category heading through one merged pass');
   assert.match(quick, /const localAudio = cat\.id === 'audio' \? voiceAudioRows\(\) : \[\];[\s\S]*list\.append\(pxDivider\(cat\.title\)\);[\s\S]*for \(const key of liveKeys\)[\s\S]*for \(const r of localAudio\)/,

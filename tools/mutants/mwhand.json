@@ -1,0 +1,56 @@
+[
+  {
+    "name": "MWHAND-an-empty-right-hand-stays-the-defect",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    if (this.usingRightHand && !this.currentRightHandWeapon && this.currentLeftHandWeapon) { this.usingRightHand = false; return true; }\n",
+    "new": "",
+    "tests": [
+      "test/mwhand.test.js"
+    ]
+  },
+  {
+    "name": "MWHAND-an-empty-left-hand-stays",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    if (!this.usingRightHand && !this.currentLeftHandWeapon && this.currentRightHandWeapon) { this.usingRightHand = true; return true; }\n",
+    "new": "",
+    "tests": [
+      "test/mwhand.test.js"
+    ]
+  },
+  {
+    "name": "MWHAND-the-hand-never-follows",
+    "file": "src/combat/weaponRig.js",
+    "old": "    if (fpArm.ready()) playerWeapon.followHeldHand();   // MW-HAND: under the Morrowind arm, never an empty hand while the other holds a weapon\n",
+    "new": "",
+    "tests": [
+      "test/mwhand.test.js"
+    ]
+  },
+  {
+    "name": "MWHAND-the-classic-hand-follows-too",
+    "file": "src/combat/weaponRig.js",
+    "old": "    if (fpArm.ready()) playerWeapon.followHeldHand();",
+    "new": "    if (true) playerWeapon.followHeldHand();",
+    "tests": [
+      "test/mwhand.test.js"
+    ]
+  },
+  {
+    "name": "MWHAND-h-to-an-empty-hand",
+    "file": "src/combat/weaponRig.js",
+    "old": "      if (bindWorn && fpArm.ready() && !(playerWeapon.currentRightHandWeapon && playerWeapon.currentLeftHandWeapon)) return false;\n",
+    "new": "",
+    "tests": [
+      "test/mwhand.test.js"
+    ]
+  },
+  {
+    "name": "MWHAND-classic-h-refused",
+    "file": "src/combat/weaponRig.js",
+    "old": "      if (bindWorn && fpArm.ready() && !(playerWeapon.currentRightHandWeapon",
+    "new": "      if (bindWorn && !(playerWeapon.currentRightHandWeapon",
+    "tests": [
+      "test/mwhand.test.js"
+    ]
+  }
+]

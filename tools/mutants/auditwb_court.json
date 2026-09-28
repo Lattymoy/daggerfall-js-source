@@ -58,14 +58,14 @@
   {
     "name": "AUDWB-B5-the-refusal-kept-from-the-host",
     "file": "src/net/gateLink.js",
-    "old": "      if (g.k === 'no') { say(GATE_NO_TEXT[g.m] ?? g.m); onRefused(g.m); return; }",
-    "new": "      if (g.k === 'no') { say(GATE_NO_TEXT[g.m] ?? g.m); return; }",
+    "old": "      if (g.k === 'no') { say(gateRefusalText(g.m)); onRefused(g.m); return; }",
+    "new": "      if (g.k === 'no') { say(gateRefusalText(g.m)); return; }",
     "tests": ["test/auditwb_court.test.js"]
   },
   {
     "name": "AUDWB-B5-a-refused-in-left-in-the-court",
     "file": "src/scenes/world.js",
-    "old": "    onRefused: (why) => { if (modes?.gateArenaDay?.() != null) ejectFromCourt(GATE_NO_TEXT[why] ?? why); },",
+    "old": "    onRefused: (why) => { if (modes?.gateArenaDay?.() != null) ejectFromCourt(gateRefusalText(why)); },",
     "new": "",
     "tests": ["test/auditwb_court.test.js"]
   },

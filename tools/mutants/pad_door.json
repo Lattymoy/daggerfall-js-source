@@ -1,0 +1,93 @@
+[
+  {
+    "name": "PAD-DOOR-held-A-presses-every-frame",
+    "file": "src/ui/menuPad.js",
+    "old": "  if (confirm && !state.confirm) {",
+    "new": "  if (confirm) {",
+    "tests": ["test/menupad.test.js"]
+  },
+  {
+    "name": "PAD-DOOR-start-does-not-press",
+    "file": "src/ui/menuPad.js",
+    "old": "  const confirm = pressed(pad, PAD.A) || pressed(pad, PAD.START);",
+    "new": "  const confirm = pressed(pad, PAD.A);",
+    "tests": ["test/menupad.test.js"]
+  },
+  {
+    "name": "PAD-DOOR-B-is-not-back",
+    "file": "src/ui/menuPad.js",
+    "old": "  if (back && !state.back) ui.back();",
+    "new": "",
+    "tests": ["test/menupad.test.js"]
+  },
+  {
+    "name": "PAD-DOOR-repeat-without-delay",
+    "file": "src/ui/menuPad.js",
+    "old": "  else if (dir && now - state.heldAt >= REPEAT_DELAY_MS && now - state.lastRepeat >= REPEAT_MS) {",
+    "new": "  else if (dir && now - state.lastRepeat >= REPEAT_MS) {",
+    "tests": ["test/menupad.test.js"]
+  },
+  {
+    "name": "PAD-DOOR-stick-ignored",
+    "file": "src/ui/menuPad.js",
+    "old": "  if (Math.max(Math.abs(x), Math.abs(y)) < STICK_DIRECTION) return null;",
+    "new": "  return null;",
+    "tests": ["test/menupad.test.js"]
+  },
+  {
+    "name": "PAD-DOOR-nearest-regardless-of-line",
+    "file": "src/ui/menuPad.js",
+    "old": "    const score = along + 2 * across;",
+    "new": "    const score = along + across;",
+    "tests": ["test/menupad.test.js"]
+  },
+  {
+    "name": "PAD-DOOR-behind-counts",
+    "file": "src/ui/menuPad.js",
+    "old": "    if (along <= 1) continue;",
+    "new": "",
+    "tests": ["test/menupad.test.js"]
+  },
+  {
+    "name": "PAD-DOOR-list-box-left-by-a-side-press",
+    "file": "src/ui/menuPad.js",
+    "old": "    } else if (!((dir === 'left' || dir === 'right') && ui.step(el, dir))) {",
+    "new": "    } else {",
+    "tests": ["test/menupad.test.js"]
+  },
+  {
+    "name": "PAD-DOOR-redraw-drops-the-focus",
+    "file": "src/ui/menuPad.js",
+    "old": "    if (off <= REFOCUS_SLOP) focusOn(same);",
+    "new": "    if (false) focusOn(same);",
+    "tests": ["test/menupad.test.js"]
+  },
+  {
+    "name": "PAD-DOOR-resumes-across-screens",
+    "file": "src/ui/menuPad.js",
+    "old": "    if (off <= REFOCUS_SLOP) focusOn(same);",
+    "new": "    if (same) focusOn(same);",
+    "tests": ["test/menupad.test.js"]
+  },
+  {
+    "name": "PAD-DOOR-never-stops",
+    "file": "src/main.js",
+    "old": "    }).finally(detachMenuPad);",
+    "new": "    });",
+    "tests": ["test/menupad.test.js"]
+  },
+  {
+    "name": "PAD-SETTINGS-sensitivity-a-readout-again",
+    "file": "src/ui/settingsLaw.js",
+    "old": "  'Controls/JoystickLookSensitivity': { min: 0.1, max: 4,",
+    "new": "  'Controls/JoystickLookSensitivityX': { min: 0.1, max: 4,",
+    "tests": ["test/menupad.test.js"]
+  },
+  {
+    "name": "PAD-SETTINGS-deadzone-offers-dead-travel",
+    "file": "src/ui/settingsLaw.js",
+    "old": "  'Controls/JoystickDeadzone': { min: 0, max: 0.9,",
+    "new": "  'Controls/JoystickDeadzone': { min: 0, max: 2,",
+    "tests": ["test/menupad.test.js"]
+  }
+]

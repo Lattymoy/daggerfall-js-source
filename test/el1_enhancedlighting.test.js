@@ -232,10 +232,13 @@ test('EL1: the renderer builds the classic set alone, compiles the lane once on 
   assert.equal(r.lightingLane, EL_LANE); assert.equal(r.maxPointLights, 48);
   assert.notEqual(r.program, classicMesh); assert.notEqual(r.bbProgram, classicBb); assert.notEqual(r.terrainProgram, classicTerrain); assert.notEqual(r.charProgram, classicChar);
   const laneMesh = r.program;
-  const lookups = count(calls, 'getUniformLocation');
+  const lookups = count(calls, 'getUniformLocation'), stamp = r._frameStamp;
   r.setLightingLane(EL_LANE);
   assert.equal(count(calls, 'compileShader') - boot, 20, 'the same lane again compiles nothing');
-  assert.equal(count(calls, 'getUniformLocation'), lookups, 'and looks nothing up: the same lane again is a no-op');
+  assert.equal(count(calls, 'getUniformLocation'), lookups, 'and looks nothing up');
+  // LA-COST7 (2026-09-27): a set installed again looks nothing up now either - its locations are memoized on it - so
+  // the no-op is read off what an install still does: it forgets every frame block, and the stamp moves (LA-COST1)
+  assert.equal(r._frameStamp, stamp, 'and moves no stamp: the same lane again is a no-op');
   r.setLightingLane(null);
   assert.equal(count(calls, 'compileShader') - boot, 20, 'back to classic compiles nothing');
   assert.equal(r.program, classicMesh); assert.equal(r.bbProgram, classicBb); assert.equal(r.terrainProgram, classicTerrain); assert.equal(r.charProgram, classicChar);

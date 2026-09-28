@@ -87,7 +87,7 @@ try {
     return t.source === window.__sourceBefore && t.time() > time && t.level === gain && t.gain.gain.value < 0.3 && t.context.state === 'running';
   }, { time: beforeMenuTime, gain: MENU_THEME_GAIN }));
   check('transition input cannot activate a menu action', await page.locator('#pick').count() === 0 && await page.locator('#enhanced-menu').count() === 1);
-  check('shared supplied logo loads in the main menu', await page.locator('.px-wordmark .enhanced-logo').evaluate(img => img.complete && img.naturalWidth === 1536));
+  check('shared supplied logo loads in the main menu', await page.locator('.px-wordmark .brand-logo').evaluate(img => img.complete && img.naturalWidth === 2112));
   await shot(page, '07-main-menu');
   await page.evaluate(async () => { const { setValue } = await import('/src/systems/settings.js'); setValue('Controls', 'MusicVolume', 0); });
   await page.waitForFunction(() => window.__intro.theme.gain.gain.value < 0.001);
@@ -163,9 +163,9 @@ try {
     const layout = await p.evaluate(() => {
       const logo = document.querySelector('.intro-title img'), button = document.querySelector('.intro-continue');
       const a = logo.getBoundingClientRect(), b = button.getBoundingClientRect();
-      return { width: innerWidth, height: innerHeight, logo: { x: a.x, y: a.y, width: a.width, height: a.height, bottom: a.bottom, right: a.right }, button: { y: b.y, bottom: b.bottom, height: b.height }, loaded: logo.naturalWidth === 1536 };
+      return { width: innerWidth, height: innerHeight, logo: { x: a.x, y: a.y, width: a.width, height: a.height, bottom: a.bottom, right: a.right }, button: { y: b.y, bottom: b.bottom, height: b.height }, loaded: logo.naturalWidth === 2112 };
     });
-    check(`${name}: logo fits at its original aspect and clears the tap target`, layout.loaded && layout.logo.x >= 0 && layout.logo.right <= layout.width + 1 && Math.abs(layout.logo.width / layout.logo.height - 3) < 0.01 && layout.logo.bottom < layout.button.y && layout.button.bottom < layout.height && layout.button.height >= 44, layout);
+    check(`${name}: logo fits at its natural aspect and clears the tap target`, layout.loaded && layout.logo.x >= 0 && layout.logo.right <= layout.width + 1 && Math.abs(layout.logo.width / layout.logo.height - 2112 / 850) < 0.01 && layout.logo.bottom < layout.button.y && layout.button.bottom < layout.height && layout.button.height >= 44, layout);
     await shot(p, `title-${name}`);
     await p.locator('.intro-continue').click(); await p.waitForSelector('#intro', { state: 'detached' });
     await shot(p, `menu-${name}`);

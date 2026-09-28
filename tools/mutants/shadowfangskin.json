@@ -1,0 +1,128 @@
+[
+  {
+    "name": "SFSKIN-base-left-light",
+    "file": "src/characters/werewolfSkin.js",
+    "old": "  dark: 0.3,",
+    "new": "  dark: 0.9,",
+    "tests": [
+      "test/shadowfangskin.test.js"
+    ]
+  },
+  {
+    "name": "SFSKIN-edging-dropped",
+    "file": "src/characters/werewolfSkin.js",
+    "old": "    const wgt = Math.min(1, Math.max(strand, tip, fringe));",
+    "new": "    const wgt = 0;",
+    "tests": [
+      "test/shadowfangskin.test.js"
+    ]
+  },
+  {
+    "name": "SFSKIN-strand-dropped",
+    "file": "src/characters/werewolfSkin.js",
+    "old": "    const strand = smooth(k.strand[0], k.strand[1], l - mean[i]) * k.strand[2];",
+    "new": "    const strand = 0;",
+    "tests": [
+      "test/shadowfangskin.test.js"
+    ]
+  },
+  {
+    "name": "SFSKIN-fringe-dropped",
+    "file": "src/characters/werewolfSkin.js",
+    "old": "    const fringe = near && a >= 128 && near[i] ? k.fringe : 0;",
+    "new": "    const fringe = 0;",
+    "tests": [
+      "test/shadowfangskin.test.js"
+    ]
+  },
+  {
+    "name": "SFSKIN-eye-missed",
+    "file": "src/characters/werewolfSkin.js",
+    "old": "    if (allEye || (eye && eye[i])) {",
+    "new": "    if (allEye) {",
+    "tests": [
+      "test/shadowfangskin.test.js"
+    ]
+  },
+  {
+    "name": "SFSKIN-eye-not-the-glyphs-red",
+    "file": "src/characters/werewolfSkin.js",
+    "old": "  eye: Object.freeze([255, 34, 46]),",
+    "new": "  eye: Object.freeze([255, 0, 0]),",
+    "tests": [
+      "test/shadowfangskin.test.js"
+    ]
+  },
+  {
+    "name": "SFSKIN-cache-painted",
+    "file": "src/characters/werewolfSkin.js",
+    "old": "  const out = new Uint8Array(n * 4);",
+    "new": "  const out = rgba;",
+    "tests": [
+      "test/shadowfangskin.test.js"
+    ]
+  },
+  {
+    "name": "SFSKIN-top-level-alone",
+    "file": "src/characters/werewolfSkin.js",
+    "old": "    out.push({ ...m, rgba });",
+    "new": "    out.push(m);",
+    "tests": [
+      "test/shadowfangskin.test.js"
+    ]
+  },
+  {
+    "name": "SFSKIN-any-glyph-a-skin",
+    "file": "src/characters/werewolfSkin.js",
+    "old": "  for (const s of WEREWOLF_SKINS) if (glyphs.includes(SKIN_GLYPH[s])) return s;",
+    "new": "  for (const s of WEREWOLF_SKINS) if (glyphs.length) return s;",
+    "tests": [
+      "test/shadowfangskin.test.js"
+    ]
+  },
+  {
+    "name": "SFSKIN-skin-on-the-person",
+    "file": "src/combat/fpArm.js",
+    "old": "  const bodySkin = () => (built && built.werewolf && lastBuildOpts && lastBuildOpts.skin) || null;",
+    "new": "  const bodySkin = () => (lastBuildOpts && lastBuildOpts.skin) || null;",
+    "tests": [
+      "test/shadowfangskin.test.js"
+    ]
+  },
+  {
+    "name": "SFSKIN-glyphs-not-kept",
+    "file": "src/net/accountClient.js",
+    "old": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs })",
+    "new": "JSON.stringify({ id, name, kind, sessionId, secret })",
+    "tests": [
+      "test/shadowfangskin.test.js"
+    ]
+  },
+  {
+    "name": "SFSKIN-list-rewritten-unchanged",
+    "file": "src/net/accountClient.js",
+    "old": "  if (next.name === was.name && next.kind === was.kind && sameGlyphs) return false;",
+    "new": "  if (next.name === was.name && next.kind === was.kind && false) return false;",
+    "tests": [
+      "test/shadowfangskin.test.js"
+    ]
+  },
+  {
+    "name": "SFSKIN-wardrobe-glyphs-not-adopted",
+    "file": "src/ui/accountFlow.js",
+    "old": "kind: r.data.account?.kind, glyphs: r.data.wardrobe?.glyphs, secret: asked });",
+    "new": "kind: r.data.account?.kind, secret: asked });",
+    "tests": [
+      "test/shadowfangskin.test.js"
+    ]
+  },
+  {
+    "name": "SFSKIN-peer-skin-off-the-key",
+    "file": "src/net/peerBodies.js",
+    "old": "`wolf|${wolfLookKey(look)}|${werewolfSkinOf(glyphs) ?? ''}`",
+    "new": "`wolf|${wolfLookKey(look)}|`",
+    "tests": [
+      "test/shadowfangskin.test.js"
+    ]
+  }
+]

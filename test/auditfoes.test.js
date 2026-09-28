@@ -35,7 +35,8 @@ const code = (p) => read(p).replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]
 // foe invulnerable to that client for the life of the context.
 test('AUDIT FOES FOE4: a blow goes while my BODY is wrong - the mismatch stops the puppet looking right, never the blow landing', () => {
   const d = code('src/scenes/dungeonContext.js');
-  assert.match(d, /if \(fromPlayer && damage >= 0\) opts\.onFoeHit\?\.\(\{ i: pi, dmg: damage, kind,/,
+  // REST-SYNC re-aim: the number is the layout's index or, for a shared encounter's puppet, the room's (`xs`)
+  assert.match(d, /if \(fromPlayer && damage >= 0\) opts\.onFoeHit\?\.\(\{ \.\.\.\(foe\._encId != null \? \{ i: foe\._encId, xs: 1 \} : \{ i: pi \}\), dmg: damage, kind,/,
     'the divert asks the provenance and the sign, and nothing about the body');
   assert.doesNotMatch(d, /!foe\._pupMismatch\) opts\.onFoeHit/,
     'the retired gate is gone, not merely joined by an OR');
@@ -105,7 +106,7 @@ test('AUDIT FOES FOE8: a class puppet is judged against the level it was BUILT a
 
 test('AUDIT FOES FOE9: a blow on a record the pool no longer holds is dropped, never spent on a ghost', () => {
   const d = code('src/scenes/dungeonContext.js');
-  assert.match(d, /const pi = foes\.indexOf\(foe\);\s*if \(pi < 0\) return;\s*if \(pi < _layoutFoes\) \{/,
+  assert.match(d, /const pi = foes\.indexOf\(foe\);\s*if \(pi < 0\) return;\s*if \(isRoomFoe\(foe, pi\)\) \{/,   // REST-SYNC re-aim: the layout's run or a shared encounter
     'an orphan takes no blow, and the layout test no longer has to re-check the sign');
 });
 

@@ -1,0 +1,163 @@
+[
+  {
+    "name": "QP3B-tag-flags-refused",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "if (!Array.isArray(e) || (e.length !== 3 && e.length !== 4)) continue;",
+    "new": "if (!Array.isArray(e) || e.length !== 3) continue;",
+    "tests": ["test/questparty3b.test.js"]
+  },
+  {
+    "name": "QP3B-flags-unbounded",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "if (!Number.isInteger(fl) || fl < 0 || fl > 3) continue;",
+    "new": "if (!Number.isInteger(fl) || fl < 0) continue;",
+    "tests": ["test/questparty3b.test.js"]
+  },
+  {
+    "name": "QP3B-marker-bit-unread",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "...(fl & 1 ? { mk: 1 } : {})",
+    "new": "...(fl & 4 ? { mk: 1 } : {})",
+    "tests": ["test/questparty3b.test.js"]
+  },
+  {
+    "name": "QP3B-touched-bit-unread",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "...(fl & 2 ? { tc: 1 } : {})",
+    "new": "...(fl & 4 ? { tc: 1 } : {})",
+    "tests": ["test/questparty3b.test.js"]
+  },
+  {
+    "name": "QP3B-touched-stands-down",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "=> !mineTouched && myId != null",
+    "new": "=> myId != null",
+    "tests": ["test/questparty3b.test.js"]
+  },
+  {
+    "name": "QP3B-lower-id-yields",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "(!!theirsTouched || String(theirId) < String(myId))",
+    "new": "(!!theirsTouched || String(theirId) > String(myId))",
+    "tests": ["test/questparty3b.test.js"]
+  },
+  {
+    "name": "QP3B-touched-other-ignored",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "(!!theirsTouched || String(theirId) < String(myId))",
+    "new": "(String(theirId) < String(myId))",
+    "tests": ["test/questparty3b.test.js"]
+  },
+  {
+    "name": "QP3B-marker-never-flagged",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "fl = (f?._questMarker ? 1 : 0) |",
+    "new": "fl = 0 |",
+    "tests": ["test/questparty3b.test.js"]
+  },
+  {
+    "name": "QP3B-touch-never-flagged",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "(r.d !== 1 && questTouched(f) ? 2 : 0)",
+    "new": "0",
+    "tests": ["test/questparty3b.test.js"]
+  },
+  {
+    "name": "QP3B-body-stands-down",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "if (qt?.mk && r.d !== 1 && !r.e) liveMarks.push(qt);",
+    "new": "if (qt?.mk) liveMarks.push(qt);",
+    "tests": ["test/questparty3b.test.js"]
+  },
+  {
+    "name": "QP3B-no-stand-down",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    if (liveMarks.length) standDownMarkerCopies(from, liveMarks);",
+    "new": "    void liveMarks;",
+    "tests": ["test/questparty3b.test.js"]
+  },
+  {
+    "name": "QP3B-wave-stands-down",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (f.puppet || f.dead || !f._questMarker) continue;\n      const mine = _qTag(f);",
+    "new": "      if (f.puppet || f.dead) continue;\n      const mine = _qTag(f);",
+    "tests": ["test/questparty3b.test.js"]
+  },
+  {
+    "name": "QP3B-other-quest-stands-down",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "const theirs = mine ? marks.find((t) => t.q === mine.q && t.s === mine.s) : null;",
+    "new": "const theirs = mine ? marks[0] : null;",
+    "tests": ["test/questparty3b.test.js"]
+  },
+  {
+    "name": "QP3B-stand-down-lands-nothing",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      questPoolOps.removeFoe(f);\n      n++;",
+    "new": "      n++;",
+    "tests": ["test/questparty3b.test.js"]
+  },
+  {
+    "name": "QP3B-touched-always",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "Number.isFinite(f.entity?.health) && f.entity.health < f.entity.maxHealth)); }",
+    "new": "Number.isFinite(f.entity?.health) && f.entity.health <= f.entity.maxHealth)); }",
+    "tests": ["test/questparty3b.test.js"]
+  },
+  {
+    "name": "QP3B-marker-option-dropped",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (questMarker) f._questMarker = true;",
+    "new": "      void questMarker;",
+    "tests": ["test/questparty3b.test.js"]
+  },
+  {
+    "name": "QP3B-stand-unflagged",
+    "file": "src/scenes/worldModes.js",
+    "old": "        questMarker: true,   // QUEST-PARTY phase 3",
+    "new": "        questMarker: false,   // QUEST-PARTY phase 3",
+    "tests": ["test/questparty3b.test.js"]
+  },
+  {
+    "name": "QP3B-net-never",
+    "file": "src/scenes/worldModes.js",
+    "old": "      _intNetOn = false; ensureInteriorNet();",
+    "new": "      _intNetOn = false;",
+    "tests": ["test/questparty3b.test.js"]
+  },
+  {
+    "name": "QP3B-blow-not-own",
+    "file": "src/scenes/world.js",
+    "old": "onPeerHit: (hit, fate) => hitSend({ ...hit, own: 1 }, fate),",
+    "new": "onPeerHit: (hit, fate) => hitSend(hit, fate),",
+    "tests": ["test/questparty3b.test.js"]
+  },
+  {
+    "name": "QP3B-stream-any-relay",
+    "file": "src/scenes/world.js",
+    "old": "if (!online || online.status !== 'open' || !online.ownOk || !isWorldRoom(online.room)) return false;\n    const m = modes?.mode ?? 'exterior';",
+    "new": "if (!online || online.status !== 'open' || !isWorldRoom(online.room)) return false;\n    const m = modes?.mode ?? 'exterior';",
+    "tests": ["test/questparty3b.test.js"]
+  },
+  {
+    "name": "QP3B-death-hands-nothing",
+    "file": "src/scenes/world.js",
+    "old": "const _handed = handOverFoes() || handOverRoomFoes();",
+    "new": "const _handed = handOverFoes();",
+    "tests": ["test/questparty3b.test.js"]
+  },
+  {
+    "name": "QP3B-heir-a-stranger",
+    "file": "src/scenes/world.js",
+    "old": "const near = online?.room && isWorldRoom(online.room) && online.ownOk && (m === 'interior' || m === 'dungeon') ? (peersNear() ?? []) : [];\n    if (!near.length) return 0;\n    const heirOf = (f) => { if (f.entity?.team === 'PlayerAlly') return null; const at = f.ai?.feet; if (!at) return null; let id = null, best = Infinity; for (const q of near) { if ((isPrivateQuestFoe(f) || f._keptTag) && !social?.isPartyPeer(q.id)) continue;",
+    "new": "const near = online?.room && isWorldRoom(online.room) && online.ownOk && (m === 'interior' || m === 'dungeon') ? (peersNear() ?? []) : [];\n    if (!near.length) return 0;\n    const heirOf = (f) => { if (f.entity?.team === 'PlayerAlly') return null; const at = f.ai?.feet; if (!at) return null; let id = null, best = Infinity; for (const q of near) {",
+    "tests": ["test/questparty3b.test.js"]
+  },
+  {
+    "name": "QP3B-wave-indoors-any-relay",
+    "file": "src/scenes/world.js",
+    "old": "if ((m === 'interior' || m === 'dungeon') && online?.ownOk && isWorldRoom(online.room) && partnerStandsQuestFoes({",
+    "new": "if ((m === 'interior' || m === 'dungeon') && isWorldRoom(online?.room) && partnerStandsQuestFoes({",
+    "tests": ["test/questparty3b.test.js"]
+  }
+]

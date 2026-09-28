@@ -11,8 +11,8 @@
   {
     "name": "AUDWB-D2-a-late-arrival-hears-the-fanfare",
     "file": "src/systems/gateScore.js",
-    "old": "      if (law === GATE_SONGS.fell && stingAt === null) stingAt = now;",
-    "new": "      if (s.fell && stingAt === null) stingAt = now;",
+    "old": "      if (law === GATE_SONGS.fell && stingAt === null) stingAt = now + SCORE_STING_LEAD_MS;",
+    "new": "      if (s.fell && stingAt === null) stingAt = now + SCORE_STING_LEAD_MS;",
     "tests": [
       "test/auditwb_sound.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AUDWB-D4-the-war-songs-classic",
     "file": "src/systems/gateScore.js",
-    "old": "durationTicks: bars * 4 * SCORE_TPQ, seamless: true };",
-    "new": "durationTicks: bars * 4 * SCORE_TPQ };",
+    "old": "durationTicks: bars * 4 * SCORE_TPQ, seamless: true, level };",
+    "new": "durationTicks: bars * 4 * SCORE_TPQ, level };",
     "tests": [
       "test/auditwb_sound.test.js"
     ]

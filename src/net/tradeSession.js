@@ -29,10 +29,18 @@
 // peer steps past it (and tells the peer). Once both have confirmed, the exchange is not a range question.
 // The residual failure is a connection dropping in the seconds between the two commits (or under a withdrawn confirm): one
 // side can lose an offer. That is stated in the chat, not hidden, and it is the price of having no server-side inventory.
-import { mintTradeSid } from './wire.js';   // AUDIT 68 S14-minttradesid-dead-and-duplicated: the wire's own minter, TRADE_SID_RE's length
+import { mintTradeSid, TRADE_FRAME_MAX, TRADE_DATA_MAX, TRADE_REV_MAX } from './wire.js';   // AUDIT 68 S14-minttradesid-dead-and-duplicated: the wire's own minter, TRADE_SID_RE's length
 
 /** How long a frame may wait for the socket (its gate, a reconnect) before the trade is called broken, ms. */
 export const OUTBOX_TTL_MS = 6000;
+/** TRADE-FIT: the words for an offer too big for one trade frame. */
+export const OFFER_TOO_BIG_TEXT = 'That is more than one trade can carry - offer fewer items.';
+/** TRADE-FIT: a trade frame's length as the relay reads it - the socket's own wrapper (net/online.js sendTrade). */
+export const tradeFrameBytes = (data) => JSON.stringify({ t: 'trade', data }).length;
+/** AUDIT TRADE-FIT D1: the longest data an offer's goods will ride - the COMMIT, which carries the same items and gold
+ *  and the peer's revision (at its most: they may re-offer after mine), as the wire's own projection reads it
+ *  (wire.js validTradeData: over TRADE_DATA_MAX the socket refuses it). */
+export const tradeCommitBytes = ({ items, g, to, s, r }) => JSON.stringify({ to, k: 'commit', s, r, o: TRADE_REV_MAX, items, g }).length;
 /** How long an ask stands before it is refused, ms: 30 seconds to accept, then it is off until a new one is offered. */
 export const ASK_TTL_MS = 30_000;
 /** How long a side waits for the other's commit after its own left before it says so, ms. */
@@ -174,6 +182,18 @@ export class TradeSession {
       wired = this.pack.wire(clean);
       if (!wired) return { ok: false, why: 'That cannot be traded.' };
     } else wired = [];
+    // TRADE-FIT (2026-09-27, the Discord batch): an offer is ONE frame, and a frame over TRADE_FRAME_MAX is never sent
+    // (net/online.js sendTrade - the relay would close the socket for it), so the outbox held it until OUTBOX_TTL_MS
+    // and the trade ended "timed out" with nobody told why: nine richly enchanted items were enough. Measured here, as
+    // the frame the relay will read (the socket's own wrapper around it), and refused in words before anything moves.
+    // AUDIT TRADE-FIT D1: AND THE COMMIT THESE GOODS WILL RIDE, AS THE WIRE'S CAP READS IT. The frame above is not the
+    // socket's measure - validTradeData refuses the DATA past TRADE_DATA_MAX, 43 characters short of it - and the commit
+    // is longer than the offer: an offer in that band timed out again, and one a few characters under it went through,
+    // both sides confirmed, the peer's commit left their pack, and mine was refused - their goods reached nobody.
+    if (tradeFrameBytes({ k: 'offer', r: this.rev + 1, items: wired, g, to: this.peer, s: this.sid }) > TRADE_FRAME_MAX
+      || tradeCommitBytes({ items: wired, g, to: this.peer, s: this.sid, r: this.rev + 1 }) > TRADE_DATA_MAX) {
+      return { ok: false, why: OFFER_TOO_BIG_TEXT };
+    }
     this.mine = { entries: clean, gold: g }; this._mineWire = wired;
     this.rev++;
     this._unlockBoth();

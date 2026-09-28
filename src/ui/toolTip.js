@@ -53,6 +53,39 @@ export const DEFAULT_TOOLTIP_TEXT_FG = Object.freeze([230 / 255, 230 / 255, 200 
 /** UpdateTextRows (:238-256): the escaped-\r collapse, then the split. */
 export const toolTipRows = (text) => String(text).replace(/\\r/g, '\r').split('\r');
 
+/**
+ * AUDIT SET U2: THE WIDEST ROW OF THE PORT'S OWN A TOOLTIP DRAWS, in native px. DFU never wraps a tooltip row - the
+ * edge shift (:166-177) is its whole answer to a wide one, and its own rows stand as DFU draws them. The port's own
+ * lines under an item's name - its tier's, its sigil's, its set's ("4 pieces - Bloodfury: Your weapon blows deal +4%
+ * damage, +8% below half health (1 more)", systems/sigilSets.js setLines) - ran past the 320px screen, and the shift
+ * pushed their first words off its left edge. So a tooltip that carries them (the item lists' - itemScroller.js
+ * makeSlotToolTip) wraps the rows from `wrapFrom` on: a row wider than this at its spaces, each continuation indented
+ * two. A RECORDED departure (the Port-Ledger's Sigil Sets row); every row of DFU's own, the item's name included, is
+ * drawn exactly as DFU draws it.
+ */
+export const TOOLTIP_WRAP_W = 240;
+const WRAP_INDENT = '  ';
+/** The rows, each from `from` on wider than `maxW` (by `measure`) wrapped at its spaces; a word wider than the whole
+ *  stands alone; a row before `from` is never touched. */
+export function wrapToolTipRows(rows, measure, maxW = TOOLTIP_WRAP_W, from = 0) {
+  const out = [];
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    if (i < from || !(measure(row) > maxW)) { out.push(row); continue; }
+    const lead = /^ */.exec(row)[0];
+    let line = '';
+    for (const word of row.slice(lead.length).split(/ +/)) {
+      if (!word) continue;
+      const next = line ? `${line} ${word}` : `${lead}${word}`;
+      if (!line || measure(next) <= maxW) { line = next; continue; }
+      out.push(line);
+      line = `${lead}${WRAP_INDENT}${word}`;
+    }
+    if (line) out.push(line);
+  }
+  return out;
+}
+
 /** Draw's sizing (:158-160) - the -1 is DFU's own. */
 export function toolTipSize(rows, widest, glyphHeight) {
   return [
@@ -92,8 +125,9 @@ export class ToolTip {
    *  (DaggerfallQuestJournalWindow.cs:103-104,
    *  `defaultToolTip.ToolTipDelay = 1`), the same idiom the automap's
    *  own clock below carries. Null means the GUI setting. */
-  constructor(delaySeconds = null) {
+  constructor(delaySeconds = null, { wrapFrom = null } = {}) {
     this.delaySeconds = delaySeconds;
+    this.wrapFrom = wrapFrom;   // AUDIT SET U2: the first row of the port's own that may wrap (null: none - DFU's tooltip)
     this.text = null;
     this._pending = null;
     this._elapsed = 0;
@@ -121,7 +155,7 @@ export class ToolTip {
   /** Drawn LAST by its window (DFU's final-component order). */
   draw(renderer, m, font) {
     if (!this.text) return;
-    drawToolTipBox(renderer, m, font, this.text, this.x, this.y);
+    drawToolTipBox(renderer, m, font, this.text, this.x, this.y, { wrapFrom: this.wrapFrom });
   }
 }
 
@@ -143,9 +177,9 @@ export class ToolTip {
  * unconditionally in that window's Draw() (:571-572). Turning tooltips
  * off in DFU does not silence the town map's plate names.
  */
-export function drawToolTipBox(renderer, m, font, text, vx, vy, { ignoreEnableSetting = false } = {}) {
+export function drawToolTipBox(renderer, m, font, text, vx, vy, { ignoreEnableSetting = false, wrapFrom = null } = {}) {
   if (!text || (!ignoreEnableSetting && !toolTipsEnabled())) return;
-  const rows = toolTipRows(text);
+  const rows = wrapFrom == null ? toolTipRows(text) : wrapToolTipRows(toolTipRows(text), (r) => measureText(font.fnt, r), TOOLTIP_WRAP_W, wrapFrom);   // AUDIT SET U2: the port's own rows may wrap
   // DaggerfallFont.GlyphHeight - the port's own fixedHeight, the
   // same reader messageBox's rowH uses.
   const glyph = font?.fnt?.fixedHeight ?? 6;

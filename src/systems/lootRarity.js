@@ -9,7 +9,7 @@
 // (OL1). Off, not one field is written and not one read moves: DFU's
 // loot, exactly - so the 1:1 lane is one press away, not lost.
 //
-// THE LADDER. Five tiers, and Daggerfall already had three of them:
+// THE LADDER. Six tiers, and Daggerfall already had three of them:
 //   common     - a plain item, DFU's own mint, untouched
 //   magic      - an item with one or two AFFIXES (below), or one of
 //                DFU's own MAGIC.DEF items (which are the same idea:
@@ -18,6 +18,9 @@
 //                ONE of DFU's own catalogue enchantments as its flavour
 //   legendary  - a fixed record from LEGENDARIES: a name, a set affix
 //                signature and its own DFU enchantment
+//   aetheric   - SET6 (Sigil Sets): the rung under Artifact, never
+//                rolled - a boss's own set (systems/aetheric.js), and
+//                the Sigil Broker's
 //   artifact   - DFU's artifacts, untouched, the top of the ladder
 //
 // REPLACE, DON'T LAYER. With the switch on there is ONE ladder: every
@@ -69,8 +72,9 @@ import { STAT_KEYS_ORDER } from './statMods.js';
 import { SKILL_NAMES, SKILL_COUNT } from './skills.js';
 import { ENCHANTMENT_TYPES } from '../formats/magicDef.js';
 import { enchantmentName, enchantmentParamName } from './enchantmentCatalogue.js';
-import { rollSigil, sigilLines, sigilOnline, SIGIL_BANDS } from './sigil.js';   // SIGIL1: a weapon won online may carry a sigil
+import { rollSigil, sigilOnline, SIGIL_BANDS } from './sigil.js';   // SIGIL1: a weapon won online may carry a sigil
 import { ROLLED_TIERS } from './rarityTier.js';   // RARE-BREAK1: the rolled tiers' one home
+import { setPieceKind, rollSetSigil, rollSetJoin, setLines, setSigilLines } from './sigilSets.js';   // SET4: a won piece of armour or a shield may carry a set's sigil; a weapon's may join one; SET5: the set in words
 
 export const LOOT_RARITY_KEY = 'lootRarity';
 /** The switch. Read at every seam, so a press takes effect on the next
@@ -78,15 +82,17 @@ export const LOOT_RARITY_KEY = 'lootRarity';
 export const lootRarityOn = () => !!getPref(LOOT_RARITY_KEY);
 
 // ── the tiers ───────────────────────────────────────────────────────
-export const RARITY_ORDER = Object.freeze(['common', 'magic', 'rare', 'legendary', 'artifact']);
+export const RARITY_ORDER = Object.freeze(['common', 'magic', 'rare', 'legendary', 'aetheric', 'artifact']);
 /** Label, the skin colour (the enhanced sheet's rules read the id; the
- *  native scroller tints the cell with `tint`), and the rank. */
+ *  native scroller tints the cell with `tint`), and the rank. SET6: the
+ *  Aetheric rung (the aether's pale blue-white) under the Artifact. */
 export const RARITIES = Object.freeze({
   common:    Object.freeze({ rank: 0, label: 'Common',    colour: '#e9e4d9', tint: null }),
   magic:     Object.freeze({ rank: 1, label: 'Magic',     colour: '#6f9ee8', tint: Object.freeze([0.22, 0.40, 0.80, 0.45]) }),
   rare:      Object.freeze({ rank: 2, label: 'Rare',      colour: '#e4c34f', tint: Object.freeze([0.80, 0.68, 0.18, 0.45]) }),
   legendary: Object.freeze({ rank: 3, label: 'Legendary', colour: '#e07a2e', tint: Object.freeze([0.85, 0.42, 0.10, 0.50]) }),
-  artifact:  Object.freeze({ rank: 4, label: 'Artifact',  colour: '#b57bee', tint: Object.freeze([0.60, 0.35, 0.85, 0.50]) }),
+  aetheric:  Object.freeze({ rank: 4, label: 'Aetheric',  colour: '#bfe8ff', tint: Object.freeze([0.62, 0.86, 1.00, 0.55]) }),
+  artifact:  Object.freeze({ rank: 5, label: 'Artifact',  colour: '#b57bee', tint: Object.freeze([0.60, 0.35, 0.85, 0.50]) }),
 });
 export { ROLLED_TIERS };   // RARE-BREAK1: its one home is the leaf (rarityTier.js), so a formula can ask it without the ladder
 
@@ -473,11 +479,11 @@ export const LEGENDARIES = Object.freeze([
   { id: 'titanheart', name: 'Titanheart', group: 'Armor', templates: [102, 103, 104, 105, 106, 107, 108],
     affixes: [{ id: 'armor', value: 12 }, { id: 'stat', param: 'strength', value: 15 }, { id: 'weight', value: 40 }],
     enchantment: { type: T.AbsorbsSpells, param: -1 },
-    lore: 'Its plates are said to have been beaten from a giant’s own heart.' },
+    lore: 'Its plates are said to have been beaten from a giant\'s own heart.' },
   { id: 'aegis-of-dawn', name: 'Aegis of Dawn', group: 'Armor', templates: [109, 110, 111, 112],   // the four shields
     affixes: [{ id: 'armor', value: 18 }, { id: 'resist', param: 'fire', value: 45 }, { id: 'stat', param: 'willpower', value: 10 }],
     enchantment: { type: T.CastWhenHeld, param: 39 },   // Spell Resistance
-    lore: 'Raised against the Underking’s host at the dawn of the second era.' },
+    lore: 'Raised against the Underking\'s host at the dawn of the second era.' },
   { id: 'foxglove', name: 'Foxglove', group: 'Jewellery',
     affixes: [{ id: 'stat', param: 'luck', value: 15 }, { id: 'stat', param: 'speed', value: 10 }, { id: 'resist', param: 'poison', value: 35 }],
     enchantment: { type: T.ImprovesTalents, param: 1 },   // Athleticism
@@ -528,9 +534,11 @@ export const affixesWorth = (affixes) => (affixes ?? []).reduce((n, a) => n + (A
 
 /** Apply a rolled tier to an eligible item IN PLACE: the field, the
  *  affixes, the name, the value, and a Rare's or Legendary's DFU
- *  enchantment. Common leaves the item as DFU minted it. */
+ *  enchantment. Common leaves the item as DFU minted it; so does any
+ *  tier the ladder does not roll (SET6: an Aetheric piece is a fixed
+ *  record, minted whole by systems/aetheric.js - never a roll). */
 export function applyRarity(item, tier, rolls = Math.random, legendaryPool = null) {
-  if (!item || tier === 'common' || !RARITIES[tier] || tier === 'artifact') return item;
+  if (!item || !ROLLED_TIERS.includes(tier)) return item;
   let affixes;
   let enchantment = null;
   if (tier === 'legendary') {
@@ -599,15 +607,29 @@ export function rollCorpseLoot(entity, basics, { rolls = Math.random, luck = 50,
  *  when its foe dies, a treasure pile's when it is minted - rolls its sigil once, in a session that plays online:
  *  about one in five, more with more `fighters` (systems/sigil.js rollSigil; PSCALE1's count, read at the death).
  *  Never ammunition, an artifact, a quest's item, or a weapon that already carries one. Offline, nothing. Answers
- *  how many were marked. */
+ *  how many were marked.
+ *  SET4 (Sigil Sets, bible/11-Multiplayer/Sigil-Sets.md section 4 - Mac: sets "come from any source, just like
+ *  weapons"): the name is SIGIL1's; the door is every sigil's now. AFTER every weapon's own rolls - so SIGIL1's draws
+ *  stay the ones they were - a fresh weapon sigil joins a set of the world one time in three, and every Magic-or-better
+ *  piece of ARMOUR and every SHIELD rolls a set sigil by the same chance law (systems/sigilSets.js rollSetSigil),
+ *  under the same nevers: a quest's item, an artifact, a piece that already carries one. */
 export function stampWonWeapons(items, fighters = 1, { rolls = Math.random } = {}) {
   if (!sigilOnline() || !lootRarityOn() || !Array.isArray(items)) return 0;
   let n = 0;
+  const fresh = [];
   for (const it of items) {
     if (!it || it.group !== 'Weapons' || isAmmunition(it) || it.questItem || it.sigil) continue;
     const tier = rarityOf(it);
-    if (!SIGIL_BANDS[tier]) continue;   // Common, and an artifact's own tier: no band
+    if (!SIGIL_BANDS[tier]) continue;   // Common, an Aetheric's and an artifact's own tier: no band
     const s = rollSigil(tier, fighters, rolls);
+    if (s) { it.sigil = s; n++; fresh.push(it); }
+  }
+  for (const it of fresh) { const set = rollSetJoin(rolls); if (set) it.sigil = { ...it.sigil, set }; }   // SET4: a third join a set
+  for (const it of items) {
+    if (!it || it.questItem || it.sigil) continue;
+    const kind = setPieceKind(it);
+    if (kind !== 'armor' && kind !== 'shield') continue;   // SET4: a body piece or a shield - never jewellery or clothing
+    const s = rollSetSigil(rarityOf(it), fighters, rolls);
     if (s) { it.sigil = s; n++; }
   }
   return n;
@@ -680,13 +702,19 @@ const identified = (item) => !enchanted(item) || item?.isIdentified === true;
 /** The tier line and the affix lines a tooltip or a card shows, in
  *  order: "Rare", then each affix, then the DFU enchantment's name.
  *  Empty with the switch off, for a Common item, or while the item is
- *  unidentified (then one line: the tier, and "Unidentified"). */
-export function rarityLines(item) {
+ *  unidentified (then one line: the tier, and "Unidentified").
+ *  SIGIL-UI: `sigil: false` leaves the sigil's lines out, for a card
+ *  that draws the sigil as its own block (ui/sigilCard.js). */
+/** SET6: the lore of a fixed record the ladder does not hold - an Aetheric piece's (systems/aetheric.js registers the
+ *  Regalia's; it imports this file, so this one cannot import it). `fn(item) -> string | null`. */
+let _aethericLore = null;
+export function registerAethericLore(fn) { _aethericLore = typeof fn === 'function' ? fn : null; }
+export function rarityLines(item, { sigil = true, set = true } = {}) {
   if (!lootRarityOn() || !item) return [];
   const tier = rarityOf(item);
   if (tier === 'common') return [];
   const out = [RARITIES[tier].label];
-  if (!identified(item)) { out.push('Unidentified'); return [...out, ...sigilLines(item)]; }   // SIGIL1: a sigil is the port's own mark, seen at once
+  if (!identified(item)) { out.push('Unidentified'); return [...out, ...(sigil ? setSigilLines(item) : []), ...(set ? setLines(item) : [])]; }   // SIGIL1: a sigil is the port's own mark, seen at once - AUDIT SET U5: and so is its set (the card draws it; the classic tooltip said nothing)
   for (const a of item.affixes ?? []) out.push(affixLabel(a));
   if (item.rarity && Array.isArray(item.enchantments)) {
     for (const e of item.enchantments) {
@@ -696,8 +724,9 @@ export function rarityLines(item) {
       out.push(param && param !== 'None' ? `${enchantmentName(key)}: ${param}` : enchantmentName(key ?? ''));
     }
   }
-  out.push(...sigilLines(item));   // SIGIL1: what the sigil gives in my hand, and how far it has grown
-  const lore = item.legendary ? legendaryById(item.legendary)?.lore : null;
+  if (sigil) out.push(...setSigilLines(item));   // SIGIL1: what the sigil gives in my hand, and how far it has grown (AUDIT SET U11: a set piece's, asleep in a duel)
+  if (set) out.push(...setLines(item));   // SET5: its set - what is worn of it, and its three tiers (a card that draws the set's block asks without)
+  const lore = item.legendary ? legendaryById(item.legendary)?.lore : item.aetheric ? (_aethericLore?.(item) ?? null) : null;   // SET6: an Aetheric piece's own
   if (lore) out.push(lore);
   return out;
 }

@@ -8,13 +8,15 @@
 //     mints, `equipSlot` and `questItem` stripped (they are the RECEIVER's marks, never the sender's word);
 //   - what may not be offered is the pack's own refusals: worn gear (systems/equip.js isEquipped - a staged worn item
 //     would leave equip.slots pointing at it, AUDIT 17e F4), quest items (the quest owns them), summoned items (they
-//     vanish on a clock), and gold-piece items (gold is offered as gold);
+//     vanish on a clock), gold-piece items (gold is offered as gold), and bound pieces (SS1, systems/itemBound.js: a
+//     Sigil Stone is never handed to another player - and a peer's lot carrying one is refused whole, below);
 //   - weight is systems/inventory.js's own arithmetic against combat/formulas.js entityMaxEncumbrance.
 import { validLootList } from './loot.js';
 import { splitStack, addItem, itemWeight, totalWeight, carriedWeight, isSummoned, isGoldPieces, addGoldPieces, goldPiecesOf, GOLD_PIECE_WEIGHT_KG } from './inventory.js';
 import { isEquipped } from './equip.js';
 import { clearLightSourceOnLeave } from './itemTransfer.js';
 import { entityMaxEncumbrance } from '../combat/formulas.js';
+import { isBound, BOUND_TRADE_TEXT } from './itemBound.js';   // SS1: a bound piece never leaves for another player
 
 /** Why an item may not be put on the table, or null. Words a player can act on. */
 export function tradeRefusal(item) {
@@ -23,6 +25,7 @@ export function tradeRefusal(item) {
   if (item.questItem) return 'Quest items cannot be traded.';
   if (isSummoned(item)) return 'Summoned items cannot be traded.';
   if (isGoldPieces(item)) return 'Offer gold with the gold box.';
+  if (isBound(item)) return BOUND_TRADE_TEXT;   // SS1
   return null;
 }
 
@@ -53,8 +56,10 @@ export function createTradePack(entity) {
       return validLootList(recs);
     },
 
-    /** The peer's records as this game would mint them - every one through the wire clamp - or null if any is no item. */
-    unwire(records) { return validLootList(records); },
+    /** The peer's records as this game would mint them - every one through the wire clamp - or null if any is no item,
+     *  or any is BOUND (SS1: a peer that holds one out - an older build, a forged frame - offers what may not change
+     *  hands, and the lot is refused whole, the trade's own word for a forgery). */
+    unwire(records) { const items = validLootList(records); return items && !items.some(isBound) ? items : null; },
 
     /** Take the goods OUT of the pack (reserve). All-or-nothing: a lot that is not entirely here comes back null. */
     take(entries, gold) {

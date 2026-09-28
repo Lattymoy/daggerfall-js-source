@@ -38,8 +38,8 @@
   {
     "name": "DECOR2a-the-cost-allowed",
     "file": "src/net/decorLaw.js",
-    "old": "(what.item && (place.paid !== 0 || place.storage))",
-    "new": "(what.item && place.storage)",
+    "old": "(what.item && (place.paid !== 0 || place.storage || place.station))",
+    "new": "(what.item && (place.storage || place.station))",
     "tests": [
       "test/decor2a.test.js",
       "test/decor1.test.js"
@@ -48,8 +48,8 @@
   {
     "name": "DECOR2a-the-hold-allowed",
     "file": "src/net/decorLaw.js",
-    "old": "(what.item && (place.paid !== 0 || place.storage))",
-    "new": "(what.item && place.paid !== 0)",
+    "old": "(what.item && (place.paid !== 0 || place.storage || place.station))",
+    "new": "(what.item && (place.paid !== 0 || place.station))",
     "tests": [
       "test/decor2a.test.js",
       "test/decor1.test.js"
@@ -148,7 +148,7 @@
   {
     "name": "DECOR2a-the-artifact-index-misread",
     "file": "src/systems/decorItems.js",
-    "old": "const a = item.artifact && (bits & 1) ? bits >> 1 : null;",
+    "old": "const a = item.artifact ? ((bits & 1) ? bits >> 1 : DECOR_ARTIFACT_UNKNOWN) : null;",
     "new": "const a = item.artifact ? bits >> 1 : null;",
     "tests": [
       "test/decor2a.test.js"
@@ -292,8 +292,8 @@
   {
     "name": "DECOR2a-the-rooms-words-a-cost",
     "file": "src/ui/decorPanel.js",
-    "old": "pickPrice.textContent = it.piece.item ? `Take down: back to ${decorBackTo(it.piece)}` : `Remove: ${decorRefundText(it.piece.paid)} back`;",
-    "new": "pickPrice.textContent = `Remove: ${decorRefundText(it.piece.paid)} back`;",
+    "old": "pickPrice.textContent = it.piece.item ? `Take down: back to ${decorBackTo(it.piece)}` : `Remove: ${decorRefundText(it.piece.paid)} back${it.piece.station ? ' (the station licence is not)' : ''}`;",
+    "new": "pickPrice.textContent = `Remove: ${decorRefundText(it.piece.paid)} back${it.piece.station ? ' (the station licence is not)' : ''}`;",
     "tests": [
       "test/decor2a.test.js"
     ]
@@ -301,8 +301,8 @@
   {
     "name": "DECOR2a-holds-things-open-to-ones-own",
     "file": "src/ui/decorPanel.js",
-    "old": "    storeBtn.disabled = !it || !!it.piece.item || (it.piece.storage && it.holds);",
-    "new": "    storeBtn.disabled = !it || (it.piece.storage && it.holds);",
+    "old": "    storeBtn.disabled = !it || !!it.piece.item || (it.piece.storage && it.holds) || !!it.piece.station;   // HOME-STATIONS: a station holds nothing",
+    "new": "    storeBtn.disabled = !it || (it.piece.storage && it.holds) || !!it.piece.station;   // HOME-STATIONS: a station holds nothing",
     "tests": [
       "test/decor2a.test.js"
     ]
@@ -517,8 +517,8 @@
   {
     "name": "DECOR2a-the-dye-dropped",
     "file": "src/scenes/worldModes.js",
-    "old": "iconUrl: (a, r, dye = null) => loadIcon(a, r, { scale: 1, dye }),",
-    "new": "iconUrl: (a, r) => loadIcon(a, r, { scale: 1 }),",
+    "old": "iconUrl: (a, r, dye = null, dyeTarget = null) => loadIcon(a, r, { scale: 1, dye, dyeTarget }),",
+    "new": "iconUrl: (a, r, dye = null, dyeTarget = null) => loadIcon(a, r, { scale: 1, dyeTarget }),",
     "tests": [
       "test/decor2a.test.js"
     ]

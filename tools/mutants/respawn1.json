@@ -30,7 +30,7 @@
   {
     "name": "RESPAWN1-the-restore-stops-projecting-the-foes",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      const sfoes = Array.isArray(shared.world.foes) ? shared.world.foes.slice(0, _layoutFoes).map(validSharedFoe).filter(Boolean) : [];",
+    "old": "      const sfoes = Array.isArray(shared.world.foes) ? shared.world.foes.slice(0, _layoutFoes).map(validSharedFoe) : [];",
     "new": "      const sfoes = Array.isArray(shared.world.foes) ? shared.world.foes.slice(0, _layoutFoes) : [];",
     "tests": [
       "test/respawn1.test.js",

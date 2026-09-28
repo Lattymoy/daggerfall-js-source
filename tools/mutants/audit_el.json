@@ -212,8 +212,8 @@
   {
     "name": "f16-eye-not-divided",
     "file": "src/render/airPass.js",
-    "old": "      acc += log2(max(dot(c, vec3(0.2126, 0.7152, 0.0722)) / prev, 1e-9));",
-    "new": "      acc += log2(max(dot(c, vec3(0.2126, 0.7152, 0.0722)), 1e-9));",
+    "old": "      acc += clamp(log2(max(dot(c, vec3(0.2126, 0.7152, 0.0722)) / prev, 1e-9)), ",
+    "new": "      acc += clamp(log2(max(dot(c, vec3(0.2126, 0.7152, 0.0722)), 1e-9)), ",
     "tests": [
       "test/audit_el.test.js"
     ]

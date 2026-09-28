@@ -1,0 +1,155 @@
+[
+  {
+    "name": "SET1-a-set-out-of-the-records-order",
+    "file": "src/systems/sigil.js",
+    "old": "export const SIGIL_SET_IDS = Object.freeze(['malacath', 'dagon', 'nocturnal', 'mora', 'ruhn']);",
+    "new": "export const SIGIL_SET_IDS = Object.freeze(['dagon', 'malacath', 'nocturnal', 'mora', 'ruhn']);",
+    "tests": [
+      "test/set1_law.test.js"
+    ]
+  },
+  {
+    "name": "SET1-a-tier-at-the-wrong-count",
+    "file": "src/systems/sigilSets.js",
+    "old": "      tier(4, 'waters', 'Waters of Oblivion'",
+    "new": "      tier(3, 'waters', 'Waters of Oblivion'",
+    "tests": [
+      "test/set1_law.test.js"
+    ]
+  },
+  {
+    "name": "SET1-power-still-required",
+    "file": "src/systems/sigil.js",
+    "old": "  if (!hasPower && !hasSet) return false;",
+    "new": "  if (!hasPower) return false;",
+    "tests": [
+      "test/set1_law.test.js"
+    ]
+  },
+  {
+    "name": "SET1-any-set-taken",
+    "file": "src/systems/sigil.js",
+    "old": "  if (hasSet && !SIGIL_SET_IDS.includes(s.set)) return false;\n",
+    "new": "",
+    "tests": [
+      "test/set1_law.test.js"
+    ]
+  },
+  {
+    "name": "SET1-the-blow-read-off-a-set-piece",
+    "file": "src/systems/sigil.js",
+    "old": "  if (!sigilHasBlow(sigil)) return 0;\n",
+    "new": "",
+    "tests": [
+      "test/set1_law.test.js"
+    ]
+  },
+  {
+    "name": "SET1-two-weapons-of-a-set-counted-twice",
+    "file": "src/systems/sigilSets.js",
+    "old": "    if (!id || weaponOf.has(id)) continue;   // one weapon a set",
+    "new": "    if (!id) continue;",
+    "tests": [
+      "test/set1_law.test.js"
+    ]
+  },
+  {
+    "name": "SET1-the-order-the-tables",
+    "file": "src/systems/sigilSets.js",
+    "old": "  return new Map([...out.entries()].sort((a, b) => SIGIL_SET_IDS.indexOf(a[0]) - SIGIL_SET_IDS.indexOf(b[0])));",
+    "new": "  return out;",
+    "tests": [
+      "test/set1_law.test.js"
+    ]
+  },
+  {
+    "name": "SET1-the-cap-unread",
+    "file": "src/systems/sigilSets.js",
+    "old": "  const stage = cap < 0 || !count ? -1 : Math.min(lowRank, cap);",
+    "new": "  const stage = cap < 0 || !count ? -1 : lowRank;",
+    "tests": [
+      "test/set1_law.test.js"
+    ]
+  },
+  {
+    "name": "SET1-the-highest-pieces-rank",
+    "file": "src/systems/sigilSets.js",
+    "old": "  for (const p of pieces) { const x = Number(p.sigil?.xp) || 0; if (x < lowXp) { lowXp = x; low = p; } }",
+    "new": "  lowXp = -Infinity; for (const p of pieces) { const x = Number(p.sigil?.xp) || 0; if (x > lowXp) { lowXp = x; low = p; } }",
+    "tests": [
+      "test/set1_law.test.js"
+    ]
+  },
+  {
+    "name": "SET1-a-tier-awake-below-its-count",
+    "file": "src/systems/sigilSets.js",
+    "old": "awake: stage >= 0 && count >= t.at,",
+    "new": "awake: stage >= 0 && count >= t.at - 2,",
+    "tests": [
+      "test/set1_law.test.js"
+    ]
+  },
+  {
+    "name": "SET1-the-duel-unread",
+    "file": "src/systems/sigilSets.js",
+    "old": "export const setsAwake = () => sigilRenown() != null && !_dueling;",
+    "new": "export const setsAwake = () => sigilRenown() != null;",
+    "tests": [
+      "test/set1_law.test.js"
+    ]
+  },
+  {
+    "name": "SET1-a-peers-set-awake",
+    "file": "src/systems/sigilSets.js",
+    "old": "  if (!entity?.isPlayer || entity.peer || !setsAwake()) return null;",
+    "new": "  if (!entity?.isPlayer || !setsAwake()) return null;",
+    "tests": [
+      "test/set1_law.test.js"
+    ]
+  },
+  {
+    "name": "SET1-no-clamp",
+    "file": "src/systems/sigilSets.js",
+    "old": "  const s = Math.max(0, Math.min(SET_STAGE_MAX, Math.trunc(Number(stage) || 0)));",
+    "new": "  const s = Math.trunc(Number(stage) || 0);",
+    "tests": [
+      "test/set1_law.test.js"
+    ]
+  },
+  {
+    "name": "SET1-jewellery-taken",
+    "file": "src/systems/sigilSets.js",
+    "old": "  if (item.group === 'Weapons') return isAmmunition(item) ? null : 'weapon';\n  return null;",
+    "new": "  if (item.group === 'Weapons') return isAmmunition(item) ? null : 'weapon';\n  return 'armor';",
+    "tests": [
+      "test/set1_law.test.js"
+    ]
+  },
+  {
+    "name": "SET1-ammunition-taken",
+    "file": "src/systems/sigilSets.js",
+    "old": "return isAmmunition(item) ? null : 'weapon';",
+    "new": "return 'weapon';",
+    "tests": [
+      "test/set1_law.test.js"
+    ]
+  },
+  {
+    "name": "SET1-the-first-of-the-lowest-stage-named",
+    "file": "src/systems/sigilSets.js",
+    "old": "  for (const p of pieces) { const x = Number(p.sigil?.xp) || 0; if (x < lowXp) { lowXp = x; low = p; } }",
+    "new": "  for (const p of pieces) { const x = sigilRank(p.sigil); if (x < lowXp) { lowXp = x; low = p; } }",
+    "tests": [
+      "test/set1_law.test.js"
+    ]
+  },
+  {
+    "name": "SET1-the-words-built-for-a-numbers-only-read",
+    "file": "src/systems/sigilSets.js",
+    "old": "text: text ? t.text(values) : '',",
+    "new": "text: t.text(values),",
+    "tests": [
+      "test/set1_law.test.js"
+    ]
+  }
+]

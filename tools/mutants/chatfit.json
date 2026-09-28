@@ -24,7 +24,7 @@
  { "name": "CHATFIT-a-lost-peer-is-a-stranger", "file": "src/net/online.js",
    "old": "    const p = this.peers.get(id) ?? this._known.get(id);\n    return p ? { title: p.title ?? null,", "new": "    const p = this.peers.get(id);\n    return p ? { title: p.title ?? null,", "tests": ["test/chatfit.test.js"] },
  { "name": "CHATFIT-my-own-line-wears-no-badge", "file": "src/net/online.js",
-   "old": "    if (id === this.id) return { title: this.title ?? null, glyphs: Array.isArray(this.glyphs) ? this.glyphs : [] };\n", "new": "", "tests": ["test/chatfit.test.js"] },
+   "old": "    if (id === this.id) return { title: this.title ?? null, glyphs: Array.isArray(this.glyphs) ? this.glyphs : [], gt: this.gt ?? null };\n", "new": "", "tests": ["test/chatfit.test.js"] },
  { "name": "CHATFIT-the-host-reads-the-presence-session-not-the-channel", "file": "src/scenes/world.js",
    "old": "      badgeOf: (id) => chatSessionOf(chatLog?.active)?.badgeOf?.(id) ?? null,", "new": "      badgeOf: (id) => online?.badgeOf?.(id) ?? null,", "tests": ["test/chatfit.test.js"] }
 ]

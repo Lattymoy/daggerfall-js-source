@@ -66,8 +66,8 @@
   {
     "name": "V5-terminal-keeps-ghosts",
     "file": "src/net/online.js",
-    "old": "this.error = 'this character is online in another window'; this._endHalo(); this._forgetRoom(this.room); return; }",
-    "new": "this.error = 'this character is online in another window'; this._endHalo(); return; }",
+    "old": "this.error = SEAT_TEXT; this._endHalo(); this._forgetRoom(this.room); this._deliver('superseded', () => this.onSuperseded?.()); return; }",
+    "new": "this.error = SEAT_TEXT; this._endHalo(); this._deliver('superseded', () => this.onSuperseded?.()); return; }",
     "tests": [
       "test/slam12.test.js",
       "test/slam2.test.js",

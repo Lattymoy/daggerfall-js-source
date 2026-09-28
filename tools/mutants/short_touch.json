@@ -1,0 +1,47 @@
+[
+  {
+    "name": "SHORT-TOUCH-stays-one-column",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  .shell:not(.wizard) { grid-template-columns: min(var(--side), 34vw) 1fr; grid-template-rows: none; }\n",
+    "new": "",
+    "tests": [
+      "test/shorttouch.test.js"
+    ]
+  },
+  {
+    "name": "SHORT-TOUCH-side-stays-dissolved",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  .shell:not(.wizard) > .side { display: flex; flex-direction: column; min-height: 0; }\n",
+    "new": "",
+    "tests": [
+      "test/shorttouch.test.js"
+    ]
+  },
+  {
+    "name": "SHORT-TOUCH-reaches-the-wizard",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  .shell:not(.wizard) .brand { padding: 10px 14px 6px; }",
+    "new": "  .shell .brand { padding: 10px 14px 6px; }",
+    "tests": [
+      "test/shorttouch.test.js"
+    ]
+  },
+  {
+    "name": "SHORT-TOUCH-sign-in-loses-to-px8",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  .px-stage.px-acctstage { padding: max(10px, env(safe-area-inset-top)) 16px 10px; overflow: hidden; }",
+    "new": "  .px-acctstage { padding: max(10px, env(safe-area-inset-top)) 16px 10px; overflow: hidden; }",
+    "tests": [
+      "test/shorttouch.test.js"
+    ]
+  },
+  {
+    "name": "SHORT-TOUCH-sign-in-window-keeps-its-58dvh",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  .px-win.px-acctwin { max-height: calc(100dvh - 20px); }",
+    "new": "",
+    "tests": [
+      "test/shorttouch.test.js"
+    ]
+  }
+]

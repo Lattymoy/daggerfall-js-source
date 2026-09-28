@@ -242,12 +242,13 @@ test('WB3b the seams, by source: the dungeon host enters the court through its o
   assert.match(w, /ready: \(\) => !!online\?\.gateOk,/);
   assert.match(w, /enter: \(g\) => \{ modes\?\.enterGateArena\?\.\(g\); \},/);
   assert.match(w, /else if \(modes\?\.roomIdentity\?\.\(\)\?\.kind === 'gate'\) key = gateRoomKey\(modes\?\.roomIdentity\?\.\(\)\?\.day\);/);
-  assert.match(w, /if \(gateLink && online\.gateOk && isGateRoom\(online\.room\) && online\.welcomes !== _gateInFor && online\.sendGate\(\{ k: 'in', lv: Math\.max\(1, playerEntity\.level \| 0\) \}\)\) _gateInFor = online\.welcomes;/);
+  assert.match(w, /if \(gateLink && online\.gateOk && isGateRoom\(online\.room\) && online\.welcomes !== _gateInFor && online\.sendGate\(\{ k: 'in', lv: Math\.max\(1, playerEntity\.level \| 0\), bv: GATE_BRAIN_V \}\)\) _gateInFor = online\.welcomes;/);   // AUDIT WBX R7: the brain's law said with it
   assert.match(w, /online\.onGate = \(g\) => gateLink\?\.word\(g\);/);
   assert.match(w, /if \(tab\.room === SOCIAL_ROOM\) link\.onGate = \(g\) => gateLink\?\.word\(g\);/);
   assert.match(w, /if \(!player\.arena && modes\?\.gateArenaDay\?\.\(\) != null\) player\.arena = courtRing\(\);/, 'the ring in the online frame');
-  assert.match(w, /if \(!onlineOn && modes\?\.gateArenaDay\?\.\(\) != null\) ejectFromCourt\(COURT_TEXT\.collapse\);/, 'offline, no court');
-  assert.match(w, /if \(courtDay != null && Date\.now\(\) \+ _sharedOffsetMs >= gateTimes\(courtDay\)\.wrathAt \+ GATE_COLLAPSE_MS\) ejectFromCourt\(COURT_TEXT\.collapse\);/);
+  assert.match(w, /if \(!onlineOn && modes\?\.gateArenaDay\?\.\(\) != null\) \{ ejectFromCourt\(COURT_TEXT\.collapse\); gateCourt\?\.leave\(\);/, 'offline, no court - and (AUDIT SS) its floor gathered on the way out');
+  // AUDIT WBX F10: the court's own frame once first - a screen asleep through midnight lands the Wrath, then is carried out
+  assert.match(w, /if \(courtDay != null && Date\.now\(\) \+ _sharedOffsetMs >= gateTimes\(courtDay\)\.wrathAt \+ GATE_COLLAPSE_MS\) \{[\s\S]{0,400}?try \{ gateCourt\?\.frame\(\); \} catch[^\n]*\n\s*ejectFromCourt\(COURT_TEXT\.collapse\);/);
   assert.match(w, /const courtGate = modes\?\.gateArenaGate\?\.\(\) \?\? null;[\s\S]{0,200}if \(courtGate\) \{\n\s+modes\?\.forceExitToExterior\(\);\n\s+if \(landBeforeGate\(courtGate\)\) \{ gateVeil\?\.flash\(\); townTalk\.showOverlay\(new ActionTextBox\(\[COURT_TEXT\.castOut\]\)\); return; \}/, 'a death in the court is cast out before its gate');
   assert.match(w, /function setRecallAnchor\(\) \{\n\s+if \(modes\?\.gateArenaDay\?\.\(\) != null\) \{ setMidScreenText\(COURT_TEXT\.noMark\); return; \}/);
   assert.match(w, /fellAt: \(day\) => gateLink\?\.fellAt\(day\) \?\? null,/, 'the omen hears the kill');

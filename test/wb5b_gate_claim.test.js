@@ -112,15 +112,17 @@ async function stand({ gateKey = null } = {}) {
   return { env, call };
 }
 
-test('WB5b the worker: /v1/gate/claim behind a session and never open - the session is the claimant, never the body; the count on /v1/account and on the Inspect card\'s record; no public half is the service\'s gap (503), another\'s receipt 403, a forged one 400; every word has its sentence; acct10, the toml in step, the public half a var that ships empty (mutants: the route open; the account view without the gates; the key read per request)', async (t) => {
+test('WB5b the worker: /v1/gate/claim behind a session and never open - the session is the claimant, never the body; the count on /v1/account and on the Inspect card\'s record; no public half is the service\'s gap (503), another\'s receipt 403, a forged one 400; every word has its sentence; acct10, the toml in step, and no var of the public half (GATE-KEYS: the deploy puts it as a secret) (mutants: the route open; the account view without the gates; the key read per request)', async (t) => {
   let clock = T0 * 1000;
   t.mock.method(Date, 'now', () => clock);
   const { priv, pub } = await gatePair();
   assert.ok(ROUTES.has('/v1/gate/claim') && !OPEN_ROUTES.has('/v1/gate/claim'));
-  assert.equal(ACCOUNT_VERSION, 'acct11');   // acct10 on its branch; main's RENOWN1, HOME1, DECOR1 and GUILD1 took acct10 first
+  assert.equal(ACCOUNT_VERSION, 'acct16');   // HOME-STATIONS moved it on (acct16 - acct15 on its branch, renumbered past FOUNDER3 at the merge: a decor place's station); FOUNDER3's first contact moved it on (acct15); SHADOW-FANG's title and glyph moved it on (acct14 - acct12 on its branch); WB5b's was acct11 (acct10 on its branch; main's RENOWN1, HOME1, DECOR1 and GUILD1 took acct10 first); BASE-HIDE's taken-out furniture moved it on (acct12); RENOWN4 and GUILD1c moved it again (acct13 - acct12 on their branch)
   const toml = src('server-account/wrangler.toml');
-  assert.match(toml, /ACCOUNT_VERSION = "acct11"/);
-  assert.match(toml, /^GATE_PUBLIC_KEY = ""$/m, 'the public half is a var, empty until the pair is minted');
+  assert.match(toml, /ACCOUNT_VERSION = "acct16"/);
+  // GATE-KEYS: the public half is a Worker SECRET the account deploy puts (account-deploy.yml, "Mint the gate receipt
+  // pair") - a var of the name would be rewritten by every deploy and would refuse the secret its binding
+  assert.doesNotMatch(toml, /^\s*GATE_PUBLIC_KEY\s*=/m, 'no var of the public half - the deploy puts it as a secret');
   assert.doesNotMatch(toml, /GATE_SIGNING_KEY\s*=/, 'the private half is never in the account service\'s file');
   const { call } = await stand({ gateKey: pub });
   const me = (await call('POST', '/v1/auth/guest', {})).body;

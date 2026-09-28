@@ -1,0 +1,92 @@
+[
+  {
+    "name": "PARTY-UI-the-block-never-drawn",
+    "file": "src/ui/socialPanel.js",
+    "old": "      out.push(...journeyBody());   // PARTY-UI\n",
+    "new": "",
+    "tests": [
+      "test/soc3_socialpanel.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-UI-the-live-pass-blind",
+    "file": "src/ui/socialPanel.js",
+    "old": "    if (journeyKey() !== paintedJourney) ui++;",
+    "new": "",
+    "tests": [
+      "test/soc3_socialpanel.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-UI-stay-behind-wired-to-ready",
+    "file": "src/ui/socialPanel.js",
+    "old": "run: () => said(j.respond(false))",
+    "new": "run: () => said(j.respond(true))",
+    "tests": [
+      "test/soc3_socialpanel.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-UI-the-leaders-journey-never-offered",
+    "file": "src/ui/socialPanel.js",
+    "old": "    else if (st.away) {",
+    "new": "    else if (false) {",
+    "tests": [
+      "test/soc3_socialpanel.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-UI-the-count-never-kept",
+    "file": "src/systems/partyTravel.js",
+    "old": "    trip.count = count;",
+    "new": "",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-UI-the-count-never-updated",
+    "file": "src/systems/partyTravel.js",
+    "old": "      t.count = tripCountText(tally);   // PARTY-UI\n",
+    "new": "",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-UI-respond-a-toggle",
+    "file": "src/systems/partyTravel.js",
+    "old": "answer(round.at, yes == null ? vote !== round.at : !!yes), said: true",
+    "new": "answer(round.at, vote !== round.at), said: true",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-UI-the-box-left-standing",
+    "file": "src/systems/partyTravel.js",
+    "old": "    if (promptFor === round.at) closePrompt();\n    asked = round.at;\n    return { line: answer(round.at, yes",
+    "new": "    asked = round.at;\n    return { line: answer(round.at, yes",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-UI-gathered-unread",
+    "file": "src/systems/partyTravel.js",
+    "old": "gathered: near === open.at",
+    "new": "gathered: true",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-UI-the-host-forgot-it",
+    "file": "src/scenes/world.js",
+    "old": "      journey: () => partyTravel,   // PARTY-UI: the Party tab's Journey - the session is made later in this host, so it is read when drawn\n",
+    "new": "",
+    "tests": [
+      "test/soc3_socialpanel.test.js"
+    ]
+  }
+]

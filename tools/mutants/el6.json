@@ -137,8 +137,8 @@
   {
     "name": "frame-depth-renderbuffer-kept",
     "file": "src/render/airPass.js",
-    "old": "      depths.push(depth); depthFbos.push(dfbo);",
-    "new": "      depths.push(null); depthFbos.push(dfbo);",
+    "old": "      depths.push(depth); fbos.push(fb);",
+    "new": "      depths.push(null); fbos.push(fb);",
     "tests": [
       "test/el6_field.test.js"
     ]

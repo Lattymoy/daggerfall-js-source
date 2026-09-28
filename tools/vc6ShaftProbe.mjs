@@ -104,11 +104,10 @@ const out = await page.evaluate(async ({ W, H }) => {
       r.resolveFrame();
       stats = { gl: gl.getError(), shafts: r.air ? r.air.stats.shafts : null };
       if (r.air?.targets) {
-        const T = r.air.targets.shaft;
-        gl.bindFramebuffer(gl.FRAMEBUFFER, T.fbo);
-        const b = new Uint8Array(T.w * T.h * 4);
-        gl.readPixels(0, 0, T.w, T.h, gl.RGBA, gl.UNSIGNED_BYTE, b);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        // LA-POST3: a half float where the GL renders one - readTarget reads it as the bytes a byte image held; LA-POST8:
+        // a frame that drew neither the beams nor the haze leaves the image unread and uncleared - it adds nothing
+        const T = r.air.readTarget('shaft');
+        const b = r.air.stats.shafts || r.air.stats.haze ? T.px : new Uint8Array(T.px.length);
         let sum = 0, max = 0;
         for (let i = 0; i < b.length; i += 4) { const l = b[i] + b[i + 1] + b[i + 2]; sum += l; if (l > max) max = l; }
         shaft = { w: T.w, h: T.h, sum, max };

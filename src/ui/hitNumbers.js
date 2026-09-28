@@ -46,6 +46,17 @@ export function numberFor(r) {
   return { kind: 'hit', text: String(dmg), tag: null };
 }
 
+/** PARTY-BUFFS (Tabitha: "I'd also like floating Heal numbers"): a heal I TOOK - my health between two frames the
+ *  HUD drew, as "+N" in green on this same layer, a little under the reticle where the blows rise. Only a RISE, and
+ *  only from a frame the HUD saw (`prev` null is the first frame back from a window - a night's rest, a level-up, a
+ *  load or a death - so what those windows restored is never floated as a heal). Pure; pinned. */
+export function healNumberFor(prev, now) {
+  const a = Number(prev), b = Number(now);
+  if (prev == null || !Number.isFinite(a) || !Number.isFinite(b)) return null;
+  const n = Math.round(b - a);
+  return n > 0 ? { kind: 'heal', text: `+${n}`, tag: null } : null;
+}
+
 /** The layer, created once, on the enhanced overlay plane. */
 function ensureLayer() {
   if (layer && layer.isConnected) return layer;

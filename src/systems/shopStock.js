@@ -863,13 +863,30 @@ export function stockSoulGems({ quality = 0, gameMinutes = 0 } = {}, { soulPoint
   return stockGuildMagicItems({ quality, gameMinutes, sellsSoulGems: true, onlySoulGems: true }, { soulPointsOf });
 }
 
+/** GUILD-SHELF (2026-09-27, Discord: "Potion seller restock instantly"): ONE SHELF A DAY. The shelf a guild's Buy
+ *  service shows is `store[service]` while it was minted today (the day is stockDayIndex's, the one the stock is seeded
+ *  from), and a fresh `mint()` otherwise - which it then becomes. The trade window buys out of that same array, so what
+ *  was bought stays gone until the day turns. DFU mints on every open (below), which never runs out; the departure and
+ *  why are scenes/worldModes.js guildShelf's. A null store keeps nothing and answers a fresh mint. */
+export function dayShelf(store, service, gameMinutes, mint) {
+  const today = stockDayIndex(gameMinutes);
+  const kept = store?.[service];
+  if (kept && kept.day === today && Array.isArray(kept.items)) return kept;
+  if (store) for (const k of Object.keys(store)) if (store[k]?.day !== today) delete store[k];   // AUDIT GUILD-SHELF A10: a past day's shelf is never shown again - it goes, and the save with it
+  const shelf = { day: today, items: mint() };
+  if (store) store[service] = shelf;
+  return shelf;
+}
+
 /**
  * GetMerchantPotions (:273-280). `n = quality; while (n-- >= 0)` is
  * quality + 1 potions, and it does NOT reseed - it walks on from
  * wherever the sequence stands, so the potion shelf is not stable the
  * way the magic one is. Seeded on the day here anyway, because the
- * port has no ambient global stream to walk on from and a shelf that
- * rerolled on every open would restock itself for free.
+ * port has no ambient global stream to walk on from. The seed alone did
+ * not stop the free restock - the same lot came back at every open, the
+ * bought potions with it - so the host keeps the day's shelf (dayShelf
+ * above, GUILD-SHELF).
  *
  * AND THE DISCARDED DRAW: DFU passes `Random.Range(1, 5)` as
  * CreateRandomPotion's stackSize, and CreateRandomPotion

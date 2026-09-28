@@ -16,6 +16,7 @@ import {
   packModel, itemLine, itemStatSuffix, SLOT_MAP, useResultAction, remoteModel, REMOTE_TITLE, STOW_LABEL, plural,
   equippedModel, LIGHT_SLOT, localPrimaryAct,   // HT5
   mountEnhancedInventory,   // AUDIT INV2: the pane is MOUNTED and the gesture DRIVEN
+  itemInfoBoxes,   // PLUS10
 } from '../src/ui/enhancedInventory.js';
 import { WAGON_KG_LIMIT } from '../src/systems/itemTransfer.js';
 import { SMALL_CART_TEMPLATE } from '../src/systems/inventorySession.js';   // MAC-M2 B: a cart in the bag, so the loot bar's one surviving button draws
@@ -98,7 +99,7 @@ test('U53: encumbrance is the same expression the sheet and the classic window u
     'LIVE strength - a drained player must not be told they can carry the undrained amount');
   // ...and the OTHER half. PlayerEntity.CarriedWeight (:184) is the
   // items PLUS the gold counter's weight, and the pane composes it by
-  // hand (enhancedInventory.js:208-230) because it is handed the list
+  // hand (enhancedInventory.js:221-243) because it is handed the list
   // and not the entity - so it must still land on inventory
   // .carriedWeight's answer.
   assert.equal(m.encumbrance.now, Math.trunc(carriedWeight(e)));
@@ -277,8 +278,9 @@ test('U54: the tile sets no width attribute - these sprites are not square', () 
   // A dagger is tall and narrow and a cuirass is wide; forcing them
   // all to one width squashes every one. The CSS caps both axes.
   const src = read('src/ui/enhancedInventory.js');
-  const tile = src.slice(src.indexOf('function itemTile(line)'), src.indexOf('function itemRow(item)'));
-  assert.doesNotMatch(tile, /img\.width\s*=/, 'no width attribute on the icon');
+  const tile = src.slice(src.indexOf('function itemTile(line, box'), src.indexOf('function itemRow(item'));
+  assert.ok(tile.length > 200, 'the tile is read');   // UI1: the slice found - a missing anchor read nothing and passed
+  assert.doesNotMatch(tile, /img\.width\s*=/, 'no width attribute on the icon');   // UI1: the fitted picture carries its size in its style (fittedImg)
   const css = read('src/ui/enhancedStyle.js');
   assert.match(css, /\.tile img \{ image-rendering: pixelated; max-width: 30px; max-height: 30px; \}/);
 });
@@ -912,24 +914,26 @@ test('U59: the doll is the COMPOSITOR\'s, and the schematic is the fallback', ()
 // enlarged icons and displayability." And: "when looting items, only
 // open the loot tooltip, not the entire inventory window."
 
-test('PX20a: the doll owns the CENTRE COLUMN, and the map is wear-left, carry-right', () => {
+test('PX20a: the doll owns the CENTRE COLUMN, and the map is wear-left, carry-right (PLUS11\'s five rows - the one table since PLUS-DEAD retired plain Enhanced\'s six)', () => {
   const src = read('src/ui/enhancedInventory.js');
-  // Six rows a side, the doll spanning all six: a standing figure gets
-  // a portrait cell. The old 2/2/span 3 was landscape.
-  assert.match(src, /const DOLL_AREA = '1 \/ 2 \/ span 6 \/ auto';/);
-  const fams = src.slice(src.indexOf('const WORN_FAMILIES'), src.indexOf('const DOLL_AREA'));
+  // Five rows a side, the doll spanning all five: a standing figure gets a portrait cell.
+  assert.match(src, /const DOLL_AREA = '1 \/ 2 \/ span 5 \/ auto';/);
+  assert.match(src, /dollFrame\.style\.gridArea = DOLL_AREA;/);
+  const fams = src.slice(src.indexOf('const WORN_FAMILIES = Object.freeze(['), src.indexOf('const SHELF_GROUPS'));
   const left = [...fams.matchAll(/label: '([^']+)', area: '(\d) \/ 1'/g)].map((m) => [Number(m[2]), m[1]]);
   const right = [...fams.matchAll(/label: '([^']+)', area: '(\d) \/ 3'/g)].map((m) => [Number(m[2]), m[1]]);
-  assert.equal(left.length, 6, 'six down the left');
-  assert.equal(right.length, 6, 'six down the right');
-  assert.deepEqual(left.map((r) => r[0]), [1, 2, 3, 4, 5, 6], 'no gaps, no doubles');
-  assert.deepEqual(right.map((r) => r[0]), [1, 2, 3, 4, 5, 6]);
-  assert.deepEqual(left.map((r) => r[1]), ['Head', 'Neck', 'Cloaks', 'Chest', 'Arms', 'Hands'], 'what you WEAR, top to toe');
+  assert.equal(left.length, 5, 'five down the left');
+  assert.equal(right.length, 5, 'five down the right');
+  assert.deepEqual(left.map((r) => r[0]), [1, 2, 3, 4, 5], 'no gaps, no doubles');
+  assert.deepEqual(right.map((r) => r[0]), [1, 2, 3, 4, 5]);
+  assert.deepEqual(left.map((r) => r[1]), ['Head', 'Cloaks', 'Chest', 'Arms', 'Hands'], 'what you WEAR, top to toe');
   assert.ok(right.map((r) => r[1]).includes('Legs') && right.map((r) => r[1]).includes('Feet'));
   assert.ok(!fams.includes("area: '1 / 2'"), 'nothing shares the doll\'s column');
+  assert.doesNotMatch(src, /WORN_FAMILIES_PLUS|wornFamilies\(|span 6/, 'no second table, no switch between two');
   const css = read('src/ui/enhancedStyle.js');
   assert.match(css, /grid-template-columns: minmax\(0, 1fr\) auto minmax\(0, 1fr\);/, 'the centre column is AUTO - the sprite sets its width');
-  assert.match(css, /grid-template-rows: repeat\(6, minmax\(44px, 1fr\)\);/);
+  assert.match(src, /map\.classList\.add\('plus5'\);/);
+  assert.match(read('src/ui/enhancedPlusStyle.js'), /\.pack-shell \.wornmap\.plus5 \{ grid-template-rows: repeat\(5, minmax\(44px, 1fr\)\); \}/);
 });
 
 test('PX20a/c: the sprite is unframed, 4x, and its cell is a PERFECT FIT', () => {
@@ -978,7 +982,7 @@ test('PX20c: the name is in the title bar, the count is gone, the tiles carry th
 test('PX20b: a LOOT target opens its own frame alone - the pack is never built', () => {
   const src = read('src/ui/enhancedInventory.js');
   assert.match(src, /^let packOpen = true;$/m);
-  assert.match(src, /packOpen = !d\.loot;/, 'a loot session opens closed');
+  assert.match(src, /packOpen = !d\.loot \|\| d\.loot\.storage === true;/, 'a loot session opens closed - but the player\'s own STORAGE opens beside the pack (SHIP-STORE)');
   assert.match(src, /side = d\.loot \? 'remote' : 'local';/, '...on the side the player came for');
   // NOT BUILT, not built-and-hidden: the pack's whole body sits behind
   // the flag, so a hidden window cannot run layout or eat the tooltip.
@@ -1007,17 +1011,18 @@ test('PX20b: a LOOT target opens its own frame alone - the pack is never built',
 });
 
 // ── PX21: THE LOOT WINDOW READS, AND TRANSPORT HAS A HOME ─────────
-test('PX21a: mounts and the cart get their own strip - the tab they fall into is not a home', () => {
+test('PX21a: mounts and the cart get their own place - the tab they fall into is not a home (PLUS11: a split cell of the worn grid; the strip plain Enhanced drew is gone with it)', () => {
   const src = read('src/ui/enhancedInventory.js');
   // A horse and a cart are Transportation, and filterByTab has NO arm
   // for them: they land in the fourth tab with the shirts. That is
   // DFU's own behaviour, and it is why a player who buys a horse
-  // cannot find it - so the strip is a place, not a decoration.
+  // cannot find it - so their cell is a place, not a decoration.
   const nat = read('src/ui/nativeInventory.js');
-  assert.doesNotMatch(nat, /tab === 'transport'|group === 'Transportation'/, 'still no tab arm - the strip is the answer');
+  assert.doesNotMatch(nat, /tab === 'transport'|group === 'Transportation'/, 'still no tab arm - the cell is the answer');
   assert.match(src, /const TRANSPORT = Object\.freeze\(\[/);
   assert.match(src, /\{ id: 'mount', label: 'Mount', owned: hasHorse,/);
   assert.match(src, /\{ id: 'cart', label: 'Cart', owned: hasCart,/);
+  assert.match(src, /\{ id: 'transport', label: 'Travel', area: '5 \/ 3', slots: \[\], transport: true \}/, 'the Travel cell of the grid');
   // U58's law: the SESSION answers "do you have one" and hands back the
   // item to draw. No template index is read in the window - the pin
   // that caught the first draft doing it stays exactly as it was.
@@ -1027,11 +1032,13 @@ test('PX21a: mounts and the cart get their own strip - the tab they fall into is
   assert.match(sess, /export const hasHorse = \(items = \[\]\) =>/, 'and the mount question has a home beside the cart\'s');
   assert.match(sess, /export const TRANSPORT_HORSE_TEMPLATE = 94;/);
   assert.match(sess, /export function transportItem\(items = \[\], kind\)/);
-  // The cart plaque IS the wagon's door - one control for the thing and
-  // the place it opens - and it refuses through the session, not twice.
-  assert.match(src, /if \(isCart && owned\) \{[\s\S]{0,240}node\.onclick = toggleWagon;/);
+  // The cart IS the wagon's door - one control for the thing and the
+  // place it opens - and it refuses through the session, not twice.
+  assert.match(src, /if \(isCart && owned\) \{\n\s*node\.onclick = toggleWagon;/);
   assert.match(src, /el\(isCart && owned \? 'button' : 'div',/, 'a plaque that only reports is not a button');
-  assert.match(src, /col2\.append\(transportStrip\(\)\);/);
+  assert.match(src, /col2\.append\(accessoryShelf\(\)\);/, 'the shelf stands where the strip stood');
+  assert.doesNotMatch(src, /function transportStrip\(/, 'the strip is retired (PLUS-DEAD)');
+  assert.doesNotMatch(read('src/ui/enhancedStyle.js'), /\.pack-shell \.transport \{/, 'and its sheet with it');
 });
 
 test('PX21b: the loot window is ROWS, not the dock\'s anonymous squares', () => {
@@ -1039,7 +1046,7 @@ test('PX21b: the loot window is ROWS, not the dock\'s anonymous squares', () => 
   // The dock's tile grid is right for a bag you know and wrong for a
   // chest you have never opened: the only question a container asks is
   // what is in it.
-  assert.match(css, /\.pack-shell \.itemrow \{[\s\S]{0,200}width: 56px; height: 56px;/, 'the dock keeps its tiles');
+  assert.match(css, /\.pack-shell \.itemrow \{ position: relative;[\s\S]{0,200}width: 64px; height: 64px;/, 'the dock keeps its tiles (UI1: 64px plates)');
   assert.match(css, /\.loot-win \.itemrow \{ width: 100%; height: auto; min-height: 52px;/);
   assert.match(css, /\.loot-win \.itemrow \.itemname \{ position: static;[\s\S]{0,120}clip-path: none;/,
     'the name is readable here, where the dock hides it');
@@ -1483,7 +1490,7 @@ test('HT5: picking the light row offers Douse, not Take off', () => {
   assert.deepEqual(localPrimaryAct(torch, entity), { kind: 'douse', label: 'Douse' });
   const src = readFileSync(new URL('../src/ui/enhancedInventory.js', import.meta.url), 'utf8');
   // the off hand's panel carries it, and lists it first
-  assert.match(src, /\{ id: 'lhand', label: 'L\\u00b7Hand', area: '4 \/ 3', slots: \['Light', 'Left hand'\] \}/,
+  assert.match(src, /\{ id: 'lhand', label: 'L\\u00b7Hand', area: '2 \/ 3', slots: \['Light', 'Left hand'\] \}/,   // PLUS11's five-row table, the one since PLUS-DEAD
     'the light shares the off hand and is the first row of that family');
   // takeOff is reached only for a real equipped item, never for this row
   assert.match(src, /b\.onclick = act\.kind === 'takeOff' \? \(\) => takeOff\(picked\.equipSlot\)/,
@@ -1518,7 +1525,9 @@ test('INV1: a drag equips through the one act, and never crosses a side', () => 
   const release = code.slice(code.indexOf('{', decl), code.indexOf('const TOUCH_HOLD_MS'));   // the BODY, so the function's own name is not one of its calls
   assert.ok(release.length > 100, 'the release is where a drop lands');
   const calls = [...release.matchAll(/(?:^|[^\w.])([a-z][A-Za-z0-9_]*)\(/g)].map((m) => m[1]);
-  const acts = [...new Set(calls)].filter((n) => !['if', 'for', 'while', 'return', 'typeof', 'clearTimeout',
+  // AUDIT MERGE-PLUS C2: `setTimeout` joins `clearTimeout` as plumbing - it clears the click latch a tick after the
+  // release - and a call INSIDE its callback is still read by this scan, so the set stays closed.
+  const acts = [...new Set(calls)].filter((n) => !['if', 'for', 'while', 'return', 'typeof', 'clearTimeout', 'setTimeout',
     'dragLock', 'ghostEnd', 'dragHighlight', 'dropIntent', 'includes'].includes(n)).sort();
   // INV2 opened the set by exactly ONE - a release off the panel is the
   // TRANSFER THE SCREEN ALREADY OFFERS (`stow` is the function behind the
@@ -1756,7 +1765,8 @@ test('AUDIT INV2: the ghost is the item\'s own tile, and the ladder it rides is 
 
   // ONE ICON PIPELINE - this file's header names the trap in its own
   // words, and the ghost asks the same function the row does.
-  assert.match(code, /ghost\.append\(itemTile\(itemLine\(item, deps\.entity\)\)\);/);
+  // UI1: the slot's own picture at the grid's box, which a landing picture swaps in place of the initials
+  assert.match(code, /const line = itemLine\(item, deps\.entity\), g = ghost;\n {2}const tile = \(\) => itemTile\(line, gridBox\(\), \(\) => \{ if \(ghost === g\) g\.querySelector\('\.tile'\)\?\.replaceWith\(tile\(\)\); \}\);\n {2}ghost\.append\(tile\(\)\);/);
   const ghostFns = code.slice(code.indexOf('function ghostStart('), code.indexOf('function ghostAt('));
   assert.doesNotMatch(ghostFns, /modelIconUrl\(|requestIcon\(/, 'and reaches for no icon source of its own');
 
@@ -1883,10 +1893,10 @@ test('MAC-M1: ONE suffix, shared by the three hovers that show it', () => {
   const src = readFileSync(new URL('../src/ui/enhancedInventory.js', import.meta.url), 'utf8')
     .replace(/^\s*\/\/.*$/gm, '');
   const uses = (src.match(/itemStatSuffix\(/g) ?? []).length;
-  // three CALL SITES - the grid tile, its no-icon fallback, the worn
-  // slot. The `export const` declaration is not one of them, which is
+  // four CALL SITES - the grid tile, its no-icon fallback, the worn
+  // slot, and PLUS11's accessory socket. The `export const` declaration is not one of them, which is
   // why this counts `itemStatSuffix(` rather than the bare name.
-  assert.equal(uses, 3, `the builder is USED at all three hovers, not just exported (found ${uses})`);
+  assert.equal(uses, 4, `the builder is USED at all three hovers, not just exported (found ${uses})`);
   assert.doesNotMatch(src, /l\.damage \?\? l\.armour/,
     'no surface spells the `??` for itself - that is what the builder is for');
 });
@@ -2070,16 +2080,19 @@ test('MAC-M2 B: the WAGON button is untouched - it is the one control the loot b
   });
 });
 
-test('MAC-M2 B: the NORMAL pack keeps its Gold button - the gate is the session, not the frame', () => {
-  // The pack opened on the inventory key is untouched: it drops
-  // something on the ground, the ground frame arrives, and Gold is on
-  // it exactly as it always was.
+test('MAC-M2 B: the NORMAL pack keeps its Gold button - GOLD-DROP: on the pack itself, never on the ground frame\'s bar', () => {
+  // The pack opened on the inventory key: it drops something on the
+  // ground, the ground frame arrives - and Gold is where DFU keeps it,
+  // the player's own panel (GOLD-DROP), which is why it was there before
+  // anything was dropped at all.
   withPack(({ dom, e, view, rows, at, down, move, up }) => {
     assert.ok(dom.doc.querySelectorAll('.pack-win').length, 'a pack session, not a loot one');
+    assert.equal(dom.doc.querySelectorAll('.goldbtn').length, 1, 'the pack\'s Gold button, over bare ground');
     at(dom.body); down(rows()[0], 10, 10); move(60, 60); up(60, 60);
     assert.equal(view.dropped().length, 1, 'something is on the ground now');
     assert.ok(e.items.length, 'and the bag still has the rest');
-    assert.ok(barOf(dom).includes('Gold'), 'so the ground frame carries Gold, as it always did');
+    assert.equal(dom.doc.querySelectorAll('.goldbtn').length, 1, 'the Gold button still the pack\'s');
+    assert.equal(barOf(dom).some((t) => /gold/i.test(t)), false, 'and never on the ground frame\'s bar, by any word (AUDIT GOLD-DROP 5: "Drop gold" passed the bare \'Gold\' this read)');
     assert.equal(barOf(dom).includes('Pack'), false, 'and never the Pack button, which is gone for good');
   });
 });
@@ -2337,7 +2350,7 @@ test('ENH-NOTICE3 (AUDIT B/F5): a refusal raised over a LOOT PILE with the pack 
       const host = dom.mk('div');
       dom.body.append(host);
       const e = hero();
-      e.goldPieces = 2000000;   // CanCarryAmount's own gate: the coin weight alone fills the load (itemTransfer.js:271)
+      e.goldPieces = 2000000;   // CanCarryAmount's own gate: the coin weight alone fills the load (itemTransfer.js:275)
       const pile = [mk('Claymore')];
       const view = mountEnhancedInventory(host, {
         entity: e, items: () => e.items, loot: { items: () => pile }, onExit: () => {},
@@ -2356,4 +2369,92 @@ test('ENH-NOTICE3 (AUDIT B/F5): a refusal raised over a LOOT PILE with the pack 
     if (had === undefined) delete globalThis.location; else globalThis.location = had;
     destroyEnhancedNotice();
   }
+});
+
+// ═══ PLUS9: THE SPLIT WORN PANELS (Enhanced Plus only) ═══════════
+//
+// 2026-09-25, a player's sketch over the pack: chest armour | shirt, left arm | right arm, leg armour | pants/skirt,
+// each its own half panel instead of one family that hides the second piece behind a tap. Plus only - plain
+// Enhanced keeps its eleven families exactly.
+function withDressed(search, fn) {
+  const prev = globalThis.location;
+  _resetForTests(); globalThis.location = { search };
+  try {
+    return withPack((k) => {
+      for (const it of k.e.items) assert.ok(equipItem(k.e, it), `${it.name} goes on`);
+      k.view.repaint();
+      return fn(k);
+    }, { items: () => [mk('Cuirass', 'Armor'), mk('Greaves', 'Armor'), mk('Left Pauldron', 'Armor'),
+      mk('Right Pauldron', 'Armor'), mk('Casual Pants', 'MensClothing'), mk('Short Shirt', 'MensClothing')] });
+  } finally { globalThis.location = prev; _resetForTests(); }
+}
+const wornWords = (dom) => dom.doc.querySelectorAll('.wornslot').map((n) => n.textContent);
+
+test('PLUS9: under Enhanced Plus the chest, arms and legs are two half panels each - every worn piece shows at once', () => {
+  withDressed('?skin=enhanced', ({ dom }) => {   // PLUS-ONLY: the enhanced skin is Plus's
+    const pairs = dom.doc.querySelectorAll('.wornpair');
+    assert.equal(pairs.length, 4, 'three split body cells and Mount | Cart (PLUS11)');
+    const words = wornWords(dom);
+    for (const w of ['Chest armor', 'Shirt', 'Left arm', 'Right arm', 'Leg armor', 'Pants / skirt']) {
+      assert.ok(words.includes(w), `a "${w}" half: ${words}`);
+    }
+    const filled = dom.doc.querySelectorAll('.wornrow').filter((n) => !n.classList.contains('wornempty'));
+    assert.equal(filled.length, 6, 'six pieces worn, six filled panels - none hidden behind another');
+    assert.equal(dom.doc.querySelectorAll('.worncount').length, 0, 'so no panel needs a count badge');
+    // PLUS9b: the worn panels wear the pack's hover card and right-click menu, as the pack's rows do
+    for (const n of filled) {
+      assert.equal(typeof n.onmouseenter, 'function', 'a worn panel shows the card on hover');
+      assert.equal(typeof n.oncontextmenu, 'function', 'and its actions on a right-click');
+    }
+  });
+});
+
+test('PLUS-ONLY: plain Enhanced\'s eleven families are retired - a retired `?plus=0` asks for nothing, the pack is split', () => {
+  withDressed('?skin=enhanced&plus=0', ({ dom }) => {   // the old instruction on an old bookmark: Plus answers anyway
+    assert.equal(dom.doc.querySelectorAll('.wornpair').length, 4, 'the split cells stand (mutant: the seam still reads ?plus)');
+    const words = wornWords(dom);
+    for (const w of ['Chest', 'Arms', 'Legs']) assert.ok(!words.includes(w), `no whole "${w}" family: ${words}`);
+    assert.ok(words.includes('Shirt'), 'the Plus halves');
+  });
+});
+
+// ═══ PLUS10: THE INFO BUTTON (Enhanced Plus) ═════════════════════
+test('PLUS10: the Info box is the classic Info popup\'s own text - the item\'s TEXT.RSC record with its macros filled', () => {
+  const sword = mk('Longsword');
+  const rec = { 1001: [{ text: '%it', center: true }, { text: 'Weight: %kg kilograms' }] };
+  const boxes = itemInfoBoxes(sword, { rows: (id) => rec[id] ?? [] });
+  assert.equal(boxes.length, 1, 'a plain sword has one box');
+  assert.deepEqual(boxes[0].map((r) => r.text), ['Longsword', `Weight: ${boxes[0][1].text.match(/[\d.]+/)[0]} kilograms`]);
+  assert.equal(boxes[0][0].center, true, 'and keeps the record\'s alignment');
+  assert.deepEqual(itemInfoBoxes(sword, {}), [[{ text: 'No item description available.', center: true }]],
+    'with no TEXT.RSC it says so rather than inventing lines');
+  const src = readFileSync(new URL('../src/ui/enhancedInventory.js', import.meta.url), 'utf8');
+  assert.match(src, /const info = el\('button', 'act', 'Info'\);\n  info\.onclick = \(\) => openInfo\(picked\);/, 'the button (Plus\'s; on every card since PLUS-DEAD)');
+});
+
+// ═══ PLUS11: THE ACCESSORY SHELF (Enhanced Plus) ═════════════════
+test('PLUS11: under Plus the twelve accessory slots stand on a shelf of labelled pairs, and Mount | Cart is a cell of the grid', () => {
+  const prev = globalThis.location;
+  _resetForTests(); globalThis.location = { search: '?skin=enhanced' };   // PLUS-ONLY: the enhanced skin is Plus's
+  try {
+    withPack((k) => {
+      for (const it of k.e.items) assert.ok(equipItem(k.e, it), `${it.name} goes on`);
+      k.view.repaint();
+      const { dom } = k;
+      assert.equal(dom.doc.querySelectorAll('.wornshelf').length, 1, 'one shelf');
+      assert.equal(dom.doc.querySelectorAll('.transport').length, 0, 'and no Mount / Cart strip - they moved into the grid');
+      assert.deepEqual(dom.doc.querySelectorAll('.shelflabel').map((n) => n.textContent),
+        ['Amulets', 'Rings', 'Bracelets', 'Bracers', 'Marks', 'Crystals'], 'the classic shelf\'s six pairs');
+      assert.equal(dom.doc.querySelectorAll('.wornsock').length, 12, 'twelve sockets');
+      const filled = dom.doc.querySelectorAll('.wornsock').filter((n) => !n.classList.contains('wornempty'));
+      assert.equal(filled.length, 2, 'the amulet and the ring, each in its own socket');
+      for (const n of filled) {
+        assert.equal(typeof n.onpointerdown, 'function', 'a filled socket drags off the body');
+        assert.equal(typeof n.onmouseenter, 'function', 'and shows the card on hover');
+      }
+      const words = dom.doc.querySelectorAll('.wornslot').map((n) => n.textContent);
+      assert.ok(words.includes('Mount') && words.includes('Cart'), `Mount | Cart in the grid: ${words}`);
+      for (const gone of ['Neck', 'Rings', 'Tokens']) assert.ok(!words.includes(gone), `no ${gone} panel any more`);
+    }, { items: () => [mk('Amulet', 'Jewellery'), mk('Ring', 'Jewellery')] });
+  } finally { globalThis.location = prev; _resetForTests(); }
 });

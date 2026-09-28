@@ -544,11 +544,11 @@ test('MAC-K2: the bridge’s questLog is the ONE walk - and it is the arithmetic
   const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../src/scenes/questBridge.js'), 'utf8');
   const body = src.slice(src.indexOf('    questLog() {'), src.indexOf('\n    },', src.indexOf('    questLog() {')) + 6);
   assert.ok(body.includes('remainingTimeInSeconds'), 'the slice really is the walk');
-  const questLog = new Function('machine', 'notebook',
+  const questLog = new Function('machine', 'notebook', 'clockCounts',   // DEAD-CLOCK: whether a clock's end changes anything
     `const o = { ${body} }; return o.questLog();`);
 
   const machine = { quests: new Map([[5, withLog], [6, silent], [7, done], [8, ghost]]) };
-  const log = questLog(machine, { getFinishedQuests: () => ['a finished one'] });
+  const log = questLog(machine, { getFinishedQuests: () => ['a finished one'] }, () => true);
 
   assert.equal(log.active.length, 1, 'only the quest that has really written a log entry is a row');
   assert.equal(log.active[0].id, '5', 'the uid, as a string - the rail keys on it');
@@ -558,6 +558,9 @@ test('MAC-K2: the bridge’s questLog is the ONE walk - and it is the arithmetic
   assert.equal(log.active[0].clockSeconds, 120,
     'the SHORTEST live clock, by its LIVE read (clock_b\'s field says 130) - a finished one and a disabled one are not timers');
   assert.deepEqual(log.finished, ['a finished one']);
+  // DEAD-CLOCK (test/deadclock.test.js): a clock whose end changes nothing is not the line's - the next deadline is
+  const dead = questLog(machine, { getFinishedQuests: () => [] }, (q, r) => r !== withLog.resources.get('clock_b'));
+  assert.equal(dead.active[0].clockSeconds, 600, 'clock_b counts for nothing: clock_a\'s ten minutes are the deadline');
 
   // a host whose notebook has not been built yet is not a crash
   assert.deepEqual(questLog({ quests: new Map() }, null), { active: [], finished: [] });

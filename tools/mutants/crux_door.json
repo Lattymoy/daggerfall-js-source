@@ -1,0 +1,38 @@
+[
+  {
+    "name": "CRUX-DOOR-every-face-an-exit",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (!isDungeonExitDoor(door)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/crux_door.test.js"
+    ]
+  },
+  {
+    "name": "CRUX-DOOR-type-inverted",
+    "file": "src/world/dungeonLayout.js",
+    "old": "export const isDungeonExitDoor = (door) => door?.doorType === DOOR_TYPE.DUNGEON_EXIT;",
+    "new": "export const isDungeonExitDoor = (door) => door?.doorType !== DOOR_TYPE.DUNGEON_EXIT;",
+    "tests": [
+      "test/crux_door.test.js"
+    ]
+  },
+  {
+    "name": "CRUX-DOOR-entrance-too",
+    "file": "src/world/dungeonLayout.js",
+    "old": "export const isDungeonExitDoor = (door) => door?.doorType === DOOR_TYPE.DUNGEON_EXIT;",
+    "new": "export const isDungeonExitDoor = (door) => door?.doorType >= DOOR_TYPE.DUNGEON_ENTRANCE;",
+    "tests": [
+      "test/crux_door.test.js"
+    ]
+  },
+  {
+    "name": "CRUX-DOOR-second-literal",
+    "file": "src/world/dungeonLayout.js",
+    "old": "      if (isDungeonExitDoor(door)) {",
+    "new": "      if (door.doorType === DOOR_TYPE.DUNGEON_EXIT) {",
+    "tests": [
+      "test/crux_door.test.js"
+    ]
+  }
+]

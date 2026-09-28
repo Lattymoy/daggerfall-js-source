@@ -1,0 +1,269 @@
+[
+  {
+    "name": "AUDWBX-R1-the-share-left-in-him",
+    "file": "src/net/gateBrain.js",
+    "old": "  for (const p of Object.values(f.players)) if (!p.retired && now - (p.seenAt ?? p.joinedAt) > ABSENT_RETIRE_MS) retireShare(f, p);",
+    "new": "  void ABSENT_RETIRE_MS;",
+    "tests": [
+      "test/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-R1-the-return-healing-him",
+    "file": "src/net/gateBrain.js",
+    "old": "  f.max += p.share;\n  f.hp += p.share * frac;",
+    "new": "  f.max += p.share;\n  f.hp += p.share;",
+    "tests": [
+      "test/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-R2-a-beat-holding-a-seat",
+    "file": "src/net/gateBrain.js",
+    "old": "    if (present.has(sub) || p.dealt >= RECEIPT_SHARE * p.share || p.stoodMs >= SEAT_KEEP_MS) continue;",
+    "new": "    if (present.has(sub) || p.dealt > 0 || p.stoodMs > 0) continue;",
+    "tests": [
+      "test/auditwb_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-R3-the-cleave-back-at-six",
+    "file": "src/net/gateBrain.js",
+    "old": "arc: 110, pct: 0.35, base: 8, el: null, aim: 'target', phase: 1, range: 7,",
+    "new": "arc: 110, pct: 0.35, base: 8, el: null, aim: 'target', phase: 1, range: 6,",
+    "tests": [
+      "test/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-R4-the-walls-fight",
+    "file": "src/net/gateBrain.js",
+    "old": "  const fight = Math.max(1, Number.isFinite(f.liveMs) ? f.liveMs : f.fell.at - f.startedAt);",
+    "new": "  const fight = Math.max(1, f.fell.at - f.startedAt);",
+    "tests": [
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-R5-the-wind-ups-silence",
+    "file": "src/net/gateBrain.js",
+    "old": "    else hpFrame(f, now, out);   // AUDIT WBX R5",
+    "new": "    else void hpFrame;   // AUDIT WBX R5",
+    "tests": [
+      "test/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-R6-a-blow-after-midnight",
+    "file": "src/net/gateBrain.js",
+    "old": "  if (now >= f.wrathAt) return 0;",
+    "new": "  if (false) return 0;",
+    "tests": [
+      "test/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-R6-a-blow-never-waking-him",
+    "file": "server/src/index.js",
+    "old": "    else if (!f.fell && !f.wrath && !(this._beatArmedTo > now)) { this._beatArmedTo = now + BRAIN_TICK_MS; await this._gateArm(now); }",
+    "new": "    else void this._beatArmedTo;",
+    "tests": [
+      "test/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-R7-the-law-unasked",
+    "file": "server/src/index.js",
+    "old": "      if (!(m.bv >= GATE_BRAIN_MIN)) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-S1-the-hub-keeping-it",
+    "file": "server/src/index.js",
+    "old": "    await this.state.storage.put(k, { d: day, spent: true, e: Math.floor(now / 1000) + RECEIPT_TTL_S });",
+    "new": "    void k;",
+    "tests": [
+      "test/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-S4-every-tab-handed-it",
+    "file": "server/src/index.js",
+    "old": "    for (const [sub, { ws }] of newest) this._send(ws, JSON.stringify({ t: 'gate', ...rc.get(sub) }));",
+    "new": "    for (const [ws, b] of [...this._all()]) if (b.id && b.sub && rc.has(b.sub) && !here.has(b.sub) && !done.has(b.sub)) this._send(ws, JSON.stringify({ t: 'gate', ...rc.get(b.sub) }));",
+    "equivalent": true,
+    "why": "ONE-SEAT (2026-09-27): an account holds the hub from ONE tab - a second tab of the same verified account is refused there, or closes the first by claiming (net/wire.js ONE-SEAT) - so every tab of the account and its newest tab are the same socket, and the two hand-outs cannot differ. The hand-out itself is pinned (S1: one tab of the account handed it, the newest). AUDIT ONESEAT T3: re-aimed - the first `new` also dropped the spent-receipt exclusion (AUDIT WBX2 M3), which is no equivalent (auditwbx2.test.js kills it); the one it changes now is every-tab-for-newest alone.",
+    "tests": [
+      "test/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-S4-the-court-handed-it-by-the-hub",
+    "file": "server/src/index.js",
+    "old": "      if (!b.sub || !rc.has(b.sub) || here.has(b.sub) || done.has(b.sub)) continue;",
+    "new": "      if (!b.sub || !rc.has(b.sub) || done.has(b.sub)) continue;",
+    "tests": [
+      "test/auditwbx.test.js",
+      "test/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-S1-said-before-it-is-safe",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "    const durable = store?.persisted?.(SPOILS_STORE_KEY) ?? true;",
+    "new": "    const durable = true;",
+    "tests": [
+      "test/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-S3-the-clock-rule-for-this-build",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "    if (rec.v !== SPOILS_RECORD_V && savedSince(infos, rec.who ?? who, rec.at)) continue;",
+    "new": "    if (savedSince(infos, rec.who ?? who, rec.at)) continue;",
+    "tests": [
+      "test/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-S3-a-save-clearing-nothing",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "      const ids = new Set([...held].filter(([, h]) => h.who === whoSaved).map(([id]) => id));",
+    "new": "      const ids = new Set();",
+    "tests": [
+      "test/auditwbx.test.js",
+      "test/auditwb_spoils.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-S2-the-level-unsigned",
+    "file": "src/net/gateReceipt.js",
+    "old": "const claimsOf = ({ d, b, s, c, x, l }, nowS) => ({ d, b, s, c, x, ...(l !== undefined ? { l } : {}), i: nowS, e: nowS + RECEIPT_TTL_S });",
+    "new": "const claimsOf = ({ d, b, s, c, x }, nowS) => ({ d, b, s, c, x, i: nowS, e: nowS + RECEIPT_TTL_S });",
+    "tests": [
+      "test/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-S2-the-players-level-whatever-the-claim",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "export const spoilsLevel = (playerLevel, claimLevel) => Math.max(1, Math.min(Math.max(1, playerLevel | 0), Number.isSafeInteger(claimLevel) && claimLevel >= 1 ? claimLevel : Infinity));",
+    "new": "export const spoilsLevel = (playerLevel, claimLevel) => Math.max(1, playerLevel | 0);",
+    "tests": [
+      "test/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-F1-the-razor-on-the-stand-in",
+    "file": "src/systems/artifactEffects.js",
+    "old": "      if (!target || !item || target.spareGear) return null;",
+    "new": "      if (!target || !item) return null;",
+    "tests": [
+      "test/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-F3-the-fall-at-the-words-start",
+    "file": "src/net/gateLink.js",
+    "old": "      const [x, z] = place(s, g.at);",
+    "new": "      const [x, z] = [s.x, s.z];",
+    "tests": [
+      "test/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-F4-the-charge-kept-through-the-walk",
+    "file": "src/net/gateLink.js",
+    "old": "    case 'mv': return { ...s, atk: null, move:",
+    "new": "    case 'mv': return { ...s, move:",
+    "tests": [
+      "test/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-F3-the-relay-left-behind",
+    "file": "src/net/gateBrain.js",
+    "old": "    settleAt(f, now);   // AUDIT WBX F3",
+    "new": "    void settleAt;   // AUDIT WBX F3",
+    "tests": [
+      "test/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-F7-the-lane-at-half-its-width",
+    "file": "src/render/gateTelegraph.js",
+    "old": "halfW: A.shape === 'lane' ? Math.max((A.width ?? 0) / 2, BOSS_R) : (A.width ?? 0) / 2,",
+    "new": "halfW: (A.width ?? 0) / 2,",
+    "tests": [
+      "test/auditwbx.test.js",
+      "test/wb4_gate_boss.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-F6-the-trap-forgotten-at-the-door",
+    "file": "src/scenes/gateCourt.js",
+    "old": "    if (d !== null && trapMark?.day !== d) trapMark = null;",
+    "new": "    if (trapMark?.day !== d) trapMark = null;",
+    "tests": [
+      "test/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-W1-sealed-in-the-root",
+    "file": "src/scenes/gatePool.js",
+    "old": "    if (f && g && inGateRoot(place, f)) landBefore(g);",
+    "new": "    void inGateRoot;",
+    "tests": [
+      "test/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-W6-the-box-every-frame",
+    "file": "src/scenes/gatePool.js",
+    "old": "      if (!box || !boxAt || boxAt[0] !== o[0] || boxAt[1] !== o[1] || boxAt[2] !== o[2] || boxAt[3] !== place.yaw || boxAt[4] !== place.day) {",
+    "new": "      if (true) {",
+    "tests": [
+      "test/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-W6-the-box-left-where-it-stood",
+    "file": "src/scenes/gatePool.js",
+    "old": "      if (!box || !boxAt || boxAt[0] !== o[0] || boxAt[1] !== o[1] || boxAt[2] !== o[2] || boxAt[3] !== place.yaw || boxAt[4] !== place.day) {",
+    "new": "      if (!box) {",
+    "tests": [
+      "test/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-W2-the-archive-asked-of-a-made-song",
+    "file": "src/systems/music.js",
+    "old": "    if (!this.enabled && !made) return null;",
+    "new": "    if (!this.enabled) return null;",
+    "tests": [
+      "test/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-W3-the-fanfare-under-the-fade",
+    "file": "src/systems/gateScore.js",
+    "old": "stingAt = now + SCORE_STING_LEAD_MS;",
+    "new": "stingAt = now;",
+    "tests": [
+      "test/auditwbx.test.js",
+      "test/auditwb_sound.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-W4-the-session-every-frame",
+    "file": "src/net/gateClaims.js",
+    "old": "      if (!due && t - meAt < GATE_ME_POLL_MS) return false;",
+    "new": "      void meAt;",
+    "tests": [
+      "test/auditwb_spoils.test.js"
+    ]
+  }
+]

@@ -1,0 +1,245 @@
+[
+  {
+    "name": "AUDIT2-GOLD-DROP-1-the-button-takes-its-height-back",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "margin: -6px 0 -6px 12px; min-height: 32px;",
+    "new": "margin: 0 0 0 12px; min-height: 32px;",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GOLD-DROP-1-drawn-at-44-under-a-finger",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  .pack-shell .packgold .goldbtn { position: relative; }\n",
+    "new": "  .pack-shell .packgold .goldbtn { position: relative; min-height: 44px; }\n",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GOLD-DROP-1-the-target-past-the-footer",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "left: 0; right: 0; top: -8px; bottom: -8px; }",
+    "new": "left: 0; right: 0; top: -12px; bottom: -8px; }",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GOLD-DROP-1-the-footer-a-finger-short",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  .pack-shell .packbar { padding-top: 12px; padding-bottom: 12px; }\n",
+    "new": "",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GOLD-DROP-1-a-heavier-rule-draws-it-at-44",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  .lv-star .lv-gem { font-size: 15px; }\n}\n`;",
+    "new": "  .lv-star .lv-gem { font-size: 15px; }\n}\n.pack-shell .packbar .goldbtn.act { min-height: 44px; }\n`;",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GOLD-DROP-1-a-heavier-rule-cuts-the-target",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  .lv-star .lv-gem { font-size: 15px; }\n}\n`;",
+    "new": "  .lv-star .lv-gem { font-size: 15px; }\n}\n.pack-shell .packbar .goldbtn.act::after { top: 0; bottom: 0; }\n`;",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GOLD-DROP-1-a-later-rule-wraps-the-phone-footer",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  .lv-star .lv-gem { font-size: 15px; }\n}\n`;",
+    "new": "  .lv-star .lv-gem { font-size: 15px; }\n}\n@media (max-width: 640px) { .pack-shell .packbar { flex-wrap: wrap; row-gap: 8px; } }\n`;",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GOLD-DROP-1-a-later-rule-brings-the-count-back",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  .lv-star .lv-gem { font-size: 15px; }\n}\n`;",
+    "new": "  .lv-star .lv-gem { font-size: 15px; }\n}\n@media (max-width: 640px) { .pack-shell .packitems { display: inline; } }\n`;",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GOLD-DROP-1-the-count-gone-on-a-desktop",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  .lv-star .lv-gem { font-size: 15px; }\n}\n`;",
+    "new": "  .lv-star .lv-gem { font-size: 15px; }\n}\n.pack-shell .packbar .packitems { display: none; }\n`;",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GOLD-DROP-3-a-wider-meter",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".pack-shell .packcarry .px-meter { flex: 0 1 140px; min-width: 0;",
+    "new": ".pack-shell .packcarry .px-meter { flex: 0 1 260px; min-width: 0;",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GOLD-DROP-3-the-meter-held-at-140",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".pack-shell .packcarry .px-meter { flex: 0 1 140px; min-width: 0;",
+    "new": ".pack-shell .packcarry .px-meter { flex: 0 1 140px; width: 140px; min-width: 0;",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GOLD-DROP-3-a-wider-purse",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  .pack-shell .packgold { flex: 0 0 auto; }\n",
+    "new": "  .pack-shell .packgold { flex: 0 0 auto; min-width: 600px; }\n",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GOLD-DROP-3-the-purse-shrinks",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  .pack-shell .packgold { flex: 0 0 auto; }\n",
+    "new": "  .pack-shell .packgold { flex: 0 1 auto; }\n",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GOLD-DROP-3-the-words-back-at-320",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  .pack-shell .packbar .k { position: absolute; width: 1px; height: 1px; margin: 0; overflow: hidden;\n    clip-path: inset(50%); }\n",
+    "new": "",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GOLD-DROP-3-the-button-wide-at-320",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  .pack-shell .packgold .goldbtn { padding: 0 8px; }\n",
+    "new": "",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GOLD-DROP-4-a-wider-field",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "width: min(360px, calc(100% - 32px)); margin: 0;",
+    "new": "width: 520px; margin: 0;",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GOLD-DROP-4-a-field-held-wide",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "width: min(360px, calc(100% - 32px)); margin: 0;",
+    "new": "width: min(360px, calc(100% - 32px)); min-width: 520px; margin: 0;",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GOLD-DROP-2-the-card-kept-under-the-field",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "if (goldEntry != null) picked = null; notice = null; render(); };",
+    "new": "notice = null; render(); };",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GOLD-DROP-2-a-list-pick-keeps-the-field",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    picked = wasPicked ? null : item;\n    if (picked) goldEntry = null;   // AUDIT2 GOLD-DROP 2\n",
+    "new": "    picked = wasPicked ? null : item;\n",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GOLD-DROP-2-a-worn-pick-keeps-the-field",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    if (picked) goldEntry = null;   // AUDIT2 GOLD-DROP 2: one floater - a card put up puts the gold field away\n",
+    "new": "",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GOLD-DROP-2-a-socket-pick-keeps-the-field",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    picked = picked === item ? null : item;\n    if (picked) goldEntry = null;   // AUDIT2 GOLD-DROP 2\n",
+    "new": "    picked = picked === item ? null : item;\n",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GOLD-DROP-2-back-past-the-field",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  if (overlayAction(e) === 'back' && goldEntry != null) { e.preventDefault(); e.stopPropagation(); goldEntry = null; render(); return; }\n",
+    "new": "",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GOLD-DROP-2-one-back-takes-the-field-and-the-pack",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "&& goldEntry != null) { e.preventDefault(); e.stopPropagation(); goldEntry = null; render(); return; }",
+    "new": "&& goldEntry != null) { e.preventDefault(); e.stopPropagation(); goldEntry = null; render(); }",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GOLD-DROP-2-the-input-deaf-to-back",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  input.onkeydown = (e) => { if (overlayAction(e) === 'back') { e.preventDefault(); e.stopPropagation(); goldEntry = null; render(); } };\n",
+    "new": "",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GOLD-DROP-2-back-in-the-input-keeps-the-field",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "{ if (overlayAction(e) === 'back') { e.preventDefault(); e.stopPropagation(); goldEntry = null; render(); } };",
+    "new": "{ if (overlayAction(e) === 'back') { e.preventDefault(); e.stopPropagation(); render(); } };",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GOLD-DROP-2-the-click-away-deaf-to-the-field",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "      if (!picked && goldEntry == null) return;\n",
+    "new": "      if (!picked) return;\n",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GOLD-DROP-2-the-click-away-leaves-the-field",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "      picked = null; goldEntry = null; render();\n",
+    "new": "      picked = null; render();\n",
+    "tests": [
+      "test/golddrop.test.js"
+    ]
+  }
+]

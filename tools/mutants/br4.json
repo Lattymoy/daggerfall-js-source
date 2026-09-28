@@ -1,0 +1,93 @@
+[
+  {
+    "name": "BR4-landing-title-old-name",
+    "file": "index.html",
+    "old": "<title>Daggerfall Online</title>",
+    "new": "<title>Daggerfall Enhanced</title>",
+    "tests": [
+      "test/brand.test.js"
+    ]
+  },
+  {
+    "name": "BR4-intro-title-screen-blend",
+    "file": "src/ui/introScreen.js",
+    "old": "opacity:0;pointer-events:none;transform-origin:50% 50%",
+    "new": "opacity:0;pointer-events:none;mix-blend-mode:screen;transform-origin:50% 50%",
+    "tests": [
+      "test/brand.test.js"
+    ]
+  },
+  {
+    "name": "BR4-door-logo-screen-blend",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".brand-logo { display: block; width: 100%; height: auto; object-fit: contain;\n  image-rendering: auto; }",
+    "new": ".brand-logo { display: block; width: 100%; height: auto; object-fit: contain;\n  mix-blend-mode: screen; image-rendering: auto; }",
+    "tests": [
+      "test/brand.test.js"
+    ]
+  },
+  {
+    "name": "BR4-prototype-split-wordmark",
+    "file": "menu-pixel.html",
+    "old": "Daggerfall<small>Online</small>",
+    "new": "Daggerfall<small>Enhanced</small>",
+    "tests": [
+      "test/brand.test.js"
+    ]
+  },
+  {
+    "name": "BR4-class-format-renamed",
+    "file": "src/systems/customClass.js",
+    "old": "export const CLASS_FILE_FORMAT = 'daggerfall-enhanced/custom-class';",
+    "new": "export const CLASS_FILE_FORMAT = 'daggerfall-online/custom-class';",
+    "tests": [
+      "test/brand.test.js"
+    ]
+  },
+  {
+    "name": "BR4-intro-aria-old-name",
+    "file": "src/ui/introScreen.js",
+    "old": "host.setAttribute('aria-label', 'Daggerfall Online introduction');",
+    "new": "host.setAttribute('aria-label', 'Daggerfall Enhanced introduction');",
+    "tests": [
+      "test/brand.test.js"
+    ]
+  },
+  {
+    "name": "BR4-door-empty-canvas-margin-dropped",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".px-wordmark .brand-logo, .brand-home .brand-logo { margin-bottom: calc(-100% * 81 / 2112); }",
+    "new": ".px-wordmark .brand-logo, .brand-home .brand-logo { margin-bottom: 0; }",
+    "tests": [
+      "test/brand.test.js"
+    ]
+  },
+  {
+    "name": "BR4-logo-dimensions-stale",
+    "file": "src/ui/brandMark.js",
+    "old": "  image.height = 850;",
+    "new": "  image.height = 512;",
+    "tests": [
+      "test/intro.test.js"
+    ]
+  },
+  {
+    "name": "BR4-zip-old-name",
+    "file": "src/systems/saveTransfer.js",
+    "old": "export const TRANSFER_ZIP_NAME = 'DaggerfallOnline-Saves.zip';",
+    "new": "export const TRANSFER_ZIP_NAME = 'DaggerfallEnhanced-Saves.zip';",
+    "tests": [
+      "test/brand.test.js",
+      "test/savetransfer.test.js"
+    ]
+  },
+  {
+    "name": "BR4-patch-notes-keep-the-old-name",
+    "file": "PATCH-NOTES-Daggerfall-Online.md",
+    "old": "- Daggerfall Enhanced is now **Daggerfall Online** - on the website",
+    "new": "- Daggerfall Enhanced is still **Daggerfall Enhanced** - on the website",
+    "tests": [
+      "test/brand.test.js"
+    ]
+  }
+]

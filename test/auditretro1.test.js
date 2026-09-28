@@ -504,6 +504,15 @@ test('AUDIT RETRO1 D5: a menu over a lane retro frame takes the canvas slot and 
     assert.ok(![kept.tex, ...kept.depths].some((t) => t.deleted) && !kept.fbo.deleted, 'the retro slot\'s images live');
     assert.equal(ap.prevValid, false, 'the canvas slot\'s previous depth is no frame\'s previous');
     r.drawScreenQuad(null, { x: 0, y: 0, w: 1, h: 1 });
+    // LA-POST6: a menu's frame in the slot is caught by the slot's own record too (the depth a frame the pass never
+    // prepared wrote is no world's); the SWAP is the one guard when two WORLD frames alternate slots - the depth the
+    // slot comes back to is two frames old, the view-projection the last frame's
+    const world = (W, H, slot) => { ap.prepare({ viewport: [0, 0, W, H], proj: I, view: I, eye: [0, 0, 0] }); ap.beginFrameTarget(W, H, slot); ap.fresh = false; };
+    world(1280, 720, 'canvas'); world(1280, 720, 'canvas');
+    assert.equal(ap.prevValid, true, 'two world frames in the canvas slot');
+    world(320, 200, 'retro');
+    world(1280, 720, 'canvas');
+    assert.equal(ap.prevValid, false, 'a world frame back in the canvas slot after one in the retro slot: its depth is not the last frame\'s');
   } finally { setFrameTarget(null); }
 });
 

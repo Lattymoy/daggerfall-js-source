@@ -27,7 +27,8 @@ import { buffKind } from '../src/systems/effects.js';
 import { SPECIAL_ABILITY_BITS } from '../src/systems/specialAdvantages.js';
 import { SKILLS } from '../src/systems/skills.js';
 import { RACES } from '../src/systems/races.js';
-import { FATIGUE_LOSS } from '../src/systems/statMods.js';
+import { FATIGUE_LOSS, FATIGUE_DRAIN_SCALE } from '../src/systems/statMods.js';
+const charged = (loss, mult = 1) => Math.trunc(loss * mult * FATIGUE_DRAIN_SCALE);   // BALANCE1: DFU's loss x the multiplier x exertion's scale, truncated once
 
 const ARENA2 = process.env.ARENA2_PATH;
 const skipReal = !ARENA2 || !existsSync(ARENA2)
@@ -261,12 +262,13 @@ test('AUDIT 21 F8: an Argonian pays no swimming fatigue, and burns no roll for i
     return log.fatigue ?? 0;
   };
   // Swimming 20, roll 99 -> the FailedRoll succeeds -> the penalty lands
-  assert.equal(swim(RACES.Breton, () => 0.99), FATIGUE_LOSS.Swimming);
-  assert.equal(swim(RACES.Argonian, () => 0.99), FATIGUE_LOSS.Default,
+  // (BALANCE1: each band is charged on exertion's scale - `charged`)
+  assert.equal(swim(RACES.Breton, () => 0.99), charged(FATIGUE_LOSS.Swimming));
+  assert.equal(swim(RACES.Argonian, () => 0.99), charged(FATIGUE_LOSS.Default),
     'an Argonian pays the DEFAULT loss in the water, never the swimming one');
   // and on a passed roll everyone pays the default, so the pin is not just
   // reading a constant
-  assert.equal(swim(RACES.Breton, () => 0.01), FATIGUE_LOSS.Default);
+  assert.equal(swim(RACES.Breton, () => 0.01), charged(FATIGUE_LOSS.Default));
   assert.notEqual(FATIGUE_LOSS.Swimming, FATIGUE_LOSS.Default);
 
   // THE SHORT-CIRCUIT. A roll drawn where DFU draws none shifts every later

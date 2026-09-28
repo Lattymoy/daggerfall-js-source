@@ -1,0 +1,79 @@
+[
+  {
+    "name": "QPP-online-held-too",
+    "file": "src/scenes/questFoeHost.js",
+    "old": "export const questBoxHoldsFoes = (win, { online, onTop }) => !online && !!win && !win.done && !!onTop(win);",
+    "new": "export const questBoxHoldsFoes = (win, { online, onTop }) => !!win && !win.done && !!onTop(win);",
+    "tests": ["test/quest_popup_pause.test.js"]
+  },
+  {
+    "name": "QPP-a-closed-box-holds",
+    "file": "src/scenes/questFoeHost.js",
+    "old": "export const questBoxHoldsFoes = (win, { online, onTop }) => !online && !!win && !win.done && !!onTop(win);",
+    "new": "export const questBoxHoldsFoes = (win, { online, onTop }) => !online && !!win && !!onTop(win);",
+    "tests": ["test/quest_popup_pause.test.js"]
+  },
+  {
+    "name": "QPP-under-any-window",
+    "file": "src/scenes/questFoeHost.js",
+    "old": "export const questBoxHoldsFoes = (win, { online, onTop }) => !online && !!win && !win.done && !!onTop(win);",
+    "new": "export const questBoxHoldsFoes = (win, { online, onTop }) => !online && !!win && !win.done;",
+    "tests": ["test/quest_popup_pause.test.js"]
+  },
+  {
+    "name": "QPP-world-street-runs-on",
+    "file": "src/scenes/world.js",
+    "old": "    const foeDt = _questBoxHoldsFoes() ? 0 : dt;",
+    "new": "    const foeDt = dt;",
+    "tests": ["test/quest_popup_pause.test.js", "test/winfoe1_foes_under_windows.test.js"]
+  },
+  {
+    "name": "QPP-world-encounters-bypass",
+    "file": "src/scenes/world.js",
+    "old": "      exteriorFoes.update(foeDt, _pf, cam.pos, _foeSenses());",
+    "new": "      exteriorFoes.update(dt, _pf, cam.pos, _foeSenses());",
+    "tests": ["test/quest_popup_pause.test.js", "test/winfoe1_foes_under_windows.test.js", "test/disc19.test.js"]
+  },
+  {
+    "name": "QPP-world-online-page-ignored",
+    "file": "src/scenes/world.js",
+    "old": "questBoxHoldsFoes(_questBoxWin, { online: onlineOn, onTop: _liveQuestOverlay });",
+    "new": "questBoxHoldsFoes(_questBoxWin, { online: false, onTop: _liveQuestOverlay });",
+    "tests": ["test/quest_popup_pause.test.js"]
+  },
+  {
+    "name": "QPP-world-bag-dropped",
+    "file": "src/scenes/world.js",
+    "old": "    questBoxHoldsFoes: () => _questBoxHoldsFoes(),   // QUEST-POPUP-PAUSE: the interior pools' half - offline, a quest box on top holds them\n",
+    "new": "",
+    "tests": ["test/quest_popup_pause.test.js"]
+  },
+  {
+    "name": "QPP-exterior-route-runs-on",
+    "file": "src/scenes/exterior.js",
+    "old": "      const foeDt = _questBoxHoldsFoes() ? 0 : dt;",
+    "new": "      const foeDt = dt;",
+    "tests": ["test/quest_popup_pause.test.js", "test/winfoe1_foes_under_windows.test.js"]
+  },
+  {
+    "name": "QPP-exterior-online-page-ignored",
+    "file": "src/scenes/exterior.js",
+    "old": "questBoxHoldsFoes(_questBoxWin, { online: isOnlinePage(), onTop: _liveQuestOverlay });",
+    "new": "questBoxHoldsFoes(_questBoxWin, { online: false, onTop: _liveQuestOverlay });",
+    "tests": ["test/quest_popup_pause.test.js"]
+  },
+  {
+    "name": "QPP-interior-runs-on",
+    "file": "src/scenes/worldModes.js",
+    "old": "    const foeDt = host.questBoxHoldsFoes?.() ? 0 : dt;",
+    "new": "    const foeDt = dt;",
+    "tests": ["test/quest_popup_pause.test.js", "test/winfoe1_foes_under_windows.test.js"]
+  },
+  {
+    "name": "QPP-indoor-watch-bypass",
+    "file": "src/scenes/worldModes.js",
+    "old": "const _guardBatches = interiorGuards.update(foeDt, player.pos, cam.pos,",
+    "new": "const _guardBatches = interiorGuards.update(dt, player.pos, cam.pos,",
+    "tests": ["test/quest_popup_pause.test.js", "test/winfoe1_foes_under_windows.test.js"]
+  }
+]

@@ -31,6 +31,9 @@ contextBridge.exposeInMainWorld('daggerShell', {
   platform: process.platform,
   versions: { app: process.env.npm_package_version ?? '', electron: process.versions.electron },
   savesPath: path.join(store.root, 'Saves'),   // where the saves actually are, not the root above them
+  // ESC-LOCK (2026-09-27): a pointer-lock request the page lost for want of a gesture (an Escape close after the
+  // player ended the lock) is re-run by the main process AS a gesture (src/player/pointerLock.js shellRelock)
+  relockPointer: () => ipcRenderer.send('dagger:relock'),
   storage: {
     length: () => store.length(),
     key: (i) => store.key(i),

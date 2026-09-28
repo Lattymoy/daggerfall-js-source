@@ -1,0 +1,276 @@
+[
+  {
+    "name": "AUDIT-PARTY-UI-1-the-map-door-asks-nothing-indoors",
+    "file": "src/scenes/world.js",
+    "old": "    if ((modes?.mode ?? 'exterior') !== 'exterior') { townTalk.say(CANNOT_TRAVEL_INDOORS_TEXT); return; }\n",
+    "new": "",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI-1-the-leader-indoors-read-as-out",
+    "file": "src/systems/partyTravel.js",
+    "old": "round: null, outdoors: host.outdoors(), hub:",
+    "new": "round: null, outdoors: true, hub:",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI-1-the-map-offered-indoors",
+    "file": "src/ui/socialPanel.js",
+    "old": "const why = !st.outdoors ? 'Step outside' : ",
+    "new": "const why = ",
+    "tests": [
+      "test/soc3_socialpanel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI-2-an-old-hub-read-as-new",
+    "file": "src/systems/partyTravel.js",
+    "old": "hub: host.relayOk(), gathered: company",
+    "new": "hub: true, gathered: company",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI-2-nobody-gathered-read-as-company",
+    "file": "src/systems/partyTravel.js",
+    "old": "if (s.leads()) company = host.gathered().length > 0;",
+    "new": "if (s.leads()) company = true;",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI-2-the-map-offered-through-an-old-hub",
+    "file": "src/ui/socialPanel.js",
+    "old": "!st.hub ? 'Needs the server\\'s next update'\n          : ",
+    "new": "",
+    "tests": [
+      "test/soc3_socialpanel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI-2-the-map-offered-with-nobody-gathered",
+    "file": "src/ui/socialPanel.js",
+    "old": "!st.gathered ? 'Gather the party first' : ",
+    "new": "",
+    "tests": [
+      "test/soc3_socialpanel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI-2-the-map-always-offered",
+    "file": "src/ui/socialPanel.js",
+    "old": "r.append(btn('Travel map', { enabled: !why, why, run: () => j.openMap?.() }));",
+    "new": "r.append(btn('Travel map', { run: () => j.openMap?.() }));",
+    "tests": [
+      "test/soc3_socialpanel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI-3-the-instant-read-alone",
+    "file": "src/systems/partyTravel.js",
+    "old": "if (near !== round.at && !host.nearLeader(lead)) return",
+    "new": "if (!host.nearLeader(lead)) return",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI-3-the-kept-read-alone",
+    "file": "src/systems/partyTravel.js",
+    "old": "if (near !== round.at && !host.nearLeader(lead)) return",
+    "new": "if (near !== round.at) return",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI-4-the-tab-handed-no-line",
+    "file": "src/systems/partyTravel.js",
+    "old": "return { line: answer(round.at, yes == null ? vote !== round.at : !!yes), said: true };",
+    "new": "return { line: (answer(round.at, yes == null ? vote !== round.at : !!yes), null), said: true };",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI-4-travel-said-twice",
+    "file": "src/systems/partyTravel.js",
+    "old": "      return r.said ? null : r.line;",
+    "new": "      return r.line;",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI-4-the-answer-unsaid-in-the-chat",
+    "file": "src/systems/partyTravel.js",
+    "old": "    host.say(line);\n    host.poseDirty();\n    return line;",
+    "new": "    host.poseDirty();\n    return line;",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI-5-the-pending-offer-kept",
+    "file": "src/systems/partyTravel.js",
+    "old": "offerDue = false; leaderSeen = { acct: trip0.acct, px: trip0.x, py: trip0.y };",
+    "new": "leaderSeen = { acct: trip0.acct, px: trip0.x, py: trip0.y };",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI-5-the-jump-left-to-be-seen",
+    "file": "src/systems/partyTravel.js",
+    "old": "offerDue = false; leaderSeen = { acct: trip0.acct, px: trip0.x, py: trip0.y };",
+    "new": "offerDue = false;",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI-5-a-pixel-step-read-as-elsewhere",
+    "file": "src/systems/partyTravel.js",
+    "old": "leaderJourneyed({ px: here.x, py: here.y }, p),",
+    "new": "(p.px !== here.x || p.py !== here.y),",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI-5-elsewhere-while-i-move",
+    "file": "src/systems/partyTravel.js",
+    "old": "away: !!p && !host.journeying() && ",
+    "new": "away: !!p && ",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI-5-the-member-indoors-read-as-out",
+    "file": "src/systems/partyTravel.js",
+    "old": "        outdoors: host.outdoors(),\n      };",
+    "new": "        outdoors: true,\n      };",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI-5-the-journey-offered-indoors",
+    "file": "src/ui/socialPanel.js",
+    "old": "enabled: !!st.outdoors, why: 'Step outside'",
+    "new": "enabled: true, why: 'Step outside'",
+    "tests": [
+      "test/soc3_socialpanel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI-6-the-count-in-the-key",
+    "file": "src/ui/socialPanel.js",
+    "old": "JSON.stringify(st, (k, v) => (k === 'count' ? undefined : v))",
+    "new": "JSON.stringify(st)",
+    "tests": [
+      "test/soc3_socialpanel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI-6-the-count-never-written",
+    "file": "src/ui/socialPanel.js",
+    "old": "        if (r.subNode) liveSubs.push({ el: r.subNode, of: () => j.status?.()?.round?.count ?? '' });\n",
+    "new": "",
+    "tests": [
+      "test/soc3_socialpanel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI-7a-the-painted-key-never-kept",
+    "file": "src/ui/socialPanel.js",
+    "old": "    paintedJourney = journeyKey();   // PARTY-UI\n",
+    "new": "",
+    "tests": [
+      "test/soc3_socialpanel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI-7b-the-key-read-on-every-tab",
+    "file": "src/ui/socialPanel.js",
+    "old": "    if (tab !== 'party') return '';\n    const st = journey?.()?.status?.();",
+    "new": "    const st = journey?.()?.status?.();",
+    "tests": [
+      "test/soc3_socialpanel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI-7c-following-never",
+    "file": "src/systems/partyTravel.js",
+    "old": "        following: !!follow,",
+    "new": "        following: false,",
+    "tests": [
+      "test/partytravel.test.js",
+      "test/soc3_socialpanel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI-7d-the-travel-map-dead",
+    "file": "src/systems/partyTravel.js",
+    "old": "    openMap: () => host.openMap(),",
+    "new": "    openMap: () => {},",
+    "tests": [
+      "test/partytravel.test.js",
+      "test/soc3_socialpanel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI-7e-an-offline-leader-elsewhere",
+    "file": "src/systems/partyTravel.js",
+    "old": "      const p = lead && memberPresent(lead) ? lead.p : null;\n      const here = host.here();",
+    "new": "      const p = lead ? lead.p : null;\n      const here = host.here();",
+    "tests": [
+      "test/partytravel.test.js",
+      "test/soc3_socialpanel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI-7f-a-null-answer-keeps-the-note",
+    "file": "src/ui/socialPanel.js",
+    "old": "const said = (line) => { noteMsg = line ? String(line) : '';",
+    "new": "const said = (line) => { noteMsg = line ? String(line) : noteMsg;",
+    "tests": [
+      "test/soc3_socialpanel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI-7g-elsewhere-on-x-alone",
+    "file": "src/systems/partyTravel.js",
+    "old": "leaderJourneyed({ px: here.x, py: here.y }, p)",
+    "new": "leaderJourneyed({ px: here.x, py: p.py }, p)",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI-8-the-hint-names-the-tab-under-a-window",
+    "file": "src/systems/partyTravel.js",
+    "old": "Type /travel to come along.",
+    "new": "Ready up on the Party tab, or type /travel.",
+    "tests": [
+      "test/partytravel.test.js",
+      "test/soc3_socialpanel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PARTY-UI-8-setting-out-over-a-leader-already-there",
+    "file": "src/systems/partyTravel.js",
+    "old": "if (t && !t.arrived) return { role: 'leader', round:",
+    "new": "if (t) return { role: 'leader', round:",
+    "tests": [
+      "test/partytravel.test.js"
+    ]
+  }
+]

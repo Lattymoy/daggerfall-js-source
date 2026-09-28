@@ -157,7 +157,8 @@ function mkQuestMachine(instances = []) {
       currentLocation: () => ({ loaded: true, mapTableData: { locationType: 0 } }),
       getFactionData: () => null,
     },
-    questFoeInstances: (sym) => instances.filter((i) => i.symbolName === sym?.name),
+    // the hosts' own walk (world.js / exterior.js questFoeInstances): live RECORDS, matched on their questBehaviour's symbol
+    questFoeInstances: (sym) => instances.filter((i) => i.questBehaviour?.targetSymbol?.name === sym?.name),
   });
   return m;
 }
@@ -165,9 +166,9 @@ const sched = (m, qbn) => m.scheduleQuest([...QHEADER, ...qbn], 0, { rolls: () =
 
 test('MT-iii: ChangeFoeTeam writes EVERY live instance, by number or by enum NAME; an unknown name THROWS', () => {
   const insts = [
-    { symbolName: 'ally', entity: { team: 'Daedra' }, behaviour: { targetSymbol: { name: 'ally' } } },
-    { symbolName: 'ally', entity: { team: 'Daedra' }, behaviour: { targetSymbol: { name: 'ally' } } },
-    { symbolName: 'other', entity: { team: 'Orcs' }, behaviour: { targetSymbol: { name: 'other' } } },
+    { entity: { team: 'Daedra' }, questBehaviour: { targetSymbol: { name: 'ally' } } },
+    { entity: { team: 'Daedra' }, questBehaviour: { targetSymbol: { name: 'ally' } } },
+    { entity: { team: 'Orcs' }, questBehaviour: { targetSymbol: { name: 'other' } } },
   ];
   const m = mkQuestMachine(insts);
   sched(m, [' change foe _ally_ team PlayerAlly', '', 'Foe _ally_ is Giant', '']);
@@ -176,7 +177,7 @@ test('MT-iii: ChangeFoeTeam writes EVERY live instance, by number or by enum NAM
   assert.equal(insts[1].entity.team, 'PlayerAlly');
   assert.equal(insts[2].entity.team, 'Orcs', 'another symbol is untouched');
   // the NUMERIC spelling, the same enum
-  const insts2 = [{ symbolName: 'ally', entity: { team: 'Daedra' }, behaviour: { targetSymbol: { name: 'ally' } } }];
+  const insts2 = [{ entity: { team: 'Daedra' }, questBehaviour: { targetSymbol: { name: 'ally' } } }];
   const m2 = mkQuestMachine(insts2);
   sched(m2, [' change foe _ally_ team 1', '', 'Foe _ally_ is Giant', '']);
   m2.tick();
@@ -186,16 +187,16 @@ test('MT-iii: ChangeFoeTeam writes EVERY live instance, by number or by enum NAM
 });
 
 test('MT-iii: ChangeFoeInfighting writes IsAttackableByAI; Convert.ToBoolean takes true/false and nothing else', () => {
-  const insts = [{ symbolName: 'q', entity: { team: 'Orcs' }, behaviour: { targetSymbol: { name: 'q' }, isAttackableByAI: false } }];
+  const insts = [{ entity: { team: 'Orcs' }, questBehaviour: { targetSymbol: { name: 'q' }, isAttackableByAI: false } }];
   const m = mkQuestMachine(insts);
   sched(m, [' change foe _q_ infighting true', '', 'Foe _q_ is Giant', '']);
   m.tick();
-  assert.equal(insts[0].behaviour.isAttackableByAI, true, 'the quest foe becomes a legal AI target');
-  const insts2 = [{ symbolName: 'q', entity: {}, behaviour: { targetSymbol: { name: 'q' }, isAttackableByAI: true } }];
+  assert.equal(insts[0].questBehaviour.isAttackableByAI, true, 'the quest foe becomes a legal AI target');
+  const insts2 = [{ entity: {}, questBehaviour: { targetSymbol: { name: 'q' }, isAttackableByAI: true } }];
   const m2 = mkQuestMachine(insts2);
   sched(m2, [' change foe _q_ infighting False', '', 'Foe _q_ is Giant', '']);
   m2.tick();
-  assert.equal(insts2[0].behaviour.isAttackableByAI, false, 'Convert.ToBoolean is CASE-insensitive');
+  assert.equal(insts2[0].questBehaviour.isAttackableByAI, false, 'Convert.ToBoolean is CASE-insensitive');
   assert.throws(() => sched(mkQuestMachine(), [' change foe _q_ infighting yes', '', 'Foe _q_ is Giant', '']),
     /not recognized as a valid Boolean/, 'anything else is a FormatException, and the quest drops');
 });

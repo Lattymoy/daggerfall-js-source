@@ -39,7 +39,7 @@ test('DISC25-D: a guild quest refused to a non-member names the guild - a temple
   assert.equal(shareRefusalText({ reason: 'guild' }), SHARE_REFUSAL_TEXT.guild);
   assert.equal(shareRefusalText({ reason: 'nonsense' }), null);
   // and the receiver's line is built from it
-  assert.match(rd('src/scenes/world.js'), /const why = shareRefusalText\(result\);/);
+  assert.match(rd('src/scenes/world.js'), /const why = shareRefusalText\(result, quest\.data\?\.build \?\? null\);/);   // SHARE-MEND: and the sender's build, for a skew
   assert.doesNotMatch(rd('src/scenes/world.js'), /const why = SHARE_REFUSAL_TEXT\[result\.reason\];/);
 });
 

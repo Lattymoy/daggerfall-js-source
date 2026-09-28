@@ -272,6 +272,13 @@ export const SERVICE_DESTINATION = Object.freeze({
 });
 export const serviceDestination = (service) => SERVICE_DESTINATION[service] ?? null;
 
+/** STATION-ROWS (2026-09-27, Discord - the crash box: "TypeError: m.rows.map is not a function"): A SERVICE'S ANSWER
+ *  IS A BOX - text to stand on the popup that asked - only when its `rows` are a LIST. The spell maker is handed the
+ *  host's TEXT.RSC reader as `rows` and keeps it, and the maker arms hand their window back: read as a box by
+ *  `rows` being there at all, a home's Spellmaking station mapped the reader as a list and threw on every press, and
+ *  the guild popup pushed the whole window onto itself as a message. One test, every reader of the answer. */
+export const isServiceBox = (answer) => Array.isArray(answer?.rows);
+
 /** D1: Services.GetServiceShortcutButton (Services.cs:408-459) - the
  *  DaggerfallShortcut button whose binding the popup hangs on its
  *  MIDDLE button, so the service's accelerator changes with the

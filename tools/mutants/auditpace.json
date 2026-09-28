@@ -1,0 +1,128 @@
+[
+  {
+    "name": "APACE-P1-deep-handed",
+    "file": "src/scenes/world.js",
+    "old": "if (f.entity?.team === 'PlayerAlly' || f.managed) return null;",
+    "new": "if (f.entity?.team === 'PlayerAlly') return null;",
+    "tests": [
+      "test/deepshare.test.js"
+    ]
+  },
+  {
+    "name": "APACE-Q3-kept-word-to-strangers",
+    "file": "src/scenes/world.js",
+    "old": "|| f.managed) return null; const at = f.ai?.feet; if (!at) return null; let id = null, best = Infinity; for (const q of near) { if ((isPrivateQuestFoe(f) || f._keptTag) &&",
+    "new": "|| f.managed) return null; const at = f.ai?.feet; if (!at) return null; let id = null, best = Infinity; for (const q of near) { if ((isPrivateQuestFoe(f)) &&",
+    "tests": [
+      "test/questparty2.test.js"
+    ]
+  },
+  {
+    "name": "APACE-P2-no-hysteresis",
+    "file": "src/scenes/deepWatersHost.js",
+    "old": "standing ? DEEP_SHARE_RADIUS : DEEP_SHARE_RADIUS * DEEP_SHARE_HYSTERESIS",
+    "new": "DEEP_SHARE_RADIUS",
+    "tests": [
+      "test/deepshare.test.js"
+    ]
+  },
+  {
+    "name": "APACE-P2-host-forgets-its-answer",
+    "file": "src/scenes/world.js",
+    "old": "    const now = standsTheDeep(online?.id ?? null, player.feetAt(), peersNear(), _deepStanding);",
+    "new": "    const now = standsTheDeep(online?.id ?? null, player.feetAt(), peersNear());",
+    "tests": [
+      "test/deepshare.test.js"
+    ]
+  },
+  {
+    "name": "APACE-P2-reservations-kept",
+    "file": "src/scenes/world.js",
+    "old": "    if (_deepStanding && !now) dwEnemies?.dropPending?.();\n",
+    "new": "\n",
+    "tests": [
+      "test/deepshare.test.js"
+    ]
+  },
+  {
+    "name": "APACE-P2-drop-keeps-the-counts",
+    "file": "src/scenes/deepWatersEncounters.js",
+    "old": "      for (const r of pending) if (r.group?.active) { r.group.liveOrPending = Math.max(0, r.group.liveOrPending - 1); liveCount = Math.max(0, liveCount - 1); }\n      pending.length = 0;",
+    "new": "      pending.length = 0;",
+    "tests": [
+      "test/deepshare.test.js"
+    ]
+  },
+  {
+    "name": "APACE-P4-anchor-at-sea",
+    "file": "src/scenes/world.js",
+    "old": "      if (anchor && _overDeepWater(anchor.x, anchor.z)) anchor = null;",
+    "new": "      if (anchor && false) anchor = null;",
+    "tests": [
+      "test/deepshare.test.js"
+    ]
+  },
+  {
+    "name": "APACE-P4-member-at-sea",
+    "file": "src/scenes/world.js",
+    "old": "        if (spot && _overDeepWater(spot.x, spot.z)) spot = null;",
+    "new": "        if (spot && false) spot = null;",
+    "tests": [
+      "test/deepshare.test.js"
+    ]
+  },
+  {
+    "name": "APACE-P5-street-attack-frame-clock",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "f.attack.update(foeFrameDt(dt), f.ai, _tgt, _fPaused);   // MT-ii",
+    "new": "f.attack.update(dt, f.ai, _tgt, _fPaused);   // MT-ii",
+    "tests": [
+      "test/foecatchup.test.js"
+    ]
+  },
+  {
+    "name": "APACE-P5-street-cast-frame-clock",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "f.caster.update(foeFrameDt(dt), f.ai, f.attack, _tgt, _castTargetEntity)",
+    "new": "f.caster.update(dt, f.ai, f.attack, _tgt, _castTargetEntity)",
+    "tests": [
+      "test/foecatchup.test.js"
+    ]
+  },
+  {
+    "name": "APACE-P5-watch-attack-frame-clock",
+    "file": "src/scenes/cityGuards.js",
+    "old": "g.attack.update(foeFrameDt(dt), g.ai, _tgt);",
+    "new": "g.attack.update(dt, g.ai, _tgt);",
+    "tests": [
+      "test/foecatchup.test.js"
+    ]
+  },
+  {
+    "name": "APACE-P5-dungeon-attack-frame-clock",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "f.attack.update(foeFrameDt(dt), f.ai, _tgt, _fPaused);   // MT-iv",
+    "new": "f.attack.update(dt, f.ai, _tgt, _fPaused);   // MT-iv",
+    "tests": [
+      "test/foecatchup.test.js"
+    ]
+  },
+  {
+    "name": "APACE-P5-dungeon-seducer-frame-clock",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "f.seducer?.update(foeFrameDt(dt), !foeDeps",
+    "new": "f.seducer?.update(dt, !foeDeps",
+    "tests": [
+      "test/foecatchup.test.js"
+    ]
+  },
+  {
+    "name": "APACE-P6-arrows-fly-under-the-box",
+    "file": "src/scenes/world.js",
+    "old": "    arrows.update(foeDt, {",
+    "new": "    arrows.update(dt, {",
+    "tests": [
+      "test/foecatchup.test.js"
+    ]
+  }
+]

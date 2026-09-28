@@ -1,0 +1,92 @@
+[
+  {
+    "name": "DECOR-SHELL-the-flight-unclipped",
+    "file": "src/scenes/decorTool.js",
+    "old": "p.fly = flyClip(deps.collider?.(), p.fly, next, through);",
+    "new": "p.fly = next;",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "DECOR-SHELL-no-cut",
+    "file": "src/scenes/decorTool.js",
+    "old": "if (!hit || !Number.isFinite(hit.dist) || hit.dist - DECOR_FLY_SKIN >= len) return { at: b, normal: null, rest: null };",
+    "new": "if (true) return { at: b, normal: null, rest: null };",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "DECOR-SHELL-the-skin-lost",
+    "file": "src/scenes/decorTool.js",
+    "old": "const k = Math.max(0, hit.dist - DECOR_FLY_SKIN);",
+    "new": "const k = Math.max(0, hit.dist);",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "DECOR-SHELL-no-slide",
+    "file": "src/scenes/decorTool.js",
+    "old": "  if (!first.normal) return flyKeep(collider, from, first.at, skip);",
+    "new": "  return flyKeep(collider, from, first.at, skip);",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "DECOR-SHELL-the-ceiling-stood-on",
+    "file": "src/systems/decorPlacer.js",
+    "old": "const hang = nl > 0 && normal[1] / nl < -DECOR_HANG_NY;",
+    "new": "const hang = false;",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "DECOR-SHELL-the-hang-at-the-bottom",
+    "file": "src/systems/decorPlacer.js",
+    "old": "const up = hang ? drop() + s.raise : lift() + s.raise;",
+    "new": "const up = lift() + s.raise;",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "DECOR-SHELL-a-flat-hung",
+    "file": "src/systems/decorPlacer.js",
+    "old": "      if (hang && entry.model == null) return null;\n",
+    "new": "",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "DECOR-SHELL-the-failure-cached",
+    "file": "src/scenes/decorRoom.js",
+    "old": "      got.then((m) => { if (!m.gpu && models.get(id) === got) models.delete(id); });\n",
+    "new": "",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "DECOR-SHELL-the-gate-gone",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (interiorHome && _decorListed !== _decorVisit) return null;\n",
+    "new": "",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "DECOR-SHELL-the-answer-never-marked",
+    "file": "src/scenes/worldModes.js",
+    "old": "        _decorListed = visit;   // DECOR-SHELL: stood - nothing later will stand the room over a placement\n",
+    "new": "",
+    "tests": [
+      "test/decorshell.test.js"
+    ]
+  }
+]

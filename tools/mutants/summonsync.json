@@ -1,0 +1,218 @@
+[
+  {
+    "name": "SUMMONSYNC-stand-unmarked",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    f._loose = true;   // SUMMON-SYNC: a loose stand",
+    "new": "    // SUMMON-SYNC: a loose stand",
+    "tests": [
+      "test/summonsync.test.js"
+    ]
+  },
+  {
+    "name": "SUMMONSYNC-quest-foe-left-loose",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    f._loose = false;   // SUMMON-SYNC: a quest's foe",
+    "new": "    // SUMMON-SYNC: a quest's foe",
+    "tests": [
+      "test/summonsync.test.js"
+    ]
+  },
+  {
+    "name": "SUMMONSYNC-loose-takes-a-quest",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "  const ownLoose = (f) => !!f?._loose && f._ownFrom == null && !f.questBehaviour && !isRoomFoe(f);",
+    "new": "  const ownLoose = (f) => !!f?._loose && f._ownFrom == null && !isRoomFoe(f);",
+    "tests": [
+      "test/summonsync.test.js"
+    ]
+  },
+  {
+    "name": "SUMMONSYNC-loose-takes-the-run",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "  const ownLoose = (f) => !!f?._loose && f._ownFrom == null && !f.questBehaviour && !isRoomFoe(f);",
+    "new": "  const ownLoose = (f) => !!f?._loose && f._ownFrom == null && !f.questBehaviour;",
+    "tests": [
+      "test/summonsync.test.js"
+    ]
+  },
+  {
+    "name": "SUMMONSYNC-never-rides",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (!qt && !ownLoose(f)) continue;   // SUMMON-SYNC",
+    "new": "      if (!qt) continue;   // SUMMON-SYNC",
+    "tests": [
+      "test/summonsync.test.js"
+    ]
+  },
+  {
+    "name": "SUMMONSYNC-unnamed",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (!qt) { lf.push(i); return; }   // SUMMON-SYNC: a loose stand's number",
+    "new": "      if (!qt) { return; }   // SUMMON-SYNC: a loose stand's number",
+    "tests": [
+      "test/summonsync.test.js"
+    ]
+  },
+  {
+    "name": "SUMMONSYNC-reader-refuses",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      const lo = !qt && loose.has(r.i);   // SUMMON-SYNC: a loose stand - whoever in the room owns it",
+    "new": "      const lo = false;   // SUMMON-SYNC: a loose stand - whoever in the room owns it",
+    "tests": [
+      "test/summonsync.test.js"
+    ]
+  },
+  {
+    "name": "SUMMONSYNC-a-quest-by-its-loose-name",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      const lo = !qt && loose.has(r.i);   // SUMMON-SYNC: a loose stand - whoever in the room owns it",
+    "new": "      const lo = loose.has(r.i);   // SUMMON-SYNC: a loose stand - whoever in the room owns it",
+    "tests": [
+      "test/summonsync.test.js"
+    ]
+  },
+  {
+    "name": "SUMMONSYNC-uncapped",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "ownPuppetsOf(from, lo) >= (lo ? CELL_LOOSE_PUPPETS : QUEST_PUPPETS_MAX)",
+    "new": "ownPuppetsOf(from, lo) >= (lo ? QUEST_PUPPETS_MAX : QUEST_PUPPETS_MAX)",
+    "tests": [
+      "test/summonsync.test.js"
+    ]
+  },
+  {
+    "name": "SUMMONSYNC-one-allowance",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    for (const f of _ownPups.values()) if (f._ownFrom === from && !f.dead && !!f._pupLoose === lo) n++;",
+    "new": "    for (const f of _ownPups.values()) if (f._ownFrom === from && !f.dead) n++;",
+    "tests": [
+      "test/summonsync.test.js"
+    ]
+  },
+  {
+    "name": "SUMMONSYNC-pending-uncounted",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (lo) _ownPendLoose.add(key);\n",
+    "new": "      \n",
+    "tests": [
+      "test/summonsync.test.js"
+    ]
+  },
+  {
+    "name": "SUMMONSYNC-puppet-unmarked",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "f._pupQuest = qt; f._pupLoose = !!lo;",
+    "new": "f._pupQuest = qt; f._pupLoose = false;",
+    "tests": [
+      "test/summonsync.test.js"
+    ]
+  },
+  {
+    "name": "SUMMONSYNC-loose-orphan-adopted",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "        if (gone && !f.dead && f._pupQuest && !f._heirElse && share?.adoptsOrphan?.(from, f) && adoptOwn(from, f, share)) continue;",
+    "new": "        if (!f.dead && share?.adoptsOrphan?.(from, f) && adoptOwn(from, f, share)) continue;",
+    "tests": [
+      "test/summonsync.test.js"
+    ]
+  },
+  {
+    "name": "SUMMONSYNC-heir-refuses",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (!qt && !f._pupLoose) return 0;",
+    "new": "    if (!qt) return 0;",
+    "tests": [
+      "test/summonsync.test.js"
+    ]
+  },
+  {
+    "name": "SUMMONSYNC-heir-never-streams-it",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (f._pupLoose) { f._pupLoose = false; f._loose = true; }",
+    "new": "    if (f._pupLoose) { f._pupLoose = false; }",
+    "tests": [
+      "test/summonsync.test.js"
+    ]
+  },
+  {
+    "name": "SUMMONSYNC-stranger-blow-refused",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "!(ownLoose(f) || (!!ownQuestTag(f) && ownPeerMayHit(id, f)))",
+    "new": "!(!!ownQuestTag(f) && !!ownShare()?.peerMayHit?.(id, f))",
+    "tests": [
+      "test/summonsync.test.js"
+    ]
+  },
+  {
+    "name": "SUMMONSYNC-hunts-nobody",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "...((_authority && streamed) || ownLoose(rec) ? peerCandidates()",
+    "new": "...((_authority && streamed) ? peerCandidates()",
+    "tests": [
+      "test/summonsync.test.js"
+    ]
+  },
+  {
+    "name": "SUMMONSYNC-unweighed",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    return isRoomFoe(f) || f._ownFrom != null || ownRides(f);",
+    "new": "    return isRoomFoe(f) || f._ownFrom != null || !!ownQuestTag(f);",
+    "tests": [
+      "test/summonsync.test.js"
+    ]
+  },
+  {
+    "name": "SUMMONSYNC-counted-only-at-the-seat",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "  function _runsFoe(f) { return f._ownFrom == null && (_authority || ownRides(f)); }",
+    "new": "  function _runsFoe(f) { return f._ownFrom == null && (_authority || !!ownQuestTag(f)); }",
+    "tests": [
+      "test/summonsync.test.js"
+    ]
+  },
+  {
+    "name": "SUMMONSYNC-wabbajack-a-puppet",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if ((!_authority && isRoomFoe(f)) || f._ownFrom != null) return;",
+    "new": "    if (f._ownFrom != null) return;",
+    "tests": [
+      "test/summonsync.test.js"
+    ]
+  },
+  {
+    "name": "SUMMONSYNC-wabbajack-anothers",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if ((!_authority && isRoomFoe(f)) || f._ownFrom != null) return;",
+    "new": "    if (!_authority && isRoomFoe(f)) return;",
+    "tests": [
+      "test/summonsync.test.js"
+    ]
+  },
+  {
+    "name": "SUMMONSYNC-lf-unread",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "export const validLooseSeqs = (lf) => validDeepIds(lf);",
+    "new": "export const validLooseSeqs = (lf) => new Set(Array.isArray(lf) ? lf : []);",
+    "tests": [
+      "test/summonsync.test.js"
+    ]
+  },
+  {
+    "name": "SUMMONSYNC-ally-handed-outside",
+    "file": "src/scenes/world.js",
+    "old": "    const heirOf = (f) => { if (f.entity?.team === 'PlayerAlly' || f.managed) return null; const at",
+    "new": "    const heirOf = (f) => { if (f.managed) return null; const at",
+    "tests": [
+      "test/summonsync.test.js"
+    ]
+  },
+  {
+    "name": "SUMMONSYNC-ally-handed-underground",
+    "file": "src/scenes/world.js",
+    "old": "    const heirOf = (f) => { if (f.entity?.team === 'PlayerAlly') return null; const at = f.ai?.feet; if (!at) return null; let id = null, best = Infinity; for (const q of near) { if ((isPrivateQuestFoe(f) || f._keptTag) && !social?.isPartyPeer(q.id)) continue; const d = Math.hypot(at[0] - q.feet[0], at[2] - q.feet[2]); if (d < best) { best = d; id = q.id; } } return id; };   // SUMMON-SYNC: my ally goes with me, as outside",
+    "new": "    const heirOf = (f) => { const at = f.ai?.feet; if (!at) return null; let id = null, best = Infinity; for (const q of near) { if ((isPrivateQuestFoe(f) || f._keptTag) && !social?.isPartyPeer(q.id)) continue; const d = Math.hypot(at[0] - q.feet[0], at[2] - q.feet[2]); if (d < best) { best = d; id = q.id; } } return id; };   // SUMMON-SYNC: my ally goes with me, as outside",
+    "tests": [
+      "test/summonsync.test.js"
+    ]
+  }
+]

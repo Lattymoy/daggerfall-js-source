@@ -111,6 +111,15 @@ const copySceneEntry = (d) => ({
   // DECOR2a: the owner's own items standing in the room, by piece id - the save's in every room, the online home's
   // too (its piece is the service's, the thing itself the owner's). A record written before DECOR2 carries none.
   decorOwn: Object.fromEntries(Object.entries(d.decorOwn ?? {}).map(([id, item]) => [id, { ...item }])),
+  // BASE-HIDE: what the owner took out of the offline house's or ship's own furniture (net/decorLaw.js's built-in
+  // pieces' names; an online home's list is the account service's). A record written before it carries none.
+  hiddenBase: (Array.isArray(d.hiddenBase) ? d.hiddenBase : []).filter((k) => typeof k === 'string'),
+  // GUILD-SHELF: a guild's day's Buy shelves, by service, as bought down (scenes/worldModes.js guildShelf) - so
+  // walking out of the hall and back, or a save and a load, keeps what was bought gone until the next day's stock. A
+  // record written before it carries none, and the next open mints the day's shelf.
+  guildShelves: Object.fromEntries(Object.entries(d.guildShelves ?? {})
+    .filter(([, s]) => s && Number.isFinite(s.day) && Array.isArray(s.items))
+    .map(([service, s]) => [service, { day: s.day, items: s.items.map((it) => ({ ...it })) }])),
   // TERRAIN-SCALE1: `frame` names what the positions above are measured from ('building': the interior's own
   // building, as DFU's SerializableLootContainer restores an interior container by its localPosition; null: the
   // writer's own frame), and `terrainScale` the ground an exterior height stood on - absent on an entry written
@@ -158,6 +167,15 @@ export function takeSceneDecor(cache, sceneName) {
   const pieces = d.decor;
   d.decor = [];
   return pieces;
+}
+
+/** BASE-HIDE: A SOLD ROOM'S OWN FURNITURE comes back - what its owner took out is forgotten, so the room stands as
+ *  Daggerfall furnished it for whoever has it next. Answers how many pieces were out. */
+export function clearSceneHidden(cache, sceneName) {
+  const d = cache.scenes.get(sceneName);
+  const n = d?.hiddenBase?.length ?? 0;
+  if (d) d.hiddenBase = [];
+  return n;
 }
 
 /** DECOR2a: A SOLD ROOM'S OWN ITEMS - the owner's things that stood in it - taken out of its scene for the pack (Mac:
@@ -224,10 +242,10 @@ export function restoreSceneCache(cache, snap) {
 // EVERY CALLER OF THIS CACHE IS WIRED. The last one to land was the
 // HOUSE deed's AddPermanentScene, which needed the building directory
 // to know which building was bought: H1/H2 shipped both halves -
-// banking.js:201 calls the hook inside allocateHouseToPlayer with the
-// bought building's own mapId and key, and worldModes.js:2727 supplies
+// banking.js:202 calls the hook inside allocateHouseToPlayer with the
+// bought building's own mapId and key, and worldModes.js:2806 supplies
 // it as addPermanentScene(sceneCache(), interiorSceneName(mapId, key)),
 // reached from the bank's buy arm (:2144-2148), the knightly gift
 // (:2752) and :4933, with sellHouse dropping the scene again (:2184). The
 // tavern's rented room (tavern.js:143) and the ship's two scenes
-// (banking.js:310-312) name themselves and were wired before it.
+// (banking.js:311-313) name themselves and were wired before it.

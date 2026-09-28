@@ -1,0 +1,128 @@
+[
+  {
+    "name": "AINV-A-sheet-opens-the-street-pack",
+    "file": "src/scenes/worldModes.js",
+    "old": "  const interiorSheetDoors = () => ({ inventory: () => interiorInventory() });",
+    "new": "  const interiorSheetDoors = () => ({});",
+    "tests": [
+      "test/invisnet.test.js"
+    ]
+  },
+  {
+    "name": "AINV-A-world-ignores-the-door",
+    "file": "src/scenes/world.js",
+    "old": "    inventory: inventory ?? (() => (inventoryDoorReady() ? makeInventoryWindow() : null)),",
+    "new": "    inventory: (() => (inventoryDoorReady() ? makeInventoryWindow() : null)),",
+    "tests": [
+      "test/invisnet.test.js"
+    ]
+  },
+  {
+    "name": "AINV-B-hidden-owner-wagon-drawn",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "&& !(p.hidden && p.wagon.kind !== HCC_WIRE_KIND.Deployed) && drawWagon(",
+    "new": "&& drawWagon(",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "AINV-B-parked-wagon-hidden-too",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "&& !(p.hidden && p.wagon.kind !== HCC_WIRE_KIND.Deployed) && drawWagon(",
+    "new": "&& !(p.hidden) && drawWagon(",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "AINV-B-horse-plain",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "b.conceal = p.look; } }",
+    "new": "} }",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "AINV-B-host-hands-no-look",
+    "file": "src/scenes/world.js",
+    "old": "  hcc.setPeerLook((id) => (_hiddenPeers.has(id) ? 'hidden' : (_veils.get(id) ?? null)));",
+    "new": "  hcc.setPeerLook(() => null);",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "AINV-C-refused-drop-every-frame",
+    "file": "src/systems/handheldTorches.js",
+    "old": "      if (w.s.onStow > ON_STOW.Unequip && !(dropRefusal?.() ?? null)) dropLightSource(l);",
+    "new": "      if (w.s.onStow > ON_STOW.Unequip) dropLightSource(l);",
+    "tests": [
+      "test/housedrop.test.js"
+    ]
+  },
+  {
+    "name": "AINV-D-windup-douses-a-refused-throw",
+    "file": "src/systems/handheldTorches.js",
+    "old": "        else if (!(dropRefusal?.() ?? null)) {   // AUDIT (pre-merge) I-D",
+    "new": "        else {   // AUDIT (pre-merge) I-D",
+    "tests": [
+      "test/housedrop.test.js"
+    ]
+  },
+  {
+    "name": "AINV-E-maps-mark-the-hidden",
+    "file": "src/scenes/world.js",
+    "old": "  const partyOnMaps = () => partyNear().filter((m) => !_hiddenPeers.has(m.id));",
+    "new": "  const partyOnMaps = () => partyNear();",
+    "tests": [
+      "test/invisnet.test.js"
+    ]
+  },
+  {
+    "name": "AINV-F-nearby-names-the-concealed",
+    "file": "src/scenes/world.js",
+    "old": "localRosterSource(s, (peersNear() ?? []).filter((q) => !q.cv), player.feetAt())",
+    "new": "localRosterSource(s, (peersNear() ?? []), player.feetAt())",
+    "tests": [
+      "test/invisnet.test.js"
+    ]
+  },
+  {
+    "name": "AINV-F-page-to-the-concealed",
+    "file": "src/scenes/world.js",
+    "old": "    return near.filter((p) => !p.cv).map((p) => ({ id: p.id, name: peerName(p.id) ?? 'Someone',",
+    "new": "    return near.map((p) => ({ id: p.id, name: peerName(p.id) ?? 'Someone',",
+    "tests": [
+      "test/invisnet.test.js"
+    ]
+  },
+  {
+    "name": "AINV-G-hidden-drawn",
+    "file": "src/net/remotePlayers.js",
+    "old": "      if (hidden(peer.id)) continue;\n",
+    "new": "\n",
+    "tests": [
+      "test/invisnet.test.js"
+    ]
+  },
+  {
+    "name": "AINV-G-hidden-silent",
+    "file": "src/scenes/world.js",
+    "old": "remotePlayers.sync(drawable, onlineToScene,",
+    "new": "remotePlayers.sync(seen, onlineToScene,",
+    "tests": [
+      "test/invisnet.test.js"
+    ]
+  },
+  {
+    "name": "AINV-hidden-set-never-filled",
+    "file": "src/scenes/world.js",
+    "old": "      if (look.kind === 'hidden') { _hiddenPeers.add(d.id); continue; }",
+    "new": "      if (look.kind === 'hidden') { continue; }",
+    "tests": [
+      "test/invisnet.test.js"
+    ]
+  }
+]

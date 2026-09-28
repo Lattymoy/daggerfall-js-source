@@ -38,7 +38,7 @@ import { midScreenText } from './midScreenText.js';   // AUDIT 64 F34: Daggerfal
 import { horseNameTooltip } from './horseNameTooltip.js';   // AUDIT HCC U6: Horse Cart and Cargo's HUD label (HorseNameTooltipController)
 import { hudRenderEnabled } from './hudShortcuts.js';   // AUDIT 64 F37: the Draw override's renderHUD flag
 import { preloadSpellIcons } from './spellIcons.js';   // U46: the sheet the rows draw from
-import { drawEscortFaces } from './hudEscortFaces.js';   // FE1: the quest escorts' portrait column
+import { drawEscortFaces, escortFacesBottom } from './hudEscortFaces.js';   // FE1: the quest escorts' portrait column
 import { drawText, measureText } from './text.js';   // AUDIT 28 W2: the arrow counter's label
 import { HudFlickerController } from './hudFlicker.js';   // AUDIT 28 W2d: the near-death warning
 import { lastHealthLost, lastHealthLostPercent } from './hudVitals.js';   // BLOOD2e: HealthLostPercent, as CameraRecoiler reads it
@@ -51,6 +51,7 @@ import { classicLootFrame } from '../systems/classicLootFrame.js';   // DISC22-C
 import { drawLootPanel } from './classicLootPanel.js';   // DISC22-C: quick loot's classic face
 import { packImgTexture } from './packArt.js';   // OVH2: the worn UI pack's picture
 import { ToolTip } from './toolTip.js';
+import { PARTY_GREEN } from '../net/social.js';   // COMPASS-PARTY: the one green a party is drawn in
 
 export const COMPASS_BOX_OUTLINE = 2;
 export const COMPASS_BOX_INTERIOR = 64;
@@ -466,7 +467,7 @@ export function hideHudTextSurfaces(hudText = null) {
 }
 
 export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
-  { font = null, cursorActive = false, windowCoversHud = null, hudHidden = false, detected = null, playerXZ = null, gate = null, largeHud = null, hover = null,
+  { font = null, cursorActive = false, windowCoversHud = null, hudHidden = false, detected = null, playerXZ = null, gate = null, party = null, largeHud = null, hover = null,
     readied = null, weapon = null, weaponSheathed = true, quickUse = null, quickSwap = null, quickOffHand = null, quickSpell = null, quickSwitchHand = null } = {}) {   // PX30b: for the enhanced HUD's hand plaques; AUDIT 28 W2: the arrow counter's gate; AUDIT 64 F35: the host's previousWindow answer; QS3: the diamond's sheathe state and its two phone taps; QS6: the caption's spell chip press
   // AUDIT 24 (wave 39): ShowPlayerDamage's red flash, under the bars.
   // THE FOUR HOSTS RULE, applied before the fact: drawHud is the one
@@ -630,6 +631,7 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
       detected: detected ?? null,
       playerXZ: playerXZ ?? null,
       gate: gate ?? null,   // WB1: the Oblivion Gate's scene XZ while the player stands in its ring - the compass's own mark
+      party: party ?? null,   // COMPASS-PARTY: the party's points (ui/partyMapMarks.js partyCompassPoints)
       // QS3: the quickslot diamond dims its main cell when the weapon
       // is put away. drawHud has carried `weaponSheathed` since AUDIT
       // 28 W2 for the arrow counter's gate and never passed it on, so
@@ -644,6 +646,7 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
       quickOffHand: quickOffHand ?? null,   // QS4: the off hand's own press
       quickSpell: quickSpell ?? null,   // QS6: the spell chip's
       quickSwitchHand: quickSwitchHand ?? null,   // MAC-R3: the main cell's hand switch
+      escortBottom: escortBottomPx(canvas),   // UI3: how far down the escort faces reach (CSS px) - the status widget keeps below them
     });
     // FE1 + AUDIT 39 F133: the escort column is not the classic skin's
     // - DaggerfallHUD adds it unconditionally (:183-185) and even the
@@ -767,6 +770,8 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
       }
     }
   }
+  // COMPASS-PARTY: the party's marks, over the box as the Detect markers are, in the party's green
+  drawPartyCompassMarks(renderer, party, playerXZ, heading01, { bx, by, bw, s });
   // U38: the crosshair and the interaction-mode indicator, LAST -
   // DaggerfallHUD draws them from one Update beside the vitals it
   // already owns, and drawHud is the ONE host-agnostic call all four
@@ -783,6 +788,30 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   drawSpellIconRows(renderer, canvas, vitals, dt, { font, cursorActive, largeHudRect: null, hover });
 }
 
+/** COMPASS-PARTY (2026-09-27, Discord - Ashley: "just lil green marks that point in that direction"): the party on
+ *  the classic compass - the Detect marker's 5x3 triangle, its row over the box's top edge and its bearing law
+ *  (compassMarkerLerp, clamped: a mate behind stands at the box's end on the side to turn toward), in the party's one
+ *  green (net/social.js PARTY_GREEN). `points` are scene XZ (ui/partyMapMarks.js partyCompassPoints); `box` is the
+ *  compass box as drawCompassStrip laid it. Not a DFU member: DFU has no party. */
+export function drawPartyCompassMarks(renderer, points, playerXZ, heading01, { bx, by, bw, s }) {
+  if (!points || !points.length || !playerXZ) return 0;
+  const mw = DETECT_MARKER_W * s, mh = DETECT_MARKER_H * s;
+  const boxLeft = bx, boxRight = bx + bw - mw;
+  const my = by - mh;
+  const rowH = mh / DETECT_MARKER_H;
+  let drawn = 0;
+  for (const t of points) {
+    const lerp = Math.min(1, Math.max(0, compassMarkerLerp(t, playerXZ, heading01)));
+    const mx = boxLeft + (boxRight - boxLeft) * lerp;
+    for (let r = 0; r < DETECT_MARKER_ROWS.length; r++) {
+      const fill = DETECT_MARKER_ROWS[r] * s;
+      renderer.drawScreenQuad(null, { x: mx + (mw - fill) / 2, y: my + r * rowH, w: fill, h: rowH }, undefined, PARTY_GREEN);
+    }
+    drawn++;
+  }
+  return drawn;
+}
+
 /** DISC22-C: the classic skins' quick-loot panel - the frame worldHoverFrame resolved THIS frame, the lit row banded.
  *  AUDIT RETRO1 G5: beside the reticle WHERE IT IS - hudReticle, the enhanced plaque's own door - and above the large
  *  HUD's bar, docked or not, which is drawn before it (null on the plain HUD: the screen's foot). */
@@ -790,4 +819,13 @@ function drawClassicLoot(renderer, canvas, font) {
   const loot = classicLootFrame(frameMark());
   const at = { reticleY: crosshairCentreY(canvas.height, hudReticle(canvas).largeHudHeight), floorY: lastLargeHudBar?.y ?? canvas.height };
   if (loot) drawLootPanel(renderer, nativeMetrics(canvas), font, loot.frame, loot.lit, at);
+}
+
+/** UI3: the escort column's bottom edge in CSS pixels - its native bottom at this scale, over the canvas's own ratio to
+ *  the window (innerHeight, which asks no layout of the page) - or 0 with no face drawn. */
+export function escortBottomPx(canvas) {
+  const native = escortFacesBottom();
+  if (!native || !canvas?.height) return 0;
+  const view = Number(globalThis.innerHeight) || canvas.height;
+  return native * hudScale(canvas.width, canvas.height) * (view / canvas.height);
 }

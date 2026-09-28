@@ -1,0 +1,74 @@
+[
+  {
+    "name": "TRADE-INFO-dfu-powers-never-read",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "      for (const t of magicPowersLines(item, { identified: known, lines: d?.rows ?? null })) if (t && !tier.has(t)) lines.push(t);\n",
+    "new": "",
+    "tests": [
+      "test/tradeinfo.test.js"
+    ]
+  },
+  {
+    "name": "TRADE-INFO-read-beside-the-tiers",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  if (item && !(item.rarity && lootRarityOn()) && isEnchanted(item)) {",
+    "new": "  if (item && isEnchanted(item)) {",
+    "tests": [
+      "test/tradeinfo.test.js"
+    ]
+  },
+  {
+    "name": "TRADE-INFO-unknown-beside-unidentified",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    if (known || !lines.includes('Unidentified')) {",
+    "new": "    if (true) {",
+    "tests": [
+      "test/tradeinfo.test.js"
+    ]
+  },
+  {
+    "name": "TRADE-INFO-card-on-the-tiers-alone",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  { const lines = itemPowerLines(picked, deps, { set: false }); if (lines.length) {",
+    "new": "  { const lines = rarityLines(picked, { sigil: false, set: false }); if (lines.length) {",
+    "tests": [
+      "test/tradeinfo.test.js"
+    ]
+  },
+  {
+    "name": "TRADE-INFO-row-hover-bare",
+    "file": "src/ui/enhancedPlayerTrade.js",
+    "old": "    b.title = [line.name, ...powers].join('\\n');",
+    "new": "    b.title = line.name;",
+    "tests": [
+      "test/tradeinfo.test.js"
+    ]
+  },
+  {
+    "name": "TRADE-INFO-detail-bare",
+    "file": "src/ui/enhancedPlayerTrade.js",
+    "old": "    if (powers.length) { const ul = el('ul', 'rarity'); for (const p of powers) ul.append(el('li', null, p)); info.append(ul); }\n",
+    "new": "",
+    "tests": [
+      "test/tradeinfo.test.js"
+    ]
+  },
+  {
+    "name": "TRADE-FIT-size-never-read",
+    "file": "src/net/tradeSession.js",
+    "old": "    if (tradeFrameBytes({ k: 'offer', r: this.rev + 1, items: wired, g, to: this.peer, s: this.sid }) > TRADE_FRAME_MAX\n      || tradeCommitBytes({ items: wired, g, to: this.peer, s: this.sid, r: this.rev + 1 }) > TRADE_DATA_MAX) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/tradeinfo.test.js"
+    ]
+  },
+  {
+    "name": "TRADE-FIT-without-the-wrapper",
+    "file": "src/net/tradeSession.js",
+    "old": "export const tradeFrameBytes = (data) => JSON.stringify({ t: 'trade', data }).length;",
+    "new": "export const tradeFrameBytes = (data) => JSON.stringify(data).length;",
+    "tests": [
+      "test/tradeinfo.test.js"
+    ]
+  }
+]

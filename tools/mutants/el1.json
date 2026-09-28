@@ -283,7 +283,7 @@
   {
     "name": "renderer-pointcolors-raw",
     "file": "src/render/renderer.js",
-    "old": "    return this._lane && !raw ? this._lane.decodeN(out, this._pointColorDec, count) : out;",
+    "old": "    if (!lane || raw) return out;",
     "new": "    return out;",
     "tests": [
       "test/el1_enhancedlighting.test.js"

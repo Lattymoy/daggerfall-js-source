@@ -237,5 +237,50 @@
     "tests": [
       "test/skin2_class_skins.test.js"
     ]
+  },
+  {
+    "name": "ACRO-SHORT-scale-unread",
+    "file": "src/player/eotbSprite.js",
+    "old": "  const k = classRecordScale(archive, record);",
+    "new": "  const k = 1;",
+    "tests": [
+      "test/skin2_class_skins.test.js"
+    ]
+  },
+  {
+    "name": "ACRO-SHORT-wrong-record",
+    "file": "vendor/class-skins/skins.json",
+    "old": "\"16\": 0.7363636363636363",
+    "new": "\"15\": 0.7363636363636363",
+    "tests": [
+      "test/skin2_class_skins.test.js"
+    ]
+  },
+  {
+    "name": "ACRO-SHORT-wrong-scale",
+    "file": "vendor/class-skins/skins.json",
+    "old": "\"16\": 0.7363636363636363",
+    "new": "\"16\": 0.7463636363636363",
+    "tests": [
+      "test/skin2_class_skins.test.js"
+    ]
+  },
+  {
+    "name": "ACRO-SHORT-default-not-one",
+    "file": "src/player/classSkins.js",
+    "old": "?.scale?.[record] ?? 1;",
+    "new": "?.scale?.[record] ?? 1.1;",
+    "tests": [
+      "test/skin2_class_skins.test.js"
+    ]
+  },
+  {
+    "name": "ACRO-SHORT-any-archive",
+    "file": "src/player/classSkins.js",
+    "old": "CLASS_SKINS.find((s) => s.archive === archive)?.scale",
+    "new": "CLASS_SKINS.find((s) => s.scale)?.scale",
+    "tests": [
+      "test/skin2_class_skins.test.js"
+    ]
   }
 ]

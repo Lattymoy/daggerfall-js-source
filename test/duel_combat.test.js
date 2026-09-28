@@ -182,5 +182,5 @@ test('DUEL1 hosts by source: the swing reaches my opponent before any pool and i
   assert.match(h, /for \(const t of sweepFoes\(eye, EXPLOSION_RADIUS, duelMarksFor\(sp\)\)\) giveToDuel\(t, sp\);/, 'an area around me');
   assert.match(h, /if \(duel && caster\?\.entity === playerEntity\) for \(const t of sweepFoes\(pos, EXPLOSION_RADIUS, duelMarksFor\(spell\)\)\) giveToDuel\(t, spell\);/, 'a blast');
   assert.match(h, /if \(m\.duel\) \{\s*\n\s*const hitFoe = duelMarksFor\(m\.spell\)\.find\(\(p\) => missileHitsCapsule\(m\.pos, p\.ai\.feet, p\.ai\.height, PLAYER_BODY_RADIUS\)\);/, 'a missile');
-  assert.match(h, /duel: !!duelSpellOf\(sp\) \}\);/);
+  assert.match(h, /duel: !!duelSpellOf\(sp\), boss: !!duelSpellOf\(sp\) \|\| [^\n]*\}\);/);   // AUDIT WBX F5: a duel spell meets the boss too (and a Soul Trap)
 });

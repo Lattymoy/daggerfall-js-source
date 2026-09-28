@@ -177,7 +177,11 @@ movement actions + swing doors on the ActionSystem, RDB lights with
 the flicker animator, water quads with the climate ground tile
 (uploaded at enter - the exterior tilemap path never routes single
 records), flats at raw-pivot centering, a fresh collider, the start
-marker and exit doors. World routing keys on the verbatim door type;
+marker and exit doors (a block's door list is every door face its
+models carry - DFU's misnomer - and the host keeps only the
+DungeonExit ones, PlayerActivate.cs:649; CRUX-DOOR, 2026-09-27, when
+an entrance face in the Mantellan Crux sent a player outside). World
+routing keys on the verbatim door type;
 the door registry now covers ALL models with doors (dungeon entrances
 live on misc models without a building record). In-engine proof at
 Privateer's Hold entered FROM the streaming world: 303 draws / 1 exit
@@ -578,6 +582,13 @@ LevitateMotor / PlayerSpeedChanger / PlayerEnterExit / PlayerEntity:
   race gate short-circuits before the roll); breath/drowning
   (isPlayerSubmerged at +76*GlobalScale) shipped at P12, its residue
   at P18.
+  **BALANCE1 (2026-09-27, Mac: fatigue "drain[s] a little too fast")**:
+  the losses above stay DFU's; what exertion CHARGES is x0.75
+  (`statMods.js FATIGUE_DRAIN_SCALE`, inside the same truncation as the
+  multiplier) - the minute's band, a jump, a swing (8) and Roleplay
+  Realism's overload. A full bar at STR/END 50 walks 66.7 real minutes
+  (DFU 48.5) and runs 8.1 (DFU 6.1). A departure: Ledger A,
+  `01-Overview/Field-Bugs-2026-09-27-phone-backup-drains.md`.
 - **PARITY FIX**: PlayerMotor.limitDiagonalSpeed (.7071 when both
   axes are live) had never been ported - the grounded motor moved
   sqrt(2) fast on diagonals. Applied on both paths.
@@ -965,7 +976,7 @@ all four caught, then reverted).
   update's worth; the cadence, the submergence geometry and the
   SetHealth(0) stay in dungeonContext.breathTick, which BOTH
   dungeon-mode hosts drive through dungeonCtx.drawFoes
-  (worldModes.js:885). exterior.js and world.js have no submersion
+  (worldModes.js:931). exterior.js and world.js have no submersion
   path for it to ride yet - when exterior water lands, it consumes
   this same step. New in the step:
   (1) THE ARGONIAN COIN REFUND (:331-333): on each drain tick,
@@ -1696,10 +1707,10 @@ that `worldModes`'s own mousedown/mouseup handlers never call
 `mouseCode(e.button)`, so `held(keys, 'AutoRun')` was dead in that host
 at the shipped `Mouse2` default, and handed it to the input lane.
 `worldModes` has no `keys` Set of its own: it destructures one from
-`host` (`worldModes.js:441`), and its only two callers are `world.js`
+`host` (`worldModes.js:455`), and its only two callers are `world.js`
 (`:6147`) and `exterior.js` (`:2769`), both of which pass their own Set
-and both of whose WINDOW-level handlers (`world.js:8904-8905`,
-`exterior.js:3283-3284`) call `mouseCode(e.button)` and add/delete
+and both of whose WINDOW-level handlers (`world.js:9087-9088`,
+`exterior.js:3294-3295`) call `mouseCode(e.button)` and add/delete
 unconditionally - outside every mode and overlay gate. `MOUSE_CODES`
 maps button 2 to `Mouse2` (`input.js:510`), which is the shipped
 binding (`InputManager.cs:995`). The latch is live in that host; there
@@ -1717,7 +1728,7 @@ not gate on `HasAction`; it gates on `playerMotor.IsStandingStill`
 that `GroundedMovement` writes straight into `moveDirection`, so DFU
 plays the stride. The port walked the autorunner forward in silence in
 every host. All four now pass `standingStill: player.standing`, the
-motor's own mirror of that getter (`world.js:16599` already did at its
+motor's own mirror of that getter (`world.js:17435` already did at its
 other footstep site) - which is also still the paralysis answer,
 because the hosts zero both axes for a frozen player.
 

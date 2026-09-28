@@ -158,7 +158,10 @@ const HANDLERS = new Map([
    *  weapon's own damage, and the Razor pays the same in condition. */
   [ARTIFACTS.MehrunesRazor, {
     strikes({ target, item, rolls = Math.random }) {
-      if (!target || !item) return null;
+      // AUDIT WBX F1 (2026-09-26): not the Oblivion Gate's boss - his stand-in's health is a placeholder (1e9; the relay
+      // holds his), so the Razor's whole-health blow billed the Razor 1e9 condition (it broke, and enchantment wear took
+      // it from the pack) and a blow the wire refused (past GATE_DMG_WIRE_MAX), lost whole
+      if (!target || !item || target.spareGear) return null;
       if (savingThrow(ELEMENTS.Magic, EFFECT_FLAGS.Magic, target, 0, rolls) !== 0) {
         const healthRemoved = target.health ?? 0;
         markWholeBlow(target);   // AUDIT PSCALE1 DOORS-1: the whole health, whole - the foe's door takes it undivided, and so does its owner's

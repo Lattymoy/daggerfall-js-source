@@ -53,6 +53,7 @@
 // billboard indices ride along for the questor flat-pick (Q4-iii).
 
 import { QuestMachine, TICKS_PER_SECOND } from '../systems/quest/machine.js';
+import { clockCounts } from '../systems/quest/clock.js';   // DEAD-CLOCK: a clock whose end changes nothing is no deadline
 import { repairActiveQuests } from '../systems/quest/questRepair.js';   // QREPAIR: the Settings' repair
 import { QuestListsManager } from '../systems/quest/questLists.js';
 import { QuestOfferFlow } from '../systems/quest/offerFlow.js';
@@ -190,7 +191,7 @@ export const QUEST_CTX_CONTRACT = Object.freeze([
   'raiseTime', 'regionPriceAdjustment', 'releaseQuestItem',
   'relinkQuestTopics', 'removeItemFromPlayer', 'removeNpcQuestor',
   'removeProgressRumors', 'removeQuestInfoTopics', 'removeQuestRumors',
-  'removeQuestorPostMessage', 'setPlayerCrime', 'showPopup',
+  'removeQuestorPostMessage', 'setPlayerCrime', 'sharedClock', 'showPopup',
   'showPrompt', 'showPromptMulti', 'spawnCityGuards',
   'undiscoverBuilding', 'world',
 ]);
@@ -233,6 +234,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     world: ctx.world ?? null,
     nowSeconds: () => ctx.classicSeconds?.() ?? 0,
     questClockStepMax: () => ctx.questClockStepMax?.() ?? Infinity,   // WORLD7: online, a quest clock charges played time (the host's step); a host that says nothing charges every clock, DFU's own
+    sharedClock: () => !!ctx.sharedClock?.(),   // GUARD-ONLINE: online, a guarded quest's window is the player's arrival's (quest/onlineGuard.js)
     getQuestSourceLines: (name) => ctx.data.getQuestSourceLines(name),
     playerLevel: () => ctx.playerEntity?.level ?? 0,
     playerGender: () => ctx.playerEntity?.gender ?? 'male',
@@ -368,7 +370,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
      * log entry, its messages in the machine's own order, and the
      * TIGHTEST RUNNING clock on the quest's resources (Clock carries
      * `remainingTimeInSeconds` in game seconds beside
-     * `clockEnabled`/`clockFinished`, quest/clock.js:98,164). The
+     * `clockEnabled`/`clockFinished`, quest/clock.js:118,164). The
      * archive is the notebook's filed entries.
      *
      * IT WAS WRITTEN THREE TIMES - world.js's pause hooks,
@@ -388,7 +390,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
         if (!messages.length) continue;
         let clockSeconds = null;
         for (const r of q.resources.values()) {
-          if (r.clockEnabled && !r.clockFinished && Number.isFinite(r.remainingTimeInSeconds)) {
+          if (r.clockEnabled && !r.clockFinished && Number.isFinite(r.remainingTimeInSeconds) && clockCounts(q, r)) {   // DEAD-CLOCK
             const left = r.liveRemainingSeconds(q);   // QT-LIVE1: as of NOW, not as of the last tick the pause gate let through
             clockSeconds = clockSeconds == null ? left : Math.min(clockSeconds, left);
           }

@@ -11,8 +11,8 @@
   {
     "name": "QS1-the-key-remembers-the-condition",
     "file": "src/systems/quickslots.js",
-    "old": "    item.legendary ?? '', ench, custom, affixes].join('|');",
-    "new": "    item.legendary ?? '', ench, custom, affixes, item.currentCondition ?? ''].join('|');",
+    "old": "    item.legendary ?? '', ench, custom, affixes, item.aetheric ?? ''].join('|');",
+    "new": "    item.legendary ?? '', ench, custom, affixes, item.aetheric ?? '', item.currentCondition ?? ''].join('|');",
     "tests": [
       "test/quickslots.test.js"
     ]

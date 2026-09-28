@@ -1,0 +1,44 @@
+[
+  {
+    "name": "NATUREGROUND-no-lift",
+    "file": "src/scenes/world.js",
+    "old": "const lift = flat.archive === natureArchive ? groundOffPlane(samples, avg, fx, fz) : 0;",
+    "new": "const lift = 0;",
+    "tests": ["test/natureground.test.js"]
+  },
+  {
+    "name": "NATUREGROUND-every-flat-lifted",
+    "file": "src/scenes/world.js",
+    "old": "const lift = flat.archive === natureArchive ? groundOffPlane(samples, avg, fx, fz) : 0;",
+    "new": "const lift = groundOffPlane(samples, avg, fx, fz);",
+    "tests": ["test/natureground.test.js"]
+  },
+  {
+    "name": "NATUREGROUND-lift-dropped",
+    "file": "src/scenes/world.js",
+    "old": "addFlat(flat.archive, flat.record, fx, locLocal[1] + flat.y + lift, fz);",
+    "new": "addFlat(flat.archive, flat.record, fx, locLocal[1] + flat.y, fz);",
+    "tests": ["test/natureground.test.js"]
+  },
+  {
+    "name": "NATUREGROUND-plane-a-double",
+    "file": "src/world/terrainSurface.js",
+    "old": "- Math.fround(avg) * (MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE);",
+    "new": "- avg * (MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE);",
+    "tests": ["test/natureground.test.js"]
+  },
+  {
+    "name": "NATUREGROUND-sign-flipped",
+    "file": "src/world/terrainSurface.js",
+    "old": "  return surfaceHeightAt(heightmapData, lx, lz) - Math.fround(avg)",
+    "new": "  return -surfaceHeightAt(heightmapData, lx, lz) + Math.fround(avg)",
+    "tests": ["test/natureground.test.js"]
+  },
+  {
+    "name": "NATUREGROUND-plane-unscaled",
+    "file": "src/world/terrainSurface.js",
+    "old": "Math.fround(avg) * (MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE)",
+    "new": "Math.fround(avg) * MAX_TERRAIN_HEIGHT",
+    "tests": ["test/natureground.test.js"]
+  }
+]

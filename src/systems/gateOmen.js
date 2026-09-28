@@ -16,7 +16,8 @@
 // silent rather than naming nowhere.
 //
 // Not a DFU member. Ledger A (WB).
-import { gateAt, gatePhase, gateCountdown, countdownText, gateMarked, gateStands, gateBossOf, omenLine, riseLine, openLine, sealLine, wrathLine, GATE_OPEN_MINUTE, GATE_SEAL_MINUTE, GATE_DAY_MINUTES } from '../net/gateLaw.js';
+import { gateAt, gatePhase, gateCountdown, countdownText, gateMarked, gateStands, gateBossOf, omenLine, riseLine, openLine, sealLine, wrathLine, GATE_OPEN_MINUTE, GATE_SEAL_MINUTE, GATE_DAY_MINUTES, GATE_COLLAPSE_MS, PIXEL_M } from '../net/gateLaw.js';
+import { GATE_TOWN_MAX_PX } from './gateSite.js';
 
 /** Is map pixel (px, py) within the omen's ring, give or take `slack` pixels? The compass carries the gate only here:
  *  inside the area the map drew, where the player has come looking. */
@@ -24,6 +25,61 @@ export const insideGateRing = (mark, px, py, slack = 1) => !!mark && Math.hypot(
 /** The gate's spot in the SCENE's x/z: its pixel's translation (the streaming host's `pixelTranslation`, the pixel's
  *  south-west corner) plus the spot, [east, north] metres - spawned dungeons' own sum (scenes/world.js, the sight line). */
 export const gateSceneXZ = (standing, t) => [t[0] + standing.spot[0], t[2] + standing.spot[1]];
+
+// ═══ WBX8: THE SKY BURNS ═════════════════════════════════════════════════════════════════════════════════════════
+// Mac (2026-09-26): "Improve the sky effect to be more like the /event dread command" - "When I say sky effect, I mean
+// daggerfall, not the inside". The omen has always SAID it - "The sky burns over the wilds near ..." - and the sky over
+// the site never did: the gate's only mark on it was its beacon. Now the sky over a gate wears the live event's dread
+// (world/dreadSky.js: the crimson grade on the sky, its fog and the light the land stands in, the storm's deck) with
+// the event's red storm gathered round the gate - not round the eye - so its lightning shows where the gate stands.
+// A function of the relay's clock and the eye's distance from the site, so every player near a gate sees the same sky
+// at the same moment; nothing is sent. The court (the inside) keeps the Deadlands' own sky (render/deadlands.js).
+//
+// ITS LIFE: the omen's first line kindles it (GATE_SKY_KINDLE of it within GATE_SKY_KINDLE_MS, so the line is true at
+// once) and it deepens to GATE_SKY_OMEN by the rise, to GATE_SKY_RISEN by the opening, and whole within
+// GATE_SKY_KINDLE_MS of it; open, sealed and until its end (the kill or the wrath) it burns whole; it clears as the gate
+// collapses (GATE_COLLAPSE_MS) - the dread lifting as the event's does. Never a step: every stage walks from the last. ITS REACH: whole within GATE_SKY_FULL_M of the gate - the town it is reached from stands under it
+// (gateSite.js GATE_TOWN_MAX_PX) - thinning to nothing at GATE_SKY_EDGE_M.
+export const GATE_SKY_KINDLE = 0.35;
+export const GATE_SKY_KINDLE_MS = 30_000;
+export const GATE_SKY_OMEN = 0.6;
+export const GATE_SKY_RISEN = 0.85;
+export const GATE_SKY_FULL_M = Math.ceil((GATE_TOWN_MAX_PX + 1) * PIXEL_M);
+export const GATE_SKY_EDGE_M = 12_000;
+/** The gate's storm: its own schedule (a salt on the event's) and its reach round the gate - near strikes at the gate
+ *  itself, far ones over the land round it (world/dreadSky.js dreadStrikes' ring). */
+export const GATE_STORM_RING = Object.freeze({ salt: 0x6a7e5b1d, near: 120, split: 1400, far: 4500, nearShare: 0.55 });
+
+const smooth01 = (x) => { const k = Math.max(0, Math.min(1, x)); return k * k * (3 - 2 * k); };
+
+/**
+ * How much the sky burns over a gate at `nowMs`, 0..1, by its life alone (its times `t`, the relay's word of its fall).
+ * The end is gatePhase's own: a fall after the opening, or the wrath. Pure.
+ * @param {{omenAt:number, riseAt:number, openAt:number, sealAt:number, wrathAt:number}|null} t
+ * @param {number} nowMs
+ * @param {number|null} [fellAt]
+ */
+export function gateSkyPhaseWeight(t, nowMs, fellAt = null) {
+  if (!t || !Number.isFinite(nowMs) || nowMs < t.omenAt) return 0;
+  if (nowMs < t.riseAt) {
+    return GATE_SKY_KINDLE * smooth01((nowMs - t.omenAt) / GATE_SKY_KINDLE_MS) + (GATE_SKY_OMEN - GATE_SKY_KINDLE) * smooth01((nowMs - t.omenAt) / (t.riseAt - t.omenAt));
+  }
+  if (nowMs < t.openAt) return GATE_SKY_OMEN + (GATE_SKY_RISEN - GATE_SKY_OMEN) * smooth01((nowMs - t.riseAt) / (t.openAt - t.riseAt));
+  const end = Number.isFinite(fellAt) && /** @type {number} */ (fellAt) >= t.openAt ? Math.min(/** @type {number} */ (fellAt), t.wrathAt) : t.wrathAt;
+  const whole = GATE_SKY_RISEN + (1 - GATE_SKY_RISEN) * smooth01((nowMs - t.openAt) / GATE_SKY_KINDLE_MS);   // the opening burns it whole
+  if (nowMs < end) return whole;
+  return whole * (1 - smooth01((nowMs - end) / GATE_COLLAPSE_MS));
+}
+
+/** How much of a gate's sky reaches an eye `distM` metres from it, 0..1: whole within GATE_SKY_FULL_M, nothing past
+ *  GATE_SKY_EDGE_M. Pure. */
+export function gateSkyNear(distM) {
+  if (!Number.isFinite(distM)) return 0;
+  return 1 - smooth01((distM - GATE_SKY_FULL_M) / (GATE_SKY_EDGE_M - GATE_SKY_FULL_M));
+}
+
+/** The sky a gate burns over an eye `distM` metres off at `nowMs`: its life's weight by its reach. Pure. */
+export const gateSkyWeight = (t, nowMs, fellAt, distM) => gateSkyPhaseWeight(t, nowMs, fellAt) * gateSkyNear(distM);
 
 /** WB3b: the kill, said to everyone online (the hub's word): who stood where, and who struck hardest. */
 export const fellLine = ({ near, boss, top }) => `${boss} has fallen at the Oblivion Gate near ${near}${top?.length ? ` - struck down by ${top.length > 1 ? `${top.slice(0, -1).join(', ')} and ${top[top.length - 1]}` : top[0]}` : ''}. The gate collapses.`;
@@ -97,6 +153,16 @@ export function createGateOmen({ now, site, say, localTime = () => null, fellAt 
       const cd = gateCountdown(c.t, now(), c.phase);
       const label = cd ? `Oblivion Gate - ${cd.to === 'open' ? 'opens' : 'seals'} in ${countdownText(cd.ms)}` : 'Oblivion Gate';
       return { day: c.t.day, cx: c.site.ring.cx, cy: c.site.ring.cy, r: c.site.ring.r, label, phase: c.phase };
+    },
+    /** WBX8: THE SKY THE GATE BURNS over an eye at `eye` (scene metres): its weight (gateSkyWeight - its life by its
+     *  reach) and where the site stands in the scene (`x`, `z` - the storm gathers there), or null when no gate burns
+     *  over it. From the omen on: the site is known before the gate stands. */
+    sky(eye, pixelTranslation) {
+      const c = current;
+      if (!c?.site || !eye) return null;
+      const [x, z] = gateSceneXZ(c.site, pixelTranslation(c.site.px, c.site.py));
+      const weight = gateSkyWeight(c.t, now(), fellAt(c.t.day), Math.hypot(eye[0] - x, eye[2] - z));
+      return weight > 0 ? { weight, x, z } : null;
     },
     /** Where the gate stands, for the compass and the gate's own pool (WB2): its pixel and its spot in it, its phase,
      *  its times and the relay's word of its fall (the pool times the rise and the collapse by them), while it stands. */

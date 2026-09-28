@@ -17,7 +17,7 @@
 //
 // HOW IT DRAWS, and why this needs no renderer change at all: the port
 // has ALREADY shipped a first-person pass. renderCharacterSprite
-// (render/renderer.js:1208) binds an offscreen target with its OWN depth
+// (render/renderer.js:1231) binds an offscreen target with its OWN depth
 // renderbuffer, clears colour AND depth, swaps the frame's proj/view for
 // ones the caller supplies, draws, and restores; drawScreenOverlayQuad
 // (:987) composites it fullscreen with an alpha cut and no depth test.
@@ -59,7 +59,7 @@ import {
   gmstValue, GMST_SNEAK_DELTA, sneakOffset,
   lightRecords, pickTorchRecord, blendMaskBones, overlayTracks, overlaySampler, weaponFlags, MW_TWO_HANDED,   // MW-D51: the held torch
   pickLanternRecord, hangAnchor, hookOnBone, hangAffine,   // HT-WAIST: the lantern at the waist, and the part that hangs
-  tpAnimSources, TP_BASE_MODEL, playerBodyRows, MW_UNITS_PER_METER, resolveBodyParts, ARM_PARTS, raceRecords, armorRecords, clothingRecords,
+  tpAnimSources, TP_BASE_MODEL, playerBodyRows, werewolfHeadRows, MW_UNITS_PER_METER, resolveBodyParts, ARM_PARTS, raceRecords, armorRecords, clothingRecords,
   facePools, meshBounds,
   movementAnimState, composeMovementGroup, MOVEMENT_FALLBACK_SPEED, MOVEMENT_SPEED_CAP, turnAnimSpeed,
   jumpAnimState,
@@ -74,8 +74,10 @@ import { appStorage } from '../systems/appStorage.js';   // DA1: the storage sea
 import { drawRigSpriteBox } from '../render/characterSprite.js';
 import { WEAPONS } from '../characters/weapons.js';
 import { materialName } from '../systems/itemInfo.js';
-import { composeWornArmor, shadowSkinRows, fpWornAdds, mwArmorRecords, mwClothingRecord, CLOTHING_NAME } from '../formats/mwItemMap.js';
+import { composeWornArmor, shadowSkinRows, fpWornAdds, mwArmorRecords, mwClothingRecord, CLOTHING_NAME, werewolfRobeOf, firstPersonPartGroup } from '../formats/mwItemMap.js';   // WEREWOLF1: the robe and its first-person ladder
+import { skinMips, skinUseOf, skinUseKey } from '../characters/werewolfSkin.js';   // SHADOW-FANG: the werewolf's skin, a law over its own textures
 import { correctTexturePath, correctActorModelPath, wrapModes, warningImage, decodeTextureImage } from '../formats/mwTexture.js';
+import { decodeTextureOffThread } from '../formats/mwTextureClient.js';   // MW-TEXTHREAD: the preload's decodes, in the pool
 import { diffuseAt, emissiveAt } from '../formats/mwNifMesh.js';   // MWT2: the emission the pass has always resolved and never read
 import { fpLightingOn } from './fpsWeapon.js';   // MAC-P: the first-person lighting switch, shared with the classic sprite it stands in for
 import { createParticleSystem, packParticleQuads, particleDrawState, affineOfTransform, affineMul, affineApply, affineScale } from '../formats/mwParticles.js';   // MAC-Q: the torch's flame, and any other particle system a part carries
@@ -155,9 +157,20 @@ function findLoaded(archives, path) {
  *  all - and loads whatever the ladder lands on. A texture the archives
  *  do not carry loads nothing and stays the magenta warning image, which
  *  is collectArmTextures' own answer and not a new one. Skips what the
- *  decode memo already holds, so a rebuild loads nothing twice. */
+ *  decode memo already holds, so a rebuild loads nothing twice.
+ *
+ *  MW-TEXTHREAD: and it DECODES them, off this thread and several at
+ *  once (formats/mwTextureClient.js - the same decoder in a pool of
+ *  workers), into the same generation memo collectArmTextures reads, so
+ *  its synchronous decode finds every texture already answered. Only an
+ *  image or the decoder's refusal is kept here (AUDIT MW-TEXTHREAD F4);
+ *  a file the ladder cannot find is left for collectArmTextures to
+ *  answer with the warning image and its reason, exactly as it always
+ *  has. Without a generation there is no memo to fill, and
+ *  collectArmTextures decodes as before. */
 async function preloadArmTextures(pieces, archives, gen = null) {
   const paths = [];
+  const want = [];   // MW-TEXTHREAD: [file, path] - the memo is keyed by the file the piece names
   const seen = new Set();
   const exists = (p) => archives.some((a) => a.has(p));
   for (const piece of pieces ?? []) {
@@ -165,9 +178,29 @@ async function preloadArmTextures(pieces, archives, gen = null) {
     if (!file || seen.has(file)) continue;
     seen.add(file);
     if (gen !== null && TEXTURE_CACHE.has(`${gen}:${file}`)) continue;
-    paths.push(correctTexturePath(file, exists));
+    const path = correctTexturePath(file, exists);
+    paths.push(path);
+    want.push([file, path]);
   }
   await loadFromArchives(archives, paths);
+  if (gen === null) return;
+  await Promise.all(want.map(async ([file, path]) => {
+    const key = `${gen}:${file}`;
+    const arc = archives.find((a) => a.has(path));
+    if (!arc || (typeof arc.loaded === 'function' && !arc.loaded(path))) return;   // collectArmTextures says why
+    let image;
+    try { image = await decodeTextureOffThread(path, arc.get(path)); } catch (err) {
+      // AUDIT MW-TEXTHREAD F4: THE DECODER'S REFUSAL IS KEPT TOO. The
+      // decoder is pure, so the same bytes refuse again on any thread;
+      // left unkept, collectArmTextures decoded the whole file a second
+      // time, on the frame's thread, to learn what the pool had already
+      // said. Kept in collectArmTextures' own words. Anything else (no
+      // decoderError) is not the file's answer and stays its to find.
+      if (err?.decoderError && !TEXTURE_CACHE.has(key)) TEXTURE_CACHE.set(key, { ok: false, path, error: err.message, image: warningImage() });
+      return;
+    }
+    if (!TEXTURE_CACHE.has(key)) TEXTURE_CACHE.set(key, { ok: true, path, image });
+  }));
 }
 
 /** MW-LOAD: the stage clock. performance.now() where there is one (every
@@ -175,14 +208,24 @@ async function preloadArmTextures(pieces, archives, gen = null) {
 const mwNow = () => (typeof performance !== 'undefined' && performance && typeof performance.now === 'function'
   ? performance.now() : Date.now());
 
-/** Rule 6's table, as a decision rather than a list. Werewolf is out of
- *  scope (it ships with Bloodmoon and Part VI records it ABSENT from a
- *  vanilla archive). Daggerfall's Khajiit and Argonian reach the beast
+/** WEREWOLF1 (2026-09-26, Mac: "it's the 3d model" - "it needs to be imported if its not"): THE WEREWOLF'S TWO
+ *  SKELETONS, files/settings-default.cfg [Models] wolfskin and wolfskin1st. They ship with Bloodmoon, so a player
+ *  with Bloodmoon.bsa attached has them; without it the build refuses at the skeleton, and the transformed player
+ *  stands as Eye Of The Beholder's lycanthrope and the classic claws, as before. */
+export const WOLFSKIN = 'meshes/wolf/skin.nif';
+export const WOLFSKIN_1ST = 'meshes/wolf/skin.1st.nif';
+
+/** Rule 6's table, as a decision rather than a list. The werewolf was out
+ *  of scope here until WEREWOLF1 (it ships with Bloodmoon, and Part VI
+ *  records it ABSENT from a vanilla archive). Daggerfall's Khajiit and Argonian reach the beast
  *  arm through the RADT bit (mwRaceId spells them as the ESM does) - a
  *  peer's body drives it from the wire (MWBODY1). A skeleton this archive lacks is REPORTED, never
  *  silently swapped: a silent fallback here is how an empty view got
  *  called a working one for four releases. */
-export function fpSkeletonPath({ female = false, beast = false } = {}) {
+export function fpSkeletonPath({ female = false, beast = false, werewolf = false } = {}) {
+  // WEREWOLF1: getActorSkeleton asks for the werewolf FIRST, whatever the sex or the race (actorutil.cpp:23-24) -
+  // [Models] wolfskin1st. The x-form (xskin.1st.nif) is correctActorModelPath's, when its .kf is there.
+  if (werewolf) return WOLFSKIN_1ST;
   if (beast) return 'meshes/base_animkna.1st.nif';
   if (female) return 'meshes/base_anim_female.1st.nif';
   return 'meshes/xbase_anim.1st.nif';
@@ -191,9 +234,10 @@ export function fpSkeletonPath({ female = false, beast = false } = {}) {
 /** MW-D24: rule 6's OTHER column - the THIRD-PERSON skeleton the same
  *  actor walks on (getActorSkeleton's !firstPerson branch,
  *  actorutil.cpp:8-19, through settings-default.cfg [Models]
- *  baseanim/baseanimfemale/baseanimkna). Werewolf out of scope for the
- *  same reason as above. */
-export function tpSkeletonPath({ female = false, beast = false } = {}) {
+ *  baseanim/baseanimfemale/baseanimkna). The werewolf asked first here
+ *  too (WEREWOLF1): [Models] wolfskin. */
+export function tpSkeletonPath({ female = false, beast = false, werewolf = false } = {}) {
+  if (werewolf) return WOLFSKIN;   // WEREWOLF1: [Models] wolfskin (actorutil.cpp:12-13)
   if (beast) return 'meshes/base_animkna.nif';
   if (female) return 'meshes/base_anim_female.nif';
   return 'meshes/base_anim.nif';
@@ -525,7 +569,7 @@ export function armReach(eye, unionBounds) {
 /**
  * PACK THE ASSEMBLY for drawCharacter's vertex stream: 9 floats per
  * vertex, [pos.xyz, colour.rgb, normal.xyz], NON-INDEXED, because
- * drawCharacter issues drawArrays (renderer.js:1121). The MW readers hand
+ * drawCharacter issues drawArrays (renderer.js:1144). The MW readers hand
  * back indexed triangles, so the indices are expanded here.
  *
  * NORMALS ARE COMPUTED, not read. poseAssembly skins positions with a
@@ -539,7 +583,7 @@ export function armReach(eye, unionBounds) {
  * left arm is lit inside-out - dark where the right arm is bright - and
  * that is a lighting bug that reads as "the mesh is wrong" rather than
  * as "the mirror is wrong". drawCharacter disables back-face culling
- * (renderer.js:1119), so the winding costs nothing else.
+ * (renderer.js:1142), so the winding costs nothing else.
  */
 export function packFpArm(pieces, out = null) {
   let tris = 0;
@@ -849,6 +893,35 @@ async function cachedClipReport(gen, skeletonPath, name, bytesOf, skeleton) {
 // IG2: decoded-texture memo, same generation key - a steel cuirass's
 // texture does not change because a gauntlet did.
 const TEXTURE_CACHE = new Map();
+/** SHADOW-FANG (AUDIT D2/E5/F5): THE SKINNED COPIES, module-wide - keyed by the decoded image they paint (a
+ *  TEXTURE_CACHE entry's, shared by every rig on the page: this body's and every peer's) and by the skin and its use
+ *  (characters/werewolfSkin.js skinUseKey), so a rebuild, a peer's wolf and a second viewer's wolf in the same skin
+ *  paint nothing twice. They were a per-rig map, cleared at every build and filled in the FRAME that first hung the
+ *  mesh - a 1024-square texture was half a second's stall on every screen at every transformation. A generation's
+ *  images go with their cache entries, and their copies with them. */
+const SKINNED_MIPS = new WeakMap();   // decoded image -> Map(skinUseKey -> mips)
+function skinnedMipsOf(image, skin, use) {
+  let per = SKINNED_MIPS.get(image);
+  if (!per) { per = new Map(); SKINNED_MIPS.set(image, per); }
+  const key = skinUseKey(skin, use);
+  let mips = per.get(key);
+  if (!mips) { mips = skinMips(image.mips, skin, use); per.set(key, mips); }
+  return mips;
+}
+/** ...painted IN THE BUILD, one texture a turn (a macrotask between two, so the frames keep drawing the body that
+ *  still stands), for every piece the wolf's meshes will hang - the frame that hangs them finds them ready. */
+async function preskinTextures(pieces, textures, skin) {
+  if (!skin) return;
+  for (const piece of pieces ?? []) {
+    const file = piece?.material?.textureFile;
+    const entry = file ? textures.get(file) : null;
+    if (!entry?.image?.mips) continue;
+    const use = skinUseOf(piece, file);
+    if (SKINNED_MIPS.get(entry.image)?.has(skinUseKey(skin, use))) continue;
+    skinnedMipsOf(entry.image, skin, use);
+    await new Promise((r) => setTimeout(r, 0));
+  }
+}
 /** AUDIT 32 F2: the face match per identity per data generation. */
 const FACE_MATCH_CACHE = new Map();
 
@@ -906,6 +979,28 @@ function clothingMeshPath(rec, parts) {
   return `meshes/${model}`;
 }
 
+/** AUDIT MW-TEXTHREAD F2: the texture a CLOT record's colour is measured
+ *  off - the mesh clothingMeshPath names, parsed, and the first texture
+ *  it carries, through rule 36's ladder. ONE derivation for the measure
+ *  on this thread and the one in the pool, so the two cannot measure
+ *  different files. Null when no archive carries the mesh or it names
+ *  no texture; the mesh must be loaded (findLoaded says so, by name),
+ *  and a throw is the caller's to answer. */
+function clothingTexturePath(rec, parts, archives) {
+  const path = clothingMeshPath(rec, parts);
+  const arc = findLoaded(archives, path);
+  if (!arc) return null;
+  const batches = flattenNif(parseNif(arc.get(path).slice()));
+  const file = batches.map((b) => b.material && b.material.textureFile).find(Boolean);
+  return file ? correctTexturePath(file, (p) => archives.some((a) => a.has(p))) : null;
+}
+/** MW-D37: a garment's colour, off its texture's level 0 - the
+ *  alpha-weighted mean, in bytes; null when nothing measures. */
+function garmentColourOf(m0) {
+  const f = hairFeatures(m0.rgba, m0.width, m0.height, 0);   // alpha-weighted mean
+  return f && f.colour ? f.colour.map((v) => Math.round(v * 255)) : null;
+}
+
 function clothingColourOf(rec, parts, archives, gen) {
   const key = `${gen}:${rec.id}`;
   if (CLOT_COLOUR_CACHE.has(key)) return CLOT_COLOUR_CACHE.get(key);
@@ -913,22 +1008,15 @@ function clothingColourOf(rec, parts, archives, gen) {
   try {
     // MW-LOAD: both reads below are covered by preloadClothingColour,
     // which prepareClothingColours runs over the resolver's own pool
-    // before this synchronous callback is ever handed to it.
-    const path = clothingMeshPath(rec, parts);
-    const arc = findLoaded(archives, path);
-    if (arc) {
-      const batches = flattenNif(parseNif(arc.get(path).slice()));
-      const file = batches.map((b) => b.material && b.material.textureFile).find(Boolean);
-      if (file) {
-        const exists = (p) => archives.some((a) => a.has(p));
-        const tpath = correctTexturePath(file, exists);
-        const tarc = findLoaded(archives, tpath);
-        if (tarc) {
-          const m0 = decodeTextureImage(tpath, tarc.get(tpath).slice()).mips[0];
-          const f = hairFeatures(m0.rgba, m0.width, m0.height, 0);   // alpha-weighted mean
-          if (f && f.colour) rgb = f.colour.map((v) => Math.round(v * 255));
-        }
-      }
+    // before this synchronous callback is ever handed to it - and which
+    // measures them in the pool (AUDIT MW-TEXTHREAD F2), so a prepared
+    // candidate is the memo's answer above and never decodes here.
+    const tpath = clothingTexturePath(rec, parts, archives);
+    const tarc = tpath && findLoaded(archives, tpath);
+    if (tarc) {
+      // MW-TEXTHREAD: level 0 alone - the measure reads no other, and the chain below it is a third again of the
+      // decode (MW-LOAD's face-match finding, the same measure)
+      rgb = garmentColourOf(decodeTextureImage(tpath, tarc.get(tpath).slice(), { levels: 1 }).mips[0]);
     }
   } catch (err) {
     // MW-LOAD: a measure that ran ahead of its bytes is NOT a null to
@@ -945,19 +1033,47 @@ function clothingColourOf(rec, parts, archives, gen) {
 /** MW-LOAD: the bytes clothingColourOf reads synchronously, brought in
  *  first - the part mesh, and THEN the texture the parsed mesh names,
  *  because which texture that is cannot be known until the mesh is
- *  parsed. Two loads deep, exactly as the measure is two reads deep. */
+ *  parsed. Two loads deep, exactly as the measure is two reads deep.
+ *
+ *  AUDIT MW-TEXTHREAD F2: AND MEASURED, in the pool. MW-TEXTHREAD moved
+ *  the build's texture decodes and the face match's off the frame's
+ *  thread and left this one: every garment candidate's texture was
+ *  still decoded synchronously in clothingColourOf, one after another,
+ *  a dozen or more per worn type. The colour is measured here from the
+ *  pool's level 0 into the memo clothingColourOf answers from; a
+ *  refusal is its null, kept, as that measure keeps one. Anything this
+ *  cannot measure is left to clothingColourOf, in its own words. */
 async function preloadClothingColour(rec, parts, archives, gen) {
-  if (CLOT_COLOUR_CACHE.has(`${gen}:${rec.id}`)) return;
-  const path = clothingMeshPath(rec, parts);
-  await loadFromArchives(archives, [path]);
-  try {
-    const arc = archives.find((a) => a.has(path));
-    if (!arc) return;
-    const batches = flattenNif(parseNif(arc.get(path).slice()));
-    const file = batches.map((b) => b.material && b.material.textureFile).find(Boolean);
-    if (!file) return;
-    await loadFromArchives(archives, [correctTexturePath(file, (p) => archives.some((a) => a.has(p)))]);
-  } catch { /* the measure below answers null in its own words */ }
+  const key = `${gen}:${rec.id}`;
+  if (CLOT_COLOUR_CACHE.has(key)) return;
+  await loadFromArchives(archives, [clothingMeshPath(rec, parts)]);
+  let tpath;
+  try { tpath = clothingTexturePath(rec, parts, archives); } catch { return; }   // a mesh that did not load or parse
+  if (!tpath) return;
+  await loadFromArchives(archives, [tpath]);
+  const tarc = archives.find((a) => a.has(tpath));
+  if (!tarc || (typeof tarc.loaded === 'function' && !tarc.loaded(tpath))) return;
+  let rgb;
+  try { rgb = garmentColourOf((await decodeTextureOffThread(tpath, tarc.get(tpath), { levels: 1 })).mips[0]); }
+  catch (err) { if (!err?.decoderError) return; rgb = null; }
+  if (!CLOT_COLOUR_CACHE.has(key)) CLOT_COLOUR_CACHE.set(key, rgb);
+}
+
+/** AUDIT MW-TEXTHREAD F5: THE MEASURES SIDE BY SIDE, A FEW AT A TIME -
+ *  `fn` over `list` with at most `lanes` in flight, the answers in the
+ *  list's own order (matchFace's ties read it). A measure pool is a
+ *  garment type's every record or a race's every head and hair - dozens
+ *  in the base game, hundreds under a head pack - and MW-TEXTHREAD ran
+ *  all of them at once: that many ranged reads and that many texture
+ *  copies queued for four workers, in the air together. The lanes are
+ *  textureReplacement.js's preload shape. */
+export const MEASURE_LANES = 8;
+export async function inLanes(list, fn, lanes = MEASURE_LANES) {
+  const out = new Array(list.length);
+  let next = 0;
+  const lane = async () => { while (next < list.length) { const i = next++; out[i] = await fn(list[i]); } };
+  await Promise.all(Array.from({ length: Math.max(1, Math.min(lanes, list.length)) }, lane));
+  return out;
 }
 
 /** MW-LOAD: PREPARE THE COLOURS THE RESOLVER WILL ASK FOR, and do it
@@ -975,7 +1091,13 @@ async function prepareClothingColours(resolve, parts, archives, gen) {
     return CLOT_COLOUR_CACHE.get(`${gen}:${rec.id}`) ?? null;
   };
   try { resolve(probe); } catch { /* the real run reports what this cannot */ }
-  for (const rec of asked) await preloadClothingColour(rec, parts, archives, gen);
+  // MW-TEXTHREAD: the candidates' reads side by side - each is two ranged reads, a parse and a decode in the pool, so
+  // a pool of a dozen garments no longer waits on a dozen round trips. AUDIT MW-TEXTHREAD F5: each record ONCE (the
+  // probe hears a candidate once per piece that asks, and the memo is only checked as a measure starts), and a few
+  // at a time (inLanes)
+  const seen = new Set();
+  const once = asked.filter((rec) => !seen.has(rec.id) && seen.add(rec.id));
+  await inLanes(once, (rec) => preloadClothingColour(rec, parts, archives, gen));
 }
 
 /** MW-D38: the icon cache, per data generation / record / size / dye. */
@@ -1005,6 +1127,33 @@ function adoptMemoGeneration(genOf) {
 /** Test seam: the entries the generation memos hold. */
 export const _memoEntryCount = () => ESM_WALK_CACHE.size + CLIP_REPORT_CACHE.size + TEXTURE_CACHE.size
   + FACE_MATCH_CACHE.size + CLOT_COLOUR_CACHE.size + ITEM_ICON_CACHE.size;
+
+/** MW-MOUNT: THE FACE-ON FRAME a displayed item's picture is taken
+ *  under - a thing hung flat on a wall is seen along its thinnest
+ *  extent, so the camera looks along that axis with the LONGEST
+ *  upright, orthographic round the box with a little air. `w`/`h` are
+ *  the picture's extent in the box's own units (the pass frame's
+ *  metres, which are the world's), `pw`/`ph` its pixels - the long
+ *  side `px` (capped) and the other in proportion, so a texel is square.
+ *  Pure; pinned. */
+export function mountFrame(bounds, px, { air = 1.04, cap = CHAR_SPRITE_RT_SIZE } = {}) {
+  const lo = [bounds.minX, bounds.minY, bounds.minZ];
+  const hi = [bounds.maxX, bounds.maxY, bounds.maxZ];
+  const ext = [0, 1, 2].map((k) => Math.max(hi[k] - lo[k], 1e-4));
+  const [thin, mid, long] = [0, 1, 2].sort((a, b) => ext[a] - ext[b]);
+  const centre = [0, 1, 2].map((k) => (lo[k] + hi[k]) / 2);
+  const span = Math.hypot(ext[0], ext[1], ext[2]);
+  const eye = centre.map((c, k) => (k === thin ? c + span * 2 : c));
+  const up = [0, 0, 0];
+  up[long] = 1;
+  const halfW = (ext[mid] / 2) * air;
+  const halfH = (ext[long] / 2) * air;
+  const ph = Math.min(cap, Math.max(8, px | 0));   // the long side; the other is never longer (mid <= long)
+  return {
+    view: lookAt(eye, centre, up), proj: ortho(halfW, halfH, 0.01, span * 8),
+    w: halfW * 2, h: halfH * 2, pw: Math.max(8, Math.round((ph * halfW) / halfH)), ph,
+  };
+}
 
 /** MW-D38: frame a mesh's bounds for the icon camera: a three-quarter
  *  view from above-front-right, the ortho fitted to the projected
@@ -1054,7 +1203,9 @@ async function measurePart(record, archives, kind) {
   // MW-D34: by extension - the ladder legitimately answers .tga/.bmp.
   // MW-LOAD: level 0 only - it is the one level measured below, and
   // the chain under it was a third again of the decode for nothing.
-  try { img = decodeTextureImage(tpath, tarc.get(tpath).slice(), { levels: 1 }); } catch { return null; }
+  // MW-TEXTHREAD: in the pool - the same decoder, off the frame's thread
+  // (formats/mwTextureClient.js), and a refusal is still a null.
+  try { img = await decodeTextureOffThread(tpath, tarc.get(tpath), { levels: 1 }); } catch { return null; }
   const m0 = img.mips[0];
   if (kind === 'head') {
     // AUDIT 32 F1: sampled through the mesh's own UVs, so the texture's
@@ -1087,10 +1238,13 @@ export async function matchFaceFor({ race, female, faceIndex, parts, archives, d
   }
   if (!portrait) return { head: null, hair: null, reasons: [...reasons, 'the walk stands'] };
   const pools = facePools(parts, race, female);
-  const heads = [];
-  for (const rec of pools.heads) heads.push({ id: rec.id, f: await measurePart(rec, archives, 'head') });
-  const hairs = [];
-  for (const rec of pools.hairs) hairs.push({ id: rec.id, f: await measurePart(rec, archives, 'hair') });
+  // MW-TEXTHREAD: every candidate measured side by side - its reads concurrent and its decode in the pool - in the
+  // pools' own order, which matchFace's ties read. AUDIT MW-TEXTHREAD F5: a few at a time (inLanes), heads and hairs
+  // in one set of lanes
+  const measured = await inLanes([...pools.heads.map((rec) => [rec, 'head']), ...pools.hairs.map((rec) => [rec, 'hair'])],
+    async ([rec, kind]) => ({ id: rec.id, f: await measurePart(rec, archives, kind) }));
+  const heads = measured.slice(0, pools.heads.length);
+  const hairs = measured.slice(pools.heads.length);
   const m = matchFace(portrait, heads, hairs, { female });
   const hex = (c) => `#${c.map((v) => Math.round(v * 255).toString(16).padStart(2, '0')).join('')}`;
   reasons.push(`portrait ${faceIndex | 0}: skin ${hex(portrait.skin)}, hair ${portrait.bald ? 'none' : hex(portrait.hair)}, `
@@ -1128,7 +1282,11 @@ export function fpWeaponKey(item, hasAmmo) {
   // the id-sorted first longsword, and swapping it for an iron one was
   // not a change. Found by MW-D37's question - "do the textures map to
   // the materials" - because no weapon's ever had.
-  return `${dfWeaponToMw(item, WEAPONS)}:${item ? materialName(item) : ''}:${hasAmmo ? 1 : 0}`;
+  // WEREWOLF1 (AUDIT D3): THE CLAWS ARE THE EMPTY HAND. V4 hands a transformed player's rig the wereclaws
+  // (lycanthropy.js WERECLAWS_ITEM, material 0) - to a Morrowind arm that is hand-to-hand, the bare fist - and keyed
+  // as "Iron" they were a weapon swap on every transformation (the equip replayed on a body about to be replaced).
+  const hand = item && item.werecreatureClaws ? null : item;
+  return `${dfWeaponToMw(hand, WEAPONS)}:${hand ? materialName(hand) : ''}:${hasAmmo ? 1 : 0}`;
 }
 
 /**
@@ -1482,9 +1640,11 @@ async function buildTpBody({
   torch = false, allLights = [],   // MW-D51
   sheathing = true, ammoCount = null,   // WS1: the holster, and the quiver's count (null: a full quiver when there is ammunition)
   hipLight = false,   // HT-WAIST: a lit lantern at the waist
+  werewolf = false,   // WEREWOLF1: the transformed werewolf - the wolf's skeleton, head, hair and robe, and its own .kf
+  skin = null,   // SHADOW-FANG (AUDIT D2): the wolf's skin, painted here
 }) {
   const exists = (p) => archives.some((a) => a.has(p));
-  const settingsSkeleton = tpSkeletonPath({ female, beast });
+  const settingsSkeleton = tpSkeletonPath({ female, beast, werewolf });
   const skeletonPath = correctActorModelPath(settingsSkeleton, exists);
   try {
     // MW-LOAD: covers the skeleton read on the next line.
@@ -1493,7 +1653,8 @@ async function buildTpBody({
     if (!skelArc) return { ok: false, stage: 'skeleton', error: `${skeletonPath} is not in your archives` };
     const skeletonBytes = skelArc.get(skeletonPath).slice();
 
-    const rows = playerBodyRows(parts, race, female, { beast, faceIndex, faceMatch });
+    // WEREWOLF1: the wolf's head and hair, by id - every other skin slot is empty, the robe is the body
+    const rows = werewolf ? werewolfHeadRows(parts) : playerBodyRows(parts, race, female, { beast, faceIndex, faceMatch });
     const missing = [];
     // MW-D29/D31: the worn verdicts arrive COMPOSED - one arbitration
     // in buildFpArm serves both rigs. shadowSkinRows applies the
@@ -1501,11 +1662,13 @@ async function buildTpBody({
     // the right hand and leaves the left on the body. Never-traps:
     // every miss is a note and the skin stands.
     missing.push(...worn.notes);
-    const skinRows = shadowSkinRows(
+    let skinRows = shadowSkinRows(
       rows.filter((r) => r.record).map((r) => ({ slot: r.slot, bones: PART_BONES[r.slot] ?? [], model: r.record.model })),
       worn.shadows);
+    // WEREWOLF1: the wolf's hair only while its head is the skin's (npcanimation.cpp:654 - PRT_Head's priority <= 1)
+    if (werewolf && worn.shadows.includes('head')) skinRows = skinRows.filter((r) => r.slot !== 'hair');
     for (const row of rows) {
-      if (!row.record) missing.push(`${row.slot}: no third-person record for this actor`);
+      if (!row.record) missing.push(werewolf ? `${row.slot}: no Werewolf${row.slot === 'head' ? 'Head' : 'Hair'} BODY record - Bloodmoon.esm carries it` : `${row.slot}: no third-person record for this actor`);
     }
     // MW-LOAD: ONE round of ranged reads for everything the block below
     // reads synchronously - every third-person skin part and worn add
@@ -1527,7 +1690,7 @@ async function buildTpBody({
       partBytes.push({ slot: row.slot, partName: row.partName, bones: row.bones, bytes: arc.get(path).slice() });
     }
     if (!partBytes.length) {
-      return { ok: false, stage: 'parts', error: `no third-person body mesh resolved for race "${race}"`, notes: missing, rows };
+      return { ok: false, stage: 'parts', error: werewolf ? 'no werewolf body mesh resolved - its robe, head and hair are Bloodmoon\'s' : `no third-person body mesh resolved for race "${race}"`, notes: missing, rows };
     }
     // Rule 8 on THIS skeleton: the third-person rig carries its own
     // Weapon Bone (vanilla parents it under Bip01 R Hand), so the same
@@ -1542,7 +1705,10 @@ async function buildTpBody({
     // (injectSkeletonNodes, inside the assembly); the sheathed weapon,
     // its scabbard and its quiver resolve against the skeleton AS IT
     // WILL BE, through a dry injection over the same bytes.
-    const boneSourcePaths = boneSourcesFor(TP_BASE_MODEL, skeletonPath, archives);
+    // WEREWOLF1: the addons are the BASE model's and the wolf's own - and the wolf takes none: OpenMW reads a
+    // skeleton's animations/ folder only under `use additional anim sources`, default off, and the base model is
+    // not the wolf's (npcanimation.cpp:503-510)
+    const boneSourcePaths = werewolf ? [] : boneSourcesFor(TP_BASE_MODEL, skeletonPath, archives);
     await loadFromArchives(archives, [...boneSourcePaths, ...holsterPartPaths({ weaponModel: resolvedWeapon.weaponInfo?.model })]);
     const boneSources = boneSourcePaths.map((path) => ({ name: path, bytes: find(path)?.get(path)?.slice() })).filter((b) => b.bytes);
     const resolvedHolster = sheathing
@@ -1570,12 +1736,14 @@ async function buildTpBody({
     // knowable now that the NIFs are parsed.
     await preloadArmTextures([...arm.pieces, ...(arm.effects ?? [])], archives, gen);   // MAC-Q: and the flame's
     const textures = collectArmTextures([...arm.pieces, ...(arm.effects ?? [])], archives, gen);
+    if (werewolf) await preskinTextures(arm.pieces, textures, skin);   // SHADOW-FANG (AUDIT D2): the skin, here and not in the frame
 
-    const sourcePaths = tpAnimSources(skeletonPath, exists);
+    const sourcePaths = tpAnimSources(skeletonPath, exists, { werewolf });   // WEREWOLF1: the wolf's .kf alone
     if (!sourcePaths.length) {
       return {
         ok: false, stage: 'clip',
-        error: `no third-person animation file - neither ${animSourceName(TP_BASE_MODEL)} `
+        error: werewolf ? `no werewolf animation file - ${animSourceName(skeletonPath)} is not in your archives`
+          : `no third-person animation file - neither ${animSourceName(TP_BASE_MODEL)} `
           + `nor ${animSourceName(skeletonPath)} is in your archives`,
         notes: missing, rows,
       };
@@ -1629,6 +1797,7 @@ async function buildTpBody({
       holster: resolvedHolster.info,   // WS1
       boneSources: boneSourcePaths,   // WS1: the addons this skeleton took
       sheathing,
+      werewolf: !!werewolf,   // WEREWOLF1
       leftArm: blendMaskBones(arm.skeleton),   // MW-D51: rule 25's LeftArm mask on THIS skeleton
       rows,
       notes: [...missing, ...resolvedWeapon.notes, ...resolvedTorch.notes, ...resolvedHip.notes, ...resolvedHolster.notes, ...(arm.notes || [])],
@@ -1647,8 +1816,14 @@ export async function buildFpArm({
   torch = false,   // MW-D51: a lit Daggerfall torch in hand at the build
   sheathing = true, ammoCount = null,   // WS1: the holster on the third-person body, and the quiver's count
   hipLight = false,   // HT-WAIST: a lit lantern hung at the waist at the build (the third-person body's alone)
+  werewolf = false,   // WEREWOLF1: the transformed werewolf - Bloodmoon's wolf, in both views
+  skin = null,   // SHADOW-FANG (AUDIT D2): the wolf's skin (characters/werewolfSkin.js), painted in the build - a person wears none
 } = {}) {
   const d = deps || await import('../scenes/dataSource.js');
+  // WEREWOLF1: THE WOLF HOLDS NOTHING. setWerewolf's unequipAll empties both hands and every slot
+  // (mechanicsmanagerimp.cpp:1896-1901), and the player's items are refused while transformed - so no weapon, no
+  // arrow, no torch, no lantern at the hip and no holster, whatever the build was asked for.
+  if (werewolf) { weapon = null; hasAmmo = false; ammoCount = null; torch = false; hipLight = false; sheathing = false; }
   let settingsSkeleton = null;
   let skeletonPath = null;
   // MW-LOAD: THE STAGE CLOCK. Mac's question was "where does the time
@@ -1769,7 +1944,7 @@ export async function buildFpArm({
     // "xx") and for a female or a beast is the whole question - and
     // the beast answer now exists, which is why the skeleton resolves
     // HERE and not before the data (AUDIT MW-A F1).
-    settingsSkeleton = fpSkeletonPath({ female, beast });
+    settingsSkeleton = fpSkeletonPath({ female, beast, werewolf });
     skeletonPath = correctActorModelPath(settingsSkeleton, (p) => archives.some((a) => a.has(p)));
     // bodyParts(), not loadMorrowindEsm(). The store's parseEsm door
     // returns mwEsmFile's body shape; armReport wants bodyParts' shape;
@@ -1816,15 +1991,29 @@ export async function buildFpArm({
     // MW-D37: the garments' measured colours, so the dye can choose -
     // lazily, one candidate at a time (AUDIT 34 F1).
     const colourOf = (c) => clothingColourOf(c, parts, archives, gen);
+    // WEREWOLF1: THE WOLF WEARS ITS ROBE AND NOTHING ELSE - the CLOT "werewolfrobe" in the Robe slot, its part
+    // references the whole body (getBodyParts answers nothing for a werewolf, npcanimation.cpp:1200-1203). No
+    // Daggerfall piece is composed and no garment's colour is measured.
+    const robe = werewolf ? werewolfRobeOf(clothes) : null;
     // MW-LOAD: covers clothingColourOf's two synchronous reads (a
     // garment's part mesh and its texture) for every candidate the
     // resolver will hand it - the pool is discovered by running the
     // very same composition with a recording probe, so this file does
     // not carry a second copy of mwClothingRecord's pool law.
-    await prepareClothingColours(
-      (probe) => composeWornArmor({ pieces: armor ?? [], armors: armors ?? [], clothes: clothes ?? [], bodyPool: parts, female, colourOf: probe }),
-      parts, archives, gen);
-    const worn = composeWornArmor({ pieces: armor ?? [], armors: armors ?? [], clothes: clothes ?? [], bodyPool: parts, female, colourOf });
+    if (!werewolf) {
+      await prepareClothingColours(
+        (probe) => composeWornArmor({ pieces: armor ?? [], armors: armors ?? [], clothes: clothes ?? [], bodyPool: parts, female, colourOf: probe }),
+        parts, archives, gen);
+    }
+    const worn = werewolf
+      ? composeWornArmor({ pieces: robe ? [{ kind: 'record', record: robe, reserve: 'robe' }] : [], armors: [], clothes: [], bodyPool: parts, female })
+      : composeWornArmor({ pieces: armor ?? [], armors: armors ?? [], clothes: clothes ?? [], bodyPool: parts, female, colourOf });
+    // AUDIT C7: which of the two it is - Bloodmoon.esm not attached, or attached and naming no robe (a mod's master)
+    if (werewolf && !robe) {
+      worn.notes.push(esmNames.some((n) => /^bloodmoon\.esm$/i.test(n))
+        ? 'werewolfrobe: Bloodmoon.esm is attached and no CLOT record here names it'
+        : 'werewolfrobe: no CLOT record carries it - Bloodmoon.esm does, and it is not attached');
+    }
     // MW-D35: THE FACE, MATCHED to the classic portrait on this data.
     // Null halves fall back to the walk inside playerBodyRows.
     // AUDIT 32 F2: memoised per identity per data generation - a
@@ -1832,7 +2021,9 @@ export async function buildFpArm({
     // does not change when a gauntlet does; without this, every worn
     // swap re-parsed a dozen meshes and decoded a dozen textures.
     let faceMatch;
-    if (!d.fetchArena2Bytes) {
+    if (werewolf) {
+      faceMatch = { head: null, hair: null, reasons: ['werewolf: the head is WerewolfHead'] };   // WEREWOLF1: no face to match
+    } else if (!d.fetchArena2Bytes) {
       faceMatch = { head: null, hair: null, reasons: ['no Daggerfall data door - the walk stands'] };
     } else {
       const fkey = `${gen}:${race}:${female ? 'f' : 'm'}:${faceIndex | 0}`;
@@ -1865,7 +2056,8 @@ export async function buildFpArm({
       }
     }
 
-    const rows = armReport(parts, race, female);
+    // WEREWOLF1: no race rows - getBodyParts answers nothing for a werewolf, in first person too
+    const rows = werewolf ? [] : armReport(parts, race, female);
     const wanted = armMeshPaths(rows);
     // MW-D32: updateParts sweeps EVERY slot in first person too
     // (npcanimation.cpp:682, PRT_Neck..PRT_Count with
@@ -1874,7 +2066,7 @@ export async function buildFpArm({
     // data this adds nothing; a mod's .1st neck now appears exactly as
     // the reference shows it. A missing non-arm slot is NOT noted -
     // the reference leaves those null silently.
-    const fpAll = resolveBodyParts(parts, race, female, { firstPerson: true });
+    const fpAll = werewolf ? new Map() : resolveBodyParts(parts, race, female, { firstPerson: true });
     for (const [slot, rec] of fpAll) {
       if (ARM_PARTS.includes(slot)) continue;
       if (rec && rec.model) wanted.push({ slot, record: rec.id, firstPerson: true, path: `meshes/${rec.model}` });
@@ -1894,7 +2086,11 @@ export async function buildFpArm({
     // as addSingleAnimSource filters it. MW-LOAD resolved it here, one
     // block early, so its files ride the same round of ranged reads as
     // the meshes rather than costing a second round trip of their own.
-    const sourcePaths = fpAnimSources(skeletonPath, (p) => archives.some((a) => a.has(p)));
+    const sourcePaths = fpAnimSources(skeletonPath, (p) => archives.some((a) => a.has(p)), { werewolf });   // WEREWOLF1: the wolf's .kf alone
+    // WEREWOLF1: THE ROBE IN FIRST PERSON, by addPartGroup's own ladder - a part's ".1st" record, else the plain one
+    // for a hand, wrist, forearm or upper arm, else the slot reserved with nothing in it (mwItemMap
+    // firstPersonPartGroup). A human's worn adds keep the arm-bone filter (fpWornAdds).
+    const fpAdds = werewolf ? firstPersonPartGroup(robe, parts, female).adds : fpWornAdds(worn.adds);
     // MW-LOAD: ONE ROUND OF RANGED READS, concurrent, for every
     // synchronous read in the rest of this build - the first-person
     // skin parts (the fpRows loop), the worn adds the fp camera keeps
@@ -1904,7 +2100,7 @@ export async function buildFpArm({
     // sequence is forty round trips; forty at once is one wait.
     await loadFromArchives(archives, [
       ...fpRows.map((w) => w.path),
-      ...fpWornAdds(worn.adds).map((add) => `meshes/${add.model}`),
+      ...fpAdds.map((add) => `meshes/${add.model}`),
       ...weaponPartPaths({ weapon, hasAmmo, allWeapons, has: archiveHas(archives) }),   // MW-D50
       ...torchPartPaths({ torch, allLights, has: archiveHas(archives) }),   // MW-D51
       ...sourcePaths,
@@ -1918,7 +2114,7 @@ export async function buildFpArm({
     // sleeves, the shield - fpWornAdds' filter - never a helmet in
     // your face.
     missing.push(...worn.notes);
-    for (const add of fpWornAdds(worn.adds)) {
+    for (const add of fpAdds) {
       const path = `meshes/${add.model}`;
       const arc = find(path);
       if (!arc) { missing.push(`${add.slot}: ${path} is not in your archives`); continue; }
@@ -1950,7 +2146,7 @@ export async function buildFpArm({
       return {
         ok: false,
         stage: 'parts',
-        error: `no arm mesh resolved for race "${race}"`,
+        error: werewolf ? 'no werewolf arm mesh resolved - its robe is Bloodmoon\'s' : `no arm mesh resolved for race "${race}"`,
         notes: missing,
         rows: wanted,
         esm: esmDiagnosis(esmNames, parts, race),
@@ -1969,6 +2165,7 @@ export async function buildFpArm({
     // MAC-Q: the particle systems' textures ride the same catalog as the pieces'
     if (arm.ok) await preloadArmTextures([...arm.pieces, ...(arm.effects ?? [])], archives, gen);
     const textures = arm.ok ? collectArmTextures([...arm.pieces, ...(arm.effects ?? [])], archives, gen) : new Map();
+    if (arm.ok && werewolf) await preskinTextures(arm.pieces, textures, skin);   // SHADOW-FANG (AUDIT D2): the skin, here and not in the frame
     stage('textures');
     // MW-D38: THE CATALOG the item icons resolve against - the same
     // archives and records this build used, kept on the result so an
@@ -1977,7 +2174,7 @@ export async function buildFpArm({
     // MW-D24: the THIRD-PERSON BODY, while the same archives are open.
     // Its refusal is a note on the card, never the arm's refusal.
     const third = arm.ok
-      ? await buildTpBody({ race, female, beast, faceIndex, faceMatch, weapon, hasAmmo, worn, archives, parts, allWeapons, find, gen, torch, allLights, sheathing, ammoCount, hipLight })   // MW-D51; WS1; HT-WAIST
+      ? await buildTpBody({ race, female, beast, faceIndex, faceMatch, weapon, hasAmmo, worn, archives, parts, allWeapons, find, gen, torch, allLights, sheathing, ammoCount, hipLight, werewolf, skin: werewolf ? skin : null })   // MW-D51; WS1; HT-WAIST; WEREWOLF1; SHADOW-FANG
       : null;
     stage('meshes');
     // IG2: the mapped archives are NO LONGER truncated here - they are
@@ -1996,7 +2193,9 @@ export async function buildFpArm({
     if (!sourceBytes.length) {
       return {
         ok: false, stage: 'clip',
-        error: `no first-person animation file - neither ${animSourceName(FP_BASE_MODEL)} `
+        // AUDIT C7: the wolf takes no base .kf - its own is the one to name
+        error: werewolf ? `no werewolf animation file - ${animSourceName(skeletonPath)} is not in your archives`
+          : `no first-person animation file - neither ${animSourceName(FP_BASE_MODEL)} `
           + `nor ${animSourceName(skeletonPath)} is in your archives`,
         notes: [...missing, ...(arm.notes || [])], rows: wanted,
       };
@@ -2188,6 +2387,7 @@ export async function buildFpArm({
       raceScale,
       // MW-D24: the third-person body, or its named refusal.
       third,
+      werewolf: !!werewolf,   // WEREWOLF1: this rig is the wolf
       // MW-LOAD: the stage clock's own numbers, in milliseconds, so a
       // probe or a pin reads exactly what the log line printed.
       timings,
@@ -2249,6 +2449,21 @@ export function collectArmTextures(pieces, archives, gen = null) {
     }
   }
   return out;
+}
+
+/** AUDIT DYE-ICON r3 2: whether a texture the pieces name is one the archives carry and not in hand - neither loaded
+ *  nor answered in the generation's decode memo: a read that failed. collectArmTextures draws it as the warning and
+ *  does not keep it (the rule above); a picture drawn with it is no answer either. */
+function texturesUnread(pieces, archives, gen = null) {
+  const exists = (p) => archives.some((a) => a.has(p));
+  for (const piece of pieces ?? []) {
+    const file = piece.material && piece.material.textureFile;
+    if (!file || (gen !== null && TEXTURE_CACHE.has(`${gen}:${file}`))) continue;
+    const path = correctTexturePath(file, exists);
+    const arc = archives.find((a) => a.has(path));
+    if (arc && typeof arc.loaded === 'function' && !arc.loaded(path)) return true;
+  }
+  return false;
 }
 
 /** What the .esm layer actually saw, so a refusal names its own cause.
@@ -2403,9 +2618,11 @@ export function createFpArm() {
   let built = null;
   const listeners = new Set();   // MW-D36
   let pendingWorn = null;        // PX25: the worn table that arrived mid-build
+  let pendingWerewolf = null;    // WEREWOLF1: the form that arrived mid-build
   let pendingWeapon = null;      // PX26: the hand that arrived mid-build
   let pendingTorch = null;       // MW-D51: the light that arrived mid-build
   let pendingBuild = null;       // AUDIT MW-TORCH F6: the BUILD that arrived mid-build - an identity (a load over a load) is not dropped
+  let buildingOpts = null;       // MW-EARLY: the opts of the build in flight - whom it is building for, before anything stands
   let buildGen = 0;              // AUDIT MW-TORCH F7: bumped by unload(); a build that lands after it is discarded, never installed over the unload
   let mesh = null;
   let packed = null;
@@ -2622,6 +2839,8 @@ export function createFpArm() {
   // in xbase_anim.1st.kf in first person and xbase_anim.kf in third,
   // with one state machine between them - MW7 died of two copies.
   let viewMode = 'first';
+  /** BEAST-SELF: the arm and the body stand aside for a transformed lycanthrope (setStandIn) - no Morrowind beast */
+  let standIn = false;
   let thirdBuilt = null;
   let thirdMesh = null;
   let thirdPacked = null;
@@ -2630,9 +2849,9 @@ export function createFpArm() {
   const figureBodyBox = { minX: 0, minY: 0, minZ: 0, maxX: 0, maxY: 0, maxZ: 0 };   // PR-BOW1b: the portrait's body fold, owned by the rig
   const rig = () => (viewMode === 'third' && thirdBuilt && thirdBuilt.ok ? thirdBuilt : built);
 
-  const active = () => !!(built && built.ok && mesh && renderer && camera && (actionState || movementState || jumpState || idleState)
+  const active = () => !standIn && !!(built && built.ok && mesh && renderer && camera && (actionState || movementState || jumpState || idleState)
     && viewMode === 'first');
-  const thirdActive = () => !!(built && built.ok && thirdBuilt && thirdBuilt.ok && thirdMesh
+  const thirdActive = () => !standIn && !!(built && built.ok && thirdBuilt && thirdBuilt.ok && thirdMesh
     && renderer && (actionState || movementState || jumpState || idleState) && viewMode === 'third');
 
   /**
@@ -2673,24 +2892,31 @@ export function createFpArm() {
   }
   function releaseMesh() { releaseGpu(mesh); mesh = null; }
 
+  /** SHADOW-FANG: THE WEREWOLF'S SKIN, applied on the way to the GPU (characters/werewolfSkin.js). The decoded
+   *  texture is TEXTURE_CACHE's and shared by every rig on the page - this body's and every peer's - so the skin
+   *  paints a COPY: SKINNED_MIPS, module-wide, painted in the build (AUDIT D2), found here by the image, the skin and
+   *  the piece's use of it (the head's eyes, a cut card's fringe, the texture's wrap). */
+  /** The skin this rig's BODY wears: the wolf's, when the build was the wolf and named one - never an item icon's. */
+  const bodySkin = () => (built && built.werewolf && lastBuildOpts && lastBuildOpts.skin) || null;
+
   /** MW-D11: the textures hung on a packed mesh's ranges, ONCE - a
    *  character texture per textured range with its NiTexturingProperty
    *  clamp (3, WRAP_S_WRAP_T, when there is no material), and the
    *  NiAlphaProperty threshold (0-255 in the file). One home for the
    *  icon, the body and the arm (AUDIT 68 S08-fparm-texture-hang-triplicate). */
-  function hangRangeTextures(ranges, textures) {
+  function hangRangeTextures(ranges, textures, { skin = null } = {}) {
     for (const r of ranges) {
       if (!r.textureFile) continue;
       const entry = textures.get(r.textureFile);
       if (!entry) continue;
       const m = r.piece.material;
-      r.tex = renderer.createCharacterTexture(entry.image.mips, wrapModes(m ? m.clampMode : 3));
+      r.tex = renderer.createCharacterTexture(skin ? skinnedMipsOf(entry.image, skin, skinUseOf(r.piece, r.textureFile)) : entry.image.mips, wrapModes(m ? m.clampMode : 3));
       r.alphaCut = m && m.alphaTest ? (m.alphaThreshold || 0) / 255 : 0;
     }
   }
 
   /** MW-D38: one ground mesh, textured, rendered to an icon-sized image. */
-  function renderGroundMesh(nifBytes, archives, gen, size) {
+  function renderGroundMesh(nifBytes, archives, gen, size, { face = false } = {}) {   // MW-MOUNT: `face` - a displayed item's picture, framed face-on at its own size
     let batches;
     try { batches = flattenNif(parseNif(nifBytes)); } catch { return null; }
     const pieces = batches.filter((b) => b.positions && b.indices).map((b) => ({ ...b, slot: 'item', mirrored: false }));
@@ -2712,12 +2938,15 @@ export function createFpArm() {
     const mesh = renderer.createCharacterMesh(packed.packed, { uv: true });
     mesh.ranges = packed.ranges;
     hangRangeTextures(mesh.ranges, collectArmTextures(pieces, archives, gen));
-    const { view, proj } = iconFrame({ minX, minY, minZ, maxX, maxY, maxZ });
+    const bounds = { minX, minY, minZ, maxX, maxY, maxZ };
+    const f = face ? mountFrame(bounds, size) : null;
+    const { view, proj } = f ?? iconFrame(bounds);
     const px = Math.min(CHAR_SPRITE_RT_SIZE, Math.max(8, size | 0));
     let img = null;
-    try { img = renderer.renderCharacterSpriteImage(mesh, model, proj, view, px, px); }
+    try { img = renderer.renderCharacterSpriteImage(mesh, model, proj, view, f ? f.pw : px, f ? f.ph : px); }
     finally { releaseGpu(mesh); }
-    return img;
+    if (!face) return img;
+    return img ? { image: img, w: f.w, h: f.h } : null;
   }
   /** MW-D38: THE RECORD an item's icon draws, resolved through the ONE
    *  item map. Split out at MW-LOAD so the synchronous getter and the
@@ -2726,6 +2955,12 @@ export function createFpArm() {
   function iconRecordOf(cat, item) {
     try {
       if (item.group === 'Weapons') {
+        // MW-ASSIGN (2026-09-27, Discord: "Some sprites not assigned morrowind skin"): a weapon of the port's OWN (the
+        // Thunderlock) is its own shipped model on the icon and hung on a wall, as it is in the hand
+        // (resolveWeaponParts) - Morrowind's records hold no type for it, so the ask below answered none and the
+        // classic picture stood
+        const own = ownWeaponModelFor(item);
+        if (own) return { id: own.id, model: own.model };
         const mwType = dfWeaponToMw(item, WEAPONS);
         return mwType !== MW_WEAPON_TYPE.None ? pickWeaponRecord(cat.weapons, mwType, materialName(item)) : null;
       }
@@ -2807,7 +3042,7 @@ export function createFpArm() {
     if (!thirdMesh) {
       thirdMesh = renderer.createCharacterMesh(thirdPacked.packed, { uv: true });
       thirdMesh.ranges = thirdPacked.ranges;
-      hangRangeTextures(thirdMesh.ranges, t.textures);
+      hangRangeTextures(thirdMesh.ranges, t.textures, { skin: bodySkin() });   // SHADOW-FANG
     } else {
       renderer.updateCharacterMesh(thirdMesh, thirdPacked.packed);
     }
@@ -3383,10 +3618,11 @@ export function createFpArm() {
    */
   function flushPending() {
     if (pendingBuild) {   // AUDIT MW-TORCH F6: a queued build supersedes what was queued for the rig it replaces
-      const o = pendingBuild; pendingBuild = null; pendingWorn = null; pendingWeapon = null; pendingTorch = null; pendingHipLight = null;
+      const o = pendingBuild; pendingBuild = null; pendingWorn = null; pendingWeapon = null; pendingTorch = null; pendingHipLight = null; pendingWerewolf = null;
       api.build(o);
       return;
     }
+    if (pendingWerewolf !== null) { const w = pendingWerewolf; pendingWerewolf = null; api.setWerewolf(w.want, { skin: w.skin }); }   // WEREWOLF1: the form first - the table below waits on its build
     if (pendingWorn) { const p = pendingWorn; pendingWorn = null; api.setWorn(p); }
     if (pendingWeapon) { const w = pendingWeapon; pendingWeapon = null; api.setWeapon(w.item, { hasAmmo: w.hasAmmo, ammoCount: w.ammoCount }); }   // AUDIT 68 X7-pendingweapon-drops-ammocount: the quiver's count rides the queue
     if (pendingTorch !== null) { const l = pendingTorch; pendingTorch = null; api.setTorch(l); }   // MW-D51
@@ -3404,7 +3640,19 @@ export function createFpArm() {
      *  and `ready()` alone says only that SOME arm stands - an
      *  Argonian save loaded over a human's standing arm kept the
      *  human's body until the pack was toggled off and on. */
-    builtFor() { return built && built.ok && lastBuildOpts ? { race: lastBuildOpts.race ?? null, female: !!lastBuildOpts.female, faceIndex: lastBuildOpts.faceIndex | 0 } : null; },   // AUDIT MW-TORCH: null when nothing stands - an unloaded or refused rig was built for no one
+    builtFor() { return built && built.ok && lastBuildOpts ? { race: lastBuildOpts.race ?? null, female: !!lastBuildOpts.female, faceIndex: lastBuildOpts.faceIndex | 0, werewolf: !!lastBuildOpts.werewolf } : null; },   // WEREWOLF1: and the form   // AUDIT MW-TORCH: null when nothing stands - an unloaded or refused rig was built for no one
+    /** MW-EARLY: WHO THE ARM IS BEING BUILT FOR - the identity third of
+     *  the build that will stand once the queue drains (the queued one,
+     *  else the one in flight), or null when no build is under way. The
+     *  world's load door starts the build off the save before the world
+     *  is read (weaponRig.js prebuildArmsForSave), and the restore's
+     *  autoBuildArms reaches its door while that build still runs: this
+     *  is how it knows the build under way IS its build, rather than
+     *  queueing a second of the same body behind it. */
+    buildingFor() {
+      const o = pendingBuild ?? buildingOpts;
+      return o ? { race: o.race ?? null, female: !!o.female, faceIndex: o.faceIndex | 0, werewolf: !!o.werewolf } : null;   // WEREWOLF1 (the merge): and the form
+    },
     get frames() { return frames; },
 
     async build(opts) {
@@ -3418,6 +3666,7 @@ export function createFpArm() {
       // rig being replaced go with it (the build's opts carry theirs).
       if (busy) { pendingBuild = opts; return { ok: false, stage: 'build', error: 'already building - queued behind it', queued: true }; }
       busy = true;
+      buildingOpts = opts ?? null;   // MW-EARLY
       const gen = buildGen;
       try {
         const res = await buildFpArm(opts);
@@ -3473,6 +3722,7 @@ export function createFpArm() {
         return res;
       } finally {
         busy = false;
+        buildingOpts = null;   // MW-EARLY: settled - `built` says who stands now
         // MW-D36: whoever shows the body (the pack's figure) repaints
         // when a build settles, ok or not - D32 rebuilds on every equip
         // change, asynchronously, and a panel drawn before the rebuild
@@ -3491,6 +3741,7 @@ export function createFpArm() {
       buildGen += 1;   // AUDIT MW-TORCH F7: a build in flight lands dead
       adoptMemoGeneration(memoGenOf);   // AUDIT 68 S08-fparm-gen-cache-leak: a bumped generation's memos go with the rig
       pendingBuild = null; lastBuildOpts = null;
+      buildingOpts = null;   // MW-EARLY: the build in flight lands dead, so it stands for nobody - a door after this builds again
       releaseMesh(); built = null; packed = null;
       held = null; heldMemo = null; lastFrame = null; drewLast = false;   // MAP3: the sheet goes with the rig
       releaseThirdMesh(); thirdBuilt = null; thirdPacked = null; viewMode = 'first';
@@ -3504,6 +3755,7 @@ export function createFpArm() {
       idleSource = null; actionSource = null; poseSource = null;
       torchLit = false; torchState = null; torchSource = null; torchGroup = null; torchMissRig = null;   // MW-D51
       hipLit = false; pendingHipLight = null; Object.assign(hipSwing, createLanternSwing()); hipYaw = null;   // HT-WAIST
+      pendingWerewolf = null;   // WEREWOLF1
       reason = 'unloaded';
       for (const fn of listeners) { try { fn(); } catch { /* see build() */ } }
     },
@@ -3618,7 +3870,35 @@ export function createFpArm() {
       const key = wornEquipKeyOf(pieces);
       if (key === wornEquipKey) return false;
       wornEquipKey = key;
+      // WEREWOLF1: THE WOLF WEARS NONE OF IT - the table is kept for the way back, and the wolf is not rebuilt
+      if (lastBuildOpts.werewolf) { lastBuildOpts = { ...lastBuildOpts, armor: pieces }; return false; }
       return this.build({ ...lastBuildOpts, armor: pieces, weapon: lastBuildOpts.weapon });
+    },
+    /**
+     * WEREWOLF1: THE BODY FOLLOWS THE CURSE. weaponRig hands the rig, every frame, whether the player is a
+     * transformed werewolf; a change rebuilds the whole rig through build() as the wolf or back as the person,
+     * as OpenMW's updateParts does when the NPC type changes (npcanimation.cpp:578-584 -> rebuild()). The fast path
+     * is one boolean compare. It does not need a standing rig: a wolf refused (no Bloodmoon attached) must still be
+     * able to turn back into the person it was, and a person refused must not be asked again each frame - the
+     * compare is against the last build's opts, which a refusal keeps.
+     */
+    setWerewolf(on, { skin = null } = {}) {
+      const want = !!on;
+      // SHADOW-FANG: the wolf's skin rides the form - a person wears none; a skin that changes under a standing wolf
+      // (its holder signed in mid-change) rebuilds it too
+      const wantSkin = want ? (skin ?? null) : null;
+      // AUDIT D6: queued BEFORE the opts are asked for - a form asked during the very first build waits for it.
+      // AUDIT D4: a build already queued behind the one in flight (a door: a load, the pack, the sheathing tile)
+      // TAKES the form - it is the newer word, and a queued build clears whatever else was queued for the rig it
+      // replaces; kept apart, the door's stale form was built and the turn back was lost.
+      if (busy) {
+        if (pendingBuild) pendingBuild = { ...pendingBuild, werewolf: want, skin: wantSkin };
+        else pendingWerewolf = { want, skin: wantSkin };
+        return false;
+      }
+      if (!lastBuildOpts) return false;
+      if (want === !!lastBuildOpts.werewolf && wantSkin === (lastBuildOpts.skin ?? null)) return false;
+      return this.build({ ...lastBuildOpts, werewolf: want, skin: wantSkin });
     },
     setWeapon(item, { hasAmmo = false, ammoCount = null } = {}) {
       if (!built || !built.ok) return false;
@@ -3633,6 +3913,9 @@ export function createFpArm() {
       // queued before the key compare (wornKey is the old hand until a
       // swap lands, so switching back mid-swap was dropped).
       if (busy) { pendingWeapon = { item, hasAmmo, ammoCount }; return false; }
+      // WEREWOLF1 (AUDIT D7/C5): THE WOLF HOLDS NOTHING, whatever the hand the game hands it (the claws, a debug
+      // weapon) - setTorch's and setHipLight's law; the person's hand waits in the build opts for the way back
+      if (built.werewolf) return false;
       const key = fpWeaponKey(item, hasAmmo);
       if (key === wornKey) return false;
       // AUDIT 68 X7-fparm-swap-rejection-unhandled: a swap that failed on
@@ -3976,6 +4259,7 @@ export function createFpArm() {
       const want = !!lit;
       if (!built || !built.ok) return false;
       if (busy) { pendingTorch = want; return false; }   // AUDIT 68 S08-fparm-busy-queue-drops-latest: the latest light, before the compare
+      if (built.werewolf) { if (lastBuildOpts) lastBuildOpts.torch = want; return false; }   // WEREWOLF1: the wolf holds no torch; kept for the way back
       if (torchLit === want) return false;
       torchLit = want;
       if (lastBuildOpts) lastBuildOpts.torch = want;   // AUDIT MW-TORCH F5: the equip-follow rebuild carries the light, not the build's stale flag
@@ -4059,6 +4343,7 @@ export function createFpArm() {
       const want = !!lit;
       if (!built || !built.ok) return false;
       if (busy) { pendingHipLight = want; return false; }
+      if (built.werewolf) { if (lastBuildOpts) lastBuildOpts.hipLight = want; return false; }   // WEREWOLF1: nor a lantern at the hip
       if (hipLit === want) return false;
       hipLit = want;
       if (lastBuildOpts) lastBuildOpts.hipLight = want;
@@ -4109,7 +4394,9 @@ export function createFpArm() {
 
     readySpell(ready) {
       const want = !!ready;
-      if (!built || !built.ok || spellReady === want) return false;
+      // WEREWOLF1 (AUDIT E6): "Werewolfs can not cast spells" - MechanicsManager::setWerewolf drops a readied spell
+      // (mechanicsmanagerimp.cpp:1888-1890), and the wolf readies none
+      if (!built || !built.ok || spellReady === want || (want && built.werewolf)) return false;
       spellReady = want;
       // A cast in flight is abandoned by an un-ready (the spell was
       // aborted): the arm returns to its stance rather than finishing
@@ -4134,7 +4421,9 @@ export function createFpArm() {
      *  Never a gate: a missing clip is a note on the card and the spell
      *  still flies. */
     castSpell(rangeType = 2) {
-      if (!built || !built.ok) return false;
+      // WEREWOLF1 (AUDIT E6): nor casts one - the turn back is cast in beast form, and on the wolf it latched a spell
+      // stance the next frame's readySpell(false) tore down again
+      if (!built || !built.ok || built.werewolf) return false;
       // AUDIT WORLD C2: a SHEATHED arm casts too. Sheathed the stance is None, which the gate below refused, so a
       // caster with nothing drawn - the peer whose wd is 0, and the player's own arm alike - never played a cast,
       // though animWeaponType composes the spellcast group for the stance regardless (the spell survives the
@@ -4398,7 +4687,7 @@ export function createFpArm() {
         // resolved ONCE and hung on them - the per-frame path re-uploads
         // vertices and touches nothing else.
         mesh.ranges = packed.ranges;
-        hangRangeTextures(mesh.ranges, built.textures);
+        hangRangeTextures(mesh.ranges, built.textures, { skin: bodySkin() });   // SHADOW-FANG
       } else {
         renderer.updateCharacterMesh(mesh, packed.packed);
       }
@@ -4560,6 +4849,7 @@ export function createFpArm() {
     setViewMode(mode) {
       const want = mode === 'third' ? 'third' : 'first';
       if (want === viewMode) return true;
+      if (want === 'third' && standIn) return false;   // BEAST-SELF: no Morrowind body for a beast - refused, and no refusal on the card
       if (want === 'third' && !(thirdBuilt && thirdBuilt.ok)) {
         notes.push(`view: no third-person body - ${thirdBuilt ? `${thirdBuilt.stage}: ${thirdBuilt.error}` : 'not built'}`);
         return false;
@@ -4605,7 +4895,22 @@ export function createFpArm() {
       && (upper === UPPER_BODY.None || upper === UPPER_BODY.WeaponEquipped),
     /** What the wheel may cross INTO: a body that refused keeps the
      *  player in first person with the reason on the card. */
-    canThirdPerson: () => !!(thirdBuilt && thirdBuilt.ok),
+    canThirdPerson: () => !standIn && !!(thirdBuilt && thirdBuilt.ok),
+    /**
+     * BEAST-SELF (2026-09-26, Mac: "You dont see your self transform less your in paperdoll style (morrowind models
+     * need their vampire/werewolf forms)"): STAND ASIDE. Morrowind's data holds no beast for a Daggerfall lycanthrope,
+     * so while the player is transformed the arm and the body draw nothing and the wheel has no body to cross into:
+     * the first person is the classic claws (the weapon rig's own draw), the third Eye Of The Beholder's lycanthrope
+     * (player/mwView.js's other lane) - what the transformed player without Morrowind data sees, and what everyone
+     * else already sees. The rig keeps stepping (ready() is untouched), so the arm is there again at once when the
+     * player turns back. Set by the weapon rig from the curse every frame; answers whether it changed.
+     * SHADOW-FANG (the merge): Bloodmoon's wolf is the one Morrowind beast (WEREWOLF1, setWerewolf) - while it is what
+     * stands for a werewolf the rig does not stand aside; the weapon rig asks wolfStanding().
+     */
+    setStandIn(v) { const was = standIn; standIn = !!v; return was !== standIn; },
+    standingIn: () => standIn,
+    /** SHADOW-FANG (the merge): whether the rig standing is Bloodmoon's wolf - built, and built as the wolf. */
+    wolfStanding: () => !!(built && built.ok && built.werewolf),
 
     /** MW-D34: the race's HEIGHT factor (adjustScale's z, npc.cpp:1127/
      *  1134), which is what the camera's focal height rides - the
@@ -4644,7 +4949,7 @@ export function createFpArm() {
      * (chirality-true by MW-D23's measurement) already shows it.
      * Winding is safe: drawCharacter disables CULL_FACE.
      */
-    drawThird(canvas, { proj, view, eye, feet, yaw }) {
+    drawThird(canvas, { proj, view, eye, feet, yaw, hitFlash = 0, conceal = null }) {
       if (!thirdActive() || !canvas || !feet) return false;
       const t = thirdBuilt;
       const u = 1 / MW_UNITS_PER_METER;
@@ -4700,7 +5005,8 @@ export function createFpArm() {
       // MW-D43b: the body is a Morrowind MESH, so it takes the arm's
       // dial, not the sprite standard - the same fix MW-D43 made for
       // the first-person pass and missed here.
-      drawRigSpriteBox(renderer, canvas, thirdMesh, model, { center, halfW, halfH, anchor }, proj, view, eye, MW_ARM_PIXEL);
+      // INVIS-LOOK: `conceal` a concealed peer's draw (ECV1's visual, net/peerBodies.js drawVeiled) - the quad blends
+      drawRigSpriteBox(renderer, canvas, thirdMesh, model, { center, halfW, halfH, anchor, hitFlash, conceal }, proj, view, eye, MW_ARM_PIXEL);   // HITFLASH1: a struck peer's body flashes
       return true;
     },
 
@@ -4743,6 +5049,60 @@ export function createFpArm() {
       ITEM_ICON_CACHE.set(ckey, img);
       return img;
     },
+
+    /** MW-MOUNT (Mac: "Morrowind models if activated should show" - the
+     *  house's hung weapons and displayed armour): A DISPLAYED ITEM'S
+     *  MORROWIND PICTURE. The icon's own record (the one item map:
+     *  weapon type + material, armour template + material - so a
+     *  Daedric cuirass is Morrowind's daedric one), its ground mesh
+     *  rendered FACE-ON at its own size (mountFrame) rather than the
+     *  icon's three-quarter view, since it hangs flat on a surface:
+     *  `{ key, image, w, h }`, `w`/`h` in metres, or null - no build
+     *  stands, nothing resolves, or the file will not read - and the
+     *  classic picture stands. Asynchronous where the icon is not: it
+     *  loads what a lazy archive has not (the mesh, then the textures
+     *  the parse names) before it renders. Cached per record and size
+     *  per data generation, with the icons. */
+    async mountPicture(item, { px = 256 } = {}) {
+      if (!(built && built.ok && built.catalog && renderer) || !item) return null;
+      const cat = built.catalog;
+      const stamp = api.mountPictureStamp();   // AUDIT DYE-ICON 4: what the picture is good for - the host's own question
+      const rec = iconRecordOf(cat, item);
+      if (!rec || !rec.model) return null;
+      const ckey = `mount:${cat.gen}:${rec.id}:${px | 0}`;
+      if (ITEM_ICON_CACHE.has(ckey)) return ITEM_ICON_CACHE.get(ckey);
+      const path = `meshes/${rec.model}`;
+      await loadFromArchives(cat.archives, [path]);
+      const arc = cat.archives.find((a) => a.has(path));
+      if (!arc || (typeof arc.loaded === 'function' && !arc.loaded(path))) return null;
+      let pic = null;
+      try {
+        const bytes = arc.get(path).slice();
+        const pieces = flattenNif(parseNif(bytes.slice()));
+        await preloadArmTextures(pieces, cat.archives, cat.gen);   // what renderGroundMesh's collectArmTextures reads
+        if (api.mountPictureStamp() !== stamp) return null;   // the build went, or another generation landed, under the load: the host asks again (AUDIT DYE-ICON 4: by the stamp - a rebuild on the same data leaves it, and this picture, good)
+        // AUDIT DYE-ICON r3 2: a texture whose bytes never came (a read that failed) would be drawn as the warning and
+        // was kept with the picture for the generation - one blip, a magenta mount until the data changed. None now,
+        // nothing kept (the mesh's own failed load above answers so): the pack's picture hangs, the next ask loads again
+        if (texturesUnread(pieces, cat.archives, cat.gen)) return null;
+        pic = renderGroundMesh(bytes, cat.archives, cat.gen, px, { face: true });
+      } catch { pic = null; }
+      if (pic) pic.key = ckey;
+      ITEM_ICON_CACHE.set(ckey, pic);
+      return pic;
+    },
+
+    /** MW-MOUNT: the stamp a displayed item's picture is good for - the
+     *  build's data generation while one stands, else null. A host that
+     *  hangs pictures asks again when it changes (a build landed, the
+     *  data went): the room's mounts turn Morrowind, or back. AUDIT
+     *  DYE-ICON 4: the generation, as a string (a store without one - a
+     *  test's deps - still stands a build), never the catalogue object:
+     *  every build makes a new one, setWorn's rebuild on any change of
+     *  armour or clothing among them, so the host re-hung every mount on
+     *  each (a frame with none drawn), and kept the last catalogue - its
+     *  records and archives - alive after Remove data. */
+    mountPictureStamp() { return built && built.ok && built.catalog ? String(built.catalog.gen) : null; },
 
     /** MW-D36: THE FIGURE - the third-person body as an image for the
      *  enhanced inventory's panel. Same pieces, same textures, same
@@ -4945,3 +5305,7 @@ export function createFpArm() {
 }
 
 export const fpArm = createFpArm();
+
+/** SHADOW-FANG (AUDIT D2) test seam: has the build already painted `image` in `skin` for `use` (the frame then only
+ *  finds it)? */
+export const _skinPainted = (image, skin, use) => !!SKINNED_MIPS.get(image)?.has(skinUseKey(skin, use));

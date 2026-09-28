@@ -25,7 +25,7 @@ import { consumeVampirismPending, vampirismMagicRound, liveVampirism } from './v
 import { updatePoisons } from './poisons.js';
 import { tickActiveEffects } from './effects.js';
 import { skillValue, tallySkill, SKILLS } from './skills.js';
-import { FATIGUE_LOSS, killIfAnyLiveStatZero } from './statMods.js';
+import { FATIGUE_LOSS, FATIGUE_DRAIN_SCALE, killIfAnyLiveStatZero } from './statMods.js';
 import { decayEnemyAlert } from './encounters.js';   // PlayerEntity.Update:380-384, the 8-hour alert decay
 import { dice100, setPlayerStruckHook } from '../combat/formulas.js';
 import { installPcaao } from '../combat/pcaao.js';   // PCO1: the mod's RegisterOverride, once, for every host
@@ -676,7 +676,7 @@ export function tickPlayerMinutes({
   // every host that feeds the tick gets the law (the dungeon's inline
   // reportActivity arm moved here).
   if (activity.jumped) {
-    sinks.drainFatigue?.(Math.trunc(FATIGUE_LOSS.Jumping * fatigueMultiplier));
+    sinks.drainFatigue?.(Math.trunc(FATIGUE_LOSS.Jumping * fatigueMultiplier * FATIGUE_DRAIN_SCALE));   // BALANCE1: exertion's scale
     tallySkill(entity, SKILLS.Jumping);
   }
 
@@ -740,7 +740,7 @@ export function tickPlayerMinutes({
     // player to exhaustion. The dungeon host was accidentally exempt
     // (its rest advance never routes through this tick); the three
     // hosts S40 gave rest to were not.
-    if (!entity.isResting) sinks.drainFatigue?.(Math.trunc(loss * fatigueMultiplier));
+    if (!entity.isResting) sinks.drainFatigue?.(Math.trunc(loss * fatigueMultiplier * FATIGUE_DRAIN_SCALE));   // BALANCE1: exertion's scale
 
     // X11b - PlayerEntity.cs:420-421, the very next statement after
     // that fatigue drain and inside the same per-minute block:

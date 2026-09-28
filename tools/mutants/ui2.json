@@ -1,0 +1,317 @@
+[
+  {
+    "name": "UI2-a-worn-piece-read-as-used",
+    "file": "src/systems/quickslots.js",
+    "old": "  if (getEquipSlot({}, item) !== EQUIP_SLOTS.None) return 'wear';   // UI2: a throwaway table - the rule is the item's\n",
+    "new": "",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "UI2-an-item-refused",
+    "file": "src/systems/quickslots.js",
+    "old": "  if (getEquipSlot({}, item) !== EQUIP_SLOTS.None) return 'wear';   // UI2: a throwaway table - the rule is the item's\n  return 'use';",
+    "new": "  if (getEquipSlot({}, item) !== EQUIP_SLOTS.None) return 'wear';   // UI2: a throwaway table - the rule is the item's\n  return null;",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "UI2-the-icon-dropped-at-the-entry",
+    "file": "src/systems/quickslots.js",
+    "old": "  return { type: 'spell', index: sp.index, name: String(sp.name ?? ''), ...iconOf(sp) };",
+    "new": "  return { type: 'spell', index: sp.index, name: String(sp.name ?? '') };",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "UI2-the-saves-kinds-unwidened",
+    "file": "src/systems/quickslots.js",
+    "old": "typeof e.key === 'string' && HOTBAR_KINDS.includes(e.kind)",
+    "new": "typeof e.key === 'string' && ['consumable', 'weapon', 'light', 'shield'].includes(e.kind)",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "UI2-the-saved-icon-dropped",
+    "file": "src/systems/quickslots.js",
+    "old": "hotbar[i] = { type: 'spell', index: e.index, name: e.name, ...iconOf(e) };",
+    "new": "hotbar[i] = { type: 'spell', index: e.index, name: e.name };",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "UI2-a-ghost-loses-its-icon",
+    "file": "src/systems/quickslots.js",
+    "old": "icon: iconOf(spell).icon ?? e.icon ?? null,",
+    "new": "icon: iconOf(spell).icon ?? null,",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "UI2-no-count-on-a-use-slot",
+    "file": "src/systems/quickslots.js",
+    "old": "count: e.kind === 'consumable' ? count : (count > 1 ? count : null),",
+    "new": "count: e.kind === 'consumable' ? count : null,",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "UI2-the-wear-on-every-piece",
+    "file": "src/systems/quickslots.js",
+    "old": "condition: shown && showsWear(e.kind, shown) ? conditionPercentage(shown) : null,",
+    "new": "condition: shown && e.kind !== 'consumable' ? conditionPercentage(shown) : null,",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "UI2-a-wear-slot-used-instead",
+    "file": "src/systems/quickslots.js",
+    "old": "  if (e.kind === 'shield' || e.kind === 'wear') return (_performed = hotbarWear(entity, e, say));",
+    "new": "  if (e.kind === 'shield') return (_performed = hotbarWear(entity, e, say));",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "UI2-the-lines-crossed",
+    "file": "src/systems/quickslots.js",
+    "old": "say?.((shieldSlot ? HOTBAR_TEXT.shieldOn : HOTBAR_TEXT.wearOn)(itemLongName(piece)));",
+    "new": "say?.((shieldSlot ? HOTBAR_TEXT.wearOn : HOTBAR_TEXT.shieldOn)(itemLongName(piece)));",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "UI2-a-use-slot-a-light",
+    "file": "src/systems/quickslots.js",
+    "old": "  if (e.kind === 'use') {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "UI2-the-book-door-unasked",
+    "file": "src/systems/quickslots.js",
+    "old": "  if (res?.kind === 'book' && typeof hooks.openBook === 'function') {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "UI2-the-spellbook-door-unasked",
+    "file": "src/systems/quickslots.js",
+    "old": "  if (res?.kind === 'spellbook' && typeof hooks.openSpellbook === 'function') {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "UI2-the-camp-door-unasked",
+    "file": "src/systems/quickslots.js",
+    "old": "  if ((res?.kind === 'pitchCamp' || res?.kind === 'placeFire') && typeof hooks.placeCamp === 'function') {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "UI2-a-dead-key-silent",
+    "file": "src/systems/quickslots.js",
+    "old": "  if (res?.kind === 'none' && !res.enchanted && !res.questItem) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "UI2-worlds-hotbar-use-without-the-doors",
+    "file": "src/scenes/world.js",
+    "old": "    ...packDoors,   // UI2: a hotbar slot's Use opens what the pack's Use opens\n",
+    "new": "",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "UI2-exteriors-hotbar-use-without-the-doors",
+    "file": "src/scenes/exterior.js",
+    "old": "hand: () => quickslotHand(rig), ...packDoors }",
+    "new": "hand: () => quickslotHand(rig) }",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "UI2-the-dungeons-hotbar-use-without-the-doors",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "hand: () => quickslotHand(weaponRig), ...packDoors }",
+    "new": "hand: () => quickslotHand(weaponRig) }",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "UI2-a-spell-icon-trimmed",
+    "file": "src/ui/enhancedArt.js",
+    "old": "{ box, dpr, trim: false, onReady }",
+    "new": "{ box, dpr, onReady }",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "UI2-an-index-past-the-sheet-cut",
+    "file": "src/ui/enhancedArt.js",
+    "old": "  if (!Number.isInteger(index) || index < 0 || index >= SPELL_ICON_COUNT) return null;",
+    "new": "  if (!Number.isInteger(index) || index < 0) return null;",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "UI2-a-waiter-not-heard",
+    "file": "src/ui/enhancedArt.js",
+    "old": "    if (onReady && wait && wait.size < CUT_WAKE_MAX) wait.add(onReady);\n",
+    "new": "",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "UI2-the-untrimmed-fit-trimmed",
+    "file": "src/ui/bitmapCanvas.js",
+    "old": "const b = trim ? opaqueBounds(w, h, (x, y) => data[(y * w + x) * 4 + 3] > TRIM_ALPHA) : { x: 0, y: 0, w, h };",
+    "new": "const b = opaqueBounds(w, h, (x, y) => data[(y * w + x) * 4 + 3] > TRIM_ALPHA);",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "UI2-a-spell-slot-back-on-its-initials",
+    "file": "src/ui/enhancedHotbar.js",
+    "old": "    s.glyph.textContent = drew ? '' : sig;",
+    "new": "    s.glyph.textContent = sig;",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "UI2-the-drag-without-its-icon",
+    "file": "src/ui/enhancedSpellbook.js",
+    "old": "        icon: spellIconPicture(r.spell?.icon, { box: SPELL_DRAG_BOX }) });",
+    "new": "        icon: null });",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "UI2-the-chip-without-its-icon",
+    "file": "src/ui/enhancedHud.js",
+    "old": "  spellChip.append(spellTag, spellIcon, spellName);",
+    "new": "  spellChip.append(spellTag, spellName);",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "UI2-the-hint-says-four-kinds",
+    "file": "src/ui/enhancedHotbar.js",
+    "old": "const HINT_DROP = 'Drag any item or a spell onto a slot. Drag a slot off the bar to clear it.';",
+    "new": "const HINT_DROP = 'Drag a weapon, shield, potion, torch or spell onto a slot. Drag a slot off the bar to clear it.';",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "UI2-the-diamond-at-the-wide-box-on-a-phone",
+    "file": "src/ui/enhancedHud.js",
+    "old": "const QUICK_BOX = 40, QUICK_BOX_NARROW = 28;",
+    "new": "const QUICK_BOX = 40, QUICK_BOX_NARROW = 40;",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UI-B1-a-quest-item-refused",
+    "file": "src/systems/quickslots.js",
+    "old": " && !res.enchanted && !res.questItem) {",
+    "new": " && !res.enchanted) {",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UI-B4-a-refused-camp-used",
+    "file": "src/systems/quickslots.js",
+    "old": "if (hooks.placeCamp(res.item ?? r.item, pack) === false) return { kind: 'refused', name: r.name, result: res };",
+    "new": "hooks.placeCamp(res.item ?? r.item, pack);",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UI-B6-the-wear-on-worn-pieces-alone",
+    "file": "src/systems/quickslots.js",
+    "old": "  || item.group === 'Armor' || isEnchanted(item);",
+    "new": "  || (kind === 'wear' && (item.group === 'Armor' || isEnchanted(item)));",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UI-B7-the-stand-in-silent",
+    "file": "src/systems/quickslots.js",
+    "old": "    say?.(USE_PENDING[res.kind]);\n    return { kind: 'refused', name: r.name, result: res };\n",
+    "new": "",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UI-B2-every-picture-at-slot-1-s-box",
+    "file": "src/ui/enhancedHotbar.js",
+    "old": "const s = slots.find((x) => x.face?.offsetWidth > 0 && !!x.node.classList?.contains('hb-spell') === spell);",
+    "new": "const s = slots.find((x) => x.face?.offsetWidth > 0);",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UI-B2-a-spell-fitted-at-an-item-s-box",
+    "file": "src/ui/enhancedHotbar.js",
+    "old": "const fit = slotFit(!item && spellIcon != null);",
+    "new": "const fit = slotFit();",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UI-B3-the-ratio-off-a-slot",
+    "file": "src/ui/enhancedHotbar.js",
+    "old": "const barShown = barLayout > 0 ? (bar.getBoundingClientRect?.().width ?? barLayout) : 0;",
+    "new": "const barShown = barLayout > 0 ? (s?.face.getBoundingClientRect?.().width ?? barLayout) : 0;",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UI-B5-the-size-left-out-of-the-block-s-signature",
+    "file": "src/ui/enhancedHud.js",
+    "old": "    `${last.scale ?? 1}x${screenDpr()}${(Number(globalThis.innerWidth) || 1000) <= 860 ? 'n' : ''}`,\n",
+    "new": "",
+    "tests": [
+      "test/ui2_hotbar.test.js"
+    ]
+  }
+]

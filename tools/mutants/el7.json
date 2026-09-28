@@ -20,8 +20,8 @@
   {
     "name": "glare-presence-one-sided",
     "file": "src/render/airPass.js",
-    "old": "  return abs(viewDist(depthAt(uv)) - lantern) <= ${glslFloat(AIR_GLARE_SLACK)} ? 1.0 : 0.0;",
-    "new": "  return viewDist(depthAt(uv)) + ${glslFloat(AIR_GLARE_SLACK)} >= lantern ? 1.0 : 0.0;",
+    "old": "    : 1.0 - smoothstep(${glslFloat(AIR_GLARE_SLACK / 2)}, ${glslFloat(AIR_GLARE_SLACK)}, abs(d - lantern));",
+    "new": "    : 1.0 - smoothstep(${glslFloat(AIR_GLARE_SLACK / 2)}, ${glslFloat(AIR_GLARE_SLACK)}, lantern - d);",
     "tests": [
       "test/el7_polish.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "glare-taps-one",
     "file": "src/render/airPass.js",
-    "old": "      vis = (flame(vc, lantern)\n           + flame(vc + vec4(0.0, s, 0.0, 0.0), lantern) + flame(vc + vec4(0.0, 2.0 * s, 0.0, 0.0), lantern)\n           + flame(vc + vec4(0.0, -s, 0.0, 0.0), lantern) + flame(vc + vec4(0.0, -2.0 * s, 0.0, 0.0), lantern)\n           + flame(vc + vec4(s, 0.0, 0.0, 0.0), lantern) + flame(vc + vec4(-s, 0.0, 0.0, 0.0), lantern)) / 7.0;",
-    "new": "      vis = flame(vc, lantern);",
+    "old": "for (int k = 0; k < ${AIR_GLARE_TAPS.length}; k++) sum += flame(",
+    "new": "for (int k = 0; k < 1; k++) sum += flame(",
     "tests": [
       "test/el3_air.test.js"
     ]
@@ -47,7 +47,7 @@
   {
     "name": "blur-plain-box",
     "file": "src/render/airPass.js",
-    "old": "      float w = abs(viewDist(depthAt(uv)) - here) <= uBlurRange ? 1.0 : 0.0;",
+    "old": "      float w = abs(viewDist(depthAt(uv)) - (here + rise)) <= win ? 1.0 : 0.0;",
     "new": "      float w = 1.0;",
     "tests": [
       "test/el7_polish.test.js"

@@ -1,0 +1,182 @@
+[
+  {
+    "name": "SET6-an-affix-under-the-top",
+    "file": "src/systems/aetheric.js",
+    "old": "const top = (id) => AFFIX_RANGES[id].legendary[1];",
+    "new": "const top = (id) => AFFIX_RANGES[id].legendary[0];",
+    "tests": [
+      "test/set6_aetheric.test.js"
+    ]
+  },
+  {
+    "name": "SET6-a-place-doubled",
+    "file": "src/systems/aetheric.js",
+    "old": "  rec('ruhn-cinder-boots', \"Ruhn's Cinder-Boots\", 'Armor', 108,",
+    "new": "  rec('ruhn-cinder-boots', \"Ruhn's Cinder-Boots\", 'Armor', 107,",
+    "tests": [
+      "test/set6_aetheric.test.js"
+    ]
+  },
+  {
+    "name": "SET6-the-two-handed-axe",
+    "file": "src/systems/aetheric.js",
+    "old": "  rec('ruhn-gatecleaver', \"Ruhn's Gatecleaver\", 'Weapons', 127,",
+    "new": "  rec('ruhn-gatecleaver', \"Ruhn's Gatecleaver\", 'Weapons', 128,",
+    "tests": [
+      "test/set6_aetheric.test.js"
+    ]
+  },
+  {
+    "name": "SET6-the-affixes-shared-with-the-record",
+    "file": "src/systems/aetheric.js",
+    "old": "const affixes = r.affixes.filter(validAffix).map((a) => ({ ...a }));",
+    "new": "const affixes = r.affixes.filter(validAffix);",
+    "tests": [
+      "test/set6_aetheric.test.js"
+    ]
+  },
+  {
+    "name": "SET6-unidentified",
+    "file": "src/systems/aetheric.js",
+    "old": "  item.isIdentified = true;\n",
+    "new": "",
+    "tests": [
+      "test/set6_aetheric.test.js"
+    ]
+  },
+  {
+    "name": "SET6-the-price-without-the-rungs-worth",
+    "file": "src/systems/aetheric.js",
+    "old": "item.value = itemBaseValue(item) + affixesWorth(affixes) + AETHERIC_WORTH;",
+    "new": "item.value = itemBaseValue(item) + affixesWorth(affixes);",
+    "tests": [
+      "test/set6_aetheric.test.js"
+    ]
+  },
+  {
+    "name": "SET6-the-axes-blow-dropped",
+    "file": "src/systems/aetheric.js",
+    "old": "{ power: SIGIL_POWER_MAX, set: r.set, party, xp: 0 }",
+    "new": "{ set: r.set, party, xp: 0 }",
+    "tests": [
+      "test/set6_aetheric.test.js"
+    ]
+  },
+  {
+    "name": "SET6-the-drop-a-chance-of-its-own",
+    "file": "src/systems/aetheric.js",
+    "old": "if (!(rolls() < REGALIA_CHANCE)) return null;",
+    "new": "if (!(rolls() < 0.25)) return null;",
+    "tests": [
+      "test/set6_aetheric.test.js"
+    ]
+  },
+  {
+    "name": "SET6-every-piece-the-same",
+    "file": "src/systems/aetheric.js",
+    "old": "REGALIA[Math.min(REGALIA.length - 1, Math.floor(rolls() * REGALIA.length))]",
+    "new": "REGALIA[0]",
+    "tests": [
+      "test/set6_aetheric.test.js"
+    ]
+  },
+  {
+    "name": "SET6-the-lore-unsaid",
+    "file": "src/systems/aetheric.js",
+    "old": "registerAethericLore((item) => aethericById(item?.aetheric)?.lore ?? null);",
+    "new": "",
+    "tests": [
+      "test/set6_aetheric.test.js"
+    ]
+  },
+  {
+    "name": "SET6-the-roll-before-the-graded-pieces",
+    "file": "src/systems/gateSpoils.js",
+    "old": "  const pieces = [];\n  const first = rolls() < SPOILS_LEGENDARY ? 'legendary' : 'rare';",
+    "new": "  const pieces = [];\n  rollRegalia(rolls);\n  const first = rolls() < SPOILS_LEGENDARY ? 'legendary' : 'rare';",
+    "tests": [
+      "test/set6_aetheric.test.js"
+    ]
+  },
+  {
+    "name": "SET6-the-drop-never-laid",
+    "file": "src/systems/gateSpoils.js",
+    "old": "  if (regalia) pieces.push({ item: regalia, tier: regalia.rarity });\n",
+    "new": "",
+    "tests": [
+      "test/set6_aetheric.test.js"
+    ]
+  },
+  {
+    "name": "SET6-the-rung-out-of-its-place",
+    "file": "src/systems/lootRarity.js",
+    "old": "aetheric:  Object.freeze({ rank: 4,",
+    "new": "aetheric:  Object.freeze({ rank: 6,",
+    "tests": [
+      "test/set6_aetheric.test.js"
+    ]
+  },
+  {
+    "name": "SET6-the-roll-taking-it",
+    "file": "src/systems/lootRarity.js",
+    "old": "if (!item || !ROLLED_TIERS.includes(tier)) return item;",
+    "new": "if (!item || tier === 'common' || !RARITIES[tier] || tier === 'artifact') return item;",
+    "tests": [
+      "test/set6_aetheric.test.js"
+    ]
+  },
+  {
+    "name": "SET6-the-line-at-a-lower-height",
+    "file": "src/render/spoilsGlow.js",
+    "old": "legendary: 1.9, aetheric: 2.1, artifact: 2.3",
+    "new": "legendary: 1.9, aetheric: 1.8, artifact: 2.3",
+    "tests": [
+      "test/set6_aetheric.test.js"
+    ]
+  },
+  {
+    "name": "SET6-the-record-field-undeclared",
+    "file": "src/systems/itemFields.js",
+    "old": "  aetheric: str(),   // SET6: an Aetheric piece's record (systems/aetheric.js) - Ruhn's Regalia\n",
+    "new": "",
+    "tests": [
+      "test/set6_aetheric.test.js"
+    ]
+  },
+  {
+    "name": "SET6-the-rung-unframed",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": "  aetheric: `--rar: #bfe8ff; --rar-hi: #f0faff; --rar-lo: #4d7fa3; --rar-rgb: 191,232,255; --rar-pips: '\\\\25c8';`,\n",
+    "new": "",
+    "tests": [
+      "test/sigilui1.test.js"
+    ]
+  },
+  {
+    "name": "SET6-the-rung-uncoloured",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".itemrow[data-rarity=\"aetheric\"] .itemname > span:first-child, .packdetail .card[data-rarity=\"aetheric\"] h3, .wplaque-row[data-rarity=\"aetheric\"] > span:first-child { color: #bfe8ff; }\n",
+    "new": "",
+    "tests": [
+      "test/lr1_lootrarity.test.js"
+    ]
+  },
+  {
+    "name": "SET6-the-test-room-without-the-regalia",
+    "file": "src/systems/testRoom.js",
+    "old": "  for (const rec of REGALIA) put(mintAetheric(rec));",
+    "new": "",
+    "tests": [
+      "test/lr1_lootrarity.test.js"
+    ]
+  },
+  {
+    "name": "SET6-the-daedric-prefix",
+    "file": "src/systems/itemInfo.js",
+    "old": "|| item?.legendary || item?.aetheric) return { name: base, material: '' };",
+    "new": "|| item?.legendary) return { name: base, material: '' };",
+    "tests": [
+      "test/set6_aetheric.test.js"
+    ]
+  }
+]

@@ -92,7 +92,7 @@
   {
     "name": "WB5-a-piece-taken-in-the-air",
     "file": "src/scenes/spoilsPool.js",
-    "old": "        if (f.fly.rest && f0 && Math.hypot(",
+    "old": "        if (f.fly.rest && t - f.restAt >= SPOILS_TAKE_AFTER_MS && f0 && Math.hypot(",
     "new": "        if (f0 && Math.hypot(",
     "tests": [
       "test/wb5_gate_spoils.test.js"
@@ -119,8 +119,8 @@
   {
     "name": "WB5-the-spew-off-another-seed",
     "file": "src/scenes/gateCourt.js",
-    "old": "    spoils.spew({ day: s.day, seed: claims.c,",
-    "new": "    spoils.spew({ day: s.day, seed: s.day,",
+    "old": "    if (spoils.spew({ day: s.day, seed: claims.c,",
+    "new": "    if (spoils.spew({ day: s.day, seed: s.day,",
     "tests": [
       "test/wb5_gate_spoils.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "WB5-the-sessions-word-ignored",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    if (spentHere.has(spentKey(day, acct))) return true;\n",
-    "new": "",
+    "old": "  function spentOn(day, acct) {\n    if (spentHere.has(spentKey(day, acct))) return true;",
+    "new": "  function spentOn(day, acct) {",
     "tests": [
       "test/wb5_gate_spoils.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "WB5-the-record-without-its-pieces",
     "file": "src/scenes/spoilsPool.js",
-    "old": "keep(SPOILS_STORE_KEY, [...recs, { day, at: wall(), who: w, pieces: list }].slice(-SPOILS_RECORDS_MAX));",
-    "new": "keep(SPOILS_STORE_KEY, [...recs, { day, at: wall(), who: w, pieces: [] }].slice(-SPOILS_RECORDS_MAX));",
+    "old": "keep(SPOILS_STORE_KEY, [...recs, { v: SPOILS_RECORD_V, id, day, at, who: w, pieces: list }].slice(-SPOILS_RECORDS_MAX));",
+    "new": "keep(SPOILS_STORE_KEY, [...recs, { v: SPOILS_RECORD_V, id, day, at, who: w, pieces: [] }].slice(-SPOILS_RECORDS_MAX));",
     "tests": [
       "test/wb5_gate_spoils.test.js"
     ]
@@ -245,7 +245,7 @@
   {
     "name": "WB5-a-save-since-ignored",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    if (savedSince(infos, rec.who ?? who, rec.at)) continue;   // a save since holds them: it goes\n",
+    "old": "    if (rec.v !== SPOILS_RECORD_V && savedSince(infos, rec.who ?? who, rec.at)) continue;   // a save since holds them: it goes\n",
     "new": "",
     "tests": [
       "test/wb5_gate_spoils.test.js"

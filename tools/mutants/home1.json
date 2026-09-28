@@ -308,8 +308,8 @@
   {
     "name": "HOME1-the-service-asked-short-of-gold",
     "file": "src/systems/onlineHomes.js",
-    "old": "  if (!afford(price)) return { ok: false, error: 'gold' };\n  const r = await homes.claim(",
-    "new": "  const r = await homes.claim(",
+    "old": "    if (!afford(price)) return { ok: false, error: 'gold' };\n    const r = await homes.claim(",
+    "new": "    const r = await homes.claim(",
     "tests": [
       "test/home1.test.js"
     ]
@@ -317,7 +317,7 @@
   {
     "name": "HOME1-the-second-ask-gone",
     "file": "src/systems/onlineHomes.js",
-    "old": "  if (!afford(price)) {\n    await homes.release(mapId, buildingKey);\n    return { ok: false, error: 'gold' };\n  }\n",
+    "old": "    if (!afford(price)) {\n      await homes.release(mapId, buildingKey);\n      return { ok: false, error: 'gold' };\n    }\n",
     "new": "",
     "tests": [
       "test/home1.test.js"
@@ -326,8 +326,8 @@
   {
     "name": "HOME1-a-refusal-paid-for",
     "file": "src/systems/onlineHomes.js",
-    "old": "  const r = await homes.claim({ mapId, buildingKey, region, price });\n  if (!r.ok) return r;\n",
-    "new": "  const r = await homes.claim({ mapId, buildingKey, region, price });\n",
+    "old": "    const r = await homes.claim({ mapId, buildingKey, region, price });\n    if (!r.ok) return r;\n",
+    "new": "    const r = await homes.claim({ mapId, buildingKey, region, price });\n",
     "tests": [
       "test/home1.test.js"
     ]
@@ -397,7 +397,7 @@
   {
     "name": "HOME1-no-offer-at-the-door",
     "file": "src/scenes/worldModes.js",
-    "old": "            if (price) { openHomeOffer(bd, price, hit, entries); return true; }\n",
+    "old": "            if (prompt === 'offer') { openHomeOffer(bd, price, hit, entries); return true; }\n",
     "new": "",
     "tests": [
       "test/home1.test.js"

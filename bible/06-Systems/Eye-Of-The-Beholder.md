@@ -1056,3 +1056,15 @@ Choosing a skin wears it and closes the panel on it. The open panel stays open a
 
 Pins: `test/skin2_class_skins.test.js` (7), `test/disc23b_eotb_sprites.test.js` (re-aimed at the panels and the wider
 bound); mutants `tools/mutants/skin2.json` (26, all dead). Not verified in a browser (no probes).
+
+**ACRO-SHORT (2026-09-27, Discord: "acrobat sprite is super short on certain angles, (i am not crouching)").** The size
+law does NOT carry over for one picture: the female acrobat's front three-quarter idle (`1524_16-0.png`, 47x81) is a
+whole figure drawn at another scale than its group (110 pixels), so the one door sized it as drawn and she stood 1.54 m
+from that side (orientations 1 and 7, one mirrored) against 2.09 m from the rest - on her own body and on a peer's
+screen alike. DFU would draw it short too (`DaggerfallMobileUnit.cs:760-768` sizes a record by its first frame); its
+remedy is the pack's XML scale (`TextureReplacement.SetBillboardScale`, `TextureReplacement.cs:663-675`), and this pack
+carries none. `skins.json` carries it now (`"scale": { "16": 81/110 }` on 1524; the picture is untouched, its bytes the
+archive's), `classRecordScale` (`player/classSkins.js`) is read by `spriteOffset`, so the body, its placement and the peers all see it. A sweep
+of every view of every sheet against its group's median found no other (the next lowest, 1524's hurt record 11, is 0.88
+and a standing pose). Pins: `test/skin2_class_skins.test.js` ACRO-SHORT (the exact 110 pixels, the sweep, her idle
+wheel through `spriteFor`); mutants `tools/mutants/skin2.json` +5. `01-Overview/Field-Bugs-2026-09-27.md`.

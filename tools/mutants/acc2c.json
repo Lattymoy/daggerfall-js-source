@@ -26,8 +26,8 @@
   {
     "name": "ONLY-4-download-wired-to-push",
     "file": "src/ui/enhancedMenu.js",
-    "old": "  runCloud(card, (io) => pullSlot(io, appStorage(), card));",
-    "new": "  runCloud(card, (io) => pushSlot(io, appStorage(), card.saveName));",
+    "old": "  runCloud(card, (io) => pullSlot(io, appStorage(), card), 'download');",
+    "new": "  runCloud(card, (io) => pushSlot(io, appStorage(), card.saveName), 'download');",
     "tests": ["test/cloudsaves.test.js"],
     "note": "The one seam this slice exists to close. `pullSlot` was written, pinned end to end against the real service, and had ZERO CALLERS - a Download button that pushes leaves it that way while looking finished."
   },

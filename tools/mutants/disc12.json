@@ -47,8 +47,8 @@
   {
     "name": "DISC12-body-never-follows",
     "file": "src/net/peerBodies.js",
-    "old": "    if (look) {\n      const want = peerWeaponOf(look, shown);",
-    "new": "    if (false) {\n      const want = peerWeaponOf(look, shown);",
+    "old": "    if (look) {\n      const want = b.wolf ? null : peerWeaponOf(look, shown);",
+    "new": "    if (false) {\n      const want = b.wolf ? null : peerWeaponOf(look, shown);",
     "tests": [
       "test/disc12.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "DISC12-beast-keeps-a-body",
     "file": "src/scenes/world.js",
-    "old": "!peerRiders.isRiding(d.id) && !d.shown?.wb);",
-    "new": "!peerRiders.isRiding(d.id));",
+    "old": "!peerRiders.isRiding(d.id) && !d.shown?.wb || (peerIsWolf(d.shown) && !d.shown.rd));",
+    "new": "!peerRiders.isRiding(d.id) || (peerIsWolf(d.shown) && !d.shown.rd));",
     "tests": [
       "test/disc12.test.js"
     ]

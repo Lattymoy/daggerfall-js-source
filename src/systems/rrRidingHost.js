@@ -16,7 +16,7 @@ import { rrRidingSetting, rrTrampleOutcome, rrChargeDamage, RR_RIDING } from './
 import { GENDERS } from '../characters/nameHelper.js';
 import { SOUND } from './soundClips.js';
 import { CRIMES } from './court.js';
-import { FATIGUE_LOSS, liveStat } from './statMods.js';
+import { FATIGUE_LOSS, FATIGUE_DRAIN_SCALE, liveStat } from './statMods.js';
 import { handToHandMinDamage, handToHandMaxDamage } from '../combat/formulas.js';
 import { skillValue, SKILLS } from './skills.js';
 import { RIDING_VOLUME_SCALE } from './riding.js';
@@ -68,7 +68,7 @@ export function createRrRidingContacts({
     const v = voice(f);   // enemySounds.PlayCombatVoice(gender, false, true) (:195) - the heavy pain cry, no dice
     if (v && v.clip >= 0) playVoice(f, v);   // AUDIT-RR2 G5: on the enemy's own source with EnemySounds' pitch lift (EnemySounds.cs:172-175) - the host's spatial door
     if (f.ai) { f.ai.knockbackSpeed = RR_RIDING.chargeKnockback; f.ai.knockbackDir = [...direction]; }   // (:199-200)
-    playerEntity.fatigue = Math.max(0, (playerEntity.fatigue ?? 0) - FATIGUE_LOSS.Default * RR_RIDING.chargeFatigueMultiplier);   // (:205)
+    playerEntity.fatigue = Math.max(0, (playerEntity.fatigue ?? 0) - Math.trunc(FATIGUE_LOSS.Default * RR_RIDING.chargeFatigueMultiplier * FATIGUE_DRAIN_SCALE));   // (:205); AUDIT (pre-merge 0927b) F1: a charge is exertion - BALANCE1's scale (165 -> 123)
     const h2h = skillValue(playerEntity, SKILLS.HandToHand);
     const damage = rrChargeDamage({ minBase: handToHandMinDamage(h2h), maxBase: handToHandMaxDamage(h2h), agility: liveStat(playerEntity, 'agility'), willpower: liveStat(playerEntity, 'willpower'), roll: rolls() });
     // DamageHealthFromSource(player, damage, true, BloodPos()) (:212) - the blow alone; the knockback above is the

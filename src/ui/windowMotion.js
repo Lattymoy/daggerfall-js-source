@@ -81,6 +81,29 @@ const kindOf = (node) => windowsIn(node)[0]?.className ?? '';
 // observer sees it.
 const scrolls = new WeakMap();
 let installed = null;
+let ghostSerial = 0;   // AUDIT A2: each afterimage's own suffix for the ids it carries
+/** The attributes that reference an element by `url(#id)` (an svg's paint servers, clips, masks, filters, markers). */
+const URL_ATTRS = ['fill', 'stroke', 'clip-path', 'mask', 'filter', 'marker-start', 'marker-mid', 'marker-end', 'style'];
+
+/** SHADOW-FANG (AUDIT A2): A GHOST'S IDS ARE RENAMED, NOT DROPPED. An svg inside a window paints through one - a
+ *  gradient glyph's `fill: url(#dfglyph-grad-N)` - and with the id stripped the ghost's wolf folded away hollow. Each
+ *  id takes `tag`, and every `url(#id)` and `href="#id"` inside the same ghost moves with it; the real window keeps
+ *  its own names. @returns {Map<string, string>} old id -> the ghost's */
+export function renameGhostIds(els, tag) {
+  const renamed = new Map();
+  for (const el of els) if (el.id) { renamed.set(el.id, el.id + tag); el.id += tag; }
+  if (!renamed.size) return renamed;
+  const moved = (v) => v.replace(/url\(#([^)]+)\)/g, (m, id) => (renamed.has(id) ? `url(#${renamed.get(id)})` : m));
+  for (const el of els) {
+    for (const at of URL_ATTRS) {
+      const v = el.getAttribute?.(at);
+      if (v && v.includes('url(#')) el.setAttribute(at, moved(v));
+    }
+    const href = el.getAttribute?.('href');
+    if (href?.startsWith('#') && renamed.has(href.slice(1))) el.setAttribute('href', `#${renamed.get(href.slice(1))}`);
+  }
+  return renamed;
+}
 
 function afterimage(host, doc) {
   const clone = host.cloneNode(true);
@@ -94,8 +117,8 @@ function afterimage(host, doc) {
     }
     const s = scrolls.get(a[i]);
     if (s) restore.push([b[i], s]);
-    if (b[i].id) b[i].removeAttribute('id');   // the real window may reopen at once
   }
+  renameGhostIds(b, `-wm-ghost${++ghostSerial}`);   // the real window may reopen at once, under its own
   clone.classList.add('wm-ghost', 'wm-host-out');
   clone.setAttribute('aria-hidden', 'true');
   clone.inert = true;

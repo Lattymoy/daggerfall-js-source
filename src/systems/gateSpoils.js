@@ -17,17 +17,23 @@
 // trophy, one a kill. The spoils are graded whatever the Loot Rarity switch says: their glow is their tier.
 //
 // THE SIGIL STONE IS ITS OWN TEMPLATE (SIGIL_STONE_TEMPLATE, 570 - past DFU's 288, Climates & Calories' 530-541 and the
-// Thunderlock's 560/561), a gem by its group - so the gem stores and the pawn shops buy it - and not a renamed gem: every
+// Thunderlock's 560/561), a gem by its group (bound, so no counter buys it - SS4) - and not a renamed gem: every
 // classic gem is an ingredient, an ingredient STACKS, and a Ruby renamed would merge into the Ruby already in the pack
-// and lose its name and its price. A custom row is no ingredient and does not stack (inventory.js isStackable). It wears
-// the gems' own art, the Ruby's red, and no shelf stocks it: it is in no group's enum a shelf draws from. Registered here,
-// and scenes/shared.js imports this file so every host has the row before a save carrying one loads.
+// and lose its name and its price. A custom row is no ingredient. SS1 (2026-09-27, Mac: "make sigil stones bound items
+// and stackable"): the row STACKS with its own kind alone - it says `stackable`, as the rations' row does
+// (inventory.js isStackable), and a stack merges only with the same template, so a stone never joins a Ruby nor a Ruby
+// a stone - and it is BOUND (`bound`, systems/itemBound.js): a stone is never handed to another player. A pack saved
+// before it stacked is folded on load (restackStones). It wears the gems' own art, the Ruby's red, and no shelf stocks
+// it: it is in no group's enum a shelf draws from. Registered here, and scenes/shared.js imports this file so every host
+// has the row before a save carrying one loads.
 //
 // Not a DFU member. Ledger A (WB).
 import { seededRng } from './wind.js';
 import { createRandomWeapon, createRandomArmor, ITEM_GROUPS } from './loot.js';
 import { setItemFields, isAmmunition, mintCondition, registerCustomTemplates, templateByIndex } from './itemTemplates.js';
 import { applyRarity, rarityChances } from './lootRarity.js';
+import { rollRegalia } from './aetheric.js';   // SET6: Ruhn's Regalia - the spoils' last roll
+import { stacksWith } from './inventory.js';   // SS1: the fold of a pack saved before the stone stacked
 
 /** Gold a level of the player's, before the seed's variation (0.8 to 1.2 of it). */
 export const SPOILS_GOLD_PER_LEVEL = 250;
@@ -40,7 +46,8 @@ export const SIGIL_STONE_TEMPLATE = 570;
 export const SIGIL_STONE = Object.freeze({ name: 'Sigil Stone', value: 5000 });
 
 /** The Sigil Stone's row, in DFU's ItemTemplates.txt columns: a gem's weight and wear, the gate's price, the rarest
- *  rarity, the Ruby's art (TEXTURE.254 record 0). */
+ *  rarity, the Ruby's art (TEXTURE.254 record 0) - and the port's two (SS1): it stacks, with its own kind alone, and it
+ *  is bound. */
 export const SIGIL_STONE_TEMPLATES = Object.freeze([{
   index: SIGIL_STONE_TEMPLATE,
   name: SIGIL_STONE.name,
@@ -50,9 +57,31 @@ export const SIGIL_STONE_TEMPLATES = Object.freeze([{
   rarity: 20,
   worldTextureArchive: 254,
   worldTextureRecord: 0,
+  stackable: true,
+  bound: true,
 }]);
 registerCustomTemplates(SIGIL_STONE_TEMPLATES);
 export const isSigilStone = (item) => item?.templateIndex === SIGIL_STONE_TEMPLATE;
+
+/** SS1: STONES WON BEFORE THEY STACKED ARE ONE STACK. A pack saved before the row stacked holds a record a stone; each
+ *  goes into the first record before it that it stacks with (a locked stone into a locked one - inventory.js
+ *  stacksWith), so the load shows the stack the next kill would have made. Runs where no index into the list is still
+ *  to be read (systems/save.js, below its index-keyed relinks). Answers how many records it folded. */
+export function restackStones(list) {
+  if (!Array.isArray(list)) return 0;
+  let folded = 0;
+  for (let i = 0; i < list.length; i++) {
+    const it = list[i];
+    if (!isSigilStone(it)) continue;
+    const into = list.findIndex((held, j) => j < i && isSigilStone(held) && stacksWith(held, it));
+    if (into < 0) continue;
+    list[into].stackCount = (list[into].stackCount ?? 1) + (it.stackCount ?? 1);
+    list.splice(i, 1);
+    i--;
+    folded++;
+  }
+  return folded;
+}
 
 const pick = (list, rolls) => list[Math.floor(rolls() * list.length)];
 
@@ -89,7 +118,8 @@ export function sigilStone() {
 
 /**
  * THE SPOILS of one kill for one player: `{ gold, pieces: [{ item, tier }], sigil }` - the pieces in the order they
- * leave him (the Rare-or-better first). The same seed, level and world answer the same spoils.
+ * leave him (the Rare-or-better first; SET6: a Regalia piece, when one drops, last). The same seed, level and world
+ * answer the same spoils.
  * @param {number} seed the receipt's `c` @param {number} level the player's
  */
 export function rollSpoils(seed, level) {
@@ -100,6 +130,10 @@ export function rollSpoils(seed, level) {
   const first = rolls() < SPOILS_LEGENDARY ? 'legendary' : 'rare';
   pieces.push(graded(spoilsBase(lv, rolls), first, rolls));
   for (let i = 0; i < 2; i++) pieces.push(graded(spoilsBase(lv, rolls), magicOrBetter(rolls), rolls));
+  // SET6 (Sigil Sets, bible/11-Multiplayer/Sigil-Sets.md section 6): a piece of the Warden's own Regalia, Aetheric, a
+  // sixth of the time - rolled LAST, so every spoils before it is what it was for its seed; it leaves him last
+  const regalia = rollRegalia(rolls);
+  if (regalia) pieces.push({ item: regalia, tier: regalia.rarity });
   return { gold, pieces, sigil: sigilStone() };
 }
 

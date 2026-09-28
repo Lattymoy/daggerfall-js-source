@@ -196,9 +196,11 @@ test('DISC15: the array is made on the first room that asks, grown by SHADOW_LO_
 
 test('DISC15: the shaders read either tier - the lit loop and the flat through casterShadowAt / shadowOfLight with the light itself, the lo lookup on its own sampler with the far the JS draws to, the air\'s march too; every program binds the sampler to SHADOW_LO_UNIT', () => {
   assert.match(SHADOW_GLSL, /uniform sampler2DArrayShadow uPointShadowLo;/);
-  assert.match(SHADOW_GLSL, /float loFarOf\(float range\) \{ return ceil\(range \/ 4\.0\) \* 4\.0; \}/, 'shadowFarFor, term for term');
+  // LA-SHADOW4 (re-aimed): the far the JS draws a lo map to is held across the flicker, so the shader no longer derives
+  // it from the live range (loFarOf) - the caster table's word carries it above the slot's byte (casterWord)
+  assert.doesNotMatch(SHADOW_GLSL, /loFarOf/, 'no far derived from the live range');
   for (const w of [15, 18, 20, 7.5, 5, 12, 16]) assert.equal(Math.ceil(Math.fround(w) / 4) * 4, shadowFarFor(Math.fround(w)), `the far of a range ${w}`);
-  assert.match(SHADOW_GLSL, /return k < 8 \? pointShadowAt\(k, wp, n\) : pointShadowLoAt\(k - 8, L, wp, n\);/, 'below the eight a 512 slot, past it a lo one');
+  assert.match(SHADOW_GLSL, /int s = k & 255;\n\s+return s < 8 \? pointShadowAt\(s, wp, n\) : pointShadowLoAt\(s - 8, float\(k >> 8\) \* 4\.0, L, wp, n\);/, 'below the eight a 512 slot, past it a lo one at the word\'s far');
   assert.match(SHADOW_GLSL, /float t = 1\.5 \/ 256\.0;/, 'the lo kernel a texel and a half of a 256 face');
   for (const [name, fs] of [['mesh', EL_MESH_FS], ['terrain', EL_TERRAIN_FS], ['char', EL_CHAR_FS]]) {
     assert.match(fs, /float sh = k >= 0 \? casterShadowAt\(k, uPointLights\[i\], wp, n\)/, `${name}: either tier`);
@@ -214,10 +216,20 @@ test('DISC15: the shaders read either tier - the lit loop and the flat through c
   assert.match(air, /pointShadowLo: u\(p, 'uPointShadowLo'\)/, 'the air\'s march');
 });
 
-test('DISC15: the building hosts ask for the tier every frame, before beginFrame - the world\'s interior arm and the dev route; nothing else does', () => {
+test('DISC15: the building hosts ask for the tier every frame, before beginFrame - the world\'s interior arm and the dev route; LA-SHADOW3: the two dungeon hosts too, which draw the level whole; the street never', () => {
   const wm = rd('src/scenes/worldModes.js'), it = rd('src/scenes/interior.js');
   assert.match(wm, /renderer\.setPointLights\(_itLit\.data, null, _itLit\.colors\);\n\s+renderer\.everyLightCasts\(\);/);
   assert.ok(wm.indexOf('renderer.everyLightCasts();') < wm.indexOf('renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME);   // AUDIT-EL F5: a WORLD frame - the lane replays its records for this one\n    mwViewDrawBody'), 'before the interior arm\'s beginFrame');
   assert.match(it, /renderer\.setPointLights\(lit\.data, null, lit\.colors\);\n\s+renderer\.everyLightCasts\(\);/);
-  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeon.js', 'src/scenes/dungeonContext.js']) assert.ok(!rd(f).includes('everyLightCasts'), `${f}: a host that culls by view never asks`);
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeonContext.js']) assert.ok(!rd(f).includes('everyLightCasts'), `${f}: a host that culls by view never asks`);
+  // LA-SHADOW3 (re-aimed): DISC15 counted the dungeon among the view-culling hosts; neither dungeon host culls - each
+  // draws the level's static batch whole, every unbatched model and every mover, as the building arm does
+  const dg = rd('src/scenes/dungeon.js');
+  assert.match(dg, /DUNGEON_LANTERN_F32\) : null\);\n\s+renderer\.everyLightCasts\(\);/, 'the dev route asks, after its lights');   // LA-AUDIT A5: its lights with the cap's fade
+  assert.ok(dg.indexOf('renderer.everyLightCasts();') < dg.indexOf('renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME);'), '...before its beginFrame');
+  assert.match(dg, /renderer\.beginFrame\(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME\);[^\n]*\n[^\n]*\n\s+if \(ctx\.staticBatch\) renderer\.drawMesh\(ctx\.staticBatch, BATCH_IDENTITY, null\);[^\n]*\n\s+for \(const d of ctx\.drawList\) if \(!d\._batched\) renderer\.drawMesh\(d\.mesh, d\.matrix, ctx\.texRemap\);\n\s+for \(const d of ctx\.dynamicDraws\) renderer\.drawMesh/, '...and draws the level whole');
+  const arm = wm.slice(wm.indexOf("if (mode === 'dungeon') {"), wm.indexOf('// Whole-pipeline swap: interior draws'));
+  assert.match(arm, /renderer\.setPointLights\(_court\.data, null, _court\.colors\); \}[^\n]*\n\s+renderer\.everyLightCasts\(\);/, 'the world\'s dungeon arm asks, after the court\'s lights');
+  assert.ok(arm.indexOf('renderer.everyLightCasts();') < arm.indexOf('renderer.beginFrame('), '...before its beginFrame');
+  assert.match(arm, /if \(dungeonCtx\.staticBatch\) renderer\.drawMesh\(dungeonCtx\.staticBatch, BATCH_IDENTITY, null\);[^\n]*\n\s+for \(const d of dungeonCtx\.drawList\) if \(!d\._batched\) renderer\.drawMesh\(d\.mesh, d\.matrix, dungeonCtx\.texRemap\);\n\s+for \(const d of dungeonCtx\.dynamicDraws\) renderer\.drawMesh/, '...and draws the level whole');
 });

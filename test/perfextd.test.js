@@ -295,7 +295,7 @@ test('PERF-EXT31: the resolve and the bright pass are built for what the frame d
   assert.equal(resolve[1][0], full.replace(SHAFTS, ''), 'no shafts: that term out and nothing else');
   assert.equal(resolve[0][0], full.replace(GLOW, '').replace(SHAFTS, ''), 'neither');
   const BRIGHT_GLOW = ' + airDecode(texture(uVol, vUV).rgb)';
-  assert.ok(bright[1].includes(`vec3 c = airDecode(texture(uFrame, uv).rgb)${BRIGHT_GLOW};`), 'the full bright pass');
+  assert.ok(bright[1].includes(`vec3 glow = vec3(0.0)${BRIGHT_GLOW};`), 'the full bright pass (LA-POST1: the glow joins each of the four quarters)');
   assert.equal(bright[0], bright[1].replace(BRIGHT_GLOW, ''), 'and the bright pass without the glow');
   let n = 0;
   for (let k = 0; k < 24; k++) {
@@ -352,8 +352,8 @@ function airFrame({ lights = null, deck = null, sun = [0, 0.42, 0.9], proj = I, 
   const used = new Set(calls.filter((c) => c[0] === 'useProgram').map((c) => c[1]));
   const brights = [0, 1].filter((g) => used.has(P.bright[g].p));
   const resolves = [[0, 0], [0, 1], [1, 0], [1, 1]].filter(([g, sh]) => used.has(P.resolve[g][sh].p));
-  assert.equal(brights.length, 1, 'one bright pass a frame'); assert.equal(resolves.length, 1, 'one resolve a frame');
-  return { ap: r.air, bright: brights[0], resolve: resolves[0] };
+  assert.equal(brights.length, world ? 1 : 0, 'one bright pass a world frame (LA-POST8: none for a frame the pass was not prepared for)'); assert.equal(resolves.length, 1, 'one resolve a frame');
+  return { ap: r.air, bright: brights[0] ?? null, resolve: resolves[0] };
 }
 
 test('PERF-EXT31: the frame draws through the passes built for what it drew, chosen after the images - a lantern in fog marches the glow and takes the glow\'s passes, a day with no light takes the ones without; the beams or the haze take the shafts\' resolve, neither the one without; a frame the pass was not prepared for takes the bare ones (mutants: the choice stuck, made before the images, the haze\'s arm dropped, the bright pass or the resolve always full)', () => {
@@ -374,5 +374,5 @@ test('PERF-EXT31: the frame draws through the passes built for what it drew, cho
   assert.equal(night.ap.stats.shafts, false); assert.equal(night.ap.stats.haze, false);
   assert.deepEqual([night.bright, night.resolve], [1, [1, 0]], 'no sun: the shafts\' image is black and not read, while the lanterns\' glow is');
   const menu = airFrame({ lights: [0, 2, -3, 12], fog: ['exp', 0.03, 60, 180], world: false });
-  assert.deepEqual([menu.bright, menu.resolve], [0, [0, 0]], 'a frame the pass was not prepared for: black images, the bare passes');
+  assert.deepEqual([menu.bright, menu.resolve], [null, [0, 0]], 'a frame the pass was not prepared for: black images, the bare resolve (LA-POST8: and no bright pass)');
 });

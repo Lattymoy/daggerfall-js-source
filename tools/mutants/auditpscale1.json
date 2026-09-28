@@ -172,8 +172,8 @@
   {
     "name": "AUDIT-PSCALE1-dungeon-joiner-count-unread",
     "file": "src/scenes/dungeonContext.js",
-    "old": "  function fightN(f) { return _authority ? (f._fightN = foeFighters(f, performance.now())) : (f._fightN ?? 1); }",
-    "new": "  function fightN(f) { return _authority ? (f._fightN = foeFighters(f, performance.now())) : 1; }",
+    "old": "  function fightN(f) { return _runsFoe(f) ? (f._fightN = foeFighters(f, performance.now())) : (f._fightN ?? 1); }",
+    "new": "  function fightN(f) { return _runsFoe(f) ? (f._fightN = foeFighters(f, performance.now())) : 1; }",
     "tests": [
       "test/pscale1.test.js",
       "test/auditpscale1.test.js"
@@ -182,7 +182,7 @@
   {
     "name": "AUDIT-PSCALE1-dungeon-heal-unweighed",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    const h = _authority && _sharedFoe(f) ? partyFoeHeals(f, n, fightN(f)) : n;",
+    "old": "    const h = _runsFoe(f) && _sharedFoe(f) ? partyFoeHeals(f, n, fightN(f)) : n;",
     "new": "    const h = n;",
     "tests": [
       "test/pscale1.test.js",
@@ -212,8 +212,8 @@
   {
     "name": "AUDIT-PSCALE1-count-unstreamed-in-a-dungeon",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      if (!f.dead && _sharedFoe(f)) { const n = fightN(f); if (n > 1) r.n = n; }",
-    "new": "      if (!f.dead && _sharedFoe(f)) { const n = fightN(f); if (n > 99) r.n = n; }",
+    "old": "    if (!f.dead && _sharedFoe(f)) { const n = fightN(f); if (n > 1) r.n = n; }",
+    "new": "    if (!f.dead && _sharedFoe(f)) { const n = fightN(f); if (n > 99) r.n = n; }",
     "tests": [
       "test/pscale1.test.js",
       "test/auditpscale1.test.js"

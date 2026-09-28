@@ -38,10 +38,24 @@ import {
 } from '../systems/quickslots.js';
 import { modelIconUrl } from './itemIconUrl.js';
 import { fpArm } from '../combat/fpArm.js';
-import { requestIcon } from './textureCanvas.js';
+import { requestFittedIcon, showFitted, fittedImg, iconName } from './textureCanvas.js';   // UI2: a slot's picture fitted to it
+import { spellIconPicture } from './enhancedArt.js';   // UI2: a spell's own ICON00I0 icon
+import { clampDpr, screenDpr } from './iconFit.js';
 import { inventoryItemImage } from '../systems/itemTemplates.js';
+import { itemDyeColor } from '../systems/itemDye.js';   // AUDIT FINAL F2: a garment's own dye repaints its slot
 import { cursorActive } from '../player/pointerLock.js';   // HB1c: the freed mouse (Enter / FreeMouse)
 import { overlayOpen } from './enhancedOverlays.js';
+import { controllerLook } from '../player/lookFilter.js';   // PADPLUS4: the pad is the live device
+// PADPLUS1: THE CROSSBAR (Enhanced Plus) - the same bar, grown to sixteen and laid out as two sets under LB and RB
+import { HOTBAR_CAPACITY } from '../systems/quickslots.js';
+import { isEnhancedPlus } from '../systems/uiSkin.js';
+import { rarityAttr } from '../systems/lootRarity.js';   // RARITY-UI: a slot's frame wears its item's tier
+import { validSigil } from '../systems/sigil.js';   // SIGIL-UI: and a sigil weapon's rune
+import { markSetFrame } from './setCard.js';   // SET5: a set piece's rune in its set's colour
+import { setIdOf } from '../systems/sigilSets.js';
+import { padFamily } from './padGlyphs.js';
+import { hdGlyphSvg, hdGlyphName } from './padGlyphsHD.js';
+import { registerCrossbar, plusCrossbarMode, crossbarCodeOf, CROSSBAR_SET, CROSSBAR_HOLD } from './plusPad.js';
 
 /** The pref and its two words (systems/features.js 'quickbar-style'). */
 export const HOTBAR_PREF = 'quickbarStyle';
@@ -79,17 +93,118 @@ let keysBound = false;
 let captionTimer = null;
 const iconKeys = [];     // per slot: the kind whose picture is drawn
 
+/** PADPLUS5: THE BAR TUCKS AWAY UNDER A WINDOW (Enhanced Plus). As a drop target it stood over the foot of every
+ *  window the whole time one was open - the crossbar's two sets cover a good part of the pack. Under Plus it is
+ *  hidden while a window is up and rises only while something is being DRAGGED: an item out of the pack (the pack
+ *  says so, setHotbarDragging) or a spell out of the book or a slot off the bar (this file's own drag). */
+let extDragging = false;
+export function setHotbarDragging(on) {
+  extDragging = !!on;
+  bar?.classList.toggle('dragging', extDragging || !!hbDrag?.moved);
+}
+
 /** HB1c (Discord, 2026-09-23: "when mouse mode is on you can drag and
  *  remove skills"): THE FREED MOUSE EDITS THE BAR IN PLAY. With the cursor
  *  out of the look and no window up, the sockets take the pointer: a drag
  *  moves a slot, a drag off the bar or a right-click clears it, and a
  *  plain click presses it the way its key would. With the look held the
  *  bar is pointer-transparent again, as the whole HUD is. */
-const mouseMode = () => !!bar && hotbarMode() && !lastHidden && !dropOwners.size && cursorActive() && !overlayOpen();
+const mouseMode = () => !!bar && hotbarMode() && !lastHidden && !dropOwners.size && cursorActive() && !overlayOpen()
+  && !controllerLook();   // PADPLUS4: with the pad in hand the bar is not the mouse's to edit - no edit hint, no pointer over it
 /** Can the sockets be dragged right now - under a window, or in mouse mode? */
 const editable = () => hotbarAcceptsDrops() || mouseMode();
-const HINT_DROP = 'Drag a weapon, potion, torch or spell onto a slot. Drag a slot off the bar to clear it.';
+const HINT_DROP = 'Drag any item or a spell onto a slot. Drag a slot off the bar to clear it.';   // UI2: any item
 const HINT_EDIT = 'Click a slot to use it. Drag to move it, drag it off the bar or right-click to clear it.';
+const HINT_XB = 'Drag onto a slot. In play, hold LB or RB and press the button the slot shows - the d-pad alone never uses a slot.';
+
+// ── PADPLUS1: THE CROSSBAR ────────────────────────────────────────
+/** Is the bar a crossbar right now: Enhanced Plus, the hotbar chosen, and the Plus card's Crossbar switch - Auto
+ *  (a pad is connected), On, or Off. Never throws. */
+/** PADPLUS5: under Plus the bar hides beneath windows until a drag. */
+const tuckUnderWindows = () => { try { return isEnhancedPlus(); } catch { return false; } };
+
+export function crossbarMode() {
+  try {
+    if (!isEnhancedPlus() || !hotbarMode()) return false;
+    const m = plusCrossbarMode();
+    return m === 'on' || (m === 'auto' && padFamily() != null);
+  } catch { return false; }
+}
+let xbOn = false;        // the layout the nodes stand in
+let xbFamily = null;     // the glyph family the badges were drawn in
+let xbWrap = null;       // the crossbar's own container
+let rowHold = null;      // slots 11-16 while the bar is a row
+const xbSets = [];       // per set: its section node
+/** Where each position of a set stands in its 3 x 3 cluster: [cluster, row, column]. */
+const XB_GRID = Object.freeze([['dpad', 1, 2], ['dpad', 3, 2], ['dpad', 2, 1], ['dpad', 2, 3],
+  ['face', 1, 2], ['face', 2, 3], ['face', 3, 2], ['face', 2, 1]]);
+function setActiveSet(set) {
+  if (!bar) return;
+  bar.dataset.xbset = set == null ? '' : String(set);
+}
+registerCrossbar({
+  inForce: () => !!bar && xbOn && crossbarMode() && !lastPaused && !dropOwners.size,
+  press: (i) => { if (i >= 0 && i < HOTBAR_CAPACITY) pressHotbar(i); },
+  setActive: setActiveSet,
+});
+function buildCrossbar() {
+  xbWrap = el('div', 'xb-wrap');
+  rowHold = el('div', 'xb-hold');
+  for (let set = 0; set < 2; set++) {
+    if (set) xbWrap.append(el('i', 'xb-sep'));
+    const sec = el('section', 'xb-set');
+    sec.dataset.set = String(set);
+    const head = el('div', 'xb-head');
+    const g = el('img', 'xb-headglyph'); g.alt = ''; g.draggable = false;
+    head.append(g, el('span', 'xb-headword', 'Hold'));
+    const body = el('div', 'xb-body');
+    const clusters = { dpad: el('div', 'xb-cluster xb-dpad'), face: el('div', 'xb-cluster xb-face') };
+    body.append(clusters.dpad, clusters.face);
+    sec.append(head, body);
+    sec._clusters = clusters; sec._glyph = g;
+    xbSets.push(sec);
+    xbWrap.append(sec);
+  }
+}
+/** Stand the sixteen nodes where the mode says: a row of ten, or two sets of eight. */
+function layout(on) {
+  if (!bar) return;
+  refit();   // UI2: a crossbar's slot is another size
+  const row = bar.querySelector('.hb-row');
+  if (on) {
+    if (!xbWrap) buildCrossbar();
+    for (let i = 0; i < HOTBAR_CAPACITY; i++) {
+      const set = Math.floor(i / CROSSBAR_SET), [cl, r, c] = XB_GRID[i % CROSSBAR_SET];
+      const n = slots[i].node;
+      n.style.gridRow = String(r); n.style.gridColumn = String(c);
+      xbSets[set]._clusters[cl].append(n);
+    }
+    if (xbWrap.parentNode !== bar) row.after(xbWrap);
+  } else {
+    for (let i = 0; i < HOTBAR_CAPACITY; i++) {
+      const n = slots[i].node;
+      n.style.gridRow = ''; n.style.gridColumn = '';
+      (i < HOTBAR_SIZE ? row : rowHold).append(n);
+    }
+    xbWrap?.remove();
+  }
+  bar.classList.toggle('xb', on);
+  xbFamily = null;
+  lastSig = null;
+}
+/** The glyph badges: each slot's button, each set's bumper - in the live pad's family. */
+function paintBadges() {
+  const fam = padFamily() ?? 'xbox';
+  if (xbFamily === fam) return;
+  xbFamily = fam;
+  for (let i = 0; i < HOTBAR_CAPACITY; i++) {
+    const code = crossbarCodeOf(i);
+    const b = slots[i].badge;
+    b.src = code ? (hdGlyphSvg(fam, code, { size: 40 }) ?? '') : '';
+    b.alt = code ? hdGlyphName(fam, code) : '';
+  }
+  xbSets.forEach((sec, set) => { sec._glyph.src = hdGlyphSvg(fam, CROSSBAR_HOLD[set], { size: 48 }) ?? ''; sec._glyph.alt = hdGlyphName(fam, CROSSBAR_HOLD[set]); });
+}
 
 // ── SPELL GLYPHS ──────────────────────────────────────────────────
 /** A spell has no ARENA2 icon this skin reads, so it wears its NAME as a
@@ -122,7 +237,7 @@ function build() {
   caption.setAttribute('aria-live', 'polite');
   const row = el('div', 'hb-row');
   slots = [];
-  for (let i = 0; i < HOTBAR_SIZE; i++) {
+  for (let i = 0; i < HOTBAR_CAPACITY; i++) {   // PADPLUS1: sixteen nodes; the row shows ten, the crossbar all
     const node = el('div', 'hb-slot hb-empty');
     node.dataset.slot = String(i);
     const frame = el('i', 'hb-frame');
@@ -139,10 +254,12 @@ function build() {
     const wearFill = el('i', 'hb-wearfill');
     wear.append(wearFill);
     const flash = el('i', 'hb-flash');
-    node.append(frame, face, wear, count, pip, key, flash);
+    const badge = el('img', 'xb-badge');   // PADPLUS1: the crossbar's button glyph
+    badge.alt = ''; badge.draggable = false;
+    node.append(frame, face, wear, count, pip, key, flash, badge);
     bindSlot(node, i);
-    row.append(node);
-    slots.push({ node, icon, glyph, count, key, wear, wearFill, pip });
+    if (i < HOTBAR_SIZE) row.append(node);
+    slots.push({ node, face, icon, glyph, count, key, wear, wearFill, pip, badge });
     iconKeys[i] = null;
   }
   hint = el('div', 'hb-hint', HINT_DROP);
@@ -191,28 +308,39 @@ function paint() {
   const shown = on && (dropping || !lastHidden);
   if (dropping) {
     if (!dropLayer) { dropLayer = el('div', 'hb-droplayer'); document.body.append(dropLayer); }
-    if (bar.parentNode !== dropLayer) dropLayer.append(bar);
+    if (bar.parentNode !== dropLayer) { dropLayer.append(bar); refit(); }   // UI2: out from under the HUD's scale
   } else if (dock && bar.parentNode !== dock) {
     dock.append(bar);
+    refit();
     dropLayer?.remove(); dropLayer = null;
   }
   bar.classList.toggle('on', shown);
   bar.classList.toggle('dropping', dropping);
+  bar.classList.toggle('tuck', dropping && tuckUnderWindows());   // PADPLUS5
+  const xb = crossbarMode();   // PADPLUS1
+  if (xb !== xbOn) { xbOn = xb; layout(xb); }
+  if (xb) paintBadges();
   const editing = shown && !dropping && mouseMode();
   if (bar.classList.contains('editing') !== editing) {
     bar.classList.toggle('editing', editing);
     if (!editing && hbDrag) dragEnd(false);   // the look taken back mid-drag: never mind
   }
-  const hintText = editing ? HINT_EDIT : HINT_DROP;
+  const hintText = xbOn ? HINT_XB : editing ? HINT_EDIT : HINT_DROP;
   if (hint && hint.textContent !== hintText) hint.textContent = hintText;
   if (!shown) return;
   const entity = dropping ? (dropEntity ?? liveEntity) : liveEntity;
   const readiedIndex = liveOpts.readied?.index ?? null;
-  const view = hotbarView(entity, { readiedIndex });
+  const view = hotbarView(entity, { readiedIndex, size: HOTBAR_CAPACITY });
+  const fit = slotFit();   // UI2: the box a slot's picture is fitted to - a change of it redraws the pictures
   const rev = bindings().rev;
   if (rev !== keysRev) { keysRev = rev; slots.forEach((sl, i) => { const t = hotbarKeyOf(i) ?? ''; if (sl.key.textContent !== t) sl.key.textContent = t; }); }   // KB1: a rebind renames the chips
-  const sig = `${hotbarRevision()}|${dropping ? 1 : 0}|${view.map((v) => (v.empty ? '-'
-    : `${v.name}|${v.count ?? ''}|${Number.isFinite(v.condition) ? Math.round(v.condition) : ''}|${v.ghost ? 1 : 0}|${v.active ? 1 : 0}|${v.item ? 1 : 0}`)).join('~')}`;
+  const sig = `${hotbarRevision()}|${dropping ? 1 : 0}|${fit.box}x${fit.dpr}|${view.map((v) => (v.empty ? '-'
+    : `${v.name}|${v.count ?? ''}|${Number.isFinite(v.condition) ? Math.round(v.condition) : ''}|${v.ghost ? 1 : 0}|${v.active ? 1 : 0}|${v.item ? 1 : 0}|${v.icon ?? ''}`
+      // AUDIT MERGE-PLUS C8: and the frame the slot wears (RARITY-UI's tier, SIGIL-UI's rune) - Loot Rarity switched,
+      // an item identified or a sigil grown in, and the slot kept its old colour until something else moved
+      + `|${v.item && v.type !== 'spell' ? `${rarityAttr(v.item) ?? ''}${validSigil(v.item.sigil) ? '*' : ''}${setIdOf(v.item) ?? ''}` : ''}`   // SET5: and its set
+      // AUDIT FINAL F2: and the item's own dye - Blue Straps and Red Straps are one name, one kind
+      + `|${v.item && v.type !== 'spell' ? itemDyeColor(v.item) ?? '' : ''}`)).join('~')}`;
   if (sig === lastSig) return;
   lastSig = sig;
   view.forEach((v) => paintSlot(slots[v.slot], v, entity));
@@ -220,6 +348,13 @@ function paint() {
 
 function paintSlot(s, v, entity) {
   const n = s.node;
+  // RARITY-UI / SIGIL-UI: the slot's frame wears its item's tier (the Plus sheet's [data-rarity] rules) and a sigil
+  // weapon its rune - a slot outlives its item, so both are taken off when the kind changes
+  const it = !v.empty && v.type !== 'spell' ? v.item : null;
+  const rar = it ? rarityAttr(it) : null;
+  if (rar) n.dataset.rarity = rar; else delete n.dataset.rarity;
+  if (it && validSigil(it.sigil)) n.dataset.sigil = ''; else delete n.dataset.sigil;
+  markSetFrame(n, it);   // SET5: a set piece's rune in its set's colour
   n.classList.toggle('hb-empty', !!v.empty);
   n.classList.toggle('hb-gone', !!v.ghost);
   n.classList.toggle('hb-active', !!v.active);
@@ -235,9 +370,12 @@ function paintSlot(s, v, entity) {
     return;
   }
   if (v.type === 'spell') {
-    iconFor(s, v.slot, null, entity);
+    // UI2 (Mac: "The hotbar also is missing sprite icons like spells"): THE SPELL'S OWN ICON - ICON00I0's, the one its
+    // record names (a spell gone from the book keeps the one it was slotted with) - its initials only while the sheet
+    // loads and for a spell with no icon at all
+    const drew = iconFor(s, v.slot, null, entity, v.icon);
     const sig = spellSigil(v.name);
-    s.glyph.textContent = sig;
+    s.glyph.textContent = drew ? '' : sig;
     s.glyph.dataset.len = String(sig.length);
     s.count.textContent = '';
     s.pip.textContent = RANGE_MARK[v.rangeType] ?? '';
@@ -263,22 +401,65 @@ const initialsOf = (name) => String(name ?? '').split(/\s+/).filter(Boolean).map
 /** The enhanced HUD's own picture ladder (quickIcon): the Morrowind
  *  ground mesh, else the classic icon, else nothing (the initials show).
  *  Requested only when the slot's KIND changed. Answers whether a
- *  picture is up. */
-function iconFor(s, i, item, entity) {
-  const key = item ? (hotbarEntryForItem(item)?.key ?? '') : '';
+ *  picture is up.
+ *  UI2: every picture FITTED to the slot (ui/iconFit.js - the pack's own law), and a spell's ICON00I0 icon beside the
+ *  items': `spellIcon` its index. The key carries the fit, so a new size draws them anew. */
+function iconFor(s, i, item, entity, spellIcon = null) {
+  const fit = slotFit(!item && spellIcon != null);
+  // AUDIT FINAL F2 (UI2 x DYE-ICON): the picture's own name in the key - a garment's dye is its own and not its kind's
+  // (Blue Straps and Red Straps are one quickslot key), and DYE-ICON dyes the cloth: the slot kept the first one's colour
+  const image = item ? inventoryItemImage(item, entity ?? undefined) : null;
+  const kind = item ? `${hotbarEntryForItem(item)?.key ?? ''}${image ? `#${iconName(image.archive, image.record, image.dye, image.dyeTarget)}` : ''}` : spellIcon != null ? `spell:${spellIcon}` : '';
+  const key = kind ? `${kind}@${fit.box}x${fit.dpr}` : '';
   if (iconKeys[i] === key) return !!s.icon.getAttribute('src');
   iconKeys[i] = key;
-  let src = null;
+  const again = () => { iconKeys[i] = null; lastSig = null; paint(); };
+  let pic = null;
   if (item) {
-    src = modelIconUrl(item, 96, fpArm);
-    if (!src) {
-      const image = inventoryItemImage(item, entity ?? undefined);
-      src = image ? requestIcon(image.archive, image.record, { scale: 2, dye: image.dye, onReady: () => { iconKeys[i] = null; lastSig = null; paint(); } }) : null;   // AUDIT CONTRIB H5: DW3's dye, as the diamond and the pack ask
+    const mw = modelIconUrl(item, Math.round(fit.box * fit.dpr), fpArm);
+    if (mw) pic = { src: mw, w: fit.box, h: fit.box, smooth: true };
+    else {
+      pic = image ? requestFittedIcon(image.archive, image.record, { box: fit.box, dpr: fit.dpr, dye: image.dye, dyeTarget: image.dyeTarget, onReady: again }) : null;   // AUDIT CONTRIB H5: DW3's dye, as the diamond and the pack ask
     }
+  } else if (spellIcon != null) {
+    pic = spellIconPicture(spellIcon, { box: fit.box, dpr: fit.dpr, onReady: again });
   }
-  if (src) { s.icon.src = src; s.icon.style.display = ''; }
+  if (pic) { showFitted(s.icon, pic); s.icon.style.display = ''; }
   else { s.icon.removeAttribute('src'); s.icon.style.display = 'none'; }
-  return !!src;
+  return !!pic;
+}
+
+/** UI2: THE PICTURE'S BOX IN A SLOT, measured off a live one of its KIND - its face less two pixels a side (a spell's
+ *  face stands further in than an item's, inside its own ring: AUDIT UI B2, where every picture on the bar took the box
+ *  of whatever slot 1 held) - and the ratio its pixels land at: the screen's times the transform the BAR rides in play
+ *  (the HUD's scale), read off the bar itself - never a slot, which the crossbar's held set scales by 1.06, its other
+ *  by 0.94 and a transition between (AUDIT UI B3: holding a bumper re-fitted all sixteen and blanked them for a frame).
+ *  Read again every FIT_TTL frames and after a layout change; a bar not yet laid out takes the row's own cells (50px: a
+ *  38px box, a spell's 34) at the screen's ratio. */
+const FIT_TTL = 60;
+const FIT_DEFAULT_BOX = 38, FIT_DEFAULT_SPELL_BOX = 34;
+const faceFit = { item: null, spell: null }, faceFitAge = { item: 0, spell: 0 };
+function slotFit(spell = false) {
+  const k = spell ? 'spell' : 'item';
+  if (faceFit[k] && faceFitAge[k]-- > 0) return faceFit[k];
+  faceFitAge[k] = FIT_TTL;
+  const s = slots.find((x) => x.face?.offsetWidth > 0 && !!x.node.classList?.contains('hb-spell') === spell);
+  const barLayout = bar?.offsetWidth ?? 0;
+  const barShown = barLayout > 0 ? (bar.getBoundingClientRect?.().width ?? barLayout) : 0;
+  const scale = barLayout > 0 && barShown > 0 ? barShown / barLayout : 1;
+  const dpr = Math.round(clampDpr(screenDpr() * scale) * 1000) / 1000;
+  if (!s) { faceFitAge[k] = 0; faceFit[k] = { box: spell ? FIT_DEFAULT_SPELL_BOX : FIT_DEFAULT_BOX, dpr }; return faceFit[k]; }
+  const layout = s.face.offsetWidth;
+  faceFit[k] = { box: Math.max(8, layout - 4), dpr };
+  return faceFit[k];
+}
+/** A layout change (the crossbar laid out, the bar carried under a window) measures the slot anew. */
+function refit() { faceFit.item = null; faceFit.spell = null; }
+/** UI2: the picture a slot shows, as a fitted picture - its source and the size it is drawn at - or null. */
+function slotPicture(img) {
+  const src = img?.getAttribute?.('src');
+  const w = parseFloat(img?.style?.width), h = parseFloat(img?.style?.height);
+  return src && w > 0 && h > 0 ? { src, w, h, smooth: !!img.classList?.contains('smooth') } : null;
 }
 
 // ── THE PRESS ─────────────────────────────────────────────────────
@@ -423,7 +604,7 @@ export function hotbarDropSpell(i, sp) {
 export function toggleHotbarItem(item) {
   const at = hotbarSlotOf(item);
   if (at >= 0) { clearHotbarSlot(at); lastSig = null; paint(); return HOTBAR_TEXT.removed(hotbarEntryForItem(item)?.name ?? 'It'); }
-  const free = firstFreeHotbarSlot();
+  const free = firstFreeHotbarSlot(xbOn ? HOTBAR_CAPACITY : HOTBAR_SIZE);
   if (free < 0) return HOTBAR_TEXT.full;
   hotbarDropItem(free, item);
   return HOTBAR_TEXT.added(hotbarEntryForItem(item)?.name ?? 'It', free + 1);
@@ -431,7 +612,7 @@ export function toggleHotbarItem(item) {
 export function toggleHotbarSpell(sp) {
   const at = hotbarSlotOf(sp, { spell: true });
   if (at >= 0) { clearHotbarSlot(at); lastSig = null; paint(); return HOTBAR_TEXT.removed(sp?.name ?? 'It'); }
-  const free = firstFreeHotbarSlot();
+  const free = firstFreeHotbarSlot(xbOn ? HOTBAR_CAPACITY : HOTBAR_SIZE);
   if (free < 0) return HOTBAR_TEXT.full;
   hotbarDropSpell(free, sp);
   return HOTBAR_TEXT.added(sp?.name ?? 'It', free + 1);
@@ -461,10 +642,10 @@ let hbDrag = null;
 let hbDragged = false;
 export const takeHotbarDragClick = () => { const was = hbDragged; hbDragged = false; return was; };
 
-export function beginHotbarDrag(e, payload, { label = '', sigil = null, element = null, iconSrc = null } = {}) {
+export function beginHotbarDrag(e, payload, { label = '', sigil = null, element = null, iconSrc = null, icon = null } = {}) {
   if (hbDrag || (e.button ?? 0) > 0) return;
   const touch = e.pointerType === 'touch' || e.pointerType === 'pen';
-  hbDrag = { id: e.pointerId, payload, label, sigil, element, iconSrc, ox: e.clientX, oy: e.clientY,
+  hbDrag = { id: e.pointerId, payload, label, sigil, element, iconSrc, icon, ox: e.clientX, oy: e.clientY,
     x: e.clientX, y: e.clientY, moved: false, touch, hold: null, ghost: null };
   if (touch) hbDrag.hold = setTimeout(() => { if (hbDrag && !hbDrag.moved) arm(); }, TOUCH_HOLD_MS);
   window.addEventListener('pointermove', onMove, true);
@@ -478,9 +659,11 @@ const onNativeDrag = (e) => { if (hbDrag && e.cancelable) e.preventDefault(); };
 function arm() {
   if (!hbDrag) return;
   hbDrag.moved = true;
+  bar?.classList.add('dragging');   // PADPLUS5: the tucked bar rises for the drop
   const g = el('div', 'hb-ghost');
   const tile = el('div', 'hb-ghosttile');
-  if (hbDrag.iconSrc) { const im = el('img'); im.src = hbDrag.iconSrc; tile.append(im); }
+  if (hbDrag.icon?.src) tile.append(fittedImg(hbDrag.icon));   // UI2: a fitted picture carries its own size
+  else if (hbDrag.iconSrc) { const im = el('img'); im.src = hbDrag.iconSrc; tile.append(im); }
   else { const s = el('span', 'hb-glyph', hbDrag.sigil ?? ''); s.dataset.len = String((hbDrag.sigil ?? '').length); tile.append(s); }
   if (hbDrag.element != null && ELEMENT_CLASS[hbDrag.element]) g.classList.add(`el-${ELEMENT_CLASS[hbDrag.element]}`);
   const verb = el('span', 'hb-ghostverb', '');
@@ -539,6 +722,11 @@ function dragEnd(commit) {
   window.removeEventListener('pointercancel', onCancel, true);
   window.removeEventListener('touchmove', onTouchHold, { capture: true });
   window.removeEventListener('dragstart', onNativeDrag, true);
+  // PADPLUS8: HIT-TEST THE RELEASE BEFORE THE BAR GOES DOWN. Dropping 'dragging' puts the tucked bar back to
+  // pointer-events: none at once, and elementFromPoint never answers a node that takes no pointer - so the drop
+  // looked through the bar at the window under it and every spell (and slot move) landed nowhere.
+  const dropAt = d.moved && commit ? hotbarSlotAt(d.x, d.y) : -1;
+  if (!extDragging) bar?.classList.remove('dragging');   // PADPLUS5
   if (!d.moved) {
     // HB1c: a click in mouse mode that never became a drag is a PRESS.
     if (commit && d.payload.tapPress) pressHotbar(d.payload.slot);
@@ -546,7 +734,7 @@ function dragEnd(commit) {
   }
   hbDragged = true;   // the click the release raises is not a pick
   if (!commit) return;
-  const i = hotbarSlotAt(d.x, d.y);
+  const i = dropAt;
   if (d.payload.kind === 'spell') { if (i >= 0) hotbarDropSpell(i, d.payload.spell); return; }
   if (d.payload.kind === 'slot') {
     const from = d.payload.slot;
@@ -570,7 +758,7 @@ function bindSlot(node, i) {
       const s = slots[i];
       e.preventDefault();   // no text selection, no focus theft - the press is the bar's
       beginHotbarDrag(e, { kind: 'slot', slot: i, tapPress: mouseMode() }, {
-        sigil: s.glyph.textContent || null, iconSrc: s.icon.getAttribute('src'),
+        sigil: s.glyph.textContent || null, iconSrc: s.icon.getAttribute('src'), icon: slotPicture(s.icon),   // UI2: the slot's own fitted picture, lifted
         element: ELEMENT_CLASS.findIndex((c) => node.classList.contains(`el-${c}`)),
       });
       return;
@@ -622,6 +810,51 @@ function injectHotbarStyle(doc = document) {
   s.textContent = HOTBAR_CSS;
   doc.head.append(s);
 }
+
+/** PADPLUS1: the crossbar's dress - two sets of two diamonds, the bumper that raises each over it, a glyph badge on
+ *  every socket. The held set lifts and glows brass; the other sinks back, so the eye lands on the eight live
+ *  slots. The sockets keep every .hb-slot rule (the Plus kit's stone, the strike, the spell stone). */
+const CROSSBAR_CSS = `
+/* PADPLUS5: tucked under a window, up while a drag is on */
+:root[data-plus-theme] .hb-droplayer { bottom: calc(58px + env(safe-area-inset-bottom, 0px)); }   /* clear of the pad's prompt bar */
+.hb.dropping.tuck { opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(12px);
+  transition: opacity 140ms ease-in, transform 140ms ease-in, visibility 0s linear 140ms; }
+.hb.dropping.tuck.dragging { opacity: 1; visibility: visible; pointer-events: auto; transform: none;
+  transition: opacity 120ms ease-out, transform 120ms ease-out, visibility 0s; }
+@media (prefers-reduced-motion: reduce) { .hb.dropping.tuck, .hb.dropping.tuck.dragging { transition: none; transform: none; } }
+.xb-hold { display: none; }
+.hb.xb { --xb-cell: 46px; }
+.hb.xb .hb-row { display: none; }
+.xb-wrap { display: flex; align-items: flex-end; gap: 22px; }
+.xb-set { display: flex; flex-direction: column; align-items: center; gap: 6px;
+  transition: transform 120ms ease-out, opacity 120ms, filter 120ms; transform-origin: 50% 100%; }
+.xb-head { display: flex; align-items: center; gap: 6px; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: #cbbf9e; text-shadow: 1px 1px 0 #000; }
+.xb-headglyph { width: 28px; height: 28px; display: block; filter: drop-shadow(0 1px 0 #000); }
+.xb-body { display: flex; gap: 10px; }
+.xb-cluster { display: grid; grid-template-columns: repeat(3, var(--xb-cell)); grid-template-rows: repeat(3, var(--xb-cell));
+  gap: 0; position: relative; }
+.xb-cluster::before { content: ''; grid-row: 2; grid-column: 2; align-self: center; justify-self: center; width: 12px; height: 12px;
+  transform: rotate(45deg); border: 2px solid rgba(176,138,74,0.55); background: rgba(10,10,10,0.55); }
+.hb.xb .hb-slot { width: calc(var(--xb-cell) - 4px); height: calc(var(--xb-cell) - 4px); margin: 2px; }
+.hb.xb .hb-key { display: none; }
+.xb-badge { display: none; position: absolute; left: -7px; top: -7px; width: 20px; height: 20px; pointer-events: none; z-index: 2;
+  filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.9)); }
+.hb.xb .xb-badge { display: block; }
+.hb.xb .hb-slot.hb-active::after { top: auto; bottom: -4px; }
+.xb-sep { align-self: stretch; width: 2px; margin: 26px 0 4px; background: linear-gradient(180deg, transparent, rgba(176,138,74,0.7) 20%, rgba(176,138,74,0.7) 80%, transparent);
+  box-shadow: 1px 0 0 rgba(0,0,0,0.7); }
+/* the held set */
+.hb.xb[data-xbset="0"] .xb-set[data-set="0"], .hb.xb[data-xbset="1"] .xb-set[data-set="1"] { transform: translateY(-4px) scale(1.06); }
+.hb.xb[data-xbset="0"] .xb-set[data-set="0"] .hb-frame, .hb.xb[data-xbset="1"] .xb-set[data-set="1"] .hb-frame {
+  border-color: #e8c374 #b08a4a #6b5129 #d6ad5c; box-shadow: 0 0 10px rgba(232,195,116,0.35); }
+.hb.xb[data-xbset="0"] .xb-set[data-set="0"] .xb-head, .hb.xb[data-xbset="1"] .xb-set[data-set="1"] .xb-head { color: #f4d98e; }
+.hb.xb[data-xbset="0"] .xb-set[data-set="1"], .hb.xb[data-xbset="1"] .xb-set[data-set="0"] { opacity: 0.42; filter: saturate(0.4); transform: scale(0.94); }
+.hb.xb.dropping .xb-set { opacity: 1; filter: none; transform: none; }
+@media (max-width: 900px) { .hb.xb { --xb-cell: 38px; } .xb-wrap { gap: 12px; } .xb-body { gap: 6px; } .xb-badge { width: 16px; height: 16px; left: -5px; top: -5px; } }
+@media (max-width: 560px) { .hb.xb { --xb-cell: 30px; } .xb-headglyph { width: 22px; height: 22px; } .xb-head { font-size: 9px; } }
+@media (prefers-reduced-motion: reduce) { .xb-set { transition: none; } }
+`;
 
 export const HOTBAR_CSS = `
 .hud-hotdock { display: contents; }
@@ -742,6 +975,7 @@ export const HOTBAR_CSS = `
 .hb-ghost.clearing .hb-ghosttile { border-color: var(--blood, #8c3a32); opacity: 0.7; }
 .hb-ghost.clearing .hb-ghostverb { background: var(--blood, #8c3a32); color: var(--bone, #e9e4d9); }
 
+${CROSSBAR_CSS}
 /* THE DIAMOND STANDS DOWN while the hotbar is up (one bar or the other). */
 .hud-quick.hotbarmode .hud-qdiamond, .hud-quick.hotbarmode .hud-qspell { display: none; }
 

@@ -254,7 +254,7 @@
   {
     "name": "DISC19-F-host-never-runs-the-watch",
     "file": "src/scenes/world.js",
-    "old": "      if (playerSpawned) _townWatchFrame(dt);",
+    "old": "      if (playerSpawned) _townWatchFrame(foeDt);",
     "new": "",
     "tests": [
       "test/disc19.test.js"

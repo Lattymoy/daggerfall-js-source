@@ -56,7 +56,7 @@ import { SOUND } from '../systems/soundClips.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, latchBoxRows } from './messageBox.js';
 import { noticeFrame, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
 import { drawText, measureText } from './text.js';
-import { serviceLabel, serviceShortcutButton } from '../systems/guildServiceFlow.js';
+import { serviceLabel, serviceShortcutButton, isServiceBox } from '../systems/guildServiceFlow.js';
 import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
 
 /** mainPanel.Size (:124) - and the size of both IMGs. */
@@ -126,7 +126,7 @@ export class GuildServiceWindow {
       // said nothing. A null return means the handler DISPATCHED
       // (the film window replaced this one in the overlay slot).
       const next = b.onYes?.();
-      if (next?.rows) this.boxes.unshift({ ...next });
+      if (isServiceBox(next)) this.boxes.unshift({ ...next });
     } else if (button === MB_BUTTONS.No) b.onNo?.();
     if (b.closesWindow) this._close();
     // G6: ClickAnywhereToClose + OnClose (:436-437). The Spymaster's
@@ -156,7 +156,7 @@ export class GuildServiceWindow {
     // A refusal is a box on this window (DFU keeps the popup open for
     // both refusals, :314-328); a dispatch closes it (every arm of the
     // switch calls CloseWindow first).
-    if (r?.rows) { this._push({ ...r, closesWindow: !!r.closesWindow }); return; }
+    if (isServiceBox(r)) { this._push({ ...r, closesWindow: !!r.closesWindow }); return; }   // STATION-ROWS
     if (r?.dispatched) this._close();
   }
 

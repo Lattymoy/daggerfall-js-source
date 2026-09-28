@@ -342,6 +342,12 @@ export function createEnemySpawner({ settings, spawnEnemy, pixelOrigin }) {
     get pendingCount() { return pending.length; },
     groupOf: (key) => groups.get(key) ?? null,
     clearAll,
+    /** AUDIT (the pre-merge audit, P2): the reservations not yet stood, given back - the deep this player stood is
+     *  another's now (DEEP-SHARE's election), and the pump stood what was reserved whether or not it still was. */
+    dropPending() {
+      for (const r of pending) if (r.group?.active) { r.group.liveOrPending = Math.max(0, r.group.liveOrPending - 1); liveCount = Math.max(0, liveCount - 1); }
+      pending.length = 0;
+    },
     /** CanPopulate: the switch on and a frequency above nothing. */
     canPopulate: () => { const s = settings(); return !!s.on && s.frequency > 0; },
 

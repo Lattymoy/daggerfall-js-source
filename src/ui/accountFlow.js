@@ -191,7 +191,8 @@ export function AccountFlow({ io, storage, onChange = () => {} }) {
    *  that cannot open until a network call returns is a menu that does
    *  not open on a train. */
   self.start = async () => {
-    if (!secret()) { go('out'); return; }
+    const asked = secret();   // AUDIT B4: the session this read describes
+    if (!asked) { go('out'); return; }
     self.stage = 'loading'; changed();
     const r = await ask(() => readAccount(door()));
     if (!r) return;                       // `auth` already landed on `out`
@@ -212,7 +213,7 @@ export function AccountFlow({ io, storage, onChange = () => {} }) {
     // top-right button reads the stored session. This is the next answer
     // that states the name after a registration (acknowledging the code
     // lands here), and it is the service's own word, so it is adopted.
-    adoptIdentity(storage, { name: r.data.account?.name, kind: r.data.account?.kind });
+    adoptIdentity(storage, { name: r.data.account?.name, kind: r.data.account?.kind, glyphs: r.data.wardrobe?.glyphs, secret: asked });   // SHADOW-FANG: and what is true of the account; AUDIT B4: into the session that asked
     // ACC3c: THE WARDROBE IS ITS OWN FIELD, exactly as the service
     // answers it - what this account HOLDS, what it WEARS, and what is
     // true of it. Held beside `account` rather than folded into it,

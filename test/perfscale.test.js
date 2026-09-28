@@ -524,7 +524,7 @@ test('PERF-SCALE S7 (the review): the world frame that goes back to no image fre
       assert.deepEqual([img.tex.deleted, img.depth.deleted, img.fbo.deleted], [true, true, true], 'its texture, its depth and its framebuffer');
       if (lane) {
         assert.equal(r.air._frames.retro, null, 'the lane\'s image-sized frame too');
-        assert.ok(slot.tex.deleted && slot.depths.every((d) => d.deleted) && slot.depthFbos.every((f) => f.deleted) && slot.fbo.deleted);
+        assert.ok(slot.tex.deleted && slot.depths.every((d) => d.deleted) && slot.fbos.every((f) => f.deleted) && slot.fbo.deleted);   // LA-POST8: a framebuffer per depth
         assert.equal(r.air._frames.canvas, canvasSlot, 'the canvas-sized frame the world draws into now is kept');
         assert.ok(!canvasSlot.tex.deleted);
         assert.equal(r.air.frame, canvasSlot);
@@ -570,7 +570,7 @@ test('PERF-SCALE S7 (the review): the world frame that goes back to no image fre
   }
   // AUDIT BRANCH-0925 PS-A2: the lane turned OFF at 75%, then 100% - the renderer lets go of its AirPass (`air` is
   // null while the lane is off) but keeps the pass itself, and with it the image-sized frame; the drop is the kept
-  // pass's, or the frame (a colour image, two depths and three framebuffers) is held for the rest of the session -
+  // pass's, or the frame (a colour image, two depths and their framebuffers) is held for the rest of the session -
   // `_retroFrame` is null from then on, so nothing would ever ask again, the lane back on or not
   {
     const { canvas } = stateGl(1920, 1080);
@@ -590,7 +590,7 @@ test('PERF-SCALE S7 (the review): the world frame that goes back to no image fre
       r.beginFrame(I, I, L, WORLD_FRAME); r.drawScreenQuad(null, Q);
       assert.equal(r.retro.target, null);
       assert.equal(pass._frames.retro, null, 'the lane off, the scale at 100%: the kept pass\'s image-sized frame is let go');
-      assert.deepEqual([slot.tex.deleted, ...slot.depths.map((d) => d.deleted), ...slot.depthFbos.map((f) => f.deleted), slot.fbo.deleted], [true, true, true, true, true, true]);
+      assert.deepEqual([slot.tex.deleted, ...slot.depths.map((d) => d.deleted), ...slot.fbos.map((f) => f.deleted), slot.fbo.deleted], [true, true, true, true, true, true]);   // LA-POST8: the two framebuffers, one per depth (slot.fbo the live one of them)
       r.setLightingLane(EL_LANE);   // and the lane back on at 100% draws into its canvas-sized frame alone
       r.beginFrame(I, I, L, WORLD_FRAME); r.drawScreenQuad(null, Q);
       assert.equal(r.air, pass, 'the same pass, reinstalled');

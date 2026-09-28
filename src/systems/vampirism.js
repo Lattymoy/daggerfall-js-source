@@ -27,6 +27,18 @@
 // IsPlayerInSunlight/IsPlayerInHolyPlace host seam registered by the
 // hosts).
 //
+// VAMP-DAY (2026-09-26, Mac: "do vampires have a negative??? ...
+// instead of constant damage taken they should get reduced stats in
+// day and get the bonus at night"; asked, "Day -20 / night +20"): THE
+// PORT'S DEPARTURE. The sun no longer burns a vampire. The curse's
+// stat advantages are the NIGHT's; from 06:00 to 18:00, wherever the
+// vampire stands, the same stats are 20 DOWN (vampireStatMod) - held
+// where the stat is read so a day never zeroes one (statMods.js
+// liveStat: a live 0 kills). The skills' +30, holy ground's burn, the
+// feeding and the rest it gates, and the travel rules the sunDamage
+// flag still keys (no fast travel by day, arriving by night) stand
+// as DFU has them.
+//
 // THE QUESTS went live in V2d (racialQuests.js): P0A01L00 on the
 // first 50% hit of the 38-day arm with hasStartedInitialVampireQuest
 // latched on this entry, the clan's guild-pool quests after it,
@@ -63,6 +75,9 @@ export const VAMPIRISM_CURSE_KEY = 'Vampirism-Curse';
  *  every stat but Intelligence, which only the Anthotis add - and
  *  +30 on six skills (no Swimming: the dead do not float better). */
 export const VAMPIRE_STAT_MOD = 20;
+/** VAMP-DAY: the curse's stat mod at a clock minute - DFU's +20 by night, the same 20 DOWN by day (06:00-18:00,
+ *  isDayFromMinutes: the hour, never the sky or a roof). */
+export const vampireStatMod = (clockMinutes) => (isDayFromMinutes(clockMinutes) ? -VAMPIRE_STAT_MOD : VAMPIRE_STAT_MOD);
 export const VAMPIRE_SKILL_MOD = 30;
 export const VAMPIRE_STATS = Object.freeze(['strength', 'willpower', 'agility', 'endurance', 'personality', 'speed', 'luck']);
 export const VAMPIRE_SKILLS = Object.freeze([
@@ -185,14 +200,17 @@ export function consumeVampirismPending(entity, { now = 0 } = {}) {
  * ConstantEffect (:97-107) + MagicRound (:109-113) at the round
  * cadence: both immunities, silver ALWAYS (no beast form to toggle
  * it), and the advantages re-applied - the Anthotis alone add
- * Intelligence (:295-296).
+ * Intelligence (:295-296). VAMP-DAY: at the clock's hour - the
+ * night's +20, the day's -20 on the same stats (`nowMinutes` is the
+ * world clock, worldTick's `clockMinutes`).
  */
 export function vampirismMagicRound(entity, { nowMinutes = 0 } = {}) {
   const entry = liveVampirism(entity);
   if (!entry) return;
+  const mod = vampireStatMod(nowMinutes);
   entry.statMods = {};
-  for (const stat of VAMPIRE_STATS) entry.statMods[stat] = VAMPIRE_STAT_MOD;
-  if (entry.clan === VAMPIRE_CLANS.Anthotis) entry.statMods.intelligence = VAMPIRE_STAT_MOD;
+  for (const stat of VAMPIRE_STATS) entry.statMods[stat] = mod;
+  if (entry.clan === VAMPIRE_CLANS.Anthotis) entry.statMods.intelligence = mod;
   entry.skillMods = {};
   for (const skill of VAMPIRE_SKILLS) entry.skillMods[skill] = VAMPIRE_SKILL_MOD;
   entity.minMetalToHit = WEAPON_MATERIALS.Silver;
@@ -319,7 +337,7 @@ export function liveRaceTemplate(entity) {
       ...base,
       name: vamp.raceNameOverride ?? 'Vampire',
       immunityFlags: (base.immunityFlags ?? 0) | EFFECT_BITS.toParalysis | EFFECT_BITS.toDisease,
-      specialAbilities: (base.specialAbilities ?? 0) | SPECIAL_ABILITY_BITS.sunDamage | SPECIAL_ABILITY_BITS.holyDamage,
+      specialAbilities: (base.specialAbilities ?? 0) | SPECIAL_ABILITY_BITS.holyDamage,   // VAMP-DAY: the sun no longer burns, so the sheet no longer says it does
     });
   }
   return Object.freeze({

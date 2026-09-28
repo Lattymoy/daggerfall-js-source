@@ -83,3 +83,13 @@ What changed on the way in:
   three-quarter in three frames.
 - **Left out.** `Healer male/Finished/Bonus` (12 loose pictures, not a
   full sheet).
+- **One picture drawn at another scale** (ACRO-SHORT, 2026-09-27). The
+  female acrobat's front three-quarter idle, `1524_16-0.png`, is a whole
+  figure 81 pixels tall where the idle's other views are 110 (the walk's
+  same view is 112), so she stood a quarter shorter from that side. The
+  picture is unchanged - the files are byte-checked against the archive -
+  and `skins.json` carries its size the way a DFU pack's XML would
+  (`TextureReplacement.SetBillboardScale`): `"scale": { "16": 81/110 }`
+  on archive 1524. `test/skin2_class_skins.test.js` sweeps every view of
+  every sheet against its group, so another picture drawn small fails
+  there.

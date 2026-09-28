@@ -37,8 +37,8 @@
   {
     "name": "WB7-the-fall-ringing-past-its-time",
     "file": "src/systems/gateScore.js",
-    "old": "    w.note('timpani', 4, 0, 1, 'D2', 124); w.hit('crash', 4, 0, 110);",
-    "new": "    w.note('timpani', 4, 0, 6, 'D2', 124); w.hit('crash', 4, 0, 110);",
+    "old": "    w.note('timpani', 4, 0, 1, 'D2', 112); w.hit('crash', 4, 0, 102);",
+    "new": "    w.note('timpani', 4, 0, 6, 'D2', 112); w.hit('crash', 4, 0, 102);",
     "tests": ["test/wb7_boss_audio.test.js"]
   },
   {

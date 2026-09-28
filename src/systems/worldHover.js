@@ -323,7 +323,10 @@ export function nextSelection(prev, frame, delta = 0) {
   let row = floor;   // a new key starts at the top (or unlit) whatever the nudge
   if (prev && prev.key === frame.key) {
     const at = prev.id != null ? frame.rows.findIndex((r) => r.id === prev.id) : -1;
-    row = Math.max(floor, Math.min(rows - 1, (at >= 0 ? at : prev.row) + d));
+    // AUDIT MERGE-PLUS A1: and a lit row WITH an id that is gone lights no neighbour - HOME2's "Buy it" bought, the
+    // owner's rows came in and "Who may enter" was clamped into its slot, so the next click turned the house over to
+    // the party unasked. It starts again where the list starts (or unlit); a row with no id (a pile's) clamps as before.
+    row = prev.id != null && at < 0 ? floor : Math.max(floor, Math.min(rows - 1, (at >= 0 ? at : prev.row) + d));
   }
   const id = row >= 0 ? frame.rows[row]?.id : undefined;
   return id != null ? { key: frame.key, row, id } : { key: frame.key, row };

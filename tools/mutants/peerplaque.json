@@ -2,8 +2,8 @@
   {
     "name": "PEER-PLAQUE1-peer-before-the-townsperson",
     "file": "src/player/activationRace.js",
-    "old": "  return firmFirst([gate, camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
-    "new": "  return firmFirst([gate, camp, water, wagon, horseCart, torch, corpse, pile, ground, peer, person, foe], nearestInOrder);",
+    "old": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
+    "new": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, torch, corpse, pile, ground, peer, person, foe], nearestInOrder);",
     "tests": [
       "test/peerplaque.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "PEER-PLAQUE1-foe-before-the-peer",
     "file": "src/player/activationRace.js",
-    "old": "  return firmFirst([gate, camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
-    "new": "  return firmFirst([gate, camp, water, wagon, horseCart, torch, corpse, pile, ground, person, foe, peer], nearestInOrder);",
+    "old": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
+    "new": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, torch, corpse, pile, ground, person, foe, peer], nearestInOrder);",
     "tests": [
       "test/peerplaque.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PEER-PLAQUE1-peer-not-raced",
     "file": "src/player/activationRace.js",
-    "old": "  return firmFirst([gate, camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
-    "new": "  return firmFirst([gate, camp, water, wagon, horseCart, torch, corpse, pile, ground, person, foe], nearestInOrder);",
+    "old": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
+    "new": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, torch, corpse, pile, ground, person, foe], nearestInOrder);",
     "tests": [
       "test/peerplaque.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "PEER-PLAQUE1-pick-with-a-reach-of-its-own",
     "file": "src/scenes/world.js",
-    "old": "    const hit = pickPeerInFront(eye, dir, peersNear(), SOCIAL_REACH, rayPersonDistance);\n    if (!hit) return null;",
-    "new": "    const hit = pickPeerInFront(eye, dir, peersNear(), 40, rayPersonDistance);\n    if (!hit) return null;",
+    "old": "    const hit = pickPeerInFront(eye, dir, (peersNear() ?? []).filter((q) => !q.cv), SOCIAL_REACH, rayPersonDistance);",
+    "new": "    const hit = pickPeerInFront(eye, dir, (peersNear() ?? []).filter((q) => !q.cv), 40, rayPersonDistance);",
     "tests": [
       "test/peerplaque.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "PEER-PLAQUE1-title-without-the-marks",
     "file": "src/scenes/world.js",
-    "old": "    return { title: marks ? `${name} ${marks}` : name, renown, subs: [cast, peerRelationText(acts)].filter(Boolean), actions: acts ? socialPlaqueRows(id, acts) : [], actionsUnlit: true };",
-    "new": "    return { title: name, renown, subs: [cast, peerRelationText(acts)].filter(Boolean), actions: acts ? socialPlaqueRows(id, acts) : [], actionsUnlit: true };",
+    "old": "    return { title: marks ? `${name} ${marks}` : name, renown, subs: [cast, peerRelationText(acts)].filter(Boolean),",
+    "new": "    return { title: name, renown, subs: [cast, peerRelationText(acts)].filter(Boolean),",
     "tests": [
       "test/peerplaque.test.js"
     ]

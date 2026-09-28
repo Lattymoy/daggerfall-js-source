@@ -51,13 +51,13 @@ test('SKIN-CARRY: a refused store answers false from setPref and null from setUi
   _resetForTests();
 });
 
-test('SKIN-CARRY by source: switchSkin reads the store’s word and carries a refused choice on the reload URL, and deletes the override otherwise (mutant: the carry dropped, or the override left standing)', () => {
-  const menu = rd('src/ui/enhancedMenu.js');
-  const fn = menu.slice(menu.indexOf('export function switchSkin('), menu.indexOf('\n}\n', menu.indexOf('export function switchSkin(')) + 3);
-  assert.match(fn, /const stored = setUiSkin\(to\);/);
+test('SKIN-CARRY by source: the UI Overhaul card\'s choice reads the store\'s word and carries a refused choice on the reload URL, and drops the override otherwise - its one home since MENU-TOGGLE retired the menu\'s switchSkin (mutant: the carry dropped, or the override left standing)', () => {
+  const ovh = rd('src/systems/overhauls.js');
+  const fn = ovh.slice(ovh.indexOf('export function uiChoiceUrl('), ovh.indexOf('\n}\n', ovh.indexOf('export function uiChoiceUrl(')) + 3);
   assert.match(fn, /url\.searchParams\.delete\('skin'\);/, 'a stored choice rides no override');
-  assert.match(fn, /if \(stored === null\) url\.searchParams\.set\('skin', to\);/, 'a refused one rides the URL');
-  assert.match(fn, /location\.replace\(url\.toString\(\)\);/);
+  assert.match(fn, /if \(setUiSkin\(skin\) === null\) url\.searchParams\.set\('skin', skin\);/, 'a refused one rides the URL');
+  assert.match(fn, /return url\.toString\(\);/);
+  assert.doesNotMatch(rd('src/ui/enhancedMenu.js'), /function switchSkin\(/, 'the menu\'s own door is retired (MENU-TOGGLE)');
   assert.match(rd('src/systems/uiSkin.js'), /return setPref\('skin', skin\) === false \? null : skin;/);
   assert.match(rd('src/systems/uiPrefs.js'), /export function setPref\(k, v\) \{ if \(_prefs === null\) loadPrefs\(\); _prefs\[k\] = v; return savePrefs\(\); \}/);
 });

@@ -325,7 +325,7 @@ export const muteAccount = (io, target, minutes) => call(io, '/v1/mod/mute', { t
  *  holds - this side does not get to say what goes in it, which is the
  *  whole point of the seam. A service with no signing pair answers
  *  `no-signing-key` rather than minting something the relay refuses. */
-export const mintIdentity = (io, character = null) => call(io, '/v1/auth/token', character ? { character } : {});   // RENOWN1: naming the character brought online signs its Renown in
+export const mintIdentity = (io, character = null) => call(io, '/v1/auth/token', character ? { character, guild: true } : {});   // RENOWN1: naming the character brought online signs its Renown in; AUDIT MERGE-PLUS A6: and this build knows the guild's channel, so it asks for the guild
 
 // ── THE SESSION ON THIS DEVICE ──────────────────────────────────────
 
@@ -350,9 +350,9 @@ export function storedSession(storage) {
 /** Keep the session this device signed in with. The RECOVERY CODE IS
  *  NEVER PART OF THIS - `register` and `recover` hand one back and it
  *  is the screen's to show and the player's to write down. */
-export function keepSession(storage, { id, name, kind, sessionId, secret }) {
+export function keepSession(storage, { id, name, kind, sessionId, secret, glyphs }) {
   try {
-    storage?.setItem?.(SESSION_KEY, JSON.stringify({ id, name, kind, sessionId, secret }));
+    storage?.setItem?.(SESSION_KEY, JSON.stringify({ id, name, kind, sessionId, secret, glyphs }));   // SHADOW-FANG: `glyphs` when the service has stated them (adoptIdentity) - JSON leaves it out otherwise
     return true;
   } catch { return false; }
 }
@@ -382,16 +382,31 @@ export function keepSession(storage, { id, name, kind, sessionId, secret }) {
  * it corrects the name and kind of a session that already exists, so
  * an answer arriving after a sign-out cannot resurrect one.
  *
+ * SHADOW-FANG (2026-09-26): AND THE GLYPHS, when the answer states them - what is TRUE of this account (a token's
+ * `glyphs`, a wardrobe's). The relay reads a player's glyphs off the signature for everybody else; this device keeps
+ * the service's last word for its own player, so what dresses them on their own screen (their werewolf's skin,
+ * characters/werewolfSkin.js) is there offline too. Strings only, a bounded list; a list that did not change is not
+ * written.
+ *
+ * AUDIT B4 (2026-09-26): AND ONLY INTO THE SESSION THAT ASKED. `secret` is
+ * the credential the answer was asked with; a session signed out and
+ * another signed in while it was in flight is not the one it describes -
+ * adopted, one account's name and glyphs landed on another's device (and
+ * dressed its werewolf in a skin it does not hold).
+ *
  * @param {any} storage
- * @param {{ name?: string, kind?: string }} [who]
+ * @param {{ name?: string, kind?: string, glyphs?: string[], secret?: string }} [who]
  */
-export function adoptIdentity(storage, { name, kind } = {}) {
+export function adoptIdentity(storage, { name, kind, glyphs, secret } = {}) {
   const was = storedSession(storage);
   if (!was) return false;
+  if (typeof secret === 'string' && was.secret !== secret) return false;
   const next = { ...was };
   if (typeof name === 'string' && name) next.name = name;
   if (kind === 'guest' || kind === 'linked') next.kind = kind;
-  if (next.name === was.name && next.kind === was.kind) return false;   // nothing to write, and a write is a storage event every open tab hears
+  if (Array.isArray(glyphs)) next.glyphs = glyphs.filter((g) => typeof g === 'string' && g.length <= 24).slice(0, 16);
+  const sameGlyphs = (next.glyphs ?? []).join('+') === (was.glyphs ?? []).join('+');
+  if (next.name === was.name && next.kind === was.kind && sameGlyphs) return false;   // nothing to write, and a write is a storage event every open tab hears
   return keepSession(storage, next);
 }
 
@@ -435,12 +450,15 @@ export function forgetSession(storage) {
  * RENOWN1: `character` answers the id of the character being brought
  * online (systems/characterId.js), read at EACH mint - the service signs
  * that character's Renown into the token, and `who.level`
- * carries it back. A getter that answers nothing mints as before.
+ * carries it back - RENOWN4: and `who.xp` the track's total, which the
+ * answer carries beside the token and never in it. GUILD1c: and
+ * `who.guild` the character's guild's tag, signed into the token beside
+ * the level. A getter that answers nothing mints as before.
  *
  * @param {object} io
  * @param {(url: string, init: object) => Promise<any>} io.fetch
  * @param {any} io.storage  appStorage() in the app, a Map in a test
- * @param {((who: {name: string, kind: string, title: string|null, glyphs: string[], level: number|null}) => void)|null} [io.onIssued]
+ * @param {((who: {name: string, kind: string, title: string|null, glyphs: string[], level: number|null, xp: number|null, guild?: string|null}) => void)|null} [io.onIssued]
  * @param {(() => string|null)|null} [io.character]
  * @returns {() => Promise<string|null>}
  */
@@ -454,8 +472,11 @@ export function accountTokenMinter({ fetch, storage, onIssued = null, character 
     if (answer.ok) {
       const token = typeof answer.data?.token === 'string' ? answer.data.token : null;
       if (token) {
-        const who = { name: answer.data.name, kind: answer.data.kind, title: answer.data.title ?? null, glyphs: Array.isArray(answer.data.glyphs) ? answer.data.glyphs : [], level: Number.isSafeInteger(answer.data.level) ? answer.data.level : null };
-        adoptIdentity(storage, who);
+        const who = { name: answer.data.name, kind: answer.data.kind, title: answer.data.title ?? null, glyphs: Array.isArray(answer.data.glyphs) ? answer.data.glyphs : [], level: Number.isSafeInteger(answer.data.level) ? answer.data.level : null,
+          xp: Number.isSafeInteger(answer.data.xp) && answer.data.xp >= 0 ? answer.data.xp : null,   // RENOWN4: the track's total, for the page's own bar - none from a service before acct13
+          // GUILD1c: the tag my character's guild wears (null for none) - absent from a service before acct13, which says nothing
+          ...('guild' in answer.data ? { guild: typeof answer.data.guild === 'string' ? answer.data.guild : null } : {}) };
+        adoptIdentity(storage, { ...who, secret: session.secret });   // AUDIT B4: into the session that asked
         // A THROW HERE IS THE HOST'S AND IS NOT THE PLAYER'S. The token
         // is good and the connection is the thing that matters; a
         // display seam that breaks must not cost the hello its word.
@@ -580,18 +601,27 @@ export function accountHomes({ fetch, storage }) {
   };
 }
 
+/** AUDIT DECOR-SHELL 2: how long an online home's list is waited for before it is given up. */
+export const DECOR_LIST_WAIT_MS = 10_000;
+
 /**
  * DECOR1: AN ONLINE HOME'S DECOR (server-account/src/decor.js) through the one door - the pieces standing in a home,
  * and the three writes, one piece each, that change them. Every answer is `call`'s shape; no session is `no-session`,
- * never a throw.
+ * never a throw. AUDIT DECOR-SHELL 2: the list is waited for `listWaitMs` at most - a request that stalled held the
+ * room's decorator shut for the whole visit (the host opens it on the list's answer); given up, it is aborted and
+ * answered 'offline', as a request that never reached the service is, and the host asks again.
  */
-export function accountDecor({ fetch, storage }) {
+export function accountDecor({ fetch, storage, listWaitMs = DECOR_LIST_WAIT_MS }) {
   const post = sessionPost({ fetch, storage });
+  const wait = () => (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function' ? AbortSignal.timeout(listWaitMs) : undefined);
+  const waited = sessionPost({ fetch: (url, init) => fetch(url, { ...init, signal: wait() }), storage });
   return {
-    list: (mapId, buildingKey) => post('/v1/homes/decor', { mapId, buildingKey }),
+    list: (mapId, buildingKey) => waited('/v1/homes/decor', { mapId, buildingKey }),
     place: ({ mapId, buildingKey, character, piece }) => post('/v1/homes/decor/place', { mapId, buildingKey, character, piece }),
     move: ({ mapId, buildingKey, character, id, place }) => post('/v1/homes/decor/move', { mapId, buildingKey, character, id, place }),
     remove: ({ mapId, buildingKey, character, id }) => post('/v1/homes/decor/remove', { mapId, buildingKey, character, id }),
+    // BASE-HIDE: the room's own furniture taken out - the whole list, written by the owner
+    hidden: ({ mapId, buildingKey, character, keys }) => post('/v1/homes/decor/hidden', { mapId, buildingKey, character, keys }),
   };
 }
 

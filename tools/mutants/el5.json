@@ -119,7 +119,7 @@
   {
     "name": "replay-no-sub-cull",
     "file": "src/render/shadowPass.js",
-    "old": "          if (!subMeshVisible(planes, r, k)) { this.stats.culled++; continue; }\n",
+    "old": "          if (cells ? !sphereInPlanes(planes, r.cellSpheres[k * 4], r.cellSpheres[k * 4 + 1], r.cellSpheres[k * 4 + 2], r.cellSpheres[k * 4 + 3]) : !subMeshVisible(planes, r, k)) { this.stats.culled++; continue; }\n",
     "new": "",
     "tests": [
       "test/el5_field.test.js"
@@ -201,7 +201,7 @@
   {
     "name": "glare-one-tap",
     "file": "src/render/airPass.js",
-    "old": "      vis = (flame(vc, lantern)\n           + flame(vc + vec4(0.0, s, 0.0, 0.0), lantern) + flame(vc + vec4(0.0, 2.0 * s, 0.0, 0.0), lantern)\n           + flame(vc + vec4(0.0, -s, 0.0, 0.0), lantern) + flame(vc + vec4(0.0, -2.0 * s, 0.0, 0.0), lantern)\n           + flame(vc + vec4(s, 0.0, 0.0, 0.0), lantern) + flame(vc + vec4(-s, 0.0, 0.0, 0.0), lantern)) / 7.0;",
+    "old": "      for (int k = 0; k < ${AIR_GLARE_TAPS.length}; k++) sum += flame(vc + vec4(GLARE_TAP[k] * s, 0.0, 0.0), lantern);\n      vis = sum / ${glslFloat(AIR_GLARE_TAPS.length)};",
     "new": "      vis = flame(vc, lantern);",
     "tests": [
       "test/el3_air.test.js"

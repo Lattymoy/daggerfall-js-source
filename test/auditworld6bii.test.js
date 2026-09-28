@@ -121,7 +121,7 @@ test('AUDIT WORLD6b-ii A5/A8: the player\'s slot is named in the target walk (fo
   assert.deepEqual(pool.foesFrame(true).f.map((r) => r.g), [''], 'A8: not stepped yet - none, not \'.\' (which latched the puppet hostile)');
   const t = rd('src/characters/enemyTargets.js');
   assert.match(t, /const walk = \(candidates \?\? \[\]\)\.includes\(PLAYER_TARGET\) \? \[\.\.\.candidates\] : \[\.\.\.\(candidates \?\? \[\]\), PLAYER_TARGET\];/, 'A5: the caller names my slot');
-  assert.match(rd('src/scenes/exteriorFoes.js'), /runTargetMachine\(f, \[\.\.\.senses\.candidates\(\), PLAYER_TARGET, \.\.\.\(f\.placed && !f\.site \? \[\] : peerCandidates\(\)\)\], pf, cdt, \{/, 'and the pool puts the peers after me');
+  assert.match(rd('src/scenes/exteriorFoes.js'), /runTargetMachine\(f, \[\.\.\.senses\.candidates\(\), PLAYER_TARGET, \.\.\.\(f\.placed && !f\.site \? \[\] : _questLike\(f\) \? questPeerCandidates\(f\) : peerCandidates\(\)\)\], pf, cdt, \{/, 'and the pool puts the peers after me (QUEST-PARTY re-aim: a quest foe\'s are the party it rides to)');
   void rat;
 });
 
@@ -247,16 +247,16 @@ test('AUDIT WORLD6b-ii B6/B8/C2: a puppet beating on me raises the enemy alert a
 
 test('AUDIT WORLD6b-ii by source: the Seducer transforms for ME in both pools (A4/C4); the dungeon drops a puppet\'s latches after the mobile (B10); no double loose (B7); the pane says a peer\'s creature can hurt me (C3); the peer\'s height is the last standing one (C5); the prune reads the peers the hunt sees (C2); the record', () => {
   const x = rd('src/scenes/exteriorFoes.js'), d = rd('src/scenes/dungeonContext.js'), w = rd('src/scenes/world.js');
-  assert.match(x, /f\.seducer\?\.update\(dt, isLocalPlayerTarget\(f\.ai\.target\) \|\| !f\.ai\._armedTargeting\);/, 'A4');
-  assert.match(d, /f\.seducer\?\.update\(dt, !foeDeps \|\| !f\.ai\._armedTargeting \|\| foeDeps\.isLocalPlayerTarget\(f\.ai\.target\)\);/, 'C4');
+  assert.match(x, /f\.seducer\?\.update\(foeFrameDt\(dt\), isLocalPlayerTarget\(f\.ai\.target\) \|\| !f\.ai\._armedTargeting\);/, 'A4');
+  assert.match(d, /f\.seducer\?\.update\(foeFrameDt\(dt\), !foeDeps \|\| !f\.ai\._armedTargeting \|\| foeDeps\.isLocalPlayerTarget\(f\.ai\.target\)\);/, 'C4');
   assert.match(d, /f\._castPending = false;[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*if \(_puppet && f\.mobile\) \{\s*if \(!f\._pupMine\) f\.mobile\.doMeleeDamage = false;/, 'B10: dropped after the mobile');
   assert.doesNotMatch(d.slice(d.indexOf('function puppetStep('), d.indexOf('function puppetStep(') + 4000), /if \(f\.mobile\) \{[^\n]*\n\s*if \(!f\._pupMine\) f\.mobile\.doMeleeDamage = false;/, 'and no longer in puppetStep');
   const pupArm = x.slice(x.indexOf("onArrow(from, dir, f, f._pupMine ? null : _at);"), x.indexOf("onArrow(from, dir, f, f._pupMine ? null : _at);") + 300);
   assert.doesNotMatch(pupArm, /SOUND\.ArrowShoot/, 'B7: the loose rings at the host\'s seam alone');
   assert.match(rd('src/ui/enhancedMenu.js'), /everyone nearby sees and fights - and its creatures can hurt you too\./, 'C3');
-  assert.match(w, /const h = peerBodies\?\.heightOf\(p\.id\) \|\| 0;\s*if \(h > 0\) _peerHeights\.set\(p\.id, h\);\s*out\.push\(\{ id: p\.id, feet: onlineToScene\(p\.shown\), height: _peerHeights\.get\(p\.id\) \}\);/, 'C5');
+  assert.match(w, /const h = peerBodies\?\.heightOf\(p\.id\) \|\| 0;\s*if \(h > 0\) _peerHeights\.set\(p\.id, h\);\s*out\.push\(\{ id: p\.id, feet: onlineToScene\(p\.shown\), height: _peerHeights\.get\(p\.id\), cv: p\.shown\?\.cv \| 0 \}\);/, 'C5');
   assert.match(w, /\{ const ids = ownerIds\(\); if \(ids\) exteriorFoes\.pruneOwners\(ids, now\); \}/, 'C2: the prune reads the same list');
-  assert.match(x, /if \(!f\.placed && !f\.managed && _playerDist > \(f\.campId != null \? CAMP_CULL_DISTANCE : ENCOUNTER_CULL_DISTANCE\) && !\(f\.ai\.detected && f\.ai\.targetIsLocalPlayer !== false\)\) \{/, 'A2');   // WOD3: a mod-placed foe is never culled; DW-E4: nor a spawner-managed one
+  assert.match(x, /const _cullAt = f\.campId != null \? CAMP_CULL_DISTANCE : ENCOUNTER_CULL_DISTANCE;\n\s*if \(!f\.placed && !f\.managed && _playerDist > _cullAt && !\(f\.ai\.detected && f\.ai\.targetIsLocalPlayer !== false\) && !\(_qTag\(f\) && partyNearFoe\(f, _cullAt\)\)\) \{/, 'A2');   // AUDIT (pre-merge) Q4: a shared quest's foe stands while a party member is near it   // WOD3: a mod-placed foe is never culled; DW-E4: nor a spawner-managed one
   assert.match(x, /f\.ai\.targetIsLocalPlayer = f\._pupMine;\s*if \(f\._pupMine\) \{\s*f\.ai\._senses\?\.\(playerFeet, null\);/, 'A6/B8');
   assert.match(rd('bible/06-Systems/Online-Arc.md'), /## AUDIT WORLD6b-ii \(2026-09-14\)/, 'the record');
 });

@@ -404,7 +404,8 @@ test('player: P18 the Argonian swim-fatigue exemption - the race gate short-circ
   const breton = entity(RACES.Breton);
   const bretonDrain = { n: 0 };
   tickPlayerMinutes({ entity: breton, classicMinutes: 0, dt: 5, sinks: sinks(bretonDrain), activity: swim, rolls: () => 0.5 });
-  assert.equal(bretonDrain.n, 44);
+  const { FATIGUE_DRAIN_SCALE } = await import('../src/systems/statMods.js');
+  assert.equal(bretonDrain.n, Math.trunc(44 * FATIGUE_DRAIN_SCALE), 'SwimmingFatigueLoss, on BALANCE1\'s exertion scale');
   // ...unless the race is Argonian, which pays the DEFAULT loss - and
   // the gate sits BEFORE Dice100, so the roll is never consumed
   // (sequence preservation: the shared stream must not desync).
@@ -412,7 +413,7 @@ test('player: P18 the Argonian swim-fatigue exemption - the race gate short-circ
   const argonianDrain = { n: 0 };
   let rolled = 0;
   tickPlayerMinutes({ entity: argonian, classicMinutes: 0, dt: 5, sinks: sinks(argonianDrain), activity: swim, rolls: () => { rolled++; return 0.5; } });
-  assert.equal(argonianDrain.n, 11);
+  assert.equal(argonianDrain.n, Math.trunc(11 * FATIGUE_DRAIN_SCALE));
   assert.equal(rolled, 0);
   // The Swimming tally runs for BOTH races (:414).
   assert.equal(breton.skillUses[SKILLS.Swimming], 1);

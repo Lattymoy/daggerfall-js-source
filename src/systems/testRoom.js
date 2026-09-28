@@ -36,6 +36,7 @@ import { BOOK_TEMPLATE, createBook } from './books.js';   // EB3: books in the p
 import { BOOK_ID_TITLES } from './booksData.js';
 import { setPref } from './uiPrefs.js';   // LR3: the loot door turns the ladder on for the session
 import { applyRarity, LEGENDARIES, ROLLED_TIERS } from './lootRarity.js';   // LR3: one of everything the ladder can mint
+import { REGALIA, mintAetheric } from './aetheric.js';   // SET6: the Aetheric rung - Ruhn's Regalia, whole
 import { createThunderlock, createPellets, THUNDERLOCK_TEMPLATE, PELLET_TEMPLATE } from './thunderlock.js';   // TSR-GUN: the port's own weapon, and the import IS its registration
 
 /** The prebuilt characters. `race` is the DF race key (races.js RACES
@@ -79,7 +80,7 @@ export const TEST_RIDE = Object.freeze({
  *  the lines and the folds show; the Nord Warrior carries it. */
 export const TEST_LOOT = Object.freeze({
   id: 'loot', label: 'The loot ladder', preset: 'nord-warrior',
-  blurb: 'The Nord Warrior with a Magic and a Rare of ten base items and every Legendary in the pack, IDENTIFIED so their names and affix lines read - plus one unidentified Rare and one unidentified Legendary, which is what the two top tiers look like on the floor. The tier colours, the affix lines and the folds on the paperdoll. Turns Loot rarity on.',
+  blurb: 'The Nord Warrior with a Magic and a Rare of ten base items and every Legendary in the pack, IDENTIFIED so their names and affix lines read - plus one unidentified Rare and one unidentified Legendary, which is what the two top tiers look like on the floor - and Ruhn\'s Regalia whole, the Aetheric rung. The tier colours, the affix lines and the folds on the paperdoll. Turns Loot rarity on.',
 });
 
 /** The one door for a `test=` id: a preset (ride false), the ride
@@ -283,6 +284,7 @@ export function seedTestLoot(entity, rolls = Math.random) {
     for (const row of TEST_LOOT_BASES) put(applyRarity(base(row), tier, rolls));
   }
   for (const rec of LEGENDARIES) put(legendaryItem(rec));
+  for (const rec of REGALIA) put(mintAetheric(rec));   // SET6: the rung above, never rolled - the Warden's own set, all nine places
   // ...and the law itself, once each: what a Rare and a Legendary look
   // like on the floor, before the Mages Guild has been paid.
   put(applyRarity(base(TEST_LOOT_BASES[0]), 'rare', rolls), { identified: false });
@@ -347,6 +349,7 @@ export async function applyTestCharacter(playerEntity, preset, { fetchBytes, spe
   playerEntity.faceIndex = preset.faceIndex | 0;
   playerEntity.name = preset.label;
   await applyHeadlessChargen(playerEntity, preset.classIndex, { fetchBytes, spellsByIndex });
+  playerEntity.testRoom = true;   // AUDIT SET D4: after the chargen, which builds the character afresh - the mark rides every save of it
   if (preset.id === 'breton-sorceress') addTestMissileSpells(playerEntity, spellsByIndex);   // SPELLFX1: something that FLIES, to test with
   const added = seedTestGear(playerEntity);
   // Dress the baseline so the room opens with something ON: the steel
@@ -358,3 +361,26 @@ export async function applyTestCharacter(playerEntity, preset, { fetchBytes, spe
   if (sword) equipItem(playerEntity, sword);
   return { added: added.length };
 }
+
+/**
+ * AUDIT SET D4: A TEST ROOM CHARACTER STAYS OFFLINE. The room is for looking - it hands its character every Legendary
+ * and Ruhn's Regalia whole (seedTestLoot), where online the Regalia is a gate boss's one-in-six drop. A boot that would
+ * bring a marked character online (`?online` with `?load`, by the Online pane or by any URL) is answered true here,
+ * and the boot drops `online` before anything reads it - AND (AUDIT FINAL F8) one the URL BUILDS: `?online&test=loot`
+ * (any Test Room entry) hands the armory to a character no save ever marked, straight into a live session.
+ * `snap()` is the boot's own pick of the save its load door restores (AUDIT FINAL F9: world.js bootSnap, main's MW-EARLY
+ * F3 one parse - the check asked the save a second time); without it, `loadSlot(key)` and `mostRecent()`, the save
+ * slots' own synchronous readers (systems/saveSlots.js).
+ * @param {URLSearchParams} params
+ * @param {{ snap?: () => any, loadSlot?: (key: number) => any, mostRecent?: () => ({ snap: any } | null) }} saves
+ */
+export function testRoomOnlineRefused(params, { snap: pick = null, loadSlot, mostRecent } = {}) {
+  if (!params?.has?.('online')) return false;
+  if (params.has('test') && testEntryById(params.get('test'))) return true;
+  if (!params.has('load')) return false;
+  let snap = null;
+  try { snap = pick ? pick() : params.has('loadkey') ? loadSlot(Number(params.get('loadkey'))) : (mostRecent()?.snap ?? null); } catch { snap = null; }
+  return snap?.testRoom === true;
+}
+/** What the refused boot says once the world stands. */
+export const TEST_ROOM_OFFLINE_TEXT = 'A Test Room character plays offline - its armory stays in the room.';

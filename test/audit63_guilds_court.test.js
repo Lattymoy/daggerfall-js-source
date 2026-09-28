@@ -718,7 +718,8 @@ test('AUDIT 65 MC-2: per family - who reaches for the ray, who keeps the narrow 
     // both reach for the ray, so a too-far click on the way out speaks
     ['the interior exit door (:501-504)', /interiorCtx\.doors\.map\(\(d, i\) => \(\{ key: `exit:\$\{i\}`, aabb: doorWorldAabb\(d\), distance: RAY_DISTANCE, reach: DOOR_ACTIVATION_DISTANCE \}\)\)/],
     // WORLD-HOVER: registered at the dungeon mount now, not composed in the press arm - same family, same reach.
-    ['the dungeon exit door (:501-504)', /ctx\.addActivationTargets\(\(\) => ctx\.exitDoors\.map\(\(d, i\) => \(\{ key: `exit:\$\{i\}`, aabb: doorWorldAabb\(d\), distance: RAY_DISTANCE, reach: DOOR_ACTIVATION_DISTANCE \}\)\)\)/],
+    // AUDIT SS: a gate court's exits are pressed in their fire's own box (world/gateArena.js courtDoorAabb) - the same ray and reach
+    ['the dungeon exit door (:501-504)', /ctx\.addActivationTargets\(\(\) => ctx\.exitDoors\.map\(\(d, i\) => \(\{ key: `exit:\$\{i\}`, aabb: d\.court \? courtDoorAabb\(d\) : doorWorldAabb\(d\), distance: RAY_DISTANCE, reach: DOOR_ACTIVATION_DISTANCE \}\)\)\)/],
   ]) assert.match(wm, re, `${what} does not reach for the ray`);
   // ...and the static door's rung sits where ActivateStaticDoor's own
   // first statement does: BELOW the NPC and board arms, which carry
@@ -726,7 +727,7 @@ test('AUDIT 65 MC-2: per family - who reaches for the ray, who keeps the narrow 
   const tAt = wm.indexOf('if (_hitDist > _hitReach) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }');
   assert.ok(tAt > 0, 'tryEnter carries the refusal');
   assert.ok(tAt > wm.indexOf("if (typeof key === 'string' && key.startsWith('board:')) {"));
-  assert.ok(tAt < wm.indexOf('return activateStaticDoor(entries[key], entries, false);'));
+  assert.ok(tAt < wm.indexOf('return activateStaticDoor(entries[key], entries, false, { verb: plaqueActionFor(key) });'));   // HOME2 re-aim: the click carries the verb the door's plaque lit
   const dc = read('../src/scenes/dungeonContext.js');
   assert.match(dc, /key: `loot:\$\{i\}`.*distance: RAY_DISTANCE, reach: TREASURE_ACTIVATION_DISTANCE/, 'the dungeon pile');
   assert.match(dc, /key: `corpse:\$\{i\}`.*distance: RAY_DISTANCE, reach: CORPSE_ACTIVATION_DISTANCE/, 'the dungeon body');

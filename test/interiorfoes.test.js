@@ -191,8 +191,8 @@ test('IF: the pool is ARMED for targeting like every other pool, over its own da
   // AUDIT 68 S23-coven-punishment-interior-only: the punishment wave
   // stands through the loose-foe door now, which indoors is
   // standInteriorLooseFoe over the same join.
-  assert.equal((WM.match(/isOccupied: entityOccupancy\(\(f\) => f\.ai\?\.feet, \(\) => interiorFoePool\(\), feet\)/g) ?? []).length, 1,
-    'the quest foe\'s placement tests the WHOLE database for occupancy');
+  assert.equal((WM.match(/isOccupied: entityOccupancy\(\(f\) => f\.ai\?\.feet, \(\) => \[\.\.\.interiorFoePool\(\), \.\.\.heldSpots\(interiorCtx\.collider\)\], feet\)/g) ?? []).length, 1,
+    'the quest foe\'s placement tests the WHOLE database for occupancy (QUEST-WAVE: and the spots in flight)');
   assert.match(WM, /function standInteriorLooseFoe\(mobileType, opts = \{\}\) \{[\s\S]{0,400}?foes: interiorFoePool\(\),/,
     '...and so does the loose-foe stand the daedric punishment wave takes indoors');
   assert.equal(/\(\) => interiorFoes\.foes, feet\)/.test(WM), false,
@@ -205,7 +205,7 @@ test('IF: the pool is ARMED for targeting like every other pool, over its own da
     'and the second is the fan-out, one thunk per pool');
   assert.match(WM, /const _interiorSenses = \(\) => sensesContext\(playerEntity, interiorTicker\.classicMinutes, \{/,
     'through the ONE senses builder');
-assert.match(WM, /interiorFoes\.update\(dt, player\.pos, cam\.pos, _interiorSenses\(\)\)/,
+assert.match(WM, /interiorFoes\.update\(foeDt, player\.pos, cam\.pos, _interiorSenses\(\)\)/,   // QUEST-POPUP-PAUSE re-aim: the pools' clock (0 offline under a quest box)
     'and the pool takes it (WINFOE1, 2026-09-17: on the frame\'s own dt - a window no longer zeroes the foes\' clock)');
   // INTEGRATION: b2's branch pinned the NPC4b batches(ctx, dt)
   // signature it saw at its pre-revert base; that arc is REVERTED, so
@@ -222,9 +222,10 @@ test('IF: quest foes stand from BUILDING MARKERS too - DFU\'s second path into a
   // commit: the flag was worded differently enough to survive the
   // grep that found the other four.)
   assert.match(WM, /standFoe: \(\{ foe, gender, position, behaviour \}\) => \{\n\s+if \(!interiorCtx \|\| !interiorFoes\) return null;/);
-  assert.match(WM, /interiorFoes\.spawnFoe\(foe\.foeType, interiorCtx\.parentPt\(position\.x, position\.y, position\.z\)/,
+  // ROGUE-IMP re-aim: the marker is the flat's base on the floor, handed over as FEET (test/rogueimp.test.js)
+  assert.match(WM, /interiorFoes\.spawnFoe\(foe\.foeType, interiorCtx\.parentPt\(position\.x, position\.y \+ INTERIOR_MARKER_FEET_LIFT, position\.z\)/,
     'parented exactly as this host\'s own flats are');
-  assert.match(WM, /gender, questBehaviour: behaviour,/, 'and the resource behaviour binds at the stand');
+  assert.match(WM, /gender, questBehaviour: behaviour, feetGiven: true,/, 'and the resource behaviour binds at the stand');
   // the behaviour joins the scene walk and leaves with the teardown,
   // the dungeon adapter's own shape
   assert.match(WM, /for \(const b of interiorFoeStands\) out\.push\(b\);/);

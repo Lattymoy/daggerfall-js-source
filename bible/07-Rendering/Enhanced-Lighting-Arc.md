@@ -1417,8 +1417,11 @@ and the one-frame flash is gone.
 
 - **Who asks.** `renderer.everyLightCasts()`, each frame before beginFrame, from the two building hosts (the world's
   interior arm and `?interior=`) - the hosts that draw everything, so every static caster is in the records. A host
-  that culls by view (the street, the dungeon) does not ask: its records miss what the view rejected, and a lo map of
+  that culls by view (the street) does not ask: its records miss what the view rejected, and a lo map of
   them would change as the camera turned. Consumed per world frame, so a host that does not ask never has it.
+  (LA-SHADOW3, 2026-09-27: this line first counted the dungeon among the view-culling hosts. Neither dungeon host
+  culls - each draws the level's static batch whole, every unbatched model and every mover - and both ask now; see LA
+  below.)
 - **The door.** The records a frame replays are the last frame's, so the first frame through a door had the street's:
   that frame drops them (nothing casts, once) and the tier runs from the next frame on the room's own. Before, the
   eight 512 maps were drawn from the street's walls for that frame.
@@ -1441,3 +1444,494 @@ canvas; under a docked large HUD every sample came from the wrong row and near t
 strip. `holdPrevRect` keeps the rect the depth was written under (with the view-projection, in `prepare`) and
 `prevDepthUV` maps through it, as DEPTH_GLSL's `depthAt` does for every other screen pass. Record:
 `01-Overview/Field-Bugs-2026-09-23.md` (DISC7). Pins: `test/disc7.test.js`.
+
+## LA - THE DEEP AUDIT: THE SHADOWS HOLD STILL (2026-09-27, Mac: "a deep audit on the enhanced lightning system, look for flickering issues, performance improvements and just a complete detailed overhaul to make this insanely better")
+
+DISC15's lesson stands at the head of this one: a flicker is a number or it is a guess. `tools/lightFlickerProbe.mjs`
+drives the WORLD host (the one players run) over ARENA2 in headless Chromium on SwiftShader, stands in a night street
+before a tavern, walks into the tavern and into a dungeon, and reads EVERY frame back while the camera stands still,
+walks (a pendulum along the room's most open heading) and turns: `c12`/`c4` the share of the screen whose luma moved
+12+/4+ levels in a frame, `flip` the share that moved 8+ one way and 8+ back the next (a flicker's signature), `ms`
+the frame callback's time, the GL calls by name, and the shadow pass's own counters. Nothing leaves the machine.
+
+- **LA-SHADOW1 - the sun's grid is snapped beside the eye.** `sunCascadeMatrices` snapped the WORLD ORIGIN's texel,
+  which makes a pure translation of the eye move nothing on the map - but the sun TURNS every frame, and a turn slides
+  a point's texel phase by its distance from the snapped point times the angle. The floating origin recentres every
+  819 units, so the ground under a player sat up to 400 units off it: up to half a cascade-0 texel a frame, every
+  shadow edge beside a standing player crawling. The snap is taken at an anchor now - the eye rounded to
+  SUN_ANCHOR_STEP (8), held until the eye is SUN_ANCHOR_HOLD (24) from it, carried by `shiftOrigin` - so the lever is
+  a tenth as long or less (under 0.02 of a texel a frame at 400 units out, against the base's 0.2+). And the basis's
+  up is the world's Z, which the sun's path (worldClock.js: x cos, y sin, z 0) never crosses: the old up flipped from
+  Y to Z within eight degrees of the zenith, turning the whole grid ninety degrees in one frame at 11:28 and 12:32.
+- **LA-SHADOW2 - the cascades hand over in a band.** The pick was a hard line at 0.9 of each radius: a shadow crossing
+  it changed its texel four- or fivefold, its normal offset (an edge stepped sideways) and, at the far line, its
+  kernel - a ring about the player that popped every shadow it swept, and a tree's whole sprite (a flat reads one
+  value at its foot). Past the far box the shadows ended at its square edge, a line that turned with the sun. The one
+  cascade's lookup is `sunCascadeTap` now; `sunShadowTap` mixes the next cascade in over the last SUN_CASCADE_BAND
+  (0.2) of the reach before each line, and fades the far one to lit by distance, reading nothing past its fade. Two
+  lookups only in a band.
+- **LA-SHADOW3 - every dungeon torch casts.** DISC15 gave every light in a room its own lo map, but only where the
+  host draws the room whole, and it counted the dungeon among the view-culling hosts. Neither dungeon host culls: each
+  draws the level's static batch whole, every unbatched model and every mover. So a torch past the eight lit through
+  the rock and the eight changing as the player walked lit and unlit whole walls - DISC15's tavern flicker, in every
+  dungeon. Both dungeon hosts ask for the tier now (`renderer.everyLightCasts()` before beginFrame). The cost is
+  DISC15's: each torch's lo map is drawn when it arrives and then served; a light that MOVES past the eight (a thrown
+  torch, a burning foe, the court's glow on the boss) is a new light every frame it moves and redraws its six 256
+  faces, as it has in the buildings since DISC15 - the player's own candle, torch and muzzle flash are carried and take
+  no map. (LA-AUDIT A1 and A2 priced that and cut it: each face drew the whole level. And a peer's torch is carried too
+  - PEERLIGHT1 marks it so to spare its glare - so it takes no map and lights through the rock: A3, recorded.)
+- **LA-SHADOW4 - a torch's flicker is not a new light.** PERF-FLICKER rounds a shadow's far up to a quantum of 4, which
+  swallows the town lantern's wobble (AnimateLight: 16.6 to 18.4, all 20) but not a dungeon's, where each light
+  flickers about its own radius-derived range: a range of 12.3 wanders 10.9 to 12.7 and its far flipped 12 <-> 16 at
+  every crossing - each such torch among the eight redrew its six static faces, and each lo map the same, unbudgeted.
+  The probe caught it standing still: nine frames in forty redrew a static cache, with nothing in the dungeon moving.
+  `heldShadowFar` keeps the far a map was drawn to while the range stays within it and under SHADOW_FAR_HOLD (8) short
+  of it; the caster table's word carries a lo map's far above the slot's byte (`casterWord`; the shader's `loFarOf`,
+  which derived it from the live range, is gone).
+- **LA-LIGHTS1 - a lantern's flicker is its own.** world.js refills its lantern pool in `built`'s order and the pool
+  INDEX named the animator slot, so a pixel streamed out moved every lantern after it onto another's range - each
+  jumping up to 1.8 of its 18 at once, a pulse through half the town at every stream-out of a walk. The slot is named
+  by the pixel now (`cityLights.js lanternSlot`) and the lantern's place in the pixel's list.
+- **LA-LIGHTS2 - the cap fades, it does not cut.** The lane lights the nearest 48 lights and a town at night holds more
+  (the probe's night street had all 48 taken on every frame): every step changed which lanterns made the cut, and the
+  one that left went dark at once wherever it lit - a pool of light on a far street switching off, another on. On the
+  lane the street now picks one lantern past the cap, and each kept lantern's colour takes its share of its light,
+  falling to nothing over the last LIGHT_CAP_FADE (16) units before the first lantern the cap leaves out
+  (`capFadeColors`) - so the one that leaves the set leaves it dark and the one that joins joins dark. The hand's
+  lights (the torch, the candle, a peer's) are never faded; classic keeps DFU's hard cut. (LA-AUDIT A5/F4: the dungeons
+  and the World of Daggerfall mod's selection, whose lights carry their own colours, fade by `capFadePairs` since.)
+
+**Measured** (`tools/lightFlickerProbe.mjs` on SwiftShader, the world host over ARENA2: a night street before a
+tavern, the tavern, a dungeon; 40 frames standing, 80 walking and turning; the base `e55e9c64` against the merged
+`2661af4e`). Standing still, every scene moved 0% of the screen by 12+ levels a frame before and after. The dungeon's
+shadow pass redrew 60 static cube faces in 40 frames standing still, 156 walking and 144 turning before (LA-SHADOW4's
+far flip, with nothing in the dungeon moving); after, 0, 12 (and 42 lo faces as torches arrived) and 0, with all 48 of
+its lights shadowed. Its frames were the same before and after at this spot - no light past the eight reached a
+surface in view - and the tavern's were identical (its lamps do not flicker, it has no sun). The night street's lights
+filled the lane's 48 slots on every frame (LA-LIGHTS2). The walk and turn passes differ between runs by the player
+body's animation phase, not the lighting. At 09:00 the still street moved only in the sky (the clouds) and on the
+player's body, before and after, so LA-SHADOW1/2 rest on their arithmetic (the pins). Two one-frame blips (a few
+levels over part of the screen) were seen in 2 of 5 runs of the merged code, each on a frame that drew one extra UI
+text quad and the same lighting draws; three re-runs of the same code and walk were clean - recorded, not closed, and
+closed by the audit's lens D: BLOOD2e's bleed flash on a character the street had mauled, the same in both trees (AUDIT
+(LA) below).
+
+Pins: `test/la_shadow.test.js` (16); re-aimed by content: el2_shadows, perfexta, perfsun_fragment, perfon2_peercull,
+disc15, shadowreach. Mutants: `tools/mutants/la_shadow.json` 27, all dead; eight older records re-aimed, all still dead.
+
+## LA-POST - THE POST CHAIN, AUDITED (2026-09-27, Mac: "a deep audit on the enhanced lighting system")
+
+Mac: "a deep audit on the enhanced lighting system, look for flickering issues, performance improvements and just a
+complete detailed overhaul to make this insanely better". This package is the screen-space chain in
+`render/airPass.js`: the bright pass, the glares, the bloom and shaft images, the eye, the AO blur and the contact march.
+Past flicker fixes were declared solved when they were not, so every finding below was checked against the code and
+MEASURED on the shader's own text before a line changed - the GLSL evaluator (`test/glsl.mjs`) running each pass
+against synthetic frames and depths, with "the base" (the pass as it stood) run beside it on the same input.
+
+1. **LA-POST1 - the bright pass read four pixels in sixteen.** The bloom image is a quarter of the frame each way, so
+   a bloom texel's centre is the corner where the middle four pixels of its 4x4 block meet, and `brightFs`'s one
+   bilinear read averaged those four and nothing else. A flame, a glint or a window under ~4 pixels bloomed only while
+   it stood on the middle four: measured, a 3x3 flame bloomed WHOLE at 4 of its 16 sub-block places and not at all at
+   the other 12 - a halo that popped with every sub-pixel step and every frame of the flame's animation, the camera
+   still. Now four bilinear reads at the block's four inner corners (`AIR_BRIGHT_TAPS`, one full-resolution pixel out)
+   average its four 2x2 quarters - every pixel once, a sixteenth each - and each quarter is thresholded BEFORE the
+   average (`brightTap`), so a highlight that fills a quarter blooms the same wherever it stands: the same 3x3 flame
+   puts exactly a quarter of its block's energy in the bloom at all 16 places. A lit field blooms exactly as before;
+   the glow (VOL1's `uVol`) joins every quarter before its threshold, as it joined the one read. No Karis weight: the
+   frame is display-encoded, a pixel decodes to 1 at most (2 with the glow), so there are no HDR fireflies to tame,
+   and a luminance weight would make a lone highlight's share depend on what shares its block. Residue, said plainly:
+   the threshold sees 2x2 averages, so a 1-2 pixel highlight still blooms by where it falls (1 pixel never did).
+2. **LA-POST2 - the lantern glare blinked.** Three causes, all measured. (a) The size, and with it every tap's place,
+   came from the LIVE range, which `CityLightAnimator` walks 0.4 at a time, 14 times a second, over
+   [start - 1.4, start + 0.4]: a still lamp's taps slid across texel edges at 14 Hz. A light's glare is sized by a
+   range HELD per light, found by its place (`glareKey`, an eighth of a unit a step): `heldGlareRange` takes a rise at
+   once and a fall only past `AIR_GLARE_HOLD_BAND` (2, wider than the animator's 1.8), so the held range settles on
+   the flicker's top and stays - measured, ten seconds of the real animator upload one size where the live range
+   walked it by 0.036; a place unlit for 120 glare passes is let go, and `shiftOrigin` files each hold under its moved
+   place. (b) EL7's seven taps were binary NEAREST answers, and three of them - the centre and the horizontal pair -
+   stood ON THE LIGHT'S OWN ROW, which is the flat's top edge for every city light (its base for a dungeon light): a
+   sub-pixel step of the eye flipped all three together. Measured on a flame wider than the arm, the head's bob moved
+   the base's glare by 3/7 at a step. The footprint is EL7's still (two half-sizes above and below, one either side),
+   sampled by 28 taps (`AIR_GLARE_TAPS`) that stand off the light's row (0.3 of a half-size at least), each on a row
+   and a column of its own so no two cross a texel edge at the same step; each tap is soft in depth (whole within half
+   the slack, none past it) and read over the four texels about its point, weighted by where it sits among them (a
+   percentage-closer read, `filtered`). Measured over five-pixel slides across and up, near (10) and far (30), narrow
+   and wide flames: the largest step is one tap's share, 1/28 - where the base stepped 1/7 across and 3/7 on the bob.
+   Filtering cannot make a tap exactly on a moving edge continuous (it turns NEAREST's square wave into a sawtooth);
+   keeping the taps off the known edge and on their own rows is what bounds the step. The level stays where EL7's
+   footprint put it (0.4-0.5 on the probe's flames, where the base read 0.14-0.43 by sub-pixel phase). (c) JAN1's
+   veto was one NEAREST texel zeroing the glare whole; it is the same filtered read, soft over [slack, 2 x slack] - a
+   surface clearly nearer than the light at the light's own pixel still hides it whole (the attic floor is nearer by
+   1.7 at every pitch of JAN1's geometry), and a beam sliding off the light gives the glare back over several frames,
+   a column of the four texels at a time, where the base gave it back in one. A glare with nothing to show now leaves
+   the clip volume whole (the doc comment always said "collapsed"; the quad was drawn at vis 0). F11 (the storm's
+   flash) and MAC-T1 (the carried light) stand.
+3. **LA-POST3 - the bloom and the shafts were bytes of linear light.** A byte of linear light is coarsest where the eye
+   is finest: a halo's tail below half a step (~0.002) fell to 0 - four display levels once the resolve adds it at 0.6
+   and encodes - so every halo in the dark ended in a hard ring that jumped as the flame under it flickered; one byte of
+   the haze over a black ground is thirteen display levels. Where the GL renders to half floats (`volLinear`: the
+   glow's own test, `EXT_color_buffer_float` or `_half_float`), `bloom`, `bloomB`, `shaft` and `shaftRaw` are RGBA16F;
+   without one, bytes as before. Every writer (the emitters and the glares adding, the bright pass adding, the gaussians,
+   the shafts and their tile) writes linear light and every reader (the gaussians, the resolve) reads it so. The
+   emitters, the glare and the bright pass of one flame ADD past 1, where the byte image saturated - the gain was
+   tuned on that - so `GAUSS_FS` holds its reads at 1 (for writers that add, min(1, sum) is exactly the byte image's
+   answer; every later pass reads a blur under 1, where the hold is a no-op): the level is unchanged, the precision is
+   new. The AO keeps its byte (a share, not light). `readTarget(name)` reads a target as the bytes a byte image held,
+   whatever it is stored as - the probes' read (a half float refuses an UNSIGNED_BYTE readPixels).
+4. **LA-POST4 - the eye was stuck in a byte.** The adapted multiplier was ONE byte of log2 over [-2, 2] - 4/255 of a
+   stop a step - and a frame's step under half of one rounded back to where it stood. Opening (0.6/s) moves 1% of the
+   gap a frame at 60 Hz, so the eye stopped dead with the target up to 55% away (measured: twenty seconds toward 1.5,
+   stuck under 1.2); at 144 Hz it never opened at all (five seconds toward 1.1: not one step); a flash closed it by
+   whole bytes (3/s) with nothing small enough to bring it back (ten seconds of mid-grey after, still closed). The state
+   is sixteen bits (`AIR_ADAPT_STEPS` 65535): the high byte in R, the low in G of the same RGBA8 1x1 image - renderable
+   on every GL, no extension. `ADAPT_FS` encodes (`packAdapt`, term for term), `airAdaptLog2` decodes in the eye's
+   block (`AIR_ADAPT_GLSL`: every lane shader, the far ring, the glow and its tone pass), `LUM_FS` and `ADAPT_FS`
+   (`unpackAdapt`); the images start at [128, 0] (the multiplier 1), and R = G = b decodes to b / 255, so the renderer's
+   and the ring's bare [128, 128, 128] images read as they always did. `LUM_FS` held a black tap at log2(1e-9) = -29.9
+   stops, eighteen under the range's floor: a cell a quarter black read 4.4 stops darker than its lit three quarters,
+   and a dark floor dithered between the bytes 0 and 1 swung the mean with the dither. Each tap's log is held to the
+   encoded range now (`lumTapLog`, [-12, 4]).
+5. **LA-POST5 - the AO blur dropped far ground.** EL7's depth window was the AO radius (0.8) in absolute units, and the
+   ground's view distance climbs ~d^2 / (eye height) per pixel up the screen: measured at 1080p from an eye 1.7 up, the
+   tile's outer rows fell out at 30 units (the tile averaged across alone - the ordered rotation's pattern in 8-pixel
+   stripes that swam with every step) and at 45 every tap did (no neighbour, the fallback: no occlusion at all). The
+   window is `max(radius, AIR_AO_BLUR_SHARE (0.15) x the centre's distance)` - VOL1's blur's own rule, the radius its
+   floor: the whole tile counts on ground at 8, 20, 30 and 45, and the sky beside a wall is still no neighbour (EL7's
+   law). `tools/aoProbe.mjs` stays all green.
+6. **LA-POST6 - the contact march.** (a) F3's check ("the surface was there last frame") held the point's depth to
+   the occluder THICKNESS (0.8), so a wall revealed within 80 cm behind a pillar, a townsman or a door's edge passed it
+   and marched through the pillar's frame-old depth into its shadow - reproduced on a ray-cast previous frame (a wall
+   point 0.78 behind the pillar's face: the base put it at the floor). The tolerance is the surface's own:
+   `AIR_CONTACT_SELF` (0.05) plus what one texel of the previous depth spans on this surface at this distance (its
+   view distance x the texel's tangent, from `textureSize` and the projection's focal term, x the tangent of its slope
+   to the eye, capped at `AIR_CONTACT_SLOPE_MAX` 16; the block reads its host's `uCamPos`, which every lane shader
+   that takes it declares first). The revealed wall is lit; the floor at a wall's foot with a lantern behind the wall
+   (grazing, ten units off) keeps its contact shadow. (b) Each step's verdict was all or nothing off one NEAREST
+   texel per light; it is a claim now - rising over `AIR_CONTACT_RAMP` (0.08) past the 0.02 and easing out over the
+   thickness's last quarter - and the strongest darkens toward the floor (`mix(1, floor, occ)`): an occluder eased past
+   the thresholds eases the shadow in steps under a tenth where the base dropped from lit to the floor at once. (c)
+   The march was NEVER invalidated. `AirPass.shiftOrigin(offset)` rebases the held view-projections for the floating
+   origin's recentre (a point p is p + offset after it, `ShadowPass.shiftOrigin`'s convention, so VP' = VP x
+   translate(-offset)) and the held eye with them, so a recentre is no cut; `renderer.shadowOriginShift` calls it.
+   `invalidatePrev()` makes the next prepared frame march against nothing: the renderer calls it at DISC15's door edge
+   (into a room drawn whole or out of one, beside the records' discard). `release()` (the air turned off) cuts too, so
+   the air back on never marches a depth from before; `prepare` cuts on an eye that moved past `AIR_CONTACT_CUT` (4)
+   since the last world frame (a teleport, a load); and `beginFrameTarget` cuts when the depth it would read as the
+   previous was written by a frame that was not prepared (a menu's, a video's). `_images` replays the emitters under
+   prepare's own view-projection now (the recompute is gone), so a resolve still owed at a recentre replays the moved
+   records under the moved matrix. (d) The steps' clip positions are `c0 + i x dc` - a projection is linear in its
+   point - so the march takes two products, not five (pinned equal to the direct product in JS).
+7. **LA-POST7 - the glow's gate.** `renderer._airGlows()` zeroed the lane's own analytic glow on every prepared world
+   frame, whether or not the air pass could march one: a GL that refused VOL1's shader (`programs.vol` null) was left
+   with no glow at all. The gate asks whether the shader built.
+8. **LA-POST8 - the perf items.** The frame keeps TWO framebuffers, the colour image with each depth, and binds the one
+   it writes (`f.fbos[depthIndex]`) - it re-attached its depth every frame, and a changed attachment is a framebuffer the
+   driver checks whole again. A night frame (no beams, no haze) no longer clears the shafts' image: its resolve is built
+   without the read (PERF-EXT31), and a frame that draws them writes the image whole (the shaft probes read what the
+   resolve adds - nothing - for such a frame; AUDIT VOL1's black images for a menu's frame stand). A frame the pass was
+   not prepared for (a menu's, a video's - resolved at its first screen quad, before anything is drawn over its clear)
+   runs no bright pass and no gaussians: five passes over nothing; its bloom is `_blank`'s black.
+
+**The renderer.** Three wiring lines, nothing else: `shadowOriginShift` tells the air, the door edge invalidates it
+(next to DISC15's discard), `_airGlows` asks for the built shader. The air's re-enable needed no renderer line -
+`release()` carries the cut.
+
+**Pinned:** `test/la_post.test.js` (10): the bright pass's footprint (every pixel a sixteenth) and the shader run on a
+16x16 frame (a 3x3 flame's energy constant at all 16 places, the base's four-of-sixteen pop beside it, a lit field
+unchanged, the glow blooming through the variant that reads it); the glare's taps (28, rows and columns distinct, off
+the light's row, EL7's footprint, symmetric) and the vertex shader run on a ray-cast scene (a flame glares and a bare
+light collapses its quad; slides across and up, near and far, narrow and wide, each step within one tap's share where
+the base stepped a seventh and three sevenths; a beam fading the glare back over frames; a flat eased back through the
+slack; the filtered read a half between a flame texel and a wall texel); the held range under the real
+`CityLightAnimator` for ten seconds, a real fall followed, the hold by place, the sweep, F11 and MAC-T1; the half-float
+targets with and without the extension, `readTarget`'s two reads, the gaussian's hold, the tail the byte image lost; the
+eye's codec (the round trip within half a step, [128, 0], the bare images), the dead band at 144 Hz and 60 Hz and the
+flash's recovery against the byte eye, `ADAPT_FS` run as `adaptStepStored` byte for byte, `LUM_FS` run on a quarter-black
+cell; the AO blur run on ray-cast ground at 8-45 units (the base's two failures beside it) and a wall under the sky;
+the contact block run on a ray-cast previous frame (the revealed wall, the real contact, the eased occluder, the stride's
+equivalence); the previous-frame bookkeeping on the renderer frame by frame (the recentre no cut, a teleport, a stride
+under the cut, the door both ways, the air off and on, a menu's frame between); the glow gate with the shader refused;
+the two framebuffers, the night's untouched shafts, the menu's missing bloom. Re-aimed by content (the law kept, the
+text new): audit_el (F16's divided eye), audit_lighting (the shift's forwarding), auditretro1 (D5 strengthened, below),
+auditretro2 (a menu frame's rect, read by the resolve now), disc7 (the rect held with the cut), el3 (the glare's
+presence, the footprint, the tap loop), el4 (the eye's decode and its starting bytes), el7 (the presence, the blur's
+window), el8 (the stride, F3's tolerance, the
+claim, the two framebuffers), jan1 (the soft veto, the footprint's taps, the centre read apart), perfextd (the bright
+pass's glow line, no bright pass for a menu), perfscale (the frame's framebuffers), vol1 (the bright pass's glow, the
+gate). Campaign: `tools/mutants/la_post.json`, 42 mutants, 42 dead; 23 records in twelve lists re-aimed by content
+(audit_el, bugs5, disc7, el3, el4, el5, el6, el7, el8, jan1, vol1, auditretro2), all still dead. Every airPass.js record
+of every list (211, the renderer's at the three wiring sites among them) was run again over the new code, and it found
+two that the new code had quietly weakened: AUDIT RETRO1 D5 (the slot swap drops the previous-depth claim) survived
+because the new world-depth record catches its menu-in-the-slot case too - its test now also drives two WORLD frames
+alternating slots, where the swap is the one guard; AUDIT RETRO2 I6 (a menu's frame reads its whole image) survived
+because the bright pass no longer runs for such a frame - re-aimed at the resolve's own upload, which is where that law
+lives now. Both dead again.
+
+**The probes** (SwiftShader, headless Chromium): `tools/enhancedLightingProbe.mjs` OK - every lane program compiles and
+links, the bloom source a half float read through `readTarget`, the emitter behind the wall blooms nothing through it,
+lantern B's glare shows with its flame (1090), not without it (0), not for the torch in the hand and not behind the
+panel, the contact march still darkens the wall's foot (0.185 off, 0.083 on); `tools/vc6ShaftProbe.mjs` 6/6 and
+`tools/vc7bHazeProbe.mjs` 12/12 on `readTarget`; `tools/aoProbe.mjs` all green. **NOT SEEN ON MAC'S GPU** - the steps
+and the rings are measured on the evaluator and SwiftShader; the field decides, and every threshold is a named constant.
+
+## LA-COST - THE LANE'S FRAME, PRICED (2026-09-27, Mac: "a deep audit on the enhanced lighting system")
+
+Mac's whole ask was "a deep audit on the enhanced lighting system, look for flickering issues, performance
+improvements and just a complete detailed overhaul to make this insanely better"; this is the package that priced the
+lane's frame - what the CPU sends each draw and what the GPU runs each fragment - and paid all seven findings.
+Every change but two is bit-identical by construction and held to it; the two that move a pixel say so (LA-COST4's
+x^24, one byte in one pixel of the probe; LA-COST5, on purpose).
+
+**LA-COST1 - the frame block goes up once a stamp, and the colours are decoded once a change.** `drawBillboards`,
+`drawDecals` and `drawCharacter` each re-sent the frame's whole block on EVERY call: the camera, the fog, the scene's
+light (the tint and the sun's half; the decal's and the rig's sun, moon, trilight and direction), forty-eight lights
+and their colours - decoded to linear again each time, 144 `Math.pow` - the indirect, and the lane's own block
+(`_uploadEl`: the exposure and the glow's gain, the three shadow arrays on their units, `uSunVP[3]`, the cascade
+terms, `uPointShadowParams[8]`, `uShadowIndex[8]`, `uCasterOf[48]`, the eye's image, the contact block, the grid's two
+textures and four uniforms). On the fake GL with the lane and the air on that is **95 GL calls a billboard call (of
+the pin's three batches), 83 a decal call, 84 a body** - of which only the basis, the wind and the batches' own, the
+atlas and the picture flag, and the model matrix and ranges are the call's. An interior frame makes eight flat calls (its flats, the blood, the dropped torches, the placed
+decor, the piles, the foes, the watch, the spells), a decal call per hung weapon (DECOR2c's mounts, every frame) and
+the blood pool's, and one call per body - and nothing between them moved a value in the block. Now PERF3's terrain law
+runs on all three programs: a per-program last stamp (`_bbFrameStamp`, `_dFrameStamp`, `_cFrameStamp` beside
+`_tFrameStamp`), and the block goes up on the first call after `_frameStamp` moves - **28, 12 and 13 calls after
+that** (LA-AUDIT F5: the pin compares these numbers now; they were quoted before main's HITFLASH1 and WEAPON-MOUNT gave
+a batch and a decal call one uniform more each). A uniform is its PROGRAM's and survives any pass; a texture binding is its UNIT's and does not. So the stamp
+moves at beginFrame, the panel's restore and a moved light (PERF3's three), at every setter that changes a value in
+any of the four blocks (setFog, setWaterFog, setMoonlight, setAmbientTrilight - setLighting through it -,
+setPointLights, setFlashLight, setIndirectLight, setExposure, setContact, setVolumetrics, `_syncAir` for setAir and the
+lane), at every seam that forgets the units (`_forgetTextureShadows`: a foreign pass - the far ring binds its own 1x1
+on unit 11 when the air is off (LA-AUDIT C3: not Dynamic Skies, whose 2D binds on units 0 to 8 leave unit 8's 2D array
+alone) -, the resolve, whose `fresh` flip also moves VOL1's glow gate, the retro present, an
+emission upload, a set install), and when the studio bake puts AUDIT-EL F1's bare eye on unit 11. The sprite pass draws
+the character program alone under its own camera, fog and light, so it forgets that one block on its way in and on
+its way out (`_cFrameStamp = -1`), and the world's other three blocks stand. The terrain's PERF3 block takes every
+new word too, which it never had: a mid-frame setter used to leave it a frame stale. `_pointColorData` keeps its
+decode (`_pointColorDec`, which it always wrote) under the colours' generation - moved by setPointLights,
+setFlashLight and setLightingLane - and the lane that decoded it; fewer lights take the prefix. A 48-light decode is
+8.4 us in node, and an interior frame paid it about fifteen times (beginFrame, the air's prepare, eight flat calls,
+the decals, the bodies); now once.
+
+**The proof is a differential, not a list.** `test/la_cost.test.js` drives a fake GL that keeps a driver's state (a
+uniform is its program's, a binding its unit's, a location null where no attached shader declares the name) through
+two frames of mesh, terrain, body, decal and flat draws with EVERY setter, borrow and seam above between them -
+including a foreign pass that binds junk on all sixteen units - and snapshots, at every one of its 678 draws, the
+bound program's every uniform and units 0..15. The same script on a renderer that re-sends every block at every draw
+and decodes every time (the old calls) must snapshot the same, draw for draw; it does, with a third fewer uniform
+uploads (12134 against 17796) in a script that moves a setter between nearly every group of draws - the stamp's worst
+case, where a real frame moves it a handful of times. Beside it, the LAW READ OFF THE SOURCE: every `this._field`
+the four blocks and their helpers read is classed (an input, or a location table, scratch, the memo's keys, a stamp),
+and every method that writes an input moves the stamp, calls one that does, runs only inside beginFrame, or is a
+borrow that forgets the block it draws - so a new setter cannot land without its word. **Left as it was:** the mesh
+program's block is still beginFrame's alone (it never was re-sent at a draw), save the sea's fog (LA-COST6).
+
+**LA-COST2 - the cutout pass sorts by bucket.** `opaque.sort` compared STRING keys: 216 us for 800 batches over sixty
+keys (node). `billboardKey` now interns each key to a small integer when it mints it (`_bbKeyId`, minted with the
+batch - PERF-EXT10's one shape), and `sortByKey` (billboardKey.js) counts the batches into one bucket per key, orders
+only the DISTINCT keys, and places the batches back: **27 us** at 800 over sixty keys, 33 over 180, 91 for 3000 over 300
+(879 before), and no worse at the degenerate end (800 distinct: 242 to 210). The audit said order within a key does not
+matter to the cutout pass; read against the pass it is true except at an exact depth TIE - two overlapping coplanar
+flats (every flat faces the same way, so any two whose origins stand at one depth are coplanar), where LESS keeps the
+FIRST drawn. So nothing is relaxed: keys ascend as the string compare had them and a key's batches keep their order,
+the order the stable sort gave - held to that sort over 300 random passes.
+
+**LA-COST3 - the flat's sun is read once a quad.** EL_BB_FS read the sun map at the flat's base in every fragment -
+the cascade pick, a mat4, TREES1's four compare taps - for the one value the whole quad wears (EL2: `vBBBase` is the
+quad's centre, the same at all four corners). The lane now carries its additions to the billboard vertex shader
+(`EL_BB_VS_EXT`; `bbVertexShader` in renderer.js puts the declarations before main and the read after every line that
+places the corner, so EL1's law that the vertex shaders are the renderer's own stands, text and all), and the read -
+the same point, the same `sunShadowSoftAt`, PERF-SUN2's night gate with it - happens per corner and reaches the
+fragment `flat`. A tree of a thousand fragments paid a thousand reads; it pays four. The shadow and air passes keep
+BB_VS itself. The real GL found the one catch no fake can: a vertex shader's ints default to highp and a fragment
+shader's to mediump, and a uniform both stages declare (the receiver block's `uCasterOf`, `uShadowIndex`) must agree
+or the program does not link - so the head declares `precision mediump int`. Held by the GLSL evaluator: all four
+corners of sixty quads (lit, dark and on an edge, still and in the wind) equal the fragment's old read at the base,
+to the bit in float32.
+
+**LA-COST4 - the lantern loop's arithmetic.** (a) The glint's `pow(x, 24.0)` - a log2, a multiply and an exp2 for
+every light in range of every lit fragment - is `x^16 * x^8`, four squarings and a multiply, GENERATED from
+`EL_SPEC_GLOSS` (`powChainGlsl`), within 24 float32 roundings of the true power where GLSL's pow is only held to its
+log2's error (about 8e-6 at this gloss). (b) The eye vector was normalised again for every light in range, inside
+the loop (AUDIT BLOOD3 F5/F6 named it and left it there); it stands before the loop, once a fragment, and not at all
+where the cell holds no light. (c) The glow's colour curve ran over a black glow in every fragment of every world
+frame (uELScatter is 0 there - VOL1 glows in the air pass); it is gated on the gain. (d) `bayer4` built a sixteen-float
+table per fragment in every program that dithers; a 4x4 Bayer matrix is a bit interleave of `x ^ y` and `y`, and the
+table's sixteen values come out of four shifts. (b), (c) and (d) are equal to the bit, run against the texts they
+replaced; (a) moved one byte of one pixel of the probe's eighteen scenes (swapped back to pow, that pixel is the
+baseline's).
+
+**LA-COST5 - the contact march is eased out, not cut.** EL8/BUGS-5 F5 marched a lantern's contact shadow to seven
+tenths of its range and stopped there in one step, and CityLightAnimator walks a lantern's range in 0.4 steps fourteen
+times a second - so the fragments on that shell went from shadowed (to AIR_CONTACT_FLOOR) to unshadowed and back at
+14 Hz. Between `EL_CONTACT_FADE_START` (0.6) and the edge the shadow now eases to none (smoothstep); inside 0.6 nothing
+moved, and past 0.7 the march still never runs (the hand's light neither). On the lane's own loop in the evaluator:
+the step at the edge is gone, and the worst frame-to-frame change of an 18-unit lantern's term at any fragment falls
+from 0.047 to 0.012 of the light. On the real GL, the probe's contact scene moved 64 pixels inside the band.
+
+**LA-COST6 - the sea's fog reaches the buildings.** beginFrame clears Deep Waters' distance fog (a frame's) and
+uploads the mesh program's fog; the world host sets the fog AFTER beginFrame (`beginDeepWatersFrame`), and setWaterFog
+only stored it - the terrain, the flats and the bodies upload at their draws and wore the murk, and every building,
+wall and model drew clear through it. setWaterFog sends `uDwFog` to the mesh program at once, setClipY's seam.
+
+**LA-COST7 - a world set's locations are asked of GL once.** `_installWorldSet` runs at every lane swap and twice in
+every panel frame (AUDIT-EL F7 puts the classic set in for the automap's bracket or the bank's preview and the lane
+back after it), and each time it asked GL for all 270 of its uniform locations again - a string lookup and a fresh
+`WebGLUniformLocation` apiece, for answers fixed when the programs linked: a world set's five programs are linked once,
+when the set is built, and kept. The lookups now go through `_locations()`, `gl.getUniformLocation` behind a memo per
+(program, name), nulls included, kept ON the set (a lane under a new key builds a new set, and brings its own) - so
+every table line in the install, `_fogLocs` and `_decalLocs` reads as it did, and only a set's first install asks GL
+anything. A panel frame's two installs asked 540 times and now ask nothing; on the real GL (headless Chromium,
+SwiftShader) they fell from 172 us to 13 us. Held on a GL whose every lookup is a fresh object, as WebGL's are: through
+swaps both ways, two panel frames and a second lane key, every field the install writes equals the field a renderer
+that asks at every install builds.
+
+**On the real GL** (`tools/enhancedLightingProbe.mjs`, SwiftShader, all eighteen scenes pixel-compared with the tree
+before): identical, but the contact scene's band (LA-COST5) and the one x^24 byte; `tools/lightClusterProbe.mjs` still
+pixel-identical grid against plain, and against the tree before but for 604 pixels, by at most 2 of 255, of its
+forty-lantern street - LA-COST5's band again (with the hard edge put back, identical).
+
+Pins: `test/la_cost.test.js` (10). Re-aimed by content: audit68_render_a (the import), audit_el (the glint), el1 (the
+same lane's no-op, read off the stamp: an install looks nothing up now either), el2 (the march line, the flat's sun at
+the corner), el4 (the eye vector, the lobe), el5 and el8 (the march line), glstate (the one forget), hard3 (the batch's
+36 fields), lc1 (the loop head), perf3 (the stamp sites, the sort), perfsun_fragment (PERF-SUN2's and TREES1's flat),
+volumetricClouds (the sprite's finally). Mutants: `tools/mutants/la_cost.json` (49, all dead); blood1, el1, el8,
+macbugw4, perfextb and perfsun records re-aimed by content, all still dead; and the 109 records of every other list
+that mutate code this package touched, run again on it - all dead, once el1's no-op pin was read off the stamp (LA-COST7
+had made its lookup count blind: `renderer-lane-same-noop` survived until then).
+
+## AUDIT (LA) - SIX LENSES BEFORE THE MERGE (2026-09-27, Mac: "Audit before we merge")
+
+Six read-only lenses read the three packages (LA, LA-POST, LA-COST) at `62ecd090`, each proving its findings with a
+driver script against the real modules, and nothing was fixed while they read: A the shadows and the lights (the real
+ARENA2 dungeons on the fake GL), B the post chain (every shader through the GLSL evaluator), C the frame's cost and GL
+state (a fake GL that keeps a driver's state), D the one-frame blip the Measured paragraph left open (the real game in
+headless Chromium), E the merge with main (a trial merge, every check run on it), F the records, the pins and the
+claims (mutants, the patch notes, the numbers).
+
+**Fixed.**
+- **A1 (the cost): every dungeon lo map drew the whole level, six times.** LA-SHADOW3 gave every dungeon light a lo
+  map, and the level is PERF5's one mesh - one sub-mesh per texture, laid end to end, each across the level - so the
+  replay's sub-mesh cull passed them all and each 256 face drew 0.85 of the level. Scourg Barrow's entry frame (22
+  blocks, 30,377 triangles, 40 lights in range) replayed 23.1M indices, 253 levels (the base without the tier: 3.8M); a
+  walk across it 82.6M in 1,200 frames, the worst frame 16.2M (the lo array growing, every slot redrawn); one light
+  moving past the eight 455k a frame. `staticBatch.js`'s `shadowCells` sorts the same triangles by the 16-unit grid
+  cell of their centroid into a second index buffer (`SHADOW_CELL_SIZE`, about a torch's reach), createMesh puts it on
+  a second VAO over the same vertex buffers with each cell's sphere, and the shadow replays cull by cell; the lit
+  pass's buffer is byte for byte what it was. The entry frame is 0.79M indices now (1,880 draws where 2,093 were), the
+  walk 2.6M (its worst frame, the lo array growing, 0.65M), a mover 7.8k a frame; the CPU of a full redraw (every map
+  afresh) is about what it was (4 to 8 ms either way on the fake GL, run to run). Proved on three real dungeons
+  (Scourg Barrow, Privateer's Hold, Wayrest):
+  over 1,380 faces not one triangle any part of which a face's frustum holds was left undrawn, the cells' buffer is a
+  permutation of the lit one, and a face draws 3.5% of a large level (19.6% of a small one).
+- **A5 / F4: the cap's fade was the street's alone.** The dungeons still cut at 48 (Scourg Barrow's cap cut at 128 of
+  297 lights in range; its walk had 138 joins in 20 seconds, each at full strength) and so did the World of Daggerfall
+  mod's towns. `capFadePairs` is capFadeColors for lights that carry their own colours; both dungeon hosts and the mod's
+  arm take one light past the cap on the lane and hand the renderer the fade. The gate's court keeps its cut (its
+  braziers ride after every light).
+- **B1: the contact march's self-check had no term for its own lift.** The march starts 0.02 off the surface and the
+  check reprojects that point, which along its own ray stands about 0.02 / cos(slope) nearer than the surface the
+  previous depth holds (0.12 on the ground ten units off); LA-POST6's tolerance lacked it and its texel term shrinks as
+  the resolution grows, so the floor's contact shadows fell out at 1080p (101 of 400 shadowed rows before a crate 4-30
+  units off; 235 of 533 at 1440p, 19 of 269 at 720p, none at the pin's 320 x 200) and pulsed on a walk.
+  `AIR_CONTACT_LIFT / ct` joins the tolerance: none lost at any of them, and the revealed wall is still refused.
+- **B2: the shafts in half floats kept what the bytes clamped.** LA-POST3's "precision, not level" held for the bloom
+  (its gaussian holds its reads at 1) but the shafts never pass through it: heavy fog's haze toward the sun came out
+  2.46 times as bright, a sandstorm's 2.80. SHAFT_FS holds its output at 1, and the byte level is back exactly.
+- **B3: the bright pass's blocks drifted off the pixel grid** on a rect whose side is not four bloom texels (1366
+  wide, a docked HUD's 637 rows, a dpr-scaled window): the centres fell between corners and a 3x3 flame's energy ran
+  0.25 to 0.5 at 94 of 1,359 places across a 1366-wide rect (41 of 630 down a 637-row one). Snapping each centre to its corner gathered the drift into a
+  column read twice or a row read by none (a flame there bloomed 0); the blocks are whole 4x4s on one grid centred on
+  the rect now, at most a pixel from where the image maps them - every interior place 0.25, only the grid's two edge
+  blocks, held inside the rect, read a column twice.
+- **B5: the eye's sixteen bits read through lowp samplers** (AUDIT-VC7 G2's lesson): a GPU that fetches them at half
+  precision returns b / 255 to a part in 2,048, and times 65,280 the stored state came back up to 15.7 steps off every
+  frame of the loop - at 144 Hz the eye settled 0.059 stops short. Each byte is rounded before it is scaled, which reads
+  the state exactly through any fetch finer than half a byte (the fp16 loop now settles where the fp32 one does, 0.007
+  stops), and the three samplers are highp.
+- **B6: LA-POST5's share window let EL7's halo back** - a pillar a metre before a wall sat inside 15% of the wall's
+  distance, and the wall's texel at the silhouette took the pillar's occlusion (0.737 where the base kept 1.000). The
+  AO blur's window follows the surface now: per axis the parabola through the centre and its two neighbours when the
+  three are one surface, the gentler side's line past an edge, no line at a ridge, and a tap counts while it is within
+  the radius (or LA-POST5's share of the step the surface takes to it) of where that surface runs. The wall keeps its
+  1.000; the far ground stays whole to 150 units at 1080p (LA-POST5's own stripes do not come back).
+- **C1: the floating origin's shift moved a gated input without moving the stamp** - the air's held view-projection
+  is one of the lane blocks' uploads, so a shift between beginFrame and a draw would have left the billboard, decal,
+  character and terrain blocks the pre-shift matrix for the frame. Not live (the one host shifts before beginFrame);
+  `shadowOriginShift` moves the stamp, so the order does not matter. **C2** (docs): setPointLights, setLighting and
+  setFog keep the host's arrays, and the gated blocks read them when the stamp moves - a host writing one in place
+  mid-frame must set it again (none does). **C3** (docs): the foreign pass the forget protects against is the far
+  ring's 1x1 on unit 11 - Dynamic Skies' 2D binds on units 0 to 8 leave unit 8's 2D array, the lo tier, alone.
+- **D: the one-frame blip the LA runs left open was the HUD's, not the lighting's.** It is BLOOD2e's bleed flash: a
+  whole-canvas red quad at 0.05 on each drip while the player stands under half health - the runs whose street pass
+  had mauled the character below it, and only those. Every blipped frame is the frame before it blended with red at
+  0.050 (100.00% of 400,000 pixels within 1.5 levels, both trees; the frame after, -0.0526); forced with
+  `playerDamageFlash.bleed()` at full health it reproduces the reported numbers exactly (the tavern c4 15.14%, mean
+  1.84; the dungeon 0.90%, 2.07) on base and merged alike; and a character left at 43% health drips on its own and
+  gives GL counts byte-identical to the original blip rows (912 and 898 over 895). No UI text reaches the canvas in
+  either frame - the "extra text quad" was the flash's own drawScreenQuad. The quad arrives after the last world draw
+  and resolves the frame itself; forced EARLIER (a screen quad before or amid the world draws) it is loud and local -
+  the world drawn straight to the canvas with no AO or bloom, or a lantern through a ceiling - never a 2-level tint.
+  The probe now starts each pass at full health, records the health and the HUD's flash on every row, and refuses a
+  pass the HUD flashed in or the player lost health in.
+- **F1: the flicker probe passed a black, frozen scene.** With world.js clearing the frame black and the pose door a
+  no-op it stood at the spawn, read 0 everywhere, and said OK - it judged only the still passes' 12-level share, its
+  boot wait fell through, a plan's exception went unread, and "street" was wherever the boot left it. The summary and
+  the verdict are `tools/lightFlickerVerdict.mjs` now, pinned: a boot that never came (the world streams idle in about
+  310 s on SwiftShader at night, so the wait is `--boot-s`, 900 by default), a street with no tavern, a pass in the
+  wrong mode, black, short or thrown, a walk that did not walk and a turn that did not turn all fail. And the
+  churn weighs each join and leave by the light's share (a faded join is no switch; the hand's lights and a recentre's
+  frame weigh nothing) - the count could not see LA-LIGHTS2 at all.
+- **F2: the street's lantern pool fill had no pin of its own** (LA-LIGHTS1's test ran a copy; a fill that forgot to
+  grow its range array past 64 lanterns survived every pin). It is `cityLights.js`'s `fillLanternPool`, which world.js
+  calls and the pins run.
+- **F3: PATCH-NOTES-Gate-Reload promised an update on quit to every desktop app** - the Mac and the portable Windows
+  build are only told a release exists; the note says so per build. **F4: the lighting notes overclaimed** (shadows
+  that "hold still", menus that "open quicker", a sprite's sun "once per sprite"); reworded. **F5: stale records** - the
+  LA-COST per-call counts and the differential's upload totals (they predated the merge with HITFLASH1 and
+  WEAPON-MOUNT; the pin compares the counts now, where it only counted them), four Testing.md rows, two cites wrong
+  since before LA. **F6: pins that read source text** - LA-SHADOW2's handover and the lo compare are driven through the
+  evaluator now (F-H3: a lo lookup comparing at the live range's own quantum passed every pin).
+
+**Declined, with the reason.**
+- **A2: a light holding a 512 map keeps drawing its lo map** - six unread faces a frame for a mover in the eight. With
+  A1's cells that is 7.8k indices a frame, and DISC15 keeps the eight's lo maps on purpose (a light that leaves the eight
+  has its map, and the hand-over draws nothing); its pins hold that. Tried and reverted.
+- **A1's other two cures** - the lo array blitted into its bigger self instead of redrawn, and a cadence for moving
+  lights: with the cells the growth frame is 0.49M indices and a mover 7.8k, both under the base's entry frame.
+- **A3: a peer's torch takes no map and lights through the rock.** PEERLIGHT1 marks it carried to spare its glare, and
+  MAC-T1's carried lights take no map; casting it needs the peer's own sprite excluded from its map (the flame flats'
+  EL6 arm) - a feature, recorded. **A4: a lightning flash drops the 48th lantern** at a share of at most 0.008, for the
+  0.2 s of the flash.
+- **B4: LA-POST4's tap clamp changes the eye** in scenes mixing lit and pure-black taps - a lit street with 5% black
+  sits 0.54 stops less open. The base let four black taps outweigh twelve lit ones; the clamp is the fix, not a fault.
+- **B7: the glare hold's keys** collide for lights within 1/16 unit and wrap at 16,384, a moving light never holds, and
+  nothing sweeps the map while no light burns - bounded (8,832 entries at 48 moving lights). **B8:** the self-check
+  refuses still surfaces past about 470 units outdoors (depth precision) - sub-pixel contact there. **B9:** no
+  completeness check on the RGBA16F targets - EXT_color_buffer_float makes them renderable by its own terms, and a
+  check would have every fake GL answer checkFramebufferStatus. **B10:** a room to a dungeon (both drawn whole) is not
+  a cut - harmless while every indoor light holds a map.
+- **C4: la_cost's differential** runs no screen quad, no resolve, no retro, render scale or docked rect - C's drivers
+  ran 120 frames of those and 55 seams, all equal to the reference; recorded. **D's note:** nothing warns when a world
+  draw lands after the resolve (WATER-D1 was one); a once-only dev warning would make the next one loud - recorded.
+  **F-H4:** `_images` multiplies the
+  frame's projection and view again (it matters only for a resolve owed across a recentre). **E's note:** the
+  character caster ignores alphaCut, so fur and hair cards cast card-shaped shadows - as Morrowind hair always has.
+
+**Measured after the fixes** (`tools/lightFlickerProbe.mjs` with the new verdict on the audited tree `cc22c8f0`, the
+world host over ARENA2 on SwiftShader, the night street, the tavern and a dungeon, 40 frames standing and 80 walking
+and turning): OK, nine passes. Standing still the street moved at most 0.43% of the screen by 12+ levels (a walker's
+share), the tavern and the dungeon 0%; no pass drew a HUD flash or lost health. The dungeon redrew no shadow face
+standing or turning, and 12 static and 42 lo faces walking (torches arriving); on that walk eight lights joined or
+left the set of 48, weighing 0.02 of one light together - the cap's fade (A5) at work, where the base's hard cut
+weighs every one of them whole. The world took 310-380 s to boot and stream idle.
+
+**The merge (lens E).** Main (`71450b02`) touches no file under `src/render/`, adds no light, no setter and no
+foreign pass; the trial merge's 34 conflicts were numbers only (cites, and the Suite line), every check passed on it,
+and no relay file moved. Merged at `bceff1da` the same way (the 34 hunks re-checked against the audit's commit):
+12,911 tests, none failing; lint, types and the build clean.
+
+Pins: `test/la_audit.test.js` (12). Re-aimed by content: la_post (LA-POST1's blocks placed by the texel's
+gl_FragCoord; LA-POST5's base and the far ground to 150; the recentre's stamp), la_shadow and perfon2_peercull (the
+pool fill run), la_cost (the counts compared), and the source pins the fixes' text moved - a10_world_misc,
+audit_lighting, auditdisc19, disc15, disc19, el4_frame, el7_polish, perf5. Mutants: `tools/mutants/la_audit.json` 42, all dead; fourteen older records re-aimed by content
+(auditdisc19, el4, el5, el7, la_post 7, la_shadow, perfextb, perfon2), all dead.

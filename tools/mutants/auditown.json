@@ -1,0 +1,51 @@
+[
+  {
+    "name": "AOWN-O3-growth-fanned",
+    "file": "server/src/index.js",
+    "old": "  return out.length > sentLength + id.length + 8 ? null : out;",
+    "new": "  return out;",
+    "tests": ["test/own1.test.js"]
+  },
+  {
+    "name": "AOWN-O4-stringify-unguarded",
+    "file": "server/src/index.js",
+    "old": "  try { out = JSON.stringify({ t, id, data }); } catch { return null; }",
+    "new": "  out = JSON.stringify({ t, id, data });",
+    "tests": ["test/own1.test.js"]
+  },
+  {
+    "name": "AOWN-own-arm-unguarded",
+    "file": "server/src/index.js",
+    "old": "      const out = fanOut('own', a.id, m.data, message.length);   // AUDIT (pre-merge) O3/O4\n      if (out == null) { this._junk(ws); return; }",
+    "new": "      const out = JSON.stringify({ t: 'own', id: a.id, data: m.data });",
+    "tests": ["test/own1.test.js"]
+  },
+  {
+    "name": "AOWN-foes-arm-unguarded",
+    "file": "server/src/index.js",
+    "old": "      const out = fanOut('foes', a.id, m.data, message.length);   // AUDIT (pre-merge) O3/O4\n      if (out == null) { this._junk(ws); return; }",
+    "new": "      const out = JSON.stringify({ t: 'foes', id: a.id, data: m.data });",
+    "tests": ["test/own1.test.js"]
+  },
+  {
+    "name": "AOWN-hit-arm-unguarded",
+    "file": "server/src/index.js",
+    "old": "      const out = fanOut('hit', a.id, m.data, message.length);   // AUDIT (pre-merge) O4: a nesting stringify cannot take, junk - it threw out of the handler\n      if (out == null) { this._junk(ws); return; }",
+    "new": "      let out; try { out = JSON.stringify({ t: 'hit', id: a.id, data: m.data }); } catch { return; }",
+    "tests": ["test/own1.test.js"]
+  },
+  {
+    "name": "AOWN-O2-stale-own-gate",
+    "file": "src/net/online.js",
+    "old": "    this.ownOk = false;\n    this._bind(ws);",
+    "new": "    this._bind(ws);",
+    "tests": ["test/own1.test.js"]
+  },
+  {
+    "name": "AOWN-O5-host-drops-own-blows",
+    "file": "src/net/online.js",
+    "old": "if (primary) this.ownOk = relaySupportsOwn(relayV);   // OWN1",
+    "new": "if (primary) this.ownOk = relaySupportsOwn(relayV) && m.host !== this.id;   // OWN1",
+    "tests": ["test/own1.test.js"]
+  }
+]

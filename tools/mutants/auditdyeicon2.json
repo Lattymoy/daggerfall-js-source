@@ -1,0 +1,92 @@
+[
+  {
+    "name": "AUDIT2-DYE-ICON-1-the-ghost-past-the-room",
+    "file": "src/scenes/decorTool.js",
+    "old": "const ask = pool.mountPicture?.(entry.flat, entry.item)\n      ?? loadMountPicture(",
+    "new": "const ask = loadMountPicture(",
+    "tests": [
+      "test/mwmount.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-DYE-ICON-1-the-ghost-not-told",
+    "file": "src/scenes/decorTool.js",
+    "old": "const offRefresh = pool?.onRefresh?.(() => refreshGhost()) ?? null;",
+    "new": "const offRefresh = null;",
+    "tests": [
+      "test/mwmount.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-DYE-ICON-1-the-room-tells-no-one",
+    "file": "src/scenes/decorRoom.js",
+    "old": "    for (const fn of [...borrowers]) fn();",
+    "new": "",
+    "tests": [
+      "test/mwmount.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-DYE-ICON-1-the-old-picture-drawn-on",
+    "file": "src/scenes/decorTool.js",
+    "old": "    placing.art = null;\n    askGhostArt(placing);",
+    "new": "    askGhostArt(placing);",
+    "tests": [
+      "test/mwmount.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-DYE-ICON-1-an-older-answer-hung",
+    "file": "src/scenes/decorTool.js",
+    "old": "if (placing !== p || p.ask !== ask || !art) return;",
+    "new": "if (placing !== p || !art) return;",
+    "tests": [
+      "test/mwmount.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-DYE-ICON-1-the-room's-door-past-its-keys",
+    "file": "src/scenes/decorRoom.js",
+    "old": "const mountPicture = (flat, item) => artOf({ flat, item });",
+    "new": "const mountPicture = (flat, item) => loadMountPicture({ getTexture, uploadRecord, renderer, mwPicture }, flat, item);",
+    "tests": [
+      "test/mwmount.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-DYE-ICON-2-the-unread-texture-drawn-and-kept",
+    "file": "src/combat/fpArm.js",
+    "old": "        if (texturesUnread(pieces, cat.archives, cat.gen)) return null;\n",
+    "new": "",
+    "tests": [
+      "test/mwmount.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-DYE-ICON-2-an-unread-texture-taken-as-in-hand",
+    "file": "src/combat/fpArm.js",
+    "old": "    if (arc && typeof arc.loaded === 'function' && !arc.loaded(path)) return true;",
+    "new": "",
+    "tests": [
+      "test/mwmount.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-DYE-ICON-3-the-marker-MAGIC.DEF's-first-artifact",
+    "file": "src/net/decorLaw.js",
+    "old": "export const DECOR_ARTIFACT_UNKNOWN = 255;",
+    "new": "export const DECOR_ARTIFACT_UNKNOWN = 0;",
+    "tests": [
+      "test/dyeicon.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-DYE-ICON-3-the-marker-MAGIC.DEF's-last-artifact",
+    "file": "src/net/decorLaw.js",
+    "old": "export const DECOR_ARTIFACT_UNKNOWN = 255;",
+    "new": "export const DECOR_ARTIFACT_UNKNOWN = 22;",
+    "tests": [
+      "test/dyeicon.test.js"
+    ]
+  }
+]

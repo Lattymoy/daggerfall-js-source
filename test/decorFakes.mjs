@@ -11,6 +11,8 @@ import { decorCatalogue, collectDecor } from '../src/systems/decorCatalogue.js';
 import { DECOR_CAP, decorPrice } from '../src/net/decorLaw.js';
 import { PROP_MODEL_TYPE } from '../src/world/interiorLayout.js';
 import { isFurnishing } from '../src/systems/decorFurnish.js';
+import { decorMatrix, decorKeyOf } from '../src/scenes/decorRoom.js';
+import { localAabb } from '../src/render/frustum.js';
 
 export const settle = () => new Promise((r) => setTimeout(r, 0));
 export const near = (a, b, eps = 1e-6) => Math.abs(a - b) < eps;
@@ -114,18 +116,34 @@ export const ACTIONS = new Map([['KeyW', 'MoveForwards'], ['KeyS', 'MoveBackward
  * DECOR2b: `furnishings` the furniture delivered - where a piece of furniture lives, as the host's decorHome has it:
  * taken out whole, given back there, never to the pack. DECOR2c: `state.normal` the surface's normal the eye's ray
  * answers (null: none, as before), and the renderer's decal pass and texture cache, faked - `decals` every batch made
- * (its writes, its draws, whether it was destroyed), an icon upload answering the `#ui` variant.
+ * (its writes, its draws, whether it was destroyed), an icon upload answering the `#ui` variant. MW-MOUNT: `mwPicture`
+ * the host's Morrowind picture of a mount's item (null: none, as before), uploaded through `uploadTexture`.
+ * DECOR-SHELL: `collider` a real room collider (player/collider.js) in place of the fake that meets a surface 2 m off.
+ * AUDIT DYE-ICON 1: `iconUrl(a, r, dye, dyeTarget)` the host's picture door for the panel's thumbnails (none, as before).
+ * AUDIT DECOR-SHELL 3: `getGpuMesh` the pipeline's mesh door (one that loads every model, as before), and `now` the
+ * tool's clock (0, as before). AUDIT2 DECOR-SHELL 8: with a real `collider`, a model piece put stands SOLID in it as the
+ * room stands it (scenes/decorRoom.js put) - its model's box, closed, under the piece's own matrix, in its own bucket.
  */
-export function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 1000, homeDecor = null, locked = true, touch = false, radius = () => 0.8 } = {}) {
+export function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 1000, homeDecor = null, locked = true, touch = false, radius = () => 0.8, base = null, mwPicture = null, collider = null, iconUrl = async () => null, getGpuMesh = async (id) => ({ gpu: id }), now = () => 0, extraFlats = [] } = {}) {
   const doc = fakeDoc();
   const win = fakeWin();
   const entries = catalogue();
   const standing = [];
   const holds = new Set();
   const owned = new Map();   // DECOR2a: the owner's own items by piece id (scenes/decorRoom.js keepOwn and its kin)
+  const solid = (p) => {
+    if (!collider?.addMesh) return;
+    collider.removeBucket?.(decorKeyOf(p.id));
+    const cpu = p.model != null ? cpuModels.get(p.model) : null;
+    if (!cpu) return;
+    const [x0, y0, z0, x1, y1, z1] = localAabb(cpu.positions);
+    const at = new Float32Array([x0, y0, z0, x1, y0, z0, x1, y1, z0, x0, y1, z0, x0, y0, z1, x1, y0, z1, x1, y1, z1, x0, y1, z1]);
+    const tris = new Uint32Array([0, 1, 2, 0, 2, 3, 4, 6, 5, 4, 7, 6, 0, 4, 5, 0, 5, 1, 3, 2, 6, 3, 6, 7, 0, 3, 7, 0, 7, 4, 1, 5, 6, 1, 6, 2]);
+    collider.addMesh(decorKeyOf(p.id), at, tris, decorMatrix(p, [10, 0, 10]));
+  };
   const pool = {
-    put: (p) => { const i = standing.findIndex((x) => x.id === p.id); if (i >= 0) standing[i] = p; else standing.push(p); },
-    remove: (id) => { const i = standing.findIndex((x) => x.id === id); if (i >= 0) standing.splice(i, 1); },
+    put: (p) => { const i = standing.findIndex((x) => x.id === p.id); if (i >= 0) standing[i] = p; else standing.push(p); solid(p); },
+    remove: (id) => { const i = standing.findIndex((x) => x.id === id); if (i >= 0) standing.splice(i, 1); collider?.removeBucket?.(decorKeyOf(id)); },
     list: () => standing.map((p) => ({ ...p })),
     size: () => standing.length,
     holdsAny: (id) => holds.has(id),
@@ -155,6 +173,7 @@ export function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 
     writeDecalSlot: (b, slot, floats) => { b.writes.push([slot, Array.from(floats)]); return true; },
     drawDecals: (b, tex) => { b.draws++; draws.push({ decal: b, tex }); },
     destroyDecalBatch: (b) => { b.destroyed = true; },
+    uploadTexture: (a, r, c, o = {}) => { const k = `${a}_${r}${o.variant ?? ''}`; if (!textures.has(k)) textures.set(k, `tex:${k}`); return textures.get(k); },   // MW-MOUNT
     drawMesh: (gpu, m, remap) => draws.push({ gpu, m, remap }),
     createBillboardBatch: (a, r, size, centers) => ({ archive: a, record: r, size, centers, bounds: [0, 0, 0, 1] }),
     destroyBillboardBatch: (b) => { b.destroyed = true; },
@@ -166,19 +185,21 @@ export function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 
     doc, win, touch, renderer, pool, names,
     canvas: { width: 1600, height: 900, getBoundingClientRect: () => ({ left: 0, top: 0, width: 800, height: 450 }) },
     room: () => state.room,
+    base: () => base,   // BASE-HIDE: the room's own furniture (scenes/decorBase.js), none unless a pin hands one
     scanDeps: () => ({
-      blocks: fakeBlocks([{ type: TOWN, block: rmb([41000, 41000, 41001, 41811], [[210, 3], [209, 0]]) }, { type: TOWN, block: rmb([41000], [[209, 0]]) }]),
+      blocks: fakeBlocks([{ type: TOWN, block: rmb([41000, 41000, 41001, 41811], [[210, 3], [209, 0]]) }, { type: TOWN, block: rmb([41000], [[209, 0], ...extraFlats]) }]),   // DECOR-MODFLATS: `extraFlats`, a pin's own
       isTownBlock: (t) => t === TOWN, modelRadius: radius, flatRadius: async () => 0.2,
     }),
-    getGpuMesh: async (id) => ({ gpu: id }), cpuModels,
+    getGpuMesh, cpuModels,
     getTexture: async () => ({ recordCount: 64, getSize: () => ({ width: 16, height: 32 }), getScale: () => ({ width: 0, height: 0 }) }),
     uploadRecord: (a, r, opts = {}) => {   // DECOR2c: the icon arm answers its variant, as dataPipeline.js's does
       if (opts.mips !== false) return undefined;
       textures.set(`${a}_${r}#ui`, `tex:${a}.${r}`);
       return '#ui';
     },
-    iconUrl: async () => null,
-    collider: () => ({ raycastHit: (e, d, max, filter = null) => { rays.push(filter); return { dist: 2, normal: state.normal }; } }), origin: () => [10, 0, 10], eye: () => [10, 1.6, 10],
+    iconUrl,   // AUDIT DYE-ICON 1: the DOM's picture door - none to be had unless a pin hands one
+    mwPicture,   // MW-MOUNT
+    collider: () => collider ?? ({ raycastHit: (e, d, max, filter = null) => { rays.push(filter); return { dist: 2, normal: state.normal }; } }), origin: () => [10, 0, 10], eye: () => [10, 1.6, 10],
     stick: () => hand.stick,
     actionOf: (e) => ACTIONS.get(e.code) ?? null,
     locked: () => state.locked, cursorOff: () => { cursorOff++; },
@@ -195,7 +216,7 @@ export function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 
     },
     packGive: (item) => { homeOf(item).push(item); },
     openSlot: (o) => slots.push(['open', o]), closeSlot: (o) => slots.push(['close', o]),
-    say: (l) => said.push(l), refusal: (word) => `refused: ${word}`, now: () => 0,
+    say: (l) => said.push(l), refusal: (word) => `refused: ${word}`, now,
   });
   const cam = { pos: [10, 1.6, 10], yaw: 0, pitch: 0 };
   const frame = (over = {}) => tool.frame({ dt: 0.1, cam, overlayUp: false, interior: true, ...over });

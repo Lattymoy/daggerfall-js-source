@@ -62,7 +62,7 @@
 // furniture's own name and numbers, free. Taken down, it is delivered
 // again: back among "Your things", never the pack.
 //
-// DECOR2c - THE MOUNTS. A weapon or a shield among "Your things" is
+// DECOR2c - THE MOUNTS. A weapon or a piece of armour among "Your things" is
 // HUNG: the flight sets it flat on the surface the eye meets (the ray's
 // own normal - scenes/decorRoom.js frames it), the turn spins it there,
 // and the ghost is the picture itself, hanging where it will hang. No
@@ -70,17 +70,21 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { createDecorScan } from '../systems/decorScan.js';
+import { createDecorRooms } from '../systems/decorRooms.js';   // DECOR-ROOMS: a house's rooms, found in its own walls
 import { createDecorPlacer, DECOR_TURN_STEP, DECOR_TURN_FINE, DECOR_RAISE_STEP, DECOR_RAISE_FINE } from '../systems/decorPlacer.js';
 import { createDecorButton, createDecorPanel, createDecorBar, decorWhyNot } from '../ui/decorPanel.js';
-import { DECOR_CAP, DECOR_PRICE_PER_METRE, decorPrice, decorPieceOf, decorRefund, decorRescale, mintDecorId } from '../net/decorLaw.js';
-import { decorKey, DECOR_KINDS, decorFlatLight } from '../systems/decorCatalogue.js';
-import { decorOwnEntry, decorItemName } from '../systems/decorItems.js';
+import { DECOR_CAP, DECOR_PRICE_PER_METRE, DECOR_HIDDEN_CAP, decorPrice, decorPieceOf, decorRefund, decorRescale, mintDecorId, DECOR_STATIONS, DECOR_STATION_FEES, DECOR_STATION_NAMES } from '../net/decorLaw.js';
+import { decorKey, DECOR_KINDS, decorFlatLight, modelKind, flatKind } from '../systems/decorCatalogue.js';
+import { decorOwnEntry, decorItemName, decorMountDye, decorMountDyeTarget } from '../systems/decorItems.js';
 import { decorFurnishingEntry, isFurnishing } from '../systems/decorFurnish.js';
 import { itemLongName } from '../systems/itemInfo.js';
-import { decorMatrix, decorKeyOf, loadMountArt, decorMountQuad, decorMountFloats } from './decorRoom.js';
-import { decorIsMount } from '../net/decorLaw.js';
-import { decorMountDye } from '../systems/decorItems.js';
-import { localAabb } from '../render/frustum.js';
+import { decorMatrix, decorKeyOf, loadMountPicture, decorMountQuad, decorMountFloats, DECOR_MODEL_RETRY_MS, MW_STAND_ARCHIVE } from './decorRoom.js';
+import { decorIsMount, decorFlatMirrored } from '../net/decorLaw.js';
+/** HOME-STATIONS: an online home whose service does not keep a station yet (one from before this) - said, and nothing paid. */
+export const DECOR_STATION_UNKEPT = 'Your home could not keep a station yet - nothing was paid.';
+/** AUDIT HOME-STATIONS S2: the gold went while the station was being made (spent elsewhere mid-write) - nothing paid. */
+export const DECOR_STATION_GOLD_WENT = 'Your gold ran short while the station was being made - nothing was paid.';
+import { localAabb, transformedAabb } from '../render/frustum.js';
 import { billboardSize } from '../world/rmbFlats.js';
 import { lookAt, perspective, mirrorProjectionX, trs, multiply } from '../world/mat4.js';
 import { isTextEntryTarget } from '../ui/input.js';
@@ -144,6 +148,93 @@ export function flyStep(pos, start, { forward = 0, strafe = 0, rise = 0 }, yaw, 
   return [start[0] + d[0] * s, start[1] + d[1] * s, start[2] + d[2] * s];
 }
 
+/** DECOR-SHELL: how far off a face the flying eye is kept - past the near plane (0.05), so no face near it is cut open
+ *  in front of it. AUDIT DECOR-SHELL 1: measured from the face (flyKeep's push), not along the step. */
+export const DECOR_FLY_SKIN = 0.2;
+/** AUDIT DECOR-SHELL 1: the most pushes flyKeep makes before it refuses a step; and the give of its look, a hair
+ *  inside the skin - never the push's own radius, where two faces pushing the eye back and forth (a gap) can cancel to
+ *  a look that moves nothing. */
+export const DECOR_FLY_PUSHES = 3;
+export const DECOR_FLY_GIVE = 1e-3;
+
+/**
+ * AUDIT DECOR-SHELL 1: THE END OF A STEP, KEPT OFF THE FACES. `at`, where flyClip's cut and slide leave a step from
+ * `from`, is pushed out of every face within DECOR_FLY_SKIN, as a sphere of the skin - the body's own push
+ * (player/collider.js _resolveSphere), through the buckets in `skip` - until a look a hair inside the skin moves
+ * nothing, and answered; or `from` when the eye cannot stand there: a gap narrower than twice the skin (pushed off one
+ * side, it stands against the other) or a corner the pushes cannot clear, or an end a ray from `from` does not reach
+ * (a push carried it across a face). A still eye is left where it is.
+ */
+function flyKeep(collider, from, at, skip) {
+  if (!(Math.hypot(at[0] - from[0], at[1] - from[1], at[2] - from[2]) > 1e-9)) return at;
+  let end = at;
+  if (typeof collider._resolveSphere === 'function') {
+    const through = skip ? new Set(skip) : null;
+    const pushed = (q, radius) => {
+      const was = [q[0], q[1], q[2]];
+      collider._resolveSphere(q, radius, {}, Infinity, false, false, through);
+      return q[0] !== was[0] || q[1] !== was[1] || q[2] !== was[2];
+    };
+    const p = [at[0], at[1], at[2]];
+    if (pushed(p, DECOR_FLY_SKIN)) {
+      for (let i = 1; pushed([p[0], p[1], p[2]], DECOR_FLY_SKIN - DECOR_FLY_GIVE); i++) {
+        if (i >= DECOR_FLY_PUSHES) return from;
+        pushed(p, DECOR_FLY_SKIN);
+      }
+      end = p;
+    }
+  }
+  const e = [end[0] - from[0], end[1] - from[1], end[2] - from[2]];
+  const reach = Math.hypot(e[0], e[1], e[2]);
+  if (!(reach > 1e-9)) return end;
+  let hit = null;
+  try { hit = collider.raycastHit(from, [e[0] / reach, e[1] / reach, e[2] / reach], reach, skip ? { skip } : null); } catch { hit = null; }
+  return hit && Number.isFinite(hit.dist) && hit.dist <= reach ? from : end;
+}
+
+/** AUDIT2 DECOR-SHELL 8: whether `q` is within a world box `b` ([minX, minY, minZ, maxX, maxY, maxZ]) grown by
+ *  DECOR_FLY_SKIN - near enough a piece that flyKeep pushes it, or inside it. */
+const inSkin = (q, b) => [0, 1, 2].every((i) => q[i] >= b[i] - DECOR_FLY_SKIN && q[i] <= b[i + 3] + DECOR_FLY_SKIN);
+
+/**
+ * DECOR-SHELL (2026-09-26, a player over the house: "They are there / But its model disappearing / Placing models is
+ * different then the ones after"): THE EYE STAYS IN THE ROOM. The free camera flew through walls, floor and ceiling -
+ * nothing but the leash held it - and the room's faces are one-sided, so from outside the room it was an open
+ * dollhouse: a piece set on the ceiling's top or behind a wall looked placed in the room from up there, and was gone
+ * from the body's own eye, still listed, still solid, still named through the ceiling. A step from `from` to `to` is
+ * cut DECOR_FLY_SKIN short of the first face of the room's collider across it (either side: the collider is
+ * two-sided), and what is left of it slides along that face, once, cut the same way. `skip` the buckets the eye looks
+ * through (a piece being moved).
+ *
+ * AUDIT DECOR-SHELL 1: THE SKIN IS KEPT FROM THE FACE. The cut is DECOR_FLY_SKIN back along the step, which a step at
+ * a shallow angle to the face leaves only DECOR_FLY_SKIN x sin(angle) off it - 3.5 mm gliding along the floor looking
+ * a degree down, 1.7 cm flying along a wall turned 5 degrees to it (39% of the screen past it) - and once under 1e-4
+ * the ray (player/collider.js rayTriangle) no longer met that face, so the next step went through it: under the floor,
+ * where a model aimed up hung from the floor's underside. Where the step ends, flyKeep keeps the eye off every face.
+ */
+export function flyClip(collider, from, to, skip = null) {
+  if (!collider?.raycastHit) return to;
+  const cut = (a, b) => {
+    const d = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
+    const len = Math.hypot(d[0], d[1], d[2]);
+    if (!(len > 1e-9)) return { at: b, normal: null, rest: null };
+    const dir = [d[0] / len, d[1] / len, d[2] / len];
+    let hit = null;
+    try { hit = collider.raycastHit(a, dir, len + DECOR_FLY_SKIN, skip ? { skip } : null); } catch { hit = null; }
+    if (!hit || !Number.isFinite(hit.dist) || hit.dist - DECOR_FLY_SKIN >= len) return { at: b, normal: null, rest: null };
+    const k = Math.max(0, hit.dist - DECOR_FLY_SKIN);
+    const at = [a[0] + dir[0] * k, a[1] + dir[1] * k, a[2] + dir[2] * k];
+    return { at, normal: Array.isArray(hit.normal) ? hit.normal : null, rest: [b[0] - at[0], b[1] - at[1], b[2] - at[2]] };
+  };
+  const first = cut(from, to);
+  if (!first.normal) return flyKeep(collider, from, first.at, skip);
+  // the rest slides along the face - its part into the face taken away (the normal faces the eye)
+  const n = first.normal, r = first.rest;
+  const into = r[0] * n[0] + r[1] * n[1] + r[2] * n[2];
+  const slide = [r[0] - n[0] * into, r[1] - n[1] * into, r[2] - n[2] * into];
+  return flyKeep(collider, from, cut(first.at, [first.at[0] + slide[0], first.at[1] + slide[1], first.at[2] + slide[2]]).at, skip);
+}
+
 /** DECOR1e: A STICK'S READING ({x: strafe right +, y: forward +} - the finger's analog stick or the pad's, the host's
  *  stickAxes) as the flight's forward and strafe, each within one; null with no stick in hand. */
 export function stickMove(a) {
@@ -176,6 +267,7 @@ export const eyePoint = (collider, eye, dir, skip = null) => eyeHit(collider, ey
  *   names            - the host's Map of hover names by piece key, filled once the catalogue is read
  *   room()           - where the player may decorate now: { kind: 'home'|'house'|'ship', where, mapId?, buildingKey? },
  *                      or null
+ *   base()           - BASE-HIDE: the room's own furniture, piece by piece (scenes/decorBase.js), or null
  *   scanDeps()       - systems/decorScan.js's deps (the blocks, the two measures)
  *   getGpuMesh(id), cpuModels, getTexture(a), uploadRecord(a, r, opts), iconUrl(a, r) - the pipeline's, and the DOM's
  *                      door (DECOR2c: uploadRecord's icon arm and the renderer's decal pass draw the mount's ghost)
@@ -207,18 +299,33 @@ export function createDecorTool(deps) {
   let spin = 0;
   let named = false;
   let listening = false;
+  // DECOR-ROOMS (2026-09-27, Discord: "For a house with multiple connects, add room switching tabs"): the house's rooms,
+  // found in the room's own collider a few rays a frame while the panel is up (systems/decorRooms.js) - found again for
+  // another interior - and the one the owner chose (null: the one the eye stands in)
+  /** @type {any} */ let rooms = null;
+  /** @type {any} */ let roomsFor = null;
+  /** @type {number|null} */ let roomPick = null;
   /** @type {Set<string>} the flight's own held actions - its presses never reach the host */
   const flyHeld = new Set();
   /** @type {Map<number, {gpu: any, box: any}|null>} */
   const models = new Map();
+  /** @type {Map<number, number>} AUDIT DECOR-SHELL 3: when each model last failed to load */
+  const modelFailed = new Map();
+  const offRefresh = pool?.onRefresh?.(() => refreshGhost()) ?? null;   // AUDIT DYE-ICON r3 1: the room tells the ghost when its pictures go
 
+  /** AUDIT DECOR-SHELL 3: a model that would not load is asked again DECOR_MODEL_RETRY_MS on (the frame asks every
+   *  frame) - it was remembered as nothing for the session: the bar said "Loading..." for good, no ghost, the preview
+   *  blank, though the pipeline's own cache builds a failed mesh again. */
   function modelFor(id) {
     if (models.has(id)) return models.get(id) ?? null;
+    if (now() - (modelFailed.get(id) ?? -Infinity) < DECOR_MODEL_RETRY_MS) return null;
     models.set(id, null);
+    const failed = () => { models.delete(id); modelFailed.set(id, now()); };
     Promise.resolve(deps.getGpuMesh?.(id)).then((gpu) => {
       const cpu = deps.cpuModels?.get?.(id);
       if (gpu && cpu?.positions) models.set(id, { gpu, box: localAabb(cpu.positions) });
-    }, () => {});
+      else failed();
+    }, failed);
     return null;
   }
 
@@ -232,12 +339,17 @@ export function createDecorTool(deps) {
       onPlaceLook: (furn, look) => beginPlacing(decorLookEntry(furn, look)),   // DECOR2b
       onClose: () => { const s = slot; slot = null; if (s) deps.closeSlot?.(s); },
       thumbOf: (entry) => {
-        if (entry.icon) return deps.iconUrl?.(entry.icon.archive, entry.icon.record, entry.icon.dye ?? null) ?? null;   // DECOR2a: the pack's own picture
+        if (entry.icon) return deps.iconUrl?.(entry.icon.archive, entry.icon.record, entry.icon.dye ?? null, entry.icon.dyeTarget ?? null) ?? null;   // DECOR2a: the pack's own picture
+        // AUDIT DYE-ICON 1: a hung one "In this room" is the pack's picture too, dyed off its numbers as it hangs - asked
+        // bare, an Ebony blade previewed as the base metal's (Mac's "daedric but show steel", in the panel)
+        if (decorIsMount(entry)) return deps.iconUrl?.(entry.flat[0], entry.flat[1], decorMountDye(entry.item), decorMountDyeTarget(entry.item)) ?? null;
         return entry.flat ? deps.iconUrl?.(entry.flat[0], entry.flat[1]) ?? null : null;
       },
       onMove: (piece) => beginPlacing(entryOf(piece), piece),
       onRemove: (piece) => { removePiece(piece); },
       onToggle: (piece, what) => { togglePiece(piece, what); },
+      onBase: (keys, out) => { setBase(keys, out); },   // BASE-HIDE
+      onRoom: (id) => { roomPick = id; if (panel?.isOpen()) panel.update(view()); },   // DECOR-ROOMS
     });
     bar = createDecorBar({
       doc, touch,
@@ -253,6 +365,38 @@ export function createDecorTool(deps) {
   }
 
   const ensureScan = () => { scan ??= createDecorScan(deps.scanDeps()); return scan; };
+
+  /** DECOR-ROOMS: the finder for this interior - a new one for another interior's collider (a new visit), the choice
+   *  forgotten with the house it was made in. */
+  function ensureRooms() {
+    const c = deps.collider?.() ?? null;
+    if (rooms && roomsFor === c) return rooms;
+    roomsFor = c;
+    roomPick = null;
+    const box = typeof c?.bounds === 'function' ? c.bounds() : null;
+    rooms = createDecorRooms({ raycastHit: (o, d, m) => c.raycastHit(o, d, m), box });
+    return rooms;
+  }
+  /** DECOR-ROOMS: the house's rooms once found - two or more, since one room is no choice - else null. */
+  function roomList() {
+    if (!rooms || roomsFor !== (deps.collider?.() ?? null) || !rooms.done()) return null;
+    const found = rooms.rooms();
+    return found && found.length > 1 ? found : null;
+  }
+  /** Where a placed piece stands, in this visit's frame. */
+  const piecePoint = (piece) => { const o = deps.origin?.() ?? [0, 0, 0]; return [o[0] + piece.pos[0], o[1] + piece.pos[1], o[2] + piece.pos[2]]; };
+  /** The room chosen: the owner's pick, else the one the eye stands in, else the first. */
+  const roomChosen = (list) => list.find((r) => r.id === roomPick) ?? rooms.roomOf(deps.eye?.() ?? null) ?? list[0];
+  /** DECOR-ROOMS: WHERE A FLIGHT BEGINS - over the floor of the room chosen (a piece being moved: its own room's) when
+   *  that is not the room the eye stands in; else at the eye, as ever. */
+  function flightStart(editing) {
+    const eye = deps.eye?.() ?? [0, 0, 0];
+    const list = roomList();
+    if (!list) return eye;
+    const want = editing ? rooms.roomOf(piecePoint(editing)) : roomChosen(list);
+    const here = rooms.roomOf(eye);
+    return want && (!here || here.id !== want.id) ? [...want.eye] : eye;
+  }
   /** The hover names (the host's Map), filled once the catalogue stands; a step of the scan until then. */
   function nameFromCatalogue() {
     if (named) return;
@@ -316,13 +460,18 @@ export function createDecorTool(deps) {
   function view() {
     const r = deps.room?.();
     const s = ensureScan();
+    const list = roomList();   // DECOR-ROOMS
     return {
       placed: pool.list().map((piece) => {
         const entry = entryOf(piece);
-        return { piece, entry: entry.count ? entry : null, name: entry.name, holds: !!pool.holdsAny?.(piece.id), own: !!piece.item };
+        return { piece, entry: entry.count ? entry : null, name: entry.name, holds: !!pool.holdsAny?.(piece.id), own: !!piece.item, room: list ? rooms.roomOf(piecePoint(piece))?.id ?? null : null };
       }),
+      // DECOR-ROOMS: a house of two rooms or more - each one's name, and the one chosen (the panel's tabs, and its lists)
+      rooms: list ? list.map((room) => ({ id: room.id, name: room.name })) : null,
+      roomId: list ? roomChosen(list).id : null,
       // DECOR2a: what in the pack can stand here - free, and back to the pack when taken down
       own: ownEntries(),
+      base: baseRows(),   // BASE-HIDE: the room's own furniture
       where: r?.where ?? '',
       entries: s.entries(),
       progress: s.progress(),
@@ -333,6 +482,47 @@ export function createDecorTool(deps) {
       count: pool.size(),
       cap: DECOR_CAP,
     };
+  }
+
+  /** BASE-HIDE: THE ROOM'S OWN FURNITURE, nearest the eye first - each piece named by the catalogue once it is read (its
+   *  kind until then), how far it stands, whether it is out and whether it holds anything. */
+  function baseRows() {
+    const b = deps.base?.();
+    if (!b) return [];
+    const eye = deps.eye?.() ?? null;
+    return b.list().map((p) => {
+      const shape = decorKey(p);
+      const kind = p.model != null ? modelKind(p.model) : flatKind(p.flat[0]);
+      const dist = eye && p.at ? Math.hypot(p.at[0] - eye[0], p.at[1] - eye[1], p.at[2] - eye[2]) : null;
+      const list = roomList();   // DECOR-ROOMS: the room it stands in, where the house has more than one
+      return { key: p.key, shape, model: p.model, flat: p.flat, kind, name: deps.names?.get(shape) ?? DECOR_KINDS[kind], hidden: p.hidden, holds: p.holds, dist, room: list && p.at ? rooms.roomOf(p.at)?.id ?? null : null };
+    }).sort((a, b2) => (a.dist ?? Infinity) - (b2.dist ?? Infinity));
+  }
+
+  /** BASE-HIDE: THE ROOM'S OWN FURNITURE TAKEN OUT (`out`) OR PUT BACK - free. An online home writes the room's whole list
+   *  first (the account service is the room's truth, and every visitor's) and stands it once the service has it; the
+   *  house and the ship stand it at once (the room's scene carries the list into the save). A piece that holds anything
+   *  is never taken out: what it holds would go with it. */
+  async function setBase(keys, out) {
+    const r = deps.room?.();
+    const b = deps.base?.();
+    if (!r || !b || !Array.isArray(keys)) return false;
+    const rows = new Map(b.list().map((p) => [p.key, p]));
+    const moving = keys.filter((k) => { const p = rows.get(k); return p && p.hidden !== out && !(out && p.holds); });
+    if (!moving.length) return false;
+    const next = new Set(b.hidden());
+    for (const k of moving) { if (out) next.add(k); else next.delete(k); }
+    if (next.size > DECOR_HIDDEN_CAP) { deps.say?.('No more of this room\'s own furniture can be taken out.'); return false; }
+    const visit = deps.visit?.();
+    if (r.kind === 'home') {
+      const res = await deps.homeDecor?.hidden?.({ mapId: r.mapId, buildingKey: r.buildingKey, character: deps.character?.(), keys: [...next].sort() });
+      if (!res?.ok) { deps.say?.(deps.refusal?.(res?.error) ?? 'The room could not be changed.'); return false; }
+    }
+    if (deps.visit?.() !== visit) return false;
+    for (const k of moving) { if (out) b.hide(k); else b.show(k); }
+    const one = moving.length === 1 ? (baseRows().find((row) => row.key === moving[0])?.name ?? null) : null;
+    deps.say?.(one ? `${one} ${out ? 'taken out' : 'put back'}.` : `${moving.length} pieces ${out ? 'taken out' : 'put back'}.`);
+    return true;
   }
 
   /** THE BUTTON'S PRESS: the panel opens over the room (paused, the pointer freed - the slot's doing). */
@@ -350,27 +540,31 @@ export function createDecorTool(deps) {
    *  storage; its size, when the scan has not read it yet, is what it was priced at. */
   function beginPlacing(catalogueEntry, editing = null) {
     const s = ensureScan();
-    const entry = editing ? { ...catalogueEntry, light: editing.light ?? null, storage: !!editing.storage } : catalogueEntry;
+    const entry = editing ? { ...catalogueEntry, light: editing.light ?? null, storage: !!editing.storage, station: editing.station ?? null } : catalogueEntry;   // AUDIT HOME-STATIONS S1: a moved station stays one
     const free = entry.kind === 'own';   // DECOR2a: the player's own item - no price, whatever its size
     const radius = free ? null : s.radiusOf(catalogueEntry) ?? (editing ? editing.paid / (DECOR_PRICE_PER_METRE * editing.scale) : null);
-    const eye = deps.eye?.() ?? [0, 0, 0];
+    const eye = flightStart(editing);   // DECOR-ROOMS: in the room chosen - else at the eye, as ever
     placing = {
       entry, radius, editing, free, placer: null, fly: [...eye], start: [...eye], id: editing ? editing.id : mintDecorId(), piece: null,
-      refused: null, busy: false, batch: null, flatSize: null, rise: 0, art: null, decal: null,
+      refused: null, busy: false, batch: null, flatSize: null, rise: 0, art: null, decal: null, inside: [],
     };
     deps.cursorOff?.();   // a cursor freed to press the button would hold the look off for the whole placement
     if (entry.mount) {   // DECOR2c: the picture itself hangs where it will hang
-      const p = placing;
-      Promise.resolve(loadMountArt({ getTexture: deps.getTexture, uploadRecord: deps.uploadRecord, renderer }, entry.flat[0], entry.flat[1], decorMountDye(entry.item))).then((art) => {
-        if (placing !== p || !art) return;
-        p.art = art;
-        p.decal = renderer?.createDecalBatch?.(1) ?? null;
-        p.placer = createDecorPlacer(entry, { radius, from: editing, free });
-      }, () => {});
+      askGhostArt(placing);
     } else if (entry.model == null) {
       const p = placing;
-      Promise.resolve(deps.getTexture?.(entry.flat[0])).then((t) => {
-        if (placing !== p || !t || !(entry.flat[1] < t.recordCount)) return;
+      // MW-ASSIGN: one's own thing set down shows the Morrowind picture it will stand as (the room's own door and cache,
+      // scenes/decorRoom.js standPicture) - else its own world picture, as ever
+      const mw = entry.kind === 'own' && entry.item ? Promise.resolve(pool.standPicture?.(entry.item) ?? null).catch(() => null) : Promise.resolve(null);
+      Promise.all([deps.getTexture?.(entry.flat[0]), mw]).then(([t, pic]) => {
+        if (placing !== p) return;
+        if (pic) {
+          p.flatSize = { w: pic.w, h: pic.h };
+          p.placer = createDecorPlacer(entry, { radius, from: editing, free });
+          if (renderer?.createBillboardBatch) p.batch = renderer.createBillboardBatch(MW_STAND_ARCHIVE, pic.key, { ...p.flatSize }, [[0, 0, 0]]);
+          return;
+        }
+        if (!t || !(entry.flat[1] < t.recordCount)) return;
         deps.uploadRecord?.(entry.flat[0], entry.flat[1]);
         p.flatSize = billboardSize(t, entry.flat[1]);
         p.placer = createDecorPlacer(entry, { radius, from: editing, free });
@@ -378,6 +572,31 @@ export function createDecorTool(deps) {
       }, () => {});
     }
     listen(true);
+  }
+
+  /** DECOR2c: THE GHOST'S PICTURE, and its placer once it lands. MW-MOUNT: the room's own door - the Morrowind picture
+   *  while a build stands. AUDIT DYE-ICON r3 1: asked through the room (pool.mountPicture - its cache and its keys) where
+   *  the room offers it, so the texture a refresh lets go is never the ghost's still: a hung piece's ghost shared the
+   *  room's, drawn after it was gone, and a cancelled ghost's own upload was never let go. The answer to an older ask
+   *  hangs nothing. */
+  function askGhostArt(p) {
+    const { entry } = p;
+    const ask = pool.mountPicture?.(entry.flat, entry.item)
+      ?? loadMountPicture({ getTexture: deps.getTexture, uploadRecord: deps.uploadRecord, renderer, mwPicture: deps.mwPicture }, entry.flat, entry.item);
+    p.ask = ask;
+    Promise.resolve(ask).then((art) => {
+      if (placing !== p || p.ask !== ask || !art) return;
+      p.art = art;
+      p.decal ??= renderer?.createDecalBatch?.(1) ?? null;
+      p.placer ??= createDecorPlacer(entry, { radius: p.radius, from: p.editing, free: p.free });
+    }, () => {});
+  }
+  /** AUDIT DYE-ICON r3 1: the room asked its mounts' pictures again and let the old ones go (decorRoom.js onRefresh) -
+   *  the ghost draws none until its own new answer lands. */
+  function refreshGhost() {
+    if (!placing?.entry?.mount) return;
+    placing.art = null;
+    askGhostArt(placing);
   }
 
   /** Back to the panel (Escape, a right press, the Back button) - the piece chosen stays chosen; a move goes back to
@@ -429,10 +648,10 @@ export function createDecorTool(deps) {
           return false;
         }
         wallet.pay(price);
-        if (deps.visit?.() === visit) pool.put(decorPieceOf(res.data?.piece) ?? piece);
+        if (deps.visit?.() === visit) standRound(p, decorPieceOf(res.data?.piece) ?? piece);
       } else {
         deps.wallet().pay(price);
-        pool.put(piece);
+        standRound(p, piece);
       }
       deps.say?.(`${p.entry.name} placed for ${price} gold.`);
       p.id = mintDecorId();   // the next of the same piece is a new piece
@@ -440,6 +659,18 @@ export function createDecorTool(deps) {
     } finally {
       p.busy = false;
     }
+  }
+
+  /** AUDIT2 DECOR-SHELL 8: STAND A PIECE THE FLIGHT GOES ON FROM - and one that stands round the eye (its box within
+   *  the skin of it) is flown and looked through until the eye is out of it: the room's collider is two-sided, so every
+   *  step from inside was cut at the piece's own faces, and a wardrobe placed looking down at the eye's feet shut the
+   *  eye in it until Escape. */
+  function standRound(p, piece) {
+    pool.put(piece);
+    const box = piece.model != null ? models.get(piece.model)?.box : null;
+    if (!box) return;
+    const b = transformedAabb(box, decorMatrix(piece, deps.origin?.() ?? [0, 0, 0]));
+    if (inSkin(p.fly, b)) p.inside.push({ key: decorKeyOf(piece.id), box: b });
   }
 
   /** DECOR2a: SET ONE'S OWN ITEM DOWN where the ghost shows it - free. Online the account service has the piece first
@@ -476,7 +707,7 @@ export function createDecorTool(deps) {
   }
 
   /** The place half of a piece - what a move rewrites (net/decorLaw.js decorPlaceOf; what it IS never changes). */
-  const placeOf = (piece) => ({ pos: piece.pos, rot: piece.rot, scale: piece.scale, light: piece.light, storage: piece.storage, paid: piece.paid });
+  const placeOf = (piece) => ({ pos: piece.pos, rot: piece.rot, scale: piece.scale, light: piece.light, storage: piece.storage, paid: piece.paid, ...(piece.station ? { station: piece.station } : {}) });   // HOME-STATIONS: the craft, when it serves one
 
   /** Write a placed piece's change - through the account service in an online home, into the room's pool (and so the
    *  save) elsewhere - and answer the piece as it now stands, or null (the bar or the line says why). */
@@ -559,6 +790,7 @@ export function createDecorTool(deps) {
   async function togglePiece(piece, what) {
     const r = deps.room?.();
     if (!r) return false;
+    if (typeof what === 'string' && what.startsWith('station:')) return setStation(r, piece, what.slice(8));
     let next;
     if (what === 'light') {
       const own = entryOf(piece).light;
@@ -574,6 +806,48 @@ export function createDecorTool(deps) {
     if (deps.visit?.() === visit) pool.put(stood);
     return true;
   }
+
+  /** HOME-STATIONS: a piece a station cannot be made in for want of gold. */
+  const decorStationGoldLine = (kind) => `${DECOR_STATION_NAMES[kind]}: ${DECOR_STATION_FEES[kind].toLocaleString('en-US')} gold, and you have not that much.`;
+
+  /** HOME-STATIONS: A PLACED PIECE MADE A CRAFTING STATION, or unmade - `kind` one of DECOR_STATIONS, or 'none'. The
+   *  licence is paid once (DECOR_STATION_FEES) and never comes back; a piece that holds things, or one's own item, is
+   *  no station (the law says no piece). An online home's service that does not keep the craft is paid nothing. */
+  async function setStation(r, piece, kind) {
+    const want = kind === 'none' ? null : kind;
+    if (want !== null && !DECOR_STATIONS.includes(want)) return false;
+    // AUDIT HOME-STATIONS S2: ONE CHANGE AT A TIME, ON THE PIECE AS IT STANDS. A second press while the account service
+    // was still answering the first paid the licence twice, or - short of twice the gold - wrote the pre-station piece
+    // back over the one just paid for; and the panel's piece is a snapshot of an earlier frame.
+    if (stationBusy.has(piece.id)) return false;
+    const cur = pool.list().find((p) => p.id === piece.id) ?? piece;
+    if ((cur.station ?? null) === want) return false;
+    const fee = want ? DECOR_STATION_FEES[want] : 0;
+    if (fee > (deps.wallet?.().gold ?? 0)) { deps.say?.(decorStationGoldLine(want)); return false; }
+    const next = decorPieceOf({ ...cur, station: want });
+    if (!next) return false;
+    stationBusy.add(piece.id);
+    try {
+      const visit = deps.visit?.();
+      const stood = await writeChange(r, next);
+      if (!stood) return false;
+      if ((stood.station ?? null) !== want) { deps.say?.(DECOR_STATION_UNKEPT); return false; }   // an older home service drops it: nothing is paid
+      if (fee > (deps.wallet?.().gold ?? 0)) {   // the gold went while the service was asked: it stands as it was, and says so
+        await writeChange(r, cur);
+        deps.say?.(DECOR_STATION_GOLD_WENT);
+        return false;
+      }
+      if (fee > 0) deps.wallet().pay(fee);
+      if (deps.visit?.() === visit) pool.put(stood);
+      const name = entryOf(cur).name ?? 'The piece';
+      deps.say?.(want ? `${name}: ${DECOR_STATION_NAMES[want]}.` : `${name} is no longer a station.`);
+      return true;
+    } finally {
+      stationBusy.delete(piece.id);
+    }
+  }
+  /** AUDIT HOME-STATIONS S2: the pieces whose craft is being changed right now. */
+  const stationBusy = new Set();
 
   // THE KEYS AND PRESSES WHILE THE CAMERA FLIES, taken before the host sees them
   const turn = (e, dir) => placing?.placer?.turn(dir * (e.shiftKey ? DECOR_TURN_FINE : DECOR_TURN_STEP));
@@ -660,6 +934,7 @@ export function createDecorTool(deps) {
     spin = (spin + (dt > 0 ? dt : 0) * DECOR_PREVIEW_SPIN) % 360;
     if (panel?.isOpen()) {
       ensureScan().step();
+      ensureRooms().step();   // DECOR-ROOMS: a few rays a frame until the house's rooms are found
       nameFromCatalogue();
       panel.update(view());
       const pointed = panel.pointed();
@@ -680,9 +955,13 @@ export function createDecorTool(deps) {
       strafe: stick ? stick.strafe : (held('MoveRight') ? 1 : 0) - (held('MoveLeft') ? 1 : 0),
       rise: Math.max(-1, Math.min(1, (held('Jump') ? 1 : 0) - (held('Crouch') ? 1 : 0) + p.rise)),
     };
-    p.fly = flyStep(p.fly, p.start, move, cam.yaw, cam.pitch, held('Run') ? DECOR_FLY_FAST : DECOR_FLY_SPEED, dt);
     const origin = deps.origin?.() ?? [0, 0, 0];
-    const through = p.editing ? [decorKeyOf(p.editing.id)] : null;   // DECOR1e: a moved piece is no surface for itself
+    // DECOR1e: a moved piece is no surface for itself; AUDIT2 DECOR-SHELL 8: nor one just placed round the eye, until it is out
+    p.inside = p.inside.filter((c) => inSkin(p.fly, c.box));
+    const skips = [...(p.editing ? [decorKeyOf(p.editing.id)] : []), ...p.inside.map((c) => c.key)];
+    const through = skips.length ? skips : null;
+    const next = flyStep(p.fly, p.start, move, cam.yaw, cam.pitch, held('Run') ? DECOR_FLY_FAST : DECOR_FLY_SPEED, dt);
+    p.fly = flyClip(deps.collider?.(), p.fly, next, through);   // DECOR-SHELL: never through the room's own faces
     const hit = eyeHit(deps.collider?.(), p.fly, lookDir(cam.yaw, cam.pitch), through);
     p.piece = p.placer ? p.placer.pieceAt(hit.point, origin, p.id, hit.normal, cam.yaw) : null;   // DECOR2c: a mount reads the surface
     if (p.decal && p.art) {   // DECOR2c: the ghost hangs where the mount will - or, with nothing to hang on, nowhere
@@ -698,7 +977,7 @@ export function createDecorTool(deps) {
     if (p.batch && p.piece && p.flatSize) {
       const sc = p.piece.scale;
       p.batch.origin = [origin[0] + p.piece.pos[0], origin[1] + p.piece.pos[1], origin[2] + p.piece.pos[2]];
-      p.batch.size = { w: p.flatSize.w * sc, h: p.flatSize.h * sc };
+      p.batch.size = { w: p.flatSize.w * sc * (decorFlatMirrored(p.piece) ? -1 : 1), h: p.flatSize.h * sc };   // DECOR-FLIP: the ghost faces the way it will stand
       if (p.batch.bounds) p.batch.bounds[3] = Math.hypot(p.batch.size.w, p.batch.size.h) * 0.5;
     }
   }
@@ -740,7 +1019,7 @@ export function createDecorTool(deps) {
   function drawMounts(r = renderer) {
     const p = placing;
     if (!p || p.suspended || !p.piece || !p.decal || !p.art) return false;
-    r?.drawDecals?.(p.decal, p.art.tex);
+    (r?.drawDecalPicture ?? r?.drawDecals)?.call(r, p.decal, p.art.tex);   // WEAPON-MOUNT: the ghost is the picture it will hang as
     return true;
   }
 
@@ -792,6 +1071,7 @@ export function createDecorTool(deps) {
 
   return {
     frame, cameraOverride, draw, batches, drawMounts, drawPreview, close, openPanel, commit, back,
+    setBase,   // BASE-HIDE: the room's own furniture out or back - the panel's door (and the pins')
     /** Whether the camera flies - the host hands the body no movement while it does. */
     flying: () => !!placing && !placing.suspended,
     panelOpen: () => !!panel?.isOpen(),
@@ -803,6 +1083,7 @@ export function createDecorTool(deps) {
     destroy() {
       close();
       listen(false);
+      offRefresh?.();
       button?.destroy(); panel?.destroy(); bar?.destroy();
       button = panel = bar = null;
     },

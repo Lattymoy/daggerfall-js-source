@@ -3,7 +3,7 @@
 // `.px-home` / `.px-win` frame ui/enhancedTrade.js (the shop counter) wears - but it is NOT the shop counter: there is
 // no price, no haggle, no steal and no repair here, only two offers and two locks. So it does not extend that module
 // (which keeps its state in module variables and is built around ui/nativeTrade.js's hooks bag); it borrows the SAME
-// row and icon builders (`itemLine`, `linePictureUrl`) and the same stylesheet, so an item reads the same everywhere.
+// row and icon builders (`itemLine`, `linePicture` - UI1: fitted to the row's box) and the same stylesheet, so an item reads the same everywhere.
 //
 // THREE COLUMNS: your pack (tabbed, worn gear hidden) | your offer (items + a gold box) | their offer (read only, live).
 // THE LAW IS net/tradeSession.js's: this file draws a session and calls its four verbs (setOffer, lock/unlock, confirm,
@@ -11,7 +11,10 @@
 //
 // CLOSING: Escape / Close cancels a trade that is still being negotiated. Once the goods are in flight (`committing`) the
 // window cannot be cancelled and says so; when the session ends it shows the outcome a moment and closes itself.
-import { itemLine, linePictureUrl } from './enhancedInventory.js';
+import { itemLine, linePicture, markItemFrame, wearBar, itemPowerLines } from './enhancedInventory.js';   // TRADE-INFO: an item's magic, in words   // RARITY-UI: the pack's one frame marker; WEAR-UI: its wear bar
+import { lockRefuses, lockedText } from '../systems/itemLock.js';   // LOCK1: a locked piece is not held out
+import { SLOT_BOX } from './iconFit.js';   // UI1: the row's picture box
+import { fittedImg } from './textureCanvas.js';   // UI1: the fitted picture's element
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { overlayAction, isTextEntryTarget } from './input.js';
 import { TABS, tabAccepts } from './nativeInventory.js';
@@ -75,15 +78,16 @@ export function mountEnhancedPlayerTrade(hostEl, { session, deps }) {
   const stage = (item, count = null) => {
     if (session.phase !== 'open' || session.myConfirm) return;   // AUDIT DROPS B1: confirmed = frozen
     if (entries().length >= TRADE_ITEMS_MAX) { say(`At most ${TRADE_ITEMS_MAX} items in one trade.`); render(); return; }
+    if (lockRefuses(item, 'trade')) { say(lockedText(itemLine(item, deps.entity).name)); render(); return; }   // LOCK1
     const n = count ?? Math.max(1, item.stackCount ?? 1);
     applyOffer([...entries(), { item, count: n }]);
   };
   const unstage = (item) => { if (session.phase === 'open' && !session.myConfirm) applyOffer(entries().filter((e) => e.item !== item)); };   // AUDIT DROPS B1
 
   const itemTile = (line) => {
-    const src = linePictureUrl(line, { scale: 2, onReady: () => alive && render() });   // DISC22-D / DISC24-B: the pack's own door
-    if (src) {
-      const tile = el('span', 'tile has-icon'); const img = el('img'); img.src = src; img.alt = ''; tile.append(img); tile.title = line.name; return tile;
+    const pic = linePicture(line, { box: SLOT_BOX.row, onReady: () => alive && render() });   // DISC22-D / DISC24-B: the pack's own door; UI1: fitted to the row's box
+    if (pic) {
+      const tile = el('span', 'tile has-icon'); tile.append(fittedImg(pic)); tile.title = line.name; return tile;
     }
     const tile = el('span', 'tile', line.name.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase());
     tile.title = line.name; return tile;
@@ -91,14 +95,20 @@ export function mountEnhancedPlayerTrade(hostEl, { session, deps }) {
 
   const row = (item, side, count = null) => {
     const line = itemLine(item, deps.entity);
-    const b = el('button', 'itemrow');
-    b.append(itemTile(line));
+    const b = markItemFrame(el('button', 'itemrow'), item);   // RARITY-UI / SIGIL-UI: an offered piece wears its tier
+    const tile = itemTile(line);
+    const bar = wearBar(item);   // WEAR-UI: and its wear
+    if (bar) { tile.append(bar); b.classList.add('hasbar'); }
+    b.append(tile);
     const mid = el('span', 'itemname');
     const n = count ?? (line.stack || 0);
     mid.append(el('span', null, line.name + (n > 1 ? ` ×${n}` : '')));
     const sub = [line.material, line.word].filter(Boolean).join(' · ');
     if (sub) mid.append(el('small', null, sub));
     b.append(mid, el('span', 'itemwt', `${line.weight.toFixed(2)} kg`));
+    // TRADE-INFO (Tabitha: "magic item stats on the trade hover"): the row's hover says what its magic is - mine and theirs
+    const powers = itemPowerLines(item, deps);
+    b.title = [line.name, ...powers].join('\n');
     if (selected?.item === item) b.classList.add('picked');
     if (side === 'offer') b.classList.add('staged');
     b.onclick = (e) => {
@@ -177,6 +187,9 @@ export function mountEnhancedPlayerTrade(hostEl, { session, deps }) {
     if (line.armour != null) bits.push(`Armour ${line.armour}`);
     for (const t of line.survival ?? []) bits.push(t);
     info.append(el('p', 'meta', bits.filter(Boolean).join(' · ')));
+    // TRADE-INFO: and the item's magic, a line each - the same list the pack's card draws
+    const powers = itemPowerLines(selected.item, deps);
+    if (powers.length) { const ul = el('ul', 'rarity'); for (const p of powers) ul.append(el('li', null, p)); info.append(ul); }
     bar.append(info);
     const stack = Math.max(1, selected.item.stackCount ?? 1);
     if (selected.side === 'pack' && session.phase === 'open' && !session.myConfirm) {

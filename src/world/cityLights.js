@@ -22,6 +22,82 @@ import { GLOBAL_SCALE } from './meshReader.js';
 
 export const LIGHTS_ARCHIVE = 210;
 export const CITY_LIGHT_RANGE = 18;
+/**
+ * LA-LIGHTS2 (2026-09-27, Mac: "look for flickering issues"): THE CAP FADES, IT DOES NOT CUT. The lane lights the
+ * nearest EL_MAX_LIGHTS (48) of a town's lanterns, and a town at night holds more (the probe's night street: all 48
+ * taken, every frame). Each step the player took changed which lanterns made the cut, and the one that left went dark
+ * at once wherever it lit - a pool of light on a far street switching off, another switching on. A lantern's share of
+ * its light now falls to nothing over the last LIGHT_CAP_FADE units before the first lantern the cap leaves out, so
+ * the one that leaves the set leaves it dark and the one that joins joins dark. The hand's lights (the torch, the
+ * candle, a peer's) are never faded; a set the cap does not cut fades nothing.
+ */
+export const LIGHT_CAP_FADE = 16;
+/** LA-LIGHTS2: the colours `renderer.setPointLights` takes for `lit` - the composed array, the hand's `lead` lights
+ *  first and then the lanterns nearest first, one or more past the renderer's `cap` - seen from `pos`: `color` for the
+ *  hand's, each kept lantern's `color` times its share, or null when the cap leaves nothing out. */
+export function capFadeColors(lit, lead, pos, cap, color, fade = LIGHT_CAP_FADE) {
+  return capFade(lit, lead, pos, cap, color, 0, fade);
+}
+/** LA-AUDIT A5 (2026-09-27, the audit before LA's merge; lens A measured it): THE DUNGEON'S CAP FADES TOO. A level
+ *  holds more torches than the lane's 48 (Scourg Barrow's cap cut at 128 of 297 in range, Privateer's Hold at 38 of
+ *  71), and each one the walk brought in popped on at full strength - 138 joins in a 20-second walk, the first left out
+ *  34 to 72 units off. capFadeColors for a set whose lights carry their OWN colours (the world host's dungeon pairs:
+ *  the candle's white, a camp's fire, the torches' flame): each kept light's colour times its share. */
+export function capFadePairs(lit, lead, pos, cap, colors, fade = LIGHT_CAP_FADE) {
+  return capFade(lit, lead, pos, cap, colors, 3, fade);
+}
+/** The two above: `color` one vec3 (`stride` 0) or one per light (`stride` 3). */
+function capFade(lit, lead, pos, cap, color, stride, fade) {
+  const count = lit.length >> 2;
+  if (count <= cap || lead >= cap) return null;
+  const dist = (i) => Math.hypot(lit[i * 4] - pos[0], lit[i * 4 + 1] - pos[1], lit[i * 4 + 2] - pos[2]);
+  const cut = dist(cap);   // the first light the cap leaves out
+  const out = new Float32Array(cap * 3);
+  for (let i = 0; i < cap; i++) {
+    const share = i < lead ? 1 : Math.max(0, Math.min(1, (cut - dist(i)) / fade));
+    const c = i * stride;
+    out[i * 3] = color[c] * share; out[i * 3 + 1] = color[c + 1] * share; out[i * 3 + 2] = color[c + 2] * share;
+  }
+  return out;
+}
+/** LA-LIGHTS1 (2026-09-27): the CityLightAnimator slot a pixel's FIRST lantern flickers on (its j-th: this plus j,
+ *  modulo the animator's length) - named by the pixel, so each lantern keeps its own flicker whatever else is built
+ *  around it (world.js refills its pool in `built`'s order, which a stream-out reshuffles). */
+export const lanternSlot = (px, py) => (Math.imul(px | 0, 73856093) ^ Math.imul(py | 0, 19349663)) >>> 0;
+/** LA-AUDIT F2 (2026-09-27; lens F found the fill unpinned - LA-LIGHTS1's test ran its own copy): THE STREET'S LANTERN
+ *  POOL, REFILLED (world.js's PERF-LIGHTS pool). Each built pixel's lanterns go into `pool` from 0 under the pixel's
+ *  live translation, and each takes the range of its own animator slot - its pixel's lanternSlot plus its place in the
+ *  pixel's list (LA-LIGHTS1). `ranges` grows with the pool (a town holds more than its first 64), and is handed back.
+ *  @param {Iterable<{ px: number, py: number, lights: ArrayLike<ArrayLike<number>> }>} pixels
+ *  @param {(p: any) => ArrayLike<number>} translate the pixel's live translation
+ *  @param {Array<{ x: number, y: number, z: number }>} pool
+ *  @param {Float32Array} ranges
+ *  @param {ArrayLike<number>} animRanges the animator's live ranges
+ *  @returns {{ n: number, ranges: Float32Array }} */
+export function fillLanternPool(pixels, translate, pool, ranges, animRanges) {
+  let n = 0;
+  for (const p of pixels) {
+    if (!p.lights.length) continue;
+    const t = translate(p);
+    ranges = rangesFor(ranges, n + p.lights.length);
+    const slot0 = lanternSlot(p.px, p.py);
+    for (let j = 0; j < p.lights.length; j++) {
+      const l = p.lights[j];
+      const e = pool[n] ?? (pool[n] = { x: 0, y: 0, z: 0 });
+      e.x = l[0] + t[0]; e.y = l[1] + t[1]; e.z = l[2] + t[2];
+      ranges[n] = animRanges[(slot0 + j) % animRanges.length];
+      n++;
+    }
+  }
+  return { n, ranges };
+}
+/** A range array with room for `n`, keeping what is in it (the same one when it has room). */
+export function rangesFor(ranges, n) {
+  if (ranges.length >= n) return ranges;
+  const g = new Float32Array(Math.max(n, ranges.length * 2));
+  g.set(ranges);
+  return g;
+}
 export const CITY_LIGHT_INTENSITY = 1;
 export const CITY_LIGHT_COLOR = Object.freeze([1, 1, 1]);
 

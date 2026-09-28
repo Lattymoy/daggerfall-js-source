@@ -142,7 +142,10 @@ export function activeSpellIcons(entity) {
       expiring: maxRoundsRemaining(bundle) < 2,
       isItem: bundle.bundleType === 'HeldMagicItem',
     };
-    (bundle.selfCast ? self : other).push(item);
+    // SPELL-GIFT (2026-09-27, Tabitha: "the feedback for buffing other players is non-existent"): a GIFT - another
+    // player's beneficial spell (ALLY-CAST's bundleAlly, only ever the beneficial families) - is a buff, and sorts with
+    // the buffs. DFU's null-caster arm sent it to the debuff row, where only a foe's spell has ever landed in DFU.
+    (bundle.selfCast || bundle.ally ? self : other).push(item);
   }
   return { self, other };
 }

@@ -47,11 +47,20 @@ export const PREF_DEFAULTS = Object.freeze({
   // (GrimoireUI). Read it through uiPack.js activeUiPack, which answers the URL and the skin on top of it.
   uiPack: 'none',
   // PLUS1 (2026-09-25): Enhanced Plus - the refreshed dress over the enhanced skin (systems/uiSkin.js isEnhancedPlus).
-  // Off by default: Enhanced stays the default look; the UI Overhaul panel is where a player picks Plus.
-  enhancedPlus: false,
+  // PLUS-ONLY (2026-09-26): `enhancedPlus`, the switch between it and plain Enhanced (PLUS-DEFAULT turned it on), is
+  // RETIRED - plain Enhanced is gone and Plus is simply the enhanced skin. A stored value is read by nothing.
   // PLUS2: Enhanced Plus's colours - a ui/enhancedFrame.js PLUS_THEMES id; 'slate' is the kit as it ships.
   plusTheme: 'slate',  plusCursor: true,   // PLUS6: the gauntlet cursor - off gives the system pointer back
   plusItemHover: true,   // PLUS7: the inventory's hover card - off keeps the right-click menu, drops the card
+  // PADPLUS1: the Plus controller - the crossbar ('auto' while a pad is connected, 'on', 'off'), run as a toggle on
+  // the Run button, and the version of the one-time layout move already made (ui/plusPad.js)
+  plusCrossbar: 'auto', plusToggleRun: true, plusPadLayout: 0,
+  // PADPLUS10: the d-pad's tap and hold per direction (null = the defaults, ui/plusPad.js PLUS_DPAD_DEFAULTS) and the
+  // two sticks' sensitivity multipliers - the Controller bindings window writes them
+  plusDpad: null, plusStickLeft: 1, plusStickRight: 1,
+  // PEERMENU1: the player menu's two binds, keyboard and controller, each { code, hold } (null = the defaults: hold E,
+  // hold A - systems/peerMenuBind.js). Online only.
+  peerMenuKey: null, peerMenuPad: null,
   // ONLINE1 (2026-09-12): the Online door's two fields - the name over the
   // player's head and the relay to join (net/online.js DEFAULT_SERVER when empty).
   onlineServer: '',
@@ -79,6 +88,14 @@ export const PREF_DEFAULTS = Object.freeze({
   touchGyroSensitivity: 1,   // 1 = a degree of phone is a degree of camera
   touchHaptics: true,        // a short vibration on a button, an armed swipe and a lock
   touchFullscreen: true,     // the first touch asks for fullscreen and a landscape lock where the browser allows it
+  // TOUCH-BUTTONS (2026-09-27): the corner's three slots, from the corner in (ui/touchButtons.js) - TI1's two, and none
+  touchButton1: 'Jump',
+  touchButton2: 'ReadyWeapon',
+  touchButton3: 'none',
+  // SPELL-GIFT (2026-09-27): whether a player OUTSIDE my party may cast the stranger's list of spells on me (Heal,
+  // Regenerate, Cure, Fortify, Shield, resistances, Jumping, Water Breathing - systems/allyCast.js). On: Tabitha's ask.
+  acceptStrangerSpells: true,
+  restWithParty: true,   // REST-OPT: off - I rest alone, and the party rests without me
   // MWA4 (2026-09-25): `mwArms` (MWA1's arms switch) is retired - the attached Morrowind files are the switch, and
   // Remove data the off (combat/weaponRig.js autoBuildArms, ui/enhancedMenu.js morrowindCard). A stored value is
   // read by nothing.

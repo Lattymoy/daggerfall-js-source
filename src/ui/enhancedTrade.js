@@ -32,11 +32,13 @@
 // enhancedSpellbook.js ("this window reads no ARENA2"), a trade
 // counter reachable from a fresh install with no classic assets must
 // stand on its own - so this reads item icons the same OPTIONAL way
-// enhancedInventory's own item tile does (its linePictureUrl door over
+// enhancedInventory's own item tile does (its linePicture door over
 // the item's texture record, or the cart's model), falling back to two
 // letters when that picture is unavailable, and never blocks on it.
 
-import { itemLine, linePictureUrl } from './enhancedInventory.js';   // RF6/MW-D38: one item model, read by both packs
+import { itemLine, linePicture, markItemFrame, wearBar } from './enhancedInventory.js';   // RF6/MW-D38: one item model, read by both packs; RARITY-UI: one frame marker; WEAR-UI: one wear bar
+import { SLOT_BOX } from './iconFit.js';   // UI1: the row's picture box
+import { fittedImg } from './textureCanvas.js';   // UI1: the fitted picture's element
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';
 import { overlayAction } from './input.js';
@@ -58,6 +60,8 @@ import { howManyField } from './howManyField.js';   // DISC25-F: the counter's h
 import { isTextEntryTarget } from './input.js';
 import { isSummoned, carriedWeight, totalWeight, transferAll, addItem } from '../systems/inventory.js';   // AUDIT UXB1 F4: addItem, a returning lot's merge
 import { isFurnishing } from '../systems/decorFurnish.js';   // DECOR2b: furniture is delivered, never carried
+import { lockRefuses, lockedText } from '../systems/itemLock.js';   // LOCK1: a locked piece is not for sale
+import { isBound, boundText } from '../systems/itemBound.js';   // SS4: nor a bound one - a Sigil Stone, the Broker's wares
 import { getBool } from '../systems/settings.js';   // UXB1-K: InstantRepairs - no clock to count down
 import { dateFromClassicMinutes, dateString } from '../systems/gameDate.js';
 import { sharedRealTimeText } from '../systems/worldTick.js';   // UXB1-K: online, the ready time in the player's own clock
@@ -192,6 +196,7 @@ function quotePriceFor(item, side) {
   // make (localClickDecision) - a quote for an item this mode would
   // refuse (an unrepairable trinket, an already-identified ring, a
   // wagon in use) would just be misleading.
+  if (saleRefused(item)) return null;   // AUDIT SS: and a locked or bound piece's sale is refused - "Sell for 25000 gold" over five Sigil Stones was a price the counter never pays
   const d = localClickDecision(mode, item, {
     allowMagicRepairs: deps.allowMagicRepairs ?? false,
     usingIdentifySpell: deps.usingIdentifySpell ?? false,
@@ -227,7 +232,23 @@ function refuse(refusal) {
   render();
 }
 
+/** LOCK1, SS4: a piece this counter will not put up for SALE - locked, or bound (systems/itemBound.js); a repair or an
+ *  identify still takes either, because it comes back. AUDIT SS: one reading for the refusal, the quote and the count. */
+const saleRefused = (item) => selling() && (lockRefuses(item, 'sell') || isBound(item));
+
 function refuseTransfer(item) {
+  // LOCK1: a locked piece is not put up for SALE - a repair or an identify still takes it, because it comes back
+  if (selling() && lockRefuses(item, 'sell')) {
+    box = { rows: [{ text: lockedText(itemLine(item, deps.entity).name), center: true }], buttons: null };
+    render();
+    return true;
+  }
+  // SS4: a BOUND piece is not put up for sale either (systems/itemBound.js) - a repair or an identify still takes it
+  if (selling() && isBound(item)) {
+    box = { rows: [{ text: boundText(itemLine(item, deps.entity).name), center: true }], buttons: null };
+    render();
+    return true;
+  }
   const refused = isSummoned(item) || questTransferRefused(item, {
     fromLocal: true, toWagon: false, getQuest: deps.getQuest ?? null,
   });
@@ -362,6 +383,7 @@ function askAgain(item) {
  */
 function splitMaxOf(item, side) {
   if (!item || mode === 'Repair') return 0;
+  if (side === 'local' && saleRefused(item)) return 0;   // AUDIT SS: no "how many" over a sale that is refused
   if (side === 'remote') {
     if (!inBuy()) return stackOf(item);
     const plan = planTake(item, { bag: [...deps.packItems(), ...basket], entity: deps.entity ?? null, dryRun: true });
@@ -566,6 +588,7 @@ function confirmTrade(price) {
 function quickSellSelected() {
   if (!selected || !isQuickSellCandidate()) return;
   const item = selected.item;
+  if (isBound(item) || lockRefuses(item, 'sell')) return;   // AUDIT SS: the counter's own refusals hold here too, should this path ever open (isQuickSellCandidate answers false)
   const ctx = deps.priceCtx?.() ?? {};
   const c = tradeCost('Sell', [item], ctx).cost;
   const price = getTradePrice('Sell', c, ctx.quality ?? 0, ctx.skills ?? {});
@@ -669,12 +692,10 @@ export function repairReadyLine(c) {
 // ── ROWS ──────────────────────────────────────────────────────────
 
 function itemTile(line) {
-  const src = linePictureUrl(line, { scale: 2, onReady: render });   // DISC22-D / DISC24-B: the pack's own door - the item's dye, the cart's model
-  if (src) {
+  const pic = linePicture(line, { box: SLOT_BOX.row, onReady: render });   // DISC22-D / DISC24-B: the pack's own door - the item's dye, the cart's model; UI1: fitted to the row's box
+  if (pic) {
     const tile = el('span', 'tile has-icon');
-    const img = el('img');
-    img.src = src; img.alt = '';
-    tile.append(img);
+    tile.append(fittedImg(pic));
     tile.title = line.name;
     return tile;
   }
@@ -685,8 +706,11 @@ function itemTile(line) {
 
 function itemRow(item, from) {
   const line = itemLine(item, deps.entity);
-  const row = el('button', 'itemrow');
-  row.append(itemTile(line));
+  const row = markItemFrame(el('button', 'itemrow'), item);   // RARITY-UI / SIGIL-UI: the shelf's icons wear their tier too
+  const tile = itemTile(line);
+  const bar = wearBar(item);   // WEAR-UI: what a piece will fetch starts with how worn it is - said before the click
+  if (bar) { tile.append(bar); row.classList.add('hasbar'); }
+  row.append(tile);
   const mid = el('span', 'itemname');
   mid.append(el('span', null, line.name + (line.stack ? ` ×${line.stack}` : '')));
   const sub = [line.material, line.word].filter(Boolean).join(' · ');
@@ -942,6 +966,10 @@ export function mountEnhancedTrade(hostEl, hooks = {}) {
   return {
     repaint: render,
     unmount() {
+      // AUDIT SS: EVERY way off this screen puts back what is staged - OnPop's ClearSelectedItems. The door's own close
+      // (the QuickDial's key, a death, a building left, a load: ui/tradeDoor.js dispose) comes straight here, past this
+      // view's close(), and the staged goods - a sale's, an identify's, a basket's - went with the view
+      if (host) clear();
       if (keyHandler) globalThis.removeEventListener('keydown', keyHandler, { capture: true });
       keyHandler = null;
       unregisterOutside();

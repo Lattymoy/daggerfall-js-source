@@ -155,7 +155,7 @@ test('HCC hosts: world.js - the frame, the draw, the origin, the ray, the plaque
     /horseCart: \(\) => hccRuntimeOn\(\),\s+\/\/ HCC: TrailingWagonTransportWindow/, /horseCart: hccRuntimeOn,\s+\/\/ HCC: the wagon's storage access is the runtime's word/,
   ]) assert.match(w, re, `world.js lost ${re}`);
   assert.equal((w.match(/hcc\.clearPeers\(\)/g) ?? []).length, 1, 'the peers\' teams clear wherever the pool\'s puppets do - the pool\'s own clearPuppets hook, so the pinned room-change and leave lines stand as they were');
-  assert.match(w, /if \(!seam\) exteriorFoes\.clearPuppets\(\);/); assert.match(w, /online\.leave\(\); exteriorFoes\.clearPuppets\(\); _foesRoom = null;/);
+  assert.match(w, /if \(!seam\) \{ exteriorFoes\.clearPuppets\(\);/); assert.match(w, /online\.leave\(\); exteriorFoes\.clearPuppets\(\); modes\?\.clearOwnPuppets\?\.\(\); _foesRoom = null;/);   // QUEST-PARTY phase 3b: and a building's
 });
 
 test('HCC hosts: exterior.js mirrors the same seams over the fixed city (no stream, no save, no ship, no fast travel)', () => {
@@ -204,7 +204,7 @@ test('HCC-ONLINE hosts: the foe pool carries the `hv` field past its room test a
   assert.match(f, /if \(data\.hv !== undefined\) _onHcc\?\.\(from, data\.hv, _now\(\)\);/);
   assert.match(f, /if \(data\.hv !== undefined\) _onHcc[^\n]*\n\s+if \(Array\.isArray\(data\.c\)\) _onCamps/, 'past the room test the camps pass, beside them');
   assert.match(f, /function setOnHcc\(fn, onClear = null\)/);
-  assert.match(f, /_pupPending\.clear\(\);\n\s+_onHccClear\?\.\(\);/, 'the peers\' teams go with the puppets');
+  assert.match(f, /_pupPending\.clear\(\);\n\s+(?:_adopted\.clear\(\);[^\n]*\n\s+)?_onHccClear\?\.\(\);/, 'the peers\' teams go with the puppets');
   assert.match(f, /setOnCamps, setOnHcc, setOnDuel \};/);   // DUEL1: and the ring a peer duels in, the same way
   assert.doesNotMatch(rd('server/src/index.js'), /\bhv\b/, 'the relay reads nothing inside a foes frame - no relay change, no version bump');
 });

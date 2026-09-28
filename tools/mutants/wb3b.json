@@ -155,8 +155,8 @@
   {
     "name": "WB3b-another-days-kill-taken",
     "file": "src/net/gateLink.js",
-    "old": "    case 'fell': return g.d !== undefined && g.d !== s.day ? s :",
-    "new": "    case 'fell': return false ? s :",
+    "old": "      if (g.d !== undefined && g.d !== s.day) return s;",
+    "new": "      if (false) return s;",
     "tests": [
       "test/wb3b_gate_arena.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "WB3b-the-court-outlives-its-day",
     "file": "src/scenes/world.js",
-    "old": "    if (courtDay != null && Date.now() + _sharedOffsetMs >= gateTimes(courtDay).wrathAt + GATE_COLLAPSE_MS) ejectFromCourt(COURT_TEXT.collapse);",
-    "new": "    if (courtDay != null && false) ejectFromCourt(COURT_TEXT.collapse);",
+    "old": "    if (courtDay != null && Date.now() + _sharedOffsetMs >= gateTimes(courtDay).wrathAt + GATE_COLLAPSE_MS) {",
+    "new": "    if (courtDay != null && false) {",
     "tests": [
       "test/wb3b_gate_arena.test.js"
     ]

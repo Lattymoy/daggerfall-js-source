@@ -56,7 +56,7 @@ import { CLIMATES, MAX_MAP_PIXEL_X, MAX_MAP_PIXEL_Y } from '../formats/mapsFile.
 import { SEASONS, seasonValue, dateFromClassicMinutes } from './gameDate.js';
 import { WEATHER_TABLE, weatherTableFor } from './weatherTable.js';
 import { pixelOfField } from './weatherField.js';
-import { seededRng, VIOLENCE } from './wind.js';
+import { seededRng, seededFirst, VIOLENCE } from './wind.js';
 
 const WORLD_SEED = 0x57584D50;   // 'WXMP'
 
@@ -157,10 +157,11 @@ export const SHAPE_AMPS = Object.freeze({
 });
 /** The largest m(theta) a type's shape can reach: a search's reach. */
 export const shapeMax = (type) => 1 + SHAPE_AMPS[type].reduce((a, b) => a + b, 0);
-/** A system's shape, from six draws of its generator (taken whatever its fate). */
-function drawShape(type, r) {
+/** A system's shape, from six draws of its generator (taken whatever its fate) - FLOW2 (2026-09-26): the draws are
+ *  taken where they always were, and the shape made from them only for a candidate that is kept (the same numbers). */
+function shapeOf(type, u1, u2, u3, u4, u5, u6) {
   const [A2, A3, A4] = SHAPE_AMPS[type];
-  const a2 = A2 * r(), p2 = r() * Math.PI * 2, a3 = A3 * r(), p3 = r() * Math.PI * 2, a4 = A4 * r(), p4 = r() * Math.PI * 2;
+  const a2 = A2 * u1, p2 = u2 * Math.PI * 2, a3 = A3 * u3, p3 = u4 * Math.PI * 2, a4 = A4 * u5, p4 = u6 * Math.PI * 2;
   const n = 1 / Math.sqrt(1 + (a2 * a2 + a3 * a3 + a4 * a4) / 2);
   return Object.freeze([n, a2 * Math.cos(2 * p2), a2 * Math.sin(2 * p2), a3 * Math.cos(3 * p3), a3 * Math.sin(3 * p3), a4 * Math.cos(4 * p4), a4 * Math.sin(4 * p4)]);
 }
@@ -434,35 +435,44 @@ function valueNoise(x, z, salt) {
   const gx = Math.floor(x), gz = Math.floor(z);
   const fx = x - gx, fz = z - gz;
   const sx = fx * fx * (3 - 2 * fx), sz = fz * fz * (3 - 2 * fz);
-  const at = (i, j) => seededRng((Math.imul(i, 0x27d4eb2d) ^ Math.imul(j, 0x165667b1) ^ Math.imul(salt, 0x9e3779b1) ^ WORLD_SEED) >>> 0)();
-  const a = at(gx, gz), b = at(gx + 1, gz), c = at(gx, gz + 1), d = at(gx + 1, gz + 1);
+  const a = noiseAt(gx, gz, salt), b = noiseAt(gx + 1, gz, salt), c = noiseAt(gx, gz + 1, salt), d = noiseAt(gx + 1, gz + 1, salt);
   return (a + (b - a) * sx) + ((c + (d - c) * sx) - (a + (b - a) * sx)) * sz;
 }
-/** The wind terms' headings at a place (radians at minute 0). */
+/** A lattice corner's value: its seed's first draw. FLOW2 (2026-09-26): no generator made for the one number, no
+ *  closure a call - the same bits, and a wind reading allocates nothing but its answer. */
+const noiseAt = (i, j, salt) => seededFirst((Math.imul(i, 0x27d4eb2d) ^ Math.imul(j, 0x165667b1) ^ Math.imul(salt, 0x9e3779b1) ^ WORLD_SEED) >>> 0);
+/** The wind terms' headings at a place (radians at minute 0) - FLOW2: into one scratch array, read at once by its
+ *  caller (neither windAt nor windPath asks again before it has done). */
+const _headings = new Float64Array(WIND_TERMS.length);
 function headings(x, z) {
   const nx = x / WIND_SCALE_M, nz = z / WIND_SCALE_M;
-  return WIND_TERMS.map(([, base, swing], i) => base + swing * (valueNoise(nx, nz, 11 + i) - 0.5));
+  for (let i = 0; i < WIND_TERMS.length; i++) _headings[i] = WIND_TERMS[i][1] + WIND_TERMS[i][2] * (valueNoise(nx, nz, 11 + i) - 0.5);
+  return _headings;
 }
 /** The wind at a place and minute, [vx, vz] as shares of full speed
  *  (magnitude at most 1). */
 export function windAt(x, z, minutes) {
   const h = headings(x, z);
   let vx = 0, vz = 0;
-  WIND_TERMS.forEach(([share, , , turn], i) => { const a = h[i] + turn * minutes; vx += share * Math.cos(a); vz += share * Math.sin(a); });
+  for (let i = 0; i < WIND_TERMS.length; i++) { const share = WIND_TERMS[i][0], a = h[i] + WIND_TERMS[i][3] * minutes; vx += share * Math.cos(a); vz += share * Math.sin(a); }
   return [vx, vz];
 }
 /** How far a system born at (x, z) at minute t0 has ridden by minute t,
  *  in wind shares x minutes - the wind read at its birthplace (it turns
  *  over hundreds of km; a system rides tens), integrated closed form. */
 export function windPath(x, z, t0, t) {
-  const h = headings(x, z);
+  return pathWith(headings(x, z), t0, t);
+}
+/** FLOW2: `windPath` from a place's headings already read (`headings`, or a born system's own - `hostHeadings`). */
+function pathWith(h, t0, t) {
   let dx = 0, dz = 0;
-  WIND_TERMS.forEach(([share, , , turn], i) => {
-    if (turn === 0) { dx += share * Math.cos(h[i]) * (t - t0); dz += share * Math.sin(h[i]) * (t - t0); return; }
+  for (let i = 0; i < WIND_TERMS.length; i++) {
+    const share = WIND_TERMS[i][0], turn = WIND_TERMS[i][3];
+    if (turn === 0) { dx += share * Math.cos(h[i]) * (t - t0); dz += share * Math.sin(h[i]) * (t - t0); continue; }
     const a0 = h[i] + turn * t0, a1 = h[i] + turn * t;
     dx += (share * (Math.sin(a1) - Math.sin(a0))) / turn;
     dz += (share * (Math.cos(a0) - Math.cos(a1))) / turn;
-  });
+  }
   return [dx, dz];
 }
 
@@ -534,11 +544,12 @@ function drawBirths(type, gx, gz, gt, climateAt) {
     // every draw is taken whether or not the candidate is kept, so one
     // candidate's fate never moves another's
     const bornX = (gx + r()) * nodeM, bornZ = (gz + r()) * nodeM, bornAt = (gt + r()) * nodeMinutes;
-    const keep = r(), rc = r(), rl = r(), shape = drawShape(type, r);
+    const keep = r(), rc = r(), rl = r(), u1 = r(), u2 = r(), u3 = r(), u4 = r(), u5 = r(), u6 = r();
     const season = seasonValue(dateFromClassicMinutes(bornAt));
     const law = birthLaw(climateOfField(climateAt, bornX, bornZ), season);
     const hour = (((bornAt % 1440) + 1440) % 1440) / 60;
     if (!law || keep * ceiling >= law.weight[type] * diurnal(type, hour, season)) continue;
+    const shape = shapeOf(type, u1, u2, u3, u4, u5, u6);
     out.push(Object.freeze({
       type, id: `${type}:${gx}:${gz}:${gt}:${i}`, bornX, bornZ, bornAt, shape,
       core: spec.core[0] + rc * (spec.core[1] - spec.core[0]),
@@ -572,16 +583,18 @@ function drawCells(front, climateAt) {
   const reach = front.core * shapeBound(front.shape) + spec.core[1] * shapeMax(type), lead = spec.life[1];
   const n = poisson(ceiling * Math.PI * reach * reach * (lead + front.life), r);
   const out = [];
+  const fh = hostHeadings(front);
   for (let i = 0; i < n; i++) {
     const bornAt = front.bornAt - lead + r() * (lead + front.life), rad = reach * Math.sqrt(r()), ang = r() * Math.PI * 2;
-    const keep = r(), rc = r(), rl = r(), shape = drawShape(type, r);
+    const keep = r(), rc = r(), rl = r(), u1 = r(), u2 = r(), u3 = r(), u4 = r(), u5 = r(), u6 = r();
     const ox = rad * Math.cos(ang), oz = rad * Math.sin(ang);
-    const [px, pz] = windPath(front.bornX, front.bornZ, front.bornAt, bornAt);
+    const [px, pz] = pathWith(fh, front.bornAt, bornAt);   // FLOW2: the front's own headings, read once for all its cells
     const bornX = front.bornX + px * fspec.speed + ox, bornZ = front.bornZ + pz * fspec.speed + oz;
     const season = seasonValue(dateFromClassicMinutes(bornAt));
     const law = birthLaw(climateOfField(climateAt, bornX, bornZ), season);
     const hour = (((bornAt % 1440) + 1440) % 1440) / 60;
     if (!law || keep * ceiling >= law.weight[type] * diurnal(type, hour, season)) continue;
+    const shape = shapeOf(type, u1, u2, u3, u4, u5, u6);
     out.push(Object.freeze({
       type, id: `${front.id}/${i}`, front, ox, oz, bornX, bornZ, bornAt, shape,
       core: spec.core[0] + rc * (spec.core[1] - spec.core[0]),
@@ -594,9 +607,18 @@ function drawCells(front, climateAt) {
 
 /** Where a born system stands at `minutes` (alive or not): its birthplace
  *  ridden on the wind - a cell, its front's place plus its own offset. */
+/** FLOW2 (2026-09-26): a born system's headings at its birthplace, read once for the system (a system is one frozen
+ *  object for as long as the births cache holds it, and its birthplace never moves) - every placing of it read the same
+ *  twelve noise corners again. */
+const _hostHeadings = new WeakMap();
+function hostHeadings(host) {
+  let h = _hostHeadings.get(host);
+  if (!h) _hostHeadings.set(host, h = Float64Array.from(headings(host.bornX, host.bornZ)));
+  return h;
+}
 function placeAt(b, minutes) {
   const host = b.front ?? b, speed = SYSTEM_TYPES[host.type].speed;
-  const [px, pz] = windPath(host.bornX, host.bornZ, host.bornAt, minutes);
+  const [px, pz] = pathWith(hostHeadings(host), host.bornAt, minutes);
   return [host.bornX + px * speed + (b.ox ?? 0), host.bornZ + pz * speed + (b.oz ?? 0)];
 }
 

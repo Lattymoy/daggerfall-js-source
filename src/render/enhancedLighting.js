@@ -67,6 +67,7 @@ import { BAYER_GLSL, BAYER_MEAN } from './orderedDither.js';
 import { CLOUD_SHADOW_GLSL } from './cloudShadow.js';   // AUDIT 68 S16-el-cloudshadow-dup: the reader's one home, as the classic lane and the shafts take it - five hand copies were here
 import { CLUSTER_X, CLUSTER_Y, CLUSTER_Z, CLUSTER_LIST_W, clustersOn } from './lightClusters.js';   // LC1: the grid the lantern loop walks, and its door   // EL6: the dither at the encode - the port's one Bayer
 import { SHADE_DARK } from '../systems/concealDraw.js';   // AUDIT-EL F14: the shade's pull toward black, interpolated as the classic BB_FS does   // EL3: the ambient occlusion image by screen position, and its kill door; EL4: the adapted exposure
+import { HIT_FLASH_GLSL } from '../systems/hitFlash.js';   // HITFLASH1: the struck-red term, the classic BB_FS's own
 
 /** The lane's light cap - the classic lane's sixteen, tripled. Forty-eight
  *  vec4 + forty-eight vec3 are 96 uniform vectors; ES 3.0 guarantees 224
@@ -111,6 +112,33 @@ export const EL_LIGHT_KNEE = 16;
  *  terrain and character shaders (a flat has no normal). */
 export const EL_SPEC_GLOSS = 24;
 export const EL_SPEC_STRENGTH = 0.12;
+/** LA-COST4 (2026-09-27, Mac: "a deep audit on the enhanced lighting system ... performance improvements"): x^n BY
+ *  REPEATED SQUARING, as a GLSL function named `name` - the lantern glint's lobe at EL_SPEC_GLOSS, which was
+ *  `pow(x, 24.0)` for every light in range of every lit fragment: a log2, a multiply and an exp2, where x^24 is
+ *  x^16 * x^8 - four squarings and one multiply. Generated from the gloss, so the constant keeps its one home and a
+ *  new gloss still gets its chain. `n` a positive integer. Equal to pow() in exact arithmetic; in float it rounds
+ *  five times where the driver's pow() carries log2's and exp2's error, so it sits nearer x^n than pow() did
+ *  (test/la_cost.test.js runs it against Math.pow over [0, 1]). */
+export function powChainGlsl(name, n) {
+  if (!Number.isInteger(n) || n < 1) throw new Error(`powChainGlsl: the exponent must be a positive integer, got ${n}`);
+  const lines = [], terms = [];
+  let sq = 'x';
+  for (let bit = 1; ; bit *= 2) {
+    if (n & bit) terms.push(sq);
+    if (bit * 2 > n) break;
+    const next = `x${bit * 2}`;
+    lines.push(`float ${next} = ${sq} * ${sq};`);
+    sq = next;
+  }
+  return `float ${name}(float x) { ${lines.length ? `${lines.join(' ')} ` : ''}return ${terms.reverse().join(' * ')}; }`;
+}
+/** LA-COST5 (2026-09-27, Mac: "look for flickering issues"): WHERE THE CONTACT MARCH BEGINS TO FADE, a share of the
+ *  light's range. EL8/BUGS-5 F5 marched a lantern's contact shadow out to AIR_CONTACT_RANGE_FRACTION (0.7) of its
+ *  range and dropped it there in one step - a hard shell - and a flickering lamp's range steps 0.4 at 14 Hz, so the
+ *  fragments on that shell went from contact-shadowed (down to AIR_CONTACT_FLOOR) to unshadowed and back fourteen
+ *  times a second. Between this share and the march's edge the shadow now eases to none (smoothstep), so the edge
+ *  has no step to flicker across; inside it nothing moved, and past the edge the march is still never run. */
+export const EL_CONTACT_FADE_START = 0.6;
 /** BLOOD2f: a WET surface's glint - fresh blood under a torch. Far
  *  tighter and far brighter than stone's low gloss above, scaled by the
  *  mark's own wetness (one fresh, zero dried), so the sheen is what
@@ -357,11 +385,16 @@ ${EL_CLUSTER_GLSL}
 float wetFresnel(float vdoth) {
   return ${glslFloat(BLOOD_F0)} + ${glslFloat(1 - BLOOD_F0)} * pow(1.0 - clamp(vdoth, 0.0, 1.0), 5.0);
 }
+// LA-COST4: the glint's lobe, x^EL_SPEC_GLOSS by repeated squaring (powChainGlsl) - no pow() per light
+${powChainGlsl('elSpecLobe', EL_SPEC_GLOSS)}
 vec3 elPointLitWet(vec3 wp, vec3 n, float wet, out vec3 glint) {
   vec3 acc = vec3(0.0);
   glint = vec3(0.0);
   uvec2 cell = elCluster(wp);   // LC1
   int cellCount = int(cell.y);
+  // LA-COST4: the eye's direction ONCE a fragment - it was normalised again for every light in range, the same vector
+  // each time - and not at all where the cell holds no light (the loop is then empty and never reads it)
+  vec3 V = cellCount > 0 ? normalize(uCamPos - wp) : vec3(0.0);
   for (int j = 0; j < ${EL_MAX_LIGHTS}; j++) {
     if (j >= cellCount) break;
     int i = elClusterLight(cell, j);
@@ -373,13 +406,14 @@ vec3 elPointLitWet(vec3 wp, vec3 n, float wet, out vec3 glint) {
     // EL2: the lantern's map; EL8: every other lantern a contact shadow off the previous frame's depth;
     // F3/MAC-T1: never for the light in the hand - by name, -2 in the caster table (LIGHT-NEAR1: and no longer by its distance to the camera, which dropped the lamp overhead too);
     // F5: and only within the share of the range where the light is worth a shadow
+    // LA-COST5: ...EASED OUT over the last of that share (EL_CONTACT_FADE_START to the edge) - a hard edge there was a
+    // shell of fragments a flickering lamp's range carried in and out of the march fourteen times a second
     float sh = k >= 0 ? casterShadowAt(k, uPointLights[i], wp, n)   // DISC15: a 512 slot or a lo one - indoors, every light has one
       : (k == -2 || d > uPointLights[i].w * ${glslFloat(AIR_CONTACT_RANGE_FRACTION)}) ? 1.0   // MAC-T1: -2 is the hand's light, by name
-      : contactShadow(wp, n, Ln, d);
+      : mix(contactShadow(wp, n, Ln, d), 1.0, smoothstep(uPointLights[i].w * ${glslFloat(EL_CONTACT_FADE_START)}, uPointLights[i].w * ${glslFloat(AIR_CONTACT_RANGE_FRACTION)}, d));
     // EL4: a glint - Blinn-Phong, a low gloss for stone and wood, a twelfth of the light: wet stone under a torch
-    vec3 V = normalize(uCamPos - wp);
     vec3 H = normalize(Ln + V);
-    float spec = pow(max(dot(n, H), 0.0), ${EL_SPEC_GLOSS}.0) * ${EL_SPEC_STRENGTH};
+    float spec = elSpecLobe(max(dot(n, H), 0.0)) * ${EL_SPEC_STRENGTH};
     float att = sh * elAttenuation(d, uPointLights[i].w);
     acc += att * (max(dot(n, Ln), 0.0) + spec) * uPointColors[i];
     if (wet > 0.0) {
@@ -451,8 +485,13 @@ vec3 elFinish(vec3 lit, vec3 wp) {
   vec3 col = mix(uFogColor, elEncode(tm), fogFactorAt(wp));
   // HQ1's lantern glow in the fog is light the medium ADDS, not a surface the fog covers: added in linear on top.
   // No lantern in reach answers exactly black, and then the frame pays nothing for it.
-  vec3 glow = elTonemapRGB(elInScatter(wp) * ex);
-  if (glow.r + glow.g + glow.b > 0.0) col = elEncode(elDecode(col) + glow);
+  // LA-COST4: ...and with no glow asked for (uELScatter 0: the fog off, or a WORLD frame the air pass glows for -
+  // VOL1 - which is every world frame the lane draws) nothing here runs at all. elInScatter answered black at once
+  // there, but the colour curve still ran over that black in every fragment, for a sum it knew would be zero.
+  if (uELScatter > 0.0) {
+    vec3 glow = elTonemapRGB(elInScatter(wp) * ex);
+    if (glow.r + glow.g + glow.b > 0.0) col = elEncode(elDecode(col) + glow);
+  }
   return dwWaterFog(col, wp) + (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0;   // EL6: dithered at the byte, zero-mean - a lantern's falloff on a dark floor is bands without it   // DW-C: the sea's distance fog on the DISPLAY colour - the mod's post effect reads the camera's finished image
 }
 `;
@@ -554,10 +593,12 @@ precision highp float;
 in vec2 vUV;
 in vec3 vBBWorld;
 in vec3 vBBBase;   // EL2: the flat's placement base (BB_VS)
+flat in float vBBSunVis;   // LA-COST3: the sun map's word at that base, read once a quad by the lane's vertex shader (EL_BB_VS_EXT)
 uniform sampler2D uTex;
 uniform sampler2D uEmissionTex;
 uniform int uSpectral;
 uniform vec4 uConceal;
+uniform float uHitFlash;   // HITFLASH1
 uniform vec3 uTint;
 uniform vec3 uBBSun;
 uniform int uPointCount;
@@ -576,6 +617,7 @@ ${SHADOW_GLSL}
 ${AIR_CONTACT_GLSL}
 ${EL_FOG_GLSL}
 ${EL_POINT_LIT_GLSL}
+${HIT_FLASH_GLSL}
 out vec4 outColor;
 void main() {
   vec2 uv = vUV;
@@ -595,14 +637,47 @@ void main() {
   // TREES1: sunShadowSOFTat - a flat reads its shadow ONCE for the whole
   // sprite, so the kernel is the only gradation it gets and the far
   // cascade's one-tap trade does not apply to it.
-  vec3 sunLit = dot(uBBSun, uBBSun) > 0.0 ? uBBSun * cloudShadowAt(vBBWorld) * sunShadowSoftAt(base, vec3(0.0, 1.0, 0.0)) : vec3(0.0);
+  // LA-COST3 (2026-09-27, Mac: "performance improvements"): ONCE FOR THE
+  // WHOLE SPRITE WAS THE LAW AND NOT THE COST. The point is one per quad,
+  // and every fragment of the quad still ran the read - the cascade pick, a
+  // mat4 and four compare taps - for the same answer: a tree's hundreds of
+  // fragments, every flat in a town or a wood by day. The lane's billboard
+  // vertex shader (EL_BB_VS_EXT) reads it at that same point, with the same
+  // function, at each corner - the four agree - and hands it here flat.
+  vec3 sunLit = dot(uBBSun, uBBSun) > 0.0 ? uBBSun * cloudShadowAt(vBBWorld) * vBBSunVis : vec3(0.0);
   vec3 lit = albedo * (uTint + sunLit + elPointFlat(vBBWorld, base) + elIndirectFlat(vBBWorld)) + emission;
   if (uConceal.x == 2.0) lit *= ${SHADE_DARK};   // AUDIT-EL F14: a uniform nothing uploaded read 0 - every shade a black cut-out
+  if (uConceal.x == 5.0) lit = mix(lit, vec3(0.95, 0.06, 0.04), uConceal.z);   // PEERFX3's mode, which this lane never drew
+  lit = hitFlashLit(lit, albedo + emission, uHitFlash);   // HITFLASH1: a struck body's red - the lane had no flash at all
   if (uConceal.x == 4.0) lit = vec3(0.0);
   float alpha = uSpectral == 1 ? tex.a : 1.0;
   if (uConceal.x > 0.0) alpha = tex.a * uConceal.y;
   outColor = vec4(elFinish(lit, vBBWorld), alpha);
 }`;
+
+/** LA-COST3 (2026-09-27, Mac: "a deep audit on the enhanced lighting system ... performance improvements"): THE
+ *  FLAT'S SUN, READ WHERE THE QUAD IS - the lane's additions to the renderer's billboard vertex shader
+ *  (renderer.js bbVertexShader: `head` goes in before main, `main` at its end, after every line that places the
+ *  vertex, so a corner lands exactly where BB_VS lands it). EL_BB_FS used to read the sun map at the flat's base in
+ *  every FRAGMENT; the base is the quad's centre (aCenter + uOrigin, the same at all four corners), so each corner
+ *  reads the one value the fragments were reading - the same point, `sunShadowSoftAt`, the same kernel - and hands it
+ *  on `flat`, uninterpolated. Night still reads nothing: the uBBSun gate is PERF-SUN2's, moved with the read. The
+ *  receiver block compiles in a vertex shader (a texture() there reads level 0, and the maps have no other) - the
+ *  shadow and air passes keep BB_VS itself; tools/enhancedLightingProbe.mjs links this on a real GL, which is where
+ *  the one catch showed: a vertex shader's ints default to highp and a fragment shader's to mediump, and a uniform
+ *  both stages declare (the block's uShadowIndex and uCasterOf) must be one precision or the program does not link
+ *  ("Precisions of uniform 'uCasterOf' differ"). So the head takes the fragment stage's int precision - the one int
+ *  the vertex stage computes with is the sun's cascade index, 0 to 2. */
+export const EL_BB_VS_EXT = Object.freeze({
+  head: `
+precision mediump int;   // LA-COST3: the fragment stage's default, so the uniforms both stages declare agree
+uniform vec3 uCamPos;
+uniform vec3 uBBSun;
+flat out float vBBSunVis;   // LA-COST3: the sun map's word at the flat's base, one value for the whole quad
+${SHADOW_GLSL}`,
+  main: `
+  vBBSunVis = dot(uBBSun, uBBSun) > 0.0 ? sunShadowSoftAt(vBBBase + vec3(0.0, 0.5, 0.0), vec3(0.0, 1.0, 0.0)) : 1.0;   // LA-COST3: EL2's point, TREES1's kernel, PERF-SUN2's gate`,
+});
 
 /** MAC-BUG W6 (2026-09-20, Mac: "super dark coloring instead of red") -
  *  THE DECAL FRAGMENT SHADER OF THE LANE: the classic DECAL_FS's every
@@ -662,6 +737,7 @@ uniform vec3 uMoonDir;
 uniform float uTrilight;   // BLOOD AUDIT 5: and the trilight ambient the mesh takes
 uniform vec3 uAmbientSky;
 uniform vec3 uAmbientGround;
+uniform float uPicture;   // WEAPON-MOUNT: a mounted PICTURE (the decorator's hung weapons and armour), not a film of blood
 ${CLOUD_SHADOW_GLSL}
 ${EL_GLSL}
 ${SHADOW_GLSL}
@@ -710,6 +786,10 @@ void main() {
   vec3 albedo = elDecode(vColor.rgb)
     * exp(vec3(${glslFloat(BLOOD_ABSORB[0])}, ${glslFloat(BLOOD_ABSORB[1])}, ${glslFloat(BLOOD_ABSORB[2])}) * (1.0 - thick))
     * mix(1.0, ${glslFloat(WET_DARKEN)}, clamp(vWet, 0.0, 1.0));
+  // WEAPON-MOUNT (2026-09-26, Mac: "weapons dont show in houses properly"): a picture's albedo IS its texel,
+  // decoded as every texel on this lane is - and it is flat: no film, no relief, no sheen. The blood law above read a
+  // hung sword's red channel as a thickness and drew it as a pale silhouette of itself.
+  if (uPicture > 0.5) { albedo = elDecode(t.rgb * vColor.rgb); thick = 0.0; }
   // the mark's own surface, from its own quad, facing the eye - and a
   // quad seen edge-on has no derivative to speak of, so it takes up
   // rather than NaN (BLOOD1 AUDIT 3)
@@ -753,6 +833,7 @@ void main() {
   // same test line 616 already makes before it falls back to world up -
   // without it a quad whose world derivatives are parallel hands
   // normalize() a zero vector and throws that fallback away as NaN.
+  if (uPicture > 0.5) duv = vec2(0.0);   // WEAPON-MOUNT: a picture is flat - no relief off its red channel
   if (dot(c, c) > 1e-12 && abs(uvDet) > 1e-12 && dot(duv, duv) > 0.0) {
     vec3 tu = (duy.y * dpx - dux.y * dpy) / uvDet;
     vec3 tv = (dux.x * dpy - duy.x * dpx) / uvDet;
@@ -998,13 +1079,14 @@ void main() {
 }`;
 
 /** THE LANE the renderer installs (Renderer.setLightingLane): the five
- *  fragment shaders (MAC-BUG W6: the decal's), the light cap, the colour decode, and the lane's
- *  own uniforms' values. One frozen object, so a renderer can tell "the
+ *  fragment shaders (MAC-BUG W6: the decal's), the billboard vertex shader's additions (LA-COST3), the light cap,
+ *  the colour decode, and the lane's own uniforms' values. One frozen object, so a renderer can tell "the
  *  same lane again" by identity and keep its compiled programs. */
 export const EL_LANE = Object.freeze({
   key: 'enhanced-lighting',
   meshFs: EL_MESH_FS,
   bbFs: EL_BB_FS,
+  bbVs: EL_BB_VS_EXT,   // LA-COST3: the flat's sun read once a quad - EL_BB_FS reads vBBSunVis, which this writes
   terrainFs: EL_TERRAIN_FS,
   charFs: EL_CHAR_FS,
   decalFs: EL_DECAL_FS,   // MAC-BUG W6: the blood marks' twin - without it a lane lights its marks on the classic program, which is the bug

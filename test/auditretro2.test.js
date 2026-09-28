@@ -348,7 +348,8 @@ test('AUDIT RETRO1 I6: the half-pinned fixes - a replacement\'s emission map pas
       assert.equal(grades[0].scissorOn, false, 'before the panel\'s own scissor');
     } finally { setFrameTarget(null); }
   }
-  // (c) the bright pass reads a menu frame's whole image too
+  // (c) the resolve reads a menu frame's whole image too (LA-POST8: the bright pass no longer runs for such a frame -
+  // it was resolved before anything was drawn over its clear - so the rect's reader there is the resolve's vignette)
   {
     const { canvas } = stateGl();
     const r = new Renderer(canvas);
@@ -356,8 +357,11 @@ test('AUDIT RETRO1 I6: the half-pinned fixes - a replacement\'s emission map pas
     r.setRetroSource(() => retroCfg({ post: 0 }));
     try {
       r.beginFrame(I, I, L, WORLD_FRAME); r.drawScreenQuad(null, Q);
+      const worldRect = [...r.air.programs.bright[0].p.values.uRect];
+      assert.deepEqual(worldRect, [0, 0, 320, 200], 'the world frame\'s bright pass reads the retro image\'s rect');
       r.beginFrame(I, I, L); r.drawScreenQuad(null, Q);
-      assert.deepEqual(r.air.programs.bright[0].p.values.uRect, [0, 0, 1280, 720]);   // PERF-EXT31: the bright pass built for no glow - a menu frame's
+      assert.deepEqual(r.air.programs.resolve[0][0].p.values.uRect, [0, 0, 1280, 720]);   // PERF-EXT31: the resolve built for no glow and no shafts - a menu frame's
+      assert.deepEqual(r.air.programs.bright[0].p.values.uRect, worldRect, 'LA-POST8: no bright pass for the menu frame');
     } finally { setFrameTarget(null); }
   }
   // (d) the span over a docked strip, and a texel never 0 for a fine pixel on a tall canvas

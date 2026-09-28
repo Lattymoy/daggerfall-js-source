@@ -3,10 +3,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { tryLanguagePacification, SWING_WEAPON_FATIGUE_LOSS } from '../src/scenes/hostCombat.js';
+import { tryLanguagePacification, SWING_WEAPON_FATIGUE_LOSS, SWING_FATIGUE_COST } from '../src/scenes/hostCombat.js';
 import { enemyLanguageSkill, calculateEnemyPacification } from '../src/combat/formulas.js';
 import { SKILLS, SKILL_NAMES, skillValue } from '../src/systems/skills.js';
 import { KNIGHT_CITY_WATCH, MOBILE_TYPES } from '../src/characters/mobileTypes.js';
+import { FATIGUE_DRAIN_SCALE } from '../src/systems/statMods.js';   // BALANCE1
 
 const rd = (f) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
 
@@ -160,26 +161,29 @@ test('audit24 wave42: a swing costs eleven fatigue, ONCE, whatever is standing n
   // sits in the single isDamageFinished block. It is a property of
   // SWINGING, not of what you swung at.
   assert.equal(SWING_WEAPON_FATIGUE_LOSS, 11);
+  // BALANCE1: and what it CHARGES is that on exertion's scale - one law, the same in every host (derived, so a turn of
+  // the scale is its constant and balance1's pins alone: the pre-merge audit 0927b F3)
+  assert.equal(SWING_FATIGUE_COST, Math.trunc(SWING_WEAPON_FATIGUE_LOSS * FATIGUE_DRAIN_SCALE));
 
   // The watch pool used to drain it a SECOND time inside
   // resolvePlayerHit, on top of the host's melee arm - and its early
   // `if (!live.length) return false` meant the extra charge landed
   // only while a guard was alive. 22 near the watch, 11 everywhere.
   const cg = rd('src/scenes/cityGuards.js');
-  assert.doesNotMatch(cg, /SWING_WEAPON_FATIGUE_LOSS/, 'the watch pool no longer touches the swing fatigue');
+  assert.doesNotMatch(cg, /SWING_WEAPON_FATIGUE_LOSS|SWING_FATIGUE_COST/, 'the watch pool no longer touches the swing fatigue');
   assert.match(cg, /AUDIT 24 \(wave 42\): the FATIGUE drain that used to sit here was/, 'and says why');
 
   // the other two pools never did, and must not start
-  assert.doesNotMatch(rd('src/scenes/exteriorFoes.js'), /SWING_WEAPON_FATIGUE_LOSS/);
+  assert.doesNotMatch(rd('src/scenes/exteriorFoes.js'), /SWING_WEAPON_FATIGUE_LOSS|SWING_FATIGUE_COST/);
   // the HOSTS own it - exactly one melee charge each
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const src = rd(f);
-    const charges = src.split('\n').filter((l) => /drain\w*Fatigue\(SWING_WEAPON_FATIGUE_LOSS\)/.test(l));
+    const charges = src.split('\n').filter((l) => /drain\w*Fatigue\(SWING_FATIGUE_COST\)/.test(l));
     assert.equal(charges.length, 2, `${f}: one bow arm, one melee arm, and no more`);
   }
   // the dungeon is the shape this was corrected TO: the frame body
   // charges, resolvePlayerHit does not
   const dc = rd('src/scenes/dungeonContext.js');
   const rp = dc.slice(dc.indexOf('function resolvePlayerHit('), dc.indexOf('function resolvePlayerHit(') + 4000);
-  assert.doesNotMatch(rp, /SWING_WEAPON_FATIGUE_LOSS/, 'the dungeon never charged it inside the resolver');
+  assert.doesNotMatch(rp, /SWING_WEAPON_FATIGUE_LOSS|SWING_FATIGUE_COST/, 'the dungeon never charged it inside the resolver');
 });

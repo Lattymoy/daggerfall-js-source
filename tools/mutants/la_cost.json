@@ -1,0 +1,345 @@
+[
+ {
+  "name": "LA-COST1-billboard-block-every-call",
+  "file": "src/render/renderer.js",
+  "old": "      this._bbFrameStamp = this._frameStamp;\n",
+  "new": "",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST1-decal-block-every-call",
+  "file": "src/render/renderer.js",
+  "old": "      this._dFrameStamp = this._frameStamp;\n",
+  "new": "",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST1-character-block-every-call",
+  "file": "src/render/renderer.js",
+  "old": "      this._cFrameStamp = this._frameStamp;\n",
+  "new": "",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST1-setFog-silent-a-fog-change-is-a-frame-late-on-the-flats",
+  "file": "src/render/renderer.js",
+  "old": "    this._frameStamp++;   // LA-COST1: the fog, and the lane's in-scatter gain folded with it, ride every frame block\n",
+  "new": "",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST1-setWaterFog-silent",
+  "file": "src/render/renderer.js",
+  "old": "    this._frameStamp++;   // LA-COST1\n    const loc = this._solidFog?.dwFog;",
+  "new": "    const loc = this._solidFog?.dwFog;",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST1-setPointLights-silent-the-flats-keep-the-old-lamps",
+  "file": "src/render/renderer.js",
+  "old": "    this._frameStamp++;      // LA-COST1: and every frame block carries the lights\n",
+  "new": "",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST1-setFlashLight-silent",
+  "file": "src/render/renderer.js",
+  "old": "    this._frameStamp++;      // LA-COST1\n",
+  "new": "",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST1-setIndirectLight-silent",
+  "file": "src/render/renderer.js",
+  "old": "    this._frameStamp++;   // LA-COST1: every frame block carries the indirect light\n",
+  "new": "",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST1-setMoonlight-silent",
+  "file": "src/render/renderer.js",
+  "old": "    this._frameStamp++;   // LA-COST1: the moon rides the billboard's tint, the decal's and the character's terms and the terrain's\n",
+  "new": "",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST1-setAmbientTrilight-silent-and-setLighting-with-it",
+  "file": "src/render/renderer.js",
+  "old": "    this._frameStamp++;   // LA-COST1: the decal's block takes the trilight (BLOOD AUDIT 5)\n",
+  "new": "",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST1-setExposure-silent",
+  "file": "src/render/renderer.js",
+  "old": "  setExposure(v) { this._exposure = v > 0 ? v : 1; this._frameStamp++; }",
+  "new": "  setExposure(v) { this._exposure = v > 0 ? v : 1; }",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST1-setContact-silent",
+  "file": "src/render/renderer.js",
+  "old": "  setContact(on) { this._contactWanted = !!on; this._frameStamp++; }",
+  "new": "  setContact(on) { this._contactWanted = !!on; }",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST1-setVolumetrics-silent",
+  "file": "src/render/renderer.js",
+  "old": "if (this._airPass) this._airPass.volOn = this._volumetricsWanted; this._frameStamp++; }",
+  "new": "if (this._airPass) this._airPass.volOn = this._volumetricsWanted; }",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST1-syncAir-silent",
+  "file": "src/render/renderer.js",
+  "old": "    this._frameStamp++;   // LA-COST1: the eye, the contact block and the glow's gate are the air pass's - a new or a gone one moves every block\n",
+  "new": "",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST1-a-foreign-pass-leaves-its-textures-under-the-blocks",
+  "file": "src/render/renderer.js",
+  "old": "    // each program binds its images again. (Their UNIFORM values are the programs' own and survive any pass.)\n    this._frameStamp++;\n",
+  "new": "",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST1-the-sprite-draws-under-the-world-block",
+  "file": "src/render/renderer.js",
+  "old": "    // program draws in here, and the borrows are all put back, so the other three blocks stand.\n    this._cFrameStamp = -1;\n",
+  "new": "",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST1-the-world-rigs-draw-under-the-sprite-block",
+  "file": "src/render/renderer.js",
+  "old": "      this._cFrameStamp = -1;   // LA-COST1: the sprite's block is no world rig's\n",
+  "new": "",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST1-the-studio-leaves-the-bare-eye-on-its-unit",
+  "file": "src/render/renderer.js",
+  "old": "      if (studio) this._frameStamp++;\n",
+  "new": "",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST1-memo-deaf-to-setPointLights",
+  "file": "src/render/renderer.js",
+  "old": "    this._pointColorGen++;   // LA-COST1: the colours' decode is due again (the memo in _pointColorData)\n",
+  "new": "",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST1-memo-deaf-to-the-flash",
+  "file": "src/render/renderer.js",
+  "old": "    this._pointColorGen++;   // LA-COST1: the flash's colour first - the memo's decode is due again (the scratch is written in place)\n",
+  "new": "",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST1-memo-answers-from-a-new-buffer-after-a-lane-swap",
+  "file": "src/render/renderer.js",
+  "old": "    // blocks were forgotten above: _installWorldSet forgets the units, and _syncAir moves the stamp.)\n    this._pointColorGen++;\n",
+  "new": "",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST1-memo-blind-to-the-count",
+  "file": "src/render/renderer.js",
+  "old": " && this._pointColorDecLane === lane && this._pointColorDecCount >= count) {",
+  "new": " && this._pointColorDecLane === lane) {",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST2-the-keys-in-first-seen-order",
+  "file": "src/render/billboardKey.js",
+  "old": "    _order.sort(byKey);\n",
+  "new": "",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST2-one-key-s-batches-reversed",
+  "file": "src/render/billboardKey.js",
+  "old": "    for (let i = 0; i < n; i++) { const b = list[i]; _placed[_count[_slot[b._bbKeyId] - 1]++] = b; }",
+  "new": "    for (let i = n - 1; i >= 0; i--) { const b = list[i]; _placed[_count[_slot[b._bbKeyId] - 1]++] = b; }",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST2-the-slot-table-kept-between-passes",
+  "file": "src/render/billboardKey.js",
+  "old": "  for (let s = 0; s < k; s++) _slot[_bucketKey[s]] = 0;\n",
+  "new": "",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST2-the-renderer-draws-unsorted",
+  "file": "src/render/renderer.js",
+  "old": "    sortByKey(opaque);   // LA-COST2",
+  "new": "    // LA-COST2",
+  "tests": ["test/la_cost.test.js", "test/perf3.test.js"]
+ },
+ {
+  "name": "LA-COST3-the-read-without-the-half-unit-lift",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  vBBSunVis = dot(uBBSun, uBBSun) > 0.0 ? sunShadowSoftAt(vBBBase + vec3(0.0, 0.5, 0.0), vec3(0.0, 1.0, 0.0)) : 1.0;",
+  "new": "  vBBSunVis = dot(uBBSun, uBBSun) > 0.0 ? sunShadowSoftAt(vBBBase, vec3(0.0, 1.0, 0.0)) : 1.0;",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST3-the-fragment-reads-the-map-again",
+  "file": "src/render/enhancedLighting.js",
+  "old": "uBBSun * cloudShadowAt(vBBWorld) * vBBSunVis : vec3(0.0);",
+  "new": "uBBSun * cloudShadowAt(vBBWorld) * sunShadowSoftAt(base, vec3(0.0, 1.0, 0.0)) : vec3(0.0);",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST3-the-value-interpolated",
+  "file": "src/render/enhancedLighting.js",
+  "old": "flat out float vBBSunVis;",
+  "new": "out float vBBSunVis;",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST3-the-read-before-main",
+  "file": "src/render/renderer.js",
+  "old": "  return `${BB_VS.slice(0, at)}${ext.head}\\n${BB_VS.slice(at, end)}${ext.main}\\n${BB_VS.slice(end)}`;",
+  "new": "  return `${BB_VS.slice(0, at)}${ext.head}\\n${ext.main}\\n${BB_VS.slice(at, end)}${BB_VS.slice(end)}`;",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST3-the-int-precision-the-stages-disagree-on",
+  "file": "src/render/enhancedLighting.js",
+  "old": "precision mediump int;   // LA-COST3",
+  "new": "// LA-COST3",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST4-a-squaring-multiplied-by-x",
+  "file": "src/render/enhancedLighting.js",
+  "old": "    lines.push(`float ${next} = ${sq} * ${sq};`);",
+  "new": "    lines.push(`float ${next} = ${sq} * x;`);",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST4-the-lobe-not-the-gloss-s",
+  "file": "src/render/enhancedLighting.js",
+  "old": "${powChainGlsl('elSpecLobe', EL_SPEC_GLOSS)}",
+  "new": "${powChainGlsl('elSpecLobe', 16)}",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST4-the-eye-vector-reversed",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  vec3 V = cellCount > 0 ? normalize(uCamPos - wp) : vec3(0.0);",
+  "new": "  vec3 V = cellCount > 0 ? normalize(wp - uCamPos) : vec3(0.0);",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST4-the-eye-vector-unguarded-every-empty-cell-pays-it",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  vec3 V = cellCount > 0 ? normalize(uCamPos - wp) : vec3(0.0);",
+  "new": "  vec3 V = normalize(uCamPos - wp);",
+  "tests": ["test/la_cost.test.js", "test/el4_frame.test.js", "test/lc1_clusters.test.js"]
+ },
+ {
+  "name": "LA-COST4-the-glow-gate-inverted",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  if (uELScatter > 0.0) {\n    vec3 glow",
+  "new": "  if (uELScatter <= 0.0) {\n    vec3 glow",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST4-a-bit-of-the-bayer-moved",
+  "file": "src/render/orderedDither.js",
+  "old": "  return float(((z & 1) << 3) | ((y & 1) << 2) | (z & 2) | ((y >> 1) & 1)) / 16.0;",
+  "new": "  return float(((z & 1) << 2) | ((y & 1) << 3) | (z & 2) | ((y >> 1) & 1)) / 16.0;",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST5-the-hard-edge-back",
+  "file": "src/render/enhancedLighting.js",
+  "old": "      : mix(contactShadow(wp, n, Ln, d), 1.0, smoothstep(uPointLights[i].w * ${glslFloat(EL_CONTACT_FADE_START)}, uPointLights[i].w * ${glslFloat(AIR_CONTACT_RANGE_FRACTION)}, d));",
+  "new": "      : contactShadow(wp, n, Ln, d);",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST5-the-march-run-past-the-band",
+  "file": "src/render/enhancedLighting.js",
+  "old": "      : (k == -2 || d > uPointLights[i].w * ${glslFloat(AIR_CONTACT_RANGE_FRACTION)}) ? 1.0",
+  "new": "      : (k == -2) ? 1.0",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST5-the-fade-starting-past-its-end",
+  "file": "src/render/enhancedLighting.js",
+  "old": "export const EL_CONTACT_FADE_START = 0.6;",
+  "new": "export const EL_CONTACT_FADE_START = 0.75;",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST6-the-sea-s-fog-not-pushed",
+  "file": "src/render/renderer.js",
+  "old": "    if (loc) { this._use(this.program); this.gl.uniform4fv(loc, this._dwFog); }\n",
+  "new": "",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST6-pushed-to-whatever-program-is-bound",
+  "file": "src/render/renderer.js",
+  "old": "    if (loc) { this._use(this.program); this.gl.uniform4fv(loc, this._dwFog); }",
+  "new": "    if (loc) this.gl.uniform4fv(loc, this._dwFog);",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST7-the-memo-off",
+  "file": "src/render/renderer.js",
+  "old": "        if (loc === undefined) byName.set(name, (loc = gl.getUniformLocation(program, name)));",
+  "new": "        byName.set(name, (loc = gl.getUniformLocation(program, name)));",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST7-an-undeclared-name-asked-again-every-install",
+  "file": "src/render/renderer.js",
+  "old": "if (loc === undefined) byName.set(",
+  "new": "if (!loc) byName.set(",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST7-keyed-by-the-name-alone",
+  "file": "src/render/renderer.js",
+  "old": "        let byName = byProgram.get(program);\n        if (!byName) byProgram.set(program, (byName = new Map()));",
+  "new": "        let byName = byProgram.get(0);\n        if (!byName) byProgram.set(0, (byName = new Map()));",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST7-the-memo-not-kept-on-the-set",
+  "file": "src/render/renderer.js",
+  "old": "    return (set.locate = {",
+  "new": "    return ({",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST7-the-install-past-the-memo",
+  "file": "src/render/renderer.js",
+  "old": "    const gl = this._locations(set);   // LA-COST7: every lookup below, memoized on the set",
+  "new": "    const gl = this.gl;",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST7-the-fog-table-past-the-memo",
+  "file": "src/render/renderer.js",
+  "old": "  _fogLocs(program) {\n    const gl = this._locations();   // LA-COST7: the installed set's memo",
+  "new": "  _fogLocs(program) {\n    const gl = this.gl;",
+  "tests": ["test/la_cost.test.js"]
+ },
+ {
+  "name": "LA-COST7-the-decal-table-past-the-memo",
+  "file": "src/render/renderer.js",
+  "old": "  _decalLocs(P) {\n    const gl = this._locations();   // LA-COST7: the installed set's memo",
+  "new": "  _decalLocs(P) {\n    const gl = this.gl;",
+  "tests": ["test/la_cost.test.js"]
+ }
+]

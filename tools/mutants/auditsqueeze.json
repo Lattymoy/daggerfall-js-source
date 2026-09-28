@@ -1,0 +1,47 @@
+[
+  {
+    "name": "ASQ-S1-head-stands-on-the-ceiling",
+    "file": "src/player/collider.js",
+    "old": "      this._resolveSphere(high, CAPSULE_RADIUS, out, standCeil, axis === 0, tall && axis !== 0);",
+    "new": "      this._resolveSphere(high, CAPSULE_RADIUS, out, standCeil, axis === 0);",
+    "tests": [
+      "test/squeeze1.test.js"
+    ]
+  },
+  {
+    "name": "ASQ-S2-height-line-only",
+    "file": "src/player/collider.js",
+    "old": "    const tall = height > RIDE_HEIGHT || !!this._keepFloor;",
+    "new": "    const tall = height > RIDE_HEIGHT;",
+    "tests": [
+      "test/squeeze1.test.js"
+    ]
+  },
+  {
+    "name": "ASQ-S2-flag-dropped-at-the-door",
+    "file": "src/player/collider.js",
+    "old": "    this._keepFloor = !!keepFloor;",
+    "new": "    this._keepFloor = false;",
+    "tests": [
+      "test/squeeze1.test.js"
+    ]
+  },
+  {
+    "name": "ASQ-S2-motor-never-asks",
+    "file": "src/characters/enemyMotor.js",
+    "old": "const FOE_KEEPS_FLOOR = true;",
+    "new": "const FOE_KEEPS_FLOOR = false;",
+    "tests": [
+      "test/squeeze1.test.js"
+    ]
+  },
+  {
+    "name": "ASQ-S3-a-reset-ends-the-step",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "-d \"{\\\"secret\\\":\\\"$secret\\\",\\\"receipt\\\":\\\"r1.deploy.smoke\\\"}\" || true",
+    "new": "-d \"{\\\"secret\\\":\\\"$secret\\\",\\\"receipt\\\":\\\"r1.deploy.smoke\\\"}\"",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ]
+  }
+]

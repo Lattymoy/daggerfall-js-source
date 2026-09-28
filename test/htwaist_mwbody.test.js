@@ -287,5 +287,5 @@ test('HT-WAIST the wiring: the weapon rig hands the lantern at the waist over pe
   assert.match(fp, /else if \(r\.slot === HIP_LIGHT_SLOT\) r\.hidden = !hipVisible\(\);/, 'the world body hides it only unlit');
   assert.match(fp, /if \(eff\.slot === HIP_LIGHT_SLOT\) return !hipVisible\(\);/, 'its flame with it');
   const peers = rd('src/net/peerBodies.js');
-  assert.match(peers, /b\.rig\.setHipLight\?\.\(!!shown\.hl\);/, 'HT-WAIST-NET: a peer\'s body takes it through the same door, off the pose\'s `hl` (test/htwaistnet_peers.test.js drives it)');
+  assert.match(peers, /b\.rig\.setHipLight\?\.\(!b\.wolf && !!shown\.hl\);/, 'HT-WAIST-NET: a peer\'s body takes it through the same door, off the pose\'s `hl` (test/htwaistnet_peers.test.js drives it)');
 });

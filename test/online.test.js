@@ -215,8 +215,11 @@ test('ONLINE1: the socket\'s lifecycle - a room change closes and reopens, a sta
   // replaced by another window: terminal too
   s.join('town:m5', pose(0)); assert.equal(sockets.length, 6); assert.equal(s.terminal, false, 'a new room starts clean');
   sockets[5].open(); sockets[5].drop(CLOSE_REPLACED);
-  assert.equal(s.terminal, true); assert.match(s.error, /another window/);
+  assert.equal(s.terminal, true); assert.match(s.error, /another tab, window or device/);
   now += BACKOFF_MAX_MS * 4; s.tick(); assert.equal(sockets.length, 6, 'replaced: not retried, or two tabs would evict each other forever');
+  // ONE-SEAT (2026-09-27): and STICKY - no room joins until the player takes the seat back (test/oneseat.test.js)
+  s.join('town:m6', pose(0)); assert.equal(sockets.length, 6, 'a crossing joins nothing while another tab has the seat');
+  s.resume();
   // busy (1013): not terminal, but a hard backoff
   s.join('town:m6', pose(0)); sockets[6].open(); sockets[6].drop(CLOSE_BUSY);
   assert.equal(s.terminal, false); assert.ok(s._backoff >= BACKOFF_MAX_MS / 2, 'a full room is waited out, not hammered'); now += BACKOFF_MAX_MS + 1; s.tick(); assert.equal(sockets.length, 8, 'then tried again');

@@ -59,8 +59,8 @@
     "tests": [
       "test/ovh4_partyrest.test.js"
     ],
-    "old": "    if (!social?.party || modes?.insidePartyRestExempt) { _partyRestVoteLastReady = null;",
-    "new": "    if (!isEnhanced() || !social?.party || modes?.insidePartyRestExempt) { _partyRestVoteLastReady = null;"
+    "old": "    if (!social?.party || modes?.insidePartyRestExempt || !restTogether()) { _partyRestVoteLastReady = null;",
+    "new": "    if (!isEnhanced() || !social?.party || modes?.insidePartyRestExempt || !restTogether()) { _partyRestVoteLastReady = null;"
   },
   {
     "name": "OVH4-follow-classic-never",
@@ -77,8 +77,8 @@
     "tests": [
       "test/ovh4_partyrest.test.js"
     ],
-    "old": "const partyRestHere = () => !!social?.party && !modes?.insidePartyRestExempt;",
-    "new": "const partyRestHere = () => !!social?.party;"
+    "old": "const partyRestHere = () => !!social?.party && !modes?.insidePartyRestExempt && restTogether();",
+    "new": "const partyRestHere = () => !!social?.party && restTogether();"
   },
   {
     "name": "OVH4-outdoor-unsaid",

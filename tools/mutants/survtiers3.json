@@ -462,8 +462,8 @@
   {
     "name": "SURVTIERS3-the-kit-cite-world-seed-rots",
     "file": "src/systems/equip.js",
-    "old": "(world.js:3721, exterior.js:1284)",
-    "new": "(world.js:2460, exterior.js:1284)",
+    "old": "(world.js:3836, exterior.js:1285)",
+    "new": "(world.js:2460, exterior.js:1285)",
     "tests": [
       "test/citedrift.test.js"
     ]
@@ -471,7 +471,7 @@
   {
     "name": "SURVTIERS3-the-gear-cite-equip-seed-rots",
     "file": "src/systems/startingGear.js",
-    "old": "// (equip.js:324), which survives",
+    "old": "// (equip.js:335), which survives",
     "new": "// (equip.js:307), which survives",
     "tests": [
       "test/citedrift.test.js"
@@ -480,8 +480,8 @@
   {
     "name": "SURVTIERS3-the-gear-cite-world-seed-rots",
     "file": "src/systems/startingGear.js",
-    "old": "world.js:3721 and exterior.js:1284 seed it",
-    "new": "world.js:2460 and exterior.js:1284 seed it",
+    "old": "world.js:3836 and exterior.js:1285 seed it",
+    "new": "world.js:2460 and exterior.js:1285 seed it",
     "tests": [
       "test/citedrift.test.js"
     ]
@@ -489,7 +489,7 @@
   {
     "name": "SURVTIERS3-the-exterior-cite-equip-guard-rots",
     "file": "src/scenes/exterior.js",
-    "old": "early-returns (equip.js:325).",
+    "old": "early-returns (equip.js:336).",
     "new": "early-returns (equip.js:306).",
     "tests": [
       "test/citedrift.test.js"
@@ -498,8 +498,8 @@
   {
     "name": "SURVTIERS3-the-rest-window-cite-input-rots",
     "file": "src/ui/restWindow.js",
-    "old": "exterior.js:3117, ui/input.js:912)",
-    "new": "exterior.js:3117, ui/input.js:525)",
+    "old": "exterior.js:3128, ui/input.js:912)",
+    "new": "exterior.js:3128, ui/input.js:525)",
     "tests": [
       "test/citedrift.test.js"
     ]
@@ -507,8 +507,8 @@
   {
     "name": "SURVTIERS3-the-mirror-overrides-tickVitals",
     "file": "src/scenes/world.js",
-    "old": "    enemiesNearby: () => false,\n    advanceMinutes: (n) => { playerTicker.advance(n); },",
-    "new": "    enemiesNearby: () => false,\n    tickVitals: () => {},\n    advanceMinutes: (n) => { playerTicker.advance(n); },",
+    "old": "    enemiesNearby: () => false,\n    advanceMinutes: (n, sharedEnd) => { playerTicker.advance(n, sharedEnd); },",
+    "new": "    enemiesNearby: () => false,\n    tickVitals: () => {},\n    advanceMinutes: (n, sharedEnd) => { playerTicker.advance(n, sharedEnd); },",
     "tests": [
       "test/partyrest1.test.js"
     ]

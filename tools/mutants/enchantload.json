@@ -1,0 +1,72 @@
+[
+  {
+    "name": "ENCHANTLOAD-no-refold",
+    "file": "src/systems/enchantments.js",
+    "old": "  if (entity?._enchantMods || items.length) computeEnchantmentMods(entity, ctx, { clampMagicka: false });\n",
+    "new": "",
+    "tests": ["test/enchantload.test.js"]
+  },
+  {
+    "name": "ENCHANTLOAD-refold-only-when-worn",
+    "file": "src/systems/enchantments.js",
+    "old": "  if (entity?._enchantMods || items.length) computeEnchantmentMods(entity, ctx, { clampMagicka: false });",
+    "new": "  if (items.length) computeEnchantmentMods(entity, ctx, { clampMagicka: false });",
+    "tests": ["test/enchantload.test.js"]
+  },
+  {
+    "name": "ENCHANTLOAD-refold-clamps",
+    "file": "src/systems/enchantments.js",
+    "old": "computeEnchantmentMods(entity, ctx, { clampMagicka: false });",
+    "new": "computeEnchantmentMods(entity, ctx, { clampMagicka: true });",
+    "tests": ["test/enchantload.test.js"]
+  },
+  {
+    "name": "ENCHANTLOAD-clamp-flag-ignored",
+    "file": "src/systems/enchantments.js",
+    "old": "  if (clampMagicka && (entity.magicka ?? 0) > (entity.maxMagicka ?? 0)",
+    "new": "  if ((entity.magicka ?? 0) > (entity.maxMagicka ?? 0)",
+    "tests": ["test/enchantload.test.js"]
+  },
+  {
+    "name": "ENCHANTLOAD-clamp-never",
+    "file": "src/systems/enchantments.js",
+    "old": "export function computeEnchantmentMods(entity, ctx = null, { clampMagicka = true } = {}) {",
+    "new": "export function computeEnchantmentMods(entity, ctx = null, { clampMagicka = false } = {}) {",
+    "tests": ["test/enchantload.test.js"]
+  },
+  {
+    "name": "ENCHANTLOAD-strip-per-row",
+    "file": "src/systems/enchantments.js",
+    "old": "  _fx.applySpell?.(record, entity.level ?? 1, entity,",
+    "new": "  _fx.removeItemPinnedEffects?.(entity, item);\n  _fx.applySpell?.(record, entity.level ?? 1, entity,",
+    "tests": ["test/enchantload.test.js"]
+  },
+  {
+    "name": "ENCHANTLOAD-reroll-no-strip",
+    "file": "src/systems/enchantments.js",
+    "old": "      _fx.removeItemPinnedEffects?.(entity, item);\n      doItemEnchantmentPayloads(PAYLOAD.RerollEffect,",
+    "new": "      doItemEnchantmentPayloads(PAYLOAD.RerollEffect,",
+    "tests": ["test/enchantload.test.js"]
+  },
+  {
+    "name": "ENCHANTLOAD-restart-no-strip",
+    "file": "src/systems/enchantments.js",
+    "old": "    _fx.removeItemPinnedEffects?.(entity, item);\n    const at = item.timeEffectsLastRerolled ?? nowMinutes;",
+    "new": "    const at = item.timeEffectsLastRerolled ?? nowMinutes;",
+    "tests": ["test/enchantload.test.js"]
+  },
+  {
+    "name": "ENCHANTLOAD-restart-stamps-the-session",
+    "file": "src/systems/enchantments.js",
+    "old": "    const at = item.timeEffectsLastRerolled ?? nowMinutes;",
+    "new": "    const at = nowMinutes;",
+    "tests": ["test/enchantload.test.js"]
+  },
+  {
+    "name": "ENCHANTLOAD-restart-recasts-at-now",
+    "file": "src/systems/enchantments.js",
+    "old": "instantiateHeldSpell({ param: e.param, entity, item, ctx, nowMinutes: at }, true);",
+    "new": "instantiateHeldSpell({ param: e.param, entity, item, ctx, nowMinutes }, true);",
+    "tests": ["test/enchantload.test.js"]
+  }
+]

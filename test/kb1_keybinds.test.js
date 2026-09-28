@@ -336,6 +336,7 @@ test('KB1 law 5, swept: no gameplay code reads a key the registry binds by its r
     'src/scenes/exterior.js': { Escape: 'the back-button latch', AltLeft: 'preventDefault only' },
     'src/scenes/dungeon.js': { AltLeft: 'preventDefault only' },
     'src/scenes/townTalk.js': { KeyE: 'an open talk window\'s confirm alias - the window\'s key, while it is up' },
+    'src/player/pointerLock.js': { Escape: 'the BROWSER\'s unlock key, not the pause action: a real press is noted so the one the browser swallowed is not delivered twice (ESC-LOCK) - the pause itself is read through the registry' },
   };
   const files = [];
   const walk = (d) => { for (const e of readdirSync(new URL(`../${d}`, import.meta.url), { withFileTypes: true })) { const p = `${d}/${e.name}`; if (e.isDirectory()) walk(p); else if (e.name.endsWith('.js')) files.push(p); } };

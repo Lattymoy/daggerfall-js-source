@@ -154,7 +154,7 @@ test('DUEL1 the world host by source: the wall built in every skin (a shader tha
   assert.match(w, /const duelWall = \(\(\) => \{ try \{ return new DuelWallRenderer\(renderer\.gl\); \} catch \(e\) \{ console\.warn\('\[duel\] the ring wall could not be built', e\); return null; \} \}\)\(\);/);
   const grass = w.indexOf("renderer.markForeignPass();   // EV6: the grass changed programs behind the shadows' back");
   const wall = w.indexOf('duelWall.draw(rings, proj, view, new Float32Array(mwv.eye), now / 1000,');
-  const arrows = w.indexOf('arrows.update(dt, {');
+  const arrows = w.indexOf('arrows.update(foeDt, {');
   assert.ok(grass > 0 && wall > grass && arrows > wall, 'after the grass, before the arrows and the weapon');
   assert.match(w, /duelWall\.draw\(rings, proj, view, new Float32Array\(mwv\.eye\), now \/ 1000,\s*\n\s*\{ mode: renderer\._fogMode, density: renderer\._fogDensity, range: renderer\._fogRange, color: renderer\._fogColor, camPos: renderer\._camPos, dw: renderer\._dwFog \}\);[^\n]*\n\s*renderer\.markForeignPass\(\);/);   // DW-C: the carved sea's fog rides with the frame's
   assert.match(w, /player\.arena = live && \(modes\?\.mode \?\? 'exterior'\) === 'exterior' \? \{ centre: campToScene\(live\.c\), radius: DUEL_RADIUS_M \} : null;/, 'every frame, off the world frame');

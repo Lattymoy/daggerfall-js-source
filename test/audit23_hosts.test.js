@@ -16,7 +16,7 @@ import { TownPopulation } from '../src/systems/townPopulation.js';
 import { BANK_TYPES } from '../src/characters/nameHelper.js';
 import { NORMALIZE_INTERVAL_MINUTES } from '../src/systems/court.js';
 import { SKILLS } from '../src/systems/skills.js';
-import { maxFatigue, FATIGUE_LOSS } from '../src/systems/statMods.js';   // AUDIT 64 F7: the two running bands
+import { maxFatigue, FATIGUE_LOSS, FATIGUE_DRAIN_SCALE } from '../src/systems/statMods.js';   // AUDIT 64 F7: the two running bands
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const src = (f) => readFileSync(join(root, f), 'utf8');
@@ -124,18 +124,19 @@ test('AUDIT 64 F7: the tally gate and the fatigue gate are DIFFERENT conditions'
   const bandSinks = { ...sinks(), drainFatigue: (n) => drains.push(n) };
   tickPlayerMinutes({ entity: tickEntity(), classicMinutes: 59.9, dt: 1.0, sinks: bandSinks,
     activity: { running: true, runningTally: true }, rolls: () => 0.5 });
-  assert.ok(drains.includes(FATIGUE_LOSS.Running), `the moving runner pays RunningFatigueLoss (got ${drains})`);
+  const scaled = (loss) => Math.trunc(loss * FATIGUE_DRAIN_SCALE);   // BALANCE1: each band on exertion's scale
+  assert.ok(drains.includes(scaled(FATIGUE_LOSS.Running)), `the moving runner pays RunningFatigueLoss (got ${drains})`);
   const drains2 = [];
   const standSinks = { ...sinks(), drainFatigue: (n) => drains2.push(n) };
   tickPlayerMinutes({ entity: tickEntity(), classicMinutes: 59.9, dt: 1.0, sinks: standSinks,
     activity: { running: false, runningTally: true }, rolls: () => 0.5 });
-  assert.equal(drains2.includes(FATIGUE_LOSS.Running), false, 'the STANDING runner pays the default band, not 88');
-  assert.ok(drains2.includes(FATIGUE_LOSS.Default), `the standing runner pays DefaultFatigueLoss (got ${drains2})`);
+  assert.equal(drains2.includes(scaled(FATIGUE_LOSS.Running)), false, 'the STANDING runner pays the default band, not 88');
+  assert.ok(drains2.includes(scaled(FATIGUE_LOSS.Default)), `the standing runner pays DefaultFatigueLoss (got ${drains2})`);
 });
 
 test('AUDIT 23 C14 + combat-4: the exterior swing arms drain, tally fully, and never double-count', () => {
   for (const [name, text] of [['exterior', EXTERIOR], ['world', WORLD]]) {
-    assert.equal((text.match(/drainExteriorFatigue\(SWING_WEAPON_FATIGUE_LOSS\)/g) ?? []).length, 2,
+    assert.equal((text.match(/drainExteriorFatigue\(SWING_FATIGUE_COST\)/g) ?? []).length, 2,   // BALANCE1: DFU's swing loss on exertion's scale
       `${name}: the bow arm and the melee arm both drain`);
     assert.ok(text.includes('tallySwingSkills(playerEntity, weaponRig.playerWeapon.weapon)'), `${name}: the full bow tally arm`);
     assert.equal(/WEAPON_SKILL\[/.test(text), false, `${name}: the display-name double tally is gone`);

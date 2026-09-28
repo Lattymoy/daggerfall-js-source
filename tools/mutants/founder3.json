@@ -1,0 +1,50 @@
+[
+  {
+    "name": "FOUNDER3-registration-again",
+    "file": "server-account/src/titles.js",
+    "old": "firstPlayed(player) <= FOUNDER_UNTIL",
+    "new": "player.registered_at <= FOUNDER_UNTIL",
+    "tests": ["test/founder3.test.js"],
+    "note": "The bug itself: Founder read off when the account registered, so a player here as a guest since before the cutoff who registered after it holds nothing."
+  },
+  {
+    "name": "FOUNDER3-the-later-stamp",
+    "file": "server-account/src/titles.js",
+    "old": "  Math.min(player.registered_at, Number.isFinite(player.created_at) ? player.created_at : Infinity);",
+    "new": "  Math.max(player.registered_at, Number.isFinite(player.created_at) ? player.created_at : -Infinity);",
+    "tests": ["test/founder3.test.js"],
+    "note": "The later of the two stamps is the registration on every real row - the old rule by another road."
+  },
+  {
+    "name": "FOUNDER3-no-birth-a-founder",
+    "file": "server-account/src/titles.js",
+    "old": "? player.created_at : Infinity);",
+    "new": "? player.created_at : 0);",
+    "tests": ["test/founder3.test.js"],
+    "note": "A row without a birth stamp read as born at the epoch: every such row a founder, however late it registered."
+  },
+  {
+    "name": "FOUNDER3-the-birth-alone",
+    "file": "server-account/src/titles.js",
+    "old": "  Math.min(player.registered_at, Number.isFinite(player.created_at) ? player.created_at : Infinity);",
+    "new": "  player.created_at;",
+    "tests": ["test/founder2.test.js", "test/founder3.test.js"],
+    "note": "A row without a birth stamp compares undefined, and a founder who registered before the cutoff loses it."
+  },
+  {
+    "name": "FOUNDER3-first-contact-exclusive",
+    "file": "server-account/src/titles.js",
+    "old": "firstPlayed(player) <= FOUNDER_UNTIL",
+    "new": "firstPlayed(player) < FOUNDER_UNTIL",
+    "tests": ["test/founder3.test.js"],
+    "note": "A player first seen in the cutoff's own second is outside it."
+  },
+  {
+    "name": "FOUNDER3-the-registered-guard-dropped",
+    "file": "server-account/src/titles.js",
+    "old": "  if (Number.isFinite(player?.registered_at) && firstPlayed(player) <= FOUNDER_UNTIL) held.push('founder');",
+    "new": "  if (player && firstPlayed(player) <= FOUNDER_UNTIL) held.push('founder');",
+    "tests": ["test/founder3.test.js"],
+    "note": "D1 gives a guest a NULL registered_at and Math.min reads null as 0, so without the guard every guest is a founder."
+  }
+]

@@ -9,8 +9,8 @@
   {
     "name": "EPS-elite-copies-are-not-shared",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    return i >= 0 && i < _layoutFoes;",
-    "new": "    return i >= 0 && i < _layoutFoes && !f.entity?.elite;",
+    "old": "    return isRoomFoe(f) || f._ownFrom != null || ownRides(f);   // REST-SYNC: and a rest's encounter, which the room now shares; PSCALE-OWN: and a shared quest's, on the own lane; SUMMON-SYNC: and a loose stand",
+    "new": "    return (isRoomFoe(f) && !f.entity?.elite) || f._ownFrom != null || ownRides(f);   // REST-SYNC: and a rest's encounter, which the room now shares; PSCALE-OWN: and a shared quest's, on the own lane; SUMMON-SYNC: and a loose stand",
     "tests": ["test/elitepscale.test.js"]
   },
   {

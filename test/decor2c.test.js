@@ -10,9 +10,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   decorIsMount, decorMountFrame, decorWhatOf, decorPieceOf, DECOR_MOUNT_LIFT, DECOR_ARCHIVE_MAX, DECOR_WEAPONS_GROUP, DECOR_ARMOR_GROUP,
-  DECOR_ARROW_TEMPLATE, DECOR_SHIELD_TEMPLATES,
+  DECOR_ARROW_TEMPLATE,
 } from '../src/net/decorLaw.js';
-import { decorMountOf, decorMountDye, decorOwnEntry, decorStandOf } from '../src/systems/decorItems.js';
+import { decorMountOf, decorMountDye, decorMountDyeTarget, decorOwnEntry, decorStandOf } from '../src/systems/decorItems.js';
 import { itemDyeColor } from '../src/systems/itemDye.js';
 import { inventoryItemImage } from '../src/systems/itemTemplates.js';
 import { ITEM_GROUP_NAME_BY_CLASS } from '../src/systems/loot.js';
@@ -38,14 +38,14 @@ const named = (root, name) => rows(root).find((r) => one(r, 'dfdecor-row-name').
 
 // ─── THE LAW ─────────────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('DECOR2c the law: a mount is a flat piece of one\'s own weapon (never the arrows) or shield - every client reads it off the item\'s own numbers; its turn names a frame (the surface\'s heading and tilt, then a spin, clockwise as its viewer sees it) whose right is that viewer\'s right; it hangs the blood marks\' own hair off the surface; the port\'s own pictures past archive 511 are within bounds (mutants: the arrows hung, any armour hung, a model hung, the frame mirrored, the spin backwards, the bound kept)', () => {
-  assert.deepEqual([ITEM_GROUP_NAME_BY_CLASS[DECOR_WEAPONS_GROUP], ITEM_GROUP_NAME_BY_CLASS[DECOR_ARMOR_GROUP], DECOR_ARROW_TEMPLATE, [...DECOR_SHIELD_TEMPLATES]],
-    ['Weapons', 'Armor', 131, [109, 110, 111, 112]], 'Daggerfall\'s own numbers');
+test('DECOR2c the law: a mount is a flat piece of one\'s own weapon (never the arrows) or armour (ARMOR-MOUNT: every piece, not the shields alone) - every client reads it off the item\'s own numbers; its turn names a frame (the surface\'s heading and tilt, then a spin, clockwise as its viewer sees it) whose right is that viewer\'s right; it hangs the blood marks\' own hair off the surface; the port\'s own pictures past archive 511 are within bounds (mutants: the arrows hung, a model hung, the frame mirrored, the spin backwards, the bound kept)', () => {
+  assert.deepEqual([ITEM_GROUP_NAME_BY_CLASS[DECOR_WEAPONS_GROUP], ITEM_GROUP_NAME_BY_CLASS[DECOR_ARMOR_GROUP], DECOR_ARROW_TEMPLATE],
+    ['Weapons', 'Armor', 131], 'Daggerfall\'s own numbers');
   const hung = (item, extra = {}) => decorIsMount({ model: null, flat: [234, 12], item, ...extra });
   assert.equal(hung({ t: 120, g: 3 }), true, 'a longsword');
   assert.equal(hung({ t: 131, g: 3 }), false, 'never the arrows');
   assert.equal(hung({ t: 111, g: 2 }), true, 'a kite shield');
-  assert.equal(hung({ t: 102, g: 2 }), false, 'a cuirass is no shield');
+  assert.equal(hung({ t: 102, g: 2 }), true, 'ARMOR-MOUNT: a cuirass hangs as a shield does (test/armormount.test.js)');
   assert.equal(hung({ t: 265, g: 10 }), false, 'a statue stands');
   assert.equal(hung({ t: 120, g: 3 }, { model: 41000 }), false, 'a model never hangs');
   assert.equal(hung({ t: 120, g: 3 }, { flat: null }), false);
@@ -62,9 +62,9 @@ test('DECOR2c the law: a mount is a flat piece of one\'s own weapon (never the a
   assert.ok(nearAll(spun.right, [0, -1, 0]) && nearAll(spun.up, [-1, 0, 0]), 'spun a quarter clockwise: its top to the viewer\'s right');
   assert.equal(DECOR_MOUNT_LIFT, SURFACE_LIFT, 'the blood marks\' own hair');
   // the bound
-  assert.equal(DECOR_ARCHIVE_MAX, 999);
+  assert.equal(DECOR_ARCHIVE_MAX, 99_999);   // DECOR-MODFLATS: a mod's archive, to five digits
   assert.deepEqual(decorWhatOf({ model: null, flat: [513, 2], item: { t: 513, g: 3 } })?.flat, [513, 2], 'Roleplay & Realism\'s own weapon picture');
-  assert.equal(decorWhatOf({ model: null, flat: [1000, 0] }), null);
+  assert.equal(decorWhatOf({ model: null, flat: [100_000, 0] }), null);
   const mount = { id: 'm1', model: null, flat: [234, 12], item: { t: 120, g: 3, m: 7 }, pos: [0, 1.5, 2], rot: [180, 0, 15], scale: 1, light: null, storage: false, paid: 0 };
   assert.deepEqual(decorPieceOf(mount)?.rot, [180, 0, 15]);
   assert.equal(decorPieceOf({ ...mount, paid: 10 }), null, 'one\'s own, free');
@@ -72,7 +72,7 @@ test('DECOR2c the law: a mount is a flat piece of one\'s own weapon (never the a
 
 // ─── WHAT HANGS ──────────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('DECOR2c what of the pack hangs, and as what: a weapon or a shield, as its own pack picture - the owner\'s body\'s, as the pack draws it - with no light and its own numbers; never the arrows, other armour, anything worn, a quest\'s or a summoned one; its dye read off its numbers alone (an artifact\'s its own); the panel\'s row says it hangs, and a thing that stands stands (mutants: a worn blade hung, the body ignored, the dye the template\'s, a statue hung)', () => {
+test('DECOR2c what of the pack hangs, and as what: a weapon or a piece of armour, as its own pack picture - the owner\'s body\'s, as the pack draws it - with no light and its own numbers; never the arrows, anything worn, a quest\'s or a summoned one; its dye read off its numbers alone (an artifact\'s its own); the panel\'s row says it hangs, and a thing that stands stands (mutants: a worn blade hung, the body ignored, the dye the template\'s, a statue hung)', () => {
   const m = decorMountOf(sword());
   assert.deepEqual(m, { flat: [234, 12], light: null, item: { t: 120, g: 3, m: 7, v: null, a: null, p: null } });
   assert.deepEqual(decorMountOf(sword(), { gender: 'female' })?.flat, [233, 12], 'the owner\'s own body\'s picture (ItemBuilder: a woman\'s weapons are 233)');
@@ -81,7 +81,6 @@ test('DECOR2c what of the pack hangs, and as what: a weapon or a shield, as its 
   assert.deepEqual(decorMountOf(kite())?.flat, [251, 35]);
   for (const [why, item] of [
     ['arrows', { templateIndex: 131, group: 'Weapons', stackCount: 20 }],
-    ['a cuirass', { templateIndex: 102, group: 'Armor' }],
     ['worn', sword({ equipSlot: 'RightHand' })],
     ['a quest\'s', sword({ questItem: true })],
     ['summoned', sword({ timeForItemToDisappear: 100 })],
@@ -169,7 +168,7 @@ test('DECOR2c the room hangs a mount on the decal pass: its picture uploaded as 
   pool.put(piece);
   assert.equal(decals.length, 0, 'not yet loaded');
   await settle();
-  assert.deepEqual(uploads, [[234, 12, { mips: false, removeMask: true, dye: decorMountDye(piece.item) }]], 'the pack\'s own upload, its dye off its numbers');
+  assert.deepEqual(uploads, [[234, 12, { mips: false, removeMask: true, dye: decorMountDye(piece.item), dyeTarget: decorMountDyeTarget(piece.item) }]], 'the pack\'s own upload, its dye off its numbers - DYE-ICON: and the metal swatch it changes');
   const size = billboardSize(tex, 12);
   const quad = decorMountQuad(piece, origin, { w: size.w * 2, h: size.h * 2 });
   assert.equal(decals.length, 1);
@@ -270,7 +269,7 @@ test('DECOR2c hanging a blade from "Your things": its row says it hangs; the fli
 
 test('DECOR2c the host (worldModes.js) by source: the room\'s mounts and the one being hung are drawn on the decal pass, after the room\'s solid models and before its billboards; the room is handed the renderer whose decal pass and texture cache hang them (mutants: the mounts undrawn, the ghost undrawn)', () => {
   const m = src('src/scenes/worldModes.js');
-  assert.match(m, /decorTool\.draw\(renderer, interiorCtx\.texRemap\);[^\n]*\n\s*interiorDecor\.drawMounts\(renderer\);[^\n]*\n\s*decorTool\.drawMounts\(renderer\);/);
+  assert.match(m, /decorTool\.draw\(renderer, interiorCtx\.texRemap\);[^\n]*\n\s*const mwStamp = fpArm\.mountPictureStamp\(\);[^\n]*\n\s*if \(mwStamp !== _decorMwStamp\) \{ _decorMwStamp = mwStamp; interiorDecor\.refreshMounts\(\); \}\n\s*interiorDecor\.drawMounts\(renderer\);[^\n]*\n\s*decorTool\.drawMounts\(renderer\);/, 'MW-MOUNT: a build that landed or went is asked about first');
   assert.ok(m.indexOf('interiorDecor.drawMounts(renderer)') < m.indexOf('renderer.drawBillboards([...interiorCtx.billboardBatches'), 'before the billboards');
   assert.match(m, /const interiorDecor = createDecorRoom\(\{\n\s*meshes: \{ getGpuMesh, cpuModels \}, renderer, getTexture, uploadRecord,/);
 });

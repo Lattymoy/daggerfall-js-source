@@ -37,10 +37,10 @@ import { expandRowValues } from '../systems/quest/questMacros.js';   // MACRO-3:
 import { announceSkillRaise, announceMastery } from '../ui/levelNotice.js';
 import { DOOR_SPELL_TEXT, castBySkeletonKey } from '../systems/mysticism.js';   // X1: the door-spell alert lines; D9: Open.CheckCastByItem
 import { raiseSkills } from '../systems/advancement.js';   // AUDIT 23 (entity-1): the rest-end raise
-import { tickPlayerMinutes, runMagicRoundsFor, worldMinutes, setWorldMinutes, advanceWorldMinutes, MINUTES_PER_DAY, CLASSIC_MINUTES_PER_SECOND, sharedClockOn } from '../systems/worldTick.js';
+import { tickPlayerMinutes, claimMagicRounds, runMagicRoundsFor, worldMinutes, setWorldMinutes, advanceWorldMinutes, MINUTES_PER_DAY, CLASSIC_MINUTES_PER_SECOND, sharedClockOn } from '../systems/worldTick.js';
 import { REST_KIND, REST_TEXT_SURVIVAL, restCost, restHour, stiffen } from '../systems/survival/rest.js';   // SURV4: the rest law - a bed and a fire sleep, the window alone is rough
 import { survivalRules } from '../systems/survival/switch.js';   // SURV-TIERS: the rest's price is the tier's, read at the open
-import { sleepStage } from '../systems/survival/needs.js';   // AUDIT SURV-TIERS (the third pass): the rough night's lesser sleep, said
+import { sleepStage, runSurvivalMinutes } from '../systems/survival/needs.js';   // AUDIT SURV-TIERS (the third pass): the rough night's lesser sleep, said
 import { setSyntheticTimeIncrease } from '../systems/effectBroker.js';   // AUDIT 63 F13: VampirismInfection.cs:161-162
 import { setInfectionHost, vampireClanForFaction } from '../systems/infection.js';   // V1: the host seam for the dream/death videos and the turn's clock raise
 import { findFactions } from '../systems/talk.js';   // V1: GetRegionFaction's FindFactions(Province, region)
@@ -75,6 +75,7 @@ import { installRoleplayRealismItems } from '../systems/rriInstall.js';
 import { installDetailedShipsArt } from '../systems/detailedShips.js';   // DS1: Detailed Ships' pictures and xml scales
 import { installWarmAshesShips } from '../systems/warmAshesShips.js';   // WA1: Warm Ashes - Ships' quest list and save slot
 import '../systems/gateSpoils.js';   // WB5: the Sigil Stone's own template (570) registers in every host, so a save carrying one loads it in any of the four
+import '../systems/sigilBroker.js';   // SET7: the Broker's record (what this character bought today) registers its save slot in every host, so a save made anywhere carries it
 import { installRoleplayRealism } from '../systems/rrInstall.js';   // RR1: Roleplay & Realism's InitMod - after Items', as DFU loads them (Items is the one it looks up)   // RRI1: the templates, the patches, the art - the same seam, the same reason   // DW3: its icons, on the replacement door - here and not at worldTick's module scope, where the mod's law sits in an import cycle (a TDZ)
 import { getBool, getInt } from '../systems/settings.js';   // M-FM: Audio/AlternateMusic, read once for all three hosts; MAC-O4: Controls/WeaponSwingMode, the drag route's own missing term
 import { SongManager, musicEnvironment, holdEnvironment } from '../systems/songManager.js';
@@ -1458,9 +1459,33 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, o
      *  all owe the world those minutes. The once-per-minute-change
      *  fatigue drain still fires once, exactly as it does in DFU
      *  across a jump, which is why the callers that need a session's
-     *  worth of fatigue charge it explicitly. */
-    advance(minutes) {
+     *  worth of fatigue charge it explicitly. REST-ROUNDS: `sharedEnd`
+     *  is a rest sub-tick's end off the session's own counter (null
+     *  offline), which online is the only clock those minutes have. */
+    advance(minutes, sharedEnd = null) {
       if (!(minutes > 0)) return null;
+      // REST-ROUNDS (Discord, 2026-09-27: "when you rest, spell effects don't wear off ... I've acomplished permanent
+      // true invisibility, waterbreathing, regenerate health, etc."): A REST'S MINUTES OWE THEIR MAGIC ROUNDS ONLINE
+      // TOO. RESTX2 hands each sub-tick's end off the session's own counter (restSession.js `_onlineSimMinutes`) so
+      // the rolls and "the magic-round catch-up" run online, and only the dungeon's arm spent it on the rounds
+      // (dungeonContext.js _restAdvance) - here the arm below ran the world's real seconds and dropped it, so a night
+      // outdoors or in a building healed every hour and aged no effect: cast, rest the magicka back, cast again, and
+      // the incumbent's rounds stacked for good. The window is claimed the dungeon's way (WORLD5 C1 moves the tick's
+      // reading with it, so the next tick re-anchors rather than running the night twice) and fanned out to the foe
+      // pools as a tick's is. Nothing is moved on the shared clock.
+      if (sharedClockOn() && Number.isFinite(sharedEnd)) {
+        const end = Math.floor(sharedEnd), start = end - minutes;
+        const w = claimMagicRounds(start, sharedEnd);
+        runMagicRoundsFor(entity, w.from, w.to, { sinks, say });
+        // AUDIT RISE-REST F2: ...and the NEEDS over the same minutes, asleep, as the dungeon's arm pays them (AUDIT SURV
+        // B) - the tick below this arm is what paid them before, and online it had the world's seconds to pay: a night
+        // in a bed or by a fire cleared no sleep debt anywhere but underground (SURV4: "ONLINE the same"). The record's
+        // own marker keeps the first frame after the night from paying it again, awake.
+        const feed = survivalFeed(entity, survivalEnv?.() ?? null, { say });
+        if (feed) runSurvivalMinutes(entity, start, end, feed.env, { ...feed.deps, sinks, rolls: Math.random });
+        for (const fn of subscribers) fn(w.from, w.to, 0);
+        return { classicMinutes: worldMinutes(), rounds: w.rounds, magicRoundWindow: w };
+      }
       // WORLD5: the shared clock is not this player's to move - a rest, a training session, a fast travel or the
       // exhaustion collapse fabricates no minutes online; the tick runs whatever the world's clock owes since the last
       // reading, and nothing more

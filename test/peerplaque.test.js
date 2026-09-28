@@ -77,7 +77,7 @@ test('PEER-PLAQUE1 hosts by source: the street races the F key\'s own pick and n
   assert.match(w, /import \{ glyphMarks \} from '\.\.\/ui\/playerBadge\.js';/, 'the badge\'s plain-text marks, for a text plaque');
   assert.match(w, /const _hoverPeerPick = \(eye, dir\) => peerRayPick\(peerInSight\(eye, dir\), SOCIAL_REACH\);/,
     'SOC5\'s one pick (through peerInSight: AUDIT DISC7 A6, a wall blocks it), the same reach, dressed for the race');
-  assert.match(w, /const hit = pickPeerInFront\(eye, dir, peersNear\(\), SOCIAL_REACH, rayPersonDistance\);/,
+  assert.match(w, /const hit = pickPeerInFront\(eye, dir, \(peersNear\(\) \?\? \[\]\)\.filter\(\(q\) => !q\.cv\), SOCIAL_REACH, rayPersonDistance\);/,
     'SOC5\'s one pick, the same reach and the same cylinder, dressed for the race');
   assert.match(w, /person: _hoverPersonPick\(cam\.pos, _hd\),\s*\n\s*peer: _hoverPeerPick\(cam\.pos, _hd\),/, 'raced beside the townsperson in the street\'s pick');
   const namers = w.slice(w.indexOf('const _hoverNamers = ['), w.indexOf('const _hoverModNamers = ['));
@@ -89,7 +89,7 @@ test('PEER-PLAQUE1 hosts by source: the street races the F key\'s own pick and n
   assert.match(namer, /const acts = social \? peerActsFor\(id\) : null;/, 'the F-menu\'s own bag');
   assert.match(w, /const peerActsFor = \(peerId\) => \(\{ \.\.\.social\.actionsFor\(peerId\), \.\.\.tradeActionsFor\(peerId\), canInspect: true, canReadPage: !!pageOffers\.get\(peerId\), \.\.\.duelActionsFor\(peerId\) \}\);/, 'both halves, and the look (INSPECT1), and a page held out to me (JOURNAL1)');
   assert.match(namer, /const renown = online\?\.renownOf\?\.\(id\) \?\? null;/, 'RENOWN2: their Renown, handed beside the name - the plaque boxes it left of the name, as over their head');
-  assert.match(namer, /return \{ title: marks \? `\$\{name\} \$\{marks\}` : name, renown, subs: \[cast, peerRelationText\(acts\)\]\.filter\(Boolean\), actions: acts \? socialPlaqueRows\(id, acts\) : \[\], actionsUnlit: true \};/);   // ALLY-CAST: the cast line above the relation; ACT-MENU: the card's rows, unlit
+  assert.match(namer, /return \{ title: marks \? `\$\{name\} \$\{marks\}` : name, renown, subs: \[cast, peerRelationText\(acts\)\]\.filter\(Boolean\), actions: acts \? socialPlaqueRows\(id, acts\) : \[\], actionsUnlit: !acts \};/);   // ALLY-CAST: the cast line above the relation; ACT-MENU: the card's rows, unlit
   assert.match(w, /peerHoverPick: \(\) => _hoverPeerPick\(cam\.pos, socialFwd\(\)\),\s*\n\s*peerHoverName: \(key\) => peerHoverName\(key\),/, 'the two doors the modal hosts reach - the pick off the F key\'s OWN ray (AUDIT DROPS E3), never the mode\'s eye');
   assert.match(w, /const hit = peerInSight\(cam\.pos, socialFwd\(\)\);/, 'the same ray the key casts');
   const m = rd('src/scenes/worldModes.js');
@@ -110,5 +110,5 @@ test('PEER-PLAQUE1 hosts by source: the street races the F key\'s own pick and n
   assert.match(m, /cursorActive: overlayHeld \|\| !!host\.pointerSurfaceUp\?\.\(\),/);
   assert.match(m, /pointerSurfaceUp: \(\) => !!host\.pointerSurfaceUp\?\.\(\),/);
   assert.match(d, /cursorActive: dungeonPaused\(\) \|\| !!opts\.pointerSurfaceUp\?\.\(\),/);
-  assert.match(race, /return firmFirst\(\[gate, camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe\], nearestInOrder\);/, 'between the townsperson and the foe');   // PR-WAGON1: the one order, raced firm-first   // HCC: the mod's activator stands after the cart   // WB2: the gate's fire heads the list
+  assert.match(race, /return firmFirst\(\[gate, broker, camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe\], nearestInOrder\);/, 'between the townsperson and the foe');   // PR-WAGON1: the one order, raced firm-first   // HCC: the mod's activator stands after the cart   // WB2: the gate's fire heads the list   // SET7: the Broker beside it next
 });

@@ -1,0 +1,92 @@
+[
+  {
+    "name": "FLOW2-a-type0-between-unread",
+    "file": "src/world/wodLocationLoader.js",
+    "old": "    if ((st.hasLocation || st.ocean) && type0Between(idx.type0, prev, i)) return st.out;\n",
+    "new": "",
+    "tests": [
+      "test/flow2_fast_tests.test.js"
+    ]
+  },
+  {
+    "name": "FLOW2-the-last-own-taken-for-between",
+    "file": "src/world/wodLocationLoader.js",
+    "old": "if (t0[mid] <= a) lo = mid + 1; else hi = mid;",
+    "new": "if (t0[mid] < a) lo = mid + 1; else hi = mid;",
+    "tests": [
+      "test/flow2_fast_tests.test.js"
+    ]
+  },
+  {
+    "name": "FLOW2-the-index-past-an-append",
+    "file": "src/world/wodLocationLoader.js",
+    "old": "    if (this._pix && this._pixCount === this.count) return this._pix;",
+    "new": "    if (this._pix) return this._pix;",
+    "tests": [
+      "test/flow2_fast_tests.test.js"
+    ]
+  },
+  {
+    "name": "FLOW2-the-right-edge-aliased",
+    "file": "src/world/wodLocationLoader.js",
+    "old": "x < PIX_W && y < PIX_H",
+    "new": "x <= PIX_W && y < PIX_H",
+    "tests": [
+      "test/flow2_fast_tests.test.js"
+    ]
+  },
+  {
+    "name": "FLOW2-the-walk-off-its-pixel",
+    "file": "src/world/wodLocationLoader.js",
+    "old": "  for (let i = idx.first[p]; i >= 0; i = idx.next[i]) {",
+    "new": "  for (let i = idx.first[p]; i >= 0; i = -1) {",
+    "tests": [
+      "test/flow2_fast_tests.test.js"
+    ]
+  },
+  {
+    "name": "FLOW2-a-shape-draws-reordered",
+    "file": "src/systems/weatherMap.js",
+    "old": "  const a2 = A2 * u1, p2 = u2 * Math.PI * 2,",
+    "new": "  const a2 = A2 * u2, p2 = u1 * Math.PI * 2,",
+    "tests": [
+      "test/flow2_fast_tests.test.js"
+    ]
+  },
+  {
+    "name": "FLOW2-a-corner-seed-moved",
+    "file": "src/systems/weatherMap.js",
+    "old": "const noiseAt = (i, j, salt) => seededFirst((Math.imul(i, 0x27d4eb2d) ^ Math.imul(j, 0x165667b1)",
+    "new": "const noiseAt = (i, j, salt) => seededFirst((Math.imul(j, 0x27d4eb2d) ^ Math.imul(i, 0x165667b1)",
+    "tests": [
+      "test/flow2_fast_tests.test.js"
+    ]
+  },
+  {
+    "name": "FLOW2-the-first-draw-unadvanced",
+    "file": "src/systems/wind.js",
+    "old": "export const seededFirst = (seed) => mulberryDraw(((seed >>> 0) + 0x6D2B79F5) >>> 0);",
+    "new": "export const seededFirst = (seed) => mulberryDraw(seed >>> 0);",
+    "tests": [
+      "test/flow2_fast_tests.test.js"
+    ]
+  },
+  {
+    "name": "FLOW2-headings-of-another-place",
+    "file": "src/systems/weatherMap.js",
+    "old": "h = Float64Array.from(headings(host.bornX, host.bornZ))",
+    "new": "h = Float64Array.from(headings(host.bornZ, host.bornX))",
+    "tests": [
+      "test/flow2_fast_tests.test.js"
+    ]
+  },
+  {
+    "name": "FLOW2-the-front-path-backwards",
+    "file": "src/systems/weatherMap.js",
+    "old": "pathWith(fh, front.bornAt, bornAt)",
+    "new": "pathWith(fh, bornAt, front.bornAt)",
+    "tests": [
+      "test/flow2_fast_tests.test.js"
+    ]
+  }
+]

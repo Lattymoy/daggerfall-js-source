@@ -18,7 +18,7 @@ import { FEATURES, resolveControl } from './features.js';
 import { getPref, setPref } from './uiPrefs.js';
 import { modSetting, setModSetting } from './modSettings.js';
 import { onlineForcedPref, onlineForcedModSetting } from './onlineLane.js';
-import { uiSkin, setUiSkin, SKIN_NAMES, isEnhancedPlus, setEnhancedPlus } from './uiSkin.js';
+import { uiSkin, setUiSkin, SKIN_NAMES } from './uiSkin.js';
 import { activeUiPack, setUiPack, UI_PACKS, UI_PACK_NONE } from './uiPack.js';
 
 const row = (id) => {
@@ -69,20 +69,18 @@ export const SOUND_ROWS = Object.freeze(['enhanced-sounds', 'mod-immersive-foots
 /** Wear a UI choice: the skin, and the pack over a classic one. Both land on the shelf, then the page reloads - the
  *  two skins are two hosts (uiSkin.js). Answers the URL to load, carrying the choice on it when the shelf refused
  *  (SKIN-CARRY's law, for the pack too). */
-export function uiChoiceUrl(skin, pack, href = globalThis.location?.href ?? 'http://localhost/', plus = false) {
+export function uiChoiceUrl(skin, pack, href = globalThis.location?.href ?? 'http://localhost/') {
   const url = new URL(href);
+  // PLUS-ONLY: `plus` is dropped with the others - a retired instruction left on the address means nothing now
   url.searchParams.delete('skin'); url.searchParams.delete('uipack'); url.searchParams.delete('plus');
   if (setUiSkin(skin) === null) url.searchParams.set('skin', skin);
   if (skin === 'classic' && setUiPack(pack) === false) url.searchParams.set('uipack', pack);
-  // PLUS1: Enhanced and Enhanced Plus are the one skin; the choice between them is its own shelf key.
-  if (skin === 'enhanced' && setEnhancedPlus(plus) === null) url.searchParams.set('plus', plus ? '1' : '0');
   return url.toString();
 }
-const uiOption = (id, name, skin, pack, { by, blurb, plus = false }) => Object.freeze({
-  id, name, by, blurb, skin, pack, plus,
-  isOn: () => uiSkin() === skin && (skin !== 'classic' || (activeUiPack()?.id ?? UI_PACK_NONE) === pack)
-    && (skin !== 'enhanced' || isEnhancedPlus() === plus),
-  apply: () => ({ reload: true, url: uiChoiceUrl(skin, pack, undefined, plus) }),
+const uiOption = (id, name, skin, pack, { by, blurb }) => Object.freeze({
+  id, name, by, blurb, skin, pack,
+  isOn: () => uiSkin() === skin && (skin !== 'classic' || (activeUiPack()?.id ?? UI_PACK_NONE) === pack),
+  apply: () => ({ reload: true, url: uiChoiceUrl(skin, pack) }),
 });
 
 const G = UI_PACKS.grimoire;
@@ -111,9 +109,9 @@ export const OVERHAUL_PANELS = Object.freeze([
     online: 'Online, the chat, your friends, the party and trading keep their own panels over any of these.',
     options: Object.freeze([
       uiOption('classic', SKIN_NAMES.classic, 'classic', UI_PACK_NONE, { by: 'Daggerfall', blurb: 'Daggerfall’s own screens, pixel for pixel: the inventory, the spellbook, the conversations and the maps as they shipped.' }),
-      uiOption('enhanced', SKIN_NAMES.enhanced, 'enhanced', UI_PACK_NONE, { by: 'The port', blurb: 'The port’s own screens: a hotbar, the enhanced inventory and spellbook, the held map, and every panel built for a mouse, a pad and a phone.' }),
-      // PLUS1 (2026-09-25): the enhanced screens in the refreshed dress - Enhanced itself stays as it was, beside it.
-      uiOption('enhanced-plus', 'Enhanced Plus', 'enhanced', UI_PACK_NONE, { plus: true, by: 'The port, refreshed', blurb: 'The enhanced screens in stone and brass: framed windows that unfold, Yes and No as real buttons, the guild and shop windows rebuilt, health that breaks off when you are hit, and popup lines that fade.' }),
+      // PLUS1 (2026-09-25): the enhanced screens in the refreshed dress. PLUS-ONLY (2026-09-26): and the only enhanced
+      // option - plain Enhanced, which stood beside it, is retired (systems/uiSkin.js isEnhancedPlus).
+      uiOption('enhanced-plus', SKIN_NAMES.enhanced, 'enhanced', UI_PACK_NONE, { by: 'The port', blurb: 'The port’s own screens in stone and brass: a hotbar, the enhanced inventory and spellbook, the held map, framed windows that unfold, the guild and shop windows rebuilt, and every panel built for a mouse, a pad and a phone.' }),
       uiOption(G.id, G.title, 'classic', G.id, { by: `${G.author}, version ${G.version}`, blurb: 'Daggerfall’s screens redrawn at three times the detail: parchment and wood in place of the rock, a spellbook that is a book, and new lettering.' }),
     ]),
   }),

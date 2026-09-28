@@ -101,8 +101,8 @@
   {
     "name": "AUDIT-DROPS-D3-offline-rester-rests",
     "file": "src/scenes/world.js",
-    "old": "    const farRow = social.others().find((m) => m.p?.rest && m.online !== false && !nearAccount(m.acct, m.p)) ?? null;",
-    "new": "    const farRow = social.others().find((m) => m.p?.rest && !nearAccount(m.acct, m.p)) ?? null;",
+    "old": "    const farRow = restTogether() ? (social.others().find((m) => m.p?.rest && !restsAlone(m) && m.online !== false && !nearAccount(m.acct, m.p)) ?? null) : null;",
+    "new": "    const farRow = restTogether() ? (social.others().find((m) => m.p?.rest && !restsAlone(m) && !nearAccount(m.acct, m.p)) ?? null) : null;",
     "tests": [
       "test/restfar.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "PARTY-REST-FAR1-a-near-rester-counts-as-far",
     "file": "src/scenes/world.js",
-    "old": "    const farRow = social.others().find((m) => m.p?.rest && m.online !== false && !nearAccount(m.acct, m.p)) ?? null;",
-    "new": "    const farRow = social.others().find((m) => m.p?.rest && m.online !== false) ?? null;",
+    "old": "    const farRow = restTogether() ? (social.others().find((m) => m.p?.rest && !restsAlone(m) && m.online !== false && !nearAccount(m.acct, m.p)) ?? null) : null;",
+    "new": "    const farRow = restTogether() ? (social.others().find((m) => m.p?.rest && !restsAlone(m) && m.online !== false) ?? null) : null;",
     "tests": [
       "test/restfar.test.js"
     ]

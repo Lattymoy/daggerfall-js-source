@@ -16,7 +16,9 @@ import {
   isBedModel, bedSleepingOn,
 } from '../src/systems/rrRealism.js';
 import { installRoleplayRealism, setRrHostSeams, roleplayRealismInstalled } from '../src/systems/rrInstall.js';
-import { formulaOverride, adjustWeaponHitChanceMod, adjustWeaponAttackDamage, damageModifier, damageEquipment, maxEncumbrance } from '../src/combat/formulas.js';
+import { formulaOverride, adjustWeaponHitChanceMod, adjustWeaponAttackDamage, damageModifier, damageEquipment, maxEncumbrance, entityMaxEncumbrance } from '../src/combat/formulas.js';
+import { ENCHANTMENT_TYPES, computeEnchantmentMods } from '../src/systems/enchantments.js';
+import { ITEM_GROUPS } from '../src/characters/equipRules.js';
 import { climbingChanceOverride, climbingChance } from '../src/player/climbing.js';
 import { setWeaponPoseProbe } from '../src/combat/playerWeapon.js';
 import { getMeleeWeaponAnimTime, CLASSIC_FRAME_UPDATE } from '../src/characters/weaponStates.js';
@@ -33,9 +35,12 @@ import { createFactionRep, getReputation } from '../src/systems/factionRep.js';
 import { SKILLS } from '../src/systems/skills.js';
 import { WEAPONS, WEAPON_MATERIALS } from '../src/characters/weapons.js';
 import { mintCondition, setItemFields } from '../src/systems/itemTemplates.js';
-import { equipTableOf, EQUIP_SLOTS } from '../src/systems/equip.js';
-import { liveStat } from '../src/systems/statMods.js';
+import { equipTableOf, EQUIP_SLOTS, _wearScaleForTests } from '../src/systems/equip.js';
+import { liveStat, FATIGUE_DRAIN_SCALE } from '../src/systems/statMods.js';
 import { carriedWeight } from '../src/systems/inventory.js';
+
+// BALANCE1: this file pins DFU's / the mod's own wear verbatim, so it runs the port's wear scale at 1 (test/balance1.test.js pins the scale)
+_wearScaleForTests(1);
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -235,7 +240,7 @@ test('RR1 encumbranceEffects: past 75% of MaxEncumbrance the excess x2 takes spe
   assert.equal(liveStat(player, 'speed'), 60 + player._mods.stats.speed);
   const drained = [];
   runMagicRoundsFor(player, 0, 1, { sinks: { drainFatigue: (n) => drained.push(n) } });
-  assert.deepEqual(drained, [Math.trunc(over * 100)], 'the round: DecreaseFatigue(fatigueEffect, false)');
+  assert.deepEqual(drained, [Math.trunc(Math.trunc(over * 100) * FATIGUE_DRAIN_SCALE)], 'the round: DecreaseFatigue(fatigueEffect, false) - on BALANCE1\'s exertion scale');
   player.isResting = true;
   computeEntityMods(player);
   assert.equal(player._mods.stats.speed ?? 0, 0, 'resting: no effect (IsResting guard)');
@@ -246,6 +251,59 @@ test('RR1 encumbranceEffects: past 75% of MaxEncumbrance the excess x2 takes spe
   on('encumbranceEffects', false);
   computeEntityMods(player);
   assert.equal(player._mods.stats.speed ?? 0, 0, 'off');
+  reset();
+});
+
+// ENC-CEIL (2026-09-27, Discord: "a max of 502 encumbrance it sees me as overweight when I hit past whatever my base
+// is ... as soon as I hit 105 it's giving me full weight penalties"). The C# divides by `playerEntity.MaxEncumbrance`
+// (RoleplayRealism.cs:590) - the PROPERTY, GetMaxEncumbrance (DaggerfallEntity.cs:272, :501-507), live strength x1.5
+// plus IncreasedWeightAllowance's share - and the port divided by the bare formula. The fixture's allowance is the real
+// producer's: an equipped item enchanted IncreasedWeightAllowance (param 1, the half) through computeEnchantmentMods.
+test('ENC-CEIL: the encumbrance penalty reads the pack\'s own ceiling - PlayerEntity.MaxEncumbrance, the weight allowance and all (:590)', () => {
+  reset();
+  const ring = { name: 'Ring', templateIndex: 135, group: ITEM_GROUPS.Jewellery, currentCondition: 100, maxCondition: 100, equipSlot: 9, enchantments: [{ type: ENCHANTMENT_TYPES.IncreasedWeightAllowance, param: 1 }] };
+  const laden = (n) => {
+    const p = { isPlayer: true, stats: { strength: 40, speed: 60 }, activeEffects: [], items: [ring, ...Array.from({ length: n }, () => mint({ group: 'Weapons', templateIndex: WEAPONS.Claymore, material: 0 }))], health: 20, fatigue: 5000 };
+    computeEnchantmentMods(p, {});
+    computeEntityMods(p);
+    return p;
+  };
+  // seven iron claymores: 52.75 kg - past three quarters of the bare 60, under three quarters of the 90 the pack shows
+  const light = laden(7);
+  assert.equal(maxEncumbrance(40), 60, 'the bare formula');
+  assert.equal(entityMaxEncumbrance(light), 90, '60 + (int)(60 * 0.5): the ceiling the pack draws');
+  assert.equal(carriedWeight(light), 52.75);
+  assert.equal(light._mods.stats.speed ?? 0, 0, 'under 75% of the real ceiling: no speed taken');
+  const none = [];
+  runMagicRoundsFor(light, 0, 1, { sinks: { drainFatigue: (n) => none.push(n) } });
+  assert.deepEqual(none, [], 'and no fatigue spent');
+  // ten: 75.25 kg of 90 - the penalty the real ceiling gives, not the bare one's (which would read 1.2 and take 54)
+  const heavy = laden(10);
+  assert.equal(carriedWeight(heavy), 75.25);
+  const over = Math.fround(Math.fround(Math.fround(Math.min(Math.fround(75.25 / 90), 1.2)) - 0.75) * 2);   // float32, as the C#
+  assert.equal(heavy._mods.stats.speed, -Math.trunc(60 * over));
+  assert.equal(heavy._mods.stats.speed, -10);
+  const drained = [];
+  runMagicRoundsFor(heavy, 0, 1, { sinks: { drainFatigue: (n) => drained.push(n) } });
+  assert.deepEqual(drained, [Math.trunc(17 * FATIGUE_DRAIN_SCALE)], '(int)(encOver * 100) off 75.25 / 90 - 17, on BALANCE1\'s exertion scale');
+  // THE FRACTION IS CARRIED (the pre-merge audit 0927b F2): each round pays 17 x the scale on average - over twenty
+  // rounds the whole of it, where truncating every round lost the fraction twenty times and a light overload's 1 a
+  // minute paid nothing at all. Derived from the scale, so a turn of it is balance1's pins alone.
+  runMagicRoundsFor(heavy, 1, 20, { sinks: { drainFatigue: (n) => drained.push(n) } });
+  const per = 17 * FATIGUE_DRAIN_SCALE;
+  assert.equal(drained.length, 20);
+  assert.ok(drained.every((n) => n === Math.floor(per) || n === Math.ceil(per)), `each round pays the scale's share: ${drained}`);
+  assert.equal(drained.reduce((x, y) => x + y, 0), Math.floor(20 * per + 1e-9), 'the carry never loses a point');
+  assert.ok(Math.floor(20 * per + 1e-9) > 20 * Math.trunc(per), 'which truncating every round would have');
+  // ...and with no sink the round sets the fatigue itself - the same scaled drain (SetFatigue's clamps)
+  const bare = laden(10);
+  bare.fatigue = 1000;   // under its own maximum, so SetFatigue's ceiling does not take part
+  const f0 = bare.fatigue;
+  runMagicRoundsFor(bare, 0, 1, { sinks: {} });
+  assert.equal(f0 - bare.fatigue, Math.trunc(per), 'the no-sink arm charges the scaled drain too');
+  // the seam reads the property, never the bare formula again
+  assert.match(rd('src/systems/rrInstall.js'), /maxEncumbrance: entityMaxEncumbrance\(entity\)/);
+  assert.ok(!/maxEncumbrance\(liveStat\(/.test(rd('src/systems/rrInstall.js')), 'the bare strength formula is back in the penalty');
   reset();
 });
 
@@ -349,7 +407,7 @@ test('RR1 bedSleeping and the wiring: the three bed models, listed by the interi
   assert.match(wm, /const doused = rrDouseOnDungeonExit\(playerEntity, \{ isDay: isDayFromMinutes\(Math\.floor\(worldMinutes\(\)\)\) \}\);\n      if \(doused\) townTalk\?\.showOverlay\?\.\(new ActionTextBox\(\[expandItemMacro\(USE_TEXT\.lightDouse, doused\)\]\)\);/, 'the douse on the dungeon exit with the light\'s own box');
   assert.match(wm, /setRrHostSeams\(\{ spawnFoe: \(mobileType, opts\) => standInteriorLooseFoe\(mobileType, opts\) \}\);/);
   assert.match(rd('src/combat/formulas.js'), /chanceToHitMod \+= _overrides\.get\('calculateWeaponToHit'\)\?\.\(weapon\) \?\? \(WEAPON_MATERIAL_MODIFIER\[weapon\.material\] \?\? 0\) \* 10;/);
-  assert.match(rd('src/combat/formulas.js'), /if \(_overrides\.get\('applyConditionDamageThroughPhysicalHit'\)\?\.\(item, owner, damage, \{ say \}\) === true\) return;/);
+  assert.match(rd('src/combat/formulas.js'), /if \(_overrides\.get\('applyConditionDamageThroughPhysicalHit'\)\?\.\(item, owner, damage, \{ say, rolls \}\) === true\) return;/);   // BALANCE1: the override is handed the rolls, for the wear scale's rounding
   assert.match(rd('src/player/climbing.js'), /const chance = climbingChanceOverride\(base, \{ \.\.\.i, say: this\.deps\.say \?\? null \}\) \?\? climbingChance\(/);
   assert.match(rd('src/combat/weaponRig.js'), /const poseProbe = \(\) => \(\{ \.\.\.weaponPoseOf\(playerWeapon\), weaponType: weaponTypeForItem\(playerWeapon\.weapon\) \}\);/, 'the pair through its one law (HARD2c)');
   assert.match(rd('src/combat/weaponRig.js'), /setWeaponPoseProbe\(poseProbe\);/, 'AUDIT 68 S09-rig-globals-last-built: re-claimed by the stepping rig');

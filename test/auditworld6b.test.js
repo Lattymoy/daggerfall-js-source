@@ -380,12 +380,26 @@ test('AUDIT WORLD6b C4/C5: the day\'s rolls - online the walk is one day at a ti
   // the world host by source: the heartbeat (A9), the death branch (C8), the full kick (C7), the targets (B8), the Wabbajack (B9), the pane (C9)
   const h = rd('src/scenes/world.js');
   assert.match(h, /else if \(id && isWorldRoom\(online\.room\)\) _foesInAt = performance\.now\(\);/, 'A9');
-  assert.match(h, /if \(online\.room\) \{ worldPublish\(now, true\); online\.leave\(\); exteriorFoes\.clearPuppets\(\); _foesRoom = null; \}/, 'C8');
-  assert.match(h, /if \(online\.room !== _foesRoom\) \{ const seam = isCellRoom\(online\.room\) && isCellRoom\(_foesRoom\); _foesRoom = online\.room; _foesFullAt = -Infinity; if \(!seam\) exteriorFoes\.clearPuppets\(\); \}/, 'C7 (WORLD6b-iii(b): a cell crossing keeps them - the seam is no room change to the puppets)');
+  assert.match(h, /if \(online\.room\) \{ worldPublish\(now, true\); online\.leave\(\); exteriorFoes\.clearPuppets\(\); modes\?\.clearOwnPuppets\?\.\(\); _foesRoom = null; \}/, 'C8 (QUEST-PARTY phase 3b: a building\'s puppets too)');
+  assert.match(h, /if \(online\.room !== _foesRoom\) \{ const seam = isCellRoom\(online\.room\) && isCellRoom\(_foesRoom\); _foesRoom = online\.room; _foesFullAt = -Infinity; _ownFullAt = -Infinity; if \(!seam\) \{ exteriorFoes\.clearPuppets\(\); modes\?\.clearOwnPuppets\?\.\(\); \} \}/, 'C7 (WORLD6b-iii(b): a cell crossing keeps them - the seam is no room change to the puppets; QUEST-PARTY phase 3b: a building\'s go with the room)');
   assert.match(h, /\{ const ids = ownerIds\(\); if \(ids\) exteriorFoes\.pruneOwners\(ids, now\); \}/, 'C3: the prune reads the clock');
   assert.match(h, /candidates: \(\) => \[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\]\.filter\(\(f\) => !f\.dead && !f\.puppet\),/, 'B8');
   assert.match(h, /const f = enchantFoes\(\)\.find\(\(x\) => !x\.dead && x\.entity === targetEntity\);\s*if \(!f \|\| f\.puppet\) return;/, 'B9');
   assert.match(rd('src/scenes/exteriorFoes.js'), /const me = _net\?\.selfId\?\.\(\) \?\? null;/, 'C11: selfId on the net is READ now (WORLD6b-ii: whose blow a streamed target names) - no dead wiring');
   assert.match(rd('src/ui/enhancedMenu.js'), /everyone nearby sees and fights - and its creatures can hurt you too\./, 'C9 (AUDIT WORLD6b-ii C3: since the hunt a peer\'s creature can hurt me)');
   assert.match(rd('bible/06-Systems/Online-Arc.md'), /## AUDIT WORLD6b \(2026-09-14\)/, 'the record');
+});
+
+test('AUDIT FINAL F12 (SUMMON-SYNC D6 above ground): a peer\'s blow on MY ally is refused - a partner\'s Cleave or Nova, which their puppet of it (a cell record carries no side) could not tell from a foe - where the dungeon\'s own door already refused it; a foe of mine still takes it (mutant: the ally left to a peer\'s blow)', async () => {
+  const pool = createExteriorFoes(poolRig());
+  pool.setNet(netFor([]));
+  const daedroth = await pool.spawnFoe(0, [10, 0, 10], { feetGiven: true });
+  daedroth.entity.team = 'PlayerAlly'; daedroth.entity.mobileTeam = 'PlayerAlly';
+  const hp = daedroth.entity.health;
+  assert.equal(pool.applyHit('bob-0002', { k: 'world:3,12', i: daedroth.seq, dmg: 5 }), false, 'refused');
+  assert.equal(daedroth.entity.health, hp, 'and nothing landed');
+  const rat = await pool.spawnFoe(0, [12, 0, 12], { feetGiven: true });
+  const was = rat.entity.health;
+  assert.equal(pool.applyHit('bob-0002', { k: 'world:3,12', i: rat.seq, dmg: 1 }), true);
+  assert.equal(rat.entity.health, was - 1, 'a foe of mine takes a peer\'s blow as before');
 });

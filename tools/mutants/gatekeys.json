@@ -1,0 +1,76 @@
+[
+  {
+    "name": "GATEKEYS-one-half-is-left-alone",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "          if [ \"$service_has\" = true ] && [ \"$relay_has\" = true ]; then",
+    "new": "          if [ \"$service_has\" = true ] || [ \"$relay_has\" = true ]; then",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ],
+    "note": "One half alone has a partner no listing can read back: left alone, the pair never works."
+  },
+  {
+    "name": "GATEKEYS-the-relay-listing-falls-back",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "          theirs=$(cd ../server && $WRANGLER secret list --format json)",
+    "new": "          theirs=$(cd ../server && $WRANGLER secret list --format json || echo '[]')",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ],
+    "note": "AUDIT-ACC F1 on the relay's side: 'I could not read it' becomes 'there is none', and every failed listing re-mints."
+  },
+  {
+    "name": "GATEKEYS-the-shape-is-not-checked",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "            if ! echo \"$listing\" | jq -e 'type == \"array\"' >/dev/null; then",
+    "new": "            if ! echo \"$listing\" | jq -e '.' >/dev/null; then",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ]
+  },
+  {
+    "name": "GATEKEYS-the-private-half-an-argument",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "          (cd ../server && printf '%s' \"$priv\" | $WRANGLER secret put GATE_SIGNING_KEY)",
+    "new": "          (cd ../server && $WRANGLER secret put GATE_SIGNING_KEY \"$priv\")",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ]
+  },
+  {
+    "name": "GATEKEYS-the-relay-half-put-on-this-service",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "          (cd ../server && printf '%s' \"$priv\" | $WRANGLER secret put GATE_SIGNING_KEY)",
+    "new": "          printf '%s' \"$priv\" | $WRANGLER secret put GATE_SIGNING_KEY",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ],
+    "note": "The account service would hold the private key and the relay none: every receipt still unsigned."
+  },
+  {
+    "name": "GATEKEYS-the-empty-var-back",
+    "file": "server-account/wrangler.toml",
+    "old": "ACCOUNT_VERSION = \"acct16\"\n",
+    "new": "ACCOUNT_VERSION = \"acct16\"\nGATE_PUBLIC_KEY = \"\"\n",
+    "tests": ["test/accountdeploy.test.js", "test/wb5b_gate_claim.test.js"],
+    "note": "A var of the name: every deploy rewrites it and Cloudflare refuses the secret its binding."
+  },
+  {
+    "name": "GATEKEYS-the-proof-takes-no-key-for-a-key",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "            if [ \"$code\" = \"400\" ] && grep -q '\"error\":\"receipt\"' /tmp/gate.json; then",
+    "new": "            if [ \"$code\" = \"400\" ] || [ \"$code\" = \"503\" ]; then",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ]
+  },
+  {
+    "name": "GATEKEYS-the-proof-never-fails",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "          echo \"::error::the service never answered as a holder of the gate's public half - no gate kill can be counted\"\n          cat /tmp/gate.json || true\n          exit 1",
+    "new": "          echo \"::error::the service never answered as a holder of the gate's public half - no gate kill can be counted\"\n          cat /tmp/gate.json || true\n          exit 0",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ]
+  }
+]

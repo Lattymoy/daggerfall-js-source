@@ -1,6 +1,6 @@
 // WORLD6b-iii(e) (Mac, 2026-09-14: "Continue" after WORLD6b-iii(d)): THE STRIKER'S RIDER AND THE ROSTER'S BOUND - the two
 // residuals AUDIT WORLD6b recorded and did not pay. (1) The striker's POISON: FormulaHelper inflicts a poisoned blade's
-// or shaft's dose INSIDE the damage calc and clears it from the weapon either way (formulas.js:689-693), so at a puppet
+// or shaft's dose INSIDE the damage calc and clears it from the weapon either way (formulas.js:694-698), so at a puppet
 // the dose ran on the local shadow's entity and the owner's foe never felt it. Now the pool has ONE poison door
 // (`poisonFoe`): mine dosed here, a puppet's set aside and spent by the blow's divert (`pt` on the hit, the wire's
 // bound), landed at the owner as FormulaHelper lands it - inside a damaging blow, before the health moves, the foe's
@@ -127,7 +127,7 @@ test('WORLD6b-iii(e): the hosts and the dungeon twin, by source - the exterior\'
   assert.match(m, /\? interiorFoes\?\.damageFoe\(f, d, player\.pos, m\.dir, \{ kind: 'arrow' \}\)/);
   assert.match(m, /onInflictPoison: \(att, tgt, pt\) => \(t\._encounter \? interiorFoes\?\.poisonFoe\(t, pt\) : inflictPoison\(tgt, pt, false, \{ currentMinute: Math\.floor\(interiorTicker\.classicMinutes\) \}\)\),/);
   const d = rd('src/scenes/dungeonContext.js');
-  assert.match(d, /function poisonFoe\(f, pt\) \{\s*\n\s*if \(!f\) return null;\s*\n\s*const pi = foes\.indexOf\(f\);\s*\n\s*if \(!_authority && pi >= 0 && pi < _layoutFoes\) \{ f\._divertPt = pt; return null; \}\s*\n\s*return inflictPoison\(f\.entity, pt, false, \{ currentMinute: Math\.floor\(classicMinutesRef\.value\) \}\);/, 'the dungeon\'s door: a layout foe while another hosts is a puppet');
+  assert.match(d, /function poisonFoe\(f, pt\) \{\s*\n\s*if \(!f\) return null;\s*\n\s*const pi = foes\.indexOf\(f\);\s*\n\s*if \(\(!_authority && isRoomFoe\(f, pi\)\) \|\| f\._ownFrom != null\) \{ f\._divertPt = pt; return null; \}[^\n]*\n\s*return inflictPoison\(f\.entity, pt, false, \{ currentMinute: Math\.floor\(classicMinutesRef\.value\) \}\);/, 'the dungeon\'s door: a layout foe while another hosts is a puppet');
   assert.match(d, /\(f, pt\) => poisonFoe\(f, pt\)\)\) \{\s+\/\/ C2-slice \(combat-11\)/, 'the melee chain'); assert.match(d, /onInflictPoison: \(att, tgt, pt\) => poisonFoe\(f, pt\),/, 'the shaft');
   assert.match(d, /const _pt = fromPlayer \? \(foe\._divertPt \?\? null\) : null; if \(fromPlayer\) foe\._divertPt = null;/); assert.match(d, /\.\.\.\(_pt != null \? \{ pt: _pt \} : \{\}\),[^\n]*\n\s*\.\.\.\(kind === 'arrow' \? \{ ar: 1 \} : \{\}\),\n\s*\.\.\.\(_whole \? \{ z: 1 \} : \{\}\) \}\);/);
   assert.match(d, /const pt = hitPoisonOf\(data\);/); assert.match(d, /if \(pt != null\) inflictPoison\(f\.entity, pt, false, \{ currentMinute: Math\.floor\(classicMinutesRef\.value\) \}\);[^\n]*\n\s*damageFoe\(f, dmg, at, dir, \{ fromPlayer: true, peer: true, kind, peerId: id, whole: data\.z === 1 \}\);/, 'the host lands the dose before the health moves');

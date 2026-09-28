@@ -1,0 +1,191 @@
+[
+  {
+    "name": "QP-tag-without-a-party",
+    "file": "src/scenes/questFoeHost.js",
+    "old": "  if (!partied || !b || !machine) return null;",
+    "new": "  if (!b || !machine) return null;",
+    "tests": ["test/questparty.test.js"]
+  },
+  {
+    "name": "QP-tag-an-unshared-quest",
+    "file": "src/scenes/questFoeHost.js",
+    "old": " || !machine.hasSharedQuestNamed?.(quest.questName)) return null;",
+    "new": ") return null;",
+    "tests": ["test/questparty.test.js"]
+  },
+  {
+    "name": "QP-tag-a-finished-quest",
+    "file": "src/scenes/questFoeHost.js",
+    "old": "  if (!quest || quest.questTombstoned || typeof s !== 'string'",
+    "new": "  if (!quest || typeof s !== 'string'",
+    "tests": ["test/questparty.test.js"]
+  },
+  {
+    "name": "QP-credit-a-person",
+    "file": "src/scenes/questFoeHost.js",
+    "old": "  for (const r of quest.resources.values()) if (r.isFoe && r.symbol?.name === tag.s) return r;",
+    "new": "  for (const r of quest.resources.values()) if (r.symbol?.name === tag.s) return r;",
+    "tests": ["test/questparty.test.js"]
+  },
+  {
+    "name": "QP-credit-an-unshared-quest",
+    "file": "src/scenes/questFoeHost.js",
+    "old": "  if (!machine || !tag || !machine.hasSharedQuestNamed?.(tag.q)) return null;",
+    "new": "  if (!machine || !tag) return null;",
+    "tests": ["test/questparty.test.js"]
+  },
+  {
+    "name": "QP-sharer-who-left-the-party",
+    "file": "src/scenes/questFoeHost.js",
+    "old": "  if (!sharer || !inMyParty(sharer) || !myFeet) return false;",
+    "new": "  if (!sharer || !myFeet) return false;",
+    "tests": ["test/questparty.test.js"]
+  },
+  {
+    "name": "QP-sharer-anywhere",
+    "file": "src/scenes/questFoeHost.js",
+    "old": "    if (dx * dx + dz * dz <= radius * radius) return true;",
+    "new": "    return true;",
+    "tests": ["test/questparty.test.js"]
+  },
+  {
+    "name": "QP-any-player-is-the-sharer",
+    "file": "src/scenes/questFoeHost.js",
+    "old": "    if (!p || accountOfPeer(p.id) !== sharer || !Array.isArray(p.feet)) continue;",
+    "new": "    if (!p || !Array.isArray(p.feet)) continue;",
+    "tests": ["test/questparty.test.js"]
+  },
+  {
+    "name": "QP-shared-quest-stays-home",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (f.puppet || (_questLike(f) && !qt) || (f.placed && !f.site) || (f.dead && !f.corpse)) continue;",
+    "new": "      if (f.puppet || f.isQuestFoe || (f.placed && !f.site) || (f.dead && !f.corpse)) continue;",
+    "tests": ["test/questparty.test.js"]
+  },
+  {
+    "name": "QP-every-quest-rides",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (f.puppet || (_questLike(f) && !qt) || (f.placed && !f.site) || (f.dead && !f.corpse)) continue;",
+    "new": "      if (f.puppet || (f.placed && !f.site) || (f.dead && !f.corpse)) continue;",
+    "tests": ["test/questparty.test.js"]
+  },
+  {
+    "name": "QP-frame-names-no-quest",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": ", ...(qf.length ? { qf } : {}) };",
+    "new": " };",
+    "tests": ["test/questparty.test.js"]
+  },
+  {
+    "name": "QP-trim-unranked",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      allLive.sort((a, b) => (qtOf.has(a) ? 0 : src.get(a)?.managed ? 2 : 1) - (qtOf.has(b) ? 0 : src.get(b)?.managed ? 2 : 1));",
+    "new": "",
+    "tests": ["test/questparty.test.js"]
+  },
+  {
+    "name": "QP-stranger-stands-them",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (qt && !_questShare?.accepts?.(from, qt)) { if (f) removePuppet(f); continue; }",
+    "new": "",
+    "tests": ["test/questparty.test.js"]
+  },
+  {
+    "name": "QP-no-quest-allowance",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "(qt ? livePuppetsOf(from, false, false, false, true) >= QUEST_PUPPETS_MAX : deep ?",
+    "new": "(deep ?",
+    "tests": ["test/questparty.test.js"]
+  },
+  {
+    "name": "QP-allowance-a-handful",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "export const QUEST_PUPPETS_MAX = 24;",
+    "new": "export const QUEST_PUPPETS_MAX = 12;",
+    "tests": ["test/questparty.test.js"]
+  },
+  {
+    "name": "QP-pending-forgets-its-quest",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      _pupPending.set(key, { ...r, _site: site, _deep: deep, _quest: qt });",
+    "new": "      _pupPending.set(key, { ...r, _site: site, _deep: deep });",
+    "tests": ["test/questparty.test.js"]
+  },
+  {
+    "name": "QP-built-puppet-unnamed",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "          nf._pupQuest = rec._quest ?? qt;   // QUEST-PARTY: and its quest's word\n",
+    "new": "",
+    "tests": ["test/questparty.test.js"]
+  },
+  {
+    "name": "QP-no-injury-credit",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "{ f._qHurt = true; _questShare?.onPuppetHurt?.(f._pupQuest); }",
+    "new": "{ f._qHurt = true; }",
+    "tests": ["test/questparty.test.js"]
+  },
+  {
+    "name": "QP-injury-every-blow",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "if (r.h !== undefined && f._pupQuest && !f._qHurt && p.h != null && r.h < p.h)",
+    "new": "if (r.h !== undefined && f._pupQuest && p.h != null && r.h < p.h)",
+    "tests": ["test/questparty.test.js"]
+  },
+  {
+    "name": "QP-no-kill-credit",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    if (f._pupQuest) _questShare?.onPuppetDied?.(f._pupQuest);",
+    "new": "",
+    "tests": ["test/questparty.test.js"]
+  },
+  {
+    "name": "QP-anyones-blow-lands",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    if (_questLike(f) && !_peerMayHit(from, f)) return false;",
+    "new": "",
+    "tests": ["test/questparty.test.js"]
+  },
+  {
+    "name": "QP-hunts-the-whole-cell",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "_questLike(f) ? questPeerCandidates(f) : peerCandidates()",
+    "new": "peerCandidates()",
+    "tests": ["test/questparty.test.js"]
+  },
+  {
+    "name": "QP-hunts-unfiltered",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "(_qTag(f) ? peerCandidates().filter((c) => _peerMayHit(c.id, f)) : [])",
+    "new": "(_qTag(f) ? peerCandidates() : [])",
+    "tests": ["test/questparty.test.js"]
+  },
+  {
+    "name": "QP-shared-quest-foe-unscaled",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "((!isPrivateQuestFoe(f) || !!_qTag(f)) && !(f.placed && !f.site))",
+    "new": "(!isPrivateQuestFoe(f) && !(f.placed && !f.site))",
+    "tests": ["test/questparty.test.js"]
+  },
+  {
+    "name": "QP-world-no-sharer",
+    "file": "src/scenes/world.js",
+    "old": "        if (!result.resync && acct) _questSharer.set(quest.questName, acct);",
+    "new": "",
+    "tests": ["test/questparty.test.js"]
+  },
+  {
+    "name": "QP-world-receiver-stands-its-own",
+    "file": "src/scenes/world.js",
+    "old": "accountOfPeer: (id) => social?.accountOfPeer(id), myFeet: feet })) return true;",
+    "new": "accountOfPeer: (id) => social?.accountOfPeer(id), myFeet: feet })) return false;",
+    "tests": ["test/questparty.test.js"]
+  },
+  {
+    "name": "QP-world-a-strangers-blow",
+    "file": "src/scenes/world.js",
+    "old": "    peerMayHit: (peerId, f) => !!social?.isPartyPeer(peerId) && f.entity?.team !== 'PlayerAlly'",
+    "new": "    peerMayHit: (peerId, f) => f.entity?.team !== 'PlayerAlly'",
+    "tests": ["test/questparty.test.js"]
+  }
+]

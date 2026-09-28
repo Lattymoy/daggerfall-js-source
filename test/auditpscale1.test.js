@@ -22,6 +22,7 @@ import { ARTIFACTS, SPECIAL_ARTIFACT_HANDLERS, onPlayerStruckByEnemy, registerFo
 import { ENCHANTMENT_TYPES as T } from '../src/formats/magicDef.js';
 import { MOBILE_TYPES } from '../src/characters/mobileTypes.js';
 import { killIfAnyLiveStatZero } from '../src/systems/statMods.js';
+import { isPrivateQuestFoe } from '../src/scenes/questFoeHost.js';   // CURSE-SYNC: the handover's word for a quest's foe
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
@@ -190,12 +191,15 @@ test('AUDIT PSCALE1 the dungeon, mounted: a layout foe is as tough as the player
   const D = read('src/scenes/dungeonContext.js');
   const a = D.indexOf('function _sharedFoe(f) {'), b = D.indexOf('function damageFoe(foe, damage,', a);
   assert.ok(a > 0 && b > a, 'the helpers are found');
-  const helpers = strip(D.slice(a, b));
+  // REST-SYNC re-aim: `_sharedFoe` asks the room's one predicate (the layout's run, or a rest's shared encounter)
+  const rf = D.indexOf('const isRoomFoe = ');
+  assert.ok(rf > 0, 'the room\'s predicate is found');
+  const helpers = `${D.slice(rf, D.indexOf('\n', rf))}\n${strip(D.slice(a, b))}`;
   const door = strip(D.slice(b, D.indexOf('if (foe.entity.health <= 0) {', b))).match(/foe\.entity\.health -=[^;]*;/g);
   assert.equal(door?.length, 1, 'one subtraction at the door');
   const pe = playerEntity();
   const lf = { entity: { health: 100, maxHealth: 200 } }, ally = { entity: { health: 100, team: 'PlayerAlly' } }, ambush = { entity: { health: 100 } };
-  const scope = { foes: [lf, ally, ambush], _layoutFoes: 2, _authority: true, playerEntity: pe, partyFoeLoses, partyFoeHits, partyFoeHeals, foeFighters, performance };
+  const scope = { foes: [lf, ally, ambush], _layoutFoes: 2, _authority: true, playerEntity: pe, partyFoeLoses, partyFoeHits, partyFoeHeals, foeFighters, performance, ownRides: () => false };   // PSCALE-OWN / SUMMON-SYNC: nothing of mine on the own lane here (test/pscaleown.test.js, test/summonsync.test.js)
   const d = mount(helpers, scope, `return { _sharedFoe, fightN, _weighHit, healFoe,
     door: (foe, healthDamage, bypassShield, _whole) => { ${door[0]} } };`);
   const now = performance.now();
@@ -288,7 +292,7 @@ test('AUDIT PSCALE1 a camp or a pack grows by its own members, mounted - one mor
     const stood = [];
     const standCamp = mount('', {
       placeFoeEnv: () => ({}), collider: {}, cam: { yaw: 0 }, fieldOfView: () => 1, entityOccupancy: () => () => false, _placingPool: () => [], campAnchorSpot: () => ({ x: 20, y: 0, z: 0 }),   // CAMP-FAR: main's anchor, a hundred metres out
-      LOOSE_FOE_PLACE_ATTEMPTS: 1, placeFoeFreely: () => ({ x: 1, y: 0, z: 1 }), _inAnyLocationRect: () => false, _nearRoad: () => false, CAMP_ROAD_CLEAR_M: 4, _nextCampId: 1,   // ROADS-CLEAR: no road here
+      LOOSE_FOE_PLACE_ATTEMPTS: 1, placeFoeFreely: () => ({ x: 1, y: 0, z: 1 }), _inAnyLocationRect: () => false, _nearRoad: () => false, _overDeepWater: () => false, CAMP_ROAD_CLEAR_M: 4, _nextCampId: 1,   // ROADS-CLEAR: no road here
       partyGroupMembers, partySize: () => n, ENEMY_BASICS: {},
       exteriorFoes: { spawnFoe: (mobileType) => { stood.push(mobileType); return Promise.resolve(null); } },
     }, `return (hit, feet) => ${fn.slice(fn.indexOf('{'))};`);
@@ -361,7 +365,7 @@ test('AUDIT PSCALE1 DOORS-1 at the sources and NET-2/NET-3 in the host: a Disint
   let dropped = 0;
   const hand = (over) => mount(balanced(W, hn, '{', '}'), {
     online: { room: 'world:3,12', sendFoes: (f) => { sentFrames.push(f); return true; } }, isCellRoom: (k) => String(k).startsWith('world:'), modes: { mode: 'exterior' },
-    peersNear: () => [{ id: 'bob-0002', feet: [5, 0, 5] }], exteriorFoes: { handOverFrame: (heirOf) => ({ f: [heirOf({ ai: { feet: [4, 0, 4] } })] }), dropOwnLive: () => (dropped = 2) }, ...over,
+    peersNear: () => [{ id: 'bob-0002', feet: [5, 0, 5] }], exteriorFoes: { handOverFrame: (heirOf) => ({ f: [heirOf({ ai: { feet: [4, 0, 4] } })] }), dropOwnLive: () => (dropped = 2) }, isPrivateQuestFoe, ...over,
   }, 'return handOverFoes;')();
   assert.equal(hand({}), 2, 'my foes to the nearest player outside');
   assert.deepEqual(sentFrames.at(-1), { f: ['bob-0002'] });
@@ -376,7 +380,7 @@ test('AUDIT PSCALE1 REC-3/REC-6: the shared archer\'s arrow and a puppet\'s real
   registerFormulaOverride('calculateAttackDamage', () => 10);
   try {
     const t = strip(read('src/scenes/world.js'));
-    const at = t.indexOf('onPlayerHit: (m) => {', t.indexOf('arrows.update(dt, {'));
+    const at = t.indexOf('onPlayerHit: (m) => {', t.indexOf('arrows.update(foeDt, {'));
     assert.ok(at > 0, 'the handler is found');
     const fn = balanced(t, at + 'onPlayerHit: '.length, '{', '}');
     const pool = createExteriorFoes(rig());

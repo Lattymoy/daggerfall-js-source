@@ -365,7 +365,7 @@ test('WS1: the vendored archive duck and its canonical paths; the bone-source li
 
 test('WS1: the wiring, by source - the third-person build takes the addons and the holster, the swap re-resolves it, the three hide sites, the options, the pref, the card, the data path, the build', () => {
   const fp = rd('src/combat/fpArm.js');
-  assert.match(fp, /const boneSourcePaths = boneSourcesFor\(TP_BASE_MODEL, skeletonPath, archives\);/);
+  assert.match(fp, /const boneSourcePaths = werewolf \? \[\] : boneSourcesFor\(TP_BASE_MODEL, skeletonPath, archives\);/);
   assert.match(fp, /const arm = await assembleFirstPersonArm\(\{ skeletonBytes, parts: partBytes, boneSources \}\);/);
   assert.match(fp, /hasBone: boneProbe\(skeletonBytes, boneSources\), parseNif: parseNifOnce,/);
   assert.match(fp, /ammoCount: ammoCount \?\? \(hasAmmo \? Number\.MAX_SAFE_INTEGER : 0\),/g);

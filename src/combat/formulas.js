@@ -34,7 +34,7 @@ import { SPECIAL_ABILITY_BITS, PROFICIENCY_BITS } from '../systems/specialAdvant
 // the temporal dead zone: the helper reads `undefined` at call time and the
 // bonus silently never applies. specialAdvantages.js is a leaf.
 import { weaponMinDamage, weaponMaxDamage, weaponSkillUsed } from '../characters/weapons.js';   // AUDIT 18: GetBaseDamageMin/Max and GetWeaponSkillIDAsShort resolve the TEMPLATE, never a baked field or a display name
-import { equipTableOf, lowerCondition, slotForBodyPart, EQUIP_SLOTS, weaponProficiencyFlag } from '../systems/equip.js';   // C-slice: DamageEquipment; CF1: GetWeaponSkillUsed as a ProficiencyFlag, -1 quirk included
+import { equipTableOf, lowerCondition, blowWear, slotForBodyPart, EQUIP_SLOTS, weaponProficiencyFlag } from '../systems/equip.js';   // C-slice: DamageEquipment; CF1: GetWeaponSkillUsed as a ProficiencyFlag, -1 quirk included
 import { SHIELD_PARTS } from '../systems/armorMaterials.js';
 import { totalWeight } from '../systems/inventory.js';   // EW1: ItemCollection.GetWeight, the one home for a stack's kg
 import { liveVampirism } from '../systems/racialLive.js';   // VU1: an import-free LEAF - vampirism.js cycles back here through loot.js
@@ -439,7 +439,7 @@ export const SKELETAL_WARRIOR_INDEX = 15;   // MonsterCareers.SkeletalWarrior
  *  had lifted a single group number into a parameter, which could not
  *  express DFU's two discriminants and left `target.group` - a field
  *  NOTHING in the codebase mints - as this arm's fallback. */
-export function weaponAttackDamage(attacker, target, damageMod, weapon, rolls = Math.random, weaponAnimTime = 0) {
+export function weaponAttackDamage(attacker, target, damageMod, weapon, rolls = Math.random, weaponAnimTime = 0, info = undefined) {
   const wMin = baseDamageMin(weapon), wMax = baseDamageMax(weapon);
   let damage = weaponDamageMods(weapon, wMin + Math.floor(rolls() * (wMax + 1 - wMin))) + damageMod;   // RF1: the weapon's own modifiers over ITS roll, before the swing's mods
   if (!target.isPlayer && target.careerIndex === SKELETAL_WARRIOR_INDEX) {
@@ -450,7 +450,7 @@ export function weaponAttackDamage(attacker, target, damageMod, weapon, rolls = 
   damage += WEAPON_MATERIAL_MODIFIER[weapon.material] ?? 0;   // half of the in-game display, per the source comment
   if (damage < 1) damage = 0;
   damage += bonusOrPenaltyByEnemyType(attacker, target);
-  damage = weaponBlowMods(weapon, damage, attacker, target);   // SIGIL1: the port's own over the whole blow - the online sigil, my blow at a foe - before the hook, so a bow's draw scales it too
+  damage = weaponBlowMods(weapon, damage, attacker, target, info);   // SIGIL1: the port's own over the whole blow - the online sigil, my blow at a foe - before the hook, so a bow's draw scales it too (SET2: `info` - the host's word that the foe had not noticed me)
   // "Mod hook for adjusting final damage. (no-op by default)" - the
   // stock's last line (AUDIT PCO1: Roleplay Realism's archery lands here)
   damage = adjustWeaponAttackDamage(attacker, target, damage, weaponAnimTime, weapon);
@@ -527,6 +527,11 @@ export function dropWeaponIfTargetImmune(weapon, targetEntity) {
  *  classic never damaged shields - else to the struck part's armor
  *  slot. Breaks speak and unequip through lowerCondition. */
 export function damageEquipment(attacker, target, damage, weapon, struckBodyPart, { rolls = Math.random, say = null } = {}) {
+  // WBX6 (2026-09-26, Swololo on Discord: "I broke one and a half of a weapon during the fight"): A BLOW ON THE WARDEN
+  // OF THE BURNING GATE WEARS NOTHING. His body is a stand-in the relay judges (world/gateBoss.js bossStandIn carries
+  // `spareGear`), a fight measured in hundreds of blows, and it broke weapons it was never meant to. A departure (Ledger
+  // A, WB): every other foe wears the gear as DFU's does, and the override below is never asked for him either.
+  if (target?.spareGear) return;
   // PCO1: the registered override first (the mod's DamageEquipment,
   // which wears gear on a fist's blow too, so no `!weapon` gate here).
   const o = _overrides.get('damageEquipment');
@@ -534,10 +539,10 @@ export function damageEquipment(attacker, target, damage, weapon, struckBodyPart
   if (!weapon || damage <= 0) return;
   const hit = (item, owner) => {
     // RR1: ApplyConditionDamageThroughPhysicalHit's own override slot (FormulaHelper.cs:1123-1128) - "Only return if override returns true"
-    if (_overrides.get('applyConditionDamageThroughPhysicalHit')?.(item, owner, damage, { say }) === true) return;
+    if (_overrides.get('applyConditionDamageThroughPhysicalHit')?.(item, owner, damage, { say, rolls }) === true) return;
     let amount = Math.trunc((10 * damage + 50) / 100);
     if (amount === 0 && dice100(20, rolls())) amount = 1;
-    lowerCondition(item, amount, owner, say);
+    lowerCondition(item, blowWear(amount, rolls), owner, say);   // BALANCE1: DFU's amount, on the port's wear scale
   };
   hit(weapon, attacker);
   const slots = equipTableOf(target);
@@ -551,7 +556,7 @@ export function damageEquipment(attacker, target, damage, weapon, struckBodyPart
   }
 }
 
-export function calculateAttackDamage(attacker, target, { weapon = null, damageMod = 0, toHitMod = 0, backstabChance = 0, weaponAnimTime = 0, rolls = Math.random, dfRand = rand, onMonsterHit = null, onInflictPoison = null, say = null, enchantCtx = null, playerReflexes = null } = {}) {
+export function calculateAttackDamage(attacker, target, { weapon = null, damageMod = 0, toHitMod = 0, backstabChance = 0, weaponAnimTime = 0, rolls = Math.random, dfRand = rand, onMonsterHit = null, onInflictPoison = null, say = null, enchantCtx = null, playerReflexes = null, unaware = false } = {}) {
   if (!attacker || !target) return 0;
   // HN1: THE RESOLUTION IS REPORTED, once per attack, through one seam
   // (setPlayerAttackHook - the enhanced HUD's damage numbers). Every
@@ -579,7 +584,7 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   // is DFU's CALLERS' work and runs after either core. The override gets
   // the whole option bag plus the notes.
   const core = _overrides.get('calculateAttackDamage');
-  const overridden = core ? core(attacker, target, { weapon, damageMod, toHitMod, backstabChance, weaponAnimTime, rolls, dfRand, onMonsterHit, onInflictPoison, say, playerReflexes, notes }) : undefined;
+  const overridden = core ? core(attacker, target, { weapon, damageMod, toHitMod, backstabChance, weaponAnimTime, rolls, dfRand, onMonsterHit, onInflictPoison, say, playerReflexes, notes, unaware }) : undefined;
   let damage = 0;
   if (overridden !== undefined) {
     damage = overridden;
@@ -671,7 +676,7 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   } else {
     if (calculateSuccessfulHit(attacker, target, chanceToHitMod, struck, rolls, notes)) {
       notes.hit = true;
-      damage = weaponAttackDamage(attacker, target, damageModifiers, weapon, rolls, weaponAnimTime);
+      damage = weaponAttackDamage(attacker, target, damageModifiers, weapon, rolls, weaponAnimTime, { unaware: !!unaware });   // SET2: the host's word the foe had not noticed me, for the blow's port modifiers
       const before = damage;
       damage = backstabDamage(damage, backstabChance, rolls, say);   // :688
       if (before > 0 && damage === before * 3) notes.backstab = true;
@@ -767,6 +772,9 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   // a direct import here would close a cycle; worldTick registers.
   if (target?.isPlayer && !attacker.isPlayer && damage > 0) {
     _playerStruckHook?.(attacker, target, damage);
+    // SET2: and every named struck listener (Malacath's Spite of the Spurned) - the same moment, the same three words;
+    // the Ring's one slot above stays its own
+    for (const fn of _playerStruckListeners.values()) { try { fn(attacker, target, damage); } catch { /* a set is not the blow's problem */ } }
   }
   // SW1: PCAAO's `onAttackDamageCalculated`, at the same tail and in the
   // same registered-hook shape. Unlike V3's above it is NOT gated on
@@ -776,6 +784,12 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   // because three of the six ask whether the shield covers it.
   if (target?.isPlayer && !attacker.isPlayer) {
     _attackOnPlayerHook?.(attacker, target, damage, struckPart);
+  }
+  // AUDIT SET M2: MY BLOW, LANDED - every named strike listener told the blow's FINAL damage at a foe (after either
+  // core's crits, materials and armour, which PCAAO's apply after the blow modifiers), so a power that shares the blow
+  // (Ruhn's Cleave) shares what landed, never the number before the struck foe's own armour took its part
+  if (attacker.isPlayer && !attacker.peer && !target.isPlayer && damage > 0) {
+    for (const fn of _playerStrikeListeners.values()) { try { fn(attacker, target, damage, weapon); } catch { /* a set is not the blow's problem */ } }
   }
   return report(damage);
 }
@@ -797,6 +811,17 @@ let _playerStruckHook = null;
 /** worldTick's registration seam for the enemy-damages-player tail
  *  (V3: the Ring of Namira's reflection). */
 export function setPlayerStruckHook(fn) { _playerStruckHook = fn ?? null; }
+const _playerStruckListeners = new Map();
+/** SET2: NAMED listeners at the same tail - `fn(attacker, target, damage)`, told when a foe's attack (a weapon's or a
+ *  monster's own) resolves with damage on the player, before any host subtracts it. A name re-registered replaces,
+ *  `null` removes; the Ring of Namira keeps its one slot above. Reporting only - an answer is ignored. */
+export function registerPlayerStruckListener(name, fn) { if (typeof fn === 'function') _playerStruckListeners.set(name, fn); else _playerStruckListeners.delete(name); }
+const _playerStrikeListeners = new Map();
+/** AUDIT SET M2: NAMED listeners at the same tail for the other direction - `fn(attacker, target, damage, weapon)`, told
+ *  when MY attack (never a peer's resolved here) resolves with damage on a foe (never a player: a duel's blow is its
+ *  own), the damage final, before any host subtracts it. A name re-registered replaces, `null` removes; an answer is
+ *  ignored. */
+export function registerPlayerStrikeListener(name, fn) { if (typeof fn === 'function') _playerStrikeListeners.set(name, fn); else _playerStrikeListeners.delete(name); }
 let _attackOnPlayerHook = null;
 /** SW1: the registration seam for PCAAO's `onAttackDamageCalculated` -
  *  EVERY resolution of an enemy's attack on the player, hit or miss,
@@ -889,7 +914,7 @@ export const KB_UNIT = CLASSIC_TO_UNITY_RATIO / 10;   // 3.95
  *  at 350 instead of ~570 takes roughly 60% more knockback speed.
  *
  *  `items` is the foe's own list; totalWeight IS ItemCollection
- *  .GetWeight (inventory.js:351), so the kg->classic multiply and the
+ *  .GetWeight (inventory.js:356), so the kg->classic multiply and the
  *  C# (int) truncation are the only arithmetic added here. A caller
  *  with no list passes nothing and gets the old base-only answer,
  *  which is the honest value for a foe the port gives no inventory. */

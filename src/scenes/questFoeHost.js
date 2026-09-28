@@ -30,6 +30,7 @@
 // equivalent failure throws at mint. Recorded runtime difference.
 
 import { QuestResourceBehaviour } from '../systems/quest/resourceBehaviour.js';
+import { questNameIn } from '../systems/quest/machine.js';   // AUDIT CURSE-SYNC: IsProtectedQuest's name test, one home
 import { applySpell } from '../systems/effects.js';
 import { GENDERS } from '../characters/nameHelper.js';
 
@@ -159,6 +160,149 @@ export function entityOccupancy(feetOf, liveFoes, playerFeet) {
     return false;
   };
 }
+
+/** QUEST-WAVE (2026-09-26, SquidKamer, Warm Ashes - Ships' author: "ship encounters ... get jumped by everyone"):
+ *  THE SPOTS A PLACEMENT HOLDS UNTIL ITS FOE LANDS, per scene (keyed by its collider). PlaceFoeFreely's OverlapSphere
+ *  meets every placed foe's capsule (CreateFoe.cs:319-323 - Unity syncs a placed foe's transform before the next
+ *  action's test, in the same tick), but a pool's stand is async here - the career, the texture - and its record joins
+ *  the pool only after. So a wave placed in ONE machine tick (WAQ_SHIP_SMALLRAID's thirteen) saw none of its own and
+ *  stood in a heap: every spot of a tick falls in the same two slivers of the view's edge. AUDIT 68 S21 held the loose
+ *  foes' spots; every arm holds them here now, in one set a scene, so a quest wave, a loose foe and each other all
+ *  see what is in flight. A held spot is a capsule centred on the point the law tested, released when the stand
+ *  settles - by then its record stands in the pool. */
+const _heldSpots = new WeakMap();
+export function heldSpots(collider) {
+  let set = _heldSpots.get(collider);
+  if (!set) _heldSpots.set(collider, (set = new Set()));
+  return set;
+}
+/** Hold `spot` while `stand()` runs its async chain; answers the stand's promise, the hold released either way. */
+export function holdSpotWhile(collider, spot, stand) {
+  const set = heldSpots(collider);
+  const held = { ai: { feet: [spot.x, spot.y - 0.9, spot.z], height: 1.8 } };   // a capsule centred on the tested point
+  set.add(held);
+  const release = () => { set.delete(held); };
+  let landing;
+  try { landing = stand(); } catch (err) { release(); throw err; }
+  return Promise.resolve(landing).finally(release);
+}
+
+/** QUEST-PARTY (2026-09-26, Mac: "Party shares them"). Online a quest stayed its player's own (Multiplayer.md's first
+ *  lock): a party that shared one ran a copy each, and each copy stood its own foes that no one else saw - two players
+ *  on the ship raid fought two raids. Now a quest SHARED with the party streams its foes to the party, a member stands
+ *  them and fights them, and each member's own copy counts the injuries and the kills it sees; a receiver's copy
+ *  stands no wave while the member who shared the quest stands within QUEST_SHARE_RADIUS (that copy stands it). Anyone
+ *  outside the party never sees them, and a peer's blow and a quest foe's hunt reach only the party. */
+export const QUEST_SHARE_RADIUS = 100;   // the camps' group (systems/campEncounters.js GROUP_ROLL_RADIUS)
+
+/** QUEST-PARTY: the stream's word on quest foe `f` - { q, s } (the quest's name, the foe's symbol) while its quest is
+ *  kept in step with the party and this player is partied; else null, and it stays this player's alone. */
+export function questShareTag(machine, f, partied) {
+  const b = f?.questBehaviour;
+  if (!partied || !b || !machine) return null;
+  const quest = machine.getQuest?.(b.questUID) ?? null;
+  const s = b.targetSymbol?.name;
+  if (!quest || quest.questTombstoned || typeof s !== 'string' || !machine.hasSharedQuestNamed?.(quest.questName)) return null;
+  return { q: quest.questName, s };
+}
+
+/** CURSE-SYNC (2026-09-27, the bug-reports channel: "Monsters aren't syncing ... The ghost on daggerfall ... We all had
+ *  to kill them ... And everyone had to kill thier ow[n]"). A WORLD QUEST'S FOES ARE THE WORLD'S. S0000977, the Curse of
+ *  Daggerfall, is no player's story: the tutorial starts it for every character as it ends (_TUTOR__'s `_no_`: `start
+ *  quest 977 977`, finished or declined), a main quest is never shared (systems/questShare.js), and at night in
+ *  Daggerfall's streets it stands a wraith every 21 minutes and a ghost every 31, one time in two. As a quest's foes they
+ *  rode nowhere (Multiplayer.md's first lock), so every player in the streets fought a haunting nobody else could see.
+ *  They ride the cell as an encounter's do - their spawner's, everyone else's puppet, anyone's to strike and to be
+ *  hunted by. Their quest holds them while their spawner does; a foe handed on (a door, a death) is its heir's plain
+ *  foe, which no quest counts. So A QUEST JOINS THIS LIST ONLY IF NO TASK COUNTS ITS FOES - no `killed`, no `injured`,
+ *  nothing but their Foe line and the actions that stand them (test/cursesync.test.js holds every entry to it). */
+export const WORLD_QUESTS = Object.freeze(['S0000977']);
+
+/** CURSE-SYNC: the name of the quest pool foe `f` stands for - its behaviour's quest as the behaviour resolved it, else
+ *  by its uid; null for a foe of no quest. */
+export function questNameOf(f) {
+  const b = f?.questBehaviour;
+  if (!b) return null;
+  const quest = b.targetQuest ?? b.machine?.getQuest?.(b.questUID) ?? null;
+  return typeof quest?.questName === 'string' ? quest.questName : null;
+}
+
+/** AUDIT CURSE-SYNC (the review's first and fourth findings): the answer, per behaviour, once its quest is known. A
+ *  behaviour's quest never changes (its uid is stamped once), but the machine's table does - an ended quest leaves it a
+ *  week on, a save's foe can stand before its quest is restored - and a foe whose answer flipped mid-fight would leave
+ *  every other player's screen with no fall. Known once, it stays; not known yet, it is asked again. And the stream's gates
+ *  read it several times a foe a frame: one lookup. */
+const _worldOf = new WeakMap();
+/** CURSE-SYNC: a world quest's foe - WORLD_QUESTS by name, as QuestMachine.IsProtectedQuest reads its own list. */
+export function isWorldQuestFoe(f) {
+  const b = f?.questBehaviour;
+  if (!b) return false;
+  let w = _worldOf.get(b);
+  if (w === undefined) {
+    const n = questNameOf(f);
+    if (n == null) return false;
+    w = questNameIn(WORLD_QUESTS, n);
+    _worldOf.set(b, w);
+  }
+  return w;
+}
+
+/** CURSE-SYNC: a quest foe that is its player's alone (Multiplayer.md's first lock) - every quest's but a world quest's.
+ *  The one word the stream's gates read: what rides, whose blow lands, whom it hunts, who takes it over. */
+export const isPrivateQuestFoe = (f) => !!f?.questBehaviour && !isWorldQuestFoe(f);
+
+/** QUEST-PARTY: this machine's own Foe for a partner's shared quest foe - the quest kept in step with the party, by
+ *  name, and its Foe by symbol; null for a quest this player does not share. */
+export function sharedQuestFoe(machine, tag) {
+  if (!machine || !tag || !machine.hasSharedQuestNamed?.(tag.q)) return null;
+  const quest = machine.sharedCandidateNamed?.(tag.q) ?? null;
+  if (!quest) return null;
+  for (const r of quest.resources.values()) if (r.isFoe && r.symbol?.name === tag.s) return r;
+  return null;
+}
+
+/** QUEST-PARTY: whether the member who shared quest `questName` - still in my party - stands within `radius` of me:
+ *  then that member's copy stands the quest's foes and mine stands none (a wave counts here as placed). */
+export function partnerStandsQuestFoes({ questName, sharerOf, inMyParty, peers, accountOfPeer, myFeet, radius = QUEST_SHARE_RADIUS }) {
+  const sharer = questName ? sharerOf(questName) : null;
+  if (!sharer || !inMyParty(sharer) || !myFeet) return false;
+  for (const p of peers ?? []) {
+    if (!p || accountOfPeer(p.id) !== sharer || !Array.isArray(p.feet)) continue;
+    const dx = p.feet[0] - myFeet[0], dz = p.feet[2] - myFeet[2];
+    if (dx * dx + dz * dz <= radius * radius) return true;
+  }
+  return false;
+}
+
+/** QUEST-PARTY phase 2: a behaviour over this machine's own Foe for a partner's shared quest foe - what binds a foe
+ *  this player takes over (an heir's, an orphan's) to its own copy of the quest; null for a quest it does not share. */
+export function questBehaviourFor(machine, tag) {
+  const foe = sharedQuestFoe(machine, tag);
+  if (!foe) return null;
+  const b = new QuestResourceBehaviour(machine);
+  b.assignResource(foe);
+  return b;
+}
+
+/** QUEST-PARTY phase 2: whether I take an orphaned quest foe (its owner gone without a handover) - I stand within
+ *  `radius` of it and no party member within `radius` of it has a lower id: one member takes it, the one every member's
+ *  view names alike. */
+export function adoptsOrphanQuestFoe({ myId, myFeet, foeFeet, partyPeers, radius = QUEST_SHARE_RADIUS }) {
+  if (myId == null || !myFeet || !foeFeet) return false;
+  const near = (a) => { const dx = a[0] - foeFeet[0], dz = a[2] - foeFeet[2]; return dx * dx + dz * dz <= radius * radius; };
+  if (!near(myFeet)) return false;
+  const me = String(myId);
+  for (const p of partyPeers ?? []) if (p?.id != null && Array.isArray(p.feet) && near(p.feet) && String(p.id) < me) return false;
+  return true;
+}
+
+/** QUEST-POPUP-PAUSE (2026-09-26, SquidKamer on the Discord: a ship raid's box came up and the player "get[s] jumped
+ *  by everyone"; Mac, asked: "Pause them offline"). DFU's message box pauses the game (UserInterfaceWindow
+ *  .PauseWhileOpen), so a quest's box held every foe. WINFOE1 let the foes run under every window; offline they stand
+ *  still again while the host's quest box is open and the window on top of its slot - a rest window keeps WINFOE1,
+ *  and the rest under a box resumes with the foes. Online the room keeps one clock for everyone: nothing is held.
+ *  Both outdoor hosts ask this (world.js, exterior.js), and hand the answer to the mode machine's interior pools. */
+export const questBoxHoldsFoes = (win, { online, onTop }) => !online && !!win && !win.done && !!onTop(win);
 
 /** AUDIT 63r F24 - SerializableEnemy.RestoreSaveData's quest-link arm
  *  (Serialization/SerializableEnemy.cs:206-217), the ONE home for it:

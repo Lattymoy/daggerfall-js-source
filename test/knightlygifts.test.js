@@ -203,7 +203,7 @@ test('G6: the flags ride the save, and a pre-G6 membership restores as unclaimed
 // =====================================================================
 // D9: KnightlyOrder.RestoreGuildData's armour-bit migration
 // (KnightlyOrder.cs:283-295), run on every load through save.js's
-// restoreMembershipBook (save.js:62) from restorePlayer (save.js:762).
+// restoreMembershipBook (save.js:63) from restorePlayer (save.js:773).
 // =====================================================================
 test('D9: RestoreGuildData back-fills the armour bit for every rank BELOW the current one', () => {
   // the gate is `(flags & 4092) == 0` (:288) - NO new-style bit set
@@ -257,7 +257,7 @@ test('D9: the back-fill runs at the LOAD door, so a demotion cannot re-open a cl
   assert.equal(receiveArmorDecision({ ...row, rank: 2 }, { rolls: () => 0.5 }).textId, NO_ARMOR_TEXT_ID);
   assert.equal(receiveArmorDecision(row, { rolls: () => 0.5 }).kind, 'offer');
 
-  // save.js:762-763 restores through TWO arms - the V2e store shape
+  // save.js:773-774 restores through TWO arms - the V2e store shape
   // takes the same door on BOTH books
   const store = roundTrip({
     mortal: { [KNIGHTS]: { guild: 'KnightlyOrder', rank: 2, flags: 0 } },
@@ -296,11 +296,15 @@ test('G6: an arm may answer a BOX, and a box is not a window', () => {
   const i = src.indexOf('const flow = openServiceFlow(serviceDestination(service)');
   assert.ok(i > 0, 'the caller exists');
   const call = src.slice(i, src.indexOf('return { dispatched: true };', i) + 30);
-  assert.ok(call.includes('if (flow.rows) return flow;'), 'a box is handed back, not mounted');
+  // STATION-ROWS (2026-09-27g) respelled the test: a box is an answer
+  // whose rows are a LIST (isServiceBox) - the spell maker's window
+  // keeps its TEXT.RSC reader as `rows`, and "has rows" took it for a
+  // box, which is the crash a home's Spellmaking station threw.
+  assert.ok(call.includes('if (isServiceBox(flow)) return flow;'), 'a box is handed back, not mounted');
   // ROAD-F GS1 respelled the mount - the slot a window goes into is
   // now the CURRENT mode's, through mountServiceWindow - but the law
   // this pins is the ORDER and it is untouched.
-  assert.ok(call.indexOf('if (flow.rows)') < call.indexOf('mountServiceWindow(flow);'),
+  assert.ok(call.indexOf('if (isServiceBox(flow))') < call.indexOf('mountServiceWindow(flow);'),
     'and the test comes BEFORE the mount, or it never runs');
 
   // the two arms really do answer boxes, so the guard is not dead
@@ -311,5 +315,5 @@ test('G6: an arm may answer a BOX, and a box is not a window', () => {
 
   // the probe seam keeps the same contract, or it would prove the
   // opposite of what the host does
-  assert.ok(src.includes('if (flow && !flow.rows) mountServiceWindow(flow);'));
+  assert.ok(src.includes('if (flow && !isServiceBox(flow)) mountServiceWindow(flow);'));
 });

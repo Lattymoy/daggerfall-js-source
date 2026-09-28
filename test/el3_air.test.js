@@ -16,7 +16,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   airOn, AIR_AO_SCALE, AIR_BLOOM_SCALE, AIR_AO_RADIUS, AIR_AO_SAMPLES, AIR_AO_FALLOFF, AIR_AO_STORE, AIR_AO_DIRECTIONS, AIR_AO_STRENGTH, AIR_AO_BIAS, AIR_BLOOM_STRENGTH,
-  AIR_GLARE_SIZE, AIR_SHAFT_TAPS, AIR_SHAFT_DECAY, AIR_SHAFT_STRENGTH, AIR_SHAFT_REACH, AIR_AO_RESOLVE,
+  AIR_GLARE_SIZE, AIR_GLARE_TAPS, AIR_SHAFT_TAPS, AIR_SHAFT_DECAY, AIR_SHAFT_STRENGTH, AIR_SHAFT_REACH, AIR_AO_RESOLVE,
   projInfo, viewDepth, sunScreenUV, glareSize, EMIT_MESH_FS, EMIT_BB_FS, AirPass,
 } from '../src/render/airPass.js';
 import { EL_LANE, EL_MESH_FS, EL_BB_FS, EL_TERRAIN_FS, EL_CHAR_FS, EL_FAR_RING_FS } from '../src/render/enhancedLighting.js';
@@ -166,9 +166,11 @@ test('EL3: the receiver block and the shaders - the AO by screen position, off a
   assert.match(EMIT_MESH_FS, /texture\(uEmissionTex, vUV\)\.rgb \* uEmissionColor/);
   assert.match(EMIT_BB_FS, /if \(texture\(uTex, vUV\)\.a < 0\.5\) discard;/);
   const a = read('src/render/airPass.js');
-  assert.match(a, /return abs\(viewDist\(depthAt\(uv\)\) - lantern\) <= \$\{glslFloat\(AIR_GLARE_SLACK\)\} \? 1\.0 : 0\.0;/, 'EL5: a glare hides behind the depth IN WORLD UNITS, not a hyperbolic constant; EL7: and needs a flame under it - presence, not "nothing nearer"');
+  assert.match(a, /float distPx\(vec2 px\) \{ return viewDist\(textureLod\(uDepth, \(px \+ 0\.5\) \/ uCanvas, 0\.0\)\.r\); \}/, 'EL5: a glare hides behind the depth IN WORLD UNITS, not a hyperbolic constant');
+  assert.match(a, /: 1\.0 - smoothstep\(\$\{glslFloat\(AIR_GLARE_SLACK \/ 2\)\}, \$\{glslFloat\(AIR_GLARE_SLACK\)\}, abs\(d - lantern\)\);/, 'EL7: and needs a flame under it - presence, not "nothing nearer" (LA-POST2: soft - whole within half the slack, none past it)');
   assert.match(a, /export const AIR_GLARE_SLACK = 0\.25;/, 'EL7: the flame within it of its light; F4: a quarter unit');
-  assert.match(a, /vis = \(flame\(vc, lantern\)\n\s+\+ flame\(vc \+ vec4\(0\.0, s, 0\.0, 0\.0\), lantern\) \+ flame\(vc \+ vec4\(0\.0, 2\.0 \* s, 0\.0, 0\.0\), lantern\)\n\s+\+ flame\(vc \+ vec4\(0\.0, -s, 0\.0, 0\.0\), lantern\) \+ flame\(vc \+ vec4\(0\.0, -2\.0 \* s, 0\.0, 0\.0\), lantern\)\n\s+\+ flame\(vc \+ vec4\(s, 0\.0, 0\.0, 0\.0\), lantern\) \+ flame\(vc \+ vec4\(-s, 0\.0, 0\.0, 0\.0\), lantern\)\) \/ 7\.0;/, 'seven taps over the footprint (EL7: the centre, two above and two below - a city light sits at the top of its flat, a dungeon light at its base - and either side): a flame half behind a post is half a glare');
+  assert.match(a, /for \(int k = 0; k < \$\{AIR_GLARE_TAPS\.length\}; k\+\+\) sum \+= flame\(vc \+ vec4\(GLARE_TAP\[k\] \* s, 0\.0, 0\.0\), lantern\);\n\s+vis = sum \/ \$\{glslFloat\(AIR_GLARE_TAPS\.length\)\};/, 'taps over the footprint, averaged: a flame half behind a post is half a glare');
+  assert.ok(AIR_GLARE_TAPS.every(([x, y]) => Math.abs(y) <= 2 && Math.abs(x) <= 1) && AIR_GLARE_TAPS.some(([, y]) => y > 1.5) && AIR_GLARE_TAPS.some(([, y]) => y < -1.5) && AIR_GLARE_TAPS.some(([x]) => x >= 1) && AIR_GLARE_TAPS.some(([x]) => x <= -1), 'EL7\'s footprint (two half-sizes above and below - a city light sits at the top of its flat, a dungeon light at its base - and one either side), LA-POST2\'s taps across it');
   assert.match(a, /float flame\(vec4 vc, float lantern\) \{/, 'EL7: the presence test, per tap in view space');
   assert.match(a, /float sky = depthAt\(uv\) >= 0\.99999 \? 1\.0 : 0\.0;/, 'the shafts\' mask is the sky (EL6: off the frame\'s depth, at the world rect)');
   assert.equal((a.match(/gl\.blendFunc\(gl\.ONE, gl\.ONE\);/g) || []).length, 2, 'additive: the bloom source and the bright pass, both at the resolve (EL6)');

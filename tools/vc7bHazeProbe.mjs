@@ -146,11 +146,10 @@ const out = await page.evaluate(async ({ W, H, keep }) => {
       r.drawMesh(mesh, I, null);
       r.resolveFrame();
       stats = { gl: gl.getError(), shafts: r.air?.stats.shafts, haze: r.air?.stats.haze };
-      const T = r.air.targets.shaft;
-      gl.bindFramebuffer(gl.FRAMEBUFFER, T.fbo);
-      const b = new Uint8Array(T.w * T.h * 4);
-      gl.readPixels(0, 0, T.w, T.h, gl.RGBA, gl.UNSIGNED_BYTE, b);
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      // LA-POST3: a half float where the GL renders one - readTarget reads it as the bytes a byte image held; LA-POST8:
+      // a frame that drew neither the beams nor the haze leaves the image unread and uncleared - it adds nothing
+      const T = r.air.readTarget('shaft');
+      const b = stats.shafts || stats.haze ? T.px : new Uint8Array(T.px.length);
       // per column: the mean luminance down the column - a shaft is a column that differs from its neighbours
       const cols = new Float64Array(T.w);
       let sum = 0;

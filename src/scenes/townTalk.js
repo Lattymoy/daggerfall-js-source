@@ -438,6 +438,9 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       // MENU-RELOCK: if that key dismissed the last window, reclaim
       // mouselook while the closing key is still a browser user gesture.
       // A frame-late makeLookGate request can be refused by pointer-lock.
+      // ESC-LOCK: Escape is no gesture - that close is refused after the
+      // player ended a lock, and the desktop shell re-runs it as one
+      // (player/pointerLock.js shellRelock).
       if (!overlay && !otherOverlayActive?.()) requestLook(canvas);
       return true;
     }
@@ -494,7 +497,9 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     overlay.keyup(e.code, e);
     if (overlay?.done) dropOverlay();
     // Automap and other two-phase windows can close on key-up rather
-    // than key-down; that release is also the transient gesture.
+    // than key-down. ESC-LOCK: a key-up is never a user activation, so
+    // this request rides whatever activation the press left (a key other
+    // than Escape still holds it) - a refusal is the shell's to re-run.
     if (!overlay && !otherOverlayActive?.()) requestLook(canvas);
     return true;
   }
@@ -612,8 +617,13 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     const covered = overlay;
     windows.reconcile(overlay);
     if (windows.containsWindow(win)) return true;
-    if (covered) _suspendedCallbacks.push(_onOverlayClosed);   // the covered window's callback rides down with it
     windows.pushWindow(win);                      // `onTop` puts it in the slot
+    // RISE-STUCK: ...unless the slot holds a window that keeps the top
+    // (the death screen - ui/windowStack.js holdsTop): the push waits
+    // BENEATH it, so its callback is the topmost suspended one and the
+    // slot's stays the death screen's.
+    if (overlay !== win) { _suspendedCallbacks.push(onClosed); return true; }
+    if (covered) _suspendedCallbacks.push(_onOverlayClosed);   // the covered window's callback rides down with it
     _onOverlayClosed = onClosed;
     return true;
   }
@@ -1199,7 +1209,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // CORT01I0 stood under every plea box of a trial and was never
     // once rendered. Deepest first, then the slot's own occupant.
     if (overlay && font) {
-      windows.eachCoveredWindow((w) => w.draw(renderer, canvas, font, s));
+      windows.eachPaintedBeneath((w) => w.draw(renderer, canvas, font, s));   // AUDIT RISE-REST F3: nothing beneath the death screen
       overlay.draw(renderer, canvas, font, s);
     } else if (overlay && !font) dropOverlay(false);   // font-less: never trap the motor
   }

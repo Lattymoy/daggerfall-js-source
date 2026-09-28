@@ -191,13 +191,10 @@ const result = await page.evaluate(async ({ W, H }) => {
       r.resolveFrame();   // EL6: the air's images are drawn here, off the frame's depth
       st = { label, gl: gl.getError(), shadows: shadowStats, air: r.air ? { ...r.air.stats } : null };
       px = read();
-      if (r.air?.targets) {   // the bloom source, for the emitter check: read back at its own size
-        const T = r.air.targets.bloom;
-        gl.bindFramebuffer(gl.FRAMEBUFFER, T.fbo);
-        const b = new Uint8Array(T.w * T.h * 4); gl.readPixels(0, 0, T.w, T.h, gl.RGBA, gl.UNSIGNED_BYTE, b);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      if (r.air?.targets) {   // the bloom source, for the emitter check: read back at its own size (LA-POST3: a half-float image where the GL has one - readTarget reads it as the bytes a byte image held)
+        const { w: bw, h: bh, px: b } = r.air.readTarget('bloom');
         let sum = 0; for (let i = 0; i < b.length; i += 4) sum += b[i] + b[i + 1] + b[i + 2];
-        bloom = { w: T.w, h: T.h, sum };
+        bloom = { w: bw, h: bh, sum, float: r.air.targets.bloom.float };
       }
     }
     frames[label] = { px: Array.from(px), stats: st, bloom };
@@ -253,7 +250,7 @@ const classic = Uint8Array.from(result.frames['dungeon-classic'].px);
 const bleed = regionDiff(lane, noA, result.wallRect);
 const noEmit = Uint8Array.from(result.frames['dungeon-lane-noEmit'].px);
 const emitBleed = regionDiff(lane, noEmit, result.wallRect);
-console.log(`the emitter flat behind the wall: the wall's pixels differ by ${emitBleed.toFixed(4)} with and without it (EL6: it must not bloom through); the bloom source sums ${result.frames['dungeon-lane'].bloom?.sum} with it, ${result.frames['dungeon-lane-noEmit'].bloom?.sum} without`);
+console.log(`the emitter flat behind the wall: the wall's pixels differ by ${emitBleed.toFixed(4)} with and without it (EL6: it must not bloom through); the bloom source (${result.frames['dungeon-lane'].bloom?.float ? 'a half float' : 'bytes'}, LA-POST3) sums ${result.frames['dungeon-lane'].bloom?.sum} with it, ${result.frames['dungeon-lane-noEmit'].bloom?.sum} without`);
 { // where does the frame differ with the emitter? a diff image, amplified, and the brightest difference
   const d = new Uint8Array(W * H * 4); let best = 0, bx = 0, by = 0, whole = 0;
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = (y * W + x) * 4; const v = Math.abs(lum(lane, i) - lum(noEmit, i)); whole += v; if (v > best) { best = v; bx = x; by = H - 1 - y; }

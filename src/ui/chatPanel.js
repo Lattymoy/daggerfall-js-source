@@ -155,7 +155,8 @@ import { claimCursorKey } from '../player/pointerLock.js';   // KB1: while the p
 import { isTouchDevice } from './touch.js';
 import { CHAT_MAX } from '../net/wire.js';
 import { tagOf } from '../net/chat.js';
-import { titleBadge, glyphBadges, glyphSvgNode, cssRgba, TITLE_RGBA } from './playerBadge.js';   // ACC3c: the same table the name over a head reads - a name wears one title everywhere it is drawn; cssRgba comes from HERE and not ui/nameLayer.js, which would pull the whole remote-player pass into this panel
+import { guildTagText } from '../net/guildLaw.js';   // GUILD1c: the guild's tag beside a name, as over a head
+import { titleBadge, glyphBadges, glyphSvgNode, cssRgba, TITLE_RGBA, paintTitle } from './playerBadge.js';   // ACC3c: the same table the name over a head reads - a name wears one title everywhere it is drawn; cssRgba comes from HERE and not ui/nameLayer.js, which would pull the whole remote-player pass into this panel
 import { rosterRows, rosterTitle } from '../net/roster.js';   // CHAT-R1: who is online, in order (the cap is the model's own - AUDIT-CHATR F4: this file imported it and never used it, and lint could not see that: no-unused-vars is on for server/src and not for src)
 import { PARTY_GREEN_CSS } from '../net/social.js';   // CHAT-CHAN: the Party tab's mark wears the party's one green
 import { SHORTCODE_LIST } from '../net/chatCommands.js';   // EMOTE1: the picker offers the shortcodes' own emoji, in their order, so a pick and a :code: say the same thing
@@ -316,6 +317,11 @@ ${PIXELIFY_FIVE_FACE}
 .dfchat-input { flex: 1; min-width: 0; background: var(--ink, #0e1013); color: var(--bone, #e9e4d9); border: 1px solid var(--iron, #2b323b); border-radius: 3px; padding: 6px 8px; font: inherit; font-size: calc(14px * var(--dfchat-scale, 1)); }
 .dfchat-input:focus { outline: 1px solid var(--brass, #c08a3e); }
 .dfchat-send, .dfchat-close, .dfchat-open, .dfchat-hide, .dfchat-show { background: var(--iron, #2b323b); color: var(--bone, #e9e4d9); border: 0; border-radius: 3px; font: inherit; font-size: 14px; padding: 6px 10px; cursor: pointer; }
+/* ONE-SEAT: the way back online for a tab another tab or window took the seat from - a thumb's button under the status
+   line, drawn only while the host hands an action in, and NOT taken by Hide: a player who hid the chat is still told
+   this tab is out, and can still take it back */
+.dfchat-here { display: none; pointer-events: auto; margin-top: 4px; background: var(--brass, #b08d57); color: var(--ink, #14110d); border: 0; border-radius: 3px; font: inherit; font-size: 14px; padding: 6px 10px; cursor: pointer; }
+.dfchat-here.on { display: inline-flex; }
 /* CHAT-SIZE: the corner the box is dragged from - the BOX's own bottom-right, over both columns (the form's row ends
    where the conversation column does, and the roster stands beyond it). The width it gives is the text's scale
    (--dfchat-scale), the height the list's lines; arrow keys on it step the same two, and a double click puts the
@@ -362,6 +368,8 @@ ${PIXELIFY_FIVE_FACE}
    at the tag's size, the glyphs after it at the roster's size. */
 .dfchat-line-title { font-size: calc(10px * var(--dfchat-scale, 1)); letter-spacing: .05em; text-transform: uppercase; margin-right: 4px; }
 .dfchat-line-glyph { width: calc(11px * var(--dfchat-scale, 1)); height: calc(11px * var(--dfchat-scale, 1)); display: inline-block; vertical-align: -1px; margin-left: 3px; }
+/* GUILD1c: the guild's tag right of the name, before the glyphs - the name layer's own steel, on a line and in the roster */
+.dfchat-line-guild, .dfchat-who-guild { flex: none; color: #a9c4dd; font-size: calc(10px * var(--dfchat-scale, 1)); letter-spacing: .04em; margin-left: 4px; }
 .dfchat-who-more { font-size: calc(11px * var(--dfchat-scale, 1)); color: var(--dim, #8b8578); padding-top: 4px; }
 /* the roster is the first thing to go when there is no width for it */
 @media (max-width: 560px) { .dfchat-who { display: none; } }
@@ -492,6 +500,10 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   const peek = el('div', 'dfchat-peek');
   const hint = el('div', 'dfchat-hint', 'Y to chat');   // CHAT-POLISH1: default binding; the action itself remains remappable
   const status = el('div', 'dfchat-status');
+  const here = el('button', 'dfchat-here');   // ONE-SEAT: "Play online here", while the host says this tab is out
+  here.type = 'button';
+  let hereRun = null;
+  here.addEventListener('click', (e) => { e.preventDefault?.(); e.stopPropagation?.(); hereRun?.(); });
   const openBtn = el('button', 'dfchat-open', 'Chat');
   openBtn.type = 'button';
   const badgeOut = el('span', 'dfchat-badge');
@@ -632,7 +644,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   cols.append(main, who);
   box.append(tabs, cols, grip);   // CHAT-SIZE: the grip stands at the BOX's corner, over both columns
   // the Social button follows the Chat button (they share a line when both are drawn); `show` and the box keep their places
-  root.append(peek, hint, status, openBtn, ...(socialOut ? [socialOut] : []), show, box);
+  root.append(peek, hint, status, here, openBtn, ...(socialOut ? [socialOut] : []), show, box);
   doc.body.append(root);
 
   let painted = -1;
@@ -711,17 +723,19 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   /** ACC3c / CHAT-FIT: ONE GLYPH AS AN SVG - the roster's drawing, shared with the chat line. Null where the
    *  document has no SVG door: such a document draws NO glyph rather than throwing under somebody's name. */
   const glyphSvg = (g, cls) => glyphSvgNode(doc, g, cls);   // INSPECT1: the one drawing, ui/playerBadge.js - shared with the name over a head and the profile card
-  const titleSpan = (badge, cls) => { const t = el('span', cls, badge.text); t.style.color = cssRgba(badge.rgba) ?? ''; return t; };
+  const titleSpan = (badge, cls) => paintTitle(el('span', cls, badge.text), badge);   // SHADOW-FANG: its colour, or its gradient
   /** CHAT-FIT: the badge nodes a chat line's author wears - the title BEFORE the name, the glyphs AFTER it, the
    *  roster row's own order (ACC3c) - for a { title, glyphs } record, or none for null. */
   const badgeNodes = (peer, prefix) => {
     const badge = titleBadge(peer);
     const before = badge ? [titleSpan(badge, `${prefix}-title`)] : [];
     const after = [];
+    const gt = guildTagText(peer?.gt);   // GUILD1c: the guild's tag first after the name, before the glyphs
+    if (gt) after.push(el('span', `${prefix}-guild`, gt));
     for (const g of glyphBadges(peer)) { const svg = glyphSvg(g, `${prefix}-glyph`); if (!svg) break; after.push(svg); }
     return { before, after };
   };
-  const badgeKeyOf = (b) => (b ? `${b.title ?? ''}|${(Array.isArray(b.glyphs) ? b.glyphs : []).join('+')}` : '');
+  const badgeKeyOf = (b) => (b ? `${b.title ?? ''}|${(Array.isArray(b.glyphs) ? b.glyphs : []).join('+')}|${b.gt ?? ''}` : '');   // GUILD1c: a tag that moved re-lays the line
   /** CHAT-FIT: a line is laid from its PARTS - time, the badge's title, the name, the badge's glyphs, the tag, the
    *  text - so the badge pass can re-lay one line when its author's badge changes, without rebuilding the list. */
   const layLine = (r) => { r.node.replaceChildren(...[r.chan, r.time, ...r.before, r.nameEl, ...r.after, r.tag, r.text].filter(Boolean)); };
@@ -903,7 +917,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     // reason SOC3 put the open menu in here. TITLE-R: the glyphs alone,
     // as the row draws them.
     // CHAT-CHAN: and the list's own word - a tab change can bring the same people under another heading
-    const key = label + '|' + total + '|' + (menuFor ?? '') + '|' + rows.map((r) => r.id + ':' + r.name + ':' + (r.me ? 1 : 0) + ':' + (r.glyphs ?? []).join('+')).join(',');
+    const key = label + '|' + total + '|' + (menuFor ?? '') + '|' + rows.map((r) => r.id + ':' + r.name + ':' + (r.me ? 1 : 0) + ':' + (r.glyphs ?? []).join('+') + ':' + (r.gt ?? '')).join(',');   // GUILD1c: and the guild's tag
     if (key === whoKey) return;
     whoKey = key;
     whoHead.textContent = rosterTitle(total, label);
@@ -929,6 +943,8 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
       // names and within chat itself"): the roster is a list of who is here - the glyphs AFTER the name are what is
       // true of each; the title a player chose to wear is theirs to show over their head and beside their lines.
       line.append(nameEl);
+      const gt = guildTagText(r.gt);   // GUILD1c: the guild's tag right of the name, as over a head
+      if (gt) line.append(el('span', 'dfchat-who-guild', gt));
       for (const g of glyphBadges(r)) {
         const svg = glyphSvg(g, 'dfchat-who-glyph');
         if (!svg) break;   // a document that cannot make one draws none, rather than throwing in a repaint
@@ -1139,6 +1155,9 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   // SOC3: the closed-state Social button is outside the box, so it carries the box's own press rule - a thumb that
   // taps it must not also draw a weapon (D7). The tab-bar one is inside the box and already has it.
   if (socialOut) for (const t of ['pointerdown', 'mousedown', 'click', 'touchstart']) socialOut.addEventListener(t, swallow);
+  // AUDIT ONESEAT H1: and ONE-SEAT's "Play online here" is outside the box too - a press on it reached the host's
+  // mousedown as Mouse0 (ActivateCenterObject): the readied spell cast, and what stood at the centre was used
+  for (const t of ['pointerdown', 'mousedown', 'click', 'touchstart']) here.addEventListener(t, swallow);
 
   return {
     root, input,
@@ -1168,7 +1187,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
      * inert in the only host that has one, and every CHAT-R2 pin passed,
      * because they drove `setHidden` and never drove a FRAME.
      */
-    render({ covered = false, status: line = null } = {}) {
+    render({ covered = false, status: line = null, here: hereAct = null } = {}) {
       if (!alive) return;
       if (log.open && now() - lastUseAt >= CHAT_IDLE_CLOSE_MS) closePanel();   // CHAT-POLISH1: idle timeout, frame-driven
       if (covered || overlay()) { if (log.open) closePanel(); if (root.style.display !== 'none') root.style.display = 'none'; return; }
@@ -1187,6 +1206,13 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
       paintNames();
       const s = line ? String(line) : '';
       if (status.textContent !== s) status.textContent = s;
+      // ONE-SEAT: the host's action, or none - `{ label, run }`
+      const act = hereAct && typeof hereAct.run === 'function' ? hereAct : null;
+      hereRun = act ? act.run : null;
+      const label = act ? String(act.label ?? '') : '';
+      if (here.textContent !== label) here.textContent = label;
+      const cls = act ? 'dfchat-here on' : 'dfchat-here';
+      if (here.className !== cls) here.className = cls;
     },
     destroy() {
       if (!alive) return;

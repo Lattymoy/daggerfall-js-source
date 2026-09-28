@@ -187,7 +187,7 @@ test('R7/SO1/FT12: the port\'s own switches are the Features home\'s, every one 
   for (const gone of ['music', 'mwfp', 'roads']) assert.ok(!new RegExp(`key: '${gone}`).test(reg), `${gone} has no engine in this tree and must not be a switch`);
   assert.ok(!/not built/.test(reg), 'no row labels a shipped thing a hole');
   const ui = src.slice(src.indexOf('function portRowsInterface('), src.indexOf('function portRows('));
-  assert.match(ui, /skinRow\(\)/, 'the skin switch lives under Interface');
+  assert.doesNotMatch(ui, /skinRow\(\)/, 'MENU-TOGGLE: no skin row under Interface - the interface is chosen on the Overhauls page');
   assert.match(src, /const idOf = \(label\) => label\.toLowerCase\(\)/);
 });
 
@@ -395,7 +395,7 @@ test('AUDIT UI: the 44px law follows the POINTER, not the viewport width', () =>
   const menu = read('src/ui/enhancedMenu.js');
   assert.doesNotMatch(menu, /style\.minHeight/, 'no control sizes itself inline');
   assert.doesNotMatch(menu, /b\.style\.padding = '8px 16px'/);
-  assert.equal((menu.match(/classList\.add\('rowact'\)/g) ?? []).length, 3, 'all three sites take the class');
+  assert.equal((menu.match(/classList\.add\('rowact'\)/g) ?? []).length, 2, 'both sites take the class (the skin row, the third, retired with MENU-TOGGLE)');
   assert.match(css, /\.rowact \{ min-height: 38px; padding: 8px 16px; \}/, 'the compact size a mouse keeps');
 });
 

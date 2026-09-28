@@ -1,0 +1,381 @@
+[
+  {
+    "name": "LA-POST1-one-read-at-the-centre",
+    "file": "src/render/airPass.js",
+    "old": "  outColor = vec4(acc * 0.25, 1.0);",
+    "new": "  outColor = vec4(brightTap(uv, glow), 1.0);",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST1-quarters-unthresholded",
+    "file": "src/render/airPass.js",
+    "old": "  return c * smoothstep(uThreshold, 1.0, dot(c, vec3(0.2126, 0.7152, 0.0722)));\n}\nvoid main() {\n  // the block's centre",
+    "new": "  return c;\n}\nvoid main() {\n  // the block's centre",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST1-taps-half-a-pixel-out",
+    "file": "src/render/airPass.js",
+    "old": "export const AIR_BRIGHT_TAPS = Object.freeze([[-1, -1], [1, -1], [-1, 1], [1, 1]]",
+    "new": "export const AIR_BRIGHT_TAPS = Object.freeze([[-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5]]",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST1-glow-after-the-threshold",
+    "file": "src/render/airPass.js",
+    "old": "  vec3 c = airDecode(texture(uFrame, uv).rgb) + glow;",
+    "new": "  vec3 c = airDecode(texture(uFrame, uv).rgb);",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST2-tap-binary-in-depth",
+    "file": "src/render/airPass.js",
+    "old": "    : 1.0 - smoothstep(${glslFloat(AIR_GLARE_SLACK / 2)}, ${glslFloat(AIR_GLARE_SLACK)}, abs(d - lantern));",
+    "new": "    : (abs(d - lantern) <= ${glslFloat(AIR_GLARE_SLACK)} ? 1.0 : 0.0);",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST2-tap-unfiltered",
+    "file": "src/render/airPass.js",
+    "old": "  vec2 b = floor(p), f = p - b;",
+    "new": "  vec2 b = floor(p + 0.5), f = vec2(0.0);",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST2-taps-back-on-the-row",
+    "file": "src/render/airPass.js",
+    "old": "    const y = +(0.3 + 0.18 * k).toFixed(2),",
+    "new": "    const y = +(0.18 * k).toFixed(2),",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST2-taps-share-rows",
+    "file": "src/render/airPass.js",
+    "old": "    const x = 0.25 * (k + 1), y = +((0.4 + 0.05 * k) * (k % 2 ? 1 : -1)).toFixed(2);",
+    "new": "    const x = 0.25 * (k + 1), y = +((0.3 + 0.18 * k) * (k % 2 ? 1 : -1)).toFixed(2);",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST2-veto-hard",
+    "file": "src/render/airPass.js",
+    "old": "if (cuv == clamp(cuv, vec2(0.0), vec2(1.0))) vis *= 1.0 - filtered(cuv, lantern, true);",
+    "new": "if (cuv == clamp(cuv, vec2(0.0), vec2(1.0)) && filtered(cuv, lantern, true) > 0.0) vis = 0.0;",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST2-quad-never-collapsed",
+    "file": "src/render/airPass.js",
+    "old": "  gl_Position = vis > 0.0 ? uProj * (vc + vec4(aCorner * uSize, 0.0, 0.0)) : vec4(2.0, 2.0, 2.0, 1.0);",
+    "new": "  gl_Position = uProj * (vc + vec4(aCorner * uSize, 0.0, 0.0));",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST2-size-follows-the-flicker",
+    "file": "src/render/airPass.js",
+    "old": "      gl.uniform1f(P.uSize, glareSize(h.range));",
+    "new": "      gl.uniform1f(P.uSize, glareSize(range));",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST2-hold-never-falls",
+    "file": "src/render/airPass.js",
+    "old": "  return !(held > 0) || live > held || live < held - AIR_GLARE_HOLD_BAND ? live : held;",
+    "new": "  return !(held > 0) || live > held ? live : held;",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST2-hold-by-index",
+    "file": "src/render/airPass.js",
+    "old": "      const key = glareKey(x, y, z);",
+    "new": "      const key = i;",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST2-sweep-dropped",
+    "file": "src/render/airPass.js",
+    "old": "    if ((now & 63) === 0) for (const [k, v] of hold) if (now - v.seen > 120) hold.delete(k);",
+    "new": "",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST3-bloom-in-bytes",
+    "file": "src/render/airPass.js",
+    "old": "      bloom: color(bw, bh, f16), bloomB: color(bw, bh, f16),",
+    "new": "      bloom: color(bw, bh), bloomB: color(bw, bh),",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST3-shafts-in-bytes",
+    "file": "src/render/airPass.js",
+    "old": "      shaft: color(bw, bh, f16), shaftRaw: color(bw, bh, f16),",
+    "new": "      shaft: color(bw, bh), shaftRaw: color(bw, bh),",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST3-hold-dropped",
+    "file": "src/render/airPass.js",
+    "old": "vec3 src(vec2 uv) { return min(texture(uSrc, uv).rgb, vec3(1.0)); }",
+    "new": "vec3 src(vec2 uv) { return texture(uSrc, uv).rgb; }",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST3-float-read-as-bytes",
+    "file": "src/render/airPass.js",
+    "old": "    if (T.float) {\n      const v = new Float32Array(n);",
+    "new": "    if (false) {\n      const v = new Float32Array(n);",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST4-one-byte",
+    "file": "src/render/airPass.js",
+    "old": "  outColor = vec4(hi / 255.0, (q - hi * 256.0) / 255.0, 0.0, 1.0);",
+    "new": "  outColor = vec4(vec3(v), 1.0);",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST4-low-byte-dropped",
+    "file": "src/render/airPass.js",
+    "old": "floor(t.r * 255.0 + 0.5) * 256.0 + floor(t.g * 255.0 + 0.5)",
+    "new": "floor(t.r * 255.0 + 0.5) * 256.0",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST4-packed-at-a-byte",
+    "file": "src/render/airPass.js",
+    "old": "  const q = Math.floor(packLog(m, AIR_ADAPT_LOG_RANGE) * AIR_ADAPT_STEPS + 0.5);",
+    "new": "  const q = Math.floor(packLog(m, AIR_ADAPT_LOG_RANGE) * 255 + 0.5) * 257;",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST4-black-tap-unheld",
+    "file": "src/render/airPass.js",
+    "old": ", 1e-9)), ${glslFloat(AIR_LUM_LOG_RANGE[0])}, ${glslFloat(AIR_LUM_LOG_RANGE[1])});",
+    "new": ", 1e-9)), -99.0, ${glslFloat(AIR_LUM_LOG_RANGE[1])});",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST5-absolute-window",
+    "file": "src/render/airPass.js",
+    "old": "      float win = max(uBlurRange, abs(rise) * ${glslFloat(AIR_AO_BLUR_SHARE)});   // LA-POST5's share, on the surface's own rise",
+    "new": "      float win = uBlurRange;",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST5-share-as-a-ceiling",
+    "file": "src/render/airPass.js",
+    "old": "      float win = max(uBlurRange, abs(rise) * ${glslFloat(AIR_AO_BLUR_SHARE)});   // LA-POST5's share, on the surface's own rise",
+    "new": "      float win = min(uBlurRange, abs(rise) * ${glslFloat(AIR_AO_BLUR_SHARE)});",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST6-thickness-as-the-tolerance",
+    "file": "src/render/airPass.js",
+    "old": "  float tol = ${glslFloat(AIR_CONTACT_SELF)} + ${glslFloat(AIR_CONTACT_LIFT)} / ct + c0.w * texelTan * sqrt(1.0 - ct * ct) / ct;",
+    "new": "  float tol = uContactParams.y;",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST6-slope-term-dropped",
+    "file": "src/render/airPass.js",
+    "old": "  float tol = ${glslFloat(AIR_CONTACT_SELF)} + ${glslFloat(AIR_CONTACT_LIFT)} / ct + c0.w * texelTan * sqrt(1.0 - ct * ct) / ct;",
+    "new": "  float tol = ${glslFloat(AIR_CONTACT_SELF)} + ${glslFloat(AIR_CONTACT_LIFT)} / ct;",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST6-claim-hard",
+    "file": "src/render/airPass.js",
+    "old": "smoothstep(0.02, ${glslFloat(0.02 + AIR_CONTACT_RAMP)}, behind)",
+    "new": "step(0.02, behind)",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST6-thickness-fade-dropped",
+    "file": "src/render/airPass.js",
+    "old": " * (1.0 - smoothstep(uContactParams.y * 0.75, uContactParams.y, behind)));",
+    "new": ");",
+    "tests": [
+      "test/la_post.test.js",
+      "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST6-stride-a-point",
+    "file": "src/render/airPass.js",
+    "old": "  vec4 dc = uPrevVP * vec4(toLight * (len / ${glslFloat(AIR_CONTACT_STEPS)}), 0.0);",
+    "new": "  vec4 dc = uPrevVP * vec4(toLight * (len / ${glslFloat(AIR_CONTACT_STEPS)}), 1.0);",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST6-shift-a-no-op",
+    "file": "src/render/airPass.js",
+    "old": "      for (let r = 0; r < 4; r++) m[12 + r] -= ox * m[r] + oy * m[4 + r] + oz * m[8 + r];",
+    "new": "",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST6-shift-the-wrong-way",
+    "file": "src/render/airPass.js",
+    "old": "      for (let r = 0; r < 4; r++) m[12 + r] -= ox * m[r] + oy * m[4 + r] + oz * m[8 + r];",
+    "new": "      for (let r = 0; r < 4; r++) m[12 + r] += ox * m[r] + oy * m[4 + r] + oz * m[8 + r];",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST6-held-eye-left-behind",
+    "file": "src/render/airPass.js",
+    "old": "    this._prevEye[0] += ox; this._prevEye[1] += oy; this._prevEye[2] += oz;",
+    "new": "",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST6-jump-unseen",
+    "file": "src/render/airPass.js",
+    "old": "    const jumped = !!e && this._prevEyeSet && Math.hypot(e[0] - pe[0], e[1] - pe[1], e[2] - pe[2]) > AIR_CONTACT_CUT;",
+    "new": "    const jumped = false;",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST6-cut-never-spent",
+    "file": "src/render/airPass.js",
+    "old": "    this._cut = false;\n    this._prevEyeSet = !!e;",
+    "new": "    this._prevEyeSet = !!e;",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST6-release-kept",
+    "file": "src/render/airPass.js",
+    "old": "    this._cut = true;   // LA-POST6: and the frame the reopened door draws follows none",
+    "new": "    // LA-POST6: and the frame the reopened door draws follows none",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST6-menu-depth-taken",
+    "file": "src/render/airPass.js",
+    "old": "    if (!f.worldDepth) this.prevValid = false;",
+    "new": "",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST6-door-not-a-cut",
+    "file": "src/render/renderer.js",
+    "old": "if (this._everyLightNow !== this._everyLightPrev) { this._air?.invalidatePrev(); } ",
+    "new": "",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST6-recentre-untold",
+    "file": "src/render/renderer.js",
+    "old": "this._shadowPass?.shiftOrigin(offset); this._air?.shiftOrigin(offset); this._frameStamp++; }",
+    "new": "this._shadowPass?.shiftOrigin(offset); this._frameStamp++; }",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST7-build-unasked",
+    "file": "src/render/renderer.js",
+    "old": "return !!this._air && !!this._air.programs.vol && this._air.fresh",
+    "new": "return !!this._air && this._air.fresh",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST8-depth-reattached",
+    "file": "src/render/airPass.js",
+    "old": "    f.fbo = f.fbos[f.depthIndex];   // LA-POST8",
+    "new": "    f.fbo = f.fbos[0]; gl.bindFramebuffer(gl.FRAMEBUFFER, f.fbo); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, f.depth, 0);   // LA-POST8",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST8-shafts-cleared-at-night",
+    "file": "src/render/airPass.js",
+    "old": "    // LA-POST8: with neither, the shafts' image is not cleared",
+    "new": "    if (!(sun || haze)) { quad(this.programs.shaft, T.shaft); gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT); }\n    // LA-POST8: with neither, the shafts' image is not cleared",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-POST8-bloom-for-a-menu",
+    "file": "src/render/airPass.js",
+    "old": "    if (prepared) {\n      quad(PB, T.bloom);",
+    "new": "    if (true) {\n      quad(PB, T.bloom);",
+    "tests": [
+      "test/la_post.test.js"
+    ]
+  }
+]

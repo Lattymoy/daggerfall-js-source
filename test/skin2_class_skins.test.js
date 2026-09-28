@@ -11,12 +11,12 @@
 // wire door, the real walker layer and the real card against a fake document; the cascade read off ENHANCED_CSS.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import {
   CLASS_SKINS, EOTB_FOOT_SET_COUNT, FOOT_SKIN_COUNT, classSkinOf, classSkinLabel, classRecord, classFrame,
-  CLASS_TABLE_BASE, CLASS_BOW_BASE,
+  CLASS_TABLE_BASE, CLASS_BOW_BASE, classRecordScale,
 } from '../src/player/classSkins.js';
-import { spriteFor, tableKeys } from '../src/player/eotbSprite.js';
+import { spriteFor, tableKeys, spriteOffset, spriteSize, SIZE_ON_FOOT } from '../src/player/eotbSprite.js';
 import { STATE_TABLES, frameCount, ORIENTATIONS, ARCHIVE_FOOT } from '../src/player/eotbBillboard.js';
 import { MOD_SETTINGS, modSetting, setModSetting, _resetModSettings } from '../src/systems/modSettings.js';
 import { composeLook } from '../src/net/remotePlayers.js';
@@ -144,6 +144,45 @@ test('SKIN2: the setting offers them, the look sends them, the relay keeps them,
   w.sync([peer], (p) => [p.x, p.y, p.z], at);
   assert.equal(w.isWalking('p1'), true);
   assert.equal(w.batches()[0].archive, 1541, 'the sorceress\'s own sheet');
+});
+
+// ACRO-SHORT (2026-09-27, Discord, "acrobat (female) skin bug": "acrobat sprite is super short on certain angles, (i am
+// not crouching)"). The female acrobat's front three-quarter idle is a whole figure drawn at another scale - 81 pixels
+// where the group's other views are 110 - and a loose-file pack carries no XML to size it, so she stood a quarter
+// shorter from that side, on her own body and on a peer's screen alike. The manifest's `scale` plays the XML's part
+// (TextureReplacement.SetBillboardScale) and spriteOffset reads it. Sized off the real pictures on disk.
+const pngSize = (key) => { const b = readFileSync(png(key)); return { w: b.readUInt32BE(16), h: b.readUInt32BE(20) }; };
+const drawnAt = (archive, record) => {
+  const { w, h } = pngSize(`${archive}_${record}-0`);
+  return spriteSize(w, h, {}, spriteOffset(archive, record).scale);
+};
+
+test('ACRO-SHORT: a class record drawn at another scale stands as tall as its group - every view of every sheet, the female acrobat\'s three-quarter idle 110 pixels high', () => {
+  assert.deepEqual(pngSize('1524_16-0'), { w: 47, h: 81 }, 'the picture: a whole figure drawn small, not a crop');
+  assert.equal(classRecordScale(1524, 16), 81 / 110, 'the scale is the idle group\'s 110 pixels');
+  assert.ok(Math.abs(drawnAt(1524, 16).h - 110 * SIZE_ON_FOOT) < 1e-9, `she stands ${drawnAt(1524, 16).h} m, the group's 110 pixels`);
+  assert.equal(classRecordScale(1524, 15), 1, 'her front view is drawn at the group\'s scale');
+  assert.equal(classRecordScale(1523, 16), 1, 'the male acrobat\'s three-quarter view too');
+  assert.equal(classRecordScale(15, 16), 1, 'a mod archive carries no class scale');
+  // THE SWEEP: every view of every five-record group of every sheet stands within 15% of its group's median - the pack
+  // carries no size of its own, so a picture drawn small is caught here and not on a player's screen
+  const short = [];
+  for (const s of CLASS_SKINS) {
+    for (let g = 0; g < s.frames.length; g += 5) {
+      const hs = [0, 1, 2, 3, 4].map((o) => drawnAt(s.archive, g + o).h);
+      const median = [...hs].sort((a, b) => a - b)[2];
+      hs.forEach((h, o) => { if (h < 0.85 * median) short.push(`${classSkinLabel(s)} record ${g + o}: ${h.toFixed(3)} m against ${median.toFixed(3)}`); });
+    }
+  }
+  assert.deepEqual(short, []);
+  // the one door the body and the peers size through: spriteFor, then spriteOffset - her idle wheel stands level
+  const acro = indexOf(skin('Acrobat', 'female'));
+  const tall = [];
+  for (let o = 0; o < ORIENTATIONS; o++) {
+    const sp = spriteFor('Idle', o, 0, { onFoot: acro });
+    tall.push(Math.round(spriteSize(pngSize(sp.key).w, pngSize(sp.key).h, {}, spriteOffset(sp.archive, sp.record).scale).h / SIZE_ON_FOOT));
+  }
+  assert.deepEqual(tall, [110, 110, 109, 110, 110, 110, 109, 110], 'every orientation of the idle, the mirrored three-quarter included');
 });
 
 // ── the card ────────────────────────────────────────────────────────────────────────────────────────────────────────

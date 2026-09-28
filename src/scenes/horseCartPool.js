@@ -257,6 +257,7 @@ export function createHorseCartPool({
    *  window is open); `gameDt` Unity's Time.deltaTime for MY runtime [IL_1dac, IL_5d8d, IL_37c3]: zero while the game
    *  is paused, scaled with the world's time (AUDIT HCC, the branch audit - a following horse walked on under an open
    *  inventory, and a Travel Options journey left the trailing wagon 15 m behind the cart). */
+  let peerLook = null;   // AUDIT (pre-merge) I-B: setPeerLook's
   function frame(dt, cameraPos, gameDt = dt) {
     if (!enabled) { if (_horseBatches.size || _peers.size || _bucketKey) destroyAll(); return; }
     runtime?.lateUpdate(gameDt);
@@ -265,6 +266,8 @@ export function createHorseCartPool({
     if (s?.deployed && _parts && s.wagon) standWagonCollider(wagonMatrix(s.wagon.position, s.wagon.rotation)); else standWagonCollider(null);
     if (s?.horse && _stillReady) { const b = horseBatch(''); if (b) poseHorseBatch(b, cameraPos, s.horse); } else dropHorseBatch('');
     for (const [owner, p] of _peers) {
+      const look = peerLook?.(owner) ?? null;   // AUDIT (pre-merge) I-B: 'hidden', a concealed look, or null
+      p.hidden = look === 'hidden'; p.look = p.hidden ? null : look;
       groundPeer(p);   // DISC20-C: a parked wagon and a standing horse, on MY ground
       retarget(p);   // AUDIT HCC O1: the wire frame, converted THIS frame - a rebase or a re-anchor of mine moves nothing of theirs
       if (p.horse) {
@@ -274,7 +277,10 @@ export function createHorseCartPool({
         // whether it walks - a frame on the wire changed the word twice a second while the horse merely stood
         const pace = was && dt > 0 ? Math.hypot(p.shownHorse[0] - was[0], p.shownHorse[2] - was[2]) / dt : 0;
         p.walk = stepHorseWalk(p.walk, p.horse.walking ? Math.max(pace, 2 * START_WALKING_SPEED) : 0, dt, _walkReady);
-        if (_stillReady) { const b = horseBatch(owner); if (b) poseHorseBatch(b, cameraPos, { ...p.horse, position: p.shownHorse, frame: p.walk.animationFrame }); }
+        // AUDIT (the pre-merge audit, I-B): the owner's concealment (INVIS-NET/INVIS-LOOK) is its team's - a horse the
+        // classic lane's hidden owner leads stands nowhere, and the enhanced lane's is drawn in the owner's own look
+        if (_stillReady && !p.hidden) { const b = horseBatch(owner); if (b) { poseHorseBatch(b, cameraPos, { ...p.horse, position: p.shownHorse, frame: p.walk.animationFrame }); b.conceal = p.look; } }
+        else if (p.hidden) dropHorseBatch(owner);
       } else { dropHorseBatch(owner); p.walk = freshHorseWalk(); }
       if (p.wagon) { p.shownWagon = easeToward(p.shownWagon, p.wagon.position, dt); p.shownRotation = p.shownRotation ? quatSlerp(p.shownRotation, p.wagon.rotation, 1 - Math.exp(-12 * dt)) : [...p.wagon.rotation]; }
     }
@@ -288,7 +294,7 @@ export function createHorseCartPool({
     let n = 0;
     const s = shown();
     if (s?.wagon && drawWagon(r, texRemap, s.wagon.position, s.wagon.rotation, s.wagon.tier, s.wagon.angle)) n++;
-    for (const p of _peers.values()) if (p.wagon && p.shownWagon && drawWagon(r, texRemap, p.shownWagon, p.shownRotation ?? p.wagon.rotation, p.wagon.tier, p.wagon.angle)) n++;
+    for (const p of _peers.values()) if (p.wagon && p.shownWagon && !(p.hidden && p.wagon.kind !== HCC_WIRE_KIND.Deployed) && drawWagon(r, texRemap, p.shownWagon, p.shownRotation ?? p.wagon.rotation, p.wagon.tier, p.wagon.angle)) n++;   // AUDIT (pre-merge) I-B: a hidden owner's trailing or following wagon rolls unseen with it; a parked one is a wagon in the world
     return n;
   }
 
@@ -584,6 +590,9 @@ export function createHorseCartPool({
 
   return {
     attach(rt) { runtime = rt; return this; },
+    /** AUDIT (the pre-merge audit, I-B): the host's word on each other player's look - 'hidden' (INVIS-NET's classic
+     *  lane), a concealed visual (INVIS-LOOK), or null - so a concealed owner's team is concealed with it. */
+    setPeerLook(fn) { peerLook = typeof fn === 'function' ? fn : null; },
     /** The mod's own switch (modSettings Enabled): a disabled mod is one DFU never loaded. */
     setEnabled(on) {
       const was = enabled;

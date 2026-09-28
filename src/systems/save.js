@@ -27,6 +27,7 @@ import { seedCustomSpellIndex } from './spellMaker.js';   // S1: made spells car
 import { seedBundleSeq } from './effects.js';   // X10: the live-bundle counter's restore half
 import { repairLostCurses } from './curseRepair.js';   // CURSE-REPAIR1: a curse the round clock pruned, given back
 import { repairUnmintedConditions } from './conditionRepair.js';   // DISC21-A: a wearable minted with no condition, minted
+import { restackStones } from './gateSpoils.js';   // SS1: Sigil Stones saved before they stacked, folded into one stack
 import { SOCIAL_GROUPS } from '../formats/factionFile.js';   // AUDIT 24
 import { travelMapSaveData, restoreTravelMapSaveData } from './travelMapState.js';   // U41: TravelMapSaveData
 import { getEscortFacesSaveData, restoreEscortFacesSaveData } from '../ui/hudEscortFaces.js';   // FE1: SaveData_v1.escortingFaces
@@ -138,6 +139,10 @@ const ENTITY_FIELDS = [
   // gate reads exactly as C#'s enum default of Iron does: no
   // requirement at all.
   'minMetalToHit',
+  // AUDIT SET D4: A TEST ROOM CHARACTER'S MARK (systems/testRoom.js applyTestCharacter). The room hands its character
+  // every Legendary and Ruhn's Regalia whole, to look at; the mark rides every save of it, and the boot keeps such a
+  // character offline (testRoomOnlineRefused). A save without it restores undefined: a character of the world.
+  'testRoom',
 ];
 
 /** PlayerEntity.skillsRecentlyRaised: TWO 32-bit masks over the 35
@@ -166,7 +171,7 @@ export const newSkillsRecentlyRaised = () => [0, 0];
  *  Masque of Clavicus buffed five social groups instead of eleven for
  *  the life of that character. Dropping the member costs nothing:
  *  enchantmentMagicRound clears the player's array at the head of
- *  every magic round (enchantments.js:842, DFU's ClearReactionMods at
+ *  every magic round (enchantments.js:851, DFU's ClearReactionMods at
  *  PlayerEntity.cs:1567-1570) and the folds re-apply it in the same
  *  pass, off worldTick.js:397 - so a load lands DFU's own shape, the
  *  live mods left standing until the next DoMagicRound re-derives
@@ -677,6 +682,12 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
       entity.goldPieces += it.stackCount ?? 0;
       entity.items.splice(i, 1);
     }
+  }
+  // SS1: Sigil Stones won before the stone's row stacked are one stack - folded HERE, below both index-keyed relinks, for
+  // the gold migration's own reason: a record removed before `lightSourceIndex` is read slides every later item one place.
+  for (const list of [entity.items, entity.wagonItems]) {
+    const n = restackStones(list);
+    if (n) console.info(`[save] SS1: ${n} Sigil Stone record(s) folded into their stacks`);
   }
   entity.activeEffects = (snap.activeEffects ?? []).filter((a) => !a.heldItem && !a.bundleDuel).map(copyEffectEntry);   // E2: a stale pin in an old snapshot cannot re-link - drop it (DFU :2312); AUDIT DUEL1 B4: nor a duel's spell a save from before the filter kept
   // DISC10-D/E V11: THE DREAM'S PUSH IS NOT SAVED. CustomSaveData_v1 keeps

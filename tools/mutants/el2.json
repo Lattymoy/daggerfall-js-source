@@ -2,7 +2,7 @@
  {
   "name": "cascade-no-snap",
   "file": "src/render/shadowPass.js",
-  "old": "    vp[12] += (Math.round(ox) - ox) / half;\n    vp[13] += (Math.round(oy) - oy) / half;\n",
+  "old": "    vp[12] += (Math.round(ax) - ax) / half;\n    vp[13] += (Math.round(ay) - ay) / half;\n",
   "new": "",
   "tests": [
    "test/el2_shadows.test.js"
@@ -11,8 +11,8 @@
  {
   "name": "cascade-depth-half",
   "file": "src/render/shadowPass.js",
-  "old": "    const proj = ortho(r, r, 0, 2 * SHADOW_SUN_DEPTH);",
-  "new": "    const proj = ortho(r, r, 0, SHADOW_SUN_DEPTH);",
+  "old": "const SUN_BOXES = SHADOW_CASCADES.map((r) => ortho(r, r, 0, 2 * SHADOW_SUN_DEPTH));",
+  "new": "const SUN_BOXES = SHADOW_CASCADES.map((r) => ortho(r, r, 0, SHADOW_SUN_DEPTH));",
   "tests": [
    "test/el2_shadows.test.js"
   ]
@@ -29,7 +29,7 @@
  {
   "name": "cascade-vertical-up",
   "file": "src/render/shadowPass.js",
-  "old": "  const up = Math.abs(lightDir[1]) > 0.99 ? Z_UP : Y_UP;",
+  "old": "  const up = Math.abs(lightDir[2]) < 0.9 ? Z_UP : Y_UP;   // LA-SHADOW1: never along the sun's path",
   "new": "  const up = Y_UP;",
   "tests": [
    "test/el2_shadows.test.js"

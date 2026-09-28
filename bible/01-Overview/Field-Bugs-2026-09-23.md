@@ -802,7 +802,7 @@ MorphSelf is not, and carries its own spellbook description.
 **The cites.** `citeMerge` read a line both sides carry verbatim as
 THEIRS and moved its numbers through their diff - and the drop's
 untouched comments sat beside targets that had moved on their side
-(nine cites, `spellcost.js:182` -> :181 among them). A shared line's
+(nine cites, `spellcost.js:191` -> :181 among them). A shared line's
 number was read off one side's target and the line cannot say which;
 the tool now maps it from both and moves it only where the two agree,
 else prints it AMBIGUOUS for a person (`test/citemerge.test.js`).

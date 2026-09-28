@@ -58,8 +58,8 @@
   {
     "name": "WOD7-camp-stays-home",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "if (f.puppet || f.isQuestFoe || (f.placed && !f.site) || (f.dead && !f.corpse)) continue;",
-    "new": "if (f.puppet || f.isQuestFoe || f.placed || (f.dead && !f.corpse)) continue;",
+    "old": "if (f.puppet || (_questLike(f) && !qt) || (f.placed && !f.site) || (f.dead && !f.corpse)) continue;",
+    "new": "if (f.puppet || (_questLike(f) && !qt) || f.placed || (f.dead && !f.corpse)) continue;",
     "tests": [
       "test/wod7_sharedcamps.test.js"
     ]
@@ -67,8 +67,8 @@
   {
     "name": "WOD7-camp-hunts-no-peer",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "...(f.placed && !f.site ? [] : peerCandidates())",
-    "new": "...(f.placed ? [] : peerCandidates())",
+    "old": "...(f.placed && !f.site ? [] : _questLike(f) ? questPeerCandidates(f) : peerCandidates())",
+    "new": "...(f.placed ? [] : _questLike(f) ? questPeerCandidates(f) : peerCandidates())",
     "tests": [
       "test/wod7_sharedcamps.test.js"
     ]
