@@ -931,7 +931,7 @@ test('HT4 (re-aimed by KB1): no action ships on a key another action, DFU\'s wor
   const twice = codes.filter((c, i) => codes.indexOf(c) !== i);
   assert.deepEqual(twice, [], 'a default code ships on two actions - one press would do two things');
   const world = new Set(['LargeHUDToggle', 'HUDToggle', 'ToggleRetroPP', 'Pause'].map((n) => shortcutBinding(n).code));
-  const browser = new Set(['F7', 'F12']);   // caret browsing, the dev tools (F5/F6/F11 are DFU's own rows, swallowed)
+  const browser = new Set(['F12']);   // dev tools; F7 is intentionally FreeMouse and its handler prevents the browser default
   for (const [code, action] of DEFAULT_BINDINGS) {
     if (!PORT_ACTIONS.includes(action)) continue;
     assert.ok(!world.has(code), `${action} ships ${code}, a DFU world shortcut`);

@@ -18,9 +18,9 @@ import { fakeSocketClass } from './fakeSocket.mjs';
 const pose = (x = 0) => ({ x, y: 0, z: 0, yaw: 0, pitch: 0, mv: 0 });
 
 test('VOICE1 wire: client asks only for a closed voice key; relay resolves Daggerfall clips and stamps Morrowind race/gender', () => {
-  assert.equal(VOICE_RELAY_MIN, 103);
-  assert.equal(relaySupportsVoice('world102'), false);
-  assert.equal(relaySupportsVoice('world103'), true);
+  assert.equal(VOICE_RELAY_MIN, 122);
+  assert.equal(relaySupportsVoice('world121'), false);
+  assert.equal(relaySupportsVoice('world122'), true);
   assert.ok(relaySupportsVoice(RELAY_VERSION));
 
   assert.deepEqual(validVoiceRequest({ source: 'df', type: 'attack', index: 2, clip: 999, path: 'x' }), { source: 'df', type: 'attack', index: 2 });

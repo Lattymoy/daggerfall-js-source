@@ -59,7 +59,8 @@ test('KB1 laws 1 and 3: every action is in one Controls group or hidden, no defa
   assert.equal(shipped.get('HorseSummon'), 'Period');
   assert.equal(shipped.get('CenterView'), 'Home');
   assert.equal(shipped.get('PrintScreen'), 'F8');
-  assert.equal(shipped.get('FreeMouse'), 'KeyY');
+  assert.equal(shipped.get('FreeMouse'), 'F7');
+  assert.equal(shipped.get('Chat'), 'KeyY');
   assert.equal(shipped.get('ActivateCursor'), 'Enter');
   assert.deepEqual(['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0'].map((c) => actionForCode(defaults(), c)),
     ['QuickUse1', 'QuickUse2', 'QuickSpell', 'QuickOffHand', 'Hotbar5', 'Hotbar6', 'Hotbar7', 'Hotbar8', 'Hotbar9', 'Hotbar10']);
@@ -121,7 +122,7 @@ test('KB1: the dial is QuickDial wherever it is bound, and a key a routeAction a
 
 // ── ENTER ONLINE ───────────────────────────────────────────────────────
 
-test('KB1 (Mac: "Enter = chat"): while a chat panel claims the key, Enter opens the chat and does NOT free the mouse; Y still does; offline Enter frees it as in DFU (mutant: the claim ignored - one Enter did both)', () => {
+test('KB1 + CHAT-POLISH1: Enter keeps DFU\'s cursor action, Y is Chat, and F7 is FreeMouse (mutant: a claimed chat key also toggles the mouse)', () => {
   const store = defaults();
   setBindings(store);
   const listeners = [];
@@ -135,14 +136,18 @@ test('KB1 (Mac: "Enter = chat"): while a chat panel claims the key, Enter opens 
     fire('Enter');
     assert.equal(cursorActive(), true, 'offline: Enter frees the mouse (PlayerMouseLook.cs:190)');
     setCursorActive(false);
-    const release = claimCursorKey();
-    assert.equal(cursorKeyClaimed(), true);
+    const release = claimCursorKey((e) => e?.code === 'KeyY');
+    assert.equal(cursorKeyClaimed({ code: 'KeyY' }), true);
+    assert.equal(cursorKeyClaimed({ code: 'Enter' }), false);
     fire('Enter');
-    assert.equal(cursorActive(), false, 'online: Enter is the chat\'s, the mouse stays');
+    assert.equal(cursorActive(), true, 'Enter remains DFU\'s ActivateCursor even while chat owns Y');
+    setCursorActive(false);
     fire('KeyY');
-    assert.equal(cursorActive(), true, 'Y (FreeMouse) frees it');
+    assert.equal(cursorActive(), false, 'Y is Chat, not FreeMouse');
+    fire('F7');
+    assert.equal(cursorActive(), true, 'F7 frees the mouse');
     release(); release();
-    assert.equal(cursorKeyClaimed(), false, 'the release is once-only, and the claim is gone');
+    assert.equal(cursorKeyClaimed({ code: 'KeyY' }), false, 'the release is once-only, and the claim is gone');
   } finally {
     if (prevAdd === undefined) delete globalThis.addEventListener; else globalThis.addEventListener = prevAdd;
     setCursorActive(false);

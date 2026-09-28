@@ -64,7 +64,7 @@ function fakeWindow() {
     keyup(code, e = {}) { return dispatch('keyup', code, e); },
   };
 }
-const defaultAction = (e) => (e.code === 'Enter' ? 'ActivateCursor' : null);
+const defaultAction = (e) => (e.code === 'KeyY' ? 'Chat' : null);
 
 test('MAC-T2: an H typed into the chat line switches no hand - the field stops the down in capture, the host\'s ungated keyup still runs, and the ring releases only what it captured; the same H on the canvas still switches', () => {
   setBindings(defaults());
@@ -78,7 +78,7 @@ test('MAC-T2: an H typed into the chat line switches no hand - the field stops t
   assert.equal(win.listeners.filter((l) => l.t === 'keyup').length, 1, 'the panel adds NO keyup listener - the host\'s is the only one, ungated, so the ring\'s own gate is what stands between a chat line and the hand');
 
   // the player opens the chat and types "h"
-  win.key('Enter', { target: doc.body }); win.keyup('Enter', { target: doc.body });
+  win.key('KeyY', { target: doc.body }); win.keyup('KeyY', { target: doc.body });
   assert.equal(log.open, true); assert.equal(panel.input.focused, true, 'the caret in the field');
   const down = win.key('KeyH', { target: panel.input });
   assert.equal(down.stopped, true, 'the field\'s down is stopped at the window (CG2)');

@@ -353,7 +353,7 @@ import { partySizeOf, partyExtraFoes, partyGroupMembers } from '../systems/party
 import { GROUP_ROLL_RADIUS } from '../systems/campEncounters.js';   // PSCALE1: outdoors, the party a roll stands for is the camp's own group
 import { SOLITARY_TYPES } from '../characters/mobileFactions.js';   // AUDIT PSCALE1 COUNT-2: a solitary foe meets a party alone
 import { appStorage } from '../systems/appStorage.js';   // ACC1d: where that session lives - the app's store, not the tab's (a second tab is the same player)
-import { POSE_STRIKES, isWorldRoom, isCellRoom, cellHaloFor, actFrameFits, sharedClassicMinutes, wallMsForClassicMinutes, voiceVariantCounts } from '../net/wire.js';   // WORLD6b-iii(b): the cell seam's halo   // MAC7 #1: the swing's kind on the wire; AUDIT WORLD4 A1: whether an act frame can be said at all
+import { POSE_STRIKES, isWorldRoom, isCellRoom, cellHaloFor, actFrameFits, sharedClassicMinutes, wallMsForClassicMinutes } from '../net/wire.js';   // WORLD6b-iii(b): the cell seam's halo   // MAC7 #1: the swing's kind on the wire; AUDIT WORLD4 A1: whether an act frame can be said at all
 import { hasDaggerfallArrows } from '../combat/fpArm.js';   // MAC7 #2: the arrow bit on the wire - weaponRig's own read
 import { drawText } from '../ui/text.js';   // ONLINE1: the session's status line
 import { RemotePlayers, composeLook, createSightCache } from '../net/remotePlayers.js';   // ONLINE1: the others, drawn; NAME1: and the sight test their names take, cached and hysteresised (AUDIT NAME1 F2/F5)
@@ -367,7 +367,7 @@ import { parseChatLine, HELP_LINES, CHAT_GREETING_TEXT, unknownCommandText, empt
 import { partyRosterSource, localRosterSource, guildRosterSource } from '../net/roster.js';   // CHAT-CHAN: the Party, Guild and Local tabs' composed lists
 import { partyCompassPoints } from '../ui/partyMapMarks.js';   // COMPASS-PARTY: the party's points on the compass
 import { SocialState, accountId, accountSecret } from '../net/social.js';   // SOC2: the friends and the party, as the hub says them; the account the hub's hello carries; SOC3: and the two colours a name wears in the DOM - my party's green, a friend's blue
-import { SOCIAL_ROOM, PARTY_SEND_MS, chatRegionRoom } from '../net/wire.js';   // CHAT-CHAN: a region's channel
+import { SOCIAL_ROOM, PARTY_SEND_MS, chatRegionRoom, voiceVariantCounts } from '../net/wire.js';   // CHAT-CHAN: a region's channel
 import { cellRoomOfWire } from '../net/wire.js';   // HCC-PARK: the cell a parked team's anchor stands in
 import { GATE_BRAIN_V } from '../net/wire.js';   // AUDIT WBX R7: the brain's law this client knows, said on every `in`
 import { characterIdOf } from '../systems/characterId.js';   // AUDIT HCC-PARK: my parked team is my CHARACTER's (the relay keys it by the account and this)
@@ -14345,10 +14345,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // a shade dark - in whatever stands for them (the rider, the Morrowind body, the walker, the sprite, the doll), and
     // an invisible one takes the shimmer (systems/combatVisuals.js peerDraw). Still no name.
     const drawable = online.drawable();
+    peerCastVisuals(drawable);   // SPELLFX1: a peer's new cast, drawn once
     // VOICE-MOVE1: the listener already follows the camera in audio.setListener(); move the SOURCE too so
     // a long song/line follows the remote body's interpolated pose instead of staying where /v began.
     voiceChannels.syncPositions(online.peers, onlineToScene);
-    peerCastVisuals(drawable);   // SPELLFX1: a peer's new cast, drawn once
     _veilT += dt > 0 ? dt : 0;
     _veils.clear(); _hiddenPeers.clear();
     const veilOn = combatVisualsOn();   // ECV1: once per frame

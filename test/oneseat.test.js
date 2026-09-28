@@ -29,7 +29,7 @@ test('ONE-SEAT: the hello\'s claim is 1 or nothing - anything else is refused, a
   assert.equal('cl' in parseClient(JSON.stringify(base)), false, 'a reconnect says nothing');
   for (const bad of [0, true, '1', 2]) assert.deepEqual(parseClient(JSON.stringify({ ...base, cl: bad })), { error: 'bad claim' }, JSON.stringify(bad));
   assert.equal(SEAT_ELSEWHERE, 'online in another tab, window or device');
-  assert.equal(RELAY_VERSION, 'world121');   // world119, then world120, on this branch - main's AUDIT SET took world119 and PARTY-BUFFS + REST-OPT world120 first (the merges renumbered ONE-SEAT's)
+  assert.equal(RELAY_VERSION, 'world122');   // world119, then world120, on this branch - main's AUDIT SET took world119 and PARTY-BUFFS + REST-OPT world120 first (the merges renumbered ONE-SEAT's)
 });
 
 test('ONE-SEAT at the hub: a claim closes the account\'s other tab - the reason said first, CLOSE_REPLACED - and its leave is said to the room; the newest tab stays; another account is not touched (mutants: no supersede; by the browser\'s account instead of the verified one; every room instead of the hub)', async () => {

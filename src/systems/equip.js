@@ -328,7 +328,7 @@ export function fillEquipTable(slots, items) {
  *  chargenSession.js:141 (?class= headless) and :233 (the wizard) -
  *  and the guard below (`entity.equip || items.length`) makes this a
  *  no-op for any character that went through either. What is left is
- *  residue at the two host calls (world.js:3836, exterior.js:1285):
+ *  residue at the two host calls (world.js:3838, exterior.js:1285):
  *  a chargenDone entity whose bag AND equip table are both empty
  *  still takes a free dagger here. Deleting the calls is a behaviour
  *  change, so it waits for a slice that owns one. */
