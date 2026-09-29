@@ -49,9 +49,9 @@
 // RECORDED DEPARTURES (bible/10-UI/Held-Map-Arc.md): the 3D relief, the
 // cloud veil and the camera flight are gone - a journey begins the
 // moment Begin is pressed, the sheet lowers, and the host's own travel
-// runs; the filter chip row is gone (the store's flags still decide what
-// is inked, and the classic window's chips still set them); the province
-// pages and the region picker have no meaning on one sheet.
+// runs; the province pages and the region picker have no meaning on one
+// sheet. (MAP-KEY: DFU's four filters are on the sheet again, as its KEY
+// in the foot - the classic's own flip on the same live store.)
 //
 // ── MAP2: TRAVEL OPTIONS ON THE SHEET ─────────────────────────────
 //
@@ -101,12 +101,13 @@ import { hasPort } from '../systems/travelPorts.js';
 import { noticeHold, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE3: this window's own click-anywhere boxes, as the enhanced panel
 import { TRAVEL_OPTIONS_TEXT as TO_TEXT, format as toFormat } from '../systems/travelOptionsText.js';
 import { getDaggerfallDistance, MatchesCutOff } from '../systems/editDistance.js';
-import { checkLocationDiscovered } from './travelMapWindow.js';
+import { checkLocationDiscovered, flipTravelMapFilter, travelMapDotColors } from './travelMapWindow.js';   // MAP-KEY: the classic's filter flip and its dots' colours
 import { readGateMark, gateMarkKey, GATE_RING_CSS, GATE_LEGEND_TEXT } from './gateMapMark.js';   // WB1: the Oblivion Gate's ring, read as the party is
 import { readRaidMarks, raidMarksKey, placeTip, tipKey, RAID_MARK_CSS, RAID_LEGEND_TEXT, RAID_HIT_PX } from './eventMapMarks.js';   // EVENT-TIP: the raided towns, and the card a world event answers a hover with
 import {
   buildInkModel, buildInkMarks, paintInkStatic, paintInkOverlay, zoomBand, clampView, scaleMinOf, SCALE_MAX,   // MAP-FIELD2: placeNames is inkMap's law still, but this sheet no longer inks the names
   viewCentredOn, zoomAt, toPaper, toMap, BAND_MARKS, PARTY_LABEL_STACK,
+  markKind, markInks, mapKeyGroups, KIND_WORD, paintKeyChip, KEY_CHIP_PX,   // MAP-KEY: the key, and each kind in its classic hue
 } from './inkMap.js';
 // SOC6: the party's marks, read the one way both maps read them.
 import {
@@ -516,6 +517,8 @@ export class HeldMapWindow {
     // the knuckles is not a HUD under a window (windowStack.hidesHud).
     this.hidesHud = true;
     this.filters = travelMapFilters();   // the LIVE store object, edited in place (the classic law)
+    this._inks = null;     // MAP-KEY: each kind's ink once a palette answers (_markInks)
+    this._keySig = '';     // MAP-KEY: what the key last said, so it is rebuilt only when that changes
     this.teleportationTravel = false;    // one-shot, cleared on close
     this._gotoPlace = null;              // one-shot, consumed on first tick
     this._ticked = false;
@@ -645,7 +648,7 @@ export class HeldMapWindow {
     // EM3: the sheet the window OPENS on claims its chrome as well - it
     // never passes through _selectSheet, and a world map that opened
     // without its search box was the first thing this caught.
-    this._showChrome(['search', 'ports', 'legend', 'card'], false);
+    this._showChrome(['search', 'ports', 'legend', 'card', 'key'], false);
     this._sheet?.mount?.();
     this._writeHint();   // DISC25-A
     this._tornDown = false;
@@ -1126,6 +1129,7 @@ export class HeldMapWindow {
       staticKey: () => [
         this._marksVersion, this._portsShown() ? 1 : 0, this.markedMapId,
         this.filters.roads ? 1 : 0, this.filters.tracks ? 1 : 0,
+        this._markInks() ? 1 : 0,   // MAP-KEY: a palette that lands after the sheet rose repaints it tinted
       ].join('|'),
       paintStatic: (ctx, env) => {
         // MAP-FIELD2 (Mac, 2026-09-18): "all the town names need to be
@@ -1147,6 +1151,7 @@ export class HeldMapWindow {
           ports: this._portsShown(),
           markedMapId: this.markedMapId,
           markColor: rgbaCss(this._to?.settings?.markLocationColor),
+          inks: this._markInks(),   // MAP-KEY: each kind in its classic dot's hue, or the pen with no palette
         });
       },
       paintOverlay: (ctx, env) => {
@@ -1181,18 +1186,20 @@ export class HeldMapWindow {
       tick: (dt) => {
         this._partyPoll -= dt;
         if (this._partyPoll <= 0) { this._partyPoll = PARTY_POLL_S; this._refreshParty(); }
+        this._renderKey();   // MAP-KEY: a zoom across a band, or a palette landing, changes what the key says
       },
       // THE TRAVEL CHROME IS THE WORLD SHEET'S. The search box, the
       // ports button, the legend and the travel card exist to pick a
       // destination on the bay; a dungeon plan has no destination, so
       // they go with the tab rather than standing over it.
       mount: () => {
-        this._showChrome(['search', 'card'], true);
+        this._showChrome(['search', 'card', 'key'], true);   // MAP-KEY: the key is the bay's, with the search
         this._renderPorts();
         this._renderLegend();
+        this._renderKey();
       },
       unmount: () => {
-        this._showChrome(['search', 'ports', 'legend', 'card'], false);
+        this._showChrome(['search', 'ports', 'legend', 'card', 'key'], false);
         this._closePanel?.();
       },
       // at rest the whole bay is on the sheet, centred
@@ -1709,6 +1716,83 @@ export class HeldMapWindow {
     }
     leg.classList.toggle('open', true);
     leg.style.display = 'flex';
+  }
+
+  /** MAP-KEY: each kind's ink - its classic dot's hue in this hand (inkMap.js markInks over the colours the classic
+   *  window's loader read off FMAP_PAL.COL, travelMapDotColors), or null while no palette has loaded: the plain pen.
+   *  Asked again until it answers (the world sheet's clock asks every tick), and the answer dirties the sheet, so a
+   *  palette that lands after the sheet rose tints it at once, not at the next pan (ASYNC NEVER DROPS). */
+  _markInks() {
+    if (!this._inks) {
+      this._inks = markInks(travelMapDotColors());
+      if (this._inks) this._dirty = true;
+    }
+    return this._inks;
+  }
+
+  /**
+   * MAP-KEY (Jigglehimmer, 2026-09-29, #suggestions: "Enhanced map needs filterable key like the default Daggerfall
+   * world map"): THE KEY - the classic window's four filters as toggles standing on the foot, each naming the
+   * glyphs it hides in the ink they are inked in, so a dungeon's triangle is told from a graveyard's cross without a
+   * hover. A toggle is lit while its kinds are shown (the store's flag FALSE - DFU's inversion). A kind this band does
+   * not ink is dimmed, with the reason in its title: the far band inks the cities alone (BAND_MARKS), so there every
+   * other kind says to zoom in rather than leaving a lit toggle that seems to do nothing. The WORLD sheet's chrome:
+   * its mount claims it and its clock keeps it current (EM1 - the window never asks which sheet is up). Rebuilt only
+   * when what it says changes, so a press never loses its button under the pointer (PLUS-MAP's rule for the tools).
+   */
+  _renderKey() {
+    const box = this._chrome?.key;
+    if (!box) return;
+    const band = zoomBand(this._view.scale);
+    const inks = this._markInks();
+    const groups = mapKeyGroups();
+    const dpr = this._paper.dpr || 1;
+    const sig = [band, inks ? 1 : 0, dpr, ...groups.map((g) => (this.filters[g.filter] ? 1 : 0))].join('|');
+    if (sig === this._keySig) return;
+    this._keySig = sig;
+    if (typeof box.replaceChildren === 'function') box.replaceChildren(); else box.innerHTML = '';
+    const shown = BAND_MARKS[band] ?? BAND_MARKS.near;
+    for (const g of groups) {
+      const on = !this.filters[g.filter];
+      const row = el('div', `hmkeyrow${on ? '' : ' off'}`);
+      const b = el('button', `act hmkeyflt${on ? ' on' : ''}`, g.label);
+      b.type = 'button';
+      // NEVER THE FOCUS - out of the tab order, and a press takes none (the pointer's own default, which the click
+      // outlives): a focused button is pressed again by Space or Enter, and every key under the sheet is the map's
+      // (M and Escape close it); a search being typed keeps its box
+      b.tabIndex = -1;
+      b.onpointerdown = (e) => e.preventDefault?.();
+      b.dataset.filter = g.filter;
+      b.title = `${on ? 'Hide' : 'Show'} ${g.label.toLowerCase()}`;
+      b.setAttribute?.('aria-pressed', on ? 'true' : 'false');
+      b.onclick = () => this._toggleFilter(g.filter);
+      const kinds = el('div', 'hmkeykinds');
+      for (const kind of g.kinds) {
+        const inked = g.buckets.some((i) => markKind(i) === kind && shown.has(i));
+        const item = el('span', `hmkeykind${inked ? '' : ' dim'}`);
+        item.title = inked ? KIND_WORD[kind] : `${KIND_WORD[kind]} - zoom in to see`;
+        item.dataset.kind = kind;
+        const chip = el('canvas', 'hmkeychip');
+        chip.width = chip.height = Math.round(KEY_CHIP_PX * dpr);
+        chip.style.width = chip.style.height = `${KEY_CHIP_PX}px`;
+        paintKeyChip(chip.getContext?.('2d'), kind, inks?.[kind], { dpr });
+        item.append(chip, el('span', 'hmkeyname', KIND_WORD[kind]));
+        kinds.append(item);
+      }
+      row.append(b, kinds);
+      box.append(row);
+    }
+  }
+
+  /** MAP-KEY: a press on the key - the classic window's own flip on the LIVE store (flipTravelMapFilter), then the
+   *  marks rebuilt as the classic rebuilds its dots (:1064), so the classic window opens on what the sheet last
+   *  showed and the save carries it. Dead under a box, as the rest of the chrome is (AUDIT-MAP H6). */
+  _toggleFilter(which) {
+    if (this._phase !== 'map' || this._top || this._info) return;
+    if (!flipTravelMapFilter(this.filters, which)) return;
+    this._marksDirty = true;
+    this._dirty = true;
+    this._renderKey();
   }
 
   /** The member under the cursor, by a paper-space radius of 18 - two
@@ -2456,7 +2540,10 @@ export class HeldMapWindow {
     // shown only while the mod restricts ship travel to ports
     const ports = el('button', 'act hmports', 'Ports');
     ports.onclick = () => { if (this._phase === 'map') this._togglePorts(); };
-    foot.append(hint, band, legend, ports, over);
+    // MAP-KEY: the key, a child of the foot standing on the row's own top edge - it rises with the row when the row
+    // wraps and never floats at a guessed height (AUDIT SOC C10/D5); drawn by _renderKey
+    const key = el('div', 'hmkey');
+    foot.append(key, hint, band, legend, ports, over);
     // MAP2: the box over the sheet - the I/H box, or the resume prompt
     const box = el('div', 'hmbox');
 
@@ -2481,7 +2568,7 @@ export class HeldMapWindow {
 
     root.append(stage, top, card, foot, tools, box, tip);
     document.body.append(root);
-    this._chrome = { root, stage, sprite, sheet, ink, hands, label, search, searchInput, note, noteInput, results, close, card, hint, band, legend, ports, over, box, tools, tip };
+    this._chrome = { root, stage, sprite, sheet, ink, hands, label, search, searchInput, note, noteInput, results, close, card, hint, band, legend, ports, over, box, tools, tip, key };
     // MAP-FIELD7: down and clear before the first tick, or the sheet
     // shows for one frame in its held place and then jumps to the floor
     // to start travelling.
@@ -2918,6 +3005,8 @@ export class HeldMapWindow {
     if (!card) return;
     card.innerHTML = '';
     card.classList.toggle('open', !!this._selected && this._phase === 'map');
+    // MAP-KEY: under 860px the card rides up over the foot, where the key stands - the key steps aside while it is up
+    this._chrome.root.classList.toggle('hmcardup', !!this._selected && this._phase === 'map');
     // ENH-NOTICE3 - THE CARD'S `notice` IS A CLICK-ANYWHERE BOX in both
     // of its two writers, and on the enhanced skin it is the panel's:
     //

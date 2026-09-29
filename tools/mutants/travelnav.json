@@ -254,8 +254,8 @@
   {
     "name": "TN-switch-off-the-tile",
     "file": "src/systems/features.js",
-    "old": "    'GeneralOptions.LocationPause', 'TimeAcceleration.AccelerationLimit',\n    'GeneralOptions.AvoidObstacles', 'GeneralOptions.FirstPersonTravel',\n  ]),",
-    "new": "    'GeneralOptions.LocationPause', 'TimeAcceleration.AccelerationLimit',\n    'GeneralOptions.FirstPersonTravel',\n  ]),",
+    "old": "    'GeneralOptions.LocationPause', 'TimeAcceleration.AccelerationLimit',\n    'GeneralOptions.AvoidObstacles', 'GeneralOptions.FirstPersonTravel',\n    'GeneralOptions.FirstPersonTravelFollowsRoads',\n  ]),",
+    "new": "    'GeneralOptions.LocationPause', 'TimeAcceleration.AccelerationLimit',\n    'GeneralOptions.FirstPersonTravel',\n    'GeneralOptions.FirstPersonTravelFollowsRoads',\n  ]),",
     "tests": ["test/travelnav.test.js"]
   },
   {

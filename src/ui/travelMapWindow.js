@@ -282,8 +282,20 @@ export function getPixelColorIndex(locationType, filters = {}) {
   return index;
 }
 
+/** FilterButtonClickHandler's flip (:1024-1045): the pressed filter's flag turned over IN the live store object
+ *  (systems/travelMapState.js travelMapFilters - TRUE hides), false for a name that is no filter. The classic window
+ *  then redraws its dots (:1064); MAP-KEY's key on the held map (ui/heldMap.js) presses the same law and rebuilds its
+ *  marks, so the two skins cannot disagree about what a press does or where it is kept. */
+export function flipTravelMapFilter(filters, which) {
+  if (!filters || !(which in filters)) return false;
+  filters[which] = !filters[which];
+  return true;
+}
+
 const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && y < ry + rh;
 const packRGBA = (r, g, b, a) => (((a << 24) >>> 0) | (b << 16) | (g << 8) | r) >>> 0;
+/** packRGBA read back, its own byte order (MAP-KEY). */
+const unpackRGB = (c) => ({ r: c & 0xff, g: (c >>> 8) & 0xff, b: (c >>> 16) & 0xff });
 
 // map_reveallocations / map_hidelocations (:1788-1884). E3 gave them
 // the database DFU registers them in (the registrar is at the foot of
@@ -393,6 +405,11 @@ export async function preloadTravelMapArt(deps) {
   return _art;
 }
 export const travelMapArtLoaded = () => !!_art;
+/** MAP-KEY: the location dots' colours as this window paints them (locationPixelColors, :253-269 - FMAP_PAL.COL
+ *  entries, read off the player's own file by the preload above), one {r, g, b} per bucket for the held map's ink;
+ *  null until the art has loaded, and the held map inks in the plain pen until then. The palette is ARENA2 data, so
+ *  no colour of it is written anywhere in the port - this is the one door to it. */
+export const travelMapDotColors = () => _art?.locationPixelColors?.map(unpackRGB) ?? null;
 /** RAID1: the region picker's bytes (TRAV0I01.IMG - a pixel is 128 + its region), which World Events - Raiding
  *  Parties' SelectRaids reads through DaggerfallUI.GetImgBitmap [IL_04b5]; null until the art has loaded. */
 export const travelMapPickerData = () => _art?.pickerBitmap?.data ?? null;
@@ -1440,10 +1457,9 @@ export class TravelMapWindow {
     this._updateCrosshair();
   }
 
-  /** FilterButtonClickHandler (:1024-1070). */
+  /** FilterButtonClickHandler (:1024-1070) - the flip is flipTravelMapFilter, the one both skins press (MAP-KEY). */
   _filterButtonClick(which) {
-    if (!(which in this.filters)) return;
-    this.filters[which] = !this.filters[which];
+    if (!flipTravelMapFilter(this.filters, which)) return;
     this._updateMapLocationDotsTexture();
   }
 

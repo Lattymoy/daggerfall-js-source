@@ -1,0 +1,278 @@
+[
+  {
+    "name": "FB0929D-MAPKEY-the-flip-only-hides",
+    "file": "src/ui/travelMapWindow.js",
+    "old": "  filters[which] = !filters[which];\n  return true;",
+    "new": "  filters[which] = true;\n  return true;",
+    "tests": ["test/fb0929d_mapkey.test.js", "test/travelmapwindow.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-the-flip-takes-any-name",
+    "file": "src/ui/travelMapWindow.js",
+    "old": "  if (!filters || !(which in filters)) return false;",
+    "new": "  if (!filters) return false;",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-the-classic-flips-its-own-copy",
+    "file": "src/ui/travelMapWindow.js",
+    "old": "    if (!flipTravelMapFilter(this.filters, which)) return;\n    this._updateMapLocationDotsTexture();",
+    "new": "    if (!(which in this.filters)) return;\n    this.filters[which] = !this.filters[which];\n    this._updateMapLocationDotsTexture();",
+    "why": "the law re-spelled in the classic window rather than pressed: the same behaviour, so only the source pin (ONE flip, both skins) can see it - and it does",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-the-unpack-swaps-green",
+    "file": "src/ui/travelMapWindow.js",
+    "old": "const unpackRGB = (c) => ({ r: c & 0xff, g: (c >>> 8) & 0xff, b: (c >>> 16) & 0xff });",
+    "new": "const unpackRGB = (c) => ({ r: c & 0xff, g: (c >>> 16) & 0xff, b: (c >>> 16) & 0xff });",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-the-filter-asks-nothing",
+    "file": "src/ui/inkMap.js",
+    "old": "getPixelColorIndex(t, { [filter]: true }) < 0",
+    "new": "getPixelColorIndex(t, { [filter]: false }) < 0",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-the-label-is-the-store-word",
+    "file": "src/ui/inkMap.js",
+    "old": "      filter, label: filter[0].toUpperCase() + filter.slice(1),",
+    "new": "      filter, label: filter,",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-a-kind-takes-its-last-bucket",
+    "file": "src/ui/inkMap.js",
+    "old": "if (c && !(k in out)) out[k] = markInk(c);",
+    "new": "if (c) out[k] = markInk(c);",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-no-palette-is-a-palette",
+    "file": "src/ui/inkMap.js",
+    "old": "export function markInks(colors) {\n  if (!colors) return null;",
+    "new": "export function markInks(colors) {\n  if (!colors) return {};",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-the-mark-ink-is-the-quarters",
+    "file": "src/ui/inkMap.js",
+    "old": "export const markInk = (c) => quarterInk(c, MARK_INK_MIX);",
+    "new": "export const markInk = (c) => quarterInk(c);",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-the-mix-too-light",
+    "file": "src/ui/inkMap.js",
+    "old": "export const MARK_INK_MIX = 0.58;",
+    "new": "export const MARK_INK_MIX = 0.57;",
+    "why": "killed by the measurement against the player's own FMAP_PAL.COL (ARENA2_PATH): the city's tint falls to 44.9 off the paper, under EM7's floor of 45",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-the-mix-past-the-smallest",
+    "file": "src/ui/inkMap.js",
+    "old": "export const MARK_INK_MIX = 0.58;",
+    "new": "export const MARK_INK_MIX = 0.59;",
+    "why": "killed by the measurement against the player's own FMAP_PAL.COL (ARENA2_PATH): a step lighter still clears the floor, so the mix is spending hue it does not need",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-the-paint-drops-the-inks",
+    "file": "src/ui/inkMap.js",
+    "old": "    paintGlyph(ctx, m.kind, x, y, false, opts.inks?.[m.kind]);",
+    "new": "    paintGlyph(ctx, m.kind, x, y, false);",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-the-glyph-strokes-in-the-pen",
+    "file": "src/ui/inkMap.js",
+    "old": "  ctx.strokeStyle = halo ? PEN.halo : ink;",
+    "new": "  ctx.strokeStyle = halo ? PEN.halo : PEN.line;",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-the-glyph-fills-in-the-pen",
+    "file": "src/ui/inkMap.js",
+    "old": "  ctx.fillStyle = halo ? PEN.halo : ink;",
+    "new": "  ctx.fillStyle = halo ? PEN.halo : PEN.line;",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-the-chip-is-in-the-pen",
+    "file": "src/ui/inkMap.js",
+    "old": "  paintGlyph(ctx, kind, c, c, false, ink);",
+    "new": "  paintGlyph(ctx, kind, c, c, false);",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-the-chip-has-no-paper",
+    "file": "src/ui/inkMap.js",
+    "old": "  ctx.fillRect(0, 0, KEY_CHIP_PX, KEY_CHIP_PX);\n",
+    "new": "",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-the-press-leaves-the-marks",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (!flipTravelMapFilter(this.filters, which)) return;\n    this._marksDirty = true;\n",
+    "new": "    if (!flipTravelMapFilter(this.filters, which)) return;\n",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-the-press-flips-a-copy",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (!flipTravelMapFilter(this.filters, which)) return;\n    this._marksDirty = true;",
+    "new": "    if (!flipTravelMapFilter({ ...this.filters }, which)) return;\n    this._marksDirty = true;",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-a-box-does-not-hold-the-key",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (this._phase !== 'map' || this._top || this._info) return;",
+    "new": "    if (this._phase !== 'map') return;",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-the-key-is-rebuilt-every-tick",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (sig === this._keySig) return;\n",
+    "new": "",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-the-key-forgets-the-band",
+    "file": "src/ui/heldMap.js",
+    "old": "    const sig = [band, inks ? 1 : 0, dpr, ...groups.map((g) => (this.filters[g.filter] ? 1 : 0))].join('|');",
+    "new": "    const sig = [inks ? 1 : 0, dpr, ...groups.map((g) => (this.filters[g.filter] ? 1 : 0))].join('|');",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-the-key-forgets-the-palette",
+    "file": "src/ui/heldMap.js",
+    "old": "    const sig = [band, inks ? 1 : 0, dpr, ...groups.map((g) => (this.filters[g.filter] ? 1 : 0))].join('|');",
+    "new": "    const sig = [band, dpr, ...groups.map((g) => (this.filters[g.filter] ? 1 : 0))].join('|');",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-the-key-forgets-the-filters",
+    "file": "src/ui/heldMap.js",
+    "old": "    const sig = [band, inks ? 1 : 0, dpr, ...groups.map((g) => (this.filters[g.filter] ? 1 : 0))].join('|');",
+    "new": "    const sig = [band, inks ? 1 : 0, dpr].join('|');",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-the-toggle-lights-hidden",
+    "file": "src/ui/heldMap.js",
+    "old": "      const on = !this.filters[g.filter];",
+    "new": "      const on = !!this.filters[g.filter];",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-the-key-reads-no-band",
+    "file": "src/ui/heldMap.js",
+    "old": "    const shown = BAND_MARKS[band] ?? BAND_MARKS.near;",
+    "new": "    const shown = BAND_MARKS.near;",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-the-dim-gives-no-reason",
+    "file": "src/ui/heldMap.js",
+    "old": "        item.title = inked ? KIND_WORD[kind] : `${KIND_WORD[kind]} - zoom in to see`;",
+    "new": "        item.title = KIND_WORD[kind];",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-a-toggle-takes-the-tab",
+    "file": "src/ui/heldMap.js",
+    "old": "      b.tabIndex = -1;\n      b.onpointerdown",
+    "new": "      b.onpointerdown",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-a-toggle-takes-the-focus",
+    "file": "src/ui/heldMap.js",
+    "old": "      b.onpointerdown = (e) => e.preventDefault?.();\n",
+    "new": "",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-the-key-stays-on-the-town",
+    "file": "src/ui/heldMap.js",
+    "old": "        this._showChrome(['search', 'ports', 'legend', 'card', 'key'], false);\n        this._closePanel?.();",
+    "new": "        this._showChrome(['search', 'ports', 'legend', 'card'], false);\n        this._closePanel?.();",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-the-key-never-comes-back",
+    "file": "src/ui/heldMap.js",
+    "old": "        this._showChrome(['search', 'card', 'key'], true);",
+    "new": "        this._showChrome(['search', 'card'], true);",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-the-clock-never-asks",
+    "file": "src/ui/heldMap.js",
+    "old": "        this._renderKey();   // MAP-KEY: a zoom across a band, or a palette landing, changes what the key says\n",
+    "new": "",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-the-palette-is-asked-once",
+    "file": "src/ui/heldMap.js",
+    "old": "      this._inks = markInks(travelMapDotColors());\n      if (this._inks) this._dirty = true;",
+    "new": "      this._inks = markInks(travelMapDotColors()) ?? {};\n      if (this._inks) this._dirty = true;",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-the-landing-leaves-the-sheet-clean",
+    "file": "src/ui/heldMap.js",
+    "old": "      if (this._inks) this._dirty = true;\n",
+    "new": "",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-the-kept-ink-ignores-the-palette",
+    "file": "src/ui/heldMap.js",
+    "old": "        this._markInks() ? 1 : 0,   // MAP-KEY: a palette that lands after the sheet rose repaints it tinted\n",
+    "new": "",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-the-sheet-hands-no-inks",
+    "file": "src/ui/heldMap.js",
+    "old": "          inks: this._markInks(),   // MAP-KEY: each kind in its classic dot's hue, or the pen with no palette\n",
+    "new": "",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-the-key-sits-on-the-card",
+    "file": "src/ui/heldMap.js",
+    "old": "    this._chrome.root.classList.toggle('hmcardup', !!this._selected && this._phase === 'map');\n",
+    "new": "",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-the-key-stands-over-the-card",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  .hmroot.hmcardup .hmkey { display: none; }\n",
+    "new": "",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-the-key-lets-presses-through",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  padding: 6px 10px; border-radius: 4px; background: rgba(10, 12, 17, 0.94); pointer-events: auto; }",
+    "new": "  padding: 6px 10px; border-radius: 4px; background: rgba(10, 12, 17, 0.94); }",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  },
+  {
+    "name": "FB0929D-MAPKEY-the-key-floats",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".hmkey { position: absolute; left: 0; bottom: calc(100% + 4px);",
+    "new": ".hmkey { position: absolute; left: 0; bottom: 70px;",
+    "tests": ["test/fb0929d_mapkey.test.js"]
+  }
+]

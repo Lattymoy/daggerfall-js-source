@@ -263,8 +263,8 @@
   {
     "name": "REALM0-sale-cap-the-sale",
     "file": "src/systems/shopStock.js",
-    "old": "calculateTradePrice(cost, shopQuality, { mercantile, personality }, false) * ONLINE_SALE_SHARE",
-    "new": "calculateTradePrice(cost, shopQuality, { mercantile, personality }, true, { online: false }) * ONLINE_SALE_SHARE",
+    "old": "calculateTradePrice(cost, shopQuality, best, false) * ONLINE_SALE_SHARE",
+    "new": "calculateTradePrice(cost, shopQuality, best, true, { online: false }) * ONLINE_SALE_SHARE",
     "tests": [
       "test/realm0.test.js"
     ]

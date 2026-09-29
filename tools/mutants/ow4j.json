@@ -162,7 +162,7 @@
   {
     "name": "OW4-J4-place-not-replanned",
     "file": "src/scenes/world.js",
-    "old": "    if (r.summary) travelViewRouteTo(r.summary);",
+    "old": "    if (r.summary) travelViewRouteTo(r.summary, { roads });",
     "new": "    if (r.summary) travelOptions.resumeTravel();",
     "tests": [
       "test/tv2_click_to_move.test.js"

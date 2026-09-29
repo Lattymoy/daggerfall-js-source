@@ -158,9 +158,9 @@ export const baseDamageMax = (weapon) => weaponMaxDamage(weapon?.templateIndex);
 // ---- DaggerfallUnityItem.GetWeaponMaterialModifier (index = material 0..9) ----
 export const WEAPON_MATERIAL_MODIFIER = Object.freeze([-1, 0, 0, 1, 2, 3, 3, 4, 5, 6]);
 
-// ---- CalculateStruckBodyPart ----
-const BODY_PARTS = Object.freeze([0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 6]);
-export const calculateStruckBodyPart = (roll01 = Math.random()) => BODY_PARTS[Math.floor(roll01 * BODY_PARTS.length)];
+// ---- CalculateStruckBodyPart (FormulaHelper.cs:869-870; AC-COMPARE: the table exported, its one home - see struckBodyPartTable) ----
+export const STRUCK_BODY_PARTS = Object.freeze([0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 6]);
+export const calculateStruckBodyPart = (roll01 = Math.random()) => STRUCK_BODY_PARTS[Math.floor(roll01 * STRUCK_BODY_PARTS.length)];
 
 // ---- DFCareer.StructureData attack-modifier bit table ----
 export const ENEMY_GROUPS = Object.freeze({ None: -1, Undead: 0, Daedra: 1, Humanoid: 2, Animals: 3 });
@@ -914,7 +914,7 @@ export const KB_UNIT = CLASSIC_TO_UNITY_RATIO / 10;   // 3.95
  *  at 350 instead of ~570 takes roughly 60% more knockback speed.
  *
  *  `items` is the foe's own list; totalWeight IS ItemCollection
- *  .GetWeight (inventory.js:356), so the kg->classic multiply and the
+ *  .GetWeight (inventory.js:382), so the kg->classic multiply and the
  *  C# (int) truncation are the only arithmetic added here. A caller
  *  with no list passes nothing and gets the old base-only answer,
  *  which is the honest value for a foe the port gives no inventory. */
@@ -1009,3 +1009,10 @@ export function weaponKnockbackSpeed(damage, weightClassic) {
   const floor = 15 / KB_UNIT;
   return ks < floor ? floor : ks;
 }
+
+/** AC-COMPARE (FIELD BUGS 2026-09-29d): THE STRUCK-PART TABLE A BLOW IS DRAWN FROM, under the core in force. A
+ *  registered core that draws a blow's part from a table of its own registers the table beside the core, on the core's
+ *  own switch, and declines with it (the combat overhaul's twenty - combat/pcaao.js); FormulaHelper's STRUCK_BODY_PARTS
+ *  (:869 - the head 2, each arm 3, the chest 4, the hands 4, the legs 3, the feet 1) stands otherwise. The enhanced
+ *  pack's overall armour weighs the doll's seven numbers by it (ui/armourCard.js), so it follows the core a blow meets. */
+export const struckBodyPartTable = () => _overrides.get('struckBodyPartTable')?.() ?? STRUCK_BODY_PARTS;

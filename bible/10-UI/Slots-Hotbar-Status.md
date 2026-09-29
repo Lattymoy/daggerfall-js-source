@@ -288,3 +288,61 @@ dead.
 - The status widget takes no pointer: a tile is not pressed and has no hover card (the HUD is a readout, and a
   pointer-locked player has no cursor). The Status box (the I key) and the sheet say every effect in words (UI3).
 - The game's own timings stay unsaid: a poison's minutes and a disease's days have no foot, as DFU shows neither (UI3).
+
+## AC-COMPARE - the character's armour at a glance, and what a wear would change (FIELD BUGS 2026-09-29d)
+
+> SylviaBun on the Discord (#suggestions, "Total AC counter and comparison features for hovering items"), Althea's
+> idea: "when in the player inventory we should be able to see the total AC of equipped items on our characters.
+> Hovering our cursor over an item (maybe with a modifier like alt) should also allow us to see comparative stats, maybe
+> just two tooltips side-by-side or a straight up + or - stat next to the items stats in green and red so we can quickly
+> see what is better or worse."
+
+The enhanced pack alone (`ui/armourCard.js`, composed by `ui/enhancedInventory.js`); the classic window keeps DFU's doll
+and its seven labels. NOTHING IN IT IS A NEW LAW: every number is one the port already computed, read through the member
+that computes it.
+
+**THE PARTS WHERE THE BODY IS.** DFU's armour is seven numbers, one a body part, and the classic doll labels each where
+it draws the part (RefreshArmourValues, PaperDoll.cs:154-173: `(100 - ArmorValues[part]) / 5` plus the armour modifier).
+The enhanced pack draws the parts as the worn map's panels, so the panel for each part's slot (GetBodyPartForEquipSlot,
+`equip.js bodyPartForSlot`: the head, each arm, the chest armour, the gloves, the leg armour, the feet) carries the
+part's number in its top-right corner - the classic label's own (`nativeInventory.armorLabelValue` over
+`entityMods.entityArmorDisplayMod`, so an armour affix's and a set's points are in it), filled or empty, a bare part 0
+and dimmed. A shield's share stands on the parts it covers, as the doll's does. The corner steps off a sigil's rune.
+
+**ONE FIGURE, AND WHY THIS ONE.** DFU keeps no total, and every blow meets ONE of the seven: CalculateAttackDamage draws
+the struck part (FormulaHelper.cs:616, the table at :869) and CalculateArmorToHit adds that part's value alone to the
+chance to hit (:808, :1158). So the pack's figure is the armour a blow meets ON AVERAGE - each part's number weighed by
+how often a blow lands there, by the struck-part table of the combat core in force (`formulas.js struckBodyPartTable`:
+FormulaHelper's twenty - the head 2, each arm 3, the chest 4, the hands 4, the legs 3, the feet 1 - or the combat
+overhaul's own 1/3/3/4/3/4/2, which it now registers beside its core on the core's own switch). Under FormulaHelper it
+is a fifth of the armour term a blow's hit chance takes on average; a sum would count a kite shield three times, a plain
+mean would weigh the feet like the chest. The overhaul turns a player's armour into a cut in the damage, so the figure
+claims only what is true under both cores. It stands on a plaque at the top-left of the figure's column, to a tenth
+("Armour 6.1"), and its hover says how the parts are weighed.
+
+**THE CARD COMPARES, AND THE WEAR DOES WHAT IT SAID.** The item card - the hover's and the pick's, the pack's one way of
+showing an item, so no modifier key and nothing for KB1's registry - carries under its stats what wearing the piece
+would change: what it replaces (EquipItem's three unequip arms, ItemEquipTable.cs:117-137, as `equip.js wearLeavers` -
+ONE export, which `equipItem` itself now runs: a two-hander clears both hands, a shield bumps a held two-hander, the
+occupant swaps out), then a weapon's Damage row against the weapon in the hand it takes (DFU's `%wdm`,
+`itemInfo.weaponDamageRange`), the overall figure, and each part the piece covers or the wear moves - the doll's number
+now and after, with the difference in the wear bar's green where it is better and red where it is worse. The after is
+DFU's table with each leaver given back and the piece taken off (UpdateEquippedArmorValues, on a copy) plus every
+`entityMods` fold run over the table the wear would leave, on a stand-in for the wearer. A two-hander over a sword and a
+shield says both halves: the damage it adds and the three parts the shield leaves bare. Pinned by the wear itself: for
+a Magic cuirass (its affix counted), an ebony one, a tower shield over a kite, a two-hander over a sword and shield and
+over two weapons, a shield over a two-hander and clothing boots over iron ones, what the card replaces is what
+`equipItem` takes off, and every part and the overall figure after it are the doll's once worn.
+
+**What it does not do.**
+- An UNIDENTIFIED piece's affixes are left out of its comparison (its card says "Unidentified" and no affix); worn, they
+  work and the doll shows them, as DFU's doll shows an unidentified item's powers.
+- DFU's enchantment channels (Strengthens / Weakens Armor, BadReactionsFrom) are read as they stand, not re-run for the
+  wear - they are the magic round's, and one of them waits on the foes nearby.
+- A broken piece, one the wearer's career forbids and one no slot takes have no comparison; a ring or a shirt, with no
+  stat to set against another, draws none.
+- A weapon's rarity damage affix stays its own line on both cards: the Damage delta compares the Damage rows.
+- The shop's and a player trade's detail strips draw no comparison.
+
+Pinned: `test/fb0929d_accompare.test.js` (5), `tools/mutants/fb0929d_accompare.json` (35 mutants, 35 dead). Seen in
+Chromium with the real ARENA2's icons at 1366x768 and on a phone (a scratch probe, not committed).

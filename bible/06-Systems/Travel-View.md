@@ -1364,24 +1364,75 @@ overworld travel"* - OW-ROUND 2's OW-ONLY. It comes back as a switch; OW-ONLY st
   is reachable, and READ LIVE - a flip takes effect at once (AUDIT OW5 T1: read with the mod's other settings at boot,
   it waited for the page to load again - a save loaded in play kept the old answer - under the tile's "Takes effect
   when the world next loads", which stays the mod's other keys' law; the key's own words say "Takes effect at once").
-- **On:** a journey picked on the travel map is Travel Options' own, in first person, as before OW-ONLY.
-  `tvOwnsJourneys` answers no, and every door that asks it follows: the map's pick begins the mod's journey on the
-  ground (`beginTravel` / `beginTravelToCoords`, the popup's estimate along), never refused for the Overworld's reasons
-  (the peaks, the water), and its refusals fall through as before (onTravel, onTravelToCoords); the view does not rise
-  with a journey (`tvJourneyUp`); a view the player brings down stops nothing (the view's `onLower`); and the journey
-  under a lowered view runs at the speed asked, not AUDIT OW4 J5's x1 (`travelViewGovern`). The map's Resume of the
-  mod's journey is the mod's; a ROUTE the Overworld planned is planned again from where the traveller stands, either
-  way (AUDIT OW5 J1: `travelViewResume` asks the route, not the switch). The Overworld itself is untouched: raised by
-  hand, its own clicks still begin its own journeys - routes, round the peaks and across the water - the load governor
-  holds them, and brought down they walk on, on the ground (a crossing keeping its journey's clock: AUDIT OW5 G5).
-  GROUP TRAVEL (TV8) is the Overworld's: under the switch a leader's map pick asks nobody, as before the Overworld
-  (PARTY-TRAVEL's `propose` never takes a walked trip); a click in the view raised by hand still leads the party.
+- **On:** a journey picked on the travel map is Travel Options' own, in first person, as before OW-ONLY (with its
+  roads on, the Overworld's route instead, still in first person: TO-ROADS, below). `tvOwnsJourneys` answers no, and
+  every door that asks it follows: the map's pick begins the mod's journey on the ground (`beginTravel` /
+  `beginTravelToCoords`, the popup's estimate along), never refused for the Overworld's reasons (the peaks, the water),
+  and its refusals fall through as before (onTravel, onTravelToCoords); the view does not rise with a journey
+  (`tvJourneyUp`); a view the player brings down stops nothing (the view's `onLower`); and the journey under a lowered
+  view runs at the speed asked, not AUDIT OW4 J5's x1 (`travelViewGovern`). The map's Resume of the mod's journey is
+  the mod's; a ROUTE the Overworld planned is planned again from where the traveller stands, either way (AUDIT OW5 J1:
+  `travelViewResume` asks the route, not the switch). The Overworld itself is untouched: raised by hand, its own clicks
+  still begin its own journeys - routes, round the peaks and across the water - the load governor holds them, and
+  brought down they walk on, on the ground (a crossing keeping its journey's clock: AUDIT OW5 G5). GROUP TRAVEL (TV8) is
+  the Overworld's: under the switch a leader's map pick asks nobody, as before the Overworld (PARTY-TRAVEL's `propose`
+  never takes a walked trip) - a routed one leads, TO-ROADS; a click in the view raised by hand still leads the party.
 - **Off:** OW-ONLY exactly.
 
 Proof: `test/ow_toggle.test.js` (6: the key; the host's doors MOUNTED from their own source over the real settings
 store, both ways; the live read; the governor mounted both ways), `tools/mutants/ow_toggle.json` (7 dead). TV2's three
 OW-ONLY pins (`tvOwnsJourneys`, `onLower`, `tvJourneyUp`), to1's key-set pin, and four mutant records (ow2
 OW-ONLY-down-and-on, ow3j J1 and J2, travelnav TN-switch-off-the-tile) re-aimed to the grown lines, never loosened.
+
+## TO-ROADS - FIRST-PERSON TRAVEL FOLLOWS THE ROADS, A SECOND SWITCH - SHIPPED (2026-09-29, FIELD BUGS 2026-09-29d, SylviaBun on the Discord: "Travel Options First Person doesn't follow roads like Overworld Travel Options does")
+
+SylviaBun: *"When traveling in first person, however, the travel route always just goes the straightest shot to your
+destination running you through the forest etc. A way to toggle this behavior to match or not would be nice."*
+Reproduced first, on the host's own code: under First-Person Travel a map pick is Travel Options' own journey, its
+autopilot aimed at the destination's rect from the first frame, through whatever the road goes round. That is the mod's
+(TO-FIELD: it "does not route along roads to a named destination and never did"), and OW-TOGGLE asked it back as
+exactly that - so it stays the default, and the road is a second switch.
+
+- **The switch:** `GeneralOptions.FirstPersonTravelFollowsRoads` ("First Person Travel Follows Roads"), OW-TOGGLE's
+  shape - the port's own key on the mod's pane (not in the vendored `modsettings.json`, its words say so), OFF, on the
+  tile right after the switch it serves, read LIVE ("Takes effect at once"). Online the player's own, as every key of
+  the mod's is (`ONLINE_PLAYERS_OWN_MODS`: "my own journey").
+- **On, with First-Person Travel on:** the map's pick is ROUTED. `scenes/world.js` `tvRoutesJourneys` grows from
+  `tvOwnsJourneys` (every Overworld journey is routed) and is what the map's three forks ask (`beginAcceleratedTravel`,
+  `onTravel`'s refusal line, `onTravelToCoords`). The routed arm is the Overworld's, whole - THE ONE CONSTRUCTION SEAM:
+  its gates, a place to `travelViewRouteTo` and a spot to `travelViewWalkTo` (the planner, OW-ROADSIDE's join,
+  OW-MOUNTAINS, OWS2's water, `beginTravelAlongRoute`'s legs on the one autopilot). The view's own doors ask who OWNS the
+  journey, never this, so it is walked in first person: `tvJourneyUp` raises nothing, a view raised by hand and brought
+  down stops nothing (`onLower`), and it runs at the speed asked, never AUDIT OW4 J5's x1 (`travelViewGovern`).
+- **Its life** is the mod's first-person journey's and the route's at once: the mod's panel, Camp and every stop its
+  Update makes (a place's route is a named journey); the arrival in the mod's box (`tvQuiet`: the view is down); the
+  map's Resume plans it AGAIN from where the traveller stands (AUDIT OW5 J1 asks the route, not the switch); a jump
+  stops it (J2); a route that puts to sea is sailed as OWS2's, its clock kept (G5 - the code a view-raised route brought
+  down already walks, not re-proved here). The panel counts the distance: the popup's estimate is the straight walk's.
+- **The route's refusal is the answer:** no way by land, the peaks, the water - said in the Overworld's words
+  (SHIP-SAIL's passage offered where the ship reaches) and done: never the straight walk the player switched away from,
+  never DFU's fast travel (AUDIT OW3 J2's two doors, asking `tvRoutesJourneys`).
+- **Group travel (TV8):** a leader's routed pick leads the party gathered, as the Overworld's does (`partyWalkBegin`
+  rides `travelViewRouteTo`) - the same legs for everyone, each member walking by their own switches. The roads key off,
+  First-Person Travel's pick asks nobody (OW-TOGGLE).
+- **Off (the default), or First-Person Travel off:** OW-TOGGLE and OW-ONLY exactly. **The classic skin** keeps Travel
+  Options exactly (`isEnhanced()`). **THE FOUR HOSTS:** `scenes/world.js` alone, as TO1's seam; `scenes/exterior.js` has
+  no travel map, roads or journey; `scenes/worldModes.js` and `scenes/dungeonContext.js` are indoors, where the map's door
+  refuses first (IsPlayerInside) and a door ends a journey (AUDIT-TO1 G2) - named, not wired.
+- **DECIDED AS LEAD**, each one line to change: the refusal is the route's, never a fall back to the straight walk (the
+  player asked for the road, a silent beeline is the report itself, and the switch is the way back to it); a routed pick
+  leads the party; the classic skin untouched; the key name, whose row reads "First Person Travel Follows Roads".
+- **Known, not changed:** the route's gate is the view's (`travelViewAllowed`), so a pick made under the water is
+  refused in the view's words ("You cannot survey the land from under the water."), as the Resume of any route already
+  is (AUDIT OW5 J1); and a spot's panel reads the Overworld's "The marked spot", not the mod's map coordinates.
+
+Proof: `test/fb0929d_toroads.test.js` (6: the key; REPRODUCED and fixed on world.js's doors and the Overworld's route
+LIFTED from its source and run over the real planner, a real Travel Options and the real settings store, on a map of its
+own - a road bent round a square of forest, a peak, an island; the journey's life and the governor; the refusal; both
+switches both ways, the classic skin and the live read; the seam swept in the source), `tools/mutants/fb0929d_toroads.json`
+(16: 14 dead, 2 equivalent as recorded). TV2's three fork pins, to1's two and its key-set pin, OW-TOGGLE's rig, and five
+mutant records (ow2 OW-ONLY-ground-travel, ow3j's two J2, ow_toggle and travelnav off-the-tile) re-aimed to the grown
+lines, never loosened. Not seen in a browser.
 
 ## AUDIT OW5 - the Overworld audited before the merge, seven lenses (2026-09-29, Mac: "Before we merge. Can we do a comprehensive audit on the overworld, just want to make sure it's perfect.")
 

@@ -1,0 +1,44 @@
+[
+  {
+    "name": "MERC-RISE-the-half-is-of-the-seller's-own-ask",
+    "file": "src/systems/shopStock.js",
+    "old": "    return Math.min(sale, Math.floor(calculateTradePrice(cost, shopQuality, best, false) * ONLINE_SALE_SHARE));",
+    "new": "    return Math.min(sale, Math.floor(calculateTradePrice(cost, shopQuality, { mercantile, personality }, false) * ONLINE_SALE_SHARE));",
+    "tests": ["test/fb0929d_mercantile.test.js", "test/realm0.test.js"]
+  },
+  {
+    "name": "MERC-RISE-the-best-haggler-is-average",
+    "file": "src/systems/shopStock.js",
+    "old": "export const ONLINE_SALE_REFERENCE_SKILL = 100;",
+    "new": "export const ONLINE_SALE_REFERENCE_SKILL = 50;",
+    "tests": ["test/fb0929d_mercantile.test.js", "test/realm0.test.js"]
+  },
+  {
+    "name": "MERC-RISE-a-spell's-lift-past-100-is-forgotten",
+    "file": "src/systems/shopStock.js",
+    "old": "      mercantile: Math.max(ONLINE_SALE_REFERENCE_SKILL, mercantile),",
+    "new": "      mercantile: ONLINE_SALE_REFERENCE_SKILL,",
+    "tests": ["test/fb0929d_mercantile.test.js", "test/realm0.test.js"]
+  },
+  {
+    "name": "MERC-RISE-a-charm's-lift-past-100-is-forgotten",
+    "file": "src/systems/shopStock.js",
+    "old": "      personality: Math.max(ONLINE_SALE_REFERENCE_SKILL, personality),",
+    "new": "      personality: ONLINE_SALE_REFERENCE_SKILL,",
+    "tests": ["test/fb0929d_mercantile.test.js", "test/realm0.test.js"]
+  },
+  {
+    "name": "MERC-RISE-the-reference-ignores-personality",
+    "file": "src/systems/shopStock.js",
+    "old": "      personality: Math.max(ONLINE_SALE_REFERENCE_SKILL, personality),",
+    "new": "      personality,",
+    "tests": ["test/fb0929d_mercantile.test.js", "test/realm0.test.js"]
+  },
+  {
+    "name": "MERC-RISE-the-online-sale-is-uncapped",
+    "file": "src/systems/shopStock.js",
+    "old": "    if (!online) return sale;\n    const best",
+    "new": "    return sale;\n    const best",
+    "tests": ["test/fb0929d_mercantile.test.js", "test/realm0.test.js"]
+  }
+]

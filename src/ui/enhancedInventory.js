@@ -91,9 +91,9 @@ import {
 } from './paperDoll.js';
 import {
   equipItem, unequipSlot, equipTableOf, isEquipped,
-  isForbiddenEquip, isBrokenItem,
+  isForbiddenEquip, isBrokenItem, getEquipSlot, bodyPartForSlot,   // getEquipSlot - Mac (2026-09-18): Wear only where a slot would take it; bodyPartForSlot - AC-COMPARE: GetBodyPartForEquipSlot, the part a worn panel stands for
 } from '../systems/equip.js';
-import { getEquipSlot } from '../systems/equip.js';   // Mac (2026-09-18): Wear only where a slot would take it
+import { armourBadge, armourPlaque, compareBlock } from './armourCard.js';   // AC-COMPARE: the doll's numbers on the map, the overall figure, the card's comparison
 import {
   itemWeight, isEnchanted, totalWeight, addItem, goldStack,
   goldPiecesOf, GOLD_PIECE_WEIGHT_KG,   // E4: the counter and its per-coin weight
@@ -1845,6 +1845,11 @@ function equippedList() {
     dollFrame.append(el('span', 'worntile', '\u25c7'), el('span', 'wornslot', 'Avatar'));
   }
   map.append(dollFrame);
+  // AC-COMPARE: THE OVERALL FIGURE ON THE CHARACTER - a plaque at the head of the figure's column (the doll's own first
+  // row, over it), whatever stands there: the doll, the Morrowind body or the empty frame (ui/armourCard.js)
+  const plaque = armourPlaque(deps.entity);
+  plaque.style.gridArea = '1 / 2';
+  map.append(plaque);
   wrap.append(map);
   const byLabel = new Map();
   for (const row of worn.rows) {
@@ -1880,6 +1885,11 @@ function wornPanel(fam, byLabel, area) {
   // clothes, arms before bracers - the first filled row is the top
   // of the pile, the piece a body shows.
   const filled = rows.filter((r) => r.item);
+  // AC-COMPARE: THE PART'S ARMOUR ON ITS PANEL. The classic doll labels each of the seven body parts where the part
+  // is drawn (PaperDoll.cs armourLabelPos); here the part is drawn as the panel for its slot (GetBodyPartForEquipSlot:
+  // the head, each arm, the chest armour, the gloves, the leg armour, the feet), so its number stands there - filled
+  // or empty, as the doll labels a bare part 0 - and a shield's share shows on the parts it covers, as the doll's does.
+  const part = rows.map((r) => bodyPartForSlot(r.slot)).find((p) => p >= 0) ?? -1;
   // AN EMPTY FAMILY IS NOT A CONTROL, so it is not a BUTTON - the
   // law that shaped the old per-slot rows (twenty-two disabled 24px
   // buttons on a bare character), one size up. `wornempty`, not
@@ -1892,6 +1902,7 @@ function wornPanel(fam, byLabel, area) {
     const txt = el('span', 'worntext');
     txt.append(el('span', 'wornslot', fam.label), el('span', 'wornname wornempty', '\u2014'));
     d.append(el('span', 'worntile', '\u25c7'), txt);
+    if (part >= 0) d.append(armourBadge(deps.entity, part));   // AC-COMPARE
     return d;
   }
   const top = filled.find((r) => r.item === picked) ?? filled[0];
@@ -1914,6 +1925,7 @@ function wornPanel(fam, byLabel, area) {
   txt.append(el('span', 'wornslot', fam.label), el('span', 'wornname', line.name));
   b.append(txt);
   if (filled.length > 1) b.append(el('span', 'worncount', String(filled.length)));
+  if (part >= 0) b.append(armourBadge(deps.entity, part));   // AC-COMPARE: the part's armour, as on the empty panel
   // MAC-M2 (Mac: "hold to drag ... doesn't work when trying to take
   // items off your character"): A FILLED PANEL DRAGS, on the same hold
   // and the same threshold a pack row takes. INV1 attached `dragFrom`
@@ -2703,6 +2715,11 @@ function infoCard(picked, side, ready = render, { body = false } = {}) {
   }
   else pair('Where', remote.title);
   into.append(dl);
+  // AC-COMPARE: WHAT WEARING IT WOULD CHANGE, under its own stats - the card is the hover's and the pick's alike (the
+  // pack's one way of showing an item), so the comparison needs no key: what it would replace, then its damage and the
+  // armour a wear moves, each set against what is worn now in green or red (ui/armourCard.js). A pack piece or a loot
+  // row's; a worn piece is what is worn, and has none.
+  { const cmp = compareBlock(deps.entity, picked, (it) => itemLongName(it, { getQuest: deps.getQuest ?? null })); if (cmp) into.append(cmp); }
   return { c, line, big };
 }
 

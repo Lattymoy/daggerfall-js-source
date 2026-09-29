@@ -183,10 +183,10 @@ export function weightString(item) {
 }
 
 /** WeaponDamage() (:150-154): "min - max", both shifted by the
- *  material modifier. */
+ *  material modifier - weaponDamageRange's two numbers (AC-COMPARE, below: one law for the row and its comparison). */
 export function weaponDamageString(item) {
-  const mod = weaponMaterialModifier(item?.material ?? WEAPON_MATERIALS.Iron);
-  return `${weaponMinDamage(item.templateIndex) + mod} - ${weaponMaxDamage(item.templateIndex) + mod}`;
+  const [min, max] = weaponDamageRange(item);
+  return `${min} - ${max}`;
 }
 
 /** ArmourMod() (:157-160): GetMaterialArmorValue with a C# "+0;-0;0"
@@ -274,6 +274,14 @@ export const itemHandsLine = (item) => (
  *  piece of armour has one, and a shield's comes off the same
  *  `itemArmorValue` the paperdoll totals. */
 export const itemArmourLine = (item) => (item?.group === 'Armor' ? armourModString(item) : null);
+
+/** AC-COMPARE (FIELD BUGS 2026-09-29d): WeaponDamage()'s two NUMBERS (:150-154) - the template's base damage, both ends
+ *  shifted by the material modifier - which weaponDamageString prints and the enhanced pack's card sets against the
+ *  weapon a wear would replace (ui/armourCard.js), so the card's Damage row and its comparison are one law. */
+export function weaponDamageRange(item) {
+  const mod = weaponMaterialModifier(item?.material ?? WEAPON_MATERIALS.Iron);
+  return [weaponMinDamage(item.templateIndex) + mod, weaponMaxDamage(item.templateIndex) + mod];
+}
 
 /** The material NAMES the %mat macro resolves (TextProvider's
  *  GetArmorMaterialName / GetWeaponMaterialName). Armor's enum is

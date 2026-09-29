@@ -281,7 +281,8 @@ test('A2: SplitStack mints a FRESH template item (ItemCollection.cs:267 -> ItemB
   assert.equal(picked.material, 0, 'nativeMaterialValue = 0');
   assert.equal(picked.variant, 0, 'currentVariant = 0');
   assert.equal(picked.flags, 0, 'flags = 0');
-  assert.equal(picked.message, 0, 'message = 0 (a Paintings mint would roll instead)');
+  // BOOK-SPLIT (2026-09-29, Port-Ledger A): FindExistingStack's identity terms ride the split - flipped from 0
+  assert.equal(picked.message, 12345, 'message rides the split (a Paintings mint still rolls its own)');
   assert.equal(picked.currentCondition, t.hitPoints, 'currentCondition = itemTemplate.hitPoints');
   assert.equal(picked.maxCondition, t.hitPoints, 'maxCondition too');
   assert.equal(picked.enchantmentPoints, t.enchantmentPoints);
@@ -290,8 +291,10 @@ test('A2: SplitStack mints a FRESH template item (ItemCollection.cs:267 -> ItemB
   // and the per-item state the port used to carry across is GONE
   assert.equal(picked.enchantments, undefined,
     'enchantments are NOT duplicated - the item maker splits one off a stack precisely so the rest stay plain');
-  assert.equal(picked.potionRecipeKey, undefined);
-  assert.equal(picked.timeForItemToDisappear, undefined);
+  // BOOK-SPLIT: the recipe and the expiry are identity, and ride it (flipped from undefined); a gem's value is still
+  // the template's - only a book's id and a potion's recipe priced their stack
+  assert.equal(picked.potionRecipeKey, 221871);
+  assert.equal(picked.timeForItemToDisappear, 700);
   assert.notEqual(picked, stack);
   assert.deepEqual(stack.enchantments, [{ type: 11, param: -1 }], 'the source is untouched');
 });

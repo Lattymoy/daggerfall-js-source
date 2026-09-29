@@ -144,9 +144,10 @@ test('TO1: the settings are the mod\'s own modsettings.json, key for key, type f
   // not ship (HT-WAIST's shape on Handheld Torches), named so a third
   // cannot ride in unnoticed
   // PIN MOVED (OW-TOGGLE): and its first-person switch (test/ow_toggle.test.js)
-  assert.equal(Object.keys(ours).length, n + 3, 'and the port declares them all, plus Enabled, its own AvoidObstacles and FirstPersonTravel');
-  assert.deepEqual(Object.keys(ours).filter((k) => !shippedNames.has(k)).sort(), ['Enabled', 'GeneralOptions.AvoidObstacles', 'GeneralOptions.FirstPersonTravel'],
-    'the port\'s three keys, and nothing else');
+  // PIN MOVED (TO-ROADS): and that switch's roads (test/fb0929d_toroads.test.js)
+  assert.equal(Object.keys(ours).length, n + 4, 'and the port declares them all, plus Enabled, its own AvoidObstacles, FirstPersonTravel and FirstPersonTravelFollowsRoads');
+  assert.deepEqual(Object.keys(ours).filter((k) => !shippedNames.has(k)).sort(), ['Enabled', 'GeneralOptions.AvoidObstacles', 'GeneralOptions.FirstPersonTravel', 'GeneralOptions.FirstPersonTravelFollowsRoads'],
+    'the port\'s four keys, and nothing else');
   // the five unnamed spacer sections carry no keys and are not declared
   assert.deepEqual(shipped.Sections.filter((s) => !s.Keys.length).map((s) => s.Name), ['__', '-', '_', '--', '.']);
 });
@@ -1250,7 +1251,7 @@ test('TO1: the wiring - one construction, the fork on the popup\'s word, the pan
   assert.match(w, /\n  travelOptions = travelOptionsOn \? createTravelOptions\(\{/, 'BOOT-TDZ: ASSIGNED where the mod is built - the binding is declared above the stream that reads it');
   assert.match(w, /let travelOptions = null;/, 'BOOT-TDZ: and declared there, null');
   // the fork
-  assert.match(w, /if \(opts\?\.playerControlled && beginAcceleratedTravel\(pick, opts, \{ estimateMinutes: computed\?\.minutes \?\? null \}\)\) return;[^\n]*\n(?:\s*\/\/[^\n]*\n)*(?:\s*if \(opts\?\.playerControlled && tvOwnsJourneys\(\)\) return;\n)?\s*fastTravelTo\(pick, opts, computed\);/,
+  assert.match(w, /if \(opts\?\.playerControlled && beginAcceleratedTravel\(pick, opts, \{ estimateMinutes: computed\?\.minutes \?\? null \}\)\) return;[^\n]*\n(?:\s*\/\/[^\n]*\n)*(?:\s*if \(opts\?\.playerControlled && tvRoutesJourneys\(\)\) return;\n)?\s*fastTravelTo\(pick, opts, computed\);/,   // PIN MOVED (TO-ROADS): a routed trip's refusal (the Overworld's, or a first-person route's)
     'the walked trip is tried first (with the popup\'s estimate riding along - AUDIT-TO1 L5) and fast travel is the fallback (AUDIT OW3 J2: never for a walk the Overworld refused)');
   // TO-ONLINE (2026-09-19, Mac: "travel options uses instant travel for the
   // online mod, which shouldn't be the case"): the journey RUNS online. The
@@ -1686,7 +1687,7 @@ test('AUDIT-TO1 G1/G2/G3/I2/I3/I4/I6/J1/K2/H1/H2: the host seams the sweep found
   assert.doesNotMatch(follow.slice(0, follow.indexOf('\n')), /sharedClockOn\(\)/,   // KB1: one line now - the registry's press
     'the follow key does not stand down on the shared clock either');
   // I4: the coordinates door acts on its refusal, and the popup opens only where it is honoured
-  assert.match(w, /if \(!beginAcceleratedTravel\(pick, opts, \{ coords: true \}\)( && !tvOwnsJourneys\(\))?\) townTalk\.say\('You cannot travel there now\.'\);/);   // AUDIT OW3 J2: the Overworld says its own
+  assert.match(w, /if \(!beginAcceleratedTravel\(pick, opts, \{ coords: true \}\)( && !tvRoutesJourneys\(\))?\) townTalk\.say\('You cannot travel there now\.'\);/);   // AUDIT OW3 J2: the Overworld says its own (PIN MOVED, TO-ROADS: a first-person route's too)
   assert.match(w, /coordsAllowed: \(\) => !!travelOptions,/, 'TO-ONLINE: the door opens wherever the journey runs, which is now everywhere the mod is on');
   assert.match(read('src/ui/travelMapWindow.js'), /\(this\.deps\.coordsAllowed\?\.\(\) \?\? true\)/);
   // I6: the discovery store is read by the key its writers use

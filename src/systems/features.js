@@ -202,10 +202,12 @@ export const MOD_CURATED = Object.freeze({
   // REACHABLE (TORCH-BIND's lesson, HT-WAIST's pin) - a key the drawer does
   // not draw is a key nobody can turn.
   // OW-TOGGLE: and the port's own first-person switch, on the tile for the same reason.
+  // TO-ROADS: and its roads, beside it - a first-person journey that follows them.
   'travel-options': Object.freeze([
     'CautiousTravel.PlayerControlledCautiousTravel', 'ShipTravel.OnlyFromPorts',
     'GeneralOptions.LocationPause', 'TimeAcceleration.AccelerationLimit',
     'GeneralOptions.AvoidObstacles', 'GeneralOptions.FirstPersonTravel',
+    'GeneralOptions.FirstPersonTravelFollowsRoads',
   ]),
   'ambient-text': Object.freeze(['textChance', 'interval', 'postTextInterval', 'textDisplayTime']),   // AT0: all four it ships - the mod is small enough that curation would only hide something
   // EOTB0: the mod ships FIFTY-FOUR keys across nine sections, so this

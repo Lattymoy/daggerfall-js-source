@@ -228,8 +228,8 @@
   {
     "name": "DISC28-G-rising-kills-PH1",
     "file": "src/player/collider.js",
-    "old": "const lowOneWay = rising ? axis : true;",
-    "new": "const lowOneWay = rising ? false : true;",
+    "old": "const lowOneWay = straddle ? axis : true;",
+    "new": "const lowOneWay = straddle ? false : true;",
     "tests": [
       "test/disc28_swim.test.js",
       "test/ph1_physics.test.js"

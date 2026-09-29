@@ -258,10 +258,14 @@ function refuseTransfer(item) {
   return true;
 }
 
+/** ItemCollection.Transfer (:473-480): out of `from`, then AddItem into `to` - so a lot rejoins its own stack there,
+ *  as DFU's every click-back (TransferItem -> DoTransferItem) and ClearSelectedItems (Transfer, TransferAll) do.
+ *  BOOK-SPLIT: a `push` left a book taken back off the counter as a second row beside its own stack. A quest item goes
+ *  to the front (DoTransferItem's order, :1573-1579), as itemTransfer.applyTransfer places it. */
 function move(item, from, to) {
   const i = from.indexOf(item);
   if (i >= 0) from.splice(i, 1);
-  to.push(item);
+  addItem(to, item, item?.questItem ? 'front' : 'dontCare');
 }
 
 /** Whether a pending local (your own pack) selection in Buy mode is a

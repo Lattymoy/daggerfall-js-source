@@ -18,6 +18,7 @@ import {
 } from '../src/systems/itemTransfer.js';
 import { CANNOT_REMOVE_ITEM_TEXT } from '../src/systems/createItem.js';
 import { totalWeight, goldStack } from '../src/systems/inventory.js';
+import { createPotion, CLASSIC_RECIPE_KEYS } from '../src/systems/loot.js';   // BOOK-SPLIT: the producer's own potion
 
 const book = (n = 1) => ({ group: 'Books', templateIndex: 277, name: 'Book', stackCount: n });
 const cart = () => ({ group: 'Transportation', templateIndex: 93, name: 'Small Cart' });
@@ -201,6 +202,10 @@ test('U56 applyTransfer: the split leaves a remainder, the whole move keeps its 
 // a TEMPLATE, not a copy. The ladder used to re-spell the member as
 // `{ ...item, stackCount }`, which is the fourth re-spelling a2 set out
 // to remove and the only one on the main path.
+// BOOK-SPLIT (2026-09-29, Field-Bugs-2026-09-29d): the mint keeps the
+// stack's IDENTITY - message, recipe, expiry, and the price a book's id
+// or a potion's recipe set - a Port-Ledger A departure; this pin was
+// flipped to it (the half split off a potion stack is that potion).
 test('ROAD-Ar R5: a partial move is a SplitStack MINT, not a copy of the record', () => {
   const shared = [{ type: 1, param: 3 }];
   const potion = {
@@ -218,22 +223,31 @@ test('ROAD-Ar R5: a partial move is a SplitStack MINT, not a copy of the record'
   assert.equal(taken.stackCount, 1);
   assert.equal(taken.group, potion.group, 'the mint keeps the group...');
   assert.equal(taken.templateIndex, potion.templateIndex, '...and the template index');
-  // ...and nothing else. These five are exactly SetItem's zeroing.
+  // ...and SetItem's zeroing for the rest.
   assert.equal(taken.material, 0, 'nativeMaterialValue = 0');
   assert.equal(taken.variant, 0, 'currentVariant = 0');
   assert.equal(taken.flags, 0);
-  assert.equal(taken.message, 0);
-  assert.equal(taken.potionRecipeKey ?? 0, 0, 'the recipe does not ride along');
-  assert.notEqual(taken.value, 999, 'value is reset to the template basePrice');
+  // BOOK-SPLIT: the identity FindExistingStack reads rides the split, and the price the recipe set with it
+  assert.equal(taken.message, 41, 'the identity term message rides the split');
+  assert.equal(taken.potionRecipeKey, 8765, 'the recipe rides the split - a split potion is that potion');
+  assert.equal(taken.value, 999, 'the recipe\'s price rides with it');
   assert.notEqual(taken.condition, 4, 'condition is reset to hitPoints, not inherited');
   assert.notEqual(taken.enchantments, shared,
     'the split half shared the source enchantment ARRAY by reference');
 
-  // The observable consequence: DFU's stored half will NOT re-stack
-  // with the remainder, because stacksWith reads message and recipe.
-  assert.equal(to.length, 1);
-  applyTransfer(potion, { amount: 2 }, from, to);
-  assert.equal(to.length, 2, 'a template and a keyed potion are not one stack');
+  // The observable consequence, on the shape the producer mints (the
+  // fixture above is enchanted and so stacks with nothing): the stored
+  // half RE-STACKS with the remainder - one potion is one stack again.
+  const healing = { ...createPotion(CLASSIC_RECIPE_KEYS[0]), stackCount: 3 };
+  const shelf = [healing];
+  const bag = [];
+  applyTransfer(healing, { amount: 1 }, shelf, bag);
+  assert.equal(bag[0].potionRecipeKey, CLASSIC_RECIPE_KEYS[0]);
+  assert.equal(bag[0].value, healing.value, 'the recipe\'s price, not the bottle\'s');
+  assert.equal(bag[0].worldTextureRecord, healing.worldTextureRecord, 'and the recipe\'s picture');
+  applyTransfer(healing, { amount: 2 }, shelf, bag);
+  assert.equal(bag.length, 1, 'the potion split off and the rest of it are one stack again');
+  assert.equal(bag[0].stackCount, 3);
 
   // ...but a split that carries no identity terms MUST still re-merge
   // where DFU merges. FindExistingStack (ItemCollection.cs:708-713)

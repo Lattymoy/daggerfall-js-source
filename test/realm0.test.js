@@ -259,7 +259,11 @@ test('REALM P0.4: online a shop pays at most half what it asks for the same piec
   const loop = { mercantile: 2, personality: 50 };
   const buy = calculateTradePrice(1_000, 1, loop, false, { online: false });
   assert.deepEqual([calculateTradePrice(1_000, 1, loop, true, { online: false }), buy], [488, 484], 'offline a quality-1 shop pays more than it asks');
-  assert.equal(calculateTradePrice(1_000, 1, loop, true, { online: true }), 242, 'online half of 484');
+  // MERC-RISE (Field-Bugs-2026-09-29d): the half is of the LEAST the counter asks - the best haggler's ask (100 in
+  // each, or the seller's own past it) - so no skill lowers a sale; flipped from P0.4's half of the seller's own ask
+  const best = (k) => ({ mercantile: Math.max(100, k.mercantile), personality: Math.max(100, k.personality) });
+  assert.equal(calculateTradePrice(1_000, 1, loop, true, { online: true }), Math.floor(calculateTradePrice(1_000, 1, best(loop), false, { online: false }) / 2), 'online half of what the counter asks the best haggler');
+  assert.ok(calculateTradePrice(1_000, 1, loop, true, { online: true }) <= buy / 2, 'and at most half of this seller\'s own ask');
   assert.equal(calculateTradePrice(1_000, 1, loop, false, { online: true }), buy, 'buying is untouched');
   for (const q of [1, 5, 10, 15, 20]) {
     for (const mercantile of [0, 25, 50, 100]) {
@@ -267,7 +271,8 @@ test('REALM P0.4: online a shop pays at most half what it asks for the same piec
         const k = { mercantile, personality };
         const off = calculateTradePrice(777, q, k, true, { online: false });
         const on = calculateTradePrice(777, q, k, true, { online: true });
-        assert.equal(on, Math.min(off, Math.floor(calculateTradePrice(777, q, k, false, { online: false }) / 2)), `q${q} m${mercantile} p${personality}`);
+        assert.equal(on, Math.min(off, Math.floor(calculateTradePrice(777, q, best(k), false, { online: false }) / 2)), `q${q} m${mercantile} p${personality}`);
+        assert.ok(on <= Math.floor(calculateTradePrice(777, q, k, false, { online: false }) / 2), `the buy-back loop stays shut: q${q} m${mercantile} p${personality}`);
       }
     }
   }

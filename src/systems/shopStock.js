@@ -694,6 +694,16 @@ export function calculateCost(baseValue, shopQuality, priceAdjustment = 1000, co
  *  and the regions' price walk paid a carrier. Offline, DFU's haggle stands. */
 export const ONLINE_SALE_SHARE = 0.5;
 
+/** MERC-RISE (FIELD BUGS 2026-09-29d, ValenValarys on Discord: "As the skill level increases, the sell price for items
+ *  actually decreases" - 3499 gold at Mercantile 60, 2888 at 90, Personality 100): THE HALF IS OF THE LEAST THE
+ *  COUNTER ASKS. P0.4 took half of the SELLER's own ask, and a seller's ask falls as their Mercantile and Personality
+ *  rise - so the cap, which binds for nearly every seller online, fell with them (2888/3499 is 0.825, the two asks'
+ *  own ratio). Half of what the counter asks the best haggler there is - 100 in each, DFU's maximum, or the seller's own
+ *  where a spell or a curse lifts it higher - is still at most half of what it asks anyone, so buying back never pays
+ *  (P0.4's law, whole), and it is a number of the counter and the piece: no skill lowers a sale. Under it DFU's haggle
+ *  stands, and raises the sale with the seller's skills up to it. */
+export const ONLINE_SALE_REFERENCE_SKILL = 100;
+
 /** FormulaHelper.CalculateTradePrice, verbatim - the classic
  *  fixed-point haggle over the merchant's quality-derived levels vs
  *  the player's Mercantile + Personality. selling=false is the BUY
@@ -706,7 +716,11 @@ export function calculateTradePrice(cost, shopQuality, { mercantile = 0, persona
     dp = ((Math.trunc(((100 - merchantLevel) << 8) / 200) + 128) * (Math.trunc((personality << 8) / 200) + 128)) >> 8;
     const sale = ((((179 * dm) >> 8) + ((51 * dp) >> 8)) * cost) >> 8;
     if (!online) return sale;
-    return Math.min(sale, Math.floor(calculateTradePrice(cost, shopQuality, { mercantile, personality }, false) * ONLINE_SALE_SHARE));   // REALM P0.4
+    const best = {   // MERC-RISE: the best haggler this counter can meet
+      mercantile: Math.max(ONLINE_SALE_REFERENCE_SKILL, mercantile),
+      personality: Math.max(ONLINE_SALE_REFERENCE_SKILL, personality),
+    };
+    return Math.min(sale, Math.floor(calculateTradePrice(cost, shopQuality, best, false) * ONLINE_SALE_SHARE));   // REALM P0.4; MERC-RISE: half the least it asks
   }
   dm = ((Math.trunc((merchantLevel << 8) / 200) + 128) * (Math.trunc(((100 - mercantile) << 8) / 200) + 128)) >> 8;
   dp = (((Math.trunc((merchantLevel << 8) / 200) + 128) * (Math.trunc(((100 - personality) << 8) / 200) + 128)) >> 8) << 6;

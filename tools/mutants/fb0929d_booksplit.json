@@ -1,0 +1,79 @@
+[
+  {
+    "name": "BOOK-SPLIT-the-book-id-is-dropped",
+    "file": "src/systems/inventory.js",
+    "old": "    message: stack.group === 'Paintings' ? rollPaintingMessage(rolls) : (stack.message ?? 0),",
+    "new": "    message: stack.group === 'Paintings' ? rollPaintingMessage(rolls) : 0,",
+    "tests": ["test/fb0929d_booksplit.test.js"]
+  },
+  {
+    "name": "BOOK-SPLIT-the-identity-price-is-the-template's",
+    "file": "src/systems/inventory.js",
+    "old": "    value: priced ? (stack.value ?? template?.basePrice ?? 0) : (template?.basePrice ?? 0),",
+    "new": "    value: template?.basePrice ?? 0,",
+    "tests": ["test/fb0929d_booksplit.test.js"]
+  },
+  {
+    "name": "BOOK-SPLIT-every-stack-is-priced-by-identity",
+    "file": "src/systems/inventory.js",
+    "old": "    value: priced ? (stack.value ?? template?.basePrice ?? 0) : (template?.basePrice ?? 0),",
+    "new": "    value: stack.value ?? template?.basePrice ?? 0,",
+    "tests": ["test/fb0929d_booksplit.test.js"]
+  },
+  {
+    "name": "BOOK-SPLIT-a-book-is-not-priced-by-its-id",
+    "file": "src/systems/inventory.js",
+    "old": "  stack.group === 'Books' || (stack.group === 'UselessItems1' && stack.templateIndex === GLASS_BOTTLE_TEMPLATE);",
+    "new": "  (stack.group === 'UselessItems1' && stack.templateIndex === GLASS_BOTTLE_TEMPLATE);",
+    "tests": ["test/fb0929d_booksplit.test.js"]
+  },
+  {
+    "name": "BOOK-SPLIT-a-potion-is-not-priced-by-its-recipe",
+    "file": "src/systems/inventory.js",
+    "old": "  stack.group === 'Books' || (stack.group === 'UselessItems1' && stack.templateIndex === GLASS_BOTTLE_TEMPLATE);",
+    "new": "  stack.group === 'Books';",
+    "tests": ["test/fb0929d_booksplit.test.js"]
+  },
+  {
+    "name": "BOOK-SPLIT-the-recipe-is-dropped",
+    "file": "src/systems/inventory.js",
+    "old": "  if (stack.potionRecipeKey) picked.potionRecipeKey = stack.potionRecipeKey;\n",
+    "new": "",
+    "tests": ["test/fb0929d_booksplit.test.js"]
+  },
+  {
+    "name": "BOOK-SPLIT-the-potion's-picture-is-dropped",
+    "file": "src/systems/inventory.js",
+    "old": "  if (priced && stack.worldTextureRecord != null) picked.worldTextureRecord = stack.worldTextureRecord;\n",
+    "new": "",
+    "tests": ["test/fb0929d_booksplit.test.js"]
+  },
+  {
+    "name": "BOOK-SPLIT-the-conjured-expiry-is-dropped",
+    "file": "src/systems/inventory.js",
+    "old": "  if (stack.timeForItemToDisappear) picked.timeForItemToDisappear = stack.timeForItemToDisappear;\n",
+    "new": "",
+    "tests": ["test/fb0929d_booksplit.test.js"]
+  },
+  {
+    "name": "BOOK-SPLIT-a-record-merges-with-itself",
+    "file": "src/systems/inventory.js",
+    "old": "    if (held !== item && stacksWith(held, item)) {",
+    "new": "    if (stacksWith(held, item)) {",
+    "tests": ["test/fb0929d_booksplit.test.js"]
+  },
+  {
+    "name": "BOOK-SPLIT-the-enhanced-counter-pushes",
+    "file": "src/ui/enhancedTrade.js",
+    "old": "  if (i >= 0) from.splice(i, 1);\n  addItem(to, item, item?.questItem ? 'front' : 'dontCare');\n}",
+    "new": "  if (i >= 0) from.splice(i, 1);\n  to.push(item);\n}",
+    "tests": ["test/fb0929d_booksplit.test.js"]
+  },
+  {
+    "name": "BOOK-SPLIT-the-classic-counter-pushes",
+    "file": "src/ui/nativeTrade.js",
+    "old": "    if (i >= 0) from.splice(i, 1);\n    addItem(to, item, item?.questItem ? 'front' : 'dontCare');\n  }",
+    "new": "    if (i >= 0) from.splice(i, 1);\n    to.push(item);\n  }",
+    "tests": ["test/fb0929d_booksplit.test.js"]
+  }
+]

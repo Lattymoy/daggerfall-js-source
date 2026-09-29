@@ -32,7 +32,7 @@
   {
     "name": "OW3-J2-teleport-past-the-peaks",
     "file": "src/scenes/world.js",
-    "old": "      if (opts?.playerControlled && tvOwnsJourneys()) return;\n",
+    "old": "      if (opts?.playerControlled && tvRoutesJourneys()) return;\n",
     "new": "",
     "tests": [
       "test/tv2_click_to_move.test.js"
@@ -42,7 +42,7 @@
   {
     "name": "OW3-J2-said-twice",
     "file": "src/scenes/world.js",
-    "old": "if (!beginAcceleratedTravel(pick, opts, { coords: true }) && !tvOwnsJourneys())",
+    "old": "if (!beginAcceleratedTravel(pick, opts, { coords: true }) && !tvRoutesJourneys())",
     "new": "if (!beginAcceleratedTravel(pick, opts, { coords: true }))",
     "tests": [
       "test/tv2_click_to_move.test.js"
@@ -243,7 +243,7 @@
   {
     "name": "OW3-J8-roadside-reverted",
     "file": "src/scenes/world.js",
-    "old": "    const legs = tvJoinedLegs(from, plan);\n    const ok = travelOptions.beginTravelAlongRoute({ legs, summary,",
+    "old": "    const legs = tvJoinedLegs(from, plan, roads);\n    const ok = travelOptions.beginTravelAlongRoute({ legs, summary,",
     "new": "    const legs = routeLegs(plan.pixels, plan.kinds);\n    const ok = travelOptions.beginTravelAlongRoute({ legs, summary,",
     "tests": [
       "test/tv2_click_to_move.test.js"

@@ -22,8 +22,8 @@
   {
     "name": "OW4-X2-resume-a-spawn-as-a-spot",
     "file": "src/scenes/world.js",
-    "old": "r.point.pixel, { door: r.point.door ?? null });",
-    "new": "r.point.pixel, { door: null });",
+    "old": "r.point.pixel, { door: r.point.door ?? null, roads });",
+    "new": "r.point.pixel, { door: null, roads });",
     "tests": [
       "test/tv2_click_to_move.test.js"
     ],

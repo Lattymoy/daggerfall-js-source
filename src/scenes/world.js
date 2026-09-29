@@ -9705,8 +9705,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (partyTravel?.propose(pick, opts, computed)) { hudFade.clearFade(); return; }   // PARTY-TRAVEL: "...the option for party members to ready up and travel together" - the leader's Begin with the party gathered asks them first (a walked trip is never a round: the session says no to it)
       if (opts?.playerControlled && beginAcceleratedTravel(pick, opts, { estimateMinutes: computed?.minutes ?? null })) return;   // AUDIT-TO1 L5: the popup's estimate rides along for the panel's ETA
       // AUDIT OW3 J2: a walked trip the OVERWORLD refused (no way by land, the peaks, the water, foes near) is refused -
-      // said, and done. It fell through to the fast travel below: a paid teleport straight past the mountain rule
-      if (opts?.playerControlled && tvOwnsJourneys()) return;
+      // said, and done. It fell through to the fast travel below: a paid teleport straight past the mountain rule.
+      // TO-ROADS: a first-person route's refusal the same - never the straight walk, never the teleport
+      if (opts?.playerControlled && tvRoutesJourneys()) return;
       fastTravelTo(pick, opts, computed);
     } });
     if (!_travelMap) { townTalk.say('(the travel map art is unavailable)'); return; }
@@ -9932,14 +9933,31 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  Declared, not a const: the map's doors say through it from closures (BOOT-TDZ). */
   function tvSay(line, seconds = HUD_TEXT_POP_DELAY) { townTalk.say(line, seconds * Math.max(1, worldTimeScale())); }
   /** OW-ONLY: whether a walked trip is the OVERWORLD's (the enhanced interface, Travel Options on) - its refusal then is
-   *  the answer, never the classic ground journey's nor DFU's fast travel (AUDIT OW3 J2: one question, both doors).
+   *  the answer, never the classic ground journey's nor DFU's fast travel (AUDIT OW3 J2: one question, both doors; since
+   *  TO-ROADS a first-person route refuses so too, and the doors ask tvRoutesJourneys, below).
    *  OW-TOGGLE (2026-09-28, Mac: "bring back the original travel option as a toggle. Off by default."): never while
    *  First-Person Travel is on (the port's own key on the mod's pane) - the journey is then the mod's own, on the ground,
-   *  as before OW-ONLY, and the view neither rises with it (tvJourneyUp) nor stops it (the view's onLower), nor holds its
-   *  clock at x1 (travelViewGovern), all asking this. AUDIT OW5 T1: read LIVE, so a flip takes effect at once - read with
-   *  the mod's settings at boot, it waited for the page to load again (a save loaded in play kept the old answer).
+   *  as before OW-ONLY (TO-ROADS: or, with its roads on, the Overworld's route walked there), and the view neither rises
+   *  with it (tvJourneyUp) nor stops it (the view's onLower), nor holds its clock at x1 (travelViewGovern), all asking
+   *  this. AUDIT OW5 T1: read LIVE, so a flip takes effect at once - read with the mod's settings at boot, it waited for
+   *  the page to load again (a save loaded in play kept the old answer).
    *  Declared, not a const: the map's doors ask it from closures (BOOT-TDZ). */
   function tvOwnsJourneys() { return !!travelOptions && !modSetting(TRAVEL_OPTIONS_VENDOR, 'GeneralOptions.FirstPersonTravel') && isEnhanced() && !!travelView; }
+  /** TO-ROADS (FIELD BUGS 2026-09-29d, SylviaBun on the Discord: "Travel Options First Person doesn't follow roads like
+   *  Overworld Travel Options does"): whether a walked trip picked on the map is ROUTED - the Overworld's own planner and
+   *  leg walker (travelViewRouteTo / travelViewWalkTo, the one construction: no second planner), with its gates, its
+   *  refusals said and done (never the straight walk, never DFU's fast travel) and its party walk (TV8). The Overworld's
+   *  journeys always are (tvOwnsJourneys); First-Person Travel's are while its roads key is on (the port's own, OFF, read
+   *  live) - walked in first person with the view left down, because the view's own doors (tvJourneyUp, the view's
+   *  onLower, travelViewGovern) ask tvOwnsJourneys and never this. The classic skin keeps Travel Options exactly. THE FOUR
+   *  HOSTS: this one alone, as TO1's seam is (its record, above the mod's construction, names the other three). Declared,
+   *  not a const: the map's doors ask it from closures (BOOT-TDZ). */
+  function tvRoutesJourneys() { return tvOwnsJourneys() || (!!travelOptions && !!modSetting(TRAVEL_OPTIONS_VENDOR, 'GeneralOptions.FirstPersonTravelFollowsRoads') && isEnhanced() && !!travelView); }
+  /** TO-ROADS x OW-PATH: a journey the MAP routes for First-Person Travel (its roads key on) goes by the ROADS whatever the
+   *  Overworld's Path switch says - the key is named for them, and the switch stands on the Overworld's bar, which such a
+   *  journey never raises. The Overworld's own clicks, plates and walks keep the switch (travelPathUsesRoads). Declared,
+   *  not a const: the map's doors ask it from closures (BOOT-TDZ). */
+  function tvMapForcesRoads() { return !tvOwnsJourneys() && tvRoutesJourneys(); }
   /** AUDIT OW4 J4: THE MAP'S RESUME, on the enhanced interface, is the journey PLANNED AGAIN from where the traveller
    *  stands - a place by the roads round the peaks (travelViewRouteTo, as the Overworld's own 'dest' plate takes it up),
    *  a spot walked to again (travelViewWalkTo) - refused, in the view's words, where the view may not rise. The mod's
@@ -9947,18 +9965,20 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  the peaks nor the sea: after Return and a walk by hand, a fight or a respawn it headed over the mountains. The
    *  classic skin, and a journey of the mod's own (no route), keep the mod's resume. AUDIT OW5 J1: the re-plan is the
    *  ROUTE's, whoever owns the journey - under First Person Travel a route the Overworld planned (a click in the view
-   *  raised by hand, a party's walk) walked straight over the peaks again; a map pick under the switch has no route. */
+   *  raised by hand, a party's walk) walked straight over the peaks again; a map pick under the switch has no route, but
+   *  with its roads on (TO-ROADS), and then it is this one's too. */
   function travelViewResume() {
     const r = travelOptions?.route;
     if (!r || !isEnhanced() || !travelView) { travelOptions?.resumeTravel(); return; }
     const why = travelViewAllowed();
     if (!why.ok) { if (why.why) tvSay(why.why); return; }
     if (!travelViewCanGo()) return;
-    if (r.summary) travelViewRouteTo(r.summary);
+    const roads = tvMapForcesRoads();   // TO-ROADS x OW-PATH: the map's Resume of a first-person route is by the roads
+    if (r.summary) travelViewRouteTo(r.summary, { roads });
     // AUDIT OW4 X2: a spawn's walk resumed is its door again (never refused for the peaks). AUDIT OW5b D3: THE WALK'S OWN
     // DOOR - read off the live index, a far found spawn's walk (its pixel never built) resumed as a spot ("the mountains
     // cannot be crossed"), and a spot clicked on a place's pixel resumed as that place's door
-    else if (r.point) travelViewWalkTo(tvSceneOf(r.point.x, r.point.z, 0), r.point.pixel, { door: r.point.door ?? null });
+    else if (r.point) travelViewWalkTo(tvSceneOf(r.point.x, r.point.z, 0), r.point.pixel, { door: r.point.door ?? null, roads });
   }
   /** TO1: THE OTHER ARRIVAL. `fastTravelTo` is DFU's - gold, a
    *  teleport, a clock advanced by the estimate, a fade. This is the
@@ -9997,14 +10017,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!travelOptions) return false;
     // OW-ONLY (2026-09-28, Mac: "Remove the ground travel alltogether. Now selecting a location should immediately
     // transition you to the overworld"): on the enhanced interface a picked place is the Overworld's own journey - by the
-    // roads, round the peaks - and the view rises the moment the map is down (tvJourneyUp); a picked spot the same
-    if (tvOwnsJourneys()) {
+    // roads, round the peaks - and the view rises the moment the map is down (tvJourneyUp); a picked spot the same.
+    // TO-ROADS: and First-Person Travel's with its roads on - the same journey, the view left down
+    if (tvRoutesJourneys()) {
       const why = travelViewAllowed();
       if (!why.ok) { if (why.why) tvSay(why.why); return false; }
       if (!travelViewCanGo()) return false;
       if (!coords) {
         const summary = tvPlaceSummary(pick.pixel.x, pick.pixel.y);
-        return summary ? travelViewRouteTo(summary) : false;
+        return summary ? travelViewRouteTo(summary, { roads: tvMapForcesRoads() }) : false;   // TO-ROADS x OW-PATH
       }
       const o = mapPixelToWorldCoords(pick.pixel.x, pick.pixel.y);
       const at = tvSceneOf(o.x + 16384, o.z + 16384, 0);
@@ -10012,7 +10033,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // own sea, which it never asks of the goal) or the spot under the sea's surface. A coordinate pick on the sea walked
       // the traveller out into it
       if (tvWater(pick.pixel.x, pick.pixel.y) || at[1] <= tvSeaY() + TV_SEA_EPS_M) { tvSay(TRAVEL_VIEW_TEXT.water); return false; }
-      return travelViewWalkTo(at, pick.pixel);
+      return travelViewWalkTo(at, pick.pixel, { roads: tvMapForcesRoads() });
     }
     if (coords) travelOptions.beginTravelToCoords(pick.pixel, !!opts?.speedCautious);
     else {
@@ -10145,7 +10166,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // TO1: the mod itself rides travelFareDeps (above); the reads its additions to this window need follow.
       // AUDIT-TO1 I4: ...and the door ACTS on the refusal it can still get
       // (the popup was minted before the online state could change).
-      onTravelToCoords: (pick, opts) => { if (!beginAcceleratedTravel(pick, opts, { coords: true }) && !tvOwnsJourneys()) townTalk.say('You cannot travel there now.'); },   // AUDIT OW3 J2: the Overworld said its own refusal
+      onTravelToCoords: (pick, opts) => { if (!beginAcceleratedTravel(pick, opts, { coords: true }) && !tvRoutesJourneys()) townTalk.say('You cannot travel there now.'); },   // AUDIT OW3 J2: the Overworld said its own refusal (TO-ROADS: a first-person route's too)
       onResumeTravel: () => { travelViewResume(); },   // AUDIT OW4 J4: the Overworld's journey planned again from where the traveller stands
       onForgetTravel: () => { travelOptions?.clearTravelDestination(); },   // RESUME-OUT: the held map's Forget it - the journey ended, asked no more
       // AUDIT-TO1 H1: the map's H boxes the help in the WINDOW'S OWN box
@@ -18005,7 +18026,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   const tvWater = (px, py) => px < 0 || py < 0 || px >= 1000 || py >= 500 || woods.getHeightMapValue(px, py) <= WATER_BYTE;
   /** The trip is over when Travel Options no longer walks it - arrived, stopped, or replaced by a journey of its own. */
   const tvTripLive = () => !!tvTrip.plan && !!travelOptions?.route && travelOptions.route === tvTrip.plan.route;
-  function travelViewRouteTo(summary) {
+  /** `roads` (TO-ROADS x OW-PATH): by the roads whatever the Path switch says - the map's first-person pick (tvMapForcesRoads). */
+  function travelViewRouteTo(summary, { roads = false } = {}) {
     const from = playerTravelPixel();
     // AUDIT DEEP T2-7: Hazelnut's bytes or none - the port's own generated network (Basic Roads off) is not his mod's, as
     // the follow key and the static's paths already hold (`source`): with none, the journey goes across country
@@ -18014,13 +18036,13 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const roadNet = raw?.source === 'basic-roads' ? raw : null;
     // OW-PATH: FREE walks across country (never onto a road it does not need) - and a free trip with no way falls back
     // to the roads, said, rather than refused
-    let net = travelPathUsesRoads() ? roadNet : null;
+    let net = (roads || travelPathUsesRoads()) ? roadNet : null;
     let plan = planRoute(from, summary.pixel, { roads: net?.roads ?? null, tracks: net?.tracks ?? null, ...tvRouteGround(), sea: tvSeaAsk(means, 'land') });   // OW-MOUNTAINS: never across the peaks; OWS2: across the water in a boat
     if (!plan && !net && roadNet) { net = roadNet; plan = planRoute(from, summary.pixel, { roads: net.roads ?? null, tracks: net.tracks ?? null, ...tvRouteGround(), sea: tvSeaAsk(means, 'land') }); if (plan) townTalk.say(TRAVEL_PATH_TEXT.fellBack); }   // OW-PATH
     const dry = tvMooredDry(means, plan, () => planRoute(from, summary.pixel, { roads: net?.roads ?? null, tracks: net?.tracks ?? null, ...tvRouteGround() }));   // AUDIT OW5 S3
     if (dry) { plan = dry; means = null; }
     if (!plan) { tvSeaNoWay(from, summary.pixel, means, net, 'land', summary); return false; }
-    const legs = tvJoinedLegs(from, plan);
+    const legs = tvJoinedLegs(from, plan, roads);
     const ok = travelOptions.beginTravelAlongRoute({ legs, summary, name: summary.name }, tvCautious(), { quiet: tvQuiet });
     if (!ok) return false;
     partyWalkBegin({ pixel: summary.pixel });   // TV8: the party walks with me, if I lead one gathered
@@ -18052,8 +18074,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   // OW-FREE-STRAIGHT: the planner walks the pixel grid (diagonal, then straight), so a FREE journey bent at a pixel middle
   // on the way - toward the road or a place - though the way ahead was clear. In FREE mode an all-open route is pulled
   // taut: each stretch jumps to the farthest pixel the line of sight reaches without water or a blocked (mountain) step.
-  function tvFreePull(plan) {
-    if (travelPathUsesRoads() || !plan?.pixels || plan.pixels.length < 3 || plan.kinds?.some((k) => k !== 'open')) return plan;
+  function tvFreePull(plan, roads = false) {
+    if (roads || travelPathUsesRoads() || !plan?.pixels || plan.pixels.length < 3 || plan.kinds?.some((k) => k !== 'open')) return plan;
     const g = tvRouteGround();
     const line = (a, b) => {   // 8-connected pixels a -> b (Bresenham)
       const out = [a]; let x = a.x, y = a.y;
@@ -18085,8 +18107,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     }
     return keep.length >= px.length ? plan : { ...plan, pixels: keep, kinds: keep.slice(1).map(() => 'open') };
   }
-  function tvJoinedLegs(from, plan) {
-    plan = tvFreePull(plan);
+  function tvJoinedLegs(from, plan, roads = false) {
+    plan = tvFreePull(plan, roads);
     const legs = routeLegs(plan.pixels, plan.kinds);
     if (!legs.length || (plan.kinds[0] !== 'road' && plan.kinds[0] !== 'track')) return legs;   // THE MERGE: a launch (OWS2) is no road to join
     const c = (p) => { const o = mapPixelToWorldCoords(p.x, p.y); return { x: o.x + 16384, z: o.z + 16384 }; };
@@ -18097,14 +18119,14 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
    *  a walk to a PLACE's door: its pixel is a place's (never refused for the peaks, its step in exempt - a spawn stands on
    *  a Mountain pixel as a MAPS dungeon does, and its plate walked nowhere), and the spot is its edge faced to where the
    *  route's last leg starts (dungeonApproach, lastLegStart), known only once the route is. */
-  /** OWS2: `water` - the click landed on the sea: a spot on it, sailed to. */
-  function travelViewWalkTo(point, pix, { door = null, water = false } = {}) {
+  /** OWS2: `water` - the click landed on the sea: a spot on it, sailed to. `roads`: as travelViewRouteTo's (TO-ROADS x OW-PATH). */
+  function travelViewWalkTo(point, pix, { door = null, water = false, roads = false } = {}) {
     let n = state.worldCoords(point);
     if (!door && !water && maps.getClimateIndex(pix.x, pix.y) === TV_MOUNTAIN_CLIMATE) { tvSay(TRAVEL_VIEW_TEXT.mountains); return false; }   // OW-MOUNTAINS
     // OW-MOUNTAINS: to the spot's pixel round the peaks (the roads where they help), then to the spot itself
     const from = playerTravelPixel();
     const roadsRaw = terrainGen.roads(), roadNet = roadsRaw?.source === 'basic-roads' ? roadsRaw : null;   // AUDIT DEEP T2-7's law: Hazelnut's bytes or none
-    let wnet = travelPathUsesRoads() ? roadNet : null;   // OW-PATH: FREE never asks the roads
+    let wnet = (roads || travelPathUsesRoads()) ? roadNet : null;   // OW-PATH: FREE never asks the roads
     // OWS2: a spot across the water, one on it, or any from a helm is a route that may put to sea (the planner's sea
     // layers); THE MERGE: every other spot is still routed on land, round the peaks (OW-MOUNTAINS) - never the straight walk
     const means = tvSeaMeans();
@@ -18117,7 +18139,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (!plan) { tvSeaNoWay(from, pix, seaAsk ? means : null, wnet, water ? 'sea' : 'land'); return false; }
     const dry = water ? null : tvMooredDry(seaAsk ? means : null, plan, () => planRoute(from, pix, { roads: wnet?.roads ?? null, tracks: wnet?.tracks ?? null, ...tvRouteGround(), goalExempt: !!door }));   // AUDIT OW5 S3
     if (dry) { plan = dry; seaAsk = null; }
-    let legs = tvJoinedLegs(from, plan);
+    let legs = tvJoinedLegs(from, plan, roads);
     // AUDIT OW5 S4: a spot on the sea in the traveller's own pixel, from afloat - the planner's one pixel is no step, so the
     // route had no leg at all: the crossing read its kind as land, landed the boat mid-sea and packed it from under the
     // traveller. One sea leg to the spot (its arrival the sea spot's square)

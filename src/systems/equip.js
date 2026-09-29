@@ -253,15 +253,15 @@ export function equipItem(entity, item) {
   const unequipped = [];
   // AUDIT 68 S27-ht-equip-midswap: the leavers and the arrival are ONE act, told once when the table has settled
   oneEquipAct(() => {
-    const un = (s) => { const it = unequipSlot(entity, s); if (it) unequipped.push(it); };
-    if (item.group === 'Weapons' && getItemHands(item) === ITEM_HANDS.Both) {
-      un(EQUIP_SLOTS.LeftHand); un(EQUIP_SLOTS.RightHand);   // 2H clears both hands
+    // AC-COMPARE: THE LEAVERS ARE ONE LAW, wearLeavers' (below): EquipItem's three unequip arms
+    // (ItemEquipTable.cs:117-137) - a two-hander clears both hands, a shield bumps a held two-hander, the
+    // destination's occupant swaps out (alwaysEquip) - in their own order. The enhanced pack's card reads the same
+    // list to say what a wear would replace, so it cannot name a piece this act leaves on, or miss one it takes off.
+    // Read once, before the first goes: the arms are exclusive (a two-hander is never LeftOnly), so the shield's look
+    // at the right hand sees what the old arm saw.
+    for (const s of wearLeavers(entity, item, slot)) {
+      const it = unequipSlot(entity, s); if (it) unequipped.push(it);
     }
-    if (getItemHands(item) === ITEM_HANDS.LeftOnly) {
-      const right = slots[EQUIP_SLOTS.RightHand];
-      if (right && getItemHands(right) === ITEM_HANDS.Both) un(EQUIP_SLOTS.RightHand);   // a shield bumps a held 2H
-    }
-    un(slot);   // swap the occupant out (alwaysEquip)
     item.equipSlot = slot;
     slots[slot] = item;
     updateEquippedArmorValues(entity, item, true);   // U8h: the armor table subtracts
@@ -345,6 +345,25 @@ export function seedStartingEquipment(entity) {
   if (survivalOn()) for (const it of startingProvisions()) entity.items.push(it);
 }
 
+/** AC-COMPARE (FIELD BUGS 2026-09-29d): WHAT A WEAR TAKES OFF - EquipItem's three unequip arms
+ *  (ItemEquipTable.cs:117-137), in its own order, as the slots they empty: a two-hander clears both hands (:117-122),
+ *  a LeftOnly piece - a shield, or a bow under BowLeftHandWithSwitching - bumps a two-hander held right (:125-131), and
+ *  the destination's occupant swaps out (alwaysEquip, :134-137). ONE LAW: equipItem takes off exactly these, and the
+ *  enhanced pack's card reads them to say what a wear would replace before it is worn. `slot` is getEquipSlot's
+ *  answer, computed once by the caller (the DFU order); None takes nothing off. A slot may repeat (a two-hander's own
+ *  hand) and an empty one takes nothing off. Pure: the table is read, never written. */
+export function wearLeavers(entity, item, slot = getEquipSlot(entity, item)) {
+  if (!item || slot === EQUIP_SLOTS.None) return [];
+  const out = [];
+  if (item.group === 'Weapons' && getItemHands(item) === ITEM_HANDS.Both) out.push(EQUIP_SLOTS.LeftHand, EQUIP_SLOTS.RightHand);   // 2H clears both hands
+  if (getItemHands(item) === ITEM_HANDS.LeftOnly) {
+    const right = equipTableOf(entity)[EQUIP_SLOTS.RightHand];
+    if (right && getItemHands(right) === ITEM_HANDS.Both) out.push(EQUIP_SLOTS.RightHand);   // a shield bumps a held 2H
+  }
+  out.push(slot);   // swap the occupant out (alwaysEquip)
+  return out;
+}
+
 // ---- U8h: ARMOR VALUES (DaggerfallEntity.UpdateEquippedArmorValues
 // verbatim) ----
 // The 7-part table starts at 100 each (CharacterDocument: no armor);
@@ -426,6 +445,10 @@ export function updateEquippedArmorValues(entity, item, equipping) {
  *  inverse of SLOT_BODY_PART's seven pairs; None for anything else. */
 const BODY_PART_SLOT = new Map([...SLOT_BODY_PART].map(([slot, part]) => [part, slot]));
 export const slotForBodyPart = (part) => BODY_PART_SLOT.get(part) ?? EQUIP_SLOTS.None;
+/** AC-COMPARE: GetBodyPartForEquipSlot (DaggerfallUnityItem.cs:1131-1153) itself - SLOT_BODY_PART's seven pairs, and
+ *  BodyParts.None (-1) for any other slot. The enhanced pack's worn map finds the part each of its panels stands for
+ *  through it, to show that part's armour where the classic doll shows its label. */
+export const bodyPartForSlot = (slot) => SLOT_BODY_PART.get(slot) ?? -1;
 
 /** DaggerfallUnityItem.LowerCondition + ItemBreaks (:1170-1214).
  *  C-slice (AUDIT 23 combat-1): breaking clamps at 0, speaks the

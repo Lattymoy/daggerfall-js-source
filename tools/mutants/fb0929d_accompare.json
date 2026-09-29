@@ -1,0 +1,247 @@
+[
+  {
+    "name": "ACCOMPARE-the-two-handers-arm-clears-one-hand",
+    "file": "src/systems/equip.js",
+    "old": "if (item.group === 'Weapons' && getItemHands(item) === ITEM_HANDS.Both) out.push(EQUIP_SLOTS.LeftHand, EQUIP_SLOTS.RightHand);",
+    "new": "if (item.group === 'Weapons' && getItemHands(item) === ITEM_HANDS.Both) out.push(EQUIP_SLOTS.RightHand);",
+    "tests": ["test/fb0929d_accompare.test.js", "test/equipmechanics.test.js"]
+  },
+  {
+    "name": "ACCOMPARE-a-shield-bumps-any-right-hand",
+    "file": "src/systems/equip.js",
+    "old": "if (right && getItemHands(right) === ITEM_HANDS.Both) out.push(EQUIP_SLOTS.RightHand);   // a shield bumps a held 2H",
+    "new": "if (right) out.push(EQUIP_SLOTS.RightHand);   // a shield bumps a held 2H",
+    "tests": ["test/fb0929d_accompare.test.js"]
+  },
+  {
+    "name": "ACCOMPARE-the-occupant-never-swapped",
+    "file": "src/systems/equip.js",
+    "old": "  out.push(slot);   // swap the occupant out (alwaysEquip)\n",
+    "new": "",
+    "tests": ["test/fb0929d_accompare.test.js"]
+  },
+  {
+    "name": "ACCOMPARE-equipItem-off-its-own-leavers",
+    "file": "src/systems/equip.js",
+    "old": "for (const s of wearLeavers(entity, item, slot)) {",
+    "new": "for (const s of [slot]) {",
+    "tests": ["test/fb0929d_accompare.test.js"]
+  },
+  {
+    "name": "ACCOMPARE-a-slot-with-no-part-reads-the-head",
+    "file": "src/systems/equip.js",
+    "old": "export const bodyPartForSlot = (slot) => SLOT_BODY_PART.get(slot) ?? -1;",
+    "new": "export const bodyPartForSlot = (slot) => SLOT_BODY_PART.get(slot) ?? 0;",
+    "tests": ["test/fb0929d_accompare.test.js"]
+  },
+  {
+    "name": "ACCOMPARE-a-struck-table-entry-moved",
+    "file": "src/combat/formulas.js",
+    "old": "export const STRUCK_BODY_PARTS = Object.freeze([0, 0, 1, 1, 1,",
+    "new": "export const STRUCK_BODY_PARTS = Object.freeze([0, 1, 1, 1, 1,",
+    "tests": ["test/fb0929d_accompare.test.js"]
+  },
+  {
+    "name": "ACCOMPARE-the-formulas-read-the-wrong-name",
+    "file": "src/combat/formulas.js",
+    "old": "_overrides.get('struckBodyPartTable')?.()",
+    "new": "_overrides.get('struckBodyParts')?.()",
+    "tests": ["test/fb0929d_accompare.test.js"]
+  },
+  {
+    "name": "ACCOMPARE-the-overhauls-table-off-its-switch",
+    "file": "src/combat/pcaao.js",
+    "old": "registerFormulaOverride('struckBodyPartTable', () => (modules().armorHitFormulaRedone ? PCAAO_BODY_PARTS : undefined));",
+    "new": "registerFormulaOverride('struckBodyPartTable', () => PCAAO_BODY_PARTS);",
+    "tests": ["test/fb0929d_accompare.test.js"]
+  },
+  {
+    "name": "ACCOMPARE-the-overhauls-table-never-registered",
+    "file": "src/combat/pcaao.js",
+    "old": "registerFormulaOverride('struckBodyPartTable', () => (modules().armorHitFormulaRedone ? PCAAO_BODY_PARTS : undefined));",
+    "new": "",
+    "tests": ["test/fb0929d_accompare.test.js"]
+  },
+  {
+    "name": "ACCOMPARE-the-uninstall-leaves-the-table",
+    "file": "src/combat/pcaao.js",
+    "old": "  registerFormulaOverride('struckBodyPartTable', null);   // AC-COMPARE\n",
+    "new": "",
+    "tests": ["test/fb0929d_accompare.test.js"]
+  },
+  {
+    "name": "ACCOMPARE-wdm-min-without-its-material",
+    "file": "src/systems/itemInfo.js",
+    "old": "return [weaponMinDamage(item.templateIndex) + mod, weaponMaxDamage(item.templateIndex) + mod];",
+    "new": "return [weaponMinDamage(item.templateIndex), weaponMaxDamage(item.templateIndex) + mod];",
+    "tests": ["test/fb0929d_accompare.test.js"]
+  },
+  {
+    "name": "ACCOMPARE-part-names-off-their-enum",
+    "file": "src/ui/armourCard.js",
+    "old": "  .map((k) => k.replace(/([a-z])([A-Z])/g, (_, lo, up) => `${lo} ${up.toLowerCase()}`)));",
+    "new": "  .map((k) => k));",
+    "tests": ["test/fb0929d_accompare.test.js"]
+  },
+  {
+    "name": "ACCOMPARE-the-doll-without-its-modifier",
+    "file": "src/ui/armourCard.js",
+    "old": "(_, part) => armorLabelValue(entity?.armorValues?.[part] ?? 100, entityArmorDisplayMod(entity, part)));",
+    "new": "(_, part) => armorLabelValue(entity?.armorValues?.[part] ?? 100));",
+    "tests": ["test/fb0929d_accompare.test.js"]
+  },
+  {
+    "name": "ACCOMPARE-the-counts-not-counted",
+    "file": "src/ui/armourCard.js",
+    "old": "for (const part of table) out[part]++;",
+    "new": "for (const part of table) out[part] = 1;",
+    "tests": ["test/fb0929d_accompare.test.js"]
+  },
+  {
+    "name": "ACCOMPARE-the-figure-over-seven-parts",
+    "file": "src/ui/armourCard.js",
+    "old": "return parts.reduce((sum, v, part) => sum + v * counts[part], 0) / table.length;",
+    "new": "return parts.reduce((sum, v, part) => sum + v * counts[part], 0) / NUMBER_BODY_PARTS;",
+    "tests": ["test/fb0929d_accompare.test.js"]
+  },
+  {
+    "name": "ACCOMPARE-the-figure-unweighted",
+    "file": "src/ui/armourCard.js",
+    "old": "return parts.reduce((sum, v, part) => sum + v * counts[part], 0) / table.length;",
+    "new": "return parts.reduce((sum, v) => sum + v, 0) / table.length;",
+    "tests": ["test/fb0929d_accompare.test.js"]
+  },
+  {
+    "name": "ACCOMPARE-the-tenth-a-whole",
+    "file": "src/ui/armourCard.js",
+    "old": "export const tenth = (x) => Math.round(x * 10) / 10;",
+    "new": "export const tenth = (x) => Math.round(x);",
+    "tests": ["test/fb0929d_accompare.test.js"]
+  },
+  {
+    "name": "ACCOMPARE-the-careers-refusal-dropped",
+    "file": "src/ui/armourCard.js",
+    "old": "if (isBrokenItem(item) || isForbiddenEquip(entity.career, item)) return null;",
+    "new": "if (isBrokenItem(item)) return null;",
+    "tests": ["test/fb0929d_accompare.test.js"]
+  },
+  {
+    "name": "ACCOMPARE-the-unidentified-piece-read-whole",
+    "file": "src/ui/armourCard.js",
+    "old": "slotsThen[slot] = itemIsIdentified(item) ? item : { ...item, affixes: [] };",
+    "new": "slotsThen[slot] = item;",
+    "tests": ["test/fb0929d_accompare.test.js"]
+  },
+  {
+    "name": "ACCOMPARE-the-folds-points-left-out",
+    "file": "src/ui/armourCard.js",
+    "old": "armorLabelValue(now[p]) + pointsThen[p] - pointsNow[p]);",
+    "new": "armorLabelValue(now[p]));",
+    "tests": ["test/fb0929d_accompare.test.js"]
+  },
+  {
+    "name": "ACCOMPARE-a-leavers-value-never-given-back",
+    "file": "src/ui/armourCard.js",
+    "old": "  for (const it of replaces) updateEquippedArmorValues(then, it, false);\n",
+    "new": "",
+    "tests": ["test/fb0929d_accompare.test.js"]
+  },
+  {
+    "name": "ACCOMPARE-only-the-covered-parts",
+    "file": "src/ui/armourCard.js",
+    "old": "if (covered.has(part) || after[part] !== before[part]) parts.push",
+    "new": "if (covered.has(part)) parts.push",
+    "tests": ["test/fb0929d_accompare.test.js"]
+  },
+  {
+    "name": "ACCOMPARE-the-rival-any-leaver",
+    "file": "src/ui/armourCard.js",
+    "old": "const rival = [table[slot], ...replaces].find(",
+    "new": "const rival = replaces.find(",
+    "tests": ["test/fb0929d_accompare.test.js"]
+  },
+  {
+    "name": "ACCOMPARE-the-damage-set-against-itself",
+    "file": "src/ui/armourCard.js",
+    "old": "after: weaponDamageRange(item) };",
+    "new": "after: weaponDamageRange(rival) };",
+    "tests": ["test/fb0929d_accompare.test.js"]
+  },
+  {
+    "name": "ACCOMPARE-a-leaver-named-twice",
+    "file": "src/ui/armourCard.js",
+    "old": "if (it && !replaces.includes(it)) replaces.push(it);",
+    "new": "if (it) replaces.push(it);",
+    "tests": ["test/fb0929d_accompare.test.js"]
+  },
+  {
+    "name": "ACCOMPARE-a-block-for-a-piece-with-no-stat",
+    "file": "src/ui/armourCard.js",
+    "old": "  if (!cmp.parts.length && !cmp.damage && item.group !== 'Armor' && itemDamageLine(item) == null) return null;\n",
+    "new": "",
+    "tests": ["test/fb0929d_accompare.test.js"]
+  },
+  {
+    "name": "ACCOMPARE-the-tones-swapped",
+    "file": "src/ui/armourCard.js",
+    "old": "`cmp-d ${r > 0 ? 'up' : r < 0 ? 'down' : 'same'}`",
+    "new": "`cmp-d ${r > 0 ? 'down' : r < 0 ? 'up' : 'same'}`",
+    "tests": ["test/fb0929d_accompare.test.js"]
+  },
+  {
+    "name": "ACCOMPARE-the-overall-difference-a-whole",
+    "file": "src/ui/armourCard.js",
+    "old": "row('Overall', `${b.toFixed(1)} → ${a.toFixed(1)}`, delta(a - b, 1));",
+    "new": "row('Overall', `${b.toFixed(1)} → ${a.toFixed(1)}`, delta(a - b));",
+    "tests": ["test/fb0929d_accompare.test.js"]
+  },
+  {
+    "name": "ACCOMPARE-the-dimmed-zero",
+    "file": "src/ui/armourCard.js",
+    "old": "el('span', `wornac${v ? '' : ' nil'}`, String(v));",
+    "new": "el('span', 'wornac', String(v));",
+    "tests": ["test/fb0929d_accompare.test.js"]
+  },
+  {
+    "name": "ACCOMPARE-an-empty-panels-number",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    if (part >= 0) d.append(armourBadge(deps.entity, part));   // AC-COMPARE\n",
+    "new": "",
+    "tests": ["test/fb0929d_accompare.test.js"]
+  },
+  {
+    "name": "ACCOMPARE-a-filled-panels-number",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  if (part >= 0) b.append(armourBadge(deps.entity, part));   // AC-COMPARE: the part's armour, as on the empty panel\n",
+    "new": "",
+    "tests": ["test/fb0929d_accompare.test.js"]
+  },
+  {
+    "name": "ACCOMPARE-the-head-panel-loses-its-part",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "const part = rows.map((r) => bodyPartForSlot(r.slot)).find((p) => p >= 0) ?? -1;",
+    "new": "const part = rows.map((r) => bodyPartForSlot(r.slot)).find((p) => p > 0) ?? -1;",
+    "tests": ["test/fb0929d_accompare.test.js"]
+  },
+  {
+    "name": "ACCOMPARE-the-plaque-never-stands",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  map.append(plaque);\n",
+    "new": "",
+    "tests": ["test/fb0929d_accompare.test.js"]
+  },
+  {
+    "name": "ACCOMPARE-the-card-carries-no-comparison",
+    "file": "src/ui/enhancedInventory.js",
+    "old": " if (cmp) into.append(cmp); }",
+    "new": " }",
+    "tests": ["test/fb0929d_accompare.test.js"]
+  },
+  {
+    "name": "ACCOMPARE-the-sheet-without-the-rules",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": "${LAYOUT_CSS}\n${ARMOUR_CSS}\n",
+    "new": "${LAYOUT_CSS}\n",
+    "tests": ["test/fb0929d_accompare.test.js"]
+  }
+]

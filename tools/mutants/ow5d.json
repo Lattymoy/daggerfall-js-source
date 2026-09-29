@@ -72,8 +72,8 @@
   {
     "name": "OW5b-D3-resume-reads-the-index",
     "file": "src/scenes/world.js",
-    "old": "r.point.pixel, { door: r.point.door ?? null });",
-    "new": "r.point.pixel, { door: r.point.door ?? (locationIndex.get(`${r.point.pixel.x},${r.point.pixel.y}`) ? locationWorldRect(locationIndex.get(`${r.point.pixel.x},${r.point.pixel.y}`), r.point.pixel.x, r.point.pixel.y) : null) });",
+    "old": "r.point.pixel, { door: r.point.door ?? null, roads });",
+    "new": "r.point.pixel, { door: r.point.door ?? (locationIndex.get(`${r.point.pixel.x},${r.point.pixel.y}`) ? locationWorldRect(locationIndex.get(`${r.point.pixel.x},${r.point.pixel.y}`), r.point.pixel.x, r.point.pixel.y) : null), roads });",
     "tests": [
       "test/tv2_click_to_move.test.js"
     ],

@@ -476,10 +476,13 @@ export class NativeTradeWindow {
     });
   }
 
+  /** ItemCollection.Transfer (:473-480): out of `from`, then AddItem into `to` - a lot rejoins its own stack there, as
+   *  every DFU click-back and ClearSelectedItems do. BOOK-SPLIT: a `push` left a book taken back off the counter as a
+   *  second row beside its own stack. A quest item goes to the front (DoTransferItem's order, :1573-1579). */
   _move(item, from, to) {
     const i = from.indexOf(item);
     if (i >= 0) from.splice(i, 1);
-    to.push(item);
+    addItem(to, item, item?.questItem ? 'front' : 'dontCare');
   }
 
   /** AUDIT UXB1 F4: goods put back on the shelf rejoin their stack - ItemCollection.AddItem's merge (inventory.js

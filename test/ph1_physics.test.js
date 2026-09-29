@@ -138,9 +138,10 @@ test('PH2: the snap descends a quantum at a time from the feet, accepts a hair o
   assert.doesNotMatch(src, /const probe = \[feet\[0\], feet\[1\] - STEP_OFFSET, feet\[2\]\];/, 'the whole-STEP_OFFSET teleport probe is gone');
   // AUDIT DISC28 MO-1: the one-way floor's own line is no longer held by its text - each of its terms is behaviour now:
   // a floor the lower sphere sank under is set ON (the PH1 tests above; rising and at rest, test/disc28_swim.test.js),
-  // a rising body meets what is over its head's centre as a ceiling (DISC28-G, the same file), and a wall and its
-  // edges are never a floor (test/auditdisc28_motion.test.js)
-  assert.match(src, /const lowOneWay = rising \? axis : true;/);
+  // a rising body meets what is over its head's centre as a ceiling (DISC28-G, the same file) - and so does one moving
+  // sideways (WW-LID, test/fb0929d_waterwalk.test.js) - and a wall and its edges are never a floor
+  // (test/auditdisc28_motion.test.js)
+  assert.match(src, /const lowOneWay = straddle \? axis : true;/);
   assert.match(src, /this\._resolveSphere\(low, CAPSULE_RADIUS, out, standCeil, lowOneWay\);/, 'the lower sphere\'s');
   assert.match(src, /this\._resolveSphere\(high, CAPSULE_RADIUS, out, standCeil, axis === 0 \? lowOneWay : false, tall && axis !== 0\);/, 'never the head\'s (AUDIT pre-merge S1: and a floor-keeping body\'s head never grounds at all)');
   // a ledge deeper than STEP_OFFSET is a fall, as MAC3 pins for terrain

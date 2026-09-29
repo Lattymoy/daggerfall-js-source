@@ -761,7 +761,7 @@ which `InitLocationRects` keeps refreshing the rects MID-journey
 (`:606-612`, `autopilot == null || destinationName != null`;
 `travelOptions.js:643-646`). A town's ring reaches into its neighbour
 pixels; the crossing fired `OnMapPixelChanged`, the host's
-`locationTileRect` answered null for the neighbour (world.js:9875 -
+`locationTileRect` answered null for the neighbour (world.js:9876 -
 null both for a pixel not yet built and for one with no location),
 `SetLocationRects` nulled both rects (`:602-604`), and the walk's own
 `OnArrival` (`circumnavigateLocation`, `:753-797`) read
@@ -952,6 +952,12 @@ the Overworld's; on, this switch gives the mod's own first-person journey back
 raised with it nor stopping it (`test/ow_toggle.test.js`). A journey of the
 mod's own begun at a boat's helm meets the mod's own ocean stop, as the mod
 does (AUDIT OW5 S1: the Overworld's crossing alone stands it down).
+
+**Its roads (TO-ROADS, 2026-09-29, FIELD BUGS 2026-09-29d).** `GeneralOptions.FirstPersonTravelFollowsRoads`, the
+same shape again, OFF, beside it on the tile: with First-Person Travel on, a map pick is the Overworld's route - its
+planner, its join, the peaks and the water, its refusals - walked by this mod's autopilot leg by leg, in first person.
+A departure from the mod, which never routes to a named destination (TO-FIELD above) - off, it is the mod's beeline
+again. `06-Systems/Travel-View.md` TO-ROADS (`test/fb0929d_toroads.test.js`).
 
 **Not done, and said.** A gap barely wider than the corridor is threaded
 when it is on the line, or found while the detour walks past it at a
@@ -1353,3 +1359,4 @@ The Discord through Mac: *"a player is at a port but unable to set sail"*. The b
 `test/spawntravel.test.js`, `tools/mutants/spawntravel.json` (SPAWN-TRAVEL).
 `test/risestuck.test.js`, `tools/mutants/rise_stuck.json` (RISE-STUCK).
 `test/disc28e_shipport.test.js`, `tools/mutants/disc28e.json` (SHIP-PORT's ten, SHIP-SAIL's twenty-three).
+`test/fb0929d_toroads.test.js`, `tools/mutants/fb0929d_toroads.json` (TO-ROADS, 14 dead, 2 equivalent).

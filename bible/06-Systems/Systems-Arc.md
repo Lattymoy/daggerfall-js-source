@@ -8250,3 +8250,23 @@ is the Identify spell's, paid in magicka, and both exterior hosts hand a shop's 
 online P0.4 pays half the ask at most, and half a gold is nothing. The floor only raises an ask - and it shut a loop
 Daggerfall had, a quality-1 counter in a cheap province asking nothing for a bandage and paying a gold for it back.
 `test/fb0929_min_price.test.js`, `tools/mutants/fb0929.json`.
+
+### BOOK-SPLIT - A BOOK SPLIT OFF A STACK IS THAT BOOK (2026-09-29)
+
+Janome on Discord, through Mac: *"some of the books i would add to be sold would appear under the wrong title, and then
+i was able to remove them from the sell window to like, duplicate them? somehow?"* Reproduced on the real counter first:
+one of "A Tale of Kieran" x3 put on the counter through the how-many field read "The First Scroll of Baan Dar", and came
+back to the pack as that book. TWO FAULTS. SplitStack (ItemCollection.cs:261-272) mints `ItemBuilder.CreateItem(group,
+templateIndex)` - A2 ported it faithfully - and a group and a template are all it knows, so the part split off lost the
+three terms FindExistingStack reads as identity beside them (:708-713): a book's id (book 0, at the template's 2500
+gold instead of its own 300-800 file price - a gold faucet as well as a wrong title), a potion's recipe (an empty
+bottle) and a conjured stack's expiry (arrows that outlived their spell). DFU's own split does the same; Port-Ledger A:
+`inventory.js` `splitStack` keeps the three, and the price and picture a book's id and a potion's recipe set
+(`splitPricedByIdentity`); the rest is still the fresh mint (condition, material, variant, enchantments). And both
+counters took a lot back with a `push`, where DFU's every click-back and ClearSelectedItems go through
+ItemCollection.Transfer -> AddItem (:473-480), which merges a lot into its own stack - `enhancedTrade.js` `move` and
+`nativeTrade.js` `_move` add it now, so a book taken back is the third of its stack again, not a second row. AddItem
+also gained FindExistingStack's first term, `checkItem != item`: a record already held is never its own stack-mate.
+A2's and ROAD-Ar R5's pins flipped to the new law (the R5 re-merge now on a potion the producer mints).
+`test/fb0929d_booksplit.test.js` (4); `tools/mutants/fb0929d_booksplit.json`, 11 mutants, 11 dead.
+`01-Overview/Field-Bugs-2026-09-29d.md` BOOK-SPLIT.

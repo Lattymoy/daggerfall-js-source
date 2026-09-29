@@ -1190,6 +1190,9 @@ export function installPcaao({ read = null, other = null } = {}) {
     if (!m.armorHitFormulaRedone) return undefined;
     return pcaaoAttackDamage(attacker, target, { ...opts, modules: m });
   });
+  // AC-COMPARE: the table the core above draws a blow's part from (pcaaoAttackDamage's pcaaoStruckBodyPart), on the
+  // core's own switch - a reader that weighs the parts (the enhanced pack's overall armour) follows the core in force
+  registerFormulaOverride('struckBodyPartTable', () => (modules().armorHitFormulaRedone ? PCAAO_BODY_PARTS : undefined));
   // AUDIT PCO1: InitMod's archery arm registers AdjustWeaponHitChanceMod
   // and AdjustWeaponAttackDamage on FormulaHelper whatever the armour
   // module says, so DFU's STOCK CalculateAttackDamage bends a bow's hit
@@ -1206,6 +1209,7 @@ export function uninstallPcaao() {
   registerFormulaOverride('damageModifier', null);
   registerFormulaOverride('damageEquipment', null);
   registerFormulaOverride('calculateAttackDamage', null);
+  registerFormulaOverride('struckBodyPartTable', null);   // AC-COMPARE
   registerFormulaOverride('adjustWeaponHitChanceMod', null);
   registerFormulaOverride('adjustWeaponAttackDamage', null);
 }

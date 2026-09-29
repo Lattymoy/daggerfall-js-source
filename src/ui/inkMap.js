@@ -33,11 +33,12 @@
 // owning module, never re-spelled here.
 // ═══════════════════════════════════════════════════════════════════
 
-import { CLIMATES } from '../formats/mapsFile.js';
+import { CLIMATES, LOCATION_TYPES } from '../formats/mapsFile.js';
 import {
   isWaterPixel, buildMarkerModel, traceChains, simplifyChain,
   TREELINE_BYTE, SNOWLINE_BYTE,
 } from './overworldModel.js';
+import { getPixelColorIndex, FILTER_SRC } from './travelMapWindow.js';   // MAP-KEY: the classic's filter law and its four buttons, asked of - never copied
 import { GATE_RING_CSS, GATE_FILL_CSS } from './gateMapMark.js';   // WB1: the Oblivion Gate's ring, in the omen's own colours
 import { RAID_MARK_CSS } from './eventMapMarks.js';   // EVENT-TIP: a town under attack
 
@@ -128,8 +129,42 @@ export const QUARTER_INK_DE = 15;
 export const QUARTER_INK_PAPER_DE = 45;
 /** @param {{r:number,g:number,b:number}} c */
 export const quarterWash = (c) => rgba([c.r, c.g, c.b], QUARTER_WASH_A);
+/** `mix` is how far toward the pen - MAP-KEY walks a place's glyph further than a quarter's name (MARK_INK_MIX).
+ *  @param {{r:number,g:number,b:number}} c @param {number} [mix] */
+export const quarterInk = (c, mix = QUARTER_INK_MIX) => rgba(mixRgb([c.r, c.g, c.b], INK_RGB, mix), QUARTER_INK_A);
+/**
+ * MAP-KEY - A PLACE IN ITS CLASSIC DOT'S HUE, IN THIS HAND.
+ *
+ * Jigglehimmer (2026-09-29, #suggestions): "cemeteries were red dots,
+ * and dungeons were orange dots" - and on this sheet every glyph was the
+ * one brown pen, so a new dungeon's hollow triangle had to be hovered to
+ * be told from anything else. EM7's reading again: the classic colour is
+ * kept and its PAINT is not. Each kind is inked in the hue the classic
+ * window dots it in (ui/travelMapWindow.js travelMapDotColors - entries
+ * of the player's own FMAP_PAL.COL, never a number written here) walked
+ * toward the pen by EM7's own law, so a dungeon is recognisably orange
+ * and unmistakably ink.
+ *
+ * ONE HUE PER KIND - the kind's FIRST bucket's (markInks) - and that is a
+ * measurement, not taste. markKind already reads the three dungeon
+ * buckets as one shape, and their three classic oranges run down toward
+ * the graveyard's red: on the classic palette the ruin's dot is 10.9
+ * (CIE76) from the graveyard's, so a ruin inked in its own hue passes
+ * for a graveyard at any mix - the one pair the report asks to tell
+ * apart. Inked at MARK_INK_MIX the labyrinth's orange stands 20.9 from
+ * the graveyard's red; the keep's own would stand 14.5 and the ruin's
+ * 7.3, both under EM7's ink floor (QUARTER_INK_DE).
+ *
+ * MARK_INK_MIX IS THE SMALLEST MIX THAT KEEPS EVERY KIND INK: each tint
+ * clears EM7's paper floor (QUARTER_INK_PAPER_DE) at it - the city's
+ * pale tan binds, 45.5 at 0.58 and 44.9 at 0.57 - and every step past it
+ * toward the pen spends the hue that tells the kinds apart.
+ * test/fb0929d_mapkey.test.js measures both on the player's own
+ * FMAP_PAL.COL (the colours are ARENA2 data: nowhere else to measure).
+ */
+export const MARK_INK_MIX = 0.58;
 /** @param {{r:number,g:number,b:number}} c */
-export const quarterInk = (c) => rgba(mixRgb([c.r, c.g, c.b], INK_RGB, QUARTER_INK_MIX), QUARTER_INK_A);
+export const markInk = (c) => quarterInk(c, MARK_INK_MIX);
 /** MAP-FIELD6 (2026-09-19, Mac: "Some of the glyphs are hard to read. I
  *  want to make everything more readable, without clutter and keeping
  *  the same design").
@@ -216,6 +251,41 @@ export function markKind(colorIndex) {
   if (colorIndex === 11) return 'city';
   if (colorIndex === 12) return 'hamlet';
   return 'village';
+}
+/** MAP-KEY: each kind's ink off the classic window's dot colours (one {r, g, b} per bucket) - the kind's FIRST
+ *  bucket's hue, walked in markKind's own order (MARK_INK_MIX says why the first) - or null with no palette, and
+ *  the glyphs keep the plain pen. */
+export function markInks(colors) {
+  if (!colors) return null;
+  const out = {};
+  colors.forEach((c, i) => { const k = markKind(i); if (c && !(k in out)) out[k] = markInk(c); });
+  return Object.freeze(out);
+}
+/** MAP-KEY: what the key calls each glyph. Skin - DFU prints no key; its dots' colours were learnt. */
+export const KIND_WORD = Object.freeze({
+  dungeon: 'Dungeon', graveyard: 'Graveyard', coven: 'Coven', home: 'Home', temple: 'Temple',
+  cult: 'Cult', tavern: 'Tavern', city: 'City', hamlet: 'Hamlet', village: 'Village',
+});
+let _keyGroups = null;
+/**
+ * MAP-KEY: THE KEY - the classic window's four filter buttons (FILTER_SRC's keys, DaggerfallTravelMapWindow.cs:122-125,
+ * the bar's own order) and under each the buckets it hides and their glyph kinds, ASKED of getPixelColorIndex rather
+ * than copied from it: a bucket is a filter's when that filter alone turns it to -1 (:1421-1430). Pure; ui/heldMap.js
+ * draws it.
+ * @returns {ReadonlyArray<{filter: string, label: string, buckets: number[], kinds: string[]}>}
+ */
+export function mapKeyGroups() {
+  if (_keyGroups) return _keyGroups;
+  const types = Object.values(LOCATION_TYPES).filter((t) => getPixelColorIndex(t, {}) >= 0);
+  _keyGroups = Object.freeze(Object.keys(FILTER_SRC).map((filter) => {
+    const buckets = types.filter((t) => getPixelColorIndex(t, { [filter]: true }) < 0)
+      .map((t) => getPixelColorIndex(t, {})).sort((a, b) => a - b);
+    return Object.freeze({
+      filter, label: filter[0].toUpperCase() + filter.slice(1),
+      buckets: Object.freeze(buckets), kinds: Object.freeze([...new Set(buckets.map(markKind))]),
+    });
+  }));
+  return _keyGroups;
 }
 /** Which buckets each band inks. Far: the cities alone. Mid: towns,
  *  temples and dungeons. Near: everything the discovery store admits. */
@@ -814,7 +884,8 @@ export function placeNames(marks, view, band, { paperW, paperH, measure }) {
  *   selected?: {x: number, y: number, coords?: boolean}|null,
  *   party?: {x: number, y: number, name: string, online: boolean, stack: number, color: string}[],
  *   regionNames?: string[], names?: ReturnType<typeof placeNames>, pulse?: number,
- *   ports?: boolean, markedMapId?: number, markColor?: string|null }} opts
+ *   ports?: boolean, markedMapId?: number, markColor?: string|null,
+ *   inks?: Record<string, string>|null }} opts   (MAP-KEY: each kind's ink, markInks' answer)
  */
 export function paintInk(ctx, model, view, opts) {
   paintInkStatic(ctx, model, view, opts);
@@ -918,7 +989,7 @@ export function paintInkStatic(ctx, model, view, opts) {
   for (const [m, x, y] of inked) if (m.hub) paintHubCircle(ctx, x, y, markReach(m), !!m.hub.capital);
   for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);
   for (const [m, x, y] of inked) {
-    paintGlyph(ctx, m.kind, x, y);
+    paintGlyph(ctx, m.kind, x, y, false, opts.inks?.[m.kind]);   // MAP-KEY: in its classic dot's hue, where there is a palette
     if (opts.ports && m.port && band !== 'far') paintHarbour(ctx, x, y);
   }
   // MAP2: the mod's MARK (TravelOptionsMapWindow.cs:532-550, drawn in
@@ -1146,10 +1217,14 @@ export function paintHubCircle(ctx, x, y, r, capital = false) {
  *  on the sheet's own cracks. The filled kinds are stroked as well as
  *  filled on that pass, or their halo would sit inside them and show
  *  nothing. Both passes are driven from this one switch, so a glyph
- *  cannot be drawn in ink in a shape its halo did not clear. */
-export function paintGlyph(ctx, kind, x, y, halo = false) {
-  ctx.strokeStyle = halo ? PEN.halo : PEN.line;
-  ctx.fillStyle = halo ? PEN.halo : PEN.line;
+ *  cannot be drawn in ink in a shape its halo did not clear.
+ *
+ *  MAP-KEY: `ink` is the kind's own (markInks) where the sheet has a
+ *  palette to tint with, and the pen where it has none. The halo never
+ *  takes it - it is the paper's, whatever the ink over it. */
+export function paintGlyph(ctx, kind, x, y, halo = false, ink = PEN.line) {
+  ctx.strokeStyle = halo ? PEN.halo : ink;
+  ctx.fillStyle = halo ? PEN.halo : ink;
   ctx.lineWidth = halo ? GLYPH_PEN + (2 * HALO_PEN) : GLYPH_PEN;
   const solid = () => { ctx.fill(); if (halo) ctx.stroke(); };
   ctx.beginPath();
@@ -1180,4 +1255,22 @@ export function paintGlyph(ctx, kind, x, y, halo = false) {
     default:   // home
       ctx.rect(x - 2.5, y - 2.5, 5, 5); ctx.stroke();
   }
+}
+
+/** MAP-KEY: a key chip's side, in CSS px - room for the widest glyph (the city's ring, 6.75 px of ink) and its halo. */
+export const KEY_CHIP_PX = 18;
+/** MAP-KEY: ONE KIND'S CHIP FOR THE KEY - a square of the parchment with the kind's glyph laid on it the way the sheet
+ *  lays it (the halo, then paintGlyph in the kind's ink, at the sheet's own size and caps), so the key cannot show a
+ *  mark the map does not. The chip carries its own paper because the key stands on the foot's dark scrim, where an
+ *  ink walked toward the pen would vanish. Skin. */
+export function paintKeyChip(ctx, kind, ink, { dpr = 1 } = {}) {
+  if (!ctx?.beginPath) return;
+  const c = KEY_CHIP_PX / 2;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.fillStyle = rgba(PARCHMENT_RGB, 1);
+  ctx.fillRect(0, 0, KEY_CHIP_PX, KEY_CHIP_PX);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  paintGlyph(ctx, kind, c, c, true);
+  paintGlyph(ctx, kind, c, c, false, ink);
 }

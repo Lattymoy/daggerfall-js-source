@@ -552,8 +552,8 @@
   {
     "name": "MAPFIELD6-the-halo-is-drawn-per-mark-not-per-pass",
     "file": "src/ui/inkMap.js",
-    "old": "  for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);\n  for (const [m, x, y] of inked) {\n    paintGlyph(ctx, m.kind, x, y);",
-    "new": "  for (const [m, x, y] of inked) {\n    paintGlyph(ctx, m.kind, x, y, true);\n    paintGlyph(ctx, m.kind, x, y);",
+    "old": "  for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);\n  for (const [m, x, y] of inked) {\n    paintGlyph(ctx, m.kind, x, y, false, opts.inks?.[m.kind]);",
+    "new": "  for (const [m, x, y] of inked) {\n    paintGlyph(ctx, m.kind, x, y, true);\n    paintGlyph(ctx, m.kind, x, y, false, opts.inks?.[m.kind]);",
     "tests": [
       "test/heldmap.test.js"
     ]

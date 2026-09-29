@@ -120,7 +120,8 @@ then closes. No flight: the host's own travel - DFU's, or the mod's
 walked trip - IS the journey. The card is the relief map's, class for
 class (`hm*`), over the same laws; the chip row is gone (the store's
 flags still decide what is inked, and the classic window's chips still
-set them). The party is ink: a ring and the name, stacked on a shared
+set them - until MAP-KEY, below, put DFU's four back on the sheet as its
+key). The party is ink: a ring and the name, stacked on a shared
 pixel by `PARTY_LABEL_STACK`, the hover line naming every member on it,
 the legend in the foot row. The probe surface is `globalThis.__heldMap`.
 
@@ -1237,3 +1238,58 @@ DOM card at the pointer (`.hmtip`, the pixel home's plaque; `pointer-events: non
 it, rewritten only when its words change, refreshed on the poll under a STILL pointer (the label with it), hidden on
 leaving, on a press, on a sheet change and at close. The classic window draws no card. Pinned in
 `test/eventtip.test.js`; seen in Chromium by `tools/heldMapProbe.mjs` section 8. `01-Overview/Field-Bugs-2026-09-28b.md`.
+
+## MAP-KEY - a key to filter by, and a dungeon in orange (2026-09-29, a player through Mac)
+
+Jigglehimmer on Discord (#suggestions): *"Enhanced map needs filterable key like the default Daggerfall world map ... The
+OG Daggerfall map allowed me to filter out towns, homes, and holy sites, allowing me to clearly see red dots as
+cemeteries, and orange dots as newly discovered dungeons ... it needs a filter exactly like the old map, and a color code
+for cemeteries, and actual dungeons."* His screenshot: every place in the one brown pen, a new dungeon's hollow triangle
+to be hovered before it could be told from anything else.
+
+**The filters were never gone, only out of reach.** MAP1 retired the relief map's chip row and kept the store: the
+sheet has always inked through `travelMapFilters()`, the classic window's live object, so a filter set on the classic
+skin hid its kinds here and nothing on the sheet could set one. The KEY puts DFU's four back (`heldMap.js _renderKey`),
+each toggle pressing the classic window's own flip - `flipTravelMapFilter`, FilterButtonClickHandler
+(DaggerfallTravelMapWindow.cs:1024-1045), which `_filterButtonClick` presses too - on the same live store, the marks
+rebuilt as the classic rebuilds its dots (:1064). The two skins cannot disagree: the classic window opens on what the
+sheet last showed, and the save carries it. Which kinds a toggle hides is ASKED of getPixelColorIndex
+(`inkMap.js mapKeyGroups`: a bucket is a filter's when that filter alone turns it to -1), never a range typed twice.
+
+**Each glyph in its classic dot's hue, in this hand** (`inkMap.js markInks`, EM7's reading): the kind's classic colour
+walked toward the pen by EM7's own law (`quarterInk` at `MARK_INK_MIX`) - a dungeon orange, a graveyard red, both
+unmistakably ink. The colours are ARENA2 data (FMAP_PAL.COL entries), so they are read at runtime off the classic
+loader's cache (`travelMapDotColors`, the one door; the world host preloads it on every skin), and no RGB of them is in
+the tree. No palette, the plain pen; a palette that lands after the sheet rose tints it at once. Two numbers, measured
+on the player's own FMAP_PAL.COL:
+
+- **One hue per kind, the kind's FIRST bucket's.** markKind draws the three dungeon buckets as one triangle, and their
+  classic oranges run down toward the graveyard's red: the ruin's dot is 10.9 (CIE76) from the graveyard's, so a ruin
+  in its own hue passes for a graveyard at any mix. Inked at the mix below, the labyrinth's orange stands 20.9 from the
+  graveyard's red, over EM7's ink floor (15); the keep's own would stand 14.5 and the ruin's 7.3, both under it.
+- **`MARK_INK_MIX` 0.58 is the smallest mix that keeps every kind ink** - EM7's paper floor (45); the city's pale tan
+  binds, 45.5 at 0.58 and 44.9 at 0.57. Every step further toward the pen spends hue that tells the kinds apart.
+
+**The key says which glyph is which.** It stands ON the foot - a child of the row anchored to its top edge, never at a
+guessed height (AUDIT SOC C10/D5), and out of the row's flow, because a wrapping flex row is as wide as all its children
+on one line. A toggle per filter, lit while its kinds are shown and struck while the store hides them; beside it a chip
+of each kind it hides - a square of the parchment with the kind's glyph laid by `paintGlyph` itself, in its own ink -
+and the kind's name (a phone keeps the chips, the title naming them, and steps the key aside while a picked place's
+card rides up over it). The toggles never take the focus (a focused
+button is pressed again by Space or Enter, and every key under the sheet is the map's - M and Escape still close it),
+are dead under a box and while the sheet moves, and stand outside the stage, so a press on the key never pans, picks or
+marks. It is the bay's chrome: the world sheet's mount claims it and its clock keeps it current; a town's or a
+dungeon's plan shows none.
+
+**At the far band** the sheet inks the cities alone (BAND_MARKS, kept as it was). The key says so rather than leaving a
+lit toggle that seems to do nothing: every kind the band does not ink is dimmed, titled "zoom in to see" (at mid, the
+graveyards, covens and homes). The toggles flip the store at every band.
+
+Pins: `test/fb0929d_mapkey.test.js` (8; the last measures the player's own FMAP_PAL.COL where ARENA2_PATH has it).
+`tools/mutants/fb0929d_mapkey.json`: 39, 39 dead - the two on `MARK_INK_MIX` against the real palette alone - and the
+403 older records on the four files it touched re-judged (400 dead, 3 equivalent as recorded). Re-aimed:
+`map1.json` MAPFIELD6-the-halo-is-drawn-per-mark-not-per-pass (the ink pass carries its ink now), and
+`test/soc6_partymap.test.js`'s foot pin (the key is the foot's first child). Seen in Chromium through a scratch mount of
+the synthetic bay, at the near and the far band. `tools/heldMapProbe.mjs` was not extended: it fails six of its own
+checks on the base as well (the stage, the sprite and thumb keys, the open sea, the hover cursor), and its I/H checks
+still look for the box ENH-NOTICE3 moved onto the notice panel - its own repair, not this slice's.

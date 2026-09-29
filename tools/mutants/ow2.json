@@ -112,7 +112,7 @@
   {
     "name": "OW-ONLY-ground-travel",
     "file": "src/scenes/world.js",
-    "old": "    if (tvOwnsJourneys()) {\n      const why = travelViewAllowed();",
+    "old": "    if (tvRoutesJourneys()) {\n      const why = travelViewAllowed();",
     "new": "    if (false) {\n      const why = travelViewAllowed();",
     "tests": [
       "test/tv2_click_to_move.test.js"

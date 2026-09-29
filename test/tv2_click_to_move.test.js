@@ -359,7 +359,7 @@ test('AUDIT DEEP T2-4/T2-5/T2-6/T2-7/T2-8: the planner never swims a corner of t
   assert.ok(((i, j) => i >= 0 && j >= 0 && i < j)(w.indexOf('let tvPlates = { at: null, list: [] };'), w.indexOf('tvPlates = { at: null, list: [] };   // AUDIT DEEP T2-4')), 'BOOT-TDZ: declared above the load that clears it');
   assert.match(w, /to: travelOptions\?\.route\?\.summary\?\.pixel \?\? travelOptions\?\.route\?\.point\?\.pixel \?\? travelOptions\?\.state\?\.autopilot\?\.destinationMapPixel \?\? null,/);
   // PIN MOVED (OW-PATH): the roads asked only in the Roads mode - the net is the road net or none, Free walking across country
-  assert.match(w, /const raw = terrainGen\.roads\(\);\n\s*const roadNet = raw\?\.source === 'basic-roads' \? raw : null;\n(?:\s*\/\/[^\n]*\n)*\s*let net = travelPathUsesRoads\(\) \? roadNet : null;\n\s*let plan = planRoute\(from, summary\.pixel,/);   // PIN MOVED (AUDIT OW5 S3): a let - a plan that never sails is planned again on land
+  assert.match(w, /const raw = terrainGen\.roads\(\);\n\s*const roadNet = raw\?\.source === 'basic-roads' \? raw : null;\n(?:\s*\/\/[^\n]*\n)*\s*let net = \(roads \|\| travelPathUsesRoads\(\)\) \? roadNet : null;\n\s*let plan = planRoute\(from, summary\.pixel,/);   // PIN MOVED (AUDIT OW5 S3): a let - a plan that never sails is planned again on land
   assert.match(w, /if \(travelOptions\?\.settings\?\.targetCoordsAllowed === false\) tvSay\(TRAVEL_VIEW_TEXT\.placesOnly\); else travelViewWalkTo\(hit\.point, pix\);/);
 });
 
@@ -505,7 +505,7 @@ test('TV2 host wiring: the click is a ray from the VIEW\'s eye through this fram
   assert.match(w, /if \(duelEnemyNear\(\) \|\| areEnemiesNearby\(exteriorFoePool\(\)\)\) \{ tvSay\(TRAVEL_VIEW_TEXT\.enemies\); return false; \}/);
   // AUDIT OW3 J8: the pins name what stands - the peaks' law and the road's join - so reverting either reddens here
   assert.match(w, /planRoute\(from, summary\.pixel, \{ roads: net\?\.roads \?\? null, tracks: net\?\.tracks \?\? null, \.\.\.tvRouteGround\(\), sea: tvSeaAsk\(means, 'land'\) \}\);   \/\/ OW-MOUNTAINS/, 'Hazelnut\'s bytes, whichever source raised them - never across the peaks (AUDIT OW4 J3: the ground read once), and the boat to cross the water in (OWS2)');
-  assert.match(w, /const legs = tvJoinedLegs\(from, plan\);\n\s*const ok = travelOptions\.beginTravelAlongRoute\(\{ legs, summary, name: summary\.name \}, tvCautious\(\), \{ quiet: tvQuiet \}\);/, 'OW-ROADSIDE: the road joined first');
+  assert.match(w, /const legs = tvJoinedLegs\(from, plan, roads\);\n\s*const ok = travelOptions\.beginTravelAlongRoute\(\{ legs, summary, name: summary\.name \}, tvCautious\(\), \{ quiet: tvQuiet \}\);/, 'OW-ROADSIDE: the road joined first');
   // AUDIT DEEP T2-3/X-7: the player's own cautious choice (the map's last toggles), and quiet only while the view is up
   assert.match(w, /const tvCautious = \(\) => !!travelMapPopUpState\(\)\.speedCautious;\n\s*const tvQuiet = \(\) => !!travelView\?\.active;/);
   // AUDIT TV A1: the line's points are one a LEG, so the leg index cuts it where the traveller is
@@ -516,7 +516,7 @@ test('TV2 host wiring: the click is a ray from the VIEW\'s eye through this fram
   // AUDIT TV A5: a town's grown rect asked across the 3x3 about the hit
   assert.match(w, /for \(let dy = -1; dy <= 1; dy\+\+\) \{\n\s*for \(let dx = -1; dx <= 1; dx\+\+\) \{\n\s*const summary = tvPlaceSummary\(pix\.x \+ dx, pix\.y \+ dy\);/);
   // PIN MOVED (AUDIT OW5 S4): an own-pixel sea spot is given its one sea leg first; AUDIT OW5b D3: the walk carries its door
-  assert.match(w, /let legs = tvJoinedLegs\(from, plan\);\n(?:\s*\/\/[^\n]*\n)*\s*if \(!legs\.length && seaAsk\?\.goal === 'sea'\) \{ legs = \[\{ x: pix\.x, y: pix\.y, kind: 'sea' \}\]; plan = \{ \.\.\.plan, kinds: \['sea'\] \}; \}\n(\s*if \(door\) n = [^\n]*\n)?\s*const ok = travelOptions\.beginTravelAlongRoute\(\{ legs, point: \{ pixel: pix, x: n\.x, z: n\.z, door \}, name: TRAVEL_VIEW_TEXT\.spot \}, tvCautious\(\), \{ quiet: tvQuiet \}\)/);
+  assert.match(w, /let legs = tvJoinedLegs\(from, plan, roads\);\n(?:\s*\/\/[^\n]*\n)*\s*if \(!legs\.length && seaAsk\?\.goal === 'sea'\) \{ legs = \[\{ x: pix\.x, y: pix\.y, kind: 'sea' \}\]; plan = \{ \.\.\.plan, kinds: \['sea'\] \}; \}\n(\s*if \(door\) n = [^\n]*\n)?\s*const ok = travelOptions\.beginTravelAlongRoute\(\{ legs, point: \{ pixel: pix, x: n\.x, z: n\.z, door \}, name: TRAVEL_VIEW_TEXT\.spot \}, tvCautious\(\), \{ quiet: tvQuiet \}\)/);
   for (const dep of [/onPick: \(x, y, e\) => onTravelViewPick\(x, y, e\),/, /onMark: \(key, e\) => onTravelViewMark\(key, e\),/, /marks: travelViewMarks,/, /route: travelViewRoute,/, /trip: \(\) => \(tvWalking \? TRAVEL_VIEW_TEXT\.travelling\(tvWalking, tvHeld\) : tvTripLive\(\) \? tvTrip\.line : ''\),/]) assert.match(w, dep);   // PIN MOVED (AUDIT OW5 G3): the keys' speed first
 });
 
@@ -616,12 +616,15 @@ test('OW-ONLY (Mac: "Remove the ground travel alltogether. Now selecting a locat
   tv.exit('door', true);
   assert.deepEqual(lowered, ['button'], 'cut (a door, a window, a death): not a choice - nothing said');
   const w = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
-  assert.match(w, /if \(tvOwnsJourneys\(\)\) \{\n\s*const why = travelViewAllowed\(\);\n\s*if \(!why\.ok\) \{ if \(why\.why\) tvSay\(why\.why\); return false; \}\n\s*if \(!travelViewCanGo\(\)\) return false;\n\s*if \(!coords\) \{\n\s*const summary = tvPlaceSummary\(pick\.pixel\.x, pick\.pixel\.y\);\n\s*return summary \? travelViewRouteTo\(summary\) : false;/, 'the map\'s pick: the Overworld\'s road journey');
-  assert.match(w, /const at = tvSceneOf\(o\.x \+ 16384, o\.z \+ 16384, 0\);\n(?:\s*\/\/[^\n]*\n)*\s*if \(tvWater\(pick\.pixel\.x, pick\.pixel\.y\) \|\| at\[1\] <= tvSeaY\(\) \+ TV_SEA_EPS_M\) \{ tvSay\(TRAVEL_VIEW_TEXT\.water\); return false; \}\n\s*return travelViewWalkTo\(at, pick\.pixel\);/, 'the map\'s spot: the Overworld\'s walk - AUDIT OW3 J7: never out onto the water, refused in the view\'s own words');
+  // PIN MOVED (TO-ROADS): the map's three forks ask whether the trip is ROUTED - the Overworld's, or First-Person Travel's
+  // with its roads on (tvRoutesJourneys grows from tvOwnsJourneys; test/fb0929d_toroads.test.js mounts both ways)
+  assert.match(w, /if \(tvRoutesJourneys\(\)\) \{\n\s*const why = travelViewAllowed\(\);\n\s*if \(!why\.ok\) \{ if \(why\.why\) tvSay\(why\.why\); return false; \}\n\s*if \(!travelViewCanGo\(\)\) return false;\n\s*if \(!coords\) \{\n\s*const summary = tvPlaceSummary\(pick\.pixel\.x, pick\.pixel\.y\);\n\s*return summary \? travelViewRouteTo\(summary, \{ roads: tvMapForcesRoads\(\) \}\) : false;[^\n]*/, 'the map\'s pick: the Overworld\'s road journey');
+  assert.match(w, /function tvRoutesJourneys\(\) \{ return tvOwnsJourneys\(\) \|\| \(/, 'TO-ROADS: every journey the Overworld owns is routed');
+  assert.match(w, /const at = tvSceneOf\(o\.x \+ 16384, o\.z \+ 16384, 0\);\n(?:\s*\/\/[^\n]*\n)*\s*if \(tvWater\(pick\.pixel\.x, pick\.pixel\.y\) \|\| at\[1\] <= tvSeaY\(\) \+ TV_SEA_EPS_M\) \{ tvSay\(TRAVEL_VIEW_TEXT\.water\); return false; \}\n\s*return travelViewWalkTo\(at, pick\.pixel, \{ roads: tvMapForcesRoads\(\) \}\);/, 'the map\'s spot: the Overworld\'s walk - AUDIT OW3 J7: never out onto the water, refused in the view\'s own words');
   // PIN MOVED (OW-TOGGLE, AUDIT OW5 T1): First-Person Travel on, the Overworld owns none - read live (test/ow_toggle.test.js mounts it both ways)
   assert.match(w, /function tvOwnsJourneys\(\) \{ return !!travelOptions && !modSetting\(TRAVEL_OPTIONS_VENDOR, 'GeneralOptions\.FirstPersonTravel'\) && isEnhanced\(\) && !!travelView; \}/, 'AUDIT OW3 J2: the Overworld owns the walked trip on the enhanced interface');
-  assert.match(w, /if \(opts\?\.playerControlled && beginAcceleratedTravel\(pick, opts, \{ estimateMinutes: computed\?\.minutes \?\? null \}\)\) return;[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*if \(opts\?\.playerControlled && tvOwnsJourneys\(\)\) return;\n\s*fastTravelTo\(pick, opts, computed\);/, 'AUDIT OW3 J2: a walk the Overworld refused never falls through to a paid teleport');
-  assert.match(w, /onTravelToCoords: \(pick, opts\) => \{ if \(!beginAcceleratedTravel\(pick, opts, \{ coords: true \}\) && !tvOwnsJourneys\(\)\) townTalk\.say\('You cannot travel there now\.'\); \},/, 'AUDIT OW3 J2: its refusal said once, in its own words');
+  assert.match(w, /if \(opts\?\.playerControlled && beginAcceleratedTravel\(pick, opts, \{ estimateMinutes: computed\?\.minutes \?\? null \}\)\) return;[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*if \(opts\?\.playerControlled && tvRoutesJourneys\(\)\) return;\n\s*fastTravelTo\(pick, opts, computed\);/, 'AUDIT OW3 J2: a walk the Overworld refused never falls through to a paid teleport');
+  assert.match(w, /onTravelToCoords: \(pick, opts\) => \{ if \(!beginAcceleratedTravel\(pick, opts, \{ coords: true \}\) && !tvRoutesJourneys\(\)\) townTalk\.say\('You cannot travel there now\.'\); \},/, 'AUDIT OW3 J2: its refusal said once, in its own words');
   // AUDIT OW3 J1: stopped THROUGH the panel (the mod's Camp) - a bare interrupt left it up, the journey "active"
   // PIN MOVED (OW-TOGGLE): and only the Overworld's journey - a first-person one walks on
   assert.match(w, /onLower: \(why\) => \{ if \(\(why === 'button' \|\| why === 'escape' \|\| why === 'key'\) && travelOptions\?\.isTravelActive && tvOwnsJourneys\(\)\) travelOptions\.messages\.pauseTravel\(\); \},/, 'brought down by the player: the journey stops (the map\'s resume takes it up again)');
@@ -923,7 +926,7 @@ test('AUDIT OW4 J4/J5: the map\'s Resume PLANS the Overworld\'s journey again fr
   const w = rd('src/scenes/world.js');
   assert.match(w, /onResumeTravel: \(\) => \{ travelViewResume\(\); \},/, 'the held map\'s and the classic map\'s Resume');
   // PIN MOVED (AUDIT OW5 J1): the re-plan asks the route, not the switch - First Person Travel's Overworld-planned routes are re-planned too
-  assert.match(w, /function travelViewResume\(\) \{\n\s*const r = travelOptions\?\.route;\n\s*if \(!r \|\| !isEnhanced\(\) \|\| !travelView\) \{ travelOptions\?\.resumeTravel\(\); return; \}\n\s*const why = travelViewAllowed\(\);\n\s*if \(!why\.ok\) \{ if \(why\.why\) tvSay\(why\.why\); return; \}\n\s*if \(!travelViewCanGo\(\)\) return;\n\s*if \(r\.summary\) travelViewRouteTo\(r\.summary\);\n(?:\s*\/\/[^\n]*\n)*\s*else if \(r\.point\) travelViewWalkTo\(tvSceneOf\(r\.point\.x, r\.point\.z, 0\), r\.point\.pixel, \{ door: r\.point\.door \?\? null \}\);\n\s*\}/, 'planned again - the classic skin and the mod\'s own journeys keep the mod\'s resume; a spawn\'s walk resumed is its door again (AUDIT OW4 X2) - the walk\'s OWN door, never the live index\'s (AUDIT OW5b D3)');
+  assert.match(w, /function travelViewResume\(\) \{\n\s*const r = travelOptions\?\.route;\n\s*if \(!r \|\| !isEnhanced\(\) \|\| !travelView\) \{ travelOptions\?\.resumeTravel\(\); return; \}\n\s*const why = travelViewAllowed\(\);\n\s*if \(!why\.ok\) \{ if \(why\.why\) tvSay\(why\.why\); return; \}\n\s*if \(!travelViewCanGo\(\)\) return;\n\s*const roads = tvMapForcesRoads\(\);[^\n]*\n\s*if \(r\.summary\) travelViewRouteTo\(r\.summary, \{ roads \}\);\n(?:\s*\/\/[^\n]*\n)*\s*else if \(r\.point\) travelViewWalkTo\(tvSceneOf\(r\.point\.x, r\.point\.z, 0\), r\.point\.pixel, \{ door: r\.point\.door \?\? null, roads \}\);\n\s*\}/, 'planned again - the classic skin and the mod\'s own journeys keep the mod\'s resume; a spawn\'s walk resumed is its door again (AUDIT OW4 X2) - the walk\'s OWN door, never the live index\'s (AUDIT OW5b D3)');
   // PIN MOVED (TV-WASD): the keys' travel is let go on the ground too, and the view's gate reads the keys' rate beside the journey
   // PIN MOVED (AUDIT OW5 G1): and the bar told the hold is the ground's, not the load's; OW6: then the enemies' cap on what runs
   assert.match(w, /if \(journey && !travelView\?\.active && tvOwnsJourneys\(\)\) \{\n\s*if \(worldTimeScale\(\) !== 1\) setWorldTimeScale\(1\);\n\s*tvHeld = travelAsked > 1 \? 1 : null;[^\n]*\n\s*tvHeldWhy = tvHeld != null \? 'ground' : null;[^\n]*\n\s*tvWalking = 0;[^\n]*\n\s*travelGovernor\.reset\(\);\n\s*return;\n\s*\}\n\s*const walk = travelWalkRate\(\{[\s\S]{0,900}?\}\);\n(?:\s*\/\/[^\n]*\n)*\s*const foes = journey \|\| walk \? journeyThreatCap\(!!travelView\?\.active, !journey\) : null;\n\s*if \(journey && !travelView\?\.active\) \{/, 'held at x1 until the view rises - then the governor has it');   // PIN MOVED (AUDIT OW5 G4): the keys' read grew by the focus's law
@@ -944,11 +947,12 @@ test('AUDIT OW5b D3 (run on the host\'s own code): THE MAP\'S RESUME WALKS THE W
   const walked = [];
   const run = (point, index = new Map()) => {
     walked.length = 0;
-    const resume = new Function('d', `const { travelOptions, isEnhanced, travelView, travelViewAllowed, tvSay, travelViewCanGo, travelViewRouteTo, travelViewWalkTo, tvSceneOf, locationIndex, locationWorldRect } = d;
+    const resume = new Function('d', `const { travelOptions, isEnhanced, travelView, travelViewAllowed, tvSay, travelViewCanGo, travelViewRouteTo, travelViewWalkTo, tvSceneOf, locationIndex, locationWorldRect, tvMapForcesRoads } = d;
       return ${m[1]};`)({
       travelOptions: { route: { point }, resumeTravel: () => walked.push('mod') }, isEnhanced: () => true, travelView: {}, travelViewAllowed: () => ({ ok: true }), tvSay() {},   // AUDIT OW5 J1: the route's re-plan, whoever owns the journey
       travelViewCanGo: () => true, travelViewRouteTo: () => walked.push('route'), travelViewWalkTo: (at, pix, opts) => walked.push({ pix, door: opts?.door ?? null }),
       tvSceneOf: (x, z) => [x, 0, z], locationIndex: index, locationWorldRect: () => ({ minX: 0, maxX: 1, minZ: 0, maxZ: 1 }),
+      tvMapForcesRoads: () => false,   // TO-ROADS x OW-PATH: the Overworld's own walk (its Path switch)
     });
     resume();
     return walked[0];

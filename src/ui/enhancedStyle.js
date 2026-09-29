@@ -4721,6 +4721,36 @@ ${badgeCss()}
 .hmtip-title { letter-spacing: 0.14em; text-transform: uppercase; color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12);
   border-bottom: 2px solid rgba(125,116,96,0.5); padding-bottom: 4px; margin-bottom: 4px; }
 .hmtip-line { font-size: 14px; line-height: 1.35; color: #c5bda2; }
+/* MAP-KEY: the key - the classic map's four filters, each a toggle with the glyphs it hides beside it - stands ON the
+   foot: anchored to the row's own top edge (bottom: 100% of the foot it is a child of), so it rises with the row when
+   the row wraps and never floats at a guessed height (AUDIT SOC C10/D5). Out of the row's flow on purpose: a wrapping
+   flex row sizes itself as if every child sat on one line, and the key would stretch the hint's scrim to its width
+   and its own. A solid panel, so a press between its glyphs is not a drag of the map under it. Whole here, as the
+   hover card's rule is: the key was born in the pixel home. Its toggles wear that home's frame at the foot's size -
+   the gold pair while their kinds are shown, the ghost frame and a struck word while the store's flag hides them -
+   and the glyphs' words are in the rows' bone. */
+.hmkey { position: absolute; left: 0; bottom: calc(100% + 4px); width: max-content; max-width: calc(100vw - 36px);
+  display: grid; grid-template-columns: max-content auto; gap: 3px 10px; align-items: center;
+  padding: 6px 10px; border-radius: 4px; background: rgba(10, 12, 17, 0.94); pointer-events: auto; }
+.hmkeyrow { display: contents; }
+.hmkeyflt { pointer-events: auto; text-align: left; }
+.hmroot .act.hmkeyflt { min-height: 24px; padding: 2px 10px; font-size: 12px; }
+.hmroot .act.hmkeyflt:not(.on) { border-color: rgba(125,116,96,0.55); color: #7d7460; text-decoration: line-through;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.hmroot .act.hmkeyflt:not(.on):hover { color: #d8cfae; border-color: var(--brass); }
+.hmkeykinds { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+.hmkeykind { display: inline-flex; align-items: center; gap: 5px; pointer-events: auto; font-size: 11px;
+  color: #c5bda2; letter-spacing: 0.08em; text-transform: uppercase; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.hmkeykind.dim { opacity: 0.4; }
+.hmkeyrow.off .hmkeykind { opacity: 0.3; }
+.hmkeychip { flex: none; display: block; box-shadow: 0 0 0 1px rgba(0,0,0,0.8); }
+@media (max-width: 860px) {
+  .hmkey { max-width: calc(100vw - 24px); }
+  .hmkeyname { display: none; }   /* a phone keeps the toggles and the glyphs; each glyph's title names it */
+  /* the card rides up to clear the foot row here (bottom: 76px), which is where the key stands: while a place is
+     picked the key steps aside, or it would lie over the card's own Travel button */
+  .hmroot.hmcardup .hmkey { display: none; }
+}
 
 /* ── FT14: ONE ROOF (2026-09-15) ───────────────────────────────
    The features home stops being a list. Twenty-eight tiles in a

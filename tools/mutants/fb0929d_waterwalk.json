@@ -1,0 +1,92 @@
+[
+  {
+    "name": "WW-LID-S-the-sideways-pass-straddles-nothing",
+    "file": "src/player/collider.js",
+    "old": "    this._resolveCapsule(feet, hOut, height, Infinity, true);",
+    "new": "    this._resolveCapsule(feet, hOut, height);",
+    "tests": [
+      "test/fb0929d_waterwalk.test.js"
+    ]
+  },
+  {
+    "name": "WW-LID-S-the-straddle-reaches-the-head's-top",
+    "file": "src/player/collider.js",
+    "old": "const lowOneWay = straddle ? axis : true;",
+    "new": "const lowOneWay = straddle ? axis + CAPSULE_RADIUS : true;",
+    "tests": [
+      "test/fb0929d_waterwalk.test.js"
+    ]
+  },
+  {
+    "name": "WW-LID-B-a-refused-sideways-pass-is-taken",
+    "file": "src/player/collider.js",
+    "old": "    if (hOut.refused) { feet[0] = beforeX; feet[2] = beforeZ; }\n",
+    "new": "",
+    "tests": [
+      "test/fb0929d_waterwalk.test.js"
+    ]
+  },
+  {
+    "name": "WW-LID-H-the-head's-path-is-never-asked",
+    "file": "src/player/collider.js",
+    "old": "    if (feet[1] - entryY > SKIN && Number.isFinite(this.raycast(",
+    "new": "    if (false && Number.isFinite(this.raycast(",
+    "tests": [
+      "test/fb0929d_waterwalk.test.js"
+    ]
+  },
+  {
+    "name": "WW-LID-H-a-lift-under-a-metre-is-never-asked",
+    "file": "src/player/collider.js",
+    "old": "    if (feet[1] - entryY > SKIN && Number.isFinite(this.raycast(",
+    "new": "    if (feet[1] - entryY > 1.0 && Number.isFinite(this.raycast(",
+    "tests": [
+      "test/fb0929d_waterwalk.test.js"
+    ]
+  },
+  {
+    "name": "WW-LID-H-the-path-is-asked-from-the-feet",
+    "file": "src/player/collider.js",
+    "old": "this.raycast([feet[0], entryY + CAPSULE_RADIUS + axis - SKIN, feet[2]], UP, feet[1] - entryY + SKIN)",
+    "new": "this.raycast([feet[0], entryY, feet[2]], UP, feet[1] - entryY + SKIN)",
+    "tests": [
+      "test/fb0929d_waterwalk.test.js"
+    ]
+  },
+  {
+    "name": "WW-LID-H-the-ray-starts-on-the-head's-centre",
+    "file": "src/player/collider.js",
+    "old": "entryY + CAPSULE_RADIUS + axis - SKIN, feet[2]], UP, feet[1] - entryY + SKIN)",
+    "new": "entryY + CAPSULE_RADIUS + axis, feet[2]], UP, feet[1] - entryY)",
+    "tests": [
+      "test/fb0929d_waterwalk.test.js"
+    ]
+  },
+  {
+    "name": "WW-LID-H-the-refused-rise-is-kept",
+    "file": "src/player/collider.js",
+    "old": "      out.refused = true;\n      feet[1] = Math.max(entryY, floorFeet);\n    }\n  }",
+    "new": "      out.refused = true;\n      feet[1] += 0;\n    }\n  }",
+    "tests": [
+      "test/fb0929d_waterwalk.test.js"
+    ]
+  },
+  {
+    "name": "WW-LID-H-the-refusal-is-silent",
+    "file": "src/player/collider.js",
+    "old": "      out.refused = true;\n      feet[1] = Math.max(entryY, floorFeet);\n    }\n  }",
+    "new": "      feet[1] = Math.max(entryY, floorFeet);\n    }\n  }",
+    "tests": [
+      "test/fb0929d_waterwalk.test.js"
+    ]
+  },
+  {
+    "name": "WW-LID-L-a-refused-rung-is-headroom",
+    "file": "src/player/collider.js",
+    "old": "        if (startOut.refused) break;",
+    "new": "        if (false) break;",
+    "tests": [
+      "test/fb0929d_waterwalk.test.js"
+    ]
+  }
+]

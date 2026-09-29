@@ -928,7 +928,9 @@ export class Collider {
           // DISC28-G (Discord: in Veraten "the swimming physics persisted after leaving the water ... rose way up and
           // then fell into the void"): THE LAW IS ABOUT A BODY STRADDLING A FLOOR, and a RISING body whose head is still
           // under the surface straddles nothing - it is pressing into a ceiling. The rising vertical pass hands the
-          // body's axis (`oneWayFloor` a number): the surface is a floor only below the head's centre. The crouched
+          // body's axis (`oneWayFloor` a number): the surface is a floor only below the head's centre (WW-LID: so does
+          // the sideways pass - a water walker's stride put its lower sphere under a lintel over its head's centre, and
+          // PH1 set the body on it). The crouched
           // swimmer's axis is 0.2 against a 0.2625 step, so a stroke up into a ceiling brought the lower sphere within
           // its radius of the face while the head was still beneath it, and this arm set the whole body ON the
           // ceiling's top - out of the level, under the block's water plane, where it swam on up and fell. PH1's own
@@ -1010,7 +1012,7 @@ export class Collider {
     if (groundKey != null && (out.groundKey == null || groundKey !== 'dungeon')) out.groundKey = groundKey;
   }
 
-  _resolveCapsule(feet, out, height = CAPSULE_HEIGHT, standCeil = Infinity, rising = false) {
+  _resolveCapsule(feet, out, height = CAPSULE_HEIGHT, standCeil = Infinity, straddle = false) {
     // Two spheres: lower centered radius above the feet, upper below
     // the top. height varies with the player's stance (P12 crouch:
     // the PlayerHeightChanger controller heights) - passed per call
@@ -1091,8 +1093,9 @@ export class Collider {
     // the player's stances out, and every foe from 1.6 m to RIDE_HEIGHT out with them: a 2.4 m body under a 2.0 m
     // ceiling still sank and fell out of the level
     const tall = height > RIDE_HEIGHT || !!this._keepFloor;
-    // DISC28-G: the lower sphere's floor is one-way (PH1) - and, rising, only for a surface under the head's centre
-    const lowOneWay = rising ? axis : true;
+    // DISC28-G: the lower sphere's floor is one-way (PH1) - and, in the rising pass (and since WW-LID the sideways
+    // one), only for a surface the body straddles: under the head's centre
+    const lowOneWay = straddle ? axis : true;
     let lowFloor = -Infinity;
     for (let iter = 0; iter < 3; iter++) {
       if (tall) {
@@ -1165,6 +1168,19 @@ export class Collider {
         this._resolveSphere(probe, CAPSULE_RADIUS, probeOut);
         if (probe[1] < y - 1e-4) { feet[1] = Math.max(entryY, floorFeet); break; }   // still being pushed DOWN out of a ceiling -> too tight, revert (SQUEEZE1: never under a tall body's floor)
       }
+    }
+    // WW-LID (FIELD BUGS 2026-09-29d, Cruor on Discord: "Water walking is still evil ... I fell out the map again"): A
+    // RESOLVE NEVER CARRIES THE HEAD UP THROUGH A FACE. The clamp above answers a head a ceiling still pushes DOWN; a
+    // lift that took the head clean THROUGH one - the lower sphere's one-way floor set the body on a doorway's lintel,
+    // and the head sphere, its centre now over the room's ceiling, was pushed out on top of it - left nothing in, and
+    // kept its rise. Unity's CharacterController sweeps and never crosses a plane. So when a resolve has raised the
+    // body, the path its head's centre rose along is asked, and a face across it refuses the rise, as the clamp above
+    // does. The ray starts a skin under the centre: rayTriangle takes no hit nearer than 1e-4, and a head whose centre
+    // stood ON a ceiling's plane was lifted through it unasked. A refused rise says so (`out.refused`) - the sideways
+    // pass and the step ladder's rung read it (_moveStep).
+    if (feet[1] - entryY > SKIN && Number.isFinite(this.raycast([feet[0], entryY + CAPSULE_RADIUS + axis - SKIN, feet[2]], UP, feet[1] - entryY + SKIN))) {
+      out.refused = true;
+      feet[1] = Math.max(entryY, floorFeet);
     }
   }
 
@@ -1263,7 +1279,11 @@ export class Collider {
     feet[0] += dx;
     feet[2] += dz;
     const hOut = { grounded: false, hitCeiling: false, pushedDown: false };
-    this._resolveCapsule(feet, hOut, height);
+    this._resolveCapsule(feet, hOut, height, Infinity, true);   // WW-LID: a body moving sideways straddles a floor only below its head's centre
+    // WW-LID: and a sideways pass the resolve refused is not taken - the refusal reverts to the resolve's entry, which is
+    // the move itself, so a body with a rib through its waist and no room over it passed clean through the rib. A
+    // controller walking into it is stopped by it; the step ladder below then asks whether it is a step.
+    if (hOut.refused) { feet[0] = beforeX; feet[2] = beforeZ; }
     const movedSq = (feet[0] - beforeX) ** 2 + (feet[2] - beforeZ) ** 2;
     const wantedSq = dx * dx + dz * dz;
 
@@ -1290,6 +1310,7 @@ export class Collider {
         const startOut = { grounded: false, hitCeiling: false, pushedDown: false };
         this._resolveCapsule(raisedStart, startOut, height, standCeil);
         if (raisedStart[1] <= prevResolvedY + 1e-4) break;   // no headroom gained - the ladder tops out
+        if (startOut.refused) break;   // WW-LID: a rung the resolve refused (the head has no room there) is no headroom either - it read as the raised height itself
         prevResolvedY = raisedStart[1];
         // Forward from the RESOLVED (possibly ceiling-capped) height,
         // full intent.
@@ -1456,6 +1477,7 @@ export class Collider {
 
 const ZERO3 = [0, 0, 0];
 const TMP = [0, 0, 0];
+const UP = Object.freeze([0, 1, 0]);   // WW-LID: the head's rise, asked as a ray
 /** restFloor's limiter: the smaller of two one-sided grades that agree in sign, else 0. */
 const minmod = (a, b) => (a * b <= 0 ? 0 : Math.abs(a) < Math.abs(b) ? a : b);
 // AUDIT COL1 F9: the middle spheres' centres, reused. _resolveCapsule

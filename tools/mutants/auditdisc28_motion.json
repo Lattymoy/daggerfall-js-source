@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-DISC28-MO2-rising-kills-PH1",
     "file": "src/player/collider.js",
-    "old": "const lowOneWay = rising ? axis : true;",
-    "new": "const lowOneWay = rising ? false : true;",
+    "old": "const lowOneWay = straddle ? axis : true;",
+    "new": "const lowOneWay = straddle ? false : true;",
     "tests": [
       "test/disc28_swim.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-DISC28-MO2-rest-kills-PH1",
     "file": "src/player/collider.js",
-    "old": "const lowOneWay = rising ? axis : true;",
-    "new": "const lowOneWay = rising ? axis : false;",
+    "old": "const lowOneWay = straddle ? axis : true;",
+    "new": "const lowOneWay = straddle ? axis : false;",
     "tests": [
       "test/disc28_swim.test.js"
     ]
