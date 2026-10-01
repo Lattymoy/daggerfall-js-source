@@ -39,10 +39,11 @@ name: release-desktop
 # `latest` standing. Now: `version` resolves REL3's one number once and
 # every job reads it; the legs only BUILD and hand their files on; and
 # `publish` - which runs only when every leg passed - checks the set is
-# complete, writes the player-facing notes (the PATCH-NOTES-*.md the
-# release brings, scripts/desktopRelease.mjs), stages a DRAFT carrying
-# every file, and publishes it in one step. `latest` never names a
-# release that is half there.
+# complete, writes the player-facing notes (REL6: the `## Patch notes`
+# section of every pull request the release brings, read off GitHub by
+# scripts/desktopRelease.mjs), stages a DRAFT carrying every file, and
+# publishes it in one step. `latest` never names a release that is half
+# there.
 on:
   push:
     tags:
@@ -233,13 +234,13 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: read   # REL6: the notes are the merged pull requests' own
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # the notes diff PATCH-NOTES-*.md against the previous release's tag
-          # AUDIT INSTALL L1-1: this job holds contents: write, and checkout writes its token into .git/config -
-          # a PATCH-NOTES file committed as a link to it would have been read into the public release body.
-          # The notes read git's objects now (desktopRelease.mjs), and nothing in this job uses git auth.
+          fetch-depth: 0   # the notes read the merges since the previous release's tag
+          # AUDIT INSTALL L1-1: this job holds contents: write, and checkout writes its token into .git/config.
+          # Nothing in this job uses git auth, and nothing it publishes is read from the working tree.
           persist-credentials: false
 
       - uses: actions/setup-node@v4
@@ -259,8 +260,12 @@ jobs:
       - name: The set is whole
         run: node scripts/desktopRelease.mjs check release
 
+      # REL6: each merged pull request's `## Patch notes`, read with this
+      # job's token. A read that fails fails the step - notes are never
+      # published as notes there were none of.
       - name: Write the notes
         env:
+          GH_TOKEN: ${{ github.token }}
           TAG: ${{ needs.version.outputs.tag }}
         run: node scripts/desktopRelease.mjs notes "$TAG" > release-notes.md
 

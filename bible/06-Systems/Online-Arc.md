@@ -11765,7 +11765,7 @@ Asked how each character should start, Mac chose "Own + recent gains". The recor
 - Pins: `test/renown_char.test.js` (7); `test/renown_account.test.js` keeps RENOWN-ACCOUNT's rate and 0021 (3); the
   pins RENOWN-ACCOUNT had rewritten put back. Mutants: `tools/mutants/renown_char.json` (17 dead, 1 recorded
   equivalent); 211 restored records across RENOWN1, AUDIT RENOWN1, RAID4, AUDIT RAID, RENOWN-BAR, RENOWN3 and RENOWN4,
-  all dead. Patch notes: `PATCH-NOTES-Renown-Per-Character.md`.
+  all dead.
 
 ## BOARD-ON (2026-09-29, Mac: "Should we switch everything on?") - the Notice Board opened to everyone
 
@@ -11861,7 +11861,7 @@ Asked what to, Mac chose **"Drakes"** (an old Imperial coin): "250 Drakes", "1 D
 - Pins: `test/drakes.test.js` (2; red on the tree before): the balance's words and two refusals, and a sweep of the
   twelve files that show the currency for any word left saying "Mark"; the MARKS1, PROF and AUDIT 30/31 client pins
   read the new words. Mutants: `tools/mutants/drakes.json` (10, all dead); `audit31.json`'s past-balance record and
-  `prof6.json`'s writ-filled record re-aimed by content. Patch notes: `PATCH-NOTES-Drakes.md`.
+  `prof6.json`'s writ-filled record re-aimed by content.
 
 ## STRIKE-SHARED (2026-09-29, Mac: "Do #1") - a strike spell reaches a foe another player runs
 
@@ -11900,7 +11900,7 @@ else).
   this deploys, at the one after. The mark reaches the service at the next checkpoint; until then a re-boot forgives
   the same save again, to the same end (RESTORE's own law).
 - Pins: `test/loan_amnesty.test.js` (6, red on the tree before). Mutants: `tools/mutants/loan_amnesty.json` (14, all
-  dead); `survtiers3.json`'s two cite records re-aimed. Patch notes: `PATCH-NOTES-Loan-Amnesty.md`.
+  dead); `survtiers3.json`'s two cite records re-aimed.
 
 ## PROF7 (2026-09-29, Mac: "Do it") - Hunting, the Skinning Knife and Outfitting
 
@@ -11924,8 +11924,7 @@ since SWITCH-ON - no switch of its own.
   (the service pin's 500, before it shipped); the book never applied a harvest's `extraStore` (PROF4's Resin); the
   Professions page's Smithing unlocks lost three rows to a comment.
 - **Pinned:** `test/prof7_law.test.js`, `test/prof7_service.test.js`, `test/prof7_client.test.js` (the done-when
-  through the real Worker); `tools/mutants/prof7.json` (119: 118 dead, one recorded equivalent). Patch notes:
-  `PATCH-NOTES-Professions-Hunting-Outfitting.md`.
+  through the real Worker); `tools/mutants/prof7.json` (119: 118 dead, one recorded equivalent).
 
 ## AUDIT 32 (2026-09-30, Mac: "Audit this") - PROF7 audited
 
@@ -12073,7 +12072,7 @@ What failed was what the HUD SAID of it, and the reports read that as nothing gi
   `maintenance` is an answer the book keeps and asks again (`profBook.js` RETRY), as it keeps `server` and `rate`.
 - **Pinned:** `test/gathersaid.test.js` (7, each red on the code before with only the new names shimmed); the prof2,
   prof4 and prof7 client pins read the one line. Mutants: `tools/mutants/gathersaid.json` (13, all dead); prof4's
-  Resin and prof7's butchery-count records re-aimed by content. Patch notes: `PATCH-NOTES-What-a-Harvest-Says.md`.
+  Resin and prof7's butchery-count records re-aimed by content.
 - **For Mac** (found in the trace, not changed here): the classic skin's pause has no pages, so a classic player online
   can neither see nor withdraw the Stores, nor read a rank past the toasts and the chip (CLASSIC-PAGES, below); Foraging's own tools, used from
   the pack online, run Foraging's quest and give the pack its goods with no profession XP; a new logger in the
@@ -12102,8 +12101,7 @@ every vein table); the woods were the one gap.
 - **The XP curve is unchanged**: rank 10 is 67 plain tier-1 harvests or 46 clean ones (22 XP), inside a day's 60.
 - **Pinned:** `test/pineshare.test.js` (5; four red on the law before with only the new names shimmed, the fifth the
   Mountain's guard); prof4's law, service and client pins name the Oak they mean. Mutants:
-  `tools/mutants/pineshare.json` (7, all dead); prof4's twenty tree records re-run, all dead. Patch notes:
-  `PATCH-NOTES-Pine-in-Every-Forest.md`.
+  `tools/mutants/pineshare.json` (7, all dead); prof4's twenty tree records re-run, all dead.
 
 ## CLASSIC-PAGES (2026-09-30, Mac: "Enhanced pages + key") - the Professions and Stores on the classic skin
 
@@ -12134,8 +12132,7 @@ nothing said.
   the profHud lays the professions' own sheet on every skin online.
 - **Pinned:** `test/classicpages.test.js` (4, each red on the code before with only the new names shimmed); the key's
   count pins (inputactions, qs2, viewtoggle, prof1's Professions group) and AUDIT 29 B2 flipped. Mutants:
-  `tools/mutants/classicpages.json` (9, all dead); gathersaid's two records re-aimed by content. Patch notes:
-  `PATCH-NOTES-Professions-on-the-Classic-Skin.md`.
+  `tools/mutants/classicpages.json` (9, all dead); gathersaid's two records re-aimed by content.
 
 ## GOLD-MARKET (2026-09-30, Mac: "Allow trading with gold or drakes on the marketplace"; "Gold listings, walled") - the market in gold or Drakes
 
@@ -12176,7 +12173,7 @@ gold can now change hands the way a guild deposit or a house's price does - in t
   migration and the service before the client: an old service refuses every gold word as a bad act, and an old client
   beside a new service sees the Drakes' market as before.
 - **Pinned:** `test/goldmarket_service.test.js` (8) and `test/goldmarket_client.test.js` (9); the schema's table list
-  (accountworker ACC1b). Mutants: `tools/mutants/goldmarket.json` (34, all dead). Patch notes: `PATCH-NOTES-The-Gold-Market.md`.
+  (accountworker ACC1b). Mutants: `tools/mutants/goldmarket.json` (34, all dead).
 
 ## PROF8 (2026-09-30, Mac: "Continue the arc"; "XP follows your rank") - Fishing with the net
 
@@ -12195,7 +12192,7 @@ record; in short:
 - **The service**: **acct41**, migration `0042_fishing.sql`. Deploy the migration and the service before the client: an
   old service refuses every haul as a bad node.
 - **Pinned:** `test/prof8_law.test.js` (7), `test/prof8_service.test.js` (3), `test/prof8_client.test.js` (12). Mutants:
-  `tools/mutants/prof8.json` (34, all dead). Patch notes: `PATCH-NOTES-Fishing.md`.
+  `tools/mutants/prof8.json` (34, all dead).
 
 ## EMPIRE-ACCOUNT (2026-10-01, the field - maya: "i deposited alot of letters of credit in a random bank somewhere but theyre gone in the daggerfall bank"; Regi: "irs taken money again"; Mac chose "2": online, every region one Empire-wide account) - one bank account online
 
@@ -12232,5 +12229,4 @@ record; in short:
 - Pins: `test/empireaccount.test.js` (10); `test/realm5.test.js`, `test/goldmarket_service.test.js` and
   `test/guild1b.test.js` re-aimed at the one account, and `test/fb0930b_bankregion.test.js`'s online half. Mutants:
   `tools/mutants/empireaccount.json` (41, all dead); `realm0.json` (4), `realm5.json` (1), `auditrealm.json` (1),
-  `fb0930b_bankregion.json` (3) and `survtiers3.json` (2) re-aimed by content. Patch notes:
-  `PATCH-NOTES-One-Bank-Account-Online.md`.
+  `fb0930b_bankregion.json` (3) and `survtiers3.json` (2) re-aimed by content.

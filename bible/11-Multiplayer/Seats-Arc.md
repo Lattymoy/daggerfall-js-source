@@ -898,7 +898,7 @@ Every law in Home.md's Process section, and what it demands of this arc:
 - **Season 0.** The first Season is a four-week open beta. At its end seats, influence, fortifications and history
   are wiped; Marks, the Stores and profession tracks are kept (players' effort is never wiped). Season 1 begins at
   the next Turning (9.1).
-- **Patch notes** for every slice, in the house style (`PATCH-NOTES-*.md`, Discord-sized, player-facing).
+- **Patch notes** for every slice, in the house style (the pull request's `## Patch notes`, Discord-sized, player-facing).
 - **Moderation.** Guild names and tags pass the name filter they already pass; heraldry is a fixed palette and fixed
   devices, so nothing offensive can be drawn on a banner. Moderators (MOD1) may **void a siege** (`/siege void`) - a
   history row, the holder keeping the seat - when a fight was won by an exploit found after it.

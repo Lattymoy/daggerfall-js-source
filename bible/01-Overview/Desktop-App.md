@@ -153,12 +153,11 @@ writes the notes once, stages a DRAFT with every file attached, and
 publishes it in one PATCH. `latest` never names a release that is half
 there, and a hand re-cut of an old build does not take `latest` back
 (`shouldMarkLatest`, REL3's numeric compare). The notes are the
-player's: the PATCH-NOTES-*.md added or changed since the previous
-`app-v` tag, with GitHub's list of merged changes beneath them - the
-launcher's news panel shows the part above that list (DA10). A changed
-file brings only its NEWS, decided by what each line says (Audit-Install
-R2-C1: by position, app-v0.1.4534 lost four new fixes). Pinned in
-`test/rel4_release.test.js`; `tools/mutants/rel4.json`, 15, all dead.
+player's: the patch notes of everything merged since the previous
+`app-v` tag (REL6, below), with GitHub's list of merged changes beneath
+them - the launcher's news panel shows the part above that list (DA10).
+Pinned in `test/rel4_release.test.js`; `tools/mutants/rel4.json`, 14,
+all dead.
 
 **REL5 (2026-09-29): THE DOWNLOADS HAVE NAMES THAT DO NOT MOVE.** The
 build number is out of every file name - `DaggerfallOnline-win-x64-setup.exe`,
@@ -188,6 +187,32 @@ the merge until that release is `latest`, the four links are dead (and
 stay dead if that release fails). Before merging: upload the four
 downloads, under the new names, to the current latest release (or merge
 the landing page's links after the first REL5 release).
+
+**REL6 (2026-10-01, Mac: "Remove patch notes from the codebase and
+somehow refrain from patch notes filling up the codebase"): THE NOTES
+COME OFF THE PULL REQUEST.** The notes were `PATCH-NOTES-*.md` files at
+the repository's root, one for nearly every merge - 113 by #501, each
+read by one release and then kept in the tree for good. Now a pull
+request carries its player-facing notes in its own description, under a
+`## Patch notes` heading (`## Patch notes: <title>`, its parts under
+`###`) - `.github/pull_request_template.md` asks for it, and leaving the
+template's comment alone says there is nothing for players. The publish
+job's `notes` reads the first-parent merges since the previous `app-v`
+tag (GitHub's "Merge pull request #N", a squash's "(#N)"), asks `gh api`
+for each pull request with the job's own token (`pull-requests: read`),
+and prints each section lifted to the release's `# Patch Notes: <title>`,
+newest first. Only a MERGED pull request opened by the repository's own
+people (`NOTES_AUTHORS`: owner, member, collaborator) brings notes - a
+description stays editable after the merge, and the job prints it as the
+official release; an outside contributor's notes are a maintainer's to
+carry. A read that fails fails the step: a published release is never
+re-cut, so notes are never published as notes there were none of. The
+published releases are the archive. No patch-notes file may come back:
+`test/rel4_release.test.js` fails any in the tree (`PATCH_NOTES_PATH_RE`,
+over the index and the untracked). Retired with the files: the
+file-diff reader (`addedNotes`; Audit-Install's L1-1, L3-3, R2-C1 and
+R2-C4 findings were about it), its fixtures and twenty-two mutant
+records; `tools/mutants/rel6.json`, 31, all dead.
 
 
 `.github/workflows/release-desktop.yml` cuts a release through any
@@ -383,7 +408,7 @@ dagger://launcher, its own origin; SANDBOXED, with a two-word bridge
 files; a CSP with nothing remote and nothing inline; every word, the
 patch notes from GitHub included, reaching the page as text; the brand's
 own night, wordmark, rule and gem, every colour one the Enhanced skin
-uses (U63's law), and the two faces on disk (`fonts/README.md` - it runs
+uses (U63's law), and the two faces on disk (`app/launcher/fonts/README.md` - it runs
 before anything is known about the network). In order:
 
 1. **The update**, inside DA6's two gates. On the updater transport the

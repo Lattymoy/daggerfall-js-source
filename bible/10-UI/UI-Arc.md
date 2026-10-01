@@ -18648,4 +18648,4 @@ gradient and its padding `14px 16px 16px`; with the fix, none and `0px`.
   three windows draw none of them; no board sheet (the board's, the professions', the bounty board's, the classic
   skin's) names one, and the classic sheet keeps every rule of the board's window and nothing else; the toasts' sheet
   names none of the board's. `audit31_tabs` and `audit30_client` follow the new classes. Mutants:
-  `tools/mutants/toast_split.json` (18, all dead). Patch notes: `PATCH-NOTES-Notifications-Fixed.md`.
+  `tools/mutants/toast_split.json` (18, all dead).

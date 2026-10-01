@@ -178,6 +178,26 @@ shas, which is the one thing that must not be published). The
 previous repository was kept private under another name. If a sha
 cited anywhere fails to resolve, that is why, and Mac holds the map.
 
+PATCH NOTES LIVE ON THE PULL REQUEST (REL6, 2026-10-01, Mac: "somehow
+refrain from patch notes filling up the codebase"). A change players
+will notice says so in its pull request's description, under `## Patch
+notes: <title>` - the template asks, the release reads it there
+(`scripts/desktopRelease.mjs notes`), and the published release is the
+archive. Never commit a patch-notes file: 113 piled up at the root, each
+read once, and `test/rel4_release.test.js` now fails the suite on one.
+
+THE BIBLE GROWS BY ITS RECORDS, NOT ITS INDEXES (GROWTH1, 2026-10-01,
+Mac: "bible cleanup", then "Growth rules"). Active-Arcs and Testing.md
+are the ways in; the pages they name are the records. A new Active-Arcs
+entry stands above its GROWTH1 marker in at most 700 characters; a
+Testing.md row says what its file pins now in at most 1,000, rewritten,
+never appended to; a dated page in 01-Overview (field bugs, an audit, a
+bug list, a handoff) is at most 32 KB - a batch that outgrows its page
+starts the next one. What was longer on the day is frozen at its length
+(`tools/bibleGrowth.json`; `node tools/bibleGrowth.mjs --write` only
+ever lowers it), and `test/growth1_bible.test.js` fails the suite on
+growth.
+
 ## Sections
 
 - `01-Overview/` - vision, port doctrine, phase plan, Port-Ledger (departures/quirks/unported)

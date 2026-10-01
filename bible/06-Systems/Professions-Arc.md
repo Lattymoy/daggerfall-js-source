@@ -467,7 +467,7 @@ else Foraging's Fish (1605). A **trophy** is the species' own Deep Waters templa
 ## 8. The interface
 
 DECIDED (Mac: "actual UI integration for life skills"). Everything is drawn in the Enhanced Plus UI - the one UI
-since MENU-TOGGLE and PLUS-DEAD (`PATCH-NOTES-One-UI-Choice.md`) - in its brass and bone, scaled by the UI scale,
+since MENU-TOGGLE and PLUS-DEAD - in its brass and bone, scaled by the UI scale,
 laid out for the phone's touch layer as for the desktop.
 
 - **The prompt**: bottom centre above the hotbar - "[E] Chop Oak - Logging 34". **The hover** (World Tooltips):
@@ -2458,7 +2458,7 @@ asked). What sections 5.2, 6 and 3.3 left open for PROF8, DECIDED here, and what
   lane - the act's `hand` is none, as the Basket's); no splash is played at the tug (no splash clip is wired for an act);
   peers do not see the throw (5.1's pose activity field is none of the acts' yet).
 - **Pinned**: `test/prof8_law.test.js` (7), `test/prof8_service.test.js` (3, through the real Worker), `test/prof8_client
-  .test.js` (12). Mutants: `tools/mutants/prof8.json` (34, all dead). Patch notes: `PATCH-NOTES-Fishing.md`.
+  .test.js` (12). Mutants: `tools/mutants/prof8.json` (34, all dead).
 
 ## 31. NODE-MARKS - every node on the compass, and its glow, as built (BUILT 2026-10-01)
 
@@ -2514,8 +2514,7 @@ and nothing in the world set a node apart from the ground about it. DECIDED here
   own switch does).
 - **Pinned**: `test/nodemarks.test.js` (19); `tools/nodeGlowProbe.mjs` compiles, links and draws the glow in a real WebGL2
   context over a stand-in node and wall, and through the world host's own pass with the renderer's typed camera, and
-  reads the frame back (14 checks). Mutants: `tools/mutants/nodemarks.json` (58, all dead). Patch notes:
-  `PATCH-NOTES-Nodes-on-the-Compass.md`.
+  reads the frame back (14 checks). Mutants: `tools/mutants/nodemarks.json` (58, all dead).
 
 ### AUDIT NODE-MARKS (2026-10-01, Mac: "Audit this")
 

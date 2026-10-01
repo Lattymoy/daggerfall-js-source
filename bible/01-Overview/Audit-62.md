@@ -122,7 +122,7 @@ the lanes tagged them; C0-C38 in the fleet's own ledger).
   archives and reports TODO with them, asserting nothing either way, with
   the body it owes written out beside it. The real bake waits on ARENA2.
 
-### Seasons and the render pipeline (`bible/07-Rendering/Seasons-Iliac-Bay.md`, `bible/07-Rendering/Render-Arc.md`)
+### Seasons and the render pipeline (`bible/07-Rendering/Seasons-Iliac-Bay.md`, `bible/07-Rendering/Rendering-Arc.md`)
 
 - **F26 - every seasonal flat was uploaded upside-down** (HIGH,
   `systems/seasonsIliacBayAssets.js`). The bundle reader hands PNG

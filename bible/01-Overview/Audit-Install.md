@@ -384,8 +384,8 @@ notes' symlink refusal, hostile tag names; L1-1, L1-3, L1-4.
   an added line that keeps REWRITE_SHARE (0.6) of its words in one line
   its hunk removed is a rewrite, a line removed word for word anywhere
   in the file has moved, a heading is never news alone. The release is
-  replayed from fixtures (`test/fixtures/notes/`, the real diff and
-  notes). Replayed against round 1's rule over all 62 release ranges, the
+  replayed from fixtures (the real diff and notes, RETIRED with the
+  reader by REL6). Replayed against round 1's rule over all 62 release ranges, the
   four fixes are the one difference. Over the 80 single commits that
   wrote notes ten differ, read line by line: new facts position lost
   (the bed-rest fix, a condensation's one new line, lines that grew),
@@ -422,7 +422,7 @@ notes' symlink refusal, hostile tag names; L1-1, L1-3, L1-4.
   whatever is `latest` at that moment, with no merge in between.
 - **R2-C7 (P2 by lane E): the release this PR cuts said only "Fixes and
   improvements."** - the launcher's own debut under an empty NEW entry.
-  `PATCH-NOTES-The-Launcher.md`, in the player's words.
+  The Launcher's patch notes, in the player's words.
 - **R2-C8 (P3, suspected - no Mac here): a Mac is likely asked for its
   Downloads again after every update.** macOS keys a privacy grant to
   the code's designated requirement, and an ad-hoc signature's is its

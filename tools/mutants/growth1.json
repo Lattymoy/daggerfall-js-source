@@ -1,0 +1,202 @@
+[
+  {
+    "name": "GROWTH1-1-the-row-cap-moves",
+    "file": "tools/bibleGrowth.mjs",
+    "old": "export const ROW_MAX = 1000;",
+    "new": "export const ROW_MAX = 1200;",
+    "tests": ["test/growth1_bible.test.js"],
+    "note": "The cap the docs state and the cap the suite holds would part."
+  },
+  {
+    "name": "GROWTH1-2-the-entry-cap-moves",
+    "file": "tools/bibleGrowth.mjs",
+    "old": "export const ENTRY_MAX = 700;",
+    "new": "export const ENTRY_MAX = 900;",
+    "tests": ["test/growth1_bible.test.js"],
+    "note": "The cap the marker states and the cap the suite holds would part."
+  },
+  {
+    "name": "GROWTH1-3-the-page-cap-moves",
+    "file": "tools/bibleGrowth.mjs",
+    "old": "export const PAGE_MAX = 32 * 1024;",
+    "new": "export const PAGE_MAX = 64 * 1024;",
+    "tests": ["test/growth1_bible.test.js"],
+    "note": "A dated page could double before anything said so."
+  },
+  {
+    "name": "GROWTH1-4-a-row-at-the-cap-is-past-it",
+    "file": "tools/bibleGrowth.mjs",
+    "old": "    if (len <= cap) continue;\n    problems.push(frozen\n      ? `Testing.md's",
+    "new": "    if (len < cap) continue;\n    problems.push(frozen\n      ? `Testing.md's",
+    "tests": ["test/growth1_bible.test.js"],
+    "note": "A row of exactly ROW_MAX characters would fail the suite."
+  },
+  {
+    "name": "GROWTH1-5-a-frozen-row-may-grow",
+    "file": "tools/bibleGrowth.mjs",
+    "old": "    const cap = frozen ? frozenRows[file] : ROW_MAX;",
+    "new": "    const cap = frozen ? Infinity : ROW_MAX;",
+    "tests": ["test/growth1_bible.test.js"],
+    "note": "A row already long could keep growing for ever - the very rot GROWTH1 stops."
+  },
+  {
+    "name": "GROWTH1-6-a-frozen-row-is-held-to-the-cap",
+    "file": "tools/bibleGrowth.mjs",
+    "old": "    const cap = frozen ? frozenRows[file] : ROW_MAX;",
+    "new": "    const cap = ROW_MAX;",
+    "tests": ["test/growth1_bible.test.js"],
+    "note": "Every one of the 1,191 frozen rows would fail the suite on the day."
+  },
+  {
+    "name": "GROWTH1-7-the-record-never-lets-go-of-a-row",
+    "file": "tools/bibleGrowth.mjs",
+    "old": "  problems.push(...stale(frozenRows, rows, ROW_MAX, (f) => `Testing.md's ${f} row`));\n",
+    "new": "",
+    "tests": ["test/growth1_bible.test.js"],
+    "note": "A row rewritten within its cap, or deleted, would stay frozen in the record - a record that lies."
+  },
+  {
+    "name": "GROWTH1-8-at-the-cap-is-still-frozen",
+    "file": "tools/bibleGrowth.mjs",
+    "old": "    if (size === undefined || size <= cap) {",
+    "new": "    if (size === undefined || size < cap) {",
+    "tests": ["test/growth1_bible.test.js"],
+    "note": "A row brought down to exactly the cap would stay in the record."
+  },
+  {
+    "name": "GROWTH1-9-a-gone-row-stays-frozen",
+    "file": "tools/bibleGrowth.mjs",
+    "old": "    if (size === undefined || size <= cap) {",
+    "new": "    if (size !== undefined && size <= cap) {",
+    "tests": ["test/growth1_bible.test.js"],
+    "note": "A deleted test file's row would stay frozen in the record."
+  },
+  {
+    "name": "GROWTH1-10-a-lost-marker-is-silent",
+    "file": "tools/bibleGrowth.mjs",
+    "old": "  if (!arcs) {\n    problems.push(",
+    "new": "  if (!arcs && false) {\n    problems.push(",
+    "tests": ["test/growth1_bible.test.js"],
+    "note": "Deleting the marker would switch the Active-Arcs rule off - or throw."
+  },
+  {
+    "name": "GROWTH1-11-an-entry-at-the-cap-is-past-it",
+    "file": "tools/bibleGrowth.mjs",
+    "old": "      if (entry.length > ENTRY_MAX) {",
+    "new": "      if (entry.length >= ENTRY_MAX) {",
+    "tests": ["test/growth1_bible.test.js"],
+    "note": "An entry of exactly ENTRY_MAX characters would fail the suite."
+  },
+  {
+    "name": "GROWTH1-12-new-entries-unchecked",
+    "file": "tools/bibleGrowth.mjs",
+    "old": "      if (entry.length > ENTRY_MAX) {",
+    "new": "      if (false) {",
+    "tests": ["test/growth1_bible.test.js"],
+    "note": "A new Active-Arcs entry could be an essay again."
+  },
+  {
+    "name": "GROWTH1-13-the-old-entries-may-grow",
+    "file": "tools/bibleGrowth.mjs",
+    "old": "    if (arcs.below > record.activeArcsBelow) {",
+    "new": "    if (arcs.below > record.activeArcsBelow + 1) {",
+    "tests": ["test/growth1_bible.test.js"],
+    "note": "An old entry could be added to, a character at a time."
+  },
+  {
+    "name": "GROWTH1-14-a-page-at-the-cap-is-past-it",
+    "file": "tools/bibleGrowth.mjs",
+    "old": "    if (size <= cap) continue;",
+    "new": "    if (size < cap) continue;",
+    "tests": ["test/growth1_bible.test.js"],
+    "note": "A dated page of exactly PAGE_MAX bytes would fail the suite."
+  },
+  {
+    "name": "GROWTH1-15-a-frozen-page-may-grow",
+    "file": "tools/bibleGrowth.mjs",
+    "old": "    const cap = frozen ? frozenPages[name] : PAGE_MAX;",
+    "new": "    const cap = frozen ? Infinity : PAGE_MAX;",
+    "tests": ["test/growth1_bible.test.js"],
+    "note": "A frozen page could take part after part again."
+  },
+  {
+    "name": "GROWTH1-16-the-record-never-lets-go-of-a-page",
+    "file": "tools/bibleGrowth.mjs",
+    "old": "  problems.push(...stale(frozenPages, dated, PAGE_MAX, (n) => n));\n",
+    "new": "",
+    "tests": ["test/growth1_bible.test.js"],
+    "note": "A page trimmed within its cap would stay frozen in the record."
+  },
+  {
+    "name": "GROWTH1-17-the-audit-log-is-a-dated-page",
+    "file": "tools/bibleGrowth.mjs",
+    "old": " && name !== 'Audit-Log.md';",
+    "new": ";",
+    "tests": ["test/growth1_bible.test.js"],
+    "note": "The index of audits (98 KB) would be held to a dated page's cap."
+  },
+  {
+    "name": "GROWTH1-18-a-bare-bug-list-is-no-dated-page",
+    "file": "tools/bibleGrowth.mjs",
+    "old": "(?:-.+)?\\.md$/",
+    "new": "-.+\\.md$/",
+    "tests": ["test/growth1_bible.test.js"],
+    "note": "Mac-Bugs.md and Janome-Bugs.md would grow unchecked."
+  },
+  {
+    "name": "GROWTH1-19-write-raises-the-record",
+    "file": "tools/bibleGrowth.mjs",
+    "old": "    .map(([name, was]) => [name, Math.min(was, now.get(name))]));",
+    "new": "    .map(([name]) => [name, now.get(name)]));",
+    "tests": ["test/growth1_bible.test.js"],
+    "note": "--write would freeze a grown row at its new length - the ratchet turned backwards."
+  },
+  {
+    "name": "GROWTH1-20-write-keeps-what-it-should-let-go",
+    "file": "tools/bibleGrowth.mjs",
+    "old": "    .filter(([name]) => now.has(name) && now.get(name) > cap)\n",
+    "new": "",
+    "tests": ["test/growth1_bible.test.js"],
+    "note": "--write would keep rows within their cap, and gone ones, frozen."
+  },
+  {
+    "name": "GROWTH1-21-write-raises-the-old-block",
+    "file": "tools/bibleGrowth.mjs",
+    "old": "    activeArcsBelow: arcs ? Math.min(record.activeArcsBelow, arcs.below) : record.activeArcsBelow,",
+    "new": "    activeArcsBelow: arcs ? arcs.below : record.activeArcsBelow,",
+    "tests": ["test/growth1_bible.test.js"],
+    "note": "--write would freeze the old entries at whatever they had grown to."
+  },
+  {
+    "name": "GROWTH1-22-the-record-unsorted",
+    "file": "tools/bibleGrowth.mjs",
+    "old": "    const keys = Object.keys(o).sort();",
+    "new": "    const keys = Object.keys(o);",
+    "tests": ["test/growth1_bible.test.js"],
+    "note": "The record would be rewritten in whatever order the bible was read - a diff of noise."
+  },
+  {
+    "name": "GROWTH1-23-a-row-measured-with-its-count",
+    "file": "tools/bibleGrowth.mjs",
+    "old": "/^\\| ([a-zA-Z0-9_]+\\.test\\.js) \\| \\d+ \\| (.*)$/gm",
+    "new": "/^\\| ([a-zA-Z0-9_]+\\.test\\.js) \\| (\\d+ \\| .*)$/gm",
+    "tests": ["test/growth1_bible.test.js"],
+    "note": "A test added to a file would grow its row - the count is not prose."
+  },
+  {
+    "name": "GROWTH1-24-the-marker-s-own-line-counted",
+    "file": "tools/bibleGrowth.mjs",
+    "old": "  return { above: lines.slice(0, at).filter((l) => l.startsWith('- ')), below: lines.slice(at + 1).join('\\n').length };",
+    "new": "  return { above: lines.slice(0, at).filter((l) => l.startsWith('- ')), below: lines.slice(at).join('\\n').length };",
+    "tests": ["test/growth1_bible.test.js"],
+    "note": "Rewording the marker would read as the old entries growing."
+  },
+  {
+    "name": "GROWTH1-25-the-check-passes-anything",
+    "file": "tools/bibleGrowth.mjs",
+    "old": "  return problems.length ? 1 : 0;",
+    "new": "  return 0;",
+    "tests": ["test/growth1_bible.test.js"],
+    "note": "The command would say nothing failed - the check a person runs before a push."
+  }
+]
