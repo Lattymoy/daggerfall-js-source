@@ -54,7 +54,7 @@ Four read-only audits covered the relay (`server/src/index.js`), the account ser
 | SCALE1 | The account service's half: fewer writes per request, metrics, indexes, the 100-parameter fix, gated deploys, D1 bookmark before migrations, client retry discipline | No | **Shipped in this PR** |
 | SCALE2 | The reconnect wave, from the client - NO relay deploy: one token for a connect's rooms (reused within a minute, never twice into one room, one mint on the wire), a tokenless refusal asked again while signed in, the channels' rejoin jittered | No | **Shipped** (after SCALE1) |
 | SCALE2b | The relay's own, ONE announced relay deploy: the O(1) socket index, the hello path in memory, bounded caches, cross-room timeouts, relay metrics, idle rooms allowed to sleep (foes and memory only when someone else is there) | Yes, once | Next |
-| SCALE3 | The load harness: a Node bot fleet (guest → token → hello → poses, chat and checkpoints at real rates) against local workerd, then a staging pair; the deploy-storm scenario | No | After SCALE2 |
+| SCALE3 | The load harness: a Node bot fleet (guest → realm character → token → hello, one tab each) against local workerd, then a staging pair; the deploy-storm scenario in both token modes | No | **Shipped** (the storm; poses, chat and checkpoints at rate are its next scenarios) |
 | SCALE4 | D1 discipline: sweeps moved to a `scheduled()` cron, retention for the tables that only grow, the witness tables redesigned, reads made write-free and served from read replicas (Sessions API), one heartbeat replacing the mail, beat and board polls, 304s | No | After SCALE3's numbers |
 | SCALE5 | Past about 1-2k players: the hub split (presence and social state per account, world chat over shard rooms), slimmer or binary poses, pose-only halo frames | Yes | When the metrics say |
 | SCALE6 | Abuse and backups: Turnstile on guest creation, /64 IPv6 rate keys, bans, report and ignore, `ALLOWED_ORIGIN`, R2 snapshots, a hub export | Some | Alongside |
@@ -118,3 +118,35 @@ The relay was split out of SCALE2 on reading: every piece of the reconnect storm
 - ACC1d-8 / 9 / 10 / 12
 - the three TOKEN-WAIT mutants
 - RENOWN1's character mutant
+
+## SCALE3: the fleet, and the first measured numbers
+
+`npm run load` (`tools/loadBots.mjs`) stands up both Workers in local workerd, using one throwaway key pair and a throwaway database. It seats N bots, each a guest with a realm character; the relay's door signs `rc` off that character, so a bot without one is refused. Then it runs a relay deploy: every bot opens its four rooms in the same instant, as every tab does when the relay drops everyone. The four rooms are its cell and a halo beside it around Daggerfall city (cell 12,13), the hub, and a region channel. Each bot is one tab: a single peer id in every room, and the connect claims the account's seat (`cl`, ONE-SEAT).
+
+The storm runs in both token modes:
+- **per-socket:** the client before SCALE2.
+- **per-connect:** SCALE2's minter.
+
+For each mode the report gives mints, mint latency, time to each room's welcome, and every refusal in the relay's own words. Two limits apply:
+- **Bots per local run.** The service allows sixty guests per fifteen minutes from one address, so sixty bots is the local ceiling. Each run's database is new.
+- **Never production.** `--account`/`--relay` point it at a staging pair; nothing in it names a production address, and a pin holds that.
+
+**2026-09-30, local workerd, 60 bots, 240 sockets** (`scale3.test.js` pins how a run is summed up):
+
+| Mode | Mints | Mint p50 / p95 | Welcome p50 / p95 | Refused |
+|---|---|---|---|---|
+| per-socket (before SCALE2) | 240 (4 a bot) | 3.9 s / 4.7 s | 5.5 s / 7.2 s | none |
+| per-connect (SCALE2) | 60 (1 a bot) | 0.73 s / 0.75 s | 2.1 s / 2.4 s | none |
+
+These times are workerd's D1, which is SQLite on local disk with no network between the Worker and its database. The absolute times are not production's; the ratios are what carry over:
+- A quarter of the mints.
+- About a sixth of the mint latency.
+- About a third of the time to welcome.
+
+The per-socket welcome p95 already stood at 7.2 s, against the client's 8 s `TOKEN_WAIT_MS`, with sixty players on one machine. That margin is what a production D1's network round trips would have spent: past it, the storm's tokenless hellos were refused, and before SCALE2 the players were offline for good.
+
+What the fleet found about itself on the way, each fixed:
+- A bot that used a fresh peer id in every room was read by the hub as a second tab and refused ("online in another tab"). A tab's id is one in every room.
+- Node reports some of a run's own closing sockets as 1006. They were counted as drops and retried after the run.
+
+**Next scenarios:** poses at 10 Hz in a crowd, chat at its rates, and checkpoints every 120 s. Then a staging pair, where the numbers are production's.

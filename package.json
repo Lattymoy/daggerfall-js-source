@@ -28,6 +28,7 @@
     "gunproto": "node tools/gunProtoProbe.mjs",
     "blood": "node tools/bloodProbe.mjs",
     "account": "node tools/accountProbe.mjs",
+    "load": "node tools/loadBots.mjs",
     "acctcard": "node tools/accountCardProbe.mjs",
     "savetile": "node tools/saveTileProbe.mjs",
     "chargenphone": "node tools/chargenPhoneProbe.mjs",
