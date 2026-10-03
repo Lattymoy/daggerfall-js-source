@@ -21,9 +21,11 @@ import { BARREL } from './navalShips.js';
 /** A fire barrel at the yard (gold). */
 export const BARREL_PRICE = 40;
 /** The mending at sea: quiet this long first (s), then this share of the whole a second at a full crew, this share of
- *  that with none aboard, up to this share of the whole; a wreck afloat again past this share of her hull. */
-export const FIELD_QUIET_S = 30;
-export const FIELD_MEND_PER_S = 0.002;
+ *  that with none aboard, up to this share of the whole; a wreck afloat again past this share of her hull.
+ *  QUICK-REPAIRS (2026-10-03, Mac: "allow for more streamlined repairs"): her hands turn to sooner (15 s, from 30) and
+ *  work twice as fast (0.4% a second, from 0.2% - half her whole in a little over two minutes at a full crew). */
+export const FIELD_QUIET_S = 15;
+export const FIELD_MEND_PER_S = 0.004;
 export const FIELD_MEND_ALONE = 0.5;
 export const FIELD_MEND_CAP = 0.5;
 export const FIELD_REFLOAT = 0.15;
@@ -90,13 +92,24 @@ export function fieldMend(damage, dt, { crewed, crewShare, scale = 1 }) {
 // times her crew's share (SEA_REPAIR_ALONE with none aboard) and her spirits' mending - on her hull first, then her
 // canvas, ALL THE WAY TO WHOLE, a store spent for every STORE_POINTS of work it makes good (AUDIT CC-D1). A wreck floats again past
 // FIELD_REFLOAT as the free mending's. The free mending to FIELD_MEND_CAP stands beside it, as it was.
+//
+// QUICK-REPAIRS (2026-10-03, Mac: "allow for more streamlined repairs"): her carpenter's crew work twice as fast
+// (SEA_REPAIR_PER_S), and need no order for it - once the fight is over (the mending's own quiet) her hands spend her
+// stores on their own (the host's AutoRepair, Features > Naval Combat > Crew repairs on their own) - and thriftily: on
+// what the free mending cannot reach (`paidDamage`: her hull and canvas past FIELD_MEND_CAP), so no store goes on work
+// her hands do for nothing. A crewed boat's hands work wherever she lies; a boat with none aboard only under her
+// captain's own hands (the boat the player is on). The order MAKE REPAIRS is the quick way and DAMAGE CONTROL now: her
+// stores spent from the first plank, and with a hostile ship near her carpenters at the work in the fight itself at
+// SEA_REPAIR_UNDER_FIRE of the pace - her fires left to burn, and a wreck refloated only once the fight is over (afloat
+// under fire, the next ball wrecked her again). With no enemy near and a fire aboard or a ball lately in her, the
+// order waits for the quiet, as it did.
 
 /** AUDIT CC-D1 (Mac: "Priced per hull, no port use"): A STORE OF TIMBER, PITCH AND CANVAS MAKES GOOD STORE_POINTS OF
  *  WORK - a hull point a point, canvas at its yard price's share of the hull's (SAIL_WORK) - and costs STORE_YARD_SHARE
  *  of what the yard asks for that work. A flat 25 gold for a TENTH of any ship had ten of them make a wrecked Small
  *  Ship whole for 250 gold against the yard's 6000, in the harbour beside it. So a bigger ship needs more stores, and
  *  stores are what they cost: a yard's work carried to sea, at a carpenter's discount. */
-export const STORE_POINTS = 40;
+export const STORE_POINTS = 64;   // TOUGHER-SHIPS: 40 before - the same share of a toughened hull (navalShips.js SHIP_TOUGHNESS)
 export const STORE_YARD_SHARE = 0.7;
 export const SAIL_WORK = REPAIR_PRICE.sail / REPAIR_PRICE.hull;
 /** A store's price (gold). */
@@ -113,8 +126,11 @@ export const GROG_MIN = 10;
 /** The repairs at sea: this share of the whole a second at a full crew, this share of that with none aboard (AUDIT
  *  CC-D2: and with every hand of a crewed boat lost - her captain at the work alone; a crewed boat at no crew held a
  *  repair order that never did anything). */
-export const SEA_REPAIR_PER_S = 0.008;
+export const SEA_REPAIR_PER_S = 0.016;   // QUICK-REPAIRS: 0.008 before - a wreck whole in about a minute at a full crew
 export const SEA_REPAIR_ALONE = 0.5;
+/** QUICK-REPAIRS: DAMAGE CONTROL - the repairs' pace under fire (the order MAKE REPAIRS with a hostile ship near, or
+ *  struck within the quiet). */
+export const SEA_REPAIR_UNDER_FIRE = 0.125;   // about a third of what a ship her size deals her (a fight's damage is a toughened hull's)
 
 /** A round of grog's price for a crew of `crew`. */
 export const grogPrice = (crew) => Math.max(GROG_MIN, Math.round(Math.max(0, crew) * GROG_PER_HAND));
@@ -163,6 +179,14 @@ export function seaRepair(damage, dt, { crewed, crewShare, scale = 1, budget = I
     out.work = out.hull + out.sail * SAIL_WORK;
   }
   return out;
+}
+/** QUICK-REPAIRS: her hurts as the stores pay for them on her hands' own - a part under FIELD_MEND_CAP of its whole reads
+ *  whole (her hands make it good for nothing), the rest as it is; `free` false (a crewed boat with every hand lost: no
+ *  free mending - fieldMend's own rate), all of it as it is. `seaRepair` over it spends nothing on free work.
+ * @param {{ hull: number, maxHull: number, sail: number, maxSail: number }} damage */
+export function paidDamage(damage, { free = true } = {}) {
+  const past = (have, whole) => (free && whole > 0 && have < whole * FIELD_MEND_CAP - 1e-9 ? whole : have);
+  return { hull: past(damage.hull, damage.maxHull), maxHull: damage.maxHull, sail: past(damage.sail, damage.maxSail), maxSail: damage.maxSail };
 }
 /** Whether she wants anything the repairs make good. */
 export const wantsRepair = (damage) => damage.hull < damage.maxHull - 1e-6 || (damage.maxSail > 0 && damage.sail < damage.maxSail - 1e-6);

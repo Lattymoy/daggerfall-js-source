@@ -18,10 +18,19 @@
 //
 // FLOTSAM. A ship sunk rather than taken gives up FLOTSAM_OF her lots as casks afloat (navalShots.js dropFlotsam),
 // each a lot of her hold; a boat that sails through one hauls it into its own cargo.
+//
+// SALVAGE (2026-10-03, Mac: "allow sunken vessels to provide nessecary materials so you dont have to rely on the port") -
+// beside her casks a sunk ship leaves her WRECKAGE afloat: a floater as a cask is, its lot SALVAGE_LOT. A boat that sails
+// through it (or a swimmer who reaches it) hauls in what a carpenter and a gunner can use - her timber, pitch and canvas
+// as CARPENTER'S STORES (navalStores.js), SALVAGE_SHARE of her hull's whole in their work (navalYard.js STORE_POINTS), at
+// least one; and her dry powder as SALVAGE_BARRELS fire barrels, for a stern that rolls them. What the yard sold, the sea
+// now gives back: a captain who sinks what she meets mends her ship and fills her barrels without making port.
 
 import { mulberry32 } from '../../combat/bloodArt.js';
 import { NOTORIETY } from './navalLaw.js';
 import { HULL_PRICES } from '../comeSailAwayBoat.js';   // SHIP-CLAIM: a claimed prize's deed, at a share of her hull's price
+import { hullBuild } from './navalShips.js';
+import { STORE_POINTS } from './navalYard.js';
 
 export const HOLD_KEYS = Object.freeze({
   pirate: Object.freeze(['S', 'E', 'Q']),
@@ -72,6 +81,25 @@ export function holdKeys(shipClass, seed) {
   for (let i = 0; i < lots; i++) out.push(keys[Math.floor(rng() * keys.length) % keys.length]);
   if (shipClass.flagship) out[out.length - 1] = STRONGBOX_KEY;
   return out;
+}
+
+/** SALVAGE: the wreckage's lot - never one of LOT_KEYS (a hold's draw); the wire says it on a key of its own. */
+export const SALVAGE_LOT = 'salvage';
+/** SALVAGE: her stores' work as a share of her hull's whole, and the fire barrels her powder fills. */
+export const SALVAGE_SHARE = 0.4;
+export const SALVAGE_BARRELS = 2;
+/** Whether a floater's lot is a wreck's salvage. */
+export const isSalvage = (lot) => lot === SALVAGE_LOT;
+/**
+ * SALVAGE: what a sunk ship's wreckage gives up - `{ stores, barrels }`: her stores (SALVAGE_SHARE of her hull's points
+ * in a store's work, at least one) and her powder (SALVAGE_BARRELS for a hull that carried guns). Nothing for no class.
+ */
+export function salvageOf(shipClass) {
+  if (!shipClass) return { stores: 0, barrels: 0 };
+  return {
+    stores: Math.max(1, Math.round((shipClass.hullHp * SALVAGE_SHARE) / STORE_POINTS)),
+    barrels: hullBuild(shipClass.hull).gun ? SALVAGE_BARRELS : 0,
+  };
 }
 
 /** The lots that float free when she sinks: FLOTSAM_OF of them, at least one - the first of her keys. */

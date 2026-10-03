@@ -673,7 +673,7 @@ test('AUDIT NAV1 (online #15) A CASK\'S CLAIM HELD TO ITS END: an answer lost is
   const gone = sinkFor(q);
   for (let t = 0; t < 60 && q.get('a').s.host._sea.has(gone.id); t += 1) q.run(1);
   q.run(1);
-  assert.deepEqual(Object.keys(q.get('a').s.host.word((p) => p)).filter((k) => q.get('a').s.host.word((p) => p)[k]?.length), ['f'], 'a\'s word: her casks alone');
+  assert.deepEqual(Object.keys(q.get('a').s.host.word((p) => p)).filter((k) => q.get('a').s.host.word((p) => p)[k]?.length), ['f', 'w'], 'a\'s word: her casks and her wreckage alone');   // PIN MOVED (SALVAGE): her wreckage on `w`
   assert.ok(casksOf(q.get('b'), 'a').length >= 1);
   for (const f of casksOf(q.get('a'))) q.get('a').s.host._shots.removeFloater(f.id);   // hauled in by a's own
   assert.equal(q.get('a').s.host.word((p) => p), null, 'a says nothing now');

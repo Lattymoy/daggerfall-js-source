@@ -240,10 +240,10 @@
     "note": "AUDIT CREW (PIN MOVED): re-aimed by content at the line the audit changed."
   },
   {
-    "name": "SCH-quiet-unread",
+    "name": "SCH-the-pace-under-fire-unread",
     "file": "src/scenes/navalHost.js",
-    "old": "        if (s.crew.order === CREW_ORDERS.repair) repairStep(b, s, d);   // SEA-REPAIR\n",
-    "new": "      }\n      {\n        if (s.crew.order === CREW_ORDERS.repair) repairStep(b, s, d);   // SEA-REPAIR\n",
+    "old": "(underFire ? SEA_REPAIR_UNDER_FIRE : 1)",
+    "new": "1",
     "tests": [
       "test/shipcrew.test.js"
     ]
@@ -269,8 +269,8 @@
   {
     "name": "SCH-spent-unsaid",
     "file": "src/scenes/navalHost.js",
-    "old": "deps.say?.(`${mate ? `${mate}: ` : ''}The carpenter's stores are spent, Captain.`, 4); }",
-    "new": "}",
+    "old": "else if (spent) { s.crew.give(CREW_ORDERS.stand); deps.say?.(`${mate ? `${mate}: ` : ''}The carpenter's stores are spent, Captain.`, 4); }",
+    "new": "else if (spent) { s.crew.give(CREW_ORDERS.stand); }",
     "tests": [
       "test/shipcrew.test.js"
     ]
@@ -278,8 +278,8 @@
   {
     "name": "SCH-save-mates-dropped",
     "file": "src/scenes/navalHost.js",
-    "old": "barrels: st.guns.barrels, mates: st.crew.snapshot(), credit: st.credit };",
-    "new": "barrels: st.guns.barrels, credit: st.credit };",
+    "old": "{ ...savedRecord(st.damage, st.hull, st.credit), barrels: st.guns.barrels, mates: st.crew.snapshot() };",
+    "new": "{ ...savedRecord(st.damage, st.hull, st.credit), barrels: st.guns.barrels };",
     "tests": [
       "test/shipcrew.test.js"
     ]

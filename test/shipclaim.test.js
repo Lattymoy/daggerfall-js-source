@@ -17,7 +17,7 @@ import { HARBOUR_LEAVE, SHIP_FADE_S } from '../src/scenes/navalHost.js';
 import { PRIZE_DEED_SHARE, prizeDeedValue } from '../src/systems/naval/navalPlunder.js';
 import { mintDeed, mintBoatItem, BOAT_DEED_TEMPLATE, BOAT_PARTS_TEMPLATE } from '../src/systems/comeSailAwayItems.js';
 import { HULL_PRICES } from '../src/systems/comeSailAwayBoat.js';
-import { hullBuild, classById } from '../src/systems/naval/navalShips.js';
+import { hullBuild, classById, firstBuildOf } from '../src/systems/naval/navalShips.js';
 import { GRAPPLE_S } from '../src/systems/naval/navalBoarding.js';
 import { SHIP_STATES } from '../src/systems/naval/navalDamage.js';
 import { forwardOfYaw, quatOfYaw } from '../src/systems/naval/navalAI.js';
@@ -350,7 +350,10 @@ test('SHIP-CLAIM kept by both saves: the naval save holds her hurts and her empt
   const csaSave = JSON.parse(JSON.stringify(h.rt.getSaveData()));
   const rec = navalSave.boats[uid];
   assert.ok(rec, 'her record by her UID');
-  assert.deepEqual([rec.hull, rec.sail, rec.crew, rec.state, rec.mates.hands], [Math.round(st.damage.hull), Math.round(st.damage.sail), 0, SHIP_STATES.afloat, []]);
+  // PIN MOVED (TOUGHER-SHIPS): her hurts saved on her first build's scale, to the hundredth (navalHost.js savedRecord)
+  const first = firstBuildOf(2), onFirst = (v, whole, then) => Math.round((v / whole) * then * 100) / 100;
+  assert.deepEqual([rec.hull, rec.sail, rec.maxHull, rec.maxSail, rec.crew, rec.state, rec.mates.hands],
+    [onFirst(st.damage.hull, st.damage.maxHull, first.hullHp), onFirst(st.damage.sail, st.damage.maxSail, first.sailHp), first.hullHp, first.sailHp, 0, SHIP_STATES.afloat, []]);
   assert.ok(csaSave.placedBoats.some((p) => p.UID === uid && p.Hull === 2));
   // a new game loads it
   const g = await claimSea({ save: navalSave });
@@ -362,7 +365,8 @@ test('SHIP-CLAIM kept by both saves: the naval save holds her hurts and her empt
   closeV(quatRotate(back.GameObject.rotation, [0, 0, 1]), forwardOfYaw(was.yaw), 1e-5, 'heading as she lay');
   assert.deepEqual(back.Cargo.Items.map((it) => it.name), was.hold, 'her hold aboard her');
   const st2 = g.host._myState(back);
-  assert.deepEqual([st2.damage.hull, st2.damage.sail, st2.damage.crew, st2.crew.hands.length], [Math.round(st.damage.hull), Math.round(st.damage.sail), 0, 0]);
+  assert.ok(Math.abs(st2.damage.hull - st.damage.hull) < 0.02 && Math.abs(st2.damage.sail - st.damage.sail) < 0.02, `her hurts as she was (${st2.damage.hull} ${st.damage.hull})`);   // PIN MOVED (TOUGHER-SHIPS): read back by her share
+  assert.deepEqual([st2.damage.crew, st2.crew.hands.length], [0, 0]);
 });
 
 test('SHIP-CLAIM a harbour\'s ship claimed is not stood at her berth again today - she is mine where I took her (SHIP-LIFE\'s roll notes her gone, as one that sailed); the rest stand again (mutants: her berth kept)', async () => {

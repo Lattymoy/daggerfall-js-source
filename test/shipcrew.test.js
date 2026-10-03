@@ -8,14 +8,14 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { sea, readyPool } from './navalSea.mjs';
-import { navalHitData } from '../src/systems/naval/navalWire.js';
-import { HULL } from '../src/systems/naval/navalShips.js';
+import { navalHitData, NAVAL_HIT_MAX } from '../src/systems/naval/navalWire.js';
+import { HULL, hullBuild } from '../src/systems/naval/navalShips.js';
 import {
   createShipCrew, crewCard, orderRows, handName, spiritsOf, reloadScaleOf, mendScaleOf, handsBonusOf, CREW_ORDERS, ORDER_TEXT,
   MORALE_START, MORALE_EVENT, LOSSES_CAP, SEA_DECAY_S, PORT_RISE_S, PORT_CAP, SING_MIN, GUNS_RELOAD, HIGH_SPIRITS, LOW_SPIRITS,
 } from '../src/systems/naval/shipCrew.js';
 import { crewRoster, createCrewLife, CHANTY_FIRST_S } from '../src/systems/naval/crewLife.js';
-import { seaRepair, wantsRepair, provisionOffer, grogPrice, SEA_REPAIR_PER_S, STORE_POINTS, STORE_PRICE, STORES_STOCK, FIELD_QUIET_S, FIELD_MEND_CAP, storesToWhole } from '../src/systems/naval/navalYard.js';
+import { seaRepair, wantsRepair, provisionOffer, grogPrice, SEA_REPAIR_PER_S, SEA_REPAIR_UNDER_FIRE, STORE_POINTS, STORE_PRICE, STORES_STOCK, FIELD_QUIET_S, FIELD_MEND_CAP, storesToWhole } from '../src/systems/naval/navalYard.js';
 import { mintStores, storesIn, spendStore, STORES_TEMPLATE } from '../src/systems/naval/navalStores.js';
 import { createGunDeck } from '../src/systems/naval/navalGunnery.js';
 import { yardText } from '../src/ui/navalYardWindow.js';
@@ -176,13 +176,15 @@ test('SEA-REPAIR on the host: MAKE REPAIRS mends her to whole out of the fight\'
   assert.ok(h.log.say.includes(`${mate}: ${ORDER_TEXT.repair.said}`), 'her First Mate answers');
   for (let t = 0; t < FIELD_QUIET_S + 5; t += 0.1) h.host.frame(0.1);   // a save's hurts: quiet first
   assert.equal(h.host.hudModel().ship.repairing, true);
-  // a pirate near: the work stops while she threatens, and goes on once she is gone
+  // PIN MOVED (QUICK-REPAIRS): a pirate near - DAMAGE CONTROL, the work goes on under her guns at SEA_REPAIR_UNDER_FIRE of the
+  // pace (it stood still while she threatened), and at the full pace once she is gone
   const pid = h.host.spawnShip('pirateBrig', { range: 200, temper: 'bold' });
   for (let t = 0; t < 1; t += 0.1) h.host.frame(0.1);
   const held = h.host.hudModel().ship.hull;
   for (let t = 0; t < 3; t += 0.1) { h.host._sea.get(pid).ship.pos = [0, 0, 200]; h.host.frame(0.1); }
-  assert.equal(h.host.hudModel().ship.repairing, false, 'no repairs with a pirate in the offing');
-  assert.equal(h.host.hudModel().ship.hull, held, 'nothing made good');
+  assert.equal(h.host.hudModel().ship.repairing, true, 'damage control with a pirate in the offing');
+  const under = h.host.hudModel().ship.hull - held, pace = SEA_REPAIR_PER_S * mendScaleOf(h.host.crewOf(h.boat).morale) * 3;
+  assert.ok(Math.abs(under - pace * SEA_REPAIR_UNDER_FIRE) < pace * 0.05, `made good at the pace under fire (${under.toFixed(4)} of ${(pace * SEA_REPAIR_UNDER_FIRE).toFixed(4)})`);
   h.host._sea.delete(pid);
   for (let t = 0; t < 400 && h.host.crewOf(h.boat).order === CREW_ORDERS.repair; t += 0.1) h.host.frame(0.1);
   assert.ok(Math.abs(h.host.hudModel().ship.hull - 1) < 1e-9, 'whole');
@@ -221,7 +223,7 @@ test('SHIP-CREW on the host: A HAND LOST FALLS BY NAME and wears their spirits; 
   const e = w.host._sea.get(id);
   w.host.frame(0.1);
   const m0 = w.host.crewOf(w.boat).morale;
-  w.host.applyPeerHit('local', navalHitData('local', { n: e.n, hull: Math.floor(e.ship.damage.hull - 1) }));
+  for (let left = Math.floor(e.ship.damage.hull - 1); left > 0; left -= NAVAL_HIT_MAX) w.host.applyPeerHit('local', navalHitData('local', { n: e.n, hull: Math.min(left, NAVAL_HIT_MAX) }));   // PIN MOVED (TOUGHER-SHIPS): her hull past one hit's most
   w.host.frame(0.1);
   assert.equal(e.ship.damage.state, 'struck');
   assert.equal(w.host.crewOf(w.boat).morale, m0 + MORALE_EVENT.win, 'she struck to us: spirits up');
@@ -252,7 +254,7 @@ test('SHIP-CREW on the host: A HAND LOST FALLS BY NAME and wears their spirits; 
   assert.ok(model, 'the yard\'s window');
   {
     const r = model.buyProvision('stores');
-    assert.equal(r.ok, true); assert.equal(storesIn(y.hold), Math.max(STORES_STOCK, storesToWhole({ hull: 0, maxHull: 420, sail: 0, maxSail: 160 })), 'her hold stocked to what her wreck takes (PIN MOVED: AUDIT CC-D1)');
+    assert.equal(r.ok, true); assert.equal(storesIn(y.hold), Math.max(STORES_STOCK, storesToWhole({ hull: 0, maxHull: hullBuild(HULL.SmallShip).hullHp, sail: 0, maxSail: hullBuild(HULL.SmallShip).sailHp })), 'her hold stocked to what her wreck takes (PIN MOVED: AUDIT CC-D1; TOUGHER-SHIPS: her build\'s)');
     const m0 = y.host.crewOf(y.boat).morale;
     assert.equal(model.buyProvision('grog').ok, true);
     assert.equal(y.host.crewOf(y.boat).morale, m0 + MORALE_EVENT.grog);

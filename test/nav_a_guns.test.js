@@ -11,7 +11,7 @@ import {
   BOW_ARC, STERN_ARC, RIPPLE_S, RELOAD_UNDERMANNED, RELOAD_SINGLEHANDED, BARREL_DROP_S,
   bearingOf, sideForBearing, aimSolution, volleyLaunches, reloadSeconds, createGunDeck,
 } from '../src/systems/naval/navalGunnery.js';
-import { GUNS, BARREL, batteryOf, batteriesOf, HULL_BUILDS } from '../src/systems/naval/navalShips.js';
+import { GUNS, BARREL, batteryOf, batteriesOf, HULL_BUILDS, SHIP_TOUGHNESS } from '../src/systems/naval/navalShips.js';
 import {
   SHIP_STATES, STRUCK_AT, SINK_SECONDS, WATERLINE_BAND, HOLED_BONUS, FIRE_HP, FIRE_SECONDS, FIRE_STACK, FIRE_SAIL, FIRE_CREW_S, BRACE_TAKEN, BARE_POLES,
   hitZone, shotDamage, createShipDamage, repairCost, REPAIR_PRICE,
@@ -254,7 +254,8 @@ test('NAV-A a ship\'s life: she strikes her colours at STRUCK_AT, sinks at nough
   near(f.fire, FIRE_SECONDS, 0);
   f.step(100);
   near(f.hull, 100 - FIRE_HP * FIRE_SECONDS * 2, 1e-9, 'each out after its own seconds');
-  assert.equal(f.crew, 5 - Math.floor(FIRE_SECONDS * 2 / FIRE_CREW_S), 'a man each FIRE_CREW_S of burning');
+  // PIN MOVED (TOUGHER-SHIPS): a man's worth each FIRE_CREW_S of burning, a toughened crew losing 1/SHIP_TOUGHNESS of a man for it
+  assert.equal(f.crew, 5 - Math.floor(Math.floor(FIRE_SECONDS * 2 / FIRE_CREW_S) / SHIP_TOUGHNESS), 'a man\'s worth each FIRE_CREW_S of burning');
   assert.equal(f.fires, 0);
   assert.ok(FIRE_STACK >= 2);
   // the way

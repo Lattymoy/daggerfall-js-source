@@ -53,6 +53,10 @@
 //   l - AUDIT BAY A18: the lanes' packets the owner has seen spent (sunk, struck, boarded, taken) - each her
 //       voyage's seed (systems/naval/seaLanes.js), the last NAVAL_WIRE_SPENT - so no player stands her again where she
 //       went down (a player who never saw her go stood her afresh, to every player's sight)
+//   w - SALVAGE (2026-10-03): the wreckage a sunk ship leaves afloat in the owner's sea, each [id, x, y, z, cls] as a
+//       cask of `f` (its lot navalPlunder.js SALVAGE_LOT, never one of LOT_KEYS) - hauled in and claimed as a cask is;
+//       at most NAVAL_WIRE_CASKS. A key of its own as `k`, `m` and `l` are: an older build reads none of it, where a lot
+//       past its LOT_KEYS would fail its door and the whole word with it
 //   `k`, `m` and `l` are keys of their own because an older build's door checks every field of `s` and `p` by count: it
 //   passes a word with them whole and reads none of them, and a newer door reads an older build's word as saying none.
 //   Nor are theirs counted: a newer build's longer entry reads as its first fields, never the whole word refused.
@@ -75,7 +79,7 @@
 
 import { POSE_BOUND, POSE_Y_BOUND } from '../../net/wire.js';
 import { SHIP_CLASSES, CROWNS } from './navalShips.js';
-import { LOT_KEYS } from './navalPlunder.js';
+import { LOT_KEYS, SALVAGE_LOT, isSalvage } from './navalPlunder.js';
 import { NOTORIETY } from './navalLaw.js';
 import { DENSITY_KEYS } from './navalDirector.js';
 import { REGION_NAMES } from '../../formats/mapsFile.js';
@@ -149,15 +153,18 @@ export function navalWireRecord(view, toWire = (p) => p) {
     b.push([ba.id >>> 0, r2(p[0]), r2(p[1]), r2(p[2]), Number.isInteger(ba.shooter) && ba.shooter >= 0 && ba.shooter <= 0xffff ? ba.shooter : -1]);
   }
   const out = { s, v, b };
-  const f = [];
+  const f = [], w = [];
   for (const c of view?.casks ?? []) {
-    if (f.length >= NAVAL_WIRE_CASKS) break;
+    const salvage = isSalvage(c.lot);   // SALVAGE: the wreckage on `w`
+    if ((salvage ? w : f).length >= NAVAL_WIRE_CASKS) continue;
     const cls = SHIP_CLASSES.findIndex((k) => k.id === c.from), lot = LOT_KEYS.indexOf(c.lot);
-    if (cls < 0 || lot < 0 || !Array.isArray(c.pos)) continue;
+    if (cls < 0 || (!salvage && lot < 0) || !Array.isArray(c.pos)) continue;
     const p = toWire(c.pos.map((x) => Math.round(x * 2) / 2));
-    f.push([c.id >>> 0, r2(p[0]), r2(p[1]), r2(p[2]), cls, lot]);
+    if (salvage) w.push([c.id >>> 0, r2(p[0]), r2(p[1]), r2(p[2]), cls]);
+    else f.push([c.id >>> 0, r2(p[0]), r2(p[1]), r2(p[2]), cls, lot]);
   }
   if (f.length) out.f = f;
+  if (w.length) out.w = w;
   const me = view?.me;
   if (me) out.p = [pct(me.hull), me.crippled ? 1 : 0, me.boarders === false ? 0 : 1];
   if (k.length) out.k = k;
@@ -169,7 +176,7 @@ export function navalWireRecord(view, toWire = (p) => p) {
   if (t >= 0 && view?.traffic !== TRAFFIC_DEFAULT) out.t = t;
   const l = (view?.spent ?? []).filter((x) => int(x, 0, U32)).slice(-NAVAL_WIRE_SPENT);   // AUDIT BAY A18
   if (l.length) out.l = l;
-  return s.length || v.length || b.length || out.p || out.n || out.t !== undefined || out.f || out.l ? out : null;
+  return s.length || v.length || b.length || out.p || out.n || out.t !== undefined || out.f || out.w || out.l ? out : null;
 }
 
 /** AUDIT NAV2 F1/F3/F5: the captains' key through the door - a Map from a ship's number to her temper, her captain's
@@ -250,6 +257,15 @@ export function validNavalRecord(raw) {
       const pos = [w[1], w[2], w[3]];
       if (!inBounds(pos) || !int(w[4], 0, SHIP_CLASSES.length - 1) || !int(w[5], 0, LOT_KEYS.length - 1)) return null;
       casks.push({ id: w[0], pos, from: SHIP_CLASSES[w[4]].id, lot: LOT_KEYS[w[5]] });
+    }
+  }
+  if (raw.w !== undefined) {   // SALVAGE: the wreckage - casks to the reader, its lot the salvage's
+    if (!Array.isArray(raw.w) || raw.w.length > NAVAL_WIRE_CASKS) return null;
+    for (const w of raw.w) {
+      if (!Array.isArray(w) || w.length !== 5 || !w.every(Number.isFinite) || !int(w[0], 0, U32)) return null;
+      const pos = [w[1], w[2], w[3]];
+      if (!inBounds(pos) || !int(w[4], 0, SHIP_CLASSES.length - 1)) return null;
+      casks.push({ id: w[0], pos, from: SHIP_CLASSES[w[4]].id, lot: SALVAGE_LOT });
     }
   }
   // AUDIT NAV2 F1-F3/F5: the captains and the owner's boat - an older build's word says neither

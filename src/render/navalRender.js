@@ -347,7 +347,11 @@ export class NavalRenderer {
     const alpha = [], add = [];
     for (const p of frame.particles ?? []) (p.blend === 'add' ? add : alpha).push(p);
     for (const b of frame.balls ?? []) alpha.push({ pos: b.pos, size: b.gun === 'heavy' ? 0.34 : b.gun === 'swivel' ? 0.16 : 0.26, color: [0.07, 0.07, 0.08, 1], rot: 0, blend: 'alpha', solid: true, kind: 'ball' });
-    for (const f of frame.floaters ?? []) alpha.push({ pos: [f.pos[0], f.pos[1] + 0.35, f.pos[2]], size: 0.9, color: f.kind === 'barrel' ? [0.45, 0.2, 0.08, 1] : [0.52, 0.38, 0.2, 1], rot: 0, blend: 'alpha', solid: true, kind: f.kind });
+    // SALVAGE: a sunk ship's wreckage (`wreck`, the host's mark) floats larger and paler than her casks - broken timber
+    for (const f of frame.floaters ?? []) {
+      const wreck = f.kind === 'flotsam' && !!f.wreck;
+      alpha.push({ pos: [f.pos[0], f.pos[1] + (wreck ? 0.25 : 0.35), f.pos[2]], size: wreck ? 1.4 : 0.9, color: f.kind === 'barrel' ? [0.45, 0.2, 0.08, 1] : wreck ? [0.66, 0.54, 0.36, 1] : [0.52, 0.38, 0.2, 1], rot: 0, blend: 'alpha', solid: true, kind: f.kind });
+    }
     // back to front, so the blended layers stack as they stand
     const d2 = (p) => (p.pos[0] - eye[0]) ** 2 + (p.pos[1] - eye[1]) ** 2 + (p.pos[2] - eye[2]) ** 2;
     alpha.sort((a, b) => d2(b) - d2(a));

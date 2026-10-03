@@ -613,8 +613,8 @@
   {
     "name": "NAV1O-wire-self-alone-unsaid",
     "file": "src/systems/naval/navalWire.js",
-    "old": "return s.length || v.length || b.length || out.p || out.n || out.t !== undefined || out.f || out.l ? out : null;",
-    "new": "return s.length || v.length || b.length || out.t !== undefined || out.f || out.l ? out : null;",
+    "old": "return s.length || v.length || b.length || out.p || out.n || out.t !== undefined || out.f || out.w || out.l ? out : null;",
+    "new": "return s.length || v.length || b.length || out.t !== undefined || out.f || out.w || out.l ? out : null;",
     "tests": [
       "test/nav_g_online.test.js",
       "test/navaudit_online.test.js"
@@ -859,7 +859,7 @@
   {
     "name": "NAV1O-wire-casks-uncapped",
     "file": "src/systems/naval/navalWire.js",
-    "old": "    if (f.length >= NAVAL_WIRE_CASKS) break;\n",
+    "old": "    if ((salvage ? w : f).length >= NAVAL_WIRE_CASKS) continue;\n",
     "new": "",
     "tests": [
       "test/nav_g_online.test.js"

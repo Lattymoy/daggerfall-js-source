@@ -274,8 +274,8 @@
   {
     "name": "AUDIT-NAV2-F26-the-ram-unbounded",
     "file": "src/scenes/navalHost.js",
-    "old": "        strike(t, { hull: Math.min(dealt, room), sail: 0, crew: Math.round(dealt / 40) }, e.id);",
-    "new": "        strike(t, { hull: dealt, sail: 0, crew: Math.round(dealt / 40) }, e.id);",
+    "old": "        strike(t, { hull: Math.min(dealt, room), sail: 0, crew: ramMen(dealt, random()) }, e.id);",
+    "new": "        strike(t, { hull: dealt, sail: 0, crew: ramMen(dealt, random()) }, e.id);",
     "tests": [
       "test/auditnav2_captains.test.js"
     ]

@@ -364,8 +364,8 @@
   {
     "name": "NAV1H-the-camera-part-unread",
     "file": "src/scenes/world.js",
-    "old": "      : key === 'AimCamera' ? getPref('naval-aim-camera') !== false : undefined),",
-    "new": "      : undefined),",
+    "old": "      : key === 'AimCamera' ? getPref('naval-aim-camera') !== false : key === 'AutoRepair' ? getPref('naval-auto-repair') !== false : undefined),",
+    "new": "      : key === 'AutoRepair' ? getPref('naval-auto-repair') !== false : undefined),",
     "tests": [
       "test/navaudit_helm.test.js"
     ]
@@ -761,8 +761,8 @@
   {
     "name": "NAV1H-the-quiet-unread",
     "file": "src/scenes/navalHost.js",
-    "old": "      if (clock - s.damage.lastHitAt >= FIELD_QUIET_S && !hostile) {",
-    "new": "      if (!hostile) {",
+    "old": "      const quiet = clock - s.damage.lastHitAt >= FIELD_QUIET_S && !hostile;",
+    "new": "      const quiet = !hostile;",
     "tests": [
       "test/navaudit_helm.test.js"
     ],
@@ -780,8 +780,8 @@
   {
     "name": "NAV1H-a-hostile-unread-at-sea",
     "file": "src/scenes/navalHost.js",
-    "old": "FIELD_QUIET_S && !hostile) {",
-    "new": "FIELD_QUIET_S) {",
+    "old": "FIELD_QUIET_S && !hostile;",
+    "new": "FIELD_QUIET_S;",
     "tests": [
       "test/navaudit_helm.test.js"
     ],

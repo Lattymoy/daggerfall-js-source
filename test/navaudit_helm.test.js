@@ -585,12 +585,14 @@ async function atPort(o = {}) {
 
 test('AUDIT NAV1 H13 the shipwright: a port\'s yard sells hull, canvas, hands and fire barrels by the piece - as much of each as the purse pays for, never past her whole; MAKE HER WHOLE the four in that order as far as the purse goes; he stands at the helm in a port\'s waters, her way under YARD_SPEED and no hostile near, Activate his door and the plate\'s hint naming him (mutants: a row past her whole, the purse unread, the order, the port unread, her way unread, a hostile unread)', async () => {
   assert.deepEqual(YARD_PRICE, { hull: REPAIR_PRICE.hull, sail: REPAIR_PRICE.sail, crew: REPAIR_PRICE.crew, barrels: BARREL_PRICE });
-  const o = yardOffer(hurt(), 1, 1240);
+  // PIN MOVED (TOUGHER-SHIPS): a hull point 7 gold and a yard of canvas 4 (12 and 6 before) - the purse 723, short of her hull
+  assert.deepEqual([REPAIR_PRICE.hull, REPAIR_PRICE.sail], [7, 4]);
+  const o = yardOffer(hurt(), 1, 723);
   assert.deepEqual(o.rows.map((r) => [r.id, r.missing, r.whole, r.afford, r.cost]), [
-    ['hull', 158, 158 * 12, 103, 103 * 12], ['sail', 80, 480, 80, 480], ['crew', 6, 180, 6, 180], ['barrels', 3, 120, 3, 120],
+    ['hull', 158, 158 * 7, 103, 103 * 7], ['sail', 80, 320, 80, 320], ['crew', 6, 180, 6, 180], ['barrels', 3, 120, 3, 120],
   ]);
-  assert.equal(o.whole, 158 * 12 + 480 + 180 + 120);
-  assert.deepEqual(yardAll(hurt(), 1, 1240), [{ id: 'hull', n: 103, cost: 1236 }], 'the hull first, and the purse spent there');
+  assert.equal(o.whole, 158 * 7 + 320 + 180 + 120);
+  assert.deepEqual(yardAll(hurt(), 1, 723), [{ id: 'hull', n: 103, cost: 721 }], 'the hull first, and the purse spent there');
   assert.deepEqual(yardAll(hurt(), 1, 3000).map((p) => p.id), ['hull', 'sail', 'crew', 'barrels']);
   assert.equal(yardAll(hurt(), 1, 3000).reduce((sum, p) => sum + p.cost, 0), o.whole, 'whole, and the change kept');
   assert.deepEqual(yardAll(hurt({ hull: 420, sail: 160, crew: 24 }), 4, 9999), [], 'nothing wanting, nothing bought');
@@ -604,18 +606,18 @@ test('AUDIT NAV1 H13 the shipwright: a port\'s yard sells hull, canvas, hands an
   const model = h.at.opened.at(-1);
   assert.ok(model, 'his window');
   // one row, as far as the purse goes
-  h.at.purse = 500;
+  h.at.purse = 71 * 7 + 4;   // PIN MOVED (TOUGHER-SHIPS): the yard's prices 7 and 4 a piece
   const hull0 = model.ship().hull;   // her hands have been at it since she came in
   let r = model.buy('hull');
-  assert.deepEqual([r.ok, r.n, r.cost], [true, 41, 41 * 12]);
-  assert.deepEqual(h.at.paid, [492]);
-  near(model.ship().hull, hull0 + 41, 1e-9);
+  assert.deepEqual([r.ok, r.n, r.cost], [true, 71, 71 * 7]);
+  assert.deepEqual(h.at.paid, [497]);
+  near(model.ship().hull, hull0 + 71, 1e-9);
   r = model.buy('sail');
-  assert.deepEqual([r.ok, r.n, r.cost], [true, 1, 6], 'the change: one yard of canvas');
-  h.at.purse = 5;
+  assert.deepEqual([r.ok, r.n, r.cost], [true, 1, 4], 'the change: one yard of canvas');
+  h.at.purse = 3;
   r = model.buy('sail');
-  assert.deepEqual([r.ok, r.short], [false, 6], 'short: said, nothing paid');
-  assert.deepEqual(h.at.paid, [492, 6]);
+  assert.deepEqual([r.ok, r.short], [false, 4], 'short: said, nothing paid');
+  assert.deepEqual(h.at.paid, [497, 4]);
   // make her whole
   h.at.purse = 99999;
   r = model.buyAll();
@@ -623,7 +625,8 @@ test('AUDIT NAV1 H13 the shipwright: a port\'s yard sells hull, canvas, hands an
   assert.equal(r.whole, true);
   assert.deepEqual([h.at.paid.length, h.at.paid.at(-1)], [3, r.cost], 'one payment for the whole of it');
   // PIN MOVED (SEA-REPAIR, SHIP-CREW): her stores in the hold and her crew's spirits beside her hurts
-  assert.deepEqual(model.ship(), { hull: 420, maxHull: 420, sail: 160, maxSail: 160, crew: 24, maxCrew: 24, barrels: 4, wrecked: false, stores: 0, morale: MORALE_START });
+  const b2 = hullBuild(HULL.SmallShip);   // PIN MOVED (TOUGHER-SHIPS): her toughened build
+  assert.deepEqual(model.ship(), { hull: b2.hullHp, maxHull: b2.hullHp, sail: b2.sailHp, maxSail: b2.sailHp, crew: 24, maxCrew: 24, barrels: 4, wrecked: false, stores: 0, morale: MORALE_START });
   assert.equal(yardOffer(model.ship(), 4, 99999).whole, 0);
   assert.equal(model.hasBarrels, true, 'a Small Ship rolls barrels off her stern');
   // not at a port, under way, or with a hostile near: no yard
@@ -707,7 +710,7 @@ test('AUDIT NAV1 H14 her hands mend her at sea: no hostile ship near and nothing
 });
 
 test('AUDIT NAV1 H15 the shipwright\'s window: his words for her - each row what she has, what is wanting at what a piece, its press for all of it or what the purse pays, greyed when it pays for none or she is whole; MAKE HER WHOLE or what the purse pays; the press\'s word under the title; the back key leaves; one window through his own door, warmed (mutants: a row\'s press unwired, the whole press unwired, the note unsaid, a crewless boat\'s hands shown)', async () => {
-  let purse = 1240;
+  let purse = 723;   // PIN MOVED (TOUGHER-SHIPS): short of her hull at 7 gold a point
   const st = { hull: 262, maxHull: 420, sail: 80, maxSail: 160, crew: 18, maxCrew: 24, barrels: 1, wrecked: false };
   const bought = [];
   const model = {
@@ -719,15 +722,15 @@ test('AUDIT NAV1 H15 the shipwright\'s window: his words for her - each row what
   };
   let t = yardText(model);
   assert.equal(t.title, 'The shipwright');
-  assert.equal(t.sub, 'Small Ship - your purse: 1,240 gold');
-  assert.equal(t.lede, 'He will make her whole for 2,676 gold.');
+  assert.equal(t.sub, 'Small Ship - your purse: 723 gold');
+  assert.equal(t.lede, 'He will make her whole for 1,726 gold.');
   assert.deepEqual(t.rows.map((r) => [r.label, r.state, r.press, r.can]), [
-    ['Hull', '262 of 420 - 158 wanting at 12 gold', 'Mend 103 - 1,236 gold', true],
-    ['Canvas', '80 of 160 - 80 wanting at 6 gold', 'Mend all - 480 gold', true],
+    ['Hull', '262 of 420 - 158 wanting at 7 gold', 'Mend 103 - 721 gold', true],
+    ['Canvas', '80 of 160 - 80 wanting at 4 gold', 'Mend all - 320 gold', true],
     ['Hands', '18 of 24 - 6 wanting at 30 gold', 'Hire all - 180 gold', true],
     ['Fire barrels', '1 aboard - 3 wanting at 40 gold', 'Buy all - 120 gold', true],
   ]);
-  assert.equal(t.whole, 'Make good what your purse pays - 1,236 gold');
+  assert.equal(t.whole, 'Make good what your purse pays - 721 gold');
   assert.deepEqual(yardNote({ ok: true, id: 'crew', n: 6, cost: 180 }), { text: 'Hands hired: 6 men for 180 gold.', warn: false });
   assert.deepEqual(yardNote({ ok: false, id: 'hull', short: 12 }), { text: 'Not enough gold - 12 gold a piece.', warn: true });
   assert.deepEqual(yardNote({ ok: true, cost: 2676, bought: [{}], whole: true }), { text: 'She is made whole for 2,676 gold.', warn: false });

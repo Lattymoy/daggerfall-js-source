@@ -571,7 +571,7 @@ test('AUDIT CC-F3: grog and provisions by number - a gold a hand at least GROG_M
   assert.equal(top.rows.find((r) => r.id === 'grog').missing, 0);
   const o = provisionOffer({ stores: 0, stock: 13, morale: 40, crew: 24, crewed: true, gold: 1000 });
   for (const r of o.rows) assert.equal(r.cost, r.afford * r.price);
-  assert.equal(o.rows[0].afford, 2, 'two stores in a purse of 1000');
+  assert.equal(o.rows[0].afford, 3, 'three stores in a purse of 1000');   // PIN MOVED (TOUGHER-SHIPS): a store 314 gold (navalYard.js STORE_POINTS, REPAIR_PRICE)
   assert.equal(wantsRepair({ hull: 100, maxHull: 100, sail: 50, maxSail: 100 }), true, 'her canvas alone wants it');
   assert.equal(storesCount([mint(1), { ...mint(1), stackCount: 0 }]), 2, 'a stack of none counts one');
 });

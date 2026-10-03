@@ -230,6 +230,9 @@ test('AUDIT NAV1 (the presentation) she burns as she goes down: a burning ship h
   h.host.applyPeerHit('peer', navalHitData('local', { n: e.n, hull: 5, fire: true, zone: 'hull' }));
   h.run(0.5);
   assert.equal(flames.length, 3, 'three fires along her deck');
+  // PIN MOVED (TOUGHER-SHIPS): her toughened hull takes two of a hit's most (navalWire.js NAVAL_HIT_MAX) - the first leaves her afloat
+  h.host.applyPeerHit('peer', navalHitData('local', { n: e.n, hull: 400, zone: 'holed' }));
+  assert.equal(e.ship.damage.state, SHIP_STATES.afloat);
   h.host.applyPeerHit('peer', navalHitData('local', { n: e.n, hull: 400, zone: 'holed' }));
   assert.equal(e.ship.damage.state, SHIP_STATES.sinking);
   assert.ok(e.ship.damage.fire > 0, 'her fires burn on as she goes down');
@@ -824,7 +827,8 @@ test('AUDIT NAV1 (the presentation) THE ARCS AS LINES (#4): each ball\'s arc ARC
   assert.ok(Math.abs(d[6 * NAVAL_STRIDE + 3] - (seg - off) / ARC_DASH_M) < 1e-5, 'continuous into the next segment');
   const host = readFileSync(new URL('../src/scenes/navalHost.js', import.meta.url), 'utf8');
   // PIN MOVED (SHIP-WATCH): the particles carry the far ships' lamps too, laid into the effects' list first
-  assert.match(host, /const particles = effects\.drawList\(\);\n\s*lampsInto\(particles\);[^\n]*\n\s*return \{ particles, balls: shots\.balls\(\), floaters: shots\.floaters\(\), aim: aimDraw, time: clock \};/);
+  // PIN MOVED (SALVAGE): the floaters a wreck's wreckage marked among them
+  assert.match(host, /const particles = effects\.drawList\(\);\n\s*lampsInto\(particles\);[^\n]*\n\s*return \{ particles, balls: shots\.balls\(\), floaters: shots\.floaters\(\)\.map\(\(f\) => \(isSalvage\(f\.lot\) \? \{ \.\.\.f, wreck: true \} : f\)\), aim: aimDraw, time: clock \};/);
 });
 
 test('AUDIT NAV1 (the presentation) THE FAR SHIPS\' COST (#17): an idle particle system - stopped, nothing alive - is stepped without a question (it walked up its node\'s parents to ask whether it was active, then did nothing: a war galley\'s 224 systems, one live, cost 0.45 ms a far frame), a playing or living one as ever; a ship\'s animators found once (her tree walked for them every frame: 0.44 ms); past NEAR_LIFE_M her rigging stepped every FAR_LIFE_EVERY frames with the time it missed - five far galleys 5.7 ms a frame, now 0.9 (mutants: the idle system asked, the walk every frame, the far stride unread, the missed time dropped)', async () => {

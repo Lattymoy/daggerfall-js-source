@@ -26,7 +26,7 @@
 
 import { shotPosition, segmentBoxEntry, segmentCrossesDown, toBoxLocal } from './navalBallistics.js';
 import { hitZone } from './navalDamage.js';
-import { GUNS, BARREL } from './navalShips.js';
+import { GUNS, BARREL, SHIP_TOUGHNESS } from './navalShips.js';
 
 /** A ball's longest flight (s). */
 export const BALL_LIFE = 9;
@@ -37,8 +37,9 @@ export const BALL_STEP_S = 0.1;
 export const FLOAT_DRIFT = 0.1;
 /** A fire barrel is harmless this long after it is dropped (s). */
 export const BARREL_ARM = 1.6;
-/** Flotsam: how long it floats (s), and how near a collector's box must come (m). */
-export const FLOTSAM_LIFE = 150;
+/** Flotsam: how long it floats (s), and how near a collector's box must come (m). TOUGHER-SHIPS: 150 s before, as much
+ *  longer as a fight now lasts - a two-ship fight's first cask still afloat when the second strikes. */
+export const FLOTSAM_LIFE = Math.round(150 * SHIP_TOUGHNESS);
 export const FLOTSAM_REACH = 3;
 /** How far a swept ball is tested for the ground, at most - a flight over open sea never asks. */
 const GROUND_STEP = 4;

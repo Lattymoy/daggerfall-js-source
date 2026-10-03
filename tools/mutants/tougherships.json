@@ -1,0 +1,254 @@
+[
+  {
+    "name": "TOUGHER-SHIPS-the-men-untoughened",
+    "file": "src/systems/naval/navalDamage.js",
+    "old": "export const ballMen = (men, roll) => (men > 0 ? Math.floor(men / SHIP_TOUGHNESS + clamp(roll, 0, 0.999999)) : 0);",
+    "new": "export const ballMen = (men, roll) => (men > 0 ? Math.floor(men + clamp(roll, 0, 0.999999) * 0) : 0);",
+    "tests": [
+      "test/tougherships.test.js"
+    ]
+  },
+  {
+    "name": "TOUGHER-SHIPS-a-fire-untoughened",
+    "file": "src/systems/naval/navalDamage.js",
+    "old": "s.wound += 1 / SHIP_TOUGHNESS; }",
+    "new": "s.wound += 1; }",
+    "tests": [
+      "test/tougherships.test.js"
+    ]
+  },
+  {
+    "name": "TOUGHER-SHIPS-a-fire-let-go-when-out",
+    "file": "src/systems/naval/navalDamage.js",
+    "old": "        if (!s.fires.length) s.crewBurn = 0;\n",
+    "new": "        if (!s.fires.length) { s.crewBurn = 0; s.wound = 0; }\n",
+    "tests": [
+      "test/tougherships.test.js"
+    ]
+  },
+  {
+    "name": "TOUGHER-SHIPS-the-ram-unrolled",
+    "file": "src/scenes/navalHost.js",
+    "old": "export const ramMen = (dealt, roll) => ballMen(dealt / RAM_A_MAN, roll);",
+    "new": "export const ramMen = (dealt, roll) => Math.round(dealt / RAM_A_MAN / 1.6);",
+    "tests": [
+      "test/tougherships.test.js"
+    ]
+  },
+  {
+    "name": "TOUGHER-SHIPS-the-stander-takes-the-word-whole",
+    "file": "src/scenes/navalHost.js",
+    "old": "crew: ballMen(hit.crew, random()), fire: hit.fire };",
+    "new": "crew: hit.crew, fire: hit.fire };",
+    "tests": [
+      "test/tougherships.test.js"
+    ]
+  },
+  {
+    "name": "TOUGHER-SHIPS-the-shooter-reckons",
+    "file": "src/scenes/navalHost.js",
+    "old": "crew: shotMen(gun, zone), fire: hurt.fire ?? false, zone }));",
+    "new": "crew: hurt.crew, fire: hurt.fire ?? false, zone }));",
+    "tests": [
+      "test/tougherships.test.js"
+    ]
+  },
+  {
+    "name": "TOUGHER-SHIPS-the-casks-sink-as-before",
+    "file": "src/systems/naval/navalShots.js",
+    "old": "export const FLOTSAM_LIFE = Math.round(150 * SHIP_TOUGHNESS);",
+    "new": "export const FLOTSAM_LIFE = 150;",
+    "tests": [
+      "test/tougherships.test.js"
+    ]
+  },
+  {
+    "name": "TOUGHER-SHIPS-the-pirate-runs-as-before",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "export const PIRATE_RUNS_AT = 0.3;",
+    "new": "export const PIRATE_RUNS_AT = 0.33;",
+    "tests": [
+      "test/tougherships.test.js"
+    ]
+  },
+  {
+    "name": "TOUGHER-SHIPS-the-legacy-save-read-as-points",
+    "file": "src/scenes/navalHost.js",
+    "old": "    if (saved) { st.damage.restore(rec);",
+    "new": "    if (saved) { st.damage.restore(saved);",
+    "tests": [
+      "test/tougherships.test.js"
+    ]
+  },
+  {
+    "name": "TOUGHER-SHIPS-the-credit-unscaled",
+    "file": "src/scenes/navalHost.js",
+    "old": "  if (Number.isFinite(rec.credit)) out.credit = share(rec.credit, thenHull, whole.maxHull);",
+    "new": "  if (Number.isFinite(rec.credit)) out.credit = rec.credit;",
+    "tests": [
+      "test/tougherships.test.js"
+    ]
+  },
+  {
+    "name": "TOUGHER-SHIPS-saved-on-the-toughened-scale",
+    "file": "src/scenes/navalHost.js",
+    "old": "export function savedRecord(damage, hull, credit) {\n  const first = firstBuildOf(hull);",
+    "new": "export function savedRecord(damage, hull, credit) {\n  const first = hullBuild(hull);",
+    "tests": [
+      "test/tougherships.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-REPAIRS-the-switch-unread",
+    "file": "src/scenes/navalHost.js",
+    "old": "const autoRepair = () => setting('AutoRepair', true) !== false;",
+    "new": "const autoRepair = () => false;",
+    "tests": [
+      "test/tougherships.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-REPAIRS-stores-under-the-cap",
+    "file": "src/scenes/navalHost.js",
+    "old": "    const owed = auto ? paidDamage(s.damage, { free: !b.crewed || crewShare > 0 }) : s.damage;",
+    "new": "    const owed = s.damage;",
+    "tests": [
+      "test/tougherships.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-REPAIRS-no-free-mending-unread",
+    "file": "src/scenes/navalHost.js",
+    "old": "paidDamage(s.damage, { free: !b.crewed || crewShare > 0 })",
+    "new": "paidDamage(s.damage)",
+    "tests": [
+      "test/tougherships.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-REPAIRS-the-quiet-unread",
+    "file": "src/scenes/navalHost.js",
+    "old": "      else if (quiet && autoRepair() &&",
+    "new": "      else if (autoRepair() &&",
+    "tests": [
+      "test/tougherships.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-REPAIRS-a-crewless-boat-mended-unmanned",
+    "file": "src/scenes/navalHost.js",
+    "old": "((b.crewed && s.damage.crew > 0) || b === inPlay)) repairStep(b, s, d, { auto: true, inPlay });",
+    "new": "true) repairStep(b, s, d, { auto: true, inPlay });",
+    "tests": [
+      "test/tougherships.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-REPAIRS-the-word-for-a-far-boat",
+    "file": "src/scenes/navalHost.js",
+    "old": "      if (b !== inPlay) return;   // a boat I am not on mends unsaid\n",
+    "new": "",
+    "tests": [
+      "test/tougherships.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-REPAIRS-the-order-under-a-fire-alone",
+    "file": "src/scenes/navalHost.js",
+    "old": "{ if (quiet || hostile) repairStep(b, s, d, { underFire: hostile, inPlay }); }",
+    "new": "{ repairStep(b, s, d, { underFire: !quiet, inPlay }); }",
+    "tests": [
+      "test/tougherships.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-REPAIRS-the-full-pace-under-fire",
+    "file": "src/scenes/navalHost.js",
+    "old": "repairStep(b, s, d, { underFire: hostile, inPlay }); }",
+    "new": "repairStep(b, s, d, { underFire: false, inPlay }); }",
+    "tests": [
+      "test/tougherships.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-REPAIRS-the-fire-doused-under-fire",
+    "file": "src/scenes/navalHost.js",
+    "old": "{ refloat: underFire ? Infinity : FIELD_REFLOAT, douse: !underFire }",
+    "new": "{ refloat: underFire ? Infinity : FIELD_REFLOAT }",
+    "tests": [
+      "test/tougherships.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-REPAIRS-a-wreck-refloated-under-fire",
+    "file": "src/scenes/navalHost.js",
+    "old": "{ refloat: underFire ? Infinity : FIELD_REFLOAT, douse: !underFire }",
+    "new": "{ refloat: FIELD_REFLOAT, douse: !underFire }",
+    "tests": [
+      "test/tougherships.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-REPAIRS-damage-control-as-strong-as-before",
+    "file": "src/systems/naval/navalYard.js",
+    "old": "export const SEA_REPAIR_UNDER_FIRE = 0.125;",
+    "new": "export const SEA_REPAIR_UNDER_FIRE = 0.3;",
+    "tests": [
+      "test/tougherships.test.js"
+    ]
+  },
+  {
+    "name": "SALVAGE-no-wreckage",
+    "file": "src/scenes/navalHost.js",
+    "old": "    drop(SALVAGE_LOT, 3, 8);   // SALVAGE: her wreckage, close where she went down\n",
+    "new": "",
+    "tests": [
+      "test/tougherships.test.js"
+    ]
+  },
+  {
+    "name": "SALVAGE-the-barrels-past-stock",
+    "file": "src/scenes/navalHost.js",
+    "old": "barrels = Math.max(0, Math.min(got.barrels, BARREL.stock - st.guns.barrels));",
+    "new": "barrels = got.barrels;",
+    "tests": [
+      "test/tougherships.test.js"
+    ]
+  },
+  {
+    "name": "SALVAGE-the-swimmer-s-to-a-far-boat",
+    "file": "src/scenes/navalHost.js",
+    "old": "    const into = swim ? boatInPlay() : boat ?? boatInPlay();",
+    "new": "    const into = boat ?? boatInPlay() ?? nearestBoat(e.point ?? deps.feet());",
+    "tests": [
+      "test/tougherships.test.js"
+    ]
+  },
+  {
+    "name": "SALVAGE-the-pack-all-or-nothing",
+    "file": "src/scenes/navalHost.js",
+    "old": "      const items = Array.from({ length: got.stores }, () => mintStores(1));",
+    "new": "      const items = [mintStores(got.stores)];",
+    "tests": [
+      "test/tougherships.test.js"
+    ]
+  },
+  {
+    "name": "SALVAGE-the-stow-skipping-it",
+    "file": "src/scenes/navalHost.js",
+    "old": "      if (isSalvage(f.lot)) {   // SALVAGE: her wreckage's stores and powder, as a cask's things",
+    "new": "      if (false) {",
+    "tests": [
+      "test/tougherships.test.js"
+    ]
+  },
+  {
+    "name": "SALVAGE-the-wire-key-unread",
+    "file": "src/systems/naval/navalWire.js",
+    "old": "  if (raw.w !== undefined) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/tougherships.test.js"
+    ]
+  }
+]

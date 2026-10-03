@@ -9,13 +9,24 @@ import { sea } from './navalSea.mjs';
 import { GRAPPLE_S } from '../src/systems/naval/navalBoarding.js';
 import { STRUCK_GRACE_S } from '../src/scenes/navalHost.js';
 import { SHIP_STATES } from '../src/systems/naval/navalDamage.js';
-import { navalHitData } from '../src/systems/naval/navalWire.js';
+import { navalHitData, NAVAL_HIT_MAX } from '../src/systems/naval/navalWire.js';
 import { MOD_SETTINGS } from '../src/systems/modSettings.js';
 import { scene } from './csaScene.mjs';
 import { Boat } from '../src/systems/comeSailAwayBoat.js';
 
 const WORLD = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
-const blow = (h, e, from, o) => h.host.applyPeerHit(from, navalHitData('local', { n: e.n, ...o }));
+/** A peer's blow - PIN MOVED (TOUGHER-SHIPS): one past a hit's most (navalWire.js NAVAL_HIT_MAX, a broadside's worth) lands
+ *  as several, her fire and her men with the first; a toughened hull outweighs one hit. The pieces after one that strikes
+ *  her are the same volley's (STRUCK_GRACE_S: floored at 1) - a blow meant to take her from afloat straight under is
+ *  two blows a grace apart, never one. */
+const blow = (h, e, from, o) => {
+  let left = Math.max(0, o.hull ?? 0), first = true;
+  do {
+    const hull = Math.min(left, NAVAL_HIT_MAX);
+    h.host.applyPeerHit(from, navalHitData('local', first ? { n: e.n, ...o, hull } : { n: e.n, hull, zone: o.zone }));
+    left -= hull; first = false;
+  } while (left > 0);
+};
 function place(h, classId, pos, yaw = 0) {
   const id = h.host.spawnShip(classId, { range: Math.hypot(pos[0], pos[2]), bearing: Math.atan2(pos[0], pos[2]), yaw });
   const e = h.host._sea.get(id);

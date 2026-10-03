@@ -80,7 +80,7 @@
 // host forgives the player's stray ball on her (navalHost.js ALLY_STRAY_SHARE). And the bay is gentler: a quarter of
 // the pirates bold (BOLD_SHARE), and a boat lying still grappled only after GRAPPLE_STILL_S.
 
-import { classById, batteryOf, hullBuild, GUNS, HULL, SHIP_CLASSES } from './navalShips.js';
+import { classById, batteryOf, hullBuild, GUNS, HULL, SHIP_CLASSES, SHIP_TOUGHNESS } from './navalShips.js';
 import { mulberry32 } from '../../combat/bloodArt.js';   // SEA-PEACE: the temper's draw (navalShips.js names on the same stream kind)
 import { createShipDamage, SHIP_STATES, STRUCK_AT, HOLED_BONUS, WATERLINE_BAND } from './navalDamage.js';
 import { createGunDeck, aimSolution, reloadSeconds } from './navalGunnery.js';
@@ -172,8 +172,10 @@ export const FLEE_RANGE = 320;
 export const CHASE_GIVE_UP_S = 150;
 export const CHASE_GAIN = 0.1;
 export const SPARE_S = 300;
-/** A pirate runs under this share of hull (a flagship never). */
-export const PIRATE_RUNS_AT = 0.33;
+/** A pirate runs under this share of hull (a flagship never). TOUGHER-SHIPS: 0.33 before - her band between running and
+ *  striking (STRUCK_AT) as many seconds of fire as it was, now each share of her hull takes SHIP_TOUGHNESS times the balls
+ *  (0.08 of the old hull is 0.05 of the toughened one). */
+export const PIRATE_RUNS_AT = 0.3;
 /** A pirate grapples a boat within this (m) that is crippled (under GRAPPLE_HULL of hull) or has lain under
  *  GRAPPLE_STILL m/s for GRAPPLE_STILL_S - with at least GRAPPLE_CREW men to send. */
 export const GRAPPLE_RANGE = 28;
@@ -517,7 +519,7 @@ export function strikeTime(a, b) {
     const balls = bat.muzzles.length / sides.length / (reloadSeconds(bat.gun, a.crewShare, a.crewed) + TURN_PER_VOLLEY / Math.max(1, a.turn));
     const hits = balls * hitShare(bat, a.skill, b.hull);
     hull += hits * g.hull * (1 + HOLED_BONUS * Math.min(1, WATERLINE_BAND / hullBuild(b.hull).top));   // a low hull is holed at the waterline
-    men += hits * g.crew;
+    men += (hits * g.crew) / SHIP_TOUGHNESS;   // TOUGHER-SHIPS: a ball's men (navalDamage.js ballMen), as her hull's points
   }
   const byHull = hull > 0 ? b.hullHp * Math.max(0, b.hullShare - STRUCK_AT) / hull : Infinity;
   const byMen = b.strikes && men > 0 ? b.crew / men : Infinity;

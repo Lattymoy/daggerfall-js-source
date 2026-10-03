@@ -17,7 +17,7 @@ import { RAIDER_SHEER_M, STRUCK_GRACE_S, DECK_SPOTS, SWIMMER } from '../src/scen
 import { navalHudText, drawNavalHud, destroyNavalHud } from '../src/ui/navalHud.js';
 import { choiceOffer, choiceEffect, CHOICES, PAPERS_NOTORIETY, PIRATE_PAPERS_TITLE } from '../src/systems/naval/navalPlunder.js';
 import { SHIP_STATES, STRUCK_AT } from '../src/systems/naval/navalDamage.js';
-import { navalHitData } from '../src/systems/naval/navalWire.js';
+import { navalHitData, NAVAL_HIT_MAX } from '../src/systems/naval/navalWire.js';
 import { NAVAL_CLASSIC } from '../src/systems/naval/navalSounds.js';
 import { NOTORIETY } from '../src/systems/naval/navalLaw.js';
 import { QuestMachine } from '../src/systems/quest/machine.js';
@@ -260,7 +260,18 @@ test('AUDIT NAV1 (B6) the world host\'s endRaid, run: its living boarders withdr
 // ── the prize, the fire, the founder (B3, B4) ──────────────────────────────────────────────────────────────────
 
 /** A blow on a ship I stand, landed through the host's own strike - `from` the striker ('local': mine). */
-const blow = (h, e, from, o) => h.host.applyPeerHit(from, navalHitData('local', { n: e.n, ...o }));
+/** A peer's blow - PIN MOVED (TOUGHER-SHIPS): one past a hit's most (navalWire.js NAVAL_HIT_MAX, a broadside's worth) lands
+ *  as several, her fire and her men with the first; a toughened hull outweighs one hit. The pieces after one that strikes
+ *  her are the same volley's (STRUCK_GRACE_S: floored at 1) - a blow meant to take her from afloat straight under is
+ *  two blows a grace apart, never one. */
+const blow = (h, e, from, o) => {
+  let left = Math.max(0, o.hull ?? 0), first = true;
+  do {
+    const hull = Math.min(left, NAVAL_HIT_MAX);
+    h.host.applyPeerHit(from, navalHitData('local', first ? { n: e.n, ...o, hull } : { n: e.n, hull, zone: o.zone }));
+    left -= hull; first = false;
+  } while (left > 0);
+};
 /** A merchant struck alongside, boarded from my helm and the fight begun. */
 async function boarding() {
   const h = await sea({ hull: 2 });
