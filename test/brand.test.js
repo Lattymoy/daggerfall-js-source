@@ -221,18 +221,16 @@ test('BR4: no surface still says the old name - whole, or split across a wordmar
   }
   // THE SURVIVORS ARE WORDS SOMEONE SAID OR WROTE DOWN AT THE TIME, each
   // named: a player's Discord question (REL2), Mac's BR3 ruling as the
-  // landing test quotes it, REL2's record of the file the release
-  // actually carried, and the patch notes announcing the rename - which
-  // cannot say what the game is now called without saying what it was.
-  // None is a surface. (The sweep reads git's INDEX: the first run of
-  // this pin went green with those notes and br4.json on disk but not
-  // yet added, and red in CI on the commit that carried them.)
+  // landing test quotes it, and REL2's record of the file the release
+  // actually carried. None is a surface. (The patch notes announcing the
+  // rename were a fourth until REL6 took notes out of the tree. The sweep
+  // reads git's INDEX: the first run of this pin went green with those
+  // notes and br4.json on disk but not yet added, and red in CI on the
+  // commit that carried them.)
   const SAID = [
     /^test\/relwin1\.test\.js:[23]:\/\/ /,
     /^test\/relwin1\.test\.js:9:\/\/ `artifactName`, so both wrote DaggerfallEnhanced-<v>-win-x64\.exe/,
     /^test\/landing\.test\.js:\d+:\s*\/\/ logo to the original Daggerfall Enhanced text"\)/,
-    /^PATCH-NOTES-Daggerfall-Online\.md:\d+:- Daggerfall Enhanced is now \*\*Daggerfall Online\*\* - /,
-    /^PATCH-NOTES-Daggerfall-Online\.md:\d+:.*, so you can delete "Daggerfall Enhanced\.app" once you have moved over\.$/,
   ];
   const survivors = hits.split('\n').filter((l) => l && !SAID.some((re) => re.test(l))).join('\n');
   assert.equal(survivors, '', `the old name survives:\n${survivors}`);

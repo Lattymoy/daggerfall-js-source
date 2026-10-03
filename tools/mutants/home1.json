@@ -310,8 +310,8 @@
   {
     "name": "HOME1-the-service-asked-short-of-gold",
     "file": "src/systems/onlineHomes.js",
-    "old": "    if (!afford(price)) return { ok: false, error: 'gold' };\n    // WD3: the layout this town stands in",
-    "new": "    // WD3: the layout this town stands in",
+    "old": "    if (!afford(price)) return { ok: false, error: 'gold' };\n    const layout = homeClaimLayout(mapId);",
+    "new": "    const layout = homeClaimLayout(mapId);",
     "tests": [
       "test/home1.test.js"
     ]

@@ -37,6 +37,8 @@ export const ARENA_FLOOR_LOCATION_ID = 0x7ffff100;
 const RMB_SIDE = 4096;
 /** world/rmbLayout.js PROPS_OFFSET_Y and world/rmbFlats.js BLOCK_FLATS_OFFSET_Y. */
 const PROPS_Y = -4, FLATS_Y = -6;
+/** AUDIT PRE-MERGE 1003 W1: world/rmbLayout.js GROUND_OFFSET - the city's ground under a block's models (RMB units). */
+const GROUND_Y = -1;
 /** The colosseum's sand, in its own model frame (measured off Models/864102: the floor's triangles under its origin). */
 export const SAND_Y_MODEL = -4.68;
 /** The sand's disc: its radius, metres (measured: the floor holds at 19 m from the centre every way round). */
@@ -91,6 +93,18 @@ export function floorCentre(block = ARENA_BLOCK_JSON) {
 /** THE FLOOR CENTRE in the CITY block's own frame (the same numbers: the RMB's misc models stand in that frame) - the
  *  world host adds its block's origin (scenes/world.js). */
 export const cityFloorCentre = floorCentre;
+/** AUDIT PRE-MERGE 1003 W1: the city's ground (GROUND_Y) over the sand, metres - under it by the colosseum's foot. */
+export const CITY_GROUND_UP = GROUND_Y * GLOBAL_SCALE - floorCentre()[1];
+/** AUDIT PRE-MERGE 1003 W1: THE GATE PASSAGE'S OUTER MOUTH in the floor's frame - the north arch onto the market, where
+ *  the Herald stands in the city (measured off 864102 at a body's height over the ground: its walls at x -2.80 and
+ *  3.66 from the courtyard's foot to the outer wall's face at z 51.94). */
+export const GATE_MOUTH = Object.freeze({ x0: -2.8, x1: 3.66, z: 51.94 });
+/** AUDIT PRE-MERGE 1003 W1: the made level's ground (arenaGroundModel) - its model id beside the colosseum's, and the
+ *  archive it is drawn in: the instance's ground archive (scenes/worldModes.js enterArenaFloor lays it temperate in
+ *  season 0 - world/climateSwaps.js getGroundArchive(2, 0), the archive its water tile is read from), whose record 46 is
+ *  the city's flagstone (world/arenaCity.js ARENA_PAVING). */
+export const ARENA_GROUND_MODEL = 864103;
+export const ARENA_GROUND_ARCHIVE = 302;
 
 /** A point of the floor's frame ([x, z] from the centre, `up` metres over the sand) in the level's. */
 export const floorPoint = (x, z, up = 0, c = floorCentre()) => [c[0] + x, c[1] + up, c[2] + z];
@@ -107,10 +121,13 @@ export const ARRIVE = Object.freeze({
   watch: Object.freeze({ at: Object.freeze([0, -21.8, TERRACE_UP]), yaw: 0 }),
 });
 /** The ways out (the exit doors' places): the sand's north gate, and the terrace's south stair for a watcher -
- *  `[x, z, up]` and the way the door faces (into the floor). */
+ *  `[x, z, up]` and the way the door faces (into the floor). AUDIT PRE-MERGE 1003 W1: and the gate passage's outer mouth
+ *  (GATE_MOUTH), the way a watcher came in from the Herald - shut to the feet by the ground's wall (arenaGroundModel),
+ *  its door standing just inside it so the ray meets the door first. */
 export const WAYS_OUT = Object.freeze([
   Object.freeze({ at: Object.freeze([0, 18.6, 0]), normal: Object.freeze([0, 0, -1]) }),
   Object.freeze({ at: Object.freeze([0, -23.4, TERRACE_UP]), normal: Object.freeze([0, 0, 1]) }),
+  Object.freeze({ at: Object.freeze([(GATE_MOUTH.x0 + GATE_MOUTH.x1) / 2, GATE_MOUTH.z - 0.5, CITY_GROUND_UP]), normal: Object.freeze([0, 0, -1]) }),
 ]);
 export const ARENA_EXIT_W = 3.2;
 export const ARENA_EXIT_H = 3.6;
@@ -196,8 +213,64 @@ export function arenaFloorBlock(kind = 'ladder', block = ARENA_BLOCK_JSON, banne
     type: 0x03, position: pos++, index: objects.length, xPos: Math.round(mx / GLOBAL_SCALE), yPos: Math.round(-my / GLOBAL_SCALE), zPos: Math.round(mz / GLOBAL_SCALE),
     resources: res({ flatResource: { ...NO_FLAT, textureArchive: 199, textureRecord: 10 } }),
   });
+  // AUDIT PRE-MERGE 1003 W1: the city's ground under the cell (arenaGroundModel) - last, so no record before it moves
+  modelReferenceList.push({ modelId: String(ARENA_GROUND_MODEL), modelIdNum: ARENA_GROUND_MODEL, description: 'ARN' });
+  objects.push({
+    type: 0x01, position: pos++, index: objects.length, xPos: 0, yPos: -GROUND_Y, zPos: 0,
+    resources: res({ modelResource: { ...NO_MODEL, modelIndex: modelReferenceList.length - 1, actionResource: action0() } }),
+  });
   return { name: ARENA_FLOOR_BLOCK, position: 0, rdbBlock: { modelReferenceList, objectRootList: [{ rdbObjects: objects }] } };
 }
+
+/**
+ * AUDIT PRE-MERGE 1003 W1: THE CITY'S GROUND UNDER THE MADE LEVEL. In the city the colosseum stands on the city's terrain,
+ * and Kamer's mesh has no floor where that terrain is its floor - the gate courtyard at the foot of the gate's two
+ * flights, the gate passage out to the market, the corridor under the east terrace. The made level's collider has no
+ * terrain under anything (scenes/dungeonContext.js: `new Collider(() => -Infinity)`), so a watcher who walked down the
+ * gate's flight fell for ever, in a level no save is made in. So the made block stands the cell's ground as a model of
+ * its own, drawn and walked as the city's is - and shut where the city goes on:
+ *   - THE PAVING: the 16 x 16 tiles of the cell (6.4 m, the RMB tile) at the city's ground (GROUND_Y, the block's own
+ *     frame: the model stands at the block's origin), each the city's flagstone in its lay (world/arenaCity.js
+ *     arenaGroundTiles - `tiles`, their GroundTiles order: tile (x, y) north of the south edge is `tiles[(15 - y) * 16 +
+ *     x]`, world/terrainTiles.js) turned as the terrain shader turns it (render/renderer.js ROT/TRANS), in the
+ *     instance's ground archive (ARENA_GROUND_ARCHIVE).
+ *   - THE WALL OF THE GATE'S MOUTH and THE CELL'S EDGE: the collider's alone (past `colliderOnlyFrom`, as the stairs'
+ *     ramps are - world/arenaModel.js withStairRamps): the gate passage ends at the market, where the city stands and
+ *     the instance has nothing (its way out stands there - WAYS_OUT), and nothing walks off the ground's edge.
+ * dfMeshToModel's shape (metres, uv over the classic picture, v down from 0). Pure.
+ * @param {Array<{ TextureRecord: number, IsRotated?: boolean, IsFlipped?: boolean }>} tiles
+ */
+export function arenaGroundModel(tiles, c = floorCentre()) {
+  const S = RMB_SIDE * GLOBAL_SCALE, T = S / 16;
+  const pos = [], nor = [], uv = [];
+  /** @type {Map<number, number[]>} a picture's triangles (its record - the cell is one, the flagstone) */
+  const byRecord = new Map();
+  for (let ty = 0; ty < 16; ty++) for (let tx = 0; tx < 16; tx++) {
+    const tile = tiles[(15 - ty) * 16 + tx];
+    const lay = (tile.IsRotated ? 1 : 0) + (tile.IsFlipped ? 2 : 0);
+    const base = pos.length / 3;
+    for (const [s, t] of [[0, 0], [1, 0], [1, 1], [0, 1]]) {
+      const [u, v] = LAY[lay](s, t);
+      pos.push((tx + s) * T, 0, (ty + t) * T); nor.push(0, 1, 0); uv.push(u, v - 1);
+    }
+    if (!byRecord.has(tile.TextureRecord)) byRecord.set(tile.TextureRecord, []);
+    byRecord.get(tile.TextureRecord)?.push(base, base + 2, base + 1, base, base + 3, base + 2);   // wound so cross(b - a, c - a) points up (the port's front face)
+  }
+  const idx = [], subMeshes = [];
+  for (const [record, list] of byRecord) { subMeshes.push({ textureArchive: ARENA_GROUND_ARCHIVE, textureRecord: record, startIndex: idx.length, primitiveCount: list.length / 3 }); idx.push(...list); }
+  const colliderOnlyFrom = idx.length;
+  /** a wall the feet meet from `a` to `b` on the ground (block metres), from under it to `h` over it - never drawn */
+  const wall = (a, b, h) => {
+    const base = pos.length / 3;
+    for (const [x, z, y] of [[a[0], a[1], -1], [b[0], b[1], -1], [b[0], b[1], h], [a[0], a[1], h]]) { pos.push(x, y, z); nor.push(0, 1, 0); uv.push(0, 0); }
+    idx.push(base, base + 1, base + 2, base, base + 2, base + 3);
+  };
+  wall([c[0] + GATE_MOUTH.x0 - 3, c[2] + GATE_MOUTH.z], [c[0] + GATE_MOUTH.x1 + 3, c[2] + GATE_MOUTH.z], 12);   // the mouth, into the walls either side
+  wall([0, 0], [S, 0], 40); wall([S, 0], [S, S], 40); wall([S, S], [0, S], 40); wall([0, S], [0, 0], 40);   // the cell's edge, over its highest roof
+  return { positions: Float32Array.from(pos), normals: Float32Array.from(nor), uvs: Float32Array.from(uv), indices: Uint32Array.from(idx), subMeshes, doors: [], colliderOnlyFrom };
+}
+/** The terrain shader's four lays of a tile (render/renderer.js ROT[t] * uv + TRANS[t]; t = rotated + 2 x flipped). */
+const LAY = Object.freeze([(s, t) => [s, t], (s, t) => [t, 1 - s], (s, t) => [1 - s, 1 - t], (s, t) => [1 - t, s]]);
 
 /** THE BLOCKS FILE the floor is laid from: the real one, answering one name more (world/gateArena.js gateArenaBlocks'
  *  law). */
@@ -240,11 +313,31 @@ export function crowdSeats(heightAt, { step = 1.15 } = {}) {
       const h = heightAt(x, z);
       if (!Number.isFinite(h)) continue;
       if (h < SEAT_UP_MIN || h > SEAT_UP_MAX) continue;
+      if (!seatFooting(heightAt, x, z, a, /** @type {number} */ (h))) continue;   // AUDIT PRE-MERGE 1003 W5
       const best = Math.abs(Math.sin(a)) > 0.86 && r < SEAT_R_MIN + 6;
       out.push({ x, y: /** @type {number} */ (h), z, best });
     }
   }
   return out;
+}
+/**
+ * AUDIT PRE-MERGE 1003 W5: A SEAT'S FOOTING. Any ray hit in the band was a seat - the ring parapet's coping (8 m over the
+ * sand, a hand's width with the drop to the sand beside it), the fences' tops and the ramps the collider alone lays a
+ * hair over the stairs' nosings (world/arenaModel.js withStairRamps). A seat now stands where a body does: the ground
+ * SEAT_FOOT_M to each side of it, along the radius and across it, within SEAT_LEVEL_M of its own - the terrace's floor
+ * and the wooden tiers; a coping, a fence and a stair (a ramp is a stair's slope, 43 degrees) are not level a stride wide.
+ * Of the 1,853 seats Kamer's mesh gave, 1,576 stand (test/audit1003_world.test.js), a sold-out crowd's 420 several times
+ * over. Pure.
+ */
+export const SEAT_FOOT_M = 0.35;
+export const SEAT_LEVEL_M = 0.15;
+function seatFooting(heightAt, x, z, a, h) {
+  const c = Math.cos(a) * SEAT_FOOT_M, s = Math.sin(a) * SEAT_FOOT_M;
+  for (const [dx, dz] of [[c, s], [-c, -s], [-s, c], [s, -c]]) {
+    const g = heightAt(x + dx, z + dz);
+    if (!Number.isFinite(g) || Math.abs(/** @type {number} */ (g) - h) > SEAT_LEVEL_M) return false;
+  }
+  return true;
 }
 /** `n` of the seats, picked by the seed's die (a sold-out bout takes them all). Pure. */
 export function pickSeats(seats, n, rng) {

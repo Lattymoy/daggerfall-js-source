@@ -119,11 +119,12 @@
   {
     "name": "ARENA5-REC-SWING",
     "file": "src/scenes/arenaBouts.js",
-    "old": "    if (C?.ladder && C.b && boutLive(C.b)) recordStrike(C.rec, now(), YOU);",
+    "old": "    if (C?.ladder && C.b && boutLive(C.b)) recordStrike(C.rec, lawNow(), YOU);",
     "new": "",
     "tests": [
       "test/arena5_replay.test.js"
-    ]
+    ],
+    "note": "AUDIT PRE-MERGE 1003 B1 (re-aimed by content): the law's clock."
   },
   {
     "name": "ARENA5-REC-ROW-MINUTE",

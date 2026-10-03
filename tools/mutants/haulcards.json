@@ -1,0 +1,311 @@
+[
+  {
+    "name": "HAUL-CARDS-tier-3-rare",
+    "file": "src/ui/haulCards.js",
+    "old": "export const TIER_RARITY = Object.freeze([null, null, null, 'magic',",
+    "new": "export const TIER_RARITY = Object.freeze([null, null, null, 'rare',",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "HAUL-CARDS-tier-switch-unread",
+    "file": "src/ui/haulCards.js",
+    "old": "(on && Number.isSafeInteger(tier) ? TIER_RARITY[tier]",
+    "new": "(Number.isSafeInteger(tier) ? TIER_RARITY[tier]",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "HAUL-CARDS-bar-floor",
+    "file": "src/ui/haulCards.js",
+    "old": "Math.max(0, Math.min(1, (x - lo) / (hi - lo)))",
+    "new": "Math.max(0, Math.min(1, x / hi))",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "HAUL-CARDS-held-gold-dropped",
+    "file": "src/ui/haulCards.js",
+    "old": "Number(store.own ?? 0) + Number(store.bought ?? 0) + Number(store.gold ?? 0)",
+    "new": "Number(store.own ?? 0) + Number(store.bought ?? 0)",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "HAUL-CARDS-xp-off-card",
+    "file": "src/ui/haulCards.js",
+    "old": "  if (profession && xp > 0) {",
+    "new": "  if (false && profession && xp > 0) {",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "HAUL-CARDS-gem-dropped",
+    "file": "src/ui/haulCards.js",
+    "old": "  if (d.gem) { const g = storesHaul(",
+    "new": "  if (false) { const g = storesHaul(",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "HAUL-CARDS-head-unsaid",
+    "file": "src/ui/haulCards.js",
+    "old": "  main.head = head;\n",
+    "new": "  main.head = '';\n",
+    "tests": [
+      "test/haulcards.test.js"
+    ],
+    "note": "AUDIT HAUL-CARDS (PIN MOVED): re-aimed by content - the head each act's own (B2), the tax before the guild (C3), the card on a live world alone (A3)."
+  },
+  {
+    "name": "HAUL-CARDS-lode-silver-off",
+    "file": "src/ui/haulCards.js",
+    "old": "main.silver = Number.isSafeInteger(d.marks?.struck) && d.marks.struck > 0 ? d.marks.struck : 0;",
+    "new": "main.silver = 0;",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "HAUL-CARDS-lode-miners-off",
+    "file": "src/ui/haulCards.js",
+    "old": "main.miners = Number.isSafeInteger(d.lode?.struck) ?",
+    "new": "main.miners = false ?",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "HAUL-CARDS-lode-key-a-vein",
+    "file": "src/ui/haulCards.js",
+    "old": "    main.key = `lode\\u0002${d.node ?? d.material}`;\n",
+    "new": "",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "HAUL-CARDS-claim-bar-off",
+    "file": "src/ui/haulCards.js",
+    "old": "source: kind === 'raid' ? 'Town defended' : 'Breach closed', combat: true,",
+    "new": "source: kind === 'raid' ? 'Town defended' : 'Breach closed', combat: false,",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "HAUL-CARDS-deed-an-account",
+    "file": "src/ui/haulCards.js",
+    "old": "haul: 'silver', tone: 'treasury', count: deed.struck,",
+    "new": "haul: 'silver', count: deed.struck,",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "HAUL-CARDS-contract-tax-unsaid",
+    "file": "src/ui/haulCards.js",
+    "old": "${c.tax > 0 ? ` (${num(c.tax)} tax)` : ''}",
+    "new": "",
+    "tests": [
+      "test/haulcards.test.js"
+    ],
+    "note": "AUDIT HAUL-CARDS (PIN MOVED): re-aimed by content - the head each act's own (B2), the tax before the guild (C3), the card on a live world alone (A3)."
+  },
+  {
+    "name": "HAUL-CARDS-cap-unsaid",
+    "file": "src/ui/haulCards.js",
+    "old": "combat: true, cappedText: HAUL_CAPPED_TEXT });",
+    "new": "combat: true, cappedText: null });",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "HAUL-CARDS-number-ungrouped",
+    "file": "src/ui/haulCards.js",
+    "old": "const num = (n) => Number(n).toLocaleString('en-US');",
+    "new": "const num = (n) => String(n);",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "HAUL-CARDS-combat-fill",
+    "file": "src/ui/haulCards.js",
+    "old": "{ text: 'Combat today', fill: Math.max(0, Math.min(1, l.earned / l.max)),",
+    "new": "{ text: 'Combat today', fill: 1,",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "HAUL-CARDS-bump-xp-unsummed",
+    "file": "src/ui/pickupFeed.js",
+    "old": "    for (const f of e.adds ?? []) if (f !== 'count') c[f] = (Number(c[f]) || 0) + (Number(e[f]) || 0);\n",
+    "new": "",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "HAUL-CARDS-bump-stores-stale",
+    "file": "src/ui/pickupFeed.js",
+    "old": "    for (const f of e.latest ?? []) if (e[f] !== undefined) c[f] = e[f];\n",
+    "new": "",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "HAUL-CARDS-hold-unread",
+    "file": "src/ui/pickupFeed.js",
+    "old": "const holdOf = (c) => (Number.isFinite(c.hold) && c.hold > 0 ? c.hold : hold);",
+    "new": "const holdOf = () => hold;",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "HAUL-CARDS-heights-unread",
+    "file": "src/ui/pickupFeed.js",
+    "old": "const hOf = (i) => (Array.isArray(heights) && Number.isFinite(heights[i]) ? heights[i] : cardH);",
+    "new": "const hOf = () => cardH;",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "HAUL-CARDS-classic-drawn",
+    "file": "src/ui/pickupFeed.js",
+    "old": "    if (!isEnhanced()) return false;\n    const d = doc();\n    if (!d?.body || !d.createElement) return false;\n    const list",
+    "new": "    const d = doc();\n    if (!d?.body || !d.createElement) return false;\n    const list",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "HAUL-CARDS-bump-unsaid",
+    "file": "src/ui/pickupFeed.js",
+    "old": "if (c.bumps !== l.bumps) { c.bumps = l.bumps; c.count = l.count; sayHaul(c, l); pop(c.plus, l.bumps); }",
+    "new": "if (c.bumps !== l.bumps) { c.bumps = l.bumps; c.count = l.count; pop(c.plus, l.bumps); }",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "HAUL-CARDS-bar-unset",
+    "file": "src/ui/pickupFeed.js",
+    "old": "    c.fill.style.width = `${Math.round(w.row.fill * 100)}%`;\n",
+    "new": "",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "HAUL-CARDS-icon-box-a-pickups",
+    "file": "src/ui/pickupFeed.js",
+    "old": "const box = line.lode ? LODE_ICON_BOX : line.haul ? HAUL_ICON_BOX : PICKUP_ICON_BOX;",
+    "new": "const box = PICKUP_ICON_BOX;",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "HAUL-CARDS-goods-line-beside-card",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      if (!hauled) hud.toast(k?.storesLine ? k.storesLine(d) : storesLine(d), { keep: true });",
+    "new": "      hud.toast(k?.storesLine ? k.storesLine(d) : storesLine(d), { keep: true });",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "HAUL-CARDS-xp-line-beside-card",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      if (!hauled) hud.toast(`+${d.xp} ${professionName(profession)} XP${note}`);",
+    "new": "      hud.toast(`+${d.xp} ${professionName(profession)} XP${note}`);",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "HAUL-CARDS-fallback-lost",
+    "file": "src/scenes/gatherHost.js",
+    "old": "hauled = live && deps.haul?.(harvestHauls(d, { name: k?.haulName?.(d) ?? null, note })) === true;",
+    "new": "hauled = true;",
+    "tests": [
+      "test/haulcards.test.js"
+    ],
+    "note": "AUDIT HAUL-CARDS (PIN MOVED): re-aimed by content - the head each act's own (B2), the tax before the guild (C3), the card on a live world alone (A3)."
+  },
+  {
+    "name": "HAUL-CARDS-kind-told-nothing",
+    "file": "src/scenes/gatherHost.js",
+    "old": "try { k?.answered?.(d, (t) => hud.toast(t), { hauled }); }",
+    "new": "try { k?.answered?.(d, (t) => hud.toast(t)); }",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "HAUL-CARDS-lode-silver-twice",
+    "file": "src/scenes/mineHost.js",
+    "old": "if (typeof line === 'string' && line && o?.hauled !== true) toast(line);",
+    "new": "if (typeof line === 'string' && line) toast(line);",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "HAUL-CARDS-lode-balance-unkept",
+    "file": "src/scenes/mineHost.js",
+    "old": "const line = d.marks ? marks?.strikeLine?.(d.marks) ?? null : null;   // the balance kept either way",
+    "new": "const line = d.marks && o?.hauled !== true ? marks?.strikeLine?.(d.marks) ?? null : null;   // the balance kept either way",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "HAUL-CARDS-species-unnamed",
+    "file": "src/scenes/fishHost.js",
+    "old": "haulName: (d) => speciesOfHaul(d.node, climateOf(d.node))?.itemName ?? null,",
+    "new": "haulName: () => null,",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "HAUL-CARDS-world-door-unhanded",
+    "file": "src/scenes/world.js",
+    "old": "nowMs: () => Date.now() + _sharedOffsetMs, haul: (entries) => showHaul(entries),",
+    "new": "nowMs: () => Date.now() + _sharedOffsetMs,",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "HAUL-CARDS-world-raid-uncarded",
+    "file": "src/scenes/world.js",
+    "old": "onMarks: (data) => { showHaul(claimHauls(data, 'raid')); return",
+    "new": "onMarks: (data) => { return",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "HAUL-CARDS-world-gate-uncarded",
+    "file": "src/scenes/world.js",
+    "old": "onMarks: (marks, data) => { showHaul(claimHauls(data ?? { marks }, 'gate')); return",
+    "new": "onMarks: (marks, data) => { return",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  }
+]

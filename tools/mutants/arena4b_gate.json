@@ -164,7 +164,7 @@
   {
     "name": "ARENA4B-ORDER-SILENT",
     "file": "src/scenes/arenaOnline.js",
-    "old": "if (d?.recorded === false && d.why === 'order') say(O.order);",
+    "old": "if (d?.recorded === false && (d.why === 'order' || d.why === 'reused')) say(O[d.why]);",
     "new": "void 0;",
     "tests": [
       "test/arena4b_gate.test.js"

@@ -513,6 +513,5 @@ test('AUDIT LIVED1b U1-U8, D3: the words - two rows on the classic panel, one ro
   assert.match(rd('src/ui/enhancedRest.js'), /const clockLine = el\('p', 'clock-line'\);/, 'U7');
   for (const s of ['src/ui/enhancedPlusStyle.js', 'src/ui/enhancedStyle.js']) assert.match(rd(s), /\.rest-shell \.clock-line:empty \{ display: none; \}/, s);
   assert.equal(OWN_TIME_ROOM_NOTE, ' - a rest spends it, logging off does not.', 'U8');
-  assert.match(rd('PATCH-NOTES-Your-Own-Time.md'), /Time logged off is never charged to you\./);
   assert.match(rd('src/scenes/world.js'), /LIVED1: the cure's minute is the character's own time/, 'D3');
 });

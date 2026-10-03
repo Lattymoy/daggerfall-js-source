@@ -74,7 +74,7 @@ import { payFromSave, creditSave } from '../../src/net/realmGoldLaw.js';   // RE
 import { renownTrackOf } from './renownTracks.js';
 import { HANDLE_RE } from '../../src/net/handleShape.js';
 import { MARKS_LEDGER_SHOWN } from '../../src/net/marksLaw.js';   // MARKS1: the guild's Marks lines shown
-import { marksOpenFor, guildMarksSweep } from './marks.js';   // AUDIT 28 M5: the Marks shown only where they are the viewer's; M3: a guild that goes sweeps them
+import { marksOpenFor, guildMarksSweep, guildDeedsToday } from './marks.js';   // AUDIT 28 M5: the Marks shown only where they are the viewer's; M3: a guild that goes sweeps them; AUDIT SILVER-WAYS A3: the day's deeds
 import { hallViewOf, heraldryOfRow } from './halls.js';   // GUILD1d: the guild's hall and heraldry, in its view
 import {
   GUILD_FOUND_GOLD, GUILD_FOUND_RENOWN, GUILD_MEMBERS_MAX, GUILD_RANK_NAMES, GUILD_RANK_MASTER, GUILD_RANK_OFFICER, GUILD_RANK_RECRUIT,
@@ -158,10 +158,19 @@ async function viewOf(db, guildId, me, nowS, marksOpen = false) {
     ...(marksOpen ? {
       marks: Number(marks?.balance ?? 0),
       // AUDIT GUILD1d R5: a heraldry changed is its own line (the treasury paid it), never a deposit
-      marksLedger: (marksLines?.results ?? []).map((l) => ({ at: l.at, who: l.who, kind: l.kind === 'guild-withdraw' ? 'withdraw' : l.kind === 'heraldry' ? 'heraldry' : 'deposit', amount: l.amount })),
+      marksLedger: (marksLines?.results ?? []).map((l) => ({ at: l.at, who: l.who, kind: GUILD_MARKS_LINE_KIND[l.kind] ?? 'deposit', amount: l.amount })),
+      // AUDIT SILVER-WAYS A3: the day's guild deeds against their cap (marks.js guildDeedsToday) - written for this line
+      // and never read, so a guild could not see its four
+      ...(await guildDeedsToday(db, guildId, nowS)),
     } : {}),
   };
 }
+
+/** AUDIT GUILD1d R5: a treasury line's word on the Guild tab - a heraldry changed is the treasury paying, never a
+ *  deposit. SILVER-WAYS: and a guild deed struck to it, a contract's pay put up from it and what came home. */
+const GUILD_MARKS_LINE_KIND = Object.freeze({
+  'guild-withdraw': 'withdraw', heraldry: 'heraldry', 'guild-deed': 'deed', 'contract-escrow': 'contract', 'contract-return': 'contract-return',
+});
 
 /** The member a roster names, in the actor's own guild - or null. */
 async function targetOf(db, me, member) {
@@ -310,6 +319,7 @@ const SEAT_BATTLE_PENDING = 'week > COALESCE((SELECT MAX(week) FROM town_seat_we
  */
 export const guildKeepsSql = (p) => `(EXISTS (SELECT 1 FROM guild_prof_stores WHERE guild_id = ${p} AND qty > 0)
   OR EXISTS (SELECT 1 FROM guild_writs WHERE guild_id = ${p} AND (state = 'open' OR (returned = 0 AND escrow > 0)))
+  OR EXISTS (SELECT 1 FROM guild_contracts WHERE guild_id = ${p} AND (state = 'open' OR (returned = 0 AND escrow > 0)))   -- SILVER-WAYS: a contract standing, or its escrow not yet home
   OR EXISTS (SELECT 1 FROM homes WHERE guild_id = ${p})   -- GUILD1d: and its hall - sold first, its deed share into the treasury
   OR EXISTS (SELECT 1 FROM town_seat_holds WHERE guild_id = ${p})   -- SEAT1c: a Charter it holds - relinquished first (SEAT0 16)
   OR EXISTS (SELECT 1 FROM town_seat_rights WHERE (guild_id = ${p} OR against = ${p}) AND ${SEAT_BATTLE_PENDING}))`;   // SEAT1c: a battle it is named in, still to come
@@ -341,6 +351,9 @@ async function whyNotGone(db, guildId, { alone = false } = {}) {
   if (g && await db.prepare(`SELECT 1 FROM guild_writs WHERE guild_id = ?1 AND state = 'open'`).bind(guildId).first()) return 'guild-writs';
   // AUDIT 31 A15: a closed writ's pay still on its way home - the treasury full, not a writ standing
   if (g && await db.prepare('SELECT 1 FROM guild_writs WHERE guild_id = ?1 AND returned = 0 AND escrow > 0').bind(guildId).first()) return 'guild-writ-escrow';
+  // SILVER-WAYS: a contract standing, or a closed one's pay still on its way home
+  if (g && await db.prepare(`SELECT 1 FROM guild_contracts WHERE guild_id = ?1 AND state = 'open'`).bind(guildId).first()) return 'guild-contracts';
+  if (g && await db.prepare('SELECT 1 FROM guild_contracts WHERE guild_id = ?1 AND returned = 0 AND escrow > 0').bind(guildId).first()) return 'guild-writ-escrow';
   if (g && await db.prepare('SELECT 1 FROM homes WHERE guild_id = ?1').bind(guildId).first()) return 'guild-hall';   // GUILD1d: its hall, sold first
   if (g && await db.prepare('SELECT 1 FROM town_seat_holds WHERE guild_id = ?1').bind(guildId).first()) return 'guild-seat';   // SEAT1c: a Charter, relinquished first
   if (g && await db.prepare(`SELECT 1 FROM town_seat_rights WHERE (guild_id = ?1 OR against = ?1) AND ${SEAT_BATTLE_PENDING}`).bind(guildId).first()) return 'guild-battle';   // SEAT1c: a battle the Turning named it in

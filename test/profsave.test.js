@@ -84,7 +84,7 @@ test('PROF-SAVE the host: every professions act that changes the save asks saveS
   assert.match(body('marketDrop'), /list\.splice\(i, 1\);\n {6}saveSoon\.changed\(\);\n {4}\}/, 'a piece a settled listing took');
   assert.match(body('marketPutBack'), /addItem\(\(playerEntity\.items \?\?= \[\]\), item, 'back'\);\n {4}saveSoon\.changed\(\);$/, 'a piece put back');
   assert.match(w, /if \(f\.fee > 0\) \{ deductGold\(playerEntity, f\.fee\); saveSoon\.changed\(\); \}\n {10}const out = smeltRecipe/, 'a smelt\'s fee');
-  const built = w.indexOf('  const onlineCheckpoint = () => {');
+  const built = w.indexOf('  const onlineCheckpoint = ({ sink = null } = {}) => {');   // AUDIT PRE-MERGE 1003 O10: a caller's realm sink
   const handed = w.indexOf('  saveSoon.ready(() => onlineCheckpoint());');
   // FIELD BUGS 29h (BOOT-HIDE): handed in with the checkpoint's other doors, where what it reads (the duel's last) exists
   assert.ok(built > 0 && handed > w.indexOf('  const duelHeal = () => {') && handed > built, 'handed in once the checkpoint and what it reads are built');

@@ -74,13 +74,6 @@
     "tests": ["test/rel4_release.test.js"]
   },
   {
-    "name": "REL4-11-the-notes-read-any-file-so-named",
-    "file": "scripts/desktopRelease.mjs",
-    "old": "    if (!PATCH_NOTES_RE.test(file ?? '') || (mode !== '100644' && mode !== '100755')) continue;",
-    "new": "    if (mode !== '100644' && mode !== '100755') continue;",
-    "tests": ["test/rel4_release.test.js"]
-  },
-  {
     "name": "REL5-1-the-version-is-back-in-the-installer-name",
     "file": "app/package.json",
     "old": "      \"artifactName\": \"DaggerfallOnline-win-${arch}-setup.${ext}\",\n",

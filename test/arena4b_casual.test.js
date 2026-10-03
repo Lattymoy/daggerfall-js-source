@@ -71,9 +71,10 @@ test('ARENA4b casual bout on the relay: two casual seekers offered one bout that
   assert.equal(last(R0, 'of'), null, 'the rated seeker waits on');
   await word(H, A, { k: 'y', o: oa.o }); await word(H, B, { k: 'y', o: oa.o });
   assert.deepEqual([last(A, 'go').u, last(B, 'go').u], [1, 1], 'called to a casual bout');
+  const o = last(A, 'go').o;   // AUDIT PRE-MERGE 1003 S7: the bout's room is the go's, never the offer's id
   await word(H, A, { k: 'ls' });
-  assert.equal(last(A, 'live').l.find((e) => e.o === oa.o).u, 1, 'listed as one');
-  const Rm = W.room(arenaBoutRoom(oa.o));
+  assert.equal(last(A, 'live').l.find((e) => e.o === o).u, 1, 'listed as one');
+  const Rm = W.room(arenaBoutRoom(o));
   const kp = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
   Rm.env.GATE_SIGNING_KEY = Buffer.from(new Uint8Array(await subtle.exportKey('pkcs8', kp.privateKey))).toString('base64');
   const a = Rm.connect(), b = Rm.connect();
@@ -111,7 +112,8 @@ test('ARENA4b casual bout on the client: the Challenge card offers Find a match 
   const listed = onlineCards({ hall: { ...open, live: [{ o: '0123456789abcdef', kind: 'pvp', a: { n: 'Alva' }, b: { n: 'Brann' }, sp: 2, at: 1, u: 1 }] }, me: null, now: 0 })[0];
   assert.equal(listed.live[0].title, O.liveCasual, 'listed as a casual bout');
   const src = rd('src/scenes/arenaOnline.js');
-  assert.match(src, /if \(!hallSend\(\{ k: 'q', lv: Math\.max\(1, Math\.floor\(deps\.level\?\.\(\) \?\? 1\)\), \.\.\.myBanner\(\), \.\.\.\(casual \? \{ u: 1 \} : \{\}\) \}\)\)/, 'the press sends `u`');
+  // AUDIT PRE-MERGE 1003 O4/O5: the word is kept (said again on a hall socket come back) before it is sent
+  assert.match(src, /const q = \{ k: 'q', lv: Math\.max\(1, Math\.floor\(deps\.level\?\.\(\) \?\? 1\)\), \.\.\.myBanner\(\), \.\.\.\(casual \? \{ u: 1 \} : \{\}\) \};[\s\S]{0,400}?if \(!hallSend\(q\)\)/, 'the press sends `u`');
   assert.match(src, /if \(w\.k === 'go'\) goTo\(\{ o: w\.o, kind: 'pvp', side: w\.side, vs: w\.vs, casual: w\.u === 1 \}\);/);
   assert.match(src, /onEnd: \(\) => \{ if \(b\.casual\) say\(O\.casualEnd\); askBoard\(true\); \}/, 'the end says so');
   assert.match(rd('src/scenes/arenaGate.js'), /kind === 'queue' \|\| kind === 'casual' \|\| kind === 'unqueue'/, 'the window\'s press reaches the hall');

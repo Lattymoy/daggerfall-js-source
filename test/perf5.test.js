@@ -17,8 +17,9 @@ test('PERF5 pins: the context adds each static placement to the builder after it
   const c = read('src/scenes/dungeonContext.js');
   assert.match(c, /let staticBatch = null, staticBuilt = false;\n\s+const staticBuilder = new StaticBatchBuilder\(\{ shadowCell: SHADOW_CELL_SIZE \}\);/);   // LA-AUDIT A1: with its shadow cells
   assert.match(c, /const texRemap = new Map\(\);\n\s+const resolveTexKey = keyResolver\(texRemap\);/, 'resolves through the level\'s remap');
-  assert.match(c, /drawList\.push\(\{ mesh: gpu, matrix, key: `\$\{bi\}:\$\{p\.position\}`, aabb \}\);\n\s+\/\/ PERF5[^\n]*\n\s+if \(cpu\.normals && cpu\.uvs\) \{ staticBuilder\.add\(cpu, matrix, resolveTexKey\); drawList\[drawList\.length - 1\]\._batched = true; \}/, 'added beside the draw entry, which stays in drawList for the automap');
-  const loop = c.slice(c.indexOf("if (cls === 'move') {"), c.indexOf('drawList.push({ mesh: gpu, matrix, key: `${bi}:${p.position}`, aabb });'));
+  // AUDIT PRE-MERGE 1003 W4: a climate-free model's entry carries its own (empty) table, and merges through it
+  assert.match(c, /drawList\.push\(\{ mesh: gpu, matrix, key: `\$\{bi\}:\$\{p\.position\}`, aabb, \.\.\.\(climateFree \? \{ texRemap: NO_CLIMATE_REMAP \} : \{\}\) \}\);[^\n]*\n\s+\/\/ PERF5[^\n]*\n\s+if \(cpu\.normals && cpu\.uvs\) \{ staticBuilder\.add\(cpu, matrix, climateFree \? ownTexKey : resolveTexKey\); drawList\[drawList\.length - 1\]\._batched = true; \}/, 'added beside the draw entry, which stays in drawList for the automap');
+  const loop = c.slice(c.indexOf("if (cls === 'move') {"), c.indexOf('drawList.push({ mesh: gpu, matrix, key: `${bi}:${p.position}`, aabb, '));
   assert.ok(!loop.includes('staticBuilder.add'), 'the move and specialDoor arms `continue` before the add: an action object is never batched');
   assert.match(c, /get staticBatch\(\) \{[^\n]*\n\s+if \(!staticBuilt\) \{ staticBuilt = true; const m = staticBuilder\.finish\(\); staticBatch = m \? renderer\.createMesh\(m\) : null; \}/, 'merged once, on the first frame that asks');
   assert.match(c, /if \(staticBatch\) \{ renderer\.destroyMesh\(staticBatch\); staticBatch = null; \}/, 'freed with the level');
@@ -29,6 +30,6 @@ test('PERF5 pins: both dungeon hosts draw the merge with the identity before the
   for (const [f, ctx] of [['src/scenes/dungeon.js', 'ctx'], ['src/scenes/worldModes.js', 'dungeonCtx']]) {
     const s = read(f);
     assert.match(s, /^const BATCH_IDENTITY = identity\(\);/m, `${f}: the merged level is in world space`);
-    assert.match(s, new RegExp(`if \\(${ctx}\\.staticBatch\\) renderer\\.drawMesh\\(${ctx}\\.staticBatch, BATCH_IDENTITY, null\\);[^\\n]*\\n\\s+for \\(const d of ${ctx}\\.drawList\\) if \\(!d\\._batched\\) renderer\\.drawMesh\\(d\\.mesh, d\\.matrix, ${ctx}\\.texRemap\\);\\n\\s+for \\(const d of ${ctx}\\.dynamicDraws\\) renderer\\.drawMesh\\(d\\.gpu, d\\.object\\.matrix, ${ctx}\\.texRemap\\);`), `${f}: the merge, then the rest, then the movers`);
+    assert.match(s, new RegExp(`if \\(${ctx}\\.staticBatch\\) renderer\\.drawMesh\\(${ctx}\\.staticBatch, BATCH_IDENTITY, null\\);[^\\n]*\\n\\s+for \\(const d of ${ctx}\\.drawList\\) if \\(!d\\._batched\\) renderer\\.drawMesh\\(d\\.mesh, d\\.matrix, d\\.texRemap \\?\\? ${ctx}\\.texRemap\\);[^\\n]*\\n\\s+for \\(const d of ${ctx}\\.dynamicDraws\\) renderer\\.drawMesh\\(d\\.gpu, d\\.object\\.matrix, ${ctx}\\.texRemap\\);`), `${f}: the merge, then the rest, then the movers`);
   }
 });

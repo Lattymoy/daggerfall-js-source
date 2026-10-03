@@ -53,6 +53,7 @@ import { ENHANCED_MID_TEXT_ID, midTextTopPx } from './enhancedHudText.js';
 import { crosshairCentreY, CROSSHAIR_ARM } from './hudCrosshair.js';
 import { hudReticle } from './hud.js';   // the reticle's own two terms, from their home (the plaque's anchor reads the same)
 import { armDrawWatchdog, disarmDraw } from './drawWatchdog.js';
+import { haulWords, HAUL_ICON_BOX, LODE_ICON_BOX } from './haulCards.js';   // HAUL-CARDS: a gather's, a strike's and a claim's cards - their words
 
 /** Four cards at most (the oldest goes past four). */
 export const PICKUP_FEED_MAX = 4;
@@ -128,14 +129,21 @@ function imageOf(item, identity) {
  *  - Past `max`, the oldest go.
  */
 export function createPickupQueue({ max = PICKUP_FEED_MAX, hold = PICKUP_FEED_HOLD_MS, fade = PICKUP_FEED_FADE_MS } = {}) {
-  const ttl = hold + fade;
+  // HAUL-CARDS: a card may carry its own hold (a gather's says more than a pickup's)
+  const holdOf = (c) => (Number.isFinite(c.hold) && c.hold > 0 ? c.hold : hold);
   let seq = 0;
   /** @type {any[]} */
   let cards = [];
   const tick = (now) => {
     const before = cards.length;
-    cards = cards.filter((c) => now - c.at < ttl);
+    cards = cards.filter((c) => now - c.at < holdOf(c) + fade);
     return cards.length !== before;
+  };
+  /** HAUL-CARDS: a bump's other fields - `adds` summed (a gather's XP with its goods), `latest` the newest's (the
+   *  Stores' count after it, the balance, the day's combat silver). A pickup's count alone moves, as it always did. */
+  const merge = (c, e) => {
+    for (const f of e.adds ?? []) if (f !== 'count') c[f] = (Number(c[f]) || 0) + (Number(e[f]) || 0);
+    for (const f of e.latest ?? []) if (e[f] !== undefined) c[f] = e[f];
   };
   return {
     push(entries, now) {
@@ -144,11 +152,12 @@ export function createPickupQueue({ max = PICKUP_FEED_MAX, hold = PICKUP_FEED_HO
       for (const e of entries ?? []) {
         if (!e || !(e.count > 0) || !e.key) continue;
         const mine = block.find((c) => c.key === e.key);
-        if (mine) { mine.count += e.count; continue; }
+        if (mine) { mine.count += e.count; merge(mine, e); continue; }
         const i = cards.findIndex((c) => c.key === e.key);
         if (i >= 0) {
           const c = cards.splice(i, 1)[0];
           c.count += e.count;
+          merge(c, e);
           c.at = now;
           c.bumps += 1;
           block.push(c);
@@ -161,7 +170,7 @@ export function createPickupQueue({ max = PICKUP_FEED_MAX, hold = PICKUP_FEED_HO
       return true;
     },
     tick,
-    standing(now) { return cards.map((c) => ({ ...c, fading: now - c.at >= hold })); },
+    standing(now) { return cards.map((c) => ({ ...c, fading: now - c.at >= holdOf(c) })); },
     get size() { return cards.length; },
     clear() { cards = []; },
   };
@@ -175,8 +184,11 @@ export function createPickupQueue({ max = PICKUP_FEED_MAX, hold = PICKUP_FEED_HO
  * card shows the newest ones (they come first) and lets the oldest - the next to fade anyway - wait unseen. One card
  * always shows. `cardH` and `cardGap` are one card's height and the space between two, as drawn. CSS pixels.
  */
-export function pickupFeedLayout({ base, upper = 0, lower = Infinity, cardH = 0, cardGap = 0, count = 0 } = {}) {
-  const height = (n) => (n > 0 ? n * cardH + (n - 1) * cardGap : 0);
+export function pickupFeedLayout({ base, upper = 0, lower = Infinity, cardH = 0, cardGap = 0, count = 0, heights = null } = {}) {
+  // HAUL-CARDS: a gather's card stands taller than a pickup's - each card its own height where the face measured them
+  // (`heights`, newest first), else every card the first's
+  const hOf = (i) => (Array.isArray(heights) && Number.isFinite(heights[i]) ? heights[i] : cardH);
+  const height = (n) => { let h = 0; for (let i = 0; i < n; i++) h += hOf(i); return n > 0 ? h + (n - 1) * cardGap : 0; };
   const up = Number.isFinite(upper) ? upper : 0;
   let top = Math.max(Number.isFinite(base) ? base : up, up);
   let shown = Math.max(0, Math.trunc(count) || 0);
@@ -195,18 +207,27 @@ export function pickupFeedLayout({ base, upper = 0, lower = Infinity, cardH = 0,
 // journey bar and the quest tracker read it). Each Plus theme tints the veil as it tints the plaque's.
 const T = FRAME_TONES;
 const rgbOf = (hex) => [1, 3, 5].map((i) => parseInt(String(hex).slice(i, i + 2), 16)).join(',');
+/** AUDIT HAUL-CARDS C4: a colour's relative luminance (WCAG) - a theme whose panel is light veils the feed in its ink. */
+const luminance = (hex) => {
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(String(hex).slice(i, i + 2), 16) / 255).map((v) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+/** AUDIT HAUL-CARDS C4: the feed is words over the world, in brass, parchment and the tiers' colours - a veil lighter than
+ *  this (Stone's panel, 0.10) dropped them to 2:1; such a theme's feed wears its ink, the rest their panel as before. */
+export const PICKUP_VEIL_LIGHT = 0.06;
+const veilOf = (th) => (th.ink && luminance(th.panel) > PICKUP_VEIL_LIGHT ? th.ink : th.panel);
 const THEME_TINTS = Object.entries(PLUS_THEMES).filter(([, th]) => th.panel)
-  .map(([id, th]) => `:root[data-plus-theme="${id}"] .pickfeed-card { background-color: rgba(${rgbOf(th.panel)}, 0.9); }`).join('\n');
+  .map(([id, th]) => `:root[data-plus-theme="${id}"] .pickfeed-card { background-color: rgba(${rgbOf(veilOf(th))}, 0.9); }`).join('\n');
 
 export const PICKUP_FEED_CSS = `${PIXELIFY_FIVE_FACE}
 /* PICKUP-FEED: what a press put in the pack, under the crosshair (ui/pickupFeed.js) */
 .pickfeed { position: fixed; left: 50%; top: var(--pf-top, 73%); z-index: 4; pointer-events: none;
   transform: translateX(-50%) scale(var(--hud-scale, 1)); transform-origin: top center;
-  display: flex; flex-direction: column; align-items: stretch; gap: ${PICKUP_CARD_GAP}px; width: max-content; min-width: 168px; max-width: 92vw;
+  display: flex; flex-direction: column; align-items: stretch; gap: ${PICKUP_CARD_GAP}px; width: max-content; min-width: 168px; max-width: calc(92vw / var(--hud-scale, 1));
   ${PIXEL_FONT_CSS} }
 .pickfeed:empty { display: none; }
 .pickfeed-card.pf-over { display: none; }
-.pickfeed-card { display: flex; align-items: center; gap: 6px; box-sizing: border-box; max-width: min(440px, 88vw);
+.pickfeed-card { display: flex; align-items: center; gap: 6px; box-sizing: border-box; max-width: min(440px, calc(88vw / var(--hud-scale, 1)));
   padding: 2px 10px 2px 2px; font-size: 14px; line-height: 20px; white-space: nowrap; color: #d8cfae;
   background-color: rgba(10,12,17,0.9); border: 2px solid;
   border-color: ${T.stoneLit} ${T.stoneDim} ${T.stoneDark} ${T.stoneMid};
@@ -241,10 +262,53 @@ ${rarityVarsCss('.pickfeed ')}
 @keyframes pickfeed-bump-a { from { color: ${T.brassHi}; transform: scale(1.3); } to { transform: none; } }
 @keyframes pickfeed-bump-b { from { color: ${T.brassHi}; transform: scale(1.3); } to { transform: none; } }
 .pickfeed-count, .pickfeed-name { display: inline-block; transform-origin: center; }
+/* HAUL-CARDS (ui/haulCards.js): a gather's goods, a strike's silver, a claim's deed and contracts - the card's family, two
+   lines: a head over the line where there is one, the XP or the day's combat silver a bar under it */
+.pickfeed-card.haul { align-items: center; line-height: 18px; padding-top: 3px; padding-bottom: 3px; }
+.pickfeed-card.haul .pickfeed-icon { width: 36px; height: 36px; }
+.pickfeed-card.haul .pickfeed-icon img { max-width: 32px; max-height: 32px; }
+.haul-body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 1px; }
+.haul-head { font-size: 11px; line-height: 12px; letter-spacing: 1px; text-transform: uppercase; color: ${T.brass}; }
+.haul-head:empty { display: none; }
+.haul-line { display: flex; align-items: baseline; gap: 5px; white-space: nowrap; min-width: 0; }
+.pickfeed-card.haul .pickfeed-plus { margin-right: 0; }
+.haul-sub { flex: 0 1000 auto; min-width: 0; font-size: 11px; color: ${T.stoneHi}; overflow: hidden; text-overflow: ellipsis; }   /* AUDIT HAUL-CARDS C3/C5: the sub gives way first */
+.pickfeed-card.haul .pickfeed-name { flex: 0 1 auto; }
+.pickfeed-card.haul.is-silver .pickfeed-name, .pickfeed-card.haul.is-treasury .pickfeed-name { flex-shrink: 0; }
+.haul-sub:empty, .haul-end:empty, .haul-tag:empty { display: none; }
+.haul-tag { margin-left: auto; padding: 0 4px; font-size: 11px; line-height: 14px; letter-spacing: 1px; text-transform: uppercase;
+  color: ${T.stoneHi}; border: 1px solid ${T.stoneLit}; }
+.haul-end { margin-left: auto; padding-left: 6px; font-size: 11px; color: ${T.stoneHi}; }
+.haul-row { display: flex; align-items: center; gap: 6px; font-size: 11px; line-height: 14px; color: ${T.stoneHi}; }
+.haul-row[hidden] { display: none; }
+.haul-bar { flex: 1 1 auto; min-width: 36px; height: 4px; background: rgba(5,6,8,0.9); box-shadow: 0 0 0 1px ${T.outline}; }
+.haul-fill { display: block; height: 4px; width: 0; background: ${T.brass}; transition: width 300ms ease-out; }
+.haul-coin { flex: 0 0 auto; display: inline-block; box-sizing: border-box; width: 18px; height: 18px; border-radius: 50%;
+  background: #c9d1d9; box-shadow: inset 0 0 0 3px #8d97a1, 0 0 0 1px ${T.outline}; }
+.haul-row .haul-coin { width: 10px; height: 10px; box-shadow: inset 0 0 0 2px #8d97a1, 0 0 0 1px ${T.outline}; }
+.haul-chest { flex: 0 0 auto; display: inline-block; width: 18px; height: 14px; background: ${T.brass};
+  box-shadow: inset 0 4px 0 ${T.brassHi}, inset 0 -2px 0 ${T.brassLo}, 0 0 0 1px ${T.outline}; }
+.pickfeed-card.haul.is-silver { --pf-edge: #c9d1d9; }
+.pickfeed-card.haul.is-silver .pickfeed-name, .pickfeed-card.haul.is-silver .pickfeed-plus { color: #eef2f5; }
+.pickfeed-card.haul.is-silver .haul-fill { background: #c9d1d9; }
+.pickfeed-card.haul.is-treasury { --pf-edge: ${T.brass}; }
+.pickfeed-card.haul.is-treasury .pickfeed-name { color: ${T.brassHi}; }
+.pickfeed-card.haul.is-note { color: ${T.stoneHi}; font-size: 13px; padding-left: 10px; white-space: normal; }   /* AUDIT HAUL-CARDS A2/C1: it wraps (59 letters ran 96 px past a phone's card); A5: its veil the theme's */
+.haul-note { min-width: 0; }
+.pickfeed-card.haul.is-lode { padding-top: 5px; padding-bottom: 5px;
+  box-shadow: 0 0 0 1px ${T.outline}, inset 3px 0 0 var(--pf-edge, transparent), 0 0 14px rgba(var(--rar-rgb, 192,138,62),0.4); }
+.pickfeed-card.haul.is-lode .haul-head { color: var(--rar-hi, ${T.brassHi}); }
+.pickfeed-card.haul.is-lode .pickfeed-icon { width: 42px; height: 42px; }
+.pickfeed-card.haul.is-lode .pickfeed-icon img { max-width: 38px; max-height: 38px; }
+.haul-lode .haul-silver { color: #eef2f5; }
+.haul-lode .haul-coin[hidden] { display: none; }   /* AUDIT HAUL-CARDS A5: no silver struck, no coin */
+.pickfeed-card.haul .pickfeed-plus { display: inline-block; transform-origin: center; }
+.pickfeed-card.haul .pickfeed-plus.bump-a { animation: pickfeed-bump-a 180ms ease-out; }
+.pickfeed-card.haul .pickfeed-plus.bump-b { animation: pickfeed-bump-b 180ms ease-out; }
 /* no slide, no pop, no fade under reduced motion: a card is there, and then it is not */
 @media (prefers-reduced-motion: reduce) {
-  .pickfeed-card, .pickfeed-count, .pickfeed-name { animation: none !important; transition: none !important; } }
-@media (max-width: 720px) { .pickfeed-card { font-size: 13px; max-width: 88vw; } }
+  .pickfeed-card, .pickfeed-count, .pickfeed-name, .pickfeed-plus, .haul-fill { animation: none !important; transition: none !important; } }
+@media (max-width: 720px) { .pickfeed-card { font-size: 13px; max-width: calc(88vw / var(--hud-scale, 1)); } }   /* AUDIT HAUL-CARDS C2: the width before the HUD's scale, so a scaled card keeps to the screen */
 ${THEME_TINTS}
 /* font: ${PIXEL_STACK} */`;
 
@@ -272,7 +336,8 @@ let _cancel = (t) => { if (t != null && typeof clearTimeout === 'function') clea
 let _icon = (line, onReady) => {
   const img = line.image;
   if (!img || img.archive == null) return null;
-  return requestFittedIcon(img.archive, img.record, { box: PICKUP_ICON_BOX, dpr: screenDpr(), dye: img.dye, dyeTarget: img.dyeTarget, onReady });
+  const box = line.lode ? LODE_ICON_BOX : line.haul ? HAUL_ICON_BOX : PICKUP_ICON_BOX;   // HAUL-CARDS: fitted to the card's own box
+  return requestFittedIcon(img.archive, img.record, { box, dpr: screenDpr(), dye: img.dye, dyeTarget: img.dyeTarget, onReady });
 };
 
 /** Tests and the probe: the clock, the frame source, the watchdog's timers and the icon door. */
@@ -328,6 +393,30 @@ export function showPickups(moved, identity = undefined) {
   }
 }
 
+/**
+ * HAUL-CARDS: A GATHER'S, A STRIKE'S OR A CLAIM'S CARDS (ui/haulCards.js builds them from the answer) - the same feed,
+ * law and band as a pickup's. Answers TRUE when they are up (the enhanced skin), and the caller then does not say the
+ * lines they stand for; FALSE on the classic skin, off a document, for nothing, or a face that cannot draw - and the
+ * lines are said exactly as before.
+ * @param {any[]} entries
+ */
+export function showHaul(entries) {
+  try {
+    if (!isEnhanced()) return false;
+    const d = doc();
+    if (!d?.body || !d.createElement) return false;
+    const list = (entries ?? []).filter((e) => e && e.key && e.haul && e.count > 0);
+    if (!list.length) return false;
+    if (!queue.push(list, _now())) return false;
+    ensure(d);
+    draw();
+    return true;
+  } catch (e) {
+    if (!_faultSaid) { _faultSaid = true; console.warn(`[pickup-feed] the haul's cards could not be drawn; the lines are said instead: ${e?.message ?? e}`); }
+    return false;
+  }
+}
+
 /** One frame of the face: age the cards, draw what changed, stand the feed where it fits, and keep the ticker (and its
  *  watchdog) going while a card stands. */
 function draw() {
@@ -359,12 +448,15 @@ function paint(lines) {
   for (const l of lines) {
     let c = drawn.get(l.id);
     if (!c) { c = build(d, l); drawn.set(l.id, c); }
-    if (c.count !== l.count) {
+    if (c.haul) {
+      // HAUL-CARDS: a bump rewrites the card's words (its count, its Stores, its XP and the bar), the "+N" pops
+      if (c.bumps !== l.bumps) { c.bumps = l.bumps; c.count = l.count; sayHaul(c, l); pop(c.plus, l.bumps); }
+    } else if (c.count !== l.count) {
       c.count = l.count;
       c.name.textContent = nameText(l);
       c.num.textContent = pickupCountText(l);
     }
-    if (c.bumps !== l.bumps) {
+    if (!c.haul && c.bumps !== l.bumps) {
       c.bumps = l.bumps;
       const target = l.gold ? c.name : c.num;
       target.classList.remove('bump-a', 'bump-b');
@@ -384,7 +476,61 @@ function paint(lines) {
   }
 }
 
+const pop = (target, bumps) => { if (!target) return; target.classList.remove('bump-a', 'bump-b'); target.classList.add(bumps % 2 ? 'bump-a' : 'bump-b'); };
+const span = (d, cls, text = '') => { const s = d.createElement('span'); s.className = cls; s.textContent = text; return s; };
+/** HAUL-CARDS: a gather's, a strike's or a claim's card, built once - its words written by sayHaul, now and at a bump. */
+function buildHaul(d, l) {
+  const el = d.createElement('div');
+  el.className = `pickfeed-card haul is-${l.lode ? 'lode' : l.haul === 'note' ? 'note' : l.tone === 'treasury' ? 'treasury' : l.haul === 'silver' ? 'silver' : 'stores'}`;
+  if (l.rarity) el.dataset.rarity = l.rarity;
+  const c = { el, haul: true, count: l.count, bumps: l.bumps, fading: false };
+  if (l.haul === 'note') { c.note = span(d, 'haul-note'); el.append(c.note); sayHaul(c, l); return c; }
+  c.icon = span(d, 'pickfeed-icon');
+  if (l.haul === 'silver') c.icon.append(span(d, l.tone === 'treasury' ? 'haul-chest' : 'haul-coin'));
+  const body = d.createElement('div');
+  body.className = 'haul-body';
+  c.head = d.createElement('div'); c.head.className = 'haul-head';
+  const line = d.createElement('div'); line.className = 'haul-line';
+  c.plus = span(d, 'pickfeed-plus'); c.name = span(d, 'pickfeed-name'); c.sub = span(d, 'haul-sub'); c.tag = span(d, 'haul-tag'); c.end = span(d, 'haul-end');
+  line.append(c.plus, c.name, c.sub, c.tag, c.end);
+  c.row = d.createElement('div'); c.row.className = 'haul-row';
+  c.rowText = span(d, 'haul-text'); c.bar = span(d, 'haul-bar'); c.fill = span(d, 'haul-fill'); c.rowEnd = span(d, 'haul-rank');
+  c.bar.append(c.fill);
+  c.row.append(c.rowText, c.bar, c.rowEnd);
+  body.append(c.head, line, c.row);
+  if (l.lode) {
+    c.lode = d.createElement('div'); c.lode.className = 'haul-row haul-lode';
+    c.lodeSilver = span(d, 'haul-silver'); c.lodeHeld = span(d, 'haul-sub'); c.miners = span(d, 'haul-end');   // AUDIT HAUL-CARDS B4: the purse beside the silver
+    c.lodeCoin = span(d, 'haul-coin');
+    c.lode.append(c.lodeCoin, c.lodeSilver, c.lodeHeld, c.miners);
+    body.append(c.lode);
+  }
+  el.append(c.icon, body);
+  sayHaul(c, l);
+  if (l.haul === 'stores') setIcon(c, l);
+  return c;
+}
+/** A haul card's words, written (haulCards.js haulWords - the pins read the same words). */
+function sayHaul(c, l) {
+  const w = haulWords(l);
+  if (c.note) { c.note.textContent = w.note; return; }
+  c.head.textContent = w.head ?? '';
+  c.plus.textContent = w.plus;
+  c.name.textContent = w.name;
+  c.sub.textContent = w.sub ?? '';
+  c.tag.textContent = w.tag ?? '';
+  c.end.textContent = w.end ?? '';
+  c.row.hidden = !w.row;
+  if (w.row) {
+    c.rowText.textContent = w.row.text;
+    c.fill.style.width = `${Math.round(w.row.fill * 100)}%`;
+    c.rowEnd.textContent = w.row.end ?? '';
+  }
+  if (c.lode && w.lode) { c.lodeSilver.textContent = w.lode.silver; c.lodeHeld.textContent = w.lode.held ?? ''; c.miners.textContent = w.lode.miners; c.lodeCoin.hidden = !w.lode.silver; }
+}
+
 function build(d, l) {
+  if (l.haul) return buildHaul(d, l);   // HAUL-CARDS
   const el = d.createElement('div');
   el.className = 'pickfeed-card';
   if (l.gold) el.classList.add('is-gold');
@@ -459,7 +605,16 @@ function place(count) {
     if (r) lower = Math.min(lower, r.top - gap);
   }
   const first = rect(node.firstElementChild);
-  const { top, shown } = pickupFeedLayout({ base, upper, lower, cardH: first?.height ?? 0, cardGap: PICKUP_CARD_GAP * scale, count });
+  // HAUL-CARDS: a gather's card is taller than a pickup's - each card's own height, newest first. AUDIT HAUL-CARDS A1: a
+  // card the band put out measures nothing, so each keeps its last height seen (`_pfH`) - read as the first's, a tall
+  // card out of the band fitted the next frame, stood, and went again, a flicker the whole of its hold
+  const heights = [];
+  for (let i = 0; i < count && i < (node.children?.length ?? 0); i++) {
+    const kid = node.children[i], r = rect(kid);
+    if (r) kid._pfH = r.height;
+    heights.push(r?.height ?? kid._pfH ?? first?.height ?? 0);
+  }
+  const { top, shown } = pickupFeedLayout({ base, upper, lower, cardH: first?.height ?? 0, cardGap: PICKUP_CARD_GAP * scale, count, heights });
   const t = `${top.toFixed(1)}px`;
   if (t !== lastTop) { lastTop = t; node.style.setProperty('--pf-top', t); }
   const s = String(scale);

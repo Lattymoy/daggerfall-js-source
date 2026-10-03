@@ -284,6 +284,7 @@ import {
   HALL_BOARD_TITLE, hallBoardShutLine, HALL_BOARD_COLD,   // GUILD1e: the board in a hall
   HALL_OF_RECORDS_TEXT, HALL_OF_RECORDS_SHUT,   // SEASON1 part three: a seat's Hall of Records
   homeDoorName,   // FIELD BUGS 2026-09-30b HOME-PLAQUE: a nameless house with verbs is a Residence
+  homeClaimLayout,   // AUDIT PRE-MERGE 1003 WD1: a hall is bought in its town's layout, as a home is
 } from '../systems/onlineHomes.js';
 import { guildHallPrice, GUILD_HALL_ENTRY_WORDS } from '../net/hallLaw.js';   // GUILD1d: what a hall costs, in its refusal's words; who may walk in
 import { SEAT_HALL_DECOR_CAP, SEAT_HALL_CLEAR_M, SEAT_HALL_TEXT } from '../net/townSeatLaw.js';   // SEAT-HALL: the palace as the holder's hall
@@ -535,7 +536,7 @@ export function createWorldModes(host) {
    *
    * AUDIT-WH H5. Three hover arms wrote `.Name` - the C# property, as
    * the mod's own source spells it (.cs:764, :725, :777) - and the
-   * record these hosts mint spells it `name` (exterior.js:4033 hands
+   * record these hosts mint spells it `name` (exterior.js:4034 hands
    * `dfLocation`, world.js hands `_questLoc()`; both are the port's
    * location record). `.Name` on it is `undefined`, so all three arms
    * fell to `''`, and `staticDoorName` answers NULL on an empty
@@ -1698,10 +1699,10 @@ export function createWorldModes(host) {
    *  billboard is CENTRE-anchored, so the base ends up ON the marker
    *  inside a building and half a height BELOW it inside a dungeon.
    *  This port's billboard shader is BOTTOM-anchored (position = base,
-   *  the C11 law dungeonContext.js:2232 states), so the same visual
+   *  the C11 law dungeonContext.js:2247 states), so the same visual
    *  result needs the shift on the DUNGEON side - which is exactly the
    *  shift the dungeon's own RDB flats already take
-   *  (dungeonContext.js:2117, `y - size.h / 2`), and which a building's
+   *  (dungeonContext.js:2132, `y - size.h / 2`), and which a building's
    *  flats correctly do not (interiorContext.js passes its centers
    *  straight through).
    *
@@ -6010,16 +6011,22 @@ export function createWorldModes(host) {
   /** GUILD1d: BUY IT AS THE GUILD'S HALL - the plaque's armed row, or (AUDIT GUILD1d A3) the offer box's own choice where
    *  no plaque rows are drawn. No purse moves: the treasury pays on the service. */
   function buyHallAt(bd, price) {
+    // AUDIT PRE-MERGE 1003 WD1: A HALL IS A HOME - its key names a building only in its town's layout, so buyHomeAt's
+    // gates (AUDIT WD3 O1/O2/B1) hold it too: none bought before the room's layouts of the homes' towns are heard, it is
+    // bought in its town's layout, and one refused for that layout hears them again
+    if (host.homeTownsMissing?.()) { townTalk?.say?.(accountRefusalText('home-towns')); return; }
+    if (host.homeLayoutsHeard?.() === false) { townTalk?.say?.(accountRefusalText('home-layout')); host.hearHomeLayouts?.(); return; }
     const id = homeIdOf(bd);
     if (_hallBuying.has(id)) return;
     _hallBuying.add(id);
     const g = hallGuild();
     const mapId = homeTownOf(bd);
-    Promise.resolve(host.guildHall?.buy?.({ mapId, buildingKey: bd.buildingKey, region: bd.regionIndex ?? 0, price }))
+    Promise.resolve(host.guildHall?.buy?.({ mapId, buildingKey: bd.buildingKey, region: bd.regionIndex ?? 0, price, layout: homeClaimLayout(mapId) }))
       .then((r) => {
         if (r?.ok) { host.onlineHomes?.ensure?.(mapId, { force: true }); townTalk?.say?.(hallBoughtLine(g?.name ?? 'your guild')); return; }
         townTalk?.say?.(r?.error === 'guild-treasury-short' || r?.error === 'guild-treasury-old' ? hallShortLine(guildHallPrice(price)) : accountRefusalText(r?.error ?? 'server'));
         if (r?.error === 'home-taken') host.onlineHomes?.ensure?.(mapId, { force: true });
+        if (r?.error === 'home-layout') host.hearHomeLayouts?.();   // AUDIT PRE-MERGE 1003 WD1: the town stood another layout here
       })
       .catch((e) => console.error(e))
       .finally(() => { _hallBuying.delete(id); });
@@ -7820,7 +7827,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:8119), so the OUTER host's one rides in.
+          // (dungeonContext.js:8134), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:847 -> the
@@ -8909,7 +8916,7 @@ export function createWorldModes(host) {
       mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.bodyFeetAt(), yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw });   // MW-D24; DISC18: the body at the capsule's own feet, not the camera's smoothed ones
       host.drawPeerBodies?.({ proj, view, eye: mwv.eye });   // MWBODY1: the others' bodies, after the player's own
       if (dungeonCtx.staticBatch) renderer.drawMesh(dungeonCtx.staticBatch, BATCH_IDENTITY, null);   // PERF5: the level's static models, one call per texture
-      for (const d of dungeonCtx.drawList) if (!d._batched) renderer.drawMesh(d.mesh, d.matrix, dungeonCtx.texRemap);
+      for (const d of dungeonCtx.drawList) if (!d._batched) renderer.drawMesh(d.mesh, d.matrix, d.texRemap ?? dungeonCtx.texRemap);   // AUDIT PRE-MERGE 1003 W4: a climate-free model's own table
       for (const d of dungeonCtx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, dungeonCtx.texRemap);
       host.drawModeMeshes?.();   // CSA-C: a boat on the dungeon's water
       drawCrownHall({ proj, view, eye: mwv.eye });   // CROWN-HALL: the throne room's board, chest and banners - opaque, before the flats
@@ -9065,7 +9072,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:15799's own wave-46 note); the interior
+          // a blow (world.js:15827's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -10007,7 +10014,7 @@ export function createWorldModes(host) {
   addEventListener('mousedown', (e) => {
     // AUDIT-MACK F2: THIS HOST DOES NOT FEED THE HELD SET, and MAC-K1
     // briefly made it. `keys` is not this host's - it arrives on the
-    // host bag (`exterior.js:4095`, `world.js`'s twin), and the OUTER
+    // host bag (`exterior.js:4096`, `world.js`'s twin), and the OUTER
     // host's own mousedown writes `keys.add(mouseCode(e.button))`
     // UNGATED, before any mode test, on a listener that is never
     // removed. So the three button codes were already in the Set while
@@ -11775,9 +11782,9 @@ export function createWorldModes(host) {
      *  .cs:175-176 writes `weaponDrawn`/`usingLeftHand` off it,
      *  :420-421 restores them onto it. The port has FOUR PlayerWeapons
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
-     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3638-3660), and IS1 routed the inside-a-building save to
+     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3639-3661), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:11860). So an F9 pressed in a shop
+     *  unconditionally (world.js:11874). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -11816,7 +11823,7 @@ export function createWorldModes(host) {
       if (interiorOverlay instanceof DeathScreen) { interiorOverlay.restoreView(); interiorOverlay = null; }
     },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:12189)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:12203)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -11826,8 +11833,8 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:10850`
-     *  and `dungeonContext.js:8131` for its two sibling copies - lines
+     *  HARD2c: this used to spell them out, and named `world.js:10864`
+     *  and `dungeonContext.js:8146` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {

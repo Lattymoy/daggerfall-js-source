@@ -84,8 +84,8 @@
   {
     "name": "DRAKES-the-gate-line-old",
     "file": "src/net/marksBook.js",
-    "old": "The counting-houses strike it for two breaches a day.",
-    "new": "The counting-houses strike Marks for two breaches a day.",
+    "old": "capped: `No silver for this breach. The counting-houses strike ${marksText(MARKS_COMBAT.perDay)} a day",
+    "new": "capped: `No silver for this breach. The counting-houses strike Marks a day",
     "tests": [
       "test/drakes.test.js"
     ]

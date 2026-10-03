@@ -44,7 +44,7 @@ import { WATER_SCROLL_TILES_PER_SEC } from '../render/waterSurface.js';   // WAT
 import { enemyControllerHeight, idleSpriteHeight, flyerStandFeet, centreFromFeet, spriteOriginY, keepRebuiltSpawn } from '../characters/enemyAnchor.js';   // INCIDENT 2026-09-04 (ceiling bats): SetupDemoEnemy.cs:103-115 capsule + DaggerfallMobileUnit.cs:398-411 anchor
 import { MobileUnit, MOBILE_DAEDRA_SEDUCER, SeducerTransformBehaviour } from '../characters/mobileUnit.js';   // C11: classic sprite monsters   // A5: the Seducer transform pair + its trigger
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
-import { customModelFor, customAliasFor, emptyModel } from '../world/customModels.js';   // DS1: models no ARCH3D carries, and GetModelData's false; WD3: a classic model under another id
+import { customModelFor, customAliasFor, emptyModel, isClimateFreeModel, NO_CLIMATE_REMAP } from '../world/customModels.js';   // DS1: models no ARCH3D carries, and GetModelData's false; WD3: a classic model under another id; AUDIT PRE-MERGE 1003 W4: and one that wears its own pictures
 import { RDB_SIDE, MOVE_ACTION_FLAGS, ACTION_FLAGS, TRIGGER_FLAGS } from '../world/rdbLayout.js';   // WAVE D: the move family - an acting FLAT tweens like the model beside it
 import { NPC_CONTEXT } from '../characters/staticNpc.js';   // AUDIT 64 F13: StaticNPC.SetLayoutData(RdbObject) stamps Context.Dungeon
 import { drawnFlat } from '../characters/nudeFlats.js';   // NUDE-FLATS: Show Nudity off draws a nude figure's clothed stand-in
@@ -349,6 +349,20 @@ export function boundsTopY(positions, m) {
   return top;
 }
 
+/**
+ * AUDIT PRE-MERGE 1003 W4: THE TABLE A LEVEL'S MODEL IS DRAWN BY. The level's own texture table (`remap`) is laid into its
+ * shared `texRemap` for the model's pictures (WM3's one seam, world/texRemap.js remapSubMeshes) and the model is drawn and
+ * merged through that map - but a CLIMATE-FREE model (world/customModels.js: the colosseum, in the floor's instance) wears
+ * its own pictures here as it does in the city's hosts (scenes/world.js, scenes/exterior.js: RuntimeMaterials' ApplyClimate
+ * 0): no key of its in the level's map, drawn and merged by NO_CLIMATE_REMAP - the table had turned its 122/124 passages
+ * under the tiers and the fighters' gates to the table's 23. Every other model of every level as before. Answers the map.
+ */
+export async function levelModelRemap(id, subMeshes, texRemap, remap, deps) {
+  if (isClimateFreeModel(id)) return NO_CLIMATE_REMAP;
+  await remapSubMeshes(subMeshes, texRemap, remap, deps);
+  return texRemap;
+}
+
 export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseType, opts = {}) {
   const { renderer, arch, getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, palette } = deps;
 
@@ -487,6 +501,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   };
   const texRemap = new Map();
   const resolveTexKey = keyResolver(texRemap);   // PERF5: drawMesh's own remap resolution
+  const ownTexKey = keyResolver(NO_CLIMATE_REMAP);   // AUDIT PRE-MERGE 1003 W4: a climate-free model's, in the merge (scenes/world.js's)
   const flatGroups = new Map();
   /** AUDIT 64 F13: THE DUNGEON'S STATIC NPCs. RDBLayout.AddFlat
    *  (RDBLayout.cs:1204-1247) does two things to a flat that the port
@@ -530,7 +545,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // The dungeon's law is its own RDB texture table, keyed on the
     // archive alone; everything below it is the same law the climate
     // hosts run (WM3 gave the four copies one home).
-    await remapSubMeshes(cpuModels.get(id)?.subMeshes, texRemap, (archive) => remap(archive), deps);
+    return levelModelRemap(id, cpuModels.get(id)?.subMeshes, texRemap, (archive) => remap(archive), deps);   // AUDIT PRE-MERGE 1003 W4: and answers the table the model is drawn by
   };
 
   // The MOVE-flag flats, each with its own single-flat billboard batch
@@ -639,7 +654,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const matrix = multiply(originMatrix, p.matrix);
       const gpu = await getGpuMesh(p.modelIdNum);
       if (!gpu) continue;
-      await ensureRemap(p.modelIdNum);
+      const climateFree = (await ensureRemap(p.modelIdNum)) === NO_CLIMATE_REMAP;   // AUDIT PRE-MERGE 1003 W4: the colosseum wears its own pictures (levelModelRemap)
       const cpu = cpuModels.get(p.modelIdNum);
       // A1: every placement's world AABB, computed once - the action
       // arms below and the automap reveal index both read it.
@@ -700,9 +715,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // `${bi}:${position}` key) + world AABB so the automap window
       // can filter the LIVE list by the revealed set - no duplicate
       // geometry (Automap.cs duplicates the whole level instead).
-      drawList.push({ mesh: gpu, matrix, key: `${bi}:${p.position}`, aabb });
+      drawList.push({ mesh: gpu, matrix, key: `${bi}:${p.position}`, aabb, ...(climateFree ? { texRemap: NO_CLIMATE_REMAP } : {}) });   // AUDIT PRE-MERGE 1003 W4: drawn by its own (empty) table
       // PERF5: the remap for this model is in the map (ensureRemap above); the entry stays in drawList for the automap
-      if (cpu.normals && cpu.uvs) { staticBuilder.add(cpu, matrix, resolveTexKey); drawList[drawList.length - 1]._batched = true; }
+      if (cpu.normals && cpu.uvs) { staticBuilder.add(cpu, matrix, climateFree ? ownTexKey : resolveTexKey); drawList[drawList.length - 1]._batched = true; }   // AUDIT PRE-MERGE 1003 W4
       automapEntries.push(amapRow(`${bi}:${p.position}`, aabb, !!p.action, cpu, matrix));
       collider.addMesh('dungeon', cpu.positions, cpu.indices, matrix);
       if (standable && hasActionCollision(standable)) triggerSurfaces.addMesh(standable.key, cpu.positions, cpu.indices, matrix);   // DISC29-A; AUDIT PRE-MERGE 0929 D1/D2: every collision-trigger model's, for its contact
@@ -2078,7 +2093,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:16022 / exterior.js:3926), set
+  // host's own townTalk sink (world.js:16050 / exterior.js:3927), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2667,7 +2682,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:1437,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:1438,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -3214,7 +3229,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1126 against :1156; worldModes.js:8366 against :8386).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1126 against :1156; worldModes.js:8373 against :8393).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -4109,8 +4124,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:26427,
-              // exterior.js:5589 and worldModes.js:9090 already ran;
+              // playerArrowHitFoe is the one copy world.js:26477,
+              // exterior.js:5590 and worldModes.js:9097 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that

@@ -117,7 +117,7 @@ export const SPECIALISATIONS = Object.freeze({
   mining: Object.freeze({
     50: pair(spec('prospector', 'Prospector', 'Surface veins within 200 m are marked on the compass; gems come a tenth more often.'),
       spec('deep-delver', 'Deep Delver', 'Dungeon veins yield +50%.')),
-    100: pair(spec('motherlode-sense', 'Motherlode Sense', 'Motherlode warnings come 30 minutes ahead, not 10.', 'PROF2b'),
+    100: pair(spec('motherlode-sense', 'Motherlode Sense', 'Motherlode warnings come 30 minutes ahead, not 10.'),   // PROF2b: its Motherlodes built - chosen as any
       spec('stonebreaker', 'Stonebreaker', 'Quarrying yields Cut Stone directly.')),
   }),
   logging: Object.freeze({

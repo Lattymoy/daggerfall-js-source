@@ -21,11 +21,12 @@
   {
     "name": "GATHERSAID-goods-unkept",
     "file": "src/scenes/gatherHost.js",
-    "old": "      hud.toast(k?.storesLine ? k.storesLine(d) : storesLine(d), { keep: true });",
-    "new": "      hud.toast(k?.storesLine ? k.storesLine(d) : storesLine(d));",
+    "old": "      if (!hauled) hud.toast(k?.storesLine ? k.storesLine(d) : storesLine(d), { keep: true });",
+    "new": "      if (!hauled) hud.toast(k?.storesLine ? k.storesLine(d) : storesLine(d));",
     "tests": [
       "test/gathersaid.test.js"
-    ]
+    ],
+    "note": "HAUL-CARDS (PIN MOVED): re-aimed by content - the queue's own hold and merge, the haul card's twin lines (the anchor widened to the pickup's own), the goods' line said where no card stood, a Motherlode's silver unsaid under its card."
   },
   {
     "name": "GATHERSAID-gem-own-line-again",

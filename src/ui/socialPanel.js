@@ -56,7 +56,7 @@ import { GUILD_DEPOSIT_UNSURE } from '../net/guildBook.js';
 import { LETTER_OF_CREDIT_TEXT } from '../systems/tradeModes.js';   // GUILD-LETTER: the trade window's own line for a letter of credit
 import { writMay, guildMoveOk, writBudgetOk, GUILD_STORES_MAX, WRIT_BUDGET_MAX } from '../net/writLaw.js';   // PROF6: the guild Stores' and the writ budget's ranks and bounds
 import { STORES_MAX } from '../net/professionLaw.js';   // AUDIT 31 U8: a character's Stores' most of a material
-import { marksText } from '../net/marksLaw.js';   // MARKS1: the Marks treasury's words   // MAIL1: the form's caps are the service's
+import { marksText, MARKS_FAUCETS } from '../net/marksLaw.js';   // MARKS1: the Marks treasury's words   // MAIL1: the form's caps are the service's
 import { glyphBadges, glyphSvgNode, titleBadge } from './playerBadge.js';   // MAIL1: a sender's glyphs, in the one drawing every DOM face uses
 import { HERALDRY_COLOURS, HERALDRY_DEVICES, HERALDRY_UNHELD, HERALDRY_CHANGE_DRAKES, heraldryOf, heraldrySame, heraldryText, heraldryDeviceName } from '../net/heraldryLaw.js';   // GUILD1d
 import { bannerSvg } from './heraldryArt.js';   // GUILD1d: the guild's banner, drawn
@@ -105,10 +105,16 @@ export const GUILD_GOLD_SHORT_TEXT = 'You do not have that much gold, even with 
 /** GUILD1d (Seats-Arc 8): the Hall and Heraldry sections' words. */
 export const GUILD_HALL_NONE_TEXT = `Your guild has no hall. The guildmaster buys one at any house's door, from the treasury - its price and ${Math.round((GUILD_HALL_PRICE_MULT - 1) * 100)}% more.`;
 export const GUILD_HERALDRY_NONE_TEXT = 'Your guild has no heraldry yet.';
+/** AUDIT SILVER-WAYS A3: the day's guild deeds, as the Guild tab says them (marksLaw.js MARKS_FAUCETS.deed). */
+export const guildDeedsText = (n, max) => `Guild deeds today: ${Math.max(0, Number(n) || 0)} of ${max}. When ${MARKS_FAUCETS.deed.members} members of ${Math.round(MARKS_FAUCETS.deed.tenureS / 86_400)} days defend the same town or close the same gate, the treasury earns ${marksText(MARKS_FAUCETS.deed.amount)}.`;
 /** GUILD1d: a treasury ledger line's verb - a deposit and a withdrawal, and the hall's own moves (0043's `moved_kind`). */
 export const GUILD_LEDGER_WORDS = Object.freeze({ deposit: 'put in', withdraw: 'took out', hall: 'bought the hall for', 'hall-sale': 'sold the hall for', 'hall-piece': 'took down a hall piece - back into the treasury:' });
 /** AUDIT GUILD1d R5: a Drakes ledger line's verb - a heraldry changed is the treasury paying, never a deposit. */
-export const GUILD_MARKS_LEDGER_WORDS = Object.freeze({ deposit: 'put in', withdraw: 'took out', heraldry: 'changed the heraldry for' });
+export const GUILD_MARKS_LEDGER_WORDS = Object.freeze({
+  deposit: 'put in', withdraw: 'took out', heraldry: 'changed the heraldry for',
+  // SILVER-WAYS: a guild deed (its third member names it), a contract's pay put up, and what came home of it
+  deed: 'completed a guild deed:', contract: 'put up a contract of', 'contract-return': 'came home with',
+});
 /** AUDIT GUILD1d R13: the hall's sale in words - the service's own sum (the deed share and its pieces' half). */
 export const guildHallSoldText = (r) => `The hall is sold. ${Number(r?.data?.back ?? 0).toLocaleString('en-US')} gold went back into the treasury.`;
 /** GUILD1d: where a hall stands, in words. */
@@ -1129,6 +1135,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
     if (g.marks?.state?.open === true) {
       out.push(el('div', 'dfsocial-sec', 'Silver treasury'));
       out.push(el('div', 'dfsocial-note', `The treasury holds ${marksText(Number(v.marks ?? 0))}. You hold ${marksText(Number(g.marks.state.balance ?? 0))}.`));
+      if (Number.isSafeInteger(v.deedsMax)) out.push(el('div', 'dfsocial-note', guildDeedsText(v.deeds, v.deedsMax)));   // AUDIT SILVER-WAYS A3
       const mform = el('div', 'dfsocial-form');
       guildField(mform, 'Silver', d.marks ?? '', 7, (x) => { d.marks = x; });
       out.push(mform);

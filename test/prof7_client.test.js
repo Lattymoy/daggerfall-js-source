@@ -528,7 +528,7 @@ test('PROF7 wiring: the street and the dungeon stamp and list their bodies for H
   const g = src('src/scenes/gatherHost.js');
   assert.match(g, /const gone = act\.loose \? !w : !act\.dungeon && !stood\.has\(pixelKey\(act\.px, act\.py\)\);/);
   assert.match(g, /climate: a\.info\?\.climate \?\? null, region: a\.info\?\.region \?\? null, act: report,/);
-  assert.match(g, /at: Math\.floor\(deps\.nowMs\(\) \/ 1000\), \.\.\.\(a\.ask \?\? \{\}\),/);
+  assert.match(g, /at: Math\.floor\(deps\.nowMs\(\) \/ 1000\), \.\.\.\(\(typeof a\.ask === 'function' \? a\.ask\(\) : a\.ask\) \?\? \{\}\),/);   // AUDIT SILVER-WAYS D5 (PIN MOVED): an ask may be asked at the act's end
   const b = src('src/net/profBook.js');
   assert.match(b, /\.\.\.\(h\.foe === undefined \? \{\} : \{ foe: h\.foe \}\),/);
   assert.match(b, /applyStore\(r\.data\?\.extraStore\);/);

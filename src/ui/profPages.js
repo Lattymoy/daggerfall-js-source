@@ -132,7 +132,7 @@ let _provider = /** @type {ProfPagesProvider|null} */ (null);
 export function setProfessionsPages(p) { _provider = p ?? null; }
 /** What a locked specialisation's card says it waits for (professionLaw.js `later`). */
 const LATER_WORDS = Object.freeze({
-  PROF2b: 'Comes with the Motherlodes', SEAT2: 'Comes with the sieges', SEAT2b: 'Comes with the fortifications',   // PROF11: the Builder's and the Fortifier's
+  SEAT2: 'Comes with the sieges', SEAT2b: 'Comes with the fortifications',   // PROF11: the Builder's and the Fortifier's
   // PROF7 (Professions-Arc.md 29): what DFU gives these nothing to stand as - for Mac
   trophy: 'Waits on a trophy to stand as', 'two-colour': 'Waits on a second dye Daggerfall\'s cloth can take', wagon: 'Waits on a wagon upgrade to hold',   // AUDIT 32 R11: Daggerfall, never "DFU", where a player reads it
 });

@@ -292,8 +292,8 @@
   {
     "name": "AUDIT-REALM2-M5-true-regardless",
     "file": "src/scenes/world.js",
-    "old": "    return !!(modes ? modes?.quickSaveNow(QUICK_SAVE_NAME, { quiet: true }) : worldQuickSave(QUICK_SAVE_NAME, { quiet: true }));",
-    "new": "    void (modes ? modes?.quickSaveNow(QUICK_SAVE_NAME, { quiet: true }) : worldQuickSave(QUICK_SAVE_NAME, { quiet: true })); return true;",
+    "old": "    return !!(modes ? modes?.quickSaveNow(QUICK_SAVE_NAME, opts) : worldQuickSave(QUICK_SAVE_NAME, opts));",
+    "new": "    void (modes ? modes?.quickSaveNow(QUICK_SAVE_NAME, opts) : worldQuickSave(QUICK_SAVE_NAME, opts)); return true;",
     "tests": [
       "test/auditrealm2_client.test.js"
     ]

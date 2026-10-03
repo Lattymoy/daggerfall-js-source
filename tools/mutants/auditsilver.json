@@ -1,0 +1,292 @@
+[
+  {
+    "name": "AUDIT-SILVER-WAYS-A1-unique-dropped",
+    "file": "server-account/migrations/0071_silver_ways.sql",
+    "old": "CREATE UNIQUE INDEX IF NOT EXISTS idx_guild_deed_marks_event",
+    "new": "CREATE INDEX IF NOT EXISTS idx_guild_deed_marks_event",
+    "tests": [
+      "test/auditsilver_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SILVER-WAYS-A2-strike-unguarded",
+    "file": "server-account/src/marks.js",
+    "old": "        AND ${CLAIM_GUARDS[kind](11)}`)",
+    "new": "        AND (${CLAIM_GUARDS[kind](11)} OR 1)`)",
+    "tests": [
+      "test/auditsilver_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SILVER-WAYS-A3-deeds-unread",
+    "file": "server-account/src/guilds.js",
+    "old": "      ...(await guildDeedsToday(db, guildId, nowS)),\n",
+    "new": "",
+    "tests": [
+      "test/auditsilver_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SILVER-WAYS-A3-deeds-unsaid",
+    "file": "src/ui/socialPanel.js",
+    "old": "if (Number.isSafeInteger(v.deedsMax)) out.push(el('div', 'dfsocial-note', guildDeedsText(v.deeds, v.deedsMax)));",
+    "new": "if (false) out.push(el('div', 'dfsocial-note', guildDeedsText(v.deeds, v.deedsMax)));",
+    "tests": [
+      "test/auditsilver_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SILVER-WAYS-B1-tax-not-running",
+    "file": "server-account/src/contracts.js",
+    "old": "const deedTaxSql = `(((c.deeds - c.left_deeds + 1) * c.pay * ${TAX_PCT}) / 100",
+    "new": "const deedTaxSql = `(((c.deeds - c.left_deeds) * c.pay * ${TAX_PCT}) / 100",
+    "tests": [
+      "test/auditsilver_service.test.js",
+      "test/silverways_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SILVER-WAYS-B1-tax-per-deed",
+    "file": "server-account/src/contracts.js",
+    "old": "const deedTaxSql = `(((c.deeds - c.left_deeds + 1) * c.pay * ${TAX_PCT}) / 100 - ((c.deeds - c.left_deeds) * c.pay * ${TAX_PCT}) / 100)`;",
+    "new": "const deedTaxSql = `((c.pay * ${TAX_PCT}) / 100)`;",
+    "tests": [
+      "test/auditsilver_service.test.js",
+      "test/silverways_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SILVER-WAYS-B1-read-no-wider",
+    "file": "server-account/src/contracts.js",
+    "old": "const CONTRACTS_READ_MAX = CONTRACTS_PAID_MAX * 2;",
+    "new": "const CONTRACTS_READ_MAX = CONTRACTS_PAID_MAX;",
+    "tests": [
+      "test/auditsilver_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SILVER-WAYS-B1-paid-max-unread",
+    "file": "server-account/src/contracts.js",
+    "old": "AND (SELECT COUNT(*) FROM guild_contract_pays p WHERE p.event = ?3 AND p.account = ?1) < ?10`)",
+    "new": "AND (SELECT COUNT(*) FROM guild_contract_pays p WHERE p.event = ?3 AND p.account = ?1) < ?10 + 5`)",
+    "tests": [
+      "test/auditsilver_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SILVER-WAYS-B2-read-ignores-posters",
+    "file": "server-account/src/contracts.js",
+    "old": " AND left_deeds >= 1 AND NOT ${posters('guild_contracts.guild_id')}",
+    "new": " AND left_deeds >= 1 AND (${posters('guild_contracts.guild_id')} OR 1)",
+    "tests": [
+      "test/auditsilver_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SILVER-WAYS-B3-status-unmapped",
+    "file": "server-account/src/index.js",
+    "old": "  'guild-contracts': 409,",
+    "new": "  'guild-contracts-x': 409,",
+    "tests": [
+      "test/auditsilver_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SILVER-WAYS-C1-no-ceiling",
+    "file": "src/net/motherlodeLaw.js",
+    "old": "i >= at - MOTHERLODE_WATCH_S && i <= at + MOTHERLODE_WATCH_AHEAD_S;",
+    "new": "i >= at - MOTHERLODE_WATCH_S;",
+    "tests": [
+      "test/auditsilver_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SILVER-WAYS-C1-skew-60",
+    "file": "src/net/motherlodeLaw.js",
+    "old": "export const MOTHERLODE_WATCH_AHEAD_S = 30;",
+    "new": "export const MOTHERLODE_WATCH_AHEAD_S = 60;",
+    "tests": [
+      "test/auditsilver_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SILVER-WAYS-C1-service-unasked",
+    "file": "server-account/src/motherlodes.js",
+    "old": "c.y !== lode.y || !motherlodeWatchOk(c.i, at))",
+    "new": "c.y !== lode.y || c.i < at - 600)",
+    "tests": [
+      "test/auditsilver_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SILVER-WAYS-C2-full-for-any",
+    "file": "server-account/src/motherlodes.js",
+    "old": "return balance + MOTHERLODE_SILVER > MARKS_MAX ? { marks: { struck: 0, balance, why: 'full' } } : {};",
+    "new": "return { marks: { struck: 0, balance, why: 'full' } };",
+    "tests": [
+      "test/auditsilver_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SILVER-WAYS-C3-no-mark-read",
+    "file": "server-account/src/motherlodes.js",
+    "old": "if (await db.prepare('SELECT 1 FROM motherlode_days WHERE day = ?1').bind(day).first()) return keptOf();",
+    "new": "if (false) return keptOf();",
+    "tests": [
+      "test/auditsilver_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SILVER-WAYS-C3-picks-unguarded",
+    "file": "server-account/src/motherlodes.js",
+    "old": "WHERE EXISTS (SELECT 1 FROM motherlode_days WHERE day = ?1 AND n = ?10)`)",
+    "new": "WHERE ?10 IS NOT NULL`)",
+    "tests": [
+      "test/auditsilver_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SILVER-WAYS-D1-turn-unrated",
+    "file": "src/net/motherlodeBook.js",
+    "old": " && nowMs() - askedAt >= MOTHERLODE_RETRY_MS;",
+    "new": ";",
+    "tests": [
+      "test/auditsilver_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SILVER-WAYS-D1-spread-unread",
+    "file": "src/net/motherlodeBook.js",
+    "old": "state.day !== today && (t - today * 86400) * 1000 >= turnMs && ",
+    "new": "state.day !== today && ",
+    "tests": [
+      "test/auditsilver_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SILVER-WAYS-D2-full-unlearned",
+    "file": "src/net/motherlodeBook.js",
+    "old": "if (l) l.struck = Math.max(l.struck ?? 0, MOTHERLODE_STRIKERS);",
+    "new": "if (l) l.struck = l.struck ?? 0;",
+    "tests": [
+      "test/auditsilver_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SILVER-WAYS-D2-found-unlearned",
+    "file": "src/net/motherlodeBook.js",
+    "old": "else if (error === 'motherlode-found') state.found = state.found ?? key;",
+    "new": "else if (error === 'motherlode-found') state.found = state.found ?? null;",
+    "tests": [
+      "test/auditsilver_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SILVER-WAYS-D2-host-hand-off",
+    "file": "src/scenes/gatherHost.js",
+    "old": "if (typeof key === 'string') for (const k of kinds) {",
+    "new": "if (typeof key === 'number') for (const k of kinds) {",
+    "tests": [
+      "test/auditsilver_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SILVER-WAYS-D2-kind-hand-off",
+    "file": "src/scenes/mineHost.js",
+    "old": "if (typeof key === 'string' && key.startsWith('mlode:')) lodes?.refused?.(key, error);",
+    "new": "if (typeof key === 'string' && key.startsWith('vein:')) lodes?.refused?.(key, error);",
+    "tests": [
+      "test/auditsilver_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SILVER-WAYS-D3-stand",
+    "file": "src/net/motherlodeBook.js",
+    "old": "Walk about on it a moment - the Watch marks those on the move, every two minutes.",
+    "new": "Stand a moment - it will within two minutes.",
+    "tests": [
+      "test/auditsilver_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SILVER-WAYS-D4-fallback-unasked",
+    "file": "src/scenes/mineHost.js",
+    "old": "        ?? standAnywhere(samples, tilemap, locationRect, pieces);",
+    "new": "        ?? (standAnywhere && null);",
+    "tests": [
+      "test/auditsilver_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SILVER-WAYS-D4-town-unasked",
+    "file": "src/scenes/mineHost.js",
+    "old": "    const at = natureStandsAt(samples, tilemap, locationRect, x, y);\n    if (at && onPixel(at.x, at.z) && !insideRocks(rocks, at.x, at.z)) return at;",
+    "new": "    const at = natureStandsAt(samples, tilemap, null, x, y);\n    if (at && onPixel(at.x, at.z) && !insideRocks(rocks, at.x, at.z)) return at;",
+    "tests": [
+      "test/auditsilver_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SILVER-WAYS-D5-start-alone",
+    "file": "src/scenes/mineHost.js",
+    "old": "ask: () => ({ watch: lodes?.watchFor?.(n.lode.x, n.lode.y, 0) ?? watch })",
+    "new": "ask: () => ({ watch })",
+    "tests": [
+      "test/auditsilver_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SILVER-WAYS-D5-host-ask-uncalled",
+    "file": "src/scenes/gatherHost.js",
+    "old": "...((typeof a.ask === 'function' ? a.ask() : a.ask) ?? {}),",
+    "new": "...(a.ask ?? {}),",
+    "tests": [
+      "test/auditsilver_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SILVER-WAYS-D6-account-unread",
+    "file": "src/net/motherlodeBook.js",
+    "old": "return w && w.s === meNow() && motherlodeWatchOk(",
+    "new": "return w && motherlodeWatchOk(",
+    "tests": [
+      "test/auditsilver_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SILVER-WAYS-D6-kept-for-return",
+    "file": "src/net/motherlodeBook.js",
+    "old": "if (m !== meNowV) { meNowV = m; watches.clear(); }",
+    "new": "if (m !== meNowV) { meNowV = m; }",
+    "tests": [
+      "test/auditsilver_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SILVER-WAYS-D7-account-each-frame",
+    "file": "src/net/motherlodeBook.js",
+    "old": "    if (t - meAt < MOTHERLODE_ME_MS) return meNowV;\n",
+    "new": "",
+    "tests": [
+      "test/auditsilver_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SILVER-WAYS-D7-list-a-frame",
+    "file": "src/net/motherlodeBook.js",
+    "old": "    standingAll(out = []) {\n      out.length = 0;",
+    "new": "    standingAll(out = []) {\n      out = [];",
+    "tests": [
+      "test/auditsilver_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SILVER-WAYS-D7-world-pool",
+    "file": "src/scenes/world.js",
+    "old": "const tr = state.pixelTranslation(l.x, l.y, _lodeTr), m = _lodePool[_lodeMarks.length] ??=",
+    "new": "const tr = state.pixelTranslation(l.x, l.y, [0, 0, 0]), m = _lodePool[_lodeMarks.length] ??=",
+    "tests": [
+      "test/auditsilver_client.test.js"
+    ]
+  }
+]

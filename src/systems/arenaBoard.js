@@ -235,7 +235,7 @@ export function boardsPage({ ladder, league, gameMinutes, name }) {
     pve: { title: W().boards.pve, sub: W().boards.pveSub, cols: W().cols.pve, ...pve, empty: '' },
     fast: { title: W().boards.fast, sub: W().boards.fastSub, cols: W().cols.fast, ...fast, empty: fast.rows.length ? '' : W().boards.fastNone },
     pvp: { title: W().boards.pvp, sub: W().boards.pvpSub, cols: W().cols.pvp, rows: [], pinned: null, total: 0, empty: W().boards.pvpNone },
-    team: { title: W().boards.team, sub: W().boards.teamSub, cols: W().cols.team, rows: teamRows, pinned: null, total: teamRows.length, empty: '' },
+    team: { title: W().boards.team, sub: W().boards.teamSub, heads: [W().season], cols: W().cols.team, rows: teamRows, pinned: null, total: teamRows.length, empty: '' },   // AUDIT PRE-MERGE 1003 U11: its rows are seasons - no Rank, no Fighter over them
   };
 }
 
@@ -298,9 +298,11 @@ export function onlineCards({ hall, me, guest = false, busy = false, now = 0 }) 
   let acts;
   if (st === 'queued') { acts = [{ act: 'unqueue', label: O().leaveQueue, why: null }]; lines.push(hall.casual ? O().casualQueued(hall.n ?? 0) : O().queuedLine(hall.band ?? 0, hall.n ?? 0)); }   // ARENA4b: a casual seeker's line
   else if (st === 'offer' && hall.offer) {
-    acts = [{ act: 'accept', label: O().accept, why: null }, { act: 'decline', label: O().decline, why: null }];
+    // AUDIT PRE-MERGE 1003 U10: at 0 the offer has lapsed (the hall's beat says so within the second) - no Accept to press
+    const left = Math.max(0, Math.ceil(((hall.offer.until ?? 0) - now) / 1000));
+    acts = left > 0 ? [{ act: 'accept', label: O().accept, why: null }, { act: 'decline', label: O().decline, why: null }] : [];
     const vs = billed(hall.offer.vs);
-    lines.push(O().offerLine(vs.name, vs.rating ?? '?'), O().offerClock(Math.max(0, Math.ceil(((hall.offer.until ?? 0) - now) / 1000))));
+    lines.push(O().offerLine(vs.name, vs.rating ?? '?'), O().offerClock(left));
     if (hall.offer.casual) lines.push(O().casualOffer);   // ARENA4b
   } else if (st === 'going') { acts = []; lines.push(O().goingLine(billed(hall.go?.vs)?.name ?? W().fighter)); }
   else { acts = [{ act: 'queue', label: O().findMatch, why }, { act: 'casual', label: O().casualMatch, why }]; lines.push(O().casualLine); }   // ARENA4b: Casual bout beside Find a match
@@ -420,7 +422,7 @@ export function boardsPageOnline(board, name = '') {
     pve: { title: W().boards.pve, sub: O().pveSub, cols: W().cols.pve, ...pve, empty: pve.rows.length ? '' : W().boards.fastNone },
     fast: { title: W().boards.fast, sub: O().fastSub, cols: W().cols.fast, ...fast, empty: fast.rows.length ? '' : W().boards.fastNone },
     pvp: { title: W().boards.pvp, sub: O().pvpSub, cols: W().cols.pvp, ...pvp, empty: pvp.rows.length ? '' : O().pvpNone, champion: board.champion ? O().champion(board.champion.name) : O().noChampion },
-    team: { title: W().boards.team, sub: O().teamSub, cols: W().cols.team, rows: teamRows, pinned: null, total: teamRows.length, empty: '' },
+    team: { title: W().boards.team, sub: O().teamSub, heads: [W().season], cols: W().cols.team, rows: teamRows, pinned: null, total: teamRows.length, empty: '' },   // AUDIT PRE-MERGE 1003 U11
     hall: hallBoardOnline(board, name),
   };
 }

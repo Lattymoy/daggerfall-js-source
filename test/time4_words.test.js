@@ -43,26 +43,17 @@ test('TIME4 the Online pane says the sky\'s day as it is when the pane opens: tw
   assert.match(menu, /loans and repairs run on it\. Quests online have no time limits: none fails because time ran out, a bounty never lapses, and a quest that would make you wait days \(a letter, a meeting\) moves on after a minute or two of play\./, 'TIMEFREE, said at the door (TIME3 said the quest timers ran on it)');
 });
 
-test('TIME4 the patch notes say the law\'s own figures: a day of 60 minutes, a full moon\'s night of 30, nightfall within 30, a three-day wait in about half a minute of rest, half an hour of game time at most for a tab away', () => {
-  const notes = rd('PATCH-NOTES-A-Faster-Sky.md');
-  assert.match(notes, /^# Patch Notes: A faster sky\n/);
-  assert.match(notes, /\*\*A day online is now an hour\.\*\*/);
+test('TIME4 the figures the patch notes stated are the law\'s own: a day of 60 minutes, a full moon\'s night of 30, nightfall within 30, a three-day wait in about half a minute of rest, half an hour of game time at most for a tab away', () => {
+  // the notes themselves live on the pull request since REL6, never as a file in the tree
   assert.equal(REAL_MIN_PER_SKY_DAY, 60);
-  assert.match(notes, /Midnight falls on the hour, real time, and dusk at :45 \(the Online page gives your own clock's times\)\./);
   // a night (dusk to dawn) and the longest wait for nightfall (dawn to dusk) are twelve sky hours each
   const night = ((24 - DUSK_HOUR + DAWN_HOUR) * 60) / SWITCH.minutesPerMs / 60_000;
   const day = ((DUSK_HOUR - DAWN_HOUR) * 60) / SWITCH.minutesPerMs / 60_000;
   assert.deepEqual([night, day], [30, 30]);
-  assert.match(notes, /the full moon forces the change for its night only, from dusk to dawn: 30 real minutes\./);
-  assert.match(notes, /A vampire waits at most 30 real minutes for nightfall/);
   // the rest's pace: an hour is six sub-ticks of REST_WAIT_PER_HOUR / MINUTES_PER_TICK real seconds
   const restSeconds = 72 * 6 * (REST_WAIT_PER_HOUR / MINUTES_PER_TICK);
   assert.ok(restSeconds > 20 && restSeconds < 45, `72 hours rested in ${restSeconds} real seconds - about half a minute`);
-  assert.match(notes, /"come back in 3 days" is a 72-hour rest, about half a minute\./);
   assert.equal(PLAYED_STEP_MAX_SECONDS, 30 * 60);
-  assert.match(notes, /A closed or hidden tab costs a quest timer half an hour of game time at most\./);
-  assert.match(notes, /Full-moon nights come four real hours apart, then none for twenty-eight\./, 'test/time2_moon.test.js executes it');
-  assert.match(notes, /Online saves made before this update move their quest timers onto your clock the first time they load\./);
 });
 
 test('TIME4 the bible says what was built, and the switch instant it names is the law\'s', () => {

@@ -322,8 +322,8 @@
   {
     "name": "AUDIT31-svc-escrow-word",
     "file": "server-account/src/guilds.js",
-    "old": "return 'guild-writ-escrow';",
-    "new": "return 'guild-writs';",
+    "old": "FROM guild_writs WHERE guild_id = ?1 AND returned = 0 AND escrow > 0').bind(guildId).first()) return 'guild-writ-escrow';",
+    "new": "FROM guild_writs WHERE guild_id = ?1 AND returned = 0 AND escrow > 0').bind(guildId).first()) return 'guild-writs';",
     "tests": [
       "test/audit31_service.test.js"
     ]
@@ -593,8 +593,8 @@
   {
     "name": "AUDIT31-tab-budget-none-silent",
     "file": "src/ui/workTab.js",
-    "old": "            : officer && !(g.budget > 0) ? 'The Guildmaster has set no writ budget for Officers this week.'",
-    "new": "            : false ? 'The Guildmaster has set no writ budget for Officers this week.'",
+    "old": "        || (standing >= GUILD_WRITS_MAX ? `The guild has ${GUILD_WRITS_MAX} writs posted already.`\n          : escrow > (g.marks ?? 0) ? `The guild's treasury holds only ${marksText(g.marks ?? 0)}.`\n            : officer && !(g.budget > 0) ? 'The Guildmaster has set no writ budget for Officers this week.'",
+    "new": "        || (standing >= GUILD_WRITS_MAX ? `The guild has ${GUILD_WRITS_MAX} writs posted already.`\n          : escrow > (g.marks ?? 0) ? `The guild's treasury holds only ${marksText(g.marks ?? 0)}.`\n            : false ? 'The Guildmaster has set no writ budget for Officers this week.'",
     "tests": [
       "test/audit31_tabs.test.js"
     ]

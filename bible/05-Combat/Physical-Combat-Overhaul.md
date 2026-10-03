@@ -138,7 +138,7 @@ durability because its really bad"; asked how much, "Daggerfall's rate
 (1x)").** At twice, every landed blow cost at least 2 (the doubling came
 after the floor roll's 1) and a 50-point dagger or bow broke in about 25
 blows. `DFU_WEAR_MULTIPLE` is 1 again; the seam stays for a later tuning.
-`PATCH-NOTES-Time-Free-Quests.md`. [SUPERSEDES WEAR-TWICE's 2.]
+[SUPERSEDES WEAR-TWICE's 2.]
 
 A soft weapon still wears by what it deals: an iron blade on a Ghost does
 nothing in DFU and wears nothing, and does a little under the soft-material

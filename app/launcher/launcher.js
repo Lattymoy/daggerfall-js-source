@@ -39,9 +39,10 @@
 
   const BADGE = { new: 'New', update: 'Update' };
 
-  /** A release's patch notes - the PATCH-NOTES-*.md subset: headings,
-   *  bullets (nested by their indent), paragraphs. Anything else is a
-   *  paragraph of its text. */
+  /** A release's patch notes - the markdown subset a pull request's
+   *  "Patch notes" section is written in (scripts/desktopRelease.mjs):
+   *  headings, bullets (nested by their indent), paragraphs. Anything
+   *  else is a paragraph of its text. */
   function notesBlock(note) {
     const box = el('article', 'release');
     const head = el('div', 'head');
@@ -49,8 +50,8 @@
     if (note.date) head.append(el('span', 'date', note.date));
     if (Object.hasOwn(BADGE, note.badge)) head.append(el('span', `badge ${note.badge}`, BADGE[note.badge]));
     box.append(head);
-    // the open lists, outermost first, each with the indent its bullets stand at (AUDIT INSTALL R2-E8: four
-    // PATCH-NOTES files nest their bullets, and flattened the sub-points read as points of their own)
+    // the open lists, outermost first, each with the indent its bullets stand at (AUDIT INSTALL R2-E8: notes
+    // nest their bullets, and flattened the sub-points read as points of their own)
     let lists = [];
     let para = null;
     for (const raw of String(note.text ?? '').split('\n')) {

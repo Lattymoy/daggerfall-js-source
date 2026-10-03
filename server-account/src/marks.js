@@ -49,7 +49,7 @@ import { accountKind, displayName, overRate } from './accounts.js';
 import { isDeveloper } from './titles.js';
 import { guildActorOf, guildKeepsSql } from './guilds.js';
 import {
-  MARKS_MAX, MARKS_FAUCETS, MARKS_BANK, MARKS_MOVE_MAX, MARKS_REPORT_DAYS, MARKS_OPS_MAX, MARKS_OPS_WINDOW_S, MARKS_RID_RE,
+  MARKS_MAX, MARKS_FAUCETS, MARKS_COMBAT, MARKS_BANK, MARKS_MOVE_MAX, MARKS_REPORT_DAYS, MARKS_OPS_MAX, MARKS_OPS_WINDOW_S, MARKS_RID_RE,
   marksSwitchOf, utcDay, marksAmountOk, exchangeGold,
 } from '../../src/net/marksLaw.js';
 import { guildMay } from '../../src/net/guildLaw.js';
@@ -71,11 +71,17 @@ export async function guildBalanceOf(db, guildId) {
   const r = await db.prepare('SELECT balance FROM guild_marks WHERE guild_id = ?').bind(guildId).first();
   return r ? Number(r.balance) : 0;
 }
+/** SILVER-WAYS: the combat faucets' kinds, in SQL (`kind IN (...)`) - MARKS_COMBAT's own. */
+const COMBAT_KINDS_SQL = MARKS_COMBAT.kinds.map((k) => `'${k}'`).join(', ');
+/** SILVER-WAYS: the combat silver account `a` has had struck on UTC day `d`, in SQL - what the day's cap counts. */
+const combatEarnedSql = (a, d) => `(SELECT COALESCE(SUM(amount), 0) FROM marks_ledger WHERE dst_kind = 'account' AND dst_id = ${a}
+  AND kind IN (${COMBAT_KINDS_SQL}) AND day = ${d})`;
 /** What an account has had struck by a faucet today, and sold to the Bank today. */
 async function todayOf(db, account, day) {
   const g = await db.prepare("SELECT COUNT(*) AS n FROM marks_ledger WHERE dst_id = ? AND kind = 'gate' AND day = ?").bind(account, day).first();
+  const c = await db.prepare(`SELECT ${combatEarnedSql('?1', '?2')} AS s`).bind(account, day).first();
   const x = await db.prepare("SELECT COALESCE(SUM(amount), 0) AS s FROM marks_ledger WHERE src_id = ? AND kind = 'exchange' AND day = ?").bind(account, day).first();
-  return { gate: Number(g?.n ?? 0), exchanged: Number(x?.s ?? 0) };
+  return { gate: Number(g?.n ?? 0), combat: Number(c?.s ?? 0), exchanged: Number(x?.s ?? 0) };
 }
 /** The line an actor's request already made, if it made one. */
 const lineOf = (db, actor, rid) => db.prepare('SELECT * FROM marks_ledger WHERE actor = ? AND rid = ?').bind(actor, rid).first();
@@ -97,56 +103,154 @@ async function decide(stmt) {
   }
 }
 
-// ─── THE FIRST FAUCET: A GATE'S RECEIPT ─────────────────────────────
+// ─── THE COMBAT FAUCETS: A GATE'S RECEIPT, A RAID'S ─────────────────
 
 /** A gate's line id: its game day, under the service's own `:` (AUDIT 28 M11 - never a client's). */
 export const gateStrikeRid = (gameDay) => `gate:${gameDay}`;
+/** SILVER-WAYS: a raid's line id - its key (`region:location:day`, RAID_KEY_RE), under the service's own `:`. */
+export const raidStrikeRid = (key) => `raid:${key}`;
 
 /**
- * WB5b's receipt, counted: 50 Marks to the account, at most two a UTC day, never past MARKS_MAX. The gate's game day is
- * the line's request id, so one gate strikes once whatever asks. THE STATEMENT, not its run - null where Marks are not
- * this account's (a guest, the switch). AUDIT 28 M4: claimGate runs it IN ONE BATCH with the receipt's gate_kills row,
- * and only while that row is the one this claim wrote (`at` = now): a strike that fails takes the row back with it, so
- * the client's retry claims afresh and strikes, where a row kept without its Marks answered `claimed` for ever.
+ * SILVER-WAYS: THE CLAIM'S OWN ROW, as a combat line's (and a deed's) guard - the line is written only while the row
+ * this claim wrote stands, so a strike that fails takes the row back with it (AUDIT 28 M4's law, the gate's first).
+ * Every statement that reads one binds the account at ?1 and the moment at ?4; `p` is the guard's first parameter.
+ *   gate - the receipt's gate_kills row, written this second (`at` = now): its game day at ?p.
+ *   raid - the receipt's raid_cleanses row, stamped with this claim's nonce: the key at ?p, the nonce at ?p+1.
  */
-export function gateStrikeStatement({ db, nowS }, player, env, gameDay) {
-  if (accountKind(player) !== 'linked' || !marksOpenFor(player, env) || !Number.isSafeInteger(gameDay)) return null;
-  const { amount, perDay } = MARKS_FAUCETS.gate;
+const CLAIM_GUARDS = Object.freeze({
+  gate: (p) => `EXISTS (SELECT 1 FROM gate_kills WHERE day = ?${p} AND account = ?1 AND at = ?4)`,
+  raid: (p) => `EXISTS (SELECT 1 FROM raid_cleanses WHERE raid = ?${p} AND account = ?1 AND nonce = ?${p + 1})`,
+});
+
+/**
+ * A COMBAT STRIKE: `kind`'s amount (MARKS_FAUCETS) to the account, or what the day's combat cap has left of it
+ * (MARKS_COMBAT - the gates' and the raids' together, a UTC day), never past MARKS_MAX; `rid` the claim's own, so one
+ * gate or one raid strikes once whatever asks; written only while the claim's own row stands (CLAIM_GUARDS).
+ */
+function combatStrikeStatement({ db, nowS }, player, kind, rid, guard) {
+  const { amount } = MARKS_FAUCETS[kind];
+  const day = utcDay(nowS);
+  const pay = `MIN(?2, ?6 - ${combatEarnedSql('?1', '?3')})`;
   return db.prepare(`${INSERT_LINE}
-    SELECT 'mint', NULL, 'account', ?1, 'gate', ?2, ?3, ?4, ?1, NULL, ?5
-    WHERE (SELECT COUNT(*) FROM marks_ledger WHERE dst_id = ?1 AND kind = 'gate' AND day = ?3) < ?6
-      AND COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) + ?2 <= ?7
+    SELECT 'mint', NULL, 'account', ?1, '${kind}', ${pay}, ?3, ?4, ?1, NULL, ?5
+    WHERE ${combatEarnedSql('?1', '?3')} < ?6
+      AND COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) + ${pay} <= ?7
       AND NOT EXISTS (SELECT 1 FROM marks_ledger WHERE actor = ?1 AND rid = ?5)
-      AND EXISTS (SELECT 1 FROM gate_kills WHERE day = ?8 AND account = ?1 AND at = ?4)`)
-    .bind(player.id, amount, utcDay(nowS), nowS, gateStrikeRid(gameDay), perDay, MARKS_MAX, gameDay);
+      AND ${CLAIM_GUARDS[kind](8)}`)
+    .bind(player.id, amount, day, nowS, rid, MARKS_COMBAT.perDay, MARKS_MAX, ...guard);
 }
-/** What a strike answers: `{ struck, balance }`, `struck` 0 with a `why` (`cap`, `full`), or null where Marks are not
- *  this account's. `struck` says whether the statement wrote its line. */
-export async function gateStrikeAnswer({ db, nowS }, player, env, struck) {
-  if (accountKind(player) !== 'linked' || !marksOpenFor(player, env)) return null;
-  const { amount, perDay } = MARKS_FAUCETS.gate;
+/** Whether Marks are this account's to be struck: registered, and the switch. */
+const strikesFor = (player, env) => accountKind(player) === 'linked' && marksOpenFor(player, env);
+
+/**
+ * WB5b's receipt, counted: 50 silver to the account - SILVER-WAYS: under the day's combat cap, the day's last strike
+ * what it has left - never past MARKS_MAX. The gate's game day is the line's request id, so one gate strikes once
+ * whatever asks. THE STATEMENT, not its run - null where Marks are not this account's (a guest, the switch). AUDIT 28
+ * M4: claimGate runs it IN ONE BATCH with the receipt's gate_kills row, and only while that row is the one this claim
+ * wrote (`at` = now): a strike that fails takes the row back with it, so the client's retry claims afresh and strikes,
+ * where a row kept without its Marks answered `claimed` for ever.
+ */
+export function gateStrikeStatement(ctx, player, env, gameDay) {
+  if (!strikesFor(player, env) || !Number.isSafeInteger(gameDay)) return null;
+  return combatStrikeStatement(ctx, player, 'gate', gateStrikeRid(gameDay), [gameDay]);
+}
+/** SILVER-WAYS: a raid's receipt, counted - 30 silver under the day's combat cap, in claimRaid's own batch and only
+ *  while the raid_cleanses row this claim stamped with `nonce` stands. Null where Marks are not this account's. */
+export function raidStrikeStatement(ctx, player, env, key, nonce) {
+  if (!strikesFor(player, env) || typeof key !== 'string' || typeof nonce !== 'string') return null;
+  return combatStrikeStatement(ctx, player, 'raid', raidStrikeRid(key), [key, nonce]);
+}
+/** What a combat strike answers: `{ struck, balance, combat }`, `struck` 0 with a `why` (`cap` - the day's combat cap
+ *  met; `full` - the balance at the most), or null where Marks are not this account's. `struck` says whether the
+ *  statement wrote its line; the amount is the line's own (the day's last strike may be less than the faucet's).
+ *  `combat` the day's combat silver and its cap, for the line the client says. */
+export async function combatStrikeAnswer({ db, nowS }, player, env, struck, rid) {
+  if (!strikesFor(player, env)) return null;
   const balance = await balanceOf(db, player.id);
-  if (struck) return { struck: amount, balance };
   const today = await todayOf(db, player.id, utcDay(nowS));
-  return { struck: 0, balance, why: today.gate >= perDay ? 'cap' : 'full' };
+  const combat = { earned: today.combat, max: MARKS_COMBAT.perDay };
+  const line = struck ? await lineOf(db, player.id, rid) : null;
+  if (line) return { struck: Number(line.amount), balance, combat };
+  return { struck: 0, balance, combat, why: today.combat >= MARKS_COMBAT.perDay ? 'cap' : 'full' };
 }
+/** The gate's answer (combatStrikeAnswer, under the gate's line id). */
+export const gateStrikeAnswer = (ctx, player, env, struck, gameDay) => combatStrikeAnswer(ctx, player, env, struck, gateStrikeRid(gameDay));
 /** The strike alone (the statement, run, and its answer) - for a gate_kills row this same second already wrote. */
 export async function strikeGateMarks(ctx, player, env, gameDay) {
   const stmt = gateStrikeStatement(ctx, player, env, gameDay);
   if (!stmt) return null;
-  return gateStrikeAnswer(ctx, player, env, await decide(stmt));
+  return gateStrikeAnswer(ctx, player, env, await decide(stmt), gameDay);
+}
+
+// ─── GUILD DEEDS: A GUILD'S ACCOUNTS ON ONE RAID OR GATE ────────────
+
+/** SILVER-WAYS: the deed's event - one raid (its key) or one gate (its game day). */
+export const deedEvent = (kind, id) => `${kind}:${id}`;
+/** A deed's line id, under its guild as the actor (so a guild strikes one deed an event, whoever completes it). */
+export const deedRid = (event) => `deed:${event}`;
+
+/**
+ * SILVER-WAYS: A GUILD DEED'S TWO STATEMENTS, for a claim's own batch - `null` where Marks are not this account's.
+ *   1. THE MARK: this account counts for the guild its claiming `character` is in - where that character has been in
+ *      it MARKS_FAUCETS.deed.tenureS (7 days: a guild joined for the day earns nothing) - once an (event, account)
+ *      WHATEVER THE GUILD, and only while the claim's own row stands (CLAIM_GUARDS[`kind`], its parameters `guard`).
+ *      AUDIT SILVER-WAYS A1: a gate's guard is its row's second, and a refused re-claim in that second (the same
+ *      receipt, another character named) passed it - the mark was once a (guild, event, account), so an account with a
+ *      character in each of three guilds marked all three, and its gate struck their deeds. One account, one guild an
+ *      event: the migration's unique (event, account), which this INSERT OR IGNORE meets.
+ *   2. THE STRIKE: where that guild now has `members` (3) accounts' marks on the event, 25 silver into its treasury -
+ *      once an event a guild (the line's id the deed's, the guild its actor), at most `perDay` (4) a guild a UTC day,
+ *      never past MARKS_MAX. A strike the day's cap refused is struck by the next member's COUNTED claim of that event:
+ *      AUDIT SILVER-WAYS A2 - by the claim's own row as the mark is (a refused re-send of a week-old receipt the next
+ *      day struck a deed its answer never said).
+ * A character counts on the claim alone: one account is one mark, however many of its characters are in the guild.
+ */
+export function deedStatements({ db, nowS }, player, env, { kind, event, character, guard }) {
+  if (!strikesFor(player, env) || typeof character !== 'string' || !character || !CLAIM_GUARDS[kind]) return null;
+  const { amount, perDay, members, tenureS } = MARKS_FAUCETS.deed;
+  return [
+    db.prepare(`INSERT OR IGNORE INTO guild_deed_marks (guild_id, event, account, char_id, at)
+      SELECT m.guild_id, ?2, ?1, ?3, ?4 FROM guild_members m
+      WHERE m.player = ?1 AND m.char_id = ?3 AND m.joined_at <= ?4 - ?5 AND ${CLAIM_GUARDS[kind](6)}`)
+      .bind(player.id, event, character, nowS, tenureS, ...guard),
+    db.prepare(`${INSERT_LINE}
+      SELECT 'mint', NULL, 'guild', d.guild_id, 'guild-deed', ?2, ?3, ?4, d.guild_id, ?5, ?6
+      FROM guild_deed_marks d
+      WHERE d.event = ?7 AND d.account = ?1
+        AND (SELECT COUNT(*) FROM guild_deed_marks x WHERE x.guild_id = d.guild_id AND x.event = ?7) >= ?8
+        AND (SELECT COUNT(*) FROM marks_ledger l WHERE l.dst_kind = 'guild' AND l.dst_id = d.guild_id AND l.kind = 'guild-deed' AND l.day = ?3) < ?9
+        AND COALESCE((SELECT balance FROM guild_marks WHERE guild_id = d.guild_id), 0) + ?2 <= ?10
+        AND NOT EXISTS (SELECT 1 FROM marks_ledger l WHERE l.actor = d.guild_id AND l.rid = ?6)
+        AND ${CLAIM_GUARDS[kind](11)}`)
+      .bind(player.id, amount, utcDay(nowS), nowS, displayName(player), deedRid(event), event, members, perDay, MARKS_MAX, ...guard),
+  ];
+}
+/** SILVER-WAYS: the claim's deed, as its answer says it - `{ struck, guild: { name, tag } }` where THIS claim's batch
+ *  struck it (`struck` the strike statement's result), else null. */
+export async function deedAnswer(db, player, event, struck) {
+  if (!struck) return null;
+  const r = await db.prepare(`SELECT l.amount, g.name, g.tag FROM guild_deed_marks d JOIN marks_ledger l ON l.actor = d.guild_id AND l.rid = ?2
+      JOIN guilds g ON g.id = d.guild_id WHERE d.event = ?1 AND d.account = ?3`).bind(event, deedRid(event), player.id).first();
+  return r ? { struck: Number(r.amount), guild: { name: r.name, tag: r.tag } } : null;
+}
+/** SILVER-WAYS: a guild's deeds today, against the day's cap - the Guild tab's line. */
+export async function guildDeedsToday(db, guildId, nowS) {
+  const r = await db.prepare("SELECT COUNT(*) AS n FROM marks_ledger WHERE dst_kind = 'guild' AND dst_id = ?1 AND kind = 'guild-deed' AND day = ?2")
+    .bind(guildId, utcDay(nowS)).first();
+  return { deeds: Number(r?.n ?? 0), deedsMax: MARKS_FAUCETS.deed.perDay };
 }
 
 // ─── THE BALANCE ────────────────────────────────────────────────────
 
-/** An account's Marks as its card says them: the balance, today's gate strikes and Bank sales against their caps. */
+/** An account's Marks as its card says them: the balance, today's gate strikes, the day's combat silver (SILVER-WAYS)
+ *  and Bank sales against their caps. */
 export async function marksOf({ db, nowS }, player, env) {
   const refused = whoAsks(player, null, { needRid: false }) ?? shut(player, env);
   if (refused) return refused;
   const today = await todayOf(db, player.id, utcDay(nowS));
   return {
     balance: await balanceOf(db, player.id),
-    today: { gate: today.gate, gateMax: MARKS_FAUCETS.gate.perDay, exchanged: today.exchanged, exchangeMax: MARKS_BANK.perDay },
+    today: { gate: today.gate, combat: today.combat, combatMax: MARKS_COMBAT.perDay, exchanged: today.exchanged, exchangeMax: MARKS_BANK.perDay },
     bank: { goldPerMark: MARKS_BANK.goldPerMark },
   };
 }
@@ -301,17 +405,18 @@ export async function marksReport({ db, nowS }, player, env) {
       SUM(CASE WHEN dst_kind = 'burn' THEN amount ELSE 0 END) AS burnt
     FROM marks_ledger WHERE day >= ? GROUP BY day ORDER BY day`).bind(from).all())?.results ?? [])
     .map((r) => ({ day: Number(r.day), minted: Number(r.minted), burnt: Number(r.burnt) }));
-  // AUDIT 28 M10: the ACCOUNTS that reached a cap (each once, however many of the days), and the account-days beside it
-  const gateCapped = await db.prepare(`SELECT COUNT(DISTINCT dst_id) AS n, COUNT(*) AS d FROM (SELECT dst_id FROM marks_ledger WHERE kind = 'gate' AND day >= ?
-    GROUP BY dst_id, day HAVING COUNT(*) >= ?)`).bind(from, MARKS_FAUCETS.gate.perDay).first();
+  // AUDIT 28 M10: the ACCOUNTS that reached a cap (each once, however many of the days), and the account-days beside it -
+  // SILVER-WAYS: the day's combat cap (the gates' and the raids' together) where the gate's two a day stood
+  const combatCapped = await db.prepare(`SELECT COUNT(DISTINCT dst_id) AS n, COUNT(*) AS d FROM (SELECT dst_id FROM marks_ledger
+    WHERE dst_kind = 'account' AND kind IN (${COMBAT_KINDS_SQL}) AND day >= ? GROUP BY dst_id, day HAVING SUM(amount) >= ?)`).bind(from, MARKS_COMBAT.perDay).first();
   const bankCapped = await db.prepare(`SELECT COUNT(DISTINCT src_id) AS n, COUNT(*) AS d FROM (SELECT src_id FROM marks_ledger WHERE kind = 'exchange' AND day >= ?
     GROUP BY src_id, day HAVING SUM(amount) >= ?)`).bind(from, MARKS_BANK.perDay).first();
   const m = sum(minted), b = sum(burnt);
   return {
     from, to: today, minted, burnt, moved, mintedTotal: m, burntTotal: b, ratio: b > 0 ? Math.round((m / b) * 100) / 100 : null,
     circulation: { accounts: Number(acc?.s ?? 0), guilds: Number(gld?.s ?? 0), escrow: Number(esc?.s ?? 0), holders: Number(acc?.n ?? 0) },
-    days, capped: { gate: Number(gateCapped?.n ?? 0), bank: Number(bankCapped?.n ?? 0) },
-    cappedDays: { gate: Number(gateCapped?.d ?? 0), bank: Number(bankCapped?.d ?? 0) },
+    days, capped: { combat: Number(combatCapped?.n ?? 0), bank: Number(bankCapped?.n ?? 0) },
+    cappedDays: { combat: Number(combatCapped?.d ?? 0), bank: Number(bankCapped?.d ?? 0) },
     medians,
   };
 }

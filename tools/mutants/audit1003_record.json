@@ -1,0 +1,29 @@
+[
+  {
+    "name": "AUDIT1003-D1-THE-PACE-A-FIELD-AGAIN",
+    "file": "src/characters/enemyMotor.js",
+    "old": "        const sp = this.speed * (this._tacDir ? this._tacSpeed : 1) * pace;",
+    "new": "        const sp = this.speed * (this._tacDir ? this._tacSpeed : 1) * (this._pace ?? 1);",
+    "tests": [
+      "test/audit1003_record.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-D1-EVERY-STEP-AT-THE-LAST-WALKS-PACE",
+    "file": "src/characters/enemyMotor.js",
+    "old": "  _walkStep(dt, pace = 1) {",
+    "new": "  _walkStep(dt, pace = this._pace ?? 1) {",
+    "tests": [
+      "test/audit1003_record.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-D1-THE-WALK-AT-FULL-SPEED",
+    "file": "src/characters/enemyMotor.js",
+    "old": "    this._walkStep(dt, this._pace);   // AUDIT PRE-MERGE 1003 D1",
+    "new": "    this._walkStep(dt);   // AUDIT PRE-MERGE 1003 D1",
+    "tests": [
+      "test/audit1003_record.test.js"
+    ]
+  }
+]

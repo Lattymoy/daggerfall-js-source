@@ -44,10 +44,11 @@ import { marksOpenFor } from './marks.js';
 import { mustChange } from './realm.js';
 import { GUILD_TREASURY_MAX, GUILD_OPS_MAX, GUILD_OPS_WINDOW_S } from '../../src/net/guildLaw.js';
 import { GUILD_HALL_ENTRY_DEFAULT, HALL_POWERS, hallMay, guildHallPrice, guildHallEntryOk, guildHallOwner } from '../../src/net/hallLaw.js';
-import { HOME_CLAIMS_MAX, HOME_CLAIMS_WINDOW_S, homeMapIdOk, homeBuildingKeyOk, homeRegionOk, homePriceOk, homeSaleRefund, homeInArenaCell } from '../../src/net/homeLaw.js';   // ARENA4b: the arena's cell
+import { HOME_CLAIMS_MAX, HOME_CLAIMS_WINDOW_S, homeMapIdOk, homeBuildingKeyOk, homeRegionOk, homePriceOk, homeSaleRefund, homeInArenaCell, homeLayoutOk } from '../../src/net/homeLaw.js';   // ARENA4b: the arena's cell
 import { HERALDRY_CHANGE_DRAKES, heraldryOf, heraldrySame } from '../../src/net/heraldryLaw.js';
 import { MARKS_RID_RE, utcDay } from '../../src/net/marksLaw.js';
 import { seatWeekOf } from '../../src/net/townSeatLaw.js';   // AUDIT-SEATS S10: a siege week refuses a change
+import { LAYOUT_MATCH_SQL, layoutMatchBinds, TOWN_LAYOUT_SQL, townLayoutRefusal } from './townLayout.js';   // AUDIT PRE-MERGE 1003 WD1: a hall in its town's layout
 
 /** A guild's hall, as its members read it - or null. */
 export async function hallViewOf(db, guildId) {
@@ -71,18 +72,31 @@ const piecesBackOf = async (db, mapId, buildingKey) => db.prepare(`SELECT COUNT(
  * price and half again out of what records paid in, in the claim's own batch. `price` is the home's own (Daggerfall's
  * bank's, the client's word as a home's claim takes it - HOME1); the hall costs guildHallPrice of it. A claim sent again
  * after a lost answer finds the building already this guild's hall and is answered as the claim.
+ * AUDIT PRE-MERGE 1003 WD1: `layout`, the layout the buyer's town stands in (null: Daggerfall's own) - a hall is a home
+ * (a row of `homes`), and a building key names a building only in one layout of its town, so a hall is bought as a
+ * home is claimed (homes.js claimHome): in its town's layout, kept with it, refused in another, and asked to update
+ * from a build that names none. It was written with none (NULL, Daggerfall's own): bought in a Villages town it told
+ * every client to stand the town classic (`/v1/homes/layouts`), refused the town's later homes, and a hall bought after
+ * a town's home flipped it once that home was sold.
  * @param {{db: any, nowS: number}} ctx
  */
-export async function buyHall(ctx, player, { character, mapId, buildingKey, region, price } = {}) {
+export async function buyHall(ctx, player, body = {}) {
+  const { character, mapId, buildingKey, region, price, layout = null } = body ?? {};
   const { db, nowS } = ctx;
   const a = await guildActorOf(db, player, character);
   if ('error' in a) return a;
   if (!hallMay(a.me.rank, 'hall')) return { error: 'guild-rank' };
   if (!homeMapIdOk(mapId) || !homeBuildingKeyOk(buildingKey) || !homeRegionOk(region) || !homePriceOk(price)) return { error: 'bad-home' };
+  if (!homeLayoutOk(layout)) return { error: 'bad-home' };   // AUDIT PRE-MERGE 1003 WD1: the layout the buyer's town stands in
   if (homeInArenaCell(mapId, buildingKey)) return { error: 'home-arena' };   // ARENA4b: the arena stands there - a build from before it still stands GEMSAL03 (homes.js claimHome's guard)
+  if (!Object.hasOwn(body ?? {}, 'layout')) return { error: 'home-update' };   // AUDIT PRE-MERGE 1003 WD1: a build from before the town mods (AUDIT WD3 B2)
   const gid = a.me.guild_id;
   const held = await db.prepare('SELECT guild_id FROM homes WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey).first();
   if (held) return held.guild_id === gid ? { ok: true, repeat: true, hall: await hallViewOf(db, gid) } : { error: 'home-taken' };
+  // AUDIT PRE-MERGE 1003 WD1: a hall in another layout of a town that holds homes is refused, naming the town's - before
+  // it counts against the hour's claims (AUDIT WD3 B8)
+  const crossed = await townLayoutRefusal(db, mapId, layout);
+  if (crossed) return crossed;
   if (await overRate({ db, nowS }, `home:${player.id}`, HOME_CLAIMS_MAX, HOME_CLAIMS_WINDOW_S)) return { error: 'home-rate' };
   const cost = guildHallPrice(price);
   const who = displayName(player);
@@ -94,15 +108,22 @@ export async function buyHall(ctx, player, { character, mapId, buildingKey, regi
         WHERE id = ?4 AND treasury >= ?1 AND realm_gold >= ?1 AND NOT EXISTS (SELECT 1 FROM homes WHERE guild_id = ?4)
           AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?5 AND guild_id = ?4 AND rank = ?6)`).bind(cost, who, nowS, gid, a.me.rid, a.me.rank),
       mustChange(db),
-      // ...and the building is the guild's: a building somebody owns is the primary key's refusal, and the batch goes back
-      db.prepare(`INSERT INTO homes (map_id, building_key, player, char_id, owner_name, region, entry, price, bought_at, paid, guild_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(mapId, buildingKey, player.id, guildHallOwner(gid), g?.name ?? '', region, GUILD_HALL_ENTRY_DEFAULT, price, nowS, cost, gid),
+      // ...and the building is the guild's: a building somebody owns is the primary key's refusal, and the batch goes back.
+      // AUDIT PRE-MERGE 1003 WD1: in its town's layout, in the write itself (the claim's own SQL, townLayout.js) - the
+      // town's stamp, or the hall's own in a town of no homes, and nothing where a row of another layout landed first
+      db.prepare(`INSERT INTO homes (map_id, building_key, player, char_id, owner_name, region, entry, price, bought_at, paid, guild_id, layout)
+        SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${TOWN_LAYOUT_SQL}
+        WHERE NOT EXISTS (SELECT 1 FROM homes t WHERE t.map_id = ? AND NOT (${LAYOUT_MATCH_SQL}))`)
+        .bind(mapId, buildingKey, player.id, guildHallOwner(gid), g?.name ?? '', region, GUILD_HALL_ENTRY_DEFAULT, price, nowS, cost, gid, mapId, mapId, layout, mapId, ...layoutMatchBinds(layout)),
+      mustChange(db),
     ]);
   } catch {
     // say which guard held - AUDIT GUILD1d S5: the same claim, raced by itself, is the claim that landed
     const now = await db.prepare('SELECT guild_id FROM homes WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey).first();
     if (now) return now.guild_id === gid ? { ok: true, repeat: true, hall: await hallViewOf(db, gid) } : { error: 'home-taken' };
     if (await db.prepare('SELECT 1 FROM homes WHERE guild_id = ?').bind(gid).first()) return { error: 'guild-hall-have' };
+    const lost = await townLayoutRefusal(db, mapId, layout);   // AUDIT PRE-MERGE 1003 WD1: a first home in another layout landed first
+    if (lost) return lost;
     const t = await db.prepare('SELECT treasury, realm_gold FROM guilds WHERE id = ?').bind(gid).first();
     if (!t) return { error: 'no-guild' };
     if (t.treasury < cost) return { error: 'guild-treasury-short' };

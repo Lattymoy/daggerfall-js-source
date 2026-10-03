@@ -4,7 +4,7 @@
 // WD1 (formats/worldDataPatch.js) carries a mod's world data one file at a time: a patch a file, globbed and rebuilt
 // at boot. Beautiful Villages of Daggerfall and Beautiful Cities of Daggerfall (carademono, 2026-10-01, Mac: "These
 // are the next mods I'd like to implement (We have permission)") ship 7,727 `location-<r>-<i>.json` and 820 RMB
-// blocks between them - 339 MB of DFU JSON, most of it the classic game and the rest the same few thousand redecorated
+// blocks between them - 439 MB of DFU JSON, most of it the classic game and the rest the same few thousand redecorated
 // buildings again and again (7,104 building records, 1,393 different interiors). WD3 is WD1's law at that scale:
 //
 //   - the CLASSIC part is never carried: a file is an edit of a classic location or block, and a large piece of a

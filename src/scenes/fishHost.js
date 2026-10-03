@@ -316,6 +316,7 @@ export function fishKind({ book, host }) {
     },
     /** The goods, the species named. */
     storesLine: (d) => haulLine(d, speciesOfHaul(d.node, climateOf(d.node))),
+    haulName: (d) => speciesOfHaul(d.node, climateOf(d.node))?.itemName ?? null,   // HAUL-CARDS: the catch's species on its card, the Raw Fish its sub
     /** A trophy: the species' own item, into the pack once (every answer to the haul says it). */
     answered(d, toast) {
       if (!d?.trophy || trophied.has(d.node)) return;

@@ -83,8 +83,8 @@
   {
     "name": "STORES-ROOM-the-vein-reads-held",
     "file": "src/scenes/mineHost.js",
-    "old": "storesFull: (key) => storesFullIn(book, key),",
-    "new": "storesFull: (key) => book.held(key) >= (book.state.caps?.stores ?? 5000),",
+    "old": "storesFull: (key) => storesFullIn(book, key),   // STORES-ROOM",
+    "new": "storesFull: (key) => book.held(key) >= (book.state.caps?.stores ?? 5000),   // STORES-ROOM",
     "tests": [
       "test/fb1001_ground.test.js"
     ]

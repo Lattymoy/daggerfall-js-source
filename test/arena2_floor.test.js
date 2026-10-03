@@ -9,7 +9,7 @@ import { readFileSync } from 'node:fs';
 import {
   arenaFloorLocation, isArenaFloor, arenaFloorBlock, arenaFloorBlocks, arenaExitDoors, floorCentre, floorPoint, arenaRing,
   crowdSeats, pickSeats, ARENA_FLOOR_BLOCK, ARENA_FLOOR_BLOCK_INDEX, ARENA_FLOOR_LOCATION_ID, RING_R, SAND_R, SAND_Y_MODEL,
-  TERRACE_UP, SEAT_UP_MIN, SEAT_UP_MAX, SEAT_R_MIN, ARRIVE, WAYS_OUT, ARENA_EXIT_W, ARENA_EXIT_H,
+  TERRACE_UP, SEAT_UP_MIN, SEAT_UP_MAX, SEAT_R_MIN, ARRIVE, WAYS_OUT, ARENA_EXIT_W, ARENA_EXIT_H, ARENA_GROUND_MODEL,
 } from '../src/world/arenaFloor.js';
 import { GATE_ARENA_BLOCK_INDEX, GATE_ARENA_LOCATION_ID } from '../src/world/gateArena.js';
 import { ARENA_BLOCK_INDEX } from '../src/world/arenaCity.js';
@@ -41,7 +41,9 @@ test('ARENA2 floor: the made block - every ARENADAG model in its place (y + 4, z
   const objs = blk.rdbBlock.objectRootList[0].rdbObjects;
   const models = objs.filter((o) => o.type === 0x01);
   const src = BLOCK.RmbBlock.Misc3dObjectRecords.filter((o) => Number(o.ModelIdNum) !== 43600);
-  assert.equal(models.length, src.length, 'every misc model but the undercroft\'s stair');
+  // AUDIT PRE-MERGE 1003 W1: and the city's ground under them, the last model (test/audit1003_world.test.js)
+  assert.equal(models.length, src.length + 1, 'every misc model but the undercroft\'s stair, and the ground');
+  assert.equal(blk.rdbBlock.modelReferenceList[models[src.length].resources.modelResource.modelIndex].modelIdNum, ARENA_GROUND_MODEL);
   assert.ok(!blk.rdbBlock.modelReferenceList.some((r) => r.modelIdNum === 43600));
   assert.ok(blk.rdbBlock.modelReferenceList.some((r) => r.modelIdNum === 864102), 'the colosseum');
   for (let i = 0; i < src.length; i++) {

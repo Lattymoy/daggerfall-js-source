@@ -262,12 +262,13 @@ test('AUDIT 29 A13: a free first choice is a request like any other - asked agai
   assert.deepEqual(again.body.track.specs, { 50: 'gardener', 100: null });
 });
 
-test('AUDIT 29 A17: Motherlode Sense is refused by the service until its Motherlodes', async () => {
+test('AUDIT 29 A17: Motherlode Sense was refused by the service until its Motherlodes - PIN MOVED (PROF2b, 2026-10-03): chosen at Mining 100 as any', async () => {
   const s = await stand();
   const mac = await s.registered('Mac');
   s.setXp(mac, xpForRank(100));
   const r = await s.call('/v1/prof/spec', { character: mac.character, profession: 'mining', rank: 100, spec: 'motherlode-sense', from: null, rid: rid() }, mac.secret);
-  assert.deepEqual(r.body, { error: 'prof-spec' });
+  assert.equal(r.status, 200, JSON.stringify(r.body));
+  assert.equal(r.body.track.specs[100], 'motherlode-sense');
 });
 
 // ─── A COURT WRIT ────────────────────────────────────────────────────

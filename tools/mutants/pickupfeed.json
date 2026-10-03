@@ -38,11 +38,12 @@
   {
     "name": "PICKUP-FEED-twins-in-a-press-are-two-cards",
     "file": "src/ui/pickupFeed.js",
-    "old": "        if (mine) { mine.count += e.count; continue; }",
-    "new": "        if (false) { mine.count += e.count; continue; }",
+    "old": "        if (mine) { mine.count += e.count; merge(mine, e); continue; }",
+    "new": "        if (false) { mine.count += e.count; merge(mine, e); continue; }",
     "tests": [
       "test/pickupfeed.test.js"
-    ]
+    ],
+    "note": "HAUL-CARDS (PIN MOVED): re-aimed by content - the queue's own hold and merge, the haul card's twin lines (the anchor widened to the pickup's own), the goods' line said where no card stood, a Motherlode's silver unsaid under its card."
   },
   {
     "name": "PICKUP-FEED-no-cap",
@@ -65,20 +66,22 @@
   {
     "name": "PICKUP-FEED-never-fades",
     "file": "src/ui/pickupFeed.js",
-    "old": "    standing(now) { return cards.map((c) => ({ ...c, fading: now - c.at >= hold })); },",
+    "old": "    standing(now) { return cards.map((c) => ({ ...c, fading: now - c.at >= holdOf(c) })); },",
     "new": "    standing(now) { return cards.map((c) => ({ ...c, fading: false })); },",
     "tests": [
       "test/pickupfeed.test.js"
-    ]
+    ],
+    "note": "HAUL-CARDS (PIN MOVED): re-aimed by content - the queue's own hold and merge, the haul card's twin lines (the anchor widened to the pickup's own), the goods' line said where no card stood, a Motherlode's silver unsaid under its card."
   },
   {
     "name": "PICKUP-FEED-never-gone",
     "file": "src/ui/pickupFeed.js",
-    "old": "    cards = cards.filter((c) => now - c.at < ttl);",
+    "old": "    cards = cards.filter((c) => now - c.at < holdOf(c) + fade);",
     "new": "    cards = cards.filter(() => true);",
     "tests": [
       "test/pickupfeed.test.js"
-    ]
+    ],
+    "note": "HAUL-CARDS (PIN MOVED): re-aimed by content - the queue's own hold and merge, the haul card's twin lines (the anchor widened to the pickup's own), the goods' line said where no card stood, a Motherlode's silver unsaid under its card."
   },
   {
     "name": "PICKUP-FEED-a-gone-card-is-bumped-back",
@@ -110,11 +113,12 @@
   {
     "name": "PICKUP-FEED-the-tier-not-worn",
     "file": "src/ui/pickupFeed.js",
-    "old": "  if (l.rarity) el.dataset.rarity = l.rarity;",
-    "new": "  if (false) el.dataset.rarity = l.rarity;",
+    "old": "  if (l.gold) el.classList.add('is-gold');\n  if (l.rarity) el.dataset.rarity = l.rarity;",
+    "new": "  if (l.gold) el.classList.add('is-gold');\n  if (false) el.dataset.rarity = l.rarity;",
     "tests": [
       "test/pickupfeed.test.js"
-    ]
+    ],
+    "note": "HAUL-CARDS (PIN MOVED): re-aimed by content - the queue's own hold and merge, the haul card's twin lines (the anchor widened to the pickup's own), the goods' line said where no card stood, a Motherlode's silver unsaid under its card."
   },
   {
     "name": "PICKUP-FEED-gold-wears-a-second-plus",
@@ -200,11 +204,12 @@
   {
     "name": "PICKUP-FEED-the-classic-skin-dressed",
     "file": "src/ui/pickupFeed.js",
-    "old": "    if (!isEnhanced()) return false;",
-    "new": "    if (false) return false;",
+    "old": "    if (!isEnhanced()) return false;\n    const d = doc();\n    if (!d?.body || !d.createElement) return false;\n    const entries",
+    "new": "    if (false) return false;\n    const d = doc();\n    if (!d?.body || !d.createElement) return false;\n    const entries",
     "tests": [
       "test/pickupfeed.test.js"
-    ]
+    ],
+    "note": "HAUL-CARDS (PIN MOVED): re-aimed by content - the queue's own hold and merge, the haul card's twin lines (the anchor widened to the pickup's own), the goods' line said where no card stood, a Motherlode's silver unsaid under its card."
   },
   {
     "name": "PICKUP-FEED-the-node-never-appended",

@@ -173,7 +173,7 @@
   {
     "name": "ARENA4b-EX-LATE-SEATED",
     "file": "server/src/index.js",
-    "old": "      } else if (exRoom && boutFinished(st)) {",
+    "old": "      } else if (boutFinished(st) && (exRoom || fighterOfSub(st, a.sub))) {",
     "new": "      } else if (false) {",
     "tests": [
       "test/arena4b_exhibition.test.js"

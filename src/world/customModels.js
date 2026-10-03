@@ -15,14 +15,25 @@
 // from it (RDBLayout.cs:634-638) - never a thrown scene
 // (`emptyModel`).
 
-const _models = new Map();   // id -> { build, isOn, cached, climateFree, needs }
+const _models = new Map();   // id -> { build, isOn, cached, climateFree, needs, buildSliced }
 
 /** Register a model for `id`: `build(ctx)` answers { positions, normals, uvs, indices, subMeshes, doors }.
  *  ARENA1: `climateFree` - DFU's RuntimeMaterials with ApplyClimate off: the hosts never swap its pictures for the
  *  climate or the season (scenes/world.js, scenes/exterior.js); `needs` - the classic models its build reads out of
  *  the player's ARCH3D (`ctx.classicModel(id)`, dfMeshToModel's shape), whose textures the pipeline loads first. */
-export function registerCustomModel(id, build, isOn = () => true, { climateFree = false, needs = [] } = {}) {
-  _models.set(Number(id), { build, isOn: typeof isOn === 'function' ? isOn : () => true, cached: null, climateFree: !!climateFree, needs: Object.freeze([...needs].map(Number)) });
+export function registerCustomModel(id, build, isOn = () => true, { climateFree = false, needs = [], buildSliced = null } = {}) {
+  _models.set(Number(id), { build, isOn: typeof isOn === 'function' ? isOn : () => true, cached: null, climateFree: !!climateFree, needs: Object.freeze([...needs].map(Number)), buildSliced: typeof buildSliced === 'function' ? buildSliced : null });
+}
+/** AUDIT PRE-MERGE 1003 W6: the model registered for `id` (customModelFor's), built a breath at a time where its
+ *  registration can (`buildSliced(ctx, breathe)` - the colosseum's seal, world/arenaCity.js) and the caller breathes
+ *  (scenes/dataPipeline.js getGpuMesh, handed a streamed pixel's breather by scenes/world.js); else customModelFor's own
+ *  build. Built once either way. */
+export async function customModelBuilt(id, ctx = null, breathe = null) {
+  const m = _models.get(Number(id));
+  if (!m || !m.isOn()) return null;
+  if (m.cached || !breathe || !m.buildSliced) return customModelFor(id, ctx);
+  const built = await m.buildSliced(ctx, breathe);
+  return (m.cached ??= built);
 }
 /** ARENA1: whether a registered model wears its pictures whatever the climate (RuntimeMaterials, ApplyClimate 0). */
 export const isClimateFreeModel = (id) => !!_models.get(Number(id))?.climateFree;

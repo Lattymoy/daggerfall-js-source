@@ -22,7 +22,7 @@ import { SocialState } from '../src/net/social.js';
 import { REFUSALS } from '../src/net/accountClient.js';
 
 const src = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
-const HALL = { mapId: 7, buildingKey: 300, region: 17, price: 20_000 };
+const HALL = { mapId: 7, buildingKey: 300, region: 17, price: 20_000, layout: null };   // AUDIT PRE-MERGE 1003 WD1: a hall says its town's layout (none: an old build's, 426)
 const piece = (over = {}) => ({ id: 'bench1', model: 41000, flat: null, pos: [2, 0, 2], rot: [0, 0, 0], scale: 1, light: null, storage: false, paid: 120, ...over });
 const WOLF = { field: 'azure', border: 'gold', device: 'wolf' };
 

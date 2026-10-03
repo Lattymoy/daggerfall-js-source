@@ -1228,3 +1228,7 @@ export async function deliverWrit(ctx, player, env, { character, id, rid } = {})
   if (s.own + s.bought < Number(w.qty)) return { error: s.own + s.bought + (s.gold ?? 0) >= Number(w.qty) ? 'stores-gold' : 'stores-short' };   // GOLD-MARKET
   return { error: 'marks-full' };
 }
+
+// PROF2b: what the Motherlodes' strike (motherlodes.js) shares with a harvest - the first door, the switch, the dice, a
+// track and the day's harvests - one home for each, never a second
+export { asks as profAsks, shut as profShut, dice as profDice, todayOf as profTodayOf, factsOf };

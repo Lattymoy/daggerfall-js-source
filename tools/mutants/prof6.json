@@ -155,8 +155,8 @@
   {
     "name": "PROF6-svc-officer-unbudgeted",
     "file": "server-account/src/writs.js",
-    "old": "        AND (?5 = 0 OR COALESCE(",
-    "new": "        AND (?5 = 1 OR COALESCE(",
+    "old": "        AND (?5 = 0 OR ${officerSpentSql('?4', '?6')}",
+    "new": "        AND (?5 = 1 OR ${officerSpentSql('?4', '?6')}",
     "tests": [
       "test/prof6_service.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "PROF6-svc-budget-counts-guildmaster",
     "file": "server-account/src/writs.js",
-    "old": "(SELECT SUM(units * pay) FROM guild_writs WHERE guild_id = ?4 AND week = ?6 AND officer = 1), 0) + ?11",
-    "new": "(SELECT SUM(units * pay) FROM guild_writs WHERE guild_id = ?4 AND week = ?6), 0) + ?11",
+    "old": "(SELECT SUM(units * pay) FROM guild_writs WHERE guild_id = ${g} AND week = ${week} AND officer = 1), 0)",
+    "new": "(SELECT SUM(units * pay) FROM guild_writs WHERE guild_id = ${g} AND week = ${week}), 0)",
     "tests": [
       "test/prof6_service.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "PROF6-svc-budget-every-week",
     "file": "server-account/src/writs.js",
-    "old": "(SELECT SUM(units * pay) FROM guild_writs WHERE guild_id = ?4 AND week = ?6 AND officer = 1), 0) + ?11",
-    "new": "(SELECT SUM(units * pay) FROM guild_writs WHERE guild_id = ?4 AND officer = 1), 0) + ?11",
+    "old": "(SELECT SUM(units * pay) FROM guild_writs WHERE guild_id = ${g} AND week = ${week} AND officer = 1), 0)",
+    "new": "(SELECT SUM(units * pay) FROM guild_writs WHERE guild_id = ${g} AND officer = 1), 0)",
     "tests": [
       "test/prof6_service.test.js"
     ]
@@ -640,8 +640,8 @@
   {
     "name": "PROF6-tab-budget-unsaid",
     "file": "src/ui/workTab.js",
-    "old": "              : officer && escrow > (g.left ?? 0) ? `That is past your writ budget this week",
-    "new": "              : false ? `That is past your writ budget this week",
+    "old": "              : officer && escrow > (g.left ?? 0) ? `That is past your writ budget this week (${marksText(g.left ?? 0)} left).` : '');\n      said.textContent = `Holds ${marksText(escrow)} from the guild's treasury (it holds ${marksText(g.marks ?? 0)}) until it is delivered",
+    "new": "              : false ? `That is past your writ budget this week (${marksText(g.left ?? 0)} left).` : '');\n      said.textContent = `Holds ${marksText(escrow)} from the guild's treasury (it holds ${marksText(g.marks ?? 0)}) until it is delivered",
     "tests": [
       "test/prof6_client.test.js"
     ]

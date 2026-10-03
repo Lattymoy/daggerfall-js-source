@@ -167,7 +167,7 @@ test('GUILD1d the guild book\'s hall acts: through the door as the character pla
   const { book, calls, told, answers } = hallBook();
   await book.refresh();
   assert.equal((await book.buyHall({ mapId: 7, buildingKey: 300, region: 17, price: 20_000 })).ok, true);
-  assert.deepEqual(calls[0], ['hallBuy', { character: 'rabc', mapId: 7, buildingKey: 300, region: 17, price: 20_000 }]);
+  assert.deepEqual(calls[0], ['hallBuy', { character: 'rabc', mapId: 7, buildingKey: 300, region: 17, price: 20_000, layout: null }]);   // AUDIT PRE-MERGE 1003 WD1: the town's layout passed through
   assert.deepEqual(told, [7]);
   await book.sellHall();
   assert.deepEqual(calls[1], ['hallSell', 'rabc']);
@@ -202,7 +202,7 @@ test('GUILD1d the client\'s door: the four routes and their bodies; every refusa
   await door.heraldry('rabc', WOLF, 'herald-01');
   await door.heraldry('rabc', WOLF);
   assert.deepEqual(seen.map((s) => s[0]), ['/v1/guilds/hall/buy', '/v1/guilds/hall/sell', '/v1/guilds/hall/entry', '/v1/guilds/heraldry', '/v1/guilds/heraldry']);
-  assert.deepEqual(seen[0][1], { character: 'rabc', mapId: 7, buildingKey: 300, region: 17, price: 20_000 });
+  assert.deepEqual(seen[0][1], { character: 'rabc', mapId: 7, buildingKey: 300, region: 17, price: 20_000, layout: null });   // AUDIT PRE-MERGE 1003 WD1: always said
   assert.deepEqual(seen[3][1], { character: 'rabc', heraldry: WOLF, rid: 'herald-01' });
   assert.equal(seen[4][1].rid, undefined, 'the first choice needs none');
   for (const w of ['guild-hall-have', 'guild-hall-none', 'guild-hall-moved', 'guild-hall', 'hall-item', 'hall-yard', 'bad-heraldry', 'heraldry-same', 'heraldry-moved', 'heraldry-drakes']) {

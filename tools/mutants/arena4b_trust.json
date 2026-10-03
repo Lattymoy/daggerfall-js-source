@@ -38,8 +38,8 @@
   {
     "name": "ARENA4b-TRUST-CLAIM-BELIEVED",
     "file": "src/net/arenaLaw.js",
-    "old": "cl <= ARENA_CL_MAX ? cl : Math.min(arenaLv(lv), ladderLevelCap(tier));",
-    "new": "cl <= ARENA_CL_MAX ? Math.max(cl, arenaLv(lv)) : Math.min(arenaLv(lv), ladderLevelCap(tier));",
+    "old": "cl <= ARENA_CL_MAX ? cl : arenaLv(lv);",
+    "new": "cl <= ARENA_CL_MAX ? Math.max(cl, arenaLv(lv)) : arenaLv(lv);",
     "tests": [
       "test/arena4b_trust.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "ARENA4b-TRUST-UNCAPPED",
     "file": "src/net/arenaLaw.js",
-    "old": "cl <= ARENA_CL_MAX ? cl : Math.min(arenaLv(lv), ladderLevelCap(tier));",
-    "new": "cl <= ARENA_CL_MAX ? cl : arenaLv(lv);",
+    "old": "return ladderVitalityAt(Math.min(level, ladderLevelCap(tier)));",
+    "new": "return ladderVitalityAt(Number.isSafeInteger(cl) && cl >= ARENA_CL_MIN && cl <= ARENA_CL_MAX ? Math.min(level, ladderLevelCap(tier)) : level);",
     "tests": [
       "test/arena4b_trust.test.js"
     ]

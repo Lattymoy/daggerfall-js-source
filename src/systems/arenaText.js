@@ -95,6 +95,9 @@ export const ARENA_TEXT = F({
     /** The refusals said in his box, beside the choice that cannot be taken. */
     noWatch: 'No bout on the sand right now - come back on the hour.',
     noFight: 'You are in no state to fight. Rest first, then come back.',
+    // AUDIT PRE-MERGE 1003 B3: the hour's bout has had its word here - it is not fought again from its call
+    underWay: 'It is under way - watch it from where you stand.',
+    watchSeen: 'You have seen this hour\'s bout begin - the next is on the hour.',
     /** A player struck an exhibition fighter: the first time a warning, after it the watch. */
     intrude: 'Hold! That fighter is in a bout. Strike again and the watch will have you.',
     intrudeCrime: 'Guards! Seize that brawler!',
@@ -339,7 +342,10 @@ export const ARENA_TEXT = F({
     whyClosed: 'The book on this bout is closed.',
     whyPlaced: 'Your wager on this bout is placed.',
     whyGold: 'You need 10 gold to wager.',
-    whyRefused: F({ none: 'No bout this hour.', closed: 'The book on this bout is closed.', placed: 'Your wager on this bout is placed.', stake: 'Wagers run from 10 to 1000 gold.', gold: 'You do not have that much gold.' }),
+    // AUDIT PRE-MERGE 1003 B4: a favourite shorter than his shortest price (1 to 5) is not laid
+    noPrice: 'no price',
+    notLaid: (name) => `No price on ${name} - too short a favourite for my book.`,
+    whyRefused: F({ none: 'No bout this hour.', closed: 'The book on this bout is closed.', placed: 'Your wager on this bout is placed.', stake: 'Wagers run from 10 to 1000 gold.', gold: 'You do not have that much gold.', price: 'He lays no price on that fighter.' }),
   }),
 
   // ── THE ARENA WINDOW (ARENA3; ui/arenaWindow.js, systems/arenaBoard.js) ───────────────────────────────────────
@@ -358,6 +364,7 @@ export const ARENA_TEXT = F({
     recordLine: (w, l) => `${w} won, ${l} lost`,
     wl: (w, l) => `${w}-${l}`,
     gold: (n) => `${n} gold`,
+    pursesWon: (n) => `Purses won: ${n} gold`,   // AUDIT PRE-MERGE 1003 U12: the header's chip says what it counts
     days: (n) => `${n} day${n === 1 ? '' : 's'}`,
     cleared: (n, tier) => `Tier ${n}, ${tier}`,
     allTen: 'All ten tiers taken',
@@ -381,6 +388,7 @@ export const ARENA_TEXT = F({
     purseLine: (gold) => `The purse - ${gold} gold, more if the crowd loves you.`,
     watch: 'Watch',
     wager: 'Wager',
+    placeWager: 'Place wager',   // AUDIT PRE-MERGE 1003 U14: the wager's own press, never a second "Wager"
     fight: 'Fight',
     back: (name) => `Back ${name}`,
     vs: 'vs',
@@ -422,6 +430,7 @@ export const ARENA_TEXT = F({
     }),
     rank: 'Rank',
     name: 'Fighter',
+    season: 'Season',   // AUDIT PRE-MERGE 1003 U11: the banners' board's first column - its rows are seasons, not fighters
     // Records
     stat: F({
       wins: 'Won', losses: 'Lost', share: 'Win share', yields: 'Yielded', falls: 'Fell', ringouts: 'Ring-outs', streak: 'Streak',
@@ -473,6 +482,8 @@ export const ARENA_TEXT = F({
         'Watch it from the street or from the stands. Do not strike a fighter in a bout.',
         'The bookmaker by the gate takes wagers until the fight begins - 10 to 1000 gold.',
         'A winning wager pays the price he gave. A draw returns the stake.',
+        // AUDIT PRE-MERGE 1003 B3/B4: a bout walked away from is the house's; a favourite too short is not laid
+        'Leave a bout after the word and he keeps your stake. He lays nothing under 1 to 5.',
         'Collect what you won at his stall. He pays in person, never by letter.',
       ]) }),
     ]),
@@ -502,10 +513,13 @@ export const ARENA_TEXT = F({
     challengeLine: 'A real fighter of the realm, matched to your season rating.',
     queuedLine: (band, n) => `Seeking a fighter within ${band} of your rating - ${n} in the hall.`,
     offerLine: (name, rating) => `${name} (rating ${rating}) will meet you on the sand.`,
-    offerClock: (s) => `Accept within ${s} seconds.`,
+    // AUDIT PRE-MERGE 1003 U10: "1 second"; and at 0 the offer is gone - the hall lapses it on its next beat (server
+    // _hallTick), so the window says so and offers no Accept that could not land
+    offerClock: (s) => (s > 0 ? `Accept within ${s} second${s === 1 ? '' : 's'}.` : 'The offer has lapsed.'),
     goingLine: (name) => `To the sand! ${name} is on the way.`,
     ratingLine: (r, w, l) => `Your season rating is ${r} - ${w} won, ${l} lost.`,
     whyOffline: 'Online only',
+    hallWait: 'The hall is a moment away - press again.',   // AUDIT PRE-MERGE 1003 O4: online, the hall's socket still opening
     whyGuest: 'Registered accounts only',
     whyBusy: 'You are in a bout',
     whyQueued: 'You are seeking a match',
@@ -535,6 +549,8 @@ export const ARENA_TEXT = F({
     ladderKept: 'The bout is on the realm\'s record.',
     grand: 'The realm names you Grand Champion of the Arena!',
     order: 'This win is not your next bout on the ladder, so the realm does not count it.',
+    /** AUDIT PRE-MERGE 1003 S4: the service's `reused` - the bout's id is already on the record as another bout. */
+    reused: 'The realm already keeps another bout under this one\'s name, so it does not count it.',
     guest: 'Your bouts count once your account has a name. Register to keep them.',
     points: (n, b) => `+${n} for ${b}.`,
     // the stands

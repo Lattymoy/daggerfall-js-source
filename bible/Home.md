@@ -178,6 +178,16 @@ shas, which is the one thing that must not be published). The
 previous repository was kept private under another name. If a sha
 cited anywhere fails to resolve, that is why, and Mac holds the map.
 
+PATCH NOTES LIVE ON THE PULL REQUEST (REL6, 2026-10-01, Mac: "somehow
+refrain from patch notes filling up the codebase"). A change players
+will notice says so in its pull request's description, under `## Patch
+notes: <title>` - the template asks, the release reads it there
+(`scripts/desktopRelease.mjs notes`), and the published release is the
+archive. Never commit a patch-notes file: 147 piled up at the root, each
+read once, and `test/rel4_release.test.js` now fails the suite on one.
+A description fixed after its release was cut reaches it by running
+`.github/workflows/release-notes.yml` with the release's tag (REL7).
+
 ## Sections
 
 - `01-Overview/` - vision, port doctrine, phase plan, Port-Ledger (departures/quirks/unported)
@@ -272,7 +282,7 @@ combat line numbers below are refreshed with it.
 
 - `src/combat/fpsSpellCasting.js:101` - * FLAGGED: TextureReplacement.TryImportCifRci (:179) - the loose-file
 - `src/net/professionLaw.js:399` - *  metal's, and a twig's picture is neither's (unverified without the player's data - FLAGGED to Mac's eye). */
-- `src/scenes/exterior.js:2458` - TP2 INTERIM - THE ONE ARM THIS HOST CANNOT TAKE: a jump to an anchor on ANOTHER map pixel. Teleport.cs:145-163 respawns at the anchor's world position, which is StreamingWorld's job (scenes/world.js's `_teleportToPixel`, the door `teleportPrompt -> teleportTo` opens); `?exterior` loads ONE fixed city and runs no streamer, so there is no arrival to build - and it says so instead of eating the cast, the way the standalone dungeon says so about its two windows.
+- `src/scenes/exterior.js:2459` - TP2 INTERIM - THE ONE ARM THIS HOST CANNOT TAKE: a jump to an anchor on ANOTHER map pixel. Teleport.cs:145-163 respawns at the anchor's world position, which is StreamingWorld's job (scenes/world.js's `_teleportToPixel`, the door `teleportPrompt -> teleportTo` opens); `?exterior` loads ONE fixed city and runs no streamer, so there is no arrival to build - and it says so instead of eating the cast, the way the standalone dungeon says so about its two windows.
 - `src/scenes/seatBanners.js:32` - and dungeonContext.js stand no street; exterior.js (the bench) FLAGGED -
 - `src/systems/playerTorch.js:12` - arm is FLAGGED here rather than guessed - see the note below.
 - `src/systems/playerTorch.js:51` - FLAGGED (blocked on data this reference tree does not carry): the

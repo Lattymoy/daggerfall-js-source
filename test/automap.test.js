@@ -304,7 +304,7 @@ test('c2/S5: the slice bias still resets on open unless AutomapRememberSliceLeve
 
 test('A1 wiring pins: entry identity at the push sites, the 5 Hz tick in BOTH dungeon hosts, the load re-entry', () => {
   const ctx = src('src/scenes/dungeonContext.js');
-  assert.match(ctx, /drawList\.push\(\{ mesh: gpu, matrix, key: `\$\{bi\}:\$\{p\.position\}`, aabb \}\)/, 'static entries carry the action-key identity');
+  assert.match(ctx, /drawList\.push\(\{ mesh: gpu, matrix, key: `\$\{bi\}:\$\{p\.position\}`, aabb(?:, \.\.\.\(climateFree \? \{ texRemap: NO_CLIMATE_REMAP \} : \{\}\))? \}\)/, 'static entries carry the action-key identity');   // AUDIT PRE-MERGE 1003 W4: a climate-free model's own (empty) table rides on its entry
   assert.match(ctx, /automapEntries\.push\(amapRow\(o\.key, aabb, true, cpu, matrix\)\)/, 'dynamic entries key by the live action object (c2/S1: through the identity row builder; c2/S7: carrying the picker\'s triangles)');
   assert.match(ctx, /enterDungeonAutomap\(automapKey, classicMinutesRef\.value, \{ fromLoad: true \}\)/, 'quickLoad re-enters on the LOAD arm');
   assert.match(src('src/scenes/dungeon.js'), /automapTick\?\.\(dt, cam\.pos, fwd\)/, 'the standalone host ticks');

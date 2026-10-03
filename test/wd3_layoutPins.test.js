@@ -216,7 +216,8 @@ test('WD3 every record is stamped where it is made: the deed, the room, the repa
   // ...and the sites whose record lives elsewhere, by source: the quest's building site, the online claim, the inside save, the cached interior
   assert.match(src('src/systems/quest/place.js'), /this\.sitePending = false;\n {4}this\._stampSiteLayout\(\);/);
   assert.match(src('src/systems/quest/place.js'), /if \(sd\?\.siteType === SITE_TYPES\.Building && sd\.buildingKey > 0\) stampLayout\(sd, layoutStampOfMapId\(sd\.mapId\)\);/);
-  assert.match(src('src/systems/onlineHomes.js'), /const stamp = layoutStampOfMapId\(mapId\);\n {4}const layout = stamp && stamp !== CLASSIC_LAYOUT \? stamp : null;/);
+  assert.match(src('src/systems/onlineHomes.js'), /const stamp = layoutStampOfMapId\(mapId\);\n {2}return stamp && stamp !== CLASSIC_LAYOUT \? stamp : null;/);   // AUDIT PRE-MERGE 1003 WD1: homeClaimLayout, a hall's too
+  assert.match(src('src/systems/onlineHomes.js'), /const layout = homeClaimLayout\(mapId\);/);
   assert.match(src('src/scenes/world.js'), /if \(interior\) \{ const at = playerTravelPixel\(\); stampLayout\(interior, layoutStampOfPixel\(at\.x, at\.y\)\); \}/);
   assert.match(src('src/scenes/worldModes.js'), /if \(_visitLayout !== null\) stampLayout\(state, _visitLayout\);/);
 });
@@ -408,14 +409,18 @@ test('WD3 a quest\'s building site whose town stands in another layout is chosen
   quest.resources.set('house', place);
   m.createSiteLink(quest, place.symbol);
   const asked = [];
-  place._collectQuestSitesOfBuildingType = (w, loc, type, p3) => { asked.push([loc.name, type, p3]); return [{ siteType: SITE_TYPES.Building, mapId: 1001, regionIndex: 17, locationName: 'Aldleigh', buildingKey: 0x20101, buildingName: 'The Penrose Residence', magicNumberIndex: 0, selectedMarker: { targetResources: null }, questSpawnMarkers: [{}], questItemMarkers: [] }]; };
+  place._collectQuestSitesOfBuildingType = (w, loc, type, p3) => { asked.push([loc.name, type, p3]); return [{ siteType: SITE_TYPES.Building, mapId: 1001, regionIndex: 17, locationName: 'Aldleigh', buildingKey: 0x20101, buildingName: 'The Penrose Residence', magicNumberIndex: 0, selectedMarker: { targetResources: null }, questSpawnMarkers: [{ markerType: 11, flatPosition: { x: 5, y: 0, z: 5 }, dungeonX: 0, dungeonZ: 0, targetResources: null }], questItemMarkers: [] }]; };
   const w = { maps: { getRegion: () => ({ mapNameLookup: new Map([['Aldleigh', 3]]) }), getLocation: () => ({ name: 'Aldleigh', exterior: { exteriorData: {} } }) } };
   assert.equal(m.reseatMovedSites(w), 0, 'its town stands in its layout: left as it is');
   world({ on: [] });   // the village Daggerfall's own all the same
   assert.equal(m.reseatMovedSites(w), 1);
   assert.deepEqual(asked, [['Aldleigh', 17, 0]], 'chosen by its own P2/P3');
   assert.equal(place.siteDetails.buildingKey, 0x20101);
-  assert.equal(place.siteDetails.selectedMarker, assigned, 'what was assigned to it rides along');
+  // AUDIT PRE-MERGE 1003 WD2: what was assigned to it rides along - on the new building's own marker, never the old
+  // building's (its position is the old interior's frame; test/audit1003_wd.test.js)
+  assert.notEqual(place.siteDetails.selectedMarker, assigned);
+  assert.deepEqual(place.siteDetails.selectedMarker.targetResources.map((s) => s.name), ['victim'], 'what was assigned to it rides along');
+  assert.equal(place.siteDetails.selectedMarker.flatPosition.x, 5, 'at the new building\'s marker');
   assert.equal('layout' in place.siteDetails, false, 'stamped in the layout it stands in now (Daggerfall\'s own)');
   assert.equal(m.siteLinks.find((l) => l.questUID === quest.uid).buildingKey, 0x20101, 'its site link follows');
   assert.equal(m.reseatMovedSites(w), 0, 'and stands');

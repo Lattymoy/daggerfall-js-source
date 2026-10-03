@@ -31,6 +31,12 @@ let _left = 0;
  *  flag each of them takes, so this asks nothing new of either. */
 export function markFoeStruck(foe, { fromPlayer = true } = {}) {
   if (!fromPlayer || !foe?.entity) return;
+  // AUDIT PRE-MERGE 1003 U3: a fighter of the bout on the sand (its `entity.bout` tag - scenes/arenaBouts.js) is the
+  // versus bar's, which names it and draws its health already (ui/arenaHud.js): the frame stood on every ladder bout
+  // from the first blow, under the bar, its name bleeding through. The undercroft's chained beasts carry a tag too
+  // (world/arenaUndercroft.js chainTag) and no bar stands for them - they keep the frame.
+  const bout = foe.entity.bout;
+  if (bout && !bout.chained) return;
   _foe = foe;
   _left = FOE_TARGET_SECONDS;
 }

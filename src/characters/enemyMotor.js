@@ -1710,7 +1710,10 @@ export class EnemyAI {
    * the pursuit's own laws - the classic turn in place inside the 5.625 degree move gate, the same capsule, obstacle,
    * ledge and detour probes and gravity (`_walkStep`) - at `pace` of its move speed. It decides and senses nothing on
    * the way (the bout holds it); at WALK_ARRIVE_M of the point it stops and `walkArrived` says so. A blow shoves it as
-   * any foe. `walkGoal = null` ends it where it stands.
+   * any foe. `walkGoal = null` ends it where it stands, its pace with it: the pace is the walk's own step's
+   * (`_walkGoalStep`), never a field a later pursuit reads (AUDIT PRE-MERGE 1003 D1: it was, and put back only at the
+   * motor's own arrival - the bout ends every walk in itself, at its mark or the walk's limit, so every fighter that
+   * walked in fought its bout at WALK_PACE).
    */
   walkTo(point, { pace = 1 } = {}) {
     this.walkGoal = [point[0], point[1], point[2]];
@@ -1734,7 +1737,7 @@ export class EnemyAI {
     const g = this.walkGoal;
     const left = Math.hypot(g[0] - this.feet[0], g[2] - this.feet[2]);
     if (left <= WALK_ARRIVE_M) {
-      this.walkGoal = null; this.walkArrived = true; this.moving = false; this._pace = 1;
+      this.walkGoal = null; this.walkArrived = true; this.moving = false;
       this._walkStep(dt);
       return;
     }
@@ -1748,7 +1751,7 @@ export class EnemyAI {
       this.moving = facing;
     }
     if (paralyzed) this.moving = false;
-    this._walkStep(dt);
+    this._walkStep(dt, this._pace);   // AUDIT PRE-MERGE 1003 D1: the walk's pace, for its own step alone
   }
 
   _step(dt, playerFeet, senses, paralyzed = false, paused = false) {
@@ -2004,8 +2007,9 @@ export class EnemyAI {
 
   /** The grounded walker's step - _step's tail (the comment above its call), and a frightened foe's run (_fleeStep):
    *  the rest fast path, gravity, AttemptMove's obstacle and ledge probes with DFU's detour, and the one capsule
-   *  move, at whatever `moving` the caller's classic tick decided. */
-  _walkStep(dt) {
+   *  move, at whatever `moving` the caller's classic tick decided - at `pace` of its speed, which only a walk to a mark
+   *  (_walkGoalStep) passes (AUDIT PRE-MERGE 1003 D1). */
+  _walkStep(dt, pace = 1) {
     if (!this.moving && this._restGrounded) return;
     this.velY -= GRAVITY * dt;
     const dy = this.velY * dt;
@@ -2027,7 +2031,7 @@ export class EnemyAI {
         if (this._tacDir) { this._tacDir = null; this._tacBlocked = true; this.moving = false; }   // TACT2: a wall or a drop behind it: it stands its ground (AUDIT TACT A1: and the brain hears of it; TACT5: for the rest of the classic tick too - never walked on the way it faces, into a detour)
         else this._findDetour(dir2d);
       } else {
-        const sp = this.speed * (this._tacDir ? this._tacSpeed : 1) * (this._pace ?? 1);   // TACT2: the brain's step at its share of a walk; ARENA-FIX 8: a walk to a mark at its pace (1 everywhere else)
+        const sp = this.speed * (this._tacDir ? this._tacSpeed : 1) * pace;   // TACT2: the brain's step at its share of a walk; ARENA-FIX 8: a walk to a mark at its pace (1 everywhere else - AUDIT PRE-MERGE 1003 D1: the walk's step's own, so none outlives the walk)
         dxm = dir2d[0] * sp * dt;
         dzm = dir2d[2] * sp * dt;
       }

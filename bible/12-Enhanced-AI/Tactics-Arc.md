@@ -295,4 +295,4 @@ switch off, DFU's motor to the bit (TACT2's five-foe pin).
 - Mutants `tools/mutants/tact5.json` (13), all dead; `tact2.json` and `audittact.json` records re-aimed at the moved
   lines (and two audit records widened to the new pins, which kill them where the audit's alone no longer can); the
   four TACT lists re-run, 161 dead.
-- Patch notes `PATCH-NOTES-Foes-That-Stand-and-Fight.md`. Not looked at on a real install yet.
+- Not looked at on a real install yet.

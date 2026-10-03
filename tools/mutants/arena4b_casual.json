@@ -79,8 +79,8 @@
   {
     "name": "ARENA4b-CAS-ACT-WORD",
     "file": "src/scenes/arenaOnline.js",
-    "old": "...myBanner(), ...(casual ? { u: 1 } : {}) })) return",
-    "new": "...myBanner() })) return",
+    "old": "...myBanner(), ...(casual ? { u: 1 } : {}) };",
+    "new": "...myBanner() };",
     "tests": ["test/arena4b_casual.test.js"]
   },
   {

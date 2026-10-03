@@ -228,10 +228,46 @@ export class Place extends QuestResource {
     else found = this._collectQuestSitesOfBuildingType(world, location, this.p2, this.p3);
     if (!found.length && this.p2 >= BT_HOUSE1 && this.p2 <= BT_HOUSE6) found = this._collectQuestSitesOfBuildingType(world, location, BT_ANY_HOUSE, this.p3);
     if (!found.length) return false;
-    const next = found[this._range(found.length)];
-    this.siteDetails = { ...next, questUID: sd.questUID ?? next.questUID, magicNumberIndex: sd.magicNumberIndex ?? 0, selectedMarker: sd.selectedMarker ?? next.selectedMarker };
+    const next = this._carryAssignments(sd, found[this._range(found.length)]);
+    if (!next) return false;   // AUDIT PRE-MERGE 1003 WD2: a building with no marker to carry them to keeps the record
+    this.siteDetails = { ...next, questUID: sd.questUID ?? next.questUID, magicNumberIndex: sd.magicNumberIndex ?? 0 };
     this._stampSiteLayout();
     return true;
+  }
+
+  /**
+   * AUDIT PRE-MERGE 1003 WD2: THE ASSIGNMENTS MOVE, NEVER THE MARKERS. A marker's flatPosition is in its own building's
+   * interior frame: the old selectedMarker kept stood the quest's person or thing at the old building's coordinates in
+   * the new one (in a wall, outside its rooms), and the new building's numbered markers dropped what was placed "at
+   * marker N". So the selected marker is one of `next`'s own, of the old one's type (the other where it has none, as
+   * _getSiteMarker falls back), given the old one's targets; each numbered marker's targets go to the same index of the
+   * new list, or onto the selected marker where the new building has no such marker. Answers `next` so assigned, or null
+   * for a building with no marker (_collectQuestSitesOfBuildingType never offers one).
+   */
+  _carryAssignments(sd, next) {
+    const fresh = (list) => (list ?? []).map((m) => ({ ...m, targetResources: null }));
+    const spawn = fresh(next.questSpawnMarkers), item = fresh(next.questItemMarkers);
+    if (!validateQuestMarkers(spawn, item)) return null;
+    let selectedMarker = { ...next.selectedMarker, targetResources: null };
+    const select = (type) => {
+      const own = type === MARKER_TYPES.QuestItem ? item : spawn;
+      const pool = own.length ? own : (own === item ? spawn : item);
+      selectedMarker = { ...pool[this._range(pool.length)], targetResources: [] };
+    };
+    if (sd.selectedMarker?.targetResources) {
+      select(sd.selectedMarker.markerType);
+      for (const s of sd.selectedMarker.targetResources) assignResourceToMarker(s, selectedMarker);
+    }
+    const carry = (from, to, type) => (from ?? []).forEach((m, i) => {
+      for (const s of m?.targetResources ?? []) {
+        if (to[i]) { assignResourceToMarker(s, to[i]); continue; }
+        if (!selectedMarker.targetResources) select(type);
+        assignResourceToMarker(s, selectedMarker);
+      }
+    });
+    carry(sd.questSpawnMarkers, spawn, MARKER_TYPES.QuestSpawn);
+    carry(sd.questItemMarkers, item, MARKER_TYPES.QuestItem);
+    return { ...next, questSpawnMarkers: spawn.length ? spawn : null, questItemMarkers: item.length ? item : null, selectedMarker };
   }
 
   _rolls() { return this.parentQuest?.rolls ?? Math.random; }

@@ -42,7 +42,7 @@
 import { verifyArenaReceipt } from '../../src/net/arenaReceipt.js';
 import {
   arenaSeasonOf, arenaSeasonEndsS, arenaSeasonDay, eloAfter, ARENA_ELO_START, arenaLadderOf, ladderKey, ARENA_BANNERS, ARENA_TEAM_POINTS,
-  ARENA_TIERS, ARENA_TIER_BOUTS, ARENA_PAIR_DAY_MAX, ARENA_CHAMPION_MIN_BOUTS, arenaRatingOk,
+  ARENA_TIERS, ARENA_TIER_BOUTS, ARENA_PAIR_DAY_MAX, ARENA_CHAMPION_MIN_BOUTS, arenaRatingOk, ARENA_ELO_MIN, ARENA_ELO_MAX,
 } from '../../src/net/arenaLaw.js';
 import { displayName } from './accounts.js';
 import { titleWorn, glyphsOf } from './titles.js';
@@ -50,7 +50,8 @@ import { renownQuestXp } from '../../src/net/renown.js';   // ARENA4b: a bout's 
 import { reportRenownXp, renownTrackOf, renownCharacterOk } from './renownTracks.js';   // ARENA4b: credited through the renown law's own door
 
 /** The service's doors that read a badge (a token's mint, the account's wardrobe, an equip): the arena's honours ride the
- *  row there and nowhere else (two reads - one an index lookup, one kept a minute). */
+ *  row there (two reads - one an index lookup, one kept a minute). AUDIT PRE-MERGE 1003 S8: and on the rows a box's
+ *  letters and a board's notes are badged from (withArenaHonoursAll - letters.js, board.js). */
 export const ARENA_HONOUR_PATHS = new Set(['/v1/auth/token', '/v1/account', '/v1/account/title', '/v1/account/aura', '/v1/account/insignia', '/v1/patreon/unlink']);
 /** A board's rows before the caller's own is pinned under them. */
 export const ARENA_BOARD_TOP = 10;
@@ -76,7 +77,7 @@ const GRAND_TIER = ARENA_TIERS - 1;
 // bout past the Pit pays 195 and the Grand Champion 585 - the ceiling's whole point. The most a claim asks is far under a
 // report's 5,000. A loss, a draw and a bout kept unrated (the pair's day) pay none: two friends trading wins earn
 // nothing on each other. ONCE AN ACCOUNT: a bout between players is one row whoever claims it first, so the winner may
-// claim second - the right to its Renown is its own row (`arena_renown`, migration 0073 - 0071 before the second merge onto main), taken before the credit.
+// claim second - the right to its Renown is its own row (`arena_renown`, migration 0075 - 0071 before the second merge onto main, 0073 before the third), taken before the credit.
 
 /** A ladder tier's level for its Renown - the design table's top level of each tier (Arena.md 2: 1-3, 3-5, ... 20+). */
 export const ARENA_RENOWN_TIER_LEVEL = (tier) => 2 * Math.max(0, Math.min(ARENA_TIERS - 1, Math.trunc(Number(tier) || 0))) + 3;
@@ -194,6 +195,23 @@ export async function arenaHonoursOf(ctx, player, nowS) {
 export async function withArenaHonours(ctx, player, nowS) {
   return player ? { ...player, arena: await arenaHonoursOf(ctx, player, nowS) } : player;
 }
+/** AUDIT PRE-MERGE 1003 S8: MANY ROWS WITH THEIR HONOURS - a box's senders, a board's authors (letters.js, board.js): the
+ *  Grand Champions among them in one read a fifty, the season's #1 the Worker's minute-kept one, laid on each row as
+ *  arenaHonoursOf lays it (a guest wears neither). Their badges read the rows bare, so a Grand Champion's letter and
+ *  notice wore no title and the #1's no laurel. */
+export async function withArenaHonoursAll(ctx, rows, nowS) {
+  const ids = [...new Set(rows.filter((r) => r?.handle).map((r) => r.id))];
+  if (!ids.length) return rows;
+  const grands = new Set();
+  for (let i = 0; i < ids.length; i += 50) {
+    const part = ids.slice(i, i + 50);
+    const found = (await ctx.db.prepare(`SELECT DISTINCT player FROM arena_pve WHERE tier = ${GRAND_TIER} AND step = ${ARENA_TIER_BOUTS} AND won = 1
+        AND player IN (${part.map((_, k) => `?${k + 1}`).join(', ')})`).bind(...part).all()).results ?? [];
+    for (const r of found) grands.add(r.player);
+  }
+  const champion = await championNow(ctx, nowS);
+  return rows.map((r) => (r?.handle ? { ...r, arena: { grand: grands.has(r.id), champion: champion === r.id } } : r));
+}
 
 /** The account's banner row, read. */
 export async function arenaMemberOf({ db }, playerId) {
@@ -204,8 +222,9 @@ export async function arenaMemberOf({ db }, playerId) {
 /**
  * A BOUT'S RECEIPT, CLAIMED. Verified with the relay's public half; a ladder receipt names the claiming account, a
  * players' one names it as one of its two. Answers `{ recorded: true, ... }`, `{ recorded: false, why }` (`claimed` - this
- * bout is kept already; `guest`; `order` - a win that is not the account's next bout), or `{ error }` - `no-gate-key`,
- * `receipt` (`why` the rung), `not-yours`.
+ * bout is kept already; `guest`; `order` - a win that is not the account's next bout; AUDIT PRE-MERGE 1003 S4: `reused` -
+ * its id is kept as another bout), or `{ error }` - `no-gate-key`, `receipt` (`why` the rung), `not-yours`; AUDIT
+ * PRE-MERGE 1003 S6: `busy` - a players' bout whose two ratings kept moving under it, carried again later.
  * ARENA4b: `fighter` - the character the claim names (`character`, its `name` for the track) - is paid the bout's Renown
  * when the kept bout is the account's win (a ladder win, a rated players' win), once an account: the answer's `renown`.
  * @param {{ db: any, nowS: number, subtle: SubtleCrypto }} ctx
@@ -242,8 +261,14 @@ async function claimLadder(ctx, player, c, season, banner) {
   const recorded = Number(r?.meta?.changes ?? 0) > 0;
   const ladder = await arenaLadderOfAccount(ctx, player.id);
   if (!recorded) {
-    const kept = await db.prepare('SELECT 1 AS one FROM arena_pve WHERE bout = ?1').bind(c.j).first();
-    return { recorded: false, why: kept ? 'claimed' : 'order', ladder };
+    // AUDIT PRE-MERGE 1003 S4: `claimed` ONLY FOR THIS RECEIPT'S OWN ROW - the account's, this tier and step, this result.
+    // A ladder room's id is its fighter's own, the relay forgets a finished bout ARENA_KEEP_MS after it and opens a new
+    // one under the same id, and the hall lists every live id to anybody: a win receipt reusing a kept loss's id (or
+    // anybody's bout) was answered `claimed`, and claimArena paid the receipt's own Renown - out of order, at any tier.
+    // Another row under the id is `reused`: nothing kept, nothing paid.
+    const kept = await db.prepare('SELECT player, tier, step, won FROM arena_pve WHERE bout = ?1').bind(c.j).first();
+    const mine = !!kept && kept.player === player.id && Number(kept.tier) === c.q && Number(kept.step) === c.u && Number(kept.won) === (won ? 1 : 0);
+    return { recorded: false, why: mine ? 'claimed' : kept ? 'reused' : 'order', ladder };
   }
   return {
     recorded: true, kind: 'ladder', won, tier: c.q, bout: c.u, how: c.h, ladder,
@@ -260,21 +285,38 @@ async function claimPlayers(ctx, player, c, season) {
   const linked = (id) => rows.some((r) => r.id === id && r.handle);
   // both must be registered to be rated (the hall queues no guest; a crafted pair is kept as nothing)
   if (!linked(a) || !linked(b)) return { recorded: false, why: 'guest' };
-  const ra = await arenaRatingOf(ctx, a, season), rb = await arenaRatingOf(ctx, b, season);
-  // THE PAIR'S DAY: past ARENA_PAIR_DAY_MAX rated bouts between the two in a day, a bout is kept and not counted - two
-  // friends trading wins cannot climb the board on each other
-  const pair = await db.prepare(`SELECT COUNT(*) AS n FROM arena_pvp WHERE rated = 1 AND at > ?3 - 86400
-      AND ((a = ?1 AND b = ?2) OR (a = ?2 AND b = ?1))`).bind(a, b, nowS).first();
-  const rated = Number(pair?.n ?? 0) < ARENA_PAIR_DAY_MAX;
-  const [na, nb] = rated ? eloAfter(ra.rating, rb.rating, c.r === 0 ? 1 : c.r === 1 ? 0 : 0.5) : [ra.rating, rb.rating];
-  const ma = await arenaMemberOf(ctx, a), mb = await arenaMemberOf(ctx, b);
-  const ins = await db.prepare(`INSERT OR IGNORE INTO arena_pvp (bout, season, a, b, result, how, ra0, rb0, ra1, rb1, rated, banner_a, banner_b, at)
-      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)`)
-    .bind(c.j, season, a, b, c.r, c.h, ra.rating, rb.rating, na, nb, rated ? 1 : 0, ma?.banner ?? null, mb?.banner ?? null, nowS).run();
-  const row = await db.prepare('SELECT * FROM arena_pvp WHERE bout = ?1').bind(c.j).first();
-  const recorded = Number(ins?.meta?.changes ?? 0) > 0;
-  return recorded ? { recorded: true, kind: 'pvp', ...(await pvpAnswer(ctx, player.id, row)) } : { recorded: false, why: 'claimed', ...(await pvpAnswer(ctx, player.id, row)) };
+  // AUDIT PRE-MERGE 1003 S6: THE RATINGS ARE THE WRITE'S - the INSERT lands only while both accounts' ratings still stand
+  // as they were read (RATING_NOW_SQL, arenaRatingOf's own read, in its WHERE); another bout of either landing between
+  // the read and the write is read again, a bounded number of times. Read, then written blind, two claims of one account
+  // at once both rated off the same "before" and one change was lost - a loss raced with a win, erased.
+  for (let tries = 0; tries < ARENA_RATE_TRIES; tries++) {
+    const ra = await arenaRatingOf(ctx, a, season), rb = await arenaRatingOf(ctx, b, season);
+    // THE PAIR'S DAY: past ARENA_PAIR_DAY_MAX rated bouts between the two in a day, a bout is kept and not counted - two
+    // friends trading wins cannot climb the board on each other
+    const pair = await db.prepare(`SELECT COUNT(*) AS n FROM arena_pvp WHERE rated = 1 AND at > ?3 - 86400
+        AND ((a = ?1 AND b = ?2) OR (a = ?2 AND b = ?1))`).bind(a, b, nowS).first();
+    const rated = Number(pair?.n ?? 0) < ARENA_PAIR_DAY_MAX;
+    const [na, nb] = rated ? eloAfter(ra.rating, rb.rating, c.r === 0 ? 1 : c.r === 1 ? 0 : 0.5) : [ra.rating, rb.rating];
+    const ma = await arenaMemberOf(ctx, a), mb = await arenaMemberOf(ctx, b);
+    const ins = await db.prepare(`INSERT OR IGNORE INTO arena_pvp (bout, season, a, b, result, how, ra0, rb0, ra1, rb1, rated, banner_a, banner_b, at)
+        SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14
+        WHERE ${RATING_NOW_SQL('?3')} = ?7 AND ${RATING_NOW_SQL('?4')} = ?8`)
+      .bind(c.j, season, a, b, c.r, c.h, ra.rating, rb.rating, na, nb, rated ? 1 : 0, ma?.banner ?? null, mb?.banner ?? null, nowS).run();
+    const row = await db.prepare('SELECT * FROM arena_pvp WHERE bout = ?1').bind(c.j).first();
+    if (Number(ins?.meta?.changes ?? 0) > 0) return { recorded: true, kind: 'pvp', ...(await pvpAnswer(ctx, player.id, row)) };
+    if (row) return { recorded: false, why: 'claimed', ...(await pvpAnswer(ctx, player.id, row)) };
+  }
+  return { error: 'busy' };   // the receipt is kept and carried again (net/arenaClaims.js - every error but a receipt's)
 }
+/** AUDIT PRE-MERGE 1003 S6: how many times a players' claim reads the two ratings again when a bout of either landed
+ *  between its read and its write. */
+export const ARENA_RATE_TRIES = 4;
+/** AUDIT PRE-MERGE 1003 S6: an account's season rating NOW as one SQL value - arenaRatingOf's read (its last rated row's
+ *  rating, arenaRatingOk's bounds, the start for none), `p` the account's parameter, ?2 the season - for a write to ask
+ *  in its own WHERE. */
+const RATING_NOW_SQL = (p) => `COALESCE((SELECT CASE WHEN r BETWEEN ${ARENA_ELO_MIN} AND ${ARENA_ELO_MAX} THEN r ELSE ${ARENA_ELO_START} END
+    FROM (SELECT CASE WHEN a = ${p} THEN ra1 ELSE rb1 END AS r FROM arena_pvp WHERE season = ?2 AND rated = 1 AND (a = ${p} OR b = ${p})
+      ORDER BY at DESC, rowid DESC LIMIT 1)), ${ARENA_ELO_START})`;
 /** What a players' bout's claim answers its claimant: their side, the result for them, their rating before and after,
  *  whether it counted, and their season now. */
 async function pvpAnswer(ctx, me, row) {

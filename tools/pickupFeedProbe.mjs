@@ -14,6 +14,10 @@
 // seen at its real size. The address the real door is asked for is the pack's own (inventoryItemImage) and is pinned in
 // test/pickupfeed.test.js.
 //
+// HAUL-CARDS (2026-10-03): four scenes more - a vein's card bumped and its gem, a raid's three silver cards, the day's
+// cap beside a pickup, a Motherlode's one card - built from answers through ui/haulCards.js and drawn by `showHaul`,
+// held to the same checks (no card over the plaque, the mid-screen line, the HUD's foot, or above the crosshair).
+//
 // IT RUNS ON VITE'S OWN DEV SERVER (tools/renownBarProbe.mjs's pattern). Web fonts come through the session's proxy
 // when one is set (the pixel face is what the cards are measured in); NOFONTS=1 measures the fallback face.
 //
@@ -51,7 +55,8 @@ import { foldQuickLoot, resetQuickLoot, quickLootWheel } from '/src/systems/quic
 import { setPref } from '/src/systems/uiPrefs.js';
 import { LOOT_RARITY_KEY } from '/src/systems/lootRarity.js';
 import { GOLD_TEMPLATE } from '/src/systems/inventory.js';
-import { showPickups, destroyPickupFeed, _setPickupFeedForTests } from '/src/ui/pickupFeed.js';
+import { showPickups, showHaul, destroyPickupFeed, _setPickupFeedForTests } from '/src/ui/pickupFeed.js';
+import { harvestHauls, claimHauls } from '/src/ui/haulCards.js';   // HAUL-CARDS: a gather's, a strike's and a claim's cards
 import { drawEnhancedMidText, midTextTopPx } from '/src/ui/enhancedHudText.js';
 import { crosshairCentreY } from '/src/ui/hudCrosshair.js';
 
@@ -81,8 +86,11 @@ const GLYPHS = {
   arrow: ['.........f', '........ff', '.......s..', '......s...', '.....s....', '....s.....', '...s......', '.hs.......', 'hh........', 'h.........'],
   helm: ['..........', '...mmmm...', '..mllllm..', '.mlllllm..', '.mlkkklm..', '.mlk.klm..', '.mm...mm..', '.m.....m..', '..........', '..........'],
   axe: ['....oo....', '...oooo...', '...ooob...', '....oob...', '......b...', '......b...', '......b...', '......b...', '......b...', '..........'],
+  // HAUL-CARDS: an ore's lump and a gem's facet
+  ore: ['..........', '...mmm....', '..mllmm...', '.mlkklmm..', '.mllkkmm..', '.mmllkkm..', '..mmlllm..', '...mmmm...', '..........', '..........'],
+  gem: ['..........', '....oo....', '...oYYo...', '..oYYYYo..', '..oyYYyo..', '...oyyo...', '....oo....', '..........', '..........', '..........'],
 };
-const kindOf = (name) => (/gold/i.test(name) ? 'gold' : /ring|amulet|star/i.test(name) ? 'ring' : /potion|elixir/i.test(name) ? 'potion'
+const kindOf = (name) => (/^ore:|^metal:/.test(name) ? 'ore' : /^gem:/.test(name) ? 'gem' : /gold/i.test(name) ? 'gold' : /ring|amulet|star/i.test(name) ? 'ring' : /potion|elixir/i.test(name) ? 'potion'
   : /arrow/i.test(name) ? 'arrow' : /dagger|tanto/i.test(name) ? 'dagger' : /helm/i.test(name) ? 'helm' : /axe|cleaver/i.test(name) ? 'axe' : 'sword');
 const pics = new Map();
 function pictureOf(kind) {
@@ -96,7 +104,7 @@ function pictureOf(kind) {
   return pic;
 }
 globalThis.__t = 0;
-_setPickupFeedForTests({ now: () => globalThis.__t, icon: (line) => (line.image ? pictureOf(kindOf(line.name)) : null) });
+_setPickupFeedForTests({ now: () => globalThis.__t, icon: (line) => (line.image ? pictureOf(kindOf(line.material ?? line.name)) : null) });
 
 // ── the things a player takes ──
 const W = (name, extra = {}) => ({ name, group: 'Weapons', templateIndex: 121, material: 0, identified: true, maxCondition: 100, currentCondition: 90, ...extra });
@@ -156,6 +164,29 @@ const SCENES = {
     stand([ITEMS.helm, ITEMS.arrows, ITEMS.bread, ITEMS.potion, W('Claymore', { templateIndex: 117 }), W('Mace', { templateIndex: 125 }), W('Staff', { templateIndex: 126 })], { lit: 1 });
     take([ITEMS.dagger]); globalThis.__t = 200; take([ITEMS.longsword]); globalThis.__t = 400; take([gold(12), 12]);
   },
+  // HAUL-CARDS: a vein struck clean - its ore, its Stores and its XP one card, a gem under it; then the same vein's ore
+  // again inside the window, bumped (the counts add, the Stores and the bar the newest's)
+  async haul() {
+    const vein = (qty, held, xp) => ({ material: 'metal:iron', qty, xp, track: { profession: 'mining', xp, rank: 34 }, store: { own: held } });
+    showHaul(harvestHauls({ ...vein(3, 41, 12000), xp: 60, gem: 'gem:amber' }, { note: ' (every strike on the glint)' }));
+    globalThis.__t = 700; showHaul(harvestHauls({ ...vein(2, 43, 12080), xp: 40 }));
+  },
+  // HAUL-CARDS: a raid counted - its silver (the day's combat bar), the guild's deed (to its treasury), a contract's pay
+  async silver() {
+    showHaul(claimHauls({ marks: { struck: 30, balance: 90, combat: { earned: 120, max: 150 } }, deed: { struck: 25, guild: { name: 'The HND Guild', tag: 'HND' } },
+      contracts: [{ contract: 'c1', pay: 38, tax: 2, guild: { name: 'The HND Guild', tag: 'HND' } }] }, 'raid'));
+  },
+  // HAUL-CARDS: a gate at the day's cap - its muted card - beside a pickup's
+  async capped() {
+    stand([ITEMS.bread], { lit: 0 });
+    take([ITEMS.longsword]); globalThis.__t = 300;
+    showHaul(claimHauls({ marks: { struck: 0, balance: 150, why: 'cap', combat: { earned: 150, max: 150 } } }, 'gate'));
+  },
+  // HAUL-CARDS: a Motherlode struck - the day's one card, its ore, its silver and its twenty
+  async lode() {
+    showHaul(harvestHauls({ motherlode: true, node: 'mlode:20833:0', material: 'ore:ebony', qty: 9, xp: 1380, track: { profession: 'mining', xp: 13100, rank: 36 },
+      store: { own: 9 }, marks: { struck: 10, balance: 60 }, lode: { struck: 4, strikers: 20 } }, { note: ' (every strike on the glint)' }));
+  },
   // the fade: two cards, the older past its hold
   // (the entrance runs its course first - in play a card is 2.5 s old before it fades, never mid-entrance)
   async fade() {
@@ -180,7 +211,7 @@ globalThis.__measure = () => {
     mid: shown(mid) && mid.textContent ? box(mid) : null,
     feed: box(document.querySelector('.pickfeed')),
     cards: [...document.querySelectorAll('.pickfeed-card:not(.pf-over)')].map((c) => ({ ...box(c), text: c.textContent, rarity: c.dataset.rarity ?? null,
-      colour: getComputedStyle(c.querySelector('.pickfeed-name')).color, fading: c.classList.contains('fading') })),
+      colour: c.querySelector('.pickfeed-name') ? getComputedStyle(c.querySelector('.pickfeed-name')).color : null, fading: c.classList.contains('fading') })),   // HAUL-CARDS: a muted card has no name
     hudBottom: box(document.querySelector('.hud-bottom')),
     font: getComputedStyle(document.querySelector('.pickfeed-card') ?? document.body).fontFamily,
   };
@@ -192,7 +223,7 @@ const VIEWS = [
   { name: 'desktop', viewport: { width: 1280, height: 800 }, dsf: 1 },
   { name: 'phone', viewport: { width: 390, height: 844 }, dsf: 2 },
 ];
-const SCENE_NAMES = ['one', 'bump', 'four', 'gold', 'refusal', 'tall', 'fade'];
+const SCENE_NAMES = ['one', 'bump', 'four', 'gold', 'refusal', 'tall', 'fade', 'haul', 'silver', 'capped', 'lode'];   // HAUL-CARDS: the last four
 
 mkdirSync(OUT, { recursive: true });
 const vite = process.env.PROBE_PORT ? null : await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1', watch: null }, logLevel: 'error' });

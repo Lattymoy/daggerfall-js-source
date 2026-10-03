@@ -1,0 +1,70 @@
+# REL7 (2026-10-03, Mac: "I need you to do this auto"): A PUBLISHED
+# RELEASE'S NOTES, READ AGAIN. The publish job (release-desktop.yml) reads
+# each merged pull request's `## Patch notes` once, at the moment it runs;
+# a description written or fixed after that never reached the release, and
+# the launcher's news showed "Fixes and improvements." for good. Run this
+# with the release's tag: it checks the tag out, reads the notes of the
+# pull requests between the previous release and it again
+# (scripts/desktopRelease.mjs renotes), and writes them over the old ones.
+# GitHub's generated list under them stays, and no file of the release is
+# touched - only its text. The notes live on the pull requests, never in
+# the tree.
+name: release-notes
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'The published release whose notes to read again (app-v<major>.<minor>.<patch>)'
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-notes-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  renotes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write        # the release's body
+      pull-requests: read    # the notes are the merged pull requests' own
+    steps:
+      # AUDIT INSTALL L1-5's rule: a tag is app-v<n>.<n>.<n> EXACTLY, read
+      # from the environment, before anything checks it out or names it.
+      - name: The tag is a release tag
+        shell: bash
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          if ! [[ "$TAG" =~ ^app-v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::tag must be app-v<major>.<minor>.<patch>, digits only"
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ inputs.tag }}
+          fetch-depth: 0   # the notes read the merges since the previous release's tag
+          persist-credentials: false   # nothing here pushes; no token is left in .git/config
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # A read that fails fails the step, and the release keeps the notes it has.
+      - name: Write the notes again
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" > release.json
+          node -e "process.stdout.write(require('./release.json').body ?? '')" > current-body.md
+          node scripts/desktopRelease.mjs renotes "$TAG" current-body.md > release-notes.md
+          ID=$(node -p "require('./release.json').id")
+          gh api -X PATCH "repos/$GITHUB_REPOSITORY/releases/$ID" -F body=@release-notes.md --silent
+          echo "the notes of $TAG, written again:"
+          cat release-notes.md

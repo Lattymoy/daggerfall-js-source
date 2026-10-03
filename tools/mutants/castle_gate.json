@@ -37,7 +37,7 @@
  {
   "name": "CASTLE-GATE-doors-ungathered",
   "file": "src/scenes/world.js",
-  "old": "            if (dfLocation.hasDungeon) for (const d of cpu.doors) if (d.type === DOOR_TYPE.DUNGEON_ENTRANCE) pixelDungeonDoors.push({ door: doorCornersOf(d, local), box, normal: doorNormalOf(d, local) });   // CASTLE-GATE (AUDIT G1: its outward normal)\n",
+  "old": "            if (dfLocation.hasDungeon) for (const d of cpu.doors) if (d.type === DOOR_TYPE.DUNGEON_ENTRANCE) pixelDungeonDoors.push({ door: doorCornersOf(d, local), box, normal: doorNormalOf(d, local), arena: b.blockName === ARENA_BLOCK });   // CASTLE-GATE (AUDIT G1: its outward normal; AUDIT PRE-MERGE 1003 W7: the undercroft's stair, no castle's - castleEntranceOf passes it over)\n",
   "new": "",
   "tests": ["test/castle_gate.test.js"]
  },
@@ -142,8 +142,8 @@
  {
   "name": "CASTLE-GATE-G1-normal-ungathered",
   "file": "src/scenes/world.js",
-  "old": "pixelDungeonDoors.push({ door: doorCornersOf(d, local), box, normal: doorNormalOf(d, local) });",
-  "new": "pixelDungeonDoors.push({ door: doorCornersOf(d, local), box });",
+  "old": "pixelDungeonDoors.push({ door: doorCornersOf(d, local), box, normal: doorNormalOf(d, local), arena: b.blockName === ARENA_BLOCK });",
+  "new": "pixelDungeonDoors.push({ door: doorCornersOf(d, local), box, arena: b.blockName === ARENA_BLOCK });",
   "tests": ["test/castle_gate.test.js"]
  }
 ]

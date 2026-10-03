@@ -1,0 +1,420 @@
+[
+  {
+    "name": "AUDIT-1003-U1-the-door-never-asks",
+    "file": "src/ui/arenaDoor.js",
+    "old": "      view?.refresh?.();",
+    "new": "      /* a press repaints it */",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U1-every-frame-asks",
+    "file": "src/ui/arenaDoor.js",
+    "old": "      if (since < ARENA_DOOR_REFRESH_S) return;\n",
+    "new": "",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U1-drawn-whether-or-not-it-moved",
+    "file": "src/ui/arenaWindow.js",
+    "old": "    if (now !== undefined && now === drawn) return false;\n",
+    "new": "",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U2-the-focus-not-kept",
+    "file": "src/ui/arenaWindow.js",
+    "old": "    }, { focus: true });",
+    "new": "    });",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U3-the-scale-never-copied",
+    "file": "src/ui/arenaHud.js",
+    "old": "  if (scale !== shown.scale) { shown.scale = scale; root.style.setProperty?.('--hud-scale', scale); }",
+    "new": "  /* the HUD's scale never reached it */",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U3-the-top-58-times-the-scale",
+    "file": "src/ui/arenaHud.js",
+    "old": "export const ARENA_HUD_TOP = 'calc(18px + 28px * var(--hud-scale, 1) + 12px)';",
+    "new": "export const ARENA_HUD_TOP = 'calc(58px * var(--hud-scale, 1))';",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U3-no-step-under-the-frame",
+    "file": "src/ui/arenaHud.js",
+    "old": "body:has(.hud-foe.on) .arena-hud { top: calc(18px + 28px * var(--hud-scale, 1) + 20px + 46px * var(--hud-scale, 1)); }\n",
+    "new": "",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U3-no-step-under-the-blade",
+    "file": "src/ui/arenaHud.js",
+    "old": "body:has(.hud-foe.on.blade) .arena-hud { top: calc(18px + 28px * var(--hud-scale, 1) + 20px + 76px * var(--hud-scale, 1)); }\n",
+    "new": "",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U3-the-bout-fighter-framed",
+    "file": "src/ui/hudFoeTarget.js",
+    "old": "  if (bout && !bout.chained) return;",
+    "new": "  /* every blow framed */",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U3-the-chained-beast-unframed",
+    "file": "src/ui/hudFoeTarget.js",
+    "old": "  if (bout && !bout.chained) return;",
+    "new": "  if (bout) return;",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U4-never-on",
+    "file": "src/ui/arenaHud.js",
+    "old": " root.classList.toggle('on', want); }",
+    "new": " }",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U4-the-card-stays",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "@media (max-width: 1100px) { body:has(.arena-hud.on) .qtrack { visibility: hidden; } }",
+    "new": "",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U4-the-party-stays",
+    "file": "src/ui/partyPanel.js",
+    "old": "@media (min-width: 561px) and (max-width: 980px) { body:has(.arena-hud.on) .dfparty { visibility: hidden; } }",
+    "new": "",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U5-the-header-classless",
+    "file": "src/ui/arenaWindow.js",
+    "old": "const th = el('th', i - lead.length >= 2 ? 'opt' : i === lead.length - 1 ? 'aw-nm' : ranked && i === 0 ? 'aw-rank' : null, c);",
+    "new": "const th = el('th', i - lead.length >= 2 ? 'opt' : null, c);",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U5-the-rank-by-its-place",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": "  .aw-table .aw-rank { width: 34px; }",
+    "new": "  .aw-table th:first-child, .aw-rank { width: 30px; }",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U5-how-it-ended-cut",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": "  .aw-bt { white-space: normal; }",
+    "new": "  .aw-bt { }",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U6-the-bark-kept",
+    "file": "src/ui/arenaHud.js",
+    "old": "@media (max-height: 520px) {\n  .arena-hud .arena-vs, .arena-hud .arena-bark { display: none; }",
+    "new": "@media (max-height: 520px) {\n  .arena-hud .arena-vs { display: none; }",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U6-no-short-screen",
+    "file": "src/ui/arenaHud.js",
+    "old": "@media (max-height: 520px) {",
+    "new": "@media (max-height: 1px) {",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U6-the-hint-off-the-plate",
+    "file": "src/ui/arenaHud.js",
+    "old": "  root.append(plate, bark, stands);",
+    "new": "  root.append(plate, bark, hint, stands);",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U6-the-stamina-keeps-its-line",
+    "file": "src/ui/arenaHud.js",
+    "old": "  .arena-hud .arena-plate:has(.arena-hint:not(:empty)) .arena-stam { display: none; }\n",
+    "new": "",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U6-a-line-each",
+    "file": "src/ui/arenaHud.js",
+    "old": "  .arena-hud .arena-plate { display: flex; flex-wrap: wrap; align-items: center; column-gap: 12px; padding: 3px 8px 4px; }",
+    "new": "  .arena-hud .arena-plate { padding: 3px 8px 4px; }",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U7-the-pennant-unsaid",
+    "file": "src/ui/arenaWindow.js",
+    "old": "  const name = ARENA_TEXT.teams.name[banner ?? ''];",
+    "new": "  const name = null;",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U7-the-crest-unsaid",
+    "file": "src/ui/arenaWindow.js",
+    "old": "    bannerMark(crest, h.banner);   // AUDIT PRE-MERGE 1003 U7",
+    "new": "    crest.dataset.banner = h.banner ?? '';",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U7-no-word-beside-the-colour",
+    "file": "src/ui/arenaWindow.js",
+    "old": "          if (ARENA_TEXT.teams.short[f.banner]) nums.append(chip(ARENA_TEXT.teams.short[f.banner], `aw-bannerchip b-${f.banner}`));\n",
+    "new": "",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U8-world-past-the-toggle",
+    "file": "src/scenes/world.js",
+    "old": "drawHud: (m, o) => drawArenaHud(m, { ...o, hidden: !!o?.hidden || !hudRenderEnabled() }),",
+    "new": "drawHud: (m, o) => drawArenaHud(m, o),",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U8-exterior-past-the-toggle",
+    "file": "src/scenes/exterior.js",
+    "old": "drawHud: (m, o) => drawArenaHud(m, { ...o, hidden: !!o?.hidden || !hudRenderEnabled() }),",
+    "new": "drawHud: (m, o) => drawArenaHud(m, o),",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U9-the-chosen-unmarked",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": "  .aw-tab.on, .aw-side.on, .aw-stake.on, .aw-subtab.on, .aw-tier.on { outline: 2px solid Highlight; outline-offset: -2px; }",
+    "new": "  .aw-tab.on, .aw-side.on, .aw-stake.on, .aw-subtab.on { outline: 2px solid Highlight; outline-offset: -2px; }",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U9-the-won-pip-hollow",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": "  .aw-pips i.on { background: CanvasText; forced-color-adjust: none; }\n",
+    "new": "",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U10-one-seconds",
+    "file": "src/systems/arenaText.js",
+    "old": "`Accept within ${s} second${s === 1 ? '' : 's'}.`",
+    "new": "`Accept within ${s} seconds.`",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U10-accept-at-zero",
+    "file": "src/systems/arenaBoard.js",
+    "old": "acts = left > 0 ? [",
+    "new": "acts = left >= 0 ? [",
+    "tests": [
+      "test/audit1003_ui.test.js",
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U10-lapsed-unsaid",
+    "file": "src/systems/arenaText.js",
+    "old": " : 'The offer has lapsed.'),",
+    "new": " : `Accept within ${s} seconds.`),",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U11-the-banners-board-ranked",
+    "file": "src/systems/arenaBoard.js",
+    "old": "sub: W().boards.teamSub, heads: [W().season], ",
+    "new": "sub: W().boards.teamSub, ",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U11-online-ranked",
+    "file": "src/systems/arenaBoard.js",
+    "old": "sub: O().teamSub, heads: [W().season], ",
+    "new": "sub: O().teamSub, ",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U11-the-rank-cell-drawn",
+    "file": "src/ui/arenaWindow.js",
+    "old": "      if (ranked) tr.append(el('td', 'aw-rank', String(r.rank)));",
+    "new": "      tr.append(el('td', 'aw-rank', String(r.rank)));",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U11-the-heads-not-handed",
+    "file": "src/ui/arenaWindow.js",
+    "old": "table(bd.cols, bd.rows, bd.pinned, { heads: bd.heads ?? null })",
+    "new": "table(bd.cols, bd.rows, bd.pinned)",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U12-the-bare-sum",
+    "file": "src/ui/arenaWindow.js",
+    "old": "chip(W().pursesWon(h.purses), 'aw-purse')",
+    "new": "chip(W().gold(h.purses), 'aw-purse')",
+    "tests": [
+      "test/audit1003_ui.test.js",
+      "test/arena4b_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U13-the-tabs-off-the-edge",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": "@media (max-width: 520px) { .aw-tabs { flex-wrap: wrap; row-gap: 4px; overflow-x: visible; } }\n",
+    "new": "",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U14-the-page-unnamed",
+    "file": "src/ui/arenaWindow.js",
+    "old": "    body.setAttribute('aria-labelledby', tabOf[page].id);",
+    "new": "    /* unnamed */",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U14-the-tab-names-no-page",
+    "file": "src/ui/arenaWindow.js",
+    "old": "    t.setAttribute('aria-controls', 'aw-page');\n",
+    "new": "",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U14-the-tiers-items-that-were-buttons",
+    "file": "src/ui/arenaWindow.js",
+    "old": "      item.append(row);\n      list.append(item);",
+    "new": "      list.append(row);",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U14-two-wagers",
+    "file": "src/ui/arenaWindow.js",
+    "old": " : W().placeWager, () => {",
+    "new": " : W().wager, () => {",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U14-the-replays-one-name",
+    "file": "src/ui/arenaWindow.js",
+    "old": "doAct('replay', { i: b.replay.i }), '', `${b.opp}, ${b.when}`)",
+    "new": "doAct('replay', { i: b.replay.i }), '', '')",
+    "tests": [
+      "test/audit1003_ui.test.js",
+      "test/arena5_replay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U14-the-bouts-on-the-sand-one-name",
+    "file": "src/ui/arenaWindow.js",
+    "old": "'', b.b ? `${b.a?.name ?? ''} ${W().vs} ${b.b.name ?? ''}` : `${b.a?.name ?? ''}, ${b.title}`)",
+    "new": "'', '')",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U14-what-unsaid",
+    "file": "src/ui/arenaWindow.js",
+    "old": " else if (what) b.setAttribute('aria-label', named);",
+    "new": "",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U15-disabled-again",
+    "file": "src/ui/arenaHud.js",
+    "old": "if (m.ready) p.b.removeAttribute('aria-disabled'); else p.b.setAttribute('aria-disabled', 'true');",
+    "new": "if (m.ready) p.b.removeAttribute('disabled'); else p.b.setAttribute('disabled', '');",
+    "tests": [
+      "test/audit1003_ui.test.js",
+      "test/arena4b_stands.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-1003-U15-drawn-open",
+    "file": "src/ui/arenaHud.js",
+    "old": ".arena-shout[aria-disabled=\"true\"] { opacity: 0.55; cursor: default; }",
+    "new": ".arena-shout[disabled] { opacity: 0.55; cursor: default; }",
+    "tests": [
+      "test/audit1003_ui.test.js"
+    ]
+  }
+]

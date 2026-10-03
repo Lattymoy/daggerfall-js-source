@@ -20,7 +20,7 @@ import { serviceLabel } from '../systems/guildServiceFlow.js';
 import { GUILD_RECTS, PANEL_X as GUILD_X, PANEL_Y as GUILD_Y, REFORGE_ROW } from './guildServiceWindow.js';
 import { COVEN_RECTS, COVEN_PANEL_X, COVEN_PANEL_Y } from './covenWindow.js';
 import { BANK_RECTS, BANK_PANEL_X, BANK_PANEL_Y, MARKS_ENTRY } from './bankWindow.js';
-import { MARKS_BANK, marksText } from '../net/marksLaw.js';   // MARKS1: the Bank's Marks, online
+import { MARKS_BANK, MARKS_COMBAT, marksText } from '../net/marksLaw.js';   // MARKS1: the Bank's Marks, online; SILVER-WAYS: the day's combat cap
 import { TRANSACTION_TYPE, goldRegion, EMPIRE_ACCOUNT_REGION } from '../systems/banking.js';   // EMPIRE-ACCOUNT: online, the one account
 import { REGION_NAMES } from '../formats/mapsFile.js';   // BANK-REGION: the account's region, by the index its row reads
 import { PURCHASE_RECTS, PURCHASE_PANEL_X, PURCHASE_PANEL_Y } from './bankPurchaseWindow.js';
@@ -129,6 +129,7 @@ const bank = {
           { type: 'stats', items: [
             ['Silver held', marksText(w.hooks.marks.balance() ?? 0)],
             ['Sold today', `${(w.hooks.marks.today()?.exchanged ?? 0)} of ${MARKS_BANK.perDay}`],
+            ['From gates and raids today', `${(w.hooks.marks.today()?.combat ?? 0)} of ${w.hooks.marks.today()?.combatMax ?? MARKS_COMBAT.perDay}`],   // SILVER-WAYS
             ['The Bank pays', `${MARKS_BANK.goldPerMark} gold for each silver`],
           ] },
           { type: 'actions', layout: 'column', items: [

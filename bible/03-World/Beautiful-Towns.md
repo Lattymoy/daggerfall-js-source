@@ -13,20 +13,24 @@ Provenance and what is carried: `vendor/beautiful-villages/README.md`,
 `vendor/beautiful-cities/README.md`, `01-Overview/Mod-Registry.md`. The
 format they ship in - one pack of the authors' edits over the player's own
 `MAPS.BSA` and `BLOCKS.BSA` - is WD3, `02-Formats/World-Data-Patches.md`.
+The audit (AUDIT WD3, 2026-10-02 - the IDs the code and the tests cite) is
+`01-Overview/Audit-WD3.md`.
 
 ## What the player sees
 
 | | Beautiful Villages | Beautiful Cities |
 |---|---|---|
 | locations | 7,317: villages 1,834, hamlets 1,200, farms 1,841, wealthy homes 1,399, temples 1,043 | 410: every `TownCity` |
-| through blocks alone | 1,646 roadside taverns (their blocks rebuilt by name - 274 of them, on `TVRNAS00` and `TVRNAS06`, now hold houses and no tavern: the author's blocks, served as DFU serves them) | - |
+| through blocks alone | 1,646 roadside taverns (their blocks rebuilt by name - but the author's `TVRNAS00` and `TVRNAS06` hold houses and no tavern, so the 274 roadside taverns standing on them keep Daggerfall's own: the port's curation, "Daggerfall's own laws the mods meet" below) | - |
 | RMB blocks | 209 (156 of Daggerfall's own names rebuilt, 53 new) | 611 (178 of Daggerfall's names, 433 new - 388 composites like `WALLAA04.FARMBA01`, a wall and a farm made one) |
 | untouched | dungeons, graveyards, poor homes, covens, cults, the two ship pixels | everything that is not a city |
 
 Each is one switch in the Mods pane (Features, "Takes effect when the game
-next loads"). The switch is read ONCE, when the world-data loader runs at the
-game's load, and latched (`scenes/modWorldData.js`, `latchModLoaded`): a town
-never moves under the player's feet. Both default on. Offline the towns also
+is next started (an in-game Load keeps the towns it started with). Offline it
+also needs Replace Game Artwork."). The switch is read ONCE, when the
+world-data loader runs as the game starts, and latched
+(`scenes/modWorldData.js`, `latchModLoaded`): a town never moves under the
+player's feet. Both default on. Offline the towns also
 need Replace Game Artwork (DFU's AssetInjection), as in DFU; that gate is read
 once for the game too (`latchWorldDataDoor`) - a closed door loads no pack, and
 a house bought behind it is stamped with the Daggerfall town it stands in.
@@ -117,7 +121,7 @@ a shared quest's - would name two buildings.
 
 Every online home bought before WD3 was bought in Daggerfall's own towns. The
 account service keeps the layout each home's town was bought in
-(`homes.layout`, migration `0071_home_layout.sql` - 0046 on its branch, 0069 at the first merge onto main, 0071 past PROF9's and PROF12's 0069_cooking and 0070_alchemy at the second; NULL is Daggerfall's own -
+(`homes.layout`, migration `0073_home_layout.sql` - 0046 on its branch, 0069 at the first merge onto main, 0071 past PROF9's and PROF12's 0069_cooking and 0070_alchemy at the second, 0073 past SILVER-WAYS' 0071_silver_ways and PROF2b's 0072_motherlodes at the third; NULL is Daggerfall's own -
 exactly the layout every existing home was bought in). A claim stores the
 layout its client's town stands in. A town that already holds a home keeps its
 first home's layout: a claim from a client whose town stands in another layout
@@ -143,7 +147,7 @@ the look painted, the yard and the rooms let stay in the building they were
 made for. A deed that crosses back through customs carries its town's layout
 with it (`systems/realmCustoms.js`).
 
-Deploy the account service (migration `0046`) before the client: an older
+Deploy the account service (migration `0073_home_layout.sql`, `acct72`) before the client: an older
 service drops the claim's layout and answers no `/v1/homes/layouts`, and the
 client would ask on until it does.
 

@@ -135,6 +135,32 @@ test('ACC1-CI: the migrations are applied by the tool that remembers, never enum
   assert.match(toml, /^binding\s*=\s*"DB"/m, 'the binding is no longer named DB, which is what src/index.js reads');
 });
 
+test('MIGRATION-PREFIX (the arena\'s third merge of main, 2026-10-03): every migration\'s four-digit prefix is its own, and each is the one before it plus one', () => {
+  // Two branches that each add migrations off the same main take the same
+  // next numbers, and git merges them without a word - the files' NAMES
+  // differ, so nothing conflicts. #547 shipped 0071_silver_ways.sql and
+  // 0072_motherlodes.sql while the arena branch held 0071_home_layout.sql,
+  // 0072_arena.sql and 0073_arena4b.sql; the naive merge of the two had two
+  // 0071s and two 0072s and every test green. The ledger keys a migration
+  // by its whole name, so both of a pair would apply - but in name order,
+  // not the order the arcs were written in, and the number is the name
+  // every note, pin and deploy line uses: a second 0071 is a branch that
+  // was never renumbered past main. A merge renumbers its side's migrations
+  // past main's (the arena's merges did, acct and migrations together);
+  // this is the pin that makes forgetting it red.
+  const dir = 'server-account/migrations';
+  const files = readdirSync(join(root, dir)).filter((f) => f.endsWith('.sql')).sort();
+  assert.deepEqual(files.filter((f) => !/^\d{4}_[a-z0-9_]+\.sql$/.test(f)), [], 'a migration not named NNNN_name.sql');
+  const byPrefix = new Map();
+  for (const f of files) byPrefix.set(f.slice(0, 4), [...(byPrefix.get(f.slice(0, 4)) ?? []), f]);
+  const shared = [...byPrefix.values()].filter((fs) => fs.length > 1).map((fs) => fs.join(' + '));
+  assert.deepEqual(shared, [], 'two migrations share a prefix - renumber the merged side\'s past the other\'s');
+  const nums = [...byPrefix.keys()].map(Number);
+  assert.equal(nums[0], 1, 'the first migration is not 0001');
+  const gaps = nums.filter((n, i) => i > 0 && n !== nums[i - 1] + 1).map((n) => `${String(n).padStart(4, '0')} after ${String(nums[nums.indexOf(n) - 1]).padStart(4, '0')}`);
+  assert.deepEqual(gaps, [], 'a migration is not the one before it plus one');
+});
+
 test('ACC1-CI: the signing pair is NEVER re-minted, and never leaves the pipe', () => {
   const wf = rd(WF);
 

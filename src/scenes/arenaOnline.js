@@ -20,7 +20,7 @@
 //                 room, is the bookmaker's (`exhibitionVerdict`).
 //
 // Nothing here decides a bout: the relay referees, the account service keeps. Offline (no session, a relay before the
-// arena's rooms) `live()` is false and every host keeps ARENA3's offline arena.
+// arena's rooms; AUDIT PRE-MERGE 1003 O9: a seat given up) `live()` is false and every host keeps ARENA3's offline arena.
 //
 // ARENA4b: THE ACCOUNT IS THE LAW ONLINE. The climb Fight offers is the account's and waits for it (`climb()` null
 // until the board is in - asked then - and while a ladder win of mine is still with the service, CLIMB_WAIT_MS at most);
@@ -40,6 +40,7 @@ import { ARENA_TEXT } from '../systems/arenaText.js';
 import { nextLadderBout } from '../systems/arenaLadder.js';
 import { accountRefusalText } from '../net/accountClient.js';
 import { readArenaReceipt } from '../net/arenaReceipt.js';   // ARENA4b: whose bout a claim's answer was, for its held purse
+import { BOUT_PHASES } from '../systems/arenaBout.js';   // AUDIT PRE-MERGE 1003 O3: an exhibition heard fought
 
 /** The board is asked again when the window is up and it is this old, ms. */
 export const BOARD_STALE_MS = 20_000;
@@ -58,6 +59,10 @@ export const OWED_KEEP_MS = 10 * 60_000;
  *  and asked again no sooner than EX_RETRY_MS after, ms. */
 export const EX_WAIT_MS = 20_000;
 export const EX_RETRY_MS = 30_000;
+
+/** AUDIT PRE-MERGE 1003 O3: the bout law's phases from the fight on (systems/arenaBout.js BOUT_PHASES) - an exhibition
+ *  heard in one of them has begun, and its book is shut. */
+const FOUGHT = new Set(BOUT_PHASES.slice(BOUT_PHASES.indexOf('fight')));
 
 /** A fresh bout id, 16 hex - a ladder bout this screen opens. */
 export function newBoutId(rand = (n) => globalThis.crypto.getRandomValues(new Uint8Array(n))) {
@@ -97,6 +102,8 @@ export function createArenaOnline(deps) {
   /** ARENA4b: the exhibitions this screen has heard the end of: hour -> `{ side }` (the relay's verdict) or `{ none: true }`
    *  (its room had no bout - nobody watched it while it might begin, or it is long forgotten). */
   const exSeen = new Map();
+  /** AUDIT PRE-MERGE 1003 O3: the exhibitions this screen has heard fought - their hours (`exhibitionBegun`). */
+  const exBegun = new Set();
   /** ARENA4b: LADDER PURSES HELD for the service's word, by bout id: `{ gold, pay, won, at }` - `gold`/`pay` the verdict's
    *  (scenes/arenaBouts.js relayVerdict `owe`), `won` the service's answer (true kept, false refused), paid once both are in. */
   const owed = new Map();
@@ -112,8 +119,14 @@ export function createArenaOnline(deps) {
   const realm = () => (live() ? { banner: board?.me?.banner ?? null, laurel: board?.team?.laurel ?? null } : null);
   deps.bouts?.setRealm?.(realm);
 
-  /** Is the arena online here: a session open on a relay that opens its rooms. */
-  const live = () => { const s = deps.session?.(); return !!s && s.status === 'open' && !!s.arenaOk; };
+  /** Is the arena online here: a session on a relay that opens its rooms. AUDIT PRE-MERGE 1003 O4: decided by what STAYS
+   *  true while the session moves - the last welcome's word (`arenaOk`, net/online.js - kept across every door's room
+   *  change and every blip) and the seat still this tab's (O9: a seat lost - `superseded` - is offline) - never by the
+   *  socket's status this frame: for the frames a door's reconnect took ('connecting'), every arena door ran the offline
+   *  law - the house's seeded record settled an online wager, the Herald offered Fight off the save's ladder, the city's
+   *  sand stood the local exhibition and the hour was never the relay's again. A door that needs a socket waits on that
+   *  socket itself (the bout's `in` once its room is open, `hallWait` for the hall's). */
+  const live = () => { const s = deps.session?.(); return !!s && !!s.arenaOk && !s.superseded; };
 
   // ── THE HALL ──
   function wantHall() {
@@ -126,6 +139,9 @@ export function createArenaOnline(deps) {
     return hallLink;
   }
   function hallWord(w) {
+    // AUDIT PRE-MERGE 1003 O9: ONE-SEAT - a tab whose seat is another's is shown no offer and follows no call (the hall's
+    // socket is let go with the seat - leaveAll - and a word already on its way is not this tab's to act on)
+    if ((w.k === 'of' || w.k === 'go') && !live()) return;
     if (w.k === 'live') w = { ...w, l: w.l.map(billExhibition) };   // ARENA4b: an exhibition named off its hour
     hall = foldHall(hall, w, now(), 0);
     if (w.k === 'qx' && w.m && w.m !== 'left') say(ARENA_NO_TEXT[w.m] ?? w.m);
@@ -137,6 +153,20 @@ export function createArenaOnline(deps) {
     if (!hallLink) return;
     const seeking = hall.queue === 'queued' || hall.queue === 'offer';
     if (!seeking && t - hallWantedAt > HALL_IDLE_MS) { try { hallLink.leave?.(); } catch { /* gone */ } hallLink = null; hall = { ...HALL_EMPTY }; }
+  }
+  /** AUDIT PRE-MERGE 1003 O5: MY LAST QUEUE WORD (its `u` and banner with it) and whether the hall's socket standing now
+   *  has heard it. The relay takes an account out of its queue as its hall socket closes (server/src/index.js
+   *  _arenaLeave, _hallTick), and a socket come back (net/online.js's retry - a blip, a relay deploy) says nothing on its
+   *  own: "Seeking" stood for ever over a queue without me. So while I seek (queued, or an offer the drop lost - the relay
+   *  declined it for me as I went, or re-offers it if another tab of mine held it) the word is said again on the new
+   *  socket, as a bout's `in` is (`tick`), and the relay's answer is the hall's picture. */
+  let hallQ = null;
+  function hallRequeue() {
+    if (!hallLink || !hallQ) return;
+    if (hallLink.status !== 'open') { hallQ.sent = false; return; }
+    if (hallQ.sent || (hall.queue !== 'queued' && hall.queue !== 'offer')) return;
+    hallQ.sent = hallLink.sendArena?.(hallQ.w) === true;
+    if (hallQ.sent && hall.queue === 'offer') hall = { ...hall, queue: 'queued', offer: null };   // the offer went with the old socket
   }
 
   // ── THE BOARD ──
@@ -173,7 +203,7 @@ export function createArenaOnline(deps) {
     if (d?.recorded === true) won = d.won === true;
     else if (d?.why === 'claimed') won = c.r === 1;   // kept before: the receipt's own result (a ladder receipt's r 1 is a win)
     else if (arenaClaimVerdict(a) === 'done' || d?.why === 'guest') won = false;   // out of the climb's order, a guest's, a receipt refused for good
-    if (d?.recorded === false && d.why === 'order') say(O.order);
+    if (d?.recorded === false && (d.why === 'order' || d.why === 'reused')) say(O[d.why]);   // AUDIT PRE-MERGE 1003 S4: a reused bout's own words - and, never `claimed`, no purse
     if (won === null) return;
     const e = owed.get(c.j) ?? { gold: null, pay: null, won: null, at: now() };
     e.won = won;
@@ -235,7 +265,9 @@ export function createArenaOnline(deps) {
       // replaced at the relay, and a replaced socket is a seat lost (makeHall's onSuperseded)
       closeCity();
       if (asking?.hour === b.ex.hour) closeAsk();
-      deps.bouts.ask({ where: 'floor', relayEx: { o: b.o, ex: b.ex, names: deps.names ? deps.names(b.ex.seed) : undefined } });
+      // AUDIT PRE-MERGE 1003 O7: the stands' shout down the bout's room, as a watched bout's (ARENA4b item 5 - a watcher of
+      // a relay's bout has two presses; the exhibition's stands drew them and had no door behind them)
+      deps.bouts.ask({ where: 'floor', relayEx: { o: b.o, ex: b.ex, names: deps.names ? deps.names(b.ex.seed) : undefined, send: { cheer: (c) => boutSend({ k: 'ch', c }) } } });
       const ok = await deps.enterFloor('watch', `x${b.ex.hour}`, 0);
       if (!ok) { bout = null; deps.bouts.dismiss?.(); }
       return ok;
@@ -264,17 +296,28 @@ export function createArenaOnline(deps) {
     if (!bout || !s || s.room !== bout.room) return false;
     return s.sendArena?.(w) === true;
   }
+  /** AUDIT PRE-MERGE 1003 O2: THE BOUT THIS SCREEN STOOD IN, LET GO - its mirror ended when it is the one standing (the
+   *  driver's: the ring the motor keeps me in, the hold, every door's "You are in a bout" are its) and forgotten here. */
+  function endBout() {
+    if (!bout) return;
+    if (deps.bouts.relay?.()?.o === bout.o) deps.bouts.dismiss?.();
+    bout = null;
+  }
   /** A word from the bout's room. */
   function word(w, room) {
     if (!bout || room !== bout.room) return false;
     if (w.k === 'rc') { claims.add(w.r); return true; }
+    // AUDIT PRE-MERGE 1003 O2: the relay has no more of this bout (`no bout` - done, or gone from its room; `void` - a
+    // fighter never came): its line said and the bout let go. It was only said: the mirror stood in its last phase for
+    // ever - a fighter held 14 m from the centre, the gate at 18.6, and every online door refusing "You are in a bout"
+    const over = w.k === 'no' && (w.m === 'no bout' || w.m === 'void');
     if (bout.ex) {
       // ARENA4b: the hour's exhibition from the stands - its verdict kept for the book, its refusal said
       heardEx(bout.ex.hour, w);
-      if (w.k === 'no') { say(ARENA_NO_TEXT[w.m] ?? w.m); return true; }
+      if (w.k === 'no') { say(ARENA_NO_TEXT[w.m] ?? w.m); if (over) endBout(); return true; }
       return deps.bouts.exhibitionWord?.(w) ?? false;
     }
-    if (w.k === 'no') { say(w.m === 'early' ? ARENA_TEXT.refuse.yieldEarly : ARENA_NO_TEXT[w.m] ?? w.m); return true; }
+    if (w.k === 'no') { say(w.m === 'early' ? ARENA_TEXT.refuse.yieldEarly : ARENA_NO_TEXT[w.m] ?? w.m); if (over) endBout(); return true; }
     if (w.k === 'st' && bout.kind === 'watch' && !bout.watchKind) bout.watchKind = w.kind;
     return deps.bouts.relayWord?.(w) ?? false;
   }
@@ -305,12 +348,20 @@ export function createArenaOnline(deps) {
   /** ARENA4b: MY BANNER as my queue and ladder words claim it - the account's (the board's `me`), none before the board
    *  is heard: a pennant on my bill for my rival and the stands, cosmetic (net/arenaLaw.js bannerClaim). */
   const myBanner = () => { const b = bannerClaim(board?.me?.banner); return b ? { b } : {}; };
-  /** What an exhibition's word says of its end, kept for the book: the relay's verdict, or that its room had no bout. */
+  /** What an exhibition's word says of its end, kept for the book: the relay's verdict, or that its room had no bout.
+   *  AUDIT PRE-MERGE 1003 O3: and that its fight has begun - an `st` past the count, an `ev` from the fight on. */
   function heardEx(hour, w) {
     if (w?.k === 'no' && w.m === 'no bout') { if (!exSeen.has(hour)) exSeen.set(hour, { none: true }); return; }
+    if ((w?.k === 'st' && FOUGHT.has(w.ph)) || (w?.k === 'ev' && (w.e ?? []).some((e) => FOUGHT.has(e.k)))) exBegun.add(hour);
     const v = verdictOfWord(w);
     if (v) exSeen.set(hour, v);
   }
+  /** AUDIT PRE-MERGE 1003 O3: HAS THIS SCREEN HEARD THE HOUR'S FIGHT BEGIN (or its end) - the book shuts on it
+   *  (scenes/arenaGate.js `begun`). The bookmaker read only the mirror standing here, which goes home CROWD_STAYS_MS after
+   *  the healers (or as the player steps indoors): the relay's verdict comes 12-29 s into the hour and the book stays open
+   *  20 game minutes (100 s), so a wager was taken on the side the relay had already named - and settled by that very
+   *  verdict, kept here (`exSeen`): +1,500 gold a game hour. A verdict's word is always one from the fight on. */
+  const exhibitionBegun = (hour) => exBegun.has(hour);
   /**
    * THE CITY'S EXHIBITION (world.js arenaFrame, while I stand near the colosseum in its hour): a spectator socket of its
    * own (the hall's kind - presence-less) to the hour's room, the relay's bout stood on the city's sand
@@ -328,7 +379,10 @@ export function createArenaOnline(deps) {
     const C = city = { hour: ex.hour, o: exhibitionBoutId(ex.hour), room, link, sent: false, heard: false, started: false, at: now() };
     link.onArena = (w, r) => { if (city === C && r === room) cityWord(C, w); };
     link.join?.(room);
-    deps.bouts.ask({ where: 'city', relayEx: { o: C.o, ex, names: deps.names ? deps.names(ex.seed) : undefined } });
+    // AUDIT PRE-MERGE 1003 O7: the stands' shout down this socket - once its `in` has taken my seat (the relay junks a
+    // shout from a socket with none)
+    const cheer = (c) => city === C && C.sent && C.link.sendArena?.({ k: 'ch', c }) === true;
+    deps.bouts.ask({ where: 'city', relayEx: { o: C.o, ex, names: deps.names ? deps.names(ex.seed) : undefined, send: { cheer } } });
     return true;
   }
   /** A word from the city's exhibition's room: its end kept, a refusal letting the sand go, the rest the bout's. */
@@ -411,6 +465,11 @@ export function createArenaOnline(deps) {
   function tick() {
     const t = now();
     claims.tick();
+    // AUDIT PRE-MERGE 1003 O5: THE ARENA'S OWN SOCKETS ARE TICKED HERE - a presence-less link's retry and heartbeat are its
+    // own tick (net/online.js; the chat's links are ticked by the host's chatFrame), and nothing ticked these: a hall
+    // socket that dropped never came back, so neither did the queue
+    for (const l of [hallLink, city?.link, asking?.link]) { try { l?.tick?.(); } catch { /* its own trouble */ } }
+    hallRequeue();
     closeHallIfIdle(t);
     if (hallLink && t - liveAskedAt >= LIVE_ASK_MS && t - hallWantedAt < 2000) { liveAskedAt = t; hallSend({ k: 'ls' }); }
     const s = deps.session?.();
@@ -436,6 +495,19 @@ export function createArenaOnline(deps) {
     }
   }
 
+  /** AUDIT PRE-MERGE 1003 O9: THE SEAT GIVEN UP (world.js leaveSeat - ONE-SEAT: a tab whose seat another tab took leaves
+   *  every room and joins none until Play online here). The arena's own sockets went on standing: the hall's (the
+   *  relay kept me in its queue, offered me, and its `go` closed this tab's window and entered the floor offline), the
+   *  city's exhibition's and a verdict asked. All let go - the relay takes me out of its queue as the hall's closes - with
+   *  the hall's picture, and the bout this screen stood in (its room was the presence session's, left with the seat). */
+  function leaveAll() {
+    if (hallLink) { try { hallLink.leave?.(); } catch { /* gone */ } hallLink = null; }
+    hall = { ...HALL_EMPTY };
+    closeCity();
+    closeAsk();
+    endBout();
+  }
+
   // ── THE WINDOW ──
   /** The window's online half (systems/arenaBoard.js arenaBoard's `online`), or null offline. */
   function model() {
@@ -452,7 +524,11 @@ export function createArenaOnline(deps) {
       if (bout || deps.inBout?.()) return { ok: false, text: O.whyBusy };
       // ARENA4b: Casual bout - the same queue word with `u`, paired only with another casual seeker (net/arenaLaw.js pairQueue)
       const casual = kind === 'casual';
-      if (!hallSend({ k: 'q', lv: Math.max(1, Math.floor(deps.level?.() ?? 1)), ...myBanner(), ...(casual ? { u: 1 } : {}) })) return { ok: false, text: O.whyOffline };
+      const q = { k: 'q', lv: Math.max(1, Math.floor(deps.level?.() ?? 1)), ...myBanner(), ...(casual ? { u: 1 } : {}) };
+      // AUDIT PRE-MERGE 1003 O4: online with the hall's socket still opening, the press waits for it - said so, never
+      // "Online only" (the window that sends it opened the socket a moment ago)
+      if (!hallSend(q)) return { ok: false, text: O.hallWait };
+      hallQ = { w: q, sent: true };   // O5: said again on a hall socket come back while I seek
       hall = { ...hall, casual };
       return { ok: true, text: O.queueState.queued };   // ARENA4b: my banner billed to my rival
     }
@@ -511,6 +587,8 @@ export function createArenaOnline(deps) {
     /** ARENA4b: is this a guest's session (a banner, a counted bout, need a registered account). */
     guest: () => !!deps.guest?.(),
     exhibitions, watchCity, watchExhibition, exhibitionVerdict,   // ARENA4b: the hour's exhibition, the relay's
+    exhibitionBegun,   // AUDIT PRE-MERGE 1003 O3: the hour's fight heard begun here - its book shut
+    leaveAll,   // AUDIT PRE-MERGE 1003 O9: the seat given up - the arena's own rooms left
     /** The account's ladder online (the board's), or null before the board is heard. */
     ladder: () => board?.me?.ladder ?? null,
     board: () => board,

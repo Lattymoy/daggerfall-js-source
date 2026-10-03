@@ -94,8 +94,8 @@
   {
     "name": "AWD3-BUY-UNHEARD",
     "file": "src/scenes/worldModes.js",
-    "old": "    if (host.homeLayoutsHeard?.() === false) { townTalk?.say?.(accountRefusalText('home-layout')); host.hearHomeLayouts?.(); return; }",
-    "new": "",
+    "old": "a town mod's pack did not load here\n    if (host.homeLayoutsHeard?.() === false) { townTalk?.say?.(accountRefusalText('home-layout')); host.hearHomeLayouts?.(); return; }",
+    "new": "a town mod's pack did not load here\n",
     "tests": [
       "test/wd3_online.test.js"
     ]

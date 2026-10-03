@@ -2,8 +2,8 @@
   {
     "name": "MARKS1-1-a-third-gate-a-day",
     "file": "server-account/src/marks.js",
-    "old": "    WHERE (SELECT COUNT(*) FROM marks_ledger WHERE dst_id = ?1 AND kind = 'gate' AND day = ?3) < ?6",
-    "new": "    WHERE (SELECT COUNT(*) FROM marks_ledger WHERE dst_id = ?1 AND kind = 'gate' AND day = ?3) <= ?6",
+    "old": "    WHERE ${combatEarnedSql('?1', '?3')} < ?6\n",
+    "new": "    WHERE ${combatEarnedSql('?1', '?3')} <= ?6\n",
     "tests": [
       "test/marks1.test.js"
     ]
@@ -11,7 +11,7 @@
   {
     "name": "MARKS1-2-the-gate-past-the-cap",
     "file": "server-account/src/marks.js",
-    "old": "      AND COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) + ?2 <= ?7\n      AND NOT EXISTS",
+    "old": "      AND COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) + ${pay} <= ?7\n      AND NOT EXISTS",
     "new": "      AND 1\n      AND NOT EXISTS",
     "tests": [
       "test/marks1.test.js"
@@ -20,8 +20,8 @@
   {
     "name": "MARKS1-3-a-guest-strikes",
     "file": "server-account/src/marks.js",
-    "old": "  if (accountKind(player) !== 'linked' || !marksOpenFor(player, env) || !Number.isSafeInteger(gameDay)) return null;",
-    "new": "  if (!marksOpenFor(player, env) || !Number.isSafeInteger(gameDay)) return null;",
+    "old": "const strikesFor = (player, env) => accountKind(player) === 'linked' && marksOpenFor(player, env);",
+    "new": "const strikesFor = (player, env) => marksOpenFor(player, env);",
     "tests": [
       "test/marks1.test.js",
       "test/audit28_marks.test.js"
@@ -122,7 +122,7 @@
   {
     "name": "MARKS1-14-the-gate-mints-nothing",
     "file": "server-account/src/index.js",
-    "old": "        return json(r.recorded && !r.rite ? { ...answer, marks: await gateStrikeAnswer(ctx, who.player, env, !!r.struck) } : answer, 200, origin);",
+    "old": "        return json(r.recorded && !r.rite ? { ...answer, marks: await gateStrikeAnswer(ctx, who.player, env, !!r.struck, r.day) } : answer, 200, origin);",
     "new": "        return json(answer, 200, origin);",
     "tests": [
       "test/marks1.test.js"
@@ -178,7 +178,7 @@
   {
     "name": "MARKS1-20-the-gate-says-no-marks",
     "file": "src/net/gateClaims.js",
-    "old": "          if (typeof marksLine === 'string' && marksLine) say(marksLine);\n",
+    "old": "          for (const line of Array.isArray(marksLine) ? marksLine : [marksLine]) if (typeof line === 'string' && line) say(line);\n",
     "new": "",
     "tests": [
       "test/marks1.test.js"

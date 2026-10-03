@@ -87,13 +87,19 @@ export async function raidRecordOf({ db }, playerId) {
  *   `{ error }` - `no-gate-key` (this service holds no public half), `receipt` (not a receipt the relay signed, or
  *   expired - `why` says which rung), `not-yours` (another account's), `renown-character` (no character to pay).
  * A new character past RENOWN_TRACKS_MAX is counted and paid nothing (its track has no place).
+ * SILVER-WAYS: a counted claim answers too its `key`, whether its batch struck the town's silver (`struck`) and a guild
+ * deed (`deedStruck`) - the service's own, which index.js answers in words.
  * @param {{ db: any, nowS: number, subtle: SubtleCrypto, rand: (b: Uint8Array) => Uint8Array }} ctx
  * @param {{ id: string, handle?: string|null }} player
  * @param {{ receipt: unknown, character: unknown, name?: unknown, cid?: unknown }} body `cid` the device's claim id
  *   (RAID_CID_RE) - a claim without one is answered `spoils: false` and writes no thanks
  * @param {CryptoKey|null} publicKey
+ * @param {{ strike?: ((key: string, nonce: string) => any)|null, deeds?: ((key: string, nonce: string, character: string) => any[]|null)|null,
+ *   contracts?: ((key: string, nonce: string) => Promise<{ statements: any[] }|null>)|null }} [silver] SILVER-WAYS: the
+ *   claim's silver, each a statement (or statements) its batch runs by its own row - null where Marks are not this
+ *   account's (marks.js raidStrikeStatement, deedStatements; contracts.js contractPayStatements)
  */
-export async function claimRaid({ db, nowS, subtle, rand }, player, { receipt, character, name = null, cid = null }, publicKey) {
+export async function claimRaid({ db, nowS, subtle, rand }, player, { receipt, character, name = null, cid = null }, publicKey, { strike = null, deeds = null, contracts = null } = {}) {
   if (!publicKey) return { error: 'no-gate-key' };
   const v = await verifyRaidReceipt(receipt, publicKey, { subtle, nowS });
   if (!v.ok) return { error: 'receipt', why: v.why };
@@ -110,6 +116,9 @@ export async function claimRaid({ db, nowS, subtle, rand }, player, { receipt, c
   const before = await renownTrackOf({ db }, player.id, character);
   const xp = renownRaidXp(before?.level ?? 1);
   const nonce = hex(rand(new Uint8Array(8)));
+  const mint = strike?.(c.w, nonce) ?? null;
+  const deed = deeds?.(c.w, nonce, character) ?? null;
+  const paid = contracts ? await contracts(c.w, nonce) : null;
   const mine = 'EXISTS (SELECT 1 FROM raid_cleanses WHERE raid = ?3 AND account = ?1 AND nonce = ?4)';
   const track = 'SELECT xp FROM renown_tracks WHERE player = ?1 AND char_id = ?2';
   // AUDIT RAID R5: WHAT THE TRACK CAN TAKE and WHAT THE HOUR HAS LEFT, as a report's (renownTracks.js) - and a new
@@ -156,9 +165,18 @@ export async function claimRaid({ db, nowS, subtle, rand }, player, { receipt, c
     db.prepare(track).bind(player.id, character),
     db.prepare('SELECT COUNT(*) AS n FROM raid_cleanses WHERE account = ?1').bind(player.id),
     ...(thanks ? thanksOf(db, c.w, player.id, cid, nowS) : []),
+    // SILVER-WAYS: the town's silver (marks.js raidStrikeStatement - 30 under the day's combat cap), the guild's deed
+    // (marks.js deedStatements) and the guild contracts it fills (contracts.js), each by THIS claim's row alone - so a
+    // claim that strikes nothing more is still counted, and one whose batch fails takes them back with its row
+    ...(mint ? [mint] : []),
+    ...(deed ?? []),
+    ...(paid?.statements ?? []),
   ]);
   const [row, decided, , , , after, count] = res;
   const spoils = thanks ? thanksAnswer(res[8], cid) : false;
+  const at = 7 + (thanks ? 2 : 0);   // the first SILVER-WAYS statement's place in the batch
+  const struck = !!mint && Number(res[at]?.meta?.changes ?? 0) > 0;
+  const deedStruck = !!deed && Number(res[at + (mint ? 1 : 0) + 1]?.meta?.changes ?? 0) > 0;
   const defended = int(count?.results?.[0]?.n);
   if (!row?.results?.length) {
     const had = await db.prepare('SELECT 1 AS x FROM raid_cleanses WHERE raid = ?1 AND account = ?2').bind(c.w, player.id).first();
@@ -167,7 +185,7 @@ export async function claimRaid({ db, nowS, subtle, rand }, player, { receipt, c
   const total = after?.results?.length ? int(after.results[0].xp) : null;
   const was = before?.xp ?? 0;
   return {
-    recorded: true, defended, spoils,
+    recorded: true, defended, spoils, ...(strike || deeds || contracts ? { key: c.w, struck, ...(deed ? { deedStruck } : {}) } : {}),   // SILVER-WAYS: the service's own - index.js answers them in words
     renown: total === null
       ? { character, xp: null, level: null, credited: 0, rose: false }   // no place for a new track: counted, paid nothing
       : { character, xp: total, level: renownForXp(total), credited: Math.max(0, int(decided?.results?.[0]?.credit)), rose: renownForXp(total) > renownForXp(was) },

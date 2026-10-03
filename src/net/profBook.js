@@ -606,6 +606,7 @@ export function createProfBook({ door, storage = null, character = () => null, n
     const body = {
       character: h.character, node: h.node, kind: h.kind, climate: h.climate, region: h.region, act: h.act, at: h.at, rid: h.rid,
       ...(h.foe === undefined ? {} : { foe: h.foe }),   // PROF7: the foe a body is (PROF0 6: the client's claim)
+      ...(typeof h.watch === 'string' ? { watch: h.watch } : {}),   // PROF2b: a Motherlode's - the relay's Watch receipt for its pixel
     };
     let r;
     sending.add(h.rid);

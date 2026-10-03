@@ -181,7 +181,7 @@ import { fundFort, readForts } from './seatForts.js';   // SEAT2b: a seat's fort
  *  seats are open to it - for the wardrobe's read and its write. */
 const withSeatTitles = async (ctx, player, env) => (seatsOpenFor(player, env) ? { ...player, seatTitles: await seatTitlesOf(ctx.db, player.id) } : player);
 import { decorOf, placeDecor, moveDecor, removeDecor, hideDecorBase, yardsOf } from './decor.js';   // DECOR1: an online home's decor; BASE-HIDE: what its owner took out
-import { gateStrikeStatement, gateStrikeAnswer, marksOf, marksCardOf, exchangeMarks, depositGuildMarks, withdrawGuildMarks, marksReport } from './marks.js';   // MARKS1: the server's currency
+import { gateStrikeStatement, gateStrikeAnswer, raidStrikeStatement, combatStrikeAnswer, raidStrikeRid, deedStatements, deedAnswer, deedEvent, marksOf, marksCardOf, exchangeMarks, depositGuildMarks, withdrawGuildMarks, marksReport } from './marks.js';   // MARKS1: the server's currency; SILVER-WAYS: a raid's silver and a guild's deeds
 import { readBoard, pinNote, takeDownNote, reportNote, moderateNote, postNotice, removeNotice } from './board.js';   // NOTICE1: the Notice Board
 import { profState, profPixels, harvestNode, chooseSpec, withdrawStores, smeltAtForge, craftAtAnvil, buyStock, listWrits, deliverWrit } from './professions.js';   // PROF1: the professions; PROF2: the forge; PROF3: the anvil and the smith's stock
 import { brewAtStation, disenchantPiece } from './alchemy.js';   // PROF12: Alchemy's brew, Enchanting's disenchant
@@ -189,6 +189,8 @@ import {
   writBoard, postGuildWrit, supplyGuildWrit, withdrawGuildWrit, setWritBudget, postCommission, fulfilCommission, cancelCommission, declineCommission,
   guildStores, depositGuildStores, withdrawGuildStores,
 } from './writs.js';   // PROF6: guild writs, commissions and the guild Stores
+import { contractBoard, postContract, withdrawContract, contractPayStatements, contractPaysOf } from './contracts.js';   // SILVER-WAYS: guild contracts
+import { motherlodesRead, strikeMotherlode, isMotherlodeNode } from './motherlodes.js';   // PROF2b: the Motherlodes
 import { marketRead, marketList, marketBuy, marketCancel, marketOrder, marketFill, marketUnorder, marketCollect, marketReport, marketRemove, marketAuction, marketBid, marketGoldCollect } from './market.js';   // PROF5: the market; PROF5b: its auctions; GOLD-MARKET: gold held collected
 import {
   listRealm, createRealm, customsRealm, joinRealm, checkpointRealm, getRealmBlob, leaveRealm, deleteRealm, undoRealm,
@@ -256,11 +258,15 @@ const GUILD_STATUS = Object.freeze({
   'guild-treasury': 409, 'guild-treasury-full': 409, 'guild-treasury-short': 409, 'guild-treasury-old': 409, 'marks-full': 409,   // AUDIT REALM L1-F3: gold no record paid in
   'guild-stores': 409, 'guild-writs': 409,   // PROF6: a guild keeping its Stores or a writ does not go (Professions-Arc 18)
   'guild-writ-escrow': 409,   // AUDIT 31 A15: a closed writ's escrow waiting on a full treasury
+  'guild-contracts': 409,   // AUDIT SILVER-WAYS B3: a guild with a contract standing does not go (its siblings' conflict, never a bad request)
   'guild-rate': 429,
   // GUILD1d (Seats-Arc 8): the hall - a building somebody owns, the guild's one hall already held, none held, one moved
   // under its sale, a guild kept from going by it; and the heraldry - the same again, changed meanwhile, the Drakes short
   'home-taken': 409, 'guild-hall-have': 409, 'guild-hall-moved': 409, 'guild-hall': 409, 'guild-hall-none': 404, 'home-rate': 429,
   'home-arena': 409,   // ARENA4b: a hall bought in the arena's cell - the arena stands there (halls.js buyHall)
+  // AUDIT PRE-MERGE 1003 WD1: a hall in another layout of its town (answered with the town's, below), and one from a build
+  // before the town mods - a home's claim's own words and statuses
+  'home-layout': 409, 'home-update': 426,
   'heraldry-same': 409, 'heraldry-moved': 409, 'heraldry-drakes': 409, 'marks-closed': 403,
   'heraldry-siege': 409,   // AUDIT-SEATS S10 (Seats-Arc 8.1): a change in a week the guild fights for a seat
   'guild-seat': 409, 'guild-battle': 409,   // SEAT1c: a guild holding a Charter, or named in a battle still to come, does not go
@@ -349,6 +355,10 @@ const PROF_STATUS = Object.freeze({
   'writ-own-guild': 403, 'guild-stores-mine': 403, 'market-uncollected': 409, 'commission-unyielded': 409, 'market-no-record': 409,   // AUDIT 31
   'commission-elsewhere': 409, 'market-unyielded': 409,
   'writ-rate': 429,
+  // SILVER-WAYS: guild contracts
+  'marks-need-account': 403, 'no-contract': 404, 'contract-gone': 409, 'guild-contracts-max': 409,
+  // PROF2b: a Motherlode's strike
+  'motherlode-closed': 409, 'motherlode-watch': 409, 'motherlode-found': 409, 'motherlode-full': 409, 'no-gate-key': 503,
 });
 /** PROF5: each market refusal's status - not this account's (a guest, the switches, a moderator's act) 403, no such
  *  listing, order or delivery 404, a conflict with what stands (the Marks, the Stores, the units, the road, the price
@@ -794,20 +804,26 @@ const service = {
         // one row a (day, account). No public half here yet is the
         // service's own gap, not the player's: 503, and the client keeps
         // the receipt for the week it carries.
-        const r = await claimGate(ctx, who.player, body.receipt, await gatePublicKey(env, subtle), { strike: (d) => gateStrikeStatement(ctx, who.player, env, d), region: body.region ?? null });
+        // SILVER-WAYS: and the guild's deed - the claiming character's guild, where three of its accounts closed this gate
+        const character = typeof body.character === 'string' ? body.character : null;
+        const r = await claimGate(ctx, who.player, body.receipt, await gatePublicKey(env, subtle), {
+          strike: (d) => gateStrikeStatement(ctx, who.player, env, d), region: body.region ?? null,
+          deeds: (d) => deedStatements(ctx, who.player, env, { kind: 'gate', event: deedEvent('gate', d), character, guard: [d] }),
+        });
         // AUDIT WB A5: a refused receipt says WHICH rung refused it - the client keeps one the service can mend (its key
         // not the relay's pair, a clock) and lets go of one it cannot
         if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, r.error === 'no-gate-key' ? 503 : r.error === 'not-yours' ? 403 : 400, origin);
         // MARKS1: THE FIRST FAUCET - a receipt that made its row strikes the gate's Marks, in the row's own batch
-        // (marks.js gateStrikeStatement: 50, two a UTC day, the gate's own day its line's id); `marks` null where Marks
-        // are not this account's
+        // (marks.js gateStrikeStatement: 50 under SILVER-WAYS' day's combat cap with the raids', the gate's own day its
+        // line's id); `marks` null where Marks are not this account's
         const answer = { ...r };
-        delete answer.day; delete answer.struck;   // the service's own: the line's day and whether the batch struck
+        delete answer.day; delete answer.struck; delete answer.deedStruck;   // the service's own: the line's day and whether the batch struck
+        if (r.recorded && !r.rite && r.deedStruck !== undefined) answer.deed = await deedAnswer(db, who.player, deedEvent('gate', r.day), r.deedStruck);   // SILVER-WAYS: where a deed was this claim's to try
         // SEAT1b (Seats-Arc 4.2): a kill recorded now is influence for the account's war-guild where it pledged in the
         // region the claim named (`seat` the answer: counted, or why not - the kill stands either way). WB12d: the rite
         // alone is no kill, and is no influence
         if (r.recorded && !r.rite && body.region != null) answer.seat = await creditGate(ctx, who.player, env, { character: body.character ?? null, day: r.day, region: body.region });
-        return json(r.recorded && !r.rite ? { ...answer, marks: await gateStrikeAnswer(ctx, who.player, env, !!r.struck) } : answer, 200, origin);   // AUDIT WB12d (A2): the rite alone strikes no Drakes, and says none
+        return json(r.recorded && !r.rite ? { ...answer, marks: await gateStrikeAnswer(ctx, who.player, env, !!r.struck, r.day) } : answer, 200, origin);   // AUDIT WB12d (A2): the rite alone strikes no Drakes, and says none
       }
 
       if (path === '/v1/raid/claim' && request.method === 'POST') {
@@ -816,14 +832,29 @@ const service = {
         // `claimRaid` holds the rest - the signature, the account, one row a (raid, account), the day's bound, the
         // Renown (RENOWN-CHAR: the fighting character's again). A level that ROSE comes back with a signed order, as a
         // Renown report's does.
-        const r = await claimRaid(ctx, who.player, { receipt: body.receipt, character: body.character, name: body.name ?? null, cid: body.cid ?? null }, await gatePublicKey(env, subtle));   // AUDIT RAID R4: `cid` - the device's claim, which the town's thanks are keyed to
+        // SILVER-WAYS: the town's silver (30, under the day's combat cap), the guild's deed and the guild contracts the
+        // raid's region posts, each in the claim's own batch and by its own row (raids.js)
+        const r = await claimRaid(ctx, who.player, { receipt: body.receipt, character: body.character, name: body.name ?? null, cid: body.cid ?? null }, await gatePublicKey(env, subtle), {   // AUDIT RAID R4: `cid` - the device's claim, which the town's thanks are keyed to
+          strike: (key, nonce) => raidStrikeStatement(ctx, who.player, env, key, nonce),
+          deeds: (key, nonce, character) => deedStatements(ctx, who.player, env, { kind: 'raid', event: deedEvent('raid', key), character, guard: [key, nonce] }),
+          contracts: (key, nonce) => contractPayStatements(ctx, who.player, env, { key, nonce }),
+        });
         if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, r.error === 'no-gate-key' ? 503 : r.error === 'not-yours' ? 403 : 400, origin);
         let order = null;
         if (r.renown?.rose) {
           const key = await signingKey(env, subtle);
           if (key) order = await mintRenownOrder({ s: who.player.id, lv: r.renown.level }, key, { subtle, nowS });
         }
-        return json({ ...r, order }, 200, origin);
+        const answer = { ...r };
+        delete answer.key; delete answer.struck; delete answer.deedStruck;   // SILVER-WAYS: the service's own
+        if (r.recorded) {
+          const marks = await combatStrikeAnswer(ctx, who.player, env, !!r.struck, raidStrikeRid(r.key));
+          if (marks) answer.marks = marks;
+          if (r.deedStruck !== undefined) answer.deed = await deedAnswer(db, who.player, deedEvent('raid', r.key), r.deedStruck);
+          const paid = await contractPaysOf(db, who.player, r.key);
+          if (paid.length) answer.contracts = paid;
+        }
+        return json({ ...answer, order }, 200, origin);
       }
 
       if (path === '/v1/arena/claim' && request.method === 'POST') {
@@ -835,7 +866,7 @@ const service = {
         // door, its hour and cap), with a signed order when the level rose and its influence in Daggerfall's region for a
         // pledged war-guild - as a Renown report's and a writ's are
         const r = await claimArena(ctx, who.player, body.receipt, await gatePublicKey(env, subtle), { character: body.character ?? null, name: body.name ?? null });
-        if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, r.error === 'no-gate-key' ? 503 : r.error === 'not-yours' ? 403 : 400, origin);
+        if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, r.error === 'no-gate-key' || r.error === 'busy' ? 503 : r.error === 'not-yours' ? 403 : 400, origin);   // AUDIT PRE-MERGE 1003 S6: `busy` - a players' bout whose ratings kept moving under it: kept, carried again
         if (r.renown && r.renown.credited > 0 && !r.renown.repeat) await creditRenown(ctx, who.player, env, { character: body.character, region: ARENA_RENOWN_REGION, xp: r.renown.credited });
         if (r.renown?.rose) {
           const key = await signingKey(env, subtle);
@@ -1009,6 +1040,7 @@ const service = {
         const r = await act({ ...ctx, env, bucket: env.SAVES }, who.player, body);   // REALM P2.2: a realm character's record is in R2; AUDIT 28 M5: the switch says whether the Marks show
         if (!('error' in r)) return json(await guildOrdersOf(r, who.player.id, env, subtle, nowS), 200, origin);
         if (r.error === 'seq') return json({ error: 'seq', seq: r.seq }, 409, origin);   // REALM P2.2: the service's own, as a checkpoint's
+        if (r.error === 'home-layout') return json({ error: 'home-layout', layout: r.layout ?? null }, 409, origin);   // AUDIT PRE-MERGE 1003 WD1: the town's layout, as /v1/homes/claim answers it
         return no(r.error, GUILD_STATUS[r.error] ?? 400, origin);
       }
 
@@ -1118,7 +1150,9 @@ const service = {
         const act = {
           '/v1/prof/state': () => profState(ctx, who.player, env, body),
           '/v1/prof/pixels': () => profPixels(ctx, who.player, env, body),
-          '/v1/prof/harvest': () => harvestNode(ctx, who.player, env, body),
+          // PROF2b: a Motherlode is struck through the harvest's own route - its node names it (motherlodes.js)
+          '/v1/prof/harvest': () => (isMotherlodeNode(body?.node) ? strikeMotherlode(ctx, who.player, env, body) : harvestNode(ctx, who.player, env, body)),
+          '/v1/prof/motherlodes': () => motherlodesRead(ctx, who.player, env, body),   // PROF2b: today's three
           '/v1/prof/spec': () => chooseSpec(ctx, who.player, env, body),
           '/v1/prof/smelt': () => smeltAtForge(ctx, who.player, env, body),   // PROF2
           '/v1/prof/craft': () => craftAtAnvil(ctx, who.player, env, body),   // PROF3: the anvil; PROF4: the workbench
@@ -1129,13 +1163,15 @@ const service = {
           // PROF6: the Court's writs, and beside them this board's guild writs and commissions (writs.js writBoard)
           '/v1/writs/list': async () => {
             const r = await listWrits(ctx, who.player, env, body);
-            return 'error' in r ? r : { ...r, ...(await writBoard(ctx, who.player, env, body)) };
+            return 'error' in r ? r : { ...r, ...(await writBoard(ctx, who.player, env, body)), ...(await contractBoard(ctx, who.player, env, body)) };   // SILVER-WAYS: and its guild contracts
           },
           '/v1/writs/deliver': () => deliverWrit(ctx, who.player, env, body),
           '/v1/writs/post': () => postGuildWrit(ctx, who.player, env, body),   // PROF6: a guild writ
           '/v1/writs/supply': () => supplyGuildWrit(ctx, who.player, env, body),
           '/v1/writs/withdraw': () => withdrawGuildWrit(ctx, who.player, env, body),
           '/v1/writs/budget': () => setWritBudget(ctx, who.player, env, body),
+          '/v1/writs/contract': () => postContract(ctx, who.player, env, body),   // SILVER-WAYS: a guild contract
+          '/v1/writs/contract-withdraw': () => withdrawContract(ctx, who.player, env, body),
           '/v1/writs/commission': () => postCommission(ctx, who.player, env, body),   // PROF6: a commission
           '/v1/writs/fulfil': () => fulfilCommission(ctx, who.player, env, body),
           '/v1/writs/cancel': () => cancelCommission(ctx, who.player, env, body),

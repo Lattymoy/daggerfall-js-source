@@ -290,8 +290,8 @@
   {
     "name": "ONESEAT-leave-closes-first",
     "file": "src/scenes/world.js",
-    "old": "    online?.supersede();\n    for (const link of chatLinks?.values?.() ?? []) link.supersede();\n    travellerBook.clear();",
-    "new": "    for (const link of chatLinks?.values?.() ?? []) link.supersede();\n    travellerBook.clear();",
+    "old": "    online?.supersede();\n    for (const link of chatLinks?.values?.() ?? []) link.supersede();\n    // AUDIT PRE-MERGE 1003 O9",
+    "new": "    for (const link of chatLinks?.values?.() ?? []) link.supersede();\n    // AUDIT PRE-MERGE 1003 O9",
     "tests": [
       "test/oneseat.test.js"
     ]

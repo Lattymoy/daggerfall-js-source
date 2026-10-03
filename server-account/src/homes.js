@@ -39,7 +39,7 @@ import { prepareRealmRecord, realmActFirst, realmAtOf, recordMovedOf, mustChange
 import { payFromSave, creditSave } from '../../src/net/realmGoldLaw.js';   // REALM P2.2b: the wallet's own order, over the record
 import {
   HOME_CAP, HOME_ENTRY_DEFAULT, HOME_CLAIMS_MAX, HOME_CLAIMS_WINDOW_S, HOME_TOWN_MAX, HOME_LAYOUTS_MAX,
-  homeMapIdOk, homeBuildingKeyOk, homeRegionOk, homePriceOk, homeEntryOk, homeSaleRefund, homeLookOf, homeLayoutOk, homeLayoutsMatch, HOME_LAYOUT_MODS,
+  homeMapIdOk, homeBuildingKeyOk, homeRegionOk, homePriceOk, homeEntryOk, homeSaleRefund, homeLookOf, homeLayoutOk, homeLayoutsMatch,
   homeInArenaCell, RENT_ANCHOR_MOVED,   // ARENA4b: the arena's cell, and a tenancy's point the move carries
 } from '../../src/net/homeLaw.js';
 import { GUILD_TREASURY_MAX } from '../../src/net/guildLaw.js';   // ARENA4b: a hall's pieces paid back, into a treasury under its cap
@@ -48,6 +48,7 @@ import { hallMay } from '../../src/net/hallLaw.js';   // GUILD1d: a hall's keepe
 import { heraldryOfRow } from './halls.js';   // GUILD1d: a hall's heraldry, on its door
 import { openGatesAt } from './seatHolding.js';   // SEAT1d: Open Gates, where the town's holder proclaims it
 import { OWNS } from './decor.js';   // GUILD-YARD: a home's character, or a hall's keeper - as its decor asks
+import { LAYOUT_MATCH_SQL, layoutMatchBinds, TOWN_LAYOUT_SQL } from './townLayout.js';   // WD3: a town's homes in one layout (AUDIT PRE-MERGE 1003 WD1: a hall's too)
 
 const homeOf = (row) => ({
   mapId: row.map_id, buildingKey: row.building_key, region: row.region, character: row.char_id,
@@ -58,15 +59,10 @@ const homeOf = (row) => ({
 /** THE CLAIM'S ONE WRITE: the house the character's, while it is nobody's and the character holds fewer than its cap.
  *  `paid` (AUDIT REALM L1-F3, migration 0020): the gold a realm record paid for it - the price, for a realm character's
  *  claim; nothing for any other character's, whose client paid (or did not) out of a save the service never sees. */
-// WD3 (AUDIT WD3 R5): a town's homes in ONE layout, in the write itself - the claim's mods each in a home of the town
-// or not, as homeLayoutsMatch reads them (versions aside), so two first claims in two layouts at once seat one
-const LAYOUT_MATCH_SQL = HOME_LAYOUT_MODS.map(() => `(instr(COALESCE(t.layout, ''), ?) > 0) = ?`).join(' AND ');
-const layoutMatchBinds = (layout) => {
-  const mods = new Set(typeof layout === 'string' && layout ? layout.split('+').map((p) => p.split('@')[0]) : []);
-  return HOME_LAYOUT_MODS.flatMap((m) => [`${m}@`, mods.has(m) ? 1 : 0]);
-};
+// WD3 (AUDIT WD3 R5): a town's homes in ONE layout, in the write itself (townLayout.js - AUDIT PRE-MERGE 1003 WD1: a
+// guild's hall is written with the same SQL)
 const claimStatement = (db, player, { mapId, buildingKey, region, character, price, layout = null }, nowS, paid = 0) => db.prepare(`INSERT OR IGNORE INTO homes (map_id, building_key, player, char_id, owner_name, region, entry, price, bought_at, paid, layout)
-    SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE((SELECT t.layout FROM homes t WHERE t.map_id = ? ORDER BY t.bought_at, t.building_key LIMIT 1), CASE WHEN EXISTS (SELECT 1 FROM homes t WHERE t.map_id = ?) THEN NULL ELSE ? END)
+    SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${TOWN_LAYOUT_SQL}
     WHERE (SELECT COUNT(*) FROM homes WHERE player = ? AND char_id = ?) < ?
       AND NOT EXISTS (SELECT 1 FROM homes t WHERE t.map_id = ? AND NOT (${LAYOUT_MATCH_SQL}))`)
   .bind(mapId, buildingKey, player.id, character, displayName(player), region, HOME_ENTRY_DEFAULT, price, nowS, paid, mapId, mapId, layout, player.id, character, HOME_CAP, mapId, ...layoutMatchBinds(layout));
@@ -354,7 +350,7 @@ export async function homeLayouts({ db }) {
 // home of the town holds left out) - because this service holds no town's records (the doctrine: no ARENA2 in the tree).
 // THE SAME TRUST AS A CLAIM (claimHome): the service cannot see that the key names a house, any more than it sees a
 // claim's; it checks what it can - the old key a home of the caller's in the arena's cell, the new one in the same town,
-// outside the cell, a key's shape, and nobody's - and the move once (`home_moves`, migration 0073 - 0071 before the second merge onto main).
+// outside the cell, a key's shape, and nobody's - and the move once (`home_moves`, migration 0075 - 0071 before the second merge onto main, 0073 before the third).
 //
 // WHAT MOVES IS THE OFFLINE LAW'S (arenaMove.js emptyArenaScene): the furniture's places are the old building's frame and
 // fit no other, so the room is emptied, never carried. The ROW goes whole - every column (HOME_MOVE_CARRIED) - with its

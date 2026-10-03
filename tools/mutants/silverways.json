@@ -1,0 +1,285 @@
+[
+  {
+    "name": "SILVER-WAYS-law-raid-31",
+    "file": "src/net/marksLaw.js",
+    "old": "raid: Object.freeze({ amount: 30 }),",
+    "new": "raid: Object.freeze({ amount: 31 }),",
+    "tests": [
+      "test/silverways_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-WAYS-law-cap-151",
+    "file": "src/net/marksLaw.js",
+    "old": "kinds: Object.freeze(['gate', 'raid']), perDay: 150 }",
+    "new": "kinds: Object.freeze(['gate', 'raid']), perDay: 151 }",
+    "tests": [
+      "test/silverways_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-WAYS-law-cap-gate-alone",
+    "file": "src/net/marksLaw.js",
+    "old": "kinds: Object.freeze(['gate', 'raid']), perDay: 150 }",
+    "new": "kinds: Object.freeze(['gate']), perDay: 150 }",
+    "tests": [
+      "test/silverways_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-WAYS-law-strike-no-remainder",
+    "file": "src/net/marksLaw.js",
+    "old": "Math.max(0, Math.min(amount, MARKS_COMBAT.perDay - Math.max(0, earned)))",
+    "new": "Math.max(0, amount)",
+    "tests": [
+      "test/silverways_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-WAYS-law-deed-26",
+    "file": "src/net/marksLaw.js",
+    "old": "deed: Object.freeze({ amount: 25,",
+    "new": "deed: Object.freeze({ amount: 26,",
+    "tests": [
+      "test/silverways_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-WAYS-law-deed-five-a-day",
+    "file": "src/net/marksLaw.js",
+    "old": "amount: 25, perDay: 4, members: 3,",
+    "new": "amount: 25, perDay: 5, members: 3,",
+    "tests": [
+      "test/silverways_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-WAYS-law-deed-two-members",
+    "file": "src/net/marksLaw.js",
+    "old": "perDay: 4, members: 3, tenureS",
+    "new": "perDay: 4, members: 2, tenureS",
+    "tests": [
+      "test/silverways_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-WAYS-law-deed-six-days",
+    "file": "src/net/marksLaw.js",
+    "old": "tenureS: 7 * 86_400 }",
+    "new": "tenureS: 6 * 86_400 }",
+    "tests": [
+      "test/silverways_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-WAYS-svc-strike-whole",
+    "file": "server-account/src/marks.js",
+    "old": "  const pay = `MIN(?2, ?6 - ${combatEarnedSql('?1', '?3')})`;",
+    "new": "  const pay = '?2';",
+    "tests": [
+      "test/silverways_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-WAYS-svc-cap-unread",
+    "file": "server-account/src/marks.js",
+    "old": "    WHERE ${combatEarnedSql('?1', '?3')} < ?6\n",
+    "new": "    WHERE 1\n",
+    "tests": [
+      "test/silverways_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-WAYS-svc-deed-tenure-unread",
+    "file": "server-account/src/marks.js",
+    "old": "m.joined_at <= ?4 - ?5 AND",
+    "new": "1 AND",
+    "tests": [
+      "test/silverways_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-WAYS-svc-deed-two-marks",
+    "file": "server-account/src/marks.js",
+    "old": "x.event = ?7) >= ?8",
+    "new": "x.event = ?7) >= ?8 - 1",
+    "tests": [
+      "test/silverways_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-WAYS-svc-deed-day-unbounded",
+    "file": "server-account/src/marks.js",
+    "old": "l.kind = 'guild-deed' AND l.day = ?3) < ?9",
+    "new": "l.kind = 'guild-deed' AND l.day = ?3) < ?9 + 1",
+    "tests": [
+      "test/silverways_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-WAYS-svc-raid-unstruck",
+    "file": "server-account/src/raids.js",
+    "old": "    ...(mint ? [mint] : []),\n",
+    "new": "",
+    "tests": [
+      "test/silverways_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-WAYS-svc-gate-deed-none",
+    "file": "server-account/src/accounts.js",
+    "old": "  const deed = c.x === 'rite' ? null : deeds?.(c.d) ?? null;",
+    "new": "  const deed = null;",
+    "tests": [
+      "test/silverways_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-WAYS-svc-contract-any-region",
+    "file": "server-account/src/contracts.js",
+    "old": "WHERE region = ?1 AND kind = 'raid' AND state = 'open'",
+    "new": "WHERE ?1 = ?1 AND kind = 'raid' AND state = 'open'",
+    "tests": [
+      "test/silverways_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-WAYS-svc-contract-officer-paid",
+    "file": "server-account/src/contracts.js",
+    "old": "const POSTERS_SQL = WRIT_POWERS.postWrit.join(', ');",
+    "new": "const POSTERS_SQL = '0';",
+    "tests": [
+      "test/silverways_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-WAYS-svc-contract-escrow-undrawn",
+    "file": "server-account/src/contracts.js",
+    "old": "SET left_deeds = left_deeds - 1, escrow = escrow - pay,",
+    "new": "SET left_deeds = left_deeds - 1, escrow = escrow,",
+    "tests": [
+      "test/silverways_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-WAYS-svc-contract-tax-per-deed",
+    "file": "server-account/src/contracts.js",
+    "old": "const deedTaxSql = `(((c.deeds - c.left_deeds + 1) * c.pay * ${TAX_PCT}) / 100 - ((c.deeds - c.left_deeds) * c.pay * ${TAX_PCT}) / 100)`;",
+    "new": "const deedTaxSql = `(((0 + 1) * c.pay * ${TAX_PCT}) / 100 - (0 * c.pay * ${TAX_PCT}) / 100)`;",
+    "tests": [
+      "test/silverways_service.test.js"
+    ],
+    "note": "AUDIT SILVER-WAYS (PIN MOVED): re-aimed by content to the code the audit's fix left (the Watch both ways, the receipt asked at the act's end and this account's alone, the tax reckoned in the batch)."
+  },
+  {
+    "name": "SILVER-WAYS-svc-contract-budget-unshared",
+    "file": "server-account/src/writs.js",
+    "old": "\n  + COALESCE((SELECT SUM(deeds * pay) FROM guild_contracts WHERE guild_id = ${g} AND week = ${week} AND officer = 1), 0))`;",
+    "new": "\n  + 0)`;",
+    "tests": [
+      "test/silverways_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-WAYS-svc-guild-goes-with-contract",
+    "file": "server-account/src/guilds.js",
+    "old": "  OR EXISTS (SELECT 1 FROM guild_contracts WHERE guild_id = ${p} AND (state = 'open' OR (returned = 0 AND escrow > 0)))   -- SILVER-WAYS",
+    "new": "  OR 0   -- SILVER-WAYS",
+    "tests": [
+      "test/silverways_service.test.js",
+      "test/silverways_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-WAYS-law-contract-pay-51",
+    "file": "src/net/writLaw.js",
+    "old": "export const CONTRACT_PAY_MAX = 50;",
+    "new": "export const CONTRACT_PAY_MAX = 51;",
+    "tests": [
+      "test/silverways_service.test.js",
+      "test/silverways_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-WAYS-law-contract-region-segment",
+    "file": "src/net/writLaw.js",
+    "old": "return Number(key.slice(0, key.indexOf(':')));",
+    "new": "return Number(key.slice(key.indexOf(':') + 1, key.lastIndexOf(':')));",
+    "tests": [
+      "test/silverways_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-WAYS-law-contract-posters-paid",
+    "file": "src/net/writLaw.js",
+    "old": "export const contractPaidMay = (rank) => rank == null || !writMay(rank, 'postWrit');",
+    "new": "export const contractPaidMay = (rank) => rank == null || rank >= 0;",
+    "tests": [
+      "test/silverways_service.test.js",
+      "test/silverways_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-WAYS-cli-deed-unsaid",
+    "file": "src/net/marksBook.js",
+    "old": "      if (data.deed && Number.isSafeInteger(data.deed.struck) && data.deed.struck > 0) out.push(MARKS_TEXT.deed(data.deed.struck, data.deed.guild));\n",
+    "new": "",
+    "tests": [
+      "test/silverways_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-WAYS-cli-contract-unsaid",
+    "file": "src/net/marksBook.js",
+    "old": "        if (c && Number.isSafeInteger(c.pay) && c.pay > 0) out.push(MARKS_TEXT.contract(c.pay, c.guild));",
+    "new": "        if (c && Number.isSafeInteger(c.pay) && c.pay > 0) void c;",
+    "tests": [
+      "test/silverways_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-WAYS-cli-raid-capped-the-breach",
+    "file": "src/net/marksBook.js",
+    "old": "(kind === 'raid' ? MARKS_TEXT.cappedRaid : MARKS_TEXT.capped)",
+    "new": "MARKS_TEXT.capped",
+    "tests": [
+      "test/silverways_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-WAYS-cli-raid-lines-unsaid",
+    "file": "src/net/raidClaims.js",
+    "old": "          for (const line of Array.isArray(lines) ? lines : [lines]) if (typeof line === 'string' && line) say(line);\n",
+    "new": "",
+    "tests": [
+      "test/silverways_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-WAYS-cli-gate-lines-one",
+    "file": "src/net/gateClaims.js",
+    "old": "for (const line of Array.isArray(marksLine) ? marksLine : [marksLine]) if (typeof line === 'string' && line) say(line);",
+    "new": "if (typeof marksLine === 'string' && marksLine) say(marksLine);",
+    "tests": [
+      "test/silverways_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-WAYS-cli-tab-posters-unsaid",
+    "file": "src/ui/workTab.js",
+    "old": "const own = data?.guild?.id === x.guild?.id && !contractPaidMay(data.guild.rank);",
+    "new": "const own = false;",
+    "tests": [
+      "test/silverways_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-WAYS-cli-gate-character-unsent",
+    "file": "src/scenes/world.js",
+    "old": "return site ? { region: site.region, character } : character ? { character } : null;",
+    "new": "return site ? { region: site.region, character } : null;",
+    "tests": [
+      "test/silverways_client.test.js"
+    ]
+  }
+]

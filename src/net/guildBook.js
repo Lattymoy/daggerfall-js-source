@@ -306,9 +306,10 @@ export class GuildBook {
   // No purse moves: the treasury pays for the hall and takes its sale, the Drake treasury pays for a change of heraldry
   // - each on the service, in the act's own batch - so there is no order to keep here and nothing to give back.
 
-  /** BUY A HALL - the building at its door (the guildmaster's), its `price` the home's own; the treasury pays half again. */
-  async buyHall({ mapId, buildingKey, region, price }) {
-    return this._hallTold(mapId, await this._act((c) => this.door.hallBuy({ character: c, mapId, buildingKey, region, price })));
+  /** BUY A HALL - the building at its door (the guildmaster's), its `price` the home's own; the treasury pays half again.
+   *  AUDIT PRE-MERGE 1003 WD1: `layout`, the layout its town stands in (systems/onlineHomes.js homeClaimLayout). */
+  async buyHall({ mapId, buildingKey, region, price, layout = null }) {
+    return this._hallTold(mapId, await this._act((c) => this.door.hallBuy({ character: c, mapId, buildingKey, region, price, layout })));
   }
   /** SELL THE HALL - the deed share and its pieces' half into the treasury. */
   async sellHall() {

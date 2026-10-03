@@ -137,7 +137,7 @@ test('ARENA4b the window online on a page: the Records page says it is the accou
   const host2 = dom.mk('div');
   dom.body.append(host2);
   const v2 = mountArenaWindow(host2, { board: () => AB.arenaBoard(save), page: 'boards' });
-  assert.equal(one(host2, 'aw-purse').textContent, W.gold(50), 'the save\'s purse');
+  assert.equal(one(host2, 'aw-purse').textContent, W.pursesWon(50), 'the save\'s purses won - AUDIT PRE-MERGE 1003 U12: said, not a bare sum');
   kids(host2, 'aw-subtab').find((t) => t.dataset.board === 'fast').onclick();
   assert.equal(one(host2, 'aw-hall'), null);
   v2.unmount();

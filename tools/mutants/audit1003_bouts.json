@@ -1,0 +1,333 @@
+[
+  {
+    "name": "AUDIT1003-B1-LAW-ON-THE-REAL-CLOCK",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "    const C = cur;\n    const t = clockOf(C);",
+    "new": "    const C = cur;\n    const t = now();",
+    "tests": [
+      "test/audit1003_bouts.test.js"
+    ],
+    "note": "the frame judges its own bout by performance.now() again: the limit runs on under a window"
+  },
+  {
+    "name": "AUDIT1003-B1-NOTHING-HELD",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "    if (Number.isFinite(lastReal)) heldMs += real - lastReal - Math.max(0, Number(dt) || 0) * 1000;",
+    "new": "",
+    "tests": [
+      "test/audit1003_bouts.test.js"
+    ],
+    "note": "the frame's withheld time never held off the law: lawNow is the real clock"
+  },
+  {
+    "name": "AUDIT1003-B1-ONLY-A-PAUSE-HELD",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "    if (Number.isFinite(lastReal)) heldMs += real - lastReal - Math.max(0, Number(dt) || 0) * 1000;",
+    "new": "    if (Number.isFinite(lastReal) && !(dt > 0)) heldMs += real - lastReal;",
+    "tests": [
+      "test/audit1003_bouts.test.js"
+    ],
+    "note": "a pause held, a clamped frame (a hidden tab) not: three minutes of fight in one frame"
+  },
+  {
+    "name": "AUDIT1003-B1-BLOW-ON-THE-REAL-CLOCK",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "    if (!C?.b) return;\n    const t = lawNow();   // AUDIT PRE-MERGE 1003 B1",
+    "new": "    if (!C?.b) return;\n    const t = now();",
+    "tests": [
+      "test/audit1003_bouts.test.js"
+    ],
+    "note": "hurtFoe's blow stamped on the real clock: after a pause the stall comes a pause late"
+  },
+  {
+    "name": "AUDIT1003-B1-FLOOR-ON-THE-REAL-CLOCK",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "    boutFell(C.b, fid, lawNow());   // AUDIT PRE-MERGE 1003 B1",
+    "new": "    boutFell(C.b, fid, now());",
+    "tests": [
+      "test/audit1003_bouts.test.js"
+    ],
+    "note": "a fall stamped on the real clock: after a pause its verdict comes a pause late"
+  },
+  {
+    "name": "AUDIT1003-B2-OUTSIDE-BLOW-KEPT",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "    if (fromPlayer && C && !C.ladder && foe?.entity) { foe.entity.health = Math.min(foe.entity.maxHealth ?? foe.entity.health, foe.entity.health + dmg); return; }\n",
+    "new": "",
+    "tests": [
+      "test/audit1003_bouts.test.js"
+    ],
+    "note": "my blow on an exhibition fighter kept: the door floors it and the verdict settles the book"
+  },
+  {
+    "name": "AUDIT1003-B2-MY-OWN-BOUT-TOO",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "    if (fromPlayer && C && !C.ladder && foe?.entity) {",
+    "new": "    if (fromPlayer && C && foe?.entity) {",
+    "tests": [
+      "test/audit1003_bouts.test.js",
+      "test/arena2_driver.test.js"
+    ],
+    "note": "my blows in my own ladder bout made good too: nobody falls to me"
+  },
+  {
+    "name": "AUDIT1003-B3-LEFT-UNTOLD",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "    if (C.ex && !C.relay && C.b && !boutBefore(C.b) && !Number.isFinite(C.verdictAt)) deps.exhibitionVerdict?.(C.ex.hour, C.b.result ? C.b.result.side : BOUT_LEFT);\n",
+    "new": "",
+    "tests": [
+      "test/audit1003_bouts.test.js"
+    ],
+    "note": "a bout walked away from after its word told nothing: the house's coin at the hour's end"
+  },
+  {
+    "name": "AUDIT1003-B3-LEFT-A-DRAW",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "C.b.result ? C.b.result.side : BOUT_LEFT);",
+    "new": "C.b.result ? C.b.result.side : null);",
+    "tests": [
+      "test/audit1003_bouts.test.js"
+    ],
+    "note": "walked away from, the stake returned: a free way out of a losing wager"
+  },
+  {
+    "name": "AUDIT1003-B3-RESULT-UNREAD",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "C.b.result ? C.b.result.side : BOUT_LEFT);",
+    "new": "BOUT_LEFT);",
+    "tests": [
+      "test/audit1003_bouts.test.js"
+    ],
+    "note": "a fall already standing in its END_HOLD is taken for a bout left"
+  },
+  {
+    "name": "AUDIT1003-B3-LEFT-BEFORE-THE-WORD",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "    if (C.ex && !C.relay && C.b && !boutBefore(C.b) && !Number.isFinite(C.verdictAt))",
+    "new": "    if (C.ex && !C.relay && C.b && !Number.isFinite(C.verdictAt))",
+    "tests": [
+      "test/audit1003_bouts.test.js"
+    ],
+    "note": "a bout gone before its word, nothing seen, is taken from the house's record"
+  },
+  {
+    "name": "AUDIT1003-B3-TOLD-TWICE",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "    if (C.ex && !C.relay && C.b && !boutBefore(C.b) && !Number.isFinite(C.verdictAt))",
+    "new": "    if (C.ex && !C.relay && C.b && !boutBefore(C.b))",
+    "tests": [
+      "test/audit1003_bouts.test.js"
+    ],
+    "note": "a verdict said, then its crowd gone home: told again as left"
+  },
+  {
+    "name": "AUDIT1003-B3-HERALD-OFFERS-WATCH",
+    "file": "src/systems/arenaHerald.js",
+    "old": "  const canWatch = !fought && (!!cityBout || !!ex?.open);",
+    "new": "  const canWatch = !!cityBout || !!ex?.open;",
+    "tests": [
+      "test/audit1003_bouts.test.js"
+    ],
+    "note": "Watch offered for an hour seen here: the bout dismissed and fought again from its call"
+  },
+  {
+    "name": "AUDIT1003-B3-WATCH-NEVER-REFUSED",
+    "file": "src/scenes/arenaGate.js",
+    "old": "    return (begun() && liveHour() === hour) || bookSaw(league().book, hour) ? ARENA_TEXT.herald.watchSeen : null;",
+    "new": "    return null;",
+    "tests": [
+      "test/audit1003_bouts.test.js"
+    ],
+    "note": "the gate never refuses Watch"
+  },
+  {
+    "name": "AUDIT1003-B3-WATCH-FORGETS-THE-VERDICT",
+    "file": "src/scenes/arenaGate.js",
+    "old": "    return (begun() && liveHour() === hour) || bookSaw(league().book, hour) ? ARENA_TEXT.herald.watchSeen : null;",
+    "new": "    return begun() && liveHour() === hour ? ARENA_TEXT.herald.watchSeen : null;",
+    "tests": [
+      "test/audit1003_bouts.test.js"
+    ],
+    "note": "a bout seen to its verdict and gone home: Watch fights the hour again"
+  },
+  {
+    "name": "AUDIT1003-B3-WATCH-FORGETS-THE-WORD",
+    "file": "src/scenes/arenaGate.js",
+    "old": "    return (begun() && liveHour() === hour) || bookSaw(league().book, hour) ? ARENA_TEXT.herald.watchSeen : null;",
+    "new": "    return bookSaw(league().book, hour) ? ARENA_TEXT.herald.watchSeen : null;",
+    "tests": [
+      "test/audit1003_bouts.test.js"
+    ],
+    "note": "a bout under way on the sand: Watch dismisses it"
+  },
+  {
+    "name": "AUDIT1003-B3-WINDOW-WATCH-UNASKED",
+    "file": "src/scenes/arenaGate.js",
+    "old": "      if (seen) return { ok: false, text: seen };\n",
+    "new": "",
+    "tests": [
+      "test/audit1003_bouts.test.js"
+    ],
+    "note": "the window's Watch press goes to the host unrefused"
+  },
+  {
+    "name": "AUDIT1003-B3-WORLD-WATCH-UNASKED",
+    "file": "src/scenes/world.js",
+    "old": "      const no = arenaGate.watchRefusal(ex.hour); if (no) { townTalk.say(no); return; }   // AUDIT PRE-MERGE 1003 B3: an hour seen here is never fought again from its call\n",
+    "new": "",
+    "tests": [
+      "test/audit1003_bouts.test.js"
+    ],
+    "note": "world.js's Watch dismisses before it asks"
+  },
+  {
+    "name": "AUDIT1003-B3-EXTERIOR-WATCH-UNASKED",
+    "file": "src/scenes/exterior.js",
+    "old": "      const no = arenaGate.watchRefusal(ex.hour); if (no) { townTalk.say(no); return; }   // AUDIT PRE-MERGE 1003 B3: an hour seen here is never fought again from its call\n",
+    "new": "",
+    "tests": [
+      "test/audit1003_bouts.test.js"
+    ],
+    "note": "exterior.js's Watch dismisses before it asks"
+  },
+  {
+    "name": "AUDIT1003-B3-VERDICT-NEEDS-A-WAGER",
+    "file": "src/systems/arenaBook.js",
+    "old": "  const b = bookRestore(book);\n  b.seen = [{ hour, side: seenSide(side) }",
+    "new": "  const b = bookRestore(book);\n  if (!b.wagers.some((w) => w.hour === hour && w.status === 'open')) return b;\n  b.seen = [{ hour, side: seenSide(side) }",
+    "tests": [
+      "test/audit1003_bouts.test.js"
+    ],
+    "note": "a verdict on a bout nobody backed dropped: a wager on its winner taken after"
+  },
+  {
+    "name": "AUDIT1003-B3-SEEN-PRUNED",
+    "file": "src/systems/arenaBook.js",
+    "old": "  // AUDIT PRE-MERGE 1003 B3: the verdicts seen are kept (the newest WAGERS_KEPT - bookVerdict), settled or never wagered\n",
+    "new": "  b.seen = b.seen.filter((s) => b.wagers.some((w) => w.hour === s.hour && w.status === 'open'));\n",
+    "tests": [
+      "test/audit1003_bouts.test.js"
+    ],
+    "note": "the verdicts seen pruned at every settling, as before"
+  },
+  {
+    "name": "AUDIT1003-B3-SEEN-DOES-NOT-SHUT",
+    "file": "src/systems/arenaBook.js",
+    "old": "  if (!ex.open || begun || bookSaw(book, ex.hour)) return 'closed';",
+    "new": "  if (!ex.open || begun) return 'closed';",
+    "tests": [
+      "test/audit1003_bouts.test.js"
+    ],
+    "note": "a wager taken on an hour seen to its verdict"
+  },
+  {
+    "name": "AUDIT1003-B3-CARD-OPEN-ON-A-SEEN-HOUR",
+    "file": "src/systems/arenaBook.js",
+    "old": "  const why = !ex.open || begun || bookSaw(book, ex.hour) ? B().whyClosed",
+    "new": "  const why = !ex.open || begun ? B().whyClosed",
+    "tests": [
+      "test/audit1003_bouts.test.js"
+    ],
+    "note": "the window's card offers the wager on an hour seen"
+  },
+  {
+    "name": "AUDIT1003-B3-LEFT-LOST-ON-LOAD",
+    "file": "src/systems/arenaBook.js",
+    "old": "const seenSide = (side) => (side === 0 || side === 1 || side === BOUT_LEFT ? side : null);",
+    "new": "const seenSide = (side) => (side === 0 || side === 1 ? side : null);",
+    "tests": [
+      "test/audit1003_bouts.test.js"
+    ],
+    "note": "a bout left kept as a draw: the stake back"
+  },
+  {
+    "name": "AUDIT1003-B4-SHORTEST-ALWAYS-LAID",
+    "file": "src/systems/arenaBook.js",
+    "old": "  let best = null;\n  for (const x of ODDS_LADDER)",
+    "new": "  let best = ODDS_LADDER[0];\n  for (const x of ODDS_LADDER)",
+    "tests": [
+      "test/audit1003_bouts.test.js"
+    ],
+    "note": "1 to 5 laid on any favourite: better than fair past 0.818"
+  },
+  {
+    "name": "AUDIT1003-B4-UNPRICED-SIDE-TAKEN",
+    "file": "src/systems/arenaBook.js",
+    "old": "  if (side != null && !priceFor(exhibitionOdds(ex)[side === 1 ? 1 : 0])) return 'price';\n",
+    "new": "",
+    "tests": [
+      "test/audit1003_bouts.test.js"
+    ],
+    "note": "a wager on a side with no price taken"
+  },
+  {
+    "name": "AUDIT1003-B4-STALL-BACKS-BOTH",
+    "file": "src/systems/arenaBook.js",
+    "old": "      if (prices[0]) options.push({ code: 'KeyA', label: B().back('A', names[0], oddsText(prices[0])), act: 'back0' });\n      if (prices[1]) options.push(",
+    "new": "      options.push({ code: 'KeyA', label: B().back('A', names[0], oddsText(prices[0])), act: 'back0' });\n      options.push(",
+    "tests": [
+      "test/audit1003_bouts.test.js"
+    ],
+    "note": "the stall offers both fighters whatever the price"
+  },
+  {
+    "name": "AUDIT1003-B4-STALL-UNSAID",
+    "file": "src/systems/arenaBook.js",
+    "old": "      lines.push(...notLaid(ex, prices));   // AUDIT PRE-MERGE 1003 B4: a side he lays no price on is not offered, and said\n",
+    "new": "",
+    "tests": [
+      "test/audit1003_bouts.test.js"
+    ],
+    "note": "the side not offered, and nothing said why"
+  },
+  {
+    "name": "AUDIT1003-B4-CARD-UNSAID",
+    "file": "src/systems/arenaBook.js",
+    "old": "    lines: notLaid(ex, prices),",
+    "new": "    lines: [],",
+    "tests": [
+      "test/audit1003_bouts.test.js"
+    ],
+    "note": "the window's card says nothing of the side he will not lay"
+  },
+  {
+    "name": "AUDIT1003-B5-SPARE-IN-THE-FIGHT-ONLY",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "    if (!C?.ladder || !C.b || boutBefore(C.b) || C.b.phase === 'done') return null;",
+    "new": "    if (!C?.ladder || !C.b || C.b.phase !== 'fight') return null;",
+    "tests": [
+      "test/audit1003_bouts.test.js"
+    ],
+    "note": "no spare from my yield or fall to the healers: an arrow kills on the sand"
+  },
+  {
+    "name": "AUDIT1003-B5-SPARE-NOT-WHEN-OUT",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "    if (!C?.ladder || !C.b || boutBefore(C.b) || C.b.phase === 'done') return null;",
+    "new": "    if (!C?.ladder || !C.b || boutBefore(C.b) || C.b.phase === 'done' || C.playerTag?.out) return null;",
+    "tests": [
+      "test/audit1003_bouts.test.js"
+    ],
+    "note": "out of a Grand Melee fought on: no spare"
+  },
+  {
+    "name": "AUDIT1003-B5-SPARE-PAST-DONE",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "    if (!C?.ladder || !C.b || boutBefore(C.b) || C.b.phase === 'done') return null;",
+    "new": "    if (!C?.ladder || !C.b || boutBefore(C.b)) return null;",
+    "tests": [
+      "test/audit1003_bouts.test.js"
+    ],
+    "note": "the spare outlives the bout"
+  },
+  {
+    "name": "AUDIT1003-B6-HALF-BUILT-CROWD-LEAKED",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "      if (cur !== C) { for (const x of batches) r.destroyBillboardBatch?.(x.batch); return; }",
+    "new": "      if (cur !== C) return;",
+    "tests": [
+      "test/audit1003_bouts.test.js"
+    ],
+    "note": "the batches made before the bout went are lost"
+  }
+]

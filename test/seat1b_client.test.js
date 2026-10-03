@@ -323,13 +323,14 @@ test('SEAT1b THE HOSTS BY SOURCE: the relay ticks in its pose arm and nowhere el
   const online = rd('src/net/online.js');
   assert.match(online, /const w = primary && isCellRoom\(room\) \? readWatchReceipt\(m\.r\) : null;\n\s*if \(w\) this\._deliver\('watch', \(\) => this\.onWatch\?\.\(m\.r, w\)\);/);
   const w = rd('src/scenes/world.js');
-  assert.match(w, /online\.onWatch = \(r\) => seatBook\?\.keepWatch\(r\);/);
+  assert.match(w, /online\.onWatch = \(r\) => \{ seatBook\?\.keepWatch\(r\); motherlodeBook\?\.watch\(r\); \};/);   // PIN MOVED (PROF2b): and the Motherlodes' book keeps it too
   assert.match(w, /if \(seatBook\?\.claimWatchDue\(\)\) seatBook\.claimWatch\(\);/);   // PIN MOVED (AUDIT-SEATS C12): asked in sync first - a frame with nothing due makes no Promise
   assert.match(w, /isSeatPixel: \(x, y\) => seatPixels\.has\(`\$\{x\},\$\{y\}`\),/);
   assert.match(w, /const seatPixels = new Set\(townSeats\.list\.map\(\(s\) => `\$\{s\.pixel\[0\]\},\$\{s\.pixel\[1\]\}`\)\);/);
   assert.match(w, /seat: seatAt \? \{ seat: seatAt, book: seatBook, nameOf: \(k\) => seatAtMapId\(townSeats, k\)\?\.name \?\? null, port: coastalAt\(town\.px, town\.py, seaPixel, csaIsPortTown\(town\.px, town\.py\)\), countName: materialCountLabel \} : null,/);   // SEAT2b: and whether DFU names the town a port, the works' material words
   assert.match(w, /const seatAt = seatHere\(town\.mapId\);/);
-  assert.match(w, /return site \? \{ region: site\.region, character: characterIdOf\(playerEntity\) \} : null;/);
+  // PIN MOVED (SILVER-WAYS): the claiming character rides every claim (its guild's deed asks it), the region where the scan found it
+  assert.match(w, /const character = characterIdOf\(playerEntity\);\n[^\n]*\n\s*return site \? \{ region: site\.region, character \} : character \? \{ character \} : null;/);
   assert.match(w, /region: \(\) => \{ const px = playerTravelPixel\(\); const r = maps\.getRegionIndexAt\(px\.x, px\.y\); return Number\.isSafeInteger\(r\) \? r : null; \},/);
   const nw = rd('src/ui/noticeWindow.js');
   assert.match(nw, /\.\.\.\(seatShown\(\) \? \[\['seat', 'Seat'\]\] : \[\]\)\];/);

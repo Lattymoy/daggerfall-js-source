@@ -1,0 +1,182 @@
+[
+  {
+    "name": "AUDIT-HAUL-CARDS-B1-every-find-a-gem",
+    "file": "src/ui/haulCards.js",
+    "old": "sub: material(d.gem)?.family === 'gems' ? 'a gem' : null",
+    "new": "sub: 'a gem'",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HAUL-CARDS-B2-head-the-firsts",
+    "file": "src/ui/haulCards.js",
+    "old": "  main.latest = [...main.latest, 'head'];\n",
+    "new": "",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HAUL-CARDS-B3-gem-count-unread",
+    "file": "src/ui/haulCards.js",
+    "old": "storesHaul(d.gem, 1, { held: heldOf(d.gemStore),",
+    "new": "storesHaul(d.gem, 1, { held: null,",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HAUL-CARDS-B3-extra-count-unread",
+    "file": "src/ui/haulCards.js",
+    "old": "{ held: heldOf(d.extraStore) }",
+    "new": "{ held: null }",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HAUL-CARDS-B4-purse-dropped",
+    "file": "src/ui/haulCards.js",
+    "old": "    main.balance = Number.isSafeInteger(d.marks?.balance) ? d.marks.balance : null;",
+    "new": "    main.balance = null;",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HAUL-CARDS-B4-purse-unsaid",
+    "file": "src/ui/pickupFeed.js",
+    "old": "c.lodeHeld.textContent = w.lode.held ?? '';",
+    "new": "c.lodeHeld.textContent = '';",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HAUL-CARDS-A1-hidden-read-as-first",
+    "file": "src/ui/pickupFeed.js",
+    "old": "heights.push(r?.height ?? kid._pfH ?? first?.height ?? 0);",
+    "new": "heights.push(r?.height ?? first?.height ?? 0);",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HAUL-CARDS-A2-note-unwrapped",
+    "file": "src/ui/pickupFeed.js",
+    "old": "font-size: 13px; padding-left: 10px; white-space: normal; }",
+    "new": "font-size: 13px; padding-left: 10px; }",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HAUL-CARDS-A5-note-veil-its-own",
+    "file": "src/ui/pickupFeed.js",
+    "old": ".pickfeed-card.haul.is-note { color: ${T.stoneHi}; font-size: 13px;",
+    "new": ".pickfeed-card.haul.is-note { color: ${T.stoneHi}; background-color: rgba(10,12,17,0.8); font-size: 13px;",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HAUL-CARDS-A5-note-dim",
+    "file": "src/ui/pickupFeed.js",
+    "old": ".pickfeed-card.haul.is-note { color: ${T.stoneHi};",
+    "new": ".pickfeed-card.haul.is-note { color: ${T.stoneLit};",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HAUL-CARDS-A5-coin-kept",
+    "file": "src/ui/pickupFeed.js",
+    "old": " c.lodeCoin.hidden = !w.lode.silver; }",
+    "new": " }",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HAUL-CARDS-A3-card-on-a-held-world",
+    "file": "src/scenes/gatherHost.js",
+    "old": "const live = deps.active?.() === true || deps.activeDungeon?.() === true;",
+    "new": "const live = true;",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HAUL-CARDS-C2-card-width-unscaled",
+    "file": "src/ui/pickupFeed.js",
+    "old": "max-width: min(440px, calc(88vw / var(--hud-scale, 1)));",
+    "new": "max-width: min(440px, 88vw);",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HAUL-CARDS-C2-feed-width-unscaled",
+    "file": "src/ui/pickupFeed.js",
+    "old": "max-width: calc(92vw / var(--hud-scale, 1));",
+    "new": "max-width: 92vw;",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HAUL-CARDS-C3-sub-not-first",
+    "file": "src/ui/pickupFeed.js",
+    "old": ".haul-sub { flex: 0 1000 auto; min-width: 0;",
+    "new": ".haul-sub {",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HAUL-CARDS-C3-silver-word-gives",
+    "file": "src/ui/pickupFeed.js",
+    "old": ".pickfeed-card.haul.is-silver .pickfeed-name, .pickfeed-card.haul.is-treasury .pickfeed-name { flex-shrink: 0; }\n",
+    "new": "",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HAUL-CARDS-C3-tax-after-the-guild",
+    "file": "src/ui/haulCards.js",
+    "old": "source: `Contract${c.tax > 0 ? ` (${num(c.tax)} tax)` : ''} - ${tag}`",
+    "new": "source: `Contract - ${tag}${c.tax > 0 ? ` (${num(c.tax)} tax)` : ''}`",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HAUL-CARDS-C7-tax-ungrouped",
+    "file": "src/ui/haulCards.js",
+    "old": "` (${num(c.tax)} tax)`",
+    "new": "` (${c.tax} tax)`",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HAUL-CARDS-C4-veil-stones-panel",
+    "file": "src/ui/pickupFeed.js",
+    "old": "const veilOf = (th) => (th.ink && luminance(th.panel) > PICKUP_VEIL_LIGHT ? th.ink : th.panel);",
+    "new": "const veilOf = (th) => th.panel;",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HAUL-CARDS-C4-tag-border-unread",
+    "file": "src/ui/pickupFeed.js",
+    "old": "  color: ${T.stoneHi}; border: 1px solid ${T.stoneLit}; }",
+    "new": "  color: ${T.stoneHi}; border: 1px solid ${T.stoneLo}; }",
+    "tests": [
+      "test/haulcards.test.js"
+    ]
+  }
+]

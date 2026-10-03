@@ -103,91 +103,6 @@
     "tests": ["test/audit_install2.test.js"]
   },
   {
-    "name": "AUDIT-INSTALL-R2-C1-news-by-position-again",
-    "file": "scripts/desktopRelease.mjs",
-    "old": "      && !was.some((r) => heldIn(l, r) >= REWRITE_SHARE));",
-    "new": "      && h.added.indexOf(l) >= h.removed.length);",
-    "tests": ["test/audit_install2.test.js", "test/rel4_release.test.js"],
-    "note": "Round 1's rule: the first b added lines of a hunk that removed b are its rewrites - app-v0.1.4534 lost four fixes."
-  },
-  {
-    "name": "AUDIT-INSTALL-R2-C1-any-shared-word-is-a-rewrite",
-    "file": "scripts/desktopRelease.mjs",
-    "old": "export const REWRITE_SHARE = 0.6;",
-    "new": "export const REWRITE_SHARE = 0.4;",
-    "tests": ["test/audit_install2.test.js"]
-  },
-  {
-    "name": "AUDIT-INSTALL-R2-C1-a-rewrite-is-news",
-    "file": "scripts/desktopRelease.mjs",
-    "old": "      && !was.some((r) => heldIn(l, r) >= REWRITE_SHARE));",
-    "new": "      && !was.some((r) => heldIn(l, r) >= 1));",
-    "tests": ["test/audit_install2.test.js", "test/rel4_release.test.js"]
-  },
-  {
-    "name": "AUDIT-INSTALL-R2-C1-a-moved-line-is-news",
-    "file": "scripts/desktopRelease.mjs",
-    "old": "!HEADING_RE.test(l) && !moved.has(wordsOf(l).join(' '))",
-    "new": "!HEADING_RE.test(l)",
-    "tests": ["test/audit_install2.test.js"]
-  },
-  {
-    "name": "AUDIT-INSTALL-R2-C1-a-heading-is-news",
-    "file": "scripts/desktopRelease.mjs",
-    "old": "    const news = h.added.map((l) => wordsOf(l).length > 0 && !HEADING_RE.test(l) && !moved",
-    "new": "    const news = h.added.map((l) => wordsOf(l).length > 0 && !moved",
-    "tests": ["test/audit_install2.test.js"]
-  },
-  {
-    "name": "AUDIT-INSTALL-R2-C1-plurals-count-apart",
-    "file": "scripts/desktopRelease.mjs",
-    "old": "  .map((w) => (w.length > 3 && w.endsWith('s') ? w.slice(0, -1) : w));",
-    "new": "  .map((w) => w);",
-    "tests": ["test/audit_install2.test.js", "test/rel4_release.test.js"]
-  },
-  {
-    "name": "AUDIT-INSTALL-R2-C4-a-plus-plus-note-is-the-header",
-    "file": "scripts/desktopRelease.mjs",
-    "old": "    if (raw.startsWith('+')) hunk.added.push(raw.slice(1));",
-    "new": "    if (raw.startsWith('+') && !raw.startsWith('+++')) hunk.added.push(raw.slice(1));",
-    "tests": ["test/audit_install2.test.js"]
-  },
-  {
-    "name": "AUDIT-INSTALL-R2-C4-a-second-header-is-content",
-    "file": "scripts/desktopRelease.mjs",
-    "old": "    if (raw.startsWith('diff --git ')) { hunk = null; continue; }   // a file's header lines are not content\n",
-    "new": "",
-    "tests": ["test/audit_install2.test.js"]
-  },
-  {
-    "name": "AUDIT-INSTALL-R2-C4-quoted-names-dropped",
-    "file": "scripts/desktopRelease.mjs",
-    "old": "run(['diff', '--raw', '-z', '--no-abbrev',",
-    "new": "run(['diff', '--raw', '--no-abbrev',",
-    "tests": ["test/audit_install2.test.js", "test/rel4_release.test.js"]
-  },
-  {
-    "name": "AUDIT-INSTALL-R2-C4-a-name-is-a-pattern",
-    "file": "scripts/desktopRelease.mjs",
-    "old": "    const literal = (p) => `:(literal)${p}`;",
-    "new": "    const literal = (p) => p;",
-    "tests": ["test/audit_install2.test.js"]
-  },
-  {
-    "name": "AUDIT-INSTALL-R2-C4-a-link-made-a-file-is-never-read",
-    "file": "scripts/desktopRelease.mjs",
-    "old": "'--diff-filter=AMRT'",
-    "new": "'--diff-filter=AMR'",
-    "tests": ["test/audit_install2.test.js"]
-  },
-  {
-    "name": "AUDIT-INSTALL-R2-C4-utf16-published-as-nuls",
-    "file": "scripts/desktopRelease.mjs",
-    "old": "    if (/[\\0\\uFFFD]/.test(head)) {",
-    "new": "    if (false) {",
-    "tests": ["test/audit_install2.test.js"]
-  },
-  {
     "name": "AUDIT-INSTALL-R2-D1-the-saved-folder-read-before-the-window",
     "file": "app/main.cjs",
     "old": "  // R2-D1: the saved folder is NOT read here - the window comes first, and the folder is looked at beside it (judgeSaved)\n  setArena2(null);",
@@ -825,38 +740,6 @@
     "new": "  return [path.join(home, 'GOG Games')];",
     "tests": ["test/audit_install2.test.js", "test/da9_arena2detect.test.js"],
     "note": "a Linux GOG player (Heroic) is never offered their install"
-  },
-  {
-    "name": "AUDIT-INSTALL-R2-E-48-a-huge-notes-file-is-never-capped",
-    "file": "scripts/desktopRelease.mjs",
-    "old": "  if (text.length <= NOTES_FILE_MAX) return text;",
-    "new": "  if (text.length <= NOTES_FILE_MAX * 16) return text;",
-    "tests": ["test/audit_install2.test.js", "test/rel4_release.test.js"],
-    "note": "NOTES_FILE_MAX only exists as a constant: a 200 KB notes file reaches the body (GitHub caps a body at 125000 chars - the publish fails)"
-  },
-  {
-    "name": "AUDIT-INSTALL-R2-E-49-the-oldest-change-comes-first",
-    "file": "scripts/desktopRelease.mjs",
-    "old": "  return notes.sort((a, b) => b.when - a.when || a.file.localeCompare(b.file))",
-    "new": "  return notes.sort((a, b) => a.when - b.when || a.file.localeCompare(b.file))",
-    "tests": ["test/audit_install2.test.js", "test/rel4_release.test.js"],
-    "note": "Audit-Install L3-3: \"the newest change comes first\""
-  },
-  {
-    "name": "AUDIT-INSTALL-R2-E-50-a-renamed-and-edited-notes-file-brings-nothing",
-    "file": "scripts/desktopRelease.mjs",
-    "old": "'--diff-filter=AMRT'",
-    "new": "'--diff-filter=AMT'",
-    "tests": ["test/audit_install2.test.js", "test/rel4_release.test.js"],
-    "note": "a notes file renamed with new lines drops out of the release body"
-  },
-  {
-    "name": "AUDIT-INSTALL-R2-E-51-the-notes-command-never-excludes-the-tag-being-cut",
-    "file": "scripts/desktopRelease.mjs",
-    "old": "    process.stdout.write(composeReleaseNotes(patchNotesSince(previousReleaseTag(a))));",
-    "new": "    process.stdout.write(composeReleaseNotes(patchNotesSince(previousReleaseTag(b))));",
-    "tests": ["test/audit_install2.test.js", "test/rel4_release.test.js"],
-    "note": "the one command the publish job runs for the body is never spawned: a tag-door release diffs against itself - \"Fixes and improvements.\""
   },
   {
     "name": "AUDIT-INSTALL-R2-E-52-a-tag-pasted-into-a-multi-line-script",

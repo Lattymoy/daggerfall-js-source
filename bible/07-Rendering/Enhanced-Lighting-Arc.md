@@ -1886,7 +1886,7 @@ claims (mutants, the patch notes, the numbers).
 - **F2: the street's lantern pool fill had no pin of its own** (LA-LIGHTS1's test ran a copy; a fill that forgot to
   grow its range array past 64 lanterns survived every pin). It is `cityLights.js`'s `fillLanternPool`, which world.js
   calls and the pins run.
-- **F3: PATCH-NOTES-Gate-Reload promised an update on quit to every desktop app** - the Mac and the portable Windows
+- **F3: the Gate Reload patch notes promised an update on quit to every desktop app** - the Mac and the portable Windows
   build are only told a release exists; the note says so per build. **F4: the lighting notes overclaimed** (shadows
   that "hold still", menus that "open quicker", a sprite's sun "once per sprite"); reworded. **F5: stale records** - the
   LA-COST per-call counts and the differential's upload totals (they predated the merge with HITFLASH1 and

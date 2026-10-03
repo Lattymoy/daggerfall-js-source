@@ -68,6 +68,10 @@ const reservedSql = (g, m, now) => `COALESCE((SELECT SUM(left_units) FROM guild_
   AND expires_at > ${now} AND seat IS NULL), 0)`;   // SEAT2b: a seat writ's units go to the seat, never the guild Stores
 /** A guild's Stores of a material, in SQL. */
 const guildHeldSql = (g, m) => `COALESCE((SELECT SUM(qty) FROM guild_prof_stores WHERE guild_id = ${g} AND material = ${m}), 0)`;
+/** SILVER-WAYS: what guild `g`'s Officers have put up in seat week `week`, in SQL - their writs' pay and their
+ *  contracts' (contracts.js) - one budget for both, so a contract is no way round the writ budget. */
+export const officerSpentSql = (g, week) => `(COALESCE((SELECT SUM(units * pay) FROM guild_writs WHERE guild_id = ${g} AND week = ${week} AND officer = 1), 0)
+  + COALESCE((SELECT SUM(deeds * pay) FROM guild_contracts WHERE guild_id = ${g} AND week = ${week} AND officer = 1), 0))`;
 
 const INSERT_LINE = 'INSERT INTO marks_ledger (src_kind, src_id, dst_kind, dst_id, kind, amount, day, at, actor, who, rid)';
 
@@ -273,11 +277,11 @@ async function guildOfMember(db, member, rank, nowS) {
     ...(await budgetOf(db, member.guild_id, nowS)),
   };
 }
-/** The Officers' writ budget this seat week: set, spent (the escrow of what they posted in it), left. */
+/** The Officers' writ budget this seat week: set, spent (the escrow of what they posted in it - SILVER-WAYS: writs and
+ *  contracts), left. */
 async function budgetOf(db, guildId, nowS) {
   const b = await db.prepare('SELECT budget FROM guild_writ_budgets WHERE guild_id = ?1').bind(guildId).first();
-  const s = await db.prepare('SELECT COALESCE(SUM(units * pay), 0) AS s FROM guild_writs WHERE guild_id = ?1 AND week = ?2 AND officer = 1')
-    .bind(guildId, seatWeek(nowS)).first();
+  const s = await db.prepare(`SELECT ${officerSpentSql('?1', '?2')} AS s`).bind(guildId, seatWeek(nowS)).first();
   const budget = Number(b?.budget ?? 0), spentNow = Number(s?.s ?? 0);
   return { budget, spent: spentNow, left: Math.max(0, budget - spentNow) };
 }
@@ -346,8 +350,7 @@ export async function postGuildWrit(ctx, player, env, { character, region, mater
         AND (SELECT COUNT(*) FROM guild_writs WHERE guild_id = ?4 AND state = 'open' AND expires_at > ?12) < ?17
         -- AUDIT 31 L9: the guild Stores' room for it, past what they hold and what the standing writs of it still want
         AND (?19 IS NOT NULL OR ${guildHeldSql('?4', '?8')} + ${reservedSql('?4', '?8', '?12')} + ?9 <= ?18)   -- SEAT2b: a seat writ fills no guild Stores
-        AND (?5 = 0 OR COALESCE((SELECT SUM(units * pay) FROM guild_writs WHERE guild_id = ?4 AND week = ?6 AND officer = 1), 0) + ?11
-          <= COALESCE((SELECT budget FROM guild_writ_budgets WHERE guild_id = ?4), 0))
+        AND (?5 = 0 OR ${officerSpentSql('?4', '?6')} + ?11 <= COALESCE((SELECT budget FROM guild_writ_budgets WHERE guild_id = ?4), 0))   -- SILVER-WAYS: and their contracts'
         AND NOT EXISTS (SELECT 1 FROM marks_ledger WHERE actor = ?1 AND rid = ?14 || ':wesc')`)
       .bind(me, character, id, g, officer, week, region, key, units, pay, escrow, nowS, nowS + WRIT_S, rid, nonce, rank, GUILD_WRITS_MAX, GUILD_STORES_MAX, seat, camp),
     // the pay held: the treasury to the ledger's escrow end, the writ's id

@@ -64,6 +64,7 @@ test('ARENA4b the stands\' presses on the HUD: carried only for a watcher of a r
   assert.deepEqual([one(cheer, 'arena-shout-word').textContent, one(cheer, 'arena-key').textContent], [O.cheer, O.cheerKey]);
   assert.deepEqual([one(boo, 'arena-shout-word').textContent, one(boo, 'arena-key').textContent], [O.boo, O.booKey]);
   assert.equal(cheer.attrs['aria-label'], `${O.cheer} (${O.cheerKey})`);
+  assert.equal(cheer.attrs['aria-disabled'], undefined);   // AUDIT PRE-MERGE 1003 U15: shut by aria-disabled, never disabled (the focus kept)
   assert.equal(cheer.attrs.disabled, undefined);
   let stopped = 0;
   cheer.onclick({ stopPropagation: () => stopped++ });
@@ -86,7 +87,8 @@ test('ARENA4b the stands\' presses on the HUD: carried only for a watcher of a r
   assert.deepEqual(pressed, [1, -1, 1, -1], 'a field, a modifier, a held key, another window\'s key, a walk: none');
   // the allowance: shut, the press and the key dead
   drawArenaHud(arenaHudModel(b, crowd, t, { stands: { ready: false } }), { doc: dom.doc, cheer: door });
-  assert.equal(cheer.attrs.disabled, '');
+  assert.equal(cheer.attrs['aria-disabled'], 'true', 'shut - AUDIT PRE-MERGE 1003 U15: by aria-disabled');
+  assert.equal(cheer.attrs.disabled, undefined, 'never disabled - a disabled press lets the keyboard\'s focus fall to the page');
   cheer.onclick({});
   key('Equal');
   assert.deepEqual(pressed, [1, -1, 1, -1], 'shut while the allowance runs');
@@ -137,8 +139,9 @@ test('ARENA4b my cheer from the stands over the real relay: sent through the wat
   await H.hello(B, 'peer-brann', null, { name: 'Brann', kind: 'linked', tokenSub: 'acct-brann', ar: 1040 });
   await wordTo(H, A, { k: 'q', lv: 20 }); await wordTo(H, B, { k: 'q', lv: 30 });
   step(1000); await H.fire();
-  const o = lastOf(A, 'of').o;
-  await wordTo(H, A, { k: 'y', o }); await wordTo(H, B, { k: 'y', o });
+  const of = lastOf(A, 'of').o;
+  await wordTo(H, A, { k: 'y', o: of }); await wordTo(H, B, { k: 'y', o: of });
+  const o = lastOf(A, 'go').o;   // AUDIT PRE-MERGE 1003 S7: the bout's room is the go's, never the offer's id
   const R = W.room(arenaBoutRoom(o));
   const a = R.connect(), b = R.connect();
   await R.hello(a, 'fight-alva', { x: C[0] - 6, y: 0.3, z: C[2], yaw: 0, pitch: 0, mv: 0 }, { name: 'Alva', kind: 'linked', tokenSub: 'acct-alva', lv: 20 });
@@ -271,9 +274,15 @@ test('ARENA4b the realm\'s banners on a relay\'s sand: mine the account\'s banne
   A.model();
   await new Promise((r) => setTimeout(r, 0));
   assert.deepEqual(handed(), { banner: 'red', laurel: 'blue' });
+  // AUDIT PRE-MERGE 1003 O4: offline is a relay that opens no arena room, or a seat lost - a socket between rooms
+  // ('closed' for a door's reconnect) is online all the same (this pinned the socket's status)
   session.status = 'closed';
+  assert.deepEqual(handed(), { banner: 'red', laurel: 'blue' }, 'a door\'s reconnect is no logout');
+  session.arenaOk = false;
   assert.equal(handed(), null, 'offline: the save\'s league is the law');
-  session.status = 'open';
+  Object.assign(session, { arenaOk: true, superseded: true });
+  assert.equal(handed(), null, 'a seat lost: offline');
+  Object.assign(session, { status: 'open', superseded: false });
   // a bout between players: my rival's bill handed to the driver, by its side
   const hallLink = { status: 'open', join() {}, leave() {}, sendArena: () => true };
   const B2 = createArenaOnline({ now: () => 0, session: () => session, makeHall: () => hallLink, bouts, account: { board: async () => ({ ok: true, data: board }), claim: async () => ({ ok: true, data: {} }), me: () => null }, enterFloor: () => true });

@@ -198,7 +198,7 @@ test('the dungeon arrow never enters the draw list without a matrix', () => {
   // ensureArrowModel is async and its ONE caller does not await it, so
   // the push lands in a microtask - after the frame that called it has
   // returned. The host draws dynamicDraws BEFORE it calls drawFoes
-  // (dungeon.js:1110 against :1154; worldModes.js:8906 against :8937), so
+  // (dungeon.js:1110 against :1154; worldModes.js:8913 against :8944), so
   // an entry pushed with `matrix: null` was drawn with that null on
   // the very next frame. Firing a bow killed the frame loop.
   const src = readFileSync(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
@@ -246,7 +246,7 @@ test('a model missing from ARCH3D costs the placement, never the building', () =
   assert.match(ctx, /if \(!cpu\) console\.warn/, 'and the seam says so once, where it is discovered');
   // the dungeon's action-door arm had the same three traps
   const dungeon = readFileSync(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
-  assert.match(dungeon, /remapSubMeshes\(cpuModels\.get\(id\)\?\.subMeshes,/, 'ensureRemap guards its receiver');
+  assert.match(dungeon, /levelModelRemap\(id, cpuModels\.get\(id\)\?\.subMeshes,/, 'ensureRemap guards its receiver');   // AUDIT PRE-MERGE 1003 W4: through the level's remap seam (levelModelRemap -> remapSubMeshes)
   const doorArm = dungeon.match(/for \(const d of b\.layout\.actionDoors\)[\s\S]*?\n {4}}/)[0];
   assert.match(doorArm, /if \(!gpu \|\| !cpu\) \{/, 'the dungeon door arm skips a missing model');
 });

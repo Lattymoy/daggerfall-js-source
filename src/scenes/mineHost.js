@@ -21,6 +21,15 @@
 //   THE ACT. Foraging's Pick-Axe checks first (FORAGE0 14.3); the machine
 //   is systems/mineAct.js; the hand draws DFU's Warhammer (template 126),
 //   its StrikeDown frames on each swing.
+//
+// PROF2b (2026-10-03, Mac: "plus we need to build motherloads"): A
+// MOTHERLODE stands here too - on the pixel the service picked, at the rock
+// piece nearest the pixel's heart (else its stone, else where nature stands),
+// while it stands for this account (net/motherlodeBook.js): its ore's
+// flats, a heap of them and twice a vein's size, glowing and on the compass
+// from MOTHERLODE_MARK.reach. Its act is tier 6's; it asks an Apprentice's
+// Mining and the relay's Watch receipt for its pixel, which rides the
+// harvest (`ask`) to the service.
 // ═══════════════════════════════════════════════════════════════════
 import { veins, boulders, nodeKey, VEIN_TABLES, dungeonVeins, dveinKey } from '../net/nodeLaw.js';
 import { tierOpen, TIER_RANKS, PROF_RANK_MAX, pickAxeBand, minedMaterial, storesFullIn, GROUND_WHERE, GROUND_WHERE_WORDS } from '../net/professionLaw.js';
@@ -34,6 +43,8 @@ import { materialLabel } from '../systems/profItems.js';
 import { templateByIndex } from '../systems/itemTemplates.js';
 import { liveStat } from '../systems/statMods.js';
 import { getPref } from '../systems/uiPrefs.js';
+import { MOTHERLODE_TIER, MOTHERLODE_RANK } from '../net/motherlodeLaw.js';   // PROF2b
+import { MOTHERLODE_TEXT } from '../net/motherlodeBook.js';
 
 /** The item flats' archive; a picture a new ore has none of its own borrows Lodestone's (PROF0 4.8). */
 export const ORE_FLAT_ARCHIVE = 254;
@@ -65,6 +76,12 @@ export const MINE_MARKS = Object.freeze({
   vein: Object.freeze({ w: 1.6, h: 1.3 }), boulder: Object.freeze({ w: 2.1, h: 1.5 }), dvein: Object.freeze({ w: 1.4, h: 1.2 }),
 });
 const PROSPECTOR_MARKS = Object.freeze({ vein: Object.freeze({ ...MINE_MARKS.vein, reach: PROSPECT_M }), dvein: Object.freeze({ ...MINE_MARKS.dvein, reach: PROSPECT_M }) });
+/** PROF2b: a Motherlode's heap - this many of its ore's flats at this size, spread this far (m) - and its glow, marked
+ *  on the compass from `reach` off (the compass marks it from anywhere while it stands - scenes/world.js). */
+export const MOTHERLODE_FLATS = 7;
+export const MOTHERLODE_SCALE = 3.3;
+export const MOTHERLODE_SPREAD = 1.1;
+export const MOTHERLODE_MARK = Object.freeze({ w: 3.4, h: 2.6, reach: 400 });
 /** The Pick-Axe in the hand (FORAGE0 14.2): DFU's own Warhammer. */
 export const PICK_HAND = Object.freeze({ group: 'Weapons', templateIndex: 126, material: 0 });
 /** DFU's StrikeDown frames a swing plays (fpsWeapon.js clamps to the art's own count). */
@@ -188,6 +205,68 @@ export function standMineNodes({ px, py, day, climate, region = null, confirmed 
   out.push(...stones);
   return out;
 }
+/** AUDIT SILVER-WAYS D4: the pixel's tiles walked for a Motherlode's place this far apart (tiles), the nearest its heart
+ *  first. */
+const LODE_SEARCH_STEP = 4;
+/**
+ * AUDIT SILVER-WAYS D4: WHERE A MOTHERLODE STANDS WHEN ITS HEART CANNOT HOLD IT - the pixel's tiles every
+ * LODE_SEARCH_STEP, the nearest its heart first (the one order every client walks, so all stand it alike), the first
+ * where nature stands outside the pixel's town and its rocks; null on a pixel that holds none (all water, all cliff).
+ * A town over the heart with no stone within VEIN_STONE_REACH of it stood the day's Motherlode nowhere - risen in the
+ * chat and on every compass, and on no ground - the service picks pixels with no map (the witnesses' word on the ground
+ * is all it reads), and the witnesses' pixels are the ones folk walk, about the towns.
+ */
+function standAnywhere(samples, tilemap, locationRect, rocks) {
+  const c = Math.floor(WORLD_MAP_TILE_DIM / 2);
+  const tiles = [];
+  for (let y = LODE_SEARCH_STEP / 2; y < WORLD_MAP_TILE_DIM; y += LODE_SEARCH_STEP) {
+    for (let x = LODE_SEARCH_STEP / 2; x < WORLD_MAP_TILE_DIM; x += LODE_SEARCH_STEP) tiles.push({ x, y, d: (x - c) ** 2 + (y - c) ** 2 });
+  }
+  tiles.sort((a, b) => a.d - b.d || a.y - b.y || a.x - b.x);
+  for (const { x, y } of tiles) {
+    const at = natureStandsAt(samples, tilemap, locationRect, x, y);
+    if (at && onPixel(at.x, at.z) && !insideRocks(rocks, at.x, at.z)) return at;
+  }
+  return null;
+}
+/**
+ * PROF2b: A PIXEL'S MOTHERLODES AS THE CLIENT STANDS THEM - each standing one (`lodes`, net/motherlodeBook.js
+ * standingOn) at the foot of the rock piece nearest the pixel's heart, clear of the nodes already stood (`taken`, their
+ * `local`s) by NODE_SPACING_M; with no clear foot, on the stone nearest its heart, else where nature stands there. `{ key,
+ * what: 'motherlode', slot, tier, material, local, rock, lift, lode }`, `local` pixel-local metres.
+ * @param {{ lodes: any[], samples: Float32Array, tilemap: Uint8Array, locationRect?: any, rocks?: number[][], taken?: number[][] }} p
+ */
+export function standMotherlodes({ lodes, samples, tilemap, locationRect = null, rocks = [], taken = [] }) {
+  const out = [];
+  const pieces = rocks ?? [];
+  const clear = (x, z) => onPixel(x, z) && !insideRocks(pieces, x, z) && ![...taken, ...out.map((n) => n.local)].some((t) => Math.hypot(t[0] - x, t[2] - z) < NODE_SPACING_M);
+  for (const lode of lodes ?? []) {
+    const cx = TERRAIN_SIZE / 2, cz = TERRAIN_SIZE / 2;
+    let local = null, rock = null;
+    const order = pieces.map((b, i) => ({ i, d: toBox(b, cx, cz) })).sort((a, b) => a.d - b.d || a.i - b.i);
+    for (const { i } of order) {
+      for (const [tx, tz] of footTargets(pieces[i], cx, cz)) {
+        const foot = rockFoot(pieces[i], tx, tz);
+        if (!clear(foot[0], foot[1])) continue;
+        local = [foot[0], groundAt(samples, foot[0], foot[1]), foot[1]];
+        rock = pieces[i];
+        break;
+      }
+      if (local) break;
+    }
+    if (!local) {
+      // no clear foot at a piece: the stone nearest its heart, else where nature stands there - a Motherlode stands
+      // wherever its pixel can hold it, a vein beside it or not (it is the day's one; a vein moves aside for none)
+      const t = Math.floor(WORLD_MAP_TILE_DIM / 2);
+      const at = nearestStone(samples, tilemap, locationRect, t, t, VEIN_STONE_REACH, pieces) ?? natureStandsAt(samples, tilemap, locationRect, t, t)
+        ?? standAnywhere(samples, tilemap, locationRect, pieces);
+      if (at && onPixel(at.x, at.z) && !insideRocks(pieces, at.x, at.z)) local = [at.x, at.y, at.z];
+    }
+    if (!local) continue;
+    out.push({ key: lode.key, what: 'motherlode', slot: lode.k, tier: MOTHERLODE_TIER, material: lode.material, local, rock, lift: 0.9, lode });
+  }
+  return out;
+}
 /** A dungeon vein's checks: Foraging's inside, settlement, daylight and sea are the surface's (PROF0 5.1, 23) - the foe
  *  and the load are asked. */
 export const DUNGEON_SKIP = Object.freeze(['inside', 'town', 'daylight', 'sea']);
@@ -210,11 +289,11 @@ export function standDungeonVeins({ dungeon, day, climate, confirmed = false, wa
 /** A node's flats: a cluster round its foot, turned by its slot. */
 export function mineFlats(node) {
   const [x, y, z] = node.local;
-  const n = node.what === 'boulder' ? STONE_FLATS : VEIN_FLATS;
+  const n = node.what === 'boulder' ? STONE_FLATS : node.what === 'motherlode' ? MOTHERLODE_FLATS : VEIN_FLATS;   // PROF2b: a heap
   const out = [];
   for (let i = 0; i < n; i++) {
     const a = node.slot * 1.7 + (i * 2 * Math.PI) / n;
-    const r = i === 0 ? 0 : node.what === 'dvein' ? VEIN_SPREAD / 2 : VEIN_SPREAD;   // on a wall the ore sits close
+    const r = i === 0 ? 0 : node.what === 'dvein' ? VEIN_SPREAD / 2 : node.what === 'motherlode' ? MOTHERLODE_SPREAD : VEIN_SPREAD;   // on a wall the ore sits close
     out.push([x + Math.cos(a) * r, y, z + Math.sin(a) * r]);
   }
   return out;
@@ -248,41 +327,72 @@ export function minePlan({ node, taken, counting, rank, pick, storesFull, today,
   return { harvest, verb, rest: rankWord, ready: true };
 }
 
+/**
+ * PROF2b: WHAT E DOES AT A MOTHERLODE - minePlan's shape: struck today by this character (or being counted), the
+ * account's one found, an Apprentice's Mining (MOTHERLODE_RANK, not tier 6's), the Pick-Axe, the Stores' room. The
+ * day's sixty are a vein's; a Motherlode is none of them.
+ * @param {{ node: any, taken: boolean, counting: boolean, found: boolean, rank: number, pick: boolean, storesFull: (key: string) => boolean }} o
+ */
+export function motherlodePlan({ node, taken, counting, found, rank, pick, storesFull }) {
+  const name = materialLabel(node.material);
+  const verb = `Strike the Motherlode of ${name}`;
+  if (taken) return { harvest: 'ore', verb: 'The Motherlode - struck today', rest: '', ready: false };
+  if (counting) return { harvest: 'ore', verb, rest: 'being counted', ready: false };
+  if (found) return { harvest: 'ore', verb, rest: 'your Motherlode today is found', ready: false };
+  if (rank < MOTHERLODE_RANK) return { harvest: 'ore', verb, rest: `needs Mining ${MOTHERLODE_RANK}`, ready: false, needsRank: MOTHERLODE_RANK };
+  if (!pick) return { harvest: 'ore', verb, rest: 'needs a Pick-Axe', ready: false };
+  if (storesFull(node.material)) return { harvest: 'ore', verb, rest: `Stores full - ${name}`, ready: false };
+  return { harvest: 'ore', verb, rest: `Mining ${rank}`, ready: true };
+}
+
 /** The hand's StrikeDown frame for a swing's phase (1 just struck, 0 none) - Idle between swings. */
 export const pickHandFrame = (swing) => (swing > 0 ? { state: 'StrikeDown', frame: Math.min(STRIKE_FRAMES - 1, Math.floor((1 - swing) * STRIKE_FRAMES)) } : { state: 'Idle', frame: 0 });
 
 /**
  * MINING'S KIND in the gathering host (scenes/gatherHost.js): the veins and boulders, their pictures, the plan, the act.
- * @param {{ book: any }} deps
+ * PROF2b: and the Motherlodes standing (`lodes`, net/motherlodeBook.js), their strike's silver said through `marks`
+ * (net/marksBook.js strikeLine).
+ * @param {{ book: any, lodes?: any, marks?: any }} deps
  * @returns {import('./gatherHost.js').GatherKind}
  */
-export function mineKind({ book }) {
+export function mineKind({ book, lodes = null, marks = null }) {
   const harvestOf = (n) => (n.what === 'boulder' ? 'stone' : 'ore');
-  const gone = (n) => book.taken(n.key, harvestOf(n));
+  const gone = (n) => book.taken(n.key, harvestOf(n)) || (n.what === 'motherlode' && !!lodes?.found?.());   // PROF2b: the account's one found
   return {
     id: 'mine',
     professions: Object.freeze(['mining']),
     nodesOf({ px, py, day, info, confirmed, entry }) {
-      return standMineNodes({
-        px, py, day, climate: info.climate, region: info.region, confirmed,
+      const stone = {
         samples: entry.samples, tilemap: entry.tilemap, locationRect: entry.locationRect ?? entry.wodSite ?? null, rocks: entry.rocks ?? [],   // AUDIT 29 C8
-      });
+      };
+      const nodes = standMineNodes({ px, py, day, climate: info.climate, region: info.region, confirmed, ...stone });
+      // PROF2b: a Motherlode standing on this pixel, clear of its veins and boulders
+      const here = lodes?.standingOn?.(px, py) ?? [];
+      return here.length ? [...nodes, ...standMotherlodes({ lodes: here, ...stone, taken: nodes.map((n) => n.local) })] : nodes;
     },
     dungeonNodesOf({ dungeon, day, info, confirmed, wall }) {
       return standDungeonVeins({ dungeon, day, climate: info.climate, confirmed, wall });
     },
-    flatsOf: (n) => [{ archive: ORE_FLAT_ARCHIVE, record: mineRecord(n), scale: n.what === 'boulder' ? STONE_SCALE : VEIN_SCALE, centers: mineFlats(n) }],
+    flatsOf: (n) => [{ archive: ORE_FLAT_ARCHIVE, record: mineRecord(n), scale: n.what === 'boulder' ? STONE_SCALE : n.what === 'motherlode' ? MOTHERLODE_SCALE : VEIN_SCALE, centers: mineFlats(n) }],
     gone,
     /** NODE-MARKS: every vein and boulder standing; a Prospector's veins from PROSPECT_M off (PROF0 3.3) */
     mark(n, { specs }) {
       if (gone(n)) return null;
+      if (n.what === 'motherlode') return MOTHERLODE_MARK;   // PROF2b: from 400 m, whatever the specialisation
       return (specs('mining')[50] === 'prospector' && PROSPECTOR_MARKS[n.what]) || MINE_MARKS[n.what] || MINE_MARKS.vein;
     },
     tools: Object.freeze([FT.PickAxe]),   // TOOL-USE: the Pick-Axe's Use at a vein or a boulder is E there
     where: (n) => (n.what === 'dvein' ? null : actChecksRefusal(GROUND_WHERE, GROUND_WHERE_WORDS)),   // SETTLE-SAID: a dungeon's vein asks no settlement (DUNGEON_SKIP)
     /** PROF-MENU: the menu's title - the boulder, or the vein's ore. */
-    nodeName: (n) => (n.what === 'boulder' ? 'Boulder' : `${materialLabel(n.material).replace(/ Ore$/, '')} Vein`),
+    nodeName: (n) => (n.what === 'boulder' ? 'Boulder' : n.what === 'motherlode' ? `Motherlode of ${materialLabel(n.material).replace(/ Ore$/, '')}` : `${materialLabel(n.material).replace(/ Ore$/, '')} Vein`),
     plan(n, { entity, rank }) {
+      if (n.what === 'motherlode') {   // PROF2b
+        const plan = motherlodePlan({
+          node: n, taken: book.taken(n.key, 'ore'), counting: book.counting(n.key, 'ore'), found: !!lodes?.found?.(), rank: rank('mining'),
+          pick: !!foragingToolIn(entity, FT.PickAxe), storesFull: (key) => storesFullIn(book, key),
+        });
+        return { ...plan, profession: 'mining' };
+      }
       const plan = minePlan({
         node: n, taken: book.taken(n.key, harvestOf(n)), counting: book.counting(n.key, harvestOf(n)), rank: rank('mining'),
         pick: !!foragingToolIn(entity, FT.PickAxe), storesFull: (key) => storesFullIn(book, key),   // STORES-ROOM: every origin, as the service counts
@@ -293,6 +403,9 @@ export function mineKind({ book }) {
     start(n, plan, { entity, rank }) {
       const refusal = foragingActRefusal(FT.PickAxe, n.what === 'dvein' ? DUNGEON_SKIP : null);
       if (refusal) return { refused: refusal };
+      // PROF2b: a Motherlode's strike carries the relay's word that it stood on its pixel - none yet, no act
+      const watch = n.what === 'motherlode' ? lodes?.watchFor?.(n.lode.x, n.lode.y) ?? null : null;
+      if (n.what === 'motherlode' && !watch) return { refused: MOTHERLODE_TEXT.watch };
       return {
         act: createMineAct({
           tier: n.tier, band: pickAxeBand({ intelligence: liveStat(entity, 'intelligence'), agility: liveStat(entity, 'agility') }),
@@ -300,7 +413,22 @@ export function mineKind({ book }) {
         }),
         harvest: plan.harvest, tool: foragingToolIn(entity, FT.PickAxe), profession: 'mining', label: '',
         hand: (a) => (a.tool ? { ...PICK_HAND, ...pickHandFrame(a.act.swing) } : null),
+        // AUDIT SILVER-WAYS D5: the receipt asked again at the act's end - the newest standing then (one the relay handed
+        // during a long act), the start's where none newer stands
+        ...(watch ? { ask: () => ({ watch: lodes?.watchFor?.(n.lode.x, n.lode.y, 0) ?? watch }) } : {}),
       };
+    },
+    /** AUDIT SILVER-WAYS D2: a Motherlode's refusal told to the Motherlodes' book (its twenty, the find, the list read
+     *  again), which stands its pixel again. */
+    refused(key, error) {
+      if (typeof key === 'string' && key.startsWith('mlode:')) lodes?.refused?.(key, error);
+    },
+    /** PROF2b: a Motherlode's answer - the find and its count told to the Motherlodes' book, its silver said. */
+    answered(d, toast, o = {}) {
+      if (!d?.motherlode) return;
+      lodes?.heard?.(d);
+      const line = d.marks ? marks?.strikeLine?.(d.marks) ?? null : null;   // the balance kept either way
+      if (typeof line === 'string' && line && o?.hauled !== true) toast(line);   // HAUL-CARDS: its card says the silver
     },
     cleanNote: () => ' (every strike on the glint)',
     title: () => 'Miner',

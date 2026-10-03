@@ -60,6 +60,7 @@ import { wearForagingTool } from '../systems/foragingInstall.js';
 import { materialCountLabel } from '../systems/profItems.js';
 import { accountRefusalText } from '../net/accountClient.js';
 import { DEFAULT_ACTIVATION_DISTANCE } from '../player/activate.js';
+import { harvestHauls } from '../ui/haulCards.js';   // HAUL-CARDS: a harvest's goods and XP as one card, on the enhanced skin
 import { nodeMarkCss } from '../ui/nodeMarks.js';   // GATHER-OW: a group's glyph in its profession's compass colour
 
 /** A node answers E within DFU's activation distance, and within this many degrees of the look. */
@@ -198,7 +199,11 @@ export function aimAt(eyePos, at, view) {
  * @property {() => { n: number, cap: number }} [tally] PROF7: the day's count the chip says, where it is not the
  *   character's harvests against 60 (Hunting's: the account's hides against 30)
  * @property {(data: any) => string} [storesLine] PROF8: the goods' one line in the kind's own words (a haul's species)
- * @property {(data: any, toast: (text: string) => void) => void} [answered] PROF8: a harvest's answer heard - the kind's
+ * @property {(key: string, error: (string|null)) => void} [refused] AUDIT SILVER-WAYS D2: a harvest refused - the node's key
+ *   and the service's word - so a kind learns what the refusal says of its node (REFUSALS-LEARNED)
+ * @property {(data: any) => (string|null)} [haulName] HAUL-CARDS: the kind's own name for a harvest's goods on its card
+ *   (PROF8's species - the material its sub), where the material's is not the word
+ * @property {(data: any, toast: (text: string) => void, o?: { hauled?: boolean }) => void} [answered] PROF8: a harvest's answer heard - the kind's
  *   own after-step (a trophy into the pack, once)
  * @property {(node: any, ctx: { specs: (profession: string) => any }) => ({ w: number, h: number, reach?: number }|null)} [mark]
  *   NODE-MARKS: the node on the compass and in the glow - its footprint about its base (`w` across, `h` up, metres) and
@@ -223,7 +228,7 @@ export function aimAt(eyePos, at, view) {
  *   activeDungeon?: () => boolean, onSettle?: () => void, clear?: (from: number[], to: number[], underground: boolean) => boolean,
  *   plaque?: () => boolean, lit?: (key: string) => any, choose?: (rows: string[], pick: (i: number) => void) => boolean,
  *   step?: (n: number) => boolean, settled?: (pos: number[]) => boolean,
- *   pointer?: (want: 'cursor'|'look') => ((() => void) | null),
+ *   pointer?: (want: 'cursor'|'look') => ((() => void) | null), haul?: (entries: any[]) => boolean,
  * }} deps `active` - the streaming world's exterior, walking, nothing over it (the host's); `activeDungeon` - a dungeon
  *   entered, walking, nothing over it; `nowMs` the shared clock. PROF-MENU: `plaque` - the loot plaque stands (it names
  *   the node, so no prompt does); `lit(key)` - the row the plaque has lit over that key (quickLoot.js plaqueActionFor);
@@ -551,7 +556,7 @@ export function createGatherHost(deps) {
     const before = rank(a.profession);
     book.harvest({
       node: a.node.key, kind: a.harvest, climate: a.info?.climate ?? null, region: a.info?.region ?? null, act: report,   // PROF7: a body names no ground
-      at: Math.floor(deps.nowMs() / 1000), ...(a.ask ?? {}),
+      at: Math.floor(deps.nowMs() / 1000), ...((typeof a.ask === 'function' ? a.ask() : a.ask) ?? {}),   // AUDIT SILVER-WAYS D5: a kind's ask may be asked at the act's end
     }).then((r) => answered(a, r, before), () => {});
   }
   /** A harvest's answer said: the Stores, the XP, a gem, a rank's rise; a refusal in words; a kept one once. */
@@ -561,10 +566,18 @@ export function createGatherHost(deps) {
       const d = r.data;
       const profession = d.track?.profession ?? a?.profession ?? 'herbalism';
       const k = a ? kindOf(a.node) : kindOfProfession(profession);
-      hud.toast(k?.storesLine ? k.storesLine(d) : storesLine(d), { keep: true });   // GATHER-SAID: the goods in one line, outlasting the rest; PROF4's Resin, PROF7's butchery in it; PROF8's species
-      if (!storesSaid) { storesSaid = true; hud.toast(storesWhereLine(deps.keyLabel?.('Professions') ?? '')); }
       const note = a && k?.actNote ? k.actNote(a.report) : a?.clean ? (k?.cleanNote(a, d) ?? '') : '';   // AUDIT 32 P10
-      hud.toast(`+${d.xp} ${professionName(profession)} XP${note}`);
+      // HAUL-CARDS: on the enhanced skin the goods, their Stores and the XP are ONE card under the crosshair (the loot's
+      // band - ui/pickupFeed.js showHaul); the classic skin, or a face that cannot draw, says the lines as ever
+      // AUDIT HAUL-CARDS A3: only on a live world (walking, nothing over it) - a window open as the answer lands takes
+      // the feed down with the plaque (ui/worldPlaque.js hideWorldPlaque), and the card went before it was seen, its
+      // lines unsaid; there the lines are said as ever
+      const live = deps.active?.() === true || deps.activeDungeon?.() === true;
+      let hauled = false;
+      try { hauled = live && deps.haul?.(harvestHauls(d, { name: k?.haulName?.(d) ?? null, note })) === true; } catch { hauled = false; }
+      if (!hauled) hud.toast(k?.storesLine ? k.storesLine(d) : storesLine(d), { keep: true });   // GATHER-SAID: the goods in one line, outlasting the rest; PROF4's Resin, PROF7's butchery in it; PROF8's species
+      if (!storesSaid) { storesSaid = true; hud.toast(storesWhereLine(deps.keyLabel?.('Professions') ?? '')); }
+      if (!hauled) hud.toast(`+${d.xp} ${professionName(profession)} XP${note}`);
       const after = d.track?.rank ?? before;
       if (after > before) {
         hud.toast(`${professionName(profession)} ${before} -> ${after}`);
@@ -575,7 +588,7 @@ export function createGatherHost(deps) {
           if (at === 50 || at === 100) hud.toast('A specialisation may be chosen on the Professions page (the pause menu\'s Stats).');
         }
       }
-      try { k?.answered?.(d, (t) => hud.toast(t)); } catch (e) { console.warn('[gather] an answer', e); }   // PROF8: a trophy into the pack
+      try { k?.answered?.(d, (t) => hud.toast(t), { hauled }); } catch (e) { console.warn('[gather] an answer', e); }   // PROF8: a trophy into the pack; HAUL-CARDS: `hauled` - its card said the goods (a Motherlode's silver on it)
       chipProfession = profession;
       chipLeft = CHIP_S;
       if (a && !a.loose && k?.gone(a.node)) {   // PROF7: a body stands nothing of the host's to stand again
@@ -596,11 +609,17 @@ export function createGatherHost(deps) {
     if (r?.error === 'lapsed') { hud.toast(LAPSED_LINE); return; }
     hud.toast(accountRefusalText(r?.error));
     if (a && !a.loose && r?.error === 'node-taken') restandOf(a);
+    // AUDIT SILVER-WAYS D2 (REFUSALS-LEARNED): the refusal handed to the kinds - a Motherlode spent, found or gone is
+    // learned (scenes/mineHost.js), its pixel stood again
+    const key = a?.node?.key ?? nodeKeyOf;
+    if (typeof key === 'string') for (const k of kinds) { try { k.refused?.(key, r?.error ?? null); } catch (e) { console.warn('[gather] a refusal', e); } }
   }
 
   return {
     /** A pixel built: its nodes stood. */
     onBuilt(entry) { if (entry) stand(entry); },
+    /** PROF2b: a pixel's nodes stood again, where it is built - a Motherlode risen on it, gone or spent. */
+    restandAt(px, py) { restandAt(px, py); },
     /** A pixel torn down: its batches went with it (they are in its list); forgotten here. */
     onDestroyed(entry) {
       if (!entry) return;

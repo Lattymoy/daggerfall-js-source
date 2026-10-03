@@ -515,7 +515,7 @@ test('PICKUP-FEED: the sheet is the skin\'s - the pixel face, the plaque\'s veil
   assert.match(css, /\.pickfeed-card\[data-rarity\] \.pickfeed-name \{ color: var\(--rar\); \}/, 'the name in its tier');
   assert.match(css, /scale\(var\(--hud-scale, 1\)\)/, 'the HUD\'s scale');
   assert.match(css, /\.pickfeed \{[^}]*z-index: 4;/, 'the HUD\'s own layer - every window stands over it');
-  assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{\s*\.pickfeed-card, \.pickfeed-count, \.pickfeed-name \{ animation: none !important; transition: none !important; \} \}/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{\s*\.pickfeed-card, \.pickfeed-count, \.pickfeed-name, \.pickfeed-plus, \.haul-fill \{ animation: none !important; transition: none !important; \} \}/);   // HAUL-CARDS (PIN MOVED): a haul card's "+N" pop and its bar's slide too
   assert.match(css, /\.pickfeed-card\.pf-over \{ display: none; \}/);
 });
 
@@ -525,7 +525,7 @@ test('PICKUP-FEED: FOUR HOSTS - every quick-loot take in every host hands the ta
   const files = { 'src/scenes/world.js': 2, 'src/scenes/exterior.js': 2, 'src/scenes/worldModes.js': 2, 'src/scenes/dungeonContext.js': 1 };
   for (const [f, n] of Object.entries(files)) {
     const src = rd(f);
-    assert.match(src, /import \{ showPickups \} from '\.\.\/ui\/pickupFeed\.js';/, `${f}: the feed's door`);
+    assert.match(src, /import \{ showPickups(, showHaul)? \} from '\.\.\/ui\/pickupFeed\.js';/, `${f}: the feed's door`);   // HAUL-CARDS (PIN MOVED): the world host takes the haul's door beside it
     const calls = src.match(/quickLootTake\([^\n]*/g) ?? [];
     assert.equal(calls.length, n, `${f}: the calls`);
     for (const c of calls) assert.match(c, /\{ getQuest: [^\n]*, took: showPickups \}\)/, `${f}: ${c.slice(0, 60)}... hands the take the cards`);

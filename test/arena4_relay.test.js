@@ -91,10 +91,11 @@ test('ARENA4 the hall: two registered fighters queued are offered one bout, both
   assert.equal(last(A, 'go'), null, 'one yes is not a bout');
   await word(H, B, { k: 'y', o: oa.o });
   const ga = last(A, 'go'), gb = last(B, 'go');
-  assert.deepEqual([ga.o, ga.side, gb.side], [oa.o, 0, 1]);
-  assert.ok(W.made.has(arenaBoutRoom(oa.o)), 'the bout\'s room was opened by the hall');
+  assert.deepEqual([ga.o, ga.side, gb.side], [gb.o, 0, 1]);
+  assert.notEqual(ga.o, oa.o, 'AUDIT PRE-MERGE 1003 S7: the bout\'s room minted at the go, never the offer\'s id');
+  assert.ok(W.made.has(arenaBoutRoom(ga.o)), 'the bout\'s room was opened by the hall');
   await word(H, A, { k: 'ls' });
-  assert.equal(last(A, 'live').l[0].o, oa.o, 'and it is on the list to watch');
+  assert.equal(last(A, 'live').l[0].o, ga.o, 'and it is on the list to watch');
   // the band: 1000 and 1500 wait past four widenings before they meet
   const W2 = fakeRooms();
   const P = await hallOf(W2, { ar: 1000 }, { ar: 1500 });
@@ -153,11 +154,12 @@ test('ARENA4 the offer: a no sends the other back to the queue, its wait kept, a
 
 /** A matched bout between Alva and Brann, both on its sand, its law running. */
 async function matched(W, step) {
-  const { H, A, B } = await hallOf(W);
+  const { H, A, B } = await hallOf(W, { ar: 1000, lv: 20 }, { ar: 1040, lv: 30 });   // AUDIT PRE-MERGE 1003 S3: the vitality's level is the hall's token's, never the queue word's
   await word(H, A, { k: 'q', lv: 20 }); await word(H, B, { k: 'q', lv: 30 });
   step(1000); await H.fire();
-  const o = last(A, 'of').o;
-  await word(H, A, { k: 'y', o }); await word(H, B, { k: 'y', o });
+  const of = last(A, 'of').o;
+  await word(H, A, { k: 'y', o: of }); await word(H, B, { k: 'y', o: of });
+  const o = last(A, 'go').o;   // AUDIT PRE-MERGE 1003 S7: the room the go names
   const R = W.room(arenaBoutRoom(o));
   const pair = await relayPair();
   R.env.GATE_SIGNING_KEY = pair.pkcs8;
@@ -277,8 +279,9 @@ test('ARENA4 a forfeit and a void: a fighter gone from a live fight past fifteen
   const { H, A, B } = await hallOf(W2);
   await word(H, A, { k: 'q' }); await word(H, B, { k: 'q' });
   step(1000); await H.fire();
-  const o = last(A, 'of').o;
-  await word(H, A, { k: 'y', o }); await word(H, B, { k: 'y', o });
+  const of = last(A, 'of').o;
+  await word(H, A, { k: 'y', o: of }); await word(H, B, { k: 'y', o: of });
+  const o = last(A, 'go').o;   // AUDIT PRE-MERGE 1003 S7: the room the go names
   const R2 = W2.room(arenaBoutRoom(o));
   const x = R2.connect();
   await R2.hello(x, 'fight-x01', null, { name: 'Alva', kind: 'linked', tokenSub: 'acct-alva' });

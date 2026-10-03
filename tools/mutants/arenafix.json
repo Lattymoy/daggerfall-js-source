@@ -283,7 +283,7 @@
   {
     "name": "ARENAFIX-WALK-PACE",
     "file": "src/characters/enemyMotor.js",
-    "old": "        const sp = this.speed * (this._tacDir ? this._tacSpeed : 1) * (this._pace ?? 1);",
+    "old": "        const sp = this.speed * (this._tacDir ? this._tacSpeed : 1) * pace;",
     "new": "        const sp = this.speed * (this._tacDir ? this._tacSpeed : 1) * 0.05;",
     "tests": [
       "test/arena_fix.test.js"

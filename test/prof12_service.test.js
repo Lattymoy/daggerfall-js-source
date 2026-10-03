@@ -99,7 +99,7 @@ test('PROF12 service: a Healing brewed at rank 0 - DFU\'s own recipe law on the 
   s.raw.prepare("DELETE FROM prof_stores WHERE player = ? AND material = 'p1:16'").run(mac.id);
   s.give(mac, 'p1:16', 'gold', 1);
   assert.deepEqual((await s.brew(mac, 'healing', HEALING)).body, { error: 'stores-gold' });
-  assert.match(ACCOUNT_VERSION, /^acct71$/   /* PIN MOVED (AUDIT PROF-541, the arena merge's acct71): the live version */);
+  assert.match(ACCOUNT_VERSION, /^acct72$/   /* PIN MOVED (AUDIT PROF-541, SILVER-WAYS' acct71, the arena merge's acct72): the live version */);
 });
 
 test('PROF12 service: the alchemist\'s ladder asked (Invisibility at 70, refused below, nothing spent); a brew\'s potions - 2 at Journeyman, a Brewer\'s 3, 3 at Master; Potent at Expert\'s 10% (the roll under it Potent, at it plain), a Distiller\'s +10 at 50, a Master Alchemist\'s +40% share; no 500 for a cauldron wholly of the Apothecaries\' goods', async () => {

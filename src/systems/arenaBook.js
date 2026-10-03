@@ -38,6 +38,12 @@ export const HOUSE_DRAW = 0.04;
 const STRENGTH_SPREAD = 3;
 /** How many wagers the book keeps. */
 export const WAGERS_KEPT = 20;
+/** AUDIT PRE-MERGE 1003 B3: THE BOUT LEFT - an exhibition of this screen's seen past its word and walked away from before
+ *  its verdict (scenes/arenaBouts.js dismiss), kept as the hour's verdict seen: no side won it for the one who backed
+ *  either (settleBook - lost), and the book on it is shut (wagerRefusal). */
+export const BOUT_LEFT = 'left';
+/** A verdict seen as the book keeps it: a side, a draw (null), or the bout left. */
+const seenSide = (side) => (side === 0 || side === 1 || side === BOUT_LEFT ? side : null);
 /** THE BOOKMAKER'S PRICES (net to one), longest-standing first - the house rounds a price down to the one under it. */
 export const ODDS_LADDER = Object.freeze([
   [1, 5], [2, 9], [1, 4], [2, 7], [1, 3], [4, 11], [2, 5], [4, 9], [1, 2], [8, 15], [4, 7], [8, 13], [4, 6], [8, 11],
@@ -64,7 +70,7 @@ export function bookRestore(raw) {
     names: Array.isArray(w.names) ? [String(w.names[0] ?? '').slice(0, 60), String(w.names[1] ?? '').slice(0, 60)] : ['', ''],
     at: int(w.at, 0, 1e12), status: STATUS.has(w.status) ? w.status : 'open', paid: int(w.paid, 0, 1e9), seen: w.seen === true,
   }));
-  b.seen = (Array.isArray(raw.seen) ? raw.seen : []).slice(0, WAGERS_KEPT).filter((s) => s && Number.isFinite(Number(s.hour))).map((s) => ({ hour: int(s.hour, 0, 1e9), side: s.side === 0 || s.side === 1 ? s.side : null }));
+  b.seen = (Array.isArray(raw.seen) ? raw.seen : []).slice(0, WAGERS_KEPT).filter((s) => s && Number.isFinite(Number(s.hour))).map((s) => ({ hour: int(s.hour, 0, 1e9), side: seenSide(s.side) }));   // AUDIT PRE-MERGE 1003 B3: and the bout left
   return b;
 }
 
@@ -91,16 +97,20 @@ export function exhibitionOdds(ex) {
   return [pa, 1 - pa];
 }
 /** The bookmaker's price for a chance `p`: the fair price shaded by the house's tenth and rounded down his ladder -
- *  `[num, den]`, paying `num` for every `den` staked. */
+ *  `[num, den]`, paying `num` for every `den` staked; null when even his shortest is too long (he lays no price).
+ *  @returns {[number, number] | null} */
 export function priceFor(p) {
   const fair = 1 / Math.max(0.01, Math.min(0.99, p)) - 1;
   const net = fair * (1 - BOOK_EDGE);
-  let best = ODDS_LADDER[0];
+  // AUDIT PRE-MERGE 1003 B4: A FAVOURITE SHORTER THAN HIS SHORTEST RUNG IS NOT LAID. Past a chance of 0.818 the shaded
+  // price is under 1 to 5, and 1 to 5 was laid anyway - better than fair (1.08 back for every 1 staked at 0.9, 9.8% a
+  // year backing every such favourite unseen); his ladder ends at 1 to 5 (Arena.md), so the side is refused instead
+  let best = null;
   for (const x of ODDS_LADDER) if (x[0] / x[1] <= net + 1e-9) best = x;
-  return /** @type {[number, number]} */ ([best[0], best[1]]);
+  return best ? [best[0], best[1]] : null;
 }
-/** A price said: "evens", "7 to 4". */
-export const oddsText = ([num, den]) => (num === den ? B().evens : B().price(num, den));
+/** A price said: "evens", "7 to 4" - AUDIT PRE-MERGE 1003 B4: "no price" for a side he will not lay. */
+export const oddsText = (pr) => (!pr ? B().noPrice : pr[0] === pr[1] ? B().evens : B().price(pr[0], pr[1]));
 /** What a winning stake pays back, stake and winnings, in whole gold. */
 export const payoutFor = (stake, [num, den]) => Math.max(0, Math.floor(stake)) + Math.floor((Math.max(0, Math.floor(stake)) * num) / den);
 
@@ -118,14 +128,19 @@ export function houseOutcome(ex) {
 /** The book's wager on the bout of `hour`, or null. */
 export const wagerOn = (book, hour) => bookRestore(book).wagers.find((w) => w.hour === hour) ?? null;
 
+/** AUDIT PRE-MERGE 1003 B3: whether the book keeps a verdict seen here for the bout of `hour` (or the bout left). */
+export const bookSaw = (book, hour) => bookRestore(book).seen.some((s) => s.hour === hour);
 /**
  * Why a wager of `stake` on `ex` will not be taken now, or null: 'none' (no bout this hour), 'closed' (not open, or the
- * fight begun), 'placed' (one stands on it), 'stake' (under the least or over the most), 'gold' (more than the purse).
+ * fight begun - AUDIT PRE-MERGE 1003 B3: or the bout already seen here, to its verdict or left), 'placed' (one stands on
+ * it), 'price' (AUDIT PRE-MERGE 1003 B4: fighter `side` he lays no price on), 'stake' (under the least or over the
+ * most), 'gold' (more than the purse).
  */
-export function wagerRefusal(book, ex, stake, { gold = 0, begun = false } = {}) {
+export function wagerRefusal(book, ex, stake, { gold = 0, begun = false, side = null } = {}) {
   if (!ex) return 'none';
-  if (!ex.open || begun) return 'closed';
+  if (!ex.open || begun || bookSaw(book, ex.hour)) return 'closed';
   if (wagerOn(book, ex.hour)) return 'placed';
+  if (side != null && !priceFor(exhibitionOdds(ex)[side === 1 ? 1 : 0])) return 'price';
   if (!(stake >= STAKE_MIN && stake <= STAKE_MAX)) return 'stake';
   if (stake > gold) return 'gold';
   return null;
@@ -135,22 +150,23 @@ export function wagerRefusal(book, ex, stake, { gold = 0, begun = false } = {}) 
 export function placeWager(book, ex, side, stake, { gold = 0, begun = false, gameMinutes = 0 } = {}) {
   const b = bookRestore(book);
   const s = Math.floor(Number(stake) || 0);
-  const reason = wagerRefusal(b, ex, s, { gold, begun });
+  const reason = wagerRefusal(b, ex, s, { gold, begun, side: side === 1 ? 1 : 0 });   // AUDIT PRE-MERGE 1003 B4: the side's price
   if (reason) return { ok: false, book: b, reason, cost: 0 };
   const odds = exhibitionOdds(ex);
-  const [num, den] = priceFor(odds[side === 1 ? 1 : 0]);
+  const [num, den] = /** @type {[number, number]} */ (priceFor(odds[side === 1 ? 1 : 0]));
   const names = ex.opponents.map((o, i) => fighterIdentity(ex.seed, i, o.mobile).name);
   b.wagers.unshift({ hour: ex.hour, side: side === 1 ? 1 : 0, stake: s, num, den, names: [names[0], names[1]], at: Math.floor(gameMinutes), status: 'open', paid: 0, seen: false });
   b.wagers = b.wagers.slice(0, WAGERS_KEPT);
   b.staked += s;
   return { ok: true, book: b, reason: null, cost: s };
 }
-/** THE VERDICT SEEN on this screen for the exhibition of `hour` (`side` 0 / 1, null a draw): kept, so the wager on it is
- *  settled by what was seen rather than the house's record. A new book. */
+/** THE VERDICT SEEN on this screen for the exhibition of `hour` (`side` 0 / 1, null a draw, BOUT_LEFT left after its
+ *  word): kept, so the wager on it is settled by what was seen rather than the house's record. A new book.
+ *  AUDIT PRE-MERGE 1003 B3: kept whether or not a wager stands on it - the book on an hour seen here takes none after
+ *  (wagerRefusal): once its bout was gone the word no longer shut it, and a wager on a winner already seen was taken. */
 export function bookVerdict(book, hour, side) {
   const b = bookRestore(book);
-  if (!b.wagers.some((w) => w.hour === hour && w.status === 'open')) return b;
-  b.seen = [{ hour, side: side === 0 || side === 1 ? side : null }, ...b.seen.filter((s) => s.hour !== hour)].slice(0, WAGERS_KEPT);
+  b.seen = [{ hour, side: seenSide(side) }, ...b.seen.filter((s) => s.hour !== hour)].slice(0, WAGERS_KEPT);
   return b;
 }
 /**
@@ -175,7 +191,8 @@ export function settleBook(book, gameMinutes, { liveHour = null } = {}) {
     b.owed += w.paid;
     settled.push(w);
   }
-  b.seen = b.seen.filter((s) => b.wagers.some((w) => w.hour === s.hour && w.status === 'open'));
+  // AUDIT PRE-MERGE 1003 B3: the verdicts seen are kept (the newest WAGERS_KEPT - bookVerdict), settled or never wagered
+  // on: each shuts its hour's book
   return { book: b, settled };
 }
 /** COLLECT at the bookmaker's stall: `{ book, gold }` - what he owed, paid. */
@@ -195,6 +212,8 @@ export function wagerLine(w) {
   if (w.status === 'draw') return `${on} - ${B().drawLine}`;
   return `${on} - ${B().lostLine}`;
 }
+/** AUDIT PRE-MERGE 1003 B4: the line for each fighter of `ex` he lays no price on (`prices` theirs, priceFor's). */
+const notLaid = (ex, prices) => prices.flatMap((pr, i) => (pr ? [] : [B().notLaid(fighterIdentity(ex.seed, i, ex.opponents[i].mobile).name)]));
 /** The book's lines for a page: each wager, newest first. */
 export const bookLines = (league, _gameMinutes) => bookRestore(league?.book).wagers.map((w) => ({ text: wagerLine(w), status: w.status, hour: w.hour }));
 
@@ -208,11 +227,12 @@ export function exhibitionCard(league, ex, gameMinutes, { gold = 0, begun = fals
   const prices = odds.map(priceFor);
   const recs = [0, 1].map((i) => exhibitionRecord(ex, i));
   const w = wagerOn(book, ex.hour);
-  const why = !ex.open || begun ? B().whyClosed : w ? B().whyPlaced : !atGate ? ARENA_TEXT.window.whyGate : gold < STAKE_MIN ? B().whyGold : null;
+  const why = !ex.open || begun || bookSaw(book, ex.hour) ? B().whyClosed : w ? B().whyPlaced : !atGate ? ARENA_TEXT.window.whyGate : gold < STAKE_MIN ? B().whyGold : null;   // AUDIT PRE-MERGE 1003 B3: a bout seen here
   return {
     records: recs.map((r) => ARENA_TEXT.window.wl(r.wins, r.losses)), odds: prices.map(oddsText), prices,
     favourite: odds[0] >= odds[1] ? 0 : 1, chances: odds, why, wager: w ? wagerLine(w) : '',
-    stakes: STAKES.filter((s) => s <= gold), lines: [],
+    stakes: STAKES.filter((s) => s <= gold),
+    lines: notLaid(ex, prices),   // AUDIT PRE-MERGE 1003 B4: a side he lays no price on, said
     kinds: ex.opponents.map((o) => enemyDisplayName(o.mobile) ?? ''),
   };
 }
@@ -243,8 +263,9 @@ export function bookmakerChoice({ league, gameMinutes, gold, begun = false, wind
     else if (why === 'gold' || why === 'stake') lines.push(B().whyGold);
     else {
       lines.push(B().edge);
-      options.push({ code: 'KeyA', label: B().back('A', names[0], oddsText(prices[0])), act: 'back0' });
-      options.push({ code: 'KeyB', label: B().back('B', names[1], oddsText(prices[1])), act: 'back1' });
+      lines.push(...notLaid(ex, prices));   // AUDIT PRE-MERGE 1003 B4: a side he lays no price on is not offered, and said
+      if (prices[0]) options.push({ code: 'KeyA', label: B().back('A', names[0], oddsText(prices[0])), act: 'back0' });
+      if (prices[1]) options.push({ code: 'KeyB', label: B().back('B', names[1], oddsText(prices[1])), act: 'back1' });
     }
   }
   if (window) options.push({ code: 'KeyW', label: B().window, act: 'window' });

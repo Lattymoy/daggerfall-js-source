@@ -360,11 +360,40 @@ export const SINK_M = 0.006;
  * picture kept; un-indexed - each triangle its own corners). `stats` `{ tjunctions, cut, sunk, dropped, welded }`. Pure.
  */
 export function sealArenaSeams(model) {
+  const it = sealSteps(model);
+  let r = it.next();
+  while (!r.done) r = it.next();
+  return r.value;
+}
+/**
+ * AUDIT PRE-MERGE 1003 W6: THE SEAL, A BREATH AT A TIME. The colosseum is sealed where it is first asked for - in the
+ * world host, inside a streamed pixel's build (scenes/dataPipeline.js getGpuMesh, scenes/world.js), which otherwise gives
+ * the frame back every few milliseconds (PERF7, systems/buildBreather.js) - and the seal ran ~0.5 s in one piece there.
+ * The same steps (sealSteps) with `breathe()` awaited between each unit, as PERF-EXT23's merge is
+ * (render/staticBatch.js finishSliced): the bytes sealArenaSeams makes.
+ * @param {() => Promise<void>} breathe the build's breather
+ */
+export async function sealArenaSeamsSliced(model, breathe) {
+  const it = sealSteps(model);
+  for (let r = it.next(); ; r = it.next()) {
+    if (r.done) return r.value;
+    await breathe();
+  }
+}
+/** AUDIT PRE-MERGE 1003 W6: the faces a unit of the seal's heavy loops takes (the welds, the T-junctions' edges - each
+ *  face a few dozen lookups), the light loops' sixteen times as many, the overlap test's pairs thirty-two
+ *  times: a unit a millisecond or two. */
+export const SEAL_UNIT = 32;
+/** sealArenaSeams' work, yielding between its units (AUDIT PRE-MERGE 1003 W6) - the order of every step its own. */
+function* sealSteps(model) {
   const P = model.positions, N = model.normals, U = model.uvs, I = model.indices;
+  const LIGHT = SEAL_UNIT * 16;
   /** @type {{ p: number[][], n: number[][], uv: number[][], pic: number, fn: number[], d: number, area: number, sink: number }[]} */
   const tris = [];
-  model.subMeshes.forEach((sm, pic) => {
+  for (let pic = 0; pic < model.subMeshes.length; pic++) {
+    const sm = model.subMeshes[pic];
     for (let t = sm.startIndex; t < sm.startIndex + sm.primitiveCount * 3; t += 3) {
+      if ((t / 3 + 1) % LIGHT === 0) yield;
       const v = [I[t], I[t + 1], I[t + 2]];
       const p = v.map((i) => [P[i * 3], P[i * 3 + 1], P[i * 3 + 2]]);
       const e1 = sub(p[1], p[0]), e2 = sub(p[2], p[0]);
@@ -373,7 +402,7 @@ export function sealArenaSeams(model) {
       const fn = [c[0] / l, c[1] / l, c[2] / l];
       tris.push({ p, n: v.map((i) => [N[i * 3], N[i * 3 + 1], N[i * 3 + 2]]), uv: v.map((i) => [U[i * 2], U[i * 2 + 1]]), pic, fn, d: dot(fn, p[0]), area: l / 2, sink: 0 });
     }
-  });
+  }
   // ── the welds: corners a few millimetres apart are one corner (the modeller's snapping missed by a hair - two edges
   // that should meet stand T_EPS apart, a crack of their own), each taken to the first of its cluster
   const reps = new Map();
@@ -390,8 +419,10 @@ export function sealArenaSeams(model) {
     reps.get(k).push(q);
     return q;
   };
-  for (const T of tris) T.p = T.p.map(weld);
+  yield;
+  for (let i = 0; i < tris.length; i++) { tris[i].p = tris[i].p.map(weld); if ((i + 1) % SEAL_UNIT === 0) yield; }
   for (let i = tris.length - 1; i >= 0; i--) {   // a sliver the weld closed is no face
+    if ((i + 1) % LIGHT === 0) yield;
     const T = tris[i], c = cross(sub(T.p[1], T.p[0]), sub(T.p[2], T.p[0])), l = Math.hypot(c[0], c[1], c[2]);
     if (!(l > 1e-9)) tris.splice(i, 1);
   }
@@ -409,17 +440,20 @@ export function sealArenaSeams(model) {
   let sunk = 0;
   const grid = new Map();
   const G = 4;
-  tris.forEach((T, i) => {
-    const [mn, mx] = box(T.p);
+  for (let i = 0; i < tris.length; i++) {
+    if ((i + 1) % LIGHT === 0) yield;
+    const [mn, mx] = box(tris[i].p);
     for (let gx = Math.floor(mn[0] / G); gx <= Math.floor(mx[0] / G); gx++) for (let gz = Math.floor(mn[2] / G); gz <= Math.floor(mx[2] / G); gz++) {
       const k = `${gx},${gz}`;
       if (!grid.has(k)) grid.set(k, []);
       grid.get(k).push(i);
     }
-  });
+  }
   const seen = new Set();
+  let pairs = 0;
   for (const list of grid.values()) {
     for (let a = 0; a < list.length; a++) for (let b = a + 1; b < list.length; b++) {
+      if (++pairs % (SEAL_UNIT * 32) === 0) yield;
       const i = Math.min(list[a], list[b]), j = Math.max(list[a], list[b]);
       const key = i * 1e6 + j;
       if (seen.has(key)) continue;
@@ -436,7 +470,9 @@ export function sealArenaSeams(model) {
   // ── the T-junctions: every corner, filed by a 1 m grid
   const corners = new Map();
   const cell = (x) => Math.floor(x);
+  let filed = 0;
   for (const T of tris) for (const q of (T.sink ? [] : T.p)) {   // a set-back face's corners stand behind the plane - no edge in it carries them
+    if (++filed % LIGHT === 0) yield;
     const k = `${cell(q[0])},${cell(q[1])},${cell(q[2])}`;
     if (!corners.has(k)) corners.set(k, []);
     const l = corners.get(k);
@@ -460,7 +496,9 @@ export function sealArenaSeams(model) {
   };
   let tjunctions = 0, cut = 0;
   const outByPic = model.subMeshes.map(() => []);
+  let unit = 0;
   for (const T of tris) {
+    if (++unit % SEAL_UNIT === 0) yield;
     const edges = [0, 1, 2].map((e) => onEdge(T.p[e], T.p[(e + 1) % 3]));
     const n = edges[0].length + edges[1].length + edges[2].length;
     const corner = (k) => ({ p: T.p[k], n: T.n[k], uv: T.uv[k] });
@@ -489,14 +527,17 @@ export function sealArenaSeams(model) {
       for (let k = 0; k < ring.length; k++) outByPic[T.pic].push([c, ring[k], ring[(k + 1) % ring.length]]);
     }
   }
+  yield;
   const total = outByPic.reduce((s, l) => s + l.length, 0);
   const positions = new Float32Array(total * 9), normals = new Float32Array(total * 9), uvs = new Float32Array(total * 6), indices = new Uint32Array(total * 3);
   const subMeshes = [];
   let at = 0;
-  outByPic.forEach((list, pic) => {
-    if (!list.length) return;
+  for (let pic = 0; pic < outByPic.length; pic++) {
+    const list = outByPic[pic];
+    if (!list.length) continue;
     const startIndex = at * 3;
     for (const tri of list) {
+      if ((at + 1) % LIGHT === 0) yield;
       for (let k = 0; k < 3; k++) {
         const v = at * 3 + k;
         positions.set(tri[k].p, v * 3); normals.set(tri[k].n, v * 3); uvs.set(tri[k].uv, v * 2);
@@ -506,7 +547,7 @@ export function sealArenaSeams(model) {
     }
     const sm = model.subMeshes[pic];
     subMeshes.push({ textureArchive: sm.textureArchive, textureRecord: sm.textureRecord, startIndex, primitiveCount: list.length });
-  });
+  }
   return { positions, normals, uvs, indices, subMeshes, doors: [], stats: { tjunctions, cut, sunk, dropped, welded } };
 }
 const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];

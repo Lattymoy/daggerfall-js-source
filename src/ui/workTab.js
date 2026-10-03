@@ -17,13 +17,19 @@
 // the field keeps the focus through a read's redraw - the window keeps it (AUDIT 31 U1), the tab keys its fields. The
 // forms' drafts are the writs' book's, so a stray tap or Escape throws none away (AUDIT 31 U12); every field is
 // labelled, and a button the reader cannot press says why (AUDIT 31 U2, U10).
+//
+// SILVER-WAYS (2026-10-03, Mac: "Do it"): THIS REGION'S GUILD CONTRACTS beside them - a guild's pay to each defender of a
+// raid here, what is left of it, the time left; paid as the defender's raid is counted, never to its own Officers and
+// Guildmaster; Withdraw where the reader's rank may; and POST A CONTRACT (a Guildmaster's, or an Officer's within the one
+// writ budget). Offered while the service lists them (`contracts` on the list - silver's switch, not the professions').
 import { accountRefusalText } from '../net/accountClient.js';
 import { CRAFTED_FAMILIES, marketCatalogue, saleTax, MARKET_PRICE_MAX, WEAR_WHOLE } from '../net/marketLaw.js';
 import { RECIPES, QUALITY_NAMES, MASTERWORK } from '../net/recipeLaw.js';
 import { marksText } from '../net/marksLaw.js';
 import {
   WRIT_UNITS_MAX, writPayMax, commissionable, commissionTakesQuality, COMMISSIONS_MAX, GUILD_WRITS_MAX, writDeliverMay,
-} from '../net/writLaw.js';
+  GUILD_CONTRACTS_MAX, CONTRACT_PAY_MAX, CONTRACT_DEEDS_MAX, contractPaidMay,
+} from '../net/writLaw.js';   // SILVER-WAYS: a guild contract's bounds
 import { GUILD_RANK_MASTER } from '../net/guildLaw.js';
 import { HANDLE_RE } from '../net/handleShape.js';
 import { WRIT_MOVED } from '../net/writBook.js';
@@ -134,6 +140,7 @@ export function createWorkTab(w, ui) {
     /** the open form: 'writ' | 'commission' | null */
     form: /** @type {string|null} */ (null),
     writ: { material: catalogue.find((m) => m.key === 'log:oak')?.key ?? catalogue[0]?.key ?? '', units: 100, pay: 1 },
+    contract: { pay: 20, deeds: 10 },   // SILVER-WAYS
     comm: { crafter: '', family: 'weapons', recipe: '', quality: 2, pay: 100 },
     /** a delivery's units typed, by writ; a commission's piece picked, by commission */
     supply: /** @type {Record<string, number>} */ ({}),
@@ -211,6 +218,27 @@ export function createWorkTab(w, ui) {
   const withdrawWrit = (x) => why(button('work-withdraw', 'Withdraw', () => act(() => w.writs.withdraw(x.id), 'Withdrawn. What was left of its pay is back in the guild\'s treasury.')),
     busyWhy());
 
+  // ─── A GUILD CONTRACT (SILVER-WAYS) ────────────────────────────────
+  function contractCard(x, i, data) {
+    const li = el('li', `notice-card notice-writ seal-guild${x.state !== 'open' ? ' done' : ''}`);
+    li.style.setProperty('--tilt', `${((i * 37) % 5) - 2}deg`);
+    li.append(el('span', 'notice-pin'), el('span', 'writ-kind', 'Guild contract'));
+    const flag = writBanner(x.guild?.heraldry);
+    if (flag) li.append(flag);
+    li.append(el('p', 'writ-need', `${guildName(x.guild)} pays the defenders of ${w.regionNameOf(x.region)}'s towns against raiders`));
+    li.append(el('p', 'writ-pay', `${marksText(x.pay)} each - ${plural(x.left, 'defender')} left of ${count(x.deeds)}`));
+    li.append(el('p', 'writ-left', writLeftText(x.expiresAt, ui.nowS())));
+    const bar = el('div', 'writ-take');
+    const own = data?.guild?.id === x.guild?.id && !contractPaidMay(data.guild.rank);
+    bar.append(el('span', 'work-none', own ? 'Your guild\'s Officers and Guildmaster are not paid by its contracts.'
+      : `Strike a raider here and stand in the town as it is cleansed: paid as your raid is counted, less ${marksText(saleTax(x.pay))} tax.`));
+    if (x.may) bar.append(withdrawContract(x));
+    li.append(bar, el('span', 'notice-seal', ''));
+    return li;
+  }
+  const withdrawContract = (x) => why(button('work-withdraw', 'Withdraw', () => act(() => w.writs.withdrawContract(x.id), 'Withdrawn. What was left of its pay is back in the guild\'s treasury.')),
+    busyWhy());
+
   // ─── A COMMISSION (this board's region's) ──────────────────────────
   function commissionCard(c, i) {
     const li = el('li', `notice-card notice-writ seal-commission${c.state !== 'open' ? ' done' : ''}`);
@@ -249,8 +277,8 @@ export function createWorkTab(w, ui) {
 
   // ─── YOURS ─────────────────────────────────────────────────────────
   function yoursNode(data) {
-    const cs = data?.yours?.commissions ?? [], gw = data?.yours?.guildWrits ?? [];
-    if (!cs.length && !gw.length) return null;
+    const cs = data?.yours?.commissions ?? [], gw = data?.yours?.guildWrits ?? [], gc = data?.yoursContracts ?? [];
+    if (!cs.length && !gw.length && !gc.length) return null;
     const box = el('div', 'work-yours');
     box.append(el('h3', 'work-head', 'Yours'));
     const list = el('ul', 'work-rows');
@@ -280,7 +308,50 @@ export function createWorkTab(w, ui) {
       if (x.may) li.append(withdrawWrit(x));
       list.append(li);
     }
+    for (const x of gc) {   // SILVER-WAYS: the guild's contracts, every region
+      const li = el('li', 'work-row');
+      li.append(el('span', 'work-what', `${guildName(x.guild)}: ${marksText(x.pay)} to each of ${plural(x.left, 'defender')} more`),
+        el('span', 'work-where', `${x.region === w.region ? 'here' : w.regionNameOf(x.region)} · ${writLeftText(x.expiresAt, ui.nowS())}`));
+      if (x.may) li.append(withdrawContract(x));
+      list.append(li);
+    }
     box.append(list);
+    return box;
+  }
+
+  /** SILVER-WAYS: POST A CONTRACT - its pay a defender and how many, held from the treasury (the Officers' one budget). */
+  function contractForm(g, data) {
+    const box = el('div', 'work-form');
+    box.append(el('h3', 'work-head', `Post a guild contract - ${guildName(g)}`));
+    const f = st.contract;
+    const pay = input('number', f.pay, 'Silver each defender', 'contract|pay');
+    pay.min = '1'; pay.max = String(CONTRACT_PAY_MAX);
+    const deeds = input('number', f.deeds, 'Defenders it pays', 'contract|deeds');
+    deeds.min = '1'; deeds.max = String(CONTRACT_DEEDS_MAX);
+    const said = el('p', 'work-hint');
+    said.setAttribute('aria-live', 'polite');
+    const go = button('primary work-post', 'Post', () => act(() => w.writs.contract({ region: w.region, kind: 'raid', pay: f.pay, deeds: f.deeds }),
+      () => { st.form = null; return `Posted on the boards of ${w.regionName} for seven days.`; }));
+    const standing = (data?.yoursContracts ?? []).length;
+    const refresh = () => {
+      const escrow = f.pay * f.deeds;
+      const officer = g.rank !== GUILD_RANK_MASTER;
+      const reason = busyWhy()
+        || (standing >= GUILD_CONTRACTS_MAX ? `The guild has ${GUILD_CONTRACTS_MAX} contracts posted already.`
+          : escrow > (g.marks ?? 0) ? `The guild's treasury holds only ${marksText(g.marks ?? 0)}.`
+            : officer && !(g.budget > 0) ? 'The Guildmaster has set no writ budget for Officers this week.'
+              : officer && escrow > (g.left ?? 0) ? `That is past your writ budget this week (${marksText(g.left ?? 0)} left).` : '');
+      said.textContent = `Pays each defender of a raid in ${w.regionName} as their raid is counted, less the 5% tax. Holds ${marksText(escrow)} from the guild's treasury (it holds ${marksText(g.marks ?? 0)}) until it is paid out, withdrawn or runs out in seven days. Your guild's Officers and Guildmaster are not paid by it.`
+        + (officer ? ` Your writ budget this week: ${marksText(g.left ?? 0)} of ${marksText(g.budget ?? 0)} left.` : '')
+        + (reason && !busyWhy() ? ` ${reason}` : '');
+      why(go, reason);
+    };
+    pay.oninput = () => { f.pay = intOf(pay.value, 1, CONTRACT_PAY_MAX); refresh(); };
+    deeds.oninput = () => { f.deeds = intOf(deeds.value, 1, CONTRACT_DEEDS_MAX); refresh(); };
+    refresh();
+    const row = el('div', 'work-fields');
+    row.append(labelled('Silver each', pay), labelled('Defenders', deeds), go);
+    box.append(row, said);
     return box;
   }
 
@@ -396,8 +467,9 @@ export function createWorkTab(w, ui) {
     /** This region's guild writs and commissions - cards for the Court's grid (AUDIT 31 U14: one grid). */
     cards(data) {
       if (data?.writsOpen !== true) return [];
-      const gws = data?.guildWrits ?? [], cs = data?.commissions ?? [];
-      return [...gws.map((x, i) => guildWritCard(x, i, data)), ...cs.map((c, i) => commissionCard(c, gws.length + i))];
+      const gws = data?.guildWrits ?? [], cs = data?.commissions ?? [], gcs = data?.contracts ?? [];   // SILVER-WAYS: and its contracts
+      return [...gws.map((x, i) => guildWritCard(x, i, data)), ...gcs.map((x, i) => contractCard(x, gws.length + i, data)),
+        ...cs.map((c, i) => commissionCard(c, gws.length + gcs.length + i))];
     },
     /** "Yours", and the forms, under the grid - none while they are not this account's. */
     node(data) {
@@ -413,9 +485,11 @@ export function createWorkTab(w, ui) {
         return b;
       };
       if (g?.mayPost) acts.append(opener('writ', 'Post a guild writ'));
+      if (g && data?.contractPost === true) acts.append(opener('contract', 'Post a guild contract'));   // SILVER-WAYS
       acts.append(opener('commission', 'Commission a piece'));
       box.append(acts);
       if (st.form === 'writ' && g?.mayPost) box.append(writForm(g, data));
+      if (st.form === 'contract' && g && data?.contractPost === true) box.append(contractForm(g, data));
       if (st.form === 'commission') box.append(commissionForm(data));
       focusSoon(box);
       return box;

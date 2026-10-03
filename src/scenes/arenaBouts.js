@@ -25,7 +25,9 @@
 import {
   newBout, boutTick, boutHit, boutMiss, boutFell, boutYield, boutPos, boutHealth, boutAtMarks, takeBoutEvents, boutLive, boutOver, boutFighter,
   fighterShare, boutPurse, sideNames, otherNames, YIELD_SHARE,
+  boutBefore,   // AUDIT PRE-MERGE 1003 B3/B5: an exhibition left after its word; my spare from the word
 } from '../systems/arenaBout.js';
+import { BOUT_LEFT } from '../systems/arenaBook.js';   // AUDIT PRE-MERGE 1003 B3: an exhibition walked away from after its word
 import { newCrowd, crowdHear, crowdTick, crowdBark, crowdCount, crowdFlipFps, crowdHop, verdictThrows, seatPeople, THROWN_FLOWERS, THROWN_REFUSE } from '../systems/arenaCrowd.js';
 import { fighterIdentity, boutMarks, boutGateOf } from '../systems/arenaFighters.js';
 import { EXHIBITION_PURSE, ladderAfter, arenaLadderRestore, arenaHash, seededRng, ladderTitle } from '../systems/arenaLadder.js';
@@ -86,13 +88,26 @@ export const CHEER_GAP_MS = ARENA_CHEER_MS + CHEER_SLACK_MS;
  *   drawHud?: (model: any, o?: any) => void,
  *   renderer?: any, getTexture?: (archive: number) => Promise<any>, uploadRecordFrame?: (a: number, r: number, f: number) => void,
  *   pay?: (gold: number) => void, heal?: () => void, crime?: () => void, ladderChanged?: (ladder: any, out: any) => void,
- *   gameMinutes?: () => number, exhibitionVerdict?: (hour: number, side: number|null) => void,
+ *   gameMinutes?: () => number, exhibitionVerdict?: (hour: number, side: number|null|string) => void,
  * }} deps
  *   ARENA3: `gameMinutes` the game's clock (the season a ladder bout's points go to, the laurel, the Records page's day);
- *   `exhibitionVerdict` an exhibition's verdict seen here (the side that won, null a draw) - the bookmaker's to settle.
+ *   `exhibitionVerdict` an exhibition's verdict seen here (the side that won, null a draw; AUDIT PRE-MERGE 1003 B3:
+ *   BOUT_LEFT one walked away from after its word) - the bookmaker's to settle.
  */
 export function createArenaBouts(deps) {
   const now = deps.now ?? (() => performance.now());
+  // AUDIT PRE-MERGE 1003 B1: THE LAW'S CLOCK of this screen's own bouts is the WORLD's - the real clock less every stretch
+  // the host's world did not run: each frame's real time past the `dt` the host handed it (`frame` - both hosts hand
+  // `gamePaused() ? 0 : dt`, and clamp a long frame to 0.1 s as the foes' own step is). On the real clock alone the
+  // 3-minute limit, the stall and an AI's tempers ran on under an open window (the floor's foes frozen - worldModes.js
+  // returns before drawFoes) or a hidden tab: one blow landed, the inventory held open three minutes, the judges' win,
+  // its purse and the ladder's step - the Grand Champion's 9,900 among them. Read by the law, its hooks and the
+  // recording alike (`lawNow`, never backwards between frames). A relay's bout - a replay is one - keeps the real clock:
+  // the relay's law runs on whatever this screen does (`clockOf`).
+  let heldMs = 0, lastReal = NaN, lastLaw = -Infinity;
+  const lawNow = () => (lastLaw = Math.max(lastLaw, now() - heldMs));
+  /** The clock bout `C` is judged by: this screen's own, the law's; a relay's, the real one. */
+  const clockOf = (C) => (C?.relay ? now() : lawNow());
   const rng = deps.rng ?? Math.random;
   const P = deps.playerEntity;
   let stage = null;
@@ -132,7 +147,7 @@ export function createArenaBouts(deps) {
   function start(p) {
     if (!stage) return null;
     dismiss();
-    const t = now();
+    const t = lawNow();   // AUDIT PRE-MERGE 1003 B1: the law's clock
     // ARENA-FIX 4: the training pit's PRACTICE bout is a ladder bout's shape (the player on side 0) - no purse, no
     // step on the ladder, no crowd, no music (`quiet`)
     const ladder = p.kind === 'ladder' || p.kind === 'practice';
@@ -205,7 +220,7 @@ export function createArenaBouts(deps) {
 
   /** Every body stands: the law's bout, the crowd's, the seats. */
   function beginLaw(C) {
-    const t = now();
+    const t = lawNow();   // AUDIT PRE-MERGE 1003 B1
     const c = stage.centre();
     C.b = newBout({
       id: C.id, kind: C.practice ? 'practice' : C.ladder ? (C.next.grand ? 'grand' : C.next.champion ? 'champion' : C.next.free ? 'melee' : 'ladder') : 'exhibition',
@@ -337,6 +352,9 @@ export function createArenaBouts(deps) {
     const none = { west: null, east: null };
     if (!p) return none;
     const ok = (b) => (b === 'red' || b === 'blue' ? b : null);
+    // AUDIT PRE-MERGE 1003 W2: the relay's exhibition watched in the instance (scenes/arenaOnline.js goTo: `relayEx`, no
+    // `relay` nor `kind`) is the Red against the Blue as this screen's is - startExhibitionRelay's teams, the crowd's halves
+    if (p.relayEx) return { west: 'red', east: 'blue' };
     if (p.relay) {
       const r = p.relay;
       if (Array.isArray(r.sides)) return { west: ok(r.sides[0]), east: ok(r.sides[1]) };
@@ -359,8 +377,14 @@ export function createArenaBouts(deps) {
   // ── THE BODIES' DOORS (the pools' bout hooks) ───────────────────────────────────────────────────────────
   function hurtFoe(fid, foe, dmg, { fromPlayer = false, striker = null } = {}) {
     const C = cur;
+    // AUDIT PRE-MERGE 1003 B2: MY BLOW ON AN EXHIBITION FIGHTER is made good before anything else, as a blow before the
+    // word is: I fight in no exhibition, so it is a blow from outside the bout (`intrude` - the Herald's warning, then
+    // the watch). The door (scenes/exteriorFoes.js damageFoe, scenes/dungeonContext.js's twin) has taken it off the body
+    // and reads the floor after this hook: kept, the first blow - a warning, nothing more - for a fighter's whole health
+    // felled it, and the verdict settled the book (the 10-to-1 long shot backed, the favourite struck down: 11,000 paid).
+    if (fromPlayer && C && !C.ladder && foe?.entity) { foe.entity.health = Math.min(foe.entity.maxHealth ?? foe.entity.health, foe.entity.health + dmg); return; }
     if (!C?.b) return;
-    const t = now();
+    const t = lawNow();   // AUDIT PRE-MERGE 1003 B1
     if (!boutLive(C.b)) {
       // a blow before the word or after the verdict: the body is made whole again (the healers' law), nothing counts
       if (foe?.entity) foe.entity.health = Math.min(foe.entity.maxHealth ?? foe.entity.health, foe.entity.health + dmg);
@@ -399,7 +423,7 @@ export function createArenaBouts(deps) {
     if (!from || !to || from === to) return;
     const a = boutFighter(C.b, from), b = boutFighter(C.b, to);
     if (!a || !b || a.side === b.side) return;
-    const t = now();
+    const t = lawNow();   // AUDIT PRE-MERGE 1003 B1
     if (from !== YOU) recordStrike(C.rec, t, from);   // ARENA5: a fighter's blow, its puppet's swing in the replay (mine is my swing's - playerSwing)
     if (!(r.damage > 0)) boutMiss(C.b, { from, now: t });
     else C.lastBlow.set(to, { critical: !!r.critical, at: t });
@@ -416,16 +440,16 @@ export function createArenaBouts(deps) {
       if (me && !me.out && foe) C.relay.send?.hit?.({ k: 'hit', i: foe.id, d: 0, r: 0 });
       return;
     }
-    if (C?.ladder && C.b && boutLive(C.b)) recordStrike(C.rec, now(), YOU);   // ARENA5: every swing of mine, my puppet's in the replay
+    if (C?.ladder && C.b && boutLive(C.b)) recordStrike(C.rec, lawNow(), YOU);   // ARENA5: every swing of mine, my puppet's in the replay
     if (!C?.ladder || !C.b || !boutLive(C.b) || struck > 0) return;
     const you = boutFighter(C.b, YOU);
-    if (you && !you.out) boutMiss(C.b, { from: YOU, now: now() });
+    if (you && !you.out) boutMiss(C.b, { from: YOU, now: lawNow() });   // AUDIT PRE-MERGE 1003 B1: the law's clock
   }
   function floorFoe(fid, foe) {
     const C = cur;
     if (!C?.b) return;
     if (!boutLive(C.b)) { if (foe?.entity) foe.entity.health = Math.max(foe.entity.health, 1); return; }
-    boutFell(C.b, fid, now());
+    boutFell(C.b, fid, lawNow());   // AUDIT PRE-MERGE 1003 B1
     standDown(foe);
   }
   /** A blow from outside the bout: before the word (the player's own opponent), a word from the Herald; an exhibition
@@ -455,8 +479,13 @@ export function createArenaBouts(deps) {
     // ARENA4: on a relay's sand my health is the relay's - a blow from anything here holds me at the breath of life, and
     // the fall is the relay's to say
     if (C?.relay) return C.you && C.b && boutLive(C.b) ? { spare: () => {} } : null;
-    if (!C?.ladder || !C.b || C.b.phase !== 'fight' || C.playerTag?.out) return null;
-    return { spare: () => { if (cur === C && C.b && boutLive(C.b)) { boutFell(C.b, YOU, now()); } } };
+    // AUDIT PRE-MERGE 1003 B5: HELD FROM THE WORD TO THE HEALERS' END - not the fight's alone. From my yield or my fall to
+    // the healers (END_HOLD + VERDICT, then the heal) and for the rest of a Grand Melee fought on after I am out, it was
+    // null, and an arrow loosed before, a spell in flight or a poison's round (dungeonContext.js hurtEntity's
+    // `opts.playerSpare?.() ?? {}`) killed me on the sand: nobody dies there. The fall it says is the live bout's alone
+    // (boutFell refuses a bout over and a fighter already out).
+    if (!C?.ladder || !C.b || boutBefore(C.b) || C.b.phase === 'done') return null;
+    return { spare: () => { if (cur === C && C.b && boutLive(C.b)) { boutFell(C.b, YOU, lawNow()); } } };
   }
   /** My own bout stands (its call to its healers): the duel's law - no door, no rest, no travel. */
   const holds = () => !!cur?.ladder && !!cur.b && cur.b.phase !== 'done';
@@ -469,8 +498,13 @@ export function createArenaBouts(deps) {
    * ARENA5: `o.playerYaw` my view's yaw (my facing in the replay's recording).
    */
   function frame(dt, o = {}) {
+    // AUDIT PRE-MERGE 1003 B1: the real time this frame's world did not run (past its `dt` - 0 under a window), held off
+    // the law's clock
+    const real = now();
+    if (Number.isFinite(lastReal)) heldMs += real - lastReal - Math.max(0, Number(dt) || 0) * 1000;
+    lastReal = real;
     const C = cur;
-    const t = now();
+    const t = clockOf(C);
     if (C?.relay?.replay) replayFrame(C, t);   // ARENA5: a replay's recorded words, fed to the mirror below
     if (C?.relay) { relayFrame(C, dt, o, t); return; }   // ARENA4: a bout the relay runs, mirrored
     if (!C || !C.b) { deps.drawHud?.(null, { hidden: true }); return; }
@@ -696,7 +730,9 @@ export function createArenaBouts(deps) {
     for (const g of groups.values()) {
       let tex;
       try { tex = await deps.getTexture(g.archive); } catch { continue; }
-      if (cur !== C) return;
+      // AUDIT PRE-MERGE 1003 B6: the bout gone while a picture loaded - the batches already made go with it (they were
+      // neither kept nor destroyed: GPU buffers lost to every dismissal mid-load)
+      if (cur !== C) { for (const x of batches) r.destroyBillboardBatch?.(x.batch); return; }
       const size = sizeOf(tex, g.record, CROWD_SCALE[g.archive]);
       const frames = Math.max(1, tex?.getFrameCount?.(g.record) ?? 1);
       const batch = r.createBillboardBatch(g.archive, g.record, size, g.at);
@@ -748,7 +784,7 @@ export function createArenaBouts(deps) {
       const target = at.length ? at[Math.floor(dice() * at.length)] : [0, 0];
       const to = [target[0] + (dice() - 0.5) * 5, 0, target[1] + (dice() - 0.5) * 5];
       const batch = r.createBillboardBatch(archive, record, small, [[0, 0, 0]]);
-      C.throws.push({ batch, from: [Math.cos(a) * r0, 8, Math.sin(a) * r0], to, at: now() + dice() * 600, origin: [0, 0, 0] });
+      C.throws.push({ batch, from: [Math.cos(a) * r0, 8, Math.sin(a) * r0], to, at: clockOf(C) + dice() * 600, origin: [0, 0, 0] });
     }
   }
   /** The crowd's and the throws' batches, for the host's billboard pass. */
@@ -849,9 +885,17 @@ export function createArenaBouts(deps) {
           // MY HEALTH IS THE RELAY'S: its share of my whole, on my own scale, never under the breath of life
           const [hp, max] = mine;
           const h = Math.max(1, Math.round((hp / Math.max(1, max)) * Math.max(1, P.maxHealth ?? 1)));
-          if (h < (P.health ?? h)) C.relay.struck?.(Math.round((P.health ?? h) - h));
-          C.relay.myHealth?.(h, P.maxHealth ?? h);
-          C.lastHealth = h;
+          // AUDIT PRE-MERGE 1003 O1: once the healers have come no word brings my health DOWN again - the relay's `hp`
+          // rode with the heal carrying the bout's END health (its law heals nobody; net/arenaBrain.js now heals at the
+          // word, and this holds against any word after it): the loser was healed, struck for the difference and set
+          // back to 1. A word that lifts me stands (a fighter back on the sand mid-heal hears the healed `hp`, its heal
+          // event missed); the blow that ends the fight is still felt - its `hp` comes on the end's own beat
+          const healed = C.b.phase === 'heal' || C.b.phase === 'done';
+          if (!(healed && h < (P.health ?? h))) {
+            if (h < (P.health ?? h)) C.relay.struck?.(Math.round((P.health ?? h) - h));
+            C.relay.myHealth?.(h, P.maxHealth ?? h);
+            C.lastHealth = h;
+          }
         }
         break;
       }
@@ -941,9 +985,10 @@ export function createArenaBouts(deps) {
     }
     if (Number.isFinite(C.doneAt) && t - C.doneAt >= CROWD_STAYS_MS && C.stage?.kind === 'city') { dismiss(); return; }   // ARENA4b: the city's crowd goes home, as this screen's own bout's
     const bark = t - C.barkAt < BARK_SHOWN_MS ? C.bark : '';
-    // ARENA4b: in the stands, the two presses (Cheer, Boo) under the plate - shut while the allowance runs
-    const stands = C.you ? null : { ready: t - C.cheerAt >= CHEER_GAP_MS };
-    deps.drawHud?.(near > 0 ? arenaHudModel(C.b, C.crowd, t, { you: C.you, stamina: o.stamina ?? null, bark, quiet: false, teams: C.teams, stands }) : null, { hidden: !!o.hidden, touch: !!o.touch, cheer: C.you ? null : cheerDoor });
+    // ARENA4b: in the stands, the two presses (Cheer, Boo) under the plate - shut while the allowance runs. AUDIT PRE-MERGE
+    // 1003 O7: and only with a door behind them (`send.cheer`) - never two presses that answer nothing
+    const stands = C.you || typeof C.relay.send?.cheer !== 'function' ? null : { ready: t - C.cheerAt >= CHEER_GAP_MS };
+    deps.drawHud?.(near > 0 ? arenaHudModel(C.b, C.crowd, t, { you: C.you, stamina: o.stamina ?? null, bark, quiet: false, teams: C.teams, stands }) : null, { hidden: !!o.hidden, touch: !!o.touch, cheer: stands ? cheerDoor : null });
     crowdFrame(C, t);
   }
   /** THE VERDICT of a relay's bout: the Herald's words; a ladder win's purse (the relay refereed it - the account's climb
@@ -981,13 +1026,17 @@ export function createArenaBouts(deps) {
    * watched from the stands (startRelay, `me` '') on the city's sand or the floor's instance, carrying the hour's
    * exhibition (`ex` - net/arenaExhibition.js exhibitionFor) so the window, the Herald, the book and the music read it as
    * the hour's: its Red against its Blue on the versus bar, the exhibition's call, the purse's bark and - at its verdict -
-   * the bookmaker told what the relay decided (`exhibitionVerdict`, the local bout's own door).
-   * @param {{ o: string, ex: any, names?: (i: number, mobile: number) => any, onEnd?: (r: any) => void }} p
+   * the bookmaker told what the relay decided (`exhibitionVerdict`, the local bout's own door). AUDIT PRE-MERGE 1003 O7:
+   * `send.cheer` the stands' shout, the host's door.
+   * @param {{ o: string, ex: any, names?: (i: number, mobile: number) => any, onEnd?: (r: any) => void, send?: { cheer?: (dir: number) => boolean } }} p
    */
   function startExhibitionRelay(p) {
     const ex = p.ex;
+    // AUDIT PRE-MERGE 1003 O7: the stands' shout is the one door back (`send.cheer`, the host's - the bout's room from the
+    // floor, the city's socket on the sand); no blow and no yield from the stands. It was `{}`: the presses drawn, every
+    // press refused
     const C = startRelay(/** @type {any} */ ({
-      ...p, kind: 'ex', me: '', next: null, send: {},
+      ...p, kind: 'ex', me: '', next: null, send: { cheer: p.send?.cheer },
       onEnd: (r) => {
         if (cur === C && r.side !== null) { C.bark = ARENA_TEXT.purse.won(EXHIBITION_PURSE); C.barkAt = now(); }
         deps.exhibitionVerdict?.(ex.hour, r.side);   // the bookmaker settles by the relay's verdict
@@ -1057,6 +1106,12 @@ export function createArenaBouts(deps) {
     const C = cur;
     if (!C) return;
     cur = null;
+    // AUDIT PRE-MERGE 1003 B3: AN EXHIBITION OF THIS SCREEN'S LEFT AFTER ITS WORD with its verdict unsaid is told the book
+    // all the same: its result, when one already stands (a fall in its END_HOLD), else BOUT_LEFT - walked away from, the
+    // stake the house's. Untold, the house's seeded record settled it at the hour's end, so a fighter seen losing was
+    // walked away from for the house's coin (137.9 back for every 100 staked); the judges' card as it stood would be the
+    // same option turned round - leave the moment the one I backed leads. A relay's verdict is the relay's (it runs on).
+    if (C.ex && !C.relay && C.b && !boutBefore(C.b) && !Number.isFinite(C.verdictAt)) deps.exhibitionVerdict?.(C.ex.hour, C.b.result ? C.b.result.side : BOUT_LEFT);
     for (const foe of C.fighters.values()) C.stage?.remove?.(foe);
     C.fighters.clear();
     for (const x of C.crowdBatches) deps.renderer?.destroyBillboardBatch?.(x.batch);
@@ -1090,7 +1145,7 @@ export function createArenaBouts(deps) {
       return r;
     },
     /** What the floor plays now (systems/arenaScore.js), or null (no bout heard here). */
-    scoreWant: (t = now()) => (cur?.b && !cur.quiet ? arenaScoreFor(cur.b.phase, cur.verdictAt, t) : null),   // the pit has no band
+    scoreWant: (t = clockOf(cur)) => (cur?.b && !cur.quiet ? arenaScoreFor(cur.b.phase, cur.verdictAt, t) : null),   // the pit has no band
     /** The bout standing (its law's state), its crowd, its kind, its stage's kind. */
     bout: () => cur?.b ?? null,
     crowd: () => cur?.crowd ?? null,

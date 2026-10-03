@@ -29,6 +29,12 @@
 // screen reader while the presses are not; the keys heard only while the row stands, never in a field nor with a
 // modifier, never one another window took first. The kit's button role dresses them on Plus (ui/enhancedFrame.js).
 //
+// AUDIT PRE-MERGE 1003 (lens U): THE BAR KEEPS ITS PLACE AMONG THE HUD'S OTHERS - it wears the HUD's own scale (`--hud-scale`
+// copied off `.hud`, as the pickup feed copies it) and steps under the target frame while that stands (the travel panel's
+// rule) (U3); while it stands (`.on`) the quest card and the party list step aside on a screen too narrow for the three
+// (their own sheets, U4); a short screen (a phone held sideways) keeps the fight and drops the dressing so the bar stops
+// short of the crosshair (U6); the stands' presses are shut by `aria-disabled`, so a keyboard's press keeps its focus (U15).
+//
 // Not a DFU member. Ledger A (ARENA).
 
 import { ARENA_TEXT } from '../systems/arenaText.js';
@@ -36,8 +42,11 @@ import { boutTimeLeft, fighterShare, YIELD_SHARE } from '../systems/arenaBout.js
 import { moodBand, darlingOf, villainOf } from '../systems/arenaCrowd.js';
 import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS } from './pixelifyFive.js';
 
-/** Where it stands: under the compass strip, centred (the gate bar's place - never both: the court has no arena). */
-export const ARENA_HUD_TOP = '58px';
+/** Where it stands: under the compass strip, centred (the gate bar's place - never both: the court has no arena).
+ *  AUDIT PRE-MERGE 1003 U3: the compass's foot at the HUD's scale (.hud-top at 18px, the strip 26px and its 2px rule,
+ *  scaled - the travel panel's own sum, ui/enhancedPlusStyle.js TRAVEL_CSS) and 12px of air: 58px at scale 1, as it
+ *  was. `58px * scale` stood 3px on a half-size compass and 30px off a double one. */
+export const ARENA_HUD_TOP = 'calc(18px + 28px * var(--hud-scale, 1) + 12px)';
 export const ARENA_HUD_WIDTH = 560;
 /** The most fighters a side lists (a Grand Melee's opponents three, a two-against-one's two). */
 export const HUD_ROWS_MAX = 3;
@@ -88,10 +97,15 @@ export function arenaHudModel(bout, crowd, now, { you = null, stamina = null, ba
  *  Plus sheet dresses over. No colour the Plus sheet must outweigh is written inline anywhere. */
 export const ARENA_HUD_STYLE_ID = 'dagger-arena-hud-style';
 export const ARENA_HUD_CSS = `${PIXELIFY_FIVE_FACE}
-.arena-hud { position: fixed; left: 50%; top: calc(${ARENA_HUD_TOP} * var(--hud-scale, 1)); transform: translateX(-50%);
+.arena-hud { position: fixed; left: 50%; top: ${ARENA_HUD_TOP}; transform: translateX(-50%);
   width: ${ARENA_HUD_WIDTH}px; max-width: 94vw; pointer-events: none; z-index: 30; ${PIXEL_FONT_CSS}
   font-size: 13px; letter-spacing: 0.04em; color: #efe8d6; text-shadow: 1px 1px 0 #050608, 2px 2px 0 rgba(0,0,0,0.7);
   font-variant-numeric: tabular-nums; }
+/* AUDIT PRE-MERGE 1003 U3: THE TARGET FRAME stands under the compass while a struck foe's bar shows (ui/enhancedHud.js
+   .hud-foe) - the bar steps under it as the travel panel and the helm panel do (ui/enhancedPlusStyle.js TRAVEL_CSS,
+   ui/enhancedHelm.js), the blade face's taller frame its own step; it stood on the frame's name and track */
+body:has(.hud-foe.on) .arena-hud { top: calc(18px + 28px * var(--hud-scale, 1) + 20px + 46px * var(--hud-scale, 1)); }
+body:has(.hud-foe.on.blade) .arena-hud { top: calc(18px + 28px * var(--hud-scale, 1) + 20px + 76px * var(--hud-scale, 1)); }
 .arena-plate { padding: 6px 10px 7px; background: rgba(12,14,18,0.78); border: 2px solid #5a5446; }
 .arena-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: start; gap: 10px; }
 .arena-side { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
@@ -138,19 +152,40 @@ export const ARENA_HUD_CSS = `${PIXELIFY_FIVE_FACE}
 .arena-shout { pointer-events: auto; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px;
   min-width: 96px; padding: 4px 12px; font: inherit; font-size: 13px; letter-spacing: 0.06em; color: #efe8d6; cursor: pointer;
   background: rgba(12,14,18,0.82); border: 2px solid #5a5446; text-shadow: inherit; }
-.arena-shout:hover:not([disabled]), .arena-shout:focus-visible { border-color: #c08a3e; }
-.arena-shout[disabled] { opacity: 0.55; cursor: default; }
+.arena-shout:hover:not([aria-disabled="true"]), .arena-shout:focus-visible { border-color: #c08a3e; }
+.arena-shout[aria-disabled="true"] { opacity: 0.55; cursor: default; }
 .arena-shout[data-shout="boo"] { border-color: #6b3a32; }
 .arena-key { font-size: 10px; padding: 0 4px; border: 1px solid #5a5446; opacity: 0.85; }
 .arena-hud.touch .arena-shout { min-height: 48px; min-width: 120px; font-size: 15px; }
 .arena-hud.touch .arena-key { display: none; }
 @media (max-width: 640px) { .arena-row { gap: 6px; } .arena-plate { padding: 5px 6px; } .arena-crowd-word { min-width: 0; } }
+/* AUDIT PRE-MERGE 1003 U6: A SHORT SCREEN - a phone held sideways - had the bar to the crosshair and past it (a Grand
+   Melee with the hint and a bark at 740x360: 58 to 253, 70% of the screen; the stands at 844x390 past the middle). It
+   keeps the fight - every fighter's name and health, the clock, the crowd, the yield hint - and drops the dressing: the
+   "vs" under the clock and the crowd's bark (its mood stands on the meter); the rows tighter, the stamina and the crowd
+   on one line, and the hint on the plate beside the crowd, my stamina giving it its place (the HUD's own fatigue bar
+   stands at the foot of the screen in both skins). Measured in Chromium at 740x360, 667x375, 844x390 and 640x360, touch
+   and not, both sheets: the bar's foot under 45% of the screen. Weighed so the Plus sheet's own (body .arena-plate) and
+   the kit's rules are outranked. */
+@media (max-height: 520px) {
+  .arena-hud .arena-vs, .arena-hud .arena-bark { display: none; }
+  .arena-hud.touch { font-size: 13px; }
+  .arena-hud .arena-plate { display: flex; flex-wrap: wrap; align-items: center; column-gap: 12px; padding: 3px 8px 4px; }
+  .arena-hud .arena-row { flex: 1 1 100%; }
+  .arena-hud .arena-side { gap: 1px; }
+  .arena-hud .arena-ftr-head { line-height: 1.1; }
+  .arena-hud .arena-ftr .arena-track { box-sizing: border-box; height: 8px; margin-top: 1px; }
+  .arena-hud .arena-stam, .arena-hud .arena-crowd { flex: 1 1 120px; margin-top: 2px; }
+  .arena-hud .arena-hint { flex: 0 1 auto; margin-top: 2px; }
+  .arena-hud .arena-plate:has(.arena-hint:not(:empty)) .arena-stam { display: none; }
+  .arena-hud .arena-stands { margin-top: 3px; }
+}
 @media (prefers-reduced-motion: reduce) { .arena-fill { transition: none; } }
 `;
 
 let root = null, parts = null;
 let shown = null;
-const fresh = () => ({ vis: '', rows: { left: [], right: [] }, timer: '', stam: -2, crowd: -1, word: '', bark: '', hint: '', touch: null, stands: '', standsReady: false });
+const fresh = () => ({ vis: '', rows: { left: [], right: [] }, timer: '', stam: -2, crowd: -1, word: '', bark: '', hint: '', touch: null, stands: '', standsReady: false, scale: '' });
 /** ARENA4b: the stands' door now (the last draw's `cheer`) and the window whose keys are heard while the presses stand. */
 let cheerDoor = null, keyWin = null;
 /** A press of the stands (1 cheer, -1 boo): the host's door, while the row stands and the allowance lets one. */
@@ -221,7 +256,7 @@ function build(doc) {
   crowd.append(part('span', 'arena-crowd-label', ARENA_TEXT.hud.crowd), crowdTrack, word);
   const bark = part('div', 'arena-bark');
   const hint = part('div', 'arena-hint');
-  plate.append(row, stam, crowd);   // the fight, my stamina and the crowd on one plate
+  plate.append(row, stam, crowd, hint);   // the fight, my stamina and the crowd on one plate - AUDIT PRE-MERGE 1003 U6: and the yield hint, which a short screen sets beside the crowd
   // ARENA4b: THE STANDS' PRESSES - built hidden, shown only while I watch a relay's bout; the readout's parts carry their
   // own aria-hidden, so while the row stands (the root's lifted) the presses are the one part a screen reader meets
   const stands = part('div', 'arena-stands');
@@ -241,7 +276,7 @@ function build(doc) {
   };
   const cheer = press(1, 'cheer'), boo = press(-1, 'boo');
   for (const n of [plate, bark, hint]) n.setAttribute('aria-hidden', 'true');
-  root.append(plate, bark, hint, stands);
+  root.append(plate, bark, stands);
   (doc.body ?? doc.documentElement)?.append(root);
   parts = { L: L.rows, R: R.rows, timer, stam, stamFill, crowd, crowdFill, word, bark, hint, stands, cheer, boo };
   shown = fresh();
@@ -262,7 +297,10 @@ function writeStands(m, door) {
     if (p.key.textContent !== k) p.key.textContent = k;
     p.b.setAttribute('aria-label', `${said} (${k})`);
     p.b.setAttribute('aria-keyshortcuts', code);
-    if (m.ready) p.b.removeAttribute('disabled'); else p.b.setAttribute('disabled', '');
+    // AUDIT PRE-MERGE 1003 U15: SHUT, NOT DISABLED - a keyboard's Cheer was `disabled` the next frame, and a disabled
+    // button lets the focus fall to the page; `aria-disabled` says it is shut and keeps the focus where the press was
+    // (`shout` already refuses while the allowance runs)
+    if (m.ready) p.b.removeAttribute('aria-disabled'); else p.b.setAttribute('aria-disabled', 'true');
   }
 }
 
@@ -297,12 +335,19 @@ export function drawArenaHud(model, { hidden = false, touch = false, doc = globa
     build(doc);
   }
   const vis = want ? 'on' : 'off';
-  if (vis !== shown.vis) { shown.vis = vis; root.style.display = want ? '' : 'none'; }
+  // AUDIT PRE-MERGE 1003 U4: `.on` while it stands - the quest card and the party list step aside for it on a screen too
+  // narrow for the three (ui/enhancedStyle.js .qtrack, ui/partyPanel.js .dfparty)
+  if (vis !== shown.vis) { shown.vis = vis; root.style.display = want ? '' : 'none'; root.classList.toggle('on', want); }
   const standing = want && !!model?.stands && typeof cheer === 'function';
   writeStands(standing ? model.stands : null, cheer);
   listenKeys(standing, doc);
   if (!want || !model) return;
   if (touch !== shown.touch) { shown.touch = touch; root.classList.toggle('touch', !!touch); }
+  // AUDIT PRE-MERGE 1003 U3: THE HUD'S SCALE, which the bar's top reads - the bar is a sibling of `.hud` on the page, so
+  // the variable `.hud` carries never reached it and its top stood at scale 1 under a doubled compass. Copied off `.hud`
+  // as the pickup feed copies it (ui/pickupFeed.js place) - 1 where no enhanced HUD stands (the classic skin)
+  const scale = String(Number.parseFloat(/** @type {any} */ (doc.querySelector?.('.hud'))?.style?.getPropertyValue?.('--hud-scale')) || 1);
+  if (scale !== shown.scale) { shown.scale = scale; root.style.setProperty?.('--hud-scale', scale); }
   writeRows(model.left, parts.L, shown.rows.left);
   writeRows(model.right, parts.R, shown.rows.right);
   if (model.timer !== shown.timer) { shown.timer = model.timer; parts.timer.textContent = model.timer; }

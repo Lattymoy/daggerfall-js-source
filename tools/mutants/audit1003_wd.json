@@ -1,0 +1,241 @@
+[
+  {
+    "name": "AUDIT1003-WD1-the-layout-unwritten",
+    "file": "server-account/src/halls.js",
+    "old": "        SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${TOWN_LAYOUT_SQL}\n",
+    "new": "        SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, (CASE WHEN ? = ? THEN NULL ELSE ? END)\n",
+    "tests": [
+      "test/audit1003_wd.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-WD1-the-towns-stamp-unread",
+    "file": "server-account/src/halls.js",
+    "old": "        SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${TOWN_LAYOUT_SQL}\n",
+    "new": "        SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, (CASE WHEN ? = ? THEN ? END)\n",
+    "tests": [
+      "test/audit1003_wd.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-WD1-the-writes-guard",
+    "file": "server-account/src/halls.js",
+    "old": "        WHERE NOT EXISTS (SELECT 1 FROM homes t WHERE t.map_id = ? AND NOT (${LAYOUT_MATCH_SQL}))`)\n",
+    "new": "        WHERE NOT EXISTS (SELECT 1 FROM homes t WHERE t.map_id = ? AND 0 AND NOT (${LAYOUT_MATCH_SQL}))`)\n",
+    "tests": [
+      "test/audit1003_wd.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-WD1-the-inserts-change-unasked",
+    "file": "server-account/src/halls.js",
+    "old": "...layoutMatchBinds(layout)),\n      mustChange(db),\n    ]);",
+    "new": "...layoutMatchBinds(layout)),\n    ]);",
+    "tests": [
+      "test/audit1003_wd.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-WD1-the-town-unasked-before-the-hour",
+    "file": "server-account/src/halls.js",
+    "old": "  const crossed = await townLayoutRefusal(db, mapId, layout);\n  if (crossed) return crossed;\n",
+    "new": "",
+    "tests": [
+      "test/audit1003_wd.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-WD1-the-raced-answer",
+    "file": "server-account/src/halls.js",
+    "old": "    const lost = await townLayoutRefusal(db, mapId, layout);   // AUDIT PRE-MERGE 1003 WD1: a first home in another layout landed first\n    if (lost) return lost;\n",
+    "new": "",
+    "tests": [
+      "test/audit1003_wd.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-WD1-the-stamp-unchecked",
+    "file": "server-account/src/halls.js",
+    "old": "  if (!homeLayoutOk(layout)) return { error: 'bad-home' };   // AUDIT PRE-MERGE 1003 WD1",
+    "new": "  // AUDIT PRE-MERGE 1003 WD1",
+    "tests": [
+      "test/audit1003_wd.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-WD1-the-426-unasked",
+    "file": "server-account/src/halls.js",
+    "old": "  if (!Object.hasOwn(body ?? {}, 'layout')) return { error: 'home-update' };",
+    "new": "  if (false) return { error: 'home-update' };",
+    "tests": [
+      "test/audit1003_wd.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-WD1-the-routes-layout-unsaid",
+    "file": "server-account/src/index.js",
+    "old": "        if (r.error === 'home-layout') return json({ error: 'home-layout', layout: r.layout ?? null }, 409, origin);   // AUDIT PRE-MERGE 1003 WD1",
+    "new": "        // AUDIT PRE-MERGE 1003 WD1",
+    "tests": [
+      "test/audit1003_wd.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-WD1-home-updates-status",
+    "file": "server-account/src/index.js",
+    "old": "  'home-layout': 409, 'home-update': 426,\n",
+    "new": "  'home-layout': 409,\n",
+    "tests": [
+      "test/audit1003_wd.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-WD1-the-bodys-layout",
+    "file": "src/net/accountClient.js",
+    "old": "price, layout: layout || null }),\n",
+    "new": "price }),\n",
+    "tests": [
+      "test/audit1003_wd.test.js",
+      "test/guild1d_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-WD1-the-book-drops-it",
+    "file": "src/net/guildBook.js",
+    "old": "region, price, layout })));",
+    "new": "region, price })));",
+    "tests": [
+      "test/audit1003_wd.test.js",
+      "test/guild1d_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-WD1-classic-sent-as-a-stamp",
+    "file": "src/systems/onlineHomes.js",
+    "old": "  return stamp && stamp !== CLASSIC_LAYOUT ? stamp : null;\n",
+    "new": "  return stamp || null;\n",
+    "tests": [
+      "test/audit1003_wd.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-WD1-the-claim-says-another",
+    "file": "src/systems/onlineHomes.js",
+    "old": "    const layout = homeClaimLayout(mapId);\n",
+    "new": "    const layout = null;\n",
+    "tests": [
+      "test/audit1003_wd.test.js",
+      "test/wd3_layoutPins.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-WD1-the-towns-missing-gate",
+    "file": "src/scenes/worldModes.js",
+    "old": "    // bought in its town's layout, and one refused for that layout hears them again\n    if (host.homeTownsMissing?.()) { townTalk?.say?.(accountRefusalText('home-towns')); return; }\n",
+    "new": "    // bought in its town's layout, and one refused for that layout hears them again\n",
+    "tests": [
+      "test/audit1003_wd.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-WD1-the-heard-gate",
+    "file": "src/scenes/worldModes.js",
+    "old": "return; }\n    if (host.homeLayoutsHeard?.() === false) { townTalk?.say?.(accountRefusalText('home-layout')); host.hearHomeLayouts?.(); return; }\n    const id = homeIdOf(bd);",
+    "new": "return; }\n    const id = homeIdOf(bd);",
+    "tests": [
+      "test/audit1003_wd.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-WD1-the-layout-unsent",
+    "file": "src/scenes/worldModes.js",
+    "old": "price, layout: homeClaimLayout(mapId) }))",
+    "new": "price }))",
+    "tests": [
+      "test/audit1003_wd.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-WD1-the-refusal-not-heard-again",
+    "file": "src/scenes/worldModes.js",
+    "old": "        if (r?.error === 'home-layout') host.hearHomeLayouts?.();   // AUDIT PRE-MERGE 1003 WD1",
+    "new": "        // AUDIT PRE-MERGE 1003 WD1",
+    "tests": [
+      "test/audit1003_wd.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-WD2-the-old-marker-kept",
+    "file": "src/systems/quest/place.js",
+    "old": "    this.siteDetails = { ...next, questUID: sd.questUID ?? next.questUID, magicNumberIndex: sd.magicNumberIndex ?? 0 };",
+    "new": "    this.siteDetails = { ...next, questUID: sd.questUID ?? next.questUID, magicNumberIndex: sd.magicNumberIndex ?? 0, selectedMarker: sd.selectedMarker ?? next.selectedMarker };",
+    "tests": [
+      "test/audit1003_wd.test.js",
+      "test/wd3_layoutPins.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-WD2-the-default-targets-dropped",
+    "file": "src/systems/quest/place.js",
+    "old": "      for (const s of sd.selectedMarker.targetResources) assignResourceToMarker(s, selectedMarker);\n",
+    "new": "",
+    "tests": [
+      "test/audit1003_wd.test.js",
+      "test/wd3_layoutPins.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-WD2-the-numbered-spawn-targets-dropped",
+    "file": "src/systems/quest/place.js",
+    "old": "    carry(sd.questSpawnMarkers, spawn, MARKER_TYPES.QuestSpawn);\n",
+    "new": "",
+    "tests": [
+      "test/audit1003_wd.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-WD2-the-numbered-item-targets-dropped",
+    "file": "src/systems/quest/place.js",
+    "old": "    carry(sd.questItemMarkers, item, MARKER_TYPES.QuestItem);\n",
+    "new": "",
+    "tests": [
+      "test/audit1003_wd.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-WD2-the-overflow-dropped",
+    "file": "src/systems/quest/place.js",
+    "old": "        if (to[i]) { assignResourceToMarker(s, to[i]); continue; }\n",
+    "new": "        if (to[i]) assignResourceToMarker(s, to[i]);\n        continue;\n",
+    "tests": [
+      "test/audit1003_wd.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-WD2-the-type-unread",
+    "file": "src/systems/quest/place.js",
+    "old": "      select(sd.selectedMarker.markerType);\n",
+    "new": "      select(MARKER_TYPES.QuestSpawn);\n",
+    "tests": [
+      "test/audit1003_wd.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-WD2-the-fallback-unread",
+    "file": "src/systems/quest/place.js",
+    "old": "      const pool = own.length ? own : (own === item ? spawn : item);\n",
+    "new": "      const pool = own;\n",
+    "tests": [
+      "test/audit1003_wd.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-WD2-the-markerless-building-taken",
+    "file": "src/systems/quest/place.js",
+    "old": "    if (!validateQuestMarkers(spawn, item)) return null;\n",
+    "new": "",
+    "tests": [
+      "test/audit1003_wd.test.js"
+    ]
+  }
+]

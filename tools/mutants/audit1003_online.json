@@ -1,0 +1,422 @@
+[
+  {
+    "name": "AUDIT1003-O1-RELAY-HEAL-UNDONE",
+    "file": "src/net/arenaBrain.js",
+    "old": "  if (e.some((x) => x.k === 'heal')) for (const f of st.b.fighters) f.health = f.maxHealth;\n",
+    "new": "",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O1-BELT-GONE",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "          if (!(healed && h < (P.health ?? h))) {",
+    "new": "          {",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O1-BELT-FROM-THE-END",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "const healed = C.b.phase === 'heal' || C.b.phase === 'done';",
+    "new": "const healed = boutOver(C.b);",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O1-BELT-HEAL-ONLY",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "const healed = C.b.phase === 'heal' || C.b.phase === 'done';",
+    "new": "const healed = C.b.phase === 'heal';",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O1-LIFT-REFUSED",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "if (!(healed && h < (P.health ?? h))) {",
+    "new": "if (!healed) {",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O2-FIGHTER-BOUT-KEPT",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "yieldEarly : ARENA_NO_TEXT[w.m] ?? w.m); if (over) endBout();",
+    "new": "yieldEarly : ARENA_NO_TEXT[w.m] ?? w.m);",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O2-EX-STANDS-KEPT",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "{ say(ARENA_NO_TEXT[w.m] ?? w.m); if (over) endBout(); return true; }",
+    "new": "{ say(ARENA_NO_TEXT[w.m] ?? w.m); return true; }",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O2-VOID-KEPT",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "(w.m === 'no bout' || w.m === 'void')",
+    "new": "w.m === 'no bout'",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O2-MIRROR-KEPT",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "    if (deps.bouts.relay?.()?.o === bout.o) deps.bouts.dismiss?.();\n    bout = null;",
+    "new": "    bout = null;",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O2-BOUT-KEPT",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "deps.bouts.dismiss?.();\n    bout = null;\n  }",
+    "new": "deps.bouts.dismiss?.();\n  }",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O3-FIGHT-UNHEARD",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "    if ((w?.k === 'st' && FOUGHT.has(w.ph)) || (w?.k === 'ev' && (w.e ?? []).some((e) => FOUGHT.has(e.k)))) exBegun.add(hour);\n",
+    "new": "",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O3-ST-UNHEARD",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "(w?.k === 'st' && FOUGHT.has(w.ph)) || ",
+    "new": "",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O3-EV-UNHEARD",
+    "file": "src/scenes/arenaOnline.js",
+    "old": " || (w?.k === 'ev' && (w.e ?? []).some((e) => FOUGHT.has(e.k)))",
+    "new": "",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O3-SHUT-AT-THE-CALL",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "BOUT_PHASES.slice(BOUT_PHASES.indexOf('fight'))",
+    "new": "BOUT_PHASES.slice(BOUT_PHASES.indexOf('call'))",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O3-GATE-MIRROR-ONLY",
+    "file": "src/scenes/arenaGate.js",
+    "old": "return !!ex && !!online()?.exhibitionBegun?.(ex.hour);",
+    "new": "return false;",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O4-SOCKET-STATUS-READ",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "return !!s && !!s.arenaOk && !s.superseded;",
+    "new": "return !!s && s.status === 'open' && !!s.arenaOk && !s.superseded;",
+    "tests": [
+      "test/audit1003_online.test.js",
+      "test/arena4b_stands.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O4-RELAY-WORD-IGNORED",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "return !!s && !!s.arenaOk && !s.superseded;",
+    "new": "return !!s && !s.superseded;",
+    "tests": [
+      "test/audit1003_online.test.js",
+      "test/arena4b_stands.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O9-SEAT-IGNORED",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "return !!s && !!s.arenaOk && !s.superseded;",
+    "new": "return !!s && !!s.arenaOk;",
+    "tests": [
+      "test/audit1003_online.test.js",
+      "test/arena4b_stands.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O4-OFFLINE-LINE-ONLINE",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "if (!hallSend(q)) return { ok: false, text: O.hallWait };",
+    "new": "if (!hallSend(q)) return { ok: false, text: O.whyOffline };",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O5-LINKS-UNTICKED",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "    for (const l of [hallLink, city?.link, asking?.link]) { try { l?.tick?.(); } catch { /* its own trouble */ } }\n",
+    "new": "",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O5-HALL-UNTICKED",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "[hallLink, city?.link, asking?.link]",
+    "new": "[city?.link, asking?.link]",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O5-CITY-UNTICKED",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "[hallLink, city?.link, asking?.link]",
+    "new": "[hallLink, asking?.link]",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O5-ASK-UNTICKED",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "[hallLink, city?.link, asking?.link]",
+    "new": "[hallLink, city?.link]",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O5-NEVER-SAID-AGAIN",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "    hallRequeue();\n",
+    "new": "",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O5-OLD-SOCKET-ONLY",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "if (hallLink.status !== 'open') { hallQ.sent = false; return; }",
+    "new": "if (hallLink.status !== 'open') return;",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O5-OFFER-LEFT",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "(hall.queue !== 'queued' && hall.queue !== 'offer')",
+    "new": "hall.queue !== 'queued'",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O5-DEAD-OFFER-SHOWN",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "    if (hallQ.sent && hall.queue === 'offer') hall = { ...hall, queue: 'queued', offer: null };",
+    "new": "",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O5-WORD-UNKEPT",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "      hallQ = { w: q, sent: true };",
+    "new": "",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O7-FLOOR-DOOR-UNHANDED",
+    "file": "src/scenes/arenaOnline.js",
+    "old": ", send: { cheer: (c) => boutSend({ k: 'ch', c }) } } });",
+    "new": " } });",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O7-CITY-DOOR-UNHANDED",
+    "file": "src/scenes/arenaOnline.js",
+    "old": ", send: { cheer } } });",
+    "new": " } });",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O7-EXHIBITION-DOOR-DROPPED",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "send: { cheer: p.send?.cheer },",
+    "new": "send: {},",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O7-PRESSES-WITHOUT-A-DOOR",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "C.you || typeof C.relay.send?.cheer !== 'function' ? null",
+    "new": "C.you ? null",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O7-SEATLESS-SHOUT",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "city === C && C.sent && C.link",
+    "new": "city === C && C.link",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O9-CALL-FOLLOWED",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "    if ((w.k === 'of' || w.k === 'go') && !live()) return;\n",
+    "new": "",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O9-HALL-KEPT",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "  function leaveAll() {\n    if (hallLink) { try { hallLink.leave?.(); } catch { /* gone */ } hallLink = null; }\n",
+    "new": "  function leaveAll() {\n",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O9-PICTURE-KEPT",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "    hall = { ...HALL_EMPTY };\n    closeCity();\n    closeAsk();\n    endBout();",
+    "new": "    closeCity();\n    closeAsk();\n    endBout();",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O9-CITY-KEPT",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "    hall = { ...HALL_EMPTY };\n    closeCity();\n    closeAsk();",
+    "new": "    hall = { ...HALL_EMPTY };\n    closeAsk();",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O9-ASK-KEPT",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "    closeCity();\n    closeAsk();\n    endBout();",
+    "new": "    closeCity();\n    endBout();",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O9-BOUT-KEPT",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "    closeAsk();\n    endBout();\n  }",
+    "new": "    closeAsk();\n  }",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O9-LEAVESEAT-UNWIRED",
+    "file": "src/scenes/world.js",
+    "old": "    try { arenaOnline?.leaveAll(); } catch (e) { console.warn('[online] leaving the arena\\'s rooms', e?.message ?? e); }\n",
+    "new": "",
+    "tests": [
+      "test/audit1003_online.test.js",
+      "test/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O10-READ-ON-THE-HANDOVER",
+    "file": "src/systems/onlineHomes.js",
+    "old": "if (checkpointLanded(await hooks.checkpoint?.())) await",
+    "new": "if (hooks.checkpoint?.() !== false) await",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O10-READ-ON-A-REFUSAL",
+    "file": "src/systems/onlineHomes.js",
+    "old": "export const checkpointLanded = (c) => c === undefined || c === true || c?.ok === true;",
+    "new": "export const checkpointLanded = (c) => c !== false;",
+    "tests": [
+      "test/audit1003_online.test.js",
+      "test/arena4b_homeclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O10-SINK-UNHANDED",
+    "file": "src/scenes/world.js",
+    "old": "const opts = sink ? { quiet: true, sink } : { quiet: true };",
+    "new": "const opts = { quiet: true };",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O10-SINK-NOT-PASSED",
+    "file": "src/scenes/world.js",
+    "old": "if (realmSession) return realmCheckpoint({ sink });",
+    "new": "if (realmSession) return realmCheckpoint();",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O10-HANDOVER-ANSWERED",
+    "file": "src/scenes/world.js",
+    "old": "    return put ?? false;\n  };",
+    "new": "    return true;\n  };",
+    "tests": [
+      "test/audit1003_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-O10-HOOK-THE-HANDOVER",
+    "file": "src/scenes/world.js",
+    "old": "checkpoint: () => onlineCheckpointLanded(),",
+    "new": "checkpoint: () => onlineCheckpoint(),",
+    "tests": [
+      "test/audit1003_online.test.js",
+      "test/arena4b_homeclient.test.js"
+    ]
+  }
+]

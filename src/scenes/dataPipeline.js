@@ -12,7 +12,7 @@ import { dfMeshToModel } from '../world/meshReader.js'; import { patchSeams } fr
 import { fetchBytes, texName } from './shared.js';
 import { decodedTexture, preloadTextureArchive, isVendorArchive, vendorTextureStandIn, setTextureDeriveContext } from '../systems/textureReplacement.js';   // M-TEX: user-supplied textures override the classic ones
 import { classicRecordRgba } from '../formats/derivedTexture.js';   // WD2: a mod sprite rebuilt from the player's own record
-import { customModelFor, customAliasFor, aliasSubMeshes, customModelNeeds } from '../world/customModels.js';   // DS1: models no ARCH3D carries; WD3: a classic model with its pictures swapped
+import { customModelBuilt, customAliasFor, aliasSubMeshes, customModelNeeds } from '../world/customModels.js';   // DS1: models no ARCH3D carries; WD3: a classic model with its pictures swapped
 import { dyeToken, changeDyeBitmap } from '../characters/dyes.js';   // DW3: the per-dye UI variant; DYE-ICON: and the classic arm's ChangeDye
 import { ROTOR, MACHINERY, MACHINERY_MODEL_ID, MACHINERY_CHILDREN, PLANK_GEAR, ROLLER } from '../world/windmillMesh.js';   // WM2b/WM2d/WM4b: the vendored mill and its machinery, uploaded like any other model
 import { skinnedBody } from '../world/windmills.js';   // WM2e: its walls and roof follow the climate
@@ -263,8 +263,11 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     }
     return meshPromises.get(key);
   }
-  const getGpuMesh = (modelIdNum) => cachedMesh(modelIdNum, () => buildGpuMesh(modelIdNum));
-  async function buildGpuMesh(modelIdNum) {
+  // AUDIT PRE-MERGE 1003 W6: `breathe` - the caller's breather (scenes/world.js, a streamed pixel's), handed to a custom
+  // model whose build can breathe (world/customModels.js customModelBuilt: the colosseum's seal); the first caller's, as
+  // the in-flight build is
+  const getGpuMesh = (modelIdNum, breathe = null) => cachedMesh(modelIdNum, () => buildGpuMesh(modelIdNum, breathe));
+  async function buildGpuMesh(modelIdNum, breathe = null) {
     // WM4b: MESH REPLACEMENT, the way DFU's MeshReplacement.TryImport-
     // GameObject runs BEFORE the classic mesh is read (MeshAssetImporter
     // is asked first; ARCH3D only when it has nothing). Model 41601 is
@@ -285,7 +288,7 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
       const i = arch.getRecordIndex(id);
       if (i !== -1) for (const sm of arch.getMesh(i).subMeshes) await getTexture(sm.textureArchive);
     }
-    const custom = customModelFor(modelIdNum, { classicModel: classicModelOf });
+    const custom = await customModelBuilt(modelIdNum, { classicModel: classicModelOf }, breathe);   // AUDIT PRE-MERGE 1003 W6: a breath at a time where it can
     if (custom) {
       const gpu = await uploadModel(modelIdNum, custom);
       cpuModels.set(modelIdNum, { modelIdNum, positions: custom.positions, indices: custom.indices, subMeshes: custom.subMeshes, doors: custom.doors ?? [], normals: custom.normals, uvs: custom.uvs });

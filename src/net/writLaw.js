@@ -17,6 +17,7 @@ import { STORES_MAX } from './professionLaw.js';
 import { MARKS_MAX } from './marksLaw.js';
 import { marketCatalogue, pieceListable, priceOk, UNYIELDED } from './marketLaw.js';
 import { recipeById, takesQuality, MASTERWORK } from './recipeLaw.js';
+import { RAID_KEY_RE } from './raidLaw.js';   // SILVER-WAYS: a contract's raid, by its key
 
 const DAY_S = 86_400;
 
@@ -131,3 +132,41 @@ export const guildTakeMay = (rank, units, ownDeposit) => writMay(rank, 'storesWi
  *  that takes the guild Stores out, which could sell the guild the same units again and again (its writ budget, or the
  *  treasury, become its own Marks - GUILD1's law: only the Guildmaster withdraws). */
 export const writDeliverMay = (rank) => rank == null || !writMay(rank, 'storesWithdraw');
+
+// ─── GUILD CONTRACTS (SILVER-WAYS) ───────────────────────────────────
+
+/**
+ * SILVER-WAYS (2026-10-03, Mac: "Do it"): A GUILD CONTRACT - a writ for DEEDS where a guild writ asks materials. A guild
+ * puts up `pay` silver for each defender of a raid in a region, `deeds` of them, from its treasury (escrowed, as a
+ * writ's pay is); every account a raid's receipt pays there is paid by the contract as its claim is counted, less the
+ * market's 5% tax. It mints nothing: it moves a guild's silver to the fighters who hold its towns, so a guild of
+ * gatherers can pay a guild's fighters without any new silver being struck.
+ *
+ * RAIDS ONLY, for now: a raid's region is in its key, read against the day's roll by the relay (RAID-ROLL), so a claim
+ * cannot name another region's contract; a gate's region is still the claiming client's word until three claims agree
+ * (seatInfluence.js), and a contract paid on one account's word would be one account's to empty.
+ */
+export const CONTRACT_KINDS = Object.freeze(['raid']);
+/** A contract stands a guild writ's seven days. */
+export const CONTRACT_S = WRIT_S;
+/** The open contracts a guild may stand at once. */
+export const GUILD_CONTRACTS_MAX = 5;
+/** A contract's pay a defender: 1 to 50 silver (the raid's own faucet is 30 - a contract may pay more, never a fortune
+ *  an alt could be fed by). */
+export const CONTRACT_PAY_MAX = 50;
+/** A contract's deeds: 1 to 500 defenders. */
+export const CONTRACT_DEEDS_MAX = 500;
+/** The contracts one raid's claim is paid by, at most - the best-paying first (a claim's batch stays bounded). */
+export const CONTRACTS_PAID_MAX = 3;
+export const contractKindOk = (k) => typeof k === 'string' && CONTRACT_KINDS.includes(k);
+export const contractPayOk = (n) => Number.isSafeInteger(n) && n >= 1 && n <= CONTRACT_PAY_MAX;
+export const contractDeedsOk = (n) => Number.isSafeInteger(n) && n >= 1 && n <= CONTRACT_DEEDS_MAX;
+/** The region a raid's key names (`region:location:day`, raidLaw.js RAID_KEY_RE), or null for no key. */
+export const contractRegionOfRaid = (key) => {
+  if (typeof key !== 'string' || !RAID_KEY_RE.test(key)) return null;
+  return Number(key.slice(0, key.indexOf(':')));
+};
+/** Whether an account holding `rank` in a contract's guild (null, none) may be paid by it - not a rank that may post or
+ *  withdraw one (the Guildmaster's and the Officers'), who could pay themselves the treasury a raid at a time. Any other
+ *  member may: paying its own fighters is what a contract is for. */
+export const contractPaidMay = (rank) => rank == null || !writMay(rank, 'postWrit');

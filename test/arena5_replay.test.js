@@ -328,6 +328,7 @@ test('ARENA5 offered: the Herald\'s R when the records keep a bout, the Records 
     assert.match(s, /if \(arenaBouts\.askReplay\(rec\)\) modes\?\.enterArenaFloor\?\.\('watch'\);/, f);
     assert.match(s, /playerFeet: player\.pos, playerYaw: cam\.yaw,/, f);
   }
-  assert.match(read('src/ui/arenaWindow.js'), /if \(b\.replay\) \{ const acts = el\('div', 'aw-boutacts'\); acts\.append\(press\(b\.replay, \(\) => doAct\('replay', \{ i: b\.replay\.i \}\)\)\); li\.append\(acts\); \}/);
+  // AUDIT PRE-MERGE 1003 U14: each press named by its bout (its opponent and its day)
+  assert.match(read('src/ui/arenaWindow.js'), /if \(b\.replay\) \{ const acts = el\('div', 'aw-boutacts'\); acts\.append\(press\(b\.replay, \(\) => doAct\('replay', \{ i: b\.replay\.i \}\), '', `\$\{b\.opp\}, \$\{b\.when\}`\)\); li\.append\(acts\); \}/);
   assert.equal(YOU, 'you');
 });

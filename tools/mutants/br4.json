@@ -80,14 +80,5 @@
       "test/brand.test.js",
       "test/savetransfer.test.js"
     ]
-  },
-  {
-    "name": "BR4-patch-notes-keep-the-old-name",
-    "file": "PATCH-NOTES-Daggerfall-Online.md",
-    "old": "- Daggerfall Enhanced is now **Daggerfall Online** - on the website",
-    "new": "- Daggerfall Enhanced is still **Daggerfall Enhanced** - on the website",
-    "tests": [
-      "test/brand.test.js"
-    ]
   }
 ]

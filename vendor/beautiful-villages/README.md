@@ -65,7 +65,10 @@ Editor writes it:
   of the classic block it was made from, or carried whole where it is the
   author's own. Anything the author copied out of Daggerfall - a subrecord, a
   building's exterior or interior half - is named by reference to the classic
-  record (by its sha256) and never written out. 7,526 files in 2,712
+  record (`$c`: its block's index in BLOCKS.BSA and its path in that block,
+  the block checked by its name, `classicNames` below) and never written out;
+  the piece's sha256 is only the builder's key for finding it (AUDIT
+  PRE-MERGE 1003 WD3). 7,526 files in 2,712
   content-addressed nodes, 2.58 MB gzipped (the files themselves are 154 MB of text).
   Built by:
 

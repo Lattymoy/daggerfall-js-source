@@ -464,7 +464,7 @@ test('TV3 host wiring: the book hoisted above its readers, filled by the Region 
   assert.match(w, /link\.onTravellerRoom = \(list\) => \{ travellerBook\.reset\(list, Date\.now\(\)\); travellerSent\.last = null; travellerSent\.at = 0; \};/);
   assert.match(w, /link\.onTravellerLeft = \(id\) => travellerBook\.drop\(id\);/);
   // AUDIT TV C5: offline (another tab has the seat), nobody is seen travelling
-  assert.match(w, /for \(const link of chatLinks\?\.values\?\.\(\) \?\? \[\]\) link\.supersede\(\);\n\s*travellerBook\.clear\(\); travellerSent\.last = null;/);
+  assert.match(w, /for \(const link of chatLinks\?\.values\?\.\(\) \?\? \[\]\) link\.supersede\(\);\n(?:\s*\/\/[^\n]*\n)*\s*try \{ arenaOnline\?\.leaveAll\(\); \}[^\n]*\n\s*travellerBook\.clear\(\); travellerSent\.last = null;/);
   assert.match(w, /chatRegionFrame\(performance\.now\(\)\);[^\n]*\n\s*travellerFrame\(performance\.now\(\)\);/, 'after the region link has moved');
   assert.match(w, /if \(link\.room !== travellerSent\.room\) \{ travellerSent\.room = link\.room; travellerSent\.last = null; travellerSent\.at = 0;/, 'a new room holds nothing of mine');
   assert.match(w, /const outdoors = \(modes\?\.mode \?\? 'exterior'\) === 'exterior' && walkMode && playerSpawned && \(playerEntity\.health \?\? 0\) > 0;/, 'nothing from indoors');

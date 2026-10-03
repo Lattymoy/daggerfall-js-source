@@ -87,8 +87,12 @@ not the named one at the named index) is said and not served.
 
 Beautiful Villages and Beautiful Cities (carademono; `03-World/Beautiful-Towns.md`)
 ship 7,727 `location-<r>-<i>.json` files and 820 RMB blocks between them -
-339 MB of DFU JSON, most of it the classic game, and the rest the same few
-thousand redecorated buildings again and again. A WD1 patch a file would
+439 MB of DFU JSON, most of it the classic game, and the rest the same few
+thousand redecorated buildings again and again. (The sum of the vendor
+READMEs' 154 MB and 285 MB; this line said 339 until AUDIT PRE-MERGE 1003 D14
+found it was not their sum. No tool in the tree prints the figures and none
+was measured again here: the files are rebuilt only from the player's own
+BSA files, and this tree has no ARENA2.) A WD1 patch a file would
 have been 8,547 globbed files rebuilt at every boot. WD3 is WD1's law at
 that scale: one PACK a mod, the edit of every file over the player's own
 `MAPS.BSA` and `BLOCKS.BSA`, every piece the author repeats stored once,
@@ -100,7 +104,7 @@ each file rebuilt only when the door first asks for it.
 | `src/formats/worldDataJson.js` | `locationToDfuJson` - a classic DFLocation in the World Data Editor's shape, member for member (`DFLocation.cs`, `DFRegion.cs`; every `internal` left out, enums by name) - the base of every location file. |
 | `src/formats/mapsFile.js` | `readClassicLocation(region, index)` - the location as MAPS.BSA holds it, past the door; `getRmbBlockName` notes the town whose blocks are read next (the layout pins' reading town). |
 | `tools/worldDataPackBuild.mjs` | the builder: parses each world-data TextAsset of the bundle as FullSerializer does (`\0` and `\a` are its escapes), takes its base (its own classic location or block, or for a new block the classic block or pack file nearest it), writes the edit subtree by subtree as the smaller of an op script and a whole value, and REFUSES to write a pack in which one file - rebuilt through the runtime's own reader from the pack as shipped - is not the author's sha256. Deterministic: the bundle and the ARENA2 alone decide the bytes. |
-| `scenes/modWorldData.js` | globs `vendor/*/WorldDataPack/*.pack.json.gz` as URLs (never a chunk); a pack is fetched only when its mod is loaded for the game (the switch read once and latched) or when a save's pins let it into a town; registered on the door at its load priority (`WORLD_DATA_PRIORITY`); every block and one location in 64 checked against the author's sha256 in the background, one line said for the pack however many differ. |
+| `scenes/modWorldData.js` | globs `vendor/*/WorldDataPack/*.pack.json.gz` as URLs (never a chunk); a pack is fetched only when its mod is loaded for the game (the switch read once and latched) or when a save's pins let it into a town; registered on the door at its load priority (`WORLD_DATA_PRIORITY`); one block in 8 and one location in 64, each the first time it is served, checked against the author's sha256 in the background (AUDIT WD3 B4: every block was - each hash a hitch on a phone), one line said for the pack however many differ. |
 | `formats/worldDataReplacement.js` | the door keeps every mod's entry of a name, highest load priority first (ModManager.TryGetAsset's reverse load order), and asks the layout pins which mods a town is served with; a pack file is rebuilt the first time it is asked for, and one that will not rebuild on the player's data is said once and not served. |
 
 The two packs: Beautiful Villages 7,526 files in 2,712 nodes, 2.58 MB

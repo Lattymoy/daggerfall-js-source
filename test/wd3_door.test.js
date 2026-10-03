@@ -298,7 +298,7 @@ test('WD3 the loader: each pack a URL the build emits (never a chunk), fetched o
   assert.match(M, /_pending\.set\(vendor, loadPackFrom\(vendor, entry\[1\], \(\) => false\)\.finally\(\(\) => _pending\.delete\(vendor\)\)\);\n {2}return \(await _pending\.get\(vendor\)\) > 0;/, 'a pinned pack answers only where a pin lets it in, fetched once however many ask');
   assert.match(M, /const n = registerWorldDataPack\(pack, isOn, \{ priority: WORLD_DATA_PRIORITY\[vendor\] \?\? 0 \}\);\n(?: {4}\/\/.*\n) {4}installTownStandIns\(townPacksLive\);/);
   assert.match(M, /const townPacksLive = \(\) => \{ const pinned = vendorsPinnedIn\(\); return \[\.\.\._packs\.keys\(\)\]\.some\(\(v\) => modLatchedOn\(v\) === true \|\| pinned\.has\(v\)\); \};/, 'the stand-ins on while a town pack serves a town (AUDIT WD3 T2)');
-  assert.match(M, /if \(name\.startsWith\('location-'\) && \(locations\+\+ % 64\) !== 0\) return;/, 'every block and one location in 64');
+  assert.match(M, /if \(name\.startsWith\('location-'\) && \(locations\+\+ % 64\) !== 0\) return;/, 'one location in 64 (and one block in 8 - AUDIT WD3 B4)');
   assert.match(M, /console\.error\(`\[worlddata\] \$\{vendor\}: the pack did not load \(\$\{e\?\.message \?\? e\}\) - its towns stand classic`\);/);
 });
 

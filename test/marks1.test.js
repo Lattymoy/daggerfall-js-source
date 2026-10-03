@@ -103,9 +103,9 @@ const rid = () => `req-${String(++_rid).padStart(6, '0')}`;
 
 // ─── THE LAW ─────────────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('MARKS1 the law: a balance holds 10,000,000; the gate strikes 50, two a UTC day; the Bank pays 8 gold a Mark, 300 Marks a day; the switch is off, dev or on (anything else off); the caps count by the UTC day', () => {
+test('MARKS1 the law: a balance holds 10,000,000; the gate strikes 50 (SILVER-WAYS: under the day\'s combat cap, test/silverways_service.test.js); the Bank pays 8 gold a Mark, 300 Marks a day; the switch is off, dev or on (anything else off); the caps count by the UTC day', () => {
   assert.equal(MARKS_MAX, 10_000_000);
-  assert.deepEqual(MARKS_FAUCETS.gate, { amount: 50, perDay: 2 });
+  assert.deepEqual(MARKS_FAUCETS.gate, { amount: 50 });   // PIN MOVED (SILVER-WAYS): two a UTC day of its own became the gates' and the raids' one combat cap
   assert.deepEqual(MARKS_BANK, { goldPerMark: 8, perDay: 300 });
   assert.deepEqual(MARKS_SWITCH, ['off', 'dev', 'on']);
   assert.deepEqual(['on', 'dev', 'off', 'ON', undefined, 'yes'].map(marksSwitchOf), ['on', 'dev', 'off', 'off', 'off', 'off']);
@@ -119,11 +119,14 @@ test('MARKS1 the law: a balance holds 10,000,000; the gate strikes 50, two a UTC
 
 test('MARKS1: GOLD NEVER BUYS MARKS - no kind, route, table or statement takes gold in and strikes a Mark', () => {
   // PROF1 built the second: a Court writ's pay, struck for units the service took out of the Stores (test/prof1_service)
-  assert.deepEqual(Object.entries(MARKS_KINDS).filter(([, way]) => way === 'mint').map(([k]) => k), ['gate', 'writ', 'siege-honours', 'gate-incursion', 'seat-strike-refund'], 'the faucets built - each a witnessed act');   // PIN MOVED (AUDIT-SEATS): a siege's relay-signed Honours and an Incursion's agreed gate days, registered at last
+  assert.deepEqual(Object.entries(MARKS_KINDS).filter(([, way]) => way === 'mint').map(([k]) => k), ['gate', 'writ', 'siege-honours', 'gate-incursion', 'seat-strike-refund', 'raid', 'guild-deed', 'motherlode'], 'the faucets built - each a witnessed act');   // PIN MOVED (AUDIT-SEATS): a siege's relay-signed Honours and an Incursion's agreed gate days, registered at last; PIN MOVED (SILVER-WAYS): a raid's receipt, a guild's deed, a Motherlode's Watch
   assert.ok(![...ROUTES].some((r) => r.startsWith('/v1/marks/') && /buy|purchase|gold/i.test(r)), 'no route to buy Drakes');
   const marks = src('server-account/src/marks.js').replace(/^\s*\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
-  const mints = [...marks.matchAll(/SELECT 'mint', NULL, 'account', \?1, '([a-z-]+)'/g)].map((m) => m[1]);
-  assert.deepEqual(mints, ['gate'], 'the service strikes Drakes in one statement, the gate\'s');
+  // PIN MOVED (SILVER-WAYS): the gate's statement became the combat strike's, the gate's and the raid's alone, and the
+  // guild deed's strikes a guild's treasury
+  const mints = [...marks.matchAll(/SELECT 'mint', NULL, '(?:account|guild)', [^,]+, '([^']+)'/g)].map((m) => m[1]);
+  assert.deepEqual(mints, ['${kind}', 'guild-deed'], 'the service strikes Drakes in two statements, the combat strike\'s and the deed\'s');
+  assert.deepEqual([...marks.matchAll(/combatStrikeStatement\(ctx, player, '([a-z]+)'/g)].map((m) => m[1]), ['gate', 'raid'], 'the combat strike, a gate\'s and a raid\'s');
   assert.doesNotMatch(src('server-account/migrations/0025_marks.sql'), /'gold'/, 'the ledger has no gold end');
   assert.match(src('server-account/migrations/0025_marks.sql'), /src_kind TEXT NOT NULL CHECK \(src_kind IN \('mint', 'account', 'guild'\)\)/);
 });
@@ -151,22 +154,26 @@ test('MARKS1 the schema: a line moves both balances on its own insert; a line th
 
 // ─── THE FIRST FAUCET ────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('MARKS1 the gate\'s receipt: 50 Marks for a gate counted, two a UTC day - a third gate the same day counts and strikes nothing; the next day strikes again; the same gate never twice; a guest none', async (t) => {
+test('MARKS1 the gate\'s receipt: 50 Marks for a gate counted, under the day\'s combat cap (SILVER-WAYS: was two a UTC day) - a fourth gate the same day counts and strikes nothing; the next day strikes again; the same gate never twice; a guest none', async (t) => {
   let clock = T0 * 1000;
   t.mock.method(Date, 'now', () => clock);
   const { env, registered, guest, claim, balance, call } = await stand();
   const a = await registered('Anna');
   const first = await claim(a, 700, T0);
-  assert.deepEqual(first.body, { recorded: true, stones: 1, closed: 1, marks: { struck: 50, balance: 50 } });   // WB12d: the row's embers said (AUDIT WB12d A1)
-  assert.deepEqual((await claim(a, 701, T0)).body.marks, { struck: 50, balance: 100 });
-  const third = await claim(a, 702, T0);
-  assert.equal(third.body.recorded, true, 'the gate is on the record');
-  assert.deepEqual(third.body.marks, { struck: 0, balance: 100, why: 'cap' }, 'the faucet\'s cap, not the gate\'s');
-  assert.deepEqual((await claim(a, 700, T0)).body, { recorded: false, why: 'claimed', stones: 1, closed: 3 }, 'the same gate again strikes nothing');
-  assert.deepEqual((await balance(a)).body.today, { gate: 2, gateMax: 2, exchanged: 0, exchangeMax: 300 });
+  // PIN MOVED (SILVER-WAYS): the strike answers the day's combat silver beside it, and the cap is the gates' and the
+  // raids' 150 together (three gates), where it was the gate's own two
+  const combat = (earned) => ({ earned, max: 150 });
+  assert.deepEqual(first.body, { recorded: true, stones: 1, closed: 1, marks: { struck: 50, balance: 50, combat: combat(50) } });   // WB12d: the row's embers said (AUDIT WB12d A1)
+  assert.deepEqual((await claim(a, 701, T0)).body.marks, { struck: 50, balance: 100, combat: combat(100) });
+  assert.deepEqual((await claim(a, 702, T0)).body.marks, { struck: 50, balance: 150, combat: combat(150) }, 'SILVER-WAYS: the third gate within the cap');
+  const fourth = await claim(a, 703, T0);
+  assert.equal(fourth.body.recorded, true, 'the gate is on the record');
+  assert.deepEqual(fourth.body.marks, { struck: 0, balance: 150, combat: combat(150), why: 'cap' }, 'the faucet\'s cap, not the gate\'s');
+  assert.deepEqual((await claim(a, 700, T0)).body, { recorded: false, why: 'claimed', stones: 1, closed: 4 }, 'the same gate again strikes nothing');
+  assert.deepEqual((await balance(a)).body.today, { gate: 3, combat: 150, combatMax: 150, exchanged: 0, exchangeMax: 300 });
   clock = (T0 + DAY) * 1000;
-  assert.deepEqual((await claim(a, 712, T0 + DAY)).body.marks, { struck: 50, balance: 150 }, 'a new UTC day');
-  assert.equal((await call('/v1/account', undefined, a.secret, 'GET')).body.account.marks, 150, 'the account card reads it');
+  assert.deepEqual((await claim(a, 712, T0 + DAY)).body.marks, { struck: 50, balance: 200, combat: combat(50) }, 'a new UTC day');
+  assert.equal((await call('/v1/account', undefined, a.secret, 'GET')).body.account.marks, 200, 'the account card reads it');
   const g = await guest();
   const gr = await claim(g, 700, T0 + DAY);
   assert.deepEqual([gr.body.recorded, gr.body.marks], [false, undefined], 'a guest\'s gate is not on a record, and strikes nothing');
@@ -218,7 +225,7 @@ test('MARKS1 the balance\'s cap: a gate that would carry a balance past 10,000,0
   const a = await registered('Anna');
   env.DB._raw.prepare(`INSERT INTO marks_ledger (src_kind, src_id, dst_kind, dst_id, kind, amount, day, at, actor, who, rid)
     VALUES ('mint', NULL, 'account', ?, 'test', ?, 1, 1, ?, NULL, 'seed-0001')`).run(a.id, MARKS_MAX - 10, a.id);
-  assert.deepEqual((await claim(a, 700, T0)).body.marks, { struck: 0, balance: MARKS_MAX - 10, why: 'full' });
+  assert.deepEqual((await claim(a, 700, T0)).body.marks, { struck: 0, balance: MARKS_MAX - 10, combat: { earned: 0, max: 150 }, why: 'full' });   // PIN MOVED (SILVER-WAYS): the day's combat silver beside it
 });
 
 test('MARKS1 the switch: off, nothing strikes and nothing answers; dev, the developers alone; on, every account', async (t) => {
@@ -230,7 +237,7 @@ test('MARKS1 the switch: off, nothing strikes and nothing answers; dev, the deve
   const dev = await stand({ open: 'dev', developers: 'Devra' });
   const d = await dev.registered('Devra');
   const p = await dev.registered('Pell');
-  assert.deepEqual((await dev.claim(d, 700, T0)).body.marks, { struck: 50, balance: 50 }, 'a developer strikes');
+  assert.deepEqual((await dev.claim(d, 700, T0)).body.marks, { struck: 50, balance: 50, combat: { earned: 50, max: 150 } }, 'a developer strikes');   // PIN MOVED (SILVER-WAYS): the day's combat silver beside it
   assert.equal((await dev.claim(p, 700, T0)).body.marks, null, 'everyone else waits for "on"');
   assert.match(src('server-account/wrangler.toml'), /^MARKS_OPEN = "on"$/m, 'shipped at dev - opened to everyone by one line (SWITCH-ON, Mac: "Fuck it lets switch everything on")');
 });
@@ -315,15 +322,15 @@ test('MARKS1 the weekly report: a developer\'s alone - struck by faucet, burnt b
   const { registered, claim, call } = await stand({ developers: 'Devra' });
   const d = await registered('Devra');
   const a = await registered('Anna');
-  await claim(a, 700, T0); await claim(a, 701, T0); await claim(d, 700, T0);
+  await claim(a, 700, T0); await claim(a, 701, T0); await claim(a, 702, T0); await claim(d, 700, T0);   // PIN MOVED (SILVER-WAYS): three gates reach the combat cap
   await call('/v1/marks/exchange', { marks: 40, rid: rid() }, a.secret);
   assert.deepEqual(await call('/v1/marks/report', {}, a.secret), { status: 403, body: { error: 'not-developer' } });
   const r = (await call('/v1/marks/report', {}, d.secret)).body;
-  assert.deepEqual([r.minted, r.burnt, r.moved], [{ gate: 150 }, { exchange: 40 }, {}]);
-  assert.deepEqual([r.mintedTotal, r.burntTotal, r.ratio], [150, 40, 3.75]);
-  assert.deepEqual(r.circulation, { accounts: 110, guilds: 0, escrow: 0, holders: 2 });   // PROF5: the buy orders' escrow beside the balances
-  assert.deepEqual(r.days, [{ day: utcDay(T0), minted: 150, burnt: 40 }]);
-  assert.deepEqual(r.capped, { gate: 1, bank: 0 });
+  assert.deepEqual([r.minted, r.burnt, r.moved], [{ gate: 200 }, { exchange: 40 }, {}]);
+  assert.deepEqual([r.mintedTotal, r.burntTotal, r.ratio], [200, 40, 5]);
+  assert.deepEqual(r.circulation, { accounts: 160, guilds: 0, escrow: 0, holders: 2 });   // PROF5: the buy orders' escrow beside the balances
+  assert.deepEqual(r.days, [{ day: utcDay(T0), minted: 200, burnt: 40 }]);
+  assert.deepEqual(r.capped, { combat: 1, bank: 0 });   // PIN MOVED (SILVER-WAYS): the accounts at the day's combat cap, the gates' and the raids'
   assert.equal(r.to - r.from, 6, 'seven UTC days');
 });
 
@@ -451,7 +458,10 @@ test('MARKS1 the wiring: online the streaming host holds the book and hands it t
   assert.match(w, /const marksBook = params\.has\('online'\)\n\s*\? createMarksBook\(\{ door: accountMarks\(/);
   assert.match(w, /marks: marksBook,   \/\/ MARKS1: the Bank of the Empire's Marks, online/);
   assert.match(w, /marks: marksBook,   \/\/ MARKS1: the guild's Marks treasury/);
-  assert.match(w, /onMarks: \(marks\) => marksBook\?\.strikeLine\(marks\) \?\? null,/);
+  // PIN MOVED (SILVER-WAYS): the gate's lines and the raid's, the strike's and a guild deed's, in the book's own words
+  // HAUL-CARDS (PIN MOVED): the book's lines said as ever, its cards shown beside them (ui/haulCards.js claimHauls)
+  assert.match(w, /onMarks: \(marks, data\) => \{ showHaul\(claimHauls\(data \?\? \{ marks \}, 'gate'\)\); return marksBook\?\.claimLines\(data \?\? \{ marks \}, 'gate'\) \?\? null; \},/);
+  assert.match(w, /onMarks: \(data\) => \{ showHaul\(claimHauls\(data, 'raid'\)\); return marksBook\?\.claimLines\(data, 'raid'\) \?\? null; \},/);
   const m = src('src/scenes/worldModes.js');
   assert.match(m, /sellMarks: host\.marks \? \(n\) => host\.marks\.sell\(n, marksSaleCredit\(\(\) => playerEntity\.bankAccounts, bankRegion, host\.saveSoon\), bankRegion\(\)\) : null,/);
   assert.match(m, /void host\.marks\.settle\(marksSaleCredit\(\(\) => playerEntity\.bankAccounts, bankRegion, host\.saveSoon\)\)/, 'a kept sale settles as the counter opens');

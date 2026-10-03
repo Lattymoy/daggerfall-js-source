@@ -60,10 +60,11 @@ test('ARENA4b the relay bills each fighter\'s banner: two queued under their ban
   await word(H, B, { k: 'y', o: oa.o });
   assert.equal(last(A, 'go').vs.b, 'blue', 'the bout\'s word bills the rival\'s banner');
   assert.equal(last(B, 'go').vs.b, 'red');
+  const o = last(A, 'go').o;   // AUDIT PRE-MERGE 1003 S7: the bout's room is the go's, never the offer's id
   await word(H, A, { k: 'ls' });
-  const e = last(A, 'live').l.find((x) => x.o === oa.o);
+  const e = last(A, 'live').l.find((x) => x.o === o);
   assert.deepEqual([e.a.b, e.b.b], ['red', 'blue'], 'on the list to watch, both pennants');
-  const R = W.room(arenaBoutRoom(oa.o));
+  const R = W.room(arenaBoutRoom(o));
   const st = await R.room._boutOf();
   assert.deepEqual(st.f.map((f) => f.banner), ['red', 'blue'], 'the bout\'s room carries each fighter\'s banner');
   assert.deepEqual([liveEntry(st).a.b, liveEntry(st).b.b], ['red', 'blue'], 'and bills them on its own entry');

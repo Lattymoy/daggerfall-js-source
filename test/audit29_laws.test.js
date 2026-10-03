@@ -78,9 +78,9 @@ test('AUDIT 29 A7: a smelt\'s Smithing XP keeps the record\'s quarter (3.2) - a 
   assert.equal(smeltXp(6, 3, 100), 180);
 });
 
-test('AUDIT 29 A17: Motherlode Sense waits for its Motherlodes (PROF2b) - named, never chosen', () => {
-  assert.equal(specOk('mining', 100, 'motherlode-sense'), false);
+test('AUDIT 29 A17: Motherlode Sense waited for its Motherlodes (PROF2b) - PIN MOVED (PROF2b, 2026-10-03): its Motherlodes built, it is chosen as any', () => {
+  assert.equal(specOk('mining', 100, 'motherlode-sense'), true);
   assert.equal(specOk('mining', 100, 'stonebreaker'), true);
-  assert.equal(specOf('mining', 100, 'motherlode-sense').later, 'PROF2b');
+  assert.equal(specOf('mining', 100, 'motherlode-sense').later, undefined);
   assert.ok(SPECIALISATIONS.mining[100].some((s) => s.id === 'motherlode-sense'), 'the card still stands on the page');
 });

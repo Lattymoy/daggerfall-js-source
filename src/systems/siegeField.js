@@ -48,12 +48,15 @@ export const SIEGE_FIELD = Object.freeze({ thronePaceM: 1.5, defendCampM: 12, ga
  * lowest (AUDIT G2: its centre's height, as DFU's landing measures it - player/enterExit.js doorWorldPosition; on a tie
  * the first, the records' order - the same on every machine) of those a face can be taken from (AUDIT G3: doorFace - a
  * door narrower than a man passed over for the next): `{ door, box, normal }`, the frame siegeFieldOf's `castle` and
- * scenes/seatBanners.js seatBannerAnchors' take. Null for none. Pure.
- * @param {Array<{ door: { a: number[], b: number[] } | null, box: number[], normal?: number[] | null }>} doors
+ * scenes/seatBanners.js seatBannerAnchors' take. Null for none. Pure. AUDIT PRE-MERGE 1003 W7: a door marked `arena` (the
+ * undercroft's stair in Daggerfall's colosseum, scenes/world.js - a dungeon entrance of the arena's block, ARENA1) is no
+ * castle's: it is passed over, however low it stands, and stays the player's door all the same (the hosts' door lists).
+ * @param {Array<{ door: { a: number[], b: number[] } | null, box: number[], normal?: number[] | null, arena?: boolean }>} doors
  */
 export function castleEntranceOf(doors) {
   let best = null, low = Infinity;
   for (const d of doors ?? []) {
+    if (d?.arena) continue;   // AUDIT PRE-MERGE 1003 W7
     if (!d?.door || !Array.isArray(d.door.a) || !Array.isArray(d.door.b) || !Array.isArray(d.box) || d.box.length < 6) continue;
     const y = (d.door.a[1] + d.door.b[1]) / 2;
     const normal = Array.isArray(d.normal) ? [...d.normal] : null;

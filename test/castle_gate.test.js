@@ -59,7 +59,7 @@ test('CASTLE-GATE the crown\'s two banners flank its castle\'s entrance, after t
 
 test('CASTLE-GATE wired in the city\'s host: a town with a dungeon gathers its dungeon-entrance doors with their models\' boxes and their outward normals, and a crown hands the entrance to its banners and its field alike; a palace seat hands none (mutants: the doors ungathered; the normal ungathered; the tier\'s gate; one call unhanded)', () => {
   const w = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
-  assert.match(w, /if \(dfLocation\.hasDungeon\) for \(const d of cpu\.doors\) if \(d\.type === DOOR_TYPE\.DUNGEON_ENTRANCE\) pixelDungeonDoors\.push\(\{ door: doorCornersOf\(d, local\), box, normal: doorNormalOf\(d, local\) \}\);/);
+  assert.match(w, /if \(dfLocation\.hasDungeon\) for \(const d of cpu\.doors\) if \(d\.type === DOOR_TYPE\.DUNGEON_ENTRANCE\) pixelDungeonDoors\.push\(\{ door: doorCornersOf\(d, local\), box, normal: doorNormalOf\(d, local\), arena: b\.blockName === ARENA_BLOCK \}\);/);   // AUDIT PRE-MERGE 1003 W7: the arena's stair marked
   assert.match(w, /const castleGate = seatTier === 'crown' \? castleEntranceOf\(pixelDungeonDoors\) : null;/);
   assert.match(w, /seatBannerAnchors\(\{\n\s*frames: pixelHomeFrames, palaceKeys: seatPalaceKeys, castle: castleGate,/);
   assert.match(w, /tier: seatTier, castle: castleGate,\n\s*\}\) : null;/);

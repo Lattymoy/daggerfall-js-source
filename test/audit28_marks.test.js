@@ -154,7 +154,7 @@ test('AUDIT 28 M4: the gate\'s row and its Marks are one transaction - a strike 
   raw.exec('DROP TRIGGER boom');
   const again = await svc.claim(a, 700, T0);
   assert.equal(again.body.recorded, true);
-  assert.deepEqual(again.body.marks, { struck: 50, balance: 50 }, 'the retry strikes');
+  assert.deepEqual(again.body.marks, { struck: 50, balance: 50, combat: { earned: 50, max: 150 } }, 'the retry strikes');   // PIN MOVED (SILVER-WAYS): the day's combat silver beside it
   assert.deepEqual((await svc.claim(a, 700, T0)).body.marks, undefined, 'and a third is the claimed row, striking nothing');
   assert.equal(gateStrikeStatement({ db: svc.env.DB, nowS: T0 }, { id: a.id, handle: null }, svc.env, 701), null, 'a guest has no statement to batch');
 });
@@ -241,11 +241,12 @@ test('AUDIT 28 M10: the weekly report counts the ACCOUNTS at a cap, once each, w
   const svc = await standService({ MARKS_OPEN: 'on', DEVELOPER_HANDLES: 'Devra' });
   const d = await svc.registered('Devra');
   const a = await svc.registered('Anna');
-  await svc.claim(a, 700, now); await svc.claim(a, 701, now);
+  // PIN MOVED (SILVER-WAYS): the cap is the day's combat silver - three gates (150) - where it was the gate's own two
+  await svc.claim(a, 700, now); await svc.claim(a, 701, now); await svc.claim(a, 704, now);
   now = T0 + DAY;
-  await svc.claim(a, 702, now); await svc.claim(a, 703, now);
+  await svc.claim(a, 702, now); await svc.claim(a, 703, now); await svc.claim(a, 705, now);
   const r = (await svc.call('/v1/marks/report', {}, d.secret)).body;
-  assert.deepEqual([r.capped, r.cappedDays], [{ gate: 1, bank: 0 }, { gate: 2, bank: 0 }]);
+  assert.deepEqual([r.capped, r.cappedDays], [{ combat: 1, bank: 0 }, { combat: 2, bank: 0 }]);
 });
 
 test('AUDIT 28 M11: the service\'s own line ids carry a `:` no client id can - a client cannot take a gate\'s line', async (t) => {
@@ -257,7 +258,7 @@ test('AUDIT 28 M11: the service\'s own line ids carry a `:` no client id can - a
   svc.seedMarks(a, 100);
   assert.deepEqual(await svc.call('/v1/marks/exchange', { marks: 1, rid: 'gate:900' }, a.secret), { status: 400, body: { error: 'marks-rid' } });
   await svc.call('/v1/marks/exchange', { marks: 1, rid: 'gate-day-900' }, a.secret);   // MARKS1's spelling, now any client's
-  assert.deepEqual((await svc.claim(a, 900, T0)).body.marks, { struck: 50, balance: 149 }, 'the gate still strikes');
+  assert.deepEqual((await svc.claim(a, 900, T0)).body.marks, { struck: 50, balance: 149, combat: { earned: 50, max: 150 } }, 'the gate still strikes');   // PIN MOVED (SILVER-WAYS): the day's combat silver beside it
   assert.equal(utcDay(T0), Math.floor(T0 / DAY));
 });
 

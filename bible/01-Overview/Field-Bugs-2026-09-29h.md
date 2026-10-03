@@ -310,5 +310,5 @@ skips inside, settlement, daylight and sea; `DUNGEON_SKIP`). Pinned as it stands
    10), 242 plain - three to four days at the cap of 60. Keep (a dungeon vein the Apprentice's reward, and the need now
    said), or a vein the Novice may work underground? The record's lean: keep.
 
-The Mining patch notes (`PATCH-NOTES-Professions-Mining.md`) never said a dungeon vein needs Mining 25, nor that the
-pack's Pick-Axe is Foraging's mining and not the vein's; `PATCH-NOTES-What-a-Vein-Needs.md` says both, beside the fix.
+The Mining patch notes never said a dungeon vein needs Mining 25, nor that the
+pack's Pick-Axe is Foraging's mining and not the vein's; VEIN-NEED's notes say both, beside the fix.

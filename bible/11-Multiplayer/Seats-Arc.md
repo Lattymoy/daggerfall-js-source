@@ -81,7 +81,7 @@ so balance is an edit to one file, pinned by its own tests, never a hunt.
 | Region names | `REGION_NAMES` (`src/formats/mapsFile.js`, DFU's own table, MIT) | The kingdom map's names and indices (4.3) |
 | Guilds | `server-account/src/guilds.js`, `0013_guilds.sql`, `src/net/guildLaw.js` | 50 members; ranks 0 Guildmaster, 1 Officer, 2 Member, 3 Recruit; a gold treasury and its trigger-written ledger; `gi`/`gt`/`gm` on the signed token |
 | Homes, decor, stations | `server-account/src/homes.js`, `decor.js`; `src/net/homeLaw.js`, `decorLaw.js` | One owner a building (map_id, building_key); `HOME_CAP` 3; entry private/party/public; stations for a licence |
-| Renown | `renown_tracks` (0009), `src/net/renown.js`, `renownTracker.js` | Online level to 50, signed into the token (`lv`); client-reported XP, 5,000 a report, 20,000 an hour an account; no region recorded |
+| Renown | `renown_tracks` (0009), `src/net/renown.js`, `renownTracker.js` | Online level to 50, signed into the token (`lv`); client-reported XP, 5,000 a report, 15,000 an hour an account (SILVER-WAYS: it said 20,000 - RENOWN-ACCOUNT's three quarters made it 15,000, `renown.js` RENOWN_XP_HOUR_MAX); no region recorded |
 | The Oblivion Gate | `gateLaw.js`, `gateBrain.js`, `gateReceipt.js`, relay `_gate*`, `0014_gate_kills.sql` | Relay-refereed HP, reach, rate and damage buckets; phases; `r1.` Ed25519 receipts; the day's region from a pure shuffle bag |
 | Duels | `duelSession.js`, `duelCombat.js`, `0008_duels.sql` | 1v1 on a ring 12 m in radius (`DUEL_RADIUS_M`), defender-resolved - so no duel can award anything the server keeps |
 | Parties | the hub (`chat:world` Durable Object) | `PARTY_MAX` 8 |
@@ -384,7 +384,7 @@ referees up to 256 fighters against one foe.
 
 - **Siege vitality** - DECIDED: in a siege room the RELAY holds every fighter's vitality, and it is normalised:
   **300 + 2 x Renown level** - from 302 to 400. The level is the account service's signed number; its XP is
-  client-reported but rate-bounded (20,000 an hour an account, FACT `renownTracks.js`), so an inflated level is a slow
+  client-reported but rate-bounded (15,000 an hour an account, FACT `renown.js` RENOWN_XP_HOUR_MAX - SILVER-WAYS: it said 20,000, RENOWN-ACCOUNT's figure before its three quarters), so an inflated level is a slow
   lie - some 116 hours at the cap to reach 50 - and the formula is flat on purpose, so even a lie buys about a third
   more vitality at most (400 against 302). A siege never touches the save's health, items or gold (DECIDED): a fallen
   fighter respawns (6.2), and leaves the room as they entered it.
@@ -1292,7 +1292,7 @@ Every law in Home.md's Process section, and what it demands of this arc:
   windows, stockpiles and Levies, history, fealty and Pacts (`seatTurning.js` `SEASON_ZERO_WIPED`). DECIDED: what money is
   still owed out of (a battle's contracts, an Edict's escrow, a Royal Tourney's prize), the titles and Honours earned,
   and the red lines stay; the beta crowns no one.
-- **Patch notes** for every slice, in the house style (`PATCH-NOTES-*.md`, Discord-sized, player-facing).
+- **Patch notes** for every slice, in the house style (the pull request's `## Patch notes`, Discord-sized, player-facing).
 - **Moderation.** Guild names and tags pass the name filter they already pass; heraldry is a fixed palette and fixed
   devices, so nothing offensive can be drawn on a banner. Moderators (MOD1) may **void a siege** (`/siege void`) - a
   history row, the holder keeping the seat - when a fight was won by an exploit found after it. BUILT (VOID,

@@ -79,12 +79,14 @@ export function raidRecordText(rec) {
  *   nowS?: () => (number|null), nowMs?: () => number, say?: (text: string) => void,
  *   onRecorded?: (data: any, entry: { r: string, ch: string, nm: string|null, lv: number, cid: string }) => void,
  *   onSpoils?: (entry: { r: string, ch: string, nm: string|null, lv: number, cid: string }, data: any) => void,
+ *   onMarks?: (data: any) => (string|string[]|null),
  *   me?: () => (string|null), cid?: () => string,
  * }} deps `claim` is net/accountClient.js accountRaids' - `{ ok, data }` or `{ ok: false, error, why? }`, never a
  *   throw; `me` the signed-in account's id; `onRecorded` hears each counted receipt's answer (its Renown and order);
- *   `onSpoils` (AUDIT RAID R4) each receipt whose town's thanks the service gave THIS claim
+ *   `onSpoils` (AUDIT RAID R4) each receipt whose town's thanks the service gave THIS claim; `onMarks` (SILVER-WAYS) the
+ *   silver lines a counted claim's answer says (net/marksBook.js claimLines)
  */
-export function createRaidClaims({ claim, store = null, nowS = () => Math.floor(Date.now() / 1000), nowMs = () => Date.now(), say = () => {}, onRecorded = () => {}, onSpoils = () => {}, me = () => null, cid = mintCid }) {
+export function createRaidClaims({ claim, store = null, nowS = () => Math.floor(Date.now() / 1000), nowMs = () => Date.now(), say = () => {}, onRecorded = () => {}, onSpoils = () => {}, onMarks = () => null, me = () => null, cid = mintCid }) {
   let busy = false, again = false, lastAt = -Infinity;
   let lastMe, meAt = -Infinity;
   const settled = new Set(), guestSaid = new Set();
@@ -124,6 +126,10 @@ export function createRaidClaims({ claim, store = null, nowS = () => Math.floor(
           const n = Number.isSafeInteger(answer.data.defended) ? answer.data.defended : null;
           const xp = Number.isSafeInteger(answer.data.renown?.credited) ? answer.data.renown.credited : 0;
           if (n != null) say(RAID_CLAIM_TEXT.recorded(n, xp));
+          // SILVER-WAYS: the town's silver, the guild's deed and the contracts that paid - the host's lines for them
+          let lines = null;
+          try { lines = onMarks(answer.data); } catch (err) { console.warn('[raid] silver lines', err?.message ?? err); }
+          for (const line of Array.isArray(lines) ? lines : [lines]) if (typeof line === 'string' && line) say(line);
           hear(onRecorded, answer.data, e);
         } else if (answer?.ok && answer.data?.why === 'guest' && !guestSaid.has(e.r)) {
           guestSaid.add(e.r);

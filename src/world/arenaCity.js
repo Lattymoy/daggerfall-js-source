@@ -32,8 +32,9 @@ import { configureLayoutPins, layoutLocationKeyOfMapId } from '../systems/layout
 import { LOCATION_TYPES, DUNGEON_TYPES } from '../formats/mapsFile.js';
 import { registerCustomModel } from './customModels.js';
 import { ARENA_TEXT } from '../systems/arenaText.js';
-import { ARENA_MODEL_ID, buildArenaModel, withStairRamps, sealArenaSeams } from './arenaModel.js';
+import { ARENA_MODEL_ID, buildArenaModel, withStairRamps, sealArenaSeams, sealArenaSeamsSliced } from './arenaModel.js';
 import { registerArenaPlaques } from './arenaPlaques.js';   // ARENA5: the Hall of Champions' plaque wall
+import { ARENA_GROUND_MODEL, arenaGroundModel } from './arenaFloor.js';   // AUDIT PRE-MERGE 1003 W1: the city's ground under the floor's instance
 import ARENA_BLOCK_JSON from '../../vendor/daggerfall-arena/Arena/ARENADAG.RMB.json' with { type: 'json' };
 import UNDERCROFT_JSON from '../../vendor/daggerfall-arena/Arena/undercroft.json' with { type: 'json' };
 import ARENA_MODEL_INDEX from '../../vendor/daggerfall-arena/Models/864102.json' with { type: 'json' };
@@ -253,6 +254,9 @@ export const arenaRecordDisplaced = (rec, keyOfMapId = layoutLocationKeyOfMapId)
  *  closed (ARENA-FIX 6, world/arenaModel.js sealArenaSeams) and its stairs' ramps under the collider (ARENA-FIX 1,
  *  withStairRamps). */
 export const arenaDrawnModel = (built) => withStairRamps(sealArenaSeams(built));
+/** AUDIT PRE-MERGE 1003 W6: the same, its seal a breath at a time (world/arenaModel.js sealArenaSeamsSliced) - the bytes
+ *  arenaDrawnModel makes, for a build that breathes (world/customModels.js customModelBuilt). */
+export const arenaDrawnModelSliced = async (built, breathe) => withStairRamps(await sealArenaSeamsSliced(built, breathe));
 
 /** Where the colosseum's binary is served from (the build emits it beside the bundle). */
 export const ARENA_MODEL_BIN_URL = new URL('../../vendor/daggerfall-arena/Models/864102.bin', import.meta.url).href;
@@ -270,6 +274,7 @@ export function installArena({ readBin = null, log = console } = {}) {
   registerLocationEdit(standArenaInLocation);
   configureLayoutPins({ recordDisplaced: (rec) => arenaRecordDisplaced(rec) });
   registerArenaPlaques();   // ARENA5: the Hall of Champions' plaques (world/arenaPlaques.js), down in the undercroft
+  registerCustomModel(ARENA_GROUND_MODEL, () => arenaGroundModel(arenaGroundTiles()));   // AUDIT PRE-MERGE 1003 W1: the cell's paving, under the floor's instance
   const read = readBin ?? (async () => {
     const r = await globalThis.fetch(ARENA_MODEL_BIN_URL);
     if (!r?.ok) throw new Error(`${ARENA_MODEL_BIN_URL}: ${r?.status ?? 'no answer'}`);
@@ -279,7 +284,8 @@ export function installArena({ readBin = null, log = console } = {}) {
     try {
       const bin = await read();
       registerCustomModel(ARENA_MODEL_ID, (ctx) => arenaDrawnModel(buildArenaModel(ARENA_MODEL_INDEX, bin, (id) => ctx?.classicModel?.(id) ?? null)), () => true,
-        { climateFree: true, needs: [...new Set(ARENA_MODEL_INDEX.pieces.map((p) => p.model))] });
+        { climateFree: true, needs: [...new Set(ARENA_MODEL_INDEX.pieces.map((p) => p.model))],
+          buildSliced: (ctx, breathe) => arenaDrawnModelSliced(buildArenaModel(ARENA_MODEL_INDEX, bin, (id) => ctx?.classicModel?.(id) ?? null), breathe) });   // AUDIT PRE-MERGE 1003 W6
       return true;
     } catch (e) {
       log?.warn?.('[arena] the colosseum\'s model did not load - its block stands without it', e?.message ?? e);

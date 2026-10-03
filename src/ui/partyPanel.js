@@ -128,6 +128,10 @@ ${PIXELIFY_FIVE_FACE}
 @media (max-height: 560px) and (min-width: 561px) {
   .dfparty.touch { max-height: calc(100dvh - 152px - var(--dfquest-h, 0px) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); overflow: hidden; }
 }
+/* AUDIT PRE-MERGE 1003 U4: A BOUT'S VERSUS BAR (ui/arenaHud.js, 560 wide, centred under the compass) reaches this corner on
+   a screen under 980 - its half and this list's 208 from the edge - and stood on the list there; the list steps aside
+   while the bar stands, as the quest card does. A phone's list is at the foot (above), clear of it. */
+@media (min-width: 561px) and (max-width: 980px) { body:has(.arena-hud.on) .dfparty { visibility: hidden; } }
 .dfparty-title { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; text-align: right;
   color: var(--dim, #9a9486); text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
 .dfparty-count { margin-left: 6px; letter-spacing: 0; color: var(--bone, #e9e4d9); font-variant-numeric: tabular-nums; }

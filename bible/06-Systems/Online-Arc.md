@@ -4417,7 +4417,7 @@ room exists.
 
 **The boundary that makes that safe is `_layoutFoes`** - the dungeon
 host's index of where the layout's own run ends. Every foe past it "is
-this player's own" (`dungeonContext.js:1399`, AUDIT WORLD B2): a quest
+this player's own" (`dungeonContext.js:1414`, AUDIT WORLD B2): a quest
 foe is minted above it, never streamed, never puppet-ised by the room's
 authority switch, and never touched by a joiner's stream. So a joiner's
 quest foe really does spawn and really can be killed by the player whose
@@ -4786,7 +4786,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:7807` read, on one physical line:
+`src/scenes/worldModes.js:7814` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -4801,7 +4801,7 @@ appended its own note to the end of the line that already carried
 **Why that is an invulnerable enemy.** Online, a joiner applies no local
 damage to a layout foe - `damageFoe`'s non-authority arm hands the blow
 to the room's host through `opts.onFoeHit?.(...)` and RETURNS
-(`dungeonContext.js:5692`). With the property missing that call is a
+(`dungeonContext.js:5707`). With the property missing that call is a
 no-op on `undefined`: no damage, no frame, no warning, nothing on the
 console. Every layout foe in every online dungeon absorbed every blow
 from everyone but the room's authority, for eight slices, in silence.
@@ -4928,7 +4928,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:9143` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:9157` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:475`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -10504,6 +10504,164 @@ Pinned: `test/guild1e_service.test.js` (5), `test/guild1e_client.test.js` (5); r
 powers). `tools/mutants/guild1e.json` (30, all dead); four older records re-aimed (DECOR1c's visitor, PROF5's hidden
 market twice, NOTICE1's cache aimed at the town read alone).
 
+### SILVER-WAYS - silver outside the crafts: a town defended, the day's combat cap, guild deeds, guild contracts
+
+(2026-10-03, Mac: "With the introduction of guilds. I want to talk about how we can make silver obtainable and balanced
+outside of crafting and auch, and if it should be tied to renoun"; the proposal answered; then "Do it, plus we need to
+build motherloads" - the Motherlodes are `06-Systems/Professions-Arc.md` 38, PROF2b.) One deploy of the account service
+(`acct71`, migrations `0071_silver_ways.sql` and `0072_motherlodes.sql`); no relay change.
+
+**What was found (FACT).** Silver's faucets were the Court writs (gathering's: about 67 a writ, three a day), the gate's
+receipts (50, two a UTC day), Siege Honours and an Incursion's second half - the Motherlodes stood in the faucet table
+and nowhere in code. A non-crafting player of the economy model's "regular" week (1.5 gates) struck about 75 silver a
+week against a gatherer's 700-850, while the guilds the seats ask silver of (a palace's 8,000 and 2,500 a week, a crown's
+80,000 and 15,000, every fortification tier about 79,000) had their fighters' play worth nothing to them. The relay
+signs a raid's cleanse (`w1`, RAID3) and the service counts it once a raid and account (RAID4) - and it struck no
+silver; nor did gates three to twelve of a day.
+
+**Renown is not a faucet (DECIDED, with Mac's "Do it" on the proposal).** A kill's and a quest's Renown is the client's
+report, bounded by the hour (15,000 XP an account - Seats-Arc's "20,000" was stale, corrected there); silver struck
+from it would be silver a modified client prints, the one thing marksLaw.js says a Mark is not. Renown is a character's
+(up to 60 tracks an account) and its curve is steep, so level rewards would pay alts and run dry for veterans. Renown
+keeps its own work - influence (1 per 20 XP, 400 a week), the guild's founding, sigils - and a silver payout is never
+scaled by it: a forged level would be paid more for every honest receipt.
+
+- **A TOWN DEFENDED STRIKES SILVER** - the `raid` faucet: 30 to the account, in the raid claim's own batch and by its
+  own row (raids.js claimRaid's `strike`; marks.js raidStrikeStatement), its line `raid:<key>` - one raid, one strike,
+  whatever asks. RAID-ROLL holds what a receipt is (the day's roll, the relay's count and pose window); the cap is the
+  rest.
+- **THE DAY'S COMBAT CAP** - the gates' and the raids' together, 150 an account a UTC day (`MARKS_COMBAT`), where the
+  gate's two a day stood: three gates, or five raids, or a mix; the day's last strike pays what the day has left of it
+  (`combatStrike` - 20 of a raid at 130), never nothing for a few short. The gate's strike is the same statement
+  (marks.js combatStrikeStatement - `gate:<day>` as ever); a Daedric Incursion's second half is the gate line's own
+  amount, outside the cap. The card's day: `today.combat` and `combatMax` (`gateMax` retired - no client read it). The
+  weekly report counts the accounts at the combat cap (`capped.combat`, where `capped.gate` stood).
+- **GUILD DEEDS** - the `guild-deed` faucet, into a guild's treasury, never an account's: when three of a guild's
+  accounts - each claiming with a character seven days in the guild - have claimed the same raid (`raid:<key>`) or gate
+  (`gate:<game day>`), 25 silver; once an event a guild (the line `deed:<event>`, the guild its actor), at most four a
+  guild a UTC day - a deed the day's cap refused is struck by the next member's COUNTED claim of that event (AUDIT
+  SILVER-WAYS A2). The mark and the strike ride the claim's own batch, by its own row (marks.js deedStatements;
+  `guild_deed_marks`). One account is one mark an event, however many of its characters are in the guild - or in other
+  guilds (A1: the unique (event, account)). A gate's claim now names the claiming character whether or
+  not the scan found the gate's region (`scenes/world.js` gateSeatWord). The claim's answer says it (`deed`: the
+  amount and the guild); the Guild tab's treasury line reads "completed a guild deed", and its silver treasury says the
+  day's deeds against the four (A3).
+- **GUILD CONTRACTS** - a guild writ for DEEDS (`server-account/src/contracts.js`, `writLaw.js` GUILD CONTRACTS): a
+  Guildmaster's, or an Officer's within the ONE writ budget it shares with their writs (`officerSpentSql` - a contract
+  is no way round the budget), `pay` 1-50 silver for each of 1-500 defenders of a raid in a region, held from the
+  treasury (`contract-escrow`), seven days, five open a guild. A counted raid's claim in that region is paid by up to
+  three of its contracts, the best-paying first, in the claim's own batch, keyed on the claim's nonce
+  (`guild_contract_pays`, one a contract, raid and account), less the market's 5% tax on the contract's running total
+  (a writ's, AUDIT 30 L6 - reckoned in the batch off the contract as the batch finds it, AUDIT SILVER-WAYS B1), never to an account any of whose characters may post or withdraw that guild's contracts,
+  never past the defender's cap; drawn down, filled and closed at its last deed. Withdrawn, or past its seventh day on
+  anyone's Work read, what is left goes home (`contract-return`). A guild with one standing - or its pay still on the
+  way home - does not disband. It mints nothing. RAIDS ONLY, DECIDED: a raid's region is in its key, read against the
+  day's roll by the relay; a gate's is still the claiming client's word until three claims agree, and a contract paid
+  on one account's word would be one account's to empty. Routes `/v1/writs/contract`, `/v1/writs/contract-withdraw`;
+  the board's contracts ride `/v1/writs/list` (`contracts`, `yoursContracts`, `contractPost`). The Work tab's cards,
+  "Yours" rows and post form (`ui/workTab.js`), every bound said before the press.
+- **What the player reads.** A counted raid says its town's line, then "30 silver struck to your account", a guild
+  deed it completed and each contract that paid it (net/marksBook.js claimLines, said by net/raidClaims.js and
+  net/gateClaims.js); a capped claim names the day's 150 for breaches closed and towns defended.
+- **The economy.** The ceiling an account strikes from combat a day rose by 50 (100 to 150); a combat-only regular's
+  week from about 75 to about 375 (half a gatherer's); deeds at most 700 a guild a week (a palace's upkeep is 2,500).
+  The model's own 1.00 left out more sinks (forts, Festivals, heraldry, Tribute, respecs) than faucets (Honours,
+  Motherlodes), so the room was there; the weekly report names `raid`, `guild-deed` and `motherlode` each, and PROF0
+  16's four-week rule steers by them.
+- **Pinned**: `test/silverways_service.test.js` (8), `test/silverways_client.test.js` (6);
+  `tools/mutants/silverways.json` (31, all dead). PIN MOVED: marks1 (the gate's cap, the report's cap, the mint sweep,
+  the wiring), audit28_marks (M4, M10, M11), prof5_law (the mint kinds), wb12a_breach_words (the capped line),
+  seat1b_client (the gate's word, the Watch's hand-off), raid4_rewards (unchanged answers without the silver hooks),
+  accountworker (the schema), the version pins (acct71). Mutant records re-aimed by content: marks1 (five), audit28 M4,
+  auditguild1d R5, drakes, prof6 (four), audit31 (two), gatekeys, nodemarks, survtiers3 (two), fb1001_boulders,
+  fb1001_ground.
+
+### AUDIT SILVER-WAYS (2026-10-03, Mac: "Audit this") - SILVER-WAYS and PROF2b read again, before their deploy
+
+Five lanes: four independent passes that read the PR's diff cold - the combat silver and the deeds, the contracts, the
+Motherlodes' service and law, the client - each with its repros against the real Worker over node:sqlite; and the
+author's own adversarial re-read. FOUND, each fixed and pinned (`test/auditsilver_service.test.js`,
+`test/auditsilver_client.test.js`, `tools/mutants/auditsilver.json`). Neither migration has been applied (the deploy
+runs from main), so `0071_silver_ways.sql` and `0072_motherlodes.sql` carry their fixes in place; acct71 still.
+
+- **MEDIUM - A1: one account's gate struck two guilds' deeds** (the deeds' pass). A gate's guard is its row's second
+  (`gate_kills.at` = now), and a refused re-claim in that second - the same receipt, another character named - passed
+  it; the mark was once a (guild, event, account), so three accounts each with a character in two guilds marked both,
+  and one gate minted two deeds (k guilds, k deeds, to the day's four each). FIXED: a mark is once an (event, account),
+  whatever the guild - the migration's unique `(event, account)`, which the mark's INSERT OR IGNORE meets.
+- **MEDIUM - B1: a party's defenders lost their contract pay** (the contracts' pass). The pay read the contract before
+  the batch and wrote only while it stood as read (its deeds left, the tax off that), and the relay mints every
+  earner's receipt in one pass, which the client offers at once - so a party's claims, read together, paid the first and
+  passed over the rest, each counted and never claimable again. FIXED: the tax is reckoned in the batch off the contract
+  as the batch finds it (`deedTaxSql` - saleTaxOn's running total, MARKET_TAX_PCT written into the text as the law's
+  integer: a bound number is a REAL to the driver and its division would not floor); the read takes twice what a claim
+  may be paid by, the batch paying three at most, so a contract another claim filled meanwhile leaves the next-best.
+- **MEDIUM - D1: the day's turn asked the Motherlodes every frame** (the client's pass). The turn's arm cleared only on
+  a read that answered the new day - offline over midnight, a refused session or the clocks a little apart, it asked on
+  every frame. FIXED: once a retry (60 s), and each device at its own moment in a 90-second spread
+  (`MOTHERLODE_TURN_SPREAD_MS`) - every client turns the day on one clock, and the day's first read picks its three.
+- **MEDIUM - D2: a strike's refusal taught the client nothing** (the client's pass; REFUSALS-LEARNED). `motherlode-full`,
+  `-found` and `-closed` were toasted alone: the Motherlode stood as last read, and every try played the act, wore the
+  Pick-Axe and spent an op on the same refusal for up to five minutes. FIXED: the gathering host hands a refusal to its
+  kinds (`GatherKind.refused`), Mining's to the Motherlodes' book (`refused`): its twenty struck, the day's find made,
+  or the list read again - the pixel stood again.
+- **LOW-MEDIUM - C1: a Motherlode struck after it had gone** (the Motherlodes' pass). The Watch had a floor (ten minutes
+  before the act's end) and no ceiling, and the act's end is the client's word, ten minutes late at most - an act told
+  as ended a second before the close, sent nine minutes after it, carried a receipt the relay issued after the
+  Motherlode had gone. FIXED: no later than the act's end, give the clocks' thirty seconds (`motherlodeWatchOk`,
+  `MOTHERLODE_WATCH_AHEAD_S` - identityToken.js SKEW_S, pinned equal).
+- **LOW - A2: a refused claim struck a held-back deed** (the deeds' pass). The deed's strike was not tied to the claim's
+  row as its mark was, so a member's refused re-send of a week-old receipt struck, the next day, a deed the day's cap
+  had held back - and its answer, `claimed`, never said it. FIXED: the strike is guarded by the claim's own row.
+- **LOW - A3: the guild could not see its four** (the deeds' pass). `guildDeedsToday` was written for the Guild tab and
+  never read. FIXED: the guild's view carries `deeds`/`deedsMax` where silver is open; the silver treasury says them.
+- **LOW - B2: an Officer shut out of other guilds' contracts** (the contracts' pass). The read took the best-paying
+  three before the posters' exclusion, which only the write asked - an Officer of a guild whose own contracts outranked
+  the rest was paid by none. FIXED: the read skips them (with B1's wider read it bites only an account that is an
+  Officer of two guilds - pinned so).
+- **LOW - B3: `guild-contracts` answered 400** (the contracts' pass), its siblings 409. FIXED: in GUILD_STATUS.
+- **LOW - C2: a repeat said the purse was full** (the Motherlodes' pass) for a strike made while silver was shut. FIXED:
+  `full` only where the balance truly cannot take the 10; else no silver said.
+- **LOW - C3: the day's ground read at every read** (the Motherlodes' pass). A day that picked fewer than three kept
+  nothing, so every read and strike read every confirmed pixel's reports again (about 1.2 s at 40,000 pixels), and two
+  first reads racing the turn on scarce ground could keep a mix. FIXED: the day's mark (`motherlode_days`, its count
+  among it, none included); the picks written only under the mark their own read made.
+- **LOW - D3: "Stand a moment"** (the client's pass). The relay marks a pose that MOVED in its last five minutes
+  (`watchDue`): a miner standing still at the rock was told to stand, and was never seen. FIXED: "Walk about on it a
+  moment - the Watch marks those on the move, every two minutes."
+- **LOW - D4: a Motherlode stood nowhere** (the client's pass; the PR's own named limit). A town over its pixel's heart,
+  no rock and no stone within reach - risen in the chat and on every compass, on no ground. FIXED: the nearest place
+  outside the town its pixel holds, the one order every client walks (`standAnywhere`).
+- **LOW - D5: a long act's receipt went stale** (the client's pass). The receipt was chosen at the act's start. FIXED:
+  asked again at its end (`GatherKind.start`'s `ask` may be a function the host calls at the finish), the newest then.
+- **LOW - D6: another account's receipts carried** (the client's pass) after a sign-in in the same tab. FIXED: the
+  receipts are this account's alone, and let go when it changes.
+- **LOW - D7: the frame's costs** (the client's pass). The account's stored session parsed every frame, the region's and
+  ore's names built every frame, a list and a translation made every frame for the compass. FIXED: the account read
+  once a second (`MOTHERLODE_ME_MS`), the names made only for a line said, `standingAll(out)` and the world host's
+  pooled marks.
+- **Smaller**: the gate route's comment still said "50, two a UTC day" - corrected.
+
+CHECKED, SOUND (the passes, each at the commit): the combat cap - every strike MIN(amount, 150 - earned), never nought or
+negative, one strike a batch, the claim's UTC day for the cap and the line; the Incursion's second half the gate line's
+own amount, outside the cap; the raid strike's guard (its row's nonce), its retry inert; every new statement's
+parameter numbering and batch place; a guild deed once an event a guild, four a day in the INSERT itself, the tenure in
+seconds, a rejoin restarting it; conservation over a 400-step random mix of posts, claims, withdrawals, sweeps and
+treasuries at the cap (minted less burnt equal to every balance, treasury and escrow at every step; an open contract's
+escrow its deeds left times its pay); no double return (withdraw racing expiry, withdraw twice); one budget both ways;
+the region the receipt key's; the Motherlodes' pick deterministic (witness `at` in seconds, strictly before the day);
+the twenty decided in one INSERT; one a day an account across characters; the strike's retry; the silver's
+`motherlode:<day>` once; the Watch's key, subject and pixel; rank, yield and XP as a vein's; the client's freshness
+window, units and pixel frame matching the service's and the relay's; every refusal code worded; no `innerHTML` (every
+new string through `textContent`); the four hosts (gathering, claims and the Watch are the streaming world's alone).
+NOT CHANGED, named: an Officer who leaves the guild (or an alt account) can be paid by contracts posted within the
+budget - the writs' own exposure; a pay of 1 is taxed 1 every twentieth deed (the running total's way); a Motherlode
+rising in its day's first half hour warns short of a Sense's thirty (the day's three are picked at its turn).
+- **Pinned**: `test/auditsilver_service.test.js` (10), `test/auditsilver_client.test.js` (8);
+  `tools/mutants/auditsilver.json` (32, all dead). PIN MOVED: prof2b_client (the rig's moment in the turn and a
+  retry's minute; the ask called; the compass's list), prof7_client (the host's ask, called where it is a function), accountworker (`motherlode_days`). Mutant records re-aimed by
+  content: prof2b (four), prof7 (the ask), silverways (the tax).
+
 ## THE SEATS (SEAT1a onwards, 2026-09-30, Mac: "Finish the seats"; asked what a Right of Siege does while no siege exists: "Or we could go ahead and do sieges") - `11-Multiplayer/Seats-Arc.md`, built in its section 13 order
 
 ### SEAT1a - every palace a seat: the derivation, the witnessed registry, the rings, the arrival lines, the banners
@@ -11551,7 +11709,7 @@ slice, and SEAT2b's need). `06-Systems/Professions-Arc.md` 34 holds the whole re
 
 Pinned: `test/prof11_law.test.js` (11), `test/prof11_service.test.js` (7), `test/prof11_client.test.js` (7). Mutants:
 `tools/mutants/prof11.json` (138, all dead - the two that held the Builder and Fortifier LOCKED re-aimed to lock them
-again, still dead). Patch notes: `PATCH-NOTES-Masonry.md`.
+again, still dead).
 
 ### SEAT2b (part one) - the works: a seat's fortifications, its stockpile, seat writs and the Siege Camp
 
@@ -11596,7 +11754,7 @@ Seats-Arc 7.5, 7.9, 4.2. Law (`src/net/fortLaw.js`), service (`server-account/sr
 
 Pinned: `test/seat2b_law.test.js` (7), `test/seat2b_service.test.js` (11, through the real Worker), `test/seat2b_client
 .test.js` (5). Mutants: `tools/mutants/seat2b.json` (79: 78 dead, 1 equivalent recorded - the raise's own UPDATE holds
-the day the JS check spares). Patch notes: `PATCH-NOTES-Seats.md` (Fortifications).
+the day the JS check spares).
 
 ### SEAT2b part two (a) - the works at peace: the Siegewright's day, the Shrine, the Watchtowers, the halls, the Harbour, the Ram Kit
 
@@ -11649,7 +11807,7 @@ the day the JS check spares). Patch notes: `PATCH-NOTES-Seats.md` (Fortification
 
 Pinned: `test/seat2b_peace_law.test.js` (5), `test/seat2b_peace_service.test.js` (7, through the real Worker),
 `test/seat2b_peace_client.test.js` (5); twelve older tests' pins moved (PIN MOVED). Mutants: `tools/mutants/seat2b_peace.json`
-(63, all dead); sixteen older records re-aimed by content. Patch notes: `PATCH-NOTES-Seats.md` (The works at peace).
+(63, all dead); sixteen older records re-aimed by content.
 
 ### SEAT2b part two (b) - the works in battle: the Walls' wave, the Gatehouse, the Rams
 
@@ -11698,8 +11856,7 @@ service's own unbumped - one deploy with part (a)).
 Pinned: `test/seat2b_battle_law.test.js` (7), `test/seat2b_battle_relay.test.js` (3, over the real Room),
 `test/seat2b_battle_service.test.js` (2, through the real Worker), `test/seat2b_battle_client.test.js` (4); SEAT2a's
 crown Throne, the pass's claims and identityToken.js's imports moved (PIN MOVED); the relay's version pins moved on to
-world150. Mutants: `tools/mutants/seat2b_battle.json` (64, all dead); fourteen older records re-aimed by content. Patch
-notes: `PATCH-NOTES-Seats.md` (Fortifications in battle).
+world150. Mutants: `tools/mutants/seat2b_battle.json` (64, all dead); fourteen older records re-aimed by content.
 
 ### SEAT2b part two (c) - the relay's own fighters: the Barracks' guards and the revolt
 
@@ -11758,7 +11915,7 @@ place (undeployed); `acct61` (one deploy with parts (a) and (b)). With it SEAT2b
 Pinned: `test/seat2b_guards_law.test.js` (9), `test/seat2b_guards_relay.test.js` (3, over the real Room),
 `test/seat2b_revolt_service.test.js` (3, through the real Worker), `test/seat2b_guards_client.test.js` (5); the relay's
 world150 row re-hashed in place. Mutants: `tools/mutants/seat2b_guards.json` (78, all dead); twenty-nine older records
-re-aimed by content. Patch notes: `PATCH-NOTES-Seats.md` (Fortifications in battle; Revolts).
+re-aimed by content.
 
 ### SEAT-HALL - the palace as the holder's guild hall: the Charter Room
 
@@ -11791,8 +11948,7 @@ interiorSeatHall, `src/scenes/world.js` seatHall). `acct61` (one deploy with SEA
 - **The crown's hall**: CROWN-HALL's, below.
 
 Pinned: `test/seathall_service.test.js` (5, through the real Worker), `test/seathall_client.test.js` (5); sixteen older
-source pins re-aimed (PIN MOVED (SEAT-HALL)). Mutants: `tools/mutants/seat_hall.json` (40, all dead). Patch notes:
-`PATCH-NOTES-Seats.md` (The palace hall).
+source pins re-aimed (PIN MOVED (SEAT-HALL)). Mutants: `tools/mutants/seat_hall.json` (40, all dead).
 
 ### CROWN-HALL - the crown's castle as its holder's hall: the throne room
 
@@ -11821,7 +11977,7 @@ the hall - its throne room carries the holder's banners, the roster board and th
 
 Pinned: `test/crownhall.test.js` (5; the placement over a real Collider); the counts it moved (PIN MOVED: the world
 host's foreign passes, 23 to 24 call sites and 18 to 19 in world.js; the dungeon's activation families, 5 to 6;
-Systems.md's modules, 346). Mutants: `tools/mutants/crown_hall.json` (28, all dead). Patch notes: `PATCH-NOTES-Seats.md` (The palace hall).
+Systems.md's modules, 346). Mutants: `tools/mutants/crown_hall.json` (28, all dead).
 
 ### AUDIT SEATS-2 - the Seats arc audited again, after SEAT2b part two, SEAT-HALL and CROWN-HALL
 
@@ -11860,7 +12016,7 @@ real Worker or the real Room, a node run of the law) before it was fixed and pin
 Pinned: `test/audit_seats2.test.js` (3), `test/audit_seats2_service.test.js` (8), `test/audit_seats2_relay.test.js` (2),
 `test/audit_seats2_client.test.js` (2), `test/seat2b_revolt_service.test.js` (+1). Mutants: `tools/mutants/audit_seats2.json`
 (24, all dead), `tools/mutants/audit_seats2_service.json` (32, all dead); older records re-aimed by content, all still
-dead. Patch notes: `PATCH-NOTES-Seats.md` (Fixes).
+dead.
 
 ### AUDIT SEATS-3 - the Seats arc audited a third time, every lane new
 
@@ -11906,7 +12062,7 @@ use it, the seams of main's merges with the repository's health, the tests' own 
 
 Pinned: `test/audit_seats3_service.test.js` (11), `test/audit_seats3_relay.test.js` (7), `test/audit_seats3_client.test.js`
 (9). Mutants: `tools/mutants/audit_seats3_client.json` (20), `audit_seats3_service.json` (27), `audit_seats3_relay.json` (14),
-`audit_seats3_world.json` (5), and `seat_hall.json` +2, all dead; older records re-aimed by content, all still dead. Patch notes: `PATCH-NOTES-Seats.md` (Fixes).
+`audit_seats3_world.json` (5), and `seat_hall.json` +2, all dead; older records re-aimed by content, all still dead.
 
 ### HERALDRY-SHOWN - a guild's heraldry on its tag, the siege HUD and the Chronicle (2026-10-02)
 
@@ -13601,7 +13757,7 @@ Asked how each character should start, Mac chose "Own + recent gains". The recor
 - Pins: `test/renown_char.test.js` (7); `test/renown_account.test.js` keeps RENOWN-ACCOUNT's rate and 0021 (3); the
   pins RENOWN-ACCOUNT had rewritten put back. Mutants: `tools/mutants/renown_char.json` (17 dead, 1 recorded
   equivalent); 211 restored records across RENOWN1, AUDIT RENOWN1, RAID4, AUDIT RAID, RENOWN-BAR, RENOWN3 and RENOWN4,
-  all dead. Patch notes: `PATCH-NOTES-Renown-Per-Character.md`.
+  all dead.
 
 ## BOARD-ON (2026-09-29, Mac: "Should we switch everything on?") - the Notice Board opened to everyone
 
@@ -13697,7 +13853,7 @@ Asked what to, Mac chose **"Drakes"** (an old Imperial coin): "250 Drakes", "1 D
 - Pins: `test/drakes.test.js` (2; red on the tree before): the balance's words and two refusals, and a sweep of the
   twelve files that show the currency for any word left saying "Mark"; the MARKS1, PROF and AUDIT 30/31 client pins
   read the new words. Mutants: `tools/mutants/drakes.json` (10, all dead); `audit31.json`'s past-balance record and
-  `prof6.json`'s writ-filled record re-aimed by content. Patch notes: `PATCH-NOTES-Drakes.md`.
+  `prof6.json`'s writ-filled record re-aimed by content.
 
 ## SILVER (2026-10-02, Mac: "Can we change the name of Drakes to silver") - the currency is called silver
 
@@ -13735,8 +13891,7 @@ count, so every sentence was reworded to read right, never just swapped.
   reads the new words (its Marks sweep stands). Every client and law pin that read "Drakes" reads "silver". Mutants:
   `tools/mutants/silver.json` (14, all dead); `drakes.json`'s ten re-aimed at the new words;
   `crown1_royal_client.json`'s two prize records and `prof6.json`'s writ-filled record re-aimed by content,
-  `crown2.json`'s tribute mutant reworded. Patch notes: `PATCH-NOTES-Silver.md`; the unreleased Seats and Guild Halls
-  notes say silver.
+  `crown2.json`'s tribute mutant reworded.
 
 ## STRIKE-SHARED (2026-09-29, Mac: "Do #1") - a strike spell reaches a foe another player runs
 
@@ -13775,7 +13930,7 @@ else).
   this deploys, at the one after. The mark reaches the service at the next checkpoint; until then a re-boot forgives
   the same save again, to the same end (RESTORE's own law).
 - Pins: `test/loan_amnesty.test.js` (6, red on the tree before). Mutants: `tools/mutants/loan_amnesty.json` (14, all
-  dead); `survtiers3.json`'s two cite records re-aimed. Patch notes: `PATCH-NOTES-Loan-Amnesty.md`.
+  dead); `survtiers3.json`'s two cite records re-aimed.
 
 ## PROF7 (2026-09-29, Mac: "Do it") - Hunting, the Skinning Knife and Outfitting
 
@@ -13799,8 +13954,7 @@ since SWITCH-ON - no switch of its own.
   (the service pin's 500, before it shipped); the book never applied a harvest's `extraStore` (PROF4's Resin); the
   Professions page's Smithing unlocks lost three rows to a comment.
 - **Pinned:** `test/prof7_law.test.js`, `test/prof7_service.test.js`, `test/prof7_client.test.js` (the done-when
-  through the real Worker); `tools/mutants/prof7.json` (119: 118 dead, one recorded equivalent). Patch notes:
-  `PATCH-NOTES-Professions-Hunting-Outfitting.md`.
+  through the real Worker); `tools/mutants/prof7.json` (119: 118 dead, one recorded equivalent).
 
 ## AUDIT 32 (2026-09-30, Mac: "Audit this") - PROF7 audited
 
@@ -13948,7 +14102,7 @@ What failed was what the HUD SAID of it, and the reports read that as nothing gi
   `maintenance` is an answer the book keeps and asks again (`profBook.js` RETRY), as it keeps `server` and `rate`.
 - **Pinned:** `test/gathersaid.test.js` (7, each red on the code before with only the new names shimmed); the prof2,
   prof4 and prof7 client pins read the one line. Mutants: `tools/mutants/gathersaid.json` (13, all dead); prof4's
-  Resin and prof7's butchery-count records re-aimed by content. Patch notes: `PATCH-NOTES-What-a-Harvest-Says.md`.
+  Resin and prof7's butchery-count records re-aimed by content.
 - **For Mac** (found in the trace, not changed here): the classic skin's pause has no pages, so a classic player online
   can neither see nor withdraw the Stores, nor read a rank past the toasts and the chip (CLASSIC-PAGES, below); Foraging's own tools, used from
   the pack online, run Foraging's quest and give the pack its goods with no profession XP; a new logger in the
@@ -13977,8 +14131,7 @@ every vein table); the woods were the one gap.
 - **The XP curve is unchanged**: rank 10 is 67 plain tier-1 harvests or 46 clean ones (22 XP), inside a day's 60.
 - **Pinned:** `test/pineshare.test.js` (5; four red on the law before with only the new names shimmed, the fifth the
   Mountain's guard); prof4's law, service and client pins name the Oak they mean. Mutants:
-  `tools/mutants/pineshare.json` (7, all dead); prof4's twenty tree records re-run, all dead. Patch notes:
-  `PATCH-NOTES-Pine-in-Every-Forest.md`.
+  `tools/mutants/pineshare.json` (7, all dead); prof4's twenty tree records re-run, all dead.
 
 ## CLASSIC-PAGES (2026-09-30, Mac: "Enhanced pages + key") - the Professions and Stores on the classic skin
 
@@ -14009,8 +14162,7 @@ nothing said.
   the profHud lays the professions' own sheet on every skin online.
 - **Pinned:** `test/classicpages.test.js` (4, each red on the code before with only the new names shimmed); the key's
   count pins (inputactions, qs2, viewtoggle, prof1's Professions group) and AUDIT 29 B2 flipped. Mutants:
-  `tools/mutants/classicpages.json` (9, all dead); gathersaid's two records re-aimed by content. Patch notes:
-  `PATCH-NOTES-Professions-on-the-Classic-Skin.md`.
+  `tools/mutants/classicpages.json` (9, all dead); gathersaid's two records re-aimed by content.
 
 ## GOLD-MARKET (2026-09-30, Mac: "Allow trading with gold or drakes on the marketplace"; "Gold listings, walled") - the market in gold or Drakes
 
@@ -14051,7 +14203,7 @@ gold can now change hands the way a guild deposit or a house's price does - in t
   migration and the service before the client: an old service refuses every gold word as a bad act, and an old client
   beside a new service sees the Drakes' market as before.
 - **Pinned:** `test/goldmarket_service.test.js` (8) and `test/goldmarket_client.test.js` (9); the schema's table list
-  (accountworker ACC1b). Mutants: `tools/mutants/goldmarket.json` (35, all dead - AUDIT PROF-541 R2-S3's words among them). Patch notes: `PATCH-NOTES-The-Gold-Market.md`.
+  (accountworker ACC1b). Mutants: `tools/mutants/goldmarket.json` (35, all dead - AUDIT PROF-541 R2-S3's words among them).
 
 ## PROF8 (2026-09-30, Mac: "Continue the arc"; "XP follows your rank") - Fishing with the net
 
@@ -14070,7 +14222,7 @@ record; in short:
 - **The service**: **acct41**, migration `0042_fishing.sql`. Deploy the migration and the service before the client: an
   old service refuses every haul as a bad node.
 - **Pinned:** `test/prof8_law.test.js` (7), `test/prof8_service.test.js` (3), `test/prof8_client.test.js` (12). Mutants:
-  `tools/mutants/prof8.json` (34, all dead). Patch notes: `PATCH-NOTES-Fishing.md`.
+  `tools/mutants/prof8.json` (34, all dead).
 
 ## EMPIRE-ACCOUNT (2026-10-01, the field - maya: "i deposited alot of letters of credit in a random bank somewhere but theyre gone in the daggerfall bank"; Regi: "irs taken money again"; Mac chose "2": online, every region one Empire-wide account) - one bank account online
 
@@ -14107,5 +14259,4 @@ record; in short:
 - Pins: `test/empireaccount.test.js` (10); `test/realm5.test.js`, `test/goldmarket_service.test.js` and
   `test/guild1b.test.js` re-aimed at the one account, and `test/fb0930b_bankregion.test.js`'s online half. Mutants:
   `tools/mutants/empireaccount.json` (41, all dead); `realm0.json` (4), `realm5.json` (1), `auditrealm.json` (1),
-  `fb0930b_bankregion.json` (3) and `survtiers3.json` (2) re-aimed by content. Patch notes:
-  `PATCH-NOTES-One-Bank-Account-Online.md`.
+  `fb0930b_bankregion.json` (3) and `survtiers3.json` (2) re-aimed by content.

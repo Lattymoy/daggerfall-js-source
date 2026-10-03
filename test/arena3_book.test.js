@@ -56,13 +56,18 @@ test('ARENA3 book: the price - the fair price less the house\'s tenth, rounded d
   assert.equal(BK.BOOK_EDGE, 0.1);
   assert.deepEqual(BK.priceFor(0.5), [5, 6], 'an even bout pays 5 to 6 - the house\'s tenth');
   for (let p = 0.02; p < 0.99; p += 0.01) {
-    const [num, den] = BK.priceFor(p);
+    // AUDIT PRE-MERGE 1003 B4: a chance whose shaded price is under his shortest rung is laid no price (null) - this
+    // loop let 1 to 5 stand above the shaded fair price there, better than fair; test/audit1003_bouts.test.js pins it
+    const pr = BK.priceFor(p);
+    if (!pr) { assert.ok((1 / p - 1) * 0.9 < 1 / 5, `${p}: no price only under his shortest rung`); continue; }
+    const [num, den] = pr;
     const fair = 1 / p - 1;
-    assert.ok(num / den <= fair * 0.9 + 1e-9 || (num === 1 && den === 5), `${p}: ${num}/${den} never above the shaded fair price`);
+    assert.ok(num / den <= fair * 0.9 + 1e-9, `${p}: ${num}/${den} never above the shaded fair price`);
     assert.ok(BK.ODDS_LADDER.some((x) => x[0] === num && x[1] === den), 'on his ladder');
   }
   assert.ok(BK.priceFor(0.2)[0] / BK.priceFor(0.2)[1] > BK.priceFor(0.6)[0] / BK.priceFor(0.6)[1], 'the outsider pays more');
-  assert.deepEqual(BK.priceFor(0.999), [1, 5], 'the shortest price he gives');
+  assert.deepEqual(BK.priceFor(0.81), [1, 5], 'the shortest price he gives');
+  assert.equal(BK.priceFor(0.999), null, 'AUDIT PRE-MERGE 1003 B4: and none shorter');
   assert.deepEqual(BK.priceFor(0.001), [10, 1], 'the longest');
   assert.equal(BK.oddsText([1, 1]), 'evens');
   assert.equal(BK.oddsText([7, 4]), '7 to 4');
@@ -111,7 +116,9 @@ test('ARENA3 book: a wager - refused with its reason; one a bout; settled by the
   assert.equal(house.wagers[0].status, o === null ? 'draw' : o === 1 ? 'won' : 'lost');
   assert.equal(house.wagers[0].seen, false);
   assert.equal(BK.settleBook(house, (ex.hour + 5) * 60).settled.length, 0, 'settled once');
-  assert.equal(BK.bookVerdict(BK.newArenaBook(), ex.hour, 0).seen.length, 0, 'a verdict on a bout nobody backed is not kept');
+  // AUDIT PRE-MERGE 1003 B3: a verdict on a bout nobody backed IS kept now - it shuts that hour's book (this pinned the
+  // old drop, which let a wager be taken on a winner already seen; test/audit1003_bouts.test.js pins the new law)
+  assert.equal(BK.bookVerdict(BK.newArenaBook(), ex.hour, 0).seen.length, 1, 'a verdict on a bout nobody backed is kept');
   // collected at the stall
   const c = BK.collectWinnings(won.book);
   assert.equal(c.gold, won.book.owed);

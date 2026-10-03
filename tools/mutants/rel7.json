@@ -1,0 +1,102 @@
+[
+  {
+    "name": "REL7-1-the-old-notes-kept",
+    "file": "scripts/desktopRelease.mjs",
+    "old": "  return cut < 0 ? notes : `${notes}\\n\\n${text.slice(cut)}`;",
+    "new": "  return cut < 0 ? notes : `${notes}\\n\\n${text}`;",
+    "tests": [
+      "test/rel7_renotes.test.js"
+    ],
+    "note": "The old notes would stand under the new ones, \"Fixes and improvements.\" among them."
+  },
+  {
+    "name": "REL7-2-the-list-dropped",
+    "file": "scripts/desktopRelease.mjs",
+    "old": "  return cut < 0 ? notes : `${notes}\\n\\n${text.slice(cut)}`;",
+    "new": "  return notes;",
+    "tests": [
+      "test/rel7_renotes.test.js"
+    ],
+    "note": "GitHub's list of merged changes would be lost from the release."
+  },
+  {
+    "name": "REL7-3-crlf-read-as-is",
+    "file": "scripts/desktopRelease.mjs",
+    "old": "  const text = String(current ?? '').replace(/\\r\\n/g, '\\n');\n  const cut = text.search(GENERATED_LIST_RE);",
+    "new": "  const text = String(current ?? '');\n  const cut = text.search(GENERATED_LIST_RE);",
+    "tests": [
+      "test/rel7_renotes.test.js"
+    ],
+    "note": "A body GitHub hands back with CRLF would keep its carriage returns in the list."
+  },
+  {
+    "name": "REL7-4-a-cut-of-its-own",
+    "file": "scripts/desktopRelease.mjs",
+    "old": "export const GENERATED_LIST_RE = /^(##\\s*What['’]s Changed\\b|\\*\\*Full Changelog\\*\\*|##\\s*New Contributors\\b)/m;",
+    "new": "export const GENERATED_LIST_RE = /^(##\\s*What['’]s Changed\\b|\\*\\*Full Changelog\\*\\*)/m;",
+    "tests": [
+      "test/rel7_renotes.test.js"
+    ],
+    "note": "The release's cut and the launcher's would drift apart."
+  },
+  {
+    "name": "REL7-5-any-checkout-will-do",
+    "file": "scripts/desktopRelease.mjs",
+    "old": "      if (head !== tagged) throw new Error(`HEAD is ${head}, not ${a} (${tagged})`);\n",
+    "new": "",
+    "tests": [
+      "test/rel7_renotes.test.js"
+    ],
+    "note": "A checkout past the tag would read pull requests the release never brought."
+  },
+  {
+    "name": "REL7-6-a-failed-read-writes-anyway",
+    "file": "scripts/desktopRelease.mjs",
+    "old": "      console.error(`the notes could not be read - the release is left as it is: ${String(e?.stderr || e?.message || e).trim()}`);\n      return 1;",
+    "new": "      console.error(`the notes could not be read - the release is left as it is: ${String(e?.stderr || e?.message || e).trim()}`);\n      notes = [];",
+    "tests": [
+      "test/rel7_renotes.test.js"
+    ],
+    "note": "GitHub down: the release's notes would be written over with \"Fixes and improvements.\"."
+  },
+  {
+    "name": "REL7-7-the-tag-unchecked",
+    "file": ".github/workflows/release-notes.yml",
+    "old": "          if ! [[ \"$TAG\" =~ ^app-v[0-9]+\\.[0-9]+\\.[0-9]+$ ]]; then",
+    "new": "          if ! [[ \"$TAG\" =~ ^app-v ]]; then",
+    "tests": [
+      "test/rel7_renotes.test.js"
+    ],
+    "note": "A tag carrying quotes or a newline would reach the checkout and the API."
+  },
+  {
+    "name": "REL7-8-the-branch-not-the-tag",
+    "file": ".github/workflows/release-notes.yml",
+    "old": "          ref: refs/tags/${{ inputs.tag }}",
+    "new": "          ref: main",
+    "tests": [
+      "test/rel7_renotes.test.js"
+    ],
+    "note": "The notes would be read up to main's head, not the release's own commit."
+  },
+  {
+    "name": "REL7-9-a-schedule-of-its-own",
+    "file": ".github/workflows/release-notes.yml",
+    "old": "on:\n  workflow_dispatch:",
+    "new": "on:\n  schedule:\n    - cron: '0 * * * *'\n  workflow_dispatch:",
+    "tests": [
+      "test/rel7_renotes.test.js"
+    ],
+    "note": "The workflow would rewrite releases on its own."
+  },
+  {
+    "name": "REL7-10-the-tag-is-its-own-previous",
+    "file": "scripts/desktopRelease.mjs",
+    "old": "      if (head !== tagged) throw new Error(`HEAD is ${head}, not ${a} (${tagged})`);\n      notes = pullRequestNotesSince(previousReleaseTag(a));",
+    "new": "      if (head !== tagged) throw new Error(`HEAD is ${head}, not ${a} (${tagged})`);\n      notes = pullRequestNotesSince(previousReleaseTag(b));",
+    "tests": [
+      "test/rel7_renotes.test.js"
+    ],
+    "note": "The release would read the merges since itself - none - and write \"Fixes and improvements.\" over its notes."
+  }
+]

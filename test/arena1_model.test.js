@@ -67,7 +67,8 @@ test('ARENA1 model: 864102 registers climate-free, naming the pieces it reads; t
   _resetCustomModels();
   // the pipeline loads the pieces' pictures first and hands the build its classic reader
   const pipe = read('src/scenes/dataPipeline.js');
-  assert.match(pipe, /for \(const id of customModelNeeds\(modelIdNum\)\) \{[\s\S]{0,200}await getTexture\(sm\.textureArchive\);[\s\S]{0,40}\}\s*const custom = customModelFor\(modelIdNum, \{ classicModel: classicModelOf \}\);/);
+  // AUDIT PRE-MERGE 1003 W6: through the door that lets a build breathe (customModelBuilt - customModelFor's, or the sliced one)
+  assert.match(pipe, /for \(const id of customModelNeeds\(modelIdNum\)\) \{[\s\S]{0,200}await getTexture\(sm\.textureArchive\);[\s\S]{0,40}\}\s*const custom = await customModelBuilt\(modelIdNum, \{ classicModel: classicModelOf \}, breathe\);/);
   assert.match(pipe, /return i === -1 \? null : dfMeshToModel\(arch\.getMesh\(i\), getTextureSize\);/, 'the record as ARCH3D holds it - no seam patched');
 });
 

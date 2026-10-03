@@ -197,7 +197,7 @@ test('REALM P1.3 by source: the boot joins before any save is read, never a slot
   assert.match(w, /const bootSnap = \(\) => \(bootSnapRead === undefined \? [^\n]*\n\s*if \(realmBoot\) \{ bootSnapRead = realmBoot\.snap; realmBoot\.snap = null; \}/, 'the realm\'s save is the boot\'s one parse (AUDIT MW-EARLY F3) - and the join\'s answer lets it go, so the door\'s release is the last hold');
   assert.match(w, /const onlineOn = params\.has\('online'\) && !realmNew;/, 'a character being born joins no relay');
   assert.match(w, /if \(realmSession\) setRealmSaveSink\(\(snap\) => \{[\s\S]{0,160}?realmSession\.checkpoint\(realmSaveWithHeld\(snap, holding\), realmSummaryOf\(playerEntity\)\)/, 'every save of a realm character is its checkpoint (and, landed, it clears the spoils it held - below; AUDIT RESCUE-SAVE A1: the save names them, so the next join adopts rather than hands them)');
-  assert.match(w, /if \(realmSession\) return realmCheckpoint\(\);/, 'the periodic checkpoint is the realm\'s, once');
+  assert.match(w, /if \(realmSession\) return realmCheckpoint\((?:\{ sink \})?\);/, 'the periodic checkpoint is the realm\'s, once');   // AUDIT PRE-MERGE 1003 O10: the caller's sink handed through (onlineCheckpointLanded)
   assert.match(w, /if \(realmSession\) return;   \/\/ the realm's: no slot/, 'the page going writes no local slot');
   // AUDIT REALM2 C2: the leave as the page GOES (pagehide), never before the unload guard is answered; C7: the Exit's
   // last checkpoint behind a duel's end and P0.5's gate (test/auditrealm2_client.test.js mounts both)

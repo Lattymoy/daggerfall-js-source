@@ -1,7 +1,7 @@
 // WD3 (2026-10-01, Mac: "ensure this doesn't conflict or regress anything (For example housing customization)") -
 // ONLINE, THE TOWNS ARE THE ROOM'S. Beautiful Villages and Beautiful Cities are the room's switches
 // (systems/onlineLane.js), and a home is a building KEY, which names a building only in one layout of its town: the
-// account service keeps the layout each home's town was bought in (migration 0071 - 0046 on its branch, 0069 at the first merge onto main, 0071 past PROF9's and PROF12's 0069_cooking and 0070_alchemy at the second - homes.js), a town's later homes
+// account service keeps the layout each home's town was bought in (migration 0073 - 0046 on its branch, 0069 at the first merge onto main, 0071 past PROF9's and PROF12's 0069_cooking and 0070_alchemy at the second, 0073 past SILVER-WAYS' 0071_silver_ways and PROF2b's 0072_motherlodes at the third - homes.js), a town's later homes
 // take its first home's, and every client reads the towns holding homes at its online boot and keeps each in its layout
 // (scenes/world.js, systems/layoutPins.js).
 //
@@ -26,8 +26,8 @@ const src = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const BV = 'beautiful-villages@1.4.2', BOTH = 'beautiful-cities@0.5.0+beautiful-villages@1.4.2';
 const TOWN = 1291010263, CLASSIC_TOWN = 1291010999;
 
-test('WD3 online, the record: migration 0071 adds `homes.layout` (NULL - Daggerfall\'s own town, every home before it) and the town-age index the claim and the read ask; the law\'s bounds', () => {
-  const m = src('server-account/migrations/0071_home_layout.sql');
+test('WD3 online, the record: migration 0073 adds `homes.layout` (NULL - Daggerfall\'s own town, every home before it) and the town-age index the claim and the read ask; the law\'s bounds', () => {
+  const m = src('server-account/migrations/0073_home_layout.sql');
   assert.match(m, /^ALTER TABLE homes ADD COLUMN layout TEXT;$/m);
   assert.match(m, /^CREATE INDEX IF NOT EXISTS idx_homes_town_age ON homes \(map_id, bought_at, building_key\);$/m);
   const db = d1()._raw;

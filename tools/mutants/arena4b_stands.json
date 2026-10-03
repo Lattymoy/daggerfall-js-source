@@ -101,8 +101,8 @@
   {
     "name": "ARENA4B-CHEER-NOT-SENT",
     "file": "src/scenes/arenaOnline.js",
-    "old": "cheer: (c) => boutSend({ k: 'ch', c })",
-    "new": "cheer: (c) => c !== 0",
+    "old": "yield: () => boutSend({ k: 'yd' }), cheer: (c) => boutSend({ k: 'ch', c })",
+    "new": "yield: () => boutSend({ k: 'yd' }), cheer: (c) => c !== 0",
     "tests": [
       "test/arena4b_stands.test.js"
     ]
@@ -119,7 +119,7 @@
   {
     "name": "ARENA4B-STANDS-DOOR-FIGHTER",
     "file": "src/scenes/arenaBouts.js",
-    "old": "cheer: C.you ? null : cheerDoor });",
+    "old": "cheer: stands ? cheerDoor : null });",
     "new": "cheer: cheerDoor });",
     "tests": [
       "test/arena4b_stands.test.js"
@@ -128,8 +128,8 @@
   {
     "name": "ARENA4B-STANDS-READY-ALWAYS",
     "file": "src/scenes/arenaBouts.js",
-    "old": "const stands = C.you ? null : { ready: t - C.cheerAt >= CHEER_GAP_MS };",
-    "new": "const stands = C.you ? null : { ready: true };",
+    "old": "!== 'function' ? null : { ready: t - C.cheerAt >= CHEER_GAP_MS };",
+    "new": "!== 'function' ? null : { ready: true };",
     "tests": [
       "test/arena4b_stands.test.js"
     ]

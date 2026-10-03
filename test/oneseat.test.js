@@ -499,6 +499,7 @@ function seatHost({ publishThrows = false, duelThrows = false, court = null } = 
     peerBodies: { destroy: () => log.push('bodies gone') }, remotePlayers: { sync: (list) => log.push(`players ${list.length}`) }, onlineToScene: null,
     peerRiders: { destroy: () => log.push('riders gone') }, peerWalkers: { destroy: () => log.push('walkers gone') }, peerCandlesFrame: (list) => log.push(`candles ${list.length}`),
     PLAY_HERE_LABEL,
+    arenaOnline: { leaveAll: () => log.push('arena rooms left') },   // AUDIT PRE-MERGE 1003 O9: the arena's own rooms
   };
   const body = `let { ${Object.keys(deps).join(', ')} } = deps;
     let _seatOut = false, _seatLeft = false, _seatSaid = false, _foesRoom = 'dungeon:m123';
@@ -528,6 +529,7 @@ test('AUDIT ONESEAT H2/H3/H5/H6/T1, the host run: the seat lost is left ONCE - m
       'foes handed', 'last word, final', "error: [online] the seat's last word could not be said - leaving anyway:",   // H2: contained
       'duel ended',   // H6: while the socket stands - its throw contained too
       'presence out', 'world out', 'region out', 'trade out',
+      'arena rooms left',   // AUDIT PRE-MERGE 1003 O9: the arena's hall, its exhibition's and its verdict's sockets
       'travellers forgotten',   // AUDIT TV C5: offline, nobody is seen travelling
       'puppets gone', 'own puppets gone',
       'camps kept for 0', 'kept teams for 0 rooms',   // H5

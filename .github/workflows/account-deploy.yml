@@ -60,6 +60,7 @@ on:
       - "src/net/fortLaw.js"
       - "src/net/watchReceipt.js"
       - "src/net/marksLaw.js"
+      - "src/net/motherlodeLaw.js"
       - "src/net/boardLaw.js"
       - "src/net/professionLaw.js"
       - "src/net/nodeLaw.js"

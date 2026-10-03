@@ -575,11 +575,12 @@
   {
     "name": "ARENA2-SPARE-ALWAYS",
     "file": "src/scenes/arenaBouts.js",
-    "old": "    if (!C?.ladder || !C.b || C.b.phase !== 'fight' || C.playerTag?.out) return null;",
+    "old": "    if (!C?.ladder || !C.b || boutBefore(C.b) || C.b.phase === 'done') return null;",
     "new": "    if (!C?.ladder || !C.b) return null;",
     "tests": [
       "test/arena2_driver.test.js"
-    ]
+    ],
+    "note": "AUDIT PRE-MERGE 1003 B5 (re-aimed by content): the spare is held from the word to the healers' end now."
   },
   {
     "name": "ARENA2-CRIME-FIRST",

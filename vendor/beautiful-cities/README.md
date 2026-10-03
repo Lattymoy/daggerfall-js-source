@@ -54,8 +54,11 @@ Editor writes it:
   location MAPS.BSA holds, a classic-named block as the edit of the block,
   a composite as the edit of a parent, a new block as the edit of the
   classic block nearest it - every subrecord or building half the author
-  copied out of Daggerfall named by reference (its sha256), never written
-  out. 1,021 files in 4,339 content-addressed nodes, 2.17 MB gzipped (the
+  copied out of Daggerfall named by reference (`$c`: its block's index in
+  BLOCKS.BSA and its path in that block, the block checked by its name,
+  `classicNames` below), never written out; the piece's sha256 is only the
+  builder's key for finding it (AUDIT PRE-MERGE 1003 WD3).
+  1,021 files in 4,339 content-addressed nodes, 2.17 MB gzipped (the
   files themselves are 285 MB of text). Built by:
 
   ```

@@ -111,8 +111,8 @@
   {
     "name": "NODE-MARKS-a-gone-vein-marked",
     "file": "src/scenes/mineHost.js",
-    "old": "      if (gone(n)) return null;\n      return (specs",
-    "new": "      return (specs",
+    "old": "      if (gone(n)) return null;\n      if (n.what === 'motherlode') return MOTHERLODE_MARK;",
+    "new": "      if (n.what === 'motherlode') return MOTHERLODE_MARK;",
     "tests": [
       "test/nodemarks.test.js"
     ]

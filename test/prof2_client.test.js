@@ -407,7 +407,7 @@ test('PROF2 DONE WHEN: veins placed on rock fields; signatures by kingdom - a co
 
 test('PROF2 hosts: the streaming world stands every kind through the one host, its rock pieces carried on the pixel; the dungeon\'s veins through its own doors; the forge at a smith\'s or a home; the Prospector\'s compass on both skins', () => {
   const w = src('src/scenes/world.js');
-  assert.match(w, /gatherHost = createGatherHost\(\{\n\s*book: profBook, hud, kinds: \[herbKind\(\{ book: profBook \}\), mineKind\(\{ book: profBook \}\),\n\s*treeKind\(\{ book: profBook, renderer, flatBatchAabb, getTexture, billboardSize, uploadRecord \}\),[^\n]*\n\s*huntKind\(\{ book: profBook, bodies: \(\) => huntBodies\(\), openLoot: openHuntLoot \}\),/);   // PROF4: Logging's trees, the third; PROF7: Hunting's bodies, the fourth; PROF8's casts after them
+  assert.match(w, /gatherHost = createGatherHost\(\{\n\s*book: profBook, hud, kinds: \[herbKind\(\{ book: profBook \}\), mineKind\(\{ book: profBook, lodes: motherlodeBook, marks: marksBook \}\),[^\n]*\n\s*treeKind\(\{ book: profBook, renderer, flatBatchAabb, getTexture, billboardSize, uploadRecord \}\),[^\n]*\n\s*huntKind\(\{ book: profBook, bodies: \(\) => huntBodies\(\), openLoot: openHuntLoot \}\),/);   // PROF4: Logging's trees, the third; PROF7: Hunting's bodies, the fourth; PROF8's casts after them; PIN MOVED (PROF2b): Mining's with the Motherlodes
   assert.match(w, /if \(rockPick\(m\.pick\)\) \{ const foot = rockFootprint\(cpu\.positions, cpu\.indices, m\.matrix, samples\); if \(foot\) pixelRocks\.push\(foot\); \}/, 'a rock piece that stood - after the road\'s clearance; ROCK-FOOT: as it stands out of the ground');
   assert.match(w, /rocks: pixelRocks,/);
   assert.match(w, /const rockPick = \(i\) => WOD_ROCK_SITES\.includes\(wodPicks\[i\]\?\.name\);/);   // ROCK-SUNK: the rock sites one list, the shrub's exemption's too
@@ -415,7 +415,7 @@ test('PROF2 hosts: the streaming world stands every kind through the one host, i
   assert.match(w, /if \(!townTalk\.overlayActive && act === 'Escape' && gatherHost\?\.cancel\(\)\) \{ e\.preventDefault\(\); e\.profActEnded = true; return true; \}/, 'Escape above the mode gate');
   assert.ok(w.indexOf("act === 'Escape' && gatherHost?.cancel()") < w.indexOf("if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {"), 'before the exterior gate');
   assert.match(w, /nodes: professionMarks\(\),/);   // PROF7 moved it: a Tracker's animals beside a Prospector's veins; NODE-MARKS: every node beside them
-  assert.match(w, /const professionMarks = \(feet = enchantFeet\(\)\) => nodeCompassPoints\(nodeMarksAt\(feet\), trackerAnimals\(\)\);/);
+  assert.match(w, /const near = nodeMarksAt\(feet\), far = motherlodeMarks\(\);\n\s*return nodeCompassPoints\(far\.length \? \[\.\.\.\(near \?\? \[\]\), \.\.\.far\] : near, trackerAnimals\(\)\);/);   // PIN MOVED (PROF2b): and the far Motherlodes
   assert.match(src('src/scenes/mineHost.js'), /return \(specs\('mining'\)\[50\] === 'prospector' && PROSPECTOR_MARKS\[n\.what\]\) \|\| MINE_MARKS\[n\.what\] \|\| MINE_MARKS\.vein;/, 'NODE-MARKS: the Prospector\'s veins marked from PROSPECT_M off, in the mine kind\'s own mark');
   assert.match(w, /onDungeonLeave: \(\) => \{ const n = handOverRoomFoes\(\);[^\n]*gatherHost\?\.leaveDungeon\(\); worldPublish\(performance\.now\(\), true\); \},/, 'the veins dropped while the dungeon still stands');
   assert.match(w, /profPress: \(\) => gatherHost\?\.press\(\) \?\? false,/);

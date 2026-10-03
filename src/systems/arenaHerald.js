@@ -21,17 +21,19 @@ export const FIGHT_HEALTH_MIN = 0.5;
  * (systems/arenaLeague.js) - he names the banner you fight under, and the laurel when you wear it.
  * ARENA5: `replays` how many of the save's ladder bouts the records keep (systems/arenaReplay.js) - the last one is
  * offered to watch again ("R - Watch your last bout again").
- * @param {{ gameMinutes: number, cityBout?: { a: string, b: string } | null, ladder?: any, healthShare?: number, window?: boolean, league?: any, replays?: number }} o
+ * AUDIT PRE-MERGE 1003 B3: `fought` the hour's bout has had its word on this screen (scenes/arenaGate.js watchRefusal) -
+ * Watch is not offered: it would dismiss that bout and fight the hour again from its call, both fighters whole.
+ * @param {{ gameMinutes: number, cityBout?: { a: string, b: string } | null, ladder?: any, healthShare?: number, window?: boolean, league?: any, replays?: number, fought?: boolean }} o
  */
-export function heraldChoice({ gameMinutes, cityBout = null, ladder = null, healthShare = 1, window = true, league = null, replays = 0 }) {
+export function heraldChoice({ gameMinutes, cityBout = null, ladder = null, healthShare = 1, window = true, league = null, replays = 0, fought = false }) {
   const H = ARENA_TEXT.herald;
   const lines = [];
   const hour = Math.floor(Math.max(0, gameMinutes) / 60);
   lines.push(H.greet[hour % H.greet.length]);
   lines.push('');
   const ex = exhibitionFor(gameMinutes);
-  const canWatch = !!cityBout || !!ex?.open;
-  if (cityBout) lines.push(H.onNow(cityBout.a, cityBout.b));
+  const canWatch = !fought && (!!cityBout || !!ex?.open);   // AUDIT PRE-MERGE 1003 B3
+  if (cityBout) { lines.push(H.onNow(cityBout.a, cityBout.b)); if (fought) lines.push(H.underWay); }
   else if (!canWatch) { lines.push(H.noWatch); lines.push(H.nextAt(nextExhibitionHour(gameMinutes))); }
   const next = nextLadderBout(ladder);
   const fit = healthShare >= FIGHT_HEALTH_MIN;

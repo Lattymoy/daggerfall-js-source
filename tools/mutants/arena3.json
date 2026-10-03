@@ -220,12 +220,12 @@
   {
     "name": "ARENA3-WINDOW-ANYWHERE",
     "file": "src/scenes/arenaGate.js",
-    "old": "      if (!atGate) return { ok: false, text: ARENA_TEXT.window.whyGate };\n      const on = online();",
-    "new": "      const on = online();",
+    "old": "      if (!atGate) return { ok: false, text: ARENA_TEXT.window.whyGate };\n      const seen = kind === 'watch'",
+    "new": "      const seen = kind === 'watch'",
     "tests": [
       "test/arena3_window.test.js"
     ],
-    "note": "ARENA4b (re-aimed by content): the window's Fight reads the gate's online() first now."
+    "note": "ARENA4b (re-aimed by content): the window's Fight reads the gate's online() first now. AUDIT PRE-MERGE 1003 B3 (re-aimed by content): the window's Watch asks watchRefusal after the gate."
   },
   {
     "name": "ARENA3-FIGHT-HURT",
@@ -267,11 +267,12 @@
   {
     "name": "ARENA3-BOOK-NO-CLOSE",
     "file": "src/systems/arenaBook.js",
-    "old": "  if (!ex.open || begun) return 'closed';",
-    "new": "  if (!ex.open) return 'closed';",
+    "old": "  if (!ex.open || begun || bookSaw(book, ex.hour)) return 'closed';",
+    "new": "  if (!ex.open || bookSaw(book, ex.hour)) return 'closed';",
     "tests": [
       "test/arena3_book.test.js"
-    ]
+    ],
+    "note": "AUDIT PRE-MERGE 1003 B3 (re-aimed by content): an hour seen here shuts the book too."
   },
   {
     "name": "ARENA3-BOOK-TWO-WAGERS",

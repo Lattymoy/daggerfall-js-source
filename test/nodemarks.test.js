@@ -609,7 +609,8 @@ test('NODE-MARKS the hosts by source: the street\'s compass and the dungeon\'s t
   const w = src('src/scenes/world.js');
   assert.match(w, /if \(!gatherHost \|\| profBook\?\.state\.open !== true \|\| !feet\) return null;\n\s*const m = _mode\(\);\n\s*return m === 'exterior' \|\| m === 'dungeon' \? gatherHost\.marks\(feet\) : null;/, 'AUDIT: the compass keeps the nodes under the travel view, as PROF2\'s Prospector\'s veins were kept');
   assert.match(w, /nodes: professionMarks\(\),/);
-  assert.match(w, /const professionMarks = \(feet = enchantFeet\(\)\) => nodeCompassPoints\(nodeMarksAt\(feet\), trackerAnimals\(\)\);\n\s*const nodeGlowPass = createNodeGlowPass\(renderer\);/);
+  // PIN MOVED (PROF2b): the far Motherlodes beside the near nodes, the glow still built right after
+  assert.match(w, /const professionMarks = \(feet = enchantFeet\(\)\) => \{\n\s*const near = nodeMarksAt\(feet\), far = motherlodeMarks\(\);\n\s*return nodeCompassPoints\(far\.length \? \[\.\.\.\(near \?\? \[\]\), \.\.\.far\] : near, trackerAnimals\(\)\);[^\n]*\n\s*\};\n\s*const nodeGlowPass = createNodeGlowPass\(renderer\);/);
   assert.match(w, /const drawVeiledPeerBodies = \(\) => \{ peerBodies\?\.drawVeiled\(\); drawAuras\(\); nodeGlowPass\.draw\(travelView\?\.active \? null : nodeMarksAt\(enchantFeet\(\)\)\); \};/, 'the glow alone none under the travel view');
   assert.match(w, /partyNear: \(\) => partyOnMaps\(\), professionMarks: \(feet\) => professionMarks\(feet\),/);
   assert.match(w, /^import \{ mineKind \} from '\.\/mineHost\.js'; import \{ nodeCompassPoints \} from '\.\.\/ui\/nodeMarks\.js'; import \{ createNodeGlowPass \} from '\.\.\/render\/nodeGlow\.js';/m);

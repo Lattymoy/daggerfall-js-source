@@ -72,7 +72,7 @@ export function gateRecordText(rec) {
  *   claim: (receipt: string) => Promise<any>,
  *   store?: { get: (k: string) => any, set: (k: string, v: any) => void }|null,
  *   nowS?: () => (number|null), nowMs?: () => number, say?: (text: string) => void, onClosed?: (closed: number) => void,
- *   me?: () => (string|null), onMarks?: (marks: any) => (string|null),
+ *   me?: () => (string|null), onMarks?: (marks: any, data?: any) => (string|string[]|null),
  * }} deps `claim` is net/accountClient.js accountGates' - `{ ok, data }` or `{ ok: false, error, why? }`, never a
  *   throw; `me` the signed-in account's id (accountGates' `me`), null for none
  */
@@ -112,8 +112,9 @@ export function createGateClaims({ claim, store = null, nowS = () => Math.floor(
           if (n != null) { onClosed(n); say(answer.data.rite === true ? GATE_CLAIM_TEXT.rite : GATE_CLAIM_TEXT.recorded(n)); }   // WB12d: the rite alone closed no breach
           // MARKS1: and the gate's Marks, struck by the service as it counted the gate (marks.js strikeGateMarks) - the
           // host's line for them, or none (a service from before it, Marks not this account's)
-          const marksLine = answer.data.marks ? onMarks(answer.data.marks) : null;
-          if (typeof marksLine === 'string' && marksLine) say(marksLine);
+          // SILVER-WAYS: the hook hears the whole answer too, and may say several lines (the strike, the guild's deed)
+          const marksLine = answer.data.marks || answer.data.deed ? onMarks(answer.data.marks ?? null, answer.data) : null;
+          for (const line of Array.isArray(marksLine) ? marksLine : [marksLine]) if (typeof line === 'string' && line) say(line);
         } else if (answer?.ok && answer.data?.why === 'guest' && !guestSaid.has(r)) {
           guestSaid.add(r);
           say(live(r)?.x === 'rite' ? GATE_CLAIM_TEXT.guestRite : GATE_CLAIM_TEXT.guest);

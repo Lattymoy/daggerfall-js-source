@@ -29,8 +29,8 @@
   {
     "name": "ROCK-FOOT-one-piece-asked",
     "file": "src/scenes/mineHost.js",
-    "old": "    for (const { i } of order) {",
-    "new": "    for (const { i } of order.slice(0, 1)) {",
+    "old": "    for (const { i } of order) {\n      for (const [tx, tz] of footTargets(pieces[i], x, z)) {",
+    "new": "    for (const { i } of order.slice(0, 1)) {\n      for (const [tx, tz] of footTargets(pieces[i], x, z)) {",
     "tests": [
       "test/fb1001_rockfoot.test.js"
     ]

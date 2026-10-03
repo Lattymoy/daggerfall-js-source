@@ -40,6 +40,7 @@ test('ARENA1 vendor: the tool\'s listing is the directory, and no picture stands
   assert.match(readme, /Kamer/);
   assert.match(readme, /granted by the author, relayed by Mac 2026-10-02/i);
   assert.match(readme, /node tools\/daggerfallArenaExtract\.mjs/);
+  assert.match(readme, new RegExp(`\\*\\*${json('Models/864102.json').pieces.length} pieces\\*\\*`), 'the README counts the pieces the model carries (AUDIT PRE-MERGE 1003 D11: it said 25)');
 });
 
 test('ARENA1 vendor: the model - 23 slots in RuntimeMaterials\' table, climate-free, Kamer\'s triangles and 18 pieces making the 5,138', () => {

@@ -10,7 +10,7 @@ import { guildHallPrice, guildHallOwner } from '../src/net/hallLaw.js';
 import { homeSaleRefund, homeMayEnter } from '../src/net/homeLaw.js';
 import { HERALDRY_CHANGE_DRAKES } from '../src/net/heraldryLaw.js';
 
-const HALL = { mapId: 7, buildingKey: 300, region: 17, price: 20_000 };
+const HALL = { mapId: 7, buildingKey: 300, region: 17, price: 20_000, layout: null };   // AUDIT PRE-MERGE 1003 WD1: a hall says its town's layout (none: an old build's, 426)
 const piece = (over = {}) => ({ id: 'bench1', model: 41000, flat: null, pos: [2, 0, 2], rot: [0, 0, 0], scale: 1, light: null, storage: false, paid: 120, ...over });
 
 /** A guild founded by Gwen, `gold` of realm gold deposited on Gwen's record; Otto joined and made an Officer, Rhea a

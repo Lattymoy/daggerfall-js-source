@@ -2,7 +2,8 @@
 
 > Design page, written before any code (2026-10-02). The slices at the foot are the order it ships in; each is
 > shippable and verifiable without the next. Where this page and a shipped slice disagree, the slice's own record
-> (its Ledger row, its tests, `06-Systems/Online-Arc.md` for the online slices) is what runs.
+> (its Ledger row, its tests, and for the online slices this page's own ARENA4 and ARENA4b records below) is what
+> runs.
 
 ## What Mac asked for
 
@@ -122,10 +123,12 @@ level: the colosseum, its tiers and its crowd, built on its own (`world/arenaFlo
 left to the gate - so two bouts never share a floor, the city cell never fills with fights, and an online bout is
 its own relay room (`arena:<id>` - built as `arena:b<id>`, and the hour's exhibition `arena:x<hour>`, ARENA4/ARENA4b).
 
-**The bout.** Every bout runs one law (`systems/arenaBout.js`, pure, clock injected): the Herald's call and the
+**The bout.** Every bout runs one law (`systems/arenaBout.js`, pure, clock injected - on this screen the world's, held
+while a window pauses the game and a frame clamped as the foes' own, AUDIT PRE-MERGE 1003 B1): the Herald's call and the
 fighters' walk to their marks; **3 - 2 - 1 - Fight!**; the fight (no doors, no rest, no travel - the duel's law); the
 end - a **yield** (at 15% health a fighter may yield; an AI does by its temper), a **fall** (the 1 HP floor - nobody
-dies on the arena's sand; `hurtPlayer`'s `spare`, and a new foe floor), a **ring-out** (carried off the sand past
+dies on the arena's sand; `hurtPlayer`'s `spare`, held from the word to the healers - AUDIT PRE-MERGE 1003 B5 - and a
+new foe floor), a **ring-out** (carried off the sand past
 the clamp's slack), or the **time limit** (3 minutes; then the judges - damage dealt, hits landed, fewer misses);
 the Herald's verdict; healing to full (the duel's own); the purse.
 
@@ -220,7 +223,7 @@ names, banners, health; your stamina), the **crowd meter**, the **timer**, the H
 - **Matchmaking** - a queue in the arena's hall room (`arena:hall`), by season rating (Elo, 1,000 to start, K 32),
   the band widening every 10 s; a pair found is offered a bout (both accept in 20 s), a room `arena:<id>` minted (`arena:b<id>`); [ARENA4b: and a casual queue beside it - the records below].
 - **Spectators** - join a bout's room without a body (Seats-Arc 6.6's spectator), seated in the tiers; up to 60.
-- **The records** - account-service tables (migration 0047+ - built as 0072: 0070 at the merge onto main, 0072 at the second): ladder results (one row a tier won), PvP results (one
+- **The records** - account-service tables (migration 0047+ - built as 0074: 0070 at the merge onto main, 0072 at the second, 0074 at the third): ladder results (one row a tier won), PvP results (one
   row a bout, both ratings), team membership and season; leaderboards counted from rows (`/v1/arena/board`).
 - **The relay version** - one bump for the whole online slice (new frames, the arena brain, the titles and the
   glyph), so it costs one reconnect.
@@ -304,7 +307,7 @@ the city outside the cell.
 **ARENA4 - the online homes' migration** (written down, not built) [BUILT at ARENA4b, decided by Mac: the owner's
 client picks the house by `arenaHouseFor` and the service checks it; what moves follows the offline law below, not
 this paragraph's re-keying - see the ARENA4b record]. The account service owns online homes: `homes`
-(PK map_id, building_key; 0010, `layout` 0046), `home_decor` (0011, `yard` 0039), `home_hidden` (0015) and `home_rooms`
+(PK map_id, building_key; 0010, `layout` 0073_home_layout), `home_decor` (0011, `yard` 0039), `home_hidden` (0015) and `home_rooms`
 (0037), each keyed (map_id, building_key) with `ON DELETE CASCADE` from `homes`. One migration (the next free number) and
 one service pass must, for every `homes` row whose map_id is Daggerfall's (1291010263) and whose building_key is in cell
 (4,3) (`key >> 16 = 4 AND (key >> 8) & 255 = 3`): pick the new key by `arenaHouseFor` over the city as its row's
@@ -316,9 +319,10 @@ row already outside the cell is never touched. The relay's `interior:m<map>.<key
 
 **Not done / open.** Not seen in a browser or on a GPU: the colosseum's look, the tiers' walkability under the port's
 collider, and the gate people's footing on the terrain at the block's edge are unverified by eye. Smaller Dungeons (a
-setting) may trim the undercroft as it trims any keep. The Herald's line is a placeholder until ARENA2's bouts and
-ARENA3's Arena window. [ARENA2: the Herald's choice stands; the displaced deed's scene is EMPTIED into the new house
-rather than renamed onto it - see the ARENA2 record.]
+setting) may trim the undercroft as it trims any keep [FIXED at ARENA5: it never does -
+`world/smallerDungeons.js useSmallerDungeon`; see the ARENA5 record]. The Herald's line is a placeholder until
+ARENA2's bouts and ARENA3's Arena window. [ARENA2: the Herald's choice stands; the displaced deed's scene is EMPTIED
+into the new house rather than renamed onto it - see the ARENA2 record.]
 
 ## ARENA2 record (2026-10-02) - SHIPPED
 
@@ -447,7 +451,8 @@ suites updated where the law moved); mutants `tools/mutants/arenafix.json` (43, 
    riser's foot (so the gate's floating foot meets it under the ground). The ramp's triangles follow the drawn ones in the
    index list and in no submesh: every host draws a model by its submeshes (and the static batches and the automap's wire
    walk submeshes) and builds every collider from the whole list - so no host changed. Walked in the browser up and down
-   all five, holding W (`climbwalk.sh`): grounded every sample, never the climb.
+   all five, holding W (a scratch script of the QA round, `climbwalk.sh`, not kept in the tree): grounded every sample,
+   never the climb.
 2. **The gate's people by office** (`arenaGatePersonName`, `ARENA_TEXT.gateNames`): the plaque, "You see ..." and the
    talk window ask one seam (`worldModes.js officeName`): The Herald of the Arena, Arena Warden, Red Banner Recruiter,
    Blue Banner Recruiter, The Bookmaker.
@@ -483,7 +488,10 @@ suites updated where the law moved); mutants `tools/mutants/arenafix.json` (43, 
 7. **The gate's compass**: the gate opens onto the market, to the NORTH (the design page said south).
 8. **The walk in** (`enemyMotor.js walkTo`, `arenaBouts.js walkIn`): each fighter stands at its side's gate under the tiers
    and walks to its mark (the pursuit's own walk, 0.7 of its pace) as the Herald cries its name; the count waits for every
-   fighter on its mark (or the walk's limit). A pit has no gates: its fighter stands on its mark.
+   fighter on its mark (or the walk's limit). A pit has no gates: its fighter stands on its mark. The pace is the walk's
+   own step's (AUDIT PRE-MERGE 1003 D1: it was a field the motor put back only at its own arrival, and the bout ends every
+   walk in itself, at its mark or the walk's limit - so every fighter that walked in fought its bout at 0.7 of its speed;
+   `test/audit1003_record.test.js`).
 9. **The misses** (`formulas.js registerAttackResolutionListener`, `playerWeapon.js registerPlayerSwingListener`): every
    attack's resolution is told; between two fighters of a live bout on different sides, no damage is the striker's miss,
    and the player's swing that reached nobody is the player's - the judges' third count is live.
@@ -536,11 +544,15 @@ the test) and names the banner you fight under, or the laurel.
 **The bookmaker** (`src/systems/arenaBook.js`). An exhibition fighter's record (6 to 35 bouts) and form come from the
 bout's own seed; its strength is its level (the tier's, or Daggerfall's own for a beast) and its form; the chances are
 the two strengths apart. The price is the fair price less the house's tenth, rounded DOWN the bookmaker's ladder of 40
-prices ("5 to 6" on an even bout, 1 to 5 the shortest, 10 to 1 the longest); a winning stake pays itself and the price
+prices ("5 to 6" on an even bout, 1 to 5 the shortest, 10 to 1 the longest - a favourite shorter than 1 to 5 is laid no
+price at all, AUDIT PRE-MERGE 1003 B4); a winning stake pays itself and the price
 in whole gold. One wager a bout, 10 to 1000 gold (DFU's payment law - coins, then letters of credit), taken while the
 bout is open and until the fight's word. Settled by the verdict seen on this screen (the driver's `exhibitionVerdict`),
 or - nobody here saw it - by the house's seeded record by the same chances once its hour is out (never while its bout
-stands here); a draw returns the stake. Winnings wait at the stall ("C - Collect your 175 gold"): he pays in person.
+stands here); a draw returns the stake. A bout of this screen's walked away from after its word, its verdict unsaid, is
+the house's - the stake lost whichever fighter led (a fall already standing is its verdict); the book on an hour seen
+here, to its verdict or left, takes no wager after, and the Herald's Watch does not fight it again (AUDIT PRE-MERGE 1003
+B3). Winnings wait at the stall ("C - Collect your 175 gold"): he pays in person.
 
 **The Arena window** (`src/ui/arenaWindow.js` over `src/systems/arenaBoard.js`; `src/ui/arenaDoor.js`, the Reforge's
 door's shape). Bouts (the hour's exhibition or the next - the Red's fighter against the Blue's, each with pennant, home,
@@ -596,8 +608,8 @@ ARENA4 shipped its code in three commits on its branch (the account's records, t
 record; ARENA5's audit found its online half short of this page and the ARENA4b slice built what was missing (the
 record after this one). What ARENA4 itself stood:
 
-**The account's records** (`server-account/src/arena.js`, migration `0072_arena.sql` - 0047 on its branch, 0070 at
-the merge past main's 0047-0068, 0072 past PROF9's and PROF12's 0069_cooking and 0070_alchemy at the second). Three tables: `arena_pve` (one row a bout the relay refereed: the tier and step, won or
+**The account's records** (`server-account/src/arena.js`, migration `0074_arena.sql` - 0047 on its branch, 0070 at
+the merge past main's 0047-0068, 0072 past PROF9's and PROF12's 0069_cooking and 0070_alchemy at the second, 0074 past SILVER-WAYS' 0071_silver_ways and PROF2b's 0072_motherlodes at the third). Three tables: `arena_pve` (one row a bout the relay refereed: the tier and step, won or
 lost, how, the banner worn; one WIN a step, so a climb cannot hold the same bout twice), `arena_pvp` (one row a bout
 between players whoever claims it, both accounts, the result, both ratings before and after, rated or kept-unrated) and
 `arena_members` (the banner, the season joined, the banner quit and when). `POST /v1/arena/claim` takes a relay-signed
@@ -667,11 +679,15 @@ and on the `?exterior` host (no online session) the local seeded exhibition runs
 **2. The ladder's trust.** A relay ladder bout's vitality no longer trusts the word: a new signed token claim `cl` - the
 character's level, a whole number 1..1000 from the realm character's own tile (`server-account/src/realm.js
 realmLevelOf`), minted only for the calling account's realm character, validated by `identityToken.js
-characterLevelIssuable` - carried by the relay's `_named` and read alone (`arenaLaw.js ladderVitality`: 25 + 30 a level,
-10..2,000); the word's `mh` is ignored and no longer sent. A token from an older service (no `cl`) has its claimed level
-capped at the tier's top opponent's level plus five (`ladderLevelCap`: 8 at the Pit to 26 at the Grand Melee) - about two
-tiers, so an honest over-levelled fighter fights near their level and a forged sixty does not reach the Pit. The relay
-still does not check a ladder bout is the account's next - the service's ordered write is the arbiter, as ARENA4 had it.
+characterLevelIssuable` - carried by the relay's `_named` and read in place of the word's (`arenaLaw.js ladderVitality`:
+25 + 30 a level, 10..2,000); the word's `mh` is ignored and no longer sent. A token from an older service (no `cl`) falls
+back to its claimed level. EITHER LEVEL is capped at the tier's top opponent's level plus five (`ladderLevelCap`: 8 at
+the Pit to 26 at the Grand Melee) - about two tiers, so an honest over-levelled fighter fights near their level and a
+forged level reaches the Pit at the Pit's cap, 265 health, signed or not. The signature says whose the level is, not
+that it is true: the tile's `level` is the summary the client writes itself (`/v1/realm/create`'s and every
+checkpoint's), never read against the save - this record first said the signed level was read alone and uncapped, and
+a token signing a thousand fought the Pit at 2,000 health (AUDIT PRE-MERGE 1003 S2). The relay still does not check a
+ladder bout is the account's next - the service's ordered write is the arbiter, as ARENA4 had it.
 
 **3. The players' blows.** Each swing carries one sequence `q` (`dungeonContext.js nextArenaQ`) shared by every body it
 meets, each arrow its own, so a cleave is one blow to the rate check; a spell that strikes a player rival goes to the
@@ -714,7 +730,7 @@ one at level 30, each capped at three levels over the character's Renown (measur
 answers its signed order, applied by the one plan every Renown answer takes (`renownAnswer`).
 
 **11. The displaced online homes** (the ARENA1 record's "written down, not built"). DECIDED by Mac: the owner's client
-picks, and what moves follows the offline law. Migration `0073_arena4b.sql` (`home_moves`, `arena_renown`; 0071 before the second merge onto main).
+picks, and what moves follows the offline law. Migration `0075_arena4b.sql` (`home_moves`, `arena_renown`; 0071 before the second merge onto main, 0073 before the third).
 `POST /v1/homes/arena-move { mapId, from, to, character }` (`homes.js arenaMoveHome`): `from` the caller's home (or a
 hall they keep) in Daggerfall's cell (4,3), `to` outside it, a valid key and nobody's - the trust `claimHome` has; moved
 once (a second post answers the first). The row moves whole in one batch (`HOME_MOVE_CARRIED`, pinned to the table's
@@ -787,7 +803,7 @@ What the audit found it closed - ARENA4's online gaps in ARENA4b (the record abo
   caught by the mirror suite, fixed (`ARENA4b-MIR-EX-SIDES-WIPED`).
 - The page's "What the mod is" called DFARENA's 42512-42514 "the seating tiers": they are banners (DFU's tapestry range
   42500-42571; World of Daggerfall's catalogue names 42512 "Flag" and 42514 "Flower Banner Long") - corrected here and in
-  `vendor/daggerfall-arena/README.md`. Section 7's "migration 0047+" is 0072 and its `arena:<id>` is `arena:b<id>`.
+  `vendor/daggerfall-arena/README.md`. Section 7's "migration 0047+" is 0074 and its `arena:<id>` is `arena:b<id>`.
 - `test/arena2_hosts.test.js`'s header still called exterior.js FLAGGED (ARENA-FIX 12 wired it).
 - ARENA4 shipped no record, no Ledger row, no Testing.md rows and no mutant list: all written (the records above,
   Port-Ledger's ARENA4 row at the merge and the ARENA4b/ARENA5 row now, `tools/mutants/arena4.json`).
@@ -799,12 +815,13 @@ the wardens are static Royal Guard people, and DFU's SpawnCityGuards converts mo
 from their posts would depart from DFU (`test/arena5_wardens.test.js`).
 
 **The mutants.** Every list of the arc, by slice: `arena1.json` 26, `arena2.json` 77, `arena3.json` 62,
-`arenafix.json` 43 (as their records say; 24 of arena1's and 41 of arenafix's name only tests gated on ARENA2 data, so
-they are false survivors in a tree without the player's data - judged dead where the data stands, as their records
-were), `arena4.json` 203 (written by this audit - 40 survived its first run, each a gap in the tests, six of them
-mutants ARENA4's titles claimed and never killed: a purse on a loss, the decliner kept, a lapse queueing the silent one,
+`arenafix.json` 43 (as their records say; measured again in a tree without the player's data at AUDIT PRE-MERGE
+1003: all 26 of arena1's and 42 of arenafix's die there, and the one survivor, `ARENAFIX-RAMPS-UNREGISTERED`, is killed
+only by ARENA-FIX 1's stair survey, gated on ARENA2 - judged dead where the data stands, as its record was),
+`arena4.json` 203 (written by this audit - 40 survived its first run, each a gap in the tests, six of them mutants
+ARENA4's titles claimed and never killed: a purse on a loss, the decliner kept, a lapse queueing the silent one,
 the bucket unspent, a blow out of reach landed, the rating's floor; all closed by assertions in the ARENA4 suites, no
-source bug), the thirteen `arena4b_*.json` lists (all dead) and `arena5*.json` (67, all dead).
+source bug), the fourteen `arena4b_*.json` lists (256, all dead) and `arena5*.json` (67, all dead).
 
 **The probes.** The data-free UI probes run here (Chromium at /opt/pw-browsers): `tools/arenaHudProbe.mjs` 70 checks
 (the stands' presses clicked and keyed) and `tools/arenaWindowProbe.mjs` 391 (Records and the Hall online, the replay
@@ -824,3 +841,24 @@ this tree does not hold - their last runs are ARENA-FIX's and ARENA3's.
 60 seats a watcher on the city's sand sees no exhibition. The wardens' posts are not where the watch comes from (DFU's
 own law). Team-vs-team battles, Marks wagers on players' bouts and a mounted joust stay recorded, not built (the page's
 own list).
+
+## AUDIT PRE-MERGE 1003 (2026-10-03) - what the audit changed in the arena's law
+
+Mac: *"I want to do a comprehensive audit over it and make sure its perfect"*. Every finding and its fix is
+`01-Overview/Audit-PreMerge-1003.md`; what it changed in the arena's own rules, here:
+
+- **The bout's clock is the world's** (B1): a pause, a window or a hidden tab runs no bout's time, stall or yield.
+- **The sand is no place to fix a bout** (B2): a blow from the stands on an exhibition's fighter is made good; the
+  Herald warns, then the watch.
+- **The book** (B3, B4, O3): leave an exhibition after its word and the bookmaker keeps the stake whoever led; no wager
+  on an hour seen (offline, the verdict seen here; online, any word of its fight heard); the Herald never stages an hour
+  again once its word is given; no price shorter than 1 to 5 - a fighter likelier than that is not laid.
+- **The spare** (B5) holds from the word to the healers - a blow in flight after a yield or a fall kills nobody.
+- **Online** (S1-S8, O1-O10): a seat is a socket's once; a level, signed or claimed, is held to the tier's cap; a rated
+  bout's vitality is the token's Renown level; a kept bout pays only its own receipt (`reused` otherwise); a fighter
+  back inside the keep hears the end and the receipt; the healers' heal stands; online is the session's fact, never the
+  socket's this frame; the arena's own links are ticked; a tab that lost its seat leaves the arena.
+- **The floor's instance stands on the city's paving** (W1, `ARENA_GROUND_MODEL` 864103), walled at the cell's edge and
+  the passage's mouth, and **a third way out** stands at that mouth, where the Herald stands in the city.
+- **The deploy moved** (M1): the account service is acct72, its migrations `0073_home_layout`, `0074_arena`,
+  `0075_arena4b` (main's SILVER-WAYS took acct71 and 0071-0072); the relay stays world155, hashed again in place.

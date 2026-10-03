@@ -259,6 +259,11 @@ export function cheerOf(st, key, c, now) {
 function takeWords(st) {
   const e = st.b ? takeBoutEvents(st.b) : [];
   if (!e.length) return [];
+  // AUDIT PRE-MERGE 1003 O1: THE HEALERS ON THE RELAY'S SAND - the law's 'heal' heals nobody (systems/arenaBout.js: on a
+  // screen's own bout the host's door does), and here the relay is the host: every fighter whole at the word, so the
+  // `hp` that rides with it says so (it said the bout's end health, and every fighter's screen struck its own healed
+  // player back down to it), and so does every `st` after
+  if (e.some((x) => x.k === 'heal')) for (const f of st.b.fighters) f.health = f.maxHealth;
   /** @type {any[]} */
   const words = [{ k: 'ev', e: e.map(evWire) }];
   if (e.some((x) => x.k === 'hit' || x.k === 'heal' || x.k === 'fall')) words.push(hpWord(st));

@@ -848,7 +848,7 @@ export async function gateRecordOf({ db }, playerId) {
  * @param {{ id: string, handle?: string|null }} player the session's account
  * @param {unknown} receipt @param {CryptoKey|null} publicKey
  */
-export async function claimGate({ db, nowS, subtle }, player, receipt, publicKey, { strike = null, region = null } = {}) {
+export async function claimGate({ db, nowS, subtle }, player, receipt, publicKey, { strike = null, region = null, deeds = null } = {}) {
   if (!publicKey) return { error: 'no-gate-key' };
   const v = await verifyReceipt(receipt, publicKey, { subtle, nowS });
   if (!v.ok) return { error: 'receipt', why: v.why };
@@ -866,10 +866,14 @@ export async function claimGate({ db, nowS, subtle }, player, receipt, publicKey
   // so a strike that fails takes the row with it and the retry claims afresh; `strike` null where Marks are not this
   // account's, and the row is written alone. WB12d: the rite alone is no breach closed - no strike
   const stmt = c.x === 'rite' ? null : strike?.(c.d) ?? null;
-  const [r, m] = stmt ? await db.batch([kill, stmt]) : [await kill.run(), null];
+  // SILVER-WAYS: the guild's deed (marks.js deedStatements - its mark and its strike, by the gate_kills row this claim
+  // wrote), in the same batch; never for the rite alone, which is no breach closed
+  const deed = c.x === 'rite' ? null : deeds?.(c.d) ?? null;
+  const [r, m, ...d] = stmt || deed ? await db.batch([kill, ...(stmt ? [stmt] : [db.prepare('SELECT 0')]), ...(deed ?? [])]) : [await kill.run(), null];
   const recorded = Number(r?.meta?.changes ?? 0) > 0;
-  const struck = Number(m?.meta?.changes ?? 0) > 0;
-  if (recorded) return { recorded, day: c.d, stones: embers, ...(c.x === 'rite' ? { rite: true } : {}), ...(stmt ? { struck } : {}), ...(await gateRecordOf({ db }, player.id)) };
+  const struck = !!stmt && Number(m?.meta?.changes ?? 0) > 0;
+  const deedStruck = !!deed && Number(d[1]?.meta?.changes ?? 0) > 0;
+  if (recorded) return { recorded, day: c.d, stones: embers, ...(c.x === 'rite' ? { rite: true } : {}), ...(stmt ? { struck } : {}), ...(deed ? { deedStruck } : {}), ...(await gateRecordOf({ db }, player.id)) };
   // AUDIT WB12d (A1): A FIGHTER'S `r` COUNTED AT ONE EMBER - a service from before acct62 took the receipt as a plain one
   // and kept its row - is made good when the receipt is claimed again (the game keeps an `r` receipt until a service
   // that answers its embers has counted it). One row a (day, account), one receipt a kill: the row is this receipt's

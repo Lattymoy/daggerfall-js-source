@@ -203,8 +203,8 @@
   {
     "name": "AUDIT-GUILD1d-R5-heraldry-a-deposit",
     "file": "server-account/src/guilds.js",
-    "old": ": l.kind === 'heraldry' ? 'heraldry' : 'deposit', amount: l.amount })),",
-    "new": ": 'deposit', amount: l.amount })),",
+    "old": "'guild-withdraw': 'withdraw', heraldry: 'heraldry', 'guild-deed': 'deed',",
+    "new": "'guild-withdraw': 'withdraw', 'guild-deed': 'deed',",
     "tests": [
       "test/auditguild1d.test.js"
     ]

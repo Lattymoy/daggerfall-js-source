@@ -21,7 +21,7 @@ import { fakeDoc, fakeWin, fakeBlocks, rmb, TOWN, settle } from './decorFakes.mj
 import { GuildBook } from '../src/net/guildBook.js';
 
 const src = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
-const HALL = { mapId: 7, buildingKey: 300, region: 17, price: 20_000 };
+const HALL = { mapId: 7, buildingKey: 300, region: 17, price: 20_000, layout: null };   // AUDIT PRE-MERGE 1003 WD1: a hall says its town's layout (none: an old build's, 426)
 const piece = (over = {}) => ({ id: 'yard1', model: 41000, flat: null, pos: [8, 0, 2], rot: [0, 0, 0], scale: 1, light: null, storage: false, paid: 120, ...over });
 const LOOK = { walls: { set: 'manor', climate: 'swamp' }, door: { climate: 'desert', record: 1 } };
 

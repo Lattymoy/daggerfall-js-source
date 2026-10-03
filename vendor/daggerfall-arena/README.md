@@ -32,7 +32,7 @@ Everything below is written by `tools/daggerfallArenaExtract.mjs` and listed in 
 - `daggerfallarena.dfmod.json` - the manifest, the bundle's own TextAsset byte for byte.
 - `Models/864102.json` + `Models/864102.bin` - the colosseum as data: **Kamer's own 4,773 triangles** (8,326
   vertices: positions f32 x3, normals f32 x3 - the bundle's half floats widened - uv0 f32 x2, 16-bit indices), the
-  23 slots with their RuntimeMaterials (archive, record), the collider record, and **25 pieces** (below).
+  23 slots with their RuntimeMaterials (archive, record), the collider record, and **18 pieces** (below).
 - `Arena/ARENADAG.RMB.json` - the port's own block, cut out of DFARENA.RMB: his 119 models and 29 lights, his ground
   and his automap. ZLNDFLAT's leftovers are not written - the name and index it was saved over, BlockPositions, its 31
   OtherNames (HDGWLL..., WRH642B7/B8, WHS331A4, DENTEST1, DHAUS024.HS2), BlockDataSizes and the header counts.

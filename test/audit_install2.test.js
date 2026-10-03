@@ -6,15 +6,15 @@
 // one of them: L1-5 kept a tag's text out of the build legs' scripts, and
 // in doing so broke the Windows leg. Every finding a lane verified is
 // fixed at its root and pinned here; the record, finding by finding, is
-// bible/01-Overview/Audit-Install.md ("Round 2").
+// bible/01-Overview/Audit-Install.md ("Round 2"). Lane C's notes findings
+// (C1, C4, E-48..E-51) pinned the PATCH-NOTES-*.md reader REL6 retired -
+// the notes come off the pull requests now (test/rel4_release.test.js).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import fsModule, { readFileSync, readdirSync, mkdtempSync, writeFileSync, rmSync, symlinkSync, unlinkSync } from 'node:fs';
+import fsModule, { readFileSync, readdirSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { addedNotes, patchNotesSince, composeReleaseNotes, REWRITE_SHARE } from '../scripts/desktopRelease.mjs';
 
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
@@ -146,91 +146,6 @@ test('R2-B3: the launcher is granted nothing it ASKS for and nothing it merely C
 });
 
 // ---- the release notes -------------------------------------------------------
-
-test('R2-C1: news is decided by what a line SAYS - app-v0.1.4534 lost four new fixes written where a deleted "Notes" section had stood', () => {
-  // the real release, replayed from git's own objects (the file at app-v0.1.4534 and its -U0 diff from app-v0.1.4480):
-  // the hunk that removed "## Notes" and its two lines added seven fixes, and position called the first four rewrites
-  const fx = (f) => readFileSync(new URL(`fixtures/notes/${f}`, import.meta.url), 'utf8');
-  const notes = addedNotes(fx('sea-4534.md'), fx('sea-4480..4534.diff'));
-  assert.equal(`${notes}\n`, fx('sea-4480..4534.notes.md'), 'the body the release should have carried');
-  for (const lost of ['- The sea at a distance no longer looks like large dark square panels', '- Along the coast, the ordinary water no longer draws',
-    '- Creatures under the sea, and anything dropped there, now fade', '- Opening a window (the inventory, the map) while underwater']) {
-    assert.ok(notes.includes(lost), `published: ${lost}`);
-  }
-  assert.doesNotMatch(notes, /## Notes|aren't in yet|are not in this update/, 'what the release deleted is not news');
-  // the smallest shape of it: the section that said "not in this update" goes as the thing ships
-  const head = '# Patch Notes: The Sea\n\n## Fixes\n- Swimming splashes in dungeon water.\n- Your boat stays where you left it.\n- Placing a boat while swimming puts it on the water.\n';
-  const diff = '@@ -5,3 +5,2 @@\n-\n-## Notes\n-- Boats are not in this update.\n+- Your boat stays where you left it.\n+- Placing a boat while swimming puts it on the water.';
-  assert.equal(addedNotes(head, diff), '# Patch Notes: The Sea\n\n## Fixes\n- Your boat stays where you left it.\n- Placing a boat while swimming puts it on the water.',
-    'round 1 published nothing here: two lines added, three removed, "all rewrites"');
-});
-
-test('R2-C1: what a release only rewrote stays out - a typo, a restyle, one line split in two, a line moved to another section', () => {
-  assert.equal(REWRITE_SHARE, 0.6);
-  // below the share it is news, whatever small words it shares: 3 of these 7 words are the removed line's
-  assert.equal(addedNotes('# S\n\n- The boat is saved with your game.\n', '@@ -3 +3 @@\n-- The boat is not in this update.\n+- The boat is saved with your game.'),
-    '# S\n\n- The boat is saved with your game.');
-  const head = '# T\n\n## Titles\n- Tabby is now a Developer.\n- Flylighter is now a Disciple.\n- SirMcMobdon is no longer an Apostle.\n\n## Fixes\n- **Your gear does not wear out on him.**\n';
-  // one line split in three, restyled: most of each new line's words are the old line's
-  const split = '@@ -4 +4,3 @@\n-- Tabby is now a Developer. Flylighter is now a Disciple. SirMcMobdon is no longer an Apostle.\n+- Tabby is now a Developer.\n+- Flylighter is now a Disciple.\n+- SirMcMobdon is no longer an Apostle.';
-  assert.equal(addedNotes(head, split), '', 'a restyle is not news');
-  // a line moved from one section to another: the same words, in another hunk
-  const moved = '@@ -3,0 +4 @@\n+- Tabby is now a Developer.\n@@ -9 +8,0 @@\n-- Tabby is now a Developer';
-  assert.equal(addedNotes(head, moved), '', 'moved, word for word, is not news');
-  // a heading renamed is not news - headings only ever say where news sits
-  assert.equal(addedNotes(head, '@@ -3 +3 @@\n-## Titles and glyphs\n+## Titles'), '');
-  assert.equal(addedNotes(head, '@@ -8,0 +8 @@\n+## Fixes'), '', 'a heading added alone says nothing');
-  // a plural, a possessive: "Boats keep their" is "A boat keeps its" restyled, not news
-  assert.equal(addedNotes('# S\n\n- A boat keeps its cargo when saved.\n', '@@ -3 +3 @@\n-- Boats keep their cargo when saved.\n+- A boat keeps its cargo when saved.'), '');
-  assert.equal(addedNotes('# S\n\n- The title is SirMcMobdon\'s now.\n', '@@ -3 +3 @@\n-- SirMcMobdon holds the title now.\n+- The title is SirMcMobdon\'s now.'), '');
-  // ...and a rewrite beside news keeps the news, under its heading
-  assert.equal(addedNotes(head, '@@ -10 +10 @@\n-- Your gear doesnt wear out on him.\n+- **Your gear does not wear out on him.**\n@@ -6,0 +7 @@\n+- SirMcMobdon is no longer an Apostle.'),
-    '# T\n\n## Titles\n- SirMcMobdon is no longer an Apostle.');
-});
-
-test('R2-C4: every + line inside a hunk is content - a note that opens "++" was dropped as if it were the file header', () => {
-  const head = '# Keys\n\n## Keys\n- One.\n++ and +++ both work as keys now\n';
-  assert.equal(addedNotes(head, 'diff --git a/x b/x\n--- a/x\n+++ b/x\n@@ -4,0 +5 @@\n+++ and +++ both work as keys now'),
-    '# Keys\n\n## Keys\n++ and +++ both work as keys now');
-  // a second file's header in the same text is a header again, never content
-  assert.equal(addedNotes('# A\n\n- a\n', 'diff --git a/x b/x\n--- a/x\n+++ b/x\n@@ -2,0 +3 @@\n+- a\ndiff --git a/y b/y\n--- a/y\n+++ b/y'), '# A\n\n- a');
-});
-
-test('R2-C4: the notes read every name git has - an accent, a space, a quote, a pattern character - and never a file that is not text', () => {
-  const repo = mkdtempSync(join(tmpdir(), 'r2-notes-'));
-  const git = (...args) => execFileSync('git', args, { cwd: repo, encoding: 'utf8', maxBuffer: 1 << 24 }).trim();
-  const w = (f, t) => writeFileSync(join(repo, f), t);
-  try {
-    git('init', '-q');
-    git('config', 'user.email', 'probe@example.invalid');
-    git('config', 'user.name', 'probe');
-    git('config', 'commit.gpgsign', 'false');
-    w('PATCH-NOTES-[beta].md', '# Patch Notes: The beta\n\n## Beta\n- One.\n');
-    w('PATCH-NOTES-a.md', '# Patch Notes: A\n\n## A\n- a1.\n');
-    w('real.md', '# Patch Notes: Linked\n\n- Old text.\n');
-    symlinkSync('real.md', join(repo, 'PATCH-NOTES-Linked.md'));
-    git('add', '-A');
-    git('commit', '-qm', 'first release');
-    git('tag', 'app-v0.1.1');
-    w('PATCH-NOTES-Café-Update.md', '# Patch Notes: The Café\n\n- Coffee.\n');
-    w('PATCH-NOTES-Dagon’s-Fire.md', '# Patch Notes: Dagon’s Fire\n\n- A typographic apostrophe in the name.\n');
-    w('PATCH-NOTES-"Quoted".md', '# Patch Notes: Quoted\n\n- A quote in the name.\n');
-    w('PATCH-NOTES-[beta].md', '# Patch Notes: The beta\n\n## Beta\n- One.\n- Two, the beta\'s own.\n');
-    w('PATCH-NOTES-a.md', '# Patch Notes: A\n\n## A\n- a1.\n- a2, which belongs to A and never to the beta.\n');
-    unlinkSync(join(repo, 'PATCH-NOTES-Linked.md'));
-    w('PATCH-NOTES-Linked.md', '# Patch Notes: Linked, now a real file\n\n- Notes never published before.\n');
-    writeFileSync(join(repo, 'PATCH-NOTES-Utf16.md'), Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from('# Patch Notes: UTF-16\r\n\r\n- Saved as Unicode.\r\n', 'utf16le')]));
-    git('add', '-A');
-    git('commit', '-qm', 'second release');
-    const byFile = Object.fromEntries(patchNotesSince('app-v0.1.1', (args) => git(...args)).map((n) => [n.file, n.text]));
-    assert.deepEqual(Object.keys(byFile).sort(), ['PATCH-NOTES-"Quoted".md', 'PATCH-NOTES-Café-Update.md', 'PATCH-NOTES-Dagon’s-Fire.md', 'PATCH-NOTES-Linked.md', 'PATCH-NOTES-[beta].md', 'PATCH-NOTES-a.md'].sort(),
-      'git QUOTES these names without -z, and they were dropped; a UTF-16 file is left out rather than published as NULs');
-    assert.equal(byFile['PATCH-NOTES-[beta].md'], '# Patch Notes: The beta\n\n## Beta\n- Two, the beta\'s own.', 'a name is never a pattern: A\'s line is not the beta\'s');
-    assert.equal(byFile['PATCH-NOTES-a.md'], '# Patch Notes: A\n\n## A\n- a2, which belongs to A and never to the beta.');
-    assert.equal(byFile['PATCH-NOTES-Linked.md'], '# Patch Notes: Linked, now a real file\n\n- Notes never published before.', 'a link that became a file brings the file whole');
-    assert.doesNotMatch(composeReleaseNotes(Object.values(byFile).map((text) => ({ text }))), /\0|Old text/);
-  } finally { rmSync(repo, { recursive: true, force: true }); }
-});
 
 // ---- ARENA2: every look at the disks off the main process (lane D) ---------------------------------------------
 
@@ -608,32 +523,6 @@ test('R2-E (E-43..E-47): the places a copy of Daggerfall is installed - each one
     const twice = detectArena2({ platform: 'win32', home: winHome, env: { ProgramFiles: join(root, 'ProgramFiles'), 'ProgramFiles(x86)': join(root, 'programfiles') }, regQuery: () => [] });
     assert.equal(twice.length, 1, `one install, offered once (got ${twice.map((f) => f.dir).join(', ')})`);
   } finally { rmSync(root, { recursive: true, force: true }); }
-});
-
-test('R2-E (E-48..E-51): the notes command, spawned as the publish job spawns it - capped, newest first, a renamed file\'s additions, never its own tag as "previous"', () => {
-  const repo = mkdtempSync(join(tmpdir(), 'r2-cli-'));
-  const git = (...args) => execFileSync('git', args, { cwd: repo, encoding: 'utf8', maxBuffer: 1 << 24 }).trim();
-  const script = new URL('../scripts/desktopRelease.mjs', import.meta.url).pathname;
-  try {
-    git('init', '-q'); git('config', 'user.email', 'p@example.invalid'); git('config', 'user.name', 'p'); git('config', 'commit.gpgsign', 'false');
-    writeFileSync(join(repo, 'PATCH-NOTES-Old-Name.md'), '# Patch Notes: The Sea\n\n## Fixes\n- Swimming splashes in dungeon water.\n');
-    git('add', '-A'); git('commit', '-qm', 'one'); git('tag', 'app-v0.1.1');
-    // renamed AND added to: its addition is news (E-50)
-    fsModule.renameSync(join(repo, 'PATCH-NOTES-Old-Name.md'), join(repo, 'PATCH-NOTES-The-Sea.md'));
-    writeFileSync(join(repo, 'PATCH-NOTES-The-Sea.md'), '# Patch Notes: The Sea\n\n## Fixes\n- Swimming splashes in dungeon water.\n- Boats keep their cargo.\n');
-    git('add', '-A');
-    execFileSync('git', ['commit', '-qm', 'two'], { cwd: repo, env: { ...process.env, GIT_AUTHOR_DATE: '2026-09-28T00:00:00Z', GIT_COMMITTER_DATE: '2026-09-28T00:00:00Z' } });
-    // a huge file, later (E-48: capped; E-49: the newest change first)
-    const big = `# Patch Notes: Big\n\n${Array.from({ length: 4000 }, (_, i) => `- Line ${i} of a very long list of changes.`).join('\n')}\n`;
-    writeFileSync(join(repo, 'PATCH-NOTES-Big.md'), big);
-    git('add', '-A'); execFileSync('git', ['commit', '-qm', 'three'], { cwd: repo, env: { ...process.env, GIT_AUTHOR_DATE: '2030-01-01T00:00:00Z', GIT_COMMITTER_DATE: '2030-01-01T00:00:00Z' } });
-    git('tag', 'app-v0.1.2');   // the tag being cut is HEAD's own - never its own "previous" (E-51)
-    const out = execFileSync(process.execPath, [script, 'notes', 'app-v0.1.2'], { cwd: repo, encoding: 'utf8' });
-    assert.ok(out.startsWith('# Patch Notes: Big\n'), 'the newest change first');
-    assert.ok(out.length < big.length && out.length <= 64 * 1024 + 4096, `capped at NOTES_FILE_MAX (${out.length} of ${big.length})`);
-    assert.match(out, /# Patch Notes: The Sea\n\n## Fixes\n- Boats keep their cargo\.\n$/, 'a renamed file brings what it added');
-    assert.doesNotMatch(out, /Swimming splashes/);
-  } finally { rmSync(repo, { recursive: true, force: true }); }
 });
 
 test('R2-E (E-32..E-42, E-52..E-54): the shell\'s and the workflow\'s wiring the suite never read', () => {

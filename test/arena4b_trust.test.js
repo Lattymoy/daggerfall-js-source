@@ -43,7 +43,8 @@ test('ARENA4b the ladder\'s vitality law: the signed level\'s honest most, bound
   assert.equal(ladderVitalityAt(500), PVE_HP_MAX, 'bounded');
   assert.equal(LADDER_LV_MARGIN, 5);
   assert.deepEqual(Array.from({ length: 10 }, (_, t) => ladderLevelCap(t)), [8, 10, 12, 14, 16, 17, 21, 24, 24, 26], 'each tier\'s top opponent (a monster at its DFU level) plus five');
-  assert.equal(ladderVitality(12, 60, 0), ladderVitalityAt(12), 'the signed level, whatever the word says');
+  assert.equal(ladderVitality(7, 60, 0), ladderVitalityAt(7), 'the signed level, whatever the word says');
+  assert.equal(ladderVitality(12, 60, 0), ladderVitalityAt(8), 'AUDIT PRE-MERGE 1003 S2: and held to the tier\'s cap as a claimed one is (the client writes the tile it is read off)');
   assert.equal(ladderVitality(null, 60, 0), ladderVitalityAt(8), 'no signed level: the claim held to the Pit\'s cap');
   assert.equal(ladderVitality(undefined, 4, 0), ladderVitalityAt(4), 'an honest claim under the cap stands');
   assert.equal(ladderVitality(null, 60, 9), ladderVitalityAt(26), 'the Grand Melee\'s cap');
@@ -62,12 +63,13 @@ async function ladderBout(extra, inWord) {
 }
 
 test('ARENA4b the relay holds a ladder fighter at the signed level\'s vitality: the token\'s `cl` carried onto the socket, the word\'s health and level not believed; an old token\'s claimed level held to the tier\'s cap (mutants: the word\'s health believed; the token\'s level not carried; the claim uncapped)', async () => {
-  const signed = await ladderBout({ charLevel: 9 }, { lv: 60, mh: 99999 });
-  assert.equal(signed.st.f.find((f) => f[0] === 'p0')[4], ladderVitalityAt(9), 'the token\'s level, not the word\'s');
-  assert.equal(signed.R.room._attach(signed.p).cl, 9, 'carried onto the socket off the signature');
-  assert.equal((await signed.R.room._boutOf()).f[0].cl, 9, 'and onto the bout\'s fighter');
-  const low = await ladderBout({ charLevel: 9 }, { lv: 9, mh: 5 });
-  assert.equal(low.st.f.find((f) => f[0] === 'p0')[4], ladderVitalityAt(9), 'nor a lower health named: the vitality is the relay\'s');
+  // AUDIT PRE-MERGE 1003 S2: a signed level under the Pit's cap (8) - one over it is held to it (test/audit1003_server.test.js)
+  const signed = await ladderBout({ charLevel: 7 }, { lv: 60, mh: 99999 });
+  assert.equal(signed.st.f.find((f) => f[0] === 'p0')[4], ladderVitalityAt(7), 'the token\'s level, not the word\'s');
+  assert.equal(signed.R.room._attach(signed.p).cl, 7, 'carried onto the socket off the signature');
+  assert.equal((await signed.R.room._boutOf()).f[0].cl, 7, 'and onto the bout\'s fighter');
+  const low = await ladderBout({ charLevel: 7 }, { lv: 7, mh: 5 });
+  assert.equal(low.st.f.find((f) => f[0] === 'p0')[4], ladderVitalityAt(7), 'nor a lower health named: the vitality is the relay\'s');
   const old = await ladderBout({}, { lv: 60, mh: 99999 });
   assert.equal(old.st.f.find((f) => f[0] === 'p0')[4], ladderVitalityAt(ladderLevelCap(0)), 'an older service\'s token: the claim held to the Pit\'s cap');
   const honest = await ladderBout({}, { lv: 3 });

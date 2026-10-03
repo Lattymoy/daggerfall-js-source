@@ -848,11 +848,12 @@
   {
     "name": "PROF7-gather-ask-dropped",
     "file": "src/scenes/gatherHost.js",
-    "old": "      at: Math.floor(deps.nowMs() / 1000), ...(a.ask ?? {}),",
+    "old": "      at: Math.floor(deps.nowMs() / 1000), ...((typeof a.ask === 'function' ? a.ask() : a.ask) ?? {}),",
     "new": "      at: Math.floor(deps.nowMs() / 1000),",
     "tests": [
       "test/prof7_client.test.js"
-    ]
+    ],
+    "note": "AUDIT SILVER-WAYS (PIN MOVED): re-aimed by content to the code the audit's fix left (the Watch both ways, the receipt asked at the act's end and this account's alone, the tax reckoned in the batch)."
   },
   {
     "name": "PROF7-gather-chip-characters",

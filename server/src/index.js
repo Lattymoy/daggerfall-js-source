@@ -2456,7 +2456,10 @@ export class Room {
       if (inOffer) { this._arenaSend(ws, { k: 'of', o: inOffer.o, vs: this._bill(inOffer.a.sub === sub ? inOffer.b : inOffer.a), until: inOffer.until, ...this._casualWord(inOffer.a) }); return; }
       if (!H.q.some((x) => x.sub === sub)) {
         if (H.q.length >= MATCH_QUEUE_MAX) { this._arenaSend(ws, { k: 'qx', m: 'full' }); return; }
-        H.q.push({ sub, name: a.name, rating: arenaRatingOk(a.ar), title: a.title ?? null, lv: m.lv ?? a.lv ?? 1, banner: bannerClaim(m.b), casual: m.u === 1, at: now });   // ARENA4b: the banner the word claims, billed (_bill); `casual` an unrated bout sought - paired like with like (pairQueue)
+        // AUDIT PRE-MERGE 1003 S3: `lv` THE TOKEN'S - the Renown level the account service signed (Seats-Arc 6.1's "the level
+        // is the account service's signed number"; net/arenaLaw.js pvpVitality reads it), never the word's: the word's `lv`
+        // set a rated bout's health (999 held at sixty - 420 against an honest 302). A word still carrying one is not refused.
+        H.q.push({ sub, name: a.name, rating: arenaRatingOk(a.ar), title: a.title ?? null, lv: a.lv ?? 1, banner: bannerClaim(m.b), casual: m.u === 1, at: now });   // ARENA4b: the banner the word claims, billed (_bill); `casual` an unrated bout sought - paired like with like (pairQueue)
         await this._hallSave();
       }
       this._arenaTell(sub, this._queueWord(H, now, sub));
@@ -2500,7 +2503,10 @@ export class Room {
   /** Both said yes: the bout's room opened with its two fighters, each told where to go and whom they meet. */
   async _hallGo(H, f, now) {
     H.offers = H.offers.filter((x) => x !== f);
-    const o = f.o;
+    // AUDIT PRE-MERGE 1003 S7: THE BOUT'S ROOM IS MINTED HERE, told to the pair only once it is open - never the offer's
+    // id, which both hear before either says yes: a ladder room's id is its fighter's own, so one of a pair stood a
+    // ladder bout in `arena:b<offer id>`, the open was refused, both were sent back `busy` and paired again, for ever
+    const o = arenaId();
     const fighters = [f.a, f.b].map((e) => ({ sub: e.sub, name: e.name, lv: e.lv, rating: e.rating, title: e.title, banner: e.banner ?? null }));   // ARENA4b: and the banner each claimed
     const ok = await this._arenaPost(arenaBoutRoom(o), ARENA_INTERNAL_OPEN, { o, kind: 'pvp', f: fighters, casual: !!f.a.casual, at: now });   // ARENA4b: a casual pair's room owes no receipt
     if (!ok) {
@@ -2572,14 +2578,15 @@ export class Room {
     const cur = await this.state.storage.getAlarm();
     if (cur == null || cur > at) await this.state.storage.setAlarm(at);
   }
-  /** Words to every hello'd socket in the bout's room. */
+  /** Words to every socket on the bout's sand or in its stands. AUDIT PRE-MERGE 1003 S1: theirs alone - the fan was every
+   *  hello'd socket, so one told the seats are full heard the whole bout all the same (sixty seats a bound on nothing). */
   _boutFan(words) {
     if (!words?.length) return;
     const outs = words.map((w) => JSON.stringify({ t: 'arena', ...w }));
-    for (const [ws, b] of [...this._all()]) if (b.id) for (const s of outs) if (!this._send(ws, s)) break;
+    for (const [ws, b] of [...this._all()]) if (b.id && (b.af || b.asp)) for (const s of outs) if (!this._send(ws, s)) break;
   }
-  /** The whole bout to every socket - each with its own fighter id, '' in the stands. */
-  _boutFanState(st) { for (const [ws, b] of [...this._all()]) if (b.id) this._arenaSend(ws, stateWord(st, b.afid ?? '')); }
+  /** The whole bout to every socket on its sand or in its stands - each with its own fighter id, '' in the stands. */
+  _boutFanState(st) { for (const [ws, b] of [...this._all()]) if (b.id && (b.af || b.asp)) this._arenaSend(ws, stateWord(st, b.afid ?? '')); }
   /** The hall told of this bout - its entry, or done. */
   async _boutTellHall(st, done = false) {
     const e = done ? null : liveEntry(st);
@@ -2617,20 +2624,30 @@ export class Room {
         // not ask it, the service stays the one arbiter of the climb)
         // ARENA4b: its fighter's vitality is the relay's, off the token's signed character level (`cl`); the word's `lv`
         // stands only for a token from a service before it, held to the tier's cap, and its `mh` is read by nothing
-        // (net/arenaLaw.js ladderVitality)
+        // (net/arenaLaw.js ladderVitality - AUDIT PRE-MERGE 1003 S2: the signed level held to the same cap)
         if (m.r !== 'f' || m.tier === undefined) { this._arenaSend(ws, { k: 'no', m: 'no bout' }); return; }
         st = this._bout = openBout({ o: arenaBoutIdOf(a.key), kind: 'pve', f: [{ sub: a.sub, name: a.name, lv: m.lv ?? a.lv ?? 1, cl: a.cl ?? null, title: a.title ?? null, banner: m.b ?? null }], tier: m.tier, bout: m.bout, now });   // ARENA4b: `banner` the word's claim, billed on the list to watch
         await this._boutTellHall(st);
-      } else if (exRoom && boutFinished(st)) {
+      } else if (boutFinished(st) && (exRoom || fighterOfSub(st, a.sub))) {
         // ARENA4b: a finished exhibition is kept for its verdict (ARENA_EX_KEEP_MS): an `in` is answered with the whole
         // bout, its result in it, and takes no seat - the stands are empty after the healers
-        this._arenaSend(ws, stateWord(st, ''));
+        // AUDIT PRE-MERGE 1003 S5: AND A FINISHED BOUT'S OWN FIGHTER, BACK INSIDE ITS KEEP (ARENA_KEEP_MS "for a reconnect's
+        // receipt"), is answered with it as theirs - the end and the result, and the receipt the room holds for them (a
+        // casual bout's none): joinBout says `no bout` once the healers are past, ~9 s after the end, so a fighter whose
+        // socket blinked at the last blow never heard the win the room kept ten minutes for them
+        const me = exRoom ? null : fighterOfSub(st, a.sub);
+        this._arenaSend(ws, stateWord(st, me?.id ?? ''));
+        const r = me ? st.rc?.[a.sub] : null;
+        if (r) this._arenaSend(ws, { k: 'rc', r });
         return;
       }
       const before = st.phase;
-      const j = joinBout(st, a.sub, m.r, now);
-      if (j.no) { this._arenaSend(ws, { k: 'no', m: j.no }); return; }
       const cur = this._attach(ws);
+      // AUDIT PRE-MERGE 1003 S1: A SEAT IS A SOCKET'S ONCE - joinBout counts a seat at every `in` it is asked, so a socket
+      // already in the stands asking again is answered with the bout and takes no second: one socket's sixty `in`s held
+      // all sixty seats of the hour's exhibition (and its close gave back one - 59 phantom seats, the bout blank to the realm)
+      const j = m.r === 's' && cur.asp && !fighterOfSub(st, a.sub) ? { role: 's' } : joinBout(st, a.sub, m.r, now);
+      if (j.no) { this._arenaSend(ws, { k: 'no', m: j.no }); return; }
       if (j.role === 'f') {
         this._setAttach(ws, { ...cur, af: 1, afid: j.id, asp: 0 });
         // the fighter comes onto the sand: its body said to the room now (the hello said nothing)

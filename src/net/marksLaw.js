@@ -30,18 +30,35 @@ export const MARK_WORTH_GOLD = 10;
 /**
  * THE FAUCETS - only acts a server witnessed, each capped. MARKS1 strikes the first (the gate's receipts); the rest
  * come with their slices, and are named here so the cap is the law before the faucet is built.
- *   gate      - an Oblivion Gate receipt the relay signed and the service counted (WB5b): 50, two a UTC day an account
- *               (FACT: a gate rises every game day - twelve a real day - and gate_kills keys on the game day, so the
- *               gate's own law allows twelve; this is the faucet's). 100 under a Daedric Incursion (SEAT0 9.3, to come).
+ *   gate      - an Oblivion Gate receipt the relay signed and the service counted (WB5b): 50 (100 under a Daedric
+ *               Incursion, SEAT0 9.3 - the second half at the Turning, seatIncursion.js). SILVER-WAYS: under the day's
+ *               COMBAT cap (MARKS_COMBAT) with the raids', no longer two a day of its own.
+ *   raid      - SILVER-WAYS (2026-10-03, Mac: "Do it"): a town defended - a raid's receipt the relay signed at its
+ *               cleanse (RAID3/RAID4) and the service counted once a (raid, account): 30, under the COMBAT cap.
  *   writ      - a Court writ's pay (PROF1 - BUILT, server-account/src/professions.js): its units x the material's
  *               value x 1.2, 3 an account a UTC day.
  *   honour    - a Siege Honour (SEAT0 6.8): one a siege.
- *   motherlode - a Motherlode find (PROF2): 10, one an account a day.
+ *   deed      - SILVER-WAYS: a GUILD DEED, struck to a guild's treasury (never an account's) when `members` accounts of
+ *               it - each a character `tenureS` in the guild - have claimed the same raid or gate: 25, `perDay` a guild a
+ *               UTC day.
+ *   motherlode - a Motherlode find (PROF2b): 10, one an account a UTC day.
  */
 export const MARKS_FAUCETS = Object.freeze({
-  gate: Object.freeze({ amount: 50, perDay: 2 }),
+  gate: Object.freeze({ amount: 50 }),
+  raid: Object.freeze({ amount: 30 }),
   writ: Object.freeze({ perDay: 3 }),   // PROF1: the pay is each writ's own (professionLaw.js writPay)
+  deed: Object.freeze({ amount: 25, perDay: 4, members: 3, tenureS: 7 * 86_400 }),
+  motherlode: Object.freeze({ amount: 10, perDay: 1 }),
 });
+/**
+ * SILVER-WAYS: THE DAY'S COMBAT CAP - what the gates and the raids strike an account together, a UTC day. The gate was
+ * two a day of its own (100); a fighter now earns by raids too, and the day's ceiling rose by one raid's worth and a
+ * little (150 = three gates, or five raids, or two gates and a raid and part of another). The strike that meets the cap
+ * pays what the day has left of it (`combatStrike`), never nothing for a few silver short.
+ */
+export const MARKS_COMBAT = Object.freeze({ kinds: Object.freeze(['gate', 'raid']), perDay: 150 });
+/** What a combat faucet's `amount` strikes when `earned` is the day's combat silver so far: the amount, or the day's last. */
+export const combatStrike = (amount, earned) => Math.max(0, Math.min(amount, MARKS_COMBAT.perDay - Math.max(0, earned)));
 /** The Bank of the Empire's exchange: Marks for gold, never the other way. */
 export const MARKS_BANK = Object.freeze({ goldPerMark: 8, perDay: 300 });
 /** One guild deposit or withdrawal of Marks, at most. */
@@ -101,6 +118,12 @@ export const MARKS_KINDS = Object.freeze({
   'gate-incursion': 'mint',   // AUDIT-SEATS: a Daedric Incursion's second half of a gate's Marks, once three claims agree (9.3)
   fort: 'burn',               // SEAT2b: a fortification project's Marks, from the holder's treasury as it is begun (7.5)
   'seat-strike-refund': 'mint', // AUDIT-SEATS S4: a struck seat's claim fee, minted back to its holder within the Season (16)
+  raid: 'mint',               // SILVER-WAYS: a town defended - the relay's raid receipt, counted (under the day's combat cap)
+  'guild-deed': 'mint',       // SILVER-WAYS: a guild deed - three of a guild's accounts on one raid or gate - into its treasury
+  'contract-escrow': 'move',  // SILVER-WAYS: a guild contract's whole pay, from its treasury, held while it stands (the contract's id)
+  'contract-pay': 'move',     // SILVER-WAYS: a defender's pay less its tax, out of the contract's escrow
+  'contract-return': 'move',  // SILVER-WAYS: what is left of a contract's escrow, home to its guild at a withdrawal or its seventh day
+  motherlode: 'mint',         // PROF2b: a Motherlode found - the relay's word that the striker stood in its cell, counted
 });
 
 /** The switch the service's config holds (MARKS_OPEN): off, dev (the developers alone), on. */

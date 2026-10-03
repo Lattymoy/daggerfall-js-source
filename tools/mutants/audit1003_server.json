@@ -1,0 +1,276 @@
+[
+  {
+    "name": "AUDIT1003-S1-a-seated-socket-counted-again",
+    "file": "server/src/index.js",
+    "old": "const j = m.r === 's' && cur.asp && !fighterOfSub(st, a.sub) ? { role: 's' } : joinBout(st, a.sub, m.r, now);",
+    "new": "const j = joinBout(st, a.sub, m.r, now);",
+    "tests": [
+      "test/audit1003_server.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-S1-a-seated-socket-not-answered-again",
+    "file": "server/src/index.js",
+    "old": "const j = m.r === 's' && cur.asp && !fighterOfSub(st, a.sub) ? { role: 's' } : joinBout(st, a.sub, m.r, now);",
+    "new": "if (m.r === 's' && cur.asp && !fighterOfSub(st, a.sub)) return;\n      const j = joinBout(st, a.sub, m.r, now);",
+    "tests": [
+      "test/audit1003_server.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-S1-the-fan-to-every-socket",
+    "file": "server/src/index.js",
+    "old": "for (const [ws, b] of [...this._all()]) if (b.id && (b.af || b.asp)) for (const s of outs) if (!this._send(ws, s)) break;",
+    "new": "for (const [ws, b] of [...this._all()]) if (b.id) for (const s of outs) if (!this._send(ws, s)) break;",
+    "tests": [
+      "test/audit1003_server.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-S1-the-state-to-every-socket",
+    "file": "server/src/index.js",
+    "old": "_boutFanState(st) { for (const [ws, b] of [...this._all()]) if (b.id && (b.af || b.asp)) this._arenaSend(",
+    "new": "_boutFanState(st) { for (const [ws, b] of [...this._all()]) if (b.id) this._arenaSend(",
+    "tests": [
+      "test/audit1003_server.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-S1-the-fan-to-the-sand-alone",
+    "file": "server/src/index.js",
+    "old": "for (const [ws, b] of [...this._all()]) if (b.id && (b.af || b.asp)) for (const s of outs) if (!this._send(ws, s)) break;",
+    "new": "for (const [ws, b] of [...this._all()]) if (b.id && b.af) for (const s of outs) if (!this._send(ws, s)) break;",
+    "tests": [
+      "test/audit1003_server.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-S2-the-signed-level-uncapped",
+    "file": "src/net/arenaLaw.js",
+    "old": "cl <= ARENA_CL_MAX ? cl : arenaLv(lv);\n  return ladderVitalityAt(Math.min(level, ladderLevelCap(tier)));",
+    "new": "cl <= ARENA_CL_MAX ? cl : Math.min(arenaLv(lv), ladderLevelCap(tier));\n  return ladderVitalityAt(level);",
+    "tests": [
+      "test/audit1003_server.test.js",
+      "test/arena4b_trust.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-S2-the-cap-off-another-tier",
+    "file": "src/net/arenaLaw.js",
+    "old": "return ladderVitalityAt(Math.min(level, ladderLevelCap(tier)));",
+    "new": "return ladderVitalityAt(Math.min(level, ladderLevelCap(9)));",
+    "tests": [
+      "test/audit1003_server.test.js",
+      "test/arena4b_trust.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-S3-the-word-s-level-queued",
+    "file": "server/src/index.js",
+    "old": "title: a.title ?? null, lv: a.lv ?? 1, banner: bannerClaim(m.b), casual: m.u === 1, at: now });",
+    "new": "title: a.title ?? null, lv: m.lv ?? a.lv ?? 1, banner: bannerClaim(m.b), casual: m.u === 1, at: now });",
+    "tests": [
+      "test/audit1003_server.test.js",
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-S4-claimed-for-any-kept-row",
+    "file": "server-account/src/arena.js",
+    "old": "const mine = !!kept && kept.player === player.id && Number(kept.tier) === c.q && Number(kept.step) === c.u && Number(kept.won) === (won ? 1 : 0);",
+    "new": "const mine = !!kept;",
+    "tests": [
+      "test/audit1003_server.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-S4-the-kept-row-s-account-unread",
+    "file": "server-account/src/arena.js",
+    "old": "const mine = !!kept && kept.player === player.id && Number(kept.tier)",
+    "new": "const mine = !!kept && Number(kept.tier)",
+    "tests": [
+      "test/audit1003_server.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-S4-the-kept-row-s-tier-unread",
+    "file": "server-account/src/arena.js",
+    "old": "kept.player === player.id && Number(kept.tier) === c.q && Number(kept.step)",
+    "new": "kept.player === player.id && Number(kept.step)",
+    "tests": [
+      "test/audit1003_server.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-S4-the-kept-row-s-step-unread",
+    "file": "server-account/src/arena.js",
+    "old": "Number(kept.tier) === c.q && Number(kept.step) === c.u && Number(kept.won)",
+    "new": "Number(kept.tier) === c.q && Number(kept.won)",
+    "tests": [
+      "test/audit1003_server.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-S4-the-kept-row-s-result-unread",
+    "file": "server-account/src/arena.js",
+    "old": " && Number(kept.won) === (won ? 1 : 0);",
+    "new": ";",
+    "tests": [
+      "test/audit1003_server.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-S4-reused-unsaid-on-the-client",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "if (d?.recorded === false && (d.why === 'order' || d.why === 'reused')) say(O[d.why]);",
+    "new": "if (d?.recorded === false && d.why === 'order') say(O[d.why]);",
+    "tests": [
+      "test/audit1003_server.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-S4-reused-paid-as-claimed-on-the-client",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "else if (d?.why === 'claimed') won = c.r === 1;",
+    "new": "else if (d?.why === 'claimed' || d?.why === 'reused') won = c.r === 1;",
+    "tests": [
+      "test/audit1003_server.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-S5-the-arm-for-exhibitions-alone",
+    "file": "server/src/index.js",
+    "old": "} else if (boutFinished(st) && (exRoom || fighterOfSub(st, a.sub))) {",
+    "new": "} else if (exRoom && boutFinished(st)) {",
+    "tests": [
+      "test/audit1003_server.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-S5-a-stranger-answered-as-the-bout",
+    "file": "server/src/index.js",
+    "old": "} else if (boutFinished(st) && (exRoom || fighterOfSub(st, a.sub))) {",
+    "new": "} else if (boutFinished(st)) {",
+    "tests": [
+      "test/audit1003_server.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-S5-the-receipt-not-handed-back",
+    "file": "server/src/index.js",
+    "old": "const r = me ? st.rc?.[a.sub] : null;",
+    "new": "const r = null;",
+    "tests": [
+      "test/audit1003_server.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-S5-the-fighter-s-id-not-said",
+    "file": "server/src/index.js",
+    "old": "this._arenaSend(ws, stateWord(st, me?.id ?? ''));",
+    "new": "this._arenaSend(ws, stateWord(st, ''));",
+    "tests": [
+      "test/audit1003_server.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-S6-the-write-unguarded",
+    "file": "server-account/src/arena.js",
+    "old": "WHERE ${RATING_NOW_SQL('?3')} = ?7 AND ${RATING_NOW_SQL('?4')} = ?8`)",
+    "new": "WHERE 1`)",
+    "tests": [
+      "test/audit1003_server.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-S6-side-0-s-guard-dropped",
+    "file": "server-account/src/arena.js",
+    "old": "WHERE ${RATING_NOW_SQL('?3')} = ?7 AND ${RATING_NOW_SQL('?4')} = ?8`)",
+    "new": "WHERE ${RATING_NOW_SQL('?4')} = ?8`)",
+    "tests": [
+      "test/audit1003_server.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-S6-side-1-s-guard-dropped",
+    "file": "server-account/src/arena.js",
+    "old": "WHERE ${RATING_NOW_SQL('?3')} = ?7 AND ${RATING_NOW_SQL('?4')} = ?8`)",
+    "new": "WHERE ${RATING_NOW_SQL('?3')} = ?7`)",
+    "tests": [
+      "test/audit1003_server.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-S6-one-try-only",
+    "file": "server-account/src/arena.js",
+    "old": "export const ARENA_RATE_TRIES = 4;",
+    "new": "export const ARENA_RATE_TRIES = 1;",
+    "tests": [
+      "test/audit1003_server.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-S6-a-lost-race-answered-claimed",
+    "file": "server-account/src/arena.js",
+    "old": "    if (row) return { recorded: false, why: 'claimed', ...(await pvpAnswer(ctx, player.id, row)) };\n  }\n  return { error: 'busy' };",
+    "new": "    return { recorded: false, why: 'claimed', ...(row ? await pvpAnswer(ctx, player.id, row) : {}) };\n  }\n  return { error: 'busy' };",
+    "tests": [
+      "test/audit1003_server.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-S7-the-room-named-by-the-offer",
+    "file": "server/src/index.js",
+    "old": "    const o = arenaId();\n",
+    "new": "    const o = f.o;\n",
+    "tests": [
+      "test/audit1003_server.test.js",
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-S8-the-inbox-s-senders-bare",
+    "file": "server-account/src/letters.js",
+    "old": "for (const p of await withArenaHonoursAll({ db }, found, nowS)) rows.set(p.id, p);",
+    "new": "for (const p of found) rows.set(p.id, p);",
+    "tests": [
+      "test/audit1003_server.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-S8-the-opened-letter-s-sender-bare",
+    "file": "server-account/src/letters.js",
+    "old": "const row = await withArenaHonours({ db }, await db.prepare('SELECT * FROM players WHERE id = ?').bind(l.from_id).first(), nowS);",
+    "new": "const row = await db.prepare('SELECT * FROM players WHERE id = ?').bind(l.from_id).first();",
+    "tests": [
+      "test/audit1003_server.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-S8-the-board-s-authors-bare",
+    "file": "server-account/src/board.js",
+    "old": "for (const p of await withArenaHonoursAll({ db }, found, nowS)) rows.set(p.id, p);",
+    "new": "for (const p of found) rows.set(p.id, p);",
+    "tests": [
+      "test/audit1003_server.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-S8-the-grand-champions-unread",
+    "file": "server-account/src/arena.js",
+    "old": "arena: { grand: grands.has(r.id), champion: champion === r.id } } : r));",
+    "new": "arena: { grand: false, champion: champion === r.id } } : r));",
+    "tests": [
+      "test/audit1003_server.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-S8-the-laurel-unread",
+    "file": "server-account/src/arena.js",
+    "old": "arena: { grand: grands.has(r.id), champion: champion === r.id } } : r));",
+    "new": "arena: { grand: grands.has(r.id), champion: false } } : r));",
+    "tests": [
+      "test/audit1003_server.test.js"
+    ]
+  }
+]

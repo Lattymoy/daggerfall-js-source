@@ -59,7 +59,7 @@ export async function loadModWorldData() {
       if (await registerWorldDataPatch(await load(), () => modSetting(vendor, 'Enabled') === true)) n++;
     }));
     // WD3: a packed mod is loaded for the game or not at all - its switch is read here, once, and latched, so a switch
-    // flipped mid-game moves no town under the player's feet (the Features row: "Takes effect when the game next loads");
+    // flipped mid-game moves no town under the player's feet (the Features row: "Takes effect when the game is next started");
     // the layout pins stamp a save's records with what is loaded (systems/layoutPins.js)
     configureLayoutPins({ vendorOn: (v) => modLatchedOn(v) === true, vendorVersion: (v) => _packs.get(v)?.mod?.version ?? '' });
     // the packs fetched side by side (AUDIT WD3 B4); a mod is latched loaded only once its pack is on the door - one

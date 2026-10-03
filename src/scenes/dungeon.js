@@ -152,7 +152,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       motorState: () => (_motorRef ? { eyeLevel: _motorRef.eye[1] - _motorRef.pos[1], capsule: _motorRef.height } : null),
       placePlayer: placeLoadedPlayer,   // DIAL-LOAD: the host's load law, for every load the context runs - not routeKey's alone
       // MAC1 J: this host's canvas, for the pause door's relock. The
-      // context owns none of its own (dungeonContext.js:8123), so each
+      // context owns none of its own (dungeonContext.js:8138), so each
       // dungeon host hands its own in and the resume gesture carries
       // the pointer back with it (ui/pauseDoor.js:143-167).
       relock: () => requestLook(canvas) });
@@ -1106,7 +1106,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME);   // AUDIT-EL F5: a WORLD frame - the lane replays its records for this one
     if (walkMode) mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.bodyFeetAt(), yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw });   // MW-D24; DISC18: the body at the capsule's own feet, not the camera's smoothed ones
     if (ctx.staticBatch) renderer.drawMesh(ctx.staticBatch, BATCH_IDENTITY, null);   // PERF5: the level's static models, one call per texture (keys resolved in the merge)
-    for (const d of ctx.drawList) if (!d._batched) renderer.drawMesh(d.mesh, d.matrix, ctx.texRemap);
+    for (const d of ctx.drawList) if (!d._batched) renderer.drawMesh(d.mesh, d.matrix, d.texRemap ?? ctx.texRemap);   // AUDIT PRE-MERGE 1003 W4: a climate-free model's own table
     for (const d of ctx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, ctx.texRemap);
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
     ctx.flatAnims.tick(dt);   // FA1: whoever draws the flats runs their clock

@@ -942,7 +942,7 @@
   {
     "name": "ARENA4-BOARD-OFFER-PRESSES",
     "file": "src/systems/arenaBoard.js",
-    "old": "acts = [{ act: 'accept', label: O().accept, why: null }, { act: 'decline', label: O().decline, why: null }];",
+    "old": "acts = left > 0 ? [{ act: 'accept', label: O().accept, why: null }, { act: 'decline', label: O().decline, why: null }] : [];",
     "new": "acts = [];",
     "tests": [
       "test/arena4_client.test.js"
@@ -1203,8 +1203,8 @@
   {
     "name": "ARENA4-GLUE-QUEUE-LEVEL",
     "file": "src/scenes/arenaOnline.js",
-    "old": "if (!hallSend({ k: 'q', lv: Math.max(1, Math.floor(deps.level?.() ?? 1)), ...myBanner()",
-    "new": "if (!hallSend({ k: 'q', ...myBanner()",
+    "old": "const q = { k: 'q', lv: Math.max(1, Math.floor(deps.level?.() ?? 1)), ...myBanner()",
+    "new": "const q = { k: 'q', ...myBanner()",
     "tests": [
       "test/arena4_client.test.js"
     ]
@@ -1428,8 +1428,8 @@
   {
     "name": "ARENA4-STATE-MY-ID",
     "file": "server/src/index.js",
-    "old": "_boutFanState(st) { for (const [ws, b] of [...this._all()]) if (b.id) this._arenaSend(ws, stateWord(st, b.afid ?? '')); }",
-    "new": "_boutFanState(st) { for (const [ws, b] of [...this._all()]) if (b.id) this._arenaSend(ws, stateWord(st, '')); }",
+    "old": "_boutFanState(st) { for (const [ws, b] of [...this._all()]) if (b.id && (b.af || b.asp)) this._arenaSend(ws, stateWord(st, b.afid ?? '')); }",
+    "new": "_boutFanState(st) { for (const [ws, b] of [...this._all()]) if (b.id && (b.af || b.asp)) this._arenaSend(ws, stateWord(st, '')); }",
     "tests": [
       "test/arena4_relay.test.js"
     ]
@@ -1491,7 +1491,7 @@
   {
     "name": "ARENA4-SVC-RECEIPT-ONCE",
     "file": "server-account/src/arena.js",
-    "old": "return { recorded: false, why: kept ? 'claimed' : 'order', ladder };",
+    "old": "return { recorded: false, why: mine ? 'claimed' : kept ? 'reused' : 'order', ladder };",
     "new": "return { recorded: false, why: 'order', ladder };",
     "tests": [
       "test/arena4_service.test.js"
@@ -1653,8 +1653,8 @@
   {
     "name": "ARENA4-SVC-RATING-LAST",
     "file": "server-account/src/arena.js",
-    "old": "ORDER BY at DESC, rowid DESC LIMIT 1",
-    "new": "ORDER BY at ASC, rowid ASC LIMIT 1",
+    "old": "(a = ?2 OR b = ?2) ORDER BY at DESC, rowid DESC LIMIT 1",
+    "new": "(a = ?2 OR b = ?2) ORDER BY at ASC, rowid ASC LIMIT 1",
     "tests": [
       "test/arena4_service.test.js"
     ]

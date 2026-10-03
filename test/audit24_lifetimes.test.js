@@ -265,7 +265,7 @@ test('AUDIT 39: a third race - two cold callers for one model id must not each b
   assert.match(fn, /if \(!meshPromises\.has\(key\)\) \{\s*\n\s*meshPromises\.set\(key, build\(\)/,
     'and a flying one answers with the SAME promise, set before any await');
   assert.match(fn, /\.finally\(\(\) => meshPromises\.delete\(key\)\)/, 'a settled build leaves the map');
-  assert.match(fn, /const getGpuMesh = \(modelIdNum\) => cachedMesh\(modelIdNum, \(\) => buildGpuMesh\(modelIdNum\)\);/, 'getGpuMesh is that door');
+  assert.match(fn, /const getGpuMesh = \(modelIdNum, breathe = null\) => cachedMesh\(modelIdNum, \(\) => buildGpuMesh\(modelIdNum, breathe\)\);/, 'getGpuMesh is that door');   // AUDIT PRE-MERGE 1003 W6: and hands the build its caller's breather
   // the build itself is the only createMesh, and it is unreachable
   // except through the door above
   assert.equal((pipeline.match(/buildGpuMesh\(/g) ?? []).length, 2, 'one definition, one caller');

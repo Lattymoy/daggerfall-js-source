@@ -247,7 +247,8 @@ export const ARENA_CL_MIN = 1;
 export const ARENA_CL_MAX = 1000;
 /** ARENA4b: how far past a tier's own top level a claimed level is believed when no signed one rides the token (an old
  *  account service): a tier spans two or three levels, so five past its top is two tiers' climb - an honest fighter who
- *  out-levelled the mountain still fights near their own, and a forged level-sixty is no longer carried into the Pit. */
+ *  out-levelled the mountain still fights near their own, and a forged level-sixty is no longer carried into the Pit.
+ *  AUDIT PRE-MERGE 1003 S2: and a signed level alike (ladderVitality - the client writes the tile `cl` is read off). */
 export const LADDER_LV_MARGIN = 5;
 /** ARENA4b: the highest opponent level of a tier (a class fighter's own, a monster's DFU level - ARENA_BEASTS), plus the
  *  margin - the hard cap on a claimed level there. Pure. */
@@ -259,12 +260,15 @@ export function ladderLevelCap(tier) {
 /**
  * ARENA4b: A LADDER FIGHTER'S VITALITY, the relay's alone. The signed character level (`cl`, the account service's,
  * off the realm character - net/identityToken.js) is the level; a client's claimed health (the `in` word's `mh`) is read
- * by nothing. A token from a service before `cl` falls back to the claimed level held to the tier's cap
- * (ladderLevelCap). Pure.
+ * by nothing. A token from a service before `cl` falls back to the claimed level. Pure.
+ * AUDIT PRE-MERGE 1003 S2: EITHER LEVEL IS HELD TO THE TIER'S CAP (ladderLevelCap). The signature says whose the level
+ * is, not that it is true: `cl` is the realm tile's summary `level`, which the client writes itself (the realm's create
+ * and every checkpoint's summary, never read against the save) - a token signing a thousand fought the Pit at 2,000
+ * health where the old token's claim was held to 265.
  */
 export function ladderVitality(cl, lv, tier) {
-  const level = Number.isSafeInteger(cl) && cl >= ARENA_CL_MIN && cl <= ARENA_CL_MAX ? cl : Math.min(arenaLv(lv), ladderLevelCap(tier));
-  return ladderVitalityAt(level);
+  const level = Number.isSafeInteger(cl) && cl >= ARENA_CL_MIN && cl <= ARENA_CL_MAX ? cl : arenaLv(lv);
+  return ladderVitalityAt(Math.min(level, ladderLevelCap(tier)));
 }
 /** The blows a fighter lands a second, at most (the gate's GATE_HIT_HZ_MAX shape). */
 export const ARENA_HIT_HZ_MAX = 4;

@@ -249,16 +249,9 @@
   {
     "name": "AUDIT-INSTALL-L1-1-the-publish-job-leaves-its-token-in-git-config",
     "file": ".github/workflows/release-desktop.yml",
-    "old": "          # The notes read git's objects now (desktopRelease.mjs), and nothing in this job uses git auth.\n          persist-credentials: false\n",
-    "new": "          # The notes read git's objects now (desktopRelease.mjs), and nothing in this job uses git auth.\n",
+    "old": "          # Nothing in this job uses git auth, and nothing it publishes is read from the working tree.\n          persist-credentials: false\n",
+    "new": "          # Nothing in this job uses git auth, and nothing it publishes is read from the working tree.\n",
     "tests": ["test/audit_install.test.js"]
-  },
-  {
-    "name": "AUDIT-INSTALL-L1-1-a-link-is-read",
-    "file": "scripts/desktopRelease.mjs",
-    "old": "    if (!PATCH_NOTES_RE.test(file ?? '') || (mode !== '100644' && mode !== '100755')) continue;",
-    "new": "    if (!PATCH_NOTES_RE.test(file ?? '')) continue;",
-    "tests": ["test/rel4_release.test.js"]
   },
   {
     "name": "AUDIT-INSTALL-L1-5-any-tag-shape-runs",
@@ -273,28 +266,6 @@
     "old": "            echo \"::error::$TAG is already published - a release is never re-cut in place; cut a new tag\"\n            exit 1\n",
     "new": "            echo \"::error::$TAG is already published - a release is never re-cut in place; cut a new tag\"\n",
     "tests": ["test/audit_install.test.js"]
-  },
-  {
-    "name": "AUDIT-INSTALL-L3-3-a-changed-file-is-republished-whole",
-    "file": "scripts/desktopRelease.mjs",
-    "old": "!HEADING_RE.test(l) && !moved.has(wordsOf(l).join(' '))\n      && !was.some((r) => heldIn(l, r) >= REWRITE_SHARE));",
-    "new": "!HEADING_RE.test(l));",
-    "tests": ["test/rel4_release.test.js"],
-    "note": "The Overworld notes, twice in the launcher's news."
-  },
-  {
-    "name": "AUDIT-INSTALL-L3-3-changed-files-bring-the-whole-file",
-    "file": "scripts/desktopRelease.mjs",
-    "old": "    const text = status === 'A' || status === 'T' ? head",
-    "new": "    const text = true ? head",
-    "tests": ["test/rel4_release.test.js"]
-  },
-  {
-    "name": "AUDIT-INSTALL-L3-3-an-addition-loses-its-heading",
-    "file": "scripts/desktopRelease.mjs",
-    "old": "      if (heading && heading !== title && heading !== under) out.push(heading);\n",
-    "new": "",
-    "tests": ["test/rel4_release.test.js"]
   },
   {
     "name": "AUDIT-INSTALL-L3-4-a-try-build-carries-the-updater",

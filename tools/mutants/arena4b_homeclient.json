@@ -83,8 +83,8 @@
   {
     "name": "ARENA4B-SEEN-UNASKED",
     "file": "src/systems/onlineHomes.js",
-    "old": "!== false) await api.arenaSeen(mapId, m.from);",
-    "new": "!== false) void m;",
+    "old": "checkpointLanded(await hooks.checkpoint?.())) await api.arenaSeen(mapId, m.from);",
+    "new": "checkpointLanded(await hooks.checkpoint?.())) void m;",
     "tests": [
       "test/arena4b_homeclient.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "ARENA4B-SEEN-UNSAVED",
     "file": "src/systems/onlineHomes.js",
-    "old": "if (hooks.checkpoint?.() !== false) await api.arenaSeen(mapId, m.from);",
-    "new": "hooks.checkpoint?.(); await api.arenaSeen(mapId, m.from);",
+    "old": "if (checkpointLanded(await hooks.checkpoint?.())) await api.arenaSeen(mapId, m.from);",
+    "new": "await hooks.checkpoint?.(); await api.arenaSeen(mapId, m.from);",
     "tests": [
       "test/arena4b_homeclient.test.js"
     ]
@@ -128,7 +128,7 @@
   {
     "name": "ARENA4B-HOST-CHECKPOINT",
     "file": "src/scenes/world.js",
-    "old": "          checkpoint: () => onlineCheckpoint(),   // the emptied scene in the save before the move is said read\n",
+    "old": "          checkpoint: () => onlineCheckpointLanded(),   // the emptied scene in the save before the move is said read - AUDIT PRE-MERGE 1003 O10: the realm's answer to its put, not the hand-over\n",
     "new": "",
     "tests": [
       "test/arena4b_homeclient.test.js"

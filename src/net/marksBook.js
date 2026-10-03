@@ -33,7 +33,7 @@
 // Pure - the door, the store and the ids are handed in - so the pins drive
 // it without a network.
 // ═══════════════════════════════════════════════════════════════════
-import { MARKS_BANK, MARKS_MOVE_MAX, marksAmountOk, marksText, exchangeGold } from './marksLaw.js';
+import { MARKS_BANK, MARKS_COMBAT, MARKS_MOVE_MAX, marksAmountOk, marksText, exchangeGold } from './marksLaw.js';
 import { accountRefusalText } from './accountClient.js';
 import { jittered } from './backoff.js';   // SCALE1: a press's asks spread out
 
@@ -55,7 +55,14 @@ const RETRY = Object.freeze(['offline', 'server']);
 /** The words. */
 export const MARKS_TEXT = Object.freeze({
   struck: (n, balance) => `${marksText(n)} struck to your account. You hold ${marksText(balance)}.`,
-  capped: 'No silver for this breach. The counting-houses strike it for two breaches a day.',   // WB12a; WB13b: the record's own line says it is recorded; SILVER: the currency's name
+  // WB12a; WB13b: the record's own line says it is recorded; SILVER: the currency's name; SILVER-WAYS: the day's cap is
+  // the gates' and the raids' together
+  capped: `No silver for this breach. The counting-houses strike ${marksText(MARKS_COMBAT.perDay)} a day for breaches closed and towns defended.`,
+  cappedRaid: `No silver for this town. The counting-houses strike ${marksText(MARKS_COMBAT.perDay)} a day for breaches closed and towns defended.`,
+  /** SILVER-WAYS: a guild deed this claim completed - three of the guild's accounts on one raid or gate. */
+  deed: (n, guild) => `A deed for ${guild?.name ?? 'your guild'}: three of its members stood together. ${marksText(n)} struck to its treasury.`,
+  /** SILVER-WAYS: a guild contract's pay for a town defended. */
+  contract: (pay, guild) => `${guild?.name ?? 'A guild'} pays you ${marksText(pay)} under its contract.`,
   sold: (marks, gold) => `The Bank buys ${marksText(marks)} for ${gold.toLocaleString('en-US')} gold, paid into your account here.`,
   kept: 'The Bank has your silver and will pay when the counting-house answers.',
   settled: (marks, gold) => `The Bank has finished counting: ${marksText(marks)} bought for ${gold.toLocaleString('en-US')} gold, paid into your account.`,
@@ -143,12 +150,28 @@ export function createMarksBook({ door, store = null, character = () => null, ri
     },
     /** The balance a gate's strike or an account card answered. */
     set(balance) { if (Number.isSafeInteger(balance)) { state.balance = balance; state.open = true; } },
-    /** The line a gate claim's `marks` says, or null for none (a service from before it, or Marks not this account's). */
-    strikeLine(marks) {
+    /** The line a gate claim's `marks` says, or null for none (a service from before it, or Marks not this account's).
+     *  SILVER-WAYS: `kind` the claim's - a raid's capped line names the town. */
+    strikeLine(marks, kind = 'gate') {
       if (!marks || typeof marks !== 'object') return null;
       if (Number.isSafeInteger(marks.balance)) this.set(marks.balance);
+      // SILVER-WAYS: the day's combat silver as the strike answered it - the Bank's card reads it
+      if (Number.isSafeInteger(marks.combat?.earned)) state.today = { ...(state.today ?? {}), combat: marks.combat.earned, combatMax: marks.combat.max };
       if (marks.struck > 0) return MARKS_TEXT.struck(marks.struck, marks.balance);
-      return marks.why === 'cap' ? MARKS_TEXT.capped : null;
+      return marks.why === 'cap' ? (kind === 'raid' ? MARKS_TEXT.cappedRaid : MARKS_TEXT.capped) : null;
+    },
+    /** SILVER-WAYS: every silver line a counted claim's answer says - its strike (strikeLine), the guild deed it
+     *  completed, the contracts that paid it - in that order; none for a service from before them. */
+    claimLines(data, kind = 'gate') {
+      if (!data || typeof data !== 'object') return [];
+      const out = [];
+      const strike = this.strikeLine(data.marks, kind);
+      if (strike) out.push(strike);
+      if (data.deed && Number.isSafeInteger(data.deed.struck) && data.deed.struck > 0) out.push(MARKS_TEXT.deed(data.deed.struck, data.deed.guild));
+      for (const c of Array.isArray(data.contracts) ? data.contracts : []) {
+        if (c && Number.isSafeInteger(c.pay) && c.pay > 0) out.push(MARKS_TEXT.contract(c.pay, c.guild));
+      }
+      return out;
     },
 
     /**

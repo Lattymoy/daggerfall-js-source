@@ -156,6 +156,9 @@ export function createWritBook({ door, storage = null, character, now = () => Da
     supply: (req) => idAct(`supply|${JSON.stringify(req)}`, (rid) => door.supply({ character: character(), ...req, rid })),
     /** A guild writ WITHDRAWN (its Guildmaster's, or the Officer's who posted it). */
     withdraw: (writ) => idAct(`withdraw|${writ}`, (rid) => door.withdraw({ character: character(), writ, rid })),
+    /** SILVER-WAYS: A GUILD CONTRACT posted - `req` `{ region, kind, pay, deeds }` - and one withdrawn. */
+    contract: (req) => idAct(`contract|${JSON.stringify(req)}`, (rid) => door.contract({ character: character(), ...req, rid })),
+    withdrawContract: (contract) => idAct(`cwithdraw|${contract}`, (rid) => door.withdrawContract({ character: character(), contract, rid })),
     /** The Officers' writ BUDGET, the Guildmaster's to set. */
     budget: (marks) => once(`budget|${marks}`, async () => heard(await ask(() => door.budget({ character: character(), marks })))),
     /** A COMMISSION posted - `req` `{ region, crafter, recipe, quality, pay }`. */
