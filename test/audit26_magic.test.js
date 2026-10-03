@@ -148,7 +148,7 @@ test('audit26 F122: the paperdoll armorMod is Decreased MINUS Increased, the com
 // nothing read it.
 // ---------------------------------------------------------------
 test('audit26 F044: the fatigue multiplier is 1.0 / 0.9 / 0.8, and the enchantment arm needs the career', () => {
-  // hasSpecialAbility masks the bitfield's low byte (rest.js:29-30)
+  // hasSpecialAbility masks the bitfield's low byte (rest.js:30-31)
   const athlete = () => ({ abilityFlagsAndSpellPointsBitfield: SPECIAL_ABILITY.Athleticism });
   const enchanted = (over) => ({ ...over, _enchantMods: { improvedAthleticism: true } });
 
@@ -281,7 +281,7 @@ test('audit26 F067: the identify SPELL refuses on magicka and never reaches the 
   // stays staged for a caster who comes back with the points - and the
   // window learns that only from the commit's answer. The law the pin
   // guards is unchanged: nothing identified, nothing spent, no tally.
-  assert.match(commit, /townTalk\?\.say\?\.\(NOT_ENOUGH_SPELL_POINTS_TEXT\);\s*\n\s*surfacePlayer\(\);\s*\n\s*return false;/,
+  assert.match(commit, /townTalk\?\.say\?\.\(notEnoughSpellPointsText\(\)\);\s*\n\s*surfacePlayer\(\);\s*\n\s*return false;/,
     'the refusal turns back the WHOLE pass');
 
   // the tally is ConfirmTrade's, so the spell arm returns before it

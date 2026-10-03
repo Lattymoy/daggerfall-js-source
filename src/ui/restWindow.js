@@ -49,8 +49,8 @@
 
 import { drawText, measureText } from './text.js';
 import {
-  RestSession, REST_PROMPT, LOITER_PROMPT, loiterLimitHours, cannotLoiterLines,
-  canRest, illegalRestWarning, ILLEGAL_REST_WARNING,
+  RestSession, restPrompt, loiterPrompt, loiterLimitHours, cannotLoiterLines,
+  canRest, illegalRestWarning, illegalRestWarningText,
   CANNOT_REST_MORE_THAN_99_HOURS_ID, MAX_REST_HOURS, PROMPT_MAX_CHARS, PROMPT_INITIAL,
   REST_TEXT,
 } from '../systems/restSession.js';
@@ -236,7 +236,7 @@ export class RestWindow {
     // (InputManager.cs:634-637) - so the opening release is already
     // spent when DFU's window first runs, and :193's bare `GetKeyUp`
     // is safe there. Every host here opens on the key DOWN
-    // (world.js:13528, exterior.js:3200, ui/input.js:922), and that same
+    // (world.js:13544, exterior.js:3205, ui/input.js:922), and that same
     // key's release is then routed straight into the freshly mounted
     // window, so the release door needs the deferral DFU gives every
     // window whose open edge IS the down: DaggerfallAutomapWindow.cs
@@ -853,13 +853,13 @@ export class RestWindow {
       let buttons = [];
       let opts = {};
       if (this.state === 'confirm') {
-        rows = [ILLEGAL_REST_WARNING];
+        rows = [illegalRestWarningText()];
         buttons = [MB_BUTTONS.Yes, MB_BUTTONS.No];
       } else if (this.state === 'hours') {
         // restHowManyHours / loiterHowManyHours is the field's LABEL
         // (SetTextBoxLabel :616, :697), on the field's own row with no
         // tokens above - AUDIT-CM struck the " > " row the first cut drew
-        const prompt = this.mode === 'loiter' ? LOITER_PROMPT : REST_PROMPT;
+        const prompt = this.mode === 'loiter' ? loiterPrompt() : restPrompt();
         rows = [{ text: `${prompt}${this.value}_`, center: false }];
         opts = { sizingRows: [{ text: `${prompt}${'M'.repeat(PROMPT_MAX_CHARS)}_`, center: false }] };
       } else if (this.state === 'hoursRefused') {
@@ -882,9 +882,9 @@ export class RestWindow {
     if (this.state === 'selection') {
       lines = ['How would you like to rest?', '', '1. Rest for a while', '2. Rest until healed', '3. Loiter', '', 'Esc - never mind'];
     } else if (this.state === 'confirm') {
-      lines = [ILLEGAL_REST_WARNING, '', 'Y - yes', 'N - no'];
+      lines = [illegalRestWarningText(), '', 'Y - yes', 'N - no'];
     } else if (this.state === 'hours') {
-      lines = [(this.mode === 'loiter' ? LOITER_PROMPT : REST_PROMPT) + this.value + '_'];
+      lines = [(this.mode === 'loiter' ? loiterPrompt() : restPrompt()) + this.value + '_'];
     } else if (this.state === 'hoursRefused') {
       // F144: the refusal alone - no field, no cursor; the original
       // prompt self-closed before the handler ever saw the number.

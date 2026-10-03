@@ -38,7 +38,7 @@
   {
     "name": "X2-world-hook-unanswered",
     "file": "src/scenes/world.js",
-    "old": "    if (picked) _locationRevealedByMapItem = picked.name;\n",
+    "old": "    _locationRevealedByMapItem = shown;\n",
     "new": "",
     "tests": [
       "test/fieldbugs_x.test.js"

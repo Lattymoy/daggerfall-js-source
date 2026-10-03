@@ -309,8 +309,8 @@
   {
     "name": "LOOT7-dungeon-body-unnamed",
     "file": "src/scenes/dungeonContext.js",
-    "old": "corpseName(championName(f.entity, enemyDisplayName(f.mobileType)))",
-    "new": "corpseName(enemyDisplayName(f.mobileType))",
+    "old": "corpseName(championName(f.entity, corpseEntityName(f.mobileType)))",
+    "new": "corpseName(corpseEntityName(f.mobileType))",
     "tests": [
       "test/loot7_champions.test.js"
     ]

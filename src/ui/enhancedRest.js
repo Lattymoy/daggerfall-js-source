@@ -14,10 +14,11 @@
 
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { isEnhancedPlus } from '../systems/uiSkin.js';   // PLUS6
-import { RestSession, MAX_REST_HOURS, PROMPT_INITIAL, canRest, illegalRestWarning, ILLEGAL_REST_WARNING, REST_TEXT, loiterLimitHours, cannotLoiterLines, CANNOT_REST_MORE_THAN_99_HOURS_ID } from '../systems/restSession.js';
+import { RestSession, MAX_REST_HOURS, PROMPT_INITIAL, canRest, illegalRestWarning, illegalRestWarningText, REST_TEXT, loiterLimitHours, cannotLoiterLines, CANNOT_REST_MORE_THAN_99_HOURS_ID } from '../systems/restSession.js';
 import { normalizeCode } from '../systems/dialogShortcuts.js';   // AUDIT PARTY-REST: the Rest key, read as restWindow.js reads it
 import { getBinding } from '../systems/inputActions.js';
 import { bindings } from './input.js';   // B5: the live InputManager registry, as restWindow.js reads it
+import { localizedText } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { restClockLine } from './restWindow.js';   // AUDIT LIVED1 O (U3): the classic window's clock line, one home for its words
 
 const el = (tag, cls, text) => {
@@ -185,7 +186,7 @@ export function mountEnhancedRest(hostEl, deps, ignoreAllocatedBed = false) {
 
   function confirmCard() {
     const c = el('div', 'card');
-    c.append(el('p', null, ILLEGAL_REST_WARNING));
+    c.append(el('p', null, illegalRestWarningText()));
     const acts = el('div', 'acts');
     const yes = el('button', 'act', 'Yes');
     yes.onclick = () => { const which = overlay._pendingRest; overlay._pendingRest = null; continueRest(which, true); };
@@ -220,7 +221,8 @@ export function mountEnhancedRest(hostEl, deps, ignoreAllocatedBed = false) {
 
   function hoursCard() {
     const c = el('div', 'card');
-    c.append(el('h2', null, overlay.mode === 'loiter' ? 'Loiter how many hours?' : 'Rest how many hours?'));
+    // L10N3d: DFU's field labels (DaggerfallRestWindow.cs:616, :697), asked here as the card's question
+    c.append(el('h2', null, overlay.mode === 'loiter' ? localizedText('loiterHowManyHours', 'Loiter how many hours?') : localizedText('restHowManyHours', 'Rest how many hours?')));
     const input = el('input', 'hours-field');
     input.type = 'number'; input.min = '1'; input.max = String(MAX_REST_HOURS);
     input.value = overlay._hoursValue;

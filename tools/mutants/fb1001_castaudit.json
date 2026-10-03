@@ -47,8 +47,8 @@
   {
     "name": "CU2-the-line-recomputes-the-price",
     "file": "src/scenes/dungeonContext.js",
-    "old": "`${magic.readied().name} (${magic.readiedCost()})`",
-    "new": "`${magic.readied().name} (${calculateCastCost(magic.readied(), playerEntity).sp})`",
+    "old": "`${shownSpellName(magic.readied())} (${magic.readiedCost()})`",
+    "new": "`${shownSpellName(magic.readied())} (${calculateCastCost(magic.readied(), playerEntity).sp})`",
     "tests": [
       "test/fb1001_castaudit.test.js"
     ]

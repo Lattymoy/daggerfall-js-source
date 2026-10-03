@@ -170,7 +170,7 @@ test('SO1: the settings pane is organised - the port\'s rows sit in the categori
   assert.match(ctl, /if \(!isTouchDevice\(\)\) return out;/);
   for (const k of ['touchLookSensitivity', 'touchAnalogStick', 'touchGyroLook', 'touchHaptics', 'touchFullscreen']) assert.match(ctl, new RegExp(`'${k}'`), k);
   const ui = menu.slice(menu.indexOf('function portRowsInterface('), menu.indexOf('function portRows('));
-  assert.match(ui, /const out = \[\];\n\s*out\.push\(hudScaleRow\(\)\);/, 'the HUD size heads Interface now'); assert.doesNotMatch(ui, /skinRow/); assert.match(ui, /prefRow\('showFps'/);
+  assert.match(ui, /const out = \[\];\n\s*if \(!pause\) out\.push\(languageRow\(\)\);[^\n]*\n\s*if \(!pause\) \{ const packRow = translationPackRow\(\); if \(packRow\) out\.push\(packRow\); \}[^\n]*\n\s*out\.push\(hudScaleRow\(\)\);/, 'the language heads Interface on the front door (L10N1b), its translation pack under it (L10N3b), then the HUD size'); assert.doesNotMatch(ui, /skinRow/); assert.match(ui, /prefRow\('showFps'/);
   // FT14: the Mods page is gone; the assets and the packs stand under the feature tiles instead
   const mods = menu.slice(menu.indexOf('function modsFooter('), menu.indexOf('\n}', menu.indexOf('function modsFooter(')));
   // ONLINE-CLASS1 adds the peer-sprites card; the order is what this pins - the peers' look, then the packs' door.

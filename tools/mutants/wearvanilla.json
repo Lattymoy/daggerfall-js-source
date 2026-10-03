@@ -178,8 +178,8 @@
   {
     "name": "WEAR-TWICE-the-mods-doubled-too",
     "file": "src/combat/pcaao.js",
-    "old": "  lowerCondition(item, blowWear(amount, rolls), owner, say, removeFrom);",
-    "new": "  lowerCondition(item, blowWear(amount * 2, rolls), owner, say, removeFrom);",
+    "old": "  lowerCondition(item, blowWear(amount, rolls), owner, say, removeFrom, shownItemName);",
+    "new": "  lowerCondition(item, blowWear(amount * 2, rolls), owner, say, removeFrom, shownItemName);",
     "tests": [
       "test/wear_vanilla.test.js",
       "test/balance1.test.js"

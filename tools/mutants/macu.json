@@ -16,8 +16,8 @@
   {
     "name": "MACU-hasRecord-ignores-the-table",
     "file": "src/formats/textRsc.js",
-    "old": "  hasRecord(id) { return this._table.has(id) || this._byId.has(id); }",
-    "new": "  hasRecord(id) { return this._byId.has(id); }",
+    "old": "|| this._table.has(id) || this._byId.has(id); }",
+    "new": "|| this._byId.has(id); }",
     "tests": ["test/macu_directions.test.js"]
   },
   {

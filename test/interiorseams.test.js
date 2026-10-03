@@ -44,9 +44,9 @@ test('IH1 world: %nt picks a tavern uniformly from the directory, "tavern" when 
     'the ENGINE-PRNG rule: a UnityEngine.Random draw rides an injectable uniform roll');
   assert.match(world, /\.filter\(\(b\) => b\.buildingType === TALK_BUILDING_TYPES\.Tavern\)/,
     'MacroHelper.cs:635 - GetBuildingsOfType(Tavern)');
-  assert.match(world, /if \(!taverns\.length\) return 'tavern';/,
+  assert.match(world, /if \(!taverns\.length\) return localizedText\('tavern', 'tavern'\);/,
     ':641 - the localized fallback when the location has no tavern');
-  assert.match(world, /taverns\[Math\.floor\(roll\(\) \* taverns\.length\)\]\?\.name \?\? 'tavern'/,
+  assert.match(world, /taverns\[Math\.floor\(roll\(\) \* taverns\.length\)\]\?\.name \?\? localizedText\('tavern', 'tavern'\)/,
     ':636 - Random.Range(0, taverns.Count)');
 });
 

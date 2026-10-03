@@ -106,16 +106,16 @@ test('AUDIT 23 magic-14: readying enforces the cost and CasterOnly casts instant
   // the needle pins the prefix.
   const i = src.indexOf('function readySpell(sp');
   const arm = src.slice(i, src.indexOf('\n  }\n', i));
-  assert.ok(arm.includes("say(\"You don't have the spell points.\")"), 'the classic refusal line at ready');
+  assert.ok(arm.includes("say(localizedText('youDontHaveTheSpellPoints', \"You don't have the spell points.\"))"), 'the classic refusal line at ready');
   // AUDIT ALLY-CAST A1: the instant arm ARMS instead when a party mate is in touch reach (the port's own targeting,
   // a recorded departure); with nobody there it fires on the ready as :350-351 does, and a free ready always does.
   // RESURRECT1: and a Resurrect ARMS too - its target is a fallen party member's body, which the instant arm would
   // never aim at (the port's own effect; DFU has no raise-dead to depart from)
-  assert.ok(arm.includes('if (!free && allyCastable(sp) && allyInReach(lastAim?.eye ?? null, lastAim?.dir ?? null, ALLY_TOUCH_REACH, sp)) { say(PRESS_BUTTON_TO_FIRE_SPELL); return true; }\n'), 'CasterOnly fires on ready, no click latch - unless a party mate is under the crosshair');
+  assert.ok(arm.includes('if (!free && allyCastable(sp) && allyInReach(lastAim?.eye ?? null, lastAim?.dir ?? null, ALLY_TOUCH_REACH, sp)) { say(pressButtonToFireSpellText()); return true; }\n'), 'CasterOnly fires on ready, no click latch - unless a party mate is under the crosshair');
   // SPELL-GIFT (2026-09-27): ...or NEAR (systems/allyCast.js ALLY_ARM_RADIUS) - the arm between the crosshair's and Resurrect's
   // PIN MOVED (AUDIT WATCH-KIT WK-M9, 2026-10-01): my companion's near arm (COMPANION-KIT) follows the mate's, in the
   // click's own order, where it stood ahead of every arm of ALLY-CAST's
-  assert.ok(arm.includes('if (!free && allyCastable(sp) && allyNear(lastAim?.eye ?? null, sp)) { say(PRESS_BUTTON_TO_FIRE_SPELL); say(ALLY_ARMED_LINE); return true; }\n      if (companionNear(lastAim?.eye ?? null, sp)) { say(PRESS_BUTTON_TO_FIRE_SPELL); say(COMPANION_ARMED_LINE); return true; }\n      if (!free && hasResurrect(sp)) { say(fallenInReach(lastAim?.eye ?? null, lastAim?.dir ?? null) ? PRESS_BUTTON_TO_FIRE_SPELL : RESURRECT_TEXT.aim); return true; }'), '...or near (a mate, then my companion), or the spell raises the dead');
+  assert.ok(arm.includes('if (!free && allyCastable(sp) && allyNear(lastAim?.eye ?? null, sp)) { say(pressButtonToFireSpellText()); say(ALLY_ARMED_LINE); return true; }\n      if (companionNear(lastAim?.eye ?? null, sp)) { say(pressButtonToFireSpellText()); say(COMPANION_ARMED_LINE); return true; }\n      if (!free && hasResurrect(sp)) { say(fallenInReach(lastAim?.eye ?? null, lastAim?.dir ?? null) ? pressButtonToFireSpellText() : RESURRECT_TEXT.aim); return true; }'), '...or near (a mate, then my companion), or the spell raises the dead');
   // AUDIT CONTRIB H3: the arms ANSWER now, as SetReadySpell does - armed is readied, the instant cast is its own answer
   assert.ok(arm.includes('RESURRECT_TEXT.aim); return true; }   // RESURRECT1: a caster-only Resurrect waits for the click, aimed at the body\n      return castInput(null, null) !== false;'), 'and otherwise the instant cast, as ever');
   assert.ok(arm.indexOf('calculateCastCost') < arm.indexOf('readiedSpell = sp;'), 'the cost gate sits before the assignment');

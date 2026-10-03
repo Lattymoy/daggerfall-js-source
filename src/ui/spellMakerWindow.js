@@ -86,7 +86,7 @@ import { preloadSpellIcons, drawSpellIcon } from './spellIcons.js';   // the one
 import { preloadLargeFont, questJournalLargeFont } from './questJournal.js';   // DaggerfallUI.LargeFont = FONT0000, one warm and one home
 // Internal_Strings.csv:954 ("enterSpellName" + " ") already has a home:
 // the spellbook's own rename box types under the same prompt.
-import { ENTER_SPELL_NAME } from './spellbookWindow.js';
+import { enterSpellNameLabel } from './spellbookWindow.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import {
@@ -97,13 +97,14 @@ import {
   blankEffectSettings, stepSetting, setSetting, buildCustomSpell, spellMakerCost,
   validateSpellPurchase, purchaseSpell, editedEffectCost,
   NO_SPELLBOOK_ID, SPELLMAKER_NOT_ENOUGH_GOLD_ID, MUST_CHOOSE_NAME_ID,
-  SPELL_INSCRIBED_ID, NO_EFFECTS_TEXT,
+  SPELL_INSCRIBED_ID, noEffectsText,
   updateAllowedButtons, enforceSelected, flagOfIndex,
   DEFAULT_TARGET_INDEX, DEFAULT_ELEMENT_INDEX,
   TARGET_FLAGS_ALL, ELEMENT_FLAGS_MAGIC_ONLY, SPELL_ICON_COUNT,
 } from '../systems/spellMaker.js';
 import { goldAmount } from '../systems/court.js';
 import { firstHotkey, shortcutBinding, sequenceString, normalizeCode } from '../systems/dialogShortcuts.js';
+import { localizedStrings } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
 // TargetTypes / ElementTypes in DFU's declaration order, which IS the
 // classic rangeType / element index order the record stores.
@@ -176,7 +177,7 @@ export const ELEMENT_BUTTONS = Object.freeze(['fireBased', 'coldBased', 'poisonB
  *  Internal_Strings.csv :936-955). The port has no localization
  *  table, so the en values stand in for the TextManager lookups -
  *  the same substitution ui/spellIcons.js's descriptions make. */
-export const SPELL_MAKER_TIPS = Object.freeze({
+export const SPELL_MAKER_TIPS = localizedStrings({
   addEffect: 'Add effect',
   buySpell: 'Buy spell',
   newSpell: 'New spell',
@@ -694,7 +695,7 @@ export class SpellMakerWindow {
     });
     if (!check.ok) {
       if (check.textId) this._box(check.textId);
-      else this._sayText(check.text ?? NO_EFFECTS_TEXT);
+      else this._sayText(check.text ?? noEffectsText());
       return;
     }
     const spell = buildCustomSpell({
@@ -733,7 +734,7 @@ export class SpellMakerWindow {
   _openNameBox() {
     audio.playOneShot(SOUND.ButtonClick, 1);
     this.nameBox = new InputMessageBoxWindow({
-      label: ENTER_SPELL_NAME,
+      label: enterSpellNameLabel(),
       value: this.name,
       maxCharacters: MAX_SPELL_NAME,
       onSubmit: (input) => { this.name = input; },

@@ -301,7 +301,7 @@ test('AUDIT 68 S19-removed-foe-lootable: every corpse door asks the one predicat
   const tl = memberSrc('takeLoot');
   assert.match(tl, /\} else if \(kind === 'corpse'\) \{\s*const f = foes\[i\];\s*if \(!lootableBody\(f\)\) return 0;/, 'the open');
   assert.match(tl, /describe: \(k\) => \{ const b = foes\[Number\(k\.split\(':'\)\[1\]\)\]; return lootableBody\(b\) \? pileBody\(b\) : null; \}/, 'the pile\'s tabs');
-  assert.match(fnSrc('_dungeonHoverName'), /return lootableBody\(f\) \? \{ title: corpseName\(championName\(f\.entity, enemyDisplayName\(f\.mobileType\)\)\) \} : null;/, 'the namer (LOOT7: a champion\'s body by its name)');
+  assert.match(fnSrc('_dungeonHoverName'), /return lootableBody\(f\) \? \{ title: corpseName\(championName\(f\.entity, corpseEntityName\(f\.mobileType\)\)\) \} : null;/, 'the namer (LOOT7: a champion\'s body by its name)');
 });
 
 /** retireMissile + ensureMissileBatch + the local sweep, over one archive that may still be warming. */

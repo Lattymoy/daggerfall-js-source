@@ -46,7 +46,7 @@ test('audit24 scenes: the guard countdown is the INT Random.Range overload', () 
 test('audit24 scenes: the ready-spell HUD line is SetReadySpell\'s own string', () => {
   assert.equal(PRESS_BUTTON_TO_FIRE_SPELL, 'Press button to fire spell.');
   const t = rd('src/scenes/hostMagic.js');
-  assert.match(t, /say\(PRESS_BUTTON_TO_FIRE_SPELL\);/);
+  assert.match(t, /say\(pressButtonToFireSpellText\(\)\);/);
   assert.equal(/say\(`\$\{sp\.name\} readied\.`\)/.test(t), false);
 });
 

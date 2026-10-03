@@ -34,6 +34,8 @@ import { rrTrainingCost, rrIntensiveCost, rrIntensiveOffered, RR_WEEK_BUTTON, RR
 import { goldAmount, totalGoldAmount, deductGold } from '../systems/court.js';   // AUDIT-RR F24: GetGoldAmount (PlayerEntity.cs:1313-1316) counts letters of credit
 import { isBanished, pardonPrice, grantPardon, penanceHelps, penancePrice, doPenance, banishmentLeft } from '../systems/standing.js';   // REP3/REP4: the temple speaks for a bad name
 import { raceDisplayName, honorificOf } from '../systems/talkSession.js';
+import { getDivineLocalized } from '../systems/guildVariants.js';   // L10N3d: the boxes' %god
+import { localizedText } from '../systems/textManager.js';
 
 /** The prompt DFU shows beside the donation field, from its
  *  Internal_Strings ("serviceDonateHowMuch") - the TextBox LABEL
@@ -42,9 +44,11 @@ import { raceDisplayName, honorificOf } from '../systems/talkSession.js';
 export const DONATE_HOW_MUCH = 'Donate how much money : ';
 /** DaggerfallInputMessageBox's own field for the donation box
  *  (DaggerfallGuildServiceDonation.cs:46-51: the label, Numeric,
- *  MaxCharacters 8, Text "1000"). */
+ *  MaxCharacters 8, Text "1000"). The label is read when the box is
+ *  raised, in the player's language (L10N3d). */
 export const DONATION_FIELD = Object.freeze({
-  numeric: true, maxCharacters: DONATION_MAX_CHARACTERS, initial: DONATION_DEFAULT, label: DONATE_HOW_MUCH,
+  numeric: true, maxCharacters: DONATION_MAX_CHARACTERS, initial: DONATION_DEFAULT,
+  get label() { return localizedText('serviceDonateHowMuch', DONATE_HOW_MUCH); },
 });
 /** "freeHolidayCuring" and "curedDisease". */
 export const FREE_HOLIDAY_CURING = "You are cured free from cost due to today's holiday.";
@@ -385,7 +389,7 @@ export function buildDonationFlow(entity, store, divineFactionId, deps) {
       if (amount === null) return null;
       const r = donate(entity, store, divineFactionId, amount, rolls);
       if (r.kind === 'invalid') return null;
-      const ctx = { amount, gold: goldAmount(entity), god: godName, playerName: entity.name ?? '', ...identity(entity, { shopName, cityName }) };
+      const ctx = { amount, gold: goldAmount(entity), god: getDivineLocalized(godName), playerName: entity.name ?? '', ...identity(entity, { shopName, cityName }) };
       return [{ rows: macroRows(rows, r.textId, ctx) }];
     },
   };
@@ -458,11 +462,11 @@ export function buildCureDiseaseFlow(entity, guild, membership, deps) {
   const offer = cureDiseaseOffer(entity, guild, membership, {
     quality, regionIndex, nowClassicMinutes: now(), priceAdjustment,
   });
-  const ctxFor = (amount) => ({ amount, gold: goldAmount(entity), god: godName, playerName: entity.name ?? '', ...identity(entity, { shopName, cityName }) });
+  const ctxFor = (amount) => ({ amount, gold: goldAmount(entity), god: getDivineLocalized(godName), playerName: entity.name ?? '', ...identity(entity, { shopName, cityName }) });
 
   if (offer.kind === 'freeHoliday') {
     cureForFree(entity);
-    return new ServiceFlowWindow([{ rows: line(FREE_HOLIDAY_CURING) }], { onClose });
+    return new ServiceFlowWindow([{ rows: line(localizedText('freeHolidayCuring', FREE_HOLIDAY_CURING)) }], { onClose });
   }
   if (offer.kind === 'noDisease') {
     return new ServiceFlowWindow([{ rows: macroRows(rows, offer.textId, ctxFor(0)) }], { onClose });
@@ -473,7 +477,7 @@ export function buildCureDiseaseFlow(entity, guild, membership, deps) {
     onYes: () => {
       const r = payForCure(entity, offer.cost);
       return r.kind === 'cured'
-        ? [{ rows: line(CURED_DISEASE) }]
+        ? [{ rows: line(localizedText('curedDisease', CURED_DISEASE)) }]
         : [{ rows: macroRows(rows, r.textId, ctxFor(offer.cost)) }];
     },
   }], { onClose });

@@ -29,8 +29,8 @@
   {
     "name": "D23C-off-class-first-segment",
     "file": "src/ui/enhancedMenu.js",
-    "old": "const b = el('button', `ft-segb${i === r.off ? ' off' : ''}`, L);",
-    "new": "const b = el('button', `ft-segb${i === 0 ? ' off' : ''}`, L);",
+    "old": "const b = el('button', `ft-segb${i === r.off ? ' off' : ''}`, st.shown?.[i] ?? L);",
+    "new": "const b = el('button', `ft-segb${i === 0 ? ' off' : ''}`, st.shown?.[i] ?? L);",
     "tests": [
       "test/disc23c_features_colour.test.js"
     ]

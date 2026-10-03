@@ -35,6 +35,12 @@ export const PREF_DEFAULTS = Object.freeze({
   // to scale - so it belongs in the port's own prefs, beside the other
   // things only this port has.
   hudScale: 1,
+  // L10N1b (2026-09-27, Mac: "a proper localization/translation integration"): the language the game's text is shown
+  // in - a systems/localeCatalog.js tag, 'en' the port's own. Read at boot (scenes/localeData.js initLocale; ?lang=
+  // overrides it for one visit). `languageOffered`: the front door has offered the browser's own language once and
+  // the player answered, so it asks no more.
+  language: 'en',
+  languageOffered: false,
   // HUD-MOVE (2026-10-01, Mac: "make chat, hp mana stamina bar segment and all the element moveable and add a reset UI
   // and lock UI in the settings (lock should be on by default)"): the Enhanced Plus HUD's own layout. `hudLocked` is the
   // lock (on: nothing moves, the HUD is pointer-transparent as ever); `hudLayout` is { id: { x, y } }, each piece's

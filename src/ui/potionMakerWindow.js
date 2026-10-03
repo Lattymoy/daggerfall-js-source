@@ -43,6 +43,7 @@ import {
   CAULDRON_CAPACITY, cauldronAccepts, mixCauldron, consumeCauldron,
   isIngredient, knownRecipes, gatherRecipe,
 } from '../systems/potions.js';
+import { localizedText } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
 /** MASK00I0 is a full-screen background (:75-76), so the rects are
  *  screen-absolute rather than panel-relative. */
@@ -251,13 +252,13 @@ export class PotionMakerWindow {
     if (this.cauldron.length === 0) return;
     const result = mixCauldron(this.cauldron.map((it) => it.templateIndex));
     if (result.kind === 'failed') {
-      this.box = { rows: [{ text: POTION_FAILED, center: true }] };
+      this.box = { rows: [{ text: localizedText('potionFailed', POTION_FAILED), center: true }] };
     } else {
       this.hooks.addPotion?.(result.recipe, result.key);
       // F177: MixCauldron never touches the name label (:311-360) -
       // only AddRecipeToCauldron writes it (:307); the old mix-time
       // write inverted DFU's label.
-      this.box = { rows: [{ text: POTION_MIXED, center: true }] };
+      this.box = { rows: [{ text: localizedText('potionMixed', POTION_MIXED), center: true }] };
       audio.playOneShot(SOUND.MakePotion, 1);
     }
     // The ingredients are spent EITHER WAY, and the walk can break
@@ -277,7 +278,7 @@ export class PotionMakerWindow {
   _recipes() {
     audio.playOneShot(SOUND.ButtonClick, 1);
     const known = knownRecipes(this.hooks.recipeKeys?.() ?? []);
-    if (!known.length) { this.box = { rows: [{ text: NO_RECIPES, center: true }] }; return; }
+    if (!known.length) { this.box = { rows: [{ text: localizedText('noRecipes', NO_RECIPES), center: true }] }; return; }
     this.picker = new ListPickerWindow({
       // AUDIT 63 F42: the picker's rows are DisplayName (:171-172),
       // not the recipe's localization key - `name` is that key.
@@ -299,7 +300,7 @@ export class PotionMakerWindow {
     const avail = this.ingredients();
     const { found, missing } = gatherRecipe(recipe, avail.map((it) => it.templateIndex));
     if (missing.length > 0) {
-      this.box = { rows: [{ text: REQ_INGREDIENTS, center: true }] };
+      this.box = { rows: [{ text: localizedText('reqIngredients', REQ_INGREDIENTS), center: true }] };
       return;
     }
     // ClearCauldron() (:304) - leftovers go back to the list, they

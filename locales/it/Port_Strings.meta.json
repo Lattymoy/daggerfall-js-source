@@ -1,0 +1,132 @@
+{
+ "lang.offer": {
+  "en": "4417f5798650",
+  "tr": "9e029fe507a7",
+  "by": "claude-in-session"
+ },
+ "lang.offer.machine": {
+  "en": "3564aa107b8e",
+  "tr": "211959f5ed36",
+  "by": "claude-in-session"
+ },
+ "lang.offer.no": {
+  "en": "2ddf5ea1e224",
+  "tr": "39b6eda2ed3b",
+  "by": "claude-in-session"
+ },
+ "lang.offer.yes": {
+  "en": "5397e0583f14",
+  "tr": "13ba2ac252a0",
+  "by": "claude-in-session"
+ },
+ "menu.rail.about": {
+  "en": "6b21fb791ac0",
+  "tr": "689e852ea8e4",
+  "by": "claude-in-session"
+ },
+ "menu.rail.begin": {
+  "en": "c3651ab2341e",
+  "tr": "4e66fabc2778",
+  "by": "claude-in-session"
+ },
+ "menu.rail.continue": {
+  "en": "2e02623966f9",
+  "tr": "08ccecb3ed5a",
+  "by": "claude-in-session"
+ },
+ "menu.rail.exit": {
+  "en": "f83b6fe3aebf",
+  "tr": "0f701479802f",
+  "by": "claude-in-session"
+ },
+ "menu.rail.features": {
+  "en": "fc338f87a058",
+  "tr": "91d387331419",
+  "by": "claude-in-session"
+ },
+ "menu.rail.load": {
+  "en": "802aa6576577",
+  "tr": "9285f826f8ab",
+  "by": "claude-in-session"
+ },
+ "menu.rail.new": {
+  "en": "528fb1c4e5fb",
+  "tr": "9b5aca7f6784",
+  "by": "claude-in-session"
+ },
+ "menu.rail.online": {
+  "en": "c3e839df6084",
+  "tr": "c3e839df6084",
+  "by": "claude-in-session"
+ },
+ "menu.rail.overhauls": {
+  "en": "44784711f1ea",
+  "tr": "88d880b0600a",
+  "by": "claude-in-session"
+ },
+ "menu.rail.resume": {
+  "en": "b3bd0b5a7049",
+  "tr": "e8830106c7e4",
+  "by": "claude-in-session"
+ },
+ "menu.rail.save": {
+  "en": "f760e3c2ce80",
+  "tr": "8004a323f851",
+  "by": "claude-in-session"
+ },
+ "menu.rail.settings": {
+  "en": "c7f73bb54d92",
+  "tr": "8f710ac6afc6",
+  "by": "claude-in-session"
+ },
+ "menu.rail.test": {
+  "en": "4fd8df831597",
+  "tr": "b6d7aff83f49",
+  "by": "claude-in-session"
+ },
+ "settings.language.machine": {
+  "en": "048283a78ca3",
+  "tr": "2311d45c5df4",
+  "by": "claude-in-session"
+ },
+ "settings.language.name": {
+  "en": "89b86ab0e66f",
+  "tr": "a1b8a94a4b15",
+  "by": "claude-in-session"
+ },
+ "settings.language.note": {
+  "en": "575efd1cdf95",
+  "tr": "1bfa9271862d",
+  "by": "claude-in-session"
+ },
+ "settings.pack.install": {
+  "en": "752d82d29a04",
+  "tr": "e84fe2cfdb97",
+  "by": "claude-in-session"
+ },
+ "settings.pack.installed": {
+  "en": "48f9dd7c146e",
+  "tr": "6d333f67e8a2",
+  "by": "claude-in-session"
+ },
+ "settings.pack.name": {
+  "en": "6145cc4f081b",
+  "tr": "d0fa374ac5f1",
+  "by": "claude-in-session"
+ },
+ "settings.pack.none": {
+  "en": "3b1af7494957",
+  "tr": "5eab1495ada6",
+  "by": "claude-in-session"
+ },
+ "settings.pack.remove": {
+  "en": "e963907dac5c",
+  "tr": "9b4acdcbfc97",
+  "by": "claude-in-session"
+ },
+ "settings.pack.replace": {
+  "en": "64ca199c859e",
+  "tr": "6dcc39ac7687",
+  "by": "claude-in-session"
+ }
+}

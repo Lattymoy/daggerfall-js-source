@@ -33,6 +33,7 @@
 import { templateByIndex, inventoryItemImage } from './itemTemplates.js';
 import { itemLongName } from './itemInfo.js';
 import { getMagicItemTemplates, ITEM_GROUP_NAME_BY_CLASS } from './loot.js';
+import { getLocalizedMagicItemName } from './textManager.js';   // L10N3e: an artifact's name, by its MAGIC.DEF index
 import { TEMPLATES, isMap } from './useItem.js';
 import { isSummoned } from './inventory.js';
 import { decorFlatLight } from './decorCatalogue.js';
@@ -152,8 +153,8 @@ export function decorItemName(d) {
   if (!own) return null;
   if (own.a != null) {
     const artifacts = (getMagicItemTemplates() ?? []).filter((m) => m.type === 1 || m.type === 2);
-    const name = artifacts[own.a]?.name;
-    if (name) return name;
+    const m = artifacts[own.a];
+    if (m?.name) return getLocalizedMagicItemName(m.index, m.name);   // L10N3e: SetArtifact's shortName, in the player's language (DaggerfallUnityItem.cs:602)
   }
   const t = templateByIndex(own.t);
   if (!t) return null;

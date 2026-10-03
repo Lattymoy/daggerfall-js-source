@@ -38,6 +38,7 @@ import { isSurvivalItem, useSurvivalItem } from './survival/items.js';   // SURV
 import { survivalRules } from './survival/switch.js';   // SURV-TIERS: a meal's sickness is the tier's
 import { SURVIVAL_RULES } from './survival/difficulty.js';   // AUDIT SURV-TIERS: and with the arc off, Casual's - none
 import { setLightSource } from './lightSource.js';   // DISC7: the light in hand's one door
+import { localizedStrings } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { hoodCapable, hoodUp } from './survival/temperature.js';   // HOOD-SAID: the one hood law, for toggleHood
 
 /** THE ARMS WHOSE DESTINATION WINDOW THE PORT HAS NOT BUILT, named so a use
@@ -219,7 +220,7 @@ export const DRAPE_TEXT = 'You rearrange your cloak.';
 
 // ── the strings UseItem shows (DFU's Internal_Strings) ────────────
 
-export const USE_TEXT = Object.freeze({
+export const USE_TEXT = localizedStrings({
   lightDouse: 'You douse the %it.',
   lightLight: 'You light the %it.',
   lightEmpty: 'Your %it has no fuel left.',
@@ -238,7 +239,7 @@ export const NO_SPELLS_TEXT_ID = 12;
 /** TEXT.RSC 499 - RecordLocationFromMap's reveal message (:1820). */
 export const MAP_TEXT_ID = 499;
 
-/** MacroHelper's %it - the item's own name. */
+/** MacroHelper's %it - the item's own name (L10N3e: `name`, the caller's name as shown, when one is handed in). */
 export const expandItemMacro = (text, item, name) =>
   (text ?? '').replaceAll('%it', name ?? item?.name ?? templateByIndex(item?.templateIndex)?.name ?? 'item');
 
@@ -276,14 +277,14 @@ export function useItem(item, collection, {
   // QuestMachine.Instance.GetQuest (:1673) - the quest half of the
   // use-click block below. A host with no quest machine leaves it
   // null and DFU's own fall-through arm stands.
-  getQuest = null,
+  getQuest = null, nameOf = null,   // L10N3e: nameOf(item), the name AS SHOWN - shownItemName, handed in (itemInfo.js imports this module)
   // MEND-AIM: a use AIMED at another item (a repair kit at the piece it mends), and whether the host can ask which -
   // a handler that wants an aim answers `chooseTarget` with the choices, and the host uses the item again with the
   // one chosen. The quick keys cannot ask, and take the handler's own first choice.
   target = null, chooseTarget = false,
 } = {}) {
   if (!item) return { kind: 'none' };
-  const named = (t) => expandItemMacro(USE_TEXT[t], item);
+  const named = (t) => expandItemMacro(USE_TEXT[t], item, nameOf?.(item));   // L10N3e: the light lines' %it, as the item MCP names it (DaggerfallInventoryWindow.cs:1777-1800)
   // AUDIT 22 F4: the oil arm searches the LOCAL pack (:1791
   // `localItems.GetItem(...)`), not the list the click came from - so
   // using oil off a loot pile still refuels the lantern in your bag.
@@ -453,8 +454,8 @@ export function useItem(item, collection, {
       // A STACK splits one off; a single leaves entirely.
       if ((item.stackCount ?? 1) > 1) item.stackCount--;
       else { const i = collection.indexOf(item); if (i >= 0) collection.splice(i, 1); }
-      out = { kind: 'refuelled', text: expandItemMacro(USE_TEXT.lightRefuel, lantern) };
-    } else out = { kind: 'full', text: expandItemMacro(USE_TEXT.lightFull, lantern ?? item) };
+      out = { kind: 'refuelled', text: expandItemMacro(USE_TEXT.lightRefuel, lantern, nameOf?.(lantern)) };
+    } else out = { kind: 'full', text: expandItemMacro(USE_TEXT.lightFull, lantern ?? item, nameOf?.(lantern ?? item)) };
   }
 
   else {

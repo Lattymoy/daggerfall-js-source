@@ -45,6 +45,7 @@ import {
   DAYS_PER_YEAR, DAYS_PER_MONTH, MINUTES_PER_DAY,
   dateString, dateFromClassicMinutes,   // AUDIT 64 F28: GetLoanDueDateString's two halves
 } from './gameDate.js';
+import { localizedText, getLocalizedRegionName } from './textManager.js';   // L10N3d: the status box's words; L10N3e: the region names shown
 
 /** TransactionResult (:29-51). The values ARE TEXT.RSC record ids for
  *  everything the bank says out loud - 0282-0299 is one contiguous
@@ -201,7 +202,9 @@ export function allocateHouseToPlayer(houses, regionIndex, { buildingKey, mapId,
   delete slot.crossed;   // RESTORE: a house bought is the buyer's own, whatever crossed customs in this slot before
   discoverBuilding?.(buildingKey, `${playerName}'s residence`);
   addPermanentScene?.(mapId, buildingKey);
-  addNote?.(`Deed to a house in ${location}, ${regionName}.`);
+  // L10N3e: the deed names its region as shown - GetLocalizedRegionName
+  // (DaggerfallBankManager.cs:447); the town stays location.Name there too
+  addNote?.(`Deed to a house in ${location}, ${getLocalizedRegionName(regionIndex, () => regionName)}.`);
   return slot;
 }
 
@@ -211,7 +214,7 @@ export function allocateHouseToPlayer(houses, regionIndex, { buildingKey, mapId,
  * whatever the purse could not cover.
  *
  * The mechanism is DeductGoldAmount's return value, which is the
- * SHORTFALL rather than nothing (court.js:240 ports it, letters of
+ * SHORTFALL rather than nothing (court.js:251 ports it, letters of
  * credit and all) - so `accountGold -= deductGold(...)` subtracts
  * exactly the remainder, and subtracts ZERO when the purse covered it.
  * Written any other way this either double-charges or lets the account
@@ -995,7 +998,8 @@ export function sellDecision(kind, { owns = false, price = 0 } = {}) {
  */
 export const BANKING_STATUS_COLUMNS = Object.freeze([0, 60, 120, 180]);
 /** Internal_Strings.csv:856-859 - region/account/loan/dueDate. */
-export const BANKING_STATUS_HEADERS = Object.freeze(['Region', 'Account', 'Loan', 'Loan Due Date']);
+const HEADER_REGION = 'Region', HEADER_ACCOUNT = 'Account', HEADER_LOAN = 'Loan', HEADER_DUE_DATE = 'Loan Due Date';
+export const BANKING_STATUS_HEADERS = Object.freeze([HEADER_REGION, HEADER_ACCOUNT, HEADER_LOAN, HEADER_DUE_DATE]);
 /** Internal_Strings.csv:860 - the empty case is one word. */
 export const NO_ACCOUNT_TEXT = 'None';
 
@@ -1012,13 +1016,19 @@ const loansLine = (cells, highlight = false) => ({
 });
 
 export function bankingStatusRows(accounts, { regionName = () => '', dueText = null } = {}) {
-  const rows = [loansLine(BANKING_STATUS_HEADERS), { text: '', center: false }];
+  // L10N3d: the four headers and the empty row are GetLocalizedText'd as
+  // the box is made (:526-530, :543), so they read in the player's language
+  const headers = [localizedText('region', HEADER_REGION), localizedText('account', HEADER_ACCOUNT),
+    localizedText('loan', HEADER_LOAN), localizedText('dueDate', HEADER_DUE_DATE)];
+  const rows = [loansLine(headers), { text: '', center: false }];
   let found = false;
   for (let i = 0; i < (accounts?.length ?? 0); i++) {
     if (!(accountTotal(accounts, i) > 0 || hasLoan(accounts, i))) continue;
     const due = loanDueDate(accounts, i);
     rows.push(loansLine([
-      shortenName(regionName(i), 12),
+      // L10N3e: GetLocalizedRegionName(regionIndex) (:537), the host's
+      // canonical name its fallback
+      shortenName(getLocalizedRegionName(i, regionName), 12),
       String(accountTotal(accounts, i)),
       String(loanedTotal(accounts, i)),
       // GetLoanDueDateString (:573-582) - the same expression the bank
@@ -1030,7 +1040,7 @@ export function bankingStatusRows(accounts, { regionName = () => '', dueText = n
     ], hasDefaulted(accounts, i)));
     found = true;
   }
-  if (!found) rows.push({ text: NO_ACCOUNT_TEXT, center: false });
+  if (!found) rows.push({ text: localizedText('noAccount', NO_ACCOUNT_TEXT), center: false });
   return rows;
 }
 
@@ -1040,9 +1050,9 @@ export function bankingStatusRows(accounts, { regionName = () => '', dueText = n
 //    the permanent-scene set, so housesForSale, allocateHouseToPlayer
 //    and sellHouse above are live; H2/H4 brought the BUY UI itself -
 //    DaggerfallBankPurchasePopUp is ui/bankPurchaseWindow.js
-//    (BankPurchaseWindow :102), mounted at scenes/worldModes.js:3158
+//    (BankPurchaseWindow :102), mounted at scenes/worldModes.js:3178
 //    openPurchase with drawBankModelPreview (:1938) as the dedicated
-//    3D model panel, and ui/bankWindow.js:292-305 routes BUY HOUSE's
+//    3D model panel, and ui/bankWindow.js:304-317 routes BUY HOUSE's
 //    'pick' into it (a host without the window still falls back to
 //    DFU's own missing-directory answer, :433-434).
 //  - ReadNativeBankData (:584-614) IS PORTED, verbatim quirks and all:

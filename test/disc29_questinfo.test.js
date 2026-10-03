@@ -38,7 +38,7 @@ test('DISC29-H: a Person in Info is PresentNPCInfo\'s one line, named by StaticN
   const c = click();
   const info = c.slice(c.indexOf("if (getInteractionMode() === 'info') {"));
   assert.match(info, /if \(questBridge && person\?\.isPerson\) \{\s*\n\s+const data = npcData\(\);/, 'a Person only: an item in Info is silent');
-  assert.match(info, /Promise\.resolve\(townTalk\?\.ensureFactions\?\.\(\)\)\s*\n\s+\.then\(\(\) => townTalk\?\.say\?\.\(presentNpcInfoText\(npcDisplayName\(data\)\)\)\)\.catch\(\(\) => \{\}\);/,
+  assert.match(info, /Promise\.resolve\(townTalk\?\.ensureFactions\?\.\(\)\)\s*\n\s+\.then\(\(\) => townTalk\?\.say\?\.\(presentNpcInfoText\(npcShownName\(data\)\)\)\)\.catch\(\(\) => \{\}\);/,
     'FACTION.TXT first, as activateStaticNpc waits for it (an Individual faction names the NPC)');
   // the same line a plain static NPC's Info look prints
   assert.match(wm(), /townTalk\?\.say\?\.\(presentNpcInfoText\(displayName\)\);/);

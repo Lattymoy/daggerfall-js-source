@@ -137,7 +137,7 @@ test('HCC hosts: world.js - the frame, the draw, the origin, the ray, the plaque
     /horseNameTooltip\.set\(tipOn \? hcc\.tooltipText\(cam\.pos, /,
     /camps\.draw\(renderer\);[^\n]*\n\s+hcc\.draw\(renderer\);/, /camps\.offsetAll\(r\.offset\);[^\n]*\n\s+hcc\.offsetAll\(r\.offset\);/,
     /const _hccPick = pickActivatableHit\(cam\.pos, useFwd, hcc\.targets\(\), collider\);/, /horseCart: _hccPick,/,
-    /else if \(_race\.horseCartWins\) \{ hcc\.activate\(_hccPick\.key, _hccPick\.distance, \(l\) => townTalk\.say\(l\), \(\) => setMidScreenText\(TOO_FAR_AWAY_TEXT\), plaqueActionFor\(_hccPick\.key\)\); \}/,   // ACT-MENU: and the verb the plaque lit
+    /else if \(_race\.horseCartWins\) \{ hcc\.activate\(_hccPick\.key, _hccPick\.distance, \(l\) => townTalk\.say\(l\), \(\) => setMidScreenText\(tooFarAwayText\(\)\), plaqueActionFor\(_hccPick\.key\)\); \}/,   // ACT-MENU: and the verb the plaque lit
     /\(key\) => hcc\.hoverName\(key\),/, /horseCart: pickActivatableHit\(cam\.pos, _hd, hcc\.targets\(\), collider\),/,
     // AUDIT HCC H3: DFU's per-mod slot on every save; OnStartLoad before any await, RestoreSaveData once the place stands
     /modData: \{ \[HCC_VENDOR\]: hccRuntime\.getSaveData\(\), \.\.\.modSaveRecords\(\) \},/,   // WA1: every registered mod's record beside it
@@ -171,7 +171,7 @@ test('HCC hosts: exterior.js mirrors the same seams over the fixed city (no stre
     /const hccActionPressed = \(action\) => !gamePaused\(\) && pressed\(latch\.edge, keys, action\);/,
     /camps\.draw\(renderer, texRemap\);[^\n]*\n\s+hcc\.draw\(renderer, texRemap\);/,
     /const _hccPick = pickActivatableHit\(cam\.pos, useFwd, hcc\.targets\(\), collider\);/, /horseCart: _hccPick,/,
-    /else if \(_race\.horseCartWins\) \{ hcc\.activate\(_hccPick\.key, _hccPick\.distance, \(l\) => townTalk\.say\(l\), \(\) => setMidScreenText\(TOO_FAR_AWAY_TEXT\), plaqueActionFor\(_hccPick\.key\)\); \}/,   // ACT-MENU: and the verb the plaque lit
+    /else if \(_race\.horseCartWins\) \{ hcc\.activate\(_hccPick\.key, _hccPick\.distance, \(l\) => townTalk\.say\(l\), \(\) => setMidScreenText\(tooFarAwayText\(\)\), plaqueActionFor\(_hccPick\.key\)\); \}/,   // ACT-MENU: and the verb the plaque lit
     /\(key\) => hcc\.hoverName\(key\),/, /horseCart: pickActivatableHit\(cam\.pos, _hd, hcc\.targets\(\), collider\),/,
     /horseCart: hccRuntimeOn,/, /horseCart: \(\) => hccRuntimeOn\(\),/,
   ]) assert.match(e, re, `exterior.js lost ${re}`);

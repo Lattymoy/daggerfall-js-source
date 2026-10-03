@@ -36,6 +36,7 @@ import { bloodHit } from '../combat/bloodDecals.js';   // BLOOD1b: the blow, in 
 import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';
 import { ATTRACT_RADIUS } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41)
 import { enemyDisplayName } from '../characters/enemyBasics.js';   // AUDIT 24 (wave 42)
+import { getLocalizedEnemyName } from '../systems/textManager.js';   // L10N3e: the enemy's name in the player's language
 import { comprehendLanguagesChance } from '../systems/effects.js';   // X11: the pacification bonus DFU reads inside its own formula
 
 // ---- DaggerfallUnityItem.GetWeaponSkillUsed / GetWeaponSkillIDAsShort ----
@@ -196,7 +197,7 @@ export function equipEnemy(entity, mobileType, playerLevel, rolls = Math.random,
   // `Items.AddItem(item)` - a foe's table is genuinely worn, and
   // EnemyEntity.cs:414-421 walks it. The port wrote only the summary
   // arrays, so `equipTableOf(target)` handed back the lazy all-null
-  // table (equip.js:43-44) for every enemy in the game and
+  // table (equip.js:44-45) for every enemy in the game and
   // FormulaHelper.DamageEquipment's STRUCK side - the shield at
   // FormulaHelper.cs:1095 and the struck part's armour at :1113 -
   // could not fire once: only the attacker's own weapon ever took
@@ -721,7 +722,9 @@ export function tryLanguagePacification(ai, entity, mobileType, playerEntity, {
   const comprehend = comprehendLanguagesChance(playerEntity);
   if (calculateEnemyPacification(playerEntity, lang, sheathed, undefined, comprehend)) {
     ai.isHostile = false;
-    say(`${enemyDisplayName(mobileType) ?? 'The enemy'} is pacified by your ${SKILL_NAMES[lang]} skill.`);   // languagePacified %e/%s
+    // languagePacified %e/%s. L10N3e: %e is GetLocalizedEnemyName's (EnemySenses.cs:519) - the name in the player's
+    // language; the sentence around it is still the port's own (L10N3d's recorded difference from DFU's row).
+    say(`${getLocalizedEnemyName(mobileType, enemyDisplayName(mobileType) ?? 'The enemy')} is pacified by your ${SKILL_NAMES[lang]} skill.`);
     tallySkill(playerEntity, lang, 3);
     return { pacified: true, lang };
   }

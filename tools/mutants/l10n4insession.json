@@ -1,0 +1,8 @@
+[
+  {"name":"L10N4-insession-no-placeholder-law","file":"tools/l10nInSession.mjs","old":"      const problems = checkDraft(en.get(key), text, 'icu');","new":"      const problems = [];","tests":["test/l10n4_insession.test.js"]},
+  {"name":"L10N4-insession-overwrites-a-person","file":"tools/l10nInSession.mjs","old":"      if (people.has(key)) { report.kept.push(`${code} ${key}`); continue; }","new":"","tests":["test/l10n4_insession.test.js"]},
+  {"name":"L10N4-insession-keeps-dropped-keys","file":"tools/l10nInSession.mjs","old":"    for (const key of [...rows.keys()]) if (!en.has(key)) { rows.delete(key); delete nextMeta[key]; report.dropped.push(`${code} ${key}`); }","new":"","tests":["test/l10n4_insession.test.js"]},
+  {"name":"L10N4-insession-records-as-a-person","file":"tools/l10nInSession.mjs","old":"      nextMeta[key] = { en: hash(en.get(key)), tr: hash(text), by: IN_SESSION };","new":"      nextMeta[key] = { en: hash(en.get(key)), tr: hash(text), by: 'human' };","tests":["test/l10n4_insession.test.js"]},
+  {"name":"L10N4-insession-rows-in-arrival-order","file":"tools/l10nInSession.mjs","old":"    const ordered = [...en.keys()].filter((k) => rows.has(k)).map((k) => [k, rows.get(k)]);","new":"    const ordered = [...rows.entries()];","tests":["test/l10n4_insession.test.js"]},
+  {"name":"L10N4-insession-unknown-key-written","file":"tools/l10nInSession.mjs","old":"      if (!en.has(key)) { report.refused.push(`${code} ${key}: not in the English catalog`); continue; }","new":"","tests":["test/l10n4_insession.test.js"]}
+]

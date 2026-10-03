@@ -22,8 +22,9 @@
 // with no external MCP falls through the null-mcp arm to the
 // PLAYER's name; %di reads lastPlaceReferenced.scope BEFORE the
 // null check, so an unreferenced place THROWS out of expansion as
-// C#'s NRE does; GrammarManager.ProcessGrammar is identity
-// (DefaultGrammarRules) and is skipped whole.
+// C#'s NRE does. L10N3g: GrammarManager.ProcessGrammar runs over each
+// finished token (QuestMacroHelper.cs:158) - English's rules are the
+// identity, a language's resolve its pack's grammar tokens.
 //
 // Handlers the C# table carries but no corpus message reaches are
 // NOT ported: they answer the token unchanged with one warn
@@ -44,11 +45,13 @@ const FACTION_RACE_KEYS = Object.freeze({
   0: 'Nord', 1: 'Khajiit', 2: 'Redguard', 3: 'Breton',
   4: 'Argonian', 5: 'WoodElf', 6: 'HighElf', 7: 'DarkElf',
 });
-import { dateFromSeconds, dateString, dayName, monthName, birthSignName, SEASON_NAMES, seasonValue, CLASSIC_EPOCH_IN_SECONDS } from '../gameDate.js';
+import { dateFromSeconds, dateString, dayName, monthName, birthSignName, seasonName, CLASSIC_EPOCH_IN_SECONDS } from '../gameDate.js';
 import { skySecondsOfEvent } from '../skyCalendar.js';   // TIME3: a journal date (the event clock's) on the sky's calendar
 import { REGION_TEMPLES, LOCATION_TYPES } from '../../formats/mapsFile.js';
 import { factionRaceFromRace } from '../../characters/staticNpc.js';
 import { rulerTitle } from '../../world/buildingNames.js';   // AUDIT 68 S30-ruler-divine-tables-dup: GetRulerTitle's one home
+import { localizedStrings, localizedTable, localizedText, getLocalizedLocationName, getLocalizedRegionName } from '../textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3e: the place names shown
+import { getLocalizedFactionName, processGrammar } from '../textManager.js';   // L10N3e: the faction names shown; L10N3g: the language's grammar over a finished message
 import { legalStandingWord } from '../legalBands.js';   // %ltn's fourteen bands, one home
 
 export const MACRO_TYPES = Object.freeze({
@@ -57,7 +60,7 @@ export const MACRO_TYPES = Object.freeze({
 });
 
 // Internal_Strings en values the handlers speak.
-const EN = Object.freeze({
+const EN = localizedStrings({
   pronounHe: 'he', pronounShe: 'she',
   pronounHim: 'him', pronounHer: 'her',
   pronounHimself: 'himself', pronounHerself: 'herself',
@@ -80,10 +83,12 @@ const DIVINES = Object.freeze([
 // Temple.Divines (Temple.cs:49-59) - the enum's VALUE is the factionId,
 // and note the spelling: this arm says "Zenithar" where GetRandomDivine
 // above says "Zen", because one stringifies Temple.Divines and the
-// other FactionFile.FactionIDs. DFU's own inconsistency, kept.
-const DIVINE_BY_FACTION = Object.freeze({
-  21: 'Arkay', 22: 'Zenithar', 24: 'Mara', 26: 'Akatosh',
-  27: 'Julianos', 29: 'Dibella', 33: 'Stendarr', 35: 'Kynareth',
+// other FactionFile.FactionIDs. DFU's own inconsistency, kept. L10N3d:
+// this arm is `GetLocalizedText(divine.ToString())` (QuestMCP.cs:242),
+// so the name is DFU's key; the random arm is not localized in DFU.
+const DIVINE_BY_FACTION = localizedTable({
+  21: ['Arkay', 'Arkay'], 22: ['Zenithar', 'Zenithar'], 24: ['Mara', 'Mara'], 26: ['Akatosh', 'Akatosh'],
+  27: ['Julianos', 'Julianos'], 29: ['Dibella', 'Dibella'], 33: ['Stendarr', 'Stendarr'], 35: ['Kynareth', 'Kynareth'],
 });
 const THE_FIGHTERS_GUILD = 41;   // FactionFile.FactionIDs (:90)
 
@@ -326,11 +331,15 @@ export function questMacroSource(quest) {
       srand(quest.uid + 3457);
       return fullName(getNameBankOfRegion(world()?.currentRegionIndex?.() ?? -1), GENDERS.Male);
     },
-    // %kno - the quest faction's name, 'The ' trimmed for readability
+    // %kno - the quest faction's name, 'The ' trimmed for readability.
+    // L10N3e: GetFactionData hands the name back in the player's
+    // language (QuestMCP.cs:60, PersistentFactionData.cs:176), and the
+    // trim (:61) reads THAT name
     factionOrderName() {
       const record = world()?.getFactionData?.(quest.factionId);
       if (!record) return null;
-      return record.name.startsWith('The ') ? record.name.slice(4) : record.name;
+      const name = getLocalizedFactionName(quest.factionId, record.name);
+      return name.startsWith('The ') ? name.slice(4) : name;
     },
     pronoun() { return pronounOf(quest, EN.pronounHe, EN.pronounShe); },
     pronoun2() { return pronounOf(quest, EN.pronounHim, EN.pronounHer); },
@@ -344,7 +353,9 @@ export function questMacroSource(quest) {
       if (person.factionData?.type !== 6) return null;   // FactionTypes.VampireClan
       let regionIndex = person.homeRegionIndex ?? -1;
       if (regionIndex === -1) regionIndex = world()?.currentRegionIndex?.() ?? -1;
-      return world()?.regionVampireClanName?.(regionIndex) ?? person.factionData.name;
+      // L10N3e: the person's faction record came off GetFactionData, its
+      // name in the player's language (QuestMCP.cs:162) - by its id
+      return world()?.regionVampireClanName?.(regionIndex) ?? getLocalizedFactionName(person.factionData.id, person.factionData.name);
     },
     // %qdt %qdat - the CURRENT log step's date (the journal sets
     // currentLogMessageId while rendering; -1 falls to quest start)
@@ -450,6 +461,23 @@ export const setIdFactions = (f1, f2) => { idFaction1 = f1; idFaction2 = f2; };
  *  `if (mcp == null) return null; return CapFirst(...)`. */
 const cap = (p) => (typeof p === 'string' ? capFirst(p) : p);
 
+/** L10N3e: a region's name as SHOWN - GetLocalizedRegionName by its
+ *  index, the world's canonical name the fallback (null with no world to
+ *  ask, the handlers' charter). */
+const shownRegionName = (w, i) => {
+  const canonical = (r) => w?.maps?.getRegion?.(r)?.name ?? null;
+  return Number.isInteger(i) ? getLocalizedRegionName(i, canonical) : canonical(i);
+};
+
+/** L10N3e: a faction's name as SHOWN - PersistentFactionData.
+ *  GetFactionData hands a record back with its name in the player's
+ *  language (PersistentFactionData.cs:176), by the id it was asked for;
+ *  null with no such record, or no world to ask (the charter's null). */
+const shownFactionName = (w, id) => {
+  const fd = w?.getFactionData?.(id);
+  return fd?.name != null ? getLocalizedFactionName(id, fd.name) : null;
+};
+
 const HANDLERS = {
   '%pcn': (mcp, hooks) => hooks?.playerName?.() ?? null,
   '%pcf': (mcp, hooks) => {
@@ -467,24 +495,29 @@ const HANDLERS = {
     return call(mcp, 'guildTitle');
   },
   '%ra': (mcp, hooks) => hooks?.playerRaceName?.() ?? null,
+  // L10N3e: RegionInContext's region in context (MacroHelper.cs:1053)
+  // and CurrentRegion's (:590, PlayerGPS.CurrentLocalizedRegionName)
+  // are SHOWN names
   '%reg': (mcp, hooks) => {
-    if (idRegion !== -1) return hooks?.world?.maps?.getRegion?.(idRegion)?.name ?? null;
+    if (idRegion !== -1) return shownRegionName(hooks?.world, idRegion);
     const w = hooks?.world;
-    return w ? (w.maps?.getRegion?.(w.currentRegionIndex?.())?.name ?? null) : null;
+    return w ? shownRegionName(w, w.currentRegionIndex?.()) : null;
   },
   '%crn': (mcp, hooks) => {
     const w = hooks?.world;
-    return w ? (w.maps?.getRegion?.(w.currentRegionIndex?.())?.name ?? null) : null;
+    return w ? shownRegionName(w, w.currentRegionIndex?.()) : null;
   },
   // %rn: the region Province faction's first Individual child is the
-  // ruler; no defined individual -> a random full name
+  // ruler; no defined individual -> a random full name. L10N3e: the
+  // child's name is GetFactionData's, in the player's language
+  // (MacroHelper.cs:662-663) - by the child's id
   '%rn': (mcp, hooks) => {
     const w = hooks?.world;
     const region = w?.findFactionByTypeAndRegion?.(7, w.currentRegionIndex?.());   // FactionTypes.Province
     if (region?.children) {
       for (const childID of region.children) {
         const child = w.getFactionData?.(childID);
-        if (child?.type === 4) return child.name;   // Individual
+        if (child?.type === 4) return getLocalizedFactionName(childID, child.name);   // Individual
       }
     }
     if (!w) return null;
@@ -529,7 +562,8 @@ const HANDLERS = {
     const fd = w.getFactionData?.(w.currentRegionFaction?.());
     if (fd?.children?.length > 0) {
       const firstChild = w.getFactionData?.(fd.children[0]);
-      if (firstChild?.type === 4) return firstChild.name;
+      // L10N3e: GetFactionData's name, in the player's language (MacroHelper.cs:320-322)
+      if (firstChild?.type === 4) return getLocalizedFactionName(fd.children[0], firstChild.name);
     }
     const gender = ((fd?.ruler ?? 0) + 1) % 2;   // C#: (Genders)((ruler+1)%2) - even rulers are female
     srand((fd?.rulerNameSeed ?? 0) & 0xffff);
@@ -537,12 +571,14 @@ const HANDLERS = {
   },
   '%vam': (mcp, hooks) => hooks?.world?.playerVampireClanName?.() ?? '%vam[ERROR: PC not a vampire]',
   '%jok': (mcp, hooks) => hooks?.world?.getRandomText?.(200) ?? null,
+  // L10N3e: CityName (MacroHelper.cs:567-574) shows the location by its
+  // map id (CurrentLocalizedLocationName, :571), else the region (:573)
   '%cn': (mcp, hooks) => {
     const w = hooks?.world;
     if (!w) return null;
     const loc = w.currentLocation?.();
-    if (loc?.loaded) return loc.name;
-    return w.maps?.getRegion?.(w.currentRegionIndex?.())?.name ?? null;
+    if (loc?.loaded) return getLocalizedLocationName(loc.mapTableData?.mapId, loc.name);
+    return shownRegionName(w, w.currentRegionIndex?.());
   },
   // E7: Date (MacroHelper.cs:764-767) is a GLOBAL -
   // `WorldTime.Now.DateString()` - and the port read it off the QUEST's
@@ -650,7 +686,7 @@ const HANDLERS = {
   '%mon': (mcp, hooks) => str(nowDate(hooks) && nowDate(hooks).month + 1),   // MonthOfYear, one-based
   '%monn': (mcp, hooks) => { const d = nowDate(hooks); return d ? monthName(d) : null; },
   '%year': (mcp, hooks) => str(nowDate(hooks)?.year),
-  '%sea': (mcp, hooks) => { const d = nowDate(hooks); return d ? SEASON_NAMES[seasonValue(d)] : null; },
+  '%sea': (mcp, hooks) => { const d = nowDate(hooks); return d ? seasonName(d) : null; },
   '%sign': (mcp, hooks) => { const d = nowDate(hooks); return d ? birthSignName(d) : null; },
 
   // the PLAYER IDENTITY block
@@ -694,14 +730,14 @@ const HANDLERS = {
   '%ltn': (mcp, hooks) => {
     const rep = hooks?.world?.legalRepNow?.();
     if (rep == null) return null;
-    return legalStandingWord(rep);   // REP5: the ladder's one home (systems/legalBands.js), which the notices read too
+    return legalStandingWord(rep);   // REP5: the ladder's one home (systems/legalBands.js), which the notices read too; L10N3d: in the player's language there
   },
 
   // PLACE (globals over the world hook)
   '%lp': (mcp, hooks) => {   // LocalProvince: Breton region -> High Rock, else Hammerfell
     const race = hooks?.world?.currentRegionRace?.();
     if (race == null) return null;
-    return race === LOCAL_PROVINCE_BRETON ? 'High Rock' : 'Hammerfell';
+    return race === LOCAL_PROVINCE_BRETON ? localizedText('highRock', 'High Rock') : localizedText('hammerfell', 'Hammerfell');
   },
   '%ct': (mcp, hooks) => {   // CityType's switch, verbatim strings
     const t = hooks?.world?.currentLocationType?.();
@@ -714,17 +750,17 @@ const HANDLERS = {
     if (!region?.mapTable) return null;   // headless: no region was read at all
     const here = w.currentLocationIndex?.() ?? -1;
     for (let i = 0; i < region.mapTable.length; i++) {
-      // GetLocalizedLocationName(MapId, MapNames[i]) always yields a
-      // string, so a found-but-unnamed row is not a miss either.
+      // GetLocalizedLocationName(MapId, MapNames[i]) (:583) always
+      // yields a string, so a found-but-unnamed row is not a miss either.
       if (i !== here && region.mapTable[i].locationType === TOWN_CITY_TYPE) {
-        return region.mapNames?.[i] ?? CITY_NAME2_FALLBACK;
+        return getLocalizedLocationName(region.mapTable[i].mapId, region.mapNames?.[i] ?? localizedText('daggerfall', CITY_NAME2_FALLBACK));
       }
     }
     // MacroHelper.cs:585 `return GetLocalizedText("daggerfall")` -
     // C#'s own "Localizaed fallback in case of error". A region whose
     // only TownCity is the one the player stands in takes this arm,
     // and it must not render the [nullMCP] sentinel.
-    return CITY_NAME2_FALLBACK;
+    return localizedText('daggerfall', CITY_NAME2_FALLBACK);
   },
   '%cbd': (mcp, hooks) => {   // CurrentBuilding: "[invalid]" outside
     const w = hooks?.world;
@@ -745,9 +781,10 @@ const HANDLERS = {
   '%fpa': (mcp, hooks) => hooks?.world?.factionName?.() ?? null,
   '%fpc': (mcp, hooks) => hooks?.world?.factionPC?.() ?? null,
   '%fon': (mcp) => call(mcp, 'factionOrderName'),
-  // the NEWS pair + their lords (SetFactionIdsAndRegionID's outs)
-  '%fx1': (mcp, hooks) => (idFaction1 !== -1 ? hooks?.world?.getFactionData?.(idFaction1)?.name ?? null : null),
-  '%fx2': (mcp, hooks) => (idFaction2 !== -1 ? hooks?.world?.getFactionData?.(idFaction2)?.name ?? null : null),
+  // the NEWS pair + their lords (SetFactionIdsAndRegionID's outs) - the
+  // pair's names as shown (L10N3e: MacroHelper.cs:1002-1003, :1010-1011)
+  '%fx1': (mcp, hooks) => (idFaction1 !== -1 ? shownFactionName(hooks?.world, idFaction1) : null),
+  '%fx2': (mcp, hooks) => (idFaction2 !== -1 ? shownFactionName(hooks?.world, idFaction2) : null),
   '%fl1': (mcp, hooks) => hooks?.world?.lordNameForFaction?.(idFaction1) ?? null,
   '%fl2': (mcp, hooks) => hooks?.world?.lordNameForFaction?.(idFaction2) ?? null,
   // TitleOfLordOfFaction1 (MacroHelper.cs:1040-1047) DISCARDS
@@ -989,9 +1026,9 @@ const CITY_NAME2_FALLBACK = 'Daggerfall';
  *  HomePoor 11 shack, HomeWealthy 8 manor, Tavern 6 community,
  *  ReligionTemple 5 temple, ReligionCult 9 shrine; everything else
  *  falls to the default:, Enum.ToString() - the member NAME. */
-const CITY_TYPES = Object.freeze({
-  0: 'city', 1: 'hamlet', 2: 'village', 3: 'farm',
-  11: 'shack', 8: 'manor', 6: 'community', 5: 'temple', 9: 'shrine',
+const CITY_TYPES = localizedTable({
+  0: ['city', 'city'], 1: ['hamlet', 'hamlet'], 2: ['village', 'village'], 3: ['farm', 'farm'],
+  11: ['shack', 'shack'], 8: ['manor', 'manor'], 6: ['community', 'community'], 5: ['temple', 'temple'], 9: ['shrine', 'shrine'],
 });
 /** The default: arm, `gps.CurrentLocationType.ToString()`
  *  (MacroHelper.cs:617). On a DEFINED DFRegion.LocationTypes member
@@ -1010,7 +1047,7 @@ const NULL_HANDLERS = new Set(['%1hn', '%2hn', '%3hn', '%cbl', '%dts', '%ef',
   // E7: %tcn joins them. C#'s row IS null (MacroHelper.cs:221), so
   // the table's answer is [unhandled]; the travel window's own
   // `Replace("%tcn", name)` (DaggerfallTravelMapWindow.cs:1694, and
-  // ui/travelMapWindow.js:1216 after it) is string surgery on TEXT.RSC
+  // ui/travelMapWindow.js:1250 after it) is string surgery on TEXT.RSC
   // 31 that never reaches this ladder. M-X had recorded it as a port
   // handler standing where C# has null, with a carve-out in the
   // coverage gate; there was never a handler to carve out.
@@ -1089,7 +1126,8 @@ const csReplace = (text, oldValue, newValue) => text.split(oldValue).join(newVal
 /** Expands macros inside message tokens IN PLACE. revealDialogLinks
  *  feeds the talk window's dialog table on NameMacro1 expansions
  *  (true only for talk answers and quest popups, as C# documents).
- *  The grammar pass is DefaultGrammarRules' identity and is skipped. */
+ *  L10N3g: each token's finished text then goes through the language's
+ *  grammar, as it is stored back (QuestMacroHelper.cs:158). */
 export function expandQuestMessage(parentQuest, tokens, revealDialogLinks = false) {
   for (const token of tokens) {
     if (!token.text) continue;
@@ -1129,7 +1167,12 @@ export function expandQuestMessage(parentQuest, tokens, revealDialogLinks = fals
         else if (resource.isItem) hooks?.addDialog?.(parentQuest.uid, macro.symbol, 'Thing');
       }
     }
-    token.text = words.join(' ');
+    // L10N3g: "Store result back into token" through the grammar
+    // processor (QuestMacroHelper.cs:158). English's is the identity; a
+    // language's resolves its pack's tokens - a faction's {.FS} name's
+    // article, {NPCGender?a#b} by the gender Person.expandMacro handed
+    // it - over the whole finished text, macros already in
+    token.text = processGrammar(words.join(' '));
   }
 }
 

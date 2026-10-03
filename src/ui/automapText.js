@@ -35,12 +35,13 @@
 // drifts.
 
 import { shortcutBinding, sequenceString, hotkeySequence } from '../systems/dialogShortcuts.js';
+import { localizedStrings } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
 /** DaggerfallAutomapWindow.fallbackKey (:75). */
 export const AUTOMAP_FALLBACK_KEY = 'Home';
 
 /** Internal_Strings.csv:874-890, byte for byte. */
-export const AUTOMAP_STRINGS = Object.freeze({
+export const AUTOMAP_STRINGS = localizedStrings({
   automapToolTipTextGridButton: "left click: switch between 2D top view and 3D view (hotkey: {0})\\rright click: reset rot. axis to player pos (hotkey: {1})\\rmouse wheel up while over btn: inc. perspective (only 3D mode)\\rmouse wheel down while over btn: dec. perspective (only 3D mode)",
   automapToolTipForwardButton: "left click: move viewpoint forward (hotkey: {0})\\rright click: move rotation axis forward (hotkey: {1})",
   automapToolTipBackwardButton: "left click: move viewpoint backwards (hotkey: {0})\\rright click: move rotation axis backwards (hotkey: {1})",
@@ -95,7 +96,7 @@ export function shortcutOrFallback(button, automapBinding) {
  * SHORTCUT NAMES differ: the thirty `ExtAutomap*` rows of
  * systems/dialogShortcuts.js.
  */
-export const EXTERIOR_AUTOMAP_STRINGS = Object.freeze({
+export const EXTERIOR_AUTOMAP_STRINGS = localizedStrings({
   exteriorAutomapToolTipTextGridButton: "left click: switch to next view mode (hotkey: {0})\\ravailable view modes are:\\r- original (hotkey {1})\\r- extra: includes extra buildings (hotkey {2})\\r- all: includes extra buildings, ground flats (hotkey {3})\\rswitch background texture with {4}, {5}, {6}, {7}",
   exteriorAutomapToolTipForwardButton: "left click: move up (hotkey: {0})\\rright click: move to north location border (hotkey: {1})",
   exteriorAutomapToolTipBackwardButton: "left click: move down (hotkey: {0})\\rright click: move to south location border (hotkey: {1})",

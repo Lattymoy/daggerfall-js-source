@@ -192,7 +192,7 @@ test('AUDIT 64 F18/F19: fast travel and the guild teleport carry DFU\'s repositi
 // ── F20 / F21: Career.DamageFromSunlight, twice ──────────────────────
 
 /** A custom class carrying the "Damage / From Sunlight" disadvantage -
- *  specialAdvantages.js:266's own write, mirroring
+ *  specialAdvantages.js:267's own write, mirroring
  *  CreateCharSpecialAdvantageWindow's pick. No racial override. */
 const sunCareer = () => ({ abilityFlagsAndSpellPointsBitfield: SPECIAL_ABILITY_BITS.sunDamage });
 
@@ -241,7 +241,7 @@ test('AUDIT 64 F21: the travel map door refuses a career sun-damaged class by da
   const i = world.indexOf('const toggleTravelMap = (gotoPlace = null) =>');
   assert.ok(i > 0);
   const door = world.slice(i, world.indexOf('/** G5: the map the guild', i));
-  assert.match(door, /if \(careerSunDamage\(playerEntity\.career\) && isDayFromMinutes\(nowMin\)\) \{\s*\n\s*sayWithNightfall\(SUNLIGHT_TRAVEL_TEXT\);\s*\n\s*return false;\s*\n\s*\}/,   // LIVED1: and, online, when the world's night falls (AUDIT LIVED1 M: on its own HUD row)
+  assert.match(door, /if \(careerSunDamage\(playerEntity\.career\) && isDayFromMinutes\(nowMin\)\) \{\s*\n\s*sayWithNightfall\(sunlightTravelText\(\)\);\s*\n\s*return false;\s*\n\s*\}/,   // LIVED1: and, online, when the world's night falls (AUDIT LIVED1 M: on its own HUD row)
     'the career box, with the same localized key both DFU sites use');
   // ORDER, DaggerfallUI.cs's own: GiveOffer (:612), the career box
   // (:614), then CheckFastTravel (:625).
@@ -289,6 +289,6 @@ test('AUDIT 64 F24: the sunlightDamageFastTravelDay refusal is DFU\'s own line',
   // DFU's as `hint`, said after it - never in its place.
   assert.deepEqual(racialFastTravelBlock({ racialOverride: { sunDamage: true } }, 12 * 60),
     { text: SUNLIGHT_TRAVEL_TEXT, hint: VAMPIRE_HOOD_TEXT });
-  assert.match(read('src/scenes/world.js'), /sayWithNightfall\(SUNLIGHT_TRAVEL_TEXT\);/,
+  assert.match(read('src/scenes/world.js'), /sayWithNightfall\(sunlightTravelText\(\)\);/,
     'and the career box shows the same constant');
 });

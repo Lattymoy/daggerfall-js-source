@@ -76,7 +76,7 @@ test('AUDIT CAST-USE CU2: the dungeon\'s ready line prices a free ready at what 
     useItem(item(ENCHANTMENT_TYPES.CastWhenUsed, 20), h.player.items, { entity: h.player, isEnchanted: () => true });
     assert.equal(typeof h.dungeon.readiedCost, 'function');
     assert.equal(h.dungeon.readiedCost(), 0);
-    assert.match(src('src/scenes/dungeonContext.js'), /\$\{magic\.readied\(\)\.name\} \(\$\{magic\.readiedCost\(\)\}\)/);
+    assert.match(src('src/scenes/dungeonContext.js'), /\$\{shownSpellName\(magic\.readied\(\)\)\} \(\$\{magic\.readiedCost\(\)\}\)/);
   } finally { setDefaultEnchantCtx(null); }
 });
 

@@ -43,7 +43,7 @@ import { savingThrow, careerTolerance, EFFECT_FLAGS } from './spellcast.js';
 import { FATIGUE_MULTIPLIER } from './statMods.js';
 import { dice100 } from '../combat/formulas.js';
 import { MOBILE_TYPES } from '../characters/mobileTypes.js';
-import { YOU_FEEL_SOMEWHAT_BAD } from './diseases.js';
+import { youFeelSomewhatBadText } from './diseases.js';
 
 // ---- ItemEnums.Poisons, verbatim (0-7 weapon poisons, 8-11 drugs) ----
 export const POISONS = Object.freeze({
@@ -172,7 +172,7 @@ function incrementPoisonEffects(entry, sinks, rolls, onAlert) {
       if (sinks.restoreMagicka) sinks.restoreMagicka(range(5, 10));
       break;
   }
-  if (onAlert) onAlert(YOU_FEEL_SOMEWHAT_BAD);   // player hosts only (the scene wires it)
+  if (onAlert) onAlert(youFeelSomewhatBadText());   // player hosts only (the scene wires it)
   if (--entry.minutesRemaining <= 0) entry.state = 'complete';
 }
 

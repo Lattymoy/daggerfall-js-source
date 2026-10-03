@@ -131,8 +131,8 @@
     "tests": [
       "test/overhauls.test.js"
     ],
-    "old": "const sdfCode = (sdf, code) => (sdf.glyphs.has(code) ? code : FNT_ERROR_CODE);",
-    "new": "const sdfCode = (sdf, code) => (sdf.glyphs.has(code) ? code : 32);"
+    "old": "  return sdf.glyphs.get(FNT_ERROR_CODE) ?? null;",
+    "new": "  return sdf.glyphs.get(FNT_SPACE_CODE) ?? null;"
   },
   {
     "name": "OVH3-player-trade-gated-back-on-the-skin",

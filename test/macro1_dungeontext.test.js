@@ -12,16 +12,18 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { expandMacros } from '../src/systems/talkSession.js';
+import { getLocalizedLocationName, getLocalizedRegionName } from '../src/systems/textManager.js';   // L10N3e: %cn as shown
 
 const SRC = readFileSync(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
 
 function readerFor({ records, dfLocation, playerEntity }) {
-  const start = SRC.indexOf('  const rscLines = (id) => {');
-  assert.ok(start > 0, 'dungeonContext.js no longer has rscLines - this pin drives nothing');
-  const end = SRC.indexOf('\n  };', start) + 5;
+  const start = SRC.indexOf('  const shownCityName = () =>');   // L10N3e: the reader's %cn, declared above it
+  const reader = SRC.indexOf('  const rscLines = (id) => {', start);
+  assert.ok(start > 0 && reader > start, 'dungeonContext.js no longer has rscLines - this pin drives nothing');
+  const end = SRC.indexOf('\n  };', reader) + 5;
   const body = SRC.slice(start, end);
   const textRsc = { plainText: (id) => (records[id] ? [records[id]] : null) };
-  return new Function('textRsc', 'expandMacros', 'dfLocation', 'playerEntity', `${body}\nreturn rscLines;`)(textRsc, expandMacros, dfLocation, playerEntity);
+  return new Function('textRsc', 'expandMacros', 'dfLocation', 'playerEntity', 'getLocalizedLocationName', 'getLocalizedRegionName', `${body}\nreturn rscLines;`)(textRsc, expandMacros, dfLocation, playerEntity, getLocalizedLocationName, getLocalizedRegionName);
 }
 
 test('MACRO1: the wagon prompt names the place - %cn is the dungeon\'s own location, as MacroHelper.CityName answers inside one', () => {

@@ -50,11 +50,16 @@ import { daggerY, tickDaggerTrails, REP_GREEN, REP_RED, REP_EXIT, REP_BAR_TOP, R
 import { labelRows, labelFor, LABEL_ORIGIN, LABEL_HIT_HEIGHT } from '../systems/specialAdvantages.js';   // U20b
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 import { packImgTexture } from './packArt.js';   // OVH2: the worn UI pack's picture
+import { localizedText } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { raceDisplayName } from '../systems/talkSession.js';   // L10N3d: RaceTemplate.Name, read in the player's language
 
 // DaggerfallUI.cs:52-62 - the colours these windows actually use.
 /** CreateCharNameSelect.cs:79-81 - the RANDOM button's own colours. */
 export const RANDOM_BUTTON_BG = [0.5, 0.5, 0.5, 0.75];
 export const RANDOM_LABEL = 'Random';
+/** L10N3d: the button's label (CreateCharNameSelect.cs:79) and the race map's prompt (CreateCharRaceSelect.cs:64), read where they draw. */
+export const randomLabel = () => localizedText('random', RANDOM_LABEL);
+export const homeProvincePrompt = () => localizedText('pleaseSelectYourHomeProvince', 'Please select your home province...');
 
 /** DaggerfallBaseWindow.cs:40 - parentPanel.BackgroundColor = black. */
 export const MENU_BACKDROP = [0, 0, 0, 1];
@@ -583,7 +588,7 @@ export const buildBackstory = (backstoryId, effects, ctx) =>
  *  `unchanged,Unchanged`). The port printed the signed integer, so
  *  the closing screen of every chargen read "Commoners: -5" where
  *  classic reads "Commoners: Lower". */
-export const repChangeStr = (v) => (v === 0 ? 'Unchanged' : v < 0 ? 'Lower' : 'Higher');
+export const repChangeStr = (v) => (v === 0 ? localizedText('unchanged', 'Unchanged') : v < 0 ? localizedText('lower', 'Lower') : localizedText('higher', 'Higher'));   // L10N3d: BiogFileMCP.cs:39-47
 
 /** U13: TEXT.RSC 35's rows with %r1..%r5 resolved through GetChangeStr
  *  over DigestRepChanges' totals (BiogFileMCP.cs:54-89, MacroHelper.cs
@@ -636,8 +641,9 @@ function drawName(renderer, m, font, flow) {
   // guarantees: race is the first screen.
   const [rx, ry, rw, rh] = RECTS.randomName;
   drawRect(renderer, m, rx, ry, rw, rh, RANDOM_BUTTON_BG);
-  const lw = measureText(font.fnt, RANDOM_LABEL);
-  shadowText(renderer, font, RANDOM_LABEL, m, rx + Math.round((rw - lw) / 2), ry + 2,
+  const label = randomLabel();
+  const lw = measureText(font.fnt, label);
+  shadowText(renderer, font, label, m, rx + Math.round((rw - lw) / 2), ry + 2,
     { shadow: [0, 0, 0, 1] });
   // TextBox at (80,5) 214x7 - the input colour, not the default
   const [bx, by] = RECTS.nameBox;
@@ -675,12 +681,12 @@ export function bonusPointsRows() {
 function drawRace(renderer, m, font, flow) {
   drawImg(renderer, img('TMAP00I0.IMG'), m, 0, 0);
   // promptLabel (0,16) CENTERED, default colour + default shadow
-  shadowText(renderer, font, 'Please select your home province...', m, 0, 16, { align: 'center', w: 320 });
+  shadowText(renderer, font, homeProvincePrompt(), m, 0, 16, { align: 'center', w: 320 });
   // The keyboard flow's current race, named UNDER the prompt - the
   // classic map names nothing (you click a province), but the up/down
   // seam has to be legible without a click (phone + probe drive it by
   // key). Under the prompt, not over the banner at the map's foot.
-  shadowText(renderer, font, flow.race.name, m, 0, 26, { align: 'center', w: 320, color: SELECTED_TEXT });
+  shadowText(renderer, font, raceDisplayName(flow.race.key), m, 0, 26, { align: 'center', w: 320, color: SELECTED_TEXT });
   // U11: a province click opens the race's DESCRIPTION in a Yes/No
   // box (CreateCharRaceSelect.cs:100-112) - Yes accepts the race and
   // leaves the screen, No returns to the map.

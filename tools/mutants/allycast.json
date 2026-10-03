@@ -101,8 +101,8 @@
   {
     "name": "AC-host-heals-self-too",
     "file": "src/scenes/hostMagic.js",
-    "old": "      say(allyCastCasterLine(sp.name, ally.name));\n      return done(true);\n    }",
-    "new": "      say(allyCastCasterLine(sp.name, ally.name));\n    }",
+    "old": "      say(allyCastCasterLine(shownSpellName(sp), ally.name));   // L10N3e: composed here, so as shown; the frame above carries the canonical name\n      return done(true);\n    }",
+    "new": "      say(allyCastCasterLine(shownSpellName(sp), ally.name));   // L10N3e: composed here, so as shown; the frame above carries the canonical name\n    }",
     "tests": [
       "test/allycast.test.js"
     ]
@@ -254,7 +254,7 @@
   {
     "name": "AAC-host-casteronly-instant",
     "file": "src/scenes/hostMagic.js",
-    "old": "      if (!free && allyCastable(sp) && allyInReach(lastAim?.eye ?? null, lastAim?.dir ?? null, ALLY_TOUCH_REACH, sp)) { say(PRESS_BUTTON_TO_FIRE_SPELL); return true; }\n",
+    "old": "      if (!free && allyCastable(sp) && allyInReach(lastAim?.eye ?? null, lastAim?.dir ?? null, ALLY_TOUCH_REACH, sp)) { say(pressButtonToFireSpellText()); return true; }\n",
     "new": "",
     "tests": [
       "test/allycast.test.js"

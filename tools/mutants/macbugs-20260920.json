@@ -38,8 +38,8 @@
   {
     "name": "MACBUG2-one-flow-forgets-to-pass-them-on",
     "file": "src/ui/guildServiceWindows.js",
-    "old": "  const ctxFor = (amount) => ({ amount, gold: goldAmount(entity), god: godName, playerName: entity.name ?? '', ...identity(entity, { shopName, cityName }) });",
-    "new": "  const ctxFor = (amount) => ({ amount, gold: goldAmount(entity), god: godName, playerName: entity.name ?? '', ...identity(entity) });",
+    "old": "  const ctxFor = (amount) => ({ amount, gold: goldAmount(entity), god: getDivineLocalized(godName), playerName: entity.name ?? '', ...identity(entity, { shopName, cityName }) });",
+    "new": "  const ctxFor = (amount) => ({ amount, gold: goldAmount(entity), god: getDivineLocalized(godName), playerName: entity.name ?? '', ...identity(entity) });",
     "tests": [
       "test/guildserviceflows.test.js"
     ]

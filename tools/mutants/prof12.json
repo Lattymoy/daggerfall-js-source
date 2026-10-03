@@ -11,8 +11,8 @@
   {
     "name": "PROF12-potions-reexport-copy",
     "file": "src/systems/potions.js",
-    "old": "import {\n  POTION_RECIPES, POTION_DEFAULT_TEXTURE_RECORD, potionRecipeKey, potionKeyFromCauldron,\n} from './potionRecipes.js';",
-    "new": "import {\n  POTION_RECIPES as LEAF_RECIPES, POTION_DEFAULT_TEXTURE_RECORD, potionRecipeKey, potionKeyFromCauldron,\n} from './potionRecipes.js';\nconst POTION_RECIPES = Object.freeze([...LEAF_RECIPES]);",
+    "old": "import {\n  POTION_RECIPES, POTION_DEFAULT_TEXTURE_RECORD, potionRecipeKey, potionKeyFromCauldron, setPotionDisplayNames,\n} from './potionRecipes.js';",
+    "new": "import {\n  POTION_RECIPES as LEAF_RECIPES, POTION_DEFAULT_TEXTURE_RECORD, potionRecipeKey, potionKeyFromCauldron, setPotionDisplayNames,\n} from './potionRecipes.js';\nconst POTION_RECIPES = Object.freeze([...LEAF_RECIPES]);",
     "tests": [
       "test/prof12_law.test.js"
     ]

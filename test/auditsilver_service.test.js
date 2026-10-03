@@ -211,8 +211,11 @@ test('AUDIT SILVER-WAYS B1: a claim reads past the contracts it may be paid by -
     }
     return batch(list);
   };
-  const [x, y] = await Promise.all(pair.map((w) => s.raid(w, raidKey(DF, 70))));
+  const both = await Promise.all(pair.map((w) => s.raid(w, raidKey(DF, 70))));
   db.prepare = prepare; db.batch = batch;
+  // whichever write lands first is "the first": the two claims are released together, and which batch the store runs
+  // first is the scheduler's (under a loaded runner it was the second one, at the merge of main into L10N)
+  const [x, y] = both[0].body.contracts.length === 3 ? both : [both[1], both[0]];
   assert.deepEqual(x.body.contracts.map((c) => c.pay + c.tax), [50, 50, 50], 'the first: the three best, each its last deed');
   assert.deepEqual(y.body.contracts.map((c) => c.contract), [next.body.contract.id], 'the second: the next, read past the three');
   assert.ok(s.addsUp());

@@ -128,7 +128,7 @@
   {
     "name": "EMPIRE-BANK-region-online",
     "file": "src/world/buildingNames.js",
-    "old": "      b = isOnlinePage() ? EMPIRE_BANK_OF : regionName;   // EMPIRE-BANK",
+    "old": "      b = isOnlinePage() ? EMPIRE_BANK_OF : shownRegionName;   // EMPIRE-BANK",
     "new": "      b = regionName;   // EMPIRE-BANK",
     "tests": [
       "test/empirebank.test.js"

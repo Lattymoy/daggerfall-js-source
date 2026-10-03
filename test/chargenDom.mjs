@@ -15,6 +15,8 @@ class Node_ {
   get isConnected() { let x = this; while (x.parentNode) x = x.parentNode; return x === globalThis.document.body || x === globalThis.document.head; }
   setAttribute(k, v) { this.attrs[k] = v; if (k === 'class') this.className = v; }
   getAttribute(k) { return this.attrs[k]; }
+  removeAttribute(k) { delete this.attrs[k]; if (k === 'class') this.className = ''; }   // L10N merge: the enhanced hotbar empties a slot's icon so
+  hasAttribute(k) { return k in this.attrs; }
   addEventListener(t, f) { (this.listeners[t] ??= []).push(f); }
   removeEventListener(t, f) { this.listeners[t] = (this.listeners[t] ?? []).filter((x) => x !== f); }
   querySelectorAll(sel) { const out = []; const walk = (n) => { for (const c of n.children) { if (c instanceof Node_) { out.push(c); walk(c); } } }; walk(this); return sel === '*' ? out : out.filter((n) => matches(n, sel)); }
@@ -26,6 +28,8 @@ class Node_ {
   getContext() { return new Proxy({}, { get: (t, k) => k === 'createImageData' ? (w, h) => ({ data: new Uint8ClampedArray(w * h * 4), width: w, height: h }) : k === 'getImageData' ? (x, y, w, h) => ({ data: new Uint8ClampedArray(w * h * 4) }) : k === 'measureText' ? () => ({ width: 1 }) : (typeof k === 'string' ? () => {} : undefined), set: () => true }); }
   getBoundingClientRect() { return { left: 0, top: 0, width: 100, height: 100 }; }
   get childNodes() { return this.children; }   // GUIDE2: the pause journal's PX22 meta line asks it (a real node's live NodeList)
+  get dataset() { return (this._dataset ??= {}); }   // L10N merge: the enhanced hotbar's slots (enhancedHotbar.js) tag themselves, as a real node's DOMStringMap
+  set dataset(v) { this._dataset = v; }   // ...and a test that hands a node its own keeps it
   get classList() { const n = this; return { add: (c) => { n.className += ' ' + c; }, remove() {}, toggle() {}, contains: (c) => n.className.split(/\s+/).includes(c) }; }
 }
 /** AUDIT 31 U1: A NODE TAKEN OUT OF THE DOCUMENT TAKES THE FOCUS WITH IT, as a browser's does - the focus falls to the

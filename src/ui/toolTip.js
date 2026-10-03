@@ -34,6 +34,7 @@
 import { drawRect, NATIVE_W, NATIVE_H } from './nativePanel.js';   // ONE home for the virtual canvas size
 import { drawText, measureText } from './text.js';
 import { getBool, getFloat, getString } from '../systems/settings.js';
+import { processGrammar } from '../systems/textManager.js';   // L10N3g: each row through the grammar as it is drawn (:215)
 
 /** defaultMarginSize (:30). */
 export const TOOLTIP_MARGIN = 2;
@@ -192,7 +193,13 @@ export function drawToolTipBox(renderer, m, font, text, vx, vy, { ignoreEnableSe
   drawRect(renderer, m, x, y, w, h, bg);
   // NO SHADOW: DFU draws the tooltip with a bare font.DrawText
   // (:213-217), unlike every labelled button in the UI.
-  rows.forEach((r, i) => drawText(renderer, font, r,
+  // L10N3g: `font.DrawText(ProcessGrammar(textRows[i]), ...)` (:215) -
+  // each row is processed AS IT IS DRAWN, every frame (no cache: the
+  // French rules carry a gender from one text to the next), while the
+  // box above was sized off the rows as they stand, which is DFU's own
+  // order (UpdateTextRows measures them, :257-264, before Draw runs the
+  // grammar). English is the identity.
+  rows.forEach((r, i) => drawText(renderer, font, processGrammar(r),
     m.ox + (x + TOOLTIP_MARGIN) * m.s,
     m.oy + (y + TOOLTIP_MARGIN + i * glyph) * m.s, m.s, fg));
 }

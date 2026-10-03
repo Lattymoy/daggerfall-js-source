@@ -140,11 +140,11 @@ test('U24 (ROAD-A7 CORRECTED): a click SELECTS the scrolled row; the DOUBLE clic
 
 test('AUDIT 65 UI-1: a BARE picker takes the HOST\'s four-argument click, and the 4th slot is not its clock', () => {
   // The mounts that hand a ListPickerWindow straight to an overlay slot
-  // - the U key's useMagicItemWindow (world.js:13130,
-  // dungeonContext.js:8571, worldModes.js:10254) and the bookshelf
-  // picker (worldModes.js:2077-2289) - are dispatched by the hosts'
-  // ONE shape: `click(vx, vy, right, middle)` (townTalk.js:1223,
-  // worldModes.js:10474, dungeonContext.js:8300). The window's header
+  // - the U key's useMagicItemWindow (world.js:13146,
+  // dungeonContext.js:8578, worldModes.js:10279) and the bookshelf
+  // picker (worldModes.js:2087-2307) - are dispatched by the hosts'
+  // ONE shape: `click(vx, vy, right, middle)` (townTalk.js:1235,
+  // worldModes.js:10499, dungeonContext.js:8307). The window's header
   // already defended the THIRD slot by content; the fourth was left
   // open, so `middle` arrived as `now`, `false ?? this._now()` kept the
   // `false`, and `false - false === 0 < 300` made every second click a
@@ -443,7 +443,7 @@ test('MAC-BUG2: the service windows fill %cpn and %cn - a cure offer is a TRADE 
   for (const flow of ['buildTrainingFlow', 'buildDonationFlow', 'buildCureDiseaseFlow']) {
     const at = src.indexOf(`export function ${flow}`);
     assert.ok(at > 0, flow);
-    const body = src.slice(at, at + 900);
+    const body = src.slice(at, at + 1000);
     assert.ok(/shopName = null, cityName = null/.test(body), `${flow} does not take the shop and the town`);
     assert.ok(/identity\(entity, \{ shopName, cityName \}\)/.test(body), `${flow} does not pass them on`);
   }

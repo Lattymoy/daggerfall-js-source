@@ -22,6 +22,7 @@ import {
   MOD_ACTIONS, ACTION_GROUPS, codeForAction, actionsAt, shareBinding, dropBinding, clearBinding,
 } from './inputActions.js';
 import { shortcutBinding, MOD } from './dialogShortcuts.js';   // UXB1-F: the keys this page names and cannot move
+import { localizedText, formatText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
 /** internalDupeColor / crossDupeColor (:44-45): red for a clash
  *  inside the shown dict, the blue for one across the two. */
@@ -437,12 +438,16 @@ export const splitCamel = (s) => s.replace(/([a-z])([A-Z])/g, '$1 $2').trim();
 
 /** PromptRemoveKeybindMessage's text (:298-302): the "removeKeybind"
  *  record formatted with the camel-split action name and the FULL
- *  button text of the code being removed. */
+ *  button text of the code being removed - read in the player's
+ *  language (L10N3d). DFU's box word-wraps the one line (:295's
+ *  wrapText); the port's takes rows, so the record breaks before the
+ *  word that leads into the action's name, where the English always
+ *  has, and each row is formatted. */
 export function removeKeybindPromptRows(action, code) {
-  return [
-    'Are you sure you want to remove the keybind',
-    `for ${splitCamel(action)} ('${buttonText(code, true)}')?`,
-  ];
+  const prompt = localizedText('removeKeybind', "Are you sure you want to remove the keybind for {0} ('{1}')?");
+  const at = prompt.lastIndexOf(' ', prompt.indexOf('{0}') - 2);
+  const rows = at > 0 ? [prompt.slice(0, at), prompt.slice(at + 1)] : [prompt];
+  return rows.map((row) => formatText(row, splitCamel(action), buttonText(code, true)));
 }
 
 /**

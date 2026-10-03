@@ -166,8 +166,8 @@
   {
     "name": "DECOR2a-the-artifact-name-unread",
     "file": "src/systems/decorItems.js",
-    "old": "    const name = artifacts[own.a]?.name;",
-    "new": "    const name = null;",
+    "old": "    const m = artifacts[own.a];",
+    "new": "    const m = null;",
     "tests": [
       "test/decor2a.test.js"
     ]

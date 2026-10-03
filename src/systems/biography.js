@@ -35,6 +35,7 @@ import { expandTalkMacros, MACRO_SYMBOLS } from './talkMacros.js';   // AUDIT 64
 import { getMacroValue } from './quest/questMacros.js';              // AUDIT 64 F29: MacroHelper.GetValue's ladder
 import { setSeed, rand } from '../formats/dfRandom.js';              // AUDIT 64 F29: DFRandom.Seed / rand() the four name macros ride
 import { GENDERS, getNameBank, fullName } from '../characters/nameHelper.js';
+import { localizedTable } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
 /** ItemGroups (ItemEnums.cs:27-59) - the numbers a BIOG line carries. */
 export const ITEM_GROUP_BY_ID = Object.freeze({
@@ -223,15 +224,15 @@ export function digestRepChanges(effects, groups = 5) {
  *  verbatim over it: base for %bn and %imp, base+123 for %fn,
  *  base+9543 for %mn, each RESEEDING before its single draw, so the
  *  three names stay distinct exactly as DFU's are. */
-const HOME_PROVINCE = Object.freeze({   // HomeProvinceName (:87-115)
-  Argonian: 'Black Marsh', Breton: 'High Rock', DarkElf: 'Morrowind',
-  HighElf: 'Sumurset', Khajiit: 'Elsweyr', Nord: 'Skyrim',
-  Redguard: 'Hammerfell', WoodElf: 'Valenwood',
+const HOME_PROVINCE = localizedTable({   // HomeProvinceName (:87-115)
+  Argonian: ['blackMarsh', 'Black Marsh'], Breton: ['highRock', 'High Rock'], DarkElf: ['morrowind', 'Morrowind'],
+  HighElf: ['sumurset', 'Sumurset'], Khajiit: ['elsweyr', 'Elsweyr'], Nord: ['skyrim', 'Skyrim'],
+  Redguard: ['hammerfell', 'Hammerfell'], WoodElf: ['valenwood', 'Valenwood'],
 });
-const GEOGRAPHICAL_FEATURE = Object.freeze({   // GeographicalFeature (:117-141)
-  Argonian: 'swamps', Breton: 'rolling hills', DarkElf: 'mountains',
-  HighElf: 'shores', Khajiit: 'desertland', Nord: 'mountains',
-  Redguard: 'desertland', WoodElf: 'forests',
+const GEOGRAPHICAL_FEATURE = localizedTable({   // GeographicalFeature (:117-141)
+  Argonian: ['swamps', 'swamps'], Breton: ['rollingHills', 'rolling hills'], DarkElf: ['mountains', 'mountains'],
+  HighElf: ['shores', 'shores'], Khajiit: ['desertLand', 'desertland'], Nord: ['mountains', 'mountains'],
+  Redguard: ['desertLand', 'desertland'], WoodElf: ['forests', 'forests'],
 });
 /** ImperialName (:618-624) - the literal table, NOT SaveVars'
  *  emperorSonNames, despite %imp reading those elsewhere. */

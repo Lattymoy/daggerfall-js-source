@@ -2,7 +2,7 @@
   {
     "name": "INFO1-an-empty-name-is-a-row-again",
     "file": "src/ui/hudText.js",
-    "old": "    if (String(text ?? '').trim() === '') return;",
+    "old": "    if (String(pgText ?? '').trim() === '') return;",
     "new": "",
     "tests": [
       "test/hudtext.test.js"
@@ -11,8 +11,8 @@
   {
     "name": "INFO1-whitespace-is-a-name",
     "file": "src/ui/hudText.js",
-    "old": "    if (String(text ?? '').trim() === '') return;",
-    "new": "    if (String(text ?? '') === '') return;",
+    "old": "    if (String(pgText ?? '').trim() === '') return;",
+    "new": "    if (String(pgText ?? '') === '') return;",
     "tests": [
       "test/hudtext.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "INFO1-the-gate-trims-the-row-it-passes",
     "file": "src/ui/hudText.js",
-    "old": "    this.lines.push({ id: ++this._nextId, text });",
-    "new": "    this.lines.push({ id: ++this._nextId, text: String(text).trim() });",
+    "old": "    this.lines.push({ id: ++this._nextId, text: pgText });",
+    "new": "    this.lines.push({ id: ++this._nextId, text: String(pgText).trim() });",
     "tests": [
       "test/hudtext.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "INFO1-the-notebook-still-takes-the-empty-one",
     "file": "src/ui/hudText.js",
-    "old": "    if (String(text ?? '').trim() === '') return;",
-    "new": "    if (String(text ?? '').trim() === '') { this.onMessage?.(text); return; }",
+    "old": "    if (String(pgText ?? '').trim() === '') return;",
+    "new": "    if (String(pgText ?? '').trim() === '') { this.onMessage?.(pgText); return; }",
     "tests": [
       "test/hudtext.test.js"
     ]

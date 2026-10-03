@@ -105,18 +105,9 @@
   },
   {
     "name": "N8-the-sdf-atlas-first-context-unhinted",
-    "file": "src/ui/text.js",
-    "old": "let ctx = c.getContext('2d', { willReadFrequently: true });",
-    "new": "let ctx = c.getContext('2d');",
-    "tests": [
-      "test/audit0928_nav.test.js"
-    ]
-  },
-  {
-    "name": "N8-the-sdf-atlas-resized-context-unhinted",
-    "file": "src/ui/text.js",
-    "old": "c.width = cols * cell; c.height = rows * cell;\n  ctx = c.getContext('2d', { willReadFrequently: true });",
-    "new": "c.width = cols * cell; c.height = rows * cell;\n  ctx = c.getContext('2d');",
+    "file": "src/ui/glyphFace.js",
+    "old": "    const ctx = canvas?.getContext('2d', { willReadFrequently: true });",
+    "new": "    const ctx = canvas?.getContext('2d');",
     "tests": [
       "test/audit0928_nav.test.js"
     ]

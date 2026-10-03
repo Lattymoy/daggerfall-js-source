@@ -30,14 +30,23 @@ import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 import { duelRecordText } from '../net/duelRecord.js';   // DUEL1: the duelling record's words, the account card's own
 import { renownText } from '../net/renown.js';   // RENOWN1: Renown, left of the name
 import { guildTagText } from '../net/guildLaw.js';   // GUILD1c: the guild's tag, right of the name
+import { localizedStrings } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
 export const PROFILE_STYLE_ID = 'dagger-profile-style';
 
 /** The attributes as the classic sheet labels them, in STAT_KEYS_ORDER - the card's own order (net/wire.js CARD_ATTRS). */
-export const ATTR_SHORT = Object.freeze(['STR', 'INT', 'WIL', 'AGI', 'END', 'PER', 'SPD', 'LUC']);
-export const ATTR_LABELS = Object.freeze(['Strength', 'Intelligence', 'Willpower', 'Agility', 'Endurance', 'Personality', 'Speed', 'Luck']);
+/** L10N3d: TextProvider.GetAbbreviatedStatName / GetStatName (:537-576) and the vitals' rows, read in the player's
+ *  language when the card reads them - each element a getter by DFU's key. */
+const CARD_WORDS = localizedStrings({
+  STR: 'STR', INT: 'INT', WIL: 'WIL', AGI: 'AGI', END: 'END', PER: 'PER', SPD: 'SPD', LUC: 'LUC',
+  strength: 'Strength', intelligence: 'Intelligence', willpower: 'Willpower', agility: 'Agility', endurance: 'Endurance',
+  personality: 'Personality', speed: 'Speed', luck: 'Luck', health: 'Health', fatigue: 'Fatigue', magicka: 'Magicka',
+});
+const cardWords = (keys) => Object.freeze(keys.reduce((a, k, i) => Object.defineProperty(a, i, { enumerable: true, get: () => CARD_WORDS[k] }), []));
+export const ATTR_SHORT = cardWords(['STR', 'INT', 'WIL', 'AGI', 'END', 'PER', 'SPD', 'LUC']);
+export const ATTR_LABELS = cardWords(['strength', 'intelligence', 'willpower', 'agility', 'endurance', 'personality', 'speed', 'luck']);
 /** The card's three vitals, in its order. */
-export const VITAL_LABELS = Object.freeze(['Health', 'Fatigue', 'Magicka']);
+export const VITAL_LABELS = cardWords(['health', 'fatigue', 'magicka']);
 
 /** WHAT THEY WEAR, in the order a reader looks a figure over - head to foot, then the hands, then the trinkets - each
  *  slot the look can carry (net/wire.js LOOK_GROUPS: clothing, armour, weapons, jewellery) under the word a player

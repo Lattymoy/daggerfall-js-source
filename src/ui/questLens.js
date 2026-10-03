@@ -51,6 +51,7 @@ import { SITE_TYPES } from '../systems/quest/place.js';
 import { getSeed, setSeed } from '../formats/dfRandom.js';
 import { REGION_NAMES, patchRegionIndex } from '../formats/mapsFile.js';
 import { questRail, journalLines, questTitleOf, QUEST_URGENT_SECONDS } from './questRail.js';
+import { localizedText, formatText } from '../systems/textManager.js';   // L10N3d: locationInRegionProvince, read in the player's language
 
 /** GetLastPlaceMentionedInMessage (DaggerfallQuestJournalWindow.cs:
  *  470-485): the LAST Place resource any macro in the message names.
@@ -237,7 +238,8 @@ export function entryTarget(message, where = {}) {
  *  the find-place box's own entry line (DaggerfallQuestJournalWindow.cs:
  *  459-462; AUDIT GUIDE D4). ONE HOME: the classic logbook's FIND_PLACE_TEXT reads it from
  *  here, and every enhanced face says a target's place in the same words. */
-export const locationInRegionText = (locationName, regionName) => `${locationName} in ${regionName} province`;
+export const locationInRegionText = (locationName, regionName) =>
+  formatText(localizedText('locationInRegionProvince', '{0} in {1} province'), locationName, regionName);   // L10N3d: in the player's language
 
 /** GUIDE2: the port's own words around a target - the enhanced faces'
  *  where line, its note and its door. */

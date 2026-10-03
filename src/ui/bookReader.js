@@ -48,16 +48,25 @@
 // `label.Position.y < pagePanel.Size.y && label.Position.y +
 // label.Size.y > 0` (:193-194) - overlap, not containment - and the
 // pixel cut comes from RestrictedRenderArea, which is the renderer's
-// scissor bracket here (the same one chargenArt.js:1076 uses for the
+// scissor bracket here (the same one chargenArt.js:1082 uses for the
 // question scroll). The old whole-row clip popped the boundary line
 // in and out instead of sliding it.
+//
+// L10N3f: A TRANSLATION'S BOOK. When the language has a -LOC book for
+// the file (systems/localizedBook.js), the window is handed that
+// LocalizedBook and lays its Content out as DFU does - the string
+// split at its newlines, each line through the importer
+// (ConvertStringToRSCTokens, textRsc.js markupTokens), CreateBookLabels
+// over the tokens (layoutLocalizedBookLines). Its [/color=] and
+// [/scale=] reach the label (a colour; wrapped at MaxWidth / scale, and
+// as tall as its rows times the scale - TextLabel.cs:604, :708, :789).
 
 import { loadImg, nativeMetrics, drawImg, shadowText } from './nativePanel.js';
 import { drawMenuBackdrop } from './chargenArt.js';
 import { drawText, measureText, makeFont } from './text.js';
 import { FntFile } from '../formats/fntFile.js';   // ROAD-D D10: FontPrefix's five faces
 import { wrapText } from './talkWindow.js';        // ROAD-D D10: TextLabel's word wrap, one home
-import { RSC, TOKEN_TEXT } from '../formats/textRsc.js';
+import { RSC, TOKEN_TEXT, RSC_CUSTOM, markupTokens } from '../formats/textRsc.js';
 import { BookFile } from '../formats/bookFile.js';
 import { loadBookPrices } from '../systems/books.js';   // A2: the book-price warm
 import { audio } from '../systems/audio.js';
@@ -99,7 +108,7 @@ export async function preloadBookArt(deps) {
 export const bookArtLoaded = () => !!_art;
 
 // ROAD-D D10: the five FNT faces FontPrefix can name. Each is loaded
-// in its OWN guard, the chargenArt.js:413 shape - a missing FNT costs
+// in its OWN guard, the chargenArt.js:418 shape - a missing FNT costs
 // that face and falls back to the host's font, never the book. The
 // version counter is what tells a window laid out before the fonts
 // landed to measure itself again.
@@ -129,10 +138,14 @@ export function placeBookLabels(lines, fontFor, maxWidth = BOOK_WRAP_WIDTH) {
   let y = 0;
   for (const line of lines) {
     const face = fontFor(line.font);
-    const rowH = face?.fnt?.fixedHeight ?? 0;
-    const rows = line.text && face ? wrapText(face.fnt, line.text, maxWidth) : [line.text ?? ''];
+    // L10N3f: a [/scale=]d label (a -LOC book's; a classic line is 1)
+    // wraps at `(int)(maxWidth / textScale)` and stands `rows *
+    // GlyphHeight * textScale` tall (TextLabel.cs:604, :708, :789).
+    const scale = line.scale ?? 1;
+    const rowH = (face?.fnt?.fixedHeight ?? 0) * scale;
+    const rows = line.text && face ? wrapText(face.fnt, line.text, scale === 1 ? maxWidth : Math.trunc(maxWidth / scale)) : [line.text ?? ''];
     const h = rows.length * rowH;
-    placed.push({ text: line.text, center: line.center, face, rows, rowH, y, h });
+    placed.push({ text: line.text, center: line.center, face, rows, rowH, y, h, color: line.color ?? null, scale });
     y += h;
   }
   return { placed, maxHeight: y };
@@ -213,14 +226,70 @@ export function layoutBookLines(bookFile) {
   return lines;
 }
 
+/** TryParseColor (:331-352): six hex digits as an opaque colour, else
+ *  the default text colour (null here). */
+export function parseBookColor(hex) {
+  if (!/^[0-9a-f]{6}$/i.test(hex ?? '')) return null;
+  return [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).concat(1);
+}
+/** TryParseScale (:354-362) into TextLabel.TextScale's setter
+ *  (TextLabel.cs:193-197): the number, at least 0.1; else 1. */
+export function parseBookScale(text) {
+  const n = Number.parseFloat(text);
+  return Number.isFinite(n) ? Math.max(0.1, n) : 1;
+}
+
+/**
+ * L10N3f - CreateBookLabels (DaggerfallBookReaderWindow.cs:208-261)
+ * over a LocalizedBook's Content, verbatim: the string split at '\n',
+ * each line converted by the importer (markupTokens), and then
+ *   - a line of no tokens is a Left, default-font, default-colour empty
+ *     label, and it resets alignment, colour and scale - NOT the font
+ *     (:221-228: currentFont is set only by a FontPrefix), so a book's
+ *     `[/font=2]` line reaches the title below the blank lines under it;
+ *   - FontPrefix, Color, JustifyLeft/Center and Scale set the sticky
+ *     state; an Image is DFU's ImageLabel, which draws a PNG from
+ *     StreamingAssets/Text/Books/BookImages - no pack the port installs
+ *     carries one, and an ImageLabel without its image stands 0 high
+ *     (ImageLabel.cs:45-56), so it adds nothing here;
+ *   - every other token is a label of its own text in the state
+ *     standing (the `default:` arm, :253-255).
+ * Lines in layoutBookLines' shape, with a -LOC book's colour ([r,g,b,a]
+ * or null) and scale.
+ */
+export function layoutLocalizedBookLines(content) {
+  const lines = [];
+  let center = false, font = 0, color = null, scale = 1;
+  for (const line of String(content ?? '').split('\n')) {
+    const tokens = markupTokens(line);
+    if (!tokens.length) {
+      lines.push({ text: '', center: false, font: 0, color: null, scale: 1 });
+      center = false; color = null; scale = 1;
+      continue;
+    }
+    for (const t of tokens) {
+      if (t.formatting === RSC.FontPrefix) font = t.x;
+      else if (t.formatting === RSC_CUSTOM.Color) color = parseBookColor(t.text);
+      else if (t.formatting === RSC.JustifyLeft) center = false;
+      else if (t.formatting === RSC.JustifyCenter) center = true;
+      else if (t.formatting === RSC_CUSTOM.Scale) scale = parseBookScale(t.text);
+      else if (t.formatting !== RSC_CUSTOM.Image) lines.push({ text: t.text ?? '', center, font, color, scale });
+    }
+  }
+  return lines;
+}
+
 // EB1: the hosts' openBook hook - makeOpenBookHook - moved to
 // ui/bookDoor.js, the ONE place that builds the reader this skin
 // wears; this file keeps the classic window and the layout law.
 
 export class BookReaderWindow {
-  constructor(bookFile) {
-    this.book = bookFile;
-    this.lines = layoutBookLines(bookFile);
+  /** `book` is a classic BookFile, or (L10N3f) the language's
+   *  LocalizedBook (systems/localizedBook.js) - its Content laid out as
+   *  DFU lays out every book it opens. */
+  constructor(book) {
+    this.book = book;
+    this.lines = typeof book?.content === 'string' ? layoutLocalizedBookLines(book.content) : layoutBookLines(book);
     // ROAD-D D10: measured at the first draw, because the port's
     // fonts arrive through an async seam where DFU's are ready at
     // Setup. Until then maxHeight is 0, which only makes ScrollBook's
@@ -301,12 +370,15 @@ export class BookReaderWindow {
         if (!bookLabelVisible(posY, label.h)) continue;
         if (!label.text) continue;
         const face = label.face ?? font;
+        // L10N3f: a -LOC book's [/color=] and [/scale=] (a classic line
+        // has neither: the default colour, scale 1, as it always drew).
+        const ink = { color: label.color ?? undefined, scale: label.scale ?? 1 };
         for (let r = 0; r < label.rows.length; r++) {
           const y = PAGE_PANEL.y + posY + r * label.rowH;
           if (label.center) {
-            shadowText(renderer, face, label.rows[r], m, PAGE_PANEL.x, y, { align: 'center', w: PAGE_PANEL.w });
+            shadowText(renderer, face, label.rows[r], m, PAGE_PANEL.x, y, { align: 'center', w: PAGE_PANEL.w, ...ink });
           } else {
-            shadowText(renderer, face, label.rows[r], m, PAGE_PANEL.x, y);
+            shadowText(renderer, face, label.rows[r], m, PAGE_PANEL.x, y, ink);
           }
         }
       }

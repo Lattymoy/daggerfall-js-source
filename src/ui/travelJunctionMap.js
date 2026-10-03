@@ -113,7 +113,7 @@ export class TravelJunctionMap {
     if (this._dirty || !this._tex) {
       if (this._key) renderer.releaseTexture?.('travelto', this._key);
       // bottom-up to top-down, as every generated texture in this port
-      // is flipped at upload (ui/travelMapWindow.js:1489-1496)
+      // is flipped at upload (ui/travelMapWindow.js:1525-1532)
       const flipped = new Uint32Array(this.buf.length);
       for (let row = 0; row < JUNCTION_TEX_H; row++) {
         flipped.set(this.buf.subarray((JUNCTION_TEX_H - row - 1) * JUNCTION_TEX_W, (JUNCTION_TEX_H - row) * JUNCTION_TEX_W), row * JUNCTION_TEX_W);

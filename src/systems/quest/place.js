@@ -27,6 +27,7 @@ import { placesTable } from './tables.js';
 import { mergeNamedBuildings, makeBuildingKey, blockBuildingCount } from '../talkTopics.js';
 import { generateBuildingName } from '../../world/buildingNames.js';
 import { surname, firstName, getNameBankOfRegion, GENDERS } from '../../characters/nameHelper.js';
+import { localizedText, getLocalizedLocationName, getLocalizedRegionName } from '../textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3e: the place names shown
 import { RDB_RESOURCE_TYPES } from '../../formats/blocksFile.js';
 
 export const Scopes = Object.freeze({ None: 'none', Local: 'local', Remote: 'remote', Fixed: 'fixed' });
@@ -527,10 +528,19 @@ export class Place extends QuestResource {
       const bank = getNameBankOfRegion(location.regionIndex);
       let name = surname(bank);
       if (!name) name = firstName(bank, [GENDERS.Male, GENDERS.Female][this._range(1)] ?? GENDERS.Male);
-      return THE_NAMED_RESIDENCE.replace('%s', name);
+      return localizedText('theNamedResidence', THE_NAMED_RESIDENCE).replaceAll('%s', name);
     }
-    return generateBuildingName(summary.nameSeed, summary.buildingType,
-      { ...(world.buildingNameOpts?.() ?? {}), locationName: location.name, regionName: location.regionName, factionId: summary.factionId });
+    // L10N3e: the name shows THIS location and region AS SHOWN (:1320-1321)
+    // - the location's by its map id, the region's by its index; the
+    // canonical pair stays the key a palace is chosen by, as the site's
+    // own locationName and regionName stay the quest's keys.
+    const shownRegionName = Number.isInteger(location.regionIndex)
+      ? getLocalizedRegionName(location.regionIndex, () => location.regionName) : location.regionName;
+    return generateBuildingName(summary.nameSeed, summary.buildingType, {
+      ...(world.buildingNameOpts?.() ?? {}), locationName: location.name, regionName: location.regionName,
+      shownLocationName: getLocalizedLocationName(location.mapTableData?.mapId, location.name), shownRegionName,
+      factionId: summary.factionId,
+    });
   }
 
   _hasBuildingType(location, buildingType) {
@@ -765,15 +775,17 @@ export class Place extends QuestResource {
     const sd = this.siteDetails;
     if (!sd) return false;
     const world = quest.hooks?.world;
+    // L10N3e: NameMacro2-4 SHOW the names (Place.cs:261, :265, :276,
+    // :281) - the location's by its map id, the region's by its index,
+    // each falling back to the canonical name the site keeps as its key.
     switch (macroType) {
       case 1: return sd.buildingName;           // NameMacro1
-      case 2: case 3: return sd.locationName;   // NameMacro2/3
+      case 2: case 3: return getLocalizedLocationName(sd.mapId, sd.locationName);   // NameMacro2/3
       case 4: {                                 // NameMacro4
-        if (sd.regionIndex === 0 && sd.regionName !== "Alik'r Desert") {
-          const index = world?.maps?.getRegionIndex?.(sd.regionName);
-          return world?.maps?.getRegion?.(index)?.name ?? sd.regionName;
-        }
-        return world?.maps?.getRegion?.(sd.regionIndex)?.name ?? sd.regionName;
+        const index = sd.regionIndex === 0 && sd.regionName !== "Alik'r Desert"
+          ? world?.maps?.getRegionIndex?.(sd.regionName) : sd.regionIndex;
+        const canonical = (i) => world?.maps?.getRegion?.(i)?.name ?? sd.regionName;
+        return Number.isInteger(index) ? getLocalizedRegionName(index, canonical) : canonical(index);
       }
       default: return false;
     }

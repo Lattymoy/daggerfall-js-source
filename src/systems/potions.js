@@ -46,9 +46,26 @@ import { templateByIndex } from './itemTemplates.js';
 // bundle. One home still: this file re-exports them, and every
 // reader's import stands.
 import {
-  POTION_RECIPES, POTION_DEFAULT_TEXTURE_RECORD, potionRecipeKey, potionKeyFromCauldron,
+  POTION_RECIPES, POTION_DEFAULT_TEXTURE_RECORD, potionRecipeKey, potionKeyFromCauldron, setPotionDisplayNames,
 } from './potionRecipes.js';
+import { localizedStrings } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 export { POTION_RECIPES, POTION_DEFAULT_TEXTURE_RECORD, potionRecipeKey, potionKeyFromCauldron };
+
+/** L10N3d: PotionRecipe.GetDisplayName (:225-236) is
+ *  `GetLocalizedText(DisplayNameKey)`, and each recipe's `name` IS its
+ *  DisplayNameKey - so its display name is this table's row for that
+ *  key, read each time it is shown. The leaf imports nothing (PROF12),
+ *  so it is handed the table here; the account service, which bundles
+ *  the leaf alone, reads the recipe's English. */
+const POTION_NAME_TEXT = localizedStrings({
+  resistFire: 'Resist Fire', resistFrost: 'Resist Frost', resistShock: 'Resist Shock', resistPoison: 'Resist Poison',
+  slowFalling: 'Slow Falling', waterBreathing: 'Water Breathing', chameleonForm: 'Chameleon Form',
+  invisibility: 'Invisibility', shadowForm: 'Shadow Form', cureDisease: 'Cure Disease', purification: 'Purification',
+  curePoison: 'Cure Poison', orcStrength: 'Orc Strength', freeAction: 'Free Action', stamina: 'Stamina',
+  healing: 'Healing', healTrue: 'Heal True', restorePower: 'Restore Power', levitation: 'Levitation',
+  waterWalking: 'Water Walking',
+});
+setPotionDisplayNames(POTION_NAME_TEXT);
 
 /** The broker's recipe lookup, built once. DFU keys its dictionary by
  *  the same hash the cauldron computes, which is the whole matching
@@ -204,9 +221,9 @@ export function gatherRecipe(recipe, availableTemplateIndices) {
 // BOTH OF THE SLICES THIS FILE WAITED ON HAVE LANDED:
 //  - the potion's EFFECT when drunk is the recipe->effect map, and it
 //    is potionBundle above (:138) - DrinkPotion's EffectBundleSettings
-//    (:903-947). U44 mounted it: scenes/hostMagic.js:1232-1238 builds the
-//    bundle, all three hosts hand `drinkPotion` down (world.js:9662,
-//    dungeonContext.js:1895, exterior.js:2553) and useItem.js:379
+//    (:903-947). U44 mounted it: scenes/hostMagic.js:1234-1240 builds the
+//    bundle, all three hosts hand `drinkPotion` down (world.js:9663,
+//    dungeonContext.js:1896, exterior.js:2554) and useItem.js:380
 //    routes the bottle into it.
 //  - RandomlyAddPotionRecipe(25) is live in shopStock.js:235-242
 //    (AUDIT 26 F129, DaggerfallLoot.cs:165 - the Alchemist arm), so a

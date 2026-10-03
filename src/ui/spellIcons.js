@@ -32,6 +32,7 @@ import { loadImg, drawImgCrop } from './nativePanel.js';
 // the same DFU member, so it is imported and re-exported rather than
 // written a second time.
 import { SPELL_ICON_COUNT } from '../systems/spellMaker.js';
+import { localizedStrings } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
 /** classicSpellIconsRowCount / classicSpellIconsCount (:36-37). */
 export const SPELL_ICON_ROW_COUNT = 20;
@@ -77,7 +78,7 @@ export const spellIconDim = () => (_art ? Math.trunc(_art.icons.w / SPELL_ICON_R
  *  The null matters: GetSpellIcon (:151-157) answers null outside
  *  [0, Count) and the panel then shows its black background. The
  *  `index % count` WRAP belongs to SpellMakerWindow.SetIcon, which
- *  clamps at MINT time - systems/spellMaker.js:132 already does it -
+ *  clamps at MINT time - systems/spellMaker.js:133 already does it -
  *  not to the collection, so a record carrying a bad icon byte reads
  *  as a black square here rather than as some other spell's icon. */
 export function spellIconRect(index) {
@@ -127,12 +128,17 @@ export function drawElementIcon(renderer, m, elementType, dst) {
  *  enum order, VERBATIM from DFU's own en table (StreamingAssets/
  *  Text/Master Localization CSV Files/Internal_Strings.csv :940-949).
  *  U42 first shipped these Title-Cased with a hyphen in the elements;
- *  DFU's are neither. The port has no localization table, so the en
- *  values stand in for the TextManager lookups. */
-export const TARGET_DESCRIPTIONS = Object.freeze([
-  'Caster only', 'By touch', 'Single target at range',
-  'Area around caster', 'Area at range',
-]);
-export const ELEMENT_DESCRIPTIONS = Object.freeze([
-  'Fire based', 'Cold based', 'Poison based', 'Shock based', 'Magic based',
-]);
+ *  DFU's are neither. L10N3d: DFU's keys, in enum order, each entry
+ *  read in the player's language when the tooltip reads it. */
+const TARGET_TEXT = localizedStrings({
+  casterOnly: 'Caster only', byTouch: 'By touch', singleTargetAtRange: 'Single target at range',
+  areaAroundCaster: 'Area around caster', areaAtRange: 'Area at range',
+});
+const ELEMENT_TEXT = localizedStrings({
+  fireBased: 'Fire based', coldBased: 'Cold based', poisonBased: 'Poison based', shockBased: 'Shock based', magicBased: 'Magic based',
+});
+/** A DFU-keyed table as a frozen list in its key order, each entry read when it is read. */
+const inEnumOrder = (table) => Object.freeze(Object.keys(table).reduce((list, key, i) =>
+  Object.defineProperty(list, i, { enumerable: true, get: () => table[key] }), []));
+export const TARGET_DESCRIPTIONS = inEnumOrder(TARGET_TEXT);
+export const ELEMENT_DESCRIPTIONS = inEnumOrder(ELEMENT_TEXT);

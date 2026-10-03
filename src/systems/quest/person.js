@@ -37,6 +37,10 @@ import { FACTION_TYPES } from '../../formats/factionFile.js';
 import { getNameBankOfRegion, fullName, GENDERS } from '../../characters/nameHelper.js';
 import { srand } from '../../formats/dfRandom.js';
 import { ORDERS } from '../guildVariants.js';
+import { getLocalizedLocationName, getLocalizedRegionName } from '../textManager.js';   // L10N3e: the place names shown
+import { getLocalizedFactionName, GrammarManager } from '../textManager.js';   // L10N3e: the faction names shown; L10N3g: the NPC's gender, for the grammar
+import { localizedText, TextCollections } from '../textManager.js';   // L10N3e: the flat's caption, from the flats table
+import { raceDisplayName } from '../talkSession.js';   // L10N3d: RaceTemplate.Name, in the player's language
 
 const DECL = /(Person|person) (?<symbol>[a-zA-Z0-9'_.-]+)/;
 const OPTIONS = /named (?<individualNPCName>[a-zA-Z0-9'_.-]+)|face (?<faceIndex>\d+)|(factionType|factiontype) (?<factionType>[a-zA-Z0-9'_.-]+)|faction (?<factionAlliance>[a-zA-Z0-9'_.-]+)|group (?<careerAlliance>[a-zA-Z0-9'_.-]+)|(?<gender>female|male)|(?<locationScope>local|remote)|(?<atHome>atHome|athome)/g;
@@ -65,6 +69,21 @@ export function getFactionDataOrThrow(world, factionID) {
   if (!record && factionID !== 0) throw new Error(`Could not find faction data for FactionID ${factionID}`);
   return record ?? ZERO_FACTION;
 }
+
+/** AssignDisplayName's test (Person.cs:612-614): an Individual or a
+ *  Daedra is named after its faction record - never the zero record a
+ *  failed lookup leaves, whose type 0 reads as Daedra. */
+const namedByFaction = (fd) => (fd?.type === FACTION_TYPES.Individual || fd?.type === FACTION_TYPES.Daedra) && fd?.id !== 0;
+
+/** L10N3e: A PERSON'S NAME AS SHOWN. AssignDisplayName names an
+ *  Individual or a Daedra `factionData.name` (Person.cs:617), and DFU's
+ *  record carries that name in the player's language (GetFactionData,
+ *  PersistentFactionData.cs:176). The port keeps `displayName`
+ *  canonical - it is saved, and the questor list, the dialog links and
+ *  the talk window's same-person test key on it - so the name is looked
+ *  up here, where it is shown, by the record's id. A drawn name stands. */
+export const shownPersonName = (person) => (namedByFaction(person?.factionData)
+  ? getLocalizedFactionName(person.factionData.id, person.displayName) : person?.displayName);
 
 /** KnightlyOrder.Orders in C# Enum.GetValues order - sorted by VALUE
  *  (KnightlyOrder.cs:49-61). */
@@ -178,20 +197,31 @@ export class Person extends QuestResource {
   expandMacro(macroType) {
     const quest = this.parentQuest;
     quest.lastResourceReferenced = this;
+    // L10N3g: "Send the person's gender to the grammar processor"
+    // (Person.cs:298) - a getter over the quest's LAST referenced
+    // resource (a Person's gender, a Foe's, male for anything else),
+    // read when the finished text is processed (QuestMacroHelper.cs:158)
+    // - so a later name in the same text is the one its tokens agree with
+    GrammarManager.grammarProcessor.setNPCGenderGetter(() => (quest.lastResourceReferenced?.gender === GENDERS.Female ? 'female' : 'male'));
     const dialogPlace = this.getDialogPlace();
     if (dialogPlace) quest.lastPlaceReferenced = dialogPlace;
     const world = quest.hooks?.world;
     switch (macroType) {
-      case 1:   // NameMacro1 - display name
-        return this.displayName;
+      case 1:   // NameMacro1 - display name, as shown (L10N3e: an Individual's by its record's id)
+        return shownPersonName(this);
       case 2:   // NameMacro2 - building name
         return dialogPlace ? dialogPlace.siteDetails.buildingName : 'BLANK';
+      // L10N3e: the town and the region AS SHOWN (Person.cs:319, :323) -
+      // by the site's map id and region index, the canonical names the
+      // fallback (the site keeps them as its keys)
       case 3:   // NameMacro3 - town name
-        return dialogPlace ? dialogPlace.siteDetails.locationName : 'BLANK';
-      case 4:   // NameMacro4 - region name
-        return dialogPlace
-          ? (world?.maps?.getRegion?.(dialogPlace.siteDetails.regionIndex)?.name ?? 'BLANK')
-          : 'BLANK';
+        return dialogPlace ? getLocalizedLocationName(dialogPlace.siteDetails.mapId, dialogPlace.siteDetails.locationName) : 'BLANK';
+      case 4: {   // NameMacro4 - region name
+        if (!dialogPlace) return 'BLANK';
+        const index = dialogPlace.siteDetails.regionIndex;
+        const canonical = (i) => world?.maps?.getRegion?.(i)?.name ?? 'BLANK';
+        return Number.isInteger(index) ? getLocalizedRegionName(index, canonical) : canonical(index);
+      }
       case 5: {   // DetailsMacro - the flat caption ("young lady in green")
         // GetFlatDetailsString (Person.cs:354-383). FactionFile.GetFlatData:
         // archive = flat >> 7, record = flat & 0x7f.
@@ -208,15 +238,27 @@ export class Person extends QuestResource {
         // an unexpanded macro. The port returned false and left
         // "=symbol_" standing in the text.
         const flat = (this.npcGender === GENDERS.Male ? this.factionData?.flat1 : this.factionData?.flat2) ?? 0;
-        return world?.flatCaption?.(flat >> 7, flat & 0x7f)
-          ?? raceById(this.race)?.name ?? false;
+        const archive = flat >> 7, record = flat & 0x7f;
+        // L10N3e: the caption is SHOWN from the flats table by the flat's
+        // id - GetLocalizedText(flatID, TextFlats) (Person.cs:375-380),
+        // FlatsFile.GetFlatID being (archive << 7) + record - FLATS.CFG's
+        // own caption the English; and the race's name as the language
+        // has it (RaceTemplate.Name, :382)
+        const caption = world?.flatCaption?.(archive, record);
+        if (caption != null) return localizedText(String((archive << 7) + record), caption, TextCollections.TextFlats);
+        const race = raceById(this.race);
+        return race ? raceDisplayName(race.key) : false;
       }
       case 6: {   // FactionMacro
+        // L10N3e: both names are GetFactionData's in DFU, in the player's
+        // language (Person.cs:335-336 asks for the guild, :342 reads the
+        // record setup asked for) - looked up here by the record's id
         if (this.isQuestor) {
           const guild = world?.getFactionData?.(quest.factionId);
-          return guild ? guild.name : false;
+          return guild ? getLocalizedFactionName(quest.factionId, guild.name) : false;
         }
-        return this.factionData?.name ?? false;
+        const name = this.factionData?.name;
+        return name != null ? getLocalizedFactionName(this.factionData.id, name) : false;
       }
       default:
         return false;
@@ -505,9 +547,8 @@ export class Person extends QuestResource {
     if (this.factionData?.type === FACTION_TYPES.WitchesCoven || this.factionData?.id === 512) {
       this.npcGender = GENDERS.Female;
     }
-    if ((this.factionData?.type === FACTION_TYPES.Individual || this.factionData?.type === FACTION_TYPES.Daedra)
-      && this.factionData?.id !== 0) {
-      this.displayName = this.factionData.name;
+    if (namedByFaction(this.factionData)) {
+      this.displayName = this.factionData.name;   // the CANONICAL name - the key; shownPersonName shows it
       return;
     }
     // nameSeed -1 draws DateTime.Now.Millisecond in C# - a wall-clock

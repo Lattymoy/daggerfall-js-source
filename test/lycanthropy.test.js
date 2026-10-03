@@ -242,7 +242,7 @@ test('V2a: the free spell is record 92, name-stripped, and the spellbook already
   // AUDIT 17e recorded. Now the shapes meet.
   assert.equal(spellPointCost(spell, () => 999), 0, 'the book casts it free');
   assert.equal(WINDOW_TAG, LYCANTHROPY_SPELL_TAG, 'one spelling, re-exported');
-  assert.match(read('src/ui/spellbookWindow.js'), /tag === LYCANTHROPY_SPELL_TAG.*CANNOT_DELETE_WERE/,
+  assert.match(read('src/ui/spellbookWindow.js'), /tag === LYCANTHROPY_SPELL_TAG.*cannotDeleteWereText\(\)/,
     'and the delete refusal keys on the same tag');
   // granting twice does not stack
   grantLycanthropySpell(p);

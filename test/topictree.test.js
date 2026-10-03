@@ -16,7 +16,7 @@ import assert from 'node:assert/strict';
 import {
   TopicTree, LIST_ITEM_TYPE, QUESTION_TYPE, NPC_KNOWLEDGE,
   QUEST_INFO_RESOURCE_TYPE, BUILDING_HINT_TYPE, INFO_FACTION_IDS,
-  FACTIONS_AND_BUILDINGS, KNIGHTLY_ORDER_REGIONS, REGIONAL_BUILDING_NAMES,
+  FACTIONS_AND_BUILDINGS, KNIGHTLY_ORDER_REGIONS, regionalBuildingNames,
   EN, newListItem, newQuestResourceInfo, getQuestInfoResourceType,
   buildingTypeToGroupString, checkBuildingTypeInSkipList,
 } from '../src/systems/topicTree.js';
@@ -146,7 +146,7 @@ test('the info-faction list, the regional tables and the skip list are verbatim'
     0x28, 0x29,
     0x0f, 0x0a, 0x0d, 0x2, 0x0, 0x3, 0x5, 0x6, 0x8, 0xc,
   ]);
-  assert.deepEqual([...REGIONAL_BUILDING_NAMES], [
+  assert.deepEqual([...regionalBuildingNames()], [
     'Temple of Akatosh', 'Temple of Arkay', 'Temple of Dibella', 'Temple of Julianos',
     'Temple of Kynareth', 'Temple of Mara', 'Temple of Stendarr', 'Temple of Zen',
     'Order of the Raven', 'Knights of the Dragon', 'Knights of the Owl', 'Order of the Candle',
@@ -157,16 +157,16 @@ test('the info-faction list, the regional tables and the skip list are verbatim'
     'Bookstore', 'Clothing store', 'Gem store', 'Pawn shop',
   ]);
   assert.equal(FACTIONS_AND_BUILDINGS.length, 30);
-  assert.equal(REGIONAL_BUILDING_NAMES.length, 30, 'one caption per FactionsAndBuildings row');
+  assert.equal(regionalBuildingNames().length, 30, 'one caption per FactionsAndBuildings row');
   assert.deepEqual({ ...QUESTION_TYPE }, {
     NoQuestion: 0, News: 1, WhereAmI: 2, OrganizationInfo: 3, Work: 4,
     LocalBuilding: 5, Regional: 6, Person: 7, Thing: 8,
     QuestLocation: 9, QuestPerson: 10, QuestItem: 11,
   });
   assert.deepEqual([...KNIGHTLY_ORDER_REGIONS], [0x05, 0x11, 0x12, 0x14, 0x15, 0x16, 0x17, 0x2b, 0x33, 0x37]);
-  assert.equal(REGIONAL_BUILDING_NAMES[8], 'Order of the Raven', 'row 8 starts the knightly orders');
-  assert.equal(REGIONAL_BUILDING_NAMES[18], 'Mages Guild');
-  assert.equal(REGIONAL_BUILDING_NAMES[20], 'Tavern', 'row 20 starts the stores');
+  assert.equal(regionalBuildingNames()[8], 'Order of the Raven', 'row 8 starts the knightly orders');
+  assert.equal(regionalBuildingNames()[18], 'Mages Guild');
+  assert.equal(regionalBuildingNames()[20], 'Tavern', 'row 20 starts the stores');
   // the FULL skip predicate - AllValid and Special1-4 included
   for (const t of [BUILDING_TYPES.AllValid, BUILDING_TYPES.FurnitureStore, BUILDING_TYPES.House1,
     BUILDING_TYPES.House6, BUILDING_TYPES.HouseForSale, BUILDING_TYPES.Palace, BUILDING_TYPES.Ship,

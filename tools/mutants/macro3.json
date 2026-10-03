@@ -38,7 +38,7 @@
  {
   "name": "MACRO-3-unidentified-lists-its-powers-anyway",
   "file": "src/systems/itemPowers.js",
-  "old": "  if (!identified) return [POWERS_UNKNOWN_TEXT];\n",
+  "old": "  if (!identified) return [localizedText('powersUnknown', POWERS_UNKNOWN_TEXT)];\n",
   "new": "",
   "tests": [
    "test/macro3_nowalk.test.js"

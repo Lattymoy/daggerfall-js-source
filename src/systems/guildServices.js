@@ -36,6 +36,7 @@
 // fits - the same range C# int holds.
 import { SKILLS } from './skills.js';
 import { isMember } from './guilds.js';
+import { localizedText, localizedTable } from './textManager.js';   // L10N3d: the deity lines and Stendarr's mercy
 
 /** Services.GuildServices - the service kinds. */
 export const GUILD_SERVICES = Object.freeze([
@@ -162,11 +163,13 @@ export const TEMPLE_TRAINING_SKILLS = Object.freeze({
 });
 
 /** MACRO-4: %gdd - Temple.templeData's deityDesc column
- *  (Temple.cs:134-141), DFU's Internal_Strings akatoshDesc..zenDesc. */
-export const DEITY_DESCRIPTIONS = Object.freeze({
-  Akatosh: 'God of Time', Arkay: 'God of Birth and Death', Dibella: 'Goddess of Beauty',
-  Julianos: 'God of Logic', Kynareth: 'Goddess of Air', Mara: 'Goddess of Love',
-  Stendarr: 'God of Mercy', Zenithar: 'God of Work and Commerce',
+ *  (Temple.cs:134-141), DFU's Internal_Strings akatoshDesc..zenDesc,
+ *  each read through its key when a record quotes it (L10N3d). */
+export const DEITY_DESCRIPTIONS = localizedTable({
+  Akatosh: ['akatoshDesc', 'God of Time'], Arkay: ['arkayDesc', 'God of Birth and Death'],
+  Dibella: ['dibellaDesc', 'Goddess of Beauty'], Julianos: ['julianosDesc', 'God of Logic'],
+  Kynareth: ['kynarethDesc', 'Goddess of Air'], Mara: ['maraDesc', 'Goddess of Love'],
+  Stendarr: ['stendarDesc', 'God of Mercy'], Zenithar: ['zenDesc', 'God of Work and Commerce'],
 });
 
 /** Which skills a guild will train. NULL for a knightly order, which
@@ -292,7 +295,7 @@ function knightlyCanAccessService(membership, service) {
 // - and above rank 8 the service is FREE, so the whole paid-teleport
 // feature was unreachable by exactly the players it is written for.
 //
-// The registry is the formula registry's shape (combat/formulas.js:56-59,
+// The registry is the formula registry's shape (combat/formulas.js:57-60,
 // FormulaHelper.RegisterOverride): one entry per guild name, an arm that
 // returns `undefined` to DECLINE so the stock law stands, and the mod's
 // own install as the only writer. This file stays a LEAF - the mod
@@ -405,6 +408,8 @@ export function avoidDeath(memberships, { submerged = false, rolls = Math.random
 }
 /** GetLocalizedText("avoidDeath") - DFU's en table, m_Id 106. */
 export const AVOID_DEATH_TEXT = 'By the mercy of Stendarr, you survive certain death!';
+/** L10N3d: ...as the HUD says it (Temple.cs:456), in the player's language. */
+export const avoidDeathText = () => localizedText('avoidDeath', AVOID_DEATH_TEXT);
 
 /** FightersGuild.AlterReward - a member's quest reward GROWS with rank. */
 export const alterReward = (guild, m, reward) =>

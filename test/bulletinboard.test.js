@@ -218,7 +218,7 @@ test('worldModes puts the board in the SAME ray, at the ray\'s reach', () => {
   assert.ok(arm.includes('if (d === null || d > BULLETIN_BOARD_ACTIVATION_DISTANCE) {'), 'the :709 gate');
   // AUDIT 64 F34: PlayerActivate.cs:711 speaks it through
   // DaggerfallUI.SetMidScreenText - the centred label, not the queue.
-  assert.ok(arm.includes('setMidScreenText(TOO_FAR_AWAY_TEXT);'), 'the :711 refusal, and it returns');
+  assert.ok(arm.includes('setMidScreenText(tooFarAwayText());'), 'the :711 refusal, and it returns');
   assert.ok(arm.includes('bulletinBoardRows(locationName, bulletinBoardNews?.() ?? null, tokenRows)'),
     'the news is fetched BEFORE the box is composed (:716)');
   assert.ok(arm.includes('townTalk?.showOverlay?.(new ChoiceWindow'),
@@ -235,7 +235,7 @@ test('the probe exterior host stands its boards too - the standing host rule', (
     "no mill in this host - the board opens on the location name alone, C#'s own empty arm");
   // ...AND THE NAME IS NOT FREE. The heading is PlayerGPS
   // .CurrentLocalizedLocationName (:721), which the arm reads off
-  // `buildingDirectory` (worldModes.js:2652) and off nothing else - so
+  // `buildingDirectory` (worldModes.js:2670) and off nothing else - so
   // a host that stands boards without handing one over opens the box
   // on a BLANK parchment, not "the location name alone": the head row
   // composes empty and bulletinBoard.js:97 shifts the starter row off,

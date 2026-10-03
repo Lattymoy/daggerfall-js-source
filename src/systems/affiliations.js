@@ -15,6 +15,7 @@
 import { activeMemberships, GUILDS, getTitle } from './guilds.js';
 import { templeOf, orderOf } from './guildVariants.js';
 import { getReputation } from './factionRep.js';
+import { getLocalizedFactionName } from './textManager.js';   // L10N3e: the faction's name in the player's language
 
 /** The membership book stores the port's canonical guild-record name;
  *  a temple's or an order's is its variant's (guildVariants.js). */
@@ -34,6 +35,12 @@ export function guildForMembership(membership) {
  * `GetTitle()` and `GetReputation(playerEntity)`. The vampire-aware book
  * (activeMemberships), so a vampire's clan stands where it does in the
  * sheet. A membership naming no guild (hand-built, legacy) is no row.
+ *
+ * L10N3e: GetFactionData hands the name back through
+ * GetLocalizedFactionName (PersistentFactionData.cs:176), so the row
+ * shows a translation's name for the faction id - FACTION.TXT's where
+ * the language has none. The book is only ever drawn; the faction
+ * record keeps FACTION.TXT's name, which is the key.
  * @param {any} entity
  * @returns {{ affiliation: string, title: string, rep: number, factionId: number }[]}
  */
@@ -42,8 +49,9 @@ export function affiliations(entity) {
   for (const membership of Object.values(activeMemberships(entity) ?? {})) {
     const guild = guildForMembership(membership);
     if (!guild) continue;
+    const name = entity?.factionRep?.dict?.get?.(guild.factionId)?.name;
     out.push({
-      affiliation: entity?.factionRep?.dict?.get?.(guild.factionId)?.name ?? guild.name,
+      affiliation: name != null ? getLocalizedFactionName(guild.factionId, name) : guild.name,
       title: getTitle(membership, entity, guild),
       rep: entity?.factionRep ? getReputation(entity.factionRep, guild.factionId) : 0,
       factionId: guild.factionId,

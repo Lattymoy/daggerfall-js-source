@@ -25,6 +25,7 @@ import { GUILD_GROUPS, SOCIAL_GROUPS, FACTION_TYPES } from '../formats/factionFi
 import { hasGuildService, npcServiceKind, canAccessService } from './guildServices.js';
 import { isMember, joinedGuildOfGroup, updateRank } from './guilds.js';
 import { isDivine } from './guildVariants.js';
+import { localizedText, localizedTable } from './textManager.js';   // L10N3d: the labels and the refusal
 
 /** The four ids the window quotes by name (:29-32), plus the two
  *  OnPush records and the spymaster greeting (:455). */
@@ -40,28 +41,30 @@ export const SERVICE_MEMBERS_ONLY = 'My services are reserved for members only.'
 
 /** Services.GetServiceLabelText (Services.cs :354-406), from DFU's
  *  Internal_Strings table. The button label is the ONLY text the
- *  popup draws itself - the rest of its art has the words baked in. */
-export const SERVICE_LABEL = Object.freeze({
-  Training: 'Training',
-  Quests: 'Get Quest',
-  Repair: 'Repairs',
-  Identify: 'Identify',
-  Donate: 'Make Donation',
-  CureDisease: 'Cure Disease',
-  BuyPotions: 'Buy Potions',
-  MakePotions: 'Make Potions',
-  BuySpells: 'Buy Spells',
-  BuySpellsMages: 'Buy Spells',      // the two share one label (:379-381)
-  MakeSpells: 'Make Spells',
-  BuyMagicItems: 'Buy Magic Items',
-  MakeMagicItems: 'Make Magic Items',
-  SellMagicItems: 'Sell Magic Items',
-  Teleport: 'Teleportation',
-  DaedraSummoning: 'Daedra Summoning',
-  Spymaster: 'Spymaster',
-  BuySoulgems: 'Buy Soulgems',
-  ReceiveArmor: 'Receive Armor',
-  ReceiveHouse: 'Receive House',
+ *  popup draws itself - the rest of its art has the words baked in.
+ *  Keyed by the service, each label read through its DFU key when the
+ *  button is drawn (L10N3d). */
+export const SERVICE_LABEL = localizedTable({
+  Training: ['serviceTraining', 'Training'],
+  Quests: ['serviceQuests', 'Get Quest'],
+  Repair: ['serviceRepairs', 'Repairs'],
+  Identify: ['serviceIdentify', 'Identify'],
+  Donate: ['serviceDonate', 'Make Donation'],
+  CureDisease: ['serviceCure', 'Cure Disease'],
+  BuyPotions: ['serviceBuyPotions', 'Buy Potions'],
+  MakePotions: ['serviceMakePotions', 'Make Potions'],
+  BuySpells: ['serviceBuySpells', 'Buy Spells'],
+  BuySpellsMages: ['serviceBuySpells', 'Buy Spells'],      // the two share one label (:379-381)
+  MakeSpells: ['serviceMakeSpells', 'Make Spells'],
+  BuyMagicItems: ['serviceBuyMagicItems', 'Buy Magic Items'],
+  MakeMagicItems: ['serviceMakeMagicItems', 'Make Magic Items'],
+  SellMagicItems: ['serviceSellMagicItems', 'Sell Magic Items'],
+  Teleport: ['serviceTeleport', 'Teleportation'],
+  DaedraSummoning: ['serviceDaedraSummon', 'Daedra Summoning'],
+  Spymaster: ['serviceSpymaster', 'Spymaster'],
+  BuySoulgems: ['serviceBuySoulgems', 'Buy Soulgems'],
+  ReceiveArmor: ['serviceReceiveArmor', 'Receive Armor'],
+  ReceiveHouse: ['serviceReceiveHouse', 'Receive House'],
 });
 export const serviceLabel = (service) => SERVICE_LABEL[service] ?? '?';   // DFU's `default: "?"`
 
@@ -142,7 +145,7 @@ export function serviceAccess(guild, membership, service) {
   if (canAccessService(guild, membership, service)) return { allowed: true };
   return isMember(membership)
     ? { allowed: false, textId: INSUFFICIENT_RANK_ID }
-    : { allowed: false, text: SERVICE_MEMBERS_ONLY };
+    : { allowed: false, text: localizedText('serviceMembersOnly', SERVICE_MEMBERS_ONLY) };   // :325
 }
 
 /** Whether any live effect is holding an attribute DOWN -

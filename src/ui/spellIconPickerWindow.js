@@ -54,6 +54,7 @@ import { drawScreenDimBackdrop } from './chargenArt.js';
 import { drawSpellIcon, SPELL_ICON_COUNT } from './spellIcons.js';
 import { drawText } from './text.js';
 import { VerticalScrollBar, drawScrollThumb } from './verticalScrollBar.js';   // ROAD-G G4: the scroller is DFU's component, not a painted rectangle
+import { localizedText } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
 // #region UI Rects (:27-31), verbatim - the main panel is centred.
 export const ICON_PICKER_PANEL_SIZE = Object.freeze([274, 180]);
@@ -90,7 +91,7 @@ export function buildIconPickerLayout(iconCount = SPELL_ICON_COUNT) {
   const items = [];
   let xpos = 2, ypos = 2;
   const startX = xpos;
-  items.push({ type: 'header', text: CLASSIC_ICONS_HEADER, x: xpos, y: ypos + 4 });
+  items.push({ type: 'header', text: localizedText('classicIcons', CLASSIC_ICONS_HEADER), x: xpos, y: ypos + 4 });
   ypos += ICON_SPACING;
   let rowCount = 0;
   for (let i = 0; i < iconCount; i++) {

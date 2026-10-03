@@ -24,6 +24,7 @@
 import { DEFAULTS, tierOf, UNAVAILABLE } from '../systems/settings.js';
 import { READOUT } from './settingsCopy.js';
 import { FRAME_CAP_FLOOR, FRAME_CAP_STOPS } from '../systems/frameCap.js';   // FPS-CAP1: the cap's floor and the rates its row walks
+import { localizedText, localizedTextList, TextCollections } from '../systems/textManager.js';   // L10N3d: DFU's words, read in the player's language
 
 /** DFU's own value names, in DFU's order. `encode:'index'` means the
  *  store holds the position; `'token'` means it holds the word. */
@@ -44,6 +45,41 @@ export const ENUM_LAW = Object.freeze({
   'Video/PostProcessingInRetroMode': { values: ['Off', 'Posterization (full)', 'Posterization (-sky)', 'Palettization (full)', 'Palettization (-sky)'], encode: 'index', cite: 'RetroModeConfigPage:51-62' },
   'Video/RetroModeAspectCorrection': { values: ['Off', '4:3', '16:10'], encode: 'index', cite: 'RetroModeConfigPage:64-73 (RetroModeAspects)' },
 });
+
+/** L10N3d: THE WORDS AN ENUM ROW SHOWS, in the player's language. The
+ *  values above stay the LAW - the order and count the store holds an
+ *  index into - and are these words' English. DFU reads them out of its
+ *  text tables, so the row reads them there, when it is drawn:
+ *  DaggerfallAdvancedSettingsWindow's TextSettings lists (:248, :318,
+ *  :370, :372) and RetroModeConfigPage's Internal_Strings (:41-43,
+ *  :53-57, :68-72). FourThree is DFU's shipped "4:3"
+ *  (Internal_Strings_en.asset), not the master CSV's "4:03". Every other
+ *  enum row shows its law's words: CameraRecoilStrength's and
+ *  WeaponSwingMode's are the port's own (DFU's lists say "Low (25%)" and
+ *  "Vanilla"), Handedness is DFU's checkbox, and MeleeAttackDetection's
+ *  list is missing from DFU's master Internal_Settings table. */
+export function enumWords(key) {
+  switch (key) {
+    case 'Video/RandomDungeonTextures':
+      return localizedTextList('dungeonTextureModes', ['Classic', 'Climate', 'Climate Only', 'Random', 'Random Only'], TextCollections.TextSettings);
+    case 'Video/QualityLevel':
+      return localizedTextList('qualitySettings', ['Fastest', 'Fast', 'Simple', 'Good', 'Beautiful', 'Fantastic'], TextCollections.TextSettings);
+    case 'Video/MainFilterMode': case 'GUI/GUIFilterMode': case 'GUI/VideoFilterMode':
+      return localizedTextList('filterModes', ['Point', 'Bilinear', 'Trilinear'], TextCollections.TextSettings);
+    case 'GUI/HelmAndShieldMaterialDisplay':
+      return localizedTextList('helmAndShieldMaterialDisplay', ['Off', 'No Leather Chain', 'No Leather', 'On'], TextCollections.TextSettings);
+    case 'Video/RetroRenderingMode':
+      return [localizedText('retroModeOff', 'Off'), localizedText('retroMode320x200', '320x200'), localizedText('retroMode640x400', '640x400')];
+    case 'Video/PostProcessingInRetroMode':
+      return [localizedText('off', 'Off'), localizedText('posterizationFull', 'Posterization (full)'),
+        localizedText('posterizationMinusSky', 'Posterization (-sky)'), localizedText('palettizationFull', 'Palettization (full)'),
+        localizedText('palettizationMinusSky', 'Palettization (-sky)')];
+    case 'Video/RetroModeAspectCorrection':
+      return [localizedText('off', 'Off'), localizedText('FourThree', '4:3'), localizedText('SixteenTen', '16:10')];
+    default:
+      return ENUM_LAW[key]?.values ?? [];
+  }
+}
 
 /** {min,max,step,coarse,format,source}. format: pct | mult | a unit.
  *  FPS-CAP1: `stops` makes the control walk those values instead of the range (step = one stop, coarse = that
@@ -131,7 +167,7 @@ export function formatValue(key, raw) {
     const law = ENUM_LAW[key];
     if (law.encode === 'index') {
       const i = parseInt(raw, 10);
-      return Number.isInteger(i) && law.values[i] !== undefined ? law.values[i] : String(raw ?? '');
+      return Number.isInteger(i) && law.values[i] !== undefined ? (enumWords(key)[i] ?? law.values[i]) : String(raw ?? '');
     }
     return law.values.includes(raw) ? raw : String(raw ?? '');
   }

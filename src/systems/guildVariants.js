@@ -27,16 +27,22 @@
 import { SKILLS } from './skills.js';
 import { GUILDS, activeMemberships } from './guilds.js';   // TP1: GuildManager's Memberships.Values
 import { GUILD_GROUPS } from '../formats/factionFile.js';
+import { localizedText, localizedStrings, localizedTable, splitTextList } from './textManager.js';   // L10N3d
 
 /** The two variant-keyed rank lists, from DFU's Internal_Strings
- *  ("templeRanks" / "knightlyOrderRanks"). ALL EIGHT temples share
- *  one list and ALL TEN orders share the other - the title is the
- *  GROUP's, not the divine's or the order's. "Knight Brother" is one
- *  title (GetLocalizedTextList splits on newlines only). */
-export const TEMPLE_RANK_TITLES = Object.freeze(['Novice', 'Initiate', 'Acolyte',
-  'Adept', 'Curate', 'Disciple', 'Brother', 'Diviner', 'Master', 'Patriarch']);
-export const KNIGHTLY_RANK_TITLES = Object.freeze(['Aspirant', 'Squire', 'Gallant',
-  'Chevalier', 'Keeper', 'Knight Brother', 'Commander', 'Marshall', 'Seneschal', 'Paladin']);
+ *  ("templeRanks" / "knightlyOrderRanks"), each held as the table holds
+ *  it - one entry, a title a line. ALL EIGHT temples share one list and
+ *  ALL TEN orders share the other - the title is the GROUP's, not the
+ *  divine's or the order's. "Knight Brother" is one title
+ *  (GetLocalizedTextList splits on newlines only). */
+const TEMPLE_RANKS = 'Novice\nInitiate\nAcolyte\nAdept\nCurate\nDisciple\nBrother\nDiviner\nMaster\nPatriarch';
+const KNIGHTLY_RANKS = 'Aspirant\nSquire\nGallant\nChevalier\nKeeper\nKnight Brother\nCommander\nMarshall\nSeneschal\nPaladin';
+export const TEMPLE_RANK_TITLES = Object.freeze(splitTextList(TEMPLE_RANKS));
+export const KNIGHTLY_RANK_TITLES = Object.freeze(splitTextList(KNIGHTLY_RANKS));
+/** L10N3d: RankTitles (Temple.cs:272, KnightlyOrder.cs:77), read when a
+ *  title is shown - a language's entry split into its lines, else the
+ *  group's one English list itself. */
+const shownRankTitles = (text, en, titles) => (text === en ? titles : splitTextList(text));
 
 /** Temple.Divines (:49-59) - value = factionId. */
 export const DIVINES = Object.freeze({
@@ -147,7 +153,7 @@ export function templeOf(divine) {
     factionId,
     skills: TEMPLE_SKILLS[divine],
     text: { ...TEMPLE_TEXT, welcome: d.welcome, promotion: d.promotion },
-    rankTitles: TEMPLE_RANK_TITLES,
+    get rankTitles() { return shownRankTitles(localizedText('templeRanks', TEMPLE_RANKS), TEMPLE_RANKS, TEMPLE_RANK_TITLES); },
     // Temple.cs:389-398 overrides GetTitle twice over: a non-member
     // reads "nonMember" rather than their name, and ranks 9 and 6 are
     // gender-swapped - DFU annotating each with its reason ("Not
@@ -155,7 +161,7 @@ export function templeOf(divine) {
     // F7 worked out WHICH ranks; U23 read the strings.
     nonMemberTitle: 'nonMember',
     femaleTitleRanks: [9, 6],
-    femaleRankTitles: { 9: 'Matriarch', 6: 'Sister' },
+    femaleRankTitles: localizedTable({ 9: ['matriarch', 'Matriarch'], 6: ['sister', 'Sister'] }),
     promotionForRank: (rank) => templePromotionId(d, rank),
     services: d,
   };
@@ -173,8 +179,8 @@ export function orderOf(order) {
     factionId,
     skills: KNIGHTLY_SKILLS,
     text: KNIGHTLY_TEXT,
-    rankTitles: KNIGHTLY_RANK_TITLES,
-    femaleRankTitles: { 5: 'Knight Sister' },   // KnightlyOrder.cs:123-124
+    get rankTitles() { return shownRankTitles(localizedText('knightlyOrderRanks', KNIGHTLY_RANKS), KNIGHTLY_RANKS, KNIGHTLY_RANK_TITLES); },
+    femaleRankTitles: localizedTable({ 5: ['knightSister', 'Knight Sister'] }),   // KnightlyOrder.cs:123-124
     // KnightlyOrder.cs:83-86 overrides IsSatisfyQuestReqByLevel to true -
     // the orders and the Mages Guild are the only two of the six.
     questReqByLevel: true,
@@ -218,6 +224,18 @@ export function getDivine(factionDict, factionId) {
   const f = factionDict?.get(factionId);
   return (f && DIVINE_BY_ID.get(f.parent)) || null;
 }
+
+/** L10N3d: Temple.GetDivineLocalized (:323-330) - the divine's name
+ *  through GetLocalizedText, keyed by the name itself. The %god of the
+ *  cure and donation boxes (DaggerfallGuildServiceCureDisease.cs:160,
+ *  DaggerfallGuildServiceDonation.cs:108); the temple's own macro source
+ *  answers the bare name (:559-562). Handed the name GetDivine already
+ *  resolved, where DFU re-resolves the faction id. */
+const DIVINE_NAMES = localizedStrings({
+  Akatosh: 'Akatosh', Arkay: 'Arkay', Dibella: 'Dibella', Julianos: 'Julianos',
+  Kynareth: 'Kynareth', Mara: 'Mara', Stendarr: 'Stendarr', Zenithar: 'Zenithar',
+});
+export const getDivineLocalized = (divine) => (Object.hasOwn(DIVINE_NAMES, divine) ? DIVINE_NAMES[divine] : divine);
 
 /** KnightlyOrder.GetOrder (:103-110). No parent walk - the orders are
  *  looked up directly, and DFU throws otherwise. Null here, per the

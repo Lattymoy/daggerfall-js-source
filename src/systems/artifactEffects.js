@@ -40,6 +40,7 @@ import { MOBILE_TYPES } from '../characters/mobileTypes.js';
 import { liveStat as liveStatOf, increaseDrainMagnitude } from './statMods.js';
 import { markWholeBlow } from './partyScale.js';   // AUDIT PSCALE1 DOORS-1: the Razor's strike is a kill
 import { SOCIAL_GROUP_COUNT } from '../formats/factionFile.js';   // AUDIT 63 F6: the Masque raises ALL eleven groups (MasqueOfClavicusEffect.cs:39-43 over FactionFile.cs:552-566)
+import { localizedText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
 /** ItemEnums.ArtifactsSubTypes (:238-262), the payload-bearing nine
  *  named; Hircine_Ring (3) has no effect class - lycanthropy reads it
@@ -60,9 +61,10 @@ export const SUMMON_DURABILITY_LOSS = 100;
 export const OGHMA_BONUS_POOL = 30;
 /** MaceOfMolagBalEffect.cs:36 - strikes decay after 12 game minutes. */
 export const MACE_MAX_INCREASE_ROUNDS = 12;
-/** The localized noMonstersNearby line, as a literal (the standing
- *  no-localization departure). */
+/** The localized noMonstersNearby line (SanguineRoseEffect.cs:51,
+ *  SkullOfCorruptionEffect.cs:89) - its English, and as the player reads it. */
 export const NO_MONSTERS_NEARBY_TEXT = 'There are no monsters nearby.';
+const noMonstersNearbyText = () => localizedText('noMonstersNearby', NO_MONSTERS_NEARBY_TEXT);
 
 /** WabbajackEffect.careerIDs (:23-41), the seventeen-entry table in
  *  the effect's own order, over the port's ONE mobile-type home. */
@@ -123,7 +125,7 @@ export const hasArtifactEffect = (item) => (Array.isArray(item?.enchantments) ? 
 /** IsRingOfNamira / isWearingHircineRing's shape: an EQUIPPED item
  *  carrying SpecialArtifactEffect with the given subtype param. */
 export function isWearingArtifact(entity, subtype) {
-  const slots = equipTableOf(entity);   // the SLOTS dict itself (equip.js:40)
+  const slots = equipTableOf(entity);   // the SLOTS dict itself (equip.js:41)
   if (!slots) return false;
   for (const item of Object.values(slots)) {
     if (hasArtifactSubtype(item, subtype)) return true;
@@ -221,7 +223,7 @@ const HANDLERS = new Map([
   [ARTIFACTS.SanguineRose, {
     used({ ctx }) {
       const nearby = (ctx?.nearbyFoes?.(SUMMON_ENEMY_RANGE) ?? []).filter((n) => n.team !== 'PlayerAlly');
-      if (!nearby.length) { ctx?.say?.(NO_MONSTERS_NEARBY_TEXT); return null; }
+      if (!nearby.length) { ctx?.say?.(noMonstersNearbyText()); return null; }
       ctx?.spawnAlliedFoe?.(MT.Daedroth);
       return { durabilityLoss: SUMMON_DURABILITY_LOSS };
     },
@@ -268,13 +270,13 @@ const HANDLERS = new Map([
   [ARTIFACTS.SkullOfCorruption, {
     used({ ctx }) {
       const nearby = (ctx?.nearbyFoes?.(SUMMON_ENEMY_RANGE) ?? []).filter((n) => n.team !== 'PlayerAlly');
-      if (!nearby.length) { ctx?.say?.(NO_MONSTERS_NEARBY_TEXT); return null; }
+      if (!nearby.length) { ctx?.say?.(noMonstersNearbyText()); return null; }
       let nearest = nearby[0];
       for (const n of nearby.slice(1)) {
         if ((n.distance ?? Infinity) < (nearest.distance ?? Infinity)) nearest = n;
       }
-      if (nearest.team === 'PlayerAlly') { ctx?.say?.(NO_MONSTERS_NEARBY_TEXT); return null; }   // :67-71, unreachable past the filter
-      if (nearest.mobileType == null) { ctx?.say?.(NO_MONSTERS_NEARBY_TEXT); return null; }
+      if (nearest.team === 'PlayerAlly') { ctx?.say?.(noMonstersNearbyText()); return null; }   // :67-71, unreachable past the filter
+      if (nearest.mobileType == null) { ctx?.say?.(noMonstersNearbyText()); return null; }
       ctx?.spawnAlliedFoe?.(nearest.mobileType);
       return { durabilityLoss: SUMMON_DURABILITY_LOSS };
     },

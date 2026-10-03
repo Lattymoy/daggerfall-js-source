@@ -44,6 +44,8 @@ import { chargenArtLoaded, drawChargenNative, loadFaceSet, chargenHit, raceDescr
 import { MAX_STAT_VALUE } from '../systems/statMods.js';
 import { hotkeyHit } from '../systems/dialogShortcuts.js';   // ROAD-E2: the DaggerfallShortcut table - the builder's ResetBonusPool
 import { VerticalScrollBar } from './verticalScrollBar.js';   // ROAD-E2: DFU's VerticalScrollBar, the picker's bar
+import { localizedStrings, localizedText, processGrammar, GrammarManager } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3g: the grammar and the hero's gender
+import { raceDisplayName } from '../systems/talkSession.js';   // L10N3d: RaceTemplate.Name, read in the player's language
 
 export { MAX_STAT_VALUE };
 
@@ -126,6 +128,29 @@ const STATES = ['race', 'gender', 'classMethod', 'classQuestions', 'class', 'cus
  *  button, which assigns rather than types, could already mint a
  *  name the player was then unable to retype. */
 export const NAME_MAX_CHARACTERS = 31;
+
+/** CreateCharClassSelect :59-61 - each CLASS*.CFG career's name is its
+ *  own Internal_Strings key (L10N3d); the list shows the key's word. */
+const CLASS_NAMES = localizedStrings({
+  Mage: 'Mage', Spellsword: 'Spellsword', Battlemage: 'Battlemage', Sorcerer: 'Sorcerer', Healer: 'Healer',
+  Nightblade: 'Nightblade', Bard: 'Bard', Burglar: 'Burglar', Rogue: 'Rogue', Acrobat: 'Acrobat', Thief: 'Thief',
+  Assassin: 'Assassin', Monk: 'Monk', Archer: 'Archer', Ranger: 'Ranger', Barbarian: 'Barbarian', Warrior: 'Warrior',
+  Knight: 'Knight',
+});
+
+/** L10N3g: THE HERO'S GENDER, TWO GETTERS. The wizard hands the grammar
+ *  a CONSTANT one at the pick (CreateCharGenderSelect.cs:63/:70, the
+ *  gender arm of applyHit below); every start of a game hands it a LIVE
+ *  read of the entity, never a copy - InvokeStartMethod's
+ *  `SetHeroGenderGetter(() => GameManager.Instance.PlayerEntity.Gender)`
+ *  (StartGameBehaviour.cs:147), which DFU runs for every start method.
+ *  That is what ends the wizard's constant when the new character's
+ *  game begins (finishChargen), and what a load reads (the world
+ *  host's boot): a save loaded later in the session speaks of the
+ *  loaded hero. */
+export function handHeroGenderToGrammar(entity) {
+  GrammarManager.grammarProcessor.setHeroGenderGetter(() => entity.gender);
+}
 
 /** AUDIT 18: what `new ClassFile(files[0]).Career` yields - a DISTINCT
  *  DFCareer object carrying identical values, re-read from the same
@@ -468,9 +493,15 @@ export class ChargenFlow {
   }
 
   /** U20a: the list's LAST row is Custom (CreateCharClassSelect
-   *  :66-67 appends it after the eighteen CLASS*.CFG rows). */
+   *  :66-67 appends it after the eighteen CLASS*.CFG rows). L10N3d: a
+   *  class row reads its own name as its key, through the grammar
+   *  (:60-61), and Custom its key (:65). */
   classRowCount() { return this.careers.length + 1; }
-  classRowName(i) { return this.careers[i]?.name ?? 'Custom'; }
+  classRowName(i) {
+    const name = this.careers[i]?.name;
+    if (name == null) return localizedText('Custom', 'Custom');
+    return processGrammar(Object.hasOwn(CLASS_NAMES, name) ? CLASS_NAMES[name] : name);
+  }
 
   /** S3e / U19: the class choice leads into the biography METHOD
    *  screen when its question file loaded (every accept arm calls
@@ -519,9 +550,15 @@ export class ChargenFlow {
   }
 
   /** DisplayQuestion (:255-289): the question on screen, the scroll
-   *  rewound to frame 0 and the label back at the top offset. */
+   *  rewound to frame 0 and the label back at the top offset.
+   *  L10N3g: each line is one text token of questionLabel, a
+   *  MultiFormatTextLabel, whose AddTextLabel runs the grammar on it
+   *  (MultiFormatTextLabel.cs:230) - so a translation's question reads
+   *  resolved on both skins. The a/b/c rows are found on the lines as
+   *  they stand; no token carries an answer's "a)". */
   _displayClassQuestion() {
-    this.qDisplay = displayQuestion(this.questionLibrary[this.qIndices[this.qAnswered]]);
+    const q = displayQuestion(this.questionLibrary[this.qIndices[this.qAnswered]]);
+    this.qDisplay = { ...q, lines: q.lines.map((line) => processGrammar(line)) };
     this.qLabelY = QSCROLL_TEXT_OFFSET;
     this.qScrollFrame = 0;
   }
@@ -1596,7 +1633,7 @@ export class ChargenFlow {
         // two things and the port had conflated them. Every AddButton
         // binds a HOTKEY unconditionally (DaggerfallMessageBox.cs:377,
         // `DaggerfallShortcut.GetBinding(ToShortcutButton(...))` -
-        // Yes 'Y', No 'N', dialogShortcuts.js:309), and RETURN clicks
+        // Yes 'Y', No 'N', dialogShortcuts.js:311), and RETURN clicks
         // the DEFAULT button, if there is one (:318-324 through
         // GetDefaultButton :394-403). This box is built with two bare
         // `AddButton(Yes)`/`AddButton(No)` calls
@@ -1641,7 +1678,7 @@ export class ChargenFlow {
       // here, exactly as on the race and class-list boxes. What DOES
       // act is the hotkey every AddButton binds unconditionally
       // (:377): M and F (DialogShortcuts.txt Male/Female,
-      // dialogShortcuts.js:311). Each button's handler sets the gender
+      // dialogShortcuts.js:313). Each button's handler sets the gender
       // AND closes the window (:59-71), which is what { setGender }
       // already does - so the two keys take the same door the mouse
       // does, and the bare 'confirm' that used to advance is gone.
@@ -1823,7 +1860,7 @@ export class ChargenFlow {
       // (CreateCharCustomClass.cs:257-259) - a Rect(0,0,0,0) Button
       // whose only reason to exist is its Hotkey, Ctrl-U by default
       // (StreamingAssets/Text/DialogShortcuts.txt, carried at
-      // systems/dialogShortcuts.js:320). It is a control of THIS
+      // systems/dialogShortcuts.js:322). It is a control of THIS
       // window, so it answers only while the window itself is on top:
       // the two returns above have already taken every key while a
       // ClickAnywhereToClose box or one of the pushed sub-windows
@@ -1898,7 +1935,7 @@ export class ChargenFlow {
       // as the 'minus' line above - r and R fall inside overlayAction's
       // typed-character class (ui/input.js:386), so the 'reroll' row
       // that used to sit in its table was unreachable and only the
-      // mouse rect (ui/chargenArt.js:1480) ever reached this. The hint
+      // mouse rect (ui/chargenArt.js:1486) ever reached this. The hint
       // drawn at :2059, 'R reroll', is true again. The bare 'reroll'
       // arm stays for that mouse rect.
       else if (action === 'reroll' || action === 'char:r' || action === 'char:R') this.reroll();
@@ -2066,6 +2103,13 @@ export class ChargenFlow {
       // a separate confirm, which classic has no button for.
       // U18: the close lands on the method screen (:305-316).
       this.gender = hit.setGender;
+      // L10N3g: each handler hands the grammar the hero's gender as it
+      // closes (:63 `() => Genders.Male`, :70 `() => Genders.Female`), so
+      // everything the wizard shows after the pick - the class list, the
+      // questions, the biography - reads a translation's {male/female}
+      // words for this hero. The keys and both skins take this one door.
+      const picked = hit.setGender;
+      GrammarManager.grammarProcessor.setHeroGenderGetter(() => picked);
       this._enterClassMethod();
       return true;
     }
@@ -2246,7 +2290,7 @@ export class ChargenFlow {
       RACE_TEMPLATES.forEach((r, i) => line((i === this.raceIndex ? '> ' : '  ') + r.name, i, i === this.raceIndex ? hot : white));
     } else if (this.state === 'face') {
       title('CHOOSE YOUR FACE');
-      line(`${this.race.name} ${this.gender}`, 0, white);
+      line(`${raceDisplayName(this.race.key)} ${this.gender}`, 0, white);
       line(`face ${this.facePick + 1} of ${FACES_PER_RACE}`, 2, hot);
       line('up/down to cycle, ENTER to continue', 4, dim);
       line('(the portrait draws with the chargen art slice)', 6, dim);

@@ -70,7 +70,7 @@
 
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 import { statUp, statDown, MAX_STAT_VALUE } from './chargen.js';
-import { MUST_DISTRIBUTE_BONUS_POINTS } from './charsheet.js';
+import { mustDistributeBonusPointsText } from './charsheet.js';
 import { REMAINING_POINTS_ERROR, REMAINING_POINTS_LABEL, TAKE_ONE_BACK_HINT } from './virtueLevelUp.js';
 import { attributeOffset, canRaiseAttribute, canLowerAttribute, LEVELUP_TOTAL, levelBarProgress, levelingSettings, usesVirtueLeveling } from '../systems/oblivionLeveling.js';   // ASCEND-ANYTIME: a mod-law view still needs the mod's own prices to draw a row
 import { LEVELUP_SKILL_SUM_PER_LEVEL, skillRecentlyIncreased } from '../systems/advancement.js';
@@ -117,7 +117,7 @@ export const attributeLabel = (k) => (k ? k.charAt(0).toUpperCase() + k.slice(1)
  * own words - as ui/settingsCopy.js's are.
  */
 export const ATTRIBUTE_BLURB = Object.freeze({
-  // combat/formulas.js:82-84 damageModifier = floor((strength - 50) / 5),
+  // combat/formulas.js:83-85 damageModifier = floor((strength - 50) / 5),
   // which calculateAttackDamage adds to every landed blow;
   // entityMaxEncumbrance over liveStat strength is the pack's ceiling.
   //
@@ -133,27 +133,27 @@ export const ATTRIBUTE_BLURB = Object.freeze({
   intelligence: 'Sets your pool of spell points, by your class\'s own multiplier.',
   // systems/spellcast.js:158 - `saving += magicResist(liveStat(target,
   // 'willpower'))`, the CONSUMER of DFU's MagicResist. The first cut
-  // cited systems/quest/questMacros.js:633, which only PRINTS the same
+  // cited systems/quest/questMacros.js:669, which only PRINTS the same
   // figure for %mr, and a display is not evidence that a number does
   // anything (LV1's audit).
   willpower: 'Hardens you against magic: a tenth of it goes into every saving throw.',
-  // combat/formulas.js:308-309 statsToHit = floor((your luck - theirs) / 10)
+  // combat/formulas.js:311-312 statsToHit = floor((your luck - theirs) / 10)
   // + floor((your agility - theirs) / 10), read INSIDE the hit roll.
   //
   // LV1's AUDIT CORRECTED THIS ONE TOO. It described `toHitModifier`
   // (:118, floor(agility/10) - 5), which is the CHARACTER SHEET's
-  // display modifier - ui/chargen.js:450 and the quest macros are its
+  // display modifier - ui/chargen.js:475 and the quest macros are its
   // only readers - so "a tenth of it, less five, rides on every swing"
   // named a number that rides nothing.
   agility: 'Rides every swing: a tenth of the gap between your agility and your foe\'s.',
   // systems/chargen.js hitPointsPerLevelUp reads hitPointsModifier = floor(endurance / 10) - 5.
   endurance: 'Rolls into the health you gain at every level from here on.',
-  // combat/formulas.js:883 - merchant reaction takes personality / 5; systems/court.js:498 takes it again.
+  // combat/formulas.js:888 - merchant reaction takes personality / 5; systems/court.js:509 takes it again.
   personality: 'Warms merchants, judges and anyone else weighing what you are worth.',
-  // player/motor.js:629 walkSpeed(stats.speed) is how fast you move;
-  // combat/weaponRig.js:540 reads liveStat speed for the swing.
+  // player/motor.js:630 walkSpeed(stats.speed) is how fast you move;
+  // combat/weaponRig.js:541 reads liveStat speed for the swing.
   speed: 'Quickens your weapon and closes the ground between you and a fight.',
-  // combat/formulas.js:308-309 again - the same term agility rides -
+  // combat/formulas.js:311-312 again - the same term agility rides -
   // and systems/unleveledLoot.js:95, where the vendored ladder rolls
   // rarity against the player's luck, which is where a player actually
   // notices it. (AUDIT 28e: a line shorter - at 360 to 375 wide it was the one blurb that ran to a third line, and
@@ -428,7 +428,7 @@ export const ALL_MAX_LINE = 'Every attribute is at its maximum. What is left has
 /** The refusal each lane already ships, so the window quotes rather
  *  than invents. */
 export const refusalText = (screen) =>
-  (levelUpLane(screen) === LANE_VIRTUE ? REMAINING_POINTS_ERROR : MUST_DISTRIBUTE_BONUS_POINTS);
+  (levelUpLane(screen) === LANE_VIRTUE ? REMAINING_POINTS_ERROR : mustDistributeBonusPointsText());
 
 /** IN A CORNER: points left and no star will take another. Only the
  *  mod's priced purse can reach that state (ui/virtueLevelUp.js's

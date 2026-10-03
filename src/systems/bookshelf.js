@@ -24,6 +24,7 @@
 import { getShelfBookID, bookTitle } from './books.js';   // WB12c: the shelf's draw - the port's own books among the classic ones
 import { canAccessLibrary } from './guildServices.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
+import { localizedText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
 export const BOOKSHELF_CAPACITY = 10;
 
@@ -61,7 +62,7 @@ export function bookshelfAccess({ buildingType, guild = null, membership = null 
     if (!guild || !canAccessLibrary(guild, membership)) {
       // Internal_Strings.csv, accessMembersOnly - VERBATIM from the
       // pinned clone's own CSV (the F116 convention).
-      return { allowed: false, text: 'You need to be a member of sufficient rank to access this.' };
+      return { allowed: false, text: localizedText('accessMembersOnly', 'You need to be a member of sufficient rank to access this.') };
     }
   }
   return { allowed: true };

@@ -132,11 +132,11 @@ test('R1 repairNote: the note the commit pass writes is the ROW, with DFU\'s two
   // Both of the port's commit arms (the staged Repair mode and the
   // one-item repair) write it, so both are pinned.
   const wm = src('src/scenes/worldModes.js');
-  const notes = wm.match(/questBridge\?\.notebook\?\.addNote\?\.\(`[^`]*`\);/g) ?? [];
+  const notes = wm.match(/questBridge\?\.notebook\?\.addNote\?\.\(formatText\(localizedText\('repairNote', [^\n]*\)\);/g) ?? [];
   assert.equal(notes.length, 2, 'both commit arms write the repairNote');
   for (const n of notes) {
-    assert.match(n, /`Left my \$\{_itemLabel\(it\)\} for repair at \$\{interiorBuilding\?\.name \?\? 'the shop'\}\.`/,
-      'the row verbatim, item into {0} and shop into {1}');
+    assert.match(n, /formatText\(localizedText\('repairNote', 'Left my \{0\} for repair at \{1\}\.'\), _itemLabel\(it\), interiorBuilding\?\.name \?\? 'the shop'\)/,
+      'the row verbatim (L10N3d: read through the text core), item into {0} and shop into {1}');
     assert.ok(!n.includes('to be repaired at'), 'the old paraphrase is gone');
   }
 });

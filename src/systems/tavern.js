@@ -11,6 +11,7 @@ import { HOLIDAYS, getHolidayId } from './holidays.js';
 import { calculateTradePrice, essentialPrice } from './shopStock.js';   // ESSENTIALS-HALF: online, a room and a meal cost half
 import { dayOfYear } from './gameDate.js';
 import { interiorSceneName, addPermanentScene, removePermanentScene } from './sceneCache.js';   // P1: the rented room's own scene
+import { localizedText, localizedStrings } from './textManager.js';   // L10N3d: the tavern's words
 
 /** The TEXT.RSC records the window speaks (:37-41). */
 export const TOO_MANY_DAYS_ID = 16;
@@ -27,22 +28,37 @@ export { NOT_ENOUGH_GOLD_ID } from './guildServiceActions.js';
 export const ROOM_FREE_FOR_KNIGHT = 'The room is free for a knight such as you.';
 export const ROOM_FREE_HEARTS_DAY = "Room is free due to Heart's Day.";
 export const YOU_ARE_NOT_HUNGRY = 'You are not hungry.';
+/** L10N3d: ...as the boxes say them, in the player's language - both
+ *  skins read these. The Heart's Day line is CalculateRoomCost's
+ *  (FormulaHelper.cs:1872). */
+export const roomFreeForKnightText = () => localizedText('roomFreeForKnightSuchAsYou', ROOM_FREE_FOR_KNIGHT);
+export const roomFreeHeartsDayText = () => localizedText('roomFreeDueToHeartsDay', ROOM_FREE_HEARTS_DAY);
+export const youAreNotHungryText = () => localizedText('youAreNotHungry', YOU_ARE_NOT_HUNGRY);
 
 /** tavernMenu (:43-49) and tavernFoodAndDrinkPrices (:50), in DFU's
  *  order - the price table is INDEXED by the picked row, so the two
  *  must stay aligned. */
-export const TAVERN_MENU = Object.freeze([
-  'Ale (1 gold)', 'Beer (1 gold)', 'Mead (2 gold)', 'Wine (3 gold)',
-  'Bread (1 gold)', 'Broth (1 gold)', 'Cheese (2 gold)', 'Fowl (3 gold)',
-  'Gruel (2 gold)', 'Pie (2 gold)', 'Stew (3 gold)',
-]);
+const ALE = 'Ale (1 gold)', BEER = 'Beer (1 gold)', MEAD = 'Mead (2 gold)', WINE = 'Wine (3 gold)',
+  BREAD = 'Bread (1 gold)', BROTH = 'Broth (1 gold)', CHEESE = 'Cheese (2 gold)', FOWL = 'Fowl (3 gold)',
+  GRUEL = 'Gruel (2 gold)', PIE = 'Pie (2 gold)', STEW = 'Stew (3 gold)';
+export const TAVERN_MENU = Object.freeze([ALE, BEER, MEAD, WINE, BREAD, BROTH, CHEESE, FOWL, GRUEL, PIE, STEW]);
 export const TAVERN_PRICES = Object.freeze([1, 1, 2, 3, 1, 1, 2, 3, 2, 2, 3]);
+/** L10N3d: DFU fills tavernMenu with GetLocalizedText(key), a line a
+ *  key; the menu as the player reads it, in their language, each line
+ *  in TAVERN_MENU's place. */
+const TAVERN_MENU_LINES = localizedStrings({
+  tavernAle: ALE, tavernBeer: BEER, tavernMead: MEAD, tavernWine: WINE,
+  tavernBread: BREAD, tavernBroth: BROTH, tavernCheese: CHEESE, tavernFowl: FOWL,
+  tavernGruel: GRUEL, tavernPie: PIE, tavernStew: STEW,
+});
+export const tavernMenuLines = () => Object.values(TAVERN_MENU_LINES);
 
 /** ESSENTIALS-HALF: the menu's rows as the player reads them - DFU's own labels offline, each row's gold the half it
- *  costs online (eatOrDrink's own essentialPrice). */
+ *  costs online (eatOrDrink's own essentialPrice). L10N3d: the lines are the language's (tavernMenuLines), so the
+ *  price is the last number before the line's closing bracket, whatever the language calls a gold piece. */
 export const tavernMenuPrice = (index, { online } = {}) => essentialPrice(TAVERN_PRICES[index], { online });
-export const tavernMenuLabels = ({ online } = {}) => TAVERN_MENU.map((text, i) =>
-  text.replace(/\((\d+) gold\)/, `(${tavernMenuPrice(i, { online })} gold)`));
+export const tavernMenuLabels = ({ online } = {}) => tavernMenuLines().map((text, i) =>
+  text.replace(/\d+(?=\D*\)\s*$)/, String(tavernMenuPrice(i, { online }))));
 
 /** The rental ceiling (:188) - days ALREADY rented count toward it. */
 export const MAX_RENTAL_DAYS = 350;
@@ -203,11 +219,11 @@ export function eatOrDrink(index, { gold = 0, gameMinutes = 0, online = undefine
 
 // The three clauses that stood here are all closed:
 //  - (RETIRED by TK-iv: the TALK button. tavernWindow.js:371, and the
-//    KeyT arm at :343, fire hooks.onTalk; worldModes.js:4173 supplies
+//    KeyT arm at :343, fire hooks.onTalk; worldModes.js:4193 supplies
 //    it as openStaticNpc(pn, { forceTalk: true }), which reaches
-//    npcSession.talkToStaticNPC at worldModes.js:3198 - TalkManager.
+//    npcSession.talkToStaticNPC at worldModes.js:3218 - TalkManager.
 //    TalkToStaticNPC (TalkManager.cs:752-770). The guild popup's TALK
-//    button shares that door at worldModes.js:4280, popupTalkToStaticNpc.)
+//    button shares that door at worldModes.js:4300, popupTalkToStaticNpc.)
 //  - (RETIRED by P1: AddPermanentScene (:246) keeps a rented room's
 //    interior loaded across a save. The port now has a permanent-scene
 //    set, and rentRoom names the scene it should hold.)

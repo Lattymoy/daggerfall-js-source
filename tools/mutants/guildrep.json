@@ -10,7 +10,7 @@
  {"name": "GUILD-REP-an-empty-book-draws-nothing", "file": "src/ui/enhancedMenu.js",
   "old": "    detail.append(el('p', 'px-note', 'You have no affiliations.'));\n", "new": "", "tests": ["test/guildrep.test.js"]},
  {"name": "GUILD-REP-the-faction-name-ignored", "file": "src/systems/affiliations.js",
-  "old": "affiliation: entity?.factionRep?.dict?.get?.(guild.factionId)?.name ?? guild.name,", "new": "affiliation: guild.name,", "tests": ["test/guildrep.test.js", "test/classiccharsheetmodal.test.js"]},
+  "old": "affiliation: name != null ? getLocalizedFactionName(guild.factionId, name) : guild.name,", "new": "affiliation: guild.name,", "tests": ["test/guildrep.test.js", "test/classiccharsheetmodal.test.js"]},
  {"name": "GUILD-REP-an-unknown-guild-is-a-row", "file": "src/systems/affiliations.js",
   "old": "    if (!guild) continue;\n", "new": "    if (!guild) { out.push({ affiliation: '', title: '', rep: 0, factionId: 0 }); continue; }\n", "tests": ["test/guildrep.test.js"]}
 ]

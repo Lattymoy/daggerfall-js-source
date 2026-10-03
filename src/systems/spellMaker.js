@@ -30,6 +30,7 @@ import { calculateCastCost, effectCost } from './spellcost.js';
 import { skillValue } from './skills.js';   // E8: the editor's per-effect cost reads the caster's own skill
 import { MAGIC_ONLY_KEYS } from './effects.js';   // AUDIT 26 F181: the AllowedElements set, already read off the effect classes
 import { totalGoldAmount, deductGold } from './court.js';
+import { localizedText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
 
 /** AUDIT 26 F181 - THE ALLOWED TARGET AND ELEMENT SETS.
@@ -315,6 +316,8 @@ export const SPELLMAKER_NOT_ENOUGH_GOLD_ID = 1702;
 export const MUST_CHOOSE_NAME_ID = 1704;
 export const SPELL_INSCRIBED_ID = 1705;
 export const NO_EFFECTS_TEXT = 'You must add at least one effect to this spell.';
+/** L10N3d: noEffectsError (:760), in the player's language, read when the ladder refuses. */
+export const noEffectsText = () => localizedText('noEffectsError', NO_EFFECTS_TEXT);
 
 /** `Items.Contains(ItemGroups.MiscItems, (int)MiscItems.Spellbook)`.
  *  EXPORTED for the SERVICE DOOR: DFU runs this test twice, once at
@@ -335,7 +338,7 @@ export const hasSpellbook = (entity) => (entity?.items ?? []).some(
 export function validateSpellPurchase({ entity, slots, goldCost, name }) {
   if (!hasSpellbook(entity)) return { ok: false, textId: NO_SPELLBOOK_ID };
   const used = (slots ?? []).filter((s) => s && s.type != null && s.type >= 0);
-  if (!used.length) return { ok: false, text: NO_EFFECTS_TEXT };
+  if (!used.length) return { ok: false, text: noEffectsText() };
   // ROAD-E E8: GetGoldAmount, not GoldPieces. BuyButton reads
   // `PlayerEntity.GetGoldAmount()` (:748-751) - coins PLUS letters of
   // credit - and then spends through DeductGoldAmount, which the port

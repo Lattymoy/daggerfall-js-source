@@ -176,7 +176,7 @@ test('D7: a job still under way raises ConfirmInterruptRepairBox; Yes takes it b
   assert.equal(INTERRUPT_REPAIR_TEXT, "Take back that item before it's repaired?");
   // and the keyed flow speaks that one constant rather than keeping a
   // second copy of the row of its own
-  assert.match(src('scenes/worldModes.js'), /lines: \[INTERRUPT_REPAIR_TEXT\],/);
+  assert.match(src('scenes/worldModes.js'), /lines: \[interruptRepairText\(\)\],/);
   assert.deepEqual(h.entity.items, [], 'and nothing has moved yet');
   w.input('KeyN');
   assert.deepEqual(h.entity.otherItems, [job], 'No leaves it with the shop');

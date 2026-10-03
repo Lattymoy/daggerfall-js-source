@@ -44,6 +44,7 @@ import { breakNormalPowerConcealment, handleAttackFromSource } from './concealme
 import { entityAbsorbsSpells, setEnchantmentEffectDoors } from './enchantments.js';   // E1: the AbsorbsSpells fold feeds the absorption gate
 import { markPlayerHarm } from './harmMark.js';   // REVENANT-HARM: a lingering effect's round on the player keeps its caster's mark
 import { regenBarred } from './courtRules.js';   // WBX6: the Burning Court keeps no regeneration
+import { localizedText, localizedTable } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { HEAL_SPELL_POINTS_KEY } from './potionRecipes.js';   // PROF12: Heal-SpellPoints' key, beside the one recipe that names it
 
 export { breakNormalPowerConcealment, handleAttackFromSource, NORMAL_POWER_CONCEALMENTS } from './concealment.js';
@@ -264,12 +265,14 @@ export const MAGIC_ONLY_KEYS = new Set([
  *  "youAreSilenced"), which is the same awakeAlert shape
  *  ConcealmentEffect.cs:66-72 uses. A wraith's Silence landed in total
  *  silence and the player only learned of it on the next cast attempt. */
-export const BUFF_START_TEXT = Object.freeze({
-  invisNormal: 'You are invisible.', invisTrue: 'You are invisible.',
-  chameleonNormal: 'You are blending.', chameleonTrue: 'You are blending.',
-  shadeNormal: 'You are a shade.', shadeTrue: 'You are a shade.',
-  silenced: 'You are silenced.',   // Silence.cs:91-95
-  sharedCartography: 'Your map is shared with your party.',   // PARTY-MAP: the port's own line
+export const BUFF_START_TEXT = localizedTable({
+  // startConcealmentMessageKey (InvisibilityNormal.cs:36 and its five
+  // siblings), read by ConcealmentEffect.cs:70
+  invisNormal: ['youAreInvisible', 'You are invisible.'], invisTrue: ['youAreInvisible', 'You are invisible.'],
+  chameleonNormal: ['youAreBlending', 'You are blending.'], chameleonTrue: ['youAreBlending', 'You are blending.'],
+  shadeNormal: ['youAreAShade', 'You are a shade.'], shadeTrue: ['youAreAShade', 'You are a shade.'],
+  silenced: ['youAreSilenced', 'You are silenced.'],   // Silence.cs:91-95
+  sharedCartography: () => 'Your map is shared with your party.',   // PARTY-MAP: the port's own line
 });
 /** The name this table shipped under, kept live for its importers. */
 export const CONCEALMENT_START_TEXT = BUFF_START_TEXT;
@@ -511,6 +514,8 @@ export function spellReflectionChance(target) {
 /** "Spell was reflected." - the HUD line TryReflection prints, and
  *  only when the PLAYER is the one reflecting (EEM:1231-1233). */
 export const SPELL_REFLECTED_TEXT = 'Spell was reflected.';
+/** The line as the player reads it, for the cast engine that says it. */
+export const spellReflectedText = () => localizedText('spellReflected', SPELL_REFLECTED_TEXT);
 
 // X11: COMPREHEND LANGUAGES (Mysticism 44,255). Another Custom-chance
 // incumbent (ComprehendLanguages.cs:31-33), and the only one whose
@@ -1101,7 +1106,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
         // the `amt > 0` arm this sits in IS DFU's
         // `lastMagnitudeIncreaseAmount > 0` gate. TransferEffect IS-A
         // DrainEffect, so it says the line too.
-        sinks?.say?.(FEEL_DRAINED_TEXT);
+        sinks?.say?.(localizedText('youFeelDrained', FEEL_DRAINED_TEXT));
         if (kind === 'transferAttribute' && caster?.entity) healAttributeDamage(caster.entity, stat, amt);
         out.drained = (out.drained ?? 0) + 1;
       }
@@ -1223,7 +1228,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
         // F078: Start's HUD line. base.Start precedes the incumbency
         // resolution, so it prints on EVERY cast that takes - the
         // merge into an incumbent does not silence it.
-        sinks?.say?.(REGENERATING_TEXT);
+        sinks?.say?.(localizedText('youAreRegenerating', REGENERATING_TEXT));
         out.continuous++;
       }
       continue;
@@ -1780,10 +1785,14 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       // left to read either from.
       const icon = spell?.icon ?? 0;
       const selfCast = !!caster?.entity && caster.entity === target;
+      // L10N3e: the record's index rides beside its name - the name stays the canonical one (a key: the deep-water
+      // boat test reads it), and a window shows it through loot.js shownSpellName (EntityEffectBroker.cs:877)
+      const spellIndex = Number.isInteger(spell?.index) ? spell.index : null;
       for (let i = pinStart; i < list.length; i++) {
         if (list[i].instant) continue;   // instants are probe residue, not a live bundle
         list[i].bundleId = id;
         list[i].bundleName = name;
+        list[i].bundleSpellIndex = spellIndex;
         list[i].bundleType = type;
         list[i].bundleIcon = icon;
         list[i].bundleSelfCast = selfCast;
@@ -1808,7 +1817,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
     if (target.maxMagicka != null) {
       target.magicka = Math.min(target.maxMagicka, (target.magicka ?? 0) + absorbRefund(totalAbsorbed));
     }
-    sinks?.say?.(SPELL_ABSORBED_TEXT);
+    sinks?.say?.(localizedText('spellAbsorbed', SPELL_ABSORBED_TEXT));
   }
   return out;
 }

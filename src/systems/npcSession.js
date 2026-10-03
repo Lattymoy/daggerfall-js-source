@@ -12,7 +12,8 @@
 // SEAMS the host fills (absent seams idle LOUDLY, the headless
 // charter - every one of them reads a C# default here):
 //   factionData(id)             - PersistentFactionData.GetFactionData
-//   factionName(id)             - .GetFactionName
+//   factionName(id)             - .GetFactionName's FACTION.TXT name
+//                                 (localized here, L10N3e)
 //   peopleOfCurrentRegion()     - PlayerGPS
 //   courtOfCurrentRegion()      - PlayerGPS
 //   currentLocationIndex()      - PlayerGPS
@@ -56,6 +57,7 @@ import { randomRangeInclusive } from '../formats/dfRandom.js';
 import { isAlly, isEnemy, flatArchive, flatRecord } from '../formats/factionFile.js';
 import { tokensToString } from './rumorMill.js';
 import { GENDERS } from '../characters/nameHelper.js';
+import { getLocalizedFactionName } from './textManager.js';   // L10N3e: the greeting's faction names in the player's language
 import {
   NO_RESPONSE_TEXT_ID, MIN_NEUTRAL_REACTION, MIN_LIKE_REACTION,
   MIN_VERY_LIKE_REACTION, REFUSE_TALK_REACTION,
@@ -135,6 +137,13 @@ const EMPTY_FACTION = Object.freeze({
   ally1: 0, ally2: 0, ally3: 0, enemy1: 0, enemy2: 0, enemy3: 0,
 });
 
+/** L10N3e: a faction's name as GetFactionData hands it back - through
+ *  GetLocalizedFactionName (PersistentFactionData.cs:176), so a
+ *  translation's name for the id, FACTION.TXT's where the language has
+ *  none. The greeting names are the only thing read through it: the
+ *  records, their ids and the ally/enemy tests stay FACTION.TXT's. */
+const shownName = (f) => getLocalizedFactionName(f.id, f.name);
+
 export class NPCSession {
   constructor(deps = {}) {
     this.deps = deps;
@@ -169,6 +178,10 @@ export class NPCSession {
   /** UnityEngine.Random.Range(0, n) - int, exclusive top. */
   _range(n) { return Math.floor(this._rolls()() * n); }
   _faction(id) { return this.deps.factionData?.(id) ?? null; }
+  /** PersistentFactionData.GetFactionName (:309-314): the host's
+   *  FACTION.TXT name for the id ('' when it has none), handed back
+   *  through GetLocalizedFactionName (:313) - L10N3e. */
+  _factionName(id) { return getLocalizedFactionName(id, this.deps.factionName?.(id) ?? ''); }
 
   // ---- the faction resolution (:884-907) ----
 
@@ -228,12 +241,15 @@ export class NPCSession {
     let rep = reputation;
     const npcF = npcGroupFaction ?? EMPTY_FACTION;
     const names = this.npcData;
+    // L10N3e: the names the greeting macros show, in the player's language
+    const npcName = shownName(npcF);
     for (const guild of (this.deps.guildMemberships?.() ?? [])) {
       const g = this._faction(guild.factionId) ?? EMPTY_FACTION;
+      const gName = shownName(g);
       // the same guild: nothing beats it, and it returns at once
       if (npcF.id === g.id) {
-        names.npcFactionName = g.name;
-        names.pcFactionName = g.name;
+        names.npcFactionName = gName;
+        names.pcFactionName = gName;
         return { greetingIndex: 0, reputation: rep };
       }
       // a shared parent, or one being the other's parent
@@ -241,22 +257,22 @@ export class NPCSession {
         || g.parent === npcF.id
         || npcF.parent === g.id)
         && greetingIndex > 1) {
-        names.npcFactionName = npcF.name;
-        names.pcFactionName = g.name;
+        names.npcFactionName = npcName;
+        names.pcFactionName = gName;
         greetingIndex = 1;
         rep += 15;
       }
       // allies - THE UNGUARDED FIRST ARM
       if (isAlly(g, npcF) || (isAlly(npcF, g) && greetingIndex > 2)) {
-        names.npcFactionName = npcF.name;
-        names.pcFactionName = g.name;
+        names.npcFactionName = npcName;
+        names.pcFactionName = gName;
         rep += 10;
         greetingIndex = 2;
       }
       // enemies - the same shape, the same quirk
       if (isEnemy(g, npcF) || (isEnemy(npcF, g) && greetingIndex > 3)) {
-        names.npcFactionName = npcF.name;
-        names.pcFactionName = g.name;
+        names.npcFactionName = npcName;
+        names.pcFactionName = gName;
         rep -= 20;
         greetingIndex = 3;
       }
@@ -266,9 +282,9 @@ export class NPCSession {
       for (let i = 0; i < 3; i++) {
         for (let j = 0; j < 3; j++) {
           if (guildEnemies[i] !== 0 && guildEnemies[i] === npcEnemies[j] && greetingIndex > 4) {
-            names.npcFactionName = npcF.name;
-            names.pcFactionName = g.name;
-            names.enemyFactionName = this.deps.factionName?.(guildEnemies[i]) ?? '';
+            names.npcFactionName = npcName;
+            names.pcFactionName = gName;
+            names.enemyFactionName = this._factionName(guildEnemies[i]);
             greetingIndex = 4;
             rep += 5;
           }
@@ -280,9 +296,9 @@ export class NPCSession {
       for (let i = 0; i < 3; i++) {
         for (let j = 0; j < 3; j++) {
           if (guildAllies[i] !== 0 && guildAllies[i] === npcAllies[j] && greetingIndex > 5) {
-            names.npcFactionName = npcF.name;
-            names.pcFactionName = g.name;
-            names.allyFactionName = this.deps.factionName?.(guildAllies[i]) ?? '';
+            names.npcFactionName = npcName;
+            names.pcFactionName = gName;
+            names.allyFactionName = this._factionName(guildAllies[i]);
             greetingIndex = 5;
             rep += 5;
           }
@@ -292,9 +308,9 @@ export class NPCSession {
       for (let i = 0; i < 3; i++) {
         const enemy = this._faction(npcEnemies[i]);
         if (enemy && isAlly(g, enemy) && greetingIndex > 6) {
-          names.npcFactionName = npcF.name;
-          names.pcFactionName = g.name;
-          names.enemyFactionName = enemy.name;
+          names.npcFactionName = npcName;
+          names.pcFactionName = gName;
+          names.enemyFactionName = shownName(enemy);
           greetingIndex = 6;
           rep -= 5;
         }
@@ -303,9 +319,9 @@ export class NPCSession {
       for (let i = 0; i < 3; i++) {
         const ally = this._faction(npcAllies[i]);
         if (ally && isEnemy(g, ally) && greetingIndex > 7) {
-          names.npcFactionName = npcF.name;
-          names.pcFactionName = g.name;
-          names.allyFactionName = ally.name;
+          names.npcFactionName = npcName;
+          names.pcFactionName = gName;
+          names.allyFactionName = shownName(ally);
           greetingIndex = 7;
           rep -= 5;
         }

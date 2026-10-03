@@ -58,7 +58,10 @@
 // Internal_Settings_en.asset id 392878225761951744), transcribed
 // verbatim below. `meleeAttackDetection` and
 // `meleeAttackFriendlyProtection` resolve first in GameSettings.txt
-// (:63, :65), which is the same pair of words.
+// (:63, :65), which is the same pair of words. L10N3d: each is read
+// through the text core's TextSettings collection where it is shown,
+// as DFU reads it - all but the hit-detection trio, which the master
+// CSV a translation is made from does not carry.
 //
 // THE ORDERING THAT LOOKS LIKE A BUG AND IS THE LAW. Setup subscribes
 // `OnUpdateValues` to InputManager.OnSavedKeyBinds (:83) and does ALL
@@ -122,11 +125,29 @@ import {
 } from './horizontalSlider.js';
 import { ToolTip } from './toolTip.js';
 import { getBool, getFloat, getInt, setValue, saveSettings, effectiveSettings } from '../systems/settings.js';
+import { localizedText, localizedTextList, localizedStrings, TextCollections } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Settings, read in the player's language
+import { hotkeyHit } from '../systems/dialogShortcuts.js';   // L10N3f: the prompts' Yes/No are DaggerfallShortcut's
+
+/** L10N3f: a click on a prompt's Yes or No button, handed to input() -
+ *  never a key, so it answers whatever letters the language gives them.
+ *  The grid (ui/controlsWindow.js) asks the same way. */
+export const PROMPT_YES = 'prompt:yes';
+export const PROMPT_NO = 'prompt:no';
+/** L10N3f - the controls windows' prompts are DFU message boxes, and a
+ *  message box's Yes and No answer to their DialogShortcuts hotkeys
+ *  (DaggerfallMessageBox.AddButton :377, ToShortcutButton :99-142): Y
+ *  and N in English, a translation's own letters in its language (Oui
+ *  is O). Answers 'yes', 'no' or null. */
+export function promptAnswer(code, e = null) {
+  if (code === PROMPT_YES || hotkeyHit('Yes', code, e)) return 'yes';
+  if (code === PROMPT_NO || hotkeyHit('No', code, e)) return 'no';
+  return null;
+}
 
 // MeleeAttackDetection is the ONE of this window's ten keys tiered
 // `stored` - the port has no melee-detection branch to consume it - so
 // it is read through effectiveSettings, the settings menu's own
-// display surface, exactly as ui/pauseWindow.js:146-148 reads its
+// display surface, exactly as ui/pauseWindow.js:147-149 reads its
 // three stored-tier controls. The tier doctrine reserves the typed
 // getters for LIVE keys, and settings.test.js enforces it. The CLAMP
 // GetInt(0,1) would have applied (SettingsManager.cs:516) is applied
@@ -153,16 +174,22 @@ export const ROW_SIZE = Object.freeze({ w: 85, h: 15 });
 export const ROW_LABEL = Object.freeze({ w: 40, h: 10 });
 export const ROW_BUTTON = Object.freeze({ w: 43, h: 10, x: 42, y: 2.5 });
 
-/** The six SetupKeybindButton calls (:116-121), in DFU's order, with
- *  the Internal_Settings face each action wears here. */
+/** The six SetupKeybindButton calls (:116-121), in DFU's order. */
 export const KEYBIND_ROWS = Object.freeze([
-  { action: 'Escape', label: 'Escape', x: 20, y: 20 },
-  { action: 'AutoRun', label: 'AutoRun', x: 20, y: 40 },
-  { action: 'ToggleConsole', label: 'Console', x: 115, y: 20 },
-  { action: 'PrintScreen', label: 'Screenshot', x: 115, y: 40 },
-  { action: 'QuickSave', label: 'QuickSave', x: 210, y: 20 },
-  { action: 'QuickLoad', label: 'QuickLoad', x: 210, y: 40 },
+  { action: 'Escape', x: 20, y: 20 },
+  { action: 'AutoRun', x: 20, y: 40 },
+  { action: 'ToggleConsole', x: 115, y: 20 },
+  { action: 'PrintScreen', x: 115, y: 40 },
+  { action: 'QuickSave', x: 210, y: 20 },
+  { action: 'QuickLoad', x: 210, y: 40 },
 ]);
+/** The Internal_Settings face each action wears here, keyed by the
+ *  action's own name - GetLocalizedText(action.ToString(), TextSettings)
+ *  (:190). */
+export const KEYBIND_LABELS = localizedStrings({
+  Escape: 'Escape', AutoRun: 'AutoRun', ToggleConsole: 'Console',
+  PrintScreen: 'Screenshot', QuickSave: 'QuickSave', QuickLoad: 'QuickLoad',
+}, TextCollections.TextSettings);
 
 /** AUDIT KB1: the rows this popup draws and answers - DFU's six less the port's HIDDEN ToggleConsole (there is no
  *  console; a key bound on its row would do nothing and be spent twice - inputActions.js HIDDEN_ACTIONS). */
@@ -188,11 +215,12 @@ export const WEAPON_SWING_MODES = Object.freeze(['Vanilla', 'Click', 'Hold']);
 /** Internal_Settings_en.asset, id 392878225761951744. */
 export const MELEE_DETECTION_MODES = Object.freeze(['Performance', 'Quality']);
 
-/** The four CreateSlider calls (:123-132), and the label each carries. */
+/** The four CreateSlider calls (:123-132), and the label each carries -
+ *  read when it is drawn. */
 export const SLIDERS = Object.freeze([
-  { id: 'mouseSmoothing', label: 'Mouse Look Smoothing', x: 150, y: 70 },
-  { id: 'mouseSensitivity', label: 'Mouse Look Sensitivity', x: 20, y: 70 },
-  { id: 'weaponSwingMode', label: 'Weapon Swing Mode', x: 150, y: 90 },
+  { id: 'mouseSmoothing', get label() { return localizedText('mouseLookSmoothing', 'Mouse Look Smoothing', TextCollections.TextSettings); }, x: 150, y: 70 },
+  { id: 'mouseSensitivity', get label() { return localizedText('mouseLookSensitivity', 'Mouse Look Sensitivity', TextCollections.TextSettings); }, x: 20, y: 70 },
+  { id: 'weaponSwingMode', get label() { return localizedText('weaponSwingMode', 'Weapon Swing Mode', TextCollections.TextSettings); }, x: 150, y: 90 },
   { id: 'meleeAttackDetection', label: 'Hit Detection', x: 20, y: 145 },
 ]);
 
@@ -203,16 +231,16 @@ export const SLIDERS = Object.freeze([
 export const CHECK_SIZE = 7;
 export const CHECK_TEXT_OFFSET = Object.freeze([2, 1]);
 export const CHECKBOXES = Object.freeze([
-  { id: 'invertMouseVertical', label: 'Invert Look-Y', x: 20, y: 120, section: 'Controls', key: 'InvertMouseVertical' },
-  { id: 'movementAcceleration', label: 'Movement Acceleration', x: 20, y: 130, section: 'Controls', key: 'MovementAcceleration' },
-  { id: 'bowDrawback', label: 'Bows - draw and release', x: 150, y: 120, section: 'Controls', key: 'BowDrawback' },
-  { id: 'toggleSneak', label: 'Toggle Sneak', x: 150, y: 130, section: 'Controls', key: 'ToggleSneak' },
+  { id: 'invertMouseVertical', get label() { return localizedText('invertLookY', 'Invert Look-Y', TextCollections.TextSettings); }, x: 20, y: 120, section: 'Controls', key: 'InvertMouseVertical' },
+  { id: 'movementAcceleration', get label() { return localizedText('movementAcceleration', 'Movement Acceleration', TextCollections.TextSettings); }, x: 20, y: 130, section: 'Controls', key: 'MovementAcceleration' },
+  { id: 'bowDrawback', get label() { return localizedText('bowDrawback', 'Bows - draw and release', TextCollections.TextSettings); }, x: 150, y: 120, section: 'Controls', key: 'BowDrawback' },
+  { id: 'toggleSneak', get label() { return localizedText('toggleSneak', 'Toggle Sneak', TextCollections.TextSettings); }, x: 150, y: 130, section: 'Controls', key: 'ToggleSneak' },
   { id: 'meleeAttackFriendlyProtection', label: 'Protect Friendlies and Neutrals', x: 150, y: 145, section: 'MeleeAttacks', key: 'MeleeAttackFriendlyProtection' },
 ]);
 
 /** AddTextbox (:135, :285-319). */
 export const THRESHOLD = Object.freeze({
-  label: 'Mouse Weapon Attack Threshold',
+  get label() { return localizedText('mouseWeaponAttackThreshold', 'Mouse Weapon Attack Threshold', TextCollections.TextSettings); },
   x: 20, y: 90, panelW: 100, panelH: 20,
   box: [0, 10, 30, 6], maxCharacters: 5,
 });
@@ -273,10 +301,13 @@ export class MouseControlsWindow {
     this._font = null;
 
     // Setup's reads (:123-135), each through the getter DFU's
-    // SettingsManager uses for that key.
+    // SettingsManager uses for that key - and the two name lists in the
+    // player's language, read where Setup reads them (L10N3d); their
+    // English is SMOOTHING_STRENGTHS and WEAPON_SWING_MODES above.
     this.sliders = {
       mouseSmoothing: makeSlider({
-        mode: 'choices', items: SMOOTHING_STRENGTHS,
+        mode: 'choices',
+        items: localizedTextList('mouseLookSmoothingStrengths', ['None', 'Lowest', 'Low', 'Medium', 'High', 'Highest'], TextCollections.TextSettings),
         selected: smoothingStrength(getFloat('Controls', 'MouseLookSmoothingFactor', 0.0, 0.9)),
       }),
       mouseSensitivity: makeSlider({
@@ -284,7 +315,7 @@ export class MouseControlsWindow {
         start: getFloat('Controls', 'MouseLookSensitivity', ...SENSITIVITY_RANGE),
       }),
       weaponSwingMode: makeSlider({
-        mode: 'choices', items: WEAPON_SWING_MODES,
+        mode: 'choices', items: localizedTextList('weaponSwingModes', ['Vanilla', 'Click', 'Hold'], TextCollections.TextSettings),
         selected: getInt('Controls', 'WeaponSwingMode', 0, 2),
       }),
       meleeAttackDetection: makeSlider({
@@ -394,26 +425,27 @@ export class MouseControlsWindow {
     // AUDIT KB1: a prompt is answered by a PRESS. The hosts hand repeated keydowns to the window, so a key held a beat
     // after its capture (Escape, Y, N - all bindable) answered the prompt it had just raised.
     if (this.top && e?.repeat) return;
+    const answer = this.top ? promptAnswer(code, e) : null;   // L10N3f: the prompts' Yes/No, by their DialogShortcuts letters
     if (this.top === 'replace') {
       const r = this._replace;
-      if (code === 'KeyY') {
+      if (answer === 'yes') {
         this._click();
         stageReplace(this.unsaved, r.action, r.code, r.holders);
         this._refresh();
       }
       // UXB1-S: B - "use it for both", the grid's own third answer (ui/controlsWindow.js)
-      const share = code === 'KeyB' && canShareKey(this.unsaved, r.action, r.code, r.holders);
+      const share = !answer && code === 'KeyB' && canShareKey(this.unsaved, r.action, r.code, r.holders);
       if (share) { this._click(); stageShare(this.unsaved, r.action, r.code); this._refresh(); }
-      if (code === 'KeyY' || code === 'KeyN' || code === 'Escape' || share) { this.top = null; this._replace = null; }
+      if (answer || code === 'Escape' || share) { this.top = null; this._replace = null; }
       return;
     }
     if (this.top === 'remove') {
-      if (code === 'KeyY') {
+      if (answer === 'yes') {
         this._click();
         setUnsavedBinding(this.unsaved, this._removeAction, null);
         this._refresh();
       }
-      if (code === 'KeyY' || code === 'KeyN' || code === 'Escape') { this.top = null; this._removeAction = null; }
+      if (answer || code === 'Escape') { this.top = null; this._removeAction = null; }
       return;
     }
     if (this.threshold.focus) {
@@ -490,8 +522,8 @@ export class MouseControlsWindow {
     if (this.top === 'remove' || this.top === 'replace') {
       if (this._box) {
         const hit = messageBoxHit(this._box, vx, vy);
-        if (hit === MB_BUTTONS.Yes) this.input('KeyY');
-        else if (hit === MB_BUTTONS.No) this.input('KeyN');
+        if (hit === MB_BUTTONS.Yes) this.input(PROMPT_YES);
+        else if (hit === MB_BUTTONS.No) this.input(PROMPT_NO);
         return true;
       }
       this.top = null;
@@ -566,19 +598,22 @@ export class MouseControlsWindow {
     };
     const glyphH = font.fnt?.fixedHeight ?? 6;
 
-    put('Configure Advanced Controls', Math.round((pw - measureText(font.fnt, 'Configure Advanced Controls')) / 2), TITLE_Y);
+    const title = localizedText('configureAdvancedControls', 'Configure Advanced Controls', TextCollections.TextSettings);   // :102
+    put(title, Math.round((pw - measureText(font.fnt, title)) / 2), TITLE_Y);
 
     // CONTINUE
     drawRect(renderer, m, MOUSE_PANEL[0] + CONTINUE_RECT[0], MOUSE_PANEL[1] + CONTINUE_RECT[1],
       CONTINUE_RECT[2], CONTINUE_RECT[3], CONTINUE_BG);
-    put('CONTINUE', CONTINUE_RECT[0] + Math.round((CONTINUE_RECT[2] - measureText(font.fnt, 'CONTINUE')) / 2),
+    const cont = localizedText('continueUpper', 'CONTINUE', TextCollections.TextSettings);   // :108
+    put(cont, CONTINUE_RECT[0] + Math.round((CONTINUE_RECT[2] - measureText(font.fnt, cont)) / 2),
       CONTINUE_RECT[1] + Math.round((CONTINUE_RECT[3] - glyphH) / 2));
 
     // the six keybind rows
     const dict = currentDict(this.unsaved);
     for (const row of LIVE_ROWS) {
-      const lw = measureText(font.fnt, row.label);
-      put(row.label, row.x + ROW_LABEL.w - lw, row.y + Math.round((ROW_SIZE.h - glyphH) / 2));
+      const face = KEYBIND_LABELS[row.action];
+      const lw = measureText(font.fnt, face);
+      put(face, row.x + ROW_LABEL.w - lw, row.y + Math.round((ROW_SIZE.h - glyphH) / 2));
       const [bx, by, bw, bh] = MouseControlsWindow.rowButtonRect(row);
       drawRect(renderer, m, MOUSE_PANEL[0] + bx, MOUSE_PANEL[1] + by, bw, bh, KEYBIND_BG);
       const code = dict.get(row.action);

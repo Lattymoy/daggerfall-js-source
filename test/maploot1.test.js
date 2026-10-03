@@ -15,7 +15,7 @@ const ICONS = { getTexture: async () => ({ recordCount: 0 }), uploadRecord: () =
 test('MAPLOOT1: the DUNGEON host carries the outer host\'s reveal - it was `revealMap: null`, so a map taken off a corpse underground was "studied" and left on the body', () => {
   const wm = readFileSync('src/scenes/worldModes.js', 'utf8');
   const call = wm.slice(wm.indexOf('const ctx = await buildDungeonContext('), wm.indexOf('const ctx = await buildDungeonContext(') + 12000);
-  assert.match(call, /revealMap: host\.revealLocation \? \(\) => host\.revealLocation\('readMap'\) : null/, 'worldModes hands the dungeon world.js\'s reveal');
+  assert.match(call, /revealMap: host\.revealMap \?\? null,/, 'worldModes hands the dungeon world.js\'s reveal');
   const dc = readFileSync('src/scenes/dungeonContext.js', 'utf8');
   const bag = dc.slice(dc.indexOf('const useHooks = {'), dc.indexOf('const useHooks = {') + 2000);
   assert.match(bag, /revealMap: opts\.revealMap \?\? null,/, 'and the dungeon\'s one use bag takes it');

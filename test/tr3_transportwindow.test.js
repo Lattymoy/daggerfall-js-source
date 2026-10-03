@@ -163,7 +163,7 @@ test('TR3/MAC-K3: the host door - grounded and outdoors only, and EVERY host tha
   // ...and the two indoor hosts refuse, rather than falling silent -
   // which is what this host did for the whole arc before MAC-K3.
   for (const h of ['worldModes', 'dungeonContext']) {
-    assert.match(read(`src/scenes/${h}.js`), /openTransport\(\) \{[^}]*CANNOT_CHANGE_INDOORS/,
+    assert.match(read(`src/scenes/${h}.js`), /openTransport\(\) \{[^}]*cannotChangeIndoorsText\(\)/,
       `${h}.js refuses indoors with the line, and does not just do nothing`);
   }
   assert.equal(typeof CANNOT_CHANGE_INDOORS, 'string');

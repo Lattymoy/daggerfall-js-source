@@ -320,8 +320,8 @@ test('AUDIT CONTRIB H3: a refused press is a refusal - the performers\' own answ
   assert.equal(HB.hotbarPress(0, { entity: me, doors }).kind, 'refused', 'no dagger in the pack: the swap said none');
   assert.equal(HB.hotbarPress(1, { entity: me, doors }).kind, 'refused', 'the engine refused the ready (silence, no spell points)');
   const h = rd('src/scenes/hostMagic.js');
-  assert.match(h, /say\(SILENCED_TEXT\); return false; \}/);
-  assert.match(h, /say\(PRESS_BUTTON_TO_FIRE_SPELL\);   \/\/ classic: the next attack-click CASTS\n\s*return true;/);
+  assert.match(h, /say\(silencedText\(\)\); return false; \}/);
+  assert.match(h, /say\(pressButtonToFireSpellText\(\)\);   \/\/ classic: the next attack-click CASTS\n\s*return true;/);
   HB.clearQuickslots();
 });
 

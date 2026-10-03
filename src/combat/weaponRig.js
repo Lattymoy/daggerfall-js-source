@@ -23,7 +23,7 @@
 // optional environment-attack ray (interiors: bash/Receive on action
 // objects; open exteriors have nothing in reach).
 
-import { PlayerWeapon, WEAPON_REACH, setWeaponPoseProbe, weaponPoseOf } from './playerWeapon.js';   // RR1: the rig's drawn state and weapon type, for laws that ask off-rig
+import { PlayerWeapon, WEAPON_REACH, setWeaponPoseProbe, weaponPoseOf, USING_RIGHT_HAND_TEXT } from './playerWeapon.js';   // RR1: the rig's drawn state and weapon type, for laws that ask off-rig
 import { eotbBody } from '../player/eotbBody.js';   // EOTB5: the sprite body, for a player with no Morrowind data
 import { eotbCamera } from '../player/eotbCamera.js';
 import { racialFpsWeapon } from '../systems/lycanthropy.js';   // V4: the transformed rig's claws
@@ -84,6 +84,7 @@ import { cursorActive } from '../player/pointerLock.js';   // WW1: PlayerMouseLo
 import { liveStat } from '../systems/statMods.js';   // WW1: the widget's speed ratio
 import './swingLaw.js';   // AUDIT PRE-MERGE 0929 S5: SWING-LAW's reader of the weapon in the hand, registered as it loads - every rig's
 import { walkSpeed } from '../player/motor.js';   // WW1: GetBaseSpeed's walk arm
+import { localizedText } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
 /**
  * TR2: THE ARMS-BUILD OPTS, ONE HOME. The pause card and the Test
@@ -295,9 +296,9 @@ export async function autoBuildArms(entity, { dataCount = morrowindDataCount, me
  *                     The note that hosts without a HUD text layer
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
- *                     (dungeonContext.js:3325), townTalk.say
- *                     (exterior.js:2196, world.js:8868) and
- *                     worldModes' own interior sink (worldModes.js:514,
+ *                     (dungeonContext.js:3332), townTalk.say
+ *                     (exterior.js:2197, world.js:8869) and
+ *                     worldModes' own interior sink (worldModes.js:515,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below
  *                     is unreached,
@@ -1188,7 +1189,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     // queue - and `say` here is shared with the shield refusal below,
     // which really is a PopupMessage, so this line takes the label
     // directly rather than re-pointing the sink.
-    setMidScreenText(type === WEAPON_TYPES.Bow ? 'You have no arrows.' : 'You have no pellets.');
+    setMidScreenText(type === WEAPON_TYPES.Bow ? localizedText('youHaveNoArrows', 'You have no arrows.') : 'You have no pellets.');
   }
 
   /** MW-D42's hold, as the function the frame decides first (it used to be the frame's own tail). AUDIT
@@ -1453,7 +1454,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // overwrite a weapon no equip table ever supplied.
       const line = playerWeapon.toggleHand({ entity, apply: bindWorn });
       if (line === null) return false;   // :704-705, the shield refuses
-      say(line);
+      say(line === USING_RIGHT_HAND_TEXT ? localizedText('usingRightHand', 'Using weapon in right hand.') : localizedText('usingLeftHand', 'Using weapon in left hand.'));   // L10N3d: WeaponManager.cs:709/711, in the player's language
       return true;
     },
     /**

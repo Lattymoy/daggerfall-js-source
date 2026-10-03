@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { generateBuildingName, BUILDING_TYPES, isNamedBuildingType, TAVERNS_A, TAVERNS_B, STORES_A } from '../src/world/buildingNames.js';
+import { generateBuildingName, BUILDING_TYPES, isNamedBuildingType, tavernsA, tavernsB, storesA } from '../src/world/buildingNames.js';
 import { mergeNamedBuildings, buildBuildingDirectory, compassHint, reactionTier, reactionTier012, ANSWERS_TO_DIRECTIONS, ANSWERS_TO_NON_DIRECTIONS, whereIsAnswer, KNOWLEDGE_MODIFIERS, makeBuildingKey, npcKnowsAboutItem, BUILDING_KEY_0, QUESTION_TYPE_REACTION_MODS, ETIQUETTE_REACTION_MODS, STREETWISE_REACTION_MODS } from '../src/systems/talkTopics.js';
 import { srand, rand, randomRange, randomRangeInclusive } from '../src/formats/dfRandom.js';
 import { MapsFile } from '../src/formats/mapsFile.js';
@@ -20,8 +20,8 @@ const skipReal = !ARENA2 || !existsSync(ARENA2)
 test('buildingNames: the seeded draws, macros, and singleton forms', () => {
   // The tavern draw order is B FIRST then A - reproduce by hand
   srand(1234);
-  const b = TAVERNS_B[randomRange(0, TAVERNS_B.length)];
-  const a = TAVERNS_A[randomRange(0, TAVERNS_A.length)];
+  const b = tavernsB()[randomRange(0, tavernsB().length)];
+  const a = tavernsA()[randomRange(0, tavernsA().length)];
   assert.equal(generateBuildingName(1234, BUILDING_TYPES.Tavern, {}), `${a} ${b}`);
   // The same seed always gives the same name
   assert.equal(generateBuildingName(1234, BUILDING_TYPES.Tavern, {}),
@@ -34,7 +34,7 @@ test('buildingNames: the seeded draws, macros, and singleton forms', () => {
   assert.equal(generateBuildingName(7, BUILDING_TYPES.House1, {}), '');
   assert.equal(generateBuildingName(7, BUILDING_TYPES.HouseForSale, {}), 'House for sale');
   // %cn lands the location name; StoresA carries the macro forms
-  assert.ok(STORES_A.includes('%cn'));
+  assert.ok(storesA().includes('%cn'));
   assert.ok(isNamedBuildingType(BUILDING_TYPES.Tavern));
   assert.ok(!isNamedBuildingType(BUILDING_TYPES.House1));
 });

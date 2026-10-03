@@ -227,8 +227,8 @@
   {
     "name": "DW-D-afloat-latch-never-set",
     "file": "src/player/motor.js",
-    "old": "    player.displayAfloatMessage = true;\n    return CANNOT_FLOAT_TEXT;",
-    "new": "    return CANNOT_FLOAT_TEXT;",
+    "old": "    player.displayAfloatMessage = true;\n    return localizedText('cannotFloat', CANNOT_FLOAT_TEXT);   // PlayerEnterExit.cs:398",
+    "new": "    return localizedText('cannotFloat', CANNOT_FLOAT_TEXT);   // PlayerEnterExit.cs:398",
     "tests": [
       "test/dwd_swim.test.js"
     ]

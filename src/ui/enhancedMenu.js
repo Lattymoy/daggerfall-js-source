@@ -45,7 +45,7 @@
 // reload. Classic works that way because classic is a DOS program with
 // a fixed 320x200 screen. Neither reason survives here.
 //
-// This is ONE screen, under BOTH skins (main.js:130-255, FD1: the
+// This is ONE screen, under BOTH skins (main.js:135-260, FD1: the
 // launcher and its settings window are deleted; the classic rail is
 // Begin, which leads into the splash and PICK03I0 exactly as before).
 // Every destination is a press away from every other, settings
@@ -102,7 +102,7 @@ import { dfWornEquipment } from '../formats/mwItemMap.js';
 import { ARMOR_ENUM } from '../combat/enemyEquipment.js';
 import { morrowindDataCount, morrowindDataCounted, countMorrowindArchives, assetPickerOpen } from '../scenes/dataSource.js';   // MAC1: the boot door counts the store itself; AUDIT 65 XL-6: by NAME - it never reads a stored file   // MW-IMPORT: the attach door; MWFIX: and the modal it opens owns the keyboard
 import { CATEGORIES, keysOf } from '../ui/settingsMap.js';
-import { widgetFor, blockedReason, formatValue, stepValue, COLOUR_KEYS, ENUM_LAW } from '../ui/settingsLaw.js';   // FT14: the enum's own values are the bar's segments
+import { widgetFor, blockedReason, formatValue, stepValue, COLOUR_KEYS, ENUM_LAW, enumWords } from '../ui/settingsLaw.js';   // FT14: the enum's own values are the bar's segments
 import { labelOf, helpOf, INSTEAD, TIER_TEXT } from '../ui/settingsCopy.js';
 import {
   effectiveSettings, setValue, saveSettings, resetToDefaults, tierOf, DEFAULTS,
@@ -130,7 +130,7 @@ import { textureReplacementCount, bundleTextureCount } from '../systems/textureR
 import { attachedDfmods, DFMOD_DETAIL, dfmodMaxSize } from '../systems/dfmodTextures.js';
 import { isIilMod } from '../systems/improvedInteriorLighting.js';   // IIL3: the lighting mod's own section   // DFMOD1: the attached texture mods, one row each; DFMOD2: the detail choice
 import { isTouchDevice } from './touch.js';   // TI2: the Touch card mounts only where a finger can reach it
-import { dateFromClassicMinutes, dateString, dateTimeString } from '../systems/gameDate.js';
+import { dateFromClassicMinutes, dateString } from '../systems/gameDate.js';
 // PX5: the pause clock reads THE ONE CLOCK directly (AUDIT 23 C2's
 // law - every host already reads this same module), so no host seam
 // is needed and no host can drift.
@@ -173,6 +173,8 @@ import { keyCodeForDomCode, KEYCODE_NONE } from '../systems/keyCodes.js';   // H
 import { isOnlinePage, onlineForcedPref, onlineForcedModSetting, onlineForcedSetting, onlineWholeModKey, ONLINE_ROOM_MOD_KEYS } from '../systems/onlineLane.js';   // OL1: online is the enhanced lane, whole - a forced switch is shown locked   // ROADS 24; DS1: the integer keys; UL1: the choice keys
 import { onlineSyncPlan, applyOnlineSync, lastOnlineSync, undoOnlineSync } from '../systems/onlineSync.js';   // UXB1-E: the room's rules, copied home
 import { CREDITS } from './credits.js';   // CR1: who made what the port carries
+import { t, tIn, currentLocale, localeInfo, localeTable, availableLocales, BASE_LOCALE, localizedText, formatText } from '../systems/textManager.js';   // L10N1b: the port's own strings, the language row and the first-run offer; L10N3d: DFU's Internal_Strings
+import { localeForBrowser, catalogLocale } from '../systems/localeCatalog.js';   // L10N1b
 // FIX-F (Mac: "changing keybinds in classic/enhanced do not work"): the
 // rebinding pane. The enhanced skin is the DEFAULT and had no door to
 // the key bindings at all - the only one in the port opens off the
@@ -251,6 +253,25 @@ const SECTIONS_CLASSIC = ['Begin', 'Online', 'Settings', 'Features', 'Overhauls'
 const SECTIONS_PAUSE = ['Resume', 'Save Game', 'Load Game', 'Settings', 'Features', 'Overhauls', 'About', 'Exit'];   // OVH1   // FT14; FT16: Controls is a Settings category
 
 const idOf = (label) => label.toLowerCase().split(' ')[0];
+
+/** L10N1b: the rail's words in the player's language. The ids stay the English labels' (idOf), every English label
+ *  reads back as itself, and each is one literal call so tools/l10nExtract.mjs reads the catalog off the source. */
+const RAIL_TEXT = Object.freeze({
+  continue: () => t('menu.rail.continue', 'Continue'),
+  new: () => t('menu.rail.new', 'New Game'),
+  load: () => t('menu.rail.load', 'Load Game'),
+  online: () => t('menu.rail.online', 'Online'),
+  test: () => t('menu.rail.test', 'Test Room'),
+  settings: () => t('menu.rail.settings', 'Settings'),
+  features: () => t('menu.rail.features', 'Features'),
+  overhauls: () => t('menu.rail.overhauls', 'Overhauls'),
+  about: () => t('menu.rail.about', 'About'),
+  begin: () => t('menu.rail.begin', 'Begin'),
+  resume: () => t('menu.rail.resume', 'Resume'),
+  save: () => t('menu.rail.save', 'Save Game'),
+  exit: () => t('menu.rail.exit', 'Exit'),
+});
+const railLabel = (label) => RAIL_TEXT[idOf(label)]?.() ?? label;
 
 /** Rail entries that ACT rather than navigate. Resume has no pane to
  *  show - a screen whose only content is a button repeating the word
@@ -1273,13 +1294,13 @@ function paneLoad(body) {
     actions: [
       // NO CONFIRM ON LOAD, in either mode. It discards unsaved play,
       // which is the shape AUDIT F3/F4 made confirm - but classic's
-      // own pause window loads on one press (pauseWindow.js:346-348)
+      // own pause window loads on one press (pauseWindow.js:347-349)
       // and so does F11, and inventing a prompt on exactly one of the
       // port's three load doors is a divergence, not a safety net.
-      { label: 'Load', primary: true, disabled: !canLoad, onClick: () => { _pickedSaveKey = save.key; onAction('load'); } },
+      { label: localizedText('loadButton', 'Load'), primary: true, disabled: !canLoad, onClick: () => { _pickedSaveKey = save.key; onAction('load'); } },   // L10N3d: the save window's own buttons (DaggerfallUnitySaveGameWindow.cs:445, :256)
       // ...and the destructive one still asks, and takes THIS slot
       // alone.
-      { label: 'Delete', onClick: () => ask(
+      { label: localizedText('deleteSave', 'Delete'), onClick: () => ask(
         'Delete this save',
         `Deleting ${save.name}'s "${save.saveName}" cannot be undone.`,
         'Delete',
@@ -1366,7 +1387,7 @@ function transferCard(count) {
 
 // ── SAVE GAME (pause only) ───────────────────────────────────────
 // U51. Classic's SAVE button closes the window and then writes
-// (pauseWindow.js:319-321, `this._closeWith(); ... this.hooks.quickSave?.()`),
+// (pauseWindow.js:320-322, `this._closeWith(); ... this.hooks.quickSave?.()`),
 // and this does the same for a reason that is not only parity: the
 // port answers a write with a HUD LINE, and this screen is a fixed
 // opaque div over the whole canvas, so a save that left the door open
@@ -1384,7 +1405,7 @@ function paneSave(body) {
   // thing this screen gets to reword.
   const prevented = hooks.savingPrevented?.() || typeof hooks.quickSave !== 'function';
   if (prevented) {
-    body.append(empty('You cannot save now.',
+    body.append(empty(localizedText('cannotSaveNow', 'You cannot save now.'),
       'This part of the game holds no save door. Step back outside and the quicksave returns.'));
     return;
   }
@@ -1419,7 +1440,7 @@ function paneSave(body) {
   input.oninput = () => { _saveNameDraft = input.value; describe(); };
   describe();
   c.append(line, numbers);
-  c.append(acts([{ label: 'Save', primary: true, onClick: () => { _pickedSaveName = input.value.trim() || QUICK_SAVE_NAME; onAction('save'); } }]));
+  c.append(acts([{ label: localizedText('saveButton', 'Save'), primary: true, onClick: () => { _pickedSaveName = input.value.trim() || QUICK_SAVE_NAME; onAction('save'); } }]));   // L10N3d: the save window's (DaggerfallUnitySaveGameWindow.cs:439)
   body.append(c);
   // TILE2: the same tiles the other two panes draw. Mac named Online
   // and Load; this pane lists the SAME slots, and leaving one of the
@@ -1439,7 +1460,7 @@ function paneSave(body) {
 
 // ── EXIT (pause only) ────────────────────────────────────────────
 // U51. Classic confirms on TEXT.RSC 1069 and then posts dfuiExitGame
-// (pauseWindow.js:223-226); in a browser Application.Quit means nothing,
+// (pauseWindow.js:224-227); in a browser Application.Quit means nothing,
 // so the port's door out has always been the front door - the same
 // unwind chargen's cancel and the death sequence use (Ledger A).
 //
@@ -1922,6 +1943,104 @@ function stepRow(key, name, note, { min, max, step: inc, fmt }) {
   return row;
 }
 
+/** L10N1b: THE LANGUAGE ROW. Every language the build holds text for, by its own name and its English one, switched
+ *  at once - its tables fetched, the text core switched, the menu drawn again - and remembered (uiPrefs `language`).
+ *  The front door's alone, as the skip-video row is: a running game keeps the language it booted in. A language whose
+ *  strings are Claude's drafts says so (Mac: "AI drafts, labeled"). */
+function languageRow() {
+  const row = el('div', 'row');
+  const main = el('div', 'row-main');
+  const cur = currentLocale();
+  main.append(el('div', 'row-name', t('settings.language.name', 'Language')));
+  main.append(el('div', 'row-note', t('settings.language.note', 'The language of the game\u2019s text. Takes effect at once.')));
+  if (localeInfo(cur)?.source === 'machine') main.append(el('div', 'row-note', t('settings.language.machine', 'Machine translated')));
+  row.append(main);
+  const ctl = el('div', 'ctl');
+  const sel = el('select', 'act langsel');
+  sel.setAttribute('aria-label', t('settings.language.name', 'Language'));
+  const offered = availableLocales();
+  for (const l of offered.length ? offered : [catalogLocale(BASE_LOCALE)]) {
+    if (l.hidden && l.code !== cur) continue;
+    const o = el('option', '', l.name === l.englishName ? l.name : `${l.name} (${l.englishName})`);
+    o.value = l.code;
+    o.lang = l.code === 'qps-ploc' ? BASE_LOCALE : l.code;
+    if (l.code === cur) o.selected = true;
+    sel.append(o);
+  }
+  sel.onchange = () => { chooseLanguage(sel.value); };
+  ctl.append(sel, el('span', 'tier live'));
+  row.append(ctl);
+  return row;
+}
+
+/** L10N3b: THE TRANSLATION PACK ROW, under the language's: a Daggerfall Unity translation of the chosen language,
+ *  installed from the player's own files (scenes/dataSource.js pickTranslationPack) - never bundled, never uploaded -
+ *  or replaced, or removed. Its text takes the place of the machine translation wherever it has some. English has
+ *  none: English is the game's own. */
+function translationPackRow() {
+  const cur = currentLocale();
+  const info = localeInfo(cur);
+  if (!info || cur === BASE_LOCALE || info.hidden) return null;
+  const pack = info.pack ?? null;
+  const row = el('div', 'row');
+  const main = el('div', 'row-main');
+  main.append(el('div', 'row-name', t('settings.pack.name', 'Translation pack')));
+  main.append(el('div', 'row-note', pack
+    ? t('settings.pack.installed', '{name}: {tables, plural, one {# table} other {# tables}}, {quests, plural, one {# quest} other {# quests}}, {books, plural, one {# book} other {# books}}. Its text takes the place of the machine translation.', { name: pack.name, tables: pack.counts?.table ?? 0, quests: pack.counts?.quest ?? 0, books: pack.counts?.book ?? 0 })
+    : t('settings.pack.none', 'Install a Daggerfall Unity translation into {language} from your own files. Nothing is uploaded.', { language: info.name })));
+  row.append(main);
+  const ctl = el('div', 'ctl');
+  const install = el('button', 'act', pack ? t('settings.pack.replace', 'Replace…') : t('settings.pack.install', 'Install…'));
+  install.onclick = async () => {
+    const ds = await import('../scenes/dataSource.js');
+    await ds.pickTranslationPack(cur, info.name);
+    render();
+  };
+  ctl.append(install);
+  if (pack) {
+    const remove = el('button', 'act', t('settings.pack.remove', 'Remove'));
+    remove.onclick = async () => {
+      const { removeTranslationPack } = await import('../scenes/localeData.js');
+      await removeTranslationPack(cur);
+      render();
+    };
+    ctl.append(remove);
+  }
+  row.append(ctl);
+  return row;
+}
+
+/** L10N1b: the player's language chosen - remembered, loaded, switched and drawn. A language that fails to load
+ *  leaves the one that stood (scenes/localeData.js switchLocale answers English for text the build lacks). */
+async function chooseLanguage(code) {
+  setPref('language', code);
+  setPref('languageOffered', true);
+  try {
+    const { switchLocale } = await import('../scenes/localeData.js');
+    await switchLocale(code);
+  } catch (err) { console.error('[text] the language could not switch:', err?.message ?? err); }
+  render();
+}
+
+/** L10N1b: THE FIRST-RUN OFFER. A player whose browser reads another language first is asked, once and IN that
+ *  language, whether to play in it; either answer is remembered and the offer never returns. Shown only when the
+ *  boot has fetched that language's text (scenes/localeData.js initLocale), so it can never ask in English. */
+function languageOffer() {
+  if (getPref('languageOffered') || currentLocale() !== BASE_LOCALE) return null;
+  const nav = globalThis.navigator;
+  const code = localeForBrowser(nav?.languages?.length ? nav.languages : [nav?.language], (c) => availableLocales().some((l) => l.code === c));
+  if (!code || !localeTable(code, 'Port_Strings')?.has('lang.offer')) return null;
+  const card = el('div', 'px-langoffer');
+  card.lang = code;
+  card.append(el('div', 'px-langoffer-q', tIn(code, 'lang.offer', 'Play in English?')));
+  if (localeInfo(code)?.source === 'machine') card.append(el('div', 'px-langoffer-note', tIn(code, 'lang.offer.machine', 'This translation is machine-made and still being checked.')));
+  card.append(acts([
+    { label: tIn(code, 'lang.offer.yes', 'Yes'), primary: true, onClick: () => { chooseLanguage(code); } },
+    { label: tIn(code, 'lang.offer.no', 'No, keep English'), onClick: () => { setPref('languageOffered', true); render(); } },
+  ]));
+  return card;
+}
+
 /** TOUCH-BUTTONS: a choice among named values, walked with the same two steppers as stepRow (wrapping - a list, not
  *  a range). `choices` is [id, label] in order; the store holds the id. */
 function slotChoiceRow(key, name, note, choices, current) {
@@ -2115,6 +2234,8 @@ function portRowsControls() {
  *  (MENU-TOGGLE: the Interface Style row is retired). */
 function portRowsInterface({ pause = false } = {}) {
   const out = [];
+  if (!pause) out.push(languageRow());   // L10N1b: the front door's alone - a running game is the language it booted in
+  if (!pause) { const packRow = translationPackRow(); if (packRow) out.push(packRow); }   // L10N3b: and its translation pack
   out.push(hudScaleRow());
   if (isEnhanced()) out.push(...hudLayoutRows());   // HUD-MOVE: the Enhanced Plus HUD's own - Classic draws none of it
   // FOEBAR1: the target bar's face is a two-way choice, not a switch - the
@@ -2623,7 +2744,9 @@ export function tileStates(f) {   // FT18: exported for the All off pins, which 
     if (w === 'enum' && ENUM_LAW[c.key]?.encode === 'index') {
       const vals = ENUM_LAW[c.key].values;
       const i = parseInt(raw, 10);
-      return { labels: vals, at: Number.isInteger(i) && i >= 0 && i < vals.length ? i : 0, locked: false,
+      // L10N3d: `labels` stay the law's words (All off and the switch reading find Off by them); the bar SHOWS DFU's
+      // words for them in the player's language (enumWords, DaggerfallAdvancedSettingsWindow.cs:248)
+      return { labels: vals, shown: enumWords(c.key), at: Number.isInteger(i) && i >= 0 && i < vals.length ? i : 0, locked: false,
         set: (n) => write(c.key, String(n)) };
     }
     return null;
@@ -2687,7 +2810,7 @@ function segBar(st, label) {
   seg.setAttribute('role', 'group');
   seg.setAttribute('aria-label', label);
   st.labels.forEach((L, i) => {
-    const b = el('button', `ft-segb${i === r.off ? ' off' : ''}`, L);
+    const b = el('button', `ft-segb${i === r.off ? ' off' : ''}`, st.shown?.[i] ?? L);
     b.type = 'button';
     b.setAttribute('aria-pressed', String(i === st.at));
     if (st.locked) {
@@ -3416,7 +3539,9 @@ function renderHome() {
     // clock, so one read at render is the truth for the whole visit.
     const d = dateFromClassicMinutes(Math.floor(skyMinutes()));   // TIME1: the date and time the world shows are the sky's
     const clock = el('div', 'px-clock');
-    clock.append(el('span', null, dateString(d)), el('span', 'px-clocktime', dateTimeString(d).split(' on ')[0]));
+    // the time is DateTimeString's own head ('{0:00}:{1:00}:{2:00}'), read off the clock - never by splitting the
+    // formatted line at ' on ', which a translation's pattern need not contain (L10N3d)
+    clock.append(el('span', null, dateString(d)), el('span', 'px-clocktime', formatText('{0:00}:{1:00}:{2:00}', d.hour, d.minute, d.second)));
     home.append(clock);
     app.append(home);
     return;
@@ -3448,7 +3573,7 @@ function renderHome() {
     // so the hook is structural: doorbtn plus the section id, which
     // is what a probe actually means when it says New Game.
     const b = el('button', `doorbtn door-${id}`);
-    b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(label), el('span', 'px-c', '\u25c6'));
+    b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(railLabel(label)), el('span', 'px-c', '\u25c6'));   // L10N1b
     b.onclick = RAIL_ACTS[id] ? () => onAction(RAIL_ACTS[id]) : () => go(id);
     menu.append(b);
   }
@@ -3458,11 +3583,17 @@ function renderHome() {
   // ACC1f: the profile mark, top-right - the corner the foot's About
   // box does not use.
   home.append(profileMark());
+  // L10N1b: the first-run language offer, in the top-left corner nothing else uses
+  const offer = languageOffer();
+  if (offer) home.append(offer);
 
   // ...and the window, offered ONCE per visit to a device with nobody
   // signed in. `accountOffered` latches here rather than in the
   // opener, so the mark can reopen it as often as a player likes.
-  if (!accountOpen && !accountOffered && !signedIn()) { accountOffered = true; accountOpen = true; }
+  // L10N1b: the language is asked first - the window waits while the
+  // offer stands (found by tools/languageProbe.mjs: it covered the
+  // offer, so a French player was asked in English before French).
+  if (!offer && !accountOpen && !accountOffered && !signedIn()) { accountOffered = true; accountOpen = true; }
   if (accountOpen) {
     const acct = el('div', 'px-stage px-acctstage');
     acct.append(accountWindow());
@@ -3897,7 +4028,7 @@ function statsSkills(detail, m) {
     if (group.ids.includes(SKILLS.HandToHand)) {
       const hth = el('div', 'px-qrow');
       hth.append(document.createTextNode(
-        `${SKILL_NAMES[SKILLS.HandToHand]} dmg: ${m.handToHandDamage.min}-${m.handToHandDamage.max}`));
+        formatText(localizedText('hthDamageFormatString', '{0} dmg: {1}-{2}'), SKILL_NAMES[SKILLS.HandToHand], m.handToHandDamage.min, m.handToHandDamage.max)));
       detail.append(hth);
     }
   }
@@ -4099,7 +4230,7 @@ function armQuestTimer(span, key) {
 }
 
 /** The finished-quest header the notebook files:
- *  '<name> completed|ended at <date>:' (notebook.js:190-224). The name
+ *  '<name> completed|ended at <date>:' (notebook.js:191-225). The name
  *  and the verdict come back out of it; a headerless overflow entry
  *  (the notebook's own kept quirk) reads as a continuation. */
 
@@ -4207,7 +4338,7 @@ function pauseQuests(body) {
   // The ARCHIVE is not split by kind, and that is not an oversight:
   // the notebook's filed header keeps only the display name, so the
   // questName main/side is gone by the time a quest is filed
-  // (notebook.js:190-224). Three sections is the shape the DATA has.
+  // (notebook.js:191-225). Three sections is the shape the DATA has.
   const mains = active.filter((q) => q.main);
   const sides = active.filter((q) => !q.main);
   const section = (label, items, cls, first = false) => {
@@ -4428,7 +4559,7 @@ function renderInto() {
   for (const label of sections) {
     const id = idOf(label);
     const b = el('button', `railbtn${id === section ? ' on' : ''}`);
-    b.append(el('span', 'rk', label));
+    b.append(el('span', 'rk', railLabel(label)));   // L10N1b
     // RAIL_ACTS: Resume resolves on the rail rather than opening a
     // pane. Every other entry is a destination.
     b.onclick = RAIL_ACTS[id] ? () => onAction(RAIL_ACTS[id]) : () => go(id);

@@ -29,8 +29,8 @@
   {
     "name": "GUIDE2-phrase-drifted",
     "file": "src/ui/questLens.js",
-    "old": "export const locationInRegionText = (locationName, regionName) => `${locationName} in ${regionName} province`;",
-    "new": "export const locationInRegionText = (locationName, regionName) => `${locationName}, ${regionName}`;",
+    "old": "  formatText(localizedText('locationInRegionProvince', '{0} in {1} province'), locationName, regionName);",
+    "new": "  formatText(localizedText('locationInRegionProvince', '{0}, {1}'), locationName, regionName);",
     "tests": [
       "test/guide2_wayThere.test.js",
       "test/audit26_systems2.test.js"

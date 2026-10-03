@@ -46,12 +46,13 @@
 // PlayerActivate alone and appears in no save record, so it lives on
 // the live foe entity and dies with the pool, as DFU's does.
 
-import { PICKPOCKET_DISTANCE, TREASURE_ACTIVATION_DISTANCE, TOO_FAR_AWAY_TEXT, pickFoeHit, DOOR_ACTIVATION_DISTANCE } from './activate.js';   // AUDIT WK-P6: a companion's pack is storage, at storage's reach
+import { PICKPOCKET_DISTANCE, TREASURE_ACTIVATION_DISTANCE, tooFarAwayText, pickFoeHit, DOOR_ACTIVATION_DISTANCE } from './activate.js';   // AUDIT WK-P6: a companion's pack is storage, at storage's reach
 import { setMidScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: :834 is the HUD's centred label, not the popup queue
 import { PLAYER_TARGET, resetAllyTeamOnPlayerAttack } from '../characters/enemyTargets.js';   // AUDIT NAV2 F54: MakeEnemyHostileToAttacker's entity-side half
 import { enemyDisplayName } from '../characters/enemyBasics.js';
 import { properName } from '../systems/champions.js';   // AUDIT WB12d (D2): a foe with a name of its own
 import { pickpocket } from '../systems/talk.js';
+import { localizedText, getLocalizedEnemyName } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3e: and the enemy's name
 import { sparedByPlayer } from '../combat/friendlyFire.js';   // AUDIT NAV2 F54: the player's own hands - and a town's defenders - are no mark
 
 /** Internal_Strings.csv:23-24 - `youSeeAn,You see an %s.` and
@@ -64,7 +65,7 @@ export const YOU_SEE_AN_TEXT = 'You see an %s.';
 export function youSeeEnemyText(name) {
   const n = name ?? '';
   const vowel = 'aeiouAEIOU'.includes(n[0] ?? '');
-  return (vowel ? YOU_SEE_AN_TEXT : YOU_SEE_A_TEXT).replace('%s', n);
+  return (vowel ? localizedText('youSeeAn', YOU_SEE_AN_TEXT) : localizedText('youSeeA', YOU_SEE_A_TEXT)).replaceAll('%s', n);
 }
 
 /**
@@ -105,7 +106,7 @@ export function activateMobileEnemy(foe, distance, mode, player, {
   // the loot menu"): a beaten revenant on its knees is reached as a body is - at the treasure's reach, the HUD's one
   // refusal past it - and opens its fate's window; a peer's (a puppet's) is its owner's choice
   if (foe.yielded && !foe.puppet && openFate) {
-    if (!(distance <= TREASURE_ACTIVATION_DISTANCE)) { midScreen?.(TOO_FAR_AWAY_TEXT); return true; }   // the treasure's reach, as his pack's (WK-P6)
+    if (!(distance <= TREASURE_ACTIVATION_DISTANCE)) { midScreen?.(tooFarAwayText()); return true; }   // the treasure's reach, as his pack's (WK-P6)
     openFate(foe);
     return true;
   }
@@ -116,15 +117,19 @@ export function activateMobileEnemy(foe, distance, mode, player, {
     // AUDIT WK-P6: HIS PACK IS STORAGE, AND STORAGE IS REACHED. This arm runs at the ray's reach (RAY_DISTANCE, 76.8 -
     // MC-2's one call in every host), and his pack opened from across a square; a chest, a pile, a boat's box and a cart
     // open at TreasureActivationDistance and refuse past it with the HUD's one refusal (ActivateLootContainer :868-873)
-    if (distance > TREASURE_ACTIVATION_DISTANCE) { midScreen?.(TOO_FAR_AWAY_TEXT); return true; }
+    if (distance > TREASURE_ACTIVATION_DISTANCE) { midScreen?.(tooFarAwayText()); return true; }
     if (openCompanion(foe)) return true;
   }
   if (mode !== 'steal') {
     // :814-826 - Info, Grab and Talk all pop the one line, with no
-    // distance gate of any kind.
+    // distance gate of any kind. L10N3e: the name is GetLocalizedEnemyName's
+    // (PlayerActivate.cs:811) - a translation's enemyNames row by the
+    // MobileTypes id, the port's own name where it has none - so the
+    // vowel test reads the first letter of the name the player sees.
     const own = properName(entity);   // AUDIT WB12d (D2): a foe with a name of its own is seen by it - "You see the Summoner."
-    const name = own ?? enemyDisplayName(foe.mobileType ?? entity?.mobileType ?? -1);
-    if (name) hud?.(own ? YOU_SEE_PROPER_TEXT.replace('%s', own.replace(/^The /, 'the ')) : youSeeEnemyText(name));
+    const mobileType = foe.mobileType ?? entity?.mobileType ?? -1;
+    const name = own ?? enemyDisplayName(mobileType);
+    if (name) hud?.(own ? YOU_SEE_PROPER_TEXT.replace('%s', own.replace(/^The /, 'the ')) : youSeeEnemyText(getLocalizedEnemyName(mobileType, name)));
     return true;
   }
   // :827-828 - a monster breaks out, silently, and the activation is
@@ -140,7 +145,7 @@ export function activateMobileEnemy(foe, distance, mode, player, {
   if (sparedByPlayer(foe)) return true;
   // :830 - the flag wraps EVERYTHING below, the distance line included.
   if (entity.pickpocketAttempted) return true;
-  if (distance > PICKPOCKET_DISTANCE) { midScreen?.(TOO_FAR_AWAY_TEXT); return true; }   // :834 - the mid-screen refusal
+  if (distance > PICKPOCKET_DISTANCE) { midScreen?.(tooFarAwayText()); return true; }   // :834 - the mid-screen refusal
   entity.pickpocketAttempted = true;   // :837
   const r = pickpocket(player, { target: entity, rolls, nothingText });   // :838 -> :1611
   if (r.modal) modal?.(r.message); else hud?.(r.message);

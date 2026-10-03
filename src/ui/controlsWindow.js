@@ -65,10 +65,12 @@ import {
   canShareKey, stageShare, replacePromptRows, SHARED_KEY_COLOR,
 } from '../systems/controlsConfig.js';
 import { ToolTip } from './toolTip.js';
-import { MouseControlsWindow } from './mouseControlsWindow.js';   // ROAD-G G6: the ADVANCED tab's destination
+import { MouseControlsWindow, promptAnswer, PROMPT_YES, PROMPT_NO } from './mouseControlsWindow.js';   // ROAD-G G6: the ADVANCED tab's destination; L10N3f: the prompts' Yes/No
 import { JoystickControlsWindow, createJoystickUnsaved, resetJoystickUnsaved, saveJoystickSettings } from './joystickControlsWindow.js';   // GP2: the JOYSTICK tab's destination
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
+import { localizedText } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { gameSettingsText } from '../systems/textDatabases.js';   // L10N3f: DFU's GameSettings text database, a pack's in its language
 
 /** SetupKeybindButtons' nine calls (:146-152): [startIndex, endIndex)
  *  into the Actions enum, and the group's anchor.
@@ -274,37 +276,40 @@ export class ControlsWindow {
     // AUDIT KB1: a prompt is answered by a PRESS. The hosts hand repeated keydowns to the window, so a key held a beat
     // after its capture (Escape, Y, N - all bindable) answered the prompt it had just raised.
     if (this.top && e?.repeat) return;
+    // L10N3f: a prompt's Yes and No answer to their DialogShortcuts
+    // letters - Y and N in English (promptAnswer, mouseControlsWindow.js).
+    const answer = this.top ? promptAnswer(code, e) : null;
     if (this.top === 'replace') {
       const r = this._replace;
-      if (code === 'KeyY') {
+      if (answer === 'yes') {
         this._click();
         stageReplace(this.unsaved, r.action, r.code, r.holders);
         this._refresh();
       }
       // UXB1-S: B - "use it for both": the key lands here and stays where it is (the box says so when it may)
-      const share = code === 'KeyB' && canShareKey(this.unsaved, r.action, r.code, r.holders);
+      const share = !answer && code === 'KeyB' && canShareKey(this.unsaved, r.action, r.code, r.holders);
       if (share) { this._click(); stageShare(this.unsaved, r.action, r.code); this._refresh(); }
-      if (code === 'KeyY' || code === 'KeyN' || code === 'Escape' || share) { this.top = null; this._replace = null; }
+      if (answer || code === 'Escape' || share) { this.top = null; this._replace = null; }
       return;
     }
     if (this.top === 'defaults') {
-      if (code === 'KeyY') {
+      if (answer === 'yes') {
         this._click();
         resetUnsavedToDefaults(bindings(), this.unsaved);
         saveKeyBinds(bindings());   // ConfirmDefaultsBox (:309-317)
         resetJoystickUnsaved(bindings(), this.unsaved.joystick);   // GP2: SetDefaults (:230-238) re-reads the joystick staging off the reset store
         this._refresh();
       }
-      if (code === 'KeyY' || code === 'KeyN' || code === 'Escape') this.top = null;
+      if (answer || code === 'Escape') this.top = null;
       return;
     }
     if (this.top === 'remove') {
-      if (code === 'KeyY') {
+      if (answer === 'yes') {
         this._click();
         setUnsavedBinding(this.unsaved, this._removeAction, null);
         this._refresh();
       }
-      if (code === 'KeyY' || code === 'KeyN' || code === 'Escape') { this.top = null; this._removeAction = null; }
+      if (answer || code === 'Escape') { this.top = null; this._removeAction = null; }
       return;
     }
     if (this.top) { this.top = null; return; }   // dupes/note: any key clears
@@ -341,7 +346,7 @@ export class ControlsWindow {
    *  (HorizontalSlider.cs:148-154) drops `draggingThumb` the frame the
    *  button comes up; the port has no held-button poll, so the hosts
    *  deliver that edge as `overlay.release?.()` and a nesting window
-   *  has to pass it on (ui/itemMakerWindow.js:210's shape). The popup
+   *  has to pass it on (ui/itemMakerWindow.js:214's shape). The popup
    *  latches its thumb on the press and `hover` above pumps the drag
    *  from every move, so this is the only edge that ends it. */
   release() { this.advanced?.release(); this.joystick?.release(); }
@@ -414,8 +419,8 @@ export class ControlsWindow {
     if (this.top) {
       if ((this.top === 'defaults' || this.top === 'remove' || this.top === 'replace') && this._box) {
         const hit = messageBoxHit(this._box, vx, vy);
-        if (hit === MB_BUTTONS.Yes) this.input('KeyY');
-        else if (hit === MB_BUTTONS.No) this.input('KeyN');
+        if (hit === MB_BUTTONS.Yes) this.input(PROMPT_YES);
+        else if (hit === MB_BUTTONS.No) this.input(PROMPT_NO);
         return true;
       }
       this.top = null;
@@ -477,6 +482,20 @@ export class ControlsWindow {
     return true;
   }
 
+  /** The rows of the prompt standing over the grid (`top`). The three
+   *  prompts are Internal_Strings' own, recovered - the remove prompt
+   *  formats the camel-split action and the FULL key text exactly as
+   *  PromptRemoveKeybindMessage does (:300-302) - and each is read in the
+   *  player's language when it is drawn (L10N3d: :262, :302). */
+  promptRows() {
+    return this.top === 'dupes' ? [localizedText('multipleAssignments', 'You have multiple assignments...')]
+      : this.top === 'defaults' ? [localizedText('confirmDefaultControls', 'Are you sure you want to set default controls?')]
+        : this.top === 'remove'
+          ? removeKeybindPromptRows(this._removeAction, currentDict(this.unsaved).get(this._removeAction))
+          : this.top === 'replace' ? replacePromptRows(this.unsaved, this._replace)
+            : this._noteRows;
+  }
+
   draw(renderer, canvas, font) {
     if (!_art) { this.done = true; return; }
     // DaggerfallUI draws ONLY the top window (DaggerfallUI.cs:489-492),
@@ -497,8 +516,10 @@ export class ControlsWindow {
         m.ox + (b.x + Math.round((KEY_BTN.w - lw) / 2)) * m.s,
         m.oy + b.y * m.s, m.s, color);
     }
-    // the primary/secondary face (:141)
-    const which = this.unsaved.usingPrimary ? 'PRIMARY' : 'SECONDARY';
+    // the primary/secondary face (:141) - L10N3f: GameSettings' primary/secondary
+    // (:139, :252), a pack's in its language; the port's English stays upper-case
+    // where DFU's rows read "Primary"/"Secondary" (GameSettings.txt:207-208)
+    const which = this.unsaved.usingPrimary ? gameSettingsText('primary', 'PRIMARY') : gameSettingsText('secondary', 'SECONDARY');
     drawText(renderer, font, which,
       m.ox + (TAB_RECTS.whichDict[0] + 2) * m.s, m.oy + (TAB_RECTS.whichDict[1] + 1) * m.s,
       m.s, DIM);
@@ -506,15 +527,7 @@ export class ControlsWindow {
       drawText(renderer, font, 'Press a key...', m.ox + 4 * m.s, m.oy + 180 * m.s, m.s, TEXT_COLOR);
     }
     if (this.top) {
-      // the three prompts are Internal_Strings' own, recovered - the
-      // remove prompt formats the camel-split action and the FULL key
-      // text exactly as PromptRemoveKeybindMessage does (:300-302)
-      const rows = this.top === 'dupes' ? ['You have multiple assignments...']
-        : this.top === 'defaults' ? ['Are you sure you want to set default controls?']
-          : this.top === 'remove'
-            ? removeKeybindPromptRows(this._removeAction, currentDict(this.unsaved).get(this._removeAction))
-            : this.top === 'replace' ? replacePromptRows(this.unsaved, this._replace)
-              : this._noteRows;
+      const rows = this.promptRows();
       const buttons = (this.top === 'defaults' || this.top === 'remove' || this.top === 'replace') ? [MB_BUTTONS.Yes, MB_BUTTONS.No] : [];
       this._box = layoutMessageBox(font, rows, buttons);
       if (!drawMessageBox(renderer, m, font, this._box)) {

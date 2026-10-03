@@ -11,8 +11,8 @@
  {
   "name": "AUDIT-NAV2-F54-the-refusal-under-the-distance-line",
   "file": "src/player/mobileEnemyActivate.js",
-  "old": "  if (sparedByPlayer(foe)) return true;\n  // :830 - the flag wraps EVERYTHING below, the distance line included.\n  if (entity.pickpocketAttempted) return true;\n  if (distance > PICKPOCKET_DISTANCE) { midScreen?.(TOO_FAR_AWAY_TEXT); return true; }   // :834 - the mid-screen refusal\n",
-  "new": "  // :830 - the flag wraps EVERYTHING below, the distance line included.\n  if (entity.pickpocketAttempted) return true;\n  if (distance > PICKPOCKET_DISTANCE) { midScreen?.(TOO_FAR_AWAY_TEXT); return true; }   // :834 - the mid-screen refusal\n  if (sparedByPlayer(foe)) return true;\n",
+  "old": "  if (sparedByPlayer(foe)) return true;\n  // :830 - the flag wraps EVERYTHING below, the distance line included.\n  if (entity.pickpocketAttempted) return true;\n  if (distance > PICKPOCKET_DISTANCE) { midScreen?.(tooFarAwayText()); return true; }   // :834 - the mid-screen refusal\n",
+  "new": "  // :830 - the flag wraps EVERYTHING below, the distance line included.\n  if (entity.pickpocketAttempted) return true;\n  if (distance > PICKPOCKET_DISTANCE) { midScreen?.(tooFarAwayText()); return true; }   // :834 - the mid-screen refusal\n  if (sparedByPlayer(foe)) return true;\n",
   "tests": [
    "test/auditnav2_combat.test.js"
   ]
@@ -20,8 +20,8 @@
  {
   "name": "AUDIT-NAV2-F54-the-refusal-after-the-roll",
   "file": "src/player/mobileEnemyActivate.js",
-  "old": "  if (sparedByPlayer(foe)) return true;\n  // :830 - the flag wraps EVERYTHING below, the distance line included.\n  if (entity.pickpocketAttempted) return true;\n  if (distance > PICKPOCKET_DISTANCE) { midScreen?.(TOO_FAR_AWAY_TEXT); return true; }   // :834 - the mid-screen refusal\n  entity.pickpocketAttempted = true;   // :837\n  const r = pickpocket(player, { target: entity, rolls, nothingText });   // :838 -> :1611\n",
-  "new": "  // :830 - the flag wraps EVERYTHING below, the distance line included.\n  if (entity.pickpocketAttempted) return true;\n  if (distance > PICKPOCKET_DISTANCE) { midScreen?.(TOO_FAR_AWAY_TEXT); return true; }   // :834 - the mid-screen refusal\n  entity.pickpocketAttempted = true;   // :837\n  const r = pickpocket(player, { target: entity, rolls, nothingText });   // :838 -> :1611\n  if (sparedByPlayer(foe)) return true;\n",
+  "old": "  if (sparedByPlayer(foe)) return true;\n  // :830 - the flag wraps EVERYTHING below, the distance line included.\n  if (entity.pickpocketAttempted) return true;\n  if (distance > PICKPOCKET_DISTANCE) { midScreen?.(tooFarAwayText()); return true; }   // :834 - the mid-screen refusal\n  entity.pickpocketAttempted = true;   // :837\n  const r = pickpocket(player, { target: entity, rolls, nothingText });   // :838 -> :1611\n",
+  "new": "  // :830 - the flag wraps EVERYTHING below, the distance line included.\n  if (entity.pickpocketAttempted) return true;\n  if (distance > PICKPOCKET_DISTANCE) { midScreen?.(tooFarAwayText()); return true; }   // :834 - the mid-screen refusal\n  entity.pickpocketAttempted = true;   // :837\n  const r = pickpocket(player, { target: entity, rolls, nothingText });   // :838 -> :1611\n  if (sparedByPlayer(foe)) return true;\n",
   "tests": [
    "test/auditnav2_combat.test.js"
   ]

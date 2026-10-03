@@ -94,6 +94,7 @@ import { SOUND } from '../systems/soundClips.js';
 import { BUILD_TAG } from '../buildTag.js';
 import { bindings, eventMeans } from './input.js';   // KB1: the live registry, for the toggle-close binding; AUDIT DISC28 UI-1: the event's own read of it
 import { getBinding } from '../systems/inputActions.js';   // KB1: InputManager.GetBinding(Actions.Escape)
+import { localizedText } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
 /** barMaxLength (:28). */
 export const BAR_MAX = 109.1;
@@ -183,7 +184,7 @@ export class PauseOptionsWindow {
     // GameManager.cs:515-518, and ActionComplete is the RELEASE edge
     // (InputManager.cs:634-637) - so its opening release is spent before
     // the window exists and :186's bare `GetKeyUp` is safe there. Every
-    // host here opens on the key DOWN (world.js:13545, exterior.js:3208,
+    // host here opens on the key DOWN (world.js:13561, exterior.js:3213,
     // ui/input.js:598) and then routes that same key's release into the
     // window it just mounted, so the release door closes only a window
     // whose own press it saw.
@@ -301,7 +302,7 @@ export class PauseOptionsWindow {
       this._click();
       if (this.hooks.savingPrevented?.()) {
         this.top = 'note';
-        this._noteRows = ['You cannot save now.'];   // cannotSaveNow (Internal_Strings, recovered)
+        this._noteRows = [localizedText('cannotSaveNow', 'You cannot save now.')];   // cannotSaveNow (Internal_Strings, recovered)
       } else if (this.hooks.openSave) {
         // SAV4: DFU's SAVE GAME opens the slot window (:302), with
         // this window as its previous.

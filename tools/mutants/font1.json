@@ -189,8 +189,8 @@
   {
     "name": "ENH-NOTICE3-a-row-id-reused-after-a-pop",
     "file": "src/ui/hudText.js",
-    "old": "    this.lines.push({ id: ++this._nextId, text });",
-    "new": "    this.lines.push({ id: this.lines.length + 1, text });",
+    "old": "    this.lines.push({ id: ++this._nextId, text: pgText });",
+    "new": "    this.lines.push({ id: this.lines.length + 1, text: pgText });",
     "tests": [
       "test/hudtext.test.js"
     ]

@@ -2,7 +2,7 @@
 //
 // DaggerfallHUD.Update polls five DaggerfallShortcut bindings every
 // frame (DaggerfallHUD.cs:295-326). The port had the whole binding
-// TABLE (systems/dialogShortcuts.js:208 lists them, :326 gives the
+// TABLE (systems/dialogShortcuts.js:210 lists them, :328 gives the
 // defaults F10 and Shift-F10) and no consumer for any of them, so both
 // keys were free and did nothing.
 //
@@ -79,7 +79,7 @@ export function hudShortcutKey(e, keys = null) {
     setValue('GUI', 'LargeHUD', !getBool('GUI', 'LargeHUD'));
     return true;
   }
-  // :315-317 - renderHUD. CheckSetModifiers (dialogShortcuts.js:165-168)
+  // :315-317 - renderHUD. CheckSetModifiers (dialogShortcuts.js:167-170)
   // is what keeps Shift-F10 off F10 and F10 off Shift-F10, so the two
   // arms cannot both answer one press.
   if (hotkeyHit('HUDToggle', e.code, e, keys)) {

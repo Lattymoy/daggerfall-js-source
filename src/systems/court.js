@@ -75,14 +75,24 @@ import { CRIMES } from './crimes.js';   // REP2/REP3: the marked and the banisha
 export const CRIME_IDS = Object.freeze({ Pickpocketing: 12 });
 
 // The %cri crime names (MacroHelper.Crime, verbatim strings).
-export const CRIME_NAMES = Object.freeze(['None', 'Attempted Breaking and Entering', 'Trespassing', 'Breaking and Entering', 'Assault', 'Murder', 'Tax Evasion', 'Criminal Conspiracy', 'Vagrancy', 'Smuggling', 'Piracy', 'High Treason', 'Pickpocketing', 'Theft', 'Treason', 'Loan Default']);
+export const CRIME_NAMES = localizedTable({   // L10N3d: MacroHelper.Crime's GetLocalizedText (:668-701); 0 has no row - its 'None' is DFU's unlocalized default, the caller's
+  1: ['Attempted_Breaking_And_Entering', 'Attempted Breaking and Entering'], 2: ['Trespassing', 'Trespassing'],
+  3: ['Breaking_And_Entering', 'Breaking and Entering'], 4: ['Assault', 'Assault'], 5: ['Murder', 'Murder'], 6: ['Tax_Evasion', 'Tax Evasion'],
+  7: ['Criminal_Conspiracy', 'Criminal Conspiracy'], 8: ['Vagrancy', 'Vagrancy'], 9: ['Smuggling', 'Smuggling'], 10: ['Piracy', 'Piracy'],
+  11: ['High_Treason', 'High Treason'], 12: ['Pickpocketing', 'Pickpocketing'], 13: ['Theft', 'Theft'], 14: ['Treason', 'Treason'],
+  15: ['Loan_Default', 'Loan Default'],
+});
 
 /** MacroHelper.Penalty (%pen), verbatim: type 2 = the regular
  *  punishment string with %gtp/%dip; 0 = Banishment; 1 = Execution. */
 export function penaltyText(court) {
-  if (court.punishmentType === 2) return `${court.fine} gold pieces in fines and ${court.daysInPrison} days in prison`;
-  if (court.punishmentType === 1) return 'Execution';
-  return 'Banishment';
+  // L10N3d: DFU's rows (:714-720), read in the player's language - the regular string's %gtp/%dip filled after the lookup
+  if (court.punishmentType === 2) {
+    return localizedText('Regular_Punishment_String', '%gtp gold pieces in fines and %dip days in prison')
+      .replaceAll('%gtp', String(court.fine)).replaceAll('%dip', String(court.daysInPrison));
+  }
+  if (court.punishmentType === 1) return localizedText('Execution', 'Execution');
+  return localizedText('Banishment', 'Banishment');
 }
 
 // FALL.EXE (index 0 unused; Treason = half High_Treason, DFU's note)
@@ -112,6 +122,7 @@ export const TEXT_RESCUE_DB = 551;           // courtTextDB - the Dark Brotherho
 // talk.js - see the note at its pickpocket arm), so the one home for
 // them has to be a leaf.
 import { THIEVES_GUILD_FACTION_ID, DARK_BROTHERHOOD_FACTION_ID } from './crimeGuilds.js';
+import { localizedText, localizedTable } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 export { THIEVES_GUILD_FACTION_ID, DARK_BROTHERHOOD_FACTION_ID };
 
 /** CR1 - the guild rescue arms (DaggerfallCourtWindow.cs:177-221),

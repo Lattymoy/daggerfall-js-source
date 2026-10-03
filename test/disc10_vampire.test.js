@@ -317,7 +317,7 @@ test('DISC10-D V5: the character sheet reads the LIVE race - "Vampire" for the v
   assert.equal(vampirism.liveRaceTemplate?.(p)?.name, 'Vampire');
   assert.equal(sheetModel(p).race, 'Vampire', 'the enhanced sheet');
   assert.equal(sheetModel(mortal()).race, 'Breton', 'a mortal keeps the birth race');
-  assert.match(rd('src/ui/charsheet.js'), /label\(liveRaceTemplate\(e\)/, 'the classic sheet reads the same');
+  assert.match(rd('src/ui/charsheet.js'), /label\(processGrammar\(liveRaceName\(e\)/, 'the classic sheet reads the same (L10N3d: liveRaceName - the live template\'s curse name, else the birth race shown)');
   // CreateCompoundRace (VampirismEffect.cs:326-338): the flags ride the live template too
   const t = vampirism.liveRaceTemplate(p);
   assert.equal(t.immunityFlags & 1, 1, 'immune to Paralysis');

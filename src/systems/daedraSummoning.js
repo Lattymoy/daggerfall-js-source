@@ -42,6 +42,7 @@
 
 import { FACTION_FLAGS } from './factionRep.js';
 import { FACTION_TYPES, GUILD_GROUPS } from '../formats/factionFile.js';
+import { getLocalizedFactionName } from './textManager.js';   // L10N3e: %dae, the prince's name in the player's language
 
 /** The sixteen princes, in DFU's own array order - the order is
  *  load-bearing twice: index 0 is Hircine (Glenmoril's, and excluded
@@ -97,8 +98,14 @@ export const SUMMON_TEXT = Object.freeze({
  *  A null daedra - the "not a summoning day" record, which names none -
  *  answers null, and `expandMacroValues` leaves the token verbatim
  *  rather than printing an empty hole. That record does not carry %dae
- *  anyway; the posture is the guard, not a case. */
-export const summonMacroValues = (daedra) => Object.freeze({ dae: daedra?.name ?? null });
+ *  anyway; the posture is the guard, not a case.
+ *
+ *  L10N3e: DFU's Daedra() reads the prince's faction through
+ *  GetFactionData (DaggerfallGuildServicePopupWindow.cs:739-740,
+ *  DaggerfallWitchesCovenPopupWindow.cs:266-267), whose name is a
+ *  translation's for the faction id (PersistentFactionData.cs:176). The
+ *  table's `name` is FACTION.TXT's for that id, and stays the key. */
+export const summonMacroValues = (daedra) => Object.freeze({ dae: daedra?.name != null ? getLocalizedFactionName(daedra.factionId, daedra.name) : null });
 
 /** The five daedric foes a FAILED coven summoning spawns (:70-72) -
  *  Range(0, 5) over a five-entry array, so every one is reachable. */

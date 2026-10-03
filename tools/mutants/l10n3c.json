@@ -1,0 +1,17 @@
+[
+  {"name":"L10N3c-comments-read","file":"src/systems/quest/localizedQuest.js","old":"    if (!text || text.startsWith('-')) continue;","new":"    if (!text) continue;","tests":["test/l10n3c.test.js"]},
+  {"name":"L10N3c-displayname-missed","file":"src/systems/quest/localizedQuest.js","old":"    if (startsWithCI(text, 'displayname:')) { displayName = getFieldStringValue(text); continue; }","new":"    if (startsWithCI(text, 'displayname:')) continue;","tests":["test/l10n3c.test.js"]},
+  {"name":"L10N3c-qbn-read","file":"src/systems/quest/localizedQuest.js","old":"    if (!inQRC || inQBN) continue;","new":"    if (!inQRC) continue;","tests":["test/l10n3c.test.js"]},
+  {"name":"L10N3c-fixed-id-from-header","file":"src/systems/quest/localizedQuest.js","old":"    if (parts[1].startsWith('[') && parts[1].endsWith(']')) {","new":"    if (false) {","tests":["test/l10n3c.test.js"]},
+  {"name":"L10N3c-bad-id-kept","file":"src/systems/quest/localizedQuest.js","old":"      if (!/^\\s*[+-]?\\d+\\s*$/.test(parts[1])) throw new Error(`Could not parse localized quest message ID '${parts[1]}' to an int. Expected message ID value.`);\n","new":"","tests":["test/l10n3c.test.js"]},
+  {"name":"L10N3c-author-gap-dropped","file":"src/systems/quest/localizedQuest.js","old":"        if (!peekMessageEnd(lines, i)) { messageLines += ' \\n'; continue; }","new":"        if (!peekMessageEnd(lines, i)) continue;","tests":["test/l10n3c.test.js"]},
+  {"name":"L10N3c-duplicate-kept","file":"src/systems/quest/localizedQuest.js","old":"    if (messages.has(id)) throw new Error('An item with the same key has already been added.');\n","new":"","tests":["test/l10n3c.test.js"]},
+  {"name":"L10N3c-trailing-newline","file":"src/systems/quest/localizedQuest.js","old":"    messages.set(id, messageLines.replace(/\\n+$/, ''));","new":"    messages.set(id, messageLines);","tests":["test/l10n3c.test.js"]},
+  {"name":"L10N3c-no-displayname-ok","file":"src/systems/quest/localizedQuest.js","old":"    if (parsed && !parsed.displayName) console.error(","new":"    if (false) console.error(","tests":["test/l10n3c.test.js"]},
+  {"name":"L10N3c-table-overwritten","file":"src/systems/quest/localizedQuest.js","old":"        if (!table.has(k)) table.set(k, text);   // AddEntry only where GetEntry found none","new":"        table.set(k, text);","tests":["test/l10n3c.test.js"]},
+  {"name":"L10N3c-cache-never-stale","file":"src/systems/quest/localizedQuest.js","old":"  if (_revision !== textRevision()) { _parsed.clear(); _revision = textRevision(); }\n","new":"","tests":["test/l10n3c.test.js"]},
+  {"name":"L10N3c-name-case-kept","file":"src/systems/quest/localizedQuest.js","old":"const questKey = (questName) => String(questName ?? '').replace(/\\.txt$/i, '').toUpperCase();","new":"const questKey = (questName) => String(questName ?? '');","tests":["test/l10n3c.test.js"]},
+  {"name":"L10N3c-getmessage-own-source","file":"src/systems/quest/quest.js","old":"    if (lines) result.loadMessage(messageID, lines);\n","new":"","tests":["test/l10n3c.test.js"]},
+  {"name":"L10N3c-schedule-name-kept","file":"src/systems/quest/machine.js","old":"    localizeDisplayName(quest);   // L10N3c\n","new":"","tests":["test/l10n3c.test.js"]},
+  {"name":"L10N3c-displayname-always","file":"src/systems/quest/machine.js","old":"  if (name) quest.displayName = name;","new":"  quest.displayName = name;","tests":["test/l10n3c.test.js"]}
+]

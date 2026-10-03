@@ -154,8 +154,8 @@ test('LOOT7: its name everywhere - the hover, the HUD\'s target, the death line,
   assert.equal(sayEnemyDied(() => {}, 7, e), 'Mighty Orc just died.');
   assert.equal(sayEnemyDied(() => {}, 7), 'Orc just died.');
   const dc = strip(read('src/scenes/dungeonContext.js'));
-  assert.match(dc, /corpseName\(championName\(f\.entity, enemyDisplayName\(f\.mobileType\)\)\)/, 'the dungeon\'s body');
-  assert.match(strip(read('src/scenes/exteriorFoes.js')), /corpseName\(properName\(e\.entity\) \?\? championName\(e\.entity, enemyDisplayName\(e\.mobileType\)\)\)/, 'the street\'s - AUDIT WB12d (D2): a foe\'s own name first');
+  assert.match(dc, /corpseName\(championName\(f\.entity, corpseEntityName\(f\.mobileType\)\)\)/, 'the dungeon\'s body');
+  assert.match(strip(read('src/scenes/exteriorFoes.js')), /corpseName\(properName\(e\.entity\) \?\? championName\(e\.entity, corpseEntityName\(e\.mobileType\)\)\)/, 'the street\'s - AUDIT WB12d (D2): a foe\'s own name first');
 });
 
 test('LOOT7: the traits that answer a blow - the Vampiric drinks its blow, the Thorned hurts my blow back; registered', () => {

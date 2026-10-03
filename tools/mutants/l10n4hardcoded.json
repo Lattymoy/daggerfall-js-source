@@ -1,0 +1,9 @@
+[
+  {"name":"L10N4-scan-counts-the-routed","file":"tools/l10nHardcoded.mjs","old":"const ROUTED = new Set(['t', 'tIn', ","new":"const ROUTED = new Set(['tIn', ","tests":["test/l10n4_hardcoded.test.js"]},
+  {"name":"L10N4-scan-counts-console","file":"tools/l10nHardcoded.mjs","old":"if (c?.type === 'MemberExpression' && c.object?.name === 'console') q = true;","new":"","tests":["test/l10n4_hardcoded.test.js"]},
+  {"name":"L10N4-scan-counts-thrown","file":"tools/l10nHardcoded.mjs","old":"if (n.type === 'ThrowStatement' || (n.type === 'NewExpression' && /Error$/.test(n.callee?.name ?? ''))) q = true;","new":"","tests":["test/l10n4_hardcoded.test.js"]},
+  {"name":"L10N4-scan-counts-keys","file":"tools/l10nHardcoded.mjs","old":"if (k === 'key' && (n.type === 'Property' || n.type === 'MethodDefinition' || n.type === 'PropertyDefinition') && !n.computed) continue;","new":"","tests":["test/l10n4_hardcoded.test.js"]},
+  {"name":"L10N4-scan-skips-templates","file":"tools/l10nHardcoded.mjs","old":"          if (isProse(s)) out.push({ file, line: n.loc.start.line, text: s });","new":"","tests":["test/l10n4_hardcoded.test.js"]},
+  {"name":"L10N4-prose-takes-css","file":"tools/l10nHardcoded.mjs","old":"\\d(px|em|rem|vh|vw|ms|deg)\\b|","new":"","tests":["test/l10n4_hardcoded.test.js"]},
+  {"name":"L10N4-prose-takes-one-word","file":"tools/l10nHardcoded.mjs","old":"  if (!/[A-Za-z]{2,}[\\s\\u00a0]+[A-Za-z]{2,}/.test(s)) return false;","new":"  if (!/[A-Za-z]{2,}/.test(s)) return false;","tests":["test/l10n4_hardcoded.test.js"]}
+]

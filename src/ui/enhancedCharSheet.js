@@ -80,7 +80,8 @@ import { entityMaxEncumbrance, handToHandMinDamage, handToHandMaxDamage } from '
 import { carriedWeight } from './charsheet.js';
 import { totalGoldAmount } from '../systems/court.js';   // PlayerEntity.GetGoldAmount, the figure the classic sheet draws
 import { classSpecials } from '../systems/specialAdvantages.js';   // MAC-G: GetClassSpecials, read back off the career's own flags
-import { liveRaceTemplate } from '../systems/vampirism.js';     // MAC-G: the blood half of that list; DISC10-D V5: PlayerEntity.RaceTemplate, the LIVE (compound) race
+import { liveRaceTemplate, liveRaceName } from '../systems/vampirism.js';     // MAC-G: the blood half of that list; DISC10-D V5: PlayerEntity.RaceTemplate, the LIVE (compound) race
+import { processGrammar } from '../systems/textManager.js';   // L10N3g: the race label's grammar (DaggerfallCharacterSheetWindow.cs:398)
 
 /** The three career groups, in DFU's own order, plus the remainder.
  *  `_drawSkillPage`'s `names` array, which is what keys 1-4 page. */
@@ -116,7 +117,7 @@ export function sheetModel(entity) {
     name: e.name ?? '',
     // The classic sheet's own default when an entity carries none.
     // DISC10-D V5: RaceTemplate.Name (DaggerfallCharacterSheetWindow.cs:398)
-    race: raceTemplateOf(e)?.name ?? e.race ?? 'Breton',
+    race: processGrammar(liveRaceName(e) || 'Breton'),   // L10N3d: shown in the player's language; L10N3g: through the grammar, as the classic sheet's raceLabel (:398)
     career: e.career?.name ?? '',
     level: e.level ?? 1,
     // The classic sheet's own read: GetGoldAmount, coins plus every

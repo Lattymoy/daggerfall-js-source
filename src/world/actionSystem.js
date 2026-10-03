@@ -52,6 +52,7 @@ import { CASTSPELL_COOLDOWN_TICK } from '../systems/spellcast.js';   // single s
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage
 import { triggerOpen, triggerLock } from '../systems/mysticism.js';   // X1: the Open/Lock door laws live there, not here
 import { dice100 } from '../combat/formulas.js';   // PT1: Dice100 has ONE home, and it is not this file
+import { localizedText, localizedTextList } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
 // The RDB effect-action family (DaggerfallAction delegates that hurt
 // rather than move). Combat-arc row from Port-Ledger C:
@@ -288,22 +289,9 @@ export const DOOR_OPEN_DURATION = 1.5;
 export const ACTION_LOCK_VALUE = 16;
 export const MAGIC_LOCK_THRESHOLD = 20;
 
-// PlayerActivate.LookAtInteriorLock, verbatim: the chance-tiered
-// message a player sees activating a locked door. chance =
 // CalculateInteriorLockpickingChance = clamp(5*(level - lockValue) +
-// lockpickSkill, 5, 95).
-const LOCKPICK_CHANCE_TEXT = [
-  'You doubt your ability to open this lock...',
-  'This lock looks difficult...',
-  'You would be challenged by this lock...',
-  'This lock would prove a good challenge...',
-  'You think you should be able to pick this lock...',
-  'This lock seems relatively easy...',
-  'You are amused by this lock...',
-  'You laugh at the amateur quality of this lock...',
-  'You see a pathetic excuse for a lock...',
-  'This lock is an insult to your abilities...',
-];
+// lockpickSkill, 5, 95) - the chance LookAtInteriorLock's text tiers on
+// (lookAtLockText below).
 export function interiorLockpickingChance(level, lockValue, lockpickSkill) {
   const chance = 5 * (level - lockValue) + lockpickSkill;
   return Math.max(5, Math.min(95, chance));
@@ -325,14 +313,29 @@ export function exteriorLockpickingChance(lockValue, lockpickSkill) {
  *  snapshot, so the prose is ours with the keys cited). */
 export const LOCKPICKING_SUCCESS_TEXT = 'You successfully pick the lock.';
 export const LOCKPICKING_FAILURE_TEXT = 'You fail to pick the lock.';
+/** PlayerActivate.LookAtInteriorLock (:978-1008), verbatim: the
+ *  chance-tiered message a player sees activating a locked door - the
+ *  `lockpickChance` list (:982) above 45, its three single rows below,
+ *  and `magicLock` for a lock of 20 and up. */
 export function lookAtLockText(lockValue, level, lockpickSkill) {
-  if (lockValue >= MAGIC_LOCK_THRESHOLD) return 'This is a magically held lock...';
+  if (lockValue >= MAGIC_LOCK_THRESHOLD) return localizedText('magicLock', 'This is a magically held lock...');
   const chance = interiorLockpickingChance(level, lockValue, lockpickSkill);
-  if (chance < 30) return 'This lock has nothing to fear from you...';
-  if (chance < 35) return "It'd be a miracle if you picked this lock...";
-  if (chance >= 95) return LOCKPICK_CHANCE_TEXT[9];
-  if (chance >= 45) return LOCKPICK_CHANCE_TEXT[Math.trunc((chance - 45) / 5)];
-  return 'This lock looks to be beyond your skills...';
+  if (chance < 30) return localizedText('lockpickChance1', 'This lock has nothing to fear from you...');
+  if (chance < 35) return localizedText('lockpickChance2', "It'd be a miracle if you picked this lock...");
+  if (chance < 45) return localizedText('lockpickChance3', 'This lock looks to be beyond your skills...');
+  const lockpickChance = localizedTextList('lockpickChance', [
+    'You doubt your ability to open this lock...',
+    'This lock looks difficult...',
+    'You would be challenged by this lock...',
+    'This lock would prove a good challenge...',
+    'You think you should be able to pick this lock...',
+    'This lock seems relatively easy...',
+    'You are amused by this lock...',
+    'You laugh at the amateur quality of this lock...',
+    'You see a pathetic excuse for a lock...',
+    'This lock is an insult to your abilities...',
+  ]);
+  return chance >= 95 ? lockpickChance[9] : lockpickChance[Math.trunc((chance - 45) / 5)];
 }
 
 // ---- U6: the text actions, verbatim constants ----

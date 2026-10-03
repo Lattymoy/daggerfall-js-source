@@ -202,7 +202,7 @@ test('the destructive actions ask first', () => {
   const resetAt = src.indexOf('Reset everything to defaults');
   assert.match(src.slice(resetAt, resetAt + 400), /b\.onclick = \(\) => ask\(/,
     'Reset must ask - the classic screen does');
-  const delAt = src.indexOf("label: 'Delete'");
+  const delAt = src.indexOf("label: localizedText('deleteSave', 'Delete')");
   assert.match(src.slice(delAt, delAt + 400), /onClick: \(\) => ask\(/,
     'Delete must ask');
   assert.match(src.slice(delAt, delAt + 500), /deleteSave\(save\.key\)/,

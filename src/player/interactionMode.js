@@ -8,7 +8,19 @@
 // one player - the worldTick-clock idiom. townTalk keeps the F1-F4
 // keydown and the mode-change HUD line; the door ladders read it here.
 
+import { localizedText, localizedTable } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+
 export const MODES = ['steal', 'grab', 'info', 'dialogue'];
+
+/** L10N3d: ChangeInteractionMode's HUD line (PlayerActivate.cs:1404-1424)
+ *  - "Interaction is now in %s mode." with the mode's own word, each a
+ *  TextManager row of its own. The words are shown, never matched: the
+ *  mode itself stays the identifier above. */
+const MODE_WORDS = localizedTable({
+  steal: ['steal', 'steal'], grab: ['grab', 'grab'], info: ['info', 'info'], dialogue: ['dialogue', 'dialogue'],
+});
+export const interactionModeText = (mode) =>
+  localizedText('interactionIsNowInMode', 'Interaction is now in %s mode.').replaceAll('%s', Object.hasOwn(MODE_WORDS, mode) ? MODE_WORDS[mode] : mode);
 
 /** AUDIT 58 (talk lane): PlayerActivate.Update reads the four modes as
  *  ACTIONS, not as keys - `if (InputManager.Instance.ActionStarted(

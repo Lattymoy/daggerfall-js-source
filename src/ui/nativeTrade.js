@@ -34,7 +34,7 @@ import { LIST_SLOTS, CELL_X, CELL_W, SLOT_H, CELL_MARGIN, ARROW_H, DOWN_ARROW_Y,
 import { getBool } from '../systems/settings.js';   // AUDIT 64 F53: InstantRepairs, the repair tint's first arm
 import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from './text.js';
-import { planTake, applyTransfer, clearLightSourceOnLeave, CANNOT_CARRY_TEXT } from '../systems/itemTransfer.js';   // AUDIT 26 F157/F158
+import { planTake, applyTransfer, clearLightSourceOnLeave, cannotCarryText } from '../systems/itemTransfer.js';   // AUDIT 26 F157/F158
 import { HOW_MANY_ITEMS, SPLIT_INPUT_MAX, parseSplitAmount, splitRequired } from '../systems/itemTransfer.js';   // DISC25-F: TransferItem's split popup, inherited
 import { InputMessageBoxWindow } from './inputMessageBox.js';   // DISC25-F: ...pushed as CM5 pushes it for the pack
 import { audio } from '../systems/audio.js';
@@ -43,11 +43,12 @@ import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, fitBoxRows
 import {
   MODE_ACTION_ART, SELL_GOLD_ART, modeActionArt,
   tradeCost, getTradePrice, tradeDecision, sellProceeds, creditRows, creditRefusalRows,
-  localListAccepts, localClickDecision, DOESNT_NEED_IDENTIFY, LETTER_OF_CREDIT_TEXT,
+  localListAccepts, localClickDecision, doesntNeedIdentifyText, letterOfCreditText,
   MAGIC_ITEMS_CANNOT_BE_REPAIRED_TEXT_ID, DOES_NOT_NEED_TO_BE_REPAIRED_TEXT_ID,
 } from '../systems/tradeModes.js';
-import { CANNOT_BE_REPAIRED_TEXT, INTERRUPT_REPAIR_TEXT, isBeingRepaired as itemIsBeingRepaired,
+import { cannotBeRepairedText, interruptRepairText, isBeingRepaired as itemIsBeingRepaired,
   isRepairFinished, collectRepaired, updateRepairTimes, repairStatusLabel } from '../systems/repairService.js';   // D7: the Repair mode's remote arm; UXB1-K: its misc label
+import { localizedText } from '../systems/textManager.js';   // L10N3d: DoSteal's two lines
 import { isFurnishing } from '../systems/decorFurnish.js';   // DECOR2b: furniture is delivered, never carried
 import { isSummoned, carriedWeight, totalWeight, transferAll, addItem } from '../systems/inventory.js';   // TransferItem's summoned guard; AUDIT 63 F48: transferAll is ItemCollection.TransferAll (:452), DoSteal's move
 import { shopliftAttempt } from '../systems/theft.js';   // AUDIT 63 F48: DoSteal's decision (:909-916)
@@ -59,7 +60,7 @@ import {
   drawTargetIconPanel, targetIconWeightText,
 } from './targetIconPanel.js';
 import { WAGON_KG_LIMIT } from '../systems/itemTransfer.js';   // ItemHelper.WagonKgLimit (:56)
-import { CANNOT_REMOVE_ITEM_TEXT } from '../systems/createItem.js';   // both TransferItem refusals speak it
+import { cannotRemoveItemText } from '../systems/createItem.js';   // both TransferItem refusals speak it
 import { questTransferRefused, SMALL_CART_TEMPLATE, INV_RECTS, TABS, tabAccepts } from './nativeInventory.js';   // DaggerfallTradeWindow EXTENDS the inventory window; MAC-N2: and INHERITS its four tab pages
 import { expandGuildMacros } from '../systems/guildServiceActions.js';
 import { firstName } from '../systems/talkSession.js';   // MACRO-4: %pct's shop arm
@@ -125,6 +126,9 @@ export { LIST_SLOTS, CELL_X, CELL_W, SLOT_H, ARROW_H, DOWN_ARROW_Y };
  *  (:918, :925). */
 export const STEAL_SUCCESS_TEXT = 'You are successful.';
 export const STEAL_FAILURE_TEXT = 'You are not successful...';
+/** L10N3d: ...as the HUD says them, in the player's language - both skins read these. */
+export const stealSuccessText = () => localizedText('stealSuccess', STEAL_SUCCESS_TEXT);
+export const stealFailureText = () => localizedText('stealFailure', STEAL_FAILURE_TEXT);
 
 export const TRADE_RECTS = Object.freeze({
   // MAC-N2: the parent's four tab rects (DaggerfallInventoryWindow.cs
@@ -522,8 +526,8 @@ export class NativeTradeWindow {
     const text = {
       magic: rows(MAGIC_ITEMS_CANNOT_BE_REPAIRED_TEXT_ID),
       undamaged: rows(DOES_NOT_NEED_TO_BE_REPAIRED_TEXT_ID),
-      notRepairable: [{ text: CANNOT_BE_REPAIRED_TEXT, center: true }],
-      identified: [{ text: DOESNT_NEED_IDENTIFY, center: true }],
+      notRepairable: [{ text: cannotBeRepairedText(), center: true }],
+      identified: [{ text: doesntNeedIdentifyText(), center: true }],
     }[refusal] ?? [];
     this.box = { rows: text.length ? text : [{ text: '...', center: true }], buttons: null };
   }
@@ -554,7 +558,7 @@ export class NativeTradeWindow {
       fromLocal: true, toWagon: false, getQuest: this.hooks.getQuest ?? null,
     });
     if (!refused) return false;
-    this.box = { rows: [{ text: CANNOT_REMOVE_ITEM_TEXT, center: true }], buttons: null };
+    this.box = { rows: [{ text: cannotRemoveItemText(), center: true }], buttons: null };
     return true;
   }
 
@@ -628,7 +632,7 @@ export class NativeTradeWindow {
         bag: [...this.hooks.packItems(), ...this.basket.filter((x) => !isFurnishing(x))],
         entity: this.hooks.entity ?? null,
       });
-      if (!plan.ok) { this.box = { rows: [{ text: plan.refusal?.text ?? CANNOT_CARRY_TEXT, center: true }], buttons: null }; return; }
+      if (!plan.ok) { this.box = { rows: [{ text: plan.refusal?.text ?? cannotCarryText(), center: true }], buttons: null }; return; }
       // DISC25-F: a partial fit, or Control, asks how many (:1515-1539) - the old arm took what fit, unasked
       this._split(item, plan.amount, (amount) => applyTransfer(item, { ...plan, amount }, this.hooks.shelfItems(), this.basket));
       return;
@@ -642,7 +646,7 @@ export class NativeTradeWindow {
       const now = this.hooks.nowMinutes?.() ?? 0;
       if (itemIsBeingRepaired(item) && !isRepairFinished(item, now)) {
         this.box = {
-          rows: [{ text: INTERRUPT_REPAIR_TEXT, center: true }],
+          rows: [{ text: interruptRepairText(), center: true }],
           buttons: 'YesNo',
           onYes: () => this._takeItemFromRepair(item),
         };
@@ -728,12 +732,12 @@ export class NativeTradeWindow {
     // :914 - always, and before the roll is read.
     this.hooks.tallyPickpocket?.(1);
     if (!out.caught) {
-      this.hooks.say?.(STEAL_SUCCESS_TEXT, 2);
+      this.hooks.say?.(stealSuccessText(), 2);
       this._deliverFurniture(this.basket);   // DECOR2b
       transferAll(this.basket, this.hooks.packItems());
       this.hooks.tallyCrimeGuild?.(true, 1);
     } else {
-      this.hooks.say?.(STEAL_FAILURE_TEXT, 2);
+      this.hooks.say?.(stealFailureText(), 2);
       this.hooks.crimeTheft?.();
       this.hooks.spawnCityGuards?.(true);
     }
@@ -840,7 +844,7 @@ export class NativeTradeWindow {
     // nulled `this.box` before it calls onYes, so writing the box here
     // is exactly that sequence.
     if (proceeds?.kind === 'letterOfCredit') {
-      this.box = { rows: [{ text: LETTER_OF_CREDIT_TEXT, center: true }], buttons: null };
+      this.box = { rows: [{ text: letterOfCreditText(), center: true }], buttons: null };
     }
   }
 

@@ -42,6 +42,7 @@ import { INFECTION, startInfection } from './infection.js';   // V1: the three s
 import { FATIGUE_MULTIPLIER } from './statMods.js';
 import { dice100 } from '../combat/formulas.js';
 import { MOBILE_TYPES } from '../characters/mobileTypes.js';
+import { localizedText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
 // ---- MagicAndEffectsEnums.Diseases, verbatim ----
 export const DISEASES = Object.freeze({
@@ -100,6 +101,8 @@ export const DISEASE_NAMES = Object.freeze([
 
 /** TextManager "youFeelSomewhatBad" - the daily-tick HUD alert. */
 export const YOU_FEEL_SOMEWHAT_BAD = 'You feel somewhat bad.';
+/** L10N3d: the alert as the hosts show it (DiseaseEffect.cs:165, PoisonEffect.cs:289), in the player's language. */
+export const youFeelSomewhatBadText = () => localizedText('youFeelSomewhatBad', YOU_FEEL_SOMEWHAT_BAD);
 
 // ---- The OnMonsterHit disease lists (declared inside DFU's
 // OnMonsterHit; hoisted here for the tests). Source comments: rat =
@@ -231,7 +234,7 @@ export function updateDiseaseEntry(entry, currentDay, sinks, rolls = Math.random
     entry.daysOfSymptomsLeft = 0;
     endDisease(entry);
   }
-  if (onAlert) onAlert(YOU_FEEL_SOMEWHAT_BAD);
+  if (onAlert) onAlert(youFeelSomewhatBadText());
 }
 
 /** The per-round disease pass for one entity (each DiseaseEffect's

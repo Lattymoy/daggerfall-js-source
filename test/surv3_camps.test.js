@@ -330,8 +330,8 @@ test('SURV3: by source - the three hosts stand the pool, feed the race, draw the
   }
   for (const [name, src] of [['world', world], ['exterior', ext]]) {
     assert.match(src, /camp: _campPick,/, `${name}: the race takes the camp`); assert.match(src, /water: _springPick,/, `${name}: and the water source`);
-    assert.match(src, /if \(_race\.campWins\) \{ if \(_campPick\.distance > _campPick\.reach\) setMidScreenText\(TOO_FAR_AWAY_TEXT\); else camps\.activate\(_campPick\.key, getInteractionMode\(\)\); \}/, `${name}: the camp's arm refuses out loud`);
-    assert.match(src, /else if \(_race\.waterWins\) \{ if \(_springPick\.distance > _springPick\.reach\) setMidScreenText\(TOO_FAR_AWAY_TEXT\); else drinkAtSpring\(_springPick\.key\); \}/, `${name}: the water's arm`);
+    assert.match(src, /if \(_race\.campWins\) \{ if \(_campPick\.distance > _campPick\.reach\) setMidScreenText\(tooFarAwayText\(\)\); else camps\.activate\(_campPick\.key, getInteractionMode\(\)\); \}/, `${name}: the camp's arm refuses out loud`);
+    assert.match(src, /else if \(_race\.waterWins\) \{ if \(_springPick\.distance > _springPick\.reach\) setMidScreenText\(tooFarAwayText\(\)\); else drinkAtSpring\(_springPick\.key\); \}/, `${name}: the water's arm`);
     assert.match(src, /camps\.draw\(renderer/, `${name}: the tents are drawn`);
     assert.match(src, /\.\.\.camps\.lights\(\), \.\.\.droppedTorches\.lights\(\)\)/, `${name}: the fires light`);
     assert.match(src, /openRest: \(\) => \{ townTalk\.closeOverlay\(\); toggleRest\(\); \}/, `${name}: the menu's picker leaves the slot before the rest window`);

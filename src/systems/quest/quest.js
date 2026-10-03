@@ -29,6 +29,7 @@
 
 import { travelTimeSeconds } from './clock.js';
 import { Message, Formatting } from './message.js';
+import { localizedQuestMessage } from './localizedQuest.js';   // L10N3c: GetMessage's Internal_Quests lookup
 import { symbolToSaveData, symbolFromSaveData } from './symbol.js';
 import { smallerDungeonsStateNow } from '../../world/smallerDungeons.js';   // AUDIT 28 W4: Quest.cs:284's stamp
 
@@ -183,7 +184,16 @@ export class Quest {
     else existing.copyQuestActions(task);   // duplicate symbol: merge actions in
   }
 
-  getMessage(messageID) { return this.messages.get(messageID) ?? null; }
+  /** GetMessage (Quest.cs:666-684). L10N3c: a translation's text for `QUEST.messageId` (the current language's
+   *  Internal_Quests, filled from its -LOC file) is read into the same Message, as ReplaceMessage does, each time it is
+   *  asked for; English has none, and reads its own source. */
+  getMessage(messageID) {
+    const result = this.messages.get(messageID) ?? null;
+    if (!result) return null;
+    const lines = localizedQuestMessage(this.questName, messageID);
+    if (lines) result.loadMessage(messageID, lines);
+    return result;
+  }
   getTask(symbol) { return (symbol && this.tasks.get(symbol.name)) ?? null; }
   getResource(symbol) { return (symbol && this.resources.get(symbol.name)) ?? null; }
   getClock(symbol) { const r = this.getResource(symbol); return r?.isClock ? r : null; }

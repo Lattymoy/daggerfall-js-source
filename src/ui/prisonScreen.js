@@ -57,6 +57,7 @@
 
 import { loadImg, nativeMetrics, drawImg, drawRect, shadowText, NATIVE_W } from './nativePanel.js';
 import { DFPalette } from '../formats/dfPalette.js';
+import { localizedText as coreText, processGrammar } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { isEnhanced } from '../systems/uiSkin.js';   // FONT3: the countdown in the enhanced face under that skin
 import { drawEnhancedHudLabel, midTextTopPx } from './enhancedHudText.js';   // FONT3: the mid-screen label's DOM face, one node per id
 
@@ -96,12 +97,14 @@ export const DAYS_LABEL_SHADOW = Object.freeze([48 / 255, 36 / 255, 20 / 255, 1]
  *  UpdatePrisonScreen and SwitchToPrisonScreen both read. */
 export const DAYS_UNTIL_FREEDOM = '%d days until freedom.';
 
-/** The label DFU builds: GetLocalizedText then a plain %d replace
- *  (:468-469, :522-523). `localizedText` is the port's TextManager
- *  seam; a host that answers nothing falls back to the shipped row. */
+/** The label DFU builds: GetLocalizedText then a plain %d replace,
+ *  through the grammar (:468-469, :522-523). `localizedText` is a
+ *  host's TextManager seam; a host that answers nothing reads the text
+ *  core's row (L10N3d) - the shipped English where the player's
+ *  language has none. */
 export function daysUntilFreedomText(days, localizedText = null) {
-  const t = localizedText?.('daysUntilFreedom') || DAYS_UNTIL_FREEDOM;
-  return t.replace('%d', String(days));
+  const t = localizedText?.('daysUntilFreedom') || coreText('daysUntilFreedom', DAYS_UNTIL_FREEDOM);
+  return processGrammar(t.replace('%d', String(days)));
 }
 
 let _courtArt = null;

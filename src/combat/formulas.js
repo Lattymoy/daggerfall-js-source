@@ -41,6 +41,7 @@ import { SHIELD_PARTS } from '../systems/armorMaterials.js';
 import { totalWeight } from '../systems/inventory.js';   // EW1: ItemCollection.GetWeight, the one home for a stack's kg
 import { liveVampirism } from '../systems/racialLive.js';   // VU1: an import-free LEAF - vampirism.js cycles back here through loot.js
 import { breakNormalPowerConcealment } from '../systems/concealment.js';   // wave 31: BreakNormalPowerConcealmentEffects, in its own leaf so this import cannot cycle
+import { localizedText } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language (an import-free leaf)
 
 // ---- Dice100.cs verbatim ----
 export const dice100 = (chance, roll01 = Math.random()) => Math.floor(roll01 * 100) < chance;   // Random.Range(0,100) < chance
@@ -115,6 +116,8 @@ export const entityMaxEncumbrance = (entity) => {
  *  (`materialIneffective`), verbatim - GetLocalizedText hands it over
  *  with no substitution, so the words are the whole string. */
 export const MATERIAL_INEFFECTIVE_TEXT = 'The material of the weapon you are using is ineffective.';
+/** L10N3d: that line where it is said, in the player's language. */
+export const materialIneffectiveText = () => localizedText('materialIneffective', MATERIAL_INEFFECTIVE_TEXT);
 export const spellPointsFor = (intelligence, multiplier) => Math.floor(intelligence * multiplier);
 export const magicResist = (willpower) => Math.floor(willpower / 10);
 export const toHitModifier = (agility) => Math.floor(agility / 10) - 5;
@@ -467,9 +470,11 @@ export function weaponAttackDamage(attacker, target, damageMod, weapon, rolls = 
  *  A landed backstab speaks: Internal_Strings.csv:57
  *  (`successfulBackstab`), verbatim into PopupMessage (:987-988). */
 export const SUCCESSFUL_BACKSTAB_TEXT = 'Successful backstab!';
+/** L10N3d: that popup where it is said, in the player's language. */
+export const successfulBackstabText = () => localizedText('successfulBackstab', SUCCESSFUL_BACKSTAB_TEXT);
 export function backstabDamage(damage, backstabbingLevel, rolls = Math.random, say = null) {
   if (backstabbingLevel > 1 && dice100(backstabbingLevel, rolls())) {
-    say?.(SUCCESSFUL_BACKSTAB_TEXT);
+    say?.(successfulBackstabText());
     return damage * 3;
   }
   return damage;
@@ -603,7 +608,7 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
     // too-low weapon material returns 0, and when the attacker is
     // the PLAYER the HUD says so (`materialIneffective`,
     // Internal_Strings.csv:56). Enemies fail silently.
-    if (attacker.isPlayer) say?.(MATERIAL_INEFFECTIVE_TEXT);
+    if (attacker.isPlayer) say?.(materialIneffectiveText());
     notes.ineffective = true;
     return report(0);
   }

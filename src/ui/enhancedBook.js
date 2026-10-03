@@ -126,6 +126,8 @@ export function canvasFace(px, weight = 400, family = BOOK_FAMILY) {
     canvas: true,
     font,
     px,
+    weight,
+    family,
     fixedHeight: Math.round(px * 1.3),
     fixedWidth: space + 1,
     glyphWidth(index) {
@@ -171,11 +173,28 @@ export function paginateBook(placed, pageH) {
       let page = pages[pages.length - 1];
       if (y + rowH > pageH && page.length) { page = []; pages.push(page); y = 0; }
       if (!page.length && !text) continue;   // no leaf opens on white
-      page.push({ text, center: !!label.center, face: label.face, rowH, y });
+      // L10N3f: a -LOC book's [/color=] and [/scale=] ride the row (placeBookLabels already wrapped and measured it)
+      page.push({ text, center: !!label.center, face: label.face, rowH, y, color: label.color ?? null, scale: label.scale ?? 1 });
       y += rowH;
     }
   }
   return pages;
+}
+
+/** L10N3f: the ink a row is painted in - a -LOC book's [/color=]
+ *  ([r,g,b,a] in 0..1), else the journal's own ink. */
+export const rowInk = (color) => (color ? css(color.map((v, i) => (i < 3 ? Math.round(v * 255) : v)), color[3] ?? 1) : INK);
+
+/** L10N3f: a row's face at its [/scale=] - the same cut `scale` times
+ *  the size (TextLabel.TextScale); a row at 1 keeps its own face. */
+const _scaled = new Map();
+export function scaledFace(face, scale) {
+  const fnt = face?.fnt;
+  if (!fnt?.px || !(scale > 0) || scale === 1) return face;
+  const key = `${fnt.font}|${scale}`;
+  let out = _scaled.get(key);
+  if (!out) { out = canvasFace(Math.max(1, Math.round(fnt.px * scale)), fnt.weight, fnt.family); _scaled.set(key, out); }
+  return out;
 }
 
 /** The PAPER scale: device pixels per Raum pixel - an integer, from
@@ -226,7 +245,7 @@ function cutPages(px, faces) {
   return pages.map((rows) => ({
     paint(pctx, x, y, w) {
       for (const row of rows) {
-        paintRow(pctx, row.face ?? faces[0], row.text, x + margin, y + Math.round(margin / 2) + row.y, { align: row.center ? 'center' : 'left', w: w - margin * 2 });
+        paintRow(pctx, scaledFace(row.face ?? faces[0], row.scale), row.text, x + margin, y + Math.round(margin / 2) + row.y, { align: row.center ? 'center' : 'left', w: w - margin * 2, color: rowInk(row.color) });
       }
     },
   }));

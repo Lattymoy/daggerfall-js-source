@@ -64,6 +64,7 @@ import { GUILDS } from './guilds.js';
 import {
   cureOfferMessageOffset, TRADE_MESSAGE_BASE_ID, NOT_ENOUGH_GOLD_ID,
 } from './guildServiceActions.js';
+import { localizedText, formatText } from './textManager.js';   // L10N3d: the window's own lines
 
 /** The shared TEXT.RSC ids. DaggerfallTradeWindow declares both
  *  (:33-34) and so do the guild services; ONE DFU MEMBER, ONE EXPORT,
@@ -129,7 +130,7 @@ export const IDENTIFY_COST_MULTIPLIER = 25;
  *  no magic in it at all. It was never seen because the Identify
  *  destination was a null and the mode could not be opened; X7 opened
  *  it, so the derivation had to be right first. Both paths run at
- *  worldModes.js:2627 now (commitTrade) - the paid service and the spell. */
+ *  worldModes.js:2645 now (commitTrade) - the paid service and the spell. */
 export const itemIsIdentified = (item) => !isEnchanted(item) || item?.isIdentified === true;
 
 /** FormulaHelper.CalculateItemIdentifyCost (:1935-1955). FREE on the
@@ -175,7 +176,6 @@ export function identifySpellPass(items, chance, rolls = Math.random) {
   return { successCount, total: list.length, identified, spendMagicka: list.length > 0 };
 }
 
-/** Internal_Strings.csv:1053 - `totalIdentified,{0} out of {1} identified.` */
 /** AUDIT 26 F067 - DoModeAction's magicka refusal
  *  (DaggerfallTradeWindow.cs:960-963). The string table the old flag
  *  waited on IS in the reference tree, and it settles the wording:
@@ -187,11 +187,15 @@ export function identifySpellPass(items, chance, rolls = Math.random) {
  *  exact: the whole pass returns, nothing is identified, no magicka is
  *  spent and Mercantile is not tallied.
  *  (GodMode's `&& !GodMode` arm has no port counterpart, as
- *  motor.js:919 already records for the levitation term.) */
+ *  motor.js:920 already records for the levitation term.) */
 export const NOT_ENOUGH_SPELL_POINTS_TEXT = 'You do not have enough spell points left.';
+/** L10N3d: ...as the refusal shows it (:962), in the player's language. */
+export const notEnoughSpellPointsText = () => localizedText('notEnoughSpellpointsLeft', NOT_ENOUGH_SPELL_POINTS_TEXT);
 
+/** The tally (:990): string.Format over GetLocalizedText("totalIdentified"),
+ *  Internal_Strings.csv:1053 - `totalIdentified,{0} out of {1} identified.` */
 export const identifiedTallyText = (successCount, total) =>
-  `${successCount} out of ${total} identified.`;
+  formatText(localizedText('totalIdentified', '{0} out of {1} identified.'), successCount, total);
 
 /** The three Buy-mode holiday halvings (:444-449), as ONE predicate
  *  per arm so each can be pinned alone. `guildFactionId` is null
@@ -381,6 +385,8 @@ export function tradeDecision(mode, { cost, tradePrice, gold = 0 }) {
  *  The sound alone (ParchmentScratching, already ported at :1084) is
  *  not that explanation - it plays where GoldPieces would have. */
 export const LETTER_OF_CREDIT_TEXT = 'You are paid with a letter of credit.';
+/** L10N3d: ...as the box shows it (:1093), in the player's language - both skins read it. */
+export const letterOfCreditText = () => localizedText('letterOfCredit', LETTER_OF_CREDIT_TEXT);
 
 /** SHIP-CREDIT (2026-10-01, Mac's "Buy on credit"): the templates a lot must hold to be bought on credit - Come Sail
  *  Away's parts and deed (systems/comeSailAwayItems.js BOAT_PARTS_TEMPLATE, BOAT_DEED_TEMPLATE; pinned equal). */
@@ -493,17 +499,19 @@ export function localClickDecision(mode, item, {
  *  Internal_Strings.csv:821 - `doesntNeedIdentify,This does not need to
  *  be identified.` (the row has no "item"). */
 export const DOESNT_NEED_IDENTIFY = 'This does not need to be identified.';
+/** L10N3d: ...as the refusal shows it, in the player's language - both skins read it. */
+export const doesntNeedIdentifyText = () => localizedText('doesntNeedIdentify', DOESNT_NEED_IDENTIFY);
 
 // The three clauses that stood here are all closed:
 //  - the IDENTIFY SPELL arm (:956-996) is live. identifySpellPass
-//    (:161) feeds worldModes.js:2380-2400, which spends the magicka
+//    (:161) feeds worldModes.js:2398-2418, which spends the magicka
 //    ONCE for the whole list whatever the outcome and tells the player
 //    "N of M identified"; the window opens from openIdentifyWindow
-//    (worldModes.js:9928), the entry point the magic arc owed.
+//    (worldModes.js:9953), the entry point the magic arc owed.
 //  - the LETTER OF CREDIT is tender and bankable: minted at systems/
-//    inventory.js:69, summed by creditAmount at systems/court.js:249,
-//    spent letters-before-coins by deductGold at court.js:291, and
-//    moved at systems/banking.js:732 depositAllLetters / :750
+//    inventory.js:69, summed by creditAmount at systems/court.js:260,
+//    spent letters-before-coins by deductGold at court.js:302, and
+//    moved at systems/banking.js:735 depositAllLetters / :753
 //    withdrawLetter.
 //  - SellMagic's "fencing base price" TODO is DFU's own
 //    (DaggerfallTradeWindow.cs:464 carries it verbatim), so it is

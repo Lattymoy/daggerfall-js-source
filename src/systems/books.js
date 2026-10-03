@@ -3,14 +3,17 @@
 // carries `message` = its book id; the filename law is
 // BOK%05d.TXT of the id's LOW BYTE (BookFile.messageToBookFilename),
 // with the legacy 10000 -> 5 alias ("Ark'ay The God") kept for old
-// saves. GetRandomBookID draws uniformly from the mapped ids - DFU's
-// six-attempt loop only exists to test MOD conditions (localized/
-// replacement books), which the port has none of, so one draw is the
-// same distribution. The random draw is an injectable roll (Ledger A).
+// saves. GetRandomBookID draws uniformly from the mapped ids; its
+// six-attempt loop exists to test a book's CONDITIONS, which only a
+// localized (-LOC) book carries in the port - L10N3f: a translation's
+// books (systems/localizedBook.js), so a language without them draws
+// once, as before. The random draw is an injectable roll (Ledger A).
 
 import { BOOK_ID_TITLES } from './booksData.js';
 import { messageToBookFilename, BookFile } from '../formats/bookFile.js';
 import { templateByIndex, mintCondition } from './itemTemplates.js';
+import { localizedBookExists, localizedBookHeader } from './localizedBook.js';   // L10N3f: LocalizedBook.cs, a translation's books
+import { globalVarsTable } from './quest/tables.js';   // L10N3f: LocalizedBookMeetsConditions reads QuestMachine.GlobalVarsTable
 import { PORT_BOOK_IDS, isPortBook, portBookTitle, portBookPrice } from './portBooks.js';   // WB12c: the port's own books
 
 const BOOK_IDS = Object.freeze([...BOOK_ID_TITLES.keys()]);
@@ -40,9 +43,49 @@ export function getBookFileName(id) {
   return name;
 }
 
-/** GetRandomBookID over the classic mapping. */
+/** GetRandomBookID (ItemHelper.cs:618-641) over the classic mapping:
+ *  up to six draws, a book with a -LOC file in the current language
+ *  taken only when it meets its conditions ("Localized book conditions
+ *  have overriding priority", :628-634) and every other book at once -
+ *  a classic book has no replacement entry, so BookMeetsConditions
+ *  holds (:636-637). Six misses answer the mapping's first id (:640). */
 export function getRandomBookID(roll = Math.random) {
-  return BOOK_IDS[Math.floor(roll() * BOOK_IDS.length)];
+  for (let i = 0; i < 6; i++) {
+    const id = BOOK_IDS[Math.floor(roll() * BOOK_IDS.length)];
+    if (localizedBookExists(bookFileNameQuiet(id))) {
+      if (localizedBookMeetsConditions(id)) return id;
+      continue;
+    }
+    return id;
+  }
+  return BOOK_IDS[0];
+}
+
+/** L10N3f - PlayerEntity.GlobalVars.GetGlobalVar for the draw above:
+ *  the host hands the quest machine's globals in (the 64 live on it -
+ *  quest/machine.js `globalVars`, link id -> bool). With none handed
+ *  in, a book waiting on a global is not drawn: the variable reads as
+ *  not yet set. */
+let _globalVarSet = null;
+export function setBookGlobalVars(fn) { _globalVarSet = typeof fn === 'function' ? fn : null; }
+
+/** LocalizedBookMeetsConditions (ItemHelper.cs:648-665): the current
+ *  language's -LOC book is not IsUnique, and its WhenVarSet global -
+ *  one the Quests-GlobalVars table names; any other is ignored - is
+ *  set. A book without a -LOC file does not meet them. */
+export function localizedBookMeetsConditions(id) {
+  const book = localizedBookHeader(bookFileNameQuiet(id));
+  if (!book) return false;
+  let globalVar = -1, globalVarSet = false;
+  if (book.whenVarSet) {
+    let table = null;
+    try { table = globalVarsTable(); } catch { /* no quest tables loaded: no variable matches, so none is waited on */ }
+    if (table?.hasValue(book.whenVarSet)) {
+      globalVar = Number.parseInt(table.getValue('id', book.whenVarSet), 10);
+      globalVarSet = !!_globalVarSet?.(globalVar);
+    }
+  }
+  return !book.isUnique && (globalVar === -1 || globalVarSet);
 }
 
 /** WB12c: the shelf's draw - GetRandomBookID's, over the classic books and the port's own. */
@@ -50,9 +93,21 @@ export function getShelfBookID(roll = Math.random) {
   return SHELF_BOOK_IDS[Math.floor(roll() * SHELF_BOOK_IDS.length)];
 }
 
-/** The mapping's title (the item-info %bt fallback; the READER shows
- *  the file's own header title). */
-export const bookTitle = (id) => BOOK_ID_TITLES.get(id === 10000 ? 5 : id) ?? portBookTitle(id);
+/** GetBookTitle (ItemHelper.cs:567-586): the current language's -LOC
+ *  title first (L10N3f), else the mapping's - null for an id outside
+ *  it, where DFU answers the caller's default (WB12c: the port's own
+ *  books answer their own title). Every caller SHOWS it:
+ *  an identified book's name (ResolveItemName :279-280), the item
+ *  list's tooltip (ItemListScroller.cs:464-465), the bookshelf's pick
+ *  (DaggerfallBookshelf.cs:34, :59) and the info panel's %bt; the item
+ *  itself is keyed by its id, never by a title. The READER shows the
+ *  book's own header title. */
+export function bookTitle(id) {
+  const key = id === 10000 ? 5 : id;
+  const localized = localizedBookHeader(bookFileNameQuiet(key));
+  if (localized) return localized.title;
+  return BOOK_ID_TITLES.get(key) ?? portBookTitle(id);
+}
 
 export const CLASSIC_BOOK_COUNT = BOOK_IDS.length;
 

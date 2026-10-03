@@ -396,7 +396,7 @@ test('FIX-F: while a capture is armed EVERY other control is inert (:281 etc.)',
   // Defaults (:299), Continue (:321), CurrentBindings (:338), the
   // keybind button (:361) and the right-click remove (:372, ANDed
   // with the unbound refusal). The classic grid carries it in one
-  // line (ui/controlsWindow.js:388 `if (this.capture) return true;`);
+  // line (ui/controlsWindow.js:393 `if (this.capture) return true;`);
   // this face carries it as the `act` wrapper. Without it CONTINUE
   // saves and re-stages under a LIVE capture, and the Primary toggle
   // flips the dict the pending keystroke is about to be written into.
@@ -759,7 +759,7 @@ test('FIX-F: the pane wears the skin’s own classes and adds no face of its own
   const imports = [...src.matchAll(/from '([^']+)'/g)].map((m) => m[1]);
   assert.ok(imports.includes('../systems/controlsConfig.js'));
   assert.deepEqual(imports.sort(),
-    ['../systems/controlsConfig.js', '../systems/inputActions.js', '../systems/modSettings.js', './input.js', './peerMenuBindCard.js'],   // PEERMENU1: the player menu's bind card - an enhanced-face card over its own pref, no classic canvas window
+    ['../systems/controlsConfig.js', '../systems/inputActions.js', '../systems/modSettings.js', '../systems/textDatabases.js', '../systems/textManager.js', './input.js', './peerMenuBindCard.js'],   // PEERMENU1: the player menu's bind card - an enhanced-face card over its own pref, no classic canvas window; L10N3d: the text core, a leaf with no art; L10N3f: DFU's text databases, no art either
     'the enhanced pane drives the LAW modules and nothing else - dragging the '
     + 'classic canvas windows (controlsWindow/mouseControlsWindow/nativePanel) in '
     + 'would make the enhanced skin pay for art it never draws');

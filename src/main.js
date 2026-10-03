@@ -58,6 +58,11 @@ async function boot() {
   renderer.setRetroSource(retroFrameConfig);   // RETRO1: DFU's retro mode - asked once per world frame, so the settings screen's change lands on the next
   renderer.setRenderScaleSource(renderScaleSetting);   // PERF-SCALE: the world's share of the window's pixels - asked once per world frame, and retro wins
   const params = new URLSearchParams(location.search);
+  // L10N1b: THE LANGUAGE FIRST. Every door below - the cinematic, the front door, the classic start, a probe's scene -
+  // draws text, so the chosen language's tables are patched in before any of them runs (?lang= for one visit, else
+  // the player's choice). A failure leaves English standing; nothing here can stop the game. Loaded behind a door
+  // (BOOT2's ceiling on the entry's static graph), awaited before every other one.
+  await import('./scenes/localeData.js').then(({ initLocale }) => initLocale(params)).catch((err) => console.error('[text] the language module could not load; English stands:', err?.message ?? err));
   setScreenshotCanvas(canvas);   // KB1: once, beside the counter - the hosts' routeAction arm shoots it (AUDIT KB1: a window's F8 stays the window's)
   // AUDIT KB1 F3: the keybinding carry's report, told on the HUD the moment a scene can speak. Loaded OFF the entry's
   // static graph (BOOT2): the notice door reaches the box's whole import ring, and the input readers load with the

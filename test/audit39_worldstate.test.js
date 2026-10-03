@@ -398,7 +398,7 @@ test('AUDIT 39 #159: the travel map refuses with enemies nearby, before the raci
   assert.ok(nearby > 0, 'the refusal is at the door');
   assert.ok(racial > nearby, 'ordered ahead of CheckFastTravel, as DFU orders it');
   assert.ok(build > racial, 'and both ahead of the window');
-  assert.ok(door.includes('townTalk.say(CANNOT_TRAVEL_ENEMIES_TEXT);'), 'the line is spoken');
+  assert.ok(door.includes("townTalk.say(localizedText('cannotTravelWithEnemiesNearby', CANNOT_TRAVEL_ENEMIES_TEXT));"), 'the line is spoken');
   // the STRICT variant - resting's slack distance is the sleep rule
   assert.ok(!/areEnemiesNearby\(\[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\]\), \{ resting/.test(door));
 });

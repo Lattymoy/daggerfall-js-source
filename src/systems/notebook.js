@@ -28,6 +28,7 @@
 //   cityName()          - MacroHelper.CityName (the note header's %cn)
 
 import { graphemesOf } from './graphemes.js';   // JOURNAL1: a long run is cut between the reader's characters
+import { localizedStrings } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
 export const MAX_LINE_LENGTH = 70;         // PlayerNotebook.MaxLineLenth
 export const MAX_MESSAGE_COUNT = 50;
@@ -41,7 +42,7 @@ export const MAX_LINES_QUESTS = 20;
 export const MAX_LINES_SMALL = 28;
 
 // Internal_Strings en literals.
-const EN = Object.freeze({
+const EN = localizedStrings({
   noteHeader: '{0} in {1}:',
   finishQuestHeader: '{0} {1} at {2}:',
   completedQuest: 'completed',

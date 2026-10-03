@@ -165,8 +165,8 @@
   {
     "name": "QS6-the-cycle-raises-no-lamp-so-the-HUD-never-shows-a-hold",
     "file": "src/systems/quickslots.js",
-    "old": "    cycling = { slot, ms: QUICK_CYCLE_LINGER_MS };\n    return { slot, index: list[next].index, name: list[next].name, spell: list[next] };",
-    "new": "    return { slot, index: list[next].index, name: list[next].name, spell: list[next] };",
+    "old": "    cycling = { slot, ms: QUICK_CYCLE_LINGER_MS };\n    return { slot, index: list[next].index, name: shownSpellName(list[next]), spell: list[next] };",
+    "new": "    return { slot, index: list[next].index, name: shownSpellName(list[next]), spell: list[next] };",
     "tests": [
       "test/qs6_spellslot.test.js"
     ]
@@ -259,8 +259,8 @@
   {
     "name": "QS6-the-caption-doubles-the-readied-spell-the-chip-already-names",
     "file": "src/ui/enhancedHud.js",
-    "old": "  const readyName = readySpell && !doubled ? String(readySpell.name ?? '') : null;",
-    "new": "  const readyName = readySpell ? String(readySpell.name ?? '') : null;",
+    "old": "  const readyName = readySpell && !doubled ? String(shownSpellName(readySpell) ?? '') : null;",
+    "new": "  const readyName = readySpell ? String(shownSpellName(readySpell) ?? '') : null;",
     "tests": [
       "test/enhancedHud.test.js"
     ]

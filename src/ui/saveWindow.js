@@ -157,6 +157,7 @@ import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { dateFromClassicMinutes, midDateTimeString } from '../systems/gameDate.js';
 import { packColourTexture } from './packArt.js';   // OVH2: a worn UI pack's panel and button textures
+import { localizedStrings } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import {
   enumerateSaves, findSave, findMostRecentSave, saveInfoOf, screenshotOf,
   deleteSave, renameSave, characterNames,
@@ -199,7 +200,7 @@ export const SW_COLORS = Object.freeze({
  *  StreamingAssets/Text/Master Localization CSV Files/
  *  Internal_Strings.csv - the keys TextManager is asked for, with the
  *  English values verbatim (the port has one language). */
-export const SW_TEXT = Object.freeze({
+export const SW_TEXT = localizedStrings({
   savePrompt: 'Save Game',                                     // :924
   loadPrompt: 'Load Game',                                     // :925
   saveLoadPromptFormat: "{0} for '{1}'",                       // :1580
@@ -394,7 +395,7 @@ export class SaveWindow {
    *
    *  RECORDED (structural): DFU routes the wheel to the component under
    *  the pointer; the hosts carry the point on the overlay wheel seam
-   *  now (AUDIT 65 UI-5: townTalk.js:1320-1327, worldModes.js:10568-10584,
+   *  now (AUDIT 65 UI-5: townTalk.js:1332-1339, worldModes.js:10593-10609,
    *  dungeonContext's overlayWheel), and this window has one scrolling
    *  list, so it still ignores the point and forwards the sign to it. */
   wheel(dir) {

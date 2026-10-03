@@ -18,6 +18,7 @@
 
 import { rand } from './dfRandom.js';   // ROAD-A7: GetRandomTokens' dfRand arm
 import { INTERNAL_RSC } from './rscTable.js';   // MAC-U: DFU's Internal_RSC rows, read before the file (TextProvider.cs:167-188)
+import { tryGetLocalizedText, currentLocale, TextCollections, BASE_LOCALE } from '../systems/textManager.js';   // L10N3a: the locale's own row first
 
 export const RSC = Object.freeze({
   NewLine: 0x00, EndOfPage: 0xf6, InputCursorPositioner: 0xf8,
@@ -92,6 +93,8 @@ export function rscTableBytes(table = INTERNAL_RSC) {
  *  PositionPrefix consume their argument byte exactly as the C# -
  *  including PositionPrefix's PEEK that survives a truncated tail. */
 export const TOKEN_TEXT = -1;   // TextFile.Formatting.Text
+/** The three that break a row (MultiFormatTextLabel.cs:333-345 - U11). */
+const BREAKS = new Set([RSC.NewLine, RSC.JustifyLeft, RSC.JustifyCenter]);
 export function readTokens(buffer, position, endToken) {
   if (!buffer || buffer.length === 0) return null;
   const tokens = [];
@@ -150,6 +153,72 @@ function variantRanges(raw) {
   return ranges;
 }
 
+// ─── L10N3a (2026-09-27): A TRANSLATION'S ROW, AS DFU READS IT ─────────────────────────────────────────────────────
+// TextProvider.GetRSCTokens (TextProvider.cs:167-188) asks the string table `Internal_RSC` (RuntimeRSCStrings) for the
+// record's id before it opens TEXT.RSC, and a translation pack patches its rows over that table (StringTablePatcher).
+// A row there is TEXT in the importer's markup, not bytes: its letters are any script's, and 'ü' is 0xFC - JustifyLeft's
+// own byte - so no byte shape can hold it. It is read as DFU reads it, into tokens
+// (DaggerfallStringTableImporter.ConvertStringToRSCTokens), and each reader below answers from those tokens with the
+// same law its byte arm keeps. The table is asked only for a language that is not English: the English the port shows
+// is the file's and the carried rows' (rscTable.js), exactly as before.
+
+const IMPORT_FORMAT = Object.freeze({ '[/left]': RSC.JustifyLeft, '[/center]': RSC.JustifyCenter, '[/newline]': RSC.NewLine, '[/record]': RSC.SubrecordSeparator, '[/input]': RSC.InputCursorPositioner, '[/end]': RSC.EndOfRecord });
+/** TextFile.Formatting's custom codes (TextFile.cs:125-128), which only markup carries. */
+export const RSC_CUSTOM = Object.freeze({ Color: 0x100, Scale: 0x101, Image: 0x102 });
+const token = (formatting, text = '', x = 0, y = 0) => ({ formatting, text, x, y });
+/** AddToken's prefixed markups (:228-238), each a Text token of itself when its pattern does not match. */
+function prefixedToken(m) {
+  let g;
+  if (m.startsWith('[/pos')) return (g = /pos:x=(\d+),y=(\d+)/.exec(m)) ? token(RSC.PositionPrefix, '', Number(g[1]), Number(g[2])) : token(TOKEN_TEXT, m);
+  if (m.startsWith('[/font')) return (g = /font=(\d+)/.exec(m)) ? token(RSC.FontPrefix, '', Number(g[1])) : token(TOKEN_TEXT, m);
+  if (m.startsWith('[/color')) return (g = /color=([0-9a-f]{6})/.exec(m)) ? token(RSC_CUSTOM.Color, g[1]) : token(TOKEN_TEXT, m);
+  if (m.startsWith('[/scale')) return (g = /scale=([+-]?([0-9]*[.])?[0-9]+)/.exec(m)) ? token(RSC_CUSTOM.Scale, g[1]) : token(TOKEN_TEXT, m);
+  if (m.startsWith('[/image')) return (g = /\[\/image=(.*)\]/.exec(m)) ? token(RSC_CUSTOM.Image, g[1]) : token(TOKEN_TEXT, m);
+  return token(TOKEN_TEXT, m);   // unhandled markup is text (AddToken's last arm)
+}
+/** ConvertStringToRSCTokens (DaggerfallStringTableImporter.cs:175-209): a newline is editor air and stripped
+ *  ("TEXT.RSC does not use newline"), a `[/...]` run up to its `]` is one markup (PeekMarkup :318-343), and the text
+ *  between gathers into Text tokens. An empty value is no tokens (DFU's null). */
+export function markupTokens(input) {
+  const s = String(input ?? '');
+  const tokens = [];
+  let text = '';
+  for (let i = 0; i < s.length; i++) {
+    if (s[i] === '\n') continue;
+    if (s[i] === '[' && s[i + 1] === '/') {
+      const end = s.indexOf(']', i + 2);
+      if (end > i) {
+        if (text) { tokens.push(token(TOKEN_TEXT, text)); text = ''; }
+        const m = s.slice(i, end + 1);
+        tokens.push(Object.hasOwn(IMPORT_FORMAT, m) ? token(IMPORT_FORMAT[m]) : prefixedToken(m));
+        i = end;
+        continue;
+      }
+    }
+    text += s[i];
+  }
+  if (text) tokens.push(token(TOKEN_TEXT, text));
+  return tokens;
+}
+
+/** The current locale's `Internal_RSC` row for `key` - an id, or a string key such as '9000.1' - or undefined. English
+ *  answers none: its text is the file's. */
+export function localeRscRow(key) {
+  return currentLocale() === BASE_LOCALE ? undefined : tryGetLocalizedText(TextCollections.TextRSC, String(key));
+}
+
+/** A token record's variants, split at its SubrecordSeparators and ended at its EndOfRecord - the byte arm's
+ *  variantRanges over tokens. Always at least one. */
+function tokenVariants(tokens) {
+  const out = [[]];
+  for (const t of tokens) {
+    if (t.formatting === RSC.EndOfRecord) break;
+    if (t.formatting === RSC.SubrecordSeparator) { out.push([]); continue; }
+    out[out.length - 1].push(t);
+  }
+  return out;
+}
+
 export class TextRsc {
   /** MAC-U: `table` is DFU's Internal_RSC string table (rscTable.js),
    *  the rows a DFU build reads BEFORE the classic file - TextProvider
@@ -175,7 +244,16 @@ export class TextRsc {
   }
 
   get recordCount() { return this._byId.size; }
-  hasRecord(id) { return this._table.has(id) || this._byId.has(id); }
+  hasRecord(id) { return localeRscRow(id) !== undefined || this._table.has(id) || this._byId.has(id); }   // L10N3a: the locale's row is a record too
+
+  /** L10N3a: the current locale's row for `key` as tokens, or null (English, or a key its table lacks). */
+  _localeTokens(key) {
+    const row = localeRscRow(key);
+    return row === undefined ? null : markupTokens(row);
+  }
+  /** GetRSCTokens(string id) (TextProvider.cs:190-200): a string-keyed row of the locale's table - DFU's '9000.1'
+   *  class questions - as tokens, with no TEXT.RSC to fall back to; null when the table has none. */
+  localeTokensByKey(key) { return this._localeTokens(key); }
 
   /** Raw record bytes INCLUDING the 0xFE terminator (GetBytesById).
    *  MAC-U: a table row first, in the file's own byte shape
@@ -193,6 +271,8 @@ export class TextRsc {
 
   /** Variants (SubrecordSeparator-split) of a record as plain text. */
   plainText(id) {
+    const loc = this._localeTokens(id);
+    if (loc) return tokenVariants(loc).map((v) => v.map((t) => (t.formatting === TOKEN_TEXT ? t.text : BREAKS.has(t.formatting) ? '\n' : '')).join(''));
     const raw = this.bytesById(id);
     if (!raw) return null;
     return variantRanges(raw).map(([start, end]) => {
@@ -224,9 +304,10 @@ export class TextRsc {
    *  reads over TEXT.RSC 201+oathId, where one record holds several
    *  one-line oaths. */
   randomTextById(id, pick = Math.random) {
-    const raw = this.bytesById(id);
-    if (!raw) return '';
-    const tokens = readTokens(raw, 0, RSC.EndOfRecord) ?? [];
+    const loc = this._localeTokens(id);
+    const raw = loc ? null : this.bytesById(id);
+    if (!loc && !raw) return '';
+    const tokens = loc ? tokenVariants(loc).flat() : readTokens(raw, 0, RSC.EndOfRecord) ?? [];   // L10N3a: up to [/end], as the byte arm stops at EndOfRecord
     const items = tokens.filter((t) => t.formatting === TOKEN_TEXT).map((t) => t.text);
     if (items.length === 0) return '';
     return items[Math.floor(pick() * items.length)];
@@ -269,6 +350,8 @@ export class TextRsc {
 
   /** How many SubrecordSeparator-delimited variants a record has. */
   variantCount(id) {
+    const loc = this._localeTokens(id);
+    if (loc) return tokenVariants(loc).length;
     const raw = this.bytesById(id);
     return raw ? variantRanges(raw).length : 0;
   }
@@ -279,6 +362,12 @@ export class TextRsc {
    *  real variant is picked twice as often on 0xFF 0xFE records).
    *  TK-i: the rumor mill freezes one of these per AddNonQuestRumor. */
   variantTokensById(id, pick = Math.random) {
+    const loc = this._localeTokens(id);
+    if (loc) {
+      const variants = tokenVariants(loc);
+      const want = variantIndex(pick, variants.length);   // R13's law: one variant still draws
+      return !variants[want].length && want > 0 ? variants[want - 1] : variants[want];
+    }
     const raw = this.bytesById(id);
     if (!raw) return [];
     const ranges = variantRanges(raw);
@@ -300,6 +389,8 @@ export class TextRsc {
    *  AUDIT 63 F3: DaggerfallMessageBox.SetTextTokens(int) reads this,
    *  not GetRandomTokens. */
   tokensById(id) {
+    const loc = this._localeTokens(id);
+    if (loc) { const end = loc.findIndex((t) => t.formatting === RSC.EndOfRecord); return end < 0 ? loc : loc.slice(0, end); }
     const raw = this.bytesById(id);
     if (!raw) return [];
     return readTokens(raw, 0, RSC.EndOfRecord) ?? [];
@@ -308,6 +399,8 @@ export class TextRsc {
   /** One variant's TOKEN stream, no step-back - the raw
    *  `tokenStreams[index]` TextProvider.cs:231 measures. */
   _variantTokens(id, index) {
+    const loc = this._localeTokens(id);
+    if (loc) return tokenVariants(loc)[index] ?? [];
     const raw = this.bytesById(id);
     if (!raw) return [];
     const ranges = variantRanges(raw);
@@ -322,6 +415,20 @@ export class TextRsc {
    *  (MultiFormatTextLabel.cs :333-345). Trailing empties drop - a
    *  record almost always ends with a break. */
   linesById(id, variant = 0) {
+    const loc = this._localeTokens(id);
+    if (loc) {
+      const v = tokenVariants(loc)[variant];
+      if (!v) return [];
+      const rows = [];
+      let cur = '';
+      for (const t of v) {
+        if (BREAKS.has(t.formatting)) { rows.push({ text: cur, center: t.formatting === RSC.JustifyCenter }); cur = ''; continue; }
+        if (t.formatting === TOKEN_TEXT) cur += t.text;
+      }
+      if (cur) rows.push({ text: cur, center: false });
+      while (rows.length && rows[rows.length - 1].text === '') rows.pop();
+      return rows;
+    }
     const raw = this.bytesById(id);
     if (!raw) return [];
     const r = variantRanges(raw)[variant];

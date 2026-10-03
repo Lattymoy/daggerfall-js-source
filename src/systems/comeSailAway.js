@@ -147,7 +147,7 @@ import { BOAT_PARTS_TEMPLATE, BOAT_DEED_TEMPLATE, mintBoatItem, boatItemName, bo
 import { NO_WATER_LEVEL } from '../world/deepWaterSwim.js';
 import { invertAffine } from '../world/prefabColliders.js';
 import { buildWaveMesh, stepWaveFrame, waveFrameTimeOf, isDayHour, WAVE_FRAME_COUNT, WAVE_SCALE } from './comeSailAwayWaves.js';
-import { MONTH_NAMES } from './gameDate.js';   // CSA-I: WorldTime.Now.MonthName, a marker's label
+import { monthNames } from './gameDate.js';   // CSA-I: WorldTime.Now.MonthName, a marker's label (L10N3d: in the player's language, as DFU's GetMonthName reads it)
 import { HELM_WAY, CARGO_HOLD_MISSING, steerage, isResponsive } from './helmWay.js';   // HELM-WAY: the responsive helm
 import { MAP_MARKER_MODE_COLORS, mapRect, guiMouse, mapPixelUnder, guiRectContains, vector2IntDistance, markerLabel, dayOfMonthWithSuffix, mapOverlayDraws, csFloatString, COLOR_RED, COLOR_GREEN, COLOR_BLUE, COLOR_BLACK, DAGGERFALL_DEFAULT_SHADOW_POS } from './comeSailAwayMap.js';   // CSA-I: the position reading
 
@@ -1920,7 +1920,7 @@ export function createComeSailAwayRuntime(deps) {
     log(`COME SAIL AWAY - MOUSE IS OVER MAP PIXEL (${val3[0]}, ${val3[1]})`);
     if (!IsPositionMarked(val3)) {
       const d = deps.date();
-      const newLabel = markerLabel(val3, dayOfMonthWithSuffix(d.day), MONTH_NAMES[d.month]);
+      const newLabel = markerLabel(val3, dayOfMonthWithSuffix(d.day), monthNames()[d.month]);
       state.mapMarkers.push({ position: val3, label: newLabel, color: { ...MAP_MARKER_MODE_COLORS[state.mapMarkerMode] } });
     }
   }

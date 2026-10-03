@@ -3,7 +3,8 @@
 // Two sources, in order:
 //   1. LABELS below - a short Title Case name for every one of the
 //      171 keys, so a raw ini identifier can never reach the screen.
-//      "LypyL_GameConsole" reads as "Developer Console".
+//      "LypyL_GameConsole" reads as "Developer Console". The five that
+//      are DFU's own words read through the text core (DFU_LABELS).
 //   2. DFU's OWN tooltip for the explanation (systemsText's
 //      SETTINGS_INFO, vendored from GameSettings.txt). Where DFU wrote
 //      a sentence we use DFU's sentence - porting the words is porting
@@ -15,6 +16,7 @@
 // the first letter (SoundVolume -> soundVolume); the ones that do not
 // are listed explicitly.
 import { SETTINGS_INFO } from '../systems/settingsText.js';
+import { localizedTable } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
 export const LABELS = Object.freeze({
   "Audio/AlternateMusic": "Alternate Music",
@@ -227,11 +229,27 @@ export function dfuTextKey(key) {
   return lowerFirst(bare);
 }
 
+/** L10N3d: the labels that ARE DFU's own words for the same control -
+ *  the Depth of Field page's three sliders
+ *  (DepthOfFieldConfigPage.cs:43-55), and two effect pages' titles on
+ *  the rows that switch those effects on (DepthOfFieldConfigPage.cs:29,
+ *  MotionBlurConfigPage.cs:27) - read in the player's language. LABELS
+ *  keeps their English, so it stays total; every other label on this
+ *  screen is the port's own. */
+const DFU_LABELS = localizedTable({
+  'Effects/DepthOfFieldFocusDistance': ['focusDistance', 'Focus Distance'],
+  'Effects/DepthOfFieldAperture': ['aperture', 'Aperture'],
+  'Effects/DepthOfFieldFocalLength': ['focalLength', 'Focal Length'],
+  'Effects/DepthOfFieldEnable': ['depthOfField', 'Depth Of Field'],   // this screen's Title Case of DFU's "Depth of Field"
+  'Effects/MotionBlurEnable': ['motionBlur', 'Motion Blur'],
+});
+
 /** The short name a player reads. Never an ini identifier: the LABELS
  *  table is total over the store, and the de-camel fallback exists
  *  only so a key added by a future DFU re-bake still reads as words
  *  rather than as code. */
 export function labelOf(key) {
+  if (Object.hasOwn(DFU_LABELS, key)) return DFU_LABELS[key];
   if (LABELS[key]) return LABELS[key];
   const bare = key.slice(key.indexOf('/') + 1).replace(/^LypyL_/, '').replace(/^Enable/, '');
   return bare.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/_/g, ' ').trim();
@@ -239,9 +257,10 @@ export function labelOf(key) {
 
 /** AUDIT RETRO1 C7: DFU's words that live outside GameSettings.txt -
  *  RetroModeConfigPage's one tip (RetroModeConfigPage.cs:36, the
- *  Internal_Strings `retroModeTip`), on the setting its page is for. */
-const PAGE_TIPS = Object.freeze({
-  'Video/RetroRenderingMode': 'Renders world at lower resolutions',
+ *  Internal_Strings `retroModeTip`), on the setting its page is for -
+ *  read in the player's language (L10N3d). */
+const PAGE_TIPS = localizedTable({
+  'Video/RetroRenderingMode': ['retroModeTip', 'Renders world at lower resolutions'],
 });
 
 /** The explanation, in DFU's own words where DFU wrote one. Empty

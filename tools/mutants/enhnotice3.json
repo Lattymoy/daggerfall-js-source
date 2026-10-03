@@ -280,8 +280,8 @@
   {
     "name": "ENH-NOTICE3-P4-talk-refusal-back-through-the-town-box-door",
     "file": "src/scenes/world.js",
-    "old": "      messageBox(rows.length ? rows : ['You get no response.']);",
-    "new": "      townTalk.showBox(rows.length ? rows : ['You get no response.']);",
+    "old": "      messageBox(rows.length ? rows : [localizedText('youGetNoResponse', 'You get no response.')]);",
+    "new": "      townTalk.showBox(rows.length ? rows : [localizedText('youGetNoResponse', 'You get no response.')]);",
     "tests": [
       "test/notify.test.js",
       "test/audit63_quests_talk.test.js"

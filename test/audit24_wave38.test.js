@@ -220,7 +220,7 @@ test('audit24 wave38: PlayerActivate\'s CorpseMarker arm - empty, arrows, and th
   // the list; DFU reaches it because :957 opens the window over the
   // corpse. The port's bulk take is the residue this file records, so
   // the door is spelled in takeCorpseLoot - without it a corpse's
-  // loot-table gold (loot.js:205) lands in the pack, where
+  // loot-table gold (loot.js:206) lands in the pack, where
   // court.goldAmount cannot see it and it is unspendable forever.
   say.length = 0;
   player.items = [];
@@ -313,7 +313,7 @@ test('audit24 wave38: the encounter pool exports the seam, and the host asks BOT
   // Routing a `foeCorpse:` key into the watch pool is not a harmless
   // miss: cityGuards.js:1383-1385 turns the key into
   // `guards.find((g) => g.id === id)` over ids minted by
-  // `_nextGuardId++`, and takeCorpseLoot (corpseMarker.js:197-381)
+  // `_nextGuardId++`, and takeCorpseLoot (corpseMarker.js:202-386)
   // tests only `corpseDisabled` and `entity.items` - never death - so
   // opening an encounter corpse would empty a LIVE watchman's pack.
   // AUDIT 65 MC-2 MADE THE ARM TWO RUNGS: the corpse now competes for
@@ -345,7 +345,7 @@ test('audit24 wave38: the encounter pool exports the seam, and the host asks BOT
   const refuseAt = exLines.findIndex((l) => l.includes('lootKey && _lootPick.distance > _lootPick.reach'));
   assert.ok(refuseAt > 0 && refuseAt < armAt, 'the too-far refusal sits above the router');
   const armSrc = exLines.slice(refuseAt, exLines.indexOf('          }', armAt) + 1).join('\n');
-  assert.ok(!exLines.slice(armAt, armAt + 6).join('\n').includes('TOO_FAR_AWAY_TEXT'),
+  assert.ok(!exLines.slice(armAt, armAt + 6).join('\n').includes('tooFarAwayText'),
     '...and not inside it, which would speak it after the pool had already answered');
   const took = [];
   const said = [];
@@ -360,12 +360,12 @@ test('audit24 wave38: the encounter pool exports the seam, and the host asks BOT
   let quickTakes = false;
   // PICKUP-FEED: and a third - the take's `took`, the cards' door (ui/pickupFeed.js showPickups) - supplied the same way
   const arm = new Function('lootKey', '_lootPick', 'exteriorFoes', 'cityGuards', 'townTalk',
-    'surfacePlayer', 'setMidScreenText', 'TOO_FAR_AWAY_TEXT', 'inventoryDoorReady', 'makeInventoryWindow',
+    'surfacePlayer', 'setMidScreenText', 'tooFarAwayText', 'inventoryDoorReady', 'makeInventoryWindow',
     'quickLootTake', 'playerEntity', 'lootPile', 'showPickups', doorSrc + armSrc);
   const run = (k, pick) => arm(k, pick,
     { takeLoot: (key, say2, open) => { took.push(['encounter', key]); if (open) open({ items: () => [] }); } },
     { takeLoot: (key, say2, open) => { took.push(['watch', key]); if (open) open({ items: () => [] }); } },
-    { say: () => {}, showOverlay: (w) => opened.push(w) }, () => {}, (t) => said.push(t), TOO_FAR_AWAY_TEXT,
+    { say: () => {}, showOverlay: (w) => opened.push(w) }, () => {}, (t) => said.push(t), () => TOO_FAR_AWAY_TEXT,
     () => true, (o) => o,
     (key, hooks) => { quick.push(key); return quickTakes ? {} : null; }, { items: [] }, () => null, () => false);
   const near = { distance: 1, reach: CORPSE_ACTIVATION_DISTANCE };

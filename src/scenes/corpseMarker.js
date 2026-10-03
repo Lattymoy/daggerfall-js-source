@@ -63,6 +63,7 @@ import { SOUND } from '../systems/soundClips.js';
 import { lootRarityOn, bestRarity, RARITIES } from '../systems/lootRarity.js';   // LR3: the drop chime asks the body's best tier
 import { CORPSE_ACTIVATION_DISTANCE, RAY_DISTANCE } from '../player/activate.js';
 import { enemyDisplayName } from '../characters/enemyBasics.js';
+import { localizedText, getLocalizedEnemyName } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3e: and the enemy's name
 
 /** ItemTemplates Arrow - the auto-pickup arm keys on it. */
 export const ARROW_TEMPLATE_INDEX = 131;
@@ -125,6 +126,10 @@ export async function mintCorpseMarker({
  * The name is GetLocalizedEnemyName's, which is why wave 38 moved that
  * table down to the leaf. A mobile type with no name in the list says
  * nothing rather than "undefined just died."
+ *
+ * L10N3e: and it is read in the player's language (EnemyDeath.cs:81) -
+ * a translation's enemyNames row by the MobileTypes id, the port's own
+ * name where the language has none.
  */
 // UL1: EnemyDeath.OnEnemyDeath (EnemyDeath.cs:29, raised at :139 after
 // the corpse container took the entity's items at :123). The pools
@@ -143,7 +148,7 @@ export function sayEnemyDied(say, mobileType, entity = null) {
   if (getBool('GUI', 'DisableEnemyDeathAlert')) return null;
   const name = properName(entity) ?? championName(entity, enemyDisplayName(mobileType));   // LOOT7: a champion by its name; AUDIT WB12d (D2): the Summoner by his
   if (!name) return null;
-  const line = `${name} just died.`;   // thingJustDied, %s
+  const line = localizedText('thingJustDied', '%s just died.').replaceAll('%s', getLocalizedEnemyName(mobileType, name));
   say?.(line);
   return line;
 }
@@ -333,7 +338,7 @@ function corpsePrelude(entry, playerEntity, say) {
   // DISABLED: an emptied corpse stops being activatable.
   if (!items?.length) {
     entry.corpseDisabled = true;
-    say('The body has no treasure.');   // theBodyHasNoTreasure
+    say(localizedText('theBodyHasNoTreasure', 'The body has no treasure.'));
     return 0;
   }
   // :948-952 - one item and it is arrows: taken whole, no window.
@@ -385,16 +390,30 @@ export function openCorpseLoot(entry, { playerEntity, say = () => {}, openWindow
 }
 
 /**
+ * L10N3e: A BODY'S NAME - `loot.entityName`, which
+ * CreateLootableCorpseMarker fills through GetLocalizedEnemyName
+ * (GameObjectHelper.cs:701): a translation's enemyNames row for the
+ * MobileTypes id, the port's own name where the language has none, null
+ * for a type no list names. DFU stamps it on the marker at the kill; the
+ * port reads it where the body is SHOWN - the plaque's "<who> (dead)"
+ * (World Tooltips .cs:526) in every pool, and the loot tab below - so a
+ * body follows the language chosen, and nothing stores the word.
+ */
+export const corpseEntityName = (mobileType) => getLocalizedEnemyName(mobileType, enemyDisplayName(mobileType));
+
+/**
  * LOOT-STACK: A BODY AS THE LOOT WINDOW'S TAB (player/lootStack.js
  * lootPile) - its name and how much it holds - or null for a body a tab
  * must not offer: a disabled one, an empty one (its press would only say
  * "The body has no treasure." and close the window it came from), and a
  * PUPPET's, which is its owner's to empty and opens no window here.
+ * The name is the body's own (corpseEntityName, above); a tab is keyed
+ * by the body's key, never by this word.
  */
 export function pileBody(entry) {
   if (!entry || entry.corpseDisabled || entry.puppet) return null;
   const count = entry.entity?.items?.length ?? 0;
-  return count > 0 ? { name: enemyDisplayName(entry.mobileType) ?? 'Body', count } : null;
+  return count > 0 ? { name: corpseEntityName(entry.mobileType) ?? 'Body', count } : null;
 }
 
 export function takeCorpseLoot(entry, playerEntity, say = () => {}) {

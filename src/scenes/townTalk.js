@@ -57,9 +57,10 @@ import {
 // it with a full stop while systems/bulletinBoard.js spelled the same
 // key with the table's ellipsis, so one session showed the player two
 // sentences for one string.
-import { TOO_FAR_AWAY_TEXT } from '../player/activate.js';
+import { tooFarAwayText } from '../player/activate.js';
 import { startMobileTalk, expandMacros, expandAnswerRecord, oathTextId, honorificOf, raceDisplayName } from '../systems/talkSession.js';
 import { REGION_RACES } from '../formats/mapsFile.js';
+import { getLocalizedLocationName, getLocalizedRegionName } from '../systems/textManager.js'; import { shownFactionNames } from '../world/buildingNames.js';   // L10N3e: the place names shown, and the faction names a guild hall and a temple show
 import { ChoiceWindow } from '../ui/talkWindow.js';
 import { buildBuildingDirectory, questorCandidateBuildings, TOPIC_CATEGORIES, whereIsAnswer, reactionTier012, buildingHint } from '../systems/talkTopics.js';
 import { LIST_ITEM_TYPE, QUESTION_TYPE } from '../systems/topicTree.js';   // TK-vi: the window's rows are the tree's ListItems; B6: the Work question type
@@ -84,7 +85,7 @@ export const TONE_NAMES = ['Polite', 'Normal', 'Blunt'];   // T3f: TalkTone -> i
 // currentMode is GLOBAL - the dungeon door ladder reads it too);
 // townTalk keeps the keydown, the HUD line and these re-exports.
 export { MODES, nextInteractionMode } from '../player/interactionMode.js';
-import { MODES, MODE_ACTIONS, getInteractionMode, setInteractionMode, nextInteractionMode } from '../player/interactionMode.js';
+import { MODES, MODE_ACTIONS, getInteractionMode, setInteractionMode, nextInteractionMode, interactionModeText } from '../player/interactionMode.js';
 import { getClassicQuestionIndex } from '../systems/answerPipeline.js';   // F042
 // AUDIT 58 (talk lane): the four modes ride the keybinding registry
 // now - MODE_ACTIONS lives beside the mode it sets
@@ -302,18 +303,20 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     const region = topics.regionIndex ?? regionNow();
     const province = findFactions(factions.factionDict, { type: FACTION_TYPES.Province, region })[0];
     return {
-      locationName: topics.locationName, regionName: topics.regionName,
+      locationName: topics.locationName, regionName: topics.regionName,   // the canonical pair: the key a palace is chosen by
+      // L10N3e: ...and the pair AS SHOWN, for a shop's %cn and the bank's region (TalkManager.cs:2788-2789, :2857-2858)
+      shownLocationName: shownLocationName(), shownRegionName: shownRegionName(),
       nameBank: getNameBankOfRegion(region),
       regentRuler: province?.ruler ?? 0,
       factionName: (id) => factions.getFaction(id)?.name ?? '',
-      templeName: (id) => {
-        const f = factions.getFaction(id);
-        return (f?.children?.length ? factions.getFaction(f.children[0])?.name : f?.name) ?? '';
-      },
+      templeName: (id) => { const f = factions.getFaction(id); return (f?.children?.length ? factions.getFaction(f.children[0])?.name : f?.name) ?? ''; },
+      // L10N3e: ...and the pair AS SHOWN - GetFactionData's name in the player's language (FormulaHelper.cs:3020-3036,
+      // PersistentFactionData.cs:176): a hall by its own faction, a temple by its first child
+      ...shownFactionNames((id) => factions.getFaction(id)),
       palaceName: (locName) => {
         const id = { Daggerfall: 475, Wayrest: 476, Sentinel: 477 }[locName];
         const v = id ? textRsc?.plainText(id) : null;
-        return v?.[0] ? v[0].replace(/\.$/, '') : 'Palace';
+        return v?.[0] ? v[0].replace(/\.$/, '') : null;   // L10N3d: generateBuildingName's own localized "palace" (FormulaHelper.cs:3069)
       },
     };
   }
@@ -349,15 +352,24 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   }
 
   const textVariants = (id) => textRsc?.plainText(id) ?? [''];
-  /** MacroHelper.CityName (%cn): the current location, falling back to
-   *  the region when the player is off-location. */
+  /** The current location, falling back to the region when the player is
+   *  off-location: cityName the CANONICAL pair (the discovery key), and
+   *  L10N3e shownCityName what MacroHelper.CityName (%cn) SHOWS -
+   *  CurrentLocalizedLocationName by the map id, else
+   *  CurrentLocalizedRegionName (MacroHelper.cs:571, :573). */
   const cityName = () => topics?.locationName ?? topics?.regionName ?? '';
+  const shownCityName = () => shownLocationName() ?? shownRegionName() ?? '';
+  function shownLocationName() { return topics?.locationName == null ? topics?.locationName : getLocalizedLocationName(topics.mapId, topics.locationName); }
+  function shownRegionName() {
+    const i = topics?.regionIndex ?? regionNow();
+    return topics?.regionName == null || !Number.isInteger(i) ? topics?.regionName : getLocalizedRegionName(i, () => topics.regionName);
+  }
   /** One record through the greeting/question macro set: the oath is
    *  drawn ONLY when the record carries %oth (DFU expands lazily). */
   const expandRecord = (raw) => expandMacros(raw, {
     playerName: playerEntity.name ?? '',
     oath: raw.includes('%oth') ? randomPooledText(oathTextId(npcRaceNow()), '') : '',   // F047: GetRandomText(201 + oathId)
-    cityName: cityName(),
+    cityName: shownCityName(),
   });
   const randomVariant = (id, fallback) => {
     const v = textRsc?.plainText(id);
@@ -367,7 +379,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    *  every Text TOKEN of a record and picks among them, where
    *  randomVariant above picks a whole SUBRECORD variant. The two
    *  diverge exactly where a record holds several one-line entries -
-   *  which is the shape of the oath records (textRsc.js:171-174) and
+   *  which is the shape of the oath records (textRsc.js:298-305) and
    *  of 8999 - so a multi-line variant printed all its lines fused. */
   const randomPooledText = (id, fallback) => {
     const t = textRsc?.randomTextById(id, rolls);
@@ -380,7 +392,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // AUDIT 64 F34: PlayerActivate.cs:1424 ends ChangeInteractionMode
     // with `DaggerfallUI.SetMidScreenText(interactionIsNowInMode)` - the
     // centred label, not the popup queue.
-    setMidScreenText(`Interaction is now in ${m} mode.`);
+    setMidScreenText(interactionModeText(m));
   }
 
   function keydown(e, keys = null) {   // KB1: the host's held Set, so a combo'd mode key resolves (the dungeon host's arm already reads it)
@@ -702,14 +714,14 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // street with SILENCE and let E fall through to a door behind them.
     if (!best || bestDist > RAY_DISTANCE || !(bestDist < nearerThan)) return false;   // MC-2: :412 is reached for the ray's OWN hit
     // AUDIT 64 F34: PlayerActivate.cs:780 - SetMidScreenText, not the popup queue.
-    if (getInteractionMode() !== 'steal' && bestDist > MOBILE_NPC_ACTIVATION_DISTANCE) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }
+    if (getInteractionMode() !== 'steal' && bestDist > MOBILE_NPC_ACTIVATION_DISTANCE) { setMidScreenText(tooFarAwayText()); return true; }
     // AUDIT 26 F048: ActivateMobileNPC NESTS the steal distance test
     // inside `if (!mobileNpc.PickpocketByPlayerAttempted)`
     // (PlayerActivate.cs:785-795), so an already-attempted townsperson
     // produces NO output at any range - the port gated distance first
     // and printed a line DFU never shows.
     if (getInteractionMode() === 'steal' && !best.person?.pickpocketAttempted
-        && bestDist > PICKPOCKET_DISTANCE) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }   // AUDIT 64 F34: :790, the same surface
+        && bestDist > PICKPOCKET_DISTANCE) { setMidScreenText(tooFarAwayText()); return true; }   // AUDIT 64 F34: :790, the same surface
     ensureLoaded().then(() => activate(best, bestDist));
     return true;
   }
@@ -720,7 +732,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       // F048's nesting, so the already-attempted arm is SILENT here
       // too, whatever the range.
       if (target.person.pickpocketAttempted) return;
-      if (dist > PICKPOCKET_DISTANCE) { setMidScreenText(TOO_FAR_AWAY_TEXT); return; }   // AUDIT 64 F34: :790, the same surface
+      if (dist > PICKPOCKET_DISTANCE) { setMidScreenText(tooFarAwayText()); return; }   // AUDIT 64 F34: :790, the same surface
       target.person.pickpocketAttempted = true;
       const r = pickpocket(playerEntity, {
         rolls,
@@ -795,7 +807,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // exterior.js): the reaction-threshold greeting ladder alone.
     const reaction = peopleNow() ? getReactionToPlayer(peopleNow(), playerEntity) : 0;
     const t = startMobileTalk({
-      reaction, textVariants, playerName: playerEntity.name ?? '', npcRace: npcRaceNow(), rolls, cityName: cityName(),
+      reaction, textVariants, playerName: playerEntity.name ?? '', npcRace: npcRaceNow(), rolls, cityName: shownCityName(),
     });
     if (t.refused) { hud.add(t.text || 'You get no response.'); return; }
     // AUDIT 39 (#46): through the slot's own door, like every other
@@ -1117,7 +1129,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   // U8b: the answer STRING, shared by the native talk window and the
   // fallback chain (the T3c-T3f pipeline unchanged).
   function answerText(building) {
-    const a = whereIsAnswer(topics.playerPos(), building, playerEntity.stats?.personality != null ? liveStat(playerEntity, 'personality') : 50, _talkNpc?._talkSeed ?? 0, 0, { tier: tierNow() });   // AUDIT 63 F4: LivePersonality here too, though this caller always supplies `tier` so talkTopics.js:479 never consumes it
+    const a = whereIsAnswer(topics.playerPos(), building, playerEntity.stats?.personality != null ? liveStat(playerEntity, 'personality') : 50, _talkNpc?._talkSeed ?? 0, 0, { tier: tierNow() });   // AUDIT 63 F4: LivePersonality here too, though this caller always supplies `tier` so talkTopics.js:481 never consumes it
     const raw = randomVariant(a.textId, '%hnt');
     // T4: %hnt is WHERE DFU rolls the reveal (GetKeySubjectBuildingHint
     // rides MacroHelper's %hnt), so the fork runs only when the record
@@ -1156,7 +1168,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     return expandAnswerRecord(raw, {
       playerName: playerEntity.name ?? '',
       oath: raw.includes('%oth') ? randomPooledText(oathTextId(npcRaceNow()), '') : '',   // F047: GetRandomText(201 + oathId)
-      cityName: cityName(),
+      cityName: shownCityName(),
       hint, key: building.name,
       honorific: honorificOf(playerEntity.gender),   // T4: the real %hnr/%ra
       race: raceDisplayName(playerEntity.race),
@@ -1377,7 +1389,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
      *  records quote it too ("the lowest prices in %cn"), so the
      *  accessor is exposed rather than a second locationName lookup
      *  being written in the host. */
-    cityName: () => cityName(),
+    cityName: () => shownCityName(),
     /** TK-i: GetRandomTokens for the rumor mill (a random variant as
      *  TOKENS - AddNonQuestRumor freezes one per add). */
     variantTokens: (id) => textRsc?.variantTokensById(id, rolls) ?? [],
@@ -1488,7 +1500,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     },
     get mode() { return getInteractionMode(); },
     get directory() { return directory; },   // E2: the hosts name shops for the browse window by buildingKey
-    get locationName() { return cityName(); },   // G2: %cn for the court boxes (MacroHelper.CityName)
+    get locationName() { return shownCityName(); },   // G2: %cn for the court boxes (MacroHelper.CityName)
     _debug: () => ({
       mode: getInteractionMode(), overlay: !!overlay, people: peopleNow()?.name ?? null,
       buildings: directory.length, tone: TONE_NAMES[tone], toneSession: [...toneSession],

@@ -36,7 +36,7 @@ import {
 import { GROUP_TEMPLATE_INDICES, ITEM_TEMPLATES, mintCondition, rollPaintingMessage } from '../itemTemplates.js';
 import { createBook, createRandomBook } from '../books.js';   // A2: ItemBuilder.CreateBook / CreateRandomBook
 import { goldStack, isGoldPieces } from '../inventory.js';
-import { itemLongName } from '../itemInfo.js';   // MAC-D: ResolveItemLongName, which Item.cs:304-307 is a call to
+import { itemLongName, shownItemName } from '../itemInfo.js';   // MAC-D: ResolveItemLongName, which Item.cs:304-307 is a call to; L10N3e: an artifact's shortName, as shown
 import { alterReward } from '../guilds.js';
 import { CLOTHING_DYES } from '../../characters/dyes.js';
 
@@ -114,7 +114,11 @@ export class Item extends QuestResource {
     if (macroType !== 1 && macroType !== 5) return false;   // NameMacro1/DetailsMacro
     const it = this.daggerfallUnityItem;
     if (!it) return false;
-    if (this.artifact) return it.shortName ?? it.name ?? false;
+    // L10N3e: Item.cs:245's shortName, which SetArtifact minted in the
+    // player's language (DaggerfallUnityItem.cs:602) - the port's item
+    // keeps the canonical name (LegacyGetArtifactSubType reads it), so
+    // it is looked up where it is shown, by its MAGIC.DEF template
+    if (this.artifact) return it.shortName ?? shownItemName(it) ?? false;
     if (isGoldPieces(it)) return String(it.stackCount ?? 0);   // AUDIT 68 S29-item-gold-test: Item.cs:236's IsOfTemplate, one spelling
     const long = itemLongName(it, {
       differentiatePlantIngredients: false,

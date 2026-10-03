@@ -17,8 +17,8 @@
 // MI (magic items) rolls need the MAGIC.DEF registry
 // (setMagicItemTemplates), and EVERY host that can generate loot now
 // loads it: scenes/shared.js:136-139 (loadMagicRegistries) feeds the
-// module table this file reads, called from dungeonContext.js:1639,
-// world.js:5330 and exterior.js:1329 - interiors run inside those hosts
+// module table this file reads, called from dungeonContext.js:1640,
+// world.js:5331 and exterior.js:1330 - interiors run inside those hosts
 // and read the same table. What is left is the data-absent boot, and
 // that is DFU's own answer rather than a stand-in: shared.js:147
 // records it, the category simply stays empty.
@@ -38,6 +38,7 @@ import { createRandomBook, BOOK_TEMPLATE } from './books.js';   // IM1: CreateRa
 import { potionRecipeByKey, POTION_DEFAULT_TEXTURE_RECORD } from './potions.js';   // F103: PotionRecipeKey's price side effect; AUDIT 63 F20: and its texture-record half
 import { RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS, DROP_ICON_ARCHIVES, DROP_ICON_IDXS } from './lootDataTables.js';   // G5: DaggerfallLootDataTables.cs, its own file again
 import { themedIngredientPool } from './lootThemes.js';   // MOD: a monster's CreatureIngredients roll draws from ITS OWN curated subset, not the full mismatched pool
+import { getLocalizedSpellName } from './textManager.js';   // L10N3e: a stock spell's name, by its SPELLS.STD index (shownSpellName)
 import { isOnlinePage } from './onlineLane.js';   // REALM P0.4: online, a pile's gold is not the level's
 import { rriLootMatrix, rriEnemyLootTableKey, conditionBasedPricesOn, randomConditionLootItems } from './rriRealism.js';   // RRI2: LootRealismTables over DefaultLootTables, MobLootKeys over the basics' key, the condition roll on tabled loot
 import { RRI_VENDOR } from './rriItems.js';   // FORAGE3: the pile event's first subscriber, named by its mod
@@ -273,6 +274,30 @@ export function setMagicItemTemplates(templates) { _magicItemTemplates = templat
 let _spellsByIndex = null;
 export function setSpellRecordsByIndex(byIndex) { _spellsByIndex = byIndex; }
 export const spellRecordOfIndex = (index) => _spellsByIndex?.get?.(index) ?? null;
+
+/** L10N3e: A SPELL'S NAME AS SHOWN - TextManager.GetLocalizedSpellName
+ *  (TextManager.cs:505-512) over this registry, the port's
+ *  EntityEffectBroker.GetStandardSpellName. DFU names a stock spell's
+ *  bundle in the player's language as it converts the SPELLS.STD record
+ *  (EntityEffectBroker.cs:877, by the record's index), and that bundle
+ *  is what the book and the shop list, sort and rename. The port's book
+ *  holds the record itself, its name the canonical one - the save keeps
+ *  a stock spell as its bare index, a classic import tells stock from
+ *  made by the name, the deep-water boat test reads a cast's name - so
+ *  the lookup is made where the name is shown: by the spell's index
+ *  while its name is still that stock spell's own (or that with its '!'
+ *  dropped, as the lycanthropy and vampire gifts drop it,
+ *  PlayerEntity.cs:1152-1154). A made spell (a negative index), a
+ *  renamed one and a mod's show the name they carry, and so does every
+ *  spell before SPELLS.STD is registered; anything else answers its
+ *  name as it is. */
+export function shownSpellName(spell) {
+  const name = spell?.name;
+  const stock = typeof name === 'string' && Number.isInteger(spell.index) && spell.index >= 0 ? spellRecordOfIndex(spell.index) : null;
+  if (!stock) return name;
+  const own = String(stock.name ?? '');
+  return name === own || name === own.replace(/^!/, '') ? getLocalizedSpellName(spell.index, name) : name;
+}
 
 // "The possible groups are determined by the 33rd byte" - group 0
 // picks from {Armor 2, Weapons 3, MensClothing 6, ReligiousItems 10,

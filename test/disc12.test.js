@@ -91,7 +91,7 @@ test('DISC12: U with nothing usable SAYS so, as DFU does (DaggerfallUI.cs:584-58
   const { NO_ITEM_TO_ACTIVATE_TEXT, createUseMagicItemWindow } = await import('../src/ui/useMagicItemWindow.js');
   assert.equal(NO_ITEM_TO_ACTIVATE_TEXT, 'You have no usable magic item');
   assert.equal(createUseMagicItemWindow({ items: [] }), null, 'no window with nothing usable');
-  assert.match(rd('src/scenes/world.js'), /if \(win\) townTalk\.showOverlay\(win\);\n\s*else townTalk\.say\(NO_ITEM_TO_ACTIVATE_TEXT\);/);
-  assert.match(rd('src/scenes/worldModes.js'), /if \(win\) mountInterior\(win\);\n\s*else townTalk\?\.say\?\.\(NO_ITEM_TO_ACTIVATE_TEXT\);/);
-  assert.match(rd('src/scenes/dungeonContext.js'), /if \(win\) activeOverlay = win;\n\s*else hudText\.add\(NO_ITEM_TO_ACTIVATE_TEXT\);/);
+  assert.match(rd('src/scenes/world.js'), /if \(win\) townTalk\.showOverlay\(win\);\n\s*else townTalk\.say\(noItemToActivateText\(\)\);/);
+  assert.match(rd('src/scenes/worldModes.js'), /if \(win\) mountInterior\(win\);\n\s*else townTalk\?\.say\?\.\(noItemToActivateText\(\)\);/);
+  assert.match(rd('src/scenes/dungeonContext.js'), /if \(win\) activeOverlay = win;\n\s*else hudText\.add\(noItemToActivateText\(\)\);/);
 });

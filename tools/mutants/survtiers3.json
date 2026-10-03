@@ -432,18 +432,18 @@
   {
     "name": "SURVTIERS3-the-kit-cite-world-seed-rots",
     "file": "src/systems/equip.js",
-    "old": "(world.js:5308, exterior.js:1315)",
-    "new": "(world.js:5307, exterior.js:1315)",
+    "old": "(world.js:5309, exterior.js:1316)",
+    "new": "(world.js:5308, exterior.js:1316)",
     "tests": [
       "test/citedrift.test.js"
     ],
-    "note": "SILVER-WAYS' MERGE of main's #541 and #546 (PIN MOVED): re-aimed by content to the cite citeMerge moved (the seed call, world.js:5308). SHIPS OF THE BAY'S MERGE of main (PIN MOVED): re-aimed by content to the cite citeMerge moved. THE SEATS ARC'S MERGES of main's #494-#498, #499, #483 and #493 (PIN MOVED): re-aimed by content to the cite citeMerge moved, each time. GATE-UX (PIN MOVED, at its merge of main): re-aimed by content to the cite citeMerge moved (world.js gained the damage chart's import). EMPIRE-ACCOUNT (PIN MOVED): re-aimed by content to the cite citeShift moved. THE PROF7 MERGE (PIN MOVED): re-aimed by content to the cite the merge's citeMerge moved (main's #471 and PROF7 together); FIELD BUGS 2026-09-30's shift before it. THE SEATS ARC'S MERGE of main's #502-#509 and #504 (PIN MOVED): re-aimed by content to the cite citeMerge moved. SEAT2b part two (c) (PIN MOVED): re-aimed by content to the cite citeShift moved. AUDIT ECON's merge of main (PIN MOVED): re-aimed by content to the cite the merge's citeMerge moved (world.js gained the companion pack's limit). FOREST1's merge of main (PIN MOVED): re-aimed by content to the cite citeMerge moved (world.js gained the forests' nature loop). GRASS-LIT2 (PIN MOVED): re-aimed by content to the cite citeShift moved (world.js gained the grass's slope and lanterns). AUDIT GRASS-LIT2 (PIN MOVED): again, the audit's host fixes. GRASS-LIT2's merge of main (PIN MOVED): re-aimed by content to the cite the merge's citeMerge moved (both sides had moved it). THE SEATS ARC'S MERGE of main's #524 (PIN MOVED): re-aimed by content to the cite citeMerge moved. WB12 (re-aimed at its merge): world.js:5239. FONT3 + TIMERS1's merge of main (PIN MOVED): re-aimed by content to the cite citeMerge moved. MERGE OF MAIN (#538) INTO THE TACTICS ARC (PIN MOVED): re-aimed by content to the cite citeMerge moved. AUDIT PROF-541 R2 (PIN MOVED): re-aimed by content to the cite citeShift moved."
+    "note": "SILVER-WAYS' MERGE of main's #541 and #546 (PIN MOVED): re-aimed by content to the cite citeMerge moved (the seed call, world.js:5308). SHIPS OF THE BAY'S MERGE of main (PIN MOVED): re-aimed by content to the cite citeMerge moved. THE SEATS ARC'S MERGES of main's #494-#498, #499, #483 and #493 (PIN MOVED): re-aimed by content to the cite citeMerge moved, each time. GATE-UX (PIN MOVED, at its merge of main): re-aimed by content to the cite citeMerge moved (world.js gained the damage chart's import). EMPIRE-ACCOUNT (PIN MOVED): re-aimed by content to the cite citeShift moved. THE PROF7 MERGE (PIN MOVED): re-aimed by content to the cite the merge's citeMerge moved (main's #471 and PROF7 together); FIELD BUGS 2026-09-30's shift before it. THE SEATS ARC'S MERGE of main's #502-#509 and #504 (PIN MOVED): re-aimed by content to the cite citeMerge moved. SEAT2b part two (c) (PIN MOVED): re-aimed by content to the cite citeShift moved. AUDIT ECON's merge of main (PIN MOVED): re-aimed by content to the cite the merge's citeMerge moved (world.js gained the companion pack's limit). FOREST1's merge of main (PIN MOVED): re-aimed by content to the cite citeMerge moved (world.js gained the forests' nature loop). GRASS-LIT2 (PIN MOVED): re-aimed by content to the cite citeShift moved (world.js gained the grass's slope and lanterns). AUDIT GRASS-LIT2 (PIN MOVED): again, the audit's host fixes. GRASS-LIT2's merge of main (PIN MOVED): re-aimed by content to the cite the merge's citeMerge moved (both sides had moved it). THE SEATS ARC'S MERGE of main's #524 (PIN MOVED): re-aimed by content to the cite citeMerge moved. WB12 (re-aimed at its merge): world.js:5239. FONT3 + TIMERS1's merge of main (PIN MOVED): re-aimed by content to the cite citeMerge moved. MERGE OF MAIN (#538) INTO THE TACTICS ARC (PIN MOVED): re-aimed by content to the cite citeMerge moved. AUDIT PROF-541 R2 (PIN MOVED): re-aimed by content to the cite citeShift moved. THE MERGE OF MAIN (#408-#541) INTO L10N (PIN MOVED): re-aimed by content to the merged line."
   },
   {
     "name": "SURVTIERS3-the-gear-cite-equip-seed-rots",
     "file": "src/systems/startingGear.js",
-    "old": "// (equip.js:340), which survives",
-    "new": "// (equip.js:307), which survives",
+    "old": "// (equip.js:341), which survives",
+    "new": "// (equip.js:308), which survives",
     "tests": [
       "test/citedrift.test.js"
     ]
@@ -451,18 +451,18 @@
   {
     "name": "SURVTIERS3-the-gear-cite-world-seed-rots",
     "file": "src/systems/startingGear.js",
-    "old": "world.js:5308 and exterior.js:1315 seed it",
-    "new": "world.js:5307 and exterior.js:1315 seed it",
+    "old": "world.js:5309 and exterior.js:1316 seed it",
+    "new": "world.js:5308 and exterior.js:1316 seed it",
     "tests": [
       "test/citedrift.test.js"
     ],
-    "note": "SILVER-WAYS' MERGE of main's #541 and #546 (PIN MOVED): re-aimed by content to the cite citeMerge moved (the seed call, world.js:5308). SHIPS OF THE BAY'S MERGE of main (PIN MOVED): re-aimed by content to the cite citeMerge moved. THE SEATS ARC'S MERGES of main's #494-#498, #499, #483 and #493 (PIN MOVED): re-aimed by content to the cite citeMerge moved, each time. GATE-UX (PIN MOVED, at its merge of main): re-aimed by content to the cite citeMerge moved (world.js gained the damage chart's import). EMPIRE-ACCOUNT (PIN MOVED): re-aimed by content to the cite citeShift moved. THE PROF7 MERGE (PIN MOVED): re-aimed by content to the cite the merge's citeMerge moved (main's #471 and PROF7 together); FIELD BUGS 2026-09-30's shift before it. THE SEATS ARC'S MERGE of main's #502-#509 and #504 (PIN MOVED): re-aimed by content to the cite citeMerge moved. SEAT2b part two (c) (PIN MOVED): re-aimed by content to the cite citeShift moved. AUDIT ECON's merge of main (PIN MOVED): re-aimed by content to the cite the merge's citeMerge moved (world.js gained the companion pack's limit). FOREST1's merge of main (PIN MOVED): re-aimed by content to the cite citeMerge moved (world.js gained the forests' nature loop). GRASS-LIT2 (PIN MOVED): re-aimed by content to the cite citeShift moved (world.js gained the grass's slope and lanterns). AUDIT GRASS-LIT2 (PIN MOVED): again, the audit's host fixes. GRASS-LIT2's merge of main (PIN MOVED): re-aimed by content to the cite the merge's citeMerge moved (both sides had moved it). THE SEATS ARC'S MERGE of main's #524 (PIN MOVED): re-aimed by content to the cite citeMerge moved. WB12 (re-aimed at its merge): world.js:5239. FONT3 + TIMERS1's merge of main (PIN MOVED): re-aimed by content to the cite citeMerge moved. MERGE OF MAIN (#538) INTO THE TACTICS ARC (PIN MOVED): re-aimed by content to the cite citeMerge moved. AUDIT PROF-541 R2 (PIN MOVED): re-aimed by content to the cite citeShift moved."
+    "note": "SILVER-WAYS' MERGE of main's #541 and #546 (PIN MOVED): re-aimed by content to the cite citeMerge moved (the seed call, world.js:5308). SHIPS OF THE BAY'S MERGE of main (PIN MOVED): re-aimed by content to the cite citeMerge moved. THE SEATS ARC'S MERGES of main's #494-#498, #499, #483 and #493 (PIN MOVED): re-aimed by content to the cite citeMerge moved, each time. GATE-UX (PIN MOVED, at its merge of main): re-aimed by content to the cite citeMerge moved (world.js gained the damage chart's import). EMPIRE-ACCOUNT (PIN MOVED): re-aimed by content to the cite citeShift moved. THE PROF7 MERGE (PIN MOVED): re-aimed by content to the cite the merge's citeMerge moved (main's #471 and PROF7 together); FIELD BUGS 2026-09-30's shift before it. THE SEATS ARC'S MERGE of main's #502-#509 and #504 (PIN MOVED): re-aimed by content to the cite citeMerge moved. SEAT2b part two (c) (PIN MOVED): re-aimed by content to the cite citeShift moved. AUDIT ECON's merge of main (PIN MOVED): re-aimed by content to the cite the merge's citeMerge moved (world.js gained the companion pack's limit). FOREST1's merge of main (PIN MOVED): re-aimed by content to the cite citeMerge moved (world.js gained the forests' nature loop). GRASS-LIT2 (PIN MOVED): re-aimed by content to the cite citeShift moved (world.js gained the grass's slope and lanterns). AUDIT GRASS-LIT2 (PIN MOVED): again, the audit's host fixes. GRASS-LIT2's merge of main (PIN MOVED): re-aimed by content to the cite the merge's citeMerge moved (both sides had moved it). THE SEATS ARC'S MERGE of main's #524 (PIN MOVED): re-aimed by content to the cite citeMerge moved. WB12 (re-aimed at its merge): world.js:5239. FONT3 + TIMERS1's merge of main (PIN MOVED): re-aimed by content to the cite citeMerge moved. MERGE OF MAIN (#538) INTO THE TACTICS ARC (PIN MOVED): re-aimed by content to the cite citeMerge moved. AUDIT PROF-541 R2 (PIN MOVED): re-aimed by content to the cite citeShift moved. THE MERGE OF MAIN (#408-#541) INTO L10N (PIN MOVED): re-aimed by content to the merged line."
   },
   {
     "name": "SURVTIERS3-the-exterior-cite-equip-guard-rots",
     "file": "src/scenes/exterior.js",
-    "old": "early-returns (equip.js:341).",
-    "new": "early-returns (equip.js:306).",
+    "old": "early-returns (equip.js:342).",
+    "new": "early-returns (equip.js:307).",
     "tests": [
       "test/citedrift.test.js"
     ]
@@ -470,12 +470,12 @@
   {
     "name": "SURVTIERS3-the-rest-window-cite-input-rots",
     "file": "src/ui/restWindow.js",
-    "old": "exterior.js:3200, ui/input.js:922)",
-    "new": "exterior.js:3200, ui/input.js:525)",
+    "old": "exterior.js:3205, ui/input.js:922)",
+    "new": "exterior.js:3205, ui/input.js:525)",
     "tests": [
       "test/citedrift.test.js"
     ],
-    "note": "THE PROF7 MERGE (PIN MOVED): re-aimed by content to the cite the merge's citeMerge moved (main's #471 and PROF7 together); FIELD BUGS 2026-09-30's shift before it. TIME1 (PIN MOVED): its world.js and exterior.js cites shifted by citeShift; re-aimed by content. MERGE OF MAIN (#538) INTO THE TACTICS ARC (PIN MOVED): re-aimed by content to the cite citeMerge moved."
+    "note": "THE PROF7 MERGE (PIN MOVED): re-aimed by content to the cite the merge's citeMerge moved (main's #471 and PROF7 together); FIELD BUGS 2026-09-30's shift before it. TIME1 (PIN MOVED): its world.js and exterior.js cites shifted by citeShift; re-aimed by content. MERGE OF MAIN (#538) INTO THE TACTICS ARC (PIN MOVED): re-aimed by content to the cite citeMerge moved. THE MERGE OF MAIN (#408-#541) INTO L10N (PIN MOVED): re-aimed by content to the merged line."
   },
   {
     "name": "SURVTIERS3-the-mirror-overrides-tickVitals",

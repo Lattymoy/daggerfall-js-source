@@ -27,6 +27,7 @@
 // says "pends" about a thing that shipped is the screen lying.)
 
 import { expandMacroValues } from './quest/questMacros.js';   // MH1: the ONE macro walk
+import { localizedText, localizedTable } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
 export const NO_RESPONSE_TEXT_ID = 7205;
 export const MIN_NEUTRAL_REACTION = 0;
@@ -61,16 +62,17 @@ export const firstName = (name) => (name ?? '').split(' ')[0];
 
 /** %hnr - TalkManager.GetHonoric (:1826-1832): by player gender,
  *  localization keys "Sir" / "Ma'am" (Internal_Strings 414/415). */
-export const honorificOf = (gender) => (gender === 'male' ? 'Sir' : "Ma'am");
+export const honorificOf = (gender) => (gender === 'male' ? localizedText('Sir', 'Sir') : localizedText("Ma'am", "Ma'am"));
 
 /** %ra - MacroHelper.PlayerRace (:942-945): the BIRTH race template's
  *  display Name (a transformed vampire/werewolf keeps it). The names
- *  are DFU's Internal_Strings values - the elves are TWO words. */
-export const RACE_DISPLAY_NAME = Object.freeze({
-  Breton: 'Breton', Redguard: 'Redguard', Nord: 'Nord', DarkElf: 'Dark Elf',
-  HighElf: 'High Elf', WoodElf: 'Wood Elf', Khajiit: 'Khajiit', Argonian: 'Argonian',
+ *  are DFU's Internal_Strings values - the elves are TWO words - by
+ *  RaceTemplate's keys (RaceTemplate.cs:177-330). */
+export const RACE_DISPLAY_NAME = localizedTable({
+  Breton: ['breton', 'Breton'], Redguard: ['redguard', 'Redguard'], Nord: ['nord', 'Nord'], DarkElf: ['darkElf', 'Dark Elf'],
+  HighElf: ['highElf', 'High Elf'], WoodElf: ['woodElf', 'Wood Elf'], Khajiit: ['khajiit', 'Khajiit'], Argonian: ['argonian', 'Argonian'],
 });
-export const raceDisplayName = (race) => RACE_DISPLAY_NAME[race] ?? race ?? '';
+export const raceDisplayName = (race) => RACE_DISPLAY_NAME[String(race ?? '').replace(/\s+/g, '')] ?? race ?? '';   // a key, or a stored name ('Dark Elf')
 
 /** %oth: TEXT.RSC 201 + FactionRace (DFU's oath fix - classic used
  *  the region race INDEX and gave High Rock Nord oaths). */

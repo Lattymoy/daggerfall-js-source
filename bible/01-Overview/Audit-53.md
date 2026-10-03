@@ -262,7 +262,7 @@ for the two-phase toggle-close, an FNT plate label where DFU reloads a
 yellow `DaggerfallFont` texture.)
 
 Wave D's three unshipped slices are the honest ones: the chargen
-picker's scroll-bar HIT (`chargenArt.js:753`, narrowed to itself), the
+picker's scroll-bar HIT (`chargenArt.js:759`, narrowed to itself), the
 gold stack in `inventory.js:50`, and the docked large-HUD occlusion
 (`hudLarge.js:56`) - each rewritten in place with the evidence rather
 than left as a token.
@@ -342,7 +342,7 @@ behaviour, mis-read as gaps), 10 blocked (no 1:1 target, or a blocker
 outside the site's scope).** The 93 stale-and-not-a-gap flags across 54
 files went to 6 retirement lanes, which **retired 96 sites** (three more
 turned up inside the same docstrings) and **kept 2** with their reasons -
-`buildingLocks.js:67`'s `ownsShip`, genuinely open, and one already
+`buildingLocks.js:68`'s `ownsShip`, genuinely open, and one already
 deleted by the fix round. The 42 closable flags became Wave D's 42
 slices.
 

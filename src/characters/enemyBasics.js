@@ -38,9 +38,15 @@ export const ENEMY_NAMES = Object.freeze([
 /** EnemyBasics.IsClassEnemyId: the 128 bit. */
 export const isClassEnemyId = (id) => (id & 128) !== 0;
 
-/** GetLocalizedEnemyName, with the index law in one place. Rows carry
- *  no `name` field - reading one returns undefined, which is how the
- *  pacification line came to say "The enemy" to everybody. */
+/** GetLocalizedEnemyName's English, with the index law in one place. Rows
+ *  carry no `name` field - reading one returns undefined, which is how
+ *  the pacification line came to say "The enemy" to everybody.
+ *
+ *  L10N3e: this is the CANONICAL name - the fallback a display hands to
+ *  the text core's getLocalizedEnemyName, which reads a translation's
+ *  enemyNames row by the same MobileTypes id. A name that is shown goes
+ *  through that lookup where it is shown; this one never changes with
+ *  the language. */
 export function enemyDisplayName(mobileType) {
   const i = mobileType < 128 ? mobileType : 43 + mobileType - 128;
   return ENEMY_NAMES[i] ?? null;

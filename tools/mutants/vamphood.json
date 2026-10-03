@@ -29,12 +29,12 @@
   {
     "name": "VAMPHOOD-the-refusal-says-no-more",
     "file": "src/systems/vampirism.js",
-    "old": "  return { text: SUNLIGHT_TRAVEL_TEXT, hint: isEnhanced() ? VAMPIRE_HOOD_TEXT : VAMPIRE_HOOD_TEXT_CLASSIC };",
-    "new": "  return { text: SUNLIGHT_TRAVEL_TEXT };",
+    "old": "  return { text: sunlightTravelText(), hint: isEnhanced() ? VAMPIRE_HOOD_TEXT : VAMPIRE_HOOD_TEXT_CLASSIC };",
+    "new": "  return { text: sunlightTravelText() };",
     "tests": [
       "test/fb0929_vampirehood.test.js"
     ],
-    "note": "HOOD-SAID (FIELD BUGS 2026-09-30, PIN MOVED): the hint is the skin's own now (the pack card's Raise hood, or the classic doll's Use); the mutant still drops it whole."
+    "note": "HOOD-SAID (FIELD BUGS 2026-09-30, PIN MOVED): the hint is the skin's own now (the pack card's Raise hood, or the classic doll's Use); the mutant still drops it whole. THE MERGE OF MAIN (#408-#541) INTO L10N (PIN MOVED): re-aimed by content to the merged line."
   },
   {
     "name": "VAMPHOOD-the-line-forgets-the-robe",

@@ -189,10 +189,12 @@ test('AUDIT 64 F11: both exterior hosts stand the array, and the arm does NOT co
   assert.ok(arm.includes('townTalk?.say?.(buildingClosedText(bd.buildingType));'),
     'the arm ASKS for the sentence rather than building a second copy of it');
   const bl = src('src/systems/buildingLocks.js');
-  assert.ok(bl.includes('${which} is closed. Open from ${OPEN_HOURS[buildingType]}:00 to ${CLOSE_HOURS[buildingType]}:00.'),
-    'Internal_Strings.csv:36-37, ":00" suffixes and all');
-  assert.ok(bl.includes("subject ?? (buildingType === BUILDING_TYPES.GuildHall ? 'Guild' : 'Store')"),
-    'GuildHall gets guildClosed, everything else storeClosed');
+  assert.ok(bl.includes("'Guild is closed. Open from %d1:00 to %d2:00.'") && bl.includes("'Store is closed. Open from %d1:00 to %d2:00.'")
+    && bl.includes(".replaceAll('%d1', String(OPEN_HOURS[buildingType])).replaceAll('%d2', String(CLOSE_HOURS[buildingType]))"),
+  'Internal_Strings.csv:36-37, ":00" suffixes and all');
+  assert.ok(bl.includes("buildingType === BUILDING_TYPES.GuildHall ? localizedText('guildClosed',")
+    && bl.includes(": localizedText('storeClosed',"),
+  'GuildHall gets guildClosed, everything else storeClosed');
   // And the host no longer reads the raw hour tables at all - if it did, it
   // could build the sentence again without anyone noticing.
   assert.doesNotMatch(m, /OPEN_HOURS|CLOSE_HOURS/,

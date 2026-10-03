@@ -27,8 +27,11 @@
 // this module carries only the rows where the table diverges from
 // classic AND the divergence has been verified against a real
 // ARENA2. tools/rscTableDiff.mjs lists the candidates. It is DATA
-// with no imports; textRsc.js encodes the rows into the file's own
-// byte shape (encodeRscRecord) and reads them first.
+// with one import - the CSV law (L10N1: DFU's StringTableCSVParser,
+// systems/textManager.js); textRsc.js encodes the rows into the file's
+// own byte shape (encodeRscRecord) and reads them first.
+
+import { loadStringTableCsv } from '../systems/textManager.js';
 
 /** DFU's Internal_RSC rows the port carries, by record id: each a
  *  list of the record's SubrecordSeparator-split variants as plain
@@ -77,37 +80,12 @@ export function parseRscMarkup(value) {
 
 /** The master CSV (`Key,Value`, values quoted with doubled quotes and
  *  free to span lines) as id -> raw markup value. A non-numeric key
- *  (the header, the named rows) is skipped. */
+ *  (the header, the named rows) is skipped. L10N1: read by DFU's own
+ *  StringTableCSVParser (textManager.js), the one CSV law - its values
+ *  lose a trailing newline this module's own reader kept (nine rows of
+ *  the master CSV), which parseRscMarkup strips anyway. */
 export function parseRscCsv(text) {
   const out = new Map();
-  const s = String(text ?? '').replace(/^\uFEFF/, '');
-  let i = 0;
-  const n = s.length;
-  const field = () => {
-    if (s[i] === '"') {
-      i++;
-      let v = '';
-      for (; i < n; i++) {
-        if (s[i] === '"') {
-          if (s[i + 1] === '"') { v += '"'; i++; continue; }
-          i++;
-          break;
-        }
-        v += s[i];
-      }
-      return v;
-    }
-    const start = i;
-    while (i < n && s[i] !== ',' && s[i] !== '\n' && s[i] !== '\r') i++;
-    return s.slice(start, i);
-  };
-  while (i < n) {
-    const key = field();
-    let value = '';
-    if (s[i] === ',') { i++; value = field(); }
-    while (i < n && s[i] !== '\n') i++;
-    i++;
-    if (/^\d+$/.test(key)) out.set(Number(key), value);
-  }
+  for (const [key, value] of loadStringTableCsv(text) ?? []) if (/^\d+$/.test(key)) out.set(Number(key), value);
   return out;
 }

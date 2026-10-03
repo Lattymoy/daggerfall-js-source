@@ -80,6 +80,7 @@ import { packTexture } from './packArt.js';   // OVH2: the worn UI pack's button
 import { packCifRciUrl } from '../systems/uiPack.js';
 import { isEnhancedPlus } from '../systems/uiSkin.js';   // PLUS1: the Yes/No dialog is Enhanced Plus's
 import { drawEnhancedDialog } from './enhancedDialog.js';   // DLG1: a box that asks, in the enhanced skin
+import { processGrammar } from '../systems/textManager.js';   // L10N3g: MultiFormatTextLabel.AddTextLabel's grammar (:230)
 
 /** MessageBoxButtons (DaggerfallMessageBox.cs:67-90) - the value IS
  *  the BUTTONS.RCI record. */
@@ -267,10 +268,21 @@ export function tokenRows(tokens) {
  *  which is what a caller composing its own prompt wants, but a row
  *  that came from TEXT.RSC carries the record's own alignment - and
  *  53 multi-row records are entirely LEFT while 27 mix the two, so
- *  centring everything drew 80 of 676 of them wrong. */
+ *  centring everything drew 80 of 676 of them wrong.
+ *
+ *  L10N3g: THE LABEL'S GRAMMAR. MultiFormatTextLabel.AddTextLabel sets
+ *  `textLabel.Text = ProcessGrammar(text)` for every label it lays out
+ *  (:230) - after the caller expanded the macros, and BEFORE the label
+ *  is measured - so a row here (a cell of a tab-stopped row, each its
+ *  own label) is processed as it becomes a row, and the box is sized,
+ *  drawn and handed to the enhanced dialog in the resolved words.
+ *  English is the identity. A FIELD row (`field: true`) is no label:
+ *  an input box's typed text is DFU's TextBox and the TextLabel beside
+ *  it (DaggerfallInputMessageBox.cs:34-35), which run no grammar, so
+ *  it stands as the player typed it. */
 const normalizeRows = (lines) =>
   (lines ?? []).map((l) => {
-    if (typeof l === 'string') return { text: l, center: true };
+    if (typeof l === 'string') return { text: processGrammar(l), center: true };
     // AUDIT 64 F28: a TAB-STOPPED row. MultiFormatTextLabel's
     // PositionPrefix arm sets `cursorX = token.x` outright when the
     // token carries one (:346-352), which is how GetLoansLine lays its
@@ -280,14 +292,15 @@ const normalizeRows = (lines) =>
     // label (:341-344) - and it carries its own formatting, because
     // Text and TextHighlight are per-token colours (:359-364).
     if (Array.isArray(l.cells)) {
+      const cells = l.cells.map((c) => ({ x: c.x ?? 0, text: processGrammar(c.text ?? '') }));
       return {
-        text: l.cells.map((c) => c.text ?? '').join(''),
+        text: cells.map((c) => c.text).join(''),
         center: false,
-        cells: l.cells.map((c) => ({ x: c.x ?? 0, text: c.text ?? '' })),
+        cells,
         highlight: !!l.highlight,
       };
     }
-    const row = { text: l.text ?? '', center: l.center !== false };
+    const row = { text: l.field ? (l.text ?? '') : processGrammar(l.text ?? ''), center: l.center !== false };
     if (l.highlight) row.highlight = true;
     return row;
   });

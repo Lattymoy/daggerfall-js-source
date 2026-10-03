@@ -152,8 +152,8 @@
   {
     "name": "LS-empty-body-tabbed",
     "file": "src/scenes/corpseMarker.js",
-    "old": "  return count > 0 ? { name: enemyDisplayName(entry.mobileType) ?? 'Body', count } : null;",
-    "new": "  return { name: enemyDisplayName(entry.mobileType) ?? 'Body', count };",
+    "old": "  return count > 0 ? { name: corpseEntityName(entry.mobileType) ?? 'Body', count } : null;",
+    "new": "  return { name: corpseEntityName(entry.mobileType) ?? 'Body', count };",
     "tests": [
       "test/lootstack.test.js"
     ],

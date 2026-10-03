@@ -34,6 +34,8 @@
 // window says so. DFU has no such marking; it is the port telling
 // the truth about its own residue rather than taking the money quietly.
 
+import { localizedStrings, localizedTable } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+
 /** The 8 attributes in DFCareer.Stats order - note PERSONALITY is 5,
  *  ahead of Speed, which is the order the classic subType uses. */
 export const STAT_SUBGROUPS = Object.freeze(
@@ -134,6 +136,53 @@ const FAMILIES = [
   [11, 'Transfer', [...STAT_SUBGROUPS, 'Health', 'Fatigue'], [M]],    // Transfer{...}, same 0..9
 ];
 
+/** L10N3d: GroupName and SubGroupName are properties each effect class
+ *  reads through TextManager by its own key, every time they are shown
+ *  - `GetLocalizedText("drain")` and `("strength")` for DrainStrength
+ *  (DrainStrength.cs:38-39), and so on through Effects/**. The rows
+ *  above keep their English: it is what the catalogue matches on and
+ *  what dfuEffectKeyOf spells DFU's effect Key from. These tables give
+ *  each English name its class's key, and the rows read them where
+ *  they are shown. "True" (ChameleonTrue.cs:40 and its two siblings)
+ *  stays English: DFU reads it as `true`, which the vendored
+ *  Internal_Strings.csv carries only as the spreadsheet's `TRUE`. */
+const GROUP_NAMES = localizedTable({
+  Paralyze: ['paralyze', 'Paralyze'], 'Continuous Damage': ['continuousDamage', 'Continuous Damage'],
+  'Create Item': ['createItem', 'Create Item'], Cure: ['cure', 'Cure'], Damage: ['damage', 'Damage'],
+  Disintegrate: ['disintegrate', 'Disintegrate'], Dispel: ['dispel', 'Dispel'], Drain: ['drain', 'Drain'],
+  'Elemental Resistance': ['elementalResistance', 'Elemental Resistance'],
+  'Fortify Attribute': ['fortifyAttribute', 'Fortify Attribute'], Heal: ['heal', 'Heal'], Transfer: ['transfer', 'Transfer'],
+  'Soul Trap': ['soulTrap', 'Soul Trap'], Invisibility: ['invisibility', 'Invisibility'], Levitate: ['levitate', 'Levitate'],
+  Light: ['light', 'Light'], Lock: ['lock', 'Lock'], Open: ['open', 'Open'], Regenerate: ['regenerate', 'Regenerate'],
+  Silence: ['silence', 'Silence'], 'Spell Absorption': ['spellAbsorption', 'Spell Absorption'],
+  'Spell Reflection': ['spellReflection', 'Spell Reflection'], 'Spell Resistance': ['spellResistance', 'Spell Resistance'],
+  Chameleon: ['chameleon', 'Chameleon'], Shadow: ['shadow', 'Shadow'], Slowfall: ['slowfall', 'Slowfall'],
+  'Free Action': ['freeAction', 'Free Action'], Jumping: ['jumping', 'Jumping'], Climbing: ['climbing', 'Climbing'],
+  'Morph Self': ['morphSelf', 'Morph Self'], 'Water Breathing': ['waterBreathing', 'Water Breathing'],
+  'Water Walking': ['waterWalking', 'Water Walking'], Pacify: ['pacify', 'Pacify'], Charm: ['charm', 'Charm'],
+  Shield: ['shield', 'Shield'], Detect: ['detect', 'Detect'], Identify: ['identify', 'Identify'],
+  Teleport: ['teleport', 'Teleport'], 'Comprehend Languages': ['comprehendLanguages', 'Comprehend Languages'],
+});
+const SUBGROUP_NAMES = localizedTable({
+  Health: ['health', 'Health'], Fatigue: ['fatigue', 'Fatigue'], 'Spell Points': ['spellPoints', 'Spell Points'],
+  Disease: ['disease', 'Disease'], Poison: ['poison', 'Poison'], Paralyzation: ['paralyzation', 'Paralyzation'],
+  Magic: ['magic', 'Magic'], Undead: ['undead', 'Undead'], Daedra: ['daedra', 'Daedra'], Enemy: ['enemy', 'Enemy'],
+  Treasure: ['treasure', 'Treasure'], Normal: ['normal', 'Normal'],
+  Strength: ['strength', 'Strength'], Intelligence: ['intelligence', 'Intelligence'], Willpower: ['willpower', 'Willpower'],
+  Agility: ['agility', 'Agility'], Endurance: ['endurance', 'Endurance'], Personality: ['personality', 'Personality'],
+  Speed: ['speed', 'Speed'], Luck: ['luck', 'Luck'],
+});
+/** The two variant families key each subgroup by the English word
+ *  itself (ElementalResistance.cs:27, PacifyEffect.cs:27). */
+const VARIANT_SUBGROUP_NAMES = localizedStrings({
+  Fire: 'Fire', Frost: 'Frost', Poison: 'Poison', Shock: 'Shock', Magicka: 'Magicka',
+  Animal: 'Animal', Undead: 'Undead', Humanoid: 'Humanoid', Daedra: 'Daedra',
+});
+const VARIANT_TYPES = new Set([8, 33]);   // ElementalResistance, PacifyEffect
+/** A name as the player reads it; one no table carries (the port's own
+ *  Resurrect, "True") is shown as it stands. */
+const shown = (names, en) => (Object.hasOwn(names, en) ? names[en] : en);
+
 /** The keys systems/effects.js really acts on (its predicate arms +
  *  the BUFF_KINDS table + the inline Teleport case). Anything else
  *  falls to that module's `skipped` counter - it casts and does
@@ -204,33 +253,51 @@ const PAREN_DISPLAY_NAME = new Set([
   '24,0', '24,1',   // ShadowNormal / ShadowTrue
 ]);
 
+/** Each row's English [group, subgroup], by its key: the catalogue's
+ *  order and dfuEffectKeyOf's vocabulary, whatever the language. */
+const ENGLISH_NAMES = new Map();
+
 /** Every effect the Spell Maker offers: { key, type, subType, group,
- *  subgroup, name, duration, chance, magnitude, ported }. */
+ *  subgroup, name, duration, chance, magnitude, ported }. `group`,
+ *  `subgroup` and `name` are GroupName, SubGroupName and DisplayName,
+ *  read in the player's language each time they are read. */
 export const SPELL_MAKER_EFFECTS = Object.freeze((() => {
   const out = [];
-  const push = (type, subType, group, subgroup, supports, craftable = true) => out.push(Object.freeze({
-    key: `${type},${subType}`, type, subType, group, subgroup,
-    // DisplayName: GetDisplayName's default arm, or the six
-    // concealment classes' `"{0} ({1})"` override (see above).
-    name: subgroup
-      ? (PAREN_DISPLAY_NAME.has(`${type},${subType}`) ? `${group} (${subgroup})` : `${group} ${subgroup}`)
-      : group,
-    duration: supports.includes(D), chance: supports.includes(C), magnitude: supports.includes(M),
-    ported: PORTED_KEYS.has(`${type},${subType}`),
-    // AllowedCraftingStations != None. A false row is in the REGISTRY
-    // (so the spellbook can name the effect) and out of the maker's
-    // two picker lists.
-    craftable,
-  }));
+  const push = (type, subType, group, subgroup, supports, craftable = true) => {
+    const key = `${type},${subType}`;
+    const subgroups = VARIANT_TYPES.has(type) ? VARIANT_SUBGROUP_NAMES : SUBGROUP_NAMES;
+    const groupName = () => shown(GROUP_NAMES, group);
+    const subGroupName = () => (subgroup ? shown(subgroups, subgroup) : '');
+    ENGLISH_NAMES.set(key, [group, subgroup]);
+    out.push(Object.freeze({
+      key, type, subType,
+      get group() { return groupName(); },
+      get subgroup() { return subGroupName(); },
+      // DisplayName: GetDisplayName's default arm, or the six
+      // concealment classes' `"{0} ({1})"` override (see above).
+      get name() {
+        const g = groupName(), s = subGroupName();
+        return s ? (PAREN_DISPLAY_NAME.has(key) ? `${g} (${s})` : `${g} ${s}`) : g;
+      },
+      duration: supports.includes(D), chance: supports.includes(C), magnitude: supports.includes(M),
+      ported: PORTED_KEYS.has(key),
+      // AllowedCraftingStations != None. A false row is in the REGISTRY
+      // (so the spellbook can name the effect) and out of the maker's
+      // two picker lists.
+      craftable,
+    }));
+  };
   for (const [t, s, g, sub, sup, craft] of ROWS) push(t, s, g, sub, sup, craft);
   for (const [t, g, subs, sup] of FAMILIES) subs.forEach((sub, i) => push(t, i, g, sub, sup));
-  return out.sort((a, b) => (a.group === b.group ? a.subType - b.subType : a.group.localeCompare(b.group)));
+  const en = (e) => ENGLISH_NAMES.get(e.key)[0];
+  return out.sort((a, b) => (en(a) === en(b) ? a.subType - b.subType : en(a).localeCompare(en(b))));
 })());
 
 /** The group picker's list: de-duplicated group names, alpha-sorted
  *  (EntityEffectBroker.GetGroupNames(sortAlpha: true)). GetGroupNames
  *  filters on the crafting station, so a registry-only row (MorphSelf)
- *  is not offered. */
+ *  is not offered. The names are the shown GroupNames - DFU collects,
+ *  sorts and matches the localized ones (:512-533, :568-582). */
 export const spellMakerGroups = () =>
   [...new Set(SPELL_MAKER_EFFECTS.filter((e) => e.craftable).map((e) => e.group))].sort();
 
@@ -264,8 +331,9 @@ export function dfuEffectKeyOf(type, subType) {
   const s = (subType ?? 0) & 0xff;
   const row = SPELL_MAKER_EFFECTS.find((e) => (e.type & 0xff) === t && (e.subType & 0xff) === s);
   if (!row) return null;
-  const g = row.group.replace(/ /g, '');
-  return row.subgroup ? `${g}-${row.subgroup.replace(/ /g, '')}` : g;
+  const [group, subgroup] = ENGLISH_NAMES.get(row.key);
+  const g = group.replace(/ /g, '');
+  return subgroup ? `${g}-${subgroup.replace(/ /g, '')}` : g;
 }
 
 /** ROAD-D D10 - SpellBookDescription (IEntityEffect, EntityEffect.cs

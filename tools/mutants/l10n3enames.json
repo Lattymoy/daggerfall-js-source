@@ -1,0 +1,7 @@
+[
+  {"name":"L10N3e-enemy-class-offset-lost","file":"src/systems/textManager.js","old":"?.[id < 128 ? id : 43 + id - 128];","new":"?.[id];","tests":["test/l10n3e_names.test.js"]},
+  {"name":"L10N3e-enemy-custom-reads-list","file":"src/systems/textManager.js","old":"  if (!Number.isInteger(id) || !((id >= 0 && id <= 42) || (id >= 128 && id <= 146))) return fallback;","new":"  if (!Number.isInteger(id)) return fallback;","tests":["test/l10n3e_names.test.js"]},
+  {"name":"L10N3e-enemy-short-list-undefined","file":"src/systems/textManager.js","old":"  return row ?? fallback;\n}","new":"  return row;\n}","tests":["test/l10n3e_names.test.js"]},
+  {"name":"L10N3e-region-non-integer-reads-list","file":"src/systems/textManager.js","old":" || !Number.isInteger(regionIndex) || regionIndex < 0","new":" || regionIndex < 0","tests":["test/l10n3e_names.test.js"]},
+  {"name":"L10N3e-scan-loose-unmarked","file":"tools/l10nRouted.mjs","old":"      if (n.type === 'CallExpression' && local.has(n.callee?.name)) out.push({ file, line: n.loc.start.line, via: local.get(n.callee.name), loose: !inFn });","new":"      if (n.type === 'CallExpression' && local.has(n.callee?.name)) out.push({ file, line: n.loc.start.line, via: local.get(n.callee.name), loose: false });","tests":["test/l10n3e_names.test.js"]}
+]

@@ -401,10 +401,10 @@ test('REALM P0.5 by source: the host checkpoints every slot the exit save writes
   assert.match(w, /if \(!checkpointAllowed\(\{ online: !!online, spawned: playerSpawned, seatOut: seatOut\(\), duel: !!duelMgr\?\.duel, walkWaiting: ownWalkWaiting\(playerEntity\) \}\)\) return false;/);
   assert.match(w, /const names = exitAutosaveNames\(playerEntity, \{ deathUp: townTalk\.overlay instanceof DeathScreen \|\| !!modes\?\.deathUp\?\.\(\) \}\);\n\s*for \(const saveName of names\) \{\n\s*if \(modes\) modes\?\.quickSaveNow\(saveName, \{ quiet: true \}\);[^\n]*\n\s*else worldQuickSave\(saveName, \{ quiet: true \}\);/);
   // quiet: no shot and no "Game saved." - a failure still speaks
-  assert.match(w, /if \(r\.ok && !quiet\) requestScreenshot\(r\.key\);\n\s*if \(!r\.ok \|\| !quiet\) townTalk\.say\(r\.ok \? 'Game saved\.' : 'Save failed/);
+  assert.match(w, /if \(r\.ok && !quiet\) requestScreenshot\(r\.key\);\n\s*if \(!r\.ok \|\| !quiet\) townTalk\.say\(r\.ok \? localizedText\('gameSaved', 'Game saved\.'\) : 'Save failed/);
   assert.match(w, /quickSave: \(saveName, opts\) => worldQuickSave\(saveName, opts\),/);
   assert.match(src('src/scenes/worldModes.js'), /quickSaveNow: \(saveName, opts\) => \(mode === 'dungeon' \? dungeonCtx\?\.quickSave\(saveName, opts\) : host\.quickSave\?\.\(saveName, opts\)\),/);
   const d = src('src/scenes/dungeonContext.js');
   assert.match(d, /if \(isGateArena\(dfLocation\)\) \{ if \(!quiet\) hudText\.add\(COURT_TEXT\.noSave\); return false; \}/);
-  assert.match(d, /if \(r\.ok && !quiet\) requestScreenshot\(r\.key\);\n\s*if \(r\.ok && !quiet\) hudText\.add\('Game saved\.'\);\n\s*else if \(!r\.ok\) hudText\.add\('Save failed/);
+  assert.match(d, /if \(r\.ok && !quiet\) requestScreenshot\(r\.key\);\n\s*if \(r\.ok && !quiet\) hudText\.add\(localizedText\('gameSaved', 'Game saved\.'\)\);\n\s*else if \(!r\.ok\) hudText\.add\('Save failed/);
 });

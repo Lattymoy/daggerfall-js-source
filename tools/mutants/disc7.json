@@ -182,8 +182,8 @@
   {
     "name": "ACT-MENU-street-horse-press-without-the-verb",
     "file": "src/scenes/world.js",
-    "old": "() => setMidScreenText(TOO_FAR_AWAY_TEXT), plaqueActionFor(_hccPick.key)); }",
-    "new": "() => setMidScreenText(TOO_FAR_AWAY_TEXT)); }",
+    "old": "() => setMidScreenText(tooFarAwayText()), plaqueActionFor(_hccPick.key)); }",
+    "new": "() => setMidScreenText(tooFarAwayText())); }",
     "tests": [
       "test/disc7.test.js"
     ]

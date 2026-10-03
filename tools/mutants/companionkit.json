@@ -83,8 +83,8 @@
   {
     "name": "CK-near-unarmed",
     "file": "src/scenes/hostMagic.js",
-    "old": "      if (companionNear(lastAim?.eye ?? null, sp)) { say(PRESS_BUTTON_TO_FIRE_SPELL); say(COMPANION_ARMED_LINE); return true; }",
-    "new": "      if (false) { say(PRESS_BUTTON_TO_FIRE_SPELL); say(COMPANION_ARMED_LINE); return true; }",
+    "old": "      if (companionNear(lastAim?.eye ?? null, sp)) { say(pressButtonToFireSpellText()); say(COMPANION_ARMED_LINE); return true; }",
+    "new": "      if (false) { say(pressButtonToFireSpellText()); say(COMPANION_ARMED_LINE); return true; }",
     "tests": [
       "test/companionkit.test.js"
     ]

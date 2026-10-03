@@ -82,7 +82,7 @@ test('U25: the MiscItems specials, and the default arm\'s potion check', () => {
 
 test('U25: Condition walks the thresholds, and the bands are DFU\'s', () => {
   assert.deepEqual(CONDITION_THRESHOLDS, [1, 5, 15, 40, 60, 75, 91, 101]);
-  assert.deepEqual(CONDITION_WORDS, ['Broken', 'Useless', 'Battered', 'Worn',
+  assert.deepEqual(Object.values(CONDITION_WORDS), ['Broken', 'Useless', 'Battered', 'Worn',
     'Used', 'Slightly Used', 'Almost New', 'New']);
   const at = (pct) => conditionWord({ currentCondition: pct, maxCondition: 100 });
   // `while (percentage > threshold[i]) i++` - the band is the first

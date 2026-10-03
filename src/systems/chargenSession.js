@@ -9,7 +9,7 @@
 // characters/playerEntity.js:5). The dungeon kept its own copy of
 // the load/apply code, which is exactly the duplication the audit's
 // rules forbid, so both live here now. FIXED, not pending: world.js:
-// 126/:1364-1366 and exterior.js:195/:1361-1363 both import and run
+// 126/:1364-1366 and exterior.js:195/:1362-1364 both import and run
 // createChargenFlow + createChargenWindow from here, so a town boot
 // runs the wizard.
 //
@@ -21,7 +21,7 @@
 import { ClassFile } from '../formats/classFile.js';
 import { TextRsc } from '../formats/textRsc.js';   // U18: the class questions ride TEXT.RSC 9000
 import { parseQuestionLibrary } from './classQuestions.js';   // U18
-import { ChargenFlow } from '../ui/chargen.js';
+import { ChargenFlow, handHeroGenderToGrammar } from '../ui/chargen.js';   // L10N3g: the live hero's gender, handed to the grammar at the start
 import { applyCharacter, createCharacter, assignStartingSpells, CLASS_CAREERS } from './chargen.js';   // RRI2: AssignStartingSpells, the delegate
 import { levelUpSkillSum } from './advancement.js';   // AUDIT 18: SetCurrentLevelUpSkillSum, one home
 import { overlayAction } from '../ui/input.js';
@@ -130,7 +130,7 @@ export async function applyHeadlessChargen(playerEntity, classIndex, { fetchByte
   // DFU character carries the array from the first frame.
   //
   // The null was a lazy-rebuild trick that never fired:
-  // updateEquippedArmorValues (equip.js:276) early-returns for a
+  // updateEquippedArmorValues (equip.js:277) early-returns for a
   // non-Armor, non-footwear item BEFORE it reaches armorValuesOf, and
   // the starting kit is a shirt and pants. So the array stayed null
   // until the first armour equip or a save-and-reload, and
@@ -198,7 +198,7 @@ export function applyCreationExtras(playerEntity, result, spellsByIndex = null, 
   // DFU character carries the array from the first frame.
   //
   // The null was a lazy-rebuild trick that never fired:
-  // updateEquippedArmorValues (equip.js:276) early-returns for a
+  // updateEquippedArmorValues (equip.js:277) early-returns for a
   // non-Armor, non-footwear item BEFORE it reaches armorValuesOf, and
   // the starting kit is a shirt and pants. So the array stayed null
   // until the first armour equip or a save-and-reload, and
@@ -251,7 +251,7 @@ export function applyCreationExtras(playerEntity, result, spellsByIndex = null, 
 /** Apply a finished flow result onto the entity: the career/stat/
  *  skill derivations (applyCharacter), the starting spellbook, and
  *  the IDENTITY the paperdoll reads. */
-export function finishChargen(playerEntity, result, spellsByIndex = null, { rolls = Math.random } = {}) {
+export function finishChargen(playerEntity, result, spellsByIndex = null, { rolls = Math.random } = {}) { handHeroGenderToGrammar(playerEntity);   // L10N3g: StartGameBehaviour.cs:147, the NewCharacter start - the wizard's pick (CreateCharGenderSelect.cs:63/:70) gives way to the live hero
   applyCharacter(playerEntity, result.career, result.careerIndex, result);
   // U13: the reflex pick. Both consumers were already live - the
   // EnemyAttack melee timer (450ms per step from Average) and the
@@ -372,8 +372,8 @@ export function createChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {
   //
   // THE FOUR HOSTS RULE, answered here rather than three times over.
   // Three hosts run a new game and all three build their wizard
-  // through this function - world.js:5530, exterior.js:1417,
-  // dungeonContext.js:2915 - so the question is asked once, in the
+  // through this function - world.js:5531, exterior.js:1418,
+  // dungeonContext.js:2922 - so the question is asked once, in the
   // seam, and not one of them learns a new word. THE FOURTH HOST,
   // scenes/worldModes.js, IS ACCOUNTED FOR AND ASKS NOTHING: a new game
   // never begins inside a building, that host runs no chargen at all
@@ -413,7 +413,7 @@ function chargenWizard(flow, { onDone, onCancel, hudScale = 2 } = {}) {
  *
  * `isChoiceWindow` is a GETTER for the same reason: the wizard wants
  * raw key codes and the question wants the shared overlayAction names,
- * and the hosts read that flag at routing time (townTalk.js:430,
+ * and the hosts read that flag at routing time (townTalk.js:442,
  * worldModes.js's overlayIsNative), so one object can want both in
  * turn.
  *
@@ -529,9 +529,9 @@ function classicChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {}) {
     // the port's only reading of it - without this the thumb could
     // latch on the press and then never move. Every host that runs
     // the wizard already routes a mousemove here: world.js and
-    // exterior.js through `townTalk.hover` (townTalk.js:1298-1309,
-    // the route itself :1307), dungeonContext.js through `overlayHover`
-    // (:8541), which dungeon.js:560 and worldModes.js:10528 both feed.
+    // exterior.js through `townTalk.hover` (townTalk.js:1310-1321,
+    // the route itself :1319), dungeonContext.js through `overlayHover`
+    // (:8548), which dungeon.js:560 and worldModes.js:10553 both feed.
     // (ROAD-G G4 review: all four were stale - re-resolved by content,
     // against the same six routes G4-11 sweeps.) Hovering never
     // advances the flow, so no done check.
@@ -683,3 +683,6 @@ function codeToKey(code) {
     Equal: '=', Minus: '-', NumpadAdd: '+', NumpadSubtract: '-',
   })[code] ?? '';
 }
+
+// L10N3g: the hosts hand the grammar the live hero at their own start (a load) through the same door.
+export { handHeroGenderToGrammar };

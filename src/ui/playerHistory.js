@@ -15,6 +15,7 @@ import { loadImg, nativeMetrics, drawImg, shadowText } from './nativePanel.js';
 import { drawMenuBackdrop } from './chargenArt.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
+import { processGrammar } from '../systems/textManager.js';   // L10N3g: each BackStory line through the grammar (:152)
 
 let _art = null;
 export async function preloadPlayerHistoryArt(deps) {
@@ -124,7 +125,9 @@ export class PlayerHistoryWindow {
     const lines = this.lines;
     let y = TEXT_Y;
     for (let i = this.pageStartLine; i < lines.length; i++) {
-      shadowText(renderer, font, String(lines[i] ?? ''), m, TEXT_X, y);
+      // L10N3g: AddTextLabel(ProcessGrammar(BackStory[i])) (:152) - a
+      // translation's biography reads resolved; English is the identity.
+      shadowText(renderer, font, processGrammar(String(lines[i] ?? '')), m, TEXT_X, y);
       if (i - this.pageStartLine + 1 === MAX_PAGE_LINES) break;
       y += rowH;
     }

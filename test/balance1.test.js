@@ -135,7 +135,7 @@ test('BALANCE1: every blow\'s wear path takes the scale - DFU\'s DamageEquipment
     } finally { Math.random = random; }
 
     // the other two, where they are charged
-    assert.match(rd('src/combat/pcaao.js'), /lowerCondition\(item, blowWear\(amount, rolls\), owner, say, removeFrom\);/, 'the overhaul\'s one wear sink');
+    assert.match(rd('src/combat/pcaao.js'), /lowerCondition\(item, blowWear\(amount, rolls\), owner, say, removeFrom, shownItemName\);/, 'the overhaul\'s one wear sink');
     assert.match(rd('src/systems/rrInstall.js'), /\(it, amount\) => lowerCondition\(it, blowWear\(amount, rolls\), owner, say\)/, 'Roleplay Realism\'s armour x5');
     assert.match(rd('src/scenes/world.js'), /if \(amount > 0\) lowerCondition\(sent\.weapon, dfuBlowWear\(amount\), playerEntity,/, 'a duel\'s blade (DFU\'s amount at the port\'s multiple - WEAR-ONE\'s 1 - then the scale)');
     assert.match(rd('src/combat/formulas.js'), /lowerCondition\(item, dfuBlowWear\(amount, rolls\), owner, say\);/, 'DFU\'s');

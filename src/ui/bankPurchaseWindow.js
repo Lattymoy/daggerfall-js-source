@@ -47,6 +47,7 @@ import {
   TRANSACTION_RESULT, housePrice,
   SHIP_TYPES, shipPrice, shipModelId, shipCameraDist,
 } from '../systems/banking.js';
+import { localizedText } from '../systems/textManager.js';   // L10N3d: the price row
 
 /** mainPanel.Size (:125) - and the size BANK01I0.IMG ships. */
 export const PURCHASE_PANEL_W = 225, PURCHASE_PANEL_H = 129;
@@ -124,8 +125,9 @@ export const PREVIEW_NEAR = 0.7, PREVIEW_FAR = 100;
  *  tag is the index, which is what BuyButton casts back (:389). */
 export const SHIP_LIST = Object.freeze([SHIP_TYPES.Small, SHIP_TYPES.Large]);
 
-/** Internal_Strings `bankPurchasePrice`, verbatim. */
-export const priceRow = (price) => `Price : ${price} gold`;
+/** Internal_Strings `bankPurchasePrice`, verbatim - read in the player's
+ *  language, its %s filled as PopulatePriceList's `.Replace` fills it. */
+export const priceRow = (price) => localizedText('bankPurchasePrice', 'Price : %s gold').replaceAll('%s', String(price));
 /** ListBox.SelectedTextColor - the picked row stands out. */
 const SELECTED_TEXT = [1, 0.85, 0.4, 1];
 

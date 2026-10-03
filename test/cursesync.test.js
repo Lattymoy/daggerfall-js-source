@@ -26,9 +26,9 @@ const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
 // ═══ the quests ══════════════════════════════════════════════════════════
 const V = join(ROOT, 'vendor/dfu-quests/Tables');
 const tables = {};
-for (const f of readdirSync(V)) if (f.endsWith('.txt')) tables[f.replace('.txt', '')] = readFileSync(join(V, f), 'utf8').replace(/^﻿/, '');
+for (const f of readdirSync(V)) if (f.endsWith('.txt')) tables[f.replace('.txt', '')] = readFileSync(join(V, f), 'utf8').replace(/^\uFEFF/, '');
 loadQuestTables(tables);
-const questLines = (name) => rd(`vendor/dfu-quests/Quests/${name}.txt`).replace(/^﻿/, '').split(/\r?\n/);
+const questLines = (name) => rd(`vendor/dfu-quests/Quests/${name}.txt`).replace(/^\uFEFF/, '').split(/\r?\n/);
 // a quest of the player's own that COUNTS its foes (DISC6's shape): its foes stay its player's
 const KILL_ALL = ['Quest: __KTEST', 'QRC:', 'Message:  1020', ' You killed them all.', '', 'QBN:', 'Foe _rats_ is 2 Giant_rat', '',
   '_mondead_ task:', ' killed 2 _rats_', ' say 1020', ' log 1011 step 1', '', 'log 1010 step 0'];

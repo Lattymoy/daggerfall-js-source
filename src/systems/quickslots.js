@@ -49,6 +49,7 @@ import { equipItem, equipTableOf, EQUIP_SLOTS, isBrokenItem, isForbiddenEquip, i
 import { isShieldTemplate } from './armorMaterials.js';
 import { itemLongName, conditionPercentage } from './itemInfo.js';
 import { isEnchanted } from './inventory.js';   // UI2: an enchanted piece shows its wear (its powers spend its condition - the pack's rule)
+import { shownSpellName } from './loot.js';   // L10N3e: a slotted spell's name as the book shows it - the stored name stays the canonical one
 
 import { expandRowValues } from './quest/questMacros.js';   // MACROS1: a used item's record through its own context (%map)
 import { racialSuppressInventory, LYCANTHROPY_SPELL_TAG } from './lycanthropy.js';   // DISC10-E L3: the pack's refusal, at the two doors that reach into it; HB-LYCFREE: the curse's free spell
@@ -102,7 +103,7 @@ const state = { c1: null, c2: null, swap: null };
  *  item: it carries no group, no template and no material, so
  *  `quickslotKey` has nothing to say about it. What it does carry is an
  *  INDEX - a SPELLS.STD record number, or the negative one a made spell
- *  mints (systems/spellMaker.js:234-252) - and that index is already
+ *  mints (systems/spellMaker.js:235-253) - and that index is already
  *  this port's name for "which spell": it is what the save writes
  *  (systems/save.js:358), what a restore reads back, and what
  *  `setReadiedByIndex` resolves a readied spell by. So the slot keeps
@@ -618,7 +619,7 @@ export function clearSpellQuickslot() { spellState = null; }
 export function resolveSpellQuickslot(entity) {
   if (!spellState) return null;
   const spell = bookOf(entity).find((sp) => sp?.index === spellState.index) ?? null;
-  return { index: spellState.index, name: spell?.name || spellState.name, spell };
+  return { index: spellState.index, name: shownSpellName(spell) || shownSpellName(spellState), spell };   // L10N3e: drawn, so as shown
 }
 
 /**
@@ -744,7 +745,7 @@ export function cycleQuickslot(slot, { entity = null, dir = 1 } = {}) {
     const next = at < 0 ? (step > 0 ? 0 : list.length - 1) : (at + step + list.length) % list.length;
     setSpellQuickslot(list[next]);
     cycling = { slot, ms: QUICK_CYCLE_LINGER_MS };
-    return { slot, index: list[next].index, name: list[next].name, spell: list[next] };
+    return { slot, index: list[next].index, name: shownSpellName(list[next]), spell: list[next] };   // L10N3e: as shown
   }
   if (!CONSUMABLE_SLOTS.includes(slot)) throw new Error(`quickslots: ${slot} does not cycle`);
   const list = consumableCandidates(entity, slot);
@@ -1081,7 +1082,7 @@ export function hotbarView(entity, { readiedIndex = null, size = HOTBAR_CAPACITY
     if (!e) return { slot: i, empty: true };
     if (e.type === 'spell') {
       const spell = book.find((sp) => sp?.index === e.index) ?? null;
-      return { slot: i, type: 'spell', name: spell?.name || e.name, index: e.index, spell,
+      return { slot: i, type: 'spell', name: shownSpellName(spell) || shownSpellName(e), index: e.index, spell,   // L10N3e: drawn, so as shown
         element: spell?.element ?? null, rangeType: spell?.rangeType ?? null,
         icon: iconOf(spell).icon ?? e.icon ?? null,   // UI2: the book's icon, else the one it was slotted with
         ghost: !spell, active: readiedIndex != null && readiedIndex === e.index };

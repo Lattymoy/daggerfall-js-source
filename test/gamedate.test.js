@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {
   DAYS_PER_MONTH, MONTHS_PER_YEAR, DAYS_PER_YEAR, MINUTES_PER_DAY,
   CLASSIC_EPOCH_IN_SECONDS, CLASSIC_GAME_START_TIME, DEFAULT_DATE,
-  DAY_NAMES, MONTH_NAMES, BIRTH_SIGN_NAMES, SEASON_NAMES, SEASONS,
+  dayNames, monthNames, birthSignNames, SEASON_NAMES, SEASONS,
   dateToSeconds, dateFromSeconds, dateToClassicMinutes, dateFromClassicMinutes,
   classicGameStartDate,
   dayOfYear, monthOfYear, dayOfMonth, minuteOfDay,
@@ -70,7 +70,7 @@ test('S28: GetDayOfYear is 1-based and spans exactly the year (:629-633)', () =>
 });
 
 test('S28: GetDayName cycles every 7 days of the month (:550-559)', () => {
-  assert.deepEqual(DAY_NAMES, ['Sundas', 'Morndas', 'Tirdas', 'Middas', 'Turdas', 'Fredas', 'Loredas']);
+  assert.deepEqual(dayNames(), ['Sundas', 'Morndas', 'Tirdas', 'Middas', 'Turdas', 'Fredas', 'Loredas']);
   assert.equal(dayName({ day: 0 }), 'Sundas');
   assert.equal(dayName({ day: 6 }), 'Loredas');
   assert.equal(dayName({ day: 7 }), 'Sundas');
@@ -78,10 +78,10 @@ test('S28: GetDayName cycles every 7 days of the month (:550-559)', () => {
 });
 
 test('S28: the four name lists are DFU\'s Internal_Strings, verbatim', () => {
-  assert.deepEqual(MONTH_NAMES, ["Morning Star", "Sun's Dawn", 'First Seed', "Rain's Hand",
+  assert.deepEqual(monthNames(), ["Morning Star", "Sun's Dawn", 'First Seed', "Rain's Hand",
     'Second Seed', 'Midyear', "Sun's Height", 'Last Seed', 'Hearthfire', 'Frostfall',
     "Sun's Dusk", 'Evening Star']);
-  assert.deepEqual(BIRTH_SIGN_NAMES, ['The Ritual', 'The Lover', 'The Lord', 'The Mage',
+  assert.deepEqual(birthSignNames(), ['The Ritual', 'The Lover', 'The Lord', 'The Mage',
     'The Shadow', 'The Steed', 'The Apprentice', 'The Warrior', 'The Lady', 'The Tower',
     'The Atronach', 'The Thief']);
   assert.deepEqual(SEASON_NAMES, ['Fall', 'Spring', 'Summer', 'Winter']);

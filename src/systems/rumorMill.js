@@ -67,6 +67,7 @@
 
 import { getInt } from './settings.js';   // AUDIT 28 W1: QuestRumorWeight, read live
 import { dice100 } from '../combat/formulas.js';
+import { localizedText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
 /** TalkManager.RumorType (:341-346). */
 export const RUMOR_TYPE = Object.freeze({ CommonRumor: 0, QuestProgressRumor: 1, QuestRumorMill: 2 });
@@ -89,6 +90,9 @@ export const DEFAULT_QUEST_RUMOR_WEIGHT = 50;
 
 /** The resolvingError literal (Internal_Strings en id 425). */
 export const RESOLVING_ERROR = '...never mind...';
+/** GetLocalizedText("resolvingError") where it is shown (GetNewsOrRumors :1393, the talk window's caption repair
+ *  DaggerfallTalkWindow.cs:867/871): the player's language, RESOLVING_ERROR in English. */
+export const resolvingErrorText = () => localizedText('resolvingError', RESOLVING_ERROR);
 
 /** TokensToString (:3561-3578): text fragments append; an empty or
  *  missing text appends the separator - ' ' by default, '' when
@@ -258,7 +262,7 @@ export class RumorMill {
   getNewsOrRumors(npcSession = this.defaultSession) {
     if (npcSession.numAnswersGivenTellMeAboutOrRumors < MAX_ANSWERS_TELL_ME_ABOUT_OR_RUMORS
       || npcSession.isSpyMaster || (this.deps.npcsKnowEverything?.() ?? false)) {
-      let news = this.deps.resolvingError?.() ?? RESOLVING_ERROR;
+      let news = this.deps.resolvingError?.() ?? resolvingErrorText();
       const validRumors = this.getValidRumors();
       if (validRumors.length === 0) return this.deps.expandRandomTextRecord?.(OUT_OF_NEWS_RECORD_INDEX) ?? '';
       const entry = this.weightedRandomRumor(validRumors);

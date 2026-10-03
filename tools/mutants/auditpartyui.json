@@ -2,7 +2,7 @@
   {
     "name": "AUDIT-PARTY-UI-1-the-map-door-asks-nothing-indoors",
     "file": "src/scenes/world.js",
-    "old": "    if ((modes?.mode ?? 'exterior') !== 'exterior') { townTalk.say(CANNOT_TRAVEL_INDOORS_TEXT); return false; }\n",
+    "old": "    if ((modes?.mode ?? 'exterior') !== 'exterior') { townTalk.say(localizedText('cannotTravelIndoors', CANNOT_TRAVEL_INDOORS_TEXT)); return false; }\n",
     "new": "",
     "tests": [
       "test/partytravel.test.js"

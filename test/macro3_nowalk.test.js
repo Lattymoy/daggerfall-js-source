@@ -8,7 +8,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { magicPowersLines, ITEM_POWERS, POWERS_UNKNOWN_TEXT, ARTIFACT_POWERS_TEXT_BASE } from '../src/systems/itemPowers.js';
+import { magicPowersLines, itemPowers, POWERS_UNKNOWN_TEXT, ARTIFACT_POWERS_TEXT_BASE } from '../src/systems/itemPowers.js';
 import { ENCHANTMENT_TYPES as T } from '../src/formats/magicDef.js';
 import { powersRows } from '../src/ui/nativeInventory.js';
 import { expandRowValues, setMacroWorld } from '../src/systems/quest/questMacros.js';
@@ -24,7 +24,7 @@ test('MACRO-3: %mpw is MagicPowers - one line per power, DFU’s words, DFU’s 
     'Cast when used: Levitate', 'Potent vs Daedra', 'Extra spell pts during Winter',
     'Enhances skill Medical', 'Soul bound Rat', 'Feather weight', 'Health leech unless used weekly',
   ], 'the list stops at the first None, as DFU’s loop breaks');
-  assert.equal(ITEM_POWERS.length, 26, 'every EnchantmentTypes row from CastWhenUsed to BadRepWith');
+  assert.equal(itemPowers().length, 26, 'every EnchantmentTypes row from CastWhenUsed to BadRepWith');
   assert.deepEqual(magicPowersLines(item, { identified: false }), [POWERS_UNKNOWN_TEXT], 'unidentified: the powers are unknown');
   // an artifact reads its own description record, identified or not
   const art = { artifact: true, artifactIndexBitfield: (9 << 1) | 1, enchantments: item.enchantments };

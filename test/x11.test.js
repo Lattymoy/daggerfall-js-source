@@ -223,13 +223,13 @@ test('X11 Spell Reflection: the host seam re-targets - the effect module never d
   const eff = src('src/systems/effects.js');
   assert.ok(!/applySpell\(spell,[^\n]*reflectedCount/.test(eff), 'effects.js does not re-enter itself');
   const hm = src('src/scenes/hostMagic.js');
-  assert.ok(hm.includes('SPELL_REFLECTED_TEXT'), 'the player-side line is spoken');
+  assert.ok(hm.includes('spellReflectedText()'), 'the player-side line is spoken');
   assert.equal(SPELL_REFLECTED_TEXT, 'Spell was reflected.');
   // the FOE arm must NOT speak it - the line is gated on the reflecting
   // manager being the player's (:1231-1233)
   const foeArm = hm.slice(hm.indexOf('function applySpellToFoe'), hm.indexOf('function applySpellToPlayer'));
   assert.ok(foeArm.includes('r.reflected'), 'the foe arm re-targets');
-  assert.ok(!foeArm.includes('SPELL_REFLECTED_TEXT'), 'and stays silent about it');
+  assert.ok(!foeArm.includes('spellReflectedText'), 'and stays silent about it');
   assert.ok(/reflectedCount: 1/.test(foeArm), 'the bounce is marked so it cannot volley');
   // WAVE D: the enchantment door is scenes/hostEnchant.js's, one body
   // for both mounting hosts - so the bounce cannot be re-targeted in

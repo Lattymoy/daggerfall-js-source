@@ -17,6 +17,8 @@
 import { FNT_GLYPH_COUNT, FNT_GLYPH_DIM, FNT_ASCII_START, FNT_GLYPH_SPACING } from '../formats/fntFile.js';
 import { packFontUrl, packBytes } from '../systems/uiPack.js';   // OVH2: a worn UI pack's SDF face
 import { getBool } from '../systems/settings.js';
+import { getLocalizedFont } from '../systems/textManager.js';   // L10N2: DaggerfallUI.GetFont's first ask
+import { createGlyphFace, FACE_POINT_SIZE } from './glyphFace.js';   // L10N2: TMP's dynamic atlas
 
 // ── OVH2: DFU'S SDF ARM (DaggerfallFont.IsSDFCapable) ───────────────────────────────────────────────────────────────
 // A classic font with an SDF face draws and MEASURES from that face when GUI/SDFFontRendering is on (:128-131):
@@ -24,57 +26,37 @@ import { getBool } from '../systems/settings.js';
 // and the layout law is DFU's own - a glyph's width is its advance x GlyphHeight/pointSize (GetGlyphWidth :466-478,
 // GetSDFGlyphScalingRatio :587-590), SDF glyph spacing is 0 (:41), the baseline sits at GlyphHeight - 2 below the
 // label's top (DrawSDFGlyph :264), the text is read as UTF-32 with '?' for a code the face lacks (:195-210), and a
-// shadow stands 0.4 of its classic offset away (sdfShadowPositionScale :42). The port has no SDF pass: the face is
-// rasterised once at SDF_RASTER px into a white alpha atlas the renderer blends (the pack-art law), which draws the
-// same glyph boxes a distance field does at the sizes a classic screen asks for.
-export const SDF_POINT_SIZE = 45;       // TMP_FontAsset.CreateFontAsset(font, 45, 6, SDFAA, 4096, 4096) - faceInfo.pointSize
+// shadow stands 0.4 of its classic offset away (sdfShadowPositionScale :42). The port has no SDF pass: a glyph is
+// rasterised at SDF_RASTER px into a white alpha atlas the renderer blends (the pack-art law), which draws the same
+// glyph boxes a distance field does at the sizes a classic screen asks for.
+// L10N2: the face GROWS, as TMP's dynamic asset does (ui/glyphFace.js) - HasSDFGlyph asks it for a code it has not
+// seen (TryAddCharacter), and a face a locale registered (TextManager.RegisterLocalizedFont, ui/localeFaces.js) is
+// the one every classic font of that name draws from while the locale stands, ahead of the pack's (DaggerfallUI.GetFont).
+export const SDF_POINT_SIZE = FACE_POINT_SIZE;   // TMP_FontAsset.CreateFontAsset(font, 45, 6, SDFAA, 4096, 4096) - faceInfo.pointSize
 export const SDF_GLYPH_SPACING = 0;     // sdfGlyphSpacing (:41)
 export const SDF_SHADOW_SCALE = 0.4;    // sdfShadowPositionScale (:42)
-const SDF_RASTER = 90;                  // the atlas's em in texels - twice the point size, for a crisp 4x-6x screen
-const SDF_PAD = 3;
-/** The codes the face is asked for: DFU seeds the replacement with the source font's character table (:707-716) -
- *  printable ASCII and Latin-1's printable half here. */
+const SDF_RASTER = 90;                  // a pack face's em in texels - twice the point size, for a crisp 4x-6x screen
+const SDF_PAGE = 2048;                  // the seeded 191 and every glyph a pack's text grows, on one page
+/** The codes a pack's face is seeded with: DFU seeds the replacement with the source font's character table
+ *  (:707-716) - printable ASCII and Latin-1's printable half here. Every other code is added when it is asked for. */
 export const SDF_CODES = Object.freeze([...Array.from({ length: 95 }, (_, i) => 32 + i), ...Array.from({ length: 96 }, (_, i) => 160 + i)]);
 
-/** The face's layout, or null on the classic arm. Rides the FNT itself, so every measure of the font - measureText is
- *  handed `font.fnt` at a hundred call sites - takes the same arm the draw does. */
-export const sdfOf = (fnt) => fnt?.sdf ?? null;
+/** The face a classic font draws from, or null on the classic arm. A face registered for the current locale under
+ *  the font's name comes first (DaggerfallUI.GetFont: "If current locale has a custom font registered this will
+ *  always have priority over any other font"), then the worn UI pack's (OVH2), which rides the FNT itself. Asked of
+ *  the FNT, so every measure of the font - measureText is handed `font.fnt` at a hundred call sites - takes the same
+ *  arm the draw does. */
+export const sdfOf = (fnt) => (fnt?.fontName ? getLocalizedFont(fnt.fontName) : null) ?? fnt?.sdf ?? null;
 const sdfRatio = (fnt) => fnt.fixedHeight / SDF_POINT_SIZE;   // GetSDFGlyphScalingRatio(1): GlyphHeight / pointSize
-const sdfCode = (sdf, code) => (sdf.glyphs.has(code) ? code : FNT_ERROR_CODE);   // HasSDFGlyph, else ErrorCode
-/** One glyph's width in classic pixels (GetGlyphWidth's SDF arm, spacing included). */
-export const sdfGlyphWidth = (fnt, code) => fnt.sdf.glyphs.get(sdfCode(fnt.sdf, code)).advance * sdfRatio(fnt) + SDF_GLYPH_SPACING;
-
-/** Rasterise a face into the atlas and the glyph table (`measure`/`paint` are the canvas seam; a test hands its own).
- *  Glyph metrics are in POINT-SIZE units, as TMP's are. */
-export function buildSdfFace(family, { canvas = null } = {}) {
-  const k = SDF_RASTER / SDF_POINT_SIZE;
-  const c = canvas ?? new OffscreenCanvas(1, 1);
-  let ctx = c.getContext('2d', { willReadFrequently: true });   // FIELD 2026-09-27: the atlas is read back (textureReplacement.decodePng's note)
-  ctx.font = `${SDF_RASTER}px "${family}"`;
-  const cell = SDF_RASTER * 2 + SDF_PAD * 2;
-  const cols = 16, rows = Math.ceil(SDF_CODES.length / cols);
-  c.width = cols * cell; c.height = rows * cell;
-  ctx = c.getContext('2d', { willReadFrequently: true });
-  ctx.font = `${SDF_RASTER}px "${family}"`;
-  ctx.fillStyle = '#fff'; ctx.textBaseline = 'alphabetic';
-  const glyphs = new Map();
-  SDF_CODES.forEach((code, i) => {
-    const ch = String.fromCodePoint(code);
-    const mt = ctx.measureText(ch);
-    const left = mt.actualBoundingBoxLeft ?? 0, right = mt.actualBoundingBoxRight ?? mt.width;
-    const ascent = mt.actualBoundingBoxAscent ?? SDF_RASTER * 0.8, descent = mt.actualBoundingBoxDescent ?? 0;
-    const gx = (i % cols) * cell + SDF_PAD, gy = Math.floor(i / cols) * cell + SDF_PAD;
-    const w = Math.max(0, Math.ceil(left + right)), h = Math.max(0, Math.ceil(ascent + descent));
-    if (code !== 32 && w && h) ctx.fillText(ch, gx + left, gy + ascent);
-    glyphs.set(code, {
-      code, advance: mt.width / k,                                         // horizontalAdvance
-      offX: -left / k, offY: ascent / k, w: w / k, h: h / k,               // horizontalBearingX / Y, width, height
-      src: { u0: gx / c.width, v0: gy / c.height, u1: (gx + w) / c.width, v1: (gy + h) / c.height },
-    });
-  });
-  const img = ctx.getImageData(0, 0, c.width, c.height);
-  return { glyphs, atlas: { width: c.width, height: c.height, colors: new Uint8ClampedArray(img.data.buffer) } };
+/** HasSDFGlyph (:424-435): the face's glyph for `code`, added on demand where the face grows (TryAddCharacter), else
+ *  its ErrorCode '?'; null when the face can give neither. */
+function sdfGlyph(sdf, code) {
+  if (sdf.glyphs.has(code) || sdf.add?.(code)) return sdf.glyphs.get(code);
+  if (!sdf.glyphs.has(FNT_ERROR_CODE)) sdf.add?.(FNT_ERROR_CODE);
+  return sdf.glyphs.get(FNT_ERROR_CODE) ?? null;
 }
+/** One glyph's width in classic pixels (GetGlyphWidth's SDF arm, spacing included). */
+export const sdfGlyphWidth = (fnt, code) => (sdfGlyph(sdfOf(fnt), code)?.advance ?? 0) * sdfRatio(fnt) + SDF_GLYPH_SPACING;
 
 /** Load a pack's SDF face for `fnt` and put it on the FNT once it is ready - until then the classic arm draws. */
 async function loadSdfFace(renderer, fnt, name, url) {
@@ -83,10 +65,10 @@ async function loadSdfFace(renderer, fnt, name, url) {
     const face = new globalThis.FontFace(family, await packBytes(url));
     await face.load();
     globalThis.document?.fonts?.add?.(face);
-    const { glyphs, atlas } = buildSdfFace(family);
-    for (let i = 0; i < atlas.colors.length; i += 4) { atlas.colors[i] = atlas.colors[i + 1] = atlas.colors[i + 2] = 255; }   // white, tinted per call
-    const tex = renderer.uploadTexture('fnt', `${name}#sdf`, atlas, { smooth: true, alpha: true });
-    fnt.sdf = { glyphs, tex };
+    const sdf = createGlyphFace(`"${family}"`, { raster: SDF_RASTER, page: SDF_PAGE, name: `${name}#sdf` });
+    for (const code of SDF_CODES) sdf.add(code);
+    sdf.flush(renderer);
+    fnt.sdf = sdf;
   } catch (e) { console.warn(`[ui pack] the ${name} face did not load - the classic glyphs stand:`, e?.message ?? e); }
 }
 
@@ -151,7 +133,7 @@ export const hasGlyph = (code) =>
  *  HorizontalAlignment.Center halves. */
 export function measureText(fnt, text) {
   let w = 0;
-  if (sdfOf(fnt)) {   // OVH2: CalculateTextWidth's SDF arm (:386-398) - UTF-32, '?' for a code the face lacks
+  if (sdfOf(fnt)) {   // OVH2: CalculateTextWidth's SDF arm (:386-398) - UTF-32, '?' for a code the face lacks (L10N2: after it was asked)
     for (const ch of text) w += sdfGlyphWidth(fnt, ch.codePointAt(0));
     return w;
   }
@@ -169,6 +151,7 @@ export function measureText(fnt, text) {
 
 /** Prepare a font for drawing: the uploaded white atlas + metrics. */
 export function makeFont(renderer, fnt, name) {
+  fnt.fontName ??= name;   // L10N2: DaggerfallFont.FontName - the key a locale's face is registered under
   const font = { fnt, tex: renderer.uploadTexture('fnt', name, buildFontAtlas(fnt)) };
   // OVH2: a worn UI pack's face for this font, when DFU would draw one (IsSDFCapable: the setting AND a face)
   const url = packFontUrl(name);
@@ -185,10 +168,13 @@ export function drawText(renderer, font, text, x, y, scale = 1, color = [1, 1, 1
   if (sdf) {   // OVH2: DrawSDFText (:195-210) - each glyph on its bearing from the classic baseline
     const r = sdfRatio(fnt) * scale;
     const baseline = y + (fnt.fixedHeight - 2) * scale;   // DrawSDFGlyph :264 (faceInfo.baseline 0)
-    for (const ch of text) {
-      const g = sdf.glyphs.get(sdfCode(sdf, ch.codePointAt(0)));
+    const glyphs = [];
+    for (const ch of text) glyphs.push(sdfGlyph(sdf, ch.codePointAt(0)));
+    sdf.flush?.(renderer);   // L10N2: a page that grew goes up before anything is drawn from it
+    for (const g of glyphs) {
+      if (!g) continue;
       if (g.code !== FNT_SPACE_CODE && g.w > 0 && g.h > 0) {
-        renderer.drawScreenQuad(sdf.tex, { x: cx + g.offX * r, y: baseline - g.offY * r, w: g.w * r, h: g.h * r }, g.src, color);
+        renderer.drawScreenQuad(sdf.texOf?.(g) ?? sdf.tex, { x: cx + g.offX * r, y: baseline - g.offY * r, w: g.w * r, h: g.h * r }, g.src, color);
       }
       cx += (g.advance * sdfRatio(fnt) + SDF_GLYPH_SPACING) * scale;
     }

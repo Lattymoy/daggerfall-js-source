@@ -48,6 +48,7 @@
 
 import { drawSpellIcon, spellIconsLoaded } from './spellIcons.js';
 import { liveBundles, canEndBundle } from '../systems/mysticism.js';   // BUFF-END: and which the player may end
+import { shownSpellName } from '../systems/loot.js';   // L10N3e: the bundle's Name, which DFU gave a stock spell in the player's language
 import { getString } from '../systems/settings.js';
 import { nativeMetrics, pointToNative } from './nativePanel.js';
 
@@ -128,7 +129,9 @@ export const maxRoundsRemaining = (bundle) =>
  *
  * The display name drops a LEADING '!' - "non-vendor spells start
  * with !, don't show this on the UI" - and only a leading one, which
- * is what TrimStart does.
+ * is what TrimStart does. L10N3e: a stock spell's name is the one DFU's
+ * bundle carries, in the player's language (EntityEffectBroker.cs:877),
+ * by the index the bundle keeps beside its canonical name.
  */
 export function activeSpellIcons(entity) {
   const self = [], other = [];
@@ -137,7 +140,7 @@ export function activeSpellIcons(entity) {
     if (!bundle.showIcon) continue;
     const item = {
       iconIndex: bundle.icon ?? 0,
-      displayName: String(bundle.name ?? '').replace(/^!+/, ''),
+      displayName: String(shownSpellName({ index: bundle.spellIndex, name: bundle.name }) ?? '').replace(/^!+/, ''),
       poolIndex: poolIndex++,
       expiring: maxRoundsRemaining(bundle) < 2,
       isItem: bundle.bundleType === 'HeldMagicItem',

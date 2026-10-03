@@ -29,7 +29,7 @@
   {
     "name": "MAC-E-the-empty-body-is-disabled-on-the-take-so-the-line-is-never-heard",
     "file": "src/scenes/corpseMarker.js",
-    "old": "  if (!items?.length) {\n    entry.corpseDisabled = true;\n    say('The body has no treasure.');   // theBodyHasNoTreasure\n    return 0;\n  }\n  // :948-952 - one item and it is arrows: taken whole, no window.\n  if (items.length === 1 && items[0]?.templateIndex === ARROW_TEMPLATE_INDEX) {",
+    "old": "  if (!items?.length) {\n    entry.corpseDisabled = true;\n    say(localizedText('theBodyHasNoTreasure', 'The body has no treasure.'));\n    return 0;\n  }\n  // :948-952 - one item and it is arrows: taken whole, no window.\n  if (items.length === 1 && items[0]?.templateIndex === ARROW_TEMPLATE_INDEX) {",
     "new": "  if (!items?.length) {\n    entry.corpseDisabled = true;\n    return 0;\n  }\n  // :948-952 - one item and it is arrows: taken whole, no window.\n  if (items.length === 1 && items[0]?.templateIndex === ARROW_TEMPLATE_INDEX) {",
     "tests": [
       "test/mace_corpse_window.test.js",

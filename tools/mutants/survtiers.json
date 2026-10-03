@@ -961,12 +961,12 @@
   {
     "name": "SURVTIERS-the-potion-cite-falls-short",
     "file": "src/systems/potions.js",
-    "old": "exterior.js:2553) and useItem.js:379",
-    "new": "exterior.js:2553) and useItem.js:351",
+    "old": "exterior.js:2554) and useItem.js:380",
+    "new": "exterior.js:2554) and useItem.js:352",
     "tests": [
       "test/citedrift.test.js"
     ],
-    "note": "HOOD-SAID (FIELD BUGS 2026-09-30, PIN MOVED): toggleHood and its import moved useItem.js's drink line from 316 to 347; the cite and its short mutant move with it. FIELD BUGS 2026-09-30 (PIN MOVED): re-aimed by content to the cite the batch's cite shift moved. MEND-AIM (PIN MOVED): the use door's aim options moved the drink line to 351. THE SEATS ARC'S MERGE of main's #502-#509 and #504 (PIN MOVED): re-aimed by content to the cite citeMerge moved. FIELD BUGS 2026-10-01 part five (re-aimed by content): the merge of #504 moved the cites it names. MERGE OF MAIN (#538) INTO THE TACTICS ARC (PIN MOVED): re-aimed by content to the cite citeMerge moved."
+    "note": "HOOD-SAID (FIELD BUGS 2026-09-30, PIN MOVED): toggleHood and its import moved useItem.js's drink line from 316 to 347; the cite and its short mutant move with it. FIELD BUGS 2026-09-30 (PIN MOVED): re-aimed by content to the cite the batch's cite shift moved. MEND-AIM (PIN MOVED): the use door's aim options moved the drink line to 351. THE SEATS ARC'S MERGE of main's #502-#509 and #504 (PIN MOVED): re-aimed by content to the cite citeMerge moved. FIELD BUGS 2026-10-01 part five (re-aimed by content): the merge of #504 moved the cites it names. MERGE OF MAIN (#538) INTO THE TACTICS ARC (PIN MOVED): re-aimed by content to the cite citeMerge moved. THE MERGE OF MAIN (#408-#541) INTO L10N (PIN MOVED): re-aimed by content to the merged line."
   },
   {
     "name": "SURVOFFSIGHT-off-sees-no-camp",

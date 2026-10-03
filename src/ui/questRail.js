@@ -26,7 +26,8 @@
 // chunk for four functions.
 
 import { isMainQuestName as isMainQuest } from '../systems/quest/questLists.js';   // AUDIT 68 S31-questshare-mainquest-dup: the share gates' own predicate, one home
-import { DAY_NAMES, MONTH_NAMES } from '../systems/gameDate.js';   // GUIDE3: the date header an entry opens with
+import { dayNames, monthNames } from '../systems/gameDate.js';   // GUIDE3: the date header an entry opens with
+import { localizedText } from '../systems/textManager.js';   // L10N3d: and the format it is written in
 
 /** The token formattings that carry a printable line - questJournal's
  *  own counted set (`LINE_FORMATTINGS`). */
@@ -45,8 +46,26 @@ export function journalLines(msgOrTokens) {
  *  built here from the same two name tables so the header cannot be
  *  mistaken for a sentence and a sentence cannot be taken for it. */
 const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-const DATE_HEADER = new RegExp(`^\\s*(?:${DAY_NAMES.map(escapeRe).join('|')}) the \\d{1,2}(?:st|nd|rd|th) of `
-  + `(?:${MONTH_NAMES.map(escapeRe).join('|')}):?\\s*$`);
+/** L10N3d: the header is written in the language of the moment (dateString reads dateFormatString and the name lists
+ *  through the text core), so it is read off that language's own format and names - built when asked, never frozen
+ *  at module load, and kept while they stand. English builds exactly "<day> the <n><st|nd|rd|th> of <month>". */
+let _dateHeader = null, _dateHeaderOf = null;
+function dateHeaderRe() {
+  const fmt = localizedText('dateFormatString', '{0} the {1}{2} of {3:00}');
+  const days = dayNames(), months = monthNames();
+  const of = [fmt, ...days, ...months].join('\u0000');
+  if (of !== _dateHeaderOf) {
+    const arms = [`(?:${days.map(escapeRe).join('|')})`, '\\d{1,2}', '(?:st|nd|rd|th)', `(?:${months.map(escapeRe).join('|')})`];
+    const body = fmt.split(/(\{\d+(?::0+)?\})/).map((p) => {
+      const m = /^\{(\d+)(?::0+)?\}$/.exec(p);
+      return m ? (arms[Number(m[1])] ?? '.*?') : escapeRe(p);
+    }).join('');
+    _dateHeader = new RegExp(`^\\s*${body}:?\\s*$`);
+    _dateHeaderOf = of;
+  }
+  return _dateHeader;
+}
+const DATE_HEADER = { test: (line) => dateHeaderRe().test(line) };
 
 /** A cut never ends on one of these: an article, a preposition, a conjunction or a possessive says nothing before an
  *  ellipsis. */

@@ -2194,6 +2194,21 @@ ${badgeCss()}
   text-shadow: 2px 2px 0 rgba(0,0,0,0.8);
 }
 .px-profile:focus-visible { outline: none; }
+/* L10N1b: THE FIRST-RUN LANGUAGE OFFER - the top-left corner, the About box's plate, the question in the language it
+   offers. Gone for good once answered. */
+.px-langoffer {
+  position: absolute; top: 16px; left: 18px; z-index: 4; max-width: min(360px, calc(100vw - 36px));
+  padding: 12px 14px; background: rgba(10,12,17,0.95); border: 2px solid var(--brass);
+  box-shadow: 0 0 0 2px var(--iron), 0 3px 10px rgba(0,0,0,0.65); color: #d8cfae;
+}
+/* L10N1b: the language row's select stays a control's width, so the row's name and note keep their column */
+.langsel { max-width: 15rem; }
+.px-langoffer-q { font-size: 1.05em; margin-bottom: 4px; }
+.px-langoffer-note { font-size: 0.85em; opacity: 0.8; margin-bottom: 8px; }
+@media (max-width: 480px) {
+  /* a phone's mark is a 48px portrait 10px from the right: the offer stands beside it, never over it */
+  .px-langoffer { top: 10px; left: 10px; max-width: calc(100vw - 88px); }
+}
 /* THE PORTRAIT: a round well rimmed in brass over the iron ring, the
    face inside at its own pixels. */
 .px-portrait {

@@ -433,7 +433,7 @@ test('NAV-H the world host: one naval host on Come Sail Away\'s pool, its record
   assert.match(w, /const navalHostileNear = \(\) => !!naval\?\.hostileNear\(\);/);
   assert.match(w, /enemiesNearby: \(\) => areEnemiesNearby\([^\n]*\) \|\| navalHostileNear\(\),   \/\/ NAV-H: a hostile ship in reach holds the helm's time scale too/, 'no hurrying time with a hostile sail near');
   assert.match(w, /if \(duelEnemyNear\(\) \|\| areEnemiesNearby\(\[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\]\) \|\| navalHostileNear\(\)\) \{/, 'no travel map');
-  assert.match(w, /\.\.\.exteriorFoes\.foes\]\) \|\| navalHostileNear\(\)\) return CANNOT_TRAVEL_ENEMIES_TEXT;/, 'no party trip');
+  assert.match(w, /\.\.\.exteriorFoes\.foes\]\) \|\| navalHostileNear\(\)\) return localizedText\('cannotTravelWithEnemiesNearby', CANNOT_TRAVEL_ENEMIES_TEXT\);/, 'no party trip');
   assert.match(w, /enemiesNearby: \(\) => duelEnemyNear\(\) \|\| areEnemiesNearby\(\[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\]\) \|\| navalHostileNear\(\),/, 'no journey - the Overworld\'s sea legs stop for her');
   assert.match(w, /\[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\], \{ resting: true \}\) \|\| navalHostileNear\(\),/, 'no rest');
 });

@@ -79,9 +79,11 @@ import { SKILLS } from './skills.js';
 import { WEAPON_MATERIALS } from '../characters/weapons.js';
 import { VAMPIRE_SPELL_TAG, endOldLifeEffects, liveLycanthropy } from './lycanthropy.js';
 import { RACES, RACE_TEMPLATES, raceById } from './races.js';        // V5: the BIRTH race id keys the VAMP00I0 head; DISC10-D V5: and the birth template the compound race clones
+import { raceDisplayName } from './talkSession.js';   // L10N3d: the birth race's shown name
 import { EFFECT_BITS, SPECIAL_ABILITY_BITS } from './specialAdvantages.js';   // DISC10-D V5: DFCareer.EffectFlags / SpecialAbilityFlags, for CreateCompoundRace
 import { SOUND } from './soundClips.js';   // V5: the gendered attack voices
 import { endVampireQuests } from './racialQuests.js';   // V2d: the cure's P0* tombstone sweep
+import { localizedText, localizedTable } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { cloakState } from './survival/temperature.js';   // VAMP-HOOD: the ONE "is the hood up" - the felt temperature's, never a second list
 import { isEnhanced } from './uiSkin.js';   // HOOD-SAID: the hint names the skin's own button
 import { playerInSunlight } from './passiveSpecials.js';   // FIELD BUGS 2026-10-01b: the day's -20 is the SUN's - IsPlayerInSunlight, the one seam every host registers
@@ -151,6 +153,8 @@ export const NOT_SATED_TEXT_ID = 36;
  *  (VampirismEffect.cs:202) and the career DamageFromSunlight box at
  *  the travel map's door (DaggerfallUI.cs:619), so both speak it. */
 export const SUNLIGHT_TRAVEL_TEXT = 'You cannot initiate fast travel during the day.';
+/** The refusal as the player reads it, for both of its callers. */
+export const sunlightTravelText = () => localizedText('sunlightDamageFastTravelDay', SUNLIGHT_TRAVEL_TEXT);
 /** VAMP-HOOD: the port's own line, said after DFU's refusal at the map's
  *  door - the rule, where the sun's rule is met.
  *  HOOD-SAID (FIELD BUGS 2026-09-30): AND THE BUTTON THAT DOES IT. The
@@ -350,6 +354,13 @@ export function birthRaceTemplate(entity) {
     ?? null;
 }
 
+// L10N3d: the compound race's Name is GetLocalizedText("vampire") (VampirismEffect.cs:331) or "werewolf"/"wereboar"
+// (LycanthropyEffect.cs:514-516), read here by the English name the curse entry keeps.
+const OVERRIDE_RACE_NAMES = localizedTable({
+  Vampire: ['vampire', 'Vampire'], Werewolf: ['werewolf', 'Werewolf'], Wereboar: ['wereboar', 'Wereboar'],
+});
+const overrideRaceName = (name) => (Object.hasOwn(OVERRIDE_RACE_NAMES, name) ? OVERRIDE_RACE_NAMES[name] : name);
+
 /**
  * PlayerEntity.RaceTemplate (:151) = GetLiveRaceTemplate (:233-241): the
  * racial override's CustomRace when one is live, else the birth race.
@@ -366,6 +377,14 @@ export function birthRaceTemplate(entity) {
  * curses and nothing read it: every vampire's sheet said "Breton".
  * Answers a frozen template, or null when there is no race at all.
  */
+/** L10N3d: the race name a sheet shows - a curse's own name (read in the player's language where the curse table
+ *  holds it), else the birth race's display name (RaceTemplate.Name through TextManager, talkSession.RACE_DISPLAY_NAME).
+ *  The template's `name` stays the English identity saves and matches read. */
+export function liveRaceName(entity) {
+  const t = liveRaceTemplate(entity);
+  return t && t !== birthRaceTemplate(entity) ? t.name : raceDisplayName(t?.key ?? entity?.race);
+}
+
 export function liveRaceTemplate(entity) {
   const birth = birthRaceTemplate(entity);
   const vamp = liveVampirism(entity);
@@ -375,14 +394,14 @@ export function liveRaceTemplate(entity) {
   if (vamp) {
     return Object.freeze({
       ...base,
-      name: vamp.raceNameOverride ?? 'Vampire',
+      name: overrideRaceName(vamp.raceNameOverride ?? 'Vampire'),
       immunityFlags: (base.immunityFlags ?? 0) | EFFECT_BITS.toParalysis | EFFECT_BITS.toDisease,
       specialAbilities: (base.specialAbilities ?? 0) | SPECIAL_ABILITY_BITS.holyDamage,   // VAMP-DAY: the sun no longer burns, so the sheet no longer says it does
     });
   }
   return Object.freeze({
     ...base,
-    name: lyc.raceNameOverride ?? base.name,
+    name: lyc.raceNameOverride != null ? overrideRaceName(lyc.raceNameOverride) : base.name,
     immunityFlags: (base.immunityFlags ?? 0) | EFFECT_BITS.toDisease,
   });
 }
@@ -410,7 +429,7 @@ export function racialSunAverse(entity) {
 export function racialFastTravelBlock(entity, nowMinutes = 0) {
   if (!racialSunAverse(entity)) return null;
   if (!isDayFromMinutes(nowMinutes)) return null;
-  return { text: SUNLIGHT_TRAVEL_TEXT, hint: isEnhanced() ? VAMPIRE_HOOD_TEXT : VAMPIRE_HOOD_TEXT_CLASSIC };   // HOOD-SAID: the skin's own button
+  return { text: sunlightTravelText(), hint: isEnhanced() ? VAMPIRE_HOOD_TEXT : VAMPIRE_HOOD_TEXT_CLASSIC };   // HOOD-SAID: the skin's own button
 }
 
 /**

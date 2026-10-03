@@ -69,7 +69,7 @@ test('B5: the EXHAUSTION box pushes in all three hosts that can collapse', () =>
   // refusal most likely to have eaten a real message.
   // AUDIT LIVED1b K1: the box is kept (`_exhaustedBox`) for DFU's popup guard, and still pushed
   assert.match(src('src/scenes/worldModes.js'),
-    /_exhaustedBox = new ActionTextBox\(out\.inWater \? \[EXHAUSTED_IN_WATER\] : \['You collapse from exhaustion\.'\]\);\s*mountInterior\(_exhaustedBox\);/);
+    /_exhaustedBox = new ActionTextBox\(out\.inWater \? \[exhaustedInWaterText\(\)\] : \['You collapse from exhaustion\.'\]\);\s*mountInterior\(_exhaustedBox\);/);
   assert.match(src('src/scenes/world.js'), /_exhaustedBox = new ActionTextBox\(lines\);\s*townTalk\.pushOverlay\(_exhaustedBox\);/, 'src/scenes/world.js: the outdoor collapse');
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     if (f === 'src/scenes/exterior.js') assert.match(src(f), /townTalk\.pushOverlay\(new ActionTextBox\(lines\)\);/, `${f}: the outdoor collapse`);

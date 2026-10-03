@@ -2,7 +2,7 @@
   {
     "name": "AUDIT-PARTY-UI2-1-the-door-silent-indoors",
     "file": "src/scenes/world.js",
-    "old": "{ townTalk.say(CANNOT_TRAVEL_INDOORS_TEXT); return false; }",
+    "old": "{ townTalk.say(localizedText('cannotTravelIndoors', CANNOT_TRAVEL_INDOORS_TEXT)); return false; }",
     "new": "{ return false; }",
     "tests": [
       "test/partytravel.test.js"
@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-PARTY-UI2-1-the-target-dropped-by-a-refusal",
     "file": "src/scenes/world.js",
-    "old": "{ townTalk.say(CANNOT_TRAVEL_INDOORS_TEXT); return false; }",
-    "new": "{ _travelGoto = null; townTalk.say(CANNOT_TRAVEL_INDOORS_TEXT); return false; }",
+    "old": "{ townTalk.say(localizedText('cannotTravelIndoors', CANNOT_TRAVEL_INDOORS_TEXT)); return false; }",
+    "new": "{ _travelGoto = null; townTalk.say(localizedText('cannotTravelIndoors', CANNOT_TRAVEL_INDOORS_TEXT)); return false; }",
     "tests": [
       "test/partytravel.test.js"
     ]

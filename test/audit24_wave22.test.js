@@ -37,7 +37,7 @@ test('audit24 wave22: every HUD popup files into the notebook message ring', () 
 });
 
 test('audit24 wave22: the two hosts hand their HudText the notebook sink', () => {
-  assert.match(rd('src/ui/hudText.js'), /this\.lines\.push\(\{ id: \+\+this\._nextId, text \}\);\s*\n\s*this\.onMessage\?\.\(text\);/,   // ENH-NOTICE3: the row carries its toast's id
+  assert.match(rd('src/ui/hudText.js'), /this\.lines\.push\(\{ id: \+\+this\._nextId, text: pgText \}\);\s*\n\s*this\.onMessage\?\.\(pgText\);/,   // ENH-NOTICE3: the row carries its toast's id
     'AddText files AFTER it queues, as C# does');
   // AUDIT 65 MC-1: BOTH walkable outdoor hosts, which is what this
   // test's title has always said. exterior.js handed down `notebookSink`
@@ -83,7 +83,7 @@ test('audit24 wave22: the TG/DB map reveal files its notebook note', () => {
   const s = rd('src/scenes/world.js');
   assert.match(s, /readMapTG: 'The Thieves Guild have revealed the closely-guarded whereabouts of a treasure trove called %map\.'/);
   assert.match(s, /readMapDB: 'The Dark Brotherhood revealed the secret of some treasure-laden crypts located somewhere called %map\.'/);
-  assert.match(s, /questBridge\?\.notebook\?\.addNote\(REVEAL_NOTE_TEXT\[noteKey\]\?\.replace\('%map', picked\.name\) \?\? ''\);/);
+  assert.match(s, /questBridge\?\.notebook\?\.addNote\(REVEAL_NOTE_TEXT\[noteKey\]\?\.replace\('%map', noteKey === 'readMap' \? shown : picked\.name\) \?\? ''\);/);
   assert.doesNotMatch(s, /the notebook note pends its surface/, 'and the pending warning is gone');
 
   // the note itself, end to end through the real notebook
@@ -157,5 +157,5 @@ test("audit24 wave22: the {0:00} pad rounds, so DFU prints ':60'", () => {
     /^01:02:60 /, 'the impossible reading, verbatim');
   assert.match(midDateTimeString({ year: 405, month: 0, day: 0, hour: 1, minute: 2, second: 59.49 }),
     /^01:02:59 /);
-  assert.match(rd('src/systems/gameDate.js'), /const pad2 = \(n\) => String\(Math\.round\(n\)\)\.padStart\(2, '0'\);/);
+  assert.match(rd('src/systems/gameDate.js'), /formatText\(localizedText\('midDateTimeFormatString', '\{0:00\}:\{1:00\}:\{2:00\} \{3:00\} \{4:00\} 3E\{5\}'\),/);
 });

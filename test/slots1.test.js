@@ -81,7 +81,7 @@ test('SLOTS1: the pick seams hand a key and a name over once (mutant: a pick tak
   // TILE2: the delete moved onto the Load pane's own tile actions with
   // the card it used to live on - it still ASKS, and it still takes the
   // slot it is drawn beside and no other.
-  assert.match(load, /label: 'Delete', onClick: \(\) => ask\([\s\S]{0,400}deleteSave\(save\.key\)/, 'delete asks first and removes the slot it shows');
+  assert.match(load, /label: localizedText\('deleteSave', 'Delete'\), onClick: \(\) => ask\([\s\S]{0,400}deleteSave\(save\.key\)/, 'delete asks first and removes the slot it shows');
   assert.doesNotMatch(load, /More saves/, 'the note that the list rode the classic window is gone with the reason for it');
   const save = menu.slice(menu.indexOf('function paneSave(body)'), menu.indexOf('// ── EXIT (pause only)'));
   assert.match(save, /const mine = savedGames\(\)\.filter\(\(s\) => \(myId \? s\.characterId === myId : s\.characterName === me\)\);/, 'the character\u2019s own slots - CHARID1: by id, so a namesake\u2019s are not offered to overwrite');

@@ -79,6 +79,8 @@ import {
 import { deductGold, totalGoldAmount } from '../systems/court.js';
 import { splitStack } from '../systems/inventory.js';
 import { enumerateFilledTraps } from '../systems/mysticism.js';   // AUDIT 63 F14: SoulBound.EnumerateFilledTraps (:105-127) - the maker's lists are built from the pack
+import { localizedText } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { shownItemName } from '../systems/itemInfo.js';   // L10N3e: the shortName the label shows, in the player's language
 
 /** DaggerfallInventoryWindow.TabPages, in the order the four buttons
  *  sit in (:29-32). */
@@ -114,6 +116,8 @@ export const ROW_GAP = 5, ROW_START_Y = 2, ROWS_VISIBLE = 7;
 export const MAX_ITEM_NAME = 31;
 /** Internal_Strings.enterNewName. */
 export const ENTER_NEW_NAME = 'Enter new name : ';
+/** L10N3d: ...in the player's language, read where each name box shows it (:804; the sheet's Name button). */
+export const enterNewNameLabel = () => localizedText('enterNewName', ENTER_NEW_NAME);
 /** F170: EnchantmentListPicker's scroller (:22-26, :180-247) - it
  *  APPEARS past seven rows (ShowScroller), is 4 wide at the panel's
  *  right edge, and the wheel steps 8 pixels; no arrow buttons exist
@@ -307,7 +311,10 @@ export class ItemMakerWindow {
     this.selected = item;
     this.powers = [];
     this.sideEffects = [];
-    this.itemName = item?.name ?? '';
+    // ItemListScroller_OnItemClick (:602): the label reads the item's
+    // shortName - which DFU minted in the player's language (L10N3e,
+    // shownItemName); the canonical name stays on the item (_enchant)
+    this.itemName = shownItemName(item) ?? '';
   }
 
   /** NameItemButon_OnMouseClick (:799-811): click, seed the textbox
@@ -318,7 +325,7 @@ export class ItemMakerWindow {
     // the guard the first cut invented
     audio.playOneShot(SOUND.ButtonClick, 1);
     this.renameBox = new InputMessageBoxWindow({
-      label: ENTER_NEW_NAME,
+      label: enterNewNameLabel(),
       value: this.itemName,
       maxCharacters: MAX_ITEM_NAME,
       onSubmit: (input) => { this.itemName = input; },
@@ -425,7 +432,10 @@ export class ItemMakerWindow {
     // the item comes OFF the paperdoll (DaggerfallUnityItem.cs:1338).
     applyEnchantments(this.selected, [...this.powers, ...this.sideEffects],
       { owner: this.hooks.player ?? this.hooks.entity });
-    if (this.itemName) this.selected.name = this.itemName;
+    // RenameItem (:761). L10N3e: the label still showing the item's own
+    // name leaves its canonical name in place - only a name the player
+    // gave it is written
+    if (this.itemName && this.itemName !== shownItemName(this.selected)) this.selected.name = this.itemName;
     audio.playOneShot(SOUND.MakeItem, 1);
     this._say(d.text);
     this.selected = null;

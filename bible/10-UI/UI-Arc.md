@@ -947,17 +947,17 @@ still push CLASSIC canvas windows as children under the DOM, and so
 does the pack's USE arm.
 
     THE SPELLBOOK       FIVE construction sites across FOUR hosts:
-                        worldModes.js:2517 (the factory) and :1904 (a
+                        worldModes.js:2535 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
-                        dungeonContext.js:1280, world.js:4884,
-                        exterior.js:2646. It is the only window TWO
+                        dungeonContext.js:1281, world.js:4885,
+                        exterior.js:2647. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:12957, dungeonContext.js:8542. A seam
+    / NOTEBOOK          world.js:12973, dungeonContext.js:8549. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -992,7 +992,7 @@ None of these blocks anything; all are real.
                         makes it worth fixing: the overworld is the
                         first map a thumb could actually drive.
 
-    THE SPLIT POPUP     systems/itemTransfer.js:283. TransferItem
+    THE SPLIT POPUP     systems/itemTransfer.js:288. TransferItem
                         opens a numeric field DEFAULTED to maxAmount
                         when a stack will not fit whole (:1515);
                         BOTH skins take exactly what fits and never
@@ -5593,7 +5593,7 @@ incoming lane's `F2 real seam` test is gated on `ARENA2_PATH`, so a
 bare `npm test` skips it and reports green - it went in unexecuted.
 Run with ARENA2 it failed twice over. First a `TypeError`: its fake
 renderer had no `gl`, and `drawMenuBackdrop` measures the live context
-when no canvas is passed (`chargenArt.js:83`). With that stubbed, the
+when no canvas is passed (`chargenArt.js:88`). With that stubbed, the
 real assertion failed - and the assertion was WRONG. It ticked the
 player by zero and expected a frame, but `FLCPlayer.cs`'s Update order
 displays the current buffer only once a frame delay has ELAPSED, and
@@ -7071,7 +7071,7 @@ still speaking to devtools, both of them one line of plumbing rather
 than an arc:
 
 - `townTalk.frame` ticks and draws the HUD TEXT LAYER as well as the
-  overlay (`townTalk.js:666, :674`), and both exterior hosts called it
+  overlay (`townTalk.js:678, :686`), and both exterior hosts called it
   in their modal branch only WHEN A WINDOW WAS UP. AUDIT F2-I1 added
   that line to tick a window and gated it on the window existing. So
   inside a building a broken weapon, a fatigue warning and a level-up
@@ -7623,7 +7623,7 @@ because a Daggerfall quest speaks in journal entries, not objective
 flags: the entries ARE the tasks, and inventing checkbox objectives
 the machine does not track would be a lying UI. Archived quests parse
 the notebook's own filed header ('<name> completed|ended at <date>:',
-notebook.js:190-224) back into name/verdict/date - the verdict line
+notebook.js:191-225) back into name/verdict/date - the verdict line
 gold for completed, dim for ended - with the headerless overflow
 entry (the notebook's kept quirk) reading as a continuation. Data
 arrives RAW through the new `hooks.questLog` (world.js walks
@@ -8613,7 +8613,7 @@ and _BRISIEN is the MQ opener (StartGameBehaviour.cs:445-447) - so
 which quest is which is untouched. And the ARCHIVE is still not split
 by kind, which is the DATA's shape rather than an omission: the
 notebook's filed header keeps only the display name, so the questName
-is gone by the time a quest is filed (notebook.js:190-224). Three
+is gone by the time a quest is filed (notebook.js:191-225). Three
 sections is what this log can honestly draw.
 
 Pins: 2 in enhancedPause.test.js (the three sections in order from one
@@ -8711,7 +8711,7 @@ same answer: `ui/spellbookDoor.js`, with each host handing it only
 what that host knows.
 
 THE "HAND-ROLLED DUPLICATE" WAS NOT ONE. The board recorded
-worldModes.js:3393 as a second book built by hand 342 lines below the
+worldModes.js:3413 as a second book built by hand 342 lines below the
 factory. Read closely it is the SPELL MERCHANT'S SHOP - buyMode, with
 `offered`, the building's quality, the shop name, the haggling skills
 and the classic clock. A different question with different deps, and
@@ -8764,7 +8764,7 @@ window over, and both halves of it were here too.
 IT READ THE NAMES AND THREW AWAY THE NUMBERS. `spellEffects` hands
 back the effect RECORDS, and every one carries `magnitudeBaseLow/High`
 with its per-level step, `durationBase/Mod`, and `chanceBase/Mod` -
-the exact fields systems/effects.js:535-543 reads to resolve a live
+the exact fields systems/effects.js:540-548 reads to resolve a live
 effect. The first draft printed the two names and dropped the rest,
 which is the chronicle's flattened date wearing a different hat. Each
 part now appears only when the effect HAS it, because "0 to 0" is
@@ -8794,7 +8794,7 @@ mutations, 4 dead.
 
 PX24 (Mac: "with the logbook and history, I want them as one detailed
 UI"): THE CHRONICLE. Two classic windows built at four sites -
-questJournal.js from charSheetNav:53, world.js:5342 and
+questJournal.js from charSheetNav:53, world.js:5343 and
 dungeonContext.js, playerHistory.js from charSheetNav:61 - become ONE
 seam (ui/chronicleDoor.js, the U52/U53/PX23 shape a sixth time) and,
 on the enhanced skin, ONE WINDOW.
@@ -8848,7 +8848,7 @@ typed.
 
 AND IT THREW AWAY A DATE THE DATA ALREADY HELD. `_createNote` stamps
 every note with a HIGHLIGHT token first - the day and the city, from
-the host's own clock (notebook.js:114) - and the finished-quest filing
+the host's own clock (notebook.js:115) - and the finished-quest filing
 does the same. Flattening every token to a string turned that header
 into just another line, and the window numbered its entries 1, 2, 3
 instead, which tells a player nothing. `chronicleEntry` makes the
@@ -8863,7 +8863,7 @@ PX24c (Mac: "do it" - the same look for messages and history). Two
 faults, one of them mine from the pass before.
 
 PX24b PRINTED A LIE ON EVERY MESSAGE. `addMessage` builds a CENTRE
-token and the words (notebook.js:131) and never a highlight, so a
+token and the words (notebook.js:132) and never a highlight, so a
 message has no dated head - ever. The "- continued -" fallback,
 correct for a NOTE whose page split, ran on all fifty messages
 instead. It is the note's alone now; a message gets the only true
@@ -9421,7 +9421,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:8207` and `dungeonContext.js:2008` answer the same
+`worldModes.js:8232` and `dungeonContext.js:2009` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two
@@ -9481,7 +9481,7 @@ cited and ported somewhere in `src/`. FOUR were not:
 |---|---|---|
 | DaggerfallUseMagicItemWindow | 139 | **CLOSED, UI1** - see below |
 | DaggerfallMerchantServicePopupWindow | 175 | **CLOSED, UI2** - see below |
-| DaggerfallTransportWindow | 264 | OPEN, and it is a SYSTEM gap wearing a UI hat: `motor.js:869` reads `riding: false` with "the transport arc pends". The window is the last tenth of that arc, not a slice on its own |
+| DaggerfallTransportWindow | 264 | OPEN, and it is a SYSTEM gap wearing a UI hat: `motor.js:870` reads `riding: false` with "the transport arc pends". The window is the last tenth of that arc, not a slice on its own |
 | DaggerfallUnityMouseControlsWindow | - | NOT A GAP: DFU's own mouse-settings screen, and the port's settings surface (U29) carries those keys already |
 
 ### UI1 CLOSED: the use-magic-item window
@@ -9525,7 +9525,7 @@ the art-less fallback.
 ### What is left
 
 `DaggerfallTransportWindow` alone, and it wants its own arc: the window
-is trivial, `TransportManager` is not - `motor.js:869` reads
+is trivial, `TransportManager` is not - `motor.js:870` reads
 `riding: false` with "the transport arc pends". With UI1 and UI2
 closed, **58 of DFU's 60 real windows are ported**, and the 59th is a
 system's last tenth.
@@ -10150,7 +10150,7 @@ to the wrong code.
   so the edge was a silent no-op and one press glued a slider to the
   pointer for the rest of the popup's life, with the runaway value then
   written by the grid's save. `ControlsWindow.release()` forwards it now,
-  the ROAD-E E1 shape `ui/itemMakerWindow.js:210` has carried since
+  the ROAD-E E1 shape `ui/itemMakerWindow.js:214` has carried since
   Wave E, and it is `HorizontalSlider.cs:148-154`'s else arm.
 - **The wheel arm was dead.** `sliderScroll` ported MouseScrollUp/Down
   (:180-190) with no caller anywhere. `MouseControlsWindow.wheel(dir)`
@@ -10674,9 +10674,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:13416`,
+the other half went stale unnoticed. (The rest cite named `world.js:13432`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:13422` now.)
+deleted the second and the cite is `world.js:13438` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -10719,9 +10719,9 @@ c2 flight 2 caught the same pair driving the town map's chrome.
   row 0.
 
 **THE FIX.** `vy >= 0 &&` in front of the `update` call in both hovers
-- the arm `ui/chargen.js:1153` and `ui/spellbookWindow.js:442` already
+- the arm `ui/chargen.js:1190` and `ui/spellbookWindow.js:460` already
 carry. (The third guarded sibling is not the same arm:
-`ui/spellIconPickerWindow.js:227` tests `vx >= 0 && vy >= 0`, and
+`ui/spellIconPickerWindow.js:228` tests `vx >= 0 && vy >= 0`, and
 `test/citedrift.test.js`'s CD8c pins that two-part shape by name.)
 The vy-only arm is the faithful one to add: DFU's `Update` reads
 `dragDistance.y` only, so horizontal cursor travel never moves
@@ -10762,8 +10762,8 @@ mutants - the guard deleted from either new window, "ALL THREE" restored
 to the Ledger, "both" restored to Testing.md - all go red.
 
 **AND THE THREE SIBLINGS ARE NOT ONE ARM.** The first draft of the
-section above called `ui/chargen.js:1153`, `ui/spellbookWindow.js:442`
-and `ui/spellIconPickerWindow.js:227` "the same arm". They are not:
+section above called `ui/chargen.js:1190`, `ui/spellbookWindow.js:460`
+and `ui/spellIconPickerWindow.js:228` "the same arm". They are not:
 the icon picker tests `vx >= 0 && vy >= 0`, the two-part shape CD8c
 pins by regex, while the other two test `vy` alone. The two new guards
 deliberately take the vy-only form, for the reason stated above - DFU's
@@ -11093,7 +11093,7 @@ the interior half:
 
 - The callback was handed to `openTalkWindow`'s FIRST mount and lost by
   every later one. `showOverlay` writes `_onOverlayClosed` on each call
-  (`townTalk.js:638-664`), so in the art-less greeting chain a tone
+  (`townTalk.js:650-676`), so in the art-less greeting chain a tone
   press (`toneOption`'s reshow) or a Where-is page (`openCategories` ->
   `pagedList`) re-mounted with `onClosed` null and threw the restore
   away - the player escaped the conversation and the popup DFU keeps
@@ -13301,7 +13301,7 @@ pushed popup). Nine findings; four fixed, five recorded.
 classic window's header said "DFU has no keyboard here" and rolled
 its own keys - T cycled the tone, N/P paged, W where-is, digits. DFU
 HAS a keyboard here: DialogShortcuts.txt binds all twelve of the
-window's buttons (`systems/dialogShortcuts.js:340-345` - A Tell me
+window's buttons (`systems/dialogShortcuts.js:342-347` - A Tell me
 about, W Where is, L/P/T/J the four categories, O ask, G goodbye, C
 copy, F1/F2/F3 the tones), and the port's own T and P collided with
 two of them (T is Things, P is People). `NativeTalkWindow.input(code,
@@ -14082,7 +14082,7 @@ exactly this, and the enhanced wizard is where the port is allowed to be
 kinder.
 
 **The figure shown is the one that does not move.** `statUp` and
-`statDown` are strictly zero-sum (`ui/chargen.js:52-59`): a step moves
+`statDown` are strictly zero-sum (`ui/chargen.js:54-61`): a step moves
 one point between a stat and the pool, and a *refused* step - at
 `MAX_STAT_VALUE` above, at the rolled value below - moves neither side.
 So **working stats + pool is invariant for a given roll**, and it is
@@ -14340,7 +14340,7 @@ items off your character."*
 
 It did not, and the whole of the reason is one line. INV1 hung the
 gesture on the pack's rows - `itemRow`'s `if (from === 'local')
-dragFrom(row, item)` (`ui/enhancedInventory.js:2371`) - and made the
+dragFrom(row, item)` (`ui/enhancedInventory.js:2372`) - and made the
 body a drop TARGET, with `equippedList` saying so in its own comment:
 *"the body is the equip target - `dragFrom`'s pointerup finds it by hit
 test, so the map needs no handler of its own"*. True for the direction
@@ -14839,8 +14839,8 @@ WINDOWS, which the first record did not name: under the enhanced skin the
 death screen (`ui/deathScreen.js:183-185`), the rest window's rows
 (`ui/restWindow.js:871`), the save window (`ui/saveWindow.js`, eight
 `shadowText` sites), the travel popup (`ui/travelPopUp.js:743`), the quest
-journal (`ui/questJournal.js:628-629`), every MessageBox row
-(`ui/messageBox.js:501, 434`) and every ActionTextBox (`ui/actionText.js:45,
+journal (`ui/questJournal.js:636-637`), every MessageBox row
+(`ui/messageBox.js:514, 434`) and every ActionTextBox (`ui/actionText.js:45,
 152`) still draw in the bitmap font - each a native window under THE
 NATIVE-WINDOW RULE, whose face cannot move without its DFU metrics moving
 too. That is a FONT2 slice, not this one.
@@ -15575,9 +15575,9 @@ whether an entry MATCHES and asserts nothing.
 Following it out was worse than the symptom. Five Ledger rows cite a
 PAIR - `` `world.js:N`, `exterior.js:M` `` - and the table captured `M`
 alone. So `M` was re-resolved at every wave for a year and `N` was never
-read: `world.js:10908` named a line that is 8950, `:1815` one that is
+read: `world.js:10920` named a line that is 8950, `:1816` one that is
 1215, `:1094` one that is 2194, `:3903` one that is 3066, `:3920` one
-that is 8907. `world.js:10642-10674` and `dungeonContext.js:1812` were
+that is 8907. `world.js:10654-10686` and `dungeonContext.js:1813` were
 stale the same way. Seven numbers re-resolved BY CONTENT, every
 uncaptured half de-baked to `\d+`, and eight new entries added so every
 number in a pair is captured. The half nobody reads cannot rot in
@@ -15878,7 +15878,7 @@ that through `InputManager` (:1084-1108, one poll a frame in
 `GetKeyDown` at all, so every consumer wrote its own out of the only
 read there was.
 
-`motor.js:1428` had already named this bug's twin from the other side:
+`motor.js:1429` had already named this bug's twin from the other side:
 "a render frame that accumulates less than one physics step swallowed
 the press" - the fix there moved `_heightAction` out of the fixed-step
 loop. The half that remained was the host's.
@@ -16912,9 +16912,9 @@ there; all-max gets the sentence that is true of it.
 
 **F3 - two of the eight descriptions named numbers that do nothing.**
 The window's own promise is that each attribute line is true of code
-that runs. Willpower cited `questMacros.js:633`, which only PRINTS
+that runs. Willpower cited `questMacros.js:669`, which only PRINTS
 MagicResist for the `%mr` macro - the consumer is `spellcast.js:158`'s
-saving throw. Agility cited `toHitModifier` (formulas.js:120), which is
+saving throw. Agility cited `toHitModifier` (formulas.js:123), which is
 the CHARACTER SHEET's display modifier and is read by chargen's derived
 block and the quest macros and by nothing in the hit roll; the term
 that actually rides a swing is `statsToHit` (:306-307), a tenth of the
@@ -17148,7 +17148,7 @@ says in its own header that a second `--apply` against the same base
 moves every cite AGAIN. Recovering this slice's line shifts by
 reverting the tree except the files it had edited re-created exactly
 that: the kept files still carried the first pass's moves, and the
-second pass moved them a second time - `dungeonContext.js:2897` became
+second pass moved them a second time - `dungeonContext.js:2904` became
 2221 where the line had gone to 2215. The repair is a pairing walk:
 read HEAD's number at the same position in the same file, resolve it
 BY CONTENT in the working tree, and write that. Forty-seven cites came
@@ -17253,7 +17253,7 @@ UNDER the strip rather than at a box that now contains it. All four new
 checks fail against the shipped code.
 
 **F5 - THE ROW NAMED A KEY CALLED NONE.** `buttonText(null)` is
-KeyCode.None's own string (`systems/controlsConfig.js:359`), so a
+KeyCode.None's own string (`systems/controlsConfig.js:360`), so a
 player who CLEARED the character-sheet binding was handed a plate
 reading A LEVEL AWAITS / NONE - an instruction to press a key that does
 not exist, which is the bug the registry lookup was there to prevent

@@ -15,6 +15,7 @@ import { liveStat, maxFatigue } from './statMods.js';
 import { skillValue, SKILLS } from './skills.js';
 import { healingRateModifier } from '../combat/formulas.js';   // U10
 import { isOnlinePage } from './onlineLane.js';   // REST-MANA1: online, every career's magicka comes back with rest
+import { localizedText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
 // ---- DFCareer.SpecialAbilityFlags (the low byte of
 // AbilityFlagsAndSpellPointsBitfield) + RapidHealingFlags ----
@@ -81,6 +82,8 @@ export function spellPointRecoveryRate(entity) {
 export const EXHAUSTED_SAFE_TEXT_ID = 1071;
 export const EXHAUSTED_ENEMIES_TEXT_ID = 1072;
 export const EXHAUSTED_IN_WATER = 'Fatigue overcomes you and sends you to a watery grave....';
+/** L10N3d: the line as the hosts show it (PlayerEntity.cs:2407), in the player's language. */
+export const exhaustedInWaterText = () => localizedText('exhaustedInWater', EXHAUSTED_IN_WATER);
 /**
  * FIELD BUGS 2026-09-30b (SWIM-SPENT; Mac: "you can get instakilled when fishing" - "I dont care about DFU. We're our
  * own thing now"): A SWIMMER WHO RUNS OUT OF FATIGUE DROWNS, NOT AT ONCE. DFU's OnExhausted SetHealth(0)s a swimmer

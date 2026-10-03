@@ -170,7 +170,7 @@ test('PX30b: the breath bar and the two hands - each only when there is one', ()
   // QS6: and the readied chip stands down when the SPELL CHIP is already
   // naming that spell - two chips a hand's width apart saying one word is a
   // stutter, not a readout.
-  assert.match(src, /const readyName = readySpell && !doubled \? String\(readySpell\.name \?\? ''\) : null;/);
+  assert.match(src, /const readyName = readySpell && !doubled \? String\(shownSpellName\(readySpell\) \?\? ''\) : null;/);
   // The host hands them over through drawHud's own options bag, so a
   // host that knows neither passes neither.
   // AUDIT 28 W2a re-aimed from the literal bag-tail: the bag grew

@@ -23,9 +23,9 @@
  {
   "name": "MACRO-4-a-deity-line-misspelled",
   "file": "src/systems/guildServices.js",
-  "old": "Stendarr: 'God of Mercy'",
-  "new": "Stendarr: 'God of Justice'",
-  "tests": ["test/macro4_guild.test.js"]
+  "old": "Stendarr: ['stendarDesc', 'God of Mercy']",
+  "new": "Stendarr: ['stendarDesc', 'God of Justice']",
+  "tests": ["test/macro4_guild.test.js", "test/l10n3d_sites.test.js"]
  },
  {
   "name": "MACRO-4-the-popup-title-read-once-not-at-show",
@@ -37,8 +37,8 @@
  {
   "name": "MACRO-4-the-popup-forgets-the-revealed-dungeon",
   "file": "src/scenes/worldModes.js",
-  "old": "const name = host.revealLocation(noteKey); if (name) revealedDungeon = name; return name;",
-  "new": "return host.revealLocation(noteKey);",
+  "old": "const r = host.revealLocation(noteKey); if (r) revealedDungeon = r; return r?.name ?? null;",
+  "new": "return host.revealLocation(noteKey)?.name ?? null;",
   "tests": ["test/guildreveal.test.js"]
  },
  {

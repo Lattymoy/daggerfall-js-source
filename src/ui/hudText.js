@@ -49,6 +49,7 @@ import { drawText, measureText } from './text.js';
 import { nativeMetrics, NATIVE_W, DEFAULT_TEXT_COLOR } from './nativePanel.js';
 import { isEnhanced } from '../systems/uiSkin.js';
 import { drawEnhancedToasts, releaseEnhancedToasts } from './enhancedNotice.js';
+import { processGrammar } from '../systems/textManager.js';   // L10N3g: PopupText.AddText runs the grammar (PopupText.cs:117-118)
 import { timeScale } from '../systems/timeScale.js';   // CSA-G: PopupText.Update counts Time.deltaTime, which the time scale scales
 
 /** AUDIT FONT F1: every model gets a name of its own, so two never
@@ -119,9 +120,18 @@ export class HudText {
    *  Whitespace counts as nameless: a name that is all spaces paints
    *  the same empty plate. The text itself is queued UNTRIMMED, because
    *  what is drawn is the caller's string and this is a gate, not a
-   *  formatter. */
+   *  formatter.
+   *
+   *  L10N3g: "Apply grammar processor before display" (PopupText.cs
+   *  :117-118). The row, the repeat test below and the notebook's line
+   *  (:123 AddMessage(pgText)) are all the PROCESSED text, as DFU's
+   *  label is - so every AddHUDText line a translation writes with
+   *  grammar tokens reads resolved on both skins, a building's name on
+   *  activation (PlayerActivate.cs:472) among them. English is the
+   *  identity. */
   add(text, delayInSeconds = HUD_TEXT_POP_DELAY) {
-    if (String(text ?? '').trim() === '') return;
+    const pgText = processGrammar(text);
+    if (String(pgText ?? '').trim() === '') return;
     // NOTICE-SPAM (2026-09-22, Mac: "notification spam with the new
     // enhanced integration"; DragynDance had a column of the same line
     // over and over). A TOAST SYSTEM THAT STACKS ONE LINE TEN TIMES IS
@@ -143,7 +153,7 @@ export class HudText {
     // events and both belong on screen. Only the immediate repeat is
     // the spam.
     const back = this.lines[this.lines.length - 1];
-    if (back && back.text === text) {
+    if (back && back.text === pgText) {
       if (this.timer >= 0) this.timer = Math.max(this.timer, delayInSeconds);
       else this.nextPopDelay = Math.max(this.nextPopDelay, delayInSeconds);
       return;
@@ -151,8 +161,8 @@ export class HudText {
     if (this.lines.length === 0) this.timer = delayInSeconds;
     else if (this.timer >= 0) this.timer = Math.max(this.timer, delayInSeconds);
     else this.nextPopDelay = Math.max(this.nextPopDelay, delayInSeconds);
-    this.lines.push({ id: ++this._nextId, text });
-    this.onMessage?.(text);
+    this.lines.push({ id: ++this._nextId, text: pgText });
+    this.onMessage?.(pgText);
   }
 
   /** PopupText.Update verbatim. CSA-G: its `Time.deltaTime` (PopupText.cs:56-59) is game time, so the frame's real

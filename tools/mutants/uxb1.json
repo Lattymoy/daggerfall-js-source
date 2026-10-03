@@ -293,7 +293,7 @@
   {
     "name": "UXB1-S-the-grid-ignores-B",
     "file": "src/ui/controlsWindow.js",
-    "old": "      const share = code === 'KeyB' && canShareKey(this.unsaved, r.action, r.code, r.holders);",
+    "old": "      const share = !answer && code === 'KeyB' && canShareKey(this.unsaved, r.action, r.code, r.holders);",
     "new": "      const share = false;",
     "tests": [
       "test/uxb1s_sharedkeys.test.js"

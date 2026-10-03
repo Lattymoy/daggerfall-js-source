@@ -34,10 +34,13 @@ import { drawScreenDimBackdrop } from './chargenArt.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { TRANSPORT_MODES } from '../systems/transport.js';
+import { localizedText } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
 
 /** DaggerfallUI.cs:693's localized key, and the English DFU ships. */
 export const CANNOT_CHANGE_INDOORS = 'You cannot change transportation indoors.';
+/** L10N3d: the refusal as the hosts say it (DaggerfallUI.cs:693), in the player's language. */
+export const cannotChangeIndoorsText = () => localizedText('cannotChangeTransportationIndoors', CANNOT_CHANGE_INDOORS);
 
 export const TRANSPORT_BASE_IMG = 'MOVE00I0.IMG';
 export const TRANSPORT_DISABLED_IMG = 'MOVE01I0.IMG';

@@ -614,7 +614,7 @@ test('SET7 the host\'s seams: online alone (with the omen), stood each frame rig
   assert.ok(gateFrame > 0 && brokerFrame > gateFrame && brokerFrame - gateFrame < 400, 'stood right after the gate');
   assert.match(w, /if \(sigilBroker && _mode\(\) === 'exterior'\) livePersonBatches\.push\(\.\.\.sigilBroker\.batches\(\)\);/);
   assert.match(w, /const _brokerPick = sigilBroker \? pickActivatableHit\(cam\.pos, useFwd, sigilBroker\.targets\(\), collider\) : null;/);
-  assert.match(w, /else if \(_race\.brokerWins\) \{ if \(_brokerPick\.distance > _brokerPick\.reach\) setMidScreenText\(TOO_FAR_AWAY_TEXT\); else sigilBroker\.activate\(_brokerPick\.key, getInteractionMode\(\)\); \}/, 'the arm after the gate\'s, refusing out loud past her reach');
+  assert.match(w, /else if \(_race\.brokerWins\) \{ if \(_brokerPick\.distance > _brokerPick\.reach\) setMidScreenText\(tooFarAwayText\(\)\); else sigilBroker\.activate\(_brokerPick\.key, getInteractionMode\(\)\); \}/, 'the arm after the gate\'s, refusing out loud past her reach');
   assert.ok(w.indexOf('if (_race.gateWins)') < w.indexOf('else if (_race.brokerWins)') && w.indexOf('else if (_race.brokerWins)') < w.indexOf('else if (_race.campWins)'), 'the arms in the race\'s tie order');
   assert.match(w, /broker: sigilBroker \? pickActivatableHit\(cam\.pos, _hd, sigilBroker\.targets\(\), collider\) : null,/, 'the plaque races her');
   assert.match(w, /\(key\) => gatePool\?\.hoverName\(key\) \?\? null,[^\n]*\n\s*\(key\) => sigilBroker\?\.hoverName\(key\) \?\? null,/, 'and names her, after the gate');

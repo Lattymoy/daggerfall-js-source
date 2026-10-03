@@ -154,6 +154,7 @@ import { checkOverdueLoans, settleOverdueLoan, callInEmpireDebt, empireCallInLin
 import { isOnlinePage } from './onlineLane.js';   // EMPIRE-ACCOUNT: the Empire's draw is said online
 import { lowerRepForCrime, deductGold } from './court.js';                    // OverdueLoan's LowerRepForCrime (:70); REALM P0.3: the call's purse
 import { REGION_NAMES } from '../formats/mapsFile.js';            // loanReminder2's %s
+import { localizedText, formatText, getLocalizedRegionName } from './textManager.js';      // L10N3d: the two lines in the player's language; L10N3e: the region shown
 
 import { handleStartingCrimeGuildQuests } from './crimeGuilds.js';   // CG2: PlayerEntity.Update:531
 
@@ -550,9 +551,10 @@ export function runDayChange({ entity, lastMinutes, nowMinutes, rolls = Math.ran
     for (const r of reminders) {
       // Internal_Strings.csv:861-862, both lines, verbatim - DFU
       // AddHUDTexts them one after the other and the second carries
-      // the region name.
-      say(`You have a loan of ${r.owed} gold pieces due in`, LOAN_REMINDER_HUD_DELAY);
-      say(`less than ${r.months} months in ${REGION_NAMES[r.regionIndex] ?? ''}`, LOAN_REMINDER_HUD_DELAY);
+      // the region name, as shown (GetLocalizedRegionName, LoanChecker.cs:45).
+      say(formatText(localizedText('loanReminder', 'You have a loan of {0} gold pieces due in'), r.owed), LOAN_REMINDER_HUD_DELAY);
+      say(formatText(localizedText('loanReminder2', 'less than {0} months in {1}'), r.months,
+        getLocalizedRegionName(r.regionIndex, (i) => REGION_NAMES[i] ?? '')), LOAN_REMINDER_HUD_DELAY);
       loanReminders.push(r);
     }
     for (const regionIndex of overdue) {

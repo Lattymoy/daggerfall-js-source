@@ -483,8 +483,8 @@
   {
     "name": "REALM0-world-save-says-saved",
     "file": "src/scenes/world.js",
-    "old": "    if (!r.ok || !quiet) townTalk.say(r.ok ? 'Game saved.'",
-    "new": "    townTalk.say(r.ok ? 'Game saved.'",
+    "old": "    if (!r.ok || !quiet) townTalk.say(r.ok ? localizedText('gameSaved', 'Game saved.')",
+    "new": "    townTalk.say(r.ok ? localizedText('gameSaved', 'Game saved.')",
     "tests": [
       "test/realm0.test.js"
     ]
@@ -492,8 +492,8 @@
   {
     "name": "REALM0-dungeon-save-says-saved",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      if (r.ok && !quiet) hudText.add('Game saved.');",
-    "new": "      if (r.ok) hudText.add('Game saved.');",
+    "old": "      if (r.ok && !quiet) hudText.add(localizedText('gameSaved', 'Game saved.'));",
+    "new": "      if (r.ok) hudText.add(localizedText('gameSaved', 'Game saved.'));",
     "tests": [
       "test/realm0.test.js"
     ]

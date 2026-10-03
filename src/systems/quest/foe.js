@@ -23,6 +23,7 @@ import { foesTable } from './tables.js';
 import { GENDERS, getNameBankOfRegion, fullName, monsterName } from '../../characters/nameHelper.js';
 import { srand, randomRange } from '../../formats/dfRandom.js';
 import { ENEMY_BASICS, ENEMY_NAMES, isClassEnemyId } from '../../characters/enemyBasics.js';
+import { getLocalizedEnemyName } from '../textManager.js';   // L10N3e: the type name shown
 
 const MAX_SPAWN_COUNT = 8;
 
@@ -78,10 +79,15 @@ export class Foe extends QuestResource {
 
   /** ExpandMacro (Foe.cs:153-177): _symbol_ answers the TYPE name,
    *  =symbol_ the display name - the inversion is C#'s own. Stores
-   *  this foe as the quest's last resource for pronouns. */
+   *  this foe as the quest's last resource for pronouns.
+   *
+   *  L10N3e: the type name AS SHOWN. SetFoeName writes it through
+   *  GetLocalizedEnemyName(enemy.ID) (Foe.cs:276) and _symbol_ prints
+   *  it (:164); the port's `typeName` stays the canonical name the save
+   *  holds, so the lookup is made here, by the foe's MobileTypes id. */
   expandMacro(macroType) {
     this.parentQuest.lastResourceReferenced = this;
-    if (macroType === 1) return this.typeName;      // NameMacro1
+    if (macroType === 1) return getLocalizedEnemyName(this.foeType, this.typeName);      // NameMacro1
     if (macroType === 5) return this.displayName;   // DetailsMacro
     return false;
   }
@@ -171,9 +177,10 @@ export class Foe extends QuestResource {
    *  monster seed ADDS DFRandom.random_range(1, 1000000) drawn from
    *  DFRandom's own current state, verbatim. */
   _setFoeName(world) {
-    // TextManager.GetLocalizedEnemyName; the enum-name fallback for a
-    // type missing from EnemyBasics is unreachable through the
-    // Quests-Foes table (every id is a real enemy)
+    // TextManager.GetLocalizedEnemyName's English - the CANONICAL name,
+    // saved; expandMacro shows it in the player's language (L10N3e). The
+    // enum-name fallback for a type missing from EnemyBasics is
+    // unreachable through the Quests-Foes table (every id is a real enemy)
     this.typeName = ENEMY_BASICS[this.foeType]
       ? ENEMY_NAMES[this.foeType < 128 ? this.foeType : 43 + this.foeType - 128]
       : String(this.foeType);

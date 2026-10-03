@@ -34,6 +34,7 @@
 
 import { DROP_ICON_IDXS, DROP_ICON_ARCHIVES, RANDOM_TREASURE_ARCHIVE } from './lootDataTables.js';
 import { STORAGE_CONTEXT } from './horseCartLaw.js';   // HCC: the storage contexts the runtime's CanAccessWagonStorage takes
+import { localizedText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
 /** ItemGroups.Transportation.Small_cart's template index. */
 export const SMALL_CART_TEMPLATE = 93;
@@ -47,10 +48,11 @@ export const EXIT_TOO_FAR_TEXT = 'The exit is too far away for you to access you
 /** Why the wagon did not open. Same shape as itemTransfer's REFUSAL
  *  so one renderer answers both, and separate from it because these
  *  are a BUTTON's refusals rather than a transfer's - DFU has them in
- *  different members and they refuse different things. */
+ *  different members and they refuse different things. L10N3d: each
+ *  `text` is read in the player's language when the box asks for it. */
 export const WAGON_REFUSAL = Object.freeze({
-  noWagon: { reason: 'noWagon', text: NO_WAGON_TEXT },
-  exitTooFar: { reason: 'exitTooFar', text: EXIT_TOO_FAR_TEXT },
+  noWagon: { reason: 'noWagon', get text() { return localizedText('noWagon', NO_WAGON_TEXT); } },
+  exitTooFar: { reason: 'exitTooFar', get text() { return localizedText('exitTooFar', EXIT_TOO_FAR_TEXT); } },
 });
 
 /** Items.Contains(Transportation, Small_cart) (:1236). The CART IS IN

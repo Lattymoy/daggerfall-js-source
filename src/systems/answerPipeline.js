@@ -75,6 +75,7 @@ import {
 import { QUESTION_TYPE, NPC_KNOWLEDGE, BUILDING_HINT_TYPE, FACTIONS_AND_BUILDINGS } from './topicTree.js';
 import { randomRangeInclusive, srand } from '../formats/dfRandom.js';
 import { stringHash } from '../formats/netRuntime.js';   // the knowledge seed's string.GetHashCode (Ledger A)
+import { localizedStrings, getLocalizedLocationName, getLocalizedRegionName } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3e: the place names shown
 
 /** The question records (:1298-1353). */
 export const QUESTION_RECORDS = Object.freeze({
@@ -210,7 +211,7 @@ export function specialDungeonName(regionName, locationName, textLine = () => nu
   return String(name).replace(/\.+$/, '');
 }
 
-export const TALK_STRINGS = Object.freeze({
+export const TALK_STRINGS = localizedStrings({
   WhereAmI: 'Where am I?',                                    // id 393
   AnswerTextWhereAmI: 'You are in {0} in {1}.',               // id 394
   YouAreInSameBuilding: 'You have found {0}. You are in it.',  // id 395
@@ -534,18 +535,37 @@ export class AnswerPipeline {
       const buildingKey = this.deps.currentExteriorDoorBuildingKey?.() ?? null;
       if (buildingKey != null) {
         const discovered = this.deps.getAnyBuilding?.(buildingKey) ?? null;
-        if (discovered) return format(tmpl, discovered.displayName, this.deps.currentLocationName?.() ?? '');
+        if (discovered) return format(tmpl, discovered.displayName, this._shownLocationName());
         // the fallback when no discovery record exists
         const currentBuilding = (this.deps.tree?.listBuildings ?? []).find((x) => x.buildingKey === buildingKey);
-        return format(tmpl, currentBuilding?.name ?? '', this.deps.currentLocationName?.() ?? '');
+        return format(tmpl, currentBuilding?.name ?? '', this._shownLocationName());
       }
       if ((this.deps.isPlayerInsideCastle?.() ?? false) || (this.deps.isPlayerInsideDungeon?.() ?? false)) {
         return format(tmpl, this.deps.specialDungeonName?.() ?? '', this.deps.dungeonRegionName?.() ?? '');
       }
     } else {
-      return format(tmpl, this.deps.currentLocationName?.() ?? '', this.deps.currentRegionName?.() ?? '');
+      return format(tmpl, this._shownLocationName(), this._shownRegionName());
     }
     return this._text('resolvingError');
+  }
+
+  /** L10N3e: PlayerGPS.CurrentLocalizedLocationName (PlayerGPS.cs:257-260), which the three arms above read
+   *  (TalkManager.cs:1531, :1536, :1547) - GetLocalizedLocationName by the location's MapTableData.MapId, else its
+   *  canonical name. The host hands the CANONICAL name, the key everywhere else; its map id is the current region's
+   *  row for that name (MapNameLookup, as DFU's own GetLocation(region, name) finds a location). */
+  _shownLocationName() {
+    const name = this.deps.currentLocationName?.() ?? '';
+    const region = this.deps.currentRegion?.() ?? null;
+    const index = region?.mapNameLookup?.get?.(name);
+    return getLocalizedLocationName(index == null ? undefined : region.mapTable?.[index]?.mapId, name);
+  }
+
+  /** L10N3e: PlayerGPS.CurrentLocalizedRegionName (PlayerGPS.cs:252-255, TalkManager.cs:1547) -
+   *  GetLocalizedRegionName(CurrentRegionIndex), the host's canonical name its fallback. */
+  _shownRegionName() {
+    const canonical = () => this.deps.currentRegionName?.() ?? '';
+    const index = this.deps.currentRegionIndex?.();
+    return Number.isInteger(index) ? getLocalizedRegionName(index, canonical) : canonical();
   }
 
   /** GetAnswerWhereIsRegionalBuilding (:1868-1874) +
@@ -560,10 +580,12 @@ export class AnswerPipeline {
     const location = this.getLocationWithRegionalBuilding(REGIONAL_LOOKUP_INDEXES[listItem.index], FACTIONS_AND_BUILDINGS[listItem.index]);
     if (location) {
       // C# stores GetLocalizedLocationName(MapTableData.MapId, Name)
-      // (:1885), which answers the raw name whenever no override
-      // exists for that map id - so the raw name IS the default here,
-      // and the seam is what a localized build overrides.
-      this.locationOfRegionalBuilding = this.deps.localizedLocationName?.(location.mapTableData?.mapId, location.name) ?? location.name;
+      // (:1884) - the language's row for that map id, else the raw
+      // name. L10N3e: the text core answers it; a host's own seam, where
+      // one is wired, still answers first. %fcn shows it and nothing
+      // keys on it.
+      const mapId = location.mapTableData?.mapId;
+      this.locationOfRegionalBuilding = this.deps.localizedLocationName?.(mapId, location.name) ?? getLocalizedLocationName(mapId, location.name);
       return true;
     }
     return false;

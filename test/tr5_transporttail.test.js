@@ -32,8 +32,8 @@ test('TR5: both interior transitions dismount, and nothing else does (HandleTran
 });
 
 test('TR5: the T key indoors REFUSES with the HUD line, in both interior hosts', () => {
-  assert.match(read('src/scenes/worldModes.js'), /openTransport\(\) \{ townTalk\?\.say\?\.\(CANNOT_CHANGE_INDOORS\); \},/);
-  assert.match(read('src/scenes/dungeonContext.js'), /openTransport\(\) \{ hudText\.add\(CANNOT_CHANGE_INDOORS\); \},/);
+  assert.match(read('src/scenes/worldModes.js'), /openTransport\(\) \{ townTalk\?\.say\?\.\(cannotChangeIndoorsText\(\)\); \},/);
+  assert.match(read('src/scenes/dungeonContext.js'), /openTransport\(\) \{ hudText\.add\(cannotChangeIndoorsText\(\)\); \},/);
   assert.equal(CANNOT_CHANGE_INDOORS, 'You cannot change transportation indoors.');
 });
 

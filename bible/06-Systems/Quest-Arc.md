@@ -721,7 +721,7 @@ Ignoring') - permanent by parity, recorded in the coverage pin.
   faction-listener slot (addFactionListener first-claim-wins /
   removeFactionListener at dispose; PlayerActivate.StaticNPCClick
   reads the map - :1534, the only consumer in the DFU tree, and
-  wired at src/scenes/worldModes.js:667). activeFactionPersons walks NON-COMPLETE quests only -
+  wired at src/scenes/worldModes.js:668). activeFactionPersons walks NON-COMPLETE quests only -
   completed quests must not lock an NPC out (QuestMachine.cs:1085).
   The non-individual parse throw carries the TEMPLATE-SetComplete
   quirk; its sibling's does not.
@@ -1427,10 +1427,10 @@ triage: 25 kills at fails=5+ (one at fails=7 - the `| 0` int32 rail
 broke three pins at once), 2 survivors at the baseline 4, both
 PROVEN equivalents:
 
-- questBridge.js:76 `rawZ ?? 0 -> ?? 1`: the hash's only read of
+- questBridge.js:77 `rawZ ?? 0 -> ?? 1`: the hash's only read of
   rawZ is `z >> 2`, and `1 >> 2 === 0 === 0 >> 2` - for any record
   LACKING rawZ the mutated default is arithmetically invisible.
-- questBridge.js:85 `(pn.flags ?? 0) -> (?? 1)` in the gender arm:
+- questBridge.js:86 `(pn.flags ?? 0) -> (?? 1)` in the gender arm:
   gender reads bit 5 alone, and `1 & 32 === 0 === 0 & 32` - Male
   either way, every path.
 
@@ -2813,7 +2813,7 @@ banker and guild clerk in Daggerfall reached `TalkManager` with an
 empty name. Two things read it:
 
 - the greeting says the NPC's name once reaction is above zero, and
-  "stranger" below it (`townTalk.js:568`). Every static NPC in the
+  "stranger" below it (`townTalk.js:580`). Every static NPC in the
   game stayed a stranger no matter how well liked.
 - `topicTree`'s same-building-static test (`:558`) matches a topic
   caption against that name, so it never matched.
@@ -2899,7 +2899,7 @@ correct than the game it is a port of, which is the one thing this arc
 has never allowed. Expanding in place now. (The caller-side
 `if (quest)` went too - C# calls `ExpandQuestMessage` whether or not
 `GetQuest` found anything, and the null-parent bail is a forum-bug fix
-*inside* the helper, which `questMacros.js:548` already carries.)
+*inside* the helper, which `questMacros.js:584` already carries.)
 
 **Three nits with teeth.**
 
@@ -2907,7 +2907,7 @@ has never allowed. Expanding in place now. (The caller-side
 `PlayerActivate.StaticNPCClick:1534`. `TalkManager.cs` does not
 contain the word `Listener`. Three port comments named TalkManager as
 the reader and marked the wiring `(Q4 wires)` - over a reader the port
-already ships, at `worldModes.js:667`. A pending marker over shipped
+already ships, at `worldModes.js:668`. A pending marker over shipped
 work is worse than no marker at all: it sends the next reader looking
 for work that is done, in a file that never had it. Four sites
 corrected, the bible's copy included.
@@ -5480,7 +5480,7 @@ lesson one host over.
 **What did NOT ship:** PlayerEntity.Update's per-minute *intermittent
 spawn* roll (:486-492) still has no caller on this route. It is not
 this pool's dependency — it is a loop that carries the passive-guard
-spawns and the NPC-guard conversion with it (world.js:8119-8224) — and
+spawns and the NPC-guard conversion with it (world.js:8120-8225) — and
 it is named at the mount so the absence reads as a fact.
 
 **(c) The find-place seam's absence, narrowed to one sentence.**
@@ -5499,17 +5499,17 @@ knows its one city outright.
 This host owns a cast engine of its own, and `worldModes` takes *that
 instance* for the interior mode, so it covers the shops entered from
 `?exterior` too. It passed neither of `EntityEffectManager`'s two
-ready-spell events (`hostMagic.js:97-98`), and those two doors are the
+ready-spell events (`hostMagic.js:98-99`), and those two doors are the
 *only* route into the machine's `CastSpellDo` / `CastEffectDo` latches
-(`machine.js:935`/`:918`; C# subscribes them in the action's
+(`machine.js:945`/`:928`; C# subscribes them in the action's
 constructor). Every `cast X spell do` and `cast X effect do` on this
 whole route could therefore never latch and never fire. The pair the
-other two engine-owning hosts wire (`world.js:8520-8521`,
-`dungeonContext.js:2672-2673`) is wired here now, and with it
+other two engine-owning hosts wire (`world.js:8521-8522`,
+`dungeonContext.js:2679-2680`) is wired here now, and with it
 `CastSpellDo`'s two world reads — `getClassicSpellEffects` and the
-byte-folded `spellHasMatchForClassicEffect` (`world.js:14432-14435`),
+byte-folded `spellHasMatchForClassicEffect` (`world.js:14448-14451`),
 absent which the action self-completes at *parse*
-(`actions.js:2793`/`:2800`) and the task can never arm at all.
+(`actions.js:2794`/`:2801`) and the task can never arm at all.
 
 Pins: 5 in `test/qx1_exterior_host.test.js` (the placement law RUN over
 the real `placeFoeFreely` with a stubbed world — the FOV cone bounded on
@@ -5645,7 +5645,7 @@ filed under key 0 for the sweep to reach.
 
 `place.js` now writes `buildingName: null` at those three sites and
 `quest.js` falls back to `null`, which also puts the two quest-side
-seams back in agreement — `topicTree.js:432` (TalkManager.cs:2958) had
+seams back in agreement — `topicTree.js:438` (TalkManager.cs:2958) had
 always forwarded the raw field.
 
 Two seams downstream take the null and were checked against C# rather

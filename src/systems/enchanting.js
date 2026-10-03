@@ -45,6 +45,7 @@ import { templateByIndex } from './itemTemplates.js';
 import { ARMOR_MATERIAL } from './armorMaterials.js';
 import { WEAPON_MATERIALS } from '../characters/weapons.js';
 import { customItemClass } from './rriItems.js';   // RRI1: GetEnchantmentPower is a virtual the armor classes answer
+import { localizedText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { enchantGold } from '../net/alchemyLaw.js';   // PROF12: Enchanting's layer - the gold with the rank's share off
 import { recipeById, jewelPoints } from '../net/recipeLaw.js';   // AUDIT PROF10 J1: the most a crafted piece's recipe mints
 import { enchantmentSettings } from './enchantmentCatalogue.js';   // AUDIT PROF10 J2: a crafted piece's own enchantments, costed as the maker costs a row
@@ -241,7 +242,7 @@ export function openPickerDecision(selectingPowers, { item = null, powers = [], 
 export function enchantDecision(item, powers = [], sideEffects = [], { gold = 0, discountPct = 0 } = {}) {
   if (!item) return { kind: 'noItem', text: ITEM_MUST_BE_SELECTED };
   if (powers.length === 0 && sideEffects.length === 0) {
-    return { kind: 'noEnchantments', text: NO_ENCHANTMENTS_PREPARED };
+    return { kind: 'noEnchantments', text: localizedText('noEnchantments', NO_ENCHANTMENTS_PREPARED) };   // L10N3d: DaggerfallItemMakerWindow.cs:724
   }
   // AUDIT PROF10 J2: a crafted piece's kept enchantments count against its points (GetTotalEnchantmentCost's own walk), and
   // cost no gold - they are on it already

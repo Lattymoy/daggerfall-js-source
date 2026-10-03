@@ -996,7 +996,7 @@ test('AUDIT WB12d (D2): the Summoner by his own name in the classic lines - "You
   activateMobileEnemy({ mobileType: RITE_SUMMONER_CAREER, entity: { properName: RITE_TEXT.summoner } }, 2, 'info', null, { hud: (t) => hud.push(t) });
   activateMobileEnemy({ mobileType: 128, entity: {} }, 2, 'info', null, { hud: (t) => hud.push(t) });
   assert.deepEqual(hud, ['You see the Summoner.', 'You see a Mage.']);
-  assert.match(read('src/scenes/exteriorFoes.js'), /title: corpseName\(properName\(e\.entity\) \?\? championName\(e\.entity, enemyDisplayName\(e\.mobileType\)\)\)/);
+  assert.match(read('src/scenes/exteriorFoes.js'), /title: corpseName\(properName\(e\.entity\) \?\? championName\(e\.entity, corpseEntityName\(e\.mobileType\)\)\)/);
 });
 
 test('AUDIT WB12d (C15): the faithful on the Overworld are the rite\'s - "Dagon\'s Faithful, 7", attacked as "Dagon\'s Faithful (7)" - mine or a peer\'s, and the attack spares them all (mutants: a "Mage pack"; the attack\'s question by the pack\'s regex; the attacked rite still holding the clock)', () => {

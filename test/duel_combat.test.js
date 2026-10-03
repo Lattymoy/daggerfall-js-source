@@ -173,7 +173,7 @@ test('DUEL1 hosts by source: the swing reaches my opponent before any pool and i
   assert.match(w, /const r = resolveDuelStrike\(d, playerEntity, \{ backFacing: isBackFacing\(cam\.yaw, player\.feetAt\(\), from\) \}\);\s*\n\s*if \(r\.dmg > 0\) \{\s*\n\s*hurtPlayer\(playerEntity, r\.dmg, \{ spare: duelSpare \}\);/);
   assert.match(w, /if \(!duelBlowPlausible\(d, \[\.\.\._duelTrail\.map\(\(e\) => e\.p\), campToWire\(player\.feetAt\(\)\)\], duelWorldOf\(duel\.peer\), DUEL_RADIUS_M\)\) return null;/, 'AUDIT DUEL1 B6: the trail of my own feet, now last');
   // NAV-H (2026-09-28): a hostile ship in reach joined the same doors, after the duel and the foes
-  assert.match(w, /if \(duelEnemyNear\(\) \|\| areEnemiesNearby\(\[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\]\) \|\| navalHostileNear\(\)\) \{[^\n]*\n\s*townTalk\.say\(CANNOT_TRAVEL_ENEMIES_TEXT\);/, 'the travel map');
+  assert.match(w, /if \(duelEnemyNear\(\) \|\| areEnemiesNearby\(\[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\]\) \|\| navalHostileNear\(\)\) \{[^\n]*\n\s*townTalk\.say\(localizedText\('cannotTravelWithEnemiesNearby', CANNOT_TRAVEL_ENEMIES_TEXT\)\);/, 'the travel map');
   assert.equal((w.match(/enemiesNearby: \(\) => duelEnemyNear\(\) \|\| areEnemiesNearby\(/g) ?? []).length, 2, 'rest and a journey');
   assert.match(w, /duelHolds: \(\) => duelEnemyNear\(\),/);
   const m = rd('src/scenes/worldModes.js');

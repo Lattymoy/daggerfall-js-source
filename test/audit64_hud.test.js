@@ -248,12 +248,12 @@ test('AUDIT 64 F34: the label TIMER is dead under any window - Update runs for t
 test('AUDIT 64 F34: every SetMidScreenText caller speaks to the label, and the two PopupMessage siblings do not', () => {
   // PlayerActivate.cs:1424 - the mode line, in BOTH hosts that own one
   // (one C# call site, so one surface everywhere).
-  assert.match(src('scenes/townTalk.js'), /setMidScreenText\(`Interaction is now in \$\{m\} mode\.`\)/);
-  assert.match(src('scenes/dungeon.js'), /setMidScreenText\(`Interaction is now in \$\{im\} mode\.`\)/);
+  assert.match(src('scenes/townTalk.js'), /setMidScreenText\(interactionModeText\(m\)\)/);   // L10N3d: "Interaction is now in %s mode.", routed
+  assert.match(src('scenes/dungeon.js'), /setMidScreenText\(interactionModeText\(im\)\)/);
   // :780/:790/:834 - the youAreTooFarAway refusals.
-  assert.equal((src('scenes/townTalk.js').match(/setMidScreenText\(TOO_FAR_AWAY_TEXT\)/g) ?? []).length, 3);
-  assert.match(src('scenes/worldModes.js'), /setMidScreenText\(TOO_FAR_AWAY_TEXT\)/);   // :711, the bulletin board
-  assert.match(src('player/mobileEnemyActivate.js'), /midScreen\?\.\(TOO_FAR_AWAY_TEXT\)/);   // :834
+  assert.equal((src('scenes/townTalk.js').match(/setMidScreenText\(tooFarAwayText\(\)\)/g) ?? []).length, 3);
+  assert.match(src('scenes/worldModes.js'), /setMidScreenText\(tooFarAwayText\(\)\)/);   // :711, the bulletin board
+  assert.match(src('player/mobileEnemyActivate.js'), /midScreen\?\.\(tooFarAwayText\(\)\)/);   // :834
   // :996-1007 - LookAtInteriorLock, in both hosts that carry a lock.
   assert.match(src('scenes/dungeonContext.js'), /setMidScreenText\(lookAtLockText\(/);
   assert.equal((src('scenes/worldModes.js').match(/setMidScreenText\(lookAtLockText\(/g) ?? []).length, 2);
@@ -269,7 +269,7 @@ test('AUDIT 64 F34: every SetMidScreenText caller speaks to the label, and the t
   // the popup queue: PlayerActivate.cs:527 (lockedExteriorDoor, one
   // line above LookAtInteriorLock) and :553/:564 with
   // DaggerfallActionDoor.cs:170/:175/:189 (the pick outcomes).
-  assert.match(src('scenes/worldModes.js'), /townTalk\?\.say\?\.\(LOCKED_EXTERIOR_DOOR_TEXT\)/);
+  assert.match(src('scenes/worldModes.js'), /townTalk\?\.say\?\.\(lockedExteriorDoorText\(\)\)/);
   assert.match(src('scenes/dungeonContext.js'), /hudText\.add\(success \? LOCKPICKING_SUCCESS_TEXT : LOCKPICKING_FAILURE_TEXT\)/);
   // ...and mobileEnemyActivate's pickpocket RESULT keeps the popup sink
   // it always had (:838 -> :1611), which is why the refusal took a

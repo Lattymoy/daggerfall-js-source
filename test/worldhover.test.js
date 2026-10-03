@@ -1302,7 +1302,7 @@ test('INTERIOR-BODIES: a body killed inside a building is stood, named, listed a
   // this ladder: the pick reaches as far as the whole ray, so a body
   // across the room still WINS, and the handler is where the refusal is
   // spoken (AUDIT 65 MC-2).
-  const ladder = wm.slice(wm.indexOf("if (_pick.distance > _pick.reach) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }"));
+  const ladder = wm.slice(wm.indexOf("if (_pick.distance > _pick.reach) { setMidScreenText(tooFarAwayText()); return true; }"));
   assert.ok(ladder.indexOf("key.startsWith('foeCorpse:')") > 0,
     'the corpse arm is below the too-far refusal, so an out-of-reach body says so rather than falling through');
 

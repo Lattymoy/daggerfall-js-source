@@ -133,8 +133,8 @@
   {
     "name": "BALANCE1-overhaul-wear-unscaled",
     "file": "src/combat/pcaao.js",
-    "old": "  lowerCondition(item, blowWear(amount, rolls), owner, say, removeFrom);",
-    "new": "  lowerCondition(item, amount, owner, say, removeFrom);",
+    "old": "  lowerCondition(item, blowWear(amount, rolls), owner, say, removeFrom, shownItemName);",
+    "new": "  lowerCondition(item, amount, owner, say, removeFrom, shownItemName);",
     "tests": [
       "test/balance1.test.js"
     ]

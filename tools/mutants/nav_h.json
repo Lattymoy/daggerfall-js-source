@@ -277,8 +277,8 @@
   {
     "name": "NAV-H-a-party-trip-past-a-pirate",
     "file": "src/scenes/world.js",
-    "old": "...exteriorFoes.foes]) || navalHostileNear()) return CANNOT_TRAVEL_ENEMIES_TEXT;",
-    "new": "...exteriorFoes.foes])) return CANNOT_TRAVEL_ENEMIES_TEXT;",
+    "old": "...exteriorFoes.foes]) || navalHostileNear()) return localizedText('cannotTravelWithEnemiesNearby', CANNOT_TRAVEL_ENEMIES_TEXT);",
+    "new": "...exteriorFoes.foes])) return localizedText('cannotTravelWithEnemiesNearby', CANNOT_TRAVEL_ENEMIES_TEXT);",
     "tests": [
       "test/nav_h_host.test.js"
     ]

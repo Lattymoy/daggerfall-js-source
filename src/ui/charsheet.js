@@ -50,13 +50,14 @@ import { bankingStatusRows } from '../systems/banking.js';   // AUDIT 64 F28: Cr
 import { ownTimeLeftShort } from '../systems/worldTick.js';   // AUDIT LIVED1 Q: online, a loan's due as the time left on the character's clock
 import { REGION_NAMES } from '../formats/mapsFile.js';       // GetLocalizedRegionName
 import { InputMessageBoxWindow } from './inputMessageBox.js';   // CM4: the Name button's DaggerfallInputMessageBox
-import { ENTER_NEW_NAME } from './itemMakerWindow.js';          // CM4: Internal_Strings.enterNewName, homed with its first reader
+import { enterNewNameLabel } from './itemMakerWindow.js';       // CM4: Internal_Strings.enterNewName, homed with its first reader
+import { localizedText, formatText, processGrammar } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3g: the race label's grammar
 import { healthStatusRows } from '../systems/healthStatus.js';   // CM4: CreateHealthStatusBox's rows
 import { affiliations } from '../systems/affiliations.js';   // CM4: ShowAffiliationsDialog's book - GUILD-REP: one model, both skins
 import { firstHotkey } from '../systems/dialogShortcuts.js';   // CM4: the four buttons' DaggerfallShortcut bindings
 import { YesNoBoxWindow } from './yesNoBox.js';   // SOFTCAP3: the Master Skills switch asks in DFU's own Yes/No box
 import { masterSkillsActive, masterSkillsSwitchable, masterSkillsBlockReason, masterSkillsStatusText, setMasterSkills, MASTER_SKILLS_OFFER_ROWS, MASTER_SKILLS_INFO_ROWS, MASTERY_GROUP_NAMES, masterySlots, masteryCandidates, masteryChoiceRows, masterSkill, isMasteredSkill, careerGroupOf } from '../systems/masterSkills.js';   // SOFTCAP3/4
-import { liveRaceTemplate } from '../systems/vampirism.js';   // DISC10-D V5: the live race the sheet names
+import { liveRaceTemplate, liveRaceName } from '../systems/vampirism.js';   // DISC10-D V5: the live race the sheet names
 /** AUDIT LIVED1 Q: the sheet's due column online - "in 359 days" / "due now"; null offline, where DFU's date stands. */
 const loanDueShort = (due) => { const s = ownTimeLeftShort(due); return s == null ? null : s === 'now' ? 'due now' : `in ${s}`; };
 
@@ -257,6 +258,8 @@ export const statDescriptionTextId = (i) => (i >= 0 && i < STAT_KEYS_ORDER.lengt
 
 /** Internal_Strings.csv:110 - CheckIfDoneLeveling's refusal (:437-443). */
 export const MUST_DISTRIBUTE_BONUS_POINTS = 'You must distribute all bonus points.';
+/** L10N3d: ...in the player's language, read where each levelling screen refuses. */
+export const mustDistributeBonusPointsText = () => localizedText('mustDistributeBonusPoints', MUST_DISTRIBUTE_BONUS_POINTS);
 /** DaggerfallUI.DaggerfallHighlightTextColor (DaggerfallUI.cs:54),
  *  Color32(219,130,40,255) - MultiFormatTextLabel's DEFAULT
  *  HighlightColor, what it paints a TextHighlight token with (:363)
@@ -281,8 +284,6 @@ export const NAV_BUTTONS = Object.freeze(['inventory', 'spellbook', 'logbook', '
 
 /** TEXT.RSC record 19, "You have no affiliations." (ShowAffiliationsDialog :327-364). */
 export const NO_AFFILIATIONS_TEXT_ID = 19;
-/** Internal_Strings.levelProgress (LevelButton_OnMouseClick :784). */
-export const LEVEL_PROGRESS_PREFIX = 'Progress made to the next level: ';
 
 /** LevelButton_OnMouseClick (:779-786), verbatim arithmetic: the level
  *  the skill sum has earned, its fraction as a whole percent. DFU holds
@@ -314,8 +315,8 @@ export function affiliationRows(entity, rows = null) {
   const book = affiliations(entity);
   if (!book.length) return noAffiliations();
   return [
-    { cells: [{ text: 'Affiliation', x: 0 }, { text: 'Rank', x: 125 }], highlight: true },
-    ...book.map((a) => ({ cells: [{ text: a.affiliation, x: 0 }, { text: `${a.title} (rep:${a.rep})`, x: 125 }] })),
+    { cells: [{ text: localizedText('affiliation', 'Affiliation'), x: 0 }, { text: localizedText('rank', 'Rank'), x: 125 }], highlight: true },
+    ...book.map((a) => ({ cells: [{ text: a.affiliation, x: 0 }, { text: formatText(localizedText('affiliationFormatString', '{0} (rep:{1})'), a.title, a.rep), x: 125 }] })),
   ];
 }
 
@@ -439,7 +440,7 @@ export class CharSheet {
   _checkIfDoneLeveling() {
     if (this.leveling) {
       if (this.pool > 0 && !this._workingAllMax()) {
-        this.child = new ActionTextBox([MUST_DISTRIBUTE_BONUS_POINTS]);
+        this.child = new ActionTextBox([mustDistributeBonusPointsText()]);
         return false;
       }
       this.leveling = false;
@@ -475,7 +476,7 @@ export class CharSheet {
   _showName() {
     audio.playOneShot(SOUND.ButtonClick, 1);
     this.child = new InputMessageBoxWindow({
-      label: ENTER_NEW_NAME,
+      label: enterNewNameLabel(),
       value: this.entity?.name ?? '',
       onSubmit: (input) => { if (input.length > 0 && this.entity) this.entity.name = input; },
     });
@@ -484,7 +485,7 @@ export class CharSheet {
   /** LevelButton_OnMouseClick (:779-786). */
   _showLevel() {
     audio.playOneShot(SOUND.ButtonClick, 1);
-    this.child = new ActionTextBox([`${LEVEL_PROGRESS_PREFIX}${levelProgressPercent(this.entity)}%`]);
+    this.child = new ActionTextBox([formatText(localizedText('levelProgress', 'Progress made to the next level: {0}%'), levelProgressPercent(this.entity))]);
   }
 
   /** HealthButton_OnMouseClick (:801-806) -> CreateHealthStatusBox. */
@@ -730,7 +731,7 @@ export class CharSheet {
     // sheet's own art, cleared by the next key or click.
     if (this.notice) label(this.notice, 8, 190, { color: this.noticeOk ? [0.9, 0.9, 0.85, 1] : [1, 0.5, 0.4, 1] });   // SOFTCAP3: a switch that moved says so in white
     label(e.name ?? '', 41, 4);
-    label(liveRaceTemplate(e)?.name ?? e.race ?? 'Breton', 41, 14);   // DISC10-D V5: PlayerEntity.RaceTemplate.Name (DaggerfallCharacterSheetWindow.cs:398) - the compound race
+    label(processGrammar(liveRaceName(e) || 'Breton'), 41, 14);   // DISC10-D V5: PlayerEntity.RaceTemplate.Name (DaggerfallCharacterSheetWindow.cs:398) - the compound race; L10N3g: through the grammar there, so a translation's {male/female} race word takes the hero's gender
     label(e.career?.name ?? '', 46, 24);
     label(e.level ?? 1, 45, 34);
     // DaggerfallCharacterSheetWindow.cs:401 is
@@ -847,7 +848,7 @@ export class CharSheet {
     if (showHth) {
       const v = skillValue(e, SKILLS.HandToHand);
       shadowText(renderer, font,
-        `${SKILL_NAMES[SKILLS.HandToHand]} dmg: ${handToHandMinDamage(v)}-${handToHandMaxDamage(v)}`,
+        formatText(localizedText('hthDamageFormatString', '{0} dmg: {1}-{2}'), SKILL_NAMES[SKILLS.HandToHand], handToHandMinDamage(v), handToHandMaxDamage(v)),
         m, x + 4, y + 13 + (lines - 1) * 9, { color: [0.9, 0.9, 0.85, 1] });
     }
     // SOFTCAP3: THE MASTER SKILLS ROW - its state and its key, in the dialog's highlight gold; a click on it or M

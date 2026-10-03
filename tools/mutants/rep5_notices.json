@@ -2,8 +2,8 @@
   {
     "name": "REP5-a-band-edge-moved",
     "file": "src/systems/legalBands.js",
-    "old": "  if (rep < -10) return 'a scoundrel';",
-    "new": "  if (rep <= -10) return 'a scoundrel';",
+    "old": "  if (rep < -10) return localizedText('aScoundrel', 'a scoundrel');",
+    "new": "  if (rep <= -10) return localizedText('aScoundrel', 'a scoundrel');",
     "tests": [
       "test/rep5_notices.test.js"
     ]

@@ -170,8 +170,8 @@ carried only the first of the two lines, so a player fighting with the
 left-hand weapon loaded back holding the right hand's item, or bare
 fists. By the time it was found, the two restore lines had drifted six
 and thirteen lines apart inside their own hosts, and the comment in
-`worldModes.js` that pointed between them cited `world.js:10639` and
-`dungeonContext.js:8002` - lines that had moved to `:6405` and `:7975`.
+`worldModes.js` that pointed between them cited `world.js:10651` and
+`dungeonContext.js:8009` - lines that had moved to `:6412` and `:7982`.
 *Three copies of a rule, and the signpost between them stale as well.*
 
 The pair lives in `src/combat/playerWeapon.js` now - `weaponPoseOf`,
@@ -218,8 +218,8 @@ for the drift this program's thesis predicts, and both came back clean;
 the honest result of an audit is sometimes that the work is not owed.
 
 **S1 - the two exterior hosts' draw ladders. THE HOSTS ARE NOT PEERS,
-and the record never said so.** `main.js:119` routes `?exterior`,
-`?region` and `?loc` to `bootExterior`; the front door (`main.js:254`)
+and the record never said so.** `main.js:124` routes `?exterior`,
+`?region` and `?loc` to `bootExterior`; the front door (`main.js:259`)
 boots `bootWorld`. main.js says it in its own words: *"Dev scenes stay
 one param away (?exterior/?world/etc)."* So this is a shipping ladder
 against a dev scene's ladder, not two live copies of one law - which is
@@ -232,7 +232,7 @@ has and `exterior.js` lacks is the streaming host's own (terrain pixels,
 riding, online peers). Everything `exterior.js` has and `world.js` lacks
 is a `?rig`/`?rigNear`/`?shot` probe rig, its own `refreshSeason` - whose
 streaming twin `tickSeason` is documented AND cites `refreshSeason` by
-name at `world.js:879` - and two math helpers in the shot path. **No
+name at `world.js:880` - and two math helpers in the shot path. **No
 drift.**
 
 **S2 - the mode-transition teardown order. Three candidate findings, all
@@ -249,13 +249,13 @@ three collapsed on verification.**
 2. *"`npcSession.onWorldChanged()` is on both door exits and not on the
    teleport/load path."* True, and correct: every caller of
    `forceExitToExterior` follows it with `_teleportToPixel`, and THAT
-   function owns the call (`world.js:10611`, DFU's `OnMapPixelChanged` /
+   function owns the call (`world.js:10623`, DFU's `OnMapPixelChanged` /
    `OnLoadEvent`). The quickload caller goes through
    `restoreSessionState` instead. Calling it in both places would be the
    redundancy, not the fix.
-3. *"`worldModes.js:11270` disposes the dungeon overlay that
+3. *"`worldModes.js:11295` disposes the dungeon overlay that
    `dungeonCtx.destroy()` disposes again - HARD1's double free."* Already
-   known, already written down, at `dungeonContext.js:8892-8893`:
+   known, already written down, at `dungeonContext.js:8899-8900`:
    *"dispose() is idempotent (A2), which is what makes the outer host's
    call harmless."* The tree had the answer before the audit asked.
 
@@ -548,7 +548,7 @@ frame**.
 
 **F3 - it assumed the population was `ui/*Door.js`.** It is not. Twelve
 window classes are constructed straight into a host slot, and
-`townTalk.js:1215` paints every *covered* window as well
+`townTalk.js:1227` paints every *covered* window as well
 (`eachCoveredWindow((w) => w.draw(...))`), so depth is in the contract
 too, not just the top of the stack.
 
@@ -556,7 +556,7 @@ too, not just the top of the stack.
 
 Read off the four hosts that own a window stack, scoped to the enclosing
 function rather than a fixed lookback (the first pass used four lines and
-mis-read `townTalk.js:1307` as unguarded; its guard sits eight lines up -
+mis-read `townTalk.js:1319` as unguarded; its guard sits eight lines up -
 HARD2's D10 pin was re-aimed for the same reason):
 
 | arm | required by | note |

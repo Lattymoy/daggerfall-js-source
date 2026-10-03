@@ -52,17 +52,22 @@
 // - the find box (:951-957) runs DFU's weighted edit distance over
 //   the OPEN region's names (systems/editDistance.js), not a prefix
 //   match, with MatchesCutOff's relevance gate.
+// - L10N3e: the names SHOWN are the player's language's -
+//   GetLocalizedRegionName (:1622), GetLocalizedLocationName by map id
+//   (:447, :1472, :1641, :1695) - and the find box and the L-key list
+//   search and list them (localizedMapNameLookup, :1465-1480). What the
+//   map hands its host (a journey's or a teleport's name and region)
+//   stays the canonical MAPS.BSA name: that is a key.
 //
 // RECORDED DEPARTURES:
-// - no localization layer: every name is the canonical MAPS.BSA one,
-//   so GetLocalizedLocationName / GetLocalizedRegionName collapse to
-//   the map table and REGION_NAMES, and the localizedMapNameLookup
-//   dictionary reduces to the region's own name list. With it goes
-//   the COLLATION: DFU's L-key list is OrderBy(p => p), which is
+// - the COLLATION: DFU's L-key list is OrderBy(p => p), which is
 //   culture-sensitive, and this sorts ordinal - visible as the row
 //   order of names that differ only by an apostrophe or a hyphen
 //   (systems/editDistance.js records the same departure on the find
 //   box's own two orderings).
+// - L10N3e: localizedMapNameLookup is kept per region. DFU rebuilds it
+//   only when it lists the names, so a find in one region after the L
+//   key in another read the other region's lookup.
 // - no TextureReplacement: the imported region overlays and custom
 //   region maps (:648-660, :821-833) have no door here.
 // - no world data replacement: checkLocationDiscovered reads the
@@ -128,6 +133,7 @@ import { registerCommand, consoleLog, HELP_COMMAND } from '../systems/consoleCom
 import { travelMapFilters, travelMapPopUpState, setTravelMapPopUpState, travelMapSaveData, restoreTravelMapSaveData, travelMapMarkedMapId, setTravelMapMarkedMapId } from '../systems/travelMapState.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
+import { localizedText, formatText, getLocalizedLocationName, getLocalizedRegionName } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3e: the place names shown
 
 // --- DFU's fields (:38-63) ---
 export const BETONY_INDEX = 19;
@@ -586,6 +592,7 @@ export class TravelMapWindow {
     this._teleportChargeDone = false;
     this._distance = null;
     this._distanceRegionName = null;
+    this._shownNames = null;   // L10N3e: localizedMapNameLookup, and the region it was built for
     if (this._to?.settings?.roadsIntegration) {
       this._dotsScale = DOT_SCALE;
       this._dotsBuf = new Uint32Array(REGION_W * DOT_SCALE * REGION_H * DOT_SCALE);
@@ -620,14 +627,29 @@ export class TravelMapWindow {
     return region;
   }
 
+  /** The region's CANONICAL name (GetRegionNameForMapReplacement,
+   *  :1624-1627) - what a journey hands its host, a key. */
   _getRegionName(region) { return REGION_NAMES[region] ?? ''; }
 
-  /** GetLocationNameInCurrentRegion (:1630-1658). The fallback arm
-   *  reads locationSummary.MapIndex rather than the argument - DFU's
-   *  own quirk, kept. */
+  /** GetRegionName (:1620-1623) - L10N3e: the name SHOWN,
+   *  GetLocalizedRegionName, the canonical one its fallback. */
+  _shownRegionName(region) { return getLocalizedRegionName(region, (i) => this._getRegionName(i)); }
+
+  /** GetLocationNameInCurrentRegion's MAPS.BSA arm (:1653-1656) - the
+   *  CANONICAL name, a journey's key. The fallback arm reads
+   *  locationSummary.MapIndex rather than the argument - DFU's own
+   *  quirk, kept. */
   _getLocationNameInCurrentRegion() {
     if (this.currentDFRegionIndex === -1) return '';
     return this.currentDFRegion?.mapNames?.[this.locationSummary?.mapIndex] ?? '';
+  }
+
+  /** GetLocationNameInCurrentRegion (:1630-1658) as it is SHOWN - L10N3e:
+   *  "Localized name has first priority if one exists" (:1640-1643), by
+   *  the summary's map id; an empty row is no name. */
+  _shownLocationNameInCurrentRegion() {
+    if (this.currentDFRegionIndex === -1) return '';
+    return getLocalizedLocationName(this.locationSummary?.mapID, '') || this._getLocationNameInCurrentRegion();
   }
 
   /** checkLocationDiscovered (:1121-1131) - the instance door onto the
@@ -1066,12 +1088,12 @@ export class TravelMapWindow {
 
   /** UpdateRegionLabel (:1275-1286). */
   regionLabelText() {
-    if (!this.regionSelected) return this._getRegionName(this.mouseOverRegion);
+    if (!this.regionSelected) return this._shownRegionName(this.mouseOverRegion);
     if (this.locationSelected) {
-      return `${this._getRegionName(this.mouseOverRegion)} : ${this._getLocationNameInCurrentRegion()}`;
+      return `${this._shownRegionName(this.mouseOverRegion)} : ${this._shownLocationNameInCurrentRegion()}`;
     }
-    if (this.mouseOverOtherRegion) return `Switch To: ${this._getRegionName(this.mouseOverRegion)} Region`;
-    return this._getRegionName(this.mouseOverRegion);
+    if (this.mouseOverOtherRegion) return formatText(localizedText('switchToRegion', 'Switch To: {0} Region'), this._shownRegionName(this.mouseOverRegion));
+    return this._shownRegionName(this.mouseOverRegion);
   }
 
   // --- identify (:1732-1780) ---
@@ -1113,20 +1135,31 @@ export class TravelMapWindow {
 
   // --- the find flow (:1435-1607) ---
 
-  /** GetCurrentRegionLocalizedMapNames (:1465-1478) - deduped, in
-   *  map-table order (the port's names are canonical). */
+  /** GetCurrentRegionLocalizedMapNames (:1465-1480) - each location's
+   *  name as shown (L10N3e: GetLocalizedLocationName by its map id,
+   *  :1472), deduped as Region.MapNameLookup dedupes, in map-table
+   *  order, with localizedMapNameLookup from a shown name back to its
+   *  row, kept with the region it was built for (see the header). */
   _currentRegionMapNames() {
+    const region = this.currentDFRegion;
     const names = [];
-    const seen = new Set();
-    for (const name of this.currentDFRegion?.mapNames ?? []) {
-      if (seen.has(name)) continue;
-      seen.add(name);
+    const lookup = new Map();
+    const mapNames = region?.mapNames ?? [];
+    for (let l = 0; l < mapNames.length; l++) {
+      const name = getLocalizedLocationName(region.mapTable?.[l]?.mapId, mapNames[l]);
+      if (lookup.has(name)) continue;
+      lookup.set(name, l);
       names.push(name);
     }
+    this._shownNames = { region, lookup };
     return names;
   }
 
-  _nameIndex(name) { return this.currentDFRegion?.mapNameLookup?.get(name) ?? -1; }
+  /** localizedMapNameLookup's read (:1512, :1587): a shown name's row. */
+  _nameIndex(name) {
+    if (this._shownNames?.region !== this.currentDFRegion) this._currentRegionMapNames();
+    return this._shownNames.lookup.get(name) ?? -1;
+  }
 
   /** FindLocation (:1483-1531). */
   findLocation(name) {
@@ -1210,7 +1243,8 @@ export class TravelMapWindow {
   }
 
   _confirmRows() {
-    const name = this._getLocationNameInCurrentRegion();
+    // L10N3e: :1695 - the place by its map id, over the name as shown
+    const name = getLocalizedLocationName(this.locationSummary?.mapID, this._shownLocationNameInCurrentRegion());
     const rows = _art?.textRsc?.linesById?.(31) ?? [{ text: 'Do you wish to travel to %tcn?', center: true }];
     return rows.map((r) => {
       const text = (typeof r === 'string' ? r : r.text ?? '').replace('%tcn', name);
@@ -1224,14 +1258,16 @@ export class TravelMapWindow {
   _createPopUpWindow() {
     const pos = getPixelFromPixelID(this.locationSummary.id);
     if (this.teleportationTravel) {
+      // L10N3e: the popup SHOWS DestinationName (:1712, the name as
+      // shown); the host is handed the canonical one, its key
       const name = this._getLocationNameInCurrentRegion();
-      this.telePopUp = new TeleportPopUpWindow({ pixel: pos, name }, {
+      this.telePopUp = new TeleportPopUpWindow({ pixel: pos, name: this._shownLocationNameInCurrentRegion() }, {
         onExit: () => { this.telePopUp = null; },
-        onTeleport: (pixel, destName) => {
+        onTeleport: (pixel) => {
           this.telePopUp = null;
           this.deps.onTeleport?.({
             pixel,
-            name: destName,
+            name,
             region: this._getRegionName(this.locationSummary.regionIndex),
             mapId: this.locationSummary.mapID,
             regionIndex: this.locationSummary.regionIndex,
@@ -1468,7 +1504,7 @@ export class TravelMapWindow {
     // so the map under it neither hovers nor scrolls, as under any box.
     this.top = 'find';
     this.findBox = new InputMessageBoxWindow({
-      label: FIND_PROMPT,
+      label: localizedText('findLocationPrompt', FIND_PROMPT),
       value: '',
       maxCharacters: FIND_MAX_CHARACTERS,
       onSubmit: (text) => { this.top = null; this._handleLocationFindEvent(text); },
@@ -1787,7 +1823,9 @@ export class TravelMapWindow {
       // journal's - both call it on the same SiteDetails (:450).
       this.mouseOverRegion = patchRegionIndex(site.regionIndex ?? 0, site.regionName ?? '');
       this._openRegionPanel(this.mouseOverRegion);
-      this._handleLocationFindEvent(site.locationName ?? '');
+      // L10N3e: :447 - the find searches the names as shown, so it is
+      // handed the place's own (by its map id, else the canonical)
+      this._handleLocationFindEvent(getLocalizedLocationName(site.mapId, site.locationName ?? ''));
     }
     // SOC6: ABOVE the sub-window returns. A popup, a box or the picker
     // freezes the map's own animation (DFU's "only the top window

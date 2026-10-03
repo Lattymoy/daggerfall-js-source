@@ -61,7 +61,7 @@ import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { stepGhost, chunkFrame, GHOST_HOLD } from './barLoss.js';   // VB2 / FRAME1: a bar's loss (AUDIT NAV1: shared with the sea fight's card)
 import { mountHitNumbers, healNumberFor, showNumber } from './hitNumbers.js';   // HN1; PARTY-BUFFS: the heal a frame shows
 import { maxRoundsRemaining } from './hudActiveSpells.js';
-import { liveBundles, canEndBundle, endBundle, endedSpellText } from '../systems/mysticism.js';   // PX30: the ONE bundle walk the HUD already uses; BUFF-END: and which of them the player may end
+import { liveBundles, canEndBundle, endBundle, endedSpellText } from '../systems/mysticism.js'; import { shownSpellName } from '../systems/loot.js';   // PX30: the ONE bundle walk the HUD already uses; BUFF-END: and which of them the player may end; L10N3e: a spell's name as the book shows it
 import { hudText } from '../systems/notify.js';   // BUFF-END: the ended spell's one line
 import { cursorActive } from '../player/pointerLock.js';   // BUFF-END: the freed mouse ends a spell
 import { overlayOpen } from './enhancedOverlays.js';
@@ -388,7 +388,7 @@ export function effectRows(entity) {
   const row = (b) => {
     const rounds = maxRoundsRemaining(b);
     return {
-      name: String(b.name ?? '').replace(/^!+/, ''),
+      name: String(shownSpellName({ index: b.spellIndex, name: b.name }) ?? '').replace(/^!+/, ''),   // L10N3e: bundle.name, a stock spell's in the player's language (HUDActiveSpells.cs:304, EntityEffectBroker.cs:877)
       rounds,
       expiring: rounds < 2,
       item: b.bundleType === 'HeldMagicItem',
@@ -1057,7 +1057,7 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
   // line, which had been the only one in that setup underground (and there had been none above ground).
   const named = getPref('quickslots') !== false || hotbarMode();
   const doubled = named && !!readySpell && !!slotSpell && slotSpell.index === readySpell.index;
-  const readyName = readySpell && !doubled ? String(readySpell.name ?? '') : null;
+  const readyName = readySpell && !doubled ? String(shownSpellName(readySpell) ?? '') : null;   // L10N3e: as the book shows it
   if (last.readied !== readyName) {
     last.readied = readyName;
     parts.readied.classList.toggle('on', !!readyName);

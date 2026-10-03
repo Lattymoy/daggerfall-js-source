@@ -1,7 +1,24 @@
-# DFU's TEXT.RSC string table (vendored)
+# DFU's string tables (vendored)
 
-One file from **Daggerfall Unity** (MIT License, Interkarma and
-contributors), vendored verbatim:
+Nine files from **Daggerfall Unity** (MIT License, Interkarma and
+contributors), vendored verbatim - the English masters of DFU's nine
+string tables. `Internal_RSC.csv` came first (MAC-U, below); L10N3
+(2026-09-27) brought the other eight, from the same folder at DFU
+commit 2343305 (2026-09-14):
+
+- `Internal_Strings.csv` (990 rows), `Internal_Flats.csv` (226),
+  `Internal_Locations.csv` (15,251), `Internal_Settings.csv` (32),
+  `Internal_Spells.csv` (88), `Internal_Items.csv` (288),
+  `Internal_MagicItems.csv` (59), `Internal_Factions.csv` (366) - rows
+  as DFU's StringTableCSVParser reads them, the BOM stripped.
+
+They are the English every translation is made from: the pipeline
+(`tools/translate.mjs`) drafts a language's table from them, and the
+L10N3 pins hold the port's English constants to them key by key. The
+game itself never loads them - the English it shows is in the code
+(`06-Systems/Localization-Arc.md`, L10N1).
+
+And the first:
 
 - `Internal_RSC.csv` - the English master of DFU's `Internal_RSC`
   string table: every TEXT.RSC record by id, in the importer's markup

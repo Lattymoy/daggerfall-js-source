@@ -88,8 +88,8 @@
   {
     "name": "each-lane-is-refused-in-the-other-lanes-words",
     "file": "src/ui/levelUpView.js",
-    "old": "  (levelUpLane(screen) === LANE_VIRTUE ? REMAINING_POINTS_ERROR : MUST_DISTRIBUTE_BONUS_POINTS);",
-    "new": "  (levelUpLane(screen) === LANE_VIRTUE ? MUST_DISTRIBUTE_BONUS_POINTS : REMAINING_POINTS_ERROR);",
+    "old": "  (levelUpLane(screen) === LANE_VIRTUE ? REMAINING_POINTS_ERROR : mustDistributeBonusPointsText());",
+    "new": "  (levelUpLane(screen) === LANE_VIRTUE ? mustDistributeBonusPointsText() : REMAINING_POINTS_ERROR);",
     "tests": [
       "test/enhancedLevelUp.test.js"
     ]

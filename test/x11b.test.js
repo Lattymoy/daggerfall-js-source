@@ -431,7 +431,7 @@ test('DR1 dungeon host: Identify opens the REAL trade window there, not a refusa
   //    is identifySpellPass, the points are spent ONCE, and the tally
   //    is spoken through THIS host's mouth.
   assert.ok(b.includes('return false;'), 'the magicka refusal no longer turns the pass back');
-  assert.ok(b.includes('hudText.add(NOT_ENOUGH_SPELL_POINTS_TEXT)'), 'the magicka refusal is silent');
+  assert.ok(b.includes('hudText.add(notEnoughSpellPointsText())'), 'the magicka refusal is silent');
   assert.ok(b.includes('identifySpellPass(staged, chance, Math.random)'), 'the per-item roll is gone');
   assert.ok(b.includes('for (const it of pass.identified) it.isIdentified = true;'), 'nothing is identified');
   assert.ok(b.includes('if (pass.spendMagicka)'), 'the magicka is spent unconditionally');

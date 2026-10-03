@@ -69,8 +69,8 @@
   {
     "name": "AUDITLIVED1B-K1-interior-box-never-kept",
     "file": "src/scenes/worldModes.js",
-    "old": "_exhaustedBox = new ActionTextBox(out.inWater ? [EXHAUSTED_IN_WATER] : ['You collapse from exhaustion.']);\n      mountInterior(_exhaustedBox);",
-    "new": "mountInterior(new ActionTextBox(out.inWater ? [EXHAUSTED_IN_WATER] : ['You collapse from exhaustion.']));",
+    "old": "_exhaustedBox = new ActionTextBox(out.inWater ? [exhaustedInWaterText()] : ['You collapse from exhaustion.']);\n      mountInterior(_exhaustedBox);",
+    "new": "mountInterior(new ActionTextBox(out.inWater ? [exhaustedInWaterText()] : ['You collapse from exhaustion.']));",
     "tests": [
       "test/auditlived1b.test.js"
     ]

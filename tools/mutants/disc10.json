@@ -368,7 +368,7 @@
   {
     "name": "DISC10-D-V5-the-vampire-keeps-the-birth-name",
     "file": "src/systems/vampirism.js",
-    "old": "      name: vamp.raceNameOverride ?? 'Vampire',",
+    "old": "      name: overrideRaceName(vamp.raceNameOverride ?? 'Vampire'),",
     "new": "      name: base.name,",
     "tests": [
       "test/disc10_vampire.test.js"
@@ -386,8 +386,8 @@
   {
     "name": "DISC10-D-V5-the-enhanced-sheet-reads-the-birth-race",
     "file": "src/ui/enhancedCharSheet.js",
-    "old": "    race: raceTemplateOf(e)?.name ?? e.race ?? 'Breton',",
-    "new": "    race: e.race ?? 'Breton',",
+    "old": "    race: processGrammar(liveRaceName(e) || 'Breton'),",
+    "new": "    race: processGrammar(e.race ?? 'Breton'),",
     "tests": [
       "test/disc10_vampire.test.js"
     ]
@@ -395,8 +395,8 @@
   {
     "name": "DISC10-D-V5-the-classic-sheet-reads-the-birth-race",
     "file": "src/ui/charsheet.js",
-    "old": "    label(liveRaceTemplate(e)?.name ?? e.race ?? 'Breton', 41, 14);",
-    "new": "    label(e.race ?? 'Breton', 41, 14);",
+    "old": "    label(processGrammar(liveRaceName(e) || 'Breton'), 41, 14);",
+    "new": "    label(processGrammar(e.race ?? 'Breton'), 41, 14);",
     "tests": [
       "test/disc10_vampire.test.js"
     ]

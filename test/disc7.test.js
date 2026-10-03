@@ -89,7 +89,7 @@ test('ACT-MENU: the plaque draws the verbs as the loot list\'s rows, the lit one
   // DISC22-C: the classic panel's frame is cleared with the highlight, and the DOM hide is the DOM face's
   assert.match(plaque, /if \(cursorActive \|\| !eye \|\| !dir \|\| !collider\) \{ foldQuickLoot\(null\); setClassicLootFrame\(null\); if \(dom\) showWorldPlaque\(null\); return null; \}/);
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    assert.match(rd(host), /hcc\.activate\(_hccPick\.key, _hccPick\.distance, \(l\) => townTalk\.say\(l\), \(\) => setMidScreenText\(TOO_FAR_AWAY_TEXT\), plaqueActionFor\(_hccPick\.key\)\);/, host);
+    assert.match(rd(host), /hcc\.activate\(_hccPick\.key, _hccPick\.distance, \(l\) => townTalk\.say\(l\), \(\) => setMidScreenText\(tooFarAwayText\(\)\), plaqueActionFor\(_hccPick\.key\)\);/, host);
   }
   const w = rd('src/scenes/world.js');
   assert.match(w, /else if \(_tapLockOnly\) \{[^\n]*\}\s*\n\s*else if \(!_act\.pressCast && plaquePeerAct\(cam\.pos, useFwd\)\) \{/, 'the street: a player the plaque lit takes the press ahead of the ladder, on the press\'s ray, never on a cast');

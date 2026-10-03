@@ -80,6 +80,7 @@
 import { getInt, getBool } from './settings.js';   // SETT: LoiterLimitInHours, S40: IllegalRestWarning
 import { roomRemainingHours } from './tavern.js';   // S40: GetRemainingHours, CanRest's room arm
 import { BUILDING_TYPES } from '../world/buildingNames.js';   // S40: the Ship and Tavern arms
+import { localizedText, formatText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
 export const MINUTES_PER_TICK = 10;          // classic minutes per sub-tick
 export const REST_WAIT_PER_HOUR = 0.75;      // real seconds per rested hour
@@ -98,6 +99,8 @@ export const REST_TEXT = Object.freeze({
 /** Internal_Strings.csv:357 / :871 - the two lines CanRest speaks. */
 export const HAVE_NOT_RENTED_ROOM = 'You have not rented a room here.';
 export const ILLEGAL_REST_WARNING = 'It is illegal to camp in or near a city. Continue?';
+/** L10N3d: the warning in the player's language, read where each window shows it (:648, :673). */
+export const illegalRestWarningText = () => localizedText('illegalRestWarning', ILLEGAL_REST_WARNING);
 /** DFLocation.BuildingTypes.Tavern - the one type the guild-hall arm
  *  excludes, because the data marks EVERY tavern a Fighters Guild. */
 export const BUILDING_TAVERN = BUILDING_TYPES.Tavern;   // AUDIT 68 S31-restsession-dup-remaining-hours: one home for the enum
@@ -343,7 +346,7 @@ export function canRest({
     }
     // The refusal carries both out-parameters as DFU left them, which
     // is how an expired room reports 0 rather than -1.
-    return { allowed: false, line: HAVE_NOT_RENTED_ROOM, hoursRented, bedIndex };
+    return { allowed: false, line: localizedText('haveNotRentedRoom', HAVE_NOT_RENTED_ROOM), hoursRented, bedIndex };
   }
   // The wilderness, a dungeon, a town you are not standing in the
   // rect of: rest freely. This is the arm the dungeon host has always
@@ -368,8 +371,12 @@ export const MAX_REST_HOURS = 99;
 export const PROMPT_MAX_CHARS = 8;
 export const PROMPT_INITIAL = '0';
 export const LOITER_PROMPT = 'Loiter how many hours : ';
+/** L10N3d: the two field labels (:616, :697) in the player's language, read where the field shows. */
+export const restPrompt = () => localizedText('restHowManyHours', REST_PROMPT);
+export const loiterPrompt = () => localizedText('loiterHowManyHours', LOITER_PROMPT);
 export const cannotLoiterLines = () => Object.freeze([
-  'You cannot loiter more', `than ${loiterLimitHours()} hours at a time.`,
+  localizedText('cannotLoiterMoreThanXHours1', 'You cannot loiter more'),
+  formatText(localizedText('cannotLoiterMoreThanXHours2', 'than {0} hours at a time.'), loiterLimitHours()),   // (:780-782)
 ]);
 
 /** Internal_Strings.csv :358, verbatim - EndRest's FIRST arm, which
@@ -545,7 +552,7 @@ export class RestSession {
    *  RemoveExpiredRentedRooms right there, so the landlord clears the
    *  room as the player wakes. */
   _finish(textId) {
-    if (this.remainingHoursRented === 0) return { textId: null, text: EXPIRED_RENTED_ROOM, rentExpired: true, enemyBroke: false, died: false };
+    if (this.remainingHoursRented === 0) return { textId: null, text: localizedText('expiredRentedRoom', EXPIRED_RENTED_ROOM), rentExpired: true, enemyBroke: false, died: false };
     return { textId, enemyBroke: false, died: false };
   }
 

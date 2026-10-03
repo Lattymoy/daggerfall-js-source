@@ -65,6 +65,7 @@ import { SKILLS, permanentSkillValue } from './skills.js';
 import { getReputation, setReputation } from './factionRep.js';   // RR1: the underworld guilds' join floor
 import { GUILD_GROUPS, FACTION_TYPES } from '../formats/factionFile.js';
 import { dayOfYear } from './gameDate.js';   // S28: DaggerfallDateTime.DayOfYear
+import { localizedText, localizedTextList, localizedTable } from './textManager.js';   // L10N3d: the titles, read when shown
 
 /** Internal_Strings "nonMember". Guild.GetTitle returns the PLAYER'S
  *  NAME for a non-member; three subclasses override that with this
@@ -126,8 +127,12 @@ export const GUILDS = Object.freeze({
     // Giantish out, is RETIRED with it (FGH2H-R, rrRealism.js).
     skills: [SKILLS.Archery, SKILLS.Axe, SKILLS.BluntWeapon, SKILLS.Giantish,
       SKILLS.HandToHand, SKILLS.LongBlade, SKILLS.Orcish, SKILLS.ShortBlade],
-    rankTitles: ['Apprentice', 'Journeyman', 'Swordsman', 'Protector', 'Defender',
-      'Warder', 'Guardian', 'Champion', 'Warrior', 'Master'],
+    // L10N3d: RankTitles is a getter in DFU too (FightersGuild.cs:56),
+    // GetLocalizedTextList each time it is read - so here.
+    get rankTitles() {
+      return localizedTextList('fightersRanks', ['Apprentice', 'Journeyman', 'Swordsman', 'Protector', 'Defender',
+        'Warder', 'Guardian', 'Champion', 'Warrior', 'Master']);
+    },
     text: { ineligibleBadRep: 679, ineligibleLowSkill: 680, eligible: 681, welcome: 684, promotion: 686 },
   },
   MagesGuild: {
@@ -136,8 +141,10 @@ export const GUILDS = Object.freeze({
     factionId: 40,
     skills: [SKILLS.Alteration, SKILLS.Destruction, SKILLS.Illusion,
       SKILLS.Mysticism, SKILLS.Restoration, SKILLS.Thaumaturgy],
-    rankTitles: ['Apprentice', 'Journeyman', 'Evoker', 'Conjurer', 'Magician',
-      'Enchanter', 'Warlock', 'Wizard', 'Master Wizard', 'Archmage'],
+    get rankTitles() {   // MagesGuild.cs:61
+      return localizedTextList('magesRanks', ['Apprentice', 'Journeyman', 'Evoker', 'Conjurer', 'Magician',
+        'Enchanter', 'Warlock', 'Wizard', 'Master Wizard', 'Archmage']);
+    },
     // MagesGuild.cs:67-70 overrides IsSatisfyQuestReqByLevel to true - see
     // questRankFor below. The Mages Guild and the knightly orders are the
     // only two of the six that do.
@@ -154,8 +161,10 @@ export const GUILDS = Object.freeze({
     factionId: 42,
     skills: [SKILLS.Backstabbing, SKILLS.Climbing, SKILLS.Lockpicking, SKILLS.Pickpocket,
       SKILLS.ShortBlade, SKILLS.Stealth, SKILLS.Streetwise],
-    rankTitles: ['Apprentice', 'Journeyman', 'Filcher', 'Crook', 'Robber',
-      'Bandit', 'Thief', 'Ringleader', 'Mastermind', 'Master Thief'],
+    get rankTitles() {   // ThievesGuild.cs:66
+      return localizedTextList('thievesRanks', ['Apprentice', 'Journeyman', 'Filcher', 'Crook', 'Robber',
+        'Bandit', 'Thief', 'Ringleader', 'Mastermind', 'Master Thief']);
+    },
     text: { welcome: 5225, promotion: 5235, bribesJudge: 550 },
     // ThievesGuild.cs:24 - the ONLY way in. See INVITATION_ONLY below.
     initiationQuest: 'O0A0AL00',
@@ -174,8 +183,10 @@ export const GUILDS = Object.freeze({
     factionId: 108,
     skills: [SKILLS.Archery, SKILLS.Backstabbing, SKILLS.Climbing, SKILLS.CriticalStrike,
       SKILLS.Daedric, SKILLS.Destruction, SKILLS.ShortBlade, SKILLS.Stealth, SKILLS.Streetwise],
-    rankTitles: ['Apprentice', 'Journeyman', 'Operator', 'Slayer', 'Executioner',
-      'Punisher', 'Terminator', 'Assassin', 'Dark Brother', 'Master Assassin'],
+    get rankTitles() {   // DarkBrotherhood.cs:69
+      return localizedTextList('darkBrotherhoodRanks', ['Apprentice', 'Journeyman', 'Operator', 'Slayer', 'Executioner',
+        'Punisher', 'Terminator', 'Assassin', 'Dark Brother', 'Master Assassin']);
+    },
     text: { welcome: 5292, promotion: 666, bribesJudge: 551 },
     // DarkBrotherhood.cs:24.
     initiationQuest: 'L0A01L00',
@@ -185,7 +196,7 @@ export const GUILDS = Object.freeze({
     // MARKER of which override applies, not a second copy of the string.
     nonMemberTitle: 'nonMember',
     femaleTitleRanks: [8],
-    femaleRankTitles: { 8: 'Dark Sister' },   // DarkBrotherhood.cs:88-89
+    femaleRankTitles: localizedTable({ 8: ['darkSister', 'Dark Sister'] }),   // DarkBrotherhood.cs:88-89
     // DarkBrotherhood.GetPromotionMsgId - odd ranks. G8: every DB
     // promotion fires the DiscoverRandomLocation reveal + the
     // readMapDB note BEFORE its switch (:105-110), whatever the rank
@@ -381,7 +392,7 @@ export const isMember = (membership) => (membership?.rank ?? -1) >= 0;
  *  one of them the same way: "Not calling female chars 'Brother'!". */
 export function getTitle(membership, entity, guild = null) {
   if (!isMember(membership)) {
-    return guild?.nonMemberTitle === 'nonMember' ? NON_MEMBER_TITLE : (entity?.name ?? '');
+    return guild?.nonMemberTitle === 'nonMember' ? localizedText('nonMember', NON_MEMBER_TITLE) : (entity?.name ?? '');
   }
   const rank = membership.rank;
   if (entity?.gender === 'female' && guild?.femaleTitleRanks?.includes(rank)) {

@@ -41,6 +41,7 @@ import { isShopShelfModel } from './shopStock.js';
 import { HOUSE_CONTAINER_NAMES } from './worldTooltips.js';
 import { interiorLightProperties } from '../world/interiorLights.js';
 import { decorPrice } from '../net/decorLaw.js';
+import { localizedStrings } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { BULLETIN_BOARD_MODEL_ID } from '../world/rmbLayout.js';   // GUILD1e: the hall's board is Daggerfall's own
 
 /** A piece's KIND - the panel's filter - and what it reads as. */
@@ -185,7 +186,7 @@ export const decorRoomEntries = (entries, room) => entries?.filter((e) => (!e.ha
   && !(room?.yard && e.kind === 'door')) ?? null;
 
 /** A piece's SIZE band, by its radius in metres - the panel's size filter. */
-export const DECOR_SIZES = Object.freeze({ small: 'Small', medium: 'Medium', large: 'Large' });
+export const DECOR_SIZES = localizedStrings({ small: 'Small', medium: 'Medium', large: 'Large' });
 export function decorSize(radiusMetres) {
   if (!(radiusMetres > 0)) return null;
   if (radiusMetres < 0.5) return 'small';

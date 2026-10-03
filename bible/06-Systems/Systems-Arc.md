@@ -2521,7 +2521,7 @@ from the fifteen effect classes that call `new PotionRecipe(...)`:
 registered PotionMaker-only, with no `MagicSkill` and no spell-book
 description (`HealSpellPoints.cs:21-30`), and sets no `ClassicKey` at
 all. No SPELLS.STD row can name it - which is precisely what
-`effects.js:279-285` recorded when S15 undid an earlier mis-mapping of
+`effects.js:282-288` recorded when S15 undid an earlier mis-mapping of
 `(10,9)` onto it, and why the sink list has read *"restoreMagicka
 returns with potions"* ever since. It returns here. A potion bundle
 is not a spell record: DFU builds one from `EffectEntry(effect.Key,
@@ -3196,7 +3196,7 @@ collapse is a bare `RaiseTime(1 * SecondsPerHour)` (`:2429`) that
 returns; `Update` is not re-entered.
 
 The port's hosts implement that same RaiseTime as
-`playerTicker.advance(60)` (`exterior.js:1102`, `world.js:3280`), fired
+`playerTicker.advance(60)` (`exterior.js:1103`, `world.js:3281`), fired
 from inside `sinks.drainFatigue` - so it re-enters `tickPlayerMinutes`
 from inside that function's own fatigue band. The nested tick wrote the
 marker an hour ahead, the outer frame's own `setWorldMinutes` then
@@ -4597,7 +4597,7 @@ the true clause along with the false ones is in the campaign, because
 over-retiring is the equal and opposite failure.
 
 **And one delegation pointed at a flag nobody had ever written.**
-`world.js:4829` said the dungeon-mode enchant ctx was "FLAGGED there
+`world.js:4830` said the dungeon-mode enchant ctx was "FLAGGED there
 with the rest of its enchant wiring" in `dungeonContext.js`. It was
 not. `setDefaultEnchantCtx` had exactly **one** caller in the tree, so
 the standalone `?dungeon` host ran every arm that needs a host
@@ -4680,7 +4680,7 @@ affinity scans saw an empty room. Nothing threw and nothing was
 logged - the enchantment simply had no effect where the fighting is.
 
 And it really was the only ctx in play: **no host passes an
-`enchantCtx` at the strike site** (`formulas.js:509` defaults it
+`enchantCtx` at the strike site** (`formulas.js:514` defaults it
 `null`), so `mergeCtx` folds this one mount under every dispatch, in
 every mode. FS1 had just found the other half of the same hole - the
 standalone `?dungeon` host mounts no ctx at all - and that half is
@@ -5053,7 +5053,7 @@ predicate read prettier.
 by the same sweep and each verified against the tree before deletion:
 the interior detect claim above; "there is nowhere to cash one yet" on
 the letter of credit, which B2 answered with `DepositAll_LOC`
-(`banking.js:726`, the window's own :377-389); "the BANKING arm stays
+(`banking.js:729`, the window's own :377-389); "the BANKING arm stays
 FLAGGED below", written nine lines above the live banking arm; and
 "every other arm is FLAGGED by name in
 `guildServiceFlow.SERVICE_DESTINATION`" after DR2 closed the last of
@@ -5347,7 +5347,7 @@ blocked.
 Mac: "let's work on the horses and carts". The port has carried the CART
 as an inventory fact since the W-slice - the wagon's 750kg, the
 dungeon-exit prompt, the transfer guards - and the HORSE as an item
-nobody could sit on. `motor.js:869` passed `riding: false` into the
+nobody could sit on. `motor.js:870` passed `riding: false` into the
 climbing gate with the note "the transport arc pends", and
 `DaggerfallTransportWindow` is the last of DFU's 60 real windows the
 port does not have (UI-Arc.md's table).
@@ -5575,7 +5575,7 @@ to that cite and moves under the same content check; citeMerge had
 done this since CS2 and citeShift only reported them, so the two
 regexes are one law now, exported from citeShift (`ANY_CITE`,
 `CONTINUATION`) and imported by citeMerge. (2) A TEST'S ESCAPED
-LITERAL FOLLOWS THE ROW IT PINS: `world\.js:10969` in citedrift.test.js
+LITERAL FOLLOWS THE ROW IT PINS: `world\.js:10981` in citedrift.test.js
 is a quote of a Ledger row's text; the row is STRUCK and its number
 held, and the literal used to move anyway, parting the pin from its
 row at every shift. The CLI plans every doc first, learns which
@@ -6517,7 +6517,7 @@ settles it: DFU draws both rolls, so the line goes.
 **REVIEW ROUND (2026-09-08).** Moving the line left a stale cite in
 someone else's pin. `test/audit58_pins2.test.js`'s
 "IsImmuneToDisease reads the PENDING marker" test quoted
-"`diseases.js:247 if (target.racialOverride || target.racialOverridePending)`"
+"`diseases.js:250 if (target.racialOverride || target.racialOverridePending)`"
 - the exact line this fix deleted. The pin still passes, because
 `isEntityImmuneToDisease` reads the pending marker and `inflictDisease`
 now reaches it through `startDisease`, so the record cited source that

@@ -132,6 +132,7 @@ import { drawText } from './text.js';
 import { bindings } from './input.js';
 import { InputMessageBoxWindow } from './inputMessageBox.js';   // CM6: the rename is a pushed DaggerfallInputMessageBox
 import { codeMeans } from '../systems/inputActions.js';   // UXB1-S: its own key, shared or not
+import { localizedText } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import {
   preloadSpellIcons, drawSpellIcon, drawTargetIcon, drawElementIcon,
   TARGET_DESCRIPTIONS, ELEMENT_DESCRIPTIONS,
@@ -149,6 +150,7 @@ import {
 } from '../systems/guildServiceActions.js';   // DaggerfallTradeWindow's shared ids (:33-34) and the three haggle BANDS, all already homed
 import { getHolidayId, HOLIDAYS } from '../systems/holidays.js';
 import { NO_SPELLBOOK_ID, SPELLBOOK_TEMPLATE_INDEX, MAX_SPELL_NAME, purchaseSpell } from '../systems/spellMaker.js';
+import { shownSpellName } from '../systems/loot.js';   // L10N3e: a stock spell's name in the player's language
 import { totalGoldAmount } from '../systems/court.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
@@ -204,6 +206,15 @@ export const SORT_SPELLS_PROMPT = 'Do you want to sort spells?';               /
 export const ENTER_SPELL_NAME = 'Enter spell name : ';                         // enterSpellName + " " (:934)
 export const EFFECT_NOT_FOUND = '<effect not found>';                          // effectNotFoundError
 export const SELECT_ICON_TIP = 'Select icon';                                  // selectIcon
+/** L10N3d: the same, in the player's language, read where each is shown
+ *  - this window, the enhanced book and the spell maker's name box. */
+export const cannotDeleteVampText = () => localizedText('cannotDeleteVamp', CANNOT_DELETE_VAMP);
+export const cannotDeleteWereText = () => localizedText('cannotDeleteWere', CANNOT_DELETE_WERE);
+export const deleteSpellPrompt = () => localizedText('deleteSpell', DELETE_SPELL_PROMPT);
+export const sortSpellsPrompt = () => localizedText('sortSpells', SORT_SPELLS_PROMPT);
+export const enterSpellNameLabel = () => `${localizedText('enterSpellName', 'Enter spell name :')} `;   // + " " (:934)
+export const effectNotFoundText = () => localizedText('effectNotFoundError', EFFECT_NOT_FOUND);
+export const selectIconTip = () => localizedText('selectIcon', SELECT_ICON_TIP);
 /** PlayerEntity.cs:41-42 - the two tags DELETE refuses. V2a moved
  *  their HOME to systems/lycanthropy.js (the producer that grants the
  *  tagged spells lives there now); imported and re-exported so this
@@ -229,8 +240,9 @@ const lerpGrey = (c) => c.map((v, i) => (i === 3 ? v : v + (0.5 - v) * DESATURAT
 export const spellEffects = (spell) => (spell?.effects ?? []).filter((e) => e && e.type >= 0);
 
 /** PopulateSpellsList's row text (:271) and its free-cast quirk
- *  (:266-267). */
-export function spellRowText(spell, cost) { return `${cost} - ${spell.name}`; }
+ *  (:266-267). L10N3e: the bundle's Name, which DFU gave a stock spell
+ *  in the player's language (EntityEffectBroker.cs:877). */
+export function spellRowText(spell, cost) { return `${cost} - ${shownSpellName(spell)}`; }
 export function spellPointCost(spell, castCost) {
   if (spell?.tag === LYCANTHROPY_SPELL_TAG) return 0;
   return rawSpellPointCost(spell, castCost);
@@ -240,6 +252,12 @@ export function spellPointCost(spell, castCost) {
 export function rawSpellPointCost(spell, castCost) {
   return castCost ? castCost(spell) : (spell?.cost ?? 0);
 }
+/** L10N3e: SortSpellsAlpha (DaggerfallEntity.cs:736) and the shop's
+ *  sort (:322) both OrderBy the bundle's Name - the name as shown. */
+const byShownName = (a, b) => {
+  const x = shownSpellName(a), y = shownSpellName(b);
+  return x < y ? -1 : x > y ? 1 : 0;
+};
 
 /** GetSpell/SetSpell (:940-951, :960-974): an edit lands on a COPY of the
  *  book's entry, marked `custom` so the save keeps it whole - the entry
@@ -330,8 +348,8 @@ export class SpellbookWindow {
   loadSpellsForSale() {
     const all = this.deps.offered?.() ?? [];
     this.offeredSpells = all
-      .filter((sp) => sp && !String(sp.name ?? '').startsWith('!'))
-      .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+      .filter((sp) => sp && !String(sp.name ?? '').startsWith('!'))   // the FILE's name, before the bundle is made (:302)
+      .sort(byShownName);
     return this.offeredSpells;
   }
 
@@ -471,7 +489,7 @@ export class SpellbookWindow {
   _tipHover(x, y, vx, vy) {
     const spell = this.selected;
     if (this.top || !spell) { this.tip.hide(); return; }
-    if (inRect(SPELLBOOK_RECTS.spellIcon, x, y) && !this.buyMode) { this.tip.show(SELECT_ICON_TIP, vx, vy); return; }
+    if (inRect(SPELLBOOK_RECTS.spellIcon, x, y) && !this.buyMode) { this.tip.show(selectIconTip(), vx, vy); return; }
     if (inRect(SPELLBOOK_RECTS.targetIcon, x, y)) {
       this.tip.show(TARGET_DESCRIPTIONS[spell.rangeType] ?? null, vx, vy);
       return;
@@ -527,7 +545,7 @@ export class SpellbookWindow {
    *  spellings of "no subtype": a SPELLS.STD record reads it as a
    *  SIGNED byte and stores -1, while a spell built in the maker
    *  copies the catalog's 255. Every other consumer normalizes the
-   *  same way (systems/effects.js:168's classicSub, spellcost.js:130)
+   *  same way (systems/effects.js:169's classicSub, spellcost.js:130)
    *  and the effect table is keyed on 255, so a Free Action off the
    *  file would otherwise print "Effect not found" in the book. */
   effectLabels(slot) {
@@ -536,7 +554,7 @@ export class SpellbookWindow {
     if (!e) return ['', ''];
     const key = `${e.type},${e.subType & 0xff}`;
     const template = effectByKey(key);
-    if (!template) return [EFFECT_NOT_FOUND, key];
+    if (!template) return [effectNotFoundText(), key];
     return [template.group, template.subgroup ?? ''];
   }
 
@@ -558,8 +576,8 @@ export class SpellbookWindow {
   deleteButton() {
     if (this.selectedIndex === -1) return;
     const spell = this.selected;
-    if (spell?.tag === VAMPIRE_SPELL_TAG) { this.top = 'note'; this._noteRows = [CANNOT_DELETE_VAMP]; return; }
-    if (spell?.tag === LYCANTHROPY_SPELL_TAG) { this.top = 'note'; this._noteRows = [CANNOT_DELETE_WERE]; return; }
+    if (spell?.tag === VAMPIRE_SPELL_TAG) { this.top = 'note'; this._noteRows = [cannotDeleteVampText()]; return; }
+    if (spell?.tag === LYCANTHROPY_SPELL_TAG) { this.top = 'note'; this._noteRows = [cannotDeleteWereText()]; return; }
     this.deleteSpellIndex = this.selectedIndex;
     this.top = 'delete';
   }
@@ -616,7 +634,7 @@ export class SpellbookWindow {
     if (yes) {
       const list = this.deps.spells?.() ?? [];
       const before = list.slice();
-      list.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+      list.sort(byShownName);
       if (list.every((sp, i) => sp === before[i])) {
         // AUDIT 26 F179: the RAW cost, not the display one.
         // SortSpellsPointCost (DaggerfallEntity.cs:741-752) calls
@@ -648,8 +666,8 @@ export class SpellbookWindow {
     // list under it neither highlights nor scrolls, as under any box.
     this.top = 'rename';
     this.renameBox = new InputMessageBoxWindow({
-      label: ENTER_SPELL_NAME,
-      value: this.selected.name ?? '',
+      label: enterSpellNameLabel(),
+      value: shownSpellName(this.selected) ?? '',   // L10N3e: the Name as the book shows it
       maxCharacters: MAX_SPELL_NAME,   // TextBox.maxCharacters (TextBox.cs:26, :425), homed in spellMaker.js
       onSubmit: (input) => this.confirmRename(input),
       onCancel: () => { this.top = null; },
@@ -671,7 +689,11 @@ export class SpellbookWindow {
     // port keeps it legal rather than quietly being stricter.
     this.top = null;
     if (this.selectedIndex === -1 || !input) return;   // "Must not be blank" (:943-944)
-    if (!editBookSpell(this.deps.spells?.(), this.selectedIndex, { name: input })) return;
+    // L10N3e: the box was seeded with the name as shown; handed back as
+    // it was, the spell keeps its own canonical name under it
+    const sp = this.selected;
+    const name = sp && input === shownSpellName(sp) ? sp.name : input;
+    if (!editBookSpell(this.deps.spells?.(), this.selectedIndex, { name })) return;
     this.refreshSpellsList(true);
     this._edit();
   }
@@ -804,8 +826,8 @@ export class SpellbookWindow {
 
   /** AUDIT 65 UI-1: THE HOSTS OWN THE THIRD AND FOURTH SLOTS. Every
    *  host that holds an overlay slot dispatches
-   *  `click(vx, vy, right, middle)` - `scenes/townTalk.js:1254`,
-   *  `scenes/worldModes.js:10485`, `scenes/dungeonContext.js:8370` - so
+   *  `click(vx, vy, right, middle)` - `scenes/townTalk.js:1266`,
+   *  `scenes/worldModes.js:10510`, `scenes/dungeonContext.js:8377` - so
    *  a clock threaded positionally here arrived as `e.button === 2`, a
    *  BOOLEAN. `false ?? Date.now()` keeps the `false`, `false != null`
    *  is true and `false - false === 0 < 300`, which made EVERY second
@@ -966,8 +988,8 @@ export class SpellbookWindow {
     return this._boxRowsNow();
   }
   _boxRowsNow() {
-    if (this.top === 'delete') return [DELETE_SPELL_PROMPT];
-    if (this.top === 'sort') return [SORT_SPELLS_PROMPT];
+    if (this.top === 'delete') return [deleteSpellPrompt()];
+    if (this.top === 'sort') return [sortSpellsPrompt()];
     if (this.top === 'noSpellbook') {
       const rows = this._boxText(NO_SPELLBOOK_TEXT_ID);
       return rows.length ? rows : ['You have no spellbook.'];
@@ -1027,7 +1049,8 @@ export class SpellbookWindow {
     // and gold labels set ShadowPosition = Vector2.zero (:472-475),
     // so they draw FLAT - no shadow pass at all.
     if (spell) {
-      shadowText(renderer, font, spell.name ?? '', m,
+      // spellNameLabel.Text = spellSettings.Name (:549) - L10N3e, as shown
+      shadowText(renderer, font, shownSpellName(spell) ?? '', m,
         PANEL_X + LABEL_POS.name[0], PANEL_Y + LABEL_POS.name[1], { shadow: ALT_SHADOW_1 });
     }
     if (!this.buyMode) {

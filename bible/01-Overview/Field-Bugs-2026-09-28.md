@@ -471,4 +471,4 @@ killer a fix touched re-run.
 - Citations: `tools/citeMerge.mjs origin/main 408877576 --apply --struck` for the merge (224 moved); then
   `tools/citeShift.mjs --base 2a8b70b2a --apply --struck` once over the audit's fixes (318 moved); by hand, by
   content: chargenSession.js's overlayHover continuation (twice - a bare `(:N)` on its own line, which neither
-  mapper can pair) and audit58_pins' `court.js:228-229`; `discovery.js:83` still names the re-discover it means.
+  mapper can pair) and audit58_pins' `court.js:239-240`; `discovery.js:83` still names the re-discover it means.

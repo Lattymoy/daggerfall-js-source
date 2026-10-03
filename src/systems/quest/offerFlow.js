@@ -60,6 +60,7 @@ import { MEMBERSHIP_STATUS } from './questLists.js';
 import { QUEST_MESSAGES } from './quest.js';
 import { GUILD_GROUPS } from '../../formats/factionFile.js';
 import { GENDERS } from '../../characters/nameHelper.js';
+import { localizedText } from '../textManager.js';   // L10N3d: the wait box's two lines
 
 /** DaggerfallQuestPopupWindow.cs:92 - TEXT.RSC's "You're too late, I
  *  gave the job to some spellsword" flavour family. */
@@ -199,7 +200,7 @@ export class QuestOfferFlow {
     if (this.deps.guildQuestListBox) {
       return {
         kind: 'gettingQuests',
-        textLines: [GETTING_QUESTS_1, GETTING_QUESTS_2],
+        textLines: [localizedText('gettingQuests1', GETTING_QUESTS_1), localizedText('gettingQuests2', GETTING_QUESTS_2)],   // :578-579
         clickAnywhereToClose: true,
         onClose: () => this._gettingQuestsBoxClose(),
       };

@@ -62,7 +62,7 @@ export const BROKER_TEXT = Object.freeze({
   name: 'Sigil Broker',
   trade: 'Trades in Deadlands Embers',   // WB12a
   caged: 'Caged by Dagon\'s Faithful',
-  info: presentNpcInfoText('the Sigil Broker'),
+  get info() { return presentNpcInfoText('the Sigil Broker'); },   // L10N3d: DFU's youSee row, read as it is said
   steal: 'The Broker\'s eyes never leave her embers.',
   held: 'Kill all of Dagon\'s Faithful to free her.',
   lost: 'She stays caged tonight.',

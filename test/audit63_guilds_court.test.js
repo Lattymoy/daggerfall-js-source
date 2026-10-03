@@ -589,8 +589,8 @@ test('AUDIT 65 MC-2: a target past its handler\'s reach is HANDED OVER and refus
   // and the shipped refusal, RUN: every ladder that owns one speaks
   // once and CONSUMES, exactly as each C# handler returns.
   const said = [];
-  const runRung = (stmt, _pick) => new Function('_pick', 'key', 'setMidScreenText', 'TOO_FAR_AWAY_TEXT',
-    `${stmt}\n  return false;`)(_pick, 'loot:0', (t) => said.push(t), TOO_FAR_AWAY_TEXT);
+  const runRung = (stmt, _pick) => new Function('_pick', 'key', 'setMidScreenText', 'tooFarAwayText',
+    `${stmt}\n  return false;`)(_pick, 'loot:0', (t) => said.push(t), () => TOO_FAR_AWAY_TEXT);
   const far = { key: 'loot:0', distance: 8, reach: TREASURE_ACTIVATION_DISTANCE };
   const near = { key: 'loot:0', distance: 1, reach: TREASURE_ACTIVATION_DISTANCE };
   for (const [file, n] of [['../src/scenes/worldModes.js', 2], ['../src/scenes/dungeon.js', 1]]) {
@@ -611,8 +611,8 @@ test('AUDIT 65 MC-2: a target past its handler\'s reach is HANDED OVER and refus
   const doorRung = read('../src/scenes/worldModes.js').split('\n').map((l) => l.trim())
     .find((l) => l.startsWith('if (_hitDist > _hitReach)'));
   assert.ok(doorRung, 'tryEnter speaks ActivateStaticDoor\'s own refusal');
-  const runDoor = (d) => new Function('_hitDist', '_hitReach', 'setMidScreenText', 'TOO_FAR_AWAY_TEXT',
-    `${doorRung}\n  return false;`)(d, DOOR_ACTIVATION_DISTANCE, (t) => said.push(t), TOO_FAR_AWAY_TEXT);
+  const runDoor = (d) => new Function('_hitDist', '_hitReach', 'setMidScreenText', 'tooFarAwayText',
+    `${doorRung}\n  return false;`)(d, DOOR_ACTIVATION_DISTANCE, (t) => said.push(t), () => TOO_FAR_AWAY_TEXT);
   said.length = 0;
   assert.ok(runDoor(8), 'a door the player can see but not reach CONSUMES the click');
   assert.deepEqual(said, [TOO_FAR_AWAY_TEXT]);
@@ -660,12 +660,12 @@ test('AUDIT 65 MC-2: a target past its handler\'s reach is HANDED OVER and refus
     assert.ok(doorAt > 0, `${file}: the corpse door`);
     const door = src.slice(doorAt, src.indexOf('\n  };\n', doorAt) + 5);
     const arm = new Function('lootKey', '_lootPick', 'exteriorFoes', 'cityGuards', 'townTalk',
-      'surfacePlayer', 'setMidScreenText', 'TOO_FAR_AWAY_TEXT', 'inventoryDoorReady', 'makeInventoryWindow',
+      'surfacePlayer', 'setMidScreenText', 'tooFarAwayText', 'inventoryDoorReady', 'makeInventoryWindow',
       'quickLootTake', 'playerEntity', 'lootPile',
       [door, lines[at], ...lines.slice(openAt, end)].join('\n'));
     const run = (pick) => arm('foeCorpse:1', pick,
       { takeLoot: (k) => took.push(k) }, { takeLoot: (k) => took.push(k) },
-      { say: () => {}, showOverlay: () => {} }, () => {}, (t) => said.push(t), TOO_FAR_AWAY_TEXT,
+      { say: () => {}, showOverlay: () => {} }, () => {}, (t) => said.push(t), () => TOO_FAR_AWAY_TEXT,
       () => true, (o) => o, () => null, {}, () => null);
     run({ distance: 8, reach: CORPSE_ACTIVATION_DISTANCE });
     assert.deepEqual(said, [TOO_FAR_AWAY_TEXT], `${file}: a body past 3.75 is refused`);
@@ -725,7 +725,7 @@ test('AUDIT 65 MC-2: per family - who reaches for the ray, who keeps the narrow 
   // ...and the static door's rung sits where ActivateStaticDoor's own
   // first statement does: BELOW the NPC and board arms, which carry
   // their own gates (:741-767, :709-712), and ABOVE the door itself.
-  const tAt = wm.indexOf('if (_hitDist > _hitReach) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }');
+  const tAt = wm.indexOf('if (_hitDist > _hitReach) { setMidScreenText(tooFarAwayText()); return true; }');
   assert.ok(tAt > 0, 'tryEnter carries the refusal');
   assert.ok(tAt > wm.indexOf("if (typeof key === 'string' && key.startsWith('board:')) {"));
   assert.ok(tAt < wm.indexOf('return activateStaticDoor(entries[key], entries, false, { verb: plaqueActionFor(key) });'));   // HOME2 re-aim: the click carries the verb the door's plaque lit

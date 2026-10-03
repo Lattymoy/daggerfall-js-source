@@ -6,6 +6,7 @@
 // Enter) says goodbye.
 
 import { drawText, measureText } from './text.js';
+import { graphemesOf } from '../systems/graphemes.js';   // L10N2: where a Chinese or Japanese line may break
 import { nativeMetrics } from './nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxArtLoaded } from './messageBox.js';
 import { noticeDraw, noticeRelease } from './enhancedNotice.js';
@@ -19,15 +20,42 @@ const ROW_LEAD = 2;
 const TEXT = [0.86, 0.82, 0.68, 1];
 const DIM = [0.55, 0.52, 0.45, 1];
 
-/** Greedy word-wrap against the classic font metrics. */
+// L10N2 (2026-09-27): WHERE A LINE MAY BREAK. A space, as ever; and Chinese and Japanese put no spaces between their
+// words, so between two of their characters as well - UAX #14's ideographic class, the line breaking every reader of
+// those scripts knows - except that a closing mark or a small kana never starts a line and an opening mark never ends
+// one (kinsoku). DFU's TextLabel does the crude half of it, cutting a spaceless row at the glyph that overflows
+// (CreateNewLabelLayoutWrapped, TextLabel.cs:612-651). Korean spaces its words and breaks at the spaces; a text with
+// no CJK in it breaks exactly where it always did.
+const CJK = /[\u2E80-\u2FDF\u3000-\u303F\u3040-\u30FF\u3100-\u312F\u3190-\u31FF\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF\uFF00-\uFFEF]|[\u{20000}-\u{3134F}]/u;
+const NO_LINE_START = new Set([...'、。，．・：；？！ー」』）］｝〕〉》】〙〗〟’”ぁぃぅぇぉっゃゅょゎゕゖァィゥェォッャュョヮヵヶ々〻゠–〜～!),.:;?]}']);
+const NO_LINE_END = new Set([...'「『（［｛〔〈《【〘〖〝‘“([{']);
+
+/** A space-free run as the pieces a line may break between: itself when it holds no Chinese or Japanese. */
+export function breakPieces(run) {
+  if (!CJK.test(run)) return [run];
+  const out = [];
+  let cur = '';
+  let prev = null;
+  for (const g of graphemesOf(run)) {
+    const breaks = prev !== null && (CJK.test(g) || CJK.test(prev)) && !NO_LINE_START.has(g) && !NO_LINE_END.has(prev);
+    if (breaks) { out.push(cur); cur = g; } else cur += g;
+    prev = g;
+  }
+  out.push(cur);
+  return out;
+}
+
+/** Greedy word-wrap against the classic font metrics (L10N2: a Chinese or Japanese run breaks between its
+ *  characters, with nothing put between them). */
 export function wrapText(fnt, text, maxWidth, measure = measureText) {
-  const words = text.split(' ');
   const lines = [];
   let line = '';
-  for (const w of words) {
-    const probe = line.length ? `${line} ${w}` : w;
-    if (line.length && measure(fnt, probe) > maxWidth) { lines.push(line); line = w; }
-    else line = probe;
+  for (const word of text.split(' ')) {
+    breakPieces(word).forEach((piece, i) => {
+      const probe = line.length ? `${line}${i === 0 ? ' ' : ''}${piece}` : piece;
+      if (line.length && measure(fnt, probe) > maxWidth) { lines.push(line); line = piece; }
+      else line = probe;
+    });
   }
   if (line.length) lines.push(line);
   return lines;

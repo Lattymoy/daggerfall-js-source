@@ -21,10 +21,38 @@
 //     now") rides UnityEngine.Random in DFU - a uniform roll here
 //     (the Ledger A engine-PRNG rule); every PART draw stays on
 //     DFRandom.rand(), verbatim order.
+//
+// L10N3f (2026-09-28): A TRANSLATION'S NAME BANKS, READ ONCE A SESSION.
+// DFU's NameHelper reads NameGen.txt once, in its constructor at
+// startup: the Resources copy, replaced whole by StreamingAssets/Text/
+// NameGen.txt where a translation pack installs its own
+// (LoadNameGenData, NameHelper.cs:77-80, :372-392). Here the banks are
+// read the FIRST TIME the game makes a name - the pack's NameGen of the
+// language standing then, else the vendored banks - and held for the
+// rest of the page, whatever the language does after. The Nord
+// surname's suffix (GetLocalizedText("nordSurnameImmutableSuffix"),
+// :246) is part of every Nord surname and is read with them.
+//
+// WHY ONCE, AND NOT THE LANGUAGE OF THE MOMENT: a generated name is a
+// KEY. A static NPC's name is made again from its seed every time it is
+// shown (StaticNPC.GetDisplayName, StaticNPC.cs:315-328) and compared
+// with the quest Person's name, which was made from the SAME seed when
+// the quest began and is saved as a string (Person.cs:602-628, :867,
+// :1143) - TalkManager.cs:3159, topicTree.js _dialogPartnerIsSamePerson.
+// A building's %ef and a painting's artist are made again from their
+// seeds the same way. Were the banks to follow a language
+// switched in play, every name made after would be spelled from other
+// parts than the names already held, and the comparisons would miss. So
+// the port keeps DFU's own law - one set of banks a run - and a new set
+// is read only by a new page. A save made under other banks keeps its
+// names as they were spelled, exactly as DFU's does when a pack is
+// installed between two sessions (L10N5: saves hold ids).
 
 import { rand, srand, randomRangeInclusive } from '../formats/dfRandom.js';
 import { REGION_RACES } from '../formats/mapsFile.js';
 import { RACES } from '../systems/races.js';
+import { localeDocument, localizedText } from '../systems/textManager.js';   // L10N3f: a pack's NameGen.txt and the Nord suffix
+import { PACK_KIND } from '../systems/translationPacks.js';
 import nameGen from './nameGen.json' with { type: 'json' };
 
 export const BANK_TYPES = Object.freeze({
@@ -36,7 +64,123 @@ export const GENDERS = Object.freeze({ Male: 0, Female: 1 });
 const BANK_NAMES = ['Breton', 'Redguard', 'Nord', 'DarkElf', 'HighElf',
   'WoodElf', 'Khajiit', 'Imperial', 'Monster1', 'Monster2', 'Monster3'];
 
-const bankOf = (type) => nameGen[BANK_NAMES[type]];
+/**
+ * The JSON NameHelper deserializes, read as DFU's FullSerializer
+ * parser (fsJsonParser) reads it - which is looser than JSON.parse, and
+ * every pack's NameGen.txt is written against it (DFU's own has one
+ * missing comma between two Monster3 sets and a trailing comma, and
+ * the French pack's the same two): a comma between two values is
+ * optional, one before a closing bracket is allowed, and `//` and
+ * `/* *\/` comments are whitespace. Throws on anything else.
+ */
+export function parseFsJson(src) {
+  const s = String(src ?? '');
+  let i = 0;
+  const fail = (what) => { throw new Error(`${what} at ${i}`); };
+  const space = () => {
+    for (;;) {
+      while (i < s.length && /\s/.test(s[i])) i++;
+      if (s[i] === '/' && s[i + 1] === '/') { while (i < s.length && s[i] !== '\n' && s[i] !== '\r') i++; continue; }
+      if (s[i] === '/' && s[i + 1] === '*') { const end = s.indexOf('*/', i + 2); i = end < 0 ? s.length : end + 2; continue; }
+      return;
+    }
+  };
+  const ESCAPES = { '"': '"', '\\': '\\', '/': '/', b: '\b', f: '\f', n: '\n', r: '\r', t: '\t' };
+  const string = () => {
+    if (s[i] !== '"') fail('Expected a string');
+    let out = '';
+    for (i++; i < s.length && s[i] !== '"'; i++) {
+      if (s[i] !== '\\') { out += s[i]; continue; }
+      const e = s[++i];
+      if (e === 'u') { const hex = s.slice(i + 1, i + 5); if (!/^[0-9a-f]{4}$/i.test(hex)) fail('Bad \\u escape'); out += String.fromCharCode(parseInt(hex, 16)); i += 4; } else if (ESCAPES[e] !== undefined) out += ESCAPES[e];
+      else fail(`Bad escape \\${e}`);
+    }
+    if (s[i] !== '"') fail('Unterminated string');
+    i++;
+    return out;
+  };
+  const value = () => {
+    space();
+    if (s[i] === '{') {
+      const obj = {};
+      for (i++, space(); i < s.length && s[i] !== '}'; space()) {
+        const key = string();
+        space();
+        if (s[i] !== ':') fail(`Expected : after key "${key}"`);
+        i++;
+        obj[key] = value();
+        space();
+        if (s[i] === ',') i++;
+      }
+      if (s[i] !== '}') fail('No closing } for object');
+      i++;
+      return obj;
+    }
+    if (s[i] === '[') {
+      const arr = [];
+      for (i++, space(); i < s.length && s[i] !== ']'; space()) {
+        arr.push(value());
+        space();
+        if (s[i] === ',') i++;
+      }
+      if (s[i] !== ']') fail('No closing ] for array');
+      i++;
+      return arr;
+    }
+    if (s[i] === '"') return string();
+    const m = /^(?:-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|true|false|null)/.exec(s.slice(i, i + 32));
+    if (!m) fail('Unexpected character');
+    i += m[0].length;
+    return m[0] === 'true' ? true : m[0] === 'false' ? false : m[0] === 'null' ? null : Number(m[0]);
+  };
+  const out = value();
+  space();
+  return out;
+}
+
+/** The deserialize's other half (Dictionary<BankTypes, NameBank>): a
+ *  pack's banks, held to the shape the generators read - every one of
+ *  the eleven, each with as many sets as the game's own and every set
+ *  a non-empty list of strings (a draw over none is DFU's
+ *  DivideByZeroException). Throws otherwise. */
+export function nameBanksOf(parsed) {
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('NameGen is not a dictionary of banks');
+  const banks = {};
+  for (const name of BANK_NAMES) {
+    const bank = parsed[name];
+    if (!Array.isArray(bank?.sets) || bank.sets.length < nameGen[name].sets.length) throw new Error(`NameGen bank ${name} is missing or short`);
+    for (const set of bank.sets) {
+      if (!Array.isArray(set?.parts) || !set.parts.length || !set.parts.every((p) => typeof p === 'string')) throw new Error(`NameGen bank ${name} has a set without parts`);
+    }
+    banks[name] = bank;
+  }
+  return banks;
+}
+
+/** LoadNameGenData (NameHelper.cs:372-392) for the language standing:
+ *  its pack's NameGen.txt, else the game's own banks. A file that will
+ *  not read is said, with DFU's line, and the game's own banks stand -
+ *  DFU's catch would leave NO banks and every name empty, keys and all
+ *  (a departure, recorded). */
+export function loadNameGenData() {
+  const text = localeDocument(PACK_KIND.NAMEGEN, 'NameGen');
+  if (text == null) return nameGen;
+  try { return nameBanksOf(parseFsJson(text)); } catch (err) {
+    console.log(`Could not load or deserialize NameGen.txt database from StreamingAssets/Text or internal Resources. Check file exists and is in correct format. (${err?.message ?? err})`);
+    return nameGen;
+  }
+}
+
+// The session's banks and Nord suffix - read at the first name made, then held (see L10N3f above).
+let _session = null;
+function session() {
+  if (!_session) _session = { banks: loadNameGenData(), nordSuffix: localizedText('nordSurnameImmutableSuffix', 'sen') };
+  return _session;
+}
+/** A new session's read, as a new page makes one. Tests; nothing in the game calls it. */
+export function resetNameBanks() { _session = null; }
+
+const bankOf = (type) => session().banks[BANK_NAMES[type]];
 const draw = (parts) => parts[rand() % parts.length];
 
 /** MacroHelper.GetNameBank (MacroHelper.cs:344-366) - the PLAYER
@@ -143,8 +287,8 @@ export function surname(type) {
     case BANK_TYPES.Imperial:
       return draw(bank.sets[4].parts) + draw(bank.sets[5].parts);
     case BANK_TYPES.Nord:
-      // Verbatim: 0+1 + the immutable localized suffix (default "sen").
-      return draw(bank.sets[0].parts) + draw(bank.sets[1].parts) + 'sen';
+      // Verbatim: 0+1 + the immutable localized suffix (default "sen") - L10N3f: the session's (see above).
+      return draw(bank.sets[0].parts) + draw(bank.sets[1].parts) + session().nordSuffix;
     default:
       return '';
   }

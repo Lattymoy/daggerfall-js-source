@@ -17,6 +17,7 @@ import { RACES } from '../systems/races.js';
 // ONE HOME for FactionFile.FactionTypes (FactionFile.cs:530-546) - the
 // enum the parser already mints. Individual is 4; 3 is Subgroup.
 import { FACTION_TYPES } from '../formats/factionFile.js';
+import { getLocalizedFactionName } from '../systems/textManager.js';   // L10N3e: a named NPC's faction name, shown in the player's language
 
 // RR2: `flatsDict[flatId] = new FlatsFile.FlatData { faceIndex }`
 // (RoleplayRealism.cs:1017-1023) - a mod rewrites FLATS.CFG's face for a
@@ -259,6 +260,23 @@ export function staticNpcName(data, { getFaction = null, nameBank = null } = {})
   // staticNpcData above, which wrote 'female'/'male'; that one is gone
   // and this is the C# line.
   return fullName(bank, data.gender);
+}
+
+/** L10N3e: StaticNPC.DisplayName as DFU SHOWS it. GetDisplayName reads
+ *  the faction through GetFactionData, which hands the name back through
+ *  GetLocalizedFactionName (PersistentFactionData.cs:176) - so a named
+ *  lord is shown by a translation's name for his faction id. Everybody
+ *  else is the seeded full name, in any language.
+ *
+ *  `staticNpcName` above stays FACTION.TXT's, because it is a KEY too:
+ *  it becomes the talk partner's nameNPC, which the topic tree compares
+ *  with a quest Person's name (TalkManager.cs:3159) - so the name a
+ *  plaque, the Info line or the talk window shows is read here, where
+ *  the person is drawn, and never stored. Same arguments. */
+export function staticNpcShownName(data, deps = {}) {
+  const name = staticNpcName(data, deps);
+  const fd = deps.getFaction?.(data.factionID) ?? null;
+  return fd && fd.type === FACTION_TYPES.Individual ? getLocalizedFactionName(data.factionID, name) : name;
 }
 
 /** TextureReader.IsChildNPCTexture (:1076-1137), verbatim - the eight

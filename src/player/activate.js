@@ -14,6 +14,7 @@
 import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { isActionDoorObject } from '../world/actionSystem.js';   // MC-2: ActionDoorCheck's own classifier (PlayerActivate.cs:374 vs :380)
 import { noteBodyStack } from './lootStack.js';   // LOOT-STACK: the ray notes the pile of bodies its winner stands at the front of
+import { localizedText } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
 export { GLOBAL_SCALE };
 
@@ -40,6 +41,8 @@ export const MOBILE_NPC_ACTIVATION_DISTANCE = 256 * GLOBAL_SCALE;
  *  'You are too far away.' with a full stop, so one localized key was
  *  shipping as two different sentences in one session. */
 export const TOO_FAR_AWAY_TEXT = 'You are too far away...';
+/** The refusal as the player reads it, for every reach that speaks it. */
+export const tooFarAwayText = () => localizedText('youAreTooFarAway', TOO_FAR_AWAY_TEXT);
 /** AUDIT 58 (talk lane): TextManager 'youSee'
  *  (Internal_Strings.csv:53 - `youSee,You see %s.`), the WHOLE of
  *  PresentNPCInfo (PlayerActivate.cs:1484-1486): one HUD line naming
@@ -48,7 +51,7 @@ export const TOO_FAR_AWAY_TEXT = 'You are too far away...';
  *  (:755-757) - the other three modes fall to StaticNPCClick. */
 export const YOU_SEE_TEXT = 'You see %s.';
 /** PresentNPCInfo's one line, macro-replaced (:1486). */
-export const presentNpcInfoText = (displayName) => YOU_SEE_TEXT.replace('%s', displayName ?? '');
+export const presentNpcInfoText = (displayName) => localizedText('youSee', YOU_SEE_TEXT).replaceAll('%s', displayName ?? '');
 // PlayerActivate.cs:85 - corpses reach FURTHER than everything else
 // (150 classic units, not 128). It is deliberate, not incidental:
 // ActivateLootContainer (:866-874) exempts CorpseMarker from the
@@ -162,7 +165,7 @@ export function objectAabb(o) {
  * the Update ladder itself and is SILENT - `if (ActionCheck(hit, out
  * action) && hit.distance <= DefaultActivationDistance)` (:380-383),
  * no else, no line - so it keeps the narrow pre-gate exactly as it is.
- * isActionDoorObject (world/actionSystem.js:106) is the port's spelling
+ * isActionDoorObject (world/actionSystem.js:107) is the port's spelling
  * of that GetComponent<DaggerfallActionDoor> everywhere else.
  *
  * @param {Map<string, object>} objects - ActionSystem.objects
@@ -381,7 +384,7 @@ export function pickActivatable(eye, dir, targets, collider) {
  * `distance` is widened to RAY_DISTANCE so it can WIN the pick
  * therefore carries its real `reach` beside it, and the ladder speaks
  * the refusal when the winner came back out of reach. This is the
- * bulletin board's idiom (scenes/worldModes.js:5999-6012) given a
+ * bulletin board's idiom (scenes/worldModes.js:6024-6037) given a
  * field, not a second pick: one ray, one winner, the gate downstream.
  * Targets that were never widened answer `reach === distance`, which
  * the pre-gate has already enforced, so they can never refuse.

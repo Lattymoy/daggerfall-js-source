@@ -109,7 +109,7 @@ test('HC1/MAC-K3: the draw - under the HUD, on EVERY outdoor host, hidden while 
     assert.match(src, /mountRig\.frame\(dt\)/, `${h}.js must run its mount's frame`);
   }
   for (const f of ['src/scenes/worldModes.js', 'src/scenes/dungeonContext.js']) {
-    assert.match(read(f), /CANNOT_CHANGE_INDOORS/, `${f}: the T key refuses indoors`);
+    assert.match(read(f), /cannotChangeIndoorsText\(\)/, `${f}: the T key refuses indoors`);
     assert.ok(!read(f).includes('createMountRig('), `${f}: and builds no mount, because you cannot ride indoors`);
   }
 });

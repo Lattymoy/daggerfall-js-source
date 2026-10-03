@@ -252,7 +252,7 @@ test('REVENANT-FATE the wire and the doors: a record says `yd` kneeling and `ex`
   assert.match(x, /f\._pupYield = r\.yd === 1;/);
   assert.match(x, /if \(\(f\._pupYield \|\| f\._pupExec\) && f\.mobile\.heldPose\) f\._mout = f\.mobile\.heldPose\('hurt', -1/);
   const act = read('src/player/mobileEnemyActivate.js');
-  assert.match(act, /if \(foe\.yielded && !foe\.puppet && openFate\) \{\n\s*if \(!\(distance <= TREASURE_ACTIVATION_DISTANCE\)\) \{ midScreen\?\.\(TOO_FAR_AWAY_TEXT\); return true; \}[^\n]*\n\s*openFate\(foe\);/);
+  assert.match(act, /if \(foe\.yielded && !foe\.puppet && openFate\) \{\n\s*if \(!\(distance <= TREASURE_ACTIVATION_DISTANCE\)\) \{ midScreen\?\.\(tooFarAwayText\(\)\); return true; \}[^\n]*\n\s*openFate\(foe\);/);
   const w = read('src/scenes/world.js'), m = read('src/scenes/worldModes.js'), d = read('src/scenes/dungeonContext.js');
   assert.match(w, /openFate: \(rec\) => openRevenantFate\(rec\),/, 'the street');
   assert.equal((m.match(/openFate: \(rec\) => !!host\.openRevenantFate\?\.\(rec\),/g) ?? []).length, 2, 'a building and a dungeon');

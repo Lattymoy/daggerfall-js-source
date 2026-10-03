@@ -642,7 +642,7 @@ test('AUDIT 63 F34: the hand-to-hand damage line, on the group that holds the sk
   // hthDamageFormatString is `{0} dmg: {1}-{2}`
   // (Internal_Strings.csv:1553) - the literal word "dmg:" and no
   // spaces around the dash.
-  assert.match(s, /\$\{SKILL_NAMES\[SKILLS\.HandToHand\]\} dmg: \$\{handToHandMinDamage\(v\)\}-\$\{handToHandMaxDamage\(v\)\}/);
+  assert.match(s, /formatText\(localizedText\('hthDamageFormatString', '\{0\} dmg: \{1\}-\{2\}'\), SKILL_NAMES\[SKILLS\.HandToHand\], handToHandMinDamage\(v\), handToHandMaxDamage\(v\)\)/);
   // the GROUP is what is tested, over the whole list (:281-284), and
   // the value is the LIVE skill (GetLiveSkillValue, :313-314)
   assert.match(s, /const showHth = ids\.includes\(SKILLS\.HandToHand\);/);

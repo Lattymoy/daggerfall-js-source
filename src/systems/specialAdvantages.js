@@ -16,6 +16,7 @@
 // it "stores text that was hard-coded in FALL.EXE" - so the display
 // text below IS classic's, by way of DFU's recovery of it, and the
 // keys are DFU's HardStrings members one for one.
+import { localizedStrings } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
 // ---- the two primary lists (:64-90), in DFU's order ----
 export const ADVANTAGE_KEYS = Object.freeze([
@@ -75,7 +76,7 @@ export const MAX_ITEMS = 7;
 
 // ---- the display text (Internal_Strings.csv; hard-coded in
 // FALL.EXE originally, which is why it is not in TEXT.RSC) ----
-export const LABELS = Object.freeze({
+export const LABELS = localizedStrings({
   acuteHearing: 'Acute Hearing', adrenalineRush: 'Adrenaline Rush', athleticism: 'Athleticism',
   bonusToHit: 'Bonus to hit', expertiseIn: 'Expertise in', immunity: 'Immunity',
   increasedMagery: 'Increased Magery', rapidHealing: 'Rapid Healing',

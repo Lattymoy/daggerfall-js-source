@@ -47,6 +47,7 @@
 // an artefact - which is the right register for a map of Tamriel
 // anyway. Any smoothing here would be an invented geography.
 import { RACE_TEMPLATES } from '../systems/races.js';
+import { raceDisplayName } from '../systems/talkSession.js';   // L10N3d: RaceTemplate.Name, read in the player's language
 
 /** The picker's own dimensions. Named MAP_ and not PICKER_: the
  *  one-home sweep caught PICKER_W already declared in ui/listPicker.js
@@ -286,7 +287,7 @@ export function traceProvinces(bmp, { picture = null, palette = null } = {}) {
     out.push({
       id: race.id, key: race.key,
       name: PROVINCE_NAMES[race.key] ?? race.name,   // the place
-      people: race.name,                             // and who is from it
+      people: raceDisplayName(race.key),             // and who is from it (L10N3d: in the player's language)
 
       d: traceMask(inside, w, h),
       label: [lx, ly], clearance, pixels,

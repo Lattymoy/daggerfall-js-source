@@ -901,12 +901,12 @@ test('PARTY-TRAVEL host by source: world.js wires the session - the map door\'s 
   const bag = w.slice(w.indexOf('createTravelMapWindow({'), w.indexOf('...extra,', w.indexOf('createTravelMapWindow({')));
   assert.match(bag, /\.\.\.travelFareDeps\(\),/, 'both maps read the same bag the party prices with');
   const refusal = w.slice(w.indexOf('function partyTravelRefusal() {'), w.indexOf('const partyTravelJourney'));
-  assert.match(refusal, /if \(duelEnemyNear\(\) \|\| areEnemiesNearby\(\[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\]\) \|\| navalHostileNear\(\)\) return CANNOT_TRAVEL_ENEMIES_TEXT;/, 'the door\'s own rungs, in its own words (NAV-H: a hostile ship in reach among them)');
+  assert.match(refusal, /if \(duelEnemyNear\(\) \|\| areEnemiesNearby\(\[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\]\) \|\| navalHostileNear\(\)\) return localizedText\('cannotTravelWithEnemiesNearby', CANNOT_TRAVEL_ENEMIES_TEXT\);/, 'the door\'s own rungs, in its own words (NAV-H: a hostile ship in reach among them)');
   assert.match(refusal, /const sun = racialFastTravelBlock\(playerEntity, nowMin\)\?\.text \?\? null;\s*\n\s*return sun \? withNightfall\(sun\) : null;/, 'the door\'s own words, and (LIVED1) when the world\'s night falls');
   const travel = w.slice(w.indexOf('async function fastTravelTo(pick, opts, computed)'), w.indexOf('\n  }\n', w.indexOf('async function fastTravelTo(pick, opts, computed)')));
   assert.match(travel, /const beside = walkMode && pick\.besideAt \? partyBesideLanding\(pick\.besideAt\(\), pick\.besideSeat\) : null;\s*\n\s*if \(beside\) \{\s*\n\s*player\.spawn\(beside\.pos\[0\], beside\.pos\[1\], beside\.pos\[2\]\);/, 'beside the leader, after the core built the pixel');
   assert.ok(travel.indexOf('const beside = ') > travel.indexOf('await _teleportToPixel('), 'read after the build');
-  assert.match(travel, /townTalk\.say\(beside && pick\.besideText \? pick\.besideText : `You arrive at \$\{pick\.name\}\.`\);/);
+  assert.match(travel, /townTalk\.say\(beside && pick\.besideText \? pick\.besideText : `You arrive at \$\{getLocalizedLocationName\(pick\.mapId, pick\.name\)\}\.`\);/);   // L10N3e: the place as shown
   assert.match(w, /return besideLandingOf\(\[lx, w\.y \+ state\.compensation\[1\], lz\], \{/, 'the law picks the spot over the pixel\'s collider');
   assert.match(w, /floor: \(pos\) => floorLanding\(collider, pos, BESIDE_LEVEL \* 2, BESIDE_LEVEL\),\n\s*\}, seat\);/, 'AUDIT PARTY-TRAVEL: from the follower\'s own seat in the ring');
   assert.match(w, /moving: \(\) => worldMoveBusy\(\) \|\| !!travelControlUI\?\.isShowing,/, 'AUDIT PARTY-TRAVEL: no unasked box over a Travel Options walk the player is steering');
@@ -1202,7 +1202,7 @@ test('AUDIT PARTY-UI2 host by source: the map door SAYS it indoors - "You cannot
   const w = rd('src/scenes/world.js');
   assert.match(w, /const CANNOT_TRAVEL_INDOORS_TEXT = 'You cannot travel while indoors\.';/, 'Internal_Strings.csv cannotTravelIndoors, verbatim');
   const door = w.slice(w.indexOf('const toggleTravelMap = (gotoPlace = null) => {'), w.indexOf('function openTeleportMap'));
-  assert.match(door, /if \(\(modes\?\.mode \?\? 'exterior'\) !== 'exterior'\) \{ townTalk\.say\(CANNOT_TRAVEL_INDOORS_TEXT\); return false; \}/, 'said, then refused');
+  assert.match(door, /if \(\(modes\?\.mode \?\? 'exterior'\) !== 'exterior'\) \{ townTalk\.say\(localizedText\('cannotTravelIndoors', CANNOT_TRAVEL_INDOORS_TEXT\)\); return false; \}/, 'said, then refused');
   const arm = door.indexOf('if (gotoPlace) _travelGoto = gotoPlace;');
   assert.ok(arm > 0 && arm < door.indexOf('CANNOT_TRAVEL_INDOORS_TEXT'), 'armed before the first refusal');
   assert.match(door, /if \(_travelGoto\) \{ _travelMap\.gotoPlace\(_travelGoto\); _travelGoto = null; \}/, 'taken by the map that opens');

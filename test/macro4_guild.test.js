@@ -71,7 +71,7 @@ test('MACRO-4: the trade box’s %pct is the guild’s title at its counter, the
 test('MACRO-4: the hosts wire the sources', () => {
   const modes = read('src/scenes/worldModes.js');
   assert.match(modes, /guildTitle: \(\) => getTitle\(membershipOf\(activeMemberships\(playerEntity\), guild\), playerEntity, guild\),/, 'the popup: the rank, read at show time');
-  assert.match(modes, /god: guild\?\.divine \?\? null,\s*godDesc: guild\?\.divine \? \(DEITY_DESCRIPTIONS\[guild\.divine\] \?\? null\) : null,\s*dungeon: \(\) => revealedDungeon,/, 'the popup: the deity and the revealed dungeon');
+  assert.match(modes, /god: guild\?\.divine \?\? null,\s*godDesc: guild\?\.divine \? \(DEITY_DESCRIPTIONS\[guild\.divine\] \?\? null\) : null,\s*dungeon: \(\) => \(revealedDungeon \? getLocalizedLocationName\(revealedDungeon\.mapId, revealedDungeon\.name\) : null\),/, 'the popup: the deity and the revealed dungeon');
   assert.match(modes, /const g = guildFactionId != null \? guildOfFaction\(guildFactionId, resolveVariantGuild\(dict\), dict\) : null;\s*return g \? getTitle\(membershipOf\(activeMemberships\(playerEntity\), g\), playerEntity, g\) : null;/, 'the trade window: the counter’s guild');
   assert.match(read('src/ui/enhancedTrade.js'), /guildTitle: deps\.guildTitle\?\.\(\) \?\? firstName\(deps\.entity\?\.name \?\? ''\),/, 'the enhanced trade skin reads the same hook');
   const actions = read('src/systems/guildServiceActions.js');

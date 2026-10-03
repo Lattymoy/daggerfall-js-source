@@ -200,8 +200,8 @@
   {
     "name": "DISC29-H-info-falls-through-to-the-click",
     "file": "src/scenes/worldModes.js",
-    "old": "          .then(() => townTalk?.say?.(presentNpcInfoText(npcDisplayName(data)))).catch(() => {});\n      }\n      return;\n    }",
-    "new": "          .then(() => townTalk?.say?.(presentNpcInfoText(npcDisplayName(data)))).catch(() => {});\n      }\n    }",
+    "old": "          .then(() => townTalk?.say?.(presentNpcInfoText(npcShownName(data)))).catch(() => {});   // L10N3e: the name as shown\n      }\n      return;\n    }",
+    "new": "          .then(() => townTalk?.say?.(presentNpcInfoText(npcShownName(data)))).catch(() => {});   // L10N3e: the name as shown\n      }\n    }",
     "tests": [
       "test/disc29_questinfo.test.js"
     ]
@@ -209,7 +209,7 @@
   {
     "name": "DISC29-H-info-names-the-resource",
     "file": "src/scenes/worldModes.js",
-    "old": "presentNpcInfoText(npcDisplayName(data))",
+    "old": "presentNpcInfoText(npcShownName(data))",
     "new": "presentNpcInfoText(person.displayName)",
     "tests": [
       "test/disc29_questinfo.test.js"

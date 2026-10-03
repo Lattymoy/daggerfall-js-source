@@ -59,7 +59,7 @@ test('X2 MACROS1: a map read carries its revealed name as the record\'s macro, t
   assert.equal(getMacroValue('%map', null, { world: { locationRevealedByMapItem: () => 'Privateers Hold' } }), 'Privateers Hold');
   assert.equal(getMacroValue('%map', null, { world: {} }), '%map[nullMCP]', 'unanswered, the table says so - which is what every quest %map printed before the hook existed');
   const w = rd('src/scenes/world.js');
-  assert.match(w, /if \(picked\) _locationRevealedByMapItem = picked\.name;/, 'the reveal sets PlayerGPS\'s field');
+  assert.match(w, /_locationRevealedByMapItem = shown;/, 'the reveal sets PlayerGPS\'s field');
   assert.match(w, /locationRevealedByMapItem: \(\) => _locationRevealedByMapItem,/, 'and the quest world hook answers it');
 });
 
@@ -73,7 +73,7 @@ test('X3 MACROS1: the guild window\'s every record goes through the guild\'s con
   const wm = rd('src/scenes/worldModes.js');
   const flow = wm.slice(wm.indexOf('const service = npcServiceKind(pn.factionID);'), wm.indexOf('let win = null;', wm.indexOf('const service = npcServiceKind(pn.factionID);')));
   // MACRO-4: the map grew into `guildMacros` (the rank, the deity, the revealed dungeon); the faction name is still %fon's
-  assert.match(flow, /const orderName = dict\?\.get\?\.\(guild\.factionId\)\?\.name \?\? null;[\s\S]{0,1200}?const guildMacros = \{\s*playerName: playerEntity\.name,\s*factionName: guild\?\.divine \?\? orderName,/, 'the guild\'s context names the player and the faction');
+  assert.match(flow, /const orderName = orderFaction\?\.name == null \? null : getLocalizedFactionName\(guild\.factionId, orderFaction\.name\);[\s\S]{0,1200}?const guildMacros = \{\s*playerName: playerEntity\.name,\s*factionName: guild\?\.divine \?\? orderName,/, 'the guild\'s context names the player and the faction');
   assert.match(flow, /const rows = \(id\) => expandGuildRows\(townTalk\?\.lines\?\.\(id\) \?\? \[\], guildMacros\);/, 'the join flow\'s rows, through the guild\'s context');
   assert.doesNotMatch(flow, /const rows = \(id\) => townTalk\?\.lines\?\.\(id\) \?\? \[\];/, 'and its verbatim wiring is gone');
 });

@@ -73,6 +73,7 @@ import { fillVitalSigns } from './statMods.js';   // CURE-ALL: FillVitalSigns' o
 import { SOUND } from './soundClips.js';   // V4: the transformed attack voices
 import { renownHpOf } from './renownLayer.js';   // AUDIT RENOWN1 GAME-4: the online layer rides above the limiter
 import { endLycanthropyQuests } from './racialQuests.js';   // V2d: the cure's $CUREWER tombstone sweep
+import { localizedText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
 /** LycanthropyEffect.LycanthropyCurseKey (:33). */
 export const LYCANTHROPY_CURSE_KEY = 'Lycanthropy-Curse';
@@ -400,10 +401,10 @@ export const isTransformedLycanthrope = (entity) => isTransformedNow(entity);
 export const INVENTORY_WHILE_SHAPECHANGED_TEXT = 'You cannot access the inventory while shapechanged...';
 export const NO_RESPONSE_TEXT = 'You get no response.';
 export function racialSuppressInventory(entity) {
-  return isTransformedNow(entity) ? { text: INVENTORY_WHILE_SHAPECHANGED_TEXT } : null;
+  return isTransformedNow(entity) ? { text: localizedText('inventoryWhileShapechanged', INVENTORY_WHILE_SHAPECHANGED_TEXT) } : null;   // :413
 }
 export function racialSuppressTalk(entity) {
-  return isTransformedNow(entity) ? { text: NO_RESPONSE_TEXT } : null;
+  return isTransformedNow(entity) ? { text: localizedText('youGetNoResponse', NO_RESPONSE_TEXT) } : null;   // :427
 }
 /** SuppressCrime (:121-124): a transformed lycanthrope is never
  *  tagged with a crime - the crime-write sites gate on this. */

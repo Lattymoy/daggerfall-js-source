@@ -20,8 +20,8 @@
  {
   "name": "DAEDRA1-a-null-daedra-prints-a-hole",
   "file": "src/systems/daedraSummoning.js",
-  "old": "export const summonMacroValues = (daedra) => Object.freeze({ dae: daedra?.name ?? null });",
-  "new": "export const summonMacroValues = (daedra) => Object.freeze({ dae: daedra?.name ?? '' });",
+  "old": "export const summonMacroValues = (daedra) => Object.freeze({ dae: daedra?.name != null ? getLocalizedFactionName(daedra.factionId, daedra.name) : null });",
+  "new": "export const summonMacroValues = (daedra) => Object.freeze({ dae: daedra?.name != null ? getLocalizedFactionName(daedra.factionId, daedra.name) : '' });",
   "tests": [
    "test/daedrasummoning.test.js"
   ]

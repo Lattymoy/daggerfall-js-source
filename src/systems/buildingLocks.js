@@ -16,6 +16,7 @@ import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { isShop } from './shopStock.js';
 import { HOLIDAYS } from './holidays.js';
 import { sharedClockOn } from './worldTick.js';   // OL4 (AUDIT ALL O1): the shared clock IS the reason for the shift, and every other online law keys on it
+import { localizedText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
 /** Opening and closing hours by building type (PlayerActivate.cs:
  *  91-92), indexed by DFLocation.BuildingTypes 0..24. closeHours 25
@@ -46,9 +47,9 @@ export const buildingLockValue = (quality) => Math.trunc((quality ?? 0) / 2);
  *   holidayId                     - getHolidayId's answer (shops close
  *                                   on Suns Rest, :1296-1299)
  *   isHouseOwned(buildingKey)     - DaggerfallBankManager.IsHouseOwned
- *                                   (H1 WIRED IT: banking.js:176 over
+ *                                   (H1 WIRED IT: banking.js:177 over
  *                                   playerEntity.houses, handed in at
- *                                   scenes/worldModes.js:4969, so
+ *                                   scenes/worldModes.js:4994, so
  *                                   :69 - PlayerActivate.cs:1261-1262,
  *                                   the ladder's first test - now has
  *                                   a real answer instead of false)
@@ -65,7 +66,7 @@ export const buildingLockValue = (quality) => Math.trunc((quality ?? 0) / 2);
  *                                   guild layer (Guild.HallAccessAnytime
  *                                   / IsMember)
  *   ownsShip                      - DaggerfallBankManager.OwnsShip
- *                                   (D6 WIRED IT: banking.js:297 over
+ *                                   (D6 WIRED IT: banking.js:300 over
  *                                   playerEntity.ownedShip, handed in
  *                                   at scenes/worldModes.js's
  *                                   buildingIsUnlocked call. The key
@@ -136,10 +137,14 @@ export function buildingIsUnlocked(building, {
  * World Tooltips does, substituting "Palace" for a palace it looks at
  * (a departure of the mod's, recorded with the port of its ladder), and
  * the override is how that arm stays a caller instead of a second copy.
+ * L10N3d: DFU's two rows are read in the player's language; the
+ * override's sentence is the mod's own, so it stays English.
  */
 export function buildingClosedText(buildingType, { subject = null } = {}) {
-  const which = subject ?? (buildingType === BUILDING_TYPES.GuildHall ? 'Guild' : 'Store');
-  return `${which} is closed. Open from ${OPEN_HOURS[buildingType]}:00 to ${CLOSE_HOURS[buildingType]}:00.`;
+  const text = subject != null ? `${subject} is closed. Open from %d1:00 to %d2:00.`
+    : buildingType === BUILDING_TYPES.GuildHall ? localizedText('guildClosed', 'Guild is closed. Open from %d1:00 to %d2:00.')
+      : localizedText('storeClosed', 'Store is closed. Open from %d1:00 to %d2:00.');
+  return text.replaceAll('%d1', String(OPEN_HOURS[buildingType])).replaceAll('%d2', String(CLOSE_HOURS[buildingType]));
 }
 
 /** The locked-door popup line - `lockedExteriorDoor`, which
@@ -148,6 +153,8 @@ export function buildingClosedText(buildingType, { subject = null } = {}) {
  *  follows it from actionSystem.lookAtLockText, classic's
  *  interior-formula oversight included). */
 export const LOCKED_EXTERIOR_DOOR_TEXT = 'Locked.';
+/** The popup line as the player reads it, for the door arm that pops it. */
+export const lockedExteriorDoorText = () => localizedText('lockedExteriorDoor', LOCKED_EXTERIOR_DOOR_TEXT);
 
 // OL4 - ONLINE COMMERCE (2026-09-17, a player complaint relayed by Mac:
 // players could not shop at night online). A RECORDED DEPARTURE - Ledger

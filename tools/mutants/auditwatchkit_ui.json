@@ -254,7 +254,7 @@
   {
     "name": "WK-P6-reach-unbounded",
     "file": "src/player/mobileEnemyActivate.js",
-    "old": "    if (distance > TREASURE_ACTIVATION_DISTANCE) { midScreen?.(TOO_FAR_AWAY_TEXT); return true; }\n",
+    "old": "    if (distance > TREASURE_ACTIVATION_DISTANCE) { midScreen?.(tooFarAwayText()); return true; }\n",
     "new": "",
     "tests": [
       "test/auditwatchkit_ui.test.js"
@@ -263,7 +263,7 @@
   {
     "name": "WK-P6-refusal-unsaid",
     "file": "src/player/mobileEnemyActivate.js",
-    "old": "if (distance > TREASURE_ACTIVATION_DISTANCE) { midScreen?.(TOO_FAR_AWAY_TEXT); return true; }",
+    "old": "if (distance > TREASURE_ACTIVATION_DISTANCE) { midScreen?.(tooFarAwayText()); return true; }",
     "new": "if (distance > TREASURE_ACTIVATION_DISTANCE) { return true; }",
     "tests": [
       "test/auditwatchkit_ui.test.js"
@@ -272,8 +272,8 @@
   {
     "name": "WK-P6-refusal-not-spent",
     "file": "src/player/mobileEnemyActivate.js",
-    "old": "if (distance > TREASURE_ACTIVATION_DISTANCE) { midScreen?.(TOO_FAR_AWAY_TEXT); return true; }",
-    "new": "if (distance > TREASURE_ACTIVATION_DISTANCE) { midScreen?.(TOO_FAR_AWAY_TEXT); return false; }",
+    "old": "if (distance > TREASURE_ACTIVATION_DISTANCE) { midScreen?.(tooFarAwayText()); return true; }",
+    "new": "if (distance > TREASURE_ACTIVATION_DISTANCE) { midScreen?.(tooFarAwayText()); return false; }",
     "tests": [
       "test/auditwatchkit_ui.test.js"
     ]

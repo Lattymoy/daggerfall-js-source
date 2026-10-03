@@ -127,5 +127,5 @@ test('ch3 characters-13 -> FX1 (F128): the swap pause bills PER INVENTORY VISIT,
   const w = src('src/ui/nativeInventory.js');
   assert.ok(w.includes('this._handSnapshot = hooks.entity ? equipDelaySnapshot(hooks.entity) : null;'), 'push snapshots');
   assert.ok(w.includes('billEquipDelayOnClose(this.hooks.entity, this._handSnapshot)'), 'pop bills once');
-  assert.ok(w.includes('`Equipping ${templateByIndex(it.templateIndex)?.name ?? it.name ?? \'\'}`'), 'the Internal_Strings equippingWeapon cue');
+  assert.ok(w.includes("localizedText('equippingWeapon', 'Equipping %s').replace('%s', getLocalizedItemName(it.templateIndex, templateByIndex(it.templateIndex)?.name ?? it.name ?? ''))"), 'the Internal_Strings equippingWeapon cue');
 });

@@ -74,6 +74,7 @@ on:
       - "src/formats/mapsTables.js"
       - "src/systems/foragingCore.js"
       - "src/systems/gameDate.js"
+      - "src/systems/textManager.js"
       - "src/systems/itemTemplatesData.js"
       - "src/net/raidLaw.js"
       - "src/net/gateReceipt.js"

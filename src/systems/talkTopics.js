@@ -35,6 +35,7 @@ import { directionHintString } from './talk.js';   // wave 27: one compass law
 import { staticNpcData, isChildNPCData } from '../characters/staticNpc.js';   // QP1: the one SetLayoutData law
 import { collectInteriorPeople } from '../characters/interiorPeople.js';   // QP1: the one people mapper
 import { buildingSummaries } from '../world/buildingSummaries.js';   // D9: GetBuildingList's own per-block building walk (RMBLayout.GetBuildingData)
+import { localizedTable } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
 // TalkManager.knowledgeModifiers (verbatim, 8 question rows x 5
 // social groups).
@@ -75,27 +76,28 @@ const SKIPPED_BUILDING_TYPES = new Set([
 ]);
 export const isBuildingTypeSkipped = (t) => SKIPPED_BUILDING_TYPES.has(t);
 
-const CAPTION_BY_TYPE = Object.freeze({
-  [BUILDING_TYPES.Alchemist]: 'Alchemists',
-  [BUILDING_TYPES.Armorer]: 'Armorers',
-  [BUILDING_TYPES.Bank]: 'Banks',
-  [BUILDING_TYPES.Bookseller]: 'Bookstores',
-  [BUILDING_TYPES.ClothingStore]: 'Clothing stores',
-  [BUILDING_TYPES.GemStore]: 'Gem stores',
-  [BUILDING_TYPES.GeneralStore]: 'General stores',
-  [BUILDING_TYPES.Library]: 'Libraries',
-  [BUILDING_TYPES.GuildHall]: 'Guilds',
-  [BUILDING_TYPES.PawnShop]: 'Pawn shops',
-  [BUILDING_TYPES.WeaponSmith]: 'Weapon smiths',
-  [BUILDING_TYPES.Temple]: 'Local temples',
-  [BUILDING_TYPES.Tavern]: 'Taverns',
+// L10N3d: each caption is read by its DFU key (BuildingTypeToGroupString's) when the list is drawn.
+const CAPTION_BY_TYPE = localizedTable({
+  [BUILDING_TYPES.Alchemist]: ['Alchemists', 'Alchemists'],
+  [BUILDING_TYPES.Armorer]: ['Armorers', 'Armorers'],
+  [BUILDING_TYPES.Bank]: ['Banks', 'Banks'],
+  [BUILDING_TYPES.Bookseller]: ['Bookstores', 'Bookstores'],
+  [BUILDING_TYPES.ClothingStore]: ['Clothingstores', 'Clothing stores'],
+  [BUILDING_TYPES.GemStore]: ['Gemstores', 'Gem stores'],
+  [BUILDING_TYPES.GeneralStore]: ['Generalstores', 'General stores'],
+  [BUILDING_TYPES.Library]: ['Libraries', 'Libraries'],
+  [BUILDING_TYPES.GuildHall]: ['Guilds', 'Guilds'],
+  [BUILDING_TYPES.PawnShop]: ['Pawnshops', 'Pawn shops'],
+  [BUILDING_TYPES.WeaponSmith]: ['Weaponsmiths', 'Weapon smiths'],
+  [BUILDING_TYPES.Temple]: ['Localtemples', 'Local temples'],
+  [BUILDING_TYPES.Tavern]: ['Taverns', 'Taverns'],
 });
 export const TOPIC_CATEGORIES = Object.freeze(
   Object.keys(CAPTION_BY_TYPE)
     .map(Number)
     .sort((a, b) => a - b)   // DFU walks the enum in numeric order
     .filter((t) => !isBuildingTypeSkipped(t))
-    .map((t) => Object.freeze({ type: t, caption: CAPTION_BY_TYPE[t] })));
+    .map((t) => Object.freeze({ type: t, get caption() { return CAPTION_BY_TYPE[t]; } })));
 
 // TalkManager.answersToDirections (TalkManager.cs:107-108): 15
 // doesn't-know + 15 knows, 3 reaction tiers x 5 social groups.

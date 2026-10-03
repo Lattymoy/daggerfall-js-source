@@ -293,10 +293,11 @@ test('AUDIT PRE-MERGE 0928 N8: every canvas the port makes to read pixels back a
     const { decodePng } = await import('../src/systems/textureReplacement.js');
     await decodePng(new Uint8Array([137, 80, 78, 71]));
     assert.deepEqual(log.splice(0), [want], 'decodePng');
-    // the SDF face's atlas (both of its contexts: the resize resets the first)
-    const { buildSdfFace } = await import('../src/ui/text.js');
-    buildSdfFace('Test', { canvas: recordingCanvas(log) });
-    assert.deepEqual(log.splice(0), [want, want], 'buildSdfFace');
+    // the SDF face's atlas - L10N2: DFU's dynamic face (ui/glyphFace.js) took the seeded build's place; each page it
+    // grows into is read back at its upload, so the page asks at its one context (the measurer only measures)
+    const { createGlyphFace } = await import('../src/ui/glyphFace.js');
+    createGlyphFace('Test', { makeCanvas: (w, h) => recordingCanvas(log, w, h) }).add(65);
+    assert.deepEqual(log.splice(0), [['2d', null], want], 'the glyph face: its measurer, then its page');
     // the held map: the painted sheet and the thumbs' offscreen (the hands canvas is only written)
     globalThis.document = { createElement: () => recordingCanvas(log) };
     const { HeldMapWindow } = await import('../src/ui/heldMap.js');
