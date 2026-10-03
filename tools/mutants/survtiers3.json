@@ -128,11 +128,13 @@
   {
     "name": "SURVTIERS3-a-kit-fire-is-tended",
     "file": "src/scenes/camps.js",
-    "old": "c.rec.kind !== CAMP_KIND.Tent || ",
-    "new": "",
+    "old": "    const tended = c.rec.kind === CAMP_KIND.Tent || (c.rec.kind === CAMP_KIND.Fire && !!c.rec.fuel);",
+    "new": "    const tended = true;",
     "tests": [
-      "test/survtiers3.test.js"
-    ]
+      "test/survtiers3.test.js",
+      "test/auditrestparty_camps.test.js"
+    ],
+    "note": "AUDIT REST-PARTY (PIN MOVED): a Campfire with fuel is tended now (B2); a kit fire still is not."
   },
   {
     "name": "SURVTIERS3-the-worlds-fire-is-no-rests-place",
@@ -405,11 +407,12 @@
   {
     "name": "SURVTIERS3-the-kit-cite-startingGear-rots",
     "file": "src/systems/equip.js",
-    "old": "systems/startingGear.js:74 assignStartingGear",
+    "old": "systems/startingGear.js:75 assignStartingGear",
     "new": "systems/startingGear.js:70 assignStartingGear",
     "tests": [
       "test/citedrift.test.js"
-    ]
+    ],
+    "note": "REST1+REST2 (PIN MOVED): re-aimed by content to the cite the slice's cite shift moved."
   },
   {
     "name": "SURVTIERS3-the-kit-cite-headless-chargen-rots",
@@ -432,8 +435,8 @@
   {
     "name": "SURVTIERS3-the-kit-cite-world-seed-rots",
     "file": "src/systems/equip.js",
-    "old": "(world.js:5312, exterior.js:1315)",
-    "new": "(world.js:5311, exterior.js:1315)",
+    "old": "(world.js:5315, exterior.js:1315)",
+    "new": "(world.js:5314, exterior.js:1315)",
     "tests": [
       "test/citedrift.test.js"
     ],
@@ -451,8 +454,8 @@
   {
     "name": "SURVTIERS3-the-gear-cite-world-seed-rots",
     "file": "src/systems/startingGear.js",
-    "old": "world.js:5312 and exterior.js:1315 seed it",
-    "new": "world.js:5311 and exterior.js:1315 seed it",
+    "old": "world.js:5315 and exterior.js:1315 seed it",
+    "new": "world.js:5314 and exterior.js:1315 seed it",
     "tests": [
       "test/citedrift.test.js"
     ],
@@ -470,12 +473,12 @@
   {
     "name": "SURVTIERS3-the-rest-window-cite-input-rots",
     "file": "src/ui/restWindow.js",
-    "old": "exterior.js:3200, ui/input.js:922)",
-    "new": "exterior.js:3200, ui/input.js:525)",
+    "old": "exterior.js:3201, ui/input.js:922)",
+    "new": "exterior.js:3201, ui/input.js:525)",
     "tests": [
       "test/citedrift.test.js"
     ],
-    "note": "THE PROF7 MERGE (PIN MOVED): re-aimed by content to the cite the merge's citeMerge moved (main's #471 and PROF7 together); FIELD BUGS 2026-09-30's shift before it. TIME1 (PIN MOVED): its world.js and exterior.js cites shifted by citeShift; re-aimed by content. MERGE OF MAIN (#538) INTO THE TACTICS ARC (PIN MOVED): re-aimed by content to the cite citeMerge moved."
+    "note": "THE PROF7 MERGE (PIN MOVED): re-aimed by content to the cite the merge's citeMerge moved (main's #471 and PROF7 together); FIELD BUGS 2026-09-30's shift before it. TIME1 (PIN MOVED): its world.js and exterior.js cites shifted by citeShift; re-aimed by content. MERGE OF MAIN (#538) INTO THE TACTICS ARC (PIN MOVED): re-aimed by content to the cite citeMerge moved. REST1+REST2 (PIN MOVED): re-aimed by content to the cite the slice's cite shift moved."
   },
   {
     "name": "SURVTIERS3-the-mirror-overrides-tickVitals",

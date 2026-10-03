@@ -27,7 +27,7 @@
 //   worldSeconds()              - TIME3: the event clock (worldMinutes()
 //                                 * 60) - the journal's dates
 //   raisedSeconds()             - TIME3: the session's raises
-//                                 (raisedMinutes() * 60), charged whole
+//                                 (raisedMinutes() * 60), charged nothing (QCLOCK-WORLD)
 //   playerEntity                - { name, level, gender, ... }
 //   playerRaceName()            - the birth race name (%ra)
 //   getReputation(factionId)    - factionRep.getReputation over the
@@ -62,7 +62,7 @@
 // billboard indices ride along for the questor flat-pick (Q4-iii).
 
 import { QuestMachine, TICKS_PER_SECOND } from '../systems/quest/machine.js';
-import { clockCounts, questTimeFree } from '../systems/quest/clock.js';   // DEAD-CLOCK: a clock whose end changes nothing is no deadline
+import { clockCounts } from '../systems/quest/clock.js';   // DEAD-CLOCK: a clock whose end changes nothing is no deadline
 import { repairActiveQuests } from '../systems/quest/questRepair.js';   // QREPAIR: the Settings' repair
 import { QuestListsManager } from '../systems/quest/questLists.js';
 import { QuestOfferFlow } from '../systems/quest/offerFlow.js';
@@ -255,7 +255,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     // member never reached the machine: TrainPc stamped the world's minute, the guild's gate read the character's
     // (refused for 84 days of their time behind the world, open at once ahead of it)
     ownMinutes: () => ctx.ownMinutes?.() ?? null,
-    questClockStepMax: () => ctx.questClockStepMax?.() ?? Infinity,   // WORLD7: online, a quest clock bounds the LIVED part of a gap to the host's step, a raise charged whole (TIME3); a host that says nothing charges every clock, DFU's own
+    questClockStepMax: () => ctx.questClockStepMax?.() ?? Infinity,   // WORLD7: online, a quest clock bounds the LIVED part of a gap to the host's step, a raise charged nothing (QCLOCK-WORLD; TIME3 charged it whole); a host that says nothing charges every clock, DFU's own
     sharedClock: () => !!ctx.sharedClock?.(),   // GUARD-ONLINE: online, a guarded quest's window is the player's arrival's (quest/onlineGuard.js)
     getQuestSourceLines: (name) => ctx.data.getQuestSourceLines(name),
     playerLevel: () => ctx.playerEntity?.level ?? 0,
@@ -460,7 +460,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
      * (and, GUIDE1, the step each was written at), and the TIGHTEST
      * RUNNING clock on the quest's resources (Clock carries
      * `remainingTimeInSeconds` in game seconds beside
-     * `clockEnabled`/`clockFinished`, quest/clock.js:292,164). The
+     * `clockEnabled`/`clockFinished`, quest/clock.js:329,164). The
      * archive is the notebook's filed entries; `ended` the completed
      * quests the machine still holds, with their verdict.
      *
@@ -503,9 +503,12 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
         if (!messages.length) continue;
         let clockSeconds = null;
         const clocks = [];   // AUDIT GUIDE H1: each counting clock by name - the lens counts only one the journal names
-        // TIMEFREE: online a quest has no time left to show - its deadlines never run out (quest/clock.js), so no
-        // "Time remains", no "Under a day left", no urgent herald, on any surface this walk feeds
-        if (!questTimeFree(q)) for (const r of q.resources.values()) {
+        // REST8 (2026-10-03, bible/06-Systems/Rest-Arc.md section 8; Mac's OPEN 12): online a DELAY is no time left to
+        // show - it lands on the short wait (quest/clock.js waitsShort) - so the walk skips it, and no surface it feeds
+        // counts a letter down; a DEADLINE keeps its "Time remains", its rail line and the herald's urgency, in played
+        // time. TIMEFREE's walk skipped every clock online.
+        for (const r of q.resources.values()) {
+          if (r.waitsShort) continue;   // REST8
           if (r.clockEnabled && !r.clockFinished && Number.isFinite(r.remainingTimeInSeconds) && clockCounts(q, r)) {   // DEAD-CLOCK
             const left = r.liveRemainingSeconds(q);   // QT-LIVE1: as of NOW, not as of the last tick the pause gate let through
             clockSeconds = clockSeconds == null ? left : Math.min(clockSeconds, left);

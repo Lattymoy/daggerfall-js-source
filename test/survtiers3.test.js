@@ -162,7 +162,7 @@ test('the third pass: "Rest here" is the fire\'s rest - refused in words beyond 
   const said2 = [], menus = [], rested = [];
   const entity = body();
   const pool = createCamps({ renderer, ...fireStub, meshes: tentMeshes, entity, camera: () => ({ feet, yaw: 0 }), selfId: () => null, say: (l) => said2.push(l), showOverlay: (w) => menus.push(w), openRest: (rec) => rested.push(rec.id) });
-  pool.restore([{ id: 'me:1:900', kind: 'tent', pos: [0, 0, 0], yaw: 0, litUntil: 1300, wear: 0, placedAt: 900 }]);
+  pool.restore([{ id: 'me:1:900', kind: 'tent', pos: [0, 0, 0], yaw: 0, litUntil: 1300, wear: 5, placedAt: 900 }]);   // AUDIT REST F8: a tent with uses left (a worn-through one stokes no more)
   await new Promise((r) => setTimeout(r, 0));
   const restFromMenu = () => { pool.activate('camp:me:1:900', 'grab'); const m = menus.at(-1); m.onPick(m.items.indexOf(CAMP_TEXT.menuRest)); };
   restFromMenu();

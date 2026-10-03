@@ -25,7 +25,7 @@ import { survivalOf, NEED } from './needs.js';
 /** The torch's icon stands in for the campfire's bundle until it has
  *  art of its own (a torch is UselessItems2 247, a world-textured item). */
 const TORCH = ITEM_TEMPLATES[247];
-export const CAMPFIRE_USES = 5;
+export const CAMPFIRE_USES = 8;   // REST2: eight nights of fuel, a night its owner sleeps at it spending one (camp.js spendCampNight)
 export const CAMPING_USES = 50;
 
 /** The rows, registered at import (so any mint that names an index
@@ -42,7 +42,7 @@ export const SURVIVAL_TEMPLATES = Object.freeze([
   { index: TEMPLATE.RawMeat, name: 'Raw Meat', baseWeight: 2.0, hitPoints: 60, basePrice: 8, rarity: 40, worldTextureArchive: 538, worldTextureRecord: 2 },
   { index: TEMPLATE.Waterskin, name: 'Waterskin', baseWeight: 0.5, hitPoints: 10, basePrice: 10, rarity: 1, worldTextureArchive: 539, worldTextureRecord: 0 },
   { index: TEMPLATE.Skillet, name: 'Skillet', baseWeight: 5.0, hitPoints: 100, basePrice: 60, rarity: 5, worldTextureArchive: 218, worldTextureRecord: 4 },
-  { index: TEMPLATE.Campfire, name: 'Campfire Kit', baseWeight: 3.0, hitPoints: CAMPFIRE_USES, basePrice: 25, rarity: 1, worldTextureArchive: TORCH?.worldTextureArchive ?? 205, worldTextureRecord: TORCH?.worldTextureRecord ?? 17 },
+  { index: TEMPLATE.Campfire, name: 'Campfire', baseWeight: 3.0, hitPoints: CAMPFIRE_USES, basePrice: 40, rarity: 1, worldTextureArchive: TORCH?.worldTextureArchive ?? 205, worldTextureRecord: TORCH?.worldTextureRecord ?? 17 },
 ]);
 registerCustomTemplates(SURVIVAL_TEMPLATES);
 
@@ -235,7 +235,7 @@ export function provisionsStock(quality = 5, rolls = Math.random) {
   for (let i = n(1, 3); i > 0; i--) out.push(createSurvivalItem(TEMPLATE.Bread));
   for (let i = n(1, 3); i > 0; i--) out.push(createSurvivalItem(rolls() < 0.5 ? TEMPLATE.Apple : TEMPLATE.Orange));
   for (let i = n(1, 2); i > 0; i--) out.push(createSurvivalItem(TEMPLATE.Waterskin, { water: 0 }));
-  for (let i = n(1, 3); i > 0; i--) out.push(createSurvivalItem(TEMPLATE.Campfire));
+  for (let i = n(2, 4); i > 0; i--) out.push(createSurvivalItem(TEMPLATE.Campfire));   // REST2: two to four, the rest's own tool online
   if (quality >= 5 || dice100(30, rolls())) out.push(createSurvivalItem(TEMPLATE.CampingEquipment));
   if (quality >= 8 || dice100(20, rolls())) out.push(createSurvivalItem(TEMPLATE.Skillet));
   return out.filter(Boolean);
@@ -249,8 +249,18 @@ export function startingProvisions() {
     createSurvivalItem(TEMPLATE.Rations, { stackCount: 2 }),
     createSurvivalItem(TEMPLATE.Waterskin),
     createSurvivalItem(TEMPLATE.CampingEquipment, { condition: Math.trunc(CAMPING_USES / 2) }),
-    createSurvivalItem(TEMPLATE.Campfire, { condition: 2 }),
+    createSurvivalItem(TEMPLATE.Campfire),   // REST2: a full Campfire - the rest's tool, not two lights of a kit
   ];
 }
+
+/** REST2 (bible/06-Systems/Rest-Arc.md section 3): ONLINE THE CAMPFIRE IS THE REST'S, NOT THE ARC'S. A rest online is
+ *  an act at a fire or a bed (systems/restAct.js), so with the arc Off a General Store still stocks two to four, and a
+ *  new character still sets out with one. */
+export function campfireStock(rolls = Math.random, lo = 2, hi = 4) {   // AUDIT REST: a Pawn Shop's 0-2 (Rest-Arc.md section 3)
+  const out = [];
+  for (let i = lo + Math.floor(rolls() * (hi - lo + 1)); i > 0; i--) out.push(createSurvivalItem(TEMPLATE.Campfire));
+  return out.filter(Boolean);
+}
+export const startingCampfire = () => createSurvivalItem(TEMPLATE.Campfire);
 
 export { TEMPLATE, FOOD, foodOf, foodSatiety, isFood, isWaterskin, waterIn, NEED };

@@ -34,7 +34,6 @@ import { addGoldPieces, addItem } from '../systems/inventory.js';
 import { BOUNTY_RING_R } from '../ui/bountyMapMark.js';
 import { setBountyJournal, BOUNTY_QUEST_PREFIX } from '../systems/bountyJournal.js';
 import { rewardContract } from '../systems/standing.js';   // REP4: a contract finished, the region's law two points better
-import { sharedClockOn } from '../systems/worldTick.js';   // TIMEFREE: online a taken bounty never lapses
 
 /** How often the host looks at the world, seconds. */
 export const BOUNTY_TICK_S = 0.5;
@@ -194,7 +193,7 @@ export function createBountyHost(deps) {
       if (h.from) lines.push(`Shared with you by ${h.from}.`);
       return {
         id: `${BOUNTY_QUEST_PREFIX}${h.id}`, name: `Bounty: ${p.title}`, questName: 'BOUNTY', bounty: true,
-        clockSeconds: sharedClockOn() ? null : bountyMinutesLeft(h, now) * 60,   // TIMEFREE: online no time left to show
+        clockSeconds: bountyMinutesLeft(h, now) * 60,
         messages: [lines.map(line)],
       };
     }).filter(Boolean);
@@ -234,7 +233,7 @@ export function createBountyHost(deps) {
         posting: shown,
         state: postingState(ledger, p),
         mates: joined.map((j) => j.name),
-        held: held ? { killed: held.killed, left: sharedClockOn() ? null : bountyMinutesLeft(held, now), shared: !!held.shared } : null,   // TIMEFREE
+        held: held ? { killed: held.killed, left: bountyMinutesLeft(held, now), shared: !!held.shared } : null,
       };
     });
   }
@@ -242,7 +241,7 @@ export function createBountyHost(deps) {
   /** The bounties I hold, for the window's list. */
   const heldRows = () => {
     const now = deps.now();
-    return ledger.held.map((h) => ({ id: h.id, posting: postingOf(h.id), killed: h.killed, left: sharedClockOn() ? null : bountyMinutesLeft(h, now), shared: !!h.shared, from: h.from ?? null }))   // TIMEFREE
+    return ledger.held.map((h) => ({ id: h.id, posting: postingOf(h.id), killed: h.killed, left: bountyMinutesLeft(h, now), shared: !!h.shared, from: h.from ?? null }))
       .filter((r) => r.posting);
   };
 
@@ -495,7 +494,7 @@ export function createBountyHost(deps) {
     // AUDIT 28 B10: a bounty taken "later" than now was taken on another clock (an offline save played online): it
     // runs from now, never for days, and never lapses before it began
     for (const h of ledger.held) if (h.takenAt > now) h.takenAt = now;
-    for (const gone of (sharedClockOn() ? [] : lapseBounties(ledger, now))) {   // TIMEFREE: online a taken bounty never lapses
+    for (const gone of lapseBounties(ledger, now)) {
       const p = postingOf(gone.id);
       packs.delete(gone.id);
       if (p) deps.say(`The bounty on the ${p.foes} has lapsed.`);

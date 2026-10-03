@@ -123,7 +123,7 @@ export class Quest {
     this.nowSeconds = nowSeconds;  // () => classic game seconds (machine-injected) - TIME3: the character's own clock, the countdowns'
     this.skySeconds = skySeconds ?? nowSeconds;   // TIME3: () => the sky's seconds - an hour, a date, a season (DailyFrom, a notice's daytime); the one clock offline
     this.worldSeconds = worldSeconds ?? nowSeconds;   // TIME3: () => the event clock's seconds - the journal's dates are stamped on it
-    this.raisedSeconds = raisedSeconds;   // TIME3: () => the session's raised seconds, or null - a countdown charges them whole (quest/clock.js)
+    this.raisedSeconds = raisedSeconds;   // TIME3: () => the session's raised seconds, or null - online a countdown charges none of them (QCLOCK-WORLD, quest/clock.js)
     this.questClockStepMax = questClockStepMax;   // WORLD7: () => world seconds - the most one played frame charges a Clock or a spawn interval (machine-injected; Infinity offline)
     this.hooks = hooks;            // machine hooks: showPopup/changeReputation/log
     this.actionFactory = actionFactory;   // (line, quest) -> action | null (the machine's registry)

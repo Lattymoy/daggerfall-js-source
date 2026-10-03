@@ -153,7 +153,7 @@ export function mountBountyBoard(host, deps) {
     for (const h of held) {
       const li = el('li', 'bounty-heldrow');
       li.append(el('span', 'bounty-post-title', `${h.posting.title} · ${h.posting.town.name} · Tier ${h.posting.tier}`),
-        el('span', 'bounty-post-meta', `${h.killed}/${h.posting.count} slain${h.left == null ? '' : ` · ${bountyTimeText(h.left)} left`}${h.from ? ` · from ${h.from}` : ''}`));
+        el('span', 'bounty-post-meta', `${h.killed}/${h.posting.count} slain · ${bountyTimeText(h.left)} left${h.from ? ` · from ${h.from}` : ''}`));
       heldList.append(li);
     }
     card?.remove();
@@ -171,7 +171,7 @@ export function mountBountyBoard(host, deps) {
     const reward = el('div', 'bounty-reward');
     reward.append(el('span', 'bounty-reward-head', 'Reward'), el('span', 'bounty-gold', `${p.gold} gold pieces`), el('span', 'bounty-itemhint', itemHint(p.item)));
     card.append(reward);
-    if (r.held) card.append(el('p', 'bounty-progress', `${r.held.killed} of ${p.count} slain${r.held.left == null ? '' : ` · ${bountyTimeText(r.held.left)} left`}`));
+    if (r.held) card.append(el('p', 'bounty-progress', `${r.held.killed} of ${p.count} slain · ${bountyTimeText(r.held.left)} left`));
     if (r.mates?.length && r.state !== 'held') card.append(el('p', 'bounty-mates', `${r.mates.join(', ')} ${r.mates.length > 1 ? 'are' : 'is'} already on this hunt - taking it joins them.`));
     const acts = el('div', 'bounty-acts');
     if (r.state === 'open') {

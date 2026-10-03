@@ -1886,7 +1886,7 @@ test('TO-FIELD: the accelerated journey waits for the ground; TO-FIELD3 took the
   const n = read('src/systems/survival/needs.js');
   // (SURV-TIERS: through the tier's one stamina door, `tire`)
   assert.match(n, /if \(hungerAfter === 'starving' && !resting\) tire\(DRAIN\.starving, 'hunger'\);/, 'the starving drain');
-  assert.match(n, /if \(sleepNow === 'exhausted' && !resting\) tire\(DRAIN\.exhausted, 'sleep'\);/, 'the exhausted drain');
+  assert.match(n, /if \(sleepNow === 'exhausted' && !resting(?: && !wakingHeld\(s, now\))?\) tire\(DRAIN\.exhausted, 'sleep'\);/, 'the exhausted drain (REST6: held while the Waking Salts last)');
   assert.match(n, /if \(!env\.insideBuilding && !vampire && !ctx\.beastForm && !sleeping && !resting\) \{/, 'the bare-skin health ticks');
   assert.match(read('src/systems/survival/hunting.js'), /if \(!climate \|\| !outdoors \|\| (?:afloat \|\| )?inLocationRect \|\| night \|\| enemiesNear \|\| resting\) return null;/,
     'and the hunting roll, which is the one the flag took without saying so');

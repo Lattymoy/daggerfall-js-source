@@ -19,6 +19,8 @@ import { quickslotHand } from '../ui/quickslotTags.js';   // DISC21-C: an empty 
 import { lycanthropeAttackVoice, lycanthropeMoveSound } from '../systems/lycanthropy.js';   // V4: the beast's attack voice; LM1: the 4-20s move-sound loop; DISC10-E L3: the inventory refusal moved INTO the window door
 import { layoutDungeon, isDungeonExitDoor } from '../world/dungeonLayout.js';
 import { isGateArena, COURT_TEXT } from '../world/gateArena.js';   // WB3b: the Burning Court - what the Deadlands will not allow
+import { placeDungeonFires, colliderFireProbe, inFireWard, DUNGEON_FIRE_FLAT, fireLayoutInputs } from '../world/dungeonFires.js';   // REST3: the dungeon's own campfires
+import { withFireMarks } from '../ui/nodeMarks.js';   // REST3: the campfires on the compass
 import { expandMacros } from '../systems/talkSession.js';   // MACRO1: the global symbols every TEXT.RSC box passes through (MacroHelper)
 import { executeConsoleCommand } from '../systems/consoleCommands.js';   // E3: the probe door runs the real database
 import { enterDungeonAutomap, exitDungeonAutomap, detachedAutomapRecord, buildRevealIndex, bindAutomapLayout, automapRevealTick, automapEntranceTick, automapTrailTick, capsuleCentreFromEye, automapDungeonKey, SCAN_INTERVAL_S, recordTeleporterConnection, teleporterConnection, registerAutomapConsoleCommands } from '../systems/automap.js';   // A1; ROAD-C c2/S8 the teleport listener + the three console verbs, ROAD-E E3 on the command database
@@ -35,7 +37,7 @@ import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate
 import { collectDungeonLights, dungeonAmbientFor, DUNGEON_AMBIENT, SPECIAL_AREA_BLOCK } from '../world/dungeonLights.js';   // AUDIT 26 F183: the castle / special-area ambients
 import { isHearthFlat } from '../systems/survival/hearth.js';   // HEARTH1: a bowl of fire down a corridor is a fire you can cook on
 import { CityLightAnimator, MINUTES_PER_DAY } from '../world/worldClock.js';
-import { billboardSize, mobileBillboardSize, centredBase } from '../world/rmbFlats.js';
+import { billboardSize, mobileBillboardSize, centredBase, classicBillboardSize } from '../world/rmbFlats.js';
 import { WATER_SCROLL_TILES_PER_SEC } from '../render/waterSurface.js';   // WATER-D1: the classic texel's flow, one home - the dungeon water draw lives here now
 import { enemyControllerHeight, idleSpriteHeight, flyerStandFeet, centreFromFeet, spriteOriginY, keepRebuiltSpawn } from '../characters/enemyAnchor.js';   // INCIDENT 2026-09-04 (ceiling bats): SetupDemoEnemy.cs:103-115 capsule + DaggerfallMobileUnit.cs:398-411 anchor
 import { MobileUnit, MOBILE_DAEDRA_SEDUCER, SeducerTransformBehaviour } from '../characters/mobileUnit.js';   // C11: classic sprite monsters   // A5: the Seducer transform pair + its trigger
@@ -228,8 +230,8 @@ import { createHitEffects, bloodCentre } from './hitEffects.js';
 import { orbArchiveFor, ORB_RECORD, noteOrbColour, ORB_SCALE } from '../characters/thunderlockIds.js';   // FIELD-GUN14: what this weapon's shot LOOKS like - the leaf, so no cycle   // FIELD-GUN17: ...and its colour   // FIELD-GUN18: ...and how big it is drawn
 import { bloodHit } from '../combat/bloodDecals.js';   // BLOOD1b: the blow, in the shape the mark's ladder reads
 import { createDroppedTorches } from './droppedTorches.js';
-import { createCamps } from './camps.js';   // SURV3: a fire on the dungeon floor (no tent below - the camp law says so)
-import { campWire, validCampRecord } from '../systems/survival/camp.js';   // SURV3: the room's memory carries the camps as the wire says them   // HT1: Handheld Torches' dropped lights in the dungeon   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
+import { createCamps, FIRE_LIGHT_UP } from './camps.js';   // REST3: a placed fire's light stands where a camp's does   // SURV3: a fire on the dungeon floor (no tent below - the camp law says so)
+import { campWire, validCampRecord, FIRE_LIGHT_RANGE } from '../systems/survival/camp.js';   // SURV3: the room's memory carries the camps as the wire says them   // HT1: Handheld Torches' dropped lights in the dungeon   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { EnemySoundSource, acuteHearingMultiplier } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
 import { flashPlayerDamage, shakePlayerDamage } from '../ui/damageFlash.js';   // WB13d: the gate boss's elemental blows shake, unflashed
 import { resetVitalsDetector } from '../ui/hudVitals.js';   // BLOOD AUDIT 5: the load's detector reset   // AUDIT 24 (wave 39): ShowPlayerDamage
@@ -240,7 +242,7 @@ import { raceWinner } from '../player/activationRace.js';   // WORLD-HOVER H2: t
 import { composeActivationTargets, composeNamer } from '../systems/worldHover.js';
 import { worldTooltipsOn, hideInteractTooltip, corpseName, mobileEntityName, liveEntityName, lootPileName, actionName, actionDoorName } from '../systems/worldTooltips.js';   // WORLD-HOVER: the mod's ladder, arm by arm   // WORLD-HOVER: the composition law is pure, so it lives with the model and can be DRIVEN   // WORLD-HOVER: the ONE construction seam composes the action objects' targets here; AUDIT 65 MC-2: the ray's reach, and each family's own
 import { worldHoverFrame, destroyWorldPlaque } from '../ui/worldPlaque.js';   // PX21c, WORLD-HOVER: one seam, one plaque
-import { quickLootTake } from '../systems/quickLoot.js'; import { showPickups } from '../ui/pickupFeed.js';   // QUICK-LOOT B4: the take, through the window's own door; PICKUP-FEED: what a take moved, as cards (the take's `took`)
+import { quickLootTake, plaqueActionFor } from '../systems/quickLoot.js'; import { showPickups } from '../ui/pickupFeed.js';   // QUICK-LOOT B4: the take, through the window's own door; PICKUP-FEED: what a take moved, as cards (the take's `took`)
 import { combatVisualsOn, foeDraw, markConcealedHit } from '../systems/combatVisuals.js';   // ECV1: what the enhanced skin draws for a concealed foe
 import { UnderwaterFog } from '../render/underwaterFog.js';   // ROAD-B (b3): UnderwaterFog.cs, called from PlayerEnterExit.Update's dungeon guard
 import { NavClient } from '../ai/navClient.js';   // ENHANCED AI 3b
@@ -262,6 +264,7 @@ import { rollLootRarity, pileSource, dungeonRarityTier, dungeonFamily, stampWonW
 import { foeHitFlash, setBatchHitFlash, puppetHurtStep } from '../systems/hitFlash.js';   // HITFLASH1
 import { coverDistance, coverStep, createCoverIndex, isCoverFlat, coverProxy } from '../ai/cover.js';   // TACT1: billboards are cover
 import { blowConnects, blowScaled } from '../ai/foeBlows.js';   // TACT4
+import { ambushNight } from '../systems/restAct.js';   // AUDIT REST-PARTY A1: a resting encounter stood breaks the night that rolled it
 
 
 
@@ -821,7 +824,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (isHearthFlat(f.archive, f.record)) {
         const t = await getTexture(f.archive);
         const size = t && f.record < t.recordCount ? billboardSize(t, f.record) : null;
-        dungeonHearths.push({ x: f.x + b.originX, y: f.y, z: f.z + b.originZ, foot: size ? f.y - size.h / 2 : undefined, w: size?.w, h: size?.h });
+        const lawSize = t && f.record < t.recordCount ? classicBillboardSize(t, f.record) : null;   // AUDIT REST-PARTY C7: the fires' law reads the CLASSIC height - a texture mod's XML scale is this client's alone, and the law must place the same fires on every client
+        dungeonHearths.push({ x: f.x + b.originX, y: f.y, z: f.z + b.originZ, foot: size ? f.y - size.h / 2 : undefined, w: size?.w, h: size?.h, lawFoot: lawSize ? f.y - lawSize.h / 2 : undefined });
       }
     }
     for (const m of b.layout.markers) {
@@ -885,6 +889,38 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (!isDungeonExitDoor(door)) continue;
       // Exit-door matrices are model-local under the block origin.
       exitDoors.push({ ...door, matrix: multiply(originMatrix, door.matrix) });
+    }
+  }
+
+  // REST3 (2026-10-03, bible/06-Systems/Rest-Arc.md section 4; Mac: "Dungeon layouts now recieve multiple strategic
+  // placements for campfires"): THE DUNGEON'S OWN FIRES (world/dungeonFires.js). Placed here - after every block's
+  // geometry is in the collider, before the flats are batched and the lights' flicker is sized - so a placed fire is a
+  // layout flat like any brazier: drawn and animated in the 210/1 batch, burning in the torches' loop, lit by a light of
+  // its own (the camps' range), a light billboard to Improved Interior Lighting, and a hearth in `dungeonHearths` -
+  // warmth, drying, cooking, the camp rest kind and, online, a rest point, with no new law. Every client of the dungeon
+  // casts the same rays over the same layout, so nothing rides the wire. Offline too (OPEN 8: a hearth; the rest stays
+  // DFU's). Never in the Burning Court. Permanent - never cold, never picked up - and a 15 m ward (_spawnEncounter).
+  const dungeonFires = isGateArena(dfLocation) ? [] : placeDungeonFires({
+    blocks: dungeon.blocks,
+    probe: colliderFireProbe(collider),   // the rays, the law's own (world/dungeonFires.js) - the probe tool casts the same
+    ...fireLayoutInputs(dungeon.blocks, dungeonHearths),   // AUDIT REST-PARTY C6: the law's doors and fires, read as tools/dungeonFireProbe.mjs reads them
+    seed: dfLocation?.dungeon?.recordElement?.header?.locationId ?? 0,
+    elite: !!dfLocation?.elite,
+  });
+  if (dungeonFires.length) {
+    const { archive, record } = DUNGEON_FIRE_FLAT;
+    const t = await getTexture(archive);
+    const size = t && record < t.recordCount ? billboardSize(t, record) : null;
+    if (!size) dungeonFires.length = 0;
+    for (const p of dungeonFires) {
+      const cy = p[1] + size.h / 2;   // an RDB flat's y is its centre - the batch stands it down half a height
+      const key = `${archive}_${record}`;
+      if (!flatGroups.has(key)) flatGroups.set(key, []);
+      flatGroups.get(key).push([p[0], cy, p[2]]);
+      torches.push({ pos: [p[0], cy, p[2]], handle: null });
+      iilLightFlats.push({ x: p[0], y: cy, z: p[2] });
+      lights.push({ x: p[0], y: p[1] + FIRE_LIGHT_UP, z: p[2], range: FIRE_LIGHT_RANGE });
+      dungeonHearths.push({ x: p[0], y: cy, z: p[2], foot: p[1], w: size.w, h: size.h, placed: true });
     }
   }
 
@@ -2047,7 +2083,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:15557 / exterior.js:3784), set
+  // host's own townTalk sink (world.js:15564 / exterior.js:3785), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2271,8 +2307,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     let spot = null;
     for (let i = 0; i < ENCOUNTER_PLACE_ATTEMPTS && !spot; i++) {
       spot = placeFoeFreely(env, { minDistance, maxDistance, lineOfSightCheck });
+      if (spot && sharedClockOn() && inFireWard(dungeonFires, spot)) spot = null;   // AUDIT REST-PARTY C1: online alone - offline the fires are cooking and camp points and the rest is DFU's (Rest-Arc.md section 11, OPEN 8), its ambushes with it   // REST3: a placed fire's ward (OPEN 9) - no wandering spawn stands within 15 m; the next attempt
     }
     if (!spot) return null;
+    ambushNight();   // AUDIT REST-PARTY A1: a night running now (restAct.js runRestNight) breaks at its next sub-tick - the foe stands after the awaits below
     // FinalizeFoe (FoeSpawner.cs:210-226): a flier hangs 1.5 above the
     // test point; a walker lands through the build chain's own floor.
     const fly = (ENEMY_BASICS[mobileType].behaviour ?? 'General') === 'Flying';
@@ -2454,6 +2492,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     onClose: () => { if (activeOverlay?.isRestWindow) activeOverlay = null; },
     day: () => false, inside: () => true,
     restKind: () => (_fpFeet && camps.fireNear(_fpFeet) ? 'camp' : 'rough'),   // SURV4: a fire on the floor is the sleep; the bare floor is rough (AUDIT SURV-TIERS: the world's fire, in every tier)
+    restPoint: () => (_fpFeet ? camps.restPointAt(_fpFeet) : null),   // REST1: online a dungeon's rest point is a lit fire in reach - a brazier, a camp, a placed fire
+    onNightSlept: () => camps.spendNightNear(_fpFeet),   // REST2: a night at your own camp spends a charge
   });
   // U4: the ONE player-damage door - every source (traps, melee,
   // arrows, spell missiles) lands here; death opens the overlay.
@@ -2666,7 +2706,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *    isBeingRepaired - Buy and Repair only (remoteList :256-259,
    *      _takeItemFromRepair :388, _clear :430)
    *    accepts/enchanted - localListAccepts' Sell and SellMagic arms
-   *      (tradeModes.js:441-443); Identify returns true unfiltered
+   *      (tradeModes.js:443-445); Identify returns true unfiltered
    *    weight - sellProceeds, on the Sell confirm alone (:490)
    *    priceCtx - read by tradeCost's PAID Identify arm (:263-265) and
    *      by _modeAction's ShowTradePopup ELSE (:456-466). Neither can
@@ -3176,7 +3216,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1126 against :1156; worldModes.js:8123 against :8143).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1126 against :1156; worldModes.js:8124 against :8144).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -4008,8 +4048,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:25867,
-              // exterior.js:5406 and worldModes.js:8844 already ran;
+              // playerArrowHitFoe is the one copy world.js:25938,
+              // exterior.js:5407 and worldModes.js:8845 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -6250,6 +6290,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     hitEffects.bleedPlayer(dt, playerFeet, playerEntity);   // BLOOD2e: and the player's own blood, at the feet
     droppedTorches.tick(dt);   // HT1: the burn, the flight, the flames
     camps.tick(dt);   // SURV3: the fires burn down
+    if (onlineRoom()) { const peers = opts.peers?.(); if (peers) camps.sweepColdAbsent(new Set(peers.map((q) => q?.id))); }   // AUDIT REST-PARTY B3: a room's cold fire whose owner left the room goes with them
     // PX21c / WORLD-HOVER: THE HOVER PLAQUE, from the frame function
     // both dungeon hosts already call - the splash clock's reasoning,
     // one slice on. It runs the SAME pick the take runs, so it cannot
@@ -7003,7 +7044,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         windowCoversHud: !!activeOverlay && dungeonWindows.hudCovered(activeOverlay),
         hudHidden: hidesHud(activeOverlay),   // AUDIT PRE-MERGE 0928 U8: a window that takes the HUD away outright, large HUD and all (MAP-FIELD2's word - Come Sail Away's position map, PauseGame(true, true), mounts here too)
         detected, playerXZ: playerFeet ? [playerFeet[0], playerFeet[2]] : null,
-        party: partyCompassPoints({ bodies: opts.party ?? null }), nodes: playerFeet ? (opts.nodeMarks?.(playerFeet) ?? null) : null,   // COMPASS-PARTY: the mates standing in this dungeon, at their feet in its frame; NODE-MARKS: the professions' nodes standing here (its veins), in its frame
+        party: partyCompassPoints({ bodies: opts.party ?? null }), nodes: playerFeet ? withFireMarks(opts.nodeMarks?.(playerFeet) ?? null, dungeonFires, playerFeet) : null,   // COMPASS-PARTY: the mates standing in this dungeon, at their feet in its frame; NODE-MARKS: the professions' nodes standing here (its veins), in its frame   // REST3: and the dungeon's own campfires, in the flame's yellow
         largeHud: largeHudOptions({ renderer, fetchBytes, palette }, playerEntity),
         // AUDIT 39: the enhanced HUD's two hand plaques - see world.js.
         readied: magic.readied() ?? null,
@@ -7333,6 +7374,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // window stack any other way). Null while not resting and null for
     // a mirrored session, same law.
     restEnemiesNearby: () => _restDeps.enemiesNearby(),   // AUDIT PARTY-REST: the mirror's own foe question, this host's scan
+    restDeps: () => _restDeps,   // REST5: the bag a party member's night is carried through, underground
     survivalEnvNow,   // AUDIT SURV-TIERS (the second pass): and the mirror's needs - world.js's ticker runs a mirrored night here with this host's reader
     get restState() {
       const w = activeOverlay;
@@ -7719,6 +7761,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         title: dfLocation?.name ?? 'Dungeon',
         party: opts.party ?? null,   // DISC23-A: the party members standing in this dungeon, at their feet in its frame
         portals: automapPortals,   // TP-SEEN: every teleporter in the level, shown once its spot has been seen
+        fires: dungeonFires,   // REST3: the dungeon's own campfires, on the held map once their spot has been seen
         // ROAD-C c2/S8: the Ctrl+Shift debug-teleport click
         // (TryTeleportPlayerToDungeonSegmentAtScreenPosition, :858-870).
         // It goes through the SAME `onTeleport` door the Teleport action
@@ -7861,7 +7904,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // through the overlay as 'back' (ends a running rest)": that route
     // was never real. ROAD-B B5 built the real one. With a window up,
     // overlayAction turns any single character into `char:<k>`, so
-    // KeyR arrives as 'char:r', and ui/restWindow.js:307-309 runs A8's
+    // KeyR arrives as 'char:r', and ui/restWindow.js:353-355 runs A8's
     // normalizeCode inverse to turn it back into 'KeyR' - DFU's
     // toggleClosedBinding - so a second Rest press ends a running rest
     // or closes the selection page (:302-315), which is
@@ -8921,7 +8964,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // and was CONSUMED - no cooking list, no Info line, and nothing
       // behind it activated either. The same object opens the list
       // outdoors and indoors.
-      if (kind === 'camp' || kind === 'hearth') return camps.activate(key, mode) ? 1 : 0;
+      if (kind === 'camp' || kind === 'hearth') return camps.activate(key, mode, plaqueActionFor(key)) ? 1 : 0;   // REST2: the plaque's lit row
       let source = null;
       let onEmptied = null;
       let lootHooks = null;   // G5: DaggerfallLoot's identity, per kind
@@ -9097,6 +9140,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // loop of the torch in the player's HAND and PlayerTorch's
       // position override (AUDIT 66 F8).
       uninstallSurvivalGate(_survivalGate, unregisterPreventRestCondition);   // AUDIT SURV B/C: a dead dungeon's handler was refusing the outdoor fire
+      camps.packOwnFires();   // AUDIT REST F1: the dungeon keeps nothing of mine once I leave - my Campfire comes with me
       camps.destroyAll();   // SURV3: a fire's batch is this context's too
       droppedTorches.destroyAll();
       weaponRig.dispose?.();

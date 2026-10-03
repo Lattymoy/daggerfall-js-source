@@ -1,129 +1,131 @@
 [
   {
-    "name": "AUDIT-TIMEFREE-T1-the-closing-rule-dropped",
+    "name": "REST8-AUDIT-TIMEFREE-T1-the-closing-rule-dropped",
     "file": "src/systems/quest/clock.js",
     "old": "  return readsAsDeadline(quest, name) && !closes(quest, name);",
     "new": "  return readsAsDeadline(quest, name);",
     "tests": [
-      "test/audit_timefree.test.js"
-    ]
+      "test/rest8_audit_timefree.test.js"
+    ],
+    "note": "AUDIT-TIMEFREE-T1-the-closing-rule-dropped (tools/mutants/audit_timefree.json, DELETED by QCLOCK-WORLD), restored."
   },
   {
-    "name": "AUDIT-TIMEFREE-T1-the-starter-read-whole",
+    "name": "REST8-AUDIT-TIMEFREE-T1-the-starter-read-whole",
     "file": "src/systems/quest/clock.js",
     "old": "  for (const tn of startersOf(quest, name)) {\n    if (reached(quest, tn, { conditional: false }).settles) return true;",
     "new": "  for (const tn of startersOf(quest, name)) {\n    if (reached(quest, tn).settles) return true;",
     "tests": [
-      "test/audit_timefree.test.js"
+      "test/rest8_audit_timefree.test.js"
     ]
   },
   {
-    "name": "AUDIT-TIMEFREE-T1-the-start-up-block-a-starter",
+    "name": "REST8-AUDIT-TIMEFREE-T1-the-start-up-block-a-starter",
     "file": "src/systems/quest/clock.js",
     "old": "    if (/^\\d+$/.test(tn)) continue;",
     "new": "    if (false) continue;",
     "tests": [
-      "test/audit_timefree.test.js"
+      "test/rest8_audit_timefree.test.js"
     ]
   },
   {
-    "name": "AUDIT-TIMEFREE-T1-the-closings-table-emptied",
+    "name": "REST8-AUDIT-TIMEFREE-T1-the-closings-table-emptied",
     "file": "src/systems/quest/clock.js",
     "old": "        || (!(ONLINE_CLOSINGS[q?.questName] ?? []).includes(name) && !atOnce && clockIsDeadline(q, this));",
     "new": "        || (!atOnce && clockIsDeadline(q, this));",
     "tests": [
-      "test/audit_timefree.test.js"
+      "test/rest8_audit_timefree.test.js"
     ]
   },
   {
-    "name": "AUDIT-TIMEFREE-T1-the-run-time-half-dropped",
+    "name": "REST8-AUDIT-TIMEFREE-T1-the-run-time-half-dropped",
     "file": "src/systems/quest/clock.js",
     "old": "    return this._deadline && !(this._closesOnSuccess && q?.questSuccess && !this.startedAfterSuccess);",
     "new": "    return this._deadline;",
     "tests": [
-      "test/audit_timefree.test.js"
+      "test/rest8_audit_timefree.test.js"
     ]
   },
   {
-    "name": "AUDIT-TIMEFREE-T5-the-after-success-mark-ignored",
+    "name": "REST8-AUDIT-TIMEFREE-T5-the-after-success-mark-ignored",
     "file": "src/systems/quest/clock.js",
     "old": "    return this._deadline && !(this._closesOnSuccess && q?.questSuccess && !this.startedAfterSuccess);",
     "new": "    return this._deadline && !(this._closesOnSuccess && q?.questSuccess);",
     "tests": [
-      "test/audit_timefree.test.js"
+      "test/rest8_audit_timefree.test.js"
     ]
   },
   {
-    "name": "AUDIT-TIMEFREE-T5-the-mark-not-saved",
+    "name": "REST8-AUDIT-TIMEFREE-T5-the-mark-not-saved",
     "file": "src/systems/quest/clock.js",
     "old": "      startedAfterSuccess: this.startedAfterSuccess,",
     "new": "",
     "tests": [
-      "test/audit_timefree.test.js"
+      "test/rest8_audit_timefree.test.js"
     ]
   },
   {
-    "name": "AUDIT-TIMEFREE-T2-the-lowering-read-whole",
+    "name": "REST8-AUDIT-TIMEFREE-T2-the-lowering-read-whole",
     "file": "src/systems/quest/clock.js",
     "old": "  if (reached(quest, name, { conditional: false }).lowers) return true;",
     "new": "  if (reached(quest, name).lowers) return true;",
     "tests": [
-      "test/audit_timefree.test.js"
+      "test/rest8_audit_timefree.test.js"
     ]
   },
   {
-    "name": "AUDIT-TIMEFREE-T2-the-not-reward-read-whole",
+    "name": "REST8-AUDIT-TIMEFREE-T2-the-not-reward-read-whole",
     "file": "src/systems/quest/clock.js",
     "old": "is still the loss of that pay\n    if (reached(quest, tn, { conditional: false }).settles) return true;",
     "new": "is still the loss of that pay\n    if (reached(quest, tn).settles || [...PROGRESS].some((x) => reached(quest, tn).types.has(x))) return true;",
     "tests": [
-      "test/audit_timefree.test.js"
+      "test/rest8_audit_timefree.test.js"
     ]
   },
   {
-    "name": "AUDIT-TIMEFREE-T3-the-alone-reading-dropped",
+    "name": "REST8-AUDIT-TIMEFREE-T3-the-alone-reading-dropped",
     "file": "src/systems/quest/clock.js",
     "old": "      if (alone && !reader._checkEvals?.call(",
     "new": "      if (false && !reader._checkEvals?.call(",
     "tests": [
-      "test/audit_timefree.test.js"
+      "test/rest8_audit_timefree.test.js"
     ]
   },
   {
-    "name": "AUDIT-TIMEFREE-T3-the-at-once-rule-dropped",
+    "name": "REST8-AUDIT-TIMEFREE-T3-the-at-once-rule-dropped",
     "file": "src/systems/quest/clock.js",
     "old": "      const atOnce = this.declaredAtOnce && !/^_2.*_$/.test(this.symbol?.original ?? '');",
     "new": "      const atOnce = false;",
     "tests": [
-      "test/audit_timefree.test.js"
+      "test/rest8_audit_timefree.test.js"
     ]
   },
   {
-    "name": "AUDIT-TIMEFREE-T4-get-item-not-progress",
+    "name": "REST8-AUDIT-TIMEFREE-T4-get-item-not-progress",
     "file": "src/systems/quest/clock.js",
     "old": "const PROGRESS = new Set(['GivePc', 'TrainPc', 'StartQuest', 'GetItem']);",
     "new": "const PROGRESS = new Set(['GivePc', 'TrainPc', 'StartQuest']);",
     "tests": [
-      "test/audit_timefree.test.js"
+      "test/rest8_audit_timefree.test.js"
     ]
   },
   {
-    "name": "AUDIT-TIMEFREE-T6-remindpc-out-of-the-table",
+    "name": "REST8-AUDIT-TIMEFREE-T6-remindpc-out-of-the-table",
     "file": "src/systems/quest/clock.js",
     "old": "  _BRISIEN: Object.freeze(['remindpc']),",
     "new": "",
     "tests": [
-      "test/audit_timefree.test.js",
-      "test/timefree.test.js"
+      "test/rest8_audit_timefree.test.js",
+      "test/rest8_questwaits.test.js"
     ]
   },
   {
-    "name": "AUDIT-TIMEFREE-T7-the-frozen-guard-dropped",
+    "name": "REST8-AUDIT-TIMEFREE-T7-the-freeze-back",
     "file": "src/systems/quest/clock.js",
-    "old": "    if (this.remainingTimeInSeconds <= 0 && !frozen) {",
-    "new": "    if (this.remainingTimeInSeconds <= 0) {",
+    "old": "    if (this.remainingTimeInSeconds <= 0) {",
+    "new": "    if (this.remainingTimeInSeconds <= 0 && !(questWaitsShort(this.parentQuest) && this.isDeadline)) {",
     "tests": [
-      "test/audit_timefree.test.js"
-    ]
+      "test/rest8_audit_timefree.test.js"
+    ],
+    "note": "AUDIT-TIMEFREE-T7-the-frozen-guard-dropped inverted: the guard went with the freeze, so TIMEFREE's frozen deadline back (never firing online) is the mutant now."
   }
 ]

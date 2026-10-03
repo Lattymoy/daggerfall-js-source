@@ -94,6 +94,7 @@ export const SURVIVAL_TEXT = Object.freeze({
   tired: 'You stifle a yawn...',
   drowsy: 'You are drowsy from lack of sleep...',
   exhausted: 'You really need some sleep...',
+  wakingEnd: 'The salts wear off, and your weariness comes back all at once.',   // REST6
   damp: 'You are a bit wet.',
   wet: 'You are quite wet.',
   soaked: 'You are soaking wet.',
@@ -169,6 +170,19 @@ export const awakeHours = (s, now) => Math.max(0, now - (s.awakeSince ?? now)) /
  *  (the caller clamps against the permanent stat). SURV-TIERS: the
  *  needs' drains are the tier's `attributes`; the drink's swing is
  *  every tier's - it is chosen at a bar, not a need left unmet. */
+/** REST6 (Rest-Arc.md section 6): the Waking Salts' hour - the sleep need's penalties held while `wakingUntil` is ahead
+ *  of the character's clock, the debt still growing; when it ends WAKING_DEBT_HOURS more land at once (systems/
+ *  restItems.js useSalts sets it). */
+export const WAKING_DEBT_HOURS = 2;
+export const wakingHeld = (s, now) => Number.isFinite(s?.wakingUntil) && s.wakingUntil > now;
+/** Each minute: the salts' end lands their debt once. Answers whether it landed. */
+export function landWakingDebt(s, now) {
+  if (!Number.isFinite(s?.wakingUntil) || s.wakingUntil <= 0 || now < s.wakingUntil) return false;
+  s.wakingUntil = 0;
+  s.sleepDebt = Math.min(NEED.SLEEP_DEBT_MAX, (s.sleepDebt ?? 0) + WAKING_DEBT_HOURS);
+  return true;
+}
+
 export function survivalStatMods(s, temp, now, { endurance = 50, rules = HARD_RULES, vampire = false } = {}) {
   const mods = {};
   const sub = (keys, n) => { if (n > 0) for (const k of keys) mods[k] = (mods[k] ?? 0) - n; };
@@ -181,7 +195,7 @@ export function survivalStatMods(s, temp, now, { endurance = 50, rules = HARD_RU
     if (starve > 0) sub(ALL, Math.min(20, starve * 2));
     if (temp && temp.abs > NEED.EXPOSURE_AT) sub(ALL, Math.trunc(Math.min(s.exposure, temp.abs - NEED.EXPOSURE_AT) / 4));
     if (!vampire && s.thirst >= NEED.DEHYDRATED) sub(ALL, Math.trunc((s.thirst - 90) / 10));
-    const sleep = vampire ? 'rested' : sleepStage(s.sleepDebt);
+    const sleep = vampire || wakingHeld(s, now) ? 'rested' : sleepStage(s.sleepDebt);   // REST6: the salts hold the penalties
     if (sleep === 'tired') sub(ALL, 2); else if (sleep === 'drowsy') sub(ALL, 5); else if (sleep === 'exhausted') sub(ALL, 10);
     if (Number.isFinite(s.stiffUntil) && now < s.stiffUntil) sub(['speed', 'agility'], STIFF_PENALTY);   // SURV4: the rough night's morning
   }
@@ -458,6 +472,7 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
   // SLEEP: the debt grows past the free hours; sleep pays it by quality.
   let sleepRed = false;
   if (!vampire) {
+    if (landWakingDebt(s, now)) say?.(SURVIVAL_TEXT.wakingEnd);   // REST6: the salts' hour is over
     if (sleeping) {
       const rate = sleeping === 'rough' ? 0.5 : 1.5;   // hours of debt per hour asleep
       const floor = sleeping === 'rough' ? SLEEP_FLOOR_AT[rules.roughSleepFloor] ?? 0 : 0;   // SURV-TIERS: Hard's rough night never pays below tired; Casual's pays down to nothing
@@ -470,7 +485,7 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
     const sleepNow = sleepStage(s.sleepDebt);
     stageNote(s, 'sleep', sleepNow === 'rested' ? null : sleepNow, say, SURVIVAL_TEXT[sleepNow], replay);
     sleepRed = sleepNow === 'exhausted';
-    if (sleepNow === 'exhausted' && !resting) tire(DRAIN.exhausted, 'sleep');
+    if (sleepNow === 'exhausted' && !resting && !wakingHeld(s, now)) tire(DRAIN.exhausted, 'sleep');   // REST6: held while the salts last
   }
 
   // TEMPERATURE: the body pays for the heat and the cold.

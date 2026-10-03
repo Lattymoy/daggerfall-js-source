@@ -147,6 +147,7 @@ test('AUDIT OW5b E1: a wanderer PLACED beside the traveller asks the walking jou
       exteriorFoes: { encounterRoom: () => room, spawnFoe: (t) => { order.push(`spawn ${t}`); return Promise.resolve({}); } },
       placeFoeEnv: () => ({}), collider: {}, cam: { yaw: 0 }, fieldOfView: () => 1, entityOccupancy: () => () => false, _placingPool: () => [],
       LOOSE_FOE_PLACE_ATTEMPTS: 2, placeFoeFreely: () => spot, ENEMY_BASICS: {}, journeyMet: () => { order.push('met'); return 'stopped'; },
+      ambushNight: () => false,   // AUDIT REST-PARTY A1: a night running is told of the stand (none here)
     };
     const k = Object.keys(scope);
     const stand = new Function(...k, `${src}\nreturn _standEncounterFoe;`)(...k.map((x) => scope[x]));

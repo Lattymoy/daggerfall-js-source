@@ -45,14 +45,14 @@ test('REST-OPT the host: the pose says `nr`; resting alone opens a rest of my ow
   assert.match(W, /\.\.\.\(!restsWithParty\(\) \|\| \(_restAloneNight && playerEntity\.isResting\) \? \{ nr: 1 \} : \{\}\),/);
   assert.match(W, /const restTogether = \(\) => partyRestsTogether\(restsWithParty\(\), social\?\.party \?\? null, !!social\?\.leads\?\.\(\)\);/);
   assert.match(W, /const nearRestMembers = \(from = player\.feetAt\(\)\) => nearPartyMembers\(from\)\.filter\(\(m\) => !restsAlone\(m\)\);/);
-  assert.match(W, /const partyRestHere = \(\) => !!social\?\.party && !modes\?\.insidePartyRestExempt && restTogether\(\);/);
+  assert.match(W, /const partyRestHere = \(\) => !sharedClockOn\(\) && !!social\?\.party && !modes\?\.insidePartyRestExempt && restTogether\(\);/);
   const gate = W.slice(W.indexOf('  const partyRestGate = () => {'), W.indexOf('  const partyRestGate = () => {') + 6000);
   assert.match(gate, /if \(!social\?\.party\) return null;\n    if \(!restTogether\(\)\) return null;/);
   assert.match(gate, /const nearHere = nearRestMembers\(\);/);
   assert.match(gate, /const onlineOtherCount = social\.others\(\)\.filter\(\(m\) => memberPresent\(m\) && !restsAlone\(m\)\)\.length;/);
   assert.match(gate, /nearRestMembers\(feetOfPartyAccount\(social\.party\.leader\) \?\? player\.feetAt\(\)\)\.length < onlineOtherCount/);
   assert.match(W, /const partyRoundActive = \(nearHere = nearRestMembers\(\)\) => \{/);
-  assert.match(W, /if \(!social\?\.party \|\| modes\?\.insidePartyRestExempt \|\| !restTogether\(\)\) \{ _partyRestVoteLastReady = null; _partyRestVoteOrigin = null; return; \}/);
+  assert.match(W, /if \(!social\?\.party \|\| modes\?\.insidePartyRestExempt \|\| !restTogether\(\) \|\| sharedClockOn\(\)\) \{ _partyRestVoteLastReady = null; _partyRestVoteOrigin = null; return; \}/);   // AUDIT REST-PARTY: and shut online, where there is no vote
   assert.match(W, /const nearHere = nearRestMembers\(\);\n    if \(!nearHere\.length\) \{ _partyRestVoteLastReady = null; return; \}/);
   assert.match(W, /if \(!restTogether\(\)\) return;   \/\/ REST-OPT: I rest alone - never pulled into anyone's night\n    const restingRow = nearRestMembers\(\)\.find\(\(m\) => m\.p\.rest\);/);
   assert.match(W, /const farRow = restTogether\(\) \? \(social\.others\(\)\.find\(\(m\) => m\.p\?\.rest && !restsAlone\(m\) && m\.online !== false && !nearAccount\(m\.acct, m\.p\)\) \?\? null\) : null;/);

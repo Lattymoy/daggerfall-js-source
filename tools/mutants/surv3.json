@@ -9,30 +9,32 @@
     ]
   },
   {
-    "name": "SURV3-a-kit-fire-can-be-stoked",
+    "name": "REST2-a-campfire-with-no-fuel-relights",
     "file": "src/systems/survival/camp.js",
-    "old": "  if (!camp || camp.kind !== CAMP_KIND.Tent) return false;",
-    "new": "  if (!camp) return false;",
+    "old": "  if ((camp.wear | 0) <= 0) return false;   // REST2: no fuel, no fire - AUDIT REST F8: and a worn-through tent's neither\n",
+    "new": "",
     "tests": [
-      "test/surv3_camps.test.js"
-    ]
+      "test/rest2_campfire.test.js"
+    ],
+    "note": "AUDIT REST (PIN MOVED): re-aimed by content."
   },
   {
-    "name": "SURV3-a-cold-tent-is-swept-like-a-dead-fire",
+    "name": "REST2-a-burnt-down-campfire-is-swept-away",
     "file": "src/systems/survival/camp.js",
-    "old": "export const campExpired = (camp, now) => camp?.kind === CAMP_KIND.Fire && !fireLit(camp, now);",
-    "new": "export const campExpired = (camp, now) => !fireLit(camp, now);",
+    "old": "export const campExpired = (camp, now) => camp?.kind === CAMP_KIND.Fire && !camp.fuel && !fireLit(camp, now);",
+    "new": "export const campExpired = (camp, now) => camp?.kind === CAMP_KIND.Fire && !fireLit(camp, now);",
     "tests": [
-      "test/surv3_camps.test.js"
-    ]
+      "test/rest2_campfire.test.js"
+    ],
+    "note": "REST6 (PIN MOVED): re-aimed by content. AUDIT REST (PIN MOVED): re-aimed by content."
   },
   {
-    "name": "SURV3-the-last-light-leaves-the-kit-in-the-pack",
+    "name": "REST2-a-placed-campfire-stays-in-the-pack",
     "file": "src/systems/survival/camp.js",
-    "old": "    spent = true;\n    const i = Array.isArray(list) ? list.indexOf(item) : -1;\n    if (i >= 0) list.splice(i, 1);",
-    "new": "    spent = true;",
+    "old": "  if (i >= 0) list.splice(i, 1);\n  const text = kind === CAMP_KIND.Tent ? CAMP_TEXT.pitched : CAMP_TEXT.lit;",
+    "new": "  const text = kind === CAMP_KIND.Tent ? CAMP_TEXT.pitched : CAMP_TEXT.lit;",
     "tests": [
-      "test/surv3_camps.test.js"
+      "test/rest2_campfire.test.js"
     ]
   },
   {
@@ -83,20 +85,23 @@
   {
     "name": "SURV3-anyone-may-pack-your-camp",
     "file": "src/systems/survival/camp.js",
-    "old": "  if (mine) rows.push({ key: 'pack',",
-    "new": "  rows.push({ key: 'pack',",
+    "old": "  if (mine && !camp.jar && (camp.kind === CAMP_KIND.Tent || !!camp.fuel)) rows.push({ key: 'pack',",
+    "new": "  if (!camp.jar && (camp.kind === CAMP_KIND.Tent || !!camp.fuel)) rows.push({ key: 'pack',",
     "tests": [
       "test/surv3_camps.test.js"
-    ]
+    ],
+    "note": "AUDIT REST-PARTY (PIN MOVED): the row asks fuel of a fire too."
   },
   {
     "name": "SURV3-a-dead-kit-fire-stands-for-ever",
     "file": "src/scenes/camps.js",
-    "old": "      if (campExpired(c.rec, t)) { drop(c); if (c.owner == null) onChanged?.(); continue; }",
+    "old": "      if (c.owner == null && campExpired(c.rec, t)) { drop(c); onChanged?.(); continue; }",
     "new": "",
     "tests": [
+      "test/auditrest.test.js",
       "test/surv3_camps.test.js"
-    ]
+    ],
+    "note": "AUDIT REST (PIN MOVED): re-aimed by content."
   },
   {
     "name": "SURV3-the-pixel-sweep-leaves-the-camp",

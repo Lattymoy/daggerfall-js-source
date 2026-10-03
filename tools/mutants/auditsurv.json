@@ -48,7 +48,7 @@
   {
     "name": "AUDITSURV-spent-gear-pitches-for-ever",
     "file": "src/systems/survival/camp.js",
-    "old": "  if ((item.currentCondition ?? 1) <= 0) return { ok: false, text: CAMP_TEXT.wornOut, camp: null, spent: false };   // AUDIT SURV A: the fiftieth pitch was the last\n",
+    "old": "  if (uses <= 0) return { ok: false, text: kind === CAMP_KIND.Fire ? CAMP_TEXT.noFuel : CAMP_TEXT.wornOut, camp: null, spent: false };\n",
     "new": "",
     "tests": [
       "test/auditsurv.test.js"
@@ -213,8 +213,8 @@
   {
     "name": "AUDITSURV-the-hud-drunk-band-ignores-the-endurance",
     "file": "src/systems/survival/status.js",
-    "old": "  if (s.drunk > endurance / 2) out.push({ key: 'drunk', text: s.drunk > endurance - 10 ? 'Very drunk' : 'Drunk', level: s.drunk > endurance - 10 ? 'danger' : 'warn' });",
-    "new": "  if (s.drunk > 0) out.push({ key: 'drunk', text: s.drunk > 40 ? 'Very drunk' : 'Drunk', level: s.drunk > 40 ? 'danger' : 'warn' });",
+    "old": "  if (s.drunk > endurance / 2) out.push({ key: 'drunk', text: s.drunk > endurance - 10 ? 'Very drunk' : 'Drunk', level: s.drunk > endurance - 10 ? 'danger' : 'warn', tier: s.drunk > endurance - 10 ? 2 : 1, of: 2 });",
+    "new": "  if (s.drunk > 0) out.push({ key: 'drunk', text: s.drunk > 40 ? 'Very drunk' : 'Drunk', level: s.drunk > 40 ? 'danger' : 'warn', tier: s.drunk > 40 ? 2 : 1, of: 2 });",
     "tests": [
       "test/auditsurv.test.js"
     ]
@@ -222,11 +222,12 @@
   {
     "name": "AUDITSURV-the-enhanced-card-carries-no-survival-tokens",
     "file": "src/ui/enhancedInventory.js",
-    "old": "    survival: isSurvivalItem(item) ? survivalInfoTokens(item).slice(2).map((r) => r.text) : null,",
+    "old": "    survival: isSurvivalItem(item) || isRestItem(item) ? survivalInfoTokens(item).slice(2).map((r) => r.text) : null,",
     "new": "    survival: null,",
     "tests": [
       "test/auditsurv.test.js"
-    ]
+    ],
+    "note": "REST6 (PIN MOVED): re-aimed by content."
   },
   {
     "name": "AUDITSURV-a-restore-stands-twins",
@@ -267,11 +268,12 @@
   {
     "name": "AUDITSURV-the-chargen-kit-carries-no-provisions",
     "file": "src/systems/startingGear.js",
-    "old": "  if (survivalOn()) for (const it of startingProvisions()) { addItem(entity.items, it); added.push(it); }\n",
-    "new": "",
+    "old": "for (const it of startingProvisions()) { addItem(entity.items, it); added.push(it); }",
+    "new": "{ }",
     "tests": [
       "test/auditsurv.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (AUDIT REST-PARTY): REST2's online-Campfire `else` follows this line, so dropping the whole line no longer parsed; the loop alone is emptied."
   },
   {
     "name": "AUDITSURV-bare-feet-cost-blood-every-minute",

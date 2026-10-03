@@ -328,12 +328,12 @@ export function fillEquipTable(slots, items) {
  *  like any other item. Idempotent per entity.
  *
  *  SUPERSEDED, not pending. S3d shipped the real roll -
- *  systems/startingGear.js:74 assignStartingGear (ItemHelper's
+ *  systems/startingGear.js:75 assignStartingGear (ItemHelper's
  *  AssignStartingGear), run on both creation paths at
  *  chargenSession.js:142 (?class= headless) and :235 (the wizard) -
  *  and the guard below (`entity.equip || items.length`) makes this a
  *  no-op for any character that went through either. What is left is
- *  residue at the two host calls (world.js:5312, exterior.js:1315):
+ *  residue at the two host calls (world.js:5315, exterior.js:1315):
  *  a chargenDone entity whose bag AND equip table are both empty
  *  still takes a free dagger here. Deleting the calls is a behaviour
  *  change, so it waits for a slice that owns one. */

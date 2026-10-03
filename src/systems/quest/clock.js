@@ -117,20 +117,30 @@ export function clockCounts(quest, clock) {
 }
 
 /**
- * TIMEFREE (2026-10-02, Mac: "we recently adjusted quest timing for online and im really getting tired of it ... Is
- * there a way we can overhaul online quests to not use time and edit anything questwise to make since that depends on
- * time?"; asked what a waiting step does online, "Short real wait"). ONLINE, A QUEST'S CLOCK IS NOT TIME.
- *
- * A Daggerfall clock is one of two things, and the script says which by what its end does:
+ * REST8 (2026-10-03, bible/06-Systems/Rest-Arc.md section 8; Mac's OPEN 12, option A): QUEST WAITS ONLINE - TIMEFREE's
+ * DELAY HALF, back on QCLOCK-WORLD's clock. TIMEFREE (2026-10-02, `Online-Time-Arc.md` 6.3b) read every clock off its
+ * script as a deadline or a delay, froze the deadlines and cut the delays; QCLOCK-WORLD (6.3c) reverted it whole and put
+ * every clock on played world time, and its audit measured what that cost the waits (121 of them: median 0.3 h of play,
+ * p90 24.3, the main quest's letters 20-26 h each). This brings back the reading and the cut, and NOT the freeze:
  *  - a DEADLINE - its end loses the quest ("you have 14 days": its end alone ends the quest with no reward), costs a
  *    standing, or shuts a reward that waits on it NOT having run out ("return before the time is up and be paid": a
- *    `not _clock_` reader pays). Online a deadline never runs out (AUDIT TIMEFREE: but a CLOSING is no deadline).
+ *    `not _clock_` reader pays). Online it runs on QCLOCK-WORLD's played world time (chargeSeconds: the lived step, never
+ *    a raise) and fires as DFU's; its day count, its "Time remains" and the herald's warning stand.
  *  - a DELAY - everything else: Brisienna's letter (7-14 days), the tutorial's pages, "come back in three days", a
- *    reward that comes after a wait. Online a delay runs out after ONLINE_DELAY_SECONDS of the character's own clock
- *    (about two real minutes of play) or its own remainder, whichever is sooner - the beat still lands, nobody waits days.
- * WORLD5 stood every clock down and the main quest never began (a delay is half of them); this asks each clock which it
- * is. The reading is the script's own tasks: what the end does, what starts from it, what a `when` reads of it, and
- * who started the clock; the run-time half is the quest's success (Clock isDeadline). Offline none of it - DFU's clock.
+ *    reward that comes after a wait, a closing (AUDIT TIMEFREE T1). Online its remainder is cut once to
+ *    ONLINE_DELAY_SECONDS of the character's own clock (about two real minutes of play) - or its own, if less - and then
+ *    charged as any clock: the beat lands, nobody plays a day for a letter.
+ * The reading is the script's own tasks: what the end does, what starts from it, what a `when` reads of it, and who
+ * started the clock; the run-time half is the quest's success (Clock isDeadline). AUDIT TIMEFREE read all 399 vendored
+ * clocks by hand (262 deadlines, 137 delays) and its two hand tables below stand as it left them; REST8's own read found
+ * two deadlines the reading called delays (R1, readsAsDeadline: K0C00Y02's gold, S0000502's tower) - 264 and 135 then;
+ * AUDIT REST-PARTY D2 two more, by hand (ONLINE_DEADLINES: N0B00Y17's scholar, K0C30Y03's guard) - 266 and 133 now,
+ * the main quest's deadlines 31. THE EDGE: a deadline read as a delay fires its end - a failure - two minutes in (as
+ * under TIMEFREE, whose delays were cut the same); a delay read as a deadline now only waits its played days, where
+ * TIMEFREE froze it for ever. The one harmful misreading is the first (R1's two were it), so the pins hold the split,
+ * both tables and the main quest's 31 deadlines, and test/rest8_questwaits.test.js ticks every vendored clock past the
+ * short wait. Offline none of it - DFU's clock. [SUPERSEDES QCLOCK-WORLD's delays on played time; TIMEFREE's frozen
+ * deadlines stay reverted.]
  */
 export const ONLINE_DELAY_SECONDS = 24 * 60;
 /** The actions that mean the quest is going somewhere good - GivePc (`give pc nothing` too: it is the success), TrainPc
@@ -180,15 +190,20 @@ function reached(quest, name, { conditional = true, alone = false } = {}) {
 
 /** The reading alone: whether the end of the clock `name` loses the quest, costs a standing, or shuts a reward. */
 function readsAsDeadline(quest, name) {
-  const { types } = reached(quest, name);
-  const progresses = [...PROGRESS].some((t) => types.has(t));
   // its end costs a standing - Brisienna's fortnight, a questor's patience. AUDIT TIMEFREE T2: what the end itself DOES
   // (its task and the tasks that starts), not what a later `when` may: K0C00Y05's letter comes after a few hours, and
   // only `when _S.09_ and _S.04_` - the player's own misstep - costs the knight's favour; read whole, the letter never came
   if (reached(quest, name, { conditional: false }).lowers) return true;
   // its end loses the quest - by the end alone (AUDIT TIMEFREE T3: S0000016's minute before the main quest's endings
-  // reaches `end quest` only through `when _S.01_ and _S.02_ and _delay_`; read whole, the endings never played online)
-  if (reached(quest, name, { alone: true }).types.has('EndQuest') && !progresses) return true;
+  // reaches `end quest` only through `when _S.01_ and _S.02_ and _delay_`; read whole, the endings never played online).
+  // REST8 R1: and with no progress the end ALONE makes - T3's own reading, applied to the reward too. A reward a later
+  // `when` pays only with the story's help is not what the time-out does: K0C00Y02's gold ("you only have =2mondung_
+  // days": `when _2mondung_ and _mggold_` pays, `when _2mondung_ and not _mggold_` ends it unpaid) and S0000502's tower
+  // ("my master will wait inside for =towertime_ days": `when _towertime_ and not _goout_` ends it, the reward only
+  // `when _S.16_ and _S.09_`). Read whole, both were delays, and online each quest ended unpaid two minutes in (under
+  // TIMEFREE too, whose delays were cut the same); the only two clocks of the 399 the change moves.
+  const alone = reached(quest, name, { alone: true }).types;
+  if (alone.has('EndQuest') && ![...PROGRESS].some((t) => alone.has(t))) return true;
   for (const [tn, t] of quest.tasks) {   // ...or shuts a reward that waits on it not having run out
     if (!t.actions.some((a) => a.isTriggerCondition && a.evaluations?.some((e) => NEGATED.has(e.op) && new QuestSymbol(e.task).name === name))) continue;
     // AUDIT TIMEFREE T2: the reader's own reward, not one a chain of later `when`s reaches - M0B11Y18's "not yet" line
@@ -218,7 +233,8 @@ function startersOf(quest, name) {
  *  it is the script closing the quest a while after the outcome. M0B40Y05's `_end_` (`Clock _end_ 00:00`, started by
  *  `give pc _gold_`), Brisienna's `_oneday_` (started by meeting her - whose `start task` starts the main quest - and by
  *  her fortnight running out), the main quest's S0000007 `_delay_`. Read as deadlines they never ran out online and
- *  those quests stood open for ever. (The run-time half - a quest already a success - is the Clock's `isDeadline`.) */
+ *  those quests stood open for ever (REST8: they would close only after their days played - a delay closes them on the
+ *  short wait). (The run-time half - a quest already a success - is the Clock's `isDeadline`.) */
 function closes(quest, name) {
   for (const tn of startersOf(quest, name)) {
     if (reached(quest, tn, { conditional: false }).settles) return true;
@@ -249,8 +265,8 @@ function closesStartUp(quest, name) {
   return end.types.has('EndQuest') && !end.lowers && [...end.types].every((t) => QUIET_CLOSE.has(t));
 }
 
-/** TIMEFREE: whether `clock` is a deadline (see above) as the script reads - the run-time half aside. Answers false for
- *  a clock with no name or no quest. */
+/** TIMEFREE (REST8's reading): whether `clock` is a deadline (see above) as the script reads - the run-time half
+ *  aside. Answers false for a clock with no name or no quest. */
 export function clockIsDeadline(quest, clock) {
   const name = clock?.symbol?.name;
   if (!name || !quest?.tasks) return false;
@@ -262,13 +278,28 @@ export function clockIsDeadline(quest, clock) {
  *  U0C00Y00's monster slipping away to its hideout, M0B11Y18's mark leaving the house. AUDIT TIMEFREE T6: and
  *  Brisienna's month (`_remindpc_`), whose end only words a reminder and starts her fortnight - the first half of her
  *  deadline; a delay, it sent "you are late" two minutes after the invitation. (Not a rule: S0000011's `_S.11_` has the
- *  same shape - a letter and a long clock - and its letter is the main quest's next page.) Deadlines, by hand. */
+ *  same shape - a letter and a long clock - and its letter is the main quest's next page.) Deadlines, by hand.
+ *  REST8: the table matters more than it did - read as delays, the hunters would come and the mark would leave two
+ *  minutes in; as deadlines they keep their played days.
+ *  AUDIT REST-PARTY D2: two more of the mark's class - someone who LEAVES, and what only they held goes with them:
+ *  N0B00Y17's `_time2_` ("I'll expect you back here within =time2_ days. Please be prompt." - its end hides the scholar,
+ *  and the `_scholarreward_` the ingredients buy goes with him) and K0C30Y03's `_S.13_` (a day or two after the banker
+ *  is asked, the guard who knows where the patsy hides leaves town - "_guard_ has left" - and his lead with him). Read as
+ *  delays, the scholar and the guard were gone two minutes after the player was sent off.
+ *  AUDIT REST-PARTY D1: and one the reading DOES call a deadline, here for the run-time half: B0B81Y02's `_S.30_`, the
+ *  180 days to find the artifact (`end quest`) the map read in the lich's lair starts. The knight's `give pc nothing`
+ *  (`_success_`: the lich's death reported, the quest a success but not over) can come after the map is read, and a
+ *  task started the clock - so isDeadline read the success as the quest closing, and online the artifact hunt ended two
+ *  minutes after the knight's word. An entry here is never a closing (isDeadline: `_closesOnSuccess` skips the table). */
 export const ONLINE_DEADLINES = Object.freeze({
   $CUREWER: Object.freeze(['huntstart']),
   $CUREVAM: Object.freeze(['huntstart']),
   U0C00Y00: Object.freeze(['escapetime']),
   M0B11Y18: Object.freeze(['S.05']),
   _BRISIEN: Object.freeze(['remindpc']),
+  N0B00Y17: Object.freeze(['time2']),   // AUDIT REST-PARTY D2: the scholar's "Please be prompt"
+  K0C30Y03: Object.freeze(['S.13']),   // AUDIT REST-PARTY D2: the guard's lead
+  B0B81Y02: Object.freeze(['S.30']),   // AUDIT REST-PARTY D1: the artifact hunt, through the knight's reward
 });
 
 /** AUDIT TIMEFREE T1: the closing after a FAILURE the reading cannot tell from a story beat (a starter that costs a
@@ -280,8 +311,14 @@ export const ONLINE_CLOSINGS = Object.freeze({
   R0C11Y03: Object.freeze(['2ndparton']),
 });
 
-/** TIMEFREE: whether the quest's clocks run time-free - online (the shared clock standing), the quest's own word. */
-export const questTimeFree = (quest) => !!quest?.hooks?.sharedClock?.();
+/** REST8: whether the quest's DELAYS take the short wait - online (the shared clock standing), the quest's own word.
+ *  TIMEFREE's `questTimeFree`, named for what it gates now: a deadline online is time, played. */
+export const questWaitsShort = (quest) => !!quest?.hooks?.sharedClock?.();
+
+/** Clock.cs's travel arm (setResource): flag&16, or the flag&1 HACK - bit 0, a range, and a zero time. AUDIT REST-PARTY
+ *  D3: one predicate for the parse and for a restore from a save older than the "at once" mark, which has no
+ *  declaration to read - only the flag, the range and the starting time the save kept. */
+const travelArmed = (flag, maxRange, seconds) => (flag & 16) === 16 || ((flag & 1) === 1 && maxRange > 0 && seconds === 0);
 
 export class Clock extends QuestResource {
   constructor(parentQuest, line = null) {
@@ -296,9 +333,9 @@ export class Clock extends QuestResource {
     this._lastWorldTimeSample = 0;
     this._lastRaisedSample = null;   // TIME3: the session's raised seconds at that sample - transient: a restore is a resume
     this.travelTimePending = false;   // Q1: the flag&16 / flag&1-hack arms pend Place resolution (Q3)
-    this._deadline = null;   // TIMEFREE: asked on first need (isDeadline)
+    this._deadline = null;   // REST8 (TIMEFREE's reading): asked on first need (isDeadline)
     this._closesOnSuccess = false;   // AUDIT TIMEFREE T1: a task started it, so a success makes it a closing
-    this.declaredAtOnce = false;   // AUDIT TIMEFREE T3: `Clock _x_ 00:00`, no travel arm (setResource)
+    this.declaredAtOnce = false;   // AUDIT TIMEFREE T3: `Clock _x_ 00:00`, no travel arm (setResource; saved - AUDIT REST-PARTY D3)
     this.startedAfterSuccess = false;   // AUDIT TIMEFREE T5: started once the quest was already a success (saved)
     if (line !== null) this.setResource(line);
   }
@@ -342,7 +379,7 @@ export class Clock extends QuestResource {
 
     // flag&16: 2.5x cautious travel time of the quest's Places; the
     // flag&1 + maxRange>0 + zero-time HACK forces the same check.
-    if ((this.flag & 16) === 16 || ((this.flag & 1) === 1 && this.maxRange > 0 && clockTimeInSeconds === 0)) {
+    if (travelArmed(this.flag, this.maxRange, clockTimeInSeconds)) {
       this.declaredAtOnce = false;   // (a travel clock: 2.5 trips, not "at once")
       const travel = this.parentQuest?.travelSeconds?.();
       if (travel != null) clockTimeInSeconds = travel;
@@ -355,15 +392,15 @@ export class Clock extends QuestResource {
 
   get isClock() { return true; }
 
-  /** TIMEFREE: this clock is a deadline. The script's reading is asked once (the tasks do not change after the parse);
-   *  AUDIT TIMEFREE T1's run-time half is asked every time: once the quest is a SUCCESS (`give pc`, `give pc nothing`,
-   *  `train pc` set it), no clock is a loss any more, and a deadline a task started is the script closing the quest -
-   *  S0000009's two days after the contact, whose reward a `when` on the same click pays. A clock the start-up block
-   *  started stays a deadline: A0C41Y18 is a success from its first lines and keeps its finger and its gold for its
-   *  1001 days, as DFU does - but for a start-up closing (closesStartUp, BODYGUARD-CLOSE: the start-up block settles
-   *  nothing and the end only closes; The Bodyguard's `_timer_`). AUDIT TIMEFREE T5: and so does one started AFTER the success - a new limit, not a close:
-   *  M0B11Y18 pays for the raid, then offers the traitor's hunt and "will wait =gettraitor_ days"; closed on the
-   *  success, that hunt ended a couple of minutes after the player took it. */
+  /** TIMEFREE (REST8's reading): this clock is a deadline. The script's reading is asked once (the tasks do not change
+   *  after the parse); AUDIT TIMEFREE T1's run-time half is asked every time: once the quest is a SUCCESS (`give pc`,
+   *  `give pc nothing`, `train pc` set it), no clock is a loss any more, and a deadline a task started is the script
+   *  closing the quest - S0000009's two days after the contact, whose reward a `when` on the same click pays. A clock the
+   *  start-up block started stays a deadline: A0C41Y18 is a success from its first lines and keeps its finger and its
+   *  gold for its 1001 days, as DFU does - but for a start-up closing (closesStartUp, BODYGUARD-CLOSE: the start-up block
+   *  settles nothing and the end only closes; The Bodyguard's `_timer_`). AUDIT TIMEFREE T5: and so does one started
+   *  AFTER the success - a new limit, not a close: M0B11Y18 pays for the raid, then offers the traitor's hunt and "will
+   *  wait =gettraitor_ days"; closed on the success, that hunt ended a couple of minutes after the player took it. */
   get isDeadline() {
     const q = this.parentQuest;
     if (this._deadline == null) {
@@ -371,15 +408,24 @@ export class Clock extends QuestResource {
       const atOnce = this.declaredAtOnce && !/^_2.*_$/.test(this.symbol?.original ?? '');   // (a `_2place_` clock's zero is its trip, StartTimer's)
       this._deadline = (ONLINE_DEADLINES[q?.questName] ?? []).includes(name)
         || (!(ONLINE_CLOSINGS[q?.questName] ?? []).includes(name) && !atOnce && clockIsDeadline(q, this));
+      // AUDIT REST-PARTY D1/D4: never a table entry - the hand's word stands through the success (B0B81Y02's artifact
+      // hunt outlives the knight's reward), and until D4 nothing failed when the exemption went
       this._closesOnSuccess = this._deadline && !(ONLINE_DEADLINES[q?.questName] ?? []).includes(name)
         && !!q?.tasks && (startersOf(q, name).length > 0 || closesStartUp(q, name));   // BODYGUARD-CLOSE: a start-up closing too
     }
     return this._deadline && !(this._closesOnSuccess && q?.questSuccess && !this.startedAfterSuccess);
   }
 
+  /** REST8: this clock takes the SHORT WAIT - a delay on a quest online: its remainder cut to ONLINE_DELAY_SECONDS
+   *  (tick, liveRemainingSeconds), its day count "a few" (expandMacro), no "Time remains" for it (questBridge's walk).
+   *  A deadline answers false, online and off, and is QCLOCK-WORLD's: played time, DFU's end. (Online asked first, so
+   *  an offline or headless quest never reads its script.) */
+  get waitsShort() { return questWaitsShort(this.parentQuest) && !this.isDeadline; }
+
   /** Q2 - Clock.cs Tick: whole world-seconds since the last sample
    *  come off the remainder; at zero the SAME-NAMED task starts and
-   *  the clock finishes. The world clock is the quest's nowSeconds (TIME3: online the character's own)
+   *  the clock finishes. The world clock is the quest's nowSeconds (TIME3: online the character's own, charged only as
+   *  it moves with the world - QCLOCK-WORLD)
    *  seam (classic game seconds, machine-injected). */
   /** ExpandMacro (Clock.cs): =symbol_ answers days remaining (the
    *  ShowQuestJournalClocksAsCountdown setting picks remaining vs
@@ -387,9 +433,10 @@ export class Clock extends QuestResource {
    *  seconds/86400. */
   expandMacro(macroType) {
     if (macroType !== 5) return false;   // DetailsMacro
-    // TIMEFREE: online a clock is no count of days - "within =queston_ days", "I have =x_ days to get", "you only have
-    // =x_ days" read "within a few days", "I have a few days" - the scripts' day lines read whole with it
-    if (questTimeFree(this.parentQuest)) return 'a few';
+    // REST8 (TIMEFREE's words, for a delay alone): online a wait is no count of days - "come back in =wait_ days" reads
+    // "come back in a few days" and lands about two real minutes on; a deadline's "you have =x_ days" keeps its number,
+    // the days it runs in play
+    if (this.waitsShort) return 'a few';
     const secs = this.parentQuest?.hooks?.world?.showClocksAsCountdown?.()
       ? this.remainingTimeInSeconds : this.startingTimeInSeconds;
     return String(Math.ceil(secs / 86400));
@@ -399,30 +446,31 @@ export class Clock extends QuestResource {
    *  played step) never negative and never more than one step. ONE arithmetic - tick subtracts it, and
    *  liveRemainingSeconds reads it - so a reader can never disagree with the charge.
    *  TIME3: online the quest's clock is the character's own (LIVED1), and the gap has two parts: the time RAISED since
-   *  the sample (a rest, a loiter, a journey, a sentence - the session's count, raisedSeconds) is charged whole, as DFU
-   *  charges a RaiseTime, and the time lived with the world is charged one played step at most (WORLD7: the rest is
-   *  time away, forgiven). Never more than the clock moved, never less than nothing. A sample with no count beside it,
-   *  or one from another session, charges the lived step alone - a resume. */
+   *  the sample (a rest, a loiter, a journey, a sentence - the session's count, raisedSeconds) and the time lived with
+   *  the world, the event clock's own movement while they play. QCLOCK-WORLD (2026-10-02, Mac: "go back to the quest
+   *  timer tied to the online world clock"; asked, "Shared world clock" - resting, waiting and travel spend no quest
+   *  days): online only the lived part is charged, one played step at most (WORLD7's law: the rest is time away,
+   *  forgiven), and a raise never. [SUPERSEDES TIME3's raise charged whole, and TIMEFREE's quests without time.]
+   *  Offline the one clock's raw gap stands, DFU's own arithmetic. Never more than the clock moved, never less than
+   *  nothing. */
   chargeSeconds(caller) {
     const now = wholeSeconds(caller);
     const step = caller.questClockStepMax?.() ?? Infinity;
     const raw = now - this._lastWorldTimeSample;
-    const raised = Number.isFinite(step) ? Math.min(raisedSince(caller.raisedSeconds?.(), this._lastRaisedSample), Math.max(raw, 0)) : 0;
-    const difference = Number.isFinite(step) ? Math.min(Math.max(raw - raised, 0), step) + raised : raw;
-    return Math.trunc(difference);
+    if (!Number.isFinite(step)) return Math.trunc(raw);
+    const raised = raisedSince(caller.raisedSeconds?.(), this._lastRaisedSample);
+    return Math.trunc(Math.min(Math.max(raw - raised, 0), step));   // QCLOCK-WORLD: the lived step, never the raise
   }
 
   /** QT-LIVE1 (Mac, 2026-09-21: "The time doesn't print out live?"): the remainder AS OF NOW. The machine ticks off
    *  the frame loop and every host holds that tick under the pause gate, so `remainingTimeInSeconds` is the remainder
    *  as of the last tick BEFORE the menu opened - and online the world runs on under the menu, so a journal reading
    *  the field showed a number the next tick would already have moved past. This is that next tick's answer without
-   *  taking it: the field less the charge, floored at zero. A clock that is not running answers its field. */
+   *  taking it: the field less the charge, floored at zero. A clock that is not running answers its field. REST8: a
+   *  delay online reads from the short wait, the cut the next tick makes - the one arithmetic still. */
   liveRemainingSeconds(caller) {
     if (!this.clockEnabled || this.clockFinished) return this.remainingTimeInSeconds;
-    if (questTimeFree(this.parentQuest)) {   // TIMEFREE: a deadline stands still; a delay is never more than the short wait
-      return this.isDeadline ? this.remainingTimeInSeconds
-        : Math.max(0, Math.min(this.remainingTimeInSeconds, ONLINE_DELAY_SECONDS) - this.chargeSeconds(caller));
-    }
+    if (this.waitsShort) return Math.max(0, Math.min(this.remainingTimeInSeconds, ONLINE_DELAY_SECONDS) - this.chargeSeconds(caller));
     return Math.max(0, this.remainingTimeInSeconds - this.chargeSeconds(caller));
   }
 
@@ -440,16 +488,12 @@ export class Clock extends QuestResource {
     // to every running clock (Brisienna's fourteen days became forty-four played, for exactly the character Mac
     // brought over). Online a backward sample is a resume: nothing charged, the sample moved. Offline the raw gap
     // stands, DFU's own arithmetic (a backward jump there is a load, whose sample is the save's).
-    // TIMEFREE: online a deadline is charged nothing and never runs out (the sample still moves - a clock taken
-    // offline resumes from where it stood, never charged the online span); a delay's remainder is cut to the short wait
-    // once, then charged as any clock - so a delay's beat lands within about two real minutes of play.
-    const timeFree = questTimeFree(this.parentQuest);
-    const frozen = timeFree && this.isDeadline;
-    if (!timeFree) this.remainingTimeInSeconds -= this.chargeSeconds(caller);
-    else if (!frozen) this.remainingTimeInSeconds = Math.min(this.remainingTimeInSeconds, ONLINE_DELAY_SECONDS) - this.chargeSeconds(caller);
-    // AUDIT TIMEFREE T7: a frozen deadline never fires - not even one armed at nothing (a travel clock whose places
-    // cannot be found answers 0 seconds, DFU's own sum, and fired on its first tick: online, the quest ended at once)
-    if (this.remainingTimeInSeconds <= 0 && !frozen) {
+    // REST8: online a DELAY's remainder is cut once to the short wait, then charged as any clock (the played step, never
+    // a raise) - its beat lands about two real minutes on. A DEADLINE is charged as QCLOCK-WORLD charges it and fires
+    // as DFU's, armed at nothing too (TIMEFREE froze it, and its T7 guard went with the freeze).
+    if (this.waitsShort) this.remainingTimeInSeconds = Math.min(this.remainingTimeInSeconds, ONLINE_DELAY_SECONDS);
+    this.remainingTimeInSeconds -= this.chargeSeconds(caller);
+    if (this.remainingTimeInSeconds <= 0) {
       this._triggerTask(caller);
       this.clockEnabled = false;
       this.clockFinished = true;
@@ -518,6 +562,7 @@ export class Clock extends QuestResource {
       clockEnabled: this.clockEnabled,
       clockFinished: this.clockFinished,
       startedAfterSuccess: this.startedAfterSuccess,   // AUDIT TIMEFREE T5 (the port's; absent from a save before it - false)
+      declaredAtOnce: this.declaredAtOnce,   // AUDIT REST-PARTY D3 (the port's; a restore has no declaration to read)
     };
   }
 
@@ -527,7 +572,7 @@ export class Clock extends QuestResource {
   restoreSaveData(dataIn) {
     if (dataIn == null) return;
     this._lastWorldTimeSample = Number.isFinite(dataIn.lastWorldTimeSample) ? dataIn.lastWorldTimeSample : wholeSeconds(this.parentQuest);   // AUDIT WORLD7/8 A11: a save from before the field stamped NaN into the remainder
-    this._lastRaisedSample = this.parentQuest?.raisedSeconds?.() ?? null;   // TIME3: a restore (a load, a party member's copy) is a resume - no raise counted ACROSS it (AUDIT TIME: the count now, so a raise after it, before the first tick, is charged whole)
+    this._lastRaisedSample = this.parentQuest?.raisedSeconds?.() ?? null;   // TIME3: a restore (a load, a party member's copy) is a resume - no raise counted ACROSS it (AUDIT TIME: the count now, so a raise after it, before the first tick, is a raise - QCLOCK-WORLD: charged nothing)
     this.startingTimeInSeconds = dataIn.startingTimeInSeconds;
     this.remainingTimeInSeconds = dataIn.remainingTimeInSeconds;
     this.flag = dataIn.flag;
@@ -536,6 +581,13 @@ export class Clock extends QuestResource {
     this.clockEnabled = dataIn.clockEnabled;
     this.clockFinished = dataIn.clockFinished;
     this.startedAfterSuccess = dataIn.startedAfterSuccess === true;   // AUDIT TIMEFREE T5
+    // AUDIT REST-PARTY D3: the "at once" mark rides the save. A restored clock is built bare (Quest.restoreSaveData) and
+    // has no declaration to read, so it came back false and S0000106's start-up favour (`Clock _delay_ 00:00`) read as a
+    // deadline after every load, a party member's copy and a resync. A save from before the mark: the parse's own
+    // predicate over what the save kept - a zero starting time and no travel arm. All 399 vendored clocks read the same
+    // either way; only a two-value range drawn at zero (`00:00 01:00`) could differ, and no script declares one.
+    this.declaredAtOnce = typeof dataIn.declaredAtOnce === 'boolean' ? dataIn.declaredAtOnce
+      : this.startingTimeInSeconds === 0 && !travelArmed(this.flag, this.maxRange, 0);
     this.travelTimePending = false;
   }
 }

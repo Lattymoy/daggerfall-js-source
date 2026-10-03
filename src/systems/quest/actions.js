@@ -1444,9 +1444,7 @@ export class GivePc extends ActionTemplate {
     // The notify/silently forms wait for town, outdoors, and daytime
     if ((this.textId !== 0 || this.silently) && !this.offerImmediately) {
       const now = dateFromSeconds(skySecondsOf(this.parentQuest));   // TIME3: daytime is the sky's
-      // TIMEFREE: online a letter waits for town alone - not for the sky's morning too
-      const night = !hooks?.sharedClock?.() && (now.hour < minHour || now.hour > maxHour);
-      if (!hooks?.isPlayerInTown?.() || night) {
+      if (!hooks?.isPlayerInTown?.() || now.hour < minHour || now.hour > maxHour) {
         this.waitingForTown = true;
         this.ticksUntilFire = 0;
         return;
@@ -2284,9 +2282,10 @@ export class CreateFoe extends ActionTemplate {
     // no tick sample yet) forgives the time since the save to one step; a wave already in flight still lands, the
     // placement below is not a timer. OL3 stood the interval down with the Clock instead, and no wave ever came.
     const step = this.parentQuest.questClockStepMax?.() ?? Infinity;
-    // TIME3: the interval runs on the character's clock (nowSeconds), and what they RAISED since the last tick - a rest,
-    // a loiter, a journey - is spent whole, as DFU's interval spends a RaiseTime: the time forgiven is the LIVED part past
-    // one step, never the raise (the Clock's own law, quest/clock.js chargeSeconds)
+    // TIME3: the interval runs on the character's clock (nowSeconds). QCLOCK-WORLD: online what they RAISED since the
+    // last tick - a rest, a loiter, a journey - is forgiven whole, and so is the LIVED part past one step: the interval
+    // spends the world's played time alone, the Clock's own law (quest/clock.js chargeSeconds) [SUPERSEDES TIME3's raise
+    // spent whole]
     const raisedNow = this.parentQuest.raisedSeconds?.() ?? null;
     if (this.lastSpawnTime === 0) { this.lastSpawnTime = gameSeconds - this._range(this.spawnInterval); this._lastTick = gameSeconds; }
     // AUDIT WORLD7/8 A3: a marker AHEAD of the world (an offline save loaded online is game-weeks past the shared
@@ -2295,7 +2294,7 @@ export class CreateFoe extends ActionTemplate {
     // (the placement is not a timer, and an away mid-flight counted whole once the wave landed)
     else if (this._lastTick == null) { if (Number.isFinite(step) && (gameSeconds - this.lastSpawnTime > step || gameSeconds < this.lastSpawnTime)) this.lastSpawnTime = gameSeconds; this._lastTick = gameSeconds; }   // a resume past a step: the time away is forgiven whole and the first wave waits a full interval from here (OL3's standing-up arm)
     else if (Number.isFinite(step) && gameSeconds < this._lastTick) { this.lastSpawnTime = gameSeconds; this._lastTick = gameSeconds; }
-    else { const raised = Number.isFinite(step) ? Math.min(raisedSince(raisedNow, this._lastRaised), gameSeconds - this._lastTick) : 0; const forgiven = Math.max(0, gameSeconds - this._lastTick - raised - step); if (forgiven > 0) this.lastSpawnTime += forgiven; this._lastTick = gameSeconds; }
+    else { const raised = Number.isFinite(step) ? Math.min(raisedSince(raisedNow, this._lastRaised), gameSeconds - this._lastTick) : 0; const forgiven = Math.max(0, gameSeconds - this._lastTick - raised - step) + raised; if (forgiven > 0) this.lastSpawnTime += forgiven; this._lastTick = gameSeconds; }
     this._lastRaised = raisedNow;
 
     // Max spawns reached - cleared only by a set/rearm

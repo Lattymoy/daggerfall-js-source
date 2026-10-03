@@ -291,6 +291,28 @@ export function paintPlanOverlay(ctx, view, opts) {
       opts.noteBoxes?.push({ id: m.id, x0: hx - NOTE_PIN.head - 3, y0: hy - NOTE_PIN.head - 3, x1: x1 + 2, y1: y + 3 });
       continue;
     }
+    if (m.kind === 'fire') {
+      // REST3: a dungeon's campfire - a flame (a drop, point up) over a short log, named under it like a teleporter
+      ctx.strokeStyle = PLAN_PEN.mark;
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(x, y - MARK_R * 1.4);
+      ctx.quadraticCurveTo?.(x + MARK_R, y - MARK_R * 0.2, x, y + MARK_R * 0.5);
+      ctx.quadraticCurveTo?.(x - MARK_R, y - MARK_R * 0.2, x, y - MARK_R * 1.4);
+      ctx.moveTo(x - MARK_R, y + MARK_R); ctx.lineTo(x + MARK_R, y + MARK_R);
+      ctx.stroke();
+      if (m.name) {
+        ctx.font = `11px ${NAME_FACE}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.lineWidth = 2 * HALO_PEN;
+        ctx.strokeStyle = PLAN_PEN.halo;
+        ctx.strokeText(m.name, x, y + MARK_R + 2);
+        ctx.fillStyle = PLAN_PEN.mark;
+        ctx.fillText(m.name, x, y + MARK_R + 2);
+      }
+      continue;
+    }
     ctx.strokeStyle = PLAN_PEN.mark;
     ctx.lineWidth = 1.4;
     ctx.beginPath();

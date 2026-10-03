@@ -70,7 +70,10 @@
 //     character's own clock, which the rest moves, and a party's shared
 //     copy runs on its holder's (quest/machine.js updateSharedQuest), so
 //     a rest spends this player's quest days and no one else's.
-//     SUPERSEDES the stand-down above.]
+//     SUPERSEDES the stand-down above.] [QCLOCK-WORLD (2026-10-02,
+//     Online-Time-Arc.md 6.3c): the quests still tick under the rest,
+//     but online a countdown charges a raise nothing - a rest spends no
+//     quest days; offline it does, as DFU.]
 // AUDIT RESTX F1's full-health guard on the Medical tally went with
 // the free lane: the exploit it closed ("rest 99 hours" = 99 tallies on
 // one click) needed an hour that cost no time, and every hour costs
@@ -635,7 +638,8 @@ export class RestSession {
       // TIME3 (bible/06-Systems/Online-Time-Arc.md 6.3): online too. A quest's countdowns run on the character's own
       // clock, and a rest's hours are theirs (LIVED1) - raised, so a quest charges them whole (quest/clock.js): a
       // three-day wait is a 72-hour rest, about half a minute, as in DFU. [SUPERSEDES RESTX2's stand-down online, which
-      // WORLD7 kept while a quest clock charged played time alone.]
+      // WORLD7 kept while a quest clock charged played time alone.] [QCLOCK-WORLD: the quests still tick here, but online
+      // a countdown charges a raise nothing - the rest spends no quest days (quest/clock.js chargeSeconds).]
       this.deps.tickQuests?.();
       this._minutesOfHour += MINUTES_PER_TICK;
       if (this._minutesOfHour < 60) {

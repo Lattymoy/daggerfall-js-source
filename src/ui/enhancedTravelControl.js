@@ -47,7 +47,7 @@ let last = null;
 export const TRAVEL_HELD_WHY = Object.freeze({ load: 'while the land loads', ground: 'until the Overworld rises', foes: 'with enemies near' });
 export const TRAVEL_HELD_TEXT = (n, of, why = 'load') => `Held to ×${n} of ×${of} ${TRAVEL_HELD_WHY[why] ?? TRAVEL_HELD_WHY.load}`;
 
-/** enhancedHud.js:441 - write only on a change. */
+/** enhancedHud.js:442 - write only on a change. */
 function put(node, key, value) {
   if (!node || last[key] === value) return;
   last[key] = value;

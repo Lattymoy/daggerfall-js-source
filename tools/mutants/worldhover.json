@@ -1092,8 +1092,8 @@
   {
     "name": "AUDIT-WH2-the-dungeon-brazier-eats-the-press-again",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      if (kind === 'camp' || kind === 'hearth') return camps.activate(key, mode) ? 1 : 0;",
-    "new": "      if (kind === 'camp') return camps.activate(key, mode) ? 1 : 0;",
+    "old": "      if (kind === 'camp' || kind === 'hearth') return camps.activate(key, mode, plaqueActionFor(key)) ? 1 : 0;",
+    "new": "      if (kind === 'camp') return camps.activate(key, mode, plaqueActionFor(key)) ? 1 : 0;",
     "tests": [
       "test/surv3_camps.test.js"
     ]

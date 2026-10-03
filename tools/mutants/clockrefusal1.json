@@ -31,11 +31,12 @@
   {
     "name": "camp-goes-silent-again",
     "file": "src/scenes/camps.js",
-    "old": "    if (!cam?.feet) { say(CAMP_TEXT.noSpot); return false; }",
-    "new": "    if (!cam?.feet) return false;",
+    "old": "    if (!cam?.feet) { say(CAMP_TEXT.noSpot); return false; }\n    const col = collider?.();\n    const r = placeCampItem(",
+    "new": "    if (!cam?.feet) return false;\n    const col = collider?.();\n    const r = placeCampItem(",
     "tests": [
       "test/clockrefusal.test.js"
-    ]
+    ],
+    "note": "REST6 (PIN MOVED): re-aimed by content."
   },
   {
     "name": "camp-shared-arm-goes-silent",

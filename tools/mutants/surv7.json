@@ -129,10 +129,11 @@
  {
   "name": "AUDIT-FIELD-resting-pays-the-exhausted-fatigue-anyway",
   "file": "src/systems/survival/needs.js",
-  "old": "    if (sleepNow === 'exhausted' && !resting) tire(DRAIN.exhausted, 'sleep');",
-  "new": "    if (sleepNow === 'exhausted') tire(DRAIN.exhausted, 'sleep');",
+  "old": "    if (sleepNow === 'exhausted' && !resting && !wakingHeld(s, now)) tire(DRAIN.exhausted, 'sleep');",
+  "new": "    if (sleepNow === 'exhausted' && !wakingHeld(s, now)) tire(DRAIN.exhausted, 'sleep');",
   "tests": [
    "test/surv7_feed.test.js"
-  ]
+  ],
+  "note": "REST6 (PIN MOVED): re-aimed by content."
  }
 ]

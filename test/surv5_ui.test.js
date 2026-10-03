@@ -84,6 +84,16 @@ test('SURV5: the meal and the drink - the mod\'s marker law (too full under the 
   assert.equal(blackout({}, 1440 * 2 + 120).minutes, 4 * 60, 'blacked out at two in the morning, up at six the same day');
 });
 
+test('NEED-TIER: every felt need says how bad on its own ladder - its stage of its stages, mildest first, the temperature\'s two ways each their own; Stiff one stage and no tier (Mac: "the debuffs you get from Climates and Calories no longer show the severity")', () => {
+  const e = { survival: { ...newSurvival(0), lastAte: 0, thirst: 90, wet: 40, sleepDebt: 5, drunk: 45, felt: -35, stiffUntil: 5000 } };
+  assert.deepEqual(survivalHudChips(e, 800).map((c) => `${c.key}:${c.tier}/${c.of}`),
+    ['hunger:2/3', 'thirst:2/3', 'sleep:1/3', 'wet:2/4', 'temp:2/3', 'stiff:undefined/undefined', 'drunk:2/2']);
+  const hot = { survival: { ...newSurvival(0), lastAte: -10, felt: 25 } };
+  assert.deepEqual(survivalHudChips(hot, 0).filter((c) => c.key === 'temp').map((c) => [c.text, c.tier, c.of]), [['Warm', 1, 3]], 'the warm way\'s first stage, not the cold\'s fourth');
+  e.survival.drunk = 30;
+  assert.deepEqual(survivalHudChips(e, 800, { endurance: 50 }).filter((c) => c.key === 'drunk').map((c) => [c.text, c.tier, c.of]), [['Drunk', 1, 2]]);
+});
+
 test('SURV5: the strip and the page - one chip a felt need, nothing while every need is met; the page\'s lines, the vampire\'s one, the mod\'s drunk bands', () => {
   const e = { survival: null };
   assert.deepEqual(survivalHudChips(e, 0), [], 'no record, no strip');
@@ -120,7 +130,7 @@ test('SURV5: the info box - a survival item\'s built tokens: the name, the weigh
   assert.equal(survivalInfoTokens(fish).at(-1).text, 'Raw - cook it at a fire.');
   const skin = createSurvivalItem(TEMPLATE.Waterskin, { water: 1.25 });
   assert.deepEqual(survivalInfoTokens(skin).map((r) => r.text), ['Waterskin', 'Weight: 1.75 kilograms', 'Water: 1.3 of 2.0 kg']);
-  assert.equal(survivalInfoTokens(createSurvivalItem(TEMPLATE.Campfire, { condition: 1 })).at(-1).text, '1 use left');
+  assert.equal(survivalInfoTokens(createSurvivalItem(TEMPLATE.Campfire, { condition: 1 })).at(-1).text, '1 night of fuel', 'REST2: a Campfire\'s uses are nights of fuel');
   assert.equal(survivalInfoTokens(createSurvivalItem(TEMPLATE.CampingEquipment)).at(-1).text, '50 uses left');
   assert.equal(survivalInfoTokens(createSurvivalItem(TEMPLATE.Skillet)).at(-1).text, 'Cooking at a campfire goes twice as fast.');
   assert.equal(itemInfoRows({ group: 'Weapons', templateIndex: 113 }, rows)[0].text, 'record 1001', 'DFU\'s own items keep their records');
@@ -190,14 +200,14 @@ test('SURV5: by source - the four hosts chain the third box, the enhanced HUD ca
   const hud = read('src/ui/enhancedHud.js');
   // UI3: the needs are the status widget's tiles - a felt need amber, one that costs red
   assert.match(hud, /const needs = survivalOn\(\) \? survivalHudChips\(vitals, Math\.floor\(ownMinutes\(\)\), \{ vampire: !!liveVampirism\(vitals\), endurance: liveStat\(vitals, 'endurance'\) \}\) : \[\];/);
-  assert.match(hud, /const all = statusTiles\(\{ spells, powers, afflictions: afflictionRows\(vitals\), needs \}\);/);
+  assert.match(hud, /const all = statusTiles\(\{ spells, powers, afflictions: afflictionRows\(vitals\), needs, rested \}\);/);   // REST1: and the Rested tile
   assert.match(read('src/ui/enhancedStyle.js'), /\.hst-cell\.danger \{/);
   const wm = read('src/scenes/worldModes.js');
   assert.match(wm, /climateIndex: \(\) => host\.climateIndex\?\.\(\) \?\? 232,\s*\n\s*advanceMinutes: \(n\) => interiorTicker\.advance\(n\),\s*\n\s*endurance: \(\) => liveStat\(playerEntity, 'endurance'\),/);
   assert.match(read('src/scenes/world.js'), /climateIndex: \(\) => maps\.getClimateIndex\(playerTravelPixel\(\)\.x, playerTravelPixel\(\)\.y\),   \/\/ SURV5/);
   assert.match(read('src/scenes/exterior.js'), /climateIndex: \(\) => locClimateIndex,   \/\/ SURV5/);
   assert.match(read('src/ui/tavernWindow.js'), /if \(survivalOn\(\) && typeof h\.climateIndex === 'function'\) \{ this\._survivalFood\(\); return; \}/);
-  assert.match(read('src/systems/itemInfo.js'), /if \(isSurvivalItem\(item\)\) record = survivalInfoTokens\(item\);/);
+  assert.match(read('src/systems/itemInfo.js'), /if \(isSurvivalItem\(item\)(?: \|\| isRestItem\(item\))?\) record = survivalInfoTokens\(item\);/);
   assert.match(read('src/systems/survival/needs.js'), /s\.felt = temp\.felt;/);
   for (const f of ['status', 'tavernMenu']) {
     assert.doesNotMatch(read(`src/systems/survival/${f}.js`), /from '\.\.\/\.\.\/scenes\/|from '\.\.\/\.\.\/ui\/|from '\.\.\/\.\.\/combat\/|from '\.\.\/spellcast|from '\.\.\/diseases|from '\.\.\/effects|document\.|window\./, `${f}.js is pure`);

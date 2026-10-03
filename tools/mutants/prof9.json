@@ -838,24 +838,6 @@
     ]
   },
   {
-    "name": "PROF9-cc-field-cook-any-camp",
-    "file": "src/systems/survival/camp.js",
-    "old": "(keep === true && kind === CAMP_KIND.Fire ? 0 : 1)",
-    "new": "(keep === true ? 0 : 1)",
-    "tests": [
-      "test/prof9_client.test.js"
-    ]
-  },
-  {
-    "name": "PROF9-cc-field-cook-spends",
-    "file": "src/systems/survival/camp.js",
-    "old": "(keep === true && kind === CAMP_KIND.Fire ? 0 : 1)",
-    "new": "(keep === true && kind === CAMP_KIND.Fire ? 1 : 1)",
-    "tests": [
-      "test/prof9_client.test.js"
-    ]
-  },
-  {
     "name": "PROF9-camps-field-cook-unasked",
     "file": "src/scenes/camps.js",
     "old": "keep: fieldCook?.() === true,",

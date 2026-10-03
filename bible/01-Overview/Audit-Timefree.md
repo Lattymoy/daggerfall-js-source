@@ -1,5 +1,22 @@
 # AUDIT TIMEFREE - online quests that are not time, and the wear, read before they merge (2026-10-02)
 
+> **REVERTED (quest half) by QCLOCK-WORLD, 2026-10-02** (Mac: "go back to the quest timer tied to the online world
+> clock"; `06-Systems/Online-Time-Arc.md` 6.3c). The quest reading below - deadlines, delays, the short wait - is
+> no longer the code; its pins and campaigns are DELETED. WEAR-ONE stands.
+>
+> **ITS DELAY HALF RESTORED by REST8, 2026-10-03** (`06-Systems/Rest-Arc.md` section 8, Mac's OPEN 12, option A;
+> `06-Systems/Online-Time-Arc.md` 6.3d). The reading below is the code again, every classification as this audit left
+> it (T1-T6; 262 deadlines, 137 delays; the main quest's 30 deadlines) but two: REST8 R1 found T3's `alone` reading
+> stopped short of the reward, and K0C00Y02's gold ("you only have =2mondung_ days") and S0000502's Direnni tower ("will
+> wait inside for =towertime_ days") - read as delays here, each ended its quest unpaid two minutes in - are deadlines
+> (264 and 135; the main quest's 31 - 266 and 133 since AUDIT REST-PARTY D1/D2, `06-Systems/Rest-Arc.md`). Online a delay lands on the short wait, and a
+> deadline is no longer frozen - it runs on QCLOCK-WORLD's played time and fires as DFU's. So T7 (the frozen guard) is
+> retired with the freeze, and the run-time half (T1, T5) now decides whether a task-started deadline closes on the
+> short wait or keeps its played days. The seams below that read "no clock online" are a delay's now: a deadline keeps
+> its "Time remains" and the herald. The bounties' never-lapse and the any-hour letter stay reverted. Pins:
+> `test/rest8_audit_timefree.test.js` (this audit's, re-aimed) and `test/rest8_questwaits.test.js` (TIMEFREE's);
+> campaigns `tools/mutants/rest8_audit_timefree.json` (14) and `tools/mutants/rest8.json` (22), all dead.
+
 Mac: *"Audit this and ensure its perfect"*, of TIMEFREE (`06-Systems/Online-Time-Arc.md` 6.3b - a quest clock online
 is a deadline that never runs out or a delay that lands on the short wait) and WEAR-ONE (`05-Combat/Physical-Combat-Overhaul.md`
 - the port's wear back to DFU's amount). Two lenses:
@@ -10,9 +27,9 @@ is a deadline that never runs out or a delay that lands on the short wait) and W
   marks), every machine the hosts build, the party resync, the save, the curse arms' walk, the crime guilds' clock,
   the bounties' board and party share, the letter's town hold, the words in the quest texts, the wear's callers.
 
-Every finding was checked against the script and the code before it was fixed. Pins: `test/audit_timefree.test.js`
-(and `test/timefree.test.js`'s split); each fix carries an `AUDIT TIMEFREE <ID>` comment. Campaign
-`tools/mutants/audit_timefree.json`: 14, all dead; `tools/mutants/timefree.json` re-aimed, 10, all dead.
+Every finding was checked against the script and the code before it was fixed. Pins: `test/audit_timefree.test.js` [DELETED by QCLOCK-WORLD; restored as `test/rest8_audit_timefree.test.js` by REST8]
+(and `test/timefree.test.js`'s split); each fix carries an `AUDIT TIMEFREE <ID>` comment. Campaign [DELETED by QCLOCK-WORLD]
+`tools/mutants/audit_timefree.json`: 14, all dead; `tools/mutants/timefree.json` re-aimed, 10, all dead. [DELETED by QCLOCK-WORLD; restored by REST8 as `tools/mutants/rest8_audit_timefree.json` and `tools/mutants/rest8.json`]
 
 ## Fixed
 
@@ -67,7 +84,7 @@ and read what ships beside main.
 - **Checked again and fine**: the bounty's time left has one reader (the board window, which drops the line when it is
   null); main's new tests pass beside TIMEFREE (the full suite, below).
 
-Pins: `test/audit_timefree.test.js` (the three ticked runs).
+Pins: `test/audit_timefree.test.js` (the three ticked runs). [DELETED by QCLOCK-WORLD; re-aimed in `test/rest8_audit_timefree.test.js` by REST8]
 
 ## Left, said so
 

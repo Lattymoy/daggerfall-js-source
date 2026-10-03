@@ -563,11 +563,12 @@
   {
     "name": "SURVTIERS-the-rest-place-reads-the-shown-fire",
     "file": "src/scenes/world.js",
-    "old": "restKind: () => (camps.fireNear(walkMode && playerSpawned",
-    "new": "restKind: () => (camps.byFire(walkMode && playerSpawned",
+    "old": "restKind: () => (_restFromBed ? 'bed' : camps.fireNear(walkMode && playerSpawned",
+    "new": "restKind: () => (_restFromBed ? 'bed' : camps.byFire(walkMode && playerSpawned",
     "tests": [
       "test/surv4_rest.test.js"
-    ]
+    ],
+    "note": "AUDIT REST-PARTY (PIN MOVED): a pressed bed answers first now (A3)."
   },
   {
     "name": "SURVTIERS-the-interiors-hearth-is-bare-ground",
@@ -654,7 +655,7 @@
   {
     "name": "SURVTIERS-off-shows-the-camps-it-keeps",
     "file": "src/scenes/camps.js",
-    "old": "  const shown = () => (survivalOn() ? camps : NO_CAMPS);",
+    "old": "  const shown = () => (usable() ? camps : NO_CAMPS);",
     "new": "  const shown = () => camps;",
     "tests": [
       "test/auditsurv.test.js"
@@ -672,11 +673,12 @@
   {
     "name": "SURVTIERS-off-stands-a-camp-it-cannot-show",
     "file": "src/scenes/camps.js",
-    "old": "    if (!survivalOn()) { say(CAMP_TEXT.arcOff); return false; }",
+    "old": "    if (!survivalOn() && !(sharedClockOn() && (isCampfireKit(item) || isEmberJar(item)))) { say(CAMP_TEXT.arcOff); return false; }",
     "new": "",
     "tests": [
       "test/auditsurv.test.js"
-    ]
+    ],
+    "note": "REST6 (PIN MOVED): re-aimed by content."
   },
   {
     "name": "SURVTIERS-fireNear-is-the-tiers-again",
@@ -961,18 +963,18 @@
   {
     "name": "SURVTIERS-the-potion-cite-falls-short",
     "file": "src/systems/potions.js",
-    "old": "exterior.js:2553) and useItem.js:379",
-    "new": "exterior.js:2553) and useItem.js:351",
+    "old": "exterior.js:2554) and useItem.js:379",
+    "new": "exterior.js:2554) and useItem.js:351",
     "tests": [
       "test/citedrift.test.js"
     ],
-    "note": "HOOD-SAID (FIELD BUGS 2026-09-30, PIN MOVED): toggleHood and its import moved useItem.js's drink line from 316 to 347; the cite and its short mutant move with it. FIELD BUGS 2026-09-30 (PIN MOVED): re-aimed by content to the cite the batch's cite shift moved. MEND-AIM (PIN MOVED): the use door's aim options moved the drink line to 351. THE SEATS ARC'S MERGE of main's #502-#509 and #504 (PIN MOVED): re-aimed by content to the cite citeMerge moved. FIELD BUGS 2026-10-01 part five (re-aimed by content): the merge of #504 moved the cites it names. MERGE OF MAIN (#538) INTO THE TACTICS ARC (PIN MOVED): re-aimed by content to the cite citeMerge moved."
+    "note": "HOOD-SAID (FIELD BUGS 2026-09-30, PIN MOVED): toggleHood and its import moved useItem.js's drink line from 316 to 347; the cite and its short mutant move with it. FIELD BUGS 2026-09-30 (PIN MOVED): re-aimed by content to the cite the batch's cite shift moved. MEND-AIM (PIN MOVED): the use door's aim options moved the drink line to 351. THE SEATS ARC'S MERGE of main's #502-#509 and #504 (PIN MOVED): re-aimed by content to the cite citeMerge moved. FIELD BUGS 2026-10-01 part five (re-aimed by content): the merge of #504 moved the cites it names. MERGE OF MAIN (#538) INTO THE TACTICS ARC (PIN MOVED): re-aimed by content to the cite citeMerge moved. REST1+REST2 (PIN MOVED): re-aimed by content to the cite the slice's cite shift moved."
   },
   {
     "name": "SURVOFFSIGHT-off-sees-no-camp",
     "file": "src/scenes/camps.js",
-    "old": "  const seen = () => (survivalOn() ? camps : camps.filter((c) => !mine(c)));",
-    "new": "  const seen = () => (survivalOn() ? camps : NO_CAMPS);",
+    "old": "  const seen = () => (usable() ? camps : camps.filter((c) => !mine(c)));",
+    "new": "  const seen = () => (usable() ? camps : NO_CAMPS);",
     "tests": [
       "test/survtiers.test.js"
     ]
@@ -980,7 +982,7 @@
   {
     "name": "SURVOFFSIGHT-off-sees-its-own",
     "file": "src/scenes/camps.js",
-    "old": "  const seen = () => (survivalOn() ? camps : camps.filter((c) => !mine(c)));",
+    "old": "  const seen = () => (usable() ? camps : camps.filter((c) => !mine(c)));",
     "new": "  const seen = () => camps;",
     "tests": [
       "test/survtiers.test.js"
@@ -989,8 +991,8 @@
   {
     "name": "SURVOFFSIGHT-off-sees-only-its-own",
     "file": "src/scenes/camps.js",
-    "old": "  const seen = () => (survivalOn() ? camps : camps.filter((c) => !mine(c)));",
-    "new": "  const seen = () => (survivalOn() ? camps : camps.filter((c) => mine(c)));",
+    "old": "  const seen = () => (usable() ? camps : camps.filter((c) => !mine(c)));",
+    "new": "  const seen = () => (usable() ? camps : camps.filter((c) => mine(c)));",
     "tests": [
       "test/survtiers.test.js"
     ]
@@ -1052,7 +1054,7 @@
   {
     "name": "SURVOFFSIGHT-off-opens-the-menu-of-what-it-sees",
     "file": "src/scenes/camps.js",
-    "old": "    if (!survivalOn()) return true;   // SURV-OFFSIGHT (the third pass): with the arc Off the click is taken and opens nothing\n",
+    "old": "    if (!usable()) return true;   // SURV-OFFSIGHT (the third pass): with the arc Off the click is taken and opens nothing - REST2: offline\n",
     "new": "",
     "tests": [
       "test/survtiers.test.js"

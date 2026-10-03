@@ -1013,6 +1013,8 @@ test('SURV-OFFSIGHT: Off sees another player\'s camp - the flame, its light, the
     targets: pool.targets().map((t) => t.key),
     names: [pool.hoverName('camp:pOLD:1:90'), pool.hoverName('camp:p:1')],
   });
+  const ROW = { rest: CAMP_TEXT.menuRest, cook: CAMP_TEXT.menuCook, pack: CAMP_TEXT.menuPack };
+  const rows = (ids) => ids.map((id) => ({ id, label: ROW[id] }));
   const use = () => {
     const before = menus.length;
     const clicked = [pool.activate('camp:pOLD:1:90', 'grab'), pool.activate('camp:p:1', 'grab')];
@@ -1022,8 +1024,9 @@ test('SURV-OFFSIGHT: Off sees another player\'s camp - the flame, its light, the
     setPref(SURVIVAL_PREF, tier);
     assert.deepEqual(sight(), {
       flames: [[1, 0, 1], [20, 0, 20]], lights: [[1, FIRE_LIGHT_UP, 1, FIRE_LIGHT_RANGE], [20, FIRE_LIGHT_UP, 20, FIRE_LIGHT_RANGE]], tents: 2,
-      targets: ['camp:pOLD:1:90', 'camp:pOLD:1:90', 'camp:p:1', 'camp:p:1'], names: [{ title: 'Camp' }, { title: 'Camp' }],
-    }, `${tier}: every camp seen`);
+      targets: ['camp:pOLD:1:90', 'camp:pOLD:1:90', 'camp:p:1', 'camp:p:1'],
+      names: [{ title: 'Camp', actions: rows(['rest', 'cook', 'pack']) }, { title: 'Camp', actions: rows(['rest', 'cook']) }],
+    }, `${tier}: every camp seen - REST2: its name carries the plaque's rows, Pack on mine alone`);
     assert.deepEqual(use(), { warm: [true, true], clicked: [true, true], menus: 2 }, `${tier}: and used - warmth, and a menu on each`);
   }
   setPref(SURVIVAL_PREF, SURVIVAL_STORED[SURVIVAL_OFF]);

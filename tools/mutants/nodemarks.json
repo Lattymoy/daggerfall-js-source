@@ -338,11 +338,12 @@
   {
     "name": "NODE-MARKS-the-dungeon-compass-unfed",
     "file": "src/scenes/dungeonContext.js",
-    "old": "nodes: playerFeet ? (opts.nodeMarks?.(playerFeet) ?? null) : null,",
-    "new": "nodes: null,",
+    "old": "nodes: playerFeet ? withFireMarks(opts.nodeMarks?.(playerFeet) ?? null, dungeonFires, playerFeet) : null,",
+    "new": "nodes: playerFeet ? withFireMarks(null, dungeonFires, playerFeet) : null,",
     "tests": [
       "test/nodemarks.test.js"
-    ]
+    ],
+    "note": "REST3 (PIN MOVED): the field now folds the campfires in (withFireMarks); re-aimed by content - the nodes unfed, the fires kept."
   },
   {
     "name": "NODE-MARKS-every-kinds-loose-nodes-asked",

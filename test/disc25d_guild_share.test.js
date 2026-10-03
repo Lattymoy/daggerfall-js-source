@@ -46,7 +46,7 @@ test('DISC25-D: a guild quest refused to a non-member names the guild - a temple
 test('DISC25-D: the Online pane says what the shared clock does to a quest - and no longer that the quest clocks stand still', () => {
   const menu = rd('src/ui/enhancedMenu.js');
   assert.doesNotMatch(menu, /the quest clocks stand still/, 'false since WORLD7: quest clocks count played time');
-  assert.match(menu, /a quest that waits for a time of day waits for the world\\u2019s[^.]*\. Your character also keeps their own time[^.]*\. Your wounds[^.]*loans and repairs run on it\. Quests online have no time limits[^.]*\./);   // LIVED1: the character's own time, said between; TIMEFREE: and the quests off it
+  assert.match(menu, /a quest that waits for a time of day waits for the world\\u2019s[^.]*\. Your character also keeps their own time[^.]*\. Your wounds[^.]*loans and repairs run on it\. Quest timers run on the world\\u2019s clock while you play: resting, waiting and travelling don\\u2019t spend a quest\\u2019s days, and time logged off never counts\./);   // LIVED1: the character's own time, said between; TIME3: and the quest timers on it
   // the law the sentence says: online a quest clock charges the time lived one played step at most (WORLD7) and the
   // time raised whole (TIME3), and a rest moves no world time
   assert.match(rd('src/systems/quest/clock.js'), /export const PLAYED_STEP_MAX_SECONDS = 30 \* 60;/);

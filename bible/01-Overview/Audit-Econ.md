@@ -52,7 +52,7 @@ older records the fixes moved were re-aimed by content and killed again (PIN MOV
 | P2 | Minor | Roleplay & Realism: Items' alchemist potions already sold Healing at twice the price; "no ordinary shop sold one" was false as shipped. | Part 1: the record says so. Both stacks merge at the first one's value - cosmetic, a potion never sells. |
 | P3 | Minor | "Dungeon treasure piles" - five of the nineteen dungeon types key their piles outside J-O. | Part 1: "most dungeons". |
 | P4 | Minor | Five mutants survived: the potion registered under the kit's name (field kits gone from piles), the install before the smithing install, the piles widened to I-P, both counts rounded. | Part 1's pins; 14 of 14 dead now. |
-| P5 | Nit | `potions.js` cited the shelf's painting code for the recipe arm (wrong at base too). | Re-aimed to `shopStock.js:235-242`. |
+| P5 | Nit | `potions.js` cited the shelf's painting code for the recipe arm (wrong at base too). | Re-aimed to `shopStock.js:237-244`. |
 | P6 | Nit | In a mixed-version rollout an older client restocking first leaves a day's alchemist without them. | Transient; no relay version moves. Recorded. |
 
 ## The companions' packs (C)

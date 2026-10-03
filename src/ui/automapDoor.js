@@ -74,6 +74,7 @@ export function createAutomapWindow(deps = {}) {
         title: deps.title ?? deps.dungeonName ?? '',
         party: deps.party ?? null,   // DISC23-A: the party members whose bodies stand in this level (the classic 3D arm ignores it)
         portals: deps.portals ?? null,   // TP-SEEN: every teleporter in the level (the classic 3D arm ignores it)
+        fires: deps.fires ?? null,   // REST3: the dungeon's own campfires (the classic 3D arm ignores them)
       },
     });
   }

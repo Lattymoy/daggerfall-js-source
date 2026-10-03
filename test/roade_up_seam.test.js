@@ -513,9 +513,9 @@ test('E1: the retired DEPARTURES are gone from both automap windows, and the Led
 // runs, and DaggerfallRestWindow.cs:187-196 / DaggerfallPauseOptions-
 // Window.cs:183-188 can read a bare `GetKeyUp` and be safe.
 //
-// THIS PORT OPENS ON THE PRESS in all four hosts (world.js:12998/:13003,
-// exterior.js:3200/:3208, ui/input.js:598/:604) and then routes that
-// same key's release into the window it just mounted (world.js:13119 ->
+// THIS PORT OPENS ON THE PRESS in all four hosts (world.js:13005/:13010,
+// exterior.js:3201/:3209, ui/input.js:598/:604) and then routes that
+// same key's release into the window it just mounted (world.js:13126 ->
 // townTalk.keyup). The bare `GetKeyUp` therefore is NOT safe here, and
 // the shape DFU uses for exactly this case - a window whose open edge
 // is the key DOWN - is DaggerfallAutomapWindow.cs:703-713's
@@ -534,7 +534,7 @@ const sleeper = () => ({
   career: {}, skillUses: { [SKILLS.Medical]: 0 },
 });
 
-/** world.js:12969's keydown arm, verbatim in shape: the host consumes
+/** world.js:12976's keydown arm, verbatim in shape: the host consumes
  *  the press itself and hands the slot a brand-new window. */
 const openOnKeydown = (tt, win) => { tt.showOverlay(win); return win; };
 
@@ -549,7 +549,7 @@ test('E-FIX LIVE (townTalk): the R that OPENS the rest window does not close it 
     })));
     assert.equal(w.done, false, 'the window stands the instant the host mounts it');
 
-    // world.js:13106 delivers THAT SAME KEY'S release into the slot.
+    // world.js:13113 delivers THAT SAME KEY'S release into the slot.
     tt.keyup({ code: 'KeyR', key: 'r' });
     assert.equal(w.done, false,
       'the opening release closes nothing: its press was the HOST\'s, not this window\'s '

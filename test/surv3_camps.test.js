@@ -52,44 +52,50 @@ test('SURV3: where a camp may go - not indoors, not in town, not with foes near,
   assert.equal(TENT_MODEL, 41606); assert.deepEqual(FIRE_FLAT, { archive: 210, record: 1 }); assert.equal(CAMP_REACH, 3.2);
 });
 
-test('SURV3: the fire - eight hours from the lighting or the stoking; a tent stokes, a kit does not; a dead kit fire is gone, a cold tent stands', () => {
-  const tent = newCamp({ id: 't', kind: CAMP_KIND.Tent, pos: [0, 0, 0], now: 1000 });
-  const fire = newCamp({ id: 'f', kind: CAMP_KIND.Fire, pos: [0, 0, 0], now: 1000 });
+test('SURV3: the fire - eight hours from the lighting or the stoking; a tent stokes - REST2: and a Campfire relights while it has fuel; no camp burns away, a cold one stands', () => {
+  const tent = newCamp({ id: 't', kind: CAMP_KIND.Tent, pos: [0, 0, 0], now: 1000, wear: 5 });
+  const fire = { ...newCamp({ id: 'f', kind: CAMP_KIND.Fire, pos: [0, 0, 0], now: 1000 }), fuel: true };   // a Campfire's (placeCampItem marks it)
   assert.equal(tent.litUntil, 1000 + FIRE_MINUTES); assert.equal(FIRE_MINUTES, 480);
   assert.equal(fireLit(tent, 1479), true); assert.equal(fireLit(tent, 1480), false);
   assert.equal(stokeFire(tent, 1200), true); assert.equal(tent.litUntil, 1480 + FIRE_MINUTES, 'stoked from the later of its end and now');
   assert.equal(stokeFire(tent, 5000), true); assert.equal(tent.litUntil, 5000 + FIRE_MINUTES, 'a cold tent relights from now');
-  assert.equal(stokeFire(fire, 1200), false); assert.equal(fire.litUntil, 1480, 'a kit fire cannot be stoked');
-  assert.equal(campExpired(fire, 1479), false); assert.equal(campExpired(fire, 1480), true);
+  assert.equal(stokeFire(fire, 1200), false); assert.equal(fire.litUntil, 1480, 'REST2: a Campfire with no fuel cannot be relit (newCamp\'s wear 0)');
+  fire.wear = 3;
+  assert.equal(stokeFire(fire, 1200), true, 'REST2: with fuel it relights');
+  assert.equal(campExpired(fire, 1479), false); assert.equal(campExpired(fire, 99999), false, 'REST2: a cold Campfire stands for its owner');
   assert.equal(campExpired(tent, 99999), false, 'a tent stands cold');
+  // AUDIT REST F8: a tent worn through stokes no more; F12: an old save's kit fire (no fuel of its own) goes cold and is swept
+  assert.equal(stokeFire({ ...tent, wear: 0, litUntil: 0 }, 5000), false, 'a worn-through tent');
+  const kit = newCamp({ id: 'k', kind: CAMP_KIND.Fire, pos: [0, 0, 0], now: 1000 });
+  assert.equal(campExpired(kit, 1479), false); assert.equal(campExpired(kit, 1480), true, 'an old kit fire burns away');
 });
 
-test('SURV3: placing - the gear pitches a tent and leaves the pack with its wear; a kit lights a fire and is spent on its last use; four camps at most', () => {
+test('SURV3: placing - the gear pitches a tent and leaves the pack with its wear; REST2: a Campfire lights and leaves the pack with its charges, and neither spends a use at the placing (a night does); four camps at most', () => {
   const gear = createSurvivalItem(TEMPLATE.CampingEquipment, { condition: 10 });
   const kit = createSurvivalItem(TEMPLATE.Campfire, { condition: 1 });
   const pack = [gear, kit];
   const ctx = { now: 500, owner: 'p1', feet: [0, 1, 0], yaw: 0, probe: flat(), place: {}, standing: 0, id: 'p1:1' };
   const r = placeCampItem(gear, pack, ctx);
   assert.equal(r.ok, true); assert.equal(r.text, CAMP_TEXT.pitched);
-  assert.equal(r.camp.kind, CAMP_KIND.Tent); assert.equal(r.camp.wear, 9, 'one use off the gear rides the camp');
+  assert.equal(r.camp.kind, CAMP_KIND.Tent); assert.equal(r.camp.wear, 10, 'REST2: the gear\'s ten uses ride the camp - pitching spends none');
   assert.deepEqual(r.camp.pos, [0, 0, PLACE_AHEAD]); assert.equal(r.camp.owner, 'p1'); assert.equal(r.camp.id, 'p1:1');
   assert.equal(pack.includes(gear), false, 'the gear leaves the pack while the tent stands');
   const f = placeCampItem(kit, pack, { ...ctx, standing: 1 });
-  assert.equal(f.ok, true); assert.equal(f.spent, true); assert.equal(f.text, `${CAMP_TEXT.lit} ${CAMP_TEXT.kitSpent}`);
-  assert.equal(pack.includes(kit), false, 'the last light takes the kit');
+  assert.equal(f.ok, true); assert.equal(f.spent, false); assert.equal(f.text, CAMP_TEXT.lit);
+  assert.equal(f.camp.wear, 1, 'REST2: its one charge rides the camp');
+  assert.equal(pack.includes(kit), false, 'REST2: the Campfire leaves the pack while it burns');
   const kit2 = createSurvivalItem(TEMPLATE.Campfire, { condition: 3 });
   const pack2 = [kit2];
-  const f2 = placeCampItem(kit2, pack2, { ...ctx, standing: 1 });
-  assert.equal(f2.spent, false); assert.equal(kit2.currentCondition, 2); assert.ok(pack2.includes(kit2), 'a kit with lights left stays');
   const full = placeCampItem(kit2, pack2, { ...ctx, standing: CAMPS_PER_OWNER });
-  assert.equal(full.ok, false); assert.equal(full.text, CAMP_TEXT.tooMany); assert.equal(kit2.currentCondition, 2, 'a refusal costs nothing');
+  assert.equal(full.ok, false); assert.equal(full.text, CAMP_TEXT.tooMany); assert.equal(kit2.currentCondition, 3, 'a refusal costs nothing');
   const town = placeCampItem(kit2, pack2, { ...ctx, place: { inTown: true } });
-  assert.equal(town.text, SURVIVAL_USE_TEXT.campingTown); assert.equal(kit2.currentCondition, 2);
+  assert.equal(town.text, SURVIVAL_USE_TEXT.campingTown); assert.equal(kit2.currentCondition, 3); assert.ok(pack2.includes(kit2));
   assert.equal(placeCampItem(createSurvivalItem(TEMPLATE.Bread), pack2, ctx).ok, false, 'only the two placeables');
-  // packing: the gear back with its wear; a fire stamped out
+  // packing: the gear back with its wear; REST2: the Campfire picked up with its charges
   const back = packCamp(r.camp);
-  assert.equal(back.item.templateIndex, TEMPLATE.CampingEquipment); assert.equal(back.item.currentCondition, 9); assert.equal(back.text, CAMP_TEXT.packed);
-  assert.deepEqual(packCamp(f.camp), { item: null, text: CAMP_TEXT.stamped });
+  assert.equal(back.item.templateIndex, TEMPLATE.CampingEquipment); assert.equal(back.item.currentCondition, 10); assert.equal(back.text, CAMP_TEXT.packed);
+  const fireBack = packCamp(f.camp);
+  assert.deepEqual([fireBack.item.templateIndex, fireBack.item.currentCondition, fireBack.text], [TEMPLATE.Campfire, 1, CAMP_TEXT.pickedUp]);
   assert.equal(createSurvivalItem(TEMPLATE.CampingEquipment).currentCondition, CAMPING_USES, 'the mint\'s condition is the port\'s field (SURV2 wrote `condition`, which nothing reads)');
 });
 
@@ -112,8 +118,8 @@ test('SURV3: cooking - the raw foods alone; cooked a stage nearer fresh, one off
 });
 
 test('SURV3: by the fire - within four of a LIT fire, anyone\'s; the eye\'s words and the menu\'s rows', () => {
-  const lit = newCamp({ id: 'a', owner: 'x', kind: CAMP_KIND.Fire, pos: [0, 0, 0], now: 0 });
-  const cold = newCamp({ id: 'b', owner: 'x', kind: CAMP_KIND.Tent, pos: [10, 0, 0], now: -FIRE_MINUTES });
+  const lit = { ...newCamp({ id: 'a', owner: 'x', kind: CAMP_KIND.Fire, pos: [0, 0, 0], now: 0 }), fuel: true };   // AUDIT REST-PARTY B5: a Campfire (placeCampItem marks its fuel) - an old kit's fire offers no pick-up
+  const cold = newCamp({ id: 'b', owner: 'x', kind: CAMP_KIND.Tent, pos: [10, 0, 0], now: -FIRE_MINUTES, wear: 5 });
   assert.equal(BY_FIRE_REACH, 4);
   assert.equal(nearestFire([lit, cold], [3.9, 0, 0], 10), lit);
   assert.equal(nearestFire([lit, cold], [4.1, 0, 0], 10), null);
@@ -125,7 +131,7 @@ test('SURV3: by the fire - within four of a LIT fire, anyone\'s; the eye\'s word
   assert.deepEqual(campMenu(lit, 10, true).map((r) => r.key), ['rest', 'cook', 'pack']);
   assert.deepEqual(campMenu(lit, 10, false).map((r) => r.key), ['rest', 'cook'], 'another\'s fire is not yours to put out');
   assert.deepEqual(campMenu(cold, 10, true).map((r) => r.key), ['rest', 'cook', 'stoke', 'pack'], 'a cold tent offers its fire');
-  assert.equal(campMenu(cold, 10, true)[3].text, CAMP_TEXT.menuPack); assert.equal(campMenu(lit, 10, true)[2].text, CAMP_TEXT.menuStamp);
+  assert.equal(campMenu(cold, 10, true)[3].text, CAMP_TEXT.menuPack); assert.equal(campMenu(lit, 10, true)[2].text, CAMP_TEXT.menuPickUp, 'REST2: your Campfire is picked up, not stamped out');
 });
 
 test('SURV3: the wire - a camp as its owner says it, the door every record comes in by, an owner\'s word replacing theirs alone', () => {
@@ -170,7 +176,7 @@ function fakeHost() {
 }
 const settle = () => new Promise((r) => setTimeout(r, 0));
 
-test('SURV3: the pool - a fire stands as TEXTURE.210 record 1 with a light over it, burns down by the world clock, a kit\'s camp goes with its fire, a tent stays cold', async () => {
+test('SURV3: the pool - a fire stands as TEXTURE.210 record 1 with a light over it, burns down by the world clock - REST2: a Campfire stands cold, as a tent stays cold', async () => {
   setWorldMinutes(1000);
   const h = fakeHost();
   const kit = createSurvivalItem(TEMPLATE.Campfire, { condition: 2 });
@@ -196,13 +202,13 @@ test('SURV3: the pool - a fire stands as TEXTURE.210 record 1 with a light over 
   assert.equal(h.camps.batches()[0].frame, 1, '...and a tenth is one');
   setWorldMinutes(1000 + FIRE_MINUTES);
   h.camps.tick(0.1);
-  assert.equal(h.camps.camps.length, 1, 'the kit\'s camp went with its fire');
-  assert.equal(h.camps.camps[0].rec.kind, CAMP_KIND.Tent);
-  assert.equal(h.camps.batches().length, 0, 'a cold tent shows no flame'); assert.deepEqual(h.camps.lights(), []);
+  assert.equal(h.camps.camps.length, 2, 'REST2: the Campfire stands cold for its owner, not gone');
+  assert.equal(h.camps.batches().length, 0, 'a cold fire and a cold tent show no flame'); assert.deepEqual(h.camps.lights(), []);
   assert.equal(h.camps.draw(h.renderer), 1, 'but the tent is drawn');
-  const t = h.camps.targets();
+  const tent = h.camps.camps.find((c) => c.rec.kind === CAMP_KIND.Tent);
+  const t = h.camps.targets().filter((x) => x.key === `camp:${tent.rec.id}`);
   assert.equal(t.length, 2, 'the fire\'s box and the tent\'s mesh bounds');
-  assert.ok(t.every((x) => x.key === `camp:${h.camps.camps[0].rec.id}` && x.reach === CAMP_REACH));
+  assert.ok(t.every((x) => x.reach === CAMP_REACH));
   assert.ok(t[1].aabb.min[2] < t[0].aabb.min[2], 'the tent\'s box sits behind the fire\'s');
   setWorldMinutes(0);
 });
@@ -237,7 +243,7 @@ test('SURV3: the pool - the eye names it, the menu rests, stokes, cooks and pack
   assert.equal(h.said.at(-1), CAMP_TEXT.stoked); assert.equal(h.camps.lights().length, 1, 'the flame is back');
   // the save's rows and their restore, in the host's frame
   const snap = h.camps.snapshot((p) => [p[0] + 100, p[1], p[2]]);
-  assert.equal(snap.length, 1); assert.equal(snap[0].pos[0], 100); assert.equal(snap[0].wear, 4);
+  assert.equal(snap.length, 1); assert.equal(snap[0].pos[0], 100); assert.equal(snap[0].wear, 5, 'REST2: pitching spent none of the five');
   h.camps.restore(snap, (p) => [p[0] - 100, p[1], p[2]]);
   await settle();
   assert.equal(h.camps.camps.length, 1); assert.deepEqual(h.camps.camps[0].rec.pos, [0, 0, PLACE_AHEAD]);
@@ -254,7 +260,7 @@ test('SURV3: the pool - the eye names it, the menu rests, stokes, cooks and pack
   const k2 = h.camps.targets()[0].key;
   h.camps.activate(k2, 'grab'); const lastMenu = h.overlays.at(-1); lastMenu._pick(lastMenu.items.indexOf(CAMP_TEXT.menuPack));
   assert.equal(h.said.at(-1), CAMP_TEXT.packed); assert.equal(h.camps.camps.length, 0);
-  assert.equal(h.entity.items.at(-1).templateIndex, TEMPLATE.CampingEquipment); assert.equal(h.entity.items.at(-1).currentCondition, 4);
+  assert.equal(h.entity.items.at(-1).templateIndex, TEMPLATE.CampingEquipment); assert.equal(h.entity.items.at(-1).currentCondition, 5, 'REST2: no night slept, none of the five spent');
   setWorldMinutes(0);
 });
 
@@ -330,7 +336,7 @@ test('SURV3: by source - the three hosts stand the pool, feed the race, draw the
   }
   for (const [name, src] of [['world', world], ['exterior', ext]]) {
     assert.match(src, /camp: _campPick,/, `${name}: the race takes the camp`); assert.match(src, /water: _springPick,/, `${name}: and the water source`);
-    assert.match(src, /if \(_race\.campWins\) \{ if \(_campPick\.distance > _campPick\.reach\) setMidScreenText\(TOO_FAR_AWAY_TEXT\); else camps\.activate\(_campPick\.key, getInteractionMode\(\)\); \}/, `${name}: the camp's arm refuses out loud`);
+    assert.match(src, /if \(_race\.campWins\) \{ if \(_campPick\.distance > _campPick\.reach\) setMidScreenText\(TOO_FAR_AWAY_TEXT\); else camps\.activate\(_campPick\.key, getInteractionMode\(\), plaqueActionFor\(_campPick\.key\)\); \}/, `${name}: the camp's arm refuses out loud`);
     assert.match(src, /else if \(_race\.waterWins\) \{ if \(_springPick\.distance > _springPick\.reach\) setMidScreenText\(TOO_FAR_AWAY_TEXT\); else drinkAtSpring\(_springPick\.key\); \}/, `${name}: the water's arm`);
     assert.match(src, /camps\.draw\(renderer/, `${name}: the tents are drawn`);
     assert.match(src, /\.\.\.camps\.lights\(\), \.\.\.droppedTorches\.lights\(\)\)/, `${name}: the fires light`);
@@ -371,7 +377,7 @@ test('SURV3: by source - the three hosts stand the pool, feed the race, draw the
   // 'Fire' without ever growing the arm, so E on a brazier underground
   // was eaten in silence while the same object worked outdoors and
   // indoors. `camps.activate` already routed both keys.
-  assert.match(dc, /if \(kind === 'camp' \|\| kind === 'hearth'\) return camps\.activate\(key, mode\) \? 1 : 0;/);
+  assert.match(dc, /if \(kind === 'camp' \|\| kind === 'hearth'\) return camps\.activate\(key, mode, plaqueActionFor\(key\)\) \? 1 : 0;/);
   assert.match(dc, /targets\.push\(\.\.\.camps\.targets\(\)\);/);
   assert.match(dc, /camps\.destroyAll\(\);[^\n]*\n\s*droppedTorches\.destroyAll\(\);\s*\n\s*weaponRig\.dispose\?\.\(\);/, 'the teardown frees the fires');
   assert.match(modes, /key\.startsWith\('droppedTorch:'\) \|\| key\.startsWith\('camp:'\)/);

@@ -315,7 +315,9 @@ No relay change. The servers keep the save opaque, and `RELAY_VERSION` does not 
    - **Recommended:** a quest's COUNTDOWNS (the Clock resource: "you have N days") charge the
      character's own time, so a journey spends a quest's days as in DFU, and a loiter fast-forwards a
      quest's wait ("come back in three days"). This is FB-2026-09-25's open "loiter fast-forward for
-     timed quests".
+     timed quests". [SUPERSEDED BY QCLOCK-WORLD 2026-10-02 (`Online-Time-Arc.md` 6.3c): online a
+     countdown charges the time lived with the world and never a raise - a journey or a loiter spends
+     no quest days.]
    - Its time-of-day windows (DailyFrom, "at night") stay on the world's sky.
    - It tightens WORLD1's leniency: N days would no longer be 2N real hours of play.
    - A shared quest runs on its owner's clock.

@@ -978,8 +978,8 @@
   {
     "name": "AUDITLIVED1B-T8-ui-hud-needs-on-the-worlds-clock",
     "file": "src/ui/enhancedHud.js",
-    "old": "import { ownMinutes } from '../systems/worldTick.js';",
-    "new": "import { worldMinutes as ownMinutes } from '../systems/worldTick.js';",
+    "old": "import { ownMinutes, sharedClockOn } from '../systems/worldTick.js';",
+    "new": "import { worldMinutes as ownMinutes, sharedClockOn } from '../systems/worldTick.js';",
     "tests": [
       "test/auditlived1b_t.test.js"
     ]

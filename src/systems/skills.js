@@ -280,7 +280,7 @@ export function levelUpSkillSum(entity) {
  *          if (ImprovedAthleticism) += improvedAthleticismMultiplier;
  *      }
  *
- *  - exactly the shape shared.js:1509 already uses for the same pair
+ *  - exactly the shape shared.js:1512 already uses for the same pair
  *  on the fatigue rate, so the item alone does nothing and the two
  *  together make +20%. X1 landed the Jump SPELL's term (+0.6,
  *  AcrobatMotor's own jumpSpellMultiplier :16, added when

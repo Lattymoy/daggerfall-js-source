@@ -7,6 +7,10 @@
 // away forgiven); the time they RAISE is charged whole. A party member's copy runs on its holder's clock; an online
 // save from before TIME3 moves its countdowns onto the character's clock once. THE LAW EXECUTES, end to end where a
 // rig reaches, and by source for the four hosts.
+// QCLOCK-WORLD (2026-10-02, Mac: "go back to the quest timer tied to the online world clock"; asked, "Shared world
+// clock"): online the time RAISED is charged NOTHING - a rest, a loiter, a journey spend no quest days - and only the
+// time lived with the world is, one played step at most: played time on the world's clock, WORLD7's law. Offline DFU's
+// own. The tests below that drove a clock with a rest drive it with lived play now, and say what a rest no longer does.
 import './modsOff.js';
 import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
@@ -94,55 +98,63 @@ test('TIME3 the session\'s raises: counted as they are raised - a RaiseTime, and
   assert.equal(raisedSince(500, null), 0, 'a sample with no count beside it: nothing known raised');
 });
 
-test('TIME3 the Clock online: the time RAISED since its sample is charged whole and the time lived one played step at most - a three-day wait is a 72-hour rest; never more than the clock moved; a restore is a resume; offline DFU\'s raw gap', () => {
+test('QCLOCK-WORLD the Clock online: the time RAISED since its sample is charged NOTHING and the time lived one played step at most - a 72-hour rest spends none of a three-day wait, three days played spend it; a restore is a resume; offline DFU\'s raw gap', () => {
   const c = { own: 1_000_000, raised: 0, step: PLAYED_STEP_MAX_SECONDS };
   const q = questAt(c);
   const days3 = 3 * DAY_S;
   const wait = new Clock(q, 'Clock _w_ 3.00:00'); wait.startTimer();
   assert.equal(wait.remainingTimeInSeconds, days3);
-  for (let k = 0; k < 72 * 6 - 1; k++) { c.own += 600; c.raised += 600; wait.tick(q); }
-  assert.equal(wait.clockFinished, false, 'ten minutes short of the three days: still waiting');
-  c.own += 600; c.raised += 600; wait.tick(q);
-  assert.equal(wait.clockFinished, true, 'seventy-two hours rested, a quest tick on every sub-tick: the three days are spent');
+  for (let k = 0; k < 72 * 6; k++) { c.own += 600; c.raised += 600; wait.tick(q); }
+  assert.deepEqual([wait.remainingTimeInSeconds, wait.clockFinished], [days3, false], 'seventy-two hours rested, a quest tick on every sub-tick: none of the three days spent');
+  for (let k = 0; k < 72 * 6 - 1; k++) { c.own += 600; wait.tick(q); }
+  assert.equal(wait.clockFinished, false, 'ten minutes short of three days played: still waiting');
+  c.own += 600; wait.tick(q);
+  assert.equal(wait.clockFinished, true, 'three days played with the world: the wait is over');
   const live = new Clock(q, 'Clock _l_ 3.00:00'); live.startTimer();
   c.own += 5 * DAY_S; live.tick(q);
   assert.equal(live.remainingTimeInSeconds, days3 - PLAYED_STEP_MAX_SECONDS, 'five days lived away in one gap (a hidden tab): one step, WORLD7\'s forgiveness');
   const both = new Clock(q, 'Clock _b_ 3.00:00'); both.startTimer();
   c.own += 8 * HOUR_S + HOUR_S; c.raised += 8 * HOUR_S; both.tick(q);
-  assert.equal(both.remainingTimeInSeconds, days3 - 8 * HOUR_S - PLAYED_STEP_MAX_SECONDS, 'an eight-hour rest and an hour away in one gap: the rest whole, the hour one step');
-  // a rest, then a gap lived away: the rest is charged once, the gap one step - the tick re-samples the count
-  const then = new Clock(q, 'Clock _t_ 3.00:00'); then.startTimer();
-  c.own += 2 * HOUR_S; c.raised += 2 * HOUR_S; then.tick(q);
-  c.own += 5 * DAY_S; then.tick(q);
-  assert.equal(then.remainingTimeInSeconds, days3 - 2 * HOUR_S - PLAYED_STEP_MAX_SECONDS, 'the rest\'s two hours are not charged again with the time away');
+  assert.equal(both.remainingTimeInSeconds, days3 - PLAYED_STEP_MAX_SECONDS, 'an eight-hour rest and an hour away in one gap: the rest nothing, the hour one step');
+  const near = new Clock(q, 'Clock _n_ 3.00:00'); near.startTimer();
+  c.own += 8 * HOUR_S + 600; c.raised += 8 * HOUR_S; near.tick(q);
+  assert.equal(near.remainingTimeInSeconds, days3 - 600, 'an eight-hour rest and ten minutes played in one gap: the ten minutes, to the second');
   const over = new Clock(q, 'Clock _x_ 3.00:00'); over.startTimer();
   c.own += 100; c.raised += 5000; over.tick(q);
-  assert.equal(over.remainingTimeInSeconds, days3 - 100, 'a raise is charged no further than the clock moved');
+  assert.equal(over.remainingTimeInSeconds, days3, 'a raise past what the clock moved: nothing, never a negative charge');
   const back = new Clock(q, 'Clock _r_ 3.00:00'); back.startTimer();
   c.raised += 50 * HOUR_S;   // raised before the restore (another timeline, a partner's): never counted across it
   back.restoreSaveData({ ...back.getSaveData(), lastWorldTimeSample: c.own - 5 * DAY_S });
   back.tick(q);
-  assert.equal(back.remainingTimeInSeconds, days3 - PLAYED_STEP_MAX_SECONDS, 'a restored clock\'s first gap is a resume: one step for the time behind it, no raise counted across the restore');
+  assert.equal(back.remainingTimeInSeconds, days3 - PLAYED_STEP_MAX_SECONDS, 'a restored clock\'s first gap is a resume: one step for the time behind it');
   c.own += 10 * HOUR_S; c.raised += 10 * HOUR_S; back.tick(q);
-  assert.equal(back.remainingTimeInSeconds, days3 - PLAYED_STEP_MAX_SECONDS - 10 * HOUR_S, '...and the next rest is charged whole');
-  // AUDIT TIME: a raise AFTER the restore and before its first tick (a load, then a rest; a share landing under a menu,
-  // then a journey) is charged whole - the count is sampled at the restore
+  assert.equal(back.remainingTimeInSeconds, days3 - PLAYED_STEP_MAX_SECONDS, '...and the next rest spends nothing');
+  // AUDIT TIME: the count is sampled at the restore - a raise after it and before its first tick (a load, then a rest)
+  // is a raise, not lived time: nothing
   const early = new Clock(q, 'Clock _e_ 3.00:00'); early.startTimer();
   early.restoreSaveData(early.getSaveData());
   c.own += DAY_S; c.raised += DAY_S; early.tick(q);
-  assert.equal(early.remainingTimeInSeconds, 2 * DAY_S, 'a day rested after the restore: a day off');
+  assert.equal(early.remainingTimeInSeconds, days3, 'a day rested after the restore: nothing off');
+  // ...and the raises BEFORE it are no part of the gap after it: a rest before the save, then ten minutes played
+  const late = new Clock(q, 'Clock _s_ 3.00:00'); late.startTimer();
+  c.own += 50 * HOUR_S; c.raised += 50 * HOUR_S;
+  late.restoreSaveData({ ...late.getSaveData(), lastWorldTimeSample: c.own });
+  c.own += 600; late.tick(q);
+  assert.equal(late.remainingTimeInSeconds, days3 - 600, 'a rest before the restore takes nothing off the ten minutes played after it');
   const fresh = new Clock(q, 'Clock _f_ 3.00:00'); fresh.startTimer();
   c.raised = 0; c.own += 4 * HOUR_S; fresh.tick(q);
   assert.equal(fresh.remainingTimeInSeconds, days3 - PLAYED_STEP_MAX_SECONDS, 'a count that went back (a new session) is a resume too');
   const read = new Clock(q, 'Clock _v_ 3.00:00'); read.startTimer();
   c.own += 7200; c.raised += 7200;
-  assert.equal(read.liveRemainingSeconds(q), days3 - 7200, 'the journal reads a raise as the next tick charges it (QT-LIVE1\'s one arithmetic)');
+  assert.equal(read.liveRemainingSeconds(q), days3, 'the journal reads a raise as the next tick charges it - nothing (QT-LIVE1\'s one arithmetic)');
+  c.own += 600;
+  assert.equal(read.liveRemainingSeconds(q), days3 - 600, '...and ten minutes played as ten');
   read.tick(q);
-  assert.equal(read.remainingTimeInSeconds, days3 - 7200);
+  assert.equal(read.remainingTimeInSeconds, days3 - 600);
   c.step = Infinity;
   const off = new Clock(q, 'Clock _o_ 3.00:00'); off.startTimer();
-  c.own += 2 * DAY_S; off.tick(q);
-  assert.equal(off.remainingTimeInSeconds, DAY_S, 'offline: the raw gap, whatever was lived or raised - DFU\'s own');
+  c.own += 2 * DAY_S; c.raised += DAY_S; off.tick(q);
+  assert.equal(off.remainingTimeInSeconds, DAY_S, 'offline: the raw gap, whatever was lived or raised - DFU\'s own, a rest spending its days');
 });
 
 test('TIME3 the Clock samples WHOLE seconds, as DFU\'s WorldTime.Now.ToSeconds() - an hour of fractional frames charges an hour (the gap cut to whole seconds at every tick dropped up to a third of it)', () => {
@@ -159,7 +171,7 @@ test('TIME3 the Clock samples WHOLE seconds, as DFU\'s WorldTime.Now.ToSeconds()
   }
 });
 
-test('TIME3 CreateFoe\'s interval: a rest spends it whole (the next wave comes), a lived time away past one step is forgiven (WORLD7) - the interval runs on the character\'s clock', () => {
+test('QCLOCK-WORLD CreateFoe\'s interval: a rest spends none of it (no wave), an hour played spends it (the next wave), a lived time away past one step is forgiven (WORLD7) - the interval runs on the character\'s clock as it moves with the world', () => {
   tables();
   const rig = () => {
     const world = { currentRegionIndex: () => 0, isPlayerInLocationRect: () => true, created: [], placed: [], createFoeGameObjects: (foe, count) => { world.created.push(count); return Array.from({ length: count }, (_, i) => ({ i })); }, tryPlaceFoe: (h) => { world.placed.push(h); return true; }, raiseOnEncounterEvent() {} };
@@ -175,7 +187,9 @@ test('TIME3 CreateFoe\'s interval: a rest spends it whole (the next wave comes),
   };
   { const { world, clock, m } = rig();
     clock.t += 2 * HOUR_S; clock.raised += 2 * HOUR_S; m.tick();
-    assert.equal(world.created.length, 2, 'two hours rested: the hour\'s interval spent - the next wave');
+    assert.equal(world.created.length, 1, 'two hours rested: none of the hour\'s interval spent - no wave');
+    for (let k = 0; k < 60 && world.created.length < 2; k++) { clock.t += 60; m.tick(); }
+    assert.equal(world.created.length, 2, 'an hour played: the interval spent - the next wave');
   }
   { const { world, clock, m } = rig();
     clock.t += 2 * HOUR_S; m.tick();
@@ -311,7 +325,7 @@ test('TIME3 a party member\'s copy runs on its holder\'s clock: its countdowns m
   assert.deepEqual(QUEST_WORLD_SECOND_KEYS, ['questStartTime']);
 });
 
-test('TIME3 a party\'s copies, end to end: the receiver\'s rest spends the receiver\'s days and not the sender\'s; a resync keeps each holder\'s running clock; a clock run out on one copy has run out for the party', () => {
+test('QCLOCK-WORLD a party\'s copies, end to end: the receiver\'s play spends the receiver\'s days and not the sender\'s, and a rest spends neither; a resync keeps each holder\'s running clock; a clock run out on one copy has run out for the party', () => {
   tables();
   const S = { own: 2_000_000, raised: 0 }, R = { own: 9_000_000, raised: 0 };
   const machine = (c) => new QuestMachine({ nowSeconds: () => c.own, raisedSeconds: () => c.raised, worldSeconds: () => 5_000_000, questClockStepMax: () => PLAYED_STEP_MAX_SECONDS, world: { currentRegionIndex: () => 0 }, showPopup() {} });
@@ -323,26 +337,27 @@ test('TIME3 a party\'s copies, end to end: the receiver\'s rest spends the recei
   const rq = rm.receiveSharedQuest(sm.getShareableQuestData(sq.uid));
   rm.tick();
   assert.equal(clockOf(rq).remainingTimeInSeconds, 3 * DAY_S, 'received on a clock seven million seconds away: nothing charged for the distance');
-  // the receiver rests a day: their copy, not the sender's
-  for (let k = 0; k < 24 * 6; k++) { R.own += 600; R.raised += 600; rm.tick(); }
+  // the receiver plays a day: their copy, not the sender's
+  for (let k = 0; k < 24 * 6; k++) { R.own += 600; rm.tick(); }
   sm.tick();
-  assert.equal(clockOf(rq).remainingTimeInSeconds, 2 * DAY_S, 'the receiver\'s day of rest: their copy\'s day');
+  assert.equal(clockOf(rq).remainingTimeInSeconds, 2 * DAY_S, 'the receiver\'s day of play: their copy\'s day');
   assert.equal(clockOf(sq).remainingTimeInSeconds, 3 * DAY_S, 'the sender\'s copy untouched');
   // the receiver rests three hours more, its quests not yet ticked, and a resync from the sender lands first
   const rClock = () => clockOf(rm.sharedCandidateNamed(sq.questName));
-  R.own += 3 * HOUR_S; R.raised += 3 * HOUR_S;
+  R.own += 3 * HOUR_S; R.raised += 3 * HOUR_S;   // a rest
+  R.own += 600;   // and ten minutes played, its quests not yet ticked
   rm.updateSharedQuest(sq.questName, sm.getShareableQuestData(sq.uid));
   assert.equal(rClock().remainingTimeInSeconds, 2 * DAY_S, 'a resync keeps this holder\'s running clock - the days are theirs');
   rm.tick();
-  assert.equal(rClock().remainingTimeInSeconds, 2 * DAY_S - 3 * HOUR_S, 'and its samples: the three hours rested before it are charged whole, and nothing for the sender\'s clock');
+  assert.equal(rClock().remainingTimeInSeconds, 2 * DAY_S - 600, 'and its samples: the ten minutes played before it charge ten, the three hours rested nothing, and nothing for the sender\'s clock');
   // a clock this copy does not run takes the envelope's state - moved onto this character's clock
   rClock().clockEnabled = false;
   rm.updateSharedQuest(sq.questName, sm.getShareableQuestData(sq.uid));
   assert.equal(rClock().remainingTimeInSeconds, 3 * DAY_S, 'the sender\'s running clock, as it stands on their copy');
   R.own += 600; rm.tick();
   assert.equal(rClock().remainingTimeInSeconds, 3 * DAY_S - 600, 'ten minutes lived here charge ten - not a step for the seven million seconds between the two clocks');
-  // the sender rests the three days: their clock runs out, and the resync carries it
-  for (let k = 0; k < 72 * 6; k++) { S.own += 600; S.raised += 600; sm.tick(); }
+  // the sender plays the three days: their clock runs out, and the resync carries it
+  for (let k = 0; k < 72 * 6; k++) { S.own += 600; sm.tick(); }
   assert.equal(clockOf(sq).clockFinished, true);
   assert.equal(taskOf(sq, '_wait_').triggered, true, 'the sender\'s wait is over');
   rm.updateSharedQuest(sq.questName, sm.getShareableQuestData(sq.uid));
@@ -359,7 +374,7 @@ test('TIME3 AUDIT: a resync from a partner behind keeps what this copy has done 
   const sq = sm.scheduleQuest(WAIT_3_DAYS, 0, { rolls: () => 0.4 });
   sm.tick(); sm.markQuestShared(sq.questName);
   rm.receiveSharedQuest(sm.getShareableQuestData(sq.uid)); rm.tick();
-  for (let k = 0; k < 72 * 6; k++) { R.own += 600; R.raised += 600; rm.tick(); }
+  for (let k = 0; k < 72 * 6; k++) { R.own += 600; rm.tick(); }   // QCLOCK-WORLD: three days played (a rest would spend none)
   const mine = () => rm.sharedCandidateNamed(sq.questName);
   assert.equal(clockOf(mine()).clockFinished, true);
   assert.equal(taskOf(mine(), '_wait_').triggered, true);
@@ -377,12 +392,12 @@ test('TIME3 AUDIT: a resync from a partner behind keeps what this copy has done 
   const bq = bm.receiveSharedQuest(am.getShareableQuestData(aq.uid)); bm.tick();
   const wave = (q) => [...q.tasks.values()].flatMap((t) => t.actions).find((x) => x.typeName === 'CreateFoe');
   const before = wave(bq).lastSpawnTime;
-  for (let k = 0; k < 18; k++) { B.own += 600; B.raised += 600; bm.tick(); }   // three hours rested toward B's wave
+  for (let k = 0; k < 18; k++) { B.own += 600; bm.tick(); }   // three hours played toward B's wave
   bm.updateSharedQuest(aq.questName, am.getShareableQuestData(aq.uid));
   const after = wave(bm.sharedCandidateNamed(aq.questName));
   assert.equal(after.lastSpawnTime, before, 'the wave\'s last is this holder\'s - the resync did not restart it');
-  for (let k = 0; k < 6; k++) { B.own += 600; B.raised += 600; bm.tick(); }
-  assert.ok(bw.created.length >= 1, 'and the fourth hour rested brings the wave');
+  for (let k = 0; k < 6; k++) { B.own += 600; bm.tick(); }
+  assert.ok(bw.created.length >= 1, 'and the fourth hour played brings the wave');
 });
 
 test('TIME3 AUDIT (second round): a resync that keeps a run-out clock keeps its task\'s edge and its wave\'s count - "3 times" stays three in this holder\'s world', () => {
@@ -395,12 +410,15 @@ test('TIME3 AUDIT (second round): a resync that keeps a run-out clock keeps its 
   const aq = am.scheduleQuest(SRC, 0, { rolls: () => 0.99 }); am.tick(); am.markQuestShared(aq.questName);
   bm.receiveSharedQuest(am.getShareableQuestData(aq.uid)); bm.tick();
   const rest = (n) => { for (let k = 0; k < n; k++) { B.own += 600; B.raised += 600; bm.tick(); } };
+  const play = (n) => { for (let k = 0; k < n; k++) { B.own += 600; bm.tick(); } };
   rest(6 * 4);
-  assert.equal(bw.created.length, 3, 'four hours rested: the clock out, its three waves');
+  assert.equal(bw.created.length, 0, 'QCLOCK-WORLD: four hours rested spend none of the hour - no wave');
+  play(6 * 4);
+  assert.equal(bw.created.length, 3, 'four hours played: the clock out, its three waves');
   bm.updateSharedQuest(aq.questName, am.getShareableQuestData(aq.uid));   // the partner, still counting their hour
   const q = bm.sharedCandidateNamed(aq.questName), task = taskOf(q, '_c_');
   assert.deepEqual([task.triggered, task.prevTriggered], [true, true], 'the task fired, and its edge already taken');
-  rest(6 * 4);
+  play(6 * 4);
   assert.equal(bw.created.length, 3, 'four more hours: no wave past the three');
 });
 
@@ -445,7 +463,7 @@ test('TIME3 saves: an online save from before TIME3 has its countdowns moved ont
   assert.equal(markOwnClock({ x: { questName: 'Q', questStartTime: 1 } }, 99).x.ownSecondsAt, 99);
 });
 
-test('TIME3 the rest, end to end online: a quest ticks on every sub-tick, a three-day wait is a 72-hour rest - about half a minute - and the task fires', () => {
+test('QCLOCK-WORLD the rest, end to end online: a quest ticks on every sub-tick, and a 72-hour rest - about half a minute - spends none of a three-day wait; its task does not fire', () => {
   tables();
   const t = { clock: 900_000 };
   setSharedClock(() => t.clock);
@@ -462,12 +480,12 @@ test('TIME3 the rest, end to end online: a quest ticks on every sub-tick, a thre
     const s = new RestSession('timed', 24, deps);
     for (let h = 0; h < 24; h++) {
       s.tick(HOUR_REAL + 1e-9); realSeconds += HOUR_REAL; hours++;
-      if (hours === 71) assert.equal(clockOf(q).clockFinished, false, 'seventy-one hours: still waiting');
     }
   }
   assert.equal(raisedMinutes(), 3 * D, 'seventy-two hours raised');
-  assert.equal(clockOf(q).clockFinished, true, 'the seventy-second hour: the wait is over');
-  assert.equal(taskOf(q, '_wait_').triggered, true, 'and its task fired');
+  assert.equal(clockOf(q).remainingTimeInSeconds, 3 * DAY_S, 'and none of the three days spent');
+  assert.equal(clockOf(q).clockFinished, false, 'the wait stands');
+  assert.equal(taskOf(q, '_wait_').triggered, false, 'and its task has not fired');
   assert.ok(Math.abs(realSeconds - 32.4) < 1e-6, `about half a minute of real time (${realSeconds.toFixed(1)} s)`);
 });
 

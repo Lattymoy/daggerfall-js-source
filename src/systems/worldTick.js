@@ -923,7 +923,7 @@ function tickPlayerMinutesOnce({
   // threshold stamped a clock three days out; this is where the clock
   // runs down and the invitation quest starts - and only OUTSIDE, so
   // the letter never finds the player in a dungeon.
-  handleStartingCrimeGuildQuests(entity, { nowClassicMinutes: next, inside, online: sharedClockOn() });   // TIMEFREE: the short wait online
+  handleStartingCrimeGuildQuests(entity, { nowClassicMinutes: next, inside, online: sharedClockOn() });   // REST8: the short wait online
 
   // SURV1 - THE NEEDS, one world minute at a time over the minutes this
   // tick crossed (the same [last, now] the per-minute loop above walks),
@@ -1005,7 +1005,7 @@ export function runCalendarArms(entity, lastMinutes, nowMinutes, { rolls = Math.
   // minutes), the faction powers and the regional conditions the WORLD's (the shared day's rolls). Offline all of
   // them walk the one clock in DFU's order within a minute, exactly as before.
   const worldArms = arms !== DAY_ARMS.own, ownArms = arms !== DAY_ARMS.world;
-  const timeFree = sharedClockOn();   // TIMEFREE: online the curse's quests come on the short wait, not 38 and 84 days
+  const shortWaits = sharedClockOn();   // REST8: online the curse's quests come on the short wait, not 38 and 84 days
   for (let i = lastMinutes; i < nowMinutes; i++) {
     if (ownArms && i % NORMALIZE_INTERVAL_MINUTES === 0 && !entity.preventNormalizingReputations) {
       normalizeReputations(entity, entity.factionRep ?? null);
@@ -1058,16 +1058,17 @@ export function runCalendarArms(entity, lastMinutes, nowMinutes, { rolls = Math.
       // the vampire's P0A01L00 initiation, then the clan's own quests
       // (V2d; a no-op without a live override or a registered host).
       // LIVED1: the curse's quests are the character's - online they
-      // ride the same cadence on their own minutes.
-      if (ownArms && !timeFree) startRacialOverrideQuest(entity, false, { rolls });
+      // ride the same cadence on their own minutes. [SUPERSEDED BY REST8: online the short-wait arm below.]
+      if (ownArms && !shortWaits) startRacialOverrideQuest(entity, false, { rolls });
     }
     // :475-476, the FOURTH arm - every 84 days, the CURE quest roll
     // ($CUREVAM at (10,100)<30, $CUREWER at (1,100)<30 once).
-    if (ownArms && !timeFree && i % CURE_QUEST_INTERVAL_MINUTES === 0) {
+    if (ownArms && !shortWaits && i % CURE_QUEST_INTERVAL_MINUTES === 0) {
       startRacialOverrideQuest(entity, true, { rolls });
     }
-    // TIMEFREE: online both arms roll on the short wait, each only while it has nothing running (racialQuests.js)
-    if (ownArms && timeFree && i % ONLINE_RACIAL_INTERVAL_MINUTES === 0) {
+    // REST8 (2026-10-03, bible/06-Systems/Rest-Arc.md section 8; Mac's OPEN 12 - TIMEFREE's arm, restored): online both
+    // arms roll on the short wait, each only while it has nothing running (racialQuests.js racialArmIdle)
+    if (ownArms && shortWaits && i % ONLINE_RACIAL_INTERVAL_MINUTES === 0) {
       if (racialArmIdle(false)) startRacialOverrideQuest(entity, false, { rolls });
       if (racialArmIdle(true)) startRacialOverrideQuest(entity, true, { rolls });
     }
@@ -1261,7 +1262,7 @@ let _ownMinutes = null;
 // tick's raiseMinutes, and advanceOwnMinutes). A quest's countdowns run on the character's clock, which moves two
 // ways online: with the world while they live in it - a quest charges that by one played step a frame at most, the
 // rest is time away and forgiven (WORLD7: a hidden tab, a menu left open) - and ahead of it when they raise time, which
-// a quest charges whole, as DFU charges a RaiseTime: a three-day wait is a 72-hour rest. This count tells the two
+// a quest charges nothing (QCLOCK-WORLD - TIME3 charged it whole, as DFU charges a RaiseTime). This count tells the two
 // apart. A load moves the clock and raises nothing; a clock installed or removed starts a session and the count with
 // it; offline there is one clock, no raise to tell apart, and it reads 0.
 let _raisedMinutes = 0;

@@ -10,7 +10,7 @@ import {
 import { rotFoodDay, TEMPLATE, FOOD } from '../src/systems/survival/food.js';
 import { createSurvivalItem, isSurvivalItem } from '../src/systems/survival/items.js';
 import { temperatureWord, clothingWarmth, HOOD_SHADE } from '../src/systems/survival/temperature.js';
-import { placeCampItem, CAMP_TEXT } from '../src/systems/survival/camp.js';
+import { placeCampItem, packCamp, spendCampNight, CAMP_TEXT } from '../src/systems/survival/camp.js';
 import { survivalHudChips } from '../src/systems/survival/status.js';
 import { tavernMenu, TAVERN_MENU_TEXT, breakfastHours } from '../src/systems/survival/tavernMenu.js';
 import { installSurvivalGate, uninstallSurvivalGate } from '../src/systems/survival/env.js';
@@ -86,14 +86,17 @@ test('AUDIT SURV A: the laws - a rough nap never raises the debt, wet armour rus
   e = player(); e.survival = newSurvival(6000);
   for (let m = 1; m <= 30; m++) survivalMinute(e, 6000 + m, NOON, { sinks: sinksOf([]), ctx: { vampire: true } });
   assert.equal(e.survival.fed, 0, 'no negative tally on the record');
-  // spent gear refuses the pitch
+  // spent gear refuses the pitch - REST2: pitching is free, the night slept at it spends the use
   const gear = createSurvivalItem(TEMPLATE.CampingEquipment, { condition: 1 });
   const flat = (o, d, m) => (d[1] < 0 && m >= o[1] ? o[1] : null);   // a floor at y = 0 under every probe (surv3's)
   const ctx = { now: 500, owner: 'p1', feet: [0, 1, 0], yaw: 0, probe: flat, place: {}, standing: 0, id: 'p1:1' };
   const first = placeCampItem(gear, [gear], ctx);
-  assert.equal(first.ok, true); assert.equal(gear.currentCondition, 0);
-  const again = placeCampItem(gear, [gear], { ...ctx, id: 'p1:2' });
-  assert.equal(again.ok, false); assert.equal(again.text, CAMP_TEXT.wornOut, 'the fiftieth pitch was the last');
+  assert.equal(first.ok, true); assert.equal(gear.currentCondition, 1); assert.equal(first.camp.wear, 1);
+  assert.deepEqual(spendCampNight(first.camp, 600), { spent: true, empty: true });
+  const back = packCamp(first.camp).item;
+  assert.equal(back.currentCondition, 0);
+  const again = placeCampItem(back, [back], { ...ctx, id: 'p1:2' });
+  assert.equal(again.ok, false); assert.equal(again.text, CAMP_TEXT.wornOut, 'the fiftieth night was the last');
   // a drenched hood in strong sun shades to nothing, never below
   const hoodWorn = new Array(27).fill(null); hoodWorn[EQUIP_SLOTS.Cloak1] = { templateIndex: 154, variant: 2, group: 'MensClothing' };
   assert.ok(clothingWarmth(hoodWorn, { wet: 300, natural: 40, inSunlight: true }).warmth >= 0, 'never below nothing');

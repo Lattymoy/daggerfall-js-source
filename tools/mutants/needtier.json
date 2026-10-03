@@ -1,0 +1,52 @@
+[
+  {
+    "name": "NEED-TIER-no-foot",
+    "file": "src/ui/hudStatus.js",
+    "old": "foot: c.tier ? `${c.tier}/${c.of}` : null",
+    "new": "foot: null",
+    "why": "a need tile says no stage",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "NEED-TIER-off-by-one",
+    "file": "src/systems/survival/status.js",
+    "old": "tier: ladder.indexOf(stage) + 1, of: ladder.length",
+    "new": "tier: ladder.indexOf(stage), of: ladder.length",
+    "why": "Peckish 0/3",
+    "tests": [
+      "test/surv5_ui.test.js"
+    ]
+  },
+  {
+    "name": "NEED-TIER-one-temperature-ladder",
+    "file": "src/systems/survival/status.js",
+    "old": "(key === 'temp' ? (NEED_LADDERS.cold.includes(stage) ? NEED_LADDERS.cold : NEED_LADDERS.warm) : NEED_LADDERS[key])",
+    "new": "(key === 'temp' ? Object.keys(HUD_NEED_WORDS.temp) : NEED_LADDERS[key])",
+    "why": "Freezing 5/6 and not 2/3",
+    "tests": [
+      "test/surv5_ui.test.js"
+    ]
+  },
+  {
+    "name": "NEED-TIER-the-drunk-pair-turned",
+    "file": "src/systems/survival/status.js",
+    "old": "tier: s.drunk > endurance - 10 ? 2 : 1, of: 2",
+    "new": "tier: s.drunk > endurance - 10 ? 1 : 2, of: 2",
+    "why": "Very drunk 1/2",
+    "tests": [
+      "test/surv5_ui.test.js"
+    ]
+  },
+  {
+    "name": "NEED-TIER-a-stageless-need-footed",
+    "file": "src/ui/hudStatus.js",
+    "old": "foot: c.tier ? `${c.tier}/${c.of}` : null",
+    "new": "foot: `${c.tier}/${c.of}`",
+    "why": "Stiff reads undefined/undefined",
+    "tests": [
+      "test/ui3_status.test.js"
+    ]
+  }
+]

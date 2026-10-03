@@ -173,7 +173,7 @@ export const HELP_LINES = Object.freeze([
   '/me <action> - an action on this tab: /me looks around',
   '/wave, /bow, /nod ... [name] - a gesture to those near you - /emotes lists them all',
   ':smile: :sword: :heart: ... - a shortcode is its emoji',
-  '/ready - your vote on a party rest',
+  '/ready - how your party rests online (no vote: a night at a fire carries the party)',
   '/leader - travel to your party leader',
   '/travel - ready up for the leader\'s journey (the leader: call it off)',
   '/unstuck - out through the door you came in by',

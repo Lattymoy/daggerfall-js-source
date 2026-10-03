@@ -220,7 +220,7 @@ test('WORLD1: the hosts by source - the dungeon host\'s shared world is the layo
   const m = rd('src/scenes/worldModes.js');
   assert.match(m, /dungeonSharedWorld\(\) \{ return mode === 'dungeon' && dungeonCtx \? dungeonCtx\.sharedWorld\(\) : null; \},/);
   assert.match(m, /restoreDungeonSharedWorld\(shared\) \{ return mode === 'dungeon' && dungeonCtx \? dungeonCtx\.restoreSharedWorld\(shared\) : false; \},/);
-  const ex = m.slice(m.indexOf('function exitDungeonNow() {'), m.indexOf('function exitDungeonNow() {') + 600);
+  const ex = m.slice(m.indexOf('function exitDungeonNow() {'), m.indexOf('function exitDungeonNow() {') + 720);   // AUDIT REST-PARTY B3: one line more (my fires put away before the memory goes) - still inside this function
   assert.match(ex, /host\.onDungeonLeave\?\.\(\);[^\n]*\n\s*teardownDungeonQuestFlats\(\);[^\n]*\n\s*dungeonCtx\.destroy\(\);/, 'the exit: the hook while the dungeon still stands - before the flats and the destroy, inside THIS function (AUDIT WORLD D1: a lazy regex ran on to the other teardown)');
   assert.match(m, /if \(dungeonCtx\) \{\s*host\.onDungeonLeave\?\.\(\);[^\n]*\n\s*teardownDungeonQuestFlats\(\);\s*dungeonCtx\.overlayWindow/, 'a load or a teleport out: the same hook');
   assert.equal((m.match(/host\.onDungeonLeave\?\.\(\)/g) ?? []).length, 2, 'the two teardowns, no third');

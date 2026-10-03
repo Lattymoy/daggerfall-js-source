@@ -424,20 +424,22 @@ test('PROF9 items: what eating does - a dish eaten again renews its effect, neve
   setPref('survival', 'casual');
 });
 
-test('PROF9 items: a Field Cook lights a Campfire Kit\'s fire without its charge (3.3) - C&C\'s placing, its `keep`; a tent is no campfire', () => {
+test('PROF9 items: a Field Cook lights a Campfire Kit\'s fire without its charge (3.3) - REST2 (the Rest-Arc merge of main): no placing spends a charge for anyone now, so `keep` is accepted and changes nothing; the Campfire leaves the pack with its fuel while it stands, and a tent pitches free', () => {
   const kitItem = createSurvivalItem(TEMPLATE.Campfire);
   const list = [kitItem];
   const uses = kitItem.currentCondition;
   const at = { feet: [0, 0, 0], yaw: 0, probe: () => 1, place: {} };
   const kept = placeCampItem(kitItem, list, { ...at, keep: true });
-  assert.deepEqual([kept.ok, kept.camp.kind, kitItem.currentCondition, list.length], [true, CAMP_KIND.Fire, uses, 1]);
-  const spent = placeCampItem(kitItem, list, { ...at });
-  assert.deepEqual([spent.ok, kitItem.currentCondition], [true, uses - 1]);
+  assert.deepEqual([kept.ok, kept.camp.kind, kept.camp.wear, list.length], [true, CAMP_KIND.Fire, uses, 0], 'a Field Cook\'s: every night of fuel rides the fire');
+  const plain = createSurvivalItem(TEMPLATE.Campfire);
+  const pl = [plain];
+  const spent = placeCampItem(plain, pl, { ...at });
+  assert.deepEqual([spent.ok, spent.camp.wear, pl.length], [true, uses, 0], 'and anyone\'s, the same');
   const tent = createSurvivalItem(TEMPLATE.CampingEquipment);
   const tl = [tent];
   const tu = tent.currentCondition;
-  placeCampItem(tent, tl, { ...at, keep: true });
-  assert.equal(tent.currentCondition, tu - 1, 'a Field Cook\'s is a campfire\'s');
+  const pitched = placeCampItem(tent, tl, { ...at, keep: true });
+  assert.equal(pitched.camp.wear, tu, 'a tent pitches free - a night in it spends its use');
 });
 
 // ─── THE WIRING ──────────────────────────────────────────────────────

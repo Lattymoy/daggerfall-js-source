@@ -427,7 +427,7 @@ export class QuestMachine {
 
   /** TIME3: the clocks a quest reads, one set for every door a live quest is born through - the character's (nowSeconds:
    *  the countdowns, intervals and tombstones), the sky (skySeconds: an hour, a date, a season), the event clock
-   *  (worldSeconds: the journal's dates) and the session's raises (raisedSeconds: charged whole). A host that names
+   *  (worldSeconds: the journal's dates) and the session's raises (raisedSeconds: charged nothing online - QCLOCK-WORLD). A host that names
    *  none of the last three is offline or headless: the one clock, and every gap a lived one. */
   _questClocks() {
     const nowSeconds = () => this.deps.nowSeconds?.() ?? 0;

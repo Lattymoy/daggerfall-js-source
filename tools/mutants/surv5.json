@@ -74,8 +74,8 @@
   {
     "name": "SURV5-the-strip-shows-a-met-need",
     "file": "src/systems/survival/status.js",
-    "old": "  const push = (key, table, stage) => { const w = table[stage]; if (w) out.push({ key, text: w[0], level: w[1] }); };",
-    "new": "  const push = (key, table, stage) => { const w = table[stage] ?? [stage, 'warn']; out.push({ key, text: w[0], level: w[1] }); };",
+    "old": "    const w = table[stage];\n    if (!w) return;",
+    "new": "    const w = table[stage] ?? [stage, 'warn'];",
     "tests": [
       "test/surv5_ui.test.js"
     ]

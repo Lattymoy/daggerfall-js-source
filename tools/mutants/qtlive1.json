@@ -20,45 +20,44 @@
   {
     "name": "QT-LIVE1-charge-ignores-the-played-step",
     "file": "src/systems/quest/clock.js",
-    "old": "    const difference = Number.isFinite(step) ? Math.min(Math.max(raw - raised, 0), step) + raised : raw;\n    return Math.trunc(difference);",
-    "new": "    const difference = raw;\n    return Math.trunc(difference);",
+    "old": "    return Math.trunc(Math.min(Math.max(raw - raised, 0), step));",
+    "new": "    return Math.trunc(raw);",
     "tests": [
       "test/qtlive1.test.js",
       "test/auditworld78.test.js"
     ],
-    "note": "TIME3 (PIN MOVED): the charge splits the lived part from the raised; re-aimed by content."
+    "note": "TIME3 (PIN MOVED): the charge splits the lived part from the raised; re-aimed by content. QCLOCK-WORLD (PIN MOVED): the charge is the lived step alone; re-aimed by content."
   },
   {
     "name": "QT-LIVE1-charge-lets-a-backward-sample-add",
     "file": "src/systems/quest/clock.js",
-    "old": "    const difference = Number.isFinite(step) ? Math.min(Math.max(raw - raised, 0), step) + raised : raw;\n    return Math.trunc(difference);",
-    "new": "    const difference = Number.isFinite(step) ? Math.min(raw - raised, step) + raised : raw;\n    return Math.trunc(difference);",
+    "old": "    return Math.trunc(Math.min(Math.max(raw - raised, 0), step));",
+    "new": "    return Math.trunc(Math.min(raw - raised, step));",
     "tests": [
       "test/qtlive1.test.js",
       "test/auditworld78.test.js"
     ],
-    "note": "TIME3 (PIN MOVED): the charge splits the lived part from the raised; re-aimed by content."
+    "note": "TIME3 (PIN MOVED): the charge splits the lived part from the raised; re-aimed by content. QCLOCK-WORLD (PIN MOVED): re-aimed by content."
   },
   {
     "name": "QT-LIVE1-tick-grows-its-own-arithmetic-back",
     "file": "src/systems/quest/clock.js",
-    "old": "    if (!timeFree) this.remainingTimeInSeconds -= this.chargeSeconds(caller);",
-    "new": "    if (!timeFree) this.remainingTimeInSeconds -= Math.trunc(now - this._lastWorldTimeSample);",
+    "old": "    this.remainingTimeInSeconds -= this.chargeSeconds(caller);",
+    "new": "    this.remainingTimeInSeconds -= Math.trunc(now - this._lastWorldTimeSample);",
     "tests": [
       "test/qtlive1.test.js",
       "test/auditworld78.test.js"
-    ],
-    "note": "TIMEFREE (PIN MOVED): re-aimed by content - the offline arm of the charge, the line now guarded by questTimeFree. AUDIT TIMEFREE T7 (PIN MOVED): re-aimed by content."
+    ]
   },
   {
     "name": "QT-LIVE1-running-clock-answers-the-field-when-disabled-check-inverted",
     "file": "src/systems/quest/clock.js",
-    "old": "    if (!this.clockEnabled || this.clockFinished) return this.remainingTimeInSeconds;\n    if (questTimeFree(this.parentQuest)) {",
-    "new": "    if (this.clockEnabled && !this.clockFinished) return this.remainingTimeInSeconds;\n    if (questTimeFree(this.parentQuest)) {",
+    "old": "    if (!this.clockEnabled || this.clockFinished) return this.remainingTimeInSeconds;\n    if (this.waitsShort)",
+    "new": "    if (this.clockEnabled && !this.clockFinished) return this.remainingTimeInSeconds;\n    if (this.waitsShort)",
     "tests": [
       "test/qtlive1.test.js"
     ],
-    "note": "TIMEFREE (PIN MOVED): re-aimed by content - the TIMEFREE arm now stands between the check and the charge."
+    "note": "REST8 (PIN MOVED): re-aimed by content - the delay's short-wait read now stands between the check and the charge."
   },
   {
     "name": "QT-LIVE1-walk-reads-the-stale-field",

@@ -28,12 +28,28 @@ export const HUD_NEED_WORDS = Object.freeze({
  *  nothing was charged and the pool refilled. */
 const warmedBy = (s, word) => !!s.warmed && (word === 'cold' || word === 'freezing' || word === 'deadly cold');
 
-/** The strip's chips: [{ key, text, level }] - empty when every need is met. */
+/** NEED-TIER (2026-10-02, Mac: "the debuffs you get from Climates and Calories no longer show the severity (how much
+ *  hunger your character has etc)"): a felt need's stage on its own ladder - read off the chips' table, mildest first;
+ *  the temperature's two ways each a ladder of their own - so the tile's foot can say "2/3" where its word has no room. */
+const COLD_WORDS = Object.freeze(['cold', 'freezing', 'deadly cold']);   // AUDIT NEED-TIER: the cold way named, not the table's second half by place
+const NEED_LADDERS = Object.freeze({
+  hunger: Object.keys(HUD_NEED_WORDS.hunger), thirst: Object.keys(HUD_NEED_WORDS.thirst), sleep: Object.keys(HUD_NEED_WORDS.sleep), wet: Object.keys(HUD_NEED_WORDS.wet),
+  warm: Object.keys(HUD_NEED_WORDS.temp).filter((w) => !COLD_WORDS.includes(w)), cold: COLD_WORDS,
+});
+const needLadder = (key, stage) => (key === 'temp' ? (NEED_LADDERS.cold.includes(stage) ? NEED_LADDERS.cold : NEED_LADDERS.warm) : NEED_LADDERS[key]);
+
+/** The strip's chips: [{ key, text, level, tier?, of? }] - empty when every need is met; `tier` of `of` is how bad
+ *  (NEED-TIER), absent on a need with one stage (Stiff). */
 export function survivalHudChips(entity, now, { vampire = false, endurance = 50 } = {}) {
   if (!entity?.survival) return [];
   const s = survivalOf(entity, now);
   const out = [];
-  const push = (key, table, stage) => { const w = table[stage]; if (w) out.push({ key, text: w[0], level: w[1] }); };
+  const push = (key, table, stage) => {
+    const w = table[stage];
+    if (!w) return;
+    const ladder = needLadder(key, stage);
+    out.push({ key, text: w[0], level: w[1], tier: ladder.indexOf(stage) + 1, of: ladder.length });
+  };
   if (!vampire) push('hunger', HUD_NEED_WORDS.hunger, hungerStage(hungerMinutes(s, now)));   // AUDIT SURV C: no need for food or sleep
   if (!vampire) push('thirst', HUD_NEED_WORDS.thirst, thirstStage(s.thirst));   // AUDIT SURV-TIERS (the third pass): nor drink - the law freezes it, and its red chip never cost
   if (!vampire) push('sleep', HUD_NEED_WORDS.sleep, sleepStage(s.sleepDebt));
@@ -45,7 +61,7 @@ export function survivalHudChips(entity, now, { vampire = false, endurance = 50 
   }
   if (isStiff(s, now)) out.push({ key: 'stiff', text: 'Stiff', level: 'warn' });
   // AUDIT SURV C/D: the page's own bands (the mod's LiveEndurance / 2 and - 10), not a hard forty
-  if (s.drunk > endurance / 2) out.push({ key: 'drunk', text: s.drunk > endurance - 10 ? 'Very drunk' : 'Drunk', level: s.drunk > endurance - 10 ? 'danger' : 'warn' });
+  if (s.drunk > endurance / 2) out.push({ key: 'drunk', text: s.drunk > endurance - 10 ? 'Very drunk' : 'Drunk', level: s.drunk > endurance - 10 ? 'danger' : 'warn', tier: s.drunk > endurance - 10 ? 2 : 1, of: 2 });
   return out;
 }
 

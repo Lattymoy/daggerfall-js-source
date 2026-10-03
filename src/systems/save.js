@@ -30,6 +30,7 @@ import { repairLostCurses } from './curseRepair.js';   // CURSE-REPAIR1: a curse
 import { repairUnmintedConditions } from './conditionRepair.js';   // DISC21-A: a wearable minted with no condition, minted
 import { restackStones, nameEmbers } from './gateSpoils.js';   // SS1: Sigil Stones saved before they stacked, folded into one stack; WB12a: and named Deadlands Embers
 import './profTemplates.js';   // PROF2: the ores, ingots and stone a pack may hold, known to every scene a save loads in
+import './restItems.js';   // REST6: the seven rest supplies (1700-1706), known to every scene a save loads in
 import { repairRarityNames, repairRarityBases } from './lootRarity.js';   // DISC29-B: a Magic or Rare Roleplay & Realism: Items piece given back its make's word; RARITY-WEAR: a rolled wand worn as an Amulet
 import { SOCIAL_GROUPS } from '../formats/factionFile.js';   // AUDIT 24
 import { travelMapSaveData, restoreTravelMapSaveData } from './travelMapState.js';   // U41: TravelMapSaveData
@@ -148,6 +149,10 @@ const ENTITY_FIELDS = [
   // every Legendary and Ruhn's Regalia whole, to look at; the mark rides every save of it, and the boot keeps such a
   // character offline (testRoomOnlineRefused). A save without it restores undefined: a character of the world.
   'testRoom',
+  // REST1: the last night's end on the character's own clock (systems/restAct.js) - the night interval is a DIFFERENCE
+  // against it, so a save that dropped it would let a reload pass a night at every rest. A save older than this field
+  // restores undefined, which reads as "no night yet": the first rest is a night.
+  'restNightAt',
 ];
 
 /** PlayerEntity.skillsRecentlyRaised: TWO 32-bit masks over the 35

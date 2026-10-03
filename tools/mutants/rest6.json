@@ -1,0 +1,270 @@
+[
+ {
+  "name": "REST6-the-switch-on-a-release-early",
+  "file": "src/systems/restItems.js",
+  "old": "export const REST_ITEMS_ONLINE = false;",
+  "new": "export const REST_ITEMS_ONLINE = true;",
+  "tests": [
+   "test/rest6_consumables.test.js"
+  ]
+ },
+ {
+  "name": "REST6-offline-without-the-arc",
+  "file": "src/systems/restItems.js",
+  "old": "(online ? REST_ITEMS_ONLINE : survivalOn())",
+  "new": "(online ? REST_ITEMS_ONLINE : true)",
+  "tests": [
+   "test/rest6_consumables.test.js"
+  ]
+ },
+ {
+  "name": "REST6-the-bedroll-stacks",
+  "file": "src/systems/restItems.js",
+  "old": "  row(REST_ITEM.Bedroll, 'Bedroll', 2.5, BEDROLL_NIGHTS, 80, 1, [204, 8], false),",
+  "new": "  row(REST_ITEM.Bedroll, 'Bedroll', 2.5, BEDROLL_NIGHTS, 80, 1, [204, 8], true),",
+  "tests": [
+   "test/rest6_consumables.test.js"
+  ]
+ },
+ {
+  "name": "REST6-the-tonic-half-a-sip",
+  "file": "src/systems/restItems.js",
+  "old": "Math.round(max * TONIC_FATIGUE)",
+  "new": "Math.round(max * TONIC_FATIGUE / 2)",
+  "tests": [
+   "test/rest6_consumables.test.js"
+  ]
+ },
+ {
+  "name": "REST6-the-tonic-forgets-the-debt",
+  "file": "src/systems/restItems.js",
+  "old": "    s.sleepDebt = Math.max(0, (s.sleepDebt ?? 0) - TONIC_SLEEP_HOURS);\n",
+  "new": "",
+  "tests": [
+   "test/rest6_consumables.test.js"
+  ]
+ },
+ {
+  "name": "REST6-the-tonic-never-runs-out",
+  "file": "src/systems/restItems.js",
+  "old": "  takeOne(item, list);\n  return { kind: 'text', text: sleep ? REST_ITEM_TEXT.tonicSleep : REST_ITEM_TEXT.tonic };",
+  "new": "  return { kind: 'text', text: sleep ? REST_ITEM_TEXT.tonicSleep : REST_ITEM_TEXT.tonic };",
+  "tests": [
+   "test/rest6_consumables.test.js"
+  ]
+ },
+ {
+  "name": "REST6-the-salts-wasted-on-the-rested",
+  "file": "src/systems/restItems.js",
+  "old": "  if (sleepStage(s.sleepDebt ?? 0) === 'rested') return { kind: 'text', text: REST_ITEM_TEXT.saltsNotTired };",
+  "new": "",
+  "tests": [
+   "test/rest6_consumables.test.js"
+  ],
+  "note": "AUDIT REST (PIN MOVED): re-aimed by content."
+ },
+ {
+  "name": "REST6-the-salts-hold-nothing",
+  "file": "src/systems/survival/needs.js",
+  "old": "    const sleep = vampire || wakingHeld(s, now) ? 'rested' : sleepStage(s.sleepDebt);",
+  "new": "    const sleep = vampire ? 'rested' : sleepStage(s.sleepDebt);",
+  "tests": [
+   "test/rest6_consumables.test.js"
+  ]
+ },
+ {
+  "name": "REST6-the-salts-debt-never-lands",
+  "file": "src/systems/survival/needs.js",
+  "old": "  s.sleepDebt = Math.min(NEED.SLEEP_DEBT_MAX, (s.sleepDebt ?? 0) + WAKING_DEBT_HOURS);\n",
+  "new": "",
+  "tests": [
+   "test/rest6_consumables.test.js"
+  ]
+ },
+ {
+  "name": "REST6-the-draught-twice-a-night",
+  "file": "src/systems/restItems.js",
+  "old": "  if (s.draught) return { kind: 'text', text: REST_ITEM_TEXT.draughtHeld };\n",
+  "new": "",
+  "tests": [
+   "test/rest6_consumables.test.js"
+  ]
+ },
+ {
+  "name": "REST6-the-draught-never-spent",
+  "file": "src/scenes/shared.js",
+  "old": "if (_draughtFrom != null && ownMinutes() - _draughtFrom >= DRAUGHT_SPENT_MINUTES) spendDraught(entity);",
+  "new": "if (_draughtFrom != null && ownMinutes() - _draughtFrom >= DRAUGHT_SPENT_MINUTES) {}",
+  "tests": [
+   "test/rest6_consumables.test.js"
+  ],
+  "note": "AUDIT REST (PIN MOVED): re-aimed by content."
+ },
+ {
+  "name": "REST6-the-draught-does-nothing",
+  "file": "src/scenes/shared.js",
+  "old": "draughtTaken(entity) && (!sharedClockOn()",
+  "new": "false && (!sharedClockOn()",
+  "tests": [
+   "test/rest6_consumables.test.js"
+  ]
+ },
+ {
+  "name": "REST6-the-candle-restores-all",
+  "file": "src/systems/restItems.js",
+  "old": "Math.round(max * CANDLE_MAGICKA)",
+  "new": "max",
+  "tests": [
+   "test/rest6_consumables.test.js"
+  ]
+ },
+ {
+  "name": "REST6-the-candle-never-burns-down",
+  "file": "src/systems/restItems.js",
+  "old": "  const gone = spendCharge(c.item, c.list);",
+  "new": "  const gone = false;",
+  "tests": [
+   "test/rest6_consumables.test.js"
+  ]
+ },
+ {
+  "name": "REST6-the-candle-stays-lit",
+  "file": "src/systems/restItems.js",
+  "old": "  _candle = null;\n  if (!c || !entity) return null;",
+  "new": "  if (!c || !entity) return null;",
+  "tests": [
+   "test/rest6_consumables.test.js"
+  ]
+ },
+ {
+  "name": "REST6-the-candle-kneel-is-dfus-window",
+  "file": "src/scenes/shared.js",
+  "old": "    if (litCandle(entity)) return { point: { kind: 'candle', where: 'candle' }, night: false, meditate: true, channelSeconds: REST_CHANNEL_SECONDS };\n",
+  "new": "",
+  "tests": [
+   "test/rest6_consumables.test.js"
+  ],
+  "note": "AUDIT REST (PIN MOVED): re-aimed by content."
+ },
+ {
+  "name": "REST6-the-jar-picked-up",
+  "file": "src/systems/survival/camp.js",
+  "old": "  if (mine && !camp.jar && (camp.kind === CAMP_KIND.Tent || !!camp.fuel)) rows.push",
+  "new": "  if (mine && (camp.kind === CAMP_KIND.Tent || !!camp.fuel)) rows.push",
+  "tests": [
+   "test/rest6_consumables.test.js"
+  ],
+  "equivalent": true,
+  "why": "AUDIT REST-PARTY B5: an Ember Jar's fire has no fuel of its own (camp.js placeCampItem), so the fuel term already keeps its row out; `!camp.jar` is kept as the named reason."
+ },
+ {
+  "name": "REST6-the-jar-never-swept",
+  "file": "src/systems/survival/camp.js",
+  "old": "export const campExpired = (camp, now) => camp?.kind === CAMP_KIND.Fire && !camp.fuel && !fireLit(camp, now);",
+  "new": "export const campExpired = () => false;",
+  "tests": [
+   "test/rest6_consumables.test.js"
+  ],
+  "note": "AUDIT REST (PIN MOVED): re-aimed by content."
+ },
+ {
+  "name": "REST6-the-jar-burns-a-day",
+  "file": "src/systems/survival/camp.js",
+  "old": "camp.jar = true; camp.litUntil = now + EMBER_JAR_MINUTES;",
+  "new": "camp.jar = true;",
+  "tests": [
+   "test/rest6_consumables.test.js"
+  ]
+ },
+ {
+  "name": "REST6-firewood-overfills",
+  "file": "src/scenes/camps.js",
+  "old": "      placed.rec.wear = Math.min(CAMPFIRE_USES, (placed.rec.wear | 0) + FIREWOOD_NIGHTS);",
+  "new": "      placed.rec.wear = (placed.rec.wear | 0) + FIREWOOD_NIGHTS;",
+  "tests": [
+   "test/rest6_consumables.test.js"
+  ]
+ },
+ {
+  "name": "REST6-firewood-leaves-it-cold",
+  "file": "src/scenes/camps.js",
+  "old": "      if (!fireLit(placed.rec, t)) { stokeFire(placed.rec, t); if (_fire && !placed.batch) mountFire(placed); }\n",
+  "new": "",
+  "tests": [
+   "test/rest6_consumables.test.js"
+  ]
+ },
+ {
+  "name": "REST6-firewood-ignores-the-placed-fire",
+  "file": "src/scenes/camps.js",
+  "old": "    if (placed && (placed.rec.wear | 0) < CAMPFIRE_USES) {",
+  "new": "    if (false) {",
+  "tests": [
+   "test/rest6_consumables.test.js"
+  ]
+ },
+ {
+  "name": "REST6-the-bedroll-in-town",
+  "file": "src/scenes/camps.js",
+  "old": "    const d = campDecision(CAMP_KIND.Fire, { ...(place?.() ?? {}), ground: spot.ground });\n    if (!d.ok) { say(d.text); return false; }\n    _bedroll",
+  "new": "    _bedroll",
+  "tests": [
+   "test/rest6_consumables.test.js"
+  ]
+ },
+ {
+  "name": "REST6-the-bedroll-never-wears",
+  "file": "src/scenes/camps.js",
+  "old": "      if (spendCharge(_bedroll.item, _bedroll.list)) { say(REST_ITEM_TEXT.bedrollWorn); _bedroll = null; }",
+  "new": "      if (false) { say(REST_ITEM_TEXT.bedrollWorn); _bedroll = null; }",
+  "tests": [
+   "test/rest6_consumables.test.js"
+  ]
+ },
+ {
+  "name": "REST6-the-bedroll-everywhere",
+  "file": "src/scenes/camps.js",
+  "old": "&& within(_bedroll.pos, pos, BY_FIRE_REACH);",
+  "new": "&& true;",
+  "tests": [
+   "test/rest6_consumables.test.js"
+  ]
+ },
+ {
+  "name": "REST6-the-bedroll-quick",
+  "file": "src/scenes/camps.js",
+  "old": "{ kind: 'rough', where: 'bedroll', channelSeconds: BEDROLL_CHANNEL_SECONDS }",
+  "new": "{ kind: 'rough', where: 'bedroll' }",
+  "tests": [
+   "test/rest6_consumables.test.js"
+  ]
+ },
+ {
+  "name": "REST6-no-pile-ever",
+  "file": "src/systems/restItems.js",
+  "old": "  for (const [t, pct] of chances) if (rolls() * 100 < pct)",
+  "new": "  for (const [t, pct] of chances) if (rolls() * 100 < 0)",
+  "tests": [
+   "test/rest6_consumables.test.js"
+  ]
+ },
+ {
+  "name": "REST6-the-card-says-nothing",
+  "file": "src/systems/itemInfo.js",
+  "old": "  else if (isRestItem(item)) for (const text of restItemLines(item)) out.push({ text, center: true });   // REST6\n",
+  "new": "",
+  "tests": [
+   "test/rest6_consumables.test.js"
+  ]
+ },
+ {
+  "name": "REST6-the-draught-spent-by-a-stopped-rest",
+  "file": "src/scenes/shared.js",
+  "old": "if (_draughtFrom != null && ownMinutes() - _draughtFrom >= DRAUGHT_SPENT_MINUTES) spendDraught(entity);",
+  "new": "if (_draughtFrom != null) spendDraught(entity);",
+  "tests": [
+   "test/rest6_consumables.test.js"
+  ],
+  "note": "AUDIT REST (PIN MOVED): re-aimed by content."
+ }
+]

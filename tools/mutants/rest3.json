@@ -1,0 +1,195 @@
+[
+ {
+  "name": "REST3-a-brazier-by-the-door-gets-a-second-fire",
+  "file": "src/world/dungeonFires.js",
+  "old": "  const doorFire = existing.some((q) => d2(q, from) < reach);",
+  "new": "  const doorFire = false;",
+  "tests": [
+   "test/rest3_dungeonfires.test.js"
+  ],
+  "note": "AUDIT REST (PIN MOVED): re-aimed by content. AUDIT REST-PARTY (PIN MOVED): C2/C5 lifted the door's test into `doorFire` (a layout fire by the door, or nearer it than any clear candidate); re-aimed by content."
+ },
+ {
+  "name": "REST3-the-spread-ignores-the-spacing",
+  "file": "src/world/dungeonFires.js",
+  "old": "    const open = pool.filter((c) => clearOf(c.pos, anchors(), DFIRE.spacingM));",
+  "new": "    const open = pool.slice();",
+  "tests": [
+   "test/rest3_dungeonfires.test.js"
+  ]
+ },
+ {
+  "name": "REST3-the-deep-fire-ignores-the-spacing",
+  "file": "src/world/dungeonFires.js",
+  "old": "    const far = pool.filter((c) => clearOf(c.pos, anchors(), DFIRE.spacingM))",
+  "new": "    const far = pool",
+  "tests": [
+   "test/rest3_dungeonfires.test.js"
+  ]
+ },
+ {
+  "name": "REST3-the-deep-fire-is-the-nearest",
+  "file": "src/world/dungeonFires.js",
+  "old": "      .reduce((best, c) => (!best || better(c, best, deep(c.pos, anchorFrom), deep(best.pos, anchorFrom)) ? c : best), null);",
+  "new": "      .reduce((best, c) => (!best || better(c, best, -deep(c.pos, anchorFrom), -deep(best.pos, anchorFrom)) ? c : best), null);",
+  "tests": [
+   "test/rest3_dungeonfires.test.js"
+  ]
+ },
+ {
+  "name": "REST3-no-storey-is-served-first",
+  "file": "src/world/dungeonFires.js",
+  "old": "    const from2 = unserved.length ? unserved : open;",
+  "new": "    const from2 = open;",
+  "tests": [
+   "test/rest3_dungeonfires.test.js"
+  ]
+ },
+ {
+  "name": "REST3-a-fire-stands-in-the-water",
+  "file": "src/world/dungeonFires.js",
+  "old": "    if (pos[1] < c.water + DFIRE.dryM) continue;\n",
+  "new": "",
+  "tests": [
+   "test/rest3_dungeonfires.test.js"
+  ]
+ },
+ {
+  "name": "REST3-a-fire-stands-in-a-doorway",
+  "file": "src/world/dungeonFires.js",
+  "old": "    if (doors.some((d) => d2(d, pos) < SQ(DFIRE.doorM))) continue;\n",
+  "new": "",
+  "tests": [
+   "test/rest3_dungeonfires.test.js"
+  ],
+  "note": "AUDIT REST (PIN MOVED): re-aimed by content."
+ },
+ {
+  "name": "REST3-an-enemy-a-storey-up-clears-this-floor",
+  "file": "src/world/dungeonFires.js",
+  "old": " && Math.abs(e[1] - pos[1]) < DFIRE.storeyM)) continue;",
+  "new": ")) continue;",
+  "tests": [
+   "test/rest3_dungeonfires.test.js"
+  ]
+ },
+ {
+  "name": "REST3-a-ramp-is-a-floor",
+  "file": "src/world/dungeonFires.js",
+  "old": "    if (!f || !Number.isFinite(f.y) || !(f.ny > DFIRE.flatNy)) continue;",
+  "new": "    if (!f || !Number.isFinite(f.y)) continue;",
+  "tests": [
+   "test/rest3_dungeonfires.test.js"
+  ]
+ },
+ {
+  "name": "REST3-an-elite-stands-the-full-count",
+  "file": "src/world/dungeonFires.js",
+  "old": "  return elite ? Math.max(1, Math.floor(n / 2)) : n;",
+  "new": "  return n;",
+  "tests": [
+   "test/rest3_dungeonfires.test.js"
+  ]
+ },
+ {
+  "name": "REST3-a-border-block-has-a-centre",
+  "file": "src/world/dungeonFires.js",
+  "old": "    if (!isBorderBlock(b.name)) {",
+  "new": "    if (true) {",
+  "tests": [
+   "test/rest3_dungeonfires.test.js"
+  ]
+ },
+ {
+  "name": "REST3-a-fixed-treasure-sharing-an-enemy-record-is-an-enemy",
+  "file": "src/world/dungeonFires.js",
+  "old": "const isEnemyMarker = (m) => m && m.archive == null && ENEMY_MARKER_RECORDS.includes(m.record);",
+  "new": "const isEnemyMarker = (m) => m && ENEMY_MARKER_RECORDS.includes(m.record);",
+  "tests": [
+   "test/rest3_dungeonfires.test.js"
+  ]
+ },
+ {
+  "name": "REST3-a-fire-on-a-roof",
+  "file": "src/world/dungeonFires.js",
+  "old": "      if (!Number.isFinite(collider.raycast([p[0], p[1] + 0.2, p[2]], [0, 1, 0], DFIRE.ceilingM, ONLY_DUNGEON))) return false;\n",
+  "new": "",
+  "tests": [
+   "test/rest3_dungeonfires.test.js"
+  ]
+ },
+ {
+  "name": "REST3-a-fire-in-the-void",
+  "file": "src/world/dungeonFires.js",
+  "old": "      return walls >= DFIRE.enclosedRays && collider.penetrationAt",
+  "new": "      return collider.penetrationAt",
+  "tests": [
+   "test/rest3_dungeonfires.test.js"
+  ]
+ },
+ {
+  "name": "REST3-a-fire-against-a-wall",
+  "file": "src/world/dungeonFires.js",
+  "old": "        if (d < DFIRE.roomM) return false;\n",
+  "new": "",
+  "tests": [
+   "test/rest3_dungeonfires.test.js"
+  ]
+ },
+ {
+  "name": "REST3-the-ward-is-inside-out",
+  "file": "src/world/dungeonFires.js",
+  "old": "SQ(q[0] - spot.x) + SQ(q[1] - spot.y) + SQ(q[2] - spot.z) < SQ(DFIRE.wardM));",
+  "new": "SQ(q[0] - spot.x) + SQ(q[1] - spot.y) + SQ(q[2] - spot.z) > SQ(DFIRE.wardM));",
+  "tests": [
+   "test/rest3_dungeonfires.test.js"
+  ],
+  "note": "AUDIT REST (PIN MOVED): re-aimed by content."
+ },
+ {
+  "name": "REST3-the-dungeon-forgets-the-ward",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "inFireWard(dungeonFires, spot)) spot = null;",
+  "new": "false) spot = null;",
+  "tests": [
+   "test/rest3_dungeonfires.test.js"
+  ],
+  "note": "AUDIT REST-PARTY (PIN MOVED): C1 gated the line online (sharedClockOn() before the ward); re-aimed by content at the ward's own call."
+ },
+ {
+  "name": "REST3-a-placed-fire-is-only-a-fire",
+  "file": "src/scenes/camps.js",
+  "old": "?.placed ? 'Campfire' : 'Fire';",
+  "new": "?.placed ? 'Fire' : 'Fire';",
+  "tests": [
+   "test/rest3_dungeonfires.test.js"
+  ]
+ },
+ {
+  "name": "REST3-every-fire-in-the-dungeon-on-the-strip",
+  "file": "src/ui/nodeMarks.js",
+  "old": "    if (!(d <= reach)) continue;\n",
+  "new": "",
+  "tests": [
+   "test/rest3_dungeonfires.test.js"
+  ]
+ },
+ {
+  "name": "REST3-the-fires-draw-over-the-nodes",
+  "file": "src/ui/nodeMarks.js",
+  "old": "  if (points) for (const p of points) _fires.push(p);\n  return _fires;",
+  "new": "  if (points) _fires.unshift(...points);\n  return _fires;",
+  "tests": [
+   "test/rest3_dungeonfires.test.js"
+  ]
+ },
+ {
+  "name": "REST3-the-held-map-loses-the-fires",
+  "file": "src/ui/automapSheet.js",
+  "old": "      out.push({ x, z, y: p[1], kind: 'fire', name: 'Campfire' });",
+  "new": "",
+  "tests": [
+   "test/rest3_dungeonfires.test.js"
+  ]
+ }
+]

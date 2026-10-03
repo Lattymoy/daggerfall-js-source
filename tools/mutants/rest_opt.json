@@ -110,11 +110,12 @@
   {
     "name": "REST-OPT-tally-still-mine",
     "file": "src/scenes/world.js",
-    "old": "    if (!social?.party || modes?.insidePartyRestExempt || !restTogether()) { _partyRestVoteLastReady = null;",
-    "new": "    if (!social?.party || modes?.insidePartyRestExempt) { _partyRestVoteLastReady = null;",
+    "old": "    if (!social?.party || modes?.insidePartyRestExempt || !restTogether() || sharedClockOn()) { _partyRestVoteLastReady = null;",
+    "new": "    if (!social?.party || modes?.insidePartyRestExempt || sharedClockOn()) { _partyRestVoteLastReady = null;",
     "tests": [
       "test/restopt.test.js"
-    ]
+    ],
+    "note": "AUDIT REST-PARTY (PIN MOVED): the tally is shut online too."
   },
   {
     "name": "REST-OPT-pulled-into-a-night",

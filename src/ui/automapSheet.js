@@ -147,6 +147,7 @@ const _frames = new WeakMap();   // rows -> { bounds, floors, field, links, shee
  *   domTools?: boolean,
  *   portals?: Map<string, {entrance?: {pos: number[]}, exit?: {pos: number[]}}>
  *     | (() => Map<string, {entrance?: {pos: number[]}, exit?: {pos: number[]}}>|null),
+ *   fires?: ReadonlyArray<number[]> | (() => ReadonlyArray<number[]>|null),
  * }} deps
  */
 export function createAutomapSheet(deps = {}) {
@@ -444,8 +445,28 @@ export function createAutomapSheet(deps = {}) {
       const [x, z] = toPlan(p[0], p[2]);
       out.push({ x, z, y: p[1], kind: 'teleporter', name: 'Teleporter', unwalked: true });
     }
+    // REST3: a dungeon's own campfire, once the spot it stands on has been SEEN (TP-SEEN's law) - drawn as a flame
+    for (const p of seenFires()) {
+      if (!mine(p[1])) continue;
+      const [x, z] = toPlan(p[0], p[2]);
+      out.push({ x, z, y: p[1], kind: 'fire', name: 'Campfire' });
+    }
     return out;
   }
+
+  /** REST3: the level's placed campfires (deps.fires, [x, y, z]) whose spot lies in a revealed row. */
+  function seenFires() {
+    const all = typeof deps.fires === 'function' ? deps.fires() : deps.fires;
+    const r = rec();
+    const f = ensureFrame();
+    if (!all?.length || !r?.revealed?.size) return [];
+    const rows = f.rows ?? [];
+    if (_fireMemo && _fireMemo.all === all && _fireMemo.rows === rows && _fireMemo.n === r.revealed.size && _fireMemo.rec === r) return _fireMemo.out;
+    const out = all.filter((p) => rows.some((row) => r.revealed.has(row.key) && row.aabb && aabbContains(row.aabb, p, PORTAL_SEEN_TOL)));
+    _fireMemo = { all, rows, n: r.revealed.size, rec: r, out };
+    return out;
+  }
+  let _fireMemo = null;
 
   /** TP-SEEN: the level's portals (deps.portals, key -> connection) whose entrance lies in a revealed row. */
   function seenPortals() {

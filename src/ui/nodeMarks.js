@@ -32,15 +32,22 @@ export const NODE_MARK_CSS = Object.freeze({
 });
 /** A profession no colour is named for is drawn in Mining's (the first the compass marked). */
 const FALLBACK = 'mining';
+/** REST3 (bible/06-Systems/Rest-Arc.md 4.4): a dungeon's campfire, in the flame's yellow - clear of every mark above by
+ *  more than the 75 the nodes keep from each other (the quest's gold, the nearest, by 91). Not a profession: its own
+ *  mark word, 'fire'. */
+export const FIRE_MARK_CSS = '#ffd000';
+/** How far a campfire stands on the strip. */
+export const FIRE_MARK_REACH = 120;
 
-/** The mark's CSS colour for a profession. Pure. */
-export const nodeMarkCss = (profession) => NODE_MARK_CSS[profession] ?? NODE_MARK_CSS[FALLBACK];
+/** The mark's CSS colour for a profession (or REST3's 'fire'). Pure. */
+export const nodeMarkCss = (profession) => (profession === 'fire' ? FIRE_MARK_CSS : NODE_MARK_CSS[profession] ?? NODE_MARK_CSS[FALLBACK]);
 /** The mark's colour as display-encoded floats [r, g, b], one frozen triple a profession. Pure. */
 const RGB = Object.freeze(Object.fromEntries(Object.entries(NODE_MARK_CSS).map(([k, hex]) => {
   const n = parseInt(hex.slice(1), 16);
   return [k, Object.freeze([((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255])];
 })));
-export const nodeMarkRgb = (profession) => RGB[profession] ?? RGB[FALLBACK];
+const FIRE_RGB = Object.freeze([0xff / 255, 0xd0 / 255, 0]);
+export const nodeMarkRgb = (profession) => (profession === 'fire' ? FIRE_RGB : RGB[profession] ?? RGB[FALLBACK]);
 
 /** How dim a mark at the edge of its reach stands beside one at the player's feet: nearer reads brighter. */
 export const NODE_MARK_FAR_DIM = 0.45;
@@ -74,4 +81,33 @@ export function nodeCompassPoints(marks, animals = null) {
   for (const v of animals ?? []) put(v[0], v[1], 'hunting', 1);
   if (marks) for (let i = marks.length - 1; i >= 0; i--) { const m = marks[i]; put(m.at[0], m.at[2], m.profession, nodeMarkAlpha(m.d, m.reach)); }
   return _points.length ? _points : null;
+}
+
+/** REST3: the fires' points, refilled as the nodes' are. */
+const _fires = /** @type {NodeCompassPoint[]} */ ([]);
+const _firePool = /** @type {NodeCompassPoint[]} */ ([]);
+/**
+ * THE DUNGEON'S CAMPFIRES ON THE STRIP (REST3; bible/06-Systems/Rest-Arc.md 4.4): every placed fire within
+ * FIRE_MARK_REACH of `feet` as a 'fire' point, the nearer brighter, ahead of `points` (the nodes stay last, drawn over
+ * them). `fires` are [x, y, z] in the scene's frame. `points` itself when no fire is in reach. Pure but for its pool.
+ * @param {NodeCompassPoint[]|null} points
+ * @param {ReadonlyArray<number[]>|null|undefined} fires
+ * @param {number[]|null|undefined} feet
+ * @returns {NodeCompassPoint[]|null}
+ */
+export function withFireMarks(points, fires, feet, reach = FIRE_MARK_REACH) {
+  if (!fires?.length || !feet) return points;
+  _fires.length = 0;
+  let used = 0;
+  for (const f of fires) {
+    const d = Math.hypot(f[0] - feet[0], f[2] - feet[2]);
+    if (!(d <= reach)) continue;
+    const p = _firePool[used] ??= { xz: [0, 0], mark: 'fire', a: 1 };
+    used++;
+    p.xz[0] = f[0]; p.xz[1] = f[2]; p.mark = 'fire'; p.a = nodeMarkAlpha(d, reach);
+    _fires.push(p);
+  }
+  if (!_fires.length) return points;
+  if (points) for (const p of points) _fires.push(p);
+  return _fires;
 }

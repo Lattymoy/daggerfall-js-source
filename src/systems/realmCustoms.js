@@ -41,6 +41,7 @@ import { isGoldPieces } from './inventory.js';
 // AUDIT REALM2 S1: the allowance and the measure live in the law the service reads too (net/realmGoldLaw.js), which holds
 // a customs character's first save to them - re-exported here, their home before it; AUDIT REALM2 T2, T3 and T5's
 // counting with them (every container, a boat's hold, a deed at what the realm's bank pays)
+import { REST_ITEM, REST_ITEMS_ONLINE } from './restItems.js';   // AUDIT REST-PARTY B4: the supplies stay offline while their online sources are shut
 import { liquidWorthOf, stashedItemLists, carriedItemLists, liquidWealthOf, deedsOf, customsAllowance, CUSTOMS_WEALTH_BASE, CUSTOMS_WEALTH_PER_LEVEL, CUSTOMS_HOUSE_PRICE } from '../net/realmGoldLaw.js';
 
 export { stashedItemLists, liquidWealthOf, deedsOf, customsAllowance, CUSTOMS_WEALTH_BASE, CUSTOMS_WEALTH_PER_LEVEL, CUSTOMS_HOUSE_PRICE };
@@ -96,8 +97,19 @@ export function applyCustoms(snap) {
   for (const list of carriedItemLists(snap)) {
     for (let i = list.length - 1; i >= 0; i--) if (emptied.has(list[i])) list.splice(i, 1);
   }
-  return { called: call.called, paid: call.paid, owed: call.owed, wealth, allowance, taken: wealth - liquidWealthOf(snap), crossed };
+  // AUDIT REST-PARTY B4: REST6's supplies (1700-1706) stay behind while every online source of them is shut
+  // (restItems.js REST_ITEMS_ONLINE: the templates ship a release before any shelf, pile or trade carries one, so a
+  // client a build behind never meets one) - customs is a door too, and an offline shelf's Bedroll walked in through it,
+  // usable, droppable and tradeable online. The offline character keeps them: customs runs on the realm's copy.
+  let restKept = 0;
+  if (!REST_ITEMS_ONLINE) {
+    for (const list of [...carriedItemLists(snap), ...stashedItemLists(snap)]) {
+      for (let i = list.length - 1; i >= 0; i--) if (REST_ITEM_IDS.has(list[i]?.templateIndex)) { list.splice(i, 1); restKept++; }
+    }
+  }
+  return { called: call.called, paid: call.paid, owed: call.owed, wealth, allowance, taken: wealth - liquidWealthOf(snap), crossed, restKept };
 }
+const REST_ITEM_IDS = new Set(Object.values(REST_ITEM));
 
 /**
  * LEVEL-ONLINE (2026-09-30, Mac: "Do not allow people to use daggerfall leveling in online. Characters currently using
@@ -230,7 +242,7 @@ export const CUSTOMS_PROMISE = Object.freeze([
 /** What customs did, in the Online door's words - or, `before` it runs (FIELD 2026-09-29, Dracula/Valentin: "HOW TF WAS
  *  I SUPPOSED TO KNOW YALL WOULD FORCE THE LOANS TO BE PAID"), what it will do: the same report off a copy customs ran
  *  on, told ahead, and the door's promise under it. */
-export function customsLines({ called, owed, wealth, allowance, taken, crossed = [] }, { before = false } = {}) {
+export function customsLines({ called, owed, wealth, allowance, taken, crossed = [], restKept = 0 }, { before = false } = {}) {
   const lines = [];
   if (called > 0) {
     lines.push(before
@@ -246,6 +258,7 @@ export function customsLines({ called, owed, wealth, allowance, taken, crossed =
   const houses = crossed.filter((d) => d === 'house').length;
   const what = [crossed.includes('ship') ? 'your ship' : '', houses > 1 ? `${houses} houses` : houses ? 'your house' : ''].filter(Boolean).join(' and ');
   if (what) lines.push(`${what[0].toUpperCase()}${what.slice(1)} ${before ? 'will come' : 'came'} with you, every piece in ${crossed.length > 1 ? 'them' : 'it'}; the realm's bank does not buy back what comes through customs.`);
+  if (restKept > 0) lines.push(`Your camping supplies ${before ? 'will stay' : 'stayed'} with your offline character - they are not yet sold in the realm.`);   // AUDIT REST-PARTY B4
   if (!lines.length) lines.push(before ? 'Customs finds nothing to settle.' : 'Customs found nothing to settle.');
   return before ? [...lines, ...CUSTOMS_PROMISE] : lines;
 }

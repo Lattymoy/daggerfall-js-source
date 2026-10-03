@@ -2,7 +2,7 @@
 // (ItemHelper.cs:1277-1364, MIT Daggerfall Workshop). This retires
 // the iron-dagger stand-in seedStartingEquipment used to hand out
 // (equip.js:340), which survives only as the PRE-CHARGEN fallback its
-// two hosts gate it to - world.js:5312 and exterior.js:1315 seed it
+// two hosts gate it to - world.js:5315 and exterior.js:1315 seed it
 // solely for an entity that never ran chargen. A new character now
 // begins dressed, with a spellbook, their CLASS's weapon, and 100
 // gold, exactly as classic does.
@@ -34,7 +34,8 @@ import { CLOTHING_DYES } from '../characters/dyes.js';
 import { createWeapon } from '../combat/enemyEquipment.js';   // ItemBuilder.CreateWeapon's one home (the arrow arm)
 import { getBool } from './settings.js';   // SETT: PlayerTorchFromItems
 import { survivalOn } from './survival/switch.js';   // AUDIT SURV E: the survival kit reaches the character chargen makes
-import { startingProvisions } from './survival/items.js';
+import { startingProvisions, startingCampfire } from './survival/items.js';
+import { sharedClockOn } from './worldTick.js';   // REST2: online the Campfire is the rest's
 
 // ItemEnums template indices
 const SHORT_SHIRT_M = 165, CASUAL_PANTS_M = 151;
@@ -149,6 +150,8 @@ export function assignStartingGear(entity, { classIndex = 0, isCustom = false, r
  *  a mod's kit alike (RRI2's assignSkillEquipment), after the bag. */
 export function addSurvivalProvisions(entity, added = []) {
   if (survivalOn()) for (const it of startingProvisions()) { addItem(entity.items, it); added.push(it); }
+  // REST2: online the Campfire is the rest's - a character set out with the arc Off still carries one
+  else if (sharedClockOn()) { const it = startingCampfire(); if (it) { addItem(entity.items, it); added.push(it); } }
   return added;
 }
 

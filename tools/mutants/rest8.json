@@ -1,0 +1,216 @@
+[
+  {
+    "name": "REST8-the-reading-inverted",
+    "file": "src/systems/quest/clock.js",
+    "old": "  if (alone.has('EndQuest') && ![...PROGRESS].some((t) => alone.has(t))) return true;",
+    "new": "  if (alone.has('EndQuest') && [...PROGRESS].some((t) => alone.has(t))) return true;",
+    "tests": [
+      "test/rest8_questwaits.test.js"
+    ],
+    "note": "TIMEFREE-the-reading-inverted (tools/mutants/timefree.json, DELETED by QCLOCK-WORLD), restored; re-aimed by content to REST8 R1's line."
+  },
+  {
+    "name": "REST8-R1-the-progress-read-whole",
+    "file": "src/systems/quest/clock.js",
+    "old": "  if (alone.has('EndQuest') && ![...PROGRESS].some((t) => alone.has(t))) return true;",
+    "new": "  if (alone.has('EndQuest') && ![...PROGRESS].some((t) => reached(quest, name).types.has(t))) return true;",
+    "tests": [
+      "test/rest8_questwaits.test.js",
+      "test/rest8_audit_timefree.test.js"
+    ],
+    "note": "TIMEFREE's reading back (the reward read over the whole conditional reach): K0C00Y02's gold and S0000502's tower delays again, ending unpaid two minutes in."
+  },
+  {
+    "name": "REST8-a-standing-not-counted",
+    "file": "src/systems/quest/clock.js",
+    "old": "  if (reached(quest, name, { conditional: false }).lowers) return true;",
+    "new": "  if (reached(quest, name, { conditional: false }).lowers && false) return true;",
+    "tests": [
+      "test/rest8_questwaits.test.js"
+    ],
+    "note": "TIMEFREE-a-standing-not-counted, restored."
+  },
+  {
+    "name": "REST8-the-not-reward-arm-dropped",
+    "file": "src/systems/quest/clock.js",
+    "old": "is still the loss of that pay\n    if (reached(quest, tn, { conditional: false }).settles) return true;",
+    "new": "is still the loss of that pay\n    if (reached(quest, tn, { conditional: false }).settles) return false;",
+    "tests": [
+      "test/rest8_questwaits.test.js"
+    ],
+    "note": "TIMEFREE-the-not-reward-arm-dropped, restored."
+  },
+  {
+    "name": "REST8-the-table-emptied",
+    "file": "src/systems/quest/clock.js",
+    "old": "      this._deadline = (ONLINE_DEADLINES[q?.questName] ?? []).includes(name)\n        ||",
+    "new": "      this._deadline = false\n        ||",
+    "tests": [
+      "test/rest8_questwaits.test.js"
+    ],
+    "note": "TIMEFREE-the-table-emptied, restored."
+  },
+  {
+    "name": "REST8-the-deadline-cut-too",
+    "file": "src/systems/quest/clock.js",
+    "old": "  get waitsShort() { return questWaitsShort(this.parentQuest) && !this.isDeadline; }",
+    "new": "  get waitsShort() { return questWaitsShort(this.parentQuest); }",
+    "tests": [
+      "test/rest8_questwaits.test.js"
+    ],
+    "note": "The edge: every clock online on the short wait - a deadline's end, a failure, two minutes in."
+  },
+  {
+    "name": "REST8-the-cut-offline",
+    "file": "src/systems/quest/clock.js",
+    "old": "  get waitsShort() { return questWaitsShort(this.parentQuest) && !this.isDeadline; }",
+    "new": "  get waitsShort() { return !this.isDeadline; }",
+    "tests": [
+      "test/rest8_questwaits.test.js"
+    ]
+  },
+  {
+    "name": "REST8-the-wait-never-cut",
+    "file": "src/systems/quest/clock.js",
+    "old": "    if (this.waitsShort) this.remainingTimeInSeconds = Math.min(this.remainingTimeInSeconds, ONLINE_DELAY_SECONDS);",
+    "new": "    if (this.waitsShort) this.remainingTimeInSeconds = this.remainingTimeInSeconds;",
+    "tests": [
+      "test/rest8_questwaits.test.js"
+    ],
+    "note": "TIMEFREE-the-wait-never-cut, re-aimed by content: QCLOCK-WORLD's delays on played time back."
+  },
+  {
+    "name": "REST8-TIMEFREE-deadline-charged-nothing",
+    "file": "src/systems/quest/clock.js",
+    "old": "    this.remainingTimeInSeconds -= this.chargeSeconds(caller);",
+    "new": "    if (!questWaitsShort(this.parentQuest) || this.waitsShort) this.remainingTimeInSeconds -= this.chargeSeconds(caller);",
+    "tests": [
+      "test/rest8_questwaits.test.js"
+    ],
+    "note": "TIMEFREE-online-charged inverted: TIMEFREE's freeze (a deadline online charged nothing) back is the mutant now."
+  },
+  {
+    "name": "REST8-the-live-read-uncut",
+    "file": "src/systems/quest/clock.js",
+    "old": "    if (this.waitsShort) return Math.max(0, Math.min(this.remainingTimeInSeconds, ONLINE_DELAY_SECONDS) - this.chargeSeconds(caller));",
+    "new": "    if (false) return Math.max(0, Math.min(this.remainingTimeInSeconds, ONLINE_DELAY_SECONDS) - this.chargeSeconds(caller));",
+    "tests": [
+      "test/rest8_questwaits.test.js"
+    ]
+  },
+  {
+    "name": "REST8-the-count-kept-for-a-delay",
+    "file": "src/systems/quest/clock.js",
+    "old": "    if (this.waitsShort) return 'a few';",
+    "new": "    if (false) return 'a few';",
+    "tests": [
+      "test/rest8_questwaits.test.js"
+    ],
+    "note": "TIMEFREE-the-count-kept-online, re-aimed by content."
+  },
+  {
+    "name": "REST8-a-few-for-a-deadline",
+    "file": "src/systems/quest/clock.js",
+    "old": "    if (this.waitsShort) return 'a few';",
+    "new": "    if (questWaitsShort(this.parentQuest)) return 'a few';",
+    "tests": [
+      "test/rest8_questwaits.test.js"
+    ]
+  },
+  {
+    "name": "REST8-the-walk-reads-delays",
+    "file": "src/scenes/questBridge.js",
+    "old": "          if (r.waitsShort) continue;   // REST8",
+    "new": "          if (false) continue;   // REST8",
+    "tests": [
+      "test/rest8_questwaits.test.js"
+    ]
+  },
+  {
+    "name": "REST8-TIMEFREE-walk-back",
+    "file": "src/scenes/questBridge.js",
+    "old": "          if (r.waitsShort) continue;   // REST8",
+    "new": "          if (r.waitsShort || q.hooks?.sharedClock?.()) continue;   // REST8",
+    "tests": [
+      "test/rest8_questwaits.test.js"
+    ],
+    "note": "TIMEFREE-the-walk-read-online inverted: TIMEFREE's walk (every clock skipped online) back is the mutant now."
+  },
+  {
+    "name": "REST8-TIMEFREE-any-hour-letter-back",
+    "file": "src/systems/quest/actions.js",
+    "old": "      if (!hooks?.isPlayerInTown?.() || now.hour < minHour || now.hour > maxHour) {",
+    "new": "      if (!hooks?.isPlayerInTown?.() || (!hooks?.sharedClock?.() && (now.hour < minHour || now.hour > maxHour))) {",
+    "tests": [
+      "test/rest8_questwaits.test.js"
+    ],
+    "note": "Out of REST8, as QCLOCK-WORLD has it: a letter waits for the sky's morning online too."
+  },
+  {
+    "name": "REST8-TIMEFREE-bounty-never-lapses-back",
+    "file": "src/scenes/bountyHost.js",
+    "old": "    for (const gone of lapseBounties(ledger, now)) {",
+    "new": "    for (const gone of (deps.online?.() ? [] : lapseBounties(ledger, now))) {",
+    "tests": [
+      "test/rest8_questwaits.test.js"
+    ],
+    "note": "Out of REST8, as QCLOCK-WORLD has it: a bounty lapses online. Killed by the source pin."
+  },
+  {
+    "name": "REST8-the-crime-letter-three-days-online",
+    "file": "src/systems/crimeGuilds.js",
+    "old": "  if (online) nowClassicMinutes += CRIME_GUILD_LETTER_DELAY_MINUTES - CRIME_GUILD_LETTER_ONLINE_MINUTES;",
+    "new": "  if (online) nowClassicMinutes += 0;",
+    "tests": [
+      "test/rest8_questwaits.test.js"
+    ],
+    "note": "TIMEFREE-the-crime-letter-three-days-online, restored."
+  },
+  {
+    "name": "REST8-the-tick-not-saying-online",
+    "file": "src/systems/worldTick.js",
+    "old": "  handleStartingCrimeGuildQuests(entity, { nowClassicMinutes: next, inside, online: sharedClockOn() });",
+    "new": "  handleStartingCrimeGuildQuests(entity, { nowClassicMinutes: next, inside, online: false });",
+    "tests": [
+      "test/rest8_questwaits.test.js"
+    ]
+  },
+  {
+    "name": "REST8-the-idle-check-dropped",
+    "file": "src/systems/racialQuests.js",
+    "old": "  return !live.some((n) => (isCureQuest ? CURE_QUESTS.includes(n) : String(n).startsWith(VAMPIRE_QUEST_PREFIX)));",
+    "new": "  return true;",
+    "tests": [
+      "test/rest8_questwaits.test.js"
+    ],
+    "note": "TIMEFREE-the-idle-check-dropped, restored."
+  },
+  {
+    "name": "REST8-DFU-cure-arm-on-online",
+    "file": "src/systems/worldTick.js",
+    "old": "    if (ownArms && !shortWaits && i % CURE_QUEST_INTERVAL_MINUTES === 0) {",
+    "new": "    if (ownArms && i % CURE_QUEST_INTERVAL_MINUTES === 0) {",
+    "tests": [
+      "test/rest8_questwaits.test.js"
+    ]
+  },
+  {
+    "name": "REST8-the-short-wait-arm-off",
+    "file": "src/systems/worldTick.js",
+    "old": "    if (ownArms && shortWaits && i % ONLINE_RACIAL_INTERVAL_MINUTES === 0) {",
+    "new": "    if (ownArms && false && i % ONLINE_RACIAL_INTERVAL_MINUTES === 0) {",
+    "tests": [
+      "test/rest8_questwaits.test.js"
+    ]
+  },
+  {
+    "name": "REST8-the-world-host-answers-no-live-quests",
+    "file": "src/scenes/world.js",
+    "old": "    activeQuestNames: () => [...questBridge.machine.quests.values()].filter((q) => !q.questComplete && !q.questTombstoned).map((q) => q.questName), // REST8",
+    "new": "    activeQuestNames: () => null, // REST8",
+    "tests": [
+      "test/rest8_questwaits.test.js"
+    ],
+    "note": "Killed by the source pin: without the hook racialArmIdle answers false and no curse quest ever comes online."
+  }
+]

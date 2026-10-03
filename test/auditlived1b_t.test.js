@@ -247,7 +247,7 @@ test('AUDIT LIVED1b T4, T5, T8 (23 host and UI reads, by source): every read LIV
     ["src/scenes/worldModes.js", /const m = joinGuild\(memberships, guild, Math\.floor\(ownMinutes\(\)\)\);/, "a guild join (wm-guild-join-on-the-worlds-clock)"],
     ["src/scenes/worldModes.js", /steps: \(\) => onPushEffects\(playerEntity, guild, memberships, store, ownDate\(\), \{/, "the rank steps (wm-guild-steps-on-the-worlds-date)"],
     ["src/scenes/dungeonContext.js", /get classicMinutes\(\) \{ return worldMinutes\(\); \},/, "the music's day (dc-music-day-on-the-characters-clock)"],
-    ["src/ui/enhancedHud.js", /import \{ ownMinutes \} from '\.\.\/systems\/worldTick\.js';[^\n]*\n[\s\S]*survivalHudChips\(vitals, Math\.floor\(ownMinutes\(\)\),/,"the needs strip reads the character's clock (ui-hud-needs-on-the-worlds-clock)"],
+    ["src/ui/enhancedHud.js", /import \{ ownMinutes(?:, sharedClockOn)? \} from '\.\.\/systems\/worldTick\.js';[^\n]*\n[\s\S]*survivalHudChips\(vitals, Math\.floor\(ownMinutes\(\)\),/,"the needs strip reads the character's clock (ui-hud-needs-on-the-worlds-clock)"],
     ["src/ui/enhancedTavern.js", /const t = deps\.ownTimeOf\?\.\(expiry\);/, "the enhanced offer says the room in the character's time (ui-enhanced-tavern-no-own-time)"],
     ["src/ui/enhancedTavern.js", /gameMinutes: h\.worldNow\?\.\(\) \?\? now \}\);/, "the enhanced meal's holiday is the world's (ui-enhanced-tavern-meal-holiday-own)"],
     ["src/ui/enhancedTavern.js", /hour: Math\.trunc\(\(\(\(h\.worldNow\?\.\(\) \?\? now\) % 1440\) \+ 1440\) % 1440 \/ 60\) \}\);/, "the enhanced kitchen keeps the world's hours (ui-enhanced-tavern-kitchen-own)"],

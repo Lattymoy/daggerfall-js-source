@@ -1,0 +1,437 @@
+[
+ {
+  "name": "AUDITRESTPARTY-a-tavern-carries",
+  "file": "src/systems/partyRestLaw.js",
+  "old": "  if (!withParty || resterAlone || exempt || dead) return null;",
+  "new": "  if (!withParty || resterAlone || dead) return null;",
+  "tests": [
+   "test/auditrestparty.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-the-dead-sleep",
+  "file": "src/systems/partyRestLaw.js",
+  "old": "  if (!withParty || resterAlone || exempt || dead) return null;",
+  "new": "  if (!withParty || resterAlone || exempt) return null;",
+  "tests": [
+   "test/auditrestparty.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-their-night-alone-carries",
+  "file": "src/systems/partyRestLaw.js",
+  "old": "  if (!withParty || resterAlone || exempt || dead) return null;",
+  "new": "  if (!withParty || exempt || dead) return null;",
+  "tests": [
+   "test/auditrestparty.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-far-said-across-the-map",
+  "file": "src/systems/partyRestLaw.js",
+  "old": "  if (!near) return here ? 'far' : null;",
+  "new": "  if (!near) return 'far';",
+  "tests": [
+   "test/auditrestparty.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-far-never-said",
+  "file": "src/systems/partyRestLaw.js",
+  "old": "  if (!near) return here ? 'far' : null;",
+  "new": "  if (!near) return null;",
+  "tests": [
+   "test/auditrestparty.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-busy-ignored",
+  "file": "src/systems/partyRestLaw.js",
+  "old": "  return (typeof busy === 'function' ? busy() : busy) ? 'busy' : 'carry';",
+  "new": "  return 'carry';",
+  "tests": [
+   "test/auditrestparty.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-busy-thunk-never-called",
+  "file": "src/systems/partyRestLaw.js",
+  "old": "  return (typeof busy === 'function' ? busy() : busy) ? 'busy' : 'carry';",
+  "new": "  return busy === true ? 'busy' : 'carry';",
+  "tests": [
+   "test/auditrestparty.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-first-sight-carries",
+  "file": "src/systems/partyRestLaw.js",
+  "old": "  return seen !== undefined && !!at && at !== seen && now - at <= freshMs && !!isNight;",
+  "new": "  return !!at && at !== seen && now - at <= freshMs && !!isNight;",
+  "tests": [
+   "test/auditrestparty.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-the-mark-ignored-in-the-law",
+  "file": "src/systems/partyRestLaw.js",
+  "old": "  return seen !== undefined && !!at && at !== seen && now - at <= freshMs && !!isNight;",
+  "new": "  return seen !== undefined && !!at && at !== seen && now - at <= freshMs;",
+  "tests": [
+   "test/auditrestparty.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-the-rester-s-spot-ignored",
+  "file": "src/systems/partyRestLaw.js",
+  "old": "  return t > o ? theirs : own;",
+  "new": "  return own;",
+  "tests": [
+   "test/auditrestparty.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-the-worse-of-the-two",
+  "file": "src/systems/partyRestLaw.js",
+  "old": "  return t > o ? theirs : own;",
+  "new": "  return t < o ? theirs : own;",
+  "tests": [
+   "test/auditrestparty.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-prototype-names-are-kinds",
+  "file": "src/systems/partyRestLaw.js",
+  "old": "typeof k === 'string' && Object.hasOwn(KIND_RANK, k) ? ",
+  "new": "typeof k === 'string' && k in KIND_RANK ? ",
+  "tests": [
+   "test/auditrestparty.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-the-stamp-says-no-kind",
+  "file": "src/systems/restAct.js",
+  "old": "export const nightStamp = (t, kind = REST_KIND.Camp) => Math.floor(t / 1000) * 1000 + markOf(kind);",
+  "new": "export const nightStamp = (t, kind = REST_KIND.Camp) => Math.floor(t / 1000) * 1000 + markOf(REST_KIND.Camp);",
+  "tests": [
+   "test/auditrestparty.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-the-kind-read-back-wrong",
+  "file": "src/systems/restAct.js",
+  "old": "  for (const kind of Object.keys(PARTY_NIGHT_MARKS)) if (PARTY_NIGHT_MARKS[kind] === ms) return kind;",
+  "new": "  for (const kind of Object.keys(PARTY_NIGHT_MARKS)) if (PARTY_NIGHT_MARKS[kind] === ms) return REST_KIND.Camp;",
+  "tests": [
+   "test/auditrestparty.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-the-spot-read-after-the-fuel",
+  "file": "src/scenes/shared.js",
+  "old": "      if (!carried) heardNight(spot);",
+  "new": "      if (!carried) heardNight(restKind());",
+  "tests": [
+   "test/auditrestparty.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-placeKind-lies",
+  "file": "src/scenes/shared.js",
+  "old": "  out.placeKind = () => restKind();",
+  "new": "  out.placeKind = () => REST_KIND.Rough;",
+  "tests": [
+   "test/auditrestparty.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-the-follower-sleeps-where-they-stand",
+  "file": "src/scenes/world.js",
+  "old": "      if (kind) bag.overrideRestKind?.(() => kind);",
+  "new": "      if (kind) void kind;",
+  "tests": [
+   "test/auditrestparty.test.js",
+   "test/rest5_partynight.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-the-exemption-not-handed",
+  "file": "src/scenes/world.js",
+  "old": "exempt: !!modes?.insidePartyRestExempt, dead,",
+  "new": "exempt: false, dead,",
+  "tests": [
+   "test/auditrestparty.test.js",
+   "test/rest5_partynight.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-the-tally-counts-online",
+  "file": "src/scenes/world.js",
+  "old": "    if (!social?.party || modes?.insidePartyRestExempt || !restTogether() || sharedClockOn()) { _partyRestVoteLastReady = null;",
+  "new": "    if (!social?.party || modes?.insidePartyRestExempt || !restTogether()) { _partyRestVoteLastReady = null;",
+  "tests": [
+   "test/auditrestparty.test.js",
+   "test/restopt.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-B1-a-load-packs-the-fire",
+  "file": "src/scenes/worldModes.js",
+  "old": "      if (dungeonCtx) { if (cacheScene) dungeonCtx.camps?.packOwnFires?.(); else dungeonCtx.camps?.dropOwn?.(); }",
+  "new": "      if (dungeonCtx) { dungeonCtx.camps?.packOwnFires?.(); }",
+  "tests": [
+   "test/auditrestparty_camps.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-B3-the-memory-goes-first",
+  "file": "src/scenes/worldModes.js",
+  "old": "    dungeonCtx.camps?.packOwnFires?.();   // AUDIT REST-PARTY B3",
+  "new": "    void 0;   // AUDIT REST-PARTY B3",
+  "tests": [
+   "test/auditrestparty_camps.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-B2-my-campfire-untended",
+  "file": "src/scenes/camps.js",
+  "old": "    const tended = c.rec.kind === CAMP_KIND.Tent || (c.rec.kind === CAMP_KIND.Fire && !!c.rec.fuel);",
+  "new": "    const tended = c.rec.kind === CAMP_KIND.Tent;",
+  "tests": [
+   "test/auditrestparty_camps.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-B3-a-present-owner-swept",
+  "file": "src/scenes/camps.js",
+  "old": "      if (c.owner == null || alive.has(c.owner) || c.rec.kind",
+  "new": "      if (c.owner == null || c.rec.kind",
+  "tests": [
+   "test/auditrestparty_camps.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-B3-a-lit-fire-swept",
+  "file": "src/scenes/camps.js",
+  "old": "c.rec.kind !== CAMP_KIND.Fire || fireLit(c.rec, t)) continue;",
+  "new": "c.rec.kind !== CAMP_KIND.Fire) continue;",
+  "tests": [
+   "test/auditrestparty_camps.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-B3-the-room-never-swept",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "if (peers) camps.sweepColdAbsent(new Set(peers.map((q) => q?.id))); }",
+  "new": "}",
+  "tests": [
+   "test/auditrestparty_camps.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-B4-customs-lets-them-in",
+  "file": "src/systems/realmCustoms.js",
+  "old": "  if (!REST_ITEMS_ONLINE) {",
+  "new": "  if (false) {",
+  "tests": [
+   "test/auditrestparty_camps.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-B4-used-online",
+  "file": "src/systems/restItems.js",
+  "old": "  const h = (item, list, ctx) => (restItemsShut() ? { kind: 'text', text: REST_ITEM_TEXT.notOnline } : fn(item, list, ctx));",
+  "new": "  const h = (item, list, ctx) => fn(item, list, ctx);",
+  "tests": [
+   "test/auditrestparty_camps.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-B4-use-offered-online",
+  "file": "src/systems/restItems.js",
+  "old": "  h.usable = () => !restItemsShut();",
+  "new": "  h.usable = () => true;",
+  "tests": [
+   "test/auditrestparty_camps.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-B5-a-kit-fire-picked-up",
+  "file": "src/systems/survival/camp.js",
+  "old": "  if (mine && !camp.jar && (camp.kind === CAMP_KIND.Tent || !!camp.fuel)) rows.push",
+  "new": "  if (mine && !camp.jar) rows.push",
+  "tests": [
+   "test/auditrestparty_camps.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-B5-a-kit-fire-minted",
+  "file": "src/systems/survival/camp.js",
+  "old": "  if (!tent && (camp?.kind !== CAMP_KIND.Fire || !camp.fuel)) return",
+  "new": "  if (!tent && camp?.kind !== CAMP_KIND.Fire) return",
+  "tests": [
+   "test/auditrestparty_camps.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-B5-a-kit-fed-past-its-cap",
+  "file": "src/scenes/camps.js",
+  "old": "    const capOf = (it) => Math.min(CAMPFIRE_USES, it.maxCondition ?? CAMPFIRE_USES);",
+  "new": "    const capOf = () => CAMPFIRE_USES;",
+  "tests": [
+   "test/auditrestparty_camps.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-B6-salts-stack",
+  "file": "src/systems/restItems.js",
+  "old": "  if (wakingHeld(s, now)) return { kind: 'text', text: REST_ITEM_TEXT.saltsHeld };",
+  "new": "  if (false) return { kind: 'text', text: REST_ITEM_TEXT.saltsHeld };",
+  "tests": [
+   "test/auditrestparty_camps.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-B7-the-first-campfire",
+  "file": "src/systems/quickslots.js",
+  "old": "    if (!item || (spentCharges(item) && !spentCharges(it))) item = it;",
+  "new": "    if (!item) item = it;",
+  "tests": [
+   "test/auditrestparty_camps.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-A1-a-night-an-hour-a-call",
+  "file": "src/systems/restAct.js",
+  "old": "  const step = REST_WAIT_PER_HOUR / MINUTES_PER_TICK;",
+  "new": "  const step = (REST_WAIT_PER_HOUR / MINUTES_PER_TICK) * 6;",
+  "tests": [
+   "test/auditrestparty.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-A1-the-latch-unheard",
+  "file": "src/systems/restAct.js",
+  "old": "  _night.abortForEnemySpawn();\n  return true;",
+  "new": "  return true;",
+  "tests": [
+   "test/auditrestparty.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-A1-the-dungeon-silent",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "    ambushNight();   // AUDIT REST-PARTY A1",
+  "new": "    void 0;   // AUDIT REST-PARTY A1",
+  "tests": [
+   "test/auditrestparty.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-A1-the-open-world-silent",
+  "file": "src/scenes/world.js",
+  "old": "    ambushNight();   // AUDIT REST-PARTY A1",
+  "new": "    void 0;   // AUDIT REST-PARTY A1",
+  "tests": [
+   "test/auditrestparty.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-A2-classic-quest-foe-lost",
+  "file": "src/ui/restWindow.js",
+  "old": "    else if (!ambushNight()) this._pendingEnemySpawn = true;",
+  "new": "    else this._pendingEnemySpawn = true;",
+  "tests": [
+   "test/auditrestparty_camps.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-A2-enhanced-quest-foe-lost",
+  "file": "src/ui/enhancedRest.js",
+  "old": "    else if (!ambushNight()) overlay._pendingEnemySpawn = true;",
+  "new": "    else overlay._pendingEnemySpawn = true;",
+  "tests": [
+   "test/auditrestparty_camps.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-A3-a-ship-bed-sleeps-rough",
+  "file": "src/scenes/world.js",
+  "old": "    restKind: () => (_restFromBed ? 'bed' : camps.fireNear(",
+  "new": "    restKind: () => (camps.fireNear(",
+  "tests": [
+   "test/auditrestparty_camps.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-A4-a-cut-night-whole",
+  "file": "src/scenes/shared.js",
+  "old": "    const cut = !!result?.rentExpired && hours < NIGHT_HOURS;",
+  "new": "    const cut = false;",
+  "tests": [
+   "test/auditrestparty_camps.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-A5-a-gone-fire-sleeps",
+  "file": "src/systems/restAct.js",
+  "old": "  if (opened?.point?.where && !now?.point) return null;",
+  "new": "",
+  "tests": [
+   "test/auditrestparty_camps.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-A5-a-blow-topped-up",
+  "file": "src/systems/restAct.js",
+  "old": "  if (Number.isFinite(hpAtOpen) && Number.isFinite(hpNow) && hpNow < hpAtOpen) return null;",
+  "new": "",
+  "tests": [
+   "test/auditrestparty_camps.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-A5-the-interval-read-at-the-open",
+  "file": "src/systems/restAct.js",
+  "old": "  return { ...opened, night: now ? !!now.night : !!opened?.night };",
+  "new": "  return { ...opened, night: !!opened?.night };",
+  "tests": [
+   "test/auditrestparty_camps.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-A5-a-bed-interrupted",
+  "file": "src/systems/restAct.js",
+  "old": "  if (opened?.point?.where && !now?.point) return null;",
+  "new": "  if (!now?.point) return null;",
+  "tests": [
+   "test/auditrestparty_camps.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-C1-the-ward-offline",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "      if (spot && sharedClockOn() && inFireWard(dungeonFires, spot)) spot = null;",
+  "new": "      if (spot && inFireWard(dungeonFires, spot)) spot = null;",
+  "tests": [
+   "test/auditrestparty_camps.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-C7-the-modded-foot",
+  "file": "src/world/dungeonFires.js",
+  "old": "[h.x, h.lawFoot ?? h.foot ?? h.y, h.z]",
+  "new": "[h.x, h.foot ?? h.y, h.z]",
+  "tests": [
+   "test/auditrestparty_camps.test.js"
+  ]
+ },
+ {
+  "name": "AUDITRESTPARTY-C7-the-law-reads-the-mod",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "? classicBillboardSize(t, f.record) : null;   // AUDIT REST-PARTY C7",
+  "new": "? billboardSize(t, f.record) : null;   // AUDIT REST-PARTY C7",
+  "tests": [
+   "test/auditrestparty_camps.test.js"
+  ]
+ }
+]

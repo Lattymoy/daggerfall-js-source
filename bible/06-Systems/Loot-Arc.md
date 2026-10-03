@@ -846,3 +846,18 @@ by content (both dead); RF2's boss pin exempts ammunition by the registry; audit
 cite, which the shifter cannot reach). Judged again, every campaign the change can
 move - the loot, set, sigil, card, quick-loot and hover lists whole, and every record the three edited pins kill
 elsewhere: 831 records, 829 dead and 2 equivalent as recorded, none stale.
+
+## 18. PLAIN-LOOT - half from a foe that is no elite (2026-10-02)
+
+Mac: "reduce the loot dropped by non elite enemies by 50%". `scenes/hostCombat.js spawnEnemyLoot`, after the trio: a
+foe that is not an ELITE FOE (`eliteFoe`), an Elite Dungeon foe (`elite`) or a LOOT7 champion keeps each piece the
+chain put on its body - the table's, the worn kit's droppable cut, the map, potion and recipe, the port's extras (the
+field kit, the healing potion) - on its own coin, one in two, on the host's stream; its gold is all kept, as the
+humanoid quarter keeps it. The rarity roll and the drought run after it, over what is kept, so a plain foe's Magic,
+Rare and Legendary finds halve with its pieces. Its worn kit is still worn and fought with.
+
+**AUDIT PLAIN-LOOT.** As first built it was a factor on the table's `itemChanceScale`. DFU's ladder halves a category's
+chance at every step and rolls it truncated to whole percent (`dice100(Math.trunc(c))`), so the factor compounded down
+the ladder and a 1-3% chance fell to nothing: measured exactly over the live tables at levels 1, 10 and 25, it kept
+33-50% of the table, and none of a level-1 humanoid's on table A. A coin per piece keeps half of whatever the ladder
+made, at any chance. `test/rf2_spawnloot.test.js` PLAIN-LOOT; `tools/mutants/plainloot.json` (5, all dead).

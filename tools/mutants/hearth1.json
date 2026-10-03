@@ -165,11 +165,12 @@
  {
   "name": "HEARTH1-the-dungeon-stops-collecting-so-a-bowl-of-fire-underground-is-scenery-again",
   "file": "src/scenes/dungeonContext.js",
-  "old": "        dungeonHearths.push({ x: f.x + b.originX, y: f.y, z: f.z + b.originZ, foot: size ? f.y - size.h / 2 : undefined, w: size?.w, h: size?.h });",
+  "old": "        dungeonHearths.push({ x: f.x + b.originX, y: f.y, z: f.z + b.originZ, foot: size ? f.y - size.h / 2 : undefined, w: size?.w, h: size?.h, lawFoot: lawSize ? f.y - lawSize.h / 2 : undefined });",
   "new": "",
   "tests": [
    "test/hearth1_worldfires.test.js"
-  ]
+  ],
+  "note": "AUDIT REST-PARTY C7 (PIN MOVED): the row carries the law's classic foot too."
  },
  {
   "name": "HEARTH1-the-interiors-byFire-goes-back-to-a-hard-false",
@@ -210,7 +211,7 @@
  {
   "name": "AUDIT-HEARTH1-F1-the-worlds-fires-ignore-the-mods-switch-so-a-brazier-cooks-with-C-and-C-off",
   "file": "src/scenes/camps.js",
-  "old": "  const worldFires = () => (survivalOn() && hearths ? hearths() : null);",
+  "old": "  const worldFires = () => (usable() && hearths ? hearths() : null);",
   "new": "  const worldFires = () => (hearths ? hearths() : null);",
   "tests": [
    "test/hearth1_worldfires.test.js"

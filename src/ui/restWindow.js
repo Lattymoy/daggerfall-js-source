@@ -64,7 +64,8 @@ import { drawMenuBackdrop } from './chargenArt.js';   // D3: Setup :137-138, Par
 import { layoutMessageBox, drawMessageBox, messageBoxHit, messageBoxArtLoaded, MB_BUTTONS } from './messageBox.js';   // CM2: the five pushed modal states
 import { noticeFrame, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
 import { isEnhanced } from '../systems/uiSkin.js';   // CLK4: the enhanced skin's rest is a veil, not a wall
-import { dateFromClassicMinutes } from '../systems/gameDate.js';   // OL2: the world's clock, read for the counter page
+import { dateFromClassicMinutes } from '../systems/gameDate.js';
+import { REST_ACT_TEXT, ambushNight, actAtChannelEnd } from '../systems/restAct.js';   // REST1: the act's words   // AUDIT REST-PARTY A2: and the night it runs   // OL2: the world's clock, read for the counter page
 
 /** CLK4 (the Clock arc): on the ENHANCED skin the resting page is a
  *  translucent veil over the world instead of DFU's opaque black, so
@@ -236,7 +237,7 @@ export class RestWindow {
     // (InputManager.cs:634-637) - so the opening release is already
     // spent when DFU's window first runs, and :193's bare `GetKeyUp`
     // is safe there. Every host here opens on the key DOWN
-    // (world.js:13536, exterior.js:3200, ui/input.js:922), and that same
+    // (world.js:13543, exterior.js:3201, ui/input.js:922), and that same
     // key's release is then routed straight into the freshly mounted
     // window, so the release door needs the deferral DFU gives every
     // window whose open edge IS the down: DaggerfallAutomapWindow.cs
@@ -259,6 +260,51 @@ export class RestWindow {
     // on OPEN, not on the first rested hour: standing in the window
     // deciding already costs a held enchantment.
     this.deps.setResting?.(true);
+    // REST1 (bible/06-Systems/Rest-Arc.md): ONLINE THE WINDOW OPENS ON THE ACT. No selection page, no hours, no loiter:
+    // the host's rest point (createRestDeps' restAct) is read once, here, and the window either refuses or holds the
+    // channel, then lands the night (or the short rest inside the night interval) through the host's own bag and
+    // ends on the ordinary wake box - so the close, the skill raise and an expired room are this window's own doors.
+    // Offline restAct is null and nothing below changes a byte of DFU's window.
+    this._act = this.deps.restAct?.() ?? null;
+    this._actT = 0;
+    if (this._act) this._openAct();
+  }
+
+  /** REST1: the act's open - the town's refusal (no crime: there is no rest to commit it with), no rest point, a
+   *  building's own law (CanRest: the rented room, the house, the hall), and then the channel. */
+  _openAct() {
+    if (this._act.meditate) { this.mode = 'act'; this.state = 'channel'; return; }   // REST6: a candle's kneel - anywhere a rest may begin
+    const place = this.deps.restPlace?.();
+    if (place?.inTownOutside) { this.refusalLines = [REST_ACT_TEXT.inTown]; this.state = 'refused'; return; }
+    if (!this._act.point) { this.refusalLines = [REST_ACT_TEXT.noPoint]; this.state = 'refused'; return; }
+    if (!this._canRest(false)) return;
+    this._moveToBed();
+    this.mode = 'act';
+    this.state = 'channel';
+    this._actHealth = this.deps.vitals?.()?.health;   // AUDIT REST-PARTY A5: a blow while holding interrupts
+  }
+
+  /** REST1: the channel held to its end - an enemy in reach (or a spawn latched while holding) is the enemies line;
+   *  otherwise the night, or the short rest the interval leaves. */
+  _finishAct() {
+    if (this._pendingEnemySpawn || this.deps.enemiesNearby?.()) {
+      this._pendingEnemySpawn = false;
+      this.deps.onEnemyBreak?.();
+      this._end({ textId: REST_TEXT.enemiesNearby, enemyBroke: true, died: false });
+      return;
+    }
+    const act = actAtChannelEnd(this._act, this.deps.restAct?.() ?? null, this._actHealth, this.deps.vitals?.()?.health);   // AUDIT REST-PARTY A5: the point asked again
+    if (!act) { this._end({ textId: null, text: REST_ACT_TEXT.interrupted, enemyBroke: false, died: false }); return; }
+    const r = act.meditate ? this.deps.restMeditate?.() : act.night ? this.deps.restNight?.({ rentedHours: this._remainingHoursRented }) : this.deps.restShort?.();
+    this._end(r ?? { textId: REST_TEXT.wakeUp, enemyBroke: false, died: false });
+  }
+
+  /** REST1: the channel's words - where, and how far along. */
+  actLines() {
+    const where = this._act?.point?.where;
+    const frac = Math.max(0, Math.min(1, this._actT / (this._act?.channelSeconds || 1)));
+    const n = Math.round(frac * 20);
+    return [this._act?.meditate ? REST_ACT_TEXT.meditating : where ? REST_ACT_TEXT.channel(where) : REST_ACT_TEXT.channelBed, `[${'#'.repeat(n)}${'.'.repeat(20 - n)}]`, '', 'Esc - stop'];
   }
 
   /** OnPop (:271-285) clears both flags. Every exit from this window
@@ -454,7 +500,7 @@ export class RestWindow {
    * `back` - so one spelling serves both.
    */
   keyup(action, e = null) {
-    if (this.state !== 'selection' && this.state !== 'resting') return;
+    if (this.state !== 'selection' && this.state !== 'resting' && this.state !== 'channel') return;   // REST1: the act's channel is the window too
     if (this.state === 'resting' && this.isCloseWindowDeferred
       && hotkeyHit('RestStop', action, e)) {
       this.isCloseWindowDeferred = false;
@@ -471,6 +517,8 @@ export class RestWindow {
     if (!this._toggleArmed) return;
     this._toggleArmed = false;
     if (this.state === 'resting') { this._stopRest(); return; }
+    // REST1: a channel stopped is no rest - the window closes and nothing was slept (no raise is owed)
+    if (this.state === 'channel') { audio.playOneShot(SOUND.ButtonClick, 1); if (this._act?.meditate) this.deps.snuffCandle?.(); this._close(); return; }   // REST6: a kneel stopped leaves the candle unspent and out
     // ButtonClick, as the port's `back` arm has always played it here -
     // ExitButton_OnMouseClick, the handler DFU routes the same outcome
     // through, plays it.
@@ -516,10 +564,11 @@ export class RestWindow {
     // `GetBackButtonDown() || GetKeyDown(automapBinding)`). It does NOT
     // consume the press: the button hotkeys below must still see a
     // colliding binding, which is the whole point of E1's split.
-    if ((this.state === 'selection' || this.state === 'resting')
+    if ((this.state === 'selection' || this.state === 'resting' || this.state === 'channel')
       && (normalizeCode(action, e) === 'Escape' || this._togglePressed(action, e))) {
       this._toggleArmed = true;
     }
+    if (this.state === 'channel') return;   // REST1: the channel answers only its release (keyup)
     if (this.state === 'refused') { this._close(); return; }
     // F144: the over-cap box is click-anywhere; dismissing lands on
     // the selection page, NOT back in a prompt - the prompt is gone.
@@ -636,7 +685,7 @@ export class RestWindow {
    *  it and hands it over at _start. */
   abortForEnemySpawn() {
     if (this.session) this.session.abortForEnemySpawn();
-    else this._pendingEnemySpawn = true;
+    else if (!ambushNight()) this._pendingEnemySpawn = true;   // AUDIT REST-PARTY A2: online the act's night has no session here - it is restAct.js's, run in one call, and a quest's CreateFoe inside it is heard there
   }
 
   _end(result) {
@@ -647,8 +696,9 @@ export class RestWindow {
     // does not), and DFU calls RemoveExpiredRentedRooms right there -
     // the landlord clears the room as the player wakes.
     if (result.rentExpired) this.deps.onRentExpired?.();
+    if (this.mode !== 'loiter' && (this.session?.totalHours ?? 0) >= 6) this.deps.onNightSlept?.();   // REST2: a night slept (six hours, RaiseSkills' own night) spends your own camp's charge
     this.endLines = result.died ? null
-      : (result.text ? [result.text] : (this.deps.endLines?.(result.textId) ?? null));
+      : (result.text ? [result.text, ...(result.extra ? [result.extra] : [])] : (this.deps.endLines?.(result.textId) ?? null));   // REST1: a short rest says when a night may pass again
     if (result.died || !this.endLines) {
       // The death screen owns the MESSAGE - that is this port's named
       // deviation and it stands - but not the RAISE. Every one of
@@ -726,6 +776,8 @@ export class RestWindow {
   }
 
   tick(dt) {
+    // REST1: the channel counts real seconds and lands at its end
+    if (this.state === 'channel') { this._actT += dt; if (this._actT >= this._act.channelSeconds) this._finishAct(); return; }
     if (this.state !== 'resting') return;
     const r = this.session.tick(dt);
     if (r) this._end(r);
@@ -889,6 +941,8 @@ export class RestWindow {
       // F144: the refusal alone - no field, no cursor; the original
       // prompt self-closed before the handler ever saw the number.
       lines = [...(this.notice ?? [])];
+    } else if (this.state === 'channel') {
+      lines = this.actLines();   // REST1
     } else if (this.state === 'resting') {
       // ShowStatus (:317-346): FullRest shows hours PAST against the
       // hoursPastTexture; TimedRest and Loiter show hours REMAINING

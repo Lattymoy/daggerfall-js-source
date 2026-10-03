@@ -26,6 +26,7 @@ import { withPlayerLights, CANDLE } from '../src/scenes/magicCandle.js';
 import { peerTorchLight, torchPoseByte } from '../src/systems/playerTorch.js';
 import { effectiveLevel } from '../src/systems/mentorMode.js';   // SOFTCAP2: the mentor's level the spawn sites read (a free name there, the module's own import)
 import { applyChampion } from '../src/systems/champions.js';   // LOOT7: applyEliteScaling stands a layout champion (a free name there, the module's own import)
+import { inFireWard } from '../src/world/dungeonFires.js';   // REST3: the spawn's ward (a free name there, the module's own import)
 
 function sliced(path) {
   const S = readFileSync(new URL(path, import.meta.url), 'utf8');
@@ -122,6 +123,8 @@ function context({ authority, self }) {
     renownFoeDied: () => {}, reportPlayerKill: () => {}, addCorpseFood: () => {}, stampWonWeapons: () => {}, spawnCorpse: (f) => { f.corpse = true; },
     playerEntity: {}, _wallNow: () => 1000, _sharedFoe: () => false, fightN: () => 1,
     placeFoeEnv: (o) => o, entityOccupancy: () => () => false, fieldOfView: () => 1.2, placeFoeFreely: () => ({ x: 6, y: 0, z: 6 }),
+    inFireWard, dungeonFires: [],   // REST3: the spawn's ward (a free name there, the law's own import), no fire placed here
+    sharedClockOn: () => false, ambushNight: () => false,   // AUDIT REST-PARTY C1/A1: the ward online's alone, and a night running told of the stand - free names there too
     performance: { now: () => 0 },
   };
   const api = mount(CTX_BODY, state);

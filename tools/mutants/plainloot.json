@@ -1,0 +1,52 @@
+[
+  {
+    "name": "PLAIN-LOOT-no-cut",
+    "file": "src/scenes/hostCombat.js",
+    "old": "  if (!eliteLooted(entity)) entity.items = entity.items.filter(",
+    "new": "  if (false) entity.items = entity.items.filter(",
+    "why": "a plain foe leaves everything it carries",
+    "tests": [
+      "test/rf2_spawnloot.test.js"
+    ]
+  },
+  {
+    "name": "PLAIN-LOOT-the-gold-cut-too",
+    "file": "src/scenes/hostCombat.js",
+    "old": "isGoldPieces(it) || rolls() < PLAIN_FOE_LOOT_KEEP",
+    "new": "rolls() < PLAIN_FOE_LOOT_KEEP",
+    "why": "a plain foe's gold halved with its pieces",
+    "tests": [
+      "test/rf2_spawnloot.test.js"
+    ]
+  },
+  {
+    "name": "PLAIN-LOOT-the-elites-cut-too",
+    "file": "src/scenes/hostCombat.js",
+    "old": "  if (!eliteLooted(entity)) entity.items = entity.items.filter(",
+    "new": "  if (true) entity.items = entity.items.filter(",
+    "why": "an elite foe, an Elite Dungeon foe and a champion halved as a plain one",
+    "tests": [
+      "test/rf2_spawnloot.test.js"
+    ]
+  },
+  {
+    "name": "PLAIN-LOOT-not-half",
+    "file": "src/scenes/hostCombat.js",
+    "old": "const PLAIN_FOE_LOOT_KEEP = 0.5;",
+    "new": "const PLAIN_FOE_LOOT_KEEP = 0.6;",
+    "why": "the seeded thousand bodies keep 60%, not half",
+    "tests": [
+      "test/rf2_spawnloot.test.js"
+    ]
+  },
+  {
+    "name": "PLAIN-LOOT-a-champion-is-plain",
+    "file": "src/scenes/hostCombat.js",
+    "old": "entity?.elite || championOf(entity))",
+    "new": "entity?.elite)",
+    "why": "a LOOT7 champion halved as a plain foe",
+    "tests": [
+      "test/rf2_spawnloot.test.js"
+    ]
+  }
+]

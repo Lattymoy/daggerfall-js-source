@@ -1,0 +1,85 @@
+[
+  {
+    "name": "AUDIT-REST-PARTY-D1-the-artifact-hunt-out-of-the-table",
+    "file": "src/systems/quest/clock.js",
+    "old": "  B0B81Y02: Object.freeze(['S.30']),   // AUDIT REST-PARTY D1: the artifact hunt, through the knight's reward\n",
+    "new": "",
+    "tests": [
+      "test/auditrestparty_quests.test.js",
+      "test/rest8_questwaits.test.js"
+    ],
+    "note": "B0B81Y02's `_S.30_` back to the run-time half: online the knight's `give pc nothing` closes the 180-day hunt on the short wait."
+  },
+  {
+    "name": "AUDIT-REST-PARTY-D2-the-scholar-out-of-the-table",
+    "file": "src/systems/quest/clock.js",
+    "old": "  N0B00Y17: Object.freeze(['time2']),   // AUDIT REST-PARTY D2: the scholar's \"Please be prompt\"\n",
+    "new": "",
+    "tests": [
+      "test/auditrestparty_quests.test.js",
+      "test/rest8_questwaits.test.js"
+    ],
+    "note": "N0B00Y17's `_time2_` a delay again: the scholar (and his reward) hidden two minutes after the list is taken."
+  },
+  {
+    "name": "AUDIT-REST-PARTY-D2-the-guard-out-of-the-table",
+    "file": "src/systems/quest/clock.js",
+    "old": "  K0C30Y03: Object.freeze(['S.13']),   // AUDIT REST-PARTY D2: the guard's lead\n",
+    "new": "",
+    "tests": [
+      "test/auditrestparty_quests.test.js",
+      "test/rest8_questwaits.test.js"
+    ],
+    "note": "K0C30Y03's `_S.13_` a delay again: the guard and his lead gone two minutes after the banker is asked."
+  },
+  {
+    "name": "AUDIT-REST-PARTY-D4-the-table-a-closing-on-success",
+    "file": "src/systems/quest/clock.js",
+    "old": "      this._closesOnSuccess = this._deadline && !(ONLINE_DEADLINES[q?.questName] ?? []).includes(name)\n",
+    "new": "      this._closesOnSuccess = this._deadline\n",
+    "tests": [
+      "test/auditrestparty_quests.test.js"
+    ],
+    "note": "The hand table's exemption from the run-time half dropped: every task-started table deadline closes on the quest's success."
+  },
+  {
+    "name": "AUDIT-REST-PARTY-D3-the-mark-not-saved",
+    "file": "src/systems/quest/clock.js",
+    "old": "      declaredAtOnce: this.declaredAtOnce,   // AUDIT REST-PARTY D3",
+    "new": "      // AUDIT REST-PARTY D3",
+    "tests": [
+      "test/auditrestparty_quests.test.js",
+      "test/rest8_audit_timefree.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REST-PARTY-D3-the-mark-not-restored",
+    "file": "src/systems/quest/clock.js",
+    "old": "    this.declaredAtOnce = typeof dataIn.declaredAtOnce === 'boolean' ? dataIn.declaredAtOnce\n      : this.startingTimeInSeconds",
+    "new": "    this.declaredAtOnce = this.startingTimeInSeconds",
+    "tests": [
+      "test/auditrestparty_quests.test.js"
+    ],
+    "note": "The save written but never read: the recompute every time, which cannot tell a range drawn at zero."
+  },
+  {
+    "name": "AUDIT-REST-PARTY-D3-the-old-save-default-dropped",
+    "file": "src/systems/quest/clock.js",
+    "old": "      : this.startingTimeInSeconds === 0 && !travelArmed(this.flag, this.maxRange, 0);",
+    "new": "      : false;",
+    "tests": [
+      "test/auditrestparty_quests.test.js"
+    ],
+    "note": "A save from before the mark: S0000106's start-up favour a deadline after the load, as before D3."
+  },
+  {
+    "name": "AUDIT-REST-PARTY-D3-the-old-save-default-forgets-the-travel-arm",
+    "file": "src/systems/quest/clock.js",
+    "old": "      : this.startingTimeInSeconds === 0 && !travelArmed(this.flag, this.maxRange, 0);",
+    "new": "      : this.startingTimeInSeconds === 0;",
+    "tests": [
+      "test/auditrestparty_quests.test.js"
+    ],
+    "note": "A save from before the mark: every travel clock armed at nothing (headless, held) read \"at once\" - a delay."
+  }
+]

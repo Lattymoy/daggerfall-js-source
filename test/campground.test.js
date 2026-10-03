@@ -76,6 +76,10 @@ test('CAMP-GROUND: the host wires the door that sees terrain, and falls back rat
   // has not caught up.
   assert.match(src, /: \(col\?\.raycast \? \(o, d, m\) => col\.raycast\(o, d, m\) : null\)/,
     'and an older collider keeps the bucket probe');
+  // REST6's Bedroll lays on the same ground: one home, so these pins and their mutants hold both callers - a copy
+  // beside it kept the pins green while the camp's own probe was broken (AUDIT REST-PARTY).
+  assert.equal(src.match(/groundProbe\(col\)/g)?.length, 2, 'the camp and the Bedroll ask the one probe');
+  assert.equal(src.match(/col\.surfaceHit\(/g)?.length, 1, 'and no copy of it stands beside');
 
   // THE CLASS, not the call site: blood was moved onto surfaceHit for
   // this exact reason two days earlier. Both outdoor placers use it now.

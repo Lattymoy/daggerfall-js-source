@@ -141,7 +141,9 @@ export const MAGIC_ITEMS_ENUM_TEMPLATE = 0;
 // constant, declared here and in loot.js.
 import { BOOK_TEMPLATE, createRegularMagicItem, createRandomPotion, randomlyAddPotionRecipe, getMagicItemTemplates, createRandomWeapon, createRandomArmor, createRandomClothing } from './loot.js';   // G4: the guild shelves' two minters (AUDIT 26 F129/F130: + the recipe arm and the registry)
 import { SPELLBOOK_TEMPLATE_INDEX } from './spellMaker.js';   // G4: one home for MiscItems 132
-import { provisionsStock } from './survival/items.js';   // SURV2: the general store's provisions shelf
+import { restItemsStock } from './restItems.js';   // REST6: the Bedroll, the Ember Jar, Firewood and the draughts
+import { provisionsStock, campfireStock } from './survival/items.js';   // SURV2: the general store's provisions shelf   // REST2: and online the Campfire alone, the arc Off
+import { sharedClockOn } from './worldTick.js';
 import { healingShelfCount, mintHealingPotion } from './healingSupply.js';   // POTION-COMMON: the shelf's Potions of Healing
 import { survivalOn } from './survival/switch.js';   // SURV2: the one switch
 import { conditionBasedPricesOn, conditionCostBase } from './rriRealism.js';   // RRI2: the CalculateCost override's condition arm
@@ -248,6 +250,7 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
     // their own module (their templates are the port's), after the
     // horse and the cart so the shelf reads travel first, then food.
     if (survivalOn()) for (const it of provisionsStock(quality, rolls)) items.push(it);
+    else if (sharedClockOn()) for (const it of campfireStock(rolls)) items.push(it);   // REST2: online the Campfire is the rest's, the arc on or off
   }
   const level = playerEntity.level ?? 1;
   const female = playerEntity.gender === 'female';
@@ -381,6 +384,12 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
       }
     }
   }
+  // REST6 (Rest-Arc.md section 6): a General Store's and an Alchemist's rest supplies, on the first shelf, after every
+  // draw of DFU's (unmoved) and before the healing supply, which stays the shelf's last act; offline with Climates & Calories, online once REST_ITEMS_ONLINE is on
+  if (shelfIndex === 0 && (buildingType === BUILDING_TYPES.GeneralStore || buildingType === BUILDING_TYPES.Alchemist)) {
+    for (const it of restItemsStock(buildingType === BUILDING_TYPES.GeneralStore ? 'GeneralStore' : 'Alchemist', quality, rolls)) addItem(items, it);
+  }
+  if (shelfIndex === 0 && buildingType === BUILDING_TYPES.PawnShop && sharedClockOn()) for (const it of campfireStock(rolls, 0, 2)) addItem(items, it);   // AUDIT REST: REST2's Pawn Shop, 0-2 online
   // POTION-COMMON (2026-10-01, the field: "make health potions more common"): an alchemist's and a general store's day of
   // Potions of Healing (healingSupply.js) - at the shelf's end and from no roll, so DFU's own draws above are the same.
   // AUDIT ECON P1: on the shop's FIRST shelf alone, the one its counter sells from (worldModes.js openMerchantSell) -

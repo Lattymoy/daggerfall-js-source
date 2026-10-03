@@ -1110,7 +1110,7 @@ test('AUDIT-WH C1: a namer is handed EVERY key the ray can win, including the do
     }
   }
   // ...and it still answers the keys it DOES own.
-  assert.deepEqual(camps.hoverName('hearth:0'), { title: 'Fire' });
+  assert.deepEqual(camps.hoverName('hearth:0'), { title: 'Fire', actions: [{ id: 'rest', label: 'Rest here' }, { id: 'cook', label: 'Cook food' }] }, 'REST2: with the plaque\'s rows');
   // the guard is the one `activate` has carried since HEARTH1
   assert.match(read('src/scenes/camps.js'), /function hoverName\(key\) \{[\s\S]{0,700}if \(typeof key !== 'string'\) return null;/);
 });

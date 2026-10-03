@@ -1,0 +1,136 @@
+[
+ {
+  "name": "REST5-the-follower-rolls-an-ambush-too",
+  "file": "src/systems/encounters.js",
+  "old": "  if (_quiet > 0) return null;",
+  "new": "  if (_quiet > 99) return null;",
+  "tests": [
+   "test/rest5_partynight.test.js"
+  ]
+ },
+ {
+  "name": "REST5-quiet-never-comes-back-down",
+  "file": "src/systems/encounters.js",
+  "old": "  try { return fn(); } finally { _quiet--; }",
+  "new": "  try { return fn(); } finally { if (_quiet > 1) _quiet--; }",
+  "tests": [
+   "test/rest5_partynight.test.js"
+  ]
+ },
+ {
+  "name": "REST5-a-carried-night-is-passed-on",
+  "file": "src/scenes/shared.js",
+  "old": "      if (!carried) heardNight(spot);",
+  "new": "      heardNight(spot);",
+  "tests": [
+   "test/rest5_partynight.test.js"
+  ],
+  "note": "AUDIT REST-PARTY (PIN MOVED): the night is heard with its spot."
+ },
+ {
+  "name": "REST5-the-vote-stands-online",
+  "file": "src/scenes/world.js",
+  "old": "    if (!restTogether()) return null;   // REST-OPT: I (or the leader) rest alone - my rest is my own, as in a tavern\n    if (sharedClockOn()) return null;\n",
+  "new": "    if (!restTogether()) return null;   // REST-OPT: I (or the leader) rest alone - my rest is my own, as in a tavern\n",
+  "tests": [
+   "test/rest5_partynight.test.js"
+  ]
+ },
+ {
+  "name": "REST5-the-party-card-online",
+  "file": "src/scenes/world.js",
+  "old": "  const partyRestHere = () => !sharedClockOn() && !!social?.party",
+  "new": "  const partyRestHere = () => !!social?.party",
+  "tests": [
+   "test/rest5_partynight.test.js",
+   "test/restopt.test.js"
+  ]
+ },
+ {
+  "name": "REST5-a-rest-open-stamps-the-night",
+  "file": "src/scenes/world.js",
+  "old": "    if (!sharedClockOn()) _partyRestJustStartedAt = social.now();\n",
+  "new": "    _partyRestJustStartedAt = social.now();\n",
+  "tests": [
+   "test/rest5_partynight.test.js"
+  ]
+ },
+ {
+  "name": "REST5-a-stranger-blocks-a-fire",
+  "file": "src/scenes/world.js",
+  "old": "    if (sharedClockOn() && publicRestPoint()) return null;",
+  "new": "    if (false && publicRestPoint()) return null;",
+  "tests": [
+   "test/rest5_partynight.test.js"
+  ]
+ },
+ {
+  "name": "REST5-a-bedroll-is-public",
+  "file": "src/scenes/world.js",
+  "old": "return !!pt && pt.where !== 'bedroll'; };",
+  "new": "return !!pt; };",
+  "tests": [
+   "test/rest5_partynight.test.js"
+  ]
+ },
+ {
+  "name": "REST5-my-switch-ignored",
+  "file": "src/systems/partyRestLaw.js",
+  "old": "  if (!withParty || resterAlone || exempt || dead) return null;",
+  "new": "  if (resterAlone || exempt || dead) return null;",
+  "tests": [
+   "test/rest5_partynight.test.js",
+   "test/auditrestparty.test.js"
+  ],
+  "note": "AUDIT REST-PARTY (PIN MOVED): the decision lifted into systems/partyRestLaw.js and run on a table; re-aimed by content."
+ },
+ {
+  "name": "REST5-a-stale-night-carries",
+  "file": "src/systems/partyRestLaw.js",
+  "old": " && now - at <= freshMs && !!isNight;",
+  "new": " && !!isNight;",
+  "tests": [
+   "test/rest5_partynight.test.js",
+   "test/auditrestparty.test.js"
+  ],
+  "note": "AUDIT REST-PARTY (PIN MOVED): the decision lifted into systems/partyRestLaw.js and run on a table; re-aimed by content."
+ },
+ {
+  "name": "REST5-a-busy-member-is-pulled-in",
+  "file": "src/scenes/world.js",
+  "old": "        busy: () => playerEntity.isResting || playerEntity.isLoitering || !!townTalk.overlay || mirrorRestRefused(),",
+  "new": "        busy: () => playerEntity.isResting,",
+  "tests": [
+   "test/rest5_partynight.test.js"
+  ],
+  "note": "AUDIT REST-PARTY (PIN MOVED): the decision lifted into systems/partyRestLaw.js and run on a table; re-aimed by content."
+ },
+ {
+  "name": "REST5-the-follower-sleeps-loud",
+  "file": "src/scenes/world.js",
+  "old": "    quietNights(() => {\n      if (kind) bag.overrideRestKind?.(() => kind);",
+  "new": "    ((f) => f())(() => {\n      if (kind) bag.overrideRestKind?.(() => kind);",
+  "tests": [
+   "test/rest5_partynight.test.js"
+  ],
+  "note": "AUDIT REST-PARTY (PIN MOVED): the decision lifted into systems/partyRestLaw.js and run on a table; re-aimed by content."
+ },
+ {
+  "name": "REST5-the-carried-night-passes-on",
+  "file": "src/scenes/world.js",
+  "old": "r = night ? bag.restNight({ carried: true }) : bag.restShort();",
+  "new": "r = night ? bag.restNight() : bag.restShort();",
+  "tests": [
+   "test/rest5_partynight.test.js"
+  ]
+ },
+ {
+  "name": "REST5-the-follow-tick-mirrors-online",
+  "file": "src/scenes/world.js",
+  "old": "    if (sharedClockOn()) { carryPartyNight(); return; }",
+  "new": "    if (false) { carryPartyNight(); return; }",
+  "tests": [
+   "test/rest5_partynight.test.js"
+  ]
+ }
+]

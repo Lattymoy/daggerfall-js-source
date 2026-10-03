@@ -39,6 +39,7 @@ import { potionRecipeByKey } from './potions.js';   // IM1: %po's producer (GetP
 import { bookTitle } from './books.js';   // IM1: GetBookTitle's legacy-data arm
 import { dfRandPick } from '../formats/textRsc.js';   // ROAD-A7: GetRandomTokens' dfRand draw
 import { hasArtifactEffect, hasArtifactSubtype, ARTIFACTS } from './artifactEffects.js';
+import { isRestItem, restItemLines } from './restItems.js';   // REST6: the seven's cards
 import { isSurvivalItem, isCampingEquipment, isCampfireKit, isSkillet } from './survival/items.js';   // SURV5: the survival items' own info box
 import { isFood, foodOf, foodStage, foodSatiety, isWaterskin, waterIn, WATERSKIN_CAPACITY_KG, STAGE_WORDS } from './survival/food.js';   // ROAD-U: the identity DFU reads off the item's own record
 import { makerName, PROVENANCE_RE } from '../net/recipeLaw.js';   // AUDIT 30 C7: a maker's mark as the law writes it
@@ -687,8 +688,10 @@ export function survivalInfoTokens(item) {
     out.push({ text: `Nourishes for ${foodSatiety(item)} minutes${s > 0 ? ` (${STAGE_WORDS[s].toLowerCase()})` : ''}`, center: true });
     if (foodOf(item)?.raw) out.push({ text: 'Raw - cook it at a fire.', center: true });
   } else if (isWaterskin(item)) out.push({ text: `Water: ${waterIn(item).toFixed(1)} of ${WATERSKIN_CAPACITY_KG.toFixed(1)} kg`, center: true });
-  else if (isCampingEquipment(item) || isCampfireKit(item)) out.push({ text: `${item.currentCondition ?? 0} use${item.currentCondition === 1 ? '' : 's'} left`, center: true });
+  else if (isCampingEquipment(item)) out.push({ text: `${item.currentCondition ?? 0} use${item.currentCondition === 1 ? '' : 's'} left`, center: true });
+  else if (isCampfireKit(item)) out.push({ text: `${item.currentCondition ?? 0} night${item.currentCondition === 1 ? '' : 's'} of fuel`, center: true });   // REST2: a night its owner sleeps at it spends one
   else if (isSkillet(item)) out.push({ text: 'Cooking at a campfire goes twice as fast.', center: true });
+  else if (isRestItem(item)) for (const text of restItemLines(item)) out.push({ text, center: true });   // REST6
   return out;
 }
 
@@ -699,7 +702,7 @@ export function itemInfoRows(item, rows, macros = {}) {
   // same shape - GetItemInfo's MiscItems switch (:793-794) hands back
   // BUILT tokens rather than a record id, so both bypass `rows(id)`.
   if (isPotionRecipe(item)) record = potionRecipeTokens();
-  if (isSurvivalItem(item)) record = survivalInfoTokens(item);   // SURV5: built tokens, like the recipe's - the custom rows have no TEXT.RSC record
+  if (isSurvivalItem(item) || isRestItem(item)) record = survivalInfoTokens(item);   // SURV5: built tokens, like the recipe's - the custom rows have no TEXT.RSC record
   if (!painting && item?.group === 'Paintings' && _paintFile) {
     // ROAD-A7: every one of the painting reads is GetRandomTokens with
     // dfRand TRUE (InitPaintingInfo :65 and the four macro readers
@@ -831,7 +834,7 @@ export function itemStatRows(item) {
   // arrow, a helm or shield under HelmAndShieldMaterialDisplay - so the
   // panel never names a metal the pack withholds; push drops an empty.
   push('Material', itemNameParts(item).material);
-  const survival = isSurvivalItem(item);
+  const survival = isSurvivalItem(item) || isRestItem(item);   // REST6: the seven's lines too
   if (survival) for (const t of survivalInfoTokens(item).slice(2)) push('', t.text);
   else if ((item.maxCondition ?? 0) > 0) push('Condition', `${conditionWord(item)} (${conditionPercentage(item)}%)`);
   // The weight is the STACK's, as `weightString` has it and as the

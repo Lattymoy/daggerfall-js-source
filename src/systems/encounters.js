@@ -174,6 +174,16 @@ export function chooseRandomEnemy(ctx, rolls = Math.random) {
 // the read below is DFU's own belt-and-braces copy at :560, whose
 // comment admits it "should not need" to be there.
 
+/** REST5 (bible/06-Systems/Rest-Arc.md 2.6): ONLY THE RESTER ROLLS. A party member's night carried for me runs my own
+ *  RestSession through my own host's bag - its hourly checks, its catch-up loop - and every host's ambush is this one
+ *  decision (the outdoor encounter tick and the dungeon's _restAdvance both ask it), so inside `quietNights(fn)` it
+ *  answers nothing. Re-entrant; the count always comes back down. */
+let _quiet = 0;
+export function quietNights(fn) {
+  _quiet++;
+  try { return fn(); } finally { _quiet--; }
+}
+
 /** IntermittentEnemySpawn (:547-618) as a pure decision: null, or
  *  { mobileType, minDistance }. ctx adds { inside, inDungeon,
  *  isResting, enemyAlertActive, gameMinutes, preventEnemySpawns } to
@@ -181,6 +191,7 @@ export function chooseRandomEnemy(ctx, rolls = Math.random) {
  *  (the catch-up loop) and stops on the first spawn, exactly as
  *  PlayerEntity.Update. */
 export function intermittentEnemySpawn(ctx, rolls = Math.random) {
+  if (_quiet > 0) return null;   // REST5: a night carried for a party member wakes to no ambush (quietNights)
   // SURV4: a ROUGH rest (survival/rest.js - the window opened on bare ground, no bed and no fire) doubles the
   // minute's chance: the same decision asked twice, the first spawn taken. SURV-TIERS: how many asks a rest
   // costs is its kind priced by the player's tier at the open (scenes/shared.js createRestDeps stamps `restAsks` -
@@ -321,7 +332,7 @@ export const RESTING_DISTANCE = 12;
  * nothing pending to count. Nor were quest spawns ever in that sweep
  * on either side - DFU's CreateFoe is a QuestAction that calls
  * CreateFoeGameObjects + TryPlacement itself (no CreateFoeSpawner in
- * CreateFoe.cs), which is systems/quest/actions.js:2334-2356 here.
+ * CreateFoe.cs), which is systems/quest/actions.js:2332-2354 here.
  */
 export function areEnemiesNearby(foes, { resting = false, includingPacified = false } = {}) {
   for (const f of foes ?? []) {
