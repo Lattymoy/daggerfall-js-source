@@ -111,6 +111,9 @@ test('WM3: every mod on the credits screen has a row on the Features home', () =
   }
   // OVH2: ...or a look on the Overhauls screen is the pack (a UI pack is worn and put away there, not on Features)
   for (const p of OVERHAUL_PANELS) for (const o of p.options) if (o.pack && UI_PACKS[o.pack]?.vendor) named.add(UI_PACKS[o.pack].vendor);
+  // ARENA1: the one credited work that is NOT a switch - the Arena of Daggerfall stands in the city in every game (Arena.md:
+  // "the arena is not a switch, it is the city"), so there is nothing on the Features home to turn off
+  named.add('daggerfall-arena');
   const missing = CREDITS.mods
     .flatMap((r) => (r.vendor ?? []).map((v) => [r.title, v]))
     .filter(([, v]) => !named.has(v) && !named.has(v.toLowerCase()));

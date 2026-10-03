@@ -1,0 +1,227 @@
+[
+  {
+    "name": "ARENA4B-RECRUIT-SAVE-LAW",
+    "file": "src/scenes/arenaGate.js",
+    "old": "if (on) return recruiterOnline(on, banner);",
+    "new": "if (false) return recruiterOnline(on, banner);",
+    "tests": [
+      "test/arena4b_gate.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-RECRUIT-WELCOME-EARLY",
+    "file": "src/scenes/arenaGate.js",
+    "old": "if (a === 'join') void Promise.resolve(on.team(banner)).then((r) => { if (r?.ok) { say(ARENA_TEXT.recruiter.joined(name)); openWindow?.('team'); } });",
+    "new": "if (a === 'join') { void on.team(banner); say(ARENA_TEXT.recruiter.joined(name)); openWindow?.('team'); }",
+    "tests": [
+      "test/arena4b_gate.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-RECRUIT-GUEST-OFFERED",
+    "file": "src/scenes/arenaGate.js",
+    "old": "else if (guest) { why = 'guest'; lines.push(O.guestBanner); }",
+    "new": "else if (false) { why = 'guest'; lines.push(O.guestBanner); }",
+    "tests": [
+      "test/arena4b_gate.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-RECRUIT-QUIT-WAITS",
+    "file": "src/scenes/arenaGate.js",
+    "old": "else if (me.left && me.left !== banner && Number(me.leftSeason) >= board.season)",
+    "new": "else if (me.left && Number(me.leftSeason) >= board.season)",
+    "tests": [
+      "test/arena4b_gate.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-TEAM-GUEST-ASKED",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "if (deps.guest?.()) { say(O.guestBanner); return { ok: false, error: 'guest' }; }",
+    "new": "void 0;",
+    "tests": [
+      "test/arena4b_gate.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-TEAM-BOARD-UNPATCHED",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "if (r?.ok && board?.me) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/arena4b_gate.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-HERALD-SAVE-CLIMB",
+    "file": "src/scenes/arenaGate.js",
+    "old": "const climb = on.climb?.() ?? null;",
+    "new": "const climb = arenaLadderRestore(P.arenaLadder);",
+    "tests": [
+      "test/arena4b_gate.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-HERALD-FIGHT-UNKNOWN",
+    "file": "src/scenes/arenaGate.js",
+    "old": "ch.options = ch.options.filter((o) => o.act !== 'fight');",
+    "new": "ch.options = ch.options.filter(Boolean);",
+    "tests": [
+      "test/arena4b_gate.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-HERALD-BANNER-SAVE",
+    "file": "src/scenes/arenaGate.js",
+    "old": "if (me?.banner === 'red' || me?.banner === 'blue') ch.lines.push(",
+    "new": "if (false) ch.lines.push(",
+    "tests": [
+      "test/arena4b_gate.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-WINDOW-FIGHT-UNKNOWN",
+    "file": "src/scenes/arenaGate.js",
+    "old": "if (kind === 'fight' && on && !onLadder) return { ok: false, text: ARENA_TEXT.online.climbWait };",
+    "new": "void 0;",
+    "tests": [
+      "test/arena4b_gate.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-FIGHT-EMPTY-CLIMB",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "if (!board) { askBoard(true); return null; }",
+    "new": "if (!board) { askBoard(true); return arenaLadderOf([]); }",
+    "tests": [
+      "test/arena4b_gate.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-PURSE-AT-VERDICT",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "if (C.relay.owe) C.relay.owe(purse, (g) => deps.pay?.(g)); else deps.pay?.(purse);",
+    "new": "deps.pay?.(purse);",
+    "tests": [
+      "test/arena4b_gate.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-PURSE-REFUSED-PAID",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "if (e.won && e.gold > 0) e.pay?.(e.gold);",
+    "new": "if (e.gold > 0) e.pay?.(e.gold);",
+    "tests": [
+      "test/arena4b_gate.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-PENDING-IGNORED",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "if (climbPending()) return null;",
+    "new": "if (false) return null;",
+    "tests": [
+      "test/arena4b_gate.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-PENDING-FOREVER",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "else if (e.gold !== null && e.won === null && t - e.at < CLIMB_WAIT_MS) wait = true;",
+    "new": "else if (e.gold !== null && e.won === null) wait = true;",
+    "tests": [
+      "test/arena4b_gate.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-ASK-AGAIN-DROPPED",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "if (boardAsking) { if (force) boardAgain = true; return boardWait; }",
+    "new": "if (boardAsking) { return boardWait; }",
+    "tests": [
+      "test/arena4b_gate.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-CLIMB-NOT-FROM-ANSWER",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "if (d?.ladder && board?.me) board = { ...board, me: { ...board.me, ladder: d.ladder } };",
+    "new": "void d;",
+    "tests": [
+      "test/arena4b_gate.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-EARLY-ANSWER-LOST",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "    const e = owed.get(o) ?? { gold: null, pay: null, won: null, at: now() };\n    e.gold = gold;",
+    "new": "    const e = { gold: null, pay: null, won: null, at: now() };\n    e.gold = gold;",
+    "tests": [
+      "test/arena4b_gate.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-ORDER-SILENT",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "if (d?.recorded === false && d.why === 'order') say(O.order);",
+    "new": "void 0;",
+    "tests": [
+      "test/arena4b_gate.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-GUEST-HOLDS-FIGHT",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "else if (arenaClaimVerdict(a) === 'done' || d?.why === 'guest') won = false;",
+    "new": "else if (arenaClaimVerdict(a) === 'done') won = false;",
+    "tests": [
+      "test/arena4b_gate.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-JOINED-SAVE",
+    "file": "src/scenes/arenaGate.js",
+    "old": "    return !!b?.me?.banner;\n",
+    "new": "    return !!rollLeague(P.arenaLeague, gm()).team;\n",
+    "tests": [
+      "test/arena4b_gate.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-KEEPER-SAVE",
+    "file": "src/scenes/arenaGate.js",
+    "old": "    if (!on) return false;\n    const show = (b) =>",
+    "new": "    return false;\n    const show = (b) =>",
+    "tests": [
+      "test/arena4b_gate.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-KEEPER-BEFORE-BOARD",
+    "file": "src/scenes/arenaGate.js",
+    "old": "    if (b) show(b);\n    else void Promise.resolve(on.fetchBoard?.() ?? null).then(show, () => show(null));\n",
+    "new": "    show(b);\n",
+    "tests": [
+      "test/arena4b_gate.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-KEPT-WIN-UNPAID",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "    else if (d?.why === 'claimed') won = c.r === 1;",
+    "new": "    else if (d?.why === 'claimed') won = false;",
+    "tests": [
+      "test/arena4b_gate.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-KEPT-LOSS-PAID",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "    else if (d?.why === 'claimed') won = c.r === 1;",
+    "new": "    else if (d?.why === 'claimed') won = true;",
+    "tests": [
+      "test/arena4b_gate.test.js"
+    ]
+  }
+]

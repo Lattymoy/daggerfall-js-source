@@ -231,3 +231,20 @@ test('AUDIT 68 S23-dungeon-npc-behaviours-not-destroyed: the dungeon exit destro
   assert.match(WM, /function teardownQuestFlats\(\) \{\s*teardownStands\(questFlats, interiorCtx\?\.people\);/);
   assert.match(slice(WM, 'function teardownStands(', 'function teardownDungeonQuestFlats('), /destroyPeopleBehaviours\(people\);/);
 });
+
+test('WD3 (AUDIT WD3 G3): an inside save finds its building by its KEY when the block\'s index moved - a block a world-data mod adds is numbered in the order a session first reads it, so the saved index can name nothing (or another added block) next session', async () => {
+  const { entry, saved } = tavernDoor();
+  const run = async (key) => {
+    const said = [];
+    const modes = await buildModes({
+      doorTargets: () => [entry],
+      buildingDataForDoor: () => ({ buildingKey: key }),
+      pipeline: { getGpuMesh: async () => { throw new Error('fetch failed'); }, cpuModels: new Map(), getTexture: async () => null, uploadRecord: () => {}, uploadRecordFrame: () => {}, arch: null, palette: null, getMachineryParts: () => {} },
+    });
+    const err = console.error; console.error = (...a) => said.push(a.join(' '));
+    try { await modes.restoreInterior({ ...saved, door: { ...saved.door, blockIndex: saved.door.blockIndex + 36 } }, [0, 0, 0]); } finally { console.error = err; }
+    return said.some((l) => l.includes('restoreInterior failed'));   // the entry was reached (its build then failed, as above)
+  };
+  assert.equal(await run(7), true, 'the saved building, by its key, though its block\'s index moved');
+  assert.equal(await run(8), false, 'another building at the same record and door is not it');
+});

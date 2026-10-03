@@ -235,7 +235,7 @@ test('WB3b the seams, by source: the dungeon host enters the court through its o
   assert.ok(stood > 0 && stood < marker, 'the court stands before its start marker is read (the spawn lands on its floor)');
   assert.ok(stood < wm.indexOf("ctx.addActivationNamer((key) => (typeof key === 'string' && key.startsWith('exit:') ? staticDoorName('dungeonExit'"), 'and its way home is named before the dungeon exit\'s own namer');
   assert.match(wm, /gate: hit\.gateArena \?\? null,/);
-  assert.match(wm, /const returnLanding = \(\) => \(dungeonReturn\.gate \? host\.gateLanding\?\.\(dungeonReturn\.gate\) \?\? null : dungeonEntranceLanding\(/);
+  assert.match(wm, /const returnLanding = \(\) => \(dungeonReturn\.gate \? host\.gateLanding\?\.\(dungeonReturn\.gate\) \?\? null : (?:dungeonReturn\.arena \? host\.arenaLanding\?\.\(\) \?\? null : )?dungeonEntranceLanding\(/);   // ARENA2: the arena floor's way out sits between, after the gate's
   assert.match(wm, /const landing = returnLanding\(\);/);
   assert.match(wm, /if \(isGateArena\(dungeonLoc\)\) applyFog\(renderer, dungeonFog\(!!renderer\.lightingLane, COURT_FOG\)\);/);
   // WB4a: the boss's glow joins them - WB9b: the fight's own lights first, the braziers nearest first after (the cap drops a far court's fire)
@@ -247,8 +247,8 @@ test('WB3b the seams, by source: the dungeon host enters the court through its o
   const dc = read('src/scenes/dungeonContext.js');
   for (const [what, re] of [['the map', /toggleAutomap\(\) \{\n\s+if \(activeOverlay\) return;\n\s+if \(isGateArena\(dfLocation\)\) \{ hudText\.add\(COURT_TEXT\.noMap\); return; \}/],
     ['the rest', /toggleRest\(\) \{\n\s+if \(activeOverlay\) return;\n\s+if \(isGateArena\(dfLocation\)\) \{ hudText\.add\(COURT_TEXT\.noRest\); return; \}/],
-    ['the save', /if \(isGateArena\(dfLocation\)\) \{ if \(!quiet\) hudText\.add\(COURT_TEXT\.noSave\); return false; \}\n\s+const snap = snapshotPlayer\(/],   // REALM P0.5: a quiet checkpoint is refused in silence
-    ['the pause\'s save', /savingPrevented: \(\) => isGateArena\(dfLocation\),/]]) assert.match(dc, re, what);
+    ['the save', /if \(isGateArena\(dfLocation\)\) \{ if \(!quiet\) hudText\.add\(COURT_TEXT\.noSave\); return false; \}\n(?:[^\n]*isArenaFloor\(dfLocation\)[^\n]*\n)?\s+const snap = snapshotPlayer\(/],   // ARENA2: the arena floor's own refusal may follow   // REALM P0.5: a quiet checkpoint is refused in silence
+    ['the pause\'s save', /savingPrevented: \(\) => isGateArena\(dfLocation\)(?: \|\| isArenaFloor\(dfLocation\))?,/]]) assert.match(dc, re, what);
   const w = read('src/scenes/world.js');
   assert.match(w, /ready: \(\) => !!online\?\.gateOk,/);
   assert.match(w, /enter: \(g\) => \{ modes\?\.enterGateArena\?\.\(g\); \},/);

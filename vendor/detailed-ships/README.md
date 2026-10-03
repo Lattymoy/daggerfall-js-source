@@ -62,6 +62,19 @@ has never seen:
 - the three dolphins (`10009` records 29-31) are the port's own drawing,
   made in code.
 
+WD3 (2026-10-01) read the same pieces again against DET's catalogue and the
+town mods' placements (Beautiful Villages and Beautiful Cities place them
+some 72,000 times): six of the ten model readings changed - the two
+timbers and four cloths - and seven flats are now drawn in code (a rat for
+the cat, cheese, porridge, a cabbage, broken bottles, a rolling pin), a sack
+and a globe moved between records. Each piece has one
+stand-in, shared by this mod and the town mods. This mod's own pictures
+(archives `1210` and `1230`) are shared the same way: the RMB Resource Pack
+carries Cliffworms' set as "Cliffworms' Items", and the towns stand his
+bottles and the classic pieces he moved to `1210` on their shelves - the
+pictures here answer for them while a town mod or this one is loaded
+(`bible/03-World/Detailed-Ships.md`).
+
 ## What is here, and what deliberately is NOT
 
 - `detailed-ships.dfmod.json` - the shipped manifest, verbatim (the

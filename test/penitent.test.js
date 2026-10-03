@@ -99,8 +99,8 @@ const insidePoly = (poly) => ([x, y]) => {
 // ── THE VOCABULARY AND ITS FACE ─────────────────────────────────────
 
 test('PENITENT vocabulary: the title and the glyph join the closed lists last, with the word Diggleborf named; a gradient that starts gold and ends sky blue - CSS\'s own gold and skyblue - with a warm light between them, so no letter reads green, as a straight mix of the two ends does; edged in black, not its own gold; a classic mark of its own (mutants: the ends swapped; the light dropped; the edge its own gold; a mark another glyph has)', () => {
-  assert.deepEqual(TITLES.slice(7, 10), ['penitent', 'gatebreaker', 'herald'], 'the vocabulary\'s newest, last - then WB9g\'s Gatebreaker, the Broker\'s, which has no glyph, then HERALD\'s (SEAT1c\'s five after them)');
-  assert.deepEqual(GLYPHS.slice(8, 10), ['penitent', 'herald'], 'and its glyph, HERALD\'s trumpet after it (SEAT1c\'s four after them)');
+  assert.deepEqual(TITLES.slice(7, 10), ['penitent', 'gatebreaker', 'herald'], 'the vocabulary\'s newest, last - then WB9g\'s Gatebreaker, the Broker\'s, which has no glyph, then HERALD\'s (SEAT1c\'s five after them, ARENA4\'s two after those: the pin reads past them)');
+  assert.deepEqual(GLYPHS.slice(8, 10), ['penitent', 'herald'], 'and its glyph, HERALD\'s trumpet after it (SEAT1c\'s four after them, ARENA4\'s laurel after those: the pin reads past it)');
   assert.equal(TITLE_TEXT.penitent, 'Penitent', 'Diggleborf: "maybe "Penitent" for the title"');
   const stops = TITLE_GRADIENT.penitent;
   assert.equal(stops.length, 3);

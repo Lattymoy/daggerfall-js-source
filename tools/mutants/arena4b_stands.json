@@ -1,0 +1,200 @@
+[
+  {
+    "name": "ARENA4B-STANDS-FIGHTER",
+    "file": "src/ui/arenaHud.js",
+    "old": "stands: stands && !mine && !quiet ?",
+    "new": "stands: stands && !quiet ?",
+    "tests": [
+      "test/arena4b_stands.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-STANDS-REFUSED-LET",
+    "file": "src/ui/arenaHud.js",
+    "old": "if (!shown?.standsReady || typeof cheerDoor !== 'function') return false;",
+    "new": "if (typeof cheerDoor !== 'function') return false;",
+    "tests": [
+      "test/arena4b_stands.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-STANDS-KEYS-LINGER",
+    "file": "src/ui/arenaHud.js",
+    "old": "  listenKeys(standing, doc);\n",
+    "new": "  if (standing) listenKeys(true, doc);\n",
+    "tests": [
+      "test/arena4b_stands.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-STANDS-ARIA",
+    "file": "src/ui/arenaHud.js",
+    "old": "if (!was) { parts.stands.style.display = ''; root.removeAttribute('aria-hidden'); }",
+    "new": "if (!was) { parts.stands.style.display = ''; }",
+    "tests": [
+      "test/arena4b_stands.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-STANDS-FIELD",
+    "file": "src/ui/arenaHud.js",
+    "old": "if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(String(t.tagName ?? '')))) return;",
+    "new": "if (false) return;",
+    "tests": [
+      "test/arena4b_stands.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-STANDS-MODIFIER",
+    "file": "src/ui/arenaHud.js",
+    "old": "if (!e || e.defaultPrevented || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;",
+    "new": "if (!e) return;",
+    "tests": [
+      "test/arena4b_stands.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-STANDS-SWING",
+    "file": "src/ui/arenaHud.js",
+    "old": "b.onclick = (e) => { e?.stopPropagation?.(); shout(dir); };",
+    "new": "b.onclick = () => { shout(dir); };",
+    "tests": [
+      "test/arena4b_stands.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-CHEER-ECHO-TWICE",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "const n = own ? w.n - 1 : w.n;",
+    "new": "const n = w.n;",
+    "tests": [
+      "test/arena4b_stands.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-CHEER-LOCAL-SKIPPED",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "deps.sound?.cue(crowdShout(C.crowd, dir, 1, t), 1);",
+    "new": "deps.sound?.cue([], 1);",
+    "tests": [
+      "test/arena4b_stands.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-CHEER-GAP-BARE",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "export const CHEER_GAP_MS = ARENA_CHEER_MS + CHEER_SLACK_MS;",
+    "new": "export const CHEER_GAP_MS = ARENA_CHEER_MS;",
+    "tests": [
+      "test/arena4b_stands.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-CHEER-NO-GAP",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "if (t - C.cheerAt < CHEER_GAP_MS) return false;",
+    "new": "if (false) return false;",
+    "tests": [
+      "test/arena4b_stands.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-CHEER-NOT-SENT",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "cheer: (c) => boutSend({ k: 'ch', c })",
+    "new": "cheer: (c) => c !== 0",
+    "tests": [
+      "test/arena4b_stands.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-CHEER-FIGHTER",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "if (!C?.relay || C.you || !C.b || !C.crowd || boutOver(C.b) || (dir !== 1 && dir !== -1)) return false;",
+    "new": "if (!C?.relay || !C.b || !C.crowd || boutOver(C.b) || (dir !== 1 && dir !== -1)) return false;",
+    "tests": [
+      "test/arena4b_stands.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-STANDS-DOOR-FIGHTER",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "cheer: C.you ? null : cheerDoor });",
+    "new": "cheer: cheerDoor });",
+    "tests": [
+      "test/arena4b_stands.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-STANDS-READY-ALWAYS",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "const stands = C.you ? null : { ready: t - C.cheerAt >= CHEER_GAP_MS };",
+    "new": "const stands = C.you ? null : { ready: true };",
+    "tests": [
+      "test/arena4b_stands.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-REALM-MINE-DROPPED",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "if (C.you && (R?.banner === 'red' || R?.banner === 'blue')) out[C.you] = R.banner;",
+    "new": "void R;",
+    "tests": [
+      "test/arena4b_stands.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-REALM-LAUREL-RELAY",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "    laurelOf(C, R?.laurel ?? null, out);\n",
+    "new": "    void out;\n",
+    "tests": [
+      "test/arena4b_stands.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-LAUREL-WRONG-BANNER",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "if (team === won && C.b?.fighters.some((f) => f.id === id))",
+    "new": "if (team !== won && C.b?.fighters.some((f) => f.id === id))",
+    "tests": [
+      "test/arena4b_stands.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-RIVAL-BILL-DROPPED",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "const banners = b.kind === 'pvp' ? { [`p${1 - (b.side ?? 0)}`]: b.vs?.b ?? null } :",
+    "new": "const banners = b.kind === 'pvp' ? {} :",
+    "tests": [
+      "test/arena4b_stands.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-REALM-KEPT-OFFLINE",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "const realm = () => (live() ? { banner: board?.me?.banner ?? null, laurel: board?.team?.laurel ?? null } : null);",
+    "new": "const realm = () => ({ banner: board?.me?.banner ?? null, laurel: board?.team?.laurel ?? null });",
+    "tests": [
+      "test/arena4b_stands.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-LAUREL-FLOOR-SAVE",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "if (R) { laurelOf(C, R.laurel, C.ladder ? { [YOU]: R.banner } : C.teams); return; }",
+    "new": "if (R && false) { laurelOf(C, R.laurel, C.ladder ? { [YOU]: R.banner } : C.teams); return; }",
+    "tests": [
+      "test/arena4b_stands.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-WATCH-BANNERS-DROPPED",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "banners: { p0: entry?.a?.b ?? null, p1: entry?.b?.b ?? null } });",
+    "new": "banners: {} });",
+    "tests": [
+      "test/arena4b_stands.test.js"
+    ]
+  }
+]

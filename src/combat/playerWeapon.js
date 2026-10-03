@@ -658,6 +658,9 @@ export class PlayerWeapon {
       protectedInReach.sort((a, b) => a.dist - b.dist);
       strike(protectedInReach[0].foe);
     }
+    // ARENA-FIX 9: the swing told, struck or not - a swing that reached nobody is a miss on the arena's sand (a blow
+    // that reached a foe is told by the formula's own resolution)
+    for (const fn of _swingListeners.values()) { try { fn(results.length); } catch { /* a listener is not the swing's problem */ } }
     return results;
   }
 }
@@ -682,6 +685,11 @@ export class PlayerWeapon {
  *  effects) is false. Read where the foe RECORD is in hand (the swing here, the arrow in arrowFlight.js): the formula is
  *  handed the entity, which knows nothing of its AI. A PUPPET (a foe another player's machine runs) is never unaware
  *  here - its AI is its owner's, and what this machine holds of it is not a word about whether it saw me. */
+const _swingListeners = new Map();
+/** ARENA-FIX 9: NAMED listeners told each melee hit frame's count of foes struck (PlayerWeapon.resolveHit - every host
+ *  resolves the player's swing through it). A name re-registered replaces, `null` removes. */
+export function registerPlayerSwingListener(name, fn) { if (typeof fn === 'function') _swingListeners.set(name, fn); else _swingListeners.delete(name); }
+
 export const foeUnaware = (foe) => !!foe?.ai && !foe.puppet && foe.ai.detected === false;
 
 export function playerAttackOptions(weapon, machineState, backstabChance = 0, rolls = Math.random) {

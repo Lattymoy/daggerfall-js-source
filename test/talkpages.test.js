@@ -188,7 +188,9 @@ test('B7 seam gate: the static-NPC conversation opens the window instead of "You
   // ROAD-D D10 added the third thing SetTargetNPC does before the
   // push: SetNPCPortrait (TalkManager.cs:845-849), which rides the
   // same call as the portrait option.
-  assert.match(modes, /if \(talk\?\.kind === 'talk' && townTalk\?\.openTalkWindow\) \{[\s\S]*?npcSession\?\.startNewConversation\(\);\n\s*townTalk\.openTalkWindow\(talk\.greeting, \{ npcSeed: npcData\.nameSeed, npcName: displayName, portrait: staticNpcPortrait\(npcData\) \}\);/);
+  // ARENA-FIX 2 (2026-10-02): the window's title is the person's OFFICE where one stands (the arena gate's Herald, the
+  // undercroft's Pit Master - worldModes.js officeName), StaticNPC.DisplayName everywhere else.
+  assert.match(modes, /if \(talk\?\.kind === 'talk' && townTalk\?\.openTalkWindow\) \{[\s\S]*?npcSession\?\.startNewConversation\(\);\n\s*townTalk\.openTalkWindow\(talk\.greeting, \{ npcSeed: npcData\.nameSeed, npcName: (?:officeName\(pn\) \?\? )?displayName, portrait: staticNpcPortrait\(npcData\) \}\);/);
   // the guild popup's TALK button routes TalkToStaticNPC with menu TRUE
   // (DaggerfallGuildServicePopupWindow.cs:294) and yields to the window
   // G6 gave that door a SECOND caller, so the pin follows the law

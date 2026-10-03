@@ -129,7 +129,7 @@ test('SEAT-HALL the hosts by source: the visit\'s palace latched at the door for
   assert.match(m, /if \(interiorSeatHall\?\.keeper\) return \{ kind: 'home', hall: true, seat: true, charter: true, cap: SEAT_HALL_DECOR_CAP, where: SEAT_HALL_TEXT\.where, mapId: homeTownOf\(b\), buildingKey: b\.buildingKey \};/);
   assert.match(m, /const decorKeeperHere = \(\) => !!\(interiorHome\?\.hall && interiorHome\.keeper\) \|\| !!interiorSeatHall\?\.keeper;/);
   assert.match(m, /const hallMemberHere = \(\) => !!\(interiorHome\?\.hall && interiorHome\.member\) \|\| !!interiorSeatHall\?\.member;/);
-  assert.match(m, /const seat = !interiorHome && !!interiorSeatHall;[^\n]*\n    const visit = _decorVisit;\n    askDecorList\(\{\n      ask: \(\) => host\.homeDecor\.list\(homeTownOf\(b\), b\.buildingKey, seat\),/);
+  assert.match(m, /const seat = !interiorHome && !!interiorSeatHall;[^\n]*\n(?:    \/\/[^\n]*\n)*    if \(host\.homeLayoutsHeard\?\.\(\) === false\) \{[^\n]*\n    const visit = _decorVisit;\n    askDecorList\(\{\n      ask: \(\) => host\.homeDecor\.list\(homeTownOf\(b\), b\.buildingKey, seat\),/);
   assert.match(m, /const at = \(a\) => \(interiorSeatHall && !interiorHome \? \{ \.\.\.a, seat: true \} : a\);\n    return \{ \.\.\.d, place: \(a\) => d\.place\(at\(a\)\), move: \(a\) => d\.move\(at\(a\)\), remove: \(a\) => d\.remove\(at\(a\)\) \};/);
   assert.match(m, /wallet: \(\) => decorWallet\(\), homeDecor: decorDoor\(\),/);
   assert.match(m, /charterClear: \(pt\) => charterClear\(pt\),/);

@@ -339,12 +339,12 @@
   {
     "name": "S38-version-not-bumped",
     "file": "src/net/wire.js",
-    "old": "export const RELAY_VERSION = 'world154';",
+    "old": "export const RELAY_VERSION = 'world155';",
     "new": "export const RELAY_VERSION = 'world131';",
     "tests": [
       "test/soc1_hub.test.js",
       "test/relayversion.test.js"
     ],
-    "note": "HERALD (PIN MOVED): world138. FRIENDS-SYNC (re-aimed by content): world141 - CLIMB5/CLIMB6 moved it on without this record; then world142, FRIENDS-SYNC's own. ELITE FOES (re-aimed by content): world143, the foe record's `z`. The Seats arc (re-aimed at its merges): world149, then world150 past main's ELITE FOES at the merge of #519-#523. WB12 (re-aimed at its merge): world151, past main's CLIMB5 and CLIMB6, FRIENDS-SYNC, ELITE FOES and the Seats arc (world141 on its branch). GLYPH-WEAR: world152. BROKER-CAGE (re-aimed by content): world153, the rite word's `c` and the hub's `cl`."
+    "note": "HERALD (PIN MOVED): world138. FRIENDS-SYNC (re-aimed by content): world141 - CLIMB5/CLIMB6 moved it on without this record; then world142, FRIENDS-SYNC's own. ELITE FOES (re-aimed by content): world143, the foe record's `z`. The Seats arc (re-aimed at its merges): world149, then world150 past main's ELITE FOES at the merge of #519-#523. WB12 (re-aimed at its merge): world151, past main's CLIMB5 and CLIMB6, FRIENDS-SYNC, ELITE FOES and the Seats arc (world141 on its branch). GLYPH-WEAR: world152. BROKER-CAGE (re-aimed by content): world153, the rite word's `c` and the hub's `cl`. The arena merge (re-aimed): world155, ARENA4 (world142 on its branch) past main's world142-world154."
   }
 ]

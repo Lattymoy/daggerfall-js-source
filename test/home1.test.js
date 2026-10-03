@@ -81,7 +81,7 @@ async function stand() {
   return { env, call, registered };
 }
 const T0 = 1_800_000_000;
-const home = (extra = {}) => ({ mapId: 1291010263, buildingKey: 0x10203, region: 17, character: 'char-aldric', price: 42000, ...extra });
+const home = (extra = {}) => ({ mapId: 1291010263, buildingKey: 0x10203, region: 17, character: 'char-aldric', price: 42000, layout: null, ...extra });
 /** AUDIT REALM2 S2: the record a realm character buys with - rich enough for every house a pin claims. */
 const RICH = (name) => ({ name, level: 9, goldPieces: 10_000_000, items: [], bankAccounts: new Array(62).fill(0).map(() => ({ accountGold: 0 })) });
 
@@ -222,7 +222,7 @@ test('HOME1 the client\'s door: every call rides the one session as a Bearer hea
     assert.equal(s.init.headers.authorization, 'Bearer sek');
     assert.equal(JSON.parse(s.init.body).secret, undefined, 'the credential rides the header alone');
   }
-  assert.deepEqual(JSON.parse(seen[2].init.body), { mapId: home().mapId, buildingKey: home().buildingKey, region: 17, character: 'char-aldric', price: 42000 }, 'the claim names only what the service reads');
+  assert.deepEqual(JSON.parse(seen[2].init.body), { mapId: home().mapId, buildingKey: home().buildingKey, region: 17, character: 'char-aldric', price: 42000, layout: null }, 'the claim names only what the service reads - and its town\'s layout, always (null: Daggerfall\'s own)');
   assert.deepEqual(JSON.parse(seen[4].init.body), { mapId: 7, buildingKey: 9, entry: 'party' });
   const none = accountHomes({ fetch, storage: { getItem: () => null } });
   assert.deepEqual(await none.town(7), { ok: false, error: 'no-session' });
@@ -341,7 +341,7 @@ test('HOME1 the client\'s registry: a town is asked once while its answer is out
   const towns = api.calls.filter((c) => c[0] === 'town').length;
   const r = await homes.claim({ mapId: T, buildingKey: 9, region: 17, price: 42000 });
   assert.deepEqual(r, { ok: true, repeat: false });
-  assert.deepEqual(api.calls.find((c) => c[0] === 'claim')[1], { mapId: T, buildingKey: 9, region: 17, character: 'char-aldric', price: 42000 });
+  assert.deepEqual(api.calls.find((c) => c[0] === 'claim')[1], { mapId: T, buildingKey: 9, region: 17, character: 'char-aldric', price: 42000, layout: null });
   assert.equal(homes.homeAt(T, 9).own, true, 'mine at once');
   await flush();
   assert.equal(api.calls.filter((c) => c[0] === 'town').length, towns + 1, 'and read back from the service');

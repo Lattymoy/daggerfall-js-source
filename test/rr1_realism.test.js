@@ -421,7 +421,8 @@ test('RR1 bedSleeping and the wiring: the three bed models, listed by the interi
   assert.equal(bedSleepingOn(), true);
   on('bedSleeping', false); assert.equal(bedSleepingOn(), false); reset();
   assert.match(rd('src/scenes/shared.js'), /installRoleplayRealismItems\(\);\n  installRoleplayRealism\(\);/, 'InitMod after Items\', once');
-  assert.match(rd('src/scenes/interiorContext.js'), /\} else if \(isBedModel\(p\.modelIdNum\)\) \{\n      beds\.push\(\{ cpu, matrix \}\);/);
+  // WD3: a town mod's coloured bed is an ALIAS of one of the three (world/customModels.js) - read as its classic model
+  assert.match(rd('src/scenes/interiorContext.js'), /\} else if \(isBedModel\(classicModelIdOf\(p\.modelIdNum\)\)\) \{[^\n]*\n      beds\.push\(\{ cpu, matrix \}\);/);
   const wm = rd('src/scenes/worldModes.js');
   assert.match(wm, /if \(bedSleepingOn\(\)\) interiorCtx\.beds\?\.forEach\(\(bd, i\) => \{/, 'a bed is a target only while the module is on');
   assert.match(wm, /if \(key\.startsWith\('bed:'\)\) \{\n        restFromInteriorBed\(\);/, 'BedActivation is the rest gate');

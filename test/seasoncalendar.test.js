@@ -126,7 +126,7 @@ test('A1: an interior is summer-skinned whatever the date outside', () => {
   assert.equal(INTERIOR_SEASON, SEASON.Summer);
   for (const host of HOSTS) {
     const text = read(host);
-    assert.match(text, /climateBase, season: INTERIOR_SEASON/,
+    assert.match(text, /climateBase(?:: townClimateBase)?, season: INTERIOR_SEASON/,   // AUDIT WD3 G5: the world host's town climate
       `${host}: the static door hands the interior its own constant season`);
     assert.doesNotMatch(text, /climateBase, season,/,
       `${host}: the world season is crossing the threshold again`);

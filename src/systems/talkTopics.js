@@ -136,9 +136,23 @@ export function blockBuildingCount(dfBlock) {
  *  @param exteriorBuildings dfLocation.exterior.buildings
  *  @param blocks layoutLocation().blocks (y->x order preserved)
  *  @returns per-block arrays of merged buildingDataList copies */
+/** WD3 (AUDIT WD3 G4): guild factions a mod's location files name that this game carries no guild for - 1000 is the
+ *  Archaeologists Guild's (its own mod's faction), which Beautiful Villages writes on a guild hall entry of four
+ *  villages. DFU, without that mod, hands the entry to the first guild hall of the grid: Bubandanis' Mages Guild and
+ *  Tulaedax's Fighters Guild answered "You get no response", and Tulaedax's Mages hall took the Fighters' faction.
+ *  An entry naming no guild of this game draws for no hall - each hall takes its own guild's entry. */
+export const UNCARRIED_GUILD_FACTIONS = Object.freeze(new Set([1000]));
 export function mergeNamedBuildings(exteriorBuildings, blocks, { locationIndex = 0 } = {}) {
+  return drawNamedBuildings(exteriorBuildings, blocks, { locationIndex }).out;
+}
+/** ARENA1: the same draw, answering besides each block instance's merged list the location entries it DREW and kept
+ *  (a draw a building replacement handed back is not among them) - world/arenaCity.js strips exactly the entries the
+ *  cell the arena takes drew, so every other building keeps the entry it always drew. */
+export function drawNamedBuildings(exteriorBuildings, blocks, { locationIndex = 0 } = {}) {
+  const drawnBy = new Map();   // block -> [the location's BuildingData objects it drew]
   const pool = exteriorBuildings
     .filter((b) => isNamedBuildingType(b.buildingType))
+    .filter((b) => !(b.buildingType === BUILDING_TYPES.GuildHall && UNCARRIED_GUILD_FACTIONS.has(b.factionId)))
     .map((b) => ({ data: b, used: false }));
   const next = (type) => {
     for (const it of pool) {
@@ -201,10 +215,11 @@ export function mergeNamedBuildings(exteriorBuildings, blocks, { locationIndex =
         list[i].buildingType = BUILDING_TYPES.GuildHall;
         list[i].factionId = 414;
       }
+      if (drawn?.used) drawnBy.set(b, [...(drawnBy.get(b) ?? []), drawn.data]);
     }
     out.set(b, list);
   }
-  return out;
+  return { out, drawn: drawnBy };
 }
 
 /** Build the location's named-building directory.

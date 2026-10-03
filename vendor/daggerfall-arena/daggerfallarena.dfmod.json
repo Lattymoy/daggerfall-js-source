@@ -1,0 +1,15 @@
+{
+    "ModTitle": "Daggerfall Arena",
+    "ModVersion": "1.0",
+    "ModAuthor": "Kamer",
+    "ContactInfo": "DFU Discord",
+    "DFUnity_Version": "1.1.0",
+    "ModDescription": "Adds an Arena North of Daggerfall",
+    "GUID": "0a802a1a-5e27-4266-84ee-8625ebf50d9d",
+    "Files": [
+        "Assets/Game/Mods/DaggerfallArena/DaggerfallArena.dfmod.json",
+        "Assets/Game/Mods/DaggerfallArena/WorldData/DFARENA.RMB.json",
+        "Assets/Game/Mods/DaggerfallArena/WorldData/locationnew-Daggerfall_ArenaofDaggerfall-17.json",
+        "Assets/Game/Mods/DaggerfallArena/Models/864102.prefab"
+    ]
+}

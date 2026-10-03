@@ -28,6 +28,7 @@ import { mergeNamedBuildings, makeBuildingKey, blockBuildingCount } from '../tal
 import { generateBuildingName } from '../../world/buildingNames.js';
 import { surname, firstName, getNameBankOfRegion, GENDERS } from '../../characters/nameHelper.js';
 import { RDB_RESOURCE_TYPES } from '../../formats/blocksFile.js';
+import { stampLayout, layoutStampOfMapId, recordStands } from '../layoutPins.js';   // WD3: a building site keeps its town's layout
 
 export const Scopes = Object.freeze({ None: 'none', Local: 'local', Remote: 'remote', Fixed: 'fixed' });
 
@@ -195,6 +196,42 @@ export class Place extends QuestResource {
     else if (this.scope === Scopes.Remote) this._setupRemoteSite(world, line);
     else this._setupFixedLocation(world);
     this.sitePending = false;
+    this._stampSiteLayout();
+  }
+
+  /** WD3 (a port addition): a BUILDING site names its building by key, and a key names a building only in the layout
+   *  its town stood in - so the site carries that layout, and a load keeps the town in it while the quest runs
+   *  (systems/layoutPins.js). A town or dungeon site holds no building and carries none. */
+  _stampSiteLayout() {
+    const sd = this.siteDetails;
+    if (sd?.siteType === SITE_TYPES.Building && sd.buildingKey > 0) stampLayout(sd, layoutStampOfMapId(sd.mapId));
+  }
+
+  /**
+   * WD3 (AUDIT WD3 S5): A BUILDING SITE IN A TOWN THAT NOW STANDS IN ANOTHER LAYOUT than the site was chosen in (online,
+   * a quest of the player's own from before the town mods; offline, a pack that could not be loaded for the town's
+   * pin) names another building by its key - a stranger's, a shop for a house, or none. It is chosen again in the town
+   * as it stands, by the place's own law (P2/P3, the same exclusions), keeping what was already assigned to it, and
+   * stamped anew. Answers whether it moved. A site no building of its kind stands for now keeps its record.
+   */
+  reseatMovedSite(world) {
+    const sd = this.siteDetails;
+    if (sd?.siteType !== SITE_TYPES.Building || !(sd.buildingKey > 0) || recordStands(sd)) return false;
+    const region = world?.maps?.getRegion?.(sd.regionIndex);
+    const index = region?.mapNameLookup?.get?.(sd.locationName);
+    const location = index == null ? null : world.maps.getLocation(sd.regionIndex, index);
+    if (!location?.exterior?.exteriorData) return false;
+    let found;
+    if (this.p2 === -1 && this.p3 === 0) found = this._collectQuestSitesOfBuildingType(world, location, BT_ALL_VALID, this.p3);
+    else if (this.p2 === -1 && this.p3 === 1) found = this._collectQuestSitesOfBuildingType(world, location, BT_ANY_HOUSE, this.p3);
+    else if (this.p2 === -1 && this.p3 === 2) found = this._collectQuestSitesOfBuildingType(world, location, BT_ANY_SHOP, this.p3);
+    else found = this._collectQuestSitesOfBuildingType(world, location, this.p2, this.p3);
+    if (!found.length && this.p2 >= BT_HOUSE1 && this.p2 <= BT_HOUSE6) found = this._collectQuestSitesOfBuildingType(world, location, BT_ANY_HOUSE, this.p3);
+    if (!found.length) return false;
+    const next = found[this._range(found.length)];
+    this.siteDetails = { ...next, questUID: sd.questUID ?? next.questUID, magicNumberIndex: sd.magicNumberIndex ?? 0, selectedMarker: sd.selectedMarker ?? next.selectedMarker };
+    this._stampSiteLayout();
+    return true;
   }
 
   _rolls() { return this.parentQuest?.rolls ?? Math.random; }
@@ -737,6 +774,7 @@ export class Place extends QuestResource {
       questSpawnMarkers: null, questItemMarkers: null,
       selectedMarker: { targetResources: null },
     };
+    this._stampSiteLayout();   // WD3
     this.symbol = new QuestSymbol(symbolName);
     this.sitePending = false;
     return true;

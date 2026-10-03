@@ -12,7 +12,7 @@ import { dfMeshToModel } from '../world/meshReader.js'; import { patchSeams } fr
 import { fetchBytes, texName } from './shared.js';
 import { decodedTexture, preloadTextureArchive, isVendorArchive, vendorTextureStandIn, setTextureDeriveContext } from '../systems/textureReplacement.js';   // M-TEX: user-supplied textures override the classic ones
 import { classicRecordRgba } from '../formats/derivedTexture.js';   // WD2: a mod sprite rebuilt from the player's own record
-import { customModelFor } from '../world/customModels.js';   // DS1: models no ARCH3D carries
+import { customModelFor, customAliasFor, aliasSubMeshes, customModelNeeds } from '../world/customModels.js';   // DS1: models no ARCH3D carries; WD3: a classic model with its pictures swapped
 import { dyeToken, changeDyeBitmap } from '../characters/dyes.js';   // DW3: the per-dye UI variant; DYE-ICON: and the classic arm's ChangeDye
 import { ROTOR, MACHINERY, MACHINERY_MODEL_ID, MACHINERY_CHILDREN, PLANK_GEAR, ROLLER } from '../world/windmillMesh.js';   // WM2b/WM2d/WM4b: the vendored mill and its machinery, uploaded like any other model
 import { skinnedBody } from '../world/windmills.js';   // WM2e: its walls and roof follow the climate
@@ -119,6 +119,7 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     const t = textureFiles.get(archive);
     return { width: t.getWidth(record), height: t.getHeight(record) };
   };
+  const _standInMisses = new Set();   // WD3: the stand-in records said once each
   const uploadRecord = (archive, record, { opaque = false, mips, removeMask = false, dye = null, dyeTarget = null } = {}) => {   // DYE-ICON: `dyeTarget` - the swatch the classic arm dyes (itemDye.js itemDyeTarget)   // DW3: `dye` - GetItemImage asks the replacement by the item's dye (ItemHelper.cs:458); the icon uploads under a per-dye variant and answers which   // REVIEW 2026-09-05: `mips: false` for item icons (ImageReader.cs:59 builds UI art with no chain); HM1: `removeMask` = ItemHelper's GetItemImage(removeMask: true), the item icons' door - 0xFF becomes the cutout before the upload
     const t = textureFiles.get(archive);
     const bitmap = t.getDFBitmap(record, 0);
@@ -172,6 +173,16 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     // palette index 0 transparent. This one door served both, so every
     // index-0 mortar run in a wall texture became a slit the model
     // shader discarded, and the room behind it showed through.
+    // WD3: A RECORD ITS STAND-IN ARCHIVE HAS NO PICTURE FOR. A mod-only archive answers every record under its highest
+    // (`recordCount`), and the town mods place records between the ones a mod supplies (1230_2, 1210_13 - none of their
+    // peers' pictures is carried): the stand-in's getColor32 has nothing, and a null upload threw the whole interior. DFU
+    // finds no material and the billboard draws nothing (MaterialReader answers null); here a clear pixel stands for it
+    // - its batch draws nothing - and the miss is said once, by name.
+    if (!swap && t.vendor) {
+      if (!_standInMisses.has(`${archive}_${record}`)) { _standInMisses.add(`${archive}_${record}`); console.warn(`[texture] ${archive}_${record}: no mod picture and no stand-in - nothing drawn, as in DFU`); }
+      renderer.uploadTexture(archive, record, { width: 1, height: 1, colors: new Uint8ClampedArray(4) }, variant !== undefined ? { opaque, mips, variant, replacement: true, placeholder: true } : { opaque, mips, replacement: true, placeholder: true });   // AUDIT WD3 T3: a picture that lands later takes its place
+      return variant;
+    }
     const masked = swap ? null : removeMask ? changeMask(bitmap) : bitmap;   // HM1: a clone - the cached record keeps its mask for the doll
     const color32 = swap ?? t.getColor32(dyed ? changeDyeBitmap(masked, dye, dyeTarget) : masked, opaque ? -1 : 0);   // DYE-ICON: the mask first, then the dye (:467-474)
     // AUDIT RETRO1 A4: a replacement is flagged - TextureReader's retro arm (no mip chain) never reaches TryImportTexture's
@@ -268,12 +279,22 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
       return gpu;
     }
     // DS1: the registry's models (world/customModels.js) - asked before ARCH3D, as MeshReplacement is
-    const custom = customModelFor(modelIdNum);
+    // ARENA1: a model built over classic pieces (the colosseum's undercroft) reads them out of the player's ARCH3D -
+    // their pictures loaded first, so dfMeshToModel sizes their uvs as the pieces' own build would
+    for (const id of customModelNeeds(modelIdNum)) {
+      const i = arch.getRecordIndex(id);
+      if (i !== -1) for (const sm of arch.getMesh(i).subMeshes) await getTexture(sm.textureArchive);
+    }
+    const custom = customModelFor(modelIdNum, { classicModel: classicModelOf });
     if (custom) {
       const gpu = await uploadModel(modelIdNum, custom);
       cpuModels.set(modelIdNum, { modelIdNum, positions: custom.positions, indices: custom.indices, subMeshes: custom.subMeshes, doors: custom.doors ?? [], normals: custom.normals, uvs: custom.uvs });
       return gpu;
     }
+    // WD3: an ALIAS - a classic model read out of the player's ARCH3D with some of its pictures swapped
+    // (world/customModels.js registerModelAlias; the town mods' coloured beds)
+    const alias = customAliasFor(modelIdNum);
+    if (alias) return buildAliasMesh(modelIdNum, alias);
     const index = arch.getRecordIndex(modelIdNum);
     if (index === -1) {
       gpuMeshes.set(modelIdNum, null);
@@ -291,6 +312,25 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     // whichever caller happened to still have it. The model knows.
     cpuModels.set(modelIdNum, { modelIdNum, positions: model.positions, indices: model.indices, subMeshes: model.subMeshes, doors: model.doors, normals: model.normals, uvs: model.uvs });   // PERF4: the static batch merges the whole vertex
     gpuMeshes.set(modelIdNum, gpu);
+    return gpu;
+  }
+  /** ARENA1: a classic model as dfMeshToModel mints it (no seam patched - a copy of it in a custom model is the
+   *  ARCH3D record's own), or null; its pictures must be loaded (customModelNeeds). */
+  function classicModelOf(id) {
+    const i = arch.getRecordIndex(id);
+    return i === -1 ? null : dfMeshToModel(arch.getMesh(i), getTextureSize);
+  }
+  /** WD3: an alias's mesh - its classic model's geometry and UVs (sized by the classic pictures, which a swapped
+   *  picture keeps), the swap laid on, then an ordinary model under the alias's own id. No classic model, no mesh. */
+  async function buildAliasMesh(modelIdNum, alias) {
+    const index = arch.getRecordIndex(alias.model);
+    if (index === -1) { gpuMeshes.set(modelIdNum, null); return null; }
+    const dfMesh = patchSeams(alias.model, arch.getMesh(index));
+    for (const sm of dfMesh.subMeshes) await getTexture(sm.textureArchive);
+    const classic = dfMeshToModel(dfMesh, getTextureSize);
+    const model = { ...classic, subMeshes: aliasSubMeshes(classic.subMeshes, alias.remap) };
+    const gpu = await uploadModel(modelIdNum, model);
+    cpuModels.set(modelIdNum, { modelIdNum, positions: model.positions, indices: model.indices, subMeshes: model.subMeshes, doors: model.doors, normals: model.normals, uvs: model.uvs });
     return gpu;
   }
   /** WM2b: THE WINDMILL ROTOR, uploaded once per scene.

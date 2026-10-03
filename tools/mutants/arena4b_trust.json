@@ -1,0 +1,155 @@
+[
+  {
+    "name": "ARENA4b-TRUST-CL-UNCHECKED",
+    "file": "src/net/identityToken.js",
+    "old": "  if (c.cl !== undefined && !characterLevelIssuable(c.cl)) return false;\n",
+    "new": "",
+    "tests": [
+      "test/arena4b_trust.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-TRUST-CL-FRACTION",
+    "file": "src/net/identityToken.js",
+    "old": "export const characterLevelIssuable = (cl) => Number.isSafeInteger(cl) &&",
+    "new": "export const characterLevelIssuable = (cl) => Number.isFinite(cl) &&",
+    "tests": [
+      "test/arena4b_trust.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-TRUST-CL-UNMINTED",
+    "file": "src/net/identityToken.js",
+    "old": "  if (who?.cl !== undefined) claims.cl = who.cl;",
+    "new": "  void who?.cl;",
+    "tests": [
+      "test/arena4b_trust.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-TRUST-CL-MAX",
+    "file": "src/net/identityToken.js",
+    "old": "export const CHARACTER_LEVEL_MAX = 1000;",
+    "new": "export const CHARACTER_LEVEL_MAX = 999;",
+    "tests": [
+      "test/arena4b_trust.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-TRUST-CLAIM-BELIEVED",
+    "file": "src/net/arenaLaw.js",
+    "old": "cl <= ARENA_CL_MAX ? cl : Math.min(arenaLv(lv), ladderLevelCap(tier));",
+    "new": "cl <= ARENA_CL_MAX ? Math.max(cl, arenaLv(lv)) : Math.min(arenaLv(lv), ladderLevelCap(tier));",
+    "tests": [
+      "test/arena4b_trust.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-TRUST-UNCAPPED",
+    "file": "src/net/arenaLaw.js",
+    "old": "cl <= ARENA_CL_MAX ? cl : Math.min(arenaLv(lv), ladderLevelCap(tier));",
+    "new": "cl <= ARENA_CL_MAX ? cl : arenaLv(lv);",
+    "tests": [
+      "test/arena4b_trust.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-TRUST-CAP-TIER",
+    "file": "src/net/arenaLaw.js",
+    "old": "for (const b of ARENA_LADDER_SPEC[tier] ?? []) for (const [m, l] of b)",
+    "new": "for (const b of ARENA_LADDER_SPEC[0] ?? []) for (const [m, l] of b)",
+    "tests": [
+      "test/arena4b_trust.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-TRUST-MARGIN",
+    "file": "src/net/arenaLaw.js",
+    "old": "export const LADDER_LV_MARGIN = 5;",
+    "new": "export const LADDER_LV_MARGIN = 0;",
+    "tests": [
+      "test/arena4b_trust.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-TRUST-CAP-BEAST",
+    "file": "src/net/arenaLaw.js",
+    "old": "top = Math.max(top, l ?? ARENA_BEASTS[m]?.[0] ?? 1);",
+    "new": "top = Math.max(top, l ?? 1);",
+    "tests": [
+      "test/arena4b_trust.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-TRUST-VITALITY-SLOPE",
+    "file": "src/net/arenaLaw.js",
+    "old": "Math.min(PVE_HP_MAX, 25 + 30 * Math.max(1,",
+    "new": "Math.min(PVE_HP_MAX, 25 + 25 * Math.max(1,",
+    "tests": [
+      "test/arena4b_trust.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-TRUST-ATTACH-DROPPED",
+    "file": "server/src/index.js",
+    "old": "who.cl <= ARENA_CL_MAX ? { cl: who.cl } : {}) } : {};",
+    "new": "who.cl <= ARENA_CL_MAX ? {} : {}) } : {};",
+    "tests": [
+      "test/arena4b_trust.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-TRUST-NAMED-DROPPED",
+    "file": "server/src/index.js",
+    "old": "gio: c.i, ar: c.ar, cl: c.cl };",
+    "new": "gio: c.i, ar: c.ar };",
+    "tests": [
+      "test/arena4b_trust.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-TRUST-BOUT-UNSIGNED",
+    "file": "server/src/index.js",
+    "old": "lv: m.lv ?? a.lv ?? 1, cl: a.cl ?? null, title: a.title ?? null, banner: m.b ?? null }]",
+    "new": "lv: m.lv ?? a.lv ?? 1, cl: null, title: a.title ?? null, banner: m.b ?? null }]",
+    "tests": [
+      "test/arena4b_trust.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-TRUST-WORD-BELIEVED",
+    "file": "server/src/index.js",
+    "old": "lv: m.lv ?? a.lv ?? 1, cl: a.cl ?? null, title: a.title ?? null, banner: m.b ?? null }]",
+    "new": "lv: m.lv ?? a.lv ?? 1, cl: m.mh ?? a.cl ?? null, title: a.title ?? null, banner: m.b ?? null }]",
+    "tests": [
+      "test/arena4b_trust.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-TRUST-VITALITY-LEVEL",
+    "file": "src/net/arenaBrain.js",
+    "old": "maxHealth: st.kind === 'pvp' ? pvpVitality(x.lv) : ladderVitality(x.cl, x.lv, st.tier),",
+    "new": "maxHealth: st.kind === 'pvp' ? pvpVitality(x.lv) : ladderVitality(null, x.lv, st.tier),",
+    "tests": [
+      "test/arena4b_trust.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-TRUST-BRAIN-CL-LOST",
+    "file": "src/net/arenaBrain.js",
+    "old": "lv: x.lv ?? 1, cl: x.cl ?? null,",
+    "new": "lv: x.lv ?? 1, cl: null,",
+    "tests": [
+      "test/arena4b_trust.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-TRUST-IN-HEALTH",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "bout: bout.bout, lv: Math.max(1, Math.floor(deps.level?.() ?? 1)), ...myBanner() }",
+    "new": "bout: bout.bout, lv: Math.max(1, Math.floor(deps.level?.() ?? 1)), mh: Math.max(1, Math.floor(deps.maxHealth?.() ?? 1)), ...myBanner() }",
+    "tests": [
+      "test/arena4b_trust.test.js"
+    ]
+  }
+]

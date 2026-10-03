@@ -18,7 +18,11 @@ import { effectiveLevel } from '../systems/mentorMode.js';   // SOFTCAP1
 import { quickslotHand } from '../ui/quickslotTags.js';   // DISC21-C: an empty quickslot press reads the hand   // PX30
 import { lycanthropeAttackVoice, lycanthropeMoveSound } from '../systems/lycanthropy.js';   // V4: the beast's attack voice; LM1: the 4-20s move-sound loop; DISC10-E L3: the inventory refusal moved INTO the window door
 import { layoutDungeon, isDungeonExitDoor } from '../world/dungeonLayout.js';
-import { isGateArena, COURT_TEXT } from '../world/gateArena.js';   // WB3b: the Burning Court - what the Deadlands will not allow
+import { isGateArena, COURT_TEXT } from '../world/gateArena.js';
+import { isArenaFloor } from '../world/arenaFloor.js';
+import { isArenaUndercroft } from '../world/arenaCity.js';   // ARENA-FIX 4: the fighters' hall
+import { undercroftPopulation, chainTag } from '../world/arenaUndercroft.js';   // ARENA2: the arena floor's instance - what the sand will not allow
+import { ARENA_TEXT } from '../systems/arenaText.js';   // WB3b: the Burning Court - what the Deadlands will not allow
 import { expandMacros } from '../systems/talkSession.js';   // MACRO1: the global symbols every TEXT.RSC box passes through (MacroHelper)
 import { executeConsoleCommand } from '../systems/consoleCommands.js';   // E3: the probe door runs the real database
 import { enterDungeonAutomap, exitDungeonAutomap, detachedAutomapRecord, buildRevealIndex, bindAutomapLayout, automapRevealTick, automapEntranceTick, automapTrailTick, capsuleCentreFromEye, automapDungeonKey, SCAN_INTERVAL_S, recordTeleporterConnection, teleporterConnection, registerAutomapConsoleCommands } from '../systems/automap.js';   // A1; ROAD-C c2/S8 the teleport listener + the three console verbs, ROAD-E E3 on the command database
@@ -40,7 +44,7 @@ import { WATER_SCROLL_TILES_PER_SEC } from '../render/waterSurface.js';   // WAT
 import { enemyControllerHeight, idleSpriteHeight, flyerStandFeet, centreFromFeet, spriteOriginY, keepRebuiltSpawn } from '../characters/enemyAnchor.js';   // INCIDENT 2026-09-04 (ceiling bats): SetupDemoEnemy.cs:103-115 capsule + DaggerfallMobileUnit.cs:398-411 anchor
 import { MobileUnit, MOBILE_DAEDRA_SEDUCER, SeducerTransformBehaviour } from '../characters/mobileUnit.js';   // C11: classic sprite monsters   // A5: the Seducer transform pair + its trigger
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
-import { customModelFor, emptyModel } from '../world/customModels.js';   // DS1: models no ARCH3D carries, and GetModelData's false
+import { customModelFor, customAliasFor, emptyModel } from '../world/customModels.js';   // DS1: models no ARCH3D carries, and GetModelData's false; WD3: a classic model under another id
 import { RDB_SIDE, MOVE_ACTION_FLAGS, ACTION_FLAGS, TRIGGER_FLAGS } from '../world/rdbLayout.js';   // WAVE D: the move family - an acting FLAT tweens like the model beside it
 import { NPC_CONTEXT } from '../characters/staticNpc.js';   // AUDIT 64 F13: StaticNPC.SetLayoutData(RdbObject) stamps Context.Dungeon
 import { drawnFlat } from '../characters/nudeFlats.js';   // NUDE-FLATS: Show Nudity off draws a nude figure's clothed stand-in
@@ -180,6 +184,7 @@ import { HIT_KINDS } from '../net/gateBrain.js';   // WB4b: a blow on the court'
 import { bossReach, BOSS_SWAY_TEXT, BOSS_SWAY_TELL_MS } from '../world/gateBoss.js';   // WB4b: a swing meets the court's boss at his skin; WB8a: and a sway meets his refusal
 import { duelSpellOf } from '../combat/duelCombat.js';   // WB4b: the harmful families alone reach the court's boss, as they alone reach a duel opponent
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
+import { ARENA_PUPPET_OWNER } from '../net/arenaLaw.js';   // ARENA4: the relay's fighters' puppets - a blow on one is the referee's
 import { calculateCastCost } from '../systems/spellcost.js';
 import { snapshotPlayer, restorePlayer, composeSessionState, restoreSessionState , copyEffectEntry } from '../systems/save.js';   // B4: the ONE quest+talk composer
 import { saveSlot, loadSlot, quickLoadSlot, QUICK_SAVE_NAME, requestScreenshot, slotLoaded } from '../systems/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave; SS1: the shot arms here, the HOST loop delivers it
@@ -289,7 +294,7 @@ const q3 = (v) => Math.round(v * 1000) / 1000; const GENDER_BIT = ['male', 'fema
 const HIT_POS_MAX = 1e6;
 // AUDIT FOES FOE5: the most damage one peer's blow may claim. The host TRUSTS the number (it never recomputes - the
 // striker's own calc is the game's), so without a bound any joiner could one-shot every foe in the room and empty it
-// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:2674); the dungeon
+// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:2685); the dungeon
 // had none. Past anything a legal swing, shaft or blast can roll.
 const HIT_DMG_MAX = 10000;
 /** REST-SYNC: a joiner's ask is answered - or given up on - inside this long: its rest breaks once, at the next hour. */
@@ -353,7 +358,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const getModelPre = (id) => {
     if (!preModels.has(id)) {
       const custom = customModelFor(id);   // DS1: a registered model (world/customModels.js), asked before ARCH3D
-      const index = custom ? -1 : arch.getRecordIndex(id);
+      const alias = custom ? null : customAliasFor(id);   // WD3: an alias stands its classic model's geometry
+      const index = custom ? -1 : alias ? arch.getRecordIndex(alias.model) : arch.getRecordIndex(id);
       if (custom) preModels.set(id, custom);
       else if (index === -1) {
         // DS1: GetModelData answers false (RDBLayout.cs:634-638) - nothing drawn, no door taken - a world-data
@@ -366,6 +372,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   };
 
   const dungeon = layoutDungeon(dfLocation, blocks, getModelPre);
+  // ARENA-FIX 4: THE ARENA UNDERCROFT IS THE FIGHTERS' HALL (world/arenaUndercroft.js): its people, the training pit's
+  // dummy, the Hall of Champions' trophies and the beasts' chains stood at the layout's own markers, as flats of the
+  // block they stand in (a copy of the layout - the laid block is shared); its beasts below, and no random foe
+  const _undercroftHall = isArenaUndercroft(dfLocation) ? undercroftPopulation(dungeon.blocks) : null;
+  if (_undercroftHall) {
+    for (const [bi, b] of dungeon.blocks.entries()) {
+      const mine = _undercroftHall.flats.filter((f) => f.block === bi);
+      if (mine.length) b.layout = { ...b.layout, flats: [...b.layout.flats, ...mine] };
+    }
+  }
   const remap = (archive) => applyTextureTable(archive, dungeon.textureTable, climateBaseType);
 
   // SPAWNED-DUNGEONS-TTL: told once, the moment this context is built for a dungeon this client's own
@@ -767,6 +783,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // activated as a person at all.
         action: f.action,
         active: true, questBehaviour: null,
+        arenaRole: f.role ?? null,   // ARENA-FIX 4: an undercroft person's office (the Pit Master, the Keeper of the Hall, ...)
       } : null;
       if (pn) people.push(pn);
       // ...and the second act, for EVERY flat carrying a faction id.
@@ -836,6 +853,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     for (const l of collectDungeonLights(b.dfBlock)) {
       lights.push({ x: l.x + b.originX, y: l.y, z: l.z + b.originZ, range: l.range });
     }
+    if (_undercroftHall && bi === 0) for (const l of _undercroftHall.lights) lights.push({ ...l });   // ARENA-FIX 4: the hall's lamps (the dungeon's frame), once
     // WATER-BACK (2026-09-22, kurkku: "invisible water", with a picture
     // of a dry dungeon): THE BAND-AID OUTLIVED ITS BUG BY ONE DAY.
     //
@@ -935,6 +953,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // The extras are pulled back from walls by a ray through this dungeon's own collider (every
   // peer has the same geometry, so every peer builds the same list - the foe frame's index law).
   // The ray starts at chest height so a step or a floor seam does not read as a wall.
+  // ARENA-FIX 4: the hall stands no random foe - only the beast tier's chained beasts, passive at their markers (the undercroft is the city's own keep, never an elite spawn)
+  const _hallBeasts = _undercroftHall ? _undercroftHall.beasts.map((b, i) => ({ x: b.x, y: b.y, z: b.z, mobileType: b.mobileType, fixed: true, reaction: 'passive', gender: 'unspecified', spawnDistanceType: 0, loadID: 0x55430100 + i, blockIndex: -1, arenaChained: i })) : null;
   const enemies = dfLocation?.elite
     ? expandEliteEnemies(_layoutEnemies, {
       copies: ELITE_FOE_MULTIPLIER,
@@ -943,12 +963,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // copy off a walkway's edge (or onto a crate) reads as another floor and turns to the next bearing
       floor: (at) => { const d = collider.raycast([at[0], at[1] + 1, at[2]], [0, -1, 0], 3); return Number.isFinite(d) ? at[1] + 1 - d : null; },
     })
-    : _layoutEnemies;
-  markDungeonChampions(enemies, dfLocation.dungeon.recordElement.header.locationId);   // LOOT7: the layout's champions, a hash of the place and the marker - every client the same, no wire word
+    : (_hallBeasts ?? _layoutEnemies);
+  if (!_undercroftHall) markDungeonChampions(enemies, dfLocation.dungeon.recordElement.header.locationId);   // ARENA-FIX 4: no champion among the chained beasts   // LOOT7: the layout's champions, a hash of the place and the marker - every client the same, no wire word
   // ELITE FOES: an Elite Dungeon holds 3 or 4 champions among its foes - a pure pick over the list every client builds,
   // seeded by the dungeon's own id, so every client marks the same records (systems/eliteFoes.js)
   // ...and a normal dungeon at most one, one time in five
   // ONLINE ONLY: offline, no elites (the room's id is read straight off opts - onlineRoom() is declared below)
+  // (ARENA-FIX 4: the undercroft's chained beasts stand passive, which the pick never takes)
   if (elitesAllowed({ onlinePage: isOnlinePage(), inRoom: opts.selfId?.() != null })) pickDungeonElites(enemies, dfLocation?.dungeon?.recordElement?.header?.locationId ?? dfLocation?.name ?? '', { elite: !!dfLocation?.elite });
   // C8 E1 (?foes): CLASS enemies (mobileType > 43, human morphology)
   // spawn as canonical rigs instead of their C3 billboards - one rig
@@ -991,7 +1012,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // AUDIT 68 S04-v-dungeon-dead-rig-deps: the rig's engineRig/raceCharacter imports and the BODY00I0 ramp derive
     // fed foeDeps keys nothing read (class enemies are sprite mobiles since C17), and a failure in them cost the dungeon its class enemies.
     const [{ EnemyAI, withinYaw, isBackFacing, openDoorsStep }, { EnemyAttack }, { makeEnemyEntity, loadMonsterCareer, applyProgressionScaling }, { EnemyCaster, castEnemySpell: castShared, hasMagickaToCast },
-      { runTargetMachine, isPlayerTarget, isLocalPlayerTarget, PLAYER_TARGET, PEER_CAST_TARGET, resetAllyTeamOnPlayerAttack, targetAimPoint, enemyArrowOrigin, enemyTransformPoint, arrowAimDirection, bumpAtkCount }] = await Promise.all([
+      { runTargetMachine, boutGate, isPlayerTarget, isLocalPlayerTarget, PLAYER_TARGET, PEER_CAST_TARGET, resetAllyTeamOnPlayerAttack, targetAimPoint, enemyArrowOrigin, enemyTransformPoint, arrowAimDirection, bumpAtkCount }] = await Promise.all([
       import('../characters/enemyMotor.js'), import('../characters/enemyAttack.js'),
       import('../characters/enemyEntity.js'), import('../characters/enemyCasting.js'),
       // MT-iv: dynamic, as the rest of this block. (AUDIT DISC19: the
@@ -1025,7 +1046,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // MT-iv: the target machine. Every consumer below the lazy block
       // reads foeDeps.* and must guard on foeDeps first, as
       // resolvePlayerHit already does.
-      runTargetMachine, isPlayerTarget, isLocalPlayerTarget, PLAYER_TARGET, PEER_CAST_TARGET, resetAllyTeamOnPlayerAttack, bumpAtkCount,   // AUDIT WATCH1 (one home): the attack count's spelling on the wire, through the LAZY subsystem (MT-iv)   // AUDIT WORLD3 C3: the local player, told from any player; AUDIT WORLD6b-iii(a) A10: the peer's cast stand-in
+      runTargetMachine, isPlayerTarget, isLocalPlayerTarget, PLAYER_TARGET, PEER_CAST_TARGET, resetAllyTeamOnPlayerAttack, boutGate, bumpAtkCount,   // ARENA2: the bout team's gate (the foe yield floor's twin below); AUDIT WATCH1 (one home): the attack count's spelling on the wire, through the LAZY subsystem (MT-iv)   // AUDIT WORLD3 C3: the local player, told from any player; AUDIT WORLD6b-iii(a) A10: the peer's cast stand-in
       targetAimPoint, enemyArrowOrigin, enemyTransformPoint, arrowAimDirection,   // AUDIT 62 F21 (review): the ONE aim-point law, shared with the exterior pool   // ROAD-H H1/H1b: and the ONE arrow loose point + the crouch dip beside it
     };
     // ENHANCED AI 4: the routes' world - the per-frame findPath budget
@@ -1233,9 +1254,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const careerIndex = e.mobileType - 128;
       const cf = new D.ClassFile();
       cf.load(await D.fetchBytes(`CLASS${String(careerIndex).padStart(2, '0')}.CFG`));
-      const entity = D.makeEnemyEntity(e.mobileType, basics, cf.career, effectiveLevel(D.playerEntity));   // SOFTCAP1: a mentor's dungeon is built at the group's level
+      const entity = D.makeEnemyEntity(e.mobileType, basics, cf.career, e.level ?? effectiveLevel(D.playerEntity));   // SOFTCAP1: a mentor's dungeon is built at the group's level; ARENA2: a bout fighter at its tier's
       applyEliteScaling(entity, e);   // ELITE: double health, double damage
-      if (!puppet) applyProgressionScalingTo(entity, basics);   // SOFTCAP1: tougher high-tier foes against skills past 100 (a puppet is its owner's build)
+      if (!puppet && e.level == null) applyProgressionScalingTo(entity, basics);   // SOFTCAP1: tougher high-tier foes against skills past 100 (a puppet is its owner's build); ARENA2: never a bout fighter (the ladder is a fixed mountain)
       applySpawnAlliance(entity, e);   // MT-ii / AUDIT OH-F C4
       // S1/E4b/AUDIT 18/AUDIT 24/LR1: SetEnemyCareer's whole loot chain -
       // the table on the PLAYER's level and gender, the equipment
@@ -1319,9 +1340,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const pos = behaviour === 'Flying' ? flyerStandFeet(collider, [e.x, e.y, e.z], idleH, feetGiven) : D.floorLanding(collider, [e.x, e.y + 0.2, e.z]);
       const yawDeg = ((e.mobileType * 73 + Math.round(e.x + e.z)) % 8) * 45;   // deterministic facing (Ledger A rule)
       const career = await D.loadMonsterCareer(e.mobileType, D.fetchBytes);
-      const entity = D.makeEnemyEntity(e.mobileType, basics, career, effectiveLevel(D.playerEntity));   // SOFTCAP1: a mentor's dungeon is built at the group's level
+      const entity = D.makeEnemyEntity(e.mobileType, basics, career, e.level ?? effectiveLevel(D.playerEntity));   // SOFTCAP1: a mentor's dungeon is built at the group's level; ARENA2: a bout fighter at its tier's
       applyEliteScaling(entity, e);   // ELITE: double health, double damage
-      if (!puppet) applyProgressionScalingTo(entity, basics);   // SOFTCAP1: tougher high-tier foes against skills past 100 (a puppet is its owner's build)
+      if (!puppet && e.level == null) applyProgressionScalingTo(entity, basics);   // SOFTCAP1: tougher high-tier foes against skills past 100 (a puppet is its owner's build); ARENA2: never a bout fighter
       applySpawnAlliance(entity, e);   // MT-ii / AUDIT OH-F C4
       spawnEnemyLoot(entity, e.mobileType, basics, D.playerEntity, { ...eliteLootOpts(e), where: 'dungeon' });   // ELITE: +20% drops, +20% quality. RF2: SetEnemyCareer's whole loot chain, one seam (the table, the kit, the trio, the port's roll)
       if (e.eliteFoe) grantEliteLoot(entity, effectiveLevel(D.playerEntity));   // ELITE FOES: the champion's own drop
@@ -1405,6 +1426,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // the same lane, to the whole room. RETIRED there: every foe past the run the room should see, it sees, and hunts it.
   // A PRIVATE quest's foe stays its player's own - the party's law, Mac's ("Party shares them"), not a hole.
   const _layoutFoes = foes.length;   // AUDIT WORLD B2: the layout's run - every foe past it (an encounter's, a summon's, a quest's) is this player's own
+  // ARENA-FIX 4: a chained beast - the bout team's tag nobody else carries, always held (it targets nobody and nobody
+  // it), held at the yield floor if struck, no loot; the keepers' warning when it is
+  for (const f of foes) {
+    if (f.src?.arenaChained == null || !f.entity) continue;
+    f.entity.bout = chainTag(f.src.arenaChained, () => hudText.add(ARENA_TEXT.undercroft.chained));
+    f.entity.items = [];
+  }
   _layoutStood = true;   // OH-E: every foe stood from here on is a spawn (GameManager.OnEnemySpawn's, with its own LoadID)
   // REST-SYNC (2026-09-26, Mac: "when resting in a dungeon it spawns enemys that are out of sync with others"; asked,
   // "Sync them into the room"): A REST'S ENCOUNTER IS THE ROOM'S - the rest half of the flag above (a summon's and a
@@ -1457,13 +1485,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  Entity.Team from that copy, so BOTH per-instance fields turn and
    *  the shared frozen basics row does not - getting that wrong would
    *  ally every foe of the type. */
-  async function spawnLooseFoe(mobileType, position, { gender = null, yawRad = null, allied = false, questSpawn = false, loadID = null } = {}) {
+  async function spawnLooseFoe(mobileType, position, { gender = null, yawRad = null, allied = false, questSpawn = false, loadID = null, level = null, bout = null } = {}) {
     // AUDIT OH-F C3/C4: the alliance and the quest mark ride the build's record - DFU sets both before OnEnemySpawn
     // is raised (GameObjectHelper.cs:1286-1294's QuestSpawn, SetupDemoEnemy.cs:85-86's team), and a rebuild keeps them
-    const e = { mobileType, gender, x: position[0], y: position[1], z: position[2], spawnDistanceType: 0, ...(allied ? { allied: true } : {}), ...(questSpawn ? { questSpawn: true } : {}), ...(loadID != null ? { loadID } : {}) };
+    // ARENA2: a bout fighter (scenes/arenaBouts.js) at its tier's `level`, carrying its `bout` from its first frame -
+    // no loot (nobody dies on the sand to drop it), and never the room's (the instance is one player's)
+    const e = { mobileType, gender, x: position[0], y: position[1], z: position[2], spawnDistanceType: 0, ...(allied ? { allied: true } : {}), ...(questSpawn ? { questSpawn: true } : {}), ...(loadID != null ? { loadID } : {}), ...(Number.isFinite(level) ? { level } : {}) };
     const f = await buildFoeAt(e, false);
     if (!f) return null;
     if (yawRad != null && f.ai) f.ai.yaw = yawRad;
+    if (bout) { f.entity.bout = bout; f.entity.items = []; f._bout = true; return f; }
     f._loose = true;   // SUMMON-SYNC: a loose stand - it rides the room's own lane to everyone in the room (ownLoose)
     return f;
   }
@@ -2047,7 +2078,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:15537 / exterior.js:3784), set
+  // host's own townTalk sink (world.js:16022 / exterior.js:3926), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2385,7 +2416,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // AUDIT 68 S19-rest-alert-decay-wrong-clock: at the span's own end - the character's clock (LIVED1), which a
     // rested night moves online as offline.
     decayEnemyAlert(playerEntity, Math.floor(end));
-    for (let l = 0; l < n; l++) {
+    for (let l = 0; l < n && !_undercroftHall; l++) {   // ARENA-FIX 4: nothing breaks a rest in the fighters' hall
     const hit = intermittentEnemySpawn({
       gameMinutes: start + l + 1, inside: true, inDungeon: true, isResting: true,
       restAsks: playerEntity.restAsks,   // SURV4 + SURV-TIERS: priced at the open (scenes/shared.js) - the bare floor asks twice in Hard; a fire on it, or any Casual floor, once
@@ -2502,7 +2533,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     return true;
   });
   function hurtPlayer(dmg) {
-    hurtEntity(playerEntity, dmg);
+    // ARENA2: in my bout on the arena's sand (world/arenaFloor.js - the host's word) the blow that would kill leaves me at
+    // 1 and the bout hears I am down: playerEntity.hurtPlayer's `spare`, the duel's own floor
+    hurtEntity(playerEntity, dmg, opts.playerSpare?.() ?? {});
   }
   // S13 magicka sink (parallel to heal/hurt): the SpellPoints damage
   // family drives it. DecreaseMagicka floors at 0; surfaces for the
@@ -2634,7 +2667,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:1427,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:1437,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -2794,6 +2827,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // WB11c: the Legion-Lord's host as marks a harmful spell meets - each by its number and name
     hostMarks: opts.gateHost ? () => gateHostBodies().map((q) => ({ i: q.host, name: q.entity?.name ?? '', feet: q.ai.feet, height: q.ai.height, radius: q.ai.radius })) : null,
     castAtHost: opts.gateHost ? (sp, i) => spellOnHost(sp, i) : null,
+    // ARENA4b: MY OPPONENT ON A RELAY'S SAND as the one body my harmful spells reach (the duel's own seam, hostMagic.js
+    // duelMarksFor - a touch, a missile or a blast that meets them), and the door such a spell leaves through
+    // (spellOnRival: the number to the referee as a spell, as a swing's goes); none outside a bout between players
+    duelMark: opts.arenaRival ? () => { const rb = arenaRivalBody(); return rb ? { id: rb.rival, name: rb.entity?.name ?? '', feet: rb.ai.feet, height: rb.ai.height } : null; } : null,
+    castAtDuel: opts.arenaRival ? (_id, sp) => spellOnRival(sp) : null,
     // A10: THE RECALL ARRIVAL, ROUTED. This used to be a stand-in line
     // saying the anchor machinery lived in the streaming host - true of
     // the machinery, false as a refusal: this context is the one the
@@ -3176,7 +3214,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1126 against :1156; worldModes.js:8121 against :8141).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1126 against :1156; worldModes.js:8366 against :8386).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -3628,6 +3666,55 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     reportPlayerAttack({ hit: true, damage: Math.round(dealt) });   // HN1: the number pops as a blow's does
     return landOnHost(hb, dealt, HIT_KINDS.Spell);
   }
+  // ═══ ARENA4: MY OPPONENT ON A RELAY'S SAND, MET ═══════════════════════════════════════════════════════════════
+  // (2026-10-02, Mac: "choose to matchmake for a real opponent to take on in real time"). The outer host's word of the
+  // other player in a refereed bout (`opts.arenaRival` - scenes/world.js: their fighter id, where their body stands, its
+  // height and radius, a stand-in for the formulas) as a foe-shaped record, made each time asked; none outside such a
+  // bout. Never in `foes` - their body is the room's (net/remotePlayers.js) - so a blow of mine that meets it is computed
+  // here by the game's own law and its number goes to the relay's referee (`opts.onArenaHit`, PVP-REF), which holds both
+  // fighters' health and decides what lands.
+  function arenaRivalBody() {
+    const r = opts.arenaRival?.() ?? null;
+    if (!r || !r.entity || !Array.isArray(r.feet) || !(r.height > 0) || !(r.radius > 0) || typeof r.i !== 'string') return null;
+    return { rival: r.i, dead: false, entity: r.entity, mobileType: null, ai: { feet: r.feet, yaw: r.yaw ?? 0, height: r.height, radius: r.radius, centreOffset: r.height / 2, isHostile: true } };
+  }
+  /** ARENA4b: THE BLOW'S SEQUENCE the referee reads (net/arenaBrain.js refBlow - one blow however many bodies it met): a
+   *  swing's every body one number (resolvePlayerHit), each shaft its own, each spell its own. */
+  let _arenaQ = 0;
+  const nextArenaQ = () => (_arenaQ = (_arenaQ + 1) & 0x7fffffff);
+  /** ARENA4b: A CAST'S SEQUENCE on the relay's fighters - every body one blast (or one round of its effects) meets in the
+   *  cast engine's one synchronous run shares one number, the next run a new one: the referee counts the cast once
+   *  (PVP-REF's three in five seconds), never once a body as ARENA4's unnumbered claims were. */
+  let _arenaSpellQ = null;
+  const arenaSpellQ = () => {
+    if (_arenaSpellQ == null) { _arenaSpellQ = nextArenaQ(); void Promise.resolve().then(() => { _arenaSpellQ = null; }); }
+    return _arenaSpellQ;
+  };
+  /** A blow's number on my opponent, out to the referee (ARENA4b: with its sequence); answers whether it went. */
+  const landOnRival = (rb, damage, kind) => !!opts.onArenaHit?.({ i: rb.rival, d: damage, kind, w: playerWeapon.strikingWeapon?.templateIndex ?? -1, m: playerWeapon.strikingWeapon?.material ?? 0, q: _arenaQ });
+  /** A swing of mine that met my opponent: the parry's ring for none, else the hit's sound and blood at them and the
+   *  number out (their own screen bleeds as the relay's health falls). */
+  function swingOnRival(rb, damage, lookDir) {
+    const chest = [rb.ai.feet[0], rb.ai.feet[1] + rb.ai.centreOffset, rb.ai.feet[2]];
+    if (damage <= 0) { audio.play3d(SOUND.Parry6, chest, 1.1, { maxDistance: 24 }); landOnRival(rb, 0, 'melee'); return; }
+    audio.play3d(hitSoundFor(playerWeapon.strikingWeapon), chest, ENEMY_HIT_VOLUME, { maxDistance: 24 });
+    hitEffects?.showBloodSplash(0, chest, null, bloodHit(damage, rb.entity, { fromPlayer: true, weapon: playerWeapon.strikingWeapon, swing: playerWeapon.machine?.state, forward: lookDir }));
+    landOnRival(rb, damage, 'melee');
+  }
+  /** ARENA4b: A HARMFUL SPELL OF MINE THAT MET MY OPPONENT (hostMagic's duel seam): its harmful families on their
+   *  stand-in by the one door every spell lands through, the damage summed and out to the referee as a spell - its own
+   *  sequence, PVP-REF's three casts in five seconds and sixty a cast deciding what lands (swingOnRival's road). */
+  function spellOnRival(sp) {
+    const rb = arenaRivalBody(), harm = duelSpellOf(sp);
+    if (!rb || !harm) return false;
+    let dealt = 0;
+    const sinks = { hurt: (n) => { dealt += Math.max(0, n); }, heal() {}, drainFatigue() {}, restoreFatigue() {}, drainMagicka() {}, restoreMagicka() {} };
+    try { applySpell(harm, playerEntity.level, rb.entity, sinks, Math.random, { entity: playerEntity }); } finally { rb.entity.activeEffects = []; }
+    if (!(dealt >= 1)) return false;
+    reportPlayerAttack({ hit: true, damage: Math.round(dealt) });   // HN1: the number pops as a blow's does
+    nextArenaQ();
+    return landOnRival(rb, dealt, 'spell');
+  }
   /** How the swing sees him: the distance to his body's SURFACE (his axis is `radius` in and his middle `height/2` up - a
    *  point-centre law would ask a swing to reach 3 m into him), in view at the nearest point of him, the way to it
    *  clear. */
@@ -3709,6 +3796,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     return spellOnBoss(record);
   }
   function resolvePlayerHit(eye, inViewFn, playerFeet, lookDir) {
+    nextArenaQ();   // ARENA4b: this swing is one blow to the referee, every body it meets
     // AUDIT 23 (combat-14): entity colliders resolve FIRST
     // (WeaponManager.cs:1048-1056 foreach over hitColliders);
     // WeaponEnvDamage runs only in the no-entity fallback (:1057-1064
@@ -3733,6 +3821,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (f === boss) return bossSight(eye, inViewFn, boss);
       if (f.crystal != null) return bossSight(eye, inViewFn, f);   // WB9c: a crystal of Oblivion by its surface, as he is
       if (f.host != null) return bossSight(eye, inViewFn, f);   // WB11c: one of his host by its surface
+      if (f.rival != null) return bossSight(eye, inViewFn, f);   // ARENA4: my opponent by their surface
       const c = [f.ai.feet[0], f.ai.feet[1] + (f.ai.height ?? CAPSULE_HEIGHT) / 2, f.ai.feet[2]];   // foe center (mid-capsule) - ITS capsule (REVIEW 2026-09-05), the 0.9 was the player's
       const dx = c[0] - eye[0], dy = c[1] - eye[1], dz = c[2] - eye[2];
       const dist = Math.hypot(dx, dy, dz);
@@ -3742,6 +3831,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     };
     for (const cr of gateCrystalBodies()) { cr._backFacing = false; live.push(cr); }   // WB9c: the Reckoning's crystals, bodies the swing meets as it meets him
     for (const hb of gateHostBodies()) { hb._backFacing = false; live.push(hb); }   // WB11c: his host, bodies the swing meets (its facing is the relay's walk, not a body's - no backstab)
+    const rival = arenaRivalBody();   // ARENA4: my opponent on a relay's sand - a body the swing meets, by its surface
+    if (rival) { rival._backFacing = foeDeps.isBackFacing(rival.ai.yaw, rival.ai.feet, playerFeet); live.push(rival); }
     // (the module-level playerEntity import IS foeDeps.playerEntity -
     // the old shadowing destructure was the null read that crashed)
     let hitEnemy = false;
@@ -3755,6 +3846,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (foe === boss) { hitEnemy = true; swingOnBoss(boss, damage, lookDir); continue; }   // WB4b: his own arm - nothing of a foe's door is his
       if (foe.crystal != null) { hitEnemy = true; swingOnCrystal(foe, damage); continue; }   // WB9c: a crystal's own - no blood, no foe's door
       if (foe.host != null) { hitEnemy = true; swingOnHost(foe, damage, lookDir); continue; }   // WB11c: one of his host's own - its blood, no foe's door
+      if (foe.rival != null) { hitEnemy = true; swingOnRival(foe, damage, lookDir); continue; }   // ARENA4: my opponent's - the number to the referee
       // WeaponDamage returns true for a CONNECTING swing even at zero
       // damage (WeaponManager.cs:617-637 falls through to
       // DecreaseHealth/HandleAttackFromSource and returns true), so
@@ -3985,6 +4077,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
             retireMissile(m);
             continue;
           }
+          // ARENA4: a shaft meets my opponent on a relay's sand by their whole body - the number to the referee
+          const rv = arenaRivalBody();
+          if (rv && missileHitsCapsule(m.pos, rv.ai.feet, rv.ai.height, rv.ai.radius)) {
+            nextArenaQ();   // ARENA4b: each shaft its own blow
+            playerArrowHitFoe(m, rv, { playerEntity, playerWeapon, playerFeet, audio, hitEffects, say: (l) => hudText.add(l), dealDamage: (t, d) => landOnRival(rv, d, 'arrow') });
+            retireMissile(m);
+            continue;
+          }
           // WB9c: a shaft meets a crystal by its whole body - the one player-arrow law against its stand-in (no blood)
           const cr = gateCrystalBodies().find((q) => missileHitsCapsule(m.pos, q.ai.feet, q.ai.height, q.ai.radius));
           if (cr) {
@@ -4005,11 +4105,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           for (const f of foes) {
             if (f.dead || f.companion != null) continue;   // AUDIT CC-B1: the player's shaft flies past a companion (the street's and a building's spare him already)
             if (missileHitsFoe(m.pos, f)) {   // ROAD-H tail: DaggerfallMissile.cs:339's SphereCast meets the foe's CAPSULE (REVIEW 2026-09-05 had its centre as a point)
+              nextArenaQ();   // ARENA4b: each shaft its own blow to the referee (a relay's fighter's puppet - damageFoe's lane)
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:25828,
-              // exterior.js:5406 and worldModes.js:8842 already ran;
+              // playerArrowHitFoe is the one copy world.js:26427,
+              // exterior.js:5589 and worldModes.js:9090 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -4889,7 +4990,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const i = data.i | 0, dmg = Number(data.dmg);
     const xs = data.xs === 1;   // REST-SYNC: a shared encounter, by the room's number - not a layout index
     const f = xs ? (_sharedById.get(i) ?? null) : foes[i];
-    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:2674). The number is a peer's
+    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:2685). The number is a peer's
     // word and the host trusts it without recomputing, so an unbounded one let any joiner one-shot every foe in the
     // room - and, through the kill door, empty it. 10000 is past anything a legal swing, shaft or blast can roll.
     if (!f || (!xs && i >= _layoutFoes) || f.dead || !Number.isFinite(dmg) || dmg < 0 || dmg > HIT_DMG_MAX) return false;
@@ -5464,7 +5565,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // InstantiatePrefab's a fresh GameObject per saved record, so
     // EnemyEntity's `PickpocketByPlayerAttempted` default is the loaded
     // truth for every enemy. The re-minting pools match that by
-    // construction (exteriorFoes.js:2040's restoreWorld goes through
+    // construction (exteriorFoes.js:2051's restoreWorld goes through
     // spawnFoe), but this host patches the LIVE foes in place, so a
     // same-dungeon reload kept a raised latch and a failed pickpocket
     // could never be retried - falsifying the law
@@ -5606,6 +5707,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // guard could be picked off one at a time in a room full of
     // them. The `!isHostile` read has to happen BEFORE the walk,
     // because the walk flips this foe too.
+    // ARENA2: a bout fighter struck from outside its bout (the player in the stands of an exhibition) - the floor never
+    // turns for it; the bout's own hook answers (exteriorFoes' twin)
+    const bout = foe.entity?.bout ?? null;
+    if (bout && !peer && foeDeps && foeDeps.boutGate(foe, foeDeps.PLAYER_TARGET, true) !== true) { bout.hooks?.intrude?.(foe); return; }
     if (!peer && !foe.ai.isHostile) makeEnemiesHostile(foes);
     if (foeDeps) {
       // WORLD3: a peer's blow turns the foe on the PEER - its candidate, at the striker's feet the hit carried
@@ -5669,7 +5774,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // AUDIT 68 S19-damagefoe-dead-reentry: a corpse takes no blow. EnemyDeath runs once; the round sinks tick on
     // after the killing tick inside one window, and each re-ran the whole death arm (trap, chime, OnEnemyDeath).
     if (foe.dead || (fromPlayer && !peer && foe.companion != null)) return;   // CREW-COMPANIONS: and my companion takes no blow of mine (exteriorFoes' AUDIT NAV2 F55 gate) - it turned him
-    if (fromPlayer && !peer) renownFoeStruck(foe);   // RENOWN1: MY blow - a joiner's too, before the divert sends it to the host
+    const bout = foe.entity?.bout ?? null;   // ARENA2: a fighter on the arena floor's sand (scenes/arenaBouts.js)
+    if (fromPlayer && !peer && !bout) renownFoeStruck(foe);   // RENOWN1: MY blow - a joiner's too, before the divert sends it to the host; ARENA2: no renown on the sand
     if (foe.yielded || foe.executing || foe.sparing) return;   // REVENANT-FATE: a beaten revenant takes no blow - its fate is the player's choice
     // AUDIT PSCALE1 DOORS-1: a KILL is not a blow - a Disintegrate, a stat drained to zero (the sinks' `whole`), the
     // Razor's whole-health strike (its mark on the foe) - and no fighters' toughness divides it, here or at the host
@@ -5685,6 +5791,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // sends nothing (B5: its index is another foe's on the host).
     // QUEST-PARTY phase 3c: a party member's quest foe stood here (the room's own lane) - the blow is its OWNER's to
     // apply, whoever hosts the room: out as a hit marked `own`, named by the owner's number, the relay routing it to `to`
+    // ARENA4: one of the relay's fighters on its sand (scenes/arenaBouts.js stands it as a puppet of the relay) - my
+    // blow's number goes to the bout's referee, which holds its health and decides what lands
+    if (foe._ownFrom === ARENA_PUPPET_OWNER) {
+      // ARENA4b: a swing's or a shaft's sequence (a cleave through two of them is one blow); a spell's - its damage comes
+      // through the sinks as kind 'spell' with no record (foeSinks), which ARENA4 claimed as a swing and the referee then
+      // held to a sword's reach - claimed as a spell, under its cast's one number (arenaSpellQ)
+      const cast = kind === 'spell' || !!spell;
+      if (fromPlayer && damage >= 0) opts.onArenaHit?.({ i: `a${foe._ownI}`, d: damage, kind: kind === 'arrow' ? 'arrow' : cast ? 'spell' : 'melee', w: playerWeapon?.strikingWeapon?.templateIndex ?? -1, m: playerWeapon?.strikingWeapon?.material ?? 0, q: cast ? arenaSpellQ() : _arenaQ });
+      return;
+    }
     if (foe._ownFrom != null) {
       if (fromPlayer && damage >= 0) {
         const _pAt = playerFeet ?? lastPlayerFeet;
@@ -5789,7 +5905,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // PSCALE1: a shared foe fights its fighters with more health - its damage over their toughness, here where the
     // host applies every blow (a SetHealth(0) and a kill are no blows, and stand as they were)
     foe.entity.health -= !bypassShield && !_whole && _sharedFoe(foe) ? partyFoeLoses(foe, healthDamage, fightN(foe)) : healthDamage;
+    if (bout && healthDamage > 0) bout.hooks?.hurt?.(foe, healthDamage, { fromPlayer: fromPlayer && !peer, striker });   // ARENA2: the blow, to the bout's law
     if (foe.entity.health <= 0) {
+      // ARENA2: THE FOE YIELD FLOOR (exteriorFoes' twin) - a bout fighter at the floor is held at 1 and is out of the bout:
+      // no corpse, no loot, no renown, no death notice
+      if (bout) { foe.entity.health = 1; if (!bout.out) { bout.out = true; bout.hooks?.floor?.(foe, { fromPlayer: fromPlayer && !peer, striker }); } return; }
       // CREW-COMPANIONS: a companion is knocked out, never killed (exteriorFoes' twin) - before the trap and the corpse
       if (foe.companion != null) { foe.entity.health = 1; foe._knockedOut = true; return; }
       // REVENANT-FATE: one of the player's revenants, the player's ALONE here (offline, or past the room's shared run -
@@ -6366,7 +6486,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // under those) and the outer host's street slot (opts.breathHeld), which held the motor while the lungs ran on.
       breathTick(opts.breathHeld?.() ? 0 : dt, playerFeet, playerHeight);
       const _surf = waterSurfaceYAt(playerFeet[0], playerFeet[2]);
-      if (!isGateArena(dfLocation)) sceneAmbience.update(dt, {   // WB6b: the court has its own air (scenes/deadlandsAir.js) - no drip, no door, no bird in the Deadlands
+      if (!isGateArena(dfLocation) && !isArenaFloor(dfLocation)) sceneAmbience.update(dt, {   // ARENA2: no drip nor dungeon door on the open sand - the crowd is its air (scenes/arenaBouts.js)   // WB6b: the court has its own air (scenes/deadlandsAir.js) - no drip, no door, no bird in the Deadlands
         playerPos: [playerFeet[0], playerFeet[1] + playerHeight / 2, playerFeet[2]],   // the controller center (DFU transform.position)
         waterSurfaceY: _surf,
         submerged: _surf != null && playerFeet[1] + playerHeight / 2 + 76 * 0.025 - 0.95 < _surf,
@@ -7081,7 +7201,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // :2492-2493). The world host builds a saved dungeon through the door's own build, and this line reset the colour
   // tier of the record the load had just restored - every step of the run went gray - stamped it and pruned the
   // store the save carried; quickLoad's re-fetch below came too late to keep any of it.
-  let automapRec = isGateArena(dfLocation) ? detachedAutomapRecord()   // AUDIT 27h M1: the court keeps no map, so it takes no slot from one
+  let automapRec = isGateArena(dfLocation) || isArenaFloor(dfLocation) ? detachedAutomapRecord()   // ARENA2: nor the arena's floor   // AUDIT 27h M1: the court keeps no map, so it takes no slot from one
     : enterDungeonAutomap(automapKey, classicMinutesRef.value, { fromLoad: !!opts.automapFromLoad });
   // ROAD-C c2/S1: the reveal MODEL (rows in DFU's block/element/model
   // walk order, the point-query hash grid, the draw partition). Bind
@@ -7633,6 +7753,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         openSpellbook: () => { const w = makeSpellbookWindow(); if (w) activeOverlay = w; return !!w; },
         openCharSheet: () => { const w = api.makeCharSheet(); if (w) activeOverlay = w; },   // MAC-C: the pack's other window key crosses over rather than doing nothing - the same door the sheet's own Items button takes back the other way
         openChronicle: opts.questBridge ? () => { const w = makeJournalWindow('notebook'); if (w) activeOverlay = w; return !!w; } : undefined,
+        // ARENA3: the Arena window, once a banner is worn - the world host's maker (scenes/arenaGate.js), in this slot
+        openArena: opts.makeArenaWindow ? () => { const w = opts.makeArenaWindow('team'); if (w) activeOverlay = w; return !!w; } : undefined,
+        arenaJoined: () => !!opts.arenaJoined?.(),
         // PX17c: the dungeon HAS the bridge (opts.questBridge feeds
         // the F5 journal at :3449 and the notebook at :867) - the PX3
         // flag was too conservative, so it is paid with the same walk
@@ -7665,7 +7788,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // the standalone ?dungeon probe never sets, so it stays open there.
         loadingPrevented: () => !!opts.dungeonOnline?.(),
         timers: (o) => opts.timers?.(o) ?? null,   // TIMERS1: the world host's source, through worldModes
-        savingPrevented: () => isGateArena(dfLocation),   // WB3b: the pause's Save says why, in the court
+        savingPrevented: () => isGateArena(dfLocation) || isArenaFloor(dfLocation),   // ARENA2: nor on the arena's sand   // WB3b: the pause's Save says why, in the court
         // SAV4: the slot window's seams over the same two verbs.
         playerName: () => playerEntity.name, playerId: () => playerEntity.characterId ?? null,
         saveAs: (saveName) => ctx.quickSave?.(saveName),
@@ -7686,7 +7809,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  idiom - an occupied slot refuses, the window closes itself). */
     toggleAutomap() {
       if (activeOverlay) return;
-      if (isGateArena(dfLocation)) { hudText.add(COURT_TEXT.noMap); return; }   // WB3b: an empty level, and no place to chart
+      if (isGateArena(dfLocation)) { hudText.add(COURT_TEXT.noMap); return; }
+      if (isArenaFloor(dfLocation)) { hudText.add(ARENA_TEXT.refuse.map); return; }   // ARENA2: a made level with nothing to chart   // WB3b: an empty level, and no place to chart
       // EM3: THE SKIN FORK, at the one place this host builds the map.
       // The classic arm answers null without its native art and the
       // slot stays empty, exactly as before; the enhanced arm reads no
@@ -7754,6 +7878,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     spawnQuestFoe,   // B1: CreateFoe's dungeon arm stands foes through the one build chain
     fateFor, chooseFate, companionFx,   // REVENANT-FATE: a kneeling revenant's choice; COMPANION-PORTAL: the place's portals
     removeLooseFoe,   // CREW-COMPANIONS: a companion out of the room with no corpse
+    arenaPit: _undercroftHall?.pit ?? null,   // ARENA-FIX 4: the training pit's centre (scenes/worldModes.js arenaPitStage)
+    arenaPitAxis: _undercroftHall?.pitAxis ?? null,   // ...and its passage's way
+    arenaHall: _undercroftHall?.hall ?? null,   // ARENA5: the Hall of Champions' place - its plaque wall hangs about it (scenes/worldModes.js standArenaWall)
     spawnLooseFoe,   // SD1: the same chain with no quest behaviour bound - the enchant ctx's spawner
     questSpawnSpots: () => dungeonQuestSpawnSpots(dungeon.blocks),   // FIELD BUGS 29h (BOUNTY-LAIR): where DFU stands a quest's foe here
     replaceFoe: replaceFoeInPool,   // AUDIT 58 (review): the hosted route's enchant mount routes the Wabbajack here by pool membership
@@ -7870,7 +7997,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     restFromBed() { _restFromBed = true; try { this.toggleRest(); } finally { _restFromBed = false; } },
     toggleRest() {
       if (activeOverlay) return;
-      if (isGateArena(dfLocation)) { hudText.add(COURT_TEXT.noRest); return; }   // WB3b: an enemy is always near - the boss
+      if (isGateArena(dfLocation)) { hudText.add(COURT_TEXT.noRest); return; }
+      if (isArenaFloor(dfLocation)) { hudText.add(ARENA_TEXT.refuse.rest); return; }   // ARENA2: no rest on the sand (the duel's law)   // WB3b: an enemy is always near - the boss
       // S40: the gate itself moved to systems/restSession.js. It was
       // written out here because this was the only host that could
       // rest; three more can now, and DFU raises it from ONE
@@ -7998,6 +8126,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     quickSave(saveName = QUICK_SAVE_NAME, { quiet = false, sink = null } = {}) {   // REALM P0.5: a quiet checkpoint takes no shot and says only a failure; P1.3: a realm character's goes to the service
       // WB3b: a save made in the court would load into a place that no longer stands (the court is the day's alone)
       if (isGateArena(dfLocation)) { if (!quiet) hudText.add(COURT_TEXT.noSave); return false; }
+      if (isArenaFloor(dfLocation)) { if (!quiet) hudText.add(ARENA_TEXT.refuse.save); return false; }   // ARENA2: a made level no save re-enters
       const snap = snapshotPlayer(playerEntity, {
         position: lastPlayerFeet, classicMinutes: classicMinutesRef.value,
         readiedSpellIndex: magic.readiedIndex(),
@@ -8134,6 +8263,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // AUDIT 63 F28: the orphaned-quest-item sweep rides the ONE
       // composer, so this host runs it too (SaveLoadManager.cs:1518).
       if (session && restoreSessionState(extras, { questBridge: opts.questBridge, talk: opts.talkSave, entity: playerEntity, spawnLedger: opts.spawnLedger?.() ?? null })) opts.onQuestRestored?.();
+      if (session) opts.layoutPinsLoaded?.(extras);   // WD3: the save's towns in their layouts (world.js applyLayoutPins) - a world load does its own
       const settled = extras.world && extras.locationKey === _locationKey ? applyWorld(extras.world) : null;   // AUDIT OH-F B1: the rebuilds, handed back
       if (!settled && extras.world) hudText.add('(different dungeon - world state left as built)');   // cross-location travel-on-load pends in the STANDALONE scene alone - a world-hosted dungeon hands such a save up before this (quickLoad, CASTLE1)
       // A1: restorePlayer replaced the automap store, so the live
@@ -8185,7 +8315,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // CHARGEN WIZARD sitting on top of it - and playing through the
       // wizard runs finishChargen, overwriting the character that was
       // just loaded. The context mounts chargen at build time
-      // (dungeonContext.js:890) and dungeon.js calls quickLoad after,
+      // (dungeonContext.js:891) and dungeon.js calls quickLoad after,
       // so the wizard is ALWAYS up on this path.
       // NOTE: activeOverlay is cleared but chargenWindow is NOT nulled.
       // Later sites test `activeOverlay === chargenWindow`, and with
@@ -8852,7 +8982,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  vein (nothing any other client, or the witnesses, could stand behind). */
     profIdentity() {
       // AUDIT 29 D5: nor the Burning Court - every court is "dungeon 0" by its own record (gateArena.js), no dungeon's
-      if (dfLocation?.spawned || isGateArena(dfLocation) || !Number.isSafeInteger(dfLocation?.mapTableData?.mapId)) return null;
+      if (dfLocation?.spawned || isGateArena(dfLocation) || isArenaFloor(dfLocation) || !Number.isSafeInteger(dfLocation?.mapTableData?.mapId)) return null;
       return { id: dfLocation.mapTableData.mapId & 0xfffff, climate: dfLocation.climate?.worldClimate ?? null, region: dfLocation.regionIndex ?? null };
     },
     /** PROF2: A DUNGEON VEIN'S WALL - from one of this dungeon's foe markers (the layout's own list, the same on every

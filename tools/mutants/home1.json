@@ -2,17 +2,18 @@
   {
     "name": "HOME1-claim-a-guest-owns",
     "file": "server-account/src/homes.js",
-    "old": "  if (accountKind(player) !== 'linked') return { error: 'homes-need-account' };\n  if (!homeMapIdOk(mapId)",
-    "new": "  if (!homeMapIdOk(mapId)",
+    "old": "  if (accountKind(player) !== 'linked') return { error: 'homes-need-account' };\n  if (!homeMapIdOk(mapId) || !homeBuildingKeyOk(buildingKey)",
+    "new": "  if (!homeMapIdOk(mapId) || !homeBuildingKeyOk(buildingKey)",
     "tests": [
       "test/home1.test.js"
-    ]
+    ],
+    "note": "ARENA4b (PIN MOVED, re-aimed by content): homes.js arenaMoveHome asks the same guest's question first - aimed at the claim's, whose next line reads `buildingKey`."
   },
   {
     "name": "HOME1-claim-cap-unread",
     "file": "server-account/src/homes.js",
-    "old": "price, nowS, paid, player.id, character, HOME_CAP);",
-    "new": "price, nowS, paid, player.id, character, HOME_CAP + 1);",
+    "old": "paid, mapId, mapId, layout, player.id, character, HOME_CAP, mapId, ...layoutMatchBinds(layout));",
+    "new": "paid, mapId, mapId, layout, player.id, character, HOME_CAP + 1, mapId, ...layoutMatchBinds(layout));",
     "tests": [
       "test/home1.test.js"
     ]
@@ -155,11 +156,12 @@
   {
     "name": "HOME1-taken-not-a-conflict",
     "file": "server-account/src/index.js",
-    "old": "r.error === 'home-taken' || r.error === 'home-cap' ? 409",
-    "new": "r.error === 'home-cap' ? 409",
+    "old": "r.error === 'home-taken' || r.error === 'home-cap' || r.error === 'home-arena' ? 409",
+    "new": "r.error === 'home-cap' || r.error === 'home-arena' ? 409",
     "tests": [
       "test/home1.test.js"
-    ]
+    ],
+    "note": "ARENA4b (PIN MOVED, re-aimed by content): the claim's 409s carry `home-arena` (the arena stands there)."
   },
   {
     "name": "HOME1-client-claim-route-misspelt",
@@ -281,8 +283,8 @@
   {
     "name": "HOME1-the-claims-character",
     "file": "src/systems/onlineHomes.js",
-    "old": "const r = await api.claim({ mapId: id, buildingKey, region, character: me, price, ...(realm ? { realm } : {}) });",
-    "new": "const r = await api.claim({ mapId: id, buildingKey, region, character: null, price, ...(realm ? { realm } : {}) });",
+    "old": "const r = await api.claim({ mapId: id, buildingKey, region, character: me, price, ...(realm ? { realm } : {}), layout: layout || null });",
+    "new": "const r = await api.claim({ mapId: id, buildingKey, region, character: null, price, ...(realm ? { realm } : {}), layout: layout || null });",
     "tests": [
       "test/home1.test.js"
     ]
@@ -308,8 +310,8 @@
   {
     "name": "HOME1-the-service-asked-short-of-gold",
     "file": "src/systems/onlineHomes.js",
-    "old": "    if (!afford(price)) return { ok: false, error: 'gold' };\n    if (realm) {",
-    "new": "    if (realm) {",
+    "old": "    if (!afford(price)) return { ok: false, error: 'gold' };\n    // WD3: the layout this town stands in",
+    "new": "    // WD3: the layout this town stands in",
     "tests": [
       "test/home1.test.js"
     ]
@@ -326,8 +328,8 @@
   {
     "name": "HOME1-a-refusal-paid-for",
     "file": "src/systems/onlineHomes.js",
-    "old": "    const r = await homes.claim({ mapId, buildingKey, region, price });\n    if (!r.ok) return r;\n",
-    "new": "    const r = await homes.claim({ mapId, buildingKey, region, price });\n",
+    "old": "    const r = await homes.claim({ mapId, buildingKey, region, price, layout });\n    if (!r.ok) return r;\n",
+    "new": "    const r = await homes.claim({ mapId, buildingKey, region, price, layout });\n",
     "tests": [
       "test/home1.test.js"
     ]

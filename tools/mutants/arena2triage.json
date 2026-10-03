@@ -208,9 +208,10 @@
     "file": "src/world/meshReader.js",
     "old": "for (let tri = 0; tri < plane.points.length - 2; tri++) {",
     "new": "for (let tri = 0; tri < plane.points.length - 3; tri++) {",
-    "why": "killed by 'c2/S7 mesh 99900 is a real, whole model' against the player's own data (ARENA2_PATH): each plane's fan is a triangle short, so the submeshes no longer tile the index buffer",
+    "why": "killed by 'c2/S7 mesh 99900 is a real, whole model' against the player's own data (ARENA2_PATH): each plane's fan is a triangle short, so the submeshes no longer tile the index buffer - ARENA-FIX re-aim: against this ARENA2 that pin no longer fails it (it survived at the tree before ARENA-FIX too), so the colosseum's rebuild out of ARCH3D (5,138 triangles, test/arena1_model.test.js) holds it as well",
     "tests": [
-      "test/roadc_automap_pick.test.js"
+      "test/roadc_automap_pick.test.js",
+      "test/arena1_model.test.js"
     ]
   },
   {

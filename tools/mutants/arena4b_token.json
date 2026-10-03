@@ -1,0 +1,67 @@
+[
+  {
+    "name": "ARENA4B-TOK-ANOTHERS",
+    "file": "server-account/src/realm.js",
+    "old": "const row = await db.prepare('SELECT summary FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();",
+    "new": "const row = await db.prepare('SELECT summary FROM realm_characters WHERE id = ? OR player = ?').bind(id, playerId).first();",
+    "tests": [
+      "test/arena4b_token.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-TOK-SUMMARY-UNREAD",
+    "file": "server-account/src/realm.js",
+    "old": "const lv = summary?.level;",
+    "new": "const lv = 12;",
+    "tests": [
+      "test/arena4b_token.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-TOK-BOUND",
+    "file": "server-account/src/realm.js",
+    "old": "lv >= 1 && lv <= REALM_LEVEL_CLAIM_MAX ? lv : null;",
+    "new": "lv >= 0 ? lv : null;",
+    "tests": [
+      "test/arena4b_token.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-TOK-OFFLINE",
+    "file": "server-account/src/index.js",
+    "old": "const cl = rc ? await realmLevelOf(ctx, who.player.id, body.character) : null;",
+    "new": "const cl = await realmLevelOf(ctx, who.player.id, body.character) ?? 5;",
+    "tests": [
+      "test/arena4b_token.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-TOK-VALID-ZERO",
+    "file": "src/net/identityToken.js",
+    "old": "cl >= CHARACTER_LEVEL_MIN && cl <= CHARACTER_LEVEL_MAX",
+    "new": "cl >= 0 && cl <= CHARACTER_LEVEL_MAX",
+    "note": "The merge of ARENA4b's streams (re-aimed by content): the relay stream's characterLevelIssuable is the one validation.",
+    "tests": [
+      "test/arena4b_token.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-TOK-VALID-FRACTION",
+    "file": "src/net/identityToken.js",
+    "old": "Number.isSafeInteger(cl) && cl >= CHARACTER_LEVEL_MIN",
+    "new": "cl >= CHARACTER_LEVEL_MIN",
+    "note": "The merge of ARENA4b's streams (re-aimed by content): the relay stream's characterLevelIssuable is the one validation.",
+    "tests": [
+      "test/arena4b_token.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-TOK-MINT-DROPPED",
+    "file": "src/net/identityToken.js",
+    "old": "  if (who?.cl !== undefined) claims.cl = who.cl;",
+    "new": "  // cl",
+    "tests": [
+      "test/arena4b_token.test.js"
+    ]
+  }
+]

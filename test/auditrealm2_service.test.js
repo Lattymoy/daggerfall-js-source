@@ -200,7 +200,7 @@ test('AUDIT REALM2 S1: the service measures a save as customs does - ONE law (ne
 test('AUDIT REALM2 S2: a house, a piece and a founding are a realm character\'s - any other id is refused and writes nothing (no building squatted at a price of 1, no free station, no free guild); customs carries the census\'s Renown track in - and, since CUSTOMS-CARRY (Mac 2026-09-29: "Carry them"), its home and its guild place from before the realm; a realm character claims, places and founds on its record', async () => {
   const s = await stand();
   const P = await s.account();
-  const house = { mapId: 12345, buildingKey: 777, region: 17 };
+  const house = { mapId: 12345, buildingKey: 777, region: 17, layout: null };
   assert.deepEqual(Object.values(await s.call('/v1/homes/claim', { ...house, character: 'madeUpId01', price: 1 }, P.secret)), [400, { error: 'realm-only' }]);
   for (let k = 1; k <= 3; k++) assert.equal((await s.call('/v1/homes/claim', { ...house, buildingKey: 1000 + k, character: `fake${k}0000`, price: 1 }, P.secret)).body.error, 'realm-only');
   assert.deepEqual(s.rows('SELECT COUNT(*) AS n FROM homes'), [{ n: 0 }], 'no building taken');
@@ -255,7 +255,7 @@ test('AUDIT REALM2 S3: every realm act whose batch COMMITS and then throws keeps
   const P = await s.account();
   const R = await s.character(P, 'Payer', { name: 'Payer', level: 9, goldPieces: 500_000, items: [], bankAccounts: new Array(20).fill(0).map(() => ({ accountGold: 0 })) });
   s.renown(P, R.id);
-  const house = { mapId: 7, buildingKey: 9, region: 17 };
+  const house = { mapId: 7, buildingKey: 9, region: 17, layout: null };
   const lost = async (path, body) => {
     const at = R.at();
     s.hooks.afterCommit = true;

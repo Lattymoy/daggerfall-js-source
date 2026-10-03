@@ -360,6 +360,9 @@ export const DETOUR_ARRIVAL = 0.3;              // UpdateTimers zeroes the timer
  * WaterMove (3D pursuit gated to below the block water surface via
  * waterSurfaceY(x, z), the 2.5 head margin, beached = frozen).
  */
+/** ARENA-FIX 8: a walk to a mark (EnemyAI.walkTo) is done this near it, metres. */
+export const WALK_ARRIVE_M = 0.35;
+
 export class EnemyAI {
   constructor(collider, feet, yawRad, { liveSpeed = 50, isHostile = true, height = CAPSULE_HEIGHT, seesThroughInvisibility = false, behaviour = 'General', mobileId = -1, waterSurfaceY = null, spawnDistanceType = 0, playerInside = true, isActionDoor = null, rolls = Math.random, hasBowAttack = false, canCastRangedSpell = null, hasMagickaToCast = null, centreOffset = null, vitals = null } = {}) {
     this.collider = collider;
@@ -1701,8 +1704,56 @@ export class EnemyAI {
     this._walkStep(dt);   // the pursuit's own walk - the watch is the one foe frightened, and it walks
   }
 
+  /**
+   * ARENA-FIX 8 (2026-10-02, the port's own - DFU's arena is a mod's, and no DFU motor walks to a point it was told):
+   * A WALK TO A MARK. A bout's fighter walks in from its gate to its mark on the sand (scenes/arenaBouts.js walkIn) by
+   * the pursuit's own laws - the classic turn in place inside the 5.625 degree move gate, the same capsule, obstacle,
+   * ledge and detour probes and gravity (`_walkStep`) - at `pace` of its move speed. It decides and senses nothing on
+   * the way (the bout holds it); at WALK_ARRIVE_M of the point it stops and `walkArrived` says so. A blow shoves it as
+   * any foe. `walkGoal = null` ends it where it stands.
+   */
+  walkTo(point, { pace = 1 } = {}) {
+    this.walkGoal = [point[0], point[1], point[2]];
+    this._pace = pace;
+    this.walkArrived = false;
+    this.moving = false;
+  }
+  /** ARENA-FIX 8: one fixed step of the walk to a mark (walkTo). */
+  _walkGoalStep(dt, paralyzed) {
+    this._clock += dt;
+    let classicTicks = 0;
+    this._classicTimer += dt;
+    while (this._classicTimer >= CLASSIC_UPDATE_INTERVAL) { this._classicTimer -= CLASSIC_UPDATE_INTERVAL; classicTicks++; }
+    const knocked = this.knockbackSpeed > 0;
+    this.canAct = false;
+    this.inSight = false;
+    this.detected = false;
+    this._updateDetourTimers(dt, !paralyzed && !knocked);
+    this.hurtKnock = false;
+    if (knocked) { this._knockbackStep(dt, classicTicks); return; }
+    const g = this.walkGoal;
+    const left = Math.hypot(g[0] - this.feet[0], g[2] - this.feet[2]);
+    if (left <= WALK_ARRIVE_M) {
+      this.walkGoal = null; this.walkArrived = true; this.moving = false; this._pace = 1;
+      this._walkStep(dt);
+      return;
+    }
+    this.destination = [g[0], g[1], g[2]];
+    const aim = this.avoidObstaclesTimer > 0 ? this.detourDestination : this.destination;
+    const dx = aim[0] - this.feet[0];
+    const dz = aim[2] - this.feet[2];
+    for (let i = 0; i < classicTicks; i++) {
+      const facing = withinYaw(this.yaw, dx, dz, MOVE_YAW_GATE_DEG);
+      if (!facing) this.yaw = turnTowards(this.yaw, dx, dz);   // the classic turn in place, as the run's
+      this.moving = facing;
+    }
+    if (paralyzed) this.moving = false;
+    this._walkStep(dt);
+  }
+
   _step(dt, playerFeet, senses, paralyzed = false, paused = false) {
     if (this.fleeLeft > 0) { this._fleeStep(dt, paralyzed); return; }   // WERE-FRIGHT: a frightened foe only runs
+    if (this.walkGoal) { this._walkGoalStep(dt, paralyzed); return; }   // ARENA-FIX 8: a fighter walking to its mark
     // CH4 (the senses verify pass): DFU's cadence split, exactly -
     // sight/hearing/detection resolve EVERY FixedUpdate (the fixed
     // step here); the spawn-band recompute and the illusion re-roll
@@ -1976,9 +2027,9 @@ export class EnemyAI {
         if (this._tacDir) { this._tacDir = null; this._tacBlocked = true; this.moving = false; }   // TACT2: a wall or a drop behind it: it stands its ground (AUDIT TACT A1: and the brain hears of it; TACT5: for the rest of the classic tick too - never walked on the way it faces, into a detour)
         else this._findDetour(dir2d);
       } else {
-        const k = this._tacDir ? this._tacSpeed : 1;
-        dxm = dir2d[0] * this.speed * k * dt;
-        dzm = dir2d[2] * this.speed * k * dt;
+        const sp = this.speed * (this._tacDir ? this._tacSpeed : 1) * (this._pace ?? 1);   // TACT2: the brain's step at its share of a walk; ARENA-FIX 8: a walk to a mark at its pace (1 everywhere else)
+        dxm = dir2d[0] * sp * dt;
+        dzm = dir2d[2] * sp * dt;
       }
     }
     const r = this.collider.move(this.feet, dxm, dy, dzm, this.height, true, FOE_KEEPS_FLOOR);

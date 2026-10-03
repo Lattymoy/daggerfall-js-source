@@ -134,12 +134,12 @@
   {
     "name": "ACC1b-14-the-token-carries-a-name-the-client-sent",
     "file": "server-account/src/index.js",
-    "old": "          { s: who.player.id, n: displayName(who.player), k: accountKind(who.player), ...wardrobe, mu, lv, ...(guild ?? {}), rc },",
-    "new": "          { s: who.player.id, n: body.name ?? displayName(who.player), k: accountKind(who.player), ...wardrobe, mu, lv, ...(guild ?? {}), rc },",
+    "old": "          { s: who.player.id, n: displayName(who.player), k: accountKind(who.player), ...wardrobe, mu, lv, ...(guild ?? {}), rc, ...(ar !== undefined ? { ar } : {}), ...(cl != null ? { cl } : {}) },",
+    "new": "          { s: who.player.id, n: body.name ?? displayName(who.player), k: accountKind(who.player), ...wardrobe, mu, lv, ...(guild ?? {}), rc, ...(ar !== undefined ? { ar } : {}), ...(cl != null ? { cl } : {}) },",
     "tests": [
       "test/accountworker.test.js"
     ],
-    "note": "THE WHOLE POINT OF THE TOKEN, undone: the client asserts its own name again, only now it is signed."
+    "note": "THE WHOLE POINT OF THE TOKEN, undone: the client asserts its own name again, only now it is signed. The arena merge (re-aimed by content): the mint carries ARENA4's rating. ARENA4b (PIN MOVED, re-aimed by content): the mint carries a realm character's `cl`."
   },
   {
     "name": "ACC1b-15-a-service-with-no-key-mints-nothing-and-says-nothing",

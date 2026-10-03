@@ -981,9 +981,9 @@ else saw Daggerfall's pixel werewolf. A transformed rider was worse: the
 rider layer ran first and drew a person on a horse (112382 + the rider's
 set), where the player saw their beast.
 
-The wire was never at fault. `wb` goes out on its edge (`wire.js:1231`),
+The wire was never at fault. `wb` goes out on its edge (`wire.js:1232`),
 through the door (`:1051`) and the easing (`online.js:225`), from the sender
-at `world.js:20432`.
+at `world.js:20992`.
 
 **Fix.** `peerRiders.js` takes a peer whose pose says `wb`, as it takes a
 rider:
@@ -994,17 +994,17 @@ rider:
 - The frame clock is the saddle's for a mounted beast and EOTB's `speedMod`
   run halving on foot.
 - A new swing count plays `AttackMeleeLycan` once, forward, at LYCAN_TICK,
-  as the local body's `playLycanAttack` does (`eotbBody.js:512`). The count
+  as the local body's `playLycanAttack` does (`eotbBody.js:514`). The count
   first seen is no swing.
 
 The hand-off is RIDE's: `isRiding` is true only once the art is up, so while
 it loads or has failed, and in a build without it, DISC12's enemy sprite
 still stands for them. A beast is never nothing.
 
-The modal passes (`worldModes.js:8665` the dungeon, `:8875` the interior)
+The modal passes (`worldModes.js:8912` the dungeon, `:9123` the interior)
 draw only `host.extraBillboards`. That was `remotePlayers.batches()` alone,
 so a beast drawn by the rider layer would have been nothing indoors and
-underground. It hands over both layers' batches now (`world.js:20706`). A
+underground. It hands over both layers' batches now (`world.js:21266`). A
 rider never reaches those passes: a door dismounts. The eye the layer turns
 its sprites to (`cam.pos`) is live in every mode, because worldModes shares
 world.js's `cam` and sets it each modal frame.
@@ -1012,7 +1012,7 @@ world.js's `cam` and sets it each modal frame.
 **The local body, beside it.** `eotbBody.js` asked for every sprite with
 the mod's settings (`cfg`), which never carry the form. So a wereboar saw the
 werewolf on themselves, while the others now draw the boar. The draw and the
-placement take the live form now (`lookNow`, `eotbBody.js:369`). The preload
+placement take the live form now (`lookNow`, `eotbBody.js:371`). The preload
 fetches the live form's lycan set, and fetches it again when the form
 changes (`:270`, `:713`).
 
@@ -1071,13 +1071,13 @@ the scene the picture takes in:
 
 **Hosts.** Every Morrowind body in the port goes through `drawThird`. The
 local player's goes through `mwView.mwViewDrawBody` (`mwView.js:395`,
-`:339`), which four files call: `world.js:24441`, `exterior.js:5258`,
-`worldModes.js:8626` and `:8736` (the dungeon and the interior passes),
+`:339`), which four files call: `world.js:25039`, `exterior.js:5441`,
+`worldModes.js:8872` and `:8984` (the dungeon and the interior passes),
 and `dungeon.js:1101`. `dungeonContext.js`, the fourth motor host, builds
 the dungeon for those hosts and draws no body of its own. The other players'
 bodies go through `peerBodies.js:695` (`PeerBodies.draw`, and INVIS-LOOK's `drawVeiled`, by `_drawBodies`). The open world
-calls it at `world.js:24963`, and the modal passes reach it through
-`host.drawPeerBodies` (`worldModes.js:8656`, `:8767`). The fix therefore
+calls it at `world.js:25561`, and the modal passes reach it through
+`host.drawPeerBodies` (`worldModes.js:8903`, `:9015`). The fix therefore
 sits in one place and reaches every host.
 
 The pins are `test/prbow1_bow.test.js`: seven tests, all failing on the

@@ -31,6 +31,7 @@ import { Collider } from '../player/collider.js';
 import { isHouseContainerModel } from '../systems/containers.js';
 import { isShopShelfModel } from '../systems/shopStock.js';   // E2
 import { isBedModel } from '../systems/rrRealism.js';   // RR1: the three bed models a click may rest on
+import { classicModelIdOf } from '../world/customModels.js';   // WD3: an alias is its classic model to the beds' test
 import { LADDER_MODEL_ID } from '../player/enterExit.js';
 import { MACHINERY_MODEL_ID } from '../world/windmillMesh.js';   // WM4b: the mill's machinery and its moving parts
 import { createBaseRoom, baseBucketOf } from './decorBase.js';   // BASE-HIDE: a furnishable room's own pieces, one at a time
@@ -341,7 +342,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   for (const [pi, p] of interior.placements.entries()) {
     const matrix = parent(p.matrix);
     // NEVER TRAPS: getGpuMesh returns NULL for a model id this data set
-    // does not carry (dataPipeline.js:138, and it CACHES the null), and
+    // does not carry (dataPipeline.js:139, and it CACHES the null), and
     // cpuModels is written only on its success path - so an absent
     // model used to push a {mesh: null} draw entry AND then read
     // `cpu.positions` off undefined one line later. Every other builder
@@ -442,7 +443,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
       } else {
         shelves.push({ cpu, matrix, items: null, modelIdNum: p.modelIdNum });
       }
-    } else if (isBedModel(p.modelIdNum)) {
+    } else if (isBedModel(classicModelIdOf(p.modelIdNum))) {   // WD3: a town mod's coloured bed is Daggerfall's bed under another blanket (an alias) - RR rests on it as on its own (DFU draws nothing there: the mods' prefabs point at no mesh)
       beds.push({ cpu, matrix });
     } else if (isHouseContainerModel(p.modelIdNum)) {
       // F209: `items: null` IS the stock-once latch, the shelf idiom

@@ -1,0 +1,100 @@
+[
+  {
+    "name": "ARENA4b-CAS-PAIR-MIXED",
+    "file": "src/net/arenaLaw.js",
+    "old": " || apart(a.sub, b.sub) || !!a.casual !== !!b.casual) continue;",
+    "new": " || apart(a.sub, b.sub)) continue;",
+    "tests": ["test/arena4b_casual.test.js"]
+  },
+  {
+    "name": "ARENA4b-CAS-IN-DROPPED",
+    "file": "src/net/arenaLaw.js",
+    "old": "...(bannerClaim(m.b) ? { b: m.b } : {}), ...(m.u === 1 ? { u: 1 } : {}) };",
+    "new": "...(bannerClaim(m.b) ? { b: m.b } : {}) };",
+    "tests": ["test/arena4b_casual.test.js"]
+  },
+  {
+    "name": "ARENA4b-CAS-OUT-DROPPED",
+    "file": "src/net/arenaLaw.js",
+    "old": "      const u = m.u === 1 ? { u: 1 } : {};",
+    "new": "      const u = {};",
+    "tests": ["test/arena4b_casual.test.js"]
+  },
+  {
+    "name": "ARENA4b-CAS-QUEUE-FLAG",
+    "file": "server/src/index.js",
+    "old": "banner: bannerClaim(m.b), casual: m.u === 1, at: now });",
+    "new": "banner: bannerClaim(m.b), casual: false, at: now });",
+    "tests": ["test/arena4b_casual.test.js"]
+  },
+  {
+    "name": "ARENA4b-CAS-OFFER-WORD",
+    "file": "server/src/index.js",
+    "old": "  _casualWord(e) { return e?.casual ? { u: 1 } : {}; }",
+    "new": "  _casualWord(e) { return {}; }",
+    "tests": ["test/arena4b_casual.test.js"]
+  },
+  {
+    "name": "ARENA4b-CAS-OPEN-FLAG",
+    "file": "server/src/index.js",
+    "old": "    this._bout = openBout({ o: body.o, kind: 'pvp', f: body.f, casual: body.casual === true, now });",
+    "new": "    this._bout = openBout({ o: body.o, kind: 'pvp', f: body.f, now });",
+    "tests": ["test/arena4b_casual.test.js"]
+  },
+  {
+    "name": "ARENA4b-CAS-RECEIPT-OWED",
+    "file": "src/net/arenaBrain.js",
+    "old": "  if (st.kind === 'ex' || st.casual) return [];",
+    "new": "  if (st.kind === 'ex') return [];",
+    "tests": ["test/arena4b_casual.test.js"]
+  },
+  {
+    "name": "ARENA4b-CAS-ST-WORD",
+    "file": "src/net/arenaBrain.js",
+    "old": "...(st.kind === 'ex' ? { h: st.hour } : {}), ...(st.casual ? { u: 1 } : {}), ...(st.res ? { res: st.res } : {}),",
+    "new": "...(st.kind === 'ex' ? { h: st.hour } : {}), ...(st.res ? { res: st.res } : {}),",
+    "tests": ["test/arena4b_casual.test.js"]
+  },
+  {
+    "name": "ARENA4b-CAS-LIVE-WORD",
+    "file": "server/src/index.js",
+    "old": "    H.live[o] = { o, kind: 'pvp', a: this._bill(f.a), b: this._bill(f.b), ...this._casualWord(f.a), sp: 0, at: now };",
+    "new": "    H.live[o] = { o, kind: 'pvp', a: this._bill(f.a), b: this._bill(f.b), sp: 0, at: now };",
+    "tests": ["test/arena4b_casual.test.js"]
+  },
+  {
+    "name": "ARENA4b-CAS-CARD-PRESS",
+    "file": "src/systems/arenaBoard.js",
+    "old": "  else { acts = [{ act: 'queue', label: O().findMatch, why }, { act: 'casual', label: O().casualMatch, why }]; lines.push(O().casualLine); }",
+    "new": "  else { acts = [{ act: 'queue', label: O().findMatch, why }]; lines.push(O().casualLine); }",
+    "tests": ["test/arena4b_casual.test.js"]
+  },
+  {
+    "name": "ARENA4b-CAS-FOLD",
+    "file": "src/net/arenaLink.js",
+    "old": "until: w.until - off, casual: w.u === 1 }",
+    "new": "until: w.until - off, casual: false }",
+    "tests": ["test/arena4b_casual.test.js"]
+  },
+  {
+    "name": "ARENA4b-CAS-ACT-WORD",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "...myBanner(), ...(casual ? { u: 1 } : {}) })) return",
+    "new": "...myBanner() })) return",
+    "tests": ["test/arena4b_casual.test.js"]
+  },
+  {
+    "name": "ARENA4b-CAS-GATE-DOOR",
+    "file": "src/scenes/arenaGate.js",
+    "old": "    if (kind === 'queue' || kind === 'casual' || kind === 'unqueue'",
+    "new": "    if (kind === 'queue' || kind === 'unqueue'",
+    "tests": ["test/arena4b_casual.test.js"]
+  },
+  {
+    "name": "ARENA4b-CAS-END-LINE",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "onEnd: () => { if (b.casual) say(O.casualEnd); askBoard(true); },",
+    "new": "onEnd: () => { askBoard(true); },",
+    "tests": ["test/arena4b_casual.test.js"]
+  }
+]

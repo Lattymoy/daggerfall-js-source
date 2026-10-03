@@ -57,6 +57,7 @@ import { MARKET_PRICE_MAX, MARKET_UNITS_MAX, MARKET_LISTINGS_MAX, MARKET_ORDERS_
 import { GUILD_WRITS_MAX, GUILD_STORES_MAX, COMMISSIONS_MAX, COMMISSIONS_FOR_MAX, WRIT_POSTS_MAX, WRIT_OPS_MAX } from './writLaw.js';   // PROF6: the bounds its refusals name
 import { RENOWN_TRACKS_MAX } from './renown.js';   // RENOWN1: the tracks' bound, in its refusal's own sentence (RENOWN-CHAR: back with the tracks)
 import { HERALDRY_CHANGE_DRAKES } from './heraldryLaw.js';   // GUILD1d: a change's cost, in its refusal's own sentence
+import { ARENA_TEXT } from '../systems/arenaText.js';   // ARENA4b: the arena's refusals, in its own frozen table
 
 /** WHERE THE SERVICE IS. Its own constant beside the relay's
  *  DEFAULT_SERVER (net/online.js), because they are two Workers and
@@ -148,6 +149,10 @@ export const REFUSALS = Object.freeze({
   owned: 'Your account already owns that.',
   short: 'Your account has too few embers for that.',   // WB12a; WB13b: the card says the rule; AUDIT WB12d (A4): a rite's ember counts, and is no breach closed
   guest: 'Insignia need a registered account. Add a username and password first.',
+  // ARENA4, the banners (server-account/src/arena.js arenaTeam)
+  'bad-banner': 'The arena knows only the Red Banner and the Blue. The game may need updating.',
+  joined: 'You already fight under a banner. Quit it at its own recruiter first.',
+  season: 'You quit the other banner this season. You may join it when the next season opens.',
   // PATREON-LINK, a patron's own Patreon (server-account/src/patreon.js). `signature` is the webhook's, met by Patreon
   // and never a player; it has a sentence because every word the service says does.
   'patreon-closed': 'Linking Patreon is not switched on yet.',
@@ -184,6 +189,9 @@ export const REFUSALS = Object.freeze({
   // HOME1, the online homes (server-account/src/homes.js). A player meets these at a front door, beside the price.
   'homes-need-account': 'Owning a home needs a username and a password. Give this account one and you can buy one.',
   'home-taken': 'Somebody else owns this home now.',
+  'home-update': 'This game is out of date. Reload it to buy a home.',   // WD3 (AUDIT WD3 B2): a build from before the town mods
+  'home-towns': 'The towns could not be loaded as the other players here see them. Reload the game to buy a home.',   // WD3 (AUDIT WD3 B1): a town mod's pack did not load
+  'home-layout': 'The town records here are still being read. Try again in a moment.',   // WD3: the town is built again as the room's (scenes/world.js hearHomeLayouts)
   'home-cap': `A character can own at most ${HOME_CAP} homes. Sell one to buy another.`,
   'home-rate': 'You have bought and sold a lot of homes this hour. Try again later.',
   'no-home': 'That home is not yours any more.',
@@ -204,6 +212,10 @@ export const REFUSALS = Object.freeze({
   'bad-room': 'The account service could not read that room.',
   'home-tenants': 'Somebody is renting a room in your home. It cannot be sold or deleted until their days run out.',
   'home-rent-due': 'Rent is waiting to be collected at your home. Collect it first.',
+  // ARENA4b: a home the arena displaced (homes.js arenaMoveHome), and a house of its block an old build would buy
+  'home-arena': ARENA_TEXT.homeMove.arena,
+  'home-unmoved': ARENA_TEXT.homeMove.unmoved,
+  'home-changed': ARENA_TEXT.homeMove.changed,
   // HOME-LOOK: an online home's outside (server-account/src/homes.js setHomeLook)
   'bad-look': 'The account service could not read that look. The game may need updating.',
   // DECOR1: an online home's decor (server-account/src/decor.js)
@@ -977,6 +989,24 @@ export function accountRaids({ fetch, storage }) {
   };
 }
 
+/**
+ * ARENA4: THE ARENA (server-account/src/arena.js) through the one door - a bout's receipt the relay signed, carried here
+ * by an account it names (`claim`); the boards, counted from the rows (`board` - the season's ratings, the climb, the
+ * banners, the Hall of Champions, and this account's own); a banner joined or quit (`team` - 'red', 'blue' or null).
+ * Every answer is `call`'s shape, waited for ACCOUNT_ACT_WAIT_MS at most; no session is `no-session`, never a throw.
+ * `me()` the signed-in account's id - the receipts this device may offer are its alone (AUDIT WB A9's law).
+ */
+export function accountArena({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
+  const post = waitedPost({ fetch, storage }, waitMs);
+  return {
+    // ARENA4b: and the character that fought it (its `name` for the track) - a won bout's Renown is that character's
+    claim: (receipt, character = null, name = null) => post('/v1/arena/claim', { receipt, ...(character ? { character } : {}), ...(name ? { name } : {}) }),
+    board: () => post('/v1/arena/board', {}),
+    team: (banner) => post('/v1/arena/team', { banner: banner ?? null }),
+    me: () => storedSession(storage)?.id ?? null,
+  };
+}
+
 /** RENOWN1: what one of this account's characters earned online - `{ character, xp, level, credited, rose, order }`. */
 export const reportRenownXp = (io, character, xp, name = null, rid = null, region = null) => call(io, '/v1/renown/xp', { character, xp, name, ...(rid ? { rid } : {}), ...(region != null ? { region } : {}) });   // AUDIT RENOWN1 DATA-4: `rid` the report's own id; SEAT1b: `region` where it was earned
 
@@ -1016,7 +1046,8 @@ export function accountHomes({ fetch, storage }) {
   return {
     town: (mapId, character = null) => post('/v1/homes/town', { mapId, ...(character ? { character } : {}) }),   // HOME-RENT: the playing character's own tenancies
     mine: () => post('/v1/homes/mine', {}),
-    claim: ({ mapId, buildingKey, region, character, price, realm = null }) => post('/v1/homes/claim', { mapId, buildingKey, region, character, price, ...(realm ? { realm } : {}) }),   // REALM P2.2b: a realm character's record pays
+    claim: ({ mapId, buildingKey, region, character, price, realm = null, layout = null }) => post('/v1/homes/claim', { mapId, buildingKey, region, character, price, ...(realm ? { realm } : {}), layout: layout || null }),   // REALM P2.2b: a realm character's record pays; WD3: the layout the town stands in, always said (null: Daggerfall's - AUDIT WD3 B2)
+    layouts: () => post('/v1/homes/layouts', {}),   // WD3: every town holding a home, and the layout it keeps
     release: (mapId, buildingKey, realm = null) => post('/v1/homes/release', { mapId, buildingKey, ...(realm ? { realm } : {}) }),
     entry: (mapId, buildingKey, entry) => post('/v1/homes/entry', { mapId, buildingKey, entry }),
     // HOME-RENT: a home's rooms (server-account/src/rent.js) - read at its door, offered and withdrawn by its owner, rented
@@ -1028,6 +1059,11 @@ export function accountHomes({ fetch, storage }) {
     collectRent: ({ mapId, buildingKey, character, realm = null }) => post('/v1/homes/rooms/collect', { mapId, buildingKey, character, ...(realm ? { realm } : {}) }),
     // HOME-LOOK: how a home looks outside, painted by its owner (null: the town's own)
     look: ({ mapId, buildingKey, character, look = null }) => post('/v1/homes/look', { mapId, buildingKey, character, look }),
+    // ARENA4b: a home the arena displaced, moved to the house this client picked (its record named when the pieces' refund
+    // comes onto it); the moves this character has not read; and one read
+    arenaMove: ({ mapId, from, to, character, realm = null }) => post('/v1/homes/arena-move', { mapId, from, to, character, ...(realm ? { realm } : {}) }),
+    arenaMoves: (character) => post('/v1/homes/arena-moves', { character }),
+    arenaSeen: (mapId, from) => post('/v1/homes/arena-seen', { mapId, from }),
   };
 }
 

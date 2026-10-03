@@ -787,8 +787,8 @@
   {
     "name": "AUDITLIVED1B-T4-wm-enhanced-smith-jobs-on-the-worlds-clock",
     "file": "src/scenes/worldModes.js",
-    "old": "      repairItems: () => repairJobsAt(playerEntity, b.buildingKey ?? 0, Math.floor(ownMinutes())),\n      nowMinutes: () => Math.floor(ownMinutes()),",
-    "new": "      repairItems: () => repairJobsAt(playerEntity, b.buildingKey ?? 0, Math.floor(worldMinutes())),\n      nowMinutes: () => Math.floor(ownMinutes()),",
+    "old": "      repairItems: () => repairJobsAt(playerEntity, b.buildingKey ?? 0, Math.floor(ownMinutes()), homeTownOf(b)),\n      nowMinutes: () => Math.floor(ownMinutes()),",
+    "new": "      repairItems: () => repairJobsAt(playerEntity, b.buildingKey ?? 0, Math.floor(worldMinutes()), homeTownOf(b)),\n      nowMinutes: () => Math.floor(ownMinutes()),",
     "tests": [
       "test/auditlived1b_t.test.js"
     ]
@@ -796,8 +796,8 @@
   {
     "name": "AUDITLIVED1B-T4-wm-enhanced-smith-now-on-the-worlds-clock",
     "file": "src/scenes/worldModes.js",
-    "old": "      repairItems: () => repairJobsAt(playerEntity, b.buildingKey ?? 0, Math.floor(ownMinutes())),\n      nowMinutes: () => Math.floor(ownMinutes()),",
-    "new": "      repairItems: () => repairJobsAt(playerEntity, b.buildingKey ?? 0, Math.floor(ownMinutes())),\n      nowMinutes: () => Math.floor(worldMinutes()),",
+    "old": "      repairItems: () => repairJobsAt(playerEntity, b.buildingKey ?? 0, Math.floor(ownMinutes()), homeTownOf(b)),\n      nowMinutes: () => Math.floor(ownMinutes()),",
+    "new": "      repairItems: () => repairJobsAt(playerEntity, b.buildingKey ?? 0, Math.floor(ownMinutes()), homeTownOf(b)),\n      nowMinutes: () => Math.floor(worldMinutes()),",
     "tests": [
       "test/auditlived1b_t.test.js"
     ]

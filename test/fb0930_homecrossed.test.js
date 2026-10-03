@@ -32,14 +32,14 @@ test('HOME-CROSSED the service: a realm character\'s sale of a house customs car
   const who = await s.registered('Seanobi');
   const R = await seatRealm(s.env, who.secret, 'Seanobi', { name: 'Seanobi', level: 9, goldPieces: 200_000, items: [], bankAccounts: new Array(62).fill(0).map(() => ({ accountGold: 0 })) });
   carriedIn(s.env, who.id, R.id);
-  const sale = await s.call('/v1/homes/release', { mapId: 77, buildingKey: 9, realm: R.at() }, who.secret);
+  const sale = await s.call('/v1/homes/release', { mapId: 77, buildingKey: 9, realm: R.at(), layout: null }, who.secret);
   assert.deepEqual([sale.status, sale.body?.error], [409, 'home-crossed'], 'refused, and said why');
   assert.ok(s.env.DB._raw.prepare('SELECT 1 FROM homes WHERE map_id = 77 AND building_key = 9').get(), 'the house stands');
   assert.ok(s.env.DB._raw.prepare('SELECT 1 FROM home_decor WHERE map_id = 77 AND building_key = 9').get(), 'and its pieces');
   // a house the record bought pays back the deed share of what it paid
-  const bought = await s.call('/v1/homes/claim', { mapId: 55, buildingKey: 3, region: 17, character: R.id, price: 100_000, realm: R.at() }, who.secret);
+  const bought = await s.call('/v1/homes/claim', { mapId: 55, buildingKey: 3, region: 17, character: R.id, price: 100_000, realm: R.at(), layout: null }, who.secret);
   assert.equal(bought.status, 200);
-  const sold = await s.call('/v1/homes/release', { mapId: 55, buildingKey: 3, realm: R.at() }, who.secret);
+  const sold = await s.call('/v1/homes/release', { mapId: 55, buildingKey: 3, realm: R.at(), layout: null }, who.secret);
   assert.deepEqual([sold.status, sold.body?.refund], [200, homeSaleRefund(100_000)]);
 });
 
@@ -49,7 +49,7 @@ test('HOME-CROSSED the town\'s answer marks my own carried-in house `crossed` - 
   const other = await s.registered('Stranger');
   const R = await seatRealm(s.env, who.secret, 'Seanobi', { name: 'Seanobi', level: 9, goldPieces: 200_000, items: [], bankAccounts: new Array(62).fill(0).map(() => ({ accountGold: 0 })) });
   carriedIn(s.env, who.id, R.id, 77, 9);
-  assert.equal((await s.call('/v1/homes/claim', { mapId: 77, buildingKey: 3, region: 17, character: R.id, price: 100_000, realm: R.at() }, who.secret)).status, 200);
+  assert.equal((await s.call('/v1/homes/claim', { mapId: 77, buildingKey: 3, region: 17, character: R.id, price: 100_000, realm: R.at(), layout: null }, who.secret)).status, 200);
   const town = async (w) => (await s.call('/v1/homes/town', { mapId: 77 }, w.secret)).body.homes;
   const mine = await town(who);
   assert.deepEqual(mine.map((h) => [h.buildingKey, h.crossed === true]), [[3, false], [9, true]]);

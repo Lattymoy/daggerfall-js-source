@@ -670,8 +670,10 @@ test('WORLD-HOVER: the dungeon\'s target list has ONE builder, and the hover rea
   // AUDIT-SEATS: and a FIFTH, the Hall of Records' shelves in a seat's castle (`records:` - empty off a castle
   // that keeps them, so a dungeon without the Hall offers nothing)
   // CROWN-HALL (PIN MOVED): and a SIXTH, a crown's throne room's board and chest (`crown:` - empty off a held crown's castle)
-  assert.equal((wm.match(/ctx\.addActivationTargets\(/g) ?? []).length, 6,
-    'the exit doors, the quest stands, the Records shelves, the throne room\'s pieces and the static NPCs - five, named - and the court\'s spoils');
+  // ARENA5 (PIN MOVED): and a SEVENTH, the Hall of Champions' plaques in the arena's undercroft (`plaque:` - empty off the
+  // undercroft, and until its wall has stood), registered beside their namer (test/arena5_plaques.test.js)
+  assert.equal((wm.match(/ctx\.addActivationTargets\(/g) ?? []).length, 7,
+    'the exit doors, the quest stands, the Records shelves, the throne room\'s pieces, the Hall\'s plaques and the static NPCs - six, named - and the court\'s spoils');
   assert.match(wm, /ctx\.addActivationTargets\(\(\) => host\.spoilTargets\?\.\(\) \?\? NO_TARGETS\);\n\s*ctx\.addActivationNamer\(\(key\) => \(typeof key === 'string' && key\.startsWith\('spoil'\) \? host\.spoilName\?\.\(key\) \?\? null : null\)\);/,
     'the spoils stood with their words');
   assert.doesNotMatch(read('src/scenes/dungeon.js'), /addActivationTargets/,

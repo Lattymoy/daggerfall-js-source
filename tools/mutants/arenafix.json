@@ -1,0 +1,392 @@
+[
+  {
+    "name": "ARENAFIX-STAIR-RISER-MAX",
+    "file": "src/world/arenaModel.js",
+    "old": "export const STAIR_RISER_MAX = 0.48;",
+    "new": "export const STAIR_RISER_MAX = 0.3;",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-STAIR-RUN-MIN",
+    "file": "src/world/arenaModel.js",
+    "old": "export const RUN_MIN = 3;",
+    "new": "export const RUN_MIN = 2;",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-STAIR-SAME-WAY",
+    "file": "src/world/arenaModel.js",
+    "old": "if (Math.abs(d) < TREAD_MIN || Math.abs(d) > TREAD_MAX || (sign && Math.sign(d) !== sign)) continue;",
+    "new": "if (Math.abs(d) < TREAD_MIN || Math.abs(d) > TREAD_MAX) continue;",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-RAMP-NO-FOOT",
+    "file": "src/world/arenaModel.js",
+    "old": "    const drop = h0.y - r.foot + RAMP_BELOW;",
+    "new": "    const drop = h0.y - r.foot;",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-RAMP-HULL-OFF",
+    "file": "src/world/arenaModel.js",
+    "old": "      if ((b.s - a.s) * (p.y - a.y) - (b.y - a.y) * (p.s - a.s) >= 0) hull.pop(); else break;",
+    "new": "      break;",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-RAMP-DRAWN",
+    "file": "src/world/arenaModel.js",
+    "old": "  return { ...model, positions, normals, uvs, indices, colliderOnlyFrom: model.indices.length, stairRuns: ramps.runs.length };",
+    "new": "  return { ...model, positions, normals, uvs, indices, subMeshes: [...model.subMeshes, { textureArchive: 0, textureRecord: 0, startIndex: model.indices.length, primitiveCount: ramps.indices.length / 3 }], colliderOnlyFrom: model.indices.length, stairRuns: ramps.runs.length };",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-RAMPS-UNREGISTERED",
+    "file": "src/world/arenaCity.js",
+    "old": "export const arenaDrawnModel = (built) => withStairRamps(sealArenaSeams(built));",
+    "new": "export const arenaDrawnModel = (built) => sealArenaSeams(built);",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-COMPOSE-PER-PART",
+    "file": "src/world/arenaModel.js",
+    "old": "      const k = `${s.textureArchive}_${s.textureRecord}`;",
+    "new": "      const k = `${pi}:${s.textureArchive}_${s.textureRecord}`;",
+    "tests": [
+      "test/arena_fix.test.js",
+      "test/arena1_model.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-SEAL-NO-CUT",
+    "file": "src/world/arenaModel.js",
+    "old": "    if (!n) { outByPic[T.pic].push([corner(0), corner(1), corner(2)]); continue; }",
+    "new": "    if (n >= 0) { outByPic[T.pic].push([corner(0), corner(1), corner(2)]); continue; }",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-SEAL-NO-SINK",
+    "file": "src/world/arenaModel.js",
+    "old": "      if (!loser.sink) { loser.sink = SINK_M; sunk++; }",
+    "new": "      if (!loser.sink) { sunk++; }",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-SEAL-NO-WELD",
+    "file": "src/world/arenaModel.js",
+    "old": "        if (Math.hypot(r[0] - q[0], r[1] - q[1], r[2] - q[2]) <= T_EPS) {",
+    "new": "        if (Math.hypot(r[0] - q[0], r[1] - q[1], r[2] - q[2]) <= 0) {",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-PAVING-GRASS",
+    "file": "src/world/arenaCity.js",
+    "old": "export const ARENA_PAVING = 46;",
+    "new": "export const ARENA_PAVING = 2;",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-PAVING-ONE-LAY",
+    "file": "src/world/arenaCity.js",
+    "old": "    const rot = (h >> 3) & 1, flip = (h >> 7) & 1;",
+    "new": "    const rot = 0, flip = 0;",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-PAVING-UNLAID",
+    "file": "src/world/arenaCity.js",
+    "old": "      FldHeader: { ...fld, GroundData: { ...fld.GroundData, GroundTiles: arenaGroundTiles() } },",
+    "new": "      FldHeader: fld,",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-PLAZA-GONE",
+    "file": "src/world/arenaCity.js",
+    "old": "        ...ARENA_PLAZA_FLATS.map((f, i) =>",
+    "new": "        ...[].map((f, i) =>",
+    "tests": [
+      "test/arena_fix.test.js",
+      "test/arena1_city.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-GATE-NAMES",
+    "file": "src/world/arenaCity.js",
+    "old": "  return p ? names?.[p.role] ?? null : null;",
+    "new": "  return null;",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-GATE-NAMES-TALK",
+    "file": "src/scenes/worldModes.js",
+    "old": "npcName: officeName(pn) ?? displayName, portrait:",
+    "new": "npcName: displayName, portrait:",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-UNDERCROFT-STAIR-NAME",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (entries[key]?.door?.doorType === DOOR_TYPE.DUNGEON_ENTRANCE && entries[key].dfLocation?.arenaUndercroft) {",
+    "new": "if (entries[key]?.door?.doorType === DOOR_TYPE.DUNGEON_ENTRANCE && entries[key].dfLocation?.arenaUndercroftX) {",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-UNDERCROFT-FOES",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "  const _hallBeasts = _undercroftHall ? ",
+    "new": "  const _hallBeasts = false ? ",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-UNDERCROFT-REST",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    for (let l = 0; l < n && !_undercroftHall; l++) {",
+    "new": "    for (let l = 0; l < n; l++) {",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-UNDERCROFT-ORDER",
+    "file": "src/world/arenaUndercroft.js",
+    "old": "  const order = marks.slice().sort((a, b) => d(a) - d(b) || a.k - b.k);",
+    "new": "  const order = marks.slice();",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-UNDERCROFT-FACTION",
+    "file": "src/world/arenaUndercroft.js",
+    "old": "npc: !!person, role: person?.role ?? null, factionID: person ? UNDERCROFT_FACTION : 0,",
+    "new": "npc: !!person, role: person?.role ?? null, factionID: 0,",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-CHAIN-UNHELD",
+    "file": "src/world/arenaUndercroft.js",
+    "old": "  return { id: `undercroft:chain:${n}`, side: 0, out: false, hold: true,",
+    "new": "  return { id: 'undercroft:chain', side: n, out: false, hold: false,",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-HALL-NO-GRAND",
+    "file": "src/systems/arenaLadder.js",
+    "old": "  if (s.grand) cut.push(U.hallGrand(name));",
+    "new": "",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-PRACTICE-PURSE",
+    "file": "src/systems/arenaLadder.js",
+    "old": "    purse: 0, label: ARENA_TEXT.undercroft.practiceLabel,",
+    "new": "    purse: BOUT_PURSE[s.tier], label: ARENA_TEXT.undercroft.practiceLabel,",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-PRACTICE-LADDER",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "    if (C.practice) {\n      // ARENA-FIX 4",
+    "new": "    if (false) {\n      // ARENA-FIX 4",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-PRACTICE-LOUD",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "      practice, quiet: practice,",
+    "new": "      practice, quiet: false,",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-PIT-AXIS",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "(ax ? [(x * ax[0] - z * ax[1]) * k, (x * ax[1] + z * ax[0]) * k] : [x * k, z * k])",
+    "new": "[x * k, z * k]",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-WALK-NONE",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "        if (f?.ai && !C.relay) walkIn(C, f.id);   // ARENA-FIX 8",
+    "new": "        // ARENA-FIX 8",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-WALK-AT-GATE",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "      const from = stage.gates === false ? f.mark : boutGateOf(f.mark);",
+    "new": "      const from = f.mark;",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-WALK-ARRIVE",
+    "file": "src/characters/enemyMotor.js",
+    "old": "    if (left <= WALK_ARRIVE_M) {",
+    "new": "    if (left <= -1) {",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-WALK-PACE",
+    "file": "src/characters/enemyMotor.js",
+    "old": "        const sp = this.speed * (this._tacDir ? this._tacSpeed : 1) * (this._pace ?? 1);",
+    "new": "        const sp = this.speed * (this._tacDir ? this._tacSpeed : 1) * 0.05;",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-MISS-UNHEARD",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "    if (!(r.damage > 0)) boutMiss(C.b, { from, now: t });",
+    "new": "    if (!(r.damage > 0)) { /* no miss */ }",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-SWING-UNHEARD",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "    if (!C?.ladder || !C.b || !boutLive(C.b) || struck > 0) return;",
+    "new": "    return;",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-MISS-SIDES",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "    if (!a || !b || a.side === b.side) return;",
+    "new": "    if (!a || !b) return;",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-CRIT-APPROX",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "    if (r && t - r.at <= RESOLUTION_MS) { C.lastBlow.delete(to); return r.critical; }",
+    "new": "    if (r && t - r.at <= RESOLUTION_MS) { C.lastBlow.delete(to); }",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-RESOLUTION-PLAYER-ONLY",
+    "file": "src/combat/formulas.js",
+    "old": "    if (_resolutionListeners.size) for (const fn of _resolutionListeners.values())",
+    "new": "    if (_resolutionListeners.size && attacker.isPlayer) for (const fn of _resolutionListeners.values())",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-TORCH-LEFT",
+    "file": "src/systems/arenaMove.js",
+    "old": "    for (const t of d?.droppedTorches ?? []) { const it = droppedLightItem(t); if (it) { out.crate.push(it); out.lights++; } }   // ARENA-FIX 11",
+    "new": "",
+    "tests": [
+      "test/arena_fix.test.js",
+      "test/arena2_move.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-TORCH-CONDITION",
+    "file": "src/systems/arenaMove.js",
+    "old": "currentCondition: Math.max(1, Math.ceil((Number(t.time) || 0) / LIGHT_SECONDS_PER_CONDITION))",
+    "new": "currentCondition: Math.max(1, Math.floor((Number(t.time) || 0) / LIGHT_SECONDS_PER_CONDITION))",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-NOBLES-GIANT",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "      const size = sizeOf(tex, g.record, CROWD_SCALE[g.archive]);",
+    "new": "      const size = sizeOf(tex, g.record);",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-EOTB-PLACING",
+    "file": "src/player/eotbBody.js",
+    "old": "> PLACE_JUMP_M) faceYaw(Math.atan2(cam.forward[0], cam.forward[2]));",
+    "new": "> PLACE_JUMP_M) { /* kept */ }",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-HUD-CROWD-QUIET",
+    "file": "src/ui/arenaHud.js",
+    "old": "    crowd: quiet ? null : {",
+    "new": "    crowd: false ? null : {",
+    "tests": [
+      "test/arena_fix.test.js"
+    ]
+  },
+  {
+    "name": "ARENAFIX-EXTERIOR-UNWIRED",
+    "file": "src/scenes/exterior.js",
+    "old": "    arenaHerald: () => arenaHerald(),",
+    "new": "    arenaHeraldOff: () => arenaHerald(),",
+    "tests": [
+      "test/arena2_hosts.test.js"
+    ]
+  }
+]

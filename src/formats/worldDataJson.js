@@ -30,6 +30,7 @@
 
 import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { BLOCK_TYPES, RDB_RESOURCE_TYPES } from './blocksFile.js';
+import { LOCATION_TYPES, DUNGEON_TYPES, CLIMATE_BASE_TYPES } from './mapsFile.js';
 
 const BLOCK_TYPE_NAMES = ['Unknown', 'Rmb', 'Rdb', 'Rdi'];
 const RDB_RESOURCE_NAMES = { [RDB_RESOURCE_TYPES.Model]: 'Model', [RDB_RESOURCE_TYPES.Light]: 'Light', [RDB_RESOURCE_TYPES.Flat]: 'Flat' };
@@ -122,7 +123,7 @@ function rmbJson(rmb) {
       GroundData: groundDataJson(h.groundData),
       AutoMapData: h.autoMapData ? [...h.autoMapData] : null,
       Name: h.name ?? null,
-      OtherNames: h.otherNames ? [...h.otherNames] : null,   // a block served from JSON carries none (worldDataReplacement.blockFromJson)
+      OtherNames: h.otherNames ? [...h.otherNames] : null,   // a block served from JSON carries the file's own, or none (worldDataReplacement.blockFromJson, WD3)
     },
     SubRecords: rmb.subRecords.map(rmbSubRecordJson),
     Misc3dObjectRecords: rmb.misc3dObjectRecords.map(modelJson),
@@ -180,6 +181,74 @@ export function blockToDfuJson(dfBlock) {
     RmbBlock: isRmb ? rmbJson(dfBlock.rmbBlock) : EMPTY_RMB(),
     RdbBlock: isRdb ? rdbJson(dfBlock.rdbBlock) : { ModelReferenceList: null, ObjectRootList: null },
     RdiBlock: { Data: dfBlock.rdiBlock?.data ? [...dfBlock.rdiBlock.data] : null },
+  };
+}
+
+// ---- WD3 (2026-10-01): a classic LOCATION in the same shape ----
+//
+// Beautiful Villages and Beautiful Cities (carademono) ship `location-<r>-<i>.json`: DFLocation as DFU's World
+// Data Editor writes it - the MAPS.BSA record the editor read, with the author's layout in it. Most of each file is
+// therefore the classic location (game data), so the port carries the edit (formats/worldDataPack.js) and rebuilds
+// the file from the player's own MAPS.BSA through this serialiser. DFLocation's public fields, member for member
+// (DFLocation.cs:29-81, 352-681; DFRegion.cs:224-248): every `internal` is left out (the door counts, the null
+// values, the raw block index/number/character bytes, LocationId of the map table), enums by name.
+
+const LOCATION_TYPE_NAMES = new Map(Object.entries(LOCATION_TYPES).map(([k, v]) => [v, k]));
+const DUNGEON_TYPE_NAMES = new Map(Object.entries(DUNGEON_TYPES).map(([k, v]) => [v, k]));
+const CLIMATE_TYPE_NAMES = new Map(Object.entries(CLIMATE_BASE_TYPES).map(([k, v]) => [v, k]));
+/** DFLocation.ClimateTextureSet's nature members (DFLocation.cs:249-263) - the only sets a ClimateSettings carries. */
+const NATURE_SET_NAMES = Object.freeze({
+  500: 'Nature_RainForest', 501: 'Nature_SubTropical', 502: 'Nature_Swamp', 503: 'Nature_Desert',
+  504: 'Nature_TemperateWoodland', 505: 'Nature_TemperateWoodland_Snow', 506: 'Nature_WoodlandHills', 507: 'Nature_WoodlandHills_Snow',
+  508: 'Nature_HauntedWoodlands', 509: 'Nature_HauntedWoodlands_Snow', 510: 'Nature_Mountains', 511: 'Nature_Mountains_Snow',
+});
+/** FactionFile.FactionRaces by value (FactionFile.cs:609-624). */
+const FACTION_RACE_NAMES = Object.freeze({ [-1]: 'None', 0: 'Nord', 1: 'Khajiit', 2: 'Redguard', 3: 'Breton', 4: 'Argonian', 5: 'WoodElf', 6: 'HighElf', 7: 'DarkElf', 11: 'Skakmat', 17: 'Orc', 18: 'Vampire', 19: 'Fey' });
+const enumName = (table, v) => (table instanceof Map ? table.get(v) : table[v]) ?? v;
+
+/** LocationRecordElementHeader's public fields; a location with no dungeon serialises its default struct. */
+const recordHeaderJson = (h) => (h
+  ? { X: h.x, Y: h.y, IsExterior: h.isExterior, Unknown2: h.unknown2, LocationId: h.locationId, IsInterior: h.isInterior, ExteriorLocationId: h.exteriorLocationId, LocationName: h.locationName }
+  : { X: 0, Y: 0, IsExterior: 0, Unknown2: 0, LocationId: 0, IsInterior: 0, ExteriorLocationId: 0, LocationName: null });
+
+/** A DFLocation as DFU's World Data Editor writes it (`location-<region>-<index>.json`). */
+export function locationToDfuJson(loc) {
+  const mt = loc.mapTableData, ext = loc.exterior, ed = ext.exteriorData, c = loc.climate;
+  const dungeon = loc.dungeon ?? {};
+  return {
+    Loaded: !!loc.loaded,
+    Name: loc.name,
+    RegionName: loc.regionName,
+    HasDungeon: !!loc.hasDungeon,
+    MapTableData: {
+      MapId: mt.mapId, Latitude: mt.latitude, Longitude: mt.longitude,
+      LocationType: enumName(LOCATION_TYPE_NAMES, mt.locationType), DungeonType: enumName(DUNGEON_TYPE_NAMES, mt.dungeonType),
+      Discovered: !!mt.discovered, Key: mt.key,
+    },
+    Exterior: {
+      RecordElement: { Header: recordHeaderJson(ext.recordElement?.header) },
+      BuildingCount: ext.buildingCount,
+      Buildings: (ext.buildings ?? []).map(buildingDataJson),
+      ExteriorData: {
+        AnotherName: ed.anotherName, MapId: ed.mapId, LocationId: ed.locationId, Width: ed.width, Height: ed.height,
+        PortTownAndUnknown: ed.portTownAndUnknown, BlockNames: [...ed.blockNames],
+      },
+    },
+    Dungeon: {
+      RecordElement: { Header: recordHeaderJson(dungeon.recordElement?.header) },
+      Header: { BlockCount: dungeon.header?.blockCount ?? 0 },
+      // DungeonBlock's public fields; WaterLevel and CastleBlock are never set by the reader (MapsFile.ReadMapDItem)
+      Blocks: dungeon.blocks ? dungeon.blocks.map((b) => ({ X: b.x, Z: b.z, IsStartingBlock: !!b.isStartingBlock, BlockName: b.blockName, WaterLevel: 0, CastleBlock: false })) : null,
+    },
+    Climate: {
+      WorldClimate: c.worldClimate, ClimateType: enumName(CLIMATE_TYPE_NAMES, c.climateType), NatureSet: enumName(NATURE_SET_NAMES, c.natureArchive),
+      GroundArchive: c.groundArchive, NatureArchive: c.natureArchive, SkyBase: c.skyBase,
+      People: enumName(FACTION_RACE_NAMES, c.people),
+      Names: enumName(FACTION_RACE_NAMES, c.names ?? 0),   // GetWorldClimateSettings never sets it: the struct's default, Nord
+    },
+    Politic: loc.politic,
+    RegionIndex: loc.regionIndex,
+    LocationIndex: loc.locationIndex,
   };
 }
 

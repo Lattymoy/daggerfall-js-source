@@ -1,0 +1,701 @@
+[
+  {
+    "name": "ARENA2-YIELD-LINE",
+    "file": "src/systems/arenaBout.js",
+    "old": "export const YIELD_SHARE = 0.15;",
+    "new": "export const YIELD_SHARE = 0.2;",
+    "tests": [
+      "test/arena2_bout.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-YIELD-ABOVE",
+    "file": "src/systems/arenaBout.js",
+    "old": "  if (share(f) > YIELD_SHARE) return 'early';",
+    "new": "  if (share(f) >= YIELD_SHARE) return 'early';",
+    "tests": [
+      "test/arena2_bout.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-STALL-ONCE",
+    "file": "src/systems/arenaBout.js",
+    "old": "  if (!b.stallSaid && now - b.lastBlowAt >= STALL_MS) { b.stallSaid = true;",
+    "new": "  if (now - b.lastBlowAt >= STALL_MS) { b.stallSaid = true;",
+    "tests": [
+      "test/arena2_bout.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-STALL-RESET",
+    "file": "src/systems/arenaBout.js",
+    "old": "  b.lastBlowAt = now; b.stallSaid = false;",
+    "new": "  b.lastBlowAt = now;",
+    "tests": [
+      "test/arena2_bout.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-RINGOUT-SLACK",
+    "file": "src/systems/arenaBout.js",
+    "old": "      if (d > b.ring.radius + RING_SLACK_M) {",
+    "new": "      if (d > b.ring.radius) {",
+    "tests": [
+      "test/arena2_bout.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-RINGOUT-HOLD",
+    "file": "src/systems/arenaBout.js",
+    "old": "        if (now - f.outsideAt >= RING_OUT_MS) { out(b, f, 'ringout', now); continue; }",
+    "new": "        { out(b, f, 'ringout', now); continue; }",
+    "tests": [
+      "test/arena2_bout.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-JUDGE-HITS",
+    "file": "src/systems/arenaBout.js",
+    "old": "(y.dealt - x.dealt) || (y.hits - x.hits) || (x.misses - y.misses)",
+    "new": "(y.dealt - x.dealt) || (x.misses - y.misses)",
+    "tests": [
+      "test/arena2_bout.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-JUDGE-MISSES",
+    "file": "src/systems/arenaBout.js",
+    "old": "(y.dealt - x.dealt) || (y.hits - x.hits) || (x.misses - y.misses)",
+    "new": "(y.dealt - x.dealt) || (y.hits - x.hits) || (y.misses - x.misses)",
+    "tests": [
+      "test/arena2_bout.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-DRAW-NONE",
+    "file": "src/systems/arenaBout.js",
+    "old": "  if (c && a.dealt === c.dealt && a.hits === c.hits && a.misses === c.misses) return null;",
+    "new": "",
+    "tests": [
+      "test/arena2_bout.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-TEAMMATE-BLOW",
+    "file": "src/systems/arenaBout.js",
+    "old": "  if (!a || !t || a === t || a.out || t.out || a.side === t.side) return false;",
+    "new": "  if (!a || !t || a === t || a.out || t.out) return false;",
+    "tests": [
+      "test/arena2_bout.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-KNOCKDOWN-QUARTER",
+    "file": "src/systems/arenaBout.js",
+    "old": "export const KNOCKDOWN_SHARE = 0.25;",
+    "new": "export const KNOCKDOWN_SHARE = 0.3;",
+    "tests": [
+      "test/arena2_bout.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-COMEBACK-TWICE",
+    "file": "src/systems/arenaBout.js",
+    "old": "  if (a.low && !a.comeback && share(a) >= now2) {",
+    "new": "  if (a.low && share(a) >= now2) {",
+    "tests": [
+      "test/arena2_bout.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-TEMPER-EVERY",
+    "file": "src/systems/arenaBout.js",
+    "old": "    if (f.ai && share(f) <= YIELD_SHARE && now - f.temperAt >= TEMPER_EVERY_MS) {",
+    "new": "    if (f.ai && share(f) <= YIELD_SHARE) {",
+    "tests": [
+      "test/arena2_bout.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-SIDE-OUT",
+    "file": "src/systems/arenaBout.js",
+    "old": "  if (left.length <= 1) finish(b, left.length ? left[0] : null, how, now);",
+    "new": "  if (left.length < 1) finish(b, null, how, now);",
+    "tests": [
+      "test/arena2_bout.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-PURSE-VILLAIN",
+    "file": "src/systems/arenaBout.js",
+    "old": "  const k = 1 + (f >= 0 ? f * PURSE_FAVOUR_MAX : -f * PURSE_FAVOUR_MIN);",
+    "new": "  const k = 1 + (f >= 0 ? f * PURSE_FAVOUR_MAX : 0);",
+    "tests": [
+      "test/arena2_bout.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-COUNT-EARLY",
+    "file": "src/systems/arenaBout.js",
+    "old": "  const { from, to, dmg, health, crit = false, now } = blow;\n  if (!boutLive(b)) return false;",
+    "new": "  const { from, to, dmg, health, crit = false, now } = blow;",
+    "tests": [
+      "test/arena2_bout.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-PURSE-T1",
+    "file": "src/systems/arenaLadder.js",
+    "old": "export const BOUT_PURSE = Object.freeze([50,",
+    "new": "export const BOUT_PURSE = Object.freeze([60,",
+    "tests": [
+      "test/arena2_ladder.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-GRAND-PURSE",
+    "file": "src/systems/arenaLadder.js",
+    "old": "1600, 2200, 3000, 4000, 5400, 10000]);",
+    "new": "1600, 2200, 3000, 4000, 5400, 9000]);",
+    "tests": [
+      "test/arena2_ladder.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-TIER5-TWO",
+    "file": "src/systems/arenaLadder.js",
+    "old": "champion: [b(M.Warrior, 11), b(M.Warrior, 11)] }",
+    "new": "champion: [b(M.Warrior, 11)] }",
+    "tests": [
+      "test/arena2_ladder.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-LOSS-MOVES",
+    "file": "src/systems/arenaLadder.js",
+    "old": "    } else s.won = Math.min(BOUTS_PER_TIER, s.won + 1);\n  } else {\n    r.losses++; r.streak = 0;",
+    "new": "    } else s.won = Math.min(BOUTS_PER_TIER, s.won + 1);\n  } else {\n    r.losses++; r.streak = 0; s.won = 0;",
+    "tests": [
+      "test/arena2_ladder.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-TIER-UP",
+    "file": "src/systems/arenaLadder.js",
+    "old": "      else { s.tier = Math.min(LADDER_TIERS.length - 1, s.tier + 1); s.won = 0; out.tierUp = true; }",
+    "new": "      else { s.won = 0; out.tierUp = true; }",
+    "tests": [
+      "test/arena2_driver.test.js",
+      "test/arena2_ladder.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-RESTORE-GRAND",
+    "file": "src/systems/arenaLadder.js",
+    "old": "  L.grand = raw.grand === true;",
+    "new": "  L.grand = !!raw.grand;",
+    "tests": [
+      "test/arena2_ladder.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-EX-HOURS",
+    "file": "src/net/arenaExhibition.js",
+    "old": "  if (!EXHIBITION_HOURS.includes(hod)) return null;",
+    "new": "",
+    "tests": [
+      "test/arena2_ladder.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-EX-OPEN",
+    "file": "src/net/arenaExhibition.js",
+    "old": "open: minute < EXHIBITION_START_MINUTES,",
+    "new": "open: true,",
+    "tests": [
+      "test/arena2_hud.test.js",
+      "test/arena2_ladder.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-NAME-STREAM",
+    "file": "src/systems/arenaFighters.js",
+    "old": "  } finally { setSeed(saved); }",
+    "new": "  } finally { /* the stream left moved */ }",
+    "tests": [
+      "test/arena2_ladder.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-BEAST-TEMPER",
+    "file": "src/systems/arenaFighters.js",
+    "old": "  const temper = NO_YIELD.has(mobile) ? 0 : 0.2 + rng() * 0.7;",
+    "new": "  const temper = 0.2 + rng() * 0.7;",
+    "tests": [
+      "test/arena2_ladder.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-HOME-CROWD",
+    "file": "src/systems/arenaCrowd.js",
+    "old": "  for (const f of fighters) favour[f.id] = f.home === 'Daggerfall' ? HOME_FAVOUR : 0;",
+    "new": "  for (const f of fighters) favour[f.id] = 0;",
+    "tests": [
+      "test/arena2_crowd.test.js",
+      "test/arena2_hud.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-HATED-BOO",
+    "file": "src/systems/arenaCrowd.js",
+    "old": "      if (hated) { push(c, MOOD_PUSH.hitHated); cues.push({ s: 'boo', v: 0.45 }); }",
+    "new": "      if (false) { push(c, MOOD_PUSH.hitHated); cues.push({ s: 'boo', v: 0.45 }); }",
+    "tests": [
+      "test/arena2_crowd.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-EARLY-YIELD",
+    "file": "src/systems/arenaCrowd.js",
+    "old": "      const early = share(e.a ?? '') > YIELD_EARLY_SHARE;",
+    "new": "      const early = false;",
+    "tests": [
+      "test/arena2_crowd.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-BARK-GAP",
+    "file": "src/systems/arenaCrowd.js",
+    "old": "  if (!c || !e || now - c.lastBarkAt < BARK_GAP_MS) return null;",
+    "new": "  if (!c || !e) return null;",
+    "tests": [
+      "test/arena2_crowd.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-BARK-REPEAT",
+    "file": "src/systems/arenaCrowd.js",
+    "old": "    const pool = lines.length > 1 ? lines.filter((l) => l !== c.lastBark) : lines;",
+    "new": "    const pool = lines;",
+    "tests": [
+      "test/arena2_crowd.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-GASP",
+    "file": "src/systems/arenaCrowd.js",
+    "old": "cues.push({ s: 'gasp', v: 0.9 }, { s: 'roar', v: 0.6 }); break;",
+    "new": "cues.push({ s: 'roar', v: 0.6 }); break;",
+    "tests": [
+      "test/arena2_crowd.test.js",
+      "test/arena2_driver.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-TITLE-FANFARE",
+    "file": "src/systems/arenaCrowd.js",
+    "old": "{ s: title ? 'title' : 'fanfare', v: 1 }",
+    "new": "{ s: 'fanfare', v: 1 }",
+    "tests": [
+      "test/arena2_crowd.test.js",
+      "test/arena2_driver.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-SETTLE",
+    "file": "src/systems/arenaCrowd.js",
+    "old": "  c.mood += (c.base - c.mood) * k;",
+    "new": "  c.mood += (c.base - c.mood) * k * 0.5;",
+    "tests": [
+      "test/arena2_crowd.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-BED-WRAP",
+    "file": "src/systems/arenaSound.js",
+    "old": "gain: 0.55 + rng() * 0.3, wrap: true });",
+    "new": "gain: 0.55 + rng() * 0.3 });",
+    "tests": [
+      "test/arena2_crowd.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-SOUND-RATE",
+    "file": "src/systems/arenaSound.js",
+    "old": "      for (const [k, x] of Object.entries(all)) if (!audio.registerSamples(k, x, ARENA_SOUND_RATE)) return false;",
+    "new": "      for (const [k, x] of Object.entries(all)) if (!audio.registerSamples(k, x, 11025)) return false;",
+    "tests": [
+      "test/arena2_crowd.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-GROAN",
+    "file": "src/systems/arenaSound.js",
+    "old": "          case 'groan': audio.playOneShot(ARENA_CLIPS.groan, vol); break;",
+    "new": "          case 'groan': break;",
+    "tests": [
+      "test/arena2_crowd.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-BED-OFF",
+    "file": "src/systems/arenaSound.js",
+    "old": "      if (!(near > 0)) { this.stop(); return; }",
+    "new": "      if (!(near > 0)) return;",
+    "tests": [
+      "test/arena2_crowd.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-SCORE-STING",
+    "file": "src/systems/arenaScore.js",
+    "old": "  if (Number.isFinite(verdictAt) && now - verdictAt < ARENA_STING_MS) return ARENA_SONGS.win;",
+    "new": "  if (Number.isFinite(verdictAt)) return ARENA_SONGS.win;",
+    "tests": [
+      "test/arena2_crowd.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-GATE-SIDES",
+    "file": "src/characters/enemyTargets.js",
+    "old": "  return (sb.side | 0) !== (tb.side | 0);",
+    "new": "  return true;",
+    "tests": [
+      "test/arena2_seams.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-GATE-HOLD",
+    "file": "src/characters/enemyTargets.js",
+    "old": "  if (String(sb.id) !== String(tb.id) || sb.out || tb.out || sb.hold || tb.hold) return false;",
+    "new": "  if (String(sb.id) !== String(tb.id) || sb.out || tb.out) return false;",
+    "tests": [
+      "test/arena2_seams.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-GATE-STRANGER",
+    "file": "src/characters/enemyTargets.js",
+    "old": "  if (!sb || !tb) return false;",
+    "new": "  if (!sb || !tb) return null;",
+    "tests": [
+      "test/arena2_seams.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-GATE-SKIP",
+    "file": "src/characters/enemyTargets.js",
+    "old": "    if (bout === false) continue;",
+    "new": "",
+    "tests": [
+      "test/arena2_seams.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-MACHINE-DROP",
+    "file": "src/characters/enemyTargets.js",
+    "old": "  if (ai.target && boutGate(self, ai.target, isPlayerTarget(ai.target), playerBout) === false) ai.target = null;",
+    "new": "",
+    "tests": [
+      "test/arena2_seams.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-FLOOR-DIES",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (bout) { f.entity.health = 1; if (!bout.out) { bout.out = true; bout.hooks?.floor?.(f, { fromPlayer: fromPlayer && !peer, striker }); } return; }",
+    "new": "",
+    "tests": [
+      "test/arena2_seams.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-FLOOR-TWICE",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (bout) { f.entity.health = 1; if (!bout.out) { bout.out = true; bout.hooks?.floor?.(f, { fromPlayer: fromPlayer && !peer, striker }); } return; }",
+    "new": "      if (bout) { f.entity.health = 1; bout.out = true; bout.hooks?.floor?.(f, { fromPlayer: fromPlayer && !peer, striker }); return; }",
+    "tests": [
+      "test/arena2_seams.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-CITY-TURNS",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    if (bout && !peer && boutGate(f, PLAYER_TARGET, true) !== true) { bout.hooks?.intrude?.(f); return; }",
+    "new": "",
+    "tests": [
+      "test/arena2_seams.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-HURT-HOOK",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    if (bout && healthDamage > 0) bout.hooks?.hurt?.(f, healthDamage, { fromPlayer: fromPlayer && !peer, striker });",
+    "new": "",
+    "tests": [
+      "test/arena2_seams.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-HUD-HINT",
+    "file": "src/ui/arenaHud.js",
+    "old": "    hint: mine && live && !mine.out && fighterShare(mine) <= YIELD_SHARE ? ARENA_TEXT.hud.yieldHint : '',",
+    "new": "    hint: '',",
+    "tests": [
+      "test/arena2_driver.test.js",
+      "test/arena2_hud.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-HUD-LEFT",
+    "file": "src/ui/arenaHud.js",
+    "old": "  const leftSide = mine ? mine.side : bout.fighters[0].side;",
+    "new": "  const leftSide = bout.fighters[0].side;",
+    "tests": [
+      "test/arena2_hud.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-HUD-DIFF",
+    "file": "src/ui/arenaHud.js",
+    "old": "    if (was[i] === key) return;",
+    "new": "",
+    "tests": [
+      "test/arena2_hud.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-HUD-REDUCED",
+    "file": "src/ui/arenaHud.js",
+    "old": "@media (prefers-reduced-motion: reduce) { .arena-fill { transition: none; } }",
+    "new": "",
+    "tests": [
+      "test/arena2_hud.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-HERALD-FIT",
+    "file": "src/systems/arenaHerald.js",
+    "old": "  if (next && fit) options.push({ code: 'KeyF', label: H.fight, act: 'fight' });",
+    "new": "  if (next) options.push({ code: 'KeyF', label: H.fight, act: 'fight' });",
+    "tests": [
+      "test/arena2_hud.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-HERALD-WHY",
+    "file": "src/systems/arenaHerald.js",
+    "old": "  else if (!canWatch) { lines.push(H.noWatch); lines.push(H.nextAt(nextExhibitionHour(gameMinutes))); }",
+    "new": "",
+    "tests": [
+      "test/arena2_hud.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-FLOOR-Y",
+    "file": "src/world/arenaFloor.js",
+    "old": "type: 0x01, position: pos++, index: objects.length, xPos: o.XPos, yPos: o.YPos - PROPS_Y,",
+    "new": "type: 0x01, position: pos++, index: objects.length, xPos: o.XPos, yPos: o.YPos,",
+    "tests": [
+      "test/arena2_floor.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-FLOOR-STAIR",
+    "file": "src/world/arenaFloor.js",
+    "old": "    if (id === 43600) continue;   // the undercroft's stair is the city's",
+    "new": "",
+    "tests": [
+      "test/arena2_floor.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-FLOOR-LIGHTS",
+    "file": "src/world/arenaFloor.js",
+    "old": "      resources: res({ lightResource: { unknown1: 0, unknown2: 0, radius: FLAT_LIGHT_R[key] ?? 160 } }),",
+    "new": "      resources: res({ lightResource: { unknown1: 0, unknown2: 0, radius: 0 } }),",
+    "tests": [
+      "test/arena2_floor.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-SEAT-ROOF",
+    "file": "src/world/arenaFloor.js",
+    "old": "      if (h < SEAT_UP_MIN || h > SEAT_UP_MAX) continue;",
+    "new": "      if (h < SEAT_UP_MIN) continue;",
+    "tests": [
+      "test/arena2_floor.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-RING-R",
+    "file": "src/world/arenaFloor.js",
+    "old": "export const RING_R = 14;",
+    "new": "export const RING_R = 17;",
+    "tests": [
+      "test/arena2_floor.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-REFUND-HALF",
+    "file": "src/systems/arenaMove.js",
+    "old": "out.refund += Number.isSafeInteger(p?.paid) && p.paid > 0 ? p.paid : 0;",
+    "new": "out.refund += Number.isSafeInteger(p?.paid) && p.paid > 0 ? Math.floor(p.paid / 2) : 0;",
+    "tests": [
+      "test/arena2_move.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-CRATE-FLOOR",
+    "file": "src/systems/arenaMove.js",
+    "old": "    for (const pile of d?.droppedPiles ?? []) if (Array.isArray(pile?.items)) out.crate.push(...pile.items.map(copyItem));",
+    "new": "",
+    "tests": [
+      "test/arena2_move.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-MARKS-KEPT",
+    "file": "src/systems/arenaMove.js",
+    "old": "    cacheScene(cache, to, { lootContainers: out.crate.length ? [{ key: ARENA_CRATE_KEY, items: out.crate.map(copyItem), crate: true, stockedDate: 0 }] : [], frame: 'building' });",
+    "new": "    cacheScene(cache, to, { lootContainers: out.crate.length ? [{ key: ARENA_CRATE_KEY, items: out.crate.map(copyItem), crate: true, stockedDate: 0 }] : [], frame: 'building', hiddenBase: ['bed:2'] });",
+    "tests": [
+      "test/arena2_move.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-OWN-LOST",
+    "file": "src/systems/arenaMove.js",
+    "old": "  if (emptied.own.length) hooks.giveOwn?.(emptied.own);",
+    "new": "",
+    "tests": [
+      "test/arena2_move.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-SPARE-ALWAYS",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "    if (!C?.ladder || !C.b || C.b.phase !== 'fight' || C.playerTag?.out) return null;",
+    "new": "    if (!C?.ladder || !C.b) return null;",
+    "tests": [
+      "test/arena2_driver.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-CRIME-FIRST",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "    if (intrusions === 1) deps.say?.(ARENA_TEXT.herald.intrude);",
+    "new": "    if (intrusions === 0) deps.say?.(ARENA_TEXT.herald.intrude);",
+    "tests": [
+      "test/arena2_driver.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-PREFIGHT-BLOW",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "      if (foe?.entity) foe.entity.health = Math.min(foe.entity.maxHealth ?? foe.entity.health, foe.entity.health + dmg);",
+    "new": "",
+    "tests": [
+      "test/arena2_driver.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-HOLD-LATE",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "    for (const tag of C.tags.values()) tag.hold = !boutLive(C.b);\n    if (C.playerTag) C.playerTag.hold = !boutLive(C.b);",
+    "new": "",
+    "tests": [
+      "test/arena2_driver.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-NO-LOOT",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "          if (foe.entity) { foe.entity.bout = tags.get(f.id); foe.entity.items = []; }",
+    "new": "          if (foe.entity) { foe.entity.bout = tags.get(f.id); }",
+    "tests": [
+      "test/arena2_driver.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-EX-HOSTILE",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "          if (foe.ai) { foe.ai.isHostile = !!C.ladder; foe.ai.target = null; foe.ai.yaw = yawTo(f.mark, [0, 0]); }",
+    "new": "          if (foe.ai) { foe.ai.isHostile = true; foe.ai.target = null; foe.ai.yaw = yawTo(f.mark, [0, 0]); }",
+    "tests": [
+      "test/arena2_driver.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-SAVE-DROPPED",
+    "file": "src/systems/save.js",
+    "old": "  snap.arena = arenaLadderSnapshot(entity.arenaLadder ?? null);",
+    "new": "",
+    "tests": [
+      "test/arena2_ladder.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-RESTORE-DROPPED",
+    "file": "src/systems/save.js",
+    "old": "  entity.arenaLadder = arenaLadderRestore(snap.arena);   // ARENA2: a save from before the ladder climbs from tier 1",
+    "new": "",
+    "tests": [
+      "test/arena2_ladder.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-HOST-DUEL-LAW",
+    "file": "src/scenes/world.js",
+    "old": "  function duelEnemyNear() { return !!duelMgr?.live || arenaBouts.holds(); }",
+    "new": "  function duelEnemyNear() { return !!duelMgr?.live; }",
+    "tests": [
+      "test/arena2_hosts.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-HOST-MUSIC",
+    "file": "src/scenes/world.js",
+    "old": "    if (!gateScoreFrame() && !arenaScoreFrame()) musicDirector.update({",
+    "new": "    if (!gateScoreFrame()) musicDirector.update({",
+    "tests": [
+      "test/arena2_hosts.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-HOST-GATES-OPEN",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (isArenaFloor(dungeonLoc)) { if (host.arenaHolds?.()) { setMidScreenText(ARENA_TEXT.refuse.door); return true; } return exitDungeonNow(); }",
+    "new": "    if (isArenaFloor(dungeonLoc)) return exitDungeonNow();",
+    "tests": [
+      "test/arena2_hosts.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-HOST-SPARE",
+    "file": "src/scenes/worldModes.js",
+    "old": "          playerSpare: () => host.arenaPlayerSpare?.() ?? null,",
+    "new": "",
+    "tests": [
+      "test/arena2_hosts.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-HOST-REST",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (isArenaFloor(dfLocation)) { hudText.add(ARENA_TEXT.refuse.rest); return; }",
+    "new": "",
+    "tests": [
+      "test/arena2_hosts.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-CLOCK-STANDS",
+    "file": "src/systems/arenaBout.js",
+    "old": "Math.max(0, b.fightAt + b.limitMs - b.endAt) : 0;",
+    "new": "0 : 0;",
+    "tests": [
+      "test/arena2_bout.test.js"
+    ]
+  }
+]

@@ -146,6 +146,20 @@ export async function realmCharacterHeld({ db }, /** @type {string} */ playerId,
   return !!(await db.prepare('SELECT 1 FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first());
 }
 
+/** ARENA4b: the highest level a token's `cl` claim says - the summary's own bound (realmSummaryOf's `level`). */
+export const REALM_LEVEL_CLAIM_MAX = 1000;
+/** ARENA4b: THE LEVEL ON A REALM CHARACTER'S TILE - its summary's `level`, the word its client's checkpoint wrote
+ *  (realmSummaryOf projects it) - which the identity mint signs as `cl` beside `rc`. Null for anything else: not one of
+ *  this account's realm characters, no summary yet, a level outside 1..REALM_LEVEL_CLAIM_MAX. */
+export async function realmLevelOf({ db }, /** @type {string} */ playerId, /** @type {unknown} */ id) {
+  if (typeof id !== 'string' || !REALM_ID_RE.test(id)) return null;
+  const row = await db.prepare('SELECT summary FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();
+  let summary = null;
+  try { summary = row?.summary ? JSON.parse(row.summary) : null; } catch { summary = null; }
+  const lv = summary?.level;
+  return Number.isSafeInteger(lv) && lv >= 1 && lv <= REALM_LEVEL_CLAIM_MAX ? lv : null;
+}
+
 /** ONE CHARACTER IN PLAY AN ACCOUNT: every lease of this account but `keep`'s is dropped. */
 async function freeOthers({ db }, /** @type {string} */ playerId, /** @type {string} */ keep) {
   await db.prepare('UPDATE realm_characters SET lease = NULL WHERE player = ? AND id != ? AND lease IS NOT NULL').bind(playerId, keep).run();

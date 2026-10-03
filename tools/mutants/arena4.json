@@ -1,0 +1,1833 @@
+[
+  {
+    "name": "ARENA4-LADDER-SPEC-ROW",
+    "file": "src/net/arenaLaw.js",
+    "old": "[[[138, 1]], [[136, 2]], [[143, 3]], [[143, 3]]],",
+    "new": "[[[138, 1]], [[137, 2]], [[143, 3]], [[143, 3]]],",
+    "tests": [
+      "test/arena4_client.test.js",
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-BEAST-HEALTH",
+    "file": "src/net/arenaLaw.js",
+    "old": "2: Object.freeze([3, 12, 26, 1, 8])",
+    "new": "2: Object.freeze([3, 12, 27, 1, 8])",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-MATERIAL-MOD",
+    "file": "src/net/arenaLaw.js",
+    "old": "export const ARENA_MATERIAL_MOD = Object.freeze([-1, 0, 0, 1, 2, 3, 3, 4, 5, 6]);",
+    "new": "export const ARENA_MATERIAL_MOD = Object.freeze([-1, 0, 0, 1, 2, 3, 3, 4, 5, 7]);",
+    "tests": [
+      "test/arena4_client.test.js",
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-WEAPON-MAX",
+    "file": "src/net/arenaLaw.js",
+    "old": "122: 18, 123: 21,",
+    "new": "122: 18, 123: 22,",
+    "tests": [
+      "test/arena4_client.test.js",
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-TEAM-POINTS-PVP",
+    "file": "src/net/arenaLaw.js",
+    "old": "export const ARENA_TEAM_POINTS = Object.freeze({ bout: 1, champion: 3, grand: 10, pvp: 2 });",
+    "new": "export const ARENA_TEAM_POINTS = Object.freeze({ bout: 1, champion: 3, grand: 10, pvp: 1 });",
+    "tests": [
+      "test/arena4_client.test.js",
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-FLOOR-RING",
+    "file": "src/net/arenaLaw.js",
+    "old": "export const ARENA_RING_R = 14;",
+    "new": "export const ARENA_RING_R = 15;",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-ELO-MAX",
+    "file": "src/net/arenaLaw.js",
+    "old": "export const ARENA_ELO_MAX = 4000;",
+    "new": "export const ARENA_ELO_MAX = 4096;",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SEASON-MONDAY",
+    "file": "src/net/arenaLaw.js",
+    "old": "export const ARENA_SEASON_EPOCH_S = 1_790_553_600;",
+    "new": "export const ARENA_SEASON_EPOCH_S = 1_790_640_000;",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SEASON-EIGHT-WEEKS",
+    "file": "src/net/arenaLaw.js",
+    "old": "export const ARENA_SEASON_S = 8 * 7 * 24 * 3600;",
+    "new": "export const ARENA_SEASON_S = 4 * 7 * 24 * 3600;",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SEASON-NONE-EARLIER",
+    "file": "src/net/arenaLaw.js",
+    "old": "export const arenaSeasonOf = (nowS) => Math.max(1,",
+    "new": "export const arenaSeasonOf = (nowS) => Math.max(0,",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SEASON-DAY-ONE-BASED",
+    "file": "src/net/arenaLaw.js",
+    "old": "% ARENA_SEASON_S / 86400) + 1;",
+    "new": "% ARENA_SEASON_S / 86400);",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-ELO-K",
+    "file": "src/net/arenaLaw.js",
+    "old": "export const ARENA_ELO_K = 32;",
+    "new": "export const ARENA_ELO_K = 16;",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-ELO-SUM-KEPT",
+    "file": "src/net/arenaLaw.js",
+    "old": "Math.max(ARENA_ELO_MIN, rb - d)];",
+    "new": "Math.max(ARENA_ELO_MIN, rb)];",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-ELO-FLOOR",
+    "file": "src/net/arenaLaw.js",
+    "old": "return [Math.max(ARENA_ELO_MIN, ra + d),",
+    "new": "return [(ra + d),",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-ELO-EXPECTED-400",
+    "file": "src/net/arenaLaw.js",
+    "old": "export const eloExpected = (ra, rb) => 1 / (1 + 10 ** ((rb - ra) / 400));",
+    "new": "export const eloExpected = (ra, rb) => 1 / (1 + 10 ** ((rb - ra) / 200));",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-RATING-SIGNED",
+    "file": "src/net/arenaLaw.js",
+    "old": "export const arenaRatingOk = (r) => (Number.isSafeInteger(r) && r >= ARENA_ELO_MIN && r <= ARENA_ELO_MAX ? r : ARENA_ELO_START);",
+    "new": "export const arenaRatingOk = (r) => ARENA_ELO_START;",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-BAND-START",
+    "file": "src/net/arenaLaw.js",
+    "old": "export const MATCH_BAND_START = 100;",
+    "new": "export const MATCH_BAND_START = 150;",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-BAND-STEP",
+    "file": "src/net/arenaLaw.js",
+    "old": "export const MATCH_BAND_STEP = 100;",
+    "new": "export const MATCH_BAND_STEP = 125;",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-BAND-WIDEN-10S",
+    "file": "src/net/arenaLaw.js",
+    "old": "export const MATCH_WIDEN_MS = 10_000;",
+    "new": "export const MATCH_WIDEN_MS = 5_000;",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-ACCEPT-20S",
+    "file": "src/net/arenaLaw.js",
+    "old": "export const MATCH_ACCEPT_MS = 20_000;",
+    "new": "export const MATCH_ACCEPT_MS = 30_000;",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-REPAIR-MINUTE",
+    "file": "src/net/arenaLaw.js",
+    "old": "export const MATCH_REPAIR_MS = 60_000;",
+    "new": "export const MATCH_REPAIR_MS = 30_000;",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-PAIR-NARROWER-BAND",
+    "file": "src/net/arenaLaw.js",
+    "old": "if (d > Math.min(matchBand(now - a.at), matchBand(now - b.at))) continue;",
+    "new": "if (d > Math.max(matchBand(now - a.at), matchBand(now - b.at))) continue;",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-PAIR-NEAREST",
+    "file": "src/net/arenaLaw.js",
+    "old": "if (d < gap || (d === gap && best && b.at < best.at)) { best = b; gap = d; }",
+    "new": "if (!best) { best = b; gap = d; }",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-PAIR-OLDEST-FIRST",
+    "file": "src/net/arenaLaw.js",
+    "old": "const list = [...queue].sort((x, y) => x.at - y.at ||",
+    "new": "const list = [...queue].sort((x, y) => y.at - x.at ||",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-PAIR-NEVER-SELF",
+    "file": "src/net/arenaLaw.js",
+    "old": "if (b === a || b.sub === a.sub || taken.has(b.sub)",
+    "new": "if (b === a || taken.has(b.sub)",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-CLASS-HP",
+    "file": "src/net/arenaLaw.js",
+    "old": "export const CLASS_HP_PER_LEVEL = 8;",
+    "new": "export const CLASS_HP_PER_LEVEL = 9;",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-LADDER-KEY",
+    "file": "src/net/arenaLaw.js",
+    "old": "export const ladderKey = (tier, bout) => tier * (ARENA_TIER_BOUTS + 1) + bout;",
+    "new": "export const ladderKey = (tier, bout) => tier * ARENA_TIER_BOUTS + bout;",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-CLIMB-GAP-NO-STEP",
+    "file": "src/net/arenaLaw.js",
+    "old": "while (k < ARENA_TIERS * (ARENA_TIER_BOUTS + 1) && have.has(k)) k++;",
+    "new": "k = Math.min(have.size, ARENA_TIERS * (ARENA_TIER_BOUTS + 1));",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-CLIMB-CHAMPION-IN-ORDER",
+    "file": "src/net/arenaLaw.js",
+    "old": "have.has(ladderKey(i, ARENA_TIER_BOUTS)) && ladderKey(i, ARENA_TIER_BOUTS) < k)",
+    "new": "have.has(ladderKey(i, ARENA_TIER_BOUTS)))",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-CLIMB-NOTHING-PAST-GRAND",
+    "file": "src/net/arenaLaw.js",
+    "old": "return L.grand ? null : { tier: L.tier, bout: L.won };",
+    "new": "return { tier: L.tier, bout: L.won };",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-VITALITY-FLAT",
+    "file": "src/net/arenaLaw.js",
+    "old": "export const pvpVitality = (lv) => 300 + 2 * arenaLv(lv);",
+    "new": "export const pvpVitality = (lv) => 300 + 3 * arenaLv(lv);",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-VITALITY-LEVEL-BOUND",
+    "file": "src/net/arenaLaw.js",
+    "old": "export const ARENA_LV_MAX = 60;",
+    "new": "export const ARENA_LV_MAX = 600;",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-RATE-HZ",
+    "file": "src/net/arenaLaw.js",
+    "old": "export const ARENA_HIT_HZ_MAX = 4;",
+    "new": "export const ARENA_HIT_HZ_MAX = 5;",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-BUCKET-RATE",
+    "file": "src/net/arenaLaw.js",
+    "old": "export const ARENA_BUCKET_RATE = 40;",
+    "new": "export const ARENA_BUCKET_RATE = 80;",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-MELEE-REACH",
+    "file": "src/net/arenaLaw.js",
+    "old": "export const ARENA_MELEE_REACH = 2.5;",
+    "new": "export const ARENA_MELEE_REACH = 10;",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-CAP-CRIT-DOUBLE",
+    "file": "src/net/arenaLaw.js",
+    "old": "return 2 * ((wmax != null ? wmax + mat : ARENA_HAND_MAX) + ARENA_MOD_MAX);",
+    "new": "return 1 * ((wmax != null ? wmax + mat : ARENA_HAND_MAX) + ARENA_MOD_MAX);",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-CAP-SPELL",
+    "file": "src/net/arenaLaw.js",
+    "old": "if (r === ARENA_HIT.Spell) return ARENA_SPELL_MAX;",
+    "new": "if (false) return ARENA_SPELL_MAX;",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-CAP-HAND",
+    "file": "src/net/arenaLaw.js",
+    "old": "export const ARENA_HAND_MAX = 41;",
+    "new": "export const ARENA_HAND_MAX = 40;",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-CAP-MOD-ROOM",
+    "file": "src/net/arenaLaw.js",
+    "old": "export const ARENA_MOD_MAX = 20;",
+    "new": "export const ARENA_MOD_MAX = 25;",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SPECTATORS-60",
+    "file": "src/net/arenaLaw.js",
+    "old": "export const ARENA_SPECTATORS_MAX = 60;",
+    "new": "export const ARENA_SPECTATORS_MAX = 61;",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-GONE-15S",
+    "file": "src/net/arenaLaw.js",
+    "old": "export const ARENA_GONE_MS = 15_000;",
+    "new": "export const ARENA_GONE_MS = 5_000;",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-CHEER-ALLOWANCE",
+    "file": "src/net/arenaLaw.js",
+    "old": "export const ARENA_CHEER_MS = 1500;",
+    "new": "export const ARENA_CHEER_MS = 0;",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-CHAMPION-MIN-BOUTS",
+    "file": "src/net/arenaLaw.js",
+    "old": "export const ARENA_CHAMPION_MIN_BOUTS = 3;",
+    "new": "export const ARENA_CHAMPION_MIN_BOUTS = 2;",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-BOUT-ROOM-KEY",
+    "file": "src/net/arenaLaw.js",
+    "old": "export const ARENA_BOUT_ROOM_RE = /^arena:b[0-9a-f]{16}$/;",
+    "new": "export const ARENA_BOUT_ROOM_RE = /^arena:b[0-9a-f]{4,16}$/;",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-IN-HIT-KIND",
+    "file": "src/net/arenaLaw.js",
+    "old": "const d = num(m.d, 10000), r = int(m.r, 0, 2);",
+    "new": "const d = num(m.d, 10000), r = int(m.r, 0, 3);",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-IN-HIT-WHOM",
+    "file": "src/net/arenaLaw.js",
+    "old": "if (typeof m.i !== 'string' || !FID_RE.test(m.i)) return null;",
+    "new": "if (typeof m.i !== 'string') return null;",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-IN-NO-ELEVENTH-TIER",
+    "file": "src/net/arenaLaw.js",
+    "old": "if (int(m.tier, 0, ARENA_TIERS - 1) == null || int(m.bout, 0, ARENA_TIER_BOUTS) == null) return null;\n",
+    "new": "if (int(m.tier, 0, ARENA_TIERS) == null || int(m.bout, 0, ARENA_TIER_BOUTS) == null) return null;\n",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-WIRE-BEFORE-HELLO",
+    "file": "src/net/wire.js",
+    "old": "if (!hasHello) return { error: 'arena before hello' };",
+    "new": "if (false) return { error: 'arena before hello' };",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-WIRE-RELAY-MIN",
+    "file": "src/net/wire.js",
+    "old": "export const ARENA_RELAY_MIN = 155;",
+    "new": "export const ARENA_RELAY_MIN = 154;",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-RC-FOREIGN-FIELDS",
+    "file": "src/net/arenaReceipt.js",
+    "old": "for (const k of FOREIGN) if (c[k] !== undefined) return false;",
+    "new": "for (const k of []) if (c[k] !== undefined) return false;",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-RC-ONE-ACCOUNT-TWICE",
+    "file": "src/net/arenaReceipt.js",
+    "old": "|| c.f[0] === c.f[1]) return false;",
+    "new": ") return false;",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-RC-RESULT-PAST-DRAW",
+    "file": "src/net/arenaReceipt.js",
+    "old": "if (c.r !== 0 && c.r !== 1 && c.r !== 2) return false;",
+    "new": "if (!Number.isInteger(c.r)) return false;",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-RC-TTL-BOUND",
+    "file": "src/net/arenaReceipt.js",
+    "old": "if (c.e <= c.i || c.e - c.i > ARENA_RECEIPT_TTL_S) return false;",
+    "new": "if (c.e <= c.i) return false;",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-RC-READ-VERSION",
+    "file": "src/net/arenaReceipt.js",
+    "old": "if (parts.length !== 3 || parts[0] !== ARENA_RECEIPT_V) return null;",
+    "new": "if (parts.length !== 3) return null;",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-RC-UNSIGNED",
+    "file": "src/net/arenaReceipt.js",
+    "old": "if (!sig64) return { ok: false, why: 'unsigned' };",
+    "new": "if (false) return { ok: false, why: 'unsigned' };",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-RC-SIGNATURE",
+    "file": "src/net/arenaReceipt.js",
+    "old": "if (!good) return { ok: false, why: 'signature' };",
+    "new": "if (false) return { ok: false, why: 'signature' };",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-RC-EXPIRED",
+    "file": "src/net/arenaReceipt.js",
+    "old": "if (nowS >= claims.e) return { ok: false, why: 'expired' };",
+    "new": "if (false) return { ok: false, why: 'expired' };",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-RC-FUTURE",
+    "file": "src/net/arenaReceipt.js",
+    "old": "if (claims.i > nowS + skewS) return { ok: false, why: 'future' };",
+    "new": "if (false) return { ok: false, why: 'future' };",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-RC-MINT-REFUSES",
+    "file": "src/net/arenaReceipt.js",
+    "old": "if (!arenaReceiptValid(claims)) throw new TypeError('mintArenaReceipt refused a claim set it could not verify');",
+    "new": "if (false) throw new TypeError('mintArenaReceipt refused a claim set it could not verify');",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-RC-SIGNED-FLAG",
+    "file": "src/net/arenaReceipt.js",
+    "old": "signed: parts[2].length > 0 }",
+    "new": "signed: true }",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-REF-REACH",
+    "file": "src/net/arenaBrain.js",
+    "old": "if (r === ARENA_HIT.Melee && gap > ARENA_MELEE_REACH + ARENA_POSE_SLACK) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-REF-RATE",
+    "file": "src/net/arenaBrain.js",
+    "old": "    if (M.hits.length >= ARENA_HIT_HZ_MAX) return out;\n",
+    "new": "",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-REF-BUCKET-SPENT",
+    "file": "src/net/arenaBrain.js",
+    "old": "  M.bucket -= got;\n",
+    "new": "",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-REF-BUCKET-REFILL",
+    "file": "src/net/arenaBrain.js",
+    "old": "M.bucket = Math.min(ARENA_BUCKET_DEPTH, M.bucket + (Math.max(0, now - M.bucketAt) / 1000) * ARENA_BUCKET_RATE);",
+    "new": "M.bucket = Math.min(ARENA_BUCKET_DEPTH, M.bucket);",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-REF-CAP",
+    "file": "src/net/arenaBrain.js",
+    "old": "Math.floor(Math.min(want, arenaBlowCap({ r, w, m }), M.bucket))",
+    "new": "Math.floor(Math.min(want, M.bucket))",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-REF-POSE-SPEED",
+    "file": "src/net/arenaBrain.js",
+    "old": "if (Math.hypot(x - was[0], z - was[1]) > ARENA_SPEED_MAX * dt + ARENA_SPEED_SLACK + (dt > 2 ? ARENA_SPEED_MAX : 0)) return false;",
+    "new": "if (false) return false;",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-REF-FALL-AT-ONE",
+    "file": "src/net/arenaBrain.js",
+    "old": "  if (health <= 1) boutFell(st.b, to, now);\n",
+    "new": "",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-OWED-PVP-RESULT",
+    "file": "src/net/arenaBrain.js",
+    "old": "r: r.side === 0 ? 0 : r.side === 1 ? 1 : 2,",
+    "new": "r: r.side === 0 ? 1 : r.side === 1 ? 0 : 2,",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-OWED-PVP-SIDES",
+    "file": "src/net/arenaBrain.js",
+    "old": "f: [st.f[0].sub, st.f[1].sub]",
+    "new": "f: [st.f[1].sub, st.f[0].sub]",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-OWED-LADDER-STEP",
+    "file": "src/net/arenaBrain.js",
+    "old": "q: st.tier, u: st.bout,",
+    "new": "q: st.tier, u: st.tier,",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-OWED-LADDER-WON",
+    "file": "src/net/arenaBrain.js",
+    "old": "r: r.side === 0 ? 1 : 0, h: r.how }];",
+    "new": "r: r.side === 0 ? 0 : 1, h: r.how }];",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-FORFEIT",
+    "file": "src/net/arenaBrain.js",
+    "old": "if (g != null && now - g >= ARENA_GONE_MS && lf && !lf.out) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-FORFEIT-AT-ONCE",
+    "file": "src/net/arenaBrain.js",
+    "old": "if (g != null && now - g >= ARENA_GONE_MS && lf && !lf.out) {",
+    "new": "if (g != null && lf && !lf.out) {",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-FORFEIT-SAID",
+    "file": "src/net/arenaBrain.js",
+    "old": "      if (b.result) b.result.how = 'forfeit';\n",
+    "new": "",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-VOID-SAID",
+    "file": "src/net/arenaBrain.js",
+    "old": "{ st.phase = 'void'; words.push({ k: 'no', m: 'void' }); }",
+    "new": "{ st.phase = 'void'; }",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-NOT-YOURS",
+    "file": "src/net/arenaBrain.js",
+    "old": "    if (!me) return { no: 'not yours' };\n",
+    "new": "",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SEATS-BOUNDED",
+    "file": "src/net/arenaBrain.js",
+    "old": "  if (st.spectators >= ARENA_SPECTATORS_MAX) return { no: 'seats full' };\n",
+    "new": "",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-CHEER-ONCE",
+    "file": "src/net/arenaBrain.js",
+    "old": "  if (now - (st.cheer[key] ?? -Infinity) < ARENA_CHEER_MS) return null;\n",
+    "new": "",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-AI-WALK",
+    "file": "src/net/arenaBrain.js",
+    "old": "if (!a.mv || !said || Math.hypot(said[0] - tx, said[1] - tz) > AI_RESAY_M || now - a.mv.at > AI_RESAY_MS) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-AI-BLOW-IN-REACH",
+    "file": "src/net/arenaBrain.js",
+    "old": "if (t && !t.out && p && Math.hypot(p[0] - here[0], p[1] - here[1]) <= a.reach + ARENA_POSE_SLACK * 0.5) {",
+    "new": "if (t && !t.out && p) {",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-AI-BLOW-TOLD",
+    "file": "src/net/arenaBrain.js",
+    "old": "if (tg.startsWith('p')) out.push({ k: 'blow', i: a.id, d: dmg, to: tg });",
+    "new": "if (false) out.push({ k: 'blow', i: a.id, d: dmg, to: tg });",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-AI-TELEGRAPH",
+    "file": "src/net/arenaBrain.js",
+    "old": "      out.push({ k: 'atk', i: a.id, at: a.atk.at, x: foe.p[0], z: foe.p[1], tg: foe.id });\n",
+    "new": "",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-MARKS-APART",
+    "file": "src/net/arenaBrain.js",
+    "old": "export const MARK_APART = 6;",
+    "new": "export const MARK_APART = 7;",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-MARKS-RING",
+    "file": "src/net/arenaBrain.js",
+    "old": "const a = (s / sides) * Math.PI * 2 + Math.PI;",
+    "new": "const a = (s / sides) * Math.PI * 2;",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-FOLD-OFFER-MY-CLOCK",
+    "file": "src/net/arenaLink.js",
+    "old": "until: w.until - off, casual: w.u === 1 }",
+    "new": "until: w.until, casual: w.u === 1 }",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-FOLD-CALL-GOING",
+    "file": "src/net/arenaLink.js",
+    "old": "case 'go': return { ...s, queue: 'going',",
+    "new": "case 'go': return { ...s, queue: 'queued',",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-FOLD-REFUSAL-SAID",
+    "file": "src/net/arenaLink.js",
+    "old": "case 'qx': return { ...s, queue: 'idle', offer: null, said: w.m,",
+    "new": "case 'qx': return { ...s, queue: 'idle', offer: null, said: null,",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-MIRROR-EVENT-TIME",
+    "file": "src/net/arenaLink.js",
+    "old": "const at = e0.at - clock.off;",
+    "new": "const at = e0.at;",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-MIRROR-OFFSET-HIGHEST",
+    "file": "src/net/arenaLink.js",
+    "old": "Math.max(e0.at - now, clock.off - 5)",
+    "new": "Math.min(e0.at - now, clock.off - 5)",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-MIRROR-OUT",
+    "file": "src/net/arenaLink.js",
+    "old": "if (OUT_EVENTS.has(e.k)) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-MIRROR-MY-HEALTH",
+    "file": "src/net/arenaLink.js",
+    "old": "if (id === M?.me) mine = [hp, max];",
+    "new": "if (id !== M?.me) mine = [hp, max];",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-MIRROR-AI-NAMES",
+    "file": "src/net/arenaLink.js",
+    "old": "names(k - st.f.filter((x) => !x[6]).length, mob)",
+    "new": "names(k, mob)",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-MIRROR-PHASE",
+    "file": "src/net/arenaLink.js",
+    "old": "if (PHASE_EVENTS.has(e.k) && b.phase !== e.k) { b.phase = e.k; b.phaseAt = at; }",
+    "new": "",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-MIRROR-HIT-TALLY",
+    "file": "src/net/arenaLink.js",
+    "old": "if (f) { f.dealt += e.dmg ?? 0; f.hits++; }",
+    "new": "if (f) { f.hits++; }",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-MIRROR-WINNERS",
+    "file": "src/net/arenaLink.js",
+    "old": "b.fighters.filter((f) => f.side === side).map((f) => f.id), losers",
+    "new": "b.fighters.filter((f) => f.side !== side).map((f) => f.id), losers",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-WALK-RELAY-CLOCK",
+    "file": "src/net/arenaLink.js",
+    "old": "const along = Math.min(len, (Math.max(0, now - (mv.at - off)) / 1000) * mv.v);",
+    "new": "const along = Math.min(len, (Math.max(0, now - mv.at) / 1000) * mv.v);",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-WALK-DONE",
+    "file": "src/net/arenaLink.js",
+    "old": "* mv.v >= Math.hypot(mv.tx - mv.x, mv.tz - mv.z);",
+    "new": "* mv.v >= 2 * Math.hypot(mv.tx - mv.x, mv.tz - mv.z);",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-CLAIMS-ANOTHERS",
+    "file": "src/net/arenaClaims.js",
+    "old": "(c.a === 'l' ? c.s === me : Array.isArray(c.f) && c.f.includes(me))",
+    "new": "(c.a === 'l' ? true : Array.isArray(c.f) && c.f.includes(me))",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-CLAIMS-GUEST-KEPT",
+    "file": "src/net/arenaClaims.js",
+    "old": "if (answer?.ok) return answer.data?.why === 'guest' ? 'keep' : 'done';",
+    "new": "if (answer?.ok) return 'done';",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-CLAIMS-MENDABLE",
+    "file": "src/net/arenaClaims.js",
+    "old": "return answer?.error === 'receipt' && !ARENA_CLAIM_MENDABLE.includes(answer.why) ? 'done' : 'keep';",
+    "new": "return answer?.error === 'receipt' ? 'done' : 'keep';",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-CLAIMS-ONE-A-BOUT",
+    "file": "src/net/arenaClaims.js",
+    "old": "if (!list.some((k) => arenaKeptReceipt(k) === r || readArenaReceipt(arenaKeptReceipt(k))?.j === c.j)) keep(",
+    "new": "if (true) keep(",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-CLAIMS-SETTLED-LET-GO",
+    "file": "src/net/arenaClaims.js",
+    "old": "if (arenaClaimVerdict(answer) === 'done') { settled.add(r);",
+    "new": "if (false) { settled.add(r);",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-CLAIMS-UNSIGNED-NOT-KEPT",
+    "file": "src/net/arenaClaims.js",
+    "old": "return c && c.signed && (t == null || c.e > t) ? c : null;",
+    "new": "return c && (t == null || c.e > t) ? c : null;",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-CLAIMS-COUNTED-SAID",
+    "file": "src/net/arenaClaims.js",
+    "old": "if (answer?.ok && answer.data?.recorded === true) { recorded++; onCounted(answer.data); }",
+    "new": "if (answer?.ok && answer.data?.recorded === true) { recorded++; }",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-BOARD-OFFER-PRESSES",
+    "file": "src/systems/arenaBoard.js",
+    "old": "acts = [{ act: 'accept', label: O().accept, why: null }, { act: 'decline', label: O().decline, why: null }];",
+    "new": "acts = [];",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-BOARD-OFFLINE-PRESS",
+    "file": "src/systems/arenaBoard.js",
+    "old": "const why = st === 'off' ? O().whyOffline :",
+    "new": "const why = st === 'off' ? null :",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-BOARD-ACCOUNT-LADDER",
+    "file": "src/systems/arenaBoard.js",
+    "old": "const oo = { ...o, ladder: on.board.me?.ladder ?? o.ladder };",
+    "new": "const oo = { ...o };",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-BOARD-OFFER-CLOCK",
+    "file": "src/systems/arenaBoard.js",
+    "old": "Math.ceil(((hall.offer.until ?? 0) - now) / 1000)",
+    "new": "Math.ceil((hall.offer.until ?? 0) / 1000)",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-BOARD-UNQUEUE",
+    "file": "src/systems/arenaBoard.js",
+    "old": "if (st === 'queued') { acts = [{ act: 'unqueue',",
+    "new": "if (st === 'queued') { acts = [{ act: 'queue',",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-BOARD-RATING-CHIP",
+    "file": "src/systems/arenaBoard.js",
+    "old": "rating: me.pvp ? O().ratingChip(me.pvp.rating) : null,",
+    "new": "rating: null,",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-BOARD-LAUREL-YOURS",
+    "file": "src/systems/arenaBoard.js",
+    "old": "laurelYou: !!me.banner && t.laurel === me.banner,",
+    "new": "laurelYou: !!me.banner && t.laurel !== me.banner,",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-BOARD-TITLE-PER-TIER",
+    "file": "src/systems/arenaBoard.js",
+    "old": "const tiers = Math.floor(Math.max(0, n | 0) / (BOUTS_PER_TIER + 1));",
+    "new": "const tiers = Math.floor(Math.max(0, n | 0) / BOUTS_PER_TIER);",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-BOARD-ONLINE-RULES",
+    "file": "src/systems/arenaBoard.js",
+    "old": "  rules.push({ head: O().rules.head, lines: [...O().rules.lines] });\n",
+    "new": "",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-BOARD-WATCH",
+    "file": "src/systems/arenaBoard.js",
+    "old": "acts: [{ act: 'spectate', label: W().watch, why: busy ? O().whyBusy : null }],",
+    "new": "acts: [],",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-BOARD-CHAMPION-NAMED",
+    "file": "src/systems/arenaBoard.js",
+    "old": "champion: board.champion ? O().champion(board.champion.name) : O().noChampion },",
+    "new": "champion: O().noChampion },",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-BOARD-ME-PINNED",
+    "file": "src/systems/arenaBoard.js",
+    "old": "pinned: b.pinned ? row(b.pinned, cells(b.pinned)) : null, total: b.total });",
+    "new": "pinned: null, total: b.total });",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-DRIVER-HEALTH-SCALED",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "const h = Math.max(1, Math.round((hp / Math.max(1, max)) * Math.max(1, P.maxHealth ?? 1)));",
+    "new": "const h = Math.max(1, hp);",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-DRIVER-YIELD-LINE",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "        if (fighterShare(you) > YIELD_SHARE) deps.say?.(ARENA_TEXT.refuse.yieldEarly);\n        else C.relay.send?.yield?.();",
+    "new": "        C.relay.send?.yield?.();",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-DRIVER-MISS-TOLD",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "if (me && !me.out && foe) C.relay.send?.hit?.({ k: 'hit', i: foe.id, d: 0, r: 0 });",
+    "new": "if (false) C.relay.send?.hit?.({ k: 'hit', i: foe.id, d: 0, r: 0 });",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-DRIVER-VERDICT-WORD",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "r.how === 'yield' ? V.yield(w, l) : r.how === 'ringout' ? V.ringout(w, l) : r.how === 'forfeit'",
+    "new": "r.how === 'yield' ? V.fall(w, l) : r.how === 'ringout' ? V.ringout(w, l) : r.how === 'forfeit'",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-PUPPET-OWNER",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "foe._ownFrom = ARENA_PUPPET_OWNER; foe._ownI = a.i;",
+    "new": "foe._ownFrom = null; foe._ownI = a.i;",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-PUPPET-WALK-CARRIED",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "      foe._pup.feet[0] = p[0]; foe._pup.feet[2] = p[1];\n",
+    "new": "",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-PUPPET-STOOD-AS-SAID",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "const feet = at ? [at[0], c[1], at[1]] : [c[0], c[1], c[2]];",
+    "new": "const feet = [c[0], c[1], c[2]];",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-PUPPET-NO-SENSES",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "if (foe.ai) { foe.ai.isHostile = false; foe.ai.target = null; }",
+    "new": "if (foe.ai) { foe.ai.target = null; }",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-PUPPET-TELEGRAPH",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "if (foe?._pup) { foe._pup.strike = 'melee';",
+    "new": "if (foe?._pup) { foe._pup.strike = null;",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-PURSE-ON-LOSS",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "const won = !!mine && r.side === mine.side;",
+    "new": "const won = !!mine;",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-GLUE-IN-IN-ROOM",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "const here = s.room === bout.room && s.status === 'open';",
+    "new": "const here = s.status === 'open';",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-GLUE-IN-ONCE",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "bout.sent = s.sendArena?.(inWord) === true;",
+    "new": "bout.sent = false; s.sendArena?.(inWord);",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-GLUE-RIVAL-SIDE",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "b.kind === 'pvp' && b.side === 1 ? 'rival' : 'ladder';",
+    "new": "b.kind === 'pvp' && b.side === 0 ? 'rival' : 'ladder';",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-GLUE-MY-FIGHTER-ID",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "const me = b.kind === 'watch' ? '' : b.kind === 'pvp' ? `p${b.side ?? 0}` : 'p0';",
+    "new": "const me = b.kind === 'watch' ? '' : 'p0';",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-GLUE-RECEIPT-CARRIED",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "if (w.k === 'rc') { claims.add(w.r); return true; }",
+    "new": "if (w.k === 'rc') { return true; }",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-GLUE-HIT-WHOLE",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "d: Math.max(0, Math.round(Number(d) || 0))",
+    "new": "d: Math.max(0, Number(d) || 0)",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-GLUE-HIT-KIND",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "export const hitKindOf = (kind) => (kind === 'arrow' ? ARENA_HIT.Shaft",
+    "new": "export const hitKindOf = (kind) => (kind === 'arrows' ? ARENA_HIT.Shaft",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-GLUE-QUEUE-LEVEL",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "if (!hallSend({ k: 'q', lv: Math.max(1, Math.floor(deps.level?.() ?? 1)), ...myBanner()",
+    "new": "if (!hallSend({ k: 'q', ...myBanner()",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-GLUE-ACCEPT-YES",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "hallSend({ k: kind === 'accept' ? 'y' : 'n', o });",
+    "new": "hallSend({ k: kind === 'accept' ? 'n' : 'y', o });",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-GLUE-LADDER-NEXT",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "void goTo({ o: newBoutId(), kind: 'pve', tier: next.tier, bout: next.bout, next });",
+    "new": "void goTo({ o: newBoutId(), kind: 'pve', tier: next.tier, bout: 0, next });",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-GLUE-LADDER-IN-STEP",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "{ k: 'in', r: 'f', tier: bout.tier, bout: bout.bout,",
+    "new": "{ k: 'in', r: 'f', tier: bout.tier, bout: 0,",
+    "tests": [
+      "test/arena4_client.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-DOOR-NO-OTHER-ARENA-KEY",
+    "file": "server/src/index.js",
+    "old": "if (key.startsWith('arena:') && !isArenaRoom(key)) return json({ error: 'no such room' }, 404);",
+    "new": "if (false) return json({ error: 'no such room' }, 404);",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-ATTACH-SIGNED-RATING",
+    "file": "server/src/index.js",
+    "old": "{ ar: arenaRatingOk(who.ar), lk:",
+    "new": "{ ar: arenaRatingOk(m.ar), lk:",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-ATTACH-LINKED",
+    "file": "server/src/index.js",
+    "old": "lk: who.kind === 'linked' ? 1 : 0",
+    "new": "lk: 1",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-HALL-GUEST",
+    "file": "server/src/index.js",
+    "old": "if (!a.lk) { this._arenaSend(ws, { k: 'qx', m: 'guest' }); return; }",
+    "new": "if (false) { this._arenaSend(ws, { k: 'qx', m: 'guest' }); return; }",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-HALL-QUEUED-BY-RATING",
+    "file": "server/src/index.js",
+    "old": "H.q.push({ sub, name: a.name, rating: arenaRatingOk(a.ar),",
+    "new": "H.q.push({ sub, name: a.name, rating: 1000,",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-HALL-OFFER-BOTH",
+    "file": "server/src/index.js",
+    "old": "      this._arenaTell(b.sub, { k: 'of', o: f.o, vs: this._bill(a), until: f.until, ...this._casualWord(a) });\n",
+    "new": "",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-HALL-BOTH-YES",
+    "file": "server/src/index.js",
+    "old": "if (inOffer.ya && inOffer.yb) await this._hallGo(H, inOffer, now);",
+    "new": "if (inOffer.ya || inOffer.yb) await this._hallGo(H, inOffer, now);",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-HALL-SIDES",
+    "file": "server/src/index.js",
+    "old": "this._arenaTell(f.a.sub, { k: 'go', o, side: 0,",
+    "new": "this._arenaTell(f.a.sub, { k: 'go', o, side: 1,",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-HALL-LISTS-THE-BOUT",
+    "file": "server/src/index.js",
+    "old": "    H.live[o] = { o, kind: 'pvp', a: this._bill(f.a), b: this._bill(f.b), ...this._casualWord(f.a), sp: 0, at: now };\n",
+    "new": "",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-DECLINE-OTHER-BACK",
+    "file": "server/src/index.js",
+    "old": "    if (!H.q.some((x) => x.sub === other.sub)) H.q.push(other);\n",
+    "new": "",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-DECLINE-DECLINER-OUT",
+    "file": "server/src/index.js",
+    "old": "    if (!H.q.some((x) => x.sub === other.sub)) H.q.push(other);\n",
+    "new": "    for (const e of [f.a, f.b]) if (!H.q.some((x) => x.sub === e.sub)) H.q.push(e);\n",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-DECLINE-PAIR-APART",
+    "file": "server/src/index.js",
+    "old": "    if (!H.q.some((x) => x.sub === other.sub)) H.q.push(other);\n    H.apart.push([f.a.sub, f.b.sub, now + MATCH_REPAIR_MS]);\n",
+    "new": "    if (!H.q.some((x) => x.sub === other.sub)) H.q.push(other);\n",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-LAPSE-SILENT-OUT",
+    "file": "server/src/index.js",
+    "old": "if (yes) { if (!H.q.some((x) => x.sub === e.sub)) H.q.push(e);",
+    "new": "if (true) { if (!H.q.some((x) => x.sub === e.sub)) H.q.push(e);",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-HALL-SOCKETLESS-OUT",
+    "file": "server/src/index.js",
+    "old": "    H.q = H.q.filter((e) => this._arenaSocketsOf(e.sub).length);\n",
+    "new": "",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-LEAVE-QUEUE",
+    "file": "server/src/index.js",
+    "old": "      H.q = H.q.filter((x) => x.sub !== a.sub);\n      if (f) await this._hallDecline(H, f, a.sub, now);",
+    "new": "      if (f) await this._hallDecline(H, f, a.sub, now);",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-HALL-FORGETS-DONE",
+    "file": "server/src/index.js",
+    "old": "if (body.done) delete H.live[body.o];",
+    "new": "if (body.done) void 0;",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-STANDS-NO-BODY",
+    "file": "server/src/index.js",
+    "old": "      if (j.role === 'f') {\n",
+    "new": "      if (j.role === 'f' || j.role === 's') {\n",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-STANDS-POSE-NOBODY",
+    "file": "server/src/index.js",
+    "old": "        if (!cur.af) return;\n",
+    "new": "",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-POSE-REFEREED",
+    "file": "server/src/index.js",
+    "old": "if (st && cur.afid) poseOf(st, cur.afid, m.p.x, m.p.z, now);",
+    "new": "if (st && cur.afid) void 0;",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-STANDS-COUNT-FANNED",
+    "file": "server/src/index.js",
+    "old": "        this._setAttach(ws, { ...cur, asp: 1 });\n        this._boutFan([{ k: 'sp', n: st.spectators }]);\n",
+    "new": "        this._setAttach(ws, { ...cur, asp: 1 });\n",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-FIGHTER-CHEERS-NOBODY",
+    "file": "server/src/index.js",
+    "old": "      if (!cur.asp) { this._junk(ws); return; }\n",
+    "new": "",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-STATE-MY-ID",
+    "file": "server/src/index.js",
+    "old": "_boutFanState(st) { for (const [ws, b] of [...this._all()]) if (b.id) this._arenaSend(ws, stateWord(st, b.afid ?? '')); }",
+    "new": "_boutFanState(st) { for (const [ws, b] of [...this._all()]) if (b.id) this._arenaSend(ws, stateWord(st, '')); }",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-STATE-ON-PHASE",
+    "file": "server/src/index.js",
+    "old": "    if (ph2 !== ph) this._boutFanState(st);\n",
+    "new": "",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-RECEIPT-BOTH",
+    "file": "server/src/index.js",
+    "old": "for (const sub of w.a === 'p' ? w.f : [w.s]) st.rc[sub] = r;",
+    "new": "for (const sub of w.a === 'p' ? [w.f[0]] : [w.s]) st.rc[sub] = r;",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-RECEIPT-SIGNED",
+    "file": "server/src/index.js",
+    "old": "const r = await mintArenaReceipt(w, key, { subtle: crypto.subtle, nowS });",
+    "new": "const r = await mintArenaReceipt(w, null, { subtle: crypto.subtle, nowS });",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-LEAVE-FIGHTER-GONE",
+    "file": "server/src/index.js",
+    "old": "if (!this._arenaSocketsOf(a.sub).some((w) => w !== ws)) { fighterGone(st, a.sub, now);",
+    "new": "if (false) { fighterGone(st, a.sub, now);",
+    "tests": [
+      "test/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-CLIMB-IN-ORDER",
+    "file": "server-account/src/arena.js",
+    "old": "WHERE ?6 = 0 OR (SELECT COUNT(*) FROM arena_pve WHERE player = ?2 AND won = 1) = ?10",
+    "new": "WHERE ?6 = 0 OR 1",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-LOSS-ANY-ORDER",
+    "file": "server-account/src/arena.js",
+    "old": "WHERE ?6 = 0 OR (SELECT COUNT(*) FROM arena_pve WHERE player = ?2 AND won = 1) = ?10",
+    "new": "WHERE (SELECT COUNT(*) FROM arena_pve WHERE player = ?2 AND won = 1) = ?10",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-RECEIPT-ONCE",
+    "file": "server-account/src/arena.js",
+    "old": "return { recorded: false, why: kept ? 'claimed' : 'order', ladder };",
+    "new": "return { recorded: false, why: 'order', ladder };",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-NOT-YOURS",
+    "file": "server-account/src/arena.js",
+    "old": "if (c.a === 'l' ? c.s !== player.id : !c.f.includes(player.id)) return { error: 'not-yours' };",
+    "new": "if (c.a === 'l' ? false : !c.f.includes(player.id)) return { error: 'not-yours' };",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-GUEST-KEEPS-NOTHING",
+    "file": "server-account/src/arena.js",
+    "old": "  if (!player.handle) return { recorded: false, why: 'guest' };\n",
+    "new": "",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-RECORD-YIELDS",
+    "file": "server-account/src/arena.js",
+    "old": "SUM(CASE WHEN won = 0 AND how = 'yield' THEN 1 ELSE 0 END) AS yields",
+    "new": "SUM(CASE WHEN won = 0 AND how = 'fall' THEN 1 ELSE 0 END) AS yields",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-GRAND-THE-ROW",
+    "file": "server-account/src/arena.js",
+    "old": "WHERE player = ?1 AND tier = ${GRAND_TIER} AND step = ${ARENA_TIER_BOUTS} AND won = 1 LIMIT 1",
+    "new": "WHERE player = ?1 AND won = 1 LIMIT 1",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-GRAND-SAID",
+    "file": "server-account/src/arena.js",
+    "old": "grand: won && c.q === GRAND_TIER && c.u === ARENA_TIER_BOUTS,",
+    "new": "grand: false,",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-HALL",
+    "file": "server-account/src/arena.js",
+    "old": "const hall = grandRows.slice(0, ARENA_HALL_MAX).map(",
+    "new": "const hall = grandRows.slice(0, 0).map(",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-FAST-DAYS",
+    "file": "server-account/src/arena.js",
+    "old": "days: Math.max(1, Math.ceil(",
+    "new": "days: Math.max(2, Math.ceil(",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-PVE-BOARD-ORDER",
+    "file": "server-account/src/arena.js",
+    "old": "ORDER BY reached DESC, last ASC, player ASC",
+    "new": "ORDER BY reached ASC, last ASC, player ASC",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-ID-STAYS-HOME",
+    "file": "server-account/src/arena.js",
+    "old": "const { player: id, ...rest } = r; return { ...rest,",
+    "new": "const { player: id, ...rest } = r; return { ...r,",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-YOU",
+    "file": "server-account/src/arena.js",
+    "old": "r.rank = i + 1; r.you = r.player === me;",
+    "new": "r.rank = i + 1; r.you = false;",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-RATED-BOTH",
+    "file": "server-account/src/arena.js",
+    "old": "ra.rating, rb.rating, na, nb, rated ? 1 : 0",
+    "new": "ra.rating, rb.rating, na, rb.rating, rated ? 1 : 0",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-PAIR-DAY",
+    "file": "server-account/src/arena.js",
+    "old": "const rated = Number(pair?.n ?? 0) < ARENA_PAIR_DAY_MAX;",
+    "new": "const rated = true;",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-DRAW-HALF",
+    "file": "server-account/src/arena.js",
+    "old": "c.r === 0 ? 1 : c.r === 1 ? 0 : 0.5",
+    "new": "c.r === 0 ? 1 : c.r === 1 ? 0 : 1",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-DRAW-SAID",
+    "file": "server-account/src/arena.js",
+    "old": "const result = row.result === 2 ? 'draw' : row.result === side ? 'won' : 'lost';",
+    "new": "const result = row.result === side ? 'won' : 'lost';",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-CLAIMANT-SIDE",
+    "file": "server-account/src/arena.js",
+    "old": "const side = row.a === me ? 0 : 1;\n  const result",
+    "new": "const side = 0;\n  const result",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-GUEST-PAIR",
+    "file": "server-account/src/arena.js",
+    "old": "if (!linked(a) || !linked(b)) return { recorded: false, why: 'guest' };",
+    "new": "if (!linked(a)) return { recorded: false, why: 'guest' };",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-BOARD-RATED-ONLY",
+    "file": "server-account/src/arena.js",
+    "old": "FROM arena_pvp WHERE season = ?1 AND rated = 1 AND a IS NOT NULL",
+    "new": "FROM arena_pvp WHERE season = ?1 AND a IS NOT NULL",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-RATING-LAST",
+    "file": "server-account/src/arena.js",
+    "old": "ORDER BY at DESC, rowid DESC LIMIT 1",
+    "new": "ORDER BY at ASC, rowid ASC LIMIT 1",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-LAUREL-BOUTS-TOKEN",
+    "file": "server-account/src/arena.js",
+    "old": "const top = rows.find((r) => Number(r.bouts) >= ARENA_CHAMPION_MIN_BOUTS) ?? null;",
+    "new": "const top = rows[0] ?? null;",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-LAUREL-BOUTS-BOARD",
+    "file": "server-account/src/arena.js",
+    "old": "const top = pvpAll.find((r) => Number(r.bouts) >= ARENA_CHAMPION_MIN_BOUTS) ?? null;",
+    "new": "const top = pvpAll[0] ?? null;",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-LAUREL-SECOND-ROW",
+    "file": "server-account/src/arena.js",
+    "old": "return top && top === rows[0] ? top.player : null;",
+    "new": "return top && top === rows[1] ? top.player : null;",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-LAUREL-TOP-TOKEN",
+    "file": "server-account/src/arena.js",
+    "old": "return top && top === rows[0] ? top.player : null;",
+    "new": "return top ? top.player : null;",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-LAUREL-TOP-BOARD",
+    "file": "server-account/src/arena.js",
+    "old": "const champion = top && top === pvpAll[0] ? top.player : null;",
+    "new": "const champion = top ? top.player : null;",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-BANNER-SEASON-WAIT",
+    "file": "server-account/src/arena.js",
+    "old": "if (m?.left_banner && m.left_banner !== banner && Number(m.left_season) >= season) return { error: 'season', left: m.left_banner };",
+    "new": "if (false) return { error: 'season', left: m.left_banner };",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-BANNER-QUIT-TAKES-BACK",
+    "file": "server-account/src/arena.js",
+    "old": "if (m?.left_banner && m.left_banner !== banner && Number(m.left_season) >= season) return { error: 'season', left: m.left_banner };",
+    "new": "if (m?.left_banner && Number(m.left_season) >= season) return { error: 'season', left: m.left_banner };",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-BANNER-ONE",
+    "file": "server-account/src/arena.js",
+    "old": "  if (m?.banner) return { error: 'joined', banner: m.banner };\n",
+    "new": "",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-BANNER-GUEST",
+    "file": "server-account/src/arena.js",
+    "old": "  if (!player?.handle) return { error: 'guest' };\n",
+    "new": "",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-POINTS-LOSS",
+    "file": "server-account/src/arena.js",
+    "old": "FROM arena_pve WHERE season = ?1 AND won = 1 AND banner IS NOT NULL GROUP BY banner",
+    "new": "FROM arena_pve WHERE season = ?1 AND banner IS NOT NULL GROUP BY banner",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-POINTS-CHAMPION-SQL",
+    "file": "server-account/src/arena.js",
+    "old": "WHEN step = ${ARENA_TIER_BOUTS} THEN ${ARENA_TEAM_POINTS.champion} ELSE",
+    "new": "WHEN step = ${ARENA_TIER_BOUTS} THEN ${ARENA_TEAM_POINTS.bout} ELSE",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-POINTS-CHAMPION-CLAIM",
+    "file": "server-account/src/arena.js",
+    "old": "(tier === GRAND_TIER ? ARENA_TEAM_POINTS.grand : ARENA_TEAM_POINTS.champion) : ARENA_TEAM_POINTS.bout);",
+    "new": "(tier === GRAND_TIER ? ARENA_TEAM_POINTS.grand : ARENA_TEAM_POINTS.bout) : ARENA_TEAM_POINTS.bout);",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-POINTS-PVP",
+    "file": "server-account/src/arena.js",
+    "old": "out[r.banner] += (Number(r.n) || 0) * ARENA_TEAM_POINTS.pvp;",
+    "new": "out[r.banner] += (Number(r.n) || 0) * 1;",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-LAUREL-FIRST-SEASON",
+    "file": "server-account/src/arena.js",
+    "old": "const laurel = last.red > last.blue ? 'red' :",
+    "new": "const laurel = last.red >= last.blue ? 'red' :",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-BANNER-AT-CLAIM",
+    "file": "server-account/src/arena.js",
+    "old": "await claimLadder(ctx, player, c, season, member?.banner ?? null)",
+    "new": "await claimLadder(ctx, player, c, season, null)",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-SVC-TOKEN-RATING",
+    "file": "server-account/src/index.js",
+    "old": "const ar = who.player.handle ? (await arenaRatingOf(ctx, who.player.id, arenaSeasonOf(nowS))).rating : undefined;",
+    "new": "const ar = undefined;",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-TITLE-GRAND-THE-ROW",
+    "file": "server-account/src/titles.js",
+    "old": "if (player?.arena?.grand === true) held.push('grandchampion');",
+    "new": "if (player?.arena?.grand !== false) held.push('grandchampion');",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-TITLE-ARENACHAMPION",
+    "file": "server-account/src/titles.js",
+    "old": "  if (player?.arena?.champion === true) held.push('arenachampion');\n",
+    "new": "",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4-GLYPH-LAUREL",
+    "file": "server-account/src/titles.js",
+    "old": "  if (player?.arena?.champion === true) on.push('laurel');",
+    "new": "  if (false) on.push('laurel');",
+    "tests": [
+      "test/arena4_service.test.js"
+    ]
+  }
+]

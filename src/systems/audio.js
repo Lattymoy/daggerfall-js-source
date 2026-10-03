@@ -348,6 +348,14 @@ export class AudioEngine {
     return true;
   }
 
+  /** ARENA2: a DAGGER.SND record's samples (mono, SAMPLE_RATE) - the raw voices a made sound is built from
+   *  (systems/arenaSound.js: the crowd's cheer and boo out of AmbientPeople1-10). Read off the player's own archive,
+   *  no context needed; null with no archive or no such record. Never a replacement's: the made sound is Daggerfall's. */
+  samplesOf(index) {
+    const rec = this.snd?.getSound?.(index);
+    return rec?.waveData?.length ? pcm8ToFloat32(rec.waveData) : null;
+  }
+
   _ready() {
     this._ensureCtx();
     return this.enabled && this.ctx && this.ctx.state === 'running';

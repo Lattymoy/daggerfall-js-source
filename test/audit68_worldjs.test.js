@@ -151,10 +151,13 @@ test('AUDIT 68 S22-door-repeated-block-identity: the second instance of a shared
   const shifted = lift(WORLD, '  const shiftedDoor = (entry) => {', '\n  };');
   const targets = lift(WORLD, '    doorTargets: () => buildingDoors.map((e) => ({', '\n    })),');
   const resolve = lift(WORLD, '    buildingDataForDoor: (hit) => {', '\n    },');
-  const host = new Function('buildingDoors', 'state', 'locationIndex', 'built', 'setLastLocationKeyTo', 'buildingDataForDoor', 'townTalk',
-    `${shifted}\nreturn ({\n${targets}\n${resolve}\n});`)(
+  // ARENA1: the door's location and exit group are arenaDoorTarget's (the pixel's town, or the arena's undercroft) - lifted too
+  const arenaTarget = lift(WORLD, '  function arenaDoorTarget(e) {', '\n  }');
+  const host = new Function('buildingDoors', 'state', 'locationIndex', 'built', 'setLastLocationKeyTo', 'buildingDataForDoor', 'townTalk', 'isUndercroftDoor', 'DOOR_TYPE', 'isArenaCity', 'undercroftLocation', '_undercrofts',
+    `${shifted}\n${arenaTarget}\nreturn ({\n${targets}\n${resolve}\n});`)(
     buildingDoors, { pixelTranslation: () => [500, 0, -300] }, new Map([['4,4', dfLoc]]),
-    new Map([['4,4', { locBlocks: loc.blocks, locOrigin }]]), () => {}, talk.buildingDataForDoor, { directory: [] });
+    new Map([['4,4', { locBlocks: loc.blocks, locOrigin }]]), () => {}, talk.buildingDataForDoor, { directory: [] },
+    () => false, { DUNGEON_ENTRANCE: 2 }, () => false, () => null, new WeakMap());
   const [first, second] = host.doorTargets();
   assert.notEqual(second.door.matrix[12], at(RMB_SIDE + 10)[12], 'a door hit is world-frame');
   assert.equal(host.buildingDataForDoor(first).buildingKey, talk.makeBuildingKey(0, 0, 0));

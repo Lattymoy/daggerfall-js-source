@@ -90,6 +90,8 @@ export const TITLE_TEXT = Object.freeze({
   crowned: 'Crowned',
   keeper: 'Keeper',
   champion: 'Champion',
+  grandchampion: 'Grand Champion',   // ARENA4 (2026-10-02, Mac: "Being a top rank PvE fighter comes with it's own title")
+  arenachampion: 'Arena Champion',   // ARENA4: "Being the #1 pvp arena player comes with it's own temporary title/glyph"
 });
 
 /** WB9g (2026-09-30, Mac: "an animated burning ground aura that circles the ground where your character stands"): AN
@@ -161,6 +163,11 @@ export const TITLE_RGBA = Object.freeze({
   crowned: Object.freeze([1, 0.886, 0.541, 1]),       // #ffe28a
   keeper: Object.freeze([0.471, 0.706, 0.443, 1]),    // #78b471
   champion: Object.freeze([0.851, 0.867, 0.890, 1]),  // #d9dde3
+  // ARENA4 (2026-10-02; no colour named): the GRAND CHAMPION in a champion's BRONZE - the cup on the Hall of Champions'
+  // wall, darker and browner than the Dungeon Master's bright orange and the Gatebreaker's fire, and no gold (the
+  // Founder's); the ARENA CHAMPION in the LAUREL's own green - the wreath the season's #1 wears, the glyph's colour too
+  grandchampion: Object.freeze([0.804, 0.498, 0.196, 1]),   // #cd7f32
+  arenachampion: Object.freeze([0.557, 0.776, 0.247, 1]),   // #8ec63f
 });
 
 /** SHADOW-FANG: A TITLE DRAWN AS A GRADIENT - its stops, RGBA 0..1, left
@@ -209,6 +216,7 @@ export const GLYPH_RGBA = Object.freeze({
   crownDF: Object.freeze([0.231, 0.435, 0.847, 1]),   // #3b6fd8
   crownWR: Object.freeze([0.702, 0.149, 0.180, 1]),   // #b3262e
   crownSN: Object.freeze([0.831, 0.627, 0.090, 1]),   // #d4a017
+  laurel: TITLE_RGBA.arenachampion,    // ARENA4: the wreath in the Arena Champion's own green - one grant's two halves
 });
 
 /** SHADOW-FANG: A GLYPH FILLED WITH A GRADIENT - its title's two stops,
@@ -253,6 +261,7 @@ export const GLYPH_MARK = Object.freeze({
   crownDF: 'D',       // SEAT1c: each crown its kingdom's initial
   crownWR: 'W',
   crownSN: 'S',
+  laurel: '@',        // ARENA4: the wreath, a ring round the name's end
 });
 
 /** The printable range the classic font covers. ACC1d-MARK's own bound,
@@ -296,12 +305,15 @@ export const GLYPH_PATH = Object.freeze({
   crownDF: 'M1.5 12.5h13V14h-13zM1.5 11.5L1 4.5l3.2 3L5.6 2.8 8 6.6l2.4-3.8 1.4 4.7 3.2-3-.5 7z',
   crownWR: 'M1.5 12.5h13V14h-13zM1.5 11.5L1 4.5l3.2 3L5.6 2.8 8 6.6l2.4-3.8 1.4 4.7 3.2-3-.5 7z',
   crownSN: 'M1.5 12.5h13V14h-13zM1.5 11.5L1 4.5l3.2 3L5.6 2.8 8 6.6l2.4-3.8 1.4 4.7 3.2-3-.5 7z',
+  // ARENA4: THE LAUREL - two branches rising from a tie at the foot and curving up and out, open at the top as a
+  // victor's wreath is, three leaves on each and a bud at each tip
+  laurel: 'M8 14.5C4.5 13 2.5 10 3 5M8 14.5C11.5 13 13.5 10 13 5M3.2 7L1.6 6M3.6 9.6L1.8 9.4M5 12L3.4 12.6M12.8 7L14.4 6M12.4 9.6L14.2 9.4M11 12L12.6 12.6M3 5L2.4 3.2M13 5L13.6 3.2',
 });
 
 /** Is this glyph DRAWN as an outline rather than filled? The sprout is
  *  a shape and the brackets are strokes; said here so the layer does
  *  not have to know which is which by name. */
-export const GLYPH_STROKE = Object.freeze({ sprout: true, dev: true, mod: true, dm: true, disciple: true, apostle: true, hierophant: true, shadowfang: false, penitent: true, herald: true, tower: false, crownDF: false, crownWR: false, crownSN: false });   // SEAT1c: the seats' four filled
+export const GLYPH_STROKE = Object.freeze({ sprout: true, dev: true, mod: true, dm: true, disciple: true, apostle: true, hierophant: true, shadowfang: false, penitent: true, herald: true, tower: false, crownDF: false, crownWR: false, crownSN: false, laurel: true });   // SEAT1c: the seats' four filled; ARENA4: the laurel's branches stroked
 
 /**
  * The title a peer wears, ready to draw: `{ key, text, rgba }`, or

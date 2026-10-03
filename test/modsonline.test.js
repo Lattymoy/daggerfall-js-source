@@ -78,7 +78,7 @@ test('MODS-ONLINE-2: every vendored mod is classified, and the only keys the lan
   }
 });
 
-test('MODS-ONLINE-4: every mod switch is the player\'s online, except the thirty-eight the room owns', () => {
+test('MODS-ONLINE-4: every mod switch is the player\'s online, except the forty the room owns', () => {
   for (const [vendor, def] of Object.entries(MOD_SETTINGS)) {
     for (const key of Object.keys(def.keys)) {
       const room = ONLINE_ROOM_MOD_KEYS[vendor] && Object.hasOwn(ONLINE_ROOM_MOD_KEYS[vendor], key);
@@ -91,7 +91,7 @@ test('MODS-ONLINE-4: every mod switch is the player\'s online, except the thirty
   // The whole shelf, counted, so a mod quietly re-forced shows up as a
   // number rather than as a player's complaint.
   const forced = Object.values(ONLINE_ROOM_MOD_KEYS).reduce((n, keys) => n + Object.keys(keys).length, 0);
-  assert.equal(forced, 38, 'the lane forces thirty-eight mod switches in the whole shelf');   // RAID2: World Events - Raiding Parties' Enabled, the world's raids   // OH-A: Ocean Holes' three - its switch, the pits' rate and the seafloor hole's size (the fifth floor)   // DW-D: Iliac Puddle No More's thirteen - the sea and its depth (the fourth floor), the deep's foes and loot, its swim and breath rules   // DS1: Detailed Ships' Enabled, the ships' shared deck   // MODS-ONLINE-5: one ruleset per room - RR's six combat overrides and its intensive training   // RRI1/RR1 (merged 2026-09-23): five of Roleplay & Realism: Items' (the items that change hands) and two of Roleplay & Realism's (the location, the host's foes)   // WOD1: World of Daggerfall's Enabled, the second floor
+  assert.equal(forced, 40, 'the lane forces forty mod switches in the whole shelf');   // WD3: Beautiful Villages' and Beautiful Cities' Enabled - the towns themselves   // RAID2: World Events - Raiding Parties' Enabled, the world's raids   // OH-A: Ocean Holes' three - its switch, the pits' rate and the seafloor hole's size (the fifth floor)   // DW-D: Iliac Puddle No More's thirteen - the sea and its depth (the fourth floor), the deep's foes and loot, its swim and breath rules   // DS1: Detailed Ships' Enabled, the ships' shared deck   // MODS-ONLINE-5: one ruleset per room - RR's six combat overrides and its intensive training   // RRI1/RR1 (merged 2026-09-23): five of Roleplay & Realism: Items' (the items that change hands) and two of Roleplay & Realism's (the location, the host's foes)   // WOD1: World of Daggerfall's Enabled, the second floor
   // MODS-ONLINE-4 (Mac: "What about player balance?"): the two GROUND
   // switches, and the three that spend somebody else's evening - the
   // host's dungeon foes (meaner monsters, the overhaul) and a roll that
@@ -99,8 +99,8 @@ test('MODS-ONLINE-4: every mod switch is the player\'s online, except the thirty
   // switch, World of Daggerfall's, which levels camp sites into the same
   // terrain the road beds are smoothed into.
   assert.deepEqual(Object.keys(ONLINE_ROOM_MOD_KEYS).sort(),
-    ['detailed-ships', 'iliac-puddle-no-more', 'meanerMonsters', 'ocean-holes', 'pcaao', 'roads-hazelnut', 'roleplay-realism', 'roleplay-realism-items', 'unleveledLoot', 'world-events-raiding-parties', 'world-of-daggerfall']);
-  assert.equal(ONLINE_PLAYERS_OWN_MODS.length, Object.keys(MOD_SETTINGS).length - 11);   // THE MERGE: the raids' switch (the batch's) beside Ocean Holes' (main's) - eleven the room owns
+    ['beautiful-cities', 'beautiful-villages', 'detailed-ships', 'iliac-puddle-no-more', 'meanerMonsters', 'ocean-holes', 'pcaao', 'roads-hazelnut', 'roleplay-realism', 'roleplay-realism-items', 'unleveledLoot', 'world-events-raiding-parties', 'world-of-daggerfall']);
+  assert.equal(ONLINE_PLAYERS_OWN_MODS.length, Object.keys(MOD_SETTINGS).length - 13);   // THE MERGE: the raids' switch (the batch's) beside Ocean Holes' (main's) - eleven the room owns; WD3: the two town mods, thirteen
 });
 
 test('MODS-ONLINE-2: a declared key is an OWN key - the lane and the store both refuse a name off Object.prototype', () => {

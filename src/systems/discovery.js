@@ -15,6 +15,7 @@
 // already keys by that one string.
 
 import { isResidence, BUILDING_TYPES } from '../world/buildingNames.js';   // RMBLayout.IsResidence (:753-760), House1-House4
+import { layoutStampOfTown, layoutsMatch, CLASSIC_LAYOUT } from './layoutPins.js';   // WD3: a town's discoveries keep the layout they were made in
 
 /** EMPIRE-BANK: the name a discovered building is SHOWN by, on its door and its plate - its stored one, but a BANK's is
  *  its name now (`live`, the directory's) wherever no quest renamed it: online every bank is the Empire's
@@ -27,6 +28,15 @@ export function shownBuildingName(rec, live = null) {
 }
 
 let _discovered = new Map();   // locationId -> Map(buildingKey -> record)
+// WD3: the layout each town's discoveries were made in (systems/layoutPins.js), for a town a layout mod changes - a
+// building is discovered by its KEY, and a key names a building only in its town's layout. None for classic.
+let _layouts = new Map();      // locationId -> stamp
+function noteTownLayout(locationId) {
+  const stamp = layoutStampOfTown(locationId);
+  if (stamp == null) return;
+  if (stamp !== CLASSIC_LAYOUT) _layouts.set(locationId, stamp);
+  else _layouts.delete(locationId);
+}
 
 /** DiscoverBuilding (:917-975): the record lands whole.
  *  `building` is a talk-directory entry - it carries exactly the
@@ -105,6 +115,7 @@ export function discoverBuilding(locationId, building, overrideName = null, ques
   }
   if (rec.oldDisplayName === rec.displayName) rec.isOverrideName = false;   // :969-970
   loc.set(building.buildingKey, rec);
+  noteTownLayout(locationId);   // WD3
   return true;
 }
 
@@ -280,13 +291,16 @@ export function snapshotDiscovery() {
   for (const [locId, b] of _discovered) {
     buildings[locId] = Object.fromEntries([...b].map(([k, r]) => [k, { ...r }]));
   }
-  return { buildings, locations: Object.fromEntries([..._locations].map(([k, r]) => [k, { ...r }])) };
+  const out = { buildings, locations: Object.fromEntries([..._locations].map(([k, r]) => [k, { ...r }])) };
+  if (_layouts.size) out.layouts = Object.fromEntries(_layouts);   // WD3: only where a layout mod changed the town
+  return out;
 }
 
 /** A load REPLACES both stores (missing on old saves = nothing found). */
 export function restoreDiscovery(snap) {
   _discovered = new Map();
   _locations = new Map();
+  _layouts = new Map(Object.entries(snap?.layouts ?? {}).filter(([, v]) => typeof v === 'string' && v));   // WD3: none on a save from before - classic
   _locationsGen += 1;
   if (!snap) return;
   const legacy = !snap.buildings && !snap.locations;
@@ -305,4 +319,24 @@ export function restoreDiscovery(snap) {
   for (const [k, r] of Object.entries(snap.locations ?? {})) {
     _locations.set(Number(k), { ...r });
   }
+}
+
+/**
+ * WD3: A TOWN WHOSE LAYOUT CHANGED FORGETS ITS BUILDINGS. A save's discoveries name buildings by key; loaded where the
+ * town now stands in another layout (a layout mod switched on or off since, and nothing of the save's holding the
+ * town in its old one - systems/layoutPins.js), each key names another building, and the automap would write a
+ * smith's name on a stranger's house. Those towns' discovered buildings are dropped - the town itself stays found
+ * (the location half is the map's, which no layout moves). A town the host cannot place is kept as it is. Answers
+ * how many records went.
+ */
+export function pruneDiscoveryLayouts() {
+  let n = 0;
+  for (const [locId, b] of [..._discovered]) {
+    const now = layoutStampOfTown(locId);
+    if (now == null || layoutsMatch(_layouts.get(locId), now)) continue;
+    n += b.size;
+    _discovered.delete(locId);
+    _layouts.delete(locId);
+  }
+  return n;
 }

@@ -1,0 +1,227 @@
+[
+  {
+    "name": "ARENA4b-EX-DRAW-TIER",
+    "file": "src/net/arenaExhibition.js",
+    "old": "const pool = ARENA_LADDER_SPEC[tier].slice(0, ARENA_TIER_BOUTS)",
+    "new": "const pool = ARENA_LADDER_SPEC[tier + 1].slice(0, ARENA_TIER_BOUTS)",
+    "tests": [
+      "test/arena4b_exhibition.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-EX-BOUTID-SEED",
+    "file": "src/net/arenaExhibition.js",
+    "old": "export const exhibitionBoutId = (hour) => arenaHash(hour, 1)",
+    "new": "export const exhibitionBoutId = (hour) => arenaHash(hour, 2)",
+    "tests": [
+      "test/arena4b_exhibition.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-EX-ROOM-HOUR",
+    "file": "src/net/arenaLaw.js",
+    "old": "return m ? Number(m[1]) : null; };",
+    "new": "return m ? Number(m[1]) + 1 : null; };",
+    "tests": [
+      "test/arena4b_exhibition.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-EX-ROOM-SPELLING",
+    "file": "src/net/arenaLaw.js",
+    "old": "export const ARENA_EX_ROOM_RE = /^arena:x(0|[1-9]\\d{0,8})$/;",
+    "new": "export const ARENA_EX_ROOM_RE = /^arena:x(\\d{1,9})$/;",
+    "tests": [
+      "test/arena4b_exhibition.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-EX-OPENING-WINDOW",
+    "file": "src/net/arenaExhibition.js",
+    "old": "return ex && ex.open ? ex : null;",
+    "new": "return ex;",
+    "tests": [
+      "test/arena4b_exhibition.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-EX-OPENING-HOUR",
+    "file": "src/net/arenaExhibition.js",
+    "old": "if (!Number.isSafeInteger(hour) || hourIndexOf(nowMinutes) !== hour) return null;",
+    "new": "if (!Number.isSafeInteger(hour)) return null;",
+    "tests": [
+      "test/arena4b_exhibition.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-EX-ADMITS-AHEAD",
+    "file": "src/net/arenaExhibition.js",
+    "old": "hour >= now - EXHIBITION_KEPT_HOURS - 1 && hour <= now + 1; };",
+    "new": "hour >= now - EXHIBITION_KEPT_HOURS - 1 && hour <= now + 10; };",
+    "tests": [
+      "test/arena4b_exhibition.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-EX-ADMITS-BEHIND",
+    "file": "src/net/arenaExhibition.js",
+    "old": "hour >= now - EXHIBITION_KEPT_HOURS - 1 && hour <= now + 1; };",
+    "new": "hour >= 0 && hour <= now + 1; };",
+    "tests": [
+      "test/arena4b_exhibition.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-EX-DOOR",
+    "file": "server/src/index.js",
+    "old": "if (isArenaExhibitionRoom(key) && !exhibitionAdmits(",
+    "new": "if (false && !exhibitionAdmits(",
+    "tests": [
+      "test/arena4b_exhibition.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-EX-LAW-WAITS",
+    "file": "src/net/arenaBrain.js",
+    "old": "    startLaw(st, now);\n    return st;\n",
+    "new": "    return st;\n",
+    "tests": [
+      "test/arena4b_exhibition.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-EX-SIDES",
+    "file": "src/net/arenaBrain.js",
+    "old": "windup: body.windup, reach: body.reach, side: i,",
+    "new": "windup: body.windup, reach: body.reach, side: 1 - i,",
+    "tests": [
+      "test/arena4b_exhibition.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-EX-RECEIPT",
+    "file": "src/net/arenaBrain.js",
+    "old": "  if (st.kind === 'ex' || st.casual) return [];",
+    "new": "  if (st.casual) return [];",
+    "tests": [
+      "test/arena4b_exhibition.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-EX-STATE-HOUR",
+    "file": "src/net/arenaBrain.js",
+    "old": "...(st.kind === 'ex' ? { h: st.hour } : {})",
+    "new": "...({})",
+    "tests": [
+      "test/arena4b_exhibition.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-EX-LIVE-ENTRY",
+    "file": "src/net/arenaBrain.js",
+    "old": "if (st.kind === 'ex') return { o: st.o, kind: 'ex', h: st.hour, a: { b: ARENA_EX_BANNERS[0] }, b: { b: ARENA_EX_BANNERS[1] }, tier: st.tier, sp: st.spectators, at: st.at };",
+    "new": "if (st.kind === 'ex') return { o: st.o, kind: 'ex', h: st.hour, a: { b: ARENA_EX_BANNERS[0] }, b: { b: ARENA_EX_BANNERS[1] }, sp: st.spectators, at: st.at };",
+    "tests": [
+      "test/arena4b_exhibition.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-EX-WIRE-ST-HOUR",
+    "file": "src/net/arenaLaw.js",
+    "old": "      if (m.kind === 'ex' && int(m.h, 0, ARENA_HOUR_MAX) == null) return null;   // ARENA4b: an exhibition says its hour\n",
+    "new": "",
+    "tests": [
+      "test/arena4b_exhibition.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-EX-WIRE-LIVE-HOUR",
+    "file": "src/net/arenaLaw.js",
+    "old": "        if (ex && int(b.h, 0, ARENA_HOUR_MAX) == null) return null;\n",
+    "new": "",
+    "tests": [
+      "test/arena4b_exhibition.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-EX-WIRE-LIVE-BILL",
+    "file": "src/net/arenaLaw.js",
+    "old": "if ((!ex && !a) || (!ex && b.b && !z)",
+    "new": "if ((!ex && !a) || (b.b && !z)",
+    "tests": [
+      "test/arena4b_exhibition.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-EX-OPENED-BY-FIGHTER",
+    "file": "server/src/index.js",
+    "old": "const ex = m.r === 's' ? exhibitionOpening(hour, sharedClassicMinutes(now)) : null;",
+    "new": "const ex = exhibitionOpening(hour, sharedClassicMinutes(now));",
+    "tests": [
+      "test/arena4b_exhibition.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-EX-RELAY-WINDOW",
+    "file": "server/src/index.js",
+    "old": "const ex = m.r === 's' ? exhibitionOpening(hour, sharedClassicMinutes(now)) : null;",
+    "new": "const ex = m.r === 's' ? exhibitionOpening(hour, hour * 60 + 1) : null;",
+    "tests": [
+      "test/arena4b_exhibition.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-EX-LATE-SEATED",
+    "file": "server/src/index.js",
+    "old": "      } else if (exRoom && boutFinished(st)) {",
+    "new": "      } else if (false) {",
+    "tests": [
+      "test/arena4b_exhibition.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-EX-KEEP",
+    "file": "server/src/index.js",
+    "old": "const keep = st.kind === 'ex' ? ARENA_EX_KEEP_MS : ARENA_KEEP_MS;",
+    "new": "const keep = ARENA_KEEP_MS;",
+    "tests": [
+      "test/arena4b_exhibition.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-EX-ROSTER",
+    "file": "server/src/index.js",
+    "old": "      if (isArenaFloorRoom(a.key)) for (let i = others.length - 1; i >= 0; i--) if (!others[i].af) others.splice(i, 1);",
+    "new": "      if (false) for (let i = others.length - 1; i >= 0; i--) if (!others[i].af) others.splice(i, 1);",
+    "tests": [
+      "test/arena4b_exhibition.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-EX-JOIN-SAID",
+    "file": "server/src/index.js",
+    "old": "      if (isArenaFloorRoom(a.key)) return;   // ARENA4: said at the `in`",
+    "new": "      if (false) return;   // ARENA4: said at the `in`",
+    "tests": [
+      "test/arena4b_exhibition.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-EX-WORDS-JUNK",
+    "file": "server/src/index.js",
+    "old": "        else if (isArenaFloorRoom(a.key)) await this._boutWord(ws, a, m, now);",
+    "new": "        else if (isArenaFloorRoom(a.key) && !isArenaExhibitionRoom(a.key)) await this._boutWord(ws, a, m, now);",
+    "tests": [
+      "test/arena4b_exhibition.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-EX-FLOOR-ROOM",
+    "file": "src/net/arenaLaw.js",
+    "old": "isArenaExhibitionRoom(`arena:${o}`) ? `arena:${o}` : null);",
+    "new": "isArenaExhibitionRoom(`arena:${o}`) ? arenaBoutRoom(o) : null);",
+    "tests": [
+      "test/arena4b_exhibition.test.js"
+    ]
+  }
+]

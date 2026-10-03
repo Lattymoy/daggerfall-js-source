@@ -62,7 +62,10 @@ export function createDecorScan({ blocks, isTownBlock, modelRadius, flatRadius }
     for (; next < end; next++) {
       try {
         if (!isTownBlock(blocks.getBlockType(next))) continue;
-        const b = blocks.getBlock(next);
+        // WD3: the catalogue is what DAGGERFALL furnishes - its blocks as BLOCKS.BSA holds them, never a world-data mod's
+        // (Beautiful Villages and Beautiful Cities redecorate 1,400 interiors; through the door their pieces would join
+        // the catalogue, renumber it, and leave it when the mod is switched off)
+        const b = blocks.readClassicBlock ? blocks.readClassicBlock(next) : blocks.getBlock(next);
         if (b) collectDecor([b], collected);
       } catch { /* a block the file cannot read is a block with nothing in it */ }
     }

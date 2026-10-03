@@ -81,6 +81,8 @@ export const MATERIAL = Object.freeze({
 /** [IL] `PlayFootstep`'s volume factor (IL_58cd-IL_58e1): the third-person
  *  billboard plays its step at TWICE `FootstepVolumeScale`, the
  *  first-person one at once. */
+/** ARENA-FIX 14: feet carried further than this in one frame (horizontally, metres) were placed, not walked. */
+export const PLACE_JUMP_M = 8;
 export const FOOTSTEP_VOLUME_SCALE = Object.freeze({ thirdPerson: 2, firstPerson: 1 });
 
 // ═══ HT-WAIST: THE LANTERN AT THE WAIST, ON THE SPRITE ═════════════
@@ -523,6 +525,13 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
     return startClip(table, forwardFrames(frameCount(table)), DEATH_TICK, { freeze: true });
   }
 
+  /** ARENA-FIX 14: the facing a placing writes (the object's `faceYaw`, below). */
+  function faceYaw(yaw) {
+    if (!Number.isFinite(yaw)) return;
+    lastMoveDirection = [Math.sin(yaw), 0, Math.cos(yaw)];
+    lastOrientation = -1;
+  }
+
   // ── UpdateOrientation ─────────────────────────────────────────────
   /** [IL] IL_4520-IL_48bd. The tenth-of-a-second gate first (it gates the
    *  forced calls too); the player-to-camera vector; the facing; the
@@ -762,6 +771,15 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
 
   return {
     /**
+     * ARENA-FIX 14 (2026-10-02, the port's own): THE BODY TURNED WITH A PLACING (`tick` sees one: PLACE_JUMP_M). The mod's sprite faces its last walk
+     * (UpdateOrientation's `lastMoveDirection`, a field that only a walk writes) - and a body PLACED with a facing (a
+     * fighter stood on its mark in the arena's instance, a probe's pose) had walked nowhere: it kept the old walk's
+     * facing, or none (Vector3.zero, which SignedAngle reads as the camera's own line - the sprite's FRONT to the
+     * camera), so the player's own sprite stood facing the lens at the head of every bout. A placing writes the facing
+     * it places with, as the walk it stands for would; the next orientation pass repaints it. `yaw` the facing's.
+     */
+    faceYaw,
+    /**
      * Called by `combat/weaponRig.js` beside `fpArm.attach`.
      *
      * `playerState` is the per-frame answer only the rig can give -
@@ -841,10 +859,14 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       last = bodyState(state);
       if (renderer && last.lycanthropyType !== preloadedForm) preload(true);   // PR-WW1: a curse caught (or changed) fetches its own beast
       fell = false;
+      const was = cam.feet;
       if (state.feet) cam.feet = state.feet;
       if (state.cameraPos) cam.pos = state.cameraPos;
       if (Number.isFinite(state.yaw)) { cam.yaw = state.yaw; cam.forward = [Math.sin(state.yaw), 0, Math.cos(state.yaw)]; }
       if (state.cameraForward) cam.forward = state.cameraForward;
+      // ARENA-FIX 14: a PLACING (feet carried further in one frame than any walk, fall or ride goes - a door, a warp, a
+      // fighter stood on its mark in the arena's instance) faces the body the way the view was placed facing
+      if (state.feet && was && Math.hypot(state.feet[0] - was[0], state.feet[2] - was[2]) > PLACE_JUMP_M) faceYaw(Math.atan2(cam.forward[0], cam.forward[2]));
       // the first-person billboard stands ON the camera point (IL_3e48-IL_3e6d):
       // the parent's head, so the orientation reads 0 through the zero vector
       if (FP) cam.pos = [cam.feet[0], cam.feet[1] + FP_HEAD, cam.feet[2]];

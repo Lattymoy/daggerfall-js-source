@@ -29,6 +29,22 @@ import { installDetStandIns } from '../world/detStandIns.js';
 export const DETAILED_SHIPS_VENDOR = 'detailed-ships';
 export const detailedShipsOn = () => modSetting(DETAILED_SHIPS_VENDOR, 'Enabled') === true;
 
+// WD3 (2026-10-02): CLIFFWORMS' ITEMS ARE THE TOWNS' TOO. Archive 1210 is his set, and the RMB Resource Pack carries it
+// as well ("Cliffworms' Items" in its catalogue - 1210_10, _11 and _12 its green, blue and brown bottles): Beautiful
+// Villages and Beautiful Cities stand his bottles and the classic pieces he moved there (1210_10-12, 1210_17-20) on the
+// shelves and tables of some six hundred interiors. The pictures this mod carries are those pictures, so they stand for
+// the towns' while a town mod is loaded, whatever this mod's own switch says (world/townStandIns.js shares them) - as
+// DET's pieces are shared (world/detStandIns.js). The xml scales ride with them.
+const _sharedArt = new Set();
+/** Another mod's switch the pictures and their scales also answer to (WD3: the town mods'). */
+export function shareDetailedShipsArt(isOn) { if (typeof isOn === 'function') _sharedArt.add(isOn); }
+/** The pictures' gate: this mod's switch, or any switch they are shared with. */
+export const detailedShipsArtOn = () => {
+  if (detailedShipsOn()) return true;
+  for (const g of _sharedArt) if (g() === true) return true;
+  return false;
+};
+
 /** The pictures that are the author's own (no classic record is them), shipped as PNG. */
 export const DETAILED_SHIPS_OWN_ART = Object.freeze(['1210_10-0', '1210_11-0', '1210_12-0', '1230_30-0']);
 /** The pictures rebuilt from classic records, by name (the tool's own measurement). */
@@ -52,15 +68,15 @@ let _installed = false;
 export function installDetailedShipsArt({ fetchBytes = null } = {}) {
   if (_installed) return 0;
   _installed = true;
-  registerBillboardXml(DETAILED_SHIPS_VENDOR, DETAILED_SHIPS_XML, detailedShipsOn);
+  registerBillboardXml(DETAILED_SHIPS_VENDOR, DETAILED_SHIPS_XML, detailedShipsArtOn);   // WD3: shared with the towns
   const load = fetchBytes ?? (async (name) => { const r = await fetch(detailedShipsArtUrl(name)); if (!r.ok) throw new Error(`${name}: ${r.status}`); return new Uint8Array(await r.arrayBuffer()); });
-  const own = DETAILED_SHIPS_OWN_ART.map((name) => ({ ...parseName(name), fileName: name, standIn: true, gate: detailedShipsOn, load }));
+  const own = DETAILED_SHIPS_OWN_ART.map((name) => ({ ...parseName(name), fileName: name, standIn: true, gate: detailedShipsArtOn, load }));
   const derived = Object.entries(DERIVED).map(([name, spec]) => ({
-    ...parseName(name), fileName: name, standIn: true, gate: detailedShipsOn,
+    ...parseName(name), fileName: name, standIn: true, gate: detailedShipsArtOn,
     build: (ctx) => buildDerivedPicture(spec, ctx.classicRgba),
   }));
   installDetStandIns(detailedShipsOn);   // the ten models and the flats it borrows from DET - the port's own stand-ins
   return addVendorTextures([...own, ...derived]);
 }
 /** Test seam. */
-export function _resetDetailedShipsArt() { _installed = false; }
+export function _resetDetailedShipsArt() { _installed = false; _sharedArt.clear(); }

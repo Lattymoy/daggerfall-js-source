@@ -208,7 +208,7 @@ test('PERF2 pins: the sky passes, the clouds\' composite and the ring sit AT the
   assert.ok(wSort > 0 && wSort < wMesh && w.indexOf('for (const p of _pixelOrder) {') > wSort && w.indexOf('for (const p of _pixelOrder) {') < wMesh, 'the walk runs over the sorted order');
   assert.match(w, /p\._dist2 = \(p\.px - state\.current\.x\) \*\* 2 \+ \(p\.py - state\.current\.y\) \*\* 2/, 'by grid distance from the player\u2019s own pixel');
   assert.match(w, /^const _pixelOrder = \[\];/m, 'a scratch kept across frames, not a per-frame array');
-  const eMesh = e.lastIndexOf('renderer.drawMesh(d.mesh, d.matrix, texRemap);'), eArrows = e.indexOf('arrows.draw(renderer, texRemap);');
+  const eMesh = e.lastIndexOf('renderer.drawMesh(d.mesh, d.matrix, d.texRemap ?? texRemap);'), eArrows = e.indexOf('arrows.draw(renderer, texRemap);');
   assert.ok(eMesh > 0 && eArrows > eMesh && eTerrain > eArrows, 'exterior: the ground after the buildings, the mills and the arrows');
   assert.match(w, /window\.__grassStats = \(\) => \(\{ blades: labGrass\.count, drawn: labGrass\.drawn,/, 'the probe reports what was drawn');
   // PERF-URL (2026-09-29): the hook's `cells` and `slots` sat INSIDE a trailing comment on its first line, so it had

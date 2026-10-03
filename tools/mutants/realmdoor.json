@@ -16,8 +16,8 @@
   {
     "name": "REALM-DOOR-rc-left-off-the-mint",
     "file": "server-account/src/index.js",
-    "old": "...wardrobe, mu, lv, ...(guild ?? {}), rc },",
-    "new": "...wardrobe, mu, lv, ...(guild ?? {}) },",
+    "old": "...wardrobe, mu, lv, ...(guild ?? {}), rc, ...(ar",
+    "new": "...wardrobe, mu, lv, ...(guild ?? {}), ...(ar",
     "tests": ["test/realmdoor.test.js"]
   },
   {

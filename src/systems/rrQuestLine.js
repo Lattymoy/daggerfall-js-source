@@ -79,6 +79,30 @@ export function rrMasterArmBuildingKey(regionIndex) {
 }
 export const RR_ARMORER_BLOCK = 'ARMRAM03.RMB';
 export const RR_ARMORER_RECORD = 14;
+/**
+ * WD3 (2026-10-01): THE SHOP WHERE ITS BLOCK STANDS. GetMasterArmBuildingKey hard-codes the cell ARMRAM03 has in the
+ * three classic towns - (2,1) in Pjiga, (3,2) in Penmore, (2,2) in Paponirea - and the shop variant itself follows the
+ * BLOCK wherever it stands (WorldDataVariants keys it by block name and record). Beautiful Villages lays those towns
+ * out again and moves the block - Penmore's to (2,2), Pjiga's to (0,1); Paponirea's stays - and in DFU the two mods
+ * together name a neighbour's house "Dharjen Custom Armor" while the shop stands unnamed. So the key is read off the
+ * town's own grid: the classic key while ARMRAM03 still stands in its classic cell (or the grid holds none), else the
+ * cell it stands in now, record 14 - a recorded departure (Port-Ledger, WD3), the two mods made to agree. Beautiful
+ * Villages keeps the record a weapon smith's for the shop to stand in.
+ */
+export function rrMasterArmBuildingKeyIn(location) {
+  const key = rrMasterArmBuildingKey(location?.regionIndex);
+  const ed = location?.exterior?.exteriorData;
+  if (!key || !Array.isArray(ed?.blockNames) || !(ed.width > 0)) return key;
+  const cx = (key >> 16) & 0xff, cy = (key >> 8) & 0xff;
+  let first = null;
+  for (let i = 0; i < ed.blockNames.length; i++) {
+    if (ed.blockNames[i] !== RR_ARMORER_BLOCK) continue;
+    const x = i % ed.width, y = Math.floor(i / ed.width);
+    if (x === cx && y === cy) return key;
+    first ??= [x, y];
+  }
+  return first ? (first[0] << 16) + (first[1] << 8) + RR_ARMORER_RECORD : key;
+}
 /** Entering a location whose ARMRAM03 building 14 carries a variant:
  *  DiscoverBuilding(key, "Dharjen Custom Armor"). `variantOf(regionIndex,
  *  locationIndex, blockName, recordIndex)` is WorldDataVariants.GetBuildingVariant.
@@ -86,7 +110,7 @@ export const RR_ARMORER_RECORD = 14;
 export function rrMasterArmorerDiscovery(location, variantOf) {
   if (!location) return null;
   if (variantOf(location.regionIndex, location.locationIndex, RR_ARMORER_BLOCK, RR_ARMORER_RECORD) == null) return null;
-  return { buildingKey: rrMasterArmBuildingKey(location.regionIndex), name: RR_TEXT.dharjenCustomArmor };
+  return { buildingKey: rrMasterArmBuildingKeyIn(location), name: RR_TEXT.dharjenCustomArmor };
 }
 
 // ---- CustomArmorService (:414-484) ------------------------------------------

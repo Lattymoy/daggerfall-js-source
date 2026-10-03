@@ -64,6 +64,7 @@ export const GLYPH_LABEL = Object.freeze({
   crownDF: 'The Crown of Daggerfall',   // SEAT1c: a crown seat's crown, its kingdom's
   crownWR: 'The Crown of Wayrest',
   crownSN: 'The Crown of Sentinel',
+  laurel: 'Arena Champion',   // ARENA4: the laurel, while its wearer is the season's #1
 });
 
 /** ACC4: THE TWO FACTS MAC ASKED FOR, as words. Pure, so node pins

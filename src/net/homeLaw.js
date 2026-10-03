@@ -74,6 +74,77 @@ export function homeMayEnter(home, { partyNames = [], nowS = Math.floor(Date.now
   return false;
 }
 
+// ═══ WD3 (2026-10-01) — THE LAYOUT A HOME'S TOWN WAS BOUGHT IN ═══════════
+//
+// Mac: "ensure this doesn't conflict or regress anything (For example
+// housing customization)". Beautiful Villages and Beautiful Cities lay
+// Daggerfall's towns out again, and a home is a building KEY - which names
+// a building only in one layout of its town. Online the two mods are the
+// room's (systems/onlineLane.js ONLINE_ROOM_MOD_KEYS), and every home
+// bought before them was bought in Daggerfall's own towns. So a home keeps
+// the layout its town was bought in, server-wide: NULL - Daggerfall's,
+// every home from before WD3 - or the stamp its first buyer's client sent
+// (systems/layoutPins.js layoutStampOf: `vendor@version`, joined by '+'). A
+// town's later homes take its first home's, whatever a client sends. Every
+// client reads the towns that hold homes, and their layouts, at its online
+// boot, and keeps each town in its layout - one town for the whole room.
+
+/** The layout mods a stamp may name (systems/layoutPins.js LAYOUT_MODS, pinned equal). */
+export const HOME_LAYOUT_MODS = Object.freeze(['beautiful-villages', 'beautiful-cities']);
+/** A stamp's longest spelling. */
+export const HOME_LAYOUT_MAX = 96;
+/** The most towns the layouts read answers (a town per home at the very most). */
+export const HOME_LAYOUTS_MAX = 20000;
+/** A home's layout stamp: null (Daggerfall's own town) or `vendor@version` of the layout mods, joined by '+', each
+ *  named once. */
+export function homeLayoutOk(v) {
+  if (v === null || v === undefined) return true;
+  if (typeof v !== 'string' || !v || v.length > HOME_LAYOUT_MAX) return false;
+  const seen = new Set();
+  for (const part of v.split('+')) {
+    const m = /^([a-z-]+)@([0-9A-Za-z.?-]{1,16})$/.exec(part);
+    if (!m || !HOME_LAYOUT_MODS.includes(m[1]) || seen.has(m[1])) return false;
+    seen.add(m[1]);
+  }
+  return true;
+}
+
+/** Whether two stamps are one layout - the same layout mods, whatever versions they name; null (or absent) is
+ *  Daggerfall's own (systems/layoutPins.js layoutsMatch, the same law where the service can read it). */
+export function homeLayoutsMatch(a, b) {
+  const mods = (v) => new Set(typeof v === 'string' && v ? v.split('+').map((p) => p.split('@')[0]).filter((m) => HOME_LAYOUT_MODS.includes(m)) : []);
+  const x = mods(a), y = mods(b);
+  return x.size === y.size && [...x].every((m) => y.has(m));
+}
+
+// ═══ ARENA4b (2026-10-03) — THE HOMES THE ARENA DISPLACED, MOVED ONLINE ══
+//
+// Mac (ARENA1): "Move them to a new house". The Arena of Daggerfall
+// stands in Daggerfall's cell (4,3) in every layout of the city
+// (world/arenaCity.js), so no building has a key there: an online home
+// keyed there names nothing. The OWNER'S CLIENT picks its new house by
+// the offline move's own rule (systems/arenaMove.js arenaHomeFor - the
+// service holds no town's records) and posts it; the service checks the
+// keys by the law below and carries the home's row whole to the new key
+// (server-account/src/homes.js arenaMoveHome). And no build may buy a
+// house there any more - a build from before the arena still stands
+// GEMSAL03 and would (`home-arena`: homes.js claimHome, halls.js buyHall).
+
+/** Daggerfall's map id, unsigned (world/actionSystem.js CASTLE_DAGGERFALL_MAP_ID - the city's, pinned equal). */
+export const HOME_ARENA_MAP_ID = 1291010263;
+/** The arena's cell of Daggerfall's grid (world/arenaCity.js ARENA_CELL, pinned equal): `[blockX, blockY]`. */
+export const HOME_ARENA_CELL = Object.freeze([4, 3]);
+/** Whether a building key of a town names a building of the arena's cell - read off the RAW key, as the tables keep it
+ *  and as world/arenaCity.js inArenaCell reads it (`key >> 16` the block's x, `(key >> 8) & 255` its y). */
+export const homeInArenaCell = (mapId, key) => mapId === HOME_ARENA_MAP_ID && homeBuildingKeyOk(key)
+  && (key >> 16) === HOME_ARENA_CELL[0] && ((key >> 8) & 0xff) === HOME_ARENA_CELL[1];
+/** A ROOM'S POINT CARRIED BY THE MOVE: the anchor column's text for a running tenancy the move carried to the new house
+ *  (JSON null - the column is NOT NULL). The old house's point names no room of the new one's walls, so the tenancy
+ *  runs on unlisted and anchorless: its tenant still walks in and rests (the door and the bed read the tenancy -
+ *  homesInTown's `tenant`, homeMayEnter, systems/homeRent.js homeBedIsMine - never the point), the door offers it to
+ *  nobody once its days run out (an offer of the same number writes a point again - rent.js offerRoom). */
+export const RENT_ANCHOR_MOVED = 'null';
+
 // ═══ HOME-RENT (2026-09-30) — A ROOM OF A HOME, RENTED TO ANOTHER PLAYER ══
 //
 // Asked: "For houses with multiple rooms, the owner can choose to rent out

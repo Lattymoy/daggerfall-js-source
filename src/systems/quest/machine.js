@@ -1574,6 +1574,37 @@ export class QuestMachine {
     return sites;
   }
 
+  /** WD3 (AUDIT WD3 S5): every incomplete quest's building sites whose town stands in another layout now, chosen again
+   *  in it (Place.reseatMovedSite), their site links following. Answers how many moved. */
+  reseatMovedSites(world = this.deps.world ?? null) {
+    if (!world) return 0;
+    let moved = 0;
+    for (const quest of this.quests.values()) {
+      if (quest.questComplete) continue;
+      for (const resource of quest.resources.values()) {
+        if (!resource.isPlace || !resource.reseatMovedSite?.(world)) continue;
+        moved++;
+        for (const link of this.siteLinks) {
+          if (link.questUID === quest.uid && link.placeSymbol?.name === resource.symbol?.name) link.buildingKey = resource.siteDetails.buildingKey;
+        }
+      }
+    }
+    return moved;
+  }
+
+  /** WD3 (AUDIT WD3 S3): every incomplete quest's questor met in a building - its town keeps the layout the questor
+   *  was met in (systems/layoutPins.js layoutRecordsOf). */
+  getAllActiveQuestors() {
+    const out = [];
+    for (const quest of this.quests.values()) {
+      if (quest.questComplete) continue;
+      for (const resource of quest.resources.values()) {
+        if (resource.isPerson && resource.isQuestor && resource.questorData?.buildingKey > 0) out.push(resource.questorData);
+      }
+    }
+    return out;
+  }
+
   /** DISC28-I (Discord: a quest shared by a friend - "we couldn't enter the house after I entered it"): PlayerActivate.
    *  IsActiveQuestBuilding (PlayerActivate.cs:1315-1329), the lock ladder's quest rung and the house market's
    *  exclusion. It reads GetAllActiveQuestSites - EVERY Place of every incomplete quest, matched on building key and map
@@ -1611,7 +1642,7 @@ export class QuestMachine {
    *  faction ("This effectively shuts down several named NPCs during
    *  main quest") - and TalkManager.cs does not contain the word
    *  Listener at all. The port already ships that reader, at
-   *  src/scenes/worldModes.js:3079. A pending marker over shipped work
+   *  src/scenes/worldModes.js:3108. A pending marker over shipped work
    *  is worse than no marker: it sends the next reader looking for
    *  work that is done, in a file that never had it. */
   addFactionListener(factionID, owner) {

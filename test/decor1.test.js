@@ -81,7 +81,7 @@ async function stand() {
 }
 const T0 = 1_800_000_000;
 const HOME = { mapId: 1291010263, buildingKey: 0x10203 };
-const home = (extra = {}) => ({ ...HOME, region: 17, character: 'char-aldric', price: 42000, ...extra });
+const home = (extra = {}) => ({ ...HOME, region: 17, character: 'char-aldric', price: 42000, layout: null, ...extra });
 const piece = (extra = {}) => ({ id: 'p1', model: 41000, flat: null, pos: [1.5, 0, -2.25], rot: [90, 0, 0], scale: 1, light: null, storage: false, paid: 180, ...extra });
 /** AUDIT REALM2 S2: A HOUSE AND A PIECE ARE A REALM CHARACTER'S, paid on its record - rich enough for every piece a pin
  *  places. `owner()` seats one for an account and claims the house on its record; `at(extra)` is a body in its name,

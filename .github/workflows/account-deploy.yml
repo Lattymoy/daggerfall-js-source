@@ -78,6 +78,8 @@ on:
       - "src/net/gateReceipt.js"
       - "src/net/legalLaw.js"
       - "src/net/raidReceipt.js"
+      - "src/net/arenaReceipt.js"
+      - "src/net/arenaLaw.js"
       - "src/net/wire.js"
       - "src/net/siegeRef.js"
       - "src/net/siegeReceipt.js"

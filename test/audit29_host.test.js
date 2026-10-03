@@ -287,7 +287,7 @@ test('AUDIT 29: the hosts by source - the seams the audit moved', () => {
   assert.match(d, /const PROF_VEIN_ONLY = Object\.freeze\(\{ only: Object\.freeze\(\['dungeon'\]\) \}\);/);
   assert.match(d, /collider\.raycastHit\(from, dir, PROF_VEIN_WALL_M, PROF_VEIN_ONLY\)/);
   assert.match(d, /if \(!Number\.isFinite\(down\)\) continue;/);
-  assert.match(d, /isGateArena\(dfLocation\) \|\| !Number\.isSafeInteger/);
+  assert.match(d, /isGateArena\(dfLocation\) \|\| isArenaFloor\(dfLocation\) \|\| !Number\.isSafeInteger/);   // ARENA2: nor the arena's floor
   // C8: nature's rect - a WoD site's too
   assert.match(src('src/scenes/herbHost.js'), /locationRect: entry\.locationRect \?\? entry\.wodSite \?\? null/);
   assert.match(src('src/scenes/mineHost.js'), /locationRect: entry\.locationRect \?\? entry\.wodSite \?\? null/);

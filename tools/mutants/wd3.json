@@ -1,0 +1,236 @@
+[
+  {
+    "name": "WD3-ROW-SCALE-MASK",
+    "file": "src/formats/worldDataPack.js",
+    "old": "if (row[8] & (1 << k)) o[SCALE_KEYS[k]] = row[at++];",
+    "new": "if (row[8] & (2 << k)) o[SCALE_KEYS[k]] = row[at++];",
+    "tests": [
+      "test/wd3_pack.test.js"
+    ]
+  },
+  {
+    "name": "WD3-ROW-ZEROS-KEPT",
+    "file": "src/formats/worldDataPack.js",
+    "old": "  while (row.length && row[row.length - 1] === 0) row.pop();",
+    "new": "",
+    "tests": [
+      "test/wd3_pack.test.js"
+    ]
+  },
+  {
+    "name": "WD3-REF-EDITS-DROPPED",
+    "file": "src/formats/worldDataPack.js",
+    "old": "return v.$o ? patchJson(node, expandOps(v.$o)) : node;",
+    "new": "return node;",
+    "tests": [
+      "test/wd3_pack.test.js"
+    ]
+  },
+  {
+    "name": "WD3-RUN-ONE-CELL",
+    "file": "src/formats/worldDataPack.js",
+    "old": "out.push(['s', [...path, runs[i] + n], vals[n]]);",
+    "new": "out.push(['s', [...path, runs[i]], vals[n]]);",
+    "tests": [
+      "test/wd3_pack.test.js"
+    ]
+  },
+  {
+    "name": "WD3-BASE-NOT-KEPT",
+    "file": "src/formats/worldDataPack.js",
+    "old": "    if (baseTargets.has(name)) keptFiles.set(name, json);",
+    "new": "",
+    "tests": [
+      "test/wd3_pack.test.js"
+    ]
+  },
+  {
+    "name": "WD3-BLOCK-NAME-UNCHECKED",
+    "file": "src/formats/worldDataPack.js",
+    "old": "      if (wantName && got !== wantName) throw new Error(`world-data pack: ${pack.vendor} wants ${wantName} at block ${index}, BLOCKS.BSA has ${got}`);",
+    "new": "",
+    "tests": [
+      "test/wd3_pack.test.js"
+    ]
+  },
+  {
+    "name": "WD3-ARRIVAL-ORDER",
+    "file": "src/formats/worldDataReplacement.js",
+    "old": "let at = list.findIndex((e) => e.priority <= entry.priority);",
+    "new": "let at = list.findIndex((e) => e.priority >= entry.priority);",
+    "tests": [
+      "test/wd3_door.test.js"
+    ]
+  },
+  {
+    "name": "WD3-PIN-IN-IGNORED",
+    "file": "src/formats/worldDataReplacement.js",
+    "old": "  if (pin?.in?.has(a.vendor)) return true;",
+    "new": "",
+    "tests": [
+      "test/wd3_door.test.js"
+    ]
+  },
+  {
+    "name": "WD3-PIN-OUT-IGNORED",
+    "file": "src/formats/worldDataReplacement.js",
+    "old": "  if (pin?.out?.has(a.vendor)) return false;",
+    "new": "",
+    "tests": [
+      "test/wd3_door.test.js"
+    ]
+  },
+  {
+    "name": "WD3-ONLINE-DOOR-SHUT",
+    "file": "src/formats/worldDataReplacement.js",
+    "old": "export const worldDataDoorOpen = () => _doorLatched ?? (assetInjectionOn() || isOnlinePage());",
+    "new": "export const worldDataDoorOpen = () => _doorLatched ?? assetInjectionOn();",
+    "tests": [
+      "test/wd3_door.test.js"
+    ]
+  },
+  {
+    "name": "WD3-STAMP-UNSORTED",
+    "file": "src/systems/layoutPins.js",
+    "old": "const list = [...vendors].filter((v) => LAYOUT_MODS.includes(v)).sort().map(",
+    "new": "const list = [...vendors].filter((v) => LAYOUT_MODS.includes(v)).map(",
+    "tests": [
+      "test/wd3_layoutPins.test.js"
+    ]
+  },
+  {
+    "name": "WD3-WEAKEST-RECORD",
+    "file": "src/systems/layoutPins.js",
+    "old": "if (!b || w > b.w) best.set(r.locationKey, { w, r });",
+    "new": "if (!b || w < b.w) best.set(r.locationKey, { w, r });",
+    "tests": [
+      "test/wd3_layoutPins.test.js"
+    ]
+  },
+  {
+    "name": "WD3-PIN-OUT-UNTOUCHED",
+    "file": "src/systems/layoutPins.js",
+    "old": "if (on && !want.has(v) && layoutModTouches(v, key)) out.add(v);",
+    "new": "if (on && !want.has(v)) out.add(v);",
+    "tests": [
+      "test/wd3_layoutPins.test.js"
+    ]
+  },
+  {
+    "name": "WD3-CLASSIC-STAMPED",
+    "file": "src/systems/layoutPins.js",
+    "old": "  else delete rec.layout;",
+    "new": "",
+    "tests": [
+      "test/wd3_layoutPins.test.js"
+    ]
+  },
+  {
+    "name": "WD3-ANCHOR-OUTDOORS",
+    "file": "src/systems/layoutPins.js",
+    "old": "if (anchor?.insideBuilding && anchor.pixel) out.push(",
+    "new": "if (anchor?.pixel) out.push(",
+    "tests": [
+      "test/wd3_layoutPins.test.js"
+    ]
+  },
+  {
+    "name": "WD3-HOME-LAYOUT-UNCHECKED",
+    "file": "server-account/src/homes.js",
+    "old": "  if (!homeLayoutOk(layout)) return { error: 'bad-home' };",
+    "new": "",
+    "tests": [
+      "test/wd3_online.test.js"
+    ]
+  },
+  {
+    "name": "WD3-BED-WRONG-MODEL",
+    "file": "src/world/townStandIns.js",
+    "old": "return { model: TOWN_BED_MODELS[k % 3], colour: Math.floor(k / 3) };",
+    "new": "return { model: TOWN_BED_MODELS[(k + 1) % 3], colour: Math.floor(k / 3) };",
+    "tests": [
+      "test/wd3_standins.test.js"
+    ]
+  },
+  {
+    "name": "WD3-GREY-SHEET-DYED",
+    "file": "src/world/townStandIns.js",
+    "old": "export const isBedclothGreen = (h, s) => s > 0.18 && h > 70 && h < 170;",
+    "new": "export const isBedclothGreen = (h, s) => s > 0.05 && h > 70 && h < 170;",
+    "tests": [
+      "test/wd3_standins.test.js"
+    ]
+  },
+  {
+    "name": "WD3-CLOTH-CUT-OUT",
+    "file": "src/world/townStandIns.js",
+    "old": "out[i] = r; out[i + 1] = g; out[i + 2] = b; out[i + 3] = 255;",
+    "new": "out[i] = r; out[i + 1] = g; out[i + 2] = b; out[i + 3] = src.data[i + 3];",
+    "tests": [
+      "test/wd3_standins.test.js"
+    ]
+  },
+  {
+    "name": "WD3-DOCK-UNMIRRORED",
+    "file": "src/world/townStandIns.js",
+    "old": "const dockPoint = (x, y, z) => [-x * DOCK_SCALE, y * DOCK_SCALE, z * DOCK_SCALE];",
+    "new": "const dockPoint = (x, y, z) => [x * DOCK_SCALE, y * DOCK_SCALE, z * DOCK_SCALE];",
+    "tests": [
+      "test/wd3_standins.test.js"
+    ]
+  },
+  {
+    "name": "WD3-WINTER-SUMMER",
+    "file": "src/world/flatFields.js",
+    "old": "if (natureArchive >= 505 && natureArchive % 2 === 1) return [511, [22]];",
+    "new": "if (natureArchive >= 505 && natureArchive % 2 === 0) return [511, [22]];",
+    "tests": [
+      "test/wd3_standins.test.js"
+    ]
+  },
+  {
+    "name": "WD3-FIELD-UNSEEDED",
+    "file": "src/world/flatFields.js",
+    "old": "const rnd = mulberry32(((Math.round(x * 40) * 73856093) ^ (Math.round(z * 40) * 19349663)) >>> 0);",
+    "new": "const rnd = mulberry32((Math.random() * 4294967296) >>> 0);",
+    "tests": [
+      "test/wd3_standins.test.js"
+    ]
+  },
+  {
+    "name": "WD3-FIELD-NO-CLIMATE",
+    "file": "src/world/rmbFlats.js",
+    "old": "  if (natureArchive >= NATURE_ARCHIVE_MIN && natureArchive <= NATURE_ARCHIVE_MAX) {\n    for (const obj of rmb.misc3dObjectRecords ?? []) {",
+    "new": "  if (true) {\n    for (const obj of rmb.misc3dObjectRecords ?? []) {",
+    "tests": [
+      "test/wd3_standins.test.js"
+    ]
+  },
+  {
+    "name": "WD3-SHARED-ART-UNSHARED",
+    "file": "src/systems/detailedShips.js",
+    "old": "  for (const g of _sharedArt) if (g() === true) return true;",
+    "new": "",
+    "tests": [
+      "test/wd3_standins.test.js"
+    ]
+  },
+  {
+    "name": "WD3-HOLE-THROWS",
+    "file": "src/scenes/dataPipeline.js",
+    "old": "    if (!swap && t.vendor) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/wd3_standins.test.js"
+    ]
+  },
+  {
+    "name": "WD3-BASE-NAME-THREE-DIGITS",
+    "file": "src/net/decorLaw.js",
+    "old": "f(?:0|[1-9]\\d{0,3}):(?:0|[1-9]\\d{0,4})\\.(?:0|[1-9]\\d{0,2}))$/;",
+    "new": "f(?:0|[1-9]\\d{0,3}):(?:0|[1-9]\\d{0,2})\\.(?:0|[1-9]\\d{0,2}))$/;",
+    "tests": [
+      "test/basehide.test.js"
+    ]
+  }
+]

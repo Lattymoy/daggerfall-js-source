@@ -585,6 +585,9 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
     if (_playerAttackHook && attacker.isPlayer && !attacker.peer) {
       try { _playerAttackHook({ ...notes, damage, attacker, target, weapon }); } catch { /* a HUD is not the formula's problem */ }
     }
+    // ARENA-FIX 9/10: every resolution, whoever swung - the arena's judges count the misses and its crowd hears the
+    // critical strikes (scenes/arenaBouts.js attackResolved)
+    if (_resolutionListeners.size) for (const fn of _resolutionListeners.values()) { try { fn({ ...notes, damage, attacker, target, weapon }); } catch { /* a listener is not the blow's problem */ } }
     return damage;
   };
   // PCO1: THE REGISTERED CORE. FormulaHelper.CalculateAttackDamage is
@@ -816,6 +819,11 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
 }
 
 let _playerAttackHook = null;
+const _resolutionListeners = new Map();
+/** ARENA-FIX 9/10: NAMED listeners told EVERY attack's resolution (any attacker, any target) - `{ critical, backstab,
+ *  hit, ineffective, damage, attacker, target, weapon }`: a miss is `damage` 0, `critical` the critical-strike roll's
+ *  success (skillsToHit). A name re-registered replaces, `null` removes. Reporting only - an answer is ignored. */
+export function registerAttackResolutionListener(name, fn) { if (typeof fn === 'function') _resolutionListeners.set(name, fn); else _resolutionListeners.delete(name); }
 /** HN1: the enhanced HUD's registration seam for the PLAYER'S attack
  *  resolutions (miss / ineffective / hit with damage, critical strike,
  *  backstab). Reporting only - registered by the enhanced HUD, never by

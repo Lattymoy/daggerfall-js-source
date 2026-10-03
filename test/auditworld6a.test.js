@@ -56,7 +56,7 @@ test('AUDIT WORLD6a A1 (THE ROOT): the memory composes through THE BAG THE MODE 
   assert.equal(composeInteriorShared(ctxOf(), owned), null, 'an owned house keeps no memory');
   assert.equal(applyInteriorShared(ctxOf(), shared, owned), false, 'and takes none');
   assert.equal(applyInteriorShared(ctxOf(), shared, mintInteriorShared('interior:m187853213.4')), true, 'another context in the same building takes it');
-  assert.match(rd('src/scenes/worldModes.js'), /_intShared = mintInteriorShared\(interiorLocationKey\(questSceneCtx\?\.\(\)\?\.mapId \?\? 0, b\?\.buildingKey \?\? 0\), \{ owned, home: !!interiorHome \}\);/, 'the mode mints through the one home');   // HOME1 re-aim: the visit's online home rides the bag
+  assert.match(rd('src/scenes/worldModes.js'), /_intShared = mintInteriorShared\(interiorLocationKey\(questSceneCtx\?\.\(\)\?\.mapId \?\? 0, b\?\.buildingKey \?\? 0, visitLayoutNow\(\)\), \{ owned, home: !!interiorHome \}\);/, 'the mode mints through the one home');   // HOME1 re-aim: the visit's online home rides the bag
   assert.equal((rd('src/scenes/worldModes.js').match(/_intShared\??\.key\b/g) ?? []).length, 0, 'no site reads the old spelling');
 });
 

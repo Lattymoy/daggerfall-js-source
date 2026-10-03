@@ -35,8 +35,20 @@ let _newLocationIndex = () => -1;
 export function setNewLocationIndexResolver(fn) { _newLocationIndex = typeof fn === 'function' ? fn : () => -1; }
 
 /** SetLastLocationKeyTo (:64-67). */
-export function setLastLocationKeyTo(regionIndex, locationIndex) { lastLocationKey = makeLocationKey(regionIndex, locationIndex); }
+export function setLastLocationKeyTo(regionIndex, locationIndex) { lastLocationKey = makeLocationKey(regionIndex, locationIndex); readingLocationKey = null; }
 export const lastLocationKeyOf = () => lastLocationKey;
+
+/**
+ * WD3 (a port addition - no C#): THE TOWN WHOSE BLOCKS ARE BEING READ, for the layout pins (systems/layoutPins.js).
+ * The port reads a town's grid off a DFLocation it keeps (the world host's boot index, the ground tiles laid before the
+ * layout) as well as off one it has just read, so "the last location read" is not always the town whose blocks come
+ * next. MapsFile.getRmbBlockName - the one door a town's block names are read through - notes the town here, and the
+ * layout pins answer for it; setLastLocationKeyTo and a location read (GetLocationVariant) take the note back. The
+ * variants keep DFU's last location and never read this.
+ */
+let readingLocationKey = null;
+export function noteReadingLocation(regionIndex, locationIndex) { readingLocationKey = makeLocationKey(regionIndex, locationIndex); }
+export const readingLocationKeyOf = () => readingLocationKey ?? lastLocationKey;
 
 // ---- setters (:78-162) ----------------------------------------------------------
 /** SetLocationVariant (:78-90). Answers `added` exactly as the C# does -
@@ -88,6 +100,7 @@ export function setBuildingVariant(blockName, recordIndex, variant, locationKey 
  *  { variant, newLocation }. */
 export function getLocationVariant(locationKey) {
   lastLocationKey = locationKey;
+  readingLocationKey = null;   // WD3: a location just read is the town its blocks come from
   const v = locationVariants.get(locationKey);
   return { variant: v ?? NO_VARIANT, newLocation: v !== undefined && newLocationVariants.includes(locationKey) };   // AUDIT-RR2 G15: `newLocation` only inside the TryGetValue arm (:176-182)
 }

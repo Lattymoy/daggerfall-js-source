@@ -1,0 +1,155 @@
+[
+  {
+    "name": "ARENA5-PLAQUE-NEAREST-WALL",
+    "file": "src/world/arenaPlaques.js",
+    "old": "if (Number.isFinite(d) && d < dist - 1e-6) { dist = d; way = w; }",
+    "new": "if (Number.isFinite(d) && !way) { dist = d; way = w; }",
+    "tests": [
+      "test/arena5_plaques.test.js"
+    ]
+  },
+  {
+    "name": "ARENA5-PLAQUE-YAW",
+    "file": "src/world/arenaPlaques.js",
+    "old": "const yawDeg = (Math.atan2(-way[0], -way[1]) * 180) / Math.PI;",
+    "new": "const yawDeg = (Math.atan2(way[0], way[1]) * 180) / Math.PI;",
+    "tests": [
+      "test/arena5_plaques.test.js"
+    ]
+  },
+  {
+    "name": "ARENA5-PLAQUE-ORDER",
+    "file": "src/world/arenaPlaques.js",
+    "old": "  spots.sort((a, b) => a.s - b.s);\n",
+    "new": "",
+    "tests": [
+      "test/arena5_plaques.test.js"
+    ]
+  },
+  {
+    "name": "ARENA5-PLAQUE-CAP",
+    "file": "src/world/arenaPlaques.js",
+    "old": "for (let t = 0; spots.length < n && t < n * 2 + 1; t++) {",
+    "new": "for (let t = 0; t < n * 2 + 1; t++) {",
+    "tests": [
+      "test/arena5_plaques.test.js"
+    ]
+  },
+  {
+    "name": "ARENA5-PLAQUE-DOORWAY",
+    "file": "src/world/arenaPlaques.js",
+    "old": "if (!Number.isFinite(d) || Math.abs(d - dist) > PLAQUE_FLAT_M) continue;",
+    "new": "if (Number.isFinite(d) && Math.abs(d - dist) > PLAQUE_FLAT_M) continue;",
+    "tests": [
+      "test/arena5_plaques.test.js"
+    ]
+  },
+  {
+    "name": "ARENA5-PLAQUE-CORNER",
+    "file": "src/world/arenaPlaques.js",
+    "old": "if (Number.isFinite(clear) && clear < lat + PLAQUE_W / 2) continue;",
+    "new": "void clear;",
+    "tests": [
+      "test/arena5_plaques.test.js"
+    ]
+  },
+  {
+    "name": "ARENA5-PLAQUE-NO-FLOOR",
+    "file": "src/world/arenaPlaques.js",
+    "old": "  if (!Number.isFinite(drop)) return null;\n",
+    "new": "",
+    "tests": [
+      "test/arena5_plaques.test.js"
+    ]
+  },
+  {
+    "name": "ARENA5-PLAQUE-NO-PICTURE",
+    "file": "src/world/arenaPlaques.js",
+    "old": "  if (picture) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/arena5_plaques.test.js"
+    ]
+  },
+  {
+    "name": "ARENA5-PLAQUE-NOT-REGISTERED",
+    "file": "src/world/arenaPlaques.js",
+    "old": "  registerCustomModel(PLAQUE_MODEL, () => plaqueModel(true));\n",
+    "new": "",
+    "tests": [
+      "test/arena5_plaques.test.js"
+    ]
+  },
+  {
+    "name": "ARENA5-PLAQUES-MINE-MISSING",
+    "file": "src/systems/arenaBoard.js",
+    "old": "  if (L.grand) {\n    const year",
+    "new": "  if (false) {\n    const year",
+    "tests": [
+      "test/arena5_plaques.test.js"
+    ]
+  },
+  {
+    "name": "ARENA5-PLAQUES-ORDER",
+    "file": "src/systems/arenaBoard.js",
+    "old": "  out.sort((a, b) => b.at - a.at);",
+    "new": "  out.sort((a, b) => a.at - b.at);",
+    "tests": [
+      "test/arena5_plaques.test.js"
+    ]
+  },
+  {
+    "name": "ARENA5-PLAQUES-ONLINE-SAVE",
+    "file": "src/systems/arenaBoard.js",
+    "old": "  if (board) {\n    for (const h of Array.isArray(board.hall)",
+    "new": "  if (false) {\n    for (const h of Array.isArray(board.hall)",
+    "tests": [
+      "test/arena5_plaques.test.js"
+    ]
+  },
+  {
+    "name": "ARENA5-GATE-PLAQUES-OFFLINE",
+    "file": "src/scenes/arenaGate.js",
+    "old": "    if (!on) return hallPlaques({ ladder: P.arenaLadder, league: P.arenaLeague, gameMinutes: gm(), name: P.name ?? '', max: PLAQUE_MAX });",
+    "new": "    if (!on) return [];",
+    "tests": [
+      "test/arena5_plaques.test.js"
+    ]
+  },
+  {
+    "name": "ARENA5-GATE-PLAQUES-WAIT",
+    "file": "src/scenes/arenaGate.js",
+    "old": "    return b ? hallPlaques({ board: b, max: PLAQUE_MAX }) : [];",
+    "new": "    return hallPlaques(b ? { board: b, max: PLAQUE_MAX } : { ladder: P.arenaLadder, league: P.arenaLeague, gameMinutes: gm(), name: P.name ?? '', max: PLAQUE_MAX });",
+    "tests": [
+      "test/arena5_plaques.test.js"
+    ]
+  },
+  {
+    "name": "ARENA5-WALL-NOT-STOOD",
+    "file": "src/scenes/worldModes.js",
+    "old": "      standArenaWall(ctx, dfLocation).catch(() => {});   // ARENA5: the Hall of Champions' plaque wall, about its Keeper\n",
+    "new": "",
+    "tests": [
+      "test/arena5_plaques.test.js"
+    ]
+  },
+  {
+    "name": "ARENA5-WALL-CUT-COUNT",
+    "file": "src/scenes/worldModes.js",
+    "old": "p.k < n ? w.gpu.cut : w.gpu.bare",
+    "new": "p.k <= n ? w.gpu.cut : w.gpu.bare",
+    "tests": [
+      "test/arena5_plaques.test.js"
+    ]
+  },
+  {
+    "name": "ARENA5-WALL-PRESS",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (key.startsWith('plaque:')) { readPlaque(key); return true; }   // ARENA5: a plaque in the Hall of Champions reads its champion\n",
+    "new": "",
+    "tests": [
+      "test/arena5_plaques.test.js"
+    ]
+  }
+]

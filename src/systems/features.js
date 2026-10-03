@@ -737,6 +737,11 @@ export const FEATURES = Object.freeze([
   // DS1 (2026-09-25): DETAILED SHIPS - `world`, the two ships you can own.
   // Their building records are read through the door once per load.
   modFeature('detailed-ships', 'Takes effect when the game next loads.', 'world'),
+  // WD3 (2026-10-01): BEAUTIFUL VILLAGES and BEAUTIFUL CITIES - `world`, the towns themselves. The world-data
+  // loader reads each switch once, when the game loads (scenes/modWorldData.js latches it), so a town never moves
+  // under the player; online the room owns both.
+  modFeature('beautiful-villages', 'Takes effect when the game is next started (an in-game Load keeps the towns it started with). Offline it also needs Replace Game Artwork.', 'world'),   // AUDIT WD3 B9
+  modFeature('beautiful-cities', 'Takes effect when the game is next started (an in-game Load keeps the towns it started with). Offline it also needs Replace Game Artwork.', 'world'),   // AUDIT WD3 B9
   // WA1 (2026-09-25): WARM ASHES - SHIPS - `world`, the sea voyage. The travel
   // hook reads the switch as a journey starts; an ambush already at sea
   // finishes either way.

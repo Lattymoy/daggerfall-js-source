@@ -1,0 +1,329 @@
+[
+  {
+    "name": "AWD3-DUNGEON-RECORD-DROPPED",
+    "file": "src/formats/worldDataReplacement.js",
+    "old": "    recordElement: { doorCount: 0, doors: [], header: recordHeaderFromJson(d.RecordElement?.Header ?? {}, name) },",
+    "new": "    recordElement: null,",
+    "tests": [
+      "test/wd3_door.test.js"
+    ]
+  },
+  {
+    "name": "AWD3-DOOR-UNLATCHED",
+    "file": "src/formats/worldDataReplacement.js",
+    "old": "export const worldDataDoorOpen = () => _doorLatched ?? (assetInjectionOn() || isOnlinePage());",
+    "new": "export const worldDataDoorOpen = () => assetInjectionOn() || isOnlinePage();",
+    "tests": [
+      "test/wd3_door.test.js"
+    ]
+  },
+  {
+    "name": "AWD3-PACK-BEHIND-CLOSED-DOOR",
+    "file": "src/scenes/modWorldData.js",
+    "old": "      const got = on && door ? await loadPackFrom(vendor, url, () => true) : 0;",
+    "new": "      const got = on ? await loadPackFrom(vendor, url, () => true) : 0;",
+    "tests": [
+      "test/wd3_door.test.js"
+    ]
+  },
+  {
+    "name": "AWD3-PIN-BEHIND-CLOSED-DOOR",
+    "file": "src/scenes/modWorldData.js",
+    "old": "  if (!worldDataDoorOpen()) return false;",
+    "new": "",
+    "tests": [
+      "test/wd3_door.test.js"
+    ]
+  },
+  {
+    "name": "AWD3-HELD-SCENE-OVERWRITTEN",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (_sceneHeldForLayout === name) {\n      const alt = layoutSceneName(name, _visitLayout);",
+    "new": "    if (false) {\n      const alt = layoutSceneName(name, _visitLayout);",
+    "tests": [
+      "test/wd3_layoutPins.test.js"
+    ]
+  },
+  {
+    "name": "AWD3-CUSTOMS-LAYOUT-LOST",
+    "file": "src/systems/realmCustoms.js",
+    "old": "    if (typeof slot.layout === 'string' && slot.layout) houses[region].layout = slot.layout;",
+    "new": "",
+    "tests": [
+      "test/wd3_layoutPins.test.js"
+    ]
+  },
+  {
+    "name": "AWD3-QUESTOR-UNPINNED",
+    "file": "src/systems/layoutPins.js",
+    "old": "  for (const q of questors ?? []) if (q && q.buildingKey > 0 && q.mapID) out.push",
+    "new": "  for (const q of []) if (q && q.buildingKey > 0 && q.mapID) out.push",
+    "tests": [
+      "test/wd3_layoutPins.test.js"
+    ]
+  },
+  {
+    "name": "AWD3-QUESTOR-UNSTAMPED",
+    "file": "src/systems/quest/person.js",
+    "old": "    this.questorData = stampLayout({ ...clicked }, clicked.buildingKey > 0 ? layoutStampOfMapId(clicked.mapID) : '');",
+    "new": "    this.questorData = clicked;",
+    "tests": [
+      "test/wd3_layoutPins.test.js"
+    ]
+  },
+  {
+    "name": "AWD3-CLAIM-OVER-LAYOUT",
+    "file": "server-account/src/homes.js",
+    "old": "  const town = await db.prepare('SELECT layout FROM homes WHERE map_id = ? ORDER BY bought_at, building_key LIMIT 1').bind(claim.mapId).first();\n  if (town && !homeLayoutsMatch(town.layout, claim.layout)) return",
+    "new": "  const town = null;\n  if (town && !homeLayoutsMatch(town.layout, claim.layout)) return",
+    "tests": [
+      "test/wd3_online.test.js"
+    ],
+    "equivalent": true,
+    "why": "AUDIT WD3 R5 made the claim's own write refuse a town's other layout, and its catch answers home-layout naming the town's - the check before the batch is the fast refusal (no record prepared), the write the law; removing the check changes no answer"
+  },
+  {
+    "name": "AWD3-CLASSIC-NOT-A-LAYOUT",
+    "file": "src/net/homeLaw.js",
+    "old": "  return x.size === y.size && [...x].every((m) => y.has(m));",
+    "new": "  return !x.size || !y.size || (x.size === y.size && [...x].every((m) => y.has(m)));",
+    "tests": [
+      "test/wd3_online.test.js"
+    ]
+  },
+  {
+    "name": "AWD3-BUY-UNHEARD",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (host.homeLayoutsHeard?.() === false) { townTalk?.say?.(accountRefusalText('home-layout')); host.hearHomeLayouts?.(); return; }",
+    "new": "",
+    "tests": [
+      "test/wd3_online.test.js"
+    ]
+  },
+  {
+    "name": "AWD3-PRUNE-UNHEARD",
+    "file": "src/scenes/world.js",
+    "old": "    const forgotten = homeLayoutsOnline && _serverLayoutRecords === null ? 0 : pruneDiscoveryLayouts();",
+    "new": "    const forgotten = pruneDiscoveryLayouts();",
+    "tests": [
+      "test/wd3_online.test.js",
+      "test/wd3_layoutPins.test.js"
+    ]
+  },
+  {
+    "name": "AWD3-FOUNDATION-CENTRED",
+    "file": "src/world/townStandIns.js",
+    "old": "m.box([317, 0], [0, -2.4, 0], [16, 8, 16], 0.5);",
+    "new": "m.box([317, 0], [0, 0, 0], [16, 8, 16], 0.5);",
+    "tests": [
+      "test/wd3_standins.test.js"
+    ]
+  },
+  {
+    "name": "AWD3-STANDINS-ALWAYS-ON",
+    "file": "src/scenes/modWorldData.js",
+    "old": "    installTownStandIns(townPacksLive);",
+    "new": "    installTownStandIns();",
+    "tests": [
+      "test/wd3_door.test.js"
+    ]
+  },
+  {
+    "name": "AWD3-CLAIM-WRITE-UNGUARDED",
+    "file": "server-account/src/homes.js",
+    "old": "      AND NOT EXISTS (SELECT 1 FROM homes t WHERE t.map_id = ? AND NOT (${LAYOUT_MATCH_SQL}))`)",
+    "new": "      AND NOT EXISTS (SELECT 1 FROM homes t WHERE t.map_id = ? AND 0 AND NOT (${LAYOUT_MATCH_SQL}))`)",
+    "tests": [
+      "test/wd3_online.test.js"
+    ]
+  },
+  {
+    "name": "AWD3-PINS-OVERTAKEN-SET",
+    "file": "src/scenes/world.js",
+    "old": "    if (gen !== _pinsGen) return false;   // AUDIT WD3 R3",
+    "new": "    if (false) return false;   // AUDIT WD3 R3",
+    "tests": [
+      "test/wd3_online.test.js"
+    ]
+  },
+  {
+    "name": "AWD3-HEARD-BEFORE-APPLIED",
+    "file": "src/scenes/world.js",
+    "old": "    homeLayoutsHeard: () => !homeLayoutsOnline || (_homeLayoutsApplied && !worldDataPacksMissing().length),",
+    "new": "    homeLayoutsHeard: () => !homeLayoutsOnline || _serverLayoutRecords !== null,",
+    "tests": [
+      "test/wd3_online.test.js"
+    ]
+  },
+  {
+    "name": "AWD3-DEED-NEVER-SLEEPS",
+    "file": "src/systems/banking.js",
+    "old": "  return ownedHouseKey(houses, regionIndex) === buildingKey && deedStands(houses?.[regionIndex]);",
+    "new": "  return ownedHouseKey(houses, regionIndex) === buildingKey;",
+    "tests": [
+      "test/wd3_layoutPins.test.js"
+    ]
+  },
+  {
+    "name": "AWD3-SALE-KEEPS-VISITS",
+    "file": "src/systems/sceneCache.js",
+    "old": "  for (const n of [...cache.permanent]) if (n.startsWith(`${sceneName}|`)) cache.permanent.delete(n);",
+    "new": "",
+    "tests": [
+      "test/wd3_layoutPins.test.js"
+    ]
+  },
+  {
+    "name": "AWD3-DOORLESS-HOUSE-SOLD",
+    "file": "src/systems/banking.js",
+    "old": "    if (stands && !stands(b)) continue;",
+    "new": "",
+    "tests": [
+      "test/wd3_layoutPins.test.js"
+    ]
+  },
+  {
+    "name": "AWD3-SCENERY-TALKS",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (pn.textureArchive != null && !isNpcFlat(pn.textureArchive)) return;",
+    "new": "",
+    "tests": [
+      "test/wd3_standins.test.js"
+    ]
+  },
+  {
+    "name": "AWD3-SAVE-BY-INDEX",
+    "file": "src/scenes/worldModes.js",
+    "old": "        else if (byKey.length) matches = byKey;",
+    "new": "",
+    "tests": [
+      "test/audit68_worldmodes.test.js"
+    ]
+  },
+  {
+    "name": "AWD3-TAVERN-UNCURATED",
+    "file": "src/systems/layoutPins.js",
+    "old": "export const pinAt = (locationKey) => _pins.get(locationKey) ?? curatedPin(locationKey);",
+    "new": "export const pinAt = (locationKey) => _pins.get(locationKey) ?? null;",
+    "tests": [
+      "test/wd3_layoutPins.test.js"
+    ]
+  },
+  {
+    "name": "AWD3-CURATED-BASELINE-IGNORED",
+    "file": "src/systems/layoutPins.js",
+    "old": "      const on = servesUnpinned(v, key);",
+    "new": "      const on = !!_vendorOn(v);",
+    "tests": [
+      "test/wd3_layoutPins.test.js"
+    ]
+  },
+  {
+    "name": "AWD3-ARCHAEOLOGISTS-DRAW",
+    "file": "src/systems/talkTopics.js",
+    "old": "    .filter((b) => !(b.buildingType === BUILDING_TYPES.GuildHall && UNCARRIED_GUILD_FACTIONS.has(b.factionId)))",
+    "new": "",
+    "tests": [
+      "test/wd3_door.test.js"
+    ]
+  },
+  {
+    "name": "AWD3-OLD-CLIENT-SEATED",
+    "file": "server-account/src/homes.js",
+    "old": "  if (!Object.hasOwn(body ?? {}, 'layout')) return { error: 'home-update' };",
+    "new": "",
+    "tests": [
+      "test/wd3_online.test.js"
+    ]
+  },
+  {
+    "name": "AWD3-REFUSALS-RATE-LIMITED",
+    "file": "server-account/src/homes.js",
+    "old": "    if (town && !homeLayoutsMatch(town.layout, layout)) return { error: 'home-layout', layout: homeLayoutOk(town.layout) ? town.layout ?? null : null };\n  }",
+    "new": "  }",
+    "tests": [
+      "test/wd3_online.test.js"
+    ]
+  },
+  {
+    "name": "AWD3-ROOM-UNLAYERED",
+    "file": "src/world/interiorShared.js",
+    "old": "  return buildingKey + tag * 0x1000000;",
+    "new": "  return buildingKey;",
+    "tests": [
+      "test/wd3_online.test.js"
+    ]
+  },
+  {
+    "name": "AWD3-TICKET-BY-KEY-ONLY",
+    "file": "src/systems/repairService.js",
+    "old": "  && (recordStands(item.repairData) ? item.repairData.buildingKey === buildingKey : mapId != null && item.repairData.mapId === mapId);",
+    "new": "  && item.repairData.buildingKey === buildingKey;",
+    "tests": [
+      "test/wd3_layoutPins.test.js"
+    ]
+  },
+  {
+    "name": "AWD3-ROOM-LOST",
+    "file": "src/systems/tavern.js",
+    "old": "  ?? (inn ? rooms.find((r) => r.mapId === mapId && !recordStands(r)) : null) ?? null;",
+    "new": "  ?? null;",
+    "tests": [
+      "test/wd3_layoutPins.test.js"
+    ]
+  },
+  {
+    "name": "AWD3-SITE-NOT-RESEATED",
+    "file": "src/systems/quest/place.js",
+    "old": "    if (sd?.siteType !== SITE_TYPES.Building || !(sd.buildingKey > 0) || recordStands(sd)) return false;",
+    "new": "    return false;",
+    "tests": [
+      "test/wd3_layoutPins.test.js"
+    ]
+  },
+  {
+    "name": "AWD3-PACK-NAMES-UNREAD",
+    "file": "src/formats/worldDataPack.js",
+    "old": "      node = jsonAt(classicBlockJson(index, classicNames?.[index] ?? null), path);",
+    "new": "      node = jsonAt(classicBlockJson(index), path);",
+    "tests": [
+      "test/wd3_pack.test.js"
+    ]
+  },
+  {
+    "name": "AWD3-PLACEHOLDER-FOREVER",
+    "file": "src/render/renderer.js",
+    "old": "      if (!this._placeholders?.has(key) || opts.placeholder) return this.textures.get(key);",
+    "new": "      return this.textures.get(key);",
+    "tests": [
+      "test/wd3_standins.test.js"
+    ]
+  },
+  {
+    "name": "AWD3-STANDIN-NEVER-YIELDS",
+    "file": "src/systems/textureReplacement.js",
+    "old": "const vendorOf = (key) => { const v = _vendor.get(key); return v && !(v.yields && ownPick(key)) ? v : null; };",
+    "new": "const vendorOf = (key) => _vendor.get(key) ?? null;",
+    "tests": [
+      "test/wd3_standins.test.js"
+    ]
+  },
+  {
+    "name": "AWD3-TOWN-PIXEL-CLIMATE",
+    "file": "src/scenes/world.js",
+    "old": "    const townClimateBase = dfLocation?.climate?.climateType ?? climateBase;",
+    "new": "    const townClimateBase = climateBase;",
+    "tests": [
+      "test/wd3_door.test.js"
+    ]
+  },
+  {
+    "name": "AWD3-VERSION-UNGUARDED",
+    "file": "src/systems/layoutPins.js",
+    "old": "export const LAYOUT_MOD_VERSIONS = Object.freeze({ 'beautiful-villages': '1.4.2', 'beautiful-cities': '0.5.0' });",
+    "new": "export const LAYOUT_MOD_VERSIONS = Object.freeze({ 'beautiful-villages': '1.4.3', 'beautiful-cities': '0.5.0' });",
+    "tests": [
+      "test/wd3_layoutPins.test.js"
+    ]
+  }
+]

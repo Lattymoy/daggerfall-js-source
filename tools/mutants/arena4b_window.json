@@ -1,0 +1,164 @@
+[
+  {
+    "name": "ARENA4B-RECORDS-SAVE",
+    "file": "src/systems/arenaBoard.js",
+    "old": "records: recordsPageOnline(on.board, o), rules,",
+    "new": "records: recordsPage(o), rules,",
+    "tests": [
+      "test/arena4b_window.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-RECORDS-DRAW-LOST",
+    "file": "src/systems/arenaBoard.js",
+    "old": "const draw = b.won === null, won = b.won === true;",
+    "new": "const draw = false, won = b.won === true;",
+    "tests": [
+      "test/arena4b_window.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-RECORDS-SEASON-NOW",
+    "file": "src/systems/arenaBoard.js",
+    "old": "when: Number.isFinite(b.at) && b.at > 0 ? O().boutWhen(arenaSeasonOf(b.at), arenaSeasonDay(b.at)) : '',",
+    "new": "when: O().boutWhen(board.season, board.day),",
+    "tests": [
+      "test/arena4b_window.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-RECORDS-CHAMP-LABEL",
+    "file": "src/systems/arenaBoard.js",
+    "old": "label: pve ? (champ ? (tier === LADDER_TIERS.length - 1 ? ARENA_TEXT.grandLabel : ARENA_TEXT.champLabel) : ARENA_TEXT.boutLabel(step + 1))",
+    "new": "label: pve ? ARENA_TEXT.boutLabel(step + 1)",
+    "tests": [
+      "test/arena4b_window.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-RECORDS-FALLBACK",
+    "file": "src/systems/arenaBoard.js",
+    "old": "const pveW = rec ? n(rec.pveWins) : L.record.wins,",
+    "new": "const pveW = rec ? n(rec.pveWins) : 0,",
+    "tests": [
+      "test/arena4b_window.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-PURSES-ZERO",
+    "file": "src/systems/arenaBoard.js",
+    "old": "purses: purseOf(me), owed: 0,",
+    "new": "purses: 0, owed: 0,",
+    "tests": [
+      "test/arena4b_window.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-PURSE-CHIP-AT-ZERO",
+    "file": "src/ui/arenaWindow.js",
+    "old": "if (Number.isSafeInteger(h.purses) && h.purses > 0) id.append",
+    "new": "if (Number.isSafeInteger(h.purses)) id.append",
+    "tests": [
+      "test/arena4b_window.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-FAST-SEASON-NOW",
+    "file": "src/systems/arenaBoard.js",
+    "old": "O().seasonShort(seasonOfRow(r, board))]);",
+    "new": "O().seasonShort(board.season)]);",
+    "tests": [
+      "test/arena4b_window.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-KEEPER-REALM-DROPPED",
+    "file": "src/systems/arenaBoard.js",
+    "old": "for (const h of realm) lines.push(O().hallTheirAt(h.name, seasonOfRow(h, board)));",
+    "new": "for (const h of realm) void h;",
+    "tests": [
+      "test/arena4b_window.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-HALL-YOU-UNMARKED",
+    "file": "src/systems/arenaBoard.js",
+    "old": "you: grand && !!mine && h.name === mine",
+    "new": "you: false",
+    "tests": [
+      "test/arena4b_window.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-HALL-CARD-UNDRAWN",
+    "file": "src/ui/arenaWindow.js",
+    "old": "if (boardPicked === 'fast' && m.hall) body.append(hallCard(m.hall));",
+    "new": "if (false) body.append(hallCard(m.hall));",
+    "tests": [
+      "test/arena4b_window.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-RECORDS-NOTE-MISSING",
+    "file": "src/ui/arenaWindow.js",
+    "old": "if (m.online) body.append(el('p', 'aw-line aw-online', m.online));   // ARENA4b",
+    "new": "if (false) body.append(el('p', 'aw-line aw-online', m.online));   // ARENA4b",
+    "tests": [
+      "test/arena4b_window.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-CLIMB-WAIT-CARD",
+    "file": "src/systems/arenaBoard.js",
+    "old": "      for (const c of m.bouts.cards) if (c.kind === 'ladder') c.acts",
+    "new": "      for (const c of []) if (c.kind === 'ladder') c.acts",
+    "tests": [
+      "test/arena4b_window.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-KEEPER-NOT-YET",
+    "file": "src/systems/arenaBoard.js",
+    "old": "const lines = realm.length ? mine.map((l) => (l === U.hallNone ? U.hallNotYou : l)) : [...mine];",
+    "new": "const lines = [...mine];",
+    "tests": [
+      "test/arena4b_window.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-RECORDS-SAVE-BEFORE-BOARD",
+    "file": "src/systems/arenaBoard.js",
+    "old": "      m.records = { ...recordsPageOnline(null, o), stats: [] };\n",
+    "new": "",
+    "tests": [
+      "test/arena4b_window.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-PURSES-BEFORE-BOARD",
+    "file": "src/systems/arenaBoard.js",
+    "old": "      m.header.purses = null;\n",
+    "new": "",
+    "tests": [
+      "test/arena4b_window.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-HALL-CHARACTER-NAME",
+    "file": "src/systems/arenaBoard.js",
+    "old": "const mine = fast.find((r) => r?.you && typeof r.name === 'string' && r.name)?.name || name;",
+    "new": "const mine = name;",
+    "tests": [
+      "test/arena4b_window.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-HALL-PINNED-UNREAD",
+    "file": "src/systems/arenaBoard.js",
+    "old": "(Array.isArray(board.fast.rows) ? board.fast.rows : []), board.fast.pinned]",
+    "new": "(Array.isArray(board.fast.rows) ? board.fast.rows : [])]",
+    "tests": [
+      "test/arena4b_window.test.js"
+    ]
+  }
+]

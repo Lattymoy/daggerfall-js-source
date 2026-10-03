@@ -1,0 +1,24 @@
+-- WD3 (2026-10-01) - THE LAYOUT A HOME'S TOWN WAS BOUGHT IN.
+--
+--   npx wrangler d1 migrations apply daggerfall-accounts --remote
+--
+-- Applied exactly once through the `d1_migrations` ledger, which the
+-- deploy runs (ACC1-CI). SQLite has no ADD COLUMN IF NOT EXISTS, so a
+-- second run errors harmlessly and the ledger is what stops it.
+--
+-- Mac: "ensure this doesn't conflict or regress anything (For example
+-- housing customization)". Beautiful Villages and Beautiful Cities lay
+-- Daggerfall's towns out again - online, for the whole room
+-- (src/systems/onlineLane.js) - and a home is a building KEY, which names
+-- a building only in one layout of its town. `layout` is the layout the
+-- town stood in when its first home was bought (src/net/homeLaw.js
+-- homeLayoutOk, src/systems/layoutPins.js layoutStampOf): NULL is Daggerfall's
+-- own town - every home bought before this column, which is exactly the
+-- layout each of them was bought in. A town's later homes take its first
+-- one's (homes.js claimHome), and every client keeps each town that holds
+-- a home in its layout (homes.js homeLayouts, read at the online boot) -
+-- so the decor placed, the look painted, the yard and the rooms let stay
+-- in the building they were made for.
+ALTER TABLE homes ADD COLUMN layout TEXT;
+-- A town's homes, oldest first - the claim's question (whose layout the town keeps) and the read's.
+CREATE INDEX IF NOT EXISTS idx_homes_town_age ON homes (map_id, bought_at, building_key);

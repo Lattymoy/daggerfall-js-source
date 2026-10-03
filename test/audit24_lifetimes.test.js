@@ -65,7 +65,7 @@ test('audit24 lifetimes: an encounter foe frees its billboard batch on BOTH ends
   // the documentation being cut to fit the bound. V3 moved it again:
   // the Azura's Star kill-capture sits in the same gap, after the trap
   // (a filled Star must count) and before the release.
-  assert.match(dmg, /health <= 0[\s\S]{0,2900}releaseFoeBatch\(f\)/, 'death releases too');   // REVENANT-FATE: the yield arm sits in the gap (a revenant beaten kneels, its batch kept for its fate)   // CREW-COMPANIONS: the knock-out arm heads the gap (a companion never dies, so never releases here)   // SET2: the kill told as mine widened the gap by one line   // AUDIT WORLD6b B2: the peer arm's note sits in the same gap (a proximity bound, not a law)   // STRIKE-SHARED: and a peer's trap's
+  assert.match(dmg, /health <= 0[\s\S]{0,3400}releaseFoeBatch\(f\)/, 'death releases too');   // REVENANT-FATE: the yield arm sits in the gap (a revenant beaten kneels, its batch kept for its fate)   // ARENA2: the foe yield floor heads the gap (a bout fighter never dies, so never releases here)   // CREW-COMPANIONS: the knock-out arm heads the gap (a companion never dies, so never releases here)   // SET2: the kill told as mine widened the gap by one line   // AUDIT WORLD6b B2: the peer arm's note sits in the same gap (a proximity bound, not a law)   // STRIKE-SHARED: and a peer's trap's
   // and the intercept must sit ahead of the release, not after it
   assert.ok(dmg.indexOf('attemptSoulTrap') < dmg.indexOf('releaseFoeBatch(f)'),
     'a trap that refuses the death must not have freed the batch first');
@@ -90,7 +90,7 @@ test('audit24 lifetimes: a city guard frees its batch on both death paths, and t
   // per-frame walk over `guards` paid for them. DFU destroys the
   // walk-away watch outright (EnemyEntity.cs:184-191) and keeps only
   // the killed body. So the key is the guard's own id now, and the
-  // prune is the encounter pool's (exteriorFoes.js:1450).
+  // prune is the encounter pool's (exteriorFoes.js:1461).
   // AUDIT-WH H2 moved the spelling, not the law: the id function is
   // one const now, read by the corpse lens AND by the live-foe
   // producer the plaque races, so a guard and the body it becomes

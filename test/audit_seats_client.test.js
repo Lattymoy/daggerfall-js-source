@@ -160,7 +160,7 @@ test('AUDIT-SEATS C1 THE WORLD\'S WAYS OUT by source: the one door (whichever is
   assert.match(w, /const atSeat = \(seat\) => \{\n\s*if \(!Array\.isArray\(seat\?\.pixel\) \|\| \(modes\?\.mode \?\? 'exterior'\) === 'dungeon'\) return false;\n\s*const p = playerTravelPixel\(\);\n\s*return Math\.abs\(p\.x - seat\.pixel\[0\]\) <= 1 && Math\.abs\(p\.y - seat\.pixel\[1\]\) <= 1;/);
   const frame = w.slice(w.indexOf('const gateFrame = () => {'), w.indexOf('const gateFrame = () => {') + 3500);
   assert.match(frame, /if \(townTalk\.overlay instanceof DeathScreen \|\| modes\?\.deathUp\?\.\(\)\) \{ leaveBattle\(\);/, 'the dead leave it - the gate\'s frame runs before the death return');
-  assert.match(w, /onlineFrame\(now, dt\); \} else \{[^\n]*courtRing\(\) : null; siegeHud\?\.hide\(\); \/\*/);
+  assert.match(w, /onlineFrame\(now, dt\); \} else \{[^\n]*courtRing\(\) : null; if \(!player\.arena\) player\.arena = arenaBouts\.ring\(\); \/\* ARENA2[^*\n]*\*\/ siegeHud\?\.hide\(\); \/\*/);   // the arena merge: ARENA2's bout ring stands before it
 });
 
 test('AUDIT-SEATS C2 ONE MINT SLOT: a leave clears net/online.js mintSiegePass only while it is its own (another battle\'s stays); a fresh enter lets its old one go; the world enters one battle at a time (mutants: the ownership test; the doors\' leaves)', async () => {

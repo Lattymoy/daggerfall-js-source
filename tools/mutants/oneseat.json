@@ -254,8 +254,8 @@
   {
     "name": "ONESEAT-hidden-tab-lingers",
     "file": "src/scenes/world.js",
-    "old": "      link.onSuperseded = () => seatLostNow();",
-    "new": "      link.onSuperseded = () => {};",
+    "old": "      link.onSuperseded = () => seatLostNow();\n      if (tab.room === SOCIAL_ROOM) link.onEvent",
+    "new": "      link.onSuperseded = () => {};\n      if (tab.room === SOCIAL_ROOM) link.onEvent",
     "tests": [
       "test/oneseat.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "ONESEAT-C5-hub-link-alone",
     "file": "src/scenes/world.js",
-    "old": "      link.onSuperseded = () => seatLostNow();",
-    "new": "      if (tab.room === SOCIAL_ROOM) link.onSuperseded = () => seatLostNow();",
+    "old": "      link.onSuperseded = () => seatLostNow();\n      if (tab.room === SOCIAL_ROOM) link.onEvent",
+    "new": "      if (tab.room === SOCIAL_ROOM) link.onSuperseded = () => seatLostNow();\n      if (tab.room === SOCIAL_ROOM) link.onEvent",
     "tests": [
       "test/oneseat.test.js"
     ]

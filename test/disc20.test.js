@@ -518,7 +518,7 @@ test('DISC20-C: the world host asks the pool to re-stand over every pixel it bui
   assert.ok(decl > 0 && decl < first && first < pool && pool < bind, 'declared before the first build, bound after the pool');
   const set = s.indexOf('built.set(key, {');
   const call = s.indexOf('hccGroundMoved(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE);');
-  assert.ok(set > 0 && call > set && call - set < 8000, 'after the pixel is published, over its own bounds (THE MERGE: the entry grew by GATE-CLEAR\'s fields and the batch\'s; PROF4 by its forest; GRASS-LIT2 by the near grid\'s normals)');
+  assert.ok(set > 0 && call > set && call - set < 8000, 'after the pixel is published, over its own bounds (THE MERGE: the entry grew by GATE-CLEAR\'s fields and the batch\'s; PROF4 by its forest; GRASS-LIT2 by the near grid\'s normals; ARENA2 by the sand\'s origin)');
   assert.match(s.slice(call - 200, call), /if \(hccGroundMoved\) \{\s+const t = state\.pixelTranslation\(px, py\);\s+$/);
 });
 

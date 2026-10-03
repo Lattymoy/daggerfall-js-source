@@ -37,6 +37,7 @@ import { RMB_DIMENSION, SCALE_DIVISOR } from '../formats/blocksFile.js';
 import { GLOBAL_SCALE } from './meshReader.js';
 import { applyBillboardXml } from './billboardXml.js';   // MM1: the xml scale registry (a leaf)
 import { textureReplacementEnabled, hasTextureReplacement } from '../systems/textureReplacement.js';   // AUDIT MM1: DFU's two gates on the xml scale
+import { flatFieldFor, sowField } from './flatFields.js';   // WD3: a scene model that is a field of flats (the town mods' crops)
 
 const BLOCK_FLATS_OFFSET_Y = -6;
 const NATURE_FLATS_OFFSET_Y = -2;
@@ -186,6 +187,17 @@ export function collectBlockFlats(dfBlock, natureArchive) {
       // paths hand the layout one record shape.
       rawX: obj.xPos, rawY: obj.yPos, rawZ: obj.zPos,
     });
+  }
+
+  // WD3: a scene model that is a FIELD OF FLATS (world/flatFields.js - the RMB Resource Pack's crop batches, which
+  // Beautiful Cities lays over its farmland): the plants it sows, the climate's, round the spot the block places it.
+  // Asked with a nature archive only - the climate picks the plant (a caller reading markers passes none).
+  if (natureArchive >= NATURE_ARCHIVE_MIN && natureArchive <= NATURE_ARCHIVE_MAX) {
+    for (const obj of rmb.misc3dObjectRecords ?? []) {
+      const spec = flatFieldFor(obj.modelIdNum);
+      if (!spec) continue;
+      flats.push(...sowField(spec, natureArchive, obj.xPos * GLOBAL_SCALE, -obj.yPos * GLOBAL_SCALE, (obj.zPos + RMB_DIMENSION) * GLOBAL_SCALE, (-(obj.yRotation ?? 0) / 2048) * Math.PI * 2));
+    }
   }
 
   // Exterior subrecord flats: unrotated subrecord offset, editor flats

@@ -110,7 +110,7 @@
   {
     "name": "the-camp-keeps-its-default-textures",
     "file": "src/scenes/world.js",
-    "old": "          await remapSubMeshes(gpu.subMeshes, texRemap, climateArchive, pipeline);\n          const local = multiply(origin, holdModelMatrix(hm));",
+    "old": "          await remapSubMeshes(gpu.subMeshes, texRemap, townClimateArchive, pipeline);\n          const local = multiply(origin, holdModelMatrix(hm));",
     "new": "          const local = multiply(origin, holdModelMatrix(hm));",
     "tests": [
       "test/wod4_privateershold.test.js"

@@ -345,8 +345,8 @@
   {
     "name": "LOOT7-dungeon-unmarked",
     "file": "src/scenes/dungeonContext.js",
-    "old": "  markDungeonChampions(enemies, dfLocation.dungeon.recordElement.header.locationId);",
-    "new": "  void enemies;",
+    "old": "  if (!_undercroftHall) markDungeonChampions(enemies, dfLocation.dungeon.recordElement.header.locationId);",
+    "new": "  void enemies, _undercroftHall;",
     "tests": [
       "test/loot7_champions.test.js"
     ]

@@ -25,6 +25,7 @@ import { setSeed, randomRange } from '../formats/dfRandom.js';
 import { getBool } from '../systems/settings.js';
 import { SITE_TYPES } from '../systems/quest/place.js';
 import { isMainStoryDungeon } from './dungeonTextures.js';
+import { isArenaUndercroft } from './arenaCity.js';   // ARENA5: the fighters' hall keeps its blocks
 
 /** QuestSmallerDungeonsState (DaggerfallUnityEnums.cs:758-763) -
  *  NotSet, DISABLED, ENABLED, in that order. F-B3 (self-audit 2): the
@@ -50,6 +51,11 @@ export function smallerDungeonsStateNow(enabled = getBool('Experimental', 'Small
 export function useSmallerDungeon(dfLocation, { questMachine = null,
   setting = getBool('Experimental', 'SmallerDungeons'), online = false } = {}) {
   if (!dfLocation?.hasDungeon || isMainStoryDungeon(dfLocation.mapTableData?.mapId)) return false;
+  // ARENA5 (the audit, closing ARENA1's open item "Smaller Dungeons may trim the undercroft"): THE ARENA'S UNDERCROFT
+  // NEVER SHRINKS. It is no keep of Daggerfall's but the fighters' hall (world/arenaUndercroft.js): its people, the Pit
+  // Master's ring and the Keeper's Hall stand by their distance out from the stair over Kamer's 32 blocks, and a five-
+  // block plus of random ones drawn from his list would stand the pit in a cellar and the Hall nowhere. Main story's rule.
+  if (isArenaUndercroft(dfLocation)) return false;
   // AUDIT WORLD34 B2: ONLINE, THE WHOLE DUNGEON. The room's stream, its acts and its memory address foes, doors and
   // piles by their index in the layout, and the layout was a per-client SETTING (or a quest's frozen copy of one):
   // a five-block client and a full-dungeon client shared one `_locationKey`, accepted each other's frames, and

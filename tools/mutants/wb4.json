@@ -308,8 +308,8 @@
   {
     "name": "WB4-the-body-not-drawn",
     "file": "src/scenes/world.js",
-    "old": ", ...(gateCourt?.batches() ?? []), ...(csaOn() ? csa.batches() : [])],   // WB4: and the Burning Court's boss",
-    "new": ", ...(csaOn() ? csa.batches() : [])],   // WB4: and the Burning Court's boss",
+    "old": ", ...(gateCourt?.batches() ?? []), ...(csaOn() ? csa.batches() : []), ...((modes?.mode ?? 'exterior') === 'dungeon' ? arenaBouts.batches() : [])],   // WB4: and the Burning Court's boss",
+    "new": ", ...(csaOn() ? csa.batches() : []), ...((modes?.mode ?? 'exterior') === 'dungeon' ? arenaBouts.batches() : [])],   // WB4: and the Burning Court's boss",
     "tests": [
       "test/wb4_gate_boss.test.js"
     ]

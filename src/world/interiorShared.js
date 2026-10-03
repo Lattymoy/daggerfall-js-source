@@ -45,10 +45,23 @@ import { mintSharedStamp } from '../net/wire.js';   // AUDIT WORLD6a B7: one sta
 
 /** The room's own key for a building - the SAME spelling roomKeyFor mints for the relay room (the map id unsigned,
  *  AUDIT WORLD34 A2), so the memory's `locationKey` and the room agree by construction. */
-export function interiorLocationKey(mapId, buildingKey) {
+export function interiorLocationKey(mapId, buildingKey, layout = null) {
   const id = Number.isFinite(mapId) ? mapId >>> 0 : 0;
   const key = Number.isFinite(buildingKey) ? buildingKey >>> 0 : 0;
-  return id > 0 && key > 0 ? `interior:m${id}.${key}` : null;
+  return id > 0 && key > 0 ? `interior:m${id}.${layoutRoomKey(key, layout)}` : null;
+}
+
+/** WD3 (AUDIT WD3 B3): A BUILDING'S ROOM IS ITS LAYOUT'S. A building key names a building only in one layout of its
+ *  town, so two players whose town stands in two layouts (a build from before the town mods; a pin one holds) would
+ *  share one room from two buildings - its doors, its chests, its memory - and a memory the relay kept from before the
+ *  mods would land on another building of the same key. The layout mods serving the town ride in the key's high bits
+ *  (a building key is under 2^19; the wire's room takes eight digits): Daggerfall's own town is the key as it always
+ *  was, so its rooms and their memories are untouched. */
+export const LAYOUT_ROOM_MODS = Object.freeze(['beautiful-villages', 'beautiful-cities']);
+export function layoutRoomKey(buildingKey, layout = null) {
+  let tag = 0;
+  if (typeof layout === 'string') LAYOUT_ROOM_MODS.forEach((m, i) => { if (layout.split('+').some((p) => p.split('@')[0] === m)) tag |= 1 << i; });
+  return buildingKey + tag * 0x1000000;
 }
 
 /** AUDIT WORLD6a A1: THE WIRING BAG, MINTED HERE. The interior mode built its bag with the key spelled `key` and

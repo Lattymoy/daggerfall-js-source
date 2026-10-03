@@ -12,12 +12,12 @@
   {
     "name": "ACC1d-2-the-vouched-name-comes-off-the-FRAME",
     "file": "server/src/index.js",
-    "old": "    return { name: c.n, kind: c.k, subject: c.s, title: c.t, ts: c.ts, glyphs: c.g, gx: c.gx, au: c.au, rb: c.rb, mu, lv: c.lv, ...guild, gio: c.i };",
-    "new": "    return { name: m.name, kind: c.k, subject: c.s, title: c.t, ts: c.ts, glyphs: c.g, gx: c.gx, au: c.au, rb: c.rb, mu, lv: c.lv, ...guild, gio: c.i };",
+    "old": "    return { name: c.n, kind: c.k, subject: c.s, title: c.t, ts: c.ts, glyphs: c.g, gx: c.gx, au: c.au, rb: c.rb, mu, lv: c.lv, ...guild, gio: c.i, ar: c.ar, cl: c.cl };",
+    "new": "    return { name: m.name, kind: c.k, subject: c.s, title: c.t, ts: c.ts, glyphs: c.g, gx: c.gx, au: c.au, rb: c.rb, mu, lv: c.lv, ...guild, gio: c.i, ar: c.ar, cl: c.cl };",
     "tests": [
       "test/identitytoken.test.js"
     ],
-    "note": "THE WHOLE SEAM. The name must come OUT of the token - a signed claim set beats a typed one, and after ACC1g there is no typed one at all. Read off the frame, the signature verifies and then names whoever the sender asked to be. SEAT1c (PIN MOVED): re-aimed by content - the projection carries a seat title's claim."
+    "note": "THE WHOLE SEAM. The name must come OUT of the token - a signed claim set beats a typed one, and after ACC1g there is no typed one at all. Read off the frame, the signature verifies and then names whoever the sender asked to be. SEAT1c (PIN MOVED): re-aimed by content - the projection carries a seat title's claim. The arena merge (re-aimed by content): the projection carries ARENA4's rating."
   },
   {
     "name": "ACC1d-3-a-failed-token-is-a-quiet-downgrade",
@@ -132,12 +132,12 @@
   {
     "name": "ACC1d-14-the-chat-link-sends-no-token",
     "file": "src/scenes/world.js",
-    "old": "      link.mintToken = identityMinter;",
-    "new": "",
+    "old": "      link.mintToken = identityMinter;\n      link.onDm = ",
+    "new": "      link.onDm = ",
     "tests": [
       "test/acc1dclient.test.js"
     ],
-    "note": "The hub is where a name is READ. An unsigned name in chat is exactly the impersonation this arc exists to make visible."
+    "note": "The hub is where a name is READ. An unsigned name in chat is exactly the impersonation this arc exists to make visible. The arena merge (re-aimed by content): the arena hall's link has its own - aimed at the channel link's by the line after it."
   },
   {
     "name": "ACC1d-15-the-relay-deploys-with-an-unchecked-key",

@@ -97,9 +97,9 @@ export async function standService(extra = {}) {
    *  route's `{ status, body }` and `character`, the realm character that owns the home and places in it. */
   const seatHome = async (who, home) => {
     const R = await seatRealm(env, who.secret, who.handle, { name: who.handle, level: 9, goldPieces: 1_000_000, items: [] });
-    return { ...(await call('/v1/homes/claim', { ...home, character: R.id, realm: R.at() }, who.secret)), character: R.id };
+    return { ...(await call('/v1/homes/claim', { layout: null, ...home, character: R.id, realm: R.at() }, who.secret)), character: R.id };
   };
-  return { env, call, guest, registered, claim, seedMarks, fetch, found, seatHome, identityPublic: kp.publicKey, gateKey: gatePriv };   // PROF3: the identity key's public half, a product record's verifier; SEAT1b: the relay's private half, a watch receipt's signer
+  return { env, call, guest, registered, claim, seedMarks, fetch, found, seatHome, identityPublic: kp.publicKey, gateKey: gatePriv, gatePriv };   // ARENA4: the relay's signing half, so a bout's receipt is signed as the relay signs it   // PROF3: the identity key's public half, a product record's verifier; SEAT1b: the relay's private half, a watch receipt's signer
 }
 
 /** A device's storage holding `who`'s session (net/accountClient.js SESSION_KEY). */

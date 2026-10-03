@@ -1039,6 +1039,237 @@ export const NOTICE_CSS = `/* ── NOTICE1: THE NOTICE BOARD ── */
 }
 @media (pointer: coarse) { .notice-card { min-height: 120px; } }
 @media (prefers-reduced-motion: reduce) { .notice-card { transform: none; } .notice-card:hover, .notice-card:focus-visible { transform: none; } }`;
+/** ARENA3: THE ARENA WINDOW (ui/arenaWindow.js) - the Notice Board's kind: a stone window over the world, six pages under a
+ *  tab bar, the cards panels, the presses the kit's. The banners' colours (`data-banner` red | blue) on the pennants, the
+ *  fighters, the rows and the season's split bar; brass for the chosen and for what you have won. Its classes are `aw-`
+ *  (the bout's HUD's are `arena-`). The kit dresses the window, the header, the cards, the presses and the chips
+ *  (ui/enhancedFrame.js); this is the layout and the arena's own ink. The classic skin lays it with the kit cut to it. */
+export const ARENA_WINDOW_CSS = `/* ── ARENA3: THE ARENA WINDOW ── */
+.aw-shell { position: fixed; inset: 0; z-index: 39; display: flex; align-items: center; justify-content: center;
+  padding: 16px; background: rgba(0,0,0,0.5); font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none; color: #efe8d6; }
+.aw-win { --red: #c23a2b; --red-hi: #f2a597; --red-lo: #6e1a12; --blue: #3768b8; --blue-hi: #a9c8f2; --blue-lo: #172f5c;
+  --brass: #c08a3e; --brass-hi: #f3cf86; --bone: #efe8d6; --mute: #b9ab93;
+  position: relative; width: min(1040px, 96vw); height: min(760px, 92vh); display: flex; flex-direction: column; overflow: hidden;
+  border: 2px solid; background: rgba(14,12,11,0.97); }
+.aw-win[data-banner="red"] { box-shadow: inset 0 3px 0 -1px var(--red); }
+.aw-win[data-banner="blue"] { box-shadow: inset 0 3px 0 -1px var(--blue); }
+.aw-pennant { display: inline-block; flex: 0 0 auto; width: 9px; height: 13px; vertical-align: -2px;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 74%, 0 100%); background: #5d5447; box-shadow: 1px 1px 0 #050608; }
+.aw-pennant[data-banner="red"] { background: linear-gradient(180deg, var(--red-hi) 0 2px, var(--red) 2px 70%, var(--red-lo)); }
+.aw-pennant[data-banner="blue"] { background: linear-gradient(180deg, var(--blue-hi) 0 2px, var(--blue) 2px 70%, var(--blue-lo)); }
+.aw-pennant[data-banner=""] { background: linear-gradient(180deg, #8d8270 0 2px, #4a4237 2px); }
+.aw-head { flex: 0 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 12px 16px 10px; border-bottom: 2px solid rgba(5,6,8,0.6); }
+.aw-crest { width: 26px; height: 38px; }
+.aw-title { flex: 1 1 300px; min-width: 0; }
+.aw-title h2 { margin: 0; font-size: 20px; letter-spacing: 0.12em; text-transform: uppercase; color: #efe0b8; text-shadow: 2px 2px 0 #050608; }
+.aw-sub { margin: 2px 0 0; font-size: 12px; color: var(--mute); }
+.aw-note { margin: 4px 0 0; font-size: 12px; color: #e59a8e; }
+.aw-note:empty { display: none; }
+.aw-note.ok { color: var(--brass-hi); }
+.aw-id { order: 3; flex: 1 1 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; min-width: 0;
+  padding: 7px 0 0 42px; border-top: 1px solid rgba(243,207,134,0.14); }
+.aw-name { font-size: 15px; color: var(--bone); text-shadow: 1px 1px 0 #050608; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.aw-rec { margin-left: auto; }
+.aw-rec { font-size: 12px; color: var(--mute); white-space: nowrap; }
+.aw-chip { display: inline-flex; align-items: center; gap: 4px; padding: 1px 6px; font-size: 11px; letter-spacing: 0.08em; white-space: nowrap;
+  color: var(--bone); border: 1px solid #5a5446; background: rgba(5,6,8,0.55); }
+.aw-titlechip { color: var(--brass-hi); border-color: #7a5424; text-transform: uppercase; }
+.aw-bannerchip.b-red { color: var(--red-hi); border-color: var(--red); }
+.aw-bannerchip.b-blue { color: var(--blue-hi); border-color: var(--blue); }
+.aw-laurel { color: #d9f0a8; border-color: #6f8a32; text-transform: uppercase; }
+.aw-laurel::before { content: ''; width: 9px; height: 9px; border-radius: 50% 50% 50% 0; border: 2px solid #9cc04a; border-right-color: transparent; border-bottom-color: transparent; transform: rotate(-45deg); }
+.aw-close { flex: 0 0 auto; align-self: flex-start; }
+.aw-tabs { flex: 0 0 auto; display: flex; gap: 4px; padding: 8px 16px 0; border-bottom: 2px solid rgba(5,6,8,0.6); overflow-x: auto; scrollbar-width: none; }
+.aw-tabs::-webkit-scrollbar { display: none; }
+.aw-tab { flex: 0 0 auto; padding: 6px 14px 5px; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: -2px; }
+.aw-tab.on { color: var(--brass-hi); }
+.aw-body { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 14px 16px 18px; display: flex; flex-direction: column; gap: 12px; overscroll-behavior: contain; }
+.aw-card { margin: 0; padding: 12px 14px; border: 2px solid; min-width: 0; }
+.aw-card h3 { margin: 0; font-family: inherit; font-size: 15px; letter-spacing: 0.06em; color: #efe0b8; text-shadow: 1px 1px 0 #050608; }
+.aw-card h4 { margin: 10px 0 6px; font-family: inherit; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--mute); }
+.aw-cardhead { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 10px; margin-bottom: 8px; }
+.aw-state { color: var(--brass-hi); border-color: #7a5424; }
+.aw-line { margin: 6px 0 0; font-size: 13px; line-height: 1.45; color: #e6dccb; }
+.aw-gives { color: var(--brass-hi); }
+.aw-warn { color: #e8b0a4; }
+.aw-empty { margin: 8px 0 0; font-size: 13px; color: var(--mute); font-style: italic; }
+.aw-cards { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+.aw-bout-card.k-exhibition { grid-column: 1 / -1; }
+.aw-tierline { margin: -4px 0 8px; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mute); }
+.aw-versus { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; gap: 10px; }
+.aw-fighter { display: flex; flex-direction: column; gap: 3px; min-width: 0; padding: 10px 12px; border: 1px solid #3a352a; background: rgba(5,6,8,0.4); }
+.aw-fighter[data-banner="red"] { border-left: 3px solid var(--red); background: linear-gradient(90deg, rgba(194,58,43,0.16), rgba(5,6,8,0.4) 60%); }
+.aw-fighter[data-banner="blue"] { border-right: 3px solid var(--blue); text-align: right; align-items: flex-end;
+  background: linear-gradient(270deg, rgba(55,104,184,0.18), rgba(5,6,8,0.4) 60%); }
+.aw-fname { display: flex; align-items: center; gap: 6px; min-width: 0; max-width: 100%; }
+.aw-fighter[data-banner="blue"] .aw-fname { flex-direction: row-reverse; }
+.aw-fn { font-size: 15px; color: var(--bone); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-shadow: 1px 1px 0 #050608; }
+.aw-fbill, .aw-fkind { font-size: 11px; color: var(--mute); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.aw-fnums { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.aw-fighter[data-banner="blue"] .aw-fnums { justify-content: flex-end; }
+.aw-odds { color: var(--brass-hi); border-color: #7a5424; font-variant-numeric: tabular-nums; }
+.aw-fav { color: #d9f0a8; border-color: #6f8a32; text-transform: uppercase; }
+.aw-vs { align-self: center; font-size: 13px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--brass-hi); text-shadow: 1px 1px 0 #050608; }
+.aw-wagerline { margin: 8px 0 0; font-size: 12px; color: var(--brass-hi); }
+.aw-opp { margin: 0; font-size: 14px; color: var(--bone); }
+.aw-acts { display: flex; flex-wrap: wrap; gap: 8px 10px; margin-top: 10px; }
+.aw-press { display: inline-flex; flex-direction: column; gap: 3px; }
+.aw-act { min-width: 96px; }
+.aw-why { font-size: 11px; color: var(--mute); max-width: 180px; }
+.aw-wager { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; padding: 10px; border: 1px dashed #7a5424; background: rgba(243,207,134,0.04); }
+.aw-wager-sides, .aw-stakes { display: flex; flex-wrap: wrap; gap: 6px; }
+.aw-side[data-banner="red"].on { box-shadow: inset 3px 0 0 var(--red); }
+.aw-side[data-banner="blue"].on { box-shadow: inset 3px 0 0 var(--blue); }
+.aw-stake { min-width: 64px; }
+.aw-place { align-self: flex-start; }
+.aw-owed { margin: 0; padding: 6px 10px; font-size: 13px; color: var(--brass-hi); border-left: 2px solid var(--brass); background: rgba(243,207,134,0.06); }
+/* ARENA4: online - the bouts on the sand now, the challenge's offer, the rating and rank chips */
+.aw-live { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.aw-liveb { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; padding: 6px 8px;
+  border-left: 2px solid #3a352a; background: rgba(5,6,8,0.38); }
+.aw-liveb[data-kind="pvp"] { border-left-color: #e05a3a; }
+.aw-livewho { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; }
+.aw-livef { display: inline-flex; align-items: center; gap: 5px; min-width: 0; max-width: 100%; }
+.aw-livemeta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; grid-column: 1; font-size: 11px; color: var(--mute); }
+.aw-liveb .aw-acts { grid-column: 2; grid-row: 1 / span 2; margin: 0; }
+.aw-offer { display: flex; align-items: center; gap: 8px; margin: 8px 0 0; padding: 8px 10px; border: 1px solid #e05a3a; background: rgba(224,90,58,0.08); }
+.aw-rating { color: #cfe3ff; border-color: #4a6a98; font-variant-numeric: tabular-nums; }
+.aw-rankchip { color: var(--brass-hi); border-color: #7a5424; }
+.aw-rankchip.champ { color: #d9f0a8; border-color: #6f8a32; }
+.aw-champline { padding: 4px 8px; border-left: 2px solid #6f8a32; background: rgba(111,138,50,0.1); }
+.aw-online { color: #cfe3ff; }
+@media (max-width: 520px) { .aw-liveb { grid-template-columns: minmax(0, 1fr); } .aw-liveb .aw-acts { grid-column: 1; grid-row: auto; } }
+/* the ladder: the ten tiers as a column, the one picked whole beside it */
+.aw-ladder { display: grid; grid-template-columns: minmax(240px, 0.85fr) minmax(0, 1.4fr); gap: 14px; align-items: start; }
+.aw-tiers { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column-reverse; gap: 3px; }
+.aw-tier { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; grid-template-rows: auto auto; align-items: center; gap: 0 8px;
+  padding: 5px 8px; cursor: pointer; border: 1px solid transparent; }
+.aw-tier.on { background: linear-gradient(90deg, rgba(243,207,134,0.14), transparent 85%); }
+.aw-tiern { grid-row: 1 / span 2; display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; font-size: 13px;
+  color: var(--mute); border: 1px solid #4a4438; background: rgba(5,6,8,0.6); }
+.aw-tier[data-state="cleared"] .aw-tiern { color: #1d150b; background: linear-gradient(180deg, var(--brass-hi), var(--brass)); border-color: #5c3f1a; }
+.aw-tier[data-state="current"] .aw-tiern { color: var(--brass-hi); border-color: var(--brass); box-shadow: 0 0 6px rgba(243,207,134,0.35); }
+.aw-tiername { font-size: 14px; color: var(--bone); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.aw-tier[data-state="locked"] .aw-tiername { color: #8d8270; }
+.aw-tierstate { grid-column: 3; grid-row: 1 / span 2; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mute); }
+.aw-tier[data-state="current"] .aw-tierstate { color: var(--brass-hi); }
+.aw-pips { display: inline-flex; align-items: center; gap: 4px; }
+.aw-pips i { width: 7px; height: 7px; transform: rotate(45deg); background: rgba(0,0,0,0.6); border: 1px solid #5d5245; }
+.aw-pips i.on { background: var(--brass-hi); border-color: #5c3f1a; }
+.aw-pips i.crown { width: 9px; height: 9px; margin-left: 3px; }
+.aw-pips i.crown.on { background: #e05a3a; border-color: #ffb08e; box-shadow: 0 0 4px rgba(224,90,58,0.6); }
+.aw-tierbouts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.aw-tb { display: grid; grid-template-columns: 120px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; padding: 5px 8px; font-size: 13px;
+  border-left: 2px solid #3a352a; background: rgba(5,6,8,0.35); }
+.aw-tb.won { border-left-color: var(--brass); }
+.aw-tb.next { border-left-color: #e05a3a; background: rgba(224,90,58,0.08); }
+.aw-tb.champ .aw-tbl { color: #ffb08e; }
+.aw-tbl { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--mute); }
+.aw-tbo { color: var(--bone); }
+.aw-tbm { font-size: 11px; color: var(--brass-hi); text-transform: uppercase; letter-spacing: 0.08em; }
+.aw-tb.next .aw-tbm { color: #ffb08e; }
+.aw-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+/* the team: the season's split, the banner, the roster */
+.aw-split-nums { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 4px; font-size: 14px; font-variant-numeric: tabular-nums; }
+.aw-split-n { display: inline-flex; align-items: center; gap: 6px; }
+.aw-split-n.b-red { color: var(--red-hi); }
+.aw-split-n.b-blue { color: var(--blue-hi); flex-direction: row-reverse; }
+.aw-split { position: relative; height: 14px; border: 2px solid; border-color: #25221b #6e6755 #9a9079 #3a352a;
+  background: linear-gradient(180deg, var(--blue-hi) 0 2px, var(--blue) 2px 9px, var(--blue-lo)); }
+.aw-split-red { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(180deg, var(--red-hi) 0 2px, var(--red) 2px 9px, var(--red-lo)); }
+.aw-split-mid { position: absolute; left: 50%; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; background: var(--brass-hi); box-shadow: 0 0 0 1px #050608; }
+.aw-bannerhead { display: flex; align-items: center; gap: 12px; }
+.aw-flag { width: 28px; height: 42px; }
+.aw-bannerwords { flex: 1 1 auto; min-width: 0; }
+.aw-motto { margin: 2px 0 0; font-size: 12px; font-style: italic; color: var(--mute); }
+.aw-bannercard[data-banner="red"] { box-shadow: inset 3px 0 0 var(--red); }
+.aw-bannercard[data-banner="blue"] { box-shadow: inset 3px 0 0 var(--blue); }
+.aw-mini { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
+.aw-mini li { display: flex; justify-content: space-between; gap: 8px; }
+.aw-pts { color: var(--brass-hi); font-variant-numeric: tabular-nums; }
+.aw-stats { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+.aw-stat { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border: 1px solid #3a352a; background: rgba(5,6,8,0.45); }
+.aw-stat .k { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mute); }
+.aw-stat .v { font-size: 18px; color: var(--bone); font-variant-numeric: tabular-nums; text-shadow: 1px 1px 0 #050608; }
+/* the boards */
+.aw-subtabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.aw-subtab { font-size: 12px; }
+.aw-boardsub { margin: 2px 0 10px; font-size: 12px; color: var(--mute); }
+.aw-table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.aw-table th { padding: 4px 8px; text-align: left; font-size: 11px; font-weight: 400; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mute);
+  border-bottom: 1px solid rgba(243,207,134,0.25); }
+.aw-table td { padding: 5px 8px; border-bottom: 1px solid rgba(5,6,8,0.6); white-space: nowrap; }
+.aw-rank { width: 36px; color: var(--mute); }
+.aw-row:nth-child(-n+3) .aw-rank { color: var(--brass-hi); }
+.aw-table .aw-nm { width: 46%; }
+.aw-who { display: flex; align-items: center; gap: 6px; min-width: 0; max-width: 360px; }
+.aw-who .aw-n { overflow: hidden; text-overflow: ellipsis; }
+.aw-home { font-size: 11px; color: #8d8270; overflow: hidden; text-overflow: ellipsis; }
+.aw-row.you td { background: rgba(243,207,134,0.1); color: var(--brass-hi); }
+.aw-row.you td:first-child { box-shadow: inset 2px 0 0 var(--brass-hi); }
+.aw-gap td { padding: 0 8px; color: #8d8270; text-align: center; letter-spacing: 0.3em; }
+/* the records */
+.aw-bouts { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.aw-bout { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 5px 8px;
+  border-left: 2px solid #3a352a; background: rgba(5,6,8,0.35); }
+.aw-bout.won { border-left-color: var(--brass); }
+.aw-bout.lost { border-left-color: #8a2820; }
+.aw-res { justify-content: center; text-transform: uppercase; }
+.aw-res.won { color: var(--brass-hi); border-color: #7a5424; }
+.aw-res.lost { color: #ff9a8a; border-color: #7a2a24; }
+.aw-boutwhat { display: flex; flex-direction: column; min-width: 0; }
+.aw-bo { font-size: 13px; color: var(--bone); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.aw-bt { font-size: 11px; color: var(--mute); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.aw-bouttail { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; font-size: 11px; color: var(--mute); white-space: nowrap; }
+.aw-bp { color: var(--brass-hi); }
+.aw-bpts { color: #d9f0a8; }
+/* ARENA5: a kept bout's Watch the replay, under its row - a small press, so a kept row stays a row */
+.aw-boutacts { grid-column: 2 / -1; display: flex; justify-content: flex-end; margin-top: -4px; }
+body .aw-shell .aw-boutacts .act { min-width: 0; padding: 3px 12px; font-size: 12px; }
+.aw-wagerlist { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 3px; font-size: 13px; }
+.aw-wl { padding: 3px 8px; border-left: 2px solid #3a352a; }
+.aw-wl.s-won { border-left-color: var(--brass); color: var(--brass-hi); }
+.aw-wl.s-lost { color: var(--mute); }
+.aw-wl.s-open { border-left-color: #e05a3a; }
+/* the rules */
+.aw-rules { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+.aw-rule ul { margin: 8px 0 0; padding: 0 0 0 16px; display: flex; flex-direction: column; gap: 5px; font-size: 13px; line-height: 1.45; color: #e6dccb; }
+.aw-rule li::marker { color: var(--brass); }
+@media (max-width: 720px) {
+  .aw-shell { padding: 6px; }
+  .aw-win { width: 100%; height: 96vh; }
+  .aw-head { padding: 10px 12px 8px; gap: 6px 10px; }
+  .aw-crest { width: 18px; height: 27px; }
+  .aw-title { flex: 1 1 0; }
+  .aw-close { padding-left: 10px; padding-right: 10px; }
+  .aw-title h2 { font-size: 16px; letter-spacing: 0.06em; }
+  .aw-id { padding-left: 0; }
+  .aw-rec { margin-left: 0; }
+  .aw-tabs { padding: 6px 10px 0; }
+  .aw-tab { padding: 6px 10px 5px; letter-spacing: 0.08em; }
+  .aw-body { padding: 10px 10px 14px; }
+  .aw-cards, .aw-rules { grid-template-columns: minmax(0, 1fr); }
+  .aw-versus { grid-template-columns: minmax(0, 1fr); }
+  .aw-vs { justify-self: center; }
+  .aw-fighter[data-banner="blue"] { text-align: left; align-items: flex-start; border-right: 1px solid #3a352a; border-left: 3px solid var(--blue); }
+  .aw-fighter[data-banner="blue"] .aw-fname { flex-direction: row; }
+  .aw-fighter[data-banner="blue"] .aw-fnums { justify-content: flex-start; }
+  .aw-ladder { grid-template-columns: minmax(0, 1fr); }
+  .aw-tb { grid-template-columns: minmax(0, 1fr) auto; }
+  .aw-tbl { grid-column: 1 / -1; }
+  .aw-table { table-layout: fixed; }
+  .aw-table .opt { display: none; }
+  .aw-table td, .aw-table th { padding: 5px 4px; overflow: hidden; text-overflow: ellipsis; }
+  .aw-table th:first-child, .aw-rank { width: 30px; }
+  .aw-table .aw-nm { width: 48%; }
+  .aw-home { display: none; }
+  .aw-bout { grid-template-columns: 52px minmax(0, 1fr); }
+  .aw-bouttail { grid-column: 2; flex-direction: row; flex-wrap: wrap; gap: 2px 8px; justify-content: flex-start; white-space: normal; }
+  .aw-boutacts { grid-column: 2; justify-content: flex-start; }
+}
+@media (pointer: coarse) { .aw-tier, .aw-tab, .aw-subtab, .aw-stake, .aw-side, .aw-boutacts .aw-act { min-height: 40px; } }
+@media (prefers-reduced-motion: reduce) { .aw-tier, .aw-card { transition: none; } }`;
+
 /** PROF1 (PROF0 8, 21): THE PROFESSIONS' FACES - the Work tab's writs on the Notice Board (the Court's purple seal), the
  *  Professions and Stores pages on the character sheet's rail, and in the world the prompt, the act's meter, the toasts,
  *  the day's chip under the compass and the rank's banner. The stone, the brass and the bone of the rest; the meters'
@@ -1474,6 +1705,7 @@ ${REFORGE_CSS}
 ${BOUNTY_CSS}
 ${NOTICE_CSS}
 ${PROF_CSS}
+${ARENA_WINDOW_CSS}
 /* ── WEAR-UI: THE HOTBAR'S WEAR BAR, ON EVERY PICTURE OF A PIECE THAT WEARS (ui/enhancedInventory.js wearBar) ──
    The hotbar's own bar (3px, a hard black ring, its green and its red under 40), a lit pixel on top like every fill
    here. Along the foot of a grid tile or a socket; inside the foot of a list's picture. A broken piece's track goes
@@ -1657,6 +1889,31 @@ body .wb-dmg-track { background: rgba(5,6,8,0.72); box-shadow: 0 0 0 1px #050608
 body .wb-dmg-fill { background: linear-gradient(180deg, #ffc08a 0 1px, #ff7a3a 1px 2px, #d8341a 2px); border-radius: 0; }
 body .wb-dmg-mine { outline: 1px solid ${FRAME_TONES.brassHi}; background: rgba(192,138,62,0.14); }
 body .wb-dmg-more { font-size: 11px; font-style: normal; color: #b9ab86; opacity: 1; }
+/* ARENA2: THE BOUT'S HUD (ui/arenaHud.js) - the plate is a panel and the clock and the crowd's marks chips (the kit's
+   roles); here what a role cannot say: the HUD's words in the pixel face outlined, each track a vital's stone bevel
+   with its fill banded from a lit top (health the vitals' red, stamina their green, the crowd's mood brass), the
+   crowd's middle a brass tick, the darling's mark brass and the villain's blood, my own name brass, a banner's mark
+   down the plate's inner edge (ARENA3's teams paint it; today mine brass, theirs blood). */
+body .arena-hud { ${PIXEL_FONT_CSS} font-weight: 400; color: #efe8d6; text-shadow: ${OUTLINED}; }
+body .arena-plate { padding: 7px 12px 8px; }
+body .arena-track { border: 2px solid; border-color: #9a9079 #3a352a #25221b #6e6755; background: rgba(5,6,8,0.78);
+  box-shadow: 0 0 0 1px #050608; }
+body .arena-fill { background: linear-gradient(180deg, #f2a597 0 2px, #d8685a 2px 4px, #b53a2e 4px 8px, #8a2820 8px); }
+body .arena-stam .arena-fill { background: linear-gradient(180deg, #b9f0c4 0 1px, #49b06a 1px 3px, #2f9152 3px); }
+body .arena-crowd .arena-fill { background: linear-gradient(180deg, #fff0b8 0 1px, #f2c46b 1px 3px, #d9a441 3px 5px, #a87a2a 5px); }
+body .arena-crowd-mid { background: ${FRAME_TONES.brassHi}; box-shadow: 0 0 0 1px #050608; }
+body .arena-ftr[data-you="1"] .arena-ftr-name { color: ${FRAME_TONES.brassHi}; }
+body .arena-ftr[data-banner="you"] .arena-track, body .arena-ftr[data-banner="a"] .arena-track { box-shadow: 0 0 0 1px #050608, inset 2px 0 0 ${FRAME_TONES.brass}; }
+body .arena-ftr[data-banner="them"] .arena-track, body .arena-ftr[data-banner="b"] .arena-track { box-shadow: 0 0 0 1px #050608, inset -2px 0 0 #b83a2e; }
+body .arena-tag[data-tag="darling"] { color: ${FRAME_TONES.brassHi}; }
+body .arena-tag[data-tag="villain"] { color: #ff9a8a; }
+body .arena-out { color: #ff9a8a; }
+body .arena-timer { font-size: 17px; letter-spacing: 0.1em; color: #fffaf0; }
+body .arena-vs { color: #d8cfae; opacity: 1; }
+body .arena-crowd-word[data-band="roar"], body .arena-crowd-word[data-band="cheer"] { color: ${FRAME_TONES.brassHi}; }
+body .arena-crowd-word[data-band="boo"], body .arena-crowd-word[data-band="jeer"] { color: #ff9a8a; }
+body .arena-bark { font-size: 14px; letter-spacing: 0.08em; }
+body .arena-hint { color: ${FRAME_TONES.brassHi}; }
 /* AUDIT MERGE-PLUS D3: STONE'S LIGHT GROUND. The lane's newer surfaces joined the window and panel roles above, and
    Stone paints those a light grey their words were never chosen for - they had kept their own dark ground on every
    theme until then (the F-menu's Cancel read at 2.3:1, a refused row's reason at 4.1:1). On Stone the lane's dim

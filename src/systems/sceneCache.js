@@ -75,7 +75,14 @@ export function createSceneCache() {
  *  it. */
 export const addPermanentScene = (cache, sceneName) => { cache.permanent.add(sceneName); };
 export const containsPermanentScene = (cache, sceneName) => cache.permanent.has(sceneName);
-export const removePermanentScene = (cache, sceneName) => { cache.permanent.delete(sceneName); };
+export const removePermanentScene = (cache, sceneName) => {
+  cache.permanent.delete(sceneName);
+  for (const n of [...cache.permanent]) if (n.startsWith(`${sceneName}|`)) cache.permanent.delete(n);   // WD3: and its other layouts' visits
+};
+/** WD3 (AUDIT WD3 R1): A PERMANENT SCENE'S VISIT IN ANOTHER LAYOUT of its town (a house's town pinned out, its pack
+ *  not loaded) - kept beside the scene, never over it, and given back when the town next stands in that layout; it
+ *  goes with the scene when the house is sold or the room expires. */
+export const layoutSceneName = (sceneName, layout) => `${sceneName}|${layout || 'classic'}`;
 
 /** The player's own dropped piles, deep-copied. They are the third
  *  thing a scene holds in this port because the port keeps a pile's
@@ -125,6 +132,9 @@ const copySceneEntry = (d) => ({
   // writer's own frame), and `terrainScale` the ground an exterior height stood on - absent on an entry written
   // before either was carried, which the restoring host reads as the old raw frame on the prefab's 1.5.
   frame: d.frame ?? null, terrainScale: d.terrainScale ?? null,
+  // WD3: the layout of the town an interior was cached in (systems/layoutPins.js) - only where a layout mod changed the
+  // town; an entry without one was cached in Daggerfall's own
+  ...(typeof d.layout === 'string' && d.layout ? { layout: d.layout } : {}),
 });
 
 /** CacheScene (:84-98). DFU caches exactly TWO kinds of thing for a
@@ -242,10 +252,10 @@ export function restoreSceneCache(cache, snap) {
 // EVERY CALLER OF THIS CACHE IS WIRED. The last one to land was the
 // HOUSE deed's AddPermanentScene, which needed the building directory
 // to know which building was bought: H1/H2 shipped both halves -
-// banking.js:203 calls the hook inside allocateHouseToPlayer with the
-// bought building's own mapId and key, and worldModes.js:3006 supplies
+// banking.js:214 calls the hook inside allocateHouseToPlayer with the
+// bought building's own mapId and key, and worldModes.js:3020 supplies
 // it as addPermanentScene(sceneCache(), interiorSceneName(mapId, key)),
 // reached from the bank's buy arm (:2144-2148), the knightly gift
 // (:2752) and :4933, with sellHouse dropping the scene again (:2184). The
-// tavern's rented room (tavern.js:150) and the ship's two scenes
-// (banking.js:314-316) name themselves and were wired before it.
+// tavern's rented room (tavern.js:155) and the ship's two scenes
+// (banking.js:325-327) name themselves and were wired before it.

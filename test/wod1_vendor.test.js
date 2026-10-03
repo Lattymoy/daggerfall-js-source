@@ -235,7 +235,7 @@ test('WOD1: the registry row, the credit, the Features row and the online lane a
   assert.match(row, /`03-World\/World-Of-Daggerfall\.md`/);
 
   const credit = CREDITS.mods.filter((m) => m.author === 'Kamer');
-  assert.deepEqual(credit.map((m) => m.title), ['Windmills of Daggerfall', 'World of Daggerfall', 'Warm Ashes - Ships', 'World Events - Raiding Parties'], 'the mill first (CR1 finds it by his name), then this (WA1: then his third; RAID1: his fourth)');
+  assert.deepEqual(credit.map((m) => m.title), ['Windmills of Daggerfall', 'World of Daggerfall', 'Warm Ashes - Ships', 'World Events - Raiding Parties', 'Daggerfall Arena'], 'the mill first (CR1 finds it by his name), then this (WA1: then his third; RAID1: his fourth; ARENA1: his fifth)');
   assert.deepEqual([...credit[1].vendor], ['world-of-daggerfall']);
   assert.equal(credit[1].version, '2.0');
   assert.equal(credit[1].contact, 'DFU forums', 'the manifest\'s ContactInfo, verbatim');

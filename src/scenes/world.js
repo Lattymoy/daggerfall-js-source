@@ -30,7 +30,28 @@ import { attachTouch } from '../ui/touch.js';
 import { attachGamepad } from '../ui/gamepadInput.js';   // GP1: the pad speaks the same hooks
 import { BlocksFile } from '../formats/blocksFile.js';
 import { bindWorldDataBlocks } from '../formats/worldDataReplacement.js';   // RR3b
-import { loadModWorldData } from './modWorldData.js';   // RR3b
+import { isClimateFreeModel, NO_CLIMATE_REMAP } from '../world/customModels.js';   // ARENA1: RuntimeMaterials' ApplyClimate 0 - the colosseum wears its own pictures
+import { isUndercroftDoor, undercroftLocation, isArenaUndercroft, isArenaCity, inArenaCell, ARENA_REGION, ARENA_LOCATION, ARENA_BLOCK, ARENA_GATE_PEOPLE } from '../world/arenaCity.js';   // ARENA1: the undercroft's stair and its record, the city's cell; ARENA2: the colosseum's block in a built pixel, the Herald's place
+import { isFurnishing } from '../systems/decorFurnish.js';   // ARENA2: a moved house's furniture back among the furnishings
+import { createArenaBouts } from './arenaBouts.js';   // ARENA2: the bout on this screen - its law over real bodies, its crowd, its HUD
+import { createArenaSound } from '../systems/arenaSound.js';   // ARENA2: the crowd, heard - built from DAGGER.SND's own voices
+import { arenaScoreSongs, ARENA_SCORE_SILENCE } from '../systems/arenaScore.js';   // ARENA2: the march and the fanfare
+import { drawArenaHud } from '../ui/arenaHud.js';   // ARENA2: the versus bar, the crowd's meter, the clock
+import { setPlayerBout } from '../characters/enemyTargets.js';   // ARENA2: the bout team's player arm
+import { exhibitionFor, nextLadderBout, arenaLadderRestore, practiceBout } from '../systems/arenaLadder.js';   // ARENA2: the hour's exhibition, the ladder's next bout
+import { arenaReplaysRestore } from '../systems/arenaReplay.js';   // ARENA5: your ladder replay
+import { createArenaGate, nearArenaGate } from './arenaGate.js';   // ARENA3; ARENA4b: the Herald's choice and the pause door's banner too
+import { createArenaOnline } from './arenaOnline.js';   // ARENA4: the arena online - the hall, a relay's bout, the boards and the receipts
+import { arenaFloorRoomOf } from '../net/arenaLaw.js';   // ARENA4: a bout's room (ARENA4b: or the hour's exhibition's)
+import { accountArena } from '../net/accountClient.js';   // ARENA4: the arena's records on the account service
+import { fighterIdentity } from '../systems/arenaFighters.js';   // ARENA4: the relay's fighters billed by the bout's seed
+import { bossStandIn } from '../world/gateBoss.js';   // ARENA4: my opponent's stand-in for the formulas
+import { closeArenaDoor } from '../ui/arenaDoor.js';   // ARENA4: the window goes when a bout calls
+import { cityFloorCentre } from '../world/arenaFloor.js';   // ARENA2: the city floor's sand, in its block's frame
+import { ARENA_TEXT } from '../systems/arenaText.js';   // ARENA1: the Daggerfall Bank's letter
+import { moveArenaRecords, arenaHomeFor, emptyArenaScene } from '../systems/arenaMove.js';   // ARENA1: a deed whose house the arena took, moved once; ARENA4b: and an online home, by its owner's client
+import { loadModWorldData, ensureWorldDataPack, worldDataPacksMissing } from './modWorldData.js';   // RR3b; WD3: a pack a save's pins let in
+import { configureLayoutPins, layoutRecordsOf, pinsFrom, setLayoutPins, stampLayout, layoutStampOfPixel, HOME_LAYOUTS_WAIT_MS, HOME_LAYOUTS_RETRIES, PINS_DROPPED_LINE } from '../systems/layoutPins.js';   // WD3: a town keeps the layout a save's things were made in
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, getPixelFromPixelID, REGION_RACES, LOCATION_TYPES, CLIMATES, REGION_NAMES } from '../formats/mapsFile.js';   // SPAWNED-DUNGEONS1: the ocean gate and the synthesized location's region name
 import { questTracker } from '../ui/questTracker.js';   // GUIDE5: the quest the player follows - its places, marked
@@ -269,7 +290,7 @@ import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { isBackFacing, SIGHT_RADIUS, foeFrameDt } from '../characters/enemyMotor.js';   // OW6: SIGHT_RADIUS, a foe's own sight (a camp's is its own)   // DUEL1: a duel opponent's blow from behind me is a backstab's chance
 import { markFoeStruck } from '../ui/hudFoeTarget.js';   // DUEL1: my duel opponent's health, on the enhanced HUD's target bar
 import { lowerCondition, dfuBlowWear } from '../systems/equip.js';   // DUEL1: my weapon wears on a blow that landed on my opponent; BALANCE1: on the port's wear scale
-import { reportPlayerAttack } from '../combat/formulas.js';   // DUEL1: the defender's answer, on my HUD's damage numbers
+import { reportPlayerAttack, registerAttackResolutionListener } from '../combat/formulas.js';   // DUEL1: the defender's answer, on my HUD's damage numbers
 import { worldHoverFrame, hideWorldPlaque, destroyWorldPlaque, worldPlaqueOn, reticleAnchor } from '../ui/worldPlaque.js';   // WORLD-HOVER: the one seam each host calls, its hide door for the branches that return above it, and the teardown
 import { keysHeading, axesToward, tvOwnGrow } from '../player/travelCamera.js';   // OW-FACE: the body faces the keys' way under the Overworld; OW-PEERS: the others grown as the traveller is
 import { createTravelView, TV_MOVE_ACTIONS, TRAVEL_VIEW_TEXT, travelViewLine, travelTripLine, travelWalkRate, shipPassageRows } from './travelView.js';   // TV1: the travel view (bible/06-Systems/Travel-View.md) - the raised eye, its input and its ways out
@@ -471,7 +492,7 @@ import { jumpSpeedMultiplier, isEnhancedJumping, tallySkill, SKILLS } from '../s
 import { playerEntity, surfacePlayer, hurtPlayer, playerBlowCameToNothing, setDeathPresenter, presentPlayerDeath, setAvoidDeathHook, registerDuelFell, duelSpare, setStaffPowers, staffPowers, registerLevitateWard, registerFreeFlight } from '../characters/playerEntity.js';   // AUDIT-SEATS G5: a siege's ward on Levitate   // AUDIT-SEATS G4: a spectator's flight
 import { SOUND } from '../systems/soundClips.js';
 import { createWeaponRig, autoBuildArms, armIdentityOf, armBuiltFor, armsReady, sheetHolderOf, buildArmsFor, prebuildArmsForSave } from '../combat/weaponRig.js';   // MWA1: the arms at boot; MWA3: the identity the arm should stand for, beside the one it does; MW-EARLY: and before the world is read
-import { weaponPoseOf, applyWeaponPose, mergeWeaponPose, playerMeleeCanHit } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law, and SL-2's per-field merge with the mode host's live rig
+import { weaponPoseOf, applyWeaponPose, mergeWeaponPose, playerMeleeCanHit, registerPlayerSwingListener } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law, and SL-2's per-field merge with the mode host's live rig
 import { ArrowFlight, playerArrowHitFoe } from '../combat/arrowFlight.js';   // C13: visible exterior arrows; AUDIT 39 (#64): and the shaft that LANDS
 import { addItem, addGoldPieces, isGoldPieces, spendAmmoFor, carriedWeight } from '../systems/inventory.js';
 import { storesIn, spendStore, mintStores } from '../systems/naval/navalStores.js';
@@ -502,7 +523,7 @@ import { deriveTownSeats, seatAtMapId } from '../systems/townSeats.js';   // SEA
 import { createTownSeatBook, parseSeatCommand, parseSiegeCommand } from '../net/townSeatBook.js';   // SEAT1a: the seats open, confirmed, witnessed   // VOID: a moderator's /siege void
 import { seatArrivalLine, seatHallOf, seatBannerOf, boardTithePct } from '../net/townSeatLaw.js';   // SEAT1a: the seat's arrival line; SEAT-HALL: whose hall a palace is; CROWN-HALL: the throne room's banners; AUDIT SEATS-3 D3: a board's Tithe
 import { hallMay } from '../net/hallLaw.js';   // SEAT-HALL: a palace's keepers are a hall's
-import { createOnlineHomes } from '../systems/onlineHomes.js';   // HOME1: the account service's homes, one town at a time
+import { createOnlineHomes, moveArenaHomes, homeSceneName } from '../systems/onlineHomes.js';   // HOME1: the account service's homes, one town at a time; ARENA4b: the ones the arena displaced, moved
 import { townBoardRows, townHomeRows } from '../ui/townMapMarks.js';   // TOWN-MARKS: the Notice Boards and the player housing on the town map
 import { setSigilOnline, setSigilRenown } from '../systems/sigil.js';   // SIGIL1: a weapon won online carries a sigil, woken by my Renown
 import { setSetsDueling, setsDueling, drinkWorn, setSetsWearer } from '../systems/sigilSets.js';   // SET2: the duel's word - sets sleep in one; SET4: the drink, whole; SET5: the wearer a tooltip reads
@@ -629,7 +650,7 @@ const RACE_BY_NAME_BANK = Object.freeze(Object.fromEntries(
   Object.entries(BANK_TYPES).map(([race, bank]) => [bank, race])));
 import { startDisease, endDisease, diseaseCount } from '../systems/diseases.js';   // AUDIT 24: the quest bridge's MakePcDiseased / CurePcDisease seams; U41: the popup's diseased warning
 import { poisonCount } from '../systems/poisons.js';   // U41: the warning's other half
-import { discoverRandomLocation, discoverLocation, undiscoverBuilding, discoverBuilding, discoveredBuildings, hasDiscoveredLocationId, setDiscoveredBuildingCustomName, discoveryGeneration, restampQuestNames } from '../systems/discovery.js';   // G8 + TV: the guild map reveals + the entry writer; TK-ii: the quest-residence undiscover; AUDIT DISC28 QS-K2: the town map's re-stamp
+import { discoverRandomLocation, discoverLocation, undiscoverBuilding, discoverBuilding, discoveredBuildings, hasDiscoveredLocationId, setDiscoveredBuildingCustomName, discoveryGeneration, restampQuestNames, pruneDiscoveryLayouts } from '../systems/discovery.js';   // G8 + TV: the guild map reveals + the entry writer; TK-ii: the quest-residence undiscover; AUDIT DISC28 QS-K2: the town map's re-stamp
 import {
   WEATHER_TYPES, fogForWeather, scaleFogForDistance, skyOffsetForWeather, weatherSunlightScale,
   weatherRng, fogFactor, precipitationForWeather,
@@ -644,7 +665,7 @@ import { homeLookRemap, HOME_LOOK_BUILD_WAIT_MS } from '../world/homeLook.js';  
 import { createHomeYards } from './homeYards.js';   // HOME-YARD: the town's yards, and the owner's decorator outside
 import { loadIcon } from '../ui/textureCanvas.js';   // HOME-YARD: the decorator's pictures
 import { BLOCK_TYPES } from '../formats/blocksFile.js';   // HOME-YARD: the catalogue's town blocks
-import { GLOBAL_SCALE, DOOR_TYPE } from '../world/meshReader.js';
+import { GLOBAL_SCALE, DOOR_TYPE } from '../world/meshReader.js';   // ARENA1: DOOR_TYPE too - the undercroft's stair is a dungeon entrance
 import { homeLookSig } from '../net/homeLaw.js';
 import { setWeather, setHeardWeather, heardWeather, currentWeather, currentWeatherRaw, tickWeather, weatherRespawn, applyClimateWeather, importClimateWeathers, weatherJumpStamp, setSharedWeather, rollClimateWeathersForDay, sampleWeatherField, weatherCrossingStamp, currentFieldCells, currentWeatherIntensity, currentCloudBase, currentWindApproach, currentMapSystems, sampleWeatherIndoors, weatherArrivalStamp, mapGround } from '../systems/weatherSim.js';
 import { createDistantStorms, thunderSourceAt, THUNDER_SOURCE_M } from '../systems/distantStorms.js';   // WEATHER3d: the storms at a distance
@@ -683,7 +704,7 @@ import { LETHAL_HIT, bloodHit } from '../combat/bloodDecals.js';   // the trampl
 import { RIDING_VOLUME_SCALE } from '../systems/riding.js';   // AUDIT-RR F16: the trample clip at RidingVolumeScale
 import { setRrHostSeams, rrEnabled } from '../systems/rrInstall.js';   // RR2: what the riding component reads off the scene
 import { rrFortProximityLines, rrMasterArmorerDiscovery } from '../systems/rrQuestLine.js';   // RR3: the two PlayerGPS subscribers
-import { getBuildingVariant, setLastLocationKeyTo } from '../systems/worldDataVariants.js';   // RR3: the shop variant the quest set
+import { getBuildingVariant, setLastLocationKeyTo, makeLocationKey } from '../systems/worldDataVariants.js';   // RR3: the shop variant the quest set
 import { createDeepWatersHost, deepWatersOn, DEEP_WATERS_VENDOR, deepWatersDecorationSettings, deepWatersFishSettings, deepWatersEnemySettings, deepWatersLootSettings, deepWatersEnemySettingsNear, standsTheDeep, DEEP_SHARE_RADIUS } from './deepWatersHost.js';   // DW-B: Iliac Puddle No More (jet082) - the deep bay
 import { DeepWatersRenderer, surfaceScrollAt, DECORATION_CUTOFF } from '../render/deepWatersRender.js';   // DW-C: its seafloor and its surface; DW-E5: the billboard's cut-out the sunken piles keep
 import { clippedTerrainIndices } from '../world/deepWaterCap.js';   // DW-C: the clip's cull, out of the ground's own index set (FAR-CLIP1: the rest is the clip program's)
@@ -1113,6 +1134,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   let _locIndexGen = 0;
   const _hubRows = [];   // HUB1: the game's own rows, whatever a mod's addition later stands on their pixel
   const _bandPlacePixels = new Set();   // AUDIT OW4 B2 / AUDIT OW5 B2: the land a band may NOT stand on (below)
+  const _layoutKeyPixel = new Map();   // WD3: a town's location key -> its pixel in the index (the layout pins' refresh)
+  const _layoutKeyOfMapId = new Map();   // WD3: a town's map id (unsigned) -> its location key (a save's records name towns so)
   for (let r = 0; r < maps.regionCount; r++) {
     const region = maps.getRegion(r);
     if (!region) continue;
@@ -1123,6 +1146,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       const p = longitudeLatitudeToMapPixel(loc.mapTableData.longitude, loc.mapTableData.latitude);
       locationIndex.set(`${p.x},${p.y}`, loc);
       if (l < baseCount) { _hubRows.push(loc); _bandPlacePixels.add(`${p.x},${p.y}`); }   // OW6: the band's places
+      _layoutKeyPixel.set(makeLocationKey(r, l), `${p.x},${p.y}`);   // WD3
+      _layoutKeyOfMapId.set(loc.mapTableData.mapId >>> 0, makeLocationKey(r, l));   // WD3
       if (l < baseCount) {   // BOUNTY1: the game's own rows alone - a mod's addition stands on one client and not another
         _bountyLocPixels.add(`${p.x},${p.y}`);   // the pixels a hunt's ground may not be
         // a dungeon a board may name - the game's own, never a town's (a city's castle is the city's)
@@ -1135,6 +1160,17 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
     }
   }
+  // WD3: WHERE A SAVE'S RECORDS STAND, for the layout pins (systems/layoutPins.js) - a town by its map id (a deed, a
+  // room, a quest's site, a repair ticket), by its pixel (a Recall anchor, an inside save), by its discovery id
+  // (`<region>:<name>`), and the grid it is laid out from now (which mods change it). The index answers each; the
+  // map ids and names are the game's own (the town mods keep every one - measured over all 15,251 locations).
+  configureLayoutPins({
+    locationKeyOfMapId: (mapId) => _layoutKeyOfMapId.get(Number(mapId) >>> 0) ?? null,
+    locationKeyOfPixel: (x, y) => { const loc = locationIndex.get(`${x},${y}`); return loc && !loc.spawned ? makeLocationKey(loc.regionIndex, loc.locationIndex ?? 0) : null; },
+    gridOf: (key) => locationIndex.get(_layoutKeyPixel.get(key))?.exterior?.exteriorData?.blockNames ?? null,
+    locationTypeOf: (key) => locationIndex.get(_layoutKeyPixel.get(key))?.mapTableData?.locationType ?? null,   // AUDIT WD3 G2: the port's curation
+    locationKeyOfTown: (regionIndex, name) => { const l = maps.getRegion(regionIndex)?.mapNameLookup?.get(name); return l == null ? null : makeLocationKey(regionIndex, l); },
+  });
   // AUDIT OW4 B2: the game's own places, as the maps have them - the land a band may NOT stand on (filled above). Never the
   // live index: online it gains a spawned dungeon as each client's pixels build (and loses one on its expiry), so one
   // client's bands vanished as it walked up to them, re-walked from birth round the new place (a jump), and a peer three
@@ -1161,6 +1197,17 @@ export async function bootWorld(canvas, renderer, params, status) {
   // HOME-RENT: the service's homes door itself, for a home's rooms - read at its door, rented, offered, collected
   const homesApi = params.has('online') ? accountHomes({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }) : null;
   const onlineHomes = homesApi ? createOnlineHomes({ api: homesApi, character: () => characterIdOf(playerEntity) }) : null;
+  // WD3: THE TOWNS THAT HOLD AN ONLINE HOME, AND THE LAYOUT EACH WAS BOUGHT IN (net/homeLaw.js) - asked now, beside the
+  // boot's own loading, and answered into the layout pins before the first town stands (below, at the first build), so
+  // every client of the room stands a home's town as its homes were bought in it. An answer that does not come is asked
+  // again behind the play, and the towns it names are built again when it lands.
+  const homeLayoutsOnline = !!homesApi;
+  let _serverLayoutRecords = null;   // [{ locationKey, stamp, kind }] once the service has answered
+  let _homeLayoutsApplied = false;   // AUDIT WD3 R2: and once its pins stand (the packs they let in fetched, the towns rebuilt)
+  let _pinsGen = 0;
+  let _pinsDroppedSaid = false;   // AUDIT WD3 B6   // AUDIT WD3 R3: the latest applyLayoutPins - an older one overtaken sets nothing
+  let _homeLayoutsAsk = homesApi ? homesApi.layouts().catch(() => null) : null;
+  let _arenaHomesAsked = false;   // ARENA4b: the online homes the arena displaced, moved once a boot (moveArenaHomesOnline) - here, above the boot's first landing
   // HOME-LOOK (2026-09-30, asked: "The ability to choose the texture for the roof, walls, door, windows, etc"): A PLAYER'S
   // HOME IS DRAWN OUT OF ITS PIXEL'S MERGE, with its OWN texture table - the pixel's climate swaps and its owner's look
   // over them (world/homeLook.js) - so a look that lands, or changes, repaints it where it stands (refreshHomeLooks). A
@@ -3460,6 +3507,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     // shared remap seam takes that differs between the climate hosts
     // and the dungeon.
     const climateArchive = (archive, record) => applyClimate(archive, record, climateBase, season);
+    // WD3 (AUDIT WD3 G5): A TOWN'S BUILDINGS WEAR ITS LOCATION'S CLIMATE - DaggerfallLocation's ClimateUse.UseLocation
+    // (ApplyClimateSettings: Summary.Climate, from DFLocation.Climate), the terrain the pixel's. One and the same for
+    // every classic town (MAPS.BSA reads the location's climate off the pixel); a world-data file says its own (81 of
+    // Beautiful Villages' towns name a climate other than their pixel's), as DFU stands them.
+    const townClimateBase = dfLocation?.climate?.climateType ?? climateBase;
+    const townClimateArchive = townClimateBase === climateBase ? climateArchive : (archive, record) => applyClimate(archive, record, townClimateBase, season);
     const groundArchive = getTerrainGroundArchive(climate, season);   // the TERRAIN member, Desert winter-guarded (TerrainMaterialProvider.cs:126-133)
     const natureArchive = getNatureArchive(climate.natureArchive, season);
 
@@ -3571,6 +3624,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // mills (whose rotor turns) stay individual draws.
     const staticBuilder = new StaticBatchBuilder();
     const resolveTexKey = keyResolver(texRemap);
+    const ownTexKey = keyResolver(NO_CLIMATE_REMAP);   // ARENA1: a climate-free model (RuntimeMaterials, ApplyClimate 0) wears its own pictures in the merge
     const pixelGates = [];   // AUDIT 64 F14: {gate, entry, local, bucketKey} - this pixel's DaggerfallCityGates
     made.cityGates = pixelGates;   // BUILD-FAIL1
     // AUDIT 64 F11: this pixel's StaticBuildings (RMBLayout.cs:864-882),
@@ -3579,6 +3633,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const windmills = []; // WM2b: { local, state } - mills whose rotor turns each frame
     made.windmills = windmills;   // BUILD-FAIL1
     const holdBlocks = [];   // WOD4: the origin matrix of each block DungeonExterior would find by name
+    let arenaOrigin = null;   // ARENA2: the colosseum's block's origin (pixel-local) - the city floor's frame
     let population = null;   // T2 towns: this pixel's wandering pool
     let locOrigin = null;    // the location origin, pixel-local
     let personBatches = null;
@@ -3620,6 +3675,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         const originMatrix = trs(
           locLocal[0] + b.originX, locLocal[1], locLocal[2] + b.originZ, 0, 0, 0);
         if (wod && b.blockName === PRIVATEERS_HOLD_BLOCK) holdBlocks.push(originMatrix);   // WOD4
+        if (b.blockName === ARENA_BLOCK) arenaOrigin = [originMatrix[12], originMatrix[13], originMatrix[14]];   // ARENA2
         // AUDIT 64 F11: DFU's `firstModel` is a LOCAL, reset once per
         // subrecord inside AddModels (RMBLayout.cs:824-832), and
         // AddModels runs once per PLACED block with a fresh
@@ -3638,7 +3694,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // player and a world-keyed phase would re-seed every mill in
         // sight on every shift.
         if (b.layout.windmills.length && isEnhanced()) {
-          const parts = await getWindmillMeshes(climateBase, season === SEASON.Winter);
+          const parts = await getWindmillMeshes(townClimateBase, season === SEASON.Winter);
           if (!millParts) {
             millParts = parts;
             console.log(`[windmills] first mill streamed in (${b.blockName})`);
@@ -3660,13 +3716,15 @@ export async function bootWorld(canvas, renderer, params, status) {
           if (placed.enhancedOnly && !isEnhanced()) continue;
           const gpu = await getGpuMesh(placed.modelIdNum);
           if (!gpu) continue;
-          await remapSubMeshes(gpu.subMeshes, texRemap, climateArchive, pipeline);
+          const climateFree = isClimateFreeModel(placed.modelIdNum);   // ARENA1: the colosseum - never swapped, nor a key of the pixel's table
+          if (!climateFree) await remapSubMeshes(gpu.subMeshes, texRemap, townClimateArchive, pipeline);
           const local = multiply(originMatrix, placed.matrix);
           if (WATER_SOURCE_MODELS.includes(placed.modelIdNum)) pixelSprings.push({ pos: [local[12], local[13], local[14]], dry: false });   // SURV3: a trough is a water source
           const cpu = cpuModels.get(placed.modelIdNum);
           const box = transformedAabb(archAabb(placed.modelIdNum, cpu.positions), local);
           unionBox(box);
           const entry = { gpu, local, _box: box, _order: placed.modelIdNum };   // EV6: sort key
+          if (climateFree) entry.texRemap = NO_CLIMATE_REMAP;   // ARENA1: drawn by its own table (an empty one - never the pixel's)
           // HOME-LOOK / HOME-YARD
           const homeKey = Number.isSafeInteger(placed.recordIndex) ? makeBuildingKey(b.x, b.y, placed.recordIndex) : null;
           if (homeKey != null) {
@@ -3687,7 +3745,7 @@ export async function bootWorld(canvas, renderer, params, status) {
             pixelHomeKeys.add(homeKey);
           }
           models.push(entry);
-          if (!entry._home && !isCityGate(placed.modelIdNum) && cpu.normals && cpu.uvs) { staticBuilder.add(cpu, local, resolveTexKey); entry._batched = true; }   // PERF4: the remap for this model's textures is in the map by now (awaited above); HOME-LOOK: a home stays out
+          if (!entry._home && !isCityGate(placed.modelIdNum) && cpu.normals && cpu.uvs) { staticBuilder.add(cpu, local, climateFree ? ownTexKey : resolveTexKey); entry._batched = true; }   // PERF4: the remap for this model's textures is in the map by now (awaited above); HOME-LOOK: a home stays out
           await breather.breathe();   // PERF7: a warm build gives the frame back every few milliseconds
           // AUDIT 64 F14: a city gate takes a collider bucket of its own
           // (the pixel's shared bucket has no per-mesh removal), keyed
@@ -3735,7 +3793,7 @@ export async function bootWorld(canvas, renderer, params, status) {
             const otherGpu = await getGpuMesh(otherId);
             const otherCpu = cpuModels.get(otherId);
             if (otherGpu && otherCpu) {
-              await remapSubMeshes(otherGpu.subMeshes, texRemap, climateArchive, pipeline);
+              await remapSubMeshes(otherGpu.subMeshes, texRemap, townClimateArchive, pipeline);
               unionBox(transformedAabb(archAabb(otherId, otherCpu.positions), local));
             }
             pixelGates.push({
@@ -3772,7 +3830,7 @@ export async function bootWorld(canvas, renderer, params, status) {
                 // reference interior is summer-skinned in the depths
                 // of Evening Star; the exterior season stopping at the
                 // threshold is the whole of that law.
-                recordIndex: placed.recordIndex, climateBase, season: INTERIOR_SEASON,
+                recordIndex: placed.recordIndex, climateBase: townClimateBase, season: INTERIOR_SEASON,
               });
             }
           }
@@ -4043,7 +4101,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         for (const hm of HOLD_MODELS) {
           const gpu = await getGpuMesh(hm.modelId);
           if (!gpu) continue;
-          await remapSubMeshes(gpu.subMeshes, texRemap, climateArchive, pipeline);
+          await remapSubMeshes(gpu.subMeshes, texRemap, townClimateArchive, pipeline);
           const local = multiply(origin, holdModelMatrix(hm));
           const cpu = cpuModels.get(hm.modelId);
           const box = transformedAabb(archAabb(hm.modelId, cpu.positions), local);
@@ -4135,7 +4193,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT 26 (F019): the pixel's street StaticNPCs - identity inputs
     // + the billboard extent the activation ray needs, resolved the
     // way the interior host resolves its people's
-    // (interiorContext.js:444-465). FLATS.CFG is awaited because
+    // (interiorContext.js:445-466). FLATS.CFG is awaited because
     // SetLayoutData's exterior overload reads it for the gender
     // (StaticNPC.cs:185-194); loadFlats never throws and is warmed with
     // the scene, so this is a coalesced wait. The list rides the pixel,
@@ -4250,6 +4308,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       forest: { base: climate.natureArchive, archive: natureArchive, trees: pixelTrees.filter((t) => forestGroups.has(t.group)), groups: forestGroups },
       wodSpawners, // WOD2: LoadObject's spawn markers, for WOD3
       privateersHold,   // WOD4: the camp's block origins and its Start's state, null off the Hold
+      arena: arenaOrigin,   // ARENA2: the colosseum's block origin, pixel-local - null off Daggerfall's cell (4,3)
       wodLife,     // AUDIT BRANCH (WoD) L1-3/m1: the terrain's identity, which a late pile and the carry name
       gateClearKey: gateClear?.key ?? null,   // GATE-CLEAR: the gate's clearing this pixel was built against (null: none)
       gateRefused: gateLedger.refused,   // GATE-CLEAR: whether that clearing cost it a site or a piece
@@ -4618,6 +4677,19 @@ export async function bootWorld(canvas, renderer, params, status) {
   const queue = state.init(startPixel.x, startPixel.y);
   if (wod) wodSlots.step(startPixel.x, startPixel.y, state.terrainDistance, StreamingWorldState.onMap);   // AUDIT BRANCH (WoD) L1-3: the first UpdateWorld
   _wodArrival = wodArrivalOf(queue);   // WOD6: the first world is an InitWorld too
+  // WD3: online, the homes' towns in their layouts before the first town is built (the ask went out at the boot's top)
+  if (_homeLayoutsAsk) {
+    status('reading the towns of the homes');
+    const ask = _homeLayoutsAsk;
+    const heard = await Promise.race([ask, new Promise((res) => setTimeout(() => res(null), HOME_LAYOUTS_WAIT_MS))]);
+    _homeLayoutsAsk = null;
+    const landing = takeHomeLayouts(heard);
+    if (landing) await landing;
+    else {
+      ask.then((late) => { if (_serverLayoutRecords === null) takeHomeLayouts(late); });   // AUDIT WD3 O2: the first ask's late answer is still heard
+      askHomeLayoutsAgain(1);
+    }
+  }
   let building = false;
 
   // A1: THE SEASON TURNS UNDER A STANDING WORLD.
@@ -8222,6 +8294,156 @@ export async function bootWorld(canvas, renderer, params, status) {
     },
   });
 
+  // ═══ ARENA2 (2026-10-02, Mac: "Players can choose to watch AI fights ... and climb esclating tiers of opponents";
+  // "During fights, the crowd is present and can cheer/boo you"): THE ARENA'S BOUTS ON THIS SCREEN ═══════════════════
+  // One driver (scenes/arenaBouts.js) for both floors: the CITY's colosseum (cell 4,3 of Daggerfall - this host's own
+  // pool, an exhibition on the hour of the game's clock while the player is near), and the floor's INSTANCE (the
+  // dungeon arm's made level - scenes/worldModes.js arenaFloorStage - a ladder bout, or an exhibition watched from the
+  // stands). The ladder rides the save (playerEntity.arenaLadder, systems/save.js). bible/11-Multiplayer/Arena.md.
+  const arenaSound = createArenaSound(audio);
+  /** The healers (the duel's own heal, said by the Herald rather than the duel's line). */
+  const arenaHeal = () => {
+    if (!(playerEntity.health > 0) || modes?.deathUp?.()) return;
+    playerEntity.health = playerEntity.maxHealth;
+    playerEntity.fatigue = maxFatigue(playerEntity);
+    playerEntity.magicka = playerEntity.maxMagicka ?? playerEntity.magicka;
+    surfacePlayer();
+  };
+  /** ARENA4: the arena online (scenes/arenaOnline.js) - made once the online half of this host stands (below the
+   *  session's door); null before it, and every arena door here reads it so. */
+  let arenaOnline = null;
+  const arenaBouts = createArenaBouts({
+    now: () => performance.now(), playerEntity, setPlayerBout,
+    say: (l) => setMidScreenText(l, 2.6),
+    notice: (lines) => { for (const l of lines) townTalk.say(l); },
+    sound: arenaSound, drawHud: (m, o) => drawArenaHud(m, o),
+    renderer, getTexture, uploadRecordFrame,
+    pay: (g) => addGold(playerEntity, g),
+    heal: arenaHeal,
+    crime: () => { setCrimeCommitted(playerEntity, CRIMES.Assault); _crimeResponse(); },   // the watch for a brawler, by the street's own law
+    gameMinutes: () => worldMinutes(),   // ARENA3: the season a ladder bout's points go to, the laurel, the Records page
+    exhibitionVerdict: (hour, side) => arenaGate.verdictSeen(hour, side),   // ARENA3: the bookmaker settles by what was seen
+  });
+  // ARENA-FIX 9/10: every attack's resolution and every swing of mine, told to the bout (its misses, its crits)
+  registerAttackResolutionListener('arena', (r) => arenaBouts.attackResolved(r));
+  registerPlayerSwingListener('arena', (n) => arenaBouts.playerSwing(n));
+  // ARENA3: the banners' recruiters (and the book's bookmaker) at the gate - one home for both hosts (scenes/arenaGate.js)
+  const arenaGate = createArenaGate({
+    playerEntity, gameMinutes: () => worldMinutes(), showOverlay: (w) => townTalk.showOverlay(w), say: (l) => townTalk.say(l),
+    liveHour: () => arenaBouts.hour(), begun: () => arenaBoutBegun(),
+    // the Arena window's Watch and Fight are the Herald's own, and are pressed only at the gate
+    heraldAct: (a) => arenaHeraldAct(a), atGate: () => (modes?.mode ?? 'exterior') === 'exterior' && nearArenaGate(player.pos, arenaHeraldAt()),
+    onSand: () => (arenaBouts.stageKind() === 'city' ? arenaBouts.onSand() : null),
+    online: () => arenaOnline,   // ARENA4: the window's online half, its presses, the recruiters' banners on the account
+  });
+  /** The exhibition standing here has had the word (the book on it is shut) - ARENA4b: this screen's own or the relay's
+   *  mirrored (each carries its hour). */
+  const arenaBoutBegun = () => { const b = arenaBouts.bout(); return arenaBouts.hour() != null && !!b && !['call', 'walk', 'count'].includes(b.phase); };
+  /** THE CITY'S FLOOR as a stage: the colosseum's sand where its block stands in a built pixel (null off it), its
+   *  fighters through this host's own pool - `loose` (no cap), `transient` (no save holds them), `managed` (no cull),
+   *  no champion, no loot - and the ground under a seat asked of the collider from above. */
+  const _arenaCityC = [0, 0, 0];
+  const arenaCityPixel = () => { for (const p of built.values()) if (p.arena) return p; return null; };
+  const arenaCityStage = {
+    kind: 'city',
+    centre: () => {
+      const p = arenaCityPixel();
+      if (!p) return _arenaCityC;
+      const t = state.pixelTranslation(p.px, p.py), f = cityFloorCentre();
+      _arenaCityC[0] = t[0] + p.arena[0] + f[0]; _arenaCityC[1] = t[1] + p.arena[1] + f[1]; _arenaCityC[2] = t[2] + p.arena[2] + f[2];
+      return _arenaCityC;
+    },
+    // ARENA4b: a relay's fighter (`mirror`) is a body every screen stands its own copy of - `placed`, so the cell's stream
+    // carries it to nobody (each peer mirrors the same bout), the cap and the cull leave it be
+    spawn: (mobile, feet, o) => exteriorFoes.spawnFoe(mobile, feet, { yaw: o.yaw, gender: o.gender, level: o.level, loose: true, transient: true, managed: true, champion: null, ...(o.mirror ? { placed: true } : {}) })
+      .then((f) => { if (f) { f.entity.bout = o.bout; f.entity.items = []; } return f; }),
+    remove: (f) => exteriorFoes.removeFoe(f),
+    heightAt: (x, z) => { const top = _arenaCityC[1] + 30; const d = collider.raycast([x, top, z], [0, -1, 0], 60); return Number.isFinite(d) ? top - d : null; },
+  };
+  /** Where the Herald stands, in the scene (his block record's place in the colosseum's block), or null. */
+  function arenaHeraldAt() {
+    const p = arenaCityPixel();
+    const h = ARENA_GATE_PEOPLE.find((g) => g.role === 'herald');
+    if (!p || !h) return null;
+    const t = state.pixelTranslation(p.px, p.py);
+    return [t[0] + p.arena[0] + h.x * 0.025, t[1] + p.arena[1], t[2] + p.arena[2] + (h.z + 4096) * 0.025];
+  }
+  /** THE CITY'S SCHEDULE: an exhibition on the hour (systems/arenaLadder.js exhibitionFor - the same hour, the same bout,
+   *  on every screen) while I am outside near the colosseum; walked away from, it goes, unsaid, and comes back from its
+   *  call if I return inside its window. Answers the stage this frame stands (the instance's when I am in it). */
+  const ARENA_NEAR_M = 150, ARENA_FAR_M = 260;
+  function arenaStageNow() {
+    const mode = modes?.mode ?? 'exterior';
+    if (mode === 'dungeon') return modes?.arenaFloorStage?.() ?? modes?.arenaPitStage?.() ?? null;   // ARENA-FIX 4: the undercroft's training pit
+    if (mode !== 'exterior' || !walkMode || !playerSpawned || !arenaCityPixel()) return null;
+    const c = arenaCityStage.centre();
+    const d = Math.hypot(player.pos[0] - c[0], player.pos[2] - c[2]);
+    if (d > (arenaBouts.stageKind() === 'city' ? ARENA_FAR_M : ARENA_NEAR_M)) return null;
+    return arenaCityStage;
+  }
+  let _arenaFrames = 0;   // the probe's count of the frames the arena was ticked in
+  function arenaFrame(dt) {
+    _arenaFrames++;
+    arenaOnline?.tick();   // ARENA4: the receipts, the hall, my `in` on a relay's sand
+    const stg = arenaStageNow();
+    arenaBouts.setStage(stg);
+    if (stg === arenaCityStage && !arenaBouts.bout() && !arenaBouts.pending() && !gamePaused()) {
+      const ex = exhibitionFor(worldMinutes());
+      // ARENA4b: ONLINE THE HOUR'S BOUT IS THE RELAY'S - its room watched from the city's sand (scenes/arenaOnline.js
+      // watchCity), every screen the one bout; offline, or on a relay before it, this screen's own seeded bout as ever
+      if (arenaOnline?.exhibitions?.()) arenaOnline.watchCity(ex);
+      else if (ex?.open && ex.hour !== _arenaHourRun) { _arenaHourRun = ex.hour; arenaBouts.ask({ where: 'city', kind: 'exhibition', ex }); }
+    }
+    if (!stg) { arenaBouts.frame(dt, {}); if (!arenaBouts.bout()) arenaSound.stop(); return; }
+    const inDungeon = (modes?.mode ?? 'exterior') === 'dungeon';
+    const rig = inDungeon ? modes?.dungeonCtx?.weaponRig?.() : weaponRig;
+    arenaBouts.frame(gamePaused() ? 0 : dt, {
+      playerFeet: player.pos, playerYaw: cam.yaw, sheathed: rig?.playerWeapon ? !!rig.playerWeapon.sheathed : null,   // ARENA5: my facing, for the replay
+      stamina: (playerEntity.fatigue ?? 0) / Math.max(1, maxFatigue(playerEntity)),
+      hidden: gamePaused() || !!townTalk.hudHidden, touch: isTouchDevice(),
+    });
+  }
+  let _arenaHourRun = null;   // the hour whose exhibition this screen has started (one start an hour, a walk back restarts it)
+  /** THE HERALD'S CHOICE (systems/arenaHerald.js): watch, fight, the fighters' hall, leave - answered here, the
+   *  instance and the undercroft through the mode machine. True: his choice is up. */
+  function arenaHerald() {
+    const sand = arenaBouts.stageKind() === 'city' ? arenaBouts.onSand() : null;
+    // ARENA4b: through the gate (scenes/arenaGate.js heraldChoice) - online the account's climb and banner, not the save's
+    const ch = arenaGate.heraldChoice({ cityBout: sand, healthShare: (playerEntity.health ?? 0) / Math.max(1, playerEntity.maxHealth ?? 1), league: playerEntity.arenaLeague });   // ARENA3: and the banner
+    townTalk.showOverlay(new ChoiceWindow({ lines: ch.lines, options: ch.options.map((o) => ({ code: o.code, label: o.label ?? undefined, action: () => arenaHeraldAct(o.act) })) }));
+    return true;
+  }
+  /** WHAT THE HERALD DOES on a choice - his own, and the Arena window's Watch and Fight (scenes/arenaGate.js): to the
+   *  floor's instance to watch the hour's exhibition or fight the ladder's next bout, down to the fighters' hall, or
+   *  (ARENA3) the Arena window. */
+  function arenaHeraldAct(a) {
+    if (a === 'watch') {
+      const ex = exhibitionFor(worldMinutes());
+      if (!ex) return;
+      if (arenaOnline?.exhibitions?.()) { arenaBouts.dismiss(); arenaOnline.watchExhibition(ex); return; }   // ARENA4b: the relay's bout, from the stands of its room
+      _arenaHourRun = ex.hour;
+      arenaBouts.dismiss();
+      arenaBouts.ask({ where: 'floor', kind: 'exhibition', ex });
+      modes?.enterArenaFloor?.('watch');
+    } else if (a === 'fight') {
+      // ARENA4: ONLINE THE LADDER IS THE ACCOUNT'S - its next bout fought on the relay (scenes/arenaOnline.js)
+      if (arenaOnline?.live()) { const r = arenaOnline.fightLadder(); if (!r.ok && r.text) townTalk.say(r.text); return; }
+      const next = nextLadderBout(arenaLadderRestore(playerEntity.arenaLadder));
+      if (!next) return;
+      arenaBouts.ask({ where: 'floor', kind: 'ladder', next });
+      modes?.enterArenaFloor?.('ladder');
+    } else if (a === 'hall') modes?.enterArenaUndercroft?.();
+    else if (a === 'window') arenaGate.openWindow('bouts');   // ARENA3
+    else if (a === 'replay' || String(a).startsWith('replay:')) {
+      // ARENA5: YOUR LADDER REPLAY (systems/arenaReplay.js) - a bout the records keep (the newest, or the Records page's
+      // pick), watched from the stands of the floor's instance
+      const rec = arenaReplaysRestore(playerEntity.arenaReplays)[Number(String(a).split(':')[1] ?? 0) || 0];
+      if (!rec) return;
+      arenaBouts.dismiss();
+      if (arenaBouts.askReplay(rec)) modes?.enterArenaFloor?.('watch');
+    }
+  }
+
   // The classic catch-up loop (PlayerEntity.Update:486-492): per
   // elapsed game minute, one intermittent roll; break on a spawn.
   // Fast travel resets the anchor (PreventEnemySpawns parity - DFU
@@ -9023,10 +9245,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2897 mounts the same one, gated on
+  // and dungeonContext.js:2935 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:6859
+  // that context through modes.dungeonCtx - so worldModes.js:7004
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -9399,6 +9621,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     cursorOff: () => setCursorActive(false), stick: () => touch?.axes() ?? gamepad?.axes() ?? null,
     say: (l) => townTalk.say(l), refusal: (w) => accountRefusalText(w), openSlot: (o) => townTalk.showOverlay(o),
     look: { preview: (mapId, bk, look) => previewHomeLook(mapId, bk, look), season: () => season },   // HOME-LOOK
+    heard: () => !homeLayoutsOnline || (_homeLayoutsApplied && !worldDataPacksMissing().length),   // WD3 (AUDIT WD3 R6, B1): the homes' towns' layouts, heard and standing
     now: () => Date.now(),
   }) : null;
   let _farmSyncT = 0;   // BOUNTY-FARM: the pool is brought in line twice a second
@@ -10258,7 +10481,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  exterior origin slides the pixel a step west on any negative local
    *  x and a step south on any negative local z - one block off the
    *  start of Privateer's Hold is enough. That is what made Recall's
-   *  IsSameInterior dungeon arm (teleportAnchor.js:163-166) unable to
+   *  IsSameInterior dungeon arm (teleportAnchor.js:169-172) unable to
    *  answer true against an anchor set in the room the player is
    *  standing in: setRecallAnchor already took the streamer's pixel
    *  (:2777) and this read did not. The streamer is frozen while a mode
@@ -11007,7 +11230,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // reposition arm (:615-620) - say the line and keep the
         // teleport's landing, never the inside position on the
         // outside collider.
-        landed = !!(await modes?.restoreInterior?.(a.interior, anchorLanding(a)));
+        landed = !!(await modes?.restoreInterior?.(a.interior ? { ...a.interior, layout: a.layout } : a.interior, anchorLanding(a)));   // WD3 (AUDIT WD3 S5): with the layout the anchor was set in
         if (!landed) townTalk.say('Building has no exterior doors. Repositioning player.');
       }
       if (!landed) _wodInside = false;   // WOD6: it landed outside after all
@@ -11626,6 +11849,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the building with its pools alive, and P8's unified frame makes
     // the inside position a plain world position.
     const interior = modes?.interiorSaveData?.() ?? null;
+    // WD3: the load re-enters this building by its door, which names a building only in its town's layout - the
+    // layout rides with it, and the load keeps the town in it (applyLayoutPins); none for classic
+    if (interior) { const at = playerTravelPixel(); stampLayout(interior, layoutStampOfPixel(at.x, at.y)); }
     // AUDIT 63 F24: ...and the interior host's LIVE ENEMIES with it.
     // SaveLoadManager.cs:865's enemyData is unconditional, and the
     // fourth host's two pools rode nothing. Natives through the same
@@ -11644,7 +11870,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:7975), so exterior mode and a
+    // composer, dungeonContext.js:8103), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -11742,6 +11968,220 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  restore below reads. Null when there is none. */
   function pickedSaveSnap({ key = null, mostRecent = false } = {}) {
     return key != null ? loadSlot(key) : mostRecent ? (mostRecentRestorable()?.snap ?? null) : null;
+  }
+  /** WD3: the service's answer of every town holding a home and its layout (homes.js homeLayouts), into the pins'
+   *  records - answers the pins' landing, or null for no answer. A town this map does not hold (a mod's new location)
+   *  holds nothing. */
+  function takeHomeLayouts(heard) {
+    const towns = heard?.ok ? heard.data?.towns : null;
+    if (!Array.isArray(towns)) return null;
+    _serverLayoutRecords = towns.filter((t) => Array.isArray(t)).map(([mapId, layout]) => ({
+      locationKey: _layoutKeyOfMapId.get(Number(mapId) >>> 0) ?? null, stamp: typeof layout === 'string' ? layout : undefined, kind: 'house',
+    }));
+    return applyLayoutPins().then((set) => {
+      if (!set) return;   // overtaken by a later answer, which marks it
+      _homeLayoutsApplied = true;
+      modes?.homeLayoutsLanded?.();   // AUDIT WD3 R7: a home's room the player stands in is furnished now
+      void moveArenaHomesOnline();   // ARENA4b: Daggerfall stands in its homes' layout now - a home the arena displaced is picked in it
+    }).catch((e) => {
+      console.warn('[layout] the homes\' towns:', e?.message ?? e);
+      _serverLayoutRecords = null;   // not applied: asked again
+      askHomeLayoutsAgain(1);
+    });
+  }
+  /** WD3: an answer that did not come in time is asked again, a few times, further apart; the towns it pins are built
+   *  again where they stand (applyLayoutPins). */
+  // AUDIT WD3 O2: never given up - until the towns are heard no home is bought, and no home's room furnished (its
+  // building key names a building of the town's layout, which may not be the one standing; worldModes.js
+  // homeLayoutsHeard), so the asking goes on at the longest wait once the first few have passed.
+  function askHomeLayoutsAgain(attempt) {
+    if (!homesApi || _serverLayoutRecords !== null) return;
+    if (attempt === HOME_LAYOUTS_RETRIES + 1) console.warn('[layout] the homes\' towns are not heard yet - no home is bought or furnished until they are; still asking');
+    setTimeout(() => {
+      if (_serverLayoutRecords !== null) return;
+      homesApi.layouts().catch(() => null).then((heard) => { if (!takeHomeLayouts(heard)) askHomeLayoutsAgain(attempt + 1); });
+    }, HOME_LAYOUTS_WAIT_MS * Math.min(attempt, HOME_LAYOUTS_RETRIES));
+  }
+  /** AUDIT WD3 O1: the towns asked now (a claim the service refused for its town's layout), their pins answered. */
+  let _hearing = null, _heardAskedAt = -Infinity;
+  function hearHomeLayouts() {
+    if (!homesApi) return Promise.resolve(null);
+    // AUDIT WD3 B7: one ask at a time, and not again within HOME_LAYOUTS_WAIT_MS - a door pressed again and again asks once
+    if (_hearing) return _hearing;
+    if (Date.now() - _heardAskedAt < HOME_LAYOUTS_WAIT_MS) return Promise.resolve(null);
+    _heardAskedAt = Date.now();
+    _hearing = homesApi.layouts().catch(() => null).then((heard) => takeHomeLayouts(heard)).finally(() => { _hearing = null; });
+    return _hearing;
+  }
+  /** ARENA1 (Mac: "Move them to a new house"): a deed whose house stood in Daggerfall's cell (4,3) - where the arena
+   *  stands now, in every layout - moved once to a house of its kind in the city, with everything in it
+   *  (systems/arenaMove.js). Offline only; an online home is the account service's (ARENA4). */
+  /** ARENA1 / ARENA4b: DAGGERFALL AS IT STANDS NOW for a move out of the arena's cell - its buildings (the arena's cell
+   *  holds none), its map id, the type the old block gave a key, its place in the discoveries - or null where the city
+   *  stands no arena (a read of it that failed). One read for the offline deed and the online home alike. */
+  function arenaCityNow() {
+    const city = maps.getLocation(ARENA_REGION, ARENA_LOCATION);
+    const ed = city?.exterior?.exteriorData;
+    if (!ed?.arenaTook) return null;
+    const list = [];
+    for (let y = 0; y < ed.height; y++) for (let x = 0; x < ed.width; x++) {
+      const dfBlock = blocks.getBlockByName(maps.getRmbBlockName(city, x, y));
+      if (dfBlock) list.push({ dfBlock, x, y });
+    }
+    const summaries = buildingSummaries(city.exterior.buildings, list, { locationIndex: city.locationIndex, locationName: city.name, regionName: city.regionName });
+    const took = blocks.getBlockByName(ed.arenaTook);
+    const locId = `${city.regionIndex}:${city.name}`;
+    return {
+      city, summaries, mapId: city.mapTableData.mapId, locId,
+      oldTypeOf: (key) => took?.rmbBlock?.fldHeader?.buildingDataList?.[key & 0xff]?.buildingType ?? null,
+      // the cell's discovered buildings are forgotten whatever the save holds - the cell has none to find now
+      forgetCell: () => { for (const b of discoveredBuildings(locId)) if (inArenaCell(b.buildingKey)) undiscoverBuilding(locId, b.buildingKey); },
+    };
+  }
+  /** ARENA2 / ARENA4b: what stood in a moved house, back where it lives - the owner's own things (furniture among the
+   *  furnishings, the rest in the pack), and the catalogue's placed pieces paid back whole into the city's bank account. */
+  function arenaGiveOwn(items) { for (const it of items) { if (isFurnishing(it)) (playerEntity.furnishings ??= []).push(it); else addItem(playerEntity.items ??= [], it); } }
+  function arenaRefund(gold) {
+    playerEntity.bankAccounts ??= createBankAccounts(BANK_REGION_COUNT);
+    const a = playerEntity.bankAccounts[goldRegion(playerEntity.bankAccounts, ARENA_REGION)] ?? null;
+    if (a) a.accountGold = (Number.isFinite(a.accountGold) ? a.accountGold : 0) + gold; else addGold(playerEntity, gold);
+  }
+  function moveArenaDeed() {
+    try {
+      const now = arenaCityNow();
+      if (!now) return null;
+      const { summaries, mapId, locId, forgetCell } = now;
+      const held = new Set([
+        ...(playerEntity.rentedRooms ?? []).filter((r) => r?.mapId === mapId).map((r) => r.buildingKey),
+        ...(questBridge?.machine?.getAllActiveQuestSites?.() ?? []).filter((q) => q?.mapId === mapId).map((q) => q.buildingKey),
+        ...(playerEntity.otherItems ?? []).map((it) => it?.repairData).filter((d) => d?.mapId === mapId).map((d) => d.buildingKey),
+      ]);
+      forgetCell();
+      const moved = moveArenaRecords({
+        houses: playerEntity.houses, summaries, held, scenes: (playerEntity.sceneCache ??= createSceneCache()),   // _sceneCache's own law - that const is declared after the boot walk reaches here
+        oldTypeOf: now.oldTypeOf,
+        isActiveQuestBuilding: (b) => !!questBridge?.machine?.isActiveQuestBuilding?.(mapId, b.buildingKey, b.buildingType),
+      }, {
+        undiscoverCell: forgetCell,
+        discover: (to) => discoverBuilding(locId, to, `${playerEntity.name ?? ''}'s residence`),
+        addNote: (to) => questBridge?.notebook?.addNote(ARENA_TEXT.deedMovedNote.replace('%s', to.name || 'a house in Daggerfall')),
+        notice: () => { const show = () => { try { townTalk.showOverlay(new ActionTextBox([...ARENA_TEXT.deedMoved])); } catch { setTimeout(show, 500); } }; show(); },
+        // ARENA2: what stood in the old house - the owner's own things back where they live (furniture among the
+        // furnishings, the rest in the pack), the catalogue's placed pieces paid back whole into the city's bank account
+        giveOwn: arenaGiveOwn,
+        refund: arenaRefund,
+      });
+      if (moved) console.log(`[arena] the deed to house ${moved.from} moved to ${moved.to} (${moved.name})`);
+      return moved;
+    } catch (e) {
+      console.warn('[arena] the displaced deed could not be moved:', e?.message ?? e);
+      return null;
+    }
+  }
+  /** ARENA4b (Mac: "Move them to a new house"): ONLINE, A HOME OF THIS CHARACTER'S (or a guild hall it keeps) IN
+   *  DAGGERFALL'S CELL (4,3), moved by this client - picked here by the offline move's rule over the city as its homes'
+   *  layout stands it (systems/arenaMove.js arenaHomeFor), carried by the account service (server-account/src/homes.js
+   *  arenaMoveHome) inside a realm act, its old scene emptied into the new house as the offline deed's is, the bank's
+   *  letter and the notebook's line (systems/onlineHomes.js moveArenaHomes). Once a boot, after the homes' towns land and
+   *  once the world stands (its checkpoint can write): before that a realm act's checkpoint would refuse. */
+  async function moveArenaHomesOnline() {
+    if (_arenaHomesAsked || !onlineHomes || !homesApi) return null;
+    _arenaHomesAsked = true;
+    for (let i = 0; !(playerSpawned && modes) && i < 240; i++) await new Promise((r) => { setTimeout(r, 250); });   // `modes` is declared far below: read only once the world stands
+    try {
+      const now = arenaCityNow();
+      const me = characterIdOf(playerEntity);
+      if (!now || !me || !playerSpawned) return null;
+      const scenes = (playerEntity.sceneCache ??= createSceneCache());
+      const moved = await moveArenaHomes({
+        homes: onlineHomes, api: homesApi, mapId: now.mapId >>> 0, character: me,
+        realm: realmSession ? { act: (o) => realmGoldAct({ ...o, session: realmSession, checkpoint: () => onlineCheckpoint() }) } : null,
+        pick: (from, held) => arenaHomeFor({ mapId: now.mapId, oldKey: from, oldType: now.oldTypeOf(from) }, now.summaries, {
+          held, isActiveQuestBuilding: (b) => !!questBridge?.machine?.isActiveQuestBuilding?.(now.mapId, b.buildingKey, b.buildingType),
+        }),
+        nameOf: (key) => now.summaries.find((b) => b.buildingKey === key)?.name ?? '',
+        emptyScene: (from, to) => emptyArenaScene(scenes, homeSceneName(now.mapId, from), homeSceneName(now.mapId, to)),
+        hooks: {
+          giveOwn: arenaGiveOwn, credit: arenaRefund,
+          discover: (key, hall) => { now.forgetCell(); const b = now.summaries.find((x) => x.buildingKey === key); if (b) discoverBuilding(now.locId, b, hall ? null : `${playerEntity.name ?? ''}'s residence`); },   // a hall found, never named a residence
+          notice: (lines) => { const show = () => { try { townTalk.showOverlay(new ActionTextBox([...lines])); } catch { setTimeout(show, 500); } }; show(); },
+          note: (text) => questBridge?.notebook?.addNote(text),
+          say: (line) => townTalk.say(line),
+          checkpoint: () => onlineCheckpoint(),   // the emptied scene in the save before the move is said read
+        },
+      });
+      for (const m of moved) console.log(`[arena] the online home ${m.from} moved to ${m.to}${m.made ? '' : ' (read again)'}`);
+      return moved;
+    } catch (e) {
+      console.warn('[arena] the displaced online home could not be moved:', e?.message ?? e);
+      return null;
+    }
+  }
+  /**
+   * WD3: THE SAVE'S TOWNS, IN THE LAYOUTS ITS THINGS WERE MADE IN (systems/layoutPins.js). Called once a save's
+   * player and quests are restored and before its place is built: the deeds, the rented rooms, the active quests'
+   * building sites, the repair tickets, an anchor set indoors and the save's own building name the towns they hold,
+   * each in the layout it was stamped with; a town whose layout the mods loaded for this game would change is pinned
+   * to it. A pack a pin lets in is fetched first (a mod switched off since a house was bought under it). Each town whose
+   * answer changed is read again into the index and, if it stands, built again; a town whose layout moved since its
+   * discoveries were made forgets them (systems/discovery.js). `extras` is the restore's - the inside save's building.
+   */
+  async function applyLayoutPins(extras = null) {
+    if (!homeLayoutsOnline) moveArenaDeed();   // ARENA1: before the pins are read - a deed the arena displaced names its new house
+    const gen = ++_pinsGen;
+    // ONLINE THE TOWNS ARE THE ROOM'S: only the service's homes hold one (every client the same pins - a save's own
+    // records would stand one player's town apart from the room's); offline, the save's
+    const records = homeLayoutsOnline ? (_serverLayoutRecords ?? []) : layoutRecordsOf({
+      houses: playerEntity.houses, rooms: playerEntity.rentedRooms,
+      sites: questBridge?.machine?.getAllActiveQuestSites?.() ?? [],
+      questors: questBridge?.machine?.getAllActiveQuestors?.() ?? [],   // AUDIT WD3 S3
+      repairs: (playerEntity.otherItems ?? []).map((it) => it?.repairData).filter(Boolean),
+      anchor: playerEntity.anchorPosition,
+      inside: extras?.interior && extras?.world?.pixel ? { pixel: extras.world.pixel, layout: extras.interior.layout } : null,
+    });
+    const pins = pinsFrom(records);
+    // the packs a pin lets in, on the door BEFORE the pins answer for them - a pin into a pack that will not load
+    // is dropped, and its town stands as the mods loaded for the game serve it
+    let dropped = 0;
+    for (const pin of pins.values()) {
+      for (const v of [...pin.in]) if (!(await ensureWorldDataPack(v))) { pin.in.delete(v); dropped++; }
+    }
+    // AUDIT WD3 B6: said, once a game - a house, a room or a quest whose town could not be stood as it was left (its
+    // records sleep there: banking.js deedStands, systems/layoutPins.js recordStands)
+    if (dropped && !_pinsDroppedSaid) {
+      _pinsDroppedSaid = true;
+      // the boot's first pins land before the town's talk is made - said once it stands
+      const say = () => { try { townTalk.say(PINS_DROPPED_LINE); } catch { setTimeout(say, 500); } };
+      say();
+      console.warn(`[layout] ${dropped} town(s) could not be kept in a save's layout - their packs did not load`);
+    }
+    for (const [k, pin] of [...pins]) if (!pin.in.size && !pin.out.size) pins.delete(k);
+    if (gen !== _pinsGen) return false;   // AUDIT WD3 R3: a later call (newer records) overtook this one while its packs loaded
+    const changed = setLayoutPins(pins);
+    let rebuilt = 0;
+    for (const key of changed) {
+      const pixelKey = _layoutKeyPixel.get(key);
+      if (!pixelKey) continue;
+      const loc = maps.getLocation(key % 100, Math.floor(key / 100));
+      if (!loc?.exterior?.exteriorData) continue;
+      locationIndex.set(pixelKey, loc);
+      _locIndexGen += 1;   // AUDIT OW4 D5: a reader keeping a list off the index sees the change
+      if (built.has(pixelKey)) {
+        const [px, py] = pixelKey.split(',').map(Number);
+        destroyPixel(px, py, { collectLoose: false });
+        queue.push({ px, py });
+        rebuilt++;
+      }
+    }
+    // AUDIT WD3 S4: online, a town's layout is not known until the service has said it - nothing is forgotten before
+    const forgotten = homeLayoutsOnline && _serverLayoutRecords === null ? 0 : pruneDiscoveryLayouts();
+    // AUDIT WD3 S5: a quest's building site whose town stands in another layout than it was chosen in is chosen again in
+    // it (online, never before the service has said the towns' layouts)
+    const reseated = homeLayoutsOnline && _serverLayoutRecords === null ? 0 : (questBridge?.machine?.reseatMovedSites?.() ?? 0);
+    if (reseated) console.log(`[layout] ${reseated} quest site(s) chosen again where their town's layout moved`);
+    if (pins.size || changed.size) console.log(`[layout] ${pins.size} town(s) kept in a save's layout (${[...pins.values()].map((p) => p.why).join(', ') || 'none'}); ${changed.size} read again, ${rebuilt} rebuilt${forgotten ? `; ${forgotten} discovered building(s) forgotten where a layout moved` : ''}`);
+    else if (forgotten) console.log(`[layout] ${forgotten} discovered building(s) forgotten where a layout moved`);
+    return true;
   }
   async function worldQuickLoad({ mostRecent = false, key = null, snap: picked = null } = {}) {
     if (_loading) return;
@@ -11845,6 +12285,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // runs inside the composer, after the quest machine is restored,
       // exactly where LoadGame runs it.
       if (restoreSessionState(extras, { questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession }, entity: playerEntity, spawnLedger: _spawnLedger })) _questStarted = true;
+      await applyLayoutPins(extras);   // WD3: the save's towns in the layouts its things were made in, before its place is built
       let csaElsewhere = false;   // CSA-J (the audit): the load did not land where its save stood
       if (extras.locationKey === 'world' && extras.world?.pixel) {
         const w = extras.world;
@@ -13039,6 +13480,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     openPack: () => { const w = makeInventoryWindow(); if (w) townTalk.showOverlay(w); return !!w; },   // DISC10-E L3: a refused pack is null
     openSpellbook: () => { const w = makeSpellbookWindow(); if (w) townTalk.showOverlay(w); return !!w; },
     openChronicle: () => { const w = makeJournalWindow('notebook'); if (w) townTalk.showOverlay(w); return !!w; },
+    openArena: () => arenaGate.openWindow('team'), arenaJoined: () => arenaGate.joined(),   // ARENA3: the Arena window, once a banner is worn (ARENA4b: online the account's)
     quickSave: worldQuickSave,
     quickLoad: worldQuickLoad,
     relock: () => requestLook(canvas),   // MAC1: the pointer comes back with the resume gesture (ui/pauseDoor.js)
@@ -13939,6 +14381,34 @@ export async function bootWorld(canvas, renderer, params, status) {
       sea: state.pixelTranslation(e.px, e.py, [0, 0, 0])[1] + deepWaters.oceanLocalY }))
       .filter((r) => r.d && r.d !== 'rejected:not-selected') : null);
     window.__currentPixel = () => `${state.current.x},${state.current.y}`;
+    // ARENA2 probe surface (tools/arenaProbe.mjs): the city floor's sand and the Herald's place, the bout standing (its
+    // phase, its fighters' health, the crowd's mood and how many sit), and the Herald's three doors pressed as his choice
+    window.__arena = () => {
+      const b = arenaBouts.bout(), c = arenaBouts.crowd();
+      return {
+        centre: arenaCityPixel() ? [...arenaCityStage.centre()] : null, herald: arenaHeraldAt(), stage: arenaBouts.stageKind(), kind: arenaBouts.kind(),
+        phase: b?.phase ?? null, result: b?.result ?? null, fighters: b ? b.fighters.map((f) => ({ id: f.id, name: f.name, side: f.side, health: f.health, max: f.maxHealth, out: f.out })) : [],
+        mood: c?.mood ?? null, crowd: arenaBouts.batches().length, ladder: arenaLadderRestore(playerEntity.arenaLadder), mode: modes?.mode ?? 'exterior',
+        near: arenaCityPixel() ? Math.hypot(player.pos[0] - arenaCityStage.centre()[0], player.pos[2] - arenaCityStage.centre()[2]) : null, walk: !!walkMode && !!playerSpawned,
+        hour: exhibitionFor(worldMinutes()), ran: _arenaHourRun, pending: arenaBouts.pending()?.kind ?? null,
+        frames: _arenaFrames, paused: gamePaused(), stageNow: arenaStageNow()?.kind ?? null,
+      };
+    };
+    window.__arenaHerald = () => arenaHerald();
+    // ARENA3 probe surface (tools/arena3Probe.mjs): the gate's people and the window, the league and the purse
+    window.__arenaGate = { recruiter: (r) => arenaGate.recruiter(r), bookmaker: () => arenaGate.bookmaker(), open: (p) => arenaGate.openWindow(p), board: () => arenaGate.board() };
+    window.__arenaLeague = () => ({ league: playerEntity.arenaLeague ?? null, gold: playerEntity.goldPieces ?? 0, pauseDoor: !!pauseDoorHooks().arenaJoined?.() });
+    window.__arenaCloseOverlays = () => { let n = 0; while (townTalk.overlayActive && n < 40) { townTalk.closeOverlay?.(); n++; } return n; };   // the tutorial's pages and the main quest's box, put away for a probe
+    window.__arenaStrike = (dmg = 20) => {   // a blow of mine on my bout's first opponent, through its pool's own door (a probe's swing)
+      const b = arenaBouts.bout();
+      const st = (modes?.mode ?? 'exterior') === 'dungeon' ? modes?.arenaFloorStage?.() : null;
+      if (!b || !st) return false;
+      const ctx = modes?.dungeonCtx;
+      const foe = (ctx?.foes ?? ctx?.enemies ?? []).find((f) => f?.entity?.bout && !f.entity.bout.out);
+      if (!foe) return false;
+      ctx.damageFoe?.(foe, dmg, player.pos, null, { fromPlayer: true });
+      return true;
+    };
     // CSA-B probe surface: stand a boat at a pose (the placement ray is CSA-C's), light its lanterns, read the pool
     window.__csaSpawn = async (hull = 0, variant = 0, x = 0, y = 0, z = 0, yaw = 0) => {   // CSA-C: through the runtime's own PlaceBoat (the int overload), the boat's forward along the yaw
       if (!csaRuntime || !(await csa.preload())) return null;
@@ -14366,6 +14836,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // copy of the location renamed (Name, MapTableData.MapId), the location itself untouched
   let _ohGpsLoc = null;
   const _questLoc = () => {
+    // ARENA1: underground in the arena's undercroft the current location is the undercroft's own record - its own map
+    // id, so the castle's quest sites (the city's dungeon, DaggerfallCastle) are never found to be here
+    const under = modes?.mode === 'dungeon' ? modes?.dungeonLocation : null;
+    if (isArenaUndercroft(under)) return under;
     const px = playerTravelPixel();
     const key = `${px.x},${px.y}`;
     const loc = locationIndex.get(key) ?? null;
@@ -14376,6 +14850,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     return _ohGpsLoc.loc;
   };
+  /** ARENA1: a door's location and its exit group. The arena's 43600 stair is the undercroft's door - its own record
+   *  (world/arenaCity.js undercroftLocation, one per city record) and its own group, so the way home out of the castle
+   *  never lands at the stair and the undercroft's never at the castle's doors. */
+  const _undercrofts = new WeakMap();
+  function arenaDoorTarget(e) {
+    const city = locationIndex.get(e.pixelKey);
+    if (!isUndercroftDoor(e, DOOR_TYPE.DUNGEON_ENTRANCE) || !isArenaCity(city)) return { dfLocation: city, group: e.pixelKey };
+    let u = _undercrofts.get(city);
+    if (!u) { u = undercroftLocation(city); _undercrofts.set(city, u); }
+    return { dfLocation: u, group: `${e.pixelKey}:undercroft` };
+  }
   // AUDIT 24 (the seven-slice sweep): PlayerGPS.CurrentRegionIndex is
   // derived from the POLITIC map at the player's pixel, which answers
   // everywhere - it is NOT the current location's regionIndex, which
@@ -14421,7 +14906,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:10409-10473 -
+  // worldModes answers it in BOTH modes (worldModes.js:10658-10722 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -16313,6 +16798,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // net/accountClient.js's own header states.
       mintToken: identityMinter,
     });
+    online.onArena = (w, room) => arenaOnline?.word(w, room);   // ARENA4: a relay's bout's words, to the bout on this screen
     // ONE-SEAT: the browser's arm - this tab goes online, so any other tab of this browser that is online gives its seat
     // up (net/oneSeat.js); the hub's arm is the World link's claim (chatStart)
     seatLock = createSeatLock({ onLost: () => seatLostNow() });
@@ -17121,7 +17607,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // scene's socket, bodies, motor, HUD, chat and account.
   /** DUEL1: a live duel's opponent is AN ENEMY NEARBY to every gate that asks (the travel map, a journey, rest): the
    *  ring holds the body, and these hold the doors a map or a bed would open out of it. */
-  function duelEnemyNear() { return !!duelMgr?.live; }
+  function duelEnemyNear() { return !!duelMgr?.live || arenaBouts.holds(); }   // ARENA2: my own bout holds me as a duel does - no rest, no travel, no journey
   /** A peer's body in THIS scene (peersNear's { id, feet, height }), or null. */
   const duelBody = (peerId) => (peerId ? (peersNear()?.find((x) => x.id === peerId) ?? siegeNpcs?.body(peerId) ?? null) : null);   // SEAT2b part two (c): or one of a siege's relay-run fighters
   /** AUDIT SEATS-3 C3: duelBody's answer over a peer list the caller read ONCE (peersNear walks the room and mints a body
@@ -17552,6 +18038,62 @@ export async function bootWorld(canvas, renderer, params, status) {
     say: (text) => chatNotice(text),
     onMarks: (marks) => marksBook?.strikeLine(marks) ?? null,   // MARKS1: the gate's Marks, struck as it is counted
   }) : null;
+  // ═══ ARENA4 (2026-10-02, Mac: "choose to matchmake for a real opponent to take on in real time"; "view your ranking
+  // and even player leaderboards"): THE ARENA ONLINE ON THIS SCREEN (scenes/arenaOnline.js) - the hall's own socket, a
+  // relay's bout on the floor's instance (its room the presence session's), the boards and the receipts. ═══════════════
+  arenaOnline = createArenaOnline({
+    now: () => performance.now(),
+    session: () => online,
+    // the hall's socket: a presence-less session of my own id, minting its token as every link does
+    makeHall: () => {
+      if (!online?.url) return null;
+      const link = new OnlineSession({ url: online.url, name: online.name, look: online.look, id: online.id, secret: online.secret, presence: false });
+      link.mintToken = identityMinter;
+      link.onRelay = onRelayVersion;
+      link.onSuperseded = () => seatLostNow();
+      return link;
+    },
+    account: accountArena({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }),
+    store: _spoilsStore,
+    bouts: arenaBouts,
+    enterFloor: (kind, o) => modes?.enterArenaFloor?.(kind, o) ?? false,
+    closeWindow: () => closeArenaDoor(),
+    say: (l) => chatNotice(l),
+    notice: (lines) => { for (const l of lines) townTalk.say(l); },
+    names: (seed) => (i, mobile) => fighterIdentity(seed, i, mobile),
+    level: () => playerEntity.level ?? 1,   // ARENA4b: my level alone on a ladder bout's `in` - the relay's vitality is the token's signed level, no health of mine is said
+    guest: () => storedSession(appStorage())?.kind === 'guest',
+    struck: (d) => { if (d > 0) { flashPlayerDamage(d); playPlayerVoice(audio, playerPainVoice(playerEntity, d)); } },
+    myHealth: (hp) => { if (playerEntity.health > 0) { playerEntity.health = hp; surfacePlayer(); } },
+    inBout: () => arenaBouts.holds(),
+    // ARENA4b: A WON BOUT'S RENOWN - the fighting character's (its receipt kept with it), adopted only while it is the one
+    // standing here (RENOWN-CHAR, as a raid's is), by the one plan every Renown answer takes (net/renownTracker.js
+    // renownAnswer): the bar, the level, the order carried to the rooms, the rise said once
+    character: () => characterIdOf(playerEntity),
+    characterName: () => (typeof playerEntity?.name === 'string' ? playerEntity.name : null),
+    onRenown: (d) => {
+      if (d?.renown?.character !== characterIdOf(playerEntity)) return;
+      const a = renownAnswer({ ...d.renown, order: d.order ?? null }, d.renown.credited ?? 0, renownSaid);
+      if (a.xp !== null) renownXpAdopt(a.xp);
+      if (a.level !== null) renownAdopt(a.level);
+      if (a.order) online?.sendRenownOrder?.(a.order, a.level);
+      if (a.announce !== null) { renownSaid = a.announce; townTalk.say(`Your Renown is now ${a.announce}.`); }
+    },
+    verdictHeard: () => arenaGate.settle(),   // ARENA4b: an exhibition's verdict asked of its room settles the book as it comes
+  });
+  /** ARENA4: MY OPPONENT on a relay's sand, as a body my blows meet (scenes/dungeonContext.js arenaRivalBody): the one
+   *  body the bout's room draws (the stands have none), its stand-in for the formulas - unarmoured, every blow's number
+   *  the referee's to judge. Null outside a bout between players. */
+  let _arenaRivalEntity = null;
+  function arenaRivalBody() {
+    const b = arenaOnline?.bout(), r = arenaBouts.relay();
+    if (!b || b.kind !== 'pvp' || !r || !r.me) return null;
+    const peer = (peersNear() ?? [])[0];
+    if (!peer?.feet) return null;
+    if (!_arenaRivalEntity) { _arenaRivalEntity = bossStandIn({ mobile: 0 }, b.vs?.n ?? 'Your opponent'); _arenaRivalEntity.armor = 100; _arenaRivalEntity.armorValues = new Array(7).fill(100); _arenaRivalEntity.skills = 0; _arenaRivalEntity.spareGear = true; }
+    _arenaRivalEntity.name = b.vs?.n ?? _arenaRivalEntity.name;
+    return { i: r.me === 'p0' ? 'p1' : 'p0', entity: _arenaRivalEntity, feet: peer.feet, height: peer.height ?? CAPSULE_HEIGHT, radius: 0.4, yaw: 0 };
+  }
   /** RAID4: THE RAID RECEIPTS THIS DEVICE CARRIES TO THE ACCOUNT SERVICE (net/raidClaims.js) - each town the relay
    *  signed my defence of, kept with the character that fought it until the service has counted it and paid its
    *  Renown; a counted raid's Renown is the page's at once, as a report's is - when that character is the one
@@ -17813,6 +18355,21 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (want === SCORE_SILENCE) { if (music.current !== null) music.fadeOut(); } else music.playSong(want);   // AUDIT WB D2: the quiet after the fanfare is its ending, faded - not a cut
     return true;
   };
+  /** ARENA2: THE ARENA'S MUSIC (systems/arenaScore.js) - while a bout is heard here, the march, then the fanfare, then
+   *  quiet through the healers; let go (the song stopped, the director's next frame plays its own) the frame there is
+   *  none. The songs are made the first time a bout is heard. Answers whether the arena holds the music this frame. */
+  let _arenaScoreHeld = false, _arenaScoreMade = false;
+  const arenaScoreFrame = () => {
+    const want = arenaBouts.scoreWant();
+    if (want == null) {
+      if (_arenaScoreHeld) { _arenaScoreHeld = false; music.stop(); }
+      return false;
+    }
+    if (!_arenaScoreMade) { _arenaScoreMade = true; for (const song of Object.values(arenaScoreSongs())) music.registerSong(song.name, song); }
+    _arenaScoreHeld = true;
+    if (want === ARENA_SCORE_SILENCE) { if (music.current !== null) music.fadeOut(); } else music.playSong(want);
+    return true;
+  };
   const deadlandsAirFrame = () => { if (modes?.gateArenaDay?.() != null) deadlandsAir.frame(deadlandsSeconds(), cam.pos, courtFireBeds); else deadlandsAir.stop(); };
   /** WB2: THE GATE THE WORLD STANDS (scenes/gatePool.js) - online alone, as the omen is; stood each exterior frame from
    *  the omen's word, drawn in the world pass (the stone) and after the duel wall (the fire and the beacon). Its door
@@ -18069,6 +18626,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // WB3b: the court's floor is a ring the body cannot leave - WB9b: the three courts' floor, as far as the walkways
     // between them are laid (one arena, its crossings and clock refilled each frame)
     if (!player.arena && modes?.gateArenaDay?.() != null) { _courtArena.xa = gateLink?.state()?.xa ?? _gateFloor.none; _courtArena.now = Date.now() + _sharedOffsetMs; player.arena = _courtArena; }
+    if (!player.arena) player.arena = arenaBouts.ring();   // ARENA2: my bout's ring on the arena's sand (the duel's clamp)
     duelPrompt?.render();
   };
   /** DUEL1: THE RING I DUEL IN, FOR THE ONLOOKERS, on my foes frame (validRingRecord's shape): on every FULL frame while it
@@ -20359,6 +20917,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const mp = overworld ? worldCoordToMapPixel(wc.x, wc.z) : null;
     if (overworld) key = siegeSession?.room() ?? royalSession?.room() ?? roomKeyFor({ host: 'world', mode, mapPixel: mp });   // SEAT2a part four: a battle entered stands in its own room (CROWN1 part two: a Royal Tourney too)
     else if (modes?.roomIdentity?.()?.kind === 'gate') key = gateRoomKey(modes?.roomIdentity?.()?.day);   // WB3b: the court's room is its gate's own
+    else if (modes?.roomIdentity?.()?.kind === 'arena') key = arenaFloorRoomOf(modes?.roomIdentity?.()?.o);   // ARENA4: a relay's bout's floor is its room (ARENA4b: the hour's exhibition's, `x<hour>`, its own)
     else {
       const ident = modes?.roomIdentity?.();
       const loc = _questLoc();   // the location under the player: an interior's room is named by it
@@ -20368,6 +20927,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         regionIndex: ident?.kind === 'dungeon' ? ident.regionIndex : (loc?.regionIndex ?? -1),
         locationName: ident?.kind === 'dungeon' ? ident.name : (loc?.name ?? ''),
         buildingKey: ident?.buildingKey ?? 0,
+        layout: ident?.layout ?? null,   // WD3 (AUDIT WD3 B3): an interior's room is its layout's
       });
     }
     // the pose: MapsFile's frame in the overworld (the floating origin's
@@ -20753,7 +21313,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // now draws, which the enemy sprite gives way to, would be nothing at all indoors and underground
     // (and DISC23-B's walkers: a peer standing as their chosen set gives the class sprite way just the same, so the
     // merge of the two hands their batches here too)
-    extraBillboards: () => [...(remotePlayers?.batches() ?? []), ...(peerRiders?.batches() ?? []), ...(peerWalkers?.batches() ?? []), ...(gateCourt?.batches() ?? []), ...(csaOn() ? csa.batches() : [])],   // WB4: and the Burning Court's boss; CSA-C: a boat's crew and lanterns where it stands indoors
+    extraBillboards: () => [...(remotePlayers?.batches() ?? []), ...(peerRiders?.batches() ?? []), ...(peerWalkers?.batches() ?? []), ...(gateCourt?.batches() ?? []), ...(csaOn() ? csa.batches() : []), ...((modes?.mode ?? 'exterior') === 'dungeon' ? arenaBouts.batches() : [])],   // WB4: and the Burning Court's boss; CSA-C: a boat's crew and lanterns where it stands indoors
     drawModeMeshes: () => { if (csaOn()) { csa.draw(renderer); csaDrawParticlesOpaque(); } },   // CSA-C: a boat placed on a dungeon's water (UpdateBoatVisibility's inside arm keeps it active there); CSA-F: its wake's and splashes' quads and its flag
     csaDrawParticlesBlended: () => { if (csaOn()) csaDrawParticlesBlended(); },   // CSA-F: ...and its drops, after the mode's last world draw
     modeLights: () => (csaOn() ? csa.lights(cam.pos) : []),   // CSA-C: ...and its lit lanterns
@@ -20774,6 +21334,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     onCrystalHit: (hit) => !!gateCourt?.crystalHit(hit),   // WB9c: a blow's number on one, out to the room
     gateHost: () => gateCourt?.hostTargets() ?? null,   // WB11c: his host as bodies my blows meet
     onHostHit: (hit) => !!gateCourt?.hostHit(hit),   // WB11c: a blow's number on one, out to the room
+    arenaRival: () => arenaRivalBody(),   // ARENA4: my opponent on a relay's sand, as a body my blows meet
+    onArenaHit: (hit) => !!arenaOnline?.hit(hit),   // ARENA4: a blow's number on them, out to the referee
     // WB9f: HIS SPOILS ON THE FLOOR, pressed - the pool's resting pieces as targets, their words and their items for the
     // plaque, and the press that takes one into the pack (the court's dungeon arm, worldModes.js standCourt)
     spoilTargets: () => spoilsPool?.targets() ?? null,
@@ -21114,6 +21676,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       // Guilds tab alone); false where it cannot open (offline, no board book, another window up)
       openBoard: (name) => openGuildBoard(name),
     },
+    // WD3 (AUDIT WD3 O1/O2): whether the homes' towns are heard (offline always), and asked again on a claim refused for its town's layout
+    homeLayoutsHeard: () => !homeLayoutsOnline || (_homeLayoutsApplied && !worldDataPacksMissing().length),
+    // AUDIT WD3 B1: online, a town mod of the room's whose pack did not load here - this client's towns are not the room's
+    homeTownsMissing: () => homeLayoutsOnline && worldDataPacksMissing().length > 0,
+    hearHomeLayouts,
     marks: marksBook,   // MARKS1: the Bank of the Empire's Marks, online
     saveSoon: () => saveSoon.changed(),   // PROF-SAVE: a Marks sale's gold in the Bank's account saved soon
     homeDecor,   // DECOR1c: an online home's placed pieces (null offline - the house's and the ship's are the save's)
@@ -21129,6 +21696,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // restored machine).
     talkSave: { mill: rumorMill, tree: topicTree, session: npcSession },
     onQuestRestored: () => { _questStarted = true; },
+    layoutPinsLoaded: (extras) => applyLayoutPins(extras).catch((e) => console.warn('[layout] pins on a dungeon load:', e?.message ?? e)),   // WD3: a same-dungeon load holds its own save's towns too
     // R1: the discovery store's location key - the SAME string the
     // quest bridge's discoverBuilding uses, so the exterior lockpick
     // anti-grind record and the talk reveals share one namespace.
@@ -21242,7 +21810,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     pipeline: { ...pipeline, arch, palette },   // PORTRAIT1: THE WHOLE PIPELINE, as the standalone ?dungeon scene has always handed it (dungeon.js) - see the note above
     doorTargets: () => buildingDoors.map((e) => ({
       ...e, door: shiftedDoor(e), localDoor: e.door,   // AUDIT 68 S22: the pixel-local door rides the hit - it is the block INSTANCE's, which the world one no longer says
-      dfLocation: locationIndex.get(e.pixelKey), group: e.pixelKey,
+      ...arenaDoorTarget(e),   // ARENA1: the colosseum's stair goes down to the undercroft, never into the castle
     })),
     // CRUX1: THE DOORLESS DUNGEON START - the player's own pixel's
     // location, when it has a dungeon, in the shape a door hit has
@@ -21252,6 +21820,35 @@ export async function bootWorld(canvas, renderer, params, status) {
     // teleport into the Mantellan Crux, the cemetery transfer and a new
     // game at a location whose exterior carries no entrance door.
     // WB3b: the court's climate and region - its gate's pixel's (the omen's site, when it is that day's)
+    // ARENA2: THE ARENA'S DOORS for the mode machine - the Herald's choice, the bout's 1 HP floor on my blows taken in
+    // the instance, the duel's law while my bout stands, and where the way out of the instance lands (before the
+    // Herald, facing the market)
+    arenaHerald: () => arenaHerald(),
+    arenaRecruiter: (role) => arenaGate.recruiter(role),   // ARENA3: the Red and Blue Banners' recruiters
+    arenaBookmaker: () => arenaGate.bookmaker(),   // ARENA3: the bookmaker's stall
+    makeArenaWindow: (page) => arenaGate.windowOverlay(page),   // ARENA3: the Arena window for another mode's slot (an interior's, a dungeon's)
+    arenaJoined: () => arenaGate.joined(),   // ARENA4b: online the account's banner, offline the save's
+    arenaHall: () => arenaGate.hall(),   // ARENA4b: the Keeper of the Hall reads the realm's wall online
+    arenaHallPlaques: () => arenaGate.plaques(),   // ARENA5: the names on the Hall's plaque wall (the save's, online the realm's)
+    // ARENA-FIX 4: the training pit's practice bout (the Pit Master's choice, scenes/worldModes.js) - a sparring fighter
+    // of my tier on the pit's stage; refused while a bout of mine stands
+    arenaPractice: () => {
+      if (arenaBouts.holds() || arenaBouts.pending()) return false;
+      arenaBouts.ask({ where: 'pit', kind: 'practice', next: practiceBout(playerEntity.arenaLadder) });
+      return true;
+    },
+    arenaBusy: () => arenaBouts.holds() || !!arenaBouts.pending(),
+    arenaPlayerSpare: () => arenaBouts.playerSpare(),
+    arenaHolds: () => arenaBouts.holds(),
+    arenaFloorBanners: () => arenaBouts.floorBanners(),   // ARENA5: the banners the floor's instance hangs for the bout asked
+    arenaLanding: () => {
+      const at = arenaHeraldAt();
+      if (!at) return null;
+      const x = at[0], z = at[2] + 2.5;
+      const y = heightAt(x, z);
+      return Number.isFinite(y) ? { pos: [x, y, z], normal: [0, 0, 1] } : null;
+    },
+    arenaCity: () => { try { return maps.getLocation(ARENA_REGION, ARENA_LOCATION); } catch { return null; } },
     gateArenaSite: (g) => {
       const ci = maps.getClimateIndex(g.px, g.py);
       const climateType = getWorldClimateSettings(ci).climateType;
@@ -23494,9 +24091,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (oceanHoles) { _ohTime += gamePaused() ? 0 : dt * worldTimeScale(); oceanHoles.checkSettings(); ohAbyss?.update(); }
     csaDrawHelmPanel();   // CSA-L: the helm panel, once a frame in every mode
     spoilsRecoverFrame();   // WB5: a boss's spoils no save holds, back to their character as it stands up - before it can save, online or not
-    if (onlineOn && playerSpawned) { if (!online) onlineStart(); onlineFrame(now, dt); } else { if (_peerCandleLights.length) peerCandlesFrame([], dt);   /* PEERLIGHT2: offline, no one's candle stays lit */ if (!onlineOn && modes?.gateArenaDay?.() != null) { ejectFromCourt(COURT_TEXT.collapse); gateCourt?.leave(); /* AUDIT SS: and its floor into the pack - online, the frame's own court does it */ } if (player.arena) player.arena = modes?.gateArenaDay?.() != null ? courtRing() : null; siegeHud?.hide(); /* AUDIT-SEATS C1: no online frame (a load, a spawn), no battle's tick - its HUD hidden, never frozen; the next tick draws it again */ }   // DUEL1: no online frame, no duel's law to hold the body - the ring is the live duel's alone; WB3b: the court's is its floor's, and offline there is no court   // ONLINE1: the pose out, the peers in - after the look is paid, before the camera is read and any mode draws
+    if (onlineOn && playerSpawned) { if (!online) onlineStart(); onlineFrame(now, dt); } else { if (_peerCandleLights.length) peerCandlesFrame([], dt);   /* PEERLIGHT2: offline, no one's candle stays lit */ if (!onlineOn && modes?.gateArenaDay?.() != null) { ejectFromCourt(COURT_TEXT.collapse); gateCourt?.leave(); /* AUDIT SS: and its floor into the pack - online, the frame's own court does it */ } if (player.arena) player.arena = modes?.gateArenaDay?.() != null ? courtRing() : null; if (!player.arena) player.arena = arenaBouts.ring(); /* ARENA2: my bout's ring on the arena's sand */ siegeHud?.hide(); /* AUDIT-SEATS C1: no online frame (a load, a spawn), no battle's tick - its HUD hidden, never frozen; the next tick draws it again */ }   // DUEL1: no online frame, no duel's law to hold the body - the ring is the live duel's alone; WB3b: the court's is its floor's, and offline there is no court   // ONLINE1: the pose out, the peers in - after the look is paid, before the camera is read and any mode draws
     deadlandsAirFrame();   // WB6b: after the court's ways out have run, online or not - the frame it is gone is the frame its air falls silent
     if (onlineOn && playerSpawned && (seatOut() || townTalk.overlay instanceof DeathScreen || modes?.deathUp?.())) { siegeHud?.hide(); siegeNpcs?.leave(); }   // AUDIT SEATS-2 C4: the dead and a tab out of the seat draw no battle - the online frame returns before its tick
+    arenaFrame(dt);   // ARENA2: the bout on the city's floor or the instance's - before the modal return, so the instance's runs too
     setCourtRules(modes?.gateArenaDay?.() != null);   // WBX6: the Deadlands keep no regeneration - set before any magic round of this frame, cleared the frame the court is gone
     meterFor(renderer.gl)?.markCpu('sim');   // PERF-CPU: everything between here and the next mark is the rest of the simulation
     lookGate(gamePaused());   // a window up frees the cursor; closing re-locks
@@ -23517,7 +24115,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // sunny outdoor track, and when that song ended nothing fed `songEnded`
     // so it fell silent for the rest of the visit. The whole interior and
     // dungeon music path was dead code in this host.
-    if (!gateScoreFrame()) musicDirector.update({   // WB7: the court holds the music while it stands
+    if (!gateScoreFrame() && !arenaScoreFrame()) musicDirector.update({   // WB7: the court holds the music while it stands; ARENA2: and a bout while it is heard
       inside: false,
       inLocationRect: _musicInLocationRect(),
       locationType: _musicLocationType(),
@@ -25053,6 +25651,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (peerWalkers) for (const b of peerWalkers.batches()) { if (cullOn && billboardOutside(b)) { if (renderer.shadowReachBatch(b)) castBatches.push(b); continue; } allBatches.push(b); }   // DISC23-B: and on foot, as they chose; AUDIT FLICKER R3: off screen, a shadow still in reach
     if (bandSprites) for (const b of bandSprites.batches()) { if (cullOn && billboardOutside(b)) { if (renderer.shadowReachBatch(b)) castBatches.push(b); continue; } allBatches.push(b); }   // OW-FOES: the bands near, as their monsters; AUDIT FLICKER R3: off screen, a shadow still in reach
     if (siegeNpcs) for (const b of siegeNpcs.batches()) allBatches.push(b);   // SEAT2b part two (c): the guards, the rebels
+    for (const b of arenaBouts.batches()) { if (cullOn && billboardOutside(b)) continue; allBatches.push(b); }   // ARENA2: the crowd in the colosseum's tiers, and what it throws (no shadow: a crowd of hundreds would fill the casters)
     if (yards) for (const b of yards.batches()) { if (cullOn && billboardOutside(b)) { if (renderer.shadowReachBatch(b)) castBatches.push(b); continue; } allBatches.push(b); }   // HOME-YARD: the yards' flats, and the one being placed; AUDIT FLICKER R3: off screen, a shadow still in reach
     // NEAR-FIRST (2026-09-21): THE PIXELS ARE WALKED NEAREST FIRST. The
     // map's insertion order is the order the pixels streamed in, which

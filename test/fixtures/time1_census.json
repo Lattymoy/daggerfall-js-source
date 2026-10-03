@@ -836,6 +836,56 @@
    "has": "const midnight = wallMsForSkyMinutes(Math.ceil(skyClassicMinutes(turn) / 1440) * 1440);",
    "clock": "sky",
    "why": "the Online pane's sentence: the sky's first midnight after its switch, said in local minutes (TIME4)"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "gameMinutes: () => worldMinutes(),",
+   "clock": "event",
+   "why": "ARENA3: the season a ladder bout's points go to, the laurel, the Records page"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "playerEntity, gameMinutes: () => worldMinutes(), showOverlay",
+   "clock": "event",
+   "why": "ARENA3: the gate's hour - the bookmaker's book and the Herald's doors; ARENA4b: and, through the gate, the Herald's choice at the hour and the banner the pause window's door reads (scenes/arenaGate.js heraldChoice / joined)"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "const ex = exhibitionFor(worldMinutes());",
+   "clock": "event",
+   "why": "ARENA2: the hour's exhibition on the city's sand",
+   "count": 2
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "gameMinutes: () => worldMinutes(),",
+   "clock": "event",
+   "why": "ARENA3: the season a ladder bout's points go to, the laurel, the Records page"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "playerEntity, gameMinutes: () => worldMinutes(), showOverlay",
+   "clock": "event",
+   "why": "ARENA3: the gate's hour - the bookmaker's book and the Herald's doors; ARENA4b: and, through the gate, the Herald's choice at the hour and the banner the pause window's door reads (scenes/arenaGate.js heraldChoice / joined)"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "const ex = exhibitionFor(worldMinutes());",
+   "clock": "event",
+   "why": "ARENA2: the hour's exhibition on the city's sand",
+   "count": 2
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "hour: exhibitionFor(worldMinutes()), ran: _arenaHourRun",
+   "clock": "event",
+   "why": "ARENA2: the hour's exhibition, run once an hour"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "has": "rosterGrandChampions(playerEntity.arenaLeague, Math.floor(worldMinutes()))",
+   "clock": "event",
+   "why": "ARENA3: the Keeper of the Hall reads the Hall of Champions - the roster's Grand Champions by the season"
   }
  ]
 }

@@ -205,7 +205,7 @@ export function createCharSheetWindow(deps = {}) {
 export function sheetPageDoors(bag, close) {
   // AUDIT 27h A4: the arm's answer rides back (false: it opened nothing), so the page's door can resume instead.
   const door = (arm) => (typeof bag?.[arm] === 'function' ? () => { close(); return bag[arm](); } : undefined);
-  return { openPack: door('openPack'), openSpellbook: door('openSpellbook'), openChronicle: door('openChronicle') };
+  return { openPack: door('openPack'), openSpellbook: door('openSpellbook'), openChronicle: door('openChronicle'), openArena: door('openArena') };   // ARENA3: the Arena window
 }
 
 /**

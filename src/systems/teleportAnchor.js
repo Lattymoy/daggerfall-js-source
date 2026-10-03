@@ -57,6 +57,8 @@
 // the plan and does the work, because the three arms land in three
 // different hosts and only they know how.
 
+import { stampLayout, layoutStampOfPixel } from './layoutPins.js';   // WD3: an anchor set inside keeps its town's layout
+
 /** WorldContext (DaggerfallUnityEnums.cs:582-588), whole. The anchor
  *  carries one, and the interior arm of the compensation restore
  *  (:140-143) tests it by name. */
@@ -110,7 +112,7 @@ export function makeAnchor({
 } = {}) {
   const insideBuilding = worldContext === WORLD_CONTEXT.Interior;
   const insideDungeon = worldContext === WORLD_CONTEXT.Dungeon;
-  return {
+  const anchor = {
     worldContext,
     // The TP-slice field, kept live so a save written by either
     // version reads the same way in both directions.
@@ -125,6 +127,10 @@ export function makeAnchor({
     buildingKey: insideBuilding ? buildingKey : 0,
     interior: insideBuilding ? interior : null,
   };
+  // WD3: an anchor inside a building re-enters it by its door, and a door names a building only in the layout its town
+  // stood in - so it carries that layout, and a load keeps the town in it (systems/layoutPins.js); none for classic
+  if (insideBuilding) stampLayout(anchor, layoutStampOfPixel(pixel.x, pixel.y));
+  return anchor;
 }
 
 /** A pre-A10 anchor carries `mode` and no `worldContext`; every one

@@ -219,7 +219,7 @@ test('D7: the host opens the native Repair screen when the art is up, keyed when
   assert.match(body, /return showRepairList\(0, ctx\);/, 'the keyed arm swallows its window');
   // and the window is handed the two collections the mode needs
   assert.match(wm, /otherItems: \(\) => \(playerEntity\.otherItems \?\?= \[\]\),/);
-  assert.match(wm, /repairItems: \(\) => repairJobsAt\(playerEntity, b\.buildingKey \?\? 0, Math\.floor\(ownMinutes\(\)\)\),/);   // LIVED1: a repair runs on the character's own clock
+  assert.match(wm, /repairItems: \(\) => repairJobsAt\(playerEntity, b\.buildingKey \?\? 0, Math\.floor\(ownMinutes\(\)\), homeTownOf\(b\)\),/);   // LIVED1: a repair runs on the character's own clock
 });
 
 test('D7: the booked job carries this shop\'s key and CalculateItemRepairTime', () => {
@@ -227,7 +227,7 @@ test('D7: the booked job carries this shop\'s key and CalculateItemRepairTime', 
   // write - the shop's own buildingKey and CalculateItemRepairTime's
   // answer - which the keyed flow has always written.
   const wm = src('scenes/worldModes.js');
-  assert.match(wm, /leaveForRepair\(it, bk, calculateItemRepairTime\(it\.currentCondition \?\? 0, it\.maxCondition \?\? 0\), now\);/);
+  assert.match(wm, /leaveForRepair\(it, bk, calculateItemRepairTime\(it\.currentCondition \?\? 0, it\.maxCondition \?\? 0\), now, homeTownOf\(interiorBuilding\)\);/);   // WD3: and the shop's town
   // and the number itself (FormulaHelper.cs:1924-1933): 50 points of
   // damage is trunc(50 * 1440 / 1000) = 72 minutes, which the one-day
   // floor raises to a full day

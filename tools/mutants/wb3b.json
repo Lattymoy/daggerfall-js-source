@@ -182,8 +182,8 @@
   {
     "name": "WB3b-the-way-home-at-a-door",
     "file": "src/scenes/worldModes.js",
-    "old": "  const returnLanding = () => (dungeonReturn.gate ? host.gateLanding?.(dungeonReturn.gate) ?? null : dungeonEntranceLanding(",
-    "new": "  const returnLanding = () => (false ? host.gateLanding?.(dungeonReturn.gate) ?? null : dungeonEntranceLanding(",
+    "old": "  const returnLanding = () => (dungeonReturn.gate ? host.gateLanding?.(dungeonReturn.gate) ?? null : dungeonReturn.arena",
+    "new": "  const returnLanding = () => (false ? host.gateLanding?.(dungeonReturn.gate) ?? null : dungeonReturn.arena",
     "tests": [
       "test/wb3b_gate_arena.test.js"
     ]

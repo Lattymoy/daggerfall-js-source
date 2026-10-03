@@ -33,6 +33,7 @@ import { factionsTable, placesTable } from './tables.js';
 import { raceFromFactionRace, factionRaceFromRace, ZERO_NPC_DATA } from '../../characters/staticNpc.js';
 import { raceById } from '../races.js';
 import { Place } from './place.js';
+import { stampLayout, layoutStampOfMapId } from '../layoutPins.js';   // WD3 (AUDIT WD3 S3): a questor's building keeps its town's layout
 import { FACTION_TYPES } from '../../formats/factionFile.js';
 import { getNameBankOfRegion, fullName, GENDERS } from '../../characters/nameHelper.js';
 import { srand } from '../../formats/dfRandom.js';
@@ -370,7 +371,9 @@ export class Person extends QuestResource {
       console.warn(`[quest] Quest Person _${this.symbol.name}_ is expecting a Questor NPC, but one has not been clicked. Proceeding with a virtual NPC so quest will compile.`);
       return false;
     }
-    this.questorData = clicked;
+    // WD3 (AUDIT WD3 S3): the questor stands in a building its key names only in its town's layout - the return to
+    // them (QuestMachine.IsNPCDataEqual, the four fields) finds them only in that layout, which a load keeps
+    this.questorData = stampLayout({ ...clicked }, clicked.buildingKey > 0 ? layoutStampOfMapId(clicked.mapID) : '');
     this.isQuestor = true;
     this.factionData = this._getFactionData(world, clicked.factionID);
     this.nameSeed = clicked.nameSeed;

@@ -24,6 +24,7 @@
 import {
   RENT_DAYS, RENT_DAYS_MAX, RENT_ROOMS_MAX, rentCost, rentPriceOk, rentRoomOk, rentAnchorOf, rentDaysLeft, rentUntil, RENT_PRICE_MIN, RENT_PRICE_MAX,
 } from '../net/homeLaw.js';
+import { ARENA_TEXT } from './arenaText.js';   // ARENA4b: a room the arena's move carried, named
 
 /** The door's verb for a home with a room free to rent (onlineHomes.js HOME_VERB's own row). */
 export const RENT_VERB = 'home-rent';
@@ -84,16 +85,21 @@ export function rentNoneLine(rooms, nowS) {
 
 /**
  * A HOME'S ROOMS, read: `{ ok, rooms, due, owner, mine, now }` - each room `{ room, anchor, price, listed, taken, yours,
- * until, tenant }` as the service answers them (a row the law refuses dropped) - or `{ ok: false, error }`.
+ * until, tenant, moved? }` as the service answers them (a row the law refuses dropped) - or `{ ok: false, error }`.
+ * ARENA4b: a room the arena's move carried to the new house (server-account/src/homes.js arenaMoveHome) is `moved` with
+ * no point (`anchor` null): offered to nobody, it stands in none of the new house's rooms until its owner offers it again
+ * (rentRoomsView lists it apart), and its tenant still walks in and rests - the door and the bed read the tenancy, never
+ * the point (homeBedIsMine, homeLaw.js homeMayEnter).
  */
 export async function homeRooms(api, mapId, buildingKey, character = null) {
   const r = await api.rooms(mapId, buildingKey, character);   // the playing character: a tenancy is `yours` to renew only for it
   if (!r?.ok) return { ok: false, error: r?.error ?? 'server' };
   const d = r.data ?? {};
-  const rooms = (Array.isArray(d.rooms) ? d.rooms : []).filter((x) => rentRoomOk(x?.room) && rentPriceOk(x?.price) && rentAnchorOf(x?.anchor))
+  const rooms = (Array.isArray(d.rooms) ? d.rooms : []).filter((x) => rentRoomOk(x?.room) && rentPriceOk(x?.price) && (rentAnchorOf(x?.anchor) || (x?.moved === true && x.anchor == null)))
     .map((x) => ({
       room: x.room, anchor: rentAnchorOf(x.anchor), price: x.price, listed: x.listed === true, taken: x.taken === true, yours: x.yours === true,
       until: Number.isSafeInteger(x.until) ? x.until : null, tenant: typeof x.tenant === 'string' ? x.tenant : null,
+      ...(x.moved === true ? { moved: true } : {}),
     }));
   const n = (v) => (Number.isSafeInteger(v) && v > 0 ? v : 0);
   return { ok: true, rooms, due: n(d.due), owner: typeof d.owner === 'string' ? d.owner : '', mine: d.mine === true, now: n(d.now) };
@@ -160,7 +166,8 @@ export function rentRoomsView(found, offers, roomOf, origin) {
   let next = null;
   for (let n = 1; n <= RENT_ROOMS_MAX && next == null; n++) if (!held.has(n)) next = n;
   const rows = (found ?? []).map((f) => {
-    const o = (offers ?? []).find((x) => !used.has(x.room) && roomOf([origin[0] + x.anchor[0], origin[1] + x.anchor[1], origin[2] + x.anchor[2]])?.id === f.id) ?? null;
+    // ARENA4b: an offer the arena's move carried has no point - it stands in no room the walls make (listed apart, below)
+    const o = (offers ?? []).find((x) => !used.has(x.room) && Array.isArray(x.anchor) && roomOf([origin[0] + x.anchor[0], origin[1] + x.anchor[1], origin[2] + x.anchor[2]])?.id === f.id) ?? null;
     if (o) used.add(o.room);
     // RENT-NUMBER (FIELD BUGS 2026-10-01): a room not offered takes its OWN number where no offer holds it - so the room
     // the owner's panel calls "Room 2" is room 2 at the door too (the first free number named the owner's Room 2 "room
@@ -168,7 +175,7 @@ export function rentRoomsView(found, offers, roomOf, origin) {
     const number = o ? o.room : rentRoomOk(f.id) && !held.has(f.id) ? f.id : next;
     return { id: f.id, name: f.name, eye: f.eye, offer: o, number, offerable: number != null };
   });
-  for (const o of offers ?? []) if (!used.has(o.room)) rows.push({ id: null, name: `Room ${o.room} (its walls have changed)`, eye: null, offer: o, number: o.room, offerable: false });
+  for (const o of offers ?? []) if (!used.has(o.room)) rows.push({ id: null, name: Array.isArray(o.anchor) ? `Room ${o.room} (its walls have changed)` : ARENA_TEXT.homeMove.roomMoved(o.room), eye: null, offer: o, number: o.room, offerable: false });
   return rows;
 }
 

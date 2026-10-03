@@ -72,9 +72,19 @@ export function modelScaleVector(obj) {
   return [obj.xScale || 1, obj.yScale || 1, obj.zScale || 1];
 }
 
+/** WD3: the classic model Kamer's prefab REPLACES (MeshReplacement, `41600.prefab`) - in ARCH3D (record 8176) and
+ *  placed by no classic block. Kamer's own seven farms stand it through PLACEMENTS; a town mod's farm stands it among
+ *  its own records (Beautiful Villages' six - FARMAA04, 05, 07 and FARMBA05, 08, 09 - and 34 of Beautiful Cities' blocks). */
+export const WINDMILL_MODEL_ID = 41600;
+
 export function layoutRmbBlock(dfBlock, { enhanced = false, windmills = true } = {}) {
   const rmb = dfBlock.rmbBlock;
   const models = [];
+  // WD3: Kamer's mill is DFU's replacement of model 41600 wherever it stands - so a 41600 a block's OWN records place
+  // is the mill (tower, sails, collider, hum) on the skin and switch the mills stand on, and the classic model it
+  // replaces elsewhere (DFU without his mod).
+  const millsHere = enhanced && windmills;
+  const ownMills = [];
 
   // Exterior building models per subrecord (recordIndex feeds the
   // interior transition - PlayerEnterExit keys interiors on it).
@@ -99,6 +109,7 @@ export function layoutRmbBlock(dfBlock, { enhanced = false, windmills = true } =
         -obj.zRotation / ROTATION_DIVISOR,
         ...modelScaleVector(obj)
       );
+      if (millsHere && obj.modelIdNum === WINDMILL_MODEL_ID) { ownMills.push({ matrix: multiply(subRecordMatrix, modelMatrix) }); continue; }
       models.push({
         modelId: obj.modelId,
         modelIdNum: obj.modelIdNum,
@@ -113,19 +124,17 @@ export function layoutRmbBlock(dfBlock, { enhanced = false, windmills = true } =
 
   // Miscellaneous scene models.
   for (const obj of rmb.misc3dObjectRecords) {
-    models.push({
-      modelId: obj.modelId,
-      modelIdNum: obj.modelIdNum,
-      matrix: trs(
-        obj.xPos * GLOBAL_SCALE,
-        (-obj.yPos + PROPS_OFFSET_Y) * GLOBAL_SCALE,
-        (obj.zPos + RMB_DIMENSION) * GLOBAL_SCALE,
-        -obj.xRotation / ROTATION_DIVISOR,
-        -obj.yRotation / ROTATION_DIVISOR,
-        -obj.zRotation / ROTATION_DIVISOR,
-        ...modelScaleVector(obj)
-      ),
-    });
+    const miscMatrix = trs(
+      obj.xPos * GLOBAL_SCALE,
+      (-obj.yPos + PROPS_OFFSET_Y) * GLOBAL_SCALE,
+      (obj.zPos + RMB_DIMENSION) * GLOBAL_SCALE,
+      -obj.xRotation / ROTATION_DIVISOR,
+      -obj.yRotation / ROTATION_DIVISOR,
+      -obj.zRotation / ROTATION_DIVISOR,
+      ...modelScaleVector(obj)
+    );
+    if (millsHere && obj.modelIdNum === WINDMILL_MODEL_ID) { ownMills.push({ matrix: miscMatrix }); continue; }
+    models.push({ modelId: obj.modelId, modelIdNum: obj.modelIdNum, matrix: miscMatrix });
   }
 
   // WM2f: the mill's own subrecord places TWO models - a classic
@@ -151,13 +160,19 @@ export function layoutRmbBlock(dfBlock, { enhanced = false, windmills = true } =
   // the block Daggerfall shipped. Without the attach the building keeps
   // no recordIndex, which is WM2f's state - and it is not drawn on this
   // skin anyway (`enhancedOnly`, honoured by the hosts).
-  const mills = windmillsFor(dfBlock.name);
+  // WD3: Kamer's seven farms are his block overrides, and a town mod that serves its own FARMAA0x loads after his
+  // (Beautiful Cities names Windmills of Daggerfall a dependency it must load after) - in DFU his file of that name is
+  // not the one read. A block served from world data therefore stands the mills its own records place, and his
+  // PLACEMENTS stand only on the farm Daggerfall shipped.
+  const placed = dfBlock.fromWorldData ? [] : windmillsFor(dfBlock.name);
+  const mills = [...placed, ...ownMills];
   // WM3: the skin AND the pack's own switch. `windmills` defaults TRUE
   // so `enhanced` keeps meaning exactly what it meant to every caller
   // that does not know there is a switch; the hosts pass the switch.
   if (mills.length && enhanced && windmills) {
-    const recordIndex = attachWindmillRecord(dfBlock);
-    for (const w of mills) {
+    // the attach is for Kamer's PLACED building alone - a block's own mill stands beside the building its own records hold
+    const recordIndex = placed.length ? attachWindmillRecord(dfBlock) : -1;
+    for (const w of placed) {
       if (!w.building) continue;
       w.building.recordIndex = recordIndex;
       models.push(w.building);

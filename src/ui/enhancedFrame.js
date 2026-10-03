@@ -80,7 +80,8 @@ export const FRAME_ROLES = {
     // BOUNTY1: the bounty board and its payday notice - the Broker's carved frame
     'body .bounty-win',
     // NOTICE1: the Notice Board - the cork sits inside the same carved frame
-    'body .notice-win'],
+    'body .notice-win',
+    'body .aw-win'],   // ARENA3: the Arena window - the Notice Board's carved frame
   // the talk panel is a .px-win whose own ground rule outweighs .px-win's
   windowGround: ['.talk-shell .talk-panel'],
   panel: ['body .rvncard', '.pack-shell .fate-confirm', '.px-sys .rvn-row', '.px-sys .cmp-row',   // REVENANT-PAGE / COMPANION-ROSTER: a row is a card, never a press (the 2026-10-02 audit: the tile's hover and its sink) '.port-host .port-card', '.pack-shell .statflip-back', '.pack-shell .packdetail .card', '.pack-shell .card', '.hmcard', '.px-sys .card', '.px-sys .dcard',
@@ -109,7 +110,9 @@ export const FRAME_ROLES = {
     'body .broker-card',
     // NAV-F: the helm's readout (ui/navalHud.js) - the ship's plate and the target card, boxes over the sea
     'body .dfnaval-plate', 'body .dfnaval-card',
-    'body .bounty-card'],   // BOUNTY1: the notice read whole, the reward box
+    'body .bounty-card',   // BOUNTY1: the notice read whole, the reward box
+    'body .arena-plate',   // ARENA2: the versus bar's plate - a stone panel over the sand
+    'body .aw-card'],   // ARENA3: the Arena window's cards - a bout, a tier, a banner, a board, a rule   // ARENA2: the versus bar's plate - a stone panel over the sand
   // panels that carry a brass edge on the left as their own mark
   panelAccent: ['body .rvncard', '.notice', '.inputbox', 'body .dfsocial-toast', 'body .dfdecor-bar'],   // PLUS-DRESS: the two that wore a brass line
   button: ['.port-host .port-btn', '.pack-shell .statflip-btn', '.inv-info .act', '.pbind .act', '.px-sys .act', '.shell .act', '.px-win .card .act', '.pack-shell .act', '.px-setwrap .act',
@@ -121,6 +124,8 @@ export const FRAME_ROLES = {
     'body .broker-shell .act',   // SET7: the Broker's Buy and Close
     'body .bounty-shell .act',   // BOUNTY1: Take, Give up, Share, Close, Take the reward
     'body .notice-shell .act',   // NOTICE1: Pin a note, Pin it up, Report, Take it down, Close
+    'body .aw-shell .act',   // ARENA3: the Arena window's tabs, Watch, Wager, Fight, the stakes, Close
+    'body .arena-shout',   // ARENA4b: the stands' Cheer and Boo under the versus bar (ui/arenaHud.js)
     // PLUS3: the trade counter and the tavern panel (and the merchant/repair popup, which shares
     // .tavern-shell) never picked up a scoped role - their `.act` buttons fell through to the bare
     // base rule (flat outline, no bevel), which is the "still looks native" the shelf and the
@@ -144,7 +149,8 @@ export const FRAME_ROLES = {
     // PLUS-DRESS: the page's, the F-menu's (its Cancel stays a line of text), the duel's and the decorator's
     'body .dfpage-btn', 'body .dfpeer-btn:not(.cancel)', 'body .dfduel-btn', 'body .dfprofile-duel', 'body .dfdecor-btn', 'body .dfdecor-open',
     'body .dfnaval-btn'],   // NAV-F: the plunder window's presses
-  primary: ['.lv-ok', '.hmroot .act:not(.hmtool)', 'body .dfdecor-place', 'body .bounty-shell .act.primary', 'body .notice-shell .act.primary',   // BOUNTY1: Take bounty and Take the reward in brass   // PLUS-MAP: the map's tools are plain stone   // PLUS-DRESS: Place is what the decorator is for
+  primary: ['.lv-ok', '.hmroot .act:not(.hmtool)', 'body .dfdecor-place', 'body .bounty-shell .act.primary', 'body .notice-shell .act.primary',
+    'body .aw-shell .act.primary',   // ARENA3: Fight and the wager placed - what the window is for   // BOUNTY1: Take bounty and Take the reward in brass   // PLUS-MAP: the map's tools are plain stone   // PLUS-DRESS: Place is what the decorator is for
     'body .dfnaval-take'],   // NAV-F: Take all (and a raid's Sail on) - what the plunder window is for
   // PLUS-DRESS: a press that COSTS something - leave or disband a guild, remove a member, challenge a player - the
   // button in blood rather than brass (the low-health frame's red). Each is a button above as well; this is its edge.
@@ -164,7 +170,9 @@ export const FRAME_ROLES = {
     'body .dfnaval-choice'],   // NAV-F: the captor's three choices - the one taken brass
   chip: ['body .rvncard-rank', '.px-sys .rvn-rank', 'body .rvncard-mood', '.px-sys .rvn-mood', '.pack-shell .fate-mood', '.px-sys .cmp-rank', '.px-sys .cmp-mood', '.hud-qspell', '.pack-shell .sf-tile', '.pack-shell .sf-pill', '.hud-qstag', '.hud-readied', '.lv-note-key',   // (UI3: the effect and need chips are the status widget's tiles now)
     '.shell .subbtn .count', '.hb .hb-caption',
-    'body .dfnaval-chip', 'body .dfnaval-gun'],   // NAV-F: the plate's fire/brace chips and the battery rose - readouts, never pressed
+    'body .dfnaval-chip', 'body .dfnaval-gun',   // NAV-F: the plate's fire/brace chips and the battery rose - readouts, never pressed
+    'body .arena-timer', 'body .arena-tag',
+    'body .aw-chip'],   // ARENA3: the Arena window's titles, banners, laurels, odds and states - readouts   // ARENA2: the bout's clock and the crowd's darling/villain marks - readouts
   well: ['body .rvncard-face', '.px-sys .rvn-face', '.pack-shell .fate-face', '.px-sys .cmp-face', '.px-sys .cmp-slot', '.trade-shell .packcol', '.pack-shell .sf-sec', '.shell .ft-search', '.shell .ft-tile-drawer',   // FT18: the Features search and a tile's opened drawer
     '.port-host .port-field', '.port-host .port-canvas', '.port-host .port-picture img', '.port-host .port-pictureword', '.wizard .namebox', '.sb-shell .sb-rename input', '.cr-shell .cr-compose input', '.hmsearch input',
     '.talk-face', '.pack-shell .figure-doll', '.pack-shell .wornmap-doll.noart', '.shell .look-pic',
@@ -184,6 +192,7 @@ export const FRAME_ROLES = {
     'body .dfnaval-winhead',   // NAV-F: the prize's name, her colours and her captain
     'body .bounty-head',   // BOUNTY1: the board's header - the town, the day's turn
     'body .notice-head',   // NOTICE1: the Notice Board's header - the town, the notes up
+    'body .aw-head',   // ARENA3: the Arena window's header - the season, your name, your title and banner
     '.tavern-shell .sb-top', '.pack-shell .pack-id', '.hmbox-title', '.loot-win .remotehead',
     // PLUS4: the shelf's own "On the shelf / N items" band - the same header a loot window's
     // remotehead already wears, just never scoped for the trade counter's own copy of that markup
@@ -205,7 +214,8 @@ export const FRAME_ROLES = {
     'body .dfdecor-row',   // PLUS-DRESS: the decorator's catalogue
     'body .broker-offer',   // SET7: the Broker's offers
     'body .dfnaval-item',   // NAV-F: a taken ship's hold, a line a piece
-    'body .bounty-post'],   // BOUNTY1: the board's notices
+    'body .bounty-post',   // BOUNTY1: the board's notices
+    'body .aw-tier'],   // ARENA3: the ladder's ten tiers, a line each
   // the fading wing rules and dividers of the quest page
   wing: ['.px-qwing'],
   wingFlip: ['.px-qwing.px-flip'],

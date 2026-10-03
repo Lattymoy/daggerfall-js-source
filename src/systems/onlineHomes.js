@@ -39,13 +39,16 @@
 
 import {
   HOME_ENTRIES, HOME_ENTRY_DEFAULT, homeMapIdOk, homeBuildingKeyOk, homePriceOk, homeMayEnter, rentPriceOk, rentDaysLeft, homeLookOf,
+  homeInArenaCell,   // ARENA4b: the arena's cell, the service's own law
 } from '../net/homeLaw.js';
+import { ARENA_TEXT } from './arenaText.js';   // ARENA4b: the bank's letter for a home the arena displaced
 import { RENT_VERB, rentRowLabel, rentTenantLabel } from './homeRent.js';   // HOME-RENT: the door's rows for a room to rent
 import { BUILDING_TYPES, isResidence } from '../world/buildingNames.js';
 import { DEED_SELL_MULT, CROSSED_DEED_LINES } from './banking.js';
 import { guildTagText } from '../net/guildLaw.js';   // GUILD1d: a hall's tag, as a name wears it
 import { GUILD_HALL_ENTRIES, GUILD_HALL_ENTRY_WORDS, guildHallPrice } from '../net/hallLaw.js';   // GUILD1d: a guild's hall
 import { heraldryOf } from '../net/heraldryLaw.js';   // GUILD1d: a hall's heraldry, off the town's answer
+import { layoutStampOfMapId, CLASSIC_LAYOUT } from './layoutPins.js';   // WD3: a home is bought in its town's layout
 
 /** How long a town's answer is believed before a door asks again. */
 export const HOME_TOWN_TTL_MS = 60_000;
@@ -378,10 +381,10 @@ export function createOnlineHomes({ api, character = () => null, now = () => Dat
   const refused = (r) => ({ ok: false, error: r?.error ?? 'server', ...(Number.isSafeInteger(r?.seq) ? { seq: r.seq } : {}) });
   const realmOf = (r) => (r?.data?.realm ? { data: { realm: r.data.realm } } : {});
 
-  async function claim({ mapId, buildingKey, region, price, realm = null }) {
+  async function claim({ mapId, buildingKey, region, price, realm = null, layout = null }) {
     const id = idOf(mapId);
     const me = character();
-    const r = await api.claim({ mapId: id, buildingKey, region, character: me, price, ...(realm ? { realm } : {}) });
+    const r = await api.claim({ mapId: id, buildingKey, region, character: me, price, ...(realm ? { realm } : {}), layout: layout || null });   // WD3 (AUDIT WD3 B2): always said - null is Daggerfall's own
     if (r?.ok) {
       const had = towns.get(id)?.homes.get(buildingKey);
       wrote(id, buildingKey, { buildingKey, owner: had?.owner ?? '', entry: r.data?.home?.entry ?? HOME_ENTRY_DEFAULT, mine: true, character: me });
@@ -464,6 +467,10 @@ export async function buyOnlineHome(homes, { mapId, buildingKey, region, price, 
   out.add(key);
   try {
     if (!afford(price)) return { ok: false, error: 'gold' };
+    // WD3: the layout this town stands in for the room - the service keeps it for the town's first home, and every
+    // client stands the town so from then on (net/homeLaw.js); Daggerfall's own sends none
+    const stamp = layoutStampOfMapId(mapId);
+    const layout = stamp && stamp !== CLASSIC_LAYOUT ? stamp : null;
     if (realm) {
       // REALM P2.2b: the claim and the record's payment are one write on the service - the purse pays at once and gets it
       // back on a refusal (systems/realmSaves.js realmGoldAct); there is no claim to give back
@@ -472,11 +479,11 @@ export async function buyOnlineHome(homes, { mapId, buildingKey, region, price, 
         // AUDIT REALM: a claim answered as the house already this character's (`repeat`) moved no gold on the record - the
         // purse's reserve comes back, or the next checkpoint would write the price paid twice
         apply: (/** @type {any} */ res) => { if (res?.repeat) refund?.(price); },
-        call: (/** @type {any} */ at) => homes.claim({ mapId, buildingKey, region, price, realm: at }),
+        call: (/** @type {any} */ at) => homes.claim({ mapId, buildingKey, region, price, realm: at, layout }),
       });
       return r?.ok ? { ok: true } : { ok: false, error: r?.error ?? 'server' };
     }
-    const r = await homes.claim({ mapId, buildingKey, region, price });
+    const r = await homes.claim({ mapId, buildingKey, region, price, layout });
     if (!r.ok) return r;
     if (!afford(price)) {
       await homes.release(mapId, buildingKey);
@@ -543,4 +550,114 @@ async function sellOut(homes, { mapId, buildingKey, credit, realm }) {
   const decorBack = r.decorBack ?? 0;   // DECOR1e: its placed pieces' half, as the service summed it
   credit(refund + decorBack);
   return { ok: true, refund, decorBack };
+}
+
+// ═══ ARENA4b (2026-10-03) - A HOME THE ARENA DISPLACED, MOVED BY ITS OWNER'S CLIENT ════════════════════════════════
+//
+// Mac (ARENA1): "Move them to a new house". Online, the account service carries the home's row to the new key
+// (server-account/src/homes.js arenaMoveHome); this is the client's half, the offline move's own steps (world.js
+// moveArenaDeed) for a home the service keeps. Online, in Daggerfall, once the homes' towns stand in their layouts:
+//   1. the moves this character made and never read (an answer lost, the page gone before the letter) - the old scene
+//      emptied into the new again (harmless: a scene emptied once is gone) and the letter said; never a refund, which
+//      the move's own batch paid onto the record;
+//   2. every home of the town that is this character's (or a hall it keeps) and stands in the arena's cell - the new
+//      house PICKED here (`pick`, systems/arenaMove.js arenaHomeFor over the town's buildings, every key a home holds
+//      left out - asked again past one taken meanwhile), POSTED (inside a realm act for a home: the pieces' refund comes
+//      onto the record in the move's batch), and on its answer the old scene EMPTIED into the new INSIDE the act's apply
+//      (the act's closing checkpoint holds it - worldModes.js sellHomeAt's law): the owner's own things back to the pack
+//      or the furnishings, the chests and the floor into the new house's chest, the refund into the Daggerfall bank;
+//   3. the Daggerfall Bank's letter (ARENA_TEXT.deedMoved, a hall's its own), the notebook's line, the lines for a
+//      refund and a carried tenancy - and the move said read (`seen_at`) once a checkpoint holds the emptied scene: a
+//      hall's move and a move read again empty it outside any realm act, so a page gone before the next checkpoint would
+//      have left the record's old scene full and the move read - its things in a scene nothing opens. A checkpoint
+//      refused leaves the move unread, and the next boot empties the record's scene again (1.).
+// Offline is unchanged (arenaMove.js moveArenaRecords).
+
+/** How many houses a move is posted to before it waits for the next boot (one taken under each pick). */
+export const ARENA_MOVE_TRIES = 3;
+
+/**
+ * THE MOVES, made and read (above). `homes` the registry (createOnlineHomes), `api` net/accountClient.js accountHomes,
+ * `mapId` Daggerfall's, `character` the one playing; `pick(fromKey, held)` the new house's summary (`{ buildingKey,
+ * name }`) or null; `nameOf(key)` a building's name; `realm` the host's realm act (`{ act }`) or null; `emptyScene(from,
+ * to)` empties the old home's scene into the new one's and answers arenaMove.js emptyArenaScene's `{ own, crate, ... }`;
+ * the hooks the host's, each optional: `giveOwn(items)`, `credit(gold)` (the Daggerfall bank account), `discover(key, hall)`,
+ * `notice(lines)`, `note(text)`, `say(line)`, `checkpoint()` (the save written now - false when refused). Answers every
+ * move handled, `{ from, to, refund, hall, made }`.
+ * @param {{ homes: any, api: any, mapId: number, character: string|null, pick: (from: number, held: Set<number>) => ({ buildingKey: number }|null),
+ *   nameOf?: (key: number) => string, realm?: { act: (o: any) => Promise<any> }|null, emptyScene?: (from: number, to: number) => any,
+ *   hooks?: { giveOwn?: (items: any[]) => void, credit?: (gold: number) => void, discover?: (key: number, hall: boolean) => void,
+ *     notice?: (lines: readonly string[]) => void, note?: (text: string) => void, say?: (line: string) => void,
+ *     checkpoint?: () => boolean } }} o
+ */
+export async function moveArenaHomes({ homes, api, mapId, character, pick, nameOf = () => '', realm = null, emptyScene, hooks = {} }) {
+  const out = [];
+  if (!api?.arenaMove || typeof character !== 'string' || !character || !homeMapIdOk(mapId)) return out;
+  const said = new Set();
+  /** The old scene emptied into the new - the owner's own things given back, a home's refund credited when this move made
+   *  it now (never a move read again: its batch paid the record, which the join read). */
+  const empty = (m, credit) => {
+    const e = emptyScene?.(m.from, m.to) ?? null;
+    if (e?.own?.length) hooks.giveOwn?.(e.own);
+    if (credit && !m.hall && m.refund > 0) hooks.credit?.(m.refund);
+    return e;
+  };
+  /** The letter, the notebook, the lines - once a move - and the move said read once the save holds it (3.). */
+  const announce = async (m, made) => {
+    if (said.has(m.from)) return;
+    said.add(m.from);
+    hooks.discover?.(m.to, m.hall);   // a hall is its guild's, never discovered as anyone's residence
+    const name = nameOf(m.to) || ARENA_TEXT.homeMove.aHouse;
+    hooks.notice?.(m.hall ? ARENA_TEXT.homeMove.hallMoved : ARENA_TEXT.deedMoved);
+    hooks.note?.((m.hall ? ARENA_TEXT.homeMove.hallNote : ARENA_TEXT.deedMovedNote).replace('%s', name));
+    if (made && !m.hall && m.refund > 0) hooks.say?.(ARENA_TEXT.homeMove.refund(m.refund));
+    if (made && m.tenancies > 0) hooks.say?.(ARENA_TEXT.homeMove.tenants(m.tenancies));
+    if (hooks.checkpoint?.() !== false) await api.arenaSeen(mapId, m.from);
+    out.push({ from: m.from, to: m.to, refund: m.refund, hall: m.hall, made });
+  };
+  const moveOf = (d) => ({ from: d.from, to: d.to, refund: Number.isSafeInteger(d.refund) && d.refund > 0 ? d.refund : 0, hall: d.hall === true, tenancies: Number.isSafeInteger(d.tenancies) ? d.tenancies : 0 });
+  // 1. what was moved before and never read
+  const unread = await api.arenaMoves(character);
+  for (const d of unread?.ok && Array.isArray(unread.data?.moves) ? unread.data.moves : []) {
+    if (d?.mapId !== mapId || !homeInArenaCell(mapId, d.from) || !homeBuildingKeyOk(d.to) || homeInArenaCell(mapId, d.to)) continue;
+    const m = moveOf(d);
+    empty(m, false);
+    await announce(m, false);
+  }
+  // 2. what stands in the arena's cell still
+  if (!(await homes.ensure(mapId, { force: true }))) return out;
+  const mine = [...(homes.homesIn(mapId)?.values() ?? [])]
+    .filter((h) => homeInArenaCell(mapId, h.buildingKey) && ((h.mine && h.character === character) || (h.hall && h.keeper)));
+  for (const h of mine) {
+    const held = new Set(homes.homesIn(mapId)?.keys() ?? []);
+    for (let tries = 0; tries < ARENA_MOVE_TRIES; tries++) {
+      const to = pick(h.buildingKey, held);
+      if (!to || !homeBuildingKeyOk(to.buildingKey)) break;
+      const body = { mapId, from: h.buildingKey, to: to.buildingKey, character };
+      /** @type {any} */
+      let m = null;
+      let r;
+      if (realm?.act && !h.hall) {
+        // a home's move is a realm act: its record takes the refund in the move's batch - the scene emptied in `apply`,
+        // so the act's closing checkpoint holds both; an answer that landed but never came back ends the session
+        // (`needsAnswer`), and the next join reads the move as unread (1.)
+        r = await realm.act({
+          needsAnswer: true,
+          apply: (/** @type {any} */ res) => { const d = res?.data; if (d?.to) { m = moveOf(d); empty(m, d.repeat !== true); } },
+          call: (/** @type {any} */ at) => api.arenaMove({ ...body, realm: at }),
+        });
+      } else {
+        r = await api.arenaMove(body);
+        if (r?.ok && r.data?.to) { m = moveOf(r.data); empty(m, r.data.repeat !== true); }   // a hall's refund was its treasury's (`empty` credits no hall)
+      }
+      if (r?.ok && m) { await announce(m, r.data?.repeat !== true); break; }
+      if (r?.error !== 'home-taken') { if (r?.error === 'home-changed') hooks.say?.(ARENA_TEXT.homeMove.changed); break; }
+      // taken meanwhile: the town read again, every key it holds left out, and picked again
+      held.add(to.buildingKey);
+      await homes.ensure(mapId, { force: true });
+      for (const k of homes.homesIn(mapId)?.keys() ?? []) held.add(k);
+    }
+  }
+  if (out.length) void homes.ensure(mapId, { force: true });   // the doors read the town again - the new house is the owner's now
+  return out;
 }

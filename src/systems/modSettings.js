@@ -152,6 +152,34 @@ export const MOD_SETTINGS = Object.freeze({
       }),
     }),
   }),
+  // WD3 (2026-10-01): BEAUTIFUL VILLAGES OF DAGGERFALL 1.4.2 and BEAUTIFUL
+  // CITIES OF DAGGERFALL 0.5.0 (carademono). No modsettings of their own -
+  // 7,317 and 410 places laid out again, their blocks with them - so one
+  // switch each: the port's Enabled, read once when the game loads
+  // (scenes/modWorldData.js latches it - a town never moves under the
+  // player), online the room's (systems/onlineLane.js).
+  'beautiful-villages': Object.freeze({
+    title: 'Beautiful Villages of Daggerfall',
+    author: 'carademono',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'Villages, hamlets, farms, manors and temples laid out again, and roadside taverns rebuilt. A '
+          + 'house, room or quest building you hold keeps its town as you found it.',
+      }),
+    }),
+  }),
+  'beautiful-cities': Object.freeze({
+    title: 'Beautiful Cities of Daggerfall',
+    author: 'carademono',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'The cities laid out again - districts, walls, gates, markets and docks. A house, room or quest '
+          + 'building you hold keeps its city as you found it.',
+      }),
+    }),
+  }),
   // WA1 (2026-09-25): WARM ASHES - SHIPS 1.1 (Kamer). No modsettings of its
   // own - a travel hook, a quest action and six world-data variants - so
   // one switch.

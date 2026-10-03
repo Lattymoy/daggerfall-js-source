@@ -121,7 +121,7 @@ test('WOD4: the streaming host stands the camp on the block, climate and collide
   const w = rd('src/scenes/world.js');
   assert.match(w, /if \(wod && b\.blockName === PRIVATEERS_HOLD_BLOCK\) holdBlocks\.push\(originMatrix\);   \/\/ WOD4/);
   const block = w.slice(w.indexOf('    let privateersHold = null;'), w.indexOf('    // SIB1: DaggerfallTerrain.OnInstantiateTerrain'));
-  assert.match(block, /await remapSubMeshes\(gpu\.subMeshes, texRemap, climateArchive, pipeline\);/, 'the location re-skins every mesh under its blocks');
+  assert.match(block, /await remapSubMeshes\(gpu\.subMeshes, texRemap, townClimateArchive, pipeline\);/, 'the location re-skins every mesh under its blocks (in its own climate - AUDIT WD3 G5)');
   assert.match(block, /const local = multiply\(origin, holdModelMatrix\(hm\)\);/);
   assert.match(block, /staticBuilder\.add\(cpu, local, resolveTexKey\);/);
   assert.match(block, /collider\.addMesh\(key, cpu\.positions, cpu\.indices, local, holdBucket\);/);

@@ -38,8 +38,8 @@
   {
     "name": "RR3b-5-a-mod-that-is-off-still-ships-its-assets",
     "file": "src/formats/worldDataReplacement.js",
-    "old": "const assetOn = (a) => !!a && (a.isOn?.() ?? true);",
-    "new": "const assetOn = (a) => !!a;",
+    "old": "  return a.isOn?.() ?? true;\n}",
+    "new": "  return true;\n}",
     "tests": [
       "test/rr3b_worlddata.test.js"
     ]
@@ -47,7 +47,7 @@
   {
     "name": "RR3b-6-the-injection-gate-is-ignored",
     "file": "src/formats/worldDataReplacement.js",
-    "old": "  if (!assetInjectionOn() || !dfRegion) return false;",
+    "old": "  if (!worldDataOn() || !dfRegion) return false;",
     "new": "  if (!dfRegion) return false;",
     "tests": [
       "test/rr3b_worlddata.test.js"
@@ -83,8 +83,8 @@
   {
     "name": "RR3b-10-a-variant-block-with-no-file-is-cached-as-none",
     "file": "src/formats/worldDataReplacement.js",
-    "old": "    if (variant === NO_VARIANT) blocks.set(blockName, NO_REPLACEMENT);\n    return null;",
-    "new": "    blocks.set(blockKey, NO_REPLACEMENT);\n    return null;",
+    "old": "    if (variant === NO_VARIANT) cacheBlock(blockName, NO_REPLACEMENT);\n    return null;",
+    "new": "    cacheBlock(blockKey, NO_REPLACEMENT);\n    return null;",
     "tests": [
       "test/rr3b_worlddata.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "RR3b-11-the-json-block-keeps-its-own-index",
     "file": "src/formats/worldDataReplacement.js",
-    "old": "  const dfBlock = blockFromJson(json, block);",
-    "new": "  const dfBlock = blockFromJson(json, json.Index ?? block);",
+    "old": "  const dfBlock = blockFromJson(json, block);\n  if (blockName.endsWith('.RMB')) replaceRmbBlockBuildingData(blockName, block, dfBlock);   // :382-384",
+    "new": "  const dfBlock = blockFromJson(json, json.Index ?? block);\n  if (blockName.endsWith('.RMB')) replaceRmbBlockBuildingData(blockName, block, dfBlock);   // :382-384",
     "tests": [
       "test/rr3b_worlddata.test.js"
     ]

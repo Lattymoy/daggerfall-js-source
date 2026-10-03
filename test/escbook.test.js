@@ -61,7 +61,9 @@ test('ESC-BOOK: the page\'s doors are the host\'s arms - the page goes down FIRS
     questLog: () => 'not a door',
   };
   const doors = sheetPageDoors(bag, () => seen.push('close'));
-  assert.deepEqual(Object.keys(doors), ['openPack', 'openSpellbook', 'openChronicle']);
+  // ARENA3 moved this pin: the Arena window is a fourth door of the page (bible/11-Multiplayer/Arena.md 5 - "from the
+  // pause menu's Arena entry once you have joined"), the host's arm like the other three
+  assert.deepEqual(Object.keys(doors), ['openPack', 'openSpellbook', 'openChronicle', 'openArena']);
   doors.openSpellbook(); doors.openChronicle(); doors.openPack();
   assert.deepEqual(seen, ['close', 'book', 'close', 'chronicle', 'close', 'pack'], 'down first, then the host opens it');
   // a host that handed no arm gets no door - never a factory's window that no slot holds
@@ -69,7 +71,7 @@ test('ESC-BOOK: the page\'s doors are the host\'s arms - the page goes down FIRS
   assert.equal(bare.openPack, undefined);
   assert.equal(bare.openChronicle, undefined);
   assert.equal(typeof bare.openSpellbook, 'function');
-  assert.deepEqual(sheetPageDoors(null, () => {}), { openPack: undefined, openSpellbook: undefined, openChronicle: undefined });
+  assert.deepEqual(sheetPageDoors(null, () => {}), { openPack: undefined, openSpellbook: undefined, openChronicle: undefined, openArena: undefined });
   // THE F6 CROSSOVER is the Pack door's own: the page's key handler asks the same doors
   const door = rd('src/ui/charSheetDoor.js');
   assert.match(door, /const pack = acts\.includes\('Inventory'\) \? sheetPageDoors\(pause\?\.\(\), close\)\.openPack : undefined;/);

@@ -181,6 +181,9 @@ export function reclaimCustomsDeeds(realm, offline) {
     const name = interiorSceneName(slot.mapId, slot.buildingKey);
     if (!permanent.has(name) || houses[region]?.buildingKey > 0) continue;
     houses[region] = { ...houses[region], regionIndex: region, location: slot.location ?? '', mapId: slot.mapId, buildingKey: slot.buildingKey, crossed: true };
+    // WD3 (AUDIT WD3 S2): the deed's town layout crosses with it - its key names a building only in that layout
+    delete houses[region].layout;
+    if (typeof slot.layout === 'string' && slot.layout) houses[region].layout = slot.layout;
     piecesBack(name);
     back.houses.push(slot.location ?? '');
   }

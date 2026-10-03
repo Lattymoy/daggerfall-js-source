@@ -1,0 +1,15 @@
+{
+  "ModTitle": "Daggerfall Arena",
+  "ModVersion": "1.0",
+  "ModAuthor": "Kamer",
+  "Bundle": "daggerfall arena.dfmod",
+  "BundleSha256": "6bb08b9bf656f475f4d146c504849b9f79955cca378315dc343ce1e461176b13",
+  "Note": "Every file tools/daggerfallArenaExtract.mjs writes - generated, not written by hand. No texture is among them: the bundle's two are Daggerfall's own (see README.md).",
+  "Files": [
+    "Arena/ARENADAG.RMB.json",
+    "Arena/undercroft.json",
+    "Models/864102.bin",
+    "Models/864102.json",
+    "daggerfallarena.dfmod.json"
+  ]
+}

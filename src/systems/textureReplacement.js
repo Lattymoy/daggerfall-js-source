@@ -125,6 +125,7 @@ export function setTextureReplacements(fileNames, load) {
     if (!_index.has(key)) _index.set(key, e);
   }
   _load = typeof load === 'function' ? load : null;
+  for (const k of [..._decoded.keys()]) if (_vendor.get(k)?.yields && _index.has(k)) _decoded.delete(k);   // AUDIT WD3 T2: the pick's picture, not the stand-in's already decoded
   return _index.size;
 }
 
@@ -168,7 +169,7 @@ export function addVendorTextures(entries) {
     if (!Number.isFinite(e?.archive) || !Number.isFinite(e?.record) || (typeof e.load !== 'function' && typeof e.build !== 'function')) continue;
     const map = e.map ?? 'Albedo';   // RRI1: a mod's helmet mask registers under TextureMap.Mask
     const key = textureKey(e.archive, e.record, e.frame ?? 0, map, e.dye ?? null);
-    _vendor.set(key, { archive: Number(e.archive), record: Number(e.record), frame: Number(e.frame ?? 0), map, dye: e.dye ?? null, gate: typeof e.gate === 'function' ? e.gate : null, lazy: e.lazy === true, fileName: e.fileName ?? key, load: e.load ?? null, build: typeof e.build === 'function' ? e.build : null, standIn: e.standIn === true, offset: e.offset ?? null });   // WD2: `build(ctx)` - a picture DERIVED from the player's own classic records (formats/derivedTexture.js), never a file   // FIELD-GUN4: a WORN stand-in needs a place on the doll, which only its registration knows; AUDIT-DW F1: `lazy` - decoded per record when asked, never by the archive's preload
+    _vendor.set(key, { archive: Number(e.archive), record: Number(e.record), frame: Number(e.frame ?? 0), map, dye: e.dye ?? null, gate: typeof e.gate === 'function' ? e.gate : null, lazy: e.lazy === true, fileName: e.fileName ?? key, load: e.load ?? null, build: typeof e.build === 'function' ? e.build : null, standIn: e.standIn === true, yields: e.yields === true, offset: e.offset ?? null });   // WD2: `build(ctx)` - a picture DERIVED from the player's own classic records (formats/derivedTexture.js), never a file   // FIELD-GUN4: a WORN stand-in needs a place on the doll, which only its registration knows; AUDIT-DW F1: `lazy` - decoded per record when asked, never by the archive's preload
     n++;
   }
   return n;
@@ -330,29 +331,35 @@ export function setBundleTextures(entries) {
     if (_bundle.has(key)) continue;   // the first attached mod that carries a name keeps it
     _bundle.set(key, { archive: Number(e.archive), record: Number(e.record), frame: Number(e.frame ?? 0), map, dye: e.dye ?? null, fileName: e.fileName ?? key, image: e.image, lazy: e.lazy === true, rect: e.rect ?? null });
   }
+  for (const k of [..._decoded.keys()]) if (_vendor.get(k)?.yields && _bundle.has(k)) _decoded.delete(k);   // AUDIT WD3 T2: the attached mod's picture, not the stand-in's already decoded
   return _bundle.size;
 }
 export const bundleTextureCount = () => _bundle.size;
 /** A bundle texture's paperdoll `<rect>` ({ x, y, width, height } in the doll's own pixels), or null. */
 export function textureReplacementRect(archive, record, frame = 0, map = 'Albedo', dye = null) {
   const key = textureKey(archive, record, frame, map, dye);
-  if (_index.has(key) || _vendor.has(key)) return null;
+  if (_index.has(key) || vendorOf(key)) return null;
   return _bundle.get(key)?.rect ?? null;
 }
 
-const entryFor = (key) => _index.get(key) ?? _vendor.get(key) ?? _bundle.get(key) ?? null;
+/** WD3 (AUDIT WD3 T2): a vendored entry that YIELDS - the town mods' stand-ins for peers this port does not carry
+ *  (DET's, the RMB Resource Pack's, Rosy's) - steps aside where the player's own replacement answers the same record
+ *  (a loose file or an attached .dfmod: the real peer mod's own picture, which the stand-in only stands in for). */
+const ownPick = (key) => textureReplacementEnabled() && (_index.has(key) || _bundle.has(key));
+const vendorOf = (key) => { const v = _vendor.get(key); return v && !(v.yields && ownPick(key)) ? v : null; };
+const entryFor = (key) => _index.get(key) ?? vendorOf(key) ?? _bundle.get(key) ?? null;
 
 export function clearTextureReplacements() {
   _index = new Map();
   _load = null;
-  for (const k of _decoded.keys()) if (!_vendor.has(k) && !_bundle.has(k)) _decoded.delete(k);   // a new pick must not inherit the old one's pixels; the port's own stay (DFMOD1: and an attached bundle's)
+  for (const k of _decoded.keys()) if ((!_vendor.has(k) || _vendor.get(k).yields) && !_bundle.has(k)) _decoded.delete(k);   // AUDIT WD3 T2: a yielding stand-in's picture is decided again against the new pick   // a new pick must not inherit the old one's pixels; the port's own stay (DFMOD1: and an attached bundle's)
 }
 
 /** Synchronous, and for the same reason music's is: the upload path
  *  has to know which branch it is on before it can proceed. */
 export function hasTextureReplacement(archive, record, frame = 0, map = 'Albedo', dye = null) {
   const key = textureKey(archive, record, frame, map, dye);
-  const v = _vendor.get(key);
+  const v = vendorOf(key);
   if (v) return !v.gate || v.gate() === true;   // DW3: a gated entry answers only while its switch is on
   if (!textureReplacementEnabled()) return false;
   return _index.has(key) || _bundle.has(key);   // DFMOD1: an attached bundle's texture answers too
@@ -394,11 +401,11 @@ export async function textureReplacementBytes(archive, record, frame = 0, map = 
 // ROAD-H H4: WHAT IS IN THIS MAP IS A COLOR32, NOT A DECODED PNG.
 //
 // The upload path is `renderer.uploadTexture(archive, record, color32)`,
-// which reads `color32.colors` and `asBytes` of it (renderer.js:3362),
+// which reads `color32.colors` and `asBytes` of it (renderer.js:3370),
 // and every texture it uploads is BOTTOM-UP - `getColor32` writes
 // `dstRow = (dstHeight - 1 - border - y) * dstWidth`
 // (baseImageFile.js:143, BaseImageFile.cs:250) and the upload leaves
-// UNPACK_FLIP_Y_WEBGL off (renderer.js:4000). A browser decode hands
+// UNPACK_FLIP_Y_WEBGL off (renderer.js:4008). A browser decode hands
 // back `{ width, height, data }` with the TOP row first, so a swap
 // stored raw was BOTH the wrong field name - `color32.colors` was
 // `undefined` and `asBytes` threw on the first swapped record a pack
@@ -544,7 +551,7 @@ export function preloadTextureRecord(archive, record, frame = 0, map = 'Albedo',
  *  classic". */
 export function decodedTexture(archive, record, frame = 0, map = 'Albedo', dye = null) {
   const key = textureKey(archive, record, frame, map, dye);
-  const v = _vendor.get(key);
+  const v = vendorOf(key);
   if (v) return (!v.gate || v.gate() === true) ? (_decoded.get(key) ?? null) : null;   // SURV2: the port's own, ungated - DW3: unless its registration gates it
   if (!textureReplacementEnabled()) return null;
   return _decoded.get(key) ?? null;

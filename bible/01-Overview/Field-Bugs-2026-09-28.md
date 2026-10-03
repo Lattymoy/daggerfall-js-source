@@ -267,7 +267,7 @@ own map name and the lockpick record kept, a house the player owns never renamed
 - Mutants: `tools/mutants/disc28.json` (48 dead). Re-aimed: `jail_hit.json` (6), `auditdisc19.json` (four S4 records),
   `auditparty8.json` (AP-quest-echo), `auditsqueeze.json` (ASQ-S1).
 - Citations: `tools/citeShift.mjs --base fe95d9592 --apply --struck`, once (264 moved); the worldModes DiscoverBuilding
-  note re-aimed by hand to `discovery.js:83`; `Hardening.md:642` quotes a past mismatch as history and stands.
+  note re-aimed by hand to `discovery.js:93`; `Hardening.md:642` quotes a past mismatch as history and stands.
 
 ## AUDIT (2026-09-28, before the merge)
 
@@ -471,4 +471,4 @@ killer a fix touched re-run.
 - Citations: `tools/citeMerge.mjs origin/main 408877576 --apply --struck` for the merge (224 moved); then
   `tools/citeShift.mjs --base 2a8b70b2a --apply --struck` once over the audit's fixes (318 moved); by hand, by
   content: chargenSession.js's overlayHover continuation (twice - a bare `(:N)` on its own line, which neither
-  mapper can pair) and audit58_pins' `court.js:228-229`; `discovery.js:83` still names the re-discover it means.
+  mapper can pair) and audit58_pins' `court.js:228-229`; `discovery.js:93` still names the re-discover it means.

@@ -66,13 +66,14 @@ test('F070: the trade window\'s Repair arm applies the SAME queue law as the liv
   // arms of a one-item list.
   const wm = src('scenes/worldModes.js');
   // The KEYED flow's call: one new item on top of every job at this shop.
-  const calls = wm.match(/updateRepairTimes\(\[\.\.\.repairJobsAt\(playerEntity, bk, now\), it\], \{ commit: true, nowMinutes: now, buildingKey: bk \}\);/g) ?? [];
+  // WD3: and the shop's town rides with its key (`mapId`) - a key names a building only in its town's layout
+  const calls = wm.match(/updateRepairTimes\(\[\.\.\.repairJobsAt\(playerEntity, bk, now, homeTownOf\(interiorBuilding\)\), it\], \{ commit: true, nowMinutes: now, buildingKey: bk, mapId: homeTownOf\(interiorBuilding\) \}\);/g) ?? [];
   assert.equal(calls.length, 1, 'the keyed choice flow still books against the whole queue');
   // D7 - the NATIVE arm is ConfirmTrade's own shape (:1057-1074): the
   // window's Repair remoteItems IS PlayerEntity.OtherItems, so `staged`
   // ALREADY is remoteItemsFiltered and the commit branches ONCE, not
   // once per item - one UpdateRepairTimes(true) over the whole lot.
-  assert.match(wm, /updateRepairTimes\(\[\.\.\.staged\], \{ commit: true, nowMinutes: now, buildingKey: bk \}\);/,
+  assert.match(wm, /updateRepairTimes\(\[\.\.\.staged\], \{ commit: true, nowMinutes: now, buildingKey: bk, mapId: homeTownOf\(interiorBuilding\) \}\);/,
     'the trade arm must stretch the whole queue in ONE pass');
   // the instant-repair branch mends in place and does NOT book a job
   assert.ok(wm.includes("it.currentCondition = it.maxCondition;   // the InstantRepairs branch (:1062-1065)"),

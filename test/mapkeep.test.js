@@ -54,7 +54,7 @@ test('MAP-KEEP / THE HOSTS: the world host\'s load enters the saved dungeon on t
   assert.match(m, /gatedTransition\(\(live\) => dungeonTransition\(hit, entries, preferEnterMarker, live, fromLoad\)\)/);
   assert.match(m, /automapFromLoad: fromLoad,/);
   // AUDIT 27h M1: the court's record stands outside the store; every other dungeon enters on the arm it was handed
-  assert.match(rd('src/scenes/dungeonContext.js'), /let automapRec = isGateArena\(dfLocation\) \? detachedAutomapRecord\(\)[^\n]*\n\s*: enterDungeonAutomap\(automapKey, classicMinutesRef\.value, \{ fromLoad: !!opts\.automapFromLoad \}\);/);
+  assert.match(rd('src/scenes/dungeonContext.js'), /let automapRec = isGateArena\(dfLocation\)(?: \|\| isArenaFloor\(dfLocation\))? \? detachedAutomapRecord\(\)[^\n]*\n\s*: enterDungeonAutomap\(automapKey, classicMinutesRef\.value, \{ fromLoad: !!opts\.automapFromLoad \}\);/);
   // the other entries stay fresh ones: only the load passes it
   assert.equal((m.match(/fromLoad: true/g) ?? []).length, 0, 'worldModes never claims a load on its own');
 });

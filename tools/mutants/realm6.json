@@ -119,11 +119,12 @@
   {
     "name": "REALM6-sale-guesses",
     "file": "src/systems/onlineHomes.js",
-    "old": "      needsAnswer: true,\n",
-    "new": "",
+    "old": "    const r = await realm.act({\n      needsAnswer: true,\n",
+    "new": "    const r = await realm.act({\n",
     "tests": [
       "test/realm6.test.js"
-    ]
+    ],
+    "note": "ARENA4b (PIN MOVED, re-aimed by content): onlineHomes.js moveArenaHomes's act needs its answer too - aimed at the sale's by the call over it."
   },
   {
     "name": "REALM6-tool-place-unreserved",

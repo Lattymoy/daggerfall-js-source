@@ -19,6 +19,9 @@ import { templateByIndex } from './itemTemplates.js';   // AUDIT 63r F28: `short
 import { restartHeldEnchantments } from './enchantments.js';   // E2: the held bundles' restore half
 import { snapshotWeather, restoreWeather, rollClimateWeathersForDay } from './weatherSim.js';   // W1: playerPosition.weather (SerializablePlayer.cs:225) - one value, every host; AUDIT WORLD5 C4: the shared day's sky over a loaded one
 import { snapshotRegionConditions, restoreRegionConditions } from './regionConditions.js';
+import { arenaLadderSnapshot, arenaLadderRestore } from './arenaLadder.js';   // ARENA2: the arena's ladder, offline
+import { arenaLeagueSnapshot, arenaLeagueRestore } from './arenaLeague.js';   // ARENA3: the banners, the season, the Records page, the book
+import { arenaReplaysSnapshot, arenaReplaysRestore } from './arenaReplay.js';   // ARENA5: your ladder replays
 import { snapshotStanding, restoreStanding } from './standing.js';   // REP: the standing book   // S42: the CONDITION half of RegionDataRecord
 import { snapshotDiscovery, restoreDiscovery } from './discovery.js';   // T4
 import { getWorldVariationSaveData, restoreWorldVariationData, clearWorldDataVariants } from './worldDataVariants.js';   // RR3b: the world-data variants ride the save
@@ -406,6 +409,15 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   // it must be COPIED or the snapshot aliases live state.
   snap.legalRep = entity.legalRep ? { ...entity.legalRep } : null;
   snap.standing = snapshotStanding(entity);   // REP: the watch's clocks and the prices paid, per region
+  // ARENA2: THE LADDER (systems/arenaLadder.js) - the tier, the bouts won in it, the champions beaten, the Grand
+  // Champion and the record, versioned inside its own shape (`v`); additive, so SAVE_VERSION does not move
+  snap.arena = arenaLadderSnapshot(entity.arenaLadder ?? null);
+  // ARENA5: YOUR LADDER REPLAYS (systems/arenaReplay.js) - the last three ladder bouts, each its own versioned record,
+  // on the arena record beside the ladder (an older save reads back with none; the ladder's own read ignores the field)
+  snap.arena.replays = arenaReplaysSnapshot(entity.arenaReplays ?? []);
+  // ARENA3: THE LEAGUE (systems/arenaLeague.js) - the banner worn, the season's points given, the laurel, the closed
+  // seasons, the last bouts and the bookmaker's book; versioned inside its own shape, additive like the ladder
+  snap.arenaLeague = arenaLeagueSnapshot(entity.arenaLeague ?? null);
   // Any biography deltas still parked (only if FACTION.TXT was missing
   // at creation - S25 drains them at the chargen seam otherwise).
   snap.pendingFactionRep = (entity.pendingFactionRep ?? []).map((r) => ({ ...r }));
@@ -848,6 +860,9 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   entity.timeForDarkBrotherhoodLetter = snap.timeForDarkBrotherhoodLetter ?? 0;
   entity.legalRep = snap.legalRep ? { ...snap.legalRep } : {};
   restoreStanding(entity, snap.standing);   // REP: a pre-REP save restores an empty book
+  entity.arenaLadder = arenaLadderRestore(snap.arena);   // ARENA2: a save from before the ladder climbs from tier 1
+  entity.arenaReplays = arenaReplaysRestore(snap.arena?.replays);   // ARENA5: a save from before the replays keeps none
+  entity.arenaLeague = arenaLeagueRestore(snap.arenaLeague);   // ARENA3: a save from before the banners wears none
   // AUDIT 23 (C4/guilds-4): DFU clamps every region's LegalRep right
   // after restoring it (SerializablePlayer -> ClampLegalReputations) -
   // a save carrying a beyond-band value loads back into the band.

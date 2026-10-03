@@ -11,6 +11,7 @@ import { HOLIDAYS, getHolidayId } from './holidays.js';
 import { calculateTradePrice, essentialPrice } from './shopStock.js';   // ESSENTIALS-HALF: online, a room and a meal cost half
 import { dayOfYear } from './gameDate.js';
 import { interiorSceneName, addPermanentScene, removePermanentScene } from './sceneCache.js';   // P1: the rented room's own scene
+import { stampLayout, layoutStampOfMapId, recordStands } from './layoutPins.js';   // WD3: a room keeps the layout its inn was rented in
 
 /** The TEXT.RSC records the window speaks (:37-41). */
 export const TOO_MANY_DAYS_ID = 16;
@@ -102,8 +103,12 @@ export function removeExpiredRooms(rooms, nowMinutes, sceneCache = null) {
 }
 
 /** GetRentedRoom (:158): this inn's room, by map AND building. */
-export const findRentedRoom = (rooms, mapId, buildingKey) =>
-  rooms.find((r) => r.mapId === mapId && r.buildingKey === buildingKey) ?? null;
+export const findRentedRoom = (rooms, mapId, buildingKey, inn = true) =>
+  rooms.find((r) => r.mapId === mapId && r.buildingKey === buildingKey && recordStands(r))
+  // WD3 (AUDIT WD3 S5): a room rented in another layout of this town - its inn's key names another building now - is
+  // honoured at an INN of the town (`inn`: the building asking is one), never lost and never a stranger's bed by the
+  // key alone
+  ?? (inn ? rooms.find((r) => r.mapId === mapId && !recordStands(r)) : null) ?? null;
 
 /** The days a live rental still has to run (:180-185), floored at 0 -
  *  DFU clamps a negative rather than letting an expired room CREDIT
@@ -160,6 +165,7 @@ export function rentRoom(rooms, { room, days, nowMinutes, mapId, buildingKey, na
     allocatedBedIndex: Math.floor(rolls() * Math.max(1, bedCount)),
     expiryMinutes: nowMinutes + 24 * 60 * days,
   };
+  stampLayout(fresh, layoutStampOfMapId(mapId));   // WD3: the inn's town's layout (systems/layoutPins.js)
   rooms.push(fresh);
   return fresh;
 }
@@ -203,11 +209,11 @@ export function eatOrDrink(index, { gold = 0, gameMinutes = 0, online = undefine
 
 // The three clauses that stood here are all closed:
 //  - (RETIRED by TK-iv: the TALK button. tavernWindow.js:371, and the
-//    KeyT arm at :343, fire hooks.onTalk; worldModes.js:4173 supplies
+//    KeyT arm at :343, fire hooks.onTalk; worldModes.js:4302 supplies
 //    it as openStaticNpc(pn, { forceTalk: true }), which reaches
-//    npcSession.talkToStaticNPC at worldModes.js:3198 - TalkManager.
+//    npcSession.talkToStaticNPC at worldModes.js:3227 - TalkManager.
 //    TalkToStaticNPC (TalkManager.cs:752-770). The guild popup's TALK
-//    button shares that door at worldModes.js:4280, popupTalkToStaticNpc.)
+//    button shares that door at worldModes.js:4409, popupTalkToStaticNpc.)
 //  - (RETIRED by P1: AddPermanentScene (:246) keeps a rented room's
 //    interior loaded across a save. The port now has a permanent-scene
 //    set, and rentRoom names the scene it should hold.)

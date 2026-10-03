@@ -428,7 +428,7 @@ test('PROF2 hosts: the streaming world stands every kind through the one host, i
   const d = src('src/scenes/dungeonContext.js');
   assert.match(d, /actTool: \(\) => opts\.actTool\?\.\(\) \?\? null,/);
   assert.match(d, /if \(held && opts\.profActing\?\.\(\)\) return;/, 'AUDIT 29 D2: the press alone');
-  assert.match(d, /if \(dfLocation\?\.spawned \|\| isGateArena\(dfLocation\) \|\| !Number\.isSafeInteger\(dfLocation\?\.mapTableData\?\.mapId\)\) return null;/, 'a spawned dungeon grows none, nor the Burning Court (AUDIT 29 D5)');
+  assert.match(d, /if \(dfLocation\?\.spawned \|\| isGateArena\(dfLocation\) \|\| isArenaFloor\(dfLocation\) \|\| !Number\.isSafeInteger\(dfLocation\?\.mapTableData\?\.mapId\)\) return null;/, 'a spawned dungeon grows none, nor the Burning Court (AUDIT 29 D5), nor the arena\'s floor (ARENA2)');
   assert.match(src('src/ui/hud.js'), /drawNodeCompassMarks\(renderer, nodes, playerXZ, heading01, \{ bx, by, bw, s \}\);/);   // NODE-MARKS: in each profession's colour
   assert.match(src('src/ui/enhancedHud.js'), /drawNodeMarks\(opts\.nodes \?\? null, opts\.playerXZ \?\? null, heading01\);/);
   assert.match(src('src/systems/save.js'), /import '\.\/profTemplates\.js';/, 'every scene a save loads in knows the new templates');

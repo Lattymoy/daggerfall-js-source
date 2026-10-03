@@ -45,7 +45,7 @@ import { prepareRealmRecord, realmActFirst, recordMovedOf, mustChange, dropObjec
 import { payFromSave, creditSave } from '../../src/net/realmGoldLaw.js';
 import {
   homeMapIdOk, homeBuildingKeyOk, RENT_ROOMS_MAX, RENT_HELD_MAX, RENT_WRITES_MAX, RENT_WRITES_WINDOW_S,
-  rentRoomOk, rentPriceOk, rentDaysOk, rentAnchorOf, rentCost, rentUntil,
+  rentRoomOk, rentPriceOk, rentDaysOk, rentAnchorOf, rentCost, rentUntil, RENT_ANCHOR_MOVED,
 } from '../../src/net/homeLaw.js';
 
 /** The home is the caller's character's: map, key, account, character (decor.js's own). */
@@ -80,13 +80,16 @@ export async function roomsOf({ db, nowS }, player, { mapId, buildingKey, charac
   const rooms = [];
   for (const r of results) {
     const anchor = anchorOfRow(r.anchor);
-    if (!anchor) continue;
+    // ARENA4b: a tenancy the arena's move carried to the new house has no point in its walls (homes.js arenaMoveHome) -
+    // said as `anchor: null, moved: true`, so the owner sees it and its tenant sees their own; any other point unread
+    const moved = !anchor && r.anchor === RENT_ANCHOR_MOVED;
+    if (!anchor && !moved) continue;
     const running = r.tenant != null && r.until > nowS;
     // a tenancy is its CHARACTER's (renewed by it alone - rentRoom): another character of the same account is told only
     // that the room is taken (AUDIT: it was told "yours", and its renewal was refused)
     const theirs = running && r.tenant === player.id && me != null && r.tenant_char === me;
     rooms.push({
-      room: r.room, anchor, price: r.price, listed: r.listed === 1, taken: running,
+      room: r.room, anchor, price: r.price, listed: r.listed === 1, taken: running, ...(moved ? { moved: true } : {}),
       ...(theirs ? { yours: true, character: r.tenant_char } : {}),
       ...(running && (mine || theirs) ? { until: r.until } : {}),
       ...(running && mine ? { tenant: r.tenant_name } : {}),

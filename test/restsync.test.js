@@ -10,6 +10,7 @@ import { readFileSync } from 'node:fs';
 import * as acorn from 'acorn';
 import { validFoeRecord, hitPoisonOf, hitSpellOf, FOE_HEALTH_MAX, FOE_LEVEL_MAX, FOES_FRAME_MAX, PARTY_MAX } from '../src/net/wire.js';
 import { ELITE_FOE_MULTIPLIER } from '../src/world/spawnedDungeons.js';
+import { ARENA_PUPPET_OWNER } from '../src/net/arenaLaw.js';   // ARENA4: the kill door's puppet test, the real owner word (no puppet here)
 
 const D = readFileSync(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
 const W = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
@@ -290,7 +291,7 @@ test('REST-SYNC: a joiner\'s blow at the room\'s encounter goes to the host by t
   const sent = [];
   const layout0 = foe(), pup = foe({ _encId: 7 });
   const j = {
-    _authority: false, foes: [layout0, pup], _layoutFoes: 1, lastPlayerFeet: [1, 0, 1], _ecvT: 0,
+    _authority: false, ARENA_PUPPET_OWNER, foes: [layout0, pup], _layoutFoes: 1, lastPlayerFeet: [1, 0, 1], _ecvT: 0,
     opts: { onFoeHit: (h) => sent.push(h) }, renownFoeStruck() {}, takeWholeBlow: () => false, markFoeStruck() {}, markConcealedHit() {},
   };
   const jd = mount(`${consts()}\n${declSrc('isRoomFoe')}\n${fnSrc('damageFoe')}\nreturn { damageFoe };`, j);

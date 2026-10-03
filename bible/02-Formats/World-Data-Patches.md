@@ -82,3 +82,28 @@ The rebuild is then the author's edit on the player's own block - what
 the mod does to any block it meets - and the loader says so (the sha256
 differs) and serves it. A patch whose ops do not land (a block that is
 not the named one at the named index) is said and not served.
+
+## WD3 - a world-data pack (2026-10-01)
+
+Beautiful Villages and Beautiful Cities (carademono; `03-World/Beautiful-Towns.md`)
+ship 7,727 `location-<r>-<i>.json` files and 820 RMB blocks between them -
+339 MB of DFU JSON, most of it the classic game, and the rest the same few
+thousand redecorated buildings again and again. A WD1 patch a file would
+have been 8,547 globbed files rebuilt at every boot. WD3 is WD1's law at
+that scale: one PACK a mod, the edit of every file over the player's own
+`MAPS.BSA` and `BLOCKS.BSA`, every piece the author repeats stored once,
+each file rebuilt only when the door first asks for it.
+
+| file | what it is |
+|---|---|
+| `src/formats/worldDataPack.js` | the format and the reader. `{ format: 'dfe-worlddata-pack/1', vendor, mod, bases, classicNames, files: { name: [sha256, base, ops] }, nodes }` (`classicNames`: the name of every classic block a `$c` reads, by index - checked as a `b` base's is, AUDIT WD3 P5; `tools/worldDataPackNames.mjs` laid them into packs built before). A base is a classic block (`['b', name, index]`, checked by name), a classic location (`['l', region, index, name]`, read through the asking MapsFile, checked by name) or another file of the pack (`['f', name]`, rebuilt first and kept - never more than two deep). Ops are WD1's, plus `sr` (a run of consecutive elements set at once - an automap's 1,400 cells one op). A value may hold `{ $n: k }` (the pack's node k), `{ $c: [index, path] }` (a node of a classic block - a whole building out of the player's own data), either with `$o` (WD1 ops laid on a copy), `{ $r: runs }` (a number array run-length) and `{ $m | $f | $d | $3 | $b | $t | $g: rows }` (models, flats and people, doors, section 3, building data, ground tiles, scenery - a record nine numbers, not nine keys, read back key for key in DFU's order; a record that does not fit is carried whole). `openWorldDataPack(pack, { blocks, onRebuilt })` answers `names`, `has`, `sha256Of`, `baseOf`, `rebuild(name, maps)` and `release`; every refusal names the file and what did not read. `readPackText` (the vendored gzip, or the bytes a server already inflated), `packFileSha256` (WD1's canonical hash). |
+| `src/formats/worldDataJson.js` | `locationToDfuJson` - a classic DFLocation in the World Data Editor's shape, member for member (`DFLocation.cs`, `DFRegion.cs`; every `internal` left out, enums by name) - the base of every location file. |
+| `src/formats/mapsFile.js` | `readClassicLocation(region, index)` - the location as MAPS.BSA holds it, past the door; `getRmbBlockName` notes the town whose blocks are read next (the layout pins' reading town). |
+| `tools/worldDataPackBuild.mjs` | the builder: parses each world-data TextAsset of the bundle as FullSerializer does (`\0` and `\a` are its escapes), takes its base (its own classic location or block, or for a new block the classic block or pack file nearest it), writes the edit subtree by subtree as the smaller of an op script and a whole value, and REFUSES to write a pack in which one file - rebuilt through the runtime's own reader from the pack as shipped - is not the author's sha256. Deterministic: the bundle and the ARENA2 alone decide the bytes. |
+| `scenes/modWorldData.js` | globs `vendor/*/WorldDataPack/*.pack.json.gz` as URLs (never a chunk); a pack is fetched only when its mod is loaded for the game (the switch read once and latched) or when a save's pins let it into a town; registered on the door at its load priority (`WORLD_DATA_PRIORITY`); every block and one location in 64 checked against the author's sha256 in the background, one line said for the pack however many differ. |
+| `formats/worldDataReplacement.js` | the door keeps every mod's entry of a name, highest load priority first (ModManager.TryGetAsset's reverse load order), and asks the layout pins which mods a town is served with; a pack file is rebuilt the first time it is asked for, and one that will not rebuild on the player's data is said once and not served. |
+
+The two packs: Beautiful Villages 7,526 files in 2,712 nodes, 2.58 MB
+gzipped; Beautiful Cities 1,021 files in 4,339 nodes, 2.17 MB. With
+`ARENA2_PATH` set, `test/wd3_pack.test.js` rebuilds all 8,547 of them
+from the player's own BSA files, sha256 for sha256 (about eight seconds).

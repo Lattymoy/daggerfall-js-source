@@ -27,7 +27,9 @@ import { readPng } from '../tools/pngIO.mjs';
 import { buildDerivedPicture, composeDerivedPicture, classicRecordRgba, deriveSpec } from '../src/formats/derivedTexture.js';
 import { addVendorTextures, clearVendorTextures, setTextureDeriveContext, preloadTextureArchive, decodedTexture, vendorTextureStandIn, textureReplacementBytes, isVendorArchive, setTextureReplacements, clearTextureReplacements } from '../src/systems/textureReplacement.js';
 import { registerCustomModel, unregisterCustomModel, customModelFor, hasCustomModel, emptyModel, _resetCustomModels } from '../src/world/customModels.js';
-import { MeshBuilder, DET_MODELS, DET_SEGMENT_UNITS, DET_FLAT_STAND_INS, DET_DOLPHIN_RECORDS, drawDolphin, DOLPHIN_SCALE, installDetStandIns, _resetDetStandIns } from '../src/world/detStandIns.js';
+import { MeshBuilder, DET_MODELS, DET_SEGMENT_UNITS, DET_FLAT_STAND_INS, DET_FLAT_DRAWINGS, DET_TOWN_FLATS, DET_OLD_ARCHIVES, DET_DOLPHIN_RECORDS, drawDolphin, DOLPHIN_SCALE, installDetStandIns, _resetDetStandIns } from '../src/world/detStandIns.js';
+import { TOWN_PICTURE_ARCHIVE, TOWN_PICTURES } from '../src/world/townPictures.js';
+import { STAND_IN_SPRITES } from '../src/world/standInSprites.js';
 import { DETAILED_SHIPS_VENDOR, DETAILED_SHIPS_OWN_ART, DETAILED_SHIPS_DERIVED, DETAILED_SHIPS_XML, installDetailedShipsArt, _resetDetailedShipsArt, detailedShipsOn } from '../src/systems/detailedShips.js';
 import { billboardXmlScale, unregisterBillboardXml } from '../src/world/billboardXml.js';
 import { billboardSize } from '../src/world/rmbFlats.js';
@@ -344,7 +346,7 @@ test('DS1 the ten stand-in models: every face faces its normal, every index land
     assert.deepEqual(m.doors, [], id);
     let covered = 0;
     for (const s of m.subMeshes) {
-      assert.ok(s.textureArchive <= LAST_CLASSIC_TEXTURE_ARCHIVE, `${id}: classic textures only`);
+      assert.ok(s.textureArchive <= LAST_CLASSIC_TEXTURE_ARCHIVE || s.textureArchive === TOWN_PICTURE_ARCHIVE, `${id}: classic textures, or the port's own drawn cloth (WD3)`);
       assert.equal(s.startIndex, covered, `${id}: submeshes tile the index list`);
       covered += s.primitiveCount * 3;
     }
@@ -365,19 +367,25 @@ test('DS1 the ten stand-in models: every face faces its normal, every index land
     bounds[id] = { lo, hi };
   }
   const near = (a, b) => Math.abs(a - b) < 1e-6;
-  // the rope and the staff: one segment long - the author stacks them 85 units apart - standing on their foot
+  // DET's wooden pillars: one segment long - the author stacks them 85 units apart - standing on their foot (WD3: squared
+  // timbers, six and eight units, as DET's catalogue and the towns' mantels and rafters read them; DS1 read rope and a pole)
   for (const id of [45081, 45110]) assert.ok(near(bounds[id].lo[1], 0) && near(bounds[id].hi[1], DET_SEGMENT_UNITS * 0.025), `${id}: ${JSON.stringify(bounds[id])}`);
-  assert.ok(near(bounds[45081].hi[0], 0.035), 'rope-thin');
-  // the hanging pieces hang from their hook; the floor pieces stand on the floor
-  for (const id of [45145, 45162]) assert.ok(near(bounds[id].hi[1], 0) && bounds[id].lo[1] < -0.5, `${id} hangs`);
-  for (const id of [45164, 45190, 45191, 45082, 45121, 45161]) assert.ok(near(bounds[id].lo[1], 0), `${id} stands on its origin`);
+  assert.ok(near(bounds[45081].hi[0], 3 * 0.025) && near(bounds[45110].hi[0], 4 * 0.025), 'a six-unit and an eight-unit timber');
+  // the cloth hangs from its rod (WD3: DET's tapestries - DS1 read lanterns and pennants); the floor pieces stand on the floor
+  for (const id of [45145, 45161, 45162, 45164]) assert.ok(bounds[id].hi[1] <= 0.02 && bounds[id].lo[1] < -0.5, `${id} hangs`);
+  for (const id of [45190, 45191, 45082, 45121]) assert.ok(near(bounds[id].lo[1], 0), `${id} stands on its origin`);
 });
 
-test('DS1 the stand-in flats: twenty-four DET records as the player\'s own sprites, three dolphins drawn - one leap, the animal riding the picture\'s upper part', () => {
+test('DS1 the stand-in flats: the ships\' DET records as the player\'s own sprites or the port\'s drawings, three dolphins drawn - one leap, the animal riding the picture\'s upper part', () => {
   const recs = Object.entries(DET_FLAT_STAND_INS).flatMap(([a, rs]) => Object.entries(rs).map(([r, from]) => [`${a}_${r}`, from]));
-  assert.equal(recs.length, 24);
+  assert.equal(recs.length, 17);
   for (const [name, [a, r]] of recs) assert.ok(a <= LAST_CLASSIC_TEXTURE_ARCHIVE && Number.isInteger(r), name);
-  assert.deepEqual(DET_FLAT_STAND_INS[10010][38], [201, 8], 'the ship\'s cat is a cat');
+  // WD3: a record the towns place too is what DET's catalogue names it - the hold's rat, the stores' cheese and cabbage,
+  // the galley's porridge, the cabin's broken bottles, a rolling pin; drawn, as Daggerfall has none of them
+  for (const [a, r] of [[10010, 38], [10021, 5], [10021, 9], [10021, 12], [10021, 16], [10025, 0], [10027, 3]]) assert.ok(STAND_IN_SPRITES[DET_FLAT_DRAWINGS[a][r][0]], `${a}_${r} drawn`);
+  assert.equal(DET_FLAT_DRAWINGS[10010][38][0], 'brownRat', 'the hold\'s rat (DET: Brown Rat)');
+  assert.deepEqual(DET_FLAT_STAND_INS[10025][3], [205, 17], 'a large sack (DET: Large Sack)');
+  assert.deepEqual(DET_FLAT_STAND_INS[10027][0], [208, 0], 'a tiny globe (DET: Tiny Globe)');
   assert.deepEqual(DET_DOLPHIN_RECORDS, [29, 30, 31]);
   assert.deepEqual(DOLPHIN_SCALE, { width: 384, height: 384 });
   const hashes = [
@@ -413,30 +421,44 @@ test('DS1 the stand-in flats: twenty-four DET records as the player\'s own sprit
   }
 });
 
-test('DS1 installDetStandIns: the ten models and twenty-seven flats, behind the switch it is handed; a flat is built from its classic record and sized by it', async () => {
+test('DS1 installDetStandIns: the models, the flats and the cloth behind every switch it is handed (WD3: OR\'d); a flat is built from its classic record and sized by it, or drawn', async () => {
   resetAll();
   let on = true;
-  assert.equal(installDetStandIns(() => on), 27);
+  const recs = (t) => Object.values(t).reduce((n, rs) => n + Object.keys(rs).length, 0);
+  const tables = [DET_FLAT_STAND_INS, DET_FLAT_DRAWINGS, DET_TOWN_FLATS];
+  const old = Object.values(DET_OLD_ARCHIVES).reduce((n, a) => n + tables.reduce((m, t) => m + Object.keys(t[a] ?? {}).length, 0), 0);
+  assert.equal(installDetStandIns(() => on), tables.map(recs).reduce((a, b) => a + b) + old + DET_DOLPHIN_RECORDS.length + TOWN_PICTURES.length);
   assert.equal(installDetStandIns(() => on), 0, 'once');
   for (const id of Object.keys(DET_MODELS)) assert.equal(hasCustomModel(id), true, id);
   on = false;
   for (const id of Object.keys(DET_MODELS)) assert.equal(hasCustomModel(id), false, `${id} off with the mod`);
   on = true;
-  for (const a of [10009, 10010, 10021, 10025, 10027]) assert.ok(isVendorArchive(a), `${a} stands in`);
-  const cat = synthetic(29, 24, 5);
+  for (const a of [10009, 10010, 10021, 10025, 10027, TOWN_PICTURE_ARCHIVE]) assert.ok(isVendorArchive(a), `${a} stands in`);
+  const globe = synthetic(29, 24, 5);
   setTextureDeriveContext({
-    classicRgba: async (a, r) => (a === 201 && r === 8 ? cat : synthetic(3, 3)),
-    classicScale: async (a, r) => (a === 201 && r === 8 ? { width: 12, height: 12 } : { width: 0, height: 0 }),
+    classicRgba: async (a, r) => (a === 208 && r === 0 ? globe : synthetic(3, 3)),
+    classicScale: async (a, r) => (a === 208 && r === 0 ? { width: 12, height: 12 } : { width: 0, height: 0 }),
   });
+  await preloadTextureArchive(10027);
   await preloadTextureArchive(10010);
   await preloadTextureArchive(10009);
-  const d = decodedTexture(10010, 38);
+  const d = decodedTexture(10027, 0);
   assert.deepEqual([d.width, d.height, d.recordScale], [29, 24, { width: 12, height: 12 }]);
-  assert.deepEqual(vendorTextureStandIn(10010).getScale(38), { width: 12, height: 12 }, 'as big as the cat Daggerfall draws');
+  assert.deepEqual(vendorTextureStandIn(10027).getScale(0), { width: 12, height: 12 }, 'as big as the globe Daggerfall draws');
+  const rat = decodedTexture(10010, 38), drawn = STAND_IN_SPRITES.brownRat();
+  assert.deepEqual([rat.width, rat.height, rat.recordScale], [drawn.width, drawn.height, { width: 0, height: 0 }], 'the rat drawn, at a pixel a classic unit');
   const dolphin = decodedTexture(10009, 30);
   assert.deepEqual([dolphin.width, dolphin.height, dolphin.recordScale], [40, 56, DOLPHIN_SCALE]);
   on = false;
+  assert.equal(decodedTexture(10027, 0), null);
   assert.equal(decodedTexture(10010, 38), null);
+  // WD3: a second switch (a town mod's) keeps them on while the first is off
+  let towns = true;
+  installDetStandIns(() => towns);
+  assert.equal(hasCustomModel(45081), true, 'on for the towns');
+  assert.ok(decodedTexture(10010, 38), 'the rat stands for the towns too');
+  towns = false;
+  assert.equal(hasCustomModel(45081), false, 'off with both');
   resetAll();
 });
 
@@ -510,7 +532,7 @@ test('DS1 the ship patches: based on the ships\' own records, the author\'s file
     if (n.startsWith('m')) assert.ok(DET_MODELS[n.slice(1)], `${n}: stood in`);
     else {
       const [a, r] = n.split('_').map(Number);
-      const ours = a === 1210 || a === 1230 ? AUTHOR_PICTURES[`${a}_${r}-0`] : a === 10009 ? DET_DOLPHIN_RECORDS.includes(r) : DET_FLAT_STAND_INS[a]?.[r];
+      const ours = a === 1210 || a === 1230 ? AUTHOR_PICTURES[`${a}_${r}-0`] : a === 10009 ? DET_DOLPHIN_RECORDS.includes(r) : (DET_FLAT_STAND_INS[a]?.[r] ?? DET_FLAT_DRAWINGS[a]?.[r]);
       assert.ok(ours, `${n}: a picture stands there`);
     }
   }
@@ -563,8 +585,14 @@ test('DS1 with ARENA2: the rebuilt ships place exactly the DET pieces the port s
     }
   }
   assert.deepEqual([...models].sort(), Object.keys(DET_MODELS).map(Number).sort());
-  const stood = [...Object.entries(DET_FLAT_STAND_INS).flatMap(([a, rs]) => Object.keys(rs).map((r) => `${a}_${r}`)), ...DET_DOLPHIN_RECORDS.map((r) => `10009_${r}`)];
-  assert.deepEqual([...flats].sort(), stood.sort(), 'twenty-seven DET flat records, each stood in');
+  // every DET flat the ships place stands in - the player's own sprite, the port's drawing or a dolphin - and every
+  // classic-sprite record of the ships' table is one the ships place (WD3: the drawings serve the towns as well)
+  assert.equal(flats.size, 27, 'twenty-seven DET flat records');
+  for (const f of flats) {
+    const [a, r] = f.split('_').map(Number);
+    assert.ok(DET_FLAT_STAND_INS[a]?.[r] || DET_FLAT_DRAWINGS[a]?.[r] || (a === 10009 && DET_DOLPHIN_RECORDS.includes(r)), `${f} stood in`);
+  }
+  for (const [a, rs] of Object.entries(DET_FLAT_STAND_INS)) for (const r of Object.keys(rs)) assert.ok(flats.has(`${a}_${r}`), `${a}_${r} is a ship's`);
   for (const p of pictures) assert.ok(AUTHOR_PICTURES[p], p);
   assert.equal(people, 10, 'three sailors on the small ship, seven on the large');
 });

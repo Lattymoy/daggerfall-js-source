@@ -83,12 +83,12 @@
   {
     "name": "ACC3a-9-the-relay-believes-the-frame",
     "file": "server/src/index.js",
-    "old": "    return { name: c.n, kind: c.k, subject: c.s, title: c.t, ts: c.ts, glyphs: c.g, gx: c.gx, au: c.au, rb: c.rb, mu, lv: c.lv, ...guild, gio: c.i };",
-    "new": "    return { name: c.n, kind: c.k, subject: c.s, title: m.title, glyphs: m.glyphs, gx: c.gx, au: c.au, rb: c.rb, mu, lv: c.lv, ...guild, gio: c.i };",
+    "old": "    return { name: c.n, kind: c.k, subject: c.s, title: c.t, ts: c.ts, glyphs: c.g, gx: c.gx, au: c.au, rb: c.rb, mu, lv: c.lv, ...guild, gio: c.i, ar: c.ar, cl: c.cl };",
+    "new": "    return { name: c.n, kind: c.k, subject: c.s, title: m.title, glyphs: m.glyphs, gx: c.gx, au: c.au, rb: c.rb, mu, lv: c.lv, ...guild, gio: c.i, ar: c.ar, cl: c.cl };",
     "tests": [
       "test/acc3titles.test.js"
     ],
-    "note": "The other end of the same hole: the relay holds the public half and can verify, so the badge is only worth what the signature says. Read it off the hello and the first person to open devtools is a Developer. SEAT1c (PIN MOVED): re-aimed by content - the projection carries a seat title's claim."
+    "note": "The other end of the same hole: the relay holds the public half and can verify, so the badge is only worth what the signature says. Read it off the hello and the first person to open devtools is a Developer. SEAT1c (PIN MOVED): re-aimed by content - the projection carries a seat title's claim. The arena merge (re-aimed by content): the projection carries ARENA4's rating."
   },
   {
     "name": "ACC3a-10-the-badge-nulled-rather-than-omitted",

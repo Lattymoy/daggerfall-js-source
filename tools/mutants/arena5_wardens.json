@@ -1,0 +1,47 @@
+[
+  {
+    "name": "ARENA5-WARDENS-FACTION",
+    "file": "src/world/arenaCity.js",
+    "old": "role: 'warden', archive: 183, record: 2, faction: 372",
+    "new": "role: 'warden', archive: 183, record: 2, faction: 518",
+    "tests": [
+      "test/arena5_wardens.test.js"
+    ]
+  },
+  {
+    "name": "ARENA5-CRIME-EXEMPT",
+    "file": "src/scenes/world.js",
+    "old": "function _crimeResponse() { _spawnGuards(true); }",
+    "new": "function _crimeResponse() { if (arenaCityPixel()) return; _spawnGuards(true); }",
+    "tests": [
+      "test/arena5_wardens.test.js"
+    ]
+  },
+  {
+    "name": "ARENA5-CRIME-DOOR",
+    "file": "src/scenes/exterior.js",
+    "old": "crime: () => { setCrimeCommitted(playerEntity, CRIMES.Assault); _crimeResponse(); },",
+    "new": "crime: () => { _crimeResponse(); },",
+    "tests": [
+      "test/arena5_wardens.test.js"
+    ]
+  },
+  {
+    "name": "ARENA5-WATCH-FROM-WARDENS",
+    "file": "src/scenes/world.js",
+    "old": "const _guardPool = () => ((modes?.mode ?? 'exterior') !== 'exterior' ? [] : _livePersons.map(",
+    "new": "const _guardPool = () => ((modes?.mode ?? 'exterior') !== 'exterior' ? [] : [..._livePersons].map(",
+    "tests": [
+      "test/arena5_wardens.test.js"
+    ]
+  },
+  {
+    "name": "ARENA5-INTRUDE-NO-CRIME",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "    else { deps.say?.(ARENA_TEXT.herald.intrudeCrime); deps.crime?.(); }",
+    "new": "    else { deps.say?.(ARENA_TEXT.herald.intrudeCrime); }",
+    "tests": [
+      "test/arena5_wardens.test.js"
+    ]
+  }
+]

@@ -205,7 +205,7 @@ test('WB7 the seams, by source: the world host lets the court hold the music whi
   assert.match(w, /if \(!_scoreMade\) \{ _scoreMade = true; for \(const song of Object\.values\(gateScoreSongs\(\)\)\) music\.registerSong\(song\.name, song\); \}/);
   assert.match(w, /const want = _courtScore\.want\(gateLink\?\.state\?\.\(\) \?\? null, Date\.now\(\) \+ _sharedOffsetMs\) \?\? GATE_SONGS\.war1;/);   // AUDIT WB D2: the law as this machine hears it
   assert.match(w, /if \(want === SCORE_SILENCE\) \{ if \(music\.current !== null\) music\.fadeOut\(\); \} else music\.playSong\(want\);/, 'AUDIT WB D2: the quiet after the fanfare faded in, not cut');
-  const feed = w.indexOf('    if (!gateScoreFrame()) musicDirector.update({');
+  const feed = w.indexOf('    if (!gateScoreFrame() && !arenaScoreFrame()) musicDirector.update({');   // ARENA2: an arena bout holds it too
   const modal = w.indexOf('if (modes.frame(dt, now)) {');
   assert.ok(feed > 0 && feed < modal, 'the director fed when the court does not hold the music, before the modal return');
 });

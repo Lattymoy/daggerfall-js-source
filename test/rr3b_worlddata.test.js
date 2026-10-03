@@ -261,7 +261,7 @@ test('RR3b the building: nothing without the variant (cached as none under NoVar
 test('RR3b the readers ask the door: MapsFile\'s three asks and BlocksFile\'s four, by source; the door leaf; the merge arm hands the pool draw back and varies the seed', () => {
   const mf = rd('src/formats/mapsFile.js');
   assert.match(mf, /worldDataDoor\(\)\?\.getDFRegionAdditionalLocationData\(region, rec\.dfRegion\);/, 'LoadRegion (:984)');
-  assert.match(mf, /const replacement = worldDataDoor\(\)\?\.getDFLocationReplacementData\(region, location\);\s*if \(replacement\) return replacement;/, 'ReadLocation (:998-1000)');
+  assert.match(mf, /const replacement = worldDataDoor\(\)\?\.getDFLocationReplacementData\(region, location, this\);\s*if \(replacement\) return replacement;/, 'ReadLocation (:998-1000) - WD3: the reader handed over, for a pack\'s edit of its classic location');
   assert.match(mf, /const entry = rec\.dfRegion\?\.mapTable\?\.\[location\];\s*if \(entry\?\.locationId\) return entry\.locationId;/, 'ReadLocationIdFast (:1027-1028)');
   const bf = rd('src/formats/blocksFile.js');
   assert.match(bf, /return worldDataDoor\(\)\?\.getNewDFBlockName\(block\) \?\? \(block < this\.count \? this\._bsa\.getRecordName\(block\) : null\);/, 'GetBlockName (:214)');

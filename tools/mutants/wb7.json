@@ -121,8 +121,8 @@
   {
     "name": "WB7-the-director-fed-over-the-court",
     "file": "src/scenes/world.js",
-    "old": "    if (!gateScoreFrame()) musicDirector.update({",
-    "new": "    if (!gateScoreFrame() || true) musicDirector.update({",
+    "old": "    if (!gateScoreFrame() && !arenaScoreFrame()) musicDirector.update({",
+    "new": "    if ((!gateScoreFrame() || true) && !arenaScoreFrame()) musicDirector.update({",
     "tests": ["test/wb7_boss_audio.test.js"]
   },
   {

@@ -28,6 +28,10 @@
 //   SHADOW FANG (SHADOW-FANG, 2026-09-26) the same, one player's own.
 //   PENITENT (PENITENT, 2026-09-29) the same, Diggleborf's own.
 //   HERALD (HERALD, 2026-10-01) the same, and the Patreon tier's.
+//   GRAND CHAMPION, ARENA CHAMPION and THE LAUREL (ARENA4, 2026-10-02)
+//             the arena's rows (server-account/src/arena.js): a Grand
+//             Champion row the relay signed; the season's #1 of the
+//             refereed board, and its laurel, while they hold the top.
 //   GATEBREAKER (WB9g, 2026-09-30) - the ONE grant that is not derived
 //             but recorded: the title the Sigil Broker sells, held because
 //             the account bought it (the row's `insignia`, 0036). A sale is
@@ -211,6 +215,13 @@ export function titlesHeld(player, env) {
   // account's guildmaster characters' guilds hold (seatTurning.js seatTitlesOf), read by the caller and laid on the row
   // as `seatTitles` for this request alone
   if (Array.isArray(player?.seatTitles)) for (const t of player.seatTitles) if (SEAT_TITLES.includes(t) && !held.includes(t)) held.push(t);
+  // ARENA4 (2026-10-02, Mac: "Being a top rank PvE fighter comes with it's own title. Being the #1 pvp arena player comes
+  // with it's own temporary title/glyph"): THE ARENA'S TWO, derived from the arena's rows as the founder is from a date -
+  // read onto the row (`arena`, server-account/src/arena.js arenaHonoursOf) where a token is minted or a wardrobe shown.
+  // The Grand Champion holds for good (a row only a relay-signed climb writes); the Arena Champion while the account is
+  // the season's #1, so it passes to whoever takes the top and lapses by itself. A row read without them holds neither.
+  if (player?.arena?.grand === true) held.push('grandchampion');
+  if (player?.arena?.champion === true) held.push('arenachampion');
   return held;
 }
 
@@ -237,6 +248,7 @@ export function glyphsOf(player, env, nowS) {
   if (isDeveloper(player, env)) on.push('dev');
   if (isModerator(player, env)) on.push('mod');   // MOD1: the blue shield
   for (const t of Object.keys(TIER_LISTS)) if (holdsTier(t, player, env)) on.push(TIER_GLYPH[t]);   // TITLE-N: each title's own glyph
+  if (player?.arena?.champion === true) on.push('laurel');   // ARENA4: the laurel, true of the season's #1 while they hold it
   return on;
 }
 

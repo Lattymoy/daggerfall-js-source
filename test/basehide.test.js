@@ -25,8 +25,9 @@ const src = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 test('BASE-HIDE the law: a built-in piece is named by the layout - `m<placement>:<model>`, `f<flat>:<archive>.<record>`, every number canonical; a room\'s list is refused whole, never half kept - a name the law does not take, a name twice, or more than the cap', () => {
   assert.equal(decorBaseModelKey(12, 41000), 'm12:41000');
   assert.equal(decorBaseFlatKey(3, 210, 4), 'f3:210.4');
-  for (const k of ['m0:41000', 'm9999:999999', 'f0:210.0', 'f12:204.511']) assert.match(k, DECOR_BASE_KEY_RE, k);
-  for (const k of ['m01:41000', 'm1:041000', 'm1:1000000', 'm10000:1', 'f1:210', 'f1:210.04', 'f1:1000.1', 'x1:2', 'm1:2 ', 'f-1:210.1', '', 'int:3']) {
+  // WD3: a mod's flat archive is five digits - DET's food in a Beautiful Village's kitchen, the town mods' table clutter
+  for (const k of ['m0:41000', 'm9999:999999', 'f0:210.0', 'f12:204.511', 'f12:10021.5', 'f3:56790.24', 'f9999:99999.999']) assert.match(k, DECOR_BASE_KEY_RE, k);
+  for (const k of ['m01:41000', 'm1:041000', 'm1:1000000', 'm10000:1', 'f1:210', 'f1:210.04', 'f1:100000.1', 'f1:010021.1', 'x1:2', 'm1:2 ', 'f-1:210.1', '', 'int:3']) {
     assert.doesNotMatch(k, DECOR_BASE_KEY_RE, JSON.stringify(k));
   }
   assert.deepEqual(decorBaseWhat('m12:41000'), { model: 41000 });
@@ -38,7 +39,7 @@ test('BASE-HIDE the law: a built-in piece is named by the layout - `m<placement>
   assert.equal(decorHiddenOf(['m12:41000', 'chair']), null, 'refused whole');
   assert.equal(decorHiddenOf('m12:41000'), null);
   assert.equal(decorHiddenOf(Array.from({ length: DECOR_HIDDEN_CAP + 1 }, (_, i) => `m${i}:1`)), null, 'the cap');
-  const widest = Array.from({ length: DECOR_HIDDEN_CAP }, (_, i) => `f${9999 - i}:999.511`.replace('.511', '.999'));
+  const widest = Array.from({ length: DECOR_HIDDEN_CAP }, (_, i) => `f${9999 - i}:99999.999`);   // WD3: five digits of archive
   assert.ok(JSON.stringify({ mapId: 1291010263, buildingKey: 0x10203, character: 'char-aldric-the-long', keys: decorHiddenOf(widest) }).length < 4096, 'a whole list at its widest is one write under the service\'s body cap');
 });
 

@@ -118,12 +118,12 @@ test('SD1: both arms still land on the floor, and still refuse an occupied spot'
 
 test('SD1: the dungeon has a BEHAVIOUR-FREE spawn door, and the quest one is built on it', () => {
   const dc = read('src/scenes/dungeonContext.js');
-  assert.match(dc, /async function spawnLooseFoe\(mobileType, position, \{ gender = null, yawRad = null, allied = false, questSpawn = false, loadID = null \} = \{\}\)/);
+  assert.match(dc, /async function spawnLooseFoe\(mobileType, position, \{ gender = null, yawRad = null, allied = false, questSpawn = false, loadID = null, level = null, bout = null \} = \{\}\)/);   // ARENA2: a bout fighter's level and its bout
   // MT-ii: BOTH per-instance fields turn, and the frozen basics row does not - AT THE BUILD (AUDIT OH-F C4: before
   // OnEnemySpawn hears the foe, and again on a rebuild from its record), both of buildFoeAt's arms
   assert.match(dc, /if \(e\?\.allied && entity\) \{ entity\.team = 'PlayerAlly'; entity\.mobileTeam = 'PlayerAlly'; \}/);
   assert.equal((dc.match(/applySpawnAlliance\(entity, e\);/g) ?? []).length, 2);
-  assert.match(dc, /\.\.\.\(allied \? \{ allied: true \} : \{\}\), \.\.\.\(questSpawn \? \{ questSpawn: true \} : \{\}\), \.\.\.\(loadID != null \? \{ loadID \} : \{\}\) \};/);
+  assert.match(dc, /\.\.\.\(allied \? \{ allied: true \} : \{\}\), \.\.\.\(questSpawn \? \{ questSpawn: true \} : \{\}\), \.\.\.\(loadID != null \? \{ loadID \} : \{\}\), \.\.\.\(Number\.isFinite\(level\) \? \{ level \} : \{\}\) \};/);   // ARENA2: and a bout fighter's level
   // and spawnQuestFoe is the same door plus the binding - not a second copy (AUDIT OH-F C3: marked at the build)
   assert.match(dc, /const f = await spawnLooseFoe\(mobileType, position, \{ gender, yawRad, questSpawn: true \}\);[\s\S]*?bindQuestFoeHost\(f, behaviour, questPoolOps\);/);
   assert.match(dc, /\n    spawnLooseFoe,/, 'the ctx hands it out');

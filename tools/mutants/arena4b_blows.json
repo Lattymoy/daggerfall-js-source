@@ -1,0 +1,128 @@
+[
+  {
+    "name": "ARENA4b-BLOW-SEQ-IGNORED",
+    "file": "src/net/arenaBrain.js",
+    "old": "const same = q != null && q === M.q && now - M.qAt < 250;",
+    "new": "const same = false;",
+    "tests": [
+      "test/arena4b_blows.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-BLOW-SEQ-UNKEPT",
+    "file": "src/net/arenaBrain.js",
+    "old": "M.hits.push(now); M.q = q ?? -1; M.qAt = now;",
+    "new": "M.hits.push(now); M.q = -1; M.qAt = now;",
+    "tests": [
+      "test/arena4b_blows.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-BLOW-FOURTH-CAST",
+    "file": "src/net/arenaBrain.js",
+    "old": "      if (M.spells.length >= ARENA_SPELLS_IN) return out;\n",
+    "new": "",
+    "tests": [
+      "test/arena4b_blows.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-BLOW-RIVAL-NO-SEQ",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "m: playerWeapon.strikingWeapon?.material ?? 0, q: _arenaQ });",
+    "new": "m: playerWeapon.strikingWeapon?.material ?? 0 });",
+    "tests": [
+      "test/arena4b_blows.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-BLOW-SWING-UNNUMBERED",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    nextArenaQ();   // ARENA4b: this swing is one blow to the referee, every body it meets\n",
+    "new": "",
+    "tests": [
+      "test/arena4b_blows.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-BLOW-SHAFT-UNNUMBERED",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "            nextArenaQ();   // ARENA4b: each shaft its own blow\n",
+    "new": "",
+    "tests": [
+      "test/arena4b_blows.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-BLOW-PUPPET-NO-SEQ",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "q: cast ? arenaSpellQ() : _arenaQ });",
+    "new": "q: undefined });",
+    "tests": [
+      "test/arena4b_blows.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-BLOW-PUPPET-SPELL-AS-SWING",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      const cast = kind === 'spell' || !!spell;",
+    "new": "      const cast = !!spell;",
+    "tests": [
+      "test/arena4b_blows.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-BLOW-CAST-PER-BODY",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (_arenaSpellQ == null) { _arenaSpellQ = nextArenaQ(); void Promise.resolve().then(() => { _arenaSpellQ = null; }); }",
+    "new": "    _arenaSpellQ = nextArenaQ();",
+    "tests": [
+      "test/arena4b_blows.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-BLOW-CAST-NEVER-LET-GO",
+    "file": "src/scenes/dungeonContext.js",
+    "old": " void Promise.resolve().then(() => { _arenaSpellQ = null; }); }",
+    "new": " }",
+    "tests": [
+      "test/arena4b_blows.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-BLOW-SPELL-UNROUTED",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    castAtDuel: opts.arenaRival ? (_id, sp) => spellOnRival(sp) : null,",
+    "new": "    castAtDuel: null,",
+    "tests": [
+      "test/arena4b_blows.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-BLOW-SPELL-AS-SWING",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    return landOnRival(rb, dealt, 'spell');",
+    "new": "    return landOnRival(rb, dealt, 'melee');",
+    "tests": [
+      "test/arena4b_blows.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-BLOW-CLAIM-NO-SEQ",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "...(Number.isInteger(q) ? { q } : {}) });",
+    "new": "...({}) });",
+    "tests": [
+      "test/arena4b_blows.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-BLOW-STANDS-STRIKE",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "    if (bout?.kind === 'watch') return false;   // ARENA4b: the stands strike nobody - the relay would junk the word\n",
+    "new": "",
+    "tests": [
+      "test/arena4b_blows.test.js"
+    ]
+  }
+]

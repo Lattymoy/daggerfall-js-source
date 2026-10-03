@@ -47,8 +47,8 @@
   {
     "name": "AUDWB-D2-the-world-cuts-the-quiet",
     "file": "src/scenes/world.js",
-    "old": "if (music.current !== null) music.fadeOut(); }",
-    "new": "if (music.current !== null) music.stop(); }",
+    "old": "(want === SCORE_SILENCE) { if (music.current !== null) music.fadeOut(); }",
+    "new": "(want === SCORE_SILENCE) { if (music.current !== null) music.stop(); }",
     "tests": [
       "test/wb7_boss_audio.test.js"
     ]
