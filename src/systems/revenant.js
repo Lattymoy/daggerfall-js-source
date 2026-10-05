@@ -1348,5 +1348,37 @@ registerModSaveData(REVENANT_SAVE, {
   newGame: () => { _state.list = []; _state.lastDay = null; _state.mirrorId = null; _lastSlew = null; clearPlayerHarm(); endPlayerFights(); },
 });
 
+/** LEGACY6 (bible/06-Systems/Legacy-Arc.md section 10, "the killer is remembered"): THE FOE THAT ENDED A CHARACTER -
+ *  read off that character's own mirror (the app's storage under its id): the living, unjudged revenant whose kill fell
+ *  within KILL_NEAR_MINUTES of `ownAt` (the fallen's own clock as they fell), the latest such. A copy, or null. */
+export const KILL_NEAR_MINUTES = 2;
+export function killerOf(characterId, ownAt) {
+  if (!characterId || !Number.isFinite(ownAt)) return null;
+  let list = [];
+  try { const raw = appStorage()?.getItem(storeKey(String(characterId))); if (raw) list = JSON.parse(raw)?.list ?? []; } catch { return null; }
+  let best = null, bestAt = -Infinity;
+  for (const raw of mergeRevenants(list, [])) {
+    if (raw.gone || raw.defeated || raw.sworn) continue;
+    for (const d of raw.history) if (d.deed === 'slew' && Math.abs(d.at - ownAt) <= KILL_NEAR_MINUTES && d.at > bestAt) { best = raw; bestAt = d.at; }
+  }
+  return best ? JSON.parse(JSON.stringify(best)) : null;
+}
+/** LEGACY6: a fallen kinsman's killer HUNTS THE HEIR - its record handed to `player` (their list and their mirror, so a
+ *  new game's reset or a load's merge keeps it): not out, its pack and companionship the fallen's own (never the
+ *  heir's), due one to three days on the heir's clock. A record the heir already holds (a later one, or its tombstone)
+ *  stands as it is. Answers whether it was handed. */
+export function inheritRevenant(player, rec, { now = nowMinutes(), rolls = Math.random } = {}) {
+  const r = /** @type {any} */ (sanitize(rec));
+  const id = player ? characterIdOf(player) : null;
+  if (!r || r.gone || r.defeated || r.sworn || !id) return false;
+  Object.assign(r, { out: false, outAt: 0, took: [], companion: null, notice: null, dueAt: dueFrom(now, rolls) });
+  let kept = [], keptDay = null;
+  try { const raw = appStorage()?.getItem(storeKey(id)); if (raw) { const m = JSON.parse(raw); kept = m?.list ?? []; keptDay = sanitizeDay(m?.lastDay); } } catch { /* a bad mirror is no mirror */ }
+  if (kept.some((x) => x?.id === r.id) || (_state.mirrorId === id && _state.list.some((x) => x.id === r.id))) return false;
+  try { appStorage()?.setItem(storeKey(id), JSON.stringify({ v: 1, list: [...kept, r], lastDay: keptDay })); } catch { /* storage full or gone: the list below still keeps it */ }
+  if (_state.mirrorId === id) { _state.list.push(r); trimLiving(r); persist(); }
+  return true;
+}
+
 /** Tests only: forget everything. */
 export function _resetRevenantForTests() { _state.list = []; _state.mirrorId = null; _state.lastDay = null; }

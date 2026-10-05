@@ -263,11 +263,12 @@
   {
     "name": "LW7-slain-unseen-words",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "const newsPool = (item) => (item.kind === 'slain' ? SLAIN_NEWS[item.seen ? 'seen' : 'unseen']",
-    "new": "const newsPool = (item) => (item.kind === 'slain' ? SLAIN_NEWS.seen",
+    "old": "  : item.kind === 'slain' ? SLAIN_NEWS[item.seen ? 'seen' : 'unseen']",
+    "new": "  : item.kind === 'slain' ? SLAIN_NEWS.seen",
     "tests": [
       "test/lw7_deeds.test.js"
-    ]
+    ],
+    "note": "LEGACY6 (PIN MOVED): re-aimed by content - the pool asks a kinsman's news first now (KIN_NEWS), so the slain arm opens its own line."
   },
   {
     "name": "LW7-died-words",

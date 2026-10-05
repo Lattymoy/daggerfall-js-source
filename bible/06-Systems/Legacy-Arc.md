@@ -211,9 +211,9 @@ authority online until the realm keeps the lineage and its tombstone (section 9)
   or in the heir's keeping (the pack, the wagon or the Materials Bag); gone from both (sold, dropped), they lie again
   where the fallen fell.
 - **The death quest**, "The Bones of <name>", is the heir's from their first day: the journal names where and the
-  killer, the Quest Guide's tracker follows it (GUIDE4) and the marks point at it (GUIDE5). THE KILLER STILL STANDS - a
-  revenant or champion that slew the fallen waiting by the remains (Revenants' own record, "Slew") - is LEGACY6's, with
-  the world's memory of the house. Taking the bones completes the first half; the second is to carry them into any
+  killer, the Quest Guide's tracker follows it (GUIDE4) and the marks point at it (GUIDE5). THE KILLER REMEMBERED - the
+  revenant that slew the fallen (Revenants' own record, "Slew") hunts the heir, and the journal names it by its own name
+  (LEGACY6, section 10). Taking the bones completes the first half; the second is to carry them into any
   temple or to the family's seat, where the player is asked "Lay <name> to rest here?".
 - **The rest.** Laid to rest, the fallen's BLESSING: +3 to the fallen's highest skill for the heir - at most +9 on
   any one skill however many are laid to rest (`BLESSING_SKILL_MAX`: a long line is honoured, never a build) - the
@@ -283,18 +283,30 @@ mutation-proven in `tools/mutants/legacy5.json`. Two players' characters wed onl
 
 ## 10. WORLD INFLUENCE
 
-*LEGACY6's - NOT BUILT yet: the design this section states is the plan, in the present tense of the slice that builds it.*
+*LEGACY6's - built (`systems/legacy/influence.js`; `test/legacy6_influence.test.js`, `tools/mutants/legacy6.json`).*
 
-- **House standing.** The family carries, per region, the sum of its members' deeds there: DFU's regional reputation
-  and the Living World's regard events, folded into one number (`legacy/influence.js`). An heir is BORN with a part of
-  the line's standing: a quarter of each regional reputation and faction standing the parent held, and the Living World
-  regard of the parent's friends and enemies at half (relations' `inherit`) - "your mother saved my son".
-- **The towns talk of the family** (LW6d's news): a member's death, a laying to rest, a wedding and a birth are news in
-  the family's seat and the town where they happened, for days - by name and by house.
-- **The killer is remembered.** A revenant that ended a member is the line's enemy: it hunts their heir (Feud's own
-  `hunt`), and the death quest names it.
-- **A house name online**: "<name> of House <surname>" on the roster card, the inspect card and over the head (the
-  generation in Roman numerals after a member's name when two share it - "Ysolde Hlaalu II").
+- **What a member leaves.** At every save (and at their death) the one played's STANDING is written on their person
+  (`memberStanding`): their legal reputation in every region, their faction standings (the forty furthest from nothing)
+  and the Living World's regard of the residents who know them (the sixty strongest, at least ten either way).
+- **The birth's share.** A child born of them (an heir of the newborn choice, or a child of a marriage played at last)
+  starts with a QUARTER of what the parent held over the child's own start - a region's law (written straight, held to
+  DFU's bounds; no crime's word is said for it) and each faction's standing (flat, never walked to its allies) - and
+  HALF of each resident's regard (`relations.js inherit`: no word counted for it) - "your mother saved my son", and a
+  grudge is half a grudge. A new game's fresh relations, landing after the birth, take the share again
+  (`legacyHost.seedRegards`, the Living World's `newGame`). A member never saved since LEGACY6 hands down nothing.
+- **The towns talk of the family.** A member's death, a laying to rest, a wedding and a birth are NEWS (`family.news`,
+  a fact of the store - merged, never unheard; the newest 24), stamped by the towns' own minute: told for seven days
+  in the town where it happened and in the family's seat, in the house's own words (`lines.js KIN_NEWS`: "Did you hear?
+  Ysolde of House Hlaalu is dead."), beside the road's and the deeds' (`livingTown.js familyNews`).
+- **The killer is remembered.** A fall answered by an heir reads the fallen's own revenant mirror for the foe whose kill
+  fell as they did (`revenant.js killerOf`), and hands it to the heir (`inheritRevenant`): in their list and their
+  mirror, due one to three days on - it HUNTS them as any revenant returns, by Feud's own return roll. The record
+  (`died.by`) and the death quest name it ("It was Grushnak the Butcher that struck them down.").
+- **A house name online** is LEGACY7's (section 9).
+
+**Departure (recorded):** the arc's first plan folded the house's standing into one number per region; what was built
+is the parent's own, handed to the child born of them - a house has no standing the law could read apart from the
+person standing in it, and a sibling (of no parent the line played) starts as any new character does.
 
 **Departure (recorded):** "they come of age in the telling" - a child takes the mantle as an adult with no clock
 jump; online the clock is the world's and cannot be moved, and offline a jump would desynchronise every member's own
@@ -391,7 +403,7 @@ than standing still.
 - **The HUD**: the founding, the seat, the elder's word once, Arkay's toll at a rise, the estate and the bequest, the
   remains found, carried and laid to rest.
 - **Not built** (recorded): the mod's classic 1:1 window in its own art (its pictures are the classic UI's own cuts,
-  section 1), an age on the character sheet, a house's standing by region (LEGACY6).
+  section 1), an age on the character sheet, a house's standing by region apart from its members' (section 10's departure).
 
 ## 12. The slices
 
@@ -403,6 +415,6 @@ than standing still.
 | LEGACY4 | heirlooms, the remains, the death quest, the rest and the blessing | built |
 | AUDIT LEGACY | the five-lens audit of LEGACY1-4 (`01-Overview/Audit-Legacy.md`) - the two authorities, the death at the door | built |
 | LEGACY5 | courting, marriage, children, surnames' cadet branches | built |
-| LEGACY6 | world influence: the inherited standing and regard, the towns' talk, the killer remembered | not built |
+| LEGACY6 | world influence: the inherited standing and regard, the towns' talk, the killer remembered | built |
 | LEGACY7 | online: the service's lineage, the tombstone, the heir's realm birth, the house name, two players wed | not built |
 | LEGACY-HOME | the bloodline in the world: the family home, the seat's townsfolk, their day, Play as by talking (section 10b) | built |

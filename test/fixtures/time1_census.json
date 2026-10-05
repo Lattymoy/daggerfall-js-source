@@ -956,6 +956,18 @@
   },
   {
    "file": "src/scenes/world.js",
+   "has": "const livingRegardDay = () => Math.floor((skyMinutes() - 240) / 1440);",
+   "clock": "sky",
+   "why": "LEGACY5/LEGACY6: the living day a regard is read and handed down on - the Living World's own day of the sky's minute"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "regards: () => livingRelations, regardDay: livingRegardDay, sky: () => skyMinutes(),",
+   "clock": "sky",
+   "why": "LEGACY6: the towns' minute the house's news is stamped and told by - the Living World's clock"
+  },
+  {
+   "file": "src/scenes/world.js",
    "has": "_livingDiversList = here ? diversAt(here, skyMinutes(), livingTripWorld,",
    "clock": "sky",
    "why": "LW6: the companies diving the player's dungeon at the sky's minute"

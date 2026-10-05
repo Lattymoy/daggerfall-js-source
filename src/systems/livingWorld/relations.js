@@ -173,6 +173,21 @@ export function createRelations(record = null) {
       trim(day, id);
       return e.r;
     },
+    /**
+     * LEGACY6: a regard HANDED DOWN - a share of a parent's (systems/legacy/influence.js inheritRegards), added to what
+     * stands on `day`. No word is counted for it, and a stranger is met by it. Answers the new regard.
+     * @param {string} id @param {number} amount @param {number} day
+     */
+    inherit(id, amount, day) {
+      if (!ok(id) || !Number.isFinite(amount) || !amount) return 0;
+      /** @type {Regard} */
+      const e = map.get(id) ?? { r: 0, met: day, seen: day, talked: -1 };
+      e.r = clamp(eased(e, day) + amount);
+      e.seen = day;
+      map.set(id, e);
+      trim(day, id);
+      return e.r;
+    },
     /** The player saw `id` on `day` (the regard stops easing from today). @param {string} id @param {number} day */
     seen(id, day) { const e = map.get(id); if (e) { e.r = eased(e, day); e.seen = day; } },
     /**

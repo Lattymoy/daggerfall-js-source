@@ -17,6 +17,7 @@ import { SKILL_COUNT } from '../skills.js';
 import { firstName, surname as bankSurname, getNameBank, GENDERS } from '../../characters/nameHelper.js';
 import { getSeed, setSeed } from '../../formats/dfRandom.js';
 import { startAgeOf } from './age.js';
+import { readStanding, readNews } from './influence.js';   // LEGACY6
 
 /** The save-data vendor - `modData.ProjectLegacy` (systems/modSaveData.js), the mod's IHasModSaveData. */
 export const LEGACY_VENDOR = 'ProjectLegacy';
@@ -104,11 +105,13 @@ export const fullNameOf = (given, sur) => (sur ? `${given} ${sur}` : given);
  *   heir:boolean|null, characterId:string|null, leveling:string|null, kind:'member'|'resident', residentId:string|null,
  *   startAge:number, toll:number, bornOwn:number, lived:number, retired:number|null, bequest?:any[],
  *   parked?:{mapId:number, buildingKey:number}|null, courting?:Record<string, any>, wedAt?:number|null,
- *   childDay?:number|null, minor?:boolean, residentFace?:number|null, mapId?:number
+ *   childDay?:number|null, minor?:boolean, residentFace?:number|null, mapId?:number,
+ *   standing?:import('./influence.js').Standing|null
  * }} Person
  * @typedef {{ v:number, id:string, surname:string, model:string, seat:{region:string, loc:string, mapId?:number}|null, rev:number,
  *   nextId:number, currentId:number, founded:number, ended:number|null, people:Person[], remains:any[], settings?:any,
- *   pending:Pending|null, houses?:any[], home?:{mapId:number, buildingKey:number}|null }} Family
+ *   pending:Pending|null, houses?:any[], home?:{mapId:number, buildingKey:number}|null,
+ *   news?:import('./influence.js').News[] }} Family
  * @typedef {{ fallenId:number, at:number, estate:number, bequest:any[] }} Pending - AUDIT LEGACY: a fall the Succession
  *   has not answered yet, ON THE RECORD - so a tab closed, a crash or a failed birth under the window leaves the line
  *   waiting for its answer, never stranded
@@ -464,6 +467,7 @@ export function readFamily(rec) {
     if (p.kind === 'resident') p.mapId = Number.isInteger(raw.mapId) ? raw.mapId : 0;   // LEGACY5: the town a spouse lives in
     // LEGACY-HOME: the house the member's newest save was made in (household.js homeOf), or none
     p.parked = raw.parked && Number.isInteger(raw.parked.mapId) && (raw.parked.buildingKey | 0) > 0 ? { mapId: raw.parked.mapId, buildingKey: raw.parked.buildingKey | 0 } : null;
+    p.standing = readStanding(raw.standing);   // LEGACY6: what the world thought of them, as last saved (influence.js)
     people.push(p);
   }
   if (!people.length) return null;
@@ -485,6 +489,7 @@ export function readFamily(rec) {
     houses: Array.isArray(rec.houses) ? rec.houses.filter((h) => h && Number.isInteger(h.mapId) && (h.buildingKey | 0) > 0)
       .map((h) => ({ regionIndex: h.regionIndex | 0, mapId: h.mapId, buildingKey: h.buildingKey | 0, location: String(h.location ?? ''), by: Number.isInteger(h.by) ? h.by : null })) : [],
     home: rec.home && Number.isInteger(rec.home.mapId) ? { mapId: rec.home.mapId, buildingKey: rec.home.buildingKey | 0 } : null,
+    news: readNews(rec.news),   // LEGACY6: what the house's towns talk of (influence.js)
   };
 }
 

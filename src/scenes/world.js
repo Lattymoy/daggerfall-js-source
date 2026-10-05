@@ -23,7 +23,7 @@ import { wodSiteId, yieldsTo } from '../world/wodShared.js';   // WOD7: a camp's
 import { alignBillboardToGround, alignControllerToGround } from '../world/groundAlign.js';   // WOD3: SpawnLoot's drop; CSA-D: BoardBoat's AlignControllerToGround
 import { PRIVATEERS_HOLD_BLOCK, HOLD_MODELS, HOLD_FLATS, holdModelMatrix, holdFireLights, rollHoldFoes } from '../world/wodPrivateersHold.js';   // WOD4: the camp at Privateer's Hold
 import { rollLootRarity, pileSource, dungeonRarityTier, dungeonFamily, stampWonWeapons } from '../systems/lootRarity.js';   // WOD3: LR1 over the camps' piles; SIGIL1: their weapons' sigils
-import { revenantToReturn, revenantSpawnOptions, revenantPresence, takeRevenantNotice, revenantSay, releaseRevenantStand, revenantRecord, revenantMomentEvent, revenantRumor, revenantMapMarks, revenantHuntEntries, revenantTakes, revenantFelled, revenantFelledEvent, revenantRoutSweep, revenantRoutedEvent, revenantWarnEvent, revenantBetrayEvent, forgetLastSlew } from '../systems/revenant.js';   // REVENANT: who comes back, and what the player is told
+import { revenantToReturn, revenantSpawnOptions, revenantPresence, takeRevenantNotice, revenantSay, releaseRevenantStand, revenantRecord, revenantMomentEvent, revenantRumor, revenantMapMarks, revenantHuntEntries, revenantTakes, revenantFelled, revenantFelledEvent, revenantRoutSweep, revenantRoutedEvent, revenantWarnEvent, revenantBetrayEvent, forgetLastSlew, killerOf as revenantKillerOf, inheritRevenant } from '../systems/revenant.js';   // REVENANT: who comes back, and what the player is told
 import { endPlayerFights, playerHarmMark } from '../systems/harmMark.js';   // RVN10 (bible/12-Enhanced-AI/Feud-Arc.md 21.2): a respawn's jump is no flight
 import { DEVOTED } from '../systems/revenantFeud.js';   // RVN11 (Feud-Arc.md 22.1): a Devoted one's wait between warnings
 import { SKY_CLEAR } from '../render/renderer.js'; import { centreFromFeet } from '../characters/enemyAnchor.js';   // REVIEW 2026-09-05: one line, so the cites below it hold
@@ -2121,7 +2121,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     newSaveData: () => null,
     getSaveData: () => livingRelations.snapshot(),
     restoreSaveData: (rec) => { livingRelations = createRelations(rec); },
+    // LEGACY6: a new character knows nobody - unless born of the house on this page: the birth's share of the parent's
+    // regard (legacyHost.seedRegards), whichever of the birth and this reset lands first
+    newGame: () => { livingRelations = createRelations(); legacyHost?.seedRegards(livingRelations); },
   });
+  /** The Living World's day of the sky's minute (livingTown.js dayOf: a day starts at 04:00). */
+  const livingRegardDay = () => Math.floor((skyMinutes() - 240) / 1440);
 
   // A5b: OUTDOOR MUSIC. AssignPlaylist's City/Wilderness arms - night
   // overrides everything, and by day the weather picks the list
@@ -4675,6 +4680,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           relations: () => livingRelations, playerName: () => playerEntity.name ?? '', weather: () => weather,
           townName: dfLocation.name, regionName: dfLocation.regionName ?? '',
           tripsOf: (day) => livingTripsOf(livingTown, day), armOf: livingArmOf,   // LW3: its travellers away and armed, its visitors
+          familyNews: (t) => legacyHost?.newsFor(livingTown.mapId, t) ?? null,   // LEGACY6: what the town says of the line
           extraPeople: (day, town) => legacyHost?.residentsOf(livingTown.mapId, (seed) => town.homeFor(seed), (id) => town.residents.find((r) => r.id === id) ?? null) ?? null,   // LEGACY-HOME: Project Legacy's line, at home here (LEGACY5: a spouse, the census's own)
           ashore: (res) => livingAshore(livingTown, res), crews: () => livingCrews(livingTown),   // LW5: its sailors by their ships' clock; the crews lying here
           // LW7: a townsperson's place by the lives, a hand's death, the player's, and the town's own lines of sight
@@ -12851,7 +12857,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   function legacyTopicRows(person) {
     const res = person?.living?.res;
     if (!res || !legacyHost) return [];
-    const day = Math.floor((skyMinutes() - 240) / 1440);
+    const day = livingRegardDay();
     return legacyHost.topicRows(res, {
       regard: livingRelations.regard(res.id, day), personality: liveStat(playerEntity, 'personality'),
       etiquette: skillValue(playerEntity, SKILLS.Etiquette), townName: _townOfMapId.get(res.town >>> 0)?.name ?? '',   // their own town's - the street's, a room's or a road's alike
@@ -22179,6 +22185,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     },
     // LEGACY-HOME: the houses the one played holds (a deed that stands - banking.js deedStands), and the house they are in
     heldHouses: () => (playerEntity.houses ?? []).filter((h) => (h?.buildingKey | 0) > 0 && deedStands(h)),
+    // LEGACY6: what the world remembers - the town's regard of the one played and its day, the towns' minute for the
+    // house's news, and the killer a fallen kinsman's mirror names, handed to the heir (revenant.js)
+    regards: () => livingRelations, regardDay: livingRegardDay, sky: () => skyMinutes(),
+    killerOf: (cid, ownAt) => revenantKillerOf(cid, ownAt), inheritFoe: (rec) => inheritRevenant(playerEntity, rec),
     houseHere: () => { const b = (modes?.mode ?? 'exterior') === 'interior' ? modes?.interiorBuilding : null; return b?.buildingKey > 0 && b.townMapId ? { mapId: b.townMapId >>> 0, buildingKey: b.buildingKey } : null; },
     hasSave: (cid) => newestSaveOf(enumerateSaves().info, cid) >= 0,   // AUDIT LEGACY II A2/B1: a person's character stands only with a save of them
     livingWorld: () => livingWorldOn(),   // AUDIT LEGACY II B5: the line stands only in the Living World's towns

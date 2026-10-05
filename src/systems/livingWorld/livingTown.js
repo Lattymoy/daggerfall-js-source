@@ -150,6 +150,7 @@ export class LivingTown {
    *   keepsakes?: () => readonly any[],
    *   takeKeepsake?: (item: any) => void,
    *   extraPeople?: (day: number, town: LivingTown) => readonly Resident[],
+   *   familyNews?: (t: number) => readonly any[] | null,
    * }} o - LW6c: `keepsakes()` what the player carries (a keepsake carried home), `takeKeepsake(item)` it handed over.
    *   `tripsOf(day)` the roads' word on the town for a day (trips.js through the host's book: who of it is away
    *   when, who of elsewhere stays here), undefined while its ways are still being asked; `armOf(res)` a resident's
@@ -163,7 +164,8 @@ export class LivingTown {
    *   a resident by the minute; `slay(res, t, seen)` the player struck one down (the host makes the turn); `sees(a, b)`
    *   a clear line between two points of the location frame (none given: always). LEGACY-HOME: `extraPeople(day, town)`
    *   residents beyond the census who live here (Project Legacy's bloodline, systems/legacy/household.js) - the same
-   *   list while nothing about them changed, so the day's people are kept with it
+   *   list while nothing about them changed, so the day's people are kept with it. LEGACY6: `familyNews(t)` what the
+   *   town says of that house at the minute (systems/legacy/influence.js newsFor), told beside the road's and the deeds'
    */
   constructor(nav, o) {
     this.nav = nav;
@@ -663,6 +665,8 @@ export class LivingTown {
     const ctx = { town: this.o.townName, region: this.o.regionName, weather: this.o.weather?.() ?? null, hour, news: this._roads?.news ?? null };   // LW4: the road's news
     const deeds = this.deedNews(t);   // LW7: the deeds' news beside the road's, and the character's name for it
     if (deeds.length) ctx.news = [...(ctx.news ?? []), ...deeds];
+    const kin = this.o.familyNews?.(t) ?? [];   // LEGACY6: what the town says of Project Legacy's house (legacy/influence.js newsFor)
+    if (kin.length) ctx.news = [...(ctx.news ?? []), ...kin];
     ctx.player = this.o.playerName?.() ?? '';
     return ctx;
   }

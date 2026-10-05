@@ -251,7 +251,7 @@ export const LIVING_GREETINGS = Object.freeze({
 });
 
 /** The fallback for a token the reader cannot fill. */
-export const TOKEN_FALLBACK = Object.freeze({ town: 'town', region: 'the court', a: 'friend', b: 'friend', place: 'the next town', player: 'friend', who: 'someone', foe: 'brigands' });
+export const TOKEN_FALLBACK = Object.freeze({ town: 'town', region: 'the court', a: 'friend', b: 'friend', place: 'the next town', player: 'friend', who: 'someone', foe: 'brigands', house: 'that house' });
 
 /**
  * LW4: WHAT THE TOWN SAYS OF THE ROAD - two- and three-line scripts on a trouble its own travellers met: `{who}` the one
@@ -337,13 +337,37 @@ export const SEA_NEWS = Object.freeze({
     Object.freeze(['Did you hear? {who} went over the side, halfway to {place}.', 'In that weather?', 'In any weather. The sea does not ask.']),
   ]),
 });
+/** LEGACY6 (Legacy-Arc.md section 10): what a town says of PROJECT LEGACY'S HOUSE - a member's death, a laying to rest, a
+ *  wedding and a birth, in the town where it happened and in the seat (systems/legacy/influence.js newsFor) - `{who}`
+ *  the member, `{house}` the family's name. */
+export const KIN_NEWS = Object.freeze({
+  died: Object.freeze([
+    Object.freeze(['Did you hear? {who} of House {house} is dead.', 'The house will feel that.']),
+    Object.freeze(['They are burying {who} - or would be, if anyone could find the body.', 'House {house} has had a hard year.']),
+    Object.freeze(['{who} {house}, gone. I saw them in the market not a week past.', 'Arkay keeps no calendar.']),
+  ]),
+  rested: Object.freeze([
+    Object.freeze(['{who} was laid to rest at last. The family brought the bones home.', 'Good. A house should keep its dead.']),
+    Object.freeze(['House {house} buried {who} properly, they say. Candles and all.', 'Then {who} can sleep.']),
+  ]),
+  wed: Object.freeze([
+    Object.freeze(['{who} is wed - into House {house}, no less.', 'Gods give them joy of it.']),
+    Object.freeze(['Were you at the temple? {who} and House {house}.', 'I heard the bells. I thought someone had died.']),
+  ]),
+  born: Object.freeze([
+    Object.freeze(['House {house} has a new child. {who}, they call them.', 'Another mouth. Gods bless it.']),
+    Object.freeze(['Did you hear? {who} - born to House {house}.', 'The line goes on, then.']),
+  ]),
+});
 /** Of a meeting with news to tell, the share that tells it. */
 export const NEWS_SHARE = 0.4;
 
 /** LW7: a news item's words - a deed's (struck down by the player, seen or not; died at their side), a fight the player
  *  turned, a passage by sea's (LW5b), a dive's (LW6), the road's.
- *  @param {{ kind: string, dive?: boolean, helped?: boolean, seen?: boolean, sea?: boolean }} item */
-const newsPool = (item) => (item.kind === 'slain' ? SLAIN_NEWS[item.seen ? 'seen' : 'unseen']
+ *  LEGACY6: or Project Legacy's house's (`kin`).
+ *  @param {{ kind: string, dive?: boolean, helped?: boolean, seen?: boolean, sea?: boolean, kin?: boolean }} item */
+const newsPool = (item) => (item.kin ? KIN_NEWS[/** @type {keyof typeof KIN_NEWS} */ (item.kind)]   // LEGACY6: the house's own words
+  : item.kind === 'slain' ? SLAIN_NEWS[item.seen ? 'seen' : 'unseen']
   : item.kind === 'died' ? DIED_NEWS
   : item.kind === 'home' ? HOME_NEWS   // LW6d: a keepsake carried home
     : item.helped && HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)] ? HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)]

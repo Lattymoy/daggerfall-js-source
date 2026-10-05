@@ -48,6 +48,7 @@ import {
   topicsFor, topicLabel, topicQuestion, court, propose, betrothalOf, wed, childStep, childLine, spouseOf, childrenTogether,
   splitName, dayOf as courtDayOf, MARRIAGE_TEXT, TOPIC,
 } from '../systems/legacy/marriage.js';
+import { memberStanding, inheritStanding, inheritRegards, noteNews, newsFor as houseNewsFor } from '../systems/legacy/influence.js';
 
 /** The reflexes a born member starts with - the wizard's own default (ui/chargenArt.js PLAYER_REFLEXES.Average). */
 export const BORN_REFLEXES = 2;
@@ -58,6 +59,7 @@ export const LEGACY_TEXT = Object.freeze({
   seat: (loc) => `${loc} is your family's seat.`,
   elder: (name, age) => `${name} is ${age} - an elder of the house now. The years ahead are fewer than those behind.`,
   born: (name, loc) => `${name} takes up the family's name in ${loc}.`,
+  hunted: (foe, given) => `${foe}, who ended ${given}, will come for the house's heir.`,
   lore: (given, from, to) => `Lore surname change: ${given} chose ${to} instead of ${from}.`,   // RandomizeCharacterData's own HUD line
   noHeir: 'You died without a descendant.',   // HandlePlayerDeath's own words
   heir: 'You died. Your descendant will take your place.',   // ...and the other branch's
@@ -138,14 +140,22 @@ export function mergeFamily(stored, saved, cid) {
  *   heldHouses?:() => any[], houseHere?:() => ({mapId:number, buildingKey:number}|null),
  *   hasSave?:(characterId:string) => boolean, livingWorld?:() => boolean,
  *   templeOf?:() => (number|null), askWed?:(name:string, house:string, done:(takeName:boolean) => void) => boolean,
+ *   regards?:() => any, regardDay?:() => number, sky?:() => number,
+ *   killerOf?:(characterId:string, ownAt:number) => any, inheritFoe?:(rec:any) => boolean,
  * }} deps - AUDIT LEGACY II: `hasSave(cid)` whether a save of that character stands (a person's id stands only with one);
- *   `livingWorld()` whether the Living World runs (the line stands only in its towns)
+ *   `livingWorld()` whether the Living World runs (the line stands only in its towns). LEGACY6: `regards()` the Living
+ *   World's relations of the one played and `regardDay()` their day; `sky()` the towns' minute (the house's news is
+ *   stamped by it); `killerOf(cid, ownAt)` the revenant that ended a character (revenant.js killerOf) and
+ *   `inheritFoe(rec)` it handed to the one played (inheritRevenant)
  */
 export function createLegacyHost(deps) {
   const rng = deps.rng ?? Math.random;
   /** @type {any} */ let family = null;
   /** A birth read from the boot: the family to start the new game with, and who is born. */
   /** @type {any} */ let born = null;
+  /** LEGACY6: the share of a parent's standing the member born on this page took - a new game's fresh relations take it
+   *  again (seedRegards), whichever of the birth and the new game's reset lands first. */
+  /** @type {{ personId:number, standing:any }|null} */ let bornShare = null;
   /** THE PAST PLAYED BACK: a dead or retired member's save is loaded - their person. Lasts until another load. */
   /** @type {any} */ let past = null;
   /** The death the door saw, decided: the reset presents it. `deathSeen` - the door was heard for this death. */
@@ -184,6 +194,8 @@ export function createLegacyHost(deps) {
     if (p.characterId && deps.entity.characterId && p.characterId !== String(deps.entity.characterId)) return;   // never another character's into this person
     writePlayer(p, deps.entity);
     p.lived = lived();
+    // LEGACY6: what the world thinks of them - the law, the guilds, the town's regard (influence.js) - for a child's share
+    p.standing = memberStanding(deps.entity, deps.regards?.() ?? null, deps.regardDay?.() ?? 0);
     if (!saving) return;
     // LEGACY-HOME + AUDIT LEGACY II A6: the houses the one played holds are the line's - a deed is the character's own,
     // so the line learns it with the save that holds it (an unsaved purchase or sale moved the line, and another
@@ -235,7 +247,7 @@ export function createLegacyHost(deps) {
 
   /** A save's copy beside the store's (mergeFamily); the played character is the one this save is of. */
   function adopt(rec) {
-    past = null; outcome = null; deathSeen = false; elderSaid = false;
+    past = null; outcome = null; deathSeen = false; elderSaid = false; bornShare = null;
     openedThisVisit.clear(); restAskedThisVisit.clear(); remainsSig = ''; residentsKept.clear(); openedSig.clear();
     const cid = cidOf();
     const saved = readFamily(rec);
@@ -300,6 +312,21 @@ export function createLegacyHost(deps) {
     heir.bequest = [...(heir.bequest ?? []), ...(pend.bequest ?? [])];
     family.pending = null;
     touch(family);
+    huntHeir(heir, personOf(family, pend.fallenId));
+  }
+  /** LEGACY6: THE KILLER REMEMBERED - the revenant that ended the fallen (their own mirror, revenant.js killerOf) hunts
+   *  the one who took the mantle (inheritRevenant), and the record and the death quest name it. */
+  function huntHeir(heir, fallen) {
+    if (!fallen?.characterId || !fallen.died) return;
+    const foe = deps.killerOf?.(fallen.characterId, (fallen.bornOwn | 0) + (fallen.lived | 0)) ?? null;
+    if (!foe?.name) return;
+    fallen.died.by = foe.name;
+    for (const r of family.remains ?? []) if (r.of === fallen.id) r.killer = foe.name;
+    if (deps.inheritFoe?.(foe)) deps.say(LEGACY_TEXT.hunted(foe.name, fallen.given));
+  }
+  /** LEGACY6: something the house's towns will talk of - at the town's minute, in `mapId` (and in the seat). */
+  function tellNews(kind, who, mapId) {
+    if (noteNews(family, kind, who, deps.sky?.() ?? deps.now(), mapId ?? null)) touch(family);
   }
 
   // ---- the death -------------------------------------------------------------------------------------------------
@@ -345,6 +372,7 @@ export function createLegacyHost(deps) {
       return outcome;
     }
     recordDeath(family, p.id, { at: d.at, cause: d.cause, place: d.place, by: d.by });
+    tellNews('died', fullNameOf(p.given, p.surname), d.place?.mapId);
     layDeathRemains(p, d);
     family.pending = { fallenId: p.id, at: d.at, estate: estateOf(d.gold), bequest: [] };
     touch(family);
@@ -494,6 +522,7 @@ export function createLegacyHost(deps) {
     // two copies of each, in the store and in every save
     r.items = [];
     delete r.first;
+    tellNews('rested', r.name, deps.here()?.mapId);   // LEGACY6: the towns hear of it
     touch(family);
     store();
     return true;
@@ -697,8 +726,16 @@ export function createLegacyHost(deps) {
     writePlayer(p, deps.entity);
     p.bornOwn = Math.floor(deps.own() ?? 0);
     p.lived = 0;
+    // LEGACY6: THE BIRTH'S SHARE of what the world thought of the parent - the law and the guilds a quarter, the town's
+    // regard a half (influence.js); kept for the page, so a new game's fresh relations take it too (seedRegards)
+    const parent = (p.parents ?? []).map((id) => personOf(family, id)).find((q) => q?.standing) ?? null;
+    bornShare = parent?.standing ? { personId: p.id, standing: parent.standing } : null;
+    inheritStanding(deps.entity, bornShare?.standing ?? null);
+    inheritRegards(deps.regards?.() ?? null, bornShare?.standing ?? null, deps.regardDay?.() ?? 0);
     touch(family);
-    const loc = deps.town(deps.here())?.loc ?? family.seat?.loc ?? '';
+    const here = deps.here();
+    tellNews('born', fullNameOf(p.given, p.surname), here?.mapId);
+    const loc = deps.town(here)?.loc ?? family.seat?.loc ?? '';
     deps.say(LEGACY_TEXT.born(fullNameOf(p.given, p.surname), loc || 'the Bay'));
     payEstateOf(p, { write: false });
     if (deps.saveNow()) { store(); clearBirth(deps.tab()); return; }
@@ -795,6 +832,7 @@ export function createLegacyHost(deps) {
     if (!family || spouseOf(family, p) || !betrothalOf(p)) return null;
     const s = wed(family, p, { id: rid, name: c.name, sex: c.sex, race: c.race, face: c.face, mapId: c.mapId }, deps.now(), { takeName });
     p.childDay = ownDay();
+    tellNews('wed', fullNameOf(s.given, s.surname), c.mapId);
     touch(family);
     store();
     deps.say(MARRIAGE_TEXT.wed(fullNameOf(s.given, s.surname), family.surname));
@@ -804,7 +842,7 @@ export function createLegacyHost(deps) {
   function childrenStep(p) {
     const rev = family.rev;
     const kid = childStep(family, p, { day: ownDay(), rng, at: deps.now(), settings: legacySettings() });
-    if (kid) deps.say(childLine(kid, spouseOf(family, p)));
+    if (kid) { deps.say(childLine(kid, spouseOf(family, p))); tellNews('born', fullNameOf(kid.given, kid.surname), spouseOf(family, p)?.mapId); }
     if (family.rev !== rev) store();
   }
   /** A townsperson's death heard (struck down, or fallen at the one played's side): a courtship of theirs, or a
@@ -821,6 +859,18 @@ export function createLegacyHost(deps) {
     if (ended) { touch(family); store(); }
     return ended;
   }
+  // ---- LEGACY6: what the world remembers ---------------------------------------------------------------------------
+
+  /** What the town `mapId` says of the house at the town's minute `t` (livingTown.js familyNews). */
+  const newsFor = (mapId, t) => (family && deps.on() && !past ? houseNewsFor(family, mapId, t) : []);
+  /** A new game's fresh relations (scenes/world.js LivingWorld's newGame) take the birth's share of the town's regard -
+   *  only while the one born on this page is the one played. Answers how many. */
+  function seedRegards(relations) {
+    const p = current();
+    if (!bornShare || !p || p.id !== bornShare.personId || !playedHere(p)) return 0;
+    return inheritRegards(relations, bornShare.standing, deps.regardDay?.() ?? 0);
+  }
+
   /** The census ids the line holds - every spouse who wed in, living or dead: their census place is the line's, never
    *  the census's again (scenes/world.js holderOf). */
   const holdsResident = (id) => !!family && deps.on() && (family.people ?? []).some((x) => x.kind === 'resident' && x.residentId === id);
@@ -976,5 +1026,7 @@ export function createLegacyHost(deps) {
     bornResult,
     onBorn,
     tick,
+    newsFor,
+    seedRegards,
   };
 }

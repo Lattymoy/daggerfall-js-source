@@ -13,6 +13,7 @@
 // Storage is handed in (systems/appStorage.js appStorage / tabStorage), so this is headless-testable; every read and
 // write is shielded, because storage throws under some privacy modes and a family must never cost the player a game.
 import { readFamily, FAMILY_VERSION } from './family.js';
+import { mergeNews } from './influence.js';   // LEGACY6
 
 export const FAMILY_KEY_PREFIX = 'dagger.legacy.family.';
 export const BIRTH_KEY = 'dagger.legacy.birth';
@@ -66,6 +67,7 @@ export function mergeFacts(mine, other) {
     p.toll = Math.max(p.toll | 0, o.toll | 0);
     p.lived = Math.max(p.lived | 0, o.lived | 0);
     if (!p.characterId && o.characterId) p.characterId = o.characterId;
+    if (!p.standing && o.standing) p.standing = JSON.parse(JSON.stringify(o.standing));   // LEGACY6: a standing either copy saved
     for (const c of o.children ?? []) if (!p.children.includes(c)) p.children.push(c);
   }
   for (const r of other.remains ?? []) if (!(mine.remains ??= []).some((x) => x.id === r.id)) mine.remains.push(JSON.parse(JSON.stringify(r)));
@@ -76,6 +78,7 @@ export function mergeFacts(mine, other) {
   if (!mine.pending && other.pending && knew.get(other.pending.fallenId) === false) mine.pending = JSON.parse(JSON.stringify(other.pending));
   if (!mine.seat && other.seat) mine.seat = { ...other.seat };
   if (!mine.home && other.home) mine.home = { ...other.home };
+  mine.news = mergeNews(mine.news, other.news);   // LEGACY6: what the towns heard is never unheard
   mine.nextId = Math.max(mine.nextId | 0, other.nextId | 0, ...mine.people.map((p) => p.id + 1));
   return mine;
 }
