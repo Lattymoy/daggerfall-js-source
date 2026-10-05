@@ -76,7 +76,7 @@ mode = "smart"
 [vars]
 # Answered by /health so a deploy that did not happen cannot look like
 # one that did. Kept in step with ACCOUNT_VERSION in src/service.js.
-ACCOUNT_VERSION = "acct82"
+ACCOUNT_VERSION = "acct83"
 # WB5b: THE RELAY'S PUBLIC HALF, GATE_PUBLIC_KEY - the key an Oblivion
 # Gate's kill receipts verify with (src/net/gateReceipt.js) - is NOT a
 # var here. GATE-KEYS (2026-09-26): the account deploy mints the pair
@@ -110,7 +110,12 @@ ALLOWED_ORIGIN = "*"
 # the glyph, /red, and /mute and /unmute (titles.js canModerate).
 # DEV3 (2026-09-26, Mac: "grant Tabby the developer title/glyph"): the
 # fourth, with the same whole set.
-DEVELOPER_HANDLES = "Lattymoy,trashBattery,LostMyLeg,Tabby"
+# DEV4 (2026-10-05, the owner: "Also add RookieG(Dev) as developer", then
+# "Change RookieG(Dev) to RookieG"): RookieG, the fifth, with the same whole
+# set and the developers' Seraph Wings. The handle exactly - "RookieG(Dev)"
+# (a handle may carry brackets, net/handleShape.js HANDLE_RE) is another
+# account and holds none of it.
+DEVELOPER_HANDLES = "Lattymoy,trashBattery,LostMyLeg,Tabby,RookieG"
 # MOD1: THE MODERATORS - the blue shield beside the name, and /mute and
 # /unmute in chat. Comma-separated handles, case-insensitive, the same
 # as the line above; a developer may already moderate without being
@@ -207,6 +212,17 @@ AEGIS_HANDLES = "Sureme"
 # golden light about the body. The second list that grants an aura (titles.js TIER_AURA);
 # taking the handle off takes all three on the next token.
 PRIMARCH_HANDLES = "GA00250"
+# CRYSTAL-FIST (2026-10-05, the owner, for Flylighter: "Title: Crystal Fist",
+# the glyph "referenced above" - three purple slashes - and the aura "also
+# purple, would be a circle of tiny purple squares going up and down out of
+# the ground", after Octavia's in Warframe, "the color 'gradient' would be
+# unnecessary"): Crystal Fist - the title in the reference's purple, the
+# crystalfist glyph (the three slashes) and the Crystal Resonance, a ring of
+# purple squares rising and falling about the feet. A list that grants an
+# aura (titles.js TIER_AURA); taking the handle off takes all three on the
+# next token. Flylighter stays a Disciple (DISCIPLE_HANDLES) - a second title
+# held, one worn.
+CRYSTAL_FIST_HANDLES = "Flylighter"
 # PATREON-LINK (2026-10-01, Mac: "With patron and having to manually hand
 # out titles. Im running into a workflow where its really hard to keep up
 # with it"; asked, "Patreon auto-link"): A PATRON'S TITLE FOLLOWS THEIR

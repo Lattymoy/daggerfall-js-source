@@ -89,9 +89,9 @@ const find = (n, cls) => {
 // ── THE VOCABULARY AND ITS FACE ─────────────────────────────────────
 
 test('PRIMARCH vocabulary: the title and the glyph join the closed lists last, the aura joins AURAS after the ward; "Primarch" and "Golden Radiance" in words; the title ONE colour - the pixel menu\'s own light gold, #d8cfae, held to the menu\'s rule - no gradient, no edge; the glyph in it, filled; `Y` on the classic face; the radiance\'s button in the Primarch\'s gold; the wire keeps all three (mutants: the colour, the glyph\'s colour, the mark, the fill, the button\'s paint, the words)', () => {
-  assert.equal(TITLES.at(-1), 'primarch', 'the vocabulary\'s newest');
-  assert.equal(GLYPHS.at(-1), 'primarch');
-  assert.deepEqual([...AURAS], ['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings'], 'the Broker\'s fire, the ward, then the radiance - SHADOW-CLOAK\'s cloak after it, SERAPH-WINGS\' wings after that (PIN MOVED)');
+  assert.deepEqual(TITLES.slice(-2), ['primarch', 'crystalfist'], 'the vocabulary\'s newest when it came - CRYSTAL-FIST\'s after it (PIN MOVED)');
+  assert.deepEqual(GLYPHS.slice(-2), ['primarch', 'crystalfist']);
+  assert.deepEqual([...AURAS], ['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance'], 'the Broker\'s fire, the ward, then the radiance - SHADOW-CLOAK\'s cloak after it, SERAPH-WINGS\' wings after that, CRYSTAL-FIST\'s resonance after them (PIN MOVED)');
   assert.equal(TITLE_TEXT.primarch, 'Primarch', 'GA00250: "the title will be Primarch"');
   assert.equal(AURA_TEXT.radiance, 'Golden Radiance');
   assert.equal(GLYPH_LABEL.primarch, 'Primarch', 'named on the account card');
@@ -116,7 +116,7 @@ test('PRIMARCH vocabulary: the title and the glyph join the closed lists last, t
   assert.ok(GLYPH_MARK.primarch.charCodeAt(0) >= FONT_GLYPH_MIN && GLYPH_MARK.primarch.charCodeAt(0) <= FONT_GLYPH_MAX, 'inside the font');
   for (const a of AURAS) assert.ok(AURA_TEXT[a] && TITLES.includes(AURA_PAINT[a]), `every aura has a word and a title's paint for its button: ${a}`);
   assert.equal(AURA_PAINT.radiance, 'primarch', 'the radiance in the Primarch\'s own gold');
-  assert.deepEqual({ ...AURA_PAINT }, { dagonfire: 'gatebreaker', oblivionward: 'aegis', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder' }, 'the fire and the ward as before - SERAPH-WINGS\' wings in the Founder\'s gold (PIN MOVED) - SHADOW-CLOAK\'s cloak in the Shadow Fang\'s paint after them (PIN MOVED)');
+  assert.deepEqual({ ...AURA_PAINT }, { dagonfire: 'gatebreaker', oblivionward: 'aegis', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist' }, 'CRYSTAL-FIST\'s resonance in the Crystal Fist\'s purple (PIN MOVED) - the fire and the ward as before - SERAPH-WINGS\' wings in the Founder\'s gold (PIN MOVED) - SHADOW-CLOAK\'s cloak in the Shadow Fang\'s paint after them (PIN MOVED)');
   const badge = titleBadge({ title: 'primarch' });
   assert.deepEqual({ text: badge.text, rgba: badge.rgba, gradient: badge.gradient, edge: badge.edge }, { text: 'Primarch', rgba: TITLE_RGBA.primarch, gradient: null, edge: null });
   assert.deepEqual(readBadge({ title: 'primarch', glyphs: ['primarch'] }), { title: 'primarch', glyphs: ['primarch'] }, 'the wire keeps it');
@@ -179,7 +179,7 @@ test('PRIMARCH grant: PRIMARCH_HANDLES names GA00250, and the list grants the ti
   assert.equal(v('PRIMARCH_HANDLES'), 'GA00250', 'the owner: "a custom title, glyph, and aura for ga00250"');
   assert.equal(TIER_LISTS.primarch, 'PRIMARCH_HANDLES');
   assert.equal(TIER_GLYPH.primarch, 'primarch');
-  assert.deepEqual({ ...TIER_AURA }, { aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak' }, 'the lists that grant an aura - SHADOW-CLOAK\'s the third (PIN MOVED)');
+  assert.deepEqual({ ...TIER_AURA }, { aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance' }, 'the lists that grant an aura - SHADOW-CLOAK\'s the third, CRYSTAL-FIST\'s the fourth (PIN MOVED)');
   for (const h of ['GA00250', 'ga00250', 'Ga00250']) {
     const p = row(h);
     assert.deepEqual(titlesHeld(p, ENV), ['primarch'], `${h}: the title, by name, case-folded`);
@@ -243,7 +243,7 @@ test('PRIMARCH the service end to end: GA00250 registers, holds the title, the g
 });
 
 test('PRIMARCH token and relay: a token may carry the title, the glyph and the radiance and verifies; every glyph at once still fits; the relay - world162, the one that knows the words - reads all three out of the signature onto the peer\'s row (mutants: the vocabulary\'s aura)', async () => {
-  assert.equal(RELAY_VERSION, 'world171', 'PRIMARCH moved it on (world162): the vocabulary rides the relay\'s bundle; SUNBABY1 after it (world163, a live event\'s word - PIN MOVED); PARTY-LEAD after that (world164, the hub\'s party.lead act - PIN MOVED); SERPENT1 after it (world165, the serpent frame - PIN MOVED); SERPENT2 after that (world166, the serpent herald - PIN MOVED); SHADOW-CLOAK after it (world167, the cloak\'s word - PIN MOVED); SERAPH-WINGS after it (world168, the wings word - PIN MOVED); AUDIT ARENA-LADDER after that (world169, the arena ladder audit - PIN MOVED); FEUD after that (world170, the foe record\'s wind-ups and a revenant\'s fields - PIN MOVED); SUPER-DUNGEONS after that (world171, a re-laid dungeon\'s room of its own - PIN MOVED)');
+  assert.equal(RELAY_VERSION, 'world172', 'PRIMARCH moved it on (world162): the vocabulary rides the relay\'s bundle; SUNBABY1 after it (world163, a live event\'s word - PIN MOVED); PARTY-LEAD after that (world164, the hub\'s party.lead act - PIN MOVED); SERPENT1 after it (world165, the serpent frame - PIN MOVED); SERPENT2 after that (world166, the serpent herald - PIN MOVED); SHADOW-CLOAK after it (world167, the cloak\'s word - PIN MOVED); SERAPH-WINGS after it (world168, the wings word - PIN MOVED); AUDIT ARENA-LADDER after that (world169, the arena ladder audit - PIN MOVED); FEUD after that (world170, the foe record\'s wind-ups and a revenant\'s fields - PIN MOVED); CRYSTAL-FIST after it (world171, the Crystal Fist\'s words - world170 on its branch, renumbered past FEUD\'s at the merge - PIN MOVED); SUPER-DUNGEONS after that (world172, a re-laid dungeon\'s room of its own - world171 on its branch, renumbered past CRYSTAL-FIST\'s at the merge - PIN MOVED)');
   const kp = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
   const pub = await importPublicKeyB64(Buffer.from(new Uint8Array(await subtle.exportKey('raw', kp.publicKey))).toString('base64url'), { subtle });
   const nowS = 1_760_000_000;

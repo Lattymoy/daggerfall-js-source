@@ -391,11 +391,12 @@
   {
     "name": "CLIMB5-walker-faces-the-camera",
     "file": "src/net/peerRiders.js",
-    "old": "const view = viewOf(peerBodyYaw(pose), feet, eye);",
-    "new": "const view = viewOf(pose.yaw, feet, eye);",
+    "old": "const yaw = peerBodyYaw(pose), view = viewOf(yaw, feet, eye);   // CLIMB5: facing the wall it climbs",
+    "new": "const yaw = pose.yaw, view = viewOf(yaw, feet, eye);   // CLIMB5: facing the wall it climbs",
     "tests": [
       "test/climb5.test.js"
-    ]
+    ],
+    "note": "SPRITE-FACE (re-aimed by content): the facing moved off the figure to facing() - the picture's."
   },
   {
     "name": "CLIMB5-walker-strides-on-the-wall",

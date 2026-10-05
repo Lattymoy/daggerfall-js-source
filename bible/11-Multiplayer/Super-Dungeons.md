@@ -371,7 +371,7 @@ the room's law:
   the other, and two pages in one room would trade blows on each other's foe i. So a re-laid dungeon stands in a room
   of its own, `dungeon:m<id>.s` or `dungeon:m<id>.m`, as a building's room is its layout's (WD3): named off the BUILD
   (`builtDungeonSize`), admitted by the wire's one room law at both ends (`WORLD_ROOM`, `DUNGEON_ROOM_TAGS` - a relay
-  change, `world171`). A dungeon built whole keeps `dungeon:m<id>`, and its memory - and shares it, rightly, with an
+  change, `world172`). A dungeon built whole keeps `dungeon:m<id>`, and its memory - and shares it, rightly, with an
   older page, which lays the same whole dungeon. (This page first said each frame would carry the layout's size, `lz`,
   and a receiver refuse another's; a room per layout needs no receiver to refuse anything, and an old page's blows -
   which carry no stamp - cannot reach a re-laid room at all.)
@@ -437,7 +437,8 @@ the world's sizes; a quest one of whose dungeons cannot be read keeps its stamp.
 online does; `systems/onlineSync.js` copies the forced rows home. The room: `net/online.js roomKeyFor` takes the
 dungeon's `size`, the mode machine's identity carries `builtDungeonSize(dungeonLoc)` and the world host hands it on;
 `net/wire.js` admits `dungeon:m<id>.m` and `.s` (`WORLD_ROOM`, `DUNGEON_ROOM_TAGS`, `dungeonRoomTag`), so
-RELAY_VERSION is `world171` - the arc's one version, re-hashed in place while it is undeployed.
+RELAY_VERSION is `world172` - the arc's one version, re-hashed in place while it is undeployed (`world171` on its branch,
+renumbered past main's CRYSTAL-FIST at the merge).
 
 The slice was first built as "medium everywhere online" (Mac's first word) and turned to the world's mix the same hour
 on his second; nothing of the first shape shipped but the room per layout, which both needed.
@@ -448,7 +449,7 @@ in the medium and the small rooms, the relay's Room keeping each size's memory a
 `test/dsize1_mediumdungeons.test.js`, `test/ft1_smallerdungeons.test.js`, `test/auditworld34.test.js`,
 `test/uxb1e_onlinesync.test.js`, `test/features.test.js`, `test/ft18_features.test.js` (PINS MOVED);
 `tools/mutants/sdonline.json` (13) and `tools/mutants/dsize1.json` (27), all dead. Deploy: relay first (a page of this
-build on a relay before `world171` joins a `.s` or `.m` room the relay keeps no world for - presence alone, every player
+build on a relay before `world172` joins a `.s` or `.m` room the relay keeps no world for - presence alone, every player
 stepping their own foes - which is safe, and is why the order matters).
 
 Leaves: an older page in a dungeon the world re-lays stands in the whole dungeon's room, apart from this build's

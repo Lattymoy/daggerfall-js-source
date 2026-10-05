@@ -11,12 +11,12 @@
   {
     "name": "SHADOWCLOAK-the-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder' });",
-    "new": "radiance: 'primarch', shadowcloak: 'aegis', seraphwings: 'founder' });",
+    "old": "radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist' });",
+    "new": "radiance: 'primarch', shadowcloak: 'aegis', seraphwings: 'founder', resonance: 'crystalfist' });",
     "tests": [
       "test/shadowcloak.test.js"
     ],
-    "note": "SERAPH-WINGS (re-aimed by content): the wings joined the list."
+    "note": "SERAPH-WINGS (re-aimed by content): the wings joined the list. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
   },
   {
     "name": "SHADOWCLOAK-the-kind",
@@ -48,30 +48,32 @@
   {
     "name": "SHADOWCLOAK-the-aura-not-granted",
     "file": "server-account/src/titles.js",
-    "old": "primarch: 'radiance', shadowfang: 'shadowcloak' });",
-    "new": "primarch: 'radiance' });",
+    "old": "primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance' });",
+    "new": "primarch: 'radiance', crystalfist: 'resonance' });",
     "tests": [
       "test/shadowcloak.test.js"
-    ]
+    ],
+    "note": "CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
   },
   {
     "name": "SHADOWCLOAK-granted-to-another-list",
     "file": "server-account/src/titles.js",
-    "old": "primarch: 'radiance', shadowfang: 'shadowcloak' });",
-    "new": "primarch: 'radiance', penitent: 'shadowcloak' });",
+    "old": "primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance' });",
+    "new": "primarch: 'radiance', penitent: 'shadowcloak', crystalfist: 'resonance' });",
     "tests": [
       "test/shadowcloak.test.js"
-    ]
+    ],
+    "note": "CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
   },
   {
     "name": "SHADOWCLOAK-the-vocabularys-aura",
     "file": "src/net/identityToken.js",
-    "old": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings']);",
-    "new": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'seraphwings']);",
+    "old": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance']);",
+    "new": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'seraphwings', 'resonance']);",
     "tests": [
       "test/shadowcloak.test.js"
     ],
-    "note": "SERAPH-WINGS (re-aimed by content): the wings joined the list."
+    "note": "SERAPH-WINGS (re-aimed by content): the wings joined the list. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's Crystal Resonance."
   },
   {
     "name": "SHADOWCLOAK-the-hood-too-tall",
@@ -499,20 +501,22 @@
   {
     "name": "SHADOWCLOAK-my-facing-the-views",
     "file": "src/scenes/world.js",
-    "old": "_auraSelf.yaw = mwViewSpriteFigure()?.yaw ?? player.bodyYawFor(cam.yaw);",
-    "new": "_auraSelf.yaw = mwViewSpriteFigure()?.yaw ?? cam.yaw;",
+    "old": "_auraSelf.yaw = mwViewSpriteFacing()?.yaw ?? player.bodyYawFor(cam.yaw);",
+    "new": "_auraSelf.yaw = mwViewSpriteFacing()?.yaw ?? cam.yaw;",
     "tests": [
       "test/shadowcloak.test.js"
-    ]
+    ],
+    "note": "SPRITE-FACE (re-aimed by content): the facing moved off the figure to facing() - the picture's."
   },
   {
     "name": "SHADOWCLOAK-a-peers-facing-dropped",
     "file": "src/scenes/world.js",
-    "old": "w.yaw = peerBodyYaw(d.shown) ?? 0;",
+    "old": "w.yaw = (peerWalkers?.faceOf?.(d.id) ?? peerRiders?.faceOf?.(d.id))?.yaw ?? peerBodyYaw(d.shown) ?? 0;",
     "new": "w.yaw = 0;",
     "tests": [
       "test/shadowcloak.test.js"
-    ]
+    ],
+    "note": "SPRITE-FACE (re-aimed by content): the gather reads a sprite's picture first, then the pose."
   },
   {
     "name": "SHADOWCLOAK-my-beast-form-ignored",

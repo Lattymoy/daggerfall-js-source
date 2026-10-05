@@ -90,9 +90,9 @@ const find = (n, cls) => {
 // ── THE VOCABULARY AND ITS FACE ─────────────────────────────────────
 
 test('AEGIS vocabulary: the title and the glyph join the closed lists last, the aura joins AURAS after Dagon\'s Fire; "Aegis of Oblivion" and "Oblivion Ward" in words; a gradient out of the void into the ward\'s light - three violets, darkest first - edged in black, its middle the title\'s one colour and the glyph\'s; no other title\'s colour, apart from the Apostle\'s and the Protector\'s purples; the tendrils darker than the word; a classic mark of its own (mutants: the gradient turned round; the glyph in another colour; the edge dropped; a mark another glyph has)', () => {
-  assert.deepEqual(TITLES.slice(-2), ['aegis', 'primarch'], 'the vocabulary\'s newest when it came - PRIMARCH\'s after it (PIN MOVED)');
-  assert.deepEqual(GLYPHS.slice(-2), ['aegis', 'primarch']);
-  assert.deepEqual([...AURAS], ['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings'], 'the Broker\'s fire, then the ward - PRIMARCH\'s radiance after it, SHADOW-CLOAK\'s cloak after that, SERAPH-WINGS\' wings after that (PIN MOVED)');
+  assert.deepEqual(TITLES.slice(-3), ['aegis', 'primarch', 'crystalfist'], 'the vocabulary\'s newest when it came - PRIMARCH\'s after it, CRYSTAL-FIST\'s after that (PIN MOVED)');
+  assert.deepEqual(GLYPHS.slice(-3), ['aegis', 'primarch', 'crystalfist']);
+  assert.deepEqual([...AURAS], ['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance'], 'the Broker\'s fire, then the ward - PRIMARCH\'s radiance after it, SHADOW-CLOAK\'s cloak after that, SERAPH-WINGS\' wings after that, CRYSTAL-FIST\'s resonance after them (PIN MOVED)');
   assert.equal(TITLE_TEXT.aegis, 'Aegis of Oblivion', 'the owner: "Title: Aegis of Oblivion"');
   assert.equal(AURA_TEXT.oblivionward, 'Oblivion Ward');
   assert.equal(GLYPH_LABEL.aegis, 'Aegis of Oblivion', 'named on the account card');
@@ -185,7 +185,7 @@ test('AEGIS grant: AEGIS_HANDLES names Sureme, and the list grants the title, it
   assert.equal(v('AEGIS_HANDLES'), 'Sureme', 'the owner: "For the account named Sureme"');
   assert.equal(TIER_LISTS.aegis, 'AEGIS_HANDLES');
   assert.equal(TIER_GLYPH.aegis, 'aegis');
-  assert.deepEqual({ ...TIER_AURA }, { aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak' }, 'the first list that grants an aura - PRIMARCH\'s the second, SHADOW-CLOAK\'s the third (PIN MOVED)');
+  assert.deepEqual({ ...TIER_AURA }, { aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance' }, 'the first list that grants an aura - PRIMARCH\'s the second, SHADOW-CLOAK\'s the third, CRYSTAL-FIST\'s the fourth (PIN MOVED)');
   for (const h of ['Sureme', 'sureme', 'SUREME']) {
     const p = row(h);
     assert.deepEqual(titlesHeld(p, ENV), ['aegis'], `${h}: the title, by name, case-folded`);
@@ -248,7 +248,7 @@ test('AEGIS the service end to end: Sureme registers, holds the title, the glyph
 });
 
 test('AEGIS token and relay: a token may carry the title, the glyph and the ward and verifies; every glyph at once still fits; the relay - world160, the one that knows the words - reads all three out of the signature onto the peer\'s row (mutants: the vocabulary without the ward, so the relay refuses the token)', async () => {
-  assert.equal(RELAY_VERSION, 'world171', 'AEGIS moved it on (world160): the vocabulary rides the relay\'s bundle; GUILD2 after it (world161, no wire change - PIN MOVED); PRIMARCH after that (world162, the Primarch\'s words - PIN MOVED); SUNBABY1 after it (world163, the sun baby\'s live-event word - PIN MOVED); PARTY-LEAD after that (world164, the hub\'s party.lead act - PIN MOVED); SERPENT1 after it (world165, the serpent frame - PIN MOVED); SERPENT2 after that (world166, the serpent herald - PIN MOVED); SHADOW-CLOAK after it (world167, the cloak\'s word - PIN MOVED); SERAPH-WINGS after it (world168, the wings word - PIN MOVED); AUDIT ARENA-LADDER after that (world169, the arena ladder audit - PIN MOVED); FEUD after that (world170, the foe record\'s wind-ups and a revenant\'s fields - PIN MOVED); SUPER-DUNGEONS after that (world171, a re-laid dungeon\'s room of its own - PIN MOVED)');
+  assert.equal(RELAY_VERSION, 'world172', 'AEGIS moved it on (world160): the vocabulary rides the relay\'s bundle; GUILD2 after it (world161, no wire change - PIN MOVED); PRIMARCH after that (world162, the Primarch\'s words - PIN MOVED); SUNBABY1 after it (world163, the sun baby\'s live-event word - PIN MOVED); PARTY-LEAD after that (world164, the hub\'s party.lead act - PIN MOVED); SERPENT1 after it (world165, the serpent frame - PIN MOVED); SERPENT2 after that (world166, the serpent herald - PIN MOVED); SHADOW-CLOAK after it (world167, the cloak\'s word - PIN MOVED); SERAPH-WINGS after it (world168, the wings word - PIN MOVED); AUDIT ARENA-LADDER after that (world169, the arena ladder audit - PIN MOVED); FEUD after that (world170, the foe record\'s wind-ups and a revenant\'s fields - PIN MOVED); CRYSTAL-FIST after it (world171, the Crystal Fist\'s words - world170 on its branch, renumbered past FEUD\'s at the merge - PIN MOVED); SUPER-DUNGEONS after that (world172, a re-laid dungeon\'s room of its own - world171 on its branch, renumbered past CRYSTAL-FIST\'s at the merge - PIN MOVED)');
   const kp = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
   const pub = await importPublicKeyB64(Buffer.from(new Uint8Array(await subtle.exportKey('raw', kp.publicKey))).toString('base64url'), { subtle });
   const nowS = 1_760_000_000;

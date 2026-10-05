@@ -185,7 +185,7 @@ medium row is forced off online). And A DUNGEON'S ROOM IS ITS LAYOUT'S, as a bui
 every dungeon whole and the relay keeps a room's memory for thirty days, so a re-laid dungeon stands in
 `dungeon:m<id>.s` or `dungeon:m<id>.m` (`net/online.js roomKeyFor`, reading `world/smallerDungeons.js
 builtDungeonSize` off the build through the mode machine's identity; `net/wire.js` WORLD_ROOM and DUNGEON_ROOM_TAGS -
-the relay's `world171`), while a dungeon built whole - the main story's, the undercroft, one the world leaves large, one
+the relay's `world172` - `world171` on its branch, renumbered past main's CRYSTAL-FIST at the merge), while a dungeon built whole - the main story's, the undercroft, one the world leaves large, one
 no bigger than its size - keeps the room and the memory it always had. `test/sdonline.test.js` (10);
 `tools/mutants/sdonline.json` (13).
 

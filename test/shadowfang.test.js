@@ -12,7 +12,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { webcrypto } from 'node:crypto';
 import { fakeRoom } from './fakeRoom.mjs';
-import { TITLES, GLYPHS, RENOWN_MAX, SEAT_TITLES, AURAS, claimsValid, mintToken, verifyToken, importPublicKeyB64 } from '../src/net/identityToken.js';
+import { TITLES, GLYPHS, RENOWN_MAX, SEAT_TITLES, AURAS, ARENA_RATING_MAX, CHARACTER_LEVEL_MAX, claimsValid, mintToken, verifyToken, importPublicKeyB64 } from '../src/net/identityToken.js';
 import {
   TITLE_TEXT, TITLE_RGBA, TITLE_GRADIENT, GLYPH_RGBA, GLYPH_GRADIENT, GLYPH_DETAIL, GLYPH_EDGE_W, GLYPH_MARK, GLYPH_PATH,
   GLYPH_STROKE, FONT_GLYPH_MIN, FONT_GLYPH_MAX, cssRgba, cssGradient, titleBadge, glyphBadges, glyphSvgNode, glyphArtNode,
@@ -175,9 +175,12 @@ test('SHADOW-FANG token and relay: a token may carry the title and the glyph and
   assert.ok((await verifyToken(wide, pub, { subtle, nowS })).ok);
   // SEASON1 part two (world149): AND EVERY OPTIONAL CLAIM AT ONCE - the longest seat title with its claim at its bounds,
   // the longest aura, the realm's word and a Season's banner ribbon beside the rest. The old 512 refused this one.
+  // CRYSTAL-FIST AUDIT: AND THE ARENA'S TWO - the season's rating (`ar`, every registered account's) and the character's
+  // level (`cl`, every account with a realm character) at their widest, which this token had left out; with them it is
+  // 639 of 640 once the crystalfist glyph joined, so the NEXT word into the vocabulary trips this pin rather than a hello
   const seatT = SEAT_TITLES.reduce((a, t) => (t.length > a.length ? t : a), '');
   const aura = AURAS.reduce((a, x) => (x.length > a.length ? x : a), '');
-  const widest = await mintToken({ s: 'a'.repeat(40), n: 'W'.repeat(NAME_MAX), k: 'linked', t: seatT, ts: [0xffffffff, 9999], g: [...GLYPHS], au: aura, mu: nowS + 10 ** 9, lv: RENOWN_MAX, ...guild, rc: 1, rb: [15, 14] }, kp.privateKey, { subtle, nowS });
+  const widest = await mintToken({ s: 'a'.repeat(40), n: 'W'.repeat(NAME_MAX), k: 'linked', t: seatT, ts: [0xffffffff, 9999], g: [...GLYPHS], au: aura, mu: nowS + 10 ** 9, lv: RENOWN_MAX, ...guild, rc: 1, rb: [15, 14], ar: ARENA_RATING_MAX, cl: CHARACTER_LEVEL_MAX }, kp.privateKey, { subtle, nowS });
   assert.ok(widest.split('.')[1].length > 512, `past the old bound (${widest.split('.')[1].length})`);
   assert.ok(TOKEN_RE.test(widest), `every claim at once passes the hello (${widest.split('.')[1].length} of 640)`);
   assert.ok(widest.length <= 1024);
