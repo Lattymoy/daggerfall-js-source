@@ -156,15 +156,17 @@ law, which the naval fight already keeps.
 | Venom Spit | 1 | disc, 13 m | 2.6 s | a glob flies `SPIT_FLIGHT_MS`; 1.5% + 2 and a man; a venom pool stays 9 s and bites anyone standing in it (2% of their health + 1, each second) |
 | Constrict | 2 | ring, 36 m | 4.8 s | the coil (below) |
 | Abyssal Roar | 3 | rings, 22 to 120 m | 2.8 s | safe close in under its jaws; 5% + 5, a man, and the canvas torn |
+| Satakal's Call | the turn to 2 | none | 2.6 s | its cry as it turns |
+| The Maelstrom | the turn to 3 | none | 5 s | the whirl forms (below) |
 
 These are AUDIT SERPENT T1's numbers (Mac chose the validated rebalance). At the first numbers a ship it focused was
 wrecked in 36-80 s and no fleet of eight won at the gunnery measured. At these, simulated against the relay's own brain
 at `SERPENT_TTK_S` 180: at 38% of balls striking, five or eight ships win every time in about 13.5 minutes and three
 ships half the time; at 60%, every fleet of three or more wins in six to seven minutes. One ship alone never wins - it
-is a fight to meet up for. SERPENT3 (section 15) took away the teleporting Rising Maw that did most of the hurt and gave
-a pair its share: at 38% a pair wins nine to twelve fights in twelve, a lone ship none.
-| Satakal's Call | the turn to 2 | none | 2.6 s | its cry as it turns |
-| The Maelstrom | the turn to 3 | none | 5 s | the whirl forms (below) |
+is a fight to meet up for. SERPENT3 (section 15) simulated it again on the brain as it then stood - with AUDIT SERPENT
+F7's shorter ram, which these numbers were not re-simulated with (it left ships 170-240 m off to the breach and the
+spit) - and found a pair never winning and three galleons one fight in twenty-four at 38%; it took away the
+teleporting Rising Maw that did most of the hurt and gave a pair its share: at 38% a pair wins nine to twelve fights in twelve, a lone ship none.
 
 **A blow's hurt is a share of HER whole hull and canvas, with points on top** (`shipHurt`, TOUGHER-SHIPS' law), so a
 small boat feels the points more than a carrack does. Braced, her hull and canvas take `BRACE_TAKEN` (half) of it, as
@@ -561,9 +563,10 @@ great snaps, beside the ram's run said a beat late (8.7 m).
 
 **Why nobody beat it.** The teleporting Maw was the fight: a breach under a 42 m hull 3.2 s after it was cast, wherever
 she was within 320 m, cannot be sailed out of. In a combat simulation against the relay's own brain (galleons circling
-its waters and firing, every attack judged by the struck machine's own law) it did most of the hurt, and no fleet of
-three or fewer won at any gunnery measured (25-38% of balls striking), at the old ways or the new. Its jumps wasted
-volleys in flight too, and the relay judged a blow by the body at its word's arrival - a gathering and a wire after the
+its waters and firing, every attack judged by the struck machine's own law) it did most of the hurt, and fleets of
+three or fewer won one fight in 144 at the gunnery measured (25-38% of balls striking), at the old ways and the new
+(8 and 13 m/s) - three galleons at 38%, once in twelve (AUDIT SERPENT T1's "three ships half the time" predates F7's
+shorter ram - section 5). Its jumps wasted volleys in flight too, and the relay judged a blow by the body at its word's arrival - a gathering and a wire after the
 ball struck.
 
 **The law** (`net/serpentBrain.js` - DECLARED; `net/serpentBody.js`'s legs unchanged):
@@ -596,7 +599,9 @@ ball struck.
   the sea within her guns' reach; its stun read there too. The relay keeps that second more of its track.
 - **A pair's share** (`systems/serpentStrike.js` `fleetShare`, `SERPENT_PAIR_SHARE` 2/3): with exactly two ships afloat
   at the fight (the relay's count, the state's `n`) every blow, crush, grip, grind and venom bite lands at two thirds on
-  the struck machine - each of a pair takes what each of three would. A lone ship, and three or more, take the whole.
+  the struck machine - each of a pair takes what each of three would. A lone ship, and three or more, take the whole: a
+  lone ship eased too (the option's "fewer than three") won nine fights in twelve at 50% on a fast hull, where Mac's
+  "one ship alone still can't" holds it to one.
 - **On the client** the whirl's waters are laid where its word says it forms, and a bow wave rides over its head while it
   dashes under the sea (`dashWake`: sounded, faster than it cruises; the ram's run keeps its own off its lane).
 - **Its law's version 2** (`net/serpentLaw.js` `SERPENT_BRAIN_V`, `SERPENT_BRAIN_MIN`): a game before it - one that draws
@@ -607,8 +612,9 @@ steering's ordinary 2.5-4.5 m, as before); every Maw and coil cast at its own wi
 centimetre and closing on its round to a tenth of a metre; its head farthest out a median 472 m a fight (574 m before),
 past 500 m 0.4% of the time (3.3%); above the sea 85% of a fight (80%). The fight, at 38% of balls striking (the
 audit's measured gunnery): a lone galleon never wins (none in twelve - one only at an exceptional 50% on a fast hull); a
-pair wins nine to twelve in twelve (none to seven without its share); three nine to twelve, five every time - in ten to
-eleven minutes; at 25% a pair loses, and five win four to ten in twelve. Before it, every fleet of three or fewer lost.
+pair wins nine to twelve in twelve (none to seven without its share); three and five every time - in ten to eleven
+minutes; at 25% a pair loses, three win two in twelve and five five to eleven. Before it, at 38% a pair never won and
+three won one fight in twenty-four.
 
 **The relay:** `world172` (section 11). **Pins:** `test/serpent3.test.js` (12) and the SERPENT1 and AUDIT SERPENT pins it
 moved - the stray's surfacing for the resume's, the Maelstrom at the heart, a late ship's words, the first strike's
