@@ -250,7 +250,7 @@ test('ARENA-FIX 4: a chained beast - targets nobody, nobody targets it, and the 
 
 test('ARENA-FIX 4: the stair names the undercroft; the Pit Master and the Keeper of the Hall answer by their office', () => {
   const W = rd('src/scenes/worldModes.js');
-  assert.match(W, /if \(entries\[key\]\?\.door\?\.doorType === DOOR_TYPE\.DUNGEON_ENTRANCE && entries\[key\]\.dfLocation\?\.arenaUndercroft\) \{\n\s*return staticDoorName\('dungeonEntrance', \{ locationName: ARENA_TEXT\.undercroft\.name, elite: false \}\);/);
+  assert.match(W, /if \(entries\[key\]\?\.door\?\.doorType === DOOR_TYPE\.DUNGEON_ENTRANCE && entries\[key\]\.dfLocation\?\.arenaUndercroft\) \{\n\s*return staticDoorName\('dungeonEntrance', \{ locationName: ARENA_TEXT\.undercroft\.name \}\);/);   // PIN MOVED (TIER1): no tier over the stair - the plaque names a tier only where the host passes one
   assert.equal(ARENA_TEXT.undercroft.name, 'The Arena Undercroft');
   assert.match(W, /if \(!info && pn\?\.arenaRole === 'pitMaster'\) \{ pitMasterChoice\(\); return; \}/);
   assert.match(W, /if \(!info && pn\?\.arenaRole === 'hallKeeper'\) \{ townTalk\?\.showOverlay\?\.\(new ActionTextBox\(hallOfChampions\(/);

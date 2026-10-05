@@ -161,6 +161,7 @@ import { bindings } from './input.js';
 import { actionsForCode } from '../systems/inputActions.js';   // UXB1-S: every action its key carries, shared or not
 import { smoothstep } from '../systems/mathf.js';   // MAP-FIELD7: the ONE easing, so the sheet travels like everything else in the port
 import { hubMapWord, hubTitle } from '../systems/regionHubs.js';   // HUB1: a region hub's word on the label and its title in the box
+import { tierPhrase } from '../systems/dungeonTier.js';   // TIER1: a dungeon's tier and size on the label and in the box, online
 import { TV_WHO_GROUPS, TV_WHO_TEXT, TV_KIN_COLORS, TV_KIN_LEGEND, travelViewWho, toggleTravelViewWho, cycleTravelViewRenown, playerShown } from '../systems/travelViewFilters.js';   // OW-WHO / OW-KIN: the players' filters and colours, the Overworld's own
 import { seatInfoLine, seatTipOf } from '../net/townSeatLaw.js';   // SEAT1a: a seat's Charter in the box
 
@@ -2172,7 +2173,8 @@ export class HeldMapWindow {
     // HUB1: what the place is to its region, online - known whether or not its buildings are
     const hub = this.deps.hubAt?.(summary) ?? null;
     const seat = this.deps.seatAt?.(summary) ?? null;   // SEAT1a: and its Charter, a seat's
-    const hubRows = [...(hub ? [hubTitle(hub)] : []), ...(seat ? [seatInfoLine(seat, seat.holder?.guild ?? null)] : [])];   // SEAT-TIP: a held seat names its holder (it read "unheld" whoever held it)
+    const tier = tierPhrase(this.deps.tierAt?.(summary) ?? null);   // TIER1: a dungeon's tier and size, online
+    const hubRows = [...(hub ? [hubTitle(hub)] : []), ...(seat ? [seatInfoLine(seat, seat.holder?.guild ?? null)] : []), ...(tier ? [tier] : [])];   // SEAT-TIP: a held seat names its holder (it read "unheld" whoever held it)
     if (!info) {
       this._info = { title: '', rows: [...hubRows, toFormat(TO_TEXT.MsgNoKnowledge, title)], cells: [] };
     } else {
@@ -3216,10 +3218,12 @@ export class HeldMapWindow {
       const region = REGION_NAMES[m.summary.regionIndex] ?? '';
       // UpdateRegionLabel's own "Region : Location" reading - HUB1: and a hub's word after it, online
       const hub = m.hub ? ` (${hubMapWord(m.hub)})` : '';
+      // TIER1 (Super-Dungeons.md section 12): a dungeon's tier and its size, online - the host's word (deps.tierAt)
+      const tier = tierPhrase(this.deps.tierAt?.(m.summary) ?? null);
       // SEAT-TIP (FIELD BUGS 2026-10-04e): a seat - a town that can be taken - answers with its card: who holds it, and
       // this week's battle (the mark's seat is the one the poll dressed; the EVENT-TIP card shows it)
       const tip = m.seat ? readTip(seatTipOf(m.seat), { textMax: SEAT_TIP_TEXT_MAX }) : null;
-      return { label: (region && name ? `${region} : ${name}` : name) + hub, cursor: 'pointer', ...(tip ? { tip } : {}) };
+      return { label: (region && name ? `${region} : ${name}` : name) + hub + (tier ? ` (${tier})` : ''), cursor: 'pointer', ...(tip ? { tip } : {}) };
     }
     // EVENT-TIP: the gate's ring holds an area - anywhere in it that is not a place answers with the gate's card
     const g = this._gateAt(sx, sy);

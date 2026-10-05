@@ -60,6 +60,7 @@ import { buildingClosedText, buildingLockValue } from './buildingLocks.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { TRIGGER_FLAGS } from '../world/rdbLayout.js';   // DFBlock.RdbTriggerFlags has ONE home; this arm compares against it rather than a second copy by name
 import { isActionDoorObject } from '../world/actionSystem.js';   // SENSE1: GetComponent<DaggerfallActionDoor>, the door band's own question
+import { DUNGEON_TIER_TEXT } from './dungeonTier.js';   // TIER1: a dungeon's tier, in the words every surface draws
 
 /** The mod's switch, and its one knob. Online forces every mod on
  *  (OL1), which `modSetting` already applies - right for this one: a
@@ -473,12 +474,19 @@ export function actionObjectName(o, { hideInteract = false } = {}) {
 export function staticDoorName(kind, {
   displayName = '', locationName = '', regionName = '',
   buildingType = BUILDING_TYPES.None, unlocked = true, quality = 0,
-  inTown = false, elite = false,
+  inTown = false, tier = null, size = null,
 } = {}) {
-  // ELITE: the mouth of an elite spawned dungeon says so, in the plaque's title, with the way in beneath
-  if (kind === 'dungeonEntrance' && elite) {
+  // ELITE: the mouth of an elite spawned dungeon says so, in the plaque's title, with the way in beneath.
+  // TIER1 (Super-Dungeons.md section 12): and every dungeon's mouth says its TIER the same way where the host names one -
+  // online, where the tiers differ (systems/dungeonTier.js) - Regular, Elite or Super, and beneath the way in, the
+  // size the room builds it at (SD-ONLINE's Small, Medium or Large). Offline the host names none and the mouth keeps the
+  // mod's own "To <name>". The `Elite ` a spawn's name carries is the title's now, not the way in's.
+  if (kind === 'dungeonEntrance' && Object.hasOwn(DUNGEON_TIER_TEXT, tier ?? '')) {
     const name = String(locationName ?? '').replace(/^Elite /, '');
-    return { title: 'Elite Dungeon', subs: name ? [`To ${name}`] : [] };
+    const subs = [];
+    if (name) subs.push(`To ${name}`);
+    if (size) subs.push(String(size));
+    return { title: DUNGEON_TIER_TEXT[tier], subs };
   }
   if (kind === 'buildingExit' || kind === 'dungeonEntrance') {
     return locationName ? { title: `To\n${locationName}` } : null;

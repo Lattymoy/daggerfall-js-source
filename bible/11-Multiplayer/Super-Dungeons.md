@@ -324,14 +324,22 @@ before its door: *"The Hour closes, and the Hollow folds in on itself behind you
 
 ## 12. Regular, Elite, Super - the labels
 
-One law, `dungeonTier(loc)` (`systems/dungeonTier.js`): `'super'` for a Hollow, `'elite'` for an Elite spawn,
+One law, `dungeonTier(loc)` (`systems/dungeonTier.js`, a leaf): `'super'` for a Hollow, `'elite'` for an Elite spawn,
 `'regular'` for every other dungeon - and null for a place that is not a dungeon. Its words, `DUNGEON_TIER_TEXT`:
-**Regular Dungeon**, **Elite Dungeon**, **Super Dungeon**. Shown:
+**Regular Dungeon**, **Elite Dungeon**, **Super Dungeon** - and, beside them since the world's sizes (section 13), the
+dungeon's SIZE, **Small**, **Medium** or **Large**, by the built dungeon's block count as the room builds it online
+(`world/dungeonLabel.js dungeonTierLabel`, which gives no label to the places the port made: the Burning Court, the
+arena's floor, its undercroft). One phrase everywhere: *Elite Dungeon, Small*. Said online, where the tiers differ;
+offline every dungeon is DFU's. Shown:
 
-- **the entrance plaque** (World Tooltips): the title is the tier's words, the sub *To <name>* - as Elite's already was;
-- **the held map** (enhanced): the hover label and the I-key box carry the tier after the dungeon's name;
-- **the overworld plates** (TV6): the tier under the name;
-- **on entering** (enhanced skin): one line, *Regular Dungeon*, *Elite Dungeon*, *Super Dungeon*.
+- **the entrance plaque** (World Tooltips): the title is the tier's words, the subs *To <name>* and the size - as
+  Elite's already was; offline (and over the undercroft's stair) the mod's own *To <name>*;
+- **the held map** (enhanced): the hover label carries the phrase after the dungeon's name, *Region : Location (Elite
+  Dungeon, Small)*, and the I-key box opens with it, before DFU's own refusal;
+- **the overworld plates** (TV6): a found dungeon's place plate carries the phrase under its name, a far plate before
+  its distance;
+- **the sight line**: *You see an Elite Dungeon 340 metres to the north-west!* - and a Super's, *a Super Dungeon*;
+- **on entering**: one line, the phrase (either skin - online is the port's own game).
 
 Not on the classic travel map, automap or logbook: they are native windows, and DFU has no such word (the NATIVE-WINDOW
 RULE).
@@ -446,3 +454,24 @@ stepping their own foes - which is safe, and is why the order matters).
 Leaves: an older page in a dungeon the world re-lays stands in the whole dungeon's room, apart from this build's
 players, until it reloads. Offline, a dungeon no quest holds follows the switches unless the world's sizes are asked
 for (the sync asks for them).
+
+### TIER1 - shipped 2026-10-05
+
+Section 12, whole, with the size beside the tier. `systems/dungeonTier.js` (the leaf: the tiers, their words, the
+size words, `dungeonTier`, `tierShown`, `tierPhrase`), `world/dungeonLabel.js` (`dungeonSizeClass`,
+`dungeonSizeOnline`, `dungeonTierLabel` kept per location, `madeDungeon`). The surfaces: `systems/worldTooltips.js
+staticDoorName` takes a `tier` and a `size` (its old `elite` flag is the tier now); `scenes/worldModes.js` names them
+over a dungeon's mouth online; `ui/heldMap.js` (the hover label and the I box, through the host's `tierAt`);
+`scenes/world.js` (the seam, the place and far plates, the sight line through `world/spawnedDungeons.js
+dungeonSightLine`'s tier, and one line on entering, `dungeonTierSay`, off the transition hook).
+
+THE FOUR HOSTS: `scenes/world.js` WIRED (the plates, the held map's seam, the sight line, the entry line);
+`scenes/worldModes.js` WIRED (the plaque); `scenes/dungeonContext.js` FLAGGED - it names nothing on entry (the world
+host's line rides its transition hook) and its classic automap title is DFU's native window; `scenes/exterior.js`
+FLAGGED - the `?exterior` bench is offline, and offline every dungeon is DFU's.
+
+Pins: `test/tier1_dungeontiers.test.js` (5), the held map's TIER1 window test (`test/heldmap.test.js`), and the moved
+pins of the plaque's, the plates' and the sight line's call sites (`test/elitedungeons.test.js`,
+`test/spawneddungeons.test.js`, `test/tv6_dungeons.test.js`, `test/worldhover.test.js`, `test/arena_fix.test.js`,
+`test/seat1a_client.test.js`); `tools/mutants/tier1.json` (14, all dead), and the mutant records the change moved
+re-aimed by content (`hub1`, `worldhover`, `survtiers3`).

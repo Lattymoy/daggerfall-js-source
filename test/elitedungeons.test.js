@@ -40,7 +40,8 @@ test('ELITE: the clone keeps the template look, says Elite in its name and carri
   assert.equal(plain.name, 'Old Ruin (10,20)');
   assert.strictEqual(elite.dungeon.blocks, template.dungeon.blocks, 'same blocks - the same look');
   assert.deepEqual(elite.exterior.exteriorData.blockNames, template.exterior.exteriorData.blockNames);
-  assert.match(dungeonSightLine(410, 'North', true), /^You see an Elite Dungeon 410 metres to the North!$/);
+  assert.match(dungeonSightLine(410, 'North', 'elite'), /^You see an Elite Dungeon 410 metres to the North!$/);   // PIN MOVED (TIER1): the tier, not a flag
+  assert.match(dungeonSightLine(410, 'North', 'super'), /^You see a Super Dungeon 410 metres to the North!$/);
   assert.match(dungeonSightLine(410, 'North'), /^You see a Dungeon 410 metres/);
 });
 
@@ -110,8 +111,8 @@ test('ELITE: loot - +20% item drop chance and +20% rarity odds, caps unchanged',
   assert.match(hc, /qualityMult: lootQualityMult/);
 });
 
-test('ELITE: the plaque over an elite dungeon reads "Elite Dungeon"', async () => {
+test('ELITE: the plaque over an elite dungeon reads "Elite Dungeon" (TIER1, PIN MOVED: the host names the tier - test/tier1_dungeontiers.test.js)', async () => {
   const { staticDoorName } = await import('../src/systems/worldTooltips.js');
-  assert.deepEqual(staticDoorName('dungeonEntrance', { locationName: 'Elite Old Ruin (10,20)', elite: true }), { title: 'Elite Dungeon', subs: ['To Old Ruin (10,20)'] });
-  assert.deepEqual(staticDoorName('dungeonEntrance', { locationName: 'Old Ruin (10,20)' }), { title: 'To\nOld Ruin (10,20)' }, 'a normal one is unchanged');
+  assert.deepEqual(staticDoorName('dungeonEntrance', { locationName: 'Elite Old Ruin (10,20)', tier: 'elite' }), { title: 'Elite Dungeon', subs: ['To Old Ruin (10,20)'] });
+  assert.deepEqual(staticDoorName('dungeonEntrance', { locationName: 'Old Ruin (10,20)' }), { title: 'To\nOld Ruin (10,20)' }, 'with no tier named, the mod\'s own');
 });
