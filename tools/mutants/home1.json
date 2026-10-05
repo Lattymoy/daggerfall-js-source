@@ -197,8 +197,8 @@
   {
     "name": "HOME1-quest-building-for-sale",
     "file": "src/systems/onlineHomes.js",
-    "old": "homeCandidate(bd) && !(isActiveQuestBuilding?.(bd) ?? false);",
-    "new": "homeCandidate(bd);",
+    "old": "bd.hasInterior !== false && !(isActiveQuestBuilding?.(bd) ?? false);",
+    "new": "bd.hasInterior !== false;",
     "tests": [
       "test/home1.test.js"
     ]
@@ -518,8 +518,8 @@
   {
     "name": "HOME1-the-model-unread-at-the-door",
     "file": "src/systems/talkTopics.js",
-    "old": ", modelIdNum: model?.modelIdNum ?? null };",
-    "new": " };",
+    "old": ", modelIdNum: model?.modelIdNum ?? null, hasInterior",
+    "new": ", hasInterior",
     "tests": [
       "test/home1.test.js"
     ]

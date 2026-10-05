@@ -1,0 +1,103 @@
+[
+  {
+    "name": "SHORECAST-unasked",
+    "file": "src/scenes/fishHost.js",
+    "old": "      if (!acting && host.waterAt?.(castAt(host.eye())) === false) return [];",
+    "new": "      if (false && !acting && host.waterAt?.(castAt(host.eye())) === false) return [];",
+    "tests": [
+      "test/fb1005_shorecast.test.js"
+    ],
+    "note": "the cast stands on the beach again wherever the net's law holds"
+  },
+  {
+    "name": "SHORECAST-feet-not-cast",
+    "file": "src/scenes/fishHost.js",
+    "old": "      if (!acting && host.waterAt?.(castAt(host.eye())) === false) return [];",
+    "new": "      if (!acting && host.waterAt?.(host.eye().pos) === false) return [];",
+    "tests": [
+      "test/fb1005_shorecast.test.js"
+    ],
+    "note": "the water asked at the angler's eye, not at the cast: an angler at the edge is refused"
+  },
+  {
+    "name": "SHORECAST-unknown-refused",
+    "file": "src/scenes/fishHost.js",
+    "old": "      if (!acting && host.waterAt?.(castAt(host.eye())) === false) return [];",
+    "new": "      if (!acting && host.waterAt?.(castAt(host.eye())) !== true) return [];",
+    "tests": [
+      "test/fb1005_shorecast.test.js"
+    ],
+    "note": "ground not built refuses the cast: a deck over a streaming pixel stops fishing"
+  },
+  {
+    "name": "SHORECAST-live-cast-dropped",
+    "file": "src/scenes/fishHost.js",
+    "old": "      const acting = !!live && !live.act.state.done && !live.act.state.cancelled && live.act.state.phase !== 'wind';",
+    "new": "      const acting = false;",
+    "tests": [
+      "test/fb1005_shorecast.test.js"
+    ],
+    "note": "a look swung onto the bank ends the cast in the water"
+  },
+  {
+    "name": "SHORECAST-live-cast-forever",
+    "file": "src/scenes/fishHost.js",
+    "old": "      const acting = !!live && !live.act.state.done && !live.act.state.cancelled && live.act.state.phase !== 'wind';",
+    "new": "      const acting = !!live && !live.act.state.done && live.act.state.phase !== 'wind';",
+    "tests": [
+      "test/fb1005_shorecast.test.js"
+    ],
+    "note": "a cancelled cast keeps the bank a target"
+  },
+  {
+    "name": "SHORECAST-host-draw-threshold",
+    "file": "src/scenes/world.js",
+    "old": "return c == null ? null : c >= SWIM_COVERAGE; },",
+    "new": "return c == null ? null : c > 0; },",
+    "tests": [
+      "test/fb1005_shorecast.test.js"
+    ],
+    "note": "any wet corner counts: the shore records' dry half fishes again"
+  },
+  {
+    "name": "SHORECAST-dropped-not-ended",
+    "file": "src/scenes/gatherHost.js",
+    "old": "          if (!act.act.state.done && !act.act.state.cancelled) act.act.cancel();\n",
+    "new": "",
+    "tests": [
+      "test/fb1005_shorecast.test.js"
+    ],
+    "note": "AUDIT FB1005 W2: a dropped cast left live - the bank a target until the next cast ends"
+  },
+  {
+    "name": "SHORECAST-wound-exempt",
+    "file": "src/scenes/fishHost.js",
+    "old": " && live.act.state.phase !== 'wind';",
+    "new": ";",
+    "tests": [
+      "test/fb1005_shorecast.test.js"
+    ],
+    "note": "AUDIT FB1005 W3: a net still wound keeps the sand a target, and is thrown onto it"
+  },
+  {
+    "name": "SHORECAST-sample-at-the-feet",
+    "file": "src/scenes/world.js",
+    "old": "  const groundSampleAt = (pos) => {\n    const wc = state.worldCoords(pos);",
+    "new": "  const groundSampleAt = (pos) => {\n    const wc = state.worldCoords(walkMode ? player.pos : cam.pos);",
+    "tests": [
+      "test/fb1005_shorecast.test.js"
+    ],
+    "note": "AUDIT FB1005 W4: the read at the feet whatever point it is handed - the cast asks the angler's own tile"
+  },
+  {
+    "name": "SHORECAST-sample-axes-swapped",
+    "file": "src/scenes/world.js",
+    "old": "    return { tile: built_.tilemap[tx + ty * TERRAIN_TILE_DIM], feet: [u - tx, v - ty] };",
+    "new": "    return { tile: built_.tilemap[ty + tx * TERRAIN_TILE_DIM], feet: [u - tx, v - ty] };",
+    "tests": [
+      "test/fb1005_shorecast.test.js",
+      "test/roadb_exterior_water.test.js"
+    ],
+    "note": "AUDIT FB1005 W4: the tile read across the wrong axis"
+  }
+]

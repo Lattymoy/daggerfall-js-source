@@ -990,6 +990,25 @@ export const FEATURES = Object.freeze([
       also: Object.freeze([Object.freeze({ store: 'prefs', key: 'quickslots', initial: true, online: 'player' })]),   // QS: ui/enhancedHud.js hides the diamond on false
     }),
   }),
+  // LOAD1 (2026-10-05, Mac: "add loading screens where needed for the game in an enhanced UI type fashion, maybe make
+  // it where people can also use screenshots for the loading screen and a way to access them in the menu"): THE
+  // LOADING SCREEN (ui/loadingScreen.js) - the place, the step and a running bar over one of the player's own
+  // screenshots (systems/shotGallery.js; the menu's Screenshots pane decides which) or the menu's night sky. DFU has
+  // none - its loads are the fade - so Off is Daggerfall's. The player's own online: it is a picture, nobody else's.
+  Object.freeze({
+    id: 'loading-screen',
+    group: 'interface',
+    title: 'Loading screens',
+    note: 'While the world loads - starting a game, a dungeon\u2019s door, a fast travel, a save - a screen shows where '
+      + 'you are going over one of your screenshots (chosen under Screenshots in the menu) or the menu\u2019s night sky. '
+      + 'Off is Daggerfall\u2019s, with no screen.',
+    effect: 'Takes effect at the next load.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({
+      store: 'prefs', key: 'loadingScreen', initial: 'shots', online: 'player',   // ui/loadingScreen.js LOADING_PREF
+      tiers: Object.freeze([['shots', 'Your screenshots'], ['art', 'Night sky'], ['off', 'Off']]),
+    }),
+  }),
   // GUIDE3 (2026-09-29, Mac: "...make it more accessible", then "This is your baby"): THE HERALD - a quest's news as
   // a notice in the enhanced stack (ui/questHerald.js), fed by the quest bridge's tick. On by default (the arc's
   // DECISIONS: the silence it answers is DISC6's report); the player's own online, since news is no one else's.

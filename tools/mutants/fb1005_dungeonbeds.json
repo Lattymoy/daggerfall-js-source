@@ -1,0 +1,114 @@
+[
+  {
+    "name": "DUNGEONBEDS-not-collected",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (!p.action && isBedModel(p.modelIdNum) && !palace) dungeonBeds.push({ aabb });",
+    "new": "      void palace;",
+    "tests": [
+      "test/fb1005_dungeonbeds.test.js"
+    ],
+    "note": "the level's beds never reach the rest point: \"Find a fire or a bed to rest.\" beside one again"
+  },
+  {
+    "name": "DUNGEONBEDS-point-fire-only",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    restPoint: () => (_restFromBed || bedInReach(dungeonBeds, _fpFeet) ? { kind: 'bed', where: null } : _fpFeet ? camps.restPointAt(_fpFeet) : null),",
+    "new": "    restPoint: () => (_fpFeet ? camps.restPointAt(_fpFeet) : null),",
+    "tests": [
+      "test/fb1005_dungeonbeds.test.js",
+      "test/rest1_act.test.js"
+    ],
+    "note": "the report: a dungeon's rest point a fire alone"
+  },
+  {
+    "name": "DUNGEONBEDS-kind-not-bed",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    restKind: () => (_restFromBed || bedInReach(dungeonBeds, _fpFeet) ? 'bed' : ",
+    "new": "    restKind: () => (false ? 'bed' : ",
+    "tests": [
+      "test/fb1005_dungeonbeds.test.js",
+      "test/surv4_rest.test.js"
+    ],
+    "note": "a bed's night priced as the bare floor's"
+  },
+  {
+    "name": "DUNGEONBEDS-reach-infinite",
+    "file": "src/systems/restAct.js",
+    "old": "    if (Math.hypot(d[0], d[1], d[2]) <= reach) return true;",
+    "new": "    if (Math.hypot(d[0], d[2]) <= Infinity) return true;",
+    "tests": [
+      "test/fb1005_dungeonbeds.test.js"
+    ],
+    "note": "any bed of the level is in reach"
+  },
+  {
+    "name": "DUNGEONBEDS-reach-flat",
+    "file": "src/systems/restAct.js",
+    "old": "    if (Math.hypot(d[0], d[1], d[2]) <= reach) return true;",
+    "new": "    if (Math.hypot(d[0], d[2]) <= reach) return true;",
+    "tests": [
+      "test/fb1005_dungeonbeds.test.js"
+    ],
+    "note": "a bed on the floor above counts"
+  },
+  {
+    "name": "DUNGEONBEDS-reach-to-centre",
+    "file": "src/systems/restAct.js",
+    "old": "    const d = [0, 1, 2].map((k) => Math.max(aabb.min[k] - pos[k], 0, pos[k] - aabb.max[k]));",
+    "new": "    const d = [0, 1, 2].map((k) => pos[k] - (aabb.min[k] + aabb.max[k]) / 2);",
+    "tests": [
+      "test/fb1005_dungeonbeds.test.js"
+    ],
+    "note": "measured to the bed's middle, not its nearest point: its end is a metre short"
+  },
+  {
+    "name": "DUNGEONBEDS-reach-strict",
+    "file": "src/systems/restAct.js",
+    "old": "export function bedInReach(beds, pos, reach = BY_FIRE_REACH) {",
+    "new": "export function bedInReach(beds, pos, reach = BY_FIRE_REACH - 0.5) {",
+    "tests": [
+      "test/fb1005_dungeonbeds.test.js"
+    ],
+    "note": "a reach that is not a fire's"
+  },
+  {
+    "name": "DUNGEONBEDS-palace-beds",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "isBedModel(p.modelIdNum) && !palace) dungeonBeds",
+    "new": "isBedModel(p.modelIdNum)) dungeonBeds",
+    "tests": [
+      "test/fb1005_dungeonbeds.test.js"
+    ],
+    "note": "AUDIT FB1005 B3: a palace's beds rest the player where AUDIT REST II F2 stands no fire"
+  },
+  {
+    "name": "DUNGEONBEDS-bed-night-spends-camp",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    onNightSlept: () => (_restFromBed || bedInReach(dungeonBeds, _fpFeet) ? false : camps.spendNightNear(_fpFeet)),",
+    "new": "    onNightSlept: () => camps.spendNightNear(_fpFeet),",
+    "tests": [
+      "test/fb1005_dungeonbeds.test.js"
+    ],
+    "note": "AUDIT FB1005 B1: a bed's night spends the Bedroll laid beside it"
+  },
+  {
+    "name": "DUNGEONBEDS-any-storey",
+    "file": "src/systems/restAct.js",
+    "old": "    if (Math.abs(pos[1] - aabb.min[1]) > BED_STOREY_M) continue;",
+    "new": "",
+    "tests": [
+      "test/fb1005_dungeonbeds.test.js"
+    ],
+    "note": "AUDIT FB1005 B4: a bed on the storey above or below in reach"
+  },
+  {
+    "name": "DUNGEONBEDS-storey-loose",
+    "file": "src/systems/restAct.js",
+    "old": "export const BED_STOREY_M = 1.5;",
+    "new": "export const BED_STOREY_M = 3.5;",
+    "tests": [
+      "test/fb1005_dungeonbeds.test.js"
+    ],
+    "note": "AUDIT FB1005 B4: a storey's height inside the band"
+  }
+]

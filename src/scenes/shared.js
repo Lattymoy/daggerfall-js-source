@@ -5,6 +5,7 @@
 // feature can never land in one host and miss its three siblings -
 // the shape that has recurred at every audit since 17h.
 
+import { stepAsideLoading, syncLoading } from '../ui/loadingScreen.js';   // LOAD1: a full-screen film's hold takes the loading screen aside; a claimed loop lets its hold go
 import { DFPalette } from '../formats/dfPalette.js';
 import { swingHeld } from '../ui/input.js';   // FIX-F: the swing button through the registry
 import { ImgFile } from '../formats/imgFile.js';
@@ -2104,7 +2105,9 @@ export function wireInfectionVideos(renderer, { textAt = null, factionDict = nul
 // check: guarding feet?.[0] would draw foes against a dead world and
 // call it working.
 let _frameGeneration = 0;
-export function claimFrame() { return ++_frameGeneration; }
+// LOAD1: a loop claimed is a loop ended, and the loading screen the old loop's frames were holding (ui/loadingScreen.js
+// syncLoading) goes with it - no frame of that loop will ever find the world still and end it.
+export function claimFrame() { syncLoading(false); return ++_frameGeneration; }
 export const frameAlive = (token) => token === _frameGeneration;
 
 // AUDIT 39 (#160): THE HOLD - claimFrame's other half. A full-screen
@@ -2116,11 +2119,15 @@ export const frameAlive = (token) => token === _frameGeneration;
 // while the video owns the canvas, and must still be there afterwards.
 // So the hold is a counter, taken by the seam and released on every
 // path out, and the hosts wait on it instead of dying.
+// LOAD1: and the loading screen (ui/loadingScreen.js, a DOM layer over the canvas) steps aside for the film's
+// lifetime - a dream on a fast travel's arrival plays while the travel's screen still stands, and the hosts' frames,
+// which raise and end it, are exactly what the hold stops.
 let _frameHold = 0;
 export function holdFrame() {
   _frameHold++;
+  stepAsideLoading(true);
   let released = false;   // release once, however many paths call it
-  return () => { if (released) return; released = true; _frameHold = Math.max(0, _frameHold - 1); };
+  return () => { if (released) return; released = true; _frameHold = Math.max(0, _frameHold - 1); if (!_frameHold) stepAsideLoading(false); };
 }
 export const frameHeld = () => _frameHold > 0;
 

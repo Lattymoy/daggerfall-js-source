@@ -362,7 +362,7 @@ half the lanes' own mutation tallies could not see.
   `Hand-to-Hand 30%` on one line and a damage range computed from 60 on
   the next. `charsheet.js:817` and `enhancedCharSheet.js:163` read
   `skillValue` now, which moves the enhanced skin's meter with its
-  number (`enhancedMenu.js:3033-3034`) - correctly, since the attribute
+  number (`enhancedMenu.js:3034-3035`) - correctly, since the attribute
   bars beside it were already live. The art-less `_drawFallback` pane
   still prints `''` for an absent skill (both refuters: decide the
   blank case first); DFU has no such pane.

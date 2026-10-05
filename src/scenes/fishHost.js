@@ -180,8 +180,11 @@ export function standSchools({ px, py, day, samples, tilemap }) {
  *   pixel: () => ({ x: number, y: number }|null), ground: () => ({ climate: number, region: number }|null),
  *   eye: () => ({ pos: number[], dir: number[] }), feet: () => number[], hour: () => number, storm: () => boolean,
  *   climateAt: (x: number, y: number) => number|null, trophy: (species: any) => boolean,
- *   day: () => number, rand?: () => number, tug?: () => void, busy?: () => boolean } }} deps `tug` - the floats dip (the
- *   touch layer's buzz); `busy` - the hands are the ship's (HELM-NET: at a helm, the guns laid, a boarding): no cast
+ *   day: () => number, rand?: () => number, tug?: () => void, busy?: () => boolean,
+ *   waterAt?: (pos: ArrayLike<number>) => boolean|null } }} deps `tug` - the floats dip (the
+ *   touch layer's buzz); `busy` - the hands are the ship's (HELM-NET: at a helm, the guns laid, a boarding): no cast;
+ *   `waterAt` - whether a scene point is over water the feet would swim in, null where the ground is not built
+ *   (FIELD BUGS 2026-10-05 SHORE-CAST)
  * @returns {import('./gatherHost.js').GatherKind}
  */
 export function fishKind({ book, host }) {
@@ -258,6 +261,16 @@ export function fishKind({ book, host }) {
       // water is everywhere, so the cast stood under the crosshair at the helm and over the guns' aim; while the hands
       // are the ship's (the helm, the guns laid, a boarding) there is no cast - a deck stood on still fishes
       if (dungeon || host.busy?.() || !foragingToolIn(entity, FT.FishingNet) || !inWater()) return [];
+      // SHORE-CAST (FIELD BUGS 2026-10-05, Discord: "The sea level hitbox is too high in some places", Westhead Moor's
+      // beach - "Open Water" under a crosshair on the sand): the net's law above is the ANGLER's - the Ocean's region
+      // (31, a whole 819 m pixel, POLITIC.PAK never dilated) or a shore record's whole tile - so its cast stood on dry
+      // beach 10 m and more from the water. The cast's own point must be over water the player would swim in
+      // (`host.waterAt`: true, false, or null for ground not built - unknown is not refused). Not once the net is
+      // thrown: the gather host ends the act when its node goes, and a look swung onto the bank is no reason to lose
+      // the haul - but while E is held to WIND the net is not yet thrown, and a look turned onto the sand is a cast
+      // onto the sand (AUDIT FB1005 W3).
+      const acting = !!live && !live.act.state.done && !live.act.state.cancelled && live.act.state.phase !== 'wind';
+      if (!acting && host.waterAt?.(castAt(host.eye())) === false) return [];
       const c = castNow();
       if (!c) return [];
       // CAST-LOOK: on the look at its distance ahead, at any pitch to CAST_RISE_M - and the look itself, so a node in the

@@ -1335,8 +1335,8 @@ characters regardless of mode should start with supplies"* - had been read
 as every tier, Off's included, and shipped that way (SURV-KIT, `23ee51b8`).
 It is reverted whole (`4dffc8ef`), but for six line cites in the kit's
 fallback seam that had rotted before it and named moved lines (`equip.js`'s
-`startingGear.js:71`, `chargenSession.js:225` and `world.js:5551`, `startingGear.js`'s
-`equip.js:330` and `world.js:5551`, `exterior.js`'s `equip.js:329`): each
+`startingGear.js:71`, `chargenSession.js:225` and `world.js:5560`, `startingGear.js`'s
+`equip.js:330` and `world.js:5560`, `exterior.js`'s `equip.js:329`): each
 names its line again. Casual and Hard characters set out with the kit on
 every creation path there is - the wizard and `?class=` in each of the three
 hosts, and online, where the tier is the player's own - and Off's bag is

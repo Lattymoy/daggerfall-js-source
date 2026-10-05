@@ -74,7 +74,7 @@ let towns = true;
 _resetCustomModels(); _resetTownStandIns();
 installTownStandIns(() => towns);
 
-test('TREES-SEATED: every tree the six blocks stand over the port\'s mounds is seated on the top drawn under it - 121 of 130 hung more than 1.5 m over it where they were authored', () => {
+test('TREES-SEATED: every tree the six blocks stand over the port\'s hills is seated on the top drawn under it - 121 of 130 hung more than 1.5 m over the catalogue\'s mounds where they were authored, and 1 over the measured hills (HILL-SHAPES)', () => {
   towns = true;
   let raised = 0, hung = 0, over = 0;
   for (const block of packBlocks(SIX)) {
@@ -95,7 +95,9 @@ test('TREES-SEATED: every tree the six blocks stand over the port\'s mounds is s
     }
   }
   assert.equal(raised, 130, 'the trees the author stood a metre or more over the plane');
-  assert.equal(hung, 121, 'as authored, 121 of them hung more than 1.5 m over what the port draws (the stand-ins are the catalogue\'s size, not the pack\'s)');
+  // FIELD BUGS 2026-10-05 HILL-SHAPES: the stand-ins were the catalogue's size, and 121 hung over them; drawn at the
+  // pack's measured shape (world/rmbrpHillShapes.js), one does - the seat still stands it
+  assert.equal(hung, 1, 'as authored, one of them hangs more than 1.5 m over what the port draws (it was 121 over the catalogue\'s mounds)');
   assert.ok(over > 0, 'some stand over a mound, and stand on it');
 });
 

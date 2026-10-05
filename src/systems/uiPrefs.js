@@ -141,6 +141,9 @@ export const PREF_DEFAULTS = Object.freeze({
   // front door, and on the classic skin no ANIM0001 splash before the title (main.js). ?nointro and ?novideo do the
   // same for one visit. Off by default: the film is how the game introduces itself.
   skipStartVideo: false,
+  // LOAD1 (2026-10-05): the PrintScreen key's download - on, the PNG is saved as KB1 always saved it; off, the shot is
+  // kept in the gallery alone (ui/screenshot.js). The Screenshots pane's own switch, so it is no Features row.
+  shotDownload: true,
   // FT18 (Mac: "Add option to set all mods/enhancements off"): what the Features home's All off moved, tile id ->
   // the segment it had, so Restore can put it back - across launches. null is nothing to restore.
   featuresRestore: null,
