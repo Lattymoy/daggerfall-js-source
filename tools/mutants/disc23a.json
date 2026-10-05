@@ -38,8 +38,8 @@
   {
     "name": "D23A-breathes-only-here",
     "file": "src/ui/automapSheet.js",
-    "old": "    breathes() { return !!entranceHere() || echoesHere().length > 0 || readPartyBodies(deps.party).length > 0 || hoverRow != null || hoverNote != null || (solidOn && (!!(hoverStair || hoverButton) || solidBlitted)); },   // EM3-3D fix: a scaled blit is redrawn once the zoom rests   // EM3-3D: a hovered stair's name and a hovered button are inked on the beat",
-    "new": "    breathes() { return !!entranceHere() || echoesHere().length > 0 || partyHere().length > 0 || hoverRow != null || hoverNote != null || (solidOn && (!!(hoverStair || hoverButton) || solidBlitted)); },   // EM3-3D fix: a scaled blit is redrawn once the zoom rests   // EM3-3D: a hovered stair's name and a hovered button are inked on the beat",
+    "old": "    breathes() { return !!entranceHere() || echoesBreathe() || readPartyBodies(deps.party).length > 0",
+    "new": "    breathes() { return !!entranceHere() || echoesBreathe() || partyHere().length > 0",
     "tests": [
       "test/disc23a_party_plans.test.js"
     ]

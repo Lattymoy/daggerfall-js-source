@@ -95,7 +95,9 @@ test('FT1: the dungeon host stamps and warps through the two exports, and holds 
   const ctx = read('src/scenes/dungeonContext.js');
   assert.match(ctx, /import \{ smallerDungeonsStamp, needsStartWarp \} from '\.\.\/world\/smallerDungeons\.js';/);
   assert.match(ctx, /smallerDungeonsState: smallerDungeonsStamp\(dfLocation\),/, 'the stamp');
-  assert.match(ctx, /if \(extras\.locationKey === _locationKey && setPlayerPos && needsStartWarp\(extras\.smallerDungeonsState, dfLocation\)\) \{/, 'the warp');
+  // AUDIT DELVE E2 (PIN MOVED): the law read once, before the world record, which a load at another size leaves unapplied
+  assert.match(ctx, /const otherLayout = extras\.locationKey === _locationKey && needsStartWarp\(extras\.smallerDungeonsState, dfLocation\);/, 'the warp\'s law');
+  assert.match(ctx, /if \(otherLayout && setPlayerPos\) \{/, 'the warp');
   assert.ok(!/getBool\('Experimental', 'SmallerDungeons'\)/.test(ctx), 'the host no longer reads the raw setting for either');
   assert.ok(!/smallerDungeonsState === 2|\? 2 : 1/.test(ctx), 'ONE DFU MEMBER, ONE EXPORT - no literal 2 for Enabled');
   // and the departure is RECORDED where the doctrine gate looks

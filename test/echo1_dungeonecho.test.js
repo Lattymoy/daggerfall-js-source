@@ -9,10 +9,12 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import {
-  ECHO_NEAR_M, ECHO_VERT_M, ECHO_FLAT_M, ECHO_FIND_M, ECHO_MAP_MAX, ECHO_LOOK_S, ECHO_CHAIN_MAX, ECHO_PREF, ECHO_WAYS,
-  echoWay, wayWord, isEchoMover, echoVerb, echoLine, chainMovers, boxMiddle, examineLine, createEchoBook,
+  ECHO_NEAR_M, ECHO_VERT_M, ECHO_FLAT_M, ECHO_FIND_M, ECHO_MAP_MAX, ECHO_LOOK_S, ECHO_CHAIN_MAX, ECHO_PREF,
+  wayWord, isEchoMover, echoVerb, echoLine, chainMovers, boxMiddle, examineLine, createEchoBook, echoState, echoMoved,
 } from '../src/systems/dungeonEcho.js';
-import { ActionSystem } from '../src/world/actionSystem.js';
+import { COMPASS_WORDS, sceneCompassWord } from '../src/systems/compassWords.js';
+import { bearingWord } from '../src/scenes/fishHost.js';
+import { ActionSystem, PLAY_DEPTH_MAX } from '../src/world/actionSystem.js';
 import { TRIGGER_FLAGS, ACTION_FLAGS } from '../src/world/rdbLayout.js';
 import { compassMarkerLerp } from '../src/ui/hud.js';
 import { FEATURES } from '../src/systems/features.js';
@@ -22,19 +24,26 @@ const src = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 test('ECHO1: the constants', () => {
   assert.deepEqual([ECHO_NEAR_M, ECHO_VERT_M, ECHO_FLAT_M, ECHO_FIND_M, ECHO_MAP_MAX, ECHO_LOOK_S, ECHO_CHAIN_MAX], [3, 2.5, 1.5, 12, 8, 0.25, 32]);
   assert.equal(ECHO_PREF, 'dungeonEchoes');
-  assert.deepEqual(ECHO_WAYS, ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west']);
+  assert.equal(ECHO_CHAIN_MAX, PLAY_DEPTH_MAX, 'AUDIT DELVE A4: IsPlaying\'s own depth, read from its one home');
+  assert.deepEqual(COMPASS_WORDS, ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west']);
+  assert.match(src('src/world/actionSystem.js'), /if \(depth > PLAY_DEPTH_MAX\) return false;/);
 });
 
-test('ECHO1: the compass way, in the frame the compass reads (+x east, +z north)', () => {
-  assert.equal(echoWay(0, 5), 'north');
-  assert.equal(echoWay(5, 5), 'north-east');
-  assert.equal(echoWay(5, 0), 'east');
-  assert.equal(echoWay(5, -5), 'south-east');
-  assert.equal(echoWay(0, -5), 'south');
-  assert.equal(echoWay(-5, -5), 'south-west');
-  assert.equal(echoWay(-5, 0), 'west');
-  assert.equal(echoWay(-5, 5), 'north-west');
-  assert.equal(echoWay(1, 10), 'north', 'a little east of north is north');
+test('ECHO1: the compass way, in the frame the compass reads (+x east, +z north) - AUDIT DELVE C8: one law, the angler\'s too', () => {
+  assert.equal(sceneCompassWord(0, 5), 'north');
+  assert.equal(sceneCompassWord(5, 5), 'north-east');
+  assert.equal(sceneCompassWord(5, 0), 'east');
+  assert.equal(sceneCompassWord(5, -5), 'south-east');
+  assert.equal(sceneCompassWord(0, -5), 'south');
+  assert.equal(sceneCompassWord(-5, -5), 'south-west');
+  assert.equal(sceneCompassWord(-5, 0), 'west');
+  assert.equal(sceneCompassWord(-5, 5), 'north-west');
+  assert.equal(sceneCompassWord(1, 10), 'north', 'a little east of north is north');
+  for (let a = 0; a < 360; a += 7) {
+    const dx = Math.sin(a * Math.PI / 180), dz = Math.cos(a * Math.PI / 180);
+    assert.equal(bearingWord(dx, dz), sceneCompassWord(dx, dz), `${a} degrees: the angler's word is the echo's`);
+  }
+  assert.equal(wayWord(-6, 0, 0), `to the ${sceneCompassWord(-6, 0)}`, 'the echo says it');
   // and it agrees with the compass itself: facing north (heading 0), a place to the east stands to the RIGHT
   assert.ok(compassMarkerLerp([5, 0], [0, 0], 0) > 0.5, 'east is on the right when facing +z');
   assert.ok(compassMarkerLerp([-5, 0], [0, 0], 0) < 0.5);
@@ -48,6 +57,8 @@ test('ECHO1: which way a place lies, said - level, above, below, both, or close 
   assert.equal(wayWord(6, 3, 6), 'above you, to the north-east');
   assert.equal(wayWord(0.5, 2.5, 0.5), 'close by', 'the vertical threshold is strict');
   assert.equal(wayWord(1.5, 0, 0), 'to the east', 'the level threshold is not');
+  assert.equal(wayWord(0, 4, 0, 'it'), 'above it', 'AUDIT DELVE D10: said of the lever');
+  assert.equal(wayWord(6, -3, 6, 'it'), 'below it, to the north-east');
 });
 
 test('ECHO1: what moves, and what it is heard as', () => {
@@ -55,6 +66,7 @@ test('ECHO1: what moves, and what it is heard as', () => {
   for (const k of ['relay', 'effect', undefined]) assert.equal(isEchoMover({ kind: k }), false, String(k));
   assert.equal(isEchoMover(null), false);
   assert.equal(echoVerb({ kind: 'door' }), 'A door swings');
+  assert.equal(echoVerb({ kind: 'door', special: true }), 'Stone grinds', 'AUDIT DELVE A7: a secret wall is no DaggerfallActionDoor - heard as the stone it is');
   assert.equal(echoVerb({ kind: 'moveFlat' }), 'Something shifts');
   assert.equal(echoVerb({ kind: 'action' }), 'Stone grinds');
   assert.equal(echoLine({ kind: 'action' }, [0, 1, 0], [-10, -4, 0]), 'Stone grinds somewhere below you, to the west.');
@@ -84,9 +96,18 @@ test('ECHO1: the examine\'s line - the way to the first mover the chain reaches,
   const objs = { lever: { key: 'lever', kind: 'action', next: 'relay' }, relay: { key: 'relay', kind: 'relay', next: 'wall' }, wall: { key: 'wall', kind: 'action' }, near: { key: 'near', kind: 'action' } };
   const next = (o) => objs[o.next] ?? null;
   const boxOf = (o) => boxes[o.key] ?? null;
-  assert.equal(examineLine(objs.lever, next, boxOf), 'Works something below you, to the west');
+  assert.equal(examineLine(objs.lever, next, boxOf), 'Works something below it, to the west', 'AUDIT DELVE D10: from the lever, said of it');
   objs.lever.next = 'near';
   assert.equal(examineLine(objs.lever, next, boxOf), 'Works something close by');
+  // AUDIT DELVE C6: a mover with no box is passed for the next that has one; and ECHO_NEAR_M itself is close by
+  objs.ghost = { key: 'ghost', kind: 'action', next: 'wall' };
+  objs.lever.next = 'ghost';
+  assert.equal(examineLine(objs.lever, next, boxOf), 'Works something below it, to the west', 'the boxless mover passed');
+  boxes.edge = { min: [3, 0, 0], max: [3.4, 1, 0.4] };   // its middle exactly ECHO_NEAR_M from the lever's
+  objs.edge = { key: 'edge', kind: 'action' };
+  objs.lever.next = 'edge';
+  assert.equal(examineLine(objs.lever, next, boxOf), 'Works something close by', 'at ECHO_NEAR_M, close by');
+  objs.lever.next = 'near';
   objs.lever.next = 'relay'; objs.relay.next = null;
   assert.equal(examineLine(objs.lever, next, boxOf), null, 'a chain that moves nothing says nothing');
   assert.equal(examineLine(objs.wall, next, () => null), null, 'no box, no word');
@@ -136,12 +157,39 @@ test('ECHO1: the action system says what it set going, by which trigger - after 
   assert.deepEqual(heard, []);
 });
 
+test('AUDIT DELVE B4: an echo is of a mover that MOVED - the state Receive saw before the play against the state after it', () => {
+  const collider = { addMesh() {}, removeBucket() {} };
+  const a = new ActionSystem(collider);
+  const cpu = { positions: new Float32Array(9), indices: new Uint16Array([0, 1, 2]) };
+  const I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+  const rec = (next, trig, flag) => ({ index: 0, duration: 20, rotation: { x: 0, y: 0, z: 0 }, translation: { x: 0, y: 1, z: 0 }, nextObject: next, triggerFlag: trig, actionFlag: flag });
+  a.addAction(0, 1, cpu, I, rec(2, TRIGGER_FLAGS.Direct, ACTION_FLAGS.Translation));
+  const door = a.addDoor(cpu, I, { ns: 0, positionKey: 2, action: rec(3, TRIGGER_FLAGS.None, ACTION_FLAGS.UnlockDoor) });
+  a.addAction(0, 3, cpu, I, rec(-1, TRIGGER_FLAGS.None, ACTION_FLAGS.Translation));
+  const heard = [];
+  a.onPlayed = (o, t) => { if (t === 'ActionObject') heard.push([o, echoState(o)]); };
+  a.receive(a.objects.get('act:0:1'), 'Direct');
+  const moved = heard.filter(([o, before]) => echoMoved(o, before)).map(([o]) => o.key);
+  assert.ok(heard.some(([o]) => o === door), 'the door was played');
+  assert.deepEqual(moved, ['act:0:3'], 'the unlocked door did not move; the wall past it did');
+  assert.equal(echoMoved({ state: 'start' }, echoState({ state: 'start' })), false);
+  assert.equal(echoMoved({ kind: 'door', state: 'start', moveState: 'forward' }, echoState({ kind: 'door', state: 'start', moveState: 'start' })), true, 'a door\'s record moving is a move');
+});
+
 test('ECHO1: the dungeon hears the cascade alone, says one line a press, marks and finds - and the examine keeps the author\'s hide', () => {
   const s = src('src/scenes/dungeonContext.js');
-  assert.match(s, /actions\.onPlayed = \(o, triggerType\) => \{ if \(triggerType === 'ActionObject' && _echoPlayed\.length < 64\) _echoPlayed\.push\(o\); \};/);
-  assert.match(s, /if \(Math\.hypot\(at\[0\] - eye\[0\], at\[1\] - eye\[1\], at\[2\] - eye\[2\]\) <= ECHO_NEAR_M\) continue;\n\s+if \(inPlainSight\(collider, eye, box, \{ skip: o\.key \}\)\) continue;\n\s+echoBook\.add\(o\.key, at\);\n\s+if \(!said\) \{ hudText\.add\(echoLine\(o, eye, at\)\); said = true; \}/);
-  assert.match(s, /return !box \|\| \(boxDistance\(box, eye\) <= ECHO_FIND_M && inPlainSight\(collider, eye, box, \{ skip: e\.key \}\)\);/);
-  assert.match(s, /if \(lit\.length && echoesOn\(\)\) echoPulse\.pulse\(t, lit\);/);
+  assert.match(s, /actions\.onPlayed = \(o, triggerType\) => \{ if \(triggerType === 'ActionObject' && _echoPlayed\.length < 64\) _echoPlayed\.push\(\[o, echoState\(o\)\]\); \};/);
+  assert.match(s, /if \(!isEchoMover\(o\) \|\| !echoMoved\(o, before\)\) continue;/, 'B4: only what moved');
+  assert.match(s, /if \(Math\.hypot\(at\[0\] - eye\[0\], at\[1\] - eye\[1\], at\[2\] - eye\[2\]\) <= ECHO_NEAR_M\) continue;\n\s+if \(inPlainSight\(collider, eye, box, \{ skip: o\.key, noSurface: senseFlat\(null, o\) \}\)\) continue;[^\n]*\n\s+echoBook\.add\(o\.key, at\);\n\s+if \(!said\) \{ hudText\.add\(echoLine\(o, eye, at\)\); said = true; \}/);
+  assert.match(s, /return !box \|\| \(boxDistance\(box, eye\) <= ECHO_FIND_M && inPlainSight\(collider, eye, box, \{ skip: e\.key, noSurface: senseFlat\(null, o\) \}\)\);/);
+  assert.match(s, /if \(!eye \|\| !echoesOn\(\) \|\| !echoBook\.size \|\| t - _echoLookT < ECHO_LOOK_S\) return;/, 'B7: switched off, the book is kept');
+  assert.match(s, /if \(lit\.length\) echoPulse\.pulse\(t, lit\);/);
+  // B3/E8: a load is another run
+  assert.match(s, /function forgetDelveRun\(\{ way = true \} = \{\}\) \{\n\s+echoBook\.clear\(\); echoPulse\.clear\(\); _echoPlayed\.length = 0; sensePulse\.clear\(\);\n\s+if \(way\) \{ wayOut\.reset\(\); _wayAt = null; _wayT = -Infinity; \}/);
+  const rs = s.indexOf('restoreSaved(extras, setPlayerPos, {');
+  assert.ok(s.indexOf('forgetDelveRun();', rs) > rs && s.indexOf('forgetDelveRun();', rs) < s.indexOf('applyWorld(extras.world)', rs), 'the saved run, forgotten before the world record lands');
+  const rw = s.indexOf('restoreSharedWorld(shared) {');
+  assert.ok(s.indexOf('forgetDelveRun({ way: false });', rw) > rw, 'a joiner\'s memory: the walls the room has');
   assert.match(s, /const echoesOn = \(\) => isEnhanced\(\) && getPref\(ECHO_PREF\) !== false;/);
   assert.match(s, /const why = named && !hide && getInteractionMode\(\) === 'info' && echoesOn\(\) \? examineLine\(o, \(x\) => actions\.nextOf\(x\), objectAabb\) : null;/);
   assert.match(s, /echoes: \(\) => \(echoesOn\(\) \? echoBook\.points\(\) : null\),/);

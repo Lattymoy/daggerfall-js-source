@@ -934,15 +934,35 @@ export function hideAllAutomap(rec) {
  * a record with no trail point at all (a save older than the trail) shows its reveal until its first step.
  */
 export const TRAIL_CELL = 1;
-export function automapTrailTick(rec, eye, eyeHeight = EYE_HEIGHT) {
-  if (!rec || !eye) return false;
-  if (!rec.trail) rec.trail = new Set();
-  const x = Math.floor(eye[0] / TRAIL_CELL), z = Math.floor(eye[2] / TRAIL_CELL);
-  const y = Math.round((eye[1] - eyeHeight) * 2) / 2;
-  const key = `${x},${y},${z}`;
+/** AUDIT DELVE (B1/C1/E3): THE STEP BETWEEN TWO SAMPLES, FILLED. The scan is 5 Hz and a run is 8 m/s, so one sample
+ *  stands 1.6 m from the last and the cell between was never recorded - a trail of islands, and the way out
+ *  (systems/wayOut.js) could not walk it. A step up to this long (m) is walked, and every cell along it stood in; past
+ *  it the player was carried (a teleporter, a fall, a load), and nothing between is. */
+export const TRAIL_FILL_M = 3;
+/** The last sample's feet, per record (never saved: a record loaded or entered again starts unfilled). */
+const _trailLast = new WeakMap();
+function trailMark(rec, x, y, z) {
+  const key = `${Math.floor(x / TRAIL_CELL)},${Math.round(y * 2) / 2},${Math.floor(z / TRAIL_CELL)}`;
   if (rec.trail.has(key)) return false;
   rec.trail.add(key);
   return true;
+}
+export function automapTrailTick(rec, eye, eyeHeight = EYE_HEIGHT) {
+  if (!rec || !eye) return false;
+  if (!rec.trail) rec.trail = new Set();
+  const feet = [eye[0], eye[1] - eyeHeight, eye[2]];
+  const last = _trailLast.get(rec);
+  _trailLast.set(rec, feet);
+  let added = false;
+  const d = last ? Math.hypot(feet[0] - last[0], feet[1] - last[1], feet[2] - last[2]) : 0;
+  if (d > TRAIL_CELL && d <= TRAIL_FILL_M) {
+    const steps = Math.ceil(d / (TRAIL_CELL / 2));   // half a cell apart: no cell the step crosses is skipped
+    for (let s = 1; s < steps; s++) {
+      const t = s / steps;
+      if (trailMark(rec, last[0] + (feet[0] - last[0]) * t, last[1] + (feet[1] - last[1]) * t, last[2] + (feet[2] - last[2]) * t)) added = true;
+    }
+  }
+  return trailMark(rec, feet[0], feet[1], feet[2]) || added;
 }
 /** The trail as world points (the middle of each cell stood in, at the feet's height). */
 export function automapTrailPoints(rec) {

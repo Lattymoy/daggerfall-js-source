@@ -374,8 +374,8 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     return t?.length ? t : fallback;
   };
 
-  function setMode(m) {
-    askInteractionMode(m);   // SENSE1: asked, changed or not (the dungeon's look round reads the count)
+  function setMode(m, ask = true) {
+    if (ask) askInteractionMode(m);   // SENSE1: asked, changed or not (the dungeon's look round reads the count); AUDIT DELVE B6: a held key's repeats are no asks
     if (m === getInteractionMode()) return;   // ChangeInteractionMode: no-op on the same mode
     setInteractionMode(m);
     // AUDIT 64 F34: PlayerActivate.cs:1424 ends ChangeInteractionMode
@@ -478,7 +478,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     const m = actionsOf(e, keys).map((a) => MODE_ACTIONS[a]).find(Boolean);   // UXB1-S: the mode a shared key carries, whichever of its actions it is
     if (m) {
       e.preventDefault();
-      setMode(m);
+      setMode(m, !e.repeat);   // AUDIT DELVE B6: DFU's ActionStarted is the press, not the key's repeat
       return true;
     }
     return false;

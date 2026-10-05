@@ -42,6 +42,7 @@ import { isTouchDevice } from './touchDevice.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { entryOpening, timeLeftWords } from './questRail.js';
 import { marksOn } from './questMarks.js';   // AUDIT GUIDE T2: the marks follow this model too (pure: the HUD stays light)
+import { guidanceTier } from '../systems/questGuidance.js';   // AUDIT DELVE E7: the Exact tier follows it too
 
 /** The switch's prefs key (systems/features.js row `quest-tracker`). */
 export const TRACKER_PREF = 'questTracker';
@@ -76,8 +77,10 @@ export const trackerOn = () => isEnhanced() && !!getPref(TRACKER_PREF) && typeof
 
 /** AUDIT GUIDE T2: does any face follow this model? The card, or the marks (the held map's filled diamond and the
  *  compass's one mark read `tracked()` too) - the bridge feeds it while either is on, and while either is, the choice
- *  steers something, so the journal keeps the Track toggle and opens on the followed quest. */
-export const followOn = () => trackerOn() || marksOn();
+ *  steers something, so the journal keeps the Track toggle and opens on the followed quest. AUDIT DELVE E7: and the
+ *  Exact tier (systems/questGuidance.js), whose compass takes the followed quest's mark first - with the card and the
+ *  marks both off, nothing fed the tracker and the journal hid Track, so its compass only ever took the nearest. */
+export const followOn = () => trackerOn() || marksOn() || guidanceTier() !== 'journal';   // ...and the Town tier's compass
 
 /** The active quest written last - the walk's order breaks a tie. */
 function latestOf(views) {

@@ -110,7 +110,7 @@ import { tickHudLayout } from './hudLayout.js';   // HUD-MOVE: the movable piece
 import { mountHotbarDock, drawEnhancedHotbar, detachHotbarDock, hotbarMode } from './enhancedHotbar.js';   // HB1: the hotbar, the diamond's alternative (one or the other)
 import { setEnhancedMidTextScale } from './enhancedHudText.js';   // AUDIT FONT F2: the mid-screen label is a layer beside this one, not inside it (the popup column it once scaled too is a toast in the notice stack since ENH-NOTICE3)
 import { QUEST_MARK_CSS } from './questMarks.js'; import { nodeMarkCss } from './nodeMarks.js';   // GUIDE5: the tracker's quest on the compass, in the marks' one gold; NODE-MARKS: a profession's nodes in its own colour
-import { WAY_MARK_CSS } from '../systems/wayOut.js';   // WAYOUT1: the way out's mark
+import { WAY_MARK_CSS, WAY_BODY_CSS } from '../systems/wayOut.js';   // WAYOUT1: the way out's mark
 import { BOAT_GLYPH_URL } from './boatMarks.js';   // BOAT-MARK: my boats on the strip, a sail over a hull
 import { SERPENT_RING_MAP_CSS } from './serpentMapMark.js';   // SERPENT1: the sea serpent on the strip, in its ring's green
 
@@ -313,9 +313,13 @@ function drawQuestMark(quest, playerXZ, heading01) {
 // WAYOUT1 (the delve arc): THE WAY OUT - underground, an arrow pointing up and out in the parchment's light, where the
 // walked trail leads back to the way in (systems/wayOut.js: the farthest cell the eye can see along it), on the same
 // bearing law, clamp and all. The dungeon hands it (scenes/dungeonContext.js wayOutMark); hidden, never removed.
-const wayOutMarkCss = () => 'position:absolute;top:50%;width:0;height:0;margin:-6px 0 0 -6px;'
-  + `border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:11px solid ${WAY_MARK_CSS};`
-  + 'filter:drop-shadow(0 0 1.5px rgba(0,0,0,0.95));pointer-events:none';
+// AUDIT DELVE D9: ITS OWN BAND, UNDER THE STRIP - pointing up into it - so it never covers the quest's diamond (the same
+// law, the same clamp: both behind the player stood at one end, the arrow on top) nor sits among the letters; and a dark
+// body rimmed in the parchment's light (WAY_BODY_CSS under WAY_MARK_CSS), which reads on the dark of a dungeon and on
+// the pale of the letters alike (the pale arrow alone was 1.26:1 against them).
+const wayOutMarkCss = () => 'position:absolute;top:100%;width:0;height:0;margin:3px 0 0 -6px;'
+  + `border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:11px solid ${WAY_BODY_CSS};`
+  + `filter:drop-shadow(0 0 0.8px ${WAY_MARK_CSS}) drop-shadow(0 0 0.8px ${WAY_MARK_CSS}) drop-shadow(0 0 1.5px rgba(0,0,0,0.9));pointer-events:none`;
 function drawWayOutMark(way, playerXZ, heading01) {
   if (!parts.wayOutMark) {
     const node = el('i', 'hud-wayout');

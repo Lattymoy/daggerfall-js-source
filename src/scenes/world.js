@@ -176,6 +176,7 @@ import { stampResidenceQuestNames, registerExteriorAutomapConsoleCommands } from
 import { createTownMapWindow, townMapDoorReady } from '../ui/townMapDoor.js';
 import { WORLD_PER_PX } from '../ui/inkTown.js';   // EM4: the town plan's own scale
 import { buildingSummaries } from '../world/buildingSummaries.js';   // ROAD-C c2/S10: the plate anchor's Position-bearing walk
+import { townTierOn, townQuestBuildings, townBuildingLocal } from '../systems/questGuidance.js';   // GUIDE8's Town tier (AUDIT DELVE): the building a quest's journal names, in its town
 import { hasCustomLocationPosition } from '../world/locationLayout.js';   // ROAD-C c2/S10: the marker's custom-location offsets
 import { FootstepMachine, pickFootstepSet, pickFootstepKind } from '../systems/footsteps.js';   // FS-slice; PEER-FS1: pickFootstepKind for the pose's own `fk`
 import { immersiveFootsteps, reportModCompatibilityIssues } from '../systems/immersiveFootsteps.js';
@@ -9632,10 +9633,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:3082 mounts the same one, gated on
+  // and dungeonContext.js:3083 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:7305
+  // that context through modes.dungeonCtx - so worldModes.js:7314
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -12375,7 +12376,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:8564), so exterior mode and a
+    // composer, dungeonContext.js:8576), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -14060,6 +14061,8 @@ export async function bootWorld(canvas, renderer, params, status) {
         } : null,
       }),
       townHomesVersion: () => (onlineHomes?.version() ?? 0) + vendorWaypointVersion() * 100_000,   // HOME-VENDOR: a waypoint moved repaints
+      // GUIDE8's Town tier (AUDIT DELVE, systems/questGuidance.js): the buildings a quest's journal names in this town
+      townQuestBuildings: () => (townTierOn() ? townQuestBuildings(questTracker.views, dfLoc.mapTableData?.mapId, questTracker.tracked()?.id ?? null) : []),
     }));
     onlineHomes?.ensure(dfLoc.mapTableData?.mapId);   // TOWN-MARKS: a town heard from long ago is asked again, and its homes mark when it answers
   };
@@ -15626,7 +15629,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:10992-11056 -
+  // worldModes answers it in BOTH modes (worldModes.js:11003-11067 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -19758,6 +19761,29 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!p) return null;
     const t = state.pixelTranslation(p.x, p.y);
     return [t[0] + TERRAIN_SIZE / 2, t[2] + TERRAIN_SIZE / 2];
+  };
+  /** GUIDE8's Town tier (AUDIT DELVE, systems/questGuidance.js): THE BUILDING ON THE COMPASS - the one the tracked
+   *  quest's latest entry names, while the player stands in its town, at the building's own place in THIS scene's frame
+   *  (the town map's frame - the location's own - turned back by the translation and the origin the map opens with).
+   *  The building's place is read once a building and town (its summaries are the town map's). */
+  let _townQuestAt = { key: '', at: null };
+  const townQuestCompassMark = () => {
+    if (!townTierOn() || (modes?.mode ?? 'exterior') !== 'exterior') return null;
+    const bld = questTracker.tracked()?.target?.building;
+    if (!bld) return null;
+    const px = playerTravelPixel();
+    const key = `${px.x},${px.y}`;
+    const dfLoc = locationIndex.get(key), b = built.get(key);
+    if (!dfLoc || !b?.locBlocks || !b.locOrigin || ((dfLoc.mapTableData?.mapId ?? -1) >>> 0) !== (Number(bld.mapId) >>> 0)) return null;
+    const ck = `${key}|${bld.buildingKey}`;
+    if (_townQuestAt.key !== ck) {
+      const s = buildingSummaries(dfLoc.exterior?.buildings ?? [], b.locBlocks, { locationName: dfLoc.name, regionName: maps.getRegionName(dfLoc.regionIndex), locationIndex: dfLoc.locationIndex ?? 0 })
+        .find((x) => x.buildingKey === bld.buildingKey);
+      _townQuestAt = { key: ck, at: s ? townBuildingLocal(s, RMB_SIDE) : null };
+    }
+    if (!_townQuestAt.at) return null;
+    const t = state.pixelTranslation(px.x, px.y);
+    return [_townQuestAt.at[0] + t[0] + b.locOrigin[0], _townQuestAt.at[1] + t[2] + b.locOrigin[2]];
   };
   const gateCompassMark = () => {
     const g = gateOmen?.standing();
@@ -28180,7 +28206,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           detected: _detected, playerXZ: [enchantFeet()[0], enchantFeet()[2]],
           gate: gateCompassMark(),   // WB1: the Oblivion Gate on the compass, while the player stands in its ring
           serpent: serpentCompassMark(),   // SERPENT1: the sea serpent on the compass, while the player sails in its ring
-          quest: vendorCompassMark() ?? questCompassMark(),   // GUIDE5: the tracker's quest's place on the compass, on the street; HOME-VENDOR: a trader's waypoint first, while it is set
+          quest: vendorCompassMark() ?? townQuestCompassMark() ?? questCompassMark(),   // GUIDE5: the tracker's quest's place on the compass, on the street; HOME-VENDOR: a trader's waypoint first, while it is set; GUIDE8: the Town tier's building, in its town
           party: partyCompass(),   // COMPASS-PARTY: the party's marks - the bodies drawn here, the rest where their poses say
           ships: navalOn() && _mode() === 'exterior' ? naval?.compassShips() ?? null : null, boats: csaRuntime && _mode() === 'exterior' ? boatCompassPoints(csaRuntime.AllBoats, csaBoatUnderMe(), enchantFeet(), state, TERRAIN_SIZE) : null,   // AUDIT NAV1 (the helm): the sea's ships on the compass; BOAT-MARK: my own boats, from anywhere on the street (under the travel view too), the one at my helm left out
           nodes: professionMarks(),   // NODE-MARKS: every profession's nodes near (PROF2: a Prospector's veins within 200 m, PROF0 3.3); PROF7: a Tracker's animals within 100 m

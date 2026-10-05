@@ -56,7 +56,7 @@
   {
     "name": "SENSE1-own-face-not-pardoned",
     "file": "src/systems/dungeonSense.js",
-    "old": "    if (at.every((v, i) => v >= box.min[i] - 0.15 && v <= box.max[i] + 0.15)) return true;",
+    "old": "    if (at.every((v, i) => v >= box.min[i] - PICK_PARDON_M && v <= box.max[i] + PICK_PARDON_M)) return true;",
     "new": "    if (false) return true;",
     "tests": [
       "test/sense1_dungeonsense.test.js"
@@ -92,7 +92,7 @@
   {
     "name": "SENSE1-a-lever-is-a-secret",
     "file": "src/systems/dungeonSense.js",
-    "old": "  return mover && (o.triggerFlag ?? TRIGGER_FLAGS.None) === TRIGGER_FLAGS.None && o.state === 'start';",
+    "old": "  return mover && !playerTriggers(o) && o.state === 'start';",
     "new": "  return mover && o.state === 'start';",
     "tests": [
       "test/sense1_dungeonsense.test.js"
@@ -101,8 +101,8 @@
   {
     "name": "SENSE1-an-open-wall-is-a-secret",
     "file": "src/systems/dungeonSense.js",
-    "old": "  return mover && (o.triggerFlag ?? TRIGGER_FLAGS.None) === TRIGGER_FLAGS.None && o.state === 'start';",
-    "new": "  return mover && (o.triggerFlag ?? TRIGGER_FLAGS.None) === TRIGGER_FLAGS.None;",
+    "old": "  return mover && !playerTriggers(o) && o.state === 'start';",
+    "new": "  return mover && !playerTriggers(o);",
     "tests": [
       "test/sense1_dungeonsense.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "SENSE1-asked-after-the-no-op",
     "file": "src/scenes/townTalk.js",
-    "old": "    askInteractionMode(m);   // SENSE1: asked, changed or not (the dungeon's look round reads the count)\n    if (m === getInteractionMode()) return;   // ChangeInteractionMode: no-op on the same mode",
-    "new": "    if (m === getInteractionMode()) return;   // ChangeInteractionMode: no-op on the same mode\n    askInteractionMode(m);   // SENSE1: asked, changed or not (the dungeon's look round reads the count)",
+    "old": "    if (ask) askInteractionMode(m);   // SENSE1: asked, changed or not (the dungeon's look round reads the count); AUDIT DELVE B6: a held key's repeats are no asks\n    if (m === getInteractionMode()) return;   // ChangeInteractionMode: no-op on the same mode",
+    "new": "    if (m === getInteractionMode()) return;   // ChangeInteractionMode: no-op on the same mode\n    if (ask) askInteractionMode(m);   // SENSE1: asked, changed or not (the dungeon's look round reads the count); AUDIT DELVE B6: a held key's repeats are no asks",
     "tests": [
       "test/sense1_dungeonsense.test.js"
     ]
@@ -274,6 +274,123 @@
     "file": "src/systems/features.js",
     "old": "key: 'dungeonSense', initial: 'on',",
     "new": "key: 'dungeonSense', initial: 'off',",
+    "tests": [
+      "test/sense1_dungeonsense.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-A5-the-door-flag-is-the-players",
+    "file": "src/systems/dungeonSense.js",
+    "old": "  return gate.some((t) => t !== 'Door' || isActionDoorObject(o));",
+    "new": "  return gate.length > 0;",
+    "tests": [
+      "test/sense1_dungeonsense.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-C5-the-pardon-wide",
+    "file": "src/systems/dungeonSense.js",
+    "old": "v >= box.min[i] - PICK_PARDON_M && v <= box.max[i] + PICK_PARDON_M",
+    "new": "v >= box.min[i] - 1.5 && v <= box.max[i] + 1.5",
+    "tests": [
+      "test/sense1_dungeonsense.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-C5-the-secrets-reach-long",
+    "file": "src/systems/dungeonSense.js",
+    "old": "    if (!(d <= reach) || !sees(o, box)) continue;",
+    "new": "    if (!(d <= reach + 1) || !sees(o, box)) continue;",
+    "tests": [
+      "test/sense1_dungeonsense.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-C5-the-secrets-uncapped",
+    "file": "src/systems/dungeonSense.js",
+    "old": "  if (out.length > max) out.length = max;\n  return out;\n}\n\n/**\n * AUDIT DELVE C5/B9/D5",
+    "new": "  return out;\n}\n\n/**\n * AUDIT DELVE C5/B9/D5",
+    "tests": [
+      "test/sense1_dungeonsense.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-C5-the-round-unsorted",
+    "file": "src/systems/dungeonSense.js",
+    "old": "  const all = [...(finds ?? []), ...(secrets ?? [])].sort((a, b) => a.d - b.d);",
+    "new": "  const all = [...(finds ?? []), ...(secrets ?? [])];",
+    "tests": [
+      "test/sense1_dungeonsense.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-B9-a-key-twice",
+    "file": "src/systems/dungeonSense.js",
+    "old": "    if (seen.has(f.key)) continue;\n    seen.add(f.key);\n    out.push(f);",
+    "new": "    out.push(f);",
+    "tests": [
+      "test/sense1_dungeonsense.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-D5-the-echo-last",
+    "file": "src/systems/dungeonSense.js",
+    "old": "  for (const list of [echo, sense]) {",
+    "new": "  for (const list of [sense, echo]) {",
+    "tests": [
+      "test/sense1_dungeonsense.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-D5-a-mark-twice",
+    "file": "src/systems/dungeonSense.js",
+    "old": "      if (seen.has(m.key)) continue;\n      seen.add(m.key);\n      out.push(m);",
+    "new": "      out.push(m);",
+    "tests": [
+      "test/sense1_dungeonsense.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-B8-the-billboards-faced",
+    "file": "src/systems/dungeonSense.js",
+    "old": "  return typeof key === 'string' && FLAT_PREFIXES.some((p) => key.startsWith(p));",
+    "new": "  return false;",
+    "tests": [
+      "test/sense1_dungeonsense.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-B8-the-acting-flat-faced",
+    "file": "src/systems/dungeonSense.js",
+    "old": "  if (target?.noSurface === true || object?.isFlat === true || object?.kind === 'moveFlat') return true;",
+    "new": "  if (target?.noSurface === true) return true;",
+    "tests": [
+      "test/sense1_dungeonsense.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-B6-the-repeat-asks",
+    "file": "src/scenes/townTalk.js",
+    "old": "      setMode(m, !e.repeat);",
+    "new": "      setMode(m);",
+    "tests": [
+      "test/sense1_dungeonsense.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-D6-one-form",
+    "file": "src/systems/dungeonSense.js",
+    "old": "        m.form = SENSE_FORM[f.kind] ?? SENSE_FORM.use;",
+    "new": "        m.form = SENSE_FORM.use;",
+    "tests": [
+      "test/sense1_dungeonsense.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-D6-the-glow-drops-the-form",
+    "file": "src/render/nodeGlow.js",
+    "old": "      g.form = m.form ?? NODE_GLOW_FORM;",
+    "new": "      g.form = NODE_GLOW_FORM;",
     "tests": [
       "test/sense1_dungeonsense.test.js"
     ]

@@ -75,9 +75,10 @@ import { addItem, spendAmmoFor, isEnchanted } from '../systems/inventory.js';
 import { useQuickslot, swapQuickslot, offHandQuickslot, spellQuickslotPress, offHandOffersSwap, tickQuickslotHold } from '../systems/quickslots.js';   // QS2/QS4: the diamond's performers   // QS6: the spell slot, the off hand's swap question, and the hold machine
 import { worldAabb, objectAabb, peacefulFoePass, doorDistanceOf } from '../player/activate.js';   // AUDIT 63 F37/F38: objectAabb is the LIVE box a ray or a collision meets
 import { getInteractionMode, interactionModeAsks } from '../player/interactionMode.js';   // AUDIT TACT C5: a pickpocket's plaque names the mark; SENSE1: the asks for Info, the look round's cue
-import { SENSE_PREF, SENSE_MAX, senseTier, senseFinds, senseSecrets, inPlainSight, createSensePulse, senseCard, boxDistance } from '../systems/dungeonSense.js';   // SENSE1 (the delve arc): the look round
-import { WAY_PREF, createWayOut } from '../systems/wayOut.js';   // WAYOUT1 (the delve arc): the way out on the compass
-import { ECHO_PREF, ECHO_NEAR_M, ECHO_FIND_M, ECHO_LOOK_S, isEchoMover, echoLine, examineLine, boxMiddle, createEchoBook } from '../systems/dungeonEcho.js';   // ECHO1 (the delve arc): the chain's echo, and its examine
+import { SENSE_PREF, senseTier, senseFinds, senseSecrets, senseRound, senseMarks, senseFlat, inPlainSight, createSensePulse, senseCard, boxDistance } from '../systems/dungeonSense.js';   // SENSE1 (the delve arc): the look round
+import { WAY_PREF, createWayOut, stepHitCuts } from '../systems/wayOut.js';   // WAYOUT1 (the delve arc): the way out on the compass
+import { ECHO_PREF, ECHO_NEAR_M, ECHO_FIND_M, ECHO_LOOK_S, isEchoMover, echoState, echoMoved, echoLine, examineLine, boxMiddle, createEchoBook } from '../systems/dungeonEcho.js';   // ECHO1 (the delve arc): the chain's echo, and its examine
+import { questCompassPick } from '../systems/questGuidance.js';   // AUDIT DELVE C6: the Exact tier's compass pick
 import { createNodeGlowPass } from '../render/nodeGlow.js';   // SENSE1: the professions' glow, for what the look round finds
 import { createWeaponRig, envAttack, sheetHolderOf } from '../combat/weaponRig.js';   // C10: the shared FP-weapon surface; MW-MAP1: the held map's holder
 import { mwViewFirstPerson } from '../player/mwView.js';   // MW-MAP1: the automap is read in the head (MAP-POV's law), underground too
@@ -2167,7 +2168,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:16785 / exterior.js:3980), set
+  // host's own townTalk sink (world.js:16788 / exterior.js:3980), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -3362,7 +3363,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1127 against :1157; worldModes.js:8697 against :8717).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1127 against :1157; worldModes.js:8706 against :8726).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -4275,8 +4276,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:27934,
-              // exterior.js:5644 and worldModes.js:9421 already ran;
+              // playerArrowHitFoe is the one copy world.js:27960,
+              // exterior.js:5644 and worldModes.js:9430 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -7720,28 +7721,31 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   function senseLookRound(eye, t) {
     const tier = senseTier(getPref(SENSE_PREF));
     if (!isEnhanced() || tier === 'off' || !eye) return 0;
-    const hide = hideInteractTooltip();
-    const nameOf = (key) => ((key.startsWith('act:') || key.startsWith('door:'))
-      ? actionObjectName(actions.objects.get(key) ?? null, { hideInteract: hide })?.title
-      : _namer(key, null)?.title) ?? null;
-    const sees = (tg) => inPlainSight(collider, eye, tg.aabb, { skip: actions.objects.has(tg.key) ? tg.key : null, noSurface: tg.noSurface === true });
-    const finds = senseFinds(api.dungeonActivationTargets(), eye, { nameOf, sees });
-    if (tier === 'secrets') {
-      finds.push(...senseSecrets(actions.objects.values(), actions.chainTargets(), eye, { boxOf: objectAabb, sees: (o, box) => inPlainSight(collider, eye, box, { skip: o.key }) }));
-      finds.sort((a, b) => a.d - b.d);
-      if (finds.length > SENSE_MAX) finds.length = SENSE_MAX;
+    // AUDIT DELVE B5: the namers include the extensions' door (addActivationNamer); one that throws costs the look
+    // round, never the frame - the hover plaque's own guard (worldPlaque.js worldHoverFrame), said once
+    try {
+      const hide = hideInteractTooltip();
+      const nameOf = (key) => ((key.startsWith('act:') || key.startsWith('door:'))
+        ? actionObjectName(actions.objects.get(key) ?? null, { hideInteract: hide })?.title
+        : _namer(key, null)?.title) ?? null;
+      // AUDIT DELVE B8/C3: a flat has no surface of its own (FIX-D) - a loot pile, a body, an acting flat
+      const sees = (tg) => inPlainSight(collider, eye, tg.aabb, { skip: actions.objects.has(tg.key) ? tg.key : null, noSurface: senseFlat(tg, actions.objects.get(tg.key)) });
+      const finds = senseFinds(api.dungeonActivationTargets(), eye, { nameOf, sees });
+      const secrets = tier === 'secrets' ? senseSecrets(actions.objects.values(), actions.chainTargets(), eye, { boxOf: objectAabb, sees: (o, box) => inPlainSight(collider, eye, box, { skip: o.key, noSurface: senseFlat(null, o) }) }) : [];
+      return sensePulse.pulse(t, senseRound(finds, secrets));   // AUDIT DELVE C5: the one round, merged
+    } catch (e) {
+      if (!_senseWarned) { _senseWarned = true; console.warn('[sense] the look round failed', e?.message ?? e); }
+      return 0;
     }
-    return sensePulse.pulse(t, finds);
   }
+  let _senseWarned = false;
   function senseFrame(eye) {
     const t = performance.now() / 1000;
     const asks = interactionModeAsks('info');
     if (asks !== _infoAsks) { _infoAsks = asks; senseLookRound(eye, t); }
     echoFrame(eye, t);
     const a = sensePulse.lit(t), b = echoPulse.lit(t);
-    _senseMarks.length = 0;
-    if (a) _senseMarks.push(...sensePulse.marks(t));
-    if (b) _senseMarks.push(...echoPulse.marks(t));
+    senseMarks(b ? echoPulse.marks(t) : null, a ? sensePulse.marks(t) : null, _senseMarks);   // AUDIT DELVE B9/D5: the echo's found first, a key once
     senseGlow.draw(_senseMarks.length ? _senseMarks : null);
   }
   const _senseMarks = [];
@@ -7761,24 +7765,22 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (!(len > 1e-3)) return true;
       return !(collider.raycast(eye, [dx / len, dy / len, dz / len], len) < len - 0.1);
     };
-    _wayAt = wayOut.aim(automapRec.trail, automapRec.teleporters?.values?.() ?? null, [sm.x, sm.y, sm.z], feet, sees, t);
+    _wayAt = wayOut.aim(automapRec.trail, automapRec.teleporters?.values?.() ?? null, [sm.x, sm.y, sm.z], feet, sees, t, wayStepClear);
     return _wayAt;
+  }
+  /** AUDIT DELVE C9: a step between two trail cells crosses no wall - a waist-high ray against the dungeon's own
+   *  geometry alone (its 'dungeon' bucket: a door or a mover the player walked through is no wall), each step asked
+   *  once (systems/wayOut.js createWayOut). */
+  function wayStepClear(p, q) {
+    const a = [p[0], p[1] + 0.9, p[2]];
+    const dx = q[0] - p[0], dy = q[1] - p[1], dz = q[2] - p[2], len = Math.hypot(dx, dy, dz);
+    if (!(len > 1e-3)) return true;
+    return !stepHitCuts(collider.raycast(a, [dx / len, dy / len, dz / len], len, PROF_VEIN_ONLY), len);   // a wall at either end is the cell's own
   }
   /** GUIDE8 (the delve arc): the Exact tier's mark on the compass - of the host's quest marks standing here
    *  (opts.questMarks, the quest debugger's knowledge), the followed quest's nearest, else the nearest. */
   function questCompassMark(feet) {
-    const list = feet ? opts.questMarks?.() ?? null : null;
-    if (!list?.length) return null;
-    let best = null, bestD = Infinity;
-    for (const pass of [true, false]) {
-      for (const q of list) {
-        if (pass && !q.followed) continue;
-        const d = Math.hypot(q.at[0] - feet[0], q.at[1] - feet[1], q.at[2] - feet[2]);
-        if (d < bestD) { bestD = d; best = q; }
-      }
-      if (best) break;
-    }
-    return best ? [best.at[0], best.at[2]] : null;
+    return questCompassPick(feet ? opts.questMarks?.() ?? null : null, feet);   // AUDIT DELVE C6: the pick's one home
   }
   // ECHO1 (the delve arc, systems/dungeonEcho.js): THE CHAIN'S ECHO. Every Receive the action system lets through
   // (`onPlayed`) is heard; a cascade's play (ActionObject - what a press set going, never what was pressed) of a mover
@@ -7791,36 +7793,46 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const _echoPlayed = [];
   let _echoLookT = -Infinity;
   const echoesOn = () => isEnhanced() && getPref(ECHO_PREF) !== false;
-  actions.onPlayed = (o, triggerType) => { if (triggerType === 'ActionObject' && _echoPlayed.length < 64) _echoPlayed.push(o); };
+  // AUDIT DELVE B4: each play heard with what its mover was BEFORE it (Receive tells the observer before it plays), so
+  // the frame can tell a mover that moved from a door a chain only unlocked
+  actions.onPlayed = (o, triggerType) => { if (triggerType === 'ActionObject' && _echoPlayed.length < 64) _echoPlayed.push([o, echoState(o)]); };
   function echoFrame(eye, t) {
     if (_echoPlayed.length) {
       if (eye && echoesOn()) {
         let said = false;
-        for (const o of _echoPlayed) {
-          if (!isEchoMover(o)) continue;
+        for (const [o, before] of _echoPlayed) {
+          if (!isEchoMover(o) || !echoMoved(o, before)) continue;
           const box = objectAabb(o);
           if (!box) continue;
           const at = boxMiddle(box);
           if (Math.hypot(at[0] - eye[0], at[1] - eye[1], at[2] - eye[2]) <= ECHO_NEAR_M) continue;
-          if (inPlainSight(collider, eye, box, { skip: o.key })) continue;
+          if (inPlainSight(collider, eye, box, { skip: o.key, noSurface: senseFlat(null, o) })) continue;   // AUDIT DELVE C3: a flat's box against a wall is the wall
           echoBook.add(o.key, at);
           if (!said) { hudText.add(echoLine(o, eye, at)); said = true; }
         }
       }
       _echoPlayed.length = 0;
     }
-    if (!eye || !echoBook.size || t - _echoLookT < ECHO_LOOK_S) return;
+    if (!eye || !echoesOn() || !echoBook.size || t - _echoLookT < ECHO_LOOK_S) return;   // AUDIT DELVE B7: switched off, the book is kept for when it is on
     _echoLookT = t;
     const found = echoBook.take((e) => {
       const o = actions.objects.get(e.key), box = o ? objectAabb(o) : null;
-      return !box || (boxDistance(box, eye) <= ECHO_FIND_M && inPlainSight(collider, eye, box, { skip: e.key }));
+      return !box || (boxDistance(box, eye) <= ECHO_FIND_M && inPlainSight(collider, eye, box, { skip: e.key, noSurface: senseFlat(null, o) }));
     });
     const lit = [];
     for (const e of found) {
       const o = actions.objects.get(e.key), box = o ? objectAabb(o) : null;
       if (box) lit.push({ key: e.key, kind: 'secret', d: boxDistance(box, eye), ...senseCard(box) });
     }
-    if (lit.length && echoesOn()) echoPulse.pulse(t, lit);
+    if (lit.length) echoPulse.pulse(t, lit);
+  }
+  /** AUDIT DELVE B3/E8: A LOAD IS ANOTHER RUN. The context is reused for a load in its own dungeon (and a joiner's
+   *  memory restores its walls), so what the abandoned run heard, lit and walked is put away: its echo marks (a wall
+   *  the load shut again would glow "found"), a play heard on the frame the load landed, the look round's glow, and the
+   *  way out's field. */
+  function forgetDelveRun({ way = true } = {}) {
+    echoBook.clear(); echoPulse.clear(); _echoPlayed.length = 0; sensePulse.clear();
+    if (way) { wayOut.reset(); _wayAt = null; _wayT = -Infinity; }
   }
 
   /**
@@ -8716,6 +8728,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // stand back up all stayed on the floor of the restored one.
       hitEffects.clear();
       resetVitalsDetector();   // BLOOD AUDIT 5: the loaded health is not a blow (VitalsChangeDetector.cs:139-158)
+      forgetDelveRun();   // AUDIT DELVE B3/E8: the delve's own state, for the same reason
       classicMinutesRef.value = extras.classicMinutes ?? classicMinutesRef.value;
       magic.setReadiedByIndex(extras.readiedSpellIndex ?? null, spellsByIndex);
       // B4: quest after entity, conversation after quest (the C#'s own
@@ -8726,8 +8739,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // composer, so this host runs it too (SaveLoadManager.cs:1518).
       if (session && restoreSessionState(extras, { questBridge: opts.questBridge, talk: opts.talkSave, entity: playerEntity, spawnLedger: opts.spawnLedger?.() ?? null })) opts.onQuestRestored?.();
       if (session) opts.layoutPinsLoaded?.(extras);   // WD3: the save's towns in their layouts (world.js applyLayoutPins) - a world load does its own
-      const settled = extras.world && extras.locationKey === _locationKey ? applyWorld(extras.world) : null;   // AUDIT OH-F B1: the rebuilds, handed back
-      if (!settled && extras.world) hudText.add('(different dungeon - world state left as built)');   // cross-location travel-on-load pends in the STANDALONE scene alone - a world-hosted dungeon hands such a save up before this (quickLoad, CASTLE1)
+      // AUDIT DELVE E2: SAVED AT ANOTHER SIZE, THE WORLD RECORD IS ANOTHER LAYOUT'S - its foes and piles by their index
+      // in the layout, its acts by their place in it, its dropped loot by position - so it is left unapplied and the
+      // dungeon stands as built, beside the start-marker warp below (which says why). Foe i of the small build took the
+      // whole dungeon's foe i - species, dead flag and feet - and stood it in a wall.
+      const otherLayout = extras.locationKey === _locationKey && needsStartWarp(extras.smallerDungeonsState, dfLocation);
+      const settled = extras.world && extras.locationKey === _locationKey && !otherLayout ? applyWorld(extras.world) : null;   // AUDIT OH-F B1: the rebuilds, handed back
+      if (!settled && extras.world && !otherLayout) hudText.add('(different dungeon - world state left as built)');   // cross-location travel-on-load pends in the STANDALONE scene alone - a world-hosted dungeon hands such a save up before this (quickLoad, CASTLE1)
       // A1: restorePlayer replaced the automap store, so the live
       // record reference is stale. Re-fetch on the LOAD arm
       // (initFromLoadingSave, Automap.cs:2492-2493): a bare
@@ -8749,7 +8767,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // warp to the start marker and say so. The law (story dungeons
       // never, old envelopes never, agreeing layouts never) is
       // needsStartWarp's; FT1 moved it there beside the stamp it reads.
-      if (extras.locationKey === _locationKey && setPlayerPos && needsStartWarp(extras.smallerDungeonsState, dfLocation)) {
+      if (otherLayout && setPlayerPos) {   // AUDIT DELVE E2: the law, read once above
         // F-B1 (self-audit 2): the first cut set the RAW marker position;
         // every other spawn in this port goes through the entry law -
         // floorLanding over m.y + 1.08 - and a raw marker y can stand
@@ -8833,6 +8851,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     restoreSharedWorld(shared) {
       if (!shared || shared.locationKey !== _locationKey || !shared.world || typeof shared.world !== 'object') return false;
       if (shared.stamp === _sharedStamp || _sharedApplied) return false;
+      forgetDelveRun({ way: false });   // AUDIT DELVE B3: the room's walls are not the ones this client heard move (its own walk stands)
       // AUDIT WORLD4 D3: the memory stopped SENDING `piles` and went on APPLYING them - so a snapshot written before
       // WORLD4 (the relay keeps one for WORLD_TTL_MS) still blanket-replaced a joiner's own rolls, the very thing the
       // slice removed, and any host that sent the field could do it deliberately. What this client will not say, it
@@ -9377,6 +9396,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  (ActiveGameObjectDatabase.cs:308-311). npcTargets() below is the
      *  RAY's filtered view and cannot serve either. */
     people,
+    /** AUDIT DELVE E6: a foe's quest behaviour - its own, or a puppet's (a shared quest's foe a party mate's client owns:
+     *  `_pupQuest`, the share's word for the quest) as the share binds it (the same read adoptOwn makes). */
+    questFoeBehaviour(f) {
+      if (!f) return null;
+      if (f.questBehaviour) return f.questBehaviour;
+      return f._pupQuest ? (ownShare()?.behaviourFor?.(f._pupQuest) ?? null) : null;
+    },
     npcTargets() {
       return people.filter((pn) => pn.active !== false && pn.width
         && !(pn.action && (pn.action.actionFlag === ACTION_FLAGS.ShowText

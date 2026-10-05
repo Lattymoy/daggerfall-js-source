@@ -152,7 +152,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       motorState: () => (_motorRef ? { eyeLevel: _motorRef.eye[1] - _motorRef.pos[1], capsule: _motorRef.height } : null),
       placePlayer: placeLoadedPlayer,   // DIAL-LOAD: the host's load law, for every load the context runs - not routeKey's alone
       // MAC1 J: this host's canvas, for the pause door's relock. The
-      // context owns none of its own (dungeonContext.js:8584), so each
+      // context owns none of its own (dungeonContext.js:8596), so each
       // dungeon host hands its own in and the resume gesture carries
       // the pointer back with it (ui/pauseDoor.js:143-167).
       relock: () => requestLook(canvas) });
@@ -367,7 +367,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       e.preventDefault();   // ALWAYS consumed - a repeat press must not reach the browser (F1 = help)
       // AUDIT 64 F34: PlayerActivate.cs:1424 - the mode line is
       // SetMidScreenText's, in EVERY host (one C# call site).
-      if (!ctx.uiOverlayActive) askInteractionMode(im);   // SENSE1: asked, changed or not - the context's look round reads the count
+      if (!ctx.uiOverlayActive && !e.repeat) askInteractionMode(im);   // SENSE1: asked, changed or not - the context's look round reads the count; AUDIT DELVE B6: the press, not the key's repeat
       if (!ctx.uiOverlayActive && im !== getInteractionMode()) { setInteractionMode(im); setMidScreenText(`Interaction is now in ${im} mode.`); }
     }
     // DFU parity: mouselook is the resting state - any gameplay

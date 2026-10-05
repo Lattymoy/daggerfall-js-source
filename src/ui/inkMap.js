@@ -1244,25 +1244,20 @@ export function paintQuestMark(ctx, view, m) {
   ctx.strokeStyle = PEN.soft;
   ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(x, y - 5); ctx.lineTo(x, cy + r); ctx.stroke();   // the tie to the place
-  ctx.beginPath();
-  ctx.moveTo(x, cy - r); ctx.lineTo(x + r, cy); ctx.lineTo(x, cy + r); ctx.lineTo(x - r, cy); ctx.closePath();
   // AUDIT GUIDE U16: the followed quest's diamond filled with the pen's INK - gold on the paper is 2:1, the ink 8:1
-  if (m.tracked) { ctx.fillStyle = PEN.line; ctx.fill(); }
-  ctx.strokeStyle = PEN.line;
-  ctx.lineWidth = 2.4;
-  ctx.stroke();
-  ctx.strokeStyle = QUEST_MARK_CSS;
-  ctx.lineWidth = 1.4;
-  ctx.stroke();
+  // AUDIT DELVE A4: the diamond's two strokes have one home (paintQuestDiamond, below)
+  paintQuestDiamond(ctx, x, cy, r, 1, m.tracked ? PEN.line : null);
   ctx.restore();
 }
 
 /** GUIDE8 (the delve arc): the quest's diamond ALONE, centred at (x, y) with half-diagonal `k` - the dungeon strip's
- *  mark for a floor a quest stands on (ui/inkAutomap.js paintFloorStrip), in paintQuestMark's own two strokes (the pen's
- *  ink under the journal's gold), so the gold has one home on the sheets. `s` scales the strokes. */
-export function paintQuestDiamond(ctx, x, y, k, s = 1) {
+ *  mark for a floor a quest stands on (ui/inkAutomap.js paintFloorStrip), and paintQuestMark's own (AUDIT DELVE A4): the
+ *  pen's ink under the journal's gold, so the gold has one home on the sheets. `s` scales the strokes; `fill`, given,
+ *  fills it first (the followed quest's ink). */
+export function paintQuestDiamond(ctx, x, y, k, s = 1, fill = null) {
   ctx.beginPath();
   ctx.moveTo(x, y - k); ctx.lineTo(x + k, y); ctx.lineTo(x, y + k); ctx.lineTo(x - k, y); ctx.closePath();
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }   // the followed quest's (paintQuestMark)
   ctx.lineWidth = 2.4 * s;
   ctx.strokeStyle = PEN.line;
   ctx.stroke();

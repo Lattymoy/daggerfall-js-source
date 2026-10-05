@@ -206,7 +206,10 @@ export class Quest {
     // AUDIT 28 W4 (Quest.cs:284): the SmallerDungeons setting AS OF the
     // quest's start, frozen in - marker assignments are not relocated
     // when the setting flips, so the dungeon a quest points at keeps
-    // the size the quest compiled with.
+    // the size the quest compiled with. DSIZE1 (AUDIT DELVE A8): and the
+    // medium ask with it (MEDIUM_DUNGEONS_STATE); online, Disabled (E4);
+    // the machine's Start then takes a linked dungeon's size where the
+    // medium size is either side (E5, machine.js startQuestImmediate).
     this.smallerDungeonsState = smallerDungeonsStateNow();
   }
 

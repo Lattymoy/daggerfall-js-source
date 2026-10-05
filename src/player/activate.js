@@ -14,6 +14,9 @@
 import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { isActionDoorObject } from '../world/actionSystem.js';   // MC-2: ActionDoorCheck's own classifier (PlayerActivate.cs:374 vs :380)
 import { noteBodyStack } from './lootStack.js';   // LOOT-STACK: the ray notes the pile of bodies its winner stands at the front of
+/** The pick's pardon (m): a surface met this far outside a target's box is still that target's own face (the box is
+ *  the mesh's, rounded). AUDIT DELVE C8: one home - the dungeon's look round reads it (systems/dungeonSense.js). */
+export const PICK_PARDON_M = 0.15;
 
 export { GLOBAL_SCALE };
 
@@ -381,7 +384,7 @@ export function pickActivatable(eye, dir, targets, collider) {
  * `distance` is widened to RAY_DISTANCE so it can WIN the pick
  * therefore carries its real `reach` beside it, and the ladder speaks
  * the refusal when the winner came back out of reach. This is the
- * bulletin board's idiom (scenes/worldModes.js:6409-6422) given a
+ * bulletin board's idiom (scenes/worldModes.js:6418-6431) given a
  * field, not a second pick: one ray, one winner, the gate downstream.
  * Targets that were never widened answer `reach === distance`, which
  * the pre-gate has already enforced, so they can never refuse.
@@ -494,7 +497,7 @@ function nearestActivatableHit(eye, dir, targets, collider) {
         targetKeys ??= new Set(targets.map((t) => t.key));
         if (targetKeys.has(hit.key)) continue;
       }
-      if (!boxContains(target.aabb, [eye[0] + dir[0] * hit.dist, eye[1] + dir[1] * hit.dist, eye[2] + dir[2] * hit.dist], 0.15)) continue;
+      if (!boxContains(target.aabb, [eye[0] + dir[0] * hit.dist, eye[1] + dir[1] * hit.dist, eye[2] + dir[2] * hit.dist], PICK_PARDON_M)) continue;
       d = hit.dist;
     } else if (target.meshCollider === true && collider.raycastHit) {
       // DISC19-E: CASTLE1's law for a box merely ENTERED. A mesh
@@ -523,7 +526,7 @@ function nearestActivatableHit(eye, dir, targets, collider) {
       // triangle's home is its own AABB): a ray that crosses the box and meets nothing of it never struck it.
       firstHit ??= collider.raycastHit(eye, dir, RAY_DISTANCE);   // the one cast, DISC19-E's arm's too
       if (!Number.isFinite(firstHit.dist)) continue;
-      if (!boxContains(target.aabb, [eye[0] + dir[0] * firstHit.dist, eye[1] + dir[1] * firstHit.dist, eye[2] + dir[2] * firstHit.dist], 0.15)) continue;
+      if (!boxContains(target.aabb, [eye[0] + dir[0] * firstHit.dist, eye[1] + dir[1] * firstHit.dist, eye[2] + dir[2] * firstHit.dist], PICK_PARDON_M)) continue;
       d = Math.max(d, firstHit.dist);
     }
     if (d > bestDist) continue;
@@ -562,7 +565,7 @@ function nearestActivatableHit(eye, dir, targets, collider) {
     const hy = eye[1] + dir[1] * wall;
     const hz = eye[2] + dir[2] * wall;
     const b = bestAabb;
-    const skin = 0.15;
+    const skin = PICK_PARDON_M;
     const inside = hx >= b.min[0] - skin && hx <= b.max[0] + skin
       && hy >= b.min[1] - skin && hy <= b.max[1] + skin
       && hz >= b.min[2] - skin && hz <= b.max[2] + skin;

@@ -15,9 +15,17 @@
 // reach. The SECRETS tier adds the one thing no plaque names - a wall or a door that only a chain moves (a mover no
 // trigger of its own reaches, at rest where it started) - in its own colour, opt-in, because that is new knowledge.
 //
+// AUDIT DELVE (bible/01-Overview/Audit-Delve.md): the round is one pure law (senseRound - the press's finds and the
+// secrets merged, nearest first, one card a thing, the echo's found marks before them all); a secret is read off the
+// action system's own TRIGGER_GATE; the four kinds differ in FORM as well as colour (SENSE_FORM - a protan or deutan eye
+// could not tell a lever's glow from a chest's); and the budget and the pardon are the glow's and the pick's own.
+//
 // Not a DFU member. Pure but for the pulse's own state.
 
 import { TRIGGER_FLAGS } from '../world/rdbLayout.js';   // DFBlock.RdbTriggerFlags has ONE home
+import { TRIGGER_GATE, isActionDoorObject } from '../world/actionSystem.js';   // AUDIT DELVE A5: who a trigger admits, read where it is written
+import { NODE_GLOW_MAX } from '../render/nodeGlow.js';   // AUDIT DELVE A4: the glow's own budget
+import { PICK_PARDON_M } from '../player/activate.js';   // AUDIT DELVE C8: the pick's own pardon
 
 /** How far a pulse reaches from the eye, to the nearest point of a thing's box (m). Two and a half door reaches. */
 export const SENSE_M = 8;
@@ -25,12 +33,21 @@ export const SENSE_M = 8;
 export const SENSE_HOLD_S = 6;
 export const SENSE_FADE_S = 1.5;
 /** The most things one pulse lights - the glow pass's own budget (render/nodeGlow.js NODE_GLOW_MAX), nearest first. */
-export const SENSE_MAX = 16;
+export const SENSE_MAX = NODE_GLOW_MAX;
 /** The prefs key (the `dungeon-sense` Features row, which holds its tiers: off / on / secrets). */
 export const SENSE_PREF = 'dungeonSense';
 /** The kinds and their colours (CSS hex - the glow's floats are derived): a thing to work, a way through, a find, a
- *  secret. Each clear of the others and of the professions' five (ui/nodeMarks.js) at a glance. */
+ *  secret. AUDIT DELVE D6: colour alone did not tell them apart - under protan and deutan vision `use` and `find` are
+ *  one pale yellow, and `door` and `secret` sit by fishing's blue and herbalism's violet (ui/nodeMarks.js) - so each
+ *  kind has its own FORM too (SENSE_FORM). */
 export const SENSE_CSS = Object.freeze({ use: '#ffe9a8', door: '#9cc8ff', find: '#7dff9a', secret: '#c48cff' });
+/** AUDIT DELVE D6: each kind's form - the glow's three parts (render/nodeGlow.js: the halo, the shimmer climbing it,
+ *  the motes rising out of it), each 0..1: a thing to work, the halo and its shimmer; a way through, a steady halo
+ *  alone; a find, the motes - a treasure's glints - over a faint halo; a secret, the shimmer and a few faint motes, no
+ *  body of light (a wall that is not quite a wall). A profession's node is all three, whole. */
+export const SENSE_FORM = Object.freeze({
+  use: Object.freeze([1, 1, 0]), door: Object.freeze([1.2, 0, 0]), find: Object.freeze([0.4, 0, 1]), secret: Object.freeze([0.25, 1.6, 0.35]),
+});
 const hexRgb = (hex) => { const n = parseInt(hex.slice(1), 16); return Object.freeze([((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255]); };
 export const SENSE_RGB = Object.freeze(Object.fromEntries(Object.entries(SENSE_CSS).map(([k, hex]) => [k, hexRgb(hex)])));
 /** A card's least and most size (m): a lever is never a speck, a corridor piece never a wall of light. */
@@ -76,6 +93,17 @@ export function senseCard(box) {
   };
 }
 
+/** AUDIT DELVE B8/C3: a target with no surface of its own (FIX-D's flat): one its producer says has none, an action
+ *  object that is a flat (an acting flat - no collider: `isFlat`), or one of the context's own flats by its key (a loot
+ *  pile, a body, a dropped pile - billboards all). A hit inside such a box is the wall it stands against. Pure.
+ *  @param {any} target @param {any} [object] */
+export function senseFlat(target, object = null) {
+  if (target?.noSurface === true || object?.isFlat === true || object?.kind === 'moveFlat') return true;
+  const key = target?.key;
+  return typeof key === 'string' && FLAT_PREFIXES.some((p) => key.startsWith(p));
+}
+const FLAT_PREFIXES = Object.freeze(['loot:', 'corpse:', 'droppedLoot:']);
+
 const isVec3 = (v) => v != null && typeof v === 'object' && v.length >= 3 && Number.isFinite(v[0]) && Number.isFinite(v[1]) && Number.isFinite(v[2]);
 
 /**
@@ -96,7 +124,7 @@ export function inPlainSight(collider, eye, box, { skip = null, noSurface = fals
     if (!Number.isFinite(hit?.dist)) return true;
     if (noSurface) continue;
     const at = [eye[0] + dir[0] * hit.dist, eye[1] + dir[1] * hit.dist, eye[2] + dir[2] * hit.dist];
-    if (at.every((v, i) => v >= box.min[i] - 0.15 && v <= box.max[i] + 0.15)) return true;
+    if (at.every((v, i) => v >= box.min[i] - PICK_PARDON_M && v <= box.max[i] + PICK_PARDON_M)) return true;
   }
   return false;
 }
@@ -133,17 +161,26 @@ export function senseFinds(targets, eye, { nameOf, sees = () => true, reach = SE
   return out;
 }
 
+/** Does any trigger of the player's reach this object, by TRIGGER_GATE (actionSystem.js Receive's own gate)? The
+ *  player presses (Direct), strikes (Attack), walks into (WalkInto) and stands on (WalkOn); `Door` is what an ACTION
+ *  door sends itself when pressed (DaggerfallActionDoor), so it is the player's only on one. Pure. @param {any} o */
+export function playerTriggers(o) {
+  const gate = TRIGGER_GATE[o?.triggerFlag ?? TRIGGER_FLAGS.None] ?? [];
+  return gate.some((t) => t !== 'Door' || isActionDoorObject(o));
+}
+
 /**
  * A SECRET: an action object only a chain moves - a mover (a placed model's tween, an acting flat) or a special door
- * (DaggerfallActionDoorSpecial, the wall that swings) whose own trigger flag admits no trigger of the player's (None:
- * TRIGGER_GATE's ActionObject-only row) and which some other object's chain reaches (`chainTargets`, the action
- * system's own graph) - still at rest where it started (a wall already slid open is no longer a secret). Pure.
+ * (DaggerfallActionDoorSpecial, the wall that swings) that no trigger of the player's reaches (playerTriggers: the
+ * gate's ActionObject-only row, and AUDIT DELVE A5 a `Door` flag on anything but an action door) and which some other
+ * object's chain reaches (`chainTargets`, the action system's own graph) - still at rest where it started (a wall
+ * already slid open is no longer a secret). Pure.
  * @param {any} o @param {Set<string>} chainTargets
  */
 export function isSecretMover(o, chainTargets) {
   if (!o || !chainTargets?.has(o.key)) return false;
   const mover = o.kind === 'action' || o.kind === 'moveFlat' || (o.kind === 'door' && o.special === true);
-  return mover && (o.triggerFlag ?? TRIGGER_FLAGS.None) === TRIGGER_FLAGS.None && o.state === 'start';
+  return mover && !playerTriggers(o) && o.state === 'start';
 }
 
 /**
@@ -172,8 +209,45 @@ export function senseSecrets(objects, chainTargets, eye, { boxOf, sees = () => t
 }
 
 /**
+ * AUDIT DELVE C5/B9/D5: ONE ROUND, MERGED. The press's finds and (the secrets tier) the secrets, as one list: one card a
+ * thing (a key once - its first, the nearest), nearest first, at most `max`. Pure.
+ * @param {SenseFind[]} finds @param {SenseFind[]} [secrets] @returns {SenseFind[]}
+ */
+export function senseRound(finds, secrets = [], max = SENSE_MAX) {
+  const all = [...(finds ?? []), ...(secrets ?? [])].sort((a, b) => a.d - b.d);
+  const seen = new Set(), out = [];
+  for (const f of all) {
+    if (seen.has(f.key)) continue;
+    seen.add(f.key);
+    out.push(f);
+    if (out.length >= max) break;
+  }
+  return out;
+}
+
+/**
+ * AUDIT DELVE B9/C10/D5: THE FRAME'S MARKS - the echo's found glow FIRST (what a lever moved, found: the rarer word),
+ * then the look round's, a key once (the echo's mark of a secret the look round also lit is the one drawn: two cards
+ * of one key kindled twice a frame at double light), into `out`, at most `max` (the glow's budget). Pure but for `out`.
+ * @param {ReadonlyArray<{ key: string }>} echo @param {ReadonlyArray<{ key: string }>} sense @param {any[]} out
+ */
+export function senseMarks(echo, sense, out, max = SENSE_MAX) {
+  out.length = 0;
+  const seen = new Set();
+  for (const list of [echo, sense]) {
+    for (const m of list ?? []) {
+      if (out.length >= max) return out;
+      if (seen.has(m.key)) continue;
+      seen.add(m.key);
+      out.push(m);
+    }
+  }
+  return out;
+}
+
+/**
  * THE PULSE'S STATE: `pulse(nowS, finds)` lights `finds` from `nowS`; `marks(nowS)` answers the glow pass's marks
- * (`{ key, at, w, h, rgb, gain }` - render/nodeGlow.js nodeGlows reads `rgb` and `gain` where a node has neither) for
+ * (`{ key, at, w, h, rgb, gain, form }` - render/nodeGlow.js nodeGlows reads `rgb`, `gain` and `form` where a node has none) for
  * as long as the hold lasts, fading over its last SENSE_FADE_S, and none after; `clear()` puts it out. The marks are
  * pooled: none is made a frame. A find's key is minted `sense:` so it can never share the glow's kindling with a node.
  */
@@ -181,7 +255,7 @@ export function createSensePulse({ hold = SENSE_HOLD_S, fade = SENSE_FADE_S } = 
   let at = -Infinity;
   /** @type {SenseFind[]} */
   let finds = [];
-  /** @type {Array<{ key: string, at: number[], w: number, h: number, rgb: readonly number[], gain: number }>} */
+  /** @type {Array<{ key: string, at: number[], w: number, h: number, rgb: readonly number[], gain: number, form: readonly number[] }>} */
   const pool = [], out = [];
   return {
     /** @param {number} nowS @param {SenseFind[]} list */
@@ -195,8 +269,9 @@ export function createSensePulse({ hold = SENSE_HOLD_S, fade = SENSE_FADE_S } = 
       if (!(age >= 0 && age < hold)) { finds = []; return out; }
       const gain = age > hold - fade ? Math.max(0, (hold - age) / fade) : 1;
       for (const f of finds) {
-        const m = pool[out.length] ??= { key: '', at: f.at, w: 0, h: 0, rgb: SENSE_RGB.use, gain: 0 };
+        const m = pool[out.length] ??= { key: '', at: f.at, w: 0, h: 0, rgb: SENSE_RGB.use, gain: 0, form: SENSE_FORM.use };
         m.key = `sense:${f.key}`; m.at = f.at; m.w = f.w; m.h = f.h; m.rgb = SENSE_RGB[f.kind] ?? SENSE_RGB.use; m.gain = gain;
+        m.form = SENSE_FORM[f.kind] ?? SENSE_FORM.use;   // AUDIT DELVE D6
         out.push(m);
       }
       return out;

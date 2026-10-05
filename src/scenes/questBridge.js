@@ -63,7 +63,8 @@
 
 import { QuestMachine, TICKS_PER_SECOND } from '../systems/quest/machine.js';
 import { clockCounts } from '../systems/quest/clock.js';   // DEAD-CLOCK: a clock whose end changes nothing is no deadline
-import { repairActiveQuests } from '../systems/quest/questRepair.js';   // QREPAIR: the Settings' repair
+import { repairActiveQuests, relayWholeDungeons } from '../systems/quest/questRepair.js';   // QREPAIR: the Settings' repair (AUDIT DELVE E1: and a frozen size, crossing online)
+import { isOnlinePage } from '../systems/onlineLane.js';   // AUDIT DELVE E1: online, every dungeon is whole
 import { QuestListsManager } from '../systems/quest/questLists.js';
 import { QuestOfferFlow } from '../systems/quest/offerFlow.js';
 import { PlayerNotebook } from '../systems/notebook.js';
@@ -693,6 +694,9 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
       machine.clearState();   // C#'s load path: ClearState before RestoreSaveData
       offerFlow.reset();   // QUEST-UID1: an offer parsed in the game being replaced is not the loaded game's to start
       machine.restoreSaveData(data.machine ?? { siteLinks: [], quests: [] });
+      // AUDIT DELVE E1: online every dungeon is built whole, so a quest frozen small or medium offline has its dungeon
+      // markers enumerated again on the whole dungeon (questRepair.js relayWholeDungeons) - before anything mounts
+      if (isOnlinePage()) relayWholeDungeons(machine, { carriesQuestItem: (item) => ctx.carriesQuestItem?.(item) ?? false });
       // AUDIT 26 F102: DFU restores the notebook only when the save
       // CARRIES one (`if (!string.IsNullOrEmpty(notebookDataJson))`,
       // SaveLoadManager.cs:1451-1456) - the empty-block substitute

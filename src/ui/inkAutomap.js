@@ -318,14 +318,14 @@ export function paintPlanOverlay(ctx, view, opts) {
         ctx.lineTo(x + ux * k, y + uy * k);
       }
       ctx.stroke();
-      paintMarkName(ctx, m.name, x, y + MARK_R * 2 + 2, PLAN_PEN.beacon);
+      paintMarkName(ctx, m.name, x, y + MARK_R * 2 + 2, PLAN_PEN.note);   // AUDIT DELVE D7: the names' pen (the beacon's was 3:1)
       continue;
     }
     if (m.kind === 'quest') {
       // GUIDE8: a quest resource's place - the world map's own diamond (inkMap.js paintQuestMark: tied to its spot,
       // gold edged in ink, the followed quest's filled), its name under the spot
       paintQuestMark(ctx, view, { x: m.x, y: m.z, tracked: !!m.followed });
-      paintMarkName(ctx, m.name, x, y + MARK_R + 2, PLAN_PEN.mark);
+      paintMarkName(ctx, m.name, x, y + MARK_R + 2, PLAN_PEN.note);   // AUDIT DELVE D7: the name is what the tier is for - the names' pen (10.5:1), not the marks' (2.3:1)
       continue;
     }
     if (m.kind === 'fire') {
@@ -452,7 +452,16 @@ export function floorStripLayout(floors, live, opts = {}) {
   const top = (opts.reserveTop ?? 0) + padY;
   const all = floors ?? [];
   const widest = all.reduce((m, f) => Math.max(m, width(f.label)), 0);
-  const left = paperW - padX - widest;
+  // AUDIT DELVE D2: THE MARKS AFTER THE WORD HAVE ROOM. A floor carrying you, the way out and a quest needs 30 strip
+  // units after its word and the pad is 26 - the quest's diamond stood half off the paper on the commonest floor of
+  // all (the way in's, with the quest on it). The words stand in from the edge by the widest row's marks when the pad
+  // will not hold them.
+  const marksW = (i) => {
+    const r = FLOOR_MARK.r * scale, g = FLOOR_MARK.gap * scale;
+    return g + (i === opts.you ? r * 1.6 + g : 0) + (i === opts.exit ? r * 2 + g : 0) + (opts.quest?.has?.(i) ? r * 2.4 : 0);
+  };
+  const room = Math.max(padX, ...all.map((f) => marksW(f.index) + FLOOR_MARK.gap * scale));
+  const left = paperW - room - widest;
   // DISC25-A: the room above the right hand, in rows
   let max = FLOOR_STRIP_MAX;
   for (const h of opts.hands ?? []) {
@@ -470,7 +479,7 @@ export function floorStripLayout(floors, live, opts = {}) {
     const w = width(f.label);
     push({
       index: f.index, label: f.label, w,
-      x: paperW - padX - w,
+      x: paperW - room - w,
       live: f.index === live,
       you: f.index === opts.you,
       exit: f.index === opts.exit,

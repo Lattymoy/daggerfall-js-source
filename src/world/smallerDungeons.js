@@ -28,6 +28,7 @@ import { isMainStoryDungeon } from './dungeonTextures.js';
 import { isArenaUndercroft } from './arenaCity.js';   // ARENA5: the fighters' hall keeps its blocks
 import { isEnhanced } from '../systems/uiSkin.js';   // DSIZE1: the medium size is the enhanced skin's
 import { getPref } from '../systems/uiPrefs.js';   // DSIZE1: ...and the player's ask (the `medium-dungeons` row)
+import { isOnlinePage } from '../systems/onlineLane.js';   // AUDIT DELVE E4: online the quest's stamp is the whole dungeon's
 
 /** QuestSmallerDungeonsState (DaggerfallUnityEnums.cs:758-763) -
  *  NotSet, DISABLED, ENABLED, in that order. F-B3 (self-audit 2): the
@@ -41,33 +42,54 @@ export const SMALLER_DUNGEON_THRESHOLD = 5;
 
 /**
  * DSIZE1 (the delve arc, 2026-10-05 - Features-Arc.md's open door on Smaller Dungeons: "a size tier ... would earn the
- * Enhanced label"): THE MEDIUM SIZE. Smaller Dungeons is DFU's all-or-nothing: a dungeon of thirty blocks becomes five.
+ * Enhanced label"): THE MEDIUM SIZE. Smaller Dungeons is DFU's all-or-nothing: a dungeon of twelve blocks becomes five.
  * Medium is the step between - a dungeon of more than MEDIUM_DUNGEON_THRESHOLD blocks is regenerated, by
- * GenerateSmallerDungeon's own law (its own block list, DFRandom seeded on its MapId, so the same every visit), as a
- * cross of five interior blocks (the starting block in the middle) ringed by the eight border blocks that close it.
+ * GenerateSmallerDungeon's own law (its own block list, DFRandom seeded on its MapId, so the same every visit), as
+ * MEDIUM_LAYOUT: two interior blocks side by side (the starting block first) and the six border blocks that close them.
  * Every quest guard Smaller Dungeons keeps, Medium keeps: main story, the arena's undercroft, online and a quest's frozen
  * size. Smaller Dungeons, when it is on, wins. Not a DFU member.
+ *
+ * AUDIT DELVE (MAPS.BSA, read whole - bible/01-Overview/Audit-Delve.md): the first cut was a cross of five interior
+ * blocks and its eight-block ring over THIRTEEN, and the real data had it backwards. Of the 4,232 dungeons, 159 have
+ * more than thirteen blocks, and every one of them is four interior blocks in a ring of ten: the cross made them
+ * BIGGER inside (five interior draws from a pool of four) and touched nothing else. The real sizes are 5 (775), 8
+ * (1,162), 10-13 (2,127) and 14-22 (167); eight blocks - two interior side by side, six border round them - is the
+ * commonest shape a dungeon has, so it is the medium size, and every dungeon of ten blocks or more comes down to it.
  *
  * The quest freeze and the save stamp carry it as MEDIUM_DUNGEONS_STATE - a value APPENDED past DFU's three
  * (QuestSmallerDungeonsState is NotSet/Disabled/Enabled, verbatim above and untouched): a build that does not know it
  * reads it as neither, and falls back to the setting, which is what an unknown value was always going to mean.
  */
-export const MEDIUM_DUNGEON_THRESHOLD = 13;
+export const MEDIUM_DUNGEON_THRESHOLD = 8;
 export const MEDIUM_DUNGEONS_STATE = 3;
 /** The prefs key (the `medium-dungeons` Features row). */
 export const MEDIUM_DUNGEONS_PREF = 'mediumDungeons';
 /** The player's ask, on the enhanced skin. */
 export const mediumDungeonsWanted = () => isEnhanced() && getPref(MEDIUM_DUNGEONS_PREF) === true;
-/** The cross and its ring: [x, z, border] - the middle first (the starting block), then the four interior arms, then
- *  the eight border blocks round them (N, the two inner corners above, W, E, the two below, S). */
+/** The medium size: [x, z, border] - the two interior blocks first (the starting block, then the one east of it),
+ *  then the six border blocks that close them (the two north, west, east, the two south). */
 export const MEDIUM_LAYOUT = Object.freeze([
-  [0, 0, false], [0, -1, false], [-1, 0, false], [1, 0, false], [0, 1, false],
-  [0, -2, true], [-1, -1, true], [1, -1, true], [-2, 0, true], [2, 0, true], [-1, 1, true], [1, 1, true], [0, 2, true],
+  [0, 0, false], [1, 0, false],
+  [0, -1, true], [1, -1, true], [-1, 0, true], [2, 0, true], [0, 1, true], [1, 1, true],
+].map((r) => Object.freeze(r)));
+
+/** GenerateSmallerDungeon's plus (:1391-1398), as rows: the central starting block, then the North, West, East and
+ *  South border blocks, in DFU's draw order. */
+const SMALLER_LAYOUT = Object.freeze([
+  [0, 0, false],    // Central starting block
+  [0, -1, true],    // North border block
+  [-1, 0, true],    // West border block
+  [1, 0, true],     // East border block
+  [0, 1, true],     // South border block
 ].map((r) => Object.freeze(r)));
 
 /** Quest.Start's stamp (Quest.cs:284): the setting AS OF the quest's
- *  start, frozen into the quest. DSIZE1: and the medium size, when it is asked for and Smaller Dungeons is not on. */
-export function smallerDungeonsStateNow(enabled = getBool('Experimental', 'SmallerDungeons'), medium = mediumDungeonsWanted()) {
+ *  start, frozen into the quest. DSIZE1: and the medium size, when it is asked for and Smaller Dungeons is not on.
+ *  AUDIT DELVE E4: online, Disabled - the room builds every dungeon whole (dungeonSizeFor, below), so a quest started
+ *  there placed its markers on the whole dungeon whatever the player's own Smaller setting says, and the stamp is the
+ *  size its markers were chosen on: a copy taken offline then builds the whole dungeon its markers know. */
+export function smallerDungeonsStateNow(enabled = getBool('Experimental', 'SmallerDungeons'), medium = mediumDungeonsWanted(), online = isOnlinePage()) {
+  if (online) return SMALLER_DUNGEONS_STATE.Disabled;
   if (enabled) return SMALLER_DUNGEONS_STATE.Enabled;
   return medium ? MEDIUM_DUNGEONS_STATE : SMALLER_DUNGEONS_STATE.Disabled;
 }
@@ -76,10 +98,21 @@ export function smallerDungeonsStateNow(enabled = getBool('Experimental', 'Small
  * UseSmallerDungeon (:776-797). `questMachine` is the bridge's machine
  * (null when no quest layer is mounted - the dev hosts); a SiteLink on
  * this dungeon defers to ITS quest's frozen state, first link wins.
+ * AUDIT DELVE A6: DFU's member, verbatim - a frozen state it does not name (the medium size's) falls through to the
+ * setting, as DFU's own law has it. The size the hosts build at is dungeonSizeFor's, below.
  */
 export function useSmallerDungeon(dfLocation, { questMachine = null,
   setting = getBool('Experimental', 'SmallerDungeons'), online = false } = {}) {
-  return dungeonSizeFor(dfLocation, { questMachine, setting, medium: false, online }) === 'small';
+  if (!dfLocation?.hasDungeon || isMainStoryDungeon(dfLocation.mapTableData?.mapId)) return false;
+  if (isArenaUndercroft(dfLocation)) return false;   // ARENA5: the arena's undercroft never shrinks (dungeonSizeFor, below)
+  if (online) return false;   // AUDIT WORLD34 B2: online, the whole dungeon (dungeonSizeFor, below)
+  const links = questMachine?.getSiteLinks(SITE_TYPES.Dungeon, dfLocation.mapTableData?.mapId) ?? [];
+  if (links.length > 0) {
+    const quest = questMachine.getQuest(links[0].questUID);
+    if (quest && quest.smallerDungeonsState === SMALLER_DUNGEONS_STATE.Enabled) return true;
+    if (quest && quest.smallerDungeonsState === SMALLER_DUNGEONS_STATE.Disabled) return false;
+  }
+  return setting;
 }
 
 /**
@@ -111,6 +144,31 @@ export function dungeonSizeFor(dfLocation, { questMachine = null,
   return setting ? 'small' : medium ? 'medium' : 'full';
 }
 
+/**
+ * AUDIT DELVE E5: THE SIZE A QUEST'S MARKERS WERE CHOSEN ON. A quest's dungeon Place enumerates its markers when the
+ * quest is parsed, through the sized location (world.js questWorld), and a link another quest already holds on that
+ * dungeon decides that size (first link wins, above) - but Start stamps the settings as of now, so a quest whose
+ * markers were chosen on the whole dungeon could stamp the medium size, and once the first quest ended, stand its
+ * people in blocks the medium build does not have. Between DFU's two values the stamp is DFU's (Quest.cs:284,
+ * untouched); where the medium size is either side - the stamp or the link's frozen state - the quest takes the
+ * link's: the size its markers know. Called by the machine's Start (machine.js startQuestImmediate), after the stamp.
+ */
+export function adoptLinkedDungeonSize(quest, questMachine) {
+  const known = [SMALLER_DUNGEONS_STATE.Disabled, SMALLER_DUNGEONS_STATE.Enabled, MEDIUM_DUNGEONS_STATE];
+  for (const r of quest?.resources?.values?.() ?? []) {
+    const sd = r?.isPlace ? r.siteDetails : null;
+    if (sd?.siteType !== SITE_TYPES.Dungeon) continue;
+    const link = questMachine?.getSiteLinks?.(SITE_TYPES.Dungeon, sd.mapId)?.[0];
+    if (!link || link.questUID === quest.uid) continue;
+    const held = questMachine.getQuest?.(link.questUID)?.smallerDungeonsState;
+    if (!known.includes(held) || held === quest.smallerDungeonsState) continue;
+    if (held !== MEDIUM_DUNGEONS_STATE && quest.smallerDungeonsState !== MEDIUM_DUNGEONS_STATE) continue;
+    quest.smallerDungeonsState = held;
+    return held;
+  }
+  return null;
+}
+
 /** GetRandomBlock (:1420-1443): border blocks are the ones whose name
  *  starts with "B" (case-insensitive); an empty pool throws, verbatim. */
 function getRandomBlock(borderBlock, dfLocation) {
@@ -130,29 +188,32 @@ function generateRdbBlock(x, z, borderBlock, startingBlock, dfLocation) {
 }
 
 /**
+ * GenerateSmallerDungeon's body (:1366-1400) at a layout, NON-MUTATING: a clone of the location whose dungeon is `rows`
+ * ([x, z, border], the first the starting block) drawn in order from its own pools, or the location itself at or under
+ * `threshold`. Throws on a main-story dungeon, verbatim (:1372-1373). `mark` is the clone's size (FT1: the clone SAYS
+ * its size, so the save stamp below can read the build rather than re-deriving it from deps it no longer has).
+ * AUDIT DELVE A4: the one body both sizes draw through.
+ */
+function regenerateDungeon(dfLocation, threshold, rows, mark, member) {
+  if (isMainStoryDungeon(dfLocation.mapTableData?.mapId)) {
+    throw new Error(`${member}() must not be called on a main story dungeon.`);
+  }
+  const blocks = dfLocation.dungeon?.blocks;
+  if (!blocks || blocks.length <= threshold) return dfLocation;
+  // DFRandom.Seed = (uint)MapId (:1389) - the same layout every visit.
+  setSeed(dfLocation.mapTableData.mapId);
+  const layout = rows.map(([x, z, border], i) => generateRdbBlock(x, z, border, i === 0, dfLocation));
+  return { ...dfLocation, dungeon: { ...dfLocation.dungeon, blocks: layout, [mark]: true } };
+}
+
+/**
  * GenerateSmallerDungeon (:1366-1400), NON-MUTATING: answers a clone of
  * the location whose dungeon is the five-block plus, or the location
  * itself when it is already small. Throws on a main-story dungeon,
  * verbatim (:1372-1373).
  */
 export function generateSmallerDungeon(dfLocation) {
-  if (isMainStoryDungeon(dfLocation.mapTableData?.mapId)) {
-    throw new Error('GenerateSmallerDungeon() must not be called on a main story dungeon.');
-  }
-  const blocks = dfLocation.dungeon?.blocks;
-  if (!blocks || blocks.length <= SMALLER_DUNGEON_THRESHOLD) return dfLocation;
-  // DFRandom.Seed = (uint)MapId (:1389) - the same plus every visit.
-  setSeed(dfLocation.mapTableData.mapId);
-  const layout = [
-    generateRdbBlock(0, 0, false, true, dfLocation),    // Central starting block
-    generateRdbBlock(0, -1, true, false, dfLocation),   // North border block
-    generateRdbBlock(-1, 0, true, false, dfLocation),   // West border block
-    generateRdbBlock(1, 0, true, false, dfLocation),    // East border block
-    generateRdbBlock(0, 1, true, false, dfLocation),    // South border block
-  ];
-  // FT1: the clone SAYS it is small, so the save stamp below can read
-  // the build rather than re-deriving it from deps it no longer has.
-  return { ...dfLocation, dungeon: { ...dfLocation.dungeon, blocks: layout, smaller: true } };
+  return regenerateDungeon(dfLocation, SMALLER_DUNGEON_THRESHOLD, SMALLER_LAYOUT, 'smaller', 'GenerateSmallerDungeon');
 }
 
 /** Was this location BUILT small - a clone generateSmallerDungeon
@@ -164,19 +225,12 @@ export function isSmallerDungeon(dfLocation) {
 
 /**
  * DSIZE1: GenerateSmallerDungeon's law at the medium size, NON-MUTATING - a clone whose dungeon is MEDIUM_LAYOUT drawn
- * from the location's own block list (interior blocks for the cross, border blocks for its ring; GetRandomBlock's pool
+ * from the location's own block list (interior blocks for the two, border blocks for their ring; GetRandomBlock's pool
  * and its empty-pool throw), DFRandom seeded on the MapId, or the location itself when it is at or under the
  * threshold. Throws on a main-story dungeon, as the small one does.
  */
 export function generateMediumDungeon(dfLocation) {
-  if (isMainStoryDungeon(dfLocation.mapTableData?.mapId)) {
-    throw new Error('generateMediumDungeon() must not be called on a main story dungeon.');
-  }
-  const blocks = dfLocation.dungeon?.blocks;
-  if (!blocks || blocks.length <= MEDIUM_DUNGEON_THRESHOLD) return dfLocation;
-  setSeed(dfLocation.mapTableData.mapId);
-  const layout = MEDIUM_LAYOUT.map(([x, z, border], i) => generateRdbBlock(x, z, border, i === 0, dfLocation));
-  return { ...dfLocation, dungeon: { ...dfLocation.dungeon, blocks: layout, medium: true } };
+  return regenerateDungeon(dfLocation, MEDIUM_DUNGEON_THRESHOLD, MEDIUM_LAYOUT, 'medium', 'generateMediumDungeon');
 }
 
 /** DSIZE1: was this location BUILT at the medium size? */

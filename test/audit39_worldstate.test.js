@@ -371,7 +371,9 @@ test('AUDIT-39r: the dungeon host runs the missile sweep at its OWN load door', 
   // AUDIT DISC28 widened it once more: the load's start raises the host's own OnStartLoad hands (onStartLoad - the
   // camera's reel reset), with its reason. AUDIT REST III A1 widened it again: the save's camps outside, stood after the
   // second half (outerCampsLoad), with its reason.
-  const body = ctx.slice(at, at + 7400);
+  // AUDIT DELVE widened it again: the restore reads the size law once before the world record (a load at another size
+  // leaves that record unapplied), with its reason.
+  const body = ctx.slice(at, at + 8200);
   assert.match(body, /magic\.clearMissiles\(\);/, 'which sweeps its own flights');
   assert.ok(body.indexOf('magic.clearMissiles();') < body.indexOf('applyWorld(extras.world)'),
     'ahead of the world restore, as OnStartLoad is');

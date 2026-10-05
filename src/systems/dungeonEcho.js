@@ -14,7 +14,15 @@
 //   - THE EXAMINE: in Info mode - Daggerfall's examining stance - the plaque over a lever or a wheel adds the way its
 //     work lies ("Works something to the north-east"), read off the same chain without playing it. Never when the
 //     World Tooltips author's HideDefaultInteractTooltip asks for the puzzles to be kept.
+// AUDIT DELVE (bible/01-Overview/Audit-Delve.md): an echo is of a mover that MOVED (echoMoved - a chained UnlockDoor, an
+// OpenDoor on an open door, a relay, moved nothing and said "A door swings"); a secret wall is heard as stone, not a
+// door (isActionDoorObject - the plaque's own law); the examine says where the work lies from the lever ("above it");
+// the ways and the chain depth are read from their one homes.
+//
 // Not a DFU member. Pure but for the book's own list.
+
+import { isActionDoorObject, PLAY_DEPTH_MAX } from '../world/actionSystem.js';   // AUDIT DELVE A7/A4: a door is an action door; IsPlaying's depth
+import { sceneCompassWord } from './compassWords.js';   // AUDIT DELVE C8: the eight ways, one home
 
 /** A mover set going nearer than this to the eye needs no word: the player heard it beside them (m). */
 export const ECHO_NEAR_M = 3;
@@ -29,23 +37,19 @@ export const ECHO_MAP_MAX = 8;
 /** How often the book looks for its echoes being found (s). */
 export const ECHO_LOOK_S = 0.25;
 /** The longest chain the walk follows - the action system's own IsPlaying depth (world/actionSystem.js _isPlaying). */
-export const ECHO_CHAIN_MAX = 32;
+export const ECHO_CHAIN_MAX = PLAY_DEPTH_MAX;
 /** The prefs key (the `dungeon-echoes` Features row). */
 export const ECHO_PREF = 'dungeonEchoes';
 
-/** The eight ways, clockwise from north, in scene XZ (+x east, +z north - ui/hud.js compassMarkerLerp's frame). */
-export const ECHO_WAYS = Object.freeze(['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west']);
-
-/** The compass way from one place to another across the level (+x east, +z north). Pure. */
-export const echoWay = (dx, dz) => ECHO_WAYS[((Math.round(Math.atan2(dx, dz) * 180 / Math.PI / 45) % 8) + 8) % 8];
-
 /**
  * Which way a place lies, said: "to the north-east", "above you", "below you, to the west", or "close by" when it is
- * none of those (under ECHO_FLAT_M across and within ECHO_VERT_M up or down). `dx, dy, dz` from the eye. Pure.
+ * none of those (under ECHO_FLAT_M across and within ECHO_VERT_M up or down). `dx, dy, dz` from `who` - "you", the
+ * eye, by default; AUDIT DELVE D10: "it", the lever, for the examine (which measures from the lever, not the player).
+ * Pure.
  */
-export function wayWord(dx, dy, dz) {
-  const up = dy > ECHO_VERT_M ? 'above you' : dy < -ECHO_VERT_M ? 'below you' : '';
-  const way = Math.hypot(dx, dz) >= ECHO_FLAT_M ? `to the ${echoWay(dx, dz)}` : '';
+export function wayWord(dx, dy, dz, who = 'you') {
+  const up = dy > ECHO_VERT_M ? `above ${who}` : dy < -ECHO_VERT_M ? `below ${who}` : '';
+  const way = Math.hypot(dx, dz) >= ECHO_FLAT_M ? `to the ${sceneCompassWord(dx, dz)}` : '';
   if (up && way) return `${up}, ${way}`;
   return up || way || 'close by';
 }
@@ -53,9 +57,17 @@ export function wayWord(dx, dy, dz) {
 /** What moves when a chain plays: a placed model's tween, an acting flat, a door (its swing or its record's move). */
 export const isEchoMover = (o) => !!o && (o.kind === 'action' || o.kind === 'moveFlat' || o.kind === 'door');
 
-/** What the mover is heard as. Pure. */
+/** AUDIT DELVE B4: what a mover was BEFORE its play - its tween's state and (a door) its record's move state; the
+ *  action system's Receive tells the observer before it plays (world/actionSystem.js onPlayed). Pure. */
+export const echoState = (o) => `${o?.state ?? ''}|${o?.moveState ?? ''}`;
+/** AUDIT DELVE B4: did the play MOVE it - its state, or a door's move state, changed since `before` (echoState's)? A
+ *  door a chain only unlocked, opened when open or closed when shut, an effect or a relay played on it: no. Pure. */
+export const echoMoved = (o, before) => echoState(o) !== before;
+
+/** What the mover is heard as - AUDIT DELVE A7: an action door swings; a special door (the wall that swings,
+ *  DaggerfallActionDoorSpecial - no DaggerfallActionDoor) is heard as the stone it is. Pure. */
 export function echoVerb(o) {
-  if (o?.kind === 'door') return 'A door swings';
+  if (isActionDoorObject(o)) return 'A door swings';
   if (o?.kind === 'moveFlat') return 'Something shifts';
   return 'Stone grinds';
 }
@@ -102,7 +114,7 @@ export function examineLine(o, next, boxOf) {
     if (!box) continue;
     const a = boxMiddle(from), b = boxMiddle(box);
     const d = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
-    return d <= ECHO_NEAR_M ? 'Works something close by' : `Works something ${wayWord(b[0] - a[0], b[1] - a[1], b[2] - a[2])}`;
+    return d <= ECHO_NEAR_M ? 'Works something close by' : `Works something ${wayWord(b[0] - a[0], b[1] - a[1], b[2] - a[2], 'it')}`;   // D10: from the lever
   }
   return null;
 }

@@ -26,7 +26,8 @@
 // for anything but the above, and nothing here writes them.
 //
 // Not a DFU member: DFU has no such pass (its quest debugger is a developer's console). Ledger A (QREPAIR).
-import { MARKER_PREFERENCE } from './place.js';
+import { MARKER_PREFERENCE, SITE_TYPES } from './place.js';
+import { SMALLER_DUNGEONS_STATE, MEDIUM_DUNGEONS_STATE } from '../../world/smallerDungeons.js';   // AUDIT DELVE E1: the sizes a quest can freeze
 
 const PLACEMENTS = Object.freeze({ PlaceNpc: 'npcSymbol', PlaceItem: 'itemSymbol', PlaceFoe: 'foeSymbol' });
 
@@ -96,6 +97,65 @@ export function placementIntents(quest) {
   return out;
 }
 
+/** The pass's first step, for one quest: every placement a marker lost, assigned where its action put it. Counts into
+ *  `report` (people, items, foes, failed). */
+export function putBackPlacements(quest, env = {}, report = { people: 0, items: 0, foes: 0, failed: 0 }) {
+  const held = targetedNames(quest);
+  for (const [name, it] of placementIntents(quest)) {
+    if (it.ambiguous || held.has(name) || goneOnPurpose(it.res, quest, env)) continue;
+    try { it.place.assignQuestResource(it.res.symbol, it.marker, it.pref, false); } catch { report.failed++; continue; }   // a Place with no markers throws: that one is not repairable here
+    held.add(name);
+    if (it.res.isPerson) report.people++;
+    else if (it.res.isItem) report.items++;
+    else report.foes++;
+  }
+  return report;
+}
+
+/** A marker list's addresses - block and flat - to compare two enumerations by. */
+const markerAddresses = (list) => (list ?? []).map((m) => `${m?.dungeonX},${m?.dungeonZ},${m?.markerID}`).join(';');
+
+/**
+ * DSIZE1 (AUDIT DELVE E1): A FROZEN SIZE, CROSSING ONLINE. Online every dungeon is built whole (smallerDungeons.js,
+ * AUDIT WORLD34 B2), but a quest started offline at the small or medium size chose its markers on THAT layout: a
+ * marker is a block's (dungeonX, dungeonZ) and a flat in it, and on the whole dungeon the same address is another
+ * block, or none - the quest item in rock, the foe in the void, and a quest no one in the party can finish. So when a
+ * game is loaded where dungeons are whole, a running quest frozen at either size has each dungeon Place's markers
+ * enumerated again on the dungeon the world now builds (Place's own enumeration, through the quest's own world), the
+ * pass's first step puts back what its own placements had stood there, and the stamp becomes Disabled - the size its
+ * markers now know, so a copy taken back offline keeps the whole dungeon. A Place whose markers come out the same (a
+ * main-story keep, the arena's undercroft, a dungeon no bigger than the size) is left as it is. Answers the count of
+ * quests re-laid. Not a DFU member (DFU has no online).
+ */
+export function relayWholeDungeons(machine, env = {}) {
+  let relaid = 0;
+  for (const quest of machine?.quests?.values?.() ?? []) {
+    if (!questRunning(quest)) continue;
+    const state = quest.smallerDungeonsState;
+    if (state !== SMALLER_DUNGEONS_STATE.Enabled && state !== MEDIUM_DUNGEONS_STATE) continue;
+    const world = quest.hooks?.world ?? null;
+    let moved = false;
+    for (const r of quest.resources?.values?.() ?? []) {
+      const sd = r?.isPlace ? r.siteDetails : null;
+      if (sd?.siteType !== SITE_TYPES.Dungeon || !world?.maps) continue;
+      const index = world.maps.getRegion?.(sd.regionIndex)?.mapNameLookup?.get?.(sd.locationName);
+      const location = index == null ? null : world.maps.getLocation(sd.regionIndex, index);
+      if (!location?.dungeon?.blocks) continue;
+      let markers;
+      try { markers = r._enumerateDungeonQuestMarkers(world, location); } catch { continue; }
+      if (markerAddresses(markers.questSpawnMarkers) === markerAddresses(sd.questSpawnMarkers)
+        && markerAddresses(markers.questItemMarkers) === markerAddresses(sd.questItemMarkers)) continue;
+      r.siteDetails = { ...sd, questSpawnMarkers: markers.questSpawnMarkers, questItemMarkers: markers.questItemMarkers, selectedMarker: { targetResources: null } };
+      moved = true;
+    }
+    quest.smallerDungeonsState = SMALLER_DUNGEONS_STATE.Disabled;
+    if (!moved) continue;
+    putBackPlacements(quest, env);
+    relaid++;
+  }
+  return relaid;
+}
+
 /**
  * THE PASS. `machine` the quest machine; `env` the host's seams: `discoverLocation(regionName, locationName)` (true
  * when newly filed; throws on a name it cannot resolve), `hasQuestTopics(quest)` + `addQuestTopics(quest)`,
@@ -112,15 +172,7 @@ export function repairActiveQuests(machine, env = {}) {
     for (const quest of quests) {
       try {
         // 1. the placements a marker lost
-        const held = targetedNames(quest);
-        for (const [name, it] of placementIntents(quest)) {
-          if (it.ambiguous || held.has(name) || goneOnPurpose(it.res, quest, env)) continue;
-          try { it.place.assignQuestResource(it.res.symbol, it.marker, it.pref, false); } catch { report.failed++; continue; }   // a Place with no markers throws: that one is not repairable here
-          held.add(name);
-          if (it.res.isPerson) report.people++;
-          else if (it.res.isItem) report.items++;
-          else report.foes++;
-        }
+        putBackPlacements(quest, env, report);
         // 2. one link per (quest, Place) that holds targets
         for (const r of quest.resources?.values?.() ?? []) {
           if (!r?.isPlace || !placeHoldsTargets(r)) continue;

@@ -432,7 +432,7 @@ test('NODE-MARKS nodeGlows: those within NODE_GLOW_M of the eye, each kindling f
 /** The glow's light at a point on its card - the shader's own main(), run. */
 const glowAt = (vM, { t = 7.25, seed = 0.31, alpha = 1, color = [1, 1, 1], w = 2, h = 1.5, world = [0, 0, 0], fog = null, still = 0 } = {}) => {
   const f = glslFunctions(NODE_GLOW_FS, {
-    vM, vWorld: world, uSize: [w, h], uColor: color, uAlpha: alpha, uSeed: seed, uTime: t, uStill: still,
+    vM, vWorld: world, uSize: [w, h], uColor: color, uAlpha: alpha, uSeed: seed, uTime: t, uStill: still, uForm: [1, 1, 1],   // AUDIT DELVE D6: a node's form, whole
     uFogMode: fog ? 2 : 0, uFogDensity: fog?.density ?? 0, uFogRange: [0, 1], uCamPos: [0, 0, 0], uFocus: [0, 0, 0, 0],
   });
   f.main();

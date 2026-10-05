@@ -301,9 +301,9 @@ export const FEATURES = Object.freeze([
     id: 'medium-dungeons',
     group: 'world',
     title: 'Medium dungeons',
-    note: 'Dungeons bigger than thirteen blocks are cut down to thirteen: five blocks in a cross, closed by eight '
-      + 'more, the same every visit. Smaller dungeons wins when both are on. Main-story dungeons keep full size, a '
-      + 'quest\u2019s dungeon keeps the size it had when the quest began, and online every dungeon is full size.',
+    note: 'Dungeons over eight blocks are cut to eight: two side by side, closed by six, the same every visit. Smaller '
+      + 'dungeons wins when both are on. Main-story dungeons, and every dungeon online, keep full size; a quest keeps the '
+      + 'size it was set up at (an older save\u2019s may not).',
     effect: 'Takes effect on the next dungeon you enter. A save made at another size puts you at the dungeon\u2019s start.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'mediumDungeons', initial: false, online: false }),   // world/smallerDungeons.js MEDIUM_DUNGEONS_PREF
@@ -1047,17 +1047,19 @@ export const FEATURES = Object.freeze([
   // GUIDE8 (2026-10-05, the delve arc - Quest-Guide-Arc.md DECISIONS 3, "a player who cannot read a dungeon should be
   // able to ask for it"): THE GUIDANCE TIERS. Journal is GUIDE5's law; Exact is the quest debugger's knowledge - every
   // quest resource in a dungeon on its map (its floor on the strip) and the followed one on the compass
-  // (systems/questGuidance.js, read by scenes/worldModes.js for scenes/dungeonContext.js). The one tier that can spoil:
-  // off by default, its own row. The Town tier GUIDE8 names stays open.
+  // (systems/questGuidance.js, read by scenes/worldModes.js for scenes/dungeonContext.js), and AUDIT DELVE inside
+  // buildings too; Town between them - the building an entry names, ringed on the town map and on the compass while the
+  // player is in its town (scenes/world.js). Exact is the one tier that can spoil: off by default, its own row.
   Object.freeze({
     id: 'quest-guidance',
     group: 'interface',
     title: 'Quest guidance',
-    note: 'Exact marks where a quest\u2019s item, person or foe is inside a dungeon, on its map and your compass. It can '
-      + 'spoil a search. Journal marks only places your map already holds.',
+    note: 'Journal marks only places your map already holds. Town rings the building your journal names on the Enhanced '
+      + 'town map and your compass. Exact also marks a quest\u2019s item, person or foe in dungeons and buildings - it '
+      + 'can spoil a search.',
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
-    control: Object.freeze({ store: 'prefs', key: 'questGuidance', initial: 'journal', online: 'player', classic: 'journal', tiers: Object.freeze([['journal', 'Journal'], ['exact', 'Exact']]) }),   // systems/questGuidance.js GUIDANCE_PREF
+    control: Object.freeze({ store: 'prefs', key: 'questGuidance', initial: 'journal', online: 'player', classic: 'journal', tiers: Object.freeze([['journal', 'Journal'], ['town', 'Town'], ['exact', 'Exact']]) }),   // systems/questGuidance.js GUIDANCE_PREF, GUIDANCE_TIERS
   }),
   // SENSE1 (2026-10-05, the delve arc - bible/03-World/Delve-Arc.md): THE LOOK ROUND. Asking for Info mode underground
   // lights what is near, in sight, and named by the plaque (systems/dungeonSense.js, read by scenes/dungeonContext.js
@@ -1081,8 +1083,8 @@ export const FEATURES = Object.freeze([
     id: 'dungeon-echoes',
     group: 'interface',
     title: 'Lever echoes',
-    note: 'When a lever or a plate moves something out of sight, a line says which way, the map marks it, and it glows '
-      + 'when you reach it. In Info mode, a lever tells you which way its work lies.',
+    note: 'When a lever or a plate moves something out of sight, a line says which way, the Enhanced map marks it, and '
+      + 'it glows when you reach it. In Info mode, its World Tooltips label says which way a lever works.',
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'dungeonEchoes', initial: true, online: 'player' }),   // systems/dungeonEcho.js ECHO_PREF

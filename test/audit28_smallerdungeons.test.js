@@ -149,9 +149,12 @@ test('AUDIT 28 W4: the save stamps the layout, and a load at the other size warp
   const ctx = read('src/scenes/dungeonContext.js');
   assert.match(ctx, /smallerDungeonsState: smallerDungeonsStamp\(dfLocation\),/, 'SerializablePlayer.cs:224 - the stamp, from the one export (FT1)');
   assert.ok(!/\? 2 : 1|=== 2;/.test(ctx), 'no enum literal in the host - ONE DFU MEMBER, ONE EXPORT');
-  const arm = ctx.slice(ctx.indexOf('needsStartWarp(extras.smallerDungeonsState, dfLocation)'));
+  // AUDIT DELVE E2 (PIN MOVED): the law is read once, before the world record - a load at another size leaves that
+  // record unapplied as well as warping - and the warp arm reads it
+  assert.match(ctx, /const otherLayout = extras\.locationKey === _locationKey && needsStartWarp\(extras\.smallerDungeonsState, dfLocation\);/, 'a different dungeon never warps; the rest of the law is needsStartWarp\'s (ft1_smallerdungeons.test.js)');
+  assert.match(ctx, /const settled = extras\.world && extras\.locationKey === _locationKey && !otherLayout \? applyWorld\(extras\.world\) : null;/, 'saved at another size, the world record is another layout\'s: left unapplied');
+  const arm = ctx.slice(ctx.indexOf('if (otherLayout && setPlayerPos) {'));
   assert.ok(arm.length > 100, 'the warp arm exists');
-  assert.match(ctx, /if \(extras\.locationKey === _locationKey && setPlayerPos && needsStartWarp\(extras\.smallerDungeonsState, dfLocation\)\) \{/, 'a different dungeon never warps; the rest of the law is needsStartWarp\'s (ft1_smallerdungeons.test.js)');
   // F-B1: through the entry law (floorLanding over the START marker),
   // not the raw marker position - :470 names StartMarker, and the
   // port's spawn space is the landed one.
@@ -159,7 +162,7 @@ test('AUDIT 28 W4: the save stamps the layout, and a load at the other size warp
   // The warp sits AFTER the position restore, so it overrides it.
   // FALL-KEPT (FIELD BUGS 2026-09-30, PIN MOVED): the saved fall rides the saved position's placement.
   const posAt = ctx.indexOf('if (extras.position && extras.locationKey === _locationKey && setPlayerPos) setPlayerPos(extras.position, extras.pose?.fall);');
-  const warpAt = ctx.indexOf('needsStartWarp(extras.smallerDungeonsState, dfLocation)');
+  const warpAt = ctx.indexOf('if (otherLayout && setPlayerPos) {');
   assert.ok(posAt > 0 && warpAt > posAt, 'restore first, then the warp');
 });
 

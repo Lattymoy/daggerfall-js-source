@@ -173,7 +173,7 @@ import { createCharSheetWindow } from '../ui/charSheetDoor.js';   // AUDIT 21 ho
 import { NativeTradeWindow, preloadTradeArt, TRADE_RECTS } from '../ui/nativeTrade.js';   // U8c
 import { createTradeWindow, tradeDoorReady } from '../ui/tradeDoor.js';   // the enhanced/native fork, same law as ui/inventoryDoor.js
 import { isEnhanced } from '../systems/uiSkin.js';
-import { guidanceTier, dungeonQuestMarks } from '../systems/questGuidance.js';   // GUIDE8 (the delve arc): the Exact tier, underground
+import { guidanceTier, dungeonQuestMarks, questCompassPick } from '../systems/questGuidance.js';   // GUIDE8 (the delve arc): the Exact tier, underground (AUDIT DELVE: and indoors)
 import { questTracker } from '../ui/questTracker.js';   // GUIDE8: the quest the player follows - its marks filled
 // U23: the static-NPC seam and the guild service popup.
 import { STATIC_NPC_ACTIVATION_DISTANCE, DEFAULT_ACTIVATION_DISTANCE, RAY_DISTANCE } from '../systems/talk.js';
@@ -1721,10 +1721,10 @@ export function createWorldModes(host) {
    *  billboard is CENTRE-anchored, so the base ends up ON the marker
    *  inside a building and half a height BELOW it inside a dungeon.
    *  This port's billboard shader is BOTTOM-anchored (position = base,
-   *  the C11 law dungeonContext.js:2321 states), so the same visual
+   *  the C11 law dungeonContext.js:2322 states), so the same visual
    *  result needs the shift on the DUNGEON side - which is exactly the
    *  shift the dungeon's own RDB flats already take
-   *  (dungeonContext.js:2206, `y - size.h / 2`), and which a building's
+   *  (dungeonContext.js:2207, `y - size.h / 2`), and which a building's
    *  flats correctly do not (interiorContext.js passes its centers
    *  straight through).
    *
@@ -1851,7 +1851,16 @@ export function createWorldModes(host) {
    *  any other tier, so the context draws none. */
   const dungeonQuestMarksHere = () => (guidanceTier() !== 'exact' ? null : dungeonQuestMarks({
     stands: dungeonQuestFlats, foes: dungeonCtx?.foes ?? [], boxOf: questStandBox, followedId: questTracker.tracked()?.id ?? null,
+    people: dungeonCtx?.people ?? [], behaviourOf: (f) => dungeonCtx?.questFoeBehaviour?.(f) ?? f.questBehaviour ?? null,   // AUDIT DELVE E6: a party mate's quest foe, the dungeon's own quest people
     itemName: (st) => dungeonQuestFlatName(`questflat:${dungeonQuestFlats.indexOf(st)}`)?.title ?? null,   // the plaque's own word for it
+    foeName: (f) => enemyDisplayName(f.mobileType),
+  }));
+  /** GUIDE8's Exact tier (AUDIT DELVE, the open item closed): INSIDE A BUILDING TOO - the interior's quest stands
+   *  (`questFlats`), the quest foes its pool stands and the people of the building a quest has taken, on the held map's
+   *  interior sheet and the compass; a stand's item named by the interior plaque's own word (its namer's questflat arm). */
+  const interiorQuestMarksHere = () => (guidanceTier() !== 'exact' || !interiorCtx ? null : dungeonQuestMarks({
+    stands: questFlats, foes: interiorFoePool(), people: interiorCtx.people ?? [], boxOf: questStandBox, followedId: questTracker.tracked()?.id ?? null,
+    itemName: (st) => interiorHoverName(`questflat:${questFlats.indexOf(st)}`)?.title ?? null,   // the plaque's own word for it
     foeName: (f) => enemyDisplayName(f.mobileType),
   }));
   /** .cs:483-512 - a quest ITEM stand is named by the long name, and one billboard by hand. A quest PERSON or FOE stand
@@ -7294,7 +7303,7 @@ export function createWorldModes(host) {
     // (PlayerActivate.cs:325-339 - no return, skipped in Info mode):
     // the door/ladder/loot ladder below still runs. Over BOTH pools,
     // as the exterior arm runs over its own two; pickQuestFoe skips
-    // any foe without a questBehaviour (activate.js:197), so the
+    // any foe without a questBehaviour (activate.js:200), so the
     // watch costs nothing.
     if (getInteractionMode() !== 'info' && interiorCtx && !host.activateLockOnly?.()) {   // TS1: the stick's tap is no click
       const qf = pickQuestFoe(eye, dir, interiorFoePool(), interiorCtx.collider);
@@ -8158,7 +8167,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:8580), so the OUTER host's one rides in.
+          // (dungeonContext.js:8592), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:847 -> the
@@ -9396,7 +9405,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:16565's own wave-46 note); the interior
+          // a blow (world.js:16568's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -9693,6 +9702,7 @@ export function createWorldModes(host) {
         ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1, dt,
         { detected: _detected, playerXZ: [player.pos[0], player.pos[2]],
           party: partyCompassPoints({ bodies: () => host.partyNear?.() ?? [] }),   // COMPASS-PARTY: the mates standing in this building
+          quest: questCompassPick(interiorQuestMarksHere(), player.pos),   // GUIDE8's Exact tier, indoors (AUDIT DELVE): the followed quest's nearest, else the nearest
           // QS4: the phone's own doors, this mode's own rig - see world.js's twin.
           quickUse: (n) => interiorKeyCtx.quickUse(n), quickSwap: () => interiorKeyCtx.quickSwap(),
           quickOffHand: () => interiorKeyCtx.quickOffHand(), quickSpell: () => interiorKeyCtx.quickSpell(), quickSwitchHand: () => interiorKeyCtx.quickSwitchHand(),   // QS6   // MAC-R3
@@ -10699,6 +10709,7 @@ export function createWorldModes(host) {
         where: () => ({ insideBuilding: true }),
         title: interiorBuilding?.name ?? 'Interior',
         party: () => host.partyNear?.() ?? [],   // DISC23-A: the party members standing in this building
+        quests: () => interiorQuestMarksHere(),   // GUIDE8's Exact tier, indoors (AUDIT DELVE): the quest resources standing in this building
       });
     },
     // PX15b: THE DIAL - four arms now that the interior ctx has four
@@ -12128,7 +12139,7 @@ export function createWorldModes(host) {
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
      *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3690-3712), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:12359). So an F9 pressed in a shop
+     *  unconditionally (world.js:12360). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -12167,7 +12178,7 @@ export function createWorldModes(host) {
       if (interiorOverlay instanceof DeathScreen) { interiorOverlay.restoreView(); interiorOverlay = null; }
     },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:12718)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:12719)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -12177,8 +12188,8 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:11261`
-     *  and `dungeonContext.js:8592` for its two sibling copies - lines
+     *  HARD2c: this used to spell them out, and named `world.js:11262`
+     *  and `dungeonContext.js:8604` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {

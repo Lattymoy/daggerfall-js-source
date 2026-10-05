@@ -1,4 +1,5 @@
 // @ts-check
+import { TRAIL_CELL } from './automap.js';   // AUDIT DELVE C8: the trail's own grid
 // WAYOUT1 (the delve arc, 2026-10-05 - the player, on the dungeon blocks: "removing the esoteric nature of dungeons"):
 // THE WAY OUT ON THE COMPASS.
 //
@@ -12,13 +13,23 @@
 // into the level, a save older than the trail), the mark stands on the way in itself, as the crow flies - the held
 // map's own beacon, said on the compass.
 //
-// Not a DFU member. Pure but for the field's cache.
+// AUDIT DELVE (bible/01-Overview/Audit-Delve.md): the trail is filled between the scan's samples (automapTrailTick - at
+// a run a sample is 1.6 m from the last and skipped a cell, and the field broke into pieces, the compass falling back to
+// the crow's line through the walls it promised never to point through); the cells are parsed once and added to as the
+// trail grows, on numeric column keys, and the field is built again only when the player stands off it (a crawl's
+// rebuild was 18-24 ms a second at 8,000 cells); and a step between two cells is asked of the host's static geometry
+// once (`stepClear`, a waist-high ray past the doors and movers) - two corridors a thin wall apart, whose cells the
+// trail's grid made neighbours, are not joined through it.
+//
+// Not a DFU member. Pure but for the reader's cache.
 
 /** The prefs key (the `dungeon-way-out` Features row). */
 export const WAY_PREF = 'dungeonWayOut';
 /** The compass mark's colour: the parchment's own light, an arrow pointing up and out - clear of the quest's gold, the
  *  party's green, the boats' teal, the Detect red and the professions' five (ui/enhancedHud.js drawWayOutMark). */
 export const WAY_MARK_CSS = '#efe6cf';
+/** AUDIT DELVE D9: the arrow's body - the ink the parchment's light rims (the pale alone was lost among the letters). */
+export const WAY_BODY_CSS = '#2b2418';
 /** How far one step between two cells may climb or drop (m) - a stair's tread is half of it. */
 export const WAY_STEP_DY = 1;
 /** A place's cell is the nearest trail cell within this (m). */
@@ -27,37 +38,49 @@ export const WAY_SNAP_M = 2.5;
 export const WAY_LOOK_CELLS = 14;
 /** Within this of the way in the mark is gone: the door is in front of the player (m). */
 export const WAY_HERE_M = 3;
-/** The field is rebuilt at most this often while the trail grows (s). */
+/** While the player stands off the field, it is built again at most this often (s). */
 export const WAY_FIELD_S = 1;
+/** While the player stands on it and the trail grows, it is built again this often (s) - a loop the trail closed is a
+ *  shorter way out, but the way it has is still a way. */
+export const WAY_REFIELD_S = 10;
+/** How many steps one build asks `stepClear` about (AUDIT DELVE C9): each step is asked once and kept, so a walk asks
+ *  a few a second; a long trail loaded whole is asked over a few builds, its steps taken as clear until they are. */
+export const WAY_STEP_ASKS = 2000;
+
+/** A trail column's key: its cell [x, z] as one number (AUDIT DELVE B2: no string built per lookup). */
+export const cellColumn = (x, z) => (x + 0x8000) * 0x10000 + (z + 0x8000);
 
 /**
- * @typedef {{ pts: number[][], col: Map<string, number[]> }} TrailCells
+ * @typedef {{ pts: number[][], col: Map<number, number[]>, read: number }} TrailCells
  */
-/** The trail's cells (its keys `x,y,z` - the cell's corner and the feet's half-metre height, automapTrailTick's), as
- *  points at each cell's middle and an index by column. Pure. @param {Iterable<string>|null|undefined} trail */
-export function trailCells(trail) {
-  /** @type {TrailCells} */
-  const out = { pts: [], col: new Map() };
-  for (const k of trail ?? []) {
-    const [x, y, z] = String(k).split(',').map(Number);
+/** The trail's cells (its keys `x,y,z` - the cell on TRAIL_CELL's grid and the feet's half-metre height,
+ *  automapTrailTick's), as points at each cell's middle and an index by column. `cells`, given, is extended by the keys
+ *  past the `read` it has (a trail only grows on one run, in insertion order). Pure but for `cells`.
+ *  @param {Iterable<string>|null|undefined} trail @param {TrailCells} [cells] */
+export function trailCells(trail, cells = { pts: [], col: new Map(), read: 0 }) {
+  let k = 0;
+  for (const key of trail ?? []) {
+    if (k++ < cells.read) continue;
+    const [x, y, z] = String(key).split(',').map(Number);
     if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) continue;
-    const i = out.pts.length;
-    out.pts.push([x + 0.5, y, z + 0.5]);
-    const c = `${x},${z}`;
-    const list = out.col.get(c);
-    if (list) list.push(i); else out.col.set(c, [i]);
+    const i = cells.pts.length;
+    cells.pts.push([(x + 0.5) * TRAIL_CELL, y, (z + 0.5) * TRAIL_CELL]);
+    const c = cellColumn(x, z);
+    const list = cells.col.get(c);
+    if (list) list.push(i); else cells.col.set(c, [i]);
   }
-  return out;
+  cells.read = k;
+  return cells;
 }
 
 /** The nearest cell to `p` within `snap` (m), or -1. Pure. @param {TrailCells} cells @param {number[]} p */
 export function nearestCell(cells, p, snap = WAY_SNAP_M) {
   if (!p) return -1;
-  const cx = Math.floor(p[0]), cz = Math.floor(p[2]), r = Math.ceil(snap);
+  const cx = Math.floor(p[0] / TRAIL_CELL), cz = Math.floor(p[2] / TRAIL_CELL), r = Math.ceil(snap / TRAIL_CELL);
   let best = -1, bestD = snap;
   for (let dx = -r; dx <= r; dx++) {
     for (let dz = -r; dz <= r; dz++) {
-      for (const i of cells.col.get(`${cx + dx},${cz + dz}`) ?? []) {
+      for (const i of cells.col.get(cellColumn(cx + dx, cz + dz)) ?? []) {
         const q = cells.pts[i];
         const d = Math.hypot(q[0] - p[0], q[1] - p[1], q[2] - p[2]);
         if (d <= bestD) { bestD = d; best = i; }
@@ -67,15 +90,28 @@ export function nearestCell(cells, p, snap = WAY_SNAP_M) {
   return best;
 }
 
+/** A step's wall is between its two cells, not at either end (m): a cell's middle can stand a little behind the wall
+ *  the player walked along (the capsule's 0.35 inside a one-metre cell leaves its middle up to 0.15 behind the face of
+ *  a wall square to the grid), and the collider meets a face from either side - a hit this near an end is that cell's
+ *  own wall, not one across the step. */
+export const WAY_STEP_END_M = 0.25;
+/** Does a hit at `hit` (m) along a step `len` long stand across it - a wall between the two cells? Pure. */
+export const stepHitCuts = (hit, len, end = WAY_STEP_END_M) => Number.isFinite(hit) && hit > end && hit < len - end;
+
+/** A step between two cells, either way round, as one key (the asked steps, below). */
+export const stepKey = (i, j) => (i < j ? i * 0x1000000 + j : j * 0x1000000 + i);
+
 /**
  * THE FIELD: for every cell, the next cell toward `exit` (a cell index) - -1 where the way out cannot be walked from
  * it - and whether that step is a teleporter's jump. A breadth-first walk OUT from the way in over the reversed edges:
- * two cells side by side (the eight around a column) within WAY_STEP_DY of each other's height are a step both ways;
- * a teleporter (`portals`: [entranceCell, exitCell] pairs) is a step from its entrance to its exit only, so the walk
- * reaches its entrance from its exit. Pure.
+ * two cells side by side (the eight around a column, and the column itself a little up or down) within WAY_STEP_DY of
+ * each other's height are a step both ways, unless `clear(i, j)` says a wall stands across it; a teleporter
+ * (`portals`: [entranceCell, exitCell] pairs) is a step from its entrance to its exit only, so the walk reaches its
+ * entrance from its exit. Pure but for what `clear` reads.
  * @param {TrailCells} cells @param {number} exit @param {ReadonlyArray<[number, number]>} [portals]
+ * @param {(i: number, j: number) => boolean} [clear]
  */
-export function wayField(cells, exit, portals = []) {
+export function wayField(cells, exit, portals = [], clear = undefined) {
   const n = cells.pts.length;
   const next = new Int32Array(n).fill(-1), jump = new Uint8Array(n);
   if (!(exit >= 0 && exit < n)) return { next, jump };
@@ -91,20 +127,15 @@ export function wayField(cells, exit, portals = []) {
   while (head < tail) {
     const i = queue[head++];
     const [px, py, pz] = cells.pts[i];
-    const cx = Math.floor(px), cz = Math.floor(pz);
+    const cx = Math.floor(px / TRAIL_CELL), cz = Math.floor(pz / TRAIL_CELL);
     for (let dx = -1; dx <= 1; dx++) {
-      for (let dz = -1; dz <= 1; dz++) {
-        if (!dx && !dz) continue;
-        for (const j of cells.col.get(`${cx + dx},${cz + dz}`) ?? []) {
+      for (let dz = -1; dz <= 1; dz++) {   // the eight round the column, and the column itself (a ramp's cell over a cell)
+        for (const j of cells.col.get(cellColumn(cx + dx, cz + dz)) ?? []) {
           if (seen[j] || Math.abs(cells.pts[j][1] - py) > WAY_STEP_DY) continue;
+          if (clear && !clear(i, j)) continue;
           seen[j] = 1; next[j] = i; queue[tail++] = j;
         }
       }
-    }
-    // the same column, a little up or down (a ramp's cell over a cell), is a step too
-    for (const j of cells.col.get(`${cx},${cz}`) ?? []) {
-      if (seen[j] || Math.abs(cells.pts[j][1] - py) > WAY_STEP_DY) continue;
-      seen[j] = 1; next[j] = i; queue[tail++] = j;
     }
     for (const j of back.get(i) ?? []) {
       if (seen[j]) continue;
@@ -122,7 +153,7 @@ export function wayField(cells, exit, portals = []) {
  * @param {(p: number[]) => boolean} sees
  */
 export function wayPoint(cells, field, from, sees, look = WAY_LOOK_CELLS) {
-  if (!(from >= 0) || field.next[from] < 0) return null;
+  if (!(from >= 0) || !(from < field.next.length) || field.next[from] < 0) return null;
   let i = from, best = null, first = null;
   for (let s = 0; s < look; s++) {
     if (field.jump[i] === 1) { first ??= cells.pts[i]; break; }   // the teleporter's own cell: the mark stands on it
@@ -139,40 +170,63 @@ export function wayPoint(cells, field, from, sees, look = WAY_LOOK_CELLS) {
 /**
  * THE HOST'S READER: `aim(trail, portals, exitAt, feet, sees, nowS)` answers the compass's [x, z] for the way out, or
  * null at the way in itself. `portals` are the walked teleporters ({ entrance: { pos }, exit: { pos } }); `exitAt`
- * the way in ([x, y, z]); `feet` where the player stands. The cells and the field are kept while the trail is the same
- * size (a trail only grows) and rebuilt at most every WAY_FIELD_S while it grows - at once when it is smaller (another
- * run's record) or the way in moved.
+ * the way in ([x, y, z]); `feet` where the player stands. The cells are parsed once and added to as the trail grows;
+ * the field is built again at once when the trail is smaller (another run's record), the way in moved or a teleporter
+ * was walked; at most every WAY_FIELD_S while the player stands off it or steps are still to be asked; and every
+ * WAY_REFIELD_S while the trail grows under a player on it. `stepClear(p, q)` (AUDIT DELVE C9), given, says whether a
+ * step between two cells' points crosses no wall; each step is asked once (WAY_STEP_ASKS a build at most) and kept.
  */
-export function createWayOut({ fieldEvery = WAY_FIELD_S } = {}) {
-  let size = -1, builtAt = -Infinity, exitKey = '';
+export function createWayOut({ fieldEvery = WAY_FIELD_S, refieldEvery = WAY_REFIELD_S, stepAsks = WAY_STEP_ASKS } = {}) {
+  let size = -1, builtAt = -Infinity, exitKey = '', portalCount = -1, unasked = false;
   /** @type {TrailCells|null} */ let cells = null;
   /** @type {{ next: Int32Array, jump: Uint8Array }|null} */ let field = null;
+  /** @type {Map<number, boolean>} */ let asked = new Map();
+  const reset = () => { size = -1; builtAt = -Infinity; exitKey = ''; portalCount = -1; unasked = false; cells = null; field = null; asked = new Map(); };
   return {
     /**
      * @param {Set<string>|null|undefined} trail @param {Iterable<any>|null|undefined} portals @param {number[]|null} exitAt
      * @param {number[]|null} feet @param {(p: number[]) => boolean} sees @param {number} nowS
+     * @param {((p: number[], q: number[]) => boolean)|null} [stepClear]
      * @returns {number[]|null}
      */
-    aim(trail, portals, exitAt, feet, sees, nowS) {
+    aim(trail, portals, exitAt, feet, sees, nowS, stepClear = null) {
       if (!exitAt || !feet) return null;
       if (Math.hypot(exitAt[0] - feet[0], exitAt[2] - feet[2]) <= WAY_HERE_M && Math.abs(exitAt[1] - feet[1]) <= WAY_STEP_DY * 2) return null;
       const n = trail?.size ?? 0;
       const ek = `${exitAt[0]},${exitAt[1]},${exitAt[2]}`;
-      // a trail only grows on one run; one SMALLER than the field's is another run's (a new record) - rebuilt at once
-      if ((n !== size || ek !== exitKey) && (n < size || nowS - builtAt >= fieldEvery || !cells || ek !== exitKey)) {
-        size = n; builtAt = nowS; exitKey = ek;
-        cells = trailCells(trail);
-        const ends = [];
-        for (const t of portals ?? []) {
-          const a = nearestCell(cells, t?.entrance?.pos), b = nearestCell(cells, t?.exit?.pos);
-          if (a >= 0 && b >= 0) ends.push(/** @type {[number, number]} */ ([a, b]));
+      const tps = portals ? [...portals] : [];
+      // a trail only grows on one run; one SMALLER than the cells' is another run's (a new record) - read again whole
+      if (!cells || n < size || ek !== exitKey) { reset(); cells = trailCells(trail); }
+      else if (n !== size) trailCells(trail, cells);
+      const grown = n !== size;
+      const from = nearestCell(cells, feet);
+      const off = !field || from < 0 || from >= field.next.length || field.next[from] < 0;
+      if (!field || tps.length !== portalCount
+        || ((grown && off || unasked) && nowS - builtAt >= fieldEvery)
+        || (grown && nowS - builtAt >= refieldEvery)) {
+        const c = /** @type {TrailCells} */ (cells);
+        size = n; builtAt = nowS; exitKey = ek; portalCount = tps.length; unasked = false;
+        /** @type {[number, number][]} */ const ends = [];
+        for (const t of tps) {
+          const a = nearestCell(c, t?.entrance?.pos), b = nearestCell(c, t?.exit?.pos);
+          if (a >= 0 && b >= 0) ends.push([a, b]);
         }
-        field = wayField(cells, nearestCell(cells, exitAt), ends);
+        let budget = stepAsks;
+        const clear = stepClear ? (/** @type {number} */ i, /** @type {number} */ j) => {
+          const k = stepKey(i, j);
+          const known = asked.get(k);
+          if (known !== undefined) return known;
+          if (budget <= 0) { unasked = true; return true; }   // asked at a later build; clear until then
+          budget--;
+          const ok = stepClear(c.pts[i], c.pts[j]) !== false;
+          asked.set(k, ok);
+          return ok;
+        } : undefined;
+        field = wayField(c, nearestCell(c, exitAt), ends, clear);
       }
-      const from = cells ? nearestCell(cells, feet) : -1;
       const p = cells && field && from >= 0 ? wayPoint(cells, field, from, sees) : null;
       return p ? [p[0], p[2]] : [exitAt[0], exitAt[2]];   // no walked way: the way in, as the crow flies
     },
-    reset() { size = -1; builtAt = -Infinity; exitKey = ''; cells = null; field = null; },
+    reset,
   };
 }

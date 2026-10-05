@@ -2,8 +2,8 @@
   {
     "name": "DSIZE1-the-threshold-off-by-one",
     "file": "src/world/smallerDungeons.js",
-    "old": "  if (!blocks || blocks.length <= MEDIUM_DUNGEON_THRESHOLD) return dfLocation;",
-    "new": "  if (!blocks || blocks.length < MEDIUM_DUNGEON_THRESHOLD) return dfLocation;",
+    "old": "  if (!blocks || blocks.length <= threshold) return dfLocation;",
+    "new": "  if (!blocks || blocks.length < threshold) return dfLocation;",
     "tests": [
       "test/dsize1_mediumdungeons.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "DSIZE1-unseeded",
     "file": "src/world/smallerDungeons.js",
-    "old": "  setSeed(dfLocation.mapTableData.mapId);\n  const layout = MEDIUM_LAYOUT",
-    "new": "  const layout = MEDIUM_LAYOUT",
+    "old": "  setSeed(dfLocation.mapTableData.mapId);\n  const layout = rows.map(",
+    "new": "  const layout = rows.map(",
     "tests": [
       "test/dsize1_mediumdungeons.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "DSIZE1-the-ring-from-the-interior-pool",
     "file": "src/world/smallerDungeons.js",
-    "old": "  const layout = MEDIUM_LAYOUT.map(([x, z, border], i) => generateRdbBlock(x, z, border, i === 0, dfLocation));",
-    "new": "  const layout = MEDIUM_LAYOUT.map(([x, z], i) => generateRdbBlock(x, z, false, i === 0, dfLocation));",
+    "old": "const layout = rows.map(([x, z, border], i) => generateRdbBlock(x, z, border, i === 0, dfLocation));",
+    "new": "const layout = rows.map(([x, z], i) => generateRdbBlock(x, z, false, i === 0, dfLocation));",
     "tests": [
       "test/dsize1_mediumdungeons.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "DSIZE1-the-ring-open",
     "file": "src/world/smallerDungeons.js",
-    "old": "[0, -2, true], [-1, -1, true], [1, -1, true],",
-    "new": "[0, -3, true], [-1, -1, true], [1, -1, true],",
+    "old": "[0, -1, true], [1, -1, true], [-1, 0, true], [2, 0, true],",
+    "new": "[0, -2, true], [1, -1, true], [-1, 0, true], [2, 0, true],",
     "tests": [
       "test/dsize1_mediumdungeons.test.js"
     ]
@@ -141,6 +141,96 @@
     "new": "  items: [{}],\n});",
     "tests": [
       "test/dsize1_mediumdungeons.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-A6-a-medium-quest-refuses-the-setting",
+    "file": "src/world/smallerDungeons.js",
+    "old": "    if (quest && quest.smallerDungeonsState === SMALLER_DUNGEONS_STATE.Disabled) return false;\n  }\n  return setting;",
+    "new": "    if (quest && quest.smallerDungeonsState !== SMALLER_DUNGEONS_STATE.Enabled) return false;\n  }\n  return setting;",
+    "tests": [
+      "test/dsize1_mediumdungeons.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-E4-online-stamped-by-the-setting",
+    "file": "src/world/smallerDungeons.js",
+    "old": "  if (online) return SMALLER_DUNGEONS_STATE.Disabled;\n  if (enabled)",
+    "new": "  if (enabled)",
+    "tests": [
+      "test/dsize1_mediumdungeons.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-E5-DFU-pair-adopted",
+    "file": "src/world/smallerDungeons.js",
+    "old": "    if (held !== MEDIUM_DUNGEONS_STATE && quest.smallerDungeonsState !== MEDIUM_DUNGEONS_STATE) continue;\n",
+    "new": "",
+    "tests": [
+      "test/dsize1_mediumdungeons.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-E5-its-own-link-adopted",
+    "file": "src/world/smallerDungeons.js",
+    "old": "    if (!link || link.questUID === quest.uid) continue;",
+    "new": "    if (!link) continue;",
+    "tests": [
+      "test/dsize1_mediumdungeons.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-E1-agreeing-markers-relaid",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "      if (markerAddresses(markers.questSpawnMarkers) === markerAddresses(sd.questSpawnMarkers)\n        && markerAddresses(markers.questItemMarkers) === markerAddresses(sd.questItemMarkers)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/dsize1_mediumdungeons.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-E1-the-stamp-kept",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "    quest.smallerDungeonsState = SMALLER_DUNGEONS_STATE.Disabled;\n    if (!moved) continue;",
+    "new": "    if (!moved) continue;",
+    "tests": [
+      "test/dsize1_mediumdungeons.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-E1-nothing-put-back",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "    putBackPlacements(quest, env);\n    relaid++;",
+    "new": "    relaid++;",
+    "tests": [
+      "test/dsize1_mediumdungeons.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-E1-a-whole-quest-relaid",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "    if (state !== SMALLER_DUNGEONS_STATE.Enabled && state !== MEDIUM_DUNGEONS_STATE) continue;",
+    "new": "    if (false) continue;",
+    "tests": [
+      "test/dsize1_mediumdungeons.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-E1-the-load-unwired",
+    "file": "src/scenes/questBridge.js",
+    "old": "      if (isOnlinePage()) relayWholeDungeons(machine, ",
+    "new": "      if (false) relayWholeDungeons(machine, ",
+    "tests": [
+      "test/dsize1_mediumdungeons.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-E2-the-other-layout-applied",
+    "file": "src/scenes/dungeonContext.js",
+    "old": " && !otherLayout ? applyWorld(extras.world) : null;",
+    "new": " ? applyWorld(extras.world) : null;",
+    "tests": [
+      "test/audit28_smallerdungeons.test.js"
     ]
   }
 ]

@@ -104,6 +104,10 @@ export const DOOR_VERB_FLAGS = new Set([
  *  GetComponent as `kind === 'door'` alone, which admits the special
  *  door the C# lookup can never return. */
 export const isActionDoorObject = (o) => !!o && o.kind === 'door' && !o.special;
+/** How far down a chain IsPlaying looks before it answers no (DaggerfallAction.IsPlaying's recursion, bounded here so
+ *  a looped chain cannot overflow the stack). AUDIT DELVE A4: one home - the echo's chain walk reads it
+ *  (systems/dungeonEcho.js ECHO_CHAIN_MAX). */
+export const PLAY_DEPTH_MAX = 32;
 
 // Delegated relays (P10/U6): Teleport, the text actions and
 // SetGlobalVar run through scene seams inside _runRelay. Activate
@@ -957,7 +961,7 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
   _isPlaying(o, depth = 0) {
     const s = o.kind === 'door' ? o.moveState : o.state;
     if (s === 'forward' || s === 'reverse') return true;
-    if (depth > 32) return false;
+    if (depth > PLAY_DEPTH_MAX) return false;
     const next = this._next(o);
     return next ? this._isPlaying(next, depth + 1) : false;
   }
