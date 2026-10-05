@@ -39,6 +39,7 @@ import { ownMinutes } from './worldTick.js';
 import { maxFatigue } from './statMods.js';
 import { registerTabledLootHandler, registerEnemyLootExtra } from './loot.js';
 import { registerLootSupply } from './foeLootCap.js';   // CAP-SUPPLIES: the seven are supplies to a body's cap
+import { renownLootQuarters, lootEased } from './renownLoot.js';   // RENOWN-LOOT: the chances by the roller's Renown
 
 /** The block (Rest-Arc.md section 6: 1700-1709, the last three spare). */
 export const REST_ITEM = Object.freeze({ Bedroll: 1700, EmberJar: 1701, Firewood: 1702, Tonic: 1703, Candle: 1704, Salts: 1705, Draught: 1706 });
@@ -270,6 +271,12 @@ export function restItemsStock(kind, quality = 10, rolls = Math.random, { online
  *  in a pile alone, the Bedroll never (the counter's). */
 export const REST_PILE_CHANCES = Object.freeze([[REST_ITEM.EmberJar, 6], [REST_ITEM.Tonic, 6], [REST_ITEM.Firewood, 4], [REST_ITEM.Candle, 2], [REST_ITEM.Salts, 2], [REST_ITEM.Draught, 2]]);
 export const REST_FOE_CHANCES = Object.freeze([[REST_ITEM.EmberJar, 3], [REST_ITEM.Tonic, 3], [REST_ITEM.Candle, 1], [REST_ITEM.Salts, 1], [REST_ITEM.Draught, 1]]);
+/** RENOWN-LOOT (systems/renownLoot.js): a table at `quarters` of LOOT-EASE's buff. Online the supplies' step starts from
+ *  none - they never dropped online before LOOT-EASE - so a foe's Ember Jar is 1.5 in 100 at Renown 1, 3 at Renown 20
+ *  and 4.5 at Renown 40; offline the table as it stands. Each item still draws its roll at every share, so no other
+ *  draw moves. */
+export const restLootChances = (chances, quarters = renownLootQuarters()) =>
+  quarters === 4 ? chances : chances.map(([t, pct]) => [t, lootEased(0, pct, quarters)]);
 /** A pile's or a foe's roll: each item at its chance, minted into `items`. */
 export function rollRestLoot(items, chances, rolls = Math.random, { online = isOnlinePage() } = {}) {
   if (!Array.isArray(items) || !restItemsAvailable(online)) return items;
@@ -281,6 +288,6 @@ export const isDeepPileKey = (key) => { const a = String(key ?? '').charCodeAt(0
 /** The piles' and the foes' hooks, subscribed last (scenes/shared.js, after Foraging's): a draw taken here is after
  *  every other subscriber's, so none of theirs moves. */
 export function installRestItemLoot() {
-  registerTabledLootHandler('REST', ({ key, items, rolls }) => { if (isDeepPileKey(key)) rollRestLoot(items, REST_PILE_CHANCES, rolls); });
-  registerEnemyLootExtra('REST', ({ items, rolls }) => { rollRestLoot(items, REST_FOE_CHANCES, rolls); });
+  registerTabledLootHandler('REST', ({ key, items, rolls }) => { if (isDeepPileKey(key)) rollRestLoot(items, restLootChances(REST_PILE_CHANCES), rolls); });
+  registerEnemyLootExtra('REST', ({ items, rolls }) => { rollRestLoot(items, restLootChances(REST_FOE_CHANCES), rolls); });
 }

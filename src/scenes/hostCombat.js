@@ -8,7 +8,8 @@
 // FormulaHelper.cs, DaggerfallUnityItem.cs, PlayerActivate.cs
 // (MIT, Daggerfall Workshop).
 
-import { plainFoeLootRule, capFoeLoot, PLAIN_FOE_RARITY_WEIGHTS } from '../systems/foeLootCap.js';   // FOE-CAP: a plain foe's cap and ladder
+import { plainFoeLootRule, capFoeLoot, plainFoeRarityWeights } from '../systems/foeLootCap.js';   // FOE-CAP: a plain foe's cap and ladder (RENOWN-LOOT: at the roller's Renown)
+import { renownLootQuarters, lootEased } from '../systems/renownLoot.js';   // RENOWN-LOOT: LOOT-EASE's buff by the roller's Renown
 import { SKILLS, tallySkill, skillValue, SKILL_NAMES } from '../systems/skills.js';
 import { effectiveLevel } from '../systems/mentorMode.js';   // SOFTCAP2: mentor mode - the level the world is built around
 import { vampireAttackVoice } from '../systems/vampirism.js';   // V5: GetCustomRaceGenderAttackSoundData
@@ -132,15 +133,22 @@ const HUMANOID_LOOT_ITEM_SCALE = 0.25;   // MOD: keep a quarter of the item chan
  *  humanoid's body held 0.9 pieces and a third of them nothing but gold (1.9, an eighth bare, before PLAIN-LOOT). Half
  *  the cut given back: 1.3 pieces, a fifth bare. */
 const PLAIN_FOE_LOOT_KEEP = 0.75;
+/** PLAIN-LOOT's own half - the live game's before LOOT-EASE, where RENOWN-LOOT's step starts. */
+const PLAIN_FOE_LOOT_KEEP_BEFORE = 0.5;
+/** RENOWN-LOOT (systems/renownLoot.js): the share a plain foe keeps at `quarters` of LOOT-EASE's buff - 62.5% at
+ *  Renown 1 online, three in four offline and at Renown 20, 87.5% at Renown 40. */
+export const plainFoeLootKeep = (quarters = renownLootQuarters()) => lootEased(PLAIN_FOE_LOOT_KEEP_BEFORE, PLAIN_FOE_LOOT_KEEP, quarters);
 const eliteLooted = (entity) => !!(entity?.eliteFoe || entity?.elite || championOf(entity));
 // ELITE: `lootDropMult` scales every item category's chance (gold untouched, as the humanoid cut);
 // `lootQualityMult` scales the rarity ladder's odds. Both 1 everywhere but an elite dungeon.
 export function spawnEnemyLoot(entity, mobileType, basics, player, { rolls = Math.random, lootDropMult = 1, lootQualityMult = 1, where = null } = {}) {
   const itemChanceScale = (isHumanoid(entity) ? HUMANOID_LOOT_ITEM_SCALE : 1) * lootDropMult;
+  const ease = renownLootQuarters();   // RENOWN-LOOT: the roller's Renown, read once for the keep and the ladder alike
   entity.items = generateItems(enemyLootTableKey(mobileType, basics?.lootTableKey ?? '-'), { level: effectiveLevel(player), gender: player.gender }, undefined, { itemChanceScale, mobileType });
   const eq = equipEnemy(entity, mobileType, effectiveLevel(player), rolls, { player });   // SOFTCAP2: a mentor's foes carry the GROUP's loot and gear
   addEnemyLootExtras(entity.items, basics, rolls);
-  if (!eliteLooted(entity)) entity.items = entity.items.filter((it) => isGoldPieces(it) || rolls() < PLAIN_FOE_LOOT_KEEP);   // PLAIN-LOOT: three pieces in four (LOOT-EASE), on the host's stream as the kit's cut is
+  const keep = plainFoeLootKeep(ease);
+  if (!eliteLooted(entity)) entity.items = entity.items.filter((it) => isGoldPieces(it) || rolls() < keep);   // PLAIN-LOOT: three pieces in four (LOOT-EASE; RENOWN-LOOT: by the roller's Renown), on the host's stream as the kit's cut is
   // RRI2: EnemyEntity.OnLootSpawned (EnemyEntity.cs:399) fires here, after
   // the trio and with the kit already in Items - the mod's
   // RandomConditionEnemyItems (RoleplayRealismItemsMod.cs:222-245) wears
@@ -153,7 +161,7 @@ export function spawnEnemyLoot(entity, mobileType, basics, player, { rolls = Mat
   // and carries at most its cap, gold included; the stamp rides the entity so the death's handlers are capped too
   const plain = plainFoeLootRule(entity, basics);
   if (plain) entity.lootCap = plain.cap;
-  rollCorpseLoot(entity, basics, { rolls, luck: liveStat(player, 'luck'), qualityMult: lootQualityMult, weights: plain?.plainLadder ? PLAIN_FOE_RARITY_WEIGHTS : null });
+  rollCorpseLoot(entity, basics, { rolls, luck: liveStat(player, 'luck'), qualityMult: lootQualityMult, weights: plain?.plainLadder ? plainFoeRarityWeights(ease) : null });
   capFoeLoot(entity);
   return entity.items;
 }

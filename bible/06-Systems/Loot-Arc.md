@@ -915,6 +915,9 @@ all: `REST_ITEMS_ONLINE` was still the release-ahead switch's off.
   1), each its own roll; the Bedroll stays bought. The shut release stands behind the switch (`restItemsOnline`), its
   pins kept through `_setRestItemsOnlineForTests` - the way back.
 
+**Online these are Renown 20's numbers** since RENOWN-LOOT (section 20): the buff grows with the roller's Renown, and
+offline it is this section's whole.
+
 **Measured after**, the same harness (levels 1 / 8 / 15): a plain humanoid's body 1.3 pieces, a fifth bare; a Magic or
 better piece on 5% / 8% / 12% of them, a Rare 1% / 1.2% / 2.5%, a Legendary about one in a thousand; a skeleton's 0.6
 pieces, half bare; a Potion of Healing on 7-8% of looting foes, Restore Power on 4.5-5%, a rest supply on about 7% -
@@ -930,3 +933,55 @@ re-aimed - SIGIL1's and SURVTIERS3's door regexes, the customs pins under the sh
 `auditrest3`, `auditrestparty_camps`), the mounted dungeon harnesses' stubs (`audit68_dungeonctx`, `loot7check`,
 `corpsegold`, `seatheal`). `tools/mutants/lootease.json` (39, all dead); `plainloot`, `potioncommon`, `rest6`,
 `auditrestparty` and `survtiers3` re-aimed by content.
+
+## 20. RENOWN-LOOT - the buff grown with Renown (2026-10-05)
+
+Mac, of LOOT-EASE: *"Instead of a flat loot increase, lets also tie it to renoun level"*. Asked three things, Mac chose
+**"Half → all → half again"** (Renown 1 half the buff, Renown 20 all of it, Renown 40 half again, at the stages sigils
+open), **"The roller's own"** Renown, and offline **"Keep this PR's numbers"**.
+
+**The buff.** What section 19 gave over the live game - the keep's step (a half to three in four), the plain ladder's
+(FOE-CAP's first numbers to LOOT-EASE's, each tier's base, step and cap), the healing potion's two (6 to 10 a foe, 12
+to 18 a pile), Restore Power's two and the rest supplies' online (each from none). Online, each knob takes the SAME
+SHARE of its own step (`systems/renownLoot.js` `lootEased`, settled to nine places), by the stage the roller's Renown
+opens - the sigils' own five (`sigil.js` `renownSigilStage`: Renown 1, 10, 20, 30, 40):
+
+| Renown | the buff | items kept | blue at level 0 | healing (a foe / a pile) | Restore Power (a foe / a pile) | rest supplies |
+|---|---|---|---|---|---|---|
+| 1-9 | half | 62.5% | 4.5% | 8 / 15 | 3 / 5 | half LOOT-EASE's |
+| 10-19 | three quarters | 68.75% | 4.75% | 9 / 16.5 | 4.5 / 7.5 | three quarters |
+| 20-29 | all | 75% | 5% | 10 / 18 | 6 / 10 | LOOT-EASE's |
+| 30-39 | five quarters | 81.25% | 5.25% | 11 / 19.5 | 7.5 / 12.5 | five quarters |
+| 40-50 | half again | 87.5% | 5.5% | 12 / 21 | 9 / 15 | half again |
+
+The live game before LOOT-EASE: 50% kept, 4% blue, 6 / 12 healing, no Restore Power, no rest supply online. Every
+stage is above it, and Renown 40 is under the loot before PLAIN-LOOT (section 18).
+
+**What stays whole at every stage.** What LOOT-EASE fixed rather than tuned: a plain foe's worn kit rolls the ladder at
+its death (KIT-ROLL), the cap keeps a supply before plain gear (CAP-SUPPLIES), the rest supplies drop online at all.
+
+**Whose Renown.** The roller's: the page that rolls the loot - a dungeon's host for its foes, a street cell's owner
+for its foes, and for a treasure pile the page that builds the dungeon (each player's own, `dungeonContext.js`
+`rollPileItems`) - as a foe's level and a pile's already follow that page's character. Read
+through SIGIL1's door (`sigil.js` `sigilOnline`, `sigilRenown`), which `scenes/world.js` sets: online from the page's
+own word before any list is minted, its Renown as the token's level is adopted (`renownAdopt`, only ever upward),
+offline again when a tab leaves its seat. Online before the page knows its Renown - the moments before the first token
+- the first stage: no roll is richer than the Renown behind it. Offline there is no Renown: section 19's numbers whole.
+
+**The four hosts** need nothing of their own: every knob is read inside the shared rolls (`hostCombat.js`
+`spawnEnemyLoot` - the keep and the ladder read once, so one spawn is one stage; `foeLootCap.js` `rollCorpseKit`; the
+healing and rest supplies' loot hooks), at the page's door. `scenes/world.js` sets it; `worldModes.js` and
+`dungeonContext.js` roll on the same page; `scenes/exterior.js` is the offline town page and never goes online.
+
+**No draw moves.** Every stage draws as many rolls as every other (a supply at a 0% share still draws its roll), so a
+seed's other loot is the same loot at every Renown; only what each roll decides changes.
+
+**Measured**, section 19's harness through the real chain (the spawn, the body door's kit roll, the death raise), 3,000
+bodies a cell, a plain Warrior at level 8: 1.11 pieces a body at Renown 1 (26.5% gold alone), 1.21 at 10, 1.30 at 20
+(18.7%; offline the same), 1.39 at 30, 1.46 at 40 (13.2%); a Potion of Healing on 5.8% / 7.9% / 10.1% of them at
+Renown 1 / 20 / 40, Restore Power on 2.2% / 4.3% / 8.2%, a rest supply on 2.4% / 7.1% / 11.0%. A skeleton's body 0.46 /
+0.59 / 0.75 pieces.
+
+Pinned: `test/renownloot.test.js` (6 - the stage and its door, the table, the keep through the real spawn, the kit at
+death, the supplies through the real hooks with their draws counted, the hosts). Moved: `test/rf2_spawnloot.test.js`
+(the chain's text - `ease` read once). `tools/mutants/renownloot.json` (26, all dead).

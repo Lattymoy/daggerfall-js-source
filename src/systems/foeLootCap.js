@@ -38,6 +38,7 @@ import { isGoldPieces } from './inventory.js';
 import { POTION_TEMPLATE_INDEX } from './loot.js';   // CAP-SUPPLIES: a potion IS the glass bottle (DFU's IsPotion)
 import { equipTableOf } from './equip.js';   // KIT-ROLL: what the foe wore
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // KIT-ROLL: the row every host hands its spawn
+import { renownLootQuarters, lootEased } from './renownLoot.js';   // RENOWN-LOOT: the plain ladder by the roller's Renown
 
 /** The most a plain foe's body carries, gold included. */
 export const PLAIN_FOE_LOOT_CAP = 3;
@@ -54,6 +55,27 @@ export const PLAIN_FOE_RARITY_WEIGHTS = Object.freeze({
   rare:      Object.freeze({ base: 6,    perTier: 1.2,   cap: 38 }),
   legendary: Object.freeze({ base: 0.15, perTier: 0.075, cap: 3 }),
 });
+/** FOE-CAP's first numbers - the live game's ladder before LOOT-EASE, where RENOWN-LOOT's step starts. */
+export const PLAIN_FOE_RARITY_WEIGHTS_BEFORE = Object.freeze({
+  magic:     Object.freeze({ base: 40,  perTier: 4,    cap: 150 }),
+  rare:      Object.freeze({ base: 4,   perTier: 0.8,  cap: 25 }),
+  legendary: Object.freeze({ base: 0.1, perTier: 0.05, cap: 2 }),
+});
+const _ladders = new Map();
+/** RENOWN-LOOT (systems/renownLoot.js): the plain ladder at `quarters` of LOOT-EASE's buff - every tier's base, step and
+ *  cap moved that share of the way from FOE-CAP's first numbers: 4.5% blue at level 0 at Renown 1 online, LOOT-EASE's
+ *  own (PLAIN_FOE_RARITY_WEIGHTS) offline and at Renown 20, 5.5% at Renown 40. One frozen ladder a share. */
+export function plainFoeRarityWeights(quarters = renownLootQuarters()) {
+  if (quarters === 4) return PLAIN_FOE_RARITY_WEIGHTS;
+  let w = _ladders.get(quarters);
+  if (!w) {
+    const tier = (/** @type {'magic'|'rare'|'legendary'} */ t) => Object.freeze(Object.fromEntries(['base', 'perTier', 'cap']
+      .map((k) => [k, lootEased(PLAIN_FOE_RARITY_WEIGHTS_BEFORE[t][k], PLAIN_FOE_RARITY_WEIGHTS[t][k], quarters)])));
+    w = Object.freeze({ magic: tier('magic'), rare: tier('rare'), legendary: tier('legendary') });
+    _ladders.set(quarters, w);
+  }
+  return w;
+}
 
 /** Has this foe a title of its own (and so no cap)? */
 export const titledFoe = (entity) => !!(entity?.eliteFoe || entity?.champion || entity?.revenant || entity?.properName || entity?.worldBoss);
@@ -143,7 +165,7 @@ export function rollCorpseKit(entity, { rolls = Math.random, luck = 50 } = {}) {
   if (!lootRarityOn() || !entity || !Array.isArray(entity.items) || !Number.isInteger(entity.lootCap) || entity.elite || titledFoe(entity)) return [];
   const worn = new Set(entity.equip ? equipTableOf(entity).filter(Boolean) : []);
   if (!worn.size) return [];
-  const source = { ...corpseSource(ENEMY_BASICS[entity.mobileType] ?? null, entity.level, entity.mobileType), weights: PLAIN_FOE_RARITY_WEIGHTS };
+  const source = { ...corpseSource(ENEMY_BASICS[entity.mobileType] ?? null, entity.level, entity.mobileType), weights: plainFoeRarityWeights() };   // RENOWN-LOOT: the death's roller's Renown
   const find = legendaryFindMult();
   const minted = [];
   for (const it of entity.items) {

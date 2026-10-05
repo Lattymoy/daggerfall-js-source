@@ -47,11 +47,12 @@
   {
     "name": "POTION-COMMON-every-pile",
     "file": "src/systems/healingSupply.js",
-    "old": "    if (i >= 10 && i <= 15) { maybeAddHealingPotion(items, HEALING_PILE_CHANCE, rolls);",
-    "new": "    { maybeAddHealingPotion(items, HEALING_PILE_CHANCE, rolls);",
+    "old": "    if (i >= 10 && i <= 15) { const { pile } = healingSupplyChances();",
+    "new": "    { const { pile } = healingSupplyChances();",
     "tests": [
       "test/potion_common.test.js"
-    ]
+    ],
+    "note": "RENOWN-LOOT (PIN MOVED): re-aimed by content - the line reads its knob at the roller's Renown now."
   },
   {
     "name": "POTION-COMMON-shelf-loop-dropped",
@@ -111,11 +112,12 @@
   {
     "name": "POTION-COMMON-I-to-P",
     "file": "src/systems/healingSupply.js",
-    "old": "    if (i >= 10 && i <= 15) { maybeAddHealingPotion(",
-    "new": "    if (i >= 9 && i <= 16) { maybeAddHealingPotion(",
+    "old": "    if (i >= 10 && i <= 15) { const { pile } = healingSupplyChances(); maybeAddHealingPotion(",
+    "new": "    if (i >= 9 && i <= 16) { const { pile } = healingSupplyChances(); maybeAddHealingPotion(",
     "tests": [
       "test/potion_common.test.js"
-    ]
+    ],
+    "note": "RENOWN-LOOT (PIN MOVED): re-aimed by content - the line reads its knob at the roller's Renown now."
   },
   {
     "name": "POTION-COMMON-under-the-kits-name",

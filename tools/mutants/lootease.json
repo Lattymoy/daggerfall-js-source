@@ -122,12 +122,13 @@
   {
     "name": "KIT-ROLL-the-whole-ladder",
     "file": "src/systems/foeLootCap.js",
-    "old": "entity.level, entity.mobileType), weights: PLAIN_FOE_RARITY_WEIGHTS };",
+    "old": "entity.level, entity.mobileType), weights: plainFoeRarityWeights() };",
     "new": "entity.level, entity.mobileType) };",
     "why": "the kit on the whole ladder: 0.09 is blue",
     "tests": [
       "test/search1_searchables.test.js"
-    ]
+    ],
+    "note": "RENOWN-LOOT (PIN MOVED): re-aimed by content - the line reads its knob at the roller's Renown now."
   },
   {
     "name": "KIT-ROLL-an-elite-dungeon's",
@@ -276,32 +277,35 @@
   {
     "name": "MAGICKA-COMMON-foe-dropped",
     "file": "src/systems/healingSupply.js",
-    "old": " maybeAddMagickaPotion(items, MAGICKA_ENEMY_CHANCE, rolls); });",
+    "old": " maybeAddMagickaPotion(items, enemy.magicka, rolls); });",
     "new": " });",
     "why": "no foe carries one",
     "tests": [
       "test/potion_common.test.js"
-    ]
+    ],
+    "note": "RENOWN-LOOT (PIN MOVED): re-aimed by content - the line reads its knob at the roller's Renown now."
   },
   {
     "name": "MAGICKA-COMMON-pile-dropped",
     "file": "src/systems/healingSupply.js",
-    "old": " maybeAddMagickaPotion(items, MAGICKA_PILE_CHANCE, rolls); }",
+    "old": " maybeAddMagickaPotion(items, pile.magicka, rolls); }",
     "new": " }",
     "why": "no pile holds one",
     "tests": [
       "test/potion_common.test.js"
-    ]
+    ],
+    "note": "RENOWN-LOOT (PIN MOVED): re-aimed by content - the line reads its knob at the roller's Renown now."
   },
   {
     "name": "MAGICKA-COMMON-drawn-first",
     "file": "src/systems/healingSupply.js",
-    "old": "{ maybeAddHealingPotion(items, HEALING_ENEMY_CHANCE, rolls); maybeAddMagickaPotion(items, MAGICKA_ENEMY_CHANCE, rolls); }",
-    "new": "{ maybeAddMagickaPotion(items, MAGICKA_ENEMY_CHANCE, rolls); maybeAddHealingPotion(items, HEALING_ENEMY_CHANCE, rolls); }",
+    "old": "maybeAddHealingPotion(items, enemy.healing, rolls); maybeAddMagickaPotion(items, enemy.magicka, rolls);",
+    "new": "maybeAddMagickaPotion(items, enemy.magicka, rolls); maybeAddHealingPotion(items, enemy.healing, rolls);",
     "why": "the magicka potion's draw before the healing potion's",
     "tests": [
       "test/potion_common.test.js"
-    ]
+    ],
+    "note": "RENOWN-LOOT (PIN MOVED): re-aimed by content - the line reads its knob at the roller's Renown now."
   },
   {
     "name": "POTION-COMMON-foe-chance-back",

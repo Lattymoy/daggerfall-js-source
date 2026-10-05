@@ -12,12 +12,13 @@
   {
     "name": "PLAIN-LOOT-the-gold-cut-too",
     "file": "src/scenes/hostCombat.js",
-    "old": "isGoldPieces(it) || rolls() < PLAIN_FOE_LOOT_KEEP",
-    "new": "rolls() < PLAIN_FOE_LOOT_KEEP",
+    "old": "isGoldPieces(it) || rolls() < keep",
+    "new": "rolls() < keep",
     "why": "a plain foe's gold halved with its pieces",
     "tests": [
       "test/rf2_spawnloot.test.js"
-    ]
+    ],
+    "note": "RENOWN-LOOT (PIN MOVED): re-aimed by content - the line reads its knob at the roller's Renown now."
   },
   {
     "name": "PLAIN-LOOT-the-elites-cut-too",
