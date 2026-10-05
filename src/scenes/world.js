@@ -246,7 +246,7 @@ import { herbKind } from './herbHost.js';   // PROF1: Herbalism's patches, a kin
 import { mineKind } from './mineHost.js'; import { nodeCompassPoints } from '../ui/nodeMarks.js'; import { createNodeGlowPass } from '../render/nodeGlow.js';   // PROF2: Mining's veins and Quarrying's boulders, a kind in it; NODE-MARKS: every profession's nodes on the compass in its colour, and lit where they stand
 import { treeKind, isTreeRecord, FOREST_STAMP } from './treeHost.js';   // PROF4: Logging's trees - the forest's own - a kind in it; LPT1: the felled trees' count, the near 3D trees' regather
 import { createLowPolyTrees } from '../systems/lowPolyTreesAssets.js';   // LPT1: Low Poly Trees - the host's one door
-import { LPT_ARCHIVES, LPT_SCALE_MAX, lptVariety, buildTreeSet } from '../world/lowPolyTrees.js';   // LPT1: which flats it stands for, each tree's own draw, and a near pixel's set
+import { LPT_SCALE_MAX, lptVariety, buildTreeSet } from '../world/lowPolyTrees.js'; import { naturePicture } from '../world/naturePicture.js';   // LPT1: each tree's own draw, and a near pixel's set; AUDIT 05b A12: which picture a nature flat stands as, every host's one choice
 import { realForestsOn, FOREST_HIDDEN_LOCATION_TYPES } from './shared.js';   // FOREST1: the Real forests switch, and the places the woods hide
 import { insideRocks, forestAt } from '../world/terrainNature.js';   // FOREST1 (AUDIT F1): a wood's flats keep out of the rock pieces; GRASS-LIT2: the shot hook's woods
 import { huntKind, createBodyStamps, bodiesOf, trackerMarks } from './huntHost.js';   // PROF7: Hunting's bodies - a kind in it, the kills that stamp them, a Tracker's marks
@@ -741,8 +741,8 @@ import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate
 import { homeLookRemap, HOME_LOOK_BUILD_WAIT_MS } from '../world/homeLook.js';   // HOME-LOOK: a painted house's own table
 import { createHomeYards } from './homeYards.js';   // HOME-YARD: the town's yards, and the owner's decorator outside
 import { loadIcon } from '../ui/textureCanvas.js';   // HOME-YARD: the decorator's pictures
-import { BLOCK_TYPES } from '../formats/blocksFile.js';   // HOME-YARD: the catalogue's town blocks
-import { GLOBAL_SCALE, DOOR_TYPE } from '../world/meshReader.js';   // ARENA1: DOOR_TYPE too - the undercroft's stair is a dungeon entrance
+import { decorScanDeps } from '../systems/decorScan.js';   // HOME-YARD: the catalogue's scan (DECOR-DUNGEON: one constructor for both hosts)
+import { DOOR_TYPE } from '../world/meshReader.js';   // ARENA1: the undercroft's stair is a dungeon entrance (DECOR-DUNGEON: GLOBAL_SCALE went with the yards' scan deps, systems/decorScan.js)
 import { homeLookSig } from '../net/homeLaw.js';
 import { setWeather, setHeardWeather, heardWeather, currentWeather, currentWeatherRaw, tickWeather, weatherRespawn, applyClimateWeather, importClimateWeathers, weatherJumpStamp, setSharedWeather, rollClimateWeathersForDay, sampleWeatherField, weatherCrossingStamp, currentFieldCells, currentWeatherIntensity, currentCloudBase, currentWindApproach, currentMapSystems, sampleWeatherIndoors, weatherArrivalStamp, mapGround } from '../systems/weatherSim.js';
 import { createDistantStorms, thunderSourceAt, THUNDER_SOURCE_M } from '../systems/distantStorms.js';   // WEATHER3d: the storms at a distance
@@ -4869,16 +4869,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       // frame) while a season is installed over it, the classic record
       // otherwise. The seasonal texture keys on the install so a later
       // season never reads an earlier one's upload.
-      const sib = seasonsActive ? seasons.lookup(archive, record) : null;
       // LPT1: A FLAT LOW POLY TREES HAS A TREE FOR stands as that tree's far picture - the batch sized for the tallest
       // tree it stands, each flat's own scale on its corner - and as the tree itself near the eye (the pixel's
       // `lowPolyTrees` set). Its cover, its sway, its forest and the far rings' rule are the flat's own (the season's,
-      // while one stands).
-      const lpt = lowPolyTrees && LPT_ARCHIVES.includes(archive) && (await lowPolyTrees.load()) ? lowPolyTrees.proto(archive, record) : null;
-      const far = lpt ? await lowPolyTrees.farPicture(lpt) : null;
+      // while one stands). AUDIT 05b A12: the choice is every host's one (world/naturePicture.js - a location's, a yard's)
+      const { sib, proto: lpt, far, plain, key: rkey } = await naturePicture({ door: lowPolyTrees, seasons: seasonsActive ? seasons : null, renderer, uploadRecord }, t, archive, record);
       if (far) {
         lowPolyTrees.acquire(far); lptHandles.push(far);   // AUDIT LPT B5: held until the pixel goes
-        const plain = sib ? sib.size : billboardSize(t, record);
         const scales = new Float32Array(centers.length), wild = new Uint8Array(centers.length);
         centers.forEach((c, i) => {
           wild[i] = wildFlats.has(`${k}#${i}`) ? 1 : 0;
@@ -4897,10 +4894,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         if (isCoverFlat(archive, record, plain)) for (const c of centers) coverItems.push(...coverProxies(c, plain, { tree: archive === natureArchive && isTreeRecord(natureArchive, record) }));
         continue;
       }
-      if (sib) {
-        const rkey = `${record}#season${seasons.installedSeason}`;
-        const img = sib.texture.image;
-        renderer.uploadTexture(archive, rkey, img, { mips: false, variant: '' });   // TEX1: the door already answers the upload path's shape - no re-wrap at the site (H4's own law)   // AUDIT 61: the mod's atlas has NO mip chain (mipChain:false, Apply(false), Point) - one NEAREST level at every distance, unlike the classic flats
+      if (sib) {   // uploaded under the install's key, with no mip chain (AUDIT 61) - world/naturePicture.js
         const batch = renderer.createBillboardBatch(archive, rkey, sib.size, centers);
         batch._box = flatBatchAabb(centers, sib.size);   // EV3
         batch.sway = floraSwayOf(archive, natureArchive, sib.size.h);   // WIND3: the season's trees lean too
@@ -4910,8 +4904,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         if (isCoverFlat(archive, record, sib.size)) for (const c of centers) coverItems.push(...coverProxies(c, sib.size, { tree: archive === natureArchive && isTreeRecord(natureArchive, record) }));   // AUDIT TACT B2: a tree's trunk and crown
         continue;
       }
-      uploadRecord(archive, record);
-      const size = billboardSize(t, record);
+      const size = plain;   // the record, uploaded (world/naturePicture.js)
       const batch = renderer.createBillboardBatch(archive, record, size, centers);
       batch._box = flatBatchAabb(centers, size);   // EV3
       batch.sway = floraSwayOf(archive, natureArchive, size.h);   // WIND3: the flora lean with the wind, nothing else does
@@ -5037,6 +5030,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       seatAnchors, _boardSplit: pixelBoardSplit, festivalAnchors, festivalLanterns,   // SEAT1a (above); FESTIVAL-STAGE (above)
       px, py, terrain, water, tilemapTex, tilemap, groundArchive, models, windmills, batches, flatAnims, texRemap, lights: pixelLights, hearths: pixelHearths, animals: pixelAnimals, springs: pixelSprings, skyBase: climate.skyBase, samples, natureCount: nature.length,
       tilemapBytes, season,   // GR1: the placer reads the tiles and the season
+      townClimate: townClimateBase,   // DECOR-OUTDOOR: the climate its town's buildings wear - a yard's pieces wear it too (scenes/homeYards.js)
       paths,   // GRASS-PATH1: which tiles the road painter wrote; null on a pixel built before the network arrived
       withRoads,   // ROADS 25: painted with the network present, or before it arrived (see below)
       _box: bounds,   // EV3: pixel-local presentation bounds (terrain + models + flats)
@@ -5350,7 +5344,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** LPT1: the frame's near 3D trees - the eye's pixel's and its neighbours' sets, each at its translation this frame,
    *  gathered (when the eye or they moved, or a tree was felled), culled to the view (`planes`, the frame's normalised
    *  ones - null when culling is off) and handed to the renderer for the flats' call. A set is made as its pixel comes
-   *  into the eye's 3x3 and let go once it is past the 5x5 (AUDIT LPT B10). */
+   *  into the eye's 3x3 and let go once it is past the 5x5 (AUDIT LPT B10). DECOR-LPT: and the yards' placed trees. */
   function lowPolyTreesFrame(planes) {
     _lptSets.length = 0;
     for (let i = 0; i < _pixelOrder.length; i++) {
@@ -5362,6 +5356,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       set.ox = p._t[0]; set.oy = p._t[1]; set.oz = p._t[2];
       _lptSets.push(set);
     }
+    for (const set of yards?.treeSets() ?? []) _lptSets.push(set);   // DECOR-LPT: the yards' placed trees, where their yards stand now
     _lptOpts.stamp = FOREST_STAMP.n;
     _lptOpts.planes = planes;
     lowPolyTrees.frame(_lptSets, cam.pos[0], cam.pos[1], cam.pos[2], _lptOpts);
@@ -10378,7 +10373,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:3260 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:7299
+  // that context through modes.dungeonCtx - so worldModes.js:7282
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -10768,11 +10763,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     eye: () => cam.pos,
     collider: () => collider, meshes: { getGpuMesh, cpuModels }, renderer, getTexture, uploadRecord, uploadRecordFrame,
     iconUrl: (a, r) => loadIcon(a, r, { scale: 1 }),
-    scanDeps: () => ({
-      blocks, isTownBlock: (t) => t === BLOCK_TYPES.Rmb,
-      modelRadius: (id) => { const rec = arch?.getRecordIndex?.(id); if (rec == null || rec < 0) return null; const r = arch.getMesh(rec)?.radius ?? 0; return r > 0 ? r * GLOBAL_SCALE : null; },
-      flatRadius: async (a, r) => { const t = await getTexture(a); if (!t || !(r < t.recordCount)) return null; const size = billboardSize(t, r); return Math.hypot(size.w, size.h) / 2; },
-    }),
+    scanDeps: () => decorScanDeps({ blocks, arch, getTexture }),   // DECOR-DUNGEON: the interior host's own constructor
+    seasonal: () => (seasonsActive ? seasons : null),   // DECOR-OUTDOOR: a yard's trees in Seasons of the Iliac Bay's season, as the town's
+    trees: lowPolyTrees ? { door: lowPolyTrees, sway: (proto, share) => _lptSway.set(proto, Math.max(_lptSway.get(proto) ?? 0, share)) } : null,   // DECOR-LPT: a yard's tree as Low Poly Trees' own - its 3D tree in the near set (lowPolyTreesFrame)
     character: () => characterIdOf(playerEntity),
     realm: () => (realmSession ? (o) => realmGoldAct({ session: realmSession, checkpoint: () => onlineCheckpoint(), ...o }) : null),
     wallet: (region) => homeYardWallet(region), regionOf: (y) => built.get(`${y.px},${y.py}`)?.homeRegion ?? 0,
@@ -13142,7 +13135,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:8690), so exterior mode and a
+    // composer, dungeonContext.js:8691), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -16426,7 +16419,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:11005-11069 -
+  // worldModes answers it in BOTH modes (worldModes.js:10989-11053 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -28255,6 +28248,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     renderer.setFlatWind(floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], now / 1000, wd.gust] : null);   // WIND3: the flats lean with the one wind; the flora batches carry their share (sway)
     renderer.drawBillboards(allBatches, camRight, bbUp);
     if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, bbUp);   // M2: spell missiles
+    magic.drawFx?.();   // IMPACTFX: the spells' landings in light, over their flashes
     yards?.drawPreview();   // HOME-YARD: the decorator's panel, its pointed model turning in the preview box
     // T2 towns: every built populated pixel runs its own pool
     // (PopulationManager is per-location); the pool sees the player in

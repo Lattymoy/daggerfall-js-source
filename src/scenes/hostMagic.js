@@ -41,7 +41,7 @@ import { hasSpellbook } from '../systems/spellMaker.js';   // FIX-F: RecastSpell
 const NO_SPELLBOOK_TEXT = 'You have no spellbook!';   // TextManager noSpellbook (Systems-Arc: the localized string, verbatim)
 import {
   missileArchive, MISSILE_SPEED, MISSILE_COLLIDER_RADIUS, missileReach, missileHitsFoe,   // ROAD-H tail: the reach along the normalised direction; the foe's CAPSULE at contact
-  MISSILE_LIFESPAN_S, EXPLOSION_RADIUS, pickTouchTarget, sweepFoes, sphereOverlapsCapsule,   // ROAD-H H2: DoAreaOfEffect's OverlapSphere, against the player's capsule too
+  MISSILE_LIFESPAN_S, EXPLOSION_RADIUS, BODY_CAPSULE_RADIUS, pickTouchTarget, sweepFoes, sphereOverlapsCapsule,   // ROAD-H H2: DoAreaOfEffect's OverlapSphere, against the player's capsule too
   missileHitsCapsule, PLAYER_BODY_RADIUS,   // AUDIT 62 F21 (review): the SphereCast contact test   // AUDIT 65 CV-2: the PLAYER's own controller radius (motor.js CAPSULE_RADIUS), not the foe's
 } from '../systems/spellcast.js';
 import { silenceBlocksCast, SILENCED_TEXT, PRESS_BUTTON_TO_FIRE_SPELL, DOOR_SPELL_TEXT, SOUL_TRAP_TEXT } from '../systems/mysticism.js';
@@ -55,6 +55,10 @@ import { morphSelf } from '../systems/lycanthropy.js';   // V2a: the MorphSelf a
 import { allyCastable, allyReachFor, allyCastFrame, allyCastCasterLine, allyCastCasterLineMany, allyCastSpell, PERSON_RADIUS, ALLY_TOUCH_REACH, ALLY_ARM_RADIUS, ALLY_ARMED_LINE, COMPANION_ARMED_LINE, companionCastable, createGiftLineGate } from '../systems/allyCast.js';   // SPELL-GIFT: the arm near a mate, the line it says, and the area's one line; AUDIT WK-M4: what my companion can use
 import { hasResurrect, RESURRECT_REACH, RESURRECT_TEXT, pickFallenBody } from '../systems/resurrect.js';   // RESURRECT1: a fallen party member's body is the target   // ALLY-CAST: a beneficial spell at the party mate under the crosshair
 import { billboardSize, centredBase } from '../world/rmbFlats.js';
+import { betterAmbience } from '../systems/betterAmbience.js';   // IMPACTFEEL: the camera kick a landing spell gives
+import { SpellImpactFx, SpellImpactPass, elementFxKind, IMPACT_FX_KINDS } from '../render/spellImpactFx.js';
+import { orbColourFrom } from '../characters/thunderlockIds.js';   // ART-COLOUR: a missile archive's own colour, the Thunderlock orb's sampler   // IMPACTFX: a landing spell in light - its element's spray, a heal's rising lines
+import { createSpellImpactSounds } from '../systems/spellImpactSound.js';   // IMPACTFX: ...and heard
 import { createMagicCandle } from './magicCandle.js';   // X11: the Light effect's candle
 import { CAPSULE_HEIGHT } from '../player/motor.js';   // PlayerController.height, the candle's y term
 import { setPlayerDoor } from '../systems/playerDoor.js';   // SET2: this host publishes itself as the scene a set's power reaches into
@@ -480,12 +484,149 @@ export function createPlayerMagic({
     onSpawn: (b) => batches.push(b),
     onRetire: (b) => { const i = batches.indexOf(b); if (i >= 0) batches.splice(i, 1); },
   });
+  // IMPACTFEEL: THE SPARK POOL - a few CHUNKS of the element's own art (flying flats, hitEffects.showFlyingFlat) thrown
+  // under gravity beside the glow below: the pixel grain of the burst. Each lands on the ground found by a straight-down
+  // cast from the impact (meshes AND terrain), bounces once, and dies at its lifespan.
+  // n count | v outward speed | up extra upward speed | g gravity | bounce | life seconds | s size | fps
+  const SPARK_KINDS = [
+    { n: 4, v: 4.5, up: 4.5, g: 12, bounce: 0.35, life: 1.1, s: 0.30, fps: 14 },   // fire: hot, climbing, then drop
+    { n: 3, v: 3.5, up: 3.0, g: 20, bounce: 0.15, life: 1.0, s: 0.34, fps: 8 },    // frost: shards, heavy, barely bounce
+    { n: 3, v: 2.0, up: 2.0, g: 9,  bounce: 0.05, life: 1.4, s: 0.32, fps: 7 },    // poison / disease: slow lobs that splat
+    { n: 4, v: 8.0, up: 2.5, g: 8, bounce: 0.5,  life: 0.7, s: 0.24, fps: 24 },    // shock: fast, wide, skittering
+    { n: 4, v: 4.0, up: 3.5, g: 11, bounce: 0.3,  life: 1.1, s: 0.28, fps: 12 },   // magic
+  ];
+  const sparks = [];
+  /** The floor's height under `pos` (meshes and terrain), or a body's height below it when the cast finds none. */
+  function groundUnder(pos) {
+    let ground = pos[1] - 1.2;
+    try { const h = collider?.surfaceHit?.(pos, [0, -1, 0], 30) ?? null; if (h && Number.isFinite(h.dist)) ground = pos[1] - h.dist + 0.05; } catch { /* the guess stands */ }
+    return ground > pos[1] ? pos[1] - 0.05 : ground;   // the impact is on the floor: it sprays above it
+  }
+  function spawnSparks(m, pos, sc, ground) {
+    const k = SPARK_KINDS[Math.max(0, Math.min(4, m.spell.element | 0))];
+    for (let i = 0; i < k.n; i++) {
+      const a = Math.random() * Math.PI * 2, sp = k.v * (0.4 + Math.random() * 0.6);
+      const h = impacts.showFlyingFlat(missileArchive(m.spell.element), pos, { record: 0, fps: k.fps * (0.8 + Math.random() * 0.4), scale: sc * k.s });
+      sparks.push({ h, p: [pos[0], pos[1], pos[2]], v: [Math.cos(a) * sp, k.up * (0.3 + Math.random() * 0.7), Math.sin(a) * sp], k, ground, age: 0, life: k.life * (0.7 + Math.random() * 0.5), bounced: false });
+    }
+  }
+  function stepSparks(dt) {
+    const d = Math.min(dt, 0.05);
+    for (let i = sparks.length - 1; i >= 0; i--) {
+      const sp = sparks[i];
+      sp.age += d;
+      if (sp.age >= sp.life) { sp.h.retire(); sparks.splice(i, 1); continue; }
+      sp.v[1] -= sp.k.g * d;
+      sp.p[0] += sp.v[0] * d; sp.p[1] += sp.v[1] * d; sp.p[2] += sp.v[2] * d;
+      if (sp.p[1] <= sp.ground) {
+        sp.p[1] = sp.ground;
+        if (!sp.bounced && sp.k.bounce > 0.1) { sp.v[1] = Math.abs(sp.v[1]) * sp.k.bounce; sp.v[0] *= 0.5; sp.v[2] *= 0.5; sp.bounced = true; }
+        else { sp.v[0] = sp.v[1] = sp.v[2] = 0; }   // landed: it lies there till it goes out
+      }
+      sp.h.move(sp.p);
+    }
+  }
+  /** IMPACTFX: the chunks go with a recenter (they were left behind in the first cut) and with a teardown. */
+  function shiftSparks(o) { for (const sp of sparks) { sp.p[0] += o[0]; sp.p[1] += o[1]; sp.p[2] += o[2]; sp.ground += o[1]; } }
+  function clearSparks() { for (const sp of sparks) sp.h.retire(); sparks.length = 0; }
+
+  // IMPACTFX: THE LIGHT OF A LANDING (render/spellImpactFx.js) and ITS SOUND (systems/spellImpactSound.js). The pass is
+  // built on the first frame there is something to draw and drawn by the hosts right after this engine's billboards
+  // (drawFx); a pass that will not build leaves the classic flash and the chunks exactly as they were.
+  const fx = new SpellImpactFx();
+  let fxPass = null, fxBroken = false;
+  const impactSounds = createSpellImpactSounds(audio);
+  // ART-COLOUR: EACH ELEMENT'S BURST WEARS ITS OWN ART'S COLOUR. Once per element, the first time a missile of it flies
+  // or lands, its archive (375-379, missileArchive) is asked for (it is warm by then: the missile itself draws from it)
+  // and its impact flash's first frame - record 1, what the burst is drawn over - sampled the Thunderlock orb's way.
+  // Its flight record 0 answers if the flash has no colour in it. Until then the burst wears its first guess.
+  const _artAsked = new Set();
+  function noteElementArt(el) {
+    if (!Number.isInteger(el) || el < 0 || el > 4 || _artAsked.has(el) || typeof getTexture !== 'function') return;
+    _artAsked.add(el);
+    Promise.resolve().then(() => getTexture(missileArchive(el))).then((t) => {
+      if (!t?.getColor32 || !t?.getDFBitmap) return;
+      const sample = (rec) => { try { return (t.recordCount == null || rec < t.recordCount) ? orbColourFrom(t.getColor32(t.getDFBitmap(rec, 0), 0)) : null; } catch { return null; } };
+      const c = sample(1) ?? sample(0);
+      if (c) fx.setArtColour(elementFxKind(el), c);
+    }).catch(() => { /* the first guess stands */ });
+  }
+  /** A heal's look: every effect a gift (allyCastable) and one of them a Heal (10) or a Regenerate (18). */
+  const HEAL_FX_TYPES = new Set([10, 18]);
+  function fxKindOf(spell) {
+    if (!spell) return 'magic';
+    try { if (allyCastable(spell) && (spell.effects ?? []).some((e) => e && HEAL_FX_TYPES.has(e.type))) return 'heal'; } catch { /* its element's, then */ }
+    return elementFxKind(spell.element);
+  }
+  /** One landing, seen and heard: the burst at `pos` over the floor under it, its sound, and - for anything but a heal
+   *  - the camera's kick falling off over 14 m (`shake` the kick at the player's feet). */
+  /** AOE-REACH: the body an area's drawn reach is measured for - the sweep's own default foe (sweepFoes, sphereOverlapsCapsule). */
+  const AREA_FX_BODY = Object.freeze({ r: BODY_CAPSULE_RADIUS, h: 1.8 });
+  function landFx(kind, pos, { back = null, scale = 1, power = 1, radius = null, minR = 0, heard = 40, shake = 0, ground = null, area = 0, areaFrom = null, normal = null, surfaceAt = null } = {}) {
+    try {
+      if (kind !== 'heal') noteElementArt(IMPACT_FX_KINDS.indexOf(kind));   // ART-COLOUR: a touch or a peer's lands here first sometimes
+      const gy = Number.isFinite(ground) ? ground : groundUnder(pos);
+      fx.burst(kind, pos, { ground: gy, back, scale, power, radius, minR, area, areaFrom, body: AREA_FX_BODY, normal, surfaceAt });   // AOE-SIZE / AOE-REACH: an area's burst is drawn to what its sweep catches
+      impactSounds.play(kind, kind === 'heal' ? [pos[0], gy + 1, pos[2]] : pos, { heard, volume: kind === 'heal' ? 0.8 : Math.min(1, 0.75 + 0.2 * power) });   // HEAL-SOFT: a big heal is no louder
+      const f = _doorFeet;
+      if (shake > 0 && kind !== 'heal' && f) {
+        const d = Math.hypot(pos[0] - f[0], pos[1] - f[1], pos[2] - f[2]);
+        const k = Math.max(0, 1 - d / 14) * shake;
+        if (k > 0.15) betterAmbience.weaponKick(k);
+      }
+      return gy;
+    } catch { return null; }   // feel is never worth a crash
+  }
+  /** A body's middle, for a touch that met it (its feet and height, a person's when it states none). */
+  const bodyMid = (t) => (t?.ai?.feet ? [t.ai.feet[0], t.ai.feet[1] + (t.ai.height ?? 1.8) * 0.55, t.ai.feet[2]] : null);
+  /** Where a mate under the crosshair stands: `distance` along the aim. */
+  const alongAim = (eye, dir, d) => { const l = Math.hypot(dir[0], dir[1], dir[2]) || 1; return [eye[0] + (dir[0] / l) * d, eye[1] + (dir[1] / l) * d, eye[2] + (dir[2] / l) * d]; };
+  /** A gift that landed on someone (a mate, my companion, a foe touched with a heal) - a heal rises at their feet. */
+  function giftFx(sp, at) {
+    if (!at || fxKindOf(sp) !== 'heal') return;
+    landFx('heal', at, { radius: 0.75, heard: 24 });
+  }
   /** DaggerfallMissile.DoCollision (:364-370) - record 1 of the
    *  missile's own element archive, one-shot at 15fps, gated on
    *  `elementType != None && targetType != ByTouch` (rangeType 1). */
   function showImpactFlash(m, pos) {
     if (!m.spell || m.spell.element == null || m.spell.rangeType === 1) return;
     impacts.showImpactFlash(missileArchive(m.spell.element), pos, m.scale ?? 1);   // SUNBABY2: a sky fireball's, at its own size
+    // IMPACTFEEL: the impact reads heavier - a larger, slower bloom behind the classic flash, a few chunks of the
+    // element's own art, and (IMPACTFX) the burst in light: the element's spray thrown back off what it struck and down
+    // onto the floor, its rings and its light, its sound, and the camera's kick (blasts harder; the player's maxShake /
+    // shake-off rule it, betterAmbience.weaponKick). All additive: the classic flash above is untouched.
+    try {
+      const sc = m.scale ?? 1;
+      const kind = fxKindOf(m.spell);
+      const ground = groundUnder(pos);
+      if (kind !== 'heal') {
+        impacts.showMissEffect('spell', pos, { archive: missileArchive(m.spell.element), record: 1, fps: 12, scale: sc * 1.8 });
+        spawnSparks(m, pos, sc, ground);
+      }
+      const dl = Array.isArray(m.dir) ? Math.hypot(m.dir[0], m.dir[1], m.dir[2]) : 0;
+      const back = dl > 1e-6 ? [-m.dir[0] / dl, -m.dir[1] / dl, -m.dir[2] / dl] : null;
+      // WALL-RING: WHAT IT STRUCK - the surface along the line of flight just through the impact (a wall, a ceiling, the
+      // floor), its normal turned to face the shot. None (a body, the air): the burst finds its own plane.
+      let normal = null, surfaceAt = null;
+      if (back && collider?.surfaceHit) {
+        try {
+          const u = [-back[0], -back[1], -back[2]], from = [pos[0] - u[0] * 0.6, pos[1] - u[1] * 0.6, pos[2] - u[2] * 0.6];
+          const h = collider.surfaceHit(from, u, 1.3);
+          if (h && Number.isFinite(h.dist) && Array.isArray(h.normal) && h.normal.every(Number.isFinite)) {
+            const nd = h.normal[0] * u[0] + h.normal[1] * u[1] + h.normal[2] * u[2];
+            normal = nd > 0 ? [-h.normal[0], -h.normal[1], -h.normal[2]] : [...h.normal];
+            surfaceAt = [from[0] + u[0] * h.dist, from[1] + u[1] * h.dist, from[2] + u[2] * h.dist];
+          }
+        } catch { /* the burst finds its own plane */ }
+      }
+      const blast = m.spell.rangeType === 4;
+      // AOE-SIZE: an Area at Range blast is drawn to the sphere explodeAt sweeps (EXPLOSION_RADIUS about the impact); a
+      // single-target bolt keeps its own smaller burst
+      landFx(kind, kind === 'heal' ? [pos[0], ground, pos[2]] : pos, { back, ground, scale: sc, power: blast ? 1.25 : 1, radius: 0.8,
+        area: blast ? EXPLOSION_RADIUS : 0, areaFrom: blast ? pos : null, heard: m.sky ? SKY_FIRE_HEARD_M : 40, shake: blast ? 4.5 : 3,
+        normal: kind === 'heal' ? null : normal, surfaceAt });   // WALL-RING: the shockwave lies on what it struck
+    } catch { /* feel is never worth a crash */ }
     // SUNBABY2: and a sky fireball is HEARD where it lands - its element's cast clip (DFU has no impact clip; the
     // missile's sound is its cast's), from the impact, as far as SKY_FIRE_HEARD_M
     if (m.sky) { try { audio.play3dId?.(SPELL_CAST_SOUND[m.spell.element] ?? SPELL_CAST_SOUND[4], pos, 1, { maxDistance: SKY_FIRE_HEARD_M }); } catch { /* a sound never costs the flash */ } }
@@ -834,6 +975,7 @@ export function createPlayerMagic({
       tallyCastSkills(sp);
       surfacePlayer();
       sayGift(allyCastCasterLine(sp.name, ally.name));   // GIFT-QUIET
+      if (Number.isFinite(ally.distance)) giftFx(sp, alongAim(eye, dir, ally.distance));   // IMPACTFX: a heal rising at the mate
       return done(true);
     }
     // COMPANION-KIT: ...or MY COMPANION under the crosshair - the same reach, given here
@@ -843,6 +985,7 @@ export function createPlayerMagic({
       tallyCastSkills(sp);
       surfacePlayer();
       giveToCompanion(mine, sp);
+      giftFx(sp, bodyMid(mine));   // IMPACTFX
       return done(true);
     }
     if (sp.rangeType === 0) {
@@ -859,6 +1002,7 @@ export function createPlayerMagic({
       // the gate fails outright and nothing is capped.
       lastCastCost = cost;
       if (r.healed > 0) say(`You are healed ${r.healed} points.`);
+      if (eye && fxKindOf(sp) === 'heal') landFx('heal', [eye[0], eye[1], eye[2]], { radius: 1.0, minR: 0.45, heard: 24 });   // IMPACTFX: it rises about me - clear of my own eye (a CasterOnly needs no aim: readied before any frame fed one, it heals and draws nothing)
       surfacePlayer();
       return done(true);
     }
@@ -875,6 +1019,12 @@ export function createPlayerMagic({
       else if (t?.duel) giveToDuel(t, sp);   // DUEL1: the touch met my duel opponent
       else if (t?.boss) giveToBoss(t, sp);   // WB4b: the touch met the court's boss
       else if (t) applySpellToFoe(sp, effectiveLevel(playerEntity), t, playerCaster());
+      // IMPACTFX: the touch, seen where it met - a heal rising at whoever took it, the element's small spray on a foe
+      if (t) {
+        const mid = bodyMid(t) ?? alongAim(eye, dir, 1.5), kind = fxKindOf(sp);
+        if (kind === 'heal') landFx('heal', mid, { radius: 0.75, heard: 24 });
+        else landFx(kind, mid, { scale: 0.75, power: 0.6, heard: 30, shake: 1.5 });
+      }
       return done(true);
     }
     if (sp.rangeType === 3) {
@@ -890,6 +1040,12 @@ export function createPlayerMagic({
       for (const t of sweepFoes(eye, EXPLOSION_RADIUS, duelMarksFor(sp))) giveToDuel(t, sp);   // DUEL1: and my duel opponent, if they stand in it
       for (const t of sweepFoes(eye, EXPLOSION_RADIUS, bossMarksFor(sp))) giveToBoss(t, sp);   // WB4b: and the court's boss, if any of him stands in it
       giveAreaToCaster(sp);   // AREA-CASTER: and me, when it is all gifts
+      // IMPACTFX: the area seen going off about me - a heal's wide ring of rising light, or the element's nova on the floor
+      // AOE-SIZE: drawn to the sphere the sweep above catches - EXPLOSION_RADIUS about my EYE, so its rim on the floor
+      // is where a foe stops being caught
+      { const kind = fxKindOf(sp), at = [eye[0], eye[1] - 1, eye[2]];
+        if (kind === 'heal') landFx('heal', at, { area: EXPLOSION_RADIUS, areaFrom: eye, minR: 0.5, heard: 30 });
+        else landFx(kind, at, { power: 1.2, area: EXPLOSION_RADIUS, areaFrom: eye, heard: 40, shake: 3 }); }
       return done(true);
     }
     if (sp.rangeType !== 2 && sp.rangeType !== 4) return done(false);
@@ -1083,6 +1239,9 @@ export function createPlayerMagic({
     // (systems/playerDoor.js: what a set's power reaches past the one blow through)
     _doorFeet = playerFeet ?? null;
     setPlayerDoor(_door);
+    stepSparks(dt);   // IMPACTFEEL (after the door: SET2 publishes it first thing each frame): the chunks' flight
+    fx.step(dt);      // IMPACTFX: the light's
+    for (const m of missiles) if (!m.dead && m.spell && !m._artNoted) { m._artNoted = true; noteElementArt(m.spell.element); }   // ART-COLOUR: sampled while it flies, so its landing wears it
     // FA1: the missile flats' clock rides the module's OWN update, not
     // each host's frame - hostMagic is shared by three of them and a
     // per-host tick is the four-hosts shape waiting to happen.
@@ -1336,6 +1495,7 @@ export function createPlayerMagic({
       candle.offsetAll(offset);
       for (const m of peerCandleMounts.values()) m.offsetAll(offset);   // PEERLIGHT2
       impacts.offsetAll(offset);   // F033: a flash mid-animation follows the recenter too
+      shiftSparks(offset); fx.shift(offset);   // IMPACTFX: and the bursts
       for (const m of missiles) {
         if (m.dead) continue;
         for (let a = 0; a < 3; a++) {
@@ -1377,6 +1537,8 @@ export function createPlayerMagic({
       candle.clear();
       for (const m of peerCandleMounts.values()) m.clear();   // PEERLIGHT2
       peerCandleMounts.clear();
+      clearSparks(); fx.clear();   // IMPACTFX: the bursts die with the engine
+      if (fxPass) { const p = fxPass; fxPass = null; fxBroken = true; p.destroy(); }   // IMPACTFX: and their GL pass (the slot emptied first; a draw after this builds nothing)
       impacts.clear();   // AUDIT 68 S21-magic-destroy-impacts: a flash still warming its archive is marked dead, so it publishes nothing into this dead engine
       for (const b of batches) { flatAnims.remove(b); renderer.destroyBillboardBatch(b); }
       batches.length = 0;
@@ -1389,12 +1551,28 @@ export function createPlayerMagic({
     clearMissiles() {
       for (const m of missiles) retireMissile(m);
       missiles.length = 0;
+      clearSparks(); fx.clear();   // IMPACTFX: a load or a teleport leaves no burst behind in the old place
     },
     /** X11: the candle's point light, in nearestLights' own vec4 shape,
      *  or null. Each host prepends it to the array it hands the
      *  renderer - the candle is 1.4 units away, so it is always the
      *  nearest light there is and the sort would put it first anyway. */
-    candleLight: () => candle.light(),
+    /** ART-COLOUR: each element's burst colour as drawn now, and whether it came from the art - for the console. */
+    fxColours: () => fx.artColours(),
+    candleLight: () => candle.light() ?? fx.light(),   // IMPACTFX: a landing spell lights the walls for a moment (never over the Light effect's candle)
+    /** IMPACTFX: THE BURSTS' PASS - the hosts call this right after this engine's billboards, in their world pass,
+     *  under the renderer's own camera and fog. Answers whether it drew (it marks the foreign pass itself). */
+    drawFx() {
+      if (!fx.live || fxBroken || !renderer?.gl || !renderer._proj || !renderer._view) return false;
+      const n = fx.build();
+      if (!n) return false;
+      if (!fxPass) { try { fxPass = new SpellImpactPass(renderer.gl); } catch (e) { fxBroken = true; console.warn('[magic] the impact pass would not build', e?.message ?? e); return false; } }
+      renderer.endUiRun?.();
+      const eye = renderer._camPos;
+      fxPass.draw(fx.buf, n, renderer._proj, renderer._view, eye, { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, camPos: eye, focus: renderer._focus });
+      renderer.markForeignPass?.();
+      return true;
+    },
     missileCount: () => missiles.length,   // M5 probe surface
     readied: () => readiedSpell,
     readiedIndex: () => readiedSpell?.index ?? null,
@@ -1453,6 +1631,7 @@ export function createPlayerMagic({
       // a touch goes off at arm's length along the aim; a self or area cast on the caster's own body
       const at = rangeType === 1 && Array.isArray(dir) ? [from[0] + dir[0] * 1.5, from[1] + dir[1] * 1.5, from[2] + dir[2] * 1.5] : [from[0], from[1] - 0.6, from[2]];
       impacts.showImpactFlash(missileArchive(el), at);
+      if (rangeType === 1) landFx(elementFxKind(el), at, { scale: 0.75, power: 0.6, heard: 24 });   // IMPACTFX: a peer's touch, its small spray
       return true;
     },
     /** SUNBABY2: a fireball the evil sun baby throws (world/sunbabySky.js sunbabyFireball) - a DRAWN fire missile,

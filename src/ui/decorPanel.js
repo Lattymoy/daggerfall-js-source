@@ -310,6 +310,8 @@ export function createDecorButton({ onPress, touch = false, doc = document }) {
  * `onPlace(entry)` - the Place button; `onClose()` - the panel went (Close, Escape, or a placement began);
  * DECOR2b: `onPlaceLook(furniture, look)` - the look view's Place: one's furniture, as the catalogue piece chosen;
  * `onPoint(entry|null)` - the piece the preview shows changed; `thumbOf(entry)` - a Promise of a flat's picture (a URL);
+ * NUDE-DECOR: `thumbKeyOf(entry)` - the key that picture is kept under (the entry's own, unless the host draws it as
+ * another picture now - a figure's stand-in);
  * DECOR1e: `onMove(piece)`, `onRemove(piece)`, `onToggle(piece, 'light'|'storage')` - a placed piece's four changes.
  * BASE-HIDE: `base` in the view - the room's own furniture, each `{ key, name, kind, model, flat, shape, hidden, holds,
  * dist }`, nearest first; `onBase(keys, out)` - those pieces taken out of the room (`out`) or put back, free.
@@ -319,11 +321,12 @@ export function createDecorButton({ onPress, touch = false, doc = document }) {
  *   thumbOf?: (entry: any) => Promise<string|null>|null, onMove?: (piece: any) => void, onRemove?: (piece: any) => void,
  *   onToggle?: (piece: any, what: string) => void, onPlaceLook?: (furniture: any, look: any) => void,
  *   onBase?: (keys: string[], out: boolean) => void, onRoom?: (id: number) => void, onRent?: (what: string, row: any, price: number|null) => void,
- *   onPaint?: (what: string, look: any) => void, doc?: any, win?: any }} opts
+ *   onPaint?: (what: string, look: any) => void, doc?: any, win?: any, thumbKeyOf?: (entry: any) => string }} opts
  */
 export function createDecorPanel({
   onPlace, onClose = () => {}, onPoint = () => {}, thumbOf = () => null, onMove = () => {}, onRemove = () => {}, onToggle = () => {},
   onPlaceLook = () => {}, onBase = () => {}, onRoom = () => {}, onRent = () => {}, onPaint = () => {}, doc = document, win = globalThis,
+  thumbKeyOf = (e) => e.key,
 }) {
   injectStyle(doc);
   const el = maker(doc);
@@ -460,15 +463,16 @@ export function createDecorPanel({
   const waiting = new Map();  // key -> the images waiting on its picture
   /** Ask for a flat's picture once; every image waiting on it gets it, and the preview if it shows that piece. */
   function askThumb(e, img = null) {
-    const known = thumbs.get(e.key);
+    const k = thumbKeyOf(e);
+    const known = thumbs.get(k);
     if (known) { img?.setAttribute('src', known); return; }
-    if (img) waiting.set(e.key, [...(waiting.get(e.key) ?? []), img]);
-    if (thumbs.has(e.key)) return;   // in flight, or none to be had
-    thumbs.set(e.key, null);
+    if (img) waiting.set(k, [...(waiting.get(k) ?? []), img]);
+    if (thumbs.has(k)) return;   // in flight, or none to be had
+    thumbs.set(k, null);
     Promise.resolve(thumbOf(e)).then((url) => {
-      thumbs.set(e.key, url ?? null);
-      const imgs = waiting.get(e.key) ?? [];
-      waiting.delete(e.key);
+      thumbs.set(k, url ?? null);
+      const imgs = waiting.get(k) ?? [];
+      waiting.delete(k);
       if (!url || !alive) return;
       for (const i of imgs) i.setAttribute('src', url);
       if ((hoverKey ?? selectedKey) === e.key) paintSide();
@@ -582,7 +586,7 @@ export function createDecorPanel({
       const img = el('img', '');
       img.setAttribute('alt', '');
       thumb.append(img);
-      const known = thumbs.get(shape.key);
+      const known = thumbs.get(thumbKeyOf(shape));
       if (known) img.setAttribute('src', known); else askThumb(shape, img);
     } else {
       thumb.textContent = (DECOR_KINDS[shape.kind] ?? 'Decorations').slice(0, 2);
@@ -605,7 +609,7 @@ export function createDecorPanel({
       img.setAttribute('alt', '');
       thumb.append(img);
       const shape = baseShape(it);
-      const known = thumbs.get(shape.key);
+      const known = thumbs.get(thumbKeyOf(shape));
       if (known) img.setAttribute('src', known); else askThumb(shape, img);
     } else {
       thumb.textContent = (DECOR_KINDS[it.kind] ?? DECOR_KINDS.furniture).slice(0, 2);
@@ -664,8 +668,8 @@ export function createDecorPanel({
     backBtn.disabled = !differs;
     const sw = part ? homeLookSwatch(part, choice, view?.paint?.season ?? 0) : null;
     const shape = sw ? { key: `look:${sw.archive}.${sw.record}`, flat: [sw.archive, sw.record] } : null;
-    if (shape && !thumbs.has(shape.key)) askThumb(shape);
-    const url = shape ? thumbs.get(shape.key) : null;
+    if (shape && !thumbs.has(thumbKeyOf(shape))) askThumb(shape);
+    const url = shape ? thumbs.get(thumbKeyOf(shape)) : null;
     if (url) previewImg.setAttribute('src', url); else previewImg.removeAttribute?.('src');
     if (preview.dataset.model !== '0') preview.dataset.model = '0';
     pickWhy.textContent = differs ? 'Tried on your house - paint it to keep it, for everyone to see.' : '';
@@ -710,7 +714,7 @@ export function createDecorPanel({
       const img = el('img', '');
       img.setAttribute('alt', '');
       thumb.append(img);
-      const known = thumbs.get(e.key);
+      const known = thumbs.get(thumbKeyOf(e));
       if (known) img.setAttribute('src', known);
       else if (watcher) { r.decorThumb = () => askThumb(e, img); watcher.observe(r); } else askThumb(e, img);
     } else {
@@ -737,7 +741,7 @@ export function createDecorPanel({
       const img = el('img', '');
       img.setAttribute('alt', '');
       thumb.append(img);
-      const known = thumbs.get(e.key);
+      const known = thumbs.get(thumbKeyOf(e));
       if (known) img.setAttribute('src', known); else askThumb(e, img);
     } else {
       thumb.textContent = (DECOR_KINDS[e.looks?.[0]] ?? DECOR_KINDS.furniture).slice(0, 2);
@@ -804,7 +808,7 @@ export function createDecorPanel({
   }
   /** Everything the list reads that the host can change under it (the room's pieces: each one's id, cost, light,
    *  storage and whether it holds anything). */
-  const signature = () => [view?.entries ? view.entries.length : -1, view?.ready ? 1 : 0, view?.gold ?? 0, view?.count ?? 0,
+  const signature = () => [view?.entries ? view.entries.length : -1, view?.ready ? 1 : 0, view?.sized ?? 0, view?.gold ?? 0, view?.count ?? 0,   // AUDIT 05b A3: a piece measured late, priced
     (view?.placed ?? []).map((it) => `${it.piece.id}:${it.piece.paid}:${it.piece.light ? 1 : 0}:${it.piece.storage ? 1 : 0}:${it.holds ? 1 : 0}:${it.piece.station ?? ''}:${it.room ?? ''}`).join(','),   // AUDIT HOME-STATIONS S3: and its craft; DECOR-ROOMS: and its room
     (view?.own ?? []).map((e) => `${e.key}:${e.name}:${e.count ?? 1}`).join(','),   // DECOR2a: the pack's list
     (view?.base ?? []).map((it) => `${it.key}:${it.name}:${it.hidden ? 1 : 0}:${it.holds ? 1 : 0}:${it.room ?? ''}`).join(','),   // BASE-HIDE
@@ -825,15 +829,15 @@ export function createDecorPanel({
       pickName.textContent = e.name;
       pickLine.textContent = ownLine(e);
       pickPrice.textContent = 'Free';
-      if (!thumbs.has(e.key)) askThumb(e);
-      const url = thumbs.get(e.key);
+      if (!thumbs.has(thumbKeyOf(e))) askThumb(e);
+      const url = thumbs.get(thumbKeyOf(e));
       if (url) previewImg.setAttribute('src', url); else previewImg.removeAttribute?.('src');
     } else {
       pickName.textContent = e.name;
       pickLine.textContent = e.kind === 'door' && mode === 'catalogue' ? `${decorRowSub(e, radiusOf(e))} - ${decorDoorLine(view?.doorways ?? null)}` : decorRowSub(e, radiusOf(e));   // HOME-DOORS
       pickPrice.textContent = decorPriceText(priceOf(e));
-      if (e.flat && !thumbs.has(e.key)) askThumb(e);   // chosen out of view: its picture all the same
-      const url = e.flat ? thumbs.get(e.key) : null;
+      if (e.flat && !thumbs.has(thumbKeyOf(e))) askThumb(e);   // chosen out of view: its picture all the same
+      const url = e.flat ? thumbs.get(thumbKeyOf(e)) : null;
       if (url) previewImg.setAttribute('src', url); else previewImg.removeAttribute?.('src');
     }
     if (mode === 'look') {   // DECOR2b: what is set down is one's furniture, by its own name - the look under it, free

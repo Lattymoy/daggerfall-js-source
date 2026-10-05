@@ -396,7 +396,7 @@ test('DECOR1 the catalogue - "Everything Daggerfall furnishes": every interior P
   assert.equal(keys(filterDecor(cat, { sort: 'price', radiusOf })).at(-1) !== 'm41120', true, 'an unmeasured piece sorts last by price');
   assert.deepEqual(keys(filterDecor(cat, { kinds: ['storage'], sort: 'name' })), ['m41811', 'm41003']);
   assert.deepEqual([decorSize(0.2), decorSize(0.5), decorSize(1.25), decorSize(null)], ['small', 'medium', 'large', null]);
-  assert.equal(Object.keys(DECOR_KINDS).length, 14);   // HOME-DOORS: and the doors, hung in a doorway; HOME-VENDOR: and the people
+  assert.equal(Object.keys(DECOR_KINDS).length, 18);   // HOME-DOORS: and the doors, hung in a doorway; HOME-VENDOR: and the people; DECOR-DUNGEON: and a dungeon's own furniture; DECOR-OUTDOOR: and the street's, and the climate's nature; DECOR-MODS: and the town mods' furnishings
 });
 
 // DECOR1c: a room's pool over fakes of the host's own seams - the pipeline's meshes and textures, the renderer, the room's

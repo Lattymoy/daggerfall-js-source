@@ -1,0 +1,103 @@
+[
+  {
+    "name": "NUDEDECOR-offer-ungated",
+    "file": "src/systems/decorCatalogue.js",
+    "old": "    && !(nude && e.nude)\n",
+    "new": "",
+    "tests": [
+      "test/nudedecor.test.js"
+    ],
+    "note": "AUDIT 05b (PIN MOVED): re-aimed by content - each entry says once whether it is nude (A7)."
+  },
+  {
+    "name": "NUDEDECOR-offer-setting-unread",
+    "file": "src/systems/decorCatalogue.js",
+    "old": "  const nude = !(show ?? showNudity());",
+    "new": "  const nude = !(show ?? true);",
+    "tests": [
+      "test/nudedecor.test.js"
+    ]
+  },
+  {
+    "name": "NUDEDECOR-room-born",
+    "file": "src/scenes/decorRoom.js",
+    "old": "      const [a, r] = drawnFlat(piece.flat[0], piece.flat[1]);",
+    "new": "      const [a, r] = piece.flat;",
+    "tests": [
+      "test/nudedecor.test.js"
+    ]
+  },
+  {
+    "name": "NUDEDECOR-tool-drawn-born",
+    "file": "src/scenes/decorTool.js",
+    "old": "  const drawnHere = (flat) => drawnFlat(...(deps.flatAs?.(flat) ?? flat));",
+    "new": "  const drawnHere = (flat) => (deps.flatAs?.(flat) ?? flat);",
+    "tests": [
+      "test/nudedecor.test.js"
+    ]
+  },
+  {
+    "name": "NUDEDECOR-ghost-born",
+    "file": "src/scenes/decorTool.js",
+    "old": "      const [ga, gr] = drawnHere(entry.flat);   // NUDE-DECOR: a figure moved shows the stand-in the room stands it as; DECOR-OUTDOOR: a tree, its season",
+    "new": "      const [ga, gr] = entry.flat;",
+    "tests": [
+      "test/nudedecor.test.js"
+    ]
+  },
+  {
+    "name": "NUDEDECOR-thumb-born",
+    "file": "src/scenes/decorTool.js",
+    "old": "        return entry.flat ? deps.iconUrl?.(...drawnHere(entry.flat)) ?? null : null;   // NUDE-DECOR, DECOR-OUTDOOR: the picture it stands as",
+    "new": "        return entry.flat ? deps.iconUrl?.(entry.flat[0], entry.flat[1]) ?? null : null;",
+    "tests": [
+      "test/nudedecor.test.js"
+    ]
+  },
+  {
+    "name": "NUDEDECOR-thumb-key-entry",
+    "file": "src/scenes/decorTool.js",
+    "old": "        return drawn && drawn !== entry.flat.join('.') ? `${entry.key}>${drawn}` : entry.key;",
+    "new": "        return entry.key;",
+    "tests": [
+      "test/nudedecor.test.js"
+    ]
+  },
+  {
+    "name": "NUDEDECOR-panel-key-unread",
+    "file": "src/ui/decorPanel.js",
+    "old": "    const k = thumbKeyOf(e);",
+    "new": "    const k = e.key;",
+    "tests": [
+      "test/nudedecor.test.js"
+    ]
+  },
+  {
+    "name": "NUDEDECOR-panel-placed-row-key-unread",
+    "file": "src/ui/decorPanel.js",
+    "old": "    if (shape.flat && it.entry) {\n      const img = el('img', '');\n      img.setAttribute('alt', '');\n      thumb.append(img);\n      const known = thumbs.get(thumbKeyOf(shape));",
+    "new": "    if (shape.flat && it.entry) {\n      const img = el('img', '');\n      img.setAttribute('alt', '');\n      thumb.append(img);\n      const known = thumbs.get(shape.key);",
+    "tests": [
+      "test/nudedecor.test.js"
+    ]
+  },
+  {
+    "name": "NUDEHOSTS-arena-born",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "      const [archive, record] = drawnFlat(s.archive, s.record);",
+    "new": "      const [archive, record] = [s.archive, s.record];",
+    "tests": [
+      "test/nudedecor.test.js"
+    ]
+  },
+  {
+    "name": "NUDEDECOR-flag-unset",
+    "file": "src/systems/decorCatalogue.js",
+    "old": "    nude: !!e.flat && isNudeFlat(e.flat[0], e.flat[1]),",
+    "new": "    nude: false,",
+    "tests": [
+      "test/nudedecor.test.js"
+    ],
+    "note": "AUDIT 05b A7: the catalogue never says which entries are nude - the offer, reading the flag, gates none"
+  }
+]
