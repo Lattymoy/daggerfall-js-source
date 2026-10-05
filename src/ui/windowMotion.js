@@ -25,7 +25,7 @@
 import { pageHas } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
 
 /** The window roles that open and close with motion. */
-export const MOTION_WINDOWS = ['.px-win', '.pack-win', '.loot-win', '.px-about', '.px-profile', '.hmbox', '.inputbox', '.dlg-win'];
+export const MOTION_WINDOWS = ['.px-win', '.pack-win', '.loot-win', '.px-about', '.px-profile', '.px-support', '.hmbox', '.inputbox', '.dlg-win'];   // SUPPORT1: the door's asks unfold with its other two corner marks
 export const MOTION_IN_MS = 240;
 export const MOTION_OUT_MS = 180;
 const SEL = MOTION_WINDOWS.join(', ');

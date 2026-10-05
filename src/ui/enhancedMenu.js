@@ -176,6 +176,7 @@ import { keyCodeForDomCode, KEYCODE_NONE } from '../systems/keyCodes.js';   // H
 import { isOnlinePage, onlineForcedPref, onlineForcedModSetting, onlineForcedSetting, onlineWholeModKey, ONLINE_ROOM_MOD_KEYS } from '../systems/onlineLane.js';   // OL1: online is the enhanced lane, whole - a forced switch is shown locked   // ROADS 24; DS1: the integer keys; UL1: the choice keys
 import { onlineSyncPlan, applyOnlineSync, lastOnlineSync, undoOnlineSync } from '../systems/onlineSync.js';   // UXB1-E: the room's rules, copied home
 import { CREDITS } from './credits.js';   // CR1: who made what the port carries
+import { SUPPORT_ASKS } from './supportAsks.js';   // SUPPORT1: the project's asks - the website's corner and this door's
 // FIX-F (Mac: "changing keybinds in classic/enhanced do not work"): the
 // rebinding pane. The enhanced skin is the DEFAULT and had no door to
 // the key bindings at all - the only one in the port opens off the
@@ -992,6 +993,27 @@ function profileMark() {
     face: save ? loadFace(save, { scale: 2, copy: true }) : null,   // a COPY: the Continue pane's tile may draw this very face
     onOpen: () => { accountOpen = true; render(); },
   });
+}
+
+/** SUPPORT1 (Mac, 2026-10-05: "add the patron/kofi ingame on the main menu as 2 icons"): THE ASKS, top-left of the
+ *  door - the one corner it had free. An icon a platform, its mark drawn by ui/supportAsks.js exactly as the website's
+ *  corner draws it, its name on the pointer's tooltip and in what a screen reader says. Each is a LINK out of the game,
+ *  never a press the door acts on: a new tab on the web, the system browser from the desktop app (app/main.cjs hands
+ *  http(s) there), as the credits' links and TERMS1's documents open. */
+function supportMarks() {
+  const nav = el('nav', 'px-support');
+  nav.setAttribute('aria-label', 'Support');
+  for (const ask of SUPPORT_ASKS) {
+    const a = el('a', `px-supportlink px-support-${ask.id}`);
+    a.href = ask.url; a.target = '_blank'; a.rel = 'noopener';
+    a.title = ask.label;
+    a.setAttribute('aria-label', ask.label);
+    const mark = el('i', `supmark supmark-${ask.id}`);
+    mark.setAttribute('aria-hidden', 'true');
+    a.append(mark);
+    nav.append(a);
+  }
+  return nav;
 }
 
 /** The window itself, wearing the pause window's own frame. */
@@ -3469,6 +3491,9 @@ function renderHome() {
   // ACC1f: the profile mark, top-right - the corner the foot's About
   // box does not use.
   home.append(profileMark());
+  // SUPPORT1: the asks, top-left - the front door's alone; PX4 keeps the
+  // pause face to its window, so they are not drawn over a game.
+  home.append(supportMarks());
 
   // ...and the window, offered ONCE per visit to a device with nobody
   // signed in. `accountOffered` latches here rather than in the

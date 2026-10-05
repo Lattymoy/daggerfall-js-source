@@ -1081,6 +1081,79 @@ beside a README that said Patreon. It is `custom: ["https://www.patreon.com/c/df
 `patreon: dfenhanced`, which would link a URL Mac never gave), and the PATREON1 pin reads it, README.md and SUPPORT.md:
 the same Patreon, no Ko-fi (`tools/mutants/patreon1.json`, 4, all dead).
 
+**SUPPORT1 (2026-10-05, Mac: "I want to add the kofi link in addition to the patron on the website" and "I also want
+to add the patron/kofi ingame on the main menu as 2 icons").** PATREON1's "only ask" is retired: Ko-fi stands beside
+Patreon again, at Mac's new page (https://ko-fi.com/daggerfallonline - U64's ko-fi.com/dfjs is no longer the
+project's), at two doors. THE WEBSITE: the corner is a labelled row (`<nav class="asks" aria-label="Support">`) of two
+plaques in the ONE `.ask` shape - Patreon's then Ko-fi's, each with its mark beside the words - so the page still has
+exactly two box shapes; the door starts below the row at every width now, not on a phone alone (two plaques reach over
+the wordmark on a short window), and on a phone the row stays one row, the mark and the platform's name with "Support
+on" set down. THE GAME'S FRONT DOOR: two icons in the door's top-left corner, Patreon's mark and Ko-fi's mug, a 44px
+target each in a plaque wearing the About box's face (ACC1f: corner marks that look unrelated read as two kinds of
+thing) and, under Plus, the kit's carved frame and the window motion About and the profile have; each a LINK out of the
+game (`target=_blank`: a new tab on the web, the system browser from the desktop app, which hands http(s) there as it
+does the credits' links), titled and labelled "Support on Patreon" / "Support on Ko-fi" for the pointer and a reader.
+The front door's alone: PX4 keeps the pause face to its window. AND EVERY OTHER ASK, by PATREON1-F1's own law, two now:
+README.md, SUPPORT.md and the repository's Sponsor button (`.github/FUNDING.yml`: `custom` keeps Mac's /c/ Patreon
+URL, `ko_fi: daggerfallonline` is GitHub's own key).
+
+ONE HOME, TWO DOORS. `src/ui/supportAsks.js` holds the asks (`SUPPORT_ASKS`: id, name, label, address) and their
+drawings, a string a row, and `markCss` turns a drawing into a box and one ::before pixel whose box-shadow paints the
+rest. The skin is composed with the block (`SUPPORT_MARKS_CSS`); the website runs no script, so the build seam
+(`scripts/landingHtml.mjs`) injects the same block after the tokens, as it injects the skin's tokens and the menu's
+night - the site and the game cannot ask under two drawings, and the page's own style holds the plaques alone. The
+generator reproduces PATREON1's Patreon mark pixel for pixel (its 26 pixels, checked against the shipped list). Both
+marks light in the classic pair's gold under the pointer AND the keyboard - the whole brass, where PATREON1's corner
+lit one pixel.
+
+THREE CALLS MADE HERE, FOR MAC TO OVERTURN. (1) WHERE: the top-left corner, the one the door had free. Measured at six
+sizes before choosing - the foot's open centre runs under the last menu row on a 1366x768 screen (Overhauls ends at
+y 729, the foot starts at 700: PX8's shape exactly), and a phone's foot is already full with the build and About (the
+iPhone SE leaves 0px between them). (2) THE MUG: U64's cup, its handle redrawn as a RING. Its solid handle read as a
+cup beside the words "Support on Ko-fi"; alone as an icon on the door it read as a goblet (both rendered at 12x to
+choose), and the hole is what says mug. The body stays filled - U64's own lesson, whose first draft was a ring and read
+as an 'o'. (3) THE WHOLE DRAWING IS LAID OUT. The first cut laid out the mug's body and let its steam rise above the
+box undrawn-for; on the website the steam landed in the plaque's top border (caught at 3x). Each mark's box is now its
+whole drawing (`MARK_BODY_ROWS`, five, says which rows are its body): the site centres each drawing in a plaque padded
+to keep PATREON1's 46px, and the door stands both on their feet so the two bodies centre in their cells.
+
+THE CORNERS' BAND. With a mark in each top corner, the front door's stage starts below them wherever the wordmark is
+wide enough to reach under the asks - the front door's twin of AUDIT TIMERS1 UI-2, which stands the pause window clear
+of the corner marks over a game. Measured rather than argued: `tools/supportAsksProbe.mjs` reads the logo PNG's alpha,
+maps it onto the screen through the <img>'s own box and counts the opaque pixels under each mark (the Plus frame's
+outset included) at 176 viewport sizes. Without the band the asks stood on the logo at every phone width and at
+540-700px (up to 1,965px²); and the PROFILE MARK ALREADY DID - at every phone width, and up to 5,247px² at 540-900px,
+where its "Sign in" caption sits on the logo's top-right. The band's numbers are the marks' own (pinned that way): the
+asks reach 122px in (18, the plaque's 98, the frame's 6), and (vw - min(540px, 84vw)) / 2 is under that below 784px,
+so between 481 and 783px the stage starts at 84px (over both marks' 74 and 80), keeps the one-row foot's 68px at its
+foot, scrolls where the band costs it the room (PX8's law: a row is never cut off) and still centres where it fits -
+by auto margins, which take the room that is left and none that is not; on a phone, where the marks stand 10px in,
+PX8's 7dvh is floored at 72px. With it: the asks on the logo at none of the 176 sizes on either skin, and the profile
+mark at none below 784px.
+
+FOUND, NOT FIXED - recorded for Mac, outside this slice (one feature at a time). (1) PX8'S THRESHOLD IS STALE: its
+stage scrolls only under 560px tall, a number set before the door grew to eight rows. Under Plus, at 784px wide and
+up, 561 to about 700px tall, the centred door overflows BOTH ends with no way to scroll - the wordmark's top off the
+screen (45px at 1280x600) and the last row's foot, and under about 620px the WHOLE Overhauls row (1366x568, 1280x568:
+pressable by nothing). The classic rail's five rows still fit. A 720p screen's browser window is in that range. The
+fix is the band's own mechanism at every width - the door's stage scrolling and centred by auto margins - and it moves
+nothing on a screen where the door fits. (2) THE PROFILE MARK'S CAPTION meets the logo from 784px to about 900px wide
+on short windows (2,017px² at 800x568); its reach is its text's, so the band (derived from the asks') cannot know it.
+Both print on every run of `tools/supportAsksProbe.mjs` as the profile's own and PX8's, and do not fail it.
+
+Pins: `test/support1_asks.test.js` (6) - the asks deepEqual Mac's addresses; the drawings pixel for pixel; `markCss`
+painting each pixel once on the 4px grid and laying out the whole drawing; the REAL front door mounted on the fake
+document drawing the two links (`_blank`, `noopener`, titled, labelled, marks aria-hidden) and the pause face none; the
+skin's plaque, cells, phone offsets, frame and motion; the band derived from the marks' numbers. `test/landing.test.js`:
+the PATREON1 pin rewritten as U64 + PATREON1 + SUPPORT1 (the two asks in order at the module's addresses, each plaque
+whole, the door's room computed from the row, the phone row, no mark of the page's own - read off its rules, not its
+comments, the AUDIT SITE1 F10 lesson - and every ask the project makes naming the same two), and a new pin on the
+injection (verbatim, after the tokens, the skin wearing the same block). `tools/mutants/support1.json`: 34 mutants, 34
+dead; PATREON1-F1's four still die. Live: `tools/supportAsksProbe.mjs` 16/16 (a press on each icon opens Mac's page
+and leaves the door standing; the band at 176 sizes on both skins) and `tools/landingProbe.mjs` 54/54 (the site's asks
+on desktop and a phone, gold under the pointer, one row clear of the door at 60 sizes from 320px to 1920px). Seen in
+Chromium; not in the desktop app, whose link path is the credits' own.
+
 ## U63 THE SITE WEARS THE GAME'S FACE (2026-08-27, Mac's call)
 
 Mac: "we've been doing some heavy UI work in another session and I want

@@ -39,6 +39,7 @@ import { installWindowMotion } from './windowMotion.js';   // PLUS1/WM1: windows
 import { isEnhancedPlus } from '../systems/uiSkin.js';   // PLUS1: the Plus sheet is laid only under Plus
 import { pageHas } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
 import { SERPENT_RING_MAP_CSS } from './serpentMapMark.js';   // SERPENT-TIMERS: the sea serpent's row marked in its waters' own colour
+import { SUPPORT_MARKS_CSS } from './supportAsks.js';   // SUPPORT1: the asks' marks - the door's icons and the website's corner, one drawing
 
 /**
  * QUICK-LOOT-STATS: THE PLAQUE'S LAYOUT NUMBERS LIVE WITH THE DRESS.
@@ -2248,6 +2249,22 @@ ${badgeCss()}
 .px-profile:hover .px-profilename, .px-profile:focus-visible .px-profilename {
   color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
 
+/* ── SUPPORT1: THE ASKS (Mac, 2026-10-05: "add the patron/kofi ingame on the main menu as 2 icons") ──────────────────
+   The door's TOP-LEFT corner, the one it had free - and the only home a pair of icons has at every size without
+   standing on something a player presses: the foot's centre runs under the last row of the menu on a 768px screen (the
+   PX8 shape), and a phone's foot is full with the build and About. Patreon's mark and Ko-fi's mug, drawn by
+   ui/supportAsks.js exactly as the website's corner draws them, a 44px target each, in a plaque wearing the About
+   box's own face (ACC1f: two corner marks that look unrelated read as two kinds of thing) - the kit's carved frame
+   under Plus (ui/enhancedFrame.js, the window role). A mark lights in the classic pair's gold under the pointer and
+   the keyboard (the marks' own rule). */
+${SUPPORT_MARKS_CSS}
+.px-support { position: absolute; top: 16px; left: 18px; z-index: 4; display: flex; gap: 2px; padding: 2px;
+  background: rgba(10,12,17,0.55); border: 2px solid #7d7460; }
+/* Each mark stands on its feet 12px up, so the two five-row bodies (MARK_BODY_ROWS) centre in the 44px cell side by
+   side and the mug's steam rises into the room above its own. */
+.px-supportlink { display: flex; align-items: flex-end; justify-content: center; width: 44px; height: 44px;
+  padding-bottom: 12px; border: 0; outline: none; }
+
 /* THE WINDOW is the pause window's frame with the account card inside
    it, so the door has ONE kind of modal rather than two. It is
    shorter, because the card is a card and not a journal. */
@@ -2408,6 +2425,7 @@ ${badgeCss()}
   .px-profile { top: 10px; right: 10px; }
   .px-portrait { width: 48px; height: 48px; }
   .px-profiletext { display: none; }
+  .px-support { top: 10px; left: 10px; }   /* SUPPORT1: the asks mirror it, the opposite corner */
 }
 @media (max-width: 480px) {
   .px-wordmark { font-size: 60px; }
@@ -2432,6 +2450,23 @@ ${badgeCss()}
   .px-stage { justify-content: flex-start; padding: 7dvh 24px 132px; overflow-y: auto; }
   /* Keep the ordinary pause panel above the clock; its body remains the scroller. */
   .px-over > .px-stage:not(.px-acctstage):not(.px-timersstage) > .px-win { max-height: calc(100dvh - max(7dvh, 64px) - 64px); }
+}
+/* SUPPORT1: THE CORNERS' BAND - the front door's twin of AUDIT TIMERS1 UI-2 (below), which stands the pause window
+   clear of the corner marks over a game. With a mark in each top corner, the door's stage starts below them wherever
+   the wordmark is wide enough to reach under the asks: they reach 122px in (18, their 98, the Plus frame's 6), and
+   (vw - min(540px, 84vw)) / 2 is less than that at every width under 784 - and on a phone, where the marks stand 10px
+   in, always. Measured rather than argued: tools/supportAsksProbe.mjs maps the logo's own opaque pixels onto the
+   screen across 176 sizes. Between 481 and 783 the door still centres where it fits (auto margins take the room left
+   and none that is not) and starts at the top and scrolls where it does not, because the band costs height and a row
+   it pushes off the screen must stay reachable (PX8's law, above). The bottom keeps the one-row foot's 68px. */
+@media (min-width: 481px) and (max-width: 783px) {
+  .px-home:not(.px-over) > .px-stage:not(.px-acctstage) { justify-content: flex-start; overflow-y: auto;
+    padding: 84px 24px 76px; }
+  .px-home:not(.px-over) > .px-stage:not(.px-acctstage) > :first-child { margin-top: auto; }
+  .px-home:not(.px-over) > .px-stage:not(.px-acctstage) > :last-child { margin-bottom: auto; }
+}
+@media (max-width: 480px) {
+  .px-home:not(.px-over) > .px-stage:not(.px-acctstage) { padding-top: max(7dvh, 72px); }
 }
 /* Inventory and Spellbook own direct window shells. Keep their controls above the measured controller legend. */
 html.plus-pad-prompts-visible .pack-shell,

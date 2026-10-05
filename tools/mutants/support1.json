@@ -1,0 +1,346 @@
+[
+  {
+    "name": "SUPPORT1-kofi-at-u64s-page",
+    "file": "src/ui/supportAsks.js",
+    "old": "url: 'https://ko-fi.com/daggerfallonline'",
+    "new": "url: 'https://ko-fi.com/dfjs'",
+    "tests": [
+      "test/support1_asks.test.js",
+      "test/landing.test.js"
+    ],
+    "note": "The ask goes to the page the project left in PATREON1."
+  },
+  {
+    "name": "SUPPORT1-asks-swapped",
+    "file": "src/ui/supportAsks.js",
+    "old": "  Object.freeze({ id: 'patreon', name: 'Patreon', label: 'Support on Patreon', url: 'https://www.patreon.com/c/dfenhanced', art: PATREON_ART }),\n  Object.freeze({ id: 'kofi', name: 'Ko-fi', label: 'Support on Ko-fi', url: 'https://ko-fi.com/daggerfallonline', art: KOFI_ART }),",
+    "new": "  Object.freeze({ id: 'kofi', name: 'Ko-fi', label: 'Support on Ko-fi', url: 'https://ko-fi.com/daggerfallonline', art: KOFI_ART }),\n  Object.freeze({ id: 'patreon', name: 'Patreon', label: 'Support on Patreon', url: 'https://www.patreon.com/c/dfenhanced', art: PATREON_ART }),",
+    "tests": [
+      "test/support1_asks.test.js",
+      "test/landing.test.js"
+    ],
+    "note": "Ko-fi before Patreon: the door and the site would disagree on the order."
+  },
+  {
+    "name": "SUPPORT1-patreon-disc-pixel",
+    "file": "src/ui/supportAsks.js",
+    "old": "  '+..###.',\n  '+.#####',",
+    "new": "  '+..##..',\n  '+.#####',",
+    "tests": [
+      "test/support1_asks.test.js"
+    ],
+    "note": "One pixel off PATREON1's disc."
+  },
+  {
+    "name": "SUPPORT1-mug-hole-filled",
+    "file": "src/ui/supportAsks.js",
+    "old": "  '####.#',",
+    "new": "  '######',",
+    "tests": [
+      "test/support1_asks.test.js"
+    ],
+    "note": "The handle a solid column again - U64's cup, which read as a goblet alone on the door."
+  },
+  {
+    "name": "SUPPORT1-steam-in-brass",
+    "file": "src/ui/supportAsks.js",
+    "old": "  '.+.+..',",
+    "new": "  '.#.#..',",
+    "tests": [
+      "test/support1_asks.test.js"
+    ],
+    "note": "Brass above the body: the steam lights with the mug and the bodies no longer stand on one line."
+  },
+  {
+    "name": "SUPPORT1-mark-pixel-3px",
+    "file": "src/ui/supportAsks.js",
+    "old": "export const MARK_PX = 4;",
+    "new": "export const MARK_PX = 3;",
+    "tests": [
+      "test/support1_asks.test.js",
+      "test/landing.test.js"
+    ],
+    "note": "Off the 4px grid both doors draw on."
+  },
+  {
+    "name": "SUPPORT1-corner-pixel-dropped",
+    "file": "src/ui/supportAsks.js",
+    "old": "    if (x === 0 && y === 0) { ground = colour(ch); return; }",
+    "new": "    if (x === 0 && y === 0) { return; }",
+    "tests": [
+      "test/support1_asks.test.js"
+    ],
+    "note": "The bar's top pixel vanishes: a shadow at the element's own place is clipped under it."
+  },
+  {
+    "name": "SUPPORT1-box-only-the-body",
+    "file": "src/ui/supportAsks.js",
+    "old": "  const rows = ask.art.length;",
+    "new": "  const rows = MARK_BODY_ROWS;",
+    "tests": [
+      "test/support1_asks.test.js"
+    ],
+    "note": "Laying out less than is drawn - the mug's steam in the site's border again."
+  },
+  {
+    "name": "SUPPORT1-gold-under-the-pointer-only",
+    "file": "src/ui/supportAsks.js",
+    "old": "a:hover > .supmark, a:focus-visible > .supmark { --mk-hi: rgb(243,239,44); }",
+    "new": "a:hover > .supmark { --mk-hi: rgb(243,239,44); }",
+    "tests": [
+      "test/support1_asks.test.js"
+    ],
+    "note": "The keyboard's focus no longer lights the mark."
+  },
+  {
+    "name": "SUPPORT1-door-without-asks",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "  home.append(supportMarks());",
+    "new": "  void supportMarks;",
+    "tests": [
+      "test/support1_asks.test.js"
+    ],
+    "note": "The front door draws no asks."
+  },
+  {
+    "name": "SUPPORT1-door-asks-inside-the-game",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "a.href = ask.url; a.target = '_blank';",
+    "new": "a.href = ask.url; a.target = '_self';",
+    "tests": [
+      "test/support1_asks.test.js"
+    ],
+    "note": "A press would navigate the game's own page away."
+  },
+  {
+    "name": "SUPPORT1-door-mark-read-aloud",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "    mark.setAttribute('aria-hidden', 'true');\n    a.append(mark);",
+    "new": "    a.append(mark);",
+    "tests": [
+      "test/support1_asks.test.js"
+    ],
+    "note": "A reader announces an empty element inside each link."
+  },
+  {
+    "name": "SUPPORT1-door-asks-over-a-game",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "    home.append(profileMark());\n    // TIMERS1",
+    "new": "    home.append(profileMark()); home.append(supportMarks());\n    // TIMERS1",
+    "tests": [
+      "test/support1_asks.test.js"
+    ],
+    "note": "The pause face draws the asks over a game (PX4)."
+  },
+  {
+    "name": "SUPPORT1-skin-without-the-marks",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "${SUPPORT_MARKS_CSS}\n.px-support {",
+    "new": "\n.px-support {",
+    "tests": [
+      "test/support1_asks.test.js",
+      "test/landing.test.js"
+    ],
+    "note": "The door's icons are empty boxes; the site and the game no longer share a drawing."
+  },
+  {
+    "name": "SUPPORT1-plaque-top-right",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".px-support { position: absolute; top: 16px; left: 18px;",
+    "new": ".px-support { position: absolute; top: 16px; right: 18px;",
+    "tests": [
+      "test/support1_asks.test.js"
+    ],
+    "note": "The asks on top of the profile mark."
+  },
+  {
+    "name": "SUPPORT1-cell-under-44",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "justify-content: center; width: 44px; height: 44px;\n  padding-bottom: 12px;",
+    "new": "justify-content: center; width: 40px; height: 44px;\n  padding-bottom: 12px;",
+    "tests": [
+      "test/support1_asks.test.js"
+    ],
+    "note": "Under a thumb's floor."
+  },
+  {
+    "name": "SUPPORT1-bodies-off-centre",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  padding-bottom: 12px; border: 0; outline: none; }",
+    "new": "  padding-bottom: 8px; border: 0; outline: none; }",
+    "tests": [
+      "test/support1_asks.test.js"
+    ],
+    "note": "The two bodies no longer centred in their cells."
+  },
+  {
+    "name": "SUPPORT1-phone-offsets",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".px-support { top: 10px; left: 10px; }",
+    "new": ".px-support { top: 10px; left: 16px; }",
+    "tests": [
+      "test/support1_asks.test.js"
+    ],
+    "note": "On a phone the asks no longer mirror the profile."
+  },
+  {
+    "name": "SUPPORT1-band-threshold",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "@media (min-width: 481px) and (max-width: 783px) {",
+    "new": "@media (min-width: 481px) and (max-width: 784px) {",
+    "tests": [
+      "test/support1_asks.test.js"
+    ],
+    "note": "The band's width no longer the asks' reach."
+  },
+  {
+    "name": "SUPPORT1-band-top-on-the-marks",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "    padding: 84px 24px 76px; }",
+    "new": "    padding: 74px 24px 76px; }",
+    "tests": [
+      "test/support1_asks.test.js"
+    ],
+    "note": "The wordmark under the profile's frame."
+  },
+  {
+    "name": "SUPPORT1-band-foot-short",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "    padding: 84px 24px 76px; }",
+    "new": "    padding: 84px 24px 60px; }",
+    "tests": [
+      "test/support1_asks.test.js"
+    ],
+    "note": "The last row scrolls no further than under the foot."
+  },
+  {
+    "name": "SUPPORT1-band-phone-floor",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "padding-top: max(7dvh, 72px);",
+    "new": "padding-top: max(7dvh, 64px);",
+    "tests": [
+      "test/support1_asks.test.js"
+    ],
+    "note": "On a phone the wordmark under the asks."
+  },
+  {
+    "name": "SUPPORT1-band-no-centring",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "> :first-child { margin-top: auto; }",
+    "new": "> :first-child { margin-top: 0; }",
+    "tests": [
+      "test/support1_asks.test.js"
+    ],
+    "note": "The door stops centring where it fits."
+  },
+  {
+    "name": "SUPPORT1-no-plus-frame",
+    "file": "src/ui/enhancedFrame.js",
+    "old": "    '.px-support',   // SUPPORT1",
+    "new": "    // SUPPORT1",
+    "tests": [
+      "test/support1_asks.test.js"
+    ],
+    "note": "Under Plus the asks lose the frame About and the profile wear."
+  },
+  {
+    "name": "SUPPORT1-no-unfold",
+    "file": "src/ui/windowMotion.js",
+    "old": "'.px-profile', '.px-support', '.hmbox'",
+    "new": "'.px-profile', '.hmbox'",
+    "tests": [
+      "test/support1_asks.test.js"
+    ],
+    "note": "The asks pop in while the door's other corner marks unfold."
+  },
+  {
+    "name": "SUPPORT1-site-not-injected",
+    "file": "scripts/landingHtml.mjs",
+    "old": "      { tag: 'style', attrs: { id: 'support-marks' }, children: SUPPORT_MARKS_CSS, injectTo: 'head' },",
+    "new": "",
+    "tests": [
+      "test/landing.test.js"
+    ],
+    "note": "The site's plaques carry empty marks."
+  },
+  {
+    "name": "SUPPORT1-site-kofi-at-u64s-page",
+    "file": "index.html",
+    "old": "<a class=\"ask\" href=\"https://ko-fi.com/daggerfallonline\"",
+    "new": "<a class=\"ask\" href=\"https://ko-fi.com/dfjs\"",
+    "tests": [
+      "test/landing.test.js"
+    ],
+    "note": "The site asks at the retired page."
+  },
+  {
+    "name": "SUPPORT1-site-third-box",
+    "file": "index.html",
+    "old": "    .ask:hover, .ask:focus-visible {",
+    "new": "    .kofi { border: 2px solid #7d7460; }\n    .ask:hover, .ask:focus-visible {",
+    "tests": [
+      "test/landing.test.js"
+    ],
+    "note": "A third box shape: the page's two-shape discipline broken by a second ask."
+  },
+  {
+    "name": "SUPPORT1-site-no-room",
+    "file": "index.html",
+    "old": "padding: 84px 24px 118px; text-align: center; }",
+    "new": "padding: 40px 24px 118px; text-align: center; }",
+    "tests": [
+      "test/landing.test.js"
+    ],
+    "note": "Two plaques over the wordmark on a short window."
+  },
+  {
+    "name": "SUPPORT1-site-phone-full-words",
+    "file": "index.html",
+    "old": "      .askverb { display: none; }\n",
+    "new": "",
+    "tests": [
+      "test/landing.test.js"
+    ],
+    "note": "On a phone the full words wrap the row onto the wordmark."
+  },
+  {
+    "name": "SUPPORT1-site-mark-spoken",
+    "file": "index.html",
+    "old": "<i class=\"supmark supmark-patreon\" aria-hidden=\"true\"></i>",
+    "new": "<i class=\"supmark supmark-patreon\"></i>",
+    "tests": [
+      "test/landing.test.js"
+    ],
+    "note": "A reader announces an empty element in the link."
+  },
+  {
+    "name": "SUPPORT1-sponsor-button-old-kofi",
+    "file": ".github/FUNDING.yml",
+    "old": "ko_fi: daggerfallonline",
+    "new": "ko_fi: dfjs",
+    "tests": [
+      "test/landing.test.js"
+    ],
+    "note": "GitHub's Sponsor button asks at the retired page."
+  },
+  {
+    "name": "SUPPORT1-readme-old-kofi",
+    "file": "README.md",
+    "old": "Support on Ko-fi: https://ko-fi.com/daggerfallonline",
+    "new": "Support on Ko-fi: https://ko-fi.com/dfjs",
+    "tests": [
+      "test/landing.test.js"
+    ],
+    "note": "The README asks at the retired page."
+  },
+  {
+    "name": "SUPPORT1-support-md-without-kofi",
+    "file": "SUPPORT.md",
+    "old": "**Ko-fi:** https://ko-fi.com/daggerfallonline\n",
+    "new": "",
+    "tests": [
+      "test/landing.test.js"
+    ],
+    "note": "SUPPORT.md names one ask of two."
+  }
+]
