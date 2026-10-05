@@ -545,9 +545,12 @@ test('MAC2: the player swims where the surface is drawn under the feet - the dep
   assert.equal(exteriorSurfaces({ inside: false, rawTile: raw, probe }).water, WaterWalking, 'and with no feet at all, DFU\'s record law alone');
   // both exterior hosts hand the feet over, from the tile arithmetic the
   // water pass shares (fract(vLocalXZ / tile))
-  for (const [file, sample] of [['../src/scenes/world.js', 'playerGroundSample'], ['../src/scenes/exterior.js', 'playerGroundSampleRaw']]) {
+  // (FIELD BUGS 2026-10-05 SHORE-CAST: world.js's sample is groundSampleAt's read at the feet - the fishing cast asks
+  // the same read at its own point)
+  for (const [file, sample] of [['../src/scenes/world.js', 'groundSampleAt = \\(pos\\)'], ['../src/scenes/exterior.js', 'playerGroundSampleRaw = \\(\\)']]) {
     const src = readFileSync(new URL(file, import.meta.url), 'utf8');
-    assert.match(src, new RegExp(`const ${sample} = \\(\\) => \\{[\\s\\S]{0,900}feet: \\[u - tx, v - ty\\]`), `${file}: the sample carries the feet's fraction`);
+    assert.match(src, new RegExp(`const ${sample} => \\{[\\s\\S]{0,900}feet: \\[u - tx, v - ty\\]`), `${file}: the sample carries the feet's fraction`);
+    if (file.endsWith('world.js')) assert.match(src, /const playerGroundSample = \(\) => groundSampleAt\(walkMode \? player\.pos : cam\.pos\);/, `${file}: and the feet's sample is that read at the feet`);
     assert.match(src, /rawTile: _ground\?\.tile \?\? null,\s*\n\s*feet: _ground\?\.feet \?\? null,/, `${file}: the surface read hands the feet to the model`);
   }
 });

@@ -134,7 +134,8 @@ test('the two rails differ only where the question does', () => {
   // that is itself on both rails - and test/enhancedControls.test.js
   // holds the category and its two renderers.
   // OVH1: Overhauls joins the shared set - the three looks, reachable from both doors as Features is.
-  const shared = ['Load Game', 'Settings', 'Features', 'Overhauls', 'About'];   // FT14: no Mods door; FT16: no Controls door
+  // LOAD1: Screenshots joins it - the gallery the key keeps is the same at the door and mid-game.
+  const shared = ['Load Game', 'Settings', 'Features', 'Overhauls', 'Screenshots', 'About'];   // FT14: no Mods door; FT16: no Controls door
   assert.ok(!boot.includes('Controls') && !pause.includes('Controls'),
     'Controls is a Settings category now - a second door to one subject is the thing FT16 closed');
   for (const s2 of shared) {
@@ -159,7 +160,7 @@ test('the two rails differ only where the question does', () => {
   assert.ok(!boot.includes('Enhanced') && !pause.includes('Enhanced'), 'Enhanced is a settings category, not a rail entry (SO1)');
   // FD1: the classic rail is the shared set behind one door
   const classic = list('SECTIONS_CLASSIC');
-  assert.deepEqual(classic, ['Begin', 'Online', 'Settings', 'Features', 'Overhauls', 'About'], 'ONLINE1: the classic player goes online too; FT0: and reaches the features home; FT14: which is where the mods are now; FT16: and Controls is inside Settings');
+  assert.deepEqual(classic, ['Begin', 'Online', 'Settings', 'Features', 'Overhauls', 'Screenshots', 'About'], 'ONLINE1: the classic player goes online too; FT0: and reaches the features home; FT14: which is where the mods are now; FT16: and Controls is inside Settings; LOAD1: and the key\'s shots');
   assert.deepEqual(pause.filter((x) => !shared.includes(x)), ['Resume', 'Save Game', 'Exit']);
   // SETTINGS IS THE POINT. U49's own record says settings were
   // reachable only at boot; a pause rail without them would have left

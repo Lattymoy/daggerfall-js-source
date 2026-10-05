@@ -884,8 +884,8 @@
   {
     "name": "SURVTIERS-the-dungeon-rests-by-the-shown-fire",
     "file": "src/scenes/dungeonContext.js",
-    "old": "restKind: () => (_fpFeet && camps.fireNear(_fpFeet)",
-    "new": "restKind: () => (_fpFeet && camps.byFire(_fpFeet)",
+    "old": "'bed' : _fpFeet && camps.fireNear(_fpFeet) ? 'camp'",
+    "new": "'bed' : _fpFeet && camps.byFire(_fpFeet) ? 'camp'",
     "tests": [
       "test/surv4_rest.test.js"
     ]

@@ -55,7 +55,7 @@ async function run(label, opts) {
   // MENU-TOGGLE (2026-09-26): the door's Enhanced/Classic pair is retired - the interface is the Overhauls page's -
   // so the foot is build on the left and About on the right, and nothing between them
   const foot = await page.evaluate(() => {
-    const about = document.querySelector('.px-foot .px-about');
+    const about = document.querySelector('.px-foot .px-about:not(.px-shots)');
     const b = about?.getBoundingClientRect();
     return { toggle: Boolean(document.querySelector('.skinswitch, .skinopt')), right: b ? Math.round(innerWidth - b.right) : null };
   });

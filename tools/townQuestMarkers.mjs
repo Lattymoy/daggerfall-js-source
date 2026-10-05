@@ -22,6 +22,16 @@
 // the walk's nearest floor cell to it on a storey (a floor height the walk covers four square metres of - never a table
 // it climbed onto from a bench) with half a metre of the same floor all round, in the block's own units. Nothing of the
 // packs or of ARENA2 is written; the numbers are a measurement of the player's data.
+//
+// FIELD BUGS 2026-10-05 SEALED-CELLAR ("Can't access building basement to continue quest" - Tigonus, The Possessed
+// Child: "Supposed to be stairs down"): THE HATCHES. The packs' cellars and lofts are reached by a stair the author
+// shut with a floor tile laid over its head (GEMSAL00 #7: stairs 40018 under floor 1000 and its ceiling 2000, a rug on
+// top) and marked with a pair of editor markers no game reads - 199.14 on the floor over the plug, 199.13 at the other
+// side. DFU lays the plug as the port does (AddModels places every record), so a quest marker past one stands where no
+// player walks, on a sound floor: THE RAY passes it and the list above never held it. A marker THE WALK does not reach
+// from the entrance but does from the far side of a hatch (a 199.14 or 199.13 the walk reaches, its partner the nearest
+// marker of the other number) is listed too, its floor spot the walk's nearest to the hatch's near side - the person,
+// the foe or the item stands by the shut stair, in the room the player can enter.
 import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -33,6 +43,10 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 /** MeshReader.GlobalScale - one block unit, in metres. */
 export const UNIT = 0.025;
 const SPAWN = 11, ITEM = 18, ENTER = 8, REST = 4, EDITOR = 199;
+/** SEALED-CELLAR: the packs' hatch markers - 199.14 over the plug, 199.13 at the stair's other side. */
+export const HATCH = Object.freeze([14, 13]);
+/** AUDIT FB1005 S1: how far a hatch's spot stands from the room's entrance (its enter and rest markers), in metres. */
+export const HATCH_DOOR_CLEAR_M = 1.5;
 export const VENDORS = Object.freeze([['beautiful-villages', 10], ['beautiful-cities', 20]]);
 /** The walk's person and its reach (the audit's): a 0.25 m grid, 1.7 m of headroom, a 0.65 m step, 2.5 m of reach. */
 export const WALK = Object.freeze({ cell: 0.25, head: 1.7, step: 0.65, reach: 2.5, clear: 2 });
@@ -252,8 +266,9 @@ export function walkFloor(tris, starts, { cell, head, step, reach, clear } = WAL
       return false;
     },
     /** The nearest reached cell to `p` on a storey, with `clear` cells of the same floor (within 0.1 m) all round it,
-     *  or null. */
-    clearSpot(p) {
+     *  or null. SEALED-CELLAR: `passes`, where given, a further test the cell must pass (the hatch's spots: THE RAY's floor -
+     *  by a shut stair the nearest clear cell can stand under its rail). */
+    clearSpot(p, passes = null) {
       let best = null;
       for (const n of reached) {
         let ok = storey(n.h);
@@ -262,6 +277,8 @@ export function walkFloor(tris, starts, { cell, head, step, reach, clear } = WAL
         }
         if (!ok) continue;
         const c = at(n), d = Math.hypot(c.x - p.x, c.y - p.y, c.z - p.z);
+        if (passes && best && d > best.d + 1e-9) continue;
+        if (passes && !passes(c)) continue;
         if (!best || d < best.d - 1e-9 || (Math.abs(d - best.d) <= 1e-9 && (n.i < best.n.i || (n.i === best.n.i && n.j < best.n.j)))) best = { d, n, c };
       }
       return best?.c ?? null;
@@ -276,14 +293,39 @@ export async function measureInterior(getModel, dfBlock, blockIndex, recordIndex
   const flats = dfBlock.rmbBlock.subRecords[recordIndex].interior.blockFlatObjectRecords.filter((f) => f.textureArchive === EDITOR && (f.textureRecord === SPAWN || f.textureRecord === ITEM));
   if (!flats.length) return [];
   const { tris, layout } = await interiorTriangles(getModel, dfBlock, blockIndex, recordIndex);
-  const walk = walkFloor(tris, layout.markers.filter((m) => m.type === ENTER || m.type === REST));
+  const entries = layout.markers.filter((m) => m.type === ENTER || m.type === REST);
+  const walk = walkFloor(tris, entries);
+  const sealed = hatchesOf(layout.markers, walk);
+  // AUDIT FB1005 S1: a hatch's spot is a floor (THE RAY) and not the entrance - a quest foe stood there meets the player
+  // at the door (TEMPASF0 #7's stood 0.95 m from its one enter marker)
+  const hatchSpotOk = (c) => rayVerdict(tris, c) === 'ok' && entries.every((m) => Math.hypot(c.x - m.x, c.z - m.z) >= HATCH_DOOR_CLEAR_M);
   return flats.map((f) => {
     const p = { x: f.xPos * UNIT, y: -f.yPos * UNIT, z: f.zPos * UNIT };
     const ray = rayVerdict(tris, p), reachable = walk.sees(p);
     const condemned = (ray === 'void' || ray === 'insideSolid') && !reachable;
-    const spot = condemned ? walk.clearSpot(p) : null;
-    return { record: f.textureRecord, at: [f.xPos, f.yPos, f.zPos], ray, reachable, to: spot ? rawOf(spot) : null };
+    // SEALED-CELLAR: past a shut hatch - the walk from its far side reaches it - it stands by the hatch's near side
+    const hatch = !condemned && !reachable ? sealed.find((h) => (h.walk ??= walkFloor(tris, [h.far])).sees(p)) : null;
+    const spot = condemned ? walk.clearSpot(p) : hatch ? walk.clearSpot(hatch.near, hatchSpotOk) : null;
+    return { record: f.textureRecord, at: [f.xPos, f.yPos, f.zPos], ray, reachable, ...(hatch ? { sealed: true } : {}), to: spot ? rawOf(spot) : null };
   });
+}
+
+/** SEALED-CELLAR: an interior's hatches the entrance's walk reaches - `{ near, far }`, a 199.14 or 199.13 it reaches
+ *  and the nearest marker of the other number (metres) - in the layout's marker order. */
+export function hatchesOf(markers, walk) {
+  const out = [];
+  for (const near of markers) {
+    if (!HATCH.includes(near.type) || !walk.sees(near)) continue;
+    const other = HATCH.find((t) => t !== near.type);
+    let far = null, best = Infinity;
+    for (const m of markers) {
+      if (m.type !== other) continue;
+      const d = Math.hypot(m.x - near.x, m.y - near.y, m.z - near.z);
+      if (d < best) { best = d; far = m; }
+    }
+    if (far && !walk.sees(far)) out.push({ near, far });
+  }
+  return out;
 }
 
 const designOf = (sub) => createHash('sha1').update(JSON.stringify([sub.interior.block3dObjectRecords, sub.interior.blockFlatObjectRecords, sub.interior.blockDoorRecords])).digest('hex');

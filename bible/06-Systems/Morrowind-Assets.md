@@ -240,9 +240,9 @@ die. One numbering across both slices (the code cites
 - **F3 - every load parsed the save twice, and paid it without Morrowind
   data.** The boot parsed `pickedSaveSnap` for the early build and the
   door parsed it again; the most-recent pick parses EVERY slot. Now one
-  parse (`world.js:889` `bootSnap`), read by the early door only once the
-  store is known to carry files, handed to the door (`world.js:23488`,
-  `worldQuickLoad`'s `snap`, `world.js:12756`) and let go. And the parse
+  parse (`world.js:898` `bootSnap`), read by the early door only once the
+  store is known to carry files, handed to the door (`world.js:23525`,
+  `worldQuickLoad`'s `snap`, `world.js:12777`) and let go. And the parse
   itself is one envelope now, not every slot's (SLOTS2, Online-Arc.md).
 - **F4 - the pool's refusal was decoded a second time here.** The
   preload kept images alone, so a texture the decoder refused was decoded

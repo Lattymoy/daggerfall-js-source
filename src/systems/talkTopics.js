@@ -34,6 +34,7 @@ import { RMB_SIDE } from '../world/locationLayout.js';
 import { directionHintString } from './talk.js';   // wave 27: one compass law
 import { staticNpcData, isChildNPCData } from '../characters/staticNpc.js';   // QP1: the one SetLayoutData law
 import { collectInteriorPeople } from '../characters/interiorPeople.js';   // QP1: the one people mapper
+import { hasInteriorModels } from '../world/interiorLayout.js';   // FIELD BUGS 2026-10-05 CRYPT-SALE: a room that cannot be laid out is not for sale
 import { buildingSummaries } from '../world/buildingSummaries.js';   // D9: GetBuildingList's own per-block building walk (RMBLayout.GetBuildingData)
 
 // TalkManager.knowledgeModifiers (verbatim, 8 question rows x 5
@@ -252,8 +253,10 @@ export function buildingDataForDoor(exteriorBuildings, blocks, door, { locationI
   const inst = blockInstanceOf(blocks, door);
   const data = inst ? merged.get(inst)?.[door.recordIndex] : null;
   if (!data) return null;
-  const model = inst.dfBlock?.rmbBlock?.subRecords?.[door.recordIndex]?.exterior?.block3dObjectRecords?.[0] ?? null;
-  return { ...data, buildingKey: makeBuildingKey(inst.x ?? 0, inst.y ?? 0, door.recordIndex), modelIdNum: model?.modelIdNum ?? null };
+  const sub = inst.dfBlock?.rmbBlock?.subRecords?.[door.recordIndex];
+  const model = sub?.exterior?.block3dObjectRecords?.[0] ?? null;
+  // FIELD BUGS 2026-10-05 CRYPT-SALE: whether the room can be laid out at all - a graveyard's crypt cannot
+  return { ...data, buildingKey: makeBuildingKey(inst.x ?? 0, inst.y ?? 0, door.recordIndex), modelIdNum: model?.modelIdNum ?? null, hasInterior: hasInteriorModels(sub) };
 }
 
 /**
@@ -299,6 +302,7 @@ export function locationBuildings(exteriorBuildings, blocks, { locationIndex = 0
         recordIndex: i,
         modelId: model?.modelId ?? null,
         modelIdNum: model?.modelIdNum ?? null,
+        hasInterior: hasInteriorModels(sub),   // FIELD BUGS 2026-10-05 CRYPT-SALE
       });
     }
   }

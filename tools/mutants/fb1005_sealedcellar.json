@@ -1,0 +1,112 @@
+[
+  {
+    "name": "SEALEDCELLAR-hatch-unasked",
+    "file": "tools/townQuestMarkers.mjs",
+    "old": "    const hatch = !condemned && !reachable ? sealed.find((h) => (h.walk ??= walkFloor(tris, [h.far])).sees(p)) : null;",
+    "new": "    const hatch = null;",
+    "tests": [
+      "test/fb1004d_questmarkers.test.js"
+    ],
+    "note": "the measure lists no sealed marker: the committed list is no longer the measure (gated on ARENA2_PATH)"
+  },
+  {
+    "name": "SEALEDCELLAR-near-unreached",
+    "file": "tools/townQuestMarkers.mjs",
+    "old": "    if (!HATCH.includes(near.type) || !walk.sees(near)) continue;",
+    "new": "    if (!HATCH.includes(near.type)) continue;",
+    "tests": [
+      "test/fb1005_sealedcellar.test.js"
+    ],
+    "note": "a hatch whose near side no player reaches"
+  },
+  {
+    "name": "SEALEDCELLAR-far-walked",
+    "file": "tools/townQuestMarkers.mjs",
+    "old": "    if (far && !walk.sees(far)) out.push({ near, far });",
+    "new": "    if (far) out.push({ near, far });",
+    "tests": [
+      "test/fb1005_sealedcellar.test.js"
+    ],
+    "note": "a pair the walk reaches both sides of is a hatch"
+  },
+  {
+    "name": "SEALEDCELLAR-farthest-partner",
+    "file": "tools/townQuestMarkers.mjs",
+    "old": "      if (d < best) { best = d; far = m; }",
+    "new": "      if (d > best || far === null) { best = d; far = m; }",
+    "tests": [
+      "test/fb1005_sealedcellar.test.js"
+    ],
+    "note": "the far side not the nearest of the other number"
+  },
+  {
+    "name": "SEALEDCELLAR-one-way",
+    "file": "tools/townQuestMarkers.mjs",
+    "old": "export const HATCH = Object.freeze([14, 13]);",
+    "new": "export const HATCH = Object.freeze([14]);",
+    "tests": [
+      "test/fb1005_sealedcellar.test.js"
+    ],
+    "note": "only a 199.14 is a near side: the lofts reached up through a 199.13 lost"
+  },
+  {
+    "name": "SEALEDCELLAR-gemsal-unlisted",
+    "file": "src/systems/quest/markerCuration.js",
+    "old": "['beautiful-cities', 'GEMSAL00.RMB', 7],",
+    "new": "",
+    "tests": [
+      "test/fb1005_sealedcellar.test.js"
+    ],
+    "note": "the report's house left in the cellar"
+  },
+  {
+    "name": "SEALEDCELLAR-spot-at-the-door",
+    "file": "src/systems/quest/markerCuration.js",
+    "old": "{ record: 11, at: [-118, 127, -324], to: [-38, 0, -152] }",
+    "new": "{ record: 11, at: [-118, 127, -324], to: [-128, 0, -102] }",
+    "tests": [
+      "test/fb1005_sealedcellar.test.js"
+    ],
+    "note": "AUDIT FB1005 S1: TEMPASF0 #7's foe back 0.95 m from the entrance"
+  },
+  {
+    "name": "SEALEDCELLAR-door-unminded",
+    "file": "tools/townQuestMarkers.mjs",
+    "old": "export const HATCH_DOOR_CLEAR_M = 1.5;",
+    "new": "export const HATCH_DOOR_CLEAR_M = 0;",
+    "tests": [
+      "test/fb1004d_questmarkers.test.js"
+    ],
+    "note": "AUDIT FB1005 S1: the measure stands a hatch's spot at the entrance again - the committed list is no longer the measure (gated on ARENA2_PATH)"
+  },
+  {
+    "name": "SEALEDCELLAR-spot-unfloored",
+    "file": "tools/townQuestMarkers.mjs",
+    "old": "  const hatchSpotOk = (c) => rayVerdict(tris, c) === 'ok' && ",
+    "new": "  const hatchSpotOk = (c) => ",
+    "tests": [
+      "test/fb1004d_questmarkers.test.js"
+    ],
+    "note": "AUDIT FB1005 S5: BANKAM01 #1's spot inside a solid again (gated on ARENA2_PATH)"
+  },
+  {
+    "name": "SEALEDCELLAR-clearspot-test-ignored",
+    "file": "tools/townQuestMarkers.mjs",
+    "old": "        if (passes && !passes(c)) continue;",
+    "new": "",
+    "tests": [
+      "test/fb1005_sealedcellar.test.js"
+    ],
+    "note": "AUDIT FB1005 S5: the clear spot's test never asked"
+  },
+  {
+    "name": "SEALEDCELLAR-spot-far-from-hatch",
+    "file": "src/systems/quest/markerCuration.js",
+    "old": "{ record: 11, at: [-24, 125, 52], to: [28, -2, 216] }",
+    "new": "{ record: 11, at: [-24, 125, 52], to: [28, -2, 416] }",
+    "tests": [
+      "test/fb1005_sealedcellar.test.js"
+    ],
+    "note": "AUDIT FB1005 T6: GEMSAM01 #12's spot five metres from its hatch (no game data)"
+  }
+]
