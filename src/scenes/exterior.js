@@ -890,8 +890,8 @@ export async function bootExterior(canvas, renderer, params, status) {
   // (winding matches buildTerrainIndices' quad diagonal).
   if (!renderer.tileArrays.has(groundArchive)) {
     const groundTex = textureFiles.get(groundArchive);
-    // GROUND1: an attached texture mod's tile set for the archive (DREAM's `<archive>-TexArray`) first, whole or not at all
-    const modLayers = await dfmodGroundLayers(groundArchive, groundTex.recordCount);
+    // GROUND1/VE2: the tile set a texture mod or pack dresses the archive with (TextureReader.GetTerrainTextureArray) first
+    const modLayers = await dfmodGroundLayers(groundArchive, groundTex);
     const classic = [];
     for (let r = 0; r < groundTex.recordCount; r++) {
       classic.push(groundTex.getColor32(groundTex.getDFBitmap(r, 0), 0));

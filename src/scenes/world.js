@@ -4195,8 +4195,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // texture + one cached texture array per ground archive.
     pipeline.tileArray(groundArchive); const groundTex = await getTexture(groundArchive);   // FIELD BUGS 2026-10-04d PLACE-LRU: held BEFORE the cache is asked, so no sweep in the await frees what this pixel will draw
     if (!renderer.tileArrays.has(groundArchive)) {
-      // GROUND1: an attached texture mod's tile set for the archive (DREAM's `<archive>-TexArray`) first, whole or not at all
-      const modLayers = await dfmodGroundLayers(groundArchive, groundTex.recordCount);
+      // GROUND1/VE2: the tile set a texture mod or pack dresses the archive with (TextureReader.GetTerrainTextureArray) first
+      const modLayers = await dfmodGroundLayers(groundArchive, groundTex);
       const classic = [];
       for (let r = 0; r < groundTex.recordCount; r++) {
         classic.push(groundTex.getColor32(groundTex.getDFBitmap(r, 0), 0));
@@ -4222,7 +4222,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // tile array an earlier scene uploaded (the renderer's cache outlives the scene)
     const drawnMeans = grassRecords.has(groundArchive) ? null
       : groundDrawnMeans.has(groundArchive) ? groundDrawnMeans.get(groundArchive)
-      : (await dfmodGroundLayers(groundArchive, groundTex.recordCount))?.map(tileMeanColour) ?? null;
+      : (await dfmodGroundLayers(groundArchive, groundTex))?.map(tileMeanColour) ?? null;
     if (!grassRecords.has(groundArchive)) {
       const layers = [];
       for (let r = 0; r < groundTex.recordCount; r++) layers.push(groundTex.getColor32(groundTex.getDFBitmap(r, 0), 0));

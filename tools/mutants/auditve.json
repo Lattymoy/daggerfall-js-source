@@ -1,0 +1,416 @@
+[
+  {
+    "name": "AUDITVE-base-off-by-default",
+    "file": "src/systems/vanillaEnhancedPack.js",
+    "tests": [
+      "test/auditve.test.js",
+      "test/ve4_vanillaEnhancedShipped.test.js",
+      "test/ve1_vanillaEnhanced.test.js",
+      "test/overhauls.test.js"
+    ],
+    "old": "export const ON_BY_DEFAULT = Object.freeze(new Set(['base']));",
+    "new": "export const ON_BY_DEFAULT = Object.freeze(new Set([]));"
+  },
+  {
+    "name": "AUDITVE-default-ignored",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/auditve.test.js",
+      "test/ve4_vanillaEnhancedShipped.test.js",
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "  return typeof choice === 'boolean' ? choice : shipped.on === true;   // AUDIT VE: the shipped default",
+    "new": "  return typeof choice === 'boolean' ? choice : false;"
+  },
+  {
+    "name": "AUDITVE-choice-ignored",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/auditve.test.js",
+      "test/ve4_vanillaEnhancedShipped.test.js",
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "  return typeof choice === 'boolean' ? choice : shipped.on === true;   // AUDIT VE: the shipped default",
+    "new": "  return shipped.on === true;"
+  },
+  {
+    "name": "AUDITVE-off-not-kept",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/auditve.test.js",
+      "test/ve4_vanillaEnhancedShipped.test.js"
+    ],
+    "old": "    if (shippedOf(k)) { shipped = true; choices[k] = !!on; }",
+    "new": "    if (shippedOf(k)) { shipped = true; if (on) choices[k] = true; else delete choices[k]; }"
+  },
+  {
+    "name": "AUDITVE-shipped-switch-on-the-attached-shelf",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/auditve.test.js",
+      "test/ve4_vanillaEnhancedShipped.test.js",
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "    if (shippedOf(k)) { shipped = true; choices[k] = !!on; }",
+    "new": "    if (false) { shipped = true; choices[k] = !!on; }"
+  },
+  {
+    "name": "AUDITVE-worker-never-asked",
+    "file": "src/systems/vanillaEnhancedPack.js",
+    "tests": [
+      "test/auditve.test.js"
+    ],
+    "old": "  if (lanes) {\n    try { return await askWorker(lanes, url, maxSize); } catch (e) {",
+    "new": "  if (false) {\n    try { return await askWorker(lanes, url, maxSize); } catch (e) {"
+  },
+  {
+    "name": "AUDITVE-unsupported-not-falling-back",
+    "file": "src/systems/vanillaEnhancedPack.js",
+    "tests": [
+      "test/auditve.test.js"
+    ],
+    "old": "      if (!e?.unsupported) throw e;\n",
+    "new": "      throw e;\n"
+  },
+  {
+    "name": "AUDITVE-dead-worker-asked",
+    "file": "src/systems/vanillaEnhancedPack.js",
+    "tests": [
+      "test/auditve.test.js"
+    ],
+    "old": "  const live = lanes.filter((l) => !l.dead);",
+    "new": "  const live = lanes;"
+  },
+  {
+    "name": "AUDITVE-fallback-not-fitted",
+    "file": "src/systems/vanillaEnhancedPack.js",
+    "tests": [
+      "test/auditve.test.js",
+      "test/ve4_vanillaEnhancedShipped.test.js"
+    ],
+    "old": "  return w === img.width && h === img.height ? img : resampleRgba(img, w, h);\n}",
+    "new": "  return img;\n}"
+  },
+  {
+    "name": "AUDITVE-worker-no-fit",
+    "file": "src/systems/vanillaEnhancedDecodeWorker.js",
+    "tests": [
+      "test/auditve.test.js"
+    ],
+    "old": "    if (w !== out.width || h !== out.height) {",
+    "new": "    if (false) {"
+  },
+  {
+    "name": "AUDITVE-worker-copies-the-pixels",
+    "file": "src/systems/vanillaEnhancedDecodeWorker.js",
+    "tests": [
+      "test/auditve.test.js"
+    ],
+    "old": "    globalThis.postMessage({ id, width: out.width, height: out.height, data: out.data }, [out.data.buffer]);",
+    "new": "    globalThis.postMessage({ id, width: out.width, height: out.height, data: out.data });"
+  },
+  {
+    "name": "AUDITVE-worker-unsupported-unsaid",
+    "file": "src/systems/vanillaEnhancedDecodeWorker.js",
+    "tests": [
+      "test/auditve.test.js"
+    ],
+    "old": "    if (typeof OffscreenCanvas !== 'function' || typeof createImageBitmap !== 'function') {",
+    "new": "    if (false) {"
+  },
+  {
+    "name": "AUDITVE-ground-cache-unbounded",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/auditve.test.js"
+    ],
+    "old": "  while (_groundCache.size > GROUND_CACHE_SETS) _groundCache.delete(_groundCache.keys().next().value);   // AUDIT VE P2: the least recently asked goes\n",
+    "new": ""
+  },
+  {
+    "name": "AUDITVE-ground-cache-oldest-not-least-recent",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/auditve.test.js"
+    ],
+    "old": "  _groundCache.delete(id);   // AUDIT VE P2: re-entered last - the Map's order is the cache's recency\n  if (hit) { _groundCache.set(id, hit); return hit; }",
+    "new": "  if (hit) return hit;"
+  },
+  {
+    "name": "AUDITVE-R1-tier-wiped-at-install",
+    "file": "src/systems/textureReplacement.js",
+    "tests": [
+      "test/auditve.test.js"
+    ],
+    "old": "  if (!sameEntries(was, _bundle)) tierChanged();\n  return _bundle.size;",
+    "new": "  for (const k of [..._bundleBytesOf.keys()]) dropDecoded(k);\n  if (!sameEntries(was, _bundle)) tierChanged();\n  return _bundle.size;"
+  },
+  {
+    "name": "AUDITVE-R1-stale-picture-answered",
+    "file": "src/systems/textureReplacement.js",
+    "tests": [
+      "test/auditve.test.js"
+    ],
+    "old": "const decodedFrom = (key, entry) => (entry && _decodedFrom.get(key) === srcOf(entry) ? _decoded.get(key) ?? null : null);",
+    "new": "const decodedFrom = (key, entry) => (entry ? _decoded.get(key) ?? null : null);"
+  },
+  {
+    "name": "AUDITVE-R1-archive-preloaded-once",
+    "file": "src/scenes/dataPipeline.js",
+    "tests": [
+      "test/auditve.test.js"
+    ],
+    "old": "      if (preloadedAt.get(archive) !== textureTierEpoch()) await refresh(archive);   // AUDIT VE R1\n",
+    "new": ""
+  },
+  {
+    "name": "AUDITVE-R1-epoch-never-moves",
+    "file": "src/systems/textureReplacement.js",
+    "tests": [
+      "test/auditve.test.js"
+    ],
+    "old": "export const textureTierEpoch = () => `${_tierGen}:${textureReplacementEnabled() ? 1 : 0}`;",
+    "new": "export const textureTierEpoch = () => '0';"
+  },
+  {
+    "name": "AUDITVE-R1-src-without-content",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/auditve.test.js"
+    ],
+    "old": "          src: `${key}@${stamp ?? ''}:${name}`,",
+    "new": "          src: `${key}:${name}`,"
+  },
+  {
+    "name": "AUDITVE-R1-walk-always-new",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/auditve.test.js"
+    ],
+    "old": "  if (sig !== _walkSig) {   // AUDIT VE R1",
+    "new": "  if (true) {   // AUDIT VE R1"
+  },
+  {
+    "name": "AUDITVE-R8-late-picture-kept",
+    "file": "src/systems/textureReplacement.js",
+    "tests": [
+      "test/auditve.test.js"
+    ],
+    "old": "      if (srcOf(liveEntry(key)) !== srcOf(entry)) return;   // AUDIT VE R8: switched away while it decoded - it lands nowhere\n",
+    "new": ""
+  },
+  {
+    "name": "AUDITVE-R8-late-record-kept",
+    "file": "src/systems/textureReplacement.js",
+    "tests": [
+      "test/auditve.test.js"
+    ],
+    "old": "        if (srcOf(liveEntry(key)) !== srcOf(entry)) return null;   // AUDIT VE R8: switched away while it decoded\n",
+    "new": ""
+  },
+  {
+    "name": "AUDITVE-R2-door-never-registers",
+    "file": "src/scenes/dataSource.js",
+    "tests": [
+      "test/auditve.test.js"
+    ],
+    "old": "export const textureStoreRegistered = () => _textureStore ?? registerTextureStore({ warm: false });",
+    "new": "export const textureStoreRegistered = () => _textureStore ?? Promise.resolve(0);"
+  },
+  {
+    "name": "AUDITVE-R2-registers-at-every-ask",
+    "file": "src/scenes/dataSource.js",
+    "tests": [
+      "test/auditve.test.js"
+    ],
+    "old": "export const textureStoreRegistered = () => _textureStore ?? registerTextureStore({ warm: false });",
+    "new": "export const textureStoreRegistered = () => registerTextureStore({ warm: false });"
+  },
+  {
+    "name": "AUDITVE-R2-cards-read-before-the-store",
+    "file": "src/ui/enhancedMenu.js",
+    "tests": [
+      "test/auditve.test.js"
+    ],
+    "old": "function paneOverhauls(body) {\n  waitForTextureStore();   // AUDIT VE R2\n",
+    "new": "function paneOverhauls(body) {\n"
+  },
+  {
+    "name": "AUDITVE-R2-use-offered-while-reading",
+    "file": "src/ui/enhancedMenu.js",
+    "tests": [
+      "test/auditve.test.js"
+    ],
+    "old": "  use.disabled = o === cur || reading || !!blocked;",
+    "new": "  use.disabled = o === cur || !!blocked;"
+  },
+  {
+    "name": "AUDITVE-R3-copy-on-its-own-shelf",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/auditve.test.js",
+      "test/ve4_vanillaEnhancedShipped.test.js",
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "  const shipped = shippedOf(k);\n  if (!shipped) return !offKeys().includes(k);",
+    "new": "  const shipped = _shippedLive.has(k) ? shippedOf(k) : null;\n  if (!shipped) return !offKeys().includes(k);"
+  },
+  {
+    "name": "AUDITVE-R3-attach-not-switching-the-key",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/auditve.test.js",
+      "test/ve4_vanillaEnhancedShipped.test.js",
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "  if (s && shippedChoices()[s.key] !== true) setPref(DFMOD_SHIPPED_PREF, { ...shippedChoices(), [s.key]: true });",
+    "new": "  if (s && false) setPref(DFMOD_SHIPPED_PREF, { ...shippedChoices(), [s.key]: true });"
+  },
+  {
+    "name": "AUDITVE-R9-shadow-by-key-alone",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/auditve.test.js"
+    ],
+    "old": "const sameMod = (s, m) => s.key === m.key || (!!s.index?.title && s.index.title === m.index?.title);",
+    "new": "const sameMod = (s, m) => s.key === m.key;"
+  },
+  {
+    "name": "AUDITVE-R9-copy-on-a-shelf-of-its-own",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/auditve.test.js"
+    ],
+    "old": "const switchKeyOf = (key) => _shadowOf.get(key) ?? key;",
+    "new": "const switchKeyOf = (key) => key;"
+  },
+  {
+    "name": "AUDITVE-R4-signature-by-name",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/auditve.test.js"
+    ],
+    "old": "  const sig = [...stored.map((k) => `${k}=${noMods ? 'nomods' : parts.get(k) ?? 'missing'}`)].join('\\n');",
+    "new": "  const sig = stored.join('\\n');"
+  },
+  {
+    "name": "AUDITVE-R4-same-index-reopened",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/auditve.test.js"
+    ],
+    "old": "  if (sig === _sig && load === _load && _registered !== null) {",
+    "new": "  if (false) {"
+  },
+  {
+    "name": "AUDITVE-R5-unindexed-shadowing",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/auditve.test.js"
+    ],
+    "old": "  _attached = reads.filter(([, r]) => r).map(([key, r]) => ({ key, index: r.index, stamp: `a:${r.fp}` }));",
+    "new": "  _attached = reads.map(([key, r]) => ({ key, index: r?.index ?? { textures: [] }, stamp: `a:${r?.fp}` }));"
+  },
+  {
+    "name": "AUDITVE-R5-unregistered-unlisted",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/auditve.test.js"
+    ],
+    "old": "export const unregisteredDfmods = () => [..._unregistered].map(([key, u]) => ({ key, fileName: dfmodFileName(key), state: u.state, error: u.error ?? null }));",
+    "new": "export const unregisteredDfmods = () => [];"
+  },
+  {
+    "name": "AUDITVE-R5-error-unsaid",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/auditve.test.js"
+    ],
+    "old": "        _unregistered.set(key, { state: 'error', error: openWords(why) });   // AUDIT VE R5: said, with a Remove\n",
+    "new": ""
+  },
+  {
+    "name": "AUDITVE-R6-v2-refused",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/auditve.test.js",
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "    if (idx?.v === 2) return { index: { ...idx, deps: [] }, fp: fingerprint(text), stale: true };\n",
+    "new": ""
+  },
+  {
+    "name": "AUDITVE-R6-never-rebuilt",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/auditve.test.js",
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "    if (idx?.v === 2) return { index: { ...idx, deps: [] }, fp: fingerprint(text), stale: true };",
+    "new": "    if (idx?.v === 2) return { index: { ...idx, deps: [] }, fp: fingerprint(text), stale: false };"
+  },
+  {
+    "name": "AUDITVE-R7-clients-kept-across-the-switch",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/auditve.test.js"
+    ],
+    "old": "  // shipped one, under a key a copy now takes) stood cached for the new one; a removed copy's open cached its null.\n  forgetOpen();\n",
+    "new": "  // shipped one, under a key a copy now takes) stood cached for the new one; a removed copy's open cached its null.\n"
+  },
+  {
+    "name": "AUDITVE-R10-classic-offered",
+    "file": "src/systems/vanillaEnhanced.js",
+    "tests": [
+      "test/auditve.test.js"
+    ],
+    "old": "export const classicBlocked = () => (looseTexturesWorn()",
+    "new": "export const classicBlocked = () => (false"
+  },
+  {
+    "name": "AUDITVE-R10-note-says-mods",
+    "file": "src/systems/vanillaEnhanced.js",
+    "tests": [
+      "test/auditve.test.js",
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "export const customTextureNote = () => (looseTexturesWorn() && !textureMods().some((m) => m.enabled)",
+    "new": "export const customTextureNote = () => (false"
+  },
+  {
+    "name": "AUDITVE-R11-rule-at-the-boot-alone",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/auditve.test.js"
+    ],
+    "old": "  const noMods = noModsPage();   // AUDIT VE R11: the door's own rule",
+    "new": "  const noMods = false;"
+  },
+  {
+    "name": "AUDITVE-R12-array-all-or-nothing",
+    "file": "src/systems/vanillaEnhancedPack.js",
+    "tests": [
+      "test/auditve.test.js"
+    ],
+    "old": "      const one = (i) => picture(paths[i]).catch((e) => { console.warn(`[vanilla-enhanced] ${paths[i]} would not load:`, e?.message ?? e); return null; });",
+    "new": "      const one = (i) => picture(paths[i]);"
+  },
+  {
+    "name": "AUDITVE-R12-failed-set-cached",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/auditve.test.js"
+    ],
+    "old": "    if (!whole && _groundCache.get(id) === answer) _groundCache.delete(id);\n",
+    "new": ""
+  },
+  {
+    "name": "AUDITVE-R13-every-mod-counted",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/auditve.test.js"
+    ],
+    "old": "  _dollArt = _img.size > 0 || _cifRci.size > 0 || entries.some((e) => isItemArchive(e.archive));",
+    "new": "  _dollArt = _mods.some((m) => dfmodEnabled(m.key));"
+  }
+]
