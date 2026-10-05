@@ -5037,3 +5037,161 @@ behind the head.
   forward and from the side the near one passes in front of the body - it is in front of it; the body's outline in
   the law is one measure (0.25 m either side) for every set, not read off the frames; not seen in a running game
   client with a real sprite.
+
+## CRYSTAL-FIST — Flylighter's own: the Crystal Fist, its glyph and the Crystal Resonance (2026-10-05, world171, acct83)
+
+The owner, for Flylighter: "Title: Crystal Fist", "Glyph: Referenced above" - a 54x49 picture of three purple slashes
+falling down to the right, every one of its pixels #a349a4 - and "Aura: Aura, also purple, would be a circle of tiny
+purple squares going up and down out of the ground. Something similar to what you see here, but the color 'gradient'
+would be unnecessary", pointing at Octavia in Warframe (a ring of a music visualiser's bars about her). The video is not
+read here; the aura is drawn from the sentence.
+
+- **The grant** (`server-account/src/titles.js`): `CRYSTAL_FIST_HANDLES = "Flylighter"` (`server-account/wrangler.toml`)
+  grants the title, its glyph (`TIER_GLYPH.crystalfist`) and the aura (`TIER_AURA.crystalfist: 'resonance'`) together,
+  case-folded, read off the config at every ask - TITLE-N's handle-list law, as AEGIS, PRIMARCH and SHADOW-CLOAK.
+  Flylighter stays in DISCIPLE_HANDLES: two titles held, one worn; taking the handle off this list takes the three and
+  leaves the Disciple.
+- **The vocabulary** (`src/net/identityToken.js`, in the relay bundle): `crystalfist` last in TITLES and GLYPHS,
+  `resonance` last in AURAS. A relay before it refuses a token carrying them, so the relay is **world171** (world170 on its branch, renumbered past
+  main's FEUD at the merge of main) and the
+  account service **acct83**: THE RELAY FIRST, then the account service, then the site (the account deploy waits on the
+  relay's `/health` - SHADOW-FANG's AUDIT B1). Every token acct83 mints for Flylighter carries the glyph whether or not
+  they wear anything, so an account deployed first by hand would shut them out of every room until the relay landed
+  (the AUDIT's finding: this line first had the order backwards). No frame changes shape.
+- **The face** (`src/ui/playerBadge.js`): "Crystal Fist" in ONE colour, `CRYSTAL_PURPLE` #a349a4 - the reference's own;
+  no gradient and no edge, every face's black text shadow. The glyph traced off the reference's pixels: three bands
+  falling down to the right at 45 degrees, their ends cut square, one thickness (the reference's seven pixels across) and
+  even gaps (its six); the middle corner to corner, the upper and the lower two thirds its length (48 to 72 pixels),
+  each beside its middle - filled in the title's purple. `\` on the classic face. "Crystal Resonance" on the account
+  card, its button in the Crystal Fist's purple (`AURA_PAINT`). Seen in Chromium at 13 to 64 px over a night sky, a day
+  sky, stone, grass and snow: the three slashes read from 16 px; at 13 px they read as a hatch.
+- **The look** (`src/render/auraRing.js`, the sixth: `AURA_LOOK.resonance`, kind 5, on the pass's own strip - no mesh,
+  no third draw, added whole):
+  - THE WALL: RESONANCE_COLUMNS columns round the feet at RESONANCE_R (0.8 m) - one on each face of the strip, which is
+    AURA_STEPS (48) round - each a stack of tiny squares, RESONANCE_SQUARE_M (0.042 m) a side at RESONANCE_PITCH_M
+    (0.06 m) up the column, RESONANCE_CELLS (10) at most, so the wall is 0.6 m. As many of a column's squares stand lit
+    as its level now: `resonanceLevel(k, t)` - a wave of three crests running round the ring (61 cycles in the clock's
+    120 s, about every two seconds), a second of two crests running against it (41, about every three), each column's
+    own bounce (59) and a beat through them all once a second - in node alone: the draw counts every column once a frame
+    on the wearer's own clock (`resonanceLitInto`, `resonanceClock` - the frame's clock offset by the wearer's seed) and
+    hands the counts to the shader (`uResLit`), so every GPU lights exactly the squares the law names. A kindled column's
+    foot always stands lit (the level's floor is 0.08). A square is the purple itself, covering whole; its edge a pixel
+    wide.
+  - THE GROUND: a square at each column's foot, lying on the ring.
+  - Drawn PREMULTIPLIED (AURA_LOOK `shade`, the cloak's blend): a square covers what is behind it in the purple, so a
+    square over its foot, the far wall through the near or a bright ground never sum to a paler colour.
+  - FAR OFF: a square under a couple of pixels fades to its cell's average cover (the scene's own derivatives), so the
+    rows do not moire.
+  - It kindles UP: every column's foot first, the rest rising after. Every rate whole over the clock and none stopped
+    (`resonanceRatesWhole`); every wave a whole number of crests round the ring, so no seam behind the wearer; the ring
+    never repeats inside the clock.
+- **The hosts** - THE FOUR HOSTS: no host changed. `scenes/world.js` draws every look through the pass by its key;
+  `scenes/worldModes.js` and `scenes/dungeonContext.js` draw through world.js's pass; `scenes/exterior.js` draws no
+  aura - FLAGGED, unchanged.
+- **Seen** through the committed `tools/auraProbe.mjs` in headless Chromium's WebGL2: 71/71, the resonance's 9 - no GL
+  error; every square node's law stands lit is lit in #a349a4 itself and every square over a column's top dark, square
+  for square; over a bright floor still #a349a4; another moment, other squares, every one the frame; its feet on the
+  ring from above, read inside it where the wall stands over nothing; no jump at the wrap; nothing unkindled.
+- Pins: `test/crystalfist.test.js` (12) - the vocabulary and the face; the glyph's shape against the reference; the grant
+  (case-folded, beside the Disciple, off the list, a guest, the other lists' holders); the service end to end; the token
+  and the relay (world171); the name over a head, the account card's rules and the classic face; the look's law; the
+  columns' law (the level at recorded moments, up and down, the ring's columns differing, the feet first while it kindles,
+  no repeat inside the clock, a wearer's own clock); the wall RUN square by square on node's counts (the purple covering
+  whole, the gaps, an edge a pixel wide, the far-off fade); the ground RUN (and nothing, never a NaN, at the middle); the
+  draw (the counts handed, premultiplied). `tools/mutants/crystalfist.json` (45, all dead). The relay's and the account's pins
+  moved to world171 and acct83 crediting CRYSTAL-FIST (`auditbounty1.test.js` holds the credit); the vocabulary's exact
+  lists moved in `acc3titles`, `titlen`, `aegis`, `primarch`, `shadowcloak` and `seraphwings`; nineteen records in
+  `aegis.json`, `herald.json`, `penitent.json`, `primarch.json`, `seraphwings.json`, `shadowcloak.json` and
+  `shadowfang.json`, and the version records in `soc1.json`, `gatekeys.json` and `fb1004d_knight_house.json`, re-aimed by
+  content.
+- Left as they are, said here: not seen in a running game client; the title is the reference's own purple, which over a
+  night sky is the weakest one-colour title (WCAG 3.65; the Protector's 4.36) and on the classic face carries no edge -
+  kept as the owner gave it, a lighter purple the owner's call; the squares are flat on the strip's faces, so at the
+  ring's two sides, seen edge on, they narrow to lines; the columns stand on a wearer turned beast and on a rider as the
+  ring of fire does; one program draws all six auras, so a compile failure would take them all (the eager compile in
+  `test/shadowcloak.test.js` and the probe are the guard).
+
+## DEV4 — RookieG a developer (2026-10-05, with CRYSTAL-FIST's acct83)
+
+The owner: "Also add RookieG(Dev) as developer"; asked whether the brackets were part of the name, "RookieG(Dev)" - and
+then "Change RookieG(Dev) to RookieG". `DEVELOPER_HANDLES` holds `RookieG`, fifth: the developer title, the dev glyph,
+/red, /mute and /unmute (titles.js `canModerate`) and the developers' Seraph Wings, case-folded as every list is. The
+handle exactly: `RookieG(Dev)` (a handle may carry brackets - `net/handleShape.js` HANDLE_RE) is another account and
+holds none of it, nor does a near name. Pins: `test/titlen.test.js` (the list, the handle case-folded, the bracketed
+handle and four near names refused); `tools/mutants/titlen.json` DEV4-rookieg-not-granted (the bracketed handle listed
+instead - dead) and DEV3's record re-aimed by content.
+
+### CRYSTAL-FIST AUDIT (2026-10-05, the owner: "Audit this")
+
+Four lenses over the change, read-only while they read (the grant, the token and the relay; the shader and the draw; the
+faces and the glyph; the pins, the mutants and the docs), every finding checked against the code before it was fixed.
+
+| # | Finding | Fixed |
+| --- | --- | --- |
+| A1 | MEDIUM: the deploy order written backwards (wire.js's version comment, this page) - and "refused once they wear either", where acct83 signs the glyph into every token of Flylighter's: an account deployed first by hand shuts them out of every room | the relay first, then the account (AUDIT B1's wait); world170's row, never deployed, re-hashed in place (world171 since the merge of main, past FEUD's world170) |
+| A2 | MEDIUM: the shader's own `fract(sin(x) * 43758)` hash lit other squares than node's law on a GPU (float32, each vendor's sin) - in nearly half the samples, unseen by a float64 pin and an 80% probe | the counts are node's, handed over each frame (`uResLit`); the probe square for square |
+| A3 | MEDIUM: not one colour - added light summed a square over its foot, the far wall through the near and any bright ground to a pale pink (255, 139, 255 in the probe) | premultiplied (`shade`); the probe holds #a349a4 over a dark and a bright floor |
+| A4 | LOW-MEDIUM: the squares' fixed edge would moire past about 15 m | an edge a pixel wide; a cell under a couple of pixels its average cover |
+| A5 | LOW: a glow cut into a line over each column's top | the glow gone |
+| A6 | LOW: the ring repeated every six seconds (1/2, 1/3, 1/2 Hz) and two wearers six seconds of seed apart rose as one; `uSeed` unused | rates 61, 41, 59 in 120 s; the wearer's own clock (`resonanceClock`) |
+| A7 | (found fixing A3) the ground's middle, where atan(0, 0) is no number, painted white under the premultiplied blend | the ground answers the ring's feet alone |
+| A8 | LOW: the widest-token pin left out `ar` and `cl`; with them a token is 639 of 640 | `test/shadowfang.test.js` carries both |
+| A9 | LOW: the glyph's ends square where the reference's corners are rounded two pixels | each corner taken off alike |
+| A10 | LOW: pins - the ring "inside the fire's" up to 0.9 m; a frozen bounce or a dropped beat passed both sides; the kindle's foot unpinned; two tautologies | the recorded levels, the strict radius, the foot first, a stopped rate refused |
+| A11 | LOW: docs - "a one-colour title wears every face's black text shadow" (not the classic face's); Rendering.md's probe count; a comment that credited CRYSTAL-FIST with ARENA-LADDER's renumbering; RESONANCE_RGB a second literal of the purple | each corrected; the purple imported |
+| A12 | (the mutation run) `Math.max(1, ...)` in `resonanceLit` could never act - the level's floor keeps a kindled foot lit | the dead guard gone |
+
+Left, said: the title's contrast (the "Left as they are" above); the classic face's backslash rests on FONT0003's glyph 59
+having a width, as `~`, `^` and `|` do - no ARENA2 here to read it; a token with every glyph AND `gx` was over the
+relay's 640 before this change (no player holds every glyph). Pins: `test/crystalfist.test.js` (12, rewritten for A2-A10),
+`test/shadowfang.test.js` (A8); `tools/mutants/crystalfist.json` 45, all dead; the probe 71/71.
+
+## SPRITE-FACE — the wings face as the sprite's picture does (2026-10-05)
+
+Mac: "For the wing aura we implemented for developers. The sprite rotation on character input is a little finicky and
+make the aura misallign".
+
+- **The cause.** An Eye of the Beholder sprite is drawn from one of ORIENTATIONS (8) pictures, ANGLE_PER_ORIENTATION
+  (45) degrees apart about the line from the figure to the eye (`player/eotbBillboard.js` orientationFor), and a change
+  of facing reaches the picture only at UpdateOrientation's tenth-of-a-second gate and then DELAYED_FRAMES (3) frames
+  later, when the mod's delayed repaint lands (UpdateBillboardDelayed - the mod's own, ported 1:1 and left as it is).
+  The Seraph Wings and the Shadow Cloak were hung on the facing the walk WANTS (`lastMoveDirection`; a peer's pose
+  facing), which turns at once and smoothly: on a key the wings swung round before the picture did, and at rest they
+  stood up to half a picture (22.5 degrees) off it - sliding as the eye went round while the picture held, then the
+  picture jumped. A peer's (8-way `viewOf` against the pose's smooth facing) and a rider's (the horse's picture, the
+  camera-turned body's yaw standing in) the same.
+- **The law** (`portrayedYaw`, beside orientationFor in `player/eotbBillboard.js`): orientationFor run backwards - the
+  facing a picture SHOWS, seen along the line to the eye: that line's bearing turned back by the picture's angle, the
+  middle of its bucket. A figure facing it is drawn in that picture from every line of sight; any facing portrays its
+  bucket's middle, never more than half a picture off; no line of sight, no facing.
+- **Mine** (`player/eotbBody.js` `facing()`): each frame drawn, `{ yaw, turn }` - `yaw` the picture SHOWN (the repaint
+  that has landed) about the eye of the frame it was drawn in, `turn` the walk's facing (`turnYaw`) - before any walk
+  the picture's own, its front to the eye (WINGS-FIT's law; the re-run of the re-aimed mutant lists found `turnYaw`'s own
+  reading of the eye could never differ from it - `WINGSFIT-facing-nowhere-the-cameras` survived on it - so that branch
+  is gone and the record aimed at the one fallback left). In the saddle too (the horse's picture faces as the rider's does - no figure, no shoulders,
+  but a facing); none in first person (the billboard on the camera faces no bearing) or undrawn. The figure keeps its
+  shoulders and no longer carries a facing. `player/mwView.js` keeps it beside the figure (`mwViewSpriteFacing`).
+- **A peer's** (`net/peerRiders.js` `faceOf`, the walkers' and the riders' layers alike): the view each figure is drawn
+  in about my eye, recorded as it is drawn (`faceDrawn`), with the pose's facing as `turn`; a rider's and a beast's too;
+  none undrawn or with no eye.
+- **The aura** (`render/auraRing.js`): `auraSpritePosed(w, fig, face)` poses a sprite wearer on its picture's facing -
+  with a figure its shoulders, without one (a rider) the rest pose over the saddle; `auraCapeStep` keeps the body's
+  turning beside it (`w.turnYaw`), none for a body drawn as it turns (a rig); `auraMotionStep` swings by the turning, so a
+  picture changing a whole view is no turn - the cloak does not twist and the wing tips' trail does not slide and spring
+  back at each change, and a velocity is read along the body. `scenes/world.js` hangs mine (the gather and the draw) and
+  each peer's on it - a peer's gathered so too, after the layers have drawn them, so the wings' light on the world
+  (auraWingLights, read off the gather) stands where the wings do. THE FOUR HOSTS: world.js WIRED; worldModes.js and dungeonContext.js draw through world.js's pass,
+  unchanged; exterior.js draws no aura - FLAGGED, unchanged.
+- **The sprite's own turning is the mod's** - its eight pictures, its gate, its delayed repaint - and is not changed; the
+  aura now follows it exactly, picture for picture and frame for frame.
+- Pins: `test/spriteface.test.js` (5) - the law (the round trip from every line of sight, the bucket's middle, half a
+  picture at most, no line no facing); my body DRIVEN frame by frame (every frame the picture shown; a key turning the
+  walk first and the picture after the delay, the wings with the picture; the eye going round, the picture changing and
+  the wings with it, the walk still; the saddle; first person; undrawn); a peer's walker, beast and rider driven through
+  the real layers (the view, not the pose; another eye; no eye); the aura's side (posed, kept, the swing unmoved by a
+  picture's change where reading the picture would have twisted it); the wiring. `tools/mutants/spriteface.json` (16,
+  all dead - the first of them the old behaviour itself, the walk's facing hung). Old pins moved: `seraphwings`
+  (the facing off facing(), the wiring), `shadowcloak` (the gather and the draw lines), `climb5`; records re-aimed by
+  content in `seraphwings.json` (5), `shadowcloak.json` (2), `climb5.json` and `auditclimbarc.json`.
+- Left, said: not seen in a running game client - the test drives the real sprite body and the real peer layers frame
+  by frame, no GPU; the wings still stand on a rider at the saddle's rest pose (no shoulders read off a horse's frame).

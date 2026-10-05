@@ -53,7 +53,7 @@ test('TELL8: the record\'s law - the wind-up\'s four fields together (its shape 
   for (const ws of [0, 3, '1', true]) assert.equal(validFoeRecord({ ...base, ws }), null, `ws ${ws}`);
   assert.equal(WIRE_LAND_MS, FOE_WINDUP_MS, 'the writer\'s ceiling is the reader\'s');
   assert.deepEqual([...WIRE_KINDS], ['lunge', 'sweep', 'slam', 'ring', 'charge', 'leap', 'aimed']);
-  assert.equal(RELAY_VERSION, 'world170');   // AUDIT TELL moved it on (world162 was TELL8's, world163 AUDIT TELL's on the branch); RVN13 and FEUD WIRE after it, and FEUD's merge of main renumbered the arc's relay to world170 - PIN MOVED
+  assert.equal(RELAY_VERSION, 'world171');   // CRYSTAL-FIST moved it on last (world171: the Crystal Fist's title and glyph and the Crystal Resonance's aura join the token's vocabulary - world170 on its branch, renumbered past FEUD's at the merge); AUDIT TELL moved it on (world162 was TELL8's, world163 AUDIT TELL's on the branch); RVN13 and FEUD WIRE after it, and FEUD's merge of main renumbered the arc's relay to world170 - PIN MOVED
 });
 
 test('TELL8: the owner\'s word - a live wind-up\'s shape, iron and feint flags, yaw, landing in ms (clamped), origin through the record\'s projection and point; none for a cut feint, a landed blow or a puppet; the stagger and the overreach; the dedupe key never carries `wl` (mutants: a flag dropped; wl in the key)', () => {

@@ -56,12 +56,12 @@
   {
     "name": "SHADOWFANG-glyph-without-the-title",
     "file": "server-account/src/titles.js",
-    "old": "hierophant: 'hierophant', shadowfang: 'shadowfang', penitent: 'penitent', herald: 'herald', aegis: 'aegis', primarch: 'primarch' });",
-    "new": "hierophant: 'hierophant', shadowfang: 'apostle', penitent: 'penitent', herald: 'herald', aegis: 'aegis', primarch: 'primarch' });",
+    "old": "hierophant: 'hierophant', shadowfang: 'shadowfang', penitent: 'penitent', herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist' });",
+    "new": "hierophant: 'hierophant', shadowfang: 'apostle', penitent: 'penitent', herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist' });",
     "tests": [
       "test/shadowfang.test.js"
     ],
-    "note": "HERALD (RE-AIMED by content: the lists end with herald now). AEGIS (re-aimed by content): the line gained Sureme's aegis. PRIMARCH (re-aimed by content): the line gained GA00250's primarch."
+    "note": "HERALD (RE-AIMED by content: the lists end with herald now). AEGIS (re-aimed by content): the line gained Sureme's aegis. PRIMARCH (re-aimed by content): the line gained GA00250's primarch. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
   },
   {
     "name": "SHADOWFANG-vocabulary-without-the-glyph",

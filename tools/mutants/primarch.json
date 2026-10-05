@@ -42,12 +42,12 @@
   {
     "name": "PRIMARCH-the-glyph-stroked",
     "file": "src/ui/playerBadge.js",
-    "old": "aegis: true, primarch: false });",
-    "new": "aegis: true, primarch: true });",
+    "old": "aegis: true, primarch: false, crystalfist: false });",
+    "new": "aegis: true, primarch: true, crystalfist: false });",
     "tests": [
       "test/primarch.test.js"
     ],
-    "note": "Stroked, the filled outline is a tangle of edges."
+    "note": "Stroked, the filled outline is a tangle of edges. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
   },
   {
     "name": "PRIMARCH-the-slant-turned",
@@ -102,12 +102,12 @@
   {
     "name": "PRIMARCH-the-radiances-button-in-violet",
     "file": "src/ui/playerBadge.js",
-    "old": "radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder' });",
-    "new": "radiance: 'aegis', shadowcloak: 'shadowfang', seraphwings: 'founder' });",
+    "old": "radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist' });",
+    "new": "radiance: 'aegis', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist' });",
     "tests": [
       "test/primarch.test.js"
     ],
-    "note": "The Golden Radiance's button on the card painted in the Aegis of Oblivion's violets. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. SERAPH-WINGS (re-aimed by content): the wings joined the list."
+    "note": "The Golden Radiance's button on the card painted in the Aegis of Oblivion's violets. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. SERAPH-WINGS (re-aimed by content): the wings joined the list. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
   },
   {
     "name": "PRIMARCH-the-title-misspelt",
@@ -162,42 +162,42 @@
   {
     "name": "PRIMARCH-the-glyphs-word",
     "file": "server-account/src/titles.js",
-    "old": "aegis: 'aegis', primarch: 'primarch' });",
-    "new": "aegis: 'aegis', primarch: 'aegis' });",
+    "old": "aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist' });",
+    "new": "aegis: 'aegis', primarch: 'aegis', crystalfist: 'crystalfist' });",
     "tests": [
       "test/primarch.test.js"
     ],
-    "note": "The list grants the aegis glyph, not its own."
+    "note": "The list grants the aegis glyph, not its own. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
   },
   {
     "name": "PRIMARCH-the-aura-not-granted",
     "file": "server-account/src/titles.js",
-    "old": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak' });",
-    "new": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', shadowfang: 'shadowcloak' });",
+    "old": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance' });",
+    "new": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', shadowfang: 'shadowcloak', crystalfist: 'resonance' });",
     "tests": [
       "test/primarch.test.js"
     ],
-    "note": "The title and glyph without the aura GA00250 asked for. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line."
+    "note": "The title and glyph without the aura GA00250 asked for. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
   },
   {
     "name": "PRIMARCH-the-ward-granted",
     "file": "server-account/src/titles.js",
-    "old": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak' });",
-    "new": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'oblivionward', shadowfang: 'shadowcloak' });",
+    "old": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance' });",
+    "new": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'oblivionward', shadowfang: 'shadowcloak', crystalfist: 'resonance' });",
     "tests": [
       "test/primarch.test.js"
     ],
-    "note": "GA00250 granted Sureme's ward instead of the radiance. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line."
+    "note": "GA00250 granted Sureme's ward instead of the radiance. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
   },
   {
     "name": "PRIMARCH-the-vocabularys-aura",
     "file": "src/net/identityToken.js",
-    "old": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings']);",
-    "new": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'shadowcloak', 'seraphwings']);",
+    "old": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance']);",
+    "new": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'shadowcloak', 'seraphwings', 'resonance']);",
     "tests": [
       "test/primarch.test.js"
     ],
-    "note": "A token carrying the radiance refused: the aura never reaches a screen. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. SERAPH-WINGS (re-aimed by content): the wings joined the list."
+    "note": "A token carrying the radiance refused: the aura never reaches a screen. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. SERAPH-WINGS (re-aimed by content): the wings joined the list. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's Crystal Resonance."
   },
   {
     "name": "PRIMARCH-the-looks-kind",

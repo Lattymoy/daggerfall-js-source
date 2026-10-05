@@ -174,12 +174,12 @@
   {
     "name": "PENITENT-glyph-without-the-title",
     "file": "server-account/src/titles.js",
-    "old": "penitent: 'penitent', herald: 'herald', aegis: 'aegis', primarch: 'primarch' });",
-    "new": "penitent: 'shadowfang', herald: 'herald', aegis: 'aegis', primarch: 'primarch' });",
+    "old": "penitent: 'penitent', herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist' });",
+    "new": "penitent: 'shadowfang', herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist' });",
     "tests": [
       "test/penitent.test.js"
     ],
-    "note": "HERALD (RE-AIMED by content: the lists end with herald now). AEGIS (re-aimed by content): the line gained Sureme's aegis. PRIMARCH (re-aimed by content): the line gained GA00250's primarch."
+    "note": "HERALD (RE-AIMED by content: the lists end with herald now). AEGIS (re-aimed by content): the line gained Sureme's aegis. PRIMARCH (re-aimed by content): the line gained GA00250's primarch. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
   },
   {
     "name": "PENITENT-granted-to-another-account",

@@ -25,7 +25,7 @@
 // ('AttackMeleeLycan' at LYCAN_TICK, the mob's strike DISC12 showed). The hand-off is unchanged: until the art is up
 // (or when it failed, or the build has none) `isRiding` stays false and remotePlayers' DISC12 enemy sprite stands for
 // them - a beast is never nothing. (DISC23-B's walkers leave a beast to this layer: `pose.wb` skips them.)
-import { orientationFor, frameCount, frameTime, chooseTable, speedMod, LYCAN_TICK, meleeAnimTickTime, RANGED_TICK, SPELL_TICK } from '../player/eotbBillboard.js';
+import { orientationFor, portrayedYaw, frameCount, frameTime, chooseTable, speedMod, LYCAN_TICK, meleeAnimTickTime, RANGED_TICK, SPELL_TICK } from '../player/eotbBillboard.js';
 import { getMeleeWeaponAnimTime } from '../characters/weaponStates.js';
 import { EOTB_FOOT_SET_COUNT } from '../player/classSkins.js';   // PEERFX3: a class skin is a set past the mod's
 import { spriteFor, eotbSpriteUrl, spriteSize, spriteOffset, flipRows, worldOrderColors } from '../player/eotbSprite.js';
@@ -157,6 +157,12 @@ function figureLayer(art) {
      *  frame is the horse's too): what an aura on its back reads for the bones a sprite has not got (render/auraRing.js
      *  auraSpriteBones). */
     figureOf: (id) => { const r = figs.get(id); return r?.batch && r.size && r.xml && r.px > 0 && r.form !== 'rider' ? { base: (r.xml.y / r.xml.scale) * (r.g ?? 1), mpp: r.size.h / r.px, beast: r.form === 'beast' } : null; },
+    /** SPRITE-FACE (2026-10-05, Mac: "The sprite rotation on character input is a little finicky and make the aura
+     *  misallign"): the way the figure drawn faces - { yaw, turn }: `yaw` its picture's (the eight-way view it was drawn
+     *  in, about the eye it was drawn for - eotbBillboard.js portrayedYaw), `turn` the pose's own facing - this frame's,
+     *  in the saddle too; null when not drawn or seen from its own feet. An aura on the sprite is hung on `yaw`, which the
+     *  pose's facing runs up to half a view off (render/auraRing.js auraSpritePosed). */
+    faceOf: (id) => { const r = figs.get(id); return r?.batch && r.face && r.face.yaw !== null ? r.face : null; },
     batches: () => [...figs.values()].map((r) => r.batch).filter(Boolean),
     offsetAll(offset) {
       for (const r of figs.values()) {
@@ -169,6 +175,13 @@ function figureLayer(art) {
 
 /** The viewer's side of a sprite: its eight-way view of a figure facing `yaw` at `feet`, from `eye`. */
 const viewOf = (yaw, feet, eye) => orientationFor([Math.sin(yaw), 0, Math.cos(yaw)], eye ? [eye[0] - feet[0], 0, eye[2] - feet[2]] : [0, 0, 0]);
+/** SPRITE-FACE: figure `r`'s facing as drawn this frame - the picture's (`view` about `eye`) and the pose's (`yaw`) - on
+ *  its own record, written in place (the layer's `faceOf`). */
+function faceDrawn(r, view, yaw, feet, eye) {
+  const f = r.face ?? (r.face = { yaw: null, turn: 0 });
+  f.yaw = eye ? portrayedYaw(view, [eye[0] - feet[0], 0, eye[2] - feet[2]]) : null;
+  f.turn = yaw;
+}
 
 /**
  * `renderer` the host's (uploadTexture, createBillboardBatch, destroyBillboardBatch); `urlFor` / `decode` the art's
@@ -255,9 +268,10 @@ export function createPeerRiders({ renderer = null, urlFor = eotbSpriteUrl, deco
     const feet = toScene(pose);
     // PR-WW1: the form picks the lycan archive (tableArchive: 112380, or 112381 for the wereboar); a mounted table
     // still reads the rider's own set
-    const s = spriteFor(table, viewOf(peerBodyYaw(pose), feet, eye), r.frame,   // AUDIT CLIMB-ARC N2: a beast on the wall faces it
-      { onHorse: pose.rv | 0, lycanthropyType: beast });
+    const yaw = peerBodyYaw(pose), view = viewOf(yaw, feet, eye);   // AUDIT CLIMB-ARC N2: a beast on the wall faces it
+    const s = spriteFor(table, view, r.frame, { onHorse: pose.rv | 0, lycanthropyType: beast });
     if (!s) return;
+    faceDrawn(r, view, yaw, feet, eye);   // SPRITE-FACE: the way it is drawn facing, for an aura on it
     // PR-WW1: the transformed forms take the saddle's size (sizeMod - one constant serves both)
     layer.place(r, s, feet, right, beast ? { transformed: true } : { riding: true }, hGrow ? hGrow(feet) : 1);   // OW-PEERS
   }
@@ -274,6 +288,7 @@ export function createPeerRiders({ renderer = null, urlFor = eotbSpriteUrl, deco
      *  own top this frame (its size over the feet plus EOTB's y offset), as a body's head is its own. */
     heightOf: layer.heightOf,
     figureOf: layer.figureOf,   // AUDIT 3 (SERAPH-WINGS): a beast's on foot - none in the saddle
+    faceOf: layer.faceOf,   // SPRITE-FACE: a beast's, and a rider's
     batches: layer.batches,
     offsetAll: layer.offsetAll,
     destroy: layer.destroy,
@@ -375,13 +390,14 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
         if (n > 1) { r.clock += step; while (r.clock >= ft) { r.clock -= ft; r.frame = (r.frame + 1) % n; } }
       }
       const feet = toScene(pose);
-      const view = viewOf(peerBodyYaw(pose), feet, eye);   // CLIMB5: facing the wall it climbs
+      const yaw = peerBodyYaw(pose), view = viewOf(yaw, feet, eye);   // CLIMB5: facing the wall it climbs
       // PEERFX3: A CLASS SKIN STRUCK SHOWS ITS HURT POSE for a moment - Daggerfall's own one-frame flinch (records
       // 10-14, the table class skins read for Death, player/classSkins.js). Eye Of The Beholder's sets carry no hurt
       // table (their Death is the fall), so they flinch by the red flash alone.
       const flinch = set >= EOTB_FOOT_SET_COUNT && hurt(peer.id);
       const s = spriteFor(flinch ? 'Death' : r.table, view, flinch ? 0 : r.frame, { onFoot: set });
       if (!s) continue;
+      faceDrawn(r, view, yaw, feet, eye);   // SPRITE-FACE: the way it is drawn facing, for an aura on it
       const g = grow ? grow(feet) : 1;   // OW-PEERS: grown under the Overworld, as the traveller is
       layer.place(r, s, feet, right, { riding: false }, g);
       if (g > 1) { if (r.lantern) { dropSpriteLantern(r.lantern, store.renderer); r.lantern = null; } }   // OW-PEERS: a grown walker's waist is not where the lantern hangs (eotbBody's OW-BIG rule)
@@ -437,6 +453,7 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
     batchOf: layer.batchOf,   // PEERFX3
     heightOf: layer.heightOf,
     figureOf: layer.figureOf,   // SERAPH-WINGS
+    faceOf: layer.faceOf,   // SPRITE-FACE
     batches: layer.batches,
     drawLanterns,   // HT-WAIST-BACK
     offsetAll: layer.offsetAll,

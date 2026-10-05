@@ -1082,6 +1082,8 @@ either: the Golden Radiance, granted by name with GA00250's Primarch title (the 
 Primarch's gold. SHADOW-CLOAK (2026-10-04) a fourth: the Holo Shadow Cloak, granted with SirMcMobdon's Shadow Fang title (the same
 arc, SHADOW-CLOAK), its button in the Shadow Fang's black and crimson. SERAPH-WINGS (2026-10-05) a fifth: the Seraph
 Wings, held by every developer (DEVELOPER_HANDLES - the same arc, SERAPH-WINGS), its button in the Founder's gold.
+CRYSTAL-FIST (2026-10-05) a sixth: the Crystal Resonance, granted with Flylighter's Crystal Fist title (the same arc,
+CRYSTAL-FIST), its button in the Crystal Fist's purple.
 
 THE FIRE (`render/auraRing.js`), two draws a wearer. THE GROUND: one quad under the feet, answered per pixel about the
 wearer - a ring band broken by value-noise fire flowing round it and outward, bright crests chasing about it, ten embers
