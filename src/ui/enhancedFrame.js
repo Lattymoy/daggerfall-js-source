@@ -61,6 +61,7 @@ export const TOAST_FADE_MS = 700;
  *  per entry, exactly as their rules write them. */
 export const FRAME_ROLES = {
   window: ['.dlg-win', '.px-win', '.pack-win', '.loot-win', '.px-about', '.px-profile', '.hmbox',
+    '.px-support',   // SUPPORT1: the door's asks - the About plaque's and the profile mark's carved frame
     // PLUS8: the journey's bar (ui/enhancedTravelControl.js) - carved stone, brass fittings, the theme's ground
     '.travelpanel-bar',
     // OW-THEME (2026-09-28, Mac: "The overworld ui needs to follow enhanced ui theme"): the Overworld's bar - the

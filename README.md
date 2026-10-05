@@ -29,6 +29,8 @@ work.
 
 Support on Patreon: https://www.patreon.com/c/dfenhanced
 
+Support on Ko-fi: https://ko-fi.com/daggerfallonline
+
 The monthly goal, suggested support levels, and funding breakdown are in
 [`SUPPORT.md`](SUPPORT.md). Sponsorship does not lock gameplay, source code,
 or normal releases behind a paywall.
