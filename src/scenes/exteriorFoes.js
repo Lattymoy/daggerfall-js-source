@@ -2170,7 +2170,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
    *  then overlay the saved truth - SerializableEnemy's own shape
    *  (rebuild, then SetHealth/SetMagicka/... per record). Async, as
    *  the mint is; the caller does not wait on the art. */
-  function restoreWorld(saved, fromNative, yOffset = 0, { reviveQuestBehaviour = null } = {}) {
+  function restoreWorld(saved, fromNative, yOffset = 0, { reviveQuestBehaviour = null, restandQuestFoe = null } = {}) {
     for (const sf of saved ?? []) {
       if (isRiteSite(sf.site)) continue;   // AUDIT WB12d (C5): a breach's faithful are never a save's - its circle stands its survivors again (scenes/riteHost.js)
       const [lx, lz] = fromNative(sf.nativeX, sf.nativeZ);
@@ -2182,7 +2182,9 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // owns one hands it in; a host without one restores plain foes.
       const questBehaviour = (sf.questResource && reviveQuestBehaviour)
         ? (reviveQuestBehaviour(sf.questResource) ?? null) : null;
-      spawnFoe(sf.mobileType, [lx, sf.y + yOffset, lz], { gender: sf.gender, feetGiven: true, questBehaviour, placed: !!sf.placed, eliteFoe: sf.eliteFoe === true, champion: sf.champion ? championIndex(sf.champion) : null }).then((f) => {   // REVIEW 2026-09-05: the snapshot holds FEET - a flyer must not take the centre drop twice
+      // SEALED-SAVE (FIELD BUGS 2026-10-05c): a quest foe the host stands elsewhere (its marker moved since the save)
+      const feet = (questBehaviour && restandQuestFoe?.(questBehaviour, [lx, sf.y + yOffset, lz])) || [lx, sf.y + yOffset, lz];
+      spawnFoe(sf.mobileType, feet, { gender: sf.gender, feetGiven: true, questBehaviour, placed: !!sf.placed, eliteFoe: sf.eliteFoe === true, champion: sf.champion ? championIndex(sf.champion) : null }).then((f) => {   // REVIEW 2026-09-05: the snapshot holds FEET - a flyer must not take the centre drop twice
         if (!f) return;
         if (typeof sf.site === 'string') f.site = sf.site;   // WOD7: a shared camp's foe keeps riding for its site
         if (sf.questMarker === true) f._questMarker = true;   // AUDIT (pre-merge) F1

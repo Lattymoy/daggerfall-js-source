@@ -472,11 +472,12 @@
   {
     "name": "N2-the-beast-faces-the-camera's-yaw",
     "file": "src/net/peerRiders.js",
-    "old": "const s = spriteFor(table, viewOf(peerBodyYaw(pose), feet, eye), r.frame,",
-    "new": "const s = spriteFor(table, viewOf(pose.yaw, feet, eye), r.frame,",
+    "old": "    const yaw = peerBodyYaw(pose), view = viewOf(yaw, feet, eye);   // AUDIT CLIMB-ARC N2: a beast on the wall faces it",
+    "new": "    const yaw = pose.yaw, view = viewOf(yaw, feet, eye);   // AUDIT CLIMB-ARC N2: a beast on the wall faces it",
     "tests": [
       "test/auditclimbarc.test.js"
-    ]
+    ],
+    "note": "SPRITE-FACE (re-aimed by content): the beast's facing named once, its view and its aura's facing off it."
   },
   {
     "name": "N5-the-switch-blinds-the-law",

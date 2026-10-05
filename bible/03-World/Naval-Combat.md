@@ -1360,7 +1360,10 @@ followers and Come Sail Away's crew never leaves the boat; all of this is the po
   reach (`combat/friendlyFire.js`, now the dungeon's swing, door and shaft, and a torch indoors and underground too),
   whose team no blow of the player's turns (both pools' attack door - AUDIT CREW CC-B1 - and the layer puts it back
   regardless), a `companion` every hostile may fight - with infighting off as well (`enemyTargets.js getTargets`'
-  else-arm; a plain summon keeps DFU's chain) - and a quest's foes too; never the player's foe nor an ally's. A monster
+  else-arm; a plain summon keeps DFU's chain) - and a quest's foes too; never the player's foe nor an ally's. [ASSIST,
+  FIELD BUGS 2026-10-05c: he puts a foe fighting his side - a player, a companion, himself - first
+  (`COMPANION_ASSIST_PRIORITY`): DFU's chain gave its +5 to a foe targeting no one, so an idle foe behind a wall outranked
+  the one striking the player whenever it stood outside his view cone (`01-Overview/Field-Bugs-2026-10-05c.md`).] A monster
   fighting him keeps the town's watch. The layer's catch-up (`CATCH_UP_M`) comes long before the street's cull
   (`ENCOUNTER_CULL_DISTANCE`); he takes no encounter slot; he is `transient` (no place's save) and the room's save skips
   him. His green bar shows in every mode (`navalCrewBars`, the host's `drawCompanionBars`, under a dungeon window too),
