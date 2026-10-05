@@ -103,7 +103,8 @@ export const fullNameOf = (given, sur) => (sur ? `${given} ${sur}` : given);
  *   parents:number[], children:number[], spouse:number|null, born:number, died:Death|null,
  *   heir:boolean|null, characterId:string|null, leveling:string|null, kind:'member'|'resident', residentId:string|null,
  *   startAge:number, toll:number, bornOwn:number, lived:number, retired:number|null, bequest?:any[],
- *   parked?:{mapId:number, buildingKey:number}|null
+ *   parked?:{mapId:number, buildingKey:number}|null, courting?:Record<string, any>, wedAt?:number|null,
+ *   childDay?:number|null, minor?:boolean, residentFace?:number|null
  * }} Person
  * @typedef {{ v:number, id:string, surname:string, model:string, seat:{region:string, loc:string, mapId?:number}|null, rev:number,
  *   nextId:number, currentId:number, founded:number, ended:number|null, people:Person[], remains:any[], settings?:any,
@@ -114,6 +115,8 @@ export const fullNameOf = (given, sur) => (sur ? `${given} ${sur}` : given);
  */
 
 /** A blank person - every field present, so a record read back is the shape a record written is. */
+/** LEGACY5: a person of the record, blank - a spouse who marries in is minted so (systems/legacy/marriage.js wed). */
+export const newPerson = (id) => blankPerson(id);
 function blankPerson(id) {
   return /** @type {Person} */ ({
     id, gen: 0, given: '', surname: '', gender: 'male', race: 'Breton', raceId: RACES.Breton, face: 0,
@@ -449,6 +452,15 @@ export function readFamily(rec) {
     p.estate = Math.max(0, Math.floor(Number(raw.estate) || 0));
     p.bequest = Array.isArray(raw.bequest) ? raw.bequest.filter((it) => it && typeof it === 'object') : [];
     p.died = raw.died && typeof raw.died === 'object' ? { at: Number(raw.died.at) || 0, cause: String(raw.died.cause ?? 'unknown'), place: raw.died.place ?? null, by: raw.died.by ?? null } : null;
+    // LEGACY5: courtships, a wedding, children's clock, a minor, a spouse's own face - held to their shape
+    p.courting = raw.courting && typeof raw.courting === 'object' && !Array.isArray(raw.courting)
+      ? Object.fromEntries(Object.entries(raw.courting).filter(([k, c]) => typeof k === 'string' && c && typeof c === 'object')
+        .map(([k, c]) => [k, { name: String(c.name ?? ''), mapId: c.mapId | 0, town: String(c.town ?? ''), affection: Math.max(0, Math.min(100, c.affection | 0)), day: Number.isInteger(c.day) ? c.day : -1, betrothed: !!c.betrothed }]))
+      : {};
+    p.wedAt = Number.isFinite(raw.wedAt) ? raw.wedAt : null;
+    p.childDay = Number.isInteger(raw.childDay) ? raw.childDay : null;
+    p.minor = !!raw.minor;
+    p.residentFace = Number.isInteger(raw.residentFace) ? raw.residentFace : null;
     // LEGACY-HOME: the house the member's newest save was made in (household.js homeOf), or none
     p.parked = raw.parked && Number.isInteger(raw.parked.mapId) && (raw.parked.buildingKey | 0) > 0 ? { mapId: raw.parked.mapId, buildingKey: raw.parked.buildingKey | 0 } : null;
     people.push(p);
