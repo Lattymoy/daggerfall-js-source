@@ -429,11 +429,12 @@
   {
     "name": "SURVTIERS3-the-kit-cite-wizard-rots",
     "file": "src/systems/equip.js",
-    "old": "(?class= headless) and :235 (the wizard)",
-    "new": "(?class= headless) and :223 (the wizard)",
+    "old": "(?class= headless) and :237 (the wizard)",
+    "new": "(?class= headless) and :225 (the wizard)",
     "tests": [
       "test/citedrift.test.js"
-    ]
+    ],
+    "note": "LEGACY1 (PIN MOVED): its cite shifted by citeShift (Project Legacy's question chain in chargenSession.js); re-aimed by content. "
   },
   {
     "name": "SURVTIERS3-the-kit-cite-world-seed-rots",

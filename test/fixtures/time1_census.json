@@ -529,7 +529,8 @@
    "file": "src/scenes/world.js",
    "has": "now: () => Math.floor(playerTicker.classicMinutes),",
    "clock": "event",
-   "why": "the bounty boards' day"
+   "count": 2,
+   "why": "the bounty boards' day, and Project Legacy's stamps (a founding, a death, a rest)"
   },
   {
    "file": "src/scenes/world.js",

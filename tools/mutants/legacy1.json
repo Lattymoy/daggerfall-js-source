@@ -232,5 +232,41 @@
     "tests": [
       "test/legacy4_heirloom.test.js"
     ]
+  },
+  {
+    "name": "LEGACY3-family-tab-whatever-the-switch",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "const pauseTabShown = (id) => id !== 'family' || legacyOn();",
+    "new": "const pauseTabShown = (id) => true;",
+    "tests": [
+      "test/legacy3_familytab.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY1-birth-behind-the-front-door",
+    "file": "src/systems/legacy/places.js",
+    "old": "  p.set('world', '1');\n  p.set('legacyborn', String(personId));",
+    "new": "  p.set('legacyborn', String(personId));",
+    "tests": [
+      "test/legacy1_family.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY1-load-behind-the-front-door",
+    "file": "src/systems/legacy/places.js",
+    "old": "  p.set('world', '1');\n  p.set('classic', '1');",
+    "new": "  p.set('classic', '1');",
+    "tests": [
+      "test/legacy1_family.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY4-blessings-without-end",
+    "file": "src/systems/legacy/heirloom.js",
+    "old": "mods.skills[k] = Math.min(BLESSING_SKILL_MAX, (mods.skills[k] ?? 0) + Math.max(0, Math.min(BLESSING_POINTS, b.value | 0)));",
+    "new": "mods.skills[k] = (mods.skills[k] ?? 0) + Math.max(0, Math.min(BLESSING_POINTS, b.value | 0));",
+    "tests": [
+      "test/legacy4_heirloom.test.js"
+    ]
   }
 ]

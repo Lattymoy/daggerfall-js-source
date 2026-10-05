@@ -53,22 +53,27 @@ export function nearestTownAnywhere(maps, regionNames, pixel) {
   return best;
 }
 
-/** The boot's address for a birth: the page's own search with the load doors dropped and the birth's added. */
+/** The boot's address for a birth: the page's own search with the load doors dropped and the birth's added - and the
+ *  world host's scene door (`?world`, main.js), so the reload goes straight to the world as realmBootSearch's does: the
+ *  front door would clear the menu's keys and ask again, and the birth would be lost behind it. */
 export function birthSearch(search, personId, place) {
   const p = new URLSearchParams(search);
   for (const k of ['load', 'loadkey', 'classicload', 'classic', 'class', 'test', 'realm', 'realmnew', 'spawn', 'legacyborn']) p.delete(k);
+  p.set('world', '1');
   p.set('legacyborn', String(personId));
   if (place?.region) p.set('region', place.region);
   if (place?.loc) p.set('loc', place.loc);
   return `?${p.toString()}`;
 }
 
-/** The boot's address for a member already played: the page's own search, their save picked by key (the menu's own
- *  `?load&loadkey=` door). */
+/** The boot's address for a member already played: the page's own search, their save picked by key - the menu's own
+ *  Load door (`?load&loadkey=` over the classic start, as main.js sets them), through the world host's scene door. */
 export function loadSearch(search, key) {
   const p = new URLSearchParams(search);
-  for (const k of ['classicload', 'classic', 'class', 'test', 'realm', 'realmnew', 'spawn', 'legacyborn', 'region', 'loc']) p.delete(k);
-  p.set('load', '');
+  for (const k of ['classicload', 'class', 'test', 'realm', 'realmnew', 'spawn', 'legacyborn', 'region', 'loc']) p.delete(k);
+  p.set('world', '1');
+  p.set('classic', '1');
+  p.set('load', '1');
   p.set('loadkey', String(key));
   return `?${p.toString()}`;
 }

@@ -246,10 +246,15 @@ test('LEGACY1 B11: the heir is born in a TOWN by name, never a coordinate pair',
   assert.equal(q.get('legacyborn'), '4');
   assert.equal(q.get('loc'), 'Ashbury');
   for (const k of ['load', 'loadkey', 'classic']) assert.equal(q.has(k), false, `${k} never rides into a birth`);
-  assert.equal(q.has('world'), true);
-  const l = new URLSearchParams(loadSearch('?world&legacyborn=4&region=X&loc=Y', 12));
+  // both reloads take the world host's scene door themselves - a page in play carries no `?world` (the menu's doors
+  // set none), and the front door would clear the menu's keys and ask again, the birth or the load lost behind it
+  assert.equal(new URLSearchParams(birthSearch('?online=1', 4, null)).get('world'), '1');
+  const l = new URLSearchParams(loadSearch('?legacyborn=4&region=X&loc=Y', 12));
+  assert.equal(l.get('world'), '1');
+  assert.equal(l.get('load'), '1', 'the menu\'s Load door, as main.js sets it');
+  assert.equal(l.get('classic'), '1', 'over the classic start, as the menu\'s Load');
   assert.equal(l.get('loadkey'), '12');
-  assert.equal(l.has('legacyborn'), false);
+  for (const k of ['legacyborn', 'region', 'loc']) assert.equal(l.has(k), false, `${k} never rides into a load`);
 });
 
 test('LEGACY3 U5: the tree is a pure layout of the record - generations as rows, children under their parent', () => {

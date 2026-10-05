@@ -12,7 +12,8 @@
 //    generation, armour +2 on the parts it covers a generation - folded onto whoever wears it.
 //  - THE REMAINS: what lies where the fallen fell - the heirloom, the remains themselves (an item of the port's own,
 //    "The remains of Ysolde Hlaalu"), and a share of their purse.
-//  - THE BLESSING: remains laid to rest give the one who laid them +3 to the fallen's best skill, for good.
+//  - THE BLESSING: remains laid to rest give the one who laid them +3 to the fallen's best skill, for good - at most +9
+//    on any one skill (BLESSING_SKILL_MAX).
 import { registerCustomTemplates, setItemFields, mintCondition, itemValueOf, templateByIndex } from '../itemTemplates.js';
 import { registerEntityFold, registerWeaponDamageMod, newMods, EMPTY_MODS } from '../entityMods.js';
 import { armorBodyParts } from '../equip.js';
@@ -26,6 +27,9 @@ export const HEIRLOOM_ARMOR_PER_GEN = 2;
 export const REMAINS_GOLD_SHARE = 0.1;
 /** The blessing: points on the fallen's best skill. */
 export const BLESSING_POINTS = 3;
+/** ...and the most the house's blessings give one skill, however many ancestors are laid to rest: three blessings'
+ *  worth. A long line is honoured, never a build - a skill the whole house shared does not climb without end. */
+export const BLESSING_SKILL_MAX = 9;
 
 /** The remains' template - free after the keepsake (1800). */
 export const REMAINS_TEMPLATE = 1810;
@@ -121,7 +125,7 @@ export function legacyFold(entity) {
   }
   for (const b of blessings) {
     const k = b?.skill | 0;
-    if (k >= 0 && k < SKILL_COUNT) mods.skills[k] = (mods.skills[k] ?? 0) + Math.max(0, Math.min(BLESSING_POINTS, b.value | 0));
+    if (k >= 0 && k < SKILL_COUNT) mods.skills[k] = Math.min(BLESSING_SKILL_MAX, (mods.skills[k] ?? 0) + Math.max(0, Math.min(BLESSING_POINTS, b.value | 0)));
   }
   return mods;
 }

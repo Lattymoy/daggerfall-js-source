@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import {
   pickHeirloom, markHeirloom, attuneHeirloom, heirloomEligible, isHeirloom, mintRemainsItem, isRemainsItem, bestSkillOf,
   blessingOf, legacyFold, heirloomWeaponDamage, heirloomLine, HEIRLOOM_GEN_MAX, HEIRLOOM_DAMAGE_PER_GEN,
-  HEIRLOOM_ARMOR_PER_GEN, BLESSING_POINTS, REMAINS_TEMPLATE, REMAINS_GOLD_SHARE,
+  HEIRLOOM_ARMOR_PER_GEN, BLESSING_POINTS, BLESSING_SKILL_MAX, REMAINS_TEMPLATE, REMAINS_GOLD_SHARE,
 } from '../src/systems/legacy/heirloom.js';
 import { familyRng, MODELS } from '../src/systems/legacy/family.js';
 import { createLegacyHost, LEGACY_QUEST_PREFIX } from '../src/scenes/legacyHost.js';
@@ -67,6 +67,11 @@ test('LEGACY4: an heirloom\'s power rides the entity\'s own folds - a weapon\'s 
   assert.ok(m.armorParts.some((v) => v === 4), 'two generations: +4 on the parts it covers');
   assert.equal(m.skills[29], BLESSING_POINTS);
   assert.equal(legacyFold({ items: [] }).skills[0], undefined, 'nothing worn, nothing blessed: the empty fold');
+  // a long line is honoured, never a build: the house's blessings on one skill stop at three blessings' worth
+  assert.equal(BLESSING_SKILL_MAX, 3 * BLESSING_POINTS);
+  const many = Array.from({ length: 6 }, (_, i) => ({ of: i, name: 'A', skill: 29, value: 3 }));
+  assert.equal(legacyFold({ items: [], legacyBlessings: many }).skills[29], BLESSING_SKILL_MAX);
+  assert.equal(legacyFold({ items: [], legacyBlessings: [...many.slice(0, 2), { of: 9, name: 'B', skill: 30, value: 3 }] }).skills[29], 6, 'under the cap, each counts');
   computeEntityMods(e);
   assert.equal(entityModsOf(e).skills[29] >= 3, true, 'registered with the entity\'s folds');
 });

@@ -165,23 +165,23 @@ nothing about its death but the toll - a player never wakes into permadeath they
 
 - **The heirloom roll** at a final death: 50% (the Mods pane; Bloodline) or certain (an Enduring elder's last death or
   retirement). The piece is the most valuable weapon or armour the fallen WORE (value, then condition), never a quest
-  item, a Legendary of the gate's set or a bound item. It is marked `heirloom: { of, gen, line }` and its name
+  item, an Aetheric or artifact piece, or a sigil's. It is marked `heirloom: { line, house, of, from, gen, base }` and its name
   carries the family: "Hlaalu's Steel Longsword". A piece already an heirloom is always the one chosen - an heirloom
   is handed down, not found again.
 - **The heirloom grows.** Each generation that carries it home adds one to its power (`heirloom.gen`, at most 5): a
-  weapon `+gen` to hit and damage, armour `+gen` to its armour value (riding `itemMods` as the Loot arc's affixes
-  ride it). A five-generation heirloom is the line's own Legendary.
+  weapon +5% damage a generation (the weapon-damage seam, `registerWeaponDamageMod`), armour +2 a generation on the
+  parts it covers (the entity fold, `registerEntityFold`, as the Loot arc's affixes ride it) - at five, +25% and +10.
 - **The remains** lie where the fallen fell - in a dungeon, at their last position on its floor (LW6b's `restAt` and
   `layRemains`, the same pile); in the open or a town, at their last position on the ground; in a building, at its
   door outside. The pile carries the heirloom, the fallen's REMAINS (a keepsake-kind item: "The remains of Ysolde
   Hlaalu", LW6c's template shape) and a part of their purse.
 - **The death quest**, "The Bones of <name>", is the heir's from their first day: the journal names where, the Quest
-  Guide's tracker follows it (GUIDE4) and the marks point at it (GUIDE5). If a revenant or a champion slew the fallen,
-  it is THE KILLER STILL STANDS - it waits by the remains as a revenant (Revenants' own record, "Slew"), and must be
-  faced. Taking the remains completes the first half; the second is to lay them to rest at any temple (talk: "Lay
+  Guide's tracker follows it (GUIDE4) and the marks point at it (GUIDE5); the journal names the killer. THE KILLER
+  STILL STANDS - a revenant or champion that slew the fallen waiting by the remains (Revenants' own record, "Slew") -
+  is LEGACY6's, with the world's memory of the house. Taking the remains completes the first half; the second is to lay them to rest at any temple (talk: "Lay
   <name> to rest"), or at the family's seat.
-- **The rest.** Laid to rest, the fallen's BLESSING: +3 to the fallen's highest skill for the heir (capped by
-  DFU's skill cap), the heirloom attuned (its generation counted), and the tree's portrait of the fallen marked at
+- **The rest.** Laid to rest, the fallen's BLESSING: +3 to the fallen's highest skill for the heir - at most +9 on
+  any one skill however many are laid to rest (`BLESSING_SKILL_MAX`: a long line is honoured, never a build) - the heirloom attuned (its generation counted), and the tree's portrait of the fallen marked at
   peace. Unclaimed remains lie for good (they are the family's, not the world's); a Bloodline heir carries one death
   quest per fallen.
 
@@ -207,7 +207,7 @@ nothing about its death but the toll - a player never wakes into permadeath they
 
 - **The model is the family's**, chosen at the founder's online chargen. Enduring is the default; Bloodline is marked
   on the online roster and over the player's name (a small skull beside the house name).
-- **The service holds the line** (`server-account/src/legacy.js`, migration `0042_legacy.sql`): a `lineages` row per
+- **The service holds the line** (`server-account/src/legacy.js`, migration `0083_legacy.sql`): a `lineages` row per
   family (owner, surname, model, the family's record, its `rev`), and on each realm character its `lineage_id`, its
   `person_id` and `dead_at`. The family's record is read with the roster and written with a checkpoint (`rev` checked);
   the save's copy is ignored online.

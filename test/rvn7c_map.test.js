@@ -156,7 +156,7 @@ test('RVN7c THE FACES AND THE HOST: the pause window\'s Quests tab and the chron
   const c = read('src/ui/enhancedChronicle.js');
   assert.match(c, /if \(section === 'quests' && isHuntQuestId\(e\.uid\)\) \{[\s\S]{0,500}abandonHuntQuest\(e\.uid\);/);
   assert.match(c, /!e\.main && !isBountyQuestId\(e\.uid\) && !isHuntQuestId\(e\.uid\)/, 'never the quest share');
-  assert.match(read('src/scenes/world.js'), /const extra = \[\.\.\.\(bountyHost\?\.questLogEntries\?\.\(\) \?\? \[\]\), \.\.\.revenantHuntEntries\(rumorHere\(\)\)\];/);
+  assert.match(read('src/scenes/world.js'), /const extra = \[\.\.\.\(bountyHost\?\.questLogEntries\?\.\(\) \?\? \[\]\), \.\.\.revenantHuntEntries\(rumorHere\(\)\), \.\.\.\(legacyHost\?\.questLogEntries\(\) \?\? \[\]\)\];/);   // LEGACY4: the death quests after them
 });
 
 test('RVN7c the page: a lair heard of is on the map (mutants: unsaid)', () => {
