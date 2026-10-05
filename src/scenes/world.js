@@ -377,6 +377,7 @@ import { RainCurtainsRenderer, curtainsOf, CURTAIN_FOOT_MARGIN_M } from '../rend
 import { RANGE_PIXELS as TV_BODY_RANGE } from '../net/wire.js';   // TV3: within the pose range a traveller is their body, not a mark
 import { quickLootWheel, quickLootTake, quickLootArm, plaqueActionFor, plaqueActionSelection, plaqueLightFirst, plaqueStep } from '../systems/quickLoot.js'; import { showPickups, showHaul } from '../ui/pickupFeed.js'; import { claimHauls } from '../ui/haulCards.js';   // QUICK-LOOT B4: the wheel, the take, and the two keys that arm what the next activate means; PICKUP-FEED: what a take moved, as cards (the take's `took`)
 import { findHaul } from '../ui/haulCards.js'; import { setSilverFinder, silverFindAt } from '../systems/silverFinds.js';   // SILVER-FINDS: a loot find's card; the finder every host's loot door asks, and a headstone's find
+import { setWalletSilver } from '../systems/walletItem.js';   // WALLET1: the wallet counts the account's silver
 import { lootPile } from '../player/lootStack.js';   // LOOT-STACK: the pile under the reticle, as the loot window's tabs
 import { composeContents } from '../systems/worldHover.js';   // WORLD-HOVER: the contents ladder's one law (AUDIT-WH H3)
 import { mobilePersonName, lootPileName } from '../systems/worldTooltips.js';   // WORLD-HOVER H2: MobilePersonNPC.NameNPC (.cs:299-302); M5: a dropped pile's word (.cs:534-548), outdoors too
@@ -19938,6 +19939,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   // dice strike it under the day's count. Each answered find its card where the feed stands (the world walked, nothing
   // over it - a loot window open as the answer lands takes the feed down: AUDIT HAUL-CARDS A3), else its line in the
   // chat. Online only: offline, and on the bench, nothing is found.
+  // WALLET1 (bible/06-Systems/Wallet.md): the wallet counts the account's silver - the marks book's balance, asked afresh
+  // as the wallet's sheet opens; online alone (offline the wallet says the silver is kept online)
+  if (marksBook) setWalletSilver(() => (marksBook.state.open === false ? null : marksBook.state.balance), () => marksBook.refresh());
   if (marksBook) {
     setSilverFinder((kind) => {
       marksBook.find(kind).then((finds) => {

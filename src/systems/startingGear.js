@@ -2,7 +2,7 @@
 // (ItemHelper.cs:1277-1364, MIT Daggerfall Workshop). This retires
 // the iron-dagger stand-in seedStartingEquipment used to hand out
 // (equip.js:340), which survives only as the PRE-CHARGEN fallback its
-// two hosts gate it to - world.js:6146 and exterior.js:1380 seed it
+// two hosts gate it to - world.js:6147 and exterior.js:1380 seed it
 // solely for an entity that never ran chargen. A new character now
 // begins dressed, with a spellbook, their CLASS's weapon, and 100
 // gold, exactly as classic does.
@@ -28,6 +28,7 @@
 //   enhanced 16-slot item list.
 
 import { addItem, addGoldPieces } from './inventory.js';   // E4: gold is the counter, not a bag stack
+import { giveWallet, isWalletItem } from './walletItem.js';   // WALLET1: the wallet rides the port's own tail
 import { equipItem } from './equip.js';
 import { templateByIndex, mintCondition, setItemFields } from './itemTemplates.js';   // MAC-N1: SetItem's name + value, the one export
 import { CLOTHING_DYES } from '../characters/dyes.js';
@@ -152,6 +153,9 @@ export function addSurvivalProvisions(entity, added = []) {
   if (survivalOn()) for (const it of startingProvisions()) { addItem(entity.items, it); added.push(it); }
   // REST2: online the Campfire is the rest's - a character set out with the arc Off still carries one
   else if (sharedClockOn()) { const it = startingCampfire(); if (it) { addItem(entity.items, it); added.push(it); } }
+  // WALLET1: and the wallet, whatever the switches (systems/walletItem.js) - the kit a new character sets out with holds
+  // one, as every load gives one to a character that has none
+  if (giveWallet(entity)) added.push(entity.items.find(isWalletItem));
   return added;
 }
 

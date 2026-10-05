@@ -50,7 +50,7 @@
 // .cs:108-118), spent letters-before-coins with the shortfall returned
 // by deductGold at court.js:291 (DeductGoldAmount, PlayerEntity.cs
 // :1324-1354), banked at systems/banking.js:749/:767, and described by
-// the 1007 text at systems/itemInfo.js:106. Nothing was ever owed at
+// the 1007 text at systems/itemInfo.js:107. Nothing was ever owed at
 // THIS surface anyway - DaggerfallInventoryWindow.cs has no
 // letter-of-credit arm at all.
 
@@ -63,7 +63,8 @@ import { useItem, isLightSource, isPotionRecipe, nextVariant, USE_PENDING } from
 import { potionRecipeByKey } from '../systems/potions.js';   // AUDIT 64 F49: PotionRecipeIngredients' recipe lookup
 import { itemInfoRows, itemInfoPanelRows, infoPanelShorten, questLetterName, INFO_TEXT, itemLongName } from '../systems/itemInfo.js';   // U25; AUDIT 64 F51; AUDIT MERGE-PLUS C3: the refusal's name
 import { lockRefuses, lockedText } from '../systems/itemLock.js';   // AUDIT MERGE-PLUS C3: the player's lock holds on this skin too
-import { boundRefusesPut, boundText } from '../systems/itemBound.js';   // SS3: a bound piece stays the player's on this skin too
+import { boundRefusesPut, boundText, isPackOnly, packOnlyText } from '../systems/itemBound.js';   // SS3: a bound piece stays the player's on this skin too; WALLET1: and a pack-only one in the pack
+import { walletContents, walletLines, refreshWalletSilver } from '../systems/walletItem.js';   // WALLET1: the wallet's box
 import { dismantleStones, dismantleRefusal, dismantleWare, DISMANTLE_INSTEAD, DISMANTLED } from '../systems/sigilBroker.js';   // SS5: a Broker ware back into stones
 import { YesNoBoxWindow } from './yesNoBox.js';   // SS5: the dismantle's question, DFU's own Yes/No box
 import { ListPickerWindow, listPickerArtLoaded } from './listPicker.js';   // MEND-AIM: the piece a repair kit mends, chosen
@@ -799,6 +800,9 @@ export class NativeInventoryWindow {
       else this.boxes = [{ rows: [{ text: USE_PENDING.openPortal, center: true }] }];
       return;
     }
+    // WALLET1: the wallet says what it holds - DFU's own click-anywhere box, its lines; this window is DFU's and keeps
+    // DFU's four tabs, the currencies where they always were. The account's silver asked afresh for the next look.
+    if (r.kind === 'wallet') { this.boxes = [{ rows: walletLines(walletContents(this.hooks.items(), this.hooks.entity)).map((text) => ({ text, center: true })) }]; void refreshWalletSilver(); return; }
     // MEND-AIM: a use that asks WHICH (a repair kit, with more than one piece to mend) pushes DFU's list picker over
     // the pack, the choices in the law's order; a row chosen uses the item again, aimed at it, and a click outside
     // keeps the kit. With no picker art the law's own first choice is taken, as the quick keys take it.
@@ -958,6 +962,8 @@ export class NativeInventoryWindow {
       const t = remoteTargetType(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne });
       if (t !== REMOTE_TARGET_TYPES.Merchant) {
         const kind = t === REMOTE_TARGET_TYPES.Wagon ? 'wagon' : t === REMOTE_TARGET_TYPES.Loot && this.hooks.loot?.storage === true ? 'storage' : 'elsewhere';
+        // WALLET1: a pack-only piece goes nowhere at all, and says so in its own words
+        if (isPackOnly(it)) { this._refuse({ text: packOnlyText(itemLongName(it, { getQuest: this.hooks.getQuest ?? null })) }); return; }
         if (boundRefusesPut(it, kind)) {
           // SS5: a Broker ware Removed over the GROUND - the player getting rid of it - is offered its dismantle
           // instead (a locked one was refused the ground above, and a worn one is never in this list); AUDIT SS: the

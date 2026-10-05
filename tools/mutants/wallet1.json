@@ -1,0 +1,546 @@
+[
+  {
+    "name": "WALLET1-row-weighs",
+    "file": "src/systems/walletItem.js",
+    "old": "stackable: false, hasNoEncumbrance: true,",
+    "new": "stackable: false, hasNoEncumbrance: false,",
+    "why": "the wallet weighs what a sack weighs",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-row-stacks",
+    "file": "src/systems/walletItem.js",
+    "old": "playerTextureRecord: 0, stackable: false,",
+    "new": "playerTextureRecord: 0, stackable: true,",
+    "why": "two wallets share a slot",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-row-unbound",
+    "file": "src/systems/walletItem.js",
+    "old": "bound: true, packOnly: true,",
+    "new": "bound: false, packOnly: true,",
+    "why": "the wallet dropped, traded or sold",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-row-not-pack-only",
+    "file": "src/systems/walletItem.js",
+    "old": "bound: true, packOnly: true,",
+    "new": "bound: true, packOnly: false,",
+    "why": "the wallet stowed in the wagon or the storage",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-row-picture",
+    "file": "src/systems/walletItem.js",
+    "old": "worldTextureArchive: 205, worldTextureRecord: 18,",
+    "new": "worldTextureArchive: 205, worldTextureRecord: 19,",
+    "why": "another picture than DFU's Small Sack",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-is-wallet-group",
+    "file": "src/systems/walletItem.js",
+    "old": "item?.templateIndex === WALLET_TEMPLATE && item?.group === 'UselessItems2';",
+    "new": "item?.templateIndex === WALLET_TEMPLATE;",
+    "why": "any group's 580 read as a wallet",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-holds-no-letters",
+    "file": "src/systems/walletItem.js",
+    "old": "Object.freeze([LETTER_OF_CREDIT_TEMPLATE, SIGIL_STONE_TEMPLATE, WELKYND_SHARD_TEMPLATE]);",
+    "new": "Object.freeze([SIGIL_STONE_TEMPLATE, WELKYND_SHARD_TEMPLATE]);",
+    "why": "the letters of credit left on the pages",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-holds-anything",
+    "file": "src/systems/walletItem.js",
+    "old": "!!item && WALLET_HOLDS.includes(item.templateIndex);",
+    "new": "!!item;",
+    "why": "the wallet holds every piece (the Portal Stone, itself)",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-give-no-pack",
+    "file": "src/systems/walletItem.js",
+    "old": "  if (!Array.isArray(entity.items)) entity.items = [];\n  if (hasWallet(entity.items)) return 0;",
+    "new": "  if (hasWallet(entity.items)) return 0;",
+    "why": "a character with no pack list given nothing (a throw)",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-give-twice",
+    "file": "src/systems/walletItem.js",
+    "old": "  if (hasWallet(entity.items)) return 0;\n  addItem(entity.items, mintWallet());",
+    "new": "  addItem(entity.items, mintWallet());",
+    "why": "a second wallet given to a character carrying one",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-gift-mark-unread",
+    "file": "src/systems/walletItem.js",
+    "old": "  if ((Number.isSafeInteger(entity.walletGift) ? entity.walletGift : 0) >= WALLET_GIFT) return 0;\n",
+    "new": "",
+    "why": "a character marked as given one given one again",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-gift-unmarked",
+    "file": "src/systems/walletItem.js",
+    "old": "  entity.walletGift = WALLET_GIFT;\n  return giveWallet(entity);",
+    "new": "  return giveWallet(entity);",
+    "why": "the gift never marked - given at every load the wallet is not carried",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-silver-nonsense",
+    "file": "src/systems/walletItem.js",
+    "old": "return Number.isSafeInteger(n) && n >= 0 ? n : null;",
+    "new": "return n;",
+    "why": "a reader's nonsense believed",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-silver-negative",
+    "file": "src/systems/walletItem.js",
+    "old": "return Number.isSafeInteger(n) && n >= 0 ? n : null;",
+    "new": "return Number.isSafeInteger(n) ? n : null;",
+    "why": "a negative balance counted",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-silver-reader-unread",
+    "file": "src/systems/walletItem.js",
+    "old": "const n = _silver?.() ?? null;",
+    "new": "const n = null;",
+    "why": "the host's silver never read",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-refresh-rejects",
+    "file": "src/systems/walletItem.js",
+    "old": "then(() => undefined, () => undefined);",
+    "new": "then(() => undefined);",
+    "why": "a refresh that rejects rejects the wallet's ask",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-contents-worn",
+    "file": "src/systems/walletItem.js",
+    "old": ".filter((it) => walletHolds(it) && !isEquipped(it));",
+    "new": ".filter((it) => walletHolds(it));",
+    "why": "a worn crystal counted in the wallet and taken off the doll's",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-contents-stacks",
+    "file": "src/systems/walletItem.js",
+    "old": "n + (it.templateIndex === t ? Math.max(1, Math.trunc(Number(it.stackCount) || 1)) : 0)",
+    "new": "n + (it.templateIndex === t ? 1 : 0)",
+    "why": "a stack counted as one",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-letters-gold",
+    "file": "src/systems/walletItem.js",
+    "old": "g + Math.max(0, Math.trunc(Number(it.value) || 0))",
+    "new": "g",
+    "why": "the letters worth nothing",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-gold-unread",
+    "file": "src/systems/walletItem.js",
+    "old": "gold: Math.max(0, Math.trunc(Number(entity?.goldPieces) || 0)),",
+    "new": "gold: 0,",
+    "why": "the purse's gold never counted",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-lines-silver-unknown",
+    "file": "src/systems/walletItem.js",
+    "old": "`Silver: ${c.silver == null ? 'kept by your account online' : num(c.silver)}`",
+    "new": "`Silver: ${num(c.silver ?? 0)}`",
+    "why": "an unknown silver said as none",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-lines-none",
+    "file": "src/systems/walletItem.js",
+    "old": "`Deadlands Embers: ${c.embers ? num(c.embers) : 'none'}`",
+    "new": "`Deadlands Embers: ${num(c.embers)}`",
+    "why": "no embers said as 0",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-use-unregistered",
+    "file": "src/systems/walletItem.js",
+    "old": "registerItemUseHandler(WALLET_TEMPLATE, (item) => ({ kind: 'wallet', item }));",
+    "new": "",
+    "why": "the wallet's Use DFU's 'nothing happens'",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-bound-put-pack-only",
+    "file": "src/systems/itemBound.js",
+    "old": "isBound(item) && (isPackOnly(item) || !BOUND_KEEPS.includes(kind));",
+    "new": "isBound(item) && !BOUND_KEEPS.includes(kind);",
+    "why": "the law lets a pack-only piece into the wagon and the storage",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-pack-only-unread",
+    "file": "src/systems/itemBound.js",
+    "old": "templateByIndex(item?.templateIndex)?.packOnly === true;",
+    "new": "false;",
+    "why": "no piece is pack-only",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-pack-only-words",
+    "file": "src/systems/itemBound.js",
+    "old": "`${name || 'That'} stays in your pack.`",
+    "new": "`${name || 'That'} is bound to you.`",
+    "why": "the refusal in another piece's words",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-realm-blind",
+    "file": "src/net/realmTradeLaw.js",
+    "old": "Object.freeze([570, 571, 572, 580]);",
+    "new": "Object.freeze([570, 571, 572]);",
+    "why": "the realm's trade service takes a wallet",
+    "tests": [
+      "test/wallet1.test.js",
+      "test/auditrealm.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-save-mark-unwritten",
+    "file": "src/systems/save.js",
+    "old": "snap.walletGift = Number.isSafeInteger(entity.walletGift) ? entity.walletGift : WALLET_GIFT;",
+    "new": "snap.walletGift = entity.walletGift;",
+    "why": "a character born with its kit's wallet saved as one from before it",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-save-mark-unread",
+    "file": "src/systems/save.js",
+    "old": "entity.walletGift = Number.isSafeInteger(snap.walletGift) ? snap.walletGift : 0;",
+    "new": "entity.walletGift = 0;",
+    "why": "every load reads the save as one from before the wallet",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-save-gift-ungiven",
+    "file": "src/systems/save.js",
+    "old": "  giveWalletGift(entity);   // WALLET1",
+    "new": "  // giveWalletGift(entity);   // WALLET1",
+    "why": "a character from before the wallet never given one",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-kit-ungiven",
+    "file": "src/systems/startingGear.js",
+    "old": "  if (giveWallet(entity)) added.push(entity.items.find(isWalletItem));",
+    "new": "",
+    "why": "a new character's kit holds no wallet",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-page-wallet-misc",
+    "file": "src/ui/packPages.js",
+    "old": "if (VALUABLES.has(g) || isWalletItem(it) || (g === 'MiscItems'",
+    "new": "if (VALUABLES.has(g) || (g === 'MiscItems'",
+    "why": "the wallet off Valuables",
+    "tests": [
+      "test/wallet1.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-page-letters-misc",
+    "file": "src/ui/packPages.js",
+    "old": "|| (g === 'MiscItems' && it.templateIndex === LETTER_OF_CREDIT_TEMPLATE)) return 'valuables';",
+    "new": ") return 'valuables';",
+    "why": "the letters of credit back on Misc (the page's bug)",
+    "tests": [
+      "test/wallet1.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-pages-unsplit",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "const paged = held.size ? items.filter((it) => !held.has(it)) : items;",
+    "new": "const paged = items;",
+    "why": "the held pieces on the pages and in the wallet both",
+    "tests": [
+      "test/wallet1.test.js",
+      "test/packPages.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-model-no-wallet",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "const walletItem = items.find(isWalletItem) ?? null;",
+    "new": "const walletItem = null;",
+    "why": "the pack never finds its wallet",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-use-a-message",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  if (r.kind === 'wallet') return { kind: 'pickWallet', item: r.item };\n",
+    "new": "",
+    "why": "the wallet's Use falls to the readers' message",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-pick-arm-lost",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  if (act.kind === 'pickWallet') { picked = act.item; side = 'local'; return render(); }",
+    "new": "  if (act.kind === 'pickWallet') return render();",
+    "why": "the Use opens nothing",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-sheet-unshown",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "if (side === 'local' && model?.wallet && picked === model.wallet.item) (c.querySelector('.card-body') ?? c).append(walletSheet(model.wallet));",
+    "new": "if (false) (c.querySelector('.card-body') ?? c).append(walletSheet(model.wallet));",
+    "why": "the wallet's card with no sheet",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-way-back-lost",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "if (side === 'local' && model?.wallet?.held.includes(picked)) acts.append(walletBack(model.wallet.item));",
+    "new": "if (false) acts.append(walletBack(model.wallet.item));",
+    "why": "a held piece's card with no way back",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-piece-unreachable",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    b.onclick = () => { picked = it; side = 'local'; notice = null; render(); };\n    box.append(b);",
+    "new": "    b.onclick = () => {};\n    box.append(b);",
+    "why": "a held piece's row opens nothing",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-way-back-dead",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  b.onclick = () => { picked = wallet; side = 'local'; notice = null; render(); };\n  return b;",
+    "new": "  b.onclick = () => {};\n  return b;",
+    "why": "the way back goes nowhere",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-asked-every-draw",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    walletAsked = true;\n    refreshWalletSilver()",
+    "new": "    refreshWalletSilver()",
+    "why": "the silver asked at every draw of the sheet",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-asked-never-again",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  walletAsked = false;   // WALLET1",
+    "new": "",
+    "why": "a second mount never asks the silver",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-answer-unredrawn",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "refreshWalletSilver().then(() => { if (host) { refresh(); render(); } });",
+    "new": "refreshWalletSilver();",
+    "why": "the answer never reaches the sheet",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-answer-under-piece-lost",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "refreshWalletSilver().then(() => { if (host) { refresh(); render(); } });",
+    "new": "refreshWalletSilver().then(() => { if (host && picked === model?.wallet?.item) { refresh(); render(); } });",
+    "why": "an answer landing while a piece is picked is lost for the mount (the bug the pin found)",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-enh-pack-only-silent",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  if (remote && isPackOnly(item)) {",
+    "new": "  if (false) {",
+    "why": "the enhanced pack's refusal in the bound law's words",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-classic-box-unsaid",
+    "file": "src/ui/nativeInventory.js",
+    "old": "if (r.kind === 'wallet') { this.boxes = [{ rows: walletLines(walletContents(this.hooks.items(), this.hooks.entity)).map((text) => ({ text, center: true })) }]; void refreshWalletSilver(); return; }",
+    "new": "if (r.kind === 'wallet') { void refreshWalletSilver(); return; }",
+    "why": "the classic Use says nothing",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-classic-silver-unasked",
+    "file": "src/ui/nativeInventory.js",
+    "old": "center: true })) }]; void refreshWalletSilver(); return; }",
+    "new": "center: true })) }]; return; }",
+    "why": "the classic Use never asks the silver",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-classic-pack-only-silent",
+    "file": "src/ui/nativeInventory.js",
+    "old": "        if (isPackOnly(it)) { this._refuse(",
+    "new": "        if (false) { this._refuse(",
+    "why": "the classic window's refusal in the bound law's words",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-hotbar-silent",
+    "file": "src/systems/quickslots.js",
+    "old": "    say?.(walletLines(walletContents(pack, entity)).slice(1).join(' · '));\n",
+    "new": "",
+    "why": "a wallet pressed on the hotbar says nothing",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-hotbar-arm-lost",
+    "file": "src/systems/quickslots.js",
+    "old": "  if (res?.kind === 'wallet') {",
+    "new": "  if (false) {",
+    "why": "the hotbar's wallet falls through the arms",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-card-blank",
+    "file": "src/systems/itemInfo.js",
+    "old": "  else if (isWalletItem(item)) for (const text of WALLET_CARD_LINES) out.push({ text, center: true });   // WALLET1",
+    "new": "",
+    "why": "the wallet's card says nothing of what it is for",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-world-door-unregistered",
+    "file": "src/scenes/world.js",
+    "old": "  if (marksBook) setWalletSilver(",
+    "new": "  if (false) setWalletSilver(",
+    "why": "the wallet never told the account's silver",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  },
+  {
+    "name": "WALLET1-world-closed-book",
+    "file": "src/scenes/world.js",
+    "old": "setWalletSilver(() => (marksBook.state.open === false ? null : marksBook.state.balance),",
+    "new": "setWalletSilver(() => marksBook.state.balance,",
+    "why": "a closed book's balance counted",
+    "tests": [
+      "test/wallet1.test.js"
+    ]
+  }
+]
