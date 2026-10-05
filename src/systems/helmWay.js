@@ -23,12 +23,12 @@
 //     - so her rates are read at its gain (HELM-WAY's took her 8.33 s and 14.6 s): the same handling at her new way.
 //   - STEERAGE (`steerage`): the rudder answers by a curve of her way through the water in place of the way itself -
 //     STEER_FLOOR at rest (the wind in her canvas swings her), biting hardest at steerPeakV (her way read over
-//     SAIL_FREE.gain, so the player's at 7.4), easing toward her full way - so half sail turns tightest, as Black Flag's does. Times the
-//     hull's own helm (HULL_HELM, the prefab's rudder x sail-turn modifiers): a Small Ship 2.25 deg/s at rest, 10.50 at
-//     7.4 m/s (a 81 m circle), 8.49 at her full way of 14.38 m/s (a 194 m circle), 9.44 at 12 m/s (146 m) - the mod's
-//     153 m at every way and none at rest; two seconds from rest with the helm over
-//     she swings 8.8 deg/s (the mod's 0.45); a Large Galley under sail 2.92 deg/s at 3.4 m/s (a 133 m circle; the mod's
-//     458 m). The helm comes over HELM_WAY.turnAccelSail times the mod's own rate.
+//     SAIL_FREE.gain, so the player's at 7.4), easing toward her full way - so half sail turns tightest, as Black
+//     Flag's does. Times the hull's own helm (HULL_HELM, the prefab's rudder x sail-turn modifiers): a Small Ship 2.25
+//     deg/s at rest, 10.50 at 7.4 m/s (a 81 m circle), 8.49 at her full way of 14.38 m/s (a 194 m circle), 9.44 at 12
+//     m/s (146 m) - the mod's 153 m at every way and none at rest; two seconds from rest with the helm over she swings
+//     8.8 deg/s (the mod's 0.45); a Large Galley under sail 2.92 deg/s at 3.4 m/s (a 133 m circle; the mod's 458 m).
+//     The helm comes over HELM_WAY.turnAccelSail times the mod's own rate.
 //   - A HULL WITH NO CARGO NODE carries the largest hold the mod gave any hull (CARGO_HOLD_MISSING, the Large Galley's).
 //   - SAIL-FREE (below): her way under sail is her canvas by the point of sail, at her own pace (SAIL_FREE).
 
