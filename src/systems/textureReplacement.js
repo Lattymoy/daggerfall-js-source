@@ -110,9 +110,12 @@ export const textureKey = (archive, record, frame = 0, map = 'Albedo', dye = nul
 
 let _index = new Map();
 let _load = null;
+let _looseGen = 0;   // VE2: bumps with every pick or clear - a picture built from the loose tier keys on it
 
 /** Register a picked set; `load(fileName)` resolves to bytes. */
 export function setTextureReplacements(fileNames, load) {
+  _looseGen++;
+  const was = _index;
   _index = new Map();
   for (const fileName of fileNames ?? []) {
     const e = textureEntry(fileName);
@@ -124,12 +127,39 @@ export function setTextureReplacements(fileNames, load) {
     const key = textureKey(e.archive, e.record, e.frame, e.map, e.dye);   // DW3: the dye rides the key
     if (!_index.has(key)) _index.set(key, e);
   }
+  const wasLoad = _load;
   _load = typeof load === 'function' ? load : null;
-  for (const k of [..._decoded.keys()]) if (_vendor.get(k)?.yields && _index.has(k)) _decoded.delete(k);   // AUDIT WD3 T2: the pick's picture, not the stand-in's already decoded
+  // AUDIT WD3 T2: the pick's picture, not the stand-in's already decoded - AUDIT VE R1: no longer deleted here; a
+  // decoded picture answers only the entry it was decoded from (decodedTexture), and the sweep lets go of the rest
+  if (_load !== wasLoad || !sameEntries(was, _index)) tierChanged();
   return _index.size;
 }
 
 export const textureReplacementCount = () => _index.size;
+
+// ---- VE2: THE LOOSE TIER ALONE, for the ground's tile set ----------------
+//
+// TextureReplacement.TryImportTextureArray (TextureReplacement.cs:325-352) asks the loose folder BEFORE any mod:
+// `!TextureExistsAmongLooseFiles(archive, 0, 0, textureMap)` (:847-851) is what lets it seek a mod's array at all. A
+// loose record 0 sends the archive straight to its individual textures (TryMakeTextureArrayCopyTexture), each record
+// sought loose-then-mods by TryImportTexture (:984-1005). systems/dfmodTextures.js dfmodGroundLayers asks these two.
+/** TextureExistsAmongLooseFiles: the folder pick names the texture and the gate is open. */
+export const looseTextureExists = (archive, record, frame = 0, map = 'Albedo') =>
+  textureReplacementEnabled() && !!_load && _index.has(textureKey(archive, record, frame, map));
+/** A loose texture's bytes, or null - never throws (a picture that will not load is the classic one's to stand in for). */
+export async function looseTextureBytes(archive, record, frame = 0, map = 'Albedo') {
+  if (!looseTextureExists(archive, record, frame, map)) return null;
+  const entry = _index.get(textureKey(archive, record, frame, map));
+  try {
+    const bytes = await _load(entry.fileName);
+    return bytes && bytes.byteLength > 0 ? bytes : null;
+  } catch (e) {
+    console.warn(`[texture] replacement ${entry.fileName} would not load:`, e?.message ?? e);
+    return null;
+  }
+}
+/** Bumps with every loose pick and clear: what a cache of pictures built from the loose tier keys on. */
+export const looseTextureGeneration = () => _looseGen;
 
 // ---- SURV2: THE PORT'S OWN VENDORED ART ------------------------------
 //
@@ -172,10 +202,11 @@ export function addVendorTextures(entries) {
     _vendor.set(key, { archive: Number(e.archive), record: Number(e.record), frame: Number(e.frame ?? 0), map, dye: e.dye ?? null, gate: typeof e.gate === 'function' ? e.gate : null, lazy: e.lazy === true, fileName: e.fileName ?? key, load: e.load ?? null, build: typeof e.build === 'function' ? e.build : null, standIn: e.standIn === true, yields: e.yields === true, offset: e.offset ?? null });   // WD2: `build(ctx)` - a picture DERIVED from the player's own classic records (formats/derivedTexture.js), never a file   // FIELD-GUN4: a WORN stand-in needs a place on the doll, which only its registration knows; AUDIT-DW F1: `lazy` - decoded per record when asked, never by the archive's preload
     n++;
   }
+  if (n) tierChanged();   // AUDIT VE R1: a scene's archives are asked again
   return n;
 }
 export const vendorTextureCount = () => _vendor.size;
-export function clearVendorTextures() { for (const k of _vendor.keys()) _decoded.delete(k); _vendor.clear(); }
+export function clearVendorTextures() { _vendor.clear(); tierChanged(); }   // AUDIT VE R1: the sweep lets their pictures go
 /** An archive that exists ONLY as vendored art (no ARENA2 file), which
  *  is what sends the pipeline down the stand-in branch instead of
  *  fetching TEXTURE.###.
@@ -319,19 +350,26 @@ export const bundleBudgetBytes = () => Math.round(Math.min(1536, 192 * (Number(g
 let _bundleBytes = 0;
 let _budgetWarned = false;
 export const bundleDecodedBytes = () => _bundleBytes;
-/** Replace the bundle tier: [{ archive, record, frame?, map?, dye?, fileName, image, lazy?, rect? }]. */
+/** Replace the bundle tier: [{ archive, record, frame?, map?, dye?, fileName, src?, image, lazy?, rect? }]. `src` names
+ *  where the picture comes from - the mod and its content as well as the name (AUDIT VE R1): two installs that hand the
+ *  same `src` for a key hand the same picture, and its decode is kept. */
 export function setBundleTextures(entries) {
-  for (const k of _bundle.keys()) if (!_vendor.has(k) && !_index.has(k)) _decoded.delete(k);
+  const was = _bundle;
   _bundle = new Map();
-  _bundleBytes = 0; _budgetWarned = false;   // DFMOD3
+  _budgetWarned = false;   // DFMOD3
   for (const e of entries ?? []) {
     if (!Number.isFinite(e?.archive) || !Number.isFinite(e?.record) || typeof e.image !== 'function') continue;
     const map = e.map ?? 'Albedo';
     const key = textureKey(e.archive, e.record, e.frame ?? 0, map, e.dye ?? null);
     if (_bundle.has(key)) continue;   // the first attached mod that carries a name keeps it
-    _bundle.set(key, { archive: Number(e.archive), record: Number(e.record), frame: Number(e.frame ?? 0), map, dye: e.dye ?? null, fileName: e.fileName ?? key, image: e.image, lazy: e.lazy === true, rect: e.rect ?? null });
+    _bundle.set(key, { archive: Number(e.archive), record: Number(e.record), frame: Number(e.frame ?? 0), map, dye: e.dye ?? null, fileName: e.fileName ?? key, src: e.src ?? null, image: e.image, lazy: e.lazy === true, rect: e.rect ?? null });
   }
-  for (const k of [..._decoded.keys()]) if (_vendor.get(k)?.yields && _bundle.has(k)) _decoded.delete(k);   // AUDIT WD3 T2: the attached mod's picture, not the stand-in's already decoded
+  // AUDIT VE R1: the doors were put back (a switch, an add-on, a registration landing) - which is not the same as their
+  // pictures changing. This used to let go of EVERY mod picture decoded, while a scene preloads an archive once: a switch
+  // pressed mid-game left everything not yet uploaded classic for the rest of the page. A picture answers only the entry
+  // it was decoded from (decodedTexture); what no entry answers with any more is let go (the sweep); nothing else is.
+  // AUDIT WD3 T2's stand-in yielding to the attached mod's picture is the same law: the stand-in's no longer answers.
+  if (!sameEntries(was, _bundle)) tierChanged();
   return _bundle.size;
 }
 export const bundleTextureCount = () => _bundle.size;
@@ -350,10 +388,67 @@ const vendorOf = (key) => { const v = _vendor.get(key); return v && !(v.yields &
 const entryFor = (key) => _index.get(key) ?? vendorOf(key) ?? _bundle.get(key) ?? null;
 
 export function clearTextureReplacements() {
+  _looseGen++;   // VE2
+  const had = _index.size > 0 || _load !== null;
   _index = new Map();
   _load = null;
-  for (const k of _decoded.keys()) if ((!_vendor.has(k) || _vendor.get(k).yields) && !_bundle.has(k)) _decoded.delete(k);   // AUDIT WD3 T2: a yielding stand-in's picture is decided again against the new pick   // a new pick must not inherit the old one's pixels; the port's own stay (DFMOD1: and an attached bundle's)
+  // a new pick must not inherit the old one's pixels; the port's own stay (DFMOD1: and an attached bundle's); AUDIT WD3
+  // T2: a yielding stand-in's picture is decided again against the new pick - AUDIT VE R1: all three by the one law, a
+  // picture answers only the entry it was decoded from, and the sweep lets the loose pick's go
+  if (had) tierChanged();
 }
+
+// ---- AUDIT VE R1/R8: A DECODED PICTURE KNOWS WHICH ENTRY IT CAME FROM ---------------------------------------------------
+// One picture a key is kept (`_decoded`), and with it the source it was decoded from (`_decodedFrom`): a loose file's
+// name, the port's own file, a mod's `src` - its key, its content and the name. A picture answers only while the entry
+// that answers its key now has that source, so a switch never draws a stale picture and never costs a picture whose
+// source still answers. A decode that lands after its entry stopped answering - a mod switched off while an area loads
+// (R8) - is dropped where it lands.
+const _decodedFrom = new Map();     // textureKey -> the source its picture was decoded from
+const _bundleBytesOf = new Map();   // DFMOD3: textureKey -> the bytes a mod's decoded picture holds against the budget
+const srcOf = (e) => e?.src ?? e?.fileName ?? null;
+/** The entry whose picture a key answers with now - entryFor's order, behind Replace Game Artwork where the tier is:
+ *  the loose pick (DFU reads the loose folder before any mod), else the port's own (unless it yields to the player's
+ *  pick; it answers with the gate shut too), else the mods'. A vendored entry's own switch is read at lookup
+ *  (decodedTexture). */
+const liveEntry = (key) => {
+  const on = textureReplacementEnabled();
+  return (on && _load ? _index.get(key) : null) ?? vendorOf(key) ?? (on ? _bundle.get(key) : null) ?? null;
+};
+/** The picture decoded for a key from `entry`, or null - a picture decoded from anything else is not this entry's. */
+const decodedFrom = (key, entry) => (entry && _decodedFrom.get(key) === srcOf(entry) ? _decoded.get(key) ?? null : null);
+function dropDecoded(key) {
+  _decoded.delete(key);
+  _decodedFrom.delete(key);
+  const b = _bundleBytesOf.get(key);
+  if (b !== undefined) { _bundleBytes -= b; _bundleBytesOf.delete(key); }
+}
+function putDecoded(key, entry, c32) {
+  dropDecoded(key);
+  _decoded.set(key, c32);
+  _decodedFrom.set(key, srcOf(entry));
+  if (entry.image) { const b = c32.width * c32.height * 4; _bundleBytesOf.set(key, b); _bundleBytes += b; }   // DFMOD3: what it holds
+}
+/** Some tier still registers an entry of the picture's source for its key (behind the gate or not, yielding or not). */
+const sourceRegistered = (key, src) => [_vendor.get(key), _index.get(key), _bundle.get(key)].some((e) => e && srcOf(e) === src);
+/** Two registrations of a tier answer the same keys from the same sources. */
+function sameEntries(a, b) {
+  if (a.size !== b.size) return false;
+  for (const [k, e] of b) if (srcOf(a.get(k)) !== srcOf(e)) return false;
+  return true;
+}
+let _tierGen = 0;
+/** A tier's answers changed: the pictures no tier registers any more are let go (memory - the read checks anyway), and
+ *  the epoch moves, so a scene asks its archives again (scenes/dataPipeline.js getTexture). */
+function tierChanged() {
+  _tierGen++;
+  for (const [k, src] of [..._decodedFrom]) if (!sourceRegistered(k, src)) dropDecoded(k);
+}
+/** AUDIT VE R1: what a scene's decoded archives are current with - every tier's registrations and Replace Game Artwork.
+ *  A scene preloads an archive's pictures once; when this moves, its next ask of the archive decodes what answers now,
+ *  so a switch takes effect for whatever is drawn after it (what is already drawn keeps its pictures until its area loads
+ *  again, as the Texture Overhaul card says). */
+export const textureTierEpoch = () => `${_tierGen}:${textureReplacementEnabled() ? 1 : 0}`;
 
 /** Synchronous, and for the same reason music's is: the upload path
  *  has to know which branch it is on before it can proceed. */
@@ -401,11 +496,11 @@ export async function textureReplacementBytes(archive, record, frame = 0, map = 
 // ROAD-H H4: WHAT IS IN THIS MAP IS A COLOR32, NOT A DECODED PNG.
 //
 // The upload path is `renderer.uploadTexture(archive, record, color32)`,
-// which reads `color32.colors` and `asBytes` of it (renderer.js:3456),
+// which reads `color32.colors` and `asBytes` of it (renderer.js:3463),
 // and every texture it uploads is BOTTOM-UP - `getColor32` writes
 // `dstRow = (dstHeight - 1 - border - y) * dstWidth`
 // (baseImageFile.js:143, BaseImageFile.cs:250) and the upload leaves
-// UNPACK_FLIP_Y_WEBGL off (renderer.js:4094). A browser decode hands
+// UNPACK_FLIP_Y_WEBGL off (renderer.js:4101). A browser decode hands
 // back `{ width, height, data }` with the TOP row first, so a swap
 // stored raw was BOTH the wrong field name - `color32.colors` was
 // `undefined` and `asBytes` threw on the first swapped record a pack
@@ -454,9 +549,7 @@ async function entryColor32(entry, decode) {
       return null;
     }
     const img = await entry.image();
-    if (!img) return null;
-    _bundleBytes += img.width * img.height * 4;
-    return toColor32(img);
+    return img ? toColor32(img) : null;   // AUDIT VE R8: counted against the budget where it is kept (putDecoded), not here
   }
   const bytes = await (entry.load ?? _load)(entry.fileName);
   if (!bytes || !bytes.byteLength) return null;
@@ -497,14 +590,22 @@ export async function decodePng(bytes) {
 export const PRELOAD_CONCURRENCY = 8;
 export async function preloadTextureArchive(archive, { decode = decodePng, concurrency = PRELOAD_CONCURRENCY } = {}) {
   let done = 0;
-  const on = textureReplacementEnabled();
-  const sources = [..._vendor.entries(), ...(on && _load ? _index.entries() : []), ...(on ? [..._bundle.entries()].filter(([k]) => !_index.has(k) || !_load) : [])];   // SURV2: the port's own art first, ungated; DFMOD1: an attached bundle's last
-  const todo = sources.filter(([key, entry]) => entry.archive === Number(archive) && !entry.lazy && !_decoded.has(key));
+  const a = Number(archive);
+  // SURV2: the port's own art, ungated; then the loose pick and an attached bundle's, behind the gate - AUDIT VE R1: each
+  // key decoded from the ONE entry that answers it now (decodedTexture's), and only if its picture is not that entry's
+  const keys = new Set();
+  for (const tier of [_vendor, _index, _bundle]) for (const [k, e] of tier) if (e.archive === a) keys.add(k);
+  const todo = [];
+  for (const key of keys) {
+    const entry = liveEntry(key);
+    if (entry && !entry.lazy && !decodedFrom(key, entry)) todo.push([key, entry]);
+  }
   const one = async ([key, entry]) => {
     try {
       const c32 = await entryColor32(entry, decode);   // WD2: a PNG decoded or a picture derived
       if (!c32) return;
-      _decoded.set(key, c32);
+      if (srcOf(liveEntry(key)) !== srcOf(entry)) return;   // AUDIT VE R8: switched away while it decoded - it lands nowhere
+      putDecoded(key, entry, c32);
       done++;
     } catch (e) {
       console.warn(`[texture] ${entry.fileName} would not decode:`, e?.message ?? e);
@@ -525,23 +626,25 @@ const _decoding = new Map();   // textureKey -> Promise<color32 | null>, the ask
  *  The gate is read here too, so a gated-off icon costs no fetch. */
 export function preloadTextureRecord(archive, record, frame = 0, map = 'Albedo', dye = null, { decode = decodePng } = {}) {
   const key = textureKey(archive, record, frame, map, dye);
-  if (_decoded.has(key)) return Promise.resolve(decodedTexture(archive, record, frame, map, dye));
-  if (!hasTextureReplacement(archive, record, frame, map, dye)) return Promise.resolve(null);
-  if (!_decoding.has(key)) {
-    const entry = entryFor(key);
-    _decoding.set(key, (async () => {
+  const entry = liveEntry(key);   // AUDIT VE R1: the entry that answers now - decodedTexture's
+  if (decodedFrom(key, entry)) return Promise.resolve(decodedTexture(archive, record, frame, map, dye));
+  if (!entry || !hasTextureReplacement(archive, record, frame, map, dye)) return Promise.resolve(null);
+  const ask = `${key}\n${srcOf(entry)}`;   // the asks in flight share one fetch - for one source
+  if (!_decoding.has(ask)) {
+    _decoding.set(ask, (async () => {
       try {
         const c32 = await entryColor32(entry, decode);   // WD2
         if (!c32) return null;
-        _decoded.set(key, c32);
+        if (srcOf(liveEntry(key)) !== srcOf(entry)) return null;   // AUDIT VE R8: switched away while it decoded
+        putDecoded(key, entry, c32);
         return decodedTexture(archive, record, frame, map, dye);
       } catch (e) {
         console.warn(`[texture] ${entry.fileName} would not decode:`, e?.message ?? e);
         return null;
-      } finally { _decoding.delete(key); }
+      } finally { _decoding.delete(ask); }
     })());
   }
-  return _decoding.get(key);
+  return _decoding.get(ask);
 }
 
 /** The SYNC read the upload path uses, as a COLOR32 (`{ colors, width,
@@ -552,9 +655,10 @@ export function preloadTextureRecord(archive, record, frame = 0, map = 'Albedo',
 export function decodedTexture(archive, record, frame = 0, map = 'Albedo', dye = null) {
   const key = textureKey(archive, record, frame, map, dye);
   const v = vendorOf(key);
-  if (v) return (!v.gate || v.gate() === true) ? (_decoded.get(key) ?? null) : null;   // SURV2: the port's own, ungated - DW3: unless its registration gates it
+  // AUDIT VE R1/R8: the picture of the entry that answers now, never a stale one
+  if (v) return (!v.gate || v.gate() === true) ? decodedFrom(key, liveEntry(key)) : null;   // SURV2: the port's own, ungated - DW3: unless its registration gates it
   if (!textureReplacementEnabled()) return null;
-  return _decoded.get(key) ?? null;
+  return decodedFrom(key, liveEntry(key));
 }
 
 /** DW3: the same, with the rows top-down - what a compositor into a

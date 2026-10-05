@@ -194,7 +194,9 @@ export const MOD_CURATED = Object.freeze({
   // TO1: the mod ships FIFTY-ONE keys across twelve sections, so this
   // one is curated hard. The five are what a player reaches for first:
   // whether a cautious trip is walked, whether a ship needs a port,
-  // what a location does to a journey in progress, how fast it may run,
+  // what a location does to a journey in progress, how fast it may run
+  // (RATE-LAW, 2026-10-04, Mac: "Remove travel options dials" - no longer:
+  // the journey's ground sets its rate, systems/timeScale.js travelRateOf),
   // and (KB1: in Controls now, as FollowPaths) which key follows a road. Everything else - the fourteen dot
   // colours, the junction map's placement, the fare scaling - stays in
   // the mod's own pane.
@@ -215,7 +217,7 @@ export const MOD_CURATED = Object.freeze({
   ]),
   'travel-options': Object.freeze([
     'CautiousTravel.PlayerControlledCautiousTravel', 'StopAtInnsTravel.PlayerControlledInnsTravel', 'ShipTravel.OnlyFromPorts',
-    'GeneralOptions.LocationPause', 'TimeAcceleration.AccelerationLimit',
+    'GeneralOptions.LocationPause',
     'GeneralOptions.AvoidObstacles', 'GeneralOptions.FirstPersonTravel',
     'GeneralOptions.FirstPersonTravelFollowsRoads',
   ]),
@@ -352,14 +354,20 @@ export const FEATURES = Object.freeze([
     id: 'enhanced-ai',
     group: 'combat',
     title: 'Enhanced AI',
-    note: 'Enemies take turns: two strike while the rest circle, stepping back after a blow or when hurt; archers '
-      + 'keep away, cowards flee, tough foes wind up heavy blows marked on the ground. Trees, rocks and crates block '
-      + 'sight, arrows and spells. Dungeons only for now for pathfinding: towns, interiors and doors are to come. Off '
-      + 'keeps the classic movement and sight. This is not Daggerfall Unity’s “Smarter Enemies” setting, which the '
-      + 'port does not run.',
+    note: 'Enemies take turns and back off when hurt; archers keep away, cowards flee. Wound-up blows are marked on the '
+      + 'ground: hit hard to stagger, dodge to punish; red, hatched iron cannot be stopped. Trees, rocks and crates block '
+      + 'sight and missiles. Dungeons only for now for pathfinding: towns, interiors and doors are to come. Off keeps '
+      + 'the classic movement and sight. This is not Daggerfall Unity’s “Smarter Enemies” setting, which the port does '
+      + 'not run.',
     effect: 'At once - the dungeon pathfinding from the next dungeon you enter.',   // AUDIT TACT D7: the tactics, cover and blows read the switch live
     kinds: Object.freeze(['enhanced']),
-    control: Object.freeze({ store: 'prefs', key: 'enhancedAI', initial: false, online: true }),   // OFF by default and it stays off: DFU's classic motor is the 1:1 law, this the port's departure (as EnhancedCombatAI is DFU's own opt-in)
+    control: Object.freeze({
+      store: 'prefs', key: 'enhancedAI', initial: false, online: true,   // OFF by default and it stays off: DFU's classic motor is the 1:1 law, this the port's departure (as EnhancedCombatAI is DFU's own opt-in)
+      // TELL9 (bible/12-Enhanced-AI/Feud-Arc.md 11.3): telegraph contrast - thicker lines, a white keyline, a pattern for
+      // every guard (render/foeTelegraph.js telegraphContrastOn); what THIS screen draws, so the player's online too
+      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'telegraphContrast', initial: false, online: 'player' })]),
+      parts: Object.freeze([Object.freeze({ key: 'telegraphContrast', label: 'Telegraph contrast' })]),
+    }),
   }),
   // CLIMB1 (2026-09-30, the Enhanced Climbing arc - bible/03-World/Parkour-Arc.md):
   // the ledge sensor, the mantle and the vault (player/parkour.js). Offline
@@ -715,6 +723,22 @@ export const FEATURES = Object.freeze([
     effect: 'Takes effect on the next quest you take; quests you already have keep their places.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'nearbyQuests', initial: true, online: 'player' }),
+  }),
+  // LW2 (2026-10-04, Mac: "NPCs are no longer just random walking entities"): THE LIVING WORLD
+  // (bible/06-Systems/Living-World.md) - a town's people are its residents, each with a name, a home, a trade and a
+  // day (systems/livingWorld/livingTown.js stands them where DFU's wandering pool stood). The player's own online: every
+  // resident is a pure function of the town and the sky's clock, so nothing anyone shares reads the switch; off, and on
+  // the classic skin, DFU's PopulationManager walkers 1:1.
+  Object.freeze({
+    id: 'living-world',
+    group: 'world',
+    title: 'Living world',
+    note: 'Townsfolk are residents with names, homes, trades and days of their own - they open their shops, meet at '
+      + 'the square and the tavern, talk among themselves, sleep at night and remember how you treated them, and '
+      + "everyone online sees the same people. Off, the streets fill with Daggerfall's wandering strangers, gone at dusk.",
+    effect: 'Takes effect when a town next loads.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'livingWorld', initial: true, online: 'player' }),
   }),
   // FT9 (2026-09-14): THE PACKS WITH A SWITCH (Dynamic Skies' is the
   // outdoors row's, FT4). The order is the old Mods pane's.

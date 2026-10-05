@@ -5038,7 +5038,7 @@ behind the head.
   the law is one measure (0.25 m either side) for every set, not read off the frames; not seen in a running game
   client with a real sprite.
 
-## CRYSTAL-FIST — Flylighter's own: the Crystal Fist, its glyph and the Crystal Resonance (2026-10-05, world170, acct83)
+## CRYSTAL-FIST — Flylighter's own: the Crystal Fist, its glyph and the Crystal Resonance (2026-10-05, world171, acct83)
 
 The owner, for Flylighter: "Title: Crystal Fist", "Glyph: Referenced above" - a 54x49 picture of three purple slashes
 falling down to the right, every one of its pixels #a349a4 - and "Aura: Aura, also purple, would be a circle of tiny
@@ -5052,7 +5052,8 @@ read here; the aura is drawn from the sentence.
   Flylighter stays in DISCIPLE_HANDLES: two titles held, one worn; taking the handle off this list takes the three and
   leaves the Disciple.
 - **The vocabulary** (`src/net/identityToken.js`, in the relay bundle): `crystalfist` last in TITLES and GLYPHS,
-  `resonance` last in AURAS. A relay before it refuses a token carrying them, so the relay is **world170** and the
+  `resonance` last in AURAS. A relay before it refuses a token carrying them, so the relay is **world171** (world170 on its branch, renumbered past
+  main's FEUD at the merge of main) and the
   account service **acct83**: THE RELAY FIRST, then the account service, then the site (the account deploy waits on the
   relay's `/health` - SHADOW-FANG's AUDIT B1). Every token acct83 mints for Flylighter carries the glyph whether or not
   they wear anything, so an account deployed first by hand would shut them out of every room until the relay landed
@@ -5093,12 +5094,12 @@ read here; the aura is drawn from the sentence.
   ring from above, read inside it where the wall stands over nothing; no jump at the wrap; nothing unkindled.
 - Pins: `test/crystalfist.test.js` (12) - the vocabulary and the face; the glyph's shape against the reference; the grant
   (case-folded, beside the Disciple, off the list, a guest, the other lists' holders); the service end to end; the token
-  and the relay (world170); the name over a head, the account card's rules and the classic face; the look's law; the
+  and the relay (world171); the name over a head, the account card's rules and the classic face; the look's law; the
   columns' law (the level at recorded moments, up and down, the ring's columns differing, the feet first while it kindles,
   no repeat inside the clock, a wearer's own clock); the wall RUN square by square on node's counts (the purple covering
   whole, the gaps, an edge a pixel wide, the far-off fade); the ground RUN (and nothing, never a NaN, at the middle); the
   draw (the counts handed, premultiplied). `tools/mutants/crystalfist.json` (45, all dead). The relay's and the account's pins
-  moved to world170 and acct83 crediting CRYSTAL-FIST (`auditbounty1.test.js` holds the credit); the vocabulary's exact
+  moved to world171 and acct83 crediting CRYSTAL-FIST (`auditbounty1.test.js` holds the credit); the vocabulary's exact
   lists moved in `acc3titles`, `titlen`, `aegis`, `primarch`, `shadowcloak` and `seraphwings`; nineteen records in
   `aegis.json`, `herald.json`, `penitent.json`, `primarch.json`, `seraphwings.json`, `shadowcloak.json` and
   `shadowfang.json`, and the version records in `soc1.json`, `gatekeys.json` and `fb1004d_knight_house.json`, re-aimed by
@@ -5127,7 +5128,7 @@ faces and the glyph; the pins, the mutants and the docs), every finding checked 
 
 | # | Finding | Fixed |
 | --- | --- | --- |
-| A1 | MEDIUM: the deploy order written backwards (wire.js's version comment, this page) - and "refused once they wear either", where acct83 signs the glyph into every token of Flylighter's: an account deployed first by hand shuts them out of every room | the relay first, then the account (AUDIT B1's wait); world170's row, never deployed, re-hashed in place |
+| A1 | MEDIUM: the deploy order written backwards (wire.js's version comment, this page) - and "refused once they wear either", where acct83 signs the glyph into every token of Flylighter's: an account deployed first by hand shuts them out of every room | the relay first, then the account (AUDIT B1's wait); world170's row, never deployed, re-hashed in place (world171 since the merge of main, past FEUD's world170) |
 | A2 | MEDIUM: the shader's own `fract(sin(x) * 43758)` hash lit other squares than node's law on a GPU (float32, each vendor's sin) - in nearly half the samples, unseen by a float64 pin and an 80% probe | the counts are node's, handed over each frame (`uResLit`); the probe square for square |
 | A3 | MEDIUM: not one colour - added light summed a square over its foot, the far wall through the near and any bright ground to a pale pink (255, 139, 255 in the probe) | premultiplied (`shade`); the probe holds #a349a4 over a dark and a bright floor |
 | A4 | LOW-MEDIUM: the squares' fixed edge would moire past about 15 m | an edge a pixel wide; a cell under a couple of pixels its average cover |

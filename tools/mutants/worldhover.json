@@ -585,7 +585,7 @@
   {
     "name": "WORLD-HOVER-the-streaming-host-stops-naming-townsfolk",
     "file": "src/scenes/world.js",
-    "old": "      const t = mobilePersonName(_livePersons[Number(key.split(':')[1])]?.person?.nameNPC);",
+    "old": "      const t = mobilePersonName(_talkPersons()[Number(key.split(':')[1])]?.person?.nameNPC);",
     "new": "      const t = null;",
     "tests": [
       "test/worldhover.test.js"

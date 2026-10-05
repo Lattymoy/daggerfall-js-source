@@ -11,8 +11,8 @@
   {
     "name": "TACT5-recover-retreats",
     "file": "src/ai/tactics.js",
-    "old": "    s.backUntil = now + TACT.RECOVER_HOP;",
-    "new": "    s.backUntil = s.until;",
+    "old": "    s.backUntil = now + TACT.RECOVER_HOP;   // FEEDBACK: a hop out, not a retreat",
+    "new": "    s.backUntil = s.until;   // FEEDBACK: a hop out, not a retreat",
     "tests": [
       "test/tact5_feedback.test.js"
     ]

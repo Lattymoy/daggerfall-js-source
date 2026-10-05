@@ -321,7 +321,9 @@ test('U41: the world host mounts the art window and keeps performFastTravel\'s o
   // note, above the needles
   // PIN MOVED (QUAYS, 2026-10-03), 10400 -> 10600: the harbours' quays come down with the old frame beside the farms,
   // with their note, above the last needle
-  const core = src.slice(k, k + 10600);
+  // PIN MOVED (FEUD's merge of main), 10600 -> 10800: both sides' additions above the last needle together (it stood at
+  // 10563 on main, 10533 on the arc's branch, 10685 merged)
+  const core = src.slice(k, k + 10800);
   for (const needle of ['destroyPixel(bx, by)', 'state.init(px, py)', 'awaitedBuild(first.px']) {
     assert.ok(core.includes(needle), `the core carries ${needle}`);
   }

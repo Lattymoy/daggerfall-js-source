@@ -1,0 +1,318 @@
+[
+  {
+    "name": "RVN7c-ring-size",
+    "file": "src/systems/revenantFeud.js",
+    "old": "export const LAIR_RING_R = 1.5;",
+    "new": "export const LAIR_RING_R = 2;",
+    "tests": [
+      "test/rvn7c_map.test.js"
+    ]
+  },
+  {
+    "name": "RVN7c-ring-black",
+    "file": "src/ui/bountyMapMark.js",
+    "old": "export const REVENANT_RING_CSS = '#7a0a0a';",
+    "new": "export const REVENANT_RING_CSS = '#0b0b0b';",
+    "tests": [
+      "test/rvn7c_map.test.js"
+    ]
+  },
+  {
+    "name": "RVN7c-wash-moved",
+    "file": "src/ui/bountyMapMark.js",
+    "old": "export const REVENANT_FILL_CSS = 'rgba(122, 10, 10, 0.16)';",
+    "new": "export const REVENANT_FILL_CSS = 'rgba(0, 0, 0, 0.16)';",
+    "tests": [
+      "test/rvn7c_map.test.js"
+    ]
+  },
+  {
+    "name": "RVN7c-texel-moved",
+    "file": "src/ui/bountyMapMark.js",
+    "old": "export const REVENANT_DOT_RGB = Object.freeze([122, 10, 10]);",
+    "new": "export const REVENANT_DOT_RGB = Object.freeze([12, 12, 12]);",
+    "tests": [
+      "test/rvn7c_map.test.js"
+    ]
+  },
+  {
+    "name": "RVN7c-legend-moved",
+    "file": "src/ui/bountyMapMark.js",
+    "old": "export const REVENANT_LEGEND_TEXT = 'Revenant lair';",
+    "new": "export const REVENANT_LEGEND_TEXT = 'Lair';",
+    "tests": [
+      "test/rvn7c_map.test.js"
+    ]
+  },
+  {
+    "name": "RVN7c-fallback-unread",
+    "file": "src/ui/bountyMapMark.js",
+    "old": "    out.push({ cx, cy, r, label: String(m.label ?? fallbackLabel).slice(0, 40) });",
+    "new": "    out.push({ cx, cy, r, label: String(m.label ?? BOUNTY_LEGEND_TEXT).slice(0, 40) });",
+    "tests": [
+      "test/rvn7c_map.test.js"
+    ]
+  },
+  {
+    "name": "RVN7c-marks-switch",
+    "file": "src/systems/revenant.js",
+    "old": "  if (!revenantOn()) return [];\n  return livingRevenants().filter((r) => r.lair && r.lairKnown).map((r) => ({ cx:",
+    "new": "  return livingRevenants().filter((r) => r.lair && r.lairKnown).map((r) => ({ cx:",
+    "tests": [
+      "test/rvn7c_map.test.js"
+    ]
+  },
+  {
+    "name": "RVN7c-marks-unheard",
+    "file": "src/systems/revenant.js",
+    "old": "  return livingRevenants().filter((r) => r.lair && r.lairKnown).map((r) => ({ cx:",
+    "new": "  return livingRevenants().filter((r) => r.lair).map((r) => ({ cx:",
+    "tests": [
+      "test/rvn7c_map.test.js"
+    ]
+  },
+  {
+    "name": "RVN7c-marks-corner",
+    "file": "src/systems/revenant.js",
+    "old": "({ cx: r.lair.px + 0.5, cy: r.lair.py + 0.5,",
+    "new": "({ cx: r.lair.px, cy: r.lair.py,",
+    "tests": [
+      "test/rvn7c_map.test.js"
+    ]
+  },
+  {
+    "name": "RVN7c-marks-unnamed",
+    "file": "src/systems/revenant.js",
+    "old": "r: LAIR_RING_R, label: r.given ?? r.name, id: r.id }));",
+    "new": "r: LAIR_RING_R, id: r.id }));",
+    "tests": [
+      "test/rvn7c_map.test.js"
+    ]
+  },
+  {
+    "name": "RVN7c-rows-unheard",
+    "file": "src/systems/revenant.js",
+    "old": "  return livingRevenants().filter((r) => r.lair && r.lairKnown).map((r) => {\n    const dx",
+    "new": "  return livingRevenants().filter((r) => r.lair).map((r) => {\n    const dx",
+    "tests": [
+      "test/rvn7c_map.test.js"
+    ]
+  },
+  {
+    "name": "RVN7c-rows-switch",
+    "file": "src/systems/revenant.js",
+    "old": "  if (!revenantOn()) return [];\n  const line = (text) =>",
+    "new": "  const line = (text) =>",
+    "tests": [
+      "test/rvn7c_map.test.js"
+    ]
+  },
+  {
+    "name": "RVN7c-rows-way-reversed",
+    "file": "src/systems/revenant.js",
+    "old": "const dx = Number.isInteger(here?.px) ? r.lair.px - here.px : 0, dy = Number.isInteger(here?.py) ? r.lair.py - here.py : 0;",
+    "new": "const dx = Number.isInteger(here?.px) ? here.px - r.lair.px : 0, dy = Number.isInteger(here?.py) ? here.py - r.lair.py : 0;",
+    "tests": [
+      "test/rvn7c_map.test.js"
+    ]
+  },
+  {
+    "name": "RVN7c-rows-clocked",
+    "file": "src/systems/revenant.js",
+    "old": "questName: 'HUNT', hunt: true, clockSeconds: null,",
+    "new": "questName: 'HUNT', hunt: true, clockSeconds: 0,",
+    "tests": [
+      "test/rvn7c_map.test.js"
+    ]
+  },
+  {
+    "name": "RVN7c-rows-id",
+    "file": "src/systems/revenant.js",
+    "old": "return { id: `${HUNT_QUEST_PREFIX}${r.id}`, name:",
+    "new": "return { id: r.id, name:",
+    "tests": [
+      "test/rvn7c_map.test.js"
+    ]
+  },
+  {
+    "name": "RVN7c-abandon-unwired",
+    "file": "src/systems/revenant.js",
+    "old": "setHuntJournal({ abandon: (id) => forgetRevenantLair(id) });",
+    "new": "setHuntJournal(null);",
+    "tests": [
+      "test/rvn7c_map.test.js"
+    ]
+  },
+  {
+    "name": "RVN7c-abandon-unsaved",
+    "file": "src/systems/revenant.js",
+    "old": "  r.lairKnown = false;\n  touch(r);\n  persist();\n  return true;",
+    "new": "  r.lairKnown = false;\n  touch(r);\n  return true;",
+    "tests": [
+      "test/rvn7c_map.test.js"
+    ]
+  },
+  {
+    "name": "RVN7c-abandon-unforgotten",
+    "file": "src/systems/revenant.js",
+    "old": "  if (!r || !r.lairKnown) return false;\n  r.lairKnown = false;",
+    "new": "  if (!r || !r.lairKnown) return false;",
+    "tests": [
+      "test/rvn7c_map.test.js"
+    ]
+  },
+  {
+    "name": "RVN7c-prefix-moved",
+    "file": "src/systems/huntJournal.js",
+    "old": "export const HUNT_QUEST_PREFIX = 'hunt:';",
+    "new": "export const HUNT_QUEST_PREFIX = 'bounty:';",
+    "tests": [
+      "test/rvn7c_map.test.js"
+    ]
+  },
+  {
+    "name": "RVN7c-leaf-any-id",
+    "file": "src/systems/huntJournal.js",
+    "old": "  if (!isHuntQuestId(id) || !_journal) return false;",
+    "new": "  if (!_journal) return false;",
+    "tests": [
+      "test/rvn7c_map.test.js"
+    ]
+  },
+  {
+    "name": "RVN7c-ink-unpainted",
+    "file": "src/ui/inkMap.js",
+    "old": "  for (const b of opts.revenants ?? []) if (visible(b.cx, b.cy, b.r + 2)) paintBountyRing(ctx, view, b, pulse, REVENANT_INK);\n",
+    "new": "",
+    "tests": [
+      "test/rvn7c_map.test.js"
+    ]
+  },
+  {
+    "name": "RVN7c-ink-black",
+    "file": "src/ui/inkMap.js",
+    "old": "paintBountyRing(ctx, view, b, pulse, REVENANT_INK);",
+    "new": "paintBountyRing(ctx, view, b, pulse);",
+    "tests": [
+      "test/rvn7c_map.test.js"
+    ]
+  },
+  {
+    "name": "RVN7c-ink-ring-unread",
+    "file": "src/ui/inkMap.js",
+    "old": "  ctx.strokeStyle = ink.ring; ctx.lineWidth = 2.2 + pulse * 0.6;",
+    "new": "  ctx.strokeStyle = BOUNTY_RING_CSS; ctx.lineWidth = 2.2 + pulse * 0.6;",
+    "tests": [
+      "test/rvn7c_map.test.js"
+    ]
+  },
+  {
+    "name": "RVN7c-ink-wash-unread",
+    "file": "src/ui/inkMap.js",
+    "old": "  ctx.fillStyle = ink.fill;\n",
+    "new": "  ctx.fillStyle = BOUNTY_FILL_CSS;\n",
+    "tests": [
+      "test/rvn7c_map.test.js"
+    ]
+  },
+  {
+    "name": "RVN7c-held-unread",
+    "file": "src/ui/heldMap.js",
+    "old": "    const lairs = readBountyMarks(this.deps.revenants, this._size, REVENANT_LEGEND_TEXT);",
+    "new": "    const lairs = [];",
+    "tests": [
+      "test/rvn7c_map.test.js"
+    ]
+  },
+  {
+    "name": "RVN7c-held-unpassed",
+    "file": "src/ui/heldMap.js",
+    "old": "          revenants: this._revenants,   // RVN7c\n",
+    "new": "",
+    "tests": [
+      "test/rvn7c_map.test.js"
+    ]
+  },
+  {
+    "name": "RVN7c-held-no-legend",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (this._revenants.length) {   // RVN7c: and a lair's blood-red circle",
+    "new": "    if (false) {   // RVN7c: and a lair's blood-red circle",
+    "tests": [
+      "test/rvn7c_map.test.js"
+    ]
+  },
+  {
+    "name": "RVN7c-page-unplotted",
+    "file": "src/ui/travelMapWindow.js",
+    "old": "      for (const [x, y] of bountyRingTexels(lairs, originX, originY, width, height)) plot(x, y, lairPx);",
+    "new": "",
+    "tests": [
+      "test/rvn7c_map.test.js"
+    ]
+  },
+  {
+    "name": "RVN7c-page-unrepainted",
+    "file": "src/ui/travelMapWindow.js",
+    "old": "\n      && bountyMarksKey(readBountyMarks(this.deps.revenants, { width: MAP_WIDTH, height: MAP_HEIGHT }, REVENANT_LEGEND_TEXT)) === (this._revenantsKey ?? '')",
+    "new": "",
+    "tests": [
+      "test/rvn7c_map.test.js"
+    ],
+    "note": "FEUD's MERGE of main's #586-#622 (PIN MOVED): the redraw's question asks HOME-VENDOR's trader after the lairs - the lairs' clause dropped whole."
+  },
+  {
+    "name": "RVN7c-world-no-dep",
+    "file": "src/scenes/world.js",
+    "old": "      revenants: () => revenantMapMarks(),\n",
+    "new": "",
+    "tests": [
+      "test/rvn7c_map.test.js"
+    ]
+  },
+  {
+    "name": "RVN7c-world-no-rows",
+    "file": "src/scenes/world.js",
+    "old": "const extra = [...(bountyHost?.questLogEntries?.() ?? []), ...revenantHuntEntries(rumorHere())];",
+    "new": "const extra = [...(bountyHost?.questLogEntries?.() ?? [])];",
+    "tests": [
+      "test/rvn7c_map.test.js"
+    ]
+  },
+  {
+    "name": "RVN7c-menu-unwired",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "        abandonHuntQuest(sel.id);\n",
+    "new": "",
+    "tests": [
+      "test/rvn7c_map.test.js"
+    ]
+  },
+  {
+    "name": "RVN7c-chronicle-unwired",
+    "file": "src/ui/enhancedChronicle.js",
+    "old": "            abandonHuntQuest(e.uid);\n",
+    "new": "",
+    "tests": [
+      "test/rvn7c_map.test.js"
+    ]
+  },
+  {
+    "name": "RVN7c-chronicle-shares-a-hunt",
+    "file": "src/ui/enhancedChronicle.js",
+    "old": "!e.main && !isBountyQuestId(e.uid) && !isHuntQuestId(e.uid)",
+    "new": "!e.main && !isBountyQuestId(e.uid)",
+    "tests": [
+      "test/rvn7c_map.test.js"
+    ]
+  },
+  {
+    "name": "RVN7c-page-off-the-map",
+    "file": "src/ui/revenantPage.js",
+    "old": "  return r.lairKnown ? `Lair: ${r.lair.name} - on your map.` :",
+    "new": "  return r.lairKnown ? `Lair: ${r.lair.name}.` :",
+    "tests": [
+      "test/rvn7c_map.test.js"
+    ]
+  }
+]

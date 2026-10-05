@@ -141,8 +141,8 @@ export const FRAME_ROLES = {
     '.sb-shell .act', '.cr-shell .act',
     // PLUS6: the shop's category tabs are buttons now (the examples' stone buttons), the chosen one brass
     '.trade-shell .packtab',
-    // PLUS8: the journey bar's Map / Camp / Exit and the time stepper's two presses
-    '.travelpanel-act', '.travelpanel-step',
+    // PLUS8: the journey bar's Map / Camp / Exit (RATE-LAW: the time stepper's two presses are gone)
+    '.travelpanel-act',
     // OW-THEME: the Overworld's Return; OW-PATH: and its Roads / Free switch
     '.tview-back', '.tview-mode', '.tview-filter', '.tview-map',
     // CSA-L: the helm's presses - the sails, the trim, the lanterns, the time, the position, leaving
@@ -182,7 +182,7 @@ export const FRAME_ROLES = {
     '.port-host .port-field', '.port-host .port-canvas', '.port-host .port-picture img', '.port-host .port-pictureword', '.wizard .namebox', '.sb-shell .sb-rename input', '.cr-shell .cr-compose input', '.hmsearch input',
     '.talk-face', '.pack-shell .figure-doll', '.pack-shell .wornmap-doll.noart', '.shell .look-pic',
     '.shell .dcard code', '.px-setwrap .dcard code', '.px-meter', '.shell .swatch', '.px-setwrap .swatch',
-    // PLUS8: the journey bar's time readout - the x40 sits in a socket between its two presses
+    // PLUS8: the journey bar's time readout - the x100 sits in a socket (RATE-LAW: its two presses are gone)
     '.travelpanel-accel',
     // OW-THEME: the Overworld's compass - its needle sunk in a socket, as the journey bar's clock is
     '.tview-compass',

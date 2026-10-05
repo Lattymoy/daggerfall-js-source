@@ -1,0 +1,470 @@
+[
+  {
+    "name": "RVN6-retinue-moved",
+    "file": "src/systems/revenantFeud.js",
+    "old": "export const RETINUE = Object.freeze([0, 0, 1, 2, 3, 3]);",
+    "new": "export const RETINUE = Object.freeze([0, 0, 1, 1, 3, 3]);",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-count-unclamped",
+    "file": "src/systems/revenantFeud.js",
+    "old": "RETINUE[Math.max(0, Math.min(5, rank | 0))];",
+    "new": "RETINUE[Math.max(0, rank | 0)];",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-scatter-moved",
+    "file": "src/systems/revenantFeud.js",
+    "old": "export const BAND_SCATTER_S = 8;",
+    "new": "export const BAND_SCATTER_S = 6;",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-ring-moved",
+    "file": "src/systems/revenantFeud.js",
+    "old": "export const BAND_SPACING = 6;",
+    "new": "export const BAND_SPACING = 3;",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-rally-moved",
+    "file": "src/systems/revenantFeud.js",
+    "old": "export const RALLY_KIN = 2;",
+    "new": "export const RALLY_KIN = 3;",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-orcs-a-pack",
+    "file": "src/systems/revenantFeud.js",
+    "old": "Object.freeze({ ORC: 'Warband', BEASTPACK:",
+    "new": "Object.freeze({ ORC: 'Pack', BEASTPACK:",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-werebeasts-a-host",
+    "file": "src/systems/revenantFeud.js",
+    "old": "BEASTPACK: 'Pack', WEREBEAST: 'Pack',",
+    "new": "BEASTPACK: 'Pack', WEREBEAST: 'Host',",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-fae-a-brood",
+    "file": "src/systems/revenantFeud.js",
+    "old": "UNDEAD: 'Host', FAE: 'Host',",
+    "new": "UNDEAD: 'Host', FAE: 'Brood',",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-fish-a-pack",
+    "file": "src/systems/revenantFeud.js",
+    "old": "VERMIN: 'Brood', AQUATIC: 'Brood' });",
+    "new": "VERMIN: 'Brood', AQUATIC: 'Pack' });",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-families-swapped",
+    "file": "src/systems/revenantFeud.js",
+    "old": "const CLASS_BAND_WORDS = Object.freeze(['Warband', 'Crew', 'Coven', 'Crew']);",
+    "new": "const CLASS_BAND_WORDS = Object.freeze(['Warband', 'Coven', 'Crew', 'Crew']);",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-name-rank-floor",
+    "file": "src/systems/revenantFeud.js",
+    "old": "  if (!r || retinueCount(r.rank) < 1 || !r.kin?.length) return null;",
+    "new": "  if (!r || (r.rank | 0) < 1 || !r.kin?.length) return null;",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-name-no-kin",
+    "file": "src/systems/revenantFeud.js",
+    "old": "  if (!r || retinueCount(r.rank) < 1 || !r.kin?.length) return null;",
+    "new": "  if (!r || retinueCount(r.rank) < 1) return null;",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-name-no-possessive",
+    "file": "src/systems/revenantFeud.js",
+    "old": "  return r.given ? `${possessive(r.given)} ${w}` : w;",
+    "new": "  return r.given ? `${r.given} ${w}` : w;",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-person-level-moved",
+    "file": "src/systems/revenantFeud.js",
+    "old": "level: t >= 128 ? Math.max(1, (playerLevel | 0) - 2) : null",
+    "new": "level: t >= 128 ? Math.max(1, (playerLevel | 0) - 1) : null",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-person-level-unfloored",
+    "file": "src/systems/revenantFeud.js",
+    "old": "level: t >= 128 ? Math.max(1, (playerLevel | 0) - 2) : null",
+    "new": "level: t >= 128 ? (playerLevel | 0) - 2 : null",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-monster-at-my-level",
+    "file": "src/systems/revenantFeud.js",
+    "old": "level: t >= 128 ? Math.max(1, (playerLevel | 0) - 2) : null",
+    "new": "level: t >= 128 ? Math.max(1, (playerLevel | 0) - 2) : playerLevel",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-members-uncounted",
+    "file": "src/systems/revenantFeud.js",
+    "old": "  return kin.slice(0, Math.max(0, n)).map(",
+    "new": "  return kin.map(",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-band-unstood",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (revenant && band && !puppet && !allied && entity.revenant) Promise.resolve().then(() => standBand(f, bandMembers(revenant, effectiveLevel(playerEntity))));",
+    "new": "      if (false) Promise.resolve().then(() => standBand(f, bandMembers(revenant, effectiveLevel(playerEntity))));",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-puppet-band",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (revenant && band && !puppet && !allied && entity.revenant) Promise.resolve()",
+    "new": "      if (revenant && band && !allied && entity.revenant) Promise.resolve()",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-room-unread",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    for (const m of members.slice(0, room)) {",
+    "new": "    for (const m of members) {",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-ring-wide",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "placeFoeFreely(env, { minDistance: 1, maxDistance: BAND_SPACING, lineOfSightCheck: false });",
+    "new": "placeFoeFreely(env, { minDistance: 1, maxDistance: 40, lineOfSightCheck: false });",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-saved",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "{ yaw: f.ai.yaw, level: m.level, champion: null, eliteFoe: false, transient: true }",
+    "new": "{ yaw: f.ai.yaw, level: m.level, champion: null, eliteFoe: false }",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-a-champion",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "{ yaw: f.ai.yaw, level: m.level, champion: null, eliteFoe: false, transient: true }",
+    "new": "{ yaw: f.ai.yaw, level: m.level, champion: 0, eliteFoe: false, transient: true }",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-an-elite",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "{ yaw: f.ai.yaw, level: m.level, champion: null, eliteFoe: false, transient: true }",
+    "new": "{ yaw: f.ai.yaw, level: m.level, champion: null, eliteFoe: true, transient: true }",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-unmarked",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "        if (g.entity) { g.entity.retinueOf = id; g.entity.campId = campId; g.entity.bandName = name; }",
+    "new": "        if (g.entity) { g.entity.campId = campId; g.entity.bandName = name; }",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-no-camp",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "        if (g.entity) { g.entity.retinueOf = id; g.entity.campId = campId; g.entity.bandName = name; }",
+    "new": "        if (g.entity) { g.entity.retinueOf = id; g.entity.bandName = name; }",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-unnamed",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "        if (g.entity) { g.entity.retinueOf = id; g.entity.campId = campId; g.entity.bandName = name; }",
+    "new": "        if (g.entity) { g.entity.retinueOf = id; g.entity.campId = campId; }",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-pool-unmarked",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "        g.retinueOf = id;\n",
+    "new": "",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-kneel-unscattered",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    scatterBand(f);   // RVN6: it kneels - its band breaks\n",
+    "new": "",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-death-unscattered",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (f.entity?.revenant) scatterBand(f);   // RVN6: it dies - its band breaks\n",
+    "new": "",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-unsaid",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    if (n) say?.(`The ${(bandWord(f.mobileType) ?? 'band').toLowerCase()} scatters.`);",
+    "new": "",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-run-moved",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      g.ai.flee(f.ai.feet, BAND_SCATTER_S);",
+    "new": "      g.ai.flee(f.ai.feet, 3);",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-run-from-me",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      g.ai.flee(f.ai.feet, BAND_SCATTER_S);",
+    "new": "      g.ai.flee([0, 0, 0], BAND_SCATTER_S);",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-run-kept",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "        if (!(f.ai.fleeLeft > 0)) { releaseFoeBatch(f); f.dead = true; f.escaped = true; continue; }\n",
+    "new": "",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-a-body",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "        if (!(f.ai.fleeLeft > 0)) { releaseFoeBatch(f); f.dead = true; f.escaped = true; continue; }",
+    "new": "        if (!(f.ai.fleeLeft > 0)) { releaseFoeBatch(f); f.dead = true; f.corpse = true; continue; }",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-rally-unwired",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    if (ev && (f.entity.revenant.rank | 0) >= 5) rallyBand(f);",
+    "new": "    if (false) rallyBand(f);",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-rally-not-to-it",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "g.ai.makeHostileToPlayer?.(undefined, f.ai.feet); }",
+    "new": "}",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-portal-kin-unstood",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    if (live.length) return live.length;\n    return standBand(",
+    "new": "    if (true) return live.length;\n    return standBand(",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-portal-kin-all",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "bandMembers(revenantById(id), effectiveLevel(playerEntity), RALLY_KIN), { portal: true })",
+    "new": "bandMembers(revenantById(id), effectiveLevel(playerEntity)), { portal: true })",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-portal-unshown",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "        if (portal) g.portalFx = { dir: 'in', at: Date.now(), delay: 220, ms: 640 };",
+    "new": "",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-portal-unopened",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (portal) portals.open(feet);\n",
+    "new": "",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-candidate-unrefused",
+    "file": "src/systems/revenant.js",
+    "old": "  if (entity.retinueOf != null) return false;   // RVN6",
+    "new": "  if (false) return false;   // RVN6",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-title-unnamed",
+    "file": "src/systems/foeTitle.js",
+    "old": "  if (typeof band === 'string' && band) return `${base} of ${band}`;\n",
+    "new": "",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-page-rank-1",
+    "file": "src/ui/revenantPage.js",
+    "old": "  const members = name ? bandMembers(r, 1) : [];",
+    "new": "  const members = bandMembers({ ...r, rank: Math.max(2, r?.rank | 0) }, 1);",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-page-uncounted",
+    "file": "src/ui/revenantPage.js",
+    "old": "  for (const m of members) counts.set(m.mobileType, (counts.get(m.mobileType) ?? 0) + 1);",
+    "new": "  for (const m of members) counts.set(m.mobileType, 1);",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-page-plural-f",
+    "file": "src/ui/revenantPage.js",
+    "old": ": /f$/i.test(name) ? `${name.slice(0, -1)}ves`",
+    "new": ": /f$/i.test(name) ? `${name}s`",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-page-plural-y",
+    "file": "src/ui/revenantPage.js",
+    "old": ": /[^aeiou]y$/i.test(name) ? `${name.slice(0, -1)}ies`",
+    "new": ": /[^aeiou]y$/i.test(name) ? `${name}s`",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-page-plural-fish",
+    "file": "src/ui/revenantPage.js",
+    "old": "const many = /fish$/i.test(name) ? name :",
+    "new": "const many =",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-page-article",
+    "file": "src/ui/revenantPage.js",
+    "old": "if (n === 1) return `${/^[AEIOU]/i.test(name) ? 'an' : 'a'} ${name}`;",
+    "new": "if (n === 1) return `a ${name}`;",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-page-unnamed",
+    "file": "src/ui/revenantPage.js",
+    "old": "  return `Band: rides with ${list} - ${name}.`;",
+    "new": "  return `Band: rides with ${list}.`;",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-page-row-unwired",
+    "file": "src/ui/revenantPage.js",
+    "old": "  if (band) text.append(el('span', 'rvn-will', band));\n",
+    "new": "",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  },
+  {
+    "name": "RVN6-said-for-none",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    if (n) say?.(`The ${(bandWord(f.mobileType) ?? 'band').toLowerCase()} scatters.`);",
+    "new": "    say?.(`The ${(bandWord(f.mobileType) ?? 'band').toLowerCase()} scatters.`);",
+    "tests": [
+      "test/rvn6_band.test.js"
+    ]
+  }
+]

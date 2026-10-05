@@ -1336,10 +1336,31 @@ THE HOST: the scale the helm sets runs everything the port runs on
 Time.timeScale - the world's clock, the motor, the boat's move. The
 frame's own law that a scale with no Travel Options panel behind it is a
 journey over (TO1) now spares a scale the helm holds (`csaHoldsTimeScale`:
-timeScaleIndex above the first step). Online the scale is Travel Options'
+timeScaleIndex above the first step). Online the scale was Travel Options'
 journey's case (TO-ONLINE): the shared clock takes nothing from dt
-(`systems/worldTick.js`), so the helm speeds the player's own world and
-moves no room's clock.
+(`systems/worldTick.js`), so the helm sped the player's own world and
+moved no room's clock - but WALK-CLOCK raised the character's own clock by
+it, and the boat's speed went on the wire at the owner's scale.
+HELM-TIME-ONLINE (below) retired the dial online.
+
+### HELM-TIME-ONLINE (2026-10-04) - online the helm keeps the world's time
+
+Mac: *"Remove the time dial from ships online."* Online (the host's
+`sharedClockOn()`, the runtime's new `timeLocked` dep) the helm's time dial
+is gone: the three keys - and the enhanced panel's and the pad's presses,
+which ARE those keys (`BOAT_TIME_ACTIONS`) - say *"Online, time at sea
+keeps the world's pace."* (`HELM_TIME_LOCKED_TEXT`, a second and a half)
+and move nothing (`updateSailing` returns before the three key lines, which
+stand byte for byte); `helmPanelState().timeDial` is false, so the
+enhanced helm draws no `−` / `×N` / `+` (`ui/enhancedHelm.js helmButtons`),
+the pad's left and right step nothing and, held, only trim
+(`helmPadGesture`), and the prompt row says "Trim (hold)" or nothing
+(`helmPadPrompts`). ResetTimeScale itself is untouched - it is how a
+collision, a beaching, a stop, a fast travel or another mod's scale (a
+journey's, RATE-LAW's x60/x100) is put back, none of them the dial. The
+keys stay in the registry and in Controls (KB1: the list is never cut);
+offline the dial is the mod's, as before. Pins: `test/csa_time_audio.test.js`
+(HELM-TIME-ONLINE, 4 - AUDIT-A1: no key, no line, counted); `tools/mutants/helmtime.json` (10, all dead).
 
 THE HUD'S TWO MESSAGE CLOCKS count game time, as DFU's do - a correction
 the helm's messages showed: DaggerfallHUD.cs:262 and PopupText.cs:56-59
@@ -1952,10 +1973,11 @@ The player's own (`systems/onlineLane.js` ONLINE_PLAYERS_OWN_MODS): a boat
 is a possession in the player's save, placed and sailed by them - Horse
 Cart and Cargo's wagon's shape. Its wind is each machine's own roll
 (`UpdateWind` draws from UnityEngine.Random), as it is for each DFU
-player. The time scale (CSA-G) is Travel Options' journey's case
-(TO-ONLINE): the shared clock takes nothing from dt
-(`systems/worldTick.js`), so the helm's scale speeds the player's own
-world and spends no room's clock (OL2).
+player. The time scale (CSA-G) is offline's alone (HELM-TIME-ONLINE,
+2026-10-04, Mac: "Remove the time dial from ships online"): online the
+three keys say why and move nothing, and the helm draws no dial - it had
+been Travel Options' journey's case (TO-ONLINE, OL2), speeding the player's
+own world and, through WALK-CLOCK, their own clock.
 
 CSA-J: the others in a cell SEE a sailor's boats (DECLARED (36): the mod
 is single-player). `systems/comeSailAwayWire.js`: every active boat - its

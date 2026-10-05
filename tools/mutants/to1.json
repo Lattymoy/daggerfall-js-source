@@ -290,15 +290,6 @@
     ]
   },
   {
-    "name": "half-limit-never-set",
-    "file": "src/systems/travelOptions.js",
-    "old": "    if (ui) ui.halfLimit = true;     // :705 - half the acceleration limit while following",
-    "new": "    if (ui) ui.halfLimit = false;",
-    "tests": [
-      "test/to1_travelOptions.test.js"
-    ]
-  },
-  {
     "name": "follow-keeps-destination",
     "file": "src/systems/travelOptions.js",
     "old": "        st.road = (roadDataPt & playerDirection) !== 0;\n        st.destinationName = null;\n        beginPathTravel(targetPixel(playerDirection, mp.x, mp.y));",
@@ -535,24 +526,6 @@
     ]
   },
   {
-    "name": "accel-limit-not-rounded",
-    "file": "src/systems/timeScale.js",
-    "old": "export const accelLimitOf = (limit) => Math.trunc(limit / 5) * 5;",
-    "new": "export const accelLimitOf = (limit) => limit;",
-    "tests": [
-      "test/to1_travelOptions.test.js"
-    ]
-  },
-  {
-    "name": "half-limit-is-half-the-rounded",
-    "file": "src/systems/timeScale.js",
-    "old": "export const halfAccelLimitOf = (limit) => Math.trunc(limit / 10) * 5;",
-    "new": "export const halfAccelLimitOf = (limit) => Math.trunc(limit / 5) * 5 / 2;",
-    "tests": [
-      "test/to1_travelOptions.test.js"
-    ]
-  },
-  {
     "name": "time-scale-unbounded",
     "file": "src/systems/timeScale.js",
     "old": "  _scale = Number.isFinite(v) ? Math.max(0.01, Math.min(MAX_TIME_SCALE, v)) : 1;",
@@ -575,33 +548,6 @@
     "file": "src/player/motor.js",
     "old": "    const step = FIXED_DT * scale;",
     "new": "    const step = FIXED_DT;",
-    "tests": [
-      "test/to1_travelOptions.test.js"
-    ]
-  },
-  {
-    "name": "faster-always-by-five",
-    "file": "src/ui/travelControlUI.js",
-    "old": "  return current < 5 ? current + 1 : Math.min(limit, current + 5);",
-    "new": "  return Math.min(limit, current + 5);",
-    "tests": [
-      "test/to1_travelOptions.test.js"
-    ]
-  },
-  {
-    "name": "slower-below-zero",
-    "file": "src/ui/travelControlUI.js",
-    "old": "  return current <= 5 ? Math.max(1, current - 1) : Math.max(1, current - 5);",
-    "new": "  return current <= 5 ? current - 1 : current - 5;",
-    "tests": [
-      "test/to1_travelOptions.test.js"
-    ]
-  },
-  {
-    "name": "show-does-not-clamp",
-    "file": "src/ui/travelControlUI.js",
-    "old": "    this._timeAcceleration = Math.max(1, Math.min(this.accelerationLimit(), this._preferredAcceleration));",
-    "new": "    this._timeAcceleration = Math.max(1, this._preferredAcceleration);",
     "tests": [
       "test/to1_travelOptions.test.js"
     ]

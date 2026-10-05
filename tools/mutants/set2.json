@@ -29,8 +29,8 @@
   {
     "name": "SET2-a-puppet-unaware",
     "file": "src/combat/playerWeapon.js",
-    "old": "export const foeUnaware = (foe) => !!foe?.ai && !foe.puppet && foe.ai.detected === false;",
-    "new": "export const foeUnaware = (foe) => !!foe?.ai && foe.ai.detected === false;",
+    "old": "export const foeUnaware = (foe) => !!foe?.ai && !foe.puppet && foe.ai.detected === false && ",
+    "new": "export const foeUnaware = (foe) => !!foe?.ai && foe.ai.detected === false && ",
     "tests": [
       "test/set2_seams.test.js"
     ]
@@ -200,7 +200,7 @@
   {
     "name": "SET2-the-strike-listeners-never-told",
     "file": "src/combat/formulas.js",
-    "old": "    for (const fn of _playerStrikeListeners.values()) { try { fn(attacker, target, damage, weapon); } catch { /* a set is not the blow's problem */ } }\n",
+    "old": "    for (const fn of _playerStrikeListeners.values()) { try { fn(attacker, target, damage, weapon, info); } catch { /* a set is not the blow's problem */ } }\n",
     "new": "",
     "tests": [
       "test/set2_seams.test.js"

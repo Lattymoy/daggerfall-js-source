@@ -54,7 +54,7 @@ export function markGroup(kind = '') {
   if (k === 'far') return words.includes('dungeon') ? 'dungeons' : 'distant';
   if (k === 'lair') return 'dungeons';
   if (k === 'band' || k === 'camp' || k === 'raider') return 'enemies';
-  if (k === 'traveller') return 'travellers';
+  if (k === 'traveller' || k === 'wayfarer') return 'travellers';   // LW3: the living world's parties beside the players
   if (k === 'gather') return 'gathering';   // GATHER-OW
   return null;   // dest, target, party - always drawn
 }

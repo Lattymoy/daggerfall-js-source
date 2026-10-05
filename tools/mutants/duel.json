@@ -272,8 +272,8 @@
   {
     "name": "DUEL1-the-round-s-entry-not-handed-on",
     "file": "src/systems/effects.js",
-    "old": "sinks.hurt(n, { fromPlayer: !a.caster || !!a.caster.isPlayer, bundleDuel: !!a.bundleDuel });",
-    "new": "sinks.hurt(n, { fromPlayer: !a.caster || !!a.caster.isPlayer });",
+    "old": "sinks.hurt(n, { fromPlayer: !a.caster || !!a.caster.isPlayer, bundleDuel: !!a.bundleDuel, round: true });",
+    "new": "sinks.hurt(n, { fromPlayer: !a.caster || !!a.caster.isPlayer, round: true });",
     "tests": [
       "test/duel_combat.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "DUEL1-motor-clamp-before-the-step",
     "file": "src/player/motor.js",
-    "old": "      this._step(step, input, yaw, pitch);\n      if (this.arena) this._keepInArena();",
-    "new": "      if (this.arena) this._keepInArena();\n      this._step(step, input, yaw, pitch);",
+    "old": "      this._step(step, moveInput, yaw, pitch);\n      this._pushStep(step);   // TELL6e: a blow's push, after the step's own move\n      if (this.arena) this._keepInArena();",
+    "new": "      if (this.arena) this._keepInArena();\n      this._step(step, moveInput, yaw, pitch);\n      this._pushStep(step);   // TELL6e: a blow's push, after the step's own move",
     "tests": [
       "test/duel_wall.test.js"
     ]

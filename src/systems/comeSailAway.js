@@ -95,6 +95,8 @@
 //   enemies() -> [{ key, hasController, height, position(), setPosition(centre), turn(deg), grounded() }]
 //                                                 ActiveGameObjectDatabase.GetActiveEnemyObjects, each a handle
 //   timeScale(), setTimeScale(scale)              Time.timeScale (and fixedDeltaTime, the host's one clock)
+//   HELM-TIME-ONLINE: timeLocked() -> bool        the helm's time dial retired (online: the host's sharedClockOn) - the
+//                                                 three time keys answer only with HELM_TIME_LOCKED_TEXT; absent, false
 //   CSA-G: enemiesNearby() -> bool                GameManager.AreEnemiesNearby(false, false)
 //   travelOptionsActive() -> bool | null          Travel Options' isTravelActive message (null: the mod is not loaded)
 //   messageBox(text)                              DaggerfallUI.MessageBox
@@ -288,6 +290,8 @@ export const BOAT_ACTIONS = Object.freeze({
   // HELM-KEYS (the port's, DECLARED): the arrows' more and less sail (MoreSail, LessSail)
   sailUp: 'BoatSailUp', sailDown: 'BoatSailDown',
 });
+/** HELM-TIME-ONLINE: the three time keys - the helm's time dial, retired online. */
+export const BOAT_TIME_ACTIONS = Object.freeze([BOAT_ACTIONS.timeScaleUp, BOAT_ACTIONS.timeScaleDown, BOAT_ACTIONS.timeScaleReset]);
 /** FIELD BUGS 2026-10-02b PLACE-AFLOAT: the placing's word for a water tile that stands over the sea's line. */
 export const PLACE_RAISED_TEXT = 'This water stands above the sea - place her on the open water.';
 /** HELM-KEYS (the port's, DECLARED): a helm IN IRONS - her sails up, her bow within IRONS_TELL_DEG of the wind's eye and
@@ -467,6 +471,9 @@ export const windWidgetFrameCount = () => 360 / windWidgetInterval();
 export const WEATHER_TYPE = Object.freeze({ Sunny: 0, Cloudy: 1, Overcast: 2, Fog: 3, Rain: 4, Thunder: 5, Snow: 6 });
 /** currentTimeScale (382): the helm's five steps (CSA-G's keys walk them). */
 export const TIME_SCALES = Object.freeze([1, 5, 10, 15, 30]);
+/** HELM-TIME-ONLINE (2026-10-04, Mac: "Remove the time dial from ships online"): what a time key says at the helm while
+ *  the dial is retired (online) - the step is the player's offline alone. */
+export const HELM_TIME_LOCKED_TEXT = 'Online, time at sea keeps the world\'s pace.';
 /** A point through a column-major matrix, and back through its inverse. */
 const applyMatrix = (m, p) => [
   m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12], m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13], m[2] * p[0] + m[6] * p[1] + m[10] * p[2] + m[14],
@@ -1438,6 +1445,13 @@ export function createComeSailAwayRuntime(deps) {
     forceOverLifetime.space = SPACE.World;
     forceOverLifetime.x = constantCurve(f(f(f(state.currentVector[0]) * f(0.1)) / wakeScale));
     forceOverLifetime.z = constantCurve(f(f(f(state.currentVector[2]) * f(0.1)) / wakeScale));
+    // HELM-TIME-ONLINE (2026-10-04, Mac: "Remove the time dial from ships online"): online the helm's time dial is
+    // retired - a time key (the panel's and the pad's presses are these keys) says why and moves nothing. ResetTimeScale
+    // itself stays for every caller that is not a key: a collision, a beaching, a stop, a journey's scale put back
+    if (deps.timeLocked?.()) {
+      if (BOAT_TIME_ACTIONS.some((a) => deps.input.started(a))) deps.midScreenText(HELM_TIME_LOCKED_TEXT, f(1.5));
+      return;
+    }
     // CSA-G: the time keys (4757-4767), GetKeyDown each
     if (deps.input.started(BOAT_ACTIONS.timeScaleUp)) IncreaseTimeScale();
     if (deps.input.started(BOAT_ACTIONS.timeScaleDown)) DecreaseTimeScale();
@@ -3019,6 +3033,7 @@ export function createComeSailAwayRuntime(deps) {
         hasSquare: boat.SailsSquare.length > 0,
         squareToggle: state.sailPosition !== 0 && boat.SailsSquare.length > 0 && foreAft && !trimAutoSquareUpwind(), squareUp: squareRaised,
         light: !!boat.LightOn, timeScaleIndex: state.timeScaleIndex, timeScale: TIME_SCALES[state.timeScaleIndex], timeScaleMax: TIME_SCALES.length - 1,
+        timeDial: !deps.timeLocked?.(),   // HELM-TIME-ONLINE: the dial drawn only where it turns (offline)
         manualTrim: !trimAuto(), squareOnly: !foreAft,
         // HELM-KEYS: whether more sail can be made (a sail stowed that the arrows' step raises), and whether she lies in irons
         moreSail: boat.Sails.length > 0 && (state.sailPosition === 0 || (squareHandled(boat) && squareStowed(boat))), inIrons: inIrons(boat) && state.ironsFor >= IRONS_TELL_S,

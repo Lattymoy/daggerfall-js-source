@@ -4,9 +4,11 @@
 > left as it wrote them.** They were true of the fifteen rows that
 > existed on 2026-09-15 and they are the record of what putting those
 > rows side by side found. The live numbers are derived, not written:
-> `vendor/` holds 48 directories and 28 of their READMEs still carry an
+> `vendor/` holds 49 directories and 29 of their READMEs still carry an
 > unfilled permission line, each shown as `RECORD OPEN` in the table
-> (LPT1, 2026-10-05: SquidKamer's `low-poly-trees`, the forty-eighth - its archive carries the
+> (VE4, 2026-10-05: carademono's `vanilla-enhanced`, the forty-ninth - Mac's word of permission
+> recorded ("Approved and yes"), the author's own words not yet, so the open count rises by one;
+> LPT1, 2026-10-05: SquidKamer's `low-poly-trees`, the forty-eighth - its archive carries the
 > bundle alone, no readme, and its manifest no licence, so the open count rises by one;
 > IT1, 2026-10-04: kkgobkk's `immersive-travel`, the forty-seventh - its zip carries the
 > bundle alone, no readme, so the open count rises by one;
@@ -151,6 +153,7 @@ not the date the slice shipped, where those differ.
 | `world-of-daggerfall` | manifest, the eight C# sources (carried inside the bundle as TextAssets, so nothing here is a decompile), the 65 prefab layouts verbatim, and the 2,413 instance lists read through the ported reader into one pack per region folder with every source file's sha256 recorded | Kamer | 2.0 | shipped `.rar` `World_of_Daggerfall_WindowsLinux-181-2-0-1773339543`, handed over by Mac 2026-09-23; `tools/worldOfDaggerfallAssets.mjs` reproduces every vendored file byte for byte | granted by the author (the grant that covers his windmills), confirmed by Mac 2026-09-23 | WOD1-WOD5 | 2026-09-23 | `03-World/World-Of-Daggerfall.md` |
 | `low-poly-trees` | manifest, and the author's geometry - every mesh's positions, normals and uv0 and its submeshes' indices, each prefab's mesh, root scale and materials, each material's cut, faces and colour - with each texture as an ATLAS SPEC (the records it copies and where, never a texel) | SquidKamer | 5 | shipped `.rar` `LowPolyTrees_V5-380-v5-1669847452` (one `.dfmod`), handed over by Mac 2026-10-05; `tools/lowPolyTreesExtract.mjs` rebuilds every vendored file but the README from it and the player's ARENA2 | handed over by Mac 2026-10-05 - **RECORD OPEN** | LPT1 | 2026-10-05 | `07-Rendering/Low-Poly-Trees.md` |
 | `world-tooltips` | manifest, settings, and the mod's OWN source - the bundle ships `Modded_HUDTooltipWindow.cs` as a Unity TextAsset, so nothing here is a decompile | jefetienne | 1.1 | shipped zip `World_Tooltips_-_Windows_1.1-158-1-1-1655327614`, handed over by Mac 2026-09-21; `tools/worldTooltipsAssets.mjs` reproduces all three vendored files byte for byte | MIT ("Copyright (c) 2009-2018 jefetienne", shipped as `LICENSE-world-tooltips`, beside Daggerfall Workshop's own) | WORLD-HOVER | 2026-09-21 | `10-UI/UI-Arc.md` |
+| `vanilla-enhanced` | three mods' pictures, byte for byte (`public/art/vanilla-enhanced/`): the Base's 1,246 PNGs, Masked Roads' 9 and Snowless Swamps and Jungles' 160, each under its asset name, and the 21 Masked Roads road tiles that live only in its texture arrays - from the repository's own source pictures, each proved within BC7's error of its slice; each manifest verbatim; a generated listing per directory (every file's source path and sha256) and the door's name index - not Winter Tracks, Kokey's Temperate or any Material | carademono (Masked Roads with Kokey) | 3.4.7 | the public repository `github.com/drcarademono/vanilla-enhanced` at `c0c9041c`; `tools/vanillaEnhancedVendor.mjs` writes every file from it and checks the tree against it | granted (Mac 2026-10-05: "Approved and yes"); Port-Doctrine's one exception to A RENDER OF GAME DATA IS GAME DATA - **RECORD OPEN** | VE4 | 2026-10-05 | `07-Rendering/Vanilla-Enhanced.md` |
 
 ## Known deviations, per row
 

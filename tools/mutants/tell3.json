@@ -1,0 +1,223 @@
+[
+  {
+    "name": "TELL3-iron-extra",
+    "file": "src/ai/blowShapes.js",
+    "old": "export const TELL_IRON_EXTRA = 0.2;",
+    "new": "export const TELL_IRON_EXTRA = 0.3;",
+    "tests": [
+      "test/tell3_iron.test.js",
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL3-iron-colour",
+    "file": "src/ai/foeBlows.js",
+    "old": "export const IRON_COLOR = Object.freeze([1.0, 0.12, 0.08]);",
+    "new": "export const IRON_COLOR = Object.freeze([1.0, 0.42, 0.12]);",
+    "tests": [
+      "test/tell3_iron.test.js"
+    ]
+  },
+  {
+    "name": "TELL3-extra-dropped",
+    "file": "src/ai/foeBlows.js",
+    "old": ": P.windup + (iron ? TELL_IRON_EXTRA : 0);",
+    "new": ": P.windup;",
+    "tests": [
+      "test/tell3_iron.test.js"
+    ]
+  },
+  {
+    "name": "TELL3-extra-on-poise",
+    "file": "src/ai/foeBlows.js",
+    "old": ": P.windup + (iron ? TELL_IRON_EXTRA : 0);",
+    "new": ": P.windup + TELL_IRON_EXTRA;",
+    "tests": [
+      "test/tell3_iron.test.js"
+    ]
+  },
+  {
+    "name": "TELL3-guard-lost",
+    "file": "src/ai/foeBlows.js",
+    "old": "mult: P.mult, color, guard: iron ? 'iron' : 'poise' };",
+    "new": "mult: P.mult, color, guard: 'poise' };",
+    "tests": [
+      "test/tell3_iron.test.js"
+    ]
+  },
+  {
+    "name": "TELL3-guard-unchecked",
+    "file": "src/ai/foeBlows.js",
+    "old": "  const iron = guard === 'iron';",
+    "new": "  const iron = !!guard && guard !== 'poise';",
+    "tests": [
+      "test/tell3_iron.test.js"
+    ]
+  },
+  {
+    "name": "TELL3-iron-elite-share",
+    "file": "src/ai/tells.js",
+    "old": "  IRON_ELITE: 1 / 3,",
+    "new": "  IRON_ELITE: 1 / 2,",
+    "tests": [
+      "test/tell3_iron.test.js",
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL3-ring-not-iron",
+    "file": "src/ai/tells.js",
+    "old": "  IRON_SHAPES: Object.freeze(['slam', 'ring']),",
+    "new": "  IRON_SHAPES: Object.freeze(['slam']),",
+    "tests": [
+      "test/tell3_iron.test.js",
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL3-sweep-iron",
+    "file": "src/ai/tells.js",
+    "old": "  IRON_SHAPES: Object.freeze(['slam', 'ring']),",
+    "new": "  IRON_SHAPES: Object.freeze(['slam', 'ring', 'sweep']),",
+    "tests": [
+      "test/tell3_iron.test.js",
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL3-heavy-not-iron",
+    "file": "src/ai/tells.js",
+    "old": "  if (TELL.IRON_SHAPES.includes(kind) && (cls === 'heavy' || cls === 'massive')) return 'iron';",
+    "new": "  if (TELL.IRON_SHAPES.includes(kind) && cls === 'massive') return 'iron';",
+    "tests": [
+      "test/tell3_iron.test.js"
+    ]
+  },
+  {
+    "name": "TELL3-medium-iron",
+    "file": "src/ai/tells.js",
+    "old": "  if (TELL.IRON_SHAPES.includes(kind) && (cls === 'heavy' || cls === 'massive')) return 'iron';",
+    "new": "  if (TELL.IRON_SHAPES.includes(kind) && cls !== 'light') return 'iron';",
+    "tests": [
+      "test/tell3_iron.test.js"
+    ]
+  },
+  {
+    "name": "TELL3-shape-ignored",
+    "file": "src/ai/tells.js",
+    "old": "  if (TELL.IRON_SHAPES.includes(kind) && (cls === 'heavy' || cls === 'massive')) return 'iron';",
+    "new": "  if ((cls === 'heavy' || cls === 'massive')) return 'iron';",
+    "tests": [
+      "test/tell3_iron.test.js"
+    ]
+  },
+  {
+    "name": "TELL3-elite-never",
+    "file": "src/ai/tells.js",
+    "old": "Math.max(isElite(ent) ? TELL.IRON_ELITE : 0,",
+    "new": "Math.max(0,",
+    "tests": [
+      "test/tell3_iron.test.js"
+    ]
+  },
+  {
+    "name": "TELL3-elite-always",
+    "file": "src/ai/tells.js",
+    "old": "  if (share > 0 && (roll ?? Math.random()) < share) return 'iron';",
+    "new": "  if (share > 0) return 'iron';",
+    "tests": [
+      "test/tell3_iron.test.js"
+    ]
+  },
+  {
+    "name": "TELL3-gold-only",
+    "file": "src/ai/tells.js",
+    "old": "Math.max(isElite(ent) ? TELL.IRON_ELITE",
+    "new": "Math.max(ent?.eliteFoe === true ? TELL.IRON_ELITE",
+    "tests": [
+      "test/tell3_iron.test.js"
+    ]
+  },
+  {
+    "name": "TELL3-roll-always-drawn",
+    "file": "src/ai/tells.js",
+    "old": "  if (share > 0 && (roll ?? Math.random()) < share) return 'iron';",
+    "new": "  const r = roll ?? Math.random();\n  if (share > 0 && r < share) return 'iron';",
+    "tests": [
+      "test/tell3_iron.test.js"
+    ]
+  },
+  {
+    "name": "TELL3-iron-weighed",
+    "file": "src/ai/tactics.js",
+    "old": "  if (b.guard === 'iron') return 'hold';   // TELL3",
+    "new": "  // TELL3",
+    "tests": [
+      "test/tell3_iron.test.js",
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL3-brain-never-iron",
+    "file": "src/ai/tactics.js",
+    "old": "  const guard = sig?.iron ? 'iron' : blowGuard(shape, ENEMY_BASICS[ent.mobileType]?.weight ?? 0, ent);",
+    "new": "  const guard = sig?.iron ? 'iron' : 'poise';",
+    "tests": [
+      "test/tell3_iron.test.js"
+    ]
+  },
+  {
+    "name": "TELL3-brain-poise-colour",
+    "file": "src/ai/tactics.js",
+    "old": "guard === 'iron' ? IRON_COLOR : BLOW_COLOR, guard, windup)",
+    "new": "BLOW_COLOR, guard, windup)",
+    "tests": [
+      "test/tell3_iron.test.js"
+    ]
+  },
+  {
+    "name": "TELL3-brain-weightless",
+    "file": "src/ai/tactics.js",
+    "old": "  const guard = sig?.iron ? 'iron' : blowGuard(shape, ENEMY_BASICS[ent.mobileType]?.weight ?? 0, ent);",
+    "new": "  const guard = sig?.iron ? 'iron' : blowGuard(shape, 0, ent);",
+    "tests": [
+      "test/tell3_iron.test.js"
+    ]
+  },
+  {
+    "name": "TELL3-inset",
+    "file": "src/render/telegraphStyle.js",
+    "old": "export const IRON_INSET = 0.25;",
+    "new": "export const IRON_INSET = 0.3;",
+    "tests": [
+      "test/tell3_iron.test.js"
+    ]
+  },
+  {
+    "name": "TELL3-hatch",
+    "file": "src/render/telegraphStyle.js",
+    "old": "export const IRON_HATCH = 0.35;",
+    "new": "export const IRON_HATCH = 0.5;",
+    "tests": [
+      "test/tell3_iron.test.js"
+    ]
+  },
+  {
+    "name": "TELL3-uiron-unset",
+    "file": "src/render/foeTelegraph.js",
+    "old": "      gl.uniform1f(U.uIron, b.guard === 'iron' ? 1 : 0);   // TELL3",
+    "new": "      gl.uniform1f(U.uIron, 0);   // TELL3",
+    "tests": [
+      "test/tell3_iron.test.js"
+    ]
+  },
+  {
+    "name": "TELL3-iron-undrawn",
+    "file": "src/render/foeTelegraph.js",
+    "old": "  if (uIron > 0.5) oColor = telegraphIron(",
+    "new": "  if (uIron > 1.5) oColor = telegraphIron(",
+    "tests": [
+      "test/tell3_iron.test.js"
+    ]
+  }
+]

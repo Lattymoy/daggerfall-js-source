@@ -105,7 +105,7 @@ test('LOOT7: the street\'s - a hash of where it stands, its type and the count, 
   for (const bad of [-1, 16, 1.5, 'x']) assert.equal(validFoeRecord({ i: 3, cp: bad }), null, `cp ${bad}`);
   assert.deepEqual(validFoeRecord({ i: 3 }), { i: 3 }, 'none when none');
   const ef = strip(read('src/scenes/exteriorFoes.js'));
-  assert.match(ef, /if \(!allied && !entity\.eliteFoe\) applyChampion\(entity, champion !== undefined \? champion : revenant \? \(revenant\.trait \? championIndex\(revenant\.trait\) : null\) : \(capped \? rollStreetChampion\(pending\.feet, mobileType\) : null\)\);\s*(?:if \(revenant && !puppet\) applyRevenant\(entity, revenant\);\s*)?if \(puppet\) entity\.items = \[\];/, 'the owner rolls an encounter\'s, a puppet takes its owner\'s word - before the loot (ELITE FOES: never on an elite - one or the other)');
+  assert.match(ef, /if \(!allied && !entity\.eliteFoe\) applyChampion\(entity, champion !== undefined \? champion : revenant \? \(revenant\.trait \? championIndex\(revenant\.trait\) : null\) : \(capped \? rollStreetChampion\(pending\.feet, mobileType\) : null\)\);\s*(?:if \(revenant && !puppet\) applyRevenant\(entity, revenant(?:, \{ turned \})?\);\s*)?if \(puppet\) entity\.items = \[\];/, 'the owner rolls an encounter\'s, a puppet takes its owner\'s word - before the loot (ELITE FOES: never on an elite - one or the other)');
   assert.match(ef, /if \(!onWatch && f\.entity\?\.champion\) r\.cp = championIndex\(f\.entity\.champion\);/, 'the record carries it');
   assert.equal((ef.match(/champion: r\.cp \?\? null/g) ?? []).length, 2, 'both of a puppet\'s stands read it');
   assert.match(ef, /champion: f\.entity\.champion \?\? null,/, 'a save keeps it');

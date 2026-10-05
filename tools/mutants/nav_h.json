@@ -286,8 +286,8 @@
   {
     "name": "NAV-H-a-journey-past-a-pirate",
     "file": "src/scenes/world.js",
-    "old": "    enemiesNearby: () => duelEnemyNear() || areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes]) || navalHostileNear(),",
-    "new": "    enemiesNearby: () => duelEnemyNear() || areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes]),",
+    "old": "    enemiesNearby: () => duelEnemyNear() || areEnemiesNearby([...cityGuards.guards, ...wildSeen(exteriorFoes.foes)]) || navalHostileNear(),",
+    "new": "    enemiesNearby: () => duelEnemyNear() || areEnemiesNearby([...cityGuards.guards, ...wildSeen(exteriorFoes.foes)]),",
     "tests": [
       "test/nav_h_host.test.js"
     ]

@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-A6-one-standing-buried",
     "file": "src/systems/revenant.js",
-    "old": "x !== r && !x.out)",
-    "new": "x !== r)",
+    "old": "x !== keep && !x.out && !x.took?.length)",
+    "new": "x !== keep && !x.took?.length)",
     "tests": [
       "test/revenant_audit.test.js"
     ]
@@ -29,7 +29,7 @@
   {
     "name": "AUDIT-A4-the-mirror-s-pack",
     "file": "src/systems/revenant.js",
-    "old": "    if (r.companion) r.companion.items = s?.companion?.items ? s.companion.items.slice() : [];\n",
+    "old": "    if (!r.gone && r.companion) r.companion.items = s?.companion?.items ? s.companion.items.slice() : [];\n",
     "new": "",
     "tests": [
       "test/revenant_audit.test.js"
@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-A2-the-load-keeps-the-mark",
     "file": "src/systems/revenant.js",
-    "old": "_state.mirrorId = null; clearPlayerHarm(); },   // the last game's harm",
-    "new": "_state.mirrorId = null; },   // the last game's harm",
+    "old": "_state.mirrorId = null; _lastSlew = null; clearPlayerHarm(); endPlayerFights(); },   // the last game's harm",
+    "new": "_state.mirrorId = null; _lastSlew = null; endPlayerFights(); },   // the last game's harm",
     "tests": [
       "test/revenant_audit.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-A11-a-dollar-a-pattern",
     "file": "src/systems/revenantPersonality.js",
-    "old": "const fill = (s, p) => s.replace(/\\{p\\}/g, () => p);",
-    "new": "const fill = (s, p) => s.replace(/\\{p\\}/g, p);",
+    "old": "const fill = (s, vars) => s.replace(PLACEHOLDER, (_, k) => String(vars[k]));",
+    "new": "const fill = (s, vars) => s.replace(/\\{p\\}/g, vars.p).replace(PLACEHOLDER, (_, k) => String(vars[k]));",
     "tests": [
       "test/revenant_audit.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "AUDIT-C5-the-member-kept",
     "file": "src/systems/revenantCompanions.js",
-    "old": "c.health = null; });\n      forgetSwornMember(id);\n      return true;",
-    "new": "c.health = null; });\n      return true;",
+    "old": "c.loyalty = movedLoyalty(c.loyalty, LOYALTY.KNOCKED); });   // RVN11: a fall -8\n      forgetSwornMember(id);\n      return true;",
+    "new": "c.loyalty = movedLoyalty(c.loyalty, LOYALTY.KNOCKED); });   // RVN11: a fall -8\n      return true;",
     "tests": [
       "test/revenant_audit.test.js"
     ]

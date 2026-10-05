@@ -253,7 +253,8 @@ test('DW3 wiring: the paper doll asks by item.dyeColor and blits an imported tex
   assert.match(rd('src/ui/enhancedHud.js'), /requestFittedIcon\(image\.archive, image\.record, \{ box, dpr, dye: image\.dye, dyeTarget: image\.dyeTarget, onReady:/);   // UI2: the diamond's picture fitted, still by the dye; DYE-ICON: and its swatch
   assert.match(rd('src/ui/enhancedHotbar.js'), /requestFittedIcon\(image\.archive, image\.record, \{ box: fit\.box, dpr: fit\.dpr, dye: image\.dye, dyeTarget: image\.dyeTarget, onReady: again \}\)/);   // UI2 + DYE-ICON: the bar's slot the same
   assert.match(rd('src/ui/textureCanvas.js'), /\(wake\) => requestIcon\(archive, record, \{ scale: 1, dye, dyeTarget, onReady: wake \}\)/, 'MERGE (UI1 x DYE-ICON): the fitted door asks its source by the swatch too');
-  assert.match(rd('src/scenes/shared.js'), /installDiverseWeaponsIcons\(\);[^\n]*\n\s+installRoleplayRealismItems\(\);[^\n]*\n\s+installRoleplayRealism\(\);[^\n]*\n\s+const textures = storedTextureNames\(\)/, 'installed at the scene boot, before the archives load - not at worldTick\'s module scope (a TDZ through the cycle)');
+  // PIN MOVED (AUDIT VE R2): before the store's one registration - the seam's own copy of it is gone
+  assert.match(rd('src/scenes/shared.js'), /installDiverseWeaponsIcons\(\);[^\n]*\n\s+installRoleplayRealismItems\(\);[^\n]*\n\s+installRoleplayRealism\(\);[^\n]*\n(?:\s+\/\/[^\n]*\n)*\s+const textures = registerTextureStore\(\)/, 'installed at the scene boot, before the archives load - not at worldTick\'s module scope (a TDZ through the cycle)');
   assert.ok(!/installDiverseWeaponsIcons/.test(rd('src/systems/worldTick.js')));
   for (const f of ['src/ui/itemScroller.js', 'src/ui/nativeInventory.js']) {
     assert.match(rd(f), /icons\.uploadRecord\(img\.archive, img\.record, \{ mips: false, removeMask: true, dye: img\.dye, dyeTarget: img\.dyeTarget \}\)/, f);

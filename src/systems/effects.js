@@ -31,6 +31,7 @@
 
 import { savingThrow, rollMagnitude, EFFECT_FLAGS, careerTolerance } from './spellcast.js';
 import { mentorDamageTakenMult } from './mentorMode.js';   // SOFTCAP2: a leaf
+import { noteFeudHarm, elementFeudClass } from './feudLedger.js';   // RVN1: my spell's round, in its fight's ledger (a leaf)
 import { raceById, raceByKey } from './races.js';   // L2-slice (magic-10): the racial immunity arm
 import { STAT_KEYS_ORDER, FATIGUE_MULTIPLIER, maxFatigue, increaseDrainMagnitude, liveStat } from './statMods.js';
 import { dice100 } from '../combat/formulas.js';
@@ -685,7 +686,10 @@ function runEffectRound(a, target, sinks, rolls) {
     // when the player cast it (no caster is the player, hostMagic's `!caster` law). A round sink bills nobody else.
     // DUEL1: and the entry's duel tag rides along - a duel's damage over time (bundleDuel) stops at the duel's floor
     if (n > 0 && target?.isPlayer && a.caster && !a.caster.isPlayer) markPlayerHarm(a.caster);   // REVENANT-HARM: the round that may be the death is its caster's
-    if (n > 0 && sinks.hurt) sinks.hurt(n, { fromPlayer: !a.caster || !!a.caster.isPlayer, bundleDuel: !!a.bundleDuel });
+    if (n > 0 && sinks.hurt) sinks.hurt(n, { fromPlayer: !a.caster || !!a.caster.isPlayer, bundleDuel: !!a.bundleDuel, round: true });   // TELL1: a round, not a landing - it weighs nothing on a wind-up's poise
+    // RVN1 (Feud-Arc.md section 12): MY round on a foe goes in its fight's ledger by its element (the provenance law
+    // above - no caster is mine; a peer's stand-in, a foe's, never)
+    if (n > 0 && target && !target.isPlayer && (!a.caster || (a.caster.isPlayer && !a.caster.peer))) noteFeudHarm(target, elementFeudClass(a.element), n);
     handleAttackFromSource(a.caster);   // DamageHealthFromSource's tail, wave 31
   } else if (a.kind === 'continuousDamageSpellPoints') {
     const n = effectMagnitude(a.effect, a.casterLevel, a.saveScaled ?? true, a.element, a.flag, target, rolls);

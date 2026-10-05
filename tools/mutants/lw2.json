@@ -1,0 +1,291 @@
+[
+  {
+    "name": "LW2-range-unread",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "\n      if (d < LIVING_RANGE) wanted.push({ res, d });",
+    "new": "\n      wanted.push({ res, d });",
+    "tests": [
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW2-indoors-stood",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    if (!isOutdoor(e)) return null;\n    const c = this._inCircle.get(res.id);",
+    "new": "    const c = this._inCircle.get(res.id);",
+    "tests": [
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW2-pace-slower",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    const v = Math.min(this.o.mpm * WALK_FAST, Math.max(this.o.mpm, line.len / dur));",
+    "new": "    const v = Math.min(this.o.mpm * WALK_FAST, Math.max(this.o.mpm * 0.5, line.len / dur * 0.5));",
+    "tests": [
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW2-facing-dropped",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "        if (!row.visible || d > Math.max(SNAP_M, step * 3)) { p.pos[0] = w.x; p.pos[2] = w.z; p.yaw = w.yaw; p.moving = w.moving; }",
+    "new": "        if (!row.visible || d > Math.max(SNAP_M, step * 3)) { p.pos[0] = w.x; p.pos[2] = w.z; p.moving = w.moving; }",
+    "tests": [
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW2-owed-dropped",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      if (stop) lag += dt * rate;",
+    "new": "      if (stop) lag += 0;",
+    "tests": [
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW2-catch-up",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      else if (lag > 0) lag = Math.max(0, lag - dt * rate * CATCH_UP);",
+    "new": "      else if (lag > 0) lag = Math.max(0, lag - dt * rate);",
+    "tests": [
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW2-pop-in-plain-sight",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      if (row.scheduleEnable && !w.pending && (allowChange || w.fromDoor || (row.arrival && standing))) { row.scheduleEnable = false; row.visible = true; row.arrival = false; }",
+    "new": "      if (row.scheduleEnable && !w.pending) { row.scheduleEnable = false; row.visible = true; row.arrival = false; }",
+    "tests": [
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW2-no-arrival",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    this._arriving = this._lastClock === null || Math.abs(this._now - this._lastClock) > ARRIVAL_JUMP_MIN || stepped > ARRIVAL_STEP_M;",
+    "new": "    this._arriving = false;",
+    "tests": [
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW2-jump-not-arrival",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    this._arriving = this._lastClock === null || Math.abs(this._now - this._lastClock) > ARRIVAL_JUMP_MIN || stepped > ARRIVAL_STEP_M;",
+    "new": "    this._arriving = this._lastClock === null || stepped > ARRIVAL_STEP_M;",
+    "tests": [
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW2-teleport-not-arrival",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    this._arriving = this._lastClock === null || Math.abs(this._now - this._lastClock) > ARRIVAL_JUMP_MIN || stepped > ARRIVAL_STEP_M;",
+    "new": "    this._arriving = this._lastClock === null || Math.abs(this._now - this._lastClock) > ARRIVAL_JUMP_MIN;",
+    "tests": [
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW2-arrival-never-ends",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "  _standing() { return this._realNow <= this._arrivalUntil; }",
+    "new": "  _standing() { return true; }",
+    "tests": [
+      "test/lw2_livingTown.test.js",
+      "test/lwperf_cost.test.js"
+    ]
+  },
+  {
+    "name": "LW2-taken-forgotten",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      if (this._taken.get(res.id) === day) continue;",
+    "new": "      if (false) continue;",
+    "tests": [
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW2-conversion-unread",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    for (const r of this.pool) if (r.res && !r.active) { this._take(r.res); this._free(r); }",
+    "new": "    for (const r of this.pool) if (r.res && !r.active) { this._free(r); }",
+    "tests": [
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW2-override-unread",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    if (this.o.suppressSpawns?.()) return;",
+    "new": "    if (false) return;",
+    "tests": [
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW2-everyone-speaks",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "        if (line && line.who.id === row.res.id) out.push({ person: p, text: line.text, kind: /** @type {'talk'} */ ('talk') });",
+    "new": "        if (line) out.push({ person: p, text: line.text, kind: /** @type {'talk'} */ ('talk') });",
+    "tests": [
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW2-friend-unnamed",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    const pool = standing === 'friend' ? LIVING_GREETINGS.friend : standing === 'enemy' || standing === 'hostile' ? LIVING_GREETINGS.enemy",
+    "new": "    const pool = standing === 'friend' ? LIVING_GREETINGS.known : standing === 'enemy' || standing === 'hostile' ? LIVING_GREETINGS.enemy",
+    "tests": [
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW2-enemy-warm",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    const pool = standing === 'friend' ? LIVING_GREETINGS.friend : standing === 'enemy' || standing === 'hostile' ? LIVING_GREETINGS.enemy",
+    "new": "    const pool = standing === 'friend' ? LIVING_GREETINGS.friend : standing === 'hostile' ? LIVING_GREETINGS.enemy",
+    "tests": [
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW2-enemy-talks",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    return s === 'enemy' || s === 'hostile' ? fillLine(LIVING_REFUSAL, { a: firstNameOf(person.nameNPC) }) : null;",
+    "new": "    return s === 'hostile' ? fillLine(LIVING_REFUSAL, { a: firstNameOf(person.nameNPC) }) : null;",
+    "tests": [
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW2-word-unnoted",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    this.o.relations?.()?.note(id, 'talk', this.dayOf(this._liveMinute()));",
+    "new": "    void this.o.relations;",
+    "tests": [
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW2-name-not-dressed",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    p.nameNPC = res.name;",
+    "new": "    p.nameNPC = '';",
+    "tests": [
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW2-wheel-off-yaw",
+    "file": "src/characters/residentWalker.js",
+    "old": "    const o = mobileOrientation(this.yaw, this.pos, cameraPos);",
+    "new": "    const o = mobileOrientation(0, this.pos, cameraPos);",
+    "tests": [
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW2-guard-idle",
+    "file": "src/characters/residentWalker.js",
+    "old": "      const rec = this.guard ? PERSON_GUARD_IDLE_RECORD : PERSON_IDLE_RECORD;",
+    "new": "      const rec = PERSON_IDLE_RECORD;",
+    "tests": [
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW2-no-reset",
+    "file": "src/characters/residentWalker.js",
+    "old": "    if (st !== this.state) { this.state = st; this.frame = 0; this._timer = 0; }",
+    "new": "    if (st !== this.state) { this.state = st; }",
+    "tests": [
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW2-switch-skin-unread",
+    "file": "src/systems/livingWorld/livingSwitch.js",
+    "old": "(isEnhanced() && getPref(LIVING_WORLD_KEY) !== false)",
+    "new": "(getPref(LIVING_WORLD_KEY) !== false)",
+    "tests": [
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW2-row-off",
+    "file": "src/systems/features.js",
+    "old": "    control: Object.freeze({ store: 'prefs', key: 'livingWorld', initial: true, online: 'player' }),",
+    "new": "    control: Object.freeze({ store: 'prefs', key: 'livingWorld', initial: false, online: 'player' }),",
+    "tests": [
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW2-host-never-living",
+    "file": "src/scenes/world.js",
+    "old": "        population = livingWorldOn() ? new LivingTown(nav, {",
+    "new": "        population = false ? new LivingTown(nav, {",
+    "tests": [
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW2-door-cell-dropped",
+    "file": "src/scenes/world.js",
+    "old": "                door, pixelKey: key, dfBlock: b.dfBlock, blockX: b.x, blockY: b.y,",
+    "new": "                door, pixelKey: key, dfBlock: b.dfBlock,",
+    "tests": [
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW2-lines-unmerged",
+    "file": "src/scenes/world.js",
+    "old": "      livingLinePoints(points, w, h, rect, proj, view, eye);   // LW2: the living world's residents speak through the one layer",
+    "new": "      // LW2: the living world's residents speak through the one layer",
+    "tests": [
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW2-talk-doors-unwired",
+    "file": "src/scenes/world.js",
+    "old": "    livingTalk: { refuses: (person) => person?.living?.town?.refuses(person) ?? null, talked: (person) => person?.living?.town?.talked(person), caught: (person) => person?.living?.town?.caught?.(person) },",
+    "new": "    livingTalk: null,",
+    "tests": [
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW2-regards-unsaved",
+    "file": "src/scenes/world.js",
+    "old": "    getSaveData: () => livingRelations.snapshot(),",
+    "new": "    getSaveData: () => null,",
+    "tests": [
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW2-refusal-after-talk",
+    "file": "src/scenes/townTalk.js",
+    "old": "    const refusal = livingTalk?.refuses?.(target.person) ?? null;\n    if (refusal) { setMidScreenText(refusal); return; }\n",
+    "new": "",
+    "tests": [
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW2-word-never-noted",
+    "file": "src/scenes/townTalk.js",
+    "old": "      livingTalk?.talked?.(target.person);   // LW2: a word exchanged - their regard of the player",
+    "new": "      // LW2: a word exchanged - their regard of the player",
+    "tests": [
+      "test/lw2_livingTown.test.js"
+    ]
+  }
+]

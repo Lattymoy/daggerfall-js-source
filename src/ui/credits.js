@@ -376,6 +376,17 @@ export const CREDITS = Object.freeze({
       vendor: Object.freeze(['beautiful-cities']),
       link: 'https://www.nexusmods.com/daggerfallunity/mods/720',
     }),
+    // VE4: carademono's third - the Texture Overhaul's first pack, worn from the Overhauls screen.
+    Object.freeze({
+      title: 'Vanilla Enhanced',
+      version: '3.4.7',
+      author: 'carademono',
+      what: 'Daggerfall’s own textures remastered - the ground’s tile sets, the trees, rocks and plants, the city walls and the dungeons - worn from the Texture Overhaul card (VE4). Its add-ons Masked Roads (with Kokey) and Snowless Swamps and Jungles are switches on the same card.',
+      terms: 'The author’s repaints of Daggerfall’s textures, carried byte for byte under public/art/vanilla-enhanced/ from the mod’s public repository - the one exception Port-Doctrine records to its rule that a render of game data is game data. See vendor/vanilla-enhanced/README.md for the permission record.',
+      contact: 'carademono, through the Lysandus’ Tomb Discord server',
+      vendor: Object.freeze(['vanilla-enhanced']),
+      link: 'https://www.nexusmods.com/daggerfallunity/mods/273',
+    }),
     // WA1: Kamer's third - after the mill and the wilderness, which the CR1
     // gate finds first by his name.
     Object.freeze({

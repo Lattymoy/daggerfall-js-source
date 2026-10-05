@@ -140,8 +140,8 @@ test('UI3 the diseases\' names are the seventeen the table carries, in its order
 
 // ── THE GLYPHS ──────────────────────────────────────────────────────
 
-test('UI3 the glyphs: eleven (REST1 the Rested campfire), each on the 16px grid the classic\'s spell icons use, every letter in its palette, every lit pixel outlined in the kit\'s black (no lit pixel touches the empty), drawn as runs, one source a name (mutants: a pixel unoutlined; a letter with no colour; the runs one rect a pixel)', () => {
-  assert.deepEqual(Object.keys(STATUS_GLYPHS).sort(), ['cold', 'disease', 'drunk', 'hot', 'hunger', 'poison', 'rested', 'sleep', 'stiff', 'thirst', 'wet']);   // REST1: and the Rested campfire
+test('UI3 the glyphs: twelve (REST1 the Rested campfire; TELL9 the bleed\'s two drops), each on the 16px grid the classic\'s spell icons use, every letter in its palette, every lit pixel outlined in the kit\'s black (no lit pixel touches the empty), drawn as runs, one source a name (mutants: a pixel unoutlined; a letter with no colour; the runs one rect a pixel)', () => {
+  assert.deepEqual(Object.keys(STATUS_GLYPHS).sort(), ['bleed', 'cold', 'disease', 'drunk', 'hot', 'hunger', 'poison', 'rested', 'sleep', 'stiff', 'thirst', 'wet']);   // REST1: and the Rested campfire; PIN MOVED (TELL9: the bleed's own icon)
   for (const [name, g] of Object.entries(STATUS_GLYPHS)) {
     assert.equal(g.rows.length, 16, `${name}: 16 rows`);
     let lit = 0;

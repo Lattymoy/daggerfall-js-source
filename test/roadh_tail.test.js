@@ -143,8 +143,8 @@ test('ROAD-H tail: the dungeon archer takes BowDamage\'s two-arm split - the sha
   assert.match(d, /const aim = foeDeps\.targetAimPoint\(_at, _pf, playerHeight\);/, 'the aim point is the target\'s transform through the one law');
   assert.match(d, /arrowAimDirection\(foeDeps\.enemyTransformPoint\(f\.ai\), aim, \{ targetIsPlayer: _atPlayer, playerCrouching: !!_senses\.playerCrouching \}\)/,
     'the crouch dip keys on WHO the target is (DaggerfallMissile.cs:584), not on a constant');
-  assert.match(d, /fireArrow\(from, dir, f\.entity\.weapon, false, f, _atPlayer \? null : _at\);/, 'a foe target rides the missile');
-  assert.match(d, /function fireArrow\(from, dir, weapon, fromPlayer, shooterFoe = null, aimFoe = null, muzzle = null\)/, 'fireArrow carries aimFoe (FIELD-GUN17: `muzzle` rides after it, null for every shaft - a PLAYER concern, and the enemy arm above passes six arguments and never reaches it)');
+  assert.match(d, /fireArrow\(from, dir, f\.entity\.weapon, false, f, _atPlayer \? null : _at, null, aimedArrowMeta\(shot\)\);/, 'a foe target rides the missile');   // PIN MOVED (TELL6d: and an aimed shot's word)
+  assert.match(d, /function fireArrow\(from, dir, weapon, fromPlayer, shooterFoe = null, aimFoe = null, muzzle = null, extra = null\)/, 'fireArrow carries aimFoe (FIELD-GUN17: `muzzle` rides after it, null for every shaft - a PLAYER concern, and the enemy arm above passes six arguments and never reaches it)');   // PIN MOVED (TELL6d: an aimed shot's word rides after the muzzle - the enemy arm passes null for it)
   assert.match(d, /missiles\.push\(\{ arrow: true, flatArchive: orbArchiveFor\(weapon\), weapon, fromPlayer, shooterFoe, aimFoe, pos,/, 'and stores it, so the impact fork\'s `m.aimFoe` arm (BowDamage\'s non-player arm) can run for an arrow (FIELD-GUN14: `flatArchive` rides beside it - the PICTURE forks, the arrow does not)');
   // the exterior pool's arm is the model - it reads the same law
   const x = src('src/scenes/exteriorFoes.js');
@@ -318,10 +318,11 @@ test('ROAD-H tail (review): an enemy shaft is SPENT on whatever it meets and DAM
   // the pool decides the target ONCE and hands it to every host's fire
   const x = src('src/scenes/exteriorFoes.js');
   assert.match(x, /const _at = f\.ai\.target \?\? PLAYER_TARGET, _atPlayer = isLocalPlayerTarget\(_at\);/);
-  assert.match(x, /onArrow\(from, dir, f, _atPlayer \? null : _at\);/, 'the selected foe rides the shaft; the player is null');
+  assert.match(x, /onArrow\(from, dir, f, _atPlayer \? null : _at, aimedArrowMeta\(shot\)\);/, 'the selected foe rides the shaft; the player is null');   // PIN MOVED (TELL6d: and an aimed shot's word)
   for (const [h, call] of [['src/scenes/world.js', 'arrows.fire'], ['src/scenes/exterior.js', 'arrows.fire'], ['src/scenes/worldModes.js', 'interiorArrows.fire']]) {
     const s = src(h);
-    assert.match(s, /onArrow: \(from, dir, f, aimFoe = null\) => \{/, `${h}: the host takes the target`);
-    assert.ok(s.includes(`${call}(from, dir, { enemy: true, shooterFoe: f, weapon: f.entity.weapon, aimFoe });`), `${h}: and stores it on the shaft`);
+    // PIN MOVED (TELL6d, bible/12-Enhanced-AI/Feud-Arc.md 8.1): and an aimed shot's word beside it
+    assert.match(s, /onArrow: \(from, dir, f, aimFoe = null, extra = null\) => \{/, `${h}: the host takes the target`);
+    assert.ok(s.includes(`${call}(from, dir, { enemy: true, shooterFoe: f, weapon: f.entity.weapon, aimFoe, ...(extra ?? {}) });`), `${h}: and stores it on the shaft`);
   }
 });

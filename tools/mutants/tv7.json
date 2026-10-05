@@ -142,8 +142,8 @@
   {
     "name": "TV7-wrong-bearing",
     "file": "src/scenes/world.js",
-    "old": "minDistance, maxDistance, bearingDegrees: 0, yawRad: yaw + turn }, fx)) return true;",
-    "new": "minDistance, maxDistance, bearingDegrees: 0, yawRad: cam.yaw + turn }, fx)) return true;",
+    "old": "minDistance, maxDistance, bearingDegrees: 0, yawRad: yaw + turn }, fx);",
+    "new": "minDistance, maxDistance, bearingDegrees: 0, yawRad: cam.yaw + turn }, fx);",
     "tests": [
       "test/tv7_bands.test.js"
     ],
@@ -172,7 +172,7 @@
   {
     "name": "TV7-kept-across-loads",
     "file": "src/scenes/world.js",
-    "old": "    tvBandSeen = { at: null, life: -1, list: [] }; _bandChase.clear(); _bandSpent.clear(); _bandMake.clear(); _bandPos.clear(); _bandPeer.clear(); _bandSpentAt.length = 0;   // TV7: nor the bands\n",
+    "old": "    tvBandSeen = { at: null, life: -1, list: [] }; _bandChase.clear(); _bandSpent.clear(); _bandMake.clear(); _bandPos.clear(); _bandPeer.clear(); _bandSpentAt.length = 0; wildBands.prune(() => false);   // TV7: nor the bands - AUDIT-F3: nor what they had noticed (a band that chased the abandoned run chased again on the first frame, from wherever it stood)\n",
     "new": "",
     "tests": [
       "test/tv7_bands.test.js"
@@ -292,7 +292,7 @@
   {
     "name": "TV7b-two-chasers",
     "file": "src/scenes/world.js",
-    "old": "      if (_bandChase.has(id) && chaseYields(online?.id ?? '', from)) _bandChase.delete(id);",
+    "old": "      if (_bandChase.has(id) && chaseYields(online?.id ?? '', from)) { _bandChase.delete(id); wildBands.forget(id); }",
     "new": "      // (both keep it)",
     "tests": [
       "test/tv7_bands.test.js"

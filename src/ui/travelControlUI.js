@@ -8,7 +8,7 @@
 // `pauseWhileOpened = false` and a clear background (:83-84), which is
 // a window that does not stop the game - the player keeps walking
 // underneath it. The port's overlay slot is the opposite: a townTalk
-// overlay HOLDS the motor and the world clock (scenes/world.js:23638,
+// overlay HOLDS the motor and the world clock (scenes/world.js:24404,
 // `_overlayHeld`), which is exactly what a journey must not do. So this
 // panel lives on the HUD layer, drawn by the host's `drawHud` pass and
 // clicked through the host's pointer ladder beside the large HUD's own
@@ -21,15 +21,16 @@
 //
 // THE ART is the mod's own `TOcontrolUI.png`, vendored and re-encoded
 // out of its bundle (vendor/travel-options/README.md says how and why).
-// The spinner over it is DFU's `UpDownSpinner`, whose art and geometry
-// the port already has for the chargen rollout (ui/chargenArt.js
-// UD_SPINNER, CHAR02I1.IMG) - the mod adds the spinner as a component
-// and does not ship art for it (:106-110).
+// RATE-LAW (2026-10-04, Mac: "Remove travel options dials"): the mod's
+// spinner is gone. It was DFU's `UpDownSpinner` (CHAR02I1.IMG, the mod
+// ships no art for it - :106-110) over the strip's own recess after
+// "TIME x:"; the recess now carries the rate the journey's ground runs at
+// (systems/timeScale.js travelRateOf), a readout in the spinner's own
+// value row, and nothing there takes a click.
 
-import { loadImg, nativeMetrics, drawImg, shadowText, NATIVE_W } from './nativePanel.js';
+import { nativeMetrics, drawImg, shadowText, NATIVE_W } from './nativePanel.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
-import { accelLimitOf, halfAccelLimitOf } from '../systems/timeScale.js';
 import { TRAVEL_OPTIONS_TEXT as T } from '../systems/travelOptionsText.js';
 import { firstHotkey } from '../systems/dialogShortcuts.js';
 
@@ -55,18 +56,9 @@ export const MESSAGE_POS = Object.freeze([0, 32]);
 export const MESSAGE_SECONDS = 3;
 
 /** ui/chargenArt.js UD_SPINNER, which is UpDownSpinner.cs:96-116 - the
- *  15x20 widget, its up arrow, its value row and its down arrow. */
-export const UD_SPINNER = Object.freeze({ w: 15, h: 20, up: [0, 0, 15, 7], value: [0, 7, 15, 6], down: [0, 13, 15, 7] });
-
-/** :222-236 - the two steps. Below five the spinner moves by one, at
- *  five and above by five, and it never goes under 1 or over the
- *  limit in force (which is halved while a path is being followed). */
-export function fasterAcceleration(current, limit) {
-  return current < 5 ? current + 1 : Math.min(limit, current + 5);
-}
-export function slowerAcceleration(current) {
-  return current <= 5 ? Math.max(1, current - 1) : Math.max(1, current - 5);
-}
+ *  15x20 widget the recess was cut for. RATE-LAW: only its VALUE ROW is
+ *  used, as the rate readout's place; the arrows and their clicks are gone. */
+export const UD_SPINNER = Object.freeze({ w: 15, h: 20, value: [0, 7, 15, 6] });
 
 const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && y < ry + rh;
 
@@ -99,9 +91,7 @@ export async function preloadTravelControlArt(deps = {}) {
       strip = tex ? { tex, w: px.width, h: px.height, key: 'TOcontrolUI' } : null;
     }
   } catch { strip = null; }
-  let spinner = null;
-  try { spinner = await loadImg(deps, 'CHAR02I1.IMG'); } catch { spinner = null; }
-  _art = { strip, spinner };
+  _art = { strip };   // RATE-LAW: no spinner art - the readout is text
   return _art;
 }
 export const travelControlArtLoaded = () => !!_art;
@@ -116,26 +106,22 @@ export function _setTravelControlArtForTests(art) { _art = art; }
  *  holds it. A player looking at a free cursor over the spinner clicked, the gate refused, and the click relocked
  *  the pointer instead - Map, Camp and Exit have keys, so only the mouse-only spinner looked broken, stuck at its
  *  start value of 10. The gate is the LOCK itself now: a locked click (frozen coordinates) is still refused, a click
- *  with the pointer free reaches the strip. The enhanced strip is DOM and takes its own clicks. */
+ *  with the pointer free reaches the strip. The enhanced strip is DOM and takes its own clicks. (RATE-LAW: the spinner
+ *  is gone - the gate is Map's, Camp's and Exit's.) */
 export function stripTakesClick({ showing = false, paused = false, locked = false, button = 0, enhancedDom = false } = {}) {
   return !!showing && !paused && !locked && button === 0 && !enhancedDom;
 }
 
-/** The panel. `deps`: { onClose, onCancel, onTimeAccelerationChanged,
- *  binding } - the mod's three events (:245-252, :77-79) and the host's
- *  key-binding reader for the exit button's hotkey. */
+/** The panel. `deps`: { onClose, onCancel, onOpenMap } - the mod's
+ *  events (:245-252, :77-79). RATE-LAW: the third, OnTimeAccelerationChanged,
+ *  went with the spinner - the panel says the rate, it never sets one. */
 export class TravelControlUI {
-  /** :70-87, the constructor. `accelerationLimit` is rounded down to a
-   *  multiple of five, and the half-limit is the same rounding of half
-   *  of it - so a setting of 60 gives 60 and 30, and a setting of 55
-   *  gives 55 and 25. */
-  constructor({ defaultStartingAccel = 10, accelerationLimit = 100, ...deps } = {}) {
+  /** :70-87, the constructor - less the spinner's starting value and its
+   *  limits (RATE-LAW: the journey's ground sets the rate). */
+  constructor(deps = {}) {
     this.deps = deps;
-    this._preferredAcceleration = defaultStartingAccel;
-    this._timeAcceleration = defaultStartingAccel;
-    this.accelLimit = accelLimitOf(accelerationLimit);
-    this.halfAccelLimit = halfAccelLimitOf(accelerationLimit);
-    this.halfLimit = false;          // :65
+    this.timeAcceleration = 1;       // RATE-LAW: the rate in force, written by the journey (travelOptions.js applyRate)
+    this.onRoad = false;             // RATE-LAW: and whether its ground is a road or a track
     this.isShowing = false;          // :56
     this.destinationName = '';
     this.message = '';
@@ -144,23 +130,10 @@ export class TravelControlUI {
     this.isChoiceWindow = true;      // the port's raw-key routing flag
   }
 
-  // TRAVEL-LAST-SPEED (bible/06-Systems/Travel-Options.md): a path's or a dial's cap never overwrites the chosen rate.
-  get timeAcceleration() { return this._timeAcceleration; }
-  set timeAcceleration(value) { this._preferredAcceleration = value; this._timeAcceleration = value; }
-
-  /** :67-70, GetAccelerationLimit. */
-  accelerationLimit() { return this.halfLimit ? this.halfAccelLimit : this.accelLimit; }
-
-  /** TO-LIVE (scenes/world.js refreshTravelOptionsSettings): the tile's Acceleration Limit dial turned in play - the
-   *  constructor's rounding again, and the acceleration in force the chosen one under it (TRAVEL-LAST-SPEED). */
-  setAccelerationLimit(accelerationLimit) {
-    this.accelLimit = accelLimitOf(accelerationLimit);
-    this.halfAccelLimit = halfAccelLimitOf(accelerationLimit);
-    const limit = this.accelerationLimit();
-    const next = Math.max(1, Math.min(limit, this._preferredAcceleration));
-    if (this.timeAcceleration === next) return;
-    this._timeAcceleration = next;
-    if (this.isShowing) this._accelChanged();
+  /** RATE-LAW: the journey says the rate its ground runs at (systems/timeScale.js travelRateOf). */
+  setRate(rate, onRoad = false) {
+    this.timeAcceleration = rate;
+    this.onRoad = !!onRoad;
   }
 
   /** :60-63, SetDestinationName. */
@@ -169,12 +142,11 @@ export class TravelControlUI {
   /** :156-163, ShowMessage - three seconds of unscaled time. */
   showMessage(message) { this.message = String(message ?? ''); this.messageTimer = MESSAGE_SECONDS; }
 
-  /** :186-193, OnPush - the panel appears and the CHOSEN acceleration is
-   *  clamped into the limit in force (TRAVEL-LAST-SPEED: the mod's kept it). */
+  /** :186-193, OnPush - the panel appears (RATE-LAW: no spinner to clamp
+   *  into a limit; the journey sets the rate as it starts). */
   show() {
     this.isShowing = true;
     this.done = false;
-    this._timeAcceleration = Math.max(1, Math.min(this.accelerationLimit(), this._preferredAcceleration));
   }
 
   /** :195-199, OnPop. */
@@ -199,18 +171,6 @@ export class TravelControlUI {
     this._pop();
     this.deps.onCancel?.();
     this.deps.onClose?.();
-  }
-
-  _accelChanged() { this.deps.onTimeAccelerationChanged?.(this.timeAcceleration); }
-
-  /** :220-236, the two spinner handlers. */
-  faster() {
-    this.timeAcceleration = fasterAcceleration(this.timeAcceleration, this.accelerationLimit());
-    this._accelChanged();
-  }
-  slower() {
-    this.timeAcceleration = slowerAcceleration(this.timeAcceleration);
-    this._accelChanged();
   }
 
   /** :165-179, Update - the message's own clock. UNSCALED: the mod
@@ -239,7 +199,7 @@ export class TravelControlUI {
   }
 
   /** :131-133 and :140-141 - the two buttons that carry a tooltip.
-   *  EXIT has none in the mod (:143-147), and neither has the spinner. */
+   *  EXIT has none in the mod (:143-147), nor the rate's readout. */
   tooltipAt(vx, vy) {
     if (!this.isShowing) return null;
     const x0 = Math.trunc((NATIVE_W - CONTROL_RECTS.panel[2]) / 2);
@@ -259,14 +219,7 @@ export class TravelControlUI {
     if (inRect(CONTROL_RECTS.map, px, py)) { this.deps.onOpenMap?.(); return true; }
     if (inRect(CONTROL_RECTS.camp, px, py)) { this.closeWindow(); return true; }
     if (inRect(CONTROL_RECTS.exit, px, py)) { this.cancelWindow(); return true; }
-    // the spinner: its top half is up, its bottom half is down
-    const [sx, sy] = CONTROL_RECTS.timeAccel;
-    if (inRect([sx, sy, UD_SPINNER.w, UD_SPINNER.h], px, py)) {
-      if (py < sy + UD_SPINNER.up[3]) this.faster();
-      else if (py >= sy + UD_SPINNER.down[1]) this.slower();
-      return true;
-    }
-    return true;   // the strip swallows a click that hit no button
+    return true;   // the strip swallows a click that hit no button - the rate's readout among them (RATE-LAW)
   }
 
   /** :180-186, Draw. The mod also draws the HUD's vitals and compass
@@ -282,9 +235,8 @@ export class TravelControlUI {
     // :113-115 - the destination label is centred inside its own panel
     const [dx, dy, dw] = CONTROL_RECTS.dest;
     if (this.destinationName) shadowText(renderer, font, this.destinationName, m, x0 + dx, dy, { align: 'center', w: dw });
-    // the spinner: DFU's own widget, drawn at the mod's anchor
+    // RATE-LAW: the rate in the recess the spinner sat in - its value row, at the mod's anchor; no arrows
     const [sx, sy] = CONTROL_RECTS.timeAccel;
-    if (_art?.spinner) drawImg(renderer, _art.spinner, m, x0 + sx, sy, UD_SPINNER.w, UD_SPINNER.h);
     const [vx, vy, vw] = UD_SPINNER.value;
     shadowText(renderer, font, String(this.timeAcceleration), m, x0 + sx + vx, sy + vy, { align: 'center', w: vw });
     // :116-119 - the message, centred under the strip on the screen itself

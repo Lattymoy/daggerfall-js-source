@@ -363,3 +363,12 @@ export function areEnemiesNearby(foes, { resting = false, includingPacified = fa
 export function foeHostile(f) {
   return !!f && !f.dead && !!f.ai && (f.ai.isHostile ?? true) && mobileTeamOf(f.entity) !== 'PlayerAlly';
 }
+
+/** WILD-ALERT (2026-10-04, Mac: "Enemies alerted are given an exclamation point and slow down as they do now, non alerted
+ *  enemies do not slowdown or bother the player"): A FOE ALERTED TO ME - hostile (the gate above), its target me (the
+ *  motor's own latch, `targetIsLocalPlayer`; a peer's puppet, its stream's), and seeing me or still hunting me blind
+ *  (EnemyMotor.GiveUpTimer, the pursuit that outlives a lost sight). What holds a fast traveller's clock (OW6) and wears
+ *  the "!" (systems/wildAlert.js); a foe that has not noticed me is neither. */
+export function foeAlerted(f) {
+  return foeHostile(f) && f.ai.targetIsLocalPlayer === true && (!!f.ai.detected || (f.ai.giveUpTimer ?? 0) > 0);
+}

@@ -1,0 +1,42 @@
+[
+  {
+    "name": "RLFIX-spot-host",
+    "file": "src/systems/travelOptions.js",
+    "old": "      if (r.point && r.i >= r.legs.length - 1) return !!deps.onRoad?.();\n",
+    "new": "",
+    "tests": [
+      "test/ratelawfix.test.js",
+      "test/travel_speed_preference.test.js"
+    ]
+  },
+  {
+    "name": "RLFIX-legless",
+    "file": "src/systems/travelOptions.js",
+    "old": "      if (r.point && r.i >= r.legs.length - 1) return !!deps.onRoad?.();",
+    "new": "      if (r.point && r.legs.length && r.i >= r.legs.length - 1) return !!deps.onRoad?.();",
+    "tests": [
+      "test/ratelawfix.test.js",
+      "test/travel_speed_preference.test.js"
+    ]
+  },
+  {
+    "name": "RLFIX-hold-lifted",
+    "file": "src/scenes/world.js",
+    "old": "travelAsked = n; if (!held || n < worldTimeScale()) setWorldTimeScale(n); },",
+    "new": "travelAsked = n; void held; setWorldTimeScale(n); },",
+    "tests": [
+      "test/ratelawfix.test.js",
+      "test/travel_speed_preference.test.js"
+    ]
+  },
+  {
+    "name": "RLFIX-lower-held",
+    "file": "src/scenes/world.js",
+    "old": "travelAsked = n; if (!held || n < worldTimeScale()) setWorldTimeScale(n); },",
+    "new": "travelAsked = n; if (!held) setWorldTimeScale(n); },",
+    "tests": [
+      "test/ratelawfix.test.js",
+      "test/travel_speed_preference.test.js"
+    ]
+  }
+]

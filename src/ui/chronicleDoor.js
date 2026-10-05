@@ -8,7 +8,7 @@
 //
 //   ui/charSheetNav.js:53   the sheet's LOGBOOK button
 //   ui/charSheetNav.js:61   the sheet's HISTORY button
-//   scenes/world.js:5624    the world host's own logbook
+//   scenes/world.js:6177    the world host's own logbook
 //   scenes/dungeonContext.js the dungeon's
 //
 // The seam is the U52/U53/PX23 shape a sixth time. What is new is the
@@ -68,7 +68,13 @@ export const historyDoorReady = () => isEnhanced() || playerHistoryArtLoaded();
  *                         can answer; a host without one leaves them
  *                         unset, which is the same nothing a
  *                         CanFindPlace miss produces
- *   section               'quests' | 'notes' | 'messages' | 'history' - where the
+ *   people                LW7c, OURS not DFU's: () => the living world's
+ *                         People page (systems/livingWorld/people.js
+ *                         peoplePage: friends, enemies, known - each with
+ *                         its name, town and words), or omitted - the
+ *                         enhanced window's People section draws only
+ *                         where it is handed over (the living world on)
+ *   section               'quests' | 'notes' | 'messages' | 'history' | 'people' - where the
  *                         ENHANCED window opens. The classic windows
  *                         are two, so this is also which of them the
  *                         classic skin gets.

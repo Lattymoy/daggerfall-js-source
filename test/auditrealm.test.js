@@ -22,6 +22,7 @@ import { RRI_TEMPLATES, RRI_TEMPLATE_PATCHES } from '../src/systems/rriItems.js'
 import { FORAGING_TEMPLATES } from '../src/systems/foragingLaw.js';   // MERGE 2: the professions branch's two registrars (FORAGE1, PROF2-PROF4)
 import { MINING_TEMPLATE_ROWS, WOOD_TEMPLATE_ROWS, REPAIR_KIT_ROW } from '../src/systems/profTemplates.js';
 import { STORES_ROW } from '../src/systems/naval/navalStores.js';   // SEA-REPAIR: the carpenter's stores' row
+import { KEEPSAKE_ROW } from '../src/systems/livingWorld/keepsake.js';   // LW6c: the eleventh registrar
 import { createTradePack, tradeRefusal } from '../src/systems/tradePack.js';
 import { createWeapon } from '../src/combat/enemyEquipment.js';
 import { realmIo, realmCreate, realmFetch, realmPut, realmTradeCall, realmJoin, realmDelete, createRealmSession, realmGoldAct, realmTradeEscrow } from '../src/systems/realmSaves.js';
@@ -151,6 +152,7 @@ test('AUDIT REALM F1: BOUND_TEMPLATES is every row the game registers with `boun
     ...FORAGING_TEMPLATES, ...MINING_TEMPLATE_ROWS, ...WOOD_TEMPLATE_ROWS, REPAIR_KIT_ROW,   // MERGE 2: Foraging's and the professions' rows - none bound: a material and a tool change hands
     STORES_ROW,   // SEA-REPAIR: the carpenter's stores - not bound: timber and pitch change hands
     ...REST_ITEM_ROWS,   // REST6: the seven rest supplies - none bound: a Bedroll or a Tonic changes hands
+    KEEPSAKE_ROW,   // LW6c: a keepsake of the fallen of a dive - not bound: it changes hands
   ];
   assert.deepEqual(rows.filter((t) => t.bound === true).map((t) => t.index).sort((a, b) => a - b), [...BOUND_TEMPLATES]);
   assert.ok(BOUND_TEMPLATES.includes(SIGIL_STONE_TEMPLATE));
@@ -164,7 +166,7 @@ test('AUDIT REALM F1: BOUND_TEMPLATES is every row the game registers with `boun
     }
   };
   walk('src');
-  assert.deepEqual(registrars.sort(), ['src/systems/comeSailAwayItems.js', 'src/systems/deepWatersFishItems.js', 'src/systems/foragingInstall.js', 'src/systems/gateSpoils.js', 'src/systems/naval/navalStores.js', 'src/systems/profTemplates.js', 'src/systems/restItems.js', 'src/systems/rriInstall.js', 'src/systems/survival/items.js', 'src/systems/thunderlock.js']);   // SEA-REPAIR: the ninth, the carpenter's stores; REST6: the tenth, the rest supplies
+  assert.deepEqual(registrars.sort(), ['src/systems/comeSailAwayItems.js', 'src/systems/deepWatersFishItems.js', 'src/systems/foragingInstall.js', 'src/systems/gateSpoils.js', 'src/systems/livingWorld/keepsake.js', 'src/systems/naval/navalStores.js', 'src/systems/profTemplates.js', 'src/systems/restItems.js', 'src/systems/rriInstall.js', 'src/systems/survival/items.js', 'src/systems/thunderlock.js']);   // SEA-REPAIR: the ninth, the carpenter's stores; REST6: the tenth, the rest supplies; LW6c: the eleventh, the keepsake
   // and the honest client never offers one: the window's pack refuses it before a half is ever written
   const holder = { items: [{ ...sigilStone(), stackCount: 2 }], goldPieces: 0 };
   assert.equal(createTradePack(holder).offerable(holder.items[0]), tradeRefusal(holder.items[0]));

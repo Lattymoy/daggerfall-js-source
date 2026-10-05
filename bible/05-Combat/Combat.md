@@ -511,7 +511,14 @@ EnemyMotor.KnockbackMovement + FormulaHelper:
 - THE SPEED (weaponKnockbackSpeed, formulas.js): kb = ((10d - w) *
   256)/(w + 10d) * 2d; speed = (10d/w) * (2d - kb/256), through
   classicToUnitySpeedUnitRatio/10 (3.95), FLOORED at 15 classic - so
-  every landed player hit clears the 5-classic hurt threshold.
+  every landed player hit clears the 5-classic hurt threshold. (The
+  port's own exception, TELL1 in `12-Enhanced-AI/Feud-Arc.md`: with
+  the Enhanced AI switch on, a foe WINDING UP a telegraphed blow holds
+  - no shove, no Hurt - until its poise breaks, and the blow that breaks
+  it, or the first on a foe overreached by its miss (TELL4), writes its
+  shove x1.5 (`TELL.STAGGER_KNOCK`, the store's cap still clamping it);
+  an iron blow (TELL3) holds through every blow. DFU's law everywhere
+  else.)
   Weight (enemyWeightClassicUnits): monster table Weight, class
   female 240 / male 350; the + items*4 term FLAGGED to item weights.
 - THE GATE (WeaponManager:578): monsters need Weight > 0 - the
@@ -625,7 +632,7 @@ the DEFAULT state, because starting weapons land in the bag unequipped
 `WEAPON_SKILL[playerWeapon.weapon.name]` raw at both its swing sites
 where the exterior hosts guarded with `?.`: the strike-frame bow test
 threw on EVERY bare-handed swing (reproduced live at
-dungeonContext.js:2595 by tools/fistProbe.mjs), the melee tally on
+dungeonContext.js:2763 by tools/fistProbe.mjs), the melee tally on
 every resolved fist hit. Fixed with the rule enforced, not remembered:
 a source sweep over src/scenes fails on any unguarded
 `playerWeapon.weapon.` deref, the bare-handed path is driven
@@ -1360,19 +1367,19 @@ the step, and the dip only ever makes `|dir|` larger.
 `onAttackFromPlayer` the sentence is about is `:215`, which is where the
 sibling comment in `cityGuards.js` was pointed in the same round). The
 dungeon's three-host sentence had its `exterior.js` number re-resolved
-and its `world.js:25792` left naming a `WorldTime`/`PauseWhileOpen` note
-800 lines from the host's `onPlayerArrowHitFoe` (`world.js:27784`); all
+and its `world.js:26608` left naming a `WorldTime`/`PauseWhileOpen` note
+800 lines from the host's `onPlayerArrowHitFoe` (`world.js:28615`); all
 three halves are read in `citedrift.test.js` now, the shape AUDIT 62's
 review had to apply to `pauseWindow`/`restWindow`. And `listPicker.js`'s
 "three routers that mount a bare picker" named three lines, none of
 which was a router — the round bumped the dungeon's `:4112` to `:4113`
 mechanically, and a wrong number moved by the right offset is still
-wrong. All three are resolved by content (`townTalk.js:1254`,
-`worldModes.js:11059`, `dungeonContext.js:8847`) and pinned as a set.
+wrong. All three are resolved by content (`townTalk.js:1274`,
+`worldModes.js:11081`, `dungeonContext.js:9090`) and pinned as a set.
 
 The `worldModes.js` fix inserts one line, so cites into that host past
-it move by one: the dungeon's `worldModes.js:9526` and
-`chargenSession.js`'s `worldModes.js:11172` are bumped and pinned. Four
+it move by one: the dungeon's `worldModes.js:9547` and
+`chargenSession.js`'s `worldModes.js:11194` are bumped and pinned. Four
 `worldModes.js` cites elsewhere (`interior.js`, `world.js`,
 `tradeModes.js`, `saveWindow.js`) and `UI-Arc.md`'s notebook trio were
 ALREADY stale before this round and are left as found rather than

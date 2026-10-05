@@ -56,8 +56,8 @@
   {
     "name": "WATER-FOES-overworld-threat",
     "file": "src/scenes/world.js",
-    "old": "if (!foeHostile(f) || !f.ai.feet || f.ai.unreachable) continue;",
-    "new": "if (!foeHostile(f) || !f.ai.feet) continue;",
+    "old": "if (!foeAlerted(f) || !f.ai.feet || f.ai.unreachable) continue;",
+    "new": "if (!foeAlerted(f) || !f.ai.feet) continue;",
     "tests": [
       "test/waterfoes.test.js"
     ]

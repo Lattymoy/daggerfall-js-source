@@ -235,8 +235,8 @@ test('CRYSTAL-FIST the service end to end: Flylighter registers, holds the title
   assert.deepEqual(['t' in m.claims, 'au' in m.claims, (m.claims.g ?? []).includes('crystalfist')], [false, false, false], 'off the list: the next token carries none of the three');
 });
 
-test('CRYSTAL-FIST token and relay: a token may carry the title, the glyph and the resonance and verifies; every glyph at once still fits; the relay - world170, the one that knows the words - reads all three out of the signature onto the peer\'s row (mutants: the vocabulary\'s aura)', async () => {
-  assert.equal(RELAY_VERSION, 'world170', 'CRYSTAL-FIST moved it on (world170): the vocabulary rides the relay\'s bundle');
+test('CRYSTAL-FIST token and relay: a token may carry the title, the glyph and the resonance and verifies; every glyph at once still fits; the relay - world171, the one that knows the words - reads all three out of the signature onto the peer\'s row (mutants: the vocabulary\'s aura)', async () => {
+  assert.equal(RELAY_VERSION, 'world171', 'CRYSTAL-FIST moved it on (world171 - world170 on its branch, renumbered past main\'s FEUD at the merge): the vocabulary rides the relay\'s bundle');
   const kp = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
   const pub = await importPublicKeyB64(Buffer.from(new Uint8Array(await subtle.exportKey('raw', kp.publicKey))).toString('base64url'), { subtle });
   const nowS = 1_760_000_000;

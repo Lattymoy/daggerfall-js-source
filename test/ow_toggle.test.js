@@ -17,6 +17,7 @@ import { MOD_CURATED, modDials } from '../src/systems/features.js';
 import { TRAVEL_OPTIONS_VENDOR } from '../src/systems/travelOptions.js';
 import { travelWalkRate, TV_MOVE_ACTIONS } from '../src/scenes/travelView.js';
 import { createLoadGovernor, unbuiltAround } from '../src/systems/travelGovernor.js';
+import { foePaced } from '../src/systems/travelThreat.js';   // RATE-LAW: ENEMY-PACE's fixed floor, which the governor calls
 import { timeScale, setTimeScale, resetTimeScale, MAX_TIME_SCALE } from '../src/systems/timeScale.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -148,7 +149,7 @@ test('OW-TOGGLE host: the switch is read LIVE - flipped mid-game, the next ask a
 
 /** world.js's governor, mounted from its own source (as test/tv_wasd.test.js mounts it): `let tvHeld` through travelViewGovern. */
 function mountGovernor(env) {
-  const from = WORLD.indexOf('  let tvFoeRate = ');   // ENEMY-PACE: the near-enemies pace and its floor ride in front of tvHeld
+  const from = WORLD.indexOf('  let tvHeld = null;');   // RATE-LAW: ENEMY-PACE's stepper rate is gone - its floor is travelThreat.js foePaced
   const fn = WORLD.indexOf('  function travelViewGovern(dt) {', from);
   const end = WORLD.indexOf('\n  }\n', fn) + 4;
   assert.ok(from >= 0 && fn > from && end > fn, 'the governor\'s source');
@@ -161,7 +162,8 @@ test('OW-TOGGLE host: a first-person journey under a view brought down runs at t
     resetTimeScale();
     setTimeScale(20);   // the journey's own ask, set by the mod's panel
     const g = mountGovernor({
-      travelControlUI: { isShowing: true, timeAcceleration: 20, accelerationLimit: () => 100 },
+      travelControlUI: { isShowing: true },   // RATE-LAW: no spinner, no limit - the journey's ask is travelAsked below
+      foePaced, travellerOnRoad: () => false,
       travelOptions: { state: { autopilot: {} } },
       travelWalkRate, TV_MOVE_ACTIONS,
       travelView: { active: false, state: 'off' },   // brought down

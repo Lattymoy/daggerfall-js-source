@@ -87,6 +87,7 @@ export function promoteEliteFoe(entity, { own = true, eliteDungeon = false, chec
     const hm = eliteDungeon ? ELITE_FOE_ELITE_DUNGEON_HEALTH_MULT : ELITE_FOE_HEALTH_MULT;
     entity.maxHealth = Math.max(1, Math.round((entity.maxHealth || 1) * hm));
     entity.health = entity.maxHealth;
+    entity.healthMult = (entity.healthMult ?? 1) * hm;   // TELL1: what was stood on the kind's own health (ai/tells.js kindHealth - its poise)
   }
   const prior = Number.isFinite(entity.damageScale) && entity.damageScale > 0 ? entity.damageScale : 1;
   entity.damageScale = prior * (eliteDungeon ? ELITE_FOE_ELITE_DUNGEON_DAMAGE_MULT : ELITE_FOE_DAMAGE_MULT);

@@ -488,6 +488,8 @@ test('doctrine: no raster of game data is tracked anywhere in the repo', () => {
 // Checked BOTH WAYS (AUDIT 27 F302's lesson: a row is a CLAIM, and a
 // claim about a file that is not there is not one) - see the pins
 // below.
+/** VE4: the mark a row carries when its pixels ARE a render of game data - Port-Doctrine's one exception. */
+const VE4_DERIVED = "Port-Doctrine's one exception (Mac, 2026-10-05): Daggerfall's own textures, repainted by the mod's author, carried on Mac's approval";
 const BUNDLE_ART = new Map([
   // FORAGE1 (2026-09-28): Foraging's seven pictures - the author's own
   // pixel art (tools, a wood bundle, an egg), no Daggerfall record - taken
@@ -584,6 +586,22 @@ const BUNDLE_ART = new Map([
   ['vendor/iliac-puddle-no-more/Flats/',
     { manifest: 'vendor/iliac-puddle-no-more/iliac-puddle-no-more.dfmod.json',
       why: "THIRD-PARTY - Iliac Puddle No More 1.2.2 (jet082); the mod's own seven fish, decoded from the bundle's Texture2D objects (DXT5, the first mip - the pixels the game samples) by tools/iliacPuddleAssets.mjs (see the vendor README)" }],
+  // VE4 (2026-10-05, Mac: "Approved and yes", then "Put it in the codebase"): VANILLA ENHANCED - THE ONE DERIVED PACK.
+  // Every row above carries a modder's OWN art, and several say so against this very rule. These carry Daggerfall's
+  // textures repainted, which A RENDER OF GAME DATA IS GAME DATA forbids - and which Mac approved: Port-Doctrine records
+  // the exception and names its directory. So each row says it is derived, and the pins below hold the mark to the
+  // directories that paragraph names. Each directory answers to its own generated listing (tools/vanillaEnhancedVendor.mjs
+  // writes it from the mod's repository at the pinned commit, every file's source path and sha256 beside it), so the
+  // both-ways derivation above holds for it as for every other bundle.
+  ['public/art/vanilla-enhanced/base/',
+    { manifest: 'vendor/vanilla-enhanced/base.files.json', derived: VE4_DERIVED,
+      why: "THIRD-PARTY - Vanilla Enhanced - Base 3.4.7 (carademono), carried on Mac's word of the author's permission; Daggerfall's own textures remastered - the terrain's tile sets, the nature flats, the city walls and the dungeons - the 1,246 PNGs its manifest names, byte for byte from github.com/drcarademono/vanilla-enhanced at the commit the listing pins (see vendor/vanilla-enhanced/README.md for the open permission record)" }],
+  ['public/art/vanilla-enhanced/masked-roads/',
+    { manifest: 'vendor/vanilla-enhanced/masked-roads.files.json', derived: VE4_DERIVED,
+      why: "THIRD-PARTY - Vanilla Enhanced - Masked Roads 3.4.7 (carademono & Kokey), carried on Mac's word of the author's permission; the road tiles - its own nine PNGs, and the 21 slices of its texture arrays no PNG it or the Base ships draws, each the repository's source picture for the slice, proved within BC7's error of it (see vendor/vanilla-enhanced/README.md)" }],
+  ['public/art/vanilla-enhanced/snowless-swamps-and-jungles/',
+    { manifest: 'vendor/vanilla-enhanced/snowless-swamps-and-jungles.files.json', derived: VE4_DERIVED,
+      why: "THIRD-PARTY - Vanilla Enhanced - Snowless Swamps and Jungles 3.4.7 (carademono), carried on Mac's word of the author's permission; the swamps' and jungles' ground and buildings without snow - the 160 PNGs its manifest names, byte for byte (see vendor/vanilla-enhanced/README.md)" }],
 ]);
 /** The basenames each bundle manifest names, lowercased. Memoised: the
  *  membership test runs once per tracked raster and the manifest is
@@ -642,6 +660,38 @@ test('doctrine EOTB0: the derivation is not vacuous - a stranger and a loss both
   // artwork dropped into the mod's folder
   assert.equal(bundleArt(`${dir}112364/logo.png`), false, 'a file the manifest never named must not pass as the mod\u2019s');
   assert.equal(bundleArt(`${dir}112364/112364_0-0.png`), true, 'and one it did must pass');
+});
+
+// \u2500\u2500 VE4: A DERIVED ROW IS THE EXCEPTION PORT-DOCTRINE RECORDS, AND ONLY IT \u2500\u2500
+//
+// Every other row is a CLAIM that the art is the modder's own. Vanilla
+// Enhanced's rows say the opposite - it IS Daggerfall's art, repainted -
+// and stand on Mac's approval alone. An approval is bounded by what it
+// approved: the doctrine's exception paragraph names the directory, and a
+// derived row anywhere else, or a named directory with no row, reddens.
+const DOCTRINE = 'bible/01-Overview/Port-Doctrine.md';
+/** The directories Port-Doctrine's exception paragraph names - every backticked `public/` path on its line. */
+function exceptionDirs() {
+  const line = readFileSync(join(root, DOCTRINE), 'utf8').split('\n').find((l) => /^\s+\*\*THE ONE EXCEPTION\b/.test(l)) ?? '';
+  return [...line.matchAll(/`(public\/[^`]+\/)`/g)].map((m) => m[1]);
+}
+/** The derived rows standing outside every directory the exception names. */
+const derivedOutside = (rows, dirs) => [...rows].filter(([dir, r]) => r.derived && !dirs.some((d) => dir.startsWith(d))).map(([dir]) => dir);
+
+test('doctrine VE4: a derived row stands inside the exception Port-Doctrine records, and every row inside it says it is derived', () => {
+  const dirs = exceptionDirs();
+  assert.deepEqual(dirs, ['public/art/vanilla-enhanced/'], 'the doctrine names one directory');
+  assert.deepEqual(derivedOutside(BUNDLE_ART, dirs), [], 'repainted game data outside the approved directory');
+  for (const d of dirs) assert.ok([...BUNDLE_ART].some(([dir, r]) => r.derived && dir.startsWith(d)), `${d} is approved and no row carries it`);
+  // and inside it nothing passes as the port's own: every row there says what it is
+  for (const [dir, r] of BUNDLE_ART) if (dirs.some((d) => dir.startsWith(d))) assert.equal(r.derived, VE4_DERIVED, `${dir} sits in the exception and does not say so`);
+  for (const f of PUBLIC_ALLOWLIST.keys()) assert.ok(!dirs.some((d) => f.startsWith(d)), `${f}: an allow-list row inside the exception`);
+});
+
+test('doctrine VE4: the bound is not vacuous - a derived row outside the named directory reddens, and with no approval every one does', () => {
+  const rogue = new Map([...BUNDLE_ART, ['public/art/someone-elses-repaint/', { manifest: 'x', derived: VE4_DERIVED, why: 'THIRD-PARTY - x' }]]);
+  assert.deepEqual(derivedOutside(rogue, exceptionDirs()), ['public/art/someone-elses-repaint/']);
+  assert.deepEqual(derivedOutside(rogue, []), [...rogue].filter(([, r]) => r.derived).map(([d]) => d));
 });
 
 test('doctrine: no DERIVED raster is tracked either, whatever it is wearing', () => {

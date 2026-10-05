@@ -1,0 +1,317 @@
+[
+  {
+    "name": "RVN13-bit-moved",
+    "file": "src/systems/revenantFeud.js",
+    "old": "return i >= 0 ? (m | (1 << i)) >>> 0 : m; }, 0);",
+    "new": "return i >= 0 ? (m | (1 << (i + 1))) >>> 0 : m; }, 0);",
+    "tests": [
+      "test/rvn13_wire.test.js"
+    ]
+  },
+  {
+    "name": "RVN13-read-bit-moved",
+    "file": "src/systems/revenantFeud.js",
+    "old": "ADAPTATIONS.filter((_, i) => ((Number(mask) >>> i) & 1) === 1).slice(0, ADAPT_MAX);",
+    "new": "ADAPTATIONS.filter((_, i) => ((Number(mask) >>> (i + 1)) & 1) === 1).slice(0, ADAPT_MAX);",
+    "tests": [
+      "test/rvn13_wire.test.js"
+    ]
+  },
+  {
+    "name": "RVN13-read-uncapped",
+    "file": "src/systems/revenantFeud.js",
+    "old": "=== 1).slice(0, ADAPT_MAX);",
+    "new": "=== 1);",
+    "tests": [
+      "test/rvn13_wire.test.js"
+    ]
+  },
+  {
+    "name": "RVN13-weak-index-off",
+    "file": "src/systems/revenantFeud.js",
+    "old": "export const weakAt = (i) => (Number.isInteger(i) && i >= 0 && i < WEAKNESSES.length ? WEAKNESSES[i] : null);",
+    "new": "export const weakAt = (i) => (Number.isInteger(i) && i >= 0 && i < WEAKNESSES.length ? WEAKNESSES[i + 1] ?? null : null);",
+    "tests": [
+      "test/rvn13_wire.test.js"
+    ]
+  },
+  {
+    "name": "RVN13-ad-unwritten",
+    "file": "src/systems/revenantFeud.js",
+    "old": "  return { ...(ad ? { ad } : {}), ...(wq >= 0 ? { wq } : {}), ...(rev.p2 ? { p2: 1 } : {}), ...(rb ? { rb } : {}) };",
+    "new": "  return { ...(wq >= 0 ? { wq } : {}), ...(rev.p2 ? { p2: 1 } : {}), ...(rb ? { rb } : {}) };",
+    "tests": [
+      "test/rvn13_wire.test.js"
+    ]
+  },
+  {
+    "name": "RVN13-wq-unwritten",
+    "file": "src/systems/revenantFeud.js",
+    "old": "  return { ...(ad ? { ad } : {}), ...(wq >= 0 ? { wq } : {}), ...(rev.p2 ? { p2: 1 } : {}), ...(rb ? { rb } : {}) };",
+    "new": "  return { ...(ad ? { ad } : {}), ...(rev.p2 ? { p2: 1 } : {}), ...(rb ? { rb } : {}) };",
+    "tests": [
+      "test/rvn13_wire.test.js"
+    ]
+  },
+  {
+    "name": "RVN13-p2-unwritten",
+    "file": "src/systems/revenantFeud.js",
+    "old": "  return { ...(ad ? { ad } : {}), ...(wq >= 0 ? { wq } : {}), ...(rev.p2 ? { p2: 1 } : {}), ...(rb ? { rb } : {}) };",
+    "new": "  return { ...(ad ? { ad } : {}), ...(wq >= 0 ? { wq } : {}), ...(rb ? { rb } : {}) };",
+    "tests": [
+      "test/rvn13_wire.test.js"
+    ]
+  },
+  {
+    "name": "RVN13-learned-unread",
+    "file": "src/systems/revenantFeud.js",
+    "old": "  const learned = r?.ad != null ? maskAdapt(r.ad) : [];",
+    "new": "  const learned = [];",
+    "tests": [
+      "test/rvn13_wire.test.js"
+    ]
+  },
+  {
+    "name": "RVN13-weak-unread",
+    "file": "src/systems/revenantFeud.js",
+    "old": "  const weak = r?.wq != null ? weakAt(r.wq) : null;\n  const blows",
+    "new": "  const weak = null;\n  const blows",
+    "tests": [
+      "test/rvn13_wire.test.js"
+    ]
+  },
+  {
+    "name": "RVN13-edge-unbuilt",
+    "file": "src/systems/revenantFeud.js",
+    "old": "learned, weak, edge: adaptEdge(learned, weak), p2:",
+    "new": "learned, weak, p2:",
+    "tests": [
+      "test/rvn13_wire.test.js"
+    ]
+  },
+  {
+    "name": "RVN13-p2-unread",
+    "file": "src/systems/revenantFeud.js",
+    "old": "p2: r?.p2 === 1 ? (rev?.p2 ?? phaseTwo()) : null, blows };",
+    "new": "p2: null, blows };",
+    "tests": [
+      "test/rvn13_wire.test.js"
+    ]
+  },
+  {
+    "name": "RVN13-p2-kept",
+    "file": "src/systems/revenantFeud.js",
+    "old": "p2: r?.p2 === 1 ? (rev?.p2 ?? phaseTwo()) : null, blows };",
+    "new": "p2: r?.p2 === 1 ? (rev?.p2 ?? phaseTwo()) : rev?.p2 ?? null, blows };",
+    "tests": [
+      "test/rvn13_wire.test.js"
+    ]
+  },
+  {
+    "name": "RVN13-given-unread",
+    "file": "src/systems/revenantFeud.js",
+    "old": "  const given = typeof masterName === 'string' ? masterName.split(/[, ]/)[0] : '';",
+    "new": "  const given = typeof masterName === 'string' ? masterName : '';",
+    "tests": [
+      "test/rvn13_wire.test.js"
+    ]
+  },
+  {
+    "name": "RVN13-word-unread",
+    "file": "src/systems/revenantFeud.js",
+    "old": "  return given && w ? `${possessive(given)} ${w}` : null;",
+    "new": "  return given ? `${possessive(given)} Band` : null;",
+    "tests": [
+      "test/rvn13_wire.test.js"
+    ]
+  },
+  {
+    "name": "RVN13-ad-zero",
+    "file": "src/net/wire.js",
+    "old": "r.ad < 1 || r.ad > FOE_ADAPT_MASK_MAX",
+    "new": "r.ad < 0 || r.ad > FOE_ADAPT_MASK_MAX",
+    "tests": [
+      "test/rvn13_wire.test.js"
+    ]
+  },
+  {
+    "name": "RVN13-ad-unbounded",
+    "file": "src/net/wire.js",
+    "old": "r.ad < 1 || r.ad > FOE_ADAPT_MASK_MAX || bitsOf(r.ad) > FOE_ADAPT_MAX",
+    "new": "r.ad < 1 || bitsOf(r.ad) > FOE_ADAPT_MAX",
+    "tests": [
+      "test/rvn13_wire.test.js"
+    ]
+  },
+  {
+    "name": "RVN13-ad-bits",
+    "file": "src/net/wire.js",
+    "old": " || bitsOf(r.ad) > FOE_ADAPT_MAX) return null; out.ad = r.ad; }",
+    "new": ") return null; out.ad = r.ad; }",
+    "tests": [
+      "test/rvn13_wire.test.js"
+    ]
+  },
+  {
+    "name": "RVN13-ad-unkept",
+    "file": "src/net/wire.js",
+    "old": "return null; out.ad = r.ad; }",
+    "new": "return null; }",
+    "tests": [
+      "test/rvn13_wire.test.js"
+    ]
+  },
+  {
+    "name": "RVN13-wq-unbounded",
+    "file": "src/net/wire.js",
+    "old": "r.wq < 0 || r.wq > FOE_WEAK_MAX",
+    "new": "r.wq < 0",
+    "tests": [
+      "test/rvn13_wire.test.js"
+    ]
+  },
+  {
+    "name": "RVN13-wq-unkept",
+    "file": "src/net/wire.js",
+    "old": "return null; out.wq = r.wq; }",
+    "new": "return null; }",
+    "tests": [
+      "test/rvn13_wire.test.js"
+    ]
+  },
+  {
+    "name": "RVN13-p2-any",
+    "file": "src/net/wire.js",
+    "old": "  if (r.p2 !== undefined) { if (r.p2 !== 1) return null; out.p2 = 1; }",
+    "new": "  if (r.p2 !== undefined) out.p2 = 1;",
+    "tests": [
+      "test/rvn13_wire.test.js"
+    ]
+  },
+  {
+    "name": "RVN13-rt-unbounded",
+    "file": "src/net/wire.js",
+    "old": "r.rt < 0 || r.rt > FOE_SEQ_MAX",
+    "new": "r.rt < 0",
+    "tests": [
+      "test/rvn13_wire.test.js"
+    ]
+  },
+  {
+    "name": "RVN13-rt-unkept",
+    "file": "src/net/wire.js",
+    "old": "return null; out.rt = r.rt; }",
+    "new": "return null; }",
+    "tests": [
+      "test/rvn13_wire.test.js"
+    ]
+  },
+  {
+    "name": "RVN13-weak-max-moved",
+    "file": "src/net/wire.js",
+    "old": "export const FOE_WEAK_MAX = 13;",
+    "new": "export const FOE_WEAK_MAX = 14;",
+    "tests": [
+      "test/rvn13_wire.test.js"
+    ]
+  },
+  {
+    "name": "RVN13-street-unwritten",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (!onWatch && f.entity?.revenant) Object.assign(r, feudWire(f.entity.revenant));",
+    "new": "      // none",
+    "tests": [
+      "test/rvn13_wire.test.js"
+    ]
+  },
+  {
+    "name": "RVN13-street-rt-unwritten",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "if (m) r.rt = m.seq; }",
+    "new": "}",
+    "tests": [
+      "test/rvn13_wire.test.js"
+    ]
+  },
+  {
+    "name": "RVN13-street-key",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": ",${r.ad ?? 0},${r.wq ?? -1},${r.p2 ?? 0},${r.rt ?? -1},${r.rb ?? 0}${r.wk !== undefined",
+    "new": ",${r.rb ?? 0}${r.wk !== undefined",
+    "tests": [
+      "test/rvn13_wire.test.js"
+    ]
+  },
+  {
+    "name": "RVN13-street-unread",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "if (f._feudWire !== fw) { f._feudWire = fw; f.entity.revenant = feudFromWire(f.entity.revenant, r); puppetRevenantBlows(f.entity, r); }",
+    "new": "if (f._feudWire !== fw) { f._feudWire = fw; puppetRevenantBlows(f.entity, r); }",
+    "tests": [
+      "test/rvn13_wire.test.js"
+    ]
+  },
+  {
+    "name": "RVN13-street-band-unnamed",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "if (name) f.entity.bandName = name; }",
+    "new": "}",
+    "tests": [
+      "test/rvn13_wire.test.js"
+    ]
+  },
+  {
+    "name": "RVN13-street-reveal",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    if (!onWatch && data.wc != null && hitClassOf(data)?.weak && f.entity?.revenant?.id) feudRevealWeak(f.entity);",
+    "new": "",
+    "tests": [
+      "test/rvn13_wire.test.js"
+    ]
+  },
+  {
+    "name": "RVN13-deep-unwritten",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (f.entity?.revenant) Object.assign(r, feudWire(f.entity.revenant));",
+    "new": "",
+    "tests": [
+      "test/rvn13_wire.test.js"
+    ]
+  },
+  {
+    "name": "RVN13-deep-key",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "${r.v},${r.ad ?? 0},${r.wq ?? -1},${r.p2 ?? 0},${r.rb ?? 0}${r.wk",
+    "new": "${r.v},${r.rb ?? 0}${r.wk",
+    "tests": [
+      "test/rvn13_wire.test.js"
+    ]
+  },
+  {
+    "name": "RVN13-deep-unread",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "f.entity.revenant = _fw ? feudFromWire(f.entity.revenant, r) :",
+    "new": "f.entity.revenant = _fw ? f.entity.revenant :",
+    "tests": [
+      "test/rvn13_wire.test.js"
+    ]
+  },
+  {
+    "name": "RVN13-deep-reveal",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (data.wc != null && hitClassOf(data)?.weak && f.entity?.revenant?.id) feudRevealWeak(f.entity);",
+    "new": "",
+    "tests": [
+      "test/rvn13_wire.test.js"
+    ]
+  },
+  {
+    "name": "RVN13-reveal-unwired",
+    "file": "src/systems/feudLedger.js",
+    "old": "  try { _onWeak(entity, { peer: true }); } catch { /* the reveal is no blow's business */ }",
+    "new": "",
+    "tests": [
+      "test/rvn13_wire.test.js"
+    ]
+  }
+]

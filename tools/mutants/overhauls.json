@@ -1,12 +1,12 @@
 [
   {
-    "name": "OVH-texture-panel-not-empty",
+    "name": "OVH-texture-panel-loses-vanilla-enhanced",
     "file": "src/systems/overhauls.js",
     "tests": [
       "test/overhauls.test.js"
     ],
-    "old": "    options: Object.freeze([]),\n  }),",
-    "new": "    options: Object.freeze([OVERHAUL_UI_PLACEHOLDER]),\n  }),"
+    "old": "      textureOption('vanilla-enhanced', 'Vanilla Enhanced', {",
+    "new": "      textureOption('vanilla-enhanced', 'Classic', {"
   },
   {
     "name": "OVH-sound-look-writes-one-row",

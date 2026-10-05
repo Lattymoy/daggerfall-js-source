@@ -690,7 +690,7 @@ const _swingListeners = new Map();
  *  resolves the player's swing through it). A name re-registered replaces, `null` removes. */
 export function registerPlayerSwingListener(name, fn) { if (typeof fn === 'function') _swingListeners.set(name, fn); else _swingListeners.delete(name); }
 
-export const foeUnaware = (foe) => !!foe?.ai && !foe.puppet && foe.ai.detected === false;
+export const foeUnaware = (foe) => !!foe?.ai && !foe.puppet && foe.ai.detected === false && foe.entity?.revenant?.edge?.watchful !== true;   // RVN2: a Watchful revenant is never unaware
 
 export function playerAttackOptions(weapon, machineState, backstabChance = 0, rolls = Math.random) {
   const swing = SWING_MODS[machineState] ?? { damage: 0, toHit: 0 };

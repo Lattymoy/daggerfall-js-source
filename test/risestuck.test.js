@@ -196,7 +196,8 @@ test('RISE-STUCK: a respawn that throws still takes the death screen down - its 
   const w = src('src/scenes/world.js');
   const ri = w.indexOf('function respawnOnlinePlayer()');
   const code = w.slice(ri, w.indexOf('\n  }\n', ri)).split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
-  assert.match(code, /townTalk\.showOverlay\(new ActionTextBox\(\[respawnFlavorText\(kind\)(?:, deathPenaltyText\(goldLost\)\]\.filter\(Boolean\)|\])\)\);[^\n]*\n\s*\}\)\.catch\(\(e\) => \{\n[^\n]*console\.error\([^\n]*\n\s*closeDeathScreen\(\);[^\n]*\n\s*\}\)\.finally\(\(\) => \{ _respawning = false; \}\);/,
+  // PIN MOVED (RVN8: a revenant's theft rides the same box, after the price - bible/12-Enhanced-AI/Feud-Arc.md 19)
+  assert.match(code, /townTalk\.showOverlay\(new ActionTextBox\(\[respawnFlavorText\(kind\)(?:, deathPenaltyText\(goldLost\)(?:, took\?\.line)?\]\.filter\(Boolean\)|\])\)\);[^\n]*\n\s*\}\)\.catch\(\(e\) => \{\n[^\n]*console\.error\([^\n]*\n\s*closeDeathScreen\(\);[^\n]*\n\s*\}\)\.finally\(\(\) => \{ _respawning = false; \}\);/,
     'the chain catches, closes the screen it finds and still frees the latch');
   // AUDIT RISE-REST F1: WHICHEVER HOST HOLDS IT. A death in a building or a dungeon stands in the mode's own slot, and
   // a rise that threw before (or inside) forceExitToExterior left it there - the catch read townTalk's slot alone.

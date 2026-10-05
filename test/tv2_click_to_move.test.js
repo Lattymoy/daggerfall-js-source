@@ -487,7 +487,7 @@ test('TV2 readout: the route line moves to its first point, lines through the re
   // PIN MOVED (AUDIT OW5 G1): the words say WHY - the load, or AUDIT OW4 J5's walk on the ground until the view rises
   assert.equal(TRAVEL_HELD_TEXT(20, 40), 'Held to ×20 of ×40 while the land loads');
   assert.equal(TRAVEL_HELD_TEXT(1, 20, 'ground'), 'Held to ×1 of ×20 until the Overworld rises');
-  assert.match(rd('src/ui/enhancedTravelControl.js'), /const why = shown != null \? TRAVEL_HELD_TEXT\(shown, accel, state\.heldWhy\) : '';\n\s*if \(parts\.accel && last\.accelTitle !== why\) \{ last\.accelTitle = why; parts\.accel\.title = why; \}/);
+  assert.match(rd('src/ui/enhancedTravelControl.js'), /const why = held != null \? TRAVEL_HELD_TEXT\(held, accel, state\.heldWhy\) : '';\n\s*if \(parts\.accel && last\.accelTitle !== why\) \{ last\.accelTitle = why; parts\.accel\.title = why; \}/);   // RATE-LAW: every hold said, the enemies' too (ENEMY-PACE's stepper is gone)
 });
 
 // ── THE WORLD HOST'S WIRING ─────────────────────────────────────────────────────────────────────────────────────────
@@ -528,19 +528,19 @@ test('TV2 host wiring: THE CAP - governed before the frame reads the travel scal
   assert.match(w, /if \(tvHeld != null\) \{ tvHeld = null; if \(journey\) setWorldTimeScale\(travelAsked\); \}\n\s*tvHeldWhy = null; journeySlowSaid\(null\);[^\n]*\n\s*if \(tvWalking\) \{[^\n]*\n\s*travelGovernor\.reset\(\);/, 'the mod\'s own ask back (PIN MOVED, TV-WASD: the keys\' travel let go beside it - test/tv_wasd.test.js)');
   // OW6: the classic skin's journey (and First-Person Travel's) is the mod's own ask under the enemies' cap alone - nothing near,
   // the ask handed back whole, never over the helm's own time step; under the view the lower of the ground's cap and the enemies'
-  assert.match(w, /const rate = csaHoldsTimeScale\(\) \? null : foeFloor\(foes\.cap, travelAsked\);\n\s*if \(rate != null && worldTimeScale\(\) !== rate\) setWorldTimeScale\(rate\);\n\s*tvHeld = rate != null && rate < travelAsked \? rate : null;/, 'the mod\'s own ask back');
-  assert.match(w, /const load = travelGovernor\.step\(dt, \{ unbuilt, requested: want \}\);\n\s*const foeCap = foeFloor\(foes\.cap, want\);[^\n]*\n\s*const rate = Math\.min\(load, foeCap\);/);
-  // AUDIT TV A2: the ASK is the mod's - its spinner and its own caps (the ring walk's x15, an interrupt's x1), recorded
-  // where the mod sets the clock - so the governor never lifts a journey past Travel Options' own limit
-  assert.match(w, /onTimeAccelerationChanged: \(n\) => \{ travelAsked = n; setWorldTimeScale\(n\); \},/);
-  assert.match(w, /setTimeScale: \(n\) => \{ travelAsked = n; setWorldTimeScale\(n\); \},/);
+  assert.match(w, /const rate = csaHoldsTimeScale\(\) \? null : foePaced\(foes\.cap, travelAsked\);\n\s*if \(rate != null && worldTimeScale\(\) !== rate\) setWorldTimeScale\(rate\);\n\s*tvHeld = rate != null && rate < travelAsked \? rate : null;/, 'the mod\'s own ask back');
+  assert.match(w, /const load = travelGovernor\.step\(dt, \{ unbuilt, requested: want \}\);\n\s*const foeCap = foePaced\(foes\.cap, want\);[^\n]*\n\s*const rate = Math\.min\(load, foeCap\);/);
+  // AUDIT TV A2: the ASK is the mod's - its ground's rate (RATE-LAW; it was the spinner) and its own caps (the ring walk's
+  // x15, an interrupt's x1), recorded where the mod sets the clock - so the governor never lifts a journey past the mod's
+  assert.doesNotMatch(w, /onTimeAccelerationChanged/, 'RATE-LAW: no spinner to tell the host');
+  assert.match(w, /setTimeScale: \(n\) => \{ const held = worldTimeScale\(\) < travelAsked; travelAsked = n; if \(!held \|\| n < worldTimeScale\(\)\) setWorldTimeScale\(n\); \},/, 'AUDIT-D3: the ask recorded, a hold never lifted by it');
   assert.match(w, /const want = journey \? travelAsked : walk;/);   // PIN MOVED (TV-WASD): a journey's ask, else the keys' travel
   assert.equal((w.match(/if \(!ok\) return false;\n(?:\s*partyWalkBegin\([^\n]*\n)?\s*travelGovernor\.reset\(\);   \/\/ AUDIT DEEP T2-8/g) ?? []).length, 2, 'a new click\'s journey forgets the old ceiling - the road\'s and the spot\'s');
   assert.match(w, /const radius = Math\.max\(1, grid - 1\);/, 'never its outermost ring, queued anew at every crossing and fogged (AUDIT DEEP T2-2) - and every ring inside it, always (AUDIT DEEP2 B-2: the early warning)');
   assert.match(w, /if \(uc\.gen !== gen \|\| uc\.x !== px\.x \|\| uc\.y !== px\.y \|\| uc\.r !== radius\) \{\n\s*uc\.n = unbuiltAround\(px, radius, \(x, y\) => x < 0 \|\| y < 0 \|\| x >= 1000 \|\| y >= 500 \|\| built\.has\(`\$\{x\},\$\{y\}`\)\);/);
   assert.match(w, /held: tvHeld,/, 'the travel panel says the clock is held');
   const panel = rd('src/ui/enhancedTravelControl.js');
-  assert.match(panel, /put\(parts\.accel, 'accel', shown != null \? `×\$\{shown\} \/ ×\$\{accel\}` : `×\$\{accel\}`\);/);
+  assert.match(panel, /put\(parts\.accel, 'accel', held != null \? `×\$\{held\} \/ ×\$\{accel\}` : `×\$\{accel\}`\);/);   // RATE-LAW: every hold shown, the enemies' too
   assert.match(rd('src/ui/enhancedPlusStyle.js'), /\.travelpanel-accel\.held \{/);
   assert.match(rd('src/ui/enhancedStyle.js'), /\.travelpanel-accel\.held \{/);
 });

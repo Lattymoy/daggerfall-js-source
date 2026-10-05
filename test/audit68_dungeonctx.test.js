@@ -29,6 +29,8 @@ import { FOES_FULL_MS } from '../src/net/online.js';   // AUDIT FINAL F7: the fu
 import { sayEnemyDied } from '../src/scenes/corpseMarker.js';   // LOOT7-CHECK DUNGEON-DIED: the kill door's notice, the real one
 import { eliteCorpseSize, isEliteCorpse, markEliteCorpseBatch } from '../src/systems/eliteFoes.js';   // ELITE FOES: the corpse chain's own imports, the real ones (no elite here: the size and batch as they were)
 import { effectiveLevel } from '../src/systems/mentorMode.js';   // SOFTCAP2: the mentor's level the spawn sites read (a free name there, the module's own import)
+import { blowClassOf } from '../src/ai/puppetBlows.js';   // AUDIT FEUD: the hit door builds a blow's class whenever its weakness rides (the real one - no wind-up here, no weakness: none)
+import { feudWeakBlow } from '../src/systems/feudLedger.js';   // AUDIT FEUD: ...asked of the real test (none registered here: no weakness)
 import { ARENA_PUPPET_OWNER } from '../src/net/arenaLaw.js';   // ARENA4: the kill door's puppet test, the real owner word (no puppet here)
 
 const D = readFileSync(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
@@ -95,7 +97,7 @@ const foeRec = (over = {}) => ({
 function killHarness({ foes, foeDeps = null, getTexture = async () => ({ recordCount: 99 }) } = {}) {
   const log = { deaths: 0, chimes: 0, freed: [], minted: 0, hud: [] };
   const state = {
-    foes, foeDeps, ARENA_PUPPET_OWNER, _authority: true, _layoutFoes: foes.length, opts: {}, lastPlayerFeet: [0, 0, 0], _ecvT: 0, _ctxDead: false,
+    foes, foeDeps, ARENA_PUPPET_OWNER, blowClassOf, feudWeakBlow, _authority: true, _layoutFoes: foes.length, opts: {}, lastPlayerFeet: [0, 0, 0], _ecvT: 0, _ctxDead: false,
     playerEntity: { isPlayer: true, items: [], luck: 50 },
     markFoeStruck: () => {}, markConcealedHit: () => {}, makeEnemiesHostile: () => {}, peerCandidate: () => null, renownFoeStruck, renownFoeDied, reportPlayerKill,   // RENOWN1: the kill door's two stamps, the real ones (no handler: nothing paid)
     partyFoeLoses, noteFighter, foeFighters, takeWholeBlow, PARTY_ME, registerFoeDoor,   // PSCALE1: the real weight - only my own blows land here, so every foe fights one and every blow lands whole
@@ -423,6 +425,7 @@ test('AUDIT 68 S19-rest-alert-decay-wrong-clock (LIVED1): the rest decays the al
     sharedClockOn: () => false, worldMinutes: () => own,   // AUDIT LIVED1 A: the arm hands its rounds the world's sky
     survivalFeed: () => null, survivalEnvNow: () => null, runSurvivalMinutes: () => {}, foes: [], foeSinks: () => ({}),
     decayEnemyAlert, dfLocation: { mapTableData: { dungeonType: 0 } }, _spawnEncounter: () => {},
+    onlineRoom: () => false, restInLair: () => false,   // PIN MOVED (RVN7d: the rest's first roll asks after a revenant at home - none here)
     intermittentEnemySpawn: (ctx) => { rolled.push(ctx.enemyAlertActive); return null; },
     camps: { tend: () => { state.tended = (state.tended ?? 0) + 1; } },   // AUDIT REST II H3: the arm tends my Campfire through the night
   };
@@ -462,7 +465,7 @@ test('AUDIT SET P-M3: a joiner\'s killing blow, applied at the host, is named on
   const rec = mount(`${declSrc('foeMaxOf')} ${fnSrc('roomRecord')} return { roomRecord };`, { q2: (x) => x, q3: (x) => x, FOE_HEALTH_MAX, FOE_LEVEL_MAX, KILLED_BY_MS, _sharedFoe: () => false, fightN: () => 1 });
   const r = rec.roomRecord(rat, 0, true);
   assert.equal(r.v, 'peer-7');
-  assert.ok(rat._sentKey.endsWith(',peer-7'), 'the name rides the key');
+  assert.ok(rat._sentKey.split(',').includes('peer-7'), 'the name rides the key');   // PIN MOVED (RVN13, Feud-Arc.md 25: a revenant's own ride the key after it)
   assert.equal('v' in rec.roomRecord(bat, 1, true), false, 'the host\'s kill names nobody');
   assert.equal('v' in rec.roomRecord(foeRec(), 2, true), false, 'a live foe names nobody');
   // AUDIT FINAL F7: for KILLED_BY_MS after the death, never for as long as the body lies - 453 elite corpses named by

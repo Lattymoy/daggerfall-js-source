@@ -172,10 +172,11 @@
   {
     "name": "OW3-T7-sight-gate",
     "file": "src/scenes/world.js",
-    "old": "      if (d > sight) continue;",
-    "new": "",
+    "old": "      if (!wildBands.step(b.id, { distM: d, reachM: sight,",
+    "new": "      if (!wildBands.step(b.id, { distM: d, reachM: Infinity,",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/tv7_bands.test.js",
+      "test/wildalert.test.js"
     ],
     "note": "Every band in the list chases, however far."
   }

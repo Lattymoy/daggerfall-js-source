@@ -39,7 +39,8 @@ test('PX30 target: the blow you landed, and it FADES', () => {
   markFoeStruck(foe, { fromPlayer: false });
   assert.equal(foeTarget(), null, 'a foe hitting ANOTHER foe is not your target');
   markFoeStruck(foe, { fromPlayer: true });
-  assert.deepEqual({ ...foeTarget(), fade: 1 }, { name: 'Grizzly Bear', health: 30, maxHealth: 50, fade: 1 });
+  // PIN MOVED (TELL9: the poise track rides the read - null for a foe with no brain, none drawn)
+  assert.deepEqual({ ...foeTarget(), fade: 1 }, { name: 'Grizzly Bear', health: 30, maxHealth: 50, fade: 1, poise: null });
   // It goes. A bar that never leaves is furniture.
   tickFoeTarget(FOE_TARGET_SECONDS - 1);
   assert.ok(foeTarget(), 'still there a second before its time');

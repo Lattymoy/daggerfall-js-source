@@ -35,7 +35,7 @@
 // A third has no port equivalent yet rather than being unported here:
 // EnemyAttack.cs:332 is `ApplyDamageToNonPlayer`, foe-vs-foe melee,
 // which the port's pools do not do (documented at enemyCasting.js:149
-// and dungeonContext.js:1926). When friendly fire lands, its splash is
+// and dungeonContext.js:2065). When friendly fire lands, its splash is
 // `showBloodSplash(targetBloodIndex, bloodCentre(...))`.
 
 import { FlatAnim, isAnimatedFlat, IMPACT_FPS, MISSILE_FPS } from '../render/flatAnimation.js';   // AUDIT 26 F033: ImpactBillboardFramesPerSecond   // FIELD-GUN14: a flying flat's own rate, which is the missile's
@@ -265,7 +265,7 @@ export function createHitEffects({
     bleedPlayer: (dt, feet, entity) => {
       if (!marks || !feet || !entity) return 0;
       const health = entity.health ?? 0, maxHealth = entity.maxHealth ?? 0;
-      const view = () => ({ feet, health, maxHealth, bloodIndex: 0, dead: !(health > 0), corpse: false, strides: false });
+      const view = () => ({ feet, health, maxHealth, bloodIndex: 0, dead: !(health > 0), corpse: false, strides: false, wound: !!entity.bleed });   // AUDIT TELL: a sweep's bleed drips (combat/bloodBleed.js WOUND_*)
       let n = 0;
       for (const a of bleeding.tick(dt, [PLAYER_WALKER], view)) {
         if (a.kind === 'drip' && marks.drip?.(a.bloodIndex, a.pos, a.count)) { n++; flashPlayerBleed(); }

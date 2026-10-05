@@ -1,0 +1,92 @@
+[
+  {
+    "name": "LW-FIX2-mark-find",
+    "file": "src/scenes/livingWatch.js",
+    "old": "    w.guard ??= guards.find((g) => g.livingFrom === w.from) ?? null;",
+    "new": "    w.guard ??= guards.find((g) => !g.dead) ?? null;",
+    "tests": [
+      "test/lwfix2_watch.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX2-deed",
+    "file": "src/scenes/livingWatch.js",
+    "old": "    if (w.guard?.dead) { w.town.slain({ living: { id: w.res.id, res: w.res, town: w.town }, pos: w.at }); turned.splice(i, 1); }",
+    "new": "    if (w.guard?.dead) { turned.splice(i, 1); }",
+    "tests": [
+      "test/lwfix2_watch.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX2-gone",
+    "file": "src/scenes/livingWatch.js",
+    "old": "    else if (w.guard ? !guards.includes(w.guard) : ++w.waited > WATCH_WAIT) turned.splice(i, 1);",
+    "new": "    else if (w.guard ? false : ++w.waited > WATCH_WAIT) turned.splice(i, 1);",
+    "tests": [
+      "test/lwfix2_watch.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX2-wait",
+    "file": "src/scenes/livingWatch.js",
+    "old": "export const WATCH_WAIT = 600;",
+    "new": "export const WATCH_WAIT = 60;",
+    "tests": [
+      "test/lwfix2_watch.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX2-word",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    this.o.relations?.()?.note(id, 'talk', this.dayOf(this._liveMinute()));",
+    "new": "    this.o.relations?.()?.note(id, 'talk', this.dayOf(this._now));",
+    "tests": [
+      "test/lwfix2_watch.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX2-tone",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    this.o.relations?.()?.note(id, kind, this.dayOf(this._liveMinute()));",
+    "new": "    this.o.relations?.()?.note(id, kind, this.dayOf(this._now));",
+    "tests": [
+      "test/lwfix2_watch.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX2-refusal",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    const s = rel.standing(id, this.dayOf(this._liveMinute()));",
+    "new": "    const s = rel.standing(id, this.dayOf(this._now));",
+    "tests": [
+      "test/lwfix2_watch.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX2-mark-swing",
+    "file": "src/scenes/cityGuards.js",
+    "old": "    if (stood && best.person?.living) stood.livingFrom = best.person.living;",
+    "new": "    void stood;",
+    "tests": [
+      "test/lwfix2_watch.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX2-mark-trample",
+    "file": "src/systems/rrRidingHost.js",
+    "old": "if (g) { g.livingFrom = from; chargeFoe(g, fwd); }",
+    "new": "if (g) { chargeFoe(g, fwd); }",
+    "tests": [
+      "test/lwfix2_watch.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX2-host",
+    "file": "src/scenes/world.js",
+    "old": "  const livingWatchStep = () => watchStep(_livingWatchTurned, cityGuards.guards);",
+    "new": "  const livingWatchStep = () => watchStep(_livingWatchTurned, []);",
+    "tests": [
+      "test/lwfix2_watch.test.js"
+    ]
+  }
+]

@@ -10,7 +10,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { comeSailAwayModels } from '../src/systems/comeSailAwayModels.js';
 import { spawnBoat, TRIGGER_MODEL, animatorOf, AUDIO_CLIPS, goModelName } from '../src/systems/comeSailAwayBoat.js';
-import { createComeSailAwayRuntime, NO_WATER_LEVEL, TIME_SCALES, BOAT_ACTIONS, customModelOf, activationModelOf } from '../src/systems/comeSailAway.js';
+import { createComeSailAwayRuntime, NO_WATER_LEVEL, TIME_SCALES, BOAT_ACTIONS, BOAT_TIME_ACTIONS, HELM_TIME_LOCKED_TEXT, customModelOf, activationModelOf } from '../src/systems/comeSailAway.js';
+import { helmButtons, helmPadGesture, helmPadPrompts, HELM_ACTIONS } from '../src/ui/enhancedHelm.js';
 import { BED_MODELS } from '../src/systems/rrRealism.js';
 import { createAnimator, pathHash } from '../src/world/unityAnimator.js';
 import { PrefabNode, instantiatePrefab } from '../src/world/prefabNode.js';
@@ -38,7 +39,7 @@ function scene(opts = {}) {
   const started = new Set();
   const player = { position: [1, 2, 3], yaw: 0, frozen: 0 };
   const terrains = [terrain(10, 20)];
-  const world = { time: 0, dt: 0.25, inside: false, enemies: false, travelling: opts.travelling ?? null, timeScale: 1 };
+  const world = { time: 0, dt: 0.25, inside: false, enemies: false, travelling: opts.travelling ?? null, timeScale: 1, online: !!opts.online };
   const settings = { 'Waves.Enable': false, ...opts.settings };
   const deps = {
     pool: { models: MODELS, ready: () => true, spawnNow: (boat, p) => { spawnBoat(boat, ctxFor(p)); return boat; }, remove: () => {} },
@@ -74,6 +75,7 @@ function scene(opts = {}) {
     cargoWeight: () => 0, sphereCastAll: () => [], enemies: () => [], messageBox: () => {},
     enemiesNearby: () => world.enemies,
     travelOptionsActive: () => world.travelling,
+    timeLocked: () => !!world.online,   // HELM-TIME-ONLINE
     timeScale: () => world.timeScale,
     setTimeScale: (s) => { world.timeScale = s; out.timeScales.push(s); },
     soundVolume: () => opts.soundVolume ?? 1,
@@ -444,3 +446,60 @@ test('CSA-G (the live probe): a crewed boat\'s helm borrows a ship (AssignShipTo
   assert.match(src, /removePermanentScene: \(name\) => removePermanentScene\(_sceneCache\(\), name\),/);
   assert.match(src, /const _sceneCache = \(\) => \(playerEntity\.sceneCache \?\?= createSceneCache\(\)\);/);
 });
+
+// ── HELM-TIME-ONLINE (2026-10-04, Mac: "Remove the time dial from ships online") ──────────────────────────────────────
+
+test('HELM-TIME-ONLINE: online the helm\'s time dial is retired - each of the three keys says why and moves nothing, and the panel\'s state says there is no dial; offline the keys walk the steps as ever (mutants: the gate dropped, the line unsaid, the state\'s flag wrong)', () => {
+  assert.deepEqual([...BOAT_TIME_ACTIONS], [BOAT_ACTIONS.timeScaleUp, BOAT_ACTIONS.timeScaleDown, BOAT_ACTIONS.timeScaleReset]);
+  const on = scene({ online: true });
+  on.rt.StartSailing(on.place());
+  for (const key of BOAT_TIME_ACTIONS) {
+    const said = on.out.mid.length;
+    on.frame({ press: [key] });
+    assert.deepEqual(on.out.mid.slice(said), [[HELM_TIME_LOCKED_TEXT, f(1.5)]], `${key}: said why`);
+  }
+  assert.deepEqual([on.rt.state.timeScaleIndex, on.out.timeScales, on.world.timeScale], [0, [], 1], 'and nothing moved');
+  assert.equal(on.rt.helmPanelState().timeDial, false, 'no dial to draw');
+  const said = on.out.mid.length;
+  on.frame();
+  assert.equal(on.out.mid.length, said, 'no key, no new line');   // AUDIT-A1: counted - the last line alone was the same line said every frame
+  const off = scene();
+  off.rt.StartSailing(off.place());
+  off.frame({ press: [BOAT_ACTIONS.timeScaleUp] });
+  assert.deepEqual([off.world.timeScale, off.rt.helmPanelState().timeDial], [5, true], 'offline: the dial turns');
+});
+
+test('HELM-TIME-ONLINE: what ResetTimeScale is for besides the key stands online - another mod\'s scale (a journey\'s) is still put back when the helm\'s own reasons ask (mutant: the reset gated with the keys)', () => {
+  const on = scene({ online: true });
+  on.rt.StartSailing(on.place());
+  on.world.timeScale = 60;   // a journey's x60 under the boat (RATE-LAW), set by another mod
+  on.rt.ResetTimeScale(false);
+  assert.equal(on.world.timeScale, 1, 'the reset itself is not the dial');
+});
+
+test('HELM-TIME-ONLINE: the enhanced helm drops its three time presses where the dial is retired, the pad\'s left and right step nothing (held, they only trim), and the prompt row says the trim alone; offline all as before (mutants: the presses kept online, the pad still stepping)', () => {
+  const h = { hull: 1, hasSails: true, sailsUp: true, light: false, timeScaleIndex: 0, timeScale: 1, timeScaleMax: 4, manualTrim: false };
+  const acts = (st) => helmButtons(st).map((b) => b.act);
+  assert.ok(['slower', 'normal', 'faster'].every((a) => acts({ ...h, timeDial: true }).includes(a)), 'offline: the dial');
+  assert.ok(!['slower', 'normal', 'faster'].some((a) => acts({ ...h, timeDial: false }).includes(a)), 'online: no dial');
+  assert.ok(acts({ ...h, timeDial: false }).includes('leave') && acts({ ...h, timeDial: false }).includes('light'), 'the rest of the helm stands');
+  const pressed = [], holds = [];
+  const io = { press: (a) => pressed.push(a), hold: (a, v) => holds.push([a, v]) };
+  for (const dir of ['left', 'right']) helmPadGesture(dir, 'tap', { ...h, timeDial: false }, io);
+  helmPadGesture('left', 'hold', { ...h, timeDial: false }, io);
+  assert.deepEqual(pressed, [], 'online: the pad steps nothing, nor puts the time back');
+  assert.equal(helmPadGesture('right', 'hold', { ...h, timeDial: false, manualTrim: true }, io), true, 'held with the trim the player\'s: it trims');
+  assert.deepEqual(holds, [[HELM_ACTIONS.trimRight, true]]);
+  helmPadGesture('right', 'tap', { ...h, timeDial: true }, io);
+  assert.deepEqual(pressed, [HELM_ACTIONS.faster], 'offline: right steps up');
+  const rows = (st) => helmPadPrompts(st).map((r) => r[1]);
+  assert.equal(rows({ ...h, timeDial: false }).length, 2, 'online, no trim: no left/right row');
+  assert.deepEqual(rows({ ...h, timeDial: false, manualTrim: true }).at(-1), 'Trim (hold)');
+  assert.deepEqual(rows({ ...h, timeDial: true }).at(-1), 'Slower / faster (hold left: normal time)');
+});
+
+test('HELM-TIME-ONLINE host: the world hands the runtime the shared clock as the lock (mutant: unwired)', () => {
+  const w = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
+  assert.match(w, /timeLocked: \(\) => sharedClockOn\(\),/);
+});
+

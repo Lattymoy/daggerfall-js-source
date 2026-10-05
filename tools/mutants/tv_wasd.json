@@ -72,19 +72,10 @@
     ]
   },
   {
-    "name": "TV-WASD-past-the-limit",
-    "file": "src/scenes/travelView.js",
-    "old": "  const rate = Math.min(Math.trunc(Number(accel) || 0), Math.trunc(Number(limit) || 0));",
-    "new": "  const rate = Math.trunc(Number(accel) || 0);",
-    "tests": [
-      "test/tv_wasd.test.js"
-    ]
-  },
-  {
     "name": "TV-WASD-journey-gate-gone",
     "file": "src/scenes/travelView.js",
-    "old": "  if (!viewUp || journey || !moving || !onFoot || paused) return 0;",
-    "new": "  if (!viewUp || !moving || !onFoot || paused) return 0;",
+    "old": "  if (!viewUp || journey || !moving || !onFoot || paused || !travels) return 0;",
+    "new": "  if (!viewUp || !moving || !onFoot || paused || !travels) return 0;",
     "tests": [
       "test/tv_wasd.test.js"
     ]
