@@ -847,8 +847,8 @@
  {
   "name": "PVPREF-relay-two-seats",
   "file": "server/src/index.js",
-  "old": "      if ((isGateRoom(a.key) || isBattleRoom(a.key)) && who.subject) for (const [other, b] of [...this._all()])",
-  "new": "      if (isGateRoom(a.key) && who.subject) for (const [other, b] of [...this._all()])",
+  "old": "      if ((isGateRoom(a.key) || isBattleRoom(a.key) || isSdRoom(a.key)) && who.subject) for (const [other, b] of [...this._all()])",
+  "new": "      if ((isGateRoom(a.key) || isSdRoom(a.key)) && who.subject) for (const [other, b] of [...this._all()])",
   "tests": [
    "test/pvpref_relay.test.js"
   ]

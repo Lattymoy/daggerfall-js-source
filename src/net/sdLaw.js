@@ -13,11 +13,14 @@
 //
 // PURE, and the relay's too: it imports wire.js and gateLaw.js (the port's one mix, gateHash, and a pixel's side), both
 // already the relay's. The record's law is one function per move, so the hub and every client agree on what each
-// phase means without either trusting the other's clock: phases are derived from the record's own instants.
+// phase means without either trusting the other's clock: phases are derived from the record's own instants. The
+// record's projection (validSdRecord) is the wire's, beside the frame that carries it (SD3) - re-exported here.
 //
 // Not a DFU member: Daggerfall has no other players and no world events. Ledger A (SUPER-DUNGEONS).
-import { sanitizeName, PIXEL_UNITS } from './wire.js';
+import { sanitizeName, PIXEL_UNITS, SD_REGION_COUNT, SD_SLOT_MAX, SD_FIGHTERS_MAX } from './wire.js';
 import { gateHash, PIXEL_M } from './gateLaw.js';
+
+export { SD_PHASES, SD_REGION_COUNT, SD_SLOT_MAX, SD_FIGHTERS_MAX, validSdRecord } from './wire.js';
 
 /** How long a Hollow stands unbeaten before it fades, real ms (two days). */
 export const SD_LIFETIME_MS = 48 * 3600 * 1000;
@@ -29,50 +32,17 @@ export const SD_COOLDOWN_MS = 2 * 3600 * 1000;
 export const SD_FIRST_RISE_MS = 10 * 60 * 1000;
 /** A region needs this many distinct verified accounts in it for the census to choose it. */
 export const SD_CENSUS_MIN = 2;
-/** The Bay's regions (formats/mapsFile.js REGION_NAMES - pinned equal, not imported: this module is the relay's). */
-export const SD_REGION_COUNT = 62;
 /** The one salt every client and the relay roll a Hollow's choices with. */
 export const SD_SALT = 0x5d01;
-/** The highest slot a record may carry - nine digits, the room key's bound. */
-export const SD_SLOT_MAX = 999_999_999;
-/** A record's phases, in the order a Hollow lives them. */
-export const SD_PHASES = Object.freeze(['risen', 'found', 'fell', 'gone']);
 /** How near its pixel's centre a finder must stand for the relay to believe the find, metres (a spawned dungeon stands
  *  centred in its pixel - world/spawnedDungeons.js spawnedLocationCentreLocal - and its mouth within a block of it). */
 export const SD_FOUND_RADIUS_M = 160;
-/** The most fighters a fall may count (the gate's seat bound). */
-export const SD_FIGHTERS_MAX = 256;
+/** How near the Hollow's door a player stands to FIND it, metres (the client's own test - section 4), and how often a
+ *  finder says it again while the record still says `risen` (a word the relay or the hub did not take). */
+export const SD_FOUND_NEAR_M = 25;
+export const SD_FOUND_RESEND_MS = 15_000;
 
-/** @typedef {{ s:number, ph:string, r:number, at:number, until:number, next:number, foundAt?:number, fb?:string, fellAt?:number, top?:string, n?:number }} SdRecord */
-
-const msOk = (t) => Number.isSafeInteger(t) && t >= 0;
-
-/**
- * A record as the law admits it - the hub's storage, the fan and the welcome all pass through here at both ends - or
- * null. Slot 0 is the hub's own first beat (nothing has risen yet: gone, with the first rise's instant as `next`).
- * @param {unknown} v
- * @returns {SdRecord|null}
- */
-export function validSdRecord(v) {
-  if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
-  const r = /** @type {any} */ (v);
-  if (!Number.isSafeInteger(r.s) || r.s < 0 || r.s > SD_SLOT_MAX) return null;
-  if (!SD_PHASES.includes(r.ph)) return null;
-  if (!Number.isSafeInteger(r.r) || r.r < -1 || r.r >= SD_REGION_COUNT) return null;
-  if (!msOk(r.at) || !msOk(r.until) || !msOk(r.next)) return null;
-  /** @type {SdRecord} */
-  const out = { s: r.s, ph: r.ph, r: r.r, at: r.at, until: r.until, next: r.next };
-  if (out.s === 0 && out.ph !== 'gone') return null;
-  if (r.foundAt != null) { if (!msOk(r.foundAt)) return null; out.foundAt = r.foundAt; }
-  if (r.fb != null) out.fb = sanitizeName(r.fb);
-  if (r.fellAt != null) { if (!msOk(r.fellAt)) return null; out.fellAt = r.fellAt; }
-  if (r.top != null) out.top = sanitizeName(r.top);
-  if (r.n != null) { if (!Number.isSafeInteger(r.n) || r.n < 0 || r.n > SD_FIGHTERS_MAX) return null; out.n = r.n; }
-  // a find and a fall are said with their instants, and a fall was always a find first: nobody enters an unfound Hollow
-  if ((out.ph === 'found' || out.ph === 'fell') && out.foundAt == null) return null;
-  if (out.ph === 'fell' && out.fellAt == null) return null;
-  return out;
-}
+/** @typedef {import('./wire.js').SdRecord} SdRecord */
 
 /**
  * Where a record's Hollow stands in its life at `now` - its own word, until its time runs out: 'gone' once it faded
@@ -172,9 +142,23 @@ export function pickSdRegion(s, counts, last = -1) {
 /** A pixel's side in world units, and the find's radius in them (40 world units to the metre). */
 const UNITS_PER_M = PIXEL_UNITS / PIXEL_M;
 /**
- * May the relay believe a find - a pose (MapsFile's world frame, the cell's) inside the claimed pixel and within
- * SD_FOUND_RADIUS_M of its centre, for the record's slot while it has risen. It cannot tell a true site from a false
- * one (it has no map data): a forged find can only say "found" a little early, and never places the Hollow anywhere.
+ * Does a pose (MapsFile's world frame, the cell's) stand within SD_FOUND_RADIUS_M of the claimed pixel's centre - where a
+ * spawned dungeon stands? The cell asks it of its socket's own pose before it troubles the hub (SD3); the hub asks it
+ * again with its record (sdFindBelieved).
+ * @param {{ px:number, py:number }} claim
+ * @param {{ x:number, z:number }} pose
+ */
+export function sdNearSite(claim, pose) {
+  if (!Number.isSafeInteger(claim?.px) || !Number.isSafeInteger(claim?.py) || !Number.isFinite(pose?.x) || !Number.isFinite(pose?.z)) return false;
+  // MapsFile's frame: x east from the map's west edge, z north from its SOUTH edge (pixel row py spans the z band
+  // whose top is (500 - py) pixels up) - the pose's own law, wire.js pixelOf
+  const cx = (claim.px + 0.5) * PIXEL_UNITS, cz = (500 - claim.py - 0.5) * PIXEL_UNITS;
+  return Math.hypot(pose.x - cx, pose.z - cz) <= SD_FOUND_RADIUS_M * UNITS_PER_M;
+}
+/**
+ * May the relay believe a find - a pose near the claimed pixel's centre (sdNearSite), for the record's slot while it has
+ * risen. It cannot tell a true site from a false one (it has no map data): a forged find can only say "found" a little
+ * early, and never places the Hollow anywhere.
  * @param {SdRecord|null|undefined} rec
  * @param {number} now
  * @param {{ s:number, px:number, py:number }} claim
@@ -182,11 +166,7 @@ const UNITS_PER_M = PIXEL_UNITS / PIXEL_M;
  */
 export function sdFindBelieved(rec, now, claim, pose) {
   if (!rec || sdPhase(rec, now) !== 'risen' || claim?.s !== rec.s) return false;
-  if (!Number.isSafeInteger(claim.px) || !Number.isSafeInteger(claim.py) || !Number.isFinite(pose?.x) || !Number.isFinite(pose?.z)) return false;
-  // MapsFile's frame: x east from the map's west edge, z north from its SOUTH edge (pixel row py spans the z band
-  // whose top is (500 - py) pixels up) - the pose's own law, wire.js pixelOf
-  const cx = (claim.px + 0.5) * PIXEL_UNITS, cz = (500 - claim.py - 0.5) * PIXEL_UNITS;
-  return Math.hypot(pose.x - cx, pose.z - cz) <= SD_FOUND_RADIUS_M * UNITS_PER_M;
+  return sdNearSite(claim, pose);
 }
 
 // ═══ THE NAME ═════════════════════════════════════════════════════════
@@ -222,3 +202,9 @@ export const sdFoundLine = ({ who, near }) => `${who} has found a Super Dungeon 
 export const sdFellLine = ({ top, n, name }) => (n > 1 ? `${top} and ${n - 1} ${n === 2 ? 'other' : 'others'} broke the Hour in ${name}. It collapses.` : `${top} broke the Hour in ${name}. It collapses.`);
 export const sdFadeLine = ({ name }) => `The Hour closes over ${name}, unbroken.`;
 export const SD_CAST_OUT_LINE = 'The Hour closes, and the Hollow folds in on itself behind you.';
+/** The Rift's refusals (section 6) - said by the realm's room at a hello it will not admit, and by the client's own Rift
+ *  before it asks: not yet found, and the Hour closed (or closing - its boss fallen, a newcomer is not let in). */
+export const SD_NO_RIFT = 'The Rift will not take you yet.';
+export const SD_NO_CLOSED = 'The Hour has closed.';
+/** And the realm's seats every one taken (SD_FIGHTERS_MAX accounts have entered it). */
+export const SD_NO_FULL = 'The Hour is full.';

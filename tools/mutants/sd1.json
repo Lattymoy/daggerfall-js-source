@@ -141,7 +141,7 @@
   },
   {
     "name": "SD1-a-find-without-its-instant",
-    "file": "src/net/sdLaw.js",
+    "file": "src/net/wire.js",
     "old": "  if ((out.ph === 'found' || out.ph === 'fell') && out.foundAt == null) return null;\n",
     "new": "",
     "tests": [

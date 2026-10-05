@@ -1,0 +1,283 @@
+[
+  {
+    "name": "SD3-a-slot-of-0-believed",
+    "file": "src/net/wire.js",
+    "old": "return intIn(m.s, 1, SD_SLOT_MAX) && intIn(m.px, 0, 999)",
+    "new": "return intIn(m.s, 0, SD_SLOT_MAX) && intIn(m.px, 0, 999)",
+    "tests": [
+      "test/sd3_relay.test.js"
+    ],
+    "note": "A find names a slot that rose - never the hub's own slot 0."
+  },
+  {
+    "name": "SD3-a-pixel-off-the-map",
+    "file": "src/net/wire.js",
+    "old": "&& intIn(m.px, 0, 999) && intIn(m.py, 0, 499) ? { k: 'found'",
+    "new": "&& intIn(m.px, 0, 1000) && intIn(m.py, 0, 499) ? { k: 'found'",
+    "tests": [
+      "test/sd3_relay.test.js"
+    ],
+    "note": "The map is 1000 pixels wide."
+  },
+  {
+    "name": "SD3-the-first-beat-fanned",
+    "file": "src/net/wire.js",
+    "old": "  return r && r.s > 0 ? { k: 'ev', ...r } : null;",
+    "new": "  return r ? { k: 'ev', ...r } : null;",
+    "tests": [
+      "test/sd3_relay.test.js"
+    ],
+    "note": "The hub's own first beat is said to nobody."
+  },
+  {
+    "name": "SD3-the-gate-a-version-early",
+    "file": "src/net/wire.js",
+    "old": "export const SD_RELAY_MIN = 172;",
+    "new": "export const SD_RELAY_MIN = 171;",
+    "tests": [
+      "test/sd3_relay.test.js"
+    ],
+    "note": "CRYSTAL-FIST's relay closes the socket on `sd`."
+  },
+  {
+    "name": "SD3-a-guest-counted",
+    "file": "server/src/index.js",
+    "old": "if (b.id && b.lk && typeof b.sub === 'string' && b.sub) subs.add(b.sub);",
+    "new": "if (b.id && typeof b.sub === 'string' && b.sub) subs.add(b.sub);",
+    "tests": [
+      "test/sd3_relay.test.js"
+    ],
+    "note": "A guest is one click: the census counts registered accounts alone."
+  },
+  {
+    "name": "SD3-two-tabs-two-accounts",
+    "file": "server/src/index.js",
+    "old": "if (b.id && b.lk && typeof b.sub === 'string' && b.sub) subs.add(b.sub);",
+    "new": "if (b.id && b.lk && typeof b.sub === 'string' && b.sub) subs.add(b.id);",
+    "tests": [
+      "test/sd3_relay.test.js"
+    ],
+    "note": "One account in two tabs is one account."
+  },
+  {
+    "name": "SD3-the-first-beat-rises",
+    "file": "server/src/index.js",
+    "old": "if (due.act === 'first') { await this._sdSave(sdFirst(now)); continue; }",
+    "new": "if (due.act === 'first') { await this._sdSave({ ...sdFirst(now), next: now }); continue; }",
+    "tests": [
+      "test/sd3_relay.test.js"
+    ],
+    "note": "A fresh hub waits SD_FIRST_RISE_MS before the first rise."
+  },
+  {
+    "name": "SD3-the-gone-unsaid",
+    "file": "server/src/index.js",
+    "old": "await this._sdSave(g); this._sdFan(g); continue; }",
+    "new": "await this._sdSave(g); continue; }",
+    "tests": [
+      "test/sd3_relay.test.js"
+    ],
+    "note": "A Hollow that fades is said to everyone."
+  },
+  {
+    "name": "SD3-the-welcome-without-the-record",
+    "file": "server/src/index.js",
+    "old": "if (r && r.s > 0) this._send(ws, JSON.stringify({ t: 'sd', k: 'ev', ...r }));",
+    "new": "if (r && r.s > 0 && false) this._send(ws, JSON.stringify({ t: 'sd', k: 'ev', ...r }));",
+    "tests": [
+      "test/sd3_relay.test.js"
+    ],
+    "note": "A hello hears the record."
+  },
+  {
+    "name": "SD3-the-hub-arms-nothing",
+    "file": "server/src/index.js",
+    "old": "      await this._sdArm(now);   // SD3",
+    "new": "      // await this._sdArm(now);   // SD3",
+    "tests": [
+      "test/sd3_relay.test.js"
+    ],
+    "note": "The hub's first account hello arms the director."
+  },
+  {
+    "name": "SD3-the-last-region-never-rests",
+    "file": "server/src/index.js",
+    "old": "pickSdRegion((cur?.s ?? 0) + 1, counts, cur?.s ? cur.r : -1)",
+    "new": "pickSdRegion((cur?.s ?? 0) + 1, counts, -1)",
+    "tests": [
+      "test/sd3_relay.test.js"
+    ],
+    "note": "One crowd does not keep every Hollow."
+  },
+  {
+    "name": "SD3-the-pose-unasked-at-the-cell",
+    "file": "server/src/index.js",
+    "old": "if (!a.pose || !sdNearSite(m, a.pose) || typeof a.sub !== 'string' || !a.sub) return;",
+    "new": "if (!a.pose || typeof a.sub !== 'string' || !a.sub) return;",
+    "tests": [
+      "test/sd3_relay.test.js"
+    ],
+    "note": "The cell believes its own socket's pose at the door."
+  },
+  {
+    "name": "SD3-the-slot-unasked-at-the-hub",
+    "file": "server/src/index.js",
+    "old": "    if (sdFindBelieved(rec, now, c, c)) {",
+    "new": "    if (rec && sdNearSite(c, c)) {",
+    "tests": [
+      "test/sd3_relay.test.js"
+    ],
+    "note": "The hub believes a find for its record's slot, while it has risen."
+  },
+  {
+    "name": "SD3-the-tell-never-retried",
+    "file": "server/src/index.js",
+    "old": "    const sdOwed = await this._sdTellHub(Date.now());",
+    "new": "    const sdOwed = false;",
+    "tests": [
+      "test/sd3_relay.test.js"
+    ],
+    "note": "A cell tells a find it owes on its alarm until the hub answers."
+  },
+  {
+    "name": "SD3-the-first-finder-overwritten",
+    "file": "server/src/index.js",
+    "old": "    if (had && had.s >= m.s) return;",
+    "new": "",
+    "tests": [
+      "test/sd3_relay.test.js"
+    ],
+    "note": "The first finder's word stands while it is owed."
+  },
+  {
+    "name": "SD3-a-refusal-told-for-ever",
+    "file": "server/src/index.js",
+    "old": "return !!res && (res.ok || (res.status >= 400 && res.status < 500));",
+    "new": "return !!res && res.ok;",
+    "tests": [
+      "test/sd3_relay.test.js"
+    ],
+    "note": "A find the hub refused for good is let go."
+  },
+  {
+    "name": "SD3-the-worker-unasked",
+    "file": "server/src/index.js",
+    "old": "if (isSdRoom(key)) { const s = sdSlotOfRoom(key); const rec = await sdLiveAsk(env.ROOMS, s); if (!(rec && rec.s === s && sdHolds(rec, Date.now()))) return json({ error: 'the Hour has closed' }, 404); }",
+    "new": "",
+    "tests": [
+      "test/sd3_relay.test.js"
+    ],
+    "note": "No realm is minted for a slot the hub does not hold."
+  },
+  {
+    "name": "SD3-the-worker-reads-the-phase-alone",
+    "file": "server/src/index.js",
+    "old": "if (!(rec && rec.s === s && sdHolds(rec, Date.now())))",
+    "new": "if (!(rec && sdHolds(rec, Date.now())))",
+    "tests": [
+      "test/sd3_relay.test.js"
+    ],
+    "note": "The realm for another slot is not minted on this one's record."
+  },
+  {
+    "name": "SD3-a-newcomer-after-the-kill",
+    "file": "server/src/index.js",
+    "old": "    if (!sdAdmits(rec, now)) return SD_NO_CLOSED;",
+    "new": "",
+    "tests": [
+      "test/sd3_relay.test.js"
+    ],
+    "note": "After the kill the Hour takes no newcomer."
+  },
+  {
+    "name": "SD3-a-returner-refused",
+    "file": "server/src/index.js",
+    "old": "    if (sub && realm.in.includes(sub)) return null;",
+    "new": "",
+    "tests": [
+      "test/sd3_relay.test.js"
+    ],
+    "note": "One who entered may come back until the Hollow is gone."
+  },
+  {
+    "name": "SD3-two-seats",
+    "file": "server/src/index.js",
+    "old": "if ((isGateRoom(a.key) || isBattleRoom(a.key) || isSdRoom(a.key)) && who.subject)",
+    "new": "if ((isGateRoom(a.key) || isBattleRoom(a.key)) && who.subject)",
+    "tests": [
+      "test/sd3_relay.test.js"
+    ],
+    "note": "One seat an account in a realm."
+  },
+  {
+    "name": "SD3-the-halo-never-keeps-it",
+    "file": "src/net/online.js",
+    "old": "      else { const h = this._halo.get(room); if (h) h.sdOk = relaySupportsSd(relayV); }",
+    "new": "",
+    "tests": [
+      "test/sd3_relay.test.js"
+    ],
+    "note": "A halo's own welcome says whether its relay hears a find."
+  },
+  {
+    "name": "SD3-the-promotion-forgets-it",
+    "file": "src/net/online.js",
+    "old": "this.serpentOk = !!h.serpentOk; this.sdOk = !!h.sdOk;",
+    "new": "this.serpentOk = !!h.serpentOk;",
+    "tests": [
+      "test/sd3_relay.test.js"
+    ],
+    "note": "The socket promoted at a seam keeps its own relay's word."
+  },
+  {
+    "name": "SD3-the-step-down-forgets-it",
+    "file": "src/net/online.js",
+    "old": "serpentOk: this.serpentOk, sdOk: this.sdOk, foeInventoryOk",
+    "new": "serpentOk: this.serpentOk, foeInventoryOk",
+    "tests": [
+      "test/sd3_relay.test.js"
+    ],
+    "note": "The socket stepped down keeps its own relay's word."
+  },
+  {
+    "name": "SD3-any-room",
+    "file": "src/net/online.js",
+    "old": "    const w = validSdIn({ ...word, k: 'found' });\n    if (!w || typeof cell !== 'string' || !isCellRoom(cell)) return false;",
+    "new": "    const w = validSdIn({ ...word, k: 'found' });\n    if (!w || typeof cell !== 'string') return false;",
+    "tests": [
+      "test/sd3_relay.test.js"
+    ],
+    "note": "A find goes to a cell alone."
+  },
+  {
+    "name": "SD3-unmetered",
+    "file": "src/net/online.js",
+    "old": "    const gate = sdGate(this._sdBucket, this._now());\n    if (!gate.pass) return false;",
+    "new": "    const gate = sdGate(this._sdBucket, this._now());",
+    "tests": [
+      "test/sd3_relay.test.js"
+    ],
+    "note": "SD_HZ_MAX a second."
+  },
+  {
+    "name": "SD3-a-cells-word-believed",
+    "file": "src/net/online.js",
+    "old": "if (r && isSocialRoom(room)) this._deliver('sd', () => this.onSd?.(r, room));",
+    "new": "if (r) this._deliver('sd', () => this.onSd?.(r, room));",
+    "tests": [
+      "test/sd3_relay.test.js"
+    ],
+    "note": "The record is the hub's word alone."
+  },
+  {
+    "name": "SD3-the-near-ring-unasked",
+    "file": "src/net/sdLaw.js",
+    "old": "  return sdNearSite(claim, pose);\n}",
+    "new": "  return true;\n}",
+    "tests": [
+      "test/sd3_relay.test.js",
+      "test/sd1_sdlaw.test.js"
+    ],
+    "note": "The hub asks the pose again with its record."
+  }
+]

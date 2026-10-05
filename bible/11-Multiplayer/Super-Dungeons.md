@@ -108,8 +108,9 @@ the internal doors below. Its law is pure (`net/sdLaw.js`, section 14) - the hub
 Numbers: `SD_LIFETIME_MS` 48 h, `SD_COLLAPSE_MS` 3 min, `SD_COOLDOWN_MS` 2 h, `SD_FIRST_RISE_MS` 10 min after a hub
 with no record first beats (so a fresh deploy does not raise one the instant it wakes).
 
-Clients learn the record from the hub's welcome (`sd` beside EVENT1's `ev`) and from `{t:'sd',k:'ev',...}` on every
-change. An old client never sees a `sd` frame: the hub sends it only to a hello that says it reads them (`sdv`).
+Clients learn the record from `{t:'sd',k:'ev',...}`: once after the hub's welcome, and again on every change. The hub
+says it to every hello - an older client drops a frame type it does not know (`net/online.js`'s message arms), so no
+opt-in is needed (this page first planned one, `sdv`; SD3 found it unneeded).
 
 ## 3. Where it rises - the census and the city
 
@@ -144,10 +145,11 @@ against the slot's law (section 4) or in the realm's own frame (sections 8-10).
   bell."* No map mark, no compass mark: it must be found.
 - **The sighting.** Within 600 m, Elite's own sight line: *"You see a Super Dungeon 340 metres to the north-west!"*
 - **The finding.** The first player to stand within 25 m of its door sends `{t:'sd',k:'found',s,px,py}` to the cell
-  room it stands in. The cell believes it only from a pose inside the claimed pixel, near the slot's spot (the spot's
-  offset inside the pixel is a pure function of the slot, so the relay can check it without map data), while the record
-  says `risen`. It tells the hub (`/internal/sd/found`, retried until it answers); the hub sets `found`, keeps the
-  finder's name, and fans it: *"<name> has found a Super Dungeon near <city>!"* From then on everyone online sees it on
+  room it stands in. The cell believes it only from its own socket's pose within SD_FOUND_RADIUS_M of the claimed
+  pixel's centre (a spawned dungeon stands centred in its pixel, so the relay checks it without map data), and keeps it
+  - the first finder's - until the hub answers (`/internal/sd/found`, told again on the cell's alarm). The hub believes
+  it while its record says `risen` for that slot, asking the pose again; it sets `found`, keeps the finder's VERIFIED
+  name, and fans it: *"<name> has found a Super Dungeon near <city>!"* From then on everyone online sees it on
   the map (its ring), the compass (inside 1 km), the Timers window and the notice boards.
 
 A forged `found` (a client claiming a pixel that is not the site) cannot place the Hollow anywhere else - every client
@@ -390,9 +392,13 @@ One new frame type, `sd` (`net/wire.js`: `SD_KINDS`, `validSdIn`, `validSdOut`, 
 | hub -> client | `ev {s,ph,r,at,foundAt?,fb?,fellAt?,top?,n?,until,next}`, `rcpt {r}` |
 | `sd:<s>` -> client | `st` (the whole state), `pz {st,f,lit,ok}`, `mv`, `atk`, `hp`, `ph`, `ec` (Echoes), `cx`/`cxb`/`stun` (Hearts), `fell`, `rcpt`, `no {m}` |
 
-Internal doors (object to object): `/internal/sd/census`, `/internal/sd/found`, `/internal/sd/fell`. The Worker mints
-an `sd:<s>` object only for the slot the hub's record names and only while it is `found` or `fell` (the gate's
-`gateHolds` law, read from the hub through `/internal/sd/live`).
+Internal doors (object to object): `/internal/sd/census`, `/internal/sd/found`, `/internal/sd/live`, `/internal/sd/fell`.
+The Worker mints an `sd:<s>` object only for the slot the hub's record names and only while it is `found` or `fell`
+(the gate's `gateHolds` law, read from the hub through `/internal/sd/live`).
+
+SD3 shipped the first of the table: `found` (client -> cell) and `ev` (hub -> client); the rest arrive with the slices
+that use them (SD6's `pz`, SD8's fight, SD9's receipts), each extending `SD_KINDS`/`SD_OUT_KINDS` under the arc's one
+relay version while it is undeployed.
 
 ## 15. The four hosts
 
@@ -513,3 +519,43 @@ Hollow's life; both then stand in the pixel.
 
 Pins: `test/sd2_sdsite.test.js` (5, over the real gate scanner); `tools/mutants/sd2.json` (13, all dead - one
 survivor at first, a fixture whose cities outnumbered eight, now pinned with fewer).
+
+The arc's Ledger row stands from here (`test/doctrine.test.js`: a file citing Ledger A has a row naming it - SD1 and
+SD2a cited one before it was written, and the full suite at the merge of main said so), naming each slice's files as
+they ship.
+
+### SD3 - shipped 2026-10-05 (the relay)
+
+Sections 2-4 and 14 on the relay - `world172` (`world171` on the branch; main's CRYSTAL-FIST took it at the merge).
+
+- **The frame** (`net/wire.js`): `sd`, one kind each way so far - `found {s, px, py}` to a cell (`validSdIn`, behind
+  `relaySupportsSd`: a relay before `world172` closes the socket on it) and `ev` from the hub (`validSdOut`: the record,
+  a Hollow that rose). The record's projection, `validSdRecord`, moved here from `net/sdLaw.js` beside the frame that
+  carries it (wire.js imports no law; the law imports it) - `sdLaw.js` re-exports it unchanged. Its own buckets
+  (`sdGate`, the relay's deeper `sdRelayGate`), its doors and its storage keys (`sdev`, `sdfound`, `sdrealm` - outside
+  every swept prefix).
+- **The director** (`server/src/index.js`, the hub): its record through the wire's law (`_sdOf`), moved on by
+  `_sdBeat` on the hub's one alarm after the sweep and the heralds - the first beat (slot 0, said to nobody), a Hollow's
+  time run out (gone, fanned), a rise after the rest (fanned) - and armed for its next move (`_sdArm`, at the hub's first
+  account hello and after every beat). A beat that throws tries again a minute on.
+- **The census**: asked of the 62 region channels once a rise (`_sdCensus`, six at a time, each call its own
+  `ROOM_CALL_MS`), each channel answering its DISTINCT REGISTERED accounts (`_sdCensusInternal`: a socket marked `lk` at
+  its hello when the token says `linked` - a guest is one click; one account in two tabs is one). A channel that does
+  not answer counts nobody. The record is read again after the census - a find or a fall may have landed meanwhile.
+- **The find**: a cell hears `found` from its own socket's pose (`sdNearSite` - the pixel's centre, the radius), a frame
+  naming another cell's pixel is junk, keeps the first finder's word (`sdfound`) and tells the hub until it answers -
+  the rite's law: one tell in flight, the retry armed before it goes, a 4xx refusal let go (`_sdTellHub`, on
+  `_alarmRest` beside the rite's). The hub believes it against its record (`sdFindBelieved`: the slot, `risen`, the pose
+  again) and keeps the finder's verified name.
+- **The realm**: the Worker refuses an `sd:` key that is not one the hub mints, and - after the socket's own check, so
+  nothing else asks - one whose slot the hub's record does not hold (`sdLiveAsk`, `/internal/sd/live`, failing closed).
+  The realm's own hello asks the hub too (kept ten seconds): a newcomer while found, one who entered before until it is
+  gone, SD_FIGHTERS_MAX at most, one seat an account; the refusals are the Rift's words (`SD_NO_CLOSED`, `SD_NO_FULL`).
+- **The client** (`net/online.js`): `sendSdFound` down the socket of the cell the pixel is in, my own or a halo's, by that
+  socket's own welcome (carried across a seam's promotion, AUDIT WB12d C6's law), `SD_HZ_MAX` a second; `onSd` with the
+  hub's record - from the hub alone.
+
+Pins: `test/sd3_relay.test.js` (7 - the wire, the director end to end over fake objects, the census's rest, the find,
+the realm and its Worker, the session, the seams by source); `tools/mutants/sd3.json` (28, all dead - one survivor at
+first: the cell's pose check, which the hub's own check hid while the hub was up; the far claim is now said with the
+hub down). Wired by nothing in the world yet: SD2b stands the Hollow and says the find.

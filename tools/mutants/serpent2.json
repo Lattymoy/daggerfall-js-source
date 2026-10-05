@@ -209,8 +209,8 @@
   {
     "name": "SERPENT2-beat-off-alarm",
     "file": "server/src/index.js",
-    "old": "await this._serpentHeraldBeat(Date.now()); return; }",
-    "new": "return; }",
+    "old": "await this._serpentHeraldBeat(Date.now()); await this._sdBeat(Date.now()); return; }",
+    "new": "await this._sdBeat(Date.now()); return; }",
     "tests": [
       "test/serpent2_herald.test.js"
     ]
