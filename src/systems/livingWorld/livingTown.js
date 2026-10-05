@@ -38,12 +38,12 @@
 //    talks of it for NEWS_DAYS (`deedNews`): one of its own struck down - and, seen, by whom.
 import { POP_VISIBLE_RANGE, POP_RECYCLE_DISTANCE, maxPopulationFor } from '../townPopulation.js';
 import { PERSON_MOVE_SPEED } from '../../characters/mobilePerson.js';
-import { townPlaces, exitToward, harbourDock } from './places.js';
+import { townPlaces, exitToward, harbourDock, onStreet } from './places.js';
 import { townCensus, isHome } from './census.js';
 import { dayPlan, entryAt, isOutdoor, DAY_START_MIN, DAY_MIN } from './dayPlan.js';
 import { BUILDING_TYPES } from '../../world/buildingNames.js';
 import { createPathBook, pointOnLine } from './townPaths.js';
-import { spotCircles, circleLine, circleStands, aloneStand, ROUND_S, lineMinutes } from './meetups.js';
+import { spotCircles, circleLine, circleStands, aloneStand, streetReach, ROUND_S, lineMinutes } from './meetups.js';
 import { LIVING_GREETINGS, LIVING_KEEPSAKE, fillLine, firstNameOf } from './lines.js';
 import { keepsakeFor } from './keepsake.js';
 import { lwSeed, textSeed } from './seed.js';
@@ -118,7 +118,8 @@ export const DEED_KNOWN_MIN = 60;
 /**
  * @typedef {import('./census.js').Resident} Resident
  * @typedef {import('./dayPlan.js').Entry} Entry
- * @typedef {{ person: any, active: boolean, scheduleEnable: boolean, scheduleRecycle: boolean, visible: boolean, res: Resident|null, mine: boolean, arrival: boolean }} Row
+ * @typedef {{ person: any, active: boolean, scheduleEnable: boolean, scheduleRecycle: boolean, visible: boolean, res: Resident|null, mine: boolean, arrival: boolean, paused?: boolean }} Row - LW-STAND `paused`: in view on a walk not
+ *   yet searched (its minutes owed, as the politeness gate's)
  */
 
 export class LivingTown {
@@ -162,6 +163,8 @@ export class LivingTown {
     this.nav = nav;
     this.o = o;
     this.places = townPlaces(nav, o.doors, o.buildings);
+    /** LW-STAND: may a person stand here - on the street, never in a wall nor over the water (the stands about a spot) */
+    this._standClear = (x, z) => onStreet(this.nav, this.places, x, z);
     this.residents = townCensus(o.town, o.buildings);
     this.maxPopulation = maxPopulationFor(o.town.blocks);
     /** @type {Row[]} */
@@ -380,7 +383,7 @@ export class LivingTown {
     }
     if (!isOutdoor(e)) return null;
     const c = this._inCircle.get(res.id);
-    const st = c && c.spot === e.at ? circleStands(e.at, c.circle)[c.index] : aloneStand(e.at, res.id);
+    const st = c && c.spot === e.at ? circleStands(e.at, c.circle, this._standClear)[c.index] : aloneStand(e.at, res.id, this._standClear);   // LW-STAND
     return { x: st.x, z: st.z, yaw: st.yaw, moving: false, e };
   }
 
@@ -389,7 +392,7 @@ export class LivingTown {
   _freeRow() {
     for (const r of this.pool) if (!r.active && !r.res) return r;
     if (this.pool.length >= this.maxPopulation) return null;
-    const row = { person: this.o.makePerson(this.residents[0]?.archive ?? 0, false), active: false, scheduleEnable: false, scheduleRecycle: false, visible: false, res: null, mine: true, arrival: false };
+    const row = { person: this.o.makePerson(this.residents[0]?.archive ?? 0, false), active: false, scheduleEnable: false, scheduleRecycle: false, visible: false, res: null, mine: true, arrival: false, paused: false };
     this.pool.push(row);
     return row;
   }
@@ -408,7 +411,7 @@ export class LivingTown {
   }
 
   _free(row) {
-    row.active = false; row.scheduleEnable = false; row.scheduleRecycle = false; row.visible = false; row.arrival = false;
+    row.active = false; row.scheduleEnable = false; row.scheduleRecycle = false; row.visible = false; row.arrival = false; row.paused = false;
     if (row.res) this._lag.delete(row.res.id);
     row.res = null;
     if (row.person) row.person.living = null;
@@ -531,9 +534,9 @@ export class LivingTown {
       if (!row.active || !row.res) continue;
       const res = row.res, p = row.person;
       const stop = row.visible && dt > 0 ? !!wantsToStopFn(p) : false;
-      // the politeness gate's minutes, owed and walked off
+      // the politeness gate's minutes, owed and walked off - LW-STAND: and a pause's, on a walk not yet searched
       let lag = this._lag.get(res.id) ?? 0;
-      if (stop) lag += dt * rate;
+      if (stop || row.paused) lag += dt * rate;
       else if (lag > 0) lag = Math.max(0, lag - dt * rate * CATCH_UP);
       const w = this.where(res, this._now - lag, true);
       if (!w) { this._free(row); continue; }   // indoors: in through the door, out through the gate
@@ -542,16 +545,28 @@ export class LivingTown {
       if (armed !== !!p.armed && typeof p.arm === 'function') { if (!armed) p.arm(null); else { const look = this.o.armOf?.(res) ?? null; if (look) p.arm(look); } }
       if (w.e.kind !== 'walk') lag = 0;   // standing at a spot owes nothing
       if (lag > 0) this._lag.set(res.id, lag); else this._lag.delete(res.id);
-      if (w.pending) { if (!row.visible) continue; }
+      // LW-STAND (field, 2026-10-05): a walk not yet searched is a pause where they stand - before, the body kept the
+      // stride it had (on its way to its stand) and walked on the spot, into whatever it faced, till the path came; and
+      // its minutes are owed (`paused`, above): searched, the walk is walked from where they stood, never cut straight
+      // across, through whatever stood between, to where its clock had got to
+      row.paused = !!w.pending && row.visible;
+      if (w.pending) { if (!row.visible) continue; p.moving = false; }
       else {
         const dx0 = w.x - p.pos[0], dz0 = w.z - p.pos[2];
         const d = Math.hypot(dx0, dz0);
         const step = PERSON_MOVE_SPEED * WALK_FAST * dt * scale;
         if (!row.visible || d > Math.max(SNAP_M, step * 3)) { p.pos[0] = w.x; p.pos[2] = w.z; p.yaw = w.yaw; p.moving = w.moving; }
         else if (d > 0.05) {
-          const k = Math.min(1, step / d);
-          p.pos[0] += dx0 * k; p.pos[2] += dz0 * k;
-          p.yaw = w.moving ? w.yaw : Math.atan2(dx0, dz0);
+          // LW-STAND: a stand is walked to over the street - by its spot when the straight way is not (every stand at a
+          // spot is seen from it, meetups.js): a new round's place across a corner, or across a fountain, from the last
+          let vx = dx0, vz = dz0, vd = d;
+          if (!w.moving) {
+            const ox = w.e.at.x - p.pos[0], oz = w.e.at.z - p.pos[2], od = Math.hypot(ox, oz);
+            if (od > 0.05 && streetReach(p.pos[0], p.pos[2], w.x, w.z, this._standClear) < d) { vx = ox; vz = oz; vd = od; }
+          }
+          const k = Math.min(1, step / vd);
+          p.pos[0] += vx * k; p.pos[2] += vz * k;
+          p.yaw = w.moving ? w.yaw : Math.atan2(vx, vz);
           p.moving = true;
         } else { p.pos[0] = w.x; p.pos[2] = w.z; p.yaw = w.yaw; p.moving = w.moving; }
         p.pos[1] = p.groundY(p.pos[0], p.pos[2]);

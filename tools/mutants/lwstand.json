@@ -1,0 +1,112 @@
+[
+  {
+    "name": "LW-STAND-host-unkept-alone",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "aloneStand(e.at, res.id, this._standClear);   // LW-STAND",
+    "new": "aloneStand(e.at, res.id);   // LW-STAND",
+    "tests": [
+      "test/lwstand_street.test.js"
+    ]
+  },
+  {
+    "name": "LW-STAND-host-unkept-circle",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "circleStands(e.at, c.circle, this._standClear)[c.index]",
+    "new": "circleStands(e.at, c.circle)[c.index]",
+    "tests": [
+      "test/lwstand_street.test.js"
+    ]
+  },
+  {
+    "name": "LW-STAND-step-unread",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "    if (!clear(ax + (dx * k) / d, az + (dz * k) / d)) return s;\n",
+    "new": "",
+    "tests": [
+      "test/lwstand_street.test.js"
+    ]
+  },
+  {
+    "name": "LW-STAND-end-only",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "  for (let k = Math.min(STAND_STEP_M, d); ; k = Math.min(k + STAND_STEP_M, d)) {",
+    "new": "  for (let k = d; ; k = Math.min(k + STAND_STEP_M, d)) {",
+    "tests": [
+      "test/lwstand_street.test.js"
+    ],
+    "note": "the stand alone read, not the way out to it: a stand past a wall's corner stood on, the line from the spot through the wall"
+  },
+  {
+    "name": "LW-STAND-reach-dropped",
+    "file": "src/systems/livingWorld/places.js",
+    "old": "  return on(x, z) && on(x + reach, z) && on(x - reach, z) && on(x, z + reach) && on(x, z - reach);",
+    "new": "  return on(x, z);",
+    "tests": [
+      "test/lwstand_street.test.js"
+    ]
+  },
+  {
+    "name": "LW-STAND-middle-unkept",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "  return standOn(spot, { x: spot.x + Math.sin(a) * r, z: spot.z + Math.cos(a) * r }, clear);",
+    "new": "  return { x: spot.x + Math.sin(a) * r, z: spot.z + Math.cos(a) * r };",
+    "tests": [
+      "test/lwstand_street.test.js"
+    ],
+    "note": "the middle the circle faces in to: drawn by geometry alone it stands in the wall by the street's edge, the circle facing into it"
+  },
+  {
+    "name": "LW-STAND-middle-unread",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "  const c = circleMiddle(spot, circle, clear);",
+    "new": "  const c = circleMiddle(spot, circle);",
+    "tests": [
+      "test/lwstand_street.test.js"
+    ]
+  },
+  {
+    "name": "LW-STAND-member-unseen",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "    const st = standOn(spot, standOn(c, { x: c.x + Math.sin(b) * (CIRCLE_APART / 2), z: c.z + Math.cos(b) * (CIRCLE_APART / 2) }, clear), clear);",
+    "new": "    const st = standOn(c, { x: c.x + Math.sin(b) * (CIRCLE_APART / 2), z: c.z + Math.cos(b) * (CIRCLE_APART / 2) }, clear);",
+    "tests": [
+      "test/lwstand_street.test.js"
+    ]
+  },
+  {
+    "name": "LW-STAND-way-straight",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "            if (od > 0.05 && streetReach(p.pos[0], p.pos[2], w.x, w.z, this._standClear) < d) { vx = ox; vz = oz; vd = od; }",
+    "new": "            if (od > 0.05 && false) { vx = ox; vz = oz; vd = od; }",
+    "tests": [
+      "test/lwstand_street.test.js"
+    ]
+  },
+  {
+    "name": "LW-STAND-stride-kept",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      if (w.pending) { if (!row.visible) continue; p.moving = false; }",
+    "new": "      if (w.pending) { if (!row.visible) continue; }",
+    "tests": [
+      "test/lwstand_street.test.js"
+    ]
+  },
+  {
+    "name": "LW-STAND-pause-unowed",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      if (stop || row.paused) lag += dt * rate;",
+    "new": "      if (stop) lag += dt * rate;",
+    "tests": [
+      "test/lwstand_street.test.js"
+    ]
+  },
+  {
+    "name": "LW-STAND-pause-unmarked",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      row.paused = !!w.pending && row.visible;\n",
+    "new": "",
+    "tests": [
+      "test/lwstand_street.test.js"
+    ]
+  }
+]

@@ -434,8 +434,8 @@
   {
     "name": "LW1-stand-apart",
     "file": "src/systems/livingWorld/meetups.js",
-    "old": "    const x = cx + Math.sin(b) * (CIRCLE_APART / 2), z = cz + Math.cos(b) * (CIRCLE_APART / 2);",
-    "new": "    const x = cx + Math.sin(b) * CIRCLE_APART, z = cz + Math.cos(b) * CIRCLE_APART;",
+    "old": "{ x: c.x + Math.sin(b) * (CIRCLE_APART / 2), z: c.z + Math.cos(b) * (CIRCLE_APART / 2) }",
+    "new": "{ x: c.x + Math.sin(b) * CIRCLE_APART, z: c.z + Math.cos(b) * CIRCLE_APART }",
     "tests": [
       "test/lw1_livingWorld.test.js"
     ]

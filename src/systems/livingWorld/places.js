@@ -105,6 +105,26 @@ const yawTo = (fx, fz, tx, tz) => Math.atan2(tx - fx, tz - fz);
  *  eighty metres and more out, HARBOUR-BOOK's). */
 export const HARBOUR_RING = 120;
 
+/** LW-STAND: half a person's breadth (m) - a body standing nearer a cell's edge than this stands half in what is past it. */
+export const STAND_REACH_M = 0.4;
+
+/**
+ * LW-STAND (field, 2026-10-05, Mac: "NPCs will get stuck over bodies of water, or be stuck running into walls"):
+ * may a person stand at (x, z) - the location's frame - on the street? Their cell the street net's, and every side of
+ * them within `reach` too: the net is the grid's own walkable cells (a building's footprint and the water are none -
+ * world/cityNavigation.js), so a place it holds is never in a wall nor over the water. Pure: every reader alike.
+ * @param {{ width: number, height: number }} nav @param {{ net: Int32Array, netId: number }} places
+ * @param {number} x @param {number} z @param {number} [reach]
+ */
+export function onStreet(nav, places, x, z, reach = STAND_REACH_M) {
+  const W = nav.width, H = nav.height;
+  const on = (px, pz) => {
+    const cx = Math.floor(px / NAV_CELL), cy = Math.floor(pz / NAV_CELL);
+    return cx >= 0 && cy >= 0 && cx < W && cy < H && places.net[cy * W + cx] === places.netId;
+  };
+  return on(x, z) && on(x + reach, z) && on(x - reach, z) && on(x, z + reach) && on(x, z - reach);
+}
+
 /**
  * LW5: A DOCK FROM THE HARBOUR - a port with no Ship building (most: Daggerfall stands no piers) has its dock where its
  * streets meet the water nearest its harbour's berth (`x`, `z` the berth, the location's frame): the street cell nearest

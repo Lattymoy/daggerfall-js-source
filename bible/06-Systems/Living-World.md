@@ -852,6 +852,39 @@ ARENA2 - its numbers are the CPU's, comparable before and after). Pinned by `tes
   lays them, and asks the road first that they lie there. Both dead now (and the 79 records naming either file). PIN
   MOVED: `lw1_livingWorld`, `lwfix4_turns`.
 
+## LW-STAND - the street's own (2026-10-05)
+
+Mac, from play: "I also noticed sometimes NPC's will get stuck over bodies of water, or be stuck running into walls".
+Three causes in the town, each fixed and pinned (`test/lwstand_street.test.js`, `tools/mutants/lwstand.json`):
+
+- **A stand is on the street** (`meetups.js` `standOn`, `streetReach`, `circleMiddle`; `places.js` `onStreet`,
+  STAND_REACH_M). The places about a spot - one alone up to 3.5 m out, each circle's middle further out as the circles
+  number, a circle's places 0.6 m about its middle - were drawn by geometry alone, and a spot stands a few cells before
+  a door, or (LW5) at a port's dock on the water's edge: a stand fell in the building's wall or over the harbour, and
+  the walker walked straight into it and stood there all its stay (a fisher's 450 minutes at the dock). Measured, a
+  town built solid to its streets (`test/lwTown.mjs closeTown`) stood one body in view in five inside a building, frame
+  for frame; about a spot on the street's edge, as a dock's is, two stands in five fell off it. Each stand is now
+  sounded out from its anchor - the spot, a circle's middle - a STAND_STEP_M (0.25 m) at a time, and stops short of the
+  first step the street does not hold: the street net's cell (a building's footprint and the water are none -
+  `world/cityNavigation.js`) and every side of it within a body's reach (STAND_REACH_M, 0.4 m). A circle's places are
+  sounded from the spot as well, so every stand at a spot is seen from it over open street; a circle's middle kept on
+  the street, a circle by a wall faces in to the street. A stand the street holds is as drawn; every reader's grid is
+  the same, so is every stand.
+- **The way to a stand is over the street** (`livingTown.js`, the frame's approach). A body walks its last metres to
+  its stand straight - from its walk's end, or from last round's place when the circles change partners. Where the
+  straight way is not over the street (a new place round a building's corner, across a fountain) it walks toward the
+  spot, and on from wherever the way opens.
+- **A walk not yet searched is a pause** (`livingTown.js` `row.paused`). LW-PERF searches walks in slices: a resident
+  in view whose next walk was not searched yet kept the stride it had and walked on the spot, into whatever it faced,
+  till the path came - a second or more in a great city, longer while the queue is full. They stand, idle (the watch's
+  own idle), and the pause's minutes are owed as the politeness gate's are, walked off at CATCH_UP: searched, the walk
+  is walked from where they stood, never cut straight across, through whatever stood between, to where its clock had
+  got to.
+- **Measured and left.** A walker catching up with its walk's point (the frame's straight approach) trails it by under
+  2.5 m, and on both synthetic towns, run as the street runs them, every body in view stood on the street every frame.
+  The street is the navgrid's, as DFU's walkers read it: what stands on a walkable cell without being on the grid is
+  still walked through. Not the town's: the classic lane's pool (DFU's own walkers, kept 1:1).
+
 ## The four hosts
 
 - `scenes/world.js` - WIRED (LW2 the towns, LW3 the roads and the Overworld).

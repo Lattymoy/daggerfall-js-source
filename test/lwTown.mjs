@@ -26,3 +26,25 @@ export function synthTown({ blocksW = 3, blocksH = 3, flipNormals = false } = {}
   }
   return { nav, buildings, doors };
 }
+
+/** LW-STAND: A CLOSE-BUILT TOWN - the same grid with no open ground: the streets alone (three cells wide, every 24),
+ *  each street block built solid to them - two buildings side by side, their doors on its south face onto the street.
+ *  A stand drawn by geometry alone falls in a wall here, as it does in a real town's lanes. */
+export function closeTown({ blocksW = 4, blocksH = 4 } = {}) {
+  const nav = new CityNavigation(blocksW, blocksH);
+  const W = nav.width, H = nav.height;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) nav.grid[y * W + x] = (x % 24 < 3 || y % 24 < 3) ? (15 << 4) & 0xff : 0;
+  const buildings = [], doors = [];
+  const trades = [BUILDING_TYPES.Tavern, BUILDING_TYPES.Temple, BUILDING_TYPES.GeneralStore, BUILDING_TYPES.Armorer, BUILDING_TYPES.WeaponSmith,
+    BUILDING_TYPES.Alchemist, BUILDING_TYPES.GuildHall, BUILDING_TYPES.Palace, BUILDING_TYPES.Bank];
+  let key = 1000, i = 0;
+  for (let by = 0; by < H / 24; by++) for (let bx = 0; bx < W / 24; bx++) {
+    for (const [x0, w] of [[bx * 24 + 3, 10], [bx * 24 + 13, 8]]) {
+      const type = i < trades.length ? trades[i] : BUILDING_TYPES.House1 + (i % 4);
+      buildings.push({ key, type, quality: 10 + (i % 8), factionId: 0 });
+      doors.push({ key, x: (x0 + (w >> 1)) * NAV_CELL, z: (by * 24 + 3) * NAV_CELL, nx: 0, nz: -1 });
+      key++; i++;
+    }
+  }
+  return { nav, buildings, doors };
+}
