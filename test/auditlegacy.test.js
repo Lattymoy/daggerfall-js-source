@@ -289,8 +289,9 @@ test('AUDIT LEGACY U3: the Succession walks by keyboard - arrows and Tab move, E
   walkButtons(root, 'Tab', { shiftKey: true });
   walkButtons(root, 'Space');
   assert.deepEqual(pressed, ['lgs-go-b', 'lgs-go-a']);
-  // PIN MOVED (LEGACY-HOME): a refused card's button is passed over, and the meeting's own acts (Talk) come before the end
-  assert.match(rd('src/ui/legacySuccession.js'), /\|\| win\.querySelector\?\.\('\.lgs-go:not\(\[disabled\]\)'\) \|\| win\.querySelector\?\.\('\.lgs-act'\) \|\| win\.querySelector\?\.\('\.lgs-end'\)\)\?\.focus\?\.\(\)/);
+  // PIN MOVED (LEGACY-HOME): a refused card's button is passed over, and the meeting's own acts (Talk) come before the end;
+  // PIN MOVED (AUDIT LEGACY II U14): a refused one is `aria-disabled` - in the walk, never lit first
+  assert.match(rd('src/ui/legacySuccession.js'), /\|\| win\.querySelector\?\.\('\.lgs-go:not\(\[disabled\]\):not\(\[aria-disabled="true"\]\)'\) \|\| win\.querySelector\?\.\('\.lgs-act'\) \|\| win\.querySelector\?\.\('\.lgs-end'\)\)\?\.focus\?\.\(\)/);
   assert.match(rd('src/ui/legacyDoor.js'), /input\(code, e = null\) \{ walkButtons\(host, code, e\); \},/);
   void keydown;
 });

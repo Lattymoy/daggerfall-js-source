@@ -17,7 +17,7 @@ import { modSaveRecords, restoreModSaveRecords, _resetModSaveData } from '../src
 import { setModSetting, _resetModSettings } from '../src/systems/modSettings.js';
 import { offlineCopyOf, onlineCopyOf } from '../src/systems/offlineCopy.js';
 import { planStore } from '../src/systems/itemTransfer.js';
-import { LivingTown, householdOf } from '../src/systems/livingWorld/livingTown.js';
+import { LivingTown, householdKeyOf } from '../src/systems/livingWorld/livingTown.js';
 import { ResidentWalker } from '../src/characters/residentWalker.js';
 import { CLASSIC_MINUTES_PER_SECOND } from '../src/systems/worldTick.js';
 import { PERSON_MOVE_SPEED } from '../src/characters/mobilePerson.js';
@@ -429,8 +429,8 @@ test('AUDIT LEGACY II B2: the line is its own household - a census house lent to
   const a = addChild(f, 1, { rng: familyRng(1) }).person;
   const b = addChild(f, 1, { rng: familyRng(2) }).person;
   extra.list = [residentOf(f, a, { mapId: 12345, buildingKey: lent }), residentOf(f, b, { mapId: 12345, buildingKey: lent })];
-  assert.equal(householdOf(extra.list[0]), 'Ffam-h');
-  assert.equal(householdOf(census[0]), `H${lent}`);
+  assert.equal(householdKeyOf(extra.list[0]), 'Ffam-h');
+  assert.equal(householdKeyOf(census[0]), `H${lent}`);
   assert.deepEqual(t.kinOf(extra.list[0]).map((r) => r.id), [extra.list[1].id], 'their kin: the line alone');
   assert.ok(!t.kinOf(census[0]).some((r) => r.legacy), 'a census household\'s: never the line');
   assert.equal(t.moment({ living: { res: extra.list[0] } }), null, 'no keepsake moment is the line\'s');
@@ -518,7 +518,7 @@ test('AUDIT LEGACY II U1/U2/U11/U14: a held key presses once; the meeting lights
   // U14: the pad's bar offers no Back over a window that has none
   assert.ok(windowPrompts({ back: false }).every(([, words]) => words !== 'Back'));
   assert.ok(windowPrompts({}).some(([, words]) => words === 'Back'));
-  assert.match(door, /host\.setAttribute\('data-no-back', ''\);/);
+  assert.match(door, /host\.setAttribute\?\.\('data-no-back', ''\);/);
 });
 
 test('AUDIT LEGACY II U3: Tab walks a DOM window that owns the focus - both hosts\' overlay rungs let it through', () => {
@@ -529,7 +529,7 @@ test('AUDIT LEGACY II U3: Tab walks a DOM window that owns the focus - both host
   assert.equal(isDomFocusWalk({ key: 'Enter', target: inside }), false, 'Tab alone');
   assert.match(rd('src/scenes/townTalk.js'), /if \(isDomFocusWalk\(e\)\) return true;/);
   assert.match(rd('src/ui/input.js'), /if \(ctx\.uiOverlayActive && isDomFocusWalk\(e\)\) return false;/);
-  assert.match(rd('src/ui/pauseDoor.js'), /host\.setAttribute\('data-dom-focus', ''\);/);
+  assert.match(rd('src/ui/pauseDoor.js'), /host\.setAttribute\?\.\('data-dom-focus', ''\);/);
 });
 
 test('AUDIT LEGACY II U4-U10/U12/U13: the Family pages - no hidden scroll, a seen focus, the keyboard kept on armed acts and the homes, drags that end, five tabs on a phone, tags and names that wrap, a finger\'s links', () => {

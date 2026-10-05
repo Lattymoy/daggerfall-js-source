@@ -52,7 +52,7 @@ import { NEWS_DAYS } from './trips.js';
 
 /** AUDIT LEGACY II B2: whose household a resident is of - their own `household` when they live here beyond the census
  *  (Project Legacy's line), else their census house; null for none. */
-export const householdOf = (res) => res?.household ?? (res?.home == null ? null : `H${res.home}`);
+export const householdKeyOf = (res) => res?.household ?? (res?.home == null ? null : `H${res.home}`);
 
 /** LW5: a visiting crew's day is planned again only when its arrival moved this far (the clock's minutes) - it is read
  *  off the ships' clock and the sky's at each census, and the two drift by a hair. */
@@ -740,9 +740,9 @@ export class LivingTown {
     // AUDIT LEGACY II B2: a household is its census house - or, for those living here beyond the census (Project Legacy's
     // line, `household`), their own: a line lent a census house shared it with the census's people, and a stranger
     // struck down turned the player's own sister against them (and the line's death, the strangers)
-    const hh = householdOf(res);
+    const hh = householdKeyOf(res);
     if (hh == null) return [];
-    return this.peopleOf(day).filter((r) => r.id !== res.id && householdOf(r) === hh);
+    return this.peopleOf(day).filter((r) => r.id !== res.id && householdKeyOf(r) === hh);
   }
 
   /**

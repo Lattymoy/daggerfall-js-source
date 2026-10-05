@@ -138,7 +138,7 @@ export function residentOf(family, p, home) {
     home: home.buildingKey | 0, work: null, temper: 1, social: 0.6, pious: 0.4, drink: 0.2,
     cls: stock ? CLASS_MOBILE_BASE + p.careerIndex : null, level: Math.max(1, p.level | 0), faction: 0,
     legacy: { familyId: family.id, personId: p.id },
-    household: `F${family.id}`,   // AUDIT LEGACY II B2: their own household, never the census house they may be lent (livingTown.js householdOf)
+    household: `F${family.id}`,   // AUDIT LEGACY II B2: their own household, never the census house they may be lent (livingTown.js householdKeyOf)
     portrait: { archive: raceArt(p.race, sex).heads, record: Math.max(0, Math.min(FACES_PER_RACE - 1, p.face | 0)) },   // their own chargen head in the talk window (ui/nativeTalk.js setNpcPortrait)
   };
 }

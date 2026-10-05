@@ -38,7 +38,7 @@ export function createSuccessionOverlay(deps) {
   let view = null;
   const host = document.createElement('div');
   host.id = 'legacy-succession-host';
-  host.setAttribute('data-no-back', '');   // AUDIT LEGACY II U14: a death has to be answered - the pad's bar offers no Back
+  host.setAttribute?.('data-no-back', '');   // AUDIT LEGACY II U14: a death has to be answered - the pad's bar offers no Back
   host.style.cssText = 'position:fixed;inset:0;z-index:14;background:transparent;overflow:hidden';
   document.body.append(host);
   const close = () => {

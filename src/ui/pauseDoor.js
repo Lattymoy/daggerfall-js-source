@@ -261,7 +261,7 @@ function enhancedPauseOverlay(show, base) {
 
   const host = document.createElement('div');
   host.id = 'enhanced-pause';
-  host.setAttribute('data-dom-focus', '');   // AUDIT LEGACY II U3: Tab walks its controls (ui/input.js isDomFocusWalk)
+  host.setAttribute?.('data-dom-focus', '');   // AUDIT LEGACY II U3: Tab walks its controls (ui/input.js isDomFocusWalk)
   // z-index 13: above the front door (12), below the wizard (14).
   // PX4 (Mac): TRANSLUCENT - the classic pause has always drawn its
   // panel over the live frame in the same overlay slot, so the frame

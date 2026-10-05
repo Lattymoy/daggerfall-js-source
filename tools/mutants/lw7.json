@@ -362,7 +362,7 @@
   {
     "name": "LW7-kin-home",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "    return this.peopleOf(day).filter((r) => r.id !== res.id && householdOf(r) === hh);",
+    "old": "    return this.peopleOf(day).filter((r) => r.id !== res.id && householdKeyOf(r) === hh);",
     "new": "    return this.peopleOf(day).filter((r) => r.id !== res.id);",
     "tests": [
       "test/lw7_deeds.test.js"
