@@ -47,7 +47,7 @@ const DEVS = (v('DEVELOPER_HANDLES') ?? '').split(',').map((h) => h.trim()).filt
 // ── THE VOCABULARY, THE GRANT, THE WIRE ─────────────────────────────
 
 test('SERAPH-WINGS vocabulary: the wings join AURAS last, "Seraph Wings" in words, their button in the Founder\'s gold; a look of their own - the fifth kind, their own mesh and motes, added whole (no shade); gold, white-hot at the heart (mutants: the word, the paint, the kind)', () => {
-  assert.deepEqual([...AURAS], ['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings'], 'the fire, the ward, the radiance, the cloak, then the wings');
+  assert.deepEqual([...AURAS], ['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance'], 'the fire, the ward, the radiance, the cloak, then the wings - CRYSTAL-FIST\'s resonance after them (PIN MOVED)');
   assert.equal(AURA_TEXT.seraphwings, 'Seraph Wings');
   assert.equal(AURA_PAINT.seraphwings, 'founder', 'the button in gold - the developer\'s own paint is a red');
   assert.ok(TITLES.includes(AURA_PAINT.seraphwings));
@@ -127,7 +127,7 @@ test('SERAPH-WINGS the account card: wearing the wings, the card says their name
 });
 
 test('SERAPH-WINGS token and relay: a token may carry the wings and verifies; the relay - world168 and after, the ones that know the word - reads it out of the signature for everyone near; a token with every glyph and the wings inside the relay\'s bound (mutants: the vocabulary\'s word)', async () => {
-  assert.equal(RELAY_VERSION, 'world170', 'SERAPH-WINGS moved it on (world168): the vocabulary rides the relay\'s bundle; AUDIT ARENA-LADDER after it (world169, the arena ladder audit - PIN MOVED); FEUD after that (world170, the foe record\'s wind-ups and a revenant\'s fields - PIN MOVED)');
+  assert.equal(RELAY_VERSION, 'world171', 'SERAPH-WINGS moved it on (world168): the vocabulary rides the relay\'s bundle; AUDIT ARENA-LADDER after it (world169, the arena ladder audit - PIN MOVED); FEUD after that (world170, the foe record\'s wind-ups and a revenant\'s fields - PIN MOVED); CRYSTAL-FIST after it (world171, the Crystal Fist\'s words - world170 on its branch, renumbered past FEUD\'s at the merge - PIN MOVED)');
   const kp = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
   const pub = await importPublicKeyB64(Buffer.from(new Uint8Array(await subtle.exportKey('raw', kp.publicKey))).toString('base64url'), { subtle });
   const nowS = 1_760_000_000;
@@ -335,8 +335,8 @@ test('SERAPH-WINGS the hosts: the draw hangs and swings every look with a mesh o
   assert.ok(line, 'the draw\'s line');
   const code = line.slice(0, line.indexOf('   //'));
   assert.ok(!code.trim().startsWith('//') && /for \(const w of _auraDraw\) if \(auraLookOf\(w\.aura\)\.mesh\) \{ auraCapeStep\(w, [^;]*\); auraMotionStep\(w, auraNow\); \}/.test(code), 'every meshed look hung on its body and swung');
-  assert.ok(code.includes('bones: mwViewBodyBones(CLOAK_BONES) ?? auraSpriteBones(mwViewSpriteFigure()) }') && code.includes(': peerBodies?.bonesOf(w.id, CLOAK_BONES) ?? auraSpritePosed(w, peerWalkers?.figureOf(w.id) ?? peerRiders?.figureOf?.(w.id)),'), 'mine off my rig, else off my sprite as drawn; a peer\'s off their rig, else off their sprite - a walker\'s, or a beast\'s on foot (AUDIT 3)');
-  assert.ok(code.includes('yaw: mwViewSpriteFigure()?.yaw ?? player.bodyYawFor(cam.yaw),'), 'AUDIT 3: mine facing the way my sprite faces, not the camera');
+  assert.ok(code.includes('bones: mwViewBodyBones(CLOAK_BONES) ?? auraSpriteBones(mwViewSpriteFigure()) }') && code.includes(': peerBodies?.bonesOf(w.id, CLOAK_BONES) ?? auraSpritePosed(w, peerWalkers?.figureOf(w.id) ?? peerRiders?.figureOf?.(w.id), peerWalkers?.faceOf?.(w.id) ?? peerRiders?.faceOf?.(w.id)),'), 'mine off my rig, else off my sprite as drawn; a peer\'s off their rig, else off their sprite - a walker\'s, or a beast\'s on foot (AUDIT 3)');   // SPRITE-FACE (PIN MOVED): and faced as each sprite is drawn
+  assert.ok(code.includes('yaw: mwViewSpriteFacing()?.yaw ?? player.bodyYawFor(cam.yaw), turn: mwViewSpriteFacing()?.turn,'), 'AUDIT 3: mine facing the way my sprite faces, not the camera - SPRITE-FACE (PIN MOVED): the way its PICTURE faces, and swung by the way it turns');
   assert.equal(auraLookOf('seraphwings').mesh, 'wings');
   assert.ok(Math.abs(CLOAK_REST_POSE.shoulders[1] - CLOAK_SHOULDER_Y) < 1e-6, 'without bones, the wings hang from the rest pose\'s shoulders as the cape does');
 });
@@ -426,18 +426,19 @@ test('SERAPH-WINGS on the back of an Eye of the Beholder sprite: its bones read 
   // WINGS-FIT: facing nowhere yet (Vector3.zero) the sprite shows the eye its FRONT (orientation 0) - so it faces the eye,
   // and the wings hang behind it; it answered null, and the camera's yaw hung them over the sprite's face
   assert.equal(b.state().orientation, 0, 'facing nowhere: its front to the eye');
-  assert.ok(Math.abs(Math.atan2(Math.sin(fig.yaw - Math.PI), Math.cos(fig.yaw - Math.PI))) < 1e-9, `facing nowhere yet: facing the eye (${fig.yaw})`);
+  const fy = b.facing().yaw;   // SPRITE-FACE (PIN MOVED): the facing is the frame's own (facing()), no longer the figure's
+  assert.ok(Math.abs(Math.atan2(Math.sin(fy - Math.PI), Math.cos(fy - Math.PI))) < 1e-9, `facing nowhere yet: facing the eye (${fy})`);
   // AUDIT 3: WALKING BACK, THE SPRITE FACES THE CAMERA - and so do the cloak and the wings (they were the camera's way: the cape over its face)
   const yaw = 0.3, cp = [-Math.sin(yaw) * 2, 3.5, -Math.cos(yaw) * 2];
   for (let i = 0; i < 40; i++) b.tick(1 / 60, { motion: { forward: -1, strafe: 0, standing: false, speed: 3, grounded: true, height: 1.8 }, feet: [0, 2, 0], yaw, cameraPos: cp });
   await new Promise((res) => setTimeout(res, 2));
   b.draw(null, { eye: cp, feet: [0, 2, 0], yaw });
-  const back = b.figure().yaw, d = Math.atan2(Math.sin(back - yaw), Math.cos(back - yaw));
+  const back = b.facing().yaw, d = Math.atan2(Math.sin(back - yaw), Math.cos(back - yaw));
   assert.ok(Math.abs(Math.abs(d) - Math.PI) < 1e-6, `walking back: faced about (${back.toFixed(3)} against the camera's ${yaw})`);
   for (let i = 0; i < 40; i++) b.tick(1 / 60, { motion: { forward: 0, strafe: 1, standing: false, speed: 3, grounded: true, height: 1.8 }, feet: [0, 2, 0], yaw, cameraPos: cp });
   await new Promise((res) => setTimeout(res, 2));
   b.draw(null, { eye: cp, feet: [0, 2, 0], yaw });
-  assert.ok(Math.abs(b.figure().yaw - (yaw + Math.PI / 2)) < 1e-6, 'strafing: side on');
+  assert.ok(Math.abs(b.facing().yaw - (yaw + Math.PI / 2)) < 1e-6, 'strafing: side on');
   assert.ok(b.figure(), 'a figure stands from the last frame drawn');
   b.toggle(false, false);
   assert.equal(b.draw(null, { eye: [0, 3.5, -2], feet: [0, 2, 0], yaw: 0 }), false);
@@ -450,10 +451,10 @@ test('SERAPH-WINGS on the back of an Eye of the Beholder sprite: its bones read 
   assert.equal(b.figure(), null, 'but no figure');
   // the plumbing: the door hands the figure, the view keeps it, a peer's walker or beast gives its own
   const src = (f) => readFileSync(new URL('../' + f, import.meta.url), 'utf8');
-  assert.match(src('src/player/eotbBody.js'), /setEotbDrawBody\(\(canvas, f\) => this\.draw\(canvas, f\), \(\) => this\.figure\(\)\);/);
-  assert.match(src('src/player/eotbBody.js'), /figure = last\.riding \|\| FP \? null : \{ base: c\[1\] - cam\.feet\[1\], mpp: batchPx > 0 \? batchSize\.h \* grow \/ batchPx : 0, beast: !!last\.transformed, yaw: /, 'none in the saddle - a rider\'s frame is the horse\'s too - nor in first person');
+  assert.match(src('src/player/eotbBody.js'), /setEotbDrawBody\(\(canvas, f\) => this\.draw\(canvas, f\), \(\) => this\.figure\(\), \(\) => this\.facing\(\)\);/);   // SPRITE-FACE (PIN MOVED): and the way it faces
+  assert.match(src('src/player/eotbBody.js'), /figure = last\.riding \|\| FP \? null : \{ base: c\[1\] - cam\.feet\[1\], mpp: batchPx > 0 \? batchSize\.h \* grow \/ batchPx : 0, beast: !!last\.transformed \};/, 'none in the saddle - a rider\'s frame is the horse\'s too - nor in first person (SPRITE-FACE, PIN MOVED: its facing is facing()\'s)');
   const mv = src('src/player/mwView.js');
-  assert.match(mv, /const drawn = drawEotbBody\([^;]*\); spriteFigure = drawn \? eotbFigure\(\) : null; return drawn;/);
+  assert.match(mv, /const drawn = drawEotbBody\([^;]*\); spriteFigure = drawn \? eotbFigure\(\) : null; spriteFacing = drawn \? eotbFacing\(\) : null; return drawn;/);   // SPRITE-FACE (PIN MOVED): and its facing
   assert.match(mv, /export function mwViewSpriteFigure\(\) \{ return eotbLane\(\) \? spriteFigure : null; \}/);
   const pr = src('src/net/peerRiders.js');
   assert.match(pr, /figureOf: layer\.figureOf,   \/\/ SERAPH-WINGS/);
