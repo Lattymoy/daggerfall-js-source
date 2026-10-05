@@ -1,0 +1,162 @@
+[
+  {
+    "name": "SPRITEFACE-the-walks-facing-hung",
+    "file": "src/player/eotbBody.js",
+    "old": "facingDrawn = seen === null ? null : { yaw: seen, turn: turnYaw() ?? seen };",
+    "new": "facingDrawn = seen === null ? null : { yaw: turnYaw() ?? seen, turn: turnYaw() ?? seen };",
+    "tests": [
+      "test/spriteface.test.js"
+    ],
+    "note": "The bug Mac saw: the wings hung on the walk's facing - round before the picture on a key, sliding up to half a picture off it as the eye goes round."
+  },
+  {
+    "name": "SPRITEFACE-read-before-the-repaint",
+    "file": "src/player/eotbBody.js",
+    "old": "const seen = FP ? null : portrayedYaw(shown.orientation, ",
+    "new": "const seen = FP ? null : portrayedYaw(pending.length ? pending[pending.length - 1].orientation : shown.orientation, ",
+    "tests": [
+      "test/spriteface.test.js"
+    ],
+    "note": "The picture a repaint still in flight will show, not the one shown: the wings turn DELAYED_FRAMES before the sprite."
+  },
+  {
+    "name": "SPRITEFACE-the-saddles-facing-dropped",
+    "file": "src/player/eotbBody.js",
+    "old": "const seen = FP ? null : portrayedYaw(",
+    "new": "const seen = FP || last.riding ? null : portrayedYaw(",
+    "tests": [
+      "test/spriteface.test.js"
+    ],
+    "note": "In the saddle no facing: a rider's wings fall back to the camera-turned body's yaw, off the horse's picture."
+  },
+  {
+    "name": "SPRITEFACE-first-person-faced",
+    "file": "src/player/eotbBody.js",
+    "old": "const seen = FP ? null : portrayedYaw(",
+    "new": "const seen = portrayedYaw(",
+    "tests": [
+      "test/spriteface.test.js"
+    ],
+    "note": "First person faced too - the billboard stands on the camera; with the eye on the feet it has no bearing, and with FP_HEAD's lift it reads one the picture does not show."
+  },
+  {
+    "name": "SPRITEFACE-the-sign-turned",
+    "file": "src/player/eotbBillboard.js",
+    "old": "  const y = Math.atan2(toCamera[0], toCamera[2]) - orientation * ANGLE_PER_ORIENTATION * Math.PI / 180;",
+    "new": "  const y = Math.atan2(toCamera[0], toCamera[2]) + orientation * ANGLE_PER_ORIENTATION * Math.PI / 180;",
+    "tests": [
+      "test/spriteface.test.js"
+    ],
+    "note": "The wheel run the wrong way - EOTB-IL's own finding: a figure turning left drawn turning right."
+  },
+  {
+    "name": "SPRITEFACE-the-step-not-the-pictures",
+    "file": "src/player/eotbBillboard.js",
+    "old": "  const y = Math.atan2(toCamera[0], toCamera[2]) - orientation * ANGLE_PER_ORIENTATION * Math.PI / 180;",
+    "new": "  const y = Math.atan2(toCamera[0], toCamera[2]) - orientation * 40 * Math.PI / 180;",
+    "tests": [
+      "test/spriteface.test.js"
+    ],
+    "note": "Forty degrees a picture, not the wheel's 45."
+  },
+  {
+    "name": "SPRITEFACE-the-bearing-not-the-eyes",
+    "file": "src/player/eotbBillboard.js",
+    "old": "  const y = Math.atan2(toCamera[0], toCamera[2]) - orientation",
+    "new": "  const y = Math.atan2(toCamera[2], toCamera[0]) - orientation",
+    "tests": [
+      "test/spriteface.test.js"
+    ],
+    "note": "The line of sight's bearing read off the wrong axes (x and z swapped)."
+  },
+  {
+    "name": "SPRITEFACE-the-poses-facing-hung",
+    "file": "src/net/peerRiders.js",
+    "old": "  f.yaw = eye ? portrayedYaw(view, [eye[0] - feet[0], 0, eye[2] - feet[2]]) : null;",
+    "new": "  f.yaw = eye ? yaw : null;",
+    "tests": [
+      "test/spriteface.test.js"
+    ],
+    "note": "A peer's wings hung on the pose's smooth facing, not the picture drawn of them."
+  },
+  {
+    "name": "SPRITEFACE-a-peers-line-reversed",
+    "file": "src/net/peerRiders.js",
+    "old": "  f.yaw = eye ? portrayedYaw(view, [eye[0] - feet[0], 0, eye[2] - feet[2]]) : null;",
+    "new": "  f.yaw = eye ? portrayedYaw(view, [feet[0] - eye[0], 0, feet[2] - eye[2]]) : null;",
+    "tests": [
+      "test/spriteface.test.js"
+    ],
+    "note": "The line of sight from the eye to the figure, not from the figure to the eye: every peer's wings faced about."
+  },
+  {
+    "name": "SPRITEFACE-faced-undrawn",
+    "file": "src/net/peerRiders.js",
+    "old": "    faceOf: (id) => { const r = figs.get(id); return r?.batch && r.face && r.face.yaw !== null ? r.face : null; },",
+    "new": "    faceOf: (id) => { const r = figs.get(id); return r?.face ?? null; },",
+    "tests": [
+      "test/spriteface.test.js"
+    ],
+    "note": "A facing with no line of sight (no eye) handed on - a null yaw the aura would turn to nothing."
+  },
+  {
+    "name": "SPRITEFACE-the-pose-not-the-picture",
+    "file": "src/render/auraRing.js",
+    "old": "  ? { feet: w.at, yaw: face ? face.yaw : w.yaw, turn: face ? face.turn : null, bones: fig ? auraSpriteBones(fig) : null }",
+    "new": "  ? { feet: w.at, yaw: w.yaw, turn: face ? face.turn : null, bones: fig ? auraSpriteBones(fig) : null }",
+    "tests": [
+      "test/spriteface.test.js"
+    ],
+    "note": "A peer's sprite posed on the gather's pose facing, the face handed and ignored."
+  },
+  {
+    "name": "SPRITEFACE-the-turning-not-kept",
+    "file": "src/render/auraRing.js",
+    "old": "  w.turnYaw = Number.isFinite(posed?.turn) ? posed.turn : null;",
+    "new": "  w.turnYaw = null;",
+    "tests": [
+      "test/spriteface.test.js"
+    ],
+    "note": "The body's turning dropped at the step: the swing reads the picture."
+  },
+  {
+    "name": "SPRITEFACE-the-swing-reads-the-picture",
+    "file": "src/render/auraRing.js",
+    "old": "  const yaw = Number.isFinite(w.turnYaw) ? w.turnYaw : Number.isFinite(w.yaw) ? w.yaw : 0, at = w.at;",
+    "new": "  const yaw = Number.isFinite(w.yaw) ? w.yaw : 0, at = w.at;",
+    "tests": [
+      "test/spriteface.test.js"
+    ],
+    "note": "Every 45-degree change of the picture read as a turn: the cloak twists and the wing tips' trail slides and springs back."
+  },
+  {
+    "name": "SPRITEFACE-the-gather-off-the-figure",
+    "file": "src/scenes/world.js",
+    "old": "_auraSelf.yaw = mwViewSpriteFacing()?.yaw ?? player.bodyYawFor(cam.yaw);",
+    "new": "_auraSelf.yaw = mwViewSpriteFigure()?.yaw ?? player.bodyYawFor(cam.yaw);",
+    "tests": [
+      "test/spriteface.test.js"
+    ],
+    "note": "Mine gathered off the figure, which no longer carries a facing: the camera-turned body's yaw for every sprite."
+  },
+  {
+    "name": "SPRITEFACE-the-view-keeps-none",
+    "file": "src/player/mwView.js",
+    "old": "spriteFacing = drawn ? eotbFacing() : null;",
+    "new": "spriteFacing = null;",
+    "tests": [
+      "test/spriteface.test.js"
+    ],
+    "note": "The view never keeps the facing the sprite drew in."
+  },
+  {
+    "name": "SPRITEFACE-a-peers-light-off-the-pose",
+    "file": "src/scenes/world.js",
+    "old": "w.yaw = (peerWalkers?.faceOf?.(d.id) ?? peerRiders?.faceOf?.(d.id))?.yaw ?? peerBodyYaw(d.shown) ?? 0;",
+    "new": "w.yaw = peerBodyYaw(d.shown) ?? 0;",
+    "tests": [
+      "test/spriteface.test.js"
+    ],
+    "note": "A peer gathered on the pose's facing: the wings' light (auraWingLights, read off the gather) stands up to half a picture round the body from the wings."
+  }
+]

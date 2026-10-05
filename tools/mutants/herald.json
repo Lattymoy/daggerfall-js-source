@@ -62,12 +62,12 @@
   {
     "name": "HERALD-the-glyph-without-the-title",
     "file": "server-account/src/titles.js",
-    "old": "herald: 'herald', aegis: 'aegis', primarch: 'primarch' });",
-    "new": "herald: 'penitent', aegis: 'aegis', primarch: 'primarch' });",
+    "old": "herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist' });",
+    "new": "herald: 'penitent', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist' });",
     "tests": [
       "test/herald.test.js"
     ],
-    "note": "A Herald drawn with Penitent's sword. AEGIS (re-aimed by content): the line gained Sureme's aegis. PRIMARCH (re-aimed by content): the line gained GA00250's primarch."
+    "note": "A Herald drawn with Penitent's sword. AEGIS (re-aimed by content): the line gained Sureme's aegis. PRIMARCH (re-aimed by content): the line gained GA00250's primarch. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
   },
   {
     "name": "HERALD-the-tier-unmapped",
