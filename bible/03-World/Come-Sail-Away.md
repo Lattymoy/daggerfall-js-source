@@ -2498,7 +2498,11 @@ packs every hull (`getBoatTransforms`: `Crewed` sets `packable` too), and makes 
   SHIP-CLAIM's OPEN, closed). A boat no item placed packs at her hull's price, as before.
 - **Her weight.** The ships' table weights (2,400, 48,000 and 240,000 kg) were never an item's in the mod. Packed, a hull
   weighs no more than the Large Boat's parts (120 kg, `packedHullWeight`), her hold's weight on top as ever: in the pack
-  the table's would hold the bearer under the water and sink any boat she sailed.
+  the table's would hold the bearer under the water and sink any boat she sailed. [HOLD-WEIGHT, FIELD BUGS 2026-10-05c:
+  her hold's weight on top made a ship packed off a plundered hold ONE item heavier than the bearer could ever carry -
+  set down in a chest, no take could lift it again. Parts heavier than the bearer's MaxEncumbrance are not made now
+  (`partsTooHeavy`): the pick-up and the menu say why, a fast travel and a landfall leave her where she lies; a lost
+  boat is packed whatever she weighs (`01-Overview/Field-Bugs-2026-10-05c.md`).]
 - The boat menu lists Pick up on every hull (`systems/csaBoatMenu.js`). The world host hands the runtime the pack
   (`items.player`) and the menu its word (`noDeed`); an Overworld landfall packs a ship only with her deed.
 - Pins: `test/shippack.test.js` (8) and `test/shipclaim.test.js`'s two; `test/boatmenu.test.js`, `test/csa_boats.test.js`,

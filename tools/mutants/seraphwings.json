@@ -317,11 +317,12 @@
   {
     "name": "SERAPHWINGS-the-vocabulary-without-the-wings",
     "file": "src/net/identityToken.js",
-    "old": "'shadowcloak', 'seraphwings']);",
-    "new": "'shadowcloak']);",
+    "old": "'shadowcloak', 'seraphwings', 'resonance']);",
+    "new": "'shadowcloak', 'resonance']);",
     "tests": [
       "test/seraphwings.test.js"
-    ]
+    ],
+    "note": "CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's Crystal Resonance."
   },
   {
     "name": "SERAPHWINGS-the-word",
@@ -335,11 +336,12 @@
   {
     "name": "SERAPHWINGS-the-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "shadowcloak: 'shadowfang', seraphwings: 'founder' });",
-    "new": "shadowcloak: 'shadowfang', seraphwings: 'developer' });",
+    "old": "shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist' });",
+    "new": "shadowcloak: 'shadowfang', seraphwings: 'developer', resonance: 'crystalfist' });",
     "tests": [
       "test/seraphwings.test.js"
-    ]
+    ],
+    "note": "CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
   },
   {
     "name": "SERAPHWINGS-the-wings-unposed",
@@ -452,20 +454,22 @@
   {
     "name": "SERAPHWINGS-a-peers-sprite-ignored",
     "file": "src/scenes/world.js",
-    "old": " ?? auraSpritePosed(w, peerWalkers?.figureOf(w.id) ?? peerRiders?.figureOf?.(w.id))",
+    "old": " ?? auraSpritePosed(w, peerWalkers?.figureOf(w.id) ?? peerRiders?.figureOf?.(w.id), peerWalkers?.faceOf?.(w.id) ?? peerRiders?.faceOf?.(w.id))",
     "new": "",
     "tests": [
       "test/seraphwings.test.js"
-    ]
+    ],
+    "note": "SPRITE-FACE (re-aimed by content): the facing moved off the figure to facing() - the picture's."
   },
   {
     "name": "SERAPHWINGS-the-figure-never-kept",
     "file": "src/player/eotbBody.js",
-    "old": "      figure = last.riding || FP ? null : { base: c[1] - cam.feet[1], mpp: batchPx > 0 ? batchSize.h * grow / batchPx : 0, beast: !!last.transformed, yaw: figureYaw() };   // SERAPH-WINGS: a rider's frame is the horse's too - no shoulders read off it; AUDIT 3: nor the first-person billboard's (the camera is in it), and its metres a pixel (the shoulders by the pixel - auraSpriteBones), its form, and the way it FACES (UpdateOrientation's facing - not the camera's: a sprite walking back shows its face)",
+    "old": "      figure = last.riding || FP ? null : { base: c[1] - cam.feet[1], mpp: batchPx > 0 ? batchSize.h * grow / batchPx : 0, beast: !!last.transformed };   // SERAPH-WINGS: a rider's frame is the horse's too - no shoulders read off it; AUDIT 3: nor the first-person billboard's (the camera is in it), and its metres a pixel (the shoulders by the pixel - auraSpriteBones) and its form",
     "new": "",
     "tests": [
       "test/seraphwings.test.js"
-    ]
+    ],
+    "note": "SPRITE-FACE (re-aimed by content): the facing moved off the figure to facing() - the picture's."
   },
   {
     "name": "SERAPHWINGS-a-riders-figure",
@@ -479,11 +483,12 @@
   {
     "name": "SERAPHWINGS-a-stale-figure",
     "file": "src/player/eotbBody.js",
-    "old": "      face = faceNow && Number.isFinite(faceNow.yaw) ? faceNow : null;\n      figure = null;\n",
-    "new": "      face = faceNow && Number.isFinite(faceNow.yaw) ? faceNow : null;\n",
+    "old": "      face = faceNow && Number.isFinite(faceNow.yaw) ? faceNow : null;\n      figure = null; facingDrawn = null;\n",
+    "new": "      face = faceNow && Number.isFinite(faceNow.yaw) ? faceNow : null;\n      facingDrawn = null;\n",
     "tests": [
       "test/seraphwings.test.js"
-    ]
+    ],
+    "note": "SPRITE-FACE (re-aimed by content): the facing moved off the figure to facing() - the picture's."
   },
   {
     "name": "SERAPHWINGS-the-view-forgets-the-figure",
@@ -686,20 +691,22 @@
   {
     "name": "SERAPHWINGS-the-camera-facing",
     "file": "src/player/eotbBody.js",
-    "old": "beast: !!last.transformed, yaw: figureYaw() };",
-    "new": "beast: !!last.transformed, yaw: null };",
+    "old": "facingDrawn = seen === null ? null : { yaw: seen, turn: turnYaw() ?? seen };",
+    "new": "facingDrawn = seen === null ? null : { yaw: cam.yaw, turn: turnYaw() ?? seen };",
     "tests": [
       "test/seraphwings.test.js"
-    ]
+    ],
+    "note": "SPRITE-FACE (re-aimed by content): the facing moved off the figure to facing() - the picture's."
   },
   {
     "name": "SERAPHWINGS-my-sprites-facing-ignored",
     "file": "src/scenes/world.js",
-    "old": "yaw: mwViewSpriteFigure()?.yaw ?? player.bodyYawFor(cam.yaw), bones:",
-    "new": "yaw: player.bodyYawFor(cam.yaw), bones:",
+    "old": "yaw: mwViewSpriteFacing()?.yaw ?? player.bodyYawFor(cam.yaw), turn:",
+    "new": "yaw: player.bodyYawFor(cam.yaw), turn:",
     "tests": [
       "test/seraphwings.test.js"
-    ]
+    ],
+    "note": "SPRITE-FACE (re-aimed by content): the facing moved off the figure to facing() - the picture's."
   },
   {
     "name": "SERAPHWINGS-the-beast-read-as-a-walker",
@@ -1001,11 +1008,13 @@
   {
     "name": "WINGSFIT-facing-nowhere-the-cameras",
     "file": "src/player/eotbBody.js",
-    "old": "return Math.hypot(ex, ez) > 1e-6 ? Math.atan2(ex, ez) : null;",
-    "new": "return null;",
+    "old": "facingDrawn = seen === null ? null : { yaw: seen, turn: turnYaw() ?? seen };",
+    "new": "facingDrawn = seen === null ? null : { yaw: seen, turn: turnYaw() ?? cam.yaw };",
     "tests": [
-      "test/seraphwings.test.js"
-    ]
+      "test/seraphwings.test.js",
+      "test/spriteface.test.js"
+    ],
+    "note": "SPRITE-FACE (re-aimed, the AUDIT's mutation run: it SURVIVED on turnYaw's eye-bearing fallback, which facing()'s `?? seen` had made dead - the fallback gone, the record aimed at the one fallback left): facing nowhere, the body turning as the camera looks rather than as its picture faces."
   },
   {
     "name": "WINGSFIT-the-old-reach",

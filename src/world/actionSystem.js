@@ -707,6 +707,11 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
       actionFlag: action.actionFlag ?? ACTION_FLAGS.None,
       index: action.index,
       axisRaw: action.axisRaw,
+      // FIELD BUGS 2026-10-05c (FLAT-RELAY; "red brick sections are not always working at teleporters"): an acting FLAT
+      // relay is heard by its box (dungeonContext collisionTriggers' standsOnAction), as addEffect's and addMoveFlat's
+      // are - left unset, the pass asked a flat's triangles, which it has none of, and a walk into a flat Teleport
+      // (Collision03) never fired: AUDIT PRE-MERGE 0929's "the acting flats keep the box", lost for relays alone
+      isFlat: action.isFlat === true,
       activationCount: 0,
       state: 'start',
       nextKey: action.nextObject,

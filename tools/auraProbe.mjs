@@ -32,9 +32,16 @@
 //     node tools/auraProbe.mjs [--shots <dir>]     (writes aura.png / aura_side.png / ward.png / ward_side.png /
 //                                                   radiance.png / radiance_side.png / cloak_back.png /
 //                                                   cloak_front.png / cloak_top.png / cloak_torn.png /
-//                                                   wings_back.png there)
+//                                                   wings_back.png / resonance.png / resonance_top.png there)
+//
+// CRYSTAL-FIST (2026-10-05): and THE CRYSTAL RESONANCE, the sixth - from the side, every square node's law
+// (resonanceLit, on the wearer's own clock) stands lit is lit in the reference's purple itself, and every square over a
+// column's top dark - AUDIT: exactly, square for square, the counts being node's; the columns go up and down (another
+// moment, other squares); its feet on the ring from above, read inside it where no square of the wall can stand over
+// them; the purple not summed to a paler one where a square lies over its foot; no jump at the wrap; nothing before it
+// kindles.
 import { chromium } from 'playwright';
-import { glyphEdges, CLOAK_GLYPH } from '../src/render/auraRing.js';   // SHADOW-CLOAK: where the wearer's glyph is, to read it back
+import { glyphEdges, CLOAK_GLYPH, RESONANCE_R, RESONANCE_COLUMNS, RESONANCE_CELLS, RESONANCE_PITCH_M, AURA_LIFT_M, resonanceLit, resonanceClock } from '../src/render/auraRing.js';   // SHADOW-CLOAK: where the wearer's glyph is, to read it back; CRYSTAL-FIST: which squares stand lit, by node's own law
 import http from 'node:http';
 import { readFileSync, existsSync } from 'node:fs';
 import { join, extname, dirname } from 'node:path';
@@ -354,6 +361,37 @@ try {
   check('from the wearer\'s own eye looking ahead, nothing over the view', wFp.px.every((c, i) => Math.abs(lum(c) - lum(wFpBare.px[i])) < 6), wFp.px.map(lum).join(' '));
   const wm = await wg(wBehind, 13.2, 1, wGrid, wAt, { mirror: true }), wLitM = wm.px.map((c, i) => lum(c) > lum(wBare.px[i]) + 60).filter(Boolean).length;
   check('as the game mirrors it, the same light', wm.error === 0 && Math.abs(wLitM - wWholeN) <= wWholeN * 0.25, `${wLitM} vs ${wWholeN}`);
+  // ── CRYSTAL-FIST: THE CRYSTAL RESONANCE ──
+  const rs = (eye, t, k, pts, at) => page.evaluate(([e, tt, kk, ps, a]) => window.draw(e, tt, kk, ps, 'resonance', a, 0, 1, -1, null, { strict: true }), [eye, t, k, pts, at]);
+  const resEye = [0, 2.4, 2.0], resAt = [0, 0.3, 0];   // high enough that the far side's columns stand clear above the near side's on the screen
+  /** The middle of column k's square j, in the scene (the feet at the origin, the wall lifted AURA_LIFT_M). */
+  const sq = (k, j) => { const a = ((k + 0.5) / RESONANCE_COLUMNS) * Math.PI * 2; return [Math.cos(a) * RESONANCE_R, AURA_LIFT_M + (j + 0.5) * RESONANCE_PITCH_M, Math.sin(a) * RESONANCE_R]; };
+  const nearCols = [9, 10, 11, 12, 13, 14];   // the near side, facing the eye (+z)
+  const resPts = nearCols.flatMap((k) => Array.from({ length: RESONANCE_CELLS }, (_, j) => sq(k, j)));
+  const litAt = (t) => nearCols.flatMap((k) => Array.from({ length: RESONANCE_CELLS }, (_, j) => j < resonanceLit(k, resonanceClock(t, 0.37))));   // the probe's wearer's seed
+  const rsT = 13.3, rsWhole = await rs(resEye, rsT, 1, resPts, resAt);
+  if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'resonance.png') });
+  check('the resonance draws without a GL error', rsWhole.error === 0 && rsWhole.drawn === 1, `error ${rsWhole.error}, drawn ${rsWhole.drawn}`);
+  const want = litAt(rsT), onPx = rsWhole.px.filter((c, i) => want[i]), offPx = rsWhole.px.filter((c, i) => !want[i]);
+  check('every square the law stands lit is lit', onPx.length > 6 && onPx.every((c) => lum(c) > 250), `${onPx.length} lit: ${onPx.map(lum).join(' ')}`);
+  check('in the reference\'s purple itself (#a349a4), never summed past it', onPx.every((c) => Math.abs(c[0] - 163) <= 6 && Math.abs(c[1] - 73) <= 6 && Math.abs(c[2] - 164) <= 6), JSON.stringify(onPx.slice(0, 4)));
+  check('over a column\'s top, every square dark', offPx.length > 6 && offPx.every((c) => lum(c) < 60), `${offPx.filter((c) => lum(c) < 60).length} of ${offPx.length} dark`);
+  // AUDIT: over a bright floor (0.08 * 9 a light grey) the squares COVER it in the purple, never summed past it
+  const rsLit = await page.evaluate(([e, tt, ps, a]) => window.draw(e, tt, 1, ps, 'resonance', a, 0, 9, -1, null, { strict: true }), [resEye, rsT, resPts, resAt]);
+  const litOn = rsLit.px.filter((c, i) => want[i]);
+  check('over a bright floor, still the purple itself', litOn.length > 6 && litOn.every((c) => Math.abs(c[0] - 163) <= 6 && Math.abs(c[1] - 73) <= 6 && Math.abs(c[2] - 164) <= 6), JSON.stringify(litOn.slice(0, 3)));
+  const rsT2 = 14.05, rsLater = await rs(resEye, rsT2, 1, resPts, resAt), want2 = litAt(rsT2);
+  const moved = want.filter((w, i) => w !== want2[i]).length, movedPx = rsLater.px.filter((c, i) => want2[i] && !want[i] && lum(c) > 250).length + rsLater.px.filter((c, i) => !want2[i] && want[i] && lum(c) < lum(rsWhole.px[i]) - 150).length;
+  check('up and down - another moment, other squares', moved >= 4 && movedPx === moved, `${moved} squares changed by the law, ${movedPx} by the frame`);
+  const feet = Array.from({ length: 24 }, (_, i) => { const a = ((2 * i + 0.5) / RESONANCE_COLUMNS) * Math.PI * 2, r = RESONANCE_R - 0.006; return [Math.cos(a) * r, 0.05, Math.sin(a) * r]; });   // AUDIT: inside the ring - 15 mm in from the foot's inner edge, two pixels clear of its edge's ramp - where the wall (which leans out from an eye over it) stands over nothing
+  const rsTop = await rs([0, 3.4, 0.001], rsT, 1, [...feet, [0, 0.05, 0], [1.2, 0.05, 0]], [0, 0, 0]);
+  if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'resonance_top.png') });
+  check('its feet on the ring, seen from above, in the purple itself; dark within and past it', rsTop.px.slice(0, 24).every((c) => Math.abs(c[0] - 163) <= 6 && Math.abs(c[1] - 73) <= 6 && Math.abs(c[2] - 164) <= 6) && lum(rsTop.px[24]) < 60 && lum(rsTop.px[25]) < 60, rsTop.px.map(lum).join(' '));
+  const rsB = await rs(resEye, p.period - 1 / 240, 1, resPts, resAt), rsA = await rs(resEye, 1 / 240, 1, resPts, resAt);
+  const rsJump = Math.max(...rsB.px.map((c, i) => Math.abs(lum(c) - lum(rsA.px[i]))));
+  check('no jump where the clock wraps', rsJump <= 45, `${rsJump}`);
+  const rsCold = await rs(resEye, rsT, 0, resPts, resAt);
+  check('unkindled, nothing stands', rsCold.px.every((c) => lum(c) < 70), `${Math.max(...rsCold.px.map(lum))}`);
   check('no page error', errs.length === 0, errs.join('; '));
 } finally {
   await browser.close();

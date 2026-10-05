@@ -158,8 +158,11 @@ test('audit26 F216/F217: both exterior pools snapshot in natives and restore thr
   // AUDIT 63 F24 widened the restore: the saved quest link is revived
   // before the mint (SerializableEnemy.cs:205-218), through a callback
   // the caller that owns a quest machine hands in.
-  assert.match(ef, /function restoreWorld\(saved, fromNative, yOffset = 0, \{ reviveQuestBehaviour = null \} = \{\}\)/);
-  assert.match(ef, /spawnFoe\(sf\.mobileType, \[lx, sf\.y \+ yOffset, lz\], \{ gender: sf\.gender, feetGiven: true, questBehaviour, placed: !!sf\.placed, eliteFoe: sf\.eliteFoe === true, champion: sf\.champion \? championIndex\(sf\.champion\) : null \}\)/,   // B04 (#534 fix package): its elite word restored, never re-rolled   // WOD3: a placed foe restores placed; LOOT7: a champion as one   // REVIEW 2026-09-05: the snapshot holds FEET
+  // PIN MOVED (SEALED-SAVE, FIELD BUGS 2026-10-05c): the restore takes the host's restand too, and a quest foe it moves
+  // stands at `feet` (test/fb1004d_questmarkers.test.js)
+  assert.match(ef, /function restoreWorld\(saved, fromNative, yOffset = 0, \{ reviveQuestBehaviour = null, restandQuestFoe = null \} = \{\}\)/);
+  assert.match(ef, /const feet = \(questBehaviour && restandQuestFoe\?\.\(questBehaviour, \[lx, sf\.y \+ yOffset, lz\]\)\) \|\| \[lx, sf\.y \+ yOffset, lz\];/);
+  assert.match(ef, /spawnFoe\(sf\.mobileType, feet, \{ gender: sf\.gender, feetGiven: true, questBehaviour, placed: !!sf\.placed, eliteFoe: sf\.eliteFoe === true, champion: sf\.champion \? championIndex\(sf\.champion\) : null \}\)/,   // B04 (#534 fix package): its elite word restored, never re-rolled   // WOD3: a placed foe restores placed; LOOT7: a champion as one   // REVIEW 2026-09-05: the snapshot holds FEET
     'the restore re-mints through the pool\'s ONE spawn chain, then overlays the saved truth');
   const cg = rd('src/scenes/cityGuards.js');
   assert.match(cg, /function snapshotWorld\(toNative\)/);

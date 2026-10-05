@@ -963,7 +963,7 @@ The report: *"Werewolf morrowind sprite not showing online"*.
 **What the player sees.** A transformed player with no Morrowind body is
 drawn in third person by Eye Of The Beholder's billboard (`mwView.js:119`
 `eotbLane`, `:334`). Its table rule puts the transformed form first, riding
-included (`eotbBillboard.js:337` `chooseTable`, `:343`), and it draws the
+included (`eotbBillboard.js:354` `chooseTable`, `:360`), and it draws the
 mod's lycan archives: 112380 for the werewolf, 112381 for the wereboar
 (`eotbBillboard.js:75` `lycanArchive`, `:142` `tableArchive`). That art is a
 hunched, dark-furred, Bloodmoon-style beast, and it is the "Morrowind sprite"
@@ -994,7 +994,7 @@ rider:
 - The frame clock is the saddle's for a mounted beast and EOTB's `speedMod`
   run halving on foot.
 - A new swing count plays `AttackMeleeLycan` once, forward, at LYCAN_TICK,
-  as the local body's `playLycanAttack` does (`eotbBody.js:515`). The count
+  as the local body's `playLycanAttack` does (`eotbBody.js:530`). The count
   first seen is no swing.
 
 The hand-off is RIDE's: `isRiding` is true only once the art is up, so while
@@ -1012,7 +1012,7 @@ world.js's `cam` and sets it each modal frame.
 **The local body, beside it.** `eotbBody.js` asked for every sprite with
 the mod's settings (`cfg`), which never carry the form. So a wereboar saw the
 werewolf on themselves, while the others now draw the boar. The draw and the
-placement take the live form now (`lookNow`, `eotbBody.js:372`). The preload
+placement take the live form now (`lookNow`, `eotbBody.js:387`). The preload
 fetches the live form's lycan set, and fetches it again when the form
 changes (`:270`, `:713`).
 
@@ -1101,7 +1101,7 @@ pins stand.
 
 **The portrait.** `fpArm.figure()` draws the enhanced inventory's model
 figure (`enhancedInventory.js:1710`), which is shown in a 110:184 cell with
-object-fit: contain (`enhancedStyle.js:4480`). It framed `meshBounds` over
+object-fit: contain (`enhancedStyle.js:4530`). It framed `meshBounds` over
 EVERY piece, then hid the unlit torch, the arrow off the string and the
 empty holster twin, so gear it did not show still moved the frame. Its width
 was the box's azimuth-safe diagonal, so a longsword pointing at the viewer,

@@ -11,6 +11,10 @@
 //      new home: /play/arena2/* serves ARENA2_PATH exactly as /arena2/*
 //      does. A fake folder with one fake file proves the mount; no game
 //      data is involved.
+//   4. SUPPORT1: the corner asks are Patreon's and Ko-fi's, in that order,
+//      at SUPPORT_ASKS' addresses, each mark drawn by the game's own rules
+//      (injected) and lit gold under the pointer - and at every width the
+//      two stay ONE row, clear of everything the door says under them.
 //
 // Boots vite itself (two servers: one with no data folder, one with the
 // fake one) and screenshots desktop, phone and the game's menu:
@@ -20,6 +24,7 @@ import { chromium, devices } from 'playwright';
 import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { SUPPORT_ASKS } from '../src/ui/supportAsks.js';
 
 process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
 const shots = process.env.PROBE_SHOTS ?? '/tmp';
@@ -98,6 +103,21 @@ async function landing(label, ctxOpts) {
   const downloads = await page.locator('#desktop + dd .dl a').evaluateAll((els) => els.map((e) => [e.textContent, e.getAttribute('href')]));
   check(`${label}: Install lands on three direct downloads`,
     downloads.length === 3 && downloads.every(([, h]) => /\/releases\/latest\/download\/DaggerfallOnline-[\w-]+\.(exe|dmg|AppImage)$/.test(h)), JSON.stringify(downloads));
+  // SUPPORT1: the asks - the addresses, the order, the marks the game draws, a thumb's target, gold under the pointer
+  const asks = await page.locator('.asks a.ask').evaluateAll((els) => els.map((e) => {
+    const mark = e.querySelector('.supmark'), b = e.getBoundingClientRect(), m = mark?.getBoundingClientRect();
+    return { href: e.getAttribute('href'), mark: mark?.className, h: b.height, shadow: mark ? getComputedStyle(mark, '::before').boxShadow : 'none',
+      inside: !!m && m.top >= b.top + 2 && m.bottom <= b.bottom - 2 };
+  }));
+  check(`${label}: the corner asks are Patreon then Ko-fi, at SUPPORT_ASKS' addresses`,
+    JSON.stringify(asks.map((a) => a.href)) === JSON.stringify(SUPPORT_ASKS.map((a) => a.url)), JSON.stringify(asks.map((a) => a.href)));
+  check(`${label}: each ask's mark is drawn by the injected rules, whole inside its plaque`,
+    asks.length === 2 && asks.every((a, i) => a.mark === `supmark supmark-${SUPPORT_ASKS[i].id}` && a.shadow !== 'none' && a.inside), JSON.stringify(asks));
+  check(`${label}: each ask is a 44px target`, asks.every((a) => a.h >= 44), asks.map((a) => `${a.h}px`).join(' / '));
+  await page.locator('.asks a.ask').nth(1).hover();
+  const lit = await page.locator('.asks .supmark-kofi').evaluate((m) => getComputedStyle(m).getPropertyValue('--mk-hi').trim());
+  check(`${label}: a mark lights in the classic pair's gold under the pointer`, lit === 'rgb(243,239,44)', lit);
+  await page.mouse.move(0, 0);
   check(`${label}: no page errors`, errors.length === 0, errors.join(' | '));
   await page.screenshot({ path: `${shots}/landing-${label}.png`, fullPage: true });
   console.log(`  ${shots}/landing-${label}.png`);
@@ -105,6 +125,32 @@ async function landing(label, ctxOpts) {
 }
 
 const desk = await landing('desktop', { viewport: { width: 1400, height: 900 } });
+
+// SUPPORT1: THE ASKS' ROW, at every width - one row (two would come down over the wordmark), inside the screen, and
+// clear of everything the door says under it: the door's top is the asks' room (index.html, .door).
+{
+  const page = await browser.newPage();
+  await page.goto(`${BASE}/`, { waitUntil: 'networkidle' });
+  const bad = [];
+  for (const w of [320, 360, 375, 390, 412, 430, 480, 600, 768, 860, 861, 1024, 1280, 1366, 1920]) {
+    for (const h of [568, 640, 720, 900]) {
+      await page.setViewportSize({ width: w, height: h });
+      const g = await page.evaluate(() => {
+        const r = (e) => { const b = e.getBoundingClientRect(); return { l: b.left, t: b.top, r: b.right, b: b.bottom }; };
+        const asks = [...document.querySelectorAll('.asks a.ask')].map(r);
+        const under = [...document.querySelectorAll('.door > :not(.asks):not(.foot)')].map(r);
+        return { asks, under };
+      });
+      const [a, k] = g.asks;
+      const row = { t: Math.min(a.t, k.t), b: Math.max(a.b, k.b), l: Math.min(a.l, k.l), r: Math.max(a.r, k.r) };
+      if (a.t !== k.t) bad.push(`${w}x${h}: two rows`);
+      else if (row.l < 0 || row.r > w) bad.push(`${w}x${h}: off the screen`);
+      else if (g.under.some((u) => u.t < row.b && u.l < row.r && row.l < u.r)) bad.push(`${w}x${h}: over the door`);
+    }
+  }
+  check('the asks stand one row, on the screen and clear of the door, at 60 sizes from 320px to 1920px', bad.length === 0, bad.join('; '));
+  await page.close();
+}
 check('desktop: the foot carries build, tests, lines and Source',
   await desk.page.locator('.foot').isVisible()
   && (await desk.page.locator('.foot .stat').count()) === 2);

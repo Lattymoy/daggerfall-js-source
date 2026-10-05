@@ -264,7 +264,10 @@ elsewhere.
   a block's OWN records place is the port's mill (tower, sails, collider, hum)
   on the enhanced skin with the Windmills switch, and a block served from world
   data stands no Kamer placement of its own name (Beautiful Cities loads after
-  Windmills of Daggerfall; its farms are the ones read) - `world/rmbLayout.js`.
+  Windmills of Daggerfall; its farms are the ones read) - `world/rmbLayout.js`. [FIELD BUGS 2026-10-05c: a
+  player's "windmill has disappeared" is this law - five of Kamer's seven farms (FARMAA00/01/02/06/09) stand no mill
+  in either mod's own, so online, where both mods are everyone's (WD3), those mills went on 2026-10-03. Kept as DFU
+  reads it (`01-Overview/Field-Bugs-2026-10-05c.md`).]
 - **The Order of the Raven.** A block served from JSON keeps its
   `FldHeader.OtherNames`, so RMBLayout's `KRAVE01.HS2` guild hall fires in a
   knightly block of Beautiful Cities as it does in DFU.

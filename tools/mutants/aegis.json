@@ -42,12 +42,12 @@
   {
     "name": "AEGIS-the-glyph-filled",
     "file": "src/ui/playerBadge.js",
-    "old": "laurel: true, aegis: true, primarch: false });",
-    "new": "laurel: true, aegis: false, primarch: false });",
+    "old": "laurel: true, aegis: true, primarch: false, crystalfist: false });",
+    "new": "laurel: true, aegis: false, primarch: false, crystalfist: false });",
     "tests": [
       "test/aegis.test.js"
     ],
-    "note": "Filled, the pillars and the ring are one blot. PRIMARCH (re-aimed by content): the line gained GA00250's primarch."
+    "note": "Filled, the pillars and the ring are one blot. PRIMARCH (re-aimed by content): the line gained GA00250's primarch. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
   },
   {
     "name": "AEGIS-the-middle-pillar-short",
@@ -82,12 +82,12 @@
   {
     "name": "AEGIS-the-wards-button-in-the-fire",
     "file": "src/ui/playerBadge.js",
-    "old": "oblivionward: 'aegis', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder' });",
-    "new": "oblivionward: 'gatebreaker', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder' });",
+    "old": "oblivionward: 'aegis', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist' });",
+    "new": "oblivionward: 'gatebreaker', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist' });",
     "tests": [
       "test/aegis.test.js"
     ],
-    "note": "The Oblivion Ward's button on the card painted in Dagon's fire. PRIMARCH (re-aimed by content): the line gained the radiance's paint. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. SERAPH-WINGS (re-aimed by content): the wings joined the list."
+    "note": "The Oblivion Ward's button on the card painted in Dagon's fire. PRIMARCH (re-aimed by content): the line gained the radiance's paint. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. SERAPH-WINGS (re-aimed by content): the wings joined the list. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
   },
   {
     "name": "AEGIS-the-list-renamed",
@@ -102,12 +102,12 @@
   {
     "name": "AEGIS-the-ward-without-the-list",
     "file": "server-account/src/titles.js",
-    "old": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak' });",
-    "new": "export const TIER_AURA = Object.freeze({ primarch: 'radiance', shadowfang: 'shadowcloak' });",
+    "old": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance' });",
+    "new": "export const TIER_AURA = Object.freeze({ primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance' });",
     "tests": [
       "test/aegis.test.js"
     ],
-    "note": "The list grants the title and the glyph and no aura. PRIMARCH (re-aimed by content): the line gained GA00250's radiance, which stays. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line."
+    "note": "The list grants the title and the glyph and no aura. PRIMARCH (re-aimed by content): the line gained GA00250's radiance, which stays. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
   },
   {
     "name": "AEGIS-the-brokers-first",
@@ -162,12 +162,12 @@
   {
     "name": "AEGIS-the-vocabulary-without-the-ward",
     "file": "src/net/identityToken.js",
-    "old": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings']);",
-    "new": "export const AURAS = Object.freeze(['dagonfire', 'radiance', 'shadowcloak', 'seraphwings']);",
+    "old": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance']);",
+    "new": "export const AURAS = Object.freeze(['dagonfire', 'radiance', 'shadowcloak', 'seraphwings', 'resonance']);",
     "tests": [
       "test/aegis.test.js"
     ],
-    "note": "The relay refuses Sureme's token. PRIMARCH (re-aimed by content): the list gained the radiance, which stays. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. SERAPH-WINGS (re-aimed by content): the wings joined the list."
+    "note": "The relay refuses Sureme's token. PRIMARCH (re-aimed by content): the list gained the radiance, which stays. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. SERAPH-WINGS (re-aimed by content): the wings joined the list. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's Crystal Resonance."
   },
   {
     "name": "AEGIS-a-gap-in-the-ring",

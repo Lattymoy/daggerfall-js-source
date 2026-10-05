@@ -94,6 +94,7 @@ export const TITLE_TEXT = Object.freeze({
   arenachampion: 'Arena Champion',   // ARENA4: "Being the #1 pvp arena player comes with it's own temporary title/glyph"
   aegis: 'Aegis of Oblivion',        // AEGIS (2026-10-03, the owner): Sureme's own
   primarch: 'Primarch',              // PRIMARCH (2026-10-04, GA00250: "the title will be Primarch"): GA00250's own
+  crystalfist: 'Crystal Fist',       // CRYSTAL-FIST (2026-10-05, the owner: "Title: Crystal Fist"): Flylighter's own
 });
 
 /** WB9g (2026-09-30, Mac: "an animated burning ground aura that circles the ground where your character stands"): AN
@@ -104,6 +105,7 @@ export const AURA_TEXT = Object.freeze({
   radiance: 'Golden Radiance',     // PRIMARCH: the Primarch's column of golden light about the body, granted with the title
   shadowcloak: 'Holo Shadow Cloak',   // SHADOW-CLOAK: the Shadow Fang's hooded cloak of shadow and crimson light, granted with the title
   seraphwings: 'Seraph Wings',   // SERAPH-WINGS: wings of flowing golden light, the developers' own
+  resonance: 'Crystal Resonance',   // CRYSTAL-FIST: the Crystal Fist's ring of purple squares rising and falling, granted with the title
 });
 
 /** SHADOW-FANG (2026-09-26, Mac): "SirMcMobdon gets a brand new
@@ -157,6 +159,15 @@ const OBLIVION_ABYSS = Object.freeze([0.302, 0.102, 0.580, 1]);   // #4d1a94
  *  on all five grounds in Chromium at 13 to 64 px, snow included. A pin holds it to the menu's own rule. */
 const PRIMARCH_GOLD = Object.freeze([0.847, 0.812, 0.682, 1]);   // #d8cfae
 
+/** CRYSTAL-FIST (2026-10-05, the owner, for Flylighter: "Title: Crystal Fist", the glyph "referenced above" - three
+ *  purple slashes - and the aura "also purple", "the color 'gradient' would be unnecessary"). The reference's own
+ *  purple, #a349a4, every one of its glyph's pixels: ONE colour for the title, the glyph and the aura (render/auraRing.js
+ *  RESONANCE_RGB, which reads it from here), as the three were asked in one. AUDIT: like every one-colour title it wears
+ *  the DOM faces' black text shadow, and on the classic face (net/remotePlayers.js drawNames) a bare tint with no edge -
+ *  over a night sky it is the weakest one-colour title (WCAG 3.65 against the Protector's 4.36), the reference's own
+ *  colour kept as asked. */
+export const CRYSTAL_PURPLE = Object.freeze([0.639, 0.286, 0.643, 1]);   // #a349a4
+
 /** A title's colour, RGBA 0..1 - the same shape SOC4's PARTY_GREEN is
  *  in, so `nameLayer.cssRgba` turns it into CSS and `drawText` takes it
  *  as a tint, and neither face writes a colour down a second time.
@@ -202,6 +213,9 @@ export const TITLE_RGBA = Object.freeze({
   // PRIMARCH: the menu's light gold, as GA00250 asked - paler and greyer than the Founder's gold and the Crowned's, warmer
   // than the Champion's silver
   primarch: PRIMARCH_GOLD,
+  // CRYSTAL-FIST: the reference's purple, as Flylighter drew the glyph - redder than the Aegis's violet, the Protector's
+  // royal purple and the Apostle's periwinkle, darker and bluer than the Hierophant's rose
+  crystalfist: CRYSTAL_PURPLE,
 });
 
 /** SHADOW-FANG: A TITLE DRAWN AS A GRADIENT - its stops, RGBA 0..1, left
@@ -255,6 +269,7 @@ export const GLYPH_RGBA = Object.freeze({
   laurel: TITLE_RGBA.arenachampion,    // ARENA4: the wreath in the Arena Champion's own green - one grant's two halves
   aegis: TITLE_RGBA.aegis,             // AEGIS: the pillars and the ring in the title's violet - the tendrils are its detail, below
   primarch: TITLE_RGBA.primarch,       // PRIMARCH: the cross in the title's light gold - GA00250: "with the same color of the name"
+  crystalfist: TITLE_RGBA.crystalfist, // CRYSTAL-FIST: the three slashes in the title's purple - the reference's own
 });
 
 /** SHADOW-FANG: A GLYPH FILLED WITH A GRADIENT - its title's two stops,
@@ -307,6 +322,7 @@ export const GLYPH_MARK = Object.freeze({
   laurel: '@',        // ARENA4: the wreath, a ring round the name's end
   aegis: 'O',         // AEGIS: the ring the pillars stand through - and Oblivion's initial
   primarch: 't',      // PRIMARCH: a cross with its foot turned, as the reference's footrest
+  crystalfist: '\\',  // CRYSTAL-FIST: a slash the way the reference's three fall, down to the right
 });
 
 /** The printable range the classic font covers. ACC1d-MARK's own bound,
@@ -365,12 +381,20 @@ export const GLYPH_PATH = Object.freeze({
   // shaft and the bars a little thicker (1.6 units against its 1.35) so the footrest's slant still reads at a name's
   // 13 px. Filled, one colour; every bar wound the shaft's way round, so where they cross it the fill is whole.
   primarch: 'M7.2 0.4H8.8V15.6H7.2ZM6 1.4H10V2.9H6ZM2.9 3.8H13.1V5.4H2.9ZM6 9.6L10 12.9V14.5L6 11.2Z',
+  // CRYSTAL-FIST: FLYLIGHTER'S REFERENCE (2026-10-05), traced off its pixels - THREE SLASHES falling down to the right,
+  // parallel, a claw's: the middle one the longest, corner to corner; the one above it and the one below it two thirds
+  // its length, each beside its middle, the upper a little further down it. Each a band of one thickness (the
+  // reference's seven pixels across, a gap of six between), its ends cut square to it with their corners taken off as the
+  // reference's are (AUDIT: two pixels back along the slash at each corner, so an end reads rounded, not squared, at the
+  // account card's and the profile's sizes); filled, one colour, every outline wound the same way round. Scaled whole
+  // into the box by the uncut bands, the measures the reference's.
+  crystalfist: 'M0.77 6.99L0.77 6.26L1.32 5.71L2.05 5.71L10.11 13.77L10.11 14.5L9.56 15.05L8.82 15.05ZM0.77 2.23L0.77 1.5L1.32 0.95L2.05 0.95L14.5 13.4L14.5 14.13L13.95 14.68L13.22 14.68ZM5.89 2.6L5.89 1.87L6.44 1.32L7.18 1.32L15.23 9.37L15.23 10.11L14.68 10.66L13.95 10.66Z',
 });
 
 /** Is this glyph DRAWN as an outline rather than filled? The sprout is
  *  a shape and the brackets are strokes; said here so the layer does
  *  not have to know which is which by name. */
-export const GLYPH_STROKE = Object.freeze({ sprout: true, dev: true, mod: true, dm: true, disciple: true, apostle: true, hierophant: true, shadowfang: false, penitent: true, herald: true, tower: false, crownDF: false, crownWR: false, crownSN: false, laurel: true, aegis: true, primarch: false });   // SEAT1c: the seats' four filled; ARENA4: the laurel's branches stroked; AEGIS: the pillars and the ring stroked; PRIMARCH: the cross filled
+export const GLYPH_STROKE = Object.freeze({ sprout: true, dev: true, mod: true, dm: true, disciple: true, apostle: true, hierophant: true, shadowfang: false, penitent: true, herald: true, tower: false, crownDF: false, crownWR: false, crownSN: false, laurel: true, aegis: true, primarch: false, crystalfist: false });   // SEAT1c: the seats' four filled; ARENA4: the laurel's branches stroked; AEGIS: the pillars and the ring stroked; PRIMARCH: the cross filled; CRYSTAL-FIST: the slashes filled
 
 /**
  * The title a peer wears, ready to draw: `{ key, text, rgba }`, or
@@ -484,8 +508,8 @@ export const badgeClass = (kind, key) => `${kind}-${key}`;
 /** AEGIS: THE TITLE WHOSE PAINT AN AURA'S BUTTON WEARS on the account card - the aura's own family: the Broker's fire
  *  the Gatebreaker's, the Oblivion Ward the Aegis of Oblivion's, the Golden Radiance the Primarch's (PRIMARCH), the Holo
  *  Shadow Cloak the Shadow Fang's black and crimson (SHADOW-CLOAK), the Seraph Wings the Founder's gold - the wings' own, where
- *  the developer's paint is a red (SERAPH-WINGS). A pin walks AURA_TEXT and requires an entry. */
-export const AURA_PAINT = Object.freeze({ dagonfire: 'gatebreaker', oblivionward: 'aegis', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder' });
+ *  the developer's paint is a red (SERAPH-WINGS), the Crystal Resonance the Crystal Fist's purple (CRYSTAL-FIST). A pin walks AURA_TEXT and requires an entry. */
+export const AURA_PAINT = Object.freeze({ dagonfire: 'gatebreaker', oblivionward: 'aegis', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist' });
 /** SHADOW-FANG: `titlePaint`'s properties as CSS declarations, the colour
  *  left to the button (its border is drawn in it) - so a gradient title's
  *  word on the card is the SAME paint as over a head, not a second one. */

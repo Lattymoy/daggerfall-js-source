@@ -1,0 +1,454 @@
+[
+  {
+    "name": "CRYSTALFIST-the-colour",
+    "file": "src/ui/playerBadge.js",
+    "old": "const CRYSTAL_PURPLE = Object.freeze([0.639, 0.286, 0.643, 1]);",
+    "new": "const CRYSTAL_PURPLE = Object.freeze([0.58, 0.365, 0.851, 1]);",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "The Protector's royal purple, not the reference's: two titles would share a colour and Flylighter's purple is lost."
+  },
+  {
+    "name": "CRYSTALFIST-a-bluer-purple",
+    "file": "src/ui/playerBadge.js",
+    "old": "const CRYSTAL_PURPLE = Object.freeze([0.639, 0.286, 0.643, 1]);",
+    "new": "const CRYSTAL_PURPLE = Object.freeze([0.639, 0.286, 0.843, 1]);",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "A violet, not the reference's #a349a4."
+  },
+  {
+    "name": "CRYSTALFIST-a-gradient",
+    "file": "src/ui/playerBadge.js",
+    "old": "  aegis: Object.freeze([OBLIVION_VOID, OBLIVION_VIOLET, OBLIVION_LILAC]),   // AEGIS: out of the void into the ward's light\n",
+    "new": "  aegis: Object.freeze([OBLIVION_VOID, OBLIVION_VIOLET, OBLIVION_LILAC]),   // AEGIS: out of the void into the ward's light\n  crystalfist: Object.freeze([OBLIVION_VOID, CRYSTAL_PURPLE]),\n",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "\"the color 'gradient' would be unnecessary\": one colour."
+  },
+  {
+    "name": "CRYSTALFIST-glyph-in-another-colour",
+    "file": "src/ui/playerBadge.js",
+    "old": "  crystalfist: TITLE_RGBA.crystalfist, // CRYSTAL-FIST:",
+    "new": "  crystalfist: TITLE_RGBA.aegis, // CRYSTAL-FIST:",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "The slashes in the Aegis's violet: the two halves of one grant drift apart."
+  },
+  {
+    "name": "CRYSTALFIST-the-mark",
+    "file": "src/ui/playerBadge.js",
+    "old": "  crystalfist: '\\\\',  // CRYSTAL-FIST:",
+    "new": "  crystalfist: '/',  // CRYSTAL-FIST:",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "A slash falling the wrong way - the reference's fall down to the right."
+  },
+  {
+    "name": "CRYSTALFIST-the-mark-another-glyphs",
+    "file": "src/ui/playerBadge.js",
+    "old": "  crystalfist: '\\\\',  // CRYSTAL-FIST:",
+    "new": "  crystalfist: '|',  // CRYSTAL-FIST:",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "Penitent's blade: two glyphs one mark on the classic face."
+  },
+  {
+    "name": "CRYSTALFIST-the-glyph-stroked",
+    "file": "src/ui/playerBadge.js",
+    "old": "primarch: false, crystalfist: false });",
+    "new": "primarch: false, crystalfist: true });",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "Stroked, the slashes are outlines of themselves - the reference is filled."
+  },
+  {
+    "name": "CRYSTALFIST-the-words",
+    "file": "src/ui/playerBadge.js",
+    "old": "  crystalfist: 'Crystal Fist',       // CRYSTAL-FIST",
+    "new": "  crystalfist: 'Crystal Fists',       // CRYSTAL-FIST",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "Not the title the owner named."
+  },
+  {
+    "name": "CRYSTALFIST-the-auras-word",
+    "file": "src/ui/playerBadge.js",
+    "old": "  resonance: 'Crystal Resonance',",
+    "new": "  resonance: 'Resonance',",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "The aura's name on the card."
+  },
+  {
+    "name": "CRYSTALFIST-the-resonances-button",
+    "file": "src/ui/playerBadge.js",
+    "old": "seraphwings: 'founder', resonance: 'crystalfist' });",
+    "new": "seraphwings: 'founder', resonance: 'aegis' });",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "The resonance's button in the Aegis's violets, not the Crystal Fist's purple."
+  },
+  {
+    "name": "CRYSTALFIST-the-card-label",
+    "file": "src/ui/enhancedAccount.js",
+    "old": "  crystalfist: 'Crystal Fist',   // CRYSTAL-FIST:",
+    "new": "  crystalfist: 'Crystal',   // CRYSTAL-FIST:",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "The account card names the glyph wrongly."
+  },
+  {
+    "name": "CRYSTALFIST-the-handle",
+    "file": "server-account/wrangler.toml",
+    "old": "CRYSTAL_FIST_HANDLES = \"Flylighter\"",
+    "new": "CRYSTAL_FIST_HANDLES = \"Flylight\"",
+    "tests": [
+      "test/crystalfist.test.js",
+      "test/accountdeploy.test.js"
+    ],
+    "note": "Not Flylighter's account."
+  },
+  {
+    "name": "CRYSTALFIST-the-lists-key",
+    "file": "server-account/src/titles.js",
+    "old": "  crystalfist: 'CRYSTAL_FIST_HANDLES',",
+    "new": "  crystalfist: 'PRIMARCH_HANDLES',",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "The Crystal Fist granted off GA00250's list."
+  },
+  {
+    "name": "CRYSTALFIST-the-glyphs-word",
+    "file": "server-account/src/titles.js",
+    "old": "primarch: 'primarch', crystalfist: 'crystalfist' });",
+    "new": "primarch: 'primarch', crystalfist: 'disciple' });",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "The title held, the Disciple's glyph carried for it."
+  },
+  {
+    "name": "CRYSTALFIST-the-aura-not-granted",
+    "file": "server-account/src/titles.js",
+    "old": "shadowfang: 'shadowcloak', crystalfist: 'resonance' });",
+    "new": "shadowfang: 'shadowcloak' });",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "The title and the glyph granted, the resonance not."
+  },
+  {
+    "name": "CRYSTALFIST-the-wrong-aura-granted",
+    "file": "server-account/src/titles.js",
+    "old": "shadowfang: 'shadowcloak', crystalfist: 'resonance' });",
+    "new": "shadowfang: 'shadowcloak', crystalfist: 'oblivionward' });",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "Sureme's ward granted to Flylighter."
+  },
+  {
+    "name": "CRYSTALFIST-the-vocabularys-aura",
+    "file": "src/net/identityToken.js",
+    "old": "'shadowcloak', 'seraphwings', 'resonance']);",
+    "new": "'shadowcloak', 'seraphwings']);",
+    "tests": [
+      "test/crystalfist.test.js",
+      "test/relayversion.test.js"
+    ],
+    "note": "The token's vocabulary without the resonance: no relay admits it, no account may wear it."
+  },
+  {
+    "name": "CRYSTALFIST-the-look-kind",
+    "file": "src/render/auraRing.js",
+    "old": "  resonance: Object.freeze({ kind: 5, ringR: RESONANCE_R,",
+    "new": "  resonance: Object.freeze({ kind: 2, ringR: RESONANCE_R,",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "Drawn as the radiance's column."
+  },
+  {
+    "name": "CRYSTALFIST-the-ring-on-the-body",
+    "file": "src/render/auraRing.js",
+    "old": "export const RESONANCE_R = 0.8;",
+    "new": "export const RESONANCE_R = 0.4;",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "A ring inside the body, not a circle about it."
+  },
+  {
+    "name": "CRYSTALFIST-a-wave-off-whole",
+    "file": "src/render/auraRing.js",
+    "old": "export const RESONANCE_CRESTS = Object.freeze({ wave: 3, counter: 2 });",
+    "new": "export const RESONANCE_CRESTS = Object.freeze({ wave: 3.5, counter: 2 });",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "A seam behind the wearer where the wave meets itself."
+  },
+  {
+    "name": "CRYSTALFIST-the-bounce-frozen",
+    "file": "src/render/auraRing.js",
+    "old": "  const bounce = Math.abs(Math.sin(TAU * (t * RESONANCE_HZ.bounce + h1)));",
+    "new": "  const bounce = Math.abs(Math.sin(TAU * h1));",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "Each column's own bounce frozen - the columns move with the waves alone."
+  },
+  {
+    "name": "CRYSTALFIST-a-slash-turned",
+    "file": "src/ui/playerBadge.js",
+    "old": "M0.77 6.99L0.77 6.26L1.32 5.71L2.05 5.71L10.11 13.77L10.11 14.5L9.56 15.05L8.82 15.05Z",
+    "new": "M0.77 6.99L0.77 6.26L1.32 5.71L2.05 5.71L10.11 13.77L10.11 14.5L9.56 15.05L9.32 15.05Z",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "The lower slash's end no longer square to it - the band bent."
+  },
+  {
+    "name": "CRYSTALFIST-the-middle-short",
+    "file": "src/ui/playerBadge.js",
+    "old": "ZM0.77 2.23L0.77 1.5L1.32 0.95L2.05 0.95L14.5 13.4L14.5 14.13L13.95 14.68L13.22 14.68Z",
+    "new": "ZM2.77 4.23L2.77 3.5L3.32 2.95L4.05 2.95L12.5 11.4L12.5 12.13L11.95 12.68L11.22 12.68Z",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "The middle cut to the others' length: the reference's middle runs corner to corner."
+  },
+  {
+    "name": "CRYSTALFIST-a-slash-thicker",
+    "file": "src/ui/playerBadge.js",
+    "old": "ZM5.89 2.6L5.89 1.87L6.44 1.32L7.18 1.32L15.23 9.37L15.23 10.11L14.68 10.66L13.95 10.66Z",
+    "new": "ZM5.49 3.0L5.49 2.27L6.44 1.32L7.18 1.32L15.23 9.37L15.23 10.11L14.28 11.06L13.55 11.06Z",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "The upper slash thicker than the others."
+  },
+  {
+    "name": "CRYSTALFIST-a-slash-wound-back",
+    "file": "src/ui/playerBadge.js",
+    "old": "ZM5.89 2.6L5.89 1.87L6.44 1.32L7.18 1.32L15.23 9.37L15.23 10.11L14.68 10.66L13.95 10.66Z",
+    "new": "ZM13.95 10.66L14.68 10.66L15.23 10.11L15.23 9.37L7.18 1.32L6.44 1.32L5.89 1.87L5.89 2.6Z",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "Wound against the others."
+  },
+  {
+    "name": "CRYSTALFIST-a-corner-left-square",
+    "file": "src/ui/playerBadge.js",
+    "old": "crystalfist: 'M0.77 6.99L0.77 6.26L1.32 5.71L2.05 5.71L",
+    "new": "crystalfist: 'M0.77 6.99L0.77 5.71L2.05 5.71L",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "AUDIT: one corner of the lower slash square again - the reference's ends are rounded at every corner."
+  },
+  {
+    "name": "CRYSTALFIST-a-rate-off-whole",
+    "file": "src/render/auraRing.js",
+    "old": "export const RESONANCE_HZ = Object.freeze({ wave: 61 / 120, counter: 41 / 120, bounce: 59 / 120, beat: 1 });",
+    "new": "export const RESONANCE_HZ = Object.freeze({ wave: 61 / 120, counter: 41 / 120, bounce: 59 / 120, beat: 1.07 });",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "The beat steps the picture at the clock's wrap."
+  },
+  {
+    "name": "CRYSTALFIST-the-rates-on-a-six-second-loop",
+    "file": "src/render/auraRing.js",
+    "old": "export const RESONANCE_HZ = Object.freeze({ wave: 61 / 120, counter: 41 / 120, bounce: 59 / 120, beat: 1 });",
+    "new": "export const RESONANCE_HZ = Object.freeze({ wave: 1 / 2, counter: 1 / 3, bounce: 1 / 2, beat: 1 });",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "AUDIT: the rates the slice shipped with: the whole ring repeated every six seconds, and two wearers six seconds apart rose and fell as one."
+  },
+  {
+    "name": "CRYSTALFIST-a-rate-stopped",
+    "file": "src/render/auraRing.js",
+    "old": "export const RESONANCE_HZ = Object.freeze({ wave: 61 / 120, counter: 41 / 120, bounce: 59 / 120, beat: 1 });",
+    "new": "export const RESONANCE_HZ = Object.freeze({ wave: 61 / 120, counter: 41 / 120, bounce: 0, beat: 1 });",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "AUDIT: a bounce of nothing is whole over any clock - the columns stop bouncing; resonanceRatesWhole refuses a stopped rate."
+  },
+  {
+    "name": "CRYSTALFIST-the-auras-colour",
+    "file": "src/render/auraRing.js",
+    "old": "export const RESONANCE_RGB = Object.freeze({ purple: Object.freeze(CRYSTAL_PURPLE.slice(0, 3)) });",
+    "new": "export const RESONANCE_RGB = Object.freeze({ purple: Object.freeze([0.698, 0.302, 1]) });",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "The ward's violet, not the Crystal Fist's purple - and a second literal beside the title's."
+  },
+  {
+    "name": "CRYSTALFIST-the-beat-dropped",
+    "file": "src/render/auraRing.js",
+    "old": "  return Math.max(0, Math.min(1, 0.08 + 0.34 * wave + 0.28 * counter * bounce + 0.3 * beat * (0.4 + 0.6 * h2)));",
+    "new": "  return Math.max(0, Math.min(1, 0.08 + 0.34 * wave + 0.28 * counter * bounce));",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "AUDIT: no beat through the columns - the recorded levels catch it."
+  },
+  {
+    "name": "CRYSTALFIST-the-counts-ignored",
+    "file": "src/render/auraRing.js",
+    "old": "  float lit = uResLit[int(clamp(k, 0.0, RES_N - 1.0))];",
+    "new": "  float lit = ${RESONANCE_CELLS.toFixed(1)};",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "AUDIT: every column drawn to its top, whatever node's law counts."
+  },
+  {
+    "name": "CRYSTALFIST-the-counts-not-handed",
+    "file": "src/render/auraRing.js",
+    "old": "if (look === AURA_LOOK.resonance) gl.uniform1fv(U.uResLit,",
+    "new": "if (look === AURA_LOOK.radiance) gl.uniform1fv(U.uResLit,",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "AUDIT: the draw never hands the resonance its counts: the shader draws whatever the last wearer left."
+  },
+  {
+    "name": "CRYSTALFIST-the-seed-ignored",
+    "file": "src/render/auraRing.js",
+    "old": "export const resonanceClock = (seconds, seed) => auraClock(seconds) + (Number.isFinite(seed) ? seed : 0) * AURA_CLOCK_PERIOD;",
+    "new": "export const resonanceClock = (seconds, seed) => auraClock(seconds);",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "AUDIT: every wearer on the frame's clock: two wearers side by side rise and fall as one."
+  },
+  {
+    "name": "CRYSTALFIST-the-count-off-by-one",
+    "file": "src/render/auraRing.js",
+    "old": "  if (j >= lit) return vec4(0.0);",
+    "new": "  if (j > lit) return vec4(0.0);",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "One square over each column's top lit."
+  },
+  {
+    "name": "CRYSTALFIST-the-gap-filled",
+    "file": "src/render/auraRing.js",
+    "old": "  vec2 e = clamp((vec2(RES_SQ * 0.5) - abs(q)) / px + 0.5, 0.0, 1.0);",
+    "new": "  vec2 e = clamp((vec2(RES_SQ * 1.5) - abs(q)) / px + 0.5, 0.0, 1.0);",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "Bars, not squares: the gap between them filled."
+  },
+  {
+    "name": "CRYSTALFIST-the-fade-dropped",
+    "file": "src/render/auraRing.js",
+    "old": "  return mix(e.x * e.y, avg, smoothstep(0.35, 0.7, px / min(pitchX, pitchY)));",
+    "new": "  return e.x * e.y;",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "AUDIT: far off, the rows of squares drawn as they are near - they moire and shimmer as the eye moves."
+  },
+  {
+    "name": "CRYSTALFIST-the-kindle-dropped",
+    "file": "src/render/auraRing.js",
+    "old": "Math.ceil(resonanceLevel(k, t) * Math.min(1, kindle) * RESONANCE_CELLS)",
+    "new": "Math.ceil(resonanceLevel(k, t) * RESONANCE_CELLS)",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "The columns stand whole the moment it kindles, instead of rising out of the ground."
+  },
+  {
+    "name": "CRYSTALFIST-the-foot-unlit-while-kindling",
+    "file": "src/render/auraRing.js",
+    "old": "  return Math.max(0, Math.min(1, 0.08 + 0.34 * wave",
+    "new": "  return Math.max(0, Math.min(1, -0.2 + 0.34 * wave",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "AUDIT: the level's floor taken below nothing - kindling, a column's foot not yet out of the ground. (The Math.max(1, ...) guard this record first mutated was dead code - the floor already keeps every kindled column's foot lit - and is gone.)"
+  },
+  {
+    "name": "CRYSTALFIST-the-feet-dropped",
+    "file": "src/render/auraRing.js",
+    "old": "  float c = resCover(vec2((fract(cu) - 0.5) * pitch, r - uRingR), pitch, RES_PITCH) * uKindle;",
+    "new": "  float c = 0.0;",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "No square at a column's foot on the ground."
+  },
+  {
+    "name": "CRYSTALFIST-the-feet-off-their-columns",
+    "file": "src/render/auraRing.js",
+    "old": "  float c = resCover(vec2((fract(cu) - 0.5) * pitch, r - uRingR), pitch, RES_PITCH) * uKindle;",
+    "new": "  float c = resCover(vec2(fract(cu) * pitch, r - uRingR), pitch, RES_PITCH) * uKindle;",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "The feet between the columns, not under them."
+  },
+  {
+    "name": "CRYSTALFIST-the-rings-guard-dropped",
+    "file": "src/render/auraRing.js",
+    "old": "  if (abs(r - uRingR) > RES_SQ) return vec4(0.0);\n",
+    "new": "",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "AUDIT: the ground answered at the middle, where atan(0, 0) is no number - a NaN the premultiplied blend paints white."
+  },
+  {
+    "name": "CRYSTALFIST-the-dispatch",
+    "file": "src/render/auraRing.js",
+    "old": "  if (uAura == 5) { vec4 c =",
+    "new": "  if (uAura == 6) { vec4 c =",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "The resonance drawn as Dagon's fire."
+  },
+  {
+    "name": "CRYSTALFIST-added-not-covered",
+    "file": "src/render/auraRing.js",
+    "old": "glyphs: 0, shade: true }),   // CRYSTAL-FIST:",
+    "new": "glyphs: 0 }),   // CRYSTAL-FIST:",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "AUDIT: added (ONE, ONE): a square over its foot, the far wall through the near and a bright ground sum past the purple to a pale pink."
+  },
+  {
+    "name": "CRYSTALFIST-the-ring-on-the-fire",
+    "file": "src/render/auraRing.js",
+    "old": "export const RESONANCE_R = 0.8;",
+    "new": "export const RESONANCE_R = 0.87;",
+    "tests": [
+      "test/crystalfist.test.js"
+    ],
+    "note": "AUDIT: the ring over the fire's (0.85 m), inside the old pin's 0.9 - held strictly inside it now."
+  }
+]

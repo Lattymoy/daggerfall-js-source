@@ -1,0 +1,135 @@
+[
+  {
+    "name": "FB1005C-hold-gate-unread",
+    "file": "src/systems/comeSailAway.js",
+    "old": "      if (!lost && partsTooHeavy(boat)) return false;",
+    "new": "      if (false) return false;",
+    "tests": ["test/fb1005c_holdweight.test.js"]
+  },
+  {
+    "name": "FB1005C-hold-unweighed",
+    "file": "src/systems/comeSailAway.js",
+    "old": "    return canHoldAmount(1, f(packedHullWeight(boat.hull) + hold), most, 0) <= 0;",
+    "new": "    return canHoldAmount(1, f(packedHullWeight(boat.hull)), most, 0) <= 0;",
+    "tests": ["test/fb1005c_holdweight.test.js"]
+  },
+  {
+    "name": "FB1005C-hold-edge",
+    "file": "src/systems/comeSailAway.js",
+    "old": "    return canHoldAmount(1, f(packedHullWeight(boat.hull) + hold), most, 0) <= 0;",
+    "new": "    return canHoldAmount(1, f(packedHullWeight(boat.hull) + hold), most, 0) <= 1;",
+    "tests": ["test/fb1005c_holdweight.test.js"]
+  },
+  {
+    "name": "FB1005C-hold-load-counted",
+    "file": "src/systems/comeSailAway.js",
+    "old": "    return canHoldAmount(1, f(packedHullWeight(boat.hull) + hold), most, 0) <= 0;",
+    "new": "    return canHoldAmount(1, f(packedHullWeight(boat.hull) + hold), most, deps.entity?.carriedWeight?.() ?? 0) <= 0;",
+    "tests": ["test/fb1005c_holdweight.test.js"]
+  },
+  {
+    "name": "FB1005C-hold-no-seam-reads-law",
+    "file": "src/systems/comeSailAway.js",
+    "old": "    if (!Number.isFinite(most)) return false;",
+    "new": "    if (!Number.isFinite(most)) return true;",
+    "tests": ["test/fb1005c_holdweight.test.js", "test/shippack.test.js"]
+  },
+  {
+    "name": "FB1005C-hold-refusal-unsaid",
+    "file": "src/systems/comeSailAway.js",
+    "old": "        else if (partsTooHeavy(boat)) deps.midScreenText(HOLD_TOO_HEAVY_TEXT, 1.5);",
+    "new": "        else if (partsTooHeavy(boat)) void 0;",
+    "tests": ["test/fb1005c_holdweight.test.js"]
+  },
+  {
+    "name": "FB1005C-hold-lost-left",
+    "file": "src/systems/comeSailAway.js",
+    "old": "      PackBoat(boat, true, true);",
+    "new": "      PackBoat(boat, true);",
+    "tests": ["test/fb1005c_holdweight.test.js"]
+  },
+  {
+    "name": "FB1005C-hold-menu-word",
+    "file": "src/systems/csaBoatMenu.js",
+    "old": "        : s.tooHeavy ? BOAT_MENU_WHY.tooHeavy : null;",
+    "new": "        : null;",
+    "tests": ["test/fb1005c_holdweight.test.js"]
+  },
+  {
+    "name": "FB1005C-hold-host-seam",
+    "file": "src/scenes/world.js",
+    "old": " maxEncumbrance: () => entityMaxEncumbrance(playerEntity),",
+    "new": "",
+    "tests": ["test/fb1005c_holdweight.test.js"]
+  },
+  {
+    "name": "FB1005C-flat-relay-mark-dropped",
+    "file": "src/world/actionSystem.js",
+    "old": "      isFlat: action.isFlat === true,\n      activationCount: 0,\n      state: 'start',",
+    "new": "      activationCount: 0,\n      state: 'start',",
+    "tests": ["test/audit0929_actions.test.js"]
+  },
+  {
+    "name": "FB1005C-flat-relay-every-relay-flat",
+    "file": "src/world/actionSystem.js",
+    "old": "      isFlat: action.isFlat === true,\n      activationCount: 0,\n      state: 'start',",
+    "new": "      isFlat: true,\n      activationCount: 0,\n      state: 'start',",
+    "tests": ["test/audit0929_actions.test.js"]
+  },
+  {
+    "name": "FB1005C-ramp-old-lean",
+    "file": "src/ui/inkDungeonGL.js",
+    "old": "export const FLOOR_FACE_NY = FLOOR_NY;",
+    "new": "export const FLOOR_FACE_NY = 0.6;",
+    "tests": ["test/em3_3d_dungeon.test.js"]
+  },
+  {
+    "name": "FB1005C-ramp-shader-literal",
+    "file": "src/ui/inkDungeonGL.js",
+    "old": "  if (n.y > ${FNY}) {\n    // floor (Mac",
+    "new": "  if (n.y > 0.6) {\n    // floor (Mac",
+    "tests": ["test/em3_3d_dungeon.test.js"]
+  },
+  {
+    "name": "FB1005C-assist-unread",
+    "file": "src/characters/enemyTargets.js",
+    "old": "    if (self.companion != null && fightsOurSide(targetAi, self)) priority += COMPANION_ASSIST_PRIORITY;",
+    "new": "    if (false) priority += COMPANION_ASSIST_PRIORITY;",
+    "tests": ["test/crewcompanions.test.js"]
+  },
+  {
+    "name": "FB1005C-assist-companion-not-side",
+    "file": "src/characters/enemyTargets.js",
+    "old": "  return t != null && (isPlayerTarget(t) || t.companion != null || t === self);",
+    "new": "  return t != null && (isPlayerTarget(t) || t === self);",
+    "tests": ["test/crewcompanions.test.js"]
+  },
+  {
+    "name": "FB1005C-assist-every-foe",
+    "file": "src/characters/enemyTargets.js",
+    "old": "    if (self.companion != null && fightsOurSide(targetAi, self)) priority += COMPANION_ASSIST_PRIORITY;",
+    "new": "    if (fightsOurSide(targetAi, self)) priority += COMPANION_ASSIST_PRIORITY;",
+    "tests": ["test/crewcompanions.test.js", "test/enemytargets.test.js", "test/infighting.test.js"]
+  },
+  {
+    "name": "FB1005C-sealed-old-spot-unkept",
+    "file": "src/systems/quest/markerCuration.js",
+    "old": "    m.curatedFrom = { ...p };",
+    "new": "",
+    "tests": ["test/fb1004d_questmarkers.test.js"]
+  },
+  {
+    "name": "FB1005C-sealed-restand-unasked",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      const feet = (questBehaviour && restandQuestFoe?.(questBehaviour, [lx, sf.y + yOffset, lz])) || [lx, sf.y + yOffset, lz];",
+    "new": "      const feet = [lx, sf.y + yOffset, lz];",
+    "tests": ["test/fb1004d_questmarkers.test.js"]
+  },
+  {
+    "name": "FB1005C-sealed-level-unasked",
+    "file": "src/scenes/questFoeHost.js",
+    "old": "  if (Math.abs(feet[1] - was[1]) > SEALED_SAVE_LEVEL_M || Math.hypot",
+    "new": "  if (Math.hypot",
+    "tests": ["test/fb1004d_questmarkers.test.js"]
+  }
+]

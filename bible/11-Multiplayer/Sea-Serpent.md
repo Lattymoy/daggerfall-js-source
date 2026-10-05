@@ -452,9 +452,10 @@ After the kill the bar holds a moment and fades.
 
 ## 11. Versions and deploy order
 
-- **SERPENT3's relay: `world171`** (section 15). The brain swims every leg it shows and judges a blow where the body lay
-  when it struck; its law's version is 2 (`SERPENT_BRAIN_MIN`), so a game before it is told to reload. No frame changes
-  shape, and nothing else in the order moves: deploy the relay with the client.
+- **SERPENT3's relay: `world172`** (section 15; `world171` on its branch, renumbered past main's CRYSTAL-FIST at the
+  merge). The brain swims every leg it shows and judges a blow where the body lay when it struck; its law's version is 2
+  (`SERPENT_BRAIN_MIN`), so a game before it is told to reload. No frame changes shape, and nothing else in the order
+  moves: deploy the relay with the client.
 - **SERPENT2's relay: `world166`** (section 14). The `serpent` frame's `site` word, said to the hub alone, and
   `net/serpentHerald.js` in the bundle. A relay before it closes the socket on the kind, so a client says it only to a
   relay that welcomed it with 166 or later (`serpentSiteOk`). Nothing else in the order moves: the service is untouched.
@@ -609,7 +610,7 @@ audit's measured gunnery): a lone galleon never wins (none in twelve - one only 
 pair wins nine to twelve in twelve (none to seven without its share); three nine to twelve, five every time - in ten to
 eleven minutes; at 25% a pair loses, and five win four to ten in twelve. Before it, every fleet of three or fewer lost.
 
-**The relay:** `world171` (section 11). **Pins:** `test/serpent3.test.js` (12) and the SERPENT1 and AUDIT SERPENT pins it
+**The relay:** `world172` (section 11). **Pins:** `test/serpent3.test.js` (12) and the SERPENT1 and AUDIT SERPENT pins it
 moved - the stray's surfacing for the resume's, the Maelstrom at the heart, a late ship's words, the first strike's
 time; `tools/mutants/serpent3.json` (46, all dead).
 
