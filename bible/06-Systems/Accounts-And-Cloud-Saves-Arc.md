@@ -5037,3 +5037,70 @@ behind the head.
   forward and from the side the near one passes in front of the body - it is in front of it; the body's outline in
   the law is one measure (0.25 m either side) for every set, not read off the frames; not seen in a running game
   client with a real sprite.
+
+## CRYSTAL-FIST — Flylighter's own: the Crystal Fist, its glyph and the Crystal Resonance (2026-10-05, world170, acct83)
+
+The owner, for Flylighter: "Title: Crystal Fist", "Glyph: Referenced above" - a 54x49 picture of three purple slashes
+falling down to the right, every one of its pixels #a349a4 - and "Aura: Aura, also purple, would be a circle of tiny
+purple squares going up and down out of the ground. Something similar to what you see here, but the color 'gradient'
+would be unnecessary", pointing at Octavia in Warframe (a ring of a music visualiser's bars about her). The video is not
+read here; the aura is drawn from the sentence.
+
+- **The grant** (`server-account/src/titles.js`): `CRYSTAL_FIST_HANDLES = "Flylighter"` (`server-account/wrangler.toml`)
+  grants the title, its glyph (`TIER_GLYPH.crystalfist`) and the aura (`TIER_AURA.crystalfist: 'resonance'`) together,
+  case-folded, read off the config at every ask - TITLE-N's handle-list law, as AEGIS, PRIMARCH and SHADOW-CLOAK.
+  Flylighter stays in DISCIPLE_HANDLES: two titles held, one worn; taking the handle off this list takes the three and
+  leaves the Disciple.
+- **The vocabulary** (`src/net/identityToken.js`, in the relay bundle): `crystalfist` last in TITLES and GLYPHS,
+  `resonance` last in AURAS. A relay before it refuses a token carrying them, so the relay is **world170** and the
+  account service **acct83** (the account first, then the relay, then the site). No frame changes shape.
+- **The face** (`src/ui/playerBadge.js`): "Crystal Fist" in ONE colour, `CRYSTAL_PURPLE` #a349a4 - the reference's own;
+  no gradient and no edge, every face's black text shadow. The glyph traced off the reference's pixels: three bands
+  falling down to the right at 45 degrees, their ends cut square, one thickness (the reference's seven pixels across) and
+  even gaps (its six); the middle corner to corner, the upper and the lower two thirds its length (48 to 72 pixels),
+  each beside its middle - filled in the title's purple. `\` on the classic face. "Crystal Resonance" on the account
+  card, its button in the Crystal Fist's purple (`AURA_PAINT`). Seen in Chromium at 13 to 64 px over a night sky, a day
+  sky, stone, grass and snow: the three slashes read from 16 px; at 13 px they read as a hatch.
+- **The look** (`src/render/auraRing.js`, the sixth: `AURA_LOOK.resonance`, kind 5, on the pass's own strip - no mesh,
+  no third draw, added whole):
+  - THE WALL: RESONANCE_COLUMNS columns round the feet at RESONANCE_R (0.8 m) - one on each face of the strip, which is
+    AURA_STEPS (48) round - each a stack of tiny squares, RESONANCE_SQUARE_M (0.042 m) a side at RESONANCE_PITCH_M
+    (0.06 m) up the column, RESONANCE_CELLS (10) at most, so the wall is 0.6 m. As many of a column's squares stand lit
+    as its level now: `resonanceLevel(k, t)` - a wave of three crests running round the ring every two seconds, a
+    second of two crests running against it every three, each column's own bounce and a beat through them all once a
+    second - the same arithmetic in node and in the shader, so the pins read the ring off node and the shader is run
+    against it. At least a column's foot stands lit; a square is the purple itself, soft at its edge, a faint glow of
+    the same purple outside it.
+  - THE GROUND: a square at each column's foot, lying on the ring and pulsing with the beat; a faint purple glow along
+    the ring.
+  - It kindles UP: the columns rise out of the ground as it kindles. Every rate whole over the clock
+    (`resonanceRatesWhole`); every wave a whole number of crests round the ring, so no seam behind the wearer.
+- **The hosts** - THE FOUR HOSTS: no host changed. `scenes/world.js` draws every look through the pass by its key;
+  `scenes/worldModes.js` and `scenes/dungeonContext.js` draw through world.js's pass; `scenes/exterior.js` draws no
+  aura - FLAGGED, unchanged.
+- **Seen** through the committed `tools/auraProbe.mjs` in headless Chromium's WebGL2: 70/70, the resonance's 8 - no GL
+  error; every square node's law stands lit is lit, in the purple; over a column's top mostly dark; another moment,
+  other squares; its feet on the ring from above, dark within and past it; no jump at the wrap; nothing unkindled.
+- Pins: `test/crystalfist.test.js` (12) - the vocabulary and the face; the glyph's shape against the reference; the grant
+  (case-folded, beside the Disciple, off the list, a guest, the other lists' holders); the service end to end; the token
+  and the relay (world170); the name over a head, the account card's rules and the classic face; the look's law; the
+  columns' law (up and down, the ring's columns differing, the shader's level node's, the wrap); the wall RUN square by
+  square; the ground RUN; the draw. `tools/mutants/crystalfist.json` (34, all dead). The relay's and the account's pins
+  moved to world170 and acct83 crediting CRYSTAL-FIST (`auditbounty1.test.js` holds the credit); the vocabulary's exact
+  lists moved in `acc3titles`, `titlen`, `aegis`, `primarch`, `shadowcloak` and `seraphwings`; nineteen records in
+  `aegis.json`, `herald.json`, `penitent.json`, `primarch.json`, `seraphwings.json`, `shadowcloak.json` and
+  `shadowfang.json`, and the version records in `soc1.json`, `gatekeys.json` and `fb1004d_knight_house.json`, re-aimed by
+  content.
+- Left as they are, said here: not seen in a running game client; the squares are flat on the strip's faces, so at the
+  ring's two sides, seen edge on, they narrow to lines; the columns stand on a wearer turned beast and on a rider as the
+  ring of fire does; one program draws all six auras, so a compile failure would take them all (the eager compile in
+  `test/shadowcloak.test.js` and the probe are the guard).
+
+## DEV4 — RookieG(Dev) a developer (2026-10-05, with CRYSTAL-FIST's acct83)
+
+The owner: "Also add RookieG(Dev) as developer"; asked whether the brackets are part of the name, the handle is exactly
+`RookieG(Dev)` (a handle may carry them - `net/handleShape.js` HANDLE_RE). `DEVELOPER_HANDLES` gains it, fifth: the
+developer title, the dev glyph, /red, /mute and /unmute (titles.js `canModerate`) and the developers' Seraph Wings,
+case-folded as every list is. The bare `RookieG` is another handle and holds none of it. Pins: `test/titlen.test.js`
+(the list, the handle case-folded, four near names refused); `tools/mutants/titlen.json` DEV4-rookieg-not-granted (dead)
+and DEV3's record re-aimed by content.

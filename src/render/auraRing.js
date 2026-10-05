@@ -98,6 +98,20 @@
 //     as broad; twelve plumes a side, not fifteen; about six tenths as long; each strand's light about half; the
 //     backlight smaller and faint; the pool and the light on the world dimmer.
 //
+// CRYSTAL-FIST (2026-10-05, the owner, for Flylighter: "Aura, also purple, would be a circle of tiny purple squares
+// going up and down out of the ground. Something similar to what you see here, but the color 'gradient' would be
+// unnecessary" - Octavia's in Warframe, a ring of a music visualiser's bars about her): THE CRYSTAL RESONANCE, the sixth
+// look - A RING OF SQUARES RISING AND FALLING:
+//   - THE WALL: RESONANCE_COLUMNS columns round the feet at RESONANCE_R, one on each face of the pass's own strip (it is
+//     AURA_STEPS round), each a stack of tiny squares, RESONANCE_SQUARE_M a side, RESONANCE_CELLS high at most. How
+//     many of a column's squares stand lit is its level now (resonanceLevel - the shader's and node's one law): a wave
+//     running round the ring, a second against it, each column's own bounce and a beat through them all, so the columns
+//     go up and down out of the ground as a visualiser's do. Every square the same - ONE colour, the
+//     reference's purple (the Crystal Fist's own, ui/playerBadge.js CRYSTAL_PURPLE), as asked: no gradient.
+//   - THE GROUND: each column's foot, a square lying on the ring, and a faint purple glow along the ring.
+// It kindles UP - the columns rise out of the ground. Every rate whole over the clock (resonanceRatesWhole); every
+// wave round the ring a whole number of crests, so no seam behind the wearer. No third draw, no host changed.
+//
 // Not a DFU member. Ledger A (WB).
 import { FOG_FACTOR_GLSL } from './labGrass.js';
 import { buildProgram } from './glProgram.js';
@@ -315,6 +329,42 @@ export const WING_PER_SIDE = (WING_PLUMES + WING_COVERTS) * WING_STRANDS;
 export const WING_STRAND_COUNT = 2 * WING_PER_SIDE;
 export const WING_VERTS = WING_STRAND_COUNT * WING_SEGS * 6;
 export const WING_CARDS = WING_MOTES + 1;
+/** CRYSTAL-FIST: THE CRYSTAL RESONANCE'S MEASURES - the ring's radius (inside the fire's, clear of the body), its
+ *  columns round (one on each face of the strip the wall is drawn on, AURA_STEPS), the most squares a column stands, the
+ *  squares' pitch up a column and their side (m) - tiny, as asked - and the wall's height, the tallest column's. */
+export const RESONANCE_R = 0.8;
+export const RESONANCE_COLUMNS = AURA_STEPS;
+export const RESONANCE_CELLS = 10;
+export const RESONANCE_PITCH_M = 0.06;
+export const RESONANCE_SQUARE_M = 0.042;
+export const RESONANCE_H = RESONANCE_CELLS * RESONANCE_PITCH_M;
+/** Its rates (Hz), each a whole number of cycles over AURA_CLOCK_PERIOD: the wave running round the ring and the one
+ *  against it, each column's own bounce, and the beat through them all; and the crests each wave has round the ring
+ *  (whole, so it closes behind the wearer). */
+export const RESONANCE_HZ = Object.freeze({ wave: 1 / 2, counter: 1 / 3, bounce: 1 / 2, beat: 1 });
+export const RESONANCE_CRESTS = Object.freeze({ wave: 3, counter: 2 });
+/** Every resonance rate whole over the clock. Pure. */
+export const resonanceRatesWhole = () => Object.values(RESONANCE_HZ).every((r) => Number.isInteger(Math.round(r * AURA_CLOCK_PERIOD * 1e6) / 1e6));
+/** Its light: the reference's purple, #a349a4 - the Crystal Fist's title and glyph (ui/playerBadge.js CRYSTAL_PURPLE).
+ *  RGB 0..1. One colour. */
+export const RESONANCE_RGB = Object.freeze({ purple: Object.freeze([0.639, 0.286, 0.643]) });
+const resHash = (k, a, b) => { const x = Math.sin(k * a + b) * 43758.5453; return x - Math.floor(x); };
+/** CRYSTAL-FIST: COLUMN k's LEVEL at the clock `t`, 0..1 - the share of its squares standing lit: the wave round the
+ *  ring, the one against it, its own bounce and the beat. The shader's resonanceLevel, the same arithmetic, so a pin
+ *  reads the ring off node. Pure. */
+export function resonanceLevel(k, t) {
+  const TAU = Math.PI * 2, N = RESONANCE_COLUMNS;
+  const h1 = resHash(k, 12.9898, 4.1), h2 = resHash(k, 78.233, 1.7);
+  const wave = 0.5 + 0.5 * Math.sin(TAU * (t * RESONANCE_HZ.wave - k * RESONANCE_CRESTS.wave / N));
+  const counter = 0.5 + 0.5 * Math.sin(TAU * (t * RESONANCE_HZ.counter + k * RESONANCE_CRESTS.counter / N) + 1.3);
+  const bounce = Math.abs(Math.sin(TAU * (t * RESONANCE_HZ.bounce + h1)));
+  const beat = (0.5 + 0.5 * Math.cos(TAU * t * RESONANCE_HZ.beat)) ** 4;
+  return Math.max(0, Math.min(1, 0.08 + 0.34 * wave + 0.28 * counter * bounce + 0.3 * beat * (0.4 + 0.6 * h2)));
+}
+/** CRYSTAL-FIST: how many of column k's squares stand lit at `t`, kindled `kindle` 0..1 - at least the one at its foot
+ *  once it kindles at all. The shader's own count. Pure. */
+export const resonanceLit = (k, t, kindle = 1) => (kindle > 0 ? Math.max(1, Math.ceil(resonanceLevel(k, t) * Math.max(0, Math.min(1, kindle)) * RESONANCE_CELLS - 1e-9)) : 0);
+
 /** Every rate the wings take is whole over the clock, and every spark's life divides it. Pure. */
 export const wingRatesWhole = () => [...Object.values(WING_HZ), WING_FLOW.rate, WING_FLOW.fray].every((hz) => Number.isInteger(Math.round(hz * AURA_CLOCK_PERIOD * 1e6) / 1e6))
   && WING_MOTE_LIFE.every((l) => Number.isInteger(AURA_CLOCK_PERIOD / l));
@@ -329,6 +379,7 @@ export const AURA_LOOK = Object.freeze({
   radiance: Object.freeze({ kind: 2, ringR: RADIANCE_R, flameH: RADIANCE_H, glyphs: 0 }),   // PRIMARCH: the column about the body
   shadowcloak: Object.freeze({ kind: 3, ringR: CLOAK_HEM_R, flameH: CLOAK_H, glyphs: CLOAK_EMBLEMS, shreds: CLOAK_SHREDS, mesh: 'cloak', shade: true }),   // SHADOW-CLOAK: the cape on the body, its emblems, and its shreds when it tears
   seraphwings: Object.freeze({ kind: 4, ringR: WING_POOL_R, flameH: WING_REACH[1], glyphs: WING_CARDS, mesh: 'wings' }),   // SERAPH-WINGS: the wings on the body, their sparks and their backlight
+  resonance: Object.freeze({ kind: 5, ringR: RESONANCE_R, flameH: RESONANCE_H, glyphs: 0 }),   // CRYSTAL-FIST: the ring of columns of squares, on the strip
 });
 /** The look a wearer's aura is drawn with - Dagon's Fire for one that names none (the fire was the only aura before). */
 export const auraLookOf = (aura) => (typeof aura === 'string' && Object.hasOwn(AURA_LOOK, aura) ? AURA_LOOK[aura] : AURA_LOOK.dagonfire);
@@ -555,6 +606,53 @@ vec3 radianceWall(vec2 q) {
   col += (RAD_HEART + RAD_GOLD) * 0.55 * sparks * mix(0.35, 1.0, outside);
   // kindled UP: the light rising from the feet
   return col * clamp((uKindle * 1.25 - v) / 0.15, 0.0, 1.0);
+}
+`;
+/** CRYSTAL-FIST: THE CRYSTAL RESONANCE - its columns of squares (the wall, on the strip: u round, v up) and their feet
+ *  on the ground. A square is lit whole and edged soft, with a faint glow of the same purple round it. */
+const RESONANCE_GLSL = `
+const vec3 RES_PURPLE = ${v3(RESONANCE_RGB.purple)};
+const float RES_N = ${RESONANCE_COLUMNS.toFixed(1)};
+float resHash(float k, float a, float b) { return fract(sin(k * a + b) * 43758.5453); }
+// column k's level at the clock t, 0..1 - auraRing.js resonanceLevel, the same arithmetic
+float resonanceLevel(float k, float t) {
+  float h1 = resHash(k, 12.9898, 4.1), h2 = resHash(k, 78.233, 1.7);
+  float wave = 0.5 + 0.5 * sin(TAU * (t ${hzGlsl(RESONANCE_HZ.wave)} - k * ${RESONANCE_CRESTS.wave.toFixed(1)} / RES_N));
+  float counter = 0.5 + 0.5 * sin(TAU * (t ${hzGlsl(RESONANCE_HZ.counter)} + k * ${RESONANCE_CRESTS.counter.toFixed(1)} / RES_N) + 1.3);
+  float bounce = abs(sin(TAU * (t ${hzGlsl(RESONANCE_HZ.bounce)} + h1)));
+  float beat = pow(0.5 + 0.5 * cos(TAU * t ${hzGlsl(RESONANCE_HZ.beat)}), 4.0);
+  return clamp(0.08 + 0.34 * wave + 0.28 * counter * bounce + 0.3 * beat * (0.4 + 0.6 * h2), 0.0, 1.0);
+}
+// a square of side s about its middle, at (x, y) from it (m): 1 inside - the purple itself - soft at its edge, and a
+// faint glow round it outside
+float resSquare(vec2 q, float s) {
+  float d = max(abs(q.x), abs(q.y)) - s * 0.5;
+  float fill = 1.0 - smoothstep(-0.003, 0.003, d), g = max(d, 0.0);
+  return fill + (1.0 - fill) * exp(-g * g / 0.00025) * 0.22;
+}
+vec3 resonanceWall(vec2 q) {
+  float u = fract(q.x), v = q.y;
+  float cu = u * RES_N, k = floor(cu);
+  float pitch = TAU * uRingR / RES_N;
+  float y = v * uFlameH, j = floor(y / ${RESONANCE_PITCH_M.toFixed(3)});
+  if (uKindle <= 0.0) return vec3(0.0);
+  float lit = max(1.0, ceil(resonanceLevel(k, uTime) * clamp(uKindle, 0.0, 1.0) * ${RESONANCE_CELLS.toFixed(1)} - 1e-9));
+  if (j >= lit) return vec3(0.0);
+  vec2 at = vec2((fract(cu) - 0.5) * pitch, y - (j + 0.5) * ${RESONANCE_PITCH_M.toFixed(3)});
+  return RES_PURPLE * resSquare(at, ${RESONANCE_SQUARE_M.toFixed(3)});
+}
+vec3 resonanceGround(vec2 p) {
+  float r = length(p), a = atan(p.y, p.x);
+  if (r > uGroundR) discard;
+  float R = uRingR, cu = fract(a / TAU) * RES_N;
+  // each column's foot, a square lying on the ring under it, pulsing with the beat
+  vec2 at = vec2((fract(cu) - 0.5) * TAU * r / RES_N, r - R);
+  float beat = pow(0.5 + 0.5 * cos(TAU * uTime ${hzGlsl(RESONANCE_HZ.beat)}), 4.0);
+  vec3 col = RES_PURPLE * resSquare(at, ${RESONANCE_SQUARE_M.toFixed(3)}) * (0.75 + 0.35 * beat);
+  // a faint glow along the ring
+  float dr = r - R;
+  col += RES_PURPLE * exp(-dr * dr / 0.006) * 0.16;
+  return col * (1.0 - smoothstep(uGroundR - 0.2, uGroundR, r));
 }
 `;
 /** SHADOW-CLOAK: A GLYPH'S OUTLINE AS STRAIGHT EDGES - an SVG path of absolute M, L, Q and Z (ui/playerBadge.js
@@ -1162,7 +1260,7 @@ export const AURA_FS = HEAD + `in vec2 vP;
 in vec3 vWorld;
 in vec3 vS;             // AEGIS: a floating symbol's age, rune and number
 uniform int uKind;
-uniform int uAura;      // AEGIS: 0 Dagon's Fire, 1 the Oblivion Ward, 2 the Golden Radiance (AURA_LOOK - PRIMARCH), 3 the Holo Shadow Cloak (SHADOW-CLOAK), 4 the Seraph Wings (SERAPH-WINGS)
+uniform int uAura;      // AEGIS: 0 Dagon's Fire, 1 the Oblivion Ward, 2 the Golden Radiance (AURA_LOOK - PRIMARCH), 3 the Holo Shadow Cloak (SHADOW-CLOAK), 4 the Seraph Wings (SERAPH-WINGS), 5 the Crystal Resonance (CRYSTAL-FIST)
 uniform vec3 uAt;       // PRIMARCH: the feet - the axis the radiance's column stands on
 uniform float uYaw;     // SHADOW-CLOAK: the wearer's facing - the cloak's opening is at their front
 uniform int uSide;      // SHADOW-CLOAK: which side of the cloth this draw lays - 0 its lining (front faces culled), 1 its outside (back faces culled)
@@ -1176,7 +1274,7 @@ uniform vec3 uCamPos;
 out vec4 o;
 ${FOG_FACTOR_GLSL}${NOISE_GLSL}
 const float TAU = 6.283185307179586;
-${WARD_GLSL}${RADIANCE_GLSL}${CLOAK_SHAPE_GLSL}${CLOAK_FS_GLSL}${WING_SHARED_GLSL}${WING_FS_GLSL}
+${WARD_GLSL}${RADIANCE_GLSL}${RESONANCE_GLSL}${CLOAK_SHAPE_GLSL}${CLOAK_FS_GLSL}${WING_SHARED_GLSL}${WING_FS_GLSL}
 void main() {
   if (uAura == 4) { vec3 wl = uKind == 0 ? wingsGround(vP) : uKind == 1 ? wingStrand(vP, vS) : vS.y > 1.5 ? wingHalo(vP, vS.x) : wingMote(vP, vS); o = vec4(wl * fogFactorAt(vWorld), 1.0); return; }   // SERAPH-WINGS: added whole; kindled within (the strands unfurl)
   if (uAura == 3) {   // SHADOW-CLOAK: premultiplied - the light it adds, and how much the shadow covers; both fogged
@@ -1185,6 +1283,7 @@ void main() {
     o = vec4(c.rgb * f, c.a * f);
     return;
   }
+  if (uAura == 5) { vec3 res = uKind == 0 ? resonanceGround(vP) : resonanceWall(vP); o = vec4(res * uKindle * fogFactorAt(vWorld), 1.0); return; }   // CRYSTAL-FIST: the columns rise as it kindles (resonanceWall), and its light with it
   if (uAura == 2) { vec3 rad = uKind == 0 ? radianceGround(vP) : radianceWall(vP); o = vec4(rad * uKindle * fogFactorAt(vWorld), 1.0); return; }   // PRIMARCH
   if (uAura == 1) { vec3 ward = uKind == 0 ? wardGround(vP) : uKind == 1 ? wardWall(vP) : wardSymbol(vP, vS); o = vec4(ward * uKindle * fogFactorAt(vWorld), 1.0); return; }   // AEGIS
   // every rate a whole number of cycles over the clock, in turns a second times TAU - never a rounded radian rate, which

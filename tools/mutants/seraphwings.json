@@ -317,11 +317,12 @@
   {
     "name": "SERAPHWINGS-the-vocabulary-without-the-wings",
     "file": "src/net/identityToken.js",
-    "old": "'shadowcloak', 'seraphwings']);",
-    "new": "'shadowcloak']);",
+    "old": "'shadowcloak', 'seraphwings', 'resonance']);",
+    "new": "'shadowcloak', 'resonance']);",
     "tests": [
       "test/seraphwings.test.js"
-    ]
+    ],
+    "note": "CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's Crystal Resonance."
   },
   {
     "name": "SERAPHWINGS-the-word",
@@ -335,11 +336,12 @@
   {
     "name": "SERAPHWINGS-the-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "shadowcloak: 'shadowfang', seraphwings: 'founder' });",
-    "new": "shadowcloak: 'shadowfang', seraphwings: 'developer' });",
+    "old": "shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist' });",
+    "new": "shadowcloak: 'shadowfang', seraphwings: 'developer', resonance: 'crystalfist' });",
     "tests": [
       "test/seraphwings.test.js"
-    ]
+    ],
+    "note": "CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
   },
   {
     "name": "SERAPHWINGS-the-wings-unposed",

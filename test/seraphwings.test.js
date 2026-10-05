@@ -47,7 +47,7 @@ const DEVS = (v('DEVELOPER_HANDLES') ?? '').split(',').map((h) => h.trim()).filt
 // ── THE VOCABULARY, THE GRANT, THE WIRE ─────────────────────────────
 
 test('SERAPH-WINGS vocabulary: the wings join AURAS last, "Seraph Wings" in words, their button in the Founder\'s gold; a look of their own - the fifth kind, their own mesh and motes, added whole (no shade); gold, white-hot at the heart (mutants: the word, the paint, the kind)', () => {
-  assert.deepEqual([...AURAS], ['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings'], 'the fire, the ward, the radiance, the cloak, then the wings');
+  assert.deepEqual([...AURAS], ['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance'], 'the fire, the ward, the radiance, the cloak, then the wings - CRYSTAL-FIST\'s resonance after them (PIN MOVED)');
   assert.equal(AURA_TEXT.seraphwings, 'Seraph Wings');
   assert.equal(AURA_PAINT.seraphwings, 'founder', 'the button in gold - the developer\'s own paint is a red');
   assert.ok(TITLES.includes(AURA_PAINT.seraphwings));
@@ -127,7 +127,7 @@ test('SERAPH-WINGS the account card: wearing the wings, the card says their name
 });
 
 test('SERAPH-WINGS token and relay: a token may carry the wings and verifies; the relay - world168 and after, the ones that know the word - reads it out of the signature for everyone near; a token with every glyph and the wings inside the relay\'s bound (mutants: the vocabulary\'s word)', async () => {
-  assert.equal(RELAY_VERSION, 'world169', 'SERAPH-WINGS moved it on (world168): the vocabulary rides the relay\'s bundle; AUDIT ARENA-LADDER after it (world169, the arena ladder audit - PIN MOVED)');
+  assert.equal(RELAY_VERSION, 'world170', 'SERAPH-WINGS moved it on (world168): the vocabulary rides the relay\'s bundle; AUDIT ARENA-LADDER after it (world169, the arena ladder audit - PIN MOVED); CRYSTAL-FIST after that (world170, the Crystal Fist\'s words - PIN MOVED)');
   const kp = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
   const pub = await importPublicKeyB64(Buffer.from(new Uint8Array(await subtle.exportKey('raw', kp.publicKey))).toString('base64url'), { subtle });
   const nowS = 1_760_000_000;

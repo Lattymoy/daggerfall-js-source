@@ -11,12 +11,12 @@
   {
     "name": "SHADOWCLOAK-the-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder' });",
-    "new": "radiance: 'primarch', shadowcloak: 'aegis', seraphwings: 'founder' });",
+    "old": "radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist' });",
+    "new": "radiance: 'primarch', shadowcloak: 'aegis', seraphwings: 'founder', resonance: 'crystalfist' });",
     "tests": [
       "test/shadowcloak.test.js"
     ],
-    "note": "SERAPH-WINGS (re-aimed by content): the wings joined the list."
+    "note": "SERAPH-WINGS (re-aimed by content): the wings joined the list. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
   },
   {
     "name": "SHADOWCLOAK-the-kind",
@@ -48,30 +48,32 @@
   {
     "name": "SHADOWCLOAK-the-aura-not-granted",
     "file": "server-account/src/titles.js",
-    "old": "primarch: 'radiance', shadowfang: 'shadowcloak' });",
-    "new": "primarch: 'radiance' });",
+    "old": "primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance' });",
+    "new": "primarch: 'radiance', crystalfist: 'resonance' });",
     "tests": [
       "test/shadowcloak.test.js"
-    ]
+    ],
+    "note": "CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
   },
   {
     "name": "SHADOWCLOAK-granted-to-another-list",
     "file": "server-account/src/titles.js",
-    "old": "primarch: 'radiance', shadowfang: 'shadowcloak' });",
-    "new": "primarch: 'radiance', penitent: 'shadowcloak' });",
+    "old": "primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance' });",
+    "new": "primarch: 'radiance', penitent: 'shadowcloak', crystalfist: 'resonance' });",
     "tests": [
       "test/shadowcloak.test.js"
-    ]
+    ],
+    "note": "CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
   },
   {
     "name": "SHADOWCLOAK-the-vocabularys-aura",
     "file": "src/net/identityToken.js",
-    "old": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings']);",
-    "new": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'seraphwings']);",
+    "old": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance']);",
+    "new": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'seraphwings', 'resonance']);",
     "tests": [
       "test/shadowcloak.test.js"
     ],
-    "note": "SERAPH-WINGS (re-aimed by content): the wings joined the list."
+    "note": "SERAPH-WINGS (re-aimed by content): the wings joined the list. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's Crystal Resonance."
   },
   {
     "name": "SHADOWCLOAK-the-hood-too-tall",

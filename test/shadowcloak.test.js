@@ -58,7 +58,7 @@ const TAU = 2 * Math.PI;
 // ── THE VOCABULARY, THE GRANT, THE WIRE ─────────────────────────────
 
 test('SHADOW-CLOAK vocabulary: the cloak joins AURAS after the radiance (SERAPH-WINGS\' wings after it), "Holo Shadow Cloak" in words, its button in the Shadow Fang\'s paint; a look of its own - the fourth kind, its own mesh, and it SHADES; its colours the title\'s own black and crimson (mutants: the word, the paint, the kind, the colour)', () => {
-  assert.deepEqual([...AURAS], ['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings'], 'the Broker\'s fire, the ward, the radiance, then the cloak - SERAPH-WINGS\' wings after it (PIN MOVED)');
+  assert.deepEqual([...AURAS], ['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance'], 'the Broker\'s fire, the ward, the radiance, then the cloak - SERAPH-WINGS\' wings after it, CRYSTAL-FIST\'s resonance after them (PIN MOVED)');
   assert.equal(AURA_TEXT.shadowcloak, 'Holo Shadow Cloak', 'the owner\'s words: "A holo shadow cloak"');
   assert.equal(AURA_PAINT.shadowcloak, 'shadowfang', 'its button in the Shadow Fang\'s black and crimson');
   assert.ok(TITLES.includes(AURA_PAINT.shadowcloak));
@@ -151,7 +151,7 @@ test('SHADOW-CLOAK the account card: wearing the cloak, the card says its name -
 });
 
 test('SHADOW-CLOAK token and relay: a token may carry the cloak and verifies; the relay - world167 and after, the ones that know the word - reads it out of the signature onto their row for everyone near (mutants: the vocabulary\'s aura)', async () => {
-  assert.equal(RELAY_VERSION, 'world169', 'SHADOW-CLOAK moved it on (world167 - world165 on its branch, renumbered past SERPENT1 and SERPENT2 at the merges), SERAPH-WINGS after it (world168 - PIN MOVED), AUDIT ARENA-LADDER after that (world169, the arena ladder audit - PIN MOVED): the vocabulary rides the relay\'s bundle');
+  assert.equal(RELAY_VERSION, 'world170', 'SHADOW-CLOAK moved it on (world167 - world165 on its branch, renumbered past SERPENT1 and SERPENT2 at the merges), SERAPH-WINGS after it (world168 - PIN MOVED), AUDIT ARENA-LADDER after that (world169, the arena ladder audit - PIN MOVED); CRYSTAL-FIST after it (world170, the Crystal Fist\'s words - PIN MOVED): the vocabulary rides the relay\'s bundle');
   const kp = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
   const pub = await importPublicKeyB64(Buffer.from(new Uint8Array(await subtle.exportKey('raw', kp.publicKey))).toString('base64url'), { subtle });
   const nowS = 1_760_000_000;
