@@ -89,7 +89,7 @@ const out = await page.evaluate(async ({ bsa, esm }) => {
   document.body.append(cv);
   const renderer = new Renderer(cv);
 
-  // THE HOST'S OWN CONSTRUCTION, as world.js:9863 writes it.
+  // THE HOST'S OWN CONSTRUCTION, as world.js:9888 writes it.
   const entity = { items: [], equipCountdown: 0 };
   const log = [];
   const weaponRig = rig.createWeaponRig({

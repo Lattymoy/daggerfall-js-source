@@ -536,6 +536,7 @@ function ledgerHost({ online, clockMin = M0, ms = T0 } = {}) {
     online: d.online, _spawnLedger: d._spawnLedger, _spawnClock: () => d.clockMin, bandNowMs: () => d.ms, raidNowMs: () => d.ms,
     BAND_LIFE_MS, RAIDER_LIFE_MS, bandLifeOf, raiderLifeOf, _bandSpent: d._bandSpent, _bandChase: d._bandChase, _bandPeer: d._bandPeer,
     tvRaid: d.tvRaid, tvDng: d.tvDng, performance: { now: () => d.t },
+    locationIndex: d.locationIndex = new Map(),   // SD2b (PIN MOVED): the first-sight door asks the index whether its pixel holds a Hollow - never noted
   };
   const names = Object.keys(scope);
   const h = new Function(...names, `${W.slice(a, b + 4)}

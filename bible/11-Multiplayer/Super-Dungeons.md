@@ -564,3 +564,37 @@ rise ten years off and test their own duties alone; `test/scale2b.test.js` count
 ROOM_CALL_MS; `test/raid3_raidLedger.test.js` pins `_alarmRest`'s raid line with the find's re-arm; and `parseClient`'s
 doc names `sd` (`test/auditworld2.test.js` derives the list from its arms). Wired by nothing in the world yet: SD2b
 stands the Hollow and says the find.
+
+### SD2b - shipped 2026-10-05 (the Hollow in the world)
+
+Sections 2-4 on every client. `scenes/sdHost.js` (`createSdHost`): the hub's record in (`heard` - an older slot's word
+is no word; the first word, the welcome's, is no news), the Hollow it names found once a slot over this client's own
+map files - the gate's scan, warmed if it is not ready, and the game's own rows - and stood in the location index at its
+pixel while the record's phase stands it (`frame`), then taken down - never from under a player standing in it, and the
+next slot's not before; the find said at its mouth - within SD_FOUND_NEAR_M of the dungeon entrance its pixel's blocks
+stood - to the cell its pixel is in while the record says `risen`, again every SD_FOUND_RESEND_MS until the hub's word
+moves it; and the lines everyone online hears - the find, the kill, the fading - each once, a rise to nobody, a line
+whose place the scan has not found yet waiting for it (its city's name) and past SD_LINE_WAIT_MS said with the region's.
+
+`scenes/world.js`: the host made online alone and framed every frame; the hub link's `onSd`; the Hollow's cities and
+templates kept over the game's own rows before they go (`_sdCityRows` - the populated places, `hubClaim`;
+`_sdTemplateRows`); its pixel built again between builds when it rises or goes on ground that stands (`_sdLate`,
+`sweepSdLate` - sweepWodLate's shape, after the gate's clearing); the spawn ledger never notes a Hollow's first sight
+(`_spawnSeen` - the dungeon's door and the roll's) nor its clear (`_noteSpawnCleared`): a Hollow's life is the hub's
+record, not a spawn's two clocks; a Hollow is otherwise a spawned dungeon - the build, the plates, the Overworld's lists
+and the sight line (TIER1's "a Super Dungeon") take it as one.
+
+Known, recorded: the Hollow's site does not ask the road network (a road-crossed pixel is the spawns' rule) - the network
+lands after the boot on its own time, and a site that waited for it would differ between a client that asked before and
+one that asked after; the gate's scan is what every client holds alike.
+
+THE FOUR HOSTS: `scenes/world.js` WIRED; `scenes/worldModes.js` FLAGGED - the mode machine enters a Hollow as any spawned
+dungeon (its plaque and its tier are TIER1's); `scenes/dungeonContext.js` FLAGGED - SD4's (its difficulty, its end);
+`scenes/exterior.js` FLAGGED - the `?exterior` bench is offline.
+
+Pins: `test/sd2b_world.test.js` (5); `tools/mutants/sd2b.json` (17, all dead). The pins SD2b's lines meet were kept by
+keeping their lines (the ledger's guards and the sweep's frame line stand on lines of their own, the Hollow's rows above
+the hubs'); `test/ow6_ledger.test.js`'s lifted ledger block is handed the index its first-sight door now asks (PIN
+MOVED); `tools/citeShift.mjs` moved world.js's cites a slice down (173), CD4's gated struck cites by hand (8), and
+`tools/mutants/survtiers3.json`'s two cite records re-aimed by content.
+Next: the omen, the marks and the Timers row (SD2c); a save inside a Hollow and the cast-out at its end (SD2d).

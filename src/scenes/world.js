@@ -281,6 +281,8 @@ import { createGateOmen, insideGateRing, gateSceneXZ, fellLine, OMEN_SETTLE_MS, 
 import { gateScanner, findGateSite, gateSeaPixel, politicClaimed } from '../systems/gateSite.js';   // WB1: where the day's gate stands, over the map files every client holds alike
 import { createGatePool, GATE_TEXT } from './gatePool.js';   // WB2: the gate the world stands - its stone, its fire and beacon, its collider and its door
 import { createRiteHost, RITE_TEXT } from './riteHost.js';   // WB12d: the faithful's rite - its circle, its smoke, its faithful, its word and its chest
+import { createSdHost } from './sdHost.js';   // SD2b: the Hollow in the world - the hub's record in, the Hollow stood at its pixel, the find, the lines
+import { sdCities, sdTemplates } from '../systems/sdSite.js';   // SD2b: the Hollow's cities and templates, over the game's own rows
 import { RANDOM_TREASURE_ARCHIVE } from '../systems/lootDataTables.js';   // WB12d: the casket's pile, undrawn
 import { createSigilBroker } from './sigilBrokerPool.js';   // SET7: the Sigil Broker - her body, her box and name, her press; BROKER-CAGE: caged at the faithful's circle
 import { createBrokerOverlay, closeBrokerDoor } from '../ui/brokerDoor.js';   // SET7: her window, a lazy chunk behind its door
@@ -554,7 +556,7 @@ import { travelDriveForward, travelLookaheadFor } from '../systems/travelAutopil
 import { createTravelSteer, createColliderProbe, steerDrive } from '../systems/travelSteer.js';   // TRAVEL-NAV1: the journey goes round what is in its way, and stops short of what it cannot
 import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER, exteriorSwimming, feetWaterCoverage, SWIM_COVERAGE } from '../player/exteriorSurface.js';   // ROAD-B (b3): PlayerMotor's three exterior surface methods; OT1: IsPlayerSwimming above ground
 import { isOnFoot } from '../systems/transport.js';   // TransportManager.IsOnFoot - the raycast's reach and the mounted footstep gate
-import { floorLanding } from '../player/enterExit.js';   // FixStanding for the exterior arrivals (2026-08-27)
+import { floorLanding, doorWorldPosition } from '../player/enterExit.js';   // FixStanding for the exterior arrivals (2026-08-27); SD2b: where a Hollow's mouth stands, to find it at
 import { jumpSpeedMultiplier, isEnhancedJumping, tallySkill, SKILLS } from '../systems/skills.js';   // TO1: the avoid-encounter roll reads skillValue live (imported above) Stealth   // AUDIT 64 F2: CheckAirControl's IsEnhancedJumping disjunct
 import { playerEntity, surfacePlayer, hurtPlayer, playerBlowCameToNothing, setDeathPresenter, presentPlayerDeath, setAvoidDeathHook, registerDuelFell, duelSpare, setStaffPowers, staffPowers, registerLevitateWard, registerFreeFlight } from '../characters/playerEntity.js';   // AUDIT-SEATS G5: a siege's ward on Levitate   // AUDIT-SEATS G4: a spectator's flight
 import { SOUND } from '../systems/soundClips.js';
@@ -585,7 +587,7 @@ import { renownKillXp, renownQuestXp, renownPartyXp, renownText } from '../net/r
 import { createRenownTracker, setRenownKillHandler, renownFoeLevel, renownAnswer, renownFoeCarry, renownStruckAt } from '../net/renownTracker.js';   // RENOWN1: what this character earns online, carried to the account service
 import { setRenownLayer } from '../systems/renownLayer.js';   // RENOWN1: the level's health and magicka, on top of Daggerfall's while online
 import { setHudRenown } from '../ui/hudRenown.js';   // RENOWN4: my own Renown and its bar, under the vitals
-import { pickRegionHubs, hubAtMapId, hubArrivalLine } from '../systems/regionHubs.js';   // HUB1: every region's main city, its hub
+import { pickRegionHubs, hubAtMapId, hubArrivalLine, hubClaim } from '../systems/regionHubs.js';   // HUB1: every region's main city, its hub; SD2b: a populated place's claim (the Hollow's cities)
 import { dungeonTier, tierPhrase } from '../systems/dungeonTier.js';   // TIER1: a dungeon's tier, said online...
 import { dungeonTierLabel } from '../world/dungeonLabel.js';   // ...with its size, never over a place the port made
 import { deriveTownSeats, seatAtMapId } from '../systems/townSeats.js';   // SEAT1a: every palace a seat, the three capitals crowns
@@ -1177,6 +1179,22 @@ export async function bootWorld(canvas, renderer, params, status) {
     queue.push(...again.sort(nearestFirstFrom(state.current)));
     console.log(`[wod] ${again.length} pixel(s) named by a region that landed late - built again on the list in its order`);
   }
+  // SD2b: THE HOLLOW'S PIXEL, BUILT AGAIN when it rises or goes on ground that already stands (scenes/sdHost.js stand and
+  // unstand) - sweepWodLate's shape: between builds, a pixel in flight let finish first, the player's own pixel held.
+  const _sdLate = new Set();
+  function sweepSdLate() {
+    const again = [];
+    for (const k of _sdLate) {
+      const p = built.get(k);
+      if (p) { again.push({ px: p.px, py: p.py }); _sdLate.delete(k); }
+      else if (!inFlight.has(k)) _sdLate.delete(k);   // not standing: it builds on the index as it is now
+    }
+    if (!again.length) return;
+    const under = `${state.current.x},${state.current.y}`;
+    if (walkMode && playerSpawned && again.some((k) => `${k.px},${k.py}` === under)) _seasonHoldKey = under;
+    for (const k of again) destroyPixel(k.px, k.py, { collectLoose: false });
+    queue.push(...again.sort(nearestFirstFrom(state.current)));
+  }
   // LocationLoader.cs:146-151 asks the Basic Roads MOD for the pixel's
   // road|track mask - so only Hazelnut's own arrays answer; the port's
   // generated fallback is not his mod, and with it the static stays 0.
@@ -1276,6 +1294,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   // GATE-SEEN's law) - a world-data mod's rows are appended where Replace Game Artwork is on, which is each client's own
   // switch: Roleplay & Realism's forts barred a band's pixel on one client and not another. (AUDIT OW5b B3 found the same:
   // this is its one fix.)
+  // SD2b: THE HOLLOW'S CITIES AND TEMPLATES (systems/sdSite.js), over the SAME rows - the game's own, so every client finds the
+  // same city and clones the same deep place - kept here, before the rows go: the populated places alone, and the dungeons
+  // a Hollow may clone. Online alone.
+  const _sdCityRows = params.has('online') ? _hubRows.filter((loc) => !!hubClaim(loc, maps.getRegionName(loc.regionIndex))) : [];
+  const _sdTemplateRows = params.has('online') ? sdTemplates(_hubRows, isMainStoryDungeon) : [];
   // HUB1: every region's main city, one answer on every client (systems/regionHubs.js) - read online alone
   const regionHubs = pickRegionHubs(_hubRows, { regionNameOf: (r) => maps.getRegionName(r) });
   // SEAT1a (Seats-Arc 3.1): every location with a Palace a seat, the three capitals crowns - over the SAME rows, the
@@ -1764,6 +1787,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const p = playerTravelPixel();
     const key = `${p.x},${p.y}`;
     if (!locationIndex.get(key)?.spawned) return;
+    if (locationIndex.get(key).superTier) return;   // SD2b: a Hollow's life is the hub's record - a cleared one is not two days from gone
     _spawnLedger.clear(key, _spawnClock());
     owSayRow(key);   // OW6L: and the cell hears the short clock start
   };
@@ -1820,6 +1844,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** OW6L: a spawn's first sight here - its long clock started, and the cell told (a sight already in my ledger - my own,
    *  or the cell's merged in - starts nothing and says nothing). */
   function _spawnSeen(key) {
+    if (locationIndex.get(key)?.superTier) return;   // SD2b: never a Hollow's - its life is the hub's record, not a spawn's clocks
     const fresh = !_spawnLedger.wireRow(key);
     _spawnLedger.note(key, _spawnClock());
     if (fresh) owSayRow(key);
@@ -18859,6 +18884,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (tab.room === SOCIAL_ROOM) link.onGate = (g) => gateLink?.word(g);   // WB3b: the hub's word of a kill, and a fighter's receipt outside the court
       if (tab.room === SOCIAL_ROOM) link.onSerpent = (w) => serpentLink?.word(w);   // SERPENT1: the hub's word of a sea serpent's kill, Bay-wide, and the day's at my hello
       if (tab.room === SOCIAL_ROOM) link.onRite = (w) => riteHost?.onBroken(w);   // WB12d: the hub's word of a broken rite, and at my hello
+      if (tab.room === SOCIAL_ROOM) link.onSd = (w) => sdHost?.heard(w);   // SD2b: the hub's record of the Super dungeon - at my hello and at every move
       if (tab.room === SOCIAL_ROOM) link.onRaid = (f, room) => (f.k === 'tw' ? offerRaidTowns(link, f.h) : raidRelayWord(f, room));   // RAID3: the hub's word of a cleanse anywhere, and the day's at my hello; RAID-ROLL: its ask for the towns table
       if (tab.id === 'region') {   // TV3: the region's travellers, into the book
         link.onTraveller = (f) => travellerBook.put(f, Date.now());
@@ -20415,6 +20441,34 @@ export async function bootWorld(canvas, renderer, params, status) {
     sayNear: (text) => setMidScreenText(text),
     loot: { seed: (items, feet, pixelKey) => droppedLoot.seedPile(items, feet, { archive: RANDOM_TREASURE_ARCHIVE, record: 0 }, null, pixelKey, { unsaved: true, drawn: false }), keyOf: (p) => `droppedLoot:${p.id}` },   // the casket is its picture, and its name
     level: () => playerEntity.level ?? 1,
+  }) : null;
+  /** SD2b: THE HOLLOW IN THE WORLD (scenes/sdHost.js) - online alone: the hub's record of the Super dungeon (its hub link's
+   *  onSd), the Hollow it names found over this client's own map files (the gate's scan, the game's own rows) and stood in
+   *  the index at its pixel while its phase stands - built there as a spawned dungeon is, its pixel built again when it
+   *  rises or goes on ground that stands (sweepSdLate) - the find said at its mouth to the cell its pixel is in, and the
+   *  chat's lines for its find, its kill and its fading. */
+  let _sdDoorAt = null;
+  const sdHost = params.has('online') ? createSdHost({
+    now: () => Date.now() + _sharedOffsetMs,
+    scan: () => gateScanOf(),
+    warmScan: () => warmGateScan(),
+    cities: (r) => sdCities(_sdCityRows, r, { regionNameOf: (i) => maps.getRegionName(i) }),
+    templates: () => _sdTemplateRows,
+    where: (px, py) => { const regionIndex = maps.getRegionIndexAt(px, py); return { regionIndex, regionName: REGION_NAMES[regionIndex], politic: maps.getPoliticIndex(px, py), climate: getWorldClimateSettings(maps.getClimateIndex(px, py)) }; },
+    stand: (key, loc) => { _locIndexGen += 1; locationIndex.set(key, loc); _sdLate.add(key); },
+    unstand: (key) => { if (locationIndex.get(key)?.superTier) { _locIndexGen += 1; locationIndex.delete(key); } _sdLate.add(key); },
+    inside: (loc) => (modes?.mode ?? 'exterior') === 'dungeon' && modes?.dungeonLocation?.sdSlot === loc?.sdSlot,
+    // its mouth: the dungeon entrance its pixel's blocks stood (the doors' list - kept a door generation)
+    door: (key) => {
+      if (_sdDoorAt && _sdDoorAt.key === key && _sdDoorAt.gen === doorGeneration) return _sdDoorAt.at;
+      const e = buildingDoors.find((d) => d.pixelKey === key && d.door?.doorType === DOOR_TYPE.DUNGEON_ENTRANCE);
+      _sdDoorAt = { key, gen: doorGeneration, at: e ? doorWorldPosition(e.door) : null };
+      return _sdDoorAt.at;
+    },
+    feet: () => (walkMode && playerSpawned ? player.feetAt() : null),
+    sendFound: (word, cell) => !!online?.sendSdFound?.(word, cell),
+    say: (text) => chatNotice(text),
+    regionName: (r) => (r >= 0 ? maps.getRegionName(r) : ''),
   }) : null;
   /** SET7: THE SIGIL BROKER (scenes/sigilBrokerPool.js) - BROKER-CAGE: caged at the faithful's circle from the omen to
    *  midnight, and free once every one of them fell (scenes/riteHost.js isCleared), online alone as the gate is: her
@@ -27717,6 +27771,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (roadsSweepDue && !building) { roadsSweepDue = false; sweepRoadless(); }   // FIX-C: the roads sweep, on the frame, between builds
     if (_wodLate.size && !building) sweepWodLate();   // WOD6: a late region's pixels, the same way
     if (!building) sweepGateClear();   // GATE-CLEAR: the gate the clock is about turned - its clearing in, the last one's rock back
+    if (_sdLate.size && !building) sweepSdLate();   // SD2b: the Hollow's pixel, the same way
     if (seasonsActive) seasons.tick();   // SIB1: RefreshSeasonAfterLoad's second half, the frame after a load
     refreshHomeLooks();   // HOME-LOOK: a look landed or changed repaints the home where it stands
     // W1/S41: the DRAIN ticks on the exterior frame, which is
@@ -27913,6 +27968,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // WB2: the gate stood for this frame - before the lights (its fire lights the ground) and the world pass (its stone)
     try { if (gatePool?.frame(dt)) warmGateVeil(); } catch (e) { console.warn('[gate] pool', e?.message ?? e); }   // AUDIT WB D5: a gate stands - the step's veil is built ahead
     try { sigilBroker?.frame(dt); } catch (e) { console.warn('[broker] pool', e?.message ?? e); }   // SET7: the Broker stands where the clock stands her - BROKER-CAGE: in her cage at the faithful's circle
+    try { sdHost?.frame(); } catch (e) { console.warn('[sd] host', e?.message ?? e); }   // SD2b: the Hollow stood or taken down, its find, its lines
     try { riteHost?.frame(); } catch (e) { console.warn('[rite] host', e?.message ?? e); }   // WB12d: the faithful's circle, before the lights (its braziers light the ground)
     try { if (_mode() === 'exterior' && !_loading) harbourBook.step(now / 1000); } catch (e) { console.warn('[harbours] book', e?.message ?? e); }   // HARBOUR-BOOK: the port near the player sounded, before its quays stand
     if (_mode() === 'exterior') camps.ride(dt);   // DECK-CAMP: the camps on a boat's deck posed off her - after she moved, before the lights (a fire's) and the world pass
