@@ -268,6 +268,40 @@ authority online until the realm keeps the lineage and its tombstone (section 9)
 jump; online the clock is the world's and cannot be moved, and offline a jump would desynchronise every member's own
 save from the family's dates. The years are the family's fiction, the world's clock its own.
 
+## 10b. THE BLOODLINE IN THE WORLD (LEGACY-HOME)
+
+*Not built yet - the slice that builds it is LEGACY-HOME.*
+
+Mac (2026-10-05): "I think your bloodline should be visible when not playing, and if a house is owned should live in the
+house ... With the ability to switch by interacting with them or by using the ui. Really trying to flesh this out since
+itll be default on but can be toggled off." His three answers decided the open questions: with no house, members live in
+the family seat as townsfolk; with several houses, one is the FAMILY HOME; and members keep a Living World day rather
+than standing still.
+
+- **Who stands in the world.** A living member of the blood who is not the one played - never played, or played and
+  PARKED (their newest save made in one of the player's houses), or retired - and, once LEGACY5 builds it, a spouse. A
+  member whose save stands elsewhere (a dungeon, the road) is on their own journey: not in the world, and their card
+  says where. The rule keeps what is seen and what is saved one thing: switch to a member standing in your house and you
+  take them up in that house.
+- **Where they live.** THE FAMILY HOME - one of the player's houses (offline one a region, `systems/banking.js`; online
+  the character's homes, at most three, `net/homeLaw.js` HOME_CAP): the one the player marks on the Family tab's House
+  page, else the house in the family seat's region, else the first. A parked member lives in the house their save was
+  made in. With NO house, the members live in the family seat as townsfolk - a house of the town's census lent to them
+  for the line, the Living World's own doors.
+- **Their day.** Each keeps a Living World day (`systems/livingWorld/dayPlan.js`): asleep at home by night, about the
+  town by day, home again at dusk - found in the street, at the market or the temple, and in the house. They stand as the
+  town's other people stand (the street's walkers, the room's spots, LW8), drawn as THEMSELVES - their race, sex, face and
+  worn kit, the way an online peer is drawn - never a Breton stand-in.
+- **Talking to them.** A member greets the one played by their kinship ("Brother", "Mother") and says how they fare; the
+  talk window shows their own face. Before the talk, a choice: **Talk**, or **Play as <name>** - the one played is SAVED
+  WHERE THEY STAND (in the house, they are parked there and stay standing in it), and the member is taken up: a member
+  never played is BORN on that spot, one played loads their own save (which, parked, is the same house). The Family
+  tab's Play as goes on working from anywhere.
+- **Online** (until LEGACY7): the members stand in the player's own home, seen by the player alone; Play as says it is
+  offline-only for now.
+- **The switch.** "Family in the world" (Project Legacy's settings), on by default; off, the family lives in the Family
+  tab alone.
+
 ## 11. THE UI (Enhanced Plus)
 
 - **The Family tab** of the pause window (Mac: "implement it into the pause menu as a new tab"; KB1 action
@@ -305,3 +339,4 @@ save from the family's dates. The years are the family's fiction, the world's cl
 | LEGACY5 | courting, marriage, children, surnames' cadet branches | not built |
 | LEGACY6 | world influence: the inherited standing and regard, the towns' talk, the killer remembered | not built |
 | LEGACY7 | online: the service's lineage, the tombstone, the heir's realm birth, the house name, two players wed | not built |
+| LEGACY-HOME | the bloodline in the world: the family home, the seat's townsfolk, their day, Play as by talking (section 10b) | not built |
