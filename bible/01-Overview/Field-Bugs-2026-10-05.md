@@ -40,6 +40,9 @@ the change moved re-aimed by content.
 
 ## SEALED-CELLAR (2)
 
+[SEALED-SAVE, FIELD BUGS 2026-10-05c: a foe a save made inside the house holds was restored in the cellar the mend had
+moved its marker out of; it stands at the marker's new spot now (`01-Overview/Field-Bugs-2026-10-05c.md`).]
+
 `tools/townQuestMarkers.mjs` (HATCH, hatchesOf, measureInterior's sealed arm; clearSpot's floor test),
 `systems/quest/markerCuration.js` (CURATED_QUEST_MARKERS). The Possessed Child (C0B00Y02, `local house2`) stands its
 child at the house's 199.11. Beautiful Cities lays Tigonus (Dak'fron, location 54) again; in its GEMSAL00 #7 the one

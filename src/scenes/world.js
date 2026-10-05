@@ -7185,7 +7185,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       boxes, packable: !!boat.packable, sailingThis, sailing: !!csaRuntime?.isSailing(), aboard: csaStandsOn(boat),
       passengers: csaPassengersOn(boat), variants: boat.VariantObject != null && boat.GetVariantCount >= 1,
       naval: navalOn(), crewed: !!boat.crewed, companions: !!boat.uid,   // SHIP-CREW: her crew's card and her orders - AUDIT CC-A9: hands go ashore by her deed's number
-      noDeed: !!csaRuntime?.deedMissing?.(boat),   // SHIP-PACK: a ship is picked up with her deed in the pack
+      noDeed: !!csaRuntime?.deedMissing?.(boat), tooHeavy: !!csaRuntime?.partsTooHeavy?.(boat),   // SHIP-PACK: a ship is picked up with her deed in the pack; HOLD-WEIGHT: never parts heavier than the bearer can carry
       cabin: hasSailingCabin(boat), cabinWhy: hasSailingCabin(boat) ? sailingCabins.reason(boat) : null,
     });
     const legacy = ensureBankCabinLink();
@@ -7483,7 +7483,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     },
     entity: {
       isFemale: () => playerEntity.gender === 'female',
-      carriedWeight: () => carriedWeight(playerEntity),
+      carriedWeight: () => carriedWeight(playerEntity), maxEncumbrance: () => entityMaxEncumbrance(playerEntity),   // HOLD-WEIGHT: PlayerEntity.MaxEncumbrance - PackBoat makes no parts heavier
       wagonWeight: () => totalWeight(playerEntity.wagonItems ?? []),
       decreaseFatigue: (n) => { if (!modes?.drainPlayerFatigue?.(n)) playerTicker.sinks.drainFatigue(n); surfacePlayer(); },   // PlayerEntity.DecreaseFatigue: the one fatigue door, its collapse at 0 with it - CSA-J (the audit): the mode's own, so a collapse indoors is the mode's (its enemies, its rest)
     },
@@ -25377,7 +25377,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       }
     }
     if (!placedAshore) { tvSeaStop(TRAVEL_VIEW_TEXT.noShore); return; }
-    if (tvSea.means?.again && boat.packable && csaPassengersOn(boat) === 0 && !csaRuntime.deedMissing(boat)) csaCall(() => csaRuntime.PackBoat(boat, true));   // "You store the boat in your inventory" - SHIP-PACK: a ship with her deed in the pack
+    if (tvSea.means?.again && boat.packable && csaPassengersOn(boat) === 0 && !csaRuntime.deedMissing(boat) && !csaRuntime.partsTooHeavy(boat)) csaCall(() => csaRuntime.PackBoat(boat, true));   // "You store the boat in your inventory" - SHIP-PACK: a ship with her deed in the pack; HOLD-WEIGHT: and parts her bearer can carry
     else {
       tvSay(TRAVEL_VIEW_TEXT.leftMoored);
       if (tvSea.means) tvSea.means = { ...tvSea.means, again: false };

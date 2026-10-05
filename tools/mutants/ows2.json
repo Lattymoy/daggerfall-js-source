@@ -426,8 +426,8 @@
   {
     "name": "OWS2-host-no-pack",
     "file": "src/scenes/world.js",
-    "old": "!csaRuntime.deedMissing(boat)) csaCall(() => csaRuntime.PackBoat(boat, true));",
-    "new": "!csaRuntime.deedMissing(boat)) null;",
+    "old": "!csaRuntime.partsTooHeavy(boat)) csaCall(() => csaRuntime.PackBoat(boat, true));",
+    "new": "!csaRuntime.partsTooHeavy(boat)) null;",
     "tests": [
       "test/ows2_crossing.test.js"
     ]

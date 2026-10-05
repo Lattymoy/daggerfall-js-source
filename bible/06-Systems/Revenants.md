@@ -281,6 +281,7 @@ enhanced plus UI feature."
 
 - **Sworn**: spared, it rises, gathers into a portal where it knelt, and is sworn to the player for good - it hunts
   nobody, never returns as a foe, and its record keeps its place (`companion`: with the player, away, or resting).
+  It fights as a crew companion does, the foe fighting the player's side first (ASSIST, `01-Overview/Field-Bugs-2026-10-05c.md`).
 - **The crew's own layer** (`scenes/crewAshore.js`) stands the sworn - every place, every door, the heel, the catch-up,
   health and spells carried - as a second party of the crew's shape (`systems/revenantCompanions.js revenantParty`), never
   under the naval arc's gate. Each stands at the player's level with its rank's strength (health once, its blows always),
