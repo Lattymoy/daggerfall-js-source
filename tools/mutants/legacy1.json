@@ -1,0 +1,236 @@
+[
+  {
+    "name": "LEGACY1-B5-career-skips-mage",
+    "file": "src/systems/legacy/family.js",
+    "old": "  const i = Math.min(CLASS_CAREERS.length - 1, Math.floor(rng() * CLASS_CAREERS.length));",
+    "new": "  const i = Math.min(CLASS_CAREERS.length - 1, 1 + Math.floor(rng() * (CLASS_CAREERS.length - 1)));",
+    "tests": [
+      "test/legacy1_family.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY1-B4-race-always-inherited",
+    "file": "src/systems/legacy/family.js",
+    "old": "  if (parent && rng() < RACE_INHERIT_CHANCE) return parent.race;",
+    "new": "  if (parent) return parent.race;",
+    "tests": [
+      "test/legacy1_family.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY1-blood-unbounded",
+    "file": "src/systems/legacy/family.js",
+    "old": "    out[k] = clamp(Math.round((best - 50) / 10), 0, BLOOD_MAX);",
+    "new": "    out[k] = Math.round((best - 50) / 10);",
+    "tests": [
+      "test/legacy1_family.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY1-hearth-doubled",
+    "file": "src/systems/legacy/family.js",
+    "old": "    const v = clamp(Math.floor((Number(parent.skills[id]) || 0) / 20), 0, HEARTH_MAX);",
+    "new": "    const v = clamp(Math.floor((Number(parent.skills[id]) || 0) / 10), 0, HEARTH_MAX);",
+    "tests": [
+      "test/legacy1_family.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY1-estate-uncapped",
+    "file": "src/systems/legacy/family.js",
+    "old": "export const estateOf = (gold) => Math.min(ESTATE_MAX, Math.max(0, Math.floor((Number(gold) || 0) * ESTATE_SHARE)));",
+    "new": "export const estateOf = (gold) => Math.max(0, Math.floor((Number(gold) || 0) * ESTATE_SHARE));",
+    "tests": [
+      "test/legacy1_family.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY1-B12-heir-odds",
+    "file": "src/systems/legacy/family.js",
+    "old": "  return (settings?.descendants ?? DESCENDANTS.random) === DESCENDANTS.always ? true : rng() > HEIR_CHANCE;",
+    "new": "  return (settings?.descendants ?? DESCENDANTS.random) === DESCENDANTS.always ? true : rng() >= HEIR_CHANCE;",
+    "tests": [
+      "test/legacy1_family.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY1-B14-no-siblings",
+    "file": "src/systems/legacy/family.js",
+    "old": "export const SIBLINGS_MAX_DEFAULT = 2;",
+    "new": "export const SIBLINGS_MAX_DEFAULT = 0;",
+    "tests": [
+      "test/legacy1_family.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY1-D3-generation-flat",
+    "file": "src/systems/legacy/family.js",
+    "old": "  p.gen = (parent?.gen ?? 0) + 1;",
+    "new": "  p.gen = (parent?.gen ?? 0);",
+    "tests": [
+      "test/legacy1_family.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY1-B13-death-unwritten",
+    "file": "src/systems/legacy/family.js",
+    "old": "  if (!p || p.died) return p;\n  p.died =",
+    "new": "  if (p) return p;\n  p.died =",
+    "tests": [
+      "test/legacy1_family.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY1-successors-include-played",
+    "file": "src/systems/legacy/family.js",
+    "old": "    .filter((p) => isAlive(p) && p.id !== family.currentId && p.kind === 'member' && p.retired == null)",
+    "new": "    .filter((p) => isAlive(p) && p.kind === 'member' && p.retired == null)",
+    "tests": [
+      "test/legacy1_family.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY1-D4-counter-behind",
+    "file": "src/systems/legacy/family.js",
+    "old": "nextId: Math.max(maxId + 1, rec.nextId | 0),",
+    "new": "nextId: Math.max(1, rec.nextId | 0),",
+    "tests": [
+      "test/legacy1_family.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY2-span-never-final",
+    "file": "src/systems/legacy/age.js",
+    "old": "  if (isSpent(person, lived)) return { final: true, years: 0, age: ageOf(person, lived), spent: true };",
+    "new": "  if (false) return { final: true, years: 0, age: ageOf(person, lived), spent: true };",
+    "tests": [
+      "test/legacy1_family.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY2-toll-can-be-nothing",
+    "file": "src/systems/legacy/age.js",
+    "old": "export const tollYears = (race, share) => Math.max(1, Math.round(spanOf(race) * share));",
+    "new": "export const tollYears = (race, share) => Math.max(0, Math.round(spanOf(race) * share));",
+    "tests": [
+      "test/legacy1_family.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY1-birth-taken-twice",
+    "file": "src/systems/legacy/store.js",
+    "old": "  try { b = JSON.parse(tab.getItem(BIRTH_KEY) ?? 'null'); tab.removeItem(BIRTH_KEY); } catch { return null; }",
+    "new": "  try { b = JSON.parse(tab.getItem(BIRTH_KEY) ?? 'null'); } catch { return null; }",
+    "tests": [
+      "test/legacy1_family.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY1-stale-copy-wins",
+    "file": "src/systems/legacy/store.js",
+    "old": "    if (was && was.rev > family.rev) return false;\n",
+    "new": "",
+    "tests": [
+      "test/legacy1_family.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY1-B11-birth-carries-load",
+    "file": "src/systems/legacy/places.js",
+    "old": "  for (const k of ['load', 'loadkey', 'classicload', 'classic', 'class', 'test', 'realm', 'realmnew', 'spawn', 'legacyborn']) p.delete(k);",
+    "new": "  for (const k of ['classicload', 'class', 'test', 'realm', 'realmnew', 'spawn', 'legacyborn']) p.delete(k);",
+    "tests": [
+      "test/legacy1_family.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY3-U5-tree-flat",
+    "file": "src/systems/legacy/tree.js",
+    "old": "    placed.set(p.id, { x: left, y: p.gen });\n    nodes.push({ id: p.id, x: left, y: p.gen });",
+    "new": "    placed.set(p.id, { x: left, y: 0 });\n    nodes.push({ id: p.id, x: left, y: 0 });",
+    "tests": [
+      "test/legacy1_family.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY3-U1-zoom-about-corner",
+    "file": "src/ui/familyPages.js",
+    "old": "  return { zoom: z, x: px - (px - view.x) * k, y: py - (py - view.y) * k };",
+    "new": "  return { zoom: z, x: view.x, y: view.y };",
+    "tests": [
+      "test/legacy1_family.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY1-S3-switch-mid-fight",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (deps.inFight()) return LEGACY_TEXT.fight;\n    return null;",
+    "new": "    return null;",
+    "tests": [
+      "test/legacy1_family.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY1-street-reset-skips-legacy",
+    "file": "src/scenes/world.js",
+    "old": "onReset: () => (legacyDeathReset() || (_deathWasOnline ? respawnOnlinePlayer() : endRunToTitleMenu(renderer))) }));",
+    "new": "onReset: () => ((_deathWasOnline ? respawnOnlinePlayer() : endRunToTitleMenu(renderer))) }));",
+    "tests": [
+      "test/legacy1_family.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY4-heirloom-found-again",
+    "file": "src/systems/legacy/heirloom.js",
+    "old": "  if (handed) return handed;\n",
+    "new": "",
+    "tests": [
+      "test/legacy4_heirloom.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY4-heirloom-from-the-bag",
+    "file": "src/systems/legacy/heirloom.js",
+    "old": "  return !!it && it.equipSlot != null && HEIR_GROUPS.has(it.group)",
+    "new": "  return !!it && HEIR_GROUPS.has(it.group)",
+    "tests": [
+      "test/legacy4_heirloom.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY4-heirloom-grows-forever",
+    "file": "src/systems/legacy/heirloom.js",
+    "old": "  it.heirloom.gen = Math.min(HEIRLOOM_GEN_MAX, (it.heirloom.gen | 0) + 1);",
+    "new": "  it.heirloom.gen = (it.heirloom.gen | 0) + 1;",
+    "tests": [
+      "test/legacy4_heirloom.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY4-purse-laid-twice",
+    "file": "src/scenes/legacyHost.js",
+    "old": "          if (r.gold > 0) { r.gold = 0; touch(family); store(); }",
+    "new": "          if (false) { r.gold = 0; touch(family); store(); }",
+    "tests": [
+      "test/legacy4_heirloom.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY4-heirloom-laid-twice",
+    "file": "src/scenes/legacyHost.js",
+    "old": "      if (r.items.length && carried.some((it) => isHeirloom(it) && it.heirloom.line === family.id && it.heirloom.of === r.of)) { r.items = []; touch(family); store(); }",
+    "new": "      if (false) { r.items = []; touch(family); store(); }",
+    "tests": [
+      "test/legacy4_heirloom.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY4-rest-without-blessing",
+    "file": "src/scenes/legacyHost.js",
+    "old": "      (deps.entity.legacyBlessings ??= []).push(b);",
+    "new": "      void b;",
+    "tests": [
+      "test/legacy4_heirloom.test.js"
+    ]
+  }
+]

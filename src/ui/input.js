@@ -908,6 +908,9 @@ export function routeAction(action, ctx, setPlayerPos = null) {
     // openPauseFlow opens the enhanced pages for it), or says why not
     // HELM-KEYS' merge: the key shares the down arrow with less sail - at a helm it is the sails' alone (`sailing`)
     case 'Professions': return ctx.togglePause && ctx.sailing?.() !== true ? (ctx.togglePause({ at: 'professions', setPlayerPos }), true) : false;
+    // LEGACY3 (Mac: "implement it into the pause menu as a new tab"): Project Legacy's key opens the pause on its Family tab -
+    // on either skin (ui/pauseDoor.js openPauseFlow opens the enhanced pages for it). Its mod's switch is actionLive's.
+    case 'LegacyFamily': return ctx.togglePause ? (ctx.togglePause({ at: 'family', setPlayerPos }), true) : false;
     // GameManager.cs:550-553 - the CastSpell ACTION opens the
     // spellbook window; the cast itself is the attack click.
     case 'CastSpell': ctx.toggleSpellbook(); return true;

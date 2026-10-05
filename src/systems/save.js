@@ -159,6 +159,9 @@ const ENTITY_FIELDS = [
   // against it, so a save that dropped it would let a reload pass a night at every rest. A save older than this field
   // restores undefined, which reads as "no night yet": the first rest is a night.
   'restNightAt',
+  // LEGACY4: Project Legacy's blessings - an ancestor laid to rest, their best skill on the one who laid them
+  // (systems/legacy/heirloom.js legacyFold). A save older than this field restores undefined: no blessing.
+  'legacyBlessings',
 ];
 
 /** PlayerEntity.skillsRecentlyRaised: TWO 32-bit masks over the 35

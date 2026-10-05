@@ -150,6 +150,7 @@ import { vendorPageShown, VENDOR_PAGE_SECTIONS, drawVendorPage } from './vendorP
 import { REVENANT_PAGE_SECTIONS, revenantPageShown, drawRevenantsPage } from './revenantPage.js';
 import { COMPANION_PAGE_SECTIONS, companionPageShown, drawCompanionsPage, resetCompanionRoster } from './companionRoster.js';   // COMPANION-ROSTER: the sworn and the slots
 import { STABLE_PAGE_SECTIONS, stablePageShown, drawStablePage, resetHoldingsPages } from './holdingsPages.js';   // HOLDINGS: the horse and the wagon
+import { FAMILY_PAGE_SECTIONS, drawTreePage, drawHousePage, drawHallPage, resetFamilyPages } from './familyPages.js';   // LEGACY3: Project Legacy's Family tab
 import { FLEET_PAGE_SECTIONS, fleetPageShown, drawFleetPage, resetFleetPage } from './fleetPage.js';   // HOLDINGS: the ships
 import { swornBodyOf } from '../systems/revenantCompanions.js';   // COMPANION-ROSTER: a sworn one's live health
 import { enemyDisplayName } from '../characters/enemyBasics.js';   // REVENANT-PAGE: a revenant's kind   // REVENANT-PAGE: the foes that have earned your name
@@ -314,6 +315,7 @@ let bountyAbandonArmed = null;   // BOUNTY1: the bounty whose Abandon was presse
 let journalCleanArmed = null;   // JOURNAL-CLEAN: 'f:<index>' (Remove) | 'clear' (Clear archive) pressed once - the second press acts
 let questShowHidden = false;    // JOURNAL-CLEAN: the rail's "Show hidden" - whether the hidden quests are drawn, in their own section
 let statsSec = 'character'; // PX6: the Stats page's rail - character | attributes | skills | standing
+let famSec = 'tree';       // LEGACY3: the Family page's rail - tree | house | hall
 let holdSec = 'stable';     // HOLDINGS: the Holdings page's rail - stable | fleet | companions | revenants | stores
 let statsAllSkills = false; // PX6: the Miscellaneous disclosure, the sheet's own gesture
 let sysSec = 'save';        // PX7: the System page's rail - which pane fills the detail
@@ -3517,7 +3519,9 @@ function appendPxFoot(home) {
 // ── PX3: THE PAUSE WINDOW ────────────────────────────────────────
 // HOLDINGS (2026-10-03, Mac: "Lets add a new tab to the pause menu as the stat page is starting to get bloated"): what the
 // player owns and who follows them moved off the Stats rail onto a tab of their own (pauseHoldings, below).
-const PAUSE_TABS = Object.freeze([['quests', 'Quests'], ['stats', 'Stats'], ['holdings', 'Holdings'], ['system', 'System']]);
+// LEGACY3 (2026-10-05, Mac: "implement it into the pause menu as a new tab"): Project Legacy's family - its tree, its house
+// and the Hall of Ancestors - on a tab of its own (pauseFamily, below; ui/familyPages.js).
+const PAUSE_TABS = Object.freeze([['quests', 'Quests'], ['stats', 'Stats'], ['holdings', 'Holdings'], ['family', 'Family'], ['system', 'System']]);
 /** HOLDINGS: every tab a landing may name (mountEnhancedMenu's `at`). */
 export const PAUSE_TAB_IDS = Object.freeze(PAUSE_TABS.map(([id]) => id));
 // The token formattings that carry a journal line - questJournal's own
@@ -3537,7 +3541,7 @@ function pauseWindow() {
   win.append(tabs);
 
   const body = el('div', 'px-body');
-  ({ quests: pauseQuests, stats: pauseStats, holdings: pauseHoldings, system: pauseSystem })[pauseTab](body);
+  ({ quests: pauseQuests, stats: pauseStats, holdings: pauseHoldings, family: pauseFamily, system: pauseSystem })[pauseTab](body);
   win.append(body);
   return win;
 }
@@ -3581,6 +3585,29 @@ function pauseHoldings(body) {
     stores: (d) => drawStoresPage(d, render, kit),   // PROF1
   }[holdSec];
   draw?.(detail);
+  wrap.append(detail);
+  body.append(wrap);
+}
+
+// ── LEGACY3: THE FAMILY PAGE ────────────────────────────────────
+// The journal's bones once more (PX6's rail of pages, the chosen one on the right): Project Legacy's tree, its house
+// and the Hall of Ancestors (ui/familyPages.js). Every page says why when there is no family to show.
+function pauseFamily(body) {
+  const wrap = el('div', 'px-journal');
+  const rail = el('div', 'px-qrail');
+  if (!FAMILY_PAGE_SECTIONS.some(([id]) => id === famSec)) famSec = 'tree';
+  for (const [id, label] of FAMILY_PAGE_SECTIONS) {
+    const b = el('button', `px-qrow${id === famSec ? ' on' : ''}`);
+    b.append(el('span', 'px-c', '◆'), document.createTextNode(label));
+    b.onclick = () => { famSec = id; render(); };
+    rail.append(b);
+  }
+  wrap.append(rail);
+  const detail = el('div', 'px-qdetail px-sys');
+  // an act that takes the player out of the game (a switch's load, a birth, the mantle's Succession): the pause goes down
+  // first, as the Fleet's doors do, and comes back if the act did nothing
+  const kit = { el, divider: pxDivider, door: (fn) => { onAction('handoff'); const r = fn(); if (!r?.ok) onAction('resume'); return r; } };
+  ({ tree: drawTreePage, house: drawHousePage, hall: drawHallPage })[famSec](detail, render, kit);
   wrap.append(detail);
   body.append(wrap);
 }
@@ -4812,6 +4839,8 @@ export function mountEnhancedMenu(host, {
   resetProfPages();   // PROF1: an armed change of specialisation never outlives the visit
   resetCompanionRoster();   // COMPANION-ROSTER: nor an armed Release
   holdSec = 'stable';   // HOLDINGS: the Holdings rail opens on its first page
+  famSec = 'tree';   // LEGACY3: the Family rail opens on the tree, centred on the one played
+  resetFamilyPages();
   resetHoldingsPages(); resetFleetPage();   // ...and an act's word, an open name field, an armed press never outlive the visit
   statsAllSkills = false;
   sysSec = 'save';
@@ -4826,6 +4855,7 @@ export function mountEnhancedMenu(host, {
   // HOLDINGS: the Professions page is the Stats rail's, the Stores page the Holdings rail's
   if (PROF_STATS_SECTIONS.some(([id]) => id === at)) { pauseTab = 'stats'; statsSec = at; }
   else if (PROF_HOLD_SECTIONS.some(([id]) => id === at)) { pauseTab = 'holdings'; holdSec = at; }
+  else if (FAMILY_PAGE_SECTIONS.some(([id]) => id === at)) { pauseTab = 'family'; famSec = at; }   // LEGACY3: a Family page by name
   _eff = null;
   render();
   keyHandler = onKey;

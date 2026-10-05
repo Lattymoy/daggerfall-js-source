@@ -134,14 +134,23 @@ export function choiceAtNative(vx, vy, options = []) {
   return -1;
 }
 
+/** The classic face's three lines above the options. */
+export const LEVELING_SCREEN_TEXT = Object.freeze({ title: 'HOW WILL YOU GROW?', lines: Object.freeze(['Choose how this character will level.', 'It cannot be changed later.']) });
+
 export class LevelingChoiceScreen {
   /** @param {(id: string) => void} onAnswer */
-  constructor(onAnswer, { settings = null, online = false } = {}) {
+  /** LEGACY2: `options`, `text` and the Plus face's `faceText` / `faceTags` let another one-time question of a new
+   *  character (ui/legacyModelChoice.js, Project Legacy's model) wear this same screen - its cursor, its one answer,
+   *  its keys and clicks, and both faces - rather than a copy of it. Without them it is the leveling question. */
+  constructor(onAnswer, { settings = null, online = false, options = null, text = null, faceText = null, faceTags = null } = {}) {
     this._onAnswer = onAnswer;
     /** Read ONCE, when the question is built - a player cannot move a
      *  slider while this screen is up, and re-reading per frame would
      *  make the words change under them. */
-    this.options = levelingOptions(settings, { online });
+    this.options = options ?? levelingOptions(settings, { online });
+    this.text = text ?? LEVELING_SCREEN_TEXT;
+    this.faceText = faceText;
+    this.faceTags = faceTags;
     this._fired = false;
     this.cursor = this.defaultIndex;   // LEVEL-ONLINE: never parked on a shut option
     this.done = false;
@@ -283,9 +292,9 @@ export class LevelingChoiceScreen {
     const centre = (text, y, colour) =>
       at(text, (NATIVE_W - measureText(font.fnt, text)) / 2, y, colour);
 
-    centre('HOW WILL YOU GROW?', 12, gold);
-    centre('Choose how this character will level.', 24, dim);
-    centre('It cannot be changed later.', 34, dim);
+    centre(this.text.title, 12, gold);
+    centre(this.text.lines[0], 24, dim);
+    centre(this.text.lines[1], 34, dim);
 
     this.options.forEach((opt, i) => {
       const on = i === this.cursor;

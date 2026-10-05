@@ -208,7 +208,7 @@ test('KB1: the pane draws the standard\'s groups - every action once, the two DF
   assert.equal(new Set(all).size, all.length, 'no action in two groups');
   assert.deepEqual([...all, ...HIDDEN_ACTIONS].sort(), [...ACTIONS].sort(), 'every action is in a group, or hidden');
   assert.deepEqual([...HIDDEN_ACTIONS], ['ToggleConsole', 'Slide'], 'hidden: DFU\'s console key (no console) and Slide (read by nothing in DFU either)');
-  assert.deepEqual(ACTION_GROUPS.filter((g) => g.mod).map((g) => g.mod), ['handheld-torches', 'eye-of-the-beholder', 'travel-options', 'horse-cart-and-cargo', 'come-sail-away']);   // CSA-D: the helm's two keys
+  assert.deepEqual(ACTION_GROUPS.filter((g) => g.mod).map((g) => g.mod), ['handheld-torches', 'eye-of-the-beholder', 'travel-options', 'horse-cart-and-cargo', 'come-sail-away', 'project-legacy']);   // CSA-D: the helm's two keys; LEGACY1: the family tree
   const torches = 'handheld-torches';
   const was = modSetting(torches, 'Enabled');
   try {

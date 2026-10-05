@@ -301,7 +301,7 @@ async function realDungeon(which) {
   const blocks = new BlocksFile(); blocks.load(rd('BLOCKS.BSA'));
   const arch = new Arch3dFile(); arch.load(rd('ARCH3D.BSA'));
   let loc;
-  if (which === 'm1204685') {   // world.js:1215-1257's index, :1895-1901's pick: map pixel (109,156), salt 1
+  if (which === 'm1204685') {   // world.js:1225-1267's index, :1905-1911's pick: map pixel (109,156), salt 1
     const index = new Map();
     for (let r = 0; r < maps.regionCount; r++) { const region = maps.getRegion(r); if (!region) continue;
       for (let l = 0; l < region.locationCount; l++) { const L = maps.getLocation(r, l); if (!L?.exterior?.exteriorData) continue;

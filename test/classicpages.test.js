@@ -90,7 +90,7 @@ test('CLASSIC-PAGES: with no pages to show (offline, the switch shut) the door s
 });
 
 test('CLASSIC-PAGES: THE PROFESSIONS KEY - appended, a default share on the down arrow beside less sail (as more sail shares the act choice\'s up arrow), in the Professions group, a port row; the router opens the pause on the Professions page, and nothing while sailing', () => {
-  assert.equal(ACTIONS.at(-1), 'Professions', 'appended after HELM-KEYS\' two: the classic grid and a saved file resolve by position');
+  assert.deepEqual(ACTIONS.slice(-2), ['Professions', 'LegacyFamily'], 'appended after HELM-KEYS\' two: the classic grid and a saved file resolve by position (LEGACY1\'s family tree after it)');
   assert.ok(DEFAULT_SHARES.some(([c, a, partner]) => c === 'ArrowDown' && a === 'Professions' && partner === 'BoatSailDown'), 'shared onto less sail\'s own key');
   assert.ok(!DEFAULT_BINDINGS.some(([, a]) => a === 'Professions'), 'it owns no key - KB1 law 3 keeps every owner once');
   assert.ok(DEFAULT_BINDINGS.some(([c, a]) => c === 'ArrowUp' && a === 'ActChoice'), 'the professions\' two keys on the arrows');

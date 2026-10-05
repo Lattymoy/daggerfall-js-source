@@ -55,10 +55,12 @@ function buildFace(doc, owner) {
   for (const c of ['tl', 'tr', 'bl', 'br']) win.append(el(doc, 'span', `px-gem px-corner px-${c}`));
   const body = el(doc, 'div', 'px-body');
   const card = el(doc, 'div', 'card lvl-card');
-  const eyebrow = el(doc, 'div', 'lvl-eyebrow', LEVELING_FACE_TEXT.eyebrow);
-  const title = el(doc, 'h2', 'lvl-title', LEVELING_FACE_TEXT.title);
+  const words = owner.faceText ?? LEVELING_FACE_TEXT;   // LEGACY2: another one-time question's own words on the same face
+  const tags = owner.faceTags ?? LEVELING_FACE_TAGS;
+  const eyebrow = el(doc, 'div', 'lvl-eyebrow', words.eyebrow);
+  const title = el(doc, 'h2', 'lvl-title', words.title);
   title.id = `${LEVELING_FACE_ID}-title`;
-  const lead = el(doc, 'p', 'lvl-lead', LEVELING_FACE_TEXT.lead);
+  const lead = el(doc, 'p', 'lvl-lead', words.lead);
   const list = el(doc, 'div', 'lvl-opts');
   list.setAttribute('role', 'radiogroup');
   const opts = owner.options.map((opt, i) => {
@@ -68,10 +70,10 @@ function buildFace(doc, owner) {
     node.dataset.id = opt.id;
     const head = el(doc, 'div', 'lvl-opt-head');
     head.append(el(doc, 'span', 'lvl-key', String(i + 1)), el(doc, 'span', 'lvl-opt-title', opt.title),
-      el(doc, 'span', 'lvl-tag', LEVELING_FACE_TAGS[opt.id] ?? ''));
+      el(doc, 'span', 'lvl-tag', tags[opt.id] ?? ''));
     const lines = el(doc, 'p', 'lvl-opt-body', opt.lines.join(' '));
     const foot = el(doc, 'div', 'lvl-opt-foot');
-    foot.append(opt.locked ? el(doc, 'span', 'lvl-lock', opt.lockNote) : el(doc, 'span', 'lvl-pick', LEVELING_FACE_TEXT.pick));
+    foot.append(opt.locked ? el(doc, 'span', 'lvl-lock', opt.lockNote) : el(doc, 'span', 'lvl-pick', words.pick));
     node.append(head, lines, foot);
     if (opt.locked) { node.disabled = true; node.setAttribute('aria-disabled', 'true'); }
     node.onpointerenter = () => owner.hoverIndex(i);
@@ -79,7 +81,7 @@ function buildFace(doc, owner) {
     list.append(node);
     return { node, id: opt.id };
   });
-  const hint = el(doc, 'div', 'lvl-hint', LEVELING_FACE_TEXT.hint);
+  const hint = el(doc, 'div', 'lvl-hint', words.hint);
   card.append(eyebrow, title, lead, list, hint);
   body.append(card);
   win.append(body);

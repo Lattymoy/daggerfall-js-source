@@ -156,7 +156,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // MAC1 J: this host's canvas, for the pause door's relock. The
       // context owns none of its own (dungeonContext.js:8710), so each
       // dungeon host hands its own in and the resume gesture carries
-      // the pointer back with it (ui/pauseDoor.js:143-167).
+      // the pointer back with it (ui/pauseDoor.js:144-168).
       relock: () => requestLook(canvas) });
 
   // U21: the menu's LOAD GAME. The context is built, so restore into

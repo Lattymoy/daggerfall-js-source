@@ -454,8 +454,8 @@
   {
     "name": "the-question-is-asked-with-the-mod-off",
     "file": "src/systems/chargenSession.js",
-    "old": "  if (!oblivionLevelingEnabled() && !online) {",
-    "new": "  if (false) {",
+    "old": "  if (oblivionLevelingEnabled() || online) asks.push((answer) => new LevelingChoiceScreen((id) => answer({ levelingSystem: id }), { online }));",
+    "new": "  if (true) asks.push((answer) => new LevelingChoiceScreen((id) => answer({ levelingSystem: id }), { online }));",
     "tests": [
       "test/orl1_leveling.test.js"
     ]
@@ -644,7 +644,7 @@
   {
     "name": "a-window-torn-down-mid-question-swallows-the-answer",
     "file": "src/systems/chargenSession.js",
-    "old": "      prompt?.answer(prompt.defaultId);",
+    "old": "      while (prompt && !fired) prompt.answer(prompt.defaultId);",
     "new": "",
     "tests": [
       "test/orl1_leveling.test.js"

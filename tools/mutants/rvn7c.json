@@ -273,8 +273,8 @@
   {
     "name": "RVN7c-world-no-rows",
     "file": "src/scenes/world.js",
-    "old": "const extra = [...(bountyHost?.questLogEntries?.() ?? []), ...revenantHuntEntries(rumorHere())];",
-    "new": "const extra = [...(bountyHost?.questLogEntries?.() ?? [])];",
+    "old": "const extra = [...(bountyHost?.questLogEntries?.() ?? []), ...revenantHuntEntries(rumorHere()), ...(legacyHost?.questLogEntries() ?? [])];",
+    "new": "const extra = [...(bountyHost?.questLogEntries?.() ?? []), ...(legacyHost?.questLogEntries() ?? [])];",
     "tests": [
       "test/rvn7c_map.test.js"
     ]

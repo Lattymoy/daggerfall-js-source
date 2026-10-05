@@ -302,7 +302,8 @@ test('AUDIT 21 hosts F6: no host writes player health raw any more', () => {
     // snapshot, the mode machine's `host.onlineRespawn`, the dungeon's
     // `opts.onlineRespawn` - and fall to endRunToTitleMenu when it
     // answers false; the fixed city (no online) keeps the bare form.
-    assert.match(code(h), /new DeathScreen\(\{ eyeHeight: [^\n]*, onReset: \(\) => (?:endRunToTitleMenu\(renderer\)|\(_deathWasOnline \? respawnOnlinePlayer\(\) : endRunToTitleMenu\(renderer\)\)|\{ if \(!(?:host|opts)\.onlineRespawn\?\.\(\)\) endRunToTitleMenu\(renderer\); \})(?:, hint: '[^']*')?(?:, online: false|, \.\.\.\(opts\.onlineRespawn \? \{\} : \{ online: false \}\))? \}\)/,   // FIX-E: the fixed city names its hint; AUDIT 28 B5: a host that never respawns online says so
+    // LEGACY1: and the street asks Project Legacy first (legacyDeathReset), then the same seam.
+    assert.match(code(h), /new DeathScreen\(\{ eyeHeight: [^\n]*, onReset: \(\) => (?:endRunToTitleMenu\(renderer\)|\(_deathWasOnline \? respawnOnlinePlayer\(\) : endRunToTitleMenu\(renderer\)\)|\(legacyDeathReset\(\) \|\| \(_deathWasOnline \? respawnOnlinePlayer\(\) : endRunToTitleMenu\(renderer\)\)\)|\{ if \(!(?:host|opts)\.onlineRespawn\?\.\(\)\) endRunToTitleMenu\(renderer\); \})(?:, hint: '[^']*')?(?:, online: false|, \.\.\.\(opts\.onlineRespawn \? \{\} : \{ online: false \}\))? \}\)/,   // FIX-E: the fixed city names its hint; AUDIT 28 B5: a host that never respawns online says so
       `${h} must wire the death screen to the shared end-of-run seam`);
   }
 });

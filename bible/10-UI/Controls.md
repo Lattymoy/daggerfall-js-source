@@ -384,6 +384,12 @@ Generated from `ACTION_GROUPS` and the two default tables; the enhanced pane dra
 | `BoatTimeScaleDown` | KPADSUBTRACT |  | Slow time down at the helm |
 | `BoatTimeScaleReset` | KPADENTER |  | Put time back to normal at the helm |
 
+### Project Legacy (drawn, and answering, while `project-legacy` is on)
+
+| Action | Key | Pad | What it does |
+|---|---|---|---|
+| `LegacyFamily` | KPADDIVIDE |  | Family tree |
+
 
 Not on the page: `ToggleConsole` and `Slide` (HIDDEN_ACTIONS). The classic grid still draws DFU's thirty-eight
 buttons on its fixed art, Slide's among them, unbound.

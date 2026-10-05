@@ -127,6 +127,7 @@ import { conditionWord, conditionPercentage, itemNameParts, itemLongName, itemDa
 import { survivalInfoTokens, potionMacroName, potionRecipeIngredientNames } from '../systems/itemInfo.js'; import { isPortalStone } from '../systems/gateSpoils.js';   // AUDIT SURV C: the survival items' tokens on this skin's card too
 import { isSurvivalItem } from '../systems/survival/items.js';
 import { hoodCapable, hoodUp } from '../systems/survival/temperature.js';   // HOOD-SAID: the one hood law, on the card and the panel
+import { heirloomLine } from '../systems/legacy/heirloom.js';   // LEGACY4: Project Legacy's heirlooms, named on the card
 import { rarityAttr, rarityLines, lootRarityOn } from '../systems/lootRarity.js';   // LR1: the row's tier attribute and the card's lines
 import { pieceLines } from '../net/recipeLaw.js';   // PROF3: a crafted piece's quality and maker, above its powers
 import { craftedJewelPoints } from '../systems/enchanting.js';   // AUDIT PROF-541 R2-C4: a jewel's points as the item maker reads them
@@ -2829,6 +2830,7 @@ function quickslotActs(item) {
 export function itemPowerLines(item, d = deps, { set = true, lore = true } = {}) {
   const lines = rarityLines(item, { sigil: false, set, lore });   // SET5: the card draws the set in its own block (set: false); CARD-FIT: and leaves the lore to the Info box (lore: false)
   lines.unshift(...pieceLines(item, craftedJewelPoints(item)));   // PROF3: a crafted piece's quality and maker above them
+  { const h = heirloomLine(item); if (h) lines.unshift(h); }   // LEGACY4: an heirloom's house and its generations, first
   if (item && !(item.rarity && lootRarityOn()) && isEnchanted(item)) {
     // unidentified: DFU's "powers unknown" - unless the tier list already said "Unidentified"
     const known = itemIsIdentified(item);

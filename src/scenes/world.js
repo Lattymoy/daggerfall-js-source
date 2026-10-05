@@ -24,7 +24,7 @@ import { alignBillboardToGround, alignControllerToGround } from '../world/ground
 import { PRIVATEERS_HOLD_BLOCK, HOLD_MODELS, HOLD_FLATS, holdModelMatrix, holdFireLights, rollHoldFoes } from '../world/wodPrivateersHold.js';   // WOD4: the camp at Privateer's Hold
 import { rollLootRarity, pileSource, dungeonRarityTier, dungeonFamily, stampWonWeapons } from '../systems/lootRarity.js';   // WOD3: LR1 over the camps' piles; SIGIL1: their weapons' sigils
 import { revenantToReturn, revenantSpawnOptions, revenantPresence, takeRevenantNotice, revenantSay, releaseRevenantStand, revenantRecord, revenantMomentEvent, revenantRumor, revenantMapMarks, revenantHuntEntries, revenantTakes, revenantFelled, revenantFelledEvent, revenantRoutSweep, revenantRoutedEvent, revenantWarnEvent, revenantBetrayEvent, forgetLastSlew } from '../systems/revenant.js';   // REVENANT: who comes back, and what the player is told
-import { endPlayerFights } from '../systems/harmMark.js';   // RVN10 (bible/12-Enhanced-AI/Feud-Arc.md 21.2): a respawn's jump is no flight
+import { endPlayerFights, playerHarmMark } from '../systems/harmMark.js';   // RVN10 (bible/12-Enhanced-AI/Feud-Arc.md 21.2): a respawn's jump is no flight
 import { DEVOTED } from '../systems/revenantFeud.js';   // RVN11 (Feud-Arc.md 22.1): a Devoted one's wait between warnings
 import { SKY_CLEAR } from '../render/renderer.js'; import { centreFromFeet } from '../characters/enemyAnchor.js';   // REVIEW 2026-09-05: one line, so the cites below it hold
 import { Arch3dFile } from '../formats/arch3dFile.js';
@@ -513,6 +513,16 @@ import { RAIDER_LEAD_S } from '../systems/naval/navalRaiders.js';   // NAV-R: a 
 import { setRaidingPartiesHost, raidFrame as raidingPartiesFrame, raidState, raidingPartiesOn, raidTypeName as raidKindName, raidDefendingHere, outOfSight as raidOutOfSight, raidWireWord, raidPeerWord, raidRelayWord, raidTownsFor, RAID_SPAWN_MIN_DISTANCE, RAID_SPAWN_MAX_DISTANCE } from '../systems/raidingParties.js';   // RAID1: World Events - Raiding Parties, the towns' raids
 import { modSaveRecords, restoreModSaveRecords, newGameModSaveRecords, registerModSaveData } from '../systems/modSaveData.js';   // WA1: DFU's per-mod save slot, for the mods after HCC; OH-D: Ocean Holes' OceanHoleSaveData
 import { applyDeathPenalty, deathPenaltyText, stateDeathLoss, statedDeathLoss } from '../systems/deathPenalty.js';   // DEATH-PENALTY: an online death costs a tenth of the purse
+import { createLegacyHost, LEGACY_TEXT } from './legacyHost.js';   // LEGACY1: Project Legacy's family - the record, the deaths, the births
+import { legacyOn } from '../systems/legacy/settings.js';
+import { listFamilies, newestSaveOf } from '../systems/legacy/store.js';
+import { nearestTown, nearestTownAnywhere, isTownEntry, loadSearch } from '../systems/legacy/places.js';
+import { setFamilyProvider, raceWord } from '../ui/familyPages.js';   // LEGACY3: the pause window's Family tab
+import { createSuccessionOverlay } from '../ui/legacyDoor.js';   // LEGACY3: who carries the line on
+import { createFaceLoader } from '../ui/partyPanel.js';   // LEGACY3: a member's portrait, the party HUD's own door
+import { goldPiecesOf as legacyGold, addItem as legacyAddItem, letterOfCredit } from '../systems/inventory.js';   // LEGACY1: the estate
+import { tabStorage } from '../systems/appStorage.js';   // LEGACY1: a birth crosses the reload in the tab's own store
+import { MONTH_NAMES } from '../systems/gameDate.js';
 import { createBountyHost } from './bountyHost.js';   // BOUNTY1: the town's bounty boards - the hunts, their packs, their purse
 import { createBountyFarms, farmSpotLocal, pickFarm } from './bountyFarms.js';   // BOUNTY-FARM: a farm on a farm bounty's pixel, while it is held
 import { questBoardIndices, bountyDungeons } from '../systems/bountyBoard.js';   // BOUNTY1: which of a town's boards post bounties (half); RVN7: a revenant's lair, in the boards' ring
@@ -2100,6 +2110,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   const livingBaseRate = () => (params.has('online') ? skyMinutesPerMsAt(Date.now() + _sharedOffsetMs) * 1000 : CLASSIC_MINUTES_PER_SECOND);
   const livingRate = () => (params.has('online') ? livingBaseRate() : CLASSIC_MINUTES_PER_SECOND * worldTimeScale());
   let livingRelations = createRelations();   // LW2: how the living world regards this character - the save's `LivingWorld` record
+  const LEGACY_REMAINS_NEAR = 60 * 40;   // LEGACY4: 60 m in native world units (40 to the metre) - near enough to lay the fallen's remains
+  let legacyHost = null;   // LEGACY1: Project Legacy's family (scenes/legacyHost.js) - made beside the bounty boards, read by the death resets above it
+  let _legacyMade = () => {};
+  /** LEGACY1: the host, once made - a birth's chargen (`?legacyborn=`) waits for it, since the flow's files can land first. */
+  const legacyReady = new Promise((res) => { _legacyMade = res; });
   registerModSaveData(LIVING_WORLD_VENDOR, {
     newSaveData: () => null,
     getSaveData: () => livingRelations.snapshot(),
@@ -5858,7 +5873,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // online" a frame later; and not on the reset, which a fast F11
       // reaches before that frame. The reset reads this snapshot.
       _deathWasOnline = _onlineWorldSession();
-      townTalk.showOverlay(new DeathScreen({ eyeHeight: player.eye[1] - player.pos[1], capsuleHeight: player.height, onReset: () => (_deathWasOnline ? respawnOnlinePlayer() : endRunToTitleMenu(renderer)) }));   // D1; D-ONLINE1: online play respawns instead of ending the run
+      townTalk.showOverlay(new DeathScreen({ eyeHeight: player.eye[1] - player.pos[1], capsuleHeight: player.height, onReset: () => (legacyDeathReset() || (_deathWasOnline ? respawnOnlinePlayer() : endRunToTitleMenu(renderer))) }));   // D1; D-ONLINE1: online play respawns instead of ending the run; LEGACY1: Project Legacy asked first
       // RISE-STUCK (Ninilac: "fast travelling while playing online ...
       // climb a wall that was in the way and died"): A DEATH ENDS THE
       // JOURNEY - the mod's own "pauseTravel" message (TravelOptionsMod
@@ -6338,6 +6353,23 @@ export async function bootWorld(canvas, renderer, params, status) {
         if (!res.ok) console.warn(`[testroom] arms refused - ${res.stage}: ${res.error}`);
       }
     })().catch((e) => console.warn('[testroom] boot failed; the wizard stands in', e));
+  } else if (!playerEntity.chargenDone && params.has('legacyborn') && !params.has('load')) {
+    // LEGACY1 (bible/06-Systems/Legacy-Arc.md section 4): A MEMBER OF THE FAMILY IS BORN - Project Legacy's heir, or a
+    // sibling played for the first time. Not the wizard: the person's own record, through THE ONE CONSTRUCTION SEAM
+    // (finishChargen over a result the family law builds - legacyHost.bornResult), in the town the boot stood the world
+    // in (`?region=&loc=`). A birth that waits for nobody (a stale address) falls to the wizard on the next boot.
+    Promise.all([createChargenFlow(fetchBytes), legacyReady]).then(([{ careers, spellsByIndex: sbi, factionDict }, host]) => {
+      spellsByIndex = sbi;
+      const r = host?.bornResult({ careers, factionDict });
+      if (!r) { console.warn('[legacy] no birth waits for this address; the wizard stands in'); releaseUnloadGuard(); location.replace(location.pathname + location.search.replace(/([?&])legacyborn=[^&]*&?/, '$1').replace(/[?&]$/, '')); return; }
+      finishChargen(playerEntity, r, sbi);
+      if (sharedClockOn()) playerEntity.lastSkillCheckTime = Math.floor(ownMinutes());   // AUDIT LIVED1b R4, as the wizard's
+      preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture }, { race: r.race, gender: r.gender, faceIndex: r.faceIndex });
+      surfacePlayer();
+      questInitAtGameStart();
+      autoBuildArms(playerEntity);
+      host.onBorn();
+    }).catch((e) => console.warn('[legacy] the birth failed; the interim entity stands in', e));
   } else if (!playerEntity.chargenDone && params.has('class')) {
     // AUDIT 17f: ?class=N is the headless skip - parsed here for the
     // DUNGEON the host might build, but never honoured for the host's
@@ -6348,6 +6380,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           { race: playerEntity.race, gender: playerEntity.gender, faceIndex: playerEntity.faceIndex });
         surfacePlayer();
         questInitAtGameStart();   // Q4-v: OnStartGame for the headless character
+        legacyHost?.onCharacterMade();   // LEGACY1: and its family
       })
       .catch((e) => console.warn('[chargen] CLASS*.CFG unavailable; the interim entity stands in', e));
   } else if (!playerEntity.chargenDone && !params.has('load')
@@ -6386,6 +6419,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           surfacePlayer();
           questInitAtGameStart();   // Q4-v: OnStartGame for the new character
           autoBuildArms(playerEntity);   // MWA1: the new character's arms - race, sex and face are known now
+          legacyHost?.onCharacterMade(r.legacyModel ?? null);   // LEGACY1: the family founded at the character's birth (D9), its model the question's answer
           if (realmNew) realmBirth().catch((e) => { console.error('[realm] the birth failed', e); realmLost('server'); });   // REALM P1.3: born online
         },
       }));
@@ -12714,6 +12748,90 @@ export async function bootWorld(canvas, renderer, params, status) {
     gateLink?.leave();
     setMidScreenText(words);
   }
+  /** LEGACY1-LEGACY3: THE DEATH'S RESET, ASKED OF PROJECT LEGACY FIRST - by the street's death screen and, through
+   *  `onlineRespawn`, by the building's and the dungeon's. Answers whether it took the death: an Enduring member rises
+   *  (the respawn, with Arkay's toll - offline too), a member who falls for good opens the Succession. False: the
+   *  host's own death stands (DFU's title menu offline, D-ONLINE1's respawn online). */
+  function legacyDeathReset() {
+    const out = legacyHost?.deathOutcome() ?? { kind: 'none' };
+    if (out.kind === 'rise') {
+      // LEGACY2: OFFLINE THE TOLL IS THE PRICE. The respawn is D-ONLINE1's own; offline nothing was said on the death
+      // screen (no loss shown), so the purse it takes is that word - none - and a revenant's theft stays online's (RVN8)
+      if (!(_deathWasOnline ?? _onlineWorldSession())) { stateDeathLoss(0); forgetLastSlew(); }
+      respawnOnlinePlayer();
+      townTalk.say(out.line);   // Arkay's years, on the notices over the waking
+      return true;
+    }
+    if (out.kind !== 'fall') return false;
+    openLegacySuccession(out);
+    return true;
+  }
+  /** LEGACY3: THE SUCCESSION over the fallen - every living member of the blood, a newborn heir when the heir answer
+   *  allows, and the line's end when there is no one. The world is left first (the respawn's own order) so the window
+   *  stands in the street's slot whatever mode the death came in. */
+  function openLegacySuccession(out) {
+    if ((modes?.mode ?? 'exterior') !== 'exterior') modes?.forceExitToExterior();
+    const fam = legacyHost?.family;
+    const fallen = out.fallen;
+    const choices = out.choices.map((p) => ({
+      key: `p${p.id}`, who: p, name: legacyFullName(p),
+      sub: `${legacyIdentity(p)} - ${p.characterId ? 'their journey picks up where they left it' : 'sets out from the family seat'}`,
+      act: `Carry on as ${p.given}`,
+    }));
+    if (out.newborn) choices.push({ key: 'newborn', who: null, name: `A child of ${fallen.given}`, sub: `Born of the blood, raised in the house of ${fam?.surname ?? ''} - a new heir comes of age`, act: 'Raise an heir' });
+    const retired = !fallen.died;
+    const final = retired ? `${legacyFullName(fallen)} retires to the family seat` : fallen.died.cause === 'years' ? `${legacyFullName(fallen)} has died of their years` : `${legacyFullName(fallen)} has fallen`;
+    const lines = [retired ? `${fallen.given} has carried the house long enough. The mantle passes on.` : choices.length ? LEGACY_TEXT.heir : LEGACY_TEXT.noHeir,
+      choices.length ? `The house of ${fam?.surname ?? ''} goes on. Who carries the line now?` : `There is no one left of the house of ${fam?.surname ?? ''}. The line ends here, and its tree is kept in the Hall of Ancestors.`];
+    if (out.estate > 0 && choices.length) lines.push(`The estate - ${out.estate} gold - passes to whoever takes up the name.`);
+    const ov = createSuccessionOverlay({
+      title: final, lines, choices, faces: legacyFaces,
+      choose: (key) => {
+        const ok = key === 'newborn' ? legacyHost?.succeed({ newborn: true }, { estate: out.estate, fallenId: fallen.id }) : legacyHost?.succeed({ personId: Number(key.slice(1)) }, { estate: out.estate });
+        return ok ? { ok: true } : { ok: false, why: 'That one cannot take up the name now.' };
+      },
+      end: { label: choices.length ? 'Let the line end' : 'The line ends', ask: 'Yes - let the line end', act: () => { legacyHost?.endLine(); endRunToTitleMenu(renderer); } },
+    });
+    if (ov) townTalk.showOverlay(ov);
+    else { legacyHost?.endLine(); endRunToTitleMenu(renderer); }   // no document: the classic death stands
+  }
+  /** LEGACY2: an Enduring elder passes the mantle - retired to the seat, alive and kept, and the Succession asked. The
+   *  pause is already down (the Family page's door, ui/enhancedMenu.js pauseFamily). */
+  function legacyPassMantle() {
+    const out = legacyHost?.passMantle() ?? null;
+    if (!out?.ok) return { ok: false, why: out?.why ?? 'Not now.' };
+    openLegacySuccession(out.outcome);
+    return { ok: true };
+  }
+  /** LEGACY1: a dead Bloodline member's save, loaded: the past - the line's living offered instead. */
+  function openLegacyDeadLoad(person) {
+    const fam = legacyHost?.family;
+    const cur = fam ? fam.people.find((p) => p.id === fam.currentId && !p.died) : null;
+    const ov = createSuccessionOverlay({
+      title: LEGACY_TEXT.deadLoad(legacyFullName(person)), lines: [cur ? `The house of ${fam.surname} is carried by ${legacyFullName(cur)} now.` : 'The line has ended.'],
+      choices: cur ? [{ key: `p${cur.id}`, who: cur, name: legacyFullName(cur), sub: legacyIdentity(cur), act: `Play as ${cur.given}` }] : [],
+      faces: legacyFaces,
+      choose: (key) => ({ ok: !!legacyHost?.succeed({ personId: Number(key.slice(1)) }) }),
+      end: { label: 'Return to the menu', ask: 'Return to the menu', act: () => { releaseUnloadGuard(); exitToTitleMenu(); } },
+    });
+    if (ov) townTalk.showOverlay(ov);
+  }
+  const legacyFullName = (p) => (p.surname ? `${p.given} ${p.surname}` : p.given);
+  const legacyIdentity = (p) => `${raceWord(p.race)} ${p.className}${p.characterId ? `, level ${p.level}` : ''}`;
+  /** A classic minute as the calendar says it: "14 Last Seed, 3E 405". */
+  function legacyDateText(minutes) {
+    const d = dateFromClassicMinutes(Math.max(0, Math.floor(minutes)));
+    return `${d.day + 1} ${MONTH_NAMES[d.month]}, 3E ${d.year}`;
+  }
+  let _legacyT = 0;
+  /** LEGACY1: Project Legacy's slow tick (once a second, every mode): the seat, the elder, the estate, a dead load. */
+  function legacyStep(dt) {
+    _legacyT -= dt;
+    if (_legacyT > 0 || !legacyHost) return;
+    _legacyT = 1;
+    const said = legacyHost.tick();
+    if (said?.deadLoad && !(townTalk.overlayActive && !townTalk.overlayDone)) openLegacyDeadLoad(said.deadLoad);
+  }
   function respawnOnlinePlayer() {
     _rezSeen = null;
     _deadMark = null; _partyComposedAt = -Infinity;   // PCORPSE3   // RESURRECT1: armed fresh for the next death
@@ -14646,7 +14764,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // map alone draws them: a player who chose DFU's own maps chose DFU's look.
       quests: () => (marksOn() ? questMapMarks(questTracker.views, questTracker.tracked()?.id ?? null, questPixel) : []),
       // BOUNTY1 (Mac: "board quests can be a green circle", then black - green is the party's): each held bounty's pixel, on both maps
-      bounties: () => bountyHost?.mapMarks() ?? [],
+      bounties: () => [...(bountyHost?.mapMarks() ?? []), ...(legacyHost?.mapMarks() ?? [])],   // LEGACY4: and where the house's fallen lie, ringed as a hunt is
       // RVN7c (bible/12-Enhanced-AI/Feud-Arc.md 18.3): each revenant lair heard of - a blood-red circle, on both maps
       revenants: () => revenantMapMarks(),
       // HOME-VENDOR: the trader's waypoint - its town's pixel, the house's owner and the town, on both maps (ui/vendorMapMark.js)
@@ -17714,7 +17832,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const baseQuestLog = questBridge.questLog.bind(questBridge);
     questBridge.questLog = () => {
       const log = baseQuestLog();
-      const extra = [...(bountyHost?.questLogEntries?.() ?? []), ...revenantHuntEntries(rumorHere())];   // RVN7c: and each hunt - a lair heard of, the way there from where I stand
+      const extra = [...(bountyHost?.questLogEntries?.() ?? []), ...revenantHuntEntries(rumorHere()), ...(legacyHost?.questLogEntries() ?? [])];   // LEGACY4: and the death quests   // RVN7c: and each hunt - a lair heard of, the way there from where I stand
       return extra.length ? { ...log, active: [...(log?.active ?? []), ...extra] } : log;
     };
   }
@@ -21892,6 +22010,117 @@ export async function bootWorld(canvas, renderer, params, status) {
     } : null),
     posePixel: () => playerTravelPixel(),   // AUDIT 28 B8: the pixel my pose says (composePartyPose's)
   });
+  // LEGACY1-LEGACY3 (2026-10-05, bible/06-Systems/Legacy-Arc.md, Mac: "this is actually my DFU mod that I want to
+  // integrate"): PROJECT LEGACY in the world - scenes/legacyHost.js. Every read it makes of the world is here; it
+  // registers its own save record (modData.ProjectLegacy). THE FOUR HOSTS: this host owns the family - the street's
+  // death reset (the presenter above) and the modal hosts' (worldModes' interior and the dungeon context reset through
+  // `onlineRespawn`, below) both ask `legacyDeathReset`.
+  // FLAGGED (Legacy-Arc.md section 3): exterior.js, the fixed city, keeps DFU's death - no streamer to birth an heir into.
+  const legacyHere = () => {
+    const px = playerTravelPixel();
+    const r = maps.getRegionIndexAt(px.x, px.y);
+    const loc = locationIndex.get(`${px.x},${px.y}`) ?? null;
+    const mode = modes?.mode ?? 'exterior';
+    const pos = walkMode && playerSpawned ? [player.pos[0], player.pos[1], player.pos[2]] : [cam.pos[0], cam.pos[1], cam.pos[2]];
+    // LEGACY4: where the fallen lie - the dungeon by its location and its own floor position; outdoors by the native
+    // world coordinates (the save's own law: a floating origin never moves a fallen body)
+    const dl = mode === 'dungeon' ? modes?.dungeonCtx?.abyss?.location?.() ?? null : null;
+    return {
+      pixel: { x: px.x, y: px.y }, regionIndex: r, region: REGION_NAMES[r] ?? '', mode, loc: loc?.name ?? null, locationType: loc?.mapTableData?.locationType ?? null,
+      dungeon: dl ? { regionIndex: dl.regionIndex, locationIndex: dl.locationIndex } : null,
+      pos: mode === 'dungeon' ? pos : null,
+      world: mode === 'exterior' ? state.worldCoords(pos) : null,
+    };
+  };
+  /** LEGACY4: is the player where these remains lie - in their dungeon, or within a stone's throw of where they fell
+   *  outdoors (in a building: anywhere on its town's pixel, in the street). */
+  const legacyAtPlace = (place) => {
+    if (!place || !playerSpawned) return false;
+    const h = legacyHere();
+    if (place.mode === 'dungeon') return h.mode === 'dungeon' && !!place.dungeon && h.dungeon?.regionIndex === place.dungeon.regionIndex && h.dungeon?.locationIndex === place.dungeon.locationIndex;
+    if (h.mode !== 'exterior' || h.pixel.x !== place.pixel?.x || h.pixel.y !== place.pixel?.y) return false;
+    if (place.mode !== 'exterior' || !place.world) return true;
+    return Math.hypot(h.world.x - place.world.x, h.world.z - place.world.z) <= LEGACY_REMAINS_NEAR;
+  };
+  /** LEGACY4: the pile, laid - underground at the fallen's own floor position, outdoors on the ground under where they
+   *  fell, in a town the building stood in at the heir's feet. */
+  const legacyLayRemains = (rec, items) => {
+    const place = rec.place;
+    if (place?.mode === 'dungeon') {
+      const d = modes?.dungeonCtx;
+      if (!d?.layRemains || !place.pos) return false;
+      return !!d.layRemains(items, place.pos, null);
+    }
+    let feet = null;
+    if (place?.mode === 'exterior' && place.world) {
+      const [lx, lz] = state.localFromWorld(place.world.x, place.world.z);
+      const top = (walkMode ? player.pos[1] : cam.pos[1]) + 40;
+      const dist = collider.raycast([lx, top, lz], [0, -1, 0], 200);
+      if (Number.isFinite(dist)) feet = [lx, top - dist, lz];
+    }
+    feet ??= dropFeet();
+    return !!droppedLoot.dropPile(items, feet, `${playerTravelPixel().x},${playerTravelPixel().y}`);
+  };
+  /** LEGACY4: a place to lay the dead to rest - a temple's inside, or the family's seat. */
+  const legacyAtRest = () => {
+    if (!playerSpawned) return false;
+    const b = (modes?.mode ?? 'exterior') === 'interior' ? modes?.interiorBuilding : null;
+    if (b?.buildingType === TALK_BUILDING_TYPES.Temple) return true;
+    const seat = legacyHost?.family?.seat;
+    const h = legacyHere();
+    return !!seat && h.mode !== 'dungeon' && h.loc === seat.loc && h.region === seat.region;
+  };
+  const legacyFaces = createFaceLoader({ fetchBytes, palette });
+  legacyHost = createLegacyHost({
+    entity: playerEntity,
+    storage: () => appStorage(),
+    tab: () => tabStorage(),
+    on: () => legacyOn(),
+    online: () => isOnlinePage(),
+    now: () => Math.floor(playerTicker.classicMinutes),
+    own: () => Math.floor(playerTicker.ownMinutes),
+    here: legacyHere,
+    // the seat and a birth's town: a town is the one standing on the pixel - never a dungeon below it
+    town: (h) => (h && h.mode !== 'dungeon' && h.loc && isTownEntry({ locationType: h.locationType }) ? { region: h.region, loc: h.loc } : null),
+    nearestTown: (h) => {
+      if (!h) return null;
+      const hit = nearestTown(maps.getRegion(h.regionIndex), h.region, h.pixel) ?? nearestTownAnywhere(maps, REGION_NAMES, h.pixel);
+      return hit ? { region: hit.region, loc: hit.loc } : null;
+    },
+    gold: () => legacyGold(playerEntity),
+    say: (line) => townTalk.say(line),
+    boot: (search) => { releaseUnloadGuard(); location.replace(`${location.pathname}${search}`); },
+    search: () => location.search,
+    loadCharacter: (cid) => {
+      const key = newestSaveOf(enumerateSaves().info, cid);
+      if (key < 0) return false;
+      releaseUnloadGuard();
+      location.replace(`${location.pathname}${loadSearch(location.search, key)}`);
+      return true;
+    },
+    saveNow: () => { if (modes) modes?.quickSaveNow(QUICK_SAVE_NAME, { quiet: true }); else worldQuickSave(QUICK_SAVE_NAME, { quiet: true }); },   // `?.` inside the arm: audit24 wave37's gate above the declaration
+    inFight: () => areEnemiesNearby([...(cityGuards?.guards ?? []), ...(exteriorFoes?.foes ?? []), ...(modes?.dungeonCtx?.foes ?? [])]),
+    payEstate: (n) => legacyAddItem(playerEntity.items ??= [], letterOfCredit(n)),
+    killer: () => { const e = playerHarmMark(); return e ? (e.revenant?.name ?? e.displayName ?? (Number.isInteger(e.mobileType) ? enemyDisplayName(e.mobileType) : null)) : null; },   // LEGACY4: who struck the fallen down - a revenant by its own name
+    atPlace: legacyAtPlace,
+    layRemains: legacyLayRemains,
+    atRest: legacyAtRest,
+    askRest: (name, yes) => { if (!(townTalk.overlayActive && !townTalk.overlayDone)) townTalk.showOverlay(new YesNoBoxWindow({ rows: [`Lay ${name} to rest here?`], onYes: () => { yes(); computeEntityMods(playerEntity); }, onNo: () => {} })); },
+    takeItem: (it) => { playerEntity.items = (playerEntity.items ?? []).filter((x) => x !== it); },   // LEGACY4: the remains given up at the rest
+  });
+  setFamilyProvider({
+    on: () => legacyOn(),
+    family: () => legacyHost?.family ?? null,
+    lived: () => legacyHost?.lived() ?? 0,
+    faces: legacyFaces,
+    switchRefusal: (id) => legacyHost?.switchRefusal(id) ?? 'none',
+    switchTo: (id) => legacyHost?.switchTo(id) ?? { ok: false },
+    passMantle: () => legacyPassMantle(),
+    hall: () => listFamilies(appStorage()),
+    date: (m) => legacyDateText(m),
+  });
+  if (params.has('legacyborn')) legacyHost.takeBorn(params.get('legacyborn'));   // LEGACY1: the waiting birth, before the new game's mod records are made
+  _legacyMade(legacyHost);
   // NOTICE1 (PROF0 10.1): THE NOTICE BOARD'S PRESS (scenes/worldModes.js activateBulletinBoard, after the bounty
   // board's). Online, a town's rumour board opens the Notice Board once the service has said it is open to this account
   // (BOARD_OPEN); until it has, and whenever it is not, the board is DFU's own - the rumour box - and the read that
@@ -23671,7 +23900,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // live online play, so the caller falls back to endRunToTitleMenu
     // exactly as it always did offline.
     duelHolds: () => duelEnemyNear(),   // DUEL1: a live duel holds its duellist - no door out of the ring
-    onlineRespawn: () => { if (!(_deathWasOnline ?? _onlineWorldSession())) return false; respawnOnlinePlayer(); return true; },   // ONLINE-DEATH-FIX: a reset that beats the frame's backstop (Enter on the first frame) has no snapshot yet - ask the live answer rather than read null as offline
+    onlineRespawn: () => { if (legacyDeathReset()) return true; if (!(_deathWasOnline ?? _onlineWorldSession())) return false; respawnOnlinePlayer(); return true; },   // LEGACY1: Project Legacy asked first, in a building and underground too   // ONLINE-DEATH-FIX: a reset that beats the frame's backstop (Enter on the first frame) has no snapshot yet - ask the live answer rather than read null as offline
     exteriorSubmerged: () => !!dwPlayer?.submerged,   // DW-D: the sea's forged isPlayerSubmerged, for the router's avoid-death consult
     activateDir: () => _tapDir,   // TI1: the tap's ray for the modal ladders (eyeDir)
     activateLockOnly: () => _tapLockOnly,   // TS1: the stick-half tap - the modal ladders stop after the lock pick
@@ -24315,6 +24544,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   if (!_loadedGame) mwViewNewGame((modes?.mode ?? 'exterior') !== 'exterior');
   if (!_loadedGame) hccRuntime.handleNewGame();   // HCC: StartGameBehaviour.OnNewGame [IL_98c0]
   if (!_loadedGame) newGameModSaveRecords();   // WA1: a new character starts from every mod's NewSaveData (systems/modSaveData.js - a recorded departure)
+  legacyHost?.afterBoot();   // LEGACY1 (D9): a loaded character with no family founded into the Mods pane's model; a born or new one's is its own
   // E3 - THE CONSOLE. ExteriorAutomap.Start (:417) and
   // DaggerfallTravelMapWindow's ctor (:229) each register their own
   // console commands; both surfaces are THIS host's, so both
@@ -26579,6 +26809,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // purse earned inside held its notice until the street. The farms come down here (their sync's mode test).
       try { bountyHost?.tick(dt); } catch (e) { console.warn('[bounty] tick', e); }
       try { gatherHost?.tick(dt); } catch (e) { console.warn('[prof] tick', e); }   // PROF1: indoors too - no prompt, but the answers come in
+      try { legacyStep(dt); } catch (e) { console.warn('[legacy] tick', e); }   // LEGACY1: indoors and underground too
       _farmSyncT -= dt;
       if (_farmSyncT <= 0) { _farmSyncT = 0.5; try { bountyFarms?.sync(bountyHost?.farmsWanted() ?? []); } catch (e) { console.warn('[bounty] farms', e); } }
       foragingWait.tick();   // AUDIT 28 F2: Foraging's wait ticks in every mode - a wait left pending indoors held every quest's boxes until the street
@@ -27605,6 +27836,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       }
     }
     try { bountyHost?.tick(dt); } catch (e) { console.warn('[bounty] tick', e); }   // BOUNTY1: the hunts - packs stood and counted, a purse paid, a notice raised
+    try { legacyStep(dt); } catch (e) { console.warn('[legacy] tick', e); }   // LEGACY1: the seat, the elder, the estate, a dead load
     try { gatherHost?.tick(dt); } catch (e) { console.warn('[prof] tick', e); }   // PROF1: the patches, the prompt, the act, the answers
     // NOTICE1: the town the player stands in is read on arrival (a minute's cache, net/noticeBook.js) - so its boards'
     // count floats over them and its board opens as the Notice Board at the first press, not the second
