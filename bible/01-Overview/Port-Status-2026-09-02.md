@@ -832,7 +832,7 @@ that was a claim once and is a pointer at a stranger now.
 
 **Recorded by LEGACY1 (2026-10-05).**
 
-- **`src/scenes/world.js:22038`** - the fixed city keeps DFU's death.
+- **`src/scenes/world.js:22039`** - the fixed city keeps DFU's death.
   *`06-Systems/Legacy-Arc.md` section 3: Project Legacy births an heir through the world host's boot, and the fixed
   city (`?exterior`, a dev route) streams no world to birth one into, so a death there is DFU's own; the day that
   route streams the Bay, the sentence goes.*

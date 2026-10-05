@@ -599,8 +599,8 @@ test('AUDIT ONESEAT H4: the page\'s exit save is never a tab\'s the seat was tak
   const run = (out, realmSession = null) => {
     const written = [];
     // eslint-disable-next-line no-new-func
-    new Function('online', 'playerSpawned', 'seatOut', 'duelLeaveNow', 'modes', 'worldQuickSave', 'exitAutosaveNames', 'playerEntity', 'townTalk', 'DeathScreen', 'realmSession', body)(
-      {}, true, () => out, () => {}, { quickSaveNow: (n) => written.push(n), deathUp: () => false }, null, () => ['QuickSave', 'AutoSave', 'Before the crypt'], {}, { overlay: null }, class {}, realmSession);
+    new Function('online', 'playerSpawned', 'seatOut', 'duelLeaveNow', 'modes', 'worldQuickSave', 'exitAutosaveNames', 'playerEntity', 'townTalk', 'DeathScreen', 'realmSession', 'successionOpen', body)(
+      {}, true, () => out, () => {}, { quickSaveNow: (n) => written.push(n), deathUp: () => false }, null, () => ['QuickSave', 'AutoSave', 'Before the crypt'], {}, { overlay: null }, class {}, realmSession, () => false);   // AUDIT LEGACY B1: no Succession standing
     return written;
   };
   assert.deepEqual(run(true), [], 'out of the seat: nothing written');

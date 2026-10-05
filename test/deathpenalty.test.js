@@ -37,7 +37,7 @@ test('it is taken by BOTH online respawn paths, once, and never by the offline e
     'respawnOnlinePlayer, after the _respawning guard');
   // PIN MOVED (RVN8: a revenant's theft rides the same box, after the price - bible/12-Enhanced-AI/Feud-Arc.md 19)
   assert.match(world, /\[respawnFlavorText\(kind\), deathPenaltyText\(goldLost\)(?:, took\?\.line)?\]\.filter\(Boolean\)/, 'and says so on waking');
-  assert.match(modes, /const goldLost = applyDeathPenalty\(playerEntity\);[\s\S]*?say\(deathPenaltyText\(goldLost\)\)/, "Privateer's Hold's in-place respawn");
+  assert.match(modes, /const goldLost = online \? applyDeathPenalty\(playerEntity\) : 0;[\s\S]*?say\(deathPenaltyText\(goldLost\)\)/, "Privateer's Hold's in-place respawn");   // PIN MOVED (AUDIT LEGACY B5): online's alone - an offline Project Legacy rise there pays none
   const end = /function endRunToTitleMenu[\s\S]*?\n\}/.exec(read('src/scenes/shared.js'))?.[0] ?? '';
   assert.doesNotMatch(end, /applyDeathPenalty/, 'offline a death ends the run - nothing to take');
 });

@@ -15825,7 +15825,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     try {
       // REALM P1.3: a realm character's checkpoint is ONE, the service's - the composer's sink sends it, no slot is written
       if (realmSession) return realmCheckpoint({ sink });
-      const names = exitAutosaveNames(playerEntity, { deathUp: townTalk.overlay instanceof DeathScreen || !!modes?.deathUp?.() || successionOpen() });   // AUDIT LEGACY B1
+      // AUDIT LEGACY B1: the Succession is a death up
+      const names = exitAutosaveNames(playerEntity, { deathUp: townTalk.overlay instanceof DeathScreen || !!modes?.deathUp?.() || successionOpen() });
       for (const saveName of names) {
         if (modes) modes?.quickSaveNow(saveName, { quiet: true });   // `?.` inside the test: audit24 wave37's gate above the declaration is all-or-nothing
         else worldQuickSave(saveName, { quiet: true });
