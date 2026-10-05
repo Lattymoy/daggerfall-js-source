@@ -8,6 +8,15 @@
 
 Newest first.
 
+**2026-10-05 - AUDIT VE.** Mac: *"Audit this. Ensure this is on by default. And performance isn't affected"*, of
+Vanilla Enhanced (VE1-VE4, #621). Four lenses - the default, performance (measured in Chromium and node), the door against
+DFU (an independent adversarial review of a snapshot of the pushed head) and the tests' own honesty. Paid: Vanilla
+Enhanced is worn by default (the shipped Base on as a mod in DFU's Mods folder is, its add-ons off, the player's choice
+kept either way); its pictures are decoded off the main thread, as an attached bundle's are (the worst main-thread stall
+29-39 ms to 8-10 ms, none over 16 ms); the ground cache keeps three tile sets, not every one the session drew; and the review's fourteen (two Major - a switch
+mid-game drew a classic patchwork for the page, and the main menu's card read the shipped mods alone) fixed at their
+roots, each pinned red first and mutation-proven. Record: `Audit-VE.md` (AUDIT VE).
+
 **2026-10-03 - AUDIT GALLEON-2.** Mac: *"I want you to audit it"*, of the galleon's branch after AUDIT GALLEON, with
 main merged in. Six read-only lenses (the bake; her prefab, pictures and loader; her rig; her deck on every hull; her
 guns, the sea and online with #543's glide; the tests and records), 54 findings, each reproduced; six fixers on files of

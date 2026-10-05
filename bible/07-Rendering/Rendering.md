@@ -693,8 +693,9 @@ directory by `test/audit18_bible_docs.test.js`:
   the field is on). A 30-degree slope facing away from the 9:00 sun drew
   1.34-1.43x its ground and draws 1.04-1.18x, as level ground does.
   (3) THE COLOUR OFF THE TILE SET THAT IS DRAWN: the record means
-  (`groundMeanColour`) are taken off an attached texture mod's tile set
-  where one dresses the archive (GROUND1's `dfmodGroundLayers`, asked
+  (`groundMeanColour`) are taken off a texture mod's or loose pack's tile
+  set where one dresses the archive (GROUND1's `dfmodGroundLayers`, VE2's
+  TryImportTextureArray whole since `07-Rendering/Vanilla-Enhanced.md`, asked
   before the three per-archive maps are learned so they land in one
   step), the classic file's otherwise; which records are grass stays
   the classic file's question. A big tile's mean reads at most

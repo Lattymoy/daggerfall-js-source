@@ -620,7 +620,8 @@ test('SIB1: both climate hosts take the cache\'s answer for a flat, and the stre
   assert.match(ds, /textureStoreKey\(f, deps\)/, 'the texture pick decides every file through the one exported decision');
   assert.match(ds, /storeAssets\(TEXTURE_STORE, keyed\.map\(\(\[f\]\) => f\), \(\) => true, \(f\) => keyOf\.get\(f\)\)/, 'and storeAssets does not re-decide on the basename');
   assert.match(ds, /setSeasonsSources\(names, loadTextureFile\)/, 'and registers them');
-  assert.match(read('src/scenes/shared.js'), /setSeasonsSources\(names, loadTextureFile\)/, 'the boot registers them on the same seam');
+  // PIN MOVED (AUDIT VE R2): the boot's registration is the store's one - the call above, reached from the seam
+  assert.match(read('src/scenes/shared.js'), /const textures = registerTextureStore\(\)/, 'the boot registers them on the same seam');
   // the switch and the credit
   assert.equal(MOD_SETTINGS['seasons-iliac-bay'].keys.Enabled.default, true);
   const row = CREDITS.mods.find((m) => m.title === 'Seasons of the Iliac Bay');
