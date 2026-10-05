@@ -1,0 +1,56 @@
+[
+  {
+    "name": "FB-two-again",
+    "file": "src/systems/revenantFeud.js",
+    "old": "export const WILL_STAGGERS = 1;",
+    "new": "export const WILL_STAGGERS = 2;",
+    "tests": [
+      "test/feudbalance.test.js"
+    ]
+  },
+  {
+    "name": "FB-perfect-uncounted",
+    "file": "src/systems/revenantFeud.js",
+    "old": "(ledger.staggers | 0) + (ledger.perfect | 0) >= WILL_STAGGERS",
+    "new": "(ledger.staggers | 0) >= WILL_STAGGERS",
+    "tests": [
+      "test/feudbalance.test.js"
+    ]
+  },
+  {
+    "name": "FB-stand-rank3",
+    "file": "src/systems/revenantFeud.js",
+    "old": "LAST_STAND_HEALTH = Object.freeze({ 3: 0.3,",
+    "new": "LAST_STAND_HEALTH = Object.freeze({ 3: 0.35,",
+    "tests": [
+      "test/feudbalance.test.js"
+    ]
+  },
+  {
+    "name": "FB-stand-rank5",
+    "file": "src/systems/revenantFeud.js",
+    "old": "4: 0.35, 5: 0.4 });",
+    "new": "4: 0.35, 5: 0.55 });",
+    "tests": [
+      "test/feudbalance.test.js"
+    ]
+  },
+  {
+    "name": "FB-page-old-words",
+    "file": "src/ui/revenantPage.js",
+    "old": "'Its will must be broken - strike its weakness, stagger it, or dodge its blow perfectly.'",
+    "new": "'Its will must be broken - strike its weakness, or stagger it twice.'",
+    "tests": [
+      "test/feudbalance.test.js"
+    ]
+  },
+  {
+    "name": "FB-harness-time-unread",
+    "file": "tools/tellDuel.mjs",
+    "old": " && at(ref, 'dodge', false).raw.mean <= at(ref, 'trade', false).raw.mean },",
+    "new": " },",
+    "tests": [
+      "test/feudbalance.test.js"
+    ]
+  }
+]

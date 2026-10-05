@@ -558,20 +558,19 @@ body:has(.hud-foe.on.blade) .travelpanel { --tp-top: calc(18px + 28px * var(--hu
 .travelpanel-speed, .travelpanel-acts { border-left: 2px solid rgba(5,6,8,0.55); box-shadow: inset 1px 0 0 rgba(163,152,128,0.18); }
 .travelpanel-speed { align-items: center; gap: 6px; padding: 8px 18px; }
 .travelpanel-speed > .travelpanel-label { text-indent: 0.2em; }
-.travelpanel-stepper { gap: 6px; }
-.travelpanel-step { width: 30px; height: 30px; padding: 0; display: grid; place-items: center; border: 2px solid; border-radius: 0;
-  font: inherit; font-size: 17px; line-height: 1; color: #e6dec6; text-shadow: 1px 1px 0 #050608; }
 .travelpanel-accel { min-width: 64px; height: 30px; box-sizing: border-box; display: grid; place-items: center; padding: 0 8px;
   border: 2px solid; background: rgba(0,0,0,0.38); font-family: inherit; font-size: 17px; letter-spacing: 0.04em;
   font-variant-numeric: tabular-nums; color: rgb(243,239,44); text-shadow: 1px 1px 0 rgb(93,77,12); }
-/* TV2: the clock held under the spinner while the land loads (systems/travelGovernor.js) - the rate that runs first */
+/* TV2: the clock held under the ground's rate while the land loads (systems/travelGovernor.js; OW6: or an alerted enemy
+   near) - the rate that runs first */
 .travelpanel-accel.held { min-width: 92px; color: rgb(236,160,60); }
-.travelpanel-foeaccel { color: rgb(236,160,60); }
+/* RATE-LAW: the ground's word under the socket */
+.travelpanel-ground { font-size: 11px; letter-spacing: 0.06em; color: #c9bfa4; text-shadow: 1px 1px 0 #050608; }
 .travelpanel-acts { gap: 8px; padding: 8px 16px; }
 .travelpanel-act { min-width: 78px; min-height: 36px; padding: 6px 14px; border: 2px solid; border-radius: 0;
   font-family: inherit; font-size: 13px; letter-spacing: 0.14em; text-indent: 0.14em; text-align: center; color: #e6dec6;
   text-shadow: 1px 1px 0 #050608, 2px 2px 0 rgba(0,0,0,0.45); }
-.travelpanel-step:hover, .travelpanel-step:focus-visible, .travelpanel-act:hover, .travelpanel-act:focus-visible {
+.travelpanel-act:hover, .travelpanel-act:focus-visible {
   outline: none; color: rgb(243,239,44); text-shadow: 1px 1px 0 rgb(93,77,12); }
 /* the journey's word (a stop, a speed refused): outlined gold words under the bar, the HUD lines' own face */
 .travelpanel-msg { top: calc(var(--tp-top) + 104px); max-width: calc(100vw - 48px); text-align: center; font-size: 14px;
@@ -605,8 +604,6 @@ body:has(.hud-foe.on.blade) .travelpanel { --tp-top: calc(18px + 28px * var(--hu
   .travelpanel-dest { flex: 1 1 100%; border-bottom: 2px solid rgba(5,6,8,0.55); box-shadow: 0 1px 0 rgba(163,152,128,0.18); }
   .travelpanel-speed { flex-direction: row; padding: 8px 8px 8px 12px; border-left: 0; box-shadow: none; }
   .travelpanel-speed { flex-direction: column; align-items: flex-start; }
-  .travelpanel.foes .travelpanel-msg { top: calc(var(--tp-top) + 196px); }
-  .travelpanel.foes .travelpanel-junction { top: calc(var(--tp-top) + 208px); }
   .travelpanel-speed > .travelpanel-label { display: none; }   /* the x40 in its socket says what it is; the row needs the room */
   .travelpanel-accel { min-width: 52px; }
   .travelpanel-acts { flex: 1 1 auto; padding: 8px 12px 8px 8px; }

@@ -1,0 +1,353 @@
+[
+  {
+    "name": "TELL1-medium-share",
+    "file": "src/ai/tells.js",
+    "old": "POISE_W: Object.freeze({ light: 0.2, medium: 0.3, heavy: 0.4, massive: 0.5 }),",
+    "new": "POISE_W: Object.freeze({ light: 0.2, medium: 0.35, heavy: 0.4, massive: 0.5 }),",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-heavy-bound",
+    "file": "src/ai/tells.js",
+    "old": "  if (w >= TELL.WEIGHT_HEAVY) return 'heavy';",
+    "new": "  if (w > TELL.WEIGHT_HEAVY) return 'heavy';",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-kind-health-undivided",
+    "file": "src/ai/tells.js",
+    "old": "  return Math.max(1, (entity?.maxHealth || 1) / m);",
+    "new": "  return Math.max(1, (entity?.maxHealth || 1));",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-elite-ignored",
+    "file": "src/ai/tells.js",
+    "old": "  if (entity.eliteFoe === true) s *= TELL.POISE_ELITE;",
+    "new": "  if (false) s *= TELL.POISE_ELITE;",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-stalwart-ignored",
+    "file": "src/ai/tells.js",
+    "old": "entity.champion === 'stalwart' ? TELL.POISE_STALWART : TELL.POISE_CHAMPION;",
+    "new": "TELL.POISE_CHAMPION;",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-rank-ignored",
+    "file": "src/ai/tells.js",
+    "old": "  if (rank > 0) s *= 1 + TELL.POISE_REVENANT_RANK * rank;",
+    "new": "  if (rank > 99) s *= 1 + TELL.POISE_REVENANT_RANK * rank;",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-round-weighs",
+    "file": "src/ai/tells.js",
+    "old": "  if (kind === 'spell') return round ? 0 : TELL.K_SPELL;",
+    "new": "  if (kind === 'spell') return TELL.K_SPELL;",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-two-handed-ignored",
+    "file": "src/ai/tells.js",
+    "old": "  return both ? k * TELL.K_TWO_HANDED : k;",
+    "new": "  return k;",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-back-half-turn",
+    "file": "src/ai/tells.js",
+    "old": "  return dot < Math.cos(TELL.BACK_DEG * Math.PI / 180);",
+    "new": "  return dot < 0;",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-back-unweighed",
+    "file": "src/ai/tells.js",
+    "old": "(back ? TELL.POISE_BACK : 1)",
+    "new": "(back ? 1 : 1)",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-never-holds",
+    "file": "src/ai/tactics.js",
+    "old": "  if (b.taken < b.poise) return 'hold';",
+    "new": "  if (b.taken < 0) return 'hold';",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-no-stagger",
+    "file": "src/ai/tactics.js",
+    "old": "  s.state = 'staggered'; s.until = now + staggerSeconds(weight);",
+    "new": "  s.state = 'wait'; s.until = now + staggerSeconds(weight);",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-stagger-length",
+    "file": "src/ai/tactics.js",
+    "old": "s.until = now + staggerSeconds(weight);",
+    "new": "s.until = now + 1.2;",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-token-kept",
+    "file": "src/ai/tactics.js",
+    "old": "  if (bd) { bd.melee.delete(ai); bd.waiting.set(ai, now); }\n}\n/** TELL1 (3.2)",
+    "new": "  if (false) { bd.melee.delete(ai); bd.waiting.set(ai, now); }\n}\n/** TELL1 (3.2)",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-no-cooldown",
+    "file": "src/ai/tactics.js",
+    "old": "  s.blowReady = now + blowCooldown(ent);   // TELL7: by its tier\n  clearBlowState(ai);\n  dropSwing(ai);\n  handOn(ai, s, now);",
+    "new": "  s.blowReady = now;\n  clearBlowState(ai);\n  dropSwing(ai);\n  handOn(ai, s, now);",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-stunlock",
+    "file": "src/ai/tactics.js",
+    "old": "  if (now < (s.staggerReady ?? -Infinity)) { s.state = 'wait'; return 'break'; }",
+    "new": "  if (false) { s.state = 'wait'; return 'break'; }",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-guard-short",
+    "file": "src/ai/tactics.js",
+    "old": "s.staggerReady = s.until + TELL.STAGGER_IMMUNE;",
+    "new": "s.staggerReady = s.until;",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-motor-unheld",
+    "file": "src/ai/tactics.js",
+    "old": "  ai.staggerUntil = s.until;   // the motor's hold",
+    "new": "  ai.staggerUntil = 0;   // the motor's hold",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-entity-unmarked",
+    "file": "src/ai/tactics.js",
+    "old": "  if (ent) ent.staggerUntil = s.until;",
+    "new": "  if (false) ent.staggerUntil = s.until;",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-takes-nothing-more",
+    "file": "src/ai/tactics.js",
+    "old": "(staggeredNow(target) ? TELL.STAGGER_TAKEN : 1)",
+    "new": "(staggeredNow(target) ? 1 : 1)",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-motor-acts",
+    "file": "src/characters/enemyMotor.js",
+    "old": "    this.canAct = !paralyzed && !knocked && !locked && (this.isHostile || foeTarget);",
+    "new": "    this.canAct = !paralyzed && !knocked && (this.isHostile || foeTarget);",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-motor-walks",
+    "file": "src/characters/enemyMotor.js",
+    "old": "    if (paralyzed || paused || locked || !(this.isHostile || foeTarget)) this.moving = false;",
+    "new": "    if (paralyzed || paused || !(this.isHostile || foeTarget)) this.moving = false;",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-formula-tail",
+    "file": "src/combat/formulas.js",
+    "old": "  damage = blowTaken(damage, attacker, target, weapon, ",
+    "new": "  damage = ((d) => d)(damage, attacker, target, weapon, ",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-spell-landing",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    const r = applySpell(spell, casterLevel, foe.entity, landing, rolls, caster, ctx);",
+    "new": "    const r = applySpell(spell, casterLevel, foe.entity, sinks, rolls, caster, ctx);",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-payload-shoves",
+    "file": "src/scenes/hostCombat.js",
+    "old": "    if (target.ai && !windupHolds(target.ai) && enemyKnockbackApplies(",
+    "new": "    if (target.ai && enemyKnockbackApplies(",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-striker-hands",
+    "file": "src/scenes/hostCombat.js",
+    "old": "claws: !((striker.mobileType ?? 0) >= 128)",
+    "new": "claws: false",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-no-clang",
+    "file": "src/scenes/hostCombat.js",
+    "old": "    hitEffects?.showMissEffect?.('clang', at, { scale: 2.5 });\n",
+    "new": "\n",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-no-parry",
+    "file": "src/scenes/hostCombat.js",
+    "old": "  } else if (word === 'hold' && basics?.parrySounds) {",
+    "new": "  } else if (false) {",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-street-no-hold",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    if (_tell === 'hold') return;\n    if (knockDir && weaponKnockbackApplies(f.ai.knockbackSpeed, isClass, mobileWeight)) {",
+    "new": "    if (knockDir && weaponKnockbackApplies(f.ai.knockbackSpeed, isClass, mobileWeight)) {",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-street-shove-unscaled",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      f.ai.knockbackSpeed = weaponKnockbackSpeed(damage, w) * (_tell === 'stagger' ? TELL.STAGGER_KNOCK : 1);",
+    "new": "      f.ai.knockbackSpeed = weaponKnockbackSpeed(damage, w);",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-street-weapon-dropped",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "        damageFoe(foe, damage, playerFeet, lookDir, { weapon: playerWeapon.strikingWeapon });",
+    "new": "        damageFoe(foe, damage, playerFeet, lookDir);",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-street-hurt-unheld",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "        hurting: f.ai.hurtKnock || f.ai.staggered,",
+    "new": "        hurting: f.ai.hurtKnock,",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-watch-no-hold",
+    "file": "src/scenes/cityGuards.js",
+    "old": "    if (_tell === 'hold') return;\n",
+    "new": "\n",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-dungeon-no-hold",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (_tell === 'hold') return;\n    if (knockDir && foe.ai) {",
+    "new": "    if (knockDir && foe.ai) {",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-elite-unmarked",
+    "file": "src/systems/eliteFoes.js",
+    "old": "    entity.healthMult = (entity.healthMult ?? 1) * hm;",
+    "new": "    entity.healthMult = 1;",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-champion-unmarked",
+    "file": "src/systems/champions.js",
+    "old": "  entity.healthMult = (entity.healthMult ?? 1) * hp;",
+    "new": "  entity.healthMult = 1;",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-revenant-unmarked",
+    "file": "src/systems/revenant.js",
+    "old": "  entity.healthMult = (entity.healthMult ?? 1) * (1 + REVENANT_HEALTH_PER_RANK * r.rank);",
+    "new": "  entity.healthMult = 1;",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-dungeon-unmarked",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    entity.healthMult = (entity.healthMult ?? 1) * ELITE_HEALTH_SCALE;",
+    "new": "    entity.healthMult = 1;",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL1-round-unsaid",
+    "file": "src/systems/effects.js",
+    "old": "bundleDuel: !!a.bundleDuel, round: true });",
+    "new": "bundleDuel: !!a.bundleDuel });",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  }
+]

@@ -2031,8 +2031,8 @@
   {
     "name": "AUDIT4-alive-again-is-the-old-life",
     "file": "src/combat/bloodBleed.js",
-    "old": "      s.pooled = false;\n      const share = bleedShare(v.health, v.maxHealth);",
-    "new": "      const share = bleedShare(v.health, v.maxHealth);",
+    "old": "      s.pooled = false;\n      const wound = !!v.wound;",
+    "new": "      const wound = !!v.wound;",
     "tests": [
       "test/blood1_decals.test.js"
     ]

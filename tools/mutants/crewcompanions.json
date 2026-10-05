@@ -380,7 +380,7 @@
   {
     "name": "PX-companion-killed",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "      if (f.companion != null) { f.entity.health = 1; f._knockedOut = true; return; }\n",
+    "old": "      if (f.companion != null) { f.entity.health = 1; if (!f._knockedOut) f._knockedBy = striker; f._knockedOut = true; return; }\n",
     "new": "",
     "tests": [
       "test/crewcompanions.test.js"
@@ -389,7 +389,7 @@
   {
     "name": "PD-companion-killed",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      if (foe.companion != null) { foe.entity.health = 1; foe._knockedOut = true; return; }\n",
+    "old": "      if (foe.companion != null) { foe.entity.health = 1; if (!foe._knockedOut) foe._knockedBy = striker; foe._knockedOut = true; return; }\n",
     "new": "",
     "tests": [
       "test/crewcompanions.test.js"

@@ -1,0 +1,200 @@
+[
+  {
+    "name": "LW-FIX6-owned-home",
+    "file": "src/scenes/worldModes.js",
+    "old": "ctx.ownedRoom = !!(restore?.privateRoom || hit.sailingCabin || (building && (home !== null || isHouseOwned(",
+    "new": "ctx.ownedRoom = !!(restore?.privateRoom || hit.sailingCabin || (building && (isHouseOwned(",
+    "tests": [
+      "test/lwfix6_rooms.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX6-owned-house",
+    "file": "src/scenes/worldModes.js",
+    "old": "(building && (home !== null || isHouseOwned(playerEntity.houses ?? [], building.regionIndex ?? 0, building.buildingKey))));",
+    "new": "(building && (home !== null)));",
+    "tests": [
+      "test/lwfix6_rooms.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX6-owned-private",
+    "file": "src/scenes/worldModes.js",
+    "old": "ctx.ownedRoom = !!(restore?.privateRoom || hit.sailingCabin ||",
+    "new": "ctx.ownedRoom = !!(hit.sailingCabin ||",
+    "tests": [
+      "test/lwfix6_rooms.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX6-owned-cabin",
+    "file": "src/scenes/worldModes.js",
+    "old": "ctx.ownedRoom = !!(restore?.privateRoom || hit.sailingCabin ||",
+    "new": "ctx.ownedRoom = !!(restore?.privateRoom ||",
+    "tests": [
+      "test/lwfix6_rooms.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX6-owned-unread",
+    "file": "src/scenes/world.js",
+    "old": "const town = b && !modes?.interiorCtx?.ownedRoom ? livingTownOfMap(",
+    "new": "const town = b ? livingTownOfMap(",
+    "tests": [
+      "test/lwfix6_rooms.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX6-first-door",
+    "file": "src/scenes/worldModes.js",
+    "old": "      ctx.landing = [...(waysIn[0] ?? landing)];",
+    "new": "      ctx.landing = [...landing];",
+    "tests": [
+      "test/lwfix6_rooms.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX6-first-door-floorless",
+    "file": "src/scenes/worldModes.js",
+    "old": "      ctx.landing = [...(waysIn[0] ?? landing)];",
+    "new": "      ctx.landing = [...(waysIn[0] ?? [0, 0, 0])];",
+    "tests": [
+      "test/lwfix6_rooms.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX6-landing-unread",
+    "file": "src/scenes/world.js",
+    "old": "      origin: () => modes?.interiorCtx?.landing ?? null,",
+    "new": "      origin: () => null,",
+    "tests": [
+      "test/lwfix6_rooms.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX6-ways-indoors",
+    "file": "src/scenes/world.js",
+    "old": "      livingWays.frame(); livingMemoFresh();   // AUDIT-E2",
+    "new": "      void 0;   // AUDIT-E2",
+    "tests": [
+      "test/lwfix6_rooms.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX6-talk-hold",
+    "file": "src/scenes/world.js",
+    "old": "      livingIndoorsStep(townTalk.overlayActive ? 0 : dt);",
+    "new": "      livingIndoorsStep(dt);",
+    "tests": [
+      "test/lwfix6_rooms.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX6-empty-table",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "        for (const ti of room.tableOf) if (ti >= 0 && !tables.has(ti)) roundCircles.set(ti, []);",
+    "new": "        void 0;",
+    "tests": [
+      "test/lwfix6_rooms.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX6-room-clock-back",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "        if (last != null && t >= last && t - last < GREET_REST_MIN) continue;",
+    "new": "        if (last != null && t - last < GREET_REST_MIN) continue;",
+    "tests": [
+      "test/lwfix6_rooms.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX6-street-clock-back",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    if (last != null && this._now >= last && this._now - last < GREET_REST_MIN) return;",
+    "new": "    if (last != null && this._now - last < GREET_REST_MIN) return;",
+    "tests": [
+      "test/lwfix6_rooms.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX6-road-clock-back",
+    "file": "src/scenes/livingRoads.js",
+    "old": "      if (last != null && t >= last && t - last < ROAD_GREET_REST_MIN) continue;",
+    "new": "      if (last != null && t - last < ROAD_GREET_REST_MIN) continue;",
+    "tests": [
+      "test/lwfix6_rooms.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX6-quest-feet-unread",
+    "file": "src/scenes/world.js",
+    "old": ".map((p) => [p.x, p.y, p.z]).concat(modes?.interiorQuestFeet?.() ?? []),",
+    "new": ".map((p) => [p.x, p.y, p.z]),",
+    "tests": [
+      "test/lwfix6_rooms.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX6-quest-feet",
+    "file": "src/scenes/worldModes.js",
+    "old": "    interiorQuestFeet: () => (mode === 'interior' ? questFlats.filter(",
+    "new": "    interiorQuestFeet: () => (false ? questFlats.filter(",
+    "tests": [
+      "test/lwfix6_rooms.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX6-quest-dead",
+    "file": "src/scenes/worldModes.js",
+    "old": "questFlats.filter((q) => !q.dead && q.active !== false && Number.isFinite(q.x)",
+    "new": "questFlats.filter((q) => q.active !== false && Number.isFinite(q.x)",
+    "tests": [
+      "test/lwfix6_rooms.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX6-ways-in-unkept",
+    "file": "src/scenes/livingIndoors.js",
+    "old": " || !far(p, waysIn, INDOOR_DOOR_M)) continue;",
+    "new": ") continue;",
+    "tests": [
+      "test/lwfix6_rooms.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX6-ways-in-unpassed",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "deps.staticFeet(), deps.waysIn?.() ?? []) : [];",
+    "new": "deps.staticFeet(), []) : [];",
+    "tests": [
+      "test/lwfix6_rooms.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX6-ways-in-unread",
+    "file": "src/scenes/world.js",
+    "old": "      waysIn: () => modes?.interiorCtx?.waysIn ?? [],",
+    "new": "      waysIn: () => [],",
+    "tests": [
+      "test/lwfix6_rooms.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX6-ways-in-floorless-kept",
+    "file": "src/scenes/worldModes.js",
+    "old": "      ctx.waysIn = waysIn.filter(Boolean);",
+    "new": "      ctx.waysIn = waysIn;",
+    "tests": [
+      "test/lwfix6_rooms.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX6-ways-in-first-only",
+    "file": "src/scenes/worldModes.js",
+    "old": "      const waysIn = siblings.map((s) => interiorLanding(",
+    "new": "      const waysIn = siblings.slice(0, 1).map((s) => interiorLanding(",
+    "tests": [
+      "test/lwfix6_rooms.test.js"
+    ]
+  }
+]

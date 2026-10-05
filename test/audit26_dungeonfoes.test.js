@@ -168,7 +168,7 @@ test('F050: every dungeon foe gets its spell list at BUILD time (EnemyEntity.cs:
 // =====================================================================
 
 test('F051: the ?dungeon fly-cam is gated on the OVERLAY, not on the imported input helper', () => {
-  // `held` at dungeon.js:54 is the input helper - a function, always
+  // `held` at dungeon.js:55 is the input helper - a function, always
   // truthy - so `} else if (!held) {` was a branch that could not run:
   // with ?dungeon&fly or ?shot, WASD never moved the camera. The gate
   // was a local overlay boolean once, renamed overlayHeld at :353.
@@ -534,7 +534,8 @@ test('F212: the world host collects both pools with the pixel, which is also wha
   // a second on), one statement above the needles.
   // PIN MOVED (AUDIT OW5 J2), 5600 -> 6600: a jump stops a route's walk first thing, with its note
   // PIN MOVED (AUDIT CLIMB-ARC F6), 6600 -> 6800: the climb's feel resets beside the recoiler, one statement above
-  const core = WORLD.slice(t, t + 6800);
+  // PIN MOVED (RVN10), 6800 -> 7000: a jump out of a fight routs me before the sweep, one statement above
+  const core = WORLD.slice(t, t + 7000);
   assert.ok(core.includes('destroyPixel(bx, by);'),
     'so a fast travel or a teleport takes every corpse with it');
   assert.ok(core.includes('exteriorFoes.clearLive();') && core.includes('cityGuards.clearLive();'),

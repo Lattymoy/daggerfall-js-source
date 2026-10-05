@@ -137,7 +137,7 @@ export function rayPersonDistance(camPos, fwd, feet) {
   return t / fl * Math.hypot(fwd[0], fwd[1], fwd[2]);
 }
 
-export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, regionIndex, onCrime = null, topics = null, palette = null, rolls = Math.random, talkEngine = null, onBuildingList = null, otherOverlayActive = null, otherHudCovered = null, questBuildingSource = null }) {   // AUDIT ENH-NOTICE3 C2: `otherHudCovered` is the mode host's previousWindow-chain answer (modes.hudCovered), for the toasts   // AUDIT 63 F49: PlayerGPS.DiscoverBuilding's quest name-override seam ({ currentMapID, isBuildingQuestResource }), null in a host with no topic tree
+export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, regionIndex, onCrime = null, topics = null, palette = null, rolls = Math.random, talkEngine = null, onBuildingList = null, otherOverlayActive = null, otherHudCovered = null, questBuildingSource = null, livingTalk = null, livingTone = null }) {   // LW2: `livingTalk` the living world's doors - { refuses(person) -> text|null, talked(person), caught(person) } (bible/06-Systems/Living-World.md); LW7: `livingTone(person, tone)` a question's tone   // AUDIT ENH-NOTICE3 C2: `otherHudCovered` is the mode host's previousWindow-chain answer (modes.hudCovered), for the toasts   // AUDIT 63 F49: PlayerGPS.DiscoverBuilding's quest name-override seam ({ currentMapID, isBuildingQuestResource }), null in a host with no topic tree
   // RP1 - THE REGION IS READ LIVE, NOT CAPTURED AT BOOT.
   //
   // This took a plain number, and the world host had no choice but to
@@ -734,8 +734,9 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       // failure is the arm that spawns the watch behind it.
       if (r.modal) showOverlay(new ActionTextBox(String(r.message).split('\n')));
       else hud.add(r.message);
-      // G1: the caught pickpocket IS the crime - SpawnCityGuards(true)
-      if (!r.success) onCrime?.();
+      // G1: the caught pickpocket IS the crime - SpawnCityGuards(true). LW3: a resident of the living world remembers the
+      // hand in their purse (their regard of the player); on the road - no town, no watch - that is all that comes of it
+      if (!r.success) { livingTalk?.caught?.(target.person); if (!target.person?.living?.town?.roadside) onCrime?.(); }
       return;
     }
     // Info / Grab / Talk all talk to a mobile NPC (DFU verbatim)
@@ -761,6 +762,14 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // is `DaggerfallUI.MessageBox(suppressTalkMessage)`.
     const sup0 = racialSuppressTalk(playerEntity);
     if (sup0) { showOverlay(new ActionTextBox([sup0.text])); return; }
+    // LW2: a resident of the living world who counts the player an enemy has no words for them - said on the HUD's
+    // middle line, as the activation's other refusals are; DFU's walkers have no memory to refuse from
+    const refusal = livingTalk?.refuses?.(target.person) ?? null;
+    if (refusal) { setMidScreenText(refusal); return; }
+    // LW6c: a household's moment before the words - the keepsake of one of theirs the deep kept, carried home (the
+    // body's town's: livingTown.js moment, the room's door): their words on the parchment, the conversation another time
+    const moment = target.person?.living?.town?.moment?.(target.person) ?? null;
+    if (moment) { showOverlay(new ActionTextBox(moment)); return; }
     const eng0 = engine();
     if (eng0?.session) {
       // T3c: the NPC keeps a stable per-person seed for the
@@ -774,6 +783,8 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       // has already said its piece through the session's messageBox
       if (talk?.kind !== 'talk') return;
       _talkNpc = target.person;
+      livingTalk?.talked?.(target.person);   // LW2: a word exchanged - their regard of the player
+      _toneNext = target.person.living ? target.person : null;   // LW7: a resident's - each question's tone noted
       // the local mirrors of the tone half TalkToNpc just reset
       toneSession = [0, 0, 0];
       lastToneIndex = -1;
@@ -808,6 +819,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // uniform seed stands in, Ledger A).
     target.person._talkSeed ??= Math.floor(rolls() * 0x7fffffff);
     _talkNpc = target.person;
+    _toneNext = target.person.living ? target.person : null;   // LW7
     // TK-v: TalkToNpc's session reset is the ENGINE's - both halves of
     // it - so a host cannot clear one and forget the other. With no
     // engine mounted these local mirrors are the whole of it.
@@ -837,6 +849,8 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    *  talkToStaticNPC runs the C# ones inside the engine. Art-less or
    *  building-less sessions keep the keyed greeting chain. */
   function openTalkWindow(greeting, { npcSeed = 0, npcName = '', portrait = null, push = false, onClosed = null } = {}) {
+    _toneTarget = _toneNext;   // LW7: the resident this conversation is with, if the mobile door named one - else nobody
+    _toneNext = null;
     // AUDIT 63 F44: TalkToStaticNPC is a PushWindow (TalkManager.cs:
     // :757, :767), and for ONE caller that distinction is visible -
     // DaggerfallGuildServicePopupWindow's TALK button is the only
@@ -878,13 +892,14 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
         peopleTopics: () => treeFlatTopics(engine()?.tree?.listTopicPerson),
         thingsTopics: () => treeFlatTopics(engine()?.tree?.listTopicThing),
         workQuestion: () => (eng?.pipeline ? eng.pipeline.getQuestionText(workListItem(), tone) : null),
-        askWork: () => eng.pipeline.getAnswerText(workListItem(), {
+        askWork: () => (_toneHeard(), eng.pipeline.getAnswerText(workListItem(), {
           npcSeed,
           // TalkManager.WorkAvailable - the town's npcsWithWork pool
           // (TK-iv owns it); no work in town = record 8078 verbatim
           workAvailable: eng.session?.workAvailable ?? false,
-        }),
+        })),
         answer: (row) => {
+          _toneHeard();   // LW7: the question's tone, in a resident's regard
           if (row.listItem) return eng.pipeline.getAnswerText(row.listItem, { npcSeed });
           const a = answerText(row); _questionsAsked++; return a;   // AUDIT 17e F13, moved to DFU's own site
         },
@@ -976,6 +991,11 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   }
 
   let _talkNpc = null;
+  /** LW7: the resident this conversation is with (the mobile door names them in `_toneNext`; openTalkWindow takes it -
+   *  every other door leaves nobody), whose regard hears each question's tone - a courteous one or a blunt one
+   *  (relations.js: once a day each). */
+  let _toneTarget = null, _toneNext = null;
+  const _toneHeard = () => { if (_toneTarget) livingTone?.(_toneTarget, tone); };
   // AUDIT 26 F043: the CURRENT partner's reaction seed. DFU seeds the
   // roll from whichever NPC is being spoken to - `DFRandom.Seed =
   // lastTargetMobileNPC.GetHashCode()` or `lastTargetStaticNPC`'s

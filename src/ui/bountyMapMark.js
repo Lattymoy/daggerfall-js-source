@@ -21,6 +21,13 @@ export const BOUNTY_LEGEND_RIM_CSS = '#e6dccb';
 export const BOUNTY_LEGEND_TEXT = 'Bounty';
 /** The circle's radius, map pixels: the target pixel inside it with a ring of its neighbours as the band. */
 export const BOUNTY_RING_R = 1.5;
+/** RVN7c (bible/12-Enhanced-AI/Feud-Arc.md 18.3): A REVENANT'S LAIR the player has heard of - the same circle, in blood
+ *  red, with its name; `revenants: () => marks[]` beside `bounties` in the host's map deps (systems/revenant.js
+ *  revenantMapMarks), read by the same reader. */
+export const REVENANT_RING_CSS = '#7a0a0a';
+export const REVENANT_FILL_CSS = 'rgba(122, 10, 10, 0.16)';
+export const REVENANT_DOT_RGB = Object.freeze([122, 10, 10]);
+export const REVENANT_LEGEND_TEXT = 'Revenant lair';
 /** The most circles a map draws (a hunter holds four; the room is for a later party view). */
 export const BOUNTY_MARKS_MAX = 8;
 
@@ -30,7 +37,7 @@ export const BOUNTY_MARKS_MAX = 8;
  * @param {{width:number, height:number}} size the map, in pixels
  * @returns {Array<{cx:number, cy:number, r:number, label:string}>}
  */
-export function readBountyMarks(fn, size) {
+export function readBountyMarks(fn, size, fallbackLabel = BOUNTY_LEGEND_TEXT) {
   let list = null;
   try { list = typeof fn === 'function' ? fn() : null; } catch { return []; }
   if (!Array.isArray(list)) return [];
@@ -40,7 +47,7 @@ export function readBountyMarks(fn, size) {
     const { cx, cy, r } = m;
     if (![cx, cy, r].every(Number.isFinite) || !(r > 0)) continue;
     if (cx + r < 0 || cy + r < 0 || cx - r > size.width || cy - r > size.height) continue;
-    out.push({ cx, cy, r, label: String(m.label ?? BOUNTY_LEGEND_TEXT).slice(0, 40) });
+    out.push({ cx, cy, r, label: String(m.label ?? fallbackLabel).slice(0, 40) });
     if (out.length >= BOUNTY_MARKS_MAX) break;
   }
   return out;

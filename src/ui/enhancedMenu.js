@@ -205,6 +205,7 @@ import { profileBadge, portraitSave, liveCharacter } from './profileBadge.js';  
 import { cloudIo, cloudList, pushSlot, pullSlot, removeCloudSlot, cloudOnly, slotKeyOf, cloudRefusalText } from '../systems/cloudSaves.js';   // ACC2: the backup a tile can offer, AUDIT-312 F1's delete, and ACC2c's download of a save that is only up there
 import { serviceBase, storedSession } from '../net/accountClient.js';
 import { isBountyQuestId, abandonBountyQuest, shareBountyQuest, bountyQuestShareable } from '../systems/bountyJournal.js';   // BOUNTY1: a bounty in the journal - its Abandon and its Share
+import { isHuntQuestId, abandonHuntQuest } from '../systems/huntJournal.js';   // RVN7c: a revenant's hunt in the journal - its Abandon
 import { liveBundles, canEndBundle, endBundle } from '../systems/mysticism.js';   // BUFF-END: the Stats page's Effects - the ONE bundle walk, and which the player may end
 import { maxRoundsRemaining } from './hudActiveSpells.js';   // BUFF-END: a bundle's rounds, as the HUD reads them
 
@@ -4383,6 +4384,22 @@ function pauseQuests(body) {
         if (bountyAbandonArmed !== sel.id) { bountyAbandonArmed = sel.id; render(); return; }
         bountyAbandonArmed = null;
         abandonBountyQuest(sel.id);
+        questSel = null;
+        render();
+      };
+      acts.append(ab);
+      detail.append(acts);
+    }
+    // RVN7c (bible/12-Enhanced-AI/Feud-Arc.md 18.3): a hunt's one press - Abandon (twice, as a bounty's): its lair forgotten
+    if (sel.entries && isHuntQuestId(sel.id)) {
+      const acts = el('div', 'px-qacts');
+      acts.style.cssText = 'display:flex;gap:8px;justify-content:flex-end;margin:6px 0 8px';
+      const armed = bountyAbandonArmed === sel.id;
+      const ab = el('button', 'act', armed ? 'Click again to abandon' : 'Abandon hunt');
+      ab.onclick = () => {
+        if (bountyAbandonArmed !== sel.id) { bountyAbandonArmed = sel.id; render(); return; }
+        bountyAbandonArmed = null;
+        abandonHuntQuest(sel.id);
         questSel = null;
         render();
       };

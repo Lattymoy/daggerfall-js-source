@@ -277,7 +277,7 @@ export function createRiteHost({
     f.campId = camp; f.campAlertRadius = RITE_ALERT_M;
     if (f.entity) f.entity.campId = camp;
     if (f.ai && !f.ai.target) f.ai.sightRadius = RITE_SIGHT_M;
-    if (fresh && summoner && f.entity) { f.entity.maxHealth = Math.max(1, Math.round((f.entity.maxHealth ?? 1) * RITE_SUMMONER_HEALTH)); f.entity.health = f.entity.maxHealth; }
+    if (fresh && summoner && f.entity) { f.entity.maxHealth = Math.max(1, Math.round((f.entity.maxHealth ?? 1) * RITE_SUMMONER_HEALTH)); f.entity.health = f.entity.maxHealth; f.entity.healthMult = (f.entity.healthMult ?? 1) * RITE_SUMMONER_HEALTH; }   // TELL1: what was stood on the kind's own health (its poise)
   }
   /** THE FAITHFUL STOOD: the Summoner behind the altar, the rest on the ring - one camp, chanting - every one this
    *  character has not seen fall. Never in a save (AUDIT WB12d C5: a load stood them beside a fresh set). */

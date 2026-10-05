@@ -1,7 +1,8 @@
 // TV-WASD (2026-09-28, Mac: "Also need to add the ability to travel faster with WASD") - THE OVERWORLD'S KEYS TRAVEL.
 // Under the travel view the movement keys walked the traveller at walking pace (TV1); now, while the view is up and no
-// journey drives, a held movement key runs the world's clock at the Travel Options spinner's speed, held by TV2's load
-// governor, and x1 again the moment the keys are let go, a journey begins or the view comes down.
+// journey drives, a held movement key runs the world's clock at the travel speed - RATE-LAW (2026-10-04): the ground's,
+// x100 on a road or a track and x60 off it (it was the Travel Options spinner's) - held by TV2's load governor, and x1
+// again the moment the keys are let go, a journey begins or the view comes down.
 //
 // Pinned here: the law (scenes/travelView.js travelWalkRate) gate by gate; the bar's words; and the world host's own
 // governor - its source MOUNTED over the real load governor and the real clock (systems/timeScale.js) - with the
@@ -11,22 +12,23 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { travelWalkRate, TRAVEL_VIEW_TEXT, TV_MOVE_ACTIONS } from '../src/scenes/travelView.js';
 import { createLoadGovernor, unbuiltAround, TV_GOV_HOLD_S } from '../src/systems/travelGovernor.js';
-import { timeScale, setTimeScale, resetTimeScale, MAX_TIME_SCALE } from '../src/systems/timeScale.js';
+import { timeScale, setTimeScale, resetTimeScale, MAX_TIME_SCALE, TRAVEL_ROAD_RATE, TRAVEL_OPEN_RATE } from '../src/systems/timeScale.js';
+import { foePaced } from '../src/systems/travelThreat.js';   // RATE-LAW: ENEMY-PACE's fixed floor, which the governor calls
 import { travelDriveForward } from '../src/systems/travelAutopilot.js';
 
 const WORLD = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
 
-test('TV-WASD: the keys travel at the spinner\'s speed (never past its limit) while the view is up, no journey drives, a movement key is held, the body is on its own feet and nothing is paused - else 0, walking pace', () => {
-  const up = { viewUp: true, journey: false, moving: true, onFoot: true, paused: false, accel: 10, limit: 100 };
-  assert.equal(travelWalkRate(up), 10, 'the spinner\'s x10');
-  assert.equal(travelWalkRate({ ...up, accel: 40, limit: 30 }), 30, 'never past the limit in force (a ring walk\'s half limit)');
+test('TV-WASD x RATE-LAW: the keys travel at the GROUND\'s rate - x100 on a road or a track, x60 off it - while the view is up, no journey drives, a movement key is held, the body is on its own feet, nothing is paused and Travel Options is on - else 0, walking pace (mutants: the two rates swapped, a gate dropped)', () => {
+  const up = { viewUp: true, journey: false, moving: true, onFoot: true, paused: false, travels: true, onRoad: false };
+  assert.deepEqual([TRAVEL_ROAD_RATE, TRAVEL_OPEN_RATE], [100, 60], 'Mac: "Roads now travel at x100 and non roads at x60"');
+  assert.equal(travelWalkRate(up), 60, 'off the road: x60');
+  assert.equal(travelWalkRate({ ...up, onRoad: true }), 100, 'on a road or a track: x100');
   assert.equal(travelWalkRate({ ...up, viewUp: false }), 0, 'the view rising, falling or down: walking pace');
   assert.equal(travelWalkRate({ ...up, journey: true }), 0, 'a journey drives: its own ask, not the keys\'');
   assert.equal(travelWalkRate({ ...up, moving: false }), 0, 'the keys let go');
   assert.equal(travelWalkRate({ ...up, onFoot: false }), 0, 'swimming, at a helm or aboard: the keys are the sea\'s');
   assert.equal(travelWalkRate({ ...up, paused: true }), 0, 'a window');
-  assert.equal(travelWalkRate({ ...up, accel: 1 }), 0, 'a spinner at x1 is walking pace');
-  assert.equal(travelWalkRate({ ...up, accel: 0, limit: 0 }), 0, 'Travel Options off: no spinner, no speed');
+  assert.equal(travelWalkRate({ ...up, travels: false }), 0, 'Travel Options off: no fast travel by the keys');
   assert.equal(travelWalkRate(), 0);
   assert.deepEqual([...TV_MOVE_ACTIONS], ['MoveForwards', 'MoveBackwards', 'MoveLeft', 'MoveRight'], 'the four keys');
 });
@@ -41,7 +43,7 @@ test('TV-WASD: the bar says the speed, and the load governor\'s hold beside it',
 
 /** world.js's governor, mounted from its own source: `let tvHeld` through the end of travelViewGovern. */
 function mountGovernor(env) {
-  const from = WORLD.indexOf('  let tvFoeRate = ');   // ENEMY-PACE: the near-enemies pace and its floor ride in front of tvHeld
+  const from = WORLD.indexOf('  let tvHeld = null;');   // RATE-LAW: ENEMY-PACE's stepper rate is gone - its floor is travelThreat.js foePaced
   const fn = WORLD.indexOf('  function travelViewGovern(dt) {', from);
   const end = WORLD.indexOf('\n  }\n', fn) + 4;
   assert.ok(from >= 0 && fn > from && end > fn, 'the governor\'s source');
@@ -49,10 +51,11 @@ function mountGovernor(env) {
   return new Function(...names, `${WORLD.slice(from, end)}\nreturn { govern: travelViewGovern, holds: tvWalkHoldsTimeScale, walking: () => tvWalking, held: () => tvHeld };`)(...names.map((k) => env[k]));
 }
 
-function rig({ spinner = 10, limit = 100 } = {}) {
-  const w = { keys: new Set(), view: { active: true, state: 'up' }, journey: false, swimming: false, boat: null, paused: false, unbuilt: new Set() };
+function rig({ onRoad = false } = {}) {
+  const w = { keys: new Set(), view: { active: true, state: 'up' }, journey: false, swimming: false, boat: null, paused: false, unbuilt: new Set(), onRoad };
   const env = {
-    travelControlUI: { get isShowing() { return w.journey; }, timeAcceleration: spinner, accelerationLimit: () => limit },
+    travelControlUI: { get isShowing() { return w.journey; } },
+    travellerOnRoad: () => w.onRoad, foePaced,   // RATE-LAW: the ground the keys travel on; ENEMY-PACE's floor
     travelOptions: { get state() { return { autopilot: w.journey ? {} : null }; } },
     travelWalkRate, TV_MOVE_ACTIONS,
     travelView: w.view,   // a live object: the tests move its state
@@ -77,9 +80,13 @@ test('TV-WASD host: the world\'s own governor (mounted) runs the clock at the ke
   assert.equal(timeScale(), 1, 'no key held: walking pace');
   w.keys.add('MoveForwards');
   g.govern(1 / 60);
-  assert.equal(timeScale(), 10, 'W held: the spinner\'s x10');
-  assert.equal(g.walking(), 10);
+  assert.equal(timeScale(), 60, 'W held off the road: the open ground\'s x60');
+  assert.equal(g.walking(), 60);
   assert.equal(g.holds(), true, 'the frame\'s nets spare it');
+  w.onRoad = true;
+  g.govern(1 / 60);
+  assert.equal(timeScale(), 100, 'onto a road: the road\'s x100');
+  w.onRoad = false;
   w.keys.clear();
   g.govern(1 / 60);
   assert.equal(timeScale(), 1, 'let go: x1 at once');
@@ -97,7 +104,7 @@ test('TV-WASD host (AUDIT OW5 G4): the page losing the focus with a key held let
   try {
     w.keys.add('MoveForwards');
     g.govern(1 / 60);
-    assert.equal(timeScale(), 10, 'W held, the page focused: x10');
+    assert.equal(timeScale(), 60, 'W held, the page focused: x60');
     focused = false;
     g.govern(1 / 60);
     assert.equal(timeScale(), 1, 'the focus lost with W still held: x1 at once');
@@ -110,15 +117,15 @@ test('TV-WASD host (AUDIT OW5 G4): the page losing the focus with a key held let
 
 test('TV-WASD host: the load governor holds the keys\' travel to what the land raises, as it holds a journey - and the bar is told', () => {
   resetTimeScale();
-  const { w, g } = rig({ spinner: 40 });
+  const { w, g } = rig({ onRoad: true });
   w.keys.add('MoveLeft');
   w.unbuilt.add('101,200');   // a pixel of the ring the view can see, not yet raised
   g.govern(0.1);
-  assert.equal(timeScale(), 40, 'the first frame: the full speed');
+  assert.equal(timeScale(), 100, 'the first frame: the road\'s full speed');
   g.govern(TV_GOV_HOLD_S);
-  assert.equal(timeScale(), 20, 'the hole stood a quarter second: halved');
-  assert.equal(g.held(), 20, 'the bar says ×20 of ×40');
-  assert.equal(g.walking(), 40);
+  assert.equal(timeScale(), 50, 'the hole stood a quarter second: halved');
+  assert.equal(g.held(), 50, 'the bar says ×50 of ×100');
+  assert.equal(g.walking(), 100);
   resetTimeScale();
 });
 
@@ -127,14 +134,14 @@ test('TV-WASD host: a journey\'s ask wins over the keys; the view down, a window
   const { w, g } = rig();
   w.keys.add('MoveForwards');
   g.govern(1 / 60);
-  assert.equal(timeScale(), 10);
+  assert.equal(timeScale(), 60);
   w.journey = true;
   g.govern(1 / 60);
-  assert.equal(timeScale(), 20, 'the journey\'s own ask (the mod\'s x20)');
+  assert.equal(timeScale(), 20, 'the journey\'s own ask (the mod\'s x20, a ring walk under its ceiling)');
   assert.equal(g.walking(), 0);
   w.journey = false;
   g.govern(1 / 60);
-  assert.equal(timeScale(), 10);
+  assert.equal(timeScale(), 60);
   for (const [what, set, unset] of [
     ['a window', () => { w.paused = true; }, () => { w.paused = false; }],
     ['swimming', () => { w.swimming = true; }, () => { w.swimming = false; }],
@@ -146,7 +153,7 @@ test('TV-WASD host: a journey\'s ask wins over the keys; the view down, a window
     assert.equal(timeScale(), 1, what);
     unset();
     g.govern(1 / 60);
-    assert.equal(timeScale(), 10, `${what} over: the keys travel again`);
+    assert.equal(timeScale(), 60, `${what} over: the keys travel again`);
   }
   // a door cuts the view before the frame's net asks (world.js AUDIT DEEP X-1): the scale is no longer spared
   w.view.active = false;

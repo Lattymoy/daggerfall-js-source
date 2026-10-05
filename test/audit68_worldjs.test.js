@@ -110,10 +110,10 @@ test('AUDIT 68 X4-foe-sink-provenance-dropped: the router hands the provenance t
   inside({ entity: mkEntity() }, false).hurt(6);
   inside({ entity: mkEntity(), _encounter: true }, false).hurt(4);
   inside({ entity: mkEntity() }).hurt(2);
-  assert.deepEqual(seen, [
-    { pool: 'watch', n: 6, opts: { fromPlayer: false } },
-    { pool: 'encounter', n: 4, opts: { fromPlayer: false, kind: 'spell' } },
-    { pool: 'watch', n: 2, opts: { fromPlayer: true } },
+  assert.deepEqual(seen, [   // PIN MOVED (TELL1: the blow's kind reaches the watch's door too, and whether it is a later round) (RVN3: and an encounter's a kill's whole and a landing's element)
+    { pool: 'watch', n: 6, opts: { fromPlayer: false, kind: 'spell', round: false } },
+    { pool: 'encounter', n: 4, opts: { fromPlayer: false, kind: 'spell', whole: false, round: false, element: null } },
+    { pool: 'watch', n: 2, opts: { fromPlayer: true, kind: 'spell', round: false } },
   ]);
   // and the dungeon's door onto its own sinks carries the second argument
   const dc = read('src/scenes/dungeonContext.js');

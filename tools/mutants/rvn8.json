@@ -1,0 +1,308 @@
+[
+  {
+    "name": "RVN8-cap-moved",
+    "file": "src/systems/revenantFeud.js",
+    "old": "export const TOOK_MAX = 3;",
+    "new": "export const TOOK_MAX = 4;",
+    "tests": [
+      "test/rvn8_took.test.js"
+    ]
+  },
+  {
+    "name": "RVN8-takes-quest",
+    "file": "src/systems/revenant.js",
+    "old": "  && !item.questItem && !isSummoned(item) && !isGoldPieces(item) && !isBagItem(item) && !isLocked(item);",
+    "new": "  && !isSummoned(item) && !isGoldPieces(item) && !isBagItem(item) && !isLocked(item);",
+    "tests": [
+      "test/rvn8_took.test.js"
+    ]
+  },
+  {
+    "name": "RVN8-takes-summoned",
+    "file": "src/systems/revenant.js",
+    "old": "  && !item.questItem && !isSummoned(item) && !isGoldPieces(item) && !isBagItem(item) && !isLocked(item);",
+    "new": "  && !item.questItem && !isGoldPieces(item) && !isBagItem(item) && !isLocked(item);",
+    "tests": [
+      "test/rvn8_took.test.js"
+    ]
+  },
+  {
+    "name": "RVN8-takes-gold",
+    "file": "src/systems/revenant.js",
+    "old": "  && !item.questItem && !isSummoned(item) && !isGoldPieces(item) && !isBagItem(item) && !isLocked(item);",
+    "new": "  && !item.questItem && !isSummoned(item) && !isBagItem(item) && !isLocked(item);",
+    "tests": [
+      "test/rvn8_took.test.js"
+    ]
+  },
+  {
+    "name": "RVN8-takes-bag",
+    "file": "src/systems/revenant.js",
+    "old": "  && !item.questItem && !isSummoned(item) && !isGoldPieces(item) && !isBagItem(item) && !isLocked(item);",
+    "new": "  && !item.questItem && !isSummoned(item) && !isGoldPieces(item) && !isLocked(item);",
+    "tests": [
+      "test/rvn8_took.test.js"
+    ]
+  },
+  {
+    "name": "RVN8-takes-locked",
+    "file": "src/systems/revenant.js",
+    "old": "!isBagItem(item) && !isLocked(item);",
+    "new": "!isBagItem(item);",
+    "tests": [
+      "test/rvn8_took.test.js"
+    ]
+  },
+  {
+    "name": "RVN8-pool-six",
+    "file": "src/systems/revenant.js",
+    "old": ".sort((a, b) => itemValueOf(b) - itemValueOf(a)).slice(0, 5);",
+    "new": ".sort((a, b) => itemValueOf(b) - itemValueOf(a)).slice(0, 6);",
+    "tests": [
+      "test/rvn8_took.test.js"
+    ]
+  },
+  {
+    "name": "RVN8-pool-least",
+    "file": "src/systems/revenant.js",
+    "old": ".sort((a, b) => itemValueOf(b) - itemValueOf(a)).slice(0, 5);",
+    "new": ".sort((a, b) => itemValueOf(a) - itemValueOf(b)).slice(0, 5);",
+    "tests": [
+      "test/rvn8_took.test.js"
+    ]
+  },
+  {
+    "name": "RVN8-weapon-left-out",
+    "file": "src/systems/revenant.js",
+    "old": "  const pool = [...(revenantMayTake(weapon) ? [weapon] : []), ...pack];",
+    "new": "  const pool = [...pack];",
+    "tests": [
+      "test/rvn8_took.test.js"
+    ]
+  },
+  {
+    "name": "RVN8-weapon-any",
+    "file": "src/systems/revenant.js",
+    "old": "  const pool = [...(revenantMayTake(weapon) ? [weapon] : []), ...pack];",
+    "new": "  const pool = [...(weapon ? [weapon] : []), ...pack];",
+    "tests": [
+      "test/rvn8_took.test.js"
+    ]
+  },
+  {
+    "name": "RVN8-draw-off-id",
+    "file": "src/systems/revenant.js",
+    "old": "idStream(id, `took:${kills | 0}`)",
+    "new": "idStream('rvn8', `took:${kills | 0}`)",
+    "tests": [
+      "test/rvn8_took.test.js"
+    ]
+  },
+  {
+    "name": "RVN8-draw-off-count",
+    "file": "src/systems/revenant.js",
+    "old": "idStream(id, `took:${kills | 0}`)",
+    "new": "idStream(id, 'took')",
+    "tests": [
+      "test/rvn8_took.test.js"
+    ]
+  },
+  {
+    "name": "RVN8-offline",
+    "file": "src/systems/revenant.js",
+    "old": "  if (!online || !s || !revenantOn() || !player) return null;",
+    "new": "  if (!s || !revenantOn() || !player) return null;",
+    "tests": [
+      "test/rvn8_took.test.js"
+    ]
+  },
+  {
+    "name": "RVN8-twice",
+    "file": "src/systems/revenant.js",
+    "old": "  const s = _lastSlew;\n  _lastSlew = null;\n",
+    "new": "  const s = _lastSlew;\n",
+    "tests": [
+      "test/rvn8_took.test.js"
+    ]
+  },
+  {
+    "name": "RVN8-switch-unread",
+    "file": "src/systems/revenant.js",
+    "old": "  if (!online || !s || !revenantOn() || !player) return null;",
+    "new": "  if (!online || !s || !player) return null;",
+    "tests": [
+      "test/rvn8_took.test.js"
+    ]
+  },
+  {
+    "name": "RVN8-sworn-takes",
+    "file": "src/systems/revenant.js",
+    "old": "  const r = revenantById(s.id);\n  if (!r || r.defeated || r.sworn) return null;\n  if ((r.took",
+    "new": "  const r = revenantById(s.id);\n  if (!r || r.defeated) return null;\n  if ((r.took",
+    "tests": [
+      "test/rvn8_took.test.js"
+    ]
+  },
+  {
+    "name": "RVN8-past-three",
+    "file": "src/systems/revenant.js",
+    "old": "  if ((r.took?.length ?? 0) >= TOOK_MAX) return { r, item: null, line: null };\n",
+    "new": "",
+    "tests": [
+      "test/rvn8_took.test.js"
+    ]
+  },
+  {
+    "name": "RVN8-left-equipped",
+    "file": "src/systems/revenant.js",
+    "old": "  unequipItem(player, item);\n  const i = (player.items",
+    "new": "  const i = (player.items",
+    "tests": [
+      "test/rvn8_took.test.js"
+    ]
+  },
+  {
+    "name": "RVN8-left-in-pack",
+    "file": "src/systems/revenant.js",
+    "old": "  if (i >= 0) player.items.splice(i, 1);\n  r.took = [...(r.took ?? []), item];",
+    "new": "  r.took = [...(r.took ?? []), item];",
+    "tests": [
+      "test/rvn8_took.test.js"
+    ]
+  },
+  {
+    "name": "RVN8-body-empty",
+    "file": "src/systems/revenant.js",
+    "old": "  if (body) carryTaken(body);   // the killer standing over my body carries it now",
+    "new": "",
+    "tests": [
+      "test/rvn8_took.test.js"
+    ]
+  },
+  {
+    "name": "RVN8-line-moved",
+    "file": "src/systems/revenant.js",
+    "old": "line: `${r.name} took your ${takenName(item)}.` };",
+    "new": "line: `${r.given} took your ${takenName(item)}.` };",
+    "tests": [
+      "test/rvn8_took.test.js"
+    ]
+  },
+  {
+    "name": "RVN8-slew-unremembered",
+    "file": "src/systems/revenant.js",
+    "old": "r.notice = 'slew'; _lastSlew = { id: r.id, at: Date.now() }; }",
+    "new": "r.notice = 'slew'; }",
+    "tests": [
+      "test/rvn8_took.test.js"
+    ]
+  },
+  {
+    "name": "RVN8-not-carried",
+    "file": "src/systems/revenant.js",
+    "old": "  carryTaken(entity);   // RVN8: what it took of mine, in its pack at every stand\n",
+    "new": "",
+    "tests": [
+      "test/rvn8_took.test.js"
+    ]
+  },
+  {
+    "name": "RVN8-carried-dup-guard",
+    "file": "src/systems/revenant.js",
+    "old": "  for (const it of r.took) if (!entity.items.includes(it)) entity.items.push(it);   // each piece once, whoever asks again",
+    "new": "  for (const it of r.took) entity.items.push(it);",
+    "tests": [
+      "test/rvn8_took.test.js"
+    ]
+  },
+  {
+    "name": "RVN8-kept-when-slain",
+    "file": "src/systems/revenant.js",
+    "old": "  if (entity._tookCarried) r.took = [];   // RVN8",
+    "new": "  if (false) r.took = [];   // RVN8",
+    "tests": [
+      "test/rvn8_took.test.js"
+    ]
+  },
+  {
+    "name": "RVN8-lost-when-slain-bare",
+    "file": "src/systems/revenant.js",
+    "old": "  if (entity._tookCarried) r.took = [];   // RVN8",
+    "new": "  r.took = [];   // RVN8",
+    "tests": [
+      "test/rvn8_took.test.js"
+    ]
+  },
+  {
+    "name": "RVN8-cap-buries",
+    "file": "src/systems/revenant.js",
+    "old": "!x.out && !x.took?.length).sort(",
+    "new": "!x.out).sort(",
+    "tests": [
+      "test/rvn8_took.test.js"
+    ]
+  },
+  {
+    "name": "RVN8-mirror-wins",
+    "file": "src/systems/revenant.js",
+    "old": "    r.took = s?.took ? s.took.slice() : [];   // RVN8",
+    "new": "    // RVN8",
+    "tests": [
+      "test/rvn8_took.test.js"
+    ]
+  },
+  {
+    "name": "RVN8-handback-kept",
+    "file": "src/systems/revenant.js",
+    "old": "    if (entity?.items) { const i = entity.items.indexOf(it); if (i >= 0) entity.items.splice(i, 1); }\n",
+    "new": "",
+    "tests": [
+      "test/rvn8_took.test.js"
+    ]
+  },
+  {
+    "name": "RVN8-handback-uncleared",
+    "file": "src/systems/revenant.js",
+    "old": "  r.took = [];\n  touch(r);\n  persist();\n  return back;",
+    "new": "  touch(r);\n  persist();\n  return back;",
+    "tests": [
+      "test/rvn8_took.test.js"
+    ]
+  },
+  {
+    "name": "RVN8-handback-unwired",
+    "file": "src/systems/revenantFate.js",
+    "old": "  const back = revenantHandBack(player, r, f.entity);",
+    "new": "  const back = [];",
+    "tests": [
+      "test/rvn8_took.test.js"
+    ]
+  },
+  {
+    "name": "RVN8-handback-unsaid",
+    "file": "src/systems/revenantFate.js",
+    "old": "    + (back.length ? ` It hands back your ${back.map((it) => takenName(it)).join(' and ')}: \"It's yours. It always was.\"` : '');",
+    "new": "    + '';",
+    "tests": [
+      "test/rvn8_took.test.js"
+    ]
+  },
+  {
+    "name": "RVN8-respawn-unwired",
+    "file": "src/scenes/world.js",
+    "old": "    const took = revenantTakes(playerEntity, { online: true });",
+    "new": "    const took = null;",
+    "tests": [
+      "test/rvn8_took.test.js"
+    ]
+  },
+  {
+    "name": "RVN8-wake-unsaid",
+    "file": "src/scenes/world.js",
+    "old": "deathPenaltyText(goldLost), took?.line].filter(Boolean)",
+    "new": "deathPenaltyText(goldLost)].filter(Boolean)",
+    "tests": [
+      "test/rvn8_took.test.js"
+    ]
+  }
+]

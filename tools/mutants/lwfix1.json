@@ -1,0 +1,111 @@
+[
+  {
+    "name": "LW-FIX1-dungeon",
+    "file": "src/scenes/world.js",
+    "old": "    const loc = modes?.dungeonCtx?.abyss?.location?.();",
+    "new": "    const loc = modes?.dungeonCtx?.location?.();",
+    "tests": [
+      "test/lw6_deep.test.js",
+      "test/lwfix1_review.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX1-town",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "keepsakeFor(this.o.keepsakes?.() ?? [], res.town, res.home, res.id, (id) => this._homeOfPlace(id));",
+    "new": "keepsakeFor(this.o.keepsakes?.() ?? [], this.o.town.mapId, res.home, res.id, (id) => this._homeOfPlace(id));",
+    "tests": [
+      "test/lwfix1_review.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX1-household-town",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    for (const k of this.kinOf(res)) if (k.town === res.town) rel?.note(k.id, 'helped', day);",
+    "new": "    for (const k of this.kinOf(res)) rel?.note(k.id, 'helped', day);",
+    "tests": [
+      "test/lwfix1_review.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX1-walker-place",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "if (!want.has(id) && unseen(placeOf(s))) stood.delete(id);",
+    "new": "if (!want.has(id) && unseen(room.spots[s.spot])) stood.delete(id);",
+    "tests": [
+      "test/lwfix1_review.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX1-round-deal",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "        if (dealt === undefined) {",
+    "new": "        if (true) {",
+    "tests": [
+      "test/lwfix1_review.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX1-gone",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "          if (!c.members.every((m) => at.some((x) => x.id === m.id))) continue;",
+    "new": "          void 0;",
+    "tests": [
+      "test/lwfix1_review.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX1-slain",
+    "file": "src/scenes/world.js",
+    "old": " && !turns.spared.has(key) && !turns.slain.has(key) && !turns.died.has(key) && !livingDivers",
+    "new": " && !turns.spared.has(key) && !turns.died.has(key) && !livingDivers",
+    "tests": [
+      "test/lwfix1_review.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX1-died",
+    "file": "src/scenes/world.js",
+    "old": " && !turns.spared.has(key) && !turns.slain.has(key) && !turns.died.has(key) && !livingDivers",
+    "new": " && !turns.spared.has(key) && !turns.slain.has(key) && !livingDivers",
+    "tests": [
+      "test/lwfix1_review.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX1-books-remains",
+    "file": "src/scenes/world.js",
+    "old": "      livingTurnsFresh();   // LW-FIX1: a turn made below",
+    "new": "      void 0;   // LW-FIX1: a turn made below",
+    "tests": [
+      "test/lwfix1_review.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX1-books-divers",
+    "file": "src/scenes/world.js",
+    "old": "      livingTurnsFresh();   // LW-FIX1: the books fresh below too",
+    "new": "      void 0;   // LW-FIX1: the books fresh below too",
+    "tests": [
+      "test/lwfix1_review.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX1-empty-mode",
+    "file": "src/scenes/world.js",
+    "old": "_mode() !== 'interior') { if (livingIndoors?.size || livingIndoors?.spots().length) livingIndoors.clear(); return; }",
+    "new": "_mode() !== 'interior') { if (livingIndoors?.size) livingIndoors.clear(); return; }",
+    "tests": [
+      "test/lwfix1_review.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX1-empty-street",
+    "file": "src/scenes/world.js",
+    "old": "    if (livingIndoors?.size || livingIndoors?.spots().length) livingIndoors.clear();   // LW8: the street again",
+    "new": "    if (livingIndoors?.size) livingIndoors.clear();   // LW8: the street again",
+    "tests": [
+      "test/lwfix1_review.test.js"
+    ]
+  }
+]

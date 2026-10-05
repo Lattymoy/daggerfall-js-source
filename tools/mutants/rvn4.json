@@ -1,0 +1,445 @@
+[
+  {
+    "name": "RVN4-the-rank-floor-moved",
+    "file": "src/systems/revenantFeud.js",
+    "old": "export const LAST_STAND_RANK = 3;",
+    "new": "export const LAST_STAND_RANK = 2;",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-rank-4-share-moved",
+    "file": "src/systems/revenantFeud.js",
+    "old": "export const LAST_STAND_HEALTH = Object.freeze({ 3: 0.3, 4: 0.35, 5: 0.4 });",
+    "new": "export const LAST_STAND_HEALTH = Object.freeze({ 3: 0.3, 4: 0.3, 5: 0.4 });",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-the-roar-moved",
+    "file": "src/systems/revenantFeud.js",
+    "old": "export const LAST_STAND_ROAR = 1.2;",
+    "new": "export const LAST_STAND_ROAR = 0.8;",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-blows-moved",
+    "file": "src/systems/revenantFeud.js",
+    "old": "  BLOWS: 1.2,                   // its blows (damageScale)",
+    "new": "  BLOWS: 1.1,                   // its blows (damageScale)",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-the-share-unread",
+    "file": "src/systems/revenantFeud.js",
+    "old": "export const lastStandHealth = (rank) => LAST_STAND_HEALTH[Math.min(5, rank | 0)] ?? 0;",
+    "new": "export const lastStandHealth = (rank) => LAST_STAND_HEALTH[3];",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-phase-two-chains-one",
+    "file": "src/systems/revenantFeud.js",
+    "old": "chainMax: PHASE_TWO.CHAIN_MAX, iron:",
+    "new": "chainMax: 1, iron:",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-the-rim-always",
+    "file": "src/systems/revenantFeud.js",
+    "old": "export const lastStandGlint = (entity) => (entity?.revenant?.p2 ? PHASE_TWO.GLINT : null);",
+    "new": "export const lastStandGlint = (entity) => PHASE_TWO.GLINT;",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-the-size-unread",
+    "file": "src/systems/revenantFeud.js",
+    "old": "export const lastStandSize = (entity) => entity?.revenant?.p2?.size ?? 1;",
+    "new": "export const lastStandSize = (entity) => 1;",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-twice-a-stand",
+    "file": "src/systems/revenantFate.js",
+    "old": "  if (!id || f._lastStood || f.puppet",
+    "new": "  if (!id || f.puppet",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-the-rank-unread",
+    "file": "src/systems/revenantFate.js",
+    "old": "  return !!r && !r.defeated && !r.sworn && (r.rank | 0) >= LAST_STAND_RANK;",
+    "new": "  return !!r && !r.defeated && !r.sworn;",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-once-unmarked",
+    "file": "src/systems/revenantFate.js",
+    "old": "  f._lastStood = true;\n  f.fleeing = false;",
+    "new": "  f.fleeing = false;",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-the-health-unset",
+    "file": "src/systems/revenantFate.js",
+    "old": "  e.health = Math.max(1, Math.round((e.maxHealth || 1) * lastStandHealth(r?.rank)));",
+    "new": "  e.health = 1;",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-no-roar",
+    "file": "src/systems/revenantFate.js",
+    "old": "  f.roaring = { at: now, until: now + LAST_STAND_ROAR * 1000 };\n",
+    "new": "",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-no-motor-hold",
+    "file": "src/systems/revenantFate.js",
+    "old": "{ f.ai.roarUntil = clock + LAST_STAND_ROAR; f.ai._blowHold = true; f._roarHeld = true; }",
+    "new": "{ f.ai._blowHold = true; f._roarHeld = true; }",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-the-swing-unraised",
+    "file": "src/systems/revenantFate.js",
+    "old": "{ f.ai.roarUntil = clock + LAST_STAND_ROAR; f.ai._blowHold = true; f._roarHeld = true; }",
+    "new": "{ f.ai.roarUntil = clock + LAST_STAND_ROAR; }",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-held-besides",
+    "file": "src/systems/revenantFate.js",
+    "old": "  if (!(typeof roar === 'function' && roar(LAST_STAND_ROAR)) && f.ai) {",
+    "new": "  if (f.ai) {",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-phase-two-unstood",
+    "file": "src/systems/revenantFate.js",
+    "old": "  e.revenant = { ...e.revenant, p2: phaseTwo() };\n",
+    "new": "",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-the-blows-unscaled",
+    "file": "src/systems/revenantFate.js",
+    "old": "* PHASE_TWO.BLOWS;",
+    "new": "* 1;",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-the-speed-unstood",
+    "file": "src/systems/revenantFate.js",
+    "old": "  if (e.stats) e.stats.speed = (e.stats.speed ?? 0) + PHASE_TWO.SPEED;\n",
+    "new": "",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-the-deed-unwritten",
+    "file": "src/systems/revenantFate.js",
+    "old": "  const rr = revenantLastStand(player, e);",
+    "new": "  const rr = revenantById(e?.revenant?.id);",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-the-roar-never-spent",
+    "file": "src/systems/revenantFate.js",
+    "old": "  if (f?.roaring && now >= f.roaring.until) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-the-swing-kept",
+    "file": "src/systems/revenantFate.js",
+    "old": "    if (f._roarHeld) { f._roarHeld = false; if (f.ai) f.ai._blowHold = 'cancel'; }",
+    "new": "    if (f._roarHeld) { f._roarHeld = false; }",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-the-card-unsaid",
+    "file": "src/systems/revenant.js",
+    "old": "  const body = `${r.given} rises again - its last stand.`;",
+    "new": "  const body = `${r.given} fights on.`;",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-the-kicker",
+    "file": "src/systems/revenant.js",
+    "old": "weakness: 'Weakness', unbroken: 'Unbroken', laststand: 'Last stand',",
+    "new": "weakness: 'Weakness', unbroken: 'Unbroken',",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-windup-unread",
+    "file": "src/ai/tells.js",
+    "old": "  if (ent?.revenant?.p2?.windup > 0) w *= ent.revenant.p2.windup;   // RVN4: phase two's quicker wind-ups\n",
+    "new": "",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-cooldown-unread",
+    "file": "src/ai/tells.js",
+    "old": "* (ent?.revenant?.p2?.cooldown > 0 ? ent.revenant.p2.cooldown : 1);   // RVN4: phase two's x0.7",
+    "new": ";   // RVN4: phase two's x0.7",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-iron-unread",
+    "file": "src/ai/tells.js",
+    "old": ", ent?.revenant?.p2?.iron > 0 ? ent.revenant.p2.iron : 0);   // RVN4: phase two's half",
+    "new": ");   // RVN4: phase two's half",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-chainmax-unread",
+    "file": "src/ai/tells.js",
+    "old": "export const chainMax = (ent) => (ent?.revenant?.p2?.chainMax > 0 ? ent.revenant.p2.chainMax : 1);",
+    "new": "export const chainMax = (ent) => 1;",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-the-brain-chains-one",
+    "file": "src/ai/tactics.js",
+    "old": "(b.chain ?? 0) < chainMax(ent) && chains(",
+    "new": "(b.chain ?? 0) < 1 && chains(",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-no-ring",
+    "file": "src/ai/tactics.js",
+    "old": "  if (!s || s.puppet || !ent || !tacticsSwitchOn()) return false;\n  if (s.blow)",
+    "new": "  if (true) return false;\n  if (s.blow)",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-the-ring-not-iron",
+    "file": "src/ai/tactics.js",
+    "old": "makeBlow('ring', ai.feet, ai.yaw, now, IRON_COLOR, 'iron', seconds)",
+    "new": "makeBlow('ring', ai.feet, ai.yaw, now, IRON_COLOR, 'poise', seconds)",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-the-ring-its-own-length",
+    "file": "src/ai/tactics.js",
+    "old": "makeBlow('ring', ai.feet, ai.yaw, now, IRON_COLOR, 'iron', seconds)",
+    "new": "makeBlow('ring', ai.feet, ai.yaw, now, IRON_COLOR, 'iron')",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ],
+    "equivalent": true,
+    "why": "The ring's own iron wind-up (BLOW.ring 1.0 s + TELL_IRON_EXTRA 0.2 s) is 1.2 s - the roar's length today, so no pin can tell the passed length from the shape's. The roar's own mutant (RVN4-the-roar-moved) is killed: were the two numbers to part, the pin on the ring's length against LAST_STAND_ROAR would catch it."
+  },
+  {
+    "name": "RVN4-the-motor-unheld",
+    "file": "src/characters/enemyMotor.js",
+    "old": "    const locked = staggered || overreached || (this.roarUntil > 0 && tacticsNow() < this.roarUntil);   // RVN4: a roar's hold",
+    "new": "    const locked = staggered || overreached;   // RVN4: a roar's hold",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-the-street-stand-unasked",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (!_whole && f.entity?.revenant?.id && revenantLastStandDue(f)) { lastStand(f); return; }\n",
+    "new": "",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-the-street-whole-stood",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (!_whole && f.entity?.revenant?.id && revenantLastStandDue(f)) { lastStand(f); return; }",
+    "new": "      if (f.entity?.revenant?.id && revenantLastStandDue(f)) { lastStand(f); return; }",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-the-street-roar-touchable",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    if (f.yielded || f.executing || f.sparing || f.leaving || f.roaring) return;",
+    "new": "    if (f.yielded || f.executing || f.sparing || f.leaving) return;",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-the-street-roar-unspent",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (f.roaring) roarStep(f);   // RVN4: its roar spent - blows reach it again\n",
+    "new": "",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-the-street-no-ring",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "roar: (s) => beginRoar(f.ai, f.entity, s), rolls });",
+    "new": "roar: null, rolls });",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-the-street-rim",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "prefersReducedMotion()) ?? lastStandGlint(f.entity));   // TELL2: a wind-up's glint on the body; RVN4",
+    "new": "prefersReducedMotion()));   // TELL2: a wind-up's glint on the body; RVN4",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-the-street-size",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      const szE = eliteSize(f.entity) * lastStandSize(f.entity);",
+    "new": "      const szE = eliteSize(f.entity);",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-the-dungeon-stand-unasked",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (!_whole && foe.entity?.revenant?.id && (!onlineRoom() || !isRoomFoe(foe)) && revenantLastStandDue(foe)) { lastStandDungeonFoe(foe); return; }\n",
+    "new": "",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-the-dungeon-room-stood",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (!_whole && foe.entity?.revenant?.id && (!onlineRoom() || !isRoomFoe(foe)) && revenantLastStandDue(foe))",
+    "new": "      if (!_whole && foe.entity?.revenant?.id && revenantLastStandDue(foe))",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-the-dungeon-roar-touchable",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (foe.yielded || foe.executing || foe.sparing || foe.leaving || foe.roaring) return;",
+    "new": "    if (foe.yielded || foe.executing || foe.sparing || foe.leaving) return;",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-the-dungeon-roar-unspent",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (f.roaring) roarStep(f);   // RVN4: its roar spent - blows reach it again\n",
+    "new": "",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-the-dungeon-rim",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "prefersReducedMotion()) ?? lastStandGlint(f.entity));   // TELL2: a wind-up's glint on the body; RVN4",
+    "new": "prefersReducedMotion()));   // TELL2: a wind-up's glint on the body; RVN4",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-the-dungeon-size",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "        const szE = eliteSize(f.entity) * lastStandSize(f.entity);",
+    "new": "        const szE = eliteSize(f.entity);",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-the-spell-reaches-a-roar",
+    "file": "src/scenes/hostMagic.js",
+    "old": "|| foe?.leaving || foe?.roaring) return null;",
+    "new": "|| foe?.leaving) return null;",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-the-shaft-reaches-a-roar",
+    "file": "src/combat/arrowFlight.js",
+    "old": "|| foe.leaving || foe.roaring) return 0;",
+    "new": "|| foe.leaving) return 0;",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RVN4-the-page-at-rank-2",
+    "file": "src/ui/revenantPage.js",
+    "old": "((r?.rank | 0) >= LAST_STAND_RANK ?",
+    "new": "((r?.rank | 0) >= 2 ?",
+    "tests": [
+      "test/rvn4_stand.test.js"
+    ]
+  }
+]

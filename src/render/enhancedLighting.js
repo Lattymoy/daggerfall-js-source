@@ -70,7 +70,7 @@ import { CLOUD_SHADOW_GLSL } from './cloudShadow.js';   // AUDIT 68 S16-el-cloud
 import { CLUSTER_X, CLUSTER_Y, CLUSTER_Z, CLUSTER_LIST_W, clustersOn } from './lightClusters.js';   // LC1: the grid the lantern loop walks, and its door   // EL6: the dither at the encode - the port's one Bayer
 import { SHADE_DARK } from '../systems/concealDraw.js';   // AUDIT-EL F14: the shade's pull toward black, interpolated as the classic BB_FS does   // EL3: the ambient occlusion image by screen position, and its kill door; EL4: the adapted exposure
 import { FLAT_DISSOLVE_GLSL } from '../systems/dissolve.js';   // DISSOLVE: the classic BB_FS's own
-import { HIT_FLASH_GLSL, ELITE_GLOW_GLSL } from '../systems/hitFlash.js';   // HITFLASH1: the struck-red term, the classic BB_FS's own
+import { HIT_FLASH_GLSL, ELITE_GLOW_GLSL, GLINT_GLSL } from '../systems/hitFlash.js';   // HITFLASH1: the struck-red term, the classic BB_FS's own
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
 
 /** The lane's light cap - the classic lane's sixteen, tripled. Forty-eight
@@ -629,6 +629,7 @@ uniform vec4 uConceal;
 uniform float uHitFlash;   // HITFLASH1
 uniform float uEliteGlow;  // ELITE FOES
 uniform float uEliteTime;  // ELITE FOES: the embers' clock
+uniform vec4 uGlint;  // TELL2: a wind-up's glint (render/renderer.js BB_FS) - rgb in display colour, decoded below
 uniform vec4 uDissolve;  // DISSOLVE: the burn's share and its edge (systems/dissolve.js)
 uniform vec3 uBatchTint;  // ARENA5: the batch's own wash (batch.tint), in display colour - decoded below as every colour the lane takes
 uniform vec3 uTint;
@@ -652,6 +653,7 @@ ${EL_POINT_LIT_GLSL}
 ${COLUMN_GLSL}
 ${HIT_FLASH_GLSL}
 ${ELITE_GLOW_GLSL}
+${GLINT_GLSL}
 ${FLAT_DISSOLVE_GLSL}
 out vec4 outColor;
 void main() {
@@ -663,6 +665,8 @@ void main() {
   vec3 emissionTexel = texture(uEmissionTex, uv).rgb;
 ${LPT_FS_KEEP}  if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) tex = vec4(0.0);   // ELITE FOES: the widened quad's margin is empty; ECV1: nor the ripple's reach past the edge
 ${LPT_FS_TEXEL}  if (tex.a < ((uSpectral == 1 || uConceal.x > 0.0) ? 0.1 : 0.5)) {
+    // TELL2: a wind-up's glint outlines the sprite in its blow's colour, in display colour as the elite rim (over it while it lasts)
+    if (uGlint.a > 0.0 && uConceal.x == 0.0 && uDissolve.x <= 0.0 && eliteRim(uTex, uv) > 0.0) { outColor = vec4(dwColumn(dwWaterFog(mix(uFogColor, glintRimColor(uGlint), fogFactorAt(vBBWorld)), vBBWorld), vBBWorld), 1.0); return; }
     // ELITE FOES: the rim and the embers, bright enough in linear light for the bloom to catch
     if (uEliteGlow != 0.0 && uConceal.x == 0.0 && uDissolve.x <= 0.0) {   // negative: an elite's corpse - the rim alone; DISSOLVE: none round a body burning away or through a portal
       if (eliteRim(uTex, uv) > 0.0) { outColor = vec4(dwColumn(dwWaterFog(mix(uFogColor, min(eliteRimColor(eliteRimK(uEliteGlow, uEliteTime)), vec3(1.0)), fogFactorAt(vBBWorld)), vBBWorld), vBBWorld), 1.0); return; }   // in DISPLAY colour, past the exposure: through the tone curve a dark dungeon's exposure took it to white (Mac's screenshot) - this is the classic lane's blue
@@ -695,6 +699,7 @@ ${LPT_FS_TEXEL}  if (tex.a < ((uSpectral == 1 || uConceal.x > 0.0) ? 0.1 : 0.5))
   if (uConceal.x == 2.0) lit *= ${SHADE_DARK};   // AUDIT-EL F14: a uniform nothing uploaded read 0 - every shade a black cut-out
   if (uConceal.x == 5.0) lit = mix(lit, vec3(0.95, 0.06, 0.04), uConceal.z);   // PEERFX3's mode, which this lane never drew
   lit = eliteGlowLit(lit, albedo + emission, max(uEliteGlow, 0.0));   // ELITE FOES (never a corpse)
+  lit = glintLit(lit, albedo + emission, vec4(elDecode(uGlint.rgb), uGlint.a));   // TELL2: the body lifted toward its blow's colour, in the lane's linear light
   lit = hitFlashLit(lit, albedo + emission, uHitFlash);   // HITFLASH1: a struck body's red - the lane had no flash at all
   lit = dissolveLit(lit, uv, elDecode(uDissolve.yzw));   // DISSOLVE: the burning edge, its colour decoded into the lane's linear light (the bloom catches it)
   if (uConceal.x == 4.0) lit = vec3(0.0);

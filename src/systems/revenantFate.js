@@ -21,14 +21,15 @@
 //
 // PURE but for the clock and the records it is handed - the pools (scenes/exteriorFoes.js, scenes/dungeonContext.js)
 // call in, and draw what it answers.
-import { revenantById, revenantOn, revenantYielded, revenantExecuted, revenantSpared, revenantMomentEvent, revenantPortrait, revenantRankNumeral } from './revenant.js';
+import { takenName, revenantHandBack, revenantById, revenantOn, revenantYielded, revenantExecuted, revenantSpared, revenantMomentEvent, revenantPortrait, revenantRankNumeral, revenantLastStand, revenantLastStandEvent } from './revenant.js';
 import { revenantTrophy, trophyKindWords } from './revenantTrophy.js';
 import { PERSONALITIES } from './revenantPersonality.js';
-import { retinueHasRoom, swornPlace, REVENANT_RETINUE_MAX, setRetinuePlayer, holdSworn } from './revenantCompanions.js';
+import { retinueHasRoom, swornPlace, REVENANT_RETINUE_MAX, setRetinuePlayer, holdSworn, swornWitness } from './revenantCompanions.js';
 import { companionsWithYou, COMPANION_SLOTS } from './companionSlots.js';
 import { enemyDisplayName } from '../characters/enemyBasics.js';
 import { DISSOLVE_EMBER, DISSOLVE_ARCANE } from './dissolve.js';
 import { clearPlayerHarm } from './harmMark.js';   // AUDIT (2026-10-02): a beaten one's harm is no one's death
+import { willMatters, willBroken, LAST_STAND_RANK, LAST_STAND_ROAR, PHASE_TWO, lastStandHealth, phaseTwo } from './revenantFeud.js';   // RVN3: the will (bible/12-Enhanced-AI/Feud-Arc.md 14.2); RVN4: the last stand (15)
 
 /** How long a beaten revenant kneels before it slips away (ms). */
 export const REVENANT_YIELD_MS = 90000;
@@ -48,6 +49,64 @@ export function revenantMayYield(f) {
   return !!r && !r.defeated && !r.sworn;
 }
 
+/** RVN4 (bible/12-Enhanced-AI/Feud-Arc.md 15.1): IS ITS LAST STAND DUE - one of my own revenants (never a puppet, a
+ *  companion, one held by its fate) of rank LAST_STAND_RANK and up, not stood in this stand yet? */
+export function revenantLastStandDue(f) {
+  const id = f?.entity?.revenant?.id;
+  if (!id || f._lastStood || f.puppet || f.companion != null || fateHeld(f) || !revenantOn()) return false;
+  const r = revenantById(id);
+  return !!r && !r.defeated && !r.sworn && (r.rank | 0) >= LAST_STAND_RANK;
+}
+/** RVN4 (15.2): ITS LAST STAND - the blow that would kneel or kill it brings it back to its rank's share of its health;
+ *  its ROAR (`f.roaring`, LAST_STAND_ROAR): no blow reaches it - the pools hold its motor (`ai.roarUntil`, the brain's
+ *  clock) unless `roar(seconds)` (the brain's iron ring, the Enhanced AI switch on) answers it wound one; then PHASE
+ *  TWO for the rest of the stand (`entity.revenant.p2`, the brain's numbers; its blows and its Speed here). Its deed
+ *  written; answers its card's event. */
+export function beginLastStand(player, f, { now = Date.now(), clock = 0, roar = null, rolls = Math.random } = {}) {
+  const e = f.entity;
+  const r = revenantById(e?.revenant?.id);
+  f._lastStood = true;
+  f.fleeing = false;
+  if (f.ai) f.ai.fleeLeft = 0;   // FEUD HARNESS: its run over too, as a kneel's - risen mid-flight it ran on untargeted, never cornered nor escaped
+  e.health = Math.max(1, Math.round((e.maxHealth || 1) * lastStandHealth(r?.rank)));
+  f.roaring = { at: now, until: now + LAST_STAND_ROAR * 1000 };
+  // no brain to roar with (the switch off): its motor held and its swing raised for the roar (the pool lets it go)
+  if (!(typeof roar === 'function' && roar(LAST_STAND_ROAR)) && f.ai) { f.ai.roarUntil = clock + LAST_STAND_ROAR; f.ai._blowHold = true; f._roarHeld = true; }
+  e.revenant = { ...e.revenant, p2: phaseTwo() };
+  e.damageScale = (Number.isFinite(e.damageScale) && e.damageScale > 0 ? e.damageScale : 1) * PHASE_TWO.BLOWS;
+  if (e.stats) e.stats.speed = (e.stats.speed ?? 0) + PHASE_TWO.SPEED;
+  const rr = revenantLastStand(player, e);
+  return rr ? revenantLastStandEvent(rr, player?.name, { archive: f.archive ?? f.mobileArchive ?? null, rolls }) : null;
+}
+/** RVN4: the roar over - blows reach it again (the pools ask each frame). */
+export function roarStep(f, now = Date.now()) {
+  if (f?.roaring && now >= f.roaring.until) {
+    f.roaring = null;
+    if (f._roarHeld) { f._roarHeld = false; if (f.ai) f.ai._blowHold = 'cancel'; }   // its raised swing let go, striking nothing
+  }
+  return !!f?.roaring;
+}
+/** THE TEAR-AWAY's dissolve: its body ashes out on the ember lane over this long (ms) after a short beat, then it is gone
+ *  - inside the leaving hold (`f.leaving`, 900 ms), whose hand-off is its escape. */
+export const TEAR_MS = Object.freeze({ delay: 120, ms: 720 });
+/** RVN3 (14.2): DOES ITS WILL HOLD at the killing blow - a revenant of rank WILL_RANK and up whose weakness this fight has
+ *  not struck, nor staggered or dodged perfectly WILL_STAGGERS times (its ledger, systems/feudLedger.js)? Then it does not
+ *  kneel. */
+export function revenantWillHolds(f) {
+  const r = revenantById(f?.entity?.revenant?.id);
+  return !!r && willMatters(r.rank) && !willBroken(f.entity._feud);
+}
+/** RVN3 (14.2): UNBROKEN, IT TEARS AWAY - held at 1, its fight and its run over, its body ashing out on the ember lane;
+ *  the pool's leaving hold (`f.leaving`, `done` the pool's escape - the `fled` deed: it ranks up and learns) takes it
+ *  out. Held by its fate (`leaving`) meanwhile: no blow, no spell, nobody's target. */
+export function beginTearAway(f, done, { now = Date.now() } = {}) {
+  f.fleeing = false;
+  f._fleeRolled = true;
+  if (f.entity) f.entity.health = 1;
+  if (f.ai) { f.ai.target = null; f.ai.fleeLeft = 0; f.ai.velX = 0; f.ai.velZ = 0; }
+  f.portalFx = { dir: 'out', at: now, delay: TEAR_MS.delay, ms: TEAR_MS.ms, tint: DISSOLVE_EMBER };
+  f.leaving = { at: now, done };
+}
 /** IT YIELDS: held at 1, its fight and its run over, its trophy rolled; answers the event its plea is said by. */
 export function beginYield(player, f, { now = Date.now(), rolls = Math.random } = {}) {
   f.yielded = { at: now };
@@ -111,6 +170,7 @@ export function executionStep(f, now = Date.now()) {
  *  trophy. */
 export function finishExecution(player, f) {
   revenantExecuted(player, f.entity);
+  swornWitness(f.mobileType ?? f.entity?.mobileType);   // RVN11 (Feud-Arc.md 22.1): one of its own kind executed in a sworn one's sight, -15
   const items = [...(Array.isArray(f.entity?.items) ? f.entity.items : []), ...(f.trophy ? [f.trophy] : [])];
   f.trophy = null;
   if (f.entity) f.entity.items = [];   // AUDIT (2026-10-02): handed to the pile - never a save's dead record's to carry twice
@@ -133,12 +193,14 @@ export function beginSpare(player, f, { now = Date.now(), rolls = Math.random } 
   const state = swornPlace();
   const r = revenantSpared(player, f.entity, { state });
   if (!r) return null;
+  const back = revenantHandBack(player, r, f.entity);   // RVN8 (Feud-Arc.md 19): what it took of mine, handed back at the oath
   f.yielded = null;
   f.sparing = { at: now };
   if (state === 'with') holdSworn(r.id, SPARING_MS);   // AUDIT (2026-10-02): its companion steps out once the kneeling one is through
-  const body = state === 'with'
+  const body = (state === 'with'
     ? `Sworn to you. ${r.given} walks at your side now.`
-    : `Sworn to you. Your companions are full - ${r.given} waits until you call it.`;
+    : `Sworn to you. Your companions are full - ${r.given} waits until you call it.`)
+    + (back.length ? ` It hands back your ${back.map((it) => takenName(it)).join(' and ')}: "It's yours. It always was."` : '');   // AUDIT FEUD 2: its article gone after "your"
   return { r, state, event: revenantMomentEvent('spared', r, player?.name, { body, archive: f.archive, rolls }) };
 }
 /** The sworn one has stepped through its portal - take its kneeling body out. */
@@ -159,8 +221,9 @@ export function fateDissolve(f, now = Date.now()) {
   const p = f?.portalFx;
   if (p) {
     const t = (now - p.at - p.delay) / p.ms;
-    if (p.dir === 'in') return t >= 1 ? null : [Math.max(0.001, 1 - Math.max(0, t)), ...DISSOLVE_ARCANE];
-    return t > 0 ? [Math.min(1, t), ...DISSOLVE_ARCANE] : null;
+    const tint = p.tint ?? DISSOLVE_ARCANE;   // RVN3: a tear-away's ember; a portal's arcane
+    if (p.dir === 'in') return t >= 1 ? null : [Math.max(0.001, 1 - Math.max(0, t)), ...tint];
+    return t > 0 ? [Math.min(1, t), ...tint] : null;
   }
   return null;
 }

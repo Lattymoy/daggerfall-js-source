@@ -26,6 +26,15 @@ const titled = (e, base) => foeTitle(e, base);
 
 let _foe = null;
 let _left = 0;
+/** TELL9: seconds since the player last struck a foe (markFoeStruck) - a threat yields to a foe struck this recently. */
+let _sinceStruck = Infinity;
+/** TELL9 (bible/12-Enhanced-AI/Feud-Arc.md 11.1): a foe that winds up at me takes the bar unless I struck another in
+ *  the last THREAT_YIELD_S seconds. */
+export const THREAT_YIELD_S = 2;
+/** TELL9: the poise track's reader - `(foe) => { state, fill, word } | null` - registered by the host that knows the
+ *  brain (scenes/hostCombat.js: ai/tactics.js poiseTrack); this leaf imports none. */
+let _poiseOf = null;
+export function setFoePoiseReader(fn) { _poiseOf = typeof fn === 'function' ? fn : null; }
 
 /** The one call both damage paths make. `fromPlayer` is already the
  *  flag each of them takes, so this asks nothing new of either. */
@@ -39,10 +48,24 @@ export function markFoeStruck(foe, { fromPlayer = true } = {}) {
   if (bout && !bout.chained) return;
   _foe = foe;
   _left = FOE_TARGET_SECONDS;
+  _sinceStruck = 0;   // TELL9: a threat yields to it for THREAT_YIELD_S
+}
+
+/** TELL9 (11.1): a foe began a wind-up at the local player (scenes/hostCombat.js tellCues, at its wind's start): it is
+ *  the bar's foe now, unless I struck another in the last THREAT_YIELD_S - the foe I am fighting keeps it; its own
+ *  wind-up refreshes its welcome. A bout's fighter is the versus bar's (as markFoeStruck); a dead foe has none. */
+export function markFoeThreat(foe) {
+  if (!foe?.entity || foe.dead) return;
+  const bout = foe.entity.bout;
+  if (bout && !bout.chained) return;
+  if (_foe && _foe !== foe && !_foe.dead && (_sinceStruck < THREAT_YIELD_S || _foe.duel)) return;   // AUDIT TELL U7: nor while my duel's opponent holds it (its health comes only as the duel's word does)
+  _foe = foe;
+  _left = FOE_TARGET_SECONDS;
 }
 
 /** Per-frame decay, from the one host-agnostic HUD call. */
 export function tickFoeTarget(dt = 0) {
+  _sinceStruck += dt;
   if (!_foe) return;
   _left -= dt;
   if (_left <= 0 || _foe.dead) { _foe = null; _left = 0; }
@@ -61,6 +84,7 @@ export function foeTarget() {
     health: Math.max(0, e.health ?? 0),
     maxHealth: max,
     fade: Math.min(1, _left / 1.5),   // the last second and a half
+    poise: _poiseOf ? _poiseOf(_foe) ?? null : null,   // TELL9: the poise track under the health (null: none drawn)
   };
 }
 
@@ -74,4 +98,4 @@ export function foeTargetRef() {
 }
 
 /** A host tearing down, and the tests. */
-export function clearFoeTarget() { _foe = null; _left = 0; }
+export function clearFoeTarget() { _foe = null; _left = 0; _sinceStruck = Infinity; }

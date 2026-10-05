@@ -1,0 +1,191 @@
+[
+  {
+    "name": "LW8c-stir-s",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "export const INDOOR_STIR_S = Object.freeze([30, 90]);",
+    "new": "export const INDOOR_STIR_S = Object.freeze([20, 90]);",
+    "tests": [
+      "test/lw8c_astir.test.js"
+    ]
+  },
+  {
+    "name": "LW8c-walk-m",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "export const INDOOR_WALK_M = 7;",
+    "new": "export const INDOOR_WALK_M = 12;",
+    "tests": [
+      "test/lw8c_astir.test.js"
+    ]
+  },
+  {
+    "name": "LW8c-speed",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "export const INDOOR_WALK_SPEED = 1.2;",
+    "new": "export const INDOOR_WALK_SPEED = 2.4;",
+    "tests": [
+      "test/lw8c_astir.test.js"
+    ]
+  },
+  {
+    "name": "LW8c-wait-own",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "(lwSeed(textSeed(id), n, 0x73746972) % 1000) / 1000 * (INDOOR_STIR_S[1] - INDOOR_STIR_S[0]);",
+    "new": "0;",
+    "tests": [
+      "test/lw8c_astir.test.js"
+    ]
+  },
+  {
+    "name": "LW8c-walls",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "    try { collider.move(q, b[0] - a[0], 0, b[2] - a[2], 1.8); } catch { return false; }\n    return Math.hypot(q[0] - b[0], q[2] - b[2]) < 0.25;",
+    "new": "    return true;",
+    "tests": [
+      "test/lw8c_astir.test.js"
+    ]
+  },
+  {
+    "name": "LW8c-reach",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "&& Math.hypot(room.spots[i][0] - at[0], room.spots[i][2] - at[2]) <= INDOOR_WALK_M);",
+    "new": ");",
+    "tests": [
+      "test/lw8c_astir.test.js"
+    ]
+  },
+  {
+    "name": "LW8c-company",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "  for (const i of company) if (walkable(at, room.spots[i])) return i;",
+    "new": "  void company;",
+    "tests": [
+      "test/lw8c_astir.test.js"
+    ]
+  },
+  {
+    "name": "LW8c-own-table",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "free.filter((i) => room.tableOf[i] !== room.tableOf[spot] && alone.get(",
+    "new": "free.filter((i) => alone.get(",
+    "tests": [
+      "test/lw8c_astir.test.js"
+    ]
+  },
+  {
+    "name": "LW8c-company-walking",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "  for (const x of standing) if (x.id !== id && !x.walking) alone.set(",
+    "new": "  for (const x of standing) if (x.id !== id) alone.set(",
+    "tests": [
+      "test/lw8c_astir.test.js"
+    ]
+  },
+  {
+    "name": "LW8c-dice",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "  const roll = lwSeed(textSeed(id), stirs, 0x67) % Math.max(1, free.length);",
+    "new": "  const roll = 0;",
+    "tests": [
+      "test/lw8c_astir.test.js"
+    ]
+  },
+  {
+    "name": "LW8c-line",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "{ const i = free[(roll + k) % free.length]; if (walkable(at, room.spots[i])) return i; }",
+    "new": "{ const i = free[(roll + k) % free.length]; return i; }",
+    "tests": [
+      "test/lw8c_astir.test.js"
+    ]
+  },
+  {
+    "name": "LW8c-nearest",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "    .sort((a, b) => Math.hypot(room.spots[a][0] - at[0], room.spots[a][2] - at[2]) - Math.hypot(room.spots[b][0] - at[0], room.spots[b][2] - at[2]) || a - b);",
+    "new": "    .sort((a, b) => b - a);",
+    "tests": [
+      "test/lw8c_astir.test.js"
+    ]
+  },
+  {
+    "name": "LW8c-company-alone",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "&& alone.get(room.tableOf[i]) === 1)",
+    "new": "&& alone.get(room.tableOf[i]) >= 1)",
+    "tests": [
+      "test/lw8c_astir.test.js"
+    ]
+  },
+  {
+    "name": "LW8c-none",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "        if (to < 0) { s.next = realNow + stirWait(id, s.stirs); continue; }",
+    "new": "        if (to < 0) { continue; }",
+    "tests": [
+      "test/lw8c_astir.test.js"
+    ]
+  },
+  {
+    "name": "LW8c-talking",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "        if (talking.has(id) || realNow < s.next) continue;",
+    "new": "        if (realNow < s.next) continue;",
+    "tests": [
+      "test/lw8c_astir.test.js"
+    ]
+  },
+  {
+    "name": "LW8c-wait",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "        if (talking.has(id) || realNow < s.next) continue;",
+    "new": "        if (talking.has(id)) continue;",
+    "tests": [
+      "test/lw8c_astir.test.js"
+    ]
+  },
+  {
+    "name": "LW8c-claim",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "        s.spot = to;   // theirs from the moment they set out",
+    "new": "        void to;   // theirs from the moment they set out",
+    "tests": [
+      "test/lw8c_astir.test.js"
+    ]
+  },
+  {
+    "name": "LW8c-arrive",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "          if (s.walk.t >= s.walk.dur) { s.walk = null; s.next = realNow + stirWait(id, s.stirs); }",
+    "new": "          if (s.walk.t >= s.walk.dur * 3) { s.walk = null; s.next = realNow + stirWait(id, s.stirs); }",
+    "tests": [
+      "test/lw8c_astir.test.js"
+    ]
+  },
+  {
+    "name": "LW8c-facing",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "yaw: Math.atan2(s.walk.to[0] - s.walk.from[0], s.walk.to[2] - s.walk.from[2]), moving: true,",
+    "new": "yaw: 0, moving: true,",
+    "tests": [
+      "test/lw8c_astir.test.js"
+    ]
+  },
+  {
+    "name": "LW8c-moving",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "yaw: Math.atan2(s.walk.to[0] - s.walk.from[0], s.walk.to[2] - s.walk.from[2]), moving: true,",
+    "new": "yaw: Math.atan2(s.walk.to[0] - s.walk.from[0], s.walk.to[2] - s.walk.from[2]), moving: false,",
+    "tests": [
+      "test/lw8c_astir.test.js"
+    ]
+  },
+  {
+    "name": "LW8c-talkers-kept",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "if (c.talks) talking.add(m.id); }",
+    "new": "}",
+    "tests": [
+      "test/lw8c_astir.test.js"
+    ]
+  }
+]

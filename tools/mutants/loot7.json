@@ -155,8 +155,8 @@
   {
     "name": "LOOT7-health-not-refilled",
     "file": "src/systems/champions.js",
-    "old": "  entity.health = entity.maxHealth;\n  entity.damageScale",
-    "new": "  entity.damageScale",
+    "old": "  entity.health = entity.maxHealth;\n  entity.healthMult = (entity.healthMult ?? 1) * hp;",
+    "new": "  entity.healthMult = (entity.healthMult ?? 1) * hp;",
     "tests": [
       "test/loot7_champions.test.js"
     ]

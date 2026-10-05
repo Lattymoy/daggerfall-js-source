@@ -1,0 +1,529 @@
+[
+  {
+    "name": "TELL8-wire-iron-flag",
+    "file": "src/ai/puppetBlows.js",
+    "old": "out.wk = k | (b.guard === 'iron' ? WIRE_IRON : 0) | (b.feint ? WIRE_FEINT : 0) | (landed ? WIRE_LANDED : 0) | (b.sig ? WIRE_SIG : 0);",
+    "new": "out.wk = k | (b.feint ? WIRE_FEINT : 0) | (landed ? WIRE_LANDED : 0) | (b.sig ? WIRE_SIG : 0);",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-wire-feint-flag",
+    "file": "src/ai/puppetBlows.js",
+    "old": "out.wk = k | (b.guard === 'iron' ? WIRE_IRON : 0) | (b.feint ? WIRE_FEINT : 0) | (landed ? WIRE_LANDED : 0) | (b.sig ? WIRE_SIG : 0);",
+    "new": "out.wk = k | (b.guard === 'iron' ? WIRE_IRON : 0) | (landed ? WIRE_LANDED : 0) | (b.sig ? WIRE_SIG : 0);",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-wire-cut-sent",
+    "file": "src/ai/puppetBlows.js",
+    "old": "  const live = s.state === 'windup' && s.blow && s.blow.cut == null && now < s.blow.land ? s.blow : null;",
+    "new": "  const live = s.state === 'windup' && s.blow && now < s.blow.land ? s.blow : null;",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-wire-landed-sent",
+    "file": "src/ai/puppetBlows.js",
+    "old": "| (b.feint ? WIRE_FEINT : 0) | (landed ? WIRE_LANDED : 0) | (b.sig ? WIRE_SIG : 0);",
+    "new": "| (b.feint ? WIRE_FEINT : 0) | (b.sig ? WIRE_SIG : 0);",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-wire-unclamped",
+    "file": "src/ai/puppetBlows.js",
+    "old": "out.wl = landed ? 0 : Math.max(0, Math.min(WIRE_LAND_MS, Math.round((b.land - now) * 1000)));",
+    "new": "out.wl = landed ? 0 : Math.max(0, Math.round((b.land - now) * 1000));",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-wire-origin-raw",
+    "file": "src/ai/puppetBlows.js",
+    "old": "    const w = toWire(b.origin);",
+    "new": "    const w = b.origin;",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-wire-point",
+    "file": "src/ai/puppetBlows.js",
+    "old": "      if (Number.isFinite(b.ahead)) out.wp = q2(b.ahead);\n",
+    "new": "",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-wire-puppet-speaks",
+    "file": "src/ai/puppetBlows.js",
+    "old": "  if (!s || s.puppet) return out;",
+    "new": "  if (!s) return out;",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-wire-ws-stagger",
+    "file": "src/ai/puppetBlows.js",
+    "old": "  if (s.state === 'staggered' && now < (s.until ?? 0)) out.ws = 1;",
+    "new": "  if (false) out.ws = 1;",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-wire-ws-spent",
+    "file": "src/ai/puppetBlows.js",
+    "old": "  else if (s.state === 'overreach' && now < (s.until ?? 0)) out.ws = 2;",
+    "new": "  else if (s.state === 'overreach') out.ws = 2;",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-key-carries-wl",
+    "file": "src/ai/puppetBlows.js",
+    "old": "export const blowWireKey = (r) => `${r.wk ?? ''}/${r.wn ?? ''}/${r.wy ?? ''}/",
+    "new": "export const blowWireKey = (r) => `${r.wl ?? ''}/${r.wk ?? ''}/${r.wn ?? ''}/${r.wy ?? ''}/",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-key-no-yaw",
+    "file": "src/ai/puppetBlows.js",
+    "old": "export const blowWireKey = (r) => `${r.wk ?? ''}/${r.wn ?? ''}/${r.wy ?? ''}/",
+    "new": "export const blowWireKey = (r) => `${r.wk ?? ''}/${r.wn ?? ''}/",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-puppet-not-part-filled",
+    "file": "src/ai/puppetBlows.js",
+    "old": "      const total = Math.max(BLOW[kind].windup + (iron ? TELL_IRON_EXTRA : 0), left);",
+    "new": "      const total = left;",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-puppet-reborn",
+    "file": "src/ai/puppetBlows.js",
+    "old": "    if (live && live.n === n) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-puppet-landed-reborn",
+    "file": "src/ai/puppetBlows.js",
+    "old": "      if (!landedThere && n !== s.wn) {",
+    "new": "      if (!landedThere) {",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-puppet-no-track",
+    "file": "src/ai/puppetBlows.js",
+    "old": "      else if (live.yaw !== r.wy) { live.yaw = r.wy; fitBlowToGround(live, collider); }",
+    "new": "      else if (false) { live.yaw = r.wy; fitBlowToGround(live, collider); }",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-puppet-feint-glints",
+    "file": "src/ai/puppetBlows.js",
+    "old": "      if (feint) b.feint = true;",
+    "new": "      /* feint unmarked */",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-puppet-iron-colour",
+    "file": "src/ai/puppetBlows.js",
+    "old": "iron ? IRON_COLOR : BLOW_COLOR, iron ? 'iron' : 'poise', total);",
+    "new": "BLOW_COLOR, iron ? 'iron' : 'poise', total);",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-puppet-point",
+    "file": "src/ai/puppetBlows.js",
+    "old": "      if (Number.isFinite(r.wp)) b.ahead = r.wp;\n",
+    "new": "",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-puppet-key-always-me",
+    "file": "src/ai/puppetBlows.js",
+    "old": "        s.key = me ? LOCAL_TARGET : null;",
+    "new": "        s.key = LOCAL_TARGET;",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-puppet-cut-drops",
+    "file": "src/ai/puppetBlows.js",
+    "old": "      if (live.feint) live.cut = now;",
+    "new": "      if (false) live.cut = now;",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-puppet-no-cancel",
+    "file": "src/ai/puppetBlows.js",
+    "old": "      else { if (r.ws === 1) shatterBlow(ai, now); else setLiveBlow(ai, null); s.cancel = true; }",
+    "new": "      else { if (r.ws === 1) shatterBlow(ai, now); else setLiveBlow(ai, null); }",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-puppet-break-keeps-mark",
+    "file": "src/ai/puppetBlows.js",
+    "old": "      else { if (r.ws === 1) shatterBlow(ai, now); else setLiveBlow(ai, null); s.cancel = true; }",
+    "new": "      else { s.cancel = true; }",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-puppet-stagger-unheld",
+    "file": "src/ai/puppetBlows.js",
+    "old": "  if (r.ws === 1) { if (s.state !== 'windup') s.state = 'staggered'; if (entity) { entity.staggerUntil = PUPPET_HELD_UNTIL; entity.overreachUntil = 0; } }",
+    "new": "  if (r.ws === 1) { if (s.state !== 'windup') s.state = 'staggered'; }",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-puppet-held-infinite",
+    "file": "src/ai/tactics.js",
+    "old": "export const PUPPET_HELD_UNTIL = 1e9;",
+    "new": "export const PUPPET_HELD_UNTIL = Infinity;",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-puppet-overreach-unheld",
+    "file": "src/ai/puppetBlows.js",
+    "old": "  else if (r.ws === 2) { if (s.state !== 'windup') s.state = 'overreach'; if (entity) { entity.overreachUntil = PUPPET_HELD_UNTIL; entity.staggerUntil = 0; } }",
+    "new": "  else if (r.ws === 2) { if (s.state !== 'windup') s.state = 'overreach'; }",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-puppet-held-kept",
+    "file": "src/ai/puppetBlows.js",
+    "old": "    if (entity) { if (entity.staggerUntil === PUPPET_HELD_UNTIL) entity.staggerUntil = 0; if (entity.overreachUntil === PUPPET_HELD_UNTIL) entity.overreachUntil = 0; }",
+    "new": "",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-turn-unseen",
+    "file": "src/ai/puppetBlows.js",
+    "old": "  if (!s?.puppet) return { hold: false, staggered: false };\n  s.seen = now;",
+    "new": "  if (!s?.puppet) return { hold: false, staggered: false };",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-turn-no-hold",
+    "file": "src/ai/puppetBlows.js",
+    "old": "      hold = b.kind !== 'aimed';",
+    "new": "      hold = false;",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-turn-aimed-held",
+    "file": "src/ai/puppetBlows.js",
+    "old": "      hold = b.kind !== 'aimed';",
+    "new": "      hold = true;",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-turn-onlooker-judges",
+    "file": "src/ai/puppetBlows.js",
+    "old": "  const mine = s.key === LOCAL_TARGET && !!feet && b.kind !== 'aimed';",
+    "new": "  const mine = !!feet && b.kind !== 'aimed';",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-turn-aimed-judged",
+    "file": "src/ai/puppetBlows.js",
+    "old": "  const mine = s.key === LOCAL_TARGET && !!feet && b.kind !== 'aimed';",
+    "new": "  const mine = s.key === LOCAL_TARGET && !!feet;",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-turn-no-late",
+    "file": "src/ai/puppetBlows.js",
+    "old": "      if (s.key === LOCAL_TARGET && feet && b.kind !== 'aimed' && b.lateIn == null && now >= b.land - TELL.TELL_LATE) b.lateIn = inBlow(b, feet[0], feet[2]);",
+    "new": "",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-turn-no-mult",
+    "file": "src/ai/puppetBlows.js",
+    "old": "    ai._blowVerdict = v; ai._blowMult = b.mult; ai._blowAt = now; ai._blowSwing = true;",
+    "new": "    ai._blowVerdict = v; ai._blowAt = now; ai._blowSwing = true;",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-turn-no-fx",
+    "file": "src/ai/puppetBlows.js",
+    "old": "    ai._blowFx = v ? { kind: b.kind, iron: b.guard === 'iron', at: now } : null;   // TELL6e",
+    "new": "    ai._blowFx = null;   // TELL6e",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-turn-no-perfect",
+    "file": "src/ai/puppetBlows.js",
+    "old": "    if (!v && b.lateIn === true) ai._perfectAt = now;",
+    "new": "",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-turn-no-landed-at",
+    "file": "src/ai/puppetBlows.js",
+    "old": "  ai._blowLandedAt = now;   // the LAND cue's (tellCues)",
+    "new": "  /* no landing */",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-turn-spent-pose",
+    "file": "src/ai/puppetBlows.js",
+    "old": "  else if (s.state === 'overreach') hold = 'spent';",
+    "new": "",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-gap-any-kind",
+    "file": "src/ai/puppetBlows.js",
+    "old": "  if (!l || !l.mine || l.used || (l.kind !== 'charge' && l.kind !== 'leap') || now - l.at > BLOW_VERDICT_LIFE) return false;",
+    "new": "  if (!l || !l.mine || l.used || now - l.at > BLOW_VERDICT_LIFE) return false;",
+    "tests": [
+      "test/tell8_online.test.js",
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-gap-forever",
+    "file": "src/ai/puppetBlows.js",
+    "old": "  if (!l || !l.mine || l.used || (l.kind !== 'charge' && l.kind !== 'leap') || now - l.at > BLOW_VERDICT_LIFE) return false;",
+    "new": "  if (!l || !l.mine || l.used || (l.kind !== 'charge' && l.kind !== 'leap')) return false;",
+    "tests": [
+      "test/tell8_online.test.js",
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-class-no-back",
+    "file": "src/ai/puppetBlows.js",
+    "old": "  return { k: blowK({ kind, weapon, claws, round }), back: behind(b.origin, b.yaw, from), weak: !!weak };",
+    "new": "  return { k: blowK({ kind, weapon, claws, round }), back: false, weak: !!weak };",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-class-not-winding",
+    "file": "src/ai/puppetBlows.js",
+    "old": "  if (!b) return weak ? { k: blowK({ kind, weapon, claws, round }), back: false, weak: true } : null;\n  return { k:",
+    "new": "  return { k:",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-valid-shape-7",
+    "file": "src/net/wire.js",
+    "old": "if (!Number.isInteger(r.wk) || r.wk < 0 || r.wk > 127 || (r.wk & 7) > 6) return null;",
+    "new": "if (!Number.isInteger(r.wk) || r.wk < 0 || r.wk > 127) return null;",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-valid-wl-unbounded",
+    "file": "src/net/wire.js",
+    "old": "if (!Number.isFinite(r.wy) || !Number.isInteger(r.wl) || r.wl < 0 || r.wl > FOE_WINDUP_MS) return null;",
+    "new": "if (!Number.isFinite(r.wy) || !Number.isInteger(r.wl) || r.wl < 0) return null;",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-valid-wo-unbounded",
+    "file": "src/net/wire.js",
+    "old": "    if (Math.abs(r.wo[0]) > POSE_BOUND || Math.abs(r.wo[2]) > POSE_BOUND || Math.abs(r.wo[1]) > POSE_Y_BOUND) return null;\n    out.wk",
+    "new": "    out.wk",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-valid-wp-unbounded",
+    "file": "src/net/wire.js",
+    "old": "if (!Number.isFinite(r.wp) || r.wp < 0 || r.wp > FOE_WINDUP_REACH) return null;",
+    "new": "if (!Number.isFinite(r.wp)) return null;",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-valid-ws-any",
+    "file": "src/net/wire.js",
+    "old": "if (r.ws !== 1 && r.ws !== 2) return null; out.ws = r.ws;",
+    "new": "out.ws = r.ws;",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-valid-yaw-unwrapped",
+    "file": "src/net/wire.js",
+    "old": "out.wk = r.wk; out.wy = wrapAngle(r.wy);",
+    "new": "out.wk = r.wk; out.wy = r.wy;",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-class-k-unclamped",
+    "file": "src/net/wire.js",
+    "old": "  const kk = Math.max(0, Math.min(HIT_CLASS_K_MAX, Math.round((Number(k) || 0) * 100)));",
+    "new": "  const kk = Math.max(0, Math.round((Number(k) || 0) * 100));",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-class-read-unbounded",
+    "file": "src/net/wire.js",
+    "old": "  if (!Number.isInteger(v) || v < 0 || v >= 4000 || v % 1000 > HIT_CLASS_K_MAX) return null;",
+    "new": "  if (!Number.isInteger(v) || v < 0) return null;",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-class-weak-bit",
+    "file": "src/net/wire.js",
+    "old": "  return { k: (v % 1000) / 100, back: Math.floor(v / 1000) % 2 === 1, weak: v >= 2000 };",
+    "new": "  return { k: (v % 1000) / 100, back: Math.floor(v / 1000) % 2 === 1, weak: false };",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-brain-peer-unaimed",
+    "file": "src/ai/tactics.js",
+    "old": "  if (t?.isPeer) return Array.isArray(t.feet) && t.feet.length === 3 ? t.feet : null;",
+    "new": "  if (t?.isPeer) return null;",
+    "tests": [
+      "test/tell8_online.test.js"
+    ],
+    "note": "FEUD's MERGE of main's #586-#622 (PIN MOVED): targetFeet's peer arm, ahead of AUDIT ARENA-LADDER's bout-mate's."
+  },
+  {
+    "name": "TELL8-brain-verdict-kept",
+    "file": "src/ai/tactics.js",
+    "old": "  ai._blowVerdict = judged ? verdict : null;",
+    "new": "  ai._blowVerdict = verdict;",
+    "tests": [
+      "test/tell8_online.test.js"
+    ],
+    "note": "FEUD's MERGE of main's #586-#622 (PIN MOVED): the verdict's gate is judgedHere's (a peer's landing is the peer's own; a bout-mate's is judged here, as mine)."
+  },
+  {
+    "name": "TELL8-brain-fx-kept",
+    "file": "src/ai/tactics.js",
+    "old": "  ai._blowFx = atMe && verdict ? {",
+    "new": "  ai._blowFx = verdict ? {",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-brain-mult-kept",
+    "file": "src/ai/tactics.js",
+    "old": "  ai._blowMult = judged ? b.mult : undefined;",
+    "new": "  ai._blowMult = b.mult;",
+    "tests": [
+      "test/tell8_online.test.js"
+    ],
+    "note": "FEUD's MERGE of main's #586-#622 (PIN MOVED): the weight's gate is judgedHere's."
+  },
+  {
+    "name": "TELL8-brain-puppet-kept",
+    "file": "src/ai/tactics.js",
+    "old": "    setLiveBlow(ai, null); ai._tac = null;\n    // AUDIT TELL B5",
+    "new": "    void 0;\n    // AUDIT TELL B5",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-door-class-unread",
+    "file": "src/scenes/hostCombat.js",
+    "old": "  const k = peer ? (wc ? wc.k : blowK({ kind, round, peer }))",
+    "new": "  const k = peer ? blowK({ kind, round, peer })",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "TELL8-door-peer-back-owner",
+    "file": "src/scenes/hostCombat.js",
+    "old": "  const back = peer ? !!wc?.back : behind(blow.origin, blow.yaw, from);",
+    "new": "  const back = behind(blow.origin, blow.yaw, from);",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  }
+]

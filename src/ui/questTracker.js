@@ -318,7 +318,7 @@ export function drawQuestTracker({ hidden = false, doc = (typeof document === 'u
   const hud = /** @type {any} */ (doc.querySelector?.('.hud'));
   const scale = hud?.style?.getPropertyValue?.('--hud-scale') || '1';
   const foe = /** @type {any} */ (doc.querySelector?.('.hud-foe.on'));
-  const sig = `${scale}|${foe ? (foe.classList?.contains?.('blade') ? 'blade' : 'bar') : ''}`;
+  const sig = `${scale}|${foe ? (foe.classList?.contains?.('blade') ? 'blade' : 'bar') : ''}${foe?.classList?.contains?.('poised') ? '|poised' : ''}`;   // AUDIT TELL U5: the poise track's coming or going moves it too
   if (c.last.sig !== sig) { c.last.sig = sig; c.node.style.setProperty?.('--hud-scale', scale); moved = true; }
   // the party list steps under the card: measured when what it says or where it stands changed (and by the observer
   // whenever its box does)

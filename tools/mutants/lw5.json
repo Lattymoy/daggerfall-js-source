@@ -1,0 +1,227 @@
+[
+  {
+    "name": "LW5-one-end",
+    "file": "src/systems/livingWorld/portCrews.js",
+    "old": "    if (lane.a.id !== portId && lane.b.id !== portId) continue;",
+    "new": "    if (lane.a.id !== portId) continue;",
+    "tests": [
+      "test/lw5_ports.test.js"
+    ]
+  },
+  {
+    "name": "LW5-lanes-unordered",
+    "file": "src/systems/livingWorld/portCrews.js",
+    "old": "  for (const lane of [...lanes].sort((p, q) => (p.key < q.key ? -1 : p.key > q.key ? 1 : 0))) {",
+    "new": "  for (const lane of [...lanes]) {",
+    "tests": [
+      "test/lw5_ports.test.js"
+    ]
+  },
+  {
+    "name": "LW5-count-unread",
+    "file": "src/systems/livingWorld/portCrews.js",
+    "old": "    const n = countOf(lane) | 0;",
+    "new": "    const n = 1;",
+    "tests": [
+      "test/lw5_ports.test.js"
+    ]
+  },
+  {
+    "name": "LW5-deal-unordered",
+    "file": "src/systems/livingWorld/portCrews.js",
+    "old": "  const order = [...sailors].sort((p, q) => p.slot - q.slot);",
+    "new": "  const order = [...sailors];",
+    "tests": [
+      "test/lw5_ports.test.js"
+    ]
+  },
+  {
+    "name": "LW5-deal-once",
+    "file": "src/systems/livingWorld/portCrews.js",
+    "old": "  return packets.length && i >= 0 ? packets[i % packets.length] : null;",
+    "new": "  return packets.length && i >= 0 ? packets[Math.min(i, packets.length - 1)] : null;",
+    "tests": [
+      "test/lw5_ports.test.js"
+    ]
+  },
+  {
+    "name": "LW5-sea-ashore",
+    "file": "src/systems/livingWorld/portCrews.js",
+    "old": "  if (p.phase !== 'dwell') return { at: 'sea' };",
+    "new": "  if (p.phase !== 'dwell') return { at: 'home' };",
+    "tests": [
+      "test/lw5_ports.test.js"
+    ]
+  },
+  {
+    "name": "LW5-abroad-at-home",
+    "file": "src/systems/livingWorld/portCrews.js",
+    "old": "  if (p.port?.id === portId) return { at: 'home' };",
+    "new": "  if (true) return { at: 'home' };",
+    "tests": [
+      "test/lw5_ports.test.js"
+    ]
+  },
+  {
+    "name": "LW5-abroad-forever",
+    "file": "src/systems/livingWorld/portCrews.js",
+    "old": "  return { at: 'abroad', port: p.port?.id, until: p.until ?? undefined };",
+    "new": "  return { at: 'abroad', port: p.port?.id, until: undefined };",
+    "tests": [
+      "test/lw5_ports.test.js"
+    ]
+  },
+  {
+    "name": "LW5-crews-sailing",
+    "file": "src/systems/livingWorld/portCrews.js",
+    "old": "    if (!p || p.phase !== 'dwell' || p.port?.id !== portId) continue;",
+    "new": "    if (!p) continue;",
+    "tests": [
+      "test/lw5_ports.test.js"
+    ]
+  },
+  {
+    "name": "LW5-crews-own-port",
+    "file": "src/systems/livingWorld/portCrews.js",
+    "old": "    const far = berth.lane.a.id === portId ? berth.lane.b.id : berth.lane.a.id;",
+    "new": "    const far = portId;",
+    "tests": [
+      "test/lw5_ports.test.js"
+    ]
+  },
+  {
+    "name": "LW5-crews-whole-port",
+    "file": "src/systems/livingWorld/portCrews.js",
+    "old": "      if (b && b.lane.key === berth.lane.key && b.k === berth.k) out.push(",
+    "new": "      if (b) out.push(",
+    "tests": [
+      "test/lw5_ports.test.js"
+    ]
+  },
+  {
+    "name": "LW5-dock-ring",
+    "file": "src/systems/livingWorld/places.js",
+    "old": "export const HARBOUR_RING = 120;",
+    "new": "export const HARBOUR_RING = 12;",
+    "tests": [
+      "test/lw5_ports.test.js"
+    ]
+  },
+  {
+    "name": "LW5-dock-facing-land",
+    "file": "src/systems/livingWorld/places.js",
+    "old": "  return { key: 'dharbour', kind: 'dock', cell: c, x: cx, z: cz, yaw: yawTo(cx, cz, x, z) };",
+    "new": "  return { key: 'dharbour', kind: 'dock', cell: c, x: cx, z: cz, yaw: yawTo(x, z, cx, cz) };",
+    "tests": [
+      "test/lw5_ports.test.js"
+    ]
+  },
+  {
+    "name": "LW5-gone-unread",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      if (this._gone(res)) continue;   // LW5: aboard, or ashore at the far port",
+    "new": "      // LW5: aboard, or ashore at the far port",
+    "tests": [
+      "test/lw5_ports.test.js"
+    ]
+  },
+  {
+    "name": "LW5-abroad-here",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    return a === 'sea' || a === 'abroad';",
+    "new": "    return a === 'sea';",
+    "tests": [
+      "test/lw5_ports.test.js"
+    ]
+  },
+  {
+    "name": "LW5-crews-unread",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    for (const res of [...this.peopleOf(day), ...this._crewsNow()]) {",
+    "new": "    for (const res of [...this.peopleOf(day)]) {",
+    "tests": [
+      "test/lw5_ports.test.js"
+    ]
+  },
+  {
+    "name": "LW5-crew-not-visitor",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      if (crew) {\n        // LW5: a hand of a packet lying here",
+    "new": "      if (false) {\n        // LW5: a hand of a packet lying here",
+    "tests": [
+      "test/lw5_ports.test.js"
+    ]
+  },
+  {
+    "name": "LW5-crew-replan-always",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "!(Math.abs((e.inT ?? -Infinity) - crew.inT) <= CREW_REPLAN_MIN)",
+    "new": "!(Math.abs((e.inT ?? -Infinity) - crew.inT) <= 0)",
+    "tests": [
+      "test/lw5_ports.test.js"
+    ]
+  },
+  {
+    "name": "LW5-crew-never-replanned",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "(crew && !(Math.abs((e.inT ?? -Infinity) - crew.inT) <= CREW_REPLAN_MIN))",
+    "new": "(false && crew)",
+    "tests": [
+      "test/lw5_ports.test.js"
+    ]
+  },
+  {
+    "name": "LW5-dock-unplanned",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    if (this._harbourDock) { this.places.dock.push(this._harbourDock); this._plans.clear(); }",
+    "new": "    if (this._harbourDock) { this.places.dock.push(this._harbourDock); }",
+    "tests": [
+      "test/lw5_ports.test.js"
+    ]
+  },
+  {
+    "name": "LW5-harbour-unread",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    const h = this.o.harbour?.() ?? null;",
+    "new": "    const h = null;",
+    "tests": [
+      "test/lw5_ports.test.js"
+    ]
+  },
+  {
+    "name": "LW5-host-ships-off",
+    "file": "src/scenes/world.js",
+    "old": "  const livingSailing = () => !!naval?.enabled && !!mapDict;",
+    "new": "  const livingSailing = () => !!mapDict;",
+    "tests": [
+      "test/lw5_ports.test.js"
+    ]
+  },
+  {
+    "name": "LW5-host-visitors-asked",
+    "file": "src/scenes/world.js",
+    "old": "    if (res.job !== 'sailor' || res.town !== town?.mapId || !town?.port || !livingSailing()) return null;",
+    "new": "    if (res.job !== 'sailor' || !town?.port || !livingSailing()) return null;",
+    "tests": [
+      "test/lw5_ports.test.js"
+    ]
+  },
+  {
+    "name": "LW5-host-crew-clock",
+    "file": "src/scenes/world.js",
+    "old": "outT: t + Math.max(0, c.until - nowS) * rate }] : [];",
+    "new": "outT: t + 120 }] : [];",
+    "tests": [
+      "test/lw5_ports.test.js"
+    ]
+  },
+  {
+    "name": "LW5-host-harbour-frame",
+    "file": "src/scenes/world.js",
+    "old": "            return { x: b.pos[0] - locOrigin[0] - tr[0], z: b.pos[1] - locOrigin[2] - tr[2] };",
+    "new": "            return { x: b.pos[0] - locOrigin[0], z: b.pos[1] - locOrigin[2] };",
+    "tests": [
+      "test/lw5_ports.test.js"
+    ]
+  }
+]

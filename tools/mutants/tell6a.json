@@ -1,0 +1,103 @@
+[
+  {
+    "name": "TELL6a-ring-inner",
+    "file": "src/ai/blowShapes.js",
+    "old": "ring: Object.freeze({ windup: 1.0, rIn: 1.6, rOut: 4.0, mult: 1.5 }),",
+    "new": "ring: Object.freeze({ windup: 1.0, rIn: 1.2, rOut: 4.0, mult: 1.5 }),",
+    "tests": [
+      "test/tell6a_ring.test.js"
+    ]
+  },
+  {
+    "name": "TELL6a-ring-outer",
+    "file": "src/ai/blowShapes.js",
+    "old": "ring: Object.freeze({ windup: 1.0, rIn: 1.6, rOut: 4.0, mult: 1.5 }),",
+    "new": "ring: Object.freeze({ windup: 1.0, rIn: 1.6, rOut: 4.5, mult: 1.5 }),",
+    "tests": [
+      "test/tell6a_ring.test.js"
+    ]
+  },
+  {
+    "name": "TELL6a-ring-mult",
+    "file": "src/ai/blowShapes.js",
+    "old": "ring: Object.freeze({ windup: 1.0, rIn: 1.6, rOut: 4.0, mult: 1.5 }),",
+    "new": "ring: Object.freeze({ windup: 1.0, rIn: 1.6, rOut: 4.0, mult: 1.75 }),",
+    "tests": [
+      "test/tell6a_ring.test.js"
+    ]
+  },
+  {
+    "name": "TELL6a-feet-unsafe",
+    "file": "src/ai/blowShapes.js",
+    "old": "return d >= P.rIn && d <= P.rOut; }   // TELL6: safe at its feet",
+    "new": "return d <= P.rOut; }   // TELL6: safe at its feet",
+    "tests": [
+      "test/tell6a_ring.test.js"
+    ],
+    "note": "FEUD's MERGE of main's #586-#622 (PIN MOVED): inBlow lives in the leaf ai/blowShapes.js since AUDIT ARENA-LADDER - the same line, its new file."
+  },
+  {
+    "name": "TELL6a-ring-never-lands",
+    "file": "src/ai/blowShapes.js",
+    "old": "  if (b.kind === 'ring') { const P = BLOW.ring, d = Math.hypot(rx, rz); return d >= P.rIn && d <= P.rOut; }   // TELL6: safe at its feet\n",
+    "new": "",
+    "tests": [
+      "test/tell6a_ring.test.js"
+    ],
+    "note": "FEUD's MERGE of main's #586-#622 (PIN MOVED): inBlow lives in the leaf ai/blowShapes.js since AUDIT ARENA-LADDER - the same line, its new file."
+  },
+  {
+    "name": "TELL6a-mirror-off",
+    "file": "src/render/foeTelegraph.js",
+    "old": "    const inside = d >= P.rIn && d <= P.rOut;\n    return { inside, edge: Math.max(0, (d - P.rIn) / (P.rOut - P.rIn))",
+    "new": "    const inside = d <= P.rOut;\n    return { inside, edge: Math.max(0, (d - P.rIn) / (P.rOut - P.rIn))",
+    "tests": [
+      "test/tell6a_ring.test.js"
+    ]
+  },
+  {
+    "name": "TELL6a-shader-off",
+    "file": "src/render/foeTelegraph.js",
+    "old": "    inside = d >= uP.x && d <= uP.y;",
+    "new": "    inside = d <= uP.y;",
+    "tests": [
+      "test/tell6a_ring.test.js"
+    ]
+  },
+  {
+    "name": "TELL6a-up-wrong",
+    "file": "src/render/foeTelegraph.js",
+    "old": "      else if (b.kind === 'ring') gl.uniform4f(U.uP, P.rIn, P.rOut, 0, 0);\n",
+    "new": "",
+    "tests": [
+      "test/tell6a_ring.test.js"
+    ]
+  },
+  {
+    "name": "TELL6a-quad-shared",
+    "file": "src/render/foeTelegraph.js",
+    "old": "      gl.uniform1f(U.uHalf, quadHalf(b.kind, b.ahead));   // TELL6",
+    "new": "      gl.uniform1f(U.uHalf, BLOW_QUAD_HALF);   // TELL6",
+    "tests": [
+      "test/tell6a_ring.test.js"
+    ]
+  },
+  {
+    "name": "TELL6a-quad-tight",
+    "file": "src/render/foeTelegraph.js",
+    "old": "? ahead + (kind === 'leap' ? BLOW.leap.r : kind === 'pyre' ? BLOW.pyre.r : 0) : REACH[kind] ?? BLOW_QUAD_HALF) + 0.6;",
+    "new": "? ahead + (kind === 'leap' ? BLOW.leap.r : kind === 'pyre' ? BLOW.pyre.r : 0) : REACH[kind] ?? BLOW_QUAD_HALF) + 0.2;",
+    "tests": [
+      "test/tell6a_ring.test.js"
+    ]
+  },
+  {
+    "name": "TELL6a-kind-id",
+    "file": "src/render/foeTelegraph.js",
+    "old": "export const BLOW_KIND = Object.freeze({ lunge: 0, sweep: 1, slam: 2, ring: 3, charge: 0, leap: 2, aimed: 0, pyre: 2 });",
+    "new": "export const BLOW_KIND = Object.freeze({ lunge: 0, sweep: 1, slam: 2, ring: 2, charge: 0, leap: 2, aimed: 0, pyre: 2 });",
+    "tests": [
+      "test/tell6a_ring.test.js"
+    ]
+  }
+]

@@ -1,0 +1,185 @@
+[
+  {
+    "name": "RATE-open-rate-is-the-road",
+    "file": "src/systems/timeScale.js",
+    "old": "export const TRAVEL_OPEN_RATE = 60;",
+    "new": "export const TRAVEL_OPEN_RATE = 100;",
+    "tests": [
+      "test/travel_speed_preference.test.js",
+      "test/to1_travelOptions.test.js",
+      "test/tv_wasd.test.js"
+    ],
+    "note": "Mac: non roads at x60 - the open ground run at the road's rate."
+  },
+  {
+    "name": "RATE-rates-swapped",
+    "file": "src/systems/timeScale.js",
+    "old": "export const travelRateOf = (onRoad) => (onRoad ? TRAVEL_ROAD_RATE : TRAVEL_OPEN_RATE);",
+    "new": "export const travelRateOf = (onRoad) => (onRoad ? TRAVEL_OPEN_RATE : TRAVEL_ROAD_RATE);",
+    "tests": [
+      "test/travel_speed_preference.test.js",
+      "test/to1_travelOptions.test.js",
+      "test/tv_wasd.test.js"
+    ]
+  },
+  {
+    "name": "RATE-leg-kind-unread",
+    "file": "src/systems/travelOptions.js",
+    "old": "      return !!leg && ROAD_LEG_KINDS.includes(leg.kind);",
+    "new": "      return !!leg;",
+    "tests": [
+      "test/travel_speed_preference.test.js"
+    ]
+  },
+  {
+    "name": "RATE-track-off-the-road",
+    "file": "src/systems/travelOptions.js",
+    "old": "export const ROAD_LEG_KINDS = Object.freeze(['road', 'track']);",
+    "new": "export const ROAD_LEG_KINDS = Object.freeze(['road']);",
+    "tests": [
+      "test/travel_speed_preference.test.js",
+      "test/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "RATE-join-at-road-rate",
+    "file": "src/systems/travelOptions.js",
+    "old": "      if (r.join) return false;\n",
+    "new": "",
+    "tests": [
+      "test/travel_speed_preference.test.js"
+    ]
+  },
+  {
+    "name": "RATE-path-at-open-rate",
+    "file": "src/systems/travelOptions.js",
+    "old": "    if (st.walk === 'path' || st.walk === 'ring') return true;",
+    "new": "    if (st.walk === 'ring') return true;",
+    "tests": [
+      "test/travel_speed_preference.test.js",
+      "test/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "RATE-host-never-asked",
+    "file": "src/systems/travelOptions.js",
+    "old": "    return !!deps.onRoad?.();",
+    "new": "    return false;",
+    "tests": [
+      "test/travel_speed_preference.test.js"
+    ]
+  },
+  {
+    "name": "RATE-ring-ceiling-dropped",
+    "file": "src/systems/travelOptions.js",
+    "old": "    const rate = st.walk === 'ring' ? Math.min(MAX_CIRCUMNAVIGATION_ACCEL, travelRateOf(onRoad)) : travelRateOf(onRoad);",
+    "new": "    const rate = travelRateOf(onRoad);",
+    "tests": [
+      "test/travel_speed_preference.test.js"
+    ]
+  },
+  {
+    "name": "RATE-asked-every-frame",
+    "file": "src/systems/travelOptions.js",
+    "old": "    if (!force && rate === st.rate && onRoad === st.rateOnRoad) return;",
+    "new": "    if (!force && false) return;",
+    "tests": [
+      "test/travel_speed_preference.test.js"
+    ]
+  },
+  {
+    "name": "RATE-ground-never-followed",
+    "file": "src/systems/travelOptions.js",
+    "old": "      if (st.autopilot && ui?.isShowing) applyRate();\n",
+    "new": "",
+    "tests": [
+      "test/travel_speed_preference.test.js"
+    ]
+  },
+  {
+    "name": "RATE-panel-never-told",
+    "file": "src/systems/travelOptions.js",
+    "old": "    ui?.setRate?.(rate, onRoad);\n",
+    "new": "",
+    "tests": [
+      "test/travel_speed_preference.test.js",
+      "test/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "RATE-start-not-asked",
+    "file": "src/systems/travelOptions.js",
+    "old": "    applyRate(true);\n    disableWeatherAndSound();",
+    "new": "    applyRate();\n    disableWeatherAndSound();",
+    "tests": [
+      "test/travel_speed_preference.test.js",
+      "test/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "RATE-foe-pace-unfloored",
+    "file": "src/systems/travelThreat.js",
+    "old": "export const foePaced = (cap, want) => Math.min(want, Math.max(cap, JOURNEY_FOE_PACE));",
+    "new": "export const foePaced = (cap, want) => Math.min(want, cap);",
+    "tests": [
+      "test/enemy_pace.test.js",
+      "test/ow6_slowdown.test.js"
+    ]
+  },
+  {
+    "name": "RATE-foe-pace-moved",
+    "file": "src/systems/travelThreat.js",
+    "old": "export const JOURNEY_FOE_PACE = 5;",
+    "new": "export const JOURNEY_FOE_PACE = 1;",
+    "tests": [
+      "test/enemy_pace.test.js"
+    ]
+  },
+  {
+    "name": "RATE-keys-road-unread",
+    "file": "src/scenes/travelView.js",
+    "old": "  return travelRateOf(onRoad);",
+    "new": "  return travelRateOf(false);",
+    "tests": [
+      "test/tv_wasd.test.js",
+      "test/ow6_slowdown.test.js"
+    ]
+  },
+  {
+    "name": "RATE-keys-without-the-mod",
+    "file": "src/scenes/travelView.js",
+    "old": "  if (!viewUp || journey || !moving || !onFoot || paused || !travels) return 0;",
+    "new": "  if (!viewUp || journey || !moving || !onFoot || paused) return 0;",
+    "tests": [
+      "test/tv_wasd.test.js"
+    ]
+  },
+  {
+    "name": "RATE-host-lanes-unread",
+    "file": "src/scenes/world.js",
+    "old": "    return playerOnPathAt(pathsDataPoint(net, mp.x, mp.y), wc.x, wc.z, mp.x, mp.y) !== 0;",
+    "new": "    return pathsDataPoint(net, mp.x, mp.y) !== 0;",
+    "tests": [
+      "test/travel_speed_preference.test.js"
+    ]
+  },
+  {
+    "name": "RATE-host-dep-unwired",
+    "file": "src/scenes/world.js",
+    "old": "    onRoad: () => travellerOnRoad(),",
+    "new": "    onRoad: () => false,",
+    "tests": [
+      "test/travel_speed_preference.test.js"
+    ]
+  },
+  {
+    "name": "RATE-strip-readout-steps",
+    "file": "src/ui/travelControlUI.js",
+    "old": "  setRate(rate, onRoad = false) {\n    this.timeAcceleration = rate;",
+    "new": "  setRate(rate, onRoad = false) {\n    this.timeAcceleration = rate + 5;",
+    "tests": [
+      "test/disc22e_travel_click.test.js",
+      "test/to1_travelOptions.test.js"
+    ]
+  }
+]

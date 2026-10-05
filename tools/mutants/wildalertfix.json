@@ -1,0 +1,92 @@
+[
+  {
+    "name": "WAFIX-noticed",
+    "file": "src/scenes/world.js",
+    "old": "      if (s.noticed) exteriorFoes.noticedPlayer?.(f, fx);",
+    "new": "      void s;",
+    "tests": [
+      "test/wildalertfix.test.js",
+      "test/wildalert.test.js"
+    ]
+  },
+  {
+    "name": "WAFIX-paused",
+    "file": "src/scenes/world.js",
+    "old": "sdt = gamePaused() ? 0 : dt * worldTimeScale(), now = performance.now() / 1000;\n    for (const f of exteriorFoes.foes) {",
+    "new": "sdt = dt * worldTimeScale(), now = performance.now() / 1000;\n    for (const f of exteriorFoes.foes) {",
+    "tests": [
+      "test/wildalertfix.test.js",
+      "test/wildalert.test.js"
+    ]
+  },
+  {
+    "name": "WAFIX-told",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    f.ai.makeEnemyHostileToAttacker?.(PLAYER_TARGET, playerFeet ?? null);\n    if (f.campId != null) wakeCampmates(f);",
+    "new": "    if (f.campId != null) wakeCampmates(f);",
+    "tests": [
+      "test/wildalertfix.test.js",
+      "test/wildalert.test.js"
+    ]
+  },
+  {
+    "name": "WAFIX-woken",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    f.ai.makeEnemyHostileToAttacker?.(PLAYER_TARGET, playerFeet ?? null);\n    if (f.campId != null) wakeCampmates(f);",
+    "new": "    f.ai.makeEnemyHostileToAttacker?.(PLAYER_TARGET, playerFeet ?? null);",
+    "tests": [
+      "test/wildalertfix.test.js",
+      "test/wildalert.test.js"
+    ]
+  },
+  {
+    "name": "WAFIX-band-stood",
+    "file": "src/scenes/world.js",
+    "old": "      stood.foes.then((fs) => { for (const f of fs) if (f && !f.dead) { wildFoes.alert(f, performance.now() / 1000); exteriorFoes.noticedPlayer?.(f, player.feetAt()); } }).catch(() => {});\n",
+    "new": "",
+    "tests": [
+      "test/wildalertfix.test.js",
+      "test/wildalert.test.js"
+    ]
+  },
+  {
+    "name": "WAFIX-yield-forget",
+    "file": "src/scenes/world.js",
+    "old": "{ _bandChase.delete(id); wildBands.forget(id); }",
+    "new": "{ _bandChase.delete(id); }",
+    "tests": [
+      "test/wildalertfix.test.js",
+      "test/wildalert.test.js"
+    ]
+  },
+  {
+    "name": "WAFIX-load-forget",
+    "file": "src/scenes/world.js",
+    "old": "_bandSpentAt.length = 0; wildBands.prune(() => false);",
+    "new": "_bandSpentAt.length = 0; void wildBands;",
+    "tests": [
+      "test/wildalertfix.test.js",
+      "test/wildalert.test.js"
+    ]
+  },
+  {
+    "name": "WAFIX-drop-local",
+    "file": "src/characters/enemyTargets.js",
+    "old": "    if (dropLocal && isLocalPlayerTarget(c)) continue;",
+    "new": "    if (dropLocal && isPlayer) continue;",
+    "tests": [
+      "test/wildalertfix.test.js",
+      "test/wildalert.test.js"
+    ]
+  },
+  {
+    "name": "WAFIX-drop-wired",
+    "file": "src/characters/enemyTargets.js",
+    "old": "{ noTargetMode, dropLocal, infighting, playerHeight, playerBout }",
+    "new": "{ noTargetMode, infighting, playerHeight, playerBout }",
+    "tests": [
+      "test/wildalertfix.test.js",
+      "test/wildalert.test.js"
+    ]
+  }
+]

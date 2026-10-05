@@ -1,0 +1,335 @@
+[
+  {
+    "name": "RVN11c-line-moved",
+    "file": "src/systems/revenantFeud.js",
+    "old": "export const BETRAY = Object.freeze({ AT: 10, HEALTH: 0.25,",
+    "new": "export const BETRAY = Object.freeze({ AT: 11, HEALTH: 0.25,",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-health-moved",
+    "file": "src/systems/revenantFeud.js",
+    "old": "export const BETRAY = Object.freeze({ AT: 10, HEALTH: 0.25,",
+    "new": "export const BETRAY = Object.freeze({ AT: 10, HEALTH: 0.3,",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-kind-added",
+    "file": "src/systems/revenantFeud.js",
+    "old": "KINDS: Object.freeze(['unhinged', 'craven', 'brutal']) });",
+    "new": "KINDS: Object.freeze(['unhinged', 'craven', 'brutal', 'arrogant']) });",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-kind-lost",
+    "file": "src/systems/revenantFeud.js",
+    "old": "KINDS: Object.freeze(['unhinged', 'craven', 'brutal']) });",
+    "new": "KINDS: Object.freeze(['unhinged', 'craven']) });",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-any-kind",
+    "file": "src/systems/revenantFeud.js",
+    "old": "export const mayBetray = (r) => !!r?.sworn && r.companion?.loyalty < BETRAY.AT && BETRAY.KINDS.includes(r.personality);",
+    "new": "export const mayBetray = (r) => !!r?.sworn && r.companion?.loyalty < BETRAY.AT;",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-unsworn",
+    "file": "src/systems/revenantFeud.js",
+    "old": "export const mayBetray = (r) => !!r?.sworn && r.companion?.loyalty < BETRAY.AT",
+    "new": "export const mayBetray = (r) => !!r && r.companion?.loyalty < BETRAY.AT",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-line-inclusive",
+    "file": "src/systems/revenantFeud.js",
+    "old": "r.companion?.loyalty < BETRAY.AT &&",
+    "new": "r.companion?.loyalty <= BETRAY.AT &&",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-quarter-inclusive",
+    "file": "src/systems/revenantCompanions.js",
+    "old": "after >= (entity.maxHealth || 1) * BETRAY.HEALTH) return null;",
+    "new": "after > (entity.maxHealth || 1) * BETRAY.HEALTH) return null;",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-death-turns",
+    "file": "src/systems/revenantCompanions.js",
+    "old": "if (!entity?.isPlayer || entity.peer || !(after > 0) || after >=",
+    "new": "if (!entity?.isPlayer || entity.peer || after >=",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-peer-turns",
+    "file": "src/systems/revenantCompanions.js",
+    "old": "if (!entity?.isPlayer || entity.peer || !(after > 0)",
+    "new": "if (!entity?.isPlayer || !(after > 0)",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-body-unread",
+    "file": "src/systems/revenantCompanions.js",
+    "old": "  const r = revenantsWithYou().find((x) => mayBetray(x) && swornBodyOf(x.id)?.health > 0);",
+    "new": "  const r = revenantsWithYou().find((x) => mayBetray(x));",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-anyone-turns",
+    "file": "src/systems/revenantCompanions.js",
+    "old": "  const r = revenantsWithYou().find((x) => mayBetray(x) && swornBodyOf(x.id)?.health > 0);",
+    "new": "  const r = revenantsWithYou().find((x) => swornBodyOf(x.id)?.health > 0);",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-host-untold",
+    "file": "src/systems/revenantCompanions.js",
+    "old": "  if (t) tell('betray', t);\n",
+    "new": "",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-unwired",
+    "file": "src/systems/revenantCompanions.js",
+    "old": "registerPlayerHurtListener('sworn-betrayal', (entity, { after } = /** @type {any} */ ({})) => { betrayalStep(entity, after); });",
+    "new": "",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-still-sworn",
+    "file": "src/systems/revenant.js",
+    "old": "  r.sworn = false; r.fate = null; r.companion = null;\n  r.rank = Math.min(REVENANT_MAX_RANK, r.rank + 1);",
+    "new": "  r.fate = null;\n  r.rank = Math.min(REVENANT_MAX_RANK, r.rank + 1);",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-rank-kept",
+    "file": "src/systems/revenant.js",
+    "old": "  r.rank = Math.min(REVENANT_MAX_RANK, r.rank + 1);\n  if (r.rank >= SIG_RANK && !r.sig) r.sig = drawSignature(r.id, r.mobileType);\n  r.epithet = REVENANT_EPITHETS.betrayed[0];",
+    "new": "  if (r.rank >= SIG_RANK && !r.sig) r.sig = drawSignature(r.id, r.mobileType);\n  r.epithet = REVENANT_EPITHETS.betrayed[0];",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-past-five",
+    "file": "src/systems/revenant.js",
+    "old": "  r.rank = Math.min(REVENANT_MAX_RANK, r.rank + 1);\n  if (r.rank >= SIG_RANK && !r.sig) r.sig = drawSignature(r.id, r.mobileType);\n  r.epithet = REVENANT_EPITHETS.betrayed[0];",
+    "new": "  r.rank = r.rank + 1;\n  if (r.rank >= SIG_RANK && !r.sig) r.sig = drawSignature(r.id, r.mobileType);\n  r.epithet = REVENANT_EPITHETS.betrayed[0];",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-no-sig",
+    "file": "src/systems/revenant.js",
+    "old": "  if (r.rank >= SIG_RANK && !r.sig) r.sig = drawSignature(r.id, r.mobileType);\n  r.epithet = REVENANT_EPITHETS.betrayed[0];",
+    "new": "  r.epithet = REVENANT_EPITHETS.betrayed[0];",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-risen-epithet",
+    "file": "src/systems/revenant.js",
+    "old": "  r.epithet = REVENANT_EPITHETS.betrayed[0];\n",
+    "new": "  r.epithet = revenantEpithet('betrayed', r.rank, player?.name ?? '', rolls, r.epithet);\n",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-no-deed",
+    "file": "src/systems/revenant.js",
+    "old": "  deed(r, 'betrayed', now);\n",
+    "new": "",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-due-unset",
+    "file": "src/systems/revenant.js",
+    "old": "  r.dueAt = dueFrom(now, rolls);   // should it get away\n",
+    "new": "",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-member-kept",
+    "file": "src/systems/revenant.js",
+    "old": "  try { _swornLeft?.(r.id); } catch { /* the party's bookkeeping is no record's failure */ }\n  return r;\n}\n/** RVN11c (22.3): the turning, told",
+    "new": "  return r;\n}\n/** RVN11c (22.3): the turning, told",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-pack-unsplit",
+    "file": "src/systems/revenant.js",
+    "old": "  splitPack(player, r);   // its pack as a deserter's\n",
+    "new": "",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-turn-unread",
+    "file": "src/systems/revenant.js",
+    "old": "  if (!turned) { r.returns++; deed(r, 'returned', now); }",
+    "new": "  r.returns++; deed(r, 'returned', now);",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-turn-always",
+    "file": "src/systems/revenant.js",
+    "old": "  if (!turned) { r.returns++; deed(r, 'returned', now); }",
+    "new": "  if (false) { r.returns++; deed(r, 'returned', now); }",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-kicker",
+    "file": "src/systems/revenant.js",
+    "old": "  // RVN11c: a betrayer; RVN12a: a theft's taunt\n  betrayed: 'Betrayed', stole: 'It took',",
+    "new": "  // RVN11c: a betrayer; RVN12a: a theft's taunt\n  stole: 'It took',",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-card-words",
+    "file": "src/systems/revenant.js",
+    "old": "  const body = `${r.given} turns on you!`;",
+    "new": "  const body = `${r.given} leaves you.`;",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-street-turn-unpassed",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "applyRevenant(entity, revenant, { turned });",
+    "new": "applyRevenant(entity, revenant);",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-street-band-stood",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "if (revenant && band && !puppet && !allied && entity.revenant)",
+    "new": "if (revenant && !puppet && !allied && entity.revenant)",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-deep-turn-unpassed",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "...(revenant ? { revenant, lairStand: !!lairStand, ...(turned ? { turned: true } : {}) } : {}) };",
+    "new": "...(revenant ? { revenant, lairStand: !!lairStand } : {}) };",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-turn-unqueued",
+    "file": "src/scenes/world.js",
+    "old": "    if (kind === 'betray') { _revenantArrivals.delete(r.id); _revenantBetrayals.push(r); return; }",
+    "new": "    if (kind === 'betray') return;",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-turn-after-frame",
+    "file": "src/scenes/world.js",
+    "old": "    while (_revenantBetrayals.length) turnSworn(_revenantBetrayals.shift());   // RVN11c: before the layer's frame - its body lifted, no portal\n    try { revenantAshore.frame(); } catch (e) { console.warn('[companions] the sworn', e?.message ?? e); }",
+    "new": "    try { revenantAshore.frame(); } catch (e) { console.warn('[companions] the sworn', e?.message ?? e); }\n    while (_revenantBetrayals.length) turnSworn(_revenantBetrayals.shift());",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-turn-untold",
+    "file": "src/scenes/world.js",
+    "old": "    revenantSay(revenantBetrayEvent(r, { playerName: playerEntity?.name }), (l) => townTalk.say(l));   // RVN12a: its words, my name in them\n    const rec = revenantAshore.bodies()",
+    "new": "    const rec = revenantAshore.bodies()",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-turn-portal",
+    "file": "src/scenes/world.js",
+    "old": "    try { place.remove(rec); } catch (e) { console.warn('[companions] a betrayer would not lift', e?.message ?? e); }\n",
+    "new": "",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-turn-calm",
+    "file": "src/scenes/world.js",
+    "old": "      if (f?.ai && !f.dead) f.ai.makeHostileToPlayer?.(undefined, [player.pos[0], player.pos[1], player.pos[2]]);\n",
+    "new": "",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-street-band",
+    "file": "src/scenes/world.js",
+    "old": "{ yaw, feetGiven: true, loose: true, band: false, turned: true,",
+    "new": "{ yaw, feetGiven: true, loose: true, turned: true,",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  },
+  {
+    "name": "RVN11c-deep-unturned",
+    "file": "src/scenes/world.js",
+    "old": "{ yawRad: yaw, revenant: r, turned: true, gender: so.gender, level: so.level }",
+    "new": "{ yawRad: yaw, revenant: r, gender: so.gender, level: so.level }",
+    "tests": [
+      "test/rvn11c_betray.test.js"
+    ]
+  }
+]

@@ -42,8 +42,8 @@
   {
     "name": "OW5b-E1-wanderer-never-asks",
     "file": "src/scenes/world.js",
-    "old": "    journeyMet();   // AUDIT OW5b E1: placed beside the traveller",
-    "new": "    void 0;   // AUDIT OW5b E1: placed beside the traveller",
+    "old": "    if (noticed) journeyMet();   // AUDIT OW5b E1: placed beside the traveller",
+    "new": "    if (noticed) void 0;   // AUDIT OW5b E1: placed beside the traveller",
     "tests": [
       "test/encounterplace.test.js"
     ],

@@ -184,7 +184,7 @@ test('ROAD-H H1b: the crouch flag is the LATCHED state, carried beside playerHei
 });
 
 test('ROAD-H H1b: all four hosts fill playerCrouching, and both archer sites read it', () => {
-  assert.match(src('scenes/shared.js'), /playerHeight = CAPSULE_HEIGHT, playerCrouching = false \} = \{\}\)/,
+  assert.match(src('scenes/shared.js'), /playerHeight = CAPSULE_HEIGHT, playerCrouching = false(, wildUnaware = null)? \} = \{\}\)/,   // WILD-ALERT: the gate's answer rides after it
     'sensesContext takes it beside playerHeight');
   assert.match(src('scenes/shared.js'), /^\s*playerCrouching,$/m, 'and answers it');
   for (const h of ['scenes/world.js', 'scenes/exterior.js', 'scenes/worldModes.js']) {

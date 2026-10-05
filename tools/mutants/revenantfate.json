@@ -2,7 +2,7 @@
   {
     "name": "REVENANT-FATE-dies-as-before",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "      if (fates && !_whole && revenantMayYield(f)) { yieldFoe(f); return; }\n",
+    "old": "      if (fates && !_whole && revenantMayYield(f)) { if (revenantWillHolds(f)) tearAway(f); else yieldFoe(f); return; }\n",
     "new": "",
     "tests": [
       "test/revenant_fate.test.js"
@@ -11,8 +11,8 @@
   {
     "name": "REVENANT-FATE-a-blow-kills-it-kneeling",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "    if (f.yielded || f.executing || f.sparing) return;   // REVENANT-FATE: a beaten revenant takes no blow",
-    "new": "    // REVENANT-FATE: a beaten revenant takes no blow",
+    "old": "    if (f.yielded || f.executing || f.sparing || f.leaving || f.roaring) return;   // REVENANT-FATE: a beaten revenant takes no blow",
+    "new": "    if (f.leaving || f.roaring) return;   // REVENANT-FATE: a beaten revenant takes no blow",
     "tests": [
       "test/revenant_fate.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "DISSOLVE-arriving-backwards",
     "file": "src/systems/revenantFate.js",
-    "old": "    if (p.dir === 'in') return t >= 1 ? null : [Math.max(0.001, 1 - Math.max(0, t)), ...DISSOLVE_ARCANE];",
-    "new": "    if (p.dir === 'in') return t >= 1 ? null : [Math.max(0.001, Math.max(0, t)), ...DISSOLVE_ARCANE];",
+    "old": "    if (p.dir === 'in') return t >= 1 ? null : [Math.max(0.001, 1 - Math.max(0, t)), ...tint];",
+    "new": "    if (p.dir === 'in') return t >= 1 ? null : [Math.max(0.001, Math.max(0, t)), ...tint];",
     "tests": [
       "test/revenant_companions.test.js"
     ]

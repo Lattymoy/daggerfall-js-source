@@ -12,6 +12,8 @@
 //  - AWAY: each sworn one waiting, or recovering from a fall (how long yet) - CALL (it steps through a portal to the
 //    player's side; refused, and saying why, while the slots are full or it is still hurt) and RELEASE.
 //  - The retinue's own bound (REVENANT_RETINUE_MAX), and how one is gained, at its foot.
+//  - RVN11 (bible/12-Enhanced-AI/Feud-Arc.md 22.4): each sworn one's LOYALTY - a bar under its health, and its word
+//    (Devoted, Loyal, Wavering, Restless).
 // The acts are the companions' own (systems/revenantCompanions.js); the host hears them (setRetinueListener) and the
 // companion layer carries them out the moment the menu closes - the portals, the words.
 //
@@ -23,6 +25,7 @@ import { retinue, revenantsWithYou, revenantsAway, callRevenant, callRefusal, se
 import { companionsWithYou, companionRoster, COMPANION_SLOTS } from '../systems/companionSlots.js';
 import { revenantPortrait, revenantRankNumeral } from '../systems/revenant.js';
 import { PERSONALITIES } from '../systems/revenantPersonality.js';
+import { loyaltyLabel } from '../systems/revenantFeud.js';   // RVN11 (bible/12-Enhanced-AI/Feud-Arc.md 22.4): its loyalty's word
 import { ownMinutes } from '../systems/worldTick.js';
 import { requestFittedIcon, fittedImg } from './textureCanvas.js';
 
@@ -62,6 +65,10 @@ export const COMPANION_PAGE_CSS = `
 .px-sys .cmp-sub { font-size: 11px; color: #8b8578; }
 .px-sys .cmp-hp { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; max-width: 260px; }
 .px-sys .cmp-hpn { font-size: 11px; color: #b8b0a0; font-variant-numeric: tabular-nums; }
+.px-sys .cmp-loyw { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; }
+.px-sys .cmp-loyw.is-devoted { color: #8fc7a0; }
+.px-sys .cmp-loyw.is-wavering { color: #e0a54a; }
+.px-sys .cmp-loyw.is-restless { color: #ff8a78; }
 .px-sys .cmp-mood { display: inline-block; margin-right: 6px; padding: 0 5px; border-width: 1px; border-style: solid; font-size: 9px; line-height: 1.5; letter-spacing: 0.12em; text-transform: uppercase; color: #e9c46a; vertical-align: 1px; }
 .px-sys .cmp-why { font-size: 11px; color: #e0a54a; }
 .px-sys .cmp-acts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
@@ -100,6 +107,18 @@ export function restWords(until, now) {
   return h <= 1 ? 'Recovering - within the hour' : `Recovering - ${h} hours`;
 }
 
+/** RVN11 (bible/12-Enhanced-AI/Feud-Arc.md 22.4): its loyalty - a bar (the kit's bone tone) and its word, the number on
+ *  the bar's title; nothing for a record without one. */
+export function loyaltyRow(el, r, meter) {
+  const v = r?.companion?.loyalty;
+  if (!Number.isFinite(v)) return [];
+  const word = loyaltyLabel(v);
+  const lb = el('div', 'cmp-hp cmp-loy');
+  lb.title = `Loyalty ${v} of 100`;
+  lb.append(...(typeof meter === 'function' ? [meter(v, 100, '')] : []), el('span', `cmp-loyw is-${word.toLowerCase()}`, word));
+  return [lb];
+}
+
 let _confirm = null;   // the sworn one whose release is being asked (its id)
 let _notice = null;    // the last refusal, said under its row ({ id, text })
 
@@ -127,6 +146,7 @@ function row(el, r, { now, rerender, meter, here, kindName }) {
       text.append(hp);
     }
   } else if (state === 'resting') text.append(el('span', 'cmp-sub', restWords(restUntil(r, now), now)));
+  text.append(...loyaltyRow(el, r, meter));   // RVN11 (22.4): its loyalty, wherever it is
   if (_notice?.id === r.id) text.append(el('span', 'cmp-why', _notice.text));
   const acts = el('div', 'cmp-acts');
   if (_confirm === r.id) {

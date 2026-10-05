@@ -23,7 +23,9 @@ import { wodSiteId, yieldsTo } from '../world/wodShared.js';   // WOD7: a camp's
 import { alignBillboardToGround, alignControllerToGround } from '../world/groundAlign.js';   // WOD3: SpawnLoot's drop; CSA-D: BoardBoat's AlignControllerToGround
 import { PRIVATEERS_HOLD_BLOCK, HOLD_MODELS, HOLD_FLATS, holdModelMatrix, holdFireLights, rollHoldFoes } from '../world/wodPrivateersHold.js';   // WOD4: the camp at Privateer's Hold
 import { rollLootRarity, pileSource, dungeonRarityTier, dungeonFamily, stampWonWeapons } from '../systems/lootRarity.js';   // WOD3: LR1 over the camps' piles; SIGIL1: their weapons' sigils
-import { revenantToReturn, revenantSpawnOptions, revenantPresence, takeRevenantNotice, revenantSay, releaseRevenantStand, revenantRecord, revenantMomentEvent } from '../systems/revenant.js';   // REVENANT: who comes back, and what the player is told
+import { revenantToReturn, revenantSpawnOptions, revenantPresence, takeRevenantNotice, revenantSay, releaseRevenantStand, revenantRecord, revenantMomentEvent, revenantRumor, revenantMapMarks, revenantHuntEntries, revenantTakes, revenantFelled, revenantFelledEvent, revenantRoutSweep, revenantRoutedEvent, revenantWarnEvent, revenantBetrayEvent, forgetLastSlew } from '../systems/revenant.js';   // REVENANT: who comes back, and what the player is told
+import { endPlayerFights } from '../systems/harmMark.js';   // RVN10 (bible/12-Enhanced-AI/Feud-Arc.md 21.2): a respawn's jump is no flight
+import { DEVOTED } from '../systems/revenantFeud.js';   // RVN11 (Feud-Arc.md 22.1): a Devoted one's wait between warnings
 import { SKY_CLEAR } from '../render/renderer.js'; import { centreFromFeet } from '../characters/enemyAnchor.js';   // REVIEW 2026-09-05: one line, so the cites below it hold
 import { Arch3dFile } from '../formats/arch3dFile.js';
 import { requestLook, releaseLook, makeLookGate, bindCursorToggle, setCursorActive, cursorActive, holdCursor } from '../player/pointerLock.js';   // U45: bindCursorToggle is PlayerMouseLook.cursorActive; releaseLook: the chat's open (AUDIT CHAT C2); HERB-CURSOR: an act's free cursor
@@ -60,7 +62,7 @@ import { questTracker } from '../ui/questTracker.js';   // GUIDE5: the quest the
 import { marksOn, questMapMarks } from '../ui/questMarks.js'; import { boatCompassPoints } from '../ui/boatMarks.js';   // GUIDE5: where the quests point, on the held map and the compass; BOAT-MARK: where my boats lie, on the compass
 import { settlementsOf, loadModRoads, basicRoadsPathsPoint, WATER_BYTE } from '../world/roadsProducer.js';   // ROADS 3 / AUDIT ROADS F2 / ROADS 22; WOD2: Basic Roads' getPathsPoint, the question World of Daggerfall's loader asks
 import { modSetting, modSettingsOf, modSettingsGeneration, MOD_SETTINGS, latchModLoaded } from '../systems/modSettings.js';   // ROADS 24; HCC: the mod's eight switches; CSA-D: a mod's title for the load's failure line; AUDIT PRE-MERGE 0928 S4: the next-load mods latched at mount
-import { hasPortFor, setSeatHarbours, PORT_LOCATION_IDS } from '../systems/travelPorts.js';   // AUDIT-RR2 G22: Travel Options' port list for RR's ship gate; SEAT2b part two: a members' Harbour among them (hasPortFor)
+import { hasPortFor, hasPort, setSeatHarbours, PORT_LOCATION_IDS, maskMapId } from '../systems/travelPorts.js';   // AUDIT-RR2 G22: Travel Options' port list for RR's ship gate; SEAT2b part two: a members' Harbour among them (hasPortFor)
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH, surfaceHeightAt, surfaceNormalAt, groundOffPlane, terrainSampleHeightAt, lowestGroundUnder } from '../world/terrainSurface.js';   // GRASS-LIT2: the ground's normal under a blade
 import { waterUniforms, buildWaterIndices, waterSwitchOn } from '../render/waterSurface.js';   // WATER1: the enhanced water surface over the pixel's own grid; WATER-AUDIT: its own index set
@@ -102,7 +104,32 @@ import { makeInteriorPersonHost as makeStaticNpcHost } from './interiorContext.j
 import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4
 import { CityNavigation } from '../world/cityNavigation.js';   // T2 towns
 import { TownPopulation } from '../systems/townPopulation.js';
-import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES } from '../characters/mobilePerson.js';
+import { LivingTown, LINE_HEAD_M as LIVING_HEAD_M } from '../systems/livingWorld/livingTown.js';   // LW2: the living world's streets - residents with days, where DFU's pool stood
+import { livingWorldOn } from '../systems/livingWorld/livingSwitch.js';
+import { createRelations, LIVING_WORLD_VENDOR } from '../systems/livingWorld/relations.js';   // LW2: how the living world regards this character (modData `LivingWorld`)
+import { ResidentWalker } from '../characters/residentWalker.js';
+import { firstNameOf } from '../systems/livingWorld/lines.js';
+import { travellerRoster, mintResident } from '../systems/livingWorld/census.js';   // LW3: a town's travellers, off its MAPS row alone; LW4: a newcomer to a place the road emptied
+import { townTrips, visitorsOf as tripVisitorsOf, awayOf as tripAwayOf, placeCycle, setsOut, newsOf, paceScale, NEWS_DAYS, diversAt, cycleOf, handsOn } from '../systems/livingWorld/trips.js';   // LW3: the roads, pure; LW4: the places' cycles, the town's news; LW7: a townsperson's cycle, a trip's hand deaths
+import { placeAt, turnKey } from '../systems/livingWorld/lives.js';   // LW4: who holds a traveller's place
+import { peoplePage } from '../systems/livingWorld/people.js';   // LW7c: the chronicle's People page
+import { troubleOf, troubledTrip } from '../systems/livingWorld/trouble.js';   // LW4: trouble on the road
+import { foeWord } from '../systems/livingWorld/lines.js';   // LW4: a foe's word for the town's talk and a mark
+import { portPackets, berthOf, sailorAt, crewsAshore } from '../systems/livingWorld/portCrews.js';   // LW5: the Bay's sailors
+import { createWayBook } from '../systems/livingWorld/ways.js';   // LW3: the travellers' ways, planned by the living world itself
+import { createLivingRoads } from './livingRoads.js';   // LW3: the parties on the road near the player
+import { createRoadFights, LIVE_M } from './roadFights.js';   // LW4b: a beset party's fight, stood live
+import { createRoadStands, FIGHT_NEAR_M } from './roadStands.js';   // LW7b: the armed beyond the walls - a hostile drawing, a friend at the player's side
+import { createDungeonDivers } from './dungeonDivers.js';   // LW6: the divers met in the dungeon
+import { createDeepRemains } from './deepRemains.js';   // LW6b: the fallen of a dive, found in its dungeon
+import { watchStep } from './livingWatch.js';   // LW-FIX2: a struck watchman's guard followed to his end
+import { fallenIn } from '../systems/livingWorld/trips.js';   // LW6b: ...the deep's word of them
+import { enemyLootTableKey } from '../systems/loot.js';   // LW6b: ...what they carried, their class's table
+import { goldStack } from '../systems/inventory.js';   // LW6b: ...and their purse
+import { mintKeepsake } from '../systems/livingWorld/keepsake.js'; import { lwRng, textSeed } from '../systems/livingWorld/seed.js';   // LW6c: ...and their keepsake, carried home; AUDIT-C5: their goods their key's own (on this line, so no cite below it moves)
+import { createLivingIndoors } from './livingIndoors.js';   // LW8: the residents inside the building the player is in
+import { createTravellerSprites, classLookOf } from '../world/travellerSprites.js';   // LW3: their bodies, and the armed walk's sprite
+import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES, PERSON_MOVE_SPEED } from '../characters/mobilePerson.js';
 import { bowDamageArrow, weaponOfMaterial, armorOfMaterial } from '../combat/enemyEquipment.js';   // MAC-N1: the recovered shaft is CreateWeapon's arrow, value and all; OH-E: UpgradeLoot's SetItem + ApplyWeaponMaterial / ApplyArmorSettings
 import { createTownTalk, rayPersonDistance, nearestPerson } from './townTalk.js';   // AUDIT 63 F33 (review): the townsfolk's own pick distance, the enemy arm's rival
 import { createPlayerMagic } from './hostMagic.js';   // M2: spellcasting above ground
@@ -113,10 +140,11 @@ import { preloadSpellbookArt } from '../ui/spellbookWindow.js';   // U42: the cl
 import { createSpellbookWindow } from '../ui/spellbookDoor.js';   // PX23: the book's one door
 import { calculateCastCost } from '../systems/spellcost.js';   // M2   // T3b
 import { rangedDamageSpells } from '../systems/spellcast.js';   // U42: the flight probe's picker
-import { worldMinutes, skyMinutes, setWorldMinutes, setSharedClock, sharedClockOn, sharedWallMs, alignEntityClocks, CLASSIC_MINUTES_PER_SECOND, setWorldPriceTilt, empireJoin, ownMinutes, advanceOwnMinutes, worldNightfallText, hearSharedClock, ownWalkWaiting, trustedWorldMinutes, raisedMinutes } from '../systems/worldTick.js';   // ECON1 / AUDIT ALL E1: the world's tilt off the file's base powers   // AUDIT 23 (C2): the ONE clock
+import { worldMinutes, skyMinutes, setWorldMinutes, setSharedClock, sharedClockOn, sharedWallMs, alignEntityClocks, CLASSIC_MINUTES_PER_SECOND, setWorldPriceTilt, empireJoin, ownMinutes, advanceOwnMinutes, worldNightfallText, hearSharedClock, ownWalkWaiting, trustedWorldMinutes, raisedMinutes, playerWeaponHitEntity } from '../systems/worldTick.js';   // ECON1 / AUDIT ALL E1: the world's tilt off the file's base powers   // AUDIT 23 (C2): the ONE clock
 import { setSyntheticTimeIncrease } from '../systems/effectBroker.js';   // AUDIT 63 F13: DaggerfallTravelPopUp_OnPostFastTravel (EntityEffectBroker.cs:846-847)
-import { tallySwingSkills, SWING_FATIGUE_COST, playerPainVoice, playPlayerVoice, makeEnemiesHostile, isBowWeapon, enemyHeavyPainVoice, playerClimbStrain } from './hostCombat.js';   // ROAD-B: GameManager.MakeEnemiesHostile
+import { tallySwingSkills, SWING_FATIGUE_COST, playerPainVoice, playPlayerVoice, makeEnemiesHostile, isBowWeapon, enemyHeavyPainVoice, playerClimbStrain, aimedBlowInfo, playerBlowFrame, setWindupAtMeListener } from './hostCombat.js';   // ROAD-B: GameManager.MakeEnemiesHostile
 import { flashPlayerDamage } from '../ui/damageFlash.js';
+import { knockedDown } from '../systems/blowEffects.js';   // TELL6e: knocked down, no swing
 import { resetVitalsDetector } from '../ui/hudVitals.js';   // BLOOD AUDIT 5: the load's detector reset   // AUDIT 24 (wave 46): the arrow owes the flash too   // AUDIT 23 (C14)
 import { hudFade } from '../ui/fadeLayer.js';   // D4: performFastTravel's and TeleportAway's fade from black
 import { exhaustionOutcome } from '../systems/rest.js';   // AUDIT 23 (C5); SWIM-SPENT: the water's line is the outcome's
@@ -162,7 +190,7 @@ import { racialRestBlock, racialFastTravelBlock, racialSunAverse, cureVampirism,
 import { giveOffer } from '../ui/pendingOffer.js';   // AUDIT 58: DaggerfallUI.GiveOffer, the rung in front of BOTH the rest and the fast-travel press   // V2b: the vampire's rest and daylight gates; V2d: $CUREVAM's cure arm
 import { cureLycanthropy, racialSuppressPopulationSpawns, racialSuppressTalk, lycanthropeMoveSound, isTransformedLycanthrope } from '../systems/lycanthropy.js';   // V2d: $CUREWER's cure arm; V4: the transformed gates; LM1: the 4-20s move-sound loop; DISC10-E L3: the inventory refusal moved INTO the window door
 import { setRacialQuestHost } from '../systems/racialQuests.js';   // V2d: the quest-start seam (the machine is this host's)
-import { setCrimeGuildQuestHost, setCrimeGuildClock } from '../systems/crimeGuilds.js';   // CG2
+import { setCrimeGuildQuestHost, setCrimeGuildClock, tallyCrimeGuildRequirements } from '../systems/crimeGuilds.js';   // CG2; LW7: a traveller struck down is the Brotherhood's five
 import { randomCemeteryLocationIndex } from '../systems/infection.js';   // V2e: GetRandomCemetery's pick half
 import { MEMBERSHIP_STATUS } from '../systems/quest/questLists.js';   // V2d: the vampire clan pool asks as a Member
 import { prepareQuestShare, prepareShareData, shareSignature, receiveSharedQuest, SHARE_REFUSAL_TEXT, shareRefusalText, sayShareRefusal } from '../systems/questShare.js';   // QUEST1: the chronicle's own Share button, and the party frame it answers
@@ -194,12 +222,13 @@ import { PLAYED_STEP_MAX_SECONDS } from '../systems/quest/clock.js';   // WORLD7
 import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender, reviveQuestBehaviour, heldSpots, holdSpotWhile, questBoxHoldsFoes, questShareTag, sharedQuestFoe, partnerStandsQuestFoes, questBehaviourFor, adoptsOrphanQuestFoe, isPrivateQuestFoe, KeptKillLedger, creditKeptKills } from './questFoeHost.js';   // B1   // AUDIT 63r F24: SerializableEnemy.cs:206-217's quest-link arm, the one home both hosts use
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
 import { markFoeReach } from '../systems/foeReach.js';   // WATER-FOES: a foe in the water reaches no one aboard
-import { intermittentEnemySpawn, setEnemyAlert, areEnemiesNearby, foeHostile } from '../systems/encounters.js';   // OW6: foeHostile, the one hostility gate   // CAMP-ROLL: REST5's quietNights moved with the carried night's sequence (scenes/shared.js restCampNight)
+import { intermittentEnemySpawn, setEnemyAlert, areEnemiesNearby, foeHostile, foeAlerted } from '../systems/encounters.js';   // OW6: foeHostile, the one hostility gate   // CAMP-ROLL: REST5's quietNights moved with the carried night's sequence (scenes/shared.js restCampNight)
 import { nightDue, setNightListener, nightStamp, nightKindOf, isNightStamp, carriedNightEnd, REST_ACT_TEXT, campStamp, campMarkOf } from '../systems/restAct.js';   // REST5: the party's night   // AUDIT REST-PARTY: and where it was slept   // AUDIT REST II: the mark asked lazily (P5), and what a carried night says (P3)
 import { createNightWatch, carriedNightAction, createCampWatch, campPasses } from '../systems/partyRestLaw.js';   // AUDIT REST-PARTY: the party's night, pinned by execution   // AUDIT REST II P1/P2: its watch   // CAMP-ROLL: the camp's one roll
 import { ambushNight } from '../systems/restAct.js';   // AUDIT REST-PARTY A1: a resting encounter stood breaks the night that rolled it
 import { createStandingWatch, installLegalNotices } from './standingHost.js';   // REP1: the watch's stop; REP5: the law's notices
-import { skillValue } from '../systems/skills.js';   // TO1: the avoid-encounter roll's live Stealth
+import { chooseRandomEnemy } from '../systems/encounters.js';   // LW6: a dungeon's own foes for a dive's trouble
+import { skillValue } from '../systems/skills.js';   // TO1: the avoid-encounter roll's live Stealth; WILD-ALERT: the notice's
 import { refreshMentor, mentorStatusText, effectiveLevel } from '../systems/mentorMode.js';
 import { setMasterSkillsGate, MASTER_SKILLS_DUNGEON_TEXT } from '../systems/masterSkills.js';   // SOFTCAP3
 import { isOnlinePage, ONLINE_LAND_TRAVEL_REFUSAL } from '../systems/onlineLane.js';   // SOFTCAP3: Master Skills is online only; AUDIT TRAVEL-ONLINE T7: the map's floor
@@ -329,7 +358,10 @@ import { groundHit, canvasPoint, classifyPick } from '../player/travelPick.js'; 
 import { planRoute, routeLegs, roadShare, crossesWater, dryLine, SEA_KINDS } from '../systems/travelRoute.js';   // TV2: the way by the roads; OWS2: and over the water
 import { createSeaHelm, seaHelmStep, headingOf as seaHeadingOf, squareOnly as seaSquareOnly, SEA_HELM } from '../systems/seaHelm.js';   // OWS2: the journey's hand on the helm
 import { createLoadGovernor, unbuiltAround } from '../systems/travelGovernor.js';   // TV2: "Cap it to what loads cleanly"
-import { threatCap } from '../systems/travelThreat.js';   // OW6: the journey slows as enemies close
+import { createWildAlert, noticeChance, WILD_MARK, WILD_MARK_S } from '../systems/wildAlert.js';   // WILD-ALERT: the wilderness notices a fast traveller on a stealth check
+import { drawWildMarks, WILD_MARK_RANGE } from '../ui/wildMarks.js';   // WILD-ALERT: the "!" over an alerted foe
+import { playerOnPathAt, pathsDataPoint } from '../systems/travelPaths.js';   // RATE-LAW: the traveller on a road's lane or off it
+import { threatCap, foePaced } from '../systems/travelThreat.js';   // OW6: the journey slows as enemies close; ENEMY-PACE's floor, fixed (RATE-LAW)
 import { farPlaces, settlementPixels, farDistanceText, PIXEL_KM } from '../systems/travelFarPlaces.js';   // TV5: the far places, held at the view's edge
 import { dungeonRows, spawnedPixels, filedSpawns, nearDungeons, dungeonApproach, pixelBox, lastLegStart, dungeonToFind, dungeonFoundText, NATIVE_PER_M } from '../systems/travelDungeons.js';   // TV6: the dungeons, discovered on approach; AUDIT OW3 D1/D3: off the map rows, and the spawns with them; AUDIT OW4 D4/D6: the far found spawns, the last leg's start
 import { routeGround, joinPoint, routeDrawPoints, TV_MOUNTAIN_CLIMATE } from '../systems/travelRoute.js';   // OW-MOUNTAINS, OW-ROADSIDE; AUDIT OW3 J4: the drawn route's points; AUDIT OW4 J3: the ground read once
@@ -456,7 +488,7 @@ import { createNavalCrew, CREW_RANGE, CREW_KEEP } from './navalCrew.js';   // LI
 import { asleepHour } from '../systems/naval/shipWatch.js';   // SHIP-WATCH: the crews' sleeping hours
 import { crewRoster, crewCount } from '../systems/naval/crewLife.js';
 import { createCrewAshore } from './crewAshore.js';   // CREW-COMPANIONS: the party ashore, stood in every place
-import { revenantParty, setRetinuePlayer, setRetinueListener, setRetinueBodies, revenantsWithYou, isRevenantCompanionKey, revenantIdOfKey, applySwornStrength, sendRevenantAway, forgetSwornMember } from '../systems/revenantCompanions.js';   // REVENANT-COMPANION: the sworn, stood by the same layer
+import { revenantParty, setRetinuePlayer, setRetinueListener, setRetinueBodies, revenantsWithYou, isRevenantCompanionKey, revenantIdOfKey, applySwornStrength, sendRevenantAway, forgetSwornMember, swornFightStep, swornFightWon, devotedWithYou } from '../systems/revenantCompanions.js';   // REVENANT-COMPANION: the sworn, stood by the same layer
 import { registerCompanionCount, registerCompanionRoster, companionsWithYou, COMPANION_SLOTS } from '../systems/companionSlots.js';   // COMPANION-SLOTS: the crew's hands ashore counted with the sworn
 import { PERSONALITIES } from '../systems/revenantPersonality.js';   // REVENANT-COMPANION: the party card's word for one
 import { hullBuild } from '../systems/naval/navalShips.js';   // LIVING CREW: a room's boat's crew, her hull's own
@@ -476,7 +508,7 @@ import { horseOffsetHeight as csaHorseOffsetHeight } from '../ui/hudLarge.js';  
 import { raycastColliders, rayBoxEntry, colliderPoses, invertAffine, BUILTIN_COLLIDER_MESHES, boxColliderTriangles } from '../world/prefabColliders.js';   // CSA-C: a boat's colliders under the ray; CSA-D: and in the world's collider
 import { DECK_STEP, DECK_HEADROOM, intoDeck, outOfDeck, mainLevel } from '../systems/naval/navalDeck.js';   // DECK-WALK: a body off her deck by more than a tread has left it; her deck's frame (AUDIT NAV2 F33: the headroom a deck point's ray starts under)
 import { warmAshesOn, LeaveShip, setWarmAshesHost, onPreFastTravel as warmAshesPreTravel, onPostFastTravel as warmAshesPostTravel, frame as warmAshesFrame, raidAtSea as warmAshesRaidAtSea, raidRefusal as warmAshesRaidRefusal, raidUnderWay as warmAshesRaidUnderWay, WA_RAID_QUESTS, WA_SEA_REGION } from '../systems/warmAshesShips.js';   // WA1: Warm Ashes - Ships, the ambush at sea; OWS3: its raid, seen coming; THE MERGE (NAV-D, OWS3): one raid at a time
-import { laneNetwork, laneWay, packetsAt, LANE_PATH_PX } from '../systems/naval/seaLanes.js';   // SEA-LANES: the Bay's packets
+import { laneNetwork, laneWay, packetsAt, packetAt, LANE_PATH_PX, LANE_DWELL_S } from '../systems/naval/seaLanes.js';   // SEA-LANES: the Bay's packets; LW5: where one is, and her dwell
 import { raidersNear, raiderAt, raiderSight, chaseStep as raiderChaseStep, pixelOfNative, NATIVE_PIXEL as RAID_NATIVE_PIXEL, RAIDER_CONTACT_M, RAIDER_CONTACT_PLAY_M, RAIDER_CHASE_MPS, RAIDERS_WIRE_MAX, RAIDER_WORD_MS, raiderWordOf, validRaiderWord, raiderLifeOf, raiderNearMe, RAIDER_LABEL, RAIDER_LIFE_MS } from '../systems/seaRaiders.js';   // OWS3: Warm Ashes' raiders on the Overworld's sea
 import { RAIDER_LEAD_S } from '../systems/naval/navalRaiders.js';   // NAV-R: a raider ship steers its seeded course this far on
 import { setRaidingPartiesHost, raidFrame as raidingPartiesFrame, raidState, raidingPartiesOn, raidTypeName as raidKindName, raidDefendingHere, outOfSight as raidOutOfSight, raidWireWord, raidPeerWord, raidRelayWord, raidTownsFor, RAID_SPAWN_MIN_DISTANCE, RAID_SPAWN_MAX_DISTANCE } from '../systems/raidingParties.js';   // RAID1: World Events - Raiding Parties, the towns' raids
@@ -484,7 +516,7 @@ import { modSaveRecords, restoreModSaveRecords, newGameModSaveRecords, registerM
 import { applyDeathPenalty, deathPenaltyText, stateDeathLoss, statedDeathLoss } from '../systems/deathPenalty.js';   // DEATH-PENALTY: an online death costs a tenth of the purse
 import { createBountyHost } from './bountyHost.js';   // BOUNTY1: the town's bounty boards - the hunts, their packs, their purse
 import { createBountyFarms, farmSpotLocal, pickFarm } from './bountyFarms.js';   // BOUNTY-FARM: a farm on a farm bounty's pixel, while it is held
-import { questBoardIndices } from '../systems/bountyBoard.js';   // BOUNTY1: which of a town's boards post bounties (half)
+import { questBoardIndices, bountyDungeons } from '../systems/bountyBoard.js';   // BOUNTY1: which of a town's boards post bounties (half); RVN7: a revenant's lair, in the boards' ring
 import { createBountyOverlay, closeBountyDoor, bountyDoorOpen } from '../ui/bountyDoor.js';   // BOUNTY1: the board's window and the payday notice
 import { isQualifyingThreatState } from '../systems/horseFollow.js';   // HCC: CollectThreats' qualification, the mod's own five-term test
 import { totalWeight } from '../systems/inventory.js';   // HCC: PlayerEntity.WagonWeight
@@ -527,7 +559,7 @@ import { jumpSpeedMultiplier, isEnhancedJumping, tallySkill, SKILLS } from '../s
 import { playerEntity, surfacePlayer, hurtPlayer, playerBlowCameToNothing, setDeathPresenter, presentPlayerDeath, setAvoidDeathHook, registerDuelFell, duelSpare, setStaffPowers, staffPowers, registerLevitateWard, registerFreeFlight } from '../characters/playerEntity.js';   // AUDIT-SEATS G5: a siege's ward on Levitate   // AUDIT-SEATS G4: a spectator's flight
 import { SOUND } from '../systems/soundClips.js';
 import { createWeaponRig, autoBuildArms, armIdentityOf, armBuiltFor, armsReady, sheetHolderOf, buildArmsFor, prebuildArmsForSave } from '../combat/weaponRig.js';   // MWA1: the arms at boot; MWA3: the identity the arm should stand for, beside the one it does; MW-EARLY: and before the world is read
-import { weaponPoseOf, applyWeaponPose, mergeWeaponPose, playerMeleeCanHit, registerPlayerSwingListener } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law, and SL-2's per-field merge with the mode host's live rig
+import { weaponPoseOf, applyWeaponPose, mergeWeaponPose, playerMeleeCanHit, registerPlayerSwingListener, WEAPON_REACH } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law, and SL-2's per-field merge with the mode host's live rig
 import { ArrowFlight, playerArrowHitFoe } from '../combat/arrowFlight.js';   // C13: visible exterior arrows; AUDIT 39 (#64): and the shaft that LANDS
 import { addItem, addGoldPieces, isGoldPieces, spendAmmoFor, carriedWeight } from '../systems/inventory.js';
 import { storesIn, spendStore, mintStores } from '../systems/naval/navalStores.js';
@@ -587,7 +619,7 @@ import {
 } from '../systems/realmSaves.js';   // REALM P1.3: an online character is the realm's - joined, loaded and checkpointed through the service
 import { reclaimFromDevice, reclaimLines } from '../systems/realmCustoms.js';   // RESTORE: what customs once kept back, given back at the boot
 import { appStorage } from '../systems/appStorage.js';   // ACC1d: where that session lives - the app's store, not the tab's (a second tab is the same player)
-import { skyClassicMinutes, wallMsForSkyMinutes } from '../net/skyLaw.js';   // TIME1: the sky's own clock, installed beside the event clock
+import { skyClassicMinutes, wallMsForSkyMinutes, skyMinutesPerMsAt } from '../net/skyLaw.js';   // TIME1: the sky's own clock, installed beside the event clock
 import { POSE_STRIKES, isWorldRoom, isCellRoom, cellHaloFor, actFrameFits, sharedClassicMinutes, wallMsForClassicMinutes } from '../net/wire.js';   // WORLD6b-iii(b): the cell seam's halo   // MAC7 #1: the swing's kind on the wire; AUDIT WORLD4 A1: whether an act frame can be said at all
 import { hasDaggerfallArrows } from '../combat/fpArm.js';   // MAC7 #2: the arrow bit on the wire - weaponRig's own read
 import { drawText } from '../ui/text.js';   // ONLINE1: the session's status line
@@ -784,7 +816,7 @@ import { createRandomReligiousItem, createRandomJewellery, createRandomGem, crea
 import { createRegularMagicItem, getMagicItemTemplates, lootMatrix, tableLootSpawned } from '../systems/loot.js';   // OH-E: CreateRandomMagicItem, GetMatrix, LootTables.OnLootSpawned
 import { enemyLootSpawned } from '../characters/enemyEntity.js';   // OH-E: EnemyEntity.OnLootSpawned
 import { customItemClass } from '../systems/rriItems.js';   // OH-E: UpgradeLoot's `GetType() != typeof(DaggerfallUnityItem)`
-import { setItemFields, mintCondition } from '../systems/itemTemplates.js';   // DW-E5: the item constructor's name, value and condition
+import { setItemFields, mintCondition, isAmmunition } from '../systems/itemTemplates.js';   // DW-E5: the item constructor's name, value and condition
 import { registerItemUseHandler } from '../systems/itemTemplates.js';   // CSA-H: the boat items' UseItem on the item-use door
 import { mintBoatItem, mintShelfBoatUids, assignVariantsToShopItems, cargoLootTarget, BOAT_PARTS_TEMPLATE as CSA_PARTS_TEMPLATE, BOAT_DEED_TEMPLATE as CSA_DEED_TEMPLATE } from '../systems/comeSailAwayItems.js';   // CSA-H: the two items, their shelf
 import { ListPickerWindow, listPickerArtLoaded } from '../ui/listPicker.js';   // CSA-H: the boat's variant picker
@@ -1188,6 +1220,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const _bountyFarmLocs = [];   // BOUNTY-FARM: the game's own farmsteads - the nearest lends a farm bounty its buildings
   const _bountyDungeonPixels = new Map();   // BOUNTY1: the game's own dungeons, by pixel -> name, for a board's underground hunts
   const _bountyGraveyardPixels = new Set();   // BOUNTY-GRAVEYARD: the game's own graveyards, by pixel - a board's hunt there stands outside
+  const _dungeonRegionPixels = new Map();   // RVN7: those dungeons' regions, by pixel - a revenant's lair names its region (its rumours' reach)
   const _bountyLocPixels = new Set();   // BOUNTY1: the pixels the game's OWN locations stand on (no spawn, no mod row), for a hunt's ground
   // AUDIT OW4 D5: THE INDEX'S GENERATION - bumped at every set and delete after the boot's fill (the spawns: stood,
   // expired, taken back by a road), so a reader that keeps a list off the index (the Overworld's dungeons) sees ANY
@@ -1218,6 +1251,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         if (lt === LOCATION_TYPES.HomeFarms) _bountyFarmLocs.push({ px: p.x, py: p.y, loc });   // BOUNTY-FARM: the game's own farms, whose first block a farm bounty stands
         if (loc.hasDungeon && lt !== LOCATION_TYPES.TownCity && lt !== LOCATION_TYPES.TownHamlet && lt !== LOCATION_TYPES.TownVillage) {
           _bountyDungeonPixels.set(`${p.x},${p.y}`, String(loc.name ?? ''));
+          _dungeonRegionPixels.set(`${p.x},${p.y}`, r);   // RVN7
           if (lt === LOCATION_TYPES.Graveyard || /graveyard|cemetery/i.test(String(loc.name ?? ''))) _bountyGraveyardPixels.add(`${p.x},${p.y}`);
         }
       }
@@ -2062,6 +2096,18 @@ export async function bootWorld(canvas, renderer, params, status) {
   }
   const timeScaleMult = params.has('timescale') && !sharedClockOn() ? Number(params.get('timescale')) / 12 : 1;
   const minuteNow = () => skyMinutes() % 1440;   // TIME1: THE SKY's hour - every isNight, hour and sky read below takes it
+  // LW2 (bible/06-Systems/Living-World.md, LW0 decisions 2-3): THE LIVING WORLD'S CLOCK is the sky's minute, and its
+  // people walk at DFU's 1.3 m/s - so their pace in the sky's minutes is that over the clock's rate: the sky's own online
+  // (twenty-four a real minute, every reader the same), the calendar's twelve offline. A journey speeds the calendar
+  // and the people with it (`livingRate`); online it moves no shared clock.
+  const livingBaseRate = () => (params.has('online') ? skyMinutesPerMsAt(Date.now() + _sharedOffsetMs) * 1000 : CLASSIC_MINUTES_PER_SECOND);
+  const livingRate = () => (params.has('online') ? livingBaseRate() : CLASSIC_MINUTES_PER_SECOND * worldTimeScale());
+  let livingRelations = createRelations();   // LW2: how the living world regards this character - the save's `LivingWorld` record
+  registerModSaveData(LIVING_WORLD_VENDOR, {
+    newSaveData: () => null,
+    getSaveData: () => livingRelations.snapshot(),
+    restoreSaveData: (rec) => { livingRelations = createRelations(rec); },
+  });
 
   // A5b: OUTDOOR MUSIC. AssignPlaylist's City/Wilderness arms - night
   // overrides everything, and by day the weather picks the list
@@ -2140,6 +2186,457 @@ export async function bootWorld(canvas, renderer, params, status) {
   const ensurePersonTex = () =>
     (_personTexLoad ??= Promise.all(personArchives.map(async (a) => personTex.set(a, await getTexture(a)))));
 
+  // LW3 (bible/06-Systems/Living-World.md): THE LIVING WORLD'S ROADS. The trips are pure (systems/livingWorld/trips.js);
+  // their world is this host's: the towns - the game's OWN rows (a mod's addition stands on one client and not another),
+  // the populated types, each as its MAPS row says it (its blocks, its climate's people, its region, its port) - and the
+  // way between two, the Travel Options planner's on Hazelnut's roads (the follow key's and the static's own: his bytes
+  // or none), asked once a pair in ONE direction (the lower map id first, the other its reverse) so every client walks
+  // the same way, a few a frame. A traveller's trip of a cycle never changes, so the book keeps every one it has made.
+  let _livingTowns = null;
+  const livingTownsIndex = () => {
+    if (_livingTowns) return _livingTowns;
+    _livingTowns = new Map();
+    for (const loc of _hubRows) {
+      const md = loc.mapTableData;
+      if (!md || !populatesWanderingNpcs(md.locationType)) continue;
+      const p = longitudeLatitudeToMapPixel(md.longitude, md.latitude);
+      const ed = loc.exterior?.exteriorData;
+      _livingTowns.set(p.y * 1000 + p.x, {
+        mapId: md.mapId >>> 0, name: String(loc.name ?? ''), px: p.x, py: p.y, type: md.locationType, region: loc.regionIndex,
+        people: getWorldClimateSettings(maps.getClimateIndex(p.x, p.y))?.people, blocks: Math.max(1, (ed?.width ?? 1) * (ed?.height ?? 1)),
+        port: hasPort(md.mapId),
+      });
+    }
+    return _livingTowns;
+  };
+  // LW6: THE DUNGEONS an adventurer dives - the game's own rows of a dungeon's kind (a labyrinth, a keep, a ruin, a
+  // graveyard), each with its dungeon's type
+  const LIVING_DIVE_TYPES = new Set([LOCATION_TYPES.DungeonLabyrinth, LOCATION_TYPES.DungeonKeep, LOCATION_TYPES.DungeonRuin, LOCATION_TYPES.Graveyard]);
+  let _livingDungeons = null, _livingDungeonById = null;
+  const livingDungeonsIndex = () => {
+    if (_livingDungeons) return _livingDungeons;
+    _livingDungeons = new Map(); _livingDungeonById = new Map();
+    for (const loc of _hubRows) {
+      const md = loc.mapTableData;
+      if (!md || !LIVING_DIVE_TYPES.has(md.locationType)) continue;
+      const p = longitudeLatitudeToMapPixel(md.longitude, md.latitude);
+      const d = { mapId: md.mapId >>> 0, name: String(loc.name ?? ''), px: p.x, py: p.y, type: md.locationType, region: loc.regionIndex, blocks: 1, dungeon: true, dungeonType: md.dungeonType ?? 0 };
+      _livingDungeons.set(p.y * 1000 + p.x, d); _livingDungeonById.set(d.mapId, d);
+    }
+    return _livingDungeons;
+  };
+  const _livingDungeonsNear = new Map();
+  const livingDungeonsNear = (px, py, r) => {
+    const key = `${px},${py},${r}`;
+    let got = _livingDungeonsNear.get(key);
+    if (got) return got;
+    got = [];
+    const idx = livingDungeonsIndex();
+    for (let y = py - r; y <= py + r; y++) for (let x = px - r; x <= px + r; x++) { const d = idx.get(y * 1000 + x); if (d) got.push(d); }
+    got.sort((a, b) => a.mapId - b.mapId);
+    if (_livingDungeonsNear.size > 512) _livingDungeonsNear.clear();
+    _livingDungeonsNear.set(key, got);
+    return got;
+  };
+  const _livingNear = new Map();
+  const livingTownsNear = (px, py, r) => {
+    const key = `${px},${py},${r}`;
+    let got = _livingNear.get(key);
+    if (got) return got;
+    got = [];
+    const idx = livingTownsIndex();
+    for (let y = py - r; y <= py + r; y++) for (let x = px - r; x <= px + r; x++) { const t = idx.get(y * 1000 + x); if (t) got.push(t); }
+    got.sort((a, b) => a.mapId - b.mapId);
+    if (_livingNear.size > 512) _livingNear.clear();
+    _livingNear.set(key, got);
+    return got;
+  };
+  // the ways: the living world's own planner (livingWorld/ways.js) on the drawn roads and the game's own ground - never a
+  // player's attached massifs (TO-ROADS: the host plans the player's journeys alone)
+  let _livingGround = null;
+  const livingWays = createWayBook({
+    roads: () => terrainGen.roads(),
+    ground: () => (_livingGround ??= routeGround((px, py) => maps.getClimateIndex(px, py), (px, py) => woods.getHeightMapValue(px, py), WATER_BYTE)),
+  });
+  const livingRouteOf = (a, b) => livingWays.wayOf(a, b);
+  const _livingRosters = new Map();
+  const livingTripWorld = {
+    townsNear: livingTownsNear,
+    routeOf: livingRouteOf,
+    rosterOf: (t) => { let r = _livingRosters.get(t.mapId); if (!r) { r = travellerRoster(t); _livingRosters.set(t.mapId, r); } return r; },
+    templeTown: (t) => t.type === LOCATION_TYPES.ReligionTemple || t.blocks >= 9,
+    dungeonsNear: livingDungeonsNear,   // LW6: an adventurer's dives
+  };
+  const _livingTripMemo = new Map();
+  let _livingWaysSeen = 0;
+  /** AUDIT-B8: the trips' memo kept to its bound and to the network's generation by every reader (the roads', the deep's
+   *  and the towns' - only the towns' asked it, and a long stay below grew it unbounded). */
+  const livingMemoFresh = () => { if (_livingTripMemo.size > 40000 || livingWays.generation !== _livingWaysSeen) { _livingTripMemo.clear(); _livingWaysSeen = livingWays.generation; } };
+  // LW4: THE LIVES AND THE TROUBLE (lives.js, trouble.js) - who holds each traveller's place in a cycle (the census's
+  // newcomer after a death on the road; nobody while the place stands empty) and what befalls each party, read over the
+  // character's own turns of fate (relations.js); each kept in a book, made again when a turn is made or a save loaded
+  const _livingTownById = new Map();
+  const livingTownOfId = (id) => { if (!_livingTownById.size) for (const t of livingTownsIndex().values()) _livingTownById.set(t.mapId, t); return _livingTownById.get(id) ?? null; };
+  const _livingPlaces = new Map();
+  const _livingFates = new Map();
+  let _livingTurnsRel = null, _livingTurnsV = -1;
+  const livingTurnsFresh = () => {
+    const v = livingRelations.turnsVersion();
+    if (_livingTurnsRel === livingRelations && _livingTurnsV === v) return;
+    _livingTurnsRel = livingRelations; _livingTurnsV = v;
+    _livingPlaces.clear(); _livingFates.clear(); _livingTripMemo.clear();
+  };
+  /** A resident's place in cycle `k`: who holds it (null: empty), whether the road takes its holder that cycle, and (LW7)
+   *  the minute a hand took them (null: none) - a townsperson's as a traveller's, the newcomer the census's own mint. */
+  const livingPlaceOf = (res, k) => {
+    const key = turnKey(res, k);
+    let got = _livingPlaces.get(key);
+    if (!got) {
+      const pl = placeAt(res, k, livingRelations.turns());
+      const town = pl.vacant || pl.holder == null ? null : livingTownOfId(res.town);
+      const holder = pl.vacant ? null : pl.holder == null ? res
+        : (town ? mintResident(town, res.roll ?? 't', res.slot, res.job, { gen: pl.holder, home: res.home, work: res.work, faction: res.faction }) : res);
+      got = { holder, dies: !pl.vacant && pl.dies, hand: pl.hand };
+      if (_livingPlaces.size > 30000) _livingPlaces.clear();
+      _livingPlaces.set(key, got);
+    }
+    return got;
+  };
+  const livingScale = () => paceScale(PERSON_MOVE_SPEED / livingBaseRate());
+  /** LW7: the cycle a resident's place lives by on `day` - a traveller's (placeCycle, over their town's roster), else the
+   *  resident's own (cycleOf: a townsperson's place keeps a cycle too, for the lives to read a hand's death by). */
+  const livingCycleOf = (res, day) => {
+    if (res.roll !== 't') return cycleOf(res, day, livingScale()).k;
+    const town = livingTownOfId(res.town);
+    const roster = town ? livingTripWorld.rosterOf(town) : [];
+    return placeCycle(roster.find((r) => r.slot === res.slot) ?? res, roster, day, livingScale());
+  };
+  /** LW7: THE HAND DEATHS (lives.js handDeath) - whether a hand took a resident by minute `t`, and the player striking one
+   *  down at `t` (the turn at their place and cycle, with whether it was seen and the name they bore). */
+  const livingDeadAt = (res, t) => {
+    const turns = livingRelations.turns();
+    if (!turns.slain.size && !turns.died.size) return false;
+    const h = livingPlaceOf(res, livingCycleOf(res, Math.floor((t - 240) / 1440))).hand;
+    return h != null && h <= t;
+  };
+  const livingSlay = (res, t, seen) => { livingRelations.turn('slain', turnKey(res, livingCycleOf(res, Math.floor((t - 240) / 1440))), { t, seen, who: res.name }); };
+  const livingDied = (res, t) => { livingRelations.turn('died', turnKey(res, livingCycleOf(res, Math.floor((t - 240) / 1440))), { t, who: res.name }); };   // LW7b: at the player's side
+  /** A traveller's place on a trip, at the trip's own cycle (their town's roster's, by their slot). */
+  const livingTripPlace = (res, trip) => {
+    const town = livingTownOfId(res.town);
+    const roster = town ? livingTripWorld.rosterOf(town) : [];
+    const place = roster.find((r) => r.slot === res.slot) ?? res;
+    return livingPlaceOf(place, placeCycle(place, roster, Math.floor(trip.outT0 / 1440), livingScale()));
+  };
+  const livingTroubleWorld = {
+    climateAt: (px, py) => maps.getClimateIndex(px, py),
+    foesOf: ({ climateIndex, dungeonType, minute, level, size, rolls }) => (dungeonType != null
+      ? Array.from({ length: size }, () => chooseRandomEnemy({ dungeonType, playerLevel: level }, rolls)).filter((m) => m >= 0)   // LW6: the deep's own
+      : rollGroupComposition({ climateIndex, skyMinutes: minute, inLocationRect: false, playerLevel: level, size }, rolls)?.mobileTypes ?? null),
+    foeLevel: (type, level) => (type >= 128 ? level : ENEMY_BASICS[type]?.level ?? level),
+    dies: (res, trip) => { const pl = livingTripPlace(res, trip); return pl.dies && pl.hand == null; },   // LW7: one a hand took first the road's trouble never takes
+    diced: (res, trip) => livingTripPlace(res, trip).diced,   // AUDIT-B1: the dice's own death - the trouble's shape, never a turn's
+    turnOf: (id) => { const t = livingRelations.turns(); return t.won.has(id) ? 'won' : t.lost.has(id) ? 'lost' : null; },
+  };
+  livingTripWorld.holderOf = (res, k) => livingPlaceOf(res, k).holder;
+  livingTripWorld.fated = (res, k) => livingPlaceOf(res, k).diced;   // AUDIT-B1: the dice's - a trip a spare re-rolled was gone from the road
+  livingTripWorld.fate = (trip) => {
+    const key = `${trip.id}|${trip.party.map((m) => m.id).join(',')}`;
+    let f = _livingFates.get(key);
+    if (!f) {
+      f = troubledTrip(trip, troubleOf(trip, livingTroubleWorld));
+      f = handsOn(f, (m) => livingPlaceOf(m, livingCycleOf(m, Math.floor((trip.outT0 - 240) / 1440))).hand);   // LW7: its hand deaths, gone from that minute
+      if (_livingFates.size > 20000) _livingFates.clear();
+      _livingFates.set(key, f);
+    }
+    return f;
+  };
+  /** A foe's word for the town's talk and a mark ("Orcs", "a Giant"). */
+  const livingFoeWord = (type, n) => foeWord(enemyDisplayName(type) ?? '', n);
+  const livingTripsOf = (town, day) => {
+    livingMemoFresh();   // a new network, new ways
+    livingTurnsFresh();
+    const o = { mpm: PERSON_MOVE_SPEED / livingBaseRate(), memo: _livingTripMemo };
+    const noon = day * 1440 + 240 + 720;
+    const trips = townTrips(town, noon, livingTripWorld, o);
+    const visitors = tripVisitorsOf(town, day, livingTripWorld, o);
+    if (trips === undefined || visitors === undefined) return undefined;
+    // LW4: who holds each traveller's place today (a holder the road takes with no road to meet it on is gone abroad,
+    // the whole cycle), and each one's away windows by their own id
+    const roster = livingTripWorld.rosterOf(town);
+    const scale = paceScale(o.mpm);
+    const holders = new Map(), away = new Map();
+    for (const res of roster) {
+      const k = placeCycle(res, roster, day, scale);
+      const pl = livingPlaceOf(res, k);
+      const h = pl.holder && pl.dies && setsOut(pl.holder, town, k, livingTripWorld, o) === false ? null : pl.holder;
+      holders.set(res.id, h);
+      if (!h) continue;
+      const w = tripAwayOf(h, trips);
+      if (w.length) away.set(h.id, w);
+    }
+    // LW4: the town's news of the road - its own parties' troubles of the last days, each known once they were home
+    const told = [];
+    for (let d = 0; d <= NEWS_DAYS; d++) { const tr = townTrips(town, noon - d * 1440, livingTripWorld, o); if (tr) told.push(...tr); }
+    const won = livingRelations.turns().won;
+    const news = newsOf(told, noon).map((n) => ({ ...n, foe: n.foe != null ? livingFoeWord(n.foe, 2) : '', helped: won.has(n.enc) }));   // LW7: a fight the player turned
+    return { away, visitors, holders, news };
+  };
+  // LW5: THE BAY'S SAILORS (systems/livingWorld/portCrews.js) - a port's sailors the crews of the packets calling at it,
+  // each where her clock has her (the shared one the naval host stands and steers her by, raidNowMs): aboard under way,
+  // ashore at home, or ashore at the far port as her visitors - while the Bay's ships sail (the naval host on); off, a
+  // port's sailors keep their own days ashore
+  const _livingLaneCounts = new Map();
+  const livingLaneWay = (lane) => { let way = _laneWays.get(lane.key); if (way === undefined) { way = laneWay(lane, laneOpen, laneOpenNative); _laneWays.set(lane.key, way); } return way; };
+  const livingLaneCount = (lane) => {
+    let n = _livingLaneCounts.get(lane.key);
+    if (n === undefined) { const way = livingLaneWay(lane); n = way ? packetsAt(lane, way, 0).length : 0; _livingLaneCounts.set(lane.key, n); }
+    return n;
+  };
+  const livingPacketAt = (b) => { const way = livingLaneWay(b.lane); return way ? packetAt(b.lane, way, raidNowMs(), b.k, b.count) : null; };
+  const livingSailing = () => !!naval?.enabled && !!mapDict;
+  let _livingTownByPort = null;
+  const livingTownOfPort = (portId) => {
+    if (!_livingTownByPort) { _livingTownByPort = new Map(); for (const t of livingTownsIndex().values()) if (t.port) _livingTownByPort.set(maskMapId(t.mapId), t); }
+    return _livingTownByPort.get(portId) ?? null;
+  };
+  const livingSailorsOf = (portId) => {
+    const town = livingTownOfPort(portId);
+    return town ? livingTripWorld.rosterOf(town).filter((r) => r.job === 'sailor') : [];
+  };
+  // LW5b: THE PASSAGE BY SEA - a port town's lanes (the Bay's own, naval/seaLanes.js: the far port, the lane's length),
+  // for its travellers to sail and its visitors to come off the ships by; the map read first (pure: every reader's alike)
+  const _livingLanesFrom = new Map();
+  livingTripWorld.lanesFrom = (town) => {
+    if (!town?.port) return [];
+    if (!mapDict) return undefined;
+    let got = _livingLanesFrom.get(town.mapId);
+    if (!got) {
+      const id = maskMapId(town.mapId);
+      got = laneNet().filter((l) => l.a.id === id || l.b.id === id).flatMap((l) => {
+        const way = livingLaneWay(l), to = livingTownOfPort(l.a.id === id ? l.b.id : l.a.id);
+        return way && to ? [{ to, len: way.len, key: l.key }] : [];
+      });
+      _livingLanesFrom.set(town.mapId, got);
+    }
+    return got;
+  };
+  const _livingBerths = new Map();
+  /** Where one of a port's sailors is now ('home', 'sea', 'abroad'), null for anyone else or the ships not sailing. */
+  const livingAshore = (town, res) => {
+    if (res.job !== 'sailor' || res.town !== town?.mapId || !town?.port || !livingSailing()) return null;   // its own sailors: a visiting crew is the crews' own
+    const portId = maskMapId(town.mapId);
+    let book = _livingBerths.get(portId);
+    if (!book) { book = { packets: portPackets(laneNet(), portId, livingLaneCount), sailors: livingSailorsOf(portId) }; _livingBerths.set(portId, book); }
+    return sailorAt(berthOf(res, book.sailors, book.packets), portId, livingPacketAt).at;
+  };
+  /** The hands of the packets lying at a port from elsewhere, each ashore from her making fast to her sailing (the
+   *  clock's minutes, at its rate now). */
+  const livingCrews = (town) => {
+    if (!town?.port || !livingSailing()) return [];
+    const nowS = raidNowMs() / 1000, t = skyMinutes(), rate = livingBaseRate();
+    const day = Math.floor((t - 240) / 1440);
+    return crewsAshore(maskMapId(town.mapId), laneNet(), livingLaneCount, livingPacketAt, livingSailorsOf).flatMap((c) => {
+      const res = livingPlaceOf(c.res, livingCycleOf(c.res, day)).holder;   // LW7: the place's holder now - a newcomer after a death, none while it stands empty
+      return res ? [{ res: res.id === c.res.id ? c.res : res, berth: c.berth, inT: t - Math.max(0, nowS - (c.until - LANE_DWELL_S)) * rate, outT: t + Math.max(0, c.until - nowS) * rate }] : [];
+    });
+  };
+  /** LW4: the character's turn key of a traveller's place on a trip - the place's (the census roster's slot) of the
+   *  trip's cycle. The roads' fights, the divers met and (LW6b) the remains in the deep read it. */
+  const livingTripTurnKey = (res, trip) => {
+    const town = livingTownOfId(res.town);
+    const roster = town ? livingTripWorld.rosterOf(town) : [];
+    const place = roster.find((r) => r.slot === res.slot) ?? res;
+    return turnKey(place, placeCycle(place, roster, Math.floor(trip.outT0 / 1440), livingScale()));
+  };
+  // LW6: THE DIVERS MET (scenes/dungeonDivers.js) - the companies of adventurers inside the dungeon the player is in,
+  // asked of the dives once a second, met and read each frame; a layer for each dungeon's pool, gone with it
+  let livingDivers = null, _livingDiversAt = -Infinity, _livingDiversList = [];
+  const livingDungeonHere = () => {
+    const loc = modes?.dungeonCtx?.abyss?.location?.();   // LW-FIX1: the dungeon's summary is its abyss seam's (DungeonSummary.LocationData) - it has no `location` of its own
+    if (!loc) return null;
+    const row = maps.getLocation(loc.regionIndex, loc.locationIndex);
+    livingDungeonsIndex();
+    return row?.mapTableData ? _livingDungeonById.get(row.mapTableData.mapId >>> 0) ?? null : null;
+  };
+  const livingDiversStep = (now) => {
+    const d = _dungeonPool();
+    if (!d?.spawnLooseFoe || !livingWorldOn()) { if (livingDivers) { livingDivers.clear(); livingDivers = null; } return; }
+    if (livingDivers?.pool !== d) {
+      livingDivers?.clear();
+      livingDivers = Object.assign(createDungeonDivers({
+        spawn: (type, feet, o) => d.spawnLooseFoe(type, feet, { yawRad: o.yaw, allied: true, gender: o.gender, level: o.level }),
+        remove: (f) => d.removeLooseFoe(f),
+        inPool: (f) => d.foes.includes(f),
+        leader: () => (playerSpawned ? { feet: [player.pos[0], player.pos[1], player.pos[2]], yaw: cam.yaw } : null),
+        spot: (from, dx, dz) => { const q = [from[0], from[1], from[2]]; try { d.collider?.move(q, dx, 0, dz, 1.8); } catch { /* the player's own spot */ } return [q[0], q[1], q[2]]; },
+        owner: () => amGroupRollOwner(online?.id ?? null, player.feetAt(), peersNear() ?? [], 200),
+        relations: () => livingRelations,
+        turnKeyOf: livingTripTurnKey,
+        dies: (res, trip) => livingTroubleWorld.dies(res, trip),
+        day: () => Math.floor((skyMinutes() - 240) / 1440),
+        say: (text) => d.hudSay?.(text),
+        door: _livingRoadsDoor,
+        spawnFoe: (type, feet, o) => d.spawnLooseFoe(type, feet, { yawRad: o.yaw, allied: false, gender: o.gender, level: o.level }),   // LW7b: one who draws on the player
+        slay: livingSlay,
+        died: livingDied,   // AUDIT-C3: one cut down beside the player died at their side, at that minute
+      }), { pool: d });
+      _livingDiversAt = -Infinity;
+    }
+    if (now - _livingDiversAt >= 1000) {
+      _livingDiversAt = now;
+      const here = livingDungeonHere();
+      livingTurnsFresh();   // LW-FIX1: the books fresh below too
+      livingMemoFresh();   // AUDIT-B8
+      _livingDiversList = here ? diversAt(here, skyMinutes(), livingTripWorld, { mpm: PERSON_MOVE_SPEED / livingBaseRate(), memo: _livingTripMemo }).divers : [];
+    }
+    livingDivers.frame(_livingDiversList, skyMinutes());
+  };
+  // LW6b: THE FALLEN IN THE DEEP (scenes/deepRemains.js) - the dead of a dive left in its dungeon, laid once in this
+  // character's world where the dungeon's own foes stand and told when the player comes near; the deep asked once a
+  // second, passed by the hand's dead, the fallen beside the player, the spared and any of a company stood here now
+  let livingRemains = null, _livingRemainsAt = -Infinity, _livingRemainsList = [];
+  /** LW6b: a fallen diver's remains in the dungeon `d` at `feet` - their class's corpse picture, and what they carried:
+   *  their class's own loot table at their level, a weapon and a piece of armour, their purse. */
+  const livingRemainsLay = (d, res, feet, key = res.id) => {
+    const look = classLookOf(res);
+    const corpse = look?.basics?.corpseTexture;
+    if (!corpse) return null;
+    const level = Math.max(1, res.level | 0);
+    const rolls = lwRng(textSeed(key), 0x676f6f64);   // 'good' - AUDIT-C5: the same goods each time they are laid (never a reroll for leaving)
+    const items = generateLootItems(enemyLootTableKey(res.cls, look.basics.lootTableKey ?? '-'), { level, gender: res.sex ?? 'male' }, rolls);
+    // AUDIT-C7: their weapon and their armour minted as every other piece the port hands out (the item's fields, its
+    // condition), never an arrow for a weapon
+    for (const raw of [createRandomWeapon(level, rolls), createRandomArmor(level, rolls)]) if (raw && !isAmmunition(raw)) items.push(mintCondition(setItemFields(raw)));
+    items.push(goldStack(5 + Math.floor(rolls() * 20 * level)));
+    items.push(mintKeepsake(res));   // LW6c: their own keepsake, for their household
+    return d.layRemains(items, feet, { archive: corpse.archive, record: corpse.record });
+  };
+  const livingRemainsStep = (now) => {
+    const d = _dungeonPool();
+    if (!d?.layRemains || !livingWorldOn()) { if (livingRemains) { livingRemains.clear(); livingRemains = null; } return; }
+    if (livingRemains?.pool !== d) {
+      livingRemains?.clear();
+      livingRemains = Object.assign(createDeepRemains({
+        spots: () => d.restingSpots(),
+        laid: (key) => livingRelations.turns().laid.has(key),
+        mark: (key) => livingRelations.turn('laid', key),
+        lay: (res, feet, key) => livingRemainsLay(d, res, feet, key),
+        there: (feet) => d.pileNear(feet, 0.6),
+        count: (pile) => pile?.items?.length ?? 0,   // AUDIT-C5: taken from - spent
+        feet: () => (playerSpawned ? [player.pos[0], player.pos[1], player.pos[2]] : null),
+        say: (text) => d.hudSay?.(text),
+        townName: (res) => livingTownOfId(res.town)?.name ?? '',
+      }), { pool: d });
+      _livingRemainsAt = -Infinity;
+    }
+    if (now - _livingRemainsAt >= 1000) {
+      _livingRemainsAt = now;
+      const here = livingDungeonHere();
+      livingTurnsFresh();   // LW-FIX1: a turn made below (a diver slain) makes the books again here as in the street
+      livingMemoFresh();   // AUDIT-B8
+      const turns = livingRelations.turns();
+      _livingRemainsList = here ? fallenIn(here, skyMinutes(), livingTripWorld, { mpm: PERSON_MOVE_SPEED / livingBaseRate(), memo: _livingTripMemo }).remains.filter((r) => {
+        const key = livingTripTurnKey(r.res, r.trip);
+        return !turns.fallen.has(key) && !turns.spared.has(key) && !turns.slain.has(key) && !turns.died.has(key) && !livingDivers?.stood(r.trip.id, r.res.id);   // LW-FIX1: and the player's own dead (the pool's corpses)
+      }) : [];
+    }
+    livingRemains.frame(_livingRemainsList);
+  };
+  // LW8: THE DOORS OPEN (scenes/livingIndoors.js) - the residents whose day has them inside the building the player is
+  // in, stood in its room and talked to through the street's own ray; their regard hears it through the room's own door
+  // (a caught hand seen by those in the room)
+  let livingIndoors = null;
+  const _livingIndoorsDoor = {
+    refuses: (p) => livingIndoors?.town()?.refuses(p) ?? null,
+    talked: (p) => livingIndoors?.town()?.talked(p) ?? null,
+    caught: (p) => livingIndoors?.caught(p) ?? null,
+    toned: (p, tone) => livingIndoors?.town()?.toned(p, tone) ?? null,
+    moment: (p) => livingIndoors?.town()?.moment?.(p) ?? null,   // LW6c: a household at home handed a keepsake
+  };
+  const livingTownOfMap = (mapId) => {
+    for (const p of built.values()) if (p.population instanceof LivingTown && (p.population.o.town.mapId >>> 0) === (mapId >>> 0)) return p.population;
+    return null;
+  };
+  const livingIndoorsStep = (dt) => {
+    if (!livingWorldOn() || _mode() !== 'interior') { if (livingIndoors?.size || livingIndoors?.spots().length) livingIndoors.clear(); return; }   // LW-FIX1: a room with nobody in it let go too (a house asleep) - the next way in sounds it again
+    livingIndoors ??= createLivingIndoors({
+      sprites: createTravellerSprites({ renderer, getTexture, uploadRecordFrame, living: _livingIndoorsDoor }),
+      building: () => { const b = modes?.interiorBuilding; const town = b && !modes?.interiorCtx?.ownedRoom ? livingTownOfMap(b.townMapId ?? 0) : null; return b && town ? { key: b.buildingKey, town } : null; },   // AUDIT-E1: never a player's own room
+      collider: () => modes?.interiorCollider ?? null,
+      floorAt: (x, y, z) => { const d = modes?.interiorCollider?.raycast([x, y, z], [0, -1, 0], 3); return Number.isFinite(d) ? y - d : null; },
+      origin: () => modes?.interiorCtx?.landing ?? null,   // AUDIT-E4: the landing of the building's first door - a load made inside, another door, a peer: the room laid out the same
+      waysIn: () => modes?.interiorCtx?.waysIn ?? [],   // ...and every door's landing kept clear
+      staticFeet: () => (modes?.interiorCtx?.people ?? []).filter((p) => p.active !== false).map((p) => [p.x, p.y, p.z]).concat(modes?.interiorQuestFeet?.() ?? []),   // AUDIT-E7: and the quest's people
+      clock: skyMinutes,
+      ready: () => !_loading && !modes?.transitioning,
+    });
+    livingIndoors.frame(dt, player.pos, cam.yaw, cam.pos);
+  };
+  /** LW3: a resident's class sprite for the armed walk - its art loaded into the people's own texture table (the people
+   *  pass reads its frames there), null until it is. */
+  const _livingClassLoading = new Set();
+  const livingArmOf = (res) => {
+    const look = classLookOf(res);
+    if (!look) return null;
+    const tex = personTex.get(look.archive);
+    if (!tex) {
+      if (!_livingClassLoading.has(look.archive)) { _livingClassLoading.add(look.archive); getTexture(look.archive).then((t) => { if (t) personTex.set(look.archive, t); }).catch(() => {}); }
+      return null;
+    }
+    return { ...look, frameCount: (rec) => tex.getFrameCount(rec), sex: res.sex };
+  };
+  // the person's town on the road: the roads' layer answers a refusal and notes a word (townTalk's `livingTalk` door)
+  const _livingRoadsDoor = { refuses: (p) => livingRoads?.refuses(p) ?? null, talked: (p) => livingRoads?.talked(p) ?? null, caught: (p) => livingRoads?.caught(p) ?? null, roadside: true };
+  _livingRoadsDoor.toned = (p, tone) => livingRoads?.toned(p, tone) ?? null;   // LW7: a word's tone on the road too
+  /** @type {ReturnType<typeof createLivingRoads> | null} */
+  let livingRoads = null;
+  const livingRoadsOf = () => (livingRoads ??= createLivingRoads({
+    world: livingTripWorld, mpm: PERSON_MOVE_SPEED / livingBaseRate(), clock: skyMinutes, baseRate: livingBaseRate,
+    sceneOf: (nx, nz) => tvSceneOf(nx, nz, 0),
+    here: () => (playerSpawned ? state.worldCoords(walkMode ? player.pos : cam.pos) : null),
+    sprites: createTravellerSprites({ renderer, getTexture, uploadRecordFrame, living: _livingRoadsDoor }),
+    memo: _livingTripMemo, relations: () => livingRelations, playerName: () => playerEntity.name ?? '', weather: () => weather,
+    foeName: livingFoeWord,   // LW4: what besets a party, on its mark
+    slay: livingSlay,   // LW7: a traveller struck down - the hand's turn
+    // LW4b: THE FIGHT STOOD - a beset party near the player on foot, its foes the encounter pool's own and its armed the
+    // player's allies, when this player stands it (the camps' election, by the players' own feet)
+    fights: createRoadFights({
+      spawn: (type, feet, o) => exteriorFoes.spawnFoe(type, feet, { yaw: o.yaw, gender: o.gender, level: o.level, allied: o.allied, loose: true, transient: true }),
+      remove: (f) => exteriorFoes.removeFoe(f),
+      inPool: (f) => exteriorFoes.foes.includes(f),
+      // AUDIT-B5: the fight's own election - the lowest id of those within LIVE_M of IT (each player near it stands it or
+      // none; centred on each player, a chain of three left the one beside it deferring to one too far to stand it)
+      owner: (feet) => amGroupRollOwner(online?.id ?? null, player.feetAt(), (peersNear() ?? []).filter((p) => Math.hypot(p.feet[0] - feet[0], p.feet[2] - feet[2]) <= LIVE_M), Infinity),
+      ready: () => !!walkMode && !!playerSpawned && !_loading && !modes?.transitioning && _mode() === 'exterior' && !playerAfloat(),
+      sceneOf: (nx, nz) => tvSceneOf(nx, nz, 0),
+      clock: skyMinutes,
+      relations: () => livingRelations,
+      turnKeyOf: livingTripTurnKey,
+      dies: (res, trip) => livingTroubleWorld.dies(res, trip),
+      died: livingDied,   // AUDIT-C3: an ally cut down beside the player, at that minute
+      door: _livingRoadsDoor,
+    }),
+    // LW7b: THE ARMED BEYOND THE WALLS - a traveller who counts the player hostile draws on them, a friend comes to their
+    // fight; each the encounter pool's own body while it stands (loose, transient), this character's alone to stand
+    stands: createRoadStands({
+      spawn: (type, feet, o) => exteriorFoes.spawnFoe(type, feet, { allied: o.allied, yaw: o.yaw, gender: o.gender, level: o.level, loose: true, transient: true }),
+      remove: (f) => exteriorFoes.removeFoe(f),
+      inPool: (f) => exteriorFoes.foes.includes(f),
+      ready: () => !!walkMode && !!playerSpawned && !_loading && !modes?.transitioning && _mode() === 'exterior' && !playerAfloat(),
+      sceneOf: (nx, nz) => tvSceneOf(nx, nz, 0),
+      relations: () => livingRelations,
+      slay: livingSlay, died: livingDied,
+      deadAt: livingDeadAt,   // AUDIT-B4: one a hand took is never stood again (the roads' parties are read once a second)
+      fighting: () => hccThreats().some((q) => Math.hypot(q[0] - player.pos[0], q[2] - player.pos[2]) <= FIGHT_NEAR_M),
+      say: (text) => townTalk.say(text),
+      door: _livingRoadsDoor,
+    }),
+  }));
+  /** LW3: the bodies on the road as the street's talk targets, beside the town's (`_livePersons`) - for the talk ray and
+   *  the hover alone: the watch's conversion and the trample are the town's. */
+  const _talkPersons = () => (livingRoads && livingWorldOn() ? _livePersons.concat(livingRoads.talkSeats()) : _livePersons);
+
   // --- Per-pixel build --------------------------------------------------
   const worldHeight = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;   // TERRAIN-SCALE1: the game scene's
   const tileSide = TERRAIN_SIZE / 128;
@@ -2173,6 +2670,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const TV_FIND_REACH = 4;   // AUDIT OW5 D1: map pixels about the traveller's that a kilometre from the feet can reach
   let tvBandSeen = { at: null, life: -1, list: [] };   // TV7: the bands about the traveller, this life's (above its readers: BOOT-TDZ)
   const _bandChase = new Map();   // TV7: id -> { pos, since, best } - the bands chasing me (the chase is the chased one's)
+  const wildBands = createWildAlert();   // WILD-ALERT: the bands that noticed me (above its readers: BOOT-TDZ - the load's reset clears it)
   const _bandSpent = new Set();   // TV7: the bands that fought or gave up - gone for their life
   const _bandMake = new Map();    // TV7: id -> { mobileTypes, name } | null - each band made once
   const _bandPos = new Map();     // TV7: id -> { ms, x, z } - a wanderer's place, kept a quarter second
@@ -2182,7 +2680,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const tvRaid = { list: [], at: -Infinity, chase: new Map(), spent: new Set(), clock: 0, life: -1, peer: new Map(), spentAt: [] };   // OWS3: Warm Ashes' raiders about the traveller, and the chases (BOOT-TDZ: a load ends them); OW6: a peer's chases heard, and my spent ones said
   const tvSea = { means: null, helm: createSeaHelm(), phase: null, boat: null, probeAt: 0, best: Infinity, bestS: 0, legAt: -1, wasLive: false };   // OWS2: the crossing's state (BOOT-TDZ: above the load that clears it and the Travel Options atSea that reads it)
   let travelView = null;   // TV1: assigned beside the look gate, read by the cursor toggle's guard and the frame (BOOT-TDZ)
-  let travelAsked = 1;   // TV2 (AUDIT TV A2): the rate Travel Options itself last asked the clock for - its spinner, or its own cap (the ring walk's x15, an interrupt's x1) - the one the travel view's governor may hold under, and hands back
+  let travelAsked = 1;   // TV2 (AUDIT TV A2): the rate Travel Options itself last asked the clock for - its ground's (RATE-LAW; it was the spinner), or its own cap (the ring walk's x15, an interrupt's x1) - the one the travel view's governor may hold under, and hands back
   const travellerBook = createTravellerBook();   // TV3: the region's travellers (BOOT-TDZ: read by the map, the view and the chat's links)
   const travellerSent = { room: null, last: null, at: 0 };   // TV3: what my region's room holds of me
   /** AUDIT-TO1 B3: the region the last pixel crossing stood in, for
@@ -3503,12 +4001,12 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  AUDIT-FIELD F7: A FLOOR, NOT THE WHOLE DISTANCE. The first cut
    *  called 64 "more than the fastest accelerated step", which is true
    *  of a fixed physics STEP and false of a FRAME: the motor moves
-   *  `speed * min(dt, MAX_FRAME_DT) * scale` in one go (motor.js:1446),
+   *  `speed * min(dt, MAX_FRAME_DT) * scale` in one go (motor.js:1495),
    *  and the frame that hitches is exactly the frame in which the
    *  streamer is behind. A horse at the shipped default limit of sixty
    *  covers ~65 units in a 10 fps frame and ~120 at the mod's ceiling of
    *  a hundred - past a 64-unit probe, off the built world, and once the
-   *  motor is airborne `airControl` is false (motor.js:3120) so zeroing
+   *  motor is airborne `airControl` is false (motor.js:3174) so zeroing
    *  the drive on the NEXT frame no longer steers: the fall is already
    *  paid for. `travelLookahead` measures the frame that is about to
    *  run instead, and keeps 64 as its floor. */
@@ -3989,7 +4487,7 @@ export async function bootWorld(canvas, renderer, params, status) {
             for (const door of staticDoors) {
               doorGeneration += 1;   // WORLD-HOVER: a pixel's doors arriving
               buildingDoors.push({
-                door, pixelKey: key, dfBlock: b.dfBlock,
+                door, pixelKey: key, dfBlock: b.dfBlock, blockX: b.x, blockY: b.y,   // LW2: the block's grid cell, so a door names its building (makeBuildingKey)
                 // A1: the season a door carries INSIDE is the
                 // interior's own constant, never the world's.
                 // DaggerfallInterior.cs:51 declares climateSeason =
@@ -4107,7 +4605,70 @@ export async function bootWorld(canvas, renderer, params, status) {
               [from[0] + locOrigin[0] + t[0], from[1] + t[1], from[2] + locOrigin[2] + t[2]], dir, l);
           },
         };
-        population = new TownPopulation(nav, {
+        // LW2 (2026-10-04, Mac: "NPCs are no longer just random walking entities"): THE LIVING WORLD'S STREETS where
+        // the Features row says (systems/livingWorld/livingSwitch.js) - the town's residents on their days
+        // (systems/livingWorld/livingTown.js), in the pool's own shape and on the same navgrid, bodies and batches; the
+        // town's doors named by their buildings (the block cell each door now carries), its buildings by their summaries.
+        // JAN1 (2026-09-18, Janome: "people walking in the sky lol, just outside the city"): THE TERRAIN'S
+        // FLOOR, not the location's average. The navgrid is the BLOCK rect; the flattened rect is the stamped
+        // tiles plus a clearance (terrainTiles.js setLocationTiles) and is smaller by a band of ~70 units on
+        // every side, and blendLocationTerrain only EASES that band toward the average - so a walker there stood
+        // at the average while the real ground fell away under it, ten metres in the air on the flattest city
+        // pixel. Inside the rect heightAt IS the average, so nothing there moves; the fixed city's host
+        // (exterior.js) already asks its collider. Persons are pixel-local vertically: the pixel's translation
+        // comes off the world height. A pixel not built yet answers the old constant.
+        const personGroundY = (x, z) => {
+          const t = state.pixelTranslation(px, py);
+          const h = heightAt(x + locOrigin[0] + t[0], z + locOrigin[2] + t[2]);
+          return Number.isFinite(h) ? h - t[1] + 2.0 * 0.025 : locOrigin[1];
+        };
+        const livingTown = livingTownsIndex().get(py * 1000 + px) ?? {
+          mapId: (dfLocation.mapTableData?.mapId ?? 0) >>> 0, name: dfLocation.name, px, py,
+          type: dfLocation.mapTableData?.locationType, region: dfLocation.regionIndex, people: climate?.people,
+          blocks: loc.width * loc.height, port: hasPort(dfLocation.mapTableData?.mapId),
+        };   // LW3: the roads' own record of the town (the same row the trips read), a mod's town its own
+        population = livingWorldOn() ? new LivingTown(nav, {
+          town: livingTown,
+          buildings: buildingSummaries(dfLocation.exterior?.buildings ?? [], loc.blocks, { locationIndex: dfLocation.locationIndex ?? 0, locationName: dfLocation.name })
+            .map((b) => ({ key: b.buildingKey, type: b.buildingType, quality: b.quality, factionId: b.factionId })),
+          doors: buildingDoors.filter((d) => d.pixelKey === key && d.blockX != null).map((d) => {
+            const m = d.door.matrix, c = d.door.centre, n = d.door.normal;
+            return {
+              key: makeBuildingKey(d.blockX, d.blockY, d.recordIndex),
+              x: m[0] * c.x + m[4] * c.y + m[8] * c.z + m[12] - locOrigin[0], z: m[2] * c.x + m[6] * c.y + m[10] * c.z + m[14] - locOrigin[2],
+              nx: m[0] * n.x + m[4] * n.y + m[8] * n.z, nz: m[2] * n.x + m[6] * n.y + m[10] * n.z,
+            };
+          }),
+          makePerson: (archive, guard) => {
+            const person = new ResidentWalker(nav, { archive, guard, frameCount: (rec, a) => personTex.get(a).getFrameCount(rec), collider: personCollider, groundY: personGroundY });
+            personBatches.set(person, renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]));
+            return person;
+          },
+          clock: skyMinutes, rate: livingRate, mpm: PERSON_MOVE_SPEED / livingBaseRate(),
+          suppressSpawns: () => racialSuppressPopulationSpawns(playerEntity),   // V4: the transformed lycanthrope empties the streets - here they stay in
+          relations: () => livingRelations, playerName: () => playerEntity.name ?? '', weather: () => weather,
+          townName: dfLocation.name, regionName: dfLocation.regionName ?? '',
+          tripsOf: (day) => livingTripsOf(livingTown, day), armOf: livingArmOf,   // LW3: its travellers away and armed, its visitors
+          ashore: (res) => livingAshore(livingTown, res), crews: () => livingCrews(livingTown),   // LW5: its sailors by their ships' clock; the crews lying here
+          // LW7: a townsperson's place by the lives, a hand's death, the player's, and the town's own lines of sight
+          holderOf: (res, day) => livingPlaceOf(res, livingCycleOf(res, day)).holder, deadAt: livingDeadAt, slay: livingSlay,
+          sees: (a, b) => {
+            const tr = state.pixelTranslation(px, py);
+            const d = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], len = Math.hypot(d[0], d[1], d[2]);
+            if (len < 1e-3) return true;
+            const hit = collider.raycast([a[0] + locOrigin[0] + tr[0], a[1] + tr[1], a[2] + locOrigin[2] + tr[2]], [d[0] / len, d[1] / len, d[2] / len], len);
+            return !(Number.isFinite(hit) && hit < len - 0.25);
+          },
+          harbour: () => {   // LW5: its harbour's berth in the location's frame (the dock of a port with no Ship building)
+            const b = harbourBook.get(`port:${maskMapId(livingTown.mapId)}`)?.harbour?.berths?.[0];
+            if (!b) return null;
+            const tr = state.pixelTranslation(px, py);
+            return { x: b.pos[0] - locOrigin[0] - tr[0], z: b.pos[1] - locOrigin[2] - tr[2] };
+          },
+          // LW6c: what the player carries, for a keepsake carried home - and the keepsake handed over
+          keepsakes: () => playerEntity.items ?? [],
+          takeKeepsake: (item) => { const i = playerEntity.items?.indexOf(item) ?? -1; if (i >= 0) playerEntity.items.splice(i, 1); },
+        }) : new TownPopulation(nav, {
           suppressSpawns: () => racialSuppressPopulationSpawns(playerEntity),   // V4: the transformed lycanthrope empties the streets
           totalBlocks: loc.width * loc.height,
           // AUDIT 23 (characters-4/5): billboard race = the climate's
@@ -4121,19 +4682,7 @@ export async function bootWorld(canvas, renderer, params, status) {
               // by the person's LIVE archive, never the creation one
               frameCount: (rec, a) => personTex.get(a).getFrameCount(rec),
               collider: personCollider,
-              // JAN1 (2026-09-18, Janome: "people walking in the sky lol, just outside the city"): THE TERRAIN'S
-              // FLOOR, not the location's average. The navgrid is the BLOCK rect; the flattened rect is the stamped
-              // tiles plus a clearance (terrainTiles.js setLocationTiles) and is smaller by a band of ~70 units on
-              // every side, and blendLocationTerrain only EASES that band toward the average - so a walker there stood
-              // at the average while the real ground fell away under it, ten metres in the air on the flattest city
-              // pixel. Inside the rect heightAt IS the average, so nothing there moves; the fixed city's host
-              // (exterior.js) already asks its collider. Persons are pixel-local vertically: the pixel's translation
-              // comes off the world height. A pixel not built yet answers the old constant.
-              groundY: (x, z) => {
-                const t = state.pixelTranslation(px, py);
-                const h = heightAt(x + locOrigin[0] + t[0], z + locOrigin[2] + t[2]);
-                return Number.isFinite(h) ? h - t[1] + 2.0 * 0.025 : locOrigin[1];
-              },
+              groundY: personGroundY,   // JAN1: the terrain's floor (above, one closure for both pools)
             });
             personBatches.set(person, renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]));
             return person;
@@ -5475,6 +6024,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   const townTalk = createTownTalk({
     talkEngine: () => talkEngineRef,
     renderer, canvas, fetchBytes, playerEntity, palette,
+    // LW2: the living world's two doors - an enemy's refusal, and a word noted in the resident's regard (the body's
+    // own town answers both: systems/livingWorld/livingTown.js)
+    livingTalk: { refuses: (person) => person?.living?.town?.refuses(person) ?? null, talked: (person) => person?.living?.town?.talked(person), caught: (person) => person?.living?.town?.caught?.(person) },
+    livingTone: (person, tone) => person?.living?.town?.toned?.(person, tone),   // LW7: a question's tone, in a resident's regard
     // RP1: a GETTER, not startLoc's number - see the note above. It is
     // declared below this call, so the arrow defers the read to call
     // time, which is what makes it live in the first place.
@@ -6892,6 +7445,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     travelOptionsActive: () => (travelOptions ? !!travelOptions.isTravelActive : null),
     timeScale: () => worldTimeScale(),
     setTimeScale: (scale) => setWorldTimeScale(scale),
+    timeLocked: () => sharedClockOn(),   // HELM-TIME-ONLINE (Mac: "Remove the time dial from ships online"): the helm's dial is offline's alone
     // CSA-G: the sounds - DaggerfallUnity.Settings.SoundVolume, and the three one-shot doors (the loops the frame syncs)
     soundVolume: () => getFloat('Controls', 'SoundVolume', 0, 1),
     audio: { oneShot: csaSourceOneShot, dfOneShot: csaDfOneShot, dfClipAtPoint: csaDfClipAtPoint, uiOneShot: (soundIndex) => audio.playOneShot(soundIndex, 1) },   // CSA-H: DaggerfallUI.Instance.PlayOneShot
@@ -8103,8 +8657,101 @@ export async function bootWorld(canvas, renderer, params, status) {
         const name = csa.boats.includes(l.key) ? naval?.crewName?.(l.key, l.member.i) : null;
         points.push({ x: at.x, y: at.y, text: l.text, name: name ? name.split(' ')[0] : null, who: key, kind: l.kind, distance: d });   // FIELD BUGS 2026-10-02b: `who`, the speaker - his talk is his own
       }
+      livingLinePoints(points, w, h, rect, proj, view, eye);   // LW2: the living world's residents speak through the one layer
     }
     drawCrewLines(points, { covered, scale: enhancedHudScale(), dt: gamePaused() ? 0 : dt });
+  }
+  /** LW2 (bible/06-Systems/Living-World.md): WHAT THE STREET SAYS - each living town's lines this moment (a circle's
+   *  talk, a word to the player; systems/livingWorld/livingTown.js speech) as points of the crew's own layer, by the
+   *  same projection, range and sight; a resident the player has met speaks under their first name. */
+  function livingLinePoints(points, w, h, rect, proj, view, eye) {
+    for (const p of built.values()) {
+      const pop = p.population;
+      if (typeof pop?.speech !== 'function' || !p.locOrigin) continue;
+      const t = state.pixelTranslation(p.px, p.py);
+      const local = [eye[0] - t[0] - p.locOrigin[0], eye[1] - t[1], eye[2] - t[2] - p.locOrigin[2]];
+      for (const l of pop.speech(local)) {
+        const id = l.person.living?.id;
+        if (!id) continue;
+        const over = [l.person.pos[0] + p.locOrigin[0] + t[0], l.person.pos[1] + t[1] + LIVING_HEAD_M, l.person.pos[2] + p.locOrigin[2] + t[2]];   // the point over their head
+        const d = Math.hypot(over[0] - eye[0], over[1] - eye[1], over[2] - eye[2]);
+        if (d > CREW_SAY_RANGE) continue;
+        const at = projectToScreen(over, w, h, proj, view, rect);
+        if (!at.front || at.x < -80 || at.x > w + 80 || at.y < -40 || at.y > h + 40) continue;
+        const key = `live:${id}`;
+        if (crewSight.blocked(player.collider, eye, key, over)) continue;   // behind a wall, unheard
+        points.push({ x: at.x, y: at.y, text: l.text, name: livingRelations.known(id) ? firstNameOf(l.person.nameNPC) : null, who: key, kind: 'talk', distance: d });
+      }
+    }
+    // LW3: the road's - a party's own talk, a traveller's word to the player (their bodies stand in the world's frame)
+    if (!livingRoads || !livingWorldOn()) return;
+    for (const l of livingRoads.speech(eye)) {
+      const id = l.person.living?.id;
+      if (!id || !l.person.pos) continue;
+      const over = [l.person.pos[0], l.person.pos[1] + LIVING_HEAD_M, l.person.pos[2]];
+      const d = Math.hypot(over[0] - eye[0], over[1] - eye[1], over[2] - eye[2]);
+      if (d > CREW_SAY_RANGE) continue;
+      const at = projectToScreen(over, w, h, proj, view, rect);
+      if (!at.front || at.x < -80 || at.x > w + 80 || at.y < -40 || at.y > h + 40) continue;
+      const key = `road:${id}`;
+      if (crewSight.blocked(player.collider, eye, key, over)) continue;   // behind a hill, unheard
+      points.push({ x: at.x, y: at.y, text: l.text, name: livingRelations.known(id) ? firstNameOf(l.person.nameNPC) : null, who: key, kind: 'talk', distance: d });
+    }
+  }
+  /** LW8b (bible/06-Systems/Living-World.md "LW8b"): THE ROOM'S TALK - the lines of the residents in the building the
+   *  player is in (scenes/livingIndoors.js speech: a table's circle's, a word to the player), through the interior's own
+   *  matrices, on the crew's one layer by its range, sight and names. The building mode's HUD pass calls it
+   *  (`host.livingSpeech`); nothing before the living world has stood a room. */
+  function livingRoomLines(proj, view, eye, dt = 0) {
+    if (!livingIndoors || typeof document === 'undefined') return;
+    const covered = townTalk.overlayActive || gamePaused() || !!townTalk.hudHidden || _mode() !== 'interior';
+    const points = [];
+    if (!covered) {
+      const w = canvas.clientWidth, h = canvas.clientHeight, rect = worldViewportRect(w, h);
+      for (const l of livingIndoors.speech(eye)) {
+        const id = l.person.living?.id;
+        if (!id || !l.person.pos) continue;
+        const over = [l.person.pos[0], l.person.pos[1] + LIVING_HEAD_M, l.person.pos[2]];
+        const d = Math.hypot(over[0] - eye[0], over[1] - eye[1], over[2] - eye[2]);
+        if (d > CREW_SAY_RANGE) continue;
+        const at = projectToScreen(over, w, h, proj, view, rect);
+        if (!at.front || at.x < -80 || at.x > w + 80 || at.y < -40 || at.y > h + 40) continue;
+        const key = `in:${id}`;
+        if (crewSight.blocked(player.collider, eye, key, over)) continue;   // behind a wall of the room, unheard
+        points.push({ x: at.x, y: at.y, text: l.text, who: key, kind: 'talk', distance: d, name: livingRelations.known(id) ? firstNameOf(l.person.nameNPC) : null });
+      }
+    }
+    drawCrewLines(points, { covered, dt: gamePaused() ? 0 : dt, scale: enhancedHudScale() });
+  }
+  /** WILD-ALERT (2026-10-04, Mac: "Enemies alerted are given an exclamation point"): THE "!" OVER EACH WILDERNESS FOE
+   *  ALERTED TO ME (systems/encounters.js foeAlerted) - it stands while a fast traveller's clock is held for it, else
+   *  WILD_MARK_S from the moment it noticed; never in a town (a town's foes keep the town's law), under a window or
+   *  under the Overworld (its marks carry their own "!"). Through the frame's own matrices, as the crew's lines are. */
+  const _wildMarkKeys = new WeakMap();
+  const _wildMarkAt = new WeakMap();
+  let _wildMarkKey = 0;
+  function wildMarksFrame(proj, view, eye) {
+    if (typeof document === 'undefined') return;
+    const covered = townTalk.overlayActive || gamePaused() || !!townTalk.hudHidden || _mode() !== 'exterior' || !!travelView?.active;
+    const points = [];
+    if (!covered) {
+      const w = canvas.clientWidth, h = canvas.clientHeight, rect = worldViewportRect(w, h), t = performance.now() / 1000;
+      for (const f of exteriorFoes.foes) {
+        if (f.dead || !f.ai?.feet || !foeAlerted(f)) { _wildMarkAt.delete(f); continue; }
+        if (!_wildMarkAt.has(f)) _wildMarkAt.set(f, t);
+        if (!_wildGate && t - _wildMarkAt.get(f) > WILD_MARK_S) continue;
+        if (_inAnyLocationRect(f.ai.feet)) continue;
+        const head = [f.ai.feet[0], f.ai.feet[1] + (f.ai.height ?? CAPSULE_HEIGHT) + 0.35, f.ai.feet[2]];
+        const d = Math.hypot(head[0] - eye[0], head[1] - eye[1], head[2] - eye[2]);
+        if (d > WILD_MARK_RANGE) continue;
+        const at = projectToScreen(head, w, h, proj, view, rect);
+        if (!at.front || at.x < -60 || at.x > w + 60 || at.y < -60 || at.y > h + 60) continue;
+        let key = _wildMarkKeys.get(f);
+        if (key == null) { key = `wild:${++_wildMarkKey}`; _wildMarkKeys.set(f, key); }
+        points.push({ key, x: at.x, y: at.y, distance: d });
+      }
+    }
+    drawWildMarks(points, { covered, scale: enhancedHudScale() });
   }
   /** The helm's readout, under every window and with the HUD - `dt` the frame's (the card's hull bar's loss readout). */
   function navalHud(dt = 0) {
@@ -8174,10 +8821,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT CC-A1: `has` - a place's clear empties its list and marks nobody (the street's clearLive), so the layer
     // asks the list itself whether a body still stands there
     // COMPANION-PORTAL: each place's portals (`fx` - the pool draws them with its foes)
-    if (mode === 'exterior') return { key: exteriorFoes, spawn: standIn(exteriorFoes), remove: (f) => exteriorFoes.removeFoe(f), has: (f) => exteriorFoes.foes.includes(f), spot: spotOf(collider), fx: exteriorFoes.companionFx };
+    // RVN11c (bible/12-Enhanced-AI/Feud-Arc.md 22.3): `turn` - a betrayer stood HOSTILE where its body stood (its record's
+    // stand at its feet: no band, no return counted)
+    const turnIn = (pool) => (r, feet, yaw) => pool.spawnFoe(r.mobileType, feet, { yaw, feetGiven: true, loose: true, band: false, turned: true, ...revenantSpawnOptions(r, effectiveLevel(playerEntity)) });   // `loose`: no encounter's slot - it stands whatever the pool holds
+    if (mode === 'exterior') return { key: exteriorFoes, spawn: standIn(exteriorFoes), remove: (f) => exteriorFoes.removeFoe(f), has: (f) => exteriorFoes.foes.includes(f), spot: spotOf(collider), fx: exteriorFoes.companionFx, turn: turnIn(exteriorFoes) };
     if (mode === 'interior') {
       const pool = modes?.interiorPool?.();
-      return pool ? { key: pool, spawn: standIn(pool), remove: (f) => pool.removeFoe(f), has: (f) => pool.foes.includes(f), spot: spotOf(modes?.interiorCollider), fx: pool.companionFx } : null;
+      return pool ? { key: pool, spawn: standIn(pool), remove: (f) => pool.removeFoe(f), has: (f) => pool.foes.includes(f), spot: spotOf(modes?.interiorCollider), fx: pool.companionFx, turn: turnIn(pool) } : null;
     }
     const d = _dungeonPool();
     if (!d?.spawnLooseFoe || !d.removeLooseFoe) return null;
@@ -8187,14 +8837,22 @@ export async function bootWorld(canvas, renderer, params, status) {
       // the room stands him as my ally (dungeonContext.js companionPuppet); off the lane he was nobody's to see
       spawn: (mobile, feet, o) => d.spawnLooseFoe(mobile, feet, { yawRad: o.yaw, allied: true, gender: o.gender }),
       remove: (f) => d.removeLooseFoe(f), has: (f) => d.foes.includes(f), spot: spotOf(d.collider), fx: d.companionFx ?? null,
+      turn: (r, feet, yaw) => { const so = revenantSpawnOptions(r, effectiveLevel(playerEntity)); return d.spawnLooseFoe(r.mobileType, feet, { yawRad: yaw, revenant: r, turned: true, gender: so.gender, level: so.level }); },   // RVN11c
     };
   }
+  /** RVN10 (bible/12-Enhanced-AI/Feud-Arc.md 21.1): FELLED - my companion knocked out by `by`'s blow (the pool's record the
+   *  knock-out arm noted; none for a spell's, or a foe on another's machine): the deed `felled` on it, the companion's
+   *  name on it, and its card. */
+  const felledBy = (by, ally) => {
+    const r = by ? revenantFelled(playerEntity, by, ally) : null;
+    if (r) revenantSay(revenantFelledEvent(r, ally, { archive: by.archive ?? by.mobileArchive ?? null }), (l) => townTalk.say(l));
+  };
   const crewAshore = createCrewAshore({
     party: () => (navalOn() ? naval?.companions ?? null : null),
     place: companionPlace,
     leader: () => (playerSpawned ? { feet: [player.pos[0], player.pos[1], player.pos[2]], yaw: cam.yaw, grounded: !!player.grounded && !player.levitating && !player.swimming } : null),   // AUDIT CC-A3: on a floor or not
     now: () => Math.floor(playerTicker.ownMinutes),
-    onKnocked: (c) => naval?.companionKnocked?.(c),
+    onKnocked: (c, by) => { naval?.companionKnocked?.(c); felledBy(by, c.name); },   // RVN10: a special foe's blow fells him - a deed on it
   });
   // COMPANION-SLOTS: the crew's hands ashore take the player's side's slots with the sworn
   registerCompanionCount('crew', () => (navalOn() ? naval?.companions?.party?.length ?? 0 : 0));
@@ -8205,6 +8863,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   setRetinuePlayer(playerEntity);
   /** The sworn ones the player just called or spared, who say so as they step through (the roster's call). */
   const _revenantArrivals = new Set();
+  /** RVN11c: the sworn turned on me, waiting for the layer's next frame. */
+  const _revenantBetrayals = [];
   const revenantCompanionSay = (kind, id, body = null) => {
     const r = revenantRecord(playerEntity, id);
     if (r) revenantSay(revenantMomentEvent(kind, r, playerEntity?.name, body ? { body } : {}), (l) => townTalk.say(l));
@@ -8215,7 +8875,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     place: () => companionPlace({ crew: false }),
     leader: () => (playerSpawned ? { feet: [player.pos[0], player.pos[1], player.pos[2]], yaw: cam.yaw, grounded: !!player.grounded && !player.levitating && !player.swimming } : null),
     now: () => Math.floor(playerTicker.ownMinutes),
-    onKnocked: (c) => revenantCompanionSay('downed', c.name, `${c.title ?? 'It'} falls, and is carried off through a portal to recover.`),
+    onKnocked: (c, by) => {
+      revenantCompanionSay('downed', c.name, `${c.title ?? 'It'} falls, and is carried off through a portal to recover.`);
+      felledBy(by, revenantRecord(playerEntity, c.name)?.given ?? null);   // RVN10: a special foe's blow fells it - a deed on it, its given name on the deed
+    },
     onStood: (c, rec) => {
       const r = revenantRecord(playerEntity, c.name);
       applySwornStrength(rec.entity, r, { fresh: !(c.maxHealth > 0) });   // its rank's strength, as it fought me with; its whole once
@@ -8232,6 +8895,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // AUDIT (2026-10-02): opposite acts in one pause cancel - a call after a sending-away (the body never left) says neither
   // word, nor leaves an arrival waiting for the next door; a release carries its pack's count for its words
   setRetinueListener((kind, r, extra) => {
+    if (kind === 'betray') { _revenantArrivals.delete(r.id); _revenantBetrayals.push(r); return; }   // RVN11c: its turning, at the layer's next frame
     const sentAt = _revenantDepartures.findIndex((d) => d.kind === 'dismiss' && d.r.id === r.id);
     if (kind === 'arrive') { if (sentAt >= 0) _revenantDepartures.splice(sentAt, 1); else noteRevenantArrival(r.id); return; }
     _revenantArrivals.delete(r.id);
@@ -8239,8 +8903,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   });
   /** AUDIT (2026-10-02): the sworn's layer lifted for a load - its bodies, the words still to say, and every member (so
    *  no spell the last game's body wore stands with the loaded one). */
-  const clearSworn = () => { revenantAshore.clear(); _revenantArrivals.clear(); _revenantDepartures.length = 0; forgetSwornMember(); };
-  setRetinueBodies((id) => revenantAshore.bodies().find((b) => b.revenantCompanion === id && !b.dead)?.entity ?? null);
+  const clearSworn = () => { revenantAshore.clear(); _revenantArrivals.clear(); _revenantDepartures.length = 0; _revenantBetrayals.length = 0; forgetSwornMember(); };   // AUDIT FEUD: and a turning queued under a window - the loaded game's is its own
+  setRetinueBodies((id) => revenantAshore.bodies().find((b) => b.revenantCompanion === id && !b.dead && !b._knockedOut)?.entity ?? null);   // AUDIT FEUD: a knocked-out one stands for nothing - no turning, no warning, no witness
   registerCompanionRoster('crew', () => (navalOn() ? (naval?.companions?.party ?? []).map((c) => ({ name: c.name, role: c.role })) : []));
   /** REVENANT-COMPANION: A SWORN ONE'S WORD IN A FIGHT, now and then and never a chatter - as it goes in (BARK_BATTLE), over
    *  a foe it put down (BARK_KILL) - each one's own wait between, and a quiet spell for the whole party after any. */
@@ -8318,9 +8982,24 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (++_companionPruneN >= 60) { _companionPruneN = 0; naval?.pruneCompanions?.(); }
     try { crewAshore.frame(); } catch (e) { console.warn('[companions]', e?.message ?? e); }
   }
+  /** RVN11c (bible/12-Enhanced-AI/Feud-Arc.md 22.3): BETRAYED - its card; its body lifted at once (no portal: it turns where
+   *  it stood - the layer then finds it swept, never carried off), and the hostile revenant its record now is stood there,
+   *  set on me. No body here (another place, or none stood): it comes later, as any living revenant. */
+  function turnSworn(r) {
+    revenantSay(revenantBetrayEvent(r, { playerName: playerEntity?.name }), (l) => townTalk.say(l));   // RVN12a: its words, my name in them
+    const rec = revenantAshore.bodies().find((b) => b.revenantCompanion === r.id && !b.dead && !b._knockedOut && b.ai?.feet);
+    const place = rec ? companionPlace({ crew: false }) : null;
+    if (!rec || !place?.turn || place.has?.(rec) === false) return;   // AUDIT FEUD: a body a respawn's sweep took is no place to stand it (AUDIT CC-A1's `has`)
+    const feet = [rec.ai.feet[0], rec.ai.feet[1], rec.ai.feet[2]], yaw = rec.ai.yaw ?? 0;
+    try { place.remove(rec); } catch (e) { console.warn('[companions] a betrayer would not lift', e?.message ?? e); }
+    Promise.resolve(place.turn(r, feet, yaw)).then((f) => {
+      if (f?.ai && !f.dead) f.ai.makeHostileToPlayer?.(undefined, [player.pos[0], player.pos[1], player.pos[2]]);
+    }, (e) => console.warn('[companions] a betrayer would not stand', e?.message ?? e));
+  }
   /** REVENANT-COMPANION: the sworn's layer's frame, in every mode beside the crew's - never the naval arc's to stop. */
   function revenantAshoreTick() {
     if (gamePaused()) return;   // the sworn wait out a window too (AUDIT CC-A10's law: no knock, no stand, no catch-up under one)
+    while (_revenantBetrayals.length) turnSworn(_revenantBetrayals.shift());   // RVN11c: before the layer's frame - its body lifted, no portal
     try { revenantAshore.frame(); } catch (e) { console.warn('[companions] the sworn', e?.message ?? e); }
     while (_revenantDepartures.length) {   // COMPANION-ROSTER: its parting words, as it goes
       const d = _revenantDepartures.shift();
@@ -8332,10 +9011,23 @@ export async function bootWorld(canvas, renderer, params, status) {
     // slots, the one most lately sworn steps away to wait
     if (companionsWithYou() > COMPANION_SLOTS) {
       const last = revenantsWithYou().sort((a, b) => (b.swornAt ?? 0) - (a.swornAt ?? 0))[0];
-      if (last && sendRevenantAway(last.id)) townTalk.say(`Your companions are full - ${last.name} steps away to wait.`);
+      if (last && sendRevenantAway(last.id, { byYou: false })) townTalk.say(`Your companions are full - ${last.name} steps away to wait.`);   // RVN11: the slots' hold, never the player's sending (no loyalty lost)
     }
     try { revenantCompanionBarks(); } catch { /* a bark is no frame's business */ }
+    // RVN11 (bible/12-Enhanced-AI/Feud-Arc.md 22.1): a fight won at my side, +3 loyalty
+    for (const rec of revenantAshore.bodies()) if (rec.revenantCompanion && !rec.dead && swornFightStep(rec)) swornFightWon(rec.revenantCompanion);
   }
+  /** RVN11 (Feud-Arc.md 22.1): A DEVOTED ONE'S WARNING - a wind-up at me begun behind me (the duel's own back test), while
+   *  a Devoted companion stands at my side: "Behind you, Ayla!" - DEVOTED.WARN_S between. */
+  let _devotedWarnAt = -Infinity;
+  setWindupAtMeListener((f) => {
+    if (!playerSpawned || !f?.ai?.feet || Date.now() - _devotedWarnAt < DEVOTED.WARN_S * 1000) return;
+    if (!isBackFacing(cam.yaw, player.feetAt(), f.ai.feet)) return;
+    const r = devotedWithYou();
+    if (!r) return;
+    _devotedWarnAt = Date.now();
+    revenantSay(revenantWarnEvent(r, playerEntity?.name), (l) => townTalk.say(l));
+  });
   /** CREW-COMPANIONS: a boat of mine's hands to take ashore (two at most) or send back aboard - a picker of her roster,
    *  a refused row with its reason (crewCompanions.js companionRows), the press the host's (navalHost companionPress). */
   function navalCompanions(boat) {
@@ -8476,7 +9168,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     (key) => cityGuards.liveHoverName?.(key) ?? null,
     (key) => {
       if (typeof key !== 'string' || !key.startsWith('mobileNpc:')) return null;
-      const t = mobilePersonName(_livePersons[Number(key.split(':')[1])]?.person?.nameNPC);
+      const t = mobilePersonName(_talkPersons()[Number(key.split(':')[1])]?.person?.nameNPC);   // LW3: a traveller's name too
       return t ? { title: t } : null;
     },
   ];
@@ -8486,7 +9178,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  distance with the MOD's 6.4 beside it, because the band is a gate
    *  inside the handler and not a shorter ray (AUDIT 65 MC-2). */
   const _hoverPersonPick = (eye, dir) => {
-    const n = nearestPerson(eye, dir, _livePersons);
+    const n = nearestPerson(eye, dir, _talkPersons());   // LW3: the road's people beside the town's
     return n && Number.isFinite(n.distance)
       ? { key: `mobileNpc:${n.index}`, distance: n.distance, reach: MOBILE_NPC_ACTIVATION_DISTANCE }
       : null;
@@ -8576,6 +9268,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const cityGuards = createCityGuards({
     renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio, hitEffects, groundStands: (x, z) => Number.isFinite(heightAt(x, z)),   // FALL-HOLD: a watchman over a pixel not built is held, not stepped
     playerWeaponSheathed: () => !!weaponRig.playerWeapon.sheathed,   // AUDIT 24 (wave 42): pacification's drawn-weapon penalty
+    shake: (k) => betterAmbience.weaponKick(k),   // AUDIT TELL H6: my blow that staggers a watchman kicks the camera
     raidHere: () => raidDefendingHere(),   // RAID-GUARDS: a raid on in this town spares its defenders every blow of the player's
     levelBonus: () => seatEdicts.guardLevelBonus(Math.floor(skyMinutes())),   // SEAT1d: a Curfew's night watch - AUDIT SEATS-3 E1: the sky's night (TIME1), the one the town sees
     fightHere: () => areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes]),   // PROTECT-FIGHT: under the protection, a fight spares the street's walkers
@@ -8645,8 +9338,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // X2-slice: the shoot frame looses a REAL arrow through the C13
     // flight (the enemy meta hunts the player mid-capsule), ringing
     // ArrowShoot from the archer.
-    onArrow: (from, dir, f, aimFoe = null) => {   // ROAD-H tail (review): aimFoe - the foe the archer selected, null for the player
-      arrows.fire(from, dir, { enemy: true, shooterFoe: f, weapon: f.entity.weapon, aimFoe });
+    onArrow: (from, dir, f, aimFoe = null, extra = null) => {   // ROAD-H tail (review): aimFoe - the foe the archer selected, null for the player; TELL6d: extra - an aimed shot's word
+      arrows.fire(from, dir, { enemy: true, shooterFoe: f, weapon: f.entity.weapon, aimFoe, ...(extra ?? {}) });
       audio.play3d(SOUND.ArrowShoot, from, 1, { maxDistance: 16 });
     },
     // X3-slice: casters - the S16 lists assign once the SPELLS.STD
@@ -8656,6 +9349,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     spellsByIndex: () => spellsByIndex,
     magicHooks: {
       explodeAt: (...a) => magic.explodeAt(...a),
+      strikePlayer: (spell, casterLevel, foe) => { if (walkMode && playerSpawned) magic.strikePlayerFrom(spell, casterLevel, foe); },   // RVN5: a revenant's pyre - its blast on me through the one cast engine (fireMissile's gate)
       fireMissile: (from, spell, casterLevel, foe, aimAt = null) => {   // WORLD6b-iii: aimed where the executor says (a peer's or a foe's transform), at my LIVE transform otherwise (AUDIT 62 F21) - AUDIT WORLD6b-iii(a) C3: through the ONE law, the three hosts alike
         if (!(walkMode && playerSpawned)) return;
         magic.fireEnemyMissile(from, missileAimDirection(from, aimAt ?? targetAimPoint(null, player.pos, player.height)), spell, casterLevel, foe);
@@ -9029,7 +9723,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // a crime in a temple converted and disabled townsfolk out in the road
   // and minted the watch outside the wall.
   const _guardPool = () => ((modes?.mode ?? 'exterior') !== 'exterior' ? [] : _livePersons.map(({ person, pos }) => ({
-    pos, fwdYaw: person.facingYaw, guard: person.guard,
+    pos, fwdYaw: person.facingYaw, guard: person.guard, person,   // LW7: whom a swing takes (livingStruckPool)
     disable: () => {
       for (const p of built.values()) {
         const it = p.population?.pool.find((i) => i.person === person);
@@ -9037,6 +9731,36 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
     },
   })));
+  // LW7 (bible/06-Systems/Living-World.md "LW7"): THE DEEDS AT THE STREET'S SEAMS. A resident a swing or the trample takes
+  // (DFU's one-hit civilian, the watch's conversion) is the living world's deed first: one of the watch STRUCK - the
+  // assault that turns them on the player; the guard it stands carries them, and cut down, they are slain for good -
+  // anyone else STRUCK DOWN (their town's: their own and the witnesses turned, the lives take the place)
+  const _livingWatchTurned = [];
+  const livingDeedOf = (person, near = null) => {
+    const town = livingWorldOn() ? person?.living?.town : null;
+    if (!town?.slain) return;
+    if (!person.guard) { town.slain(person); return; }
+    if (town.struck(person)) _livingWatchTurned.push({ res: person.living.res, from: person.living, town, at: [...person.pos], guard: null, waited: 0 });   // LW-FIX2: his guard found by the mark the conversion puts on it (scenes/livingWatch.js)
+  };
+  const livingStruckPool = (pool) => (livingWorldOn() ? pool.map((e) => ({ ...e, disable: () => { livingDeedOf(e.person, e.pos); e.disable(); } })) : pool);
+  /** LW7: each turned watchman's guard found and watched (scenes/livingWatch.js - LW-FIX2: by the conversion's own mark on
+   *  it, and cut down the town's whole deed, `slain`): gone with the crime, or never stood, let be. */
+  const livingWatchStep = () => watchStep(_livingWatchTurned, cityGuards.guards);
+  /** LW7: a swing that met no one in the street, at the road's travellers - the body on the ray within reach (no wall
+   *  before it), DFU's one-hit civilian (WeaponManager.cs:504-521, less the watch: there is none on the road): struck
+   *  down for good (the roads' deed), the blood, the Brotherhood's five and the racial override's hit. */
+  const livingStrikeRoad = (eye, dir) => {
+    if (!livingRoads || !livingWorldOn() || _mode() !== 'exterior') return false;
+    const near = nearestPerson(eye, dir, livingRoads.talkSeats());   // the talk ray's own pick (SOC5: the one cylinder)
+    if (!near || near.distance > WEAPON_REACH) return false;
+    const wall = collider.raycast(eye, dir, near.distance);
+    if (Number.isFinite(wall) && wall < near.distance - 1e-3) return false;
+    if (!livingRoads.slain(near.entry.person)) return false;
+    hitEffects.showBloodSplash(0, [eye[0] + dir[0] * near.distance, eye[1] + dir[1] * near.distance, eye[2] + dir[2] * near.distance], null, LETHAL_HIT);
+    tallyCrimeGuildRequirements(playerEntity, false, 5);
+    playerWeaponHitEntity(playerEntity, { health: 0 }, { isCivilian: true });
+    return true;
+  };
   /** SpawnCityGuards(FALSE) - the WITNESS arm, the other half of the
    *  same member: no crime was just seen to be committed, so the pool
    *  is searched for someone who CAN see the player. A guard NPC that
@@ -9068,7 +9792,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     spawnGuards: () => _spawnGuards(true),
     spawnCityGuard: (pos, yaw, feet) => cityGuards.spawnCityGuard(pos, yaw, feet),
     setCrime: (crime) => setCrimeCommitted(playerEntity, crime),
-    retire: (person) => { for (const p of built.values()) if (p.population?.retire(person)) break; },
+    retire: (person) => { livingDeedOf(person); for (const p of built.values()) if (p.population?.retire(person)) break; },   // LW7: a resident trampled is the living world's deed first
     hurtGuard: (f, damage, feet) => cityGuards.hurtGuard?.(f, damage, feet, null),
     damageFoe: (f, damage, feet) => exteriorFoes.damageFoe(f, damage, feet, null, { kind: 'melee' }),
     voice: (f) => enemyHeavyPainVoice(f),
@@ -9487,7 +10211,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  them, and so does the broker fan-out below - one set of doors per
    *  entity, exactly as one EntityEffectManager per entity. */
   const foeSinks = (g, fromPlayer = true) => ({   // AUDIT WORLD6b-iii(a) B2: the provenance the engine hands (AUDIT WORLD2 B7: a foe's spell is not the player's blow) - this host ignored it, so an enemy blast over a puppet went to its owner as MY hit
-    hurt: (n, o) => { const fp = o?.fromPlayer ?? fromPlayer; if (n > 0) (g._encounter ? exteriorFoes.damageFoe(g, n, player.pos, null, { fromPlayer: fp, kind: 'spell', whole: !!o?.whole }) : cityGuards.hurtGuard(g, n, player.pos, null, { fromPlayer: fp })); },   // AUDIT 68 review: a round's tick says whose it is (effects.js runEffectRound), as the dungeon's sink reads it   // X-slice: route by pool
+    hurt: (n, o) => { const fp = o?.fromPlayer ?? fromPlayer; if (n > 0) (g._encounter ? exteriorFoes.damageFoe(g, n, player.pos, null, { fromPlayer: fp, kind: 'spell', whole: !!o?.whole, round: !!o?.round, element: o?.element ?? null }) : cityGuards.hurtGuard(g, n, player.pos, null, { fromPlayer: fp, kind: 'spell', round: !!o?.round })); },   // RVN3: a landing's element (its weakness's weight)   // AUDIT 68 review: a round's tick says whose it is (effects.js runEffectRound), as the dungeon's sink reads it   // X-slice: route by pool
     heal: (n) => { if (!(n > 0)) return; if (g._encounter) exteriorFoes.healFoe(g, n); else g.entity.health = Math.min(g.entity.maxHealth ?? Infinity, g.entity.health + n); },   // AUDIT PSCALE1 DOORS-5: an encounter foe's heal through its pool, weighed as its damage is
     drainMagicka: (n) => { if (n > 0) g.entity.magicka = Math.max(0, (g.entity.magicka ?? 0) - n); },
     restoreMagicka: (n) => { if (n > 0) g.entity.magicka = Math.min(g.entity.maxMagicka ?? Infinity, (g.entity.magicka ?? 0) + n); },
@@ -9522,6 +10246,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   const veilOf = (id) => _veils.get(id) ?? null;
   const magic = createPlayerMagic({
     renderer, audio, getTexture, uploadRecord, uploadRecordFrame,
+    lairHere: () => {   // RVN7 (bible/12-Enhanced-AI/Feud-Arc.md 18.1): a deed in the open world - my map pixel, and the named dungeons in the boards' ring about it
+      const p = playerTravelPixel();
+      const dungeons = bountyDungeons(p.x, p.y, (x, y) => _bountyDungeonPixels.get(`${x},${y}`) || null).map((d) => ({ ...d, region: _dungeonRegionPixels.get(`${d.px},${d.py}`) ?? -1 }));
+      return { px: p.x, py: p.y, dungeons };
+    },
     allyMarks: (sp) => allyMarksNear(sp),   // AID1 onto ALLY-CAST: the party mates' bodies, for a beneficial touch, missile or blast (declared beside allyTargetPick, below) - SPELL-GIFT: the spell rides, for the strangers its list may reach
     peerBodies: () => peersNear(),   // SPELLFX1: every player's body, where a peer's drawn missile stops (declared below this engine's build)
     companionBodies: () => [...crewAshore.bodies(), ...revenantAshore.bodies()],   // COMPANION-KIT: my companions here - my healing and buffs reach them (REVENANT-COMPANION: the sworn too)
@@ -9650,10 +10379,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:3087 mounts the same one, gated on
+  // and dungeonContext.js:3262 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:7286
+  // that context through modes.dungeonCtx - so worldModes.js:7299
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -9683,7 +10412,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // artifact affinity scans saw an empty room. Nothing threw and
   // nothing was logged - the enchantment simply had no effect where
   // the fighting is. The one ctx in play is this mount: no host passes
-  // an enchantCtx at the strike site (formulas.js:509 defaults it
+  // an enchantCtx at the strike site (formulas.js:522 defaults it
   // null), so mergeCtx folds this default under every dispatch.
   // The law itself is in shared.js, tested on its own - which pool is
   // live, and whose sinks a record from it must go through. This host
@@ -9749,11 +10478,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:573-578) never looks the record up in `foes`, and
+    // (exteriorFoes.js:583-588) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
-    // got exactly what removeGuard (cityGuards.js:1632-1650) gives it -
+    // got exactly what removeGuard (cityGuards.js:1650-1668) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
-    // (cityGuards.js:1036) and spliced out at the end of it (:1230).
+    // (cityGuards.js:1048) and spliced out at the end of it (:1247).
     // Routing by POOL MEMBERSHIP is an OWNERSHIP fix: each pool owns the
     // teardown of its own records so the two can diverge safely, and
     // removeFoe's `questBehaviour?.notifyDestroyed()` (exteriorFoes.js
@@ -9833,11 +10562,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!spot) return null;
     ambushNight();   // AUDIT REST-PARTY A1: a night running now (restAct.js runRestNight) breaks at its next sub-tick - spawnFoe stands the foe after its awaits
     const fly = (ENEMY_BASICS[hit.mobileType]?.behaviour ?? 'General') === 'Flying';
+    // WILD-ALERT: a fast traveller is met only if the wanderer NOTICES them - its first stealth check at the spot it was
+    // placed (systems/wildAlert.js; a wanderer's own sight its reach). Unnoticed, it stands unaware and the journey runs on
+    const fast = wildTravelling() && !_inAnyLocationRect([spot.x, spot.y, spot.z]);
+    const noticed = !fast || Math.random() * 100 < noticeChance(Math.hypot(spot.x - feet[0], spot.z - feet[2]), SIGHT_RADIUS, wildStealth());
     const stood = exteriorFoes.spawnFoe(hit.mobileType, [spot.x, fly ? spot.y + 1.5 : spot.y, spot.z], {
       yaw: Math.atan2(feet[0] - spot.x, feet[2] - spot.z),   // LookAt player
       ...(hit.revenant ? revenantSpawnOptions(hit.revenant, effectiveLevel(playerEntity)) : {}),   // REVENANT: a returning one - its record, its gender, a class foe's level
-    }).catch(() => null);
-    journeyMet();   // AUDIT OW5b E1: placed beside the traveller - a walking journey stops now, never once the foe has loaded and sensed
+    }).then((f) => { if (f && fast) { if (noticed) wildFoes.alert(f, performance.now() / 1000); else wildFoes.checked(f); } return f; }).catch(() => null);
+    if (noticed) journeyMet();   // AUDIT OW5b E1: placed beside the traveller - a walking journey stops now, never once the foe has loaded and sensed
     return stood;
   };
   /** AUDIT OW5b E1 (Mac, 2026-09-28: "Need to get pullout of fast travel little sooner for encounters. U run thru them"):
@@ -10286,6 +11019,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // pool importing the other.
     candidates: () => [...cityGuards.guards, ...exteriorFoes.foes].filter((f) => !f.dead && !f.puppet),   // AUDIT WORLD6b B8: a puppet is nobody's target here - it lands no blow and takes none of mine (a foe hunting a peer is 6b-ii's)
     playerEntity,
+    wildUnaware: (f) => wildGated(f),   // WILD-ALERT: a wilderness foe that has not noticed a fast traveller leaves them off its list
   });
   // U32: ONE construction for the world inventory and spellbook - F6
   // and Backspace open them, and so do the character sheet's buttons.
@@ -10645,6 +11379,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       // journal opened in a building draws the where line and no door, rather than a door that only ever says no.
       // The classic logbook keeps gotoPlace above and DFU's box-then-refusal.
       showQuestPlace: (modes?.mode ?? 'exterior') === 'exterior' ? (find) => showQuestPlace(find) : undefined,
+      // LW7c: THE PEOPLE WHO KNOW YOU - the living world's residents the character has met, by name and town, their
+      // standing and their fate (systems/livingWorld/people.js), where the living world is on
+      people: livingWorldOn() ? () => peoplePage(livingRelations, Math.floor((skyMinutes() - 240) / 1440), livingTownOfId) : undefined,
     });
   };
   /** S40: THE REST KEY, OUTDOORS. CanRest's FIRST arm - the one that
@@ -10930,6 +11667,8 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  (:2777) and this read did not. The streamer is frozen while a mode
    *  is mounted (state.update sits below the modal early return), so
    *  state.current IS the entrance pixel DFU holds. */
+  /** RVN7b: where a town's news is asked - my map pixel and its region (a revenant's lair near is the news). */
+  function rumorHere() { const p = playerTravelPixel(); return { px: p.x, py: p.y, region: _questRegionIndex() }; }
   function playerTravelPixel() {
     if ((modes?.mode ?? 'exterior') === 'dungeon') return { x: state.current.x, y: state.current.y };
     const wc = state.worldCoords(walkMode ? player.pos : cam.pos);
@@ -11144,6 +11883,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     _reskin.clear();   // ...and the frame's own re-skin has nothing left to re-skin
     _seasonHoldKey = null;    // ...nor a held motor: the spawn below re-anchors it anyway
     _wasInLocationRect = false;   // F062: ResetState (:398-401) - no exit event on arrival
+    if (modEvent !== 'load') routByJump();   // RVN10 (Feud-Arc.md 21.2): a jump out of a fight routs me - never a load's
     // AUDIT 39: CleanupUntrackedObjects (StreamingWorld.cs:1620-1644,
     // on SaveLoadManager_OnStartLoad) - "remove loose enemies,
     // missiles, etc. on load or new game" - and the same sweep a
@@ -11634,6 +12374,12 @@ export async function bootWorld(canvas, renderer, params, status) {
   };
 
   let _recalling = false;
+  /** RVN10 (bible/12-Enhanced-AI/Feud-Arc.md 21.2): ROUTED BY A JUMP - a Recall or a teleport taking me out of a fight:
+   *  each engaged special of the pool I leave (the door's) routed and told, before its sweep takes it. A respawn's jump
+   *  routs nobody (the death ended every fight - systems/harmMark.js endPlayerFights). */
+  function routByJump() {
+    for (const { r, f } of revenantRoutSweep(playerEntity)) revenantSay(revenantRoutedEvent(r, { archive: f.archive ?? f.mobileArchive ?? null }), (l) => townTalk.say(l));
+  }
   /** TeleportPlayer (:119-164) + the respawner's tail (:228-256). */
   async function recallToAnchor() {
     if (worldMoveBusy()) return;   // AUDIT 68 S22
@@ -11669,6 +12415,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // makes). Inside a dungeon: NOTHING, because DFU takes
       // TransitionDungeonExteriorImmediate there and dungeons are not
       // scene-cached at all.
+      routByJump();   // RVN10 (21.2): out of a fight - the pool I leave asked before a mode's teardown takes it (a dungeon's, a building's)
       if (plan.cacheScene === 'exterior') cacheExteriorScene(playerTravelPixel());
       if ((modes?.mode ?? 'exterior') !== 'exterior') {
         modes?.forceExitToExterior({ cacheScene: plan.cacheScene === 'building' });
@@ -11927,6 +12674,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     _rezSeen = null;
     _deadMark = null; _partyComposedAt = -Infinity;   // PCORPSE3: my body is gone - my party pose says so at once
     reviveForPlay(playerEntity, { force: true });
+    forgetLastSlew();   // AUDIT FEUD (RVN8): no respawn - its killer takes nothing, now or at a later death
     playerEntity.health = Math.max(1, Math.round((playerEntity.maxHealth ?? playerEntity.health) * RESURRECT_HEALTH_PCT / 100));
     player.stopAutorun();   // AUDIT 27h S2: SEA-RISE's law for every rise - a drowned autorunner raised on the seabed walked on
     _deathWasOnline = null;
@@ -11993,6 +12741,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // clear the overlay, all synchronous). This is that order.
     if (_respawning) return;   // and a second death mid-flight cannot start a second respawn
     _respawning = true;
+    endPlayerFights();   // RVN10 (Feud-Arc.md 21.2): the death ended every fight - the respawn's jump routs nobody (a death no hurt told)
     // DEATHLOOP1: the health AND the cause. MAC-D3 put the heal first
     // so no frame could see a dead player with no death screen; this
     // also ends the drains that were emptying the bar, because a
@@ -12010,6 +12759,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // (no guard's blow lands in it); a charge already laid stays whole - only a sentence gives any of it back.
     setCrimeCommitted(playerEntity, CRIMES.None);
     arrestFlow.abandon();   // the surrender question withdrawn, the chase's charge and slain watchman forgotten
+    const took = revenantTakes(playerEntity, { online: true });   // RVN8 (bible/12-Enhanced-AI/Feud-Arc.md 19): a revenant's kill takes one piece - online alone, once a death (the same guard)
     _deathWasOnline = null;   // armed fresh for the NEXT death
     const mode = modes?.mode ?? 'exterior';
     const wasInDungeon = mode === 'dungeon';
@@ -12072,7 +12822,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // this is idempotent rather than a second mercy.
       if (!(playerEntity.health > 0)) { reviveForPlay(playerEntity); surfacePlayer(); }
       ohAbyss?.onRespawnerComplete();   // OH-D: the port's own respawn - a respawn anywhere but the bound abyss clears it, as the respawner's does
-      townTalk.showOverlay(new ActionTextBox([respawnFlavorText(kind), deathPenaltyText(goldLost)].filter(Boolean)));   // DEATH-PENALTY: and what the fall cost
+      townTalk.showOverlay(new ActionTextBox([respawnFlavorText(kind), deathPenaltyText(goldLost), took?.line].filter(Boolean)));   // DEATH-PENALTY: and what the fall cost; RVN8: and what it took
     }).catch((e) => {
       // RISE-STUCK: A RISE THAT THREW STILL RISES. The heal ran first
       // (MAC-D3), so the player is alive; a screen left up here has its
@@ -12396,7 +13146,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:8452), so exterior mode and a
+    // composer, dungeonContext.js:8695), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -13032,7 +13782,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     tvFar = { at: null, near: -1, list: [] };   // TV5: nor the far places
     tvDng = { at: null, dg: -1, list: [] };   // TV6: nor the dungeons
     tvFind = { at: null, dg: -1, n: -1, list: [] };   // AUDIT OW5 D1: nor the find's
-    tvBandSeen = { at: null, life: -1, list: [] }; _bandChase.clear(); _bandSpent.clear(); _bandMake.clear(); _bandPos.clear(); _bandPeer.clear(); _bandSpentAt.length = 0;   // TV7: nor the bands
+    tvBandSeen = { at: null, life: -1, list: [] }; _bandChase.clear(); _bandSpent.clear(); _bandMake.clear(); _bandPos.clear(); _bandPeer.clear(); _bandSpentAt.length = 0; wildBands.prune(() => false);   // TV7: nor the bands - AUDIT-F3: nor what they had noticed (a band that chased the abandoned run chased again on the first frame, from wherever it stood)
     travelView?.exit('load', true);   // AUDIT DEEP X-3: a load under the travel view cuts it first - its release put the head back over the camera the save restores
     _owSay.sp.clear(); _owSay.dg.clear();   // OW6L: nor what the abandoned run still owed its cell (the loaded ledger is the save's)
     // AUDIT OW4 D3: NOR THE SPAWNS THE ABANDONED RUN WAS TOLD OF - the Overworld marks a spawn once its pixel's line was
@@ -13462,8 +14212,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (g === _travelOptionsGen) return;
     _travelOptionsGen = g;
     travelOptionsSettings = readTravelOptionsSettings(modSetting, travelOptionsBoot);
-    if (travelOptions) travelOptions.settings = travelOptionsSettings;
-    travelControlUI?.setAccelerationLimit(travelOptionsSettings.accelerationLimit);   // the panel's limit, the tile's dial
+    if (travelOptions) travelOptions.settings = travelOptionsSettings;   // RATE-LAW: no limit dial to carry to the panel
   }
   const travelOptionsOn = modSetting(TRAVEL_OPTIONS_VENDOR, 'Enabled');
   latchModLoaded(TRAVEL_OPTIONS_VENDOR, travelOptionsOn);   // AUDIT PRE-MERGE 0928 U7: the journey is made now or not at all - its Follow Paths key answers the same (systems/inputActions.js actionLive)
@@ -13496,13 +14245,21 @@ export async function bootWorld(canvas, renderer, params, status) {
   // so it needs the same four reads - one law, two skins.
   if (travelJunctionMap) travelJunctionMap.deps = travelJunctionMap.deps ?? {};
   const travelControlUI = travelOptionsOn ? createTravelControlUI({
-    defaultStartingAccel: travelOptionsSettings.defaultStartingAccel,
-    accelerationLimit: travelOptionsSettings.accelerationLimit,
     onOpenMap: () => toggleTravelMap(),
     onClose: () => travelOptions?.interruptTravel(),         // TravelOptionsMod.cs:378 - CAMP: stop, keep the destination
     onCancel: () => travelOptions?.clearTravelDestination(), // :377 - EXIT: forget it
-    onTimeAccelerationChanged: (n) => { travelAsked = n; setWorldTimeScale(n); },  // :379 -> SetTimeScale; TV2: the ask, recorded for the view's governor
+    // RATE-LAW: :379's OnTimeAccelerationChanged went with the spinner - the journey asks the clock (setTimeScale below)
   }) : null;
+  /** RATE-LAW (2026-10-04, Mac: "Roads now travel at x100 and non roads at x60"): DOES THE TRAVELLER STAND ON A ROAD OR A
+   *  TRACK - inside one of the lanes leaving their map pixel (systems/travelPaths.js playerOnPathAt, Travel Options' own
+   *  geometry), on whichever network the land was painted with (his, or the port's own: the same compass, ROADS 21)?
+   *  The rate law's question for a journey with no route to say it (the mod's straight walks) and for the keys' travel. */
+  function travellerOnRoad() {
+    const net = terrainGen.roads();
+    if (!net) return false;
+    const wc = state.worldCoords(walkMode ? player.pos : cam.pos), mp = playerTravelPixel();
+    return playerOnPathAt(pathsDataPoint(net, mp.x, mp.y), wc.x, wc.z, mp.x, mp.y) !== 0;
+  }
   /** TRAVEL-NAV1 (2026-09-25, Mac: "Improving travel options navigation to
    *  properly route around objects and stopping before running into
    *  buildings"): THE JOURNEY'S STEERING (systems/travelSteer.js), made
@@ -13534,6 +14291,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // is handed over only when it is actually his (`source`, TO1's own
     // field on the network object, terrainGenClient.js).
     roads: () => { const net = terrainGen.roads(); return net?.source === 'basic-roads' ? net : null; },
+    onRoad: () => travellerOnRoad(),   // RATE-LAW: a straight walk's ground - the road's rate while it runs along one
     isWater: (x, y) => x < 0 || y < 0 || x >= 1000 || y >= 500 || woods.getHeightMapValue(x, y) <= WATER_BYTE,   // AUDIT DEEP T2-1: a road journey's resume never aims across the sea
     worldPos: () => { const wc = state.worldCoords(walkMode ? player.pos : cam.pos); return { x: wc.x, z: wc.z }; },
     mapPixel: playerTravelPixel,
@@ -13552,7 +14310,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       health: playerEntity.health, maxHealth: playerEntity.maxHealth, fatigue: playerEntity.fatigue,
       luck: liveStat(playerEntity, 'luck'), stealth: skillValue(playerEntity, SKILLS.Stealth),
     }),
-    enemiesNearby: () => duelEnemyNear() || areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes]) || navalHostileNear(),   // DUEL1: no journey out of a duel either; NAV-H: nor past a hostile ship (OWS2's sea legs stop for her)
+    enemiesNearby: () => duelEnemyNear() || areEnemiesNearby([...cityGuards.guards, ...wildSeen(exteriorFoes.foes)]) || navalHostileNear(),   // DUEL1: no journey out of a duel either; NAV-H: nor past a hostile ship (OWS2's sea legs stop for her); WILD-ALERT: nor for a foe that has not noticed me
     diseaseCount: () => diseaseCount(playerEntity),
     showHealthStatus: () => hudCtx.showStatus?.(),
     say: (line) => townTalk.say(line),
@@ -13575,7 +14333,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // multi-line messages always did, and a plain PUSH, because that
     // is what MessageBox is.
     messageBox: (line) => messageBox(line),
-    setTimeScale: (n) => { travelAsked = n; setWorldTimeScale(n); },   // TV2: the mod's own ask (its caps included), recorded for the view's governor
+    // AUDIT-D3: a new ask never lifts a hold - the clock running under the last ask (the governor's: the land loading, an
+    // enemy near, the ground's walking pace) keeps it till the governor's next frame weighs the new one; a lower ask is
+    // the clock's at once. RATE-LAW asks again at every change of ground, and each lifted the hold for a frame
+    setTimeScale: (n) => { const held = worldTimeScale() < travelAsked; travelAsked = n; if (!held || n < worldTimeScale()) setWorldTimeScale(n); },   // TV2: the mod's own ask (its caps included), recorded for the view's governor
     now: () => performance.now() / 1000,          // UNSCALED real seconds, as Time.unscaledTime is
     worldTimeNow: () => worldMinutes(),
     locationWorldRect: (summary) => {
@@ -13890,6 +14651,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       quests: () => (marksOn() ? questMapMarks(questTracker.views, questTracker.tracked()?.id ?? null, questPixel) : []),
       // BOUNTY1 (Mac: "board quests can be a green circle", then black - green is the party's): each held bounty's pixel, on both maps
       bounties: () => bountyHost?.mapMarks() ?? [],
+      // RVN7c (bible/12-Enhanced-AI/Feud-Arc.md 18.3): each revenant lair heard of - a blood-red circle, on both maps
+      revenants: () => revenantMapMarks(),
       // HOME-VENDOR: the trader's waypoint - its town's pixel, the house's owner and the town, on both maps (ui/vendorMapMark.js)
       vendor: () => { const wp = vendorWaypoint(); const t = wp ? _townOfMapId.get(wp.map) : null; return t ? { px: t.px, py: t.py, label: `Trader: ${wp.owner || 'a'}'s house`, town: t.name } : null; },
       // HUB1: each region's hub, marked and named - online alone (systems/regionHubs.js); offline the map is DFU's
@@ -14795,7 +15558,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       (e.clientX - _r.left) * (canvas.width / _r.width),
       (e.clientY - _r.top) * (canvas.height / _r.height),
       e.button, hudCtx, { windowUp: gamePaused(), event: e })) return;   // BUFF-END: the event, for the spell icon's own press
-    // TO1: the travel panel's three buttons and its spinner, in the
+    // TO1: the travel panel's three buttons (RATE-LAW: its spinner is gone), in the
     // same rung and for the same reason the large HUD's panels are
     // here - a HUD-layer control is clicked before the pointer is
     // relocked, or the click becomes a swing. The ENHANCED panel is
@@ -15023,7 +15786,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());
   });
   // U41: `!townTalk.overlayActive` is the dungeon host's own gate
-  // (dungeon.js:252, "a right-click on a window is the window's...
+  // (dungeon.js:254, "a right-click on a window is the window's...
   // never a swing"), which these two hosts never got. It matters now
   // that the travel map makes RMB a ROUTINE gesture - its zoom - and
   // an ungated one fires a readied spell or looses an arrow at the
@@ -15667,7 +16430,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:10983-11047 -
+  // worldModes answers it in BOTH modes (worldModes.js:11005-11069 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -16465,7 +17228,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // quest topic mark its dialog-linked resources. Unset, every %hnt
     // answer printed its macros raw; it is the mill's seam, one home.
     expandQuestTokens,
-    getNewsOrRumors: (session) => rumorMill.getNewsOrRumors(session),
+    getNewsOrRumors: (session) => revenantRumor(rumorHere(), session) ?? rumorMill.getNewsOrRumors(session),   // RVN7b (bible/12-Enhanced-AI/Feud-Arc.md 18.2): a revenant's lair near, the news may be of it
     isPlayerInside: () => (modes?.mode ?? 'exterior') !== 'exterior',
     /** ROAD-B B4: GameManager.IsPlayerInsideCastle (GameManager.cs:420-423)
      *  is PlayerEnterExit.IsPlayerInsideDungeonCastle and nothing else, and
@@ -16956,7 +17719,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const baseQuestLog = questBridge.questLog.bind(questBridge);
     questBridge.questLog = () => {
       const log = baseQuestLog();
-      const extra = bountyHost?.questLogEntries?.() ?? [];
+      const extra = [...(bountyHost?.questLogEntries?.() ?? []), ...revenantHuntEntries(rumorHere())];   // RVN7c: and each hunt - a lair heard of, the way there from where I stand
       return extra.length ? { ...log, active: [...(log?.active ?? []), ...extra] } : log;
     };
   }
@@ -17853,7 +18616,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // rides the cell's stream as puppets at every peer, and a peer's blow on one lands through the watch's own
       // door as NOT this player's blow (no Murder of mine for a watchman a peer kills). The crime itself stays the
       // criminal's: a peer who strikes my watch commits nothing, and my murder marks no one else.
-      watch: { list: () => cityGuards.guards, hurt: (g, dmg, at, dir) => cityGuards.hurtGuard(g, dmg, at, dir, { fromPlayer: false, peer: true }) },   // AUDIT WATCH1 A4: and a PEER's - no reveal, no notice, no pile
+      watch: { list: () => cityGuards.guards, hurt: (g, dmg, at, dir, wc = null, kind = 'melee') => cityGuards.hurtGuard(g, dmg, at, dir, { fromPlayer: false, peer: true, wc, kind }) },   // AUDIT WATCH1 A4: and a PEER's - no reveal, no notice, no pile; TELL8: and its blow's class
       toWire: (feet) => { const wc = state.worldCoords(feet); return [wc.x, feet[1] - state.compensation[1], wc.z]; },
       toScene: (p) => { const l = state.localFromWorld(p[0], p[2]); return [l[0], p[1] + state.compensation[1], l[1]]; },
     });
@@ -18678,7 +19441,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     onStart: (d) => {
       profileWin?.hide();
       _duelWall = { c: d.c, s: d.s, alpha: 0, live: true };
-      _duelFoe = { entity: { name: peerName(d.peer) ?? 'Your opponent', health: 1, maxHealth: 1 }, dead: false };
+      _duelFoe = { entity: { name: peerName(d.peer) ?? 'Your opponent', health: 1, maxHealth: 1 }, dead: false, duel: true };   // AUDIT TELL U7: `duel` - no foe's wind-up takes the bar from it (ui/hudFoeTarget.js markFoeThreat)
       _duelSent.clear();
       audio.playOneShot(SOUND.Parry6, 1);   // the blades cross: the count begins
     },
@@ -22787,6 +23550,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     modeLights: () => (csaOn() && !modes?.sailingCabin ? csa.lights(cam.pos) : []),   // CSA-C: ...and its lit lanterns (CABIN-HULL: none lights her cabin from outside)
     csaActivationPick: (eye, dir) => csaActivationPick(eye, dir),   // CSA-D: ...and the one ray on it, in the building's or the dungeon's ladder
     csaActivate: (pick) => csaActivate(pick),
+    livingBillboards: () => (livingIndoors?.batches() ?? []),   // LW8: the residents inside, on the building's own pass
+    livingPersonsAct: (eye, dir, nearer) => !!livingIndoors?.size && townTalk.tryActivate(eye, dir, livingIndoors.seats(), nearer),   // LW8: ...and the street's own talk ray on them
+    livingSpeech: ({ proj, view, eye, dt }) => livingRoomLines(proj, view, eye, dt),   // LW8b: ...and what they say, over their heads
     csaDrawWindWidget: () => csaDrawWindWidget(),   // CSA-E: the wind widget over a mode's HUD
     csaOnPlayerDeath: () => { if (csaRuntime) csaCall(() => csaRuntime.OnPlayerDeath()); },   // CSA-J (the audit): PlayerEntity.OnDeath and OnExhausted reach ComeSailAway.OnPlayerDeath in every mode (Start 1059-1060)
     csaFrame: (dt, axes) => { _csaAxes = axes; csaFrame(dt); },   // CSA-C: a MonoBehaviour's Update and LateUpdate indoors too - a boat placed on a dungeon's water is baked, lit and drawn there; CSA-J (the audit): from the modes' frame, after its motor, on its axes
@@ -23527,7 +24293,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // main.js sets ?load when the menu resolves it, and its comment says
   // "Load Game rides the dungeon host's OWN quickLoad" - true when the
   // classic start booted scenes/dungeon.js, and U31 moved it HERE. The
-  // only reader of `load` in the whole tree is dungeon.js:124, so the
+  // only reader of `load` in the whole tree is dungeon.js:125, so the
   // flag arrived in this host and was discarded: the player got a
   // brand-new character in Privateer's Hold and the only way to reach
   // their save was to start a new game and press F11. A load is not a
@@ -24668,6 +25434,36 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   // towns, made of Daggerfall's own themed groups; under the Overworld one that sees me CHASES, and one that reaches me
   // (or comes within the stand-off with the view down) stands as exactly those foes. The enhanced interface, outdoors.
   const bandNowMs = () => Date.now() + (online ? _sharedOffsetMs : 0);
+  // WILD-ALERT (2026-10-04, Mac: "Wilderness enemies now approach/non approach based on distance and a stealth check.
+  // Enemies alerted are given an exclamation point and slow down as they do now, non alerted enemies do not slowdown or
+  // bother the player"; systems/wildAlert.js): a band within its sight NOTICES me on a stealth check a classic minute
+  // apart, and only then gives chase; a wilderness foe a fast traveller passes is unaware the same way, and the pools
+  // leave me off its list until it notices (`wildGated`). Unaware, neither comes, holds the clock or stops the journey.
+  const wildFoes = createWildAlert({ weak: true });   // (the bands' own, wildBands, stands with the chases above: BOOT-TDZ)
+  let _wildGate = false;   // this frame: a fast traveller (a journey driving, or the Overworld's keys) out of doors
+  const wildStealth = () => skillValue(playerEntity, SKILLS.Stealth);
+  const wildTravelling = () => (!!travelControlUI?.isShowing && !!travelOptions?.state?.autopilot) || tvWalking > 0;
+  /** A foe the gate holds off me: mine (a puppet is its owner's), out in the wilderness (a town's foes keep the town's
+   *  law), and not yet alerted to the fast traveller. */
+  const wildGated = (f) => _wildGate && !f.puppet && !wildFoes.alerted(f) && !!f.ai?.feet && !_inAnyLocationRect(f.ai.feet);
+  /** The foes a fast traveller's stops and the view's danger count: none the gate holds. */
+  const wildSeen = (foes) => (_wildGate ? foes.filter((f) => !wildGated(f)) : foes);
+  /** The gate's frame, before the pools move: each of my hostile wilderness foes in reach checked (systems/wildAlert.js
+   *  step - its sight its reach, my Stealth, the frame on the traveller's clock); one already on me is alerted. */
+  function wildFoesFrame(dt) {
+    _wildGate = wildTravelling() && (modes?.mode ?? 'exterior') === 'exterior' && walkMode && playerSpawned;
+    if (!_wildGate) return;
+    // AUDIT-F4: the checks are a classic minute of the game's clock apart - a window that holds the game holds them (the
+    // journey kept its scale under a pause, and a camp beside the road rolled twelve times a second while the calendar stood)
+    const fx = player.feetAt(), stealth = wildStealth(), sdt = gamePaused() ? 0 : dt * worldTimeScale(), now = performance.now() / 1000;
+    for (const f of exteriorFoes.foes) {
+      if (f.dead || f.puppet || !f.ai?.feet || !foeHostile(f)) continue;
+      if (isLocalPlayerTarget(f.ai.target)) { wildFoes.alert(f, now); continue; }
+      if (_inAnyLocationRect(f.ai.feet)) continue;
+      const s = wildFoes.step(f, { distM: Math.hypot(f.ai.feet[0] - fx[0], f.ai.feet[2] - fx[2]), reachM: f.ai.sightRadius ?? SIGHT_RADIUS, stealth, scaledDt: sdt, now });
+      if (s.noticed) exteriorFoes.noticedPlayer?.(f, fx);   // AUDIT-F1: noticed, it comes - on me now: the "!", the clock held, the meeting
+    }
+  }
   const bandNight = (ms) => { const m = ((online ? skyClassicMinutes(ms) : skyMinutes()) % 1440 + 1440) % 1440; return m < 360 || m > 1080; };   // TIME1: the sky's night at the instant given (the life's middle) - a pure function of the relay's ms, the same for every player
   /** The land a band may stand on: a map pixel with no water and no place in it (native units). */
   const bandOk = (x, z) => {
@@ -24688,6 +25484,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   /** AUDIT OW3 T7-9: a life turned over - what is kept of the bands two lives gone goes (a chase's own band stays). */
   function bandPrune(life) {
     for (const m of [_bandMake, _bandPos, _bandPeer]) for (const id of m.keys()) if (bandLifeOf(id) < life - 1 && !_bandChase.has(id)) m.delete(id);
+    wildBands.prune((id) => bandLifeOf(id) >= life - 1 || _bandChase.has(id));   // WILD-ALERT: a band's notice goes with its life
     for (const id of _bandSpent) if (bandLifeOf(id) < life - 1) _bandSpent.delete(id);
     for (let i = _bandSpentAt.length - 1; i >= 0; i--) if (bandLifeOf(_bandSpentAt[i]) < life - 1) _bandSpentAt.splice(i, 1);   // AUDIT OW4 B7: said no more
   }
@@ -24761,8 +25558,14 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // CAMP-FAR - no pack lands beside the player out of nowhere) was brought a hundred metres nearer and stood beside them
     const minDistance = Math.max(BAND_STAND_MIN_M, dist - PACK_SPACING), maxDistance = Math.max(BAND_STAND_MIN_M, dist) + PACK_SPACING;
     for (const turn of [0, Math.PI / 2, -Math.PI / 2, Math.PI]) {
-      if (_standCampEncounter({ kind: 'band', mobileTypes: mk.mobileTypes, spacing: PACK_SPACING, alertRadius: PACK_ALERT_RADIUS,
-        minDistance, maxDistance, bearingDegrees: 0, yawRad: yaw + turn }, fx)) return true;
+      const stood = _standCampEncounter({ kind: 'band', mobileTypes: mk.mobileTypes, spacing: PACK_SPACING, alertRadius: PACK_ALERT_RADIUS,
+        minDistance, maxDistance, bearingDegrees: 0, yawRad: yaw + turn }, fx);
+      if (!stood) continue;
+      // AUDIT-F2: A BAND THAT CAUGHT ME STANDS ON ME - it chased me: each member alerted (never the gate's) and come for me,
+      // as a noticed foe comes (exteriorFoes.js noticedPlayer). Stood unaware, the gate held them off me and the keys'
+      // travel ran on through them
+      stood.foes.then((fs) => { for (const f of fs) if (f && !f.dead) { wildFoes.alert(f, performance.now() / 1000); exteriorFoes.noticedPlayer?.(f, player.feetAt()); } }).catch(() => {});
+      return true;
     }
     return false;
   }
@@ -24798,7 +25601,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       if (!bandNearMe(id, at, life)) continue;   // AUDIT OW3 T7-9: only a band that can be about me
       if (flag === 2) { _bandSpent.add(id); _bandChase.delete(id); _bandPeer.delete(id); continue; }
       _bandPeer.set(id, { x, z, at: now, from });
-      if (_bandChase.has(id) && chaseYields(online?.id ?? '', from)) _bandChase.delete(id);
+      if (_bandChase.has(id) && chaseYields(online?.id ?? '', from)) { _bandChase.delete(id); wildBands.forget(id); }   // AUDIT-F3: the peer's chase now - its notice of me with it (a stale word was a chase again from anywhere, unchecked)
     }
   }
   /** TV7b: my band word, on the cell's foes frame - asked with `frame` null whether it must ride (a chase moves every
@@ -24861,17 +25664,29 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         else c.retryAt = now + BAND_STAND_RETRY_MS;
       }
     }
-    // A WANDERER THAT SEES ME, under the view, chases
+    // A WANDERER THAT NOTICES ME, under the view, chases - WILD-ALERT: within its sight, on a stealth check a classic
+    // minute apart (systems/wildAlert.js); one that has not noticed me wanders on
+    const sdt = dt * worldTimeScale(), stealth = wildStealth();
     for (const b of listed) {
       if (_bandSpent.has(b.id) || _bandChase.has(b.id)) continue;
       if (!up || _bandChase.size >= 2 || bandPeerChase(b.id)) continue;   // TV7b: nor a band a peer's chase already holds
       const p = bandPlace(b, ms);
       const d = Math.hypot(p.x - feet.x, p.z - feet.z) / NATIVE_PER_M;
-      if (d > sight) continue;
+      if (!wildBands.step(b.id, { distM: d, reachM: sight, stealth, scaledDt: sdt, now: now / 1000 }).alerted) continue;
       const mk = bandMake(b);
       if (!mk) { _bandSpent.add(b.id); continue; }
       _bandChase.set(b.id, { band: b, pos: { x: p.x, z: p.z }, gainAt: _bandClock, best: d, dist: d, tries: 0, retryAt: 0 });
     }
+  }
+  /** WILD-ALERT: the camps (travelViewCamps' keys) a living member of which is alerted to me (systems/encounters.js
+   *  foeAlerted) - mine by their campId, a peer's by the tag its frames carry. */
+  function wildCampKeys() {
+    const out = new Set();
+    for (const f of exteriorFoes.foes) {
+      if (f.dead || !foeAlerted(f)) continue;
+      if (f.puppet) { if (f._pupCamp) out.add(`${f.puppet}:${f._pupCamp.id}`); } else if (f.campId != null) out.add(`me:${f.campId}`);
+    }
+    return out;
   }
   /** OW6: THE CAMPS STANDING ABOUT (world/campShared.js groupCamps) - my own camp members (their `campId`, their kind)
    *  and my peers' puppets tagged with their owner's camp, living ones alone, grouped one camp a group. */
@@ -24940,6 +25755,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         marks.push({ key: g.key, at: tvSceneKept(g, g.x, g.z, TV_PLACE_LIFT), label: g.loc.name, sub: farDistanceText(km), kind: 'far dungeon', pick: true, edge: true });   // OW-FILTER: 'dungeon' - the look is the first word's, the filter's group the second's
       } else marks.push({ key: g.key, at: tvSceneKept(g, g.x, g.z, TV_PLACE_LIFT), label: '?', kind: 'lair' });
     }
+    // LW3: THE ROAD'S PARTIES - a caravan, pilgrims, a pedlar, each where it is and where it is bound (scenes/livingRoads.js)
+    if (livingRoads && livingWorldOn()) {
+      for (const m of livingRoads.marks()) if (markShown({ kind: m.kind })) marks.push({ key: m.key, at: [m.at[0], m.at[1] + 2, m.at[2]], label: m.label, kind: m.kind });
+    }
     // TV7: THE BANDS - each with its kind and number where it walks; one chasing me held at the edge, pointing
     const bms = bandNowMs();
     // AUDIT OW4 B6: none drawn where none can come - the camps' own switch off, or the enemy spawns held
@@ -24950,12 +25769,13 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       const mk = bandMake(b);
       if (!mk) continue;
       const chasing = _bandChase.has(b.id), p = bandPlace(b, bms);
-      marks.push({ key: `band:${b.id}`, at: tvSceneKept(b, p.x, p.z, 2), label: bandLabel(mk.name, mk.mobileTypes.length), kind: chasing ? 'band chase' : 'band', edge: chasing, pick: true });   // OW6: the band's OWN number, the same for every player (a party it meets brings more - PSCALE1 - where it stands)
+      marks.push({ key: `band:${b.id}`, at: tvSceneKept(b, p.x, p.z, 2), label: chasing ? `${WILD_MARK} ${bandLabel(mk.name, mk.mobileTypes.length)}` : bandLabel(mk.name, mk.mobileTypes.length), kind: chasing ? 'band chase' : 'band', edge: chasing, pick: true });   // OW6: the band's OWN number, the same for every player (a party it meets brings more - PSCALE1 - where it stands); WILD-ALERT: a chase is a band that noticed me - its mark
     }
     // OW6 (2026-09-29, the player: "If a camp is spawned, it should show in the overworld"): THE CAMPS - every group
     // standing about, a camp, a pack or a band stood: mine, and each peer's by the tags their frames carry
     // (world/campShared.js) - one mark where its living members stand, with its kind and its number; gone with its last
-    for (const c of travelViewCamps()) marks.push({ key: `camp:${c.key}`, at: [c.at[0], c.at[1] + 2, c.at[2]], label: c.label, kind: 'camp', pick: true }); for (const g of gatherHost?.overworldGroups(walkMode ? player.pos : cam.pos) ?? []) marks.push(g);   // OW-ATTACK: pressable; GATHER-OW: each profession's group of nodes near me, a glyph (scenes/gatherHost.js overworldGroups)
+    const wildCamps = wildCampKeys();   // WILD-ALERT: a camp a member of which has noticed me wears the mark
+    for (const c of travelViewCamps()) marks.push({ key: `camp:${c.key}`, at: [c.at[0], c.at[1] + 2, c.at[2]], label: wildCamps.has(c.key) ? `${WILD_MARK} ${c.label}` : c.label, kind: 'camp', pick: true }); for (const g of gatherHost?.overworldGroups(walkMode ? player.pos : cam.pos) ?? []) marks.push(g);   // OW-ATTACK: pressable; GATHER-OW: each profession's group of nodes near me, a glyph (scenes/gatherHost.js overworldGroups)
     // BOUNTY-OVERWORLD (the player: "can the bounties also be shown on the overworld map"): EVERY BOUNTY I HOLD - its
     // hunt's pixel (the held map's black circle, scenes/bountyHost.js mapMarks), its foes and its distance, held at the
     // edge off the picture as the journey's end is, so the way to it is always shown
@@ -25325,7 +26145,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     return pts;
   }
   // THE CAP (systems/travelGovernor.js): while the view is up and a journey drives, the clock runs no faster than the
-  // grid raises the ground the view can see. The spinner stays the player's; the panel says when it is held.
+  // grid raises the ground the view can see. The ground's rate stays the journey's (RATE-LAW); the panel says when it is held.
   // OW6 (2026-09-29, the player: "If a player is traveling very fast, they should slow if enemies become close"): THE
   // ENEMIES A JOURNEY SLOWS FOR (systems/travelThreat.js) - where each is from the traveller's feet (scene metres), the
   // reach it sees or strikes in, and whether it is already closing. Under the view the Overworld's own: the bands as it
@@ -25337,13 +26157,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const out = [], fx = player.feetAt();
     const rel = (nx, nz) => { const [x, z] = state.localFromWorld(nx, nz); return [x - fx[0], z - fx[2]]; };
     if (up && getPref('wildernessCamps') !== false && !playerEntity.preventEnemySpawns) {
-      const ms = bandNowMs(), sight = bandSight(tvBandSeen.night);
-      for (const b of travelViewBands()) {
-        if (_bandSpent.has(b.id) || _bandChase.has(b.id) || !bandMake(b)) continue;
-        if (_tvAttack?.kind === 'band' && _tvAttack.id === b.id) continue;   // OW-ATTACK: the band I go to fight holds nothing
-        const p = bandPlace(b, ms), [dx, dz] = rel(p.x, p.z);
-        out.push({ dx, dz, reach: sight });
-      }
+      // WILD-ALERT: a band that has not noticed me holds nothing - only a chase, which is a band that has
       for (const c of _bandChase.values()) { if (_tvAttack?.kind === 'band' && _tvAttack.id === c.band.id) continue; const [dx, dz] = rel(c.pos.x, c.pos.z); out.push({ dx, dz, reach: BAND_CONTACT_M, chasing: true, mps: BAND_CHASE_MPS }); }   // OW-ATTACK: nor its chase
     }
     if (up && warmAshesOn() && csaOn() && raidQuarry()) {
@@ -25357,7 +26171,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       for (const c of tvRaid.chase.values()) { const [dx, dz] = rel(c.pos.x, c.pos.z); out.push({ dx, dz, reach: RAIDER_CONTACT_M, chasing: true, mps: RAIDER_CHASE_MPS }); }
     }
     for (const f of exteriorFoes.foes) {
-      if (!foeHostile(f) || !f.ai.feet || f.ai.unreachable) continue;   // WATER-FOES: nor a foe in the water while I am aboard
+      if (!foeAlerted(f) || !f.ai.feet || f.ai.unreachable) continue;   // WATER-FOES: nor a foe in the water while I am aboard; WILD-ALERT: nor one that has not noticed me
       if (_tvAttack?.kind === 'camp' && foeCampKey(f) === _tvAttack.id) continue;   // OW-ATTACK: the camp I go to fight, every member
       out.push({ dx: f.ai.feet[0] - fx[0], dz: f.ai.feet[2] - fx[2], reach: f.ai.sightRadius ?? SIGHT_RADIUS });   // CAMP-SIGHT: a camp's sixty metres
     }
@@ -25385,12 +26199,9 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   }
   const travelGovernor = createLoadGovernor({ max: MAX_TIME_SCALE });
   // ENEMY-PACE (the player: "a second time multiplier for when you're near an enemy"): the slowest pace the clock runs at
-  // with enemies near - the enemies' cap still eases a journey down toward them, but never under this. The panel's second
-  // stepper sets it, and shows only while the enemies hold the clock
-  let tvFoeRate = 5;
-  const foeLadder = (n, up) => up ? (n >= 5 ? n + 5 : n + 1) : (n > 5 ? n - 5 : Math.max(1, n - 1));
-  const foeFloor = (cap, want) => Math.min(want, Math.max(cap, Math.min(tvFoeRate, travelControlUI?.accelerationLimit() || MAX_TIME_SCALE)));
-  let tvHeld = null;   // the rate the governor holds the clock to, while it holds it under the spinner's
+  // with enemies near - the enemies' cap still eases a journey down toward them, but never under it. RATE-LAW: a fixed
+  // pace now (systems/travelThreat.js JOURNEY_FOE_PACE, `foePaced`) - the panel's second stepper is gone
+  let tvHeld = null;   // the rate the governor holds the clock to, while it holds it under the ground's (RATE-LAW)
   // OW6: and why - 'load' (TV2's ground), 'foes' (an enemy near), 'ground' (the view down: AUDIT OW4 J5's walking pace - AUDIT
   // OW5 G1, the bar saying which; its tvHeldGround is this word now)
   let tvHeldWhy = null;
@@ -25411,7 +26222,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // First-Person Travel's (OW-TOGGLE: the journey the player chose to walk on the ground)
     if (journey && !travelView?.active && tvOwnsJourneys()) {
       if (worldTimeScale() !== 1) setWorldTimeScale(1);
-      tvHeld = travelAsked > 1 ? 1 : null;   // the panel says the clock is held (the spinner stays the player's)
+      tvHeld = travelAsked > 1 ? 1 : null;   // the panel says the clock is held (the ground's rate stays the journey's)
       tvHeldWhy = tvHeld != null ? 'ground' : null;   // AUDIT OW5 G1: and says it as what it is (OW6: the one word for it)
       tvWalking = 0;   // TV-WASD: no keys' travel on the ground
       travelGovernor.reset();
@@ -25424,7 +26235,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       moving: TV_MOVE_ACTIONS.some((a) => held(keys, a)) && (typeof document === 'undefined' || document.hasFocus?.() !== false),
       onFoot: walkMode && playerSpawned && !player.isPlayerSwimming && !csaBoatUnderMe(),
       paused: gamePaused(),
-      accel: travelControlUI?.timeAcceleration ?? 0, limit: travelControlUI?.accelerationLimit() ?? 0,
+      travels: !!travelControlUI, onRoad: !journey && travelView?.state === 'up' && travellerOnRoad(),   // RATE-LAW: the ground's rate, where the spinner's was
     });
     // OW6: THE ENEMIES' CAP, on every fast travel the frame governs (systems/travelThreat.js) - a journey on either skin, and
     // the keys' travel under the view (TV-WASD: travelling very fast too) - the lower of it and the ground's holds
@@ -25433,7 +26244,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // the classic skin's journey on the ground, and First-Person Travel's (OW-TOGGLE): the mod's own ask, under the
       // enemies' cap alone (no view, no ground to watch) - nothing near, it is the ask handed back whole. Never over the
       // helm's own time step: Come Sail Away holds the clock then (AUDIT OW5 G5's law, whose restore asks this rate)
-      const rate = csaHoldsTimeScale() ? null : foeFloor(foes.cap, travelAsked);
+      const rate = csaHoldsTimeScale() ? null : foePaced(foes.cap, travelAsked);
       if (rate != null && worldTimeScale() !== rate) setWorldTimeScale(rate);
       tvHeld = rate != null && rate < travelAsked ? rate : null;
       tvHeldWhy = tvHeld != null ? 'foes' : null;
@@ -25465,9 +26276,9 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       uc.gen = gen; uc.x = px.x; uc.y = px.y; uc.r = radius;
     }
     const unbuilt = uc.n;
-    const want = journey ? travelAsked : walk;   // AUDIT TV A2: what the mod asked - never the spinner past the mod's own cap; TV-WASD: or the keys' travel
+    const want = journey ? travelAsked : walk;   // AUDIT TV A2: what the mod asked - its ground's rate under its own cap (RATE-LAW); TV-WASD: or the keys' travel
     const load = travelGovernor.step(dt, { unbuilt, requested: want });
-    const foeCap = foeFloor(foes.cap, want);   // ENEMY-PACE: the enemies' cap, never under the player's near-enemy pace
+    const foeCap = foePaced(foes.cap, want);   // ENEMY-PACE: the enemies' cap, never under the near-enemy pace (RATE-LAW: fixed)
     const rate = Math.min(load, foeCap);   // OW6: the ground's cap and the enemies', the lower
     if (worldTimeScale() !== rate) setWorldTimeScale(rate);
     tvHeld = rate < want ? rate : null;
@@ -25494,7 +26305,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     onLower: (why) => { if ((why === 'button' || why === 'escape' || why === 'key') && travelOptions?.isTravelActive && tvOwnsJourneys()) travelOptions.messages.pauseTravel(); },
     windowUp: () => gamePaused() || (modes?.modalWindowUp?.() ?? false),
     overlayUp: () => overlayOpen() || travelViewConfirmOpen(),   // AUDIT DEEP2 A3: an enhanced overlay (the Tab dial) has the keys while it is up; OW-CONFIRM: and the view's own question
-    danger: () => duelEnemyNear() || areEnemiesNearby(exteriorFoePool()),   // the travel map's own refusal, and the Travel Options journey's stop (AUDIT DEEP2 A9/B-4: a live duel too, DUEL1's)
+    danger: () => duelEnemyNear() || areEnemiesNearby(wildSeen(exteriorFoePool())),   // the travel map's own refusal, and the Travel Options journey's stop (AUDIT DEEP2 A9/B-4: a live duel too, DUEL1's); WILD-ALERT: never a foe that has not noticed a fast traveller
     actionsOf: (e) => actionsOf(e, keys),
     movementHeld: () => TV_MOVE_ACTIONS.some((a) => held(keys, a)),
     movementAxes: () => ({ forward: (held(keys, 'MoveForwards') ? 1 : 0) - (held(keys, 'MoveBackwards') ? 1 : 0), strafe: (held(keys, 'MoveRight') ? 1 : 0) - (held(keys, 'MoveLeft') ? 1 : 0) }),   // OW-FACE: the way the keys point
@@ -25654,7 +26465,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
     const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];   // HANDEDNESS (mat4's law): screen-right = (cos, 0, -sin) under the mirrored projection - Unity's own right
     noteLocalPlayer(walkMode && playerSpawned ? player.pos : cam.pos, fwd);   // TACT2: where I stand and face - a foe behind me sees my back (ai/tactics.js)
-    tickTactics(foeFrameDt(_questBoxHoldsFoes() ? 0 : dt));   // AUDIT TACT D10/A3: the brain's clock is the foes' own step - held when they are
+    tickTactics(foeFrameDt(_questBoxHoldsFoes() || (_mode() === 'dungeon' && !!modes?.dungeonCtx?.uiOverlayActive) ? 0 : dt));   // AUDIT TACT D10/A3: the brain's clock is the foes' own step - held when they are; AUDIT TELL H1: a dungeon's window holds its foes, and their wind-ups with them
 
     // Modal frame (worldModes.js): interior/dungeon consume the frame
     // entirely - the early return also freezes streaming (the
@@ -25761,6 +26572,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // front's 0.15) louder in a tavern than in the street - the Discord report itself - and a dungeon 6.7x.
       ambience.setPreset(presetForExterior(heardWeather(), isNight(minuteNow())));   // DISC9: the word the street last heard - the one truth Better Ambience's indoor rain reads too
       ambience.update(dt, { inside: true, underground: modes.mode === 'dungeon', indoorRainSource: betterAmbience.rainPlaying() });
+      if (livingRoads) livingRoads.clear();   // LW3: indoors, underground - the road's bodies freed with the open world they stood in
+      livingWays.frame(); livingMemoFresh();   // AUDIT-E2: the ways asked indoors too - a load made in a tavern or below asked once and never again
+      livingDiversStep(now);   // LW6: underground, the companies diving here met
+      livingRemainsStep(now);   // LW6b: ...and the dead the deep kept there
+      livingIndoorsStep(townTalk.overlayActive ? 0 : dt);   // LW8: in a building, the residents whose day has them inside (AUDIT-E3: held under a talk, as the street's)
       if (dwPlayer) {
         audio.setListenerLowPass(0);   // DW-D: UpdateAudioFilter's IsPlayerInside - RemoveAudioFilter
         // AUDIT DW-F: UpdateSwimSfxAndWeather asks IsPlayingGame and IsPlayerSwimming && !IsWaterWalking and nothing of
@@ -26154,6 +26970,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // because there is no floor under it while the re-skin runs.
         _dwLastForward = paralyzed ? 0 : axes.forward;   // DW-D: the shore exit's InputManager.Vertical, for the next frame's driver
         _csaAxes = { h: axes.strafe, v: axes.forward };   // CSA-D: InputManager.Horizontal / Vertical for the helm's inputTarget - CSA-J (the audit): InputManager has no paralysis gate, only the motors do
+        playerBlowFrame({ motor: player, entity: playerEntity, shake: (k) => betterAmbience.weaponKick(k), hurt: (n) => { hurtPlayer(playerEntity, n); flashPlayerDamage(n); surfacePlayer(); } });   // TELL6e: a landing's push, rattle, knockdown and bleed
         if (_overlayHeld || _seasonHeld) player.holdFrame();   // DISC8-G: a held motor reports no landing and no jump
         if (!_overlayHeld && !_seasonHeld) player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: held(keys, 'Run'), autoRun: held(keys, 'AutoRun'), back: mv.backwards, sneak: held(keys, 'Sneak') || walkModeOn(), jump: false, up: false, down: false, crouch: crouchPress } : {
           forward: axes.forward,   // TO1: the autopilot's force while a journey runs, else the player's own   // AUDIT 28 W8: InputManager's axes - accelerated under MovementAcceleration, the held difference without
@@ -26465,6 +27282,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           // this host and in exterior.js, character for character, which
           // is how AUDIT 66 F7 shipped a torch that had to beat the pile
           // but not the door. The ARMS below are still this host's own.
+          // LW3: the people under the ray are the town's and the road's (`_talkPersons`) - the person arm's distances and
+          // its talk ray alike
           const _race = raceActivation({
             corpse: _corpsePick,
             pile: _pilePick,
@@ -26477,7 +27296,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
             broker: _brokerPick,   // SET7
             boat: _csaBoatPick,   // CSA-D
             doorDistance: modes.exteriorActivationDistance(cam.pos, useFwd),
-            personDistances: _livePersons.map((p) => rayPersonDistance(cam.pos, useFwd, p.pos)),
+            personDistances: _talkPersons().map((p) => rayPersonDistance(cam.pos, useFwd, p.pos)),
           });
           const _lootPick = _race.loot, _dropPick = _race.drop;
           // Every OTHER thing this ray can strike, at its own distance:
@@ -26501,7 +27320,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           // bottom-of-the-ladder call ran with `nearerThan` Infinity,
           // so a foe 20 units off ate a click DFU gives a door at 5.
           else if (_enemyArm(RAY_DISTANCE, _rivalDist)) { /* the enemy was the nearest hit */ }
-          else if (!townTalk.tryActivate(cam.pos, useFwd, _livePersons, _nonPersonRival)) {
+          else if (!townTalk.tryActivate(cam.pos, useFwd, _talkPersons(), _nonPersonRival)) {   // LW3: the road's people beside the town's
             const lootKey = _lootPick?.key ?? null;
             const dropKey = _dropPick?.key ?? null;
             // HT1: a dropped torch under the ray, nearer than the corpse and the pile: picked up (Grab, Steal) or named (Info, Talk)
@@ -27588,6 +28407,17 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         livePersonBatches.push(batch);
       }
     }
+    // LW3: THE ROADS - the living world's parties near, in file by day and about their fires by night (scenes/
+    // livingRoads.js), on the ground and grown under the Overworld; the planner asked a few ways a frame
+    livingWays.frame(); livingMemoFresh();   // LW3: a new network, new ways (AUDIT-B8: and the memo's bound)
+    livingTurnsFresh();   // LW4: a turn of fate made, or a save loaded - the books made again
+    if (livingWorldOn() && _mode() === 'exterior') {
+      livingRoadsOf().frame(townTalk.overlayActive ? 0 : dt, cam.pos, { overworld: tvf ? { grow: tvf.grow, blend: tvf.blend } : null });
+      livePersonBatches.push(...livingRoads.batches());
+    } else if (livingRoads) livingRoads.clear();
+    if (_livingWatchTurned.length) livingWatchStep();   // LW7: a struck watchman's guard, watched
+    if (livingIndoors?.size || livingIndoors?.spots().length) livingIndoors.clear();   // LW8: the street again - the room's residents freed (LW-FIX1: and an empty room's sounding)
+    if (livingRemains) { livingRemains.clear(); livingRemains = null; }   // LW6b: ...and the deep's layer let go with its dungeon
     // G1: the guards drive + draw on the same flats' axis. WINFOE1
     // (2026-09-17, Mac: "enemies should still be able to do damage"): the
     // ENEMY pools no longer freeze under a window - a rest, the
@@ -27610,6 +28440,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     handOverWalkedAway(performance.now());   // OW6: a foe I walk away from goes to the player beside it, never culled from under them
     const _pf = walkMode && playerSpawned ? player.pos : cam.pos;
     if (!townTalk.overlayActive) runEncounterTick(_pf);
+    wildFoesFrame(foeDt);   // WILD-ALERT: who in the wilderness has noticed a fast traveller - before the pools move
     if ((modes?.mode ?? 'exterior') === 'exterior') {
       if (_deckBodies.size) navalCarry();   // DECK-WALK: the bodies on a ship's deck carried by her - after the ships moved, before the foes do
       exteriorFoes.update(foeDt, _pf, cam.pos, _foeSenses());   // WINFOE1: a window no longer zeroes the foes' clock (QUEST-POPUP-PAUSE: offline, a quest box does)
@@ -27972,6 +28803,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         tallySkill(playerEntity, SKILLS.Dodging, 1);
         const dmg = shooter && !shooter.dead ? exteriorFoes.partyHit(calculateAttackDamage(shooter.entity, playerEntity, {
           weapon: m.weapon,
+          blowInfo: m.aimed ? aimedBlowInfo(m) : null,   // TELL6d: an aimed shot's x1.4
           onInflictPoison: (att, tgt, pt) => inflictPoison(playerEntity, pt, false, { currentMinute: Math.floor(playerTicker.ownMinutes) }),
           say: (l) => townTalk.say(l),
         }), shooter) : 0;   // PSCALE1: a shared archer's arrow, harder for the party beside me
@@ -28004,19 +28836,19 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       onPlayerArrowHitFoe: (m, t) => (t?.duel ? duelStrikeOut('arrow', m.weapon ?? null, 'StrikeDown', weaponRig.playerWeapon?.lastDrawMs ?? 0, t.id) : playerArrowHitFoe(m, t, {   // DUEL1: my shaft on my duel opponent is a strike their client resolves   // AUDIT-SEATS G5: on a battle's foe (`t.id`), a shaft to the referee
         playerEntity, playerWeapon: weaponRig.playerWeapon, playerFeet: player.pos,
         dealDamage: (f, d) => (cityGuards.guards.includes(f)
-          ? cityGuards.hurtGuard(f, d, player.pos, m.dir)   // AUDIT-39r: the shaft shoves the watch too (WeaponManager.cs:576-595)
-          : exteriorFoes.damageFoe(f, d, player.pos, m.dir, { kind: 'arrow' })),   // WORLD6b-iii(e): the kind rides the hit - a puppet's owner lands the shaft (ar), as the dungeon's host has since WORLD3
+          ? cityGuards.hurtGuard(f, d, player.pos, m.dir, { kind: 'arrow' })   // AUDIT-39r: the shaft shoves the watch too (WeaponManager.cs:576-595); TELL1: a shaft's weight on a wind-up
+          : exteriorFoes.damageFoe(f, d, player.pos, m.dir, { kind: 'arrow', weapon: m.weapon ?? null })),   // AUDIT FEUD 2: the bow (a metal weakness rides to a puppet's owner)   // WORLD6b-iii(e): the kind rides the hit - a puppet's owner lands the shaft (ar), as the dungeon's host has since WORLD3
         audio, hitEffects, say: (l) => townTalk.say(l),
         onInflictPoison: (att, tgt, pt) => (cityGuards.guards.includes(t) ? inflictPoison(tgt, pt, false, { currentMinute: Math.floor(playerTicker.ownMinutes) }) : exteriorFoes.poisonFoe(t, pt)),   // WORLD6b-iii(e): the pool's one poison door - a puppet's dose rides the hit to its owner; the watch is dosed here (the player's own)
         // AUDIT 58: WeaponManager.cs:630's HandleAttackFromSource sits
         // AFTER the damage fork closes (:615), so a shaft that lost the
         // roll still enrages what it hit and wakes the area. ROAD-G G1
         // (review): the WATCH carries the pair now
-        // (cityGuards.js:781-786), so this seam ROUTES by pool exactly
+        // (cityGuards.js:784-789), so this seam ROUTES by pool exactly
         // as `dealDamage` above it does, instead of excluding the
         // guards - a zero-damage shaft into a pacified watchman has to
         // reach the same door the zero-damage SWING already reaches
-        // (cityGuards.js:1351). DFU makes no pool distinction:
+        // (cityGuards.js:1368). DFU makes no pool distinction:
         // AssignBowDamageToTarget's player arm (DaggerfallMissile.cs
         // :660-688) calls WeaponDamage, so :630 runs for the shaft as
         // for the swing.
@@ -28061,7 +28893,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       }
       // U8h/AUDIT 17e F17: the worn-weapon bind moved INTO createWeaponRig
       // so all four hosts inherit it (the interior host was missing it).
-      for (const ev of weaponRig.frame(dt, { paralyzed })) {
+      for (const ev of weaponRig.frame(dt, { paralyzed: paralyzed || knockedDown() })) {   // TELL6e: knocked down, no swing
         // AUDIT 23 (combat-2): the bow machine's frame-4 loose sound.
         if (ev === 'bowSound') { audio.playOneShot(SOUND.ArrowShoot, 1.1); continue; }
         if (ev !== 'hit') continue;
@@ -28105,10 +28937,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
             tallySwingSkills(playerEntity, weaponRig.playerWeapon.weapon);
             surfacePlayer();
           } else
-          cityGuards.resolveCivilianHit(weaponRig.playerWeapon, cam.pos, lookFwd, player.pos, _guardPool(),
+          cityGuards.resolveCivilianHit(weaponRig.playerWeapon, cam.pos, lookFwd, player.pos, livingStruckPool(_guardPool()),
             { onMurder: () => _crimeResponse(), onHitSound: guardHitSound, swing }).then((r) => {
             if (r?.carriedHit) tallySwingSkills(playerEntity, weaponRig.playerWeapon.weapon);
             if (r?.crime) surfacePlayer();
+            else if (!r?.spared && livingStrikeRoad(cam.pos, lookFwd)) surfacePlayer();   // LW7: a traveller on the road, struck down
             // ROAD-B: WeaponManager.WeaponEnvDamage (:474-477) - a
             // swing that met no living thing is offered to the STATIC
             // DOORS, and a door under it is BASHED (PlayerActivate
@@ -28180,6 +29013,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       navalTags(proj, view, mwv.eye);   // AUDIT NAV1 (#14): the ships' tags
       navalCrewBars(proj, view, mwv.eye);   // SHIPMATES: the crew's green bars
       navalCrewLines(proj, view, mwv.eye, dt);   // LIVING CREW: the lines over their heads
+      wildMarksFrame(proj, view, mwv.eye);   // WILD-ALERT: the "!" over an alerted foe
       // WORLD-HOVER: the plaque, where this host already draws its HUD.
       // It races EXACTLY what the press races - the same six live picks
       // against the same door/person/board set, settled by the same
@@ -28304,9 +29138,9 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           covered: townTalk.hudCovered || (modes?.hudCovered ?? false) || gamePaused(),
           destination: travelControlUI?.destinationName ?? '',
           following: !travelOptions?.destinationName,
-          accel: travelControlUI?.timeAcceleration ?? 1,
-          held: tvHeld,   // TV2: the travel view's cap, while it holds the clock under the spinner
-          foeRate: tvFoeRate,   // ENEMY-PACE
+          accel: travelControlUI?.timeAcceleration ?? 1,   // RATE-LAW: the rate the journey's ground runs at
+          onRoad: !!travelControlUI?.onRoad,   // RATE-LAW: and which ground it is
+          held: tvHeld,   // TV2: the travel view's cap, while it holds the clock under the ground's rate
           heldWhy: tvHeldWhy,   // AUDIT OW5 G1: and why; OW6: the land loading, an enemy near, or the view down (its ground)
           message: travelControlUI?.message ?? '',
           minutesLeft: travelOptions?.minutesLeft ?? null,   // AUDIT-TO1 L5: the popup's estimate, run down on the world clock
@@ -28317,10 +29151,6 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           map: () => toggleTravelMap(),
           camp: () => travelControlUI?.closeWindow(),
           exit: () => travelControlUI?.cancelWindow(),
-          faster: () => travelControlUI?.faster(),
-          slower: () => travelControlUI?.slower(),
-          foeFaster: () => { tvFoeRate = Math.min(travelControlUI?.accelerationLimit() || MAX_TIME_SCALE, foeLadder(tvFoeRate, true)); },   // never past the general spinner's own limit
-          foeSlower: () => { tvFoeRate = foeLadder(tvFoeRate, false); },
         });
       } else hideEnhancedTravelControl();
     } else {

@@ -46,6 +46,12 @@ export const BLEED_DROPS_MAX = 6;
 export const BLEED_RADIUS = 0.35;
 export const BLEED_RATE = GIB_SPLASH_RATE;
 
+/** AUDIT TELL (bible/12-Enhanced-AI/Feud-Arc.md 8.2, built at last): A WOUND - a sweep's bleed on the player
+ *  (systems/blowEffects.js, the view's `wound`) - drips whatever the health: at least WOUND_SHARE of the drops, every
+ *  WOUND_WAIT seconds (its ticks' cadence) for as long as it runs. */
+export const WOUND_SHARE = 0.5;
+export const WOUND_WAIT = 1;
+
 /** The corpse's pool: from a body's width to a metre and a half, over
  *  twelve seconds, in eight rewrites. The port's own numbers. */
 export const POOL_SIZE = Object.freeze({ start: 0.45, end: 1.5 });
@@ -149,16 +155,18 @@ export function createBleedLedger({ rng = Math.random } = {}) {
       // so the latch that says "this body has pooled" was the previous
       // life's, and the foe killed a second time lay in no pool.
       s.pooled = false;
-      const share = bleedShare(v.health, v.maxHealth);
+      const wound = !!v.wound;   // AUDIT TELL: a sweep's bleed
+      const share = Math.max(bleedShare(v.health, v.maxHealth), wound ? WOUND_SHARE : 0);
       if (!(share > 0)) {
         // healed past the threshold: the next wound starts a fresh wait
         if (s.bleeding) { s.bleeding = false; s.next = wait(); }
         continue;
       }
       s.bleeding = true;
+      if (wound && s.next > WOUND_WAIT) s.next = WOUND_WAIT;   // AUDIT TELL: a wound opened drips on its own cadence
       s.next -= dt;
       if (s.next > 0) continue;
-      s.next = wait();
+      s.next = wound ? WOUND_WAIT : wait();
       out.push({ kind: 'drip', body, pos: [v.feet[0], v.feet[1], v.feet[2]], bloodIndex: v.bloodIndex ?? 0, count: bleedDrops(share), share });
     }
     return out;

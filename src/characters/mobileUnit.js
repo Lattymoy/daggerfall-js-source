@@ -269,6 +269,11 @@ export class MobileUnit {
     this._attackFrames = null;
     this._iter = 0;
     this.doMeleeDamage = false;   // LATCHED on the -1 marker; the consumer clears it (C16)
+    this.meleeSeq = 0;            // TELL2: one per -1 a melee swing reached (the LAND cue counts them; nothing else reads it)
+    this._hold = false;           // TELL2: the host's word this update - true holds a telegraphed swing, 'cancel' drops it
+    this._underHold = false;      // TELL2: the running attack began held (a telegraphed blow's wind-up)
+    this._heldSwing = false;      // TELL4: ...and stays so through its strike (the 'spent' word reads it)
+    this._struck = false;         // TELL4: that swing has struck - its follow-through on show
     this.shootArrow = false;      // C17: the ranged -1
     /** A5 - MobileUnit.SpecialTransformationCompleted (Base/MobileUnit
      *  .cs:50, DaggerfallMobileUnit.cs:121-124). Raised by
@@ -414,9 +419,16 @@ export class MobileUnit {
       // attack variants STARTS with the hit frame (-1) - flag damage
       // now and advance to the next frame (audit 08-17).
       if (this.frame === -1) {
-        this.doMeleeDamage = true;
-        this.frame = this._iter < this._attackFrames.length ? this._attackFrames[this._iter++] : 0;
+        // TELL2: a held swing's strike waits for the release - the first frame drawn, the -1 next on the iterator
+        if (this._hold === true) { this.frame = 0; this._iter = 0; }
+        else {
+          this.doMeleeDamage = true;
+          this.meleeSeq++;
+          this.frame = this._iter < this._attackFrames.length ? this._attackFrames[this._iter++] : 0;
+        }
       }
+      this._underHold = this._hold === true;
+      this._heldSwing = this._underHold; this._struck = false;
     }
     // C14: ApplyEnemyState's Spell branch SEEDS from SpellAnimFrames
     // (currentFrame = frames[0]; frameIterator = 1) - but AnimateEnemy's
@@ -470,7 +482,18 @@ export class MobileUnit {
    * STARTS (EnemyAttack.MeleeAnimation fires ChangeEnemyState ONCE);
    * a level signal would replay the sequence inside one swing.
    */
-  update(dt, { moving = false, striking = false, hurting = false, casting = false, rangedStriking = false } = {}, yaw, feet, cameraPos) {
+  update(dt, { moving = false, striking = false, hurting = false, casting = false, rangedStriking = false, hold = false } = {}, yaw, feet, cameraPos) {
+    // TELL2 (bible/12-Enhanced-AI/Feud-Arc.md section 4.1): A TELEGRAPHED BLOW'S SWING, HELD. The port's own beat - DFU
+    // has none: `hold` true plays the swing that began under it up to the frame before its first -1 (the raised arm) and
+    // stands there; false lets it strike on the next step; 'cancel' drops it (its wind-up broke, a paralysis). Only a
+    // swing that BEGAN under the hold answers it - a DFU swing in flight is never held, never dropped (the wind-up's own
+    // swing replaces it, at the edge below).
+    // TELL4 (Feud-Arc.md 6.1): 'spent' - an overreach: the held swing strikes, then its follow-through STANDS (the frame
+    // after its strike - the world boss's SPENT_FRAME; never the list's later strike or its rest pose); when the word
+    // goes, the swing is over (to idle - a stagger's Hurt may take the same frame).
+    if (this._heldSwing && this._struck && this.state === 'attack' && this._hold === 'spent' && hold !== 'spent') { this._heldSwing = false; this._change('idle'); }
+    this._hold = hold;
+    if (this._underHold && this.state === 'attack' && hold === 'cancel') { this._underHold = false; this._change('idle'); }
     // NO RESET HERE (wave 33). DoMeleeDamage/ShootArrow are latches that
     // only EnemyAttack.Update clears, after it has used them.
     // The DFU priority (audit 08-17): the attack edge overrides ANY
@@ -497,7 +520,7 @@ export class MobileUnit {
     // and can never enter a transform state).
     if (this.isPlayingOneShot() && this.oneShotPauseActionsWhilePlaying()) {
       // no intent this frame
-    } else if (striking && this.state !== 'attack') this._change('attack');
+    } else if (striking && (this.state !== 'attack' || (hold === true && !this._underHold))) this._change('attack');   // TELL2: a wind-up's swing replaces a DFU swing in flight, as the attack machine's restart does (enemyAttack.js `_blowWind`)
     else if (rangedStriking && this.state !== 'ranged' && this.state !== 'attack') this._change('ranged');
     else if (casting && this.state !== 'spell' && this.state !== 'attack') this._change('spell');
     else if (hurting && this.state !== 'hurt' && this.state !== 'attack') this._change('hurt');
@@ -555,11 +578,14 @@ export class MobileUnit {
     // doingAttackAnimation (AnimateEnemy): PrimaryAttack and the two
     // RangedAttack states only - Spell is deliberately NOT in it.
     if (this.state === 'attack' || this.state === 'ranged') {
-      if (this._iter >= this._attackFrames.length) { this._change('idle'); return; }
+      if (this.state === 'attack' && this._heldSwing && this._struck && this._hold === 'spent') return;   // TELL4: the follow-through stands
+      if (this._iter >= this._attackFrames.length) { this._underHold = false; this._heldSwing = false; this._change('idle'); return; }
+      // TELL2: held - the raised arm stands until the release; the strike is the next step after it
+      if (this.state === 'attack' && this._underHold && this._hold === true && this._attackFrames[this._iter] === -1) return;
       let f = this._attackFrames[this._iter++];
       if (f === -1) {
         if (this.state === 'ranged') this.shootArrow = true;   // AnimateEnemy
-        else this.doMeleeDamage = true;   // C16: the scene resolves on it, then clears it
+        else { this.doMeleeDamage = true; this.meleeSeq++; this._underHold = false; this._struck = this._heldSwing; }   // C16: the scene resolves on it, then clears it
         if (this._iter < this._attackFrames.length) f = this._attackFrames[this._iter++];
         else { this._change('idle'); return; }
       }

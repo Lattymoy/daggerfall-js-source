@@ -1,0 +1,244 @@
+[
+  {
+    "name": "LW-FIX4-diced-turns",
+    "file": "src/systems/livingWorld/lives.js",
+    "old": "  const diced = h > 0 && lwRoll(res.town, res.slot, k, FATE) < h && quiet;",
+    "new": "  const diced = roadHits(res, k, turns) && quiet;",
+    "tests": [
+      "test/lwfix4_turns.test.js",
+      "test/lw4b_roadFights.test.js",
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX4-shape-turned",
+    "file": "src/systems/livingWorld/trouble.js",
+    "old": "  const fated = trip.party.filter((m) => (world.diced ?? world.dies)?.(m, trip)).map((m) => m.id);",
+    "new": "  const fated = trip.party.filter((m) => world.dies?.(m, trip)).map((m) => m.id);",
+    "tests": [
+      "test/lwfix4_turns.test.js",
+      "test/lw4b_roadFights.test.js",
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX4-spared-leader-stood",
+    "file": "src/systems/livingWorld/trouble.js",
+    "old": "  let kind = dead.includes(trip.leader.id) ? 'fell' : shape === 'fell' ? 'won' : shape;",
+    "new": "  let kind = shape;",
+    "tests": [
+      "test/lwfix4_turns.test.js",
+      "test/lw4b_roadFights.test.js",
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX4-dive-end-turned",
+    "file": "src/systems/livingWorld/trouble.js",
+    "old": "    if (shape !== 'fell') return { ...trip, enc, fallen, turned: false };",
+    "new": "    if (enc.kind !== 'fell') return { ...trip, enc, fallen, turned: false };",
+    "tests": [
+      "test/lwfix4_turns.test.js",
+      "test/lw4b_roadFights.test.js",
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX4-arrival-unheld",
+    "file": "src/systems/livingWorld/trouble.js",
+    "old": "  if (!turned && enc.leg === 'out' && enc.t1 > trip.outT1) return { ...trip, enc, halt, fallen, turned: false, outT1: Math.min(enc.t1, trip.backT0) };\n",
+    "new": "",
+    "tests": [
+      "test/lwfix4_turns.test.js",
+      "test/lw4b_roadFights.test.js",
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX4-homecoming-unheld",
+    "file": "src/systems/livingWorld/trouble.js",
+    "old": "  if (!turned && enc.leg === 'back' && enc.t1 > trip.backT1) return { ...trip, enc, halt, fallen, turned: false, backT1: enc.t1 };\n",
+    "new": "",
+    "tests": [
+      "test/lwfix4_turns.test.js",
+      "test/lw4b_roadFights.test.js",
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX4-host-fated",
+    "file": "src/scenes/world.js",
+    "old": "  livingTripWorld.fated = (res, k) => livingPlaceOf(res, k).diced;",
+    "new": "  livingTripWorld.fated = (res, k) => livingPlaceOf(res, k).dies;",
+    "tests": [
+      "test/lwfix4_turns.test.js",
+      "test/lw4b_roadFights.test.js",
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX4-host-diced",
+    "file": "src/scenes/world.js",
+    "old": "    diced: (res, trip) => livingTripPlace(res, trip).diced,",
+    "new": "    diced: (res, trip) => livingTripPlace(res, trip).dies,",
+    "tests": [
+      "test/lwfix4_turns.test.js",
+      "test/lw4b_roadFights.test.js",
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX4-host-election",
+    "file": "src/scenes/world.js",
+    "old": "      owner: (feet) => amGroupRollOwner(online?.id ?? null, player.feetAt(), (peersNear() ?? []).filter((p) => Math.hypot(p.feet[0] - feet[0], p.feet[2] - feet[2]) <= LIVE_M), Infinity),",
+    "new": "      owner: (feet) => amGroupRollOwner(online?.id ?? null, player.feetAt(), (peersNear() ?? []).filter((p) => !!feet), LIVE_M * 2),",
+    "tests": [
+      "test/lwfix4_turns.test.js",
+      "test/lw4b_roadFights.test.js",
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX4-host-memo-divers",
+    "file": "src/scenes/world.js",
+    "old": "      livingMemoFresh();   // AUDIT-B8\n      _livingDiversList",
+    "new": "      _livingDiversList",
+    "tests": [
+      "test/lwfix4_turns.test.js",
+      "test/lw4b_roadFights.test.js",
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX4-host-deadAt",
+    "file": "src/scenes/world.js",
+    "old": "      deadAt: livingDeadAt,",
+    "new": "      deadAt: undefined,",
+    "tests": [
+      "test/lwfix4_turns.test.js",
+      "test/lw4b_roadFights.test.js",
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX4-ended",
+    "file": "src/scenes/roadFights.js",
+    "old": " || fights.has(trip.enc.id) || ended.has(trip.enc.id)) continue;",
+    "new": " || fights.has(trip.enc.id)) continue;",
+    "tests": [
+      "test/lwfix4_turns.test.js",
+      "test/lw4b_roadFights.test.js",
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX4-ended-bound",
+    "file": "src/scenes/roadFights.js",
+    "old": "export const ENDED_MAX = 64;",
+    "new": "export const ENDED_MAX = 63;",
+    "tests": [
+      "test/lwfix4_turns.test.js",
+      "test/lw4b_roadFights.test.js",
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX4-fights-died",
+    "file": "src/scenes/roadFights.js",
+    "old": "    if (deps.died) { deps.died(res, t); deps.onTurn?.(); } else turn('fallen', deps.turnKeyOf(res, trip));",
+    "new": "    turn('fallen', deps.turnKeyOf(res, trip));",
+    "tests": [
+      "test/lwfix4_turns.test.js",
+      "test/lw4b_roadFights.test.js",
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX4-fights-dead-kept",
+    "file": "src/scenes/roadFights.js",
+    "old": "    for (const rec of f.allies.values()) if (!rec.dead) takeOut(rec);",
+    "new": "    for (const rec of f.allies.values()) takeOut(rec);",
+    "tests": [
+      "test/lwfix4_turns.test.js",
+      "test/lw4b_roadFights.test.js",
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX4-standing-allies",
+    "file": "src/scenes/roadFights.js",
+    "old": "      for (const [id, rec] of f.allies) if (!rec.dead && rec.living?.res) standing.set(id, rec.living.res);\n",
+    "new": "",
+    "tests": [
+      "test/lwfix4_turns.test.js",
+      "test/lw4b_roadFights.test.js",
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX4-remains-drawn",
+    "file": "src/scenes/livingRoads.js",
+    "old": "        if (fights?.alliesOf(r.trip.id).has(r.res.id)) continue;",
+    "new": "        void r;",
+    "tests": [
+      "test/lwfix4_turns.test.js",
+      "test/lw4b_roadFights.test.js",
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX4-peer-armed-drawn",
+    "file": "src/scenes/livingRoads.js",
+    "old": "          if (peerLive && m.res.cls != null) continue;\n",
+    "new": "",
+    "tests": [
+      "test/lwfix4_turns.test.js",
+      "test/lw4b_roadFights.test.js",
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX4-divers-ended",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "if (!companies.has(trip.id) && !ended.has(trip.id) && deps.owner()",
+    "new": "if (!companies.has(trip.id) && deps.owner()",
+    "tests": [
+      "test/lwfix4_turns.test.js",
+      "test/lw4b_roadFights.test.js",
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX4-divers-died",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "          if (deps.died) deps.died(rec.living.res, t); else turn('fallen', deps.turnKeyOf(rec.living.res, c.trip));",
+    "new": "          turn('fallen', deps.turnKeyOf(rec.living.res, c.trip));",
+    "tests": [
+      "test/lwfix4_turns.test.js",
+      "test/lw4b_roadFights.test.js",
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX4-divers-dead-kept",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "    for (const rec of c.allies.values()) if (!rec.dead) takeOut(rec);",
+    "new": "    for (const rec of c.allies.values()) takeOut(rec);",
+    "tests": [
+      "test/lwfix4_turns.test.js",
+      "test/lw4b_roadFights.test.js",
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX4-stands-dead",
+    "file": "src/scenes/roadStands.js",
+    "old": "          if (deps.deadAt?.(c.res, t)) continue;",
+    "new": "          void t;",
+    "tests": [
+      "test/lwfix4_turns.test.js",
+      "test/lw4b_roadFights.test.js",
+      "test/lw6_deep.test.js"
+    ]
+  }
+]

@@ -137,7 +137,7 @@
   {
     "name": "TOLIVE-not-handed",
     "file": "src/scenes/world.js",
-    "old": "    if (travelOptions) travelOptions.settings = travelOptionsSettings;\n",
+    "old": "    if (travelOptions) travelOptions.settings = travelOptionsSettings;   // RATE-LAW: no limit dial to carry to the panel\n",
     "new": "",
     "tests": [
       "test/to_live.test.js"
@@ -157,24 +157,6 @@
     "file": "src/systems/features.js",
     "old": "'CautiousTravel.PlayerControlledCautiousTravel', 'StopAtInnsTravel.PlayerControlledInnsTravel', 'ShipTravel.OnlyFromPorts',",
     "new": "'CautiousTravel.PlayerControlledCautiousTravel', 'ShipTravel.OnlyFromPorts',",
-    "tests": [
-      "test/to_live.test.js"
-    ]
-  },
-  {
-    "name": "TOLIVE-half-limit-kept",
-    "file": "src/ui/travelControlUI.js",
-    "old": "    this.halfAccelLimit = halfAccelLimitOf(accelerationLimit);\n    const limit = this.accelerationLimit();",
-    "new": "    const limit = this.accelerationLimit();",
-    "tests": [
-      "test/to_live.test.js"
-    ]
-  },
-  {
-    "name": "TOLIVE-acceleration-over-limit",
-    "file": "src/ui/travelControlUI.js",
-    "old": "    if (this.timeAcceleration === next) return;",
-    "new": "    return;",
     "tests": [
       "test/to_live.test.js"
     ]

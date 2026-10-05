@@ -675,7 +675,7 @@ test('TV1 host wiring: the frame draws from the view\'s eye risen out of the bod
   assert.match(w, /alive: \(\) => frameAlive\(_frameToken\),/);
   // the view's host deps: the deck the sky draws, the foes the map refuses on, the body held, the cursor freed
   assert.match(w, /cloudBase: \(\) => VC_PROFILE\[weather\]\?\.base \?\? null,/);
-  assert.match(w, /danger: \(\) => duelEnemyNear\(\) \|\| areEnemiesNearby\(exteriorFoePool\(\)\),/, 'AUDIT DEEP2 A9: a live duel too');
+  assert.match(w, /danger: \(\) => duelEnemyNear\(\) \|\| areEnemiesNearby\(wildSeen\(exteriorFoePool\(\)\)\),/, 'AUDIT DEEP2 A9: a live duel too (WILD-ALERT: never a foe that has not noticed a fast traveller)');
   assert.match(w, /holdBody: \(on\) => mwViewHoldThird\(on\),/);
   assert.match(w, /freeCursor: \(free\) => \{ if \(free\) \{ tvCursorWas = cursorActive\(\); setCursorActive\(true\); releaseLook\(\);/);
   // the gate: the enhanced lane, a walking body in the open air, alive and above the water - each refusal said

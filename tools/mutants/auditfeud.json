@@ -1,0 +1,462 @@
+[
+  {
+    "name": "AF-W1-class-unbuilt",
+    "file": "src/ai/puppetBlows.js",
+    "old": "  if (!b) return weak ? { k: blowK({ kind, weapon, claws, round }), back: false, weak: true } : null;",
+    "new": "  if (!b) return null;",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-W1-street-unpassed",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "playerFeet, !round && damage > 0 && feudWeakBlow(f.entity, { kind, weapon, element, attacker: playerEntity }));",
+    "new": "playerFeet, false);",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-W1-deep-unpassed",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "playerFeet, !round && damage > 0 && feudWeakBlow(foe.entity, { kind, weapon, element, attacker: playerEntity })) : null;",
+    "new": "playerFeet) : null;",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-W1-deep-winding-only",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "const _wc = fromPlayer && !peer && foe._ownFrom !== ARENA_PUPPET_OWNER ?",
+    "new": "const _wc = fromPlayer && !peer && foe.ai?._tac?.state === 'windup' && foe._ownFrom !== ARENA_PUPPET_OWNER ?",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-W2-street-id",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (!onWatch && f.entity?.revenant) Object.assign(r, feudWire(f.entity.revenant));",
+    "new": "      if (!onWatch && f.entity?.revenant?.id) Object.assign(r, feudWire(f.entity.revenant));",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-W2-deep-id",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (f.entity?.revenant) Object.assign(r, feudWire(f.entity.revenant));",
+    "new": "    if (f.entity?.revenant?.id) Object.assign(r, feudWire(f.entity.revenant));",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-V1-article-kept",
+    "file": "src/systems/revenant.js",
+    "old": ".replace(/^the\\s+/i, '');",
+    "new": ";",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-V1-theft-long",
+    "file": "src/systems/revenant.js",
+    "old": "took your ${takenName(item)}.`",
+    "new": "took your ${itemLongName(item)}.`",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-V1-taunt-long",
+    "file": "src/systems/revenant.js",
+    "old": "vars: { item: takenName(r.took[r.took.length - 1]) } };",
+    "new": "vars: { item: itemLongName(r.took[r.took.length - 1]) } };",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-V1-desert-long",
+    "file": "src/systems/revenant.js",
+    "old": "kept: kept.map((it) => takenName(it))",
+    "new": "kept: kept.map((it) => itemLongName(it))",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-V1-page-long",
+    "file": "src/ui/revenantPage.js",
+    "old": ".map((it) => takenName(it)).filter(Boolean);",
+    "new": ".map((it) => `The ${takenName(it)}`).filter(Boolean);",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-V2-line-restored",
+    "file": "src/systems/revenantPersonality.js",
+    "old": "'I still hold your {item}.'",
+    "new": "'Your {item} remains with me.'",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-V2-cold-learned-restored",
+    "file": "src/systems/revenantPersonality.js",
+    "old": "'I have measured your {how}. Nothing remains.'",
+    "new": "'Your {how} is known to me now.'",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-V3-oath-unread",
+    "file": "src/systems/revenant.js",
+    "old": "  const since = oath >= 0 ? hist.slice(0, oath) : hist;",
+    "new": "  const since = hist;",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-V3-leaving-unspoken",
+    "file": "src/systems/revenant.js",
+    "old": "  if (!last && left) return { event: left.deed, vars: {} };",
+    "new": "  if (false && left) return { event: left.deed, vars: {} };",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-R1-betrayal-no-leaving",
+    "file": "src/systems/revenant.js",
+    "old": "if (s?.sworn && s.companion?.items?.length && !r.sworn) {",
+    "new": "if (s?.sworn && s.companion?.items?.length && !r.sworn && !(r.history ?? []).some((h) => h.deed === 'betrayed')) {",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-R2-stranded",
+    "file": "src/systems/revenant.js",
+    "old": "    if (player && s?.took?.length && !s.defeated && !s.sworn && (r.gone || r.defeated || r.sworn)) {",
+    "new": "    if (false && player && s?.took?.length && !s.defeated && !s.sworn && (r.gone || r.defeated || r.sworn)) {",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-R2-handed-for-the-living",
+    "file": "src/systems/revenant.js",
+    "old": "!s.defeated && !s.sworn && (r.gone || r.defeated || r.sworn)) {",
+    "new": "!s.defeated && !s.sworn) {",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-R3-tombstone-first",
+    "file": "src/systems/revenant.js",
+    "old": "if (s?.sworn && s.companion?.items?.length && !r.sworn) {",
+    "new": "if (s?.sworn && s.companion?.items?.length && !r.sworn && !r.gone) {",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-R4-clock-behind",
+    "file": "src/systems/revenant.js",
+    "old": "  if (day <= _state.lastDay) return [];",
+    "new": "  if (day === _state.lastDay) return [];",
+    "tests": [
+      "test/auditfeud.test.js",
+      "test/rvn9_fester.test.js"
+    ]
+  },
+  {
+    "name": "AF-R5-split-unfiltered",
+    "file": "src/systems/revenant.js",
+    "old": "isGold: (it) => isGoldPieces(it) || !revenantMayTake(it),",
+    "new": "isGold: isGoldPieces,",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-R6-load-keeps",
+    "file": "src/systems/revenant.js",
+    "old": "_state.mirrorId = null; _lastSlew = null; clearPlayerHarm(); endPlayerFights(); },   // the last game's harm",
+    "new": "_state.mirrorId = null; clearPlayerHarm(); endPlayerFights(); },   // the last game's harm",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-R6-newgame-keeps",
+    "file": "src/systems/revenant.js",
+    "old": "newGame: () => { _state.list = []; _state.lastDay = null; _state.mirrorId = null; _lastSlew = null;",
+    "new": "newGame: () => { _state.list = []; _state.lastDay = null; _state.mirrorId = null;",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-R6-forget-nothing",
+    "file": "src/systems/revenant.js",
+    "old": "export function forgetLastSlew() { _lastSlew = null; }",
+    "new": "export function forgetLastSlew() { }",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-R6-resurrect-keeps",
+    "file": "src/scenes/world.js",
+    "old": "    forgetLastSlew();   // AUDIT FEUD (RVN8): no respawn",
+    "new": "    // AUDIT FEUD (RVN8): no respawn",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-D1-ledger-taken",
+    "file": "src/systems/revenant.js",
+    "old": "  const ledger = deedName === 'felled' ? null : takeFeud(entity);",
+    "new": "  const ledger = takeFeud(entity);",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-D1-notice-wiped",
+    "file": "src/systems/revenant.js",
+    "old": "else if (deedName === 'fled') { r.escapes++; r.notice = null; }",
+    "new": "else { if (deedName === 'fled') r.escapes++; r.notice = null; }",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-D1-felled-kneeling",
+    "file": "src/systems/revenant.js",
+    "old": "  if (!striker?.entity || striker.dead || !(striker.entity.health > 0) || striker.yielded || striker.executing || striker.sparing || striker.leaving || !name) return null;",
+    "new": "  if (!striker?.entity || striker.dead || !(striker.entity.health > 0) || striker.executing || striker.sparing || striker.leaving || !name) return null;",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-D1-felled-burning",
+    "file": "src/systems/revenant.js",
+    "old": "  if (!striker?.entity || striker.dead || !(striker.entity.health > 0) || striker.yielded || striker.executing || striker.sparing || striker.leaving || !name) return null;",
+    "new": "  if (!striker?.entity || striker.dead || !(striker.entity.health > 0) || striker.yielded || striker.sparing || striker.leaving || !name) return null;",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-D1-felled-sparing",
+    "file": "src/systems/revenant.js",
+    "old": "  if (!striker?.entity || striker.dead || !(striker.entity.health > 0) || striker.yielded || striker.executing || striker.sparing || striker.leaving || !name) return null;",
+    "new": "  if (!striker?.entity || striker.dead || !(striker.entity.health > 0) || striker.yielded || striker.executing || striker.leaving || !name) return null;",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-D1-felled-leaving",
+    "file": "src/systems/revenant.js",
+    "old": "  if (!striker?.entity || striker.dead || !(striker.entity.health > 0) || striker.yielded || striker.executing || striker.sparing || striker.leaving || !name) return null;",
+    "new": "  if (!striker?.entity || striker.dead || !(striker.entity.health > 0) || striker.yielded || striker.executing || striker.sparing || !name) return null;",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-D2-rout-leaving",
+    "file": "src/systems/revenant.js",
+    "old": "  if (!f?.entity || f.dead || f._routed || !(f.entity.health > 0) || f.yielded || f.executing || f.sparing || f.leaving || f.fleeing) return false;",
+    "new": "  if (!f?.entity || f.dead || f._routed || !(f.entity.health > 0) || f.yielded || f.executing || f.sparing || f.fleeing) return false;",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-D2-rout-burning",
+    "file": "src/systems/revenant.js",
+    "old": "  if (!f?.entity || f.dead || f._routed || !(f.entity.health > 0) || f.yielded || f.executing || f.sparing || f.leaving || f.fleeing) return false;",
+    "new": "  if (!f?.entity || f.dead || f._routed || !(f.entity.health > 0) || f.yielded || f.sparing || f.leaving || f.fleeing) return false;",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-D2-rout-sparing",
+    "file": "src/systems/revenant.js",
+    "old": "  if (!f?.entity || f.dead || f._routed || !(f.entity.health > 0) || f.yielded || f.executing || f.sparing || f.leaving || f.fleeing) return false;",
+    "new": "  if (!f?.entity || f.dead || f._routed || !(f.entity.health > 0) || f.yielded || f.executing || f.leaving || f.fleeing) return false;",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-D2-rout-puppet",
+    "file": "src/systems/revenant.js",
+    "old": "  if (f.puppet) return false;",
+    "new": "  if (false) return false;",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-D3-dead-a-win",
+    "file": "src/systems/revenantCompanions.js",
+    "old": "  return !(last.entity?.health > 0);",
+    "new": "  return !!(last.dead || !(last.entity?.health > 0));",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-H1-bodies-knocked",
+    "file": "src/scenes/world.js",
+    "old": "b.revenantCompanion === id && !b.dead && !b._knockedOut)",
+    "new": "b.revenantCompanion === id && !b.dead)",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-H1-turn-knocked",
+    "file": "src/scenes/world.js",
+    "old": "b.revenantCompanion === r.id && !b.dead && !b._knockedOut && b.ai?.feet",
+    "new": "b.revenantCompanion === r.id && !b.dead && b.ai?.feet",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-H1-turn-swept",
+    "file": "src/scenes/world.js",
+    "old": "    if (!rec || !place?.turn || place.has?.(rec) === false) return;",
+    "new": "    if (!rec || !place?.turn) return;",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-H1-queue-kept",
+    "file": "src/scenes/world.js",
+    "old": "_revenantDepartures.length = 0; _revenantBetrayals.length = 0; forgetSwornMember();",
+    "new": "_revenantDepartures.length = 0; forgetSwornMember();",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-H2-fights-kept",
+    "file": "src/scenes/worldModes.js",
+    "old": "                endPlayerFights();   // AUDIT FEUD (RVN10): the death ended every fight\n",
+    "new": "",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-H2-no-theft",
+    "file": "src/scenes/worldModes.js",
+    "old": "                const took = revenantTakes(playerEntity, { online: true });",
+    "new": "                const took = null;",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-H2-unsaid",
+    "file": "src/scenes/worldModes.js",
+    "old": "                if (took?.line) say(took.line);\n",
+    "new": "",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-H3-band-stays",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (_flee === 'start') scatterDungeonBand(f);   // AUDIT FEUD",
+    "new": "      // AUDIT FEUD",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-H3-lair-anywhere",
+    "file": "src/scenes/dungeonContext.js",
+    "old": " || isArenaFloor(dfLocation) || (Number(",
+    "new": " || (Number(",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-H3-pixel-unguarded",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (!mt || !lairable()) return null;",
+    "new": "    if (!mt) return null;",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-H3-here-unguarded",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (!mt || !dfLocation.name || !lairable()) return null;",
+    "new": "      if (!mt || !dfLocation.name) return null;",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-S28-stand-skipped",
+    "file": "tools/tellDuel.mjs",
+    "old": "        if (FATE.revenantLastStandDue(f)) {",
+    "new": "        if (false && FATE.revenantLastStandDue(f)) {",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-S28-will-unread",
+    "file": "tools/tellDuel.mjs",
+    "old": "        return done(FATE.revenantWillHolds(f) ? 'tore' : 'knelt');",
+    "new": "        return done('knelt');",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-S28-dodge-early",
+    "file": "tools/tellDuel.mjs",
+    "old": "T >= lb.land - TELL.TELL_LATE / 2 && T < lb.land",
+    "new": "T >= lb.land - TELL.TELL_LATE && T < lb.land",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  },
+  {
+    "name": "AF-S28-target-moved",
+    "file": "tools/tellDuel.mjs",
+    "old": "DODGE_SPARES: 0.1,",
+    "new": "DODGE_SPARES: 0.5,",
+    "tests": [
+      "test/auditfeud.test.js"
+    ]
+  }
+]

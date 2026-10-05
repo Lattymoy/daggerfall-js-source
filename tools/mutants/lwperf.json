@@ -1,0 +1,300 @@
+[
+  {
+    "name": "LW-PERF-slice-unbounded",
+    "file": "src/systems/livingWorld/townPaths.js",
+    "old": "        if (--budget <= 0) return undefined;",
+    "new": "        --budget;",
+    "tests": [
+      "test/lwperf_cost.test.js"
+    ]
+  },
+  {
+    "name": "LW-PERF-tie-lifted",
+    "file": "src/systems/livingWorld/townPaths.js",
+    "old": "            if (!(fi < f[pi])) break;",
+    "new": "            if (!(fi <= f[pi])) break;",
+    "tests": [
+      "test/lwperf_cost.test.js"
+    ]
+  },
+  {
+    "name": "LW-PERF-restart-lost",
+    "file": "src/systems/livingWorld/townPaths.js",
+    "old": "      if (s.search !== id) begin();",
+    "new": "      void begin;",
+    "tests": [
+      "test/lwperf_cost.test.js"
+    ]
+  },
+  {
+    "name": "LW-PERF-grid-nibble",
+    "file": "src/systems/livingWorld/townPaths.js",
+    "old": "          const w = grid ? grid[ni] >> 4 : nav.weightAt(nx, ny);",
+    "new": "          const w = grid ? grid[ni] : nav.weightAt(nx, ny);",
+    "tests": [
+      "test/lwperf_cost.test.js"
+    ]
+  },
+  {
+    "name": "LW-PERF-cells-unspent",
+    "file": "src/systems/livingWorld/townPaths.js",
+    "old": "      cells -= job.search.spent; spent += job.search.spent;",
+    "new": "      spent += job.search.spent;",
+    "tests": [
+      "test/lwperf_cost.test.js"
+    ]
+  },
+  {
+    "name": "LW-PERF-soon-last",
+    "file": "src/systems/livingWorld/townPaths.js",
+    "old": "    for (const q of [soon, later]) for (const [key, ends] of q)",
+    "new": "    for (const q of [later, soon]) for (const [key, ends] of q)",
+    "tests": [
+      "test/lwperf_cost.test.js"
+    ]
+  },
+  {
+    "name": "LW-PERF-run-idle",
+    "file": "src/systems/livingWorld/townPaths.js",
+    "old": "    run() { pump(); },",
+    "new": "    run() {},",
+    "tests": [
+      "test/lwperf_cost.test.js"
+    ]
+  },
+  {
+    "name": "LW-PERF-queue-unbounded",
+    "file": "src/systems/livingWorld/townPaths.js",
+    "old": "          if (budget <= 0 || soon.size + later.size >= PATH_QUEUE_MAX) return undefined;",
+    "new": "          if (budget <= 0) return undefined;",
+    "tests": [
+      "test/lwperf_cost.test.js"
+    ]
+  },
+  {
+    "name": "LW-PERF-asked-twice",
+    "file": "src/systems/livingWorld/townPaths.js",
+    "old": "        const waiting = soon.has(k) || later.has(k);",
+    "new": "        const waiting = false;",
+    "tests": [
+      "test/lwperf_cost.test.js"
+    ]
+  },
+  {
+    "name": "LW-PERF-promote-lost",
+    "file": "src/systems/livingWorld/townPaths.js",
+    "old": "        } else if (first && later.has(k)) { soon.set(k, /** @type {number[][]} */ (later.get(k))); later.delete(k); }",
+    "new": "        }",
+    "tests": [
+      "test/lwperf_cost.test.js"
+    ]
+  },
+  {
+    "name": "LW-PERF-no-cells-start",
+    "file": "src/systems/livingWorld/townPaths.js",
+    "old": "      if (!(cells > 0)) return;\n      if (!job) {",
+    "new": "      if (!job) {",
+    "tests": [
+      "test/lwperf_cost.test.js"
+    ]
+  },
+  {
+    "name": "LW-PERF-cells-unset",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    this._paths.cells(standing ? ARRIVAL_PATH_CELLS : PATH_CELLS);",
+    "new": "    void ARRIVAL_PATH_CELLS;",
+    "tests": [
+      "test/lwperf_cost.test.js"
+    ]
+  },
+  {
+    "name": "LW-PERF-arrival-cells",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    this._paths.cells(standing ? ARRIVAL_PATH_CELLS : PATH_CELLS);",
+    "new": "    this._paths.cells(PATH_CELLS);",
+    "tests": [
+      "test/lwperf_cost.test.js"
+    ]
+  },
+  {
+    "name": "LW-PERF-window-length",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "export const ARRIVAL_SHOW_S = 1.5;",
+    "new": "export const ARRIVAL_SHOW_S = 2;",
+    "tests": [
+      "test/lwperf_cost.test.js"
+    ]
+  },
+  {
+    "name": "LW-PERF-path-cells",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "export const PATH_CELLS = 8000;",
+    "new": "export const PATH_CELLS = 9000;",
+    "tests": [
+      "test/lwperf_cost.test.js"
+    ]
+  },
+  {
+    "name": "LW-PERF-soon-unasked",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    this._onStreet = true;   // LW-PERF",
+    "new": "    this._onStreet = false;   // LW-PERF",
+    "tests": [
+      "test/lwperf_cost.test.js"
+    ]
+  },
+  {
+    "name": "LW-PERF-run-unasked",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    this._paths.run();   // LW-PERF",
+    "new": "    void 0;   // LW-PERF",
+    "tests": [
+      "test/lwperf_cost.test.js"
+    ]
+  },
+  {
+    "name": "LW-PERF-waiting-wanted",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "        if (!w || w.pending) continue;",
+    "new": "        if (!w) continue;",
+    "tests": [
+      "test/lwperf_cost.test.js",
+      "test/lwfix3_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-PERF-fav-key-home",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "  const key = `${res.town}|${res.roll}|${res.slot}|${home?.key ?? ''}`;",
+    "new": "  const key = `${res.town}|${res.roll}|${res.slot}`;",
+    "tests": [
+      "test/lwperf_cost.test.js"
+    ]
+  },
+  {
+    "name": "LW-PERF-fav-tie",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "    || (rank.get(a) ?? 0) - (rank.get(b) ?? 0));",
+    "new": "    || 0);",
+    "tests": [
+      "test/lwperf_cost.test.js"
+    ]
+  },
+  {
+    "name": "LW-PERF-kinds-shops",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "      if (hasShopJob(t)) shops.push(spot);",
+    "new": "      if (t === BUILDING_TYPES.Alchemist) shops.push(spot);",
+    "tests": [
+      "test/lwperf_cost.test.js"
+    ]
+  },
+  {
+    "name": "LW-PERF-trips-window",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "if (trip.backT1 > t - DAY_MIN && trip.outT0 < t + DAY_MIN) pass.push(i); }",
+    "new": "pass.push(i); }",
+    "tests": [
+      "test/lwperf_cost.test.js"
+    ]
+  },
+  {
+    "name": "LW-PERF-trips-reuse",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  if (kept.out && same(kept.pass, pass)) return kept.out;",
+    "new": "  if (kept.out) return kept.out;",
+    "tests": [
+      "test/lwperf_cost.test.js"
+    ]
+  },
+  {
+    "name": "LW-PERF-trips-world",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  if (kept && (kept.world !== world || kept.scale !== scale)) kept = undefined;",
+    "new": "  if (kept && kept.scale !== scale) kept = undefined;",
+    "tests": [
+      "test/lwperf_cost.test.js"
+    ]
+  },
+  {
+    "name": "LW-PERF-trips-scale",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  if (kept && (kept.world !== world || kept.scale !== scale)) kept = undefined;",
+    "new": "  if (kept && kept.world !== world) kept = undefined;",
+    "tests": [
+      "test/lwperf_cost.test.js"
+    ]
+  },
+  {
+    "name": "LW-PERF-roads-slice",
+    "file": "src/scenes/livingRoads.js",
+    "old": "    sweepOn(t, jumped ? Infinity : ROADS_TOWNS_PER_FRAME);",
+    "new": "    sweepOn(t, Infinity);",
+    "tests": [
+      "test/lwperf_cost.test.js"
+    ]
+  },
+  {
+    "name": "LW-PERF-roads-jump",
+    "file": "src/scenes/livingRoads.js",
+    "old": "    const jumped = !readAt || Math.max(Math.abs(px - readAt[0]), Math.abs(py - readAt[1])) > ROADS_JUMP_PX;",
+    "new": "    const jumped = !readAt;",
+    "tests": [
+      "test/lwperf_cost.test.js"
+    ]
+  },
+  {
+    "name": "LW-PERF-roads-swap",
+    "file": "src/scenes/livingRoads.js",
+    "old": "i: 0, px, py, parties: [], remains: [] };",
+    "new": "i: 0, px, py, parties, remains };",
+    "tests": [
+      "test/lwperf_cost.test.js"
+    ]
+  },
+  {
+    "name": "LW-PERF-roads-clear",
+    "file": "src/scenes/livingRoads.js",
+    "old": "timer = Infinity; sweep = null; readAt = null; strikes.clear();",
+    "new": "timer = Infinity; sweep = null; strikes.clear();",
+    "tests": [
+      "test/lwperf_cost.test.js"
+    ]
+  },
+  {
+    "name": "LW-PERF-roads-slay",
+    "file": "src/scenes/livingRoads.js",
+    "old": "      timer = ROADS_TICK_S; sweep = null; readAt = null;",
+    "new": "      timer = ROADS_TICK_S;",
+    "tests": [
+      "test/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW-PERF-places-nibble",
+    "file": "src/systems/livingWorld/places.js",
+    "old": "walk[i] = grid[i] >> 4 > 0 ? 1 : 0;",
+    "new": "walk[i] = grid[i] > 0 ? 1 : 0;",
+    "tests": [
+      "test/lwperf_cost.test.js"
+    ]
+  },
+  {
+    "name": "LW-PERF-places-sums",
+    "file": "src/systems/livingWorld/places.js",
+    "old": "sums[(y + 1) * W1 + x + 1] = sums[y * W1 + x + 1] + row;",
+    "new": "sums[(y + 1) * W1 + x + 1] = row;",
+    "tests": [
+      "test/lwperf_cost.test.js"
+    ]
+  },
+  {
+    "name": "LW-PERF-places-pass",
+    "file": "src/systems/livingWorld/places.js",
+    "old": "        if (mid < bestMid) { bestMid = mid; best = [x, y]; }",
+    "new": "        if (mid <= bestMid) { bestMid = mid; best = [x, y]; }",
+    "tests": [
+      "test/lwperf_cost.test.js"
+    ]
+  }
+]

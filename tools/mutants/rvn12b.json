@@ -1,0 +1,227 @@
+[
+  {
+    "name": "RVN12b-effect-lost",
+    "file": "src/ui/revenantPage.js",
+    "old": "fireproof: 'it shrugs off fire',",
+    "new": "",
+    "tests": [
+      "test/rvn12b_page.test.js"
+    ]
+  },
+  {
+    "name": "RVN12b-effect-wrong",
+    "file": "src/ui/revenantPage.js",
+    "old": "arrowWise: 'your arrows bite less; it closes fast',",
+    "new": "arrowWise: 'your arrows bite less',",
+    "tests": [
+      "test/rvn12b_page.test.js"
+    ]
+  },
+  {
+    "name": "RVN12b-chips-unknown-kept",
+    "file": "src/ui/revenantPage.js",
+    "old": "(r?.learned ?? []).filter((a) => ADAPT_NAMES[a]).map((a) =>",
+    "new": "(r?.learned ?? []).map((a) =>",
+    "tests": [
+      "test/rvn12b_page.test.js"
+    ]
+  },
+  {
+    "name": "RVN12b-took-unnamed",
+    "file": "src/ui/revenantPage.js",
+    "old": "  const names = (r?.took ?? []).map((it) => takenName(it)).filter(Boolean);",
+    "new": "  const names = (r?.took ?? []).map(() => 'piece');",
+    "tests": [
+      "test/rvn12b_page.test.js"
+    ]
+  },
+  {
+    "name": "RVN12b-took-one-only",
+    "file": "src/ui/revenantPage.js",
+    "old": "`Took: your ${names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names.at(-1)}` : names[0]}",
+    "new": "`Took: your ${names[0]}",
+    "tests": [
+      "test/rvn12b_page.test.js"
+    ]
+  },
+  {
+    "name": "RVN12b-pips-unbound",
+    "file": "src/ui/revenantPage.js",
+    "old": "  const w = Math.max(0, Math.min(WRATH_MAX, r?.wrath | 0));",
+    "new": "  const w = Math.max(0, r?.wrath | 0);",
+    "tests": [
+      "test/rvn12b_page.test.js"
+    ]
+  },
+  {
+    "name": "RVN12b-pips-words-always",
+    "file": "src/ui/revenantPage.js",
+    "old": "words: w ? `Festering:",
+    "new": "words: true ? `Festering:",
+    "tests": [
+      "test/rvn12b_page.test.js"
+    ]
+  },
+  {
+    "name": "RVN12b-loyalty-word",
+    "file": "src/ui/revenantPage.js",
+    "old": "`Loyalty: ${r.companion.loyalty} - ${loyaltyLabel(r.companion.loyalty)}.`",
+    "new": "`Loyalty: ${r.companion.loyalty}.`",
+    "tests": [
+      "test/rvn12b_page.test.js"
+    ]
+  },
+  {
+    "name": "RVN12b-sworn-unshown",
+    "file": "src/ui/revenantPage.js",
+    "old": "    if (loy) text.append(el('span', 'rvn-will', loy));\n",
+    "new": "",
+    "tests": [
+      "test/rvn12b_page.test.js"
+    ]
+  },
+  {
+    "name": "RVN12b-chips-undrawn",
+    "file": "src/ui/revenantPage.js",
+    "old": "    for (const c of chips) { const chip = el('span', 'rvn-chip', c.name); chip.title = c.title; box.append(chip); }\n",
+    "new": "",
+    "tests": [
+      "test/rvn12b_page.test.js"
+    ]
+  },
+  {
+    "name": "RVN12b-effects-undrawn",
+    "file": "src/ui/revenantPage.js",
+    "old": "    text.append(el('span', 'rvn-effects', chips.map((c) => `${c.name} - ${c.effect}.`).join(' ')));\n",
+    "new": "",
+    "tests": [
+      "test/rvn12b_page.test.js"
+    ]
+  },
+  {
+    "name": "RVN12b-took-undrawn",
+    "file": "src/ui/revenantPage.js",
+    "old": "  if (took) text.append(el('span', 'rvn-will', took));\n",
+    "new": "",
+    "tests": [
+      "test/rvn12b_page.test.js"
+    ]
+  },
+  {
+    "name": "RVN12b-pips-unfilled",
+    "file": "src/ui/revenantPage.js",
+    "old": "el('span', `rvn-pip${i < fester.filled ? ' is-on' : ''}`, '')",
+    "new": "el('span', 'rvn-pip', '')",
+    "tests": [
+      "test/rvn12b_page.test.js"
+    ]
+  },
+  {
+    "name": "RVN12b-unbroken-unsaid",
+    "file": "src/ui/revenantPage.js",
+    "old": "d?.deed === 'fled' && d.unbroken === true ? 'escaped unbroken' : DEED_WORDS",
+    "new": "DEED_WORDS",
+    "tests": [
+      "test/rvn12b_page.test.js"
+    ]
+  },
+  {
+    "name": "RVN12b-unbroken-unsaved",
+    "file": "src/systems/revenant.js",
+    "old": ", ...(d.deed === 'fled' && d.unbroken === true ? { unbroken: true } : {}) }; };",
+    "new": " }; };",
+    "tests": [
+      "test/rvn12b_page.test.js"
+    ]
+  },
+  {
+    "name": "RVN12b-unbroken-any-deed",
+    "file": "src/systems/revenant.js",
+    "old": "...(d.deed === 'fled' && d.unbroken === true ? { unbroken: true } : {})",
+    "new": "...(d.unbroken === true ? { unbroken: true } : {})",
+    "tests": [
+      "test/rvn12b_page.test.js"
+    ]
+  },
+  {
+    "name": "RVN12b-unbroken-unwritten",
+    "file": "src/systems/revenant.js",
+    "old": ": deedName === 'fled' && unbroken ? { unbroken: true } : null);",
+    "new": ": null);",
+    "tests": [
+      "test/rvn12b_page.test.js"
+    ]
+  },
+  {
+    "name": "RVN12b-street-unhanded",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "archive: f.archive, unbroken });",
+    "new": "archive: f.archive });",
+    "tests": [
+      "test/rvn12b_page.test.js"
+    ]
+  },
+  {
+    "name": "RVN12b-deep-unhanded",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "archive: f.mobileArchive, unbroken });",
+    "new": "archive: f.mobileArchive });",
+    "tests": [
+      "test/rvn12b_page.test.js"
+    ]
+  },
+  {
+    "name": "RVN12b-rim-lost",
+    "file": "src/ui/revenantCard.js",
+    "old": "body .rvncard.is-laststand { border-left-color: #8c3a32; box-shadow: inset 0 0 0 1px #e0602a; }",
+    "new": "body .rvncard.is-laststand { border-left-color: #8c3a32; }",
+    "tests": [
+      "test/rvn12b_page.test.js"
+    ]
+  },
+  {
+    "name": "RVN12b-signature-edge",
+    "file": "src/ui/revenantCard.js",
+    "old": "body .rvncard.is-signature { border-left-color: #a8332a; }\n",
+    "new": "",
+    "tests": [
+      "test/rvn12b_page.test.js"
+    ]
+  },
+  {
+    "name": "RVN12b-theft-edge",
+    "file": "src/ui/revenantCard.js",
+    "old": "body .rvncard.is-stole { border-left-color: #c9822e; }\n",
+    "new": "",
+    "tests": [
+      "test/rvn12b_page.test.js"
+    ]
+  },
+  {
+    "name": "RVN12b-betrayal-edge",
+    "file": "src/ui/revenantCard.js",
+    "old": "body .rvncard.is-betrayed { border-left-color: #0b0b0b; }\n",
+    "new": "",
+    "tests": [
+      "test/rvn12b_page.test.js"
+    ]
+  },
+  {
+    "name": "RVN12b-kin-edges",
+    "file": "src/ui/revenantCard.js",
+    "old": "body .rvncard.is-felled, body .rvncard.is-festered, body .rvncard.is-lair, body .rvncard.is-weakness { border-left-color: #8c3a32; }\n",
+    "new": "",
+    "tests": [
+      "test/rvn12b_page.test.js"
+    ]
+  },
+  {
+    "name": "RVN12b-warn-edge",
+    "file": "src/ui/revenantCard.js",
+    "old": "body .rvncard.is-warn { border-left-color: #8a63d2; }\n",
+    "new": "",
+    "tests": [
+      "test/rvn12b_page.test.js"
+    ]
+  }
+]

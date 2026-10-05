@@ -54,12 +54,12 @@ import { hasPortFor } from './travelPorts.js';   // SEAT2b part two: HasPort, or
 import { FATIGUE_MULTIPLIER } from './statMods.js';
 import { LOCATION_TYPES, CLIMATES, worldCoordToMapPixel } from '../formats/mapsFile.js';
 import { joinPoint, dryLine as dryLineOf } from './travelRoute.js';   // AUDIT OW3 J3: a resume rejoins the road where the start's join did; AUDIT DEEP T2-1's law, one home (OWS2)
+import { travelRateOf } from './timeScale.js';   // RATE-LAW: the journey's rate is its ground's
 
 export const TRAVEL_OPTIONS_VENDOR = 'travel-options';
 
-/** TravelOptionsMod.cs:131 - the eleven accelerations the
- *  DefaultStartingAcceleration choice indexes. */
-export const START_ACCEL_VALUES = Object.freeze([1, 2, 3, 5, 10, 15, 20, 25, 30, 40, 50]);
+/** RATE-LAW: the route legs whose ground is a road - a road, or a track (travelRoute.js roadShare's own pair). */
+export const ROAD_LEG_KINDS = Object.freeze(['road', 'track']);
 
 /* KB1: :132's six follow keys, and the custom bind past them, are the registry's FollowPaths action now
  * (systems/inputActions.js MOD_ACTIONS carries the six, for the one-time carry of a player's old choice) - the
@@ -160,10 +160,8 @@ export function readTravelOptionsSettings(read = modSetting, boot = null) {
     stopAtInnsTravel: !!get('StopAtInnsTravel.PlayerControlledInnsTravel'),
     shipTravelPortsOnly: !!get('ShipTravel.OnlyFromPorts'),
     shipTravelDestinationPortsOnly: !!get('ShipTravel.OnlyToPorts'),
-    // :221-223
-    defaultStartingAccel: START_ACCEL_VALUES[get('TimeAcceleration.DefaultStartingAcceleration') | 0] ?? 10,
-    alwaysUseStartingAccel: !!get('TimeAcceleration.AlwaysUseStartingAcceleration'),
-    accelerationLimit: get('TimeAcceleration.AccelerationLimit') | 0,
+    // :221-223's three TimeAcceleration keys are not read: RATE-LAW (systems/timeScale.js travelRateOf) - the journey's
+    // ground sets its rate, and the spinner they started and bounded is gone
     // :325-329
     teleportCost: !!get('Teleportation.EnablePaidTeleportation'),
     // :316-323 and :234
@@ -386,6 +384,12 @@ export function createTravelOptions(deps = {}) {
     // clears it, :392-398's callers), Exit, the map's Forget it, a load. The port's own count, read by a host that must
     // tell a journey's END from a STOP: a spot's stop nulls its route too (TV2 AUDIT TV A4), so the fields cannot.
     cleared: 0,
+    // RATE-LAW: what the journey walks - 'path' (the follow key's legs: a road or a track), 'ring' (a town's border
+    // ring, the mod's own ceiling over it), or null (a route says by its legs; the mod's straight journeys ask the host)
+    // - and the rate it last asked of the clock, with the ground that rate is for
+    walk: null,
+    rate: 0,
+    rateOnRoad: false,
   };
 
   // AUDIT-TO1 F1: :331-336, Init's guild registration. With paid
@@ -455,8 +459,6 @@ export function createTravelOptions(deps = {}) {
     ui?.setDestinationName(name);
     st.destinationSummary = summary;
     st.destinationCautious = speedCautious;
-    if (st.settings.alwaysUseStartingAccel && ui) ui.timeAcceleration = st.settings.defaultStartingAccel;
-    if (ui) ui.halfLimit = false;
     resumeTravel();
     st.beginTime = deps.worldTimeNow?.() ?? 0;
     // AUDIT-TO1 L5: the popup's own estimate for THIS trip, the port's
@@ -481,6 +483,7 @@ export function createTravelOptions(deps = {}) {
     if (!st.destinationName) return;
     const rect = deps.locationWorldRect?.(st.destinationSummary);
     if (!rect) return;
+    st.walk = null;   // RATE-LAW: straight across - the host says what the traveller stands on
     // TRAVEL-NAV1: with the port's steering on, the arrival buffer is an
     // arrival wherever it lies - a location that fills its pixel has it
     // wholly in the neighbours (travelAutopilot.js update).
@@ -505,8 +508,7 @@ export function createTravelOptions(deps = {}) {
     const targetName = format(T.MsgTargetCoords, target.x, target.y);
     ui?.setDestinationName(targetName);
     st.destinationCautious = speedCautious;
-    if (st.settings.alwaysUseStartingAccel && ui) ui.timeAcceleration = st.settings.defaultStartingAccel;
-    if (ui) ui.halfLimit = false;
+    st.walk = null;   // RATE-LAW: straight across - the host says what the traveller stands on
     const origin = mapPixelWorldOrigin(target.x, target.y);
     const targetRect = rectOf(origin.x + MID_LO, origin.z + MID_LO, P_SIZE, P_SIZE);
     st.autopilot = new TravelAutopilot({ x: target.x, y: target.y }, targetRect,
@@ -637,6 +639,7 @@ export function createTravelOptions(deps = {}) {
     r.i = best;
     r.join = rejoinPoint(r);
     st.autopilot = null;
+    st.walk = null;   // RATE-LAW: the route's legs say their ground
     startRouteLeg();
     st.lastLocation = deps.currentLocation?.() ?? null;
     initTravelUI();
@@ -662,8 +665,7 @@ export function createTravelOptions(deps = {}) {
     st.destinationCautious = speedCautious;
     st.estimateMinutes = null;
     ui?.setDestinationName(name);
-    if (st.settings.alwaysUseStartingAccel && ui) ui.timeAcceleration = st.settings.defaultStartingAccel;
-    if (ui) ui.halfLimit = false;
+    st.walk = null;   // RATE-LAW: the route's legs say their ground
     st.autopilot = null;
     startRouteLeg();
     st.beginTime = deps.worldTimeNow?.() ?? 0;
@@ -677,12 +679,45 @@ export function createTravelOptions(deps = {}) {
     return beginTravelAlongRoute({ legs: [], point, name }, speedCautious, { quiet });
   }
 
-  /** :521-534, InitTravelUI. */
-  function initTravelUI(circumnavSpeedLimiter = false) {
+  /** RATE-LAW (2026-10-04, Mac: "Roads now travel at x100 and non roads at x60"): IS THE JOURNEY ON A ROAD? A planned
+   *  route's leg says by its kind - a road or a track (ROAD_LEG_KINDS) - and the walk back to the road after a stop
+   *  (AUDIT OW3 J3's `join`) is the open ground's (the last stretch to a spot, and a route of no legs, the host's lanes); the follow key walks a road or a track by definition, and a town's
+   *  ring is paved (world/roadPainter.js); the mod's straight journeys - to a place or to bare coordinates - ask the
+   *  host what the traveller stands on (`deps.onRoad`, the network's own lanes), so a straight line that runs along a
+   *  road runs at the road's rate while it does. */
+  function journeyOnRoad() {
+    const r = st.route;
+    if (r) {
+      if (r.join) return false;
+      // AUDIT-D1/D2: the last stretch to a SPOT aims at the spot itself, off its pixel's step wherever the spot lies (the
+      // road's x100 to a camp half a pixel from the road), and a route of no legs is a straight walk - the host's lanes say
+      if (r.point && r.i >= r.legs.length - 1) return !!deps.onRoad?.();
+      const leg = r.legs[Math.min(r.i, r.legs.length - 1)];
+      return !!leg && ROAD_LEG_KINDS.includes(leg.kind);
+    }
+    if (st.walk === 'path' || st.walk === 'ring') return true;
+    return !!deps.onRoad?.();
+  }
+  /** RATE-LAW: the rate the journey's ground runs at (systems/timeScale.js travelRateOf) - under the ring walk's own
+   *  ceiling (:34, MAX_CIRCUMNAVIGATION_ACCEL, a steering bound and no dial) - written to the panel and asked of the
+   *  clock when it changes (`force`: a journey starting, whatever the last one asked). The host's governor may hold
+   *  the clock under it (the land loading, an alerted enemy near); this is the rate it hands back to. */
+  function applyRate(force = false) {
+    const onRoad = journeyOnRoad();
+    const rate = st.walk === 'ring' ? Math.min(MAX_CIRCUMNAVIGATION_ACCEL, travelRateOf(onRoad)) : travelRateOf(onRoad);
+    if (!force && rate === st.rate && onRoad === st.rateOnRoad) return;
+    st.rate = rate;
+    st.rateOnRoad = onRoad;
+    ui?.setRate?.(rate, onRoad);
+    setTimeScale(rate);
+  }
+
+  /** :521-534, InitTravelUI. RATE-LAW: the clock asked for the ground's rate, never a spinner's (the circumnavigation
+   *  limiter is the ring walk's own ceiling, applyRate's). */
+  function initTravelUI() {
     disableJunctionMap(true);
-    if (ui && !ui.isShowing) deps.pushWindow?.(ui);   // apply a newly opened panel's rate before setting its clock
-    if (circumnavSpeedLimiter && ui && ui.timeAcceleration > MAX_CIRCUMNAVIGATION_ACCEL) setTimeScale(MAX_CIRCUMNAVIGATION_ACCEL);
-    else setTimeScale(ui ? ui.timeAcceleration : 1);
+    if (ui && !ui.isShowing) deps.pushWindow?.(ui);
+    applyRate(true);
     disableWeatherAndSound();
     st.diseaseCount = deps.diseaseCount?.() ?? 0;
   }
@@ -794,8 +829,7 @@ export function createTravelOptions(deps = {}) {
     const targetRect = aimed ? st.locationBorderRect : rectOf(origin.x + MID_LO, origin.z + MID_LO, P_SIZE, P_SIZE);
 
     st.destinationCautious = true;   // :702
-    if (starting && st.settings.alwaysUseStartingAccel && ui) ui.timeAcceleration = st.settings.defaultStartingAccel;
-    if (ui) ui.halfLimit = true;     // :705 - half the acceleration limit while following
+    st.walk = 'path';   // RATE-LAW: a road or a track, at the road's rate (:705's half limit went with the spinner)
 
     const speed = st.road ? st.settings.recklessTravelMultiplier : st.settings.cautiousTravelMultiplier;
     if (st.autopilot == null) {
@@ -875,12 +909,11 @@ export function createTravelOptions(deps = {}) {
 
     ui?.setDestinationName(format(T.MsgCircumnavigate, deps.localizedCurrentLocationName?.() ?? ''));
     st.destinationCautious = false;   // :781
-    if (st.settings.alwaysUseStartingAccel && ui) ui.timeAcceleration = st.settings.defaultStartingAccel;
-    if (ui) ui.halfLimit = true;
+    st.walk = 'ring';   // RATE-LAW: the paved ring, under the mod's own ceiling (applyRate)
 
     st.autopilot = new TravelAutopilot(mp, targetRect, travelSpeedMultiplier(st.destinationCautious, st.settings));
     st.autopilot.onArrival = () => circumnavigateLocation();
-    initTravelUI(true);   // :791 - the circumnavigation speed limiter
+    initTravelUI();   // :791 - the circumnavigation speed limiter, applyRate's ceiling now (RATE-LAW)
     if (st.settings.roadsJunctionMap && st.settings.persistentJunctionMap) {
       drawJunctionMap(mp, directionOfYaw(yawDeg()));
       st.junctionMapOn = true;
@@ -1130,6 +1163,9 @@ export function createTravelOptions(deps = {}) {
           return { drive, handled: true, stopped: stop };
         }
       }
+      // RATE-LAW: the ground under a running journey may have changed - a route's next leg, a straight line onto a road
+      // or off it - and the rate with it (asked of the clock only on a change)
+      if (st.autopilot && ui?.isShowing) applyRate();
     } else if (st.settings.roadsIntegration && !frame.inputPaused && frame.followKeyDown && frame.isPlayerOnHUD) {
       // :1438-1446 - the follow key, with no journey running
       if (frame.isPlayerInside) return { handled: true };

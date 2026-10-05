@@ -1,0 +1,515 @@
+[
+  {
+    "name": "LW1-salt-dropped",
+    "file": "src/systems/livingWorld/seed.js",
+    "old": "export const lwSeed = (...parts) => hash32(LW_SALT, ...parts);",
+    "new": "export const lwSeed = (...parts) => hash32(...parts);",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-weights-unread",
+    "file": "src/systems/livingWorld/seed.js",
+    "old": "  for (const k in weights) if (weights[k] > 0) total += weights[k];",
+    "new": "  for (const k in weights) if (weights[k] > 0) total += 1;",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-merchant-cap",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "    merchant: b >= 4 ? clamp(1 + Math.floor(b / 8), 1, 5) : (b >= 2 ? 1 : 0),",
+    "new": "    merchant: b >= 4 ? clamp(1 + Math.floor(b / 8), 1, 6) : (b >= 2 ? 1 : 0),",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-merchant-hamlet",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "    merchant: b >= 4 ? clamp(1 + Math.floor(b / 8), 1, 5) : (b >= 2 ? 1 : 0),",
+    "new": "    merchant: b >= 4 ? clamp(1 + Math.floor(b / 8), 1, 5) : (b >= 3 ? 1 : 0),",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-mercenary-threshold",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "    mercenary: b >= 9 ? clamp(Math.floor(b / 8), 1, 6) : 0,",
+    "new": "    mercenary: b >= 8 ? clamp(Math.floor(b / 8), 1, 6) : 0,",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-adventurer-threshold",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "    adventurer: b >= 4 ? clamp(1 + Math.floor(b / 10), 1, 6) : 0,",
+    "new": "    adventurer: b >= 2 ? clamp(1 + Math.floor(b / 10), 1, 6) : 0,",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-sailor-no-port",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "    sailor: town.port ? clamp(2 + Math.floor(b / 10), 2, 6) : 0,",
+    "new": "    sailor: true ? clamp(2 + Math.floor(b / 10), 2, 6) : 0,",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-pilgrim-second",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "    pilgrim: b >= 2 ? 1 + (b >= 16 ? 1 : 0) : 0,",
+    "new": "    pilgrim: b >= 2 ? 1 + (b >= 9 ? 1 : 0) : 0,",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-courier-second",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "    courier: b >= 16 ? 1 + (b >= 36 ? 1 : 0) : 0,",
+    "new": "    courier: b >= 16 ? 1 + (b >= 64 ? 1 : 0) : 0,",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-watch-cap",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "  return b >= 4 ? Math.max(2, Math.min(12, 1 + Math.floor(b / 4))) : (b >= 2 ? 1 : 0);",
+    "new": "  return b >= 4 ? Math.max(2, Math.min(11, 1 + Math.floor(b / 4))) : (b >= 2 ? 1 : 0);",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-watch-hamlet",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "  return b >= 4 ? Math.max(2, Math.min(12, 1 + Math.floor(b / 4))) : (b >= 2 ? 1 : 0);",
+    "new": "  return b >= 4 ? Math.max(2, Math.min(12, 1 + Math.floor(b / 4))) : (b >= 1 ? 1 : 0);",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-guard-female",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "  const female = !guard && rng() < 0.5;",
+    "new": "  const female = rng() < 0.5;",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-guard-outfit",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "  const variant = guard ? 0 : Math.floor(rng() * set.length);",
+    "new": "  const variant = Math.floor(rng() * set.length);",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-face-base-dropped",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "  const face = (female ? faces.female : faces.male)[variant] + Math.floor(rng() * NUM_PERSON_FACE_VARIANTS);",
+    "new": "  const face = Math.floor(rng() * NUM_PERSON_FACE_VARIANTS);",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-stream-left-moved",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "  } finally { setSeed(saved); }",
+    "new": "  } finally { void saved; }",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-innkeeper-housed-elsewhere",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "      trades.push({ job: 'innkeeper', work: b.key, faction: b.factionId ?? 0, livesAt: b.key });",
+    "new": "      trades.push({ job: 'innkeeper', work: b.key, faction: b.factionId ?? 0, livesAt: null });",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-one-priest",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "      for (let i = 0; i < 2; i++) trades.push({ job: 'priest', work: b.key, faction: b.factionId ?? 0, livesAt: b.key });",
+    "new": "      for (let i = 0; i < 1; i++) trades.push({ job: 'priest', work: b.key, faction: b.factionId ?? 0, livesAt: b.key });",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-armourer-keeper",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "[BUILDING_TYPES.Armorer]: 'smith'",
+    "new": "[BUILDING_TYPES.Armorer]: 'keeper'",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-cap-unread",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "  const keep = placed.concat(common.slice(0, Math.max(0, CENSUS_MAX - placed.length)));",
+    "new": "  const keep = placed.concat(common);",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-watch-not-at-palace",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "    if (r.guard && palace != null) return palace;",
+    "new": "    if (false) return palace;",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-normal-never-reversed",
+    "file": "src/systems/livingWorld/places.js",
+    "old": "    for (const sign of [1, -1]) {",
+    "new": "    for (const sign of [1]) {",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-square-openness-unread",
+    "file": "src/systems/livingWorld/places.js",
+    "old": "      if (open > bestOpen || (open === bestOpen && d < bestD)) { bestOpen = open; bestD = d; square = [x, y]; }",
+    "new": "      if (d < bestD) { bestOpen = open; bestD = d; square = [x, y]; }",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-net-unread",
+    "file": "src/systems/livingWorld/places.js",
+    "old": "  const onNet = (c) => c && c[0] >= 0 && c[1] >= 0 && c[0] < W && c[1] < H && net[c[1] * W + c[0]] === netId;",
+    "new": "  const onNet = (c) => c && c[0] >= 0 && c[1] >= 0 && c[0] < W && c[1] < H;",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-exit-sides-swapped",
+    "file": "src/systems/livingWorld/places.js",
+    "old": "      const i = k === 0 ? H - 1 - n : k === 1 ? n : k === 2 ? W - 1 - n : n;",
+    "new": "      const i = k === 1 ? H - 1 - n : k === 0 ? n : k === 2 ? W - 1 - n : n;",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-social-out",
+    "file": "src/systems/livingWorld/places.js",
+    "old": "export const SOCIAL_OUT = 4;",
+    "new": "export const SOCIAL_OUT = 3;",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-step-cost-flat",
+    "file": "src/systems/livingWorld/townPaths.js",
+    "old": "export const stepCost = (weight) => 1 + (15 - weight) / 10;",
+    "new": "export const stepCost = (weight) => 1 + (15 - weight) / 100;",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-diagonal-step",
+    "file": "src/systems/livingWorld/townPaths.js",
+    "old": "          const nx = d === 2 ? cx + 1 : d === 3 ? cx - 1 : cx;",
+    "new": "          const nx = d === 2 || d === 0 ? cx + 1 : d === 3 ? cx - 1 : cx;",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-turns-dropped",
+    "file": "src/systems/livingWorld/townPaths.js",
+    "old": "    if ((c[0] - p[0]) !== (n[0] - c[0]) || (c[1] - p[1]) !== (n[1] - c[1])) pts.push(at(c));",
+    "new": "    if (false) pts.push(at(c));",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-budget-unspent",
+    "file": "src/systems/livingWorld/townPaths.js",
+    "old": "          if (budget <= 0 || soon.size + later.size >= PATH_QUEUE_MAX) return undefined;",
+    "new": "          if (budget < -1 || soon.size + later.size >= PATH_QUEUE_MAX) return undefined;",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-day-turn",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "export const DAY_START_MIN = 240;",
+    "new": "export const DAY_START_MIN = 300;",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-detour",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "export const WALK_DETOUR = 1.2;",
+    "new": "export const WALK_DETOUR = 1.3;",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-keeper-opens-late",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "      I('work', at, h(job === 'smith' ? 7 : 8), 240);",
+    "new": "      I('work', at, h(job === 'smith' ? 7 : 9), 240);",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-keeper-shuts-late",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "      I('work', at, h(12.5), 330, h(18));",
+    "new": "      I('work', at, h(12.5), 330, h(19));",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-innkeeper-early",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "      I('work', work ?? home, h(11), 900, bed);",
+    "new": "      I('work', work ?? home, h(10), 900, bed);",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-fields-late",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "      I('fields', exitNearest(places, home.cell), h(6), 660, h(17));",
+    "new": "      I('fields', exitNearest(places, home.cell), h(7), 660, h(17));",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-fields-seen",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "export const OUTDOOR = Object.freeze(new Set(['walk', 'market', 'social', 'stall', 'beg', 'dock', 'watch']));",
+    "new": "export const OUTDOOR = Object.freeze(new Set(['walk', 'market', 'social', 'stall', 'beg', 'dock', 'watch', 'fields']));",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-shift-law",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "  const shift = res.job === 'guard' && !visitor ? (res.slot + day) % 3 : -1;",
+    "new": "  const shift = res.job === 'guard' && !visitor ? (res.slot + day) % 2 : -1;",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-gap-not-home",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "      if (start - cursor > walkMinutes(at, home, mpm) + walkMinutes(home, it.at, mpm) + HOME_GAP) go(home, cursor);",
+    "new": "      if (false) go(home, cursor);",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-lingers",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "      else go(/** @type {Spot} */ (it.at), cursor + walkMinutes(at, it.at, mpm), {}, it.kind);",
+    "new": "      else void 0;",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-no-gear",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "      if (w.armed) { fill(leaveHome - GEAR_MIN); if (leaveHome > cursor) { push('gear', home, cursor, leaveHome); cursor = leaveHome; } }",
+    "new": "      if (w.armed) { fill(leaveHome - GEAR_MIN); }",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-walk-out-unarmed",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "      go(exit, w.t0, { armed: !!w.armed }, 'away');",
+    "new": "      go(exit, w.t0, {}, 'away');",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-walk-home-unarmed",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "      push('walk', home, cursor, cursor + back, { from: exit, to: home, armed: !!w.armed });",
+    "new": "      push('walk', home, cursor, cursor + back, { from: exit, to: home });",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-walk-from-nowhere",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "    if (m > 0) { fill(Math.max(cursor, by - m)); push('walk', to, cursor, cursor + m, { from: at, to, ...extra }); cursor += m; }",
+    "new": "    if (m > 0) { fill(Math.max(cursor, by - m)); push('walk', to, cursor, cursor + m, { from: to, to, ...extra }); cursor += m; }",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-favourites-daily",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "  const rng = lwRng(res.town, res.roll.charCodeAt(0), res.slot, 0x666176);   // 'fav'",
+    "new": "  const rng = lwRng(res.town, res.roll.charCodeAt(0), res.slot, Math.floor(Math.random() * 1e9));   // 'fav'",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-late-arrival-counted",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "  const here = present.filter((p) => p.t0 <= start && p.t1 >= end)",
+    "new": "  const here = present.filter((p) => p.t1 >= end)",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-no-trio",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "    const n = here.length - i === 3 ? 3 : 2;",
+    "new": "    const n = 2;",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-talk-share",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "export const TALK_SHARE = 0.7;",
+    "new": "export const TALK_SHARE = 0.75;",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-speaker-turn",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "  const who = circle.members[index % circle.members.length];",
+    "new": "  const who = circle.members[0];",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-stand-apart",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "    const x = cx + Math.sin(b) * (CIRCLE_APART / 2), z = cz + Math.cos(b) * (CIRCLE_APART / 2);",
+    "new": "    const x = cx + Math.sin(b) * CIRCLE_APART, z = cz + Math.cos(b) * CIRCLE_APART;",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-token-fallback",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "  return text.replace(/\\{(\\w+)\\}/g, (_, k) => (ctx[k] ? String(ctx[k]) : TOKEN_FALLBACK[/** @type {keyof typeof TOKEN_FALLBACK} */ (k)] ?? ''));",
+    "new": "  return text.replace(/\\{(\\w+)\\}/g, (_, k) => (ctx[k] ? String(ctx[k]) : ''));",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-trade-pool-unread",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "  for (const j of jobs) { const p = JOB_TALKS[/** @type {keyof typeof JOB_TALKS} */ (j)]; if (p) pools.push(p); }",
+    "new": "  void jobs;",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-talk-twice",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "      if (kind === 'talk') { if (e.talked === day) delta = 0; else e.talked = day; }",
+    "new": "      if (kind === 'talk') { e.talked = day; }",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-ease-across-zero",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "    return e.r > 0 ? Math.max(0, e.r - ease) : Math.min(0, e.r + ease);",
+    "new": "    return e.r > 0 ? e.r - ease : e.r + ease;",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-bad-record-kept",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "  if (record && typeof record === 'object' && record.v === 1 && record.people && typeof record.people === 'object') {",
+    "new": "  if (record && typeof record === 'object' && record.people && typeof record.people === 'object') {",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-cap-untrimmed",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "    if (map.size <= RELATIONS_MAX) return;",
+    "new": "    return;",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-enemy-line",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "export const ENEMY_AT = -40;",
+    "new": "export const ENEMY_AT = -45;",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW1-saved-earns",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "  saved: 35,      // their fight won with them standing",
+    "new": "  saved: 30,      // their fight won with them standing",
+    "tests": [
+      "test/lw1_livingWorld.test.js"
+    ]
+  }
+]

@@ -61,8 +61,11 @@ import { setPlayerDoor } from '../systems/playerDoor.js';   // SET2: this host p
 import { createHitEffects } from './hitEffects.js';   // AUDIT 26 F033: DaggerfallMissile's impact flash
 import { duelSpellOf } from '../combat/duelCombat.js';   // DUEL1: the harmful half of a spell, which alone may reach a duel opponent
 import { markPlayerHarm } from '../systems/harmMark.js';   // REVENANT-HARM: a foe's spell on the player leaves its mark (a death no blow names is its)
+import { knockedDown } from '../systems/blowEffects.js';   // TELL6e: knocked down, no cast
 import { sparedByPlayer, isShipmate, boutTeammates } from '../combat/friendlyFire.js';   // SHIPMATES: who the player's spells pass by, and whose blasts pass the player by
 import { coverDistance, coverStep } from '../ai/cover.js';   // TACT1: billboards are cover; AUDIT TACT B5: met by touch
+import { blowTaken } from '../systems/blowTaken.js';   // TELL1: what a spell's target takes (a staggered foe a quarter more)
+import { noteFeudHarm, elementFeudClass } from '../systems/feudLedger.js';   // RVN1: my spell, in its fight's ledger (a leaf)
 import { sandSpellRefusal } from '../systems/arenaKit.js';   // AUDIT ARENA-LADDER: the sand's kit law
 
 /** SUNBABY2: a sky fireball (skyFire) is drawn this many times its flat's size, its flash too - a ball a sun throws,
@@ -100,6 +103,8 @@ export function createPlayerMagic({
   // :2130 - every release path), before the ready is cleared. An
   // ABORT raises neither - AbortReadySpell (:361-365) is silent,
   // which is precisely why the machine latches instead of polling.
+  lairHere = null,     // RVN7 (bible/12-Enhanced-AI/Feud-Arc.md 18.1): where a revenant's deed is done here, for its lair (systems/playerDoor.js)
+  isPuppet = null,     // AUDIT FEUD 2: the host's word on a foe another client runs (a dungeon room's carries no `puppet`)
   onNewReadySpell = null,
   onCastReadySpell = null,
   // ROAD-E6: THE HANDS, AND THE RELEASE FRAME THEY OWN.
@@ -222,6 +227,10 @@ export function createPlayerMagic({
     castOnPlayer: (bundle) => { if (bundle) applySpellToPlayer(bundle, effectiveLevel(playerEntity) ?? 1, null, { bypassSavingThrows: true, bypassChance: true }); },
     player: () => playerEntity,
     clear: (a, b) => burstClear(collider, a, b),   // AUDIT SET M4
+    say: (line) => say?.(line),   // RVN3: a line the scene's HUD speaks (a revenant's weakness found, on the classic skin)
+    sfx: (id, at) => audio?.play3d?.(id, at, 1, { maxDistance: 16 }),   // RVN3: a sound where a foe stands (its hiss)
+    lairHere: () => { try { return lairHere?.() ?? null; } catch { return null; } },   // RVN7: the host's word on where a deed is done
+    isPuppet: (f) => !!f?.puppet || (typeof isPuppet === 'function' && !!isPuppet(f)),   // AUDIT FEUD 2: run by another client - no deed of mine (a rout)
   });
   /** The party mates as foe-shaped marks ({ally, id, name, ai:{feet, height}}) - the shape every target helper in
    *  spellcast.js already reads - for a spell that may be given (allyCastable) and is not a FREE ready (AUDIT
@@ -498,8 +507,19 @@ export function createPlayerMagic({
   function applySpellToFoe(spell, casterLevel, foe, caster = null, ctx = undefined, sinks = foeSinks(foe, !caster || caster.entity === playerEntity)) {   // AUDIT WORLD2 B7: a foe's spell is not the player's blow (AUDIT 68 X4: every host's sinks read the second arg)
     // REVENANT-FATE (the 2026-10-02 audit): one held by its fate - kneeling, burning, gathering into a portal - takes no
     // spell: its blow was already refused (the kill door), and a Wabbajack, a paralysis or a drain landed all the same
-    if (foe?.yielded || foe?.executing || foe?.sparing || foe?.leaving) return null;
-    const r = applySpell(spell, casterLevel, foe.entity, sinks, rolls, caster, ctx);
+    if (foe?.yielded || foe?.executing || foe?.sparing || foe?.leaving || foe?.roaring) return null;   // RVN4: nor one roaring its last stand
+    // TELL1 (bible/12-Enhanced-AI/Feud-Arc.md 3.2): the landing's damage through what the TARGET takes (a staggered foe a
+    // quarter more - systems/blowTaken.js, the formulas' tail's law for a spell); a kill and a later round as they come
+    const striker = caster?.entity ?? playerEntity;
+    // RVN1 (Feud-Arc.md section 12): MY spell's landing goes in the fight's ledger by its element (a later round is
+    // systems/effects.js's to write - the round sink's own law); a peer's (its stand-in caster) and a foe's never
+    const mine = striker === playerEntity;
+    const landing = sinks?.hurt ? { ...sinks, hurt: (n, o) => {
+      const d = o?.whole || o?.round ? n : blowTaken(n, striker, foe.entity, null, { kind: 'spell', element: spell?.element ?? null });
+      if (mine && !o?.round) noteFeudHarm(foe.entity, elementFeudClass(spell?.element), d);
+      return sinks.hurt(d, { ...(o ?? {}), element: spell?.element ?? null });   // RVN3: the element rides to the door (its weakness's weight)
+    } } : sinks;
+    const r = applySpell(spell, casterLevel, foe.entity, landing, rolls, caster, ctx);
     // STRIKE-SHARED (2026-09-29): ANOTHER PLAYER'S strike spell, landed here on the foe I own (`ctx.peerCaster` its id).
     // The trap's line is its caster's and not mine to speak, and a new trap is marked with whose it is - its soul goes
     // to that caster's pack, never mine (mysticism.js peerSoulTrapOf). An incumbent trap keeps its own caster, as it
@@ -891,6 +911,7 @@ export function createPlayerMagic({
   function castInput(eye, dir) {
     const sp = readiedSpell;
     if (!sp) return false;
+    if (knockedDown()) return false;   // TELL6e: knocked down - the spell stays readied, no cast
     if (barredHere()) return false;   // HOME-MAGIC: a spell readied outside is not fired inside another's home
     if (wardedHere(sp)) return false;   // AUDIT-SEATS G5: a spell readied before a battle is not fired in its wards
     // S27 / SilenceCheck (EntityEffectManager :1932-1946). DFU tests
@@ -1246,6 +1267,9 @@ export function createPlayerMagic({
     barCast: () => barredHere(),
     explodeAt,             // the dungeon's enemy half reuses these (M3)
     applySpellToPlayer,
+    /** RVN5 (bible/12-Enhanced-AI/Feud-Arc.md 16.1): a FOE's spell on me with no missile - a revenant's pyre - its caster
+     *  the wrapper a missile carries (missileCaster: its entity, its sinks), so my reflection sends it back at its body. */
+    strikePlayerFrom: (spell, casterLevel, foe) => applySpellToPlayer(spell, casterLevel, foe?.entity ? { entity: foe.entity, sinks: foeSinks(foe), foe } : null),
     /** X11: the FOE door, beside the player one it has always sat
      *  next to internally. Both are needed from outside now - each is
      *  half of Spell Reflection's re-target, and a probe that can only

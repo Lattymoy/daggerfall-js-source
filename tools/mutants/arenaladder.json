@@ -22,22 +22,22 @@
   {
     "name": "ARENA-LADDER-reexport-copy",
     "file": "src/ai/foeBlows.js",
-    "old": "export { BLOW, blowShapesOf, inBlow } from './blowShapes.js';",
-    "new": "export { BLOW, inBlow } from './blowShapes.js';\nconst _copy = (t) => blowShapesOf(t).slice();\nexport { _copy as blowShapesOf };",
+    "old": "export { BLOW, blowShapesOf, blowFamily, extraShapesOf, inBlow } from './blowShapes.js';",
+    "new": "export { BLOW, blowFamily, extraShapesOf, inBlow } from './blowShapes.js';\nconst _copy = (t, e) => blowShapesOf(t, e).slice();\nexport { _copy as blowShapesOf };",
     "tests": [
       "test/arenaladder_audit.test.js"
     ],
-    "note": "The brain's families a copy of the leaf's - two homes."
+    "note": "FEUD's MERGE of main's #586-#622 (PIN MOVED): re-aimed by content - the re-export names TELL5's family and TELL7's extras beside it, and the copy takes the entity. The brain's families a copy of the leaf's - two homes."
   },
   {
     "name": "ARENA-LADDER-aim-me-alone",
     "file": "src/ai/tactics.js",
-    "old": "  if (key === LOCAL) return _me?.feet ?? null;\n  const t = ai.target;",
-    "new": "  if (key === LOCAL) return _me?.feet ?? null;\n  return null;\n  const t = ai.target;",
+    "old": "  const sb = ai?.vitals?.()?.bout, tb = t?.entity?.bout;",
+    "new": "  return null;\n  const sb = ai?.vitals?.()?.bout, tb = t?.entity?.bout;",
     "tests": [
       "test/arenaladder_audit.test.js"
     ],
-    "note": "No fighter winds up at its bout-mate: the arena's AI never receives a telegraph."
+    "note": "FEUD's MERGE of main's #586-#622 (PIN MOVED): blowAim is targetFeet's bout-mate arm - me and a peer kept, the bout-mate's arm cut. No fighter winds up at its bout-mate: the arena's AI never receives a telegraph."
   },
   {
     "name": "ARENA-LADDER-aim-bout-unread",
@@ -72,32 +72,32 @@
   {
     "name": "ARENA-LADDER-landing-at-me",
     "file": "src/ai/tactics.js",
-    "old": "      ai._blowVerdict = inBlow(s.blow, at[0], at[2]);",
-    "new": "      ai._blowVerdict = _me ? inBlow(s.blow, _me.feet[0], _me.feet[2]) : false;",
+    "old": "arrived && inBlow(s.blow, tf[0], tf[2]), now, cooled, atMe, judgedHere(ai, key));",
+    "new": "arrived && (_me ? inBlow(s.blow, _me.feet[0], _me.feet[2]) : false), now, cooled, atMe, judgedHere(ai, key));",
     "tests": [
       "test/arenaladder_audit.test.js"
     ],
-    "note": "The bout-mate's blow is decided where the player stands."
+    "note": "FEUD's MERGE of main's #586-#622 (PIN MOVED): the landing's verdict is resolveLanding's, read at the mark's feet (targetFeet) - the mutant reads it at mine. The bout-mate's blow is decided where the player stands."
   },
   {
     "name": "ARENA-LADDER-landing-mark-unread",
     "file": "src/ai/tactics.js",
-    "old": "    const at = key === (s.blow.tg ?? LOCAL) ? blowAim(ai, key) : null;",
-    "new": "    const at = blowAim(ai, key);",
+    "old": "  if (b0.key !== undefined && key !== b0.key) { breakWindup(ai); return false; }\n",
+    "new": "",
     "tests": [
       "test/arenaladder_audit.test.js"
     ],
-    "note": "A wind-up whose foe turned on another lands on the new one."
+    "note": "FEUD's MERGE of main's #586-#622 (PIN MOVED): a blow's mark is AUDIT TELL B8's `key` (main's `tg` folded into it), and B8 breaks a wind-up whose foe turned before it can land on anyone - the mutant drops the break, so the turned foe's blow lands on its new target (AUDITTELL-B8-turn's site, judged here by this list's own pin). A wind-up whose foe turned on another lands on the new one."
   },
   {
     "name": "ARENA-LADDER-sand-draw-range",
     "file": "src/ai/foeBlows.js",
-    "old": "(b.sand ? Math.max(range, SAND_DRAW_RANGE) : range)",
-    "new": "range",
+    "old": "    if (near && d > (b.sand ? Math.max(range, SAND_DRAW_RANGE) : range)) continue;\n    out.push({ blow: b, phase, nearFloor",
+    "new": "    if (near && d > range) continue;\n    out.push({ blow: b, phase, nearFloor",
     "tests": [
       "test/arenaladder_audit.test.js"
     ],
-    "note": "The stands past 40 m never see a sand blow."
+    "note": "FEUD's MERGE of main's #586-#622 (PIN MOVED): the text stands twice since AUDIT TELL's shards draw to the sand's range too - aimed at the live blow's. The stands past 40 m never see a sand blow."
   },
   {
     "name": "ARENA-LADDER-dodge-untold",

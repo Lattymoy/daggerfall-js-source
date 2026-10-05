@@ -219,7 +219,8 @@ test('TACT2: the brain only steers a foe that sees its target in range - out of 
 
 test('TACT2: the motor and the attack read the brain - the step, the stand, the gates; the hosts hand the vitals and the player\'s facing', () => {
   const m = rd('src/characters/enemyMotor.js');
-  assert.match(m, /const _took = tacticsStep\(this, dx, dz\);\n\s*if \(_took && \(!detouring \|\| this\.fleeLeft > 0 \|\| this\._tac\?\.state === 'windup'\)\) return;[^\n]*\n\s*this\._tacDir = null;\n\s*\/\/ Ranged attacks/);
+  // PIN MOVED (TELL6, bible/12-Enhanced-AI/Feud-Arc.md 8.1): a charge's run is never the detour's either
+  assert.match(m, /const _took = tacticsStep\(this, dx, dz\);\n\s*if \(_took && \(!detouring \|\| this\.fleeLeft > 0 \|\| this\._tac\?\.state === 'windup' \|\| this\._tac\?\.state === 'dash'\)\) return;[^\n]*\n\s*this\._tacDir = null;\n\s*\/\/ Ranged attacks/);
   assert.match(m, /if \(this\._tacDir\) \{ this\._tacDir = null; this\._tacBlocked = true; this\.moving = false; \}[^\n]*\n\s*else this\._findDetour\(dir2d\);/);
   const a = rd('src/characters/enemyAttack.js');
   assert.match(a, /if \(ai\._tacStrike === false\) continue;/);

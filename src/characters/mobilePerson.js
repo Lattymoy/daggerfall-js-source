@@ -112,9 +112,10 @@ export function personWantsToStop({
 const DIRS = [[0, 1], [0, -1], [1, 0], [-1, 0]];
 const DIR_YAW = [0, Math.PI, Math.PI / 2, -Math.PI / 2];
 
-// The MoveAnims wheel (records 0-4 mirrored - the monster layout).
-const MOVE_RECORDS = [0, 1, 2, 3, 4, 3, 2, 1];
-const MOVE_FLIPS = [false, false, false, false, false, true, true, true];
+// The MoveAnims wheel (records 0-4 mirrored - the monster layout). Exported for the living world's resident
+// (residentWalker.js), which wears the same wheel on a yaw of its own.
+export const MOVE_RECORDS = Object.freeze([0, 1, 2, 3, 4, 3, 2, 1]);
+export const MOVE_FLIPS = Object.freeze([false, false, false, false, false, true, true, true]);
 
 export class MobilePerson {
   /**

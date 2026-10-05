@@ -122,12 +122,13 @@
   {
     "name": "AUDIT-PSCALE1-owner-refuses-a-peers-kill",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "peerId: from, whole: data.z === 1 });   // AUDIT PSCALE1 DOORS-1: a peer's kill is a kill",
-    "new": "peerId: from });   // AUDIT PSCALE1 DOORS-1: a peer's kill is a kill",
+    "old": "peerId: from, whole: data.z === 1, ...(data.wc != null ? { wc: hitClassOf(data) } : {}) });",
+    "new": "peerId: from, ...(data.wc != null ? { wc: hitClassOf(data) } : {}) });",
     "tests": [
       "test/pscale1.test.js",
       "test/auditpscale1.test.js"
-    ]
+    ],
+    "note": "TELL8 (PIN MOVED): re-aimed by content - the owner winds up at a peer it hunts (`tf` its target's feet, `atMe` the damage's gate), a peer's blow carries its class, the relay moved to world162."
   },
   {
     "name": "AUDIT-PSCALE1-outdoor-heal-unweighed",
@@ -202,12 +203,13 @@
   {
     "name": "AUDIT-PSCALE1-dungeon-joiner-kill-refused",
     "file": "src/scenes/dungeonContext.js",
-    "old": "peerId: id, whole: data.z === 1 });   // AUDIT PSCALE1 DOORS-1: a joiner's kill is a kill",
-    "new": "peerId: id });   // AUDIT PSCALE1 DOORS-1: a joiner's kill is a kill",
+    "old": "peerId: id, whole: data.z === 1, ...(data.wc != null ? { wc: hitClassOf(data) } : {}) });",
+    "new": "peerId: id, ...(data.wc != null ? { wc: hitClassOf(data) } : {}) });",
     "tests": [
       "test/pscale1.test.js",
       "test/auditpscale1.test.js"
-    ]
+    ],
+    "note": "TELL8 (PIN MOVED): re-aimed by content - the owner winds up at a peer it hunts (`tf` its target's feet, `atMe` the damage's gate), a peer's blow carries its class, the relay moved to world162."
   },
   {
     "name": "AUDIT-PSCALE1-count-unstreamed-in-a-dungeon",

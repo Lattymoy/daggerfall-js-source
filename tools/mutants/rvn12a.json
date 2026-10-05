@@ -1,0 +1,299 @@
+[
+  {
+    "name": "RVN12a-moment-dropped",
+    "file": "src/systems/revenantPersonality.js",
+    "old": "'stole', 'festered', 'felled_return', 'routed_return', 'deserted', 'betrayed', 'devoted_warn',\n]));",
+    "new": "'stole', 'festered', 'felled_return', 'routed_return', 'deserted', 'betrayed',\n]));",
+    "tests": [
+      "test/rvn12a_words.test.js"
+    ]
+  },
+  {
+    "name": "RVN12a-placeholder-widened",
+    "file": "src/systems/revenantPersonality.js",
+    "old": "export const VOICE_PLACEHOLDERS = Object.freeze(['p', 'how', 'item', 'move', 'ally']);",
+    "new": "export const VOICE_PLACEHOLDERS = Object.freeze(['p', 'how', 'item', 'move', 'ally', 'kin']);",
+    "tests": [
+      "test/rvn12a_words.test.js"
+    ]
+  },
+  {
+    "name": "RVN12a-unsayable-said",
+    "file": "src/systems/revenantPersonality.js",
+    "old": "  const pool = voiceLines(personality, event).filter((l) => sayable(l, vars));",
+    "new": "  const pool = voiceLines(personality, event);",
+    "tests": [
+      "test/rvn12a_words.test.js"
+    ]
+  },
+  {
+    "name": "RVN12a-fill-unwidened",
+    "file": "src/systems/revenantPersonality.js",
+    "old": "const PLACEHOLDER = /\\{(p|how|item|move|ally)\\}/g;",
+    "new": "const PLACEHOLDER = /\\{(p)\\}/g;",
+    "tests": [
+      "test/rvn12a_words.test.js"
+    ]
+  },
+  {
+    "name": "RVN12a-empty-word-sayable",
+    "file": "src/systems/revenantPersonality.js",
+    "old": "every((m) => vars[m[1]] != null && vars[m[1]] !== '');",
+    "new": "every((m) => vars[m[1]] != null);",
+    "tests": [
+      "test/rvn12a_words.test.js"
+    ]
+  },
+  {
+    "name": "RVN12a-vars-unhanded",
+    "file": "src/systems/revenantPersonality.js",
+    "old": "  const vars = { p, how, item, move, ally };",
+    "new": "  const vars = { p };",
+    "tests": [
+      "test/rvn12a_words.test.js"
+    ]
+  },
+  {
+    "name": "RVN12a-beast-lost",
+    "file": "src/systems/revenantPersonality.js",
+    "old": "  betrayed: 'Turns on you {manner}!',\n",
+    "new": "",
+    "tests": [
+      "test/rvn12a_words.test.js"
+    ]
+  },
+  {
+    "name": "RVN12a-cold-line-emptied",
+    "file": "src/systems/revenantPersonality.js",
+    "old": "    learned: ['I have measured your {how}. Nothing remains.', 'I have adapted to your {how}, {p}.'],",
+    "new": "    learned: ['I have measured your {how}. Nothing remains.'],",
+    "tests": [
+      "test/rvn12a_words.test.js"
+    ]
+  },
+  {
+    "name": "RVN12a-brutal-laststand-short",
+    "file": "src/systems/revenantPersonality.js",
+    "old": "    laststand: ['Not yet! NOT YET!', \"You'll have to cut me apart, {p}!\", \"I'm still standing. Your mistake.\"],",
+    "new": "    laststand: ['Not yet! NOT YET!', \"You'll have to cut me apart, {p}!\"],",
+    "tests": [
+      "test/rvn12a_words.test.js"
+    ]
+  },
+  {
+    "name": "RVN12a-habit-word",
+    "file": "src/systems/revenantFeud.js",
+    "old": "arrowWise: 'arrows',",
+    "new": "arrowWise: 'shafts',",
+    "tests": [
+      "test/rvn12a_words.test.js"
+    ]
+  },
+  {
+    "name": "RVN12a-felled-unread",
+    "file": "src/systems/revenant.js",
+    "old": "  if (last?.deed === 'felled' && last.ally) return { event: 'felled_return', vars: { ally: last.ally } };\n",
+    "new": "",
+    "tests": [
+      "test/rvn12a_words.test.js"
+    ]
+  },
+  {
+    "name": "RVN12a-felled-unnamed",
+    "file": "src/systems/revenant.js",
+    "old": "  if (last?.deed === 'felled' && last.ally) return",
+    "new": "  if (last?.deed === 'felled') return",
+    "tests": [
+      "test/rvn12a_words.test.js"
+    ]
+  },
+  {
+    "name": "RVN12a-routed-unread",
+    "file": "src/systems/revenant.js",
+    "old": "  if (last?.deed === 'routed') return { event: 'routed_return', vars: {} };\n",
+    "new": "",
+    "tests": [
+      "test/rvn12a_words.test.js"
+    ]
+  },
+  {
+    "name": "RVN12a-festered-unread",
+    "file": "src/systems/revenant.js",
+    "old": "  if (last?.deed === 'festered') return { event: 'festered', vars: {} };\n",
+    "new": "",
+    "tests": [
+      "test/rvn12a_words.test.js"
+    ]
+  },
+  {
+    "name": "RVN12a-stole-unread",
+    "file": "src/systems/revenant.js",
+    "old": "  if (last?.deed === 'slew' && r.took?.length) return",
+    "new": "  if (false) return",
+    "tests": [
+      "test/rvn12a_words.test.js"
+    ]
+  },
+  {
+    "name": "RVN12a-stole-any-deed",
+    "file": "src/systems/revenant.js",
+    "old": "  if (last?.deed === 'slew' && r.took?.length) return",
+    "new": "  if (r.took?.length) return",
+    "tests": [
+      "test/rvn12a_words.test.js"
+    ]
+  },
+  {
+    "name": "RVN12a-stole-first-piece",
+    "file": "src/systems/revenant.js",
+    "old": "vars: { item: takenName(r.took[r.took.length - 1]) } };",
+    "new": "vars: { item: takenName(r.took[0]) } };",
+    "tests": [
+      "test/rvn12a_words.test.js"
+    ]
+  },
+  {
+    "name": "RVN12a-learned-every-return",
+    "file": "src/systems/revenant.js",
+    "old": "  if (how && (r.returns | 0) % 2 === 1) return",
+    "new": "  if (how) return",
+    "tests": [
+      "test/rvn12a_words.test.js"
+    ]
+  },
+  {
+    "name": "RVN12a-learned-oldest",
+    "file": "src/systems/revenant.js",
+    "old": "  const how = ADAPT_HOW[r?.learned?.[r.learned.length - 1]];",
+    "new": "  const how = ADAPT_HOW[r?.learned?.[0]];",
+    "tests": [
+      "test/rvn12a_words.test.js"
+    ]
+  },
+  {
+    "name": "RVN12a-deeds-narrow",
+    "file": "src/systems/revenant.js",
+    "old": "const TAUNT_DEEDS = new Set(['slew', 'fled', 'felled', 'routed', 'festered']);",
+    "new": "const TAUNT_DEEDS = new Set(['slew', 'fled']);",
+    "tests": [
+      "test/rvn12a_words.test.js"
+    ]
+  },
+  {
+    "name": "RVN12a-stole-kicker-unread",
+    "file": "src/systems/revenant.js",
+    "old": "revenantEvent(t.moment === 'stole' ? 'stole' : 'taunt', r,",
+    "new": "revenantEvent('taunt', r,",
+    "tests": [
+      "test/rvn12a_words.test.js"
+    ]
+  },
+  {
+    "name": "RVN12a-stole-kicker",
+    "file": "src/systems/revenant.js",
+    "old": "betrayed: 'Betrayed', stole: 'It took',",
+    "new": "betrayed: 'Betrayed',",
+    "tests": [
+      "test/rvn12a_words.test.js"
+    ]
+  },
+  {
+    "name": "RVN12a-vars-dropped",
+    "file": "src/systems/revenant.js",
+    "old": "  const speech = voiceLine(personality, event, { p: firstWord(playerName), rolls, ...vars });",
+    "new": "  const speech = voiceLine(personality, event, { p: firstWord(playerName), rolls });",
+    "tests": [
+      "test/rvn12a_words.test.js"
+    ]
+  },
+  {
+    "name": "RVN12a-sig-move-unhanded",
+    "file": "src/systems/revenant.js",
+    "old": "  const v = voiceParts(r, 'signature', playerName, rolls, { move: noun ?? null });",
+    "new": "  const v = voiceParts(r, 'signature', playerName, rolls);",
+    "tests": [
+      "test/rvn12a_words.test.js"
+    ]
+  },
+  {
+    "name": "RVN12a-sig-line-unsaid",
+    "file": "src/systems/revenant.js",
+    "old": "line: v.speech ? `${body} \"${v.speech}\"` : body, archive });",
+    "new": "line: body, archive });",
+    "tests": [
+      "test/rvn12a_words.test.js"
+    ]
+  },
+  {
+    "name": "RVN12a-laststand-cornered",
+    "file": "src/systems/revenant.js",
+    "old": "speech: voiceParts(r, 'laststand', playerName, rolls).speech, body, line: body, archive });",
+    "new": "speech: voiceParts(r, 'cornered', playerName, rolls).speech, body, line: body, archive });",
+    "tests": [
+      "test/rvn12a_words.test.js"
+    ]
+  },
+  {
+    "name": "RVN12a-warn-unvoiced",
+    "file": "src/systems/revenant.js",
+    "old": "  const v = voiceParts(r, 'devoted_warn', capFirst(firstWord(playerName)), rolls);",
+    "new": "  const v = voiceParts(r, 'battle', capFirst(firstWord(playerName)), rolls);",
+    "tests": [
+      "test/rvn12a_words.test.js"
+    ]
+  },
+  {
+    "name": "RVN12a-desert-unvoiced",
+    "file": "src/systems/revenant.js",
+    "old": "{ speech: voiceParts(r, 'deserted', playerName, Math.random).speech, body,",
+    "new": "{ speech: null, body,",
+    "tests": [
+      "test/rvn12a_words.test.js"
+    ]
+  },
+  {
+    "name": "RVN12a-betray-unvoiced",
+    "file": "src/systems/revenant.js",
+    "old": "{ speech: voiceParts(r, 'betrayed', playerName, rolls).speech, body,",
+    "new": "{ speech: null, body,",
+    "tests": [
+      "test/rvn12a_words.test.js"
+    ]
+  },
+  {
+    "name": "RVN12a-desert-unnamed",
+    "file": "src/systems/revenant.js",
+    "old": "revenantDesertEvent(r, { playerName: player.name })",
+    "new": "revenantDesertEvent(r)",
+    "tests": [
+      "test/rvn12a_words.test.js"
+    ]
+  },
+  {
+    "name": "RVN12a-street-sig-unnamed",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "{ archive: f.archive, playerName: playerEntity?.name })",
+    "new": "{ archive: f.archive })",
+    "tests": [
+      "test/rvn12a_words.test.js"
+    ]
+  },
+  {
+    "name": "RVN12a-deep-sig-unnamed",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "{ archive: f.mobileArchive, playerName: playerEntity?.name })",
+    "new": "{ archive: f.mobileArchive })",
+    "tests": [
+      "test/rvn12a_words.test.js"
+    ]
+  },
+  {
+    "name": "RVN12a-betray-unnamed",
+    "file": "src/scenes/world.js",
+    "old": "revenantBetrayEvent(r, { playerName: playerEntity?.name })",
+    "new": "revenantBetrayEvent(r)",
+    "tests": [
+      "test/rvn12a_words.test.js"
+    ]
+  }
+]

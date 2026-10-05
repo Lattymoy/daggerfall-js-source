@@ -1744,7 +1744,7 @@ export function subscribeFoePools(ticker, pools, sinksFor) {
  * @param {number} gameMinutes the classic clock
  * @param {object} [activity]  { movingLessThanHalfSpeed }
  */
-export function sensesContext(entity, gameMinutes, { movingLessThanHalfSpeed = true, candidates = null, playerEntity = null, insideDungeonCastle = false, playerHeight = CAPSULE_HEIGHT, playerCrouching = false } = {}) {
+export function sensesContext(entity, gameMinutes, { movingLessThanHalfSpeed = true, candidates = null, playerEntity = null, insideDungeonCastle = false, playerHeight = CAPSULE_HEIGHT, playerCrouching = false, wildUnaware = null } = {}) {
   entity.stealthCheckBox = entity.stealthCheckBox ?? { minute: -1 };
   return {
     gameMinutes: Math.floor(gameMinutes),
@@ -1790,6 +1790,10 @@ export function sensesContext(entity, gameMinutes, { movingLessThanHalfSpeed = t
     // the SWIM case (PlayerHeightChanger.cs:54-57), and a swimming
     // player draws no dip.
     playerCrouching,
+    // WILD-ALERT (systems/wildAlert.js): a host's answer to "has this foe NOT noticed a fast traveller yet?" - the pools
+    // leave the player off such a foe's candidate list (the target machine's own noTargetMode, CAMP-REST's switch)
+    // until it has. Absent: no traveller, no gate - every other host and every headless caller as before.
+    wildUnaware,
     playerEntity: playerEntity ?? entity,
   };
 }
@@ -2243,7 +2247,7 @@ export function createMusicDirector({ fm = null, play = null, stop = null, playi
  *  through to `cam.yaw += movementX` - so every swing inside a
  *  building or a dungeon turned the camera with it.
  *
- *  `dungeon.js:288`, the standalone host, has always had the right
+ *  `dungeon.js:290`, the standalone host, has always had the right
  *  shape: attack, then return. It has no modal sibling to share the
  *  drag with, which is why it never needed a mode in the test at all.
  *

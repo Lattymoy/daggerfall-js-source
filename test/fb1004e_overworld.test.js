@@ -164,7 +164,7 @@ test('OW-WHO travel map legend: the legend speaks for the players the sheet draw
   globalThis.document = { createElement: mk };
   try {
     const leg = mk('div');
-    const self = { _chrome: { legend: leg }, _party: [], _gate: null, _bounties: [], _raids: [], _quests: [],
+    const self = { _chrome: { legend: leg }, _party: [], _gate: null, _bounties: [], _revenants: [], _raids: [], _quests: [],   // PIN MOVED (FEUD's merge of main): RVN7c's lairs are the window's too
       _trav: [{ name: 'Fren', kin: 'friend', lv: 3 }, { name: 'Gilda', kin: 'guild', lv: 3 }],
       _top: null, _info: null, _phase: 'map', _renderKey() {} };
     const said = () => leg.children.filter((n) => n.className === 'hmlegtext').map((n) => n.textContent);

@@ -29,6 +29,7 @@ import { followOn, trackButton } from './questTracker.js';   // GUIDE4: the HUD'
 import { breakableNote } from '../systems/notebook.js';   // JOURNAL1: a note the notebook's wrap can take, whatever was typed
 import { pageOfNote, pageRefusalText } from '../net/journalPage.js';   // JOURNAL1: a note as the page it would be shown as, or why it cannot be
 import { isBountyQuestId, abandonBountyQuest, shareBountyQuest, bountyQuestShareable } from '../systems/bountyJournal.js';   // BOUNTY1: a bounty's Abandon and Share
+import { isHuntQuestId, abandonHuntQuest } from '../systems/huntJournal.js';   // RVN7c: a revenant's hunt - its Abandon
 
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);
@@ -75,6 +76,13 @@ const clockSpans = new Map();   // quest id -> its timer span, this render's
 export const CHRONICLE_SECTIONS = Object.freeze([
   ['quests', 'Quests'], ['notes', 'Notes'], ['messages', 'Messages'], ['history', 'History'],
 ]);
+// LW7c (bible/06-Systems/Living-World.md "LW7c", Mac: "make friends or enemies"): THE PEOPLE WHO KNOW YOU - the living
+// world's residents the character has met (systems/livingWorld/people.js peoplePage), a section of its own where the
+// host hands the page over (`people`): the friends, the enemies, the known - the last of the things written down about
+// you, by the people who wrote it.
+export const PEOPLE_SECTION = Object.freeze(['people', 'People']);
+/** The sections a chronicle carries: the four, and the People where the host hands their page over. @param {any} d */
+export const chronicleSections = (d) => (d?.people ? [...CHRONICLE_SECTIONS, PEOPLE_SECTION] : CHRONICLE_SECTIONS);
 
 const LINE_FORMATTINGS = new Set(['text', 'newline', 'highlight', 'question', 'answer']);
 
@@ -172,7 +180,8 @@ export function chronicleModel(d = {}) {
   // The history is already lines - chargen composes backStory as
   // strings, and playerHistory.js reads exactly this.
   const history = (d.entity?.backStory ?? []).map((l) => String(l ?? '')).filter((l) => l.length);
-  return { quests, notes, messages, history };
+  // LW7c: the people, only where the host hands their page over (people.js peoplePage's shape)
+  return { quests, notes, messages, history, ...(d.people ? { people: d.people() ?? { friends: [], enemies: [], known: [] } } : {}) };
 }
 
 /** MAC-F: the fold laws, kept pure so a node test can drive them with
@@ -303,7 +312,9 @@ function render() {
   if (!host) return;
   host.innerHTML = '';
   const model = chronicleModel(deps);
-  const counts = { quests: model.quests.length, notes: model.notes.length, messages: model.messages.length, history: model.history.length };
+  const counts = { quests: model.quests.length, notes: model.notes.length, messages: model.messages.length, history: model.history.length,
+    people: model.people ? model.people.friends.length + model.people.enemies.length + model.people.known.length : 0 };   // LW7c
+  const sections = chronicleSections(deps);
 
   const shell = el('div', 'px-home px-over cr-shell');
   const win = el('div', 'px-win');
@@ -323,7 +334,7 @@ function render() {
   const body = el('div', 'px-body');
   const wrap = el('div', 'px-journal');
   const rail = el('div', 'px-qrail');
-  for (const [id, label] of CHRONICLE_SECTIONS) {
+  for (const [id, label] of sections) {
     const b = el('button', `px-qrow cr-row${id === section ? ' on' : ''}`);
     b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(label));
     b.append(el('span', 'sb-cost', String(counts[id])));
@@ -333,12 +344,36 @@ function render() {
   wrap.append(rail);
 
   const detail = el('div', 'px-qdetail');
-  const label = CHRONICLE_SECTIONS.find(([id]) => id === section)?.[1] ?? '';
+  const label = sections.find(([id]) => id === section)?.[1] ?? '';
   const title = el('div', 'px-qname');
   title.append(el('span', 'px-qwing'), el('h3', null, label), el('span', 'px-qwing px-flip'));
   detail.append(title);
 
-  if (section === 'history') {
+  if (section === 'people') {
+    // LW7c: THE PEOPLE, by standing - friends, then enemies, then the known - each a card: the name, the town, and what
+    // they are to the player (the page's own words - people.js personWords: their fate, their standing, when last seen)
+    const page = model.people ?? { friends: [], enemies: [], known: [] };
+    if (!counts.people) detail.append(el('p', 'px-note', 'No one in the Bay knows you yet.'));
+    for (const [group, rows] of /** @type {[string, any[]][]} */ ([['Friends', page.friends], ['Enemies', page.enemies], ['Known', page.known]])) {
+      if (!rows.length) continue;
+      const line = el('div', 'sb-frame');
+      line.append(el('span', 'sb-chip', `${group} \u00b7 ${rows.length}`));
+      detail.append(line);
+      const box = el('div', 'cr-entries');
+      for (const p of rows) {
+        const card = el('div', 'cr-entry');
+        const top = el('div', 'cr-head');
+        top.append(el('span', 'cr-when', p.name));
+        if (p.town) top.append(el('span', 'sb-chip', p.town));
+        card.append(top);
+        const words = el('div', 'cr-prose');
+        words.append(el('p', null, p.words ?? ''));
+        card.append(words);
+        box.append(card);
+      }
+      detail.append(box);
+    }
+  } else if (section === 'history') {
     // ONE PAGE, NOT PAGINATED. The classic window pages because it
     // draws into a fixed 320x200 panel; a DOM column scrolls, and a
     // life story read in one column beats one read four lines at a
@@ -496,7 +531,21 @@ function render() {
           };
           top.append(ab);
         }
-        if (section === 'quests' && e.uid != null && !e.main && !isBountyQuestId(e.uid)
+        // RVN7c (bible/12-Enhanced-AI/Feud-Arc.md 18.3): a hunt's Abandon (twice), its lair forgotten - never a share
+        if (section === 'quests' && isHuntQuestId(e.uid)) {
+          const armed = bountyArmed === e.uid;
+          const ab = el('button', 'cr-rm cr-share', armed ? 'Click again' : 'Abandon');
+          ab.title = 'Give up this hunt';
+          ab.setAttribute('aria-label', armed ? 'Click again to give up this hunt' : 'Abandon this hunt');
+          ab.onclick = () => {
+            if (bountyArmed !== e.uid) { bountyArmed = e.uid; render(); return; }
+            bountyArmed = null;
+            abandonHuntQuest(e.uid);
+            render();
+          };
+          top.append(ab);
+        }
+        if (section === 'quests' && e.uid != null && !e.main && !isBountyQuestId(e.uid) && !isHuntQuestId(e.uid)
           && (deps.partyMembers?.() ?? []).length) {
           const share = el('button', 'cr-rm cr-share', 'Share');
           share.title = 'Share this quest with your party';
@@ -535,9 +584,10 @@ function onKey(e) {
   if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
   if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
     e.preventDefault(); e.stopPropagation();
-    const i = CHRONICLE_SECTIONS.findIndex(([id]) => id === section);
-    const n = CHRONICLE_SECTIONS.length;
-    section = CHRONICLE_SECTIONS[(i + (e.key === 'ArrowDown' ? 1 : n - 1)) % n][0];
+    const list = chronicleSections(deps);   // AUDIT-G4: the sections the window shows - LW7c's People among them (the four alone never reached it)
+    const i = list.findIndex(([id]) => id === section);
+    const n = list.length;
+    section = list[(i + (e.key === 'ArrowDown' ? 1 : n - 1)) % n][0];
     render();
     return;
   }
@@ -578,7 +628,7 @@ export function mountEnhancedChronicle(hostEl, d = {}) {
   host = hostEl;
   deps = d;
   onExit = d.onExit ?? (() => {});
-  section = CHRONICLE_SECTIONS.some(([id]) => id === d.section) ? d.section : 'quests';
+  section = chronicleSections(d).some(([id]) => id === d.section) ? d.section : 'quests';
   draft = '';
   sharing = null; shareWord = '';   // JOURNAL1: a fresh open shares nothing yet
   bountyArmed = null;   // AUDIT 28 B11: an armed Abandon never outlives the visit it was armed on

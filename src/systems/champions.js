@@ -118,6 +118,7 @@ export function applyChampion(entity, traitIndex) {
   const hp = CHAMPION_HEALTH * (t.health ?? 1);
   entity.maxHealth = Math.max(1, Math.round((entity.maxHealth ?? 1) * hp));
   entity.health = entity.maxHealth;
+  entity.healthMult = (entity.healthMult ?? 1) * hp;   // TELL1: what was stood on the kind's own health (ai/tells.js kindHealth - its poise)
   entity.damageScale = (Number.isFinite(entity.damageScale) ? entity.damageScale : 1) * CHAMPION_DAMAGE * (t.damage ?? 1);
   if (t.speed && entity.stats) entity.stats.speed = Math.min(100, (entity.stats.speed ?? 50) + t.speed);
   return true;

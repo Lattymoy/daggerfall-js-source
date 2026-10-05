@@ -1,0 +1,420 @@
+[
+  {
+    "name": "TELL5-vary",
+    "file": "src/ai/tells.js",
+    "old": "  WINDUP_VARY: Object.freeze([0.9, 1.25]),",
+    "new": "  WINDUP_VARY: Object.freeze([1, 1]),",
+    "tests": [
+      "test/tell5_patterns.test.js",
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-elite-quick",
+    "file": "src/ai/tells.js",
+    "old": "  WINDUP_ELITE: 0.9,",
+    "new": "  WINDUP_ELITE: 1,",
+    "tests": [
+      "test/tell5_patterns.test.js",
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-floor",
+    "file": "src/ai/tells.js",
+    "old": "  TELL_MIN_WINDUP: 0.55,",
+    "new": "  TELL_MIN_WINDUP: 0.5,",
+    "tests": [
+      "test/tell5_patterns.test.js",
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-track-rate",
+    "file": "src/ai/tells.js",
+    "old": "  TRACK_RATE: 120,",
+    "new": "  TRACK_RATE: 240,",
+    "tests": [
+      "test/tell5_patterns.test.js",
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-track-share",
+    "file": "src/ai/tells.js",
+    "old": "  TRACK_SHARE: 0.5,",
+    "new": "  TRACK_SHARE: 1,",
+    "tests": [
+      "test/tell5_patterns.test.js",
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-feint-at",
+    "file": "src/ai/tells.js",
+    "old": "  FEINT_AT: 0.55,",
+    "new": "  FEINT_AT: 0.8,",
+    "tests": [
+      "test/tell5_patterns.test.js",
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-chain-windup",
+    "file": "src/ai/tells.js",
+    "old": "  CHAIN_WINDUP: 0.5,",
+    "new": "  CHAIN_WINDUP: 0.8,",
+    "tests": [
+      "test/tell5_patterns.test.js",
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-chain-next",
+    "file": "src/ai/tells.js",
+    "old": "slam: 'sweep', ring: 'slam' }),",
+    "new": "slam: 'slam', ring: 'slam' }),",
+    "tests": [
+      "test/tell5_patterns.test.js",
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-undrawn",
+    "file": "src/ai/tells.js",
+    "old": "  let w = base * (roll == null ? 1 : lo + (hi - lo) * roll);",
+    "new": "  let w = base;",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-elite-ignored",
+    "file": "src/ai/tells.js",
+    "old": "  if (isElite(ent)) w *= TELL.WINDUP_ELITE;",
+    "new": "",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-rank-ignored",
+    "file": "src/ai/tells.js",
+    "old": "  if (rank > 0) w *= 1 - TELL.WINDUP_RANK * rank;",
+    "new": "",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-iron-before-floor",
+    "file": "src/ai/tells.js",
+    "old": "  if (guard === 'iron') w += TELL.IRON_EXTRA;\n  return Math.max(floor, w);",
+    "new": "  return Math.max(floor, w) + (guard === 'iron' ? 0 : 0);",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-no-floor",
+    "file": "src/ai/tells.js",
+    "old": "  return Math.max(floor, w);\n}",
+    "new": "  return w;\n}",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-dungeon-not-elite",
+    "file": "src/ai/blowShapes.js",
+    "old": "export const isElite = (ent) => ent?.eliteFoe === true || ent?.elite === true;",
+    "new": "export const isElite = (ent) => ent?.eliteFoe === true;",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ],
+    "note": "FEUD's MERGE of main's #586-#622 (PIN MOVED): TELL7's whole set lives in the leaf ai/blowShapes.js beside the families (one home: the relay's leaf takes no import, and isElite and wholeSet are field tests) - the same line, its new file; ai/tells.js hands it on."
+  },
+  {
+    "name": "TELL5-tier-rank1",
+    "file": "src/ai/tells.js",
+    "old": "isElite(ent) || !!ent?.champion || revenantRank(ent) >= 2;",
+    "new": "isElite(ent) || !!ent?.champion || revenantRank(ent) >= 1;",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-tier-no-champion",
+    "file": "src/ai/tells.js",
+    "old": "isElite(ent) || !!ent?.champion || revenantRank(ent) >= 2;",
+    "new": "isElite(ent) || revenantRank(ent) >= 2;",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-feint-gap",
+    "file": "src/ai/tells.js",
+    "old": "  return family === 'blade' && higherTier(ent) && sinceFeint >= TELL.FEINT_GAP;",
+    "new": "  return family === 'blade' && higherTier(ent);",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-feint-any-family",
+    "file": "src/ai/tells.js",
+    "old": "  return family === 'blade' && higherTier(ent) && sinceFeint >= TELL.FEINT_GAP;",
+    "new": "  return higherTier(ent) && sinceFeint >= TELL.FEINT_GAP;",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-chain-one-shape",
+    "file": "src/ai/tells.js",
+    "old": "  if (!Array.isArray(shapes) || shapes.length < 2) return false;",
+    "new": "  if (!Array.isArray(shapes)) return false;",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-chain-any-brute",
+    "file": "src/ai/tells.js",
+    "old": "  return (family === 'brute' && higherTier(ent)) || isElite(ent) || revenantRank(ent) >= 3;",
+    "new": "  return family === 'brute' || isElite(ent) || revenantRank(ent) >= 3;",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-chain-same-shape",
+    "file": "src/ai/tells.js",
+    "old": "  return shapes.find((k) => k !== prev) ?? null;",
+    "new": "  return shapes.find((k) => k === prev) ?? null;",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-track-long-way",
+    "file": "src/ai/tells.js",
+    "old": "  d = Math.atan2(Math.sin(d), Math.cos(d));\n  const max",
+    "new": "  const max",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-track-uncapped",
+    "file": "src/ai/tells.js",
+    "old": "  return yaw + Math.max(-max, Math.min(max, d));",
+    "new": "  return yaw + d;",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-windup-ignored",
+    "file": "src/ai/foeBlows.js",
+    "old": "  const w = Number.isFinite(windup) && windup > 0 ? windup : P.windup + (iron ? TELL_IRON_EXTRA : 0);",
+    "new": "  const w = P.windup + (iron ? TELL_IRON_EXTRA : 0);",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-cut-not-faded",
+    "file": "src/ai/foeBlows.js",
+    "old": "    if (after > FEINT_FADE || after < 0) return null;",
+    "new": "    if (after > 10 * FEINT_FADE || after < 0) return null;",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-cut-near",
+    "file": "src/ai/foeBlows.js",
+    "old": "    if (ai === except || b.cut != null || gone(ai, now)) continue;",
+    "new": "    if (ai === except || gone(ai, now)) continue;",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-chain-gap-open",
+    "file": "src/ai/foeBlows.js",
+    "old": "    if (now >= b.land && !(b.chainUntil > now) && !(b.dashUntil > now)) continue;",
+    "new": "    if (now >= b.land && !(b.dashUntil > now)) continue;",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-family-lost",
+    "file": "src/ai/blowShapes.js",
+    "old": "  return s === BEAST ? 'beast' : s === BRUTE ? 'brute' : s === BLADE ? 'blade' : null;",
+    "new": "  return s === BEAST ? 'beast' : s === BLADE ? 'blade' : null;",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ],
+    "note": "FEUD's MERGE of main's #586-#622 (PIN MOVED): blowFamily lives beside the families in the leaf ai/blowShapes.js - the same line, its new file."
+  },
+  {
+    "name": "TELL5-no-cut",
+    "file": "src/ai/tactics.js",
+    "old": "  if (b0.feint && now >= b0.cutAt) {",
+    "new": "  if (b0.feint && false) {",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-cut-overreaches",
+    "file": "src/ai/tactics.js",
+    "old": "    b0.cut = now;   // its mark fades out dashed (ai/foeBlows.js blowPhase)\n    s.blow = null; s.state = 'engage'; s.blowReady = cooled;",
+    "new": "    b0.cut = now;   // its mark fades out dashed (ai/foeBlows.js blowPhase)\n    s.blow = null; s.state = 'overreach'; s.until = now + 1; s.blowReady = cooled;",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-cut-weighed",
+    "file": "src/ai/tactics.js",
+    "old": "    clearBlowState(ai);\n    ai._blowSwing = true; ai._blowAt = now; ai._blowHold = false;",
+    "new": "    clearBlowState(ai);\n    ai._blowSwing = true; ai._blowAt = now; ai._blowHold = false; ai._blowVerdict = true; ai._blowMult = b0.mult;",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-cut-held",
+    "file": "src/ai/tactics.js",
+    "old": "    ai._blowSwing = true; ai._blowAt = now; ai._blowHold = false;   // the held swing goes",
+    "new": "    ai._blowSwing = true; ai._blowAt = now;   // the held swing goes",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-no-tracking",
+    "file": "src/ai/tactics.js",
+    "old": "  if (tf && TELL.TRACKERS.includes(b0.kind) && now < b0.start + trackShare(ai.vitals?.()) * (b0.land - b0.start)) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ],
+    "note": "TELL8 (PIN MOVED): re-aimed by content - the owner winds up at a peer it hunts (`tf` its target's feet, `atMe` the damage's gate), a peer's blow carries its class, the relay moved to world162."
+  },
+  {
+    "name": "TELL5-track-everything",
+    "file": "src/ai/tactics.js",
+    "old": "  if (tf && TELL.TRACKERS.includes(b0.kind) && now < b0.start",
+    "new": "  if (tf && now < b0.start",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ],
+    "note": "TELL8 (PIN MOVED): re-aimed by content - the owner winds up at a peer it hunts (`tf` its target's feet, `atMe` the damage's gate), a peer's blow carries its class, the relay moved to world162."
+  },
+  {
+    "name": "TELL5-foe-unturned",
+    "file": "src/ai/tactics.js",
+    "old": "    if (y !== b0.yaw) { b0.yaw = y; ai.yaw = y; fitBlowToGround(b0, ai.collider); }",
+    "new": "    if (y !== b0.yaw) { b0.yaw = y; fitBlowToGround(b0, ai.collider); }",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-never-chain",
+    "file": "src/ai/tactics.js",
+    "old": "  if (!GAP_CLOSERS.includes(b.kind) && (b.chain ?? 0) < chainMax(ent) && chains(blowFamily(ent?.mobileType), ent, shapes) && Math.random() < TELL.CHAIN_CHANCE) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-chain-of-chains",
+    "file": "src/ai/tactics.js",
+    "old": "  if (!GAP_CLOSERS.includes(b.kind) && (b.chain ?? 0) < chainMax(ent) && chains(",
+    "new": "  if (!GAP_CLOSERS.includes(b.kind) && (b.chain ?? 0) < 9 && chains(",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-gap-unheld",
+    "file": "src/ai/tactics.js",
+    "old": "      b.chainUntil = s.chainAt + 0.2;",
+    "new": "      b.chainUntil = 0;",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-chain-old-facing",
+    "file": "src/ai/tactics.js",
+    "old": "beginWindup(ai, s, ent, s.chainShape, tf[0] - ai.feet[0], tf[2] - ai.feet[2], now, s.chainN);",
+    "new": "beginWindup(ai, s, ent, s.chainShape, Math.sin(ai.yaw + 2), Math.cos(ai.yaw + 2), now, s.chainN);",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ],
+    "note": "TELL8 (PIN MOVED): re-aimed by content - the owner winds up at a peer it hunts (`tf` its target's feet, `atMe` the damage's gate), a peer's blow carries its class, the relay moved to world162."
+  },
+  {
+    "name": "TELL5-chain-slow",
+    "file": "src/ai/tactics.js",
+    "old": "    ? windupSeconds(TELL.CHAIN_WINDUP, ent, { guard, roll: null, floor: TELL.CHAIN_FLOOR })",
+    "new": "    ? windupSeconds(BLOW[shape].windup, ent, { guard })",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-length-undrawn",
+    "file": "src/ai/tactics.js",
+    "old": "    : windupSeconds(BLOW[shape].windup, ent, { guard });",
+    "new": "    : BLOW[shape].windup + (guard === 'iron' ? TELL.IRON_EXTRA : 0);",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-never-feint",
+    "file": "src/ai/tactics.js",
+    "old": "  if (chain === 0 && !sig && shape !== 'aimed' && shape !== 'pyre' && !GAP_CLOSERS.includes(shape) && feints(blowFamily(ent.mobileType), ent, n - (s.lastFeint ?? -Infinity)) && Math.random() < feintChance(ent)) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-feint-anyone",
+    "file": "src/ai/tactics.js",
+    "old": "  if (chain === 0 && !sig && shape !== 'aimed' && shape !== 'pyre' && !GAP_CLOSERS.includes(shape) && feints(blowFamily(ent.mobileType), ent, n - (s.lastFeint ?? -Infinity)) && Math.random()",
+    "new": "  if (chain === 0 && !sig && shape !== 'aimed' && shape !== 'pyre' && !GAP_CLOSERS.includes(shape) && Math.random()",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-ucut-unset",
+    "file": "src/render/foeTelegraph.js",
+    "old": "      gl.uniform1f(U.uCut, phase.cut > 0 ? phase.cut : 0);   // TELL5",
+    "new": "      gl.uniform1f(U.uCut, 0);   // TELL5",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ]
+  },
+  {
+    "name": "TELL5-cut-silent",
+    "file": "src/scenes/hostCombat.js",
+    "old": "      || c.blow.cut != null;   // TELL5",
+    "new": "      || false;   // TELL5",
+    "tests": [
+      "test/tell5_patterns.test.js"
+    ]
+  }
+]
