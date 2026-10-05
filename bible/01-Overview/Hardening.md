@@ -444,6 +444,17 @@ behind is worse than none - two texts, one edited and one read), the
 ban on negative pins aimed at one page, the reason `## Open flags` stayed,
 and the pin on the warning above. Mutation-verified three ways.
 
+**THE CEILING DID ITS JOB, 2026-10-05.** Home.md grew back from 30 KB to
+80 KB in three weeks - the page index under `## Sections`, one line per
+page with a record of its own, many of them grown into essays (THE LIVING
+WORLD's is 6 KB) - and WALLET1's merge of main (#621) crossed the ceiling.
+The page index moved to `01-Overview/Page-Index.md` the same way, byte for
+byte: a stub where it stood and the derived index reading it. The six
+pins that matched a page's line in Home.md (BA1, IF1, WATER, WEATHER2a, 2b
+and 2d) read that page now, not the derived index: three of their pages
+are named in Active-Arcs too, so through the whole index those three
+could no longer fail when their own line went. Home.md is 23 KB again.
+
 ## AUDIT-HARD, 2026-09-15 - the program audited against itself
 
 Mac, before merging: "Lets audit this before merging." Nine findings over
