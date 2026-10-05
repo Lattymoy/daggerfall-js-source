@@ -27,6 +27,7 @@
 // Pure JSON in, JSON out - no module state read.
 
 import { QUEST_OWN_SECOND_KEYS, QUEST_WORLD_SECOND_KEYS, shiftQuestStamps, markOwnClock } from './quest/questStamps.js';
+import { LEGACY_VENDOR } from './legacy/family.js';
 
 /** AUDIT LIVED1b F3 (S4): a save's clock - classic minutes, an unsigned count below 2^31 (4,000 years of the calendar;
  *  DFU's is a uint) - or null for anything else. The doors and the load (save.js restorePlayer) read the envelope's
@@ -92,6 +93,15 @@ const daysBetween = (to, from) => Math.floor(Math.floor(to) / 1440) - Math.floor
  *  caught the world's. The world's schedule has no meaning on another clock, so the copy takes the mod's NewSaveData
  *  (the load hands a mod with no record its new one - modSaveData.js restoreModSaveRecords) and rolls its own. */
 export const RAID_RECORD_VENDOR = 'world-events-raiding-parties';
+
+/** AUDIT LEGACY II H1: A COPY BETWEEN THE LANES IS A NEW CHARACTER, AND A NEW CHARACTER IS OF NO HOUSE YET. Project
+ *  Legacy's record (`modData.ProjectLegacy`) names the people of a line by their character ids; carried across, the
+ *  copy (a new id) played as the ORIGINAL's person - its tolls aged them, its death or retirement wrote them dead in
+ *  the store both lanes share in one browser, and the remains' purses came into the realm uncounted by customs. The
+ *  copy founds its own house on its first load (legacyHost.js found). Both doors drop it, whatever the clocks say. */
+function dropLineage(copy) {
+  if (copy.modData && typeof copy.modData === 'object') delete copy.modData[LEGACY_VENDOR];
+}
 /** AUDIT REST III D1: the bounty board's record (bountyBoard.js BOUNTY_VENDOR - pinned equal, test/auditrest3.test.js;
  *  this module stays off the board's graph, as it does off the raid mod's). */
 export const BOUNTY_RECORD_VENDOR = 'bountyBoard';
@@ -100,6 +110,7 @@ export const BOUNTY_RECORD_VENDOR = 'bountyBoard';
 export function offlineCopyOf(snap) {
   const copy = JSON.parse(JSON.stringify(snap ?? null));
   if (!copy || typeof copy !== 'object') return copy;
+  dropLineage(copy);
   const own = saneSaveClock(copy.classicMinutes), world = saneSaveClock(copy.worldMinutes);
   delete copy.worldMinutes;
   delete copy.joinFresh;
@@ -119,7 +130,9 @@ export function offlineCopyOf(snap) {
  *  distance from the offline calendar to the world's as time away. */
 export function onlineCopyOf(snap, worldNow) {
   const copy = JSON.parse(JSON.stringify(snap ?? null));
-  if (!copy || typeof copy !== 'object' || !Number.isFinite(worldNow)) return copy;
+  if (!copy || typeof copy !== 'object') return copy;
+  dropLineage(copy);
+  if (!Number.isFinite(worldNow)) return copy;
   const own = saneSaveClock(copy.classicMinutes);
   copy.worldMinutes = Math.floor(worldNow);
   // AUDIT LIVED1b P2: ...and that is the minute THIS machine's clock said at the click - the menu has no relay to

@@ -10,8 +10,10 @@ and save records, Chromium for the windows):
 - **U - the windows** (Enhanced Plus, a phone, the keyboard and the pad);
 - **F - fidelity and the records** (the mod's IL against the port; the docs against the code).
 
-Thirty-five findings after the duplicates were folded. Every one was verified against the code before it was fixed,
-and is pinned by a test that fails on the code as it stood: `test/auditlegacy.test.js` (by id), with the host's own
+Thirty-four rows of findings after the duplicates were folded (AUDIT LEGACY II F11 corrected the count, which said
+thirty-five, and named the retirement's heirloom row H10 - H9 had been given twice). Every one was verified against the
+code before it was fixed, and is pinned by a test that fails on the code as it stood (A9 and U9 were not, until AUDIT
+LEGACY II pinned them in `test/auditlegacy2.test.js`): `test/auditlegacy.test.js` (by id), with the host's own
 pins in `legacy1_family`, `legacy4_heirloom` and `legacy3_familytab` brought to the new law. Mutation-proven:
 `tools/mutants/auditlegacy.json`. Each fix carries an `AUDIT LEGACY` comment.
 
@@ -52,7 +54,7 @@ before the save that held them). The fix is a law, stated once in `scenes/legacy
 | H5 | Medium | **An artifact** (minted `artifact: true`, no `rarity`) or a **summoned** piece could become an heirloom. | `rarityOf` and `isSummoned` in `heirloomEligible`. |
 | H6 | Medium | The remains' purse was lost if not looted on the first visit. | The purse is in the list (H1). |
 | H7 | Medium | The remains' gold had no ceiling; `ESTATE_MAX` was the realm birth ceiling itself (a born heir 10,100). | `REMAINS_GOLD_MAX` 2,500; `ESTATE_MAX` 9,900 (the ceiling less `STARTING_GOLD`). |
-| F4/H9 | Medium | **An elder's retirement handed no heirloom down** (the arc said always one). | The bequest: the elder's heirloom, paid to whoever takes the mantle. The arc's "no quest at home" rule is corrected to what is built: every final death leaves remains. |
+| F4/H10 | Medium | **An elder's retirement handed no heirloom down** (the arc said always one). | The bequest: the elder's heirloom, paid to whoever takes the mantle. The arc's "no quest at home" rule is corrected to what is built: every final death leaves remains. |
 | F5 | Medium | "Always have descendants" no longer meant always: read only at a birth. | `newbornAllowed` reads the setting at the death too (IL_17ce). |
 | U4 | Medium | A refused "Pass the mantle" closed the pause silently. | `mantleRefusal` on the card before the press; a refusal after it is said on the HUD. |
 | U5 | Medium | Five tabs wrapped the pause window's strip at every desktop size. | The tab spacing a step tighter (Chromium: one row at 1280 and 1920). |

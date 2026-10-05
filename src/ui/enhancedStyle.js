@@ -2100,6 +2100,15 @@ ${badgeCss()}
   .px-tabs button { font-size: 15px; letter-spacing: 0.06em; text-indent: 0.06em; padding: 6px 6px; gap: 0; }
   .px-tabs button .px-c { display: none; }
 }
+/* AUDIT LEGACY II U9: five tabs (Project Legacy's Family) on a phone held upright and a small tablet - a step tighter
+   again, so the strip stands on one row from 320 px; wrapped still as the last resort, never cut */
+@media (max-width: 780px) and (min-width: 661px) {
+  .px-tabs button { font-size: 16px; letter-spacing: 0.06em; text-indent: 0.06em; padding: 6px 8px; gap: 4px; }
+}
+@media (max-width: 420px) {
+  .px-tabs { gap: 2px; padding: 6px 4px 2px; }
+  .px-tabs button { font-size: 13px; letter-spacing: 0.02em; text-indent: 0.02em; padding: 6px 4px; }
+}
 @media (max-width: 480px) {
   .px-win { width: 100vw; height: calc(100dvh - 48px); border-left: 0; border-right: 0; }
   /* PX4: the journal stacks - the rail is a strip of rows across the

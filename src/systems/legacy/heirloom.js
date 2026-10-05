@@ -101,6 +101,11 @@ export function mintRemainsItem({ line, of, name }) {
   return { ...item, name: `The remains of ${name}`, legacyRemains: { line: String(line), of: of | 0, name: String(name) } };
 }
 export const isRemainsItem = (it) => it?.templateIndex === REMAINS_TEMPLATE && !!it?.legacyRemains;
+/** AUDIT LEGACY II H4: the mark a remains' list wears while it is open - the fallen's person id, under a symbol (never
+ *  saved: JSON skips it). The bones go back into the list that bears their own mark, and into nothing else outside the
+ *  character's keeping (systems/itemTransfer.js planStore): put in a chest or on the ground, they were in no list the
+ *  quest reads, lay again in the list, and two sets of bones were carried home. */
+export const REMAINS_LIST = Symbol.for('dagger.legacy.remainsList');
 
 /** The fallen's best skill (the blessing's) - the highest, the first of equals. */
 export function bestSkillOf(person) {

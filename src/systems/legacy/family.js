@@ -454,6 +454,11 @@ export function readFamily(rec) {
     people.push(p);
   }
   if (!people.length) return null;
+  // AUDIT LEGACY II A9: no one is their own ancestor - a damaged record's parent link that closes a cycle is dropped
+  // (household.js kinOf walked it forever inside the talk door)
+  const byId = new Map(people.map((p) => [p.id, p]));
+  const ancestorOf = (p, id, seen = new Set()) => (p.parents ?? []).some((q) => q === id || (!seen.has(q) && (seen.add(q), byId.has(q)) && ancestorOf(byId.get(q), id, seen)));
+  for (const p of people) p.parents = p.parents.filter((q) => q !== p.id && !(byId.has(q) && ancestorOf(byId.get(q), p.id)));
   const maxId = Math.max(...people.map((p) => p.id));
   return {
     v: FAMILY_VERSION, id: rec.id, surname: String(rec.surname ?? ''), model: isModel(rec.model) ? rec.model : MODELS.enduring,
@@ -480,6 +485,9 @@ function readRemains(r) {
     ...r,
     name: String(r.name ?? ''), place: r.place && typeof r.place === 'object' ? r.place : null,
     items: Array.isArray(r.items) ? r.items.filter((it) => it && typeof it === 'object') : [],
+    // AUDIT LEGACY II A10: the list as laid held to its shape too - a damaged one became the remains' list at a rewind,
+    // and every tick after threw
+    first: Array.isArray(r.first) ? r.first.filter((it) => it && typeof it === 'object') : (Array.isArray(r.items) ? r.items.filter((it) => it && typeof it === 'object') : []),
     state: REMAINS_STATES.includes(r.state) ? r.state : 'lying',
     by: Number.isInteger(r.by) ? r.by : null,
     killer: r.killer == null ? null : String(r.killer),
@@ -495,12 +503,3 @@ function readPending(p, people) {
   };
 }
 
-/** Of two copies of one family (the store's and a save's), the newer by `rev`; either alone; null for neither or
- *  for two DIFFERENT families (the save's is then the one being played - the caller's word). */
-export function newerFamily(a, b) {
-  const x = readFamily(a), y = readFamily(b);
-  if (!x) return y;
-  if (!y) return x;
-  if (x.id !== y.id) return null;
-  return y.rev > x.rev ? y : x;
-}

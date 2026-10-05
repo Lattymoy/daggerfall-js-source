@@ -69,7 +69,7 @@ const defaultAction = (e) => (e.code === 'Enter' ? 'ActivateCursor' : null);
 test('MAC-T2: an H typed into the chat line switches no hand - the field stops the down in capture, the host\'s ungated keyup still runs, and the ring releases only what it captured; the same H on the canvas still switches', () => {
   setBindings(defaults());
   const doc = fakeDocument(), win = fakeWindow();
-  // the host's shape: bubble, on the window, feeding the held Set and the edge ring (world.js:15343 / :15366 / :15604)
+  // the host's shape: bubble, on the window, feeding the held Set and the edge ring (world.js:15346 / :15369 / :15607)
   const keys = new Set(); const edge = keyEdges();
   win.addEventListener('keydown', (e) => { keys.add(e.code); noteKeyDown(edge, e.code, e.repeat); });
   win.addEventListener('keyup', (e) => { keys.delete(e.code); noteKeyUp(edge, e.code); });

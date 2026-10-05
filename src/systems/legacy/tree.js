@@ -63,8 +63,9 @@ export function layoutTree(family) {
     if (kids.length) families.push({ parents: own === 2 ? [p.id, s.id] : [p.id], children: kids.map((c) => c.id) });
     return w;
   }
-  // the roots: members with no recorded parent who are not a spouse who married in, the founder's line first
-  const roots = people.filter((p) => !(p.parents ?? []).length && p.kind !== 'resident' && !people.some((o) => o.spouse === p.id && o.id < p.id && o.kind === 'member' && !(o.parents ?? []).length && false))
+  // the roots: members with no recorded parent who are not a spouse who married in (`resident` - they hang beside
+  // their spouse's plate), the founder's line first. AUDIT LEGACY II F14: a dead `&& false` clause dropped
+  const roots = people.filter((p) => !(p.parents ?? []).length && p.kind !== 'resident')
     .sort((a, b) => a.gen - b.gen || a.id - b.id);
   let x = 0;
   for (const r of roots) { if (placed.has(r.id)) continue; x += place(r, x); }

@@ -682,6 +682,13 @@ export function isDomControlTarget(t) {
   return !!t && (t.tagName === 'BUTTON' || t.tagName === 'SELECT' || t.tagName === 'SUMMARY' || (t.tagName === 'A' && !!t.href));
 }
 
+/** AUDIT LEGACY II U3: a Tab inside a DOM window that OWNS the keyboard's focus (its host marked `data-dom-focus` - the
+ *  pause window) is the browser's walk of it. Both hosts' overlay rungs prevented every key, so Tab moved nothing and
+ *  the Family tab's plates, its card's acts and every page's controls were a mouse's or a finger's alone. */
+export function isDomFocusWalk(e) {
+  return e?.key === 'Tab' && !!e.target?.closest?.('[data-dom-focus]');
+}
+
 /**
  * MAC-L3: THE BROWSER MENU, SHUT ONCE.
  *
@@ -727,6 +734,7 @@ export function routeKey(e, ctx, setPlayerPos = null, keys = null) {
   // overlay - a DOM field over the world (an enhanced prompt) is typed into with no overlay in the host's slot, and
   // every letter was an action (M the map, R the rest).
   if (isTextEntryTarget(e?.target)) return false;
+  if (ctx.uiOverlayActive && isDomFocusWalk(e)) return false;   // AUDIT LEGACY II U3: the window's own focus walk
   if (ctx.uiOverlayActive) {
     // U26: a NATIVE window keys off raw codes, exactly as townTalk's
     // seam has since G2 - the action map ('back'/'confirm'/'up') is

@@ -29,11 +29,12 @@
   {
     "name": "LEGACY-HOME-sync-drops-others",
     "file": "src/systems/legacy/household.js",
-    "old": "  const others = (family.houses ?? []).filter((h) => h.by !== personId);",
-    "new": "  const others = [];",
+    "old": "  const next = was.filter((h) => h.by !== personId || mine.some((m) => sameHouse(m, h)));",
+    "new": "  const next = was.filter((h) => h.by === personId && mine.some((m) => sameHouse(m, h)));",
     "tests": [
       "test/legacyhome.test.js"
-    ]
+    ],
+    "note": "AUDIT LEGACY II (PIN MOVED): re-aimed by content - the law it guards now stands at this line."
   },
   {
     "name": "LEGACY-HOME-census-job",
@@ -56,20 +57,22 @@
   {
     "name": "LEGACY-HOME-dial-ignored",
     "file": "src/scenes/legacyHost.js",
-    "old": "  const inWorld = () => !!family && deps.on() && !past && legacySettings().familyInWorld;",
-    "new": "  const inWorld = () => !!family && deps.on() && !past;",
+    "old": "!past && legacySettings().familyInWorld && (deps.livingWorld?.() ?? true);",
+    "new": "!past && (deps.livingWorld?.() ?? true);",
     "tests": [
       "test/legacyhome.test.js"
-    ]
+    ],
+    "note": "AUDIT LEGACY II (PIN MOVED): re-aimed by content - the law it guards now stands at this line."
   },
   {
     "name": "LEGACY-HOME-new-list-every-ask",
     "file": "src/scenes/legacyHost.js",
-    "old": "    if (kept?.key === key) return kept.list;\n",
+    "old": "    if (kept?.key === listKey) return kept.list;\n",
     "new": "",
     "tests": [
       "test/legacyhome.test.js"
-    ]
+    ],
+    "note": "AUDIT LEGACY II (PIN MOVED): re-aimed by content - the law it guards now stands at this line."
   },
   {
     "name": "LEGACY-HOME-not-parked",
@@ -83,11 +86,12 @@
   {
     "name": "LEGACY-HOME-houses-not-synced",
     "file": "src/scenes/legacyHost.js",
-    "old": "    if (deps.heldHouses && syncHouses(family, p.id, deps.heldHouses())) { touch(family); store(); }",
-    "new": "",
+    "old": "    syncHousesNow(p);\n    // where this save is made",
+    "new": "    // where this save is made",
     "tests": [
       "test/legacyhome.test.js"
-    ]
+    ],
+    "note": "AUDIT LEGACY II (PIN MOVED): re-aimed by content - the law it guards now stands at this line."
   },
   {
     "name": "LEGACY-HOME-kin-slain-not-stored",
@@ -101,11 +105,12 @@
   {
     "name": "LEGACY-HOME-retired-playable",
     "file": "src/scenes/legacyHost.js",
-    "old": "    const refusal = p.retired != null ? LEGACY_TEXT.retiredKin(p.given) : switchRefusal(p.id);",
-    "new": "    const refusal = switchRefusal(p.id);",
+    "old": "    const why = p.retired != null ? LEGACY_TEXT.retiredKin(p.given) : switchRefusal(p.id);",
+    "new": "    const why = switchRefusal(p.id);",
     "tests": [
       "test/legacyhome.test.js"
-    ]
+    ],
+    "note": "AUDIT LEGACY II (PIN MOVED): re-aimed by content - the law it guards now stands at this line."
   },
   {
     "name": "LEGACY-HOME-town-keeps-stale-extras",
@@ -119,11 +124,12 @@
   {
     "name": "LEGACY-HOME-lent-a-shop",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "    const homes = [...this.places.doors.keys()].filter((k) => isHome(this.places.types.get(k))).sort((a, b) => a - b);",
-    "new": "    const homes = [...this.places.doors.keys()].sort((a, b) => a - b);",
+    "old": "    this._homes ??= [...this.places.doors.keys()].filter((k) => isHome(this.places.types.get(k))).sort((a, b) => a - b);",
+    "new": "    this._homes ??= [...this.places.doors.keys()].sort((a, b) => a - b);",
     "tests": [
       "test/legacyhome.test.js"
-    ]
+    ],
+    "note": "AUDIT LEGACY II (PIN MOVED): re-aimed by content - the law it guards now stands at this line."
   },
   {
     "name": "LEGACY-HOME-record-drops-parked",

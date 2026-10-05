@@ -166,7 +166,8 @@ test('AUDIT LEGACY A4/B7: a fall waits on the record - a closed tab or a failed 
   const src = rd('src/scenes/world.js');
   assert.match(src, /if \(!r\) \{ legacyBirthFailed\('no birth waits for this address'\); return; \}/);
   assert.match(src, /\}\)\.catch\(\(e\) => legacyBirthFailed\(e\?\.message \?\? String\(e\)\)\);/);
-  assert.match(rd('src/scenes/legacyHost.js'), /payEstateOf\(p\);\n\s+born = null;\n\s+if \(deps\.saveNow\(\)\) clearBirth\(deps\.tab\(\)\);/, 'the born member saved at birth, the handoff answered then');
+  // PIN MOVED (AUDIT LEGACY II A2): the birth stands only with its save - and the handoff is answered then
+  assert.match(rd('src/scenes/legacyHost.js'), /payEstateOf\(p, \{ write: false \}\);\n\s+if \(deps\.saveNow\(\)\) \{ store\(\); clearBirth\(deps\.tab\(\)\); return; \}/, 'the born member saved at birth, the handoff answered then');
 });
 
 test('AUDIT LEGACY A6/H3: TWO AUTHORITIES - a death is the store\'s, what a character was given is their save\'s: a reload rewinds a grant with the bag, never a death', () => {

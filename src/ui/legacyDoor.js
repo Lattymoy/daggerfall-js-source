@@ -20,7 +20,8 @@ export function walkButtons(root, code, e = null) {
   const step = (d) => { const i = at < 0 ? (d > 0 ? 0 : btns.length - 1) : (at + d + btns.length) % btns.length; btns[i].focus?.(); return true; };
   if (code === 'ArrowDown' || code === 'ArrowRight' || (code === 'Tab' && !e?.shiftKey)) return step(1);
   if (code === 'ArrowUp' || code === 'ArrowLeft' || (code === 'Tab' && e?.shiftKey)) return step(-1);
-  if (code === 'Enter' || code === 'NumpadEnter' || code === 'Space') { (btns[at] ?? btns[0]).click?.(); return true; }
+  // AUDIT LEGACY II U1: a held key presses once - its repeats press nothing
+  if (code === 'Enter' || code === 'NumpadEnter' || code === 'Space') { if (!e?.repeat) (btns[at] ?? btns[0]).click?.(); return true; }
   return false;
 }
 export const successionOpen = () => !!_open && !_open.done;
@@ -37,6 +38,7 @@ export function createSuccessionOverlay(deps) {
   let view = null;
   const host = document.createElement('div');
   host.id = 'legacy-succession-host';
+  host.setAttribute('data-no-back', '');   // AUDIT LEGACY II U14: a death has to be answered - the pad's bar offers no Back
   host.style.cssText = 'position:fixed;inset:0;z-index:14;background:transparent;overflow:hidden';
   document.body.append(host);
   const close = () => {
@@ -119,7 +121,10 @@ export function createKinOverlay(deps) {
     mount: (m) => {
       view = m.mountSuccession(host, {
         title: deps.title, lines: deps.lines, faces: deps.faces,
-        choices: [{ key: 'play', who: deps.who, name: deps.name, sub: deps.sub, act: deps.act, why: deps.why }],
+        // AUDIT LEGACY II U2: Talk lit first, and Play as asked twice - one Space (the Jump key) or Enter saved and left
+        // the one played on the spot
+        choices: [{ key: 'play', who: deps.who, name: deps.name, sub: deps.sub, act: deps.act, why: deps.why, confirm: `Yes - ${deps.act.charAt(0).toLowerCase()}${deps.act.slice(1)}` }],
+        lit: 'lgs-act-talk',
         choose: () => { const r = deps.play(); if (r?.ok) close(); return r; },
         // Talk: the window down first, then the town's conversation opens in its place
         acts: [{ key: 'talk', label: 'Talk', act: () => { close(); deps.talk(); } }, { key: 'bye', label: 'Goodbye', act: () => close() }],

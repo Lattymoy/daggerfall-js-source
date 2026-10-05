@@ -9,11 +9,12 @@ import {
   familyResId, familyResOf, isFamilyRes, FAMILY_JOB, FAMILY_ROLL, FAMILY_SLOT_BASE, CLASS_MOBILE_BASE, sameHouse,
   syncHouses, familyHome, setFamilyHome, homeOf, householdOf, residentOf, kinOf, kinGreeting, kinLine,
 } from '../src/systems/legacy/household.js';
-import { foundFamily, addChild, readFamily, familyRng, MODELS, personOf, LEGACY_MOD } from '../src/systems/legacy/family.js';
+import { foundFamily, addChild, readFamily, familyRng, MODELS, personOf, LEGACY_MOD, recordDeath, touch } from '../src/systems/legacy/family.js';
 import { loadFamily } from '../src/systems/legacy/store.js';
 import { createLegacyHost, LEGACY_TEXT } from '../src/scenes/legacyHost.js';
 import { _resetModSaveData } from '../src/systems/modSaveData.js';
 import { MOD_SETTINGS, setModSetting, _resetModSettings } from '../src/systems/modSettings.js';
+import { modSaveRecords, restoreModSaveRecords } from '../src/systems/modSaveData.js';
 import { MOD_CURATED } from '../src/systems/features.js';
 import { legacySettings } from '../src/systems/legacy/settings.js';
 import { LOCATION_TYPES } from '../src/formats/mapsFile.js';
@@ -186,13 +187,16 @@ function homeWorld({ model = MODELS.enduring } = {}) {
     here: () => ({ pixel: { x: 10, y: 20 }, region: 'Daggerfall', mode: 'exterior', loc: w.loc, locationType: LOCATION_TYPES.TownCity, mapId: w.loc === 'Gothway Garden' ? 5001 : 6001 }),
     town: (h) => ({ region: h.region, loc: h.loc, mapId: h.mapId }), nearestTown: () => ({ region: 'Daggerfall', loc: 'Gothway Garden' }),
     gold: () => 100, say: (l) => w.said.push(l), boot: (q) => w.booted.push(q), search: () => '?world', loadCharacter: () => true,
-    saveNow: () => { w.saved++; return true; }, inFight: () => w.fight, rng: familyRng(9),
+    // AUDIT LEGACY II P8: a save is the real one - the host's own record written (getSaveData), as the game's save does
+    saveNow: () => { w.saved++; w.save = modSaveRecords().ProjectLegacy; return true; }, inFight: () => w.fight, rng: familyRng(9),
     heldHouses: () => w.held, houseHere: () => w.here,
   });
+  // AUDIT LEGACY II P8: a line of one, founded so - no rolled siblings (the old fixture cut them from memory alone, and
+  // the store kept them under the ids the tests then minted again)
+  setModSetting(LEGACY_MOD, 'Family.Siblings Probability', 0);
   host.found(model);
-  // the founding's rolled siblings let go: each test makes the line it reads
-  host.family.people = host.family.people.slice(0, 1);
-  host.family.nextId = 2;
+  setModSetting(LEGACY_MOD, 'Family.Siblings Probability', 50);
+  assert.equal(host.family.people.length, 1);
   return { host, storage, w, e };
 }
 
@@ -202,6 +206,12 @@ test('LEGACY-HOME: the host stands the line in its town - the seat lent with no 
   const f = host.family;
   const sib = addChild(f, null, { rng: familyRng(4) }).person;
   sib.parents = []; sib.gen = 0;
+  // AUDIT LEGACY II P4: a seat noted before it knew its town - learned only in that town, never another's
+  delete f.seat.mapId;
+  w.loc = 'Sentinel';
+  host.tick();
+  assert.equal(f.seat.mapId, undefined, 'another town teaches the seat nothing');
+  w.loc = 'Gothway Garden';
   host.tick();
   assert.equal(f.seat.mapId, 5001, 'the seat learns its town');
   const lend = (seed) => (seed === f.id ? 42 : 0);
@@ -210,15 +220,26 @@ test('LEGACY-HOME: the host stands the line in its town - the seat lent with no 
   assert.equal(host.residentsOf(5001, lend), a, 'the same list - the town keeps its day by it');
   assert.deepEqual(host.residentsOf(9999, lend), [], 'another town');
   assert.deepEqual(host.residentsOf(5001, () => 0), [], 'a town with no house to lend stands nobody');
-  // a house bought: the line moves in
+  // a house bought: the line moves in - with the save that holds the deed (AUDIT LEGACY II A6)
   w.held = [HOUSE_A];
   host.tick();
+  assert.deepEqual(f.houses, [], 'an unsaved deed is no house of the line\'s');
+  modSaveRecords();
   assert.deepEqual(loadFamily(storage, f.id).houses, [{ ...HOUSE_A, by: 1 }], 'the store knows the line\'s houses');
   const b = host.residentsOf(HOUSE_A.mapId, lend);
   assert.notEqual(b, a);
   assert.deepEqual(b.map((r) => r.home), [HOUSE_A.buildingKey]);
   assert.equal(host.isFamilyHouse(HOUSE_A), true);
   assert.equal(host.isFamilyHouse(HOUSE_B), false);
+  // AUDIT LEGACY II P3: a save changes nothing a resident is made of - the same residents, the same list
+  const before = host.residentsOf(HOUSE_A.mapId, lend);
+  modSaveRecords();
+  assert.equal(host.residentsOf(HOUSE_A.mapId, lend), before, 'the same list after a save');
+  sib.level = 9;
+  touch(f);
+  const after = host.residentsOf(HOUSE_A.mapId, lend);
+  assert.notEqual(after, before, 'one of them changed: a new list');
+  assert.notEqual(after[0], before[0]);
   // the dial
   assert.equal(MOD_SETTINGS['project-legacy'].keys['Legacy.Family In World'].default, true, 'on by default');
   assert.equal(legacySettings().familyInWorld, true);
@@ -231,12 +252,32 @@ test('LEGACY-HOME: the host stands the line in its town - the seat lent with no 
   assert.ok(MOD_CURATED['project-legacy'].includes('Legacy.Family In World'), 'on the tile');
 });
 
+test('AUDIT LEGACY II P5: the past played back stands no one of the line, and holds no house of theirs', () => {
+  _resetModSettings();
+  const { host, w } = homeWorld();
+  const f = host.family;
+  const sib = addChild(f, null, { rng: familyRng(4) }).person;
+  sib.parents = []; sib.gen = 0;
+  w.held = [HOUSE_A];
+  const lend = () => 42;
+  modSaveRecords();
+  assert.equal(host.residentsOf(HOUSE_A.mapId, lend).length, 1);
+  const fallenSave = JSON.parse(JSON.stringify(modSaveRecords().ProjectLegacy));
+  recordDeath(f, 1, { at: 1 });
+  touch(f);
+  modSaveRecords();
+  restoreModSaveRecords({ ProjectLegacy: fallenSave });
+  assert.ok(host.past, 'the fallen founder\'s save is the past');
+  assert.deepEqual(host.residentsOf(HOUSE_A.mapId, lend), [], 'none');
+  assert.equal(host.isFamilyHouse(HOUSE_A), false);
+});
+
 test('LEGACY-HOME: a save made in a house of the line PARKS the member there; one made elsewhere sends them on their own journey', () => {
   _resetModSettings();
   const { host, w } = homeWorld();
   const f = host.family;
   w.held = [HOUSE_A];
-  host.tick();
+  modSaveRecords();
   const sib = addChild(f, null, { rng: familyRng(4) }).person;
   sib.parents = []; sib.gen = 0;
   w.here = { mapId: HOUSE_A.mapId, buildingKey: HOUSE_A.buildingKey };
@@ -293,13 +334,14 @@ test('LEGACY-HOME: a kin STRUCK DOWN by the one played dies in the record - by w
 
 test('LEGACY-HOME: the House page marks the family home; the card says where each lives', () => {
   _resetModSettings();
-  const { host, w } = homeWorld();
+  const { host, w, storage } = homeWorld();
   const f = host.family;
   w.held = [HOUSE_A, HOUSE_B];
-  host.tick();
+  modSaveRecords();
   const sib = addChild(f, null, { rng: familyRng(4) }).person;
   assert.equal(livesLine(f, sib), 'At the family home in Gothway Garden');
   assert.equal(host.markHome(HOUSE_B), true);
+  assert.deepEqual(loadFamily(storage, f.id).home, { mapId: HOUSE_B.mapId, buildingKey: HOUSE_B.buildingKey }, 'AUDIT LEGACY II P5: the mark is the store\'s at once');
   assert.equal(livesLine(f, sib), 'At the family home in Sentinel');
   assert.equal(host.markHome({ mapId: 1, buildingKey: 1 }), false);
   sib.characterId = 'c-sib';

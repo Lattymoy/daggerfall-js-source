@@ -78,6 +78,7 @@ The fix column names the law in this arc that removes the cause.
 | S2 | A custom class switches to the current character's career | the lookup by name misses and nothing else runs | a person is played from their own save, which carries their career |
 | S3 | A switch is free fast travel, even mid-fight | the anchor teleport | a switch is a save and a load; a fight refuses it (`legacyHost.js switchRefusal`) |
 | S4 | Yes pops three windows: the box, the card, and whatever was under the tree | `PopWindow` inside the switch plus two closes and a pop | one close, the overlay slot's |
+| S5 | "Random descendants" chosen after "Always" keeps answering Always until the game restarts | `LoadSettings` only ever SETS `alwaysHaveDescendants` (IL_03ff-0404) and never clears it (AUDIT LEGACY II F12 found it) | the setting is read at the moment it matters (`systems/legacy/settings.js legacySettings`) |
 | U1 | The wheel zooms about the corner and reads the wheel under other windows | no re-centre after the rebuild; `Input.mouseScrollDelta` read raw | zoom about the pointer, inside the window's own handler |
 | U2 | The dead and the living, the one played and the rest, look the same | `P_DEAD`/`P_ACTIVE` frames are never drawn | the dead and the played one marked on their plates; the card's chips name the living, the dead, the elder, the heir answer ("Has an heir") and the remains' state |
 | U3 | Skill labels read "HandToHand", "CriticalStrike" | `Enum.GetName` | `SKILL_NAMES` |
@@ -103,7 +104,11 @@ S1. So in the port:
   record (`pending`). A SAVE answers what its character was given: the estate and the bequest paid, the remains opened,
   taken or laid to rest (`legacyHost.js mergeFamily`) - a reload rewinds those with the bag they went into. A save of a
   dead or retired member is THE PAST: refused for as long as it stands, the line's Succession or its living offered.
-  Online (LEGACY7, not built) the account service will hold the lineage (section 9).
+  AUDIT LEGACY II: a WRITE never loses a fact the store holds - a copy not ahead of the store's (another tab's, an older
+  save's) takes the store's facts in first, deaths only ever added (`store.js storeFamily`/`mergeFacts`, A4), and a
+  write the storage refuses is said and tried again at every tick (P1). A record with no person for the character
+  played is not theirs and is let go (H1). Online (LEGACY7, not built) the account service will hold the lineage
+  (section 9).
 - **The fixed city keeps DFU's death** (FLAGGED, `scenes/world.js`): `?exterior`, a dev route, streams no world for an
   heir to be born into.
 - **A person is played by being loaded.** Switching to a member who has been played loads their newest save; to one
@@ -122,7 +127,11 @@ The boot: `?world&legacyborn=<personId>&region=<r>&loc=<l>` (the world host's sc
 it) - the pending birth is held in session storage (`legacy/store.js leaveBirth`/`readBirth`), the boot's chargen arm
 builds the person instead of opening the wizard, and the family's record is the new game's `ProjectLegacy` save data.
 The born member is SAVED at once (the mod's `SaveCurrentCharacter(firstTime)`): the handoff is answered then, and the
-page's address becomes that save's load. A birth that cannot be made goes back to the menu, said - the line waits. The
+page's address becomes that save's load. A birth that cannot be made goes back to the menu, said - the line waits.
+AUDIT LEGACY II: the birth STANDS ONLY WITH ITS SAVE - its character id, the fall it answers (settled as the heir
+lands, never at the Succession's choice - B1) and the estate are undone if that first save is refused, and the reload
+bears them again (A2); a member whose character id no save holds (their saves deleted) is born again from their
+person rather than loaded (A2/B1). Until the heir lands, the page that chose acts for no one (A1). The
 heir is born in a TOWN: the family's seat - the first town its founder stands in - else the nearest town to where the
 parent fell (B11's root, a coordinate pair that is no place, gone).
 
@@ -140,7 +149,8 @@ parent fell (B11's root, a coordinate pair that is no place, gone).
 - **Skills.** DFU's own roll (`rollSkills`) - then THE HEARTH: each of the parent's primary and major skills
   `+ clamp(floor(parent's / 20), 0, 3)`. What the parent practised, the child grew up seeing.
 - **Kit and purse.** DFU's starting kit for the career; and THE ESTATE: a quarter of the gold the dead carried,
-  capped at 10,000 (the online birth's liquid ceiling, `REALM_BIRTH_WEALTH_MAX`) - paid as a letter of credit.
+  capped at 9,900 (`ESTATE_MAX`: the online birth's liquid ceiling, `REALM_BIRTH_WEALTH_MAX` 10,000, less the starting
+  purse - AUDIT LEGACY H7; AUDIT LEGACY II F1 corrected this line) - paid as a letter of credit.
 - **Siblings.** A birth rolls the new member's siblings: with the setting's probability, one to the setting's maximum
   (defaults 50%, 2 - B14), each a record of their own drawn by the same law from the same parent. A sibling is
   played only when switched to, and is born then (B8).
@@ -164,7 +174,8 @@ heirlooms - section 7) and the remains always lie where the fallen fell.
 **ENDURING (not permadeath) - the answer to "somehow a persistent model".** A death is not final, but it is not free:
 it costs YEARS. Every member has an age and a span (THE SPAN: Breton, Nord 90, Redguard 80, Khajiit, Argonian 85,
 Wood Elf 150, Dark Elf 180, High Elf 200), born at a quarter of it. A death in Enduring is ARKAY'S TOLL: the player
-rises as the online respawn rises (D-ONLINE1 - the nearest temple, town or graveyard, the death's purse) - offline too,
+rises as the online respawn rises (D-ONLINE1 - the nearest temple, town or graveyard) - offline too, with no purse
+taken and no revenant's theft (the offline arm keeps the toll alone - AUDIT LEGACY II F5 corrected this line),
 where the classic death would end the run - and the member is older by 6% of their span (the Mods pane: Light 4%,
 Standard 6%, Heavy 10%). The years also pass as they live (the character's own clock, LIVED1: 360 days a year). At
 three quarters of the span the card names them an ELDER and the HUD says so once. When the span is spent, the next death
@@ -208,7 +219,15 @@ authority online until the realm keeps the lineage and its tombstone (section 9)
   any one skill however many are laid to rest (`BLESSING_SKILL_MAX`: a long line is honoured, never a build) - the
   heirloom attuned (its generation counted), and the tree's card of the fallen marked "At peace" (else "Lies
   unclaimed" or "Carried home"). Unclaimed remains lie for good (they are the family's, not the world's). Every final
-  death leaves remains and its quest, wherever it happened.
+  death leaves remains and its quest, wherever it happened - but one: a member struck down by the one played (section
+  10b) leaves no remains and no quest (AUDIT LEGACY II F3 recorded the exception). A rest lays what was left with the
+  remains to rest with them (AUDIT LEGACY II P6: a rested row keeps no lists).
+- **The claim (AUDIT LEGACY II).** A list is CLAIMED by the member who changes it (opened and left as it lies, it is
+  nobody's - H5); the claim is the store's, a world fact, and a rewind of the claimant's own save restores the list
+  with their bag but never drops the claim (H2); another member's save never rewinds a list it did not claim (A3).
+  A claim lapses when its claimant dies or retires, and the list then lies as they LEFT it (A3). Another member's log
+  names whose search it is. The bones go back into their own list or stay in the character's keeping - the pack, the
+  wagon, the bag - and into no chest, pile or ground (H4).
 
 ## 8. MARRIAGE, CHILDREN AND SURNAMES
 
@@ -281,14 +300,16 @@ the family seat as townsfolk; with several houses, one is the FAMILY HOME; and m
 than standing still.
 
 - **Who stands in the world** (`homeOf`). A living member of the blood who is not the one played - never played, or
-  played and PARKED (`parked`: their newest save was made in one of the family's houses, written at every save the host
-  makes of them), or retired. A member whose save stands anywhere else (a dungeon, the road, another town's street) is
+  played and PARKED (`parked`: their newest save was made in one of the family's houses, written by the save itself and
+  by nothing else - AUDIT LEGACY II A7: a rise or a failed switch wrote it), or retired. A member whose save stands anywhere else (a dungeon, the road, another town's street) is
   on their own journey: not in the world, and their card says so. What is seen and what is saved are one thing: Play as
   a member standing in a house and their own save takes them up in that house. The one played never stands beside
   themselves. LEGACY5's spouses join them when LEGACY5 builds marriage.
 - **Where they live.** THE FAMILY'S HOUSES are every house a member holds (`family.houses`, each row its holder's - a
   deed is the character's own, `systems/banking.js`, so the rows are the one played's `houses`, a deed that stands,
-  synced every tick; another member's rows are kept). THE FAMILY HOME is the one marked on the House page, else the one
+  learned with the SAVE that holds it and at a load - AUDIT LEGACY II A6: an unsaved purchase or sale moved the line;
+  another member's rows are kept, and every row keeps its place - A5: rebuilt, "the first house" changed with whoever
+  was played). THE FAMILY HOME is the one marked on the House page, else the one
   in the family's seat, else the first (`familyHome`). A parked member lives in the house their save was made in; the
   never-played and the retired in the family home. With NO house, the members live in the family's seat town as its
   townsfolk, in a residence of the town LENT to the line (`LivingTown.homeFor`, the same house for the same family -
@@ -318,9 +339,15 @@ than standing still.
 - **Struck down.** One of the line killed by the one played (the town's one-hit civilian, LW7) dies IN THE RECORD -
   `died` with cause `slain` and by whose hand, a world fact, the store's (AUDIT LEGACY's first authority) - said on the
   HUD, and stands no more; never a death in the town's lives (`livingDeadAt`/`livingSlay` pass them to the host).
-- **Online** (until LEGACY7): the realm's homes are the account service's (`systems/onlineHomes.js`), not yet the line's,
-  so online the family stands in its seat's town; they are this player's own residents, seen by them alone; Play as is
-  refused online.
+- **Online** (until LEGACY7): the realm's homes are the account service's (`systems/onlineHomes.js`), not yet the line's
+  (AUDIT LEGACY II F2/B4: the host learns no house online), so online the family stands in its seat's town; they are
+  this player's own residents, seen by them alone; Play as is refused online. A character copied between the lanes (the
+  realm's customs, Copy to offline) is a new character of no house: both doors drop the record (AUDIT LEGACY II H1).
+- **The Living World.** The line stands only in the Living World's towns (AUDIT LEGACY II B5): with it off (the classic
+  screens, or the Features row), nobody of the line stands anywhere, the card says no home, and the House page says
+  why. Each is their OWN household (`household`, AUDIT LEGACY II B2): a census house lent to the line shares no kin, no
+  grief and no keepsake with its census people; a resident whose home changes is planned again at once (B3); the same
+  resident objects stand while nothing they are made of changes (P3: a save no longer dressed them all anew).
 - **The switch.** "Family In World" (Project Legacy's settings, `Legacy.Family In World`, on the tile), on by default;
   off, the family lives in the Family tab alone, and its houses' rooms are the census's again.
 - **The House page** lists the homes - each house, whose deed, the family home marked, "Make this the family home" on

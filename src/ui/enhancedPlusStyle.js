@@ -283,13 +283,13 @@ body .dfchat-form .dfchat-close { min-width: 32px; padding: 4px 8px; }
 .lvl-opt.is-on, .lvl-opt:focus-visible { outline: none; background: rgba(192,138,62,0.12);
   border-color: ${FRAME_TONES.brassHi} ${FRAME_TONES.brassLo} #5c3f1a ${FRAME_TONES.brass};
   box-shadow: 0 0 0 1px #050608, 0 0 14px rgba(243,207,134,0.18), inset 0 1px 0 rgba(255,244,210,0.18); }
-.lvl-opt-head { display: flex; align-items: baseline; gap: 10px; }
+.lvl-opt-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }   /* AUDIT LEGACY II U10: a long tag wraps under the title, never past the card */
 .lvl-key { flex: 0 0 auto; min-width: 22px; text-align: center; font-size: 12px; padding: 1px 4px; color: #a89f88;
   border: 1px solid rgba(125,116,96,0.55); }
 .lvl-opt.is-on .lvl-key { color: rgb(243,239,44); border-color: ${FRAME_TONES.brass}; }
 .lvl-opt-title { font-size: 18px; letter-spacing: 0.08em; text-transform: uppercase; color: #efe8d6; text-shadow: 1px 1px 0 #050608; }
 .lvl-opt.is-on .lvl-opt-title { color: rgb(243,239,44); text-shadow: 1px 1px 0 rgb(93,77,12); }
-.lvl-tag { margin-left: auto; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #9c937d; white-space: nowrap; }
+.lvl-tag { margin-left: auto; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #9c937d; white-space: normal; text-align: right; }
 .lvl-opt-body { margin: 0; font-size: 14px; line-height: 1.5; color: #c5bda2; text-shadow: 1px 1px 0 #050608; }
 .lvl-opt-foot { margin-top: auto; padding-top: 10px; border-top: 2px solid rgba(5,6,8,0.5); box-shadow: inset 0 1px 0 rgba(163,152,128,0.16);
   display: flex; justify-content: flex-end; }

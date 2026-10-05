@@ -119,11 +119,12 @@
   {
     "name": "LEGACY1-stale-copy-wins",
     "file": "src/systems/legacy/store.js",
-    "old": "    if (was && was.rev > family.rev) return false;\n",
+    "old": "      mergeFacts(family, was);\n",
     "new": "",
     "tests": [
       "test/legacy1_family.test.js"
-    ]
+    ],
+    "note": "AUDIT LEGACY II (PIN MOVED): re-aimed by content - the law it guards now stands at this line."
   },
   {
     "name": "LEGACY1-B11-birth-carries-load",

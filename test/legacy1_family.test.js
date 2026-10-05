@@ -7,7 +7,7 @@ import { STARTING_GOLD } from '../src/systems/startingGear.js';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  familyRng, foundFamily, addChild, rollSiblings, recordDeath, successors, newbornAllowed, readFamily, newerFamily,
+  familyRng, foundFamily, addChild, rollSiblings, recordDeath, successors, newbornAllowed, readFamily,
   inheritCareer, inheritRace, bloodOf, hearthOf, estateOf, bornValues, heirAnswer, surnameOf, givenOf, writePlayer,
   siblingsOf, isCustomCareer, MODELS, DESCENDANTS, SIBLINGS_MAX_DEFAULT, SIBLINGS_CHANCE_DEFAULT, ESTATE_MAX,
   RACE_INHERIT_CHANCE, CAREER_INHERIT_CHANCE, BLOOD_MAX, HEARTH_MAX, personOf,
@@ -171,10 +171,8 @@ test('LEGACY1 B13/D4: every death is written, ids never collide, a damaged copy 
   assert.equal(readFamily({ v: 1, id: 'x', people: [] }), null);
   assert.equal(readFamily(null), null);
   assert.equal(readFamily({ v: 2, id: 'x', people: [{ id: 1 }] }), null);
-  // the newer of two copies of ONE family; two families are never merged
-  const a = readFamily(f), b = readFamily({ ...f, rev: f.rev + 3 });
-  assert.equal(newerFamily(a, b).rev, f.rev + 3);
-  assert.equal(newerFamily(a, { ...b, id: 'other' }), null);
+  // AUDIT LEGACY II (PIN MOVED): `newerFamily` was dead - the store's copy and a save's meet in legacyHost.js
+  // mergeFamily, pinned in test/auditlegacy2.test.js
 });
 
 test('LEGACY1: who may carry the line - the living of the blood, not the one played, not a spouse who married in', () => {
@@ -217,8 +215,16 @@ test('LEGACY1: the store keeps the newer copy, and a birth waits across the relo
   const s = memStore(), tab = memStore();
   const f = foundFamily(entity(), { id: 'fam-st' });
   assert.equal(storeFamily(s, f), true);
-  assert.equal(storeFamily(s, { ...f, rev: 0 }), false, 'an older copy never writes over the store\'s');
-  assert.equal(loadFamily(s, 'fam-st').rev, f.rev);
+  // PIN MOVED (AUDIT LEGACY II A4): an older copy never LOSES the store's facts - it takes them in, and is written past it
+  const stored = loadFamily(s, 'fam-st');
+  recordDeath(stored, 1, { at: 3 });
+  stored.rev = 9;
+  assert.equal(storeFamily(s, stored), true);
+  const older = { ...JSON.parse(JSON.stringify(f)), rev: 2 };
+  assert.equal(storeFamily(s, older), true);
+  assert.ok(loadFamily(s, 'fam-st').people[0].died, 'the death the store held stands');
+  assert.equal(loadFamily(s, 'fam-st').rev, 10, 'one past both');
+  assert.ok(older.people[0].died, 'and the older copy plays on knowing it');
   assert.deepEqual(listFamilies(s).map((x) => x.id), ['fam-st']);
   leaveBirth(tab, { familyId: 'fam-st', personId: 4, region: 'Daggerfall', loc: 'Gothway Garden', estate: 0 }, 1000);
   assert.equal(readBirth(tab, 5, 1001), null, 'another person\'s address births nobody');
@@ -354,10 +360,10 @@ test('LEGACY1: a Bloodline death falls - written dead, the estate set aside, the
   assert.equal(w.host.deathOutcome().kind, 'fall', 'a second reset presents the waiting Succession again - never the classic end over a line that goes on');
   // a newborn heir of the fallen: a child, the estate on them, the boot asked with their birth
   assert.equal(w.host.succeed({ newborn: true }), true);
-  assert.equal(fam.pending, null, 'answered');
+  // PIN MOVED (AUDIT LEGACY II B1): the fall is answered when the heir LANDS (their birth, onBorn), never at the choice
+  assert.equal(fam.pending.estate, 250, 'the estate waits on the record until the heir is born');
   const heir = w.host.current();
   assert.deepEqual(heir.parents, [1]);
-  assert.equal(heir.estate, 250);
   const q = new URLSearchParams(w.booted.at(-1));
   assert.equal(q.get('legacyborn'), String(heir.id));
   assert.equal(q.get('loc'), 'Gothway Garden', 'born at the family seat');

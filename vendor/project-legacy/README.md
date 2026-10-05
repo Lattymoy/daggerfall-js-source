@@ -20,7 +20,7 @@ mod that I want to integrate").**
   `c366beb3...a327d2`).
 - `modsettings.json` - the shipped settings, verbatim (the key, the second key, Descendants, Max Siblings, Siblings
   Probability).
-- `Project Legacy.dll` - the shipped assembly, byte for byte (sha256 `05e356ec...978fe74`), and
+- `Project Legacy.dll` - the shipped assembly, byte for byte (sha256 `05e356ec...978368fe74`), and
   `il/Project_Legacy.il.txt` - every method body as CIL, dumped by `tools/ilDump.py`. The port
   (`src/systems/legacy/`) cites the assembly's types and members it restates.
 - **Not here: the seven pictures.** `PJLFTBG`, `PJLFTFrame` and `PJLFT` (the parchment, its frame and the tree's

@@ -126,11 +126,16 @@ function quest({ model = MODELS.bloodline } = {}) {
 /** The heir takes the mantle: a newborn of the fallen, played by the same test entity under the heir's own id. */
 function heirOf(t) {
   assert.equal(t.host.succeed({ newborn: true }), true);
+  // PIN MOVED (AUDIT LEGACY II B1): the heir LANDS through the birth's own door - the boot's takeBorn, finishChargen's
+  // entity, onBorn (the fall answered there, never at the choice)
+  const id = t.host.current().id;
+  assert.ok(t.host.takeBorn(id), 'the birth waits for its own person');
   t.e.characterId = 'c-heir';
   t.e.name = `Heir ${t.host.family.surname}`;
   t.e.items = [];
   t.e.health = 50;
-  t.host.current().characterId = 'c-heir';
+  t.host.onBorn();
+  assert.equal(t.host.family.pending, null, 'answered as the heir lands');
   return t.host.current();
 }
 
@@ -161,15 +166,16 @@ test('LEGACY4 + AUDIT LEGACY H1/H4/H6/H8: found, taken, laid to rest - the list 
   const t = quest();
   const { host, w } = t;
   host.deathOutcome();
-  const r = host.family.remains[0];
   const heir = heirOf(t);
+  const r = host.family.remains[0];   // the born page's own copy of the record (takeBorn reads the store)
   const e = t.e;
   // the heir arrives where they fell: the remains' own list, opened - never a world pile
   w.at = true;
   host.tick();
   assert.equal(w.opened.length, 1);
   assert.equal(w.opened[0], r.items, 'THE RECORD\'S LIST - what is left in it stays with the remains');
-  assert.equal(r.by, heir.id, 'opened: the heir\'s claim');
+  // PIN MOVED (AUDIT LEGACY II H5): opened is no claim - the member who CHANGES the list claims it
+  assert.equal(r.by, null, 'opened and left as it lies: nobody\'s');
   host.tick();
   assert.equal(w.opened.length, 1, 'once a visit');
   w.fight = true; w.at = false; host.tick(); w.at = true; host.tick();
@@ -180,6 +186,7 @@ test('LEGACY4 + AUDIT LEGACY H1/H4/H6/H8: found, taken, laid to rest - the list 
   const [bones, heirloom, gold] = r.items;
   r.items.splice(1, 2); e.items.push(heirloom, gold);
   host.tick();
+  assert.equal(r.by, heir.id, 'changed: the heir\'s claim');
   assert.deepEqual(r.items, [bones], 'what was taken is gone from the list for good; the bones lie on');
   assert.equal(r.state, 'lying');
   // then the bones - into the wagon, which keeps them as well as the pack (H4)

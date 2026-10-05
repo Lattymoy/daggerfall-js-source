@@ -40,7 +40,7 @@ import { legacySettings } from '../systems/legacy/settings.js';
 import { registerModSaveData } from '../systems/modSaveData.js';
 import { rollStats, rollSkills, spendPoolLowest, STAT_KEYS_ORDER } from '../systems/chargen.js';
 import { LEVELING_CLASSIC } from '../systems/oblivionLeveling.js';
-import { pickHeirloom, markHeirloom, mintRemainsItem, isRemainsItem, isHeirloom, attuneHeirloom, blessingOf, remainsGoldOf } from '../systems/legacy/heirloom.js';
+import { pickHeirloom, markHeirloom, mintRemainsItem, isRemainsItem, isHeirloom, attuneHeirloom, blessingOf, remainsGoldOf, REMAINS_LIST } from '../systems/legacy/heirloom.js';
 import { SKILL_NAMES } from '../systems/skills.js';
 import { syncHouses, householdOf, residentOf, familyResOf, kinGreeting, setFamilyHome, familyHome, sameHouse } from '../systems/legacy/household.js';
 import { goldStack } from '../systems/inventory.js';
@@ -74,6 +74,10 @@ export const LEGACY_TEXT = Object.freeze({
   ended: (sur) => `The house of ${sur} goes on.`,
   kinSlain: (name) => `${name} is dead by your hand. The house will remember it.`,   // LEGACY-HOME
   playAs: (name) => `Play as ${name}`,
+  notNow: 'Not now - the house has another matter to settle first.',
+  notStored: 'Your family\'s record could not be written - the browser\'s storage refused it. Free some space (old saves); it will be tried again.',   // AUDIT LEGACY II P1
+  notBorn: (given) => `${given}'s first day could not be saved here. Reload to begin it again - nothing of the house is lost.`,   // AUDIT LEGACY II A2
+  claimed: (name, by) => `${by} has taken up the search for ${name}'s remains.`,   // AUDIT LEGACY II H5
   retiredKin: (given) => `${given} has passed the mantle on, and keeps the house now.`,
 });
 
@@ -90,8 +94,10 @@ export const REMAINS_FLAT = Object.freeze({ archive: 254, record: 56 });
  *   - the newer by `rev` is the base - a death, a toll, a birth, a remains row made after the save all stand;
  *   - the character's own `estatePaid` and `bequestPaid` are the save's: what was paid after it is unpaid again, with the
  *     bag it went into;
- *   - every remains row the character claimed (`by`), or nobody did, carries the save's progress - its list, its state,
- *     its claim - when the save holds it, else its first state (made, or claimed, after the save).
+ *   - AUDIT LEGACY II H2/A3: a remains row the character CLAIMED (the store's `by`) carries the save's progress - its
+ *     list, its state - when the save holds it, else its first state; the claim itself is the store's and stands (a
+ *     rewind that dropped it let a second member empty the same list, and both saves held the heirloom). Every other
+ *     row - nobody's, or another member's - is the store's: a save's older copy of a list it never claimed is no grant.
  */
 export function mergeFamily(stored, saved, cid) {
   if (!saved) return stored ?? null;
@@ -105,10 +111,10 @@ export function mergeFamily(stored, saved, cid) {
   me.estatePaid = Math.max(0, Math.floor(Number(was?.estatePaid) || 0));
   me.bequestPaid = Math.max(0, Math.floor(Number(was?.bequestPaid) || 0));
   for (const r of out.remains ?? []) {
-    if (r.by != null && r.by !== me.id) continue;   // another member's claim is a world fact to this one
+    if (r.by !== me.id) continue;   // nobody's, or another member's: the store's
     const s = (saved.remains ?? []).find((x) => x.id === r.id);
-    if (s) Object.assign(r, { items: JSON.parse(JSON.stringify(s.items ?? [])), state: s.state, by: s.by ?? null, restedAt: s.restedAt ?? null, found: !!s.found });
-    else if (r.by === me.id) Object.assign(r, { items: JSON.parse(JSON.stringify(r.first ?? [])), state: 'lying', by: null, restedAt: null, found: false });
+    if (s) Object.assign(r, { items: JSON.parse(JSON.stringify(s.items ?? [])), state: s.state, restedAt: s.restedAt ?? null, found: !!s.found });
+    else Object.assign(r, { items: JSON.parse(JSON.stringify(r.first ?? [])), state: 'lying', restedAt: null, found: false });
   }
   return out;
 }
@@ -124,7 +130,9 @@ export function mergeFamily(stored, saved, cid) {
  *   boot:(search:string) => void, search:() => string, loadCharacter:(characterId:string) => boolean,
  *   saveNow:() => boolean, inFight:() => boolean, payEstate?:(gold:number) => void, rng?:() => number,
  *   heldHouses?:() => any[], houseHere?:() => ({mapId:number, buildingKey:number}|null),
- * }} deps
+ *   hasSave?:(characterId:string) => boolean, livingWorld?:() => boolean,
+ * }} deps - AUDIT LEGACY II: `hasSave(cid)` whether a save of that character stands (a person's id stands only with one);
+ *   `livingWorld()` whether the Living World runs (the line stands only in its towns)
  */
 export function createLegacyHost(deps) {
   const rng = deps.rng ?? Math.random;
@@ -142,24 +150,56 @@ export function createLegacyHost(deps) {
   const restAskedThisVisit = new Set();
   let remainsSig = '';
 
-  const store = (f = family) => { if (f) storeFamily(deps.storage(), f); };
+  /** AUDIT LEGACY II P1: a write the storage refused (its quota full, a private mode) is NOT dropped silently - the
+   *  store is the authority for a death, and a reload would have played the dead on. Retried every tick until it
+   *  lands, and said once. Answers whether it wrote. */
+  let unstored = false;
+  let unstoredSaid = false;
+  const store = (f = family) => {
+    if (!f) return true;
+    const ok = storeFamily(deps.storage(), f);
+    if (f === family) unstored = !ok;
+    if (!ok && !unstoredSaid) { unstoredSaid = true; deps.say(LEGACY_TEXT.notStored); }
+    if (ok) unstoredSaid = false;
+    return ok;
+  };
   const current = () => currentOf(family);
   const lived = () => {
     const p = current();
     return p ? Math.max(0, Math.floor((deps.own() ?? 0) - (p.bornOwn ?? 0))) : 0;
   };
-  /** The played character into their person, and the lived minutes - every save and every death. Never the past's. */
-  function writeCurrent() {
+  /** The played character into their person, and the lived minutes - every save and every death. Never the past's.
+   *  `saving` - AUDIT LEGACY II A7: only a SAVE says where the member was saved (`parked`); a rise, or a switch whose
+   *  save then failed, made none, and wrote them standing in a house their newest save is not in. */
+  function writeCurrent({ saving = false } = {}) {
     const p = current();
     if (past || !p || !deps.entity?.chargenDone || !isAlive(p) || p.retired != null) return;
     if (p.characterId && deps.entity.characterId && p.characterId !== String(deps.entity.characterId)) return;   // never another character's into this person
     writePlayer(p, deps.entity);
     p.lived = lived();
-    // LEGACY-HOME: where this save is made - in one of the family's houses the member is PARKED there, and stands in it
-    // while another is played; anywhere else they are on their own journey (systems/legacy/household.js homeOf)
+    if (!saving) return;
+    // LEGACY-HOME + AUDIT LEGACY II A6: the houses the one played holds are the line's - a deed is the character's own,
+    // so the line learns it with the save that holds it (an unsaved purchase or sale moved the line, and another
+    // member's load found it in a house that member's save does not own). Online, the realm's homes are the account
+    // service's, not the line's (Legacy-Arc 10b, until LEGACY7).
+    syncHousesNow(p);
+    // where this save is made - in one of the family's houses the member is PARKED there, and stands in it while
+    // another is played; anywhere else they are on their own journey (systems/legacy/household.js homeOf)
     const here = deps.houseHere?.() ?? null;
     p.parked = here && (family.houses ?? []).some((h) => sameHouse(h, here)) ? { mapId: here.mapId, buildingKey: here.buildingKey } : null;
   }
+  /** The played member's held houses into the line's (offline only). Answers whether they changed. */
+  function syncHousesNow(p) {
+    if (!deps.heldHouses || deps.online()) return false;
+    return syncHouses(family, p.id, deps.heldHouses());
+  }
+  /** AUDIT LEGACY II A1: whether the character in the world IS the one the record plays - after a choice hands the line
+   *  to another (the Succession, a switch) the page runs on under the old character until the boot lands, and the slow
+   *  tick paid the heir's estate into the dying page and claimed the fallen's remains as the heir's. */
+  const playedHere = (p) => {
+    const cid = cidOf();
+    return !cid || p.characterId === cid;
+  };
   const cidOf = () => (deps.entity?.characterId ? String(deps.entity.characterId) : null);
   /** The stored family a character is of, or null - a save made before its family was founded (AUDIT LEGACY A3). */
   const familyOfCharacter = (cid) => (cid ? listFamilies(deps.storage()).find((f) => f.people.some((p) => p.characterId === cid)) ?? null : null);
@@ -169,7 +209,8 @@ export function createLegacyHost(deps) {
     newSaveData: () => null,
     getSaveData: () => {
       if (!family) return null;
-      writeCurrent();   // never the past's (its own guard): the past's save carries the line as it stands
+      writeCurrent({ saving: true });   // never the past's (its own guard): the past's save carries the line as it stands
+      if (!past && current() && playedHere(current())) claimTouched();   // a list changed since the last tick is claimed by the save that holds it
       touch(family);
       store();
       return JSON.parse(JSON.stringify(family));
@@ -178,6 +219,7 @@ export function createLegacyHost(deps) {
     // a new game: a born member's family, or none (the chargen's onCharacterMade founds one)
     newGame: () => {
       past = null; outcome = null; deathSeen = false;
+      residentsKept.clear();
       if (born) { family = born.family; return; }
       const cid = cidOf();
       if (!(family && cid && currentOf(family)?.characterId === cid)) family = null;   // the wizard's founding may land first
@@ -187,18 +229,21 @@ export function createLegacyHost(deps) {
   /** A save's copy beside the store's (mergeFamily); the played character is the one this save is of. */
   function adopt(rec) {
     past = null; outcome = null; deathSeen = false; elderSaid = false;
-    openedThisVisit.clear(); restAskedThisVisit.clear(); remainsSig = '';
+    openedThisVisit.clear(); restAskedThisVisit.clear(); remainsSig = ''; residentsKept.clear(); openedSig.clear();
     const cid = cidOf();
     const saved = readFamily(rec);
     const stored = saved ? loadFamily(deps.storage(), saved.id) : familyOfCharacter(cid);
     family = mergeFamily(stored, saved, cid);
     if (!family) return;
     const me = cid ? family.people.find((p) => p.characterId === cid) : null;
-    if (!me) return;
+    // AUDIT LEGACY II H1: a record that has no person for the character played is not theirs - a copy brought across the
+    // lanes carried its original's, and played as them. Let go: the character founds its own house (found).
+    if (!me) { family = null; return; }
     if (!isAlive(me) || me.retired != null) { past = me; return; }   // THE PAST: refused under either model, for good
     if (family.pending && family.pending.fallenId !== me.id) settlePending(me);   // a living member loaded: they take the mantle
     if (family.ended != null) { family.ended = null; deps.say?.(LEGACY_TEXT.ended(family.surname)); }   // AUDIT LEGACY A8: a member plays on - the line goes on
     setCurrent(family, me.id);
+    syncHousesNow(me);   // the loaded character's deeds, the line's (AUDIT LEGACY II A6)
     touch(family);
     store();
   }
@@ -224,7 +269,7 @@ export function createLegacyHost(deps) {
 
   /** What was set aside for a member - the estate's gold and an elder's bequest - is paid on their days as the one
    *  played: a letter of credit and the pieces themselves. `estatePaid`/`bequestPaid` are the save's (mergeFamily). */
-  function payEstateOf(p) {
+  function payEstateOf(p, { write = true } = {}) {
     if (!p) return;
     const due = Math.max(0, (p.estate | 0) - (p.estatePaid | 0));
     const pieces = (p.bequest ?? []).slice(p.bequestPaid | 0);
@@ -237,7 +282,7 @@ export function createLegacyHost(deps) {
       deps.giveItems?.(pieces.map((it) => JSON.parse(JSON.stringify(it))));
       for (const it of pieces) deps.say(LEGACY_TEXT.bequest(it.heirloom?.base ?? it.name ?? 'an heirloom'));
     }
-    store();
+    if (write) store();
   }
 
   /** The waiting Succession answered by `heir` - the estate and the bequest theirs, the mantle theirs. */
@@ -345,12 +390,37 @@ export function createLegacyHost(deps) {
   const openRemains = () => {
     const me = current();
     const rows = (family?.remains ?? []).filter((r) => r.state === 'lying' || r.state === 'taken');
+    let lapsed = false;
     for (const r of rows) {
       const by = r.by != null ? personOf(family, r.by) : null;
-      if (r.by != null && r.by !== me?.id && (!by || !isAlive(by) || by.retired != null)) { r.by = null; r.state = 'lying'; touch(family); }
+      if (r.by != null && r.by !== me?.id && (!by || !isAlive(by) || by.retired != null)) {
+        // AUDIT LEGACY II A3: the list as the lapsed claimant LEFT it is what lies now - the next claimant's rewinds
+        // return to it, never to the list as first laid (which still held what the lapsed one took)
+        r.by = null; r.state = 'lying'; r.first = JSON.parse(JSON.stringify(r.items)); lapsed = true;
+      }
     }
+    if (lapsed) { touch(family); store(); }
     return rows.filter((r) => r.by == null || r.by === me?.id);
   };
+  /** AUDIT LEGACY II H5: the remains another living member has claimed - the one played's log says whose search it is. */
+  const claimedByOthers = () => {
+    const me = current();
+    return (family?.remains ?? []).filter((r) => (r.state === 'lying' || r.state === 'taken') && r.by != null && r.by !== me?.id);
+  };
+  /** AUDIT LEGACY II H5: a list is CLAIMED by the member who CHANGES it, not by one who opens it and walks away (the
+   *  quest left every other member's log for nothing). Each list as it stood when opened, by remains id. */
+  const openedSig = new Map();
+  const itemsSig = (items) => JSON.stringify(items);
+  function claimTouched() {
+    const me = current();
+    if (!me) return;
+    for (const r of family?.remains ?? []) {
+      if (r.by != null || !openedSig.has(r.id) || itemsSig(r.items) === openedSig.get(r.id)) continue;
+      r.by = me.id;
+      openedSig.delete(r.id);
+      touch(family);
+    }
+  }
   const bonesOf = (r) => (it) => isRemainsItem(it) && it.legacyRemains.line === family.id && it.legacyRemains.of === r.of;
   const carriedNow = () => deps.carried?.() ?? deps.entity?.items ?? [];
 
@@ -371,7 +441,7 @@ export function createLegacyHost(deps) {
       } else if (!inList && !kept) {
         r.items.unshift(mintRemainsItem({ line: family.id, of: r.of, name: r.name }));
         const was = r.state;
-        r.state = 'lying'; r.by = null;
+        r.state = 'lying';   // AUDIT LEGACY II H2: the claim stays the claimant's - the bones lie again for them to find
         touch(family); store();
         if (was === 'taken') deps.say(LEGACY_TEXT.remainsReturned(r.name));
       }
@@ -379,17 +449,20 @@ export function createLegacyHost(deps) {
         const here = deps.atPlace?.(r.place) ?? false;
         if (!here) { openedThisVisit.delete(r.id); continue; }
         if (openedThisVisit.has(r.id) || deps.inFight()) continue;
+        // AUDIT LEGACY II H4: the list wears its remains' mark while open - the bones go back into it, and into nothing
+        // that is not the character's own keeping (systems/itemTransfer.js planStore)
+        Object.defineProperty(r.items, REMAINS_LIST, { value: r.of, configurable: true, writable: true, enumerable: false });
         if (deps.openRemains?.(r, r.items)) {
           openedThisVisit.add(r.id);
-          r.by = me.id;   // opened: this member's claim (mergeFamily)
-          if (!r.found) { r.found = true; deps.say(LEGACY_TEXT.remainsFound(r.name)); }
-          touch(family); store();
+          if (r.by == null && !openedSig.has(r.id)) openedSig.set(r.id, itemsSig(r.items));   // claimed once changed (claimTouched)
+          if (!r.found) { r.found = true; deps.say(LEGACY_TEXT.remainsFound(r.name)); touch(family); store(); }
         }
       } else if (r.state === 'taken' && !restAskedThisVisit.has(r.id) && deps.atRest?.()) {
         if (deps.askRest?.(r.name, () => layToRest(r))) restAskedThisVisit.add(r.id);   // asked only once it was SHOWN
       }
     }
     if (!deps.atRest?.()) restAskedThisVisit.clear();
+    claimTouched();
     // what the heir took from an open list is the record's to keep - written as it changes
     const sig = JSON.stringify((family.remains ?? []).map((r) => [r.id, r.items.length, r.state]));
     if (sig !== remainsSig) { if (remainsSig) { touch(family); store(); } remainsSig = sig; }
@@ -410,6 +483,10 @@ export function createLegacyHost(deps) {
     if (heirloom) { attuneHeirloom(heirloom); deps.say(LEGACY_TEXT.attuned(heirloom.heirloom.base, heirloom.heirloom.gen)); }
     r.state = 'rested';
     r.restedAt = deps.now();
+    // AUDIT LEGACY II P6: what was left with them is laid to rest with them - a rested row's lists were kept forever,
+    // two copies of each, in the store and in every save
+    r.items = [];
+    delete r.first;
     touch(family);
     store();
     return true;
@@ -426,7 +503,11 @@ export function createLegacyHost(deps) {
           'Find them, and carry them home.']
         : [`You carry the remains of ${r.name}.`, 'Lay them to rest at any temple, or at the family’s seat, and their blessing will stay with you.'];
       return { id: `${LEGACY_QUEST_PREFIX}${r.id}`, name: `The Bones of ${r.name}`, questName: 'LEGACY', legacy: true, messages: [lines] };
-    });
+    }).concat(claimedByOthers().map((r) => {
+      const by = personOf(family, r.by);
+      return { id: `${LEGACY_QUEST_PREFIX}${r.id}`, name: `The Bones of ${r.name}`, questName: 'LEGACY', legacy: true,
+        messages: [[LEGACY_TEXT.claimed(r.name, by ? fullNameOf(by.given, by.surname) : 'Another of the house'), 'Play as them to carry it on.']] };
+    }));
   }
   /** The remains still lying, ringed on the maps where the fallen fell - while the mod is on (AUDIT LEGACY B8). */
   const mapMarks = () => (family && deps.on() && !past ? openRemains() : []).filter((r) => r.state === 'lying' && r.place?.pixel).map((r) => ({
@@ -453,7 +534,9 @@ export function createLegacyHost(deps) {
       heir = personOf(family, choice?.personId);
       if (!heir || !isAlive(heir) || heir.kind !== 'member' || heir.retired != null) return false;
     }
-    settlePending(heir);
+    // AUDIT LEGACY II B1: the waiting fall is answered when the heir LANDS (a member's load: adopt; a birth: onBorn), not
+    // at the choice - a boot that never landed (a member whose saves were deleted, a birth whose files failed) settled
+    // the fall and moved the estate to someone who could not be played, and the line had no Succession left to answer
     setCurrent(family, heir.id);
     touch(family);
     store();
@@ -464,6 +547,9 @@ export function createLegacyHost(deps) {
   /** Into the world as `p`: their newest save, or their birth. */
   function play(p, at = null) {
     if (p.characterId && deps.loadCharacter(p.characterId)) return true;
+    // AUDIT LEGACY II A2/B1: a character id no save holds (their saves deleted, a first save the storage refused) is no
+    // character - they are born again, from their person
+    if (p.characterId && deps.hasSave && !deps.hasSave(p.characterId)) { p.characterId = null; touch(family); store(); }
     const place = at ?? family.seat ?? deps.nearestTown(deps.here()) ?? { region: 'Daggerfall', loc: 'Daggerfall' };
     leaveBirth(deps.tab(), { familyId: family.id, personId: p.id, region: place.region, loc: place.loc, estate: 0 });
     deps.boot(birthSearch(deps.search(), p.id, place));
@@ -546,7 +632,11 @@ export function createLegacyHost(deps) {
     if (!b) return null;
     const f = loadFamily(deps.storage(), b.familyId);
     const p = personOf(f, b.personId);
-    if (!f || !p || !isAlive(p) || p.characterId) return null;   // a person already born is loaded, never born twice
+    if (!f || !p || !isAlive(p)) return null;
+    // a person already born is loaded, never born twice - one whose character id no save holds was never born
+    // (AUDIT LEGACY II A2/B1: the birth door and the play door now ask the same question)
+    if (p.characterId && (!deps.hasSave || deps.hasSave(p.characterId))) return null;
+    p.characterId = null;
     setCurrent(f, p.id);
     born = { family: f, person: p };
     family = f;
@@ -588,16 +678,23 @@ export function createLegacyHost(deps) {
   function onBorn() {
     const p = born?.person;
     if (!p) return;
+    born = null;
+    // AUDIT LEGACY II A2/H3/B1: the birth stands only with its save - the person's character id and the estate paid were
+    // written first, so a first save the storage refused left a person with an id no save held, whom the birth door
+    // then refused for good, and the estate with them. The fall the birth answers is settled here, as it lands.
+    // Undone if the save fails: the handoff stays, and the reload bears them again.
+    const was = JSON.parse(JSON.stringify(family));
+    if (family.pending && family.pending.fallenId !== p.id) settlePending(p);
     writePlayer(p, deps.entity);
     p.bornOwn = Math.floor(deps.own() ?? 0);
     p.lived = 0;
     touch(family);
-    store();
     const loc = deps.town(deps.here())?.loc ?? family.seat?.loc ?? '';
     deps.say(LEGACY_TEXT.born(fullNameOf(p.given, p.surname), loc || 'the Bay'));
-    payEstateOf(p);
-    born = null;
-    if (deps.saveNow()) clearBirth(deps.tab());
+    payEstateOf(p, { write: false });
+    if (deps.saveNow()) { store(); clearBirth(deps.tab()); return; }
+    family = readFamily(was);
+    deps.say(LEGACY_TEXT.notBorn(p.given));
   }
 
   // ---- the frame ---------------------------------------------------------------------------------------------------
@@ -613,11 +710,12 @@ export function createLegacyHost(deps) {
     // a death decided and never reset - a party's Resurrect raises the fallen where they lie - is over once they live
     if (deathSeen && (deps.entity?.health ?? 0) > 0) { deathSeen = false; outcome = null; }
     if (!family || !deps.on()) return null;
+    if (unstored) store();   // AUDIT LEGACY II P1: a refused write, tried again - first: a death's above all
     if (past) return { past, fall: family.pending ? fallOutcome() : null };
     if (family.pending) return deps.entity?.chargenDone ? { fall: fallOutcome() } : null;
     if (!deps.entity?.chargenDone) return null;
     const p = current();
-    if (!p || !isAlive(p)) return null;
+    if (!p || !isAlive(p) || !playedHere(p)) return null;   // AUDIT LEGACY II A1: nothing of the one handed the line, on a page not theirs
     if (!family.seat) {
       const t = deps.town(deps.here());
       if (t) { family.seat = t; touch(family); store(); deps.say(LEGACY_TEXT.seat(t.loc)); }
@@ -626,8 +724,6 @@ export function createLegacyHost(deps) {
       const t = deps.town(deps.here());
       if (t?.mapId != null && t.loc === family.seat.loc && t.region === family.seat.region) { family.seat.mapId = t.mapId; touch(family); store(); }
     }
-    // LEGACY-HOME: the houses the one played holds are the line's
-    if (deps.heldHouses && syncHouses(family, p.id, deps.heldHouses())) { touch(family); store(); }
     payEstateOf(p);
     remainsStep();
     if (family.model === MODELS.enduring && !elderSaid && isElder(p, lived())) {
@@ -639,27 +735,41 @@ export function createLegacyHost(deps) {
 
   // ---- LEGACY-HOME: the bloodline in the world ----------------------------------------------------------------------
 
-  /** Whether the line stands in the world now: the mod on, its "Family in the world" on, a family, not the past. */
+  /** Whether the line stands in the world now: the mod on, its "Family in the world" on, a family, not the past - and
+   *  (AUDIT LEGACY II B5) the Living World running, whose towns are the only place it stands. */
   const NO_RESIDENTS = Object.freeze([]);
-  const inWorld = () => !!family && deps.on() && !past && legacySettings().familyInWorld;
+  const inWorld = () => !!family && deps.on() && !past && legacySettings().familyInWorld && (deps.livingWorld?.() ?? true);
   /**
    * The family's residents of the town `mapId` (systems/legacy/household.js residentOf) - the town's own day plans,
    * walkers and rooms carry them. `lend(seed)` the town's house lent to a line with no house (a residence of its
-   * census, by the family's id - livingTown.js homeFor), 0 when it has none. The SAME list while nothing of the family
-   * changed (the town keeps its day's people by it).
+   * census, by the family's id - livingTown.js homeFor), 0 when it has none. AUDIT LEGACY II P3: the SAME residents -
+   * each the same object, and the same list - while nothing a resident is made of changed (a save bumps the record's
+   * rev, and keyed on it every save dressed each member as a stranger: the street recycled their bodies and dressed
+   * them again, two at a time). Kept by what each resident is made of.
    */
   const residentsKept = new Map();
+  /** @type {Map<string, { sig: string, res: any }>} */
+  const residentOfKept = new Map();
+  const residentSig = (p, key) => [p.id, key, p.given, p.surname, p.gender, p.race, p.face | 0, p.careerIndex, isCustomCareer(p), p.level | 0].join('|');
   function residentsOf(mapId, lend = null) {
     const id = mapId >>> 0;
     if (!inWorld()) { residentsKept.delete(id); return NO_RESIDENTS; }
     const rows = householdOf(family).filter(({ home }) => (home.mapId >>> 0) === id);
     const lent = rows.some(({ home }) => home.lent) ? (lend?.(family.id) | 0) : 0;
-    const key = `${family.id}:${family.rev}:${lent}`;
+    const want = rows.map(({ person, home }) => ({ person, key: home.lent ? lent : home.buildingKey })).filter((x) => x.key > 0);
+    const sigs = want.map(({ person, key }) => residentSig(person, `${id}:${key}`));
+    const listKey = `${family.id}#${sigs.join('#')}`;
     const kept = residentsKept.get(id);
-    if (kept?.key === key) return kept.list;
-    const list = rows.map(({ person, home }) => ({ person, key: home.lent ? lent : home.buildingKey }))
-      .filter((x) => x.key > 0).map(({ person, key: k }) => residentOf(family, person, { mapId: id, buildingKey: k }));
-    residentsKept.set(id, { key, list });
+    if (kept?.key === listKey) return kept.list;
+    const list = want.map(({ person, key }, i) => {
+      const k = `${family.id}:${person.id}`;
+      const was = residentOfKept.get(k);
+      if (was?.sig === sigs[i]) return was.res;
+      const res = residentOf(family, person, { mapId: id, buildingKey: key });
+      residentOfKept.set(k, { sig: sigs[i], res });
+      return res;
+    });
+    residentsKept.set(id, { key: listKey, list });
     return list;
   }
   /** The person of the line a family resident is, or null (another family's, or none). */
@@ -685,7 +795,9 @@ export function createLegacyHost(deps) {
     if (!p || !me) return null;
     const { word, is, lines } = kinGreeting(family, me, p, { elder: family.model === MODELS.enduring && isElder(p, p.lived) });
     // a retired elder lives at home and is never played again (LEGACY2); anyone else, the switch's own refusals
-    const refusal = p.retired != null ? LEGACY_TEXT.retiredKin(p.given) : switchRefusal(p.id);
+    // AUDIT LEGACY II U11: the switch's 'none' marker is no sentence - said as one
+    const why = p.retired != null ? LEGACY_TEXT.retiredKin(p.given) : switchRefusal(p.id);
+    const refusal = why === 'none' ? LEGACY_TEXT.notNow : why;
     return { person: p, word, is, name: fullNameOf(p.given, p.surname), lines, refusal };
   }
   /** Whether a building is one of the family's houses, while the line stands in the world (its rooms hold the line). */

@@ -55,10 +55,13 @@ export const sameHouse = (a, b) => !!a && !!b && houseKey(a) === houseKey(b);
 export function syncHouses(family, personId, held) {
   const mine = (held ?? []).filter((h) => (h?.buildingKey | 0) > 0 && (h?.mapId | 0) !== 0)
     .map((h) => ({ regionIndex: h.regionIndex | 0, mapId: h.mapId | 0, buildingKey: h.buildingKey | 0, location: String(h.location ?? ''), by: personId }));
-  const others = (family.houses ?? []).filter((h) => h.by !== personId);
-  const next = [...others, ...mine.filter((h) => !others.some((o) => sameHouse(o, h)))];
-  const was = JSON.stringify(family.houses ?? []);
-  if (JSON.stringify(next) === was) return false;
+  // AUDIT LEGACY II A5: the rows keep their places - one sold leaves its place, one bought joins at the end. Rebuilt
+  // with the one played's rows last, "the first house" (the family home with none marked and none in the seat) was
+  // always another member's, and the line moved house at every switch
+  const was = family.houses ?? [];
+  const next = was.filter((h) => h.by !== personId || mine.some((m) => sameHouse(m, h)));
+  for (const m of mine) if (!next.some((h) => sameHouse(h, m))) next.push(m);
+  if (JSON.stringify(next) === JSON.stringify(was)) return false;
   family.houses = next;
   return true;
 }
@@ -135,6 +138,7 @@ export function residentOf(family, p, home) {
     home: home.buildingKey | 0, work: null, temper: 1, social: 0.6, pious: 0.4, drink: 0.2,
     cls: stock ? CLASS_MOBILE_BASE + p.careerIndex : null, level: Math.max(1, p.level | 0), faction: 0,
     legacy: { familyId: family.id, personId: p.id },
+    household: `F${family.id}`,   // AUDIT LEGACY II B2: their own household, never the census house they may be lent (livingTown.js householdOf)
     portrait: { archive: raceArt(p.race, sex).heads, record: Math.max(0, Math.min(FACES_PER_RACE - 1, p.face | 0)) },   // their own chargen head in the talk window (ui/nativeTalk.js setNpcPortrait)
   };
 }
@@ -157,8 +161,8 @@ const ancestorsOf = (family, p, depth) => {
  * 'grandmother' | 'grandson' | 'granddaughter' | 'uncle' | 'aunt' | 'nephew' | 'niece' | 'husband' | 'wife' | 'cousin'
  * | 'kin'. The founder's generation, parentless, are siblings of one another (family.js siblingsOf's own root arm).
  */
-export function kinOf(family, viewer, other) {
-  if (!viewer || !other || viewer.id === other.id) return 'kin';
+export function kinOf(family, viewer, other, depth = 0) {
+  if (!viewer || !other || viewer.id === other.id || depth > 1) return 'kin';   // AUDIT LEGACY II A9: bounded - a damaged record's cycle never recurses
   const m = other.gender === 'female';
   if (viewer.spouse === other.id) return m ? 'wife' : 'husband';
   const up = ancestorsOf(family, viewer, 3), down = ancestorsOf(family, other, 3);
@@ -170,8 +174,8 @@ export function kinOf(family, viewer, other) {
     || (!viewer.parents.length && !other.parents.length && viewer.gen === other.gen);
   if (shared) return m ? 'sister' : 'brother';
   // a parent's sibling, a sibling's child
-  if ([...up].some(([id, d]) => d === 1 && kinOf(family, personOf(family, id), other).match(/^(brother|sister)$/))) return m ? 'aunt' : 'uncle';
-  if ([...down].some(([id, d]) => d === 1 && kinOf(family, personOf(family, id), viewer).match(/^(brother|sister)$/))) return m ? 'niece' : 'nephew';
+  if ([...up].some(([id, d]) => d === 1 && kinOf(family, personOf(family, id), other, depth + 1).match(/^(brother|sister)$/))) return m ? 'aunt' : 'uncle';
+  if ([...down].some(([id, d]) => d === 1 && kinOf(family, personOf(family, id), viewer, depth + 1).match(/^(brother|sister)$/))) return m ? 'niece' : 'nephew';
   if (other.gen === viewer.gen) return 'cousin';
   return 'kin';
 }

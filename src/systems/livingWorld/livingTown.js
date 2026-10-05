@@ -50,6 +50,10 @@ import { lwSeed, textSeed } from './seed.js';
 import { placeKeyOf } from './lives.js';
 import { NEWS_DAYS } from './trips.js';
 
+/** AUDIT LEGACY II B2: whose household a resident is of - their own `household` when they live here beyond the census
+ *  (Project Legacy's line), else their census house; null for none. */
+export const householdOf = (res) => res?.household ?? (res?.home == null ? null : `H${res.home}`);
+
 /** LW5: a visiting crew's day is planned again only when its arrival moved this far (the clock's minutes) - it is read
  *  off the ships' clock and the sky's at each census, and the two drift by a hair. */
 export const CREW_REPLAN_MIN = 5;
@@ -169,7 +173,7 @@ export class LivingTown {
     this.maxPopulation = maxPopulationFor(o.town.blocks);
     /** @type {Row[]} */
     this.pool = [];
-    /** @type {Map<string, { day: number, plan: Entry[], roads?: boolean, inT?: number }>} */
+    /** @type {Map<string, { day: number, plan: Entry[], roads?: boolean, inT?: number, home?: number|null }>} */
     this._plans = new Map();
     this._paths = createPathBook(nav);
     this._timer = Infinity;
@@ -200,6 +204,8 @@ export class LivingTown {
     this._rows = [];
     /** LW4: today's people, kept while the roads' word for the day stands (LEGACY-HOME: and the list beyond the census). @type {{ day: number, roads: any, extra?: readonly Resident[]|null, list: Resident[] } | null} */
     this._people = null;
+    /** AUDIT LEGACY II P7: the town's houses with a door, listed once (homeFor). @type {number[]|null} */
+    this._homes = null;
     /** LW5: the crews ashore here from elsewhere, read at each census (LW7: each with its packet). @type {Map<string, { res: Resident, inT: number, outT: number, berth?: { lane: { key: string }, k: number } }>} */
     this._crewOf = new Map();
     /** LW5: the dock found off the harbour (a port with no Ship building), once found. @type {any} */
@@ -238,7 +244,9 @@ export class LivingTown {
   planOf(res, day) {
     let e = this._plans.get(res.id);
     const crew = this._crewOf.get(res.id) ?? null;
-    if (!e || e.day !== day || (crew && !(Math.abs((e.inT ?? -Infinity) - crew.inT) <= CREW_REPLAN_MIN))) {   // LW5: a crew's arrival read off two clocks: replanned only when it moved
+    // AUDIT LEGACY II B3: a resident whose HOME changed (Project Legacy's line moved into a house bought, or to the home
+    // the player marked) is planned again at once - kept by the day alone, they slept the rest of it in the old house
+    if (!e || e.day !== day || e.home !== res.home || (crew && !(Math.abs((e.inT ?? -Infinity) - crew.inT) <= CREW_REPLAN_MIN))) {   // LW5: a crew's arrival read off two clocks: replanned only when it moved
       const roads = this._roadsOf(day);
       const visit = roads?.visitorOf.get(res.id) ?? null;
       let plan;
@@ -249,7 +257,7 @@ export class LivingTown {
         const D0 = day * DAY_MIN + DAY_START_MIN;
         const away = [{ t0: D0 - DAY_MIN, t1: crew.inT, exit: dock, armed: false }, { t0: crew.outT, t1: D0 + 2 * DAY_MIN, exit: dock, armed: false }];
         plan = dayPlan(res, this.places, day, { mpm: this.o.mpm, visitor: true, home: this._lodging(res), away });
-        e = { day, plan, roads: true, inT: crew.inT };
+        e = { day, plan, roads: true, inT: crew.inT, home: res.home };
         this._plans.set(res.id, e);
         return e.plan;
       }
@@ -262,7 +270,7 @@ export class LivingTown {
         const away = (roads?.away.get(res.id) ?? []).map((w) => ({ t0: w.t0, t1: w.t1, exit: w.dock ? (this.dockSpot() ?? exitToward(this.places, w.yaw)) : exitToward(this.places, w.yaw), armed: w.armed }));   // LW5b: a passage leaves by the dock
         plan = dayPlan(res, this.places, day, { mpm: this.o.mpm, away });
       }
-      e = { day, plan, roads: !!roads };
+      e = { day, plan, roads: !!roads, home: res.home };
       this._plans.set(res.id, e);
     }
     return e.plan;
@@ -312,8 +320,9 @@ export class LivingTown {
   /** LEGACY-HOME: a house of the town LENT to a household from beyond the census (a line with no house of its own, in its
    *  seat): one of its residences with a door, by `seed`, the same for the same seed - or 0 with none. @param {string} seed */
   homeFor(seed) {
-    const homes = [...this.places.doors.keys()].filter((k) => isHome(this.places.types.get(k))).sort((a, b) => a - b);
-    return homes.length ? homes[lwSeed(textSeed(String(seed)), 0x686f6d65) % homes.length] : 0;   // 'home'
+    // AUDIT LEGACY II P7: the town's doors are fixed at its making - its houses listed once
+    this._homes ??= [...this.places.doors.keys()].filter((k) => isHome(this.places.types.get(k))).sort((a, b) => a - b);
+    return this._homes.length ? this._homes[lwSeed(textSeed(String(seed)), 0x686f6d65) % this._homes.length] : 0;   // 'home'
   }
 
   /** The entry a resident is in at minute `t` (with the one before and the one after), or null. @param {Resident} res @param {number} t */
@@ -728,8 +737,12 @@ export class LivingTown {
     if (visit) return visit.trip.party.filter((m) => m.id !== res.id);
     const crew = this._crewOf.get(res.id) ?? null;
     if (crew) return [...this._crewOf.values()].filter((c) => c.res.id !== res.id && c.berth?.lane?.key === crew.berth?.lane?.key && c.berth?.k === crew.berth?.k).map((c) => c.res);
-    if (res.home == null) return [];
-    return this.peopleOf(day).filter((r) => r.id !== res.id && r.home === res.home);
+    // AUDIT LEGACY II B2: a household is its census house - or, for those living here beyond the census (Project Legacy's
+    // line, `household`), their own: a line lent a census house shared it with the census's people, and a stranger
+    // struck down turned the player's own sister against them (and the line's death, the strangers)
+    const hh = householdOf(res);
+    if (hh == null) return [];
+    return this.peopleOf(day).filter((r) => r.id !== res.id && householdOf(r) === hh);
   }
 
   /**
@@ -809,7 +822,7 @@ export class LivingTown {
    */
   moment(person) {
     const res = person?.living?.res;
-    if (!res) return null;
+    if (!res || res.household != null) return null;   // AUDIT LEGACY II B2: a keepsake is a census household's - never the line's in its house
     const item = keepsakeFor(this.o.keepsakes?.() ?? [], res.town, res.home, res.id, (id) => this._homeOfPlace(id));   // LW-FIX1: their own town's home - a visitor's is in theirs; AUDIT-C1: a traveller's off this town's census
     if (!item) return null;
     this.o.takeKeepsake?.(item);

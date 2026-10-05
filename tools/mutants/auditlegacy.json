@@ -74,20 +74,22 @@
   {
     "name": "AUDIT-LEGACY-A6-remains-progress-by-the-store",
     "file": "src/scenes/legacyHost.js",
-    "old": "    if (s) Object.assign(r, { items: JSON.parse(JSON.stringify(s.items ?? [])), state: s.state, by: s.by ?? null, restedAt: s.restedAt ?? null, found: !!s.found });",
+    "old": "    if (s) Object.assign(r, { items: JSON.parse(JSON.stringify(s.items ?? [])), state: s.state, restedAt: s.restedAt ?? null, found: !!s.found });",
     "new": "    if (s) Object.assign(r, {});",
     "tests": [
       "test/auditlegacy.test.js"
-    ]
+    ],
+    "note": "AUDIT LEGACY II (PIN MOVED): re-aimed by content - the law it guards now stands at this line."
   },
   {
     "name": "AUDIT-LEGACY-A6-another-claim-overwritten",
     "file": "src/scenes/legacyHost.js",
-    "old": "    if (r.by != null && r.by !== me.id) continue;   // another member's claim is a world fact to this one\n",
+    "old": "    if (r.by !== me.id) continue;   // nobody's, or another member's: the store's\n",
     "new": "",
     "tests": [
       "test/auditlegacy.test.js"
-    ]
+    ],
+    "note": "AUDIT LEGACY II (PIN MOVED): re-aimed by content - the law it guards now stands at this line."
   },
   {
     "name": "AUDIT-LEGACY-A7-groups-unshaped",
@@ -164,11 +166,12 @@
   {
     "name": "AUDIT-LEGACY-H1-list-not-claimed",
     "file": "src/scenes/legacyHost.js",
-    "old": "          r.by = me.id;   // opened: this member's claim (mergeFamily)\n",
-    "new": "",
+    "old": "      r.by = me.id;\n      openedSig.delete(r.id);",
+    "new": "      openedSig.delete(r.id);",
     "tests": [
       "test/legacy4_heirloom.test.js"
-    ]
+    ],
+    "note": "AUDIT LEGACY II (PIN MOVED): re-aimed by content - the law it guards now stands at this line."
   },
   {
     "name": "AUDIT-LEGACY-H1-opened-every-tick",
@@ -227,11 +230,12 @@
   {
     "name": "AUDIT-LEGACY-U3-keyboard-dead",
     "file": "src/ui/legacyDoor.js",
-    "old": "  if (code === 'Enter' || code === 'NumpadEnter' || code === 'Space') { (btns[at] ?? btns[0]).click?.(); return true; }",
-    "new": "  if (code === 'Enter' || code === 'NumpadEnter' || code === 'Space') { btns[0].click?.(); return true; }",
+    "old": "{ if (!e?.repeat) (btns[at] ?? btns[0]).click?.(); return true; }",
+    "new": "{ if (!e?.repeat) btns[0].click?.(); return true; }",
     "tests": [
       "test/auditlegacy.test.js"
-    ]
+    ],
+    "note": "AUDIT LEGACY II (PIN MOVED): re-aimed by content - the law it guards now stands at this line."
   },
   {
     "name": "AUDIT-LEGACY-U7-standard-toll-said",

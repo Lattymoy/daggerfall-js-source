@@ -50,7 +50,9 @@ export const TREE_ZOOM_STEP = 1.12;
  * @property {() => {ok:boolean, why?:string}} [passMantle]   an Enduring elder retires
  * @property {() => any[]} [hall]   every stored family
  * @property {(minutes:number) => string} [date]   a classic date in words
- * @property {() => boolean} [inWorld]   LEGACY-HOME: whether the line stands in the world (the "Family In World" dial)
+ * @property {() => boolean} [inWorld]   LEGACY-HOME: whether the line stands in the world (the "Family In World" dial,
+ *   and the Living World running - AUDIT LEGACY II B5)
+ * @property {() => boolean} [livingWorld]   whether the Living World runs (its towns are where the line stands)
  * @property {(house:any) => boolean} [markHome]   LEGACY-HOME: make one of the family's houses its home
  */
 let _provider = /** @type {FamilyProvider|null} */ (null);
@@ -64,8 +66,9 @@ let _zoom = 1;
 let _pan = null;      // { x, y } - null: centre on the played one at the next draw
 let _said = null;     // { ok, text } - the last act's word
 let _armed = null;    // 'switch:<id>' | 'mantle' - a press that asks again before it acts
+let _homeSaid = null; // the House page's word on a home marked (AUDIT LEGACY II U7)
 /** A fresh visit: nothing pressed, the tree centred, no word left over. */
-export function resetFamilyPages() { _sel = null; _zoom = 1; _pan = null; _said = null; _armed = null; }
+export function resetFamilyPages() { _sel = null; _zoom = 1; _pan = null; _said = null; _armed = null; _homeSaid = null; }
 /** AUDIT LEGACY U8: another page or tab pressed - an armed act and its word never wait for the way back. */
 export function disarmFamilyPages() { _said = null; _armed = null; }
 
@@ -81,6 +84,9 @@ export const FAMILY_CSS = `
 .px-sys .fam-node { position: absolute; width: ${TREE_NODE_W}px; height: ${TREE_NODE_H}px; box-sizing: border-box; padding: 4px 3px 3px;
   display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; border-width: 2px; border-style: solid; }
 .px-sys .fam-node.on { outline: 2px solid #f3cf86; outline-offset: 1px; }
+/* AUDIT LEGACY II U5: the keyboard's place is seen - the kit's panel rule takes every outline, and a kin link wore none */
+.px-sys .fam-node:focus-visible { outline: 2px dashed #f3cf86; outline-offset: 2px; }
+.px-sys .fam-kin button:focus-visible { outline: 1px solid #f3cf86; outline-offset: 2px; }
 .px-sys .fam-node.dead { filter: grayscale(1) brightness(0.62); }
 .px-sys .fam-node.played .fam-nname { color: #f3cf86; }
 .px-sys .fam-face { width: 48px; height: 52px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
@@ -106,7 +112,7 @@ export const FAMILY_CSS = `
 .px-sys .fam-grid .k { color: #b8b0a0; } .px-sys .fam-grid .v { color: #e2d9c4; text-align: right; }
 .px-sys .fam-h { margin: 4px 0 0; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #c08a3e; }
 .px-sys .fam-kin { font-size: 12px; color: #e2d9c4; }
-.px-sys .fam-kin button { all: unset; cursor: pointer; color: #f3cf86; text-decoration: underline dotted; }
+.px-sys .fam-kin button { all: unset; cursor: pointer; color: #f3cf86; text-decoration: underline dotted; display: inline-block; padding: 5px 0; }   /* AUDIT LEGACY II U13: a finger's target */
 .px-sys .fam-acts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
 .px-sys .fam-said { color: #8fc7a0; font-size: 12px; } .px-sys .fam-why { color: #e08a7a; font-size: 12px; }
 .px-sys .fam-hall { display: flex; flex-direction: column; gap: 8px; }
@@ -248,6 +254,9 @@ export function drawTreePage(detail, rerender, { el, divider, door = (fn) => fn(
     node.setAttribute('role', 'button');
     node.setAttribute('tabindex', '0');
     node.setAttribute('aria-label', `${fullNameOf(p.given, p.surname)}${p.died ? ', dead' : ''}`);
+    node.setAttribute('aria-pressed', p.id === _sel ? 'true' : 'false');   // AUDIT LEGACY II U14: the picked plate, and the one played, said
+    if (p.id === family.currentId) node.setAttribute('aria-current', 'true');
+    node.setAttribute('data-focus', `fam-node-${p.id}`);   // the keyboard's plate kept across a redraw
     node.append(faceBox(el, p), el('span', 'fam-nname', p.given || '?'));
     if (p.died) node.append(el('span', 'fam-mark dead', '✝'));
     else if (p.id === family.currentId) node.append(el('span', 'fam-mark', '◆'));
@@ -257,6 +266,22 @@ export function drawTreePage(detail, rerender, { el, divider, door = (fn) => fn(
     stage.append(node);
   }
   view.append(stage);
+  view.setAttribute('role', 'group');
+  view.setAttribute('aria-label', `The tree of the house of ${family.surname}`);
+  // AUDIT LEGACY II U4: the browser scrolls a clipped box to show a plate the keyboard reaches - the pan never knew, and
+  // the tools went out of sight with no way back. The box never scrolls; a plate the keyboard reaches is panned to
+  view.onscroll = () => { if (view.scrollLeft || view.scrollTop) { view.scrollLeft = 0; view.scrollTop = 0; } };
+  view.addEventListener?.('focusin', (e) => {
+    const t = /** @type {any} */ (e.target);
+    const id = Number(t?.getAttribute?.('data-focus')?.replace('fam-node-', ''));
+    const n = Number.isInteger(id) ? at.get(id) : null;
+    if (!n) return;
+    const w = view.clientWidth || 520, h = view.clientHeight || 340;
+    const sx = _pan ? _pan.x + n.x * TREE_SLOT_W * _zoom : 0, sy = _pan ? _pan.y + n.y * TREE_ROW_H * _zoom : 0;
+    if (_pan && sx >= 0 && sy >= 0 && sx + TREE_NODE_W * _zoom <= w && sy + TREE_NODE_H * _zoom <= h) return;
+    _pan = centreOn(n, w, h, _zoom);
+    apply();
+  });
   // the view: pan by dragging, zoom about the pointer
   let moved = false;
   const apply = () => { stage.style.transform = `translate(${_pan.x}px, ${_pan.y}px) scale(${_zoom})`; };
@@ -270,7 +295,11 @@ export function drawTreePage(detail, rerender, { el, divider, door = (fn) => fn(
   // AUDIT LEGACY U2: the pointer is CAPTURED only once a drag is under way (past four pixels) - captured at the press,
   // the click went to the view and no plate and no zoom button could be pressed with a mouse or a finger
   view.onpointerdown = (e) => { if (e.target?.closest?.('.fam-tools')) return; drag = { x: e.clientX, y: e.clientY, px: _pan?.x ?? 0, py: _pan?.y ?? 0, id: e.pointerId, held: false }; moved = false; };
+  // AUDIT LEGACY II U8: a drag ends when the button does - a flick released outside the view, a pointer the browser
+  // cancelled or a capture lost left it panning on a bare hover
+  const endDrag = () => { drag = null; view.classList.remove('dragging'); setTimeout(() => { moved = false; }, 0); };
   view.onpointermove = (e) => {
+    if (drag && e.buttons !== undefined && !(e.buttons & 1)) { endDrag(); return; }
     if (!drag || !_pan) return;
     const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
     if (!moved && Math.abs(dx) + Math.abs(dy) <= 4) return;
@@ -279,7 +308,9 @@ export function drawTreePage(detail, rerender, { el, divider, door = (fn) => fn(
     _pan = { x: drag.px + dx, y: drag.py + dy };
     apply();
   };
-  view.onpointerup = () => { drag = null; view.classList.remove('dragging'); setTimeout(() => { moved = false; }, 0); };
+  view.onpointerup = endDrag;
+  view.onpointercancel = endDrag;
+  view.onlostpointercapture = () => { if (drag?.held) endDrag(); };
   view.onwheel = (e) => {
     e.preventDefault?.();
     e.stopPropagation?.();
@@ -324,7 +355,7 @@ function personCard(el, family, p, livedNow, rerender, door) {
   if (p.died && _provider?.date) fact('Died', _provider.date(p.died.at));
   if (p.died?.place?.loc) fact('Fell at', String(p.died.place.loc));
   if (family.model === MODELS.enduring && (p.toll | 0) > 0) fact('Arkay’s toll', `${p.toll} years`);
-  const lives = livesLine(family, p);
+  const lives = _provider?.inWorld?.() === false ? null : livesLine(family, p);   // AUDIT LEGACY II B5: never a home the world does not show
   if (lives) fact('Lives', lives);
   card.append(facts);
   if (p.stats) {
@@ -357,12 +388,13 @@ function personCard(el, family, p, livedNow, rerender, door) {
   kinLine('Siblings', siblingsOf(family, p));
   kinLine('Children', childrenOf(family, p));
   // the acts
-  if (_said) card.append(el('p', _said.ok ? 'fam-said' : 'fam-why', _said.text));
+  if (_said) card.append(liveLine(el, _said));
   const acts = el('div', 'fam-acts');
   if (isAlive(p) && !played && p.kind === 'member' && p.retired == null) {
     const why = _provider?.switchRefusal?.(p.id) ?? null;
     const key = `switch:${p.id}`;
     const b = el('button', `act${_armed === key ? ' primary' : ''}`, _armed === key ? `Yes - play as ${p.given}` : `Play as ${p.given}`);
+    b.setAttribute('data-focus', 'fam-act-switch');   // AUDIT LEGACY II U6: armed, its words change - the keyboard stays on it
     if (why && why !== 'none') { b.disabled = true; b.title = why; }
     b.onclick = () => {
       if (_armed !== key) { _armed = key; _said = { ok: true, text: p.characterId ? `${fullNameOf(p.given, p.surname)}'s journey picks up where they left it. You are saved where you stand.` : `${fullNameOf(p.given, p.surname)} sets out for the first time from the family seat. You are saved where you stand.` }; rerender(); return; }
@@ -377,6 +409,7 @@ function personCard(el, family, p, livedNow, rerender, door) {
   if (played && family.model === MODELS.enduring && isElder(p, livedNow) && _provider?.passMantle) {
     const armed = _armed === 'mantle';
     const b = el('button', `act${armed ? ' primary' : ''}`, armed ? 'Yes - pass the mantle' : 'Pass the mantle');
+    b.setAttribute('data-focus', 'fam-act-mantle');   // AUDIT LEGACY II U6
     b.title = `${p.given} retires to the family seat, and you choose who carries the line on.`;
     // AUDIT LEGACY U4: why not, said on the card before the press - pressed, the act takes the pause down first
     const why = _provider?.mantleRefusal?.() ?? null;
@@ -403,6 +436,14 @@ export function livesLine(family, p) {
   const h = (family.houses ?? []).find((x) => sameHouse(x, home));
   const where = h?.location ? ` in ${h.location}` : '';
   return sameHouse(home, familyHome(family)) ? `At the family home${where}` : `In their own house${where}`;
+}
+
+/** An act's word, said to a reader as it changes (AUDIT LEGACY II U14). */
+function liveLine(el, said) {
+  const n = el('p', said.ok ? 'fam-said' : 'fam-why', said.text);
+  n.setAttribute('role', 'status');
+  n.setAttribute('aria-live', 'polite');
+  return n;
 }
 
 const noFamilyLine = (prov) => (!prov ? 'Your family is kept in the world - open this from a game.'
@@ -443,14 +484,23 @@ export function drawHousePage(detail, rerender, { el, divider } = /** @type {any
         el('div', 'fam-sub', holder ? `${fullNameOf(holder.given, holder.surname)}'s deed` : 'A deed of the house'));
       if (!sameHouse(h, home) && prov.markHome) {
         const b = el('button', 'act fam-makehome', 'Make this the family home');
-        b.onclick = () => { prov.markHome(h); rerender(); };
+        b.setAttribute('aria-label', `Make ${h.location || 'this house'} the family home`);
+        // AUDIT LEGACY II U7: said, and the keyboard kept on the homes - the pressed button goes with its row's change,
+        // and the browser's focus landed on the OTHER row's same button, whose next press undid the first
+        b.onclick = () => {
+          const ok = prov.markHome(h);
+          _homeSaid = ok ? { ok: true, text: `${h.location || 'That house'} is the family home now.` } : { ok: false, text: 'That house is not the family\'s.' };
+          rerender();
+        };
         row.append(b);
       }
       list.append(row);
     }
     detail.append(list);
+    if (_homeSaid) { const n = liveLine(el, _homeSaid); n.setAttribute('tabindex', '-1'); n.setAttribute('data-focus', 'fam-home-said'); detail.append(n); setTimeout(() => n.focus?.({ preventScroll: true }), 0); _homeSaid = null; }
   }
-  if (prov.inWorld && !prov.inWorld()) detail.append(el('p', 'px-note', 'Your family keeps out of sight: "Family In World" is off in Project Legacy\'s settings.'));
+  if (prov.livingWorld && !prov.livingWorld()) detail.append(el('p', 'px-note', 'Your family lives in the Living World\'s towns - turn on the Living World (Features, the enhanced screens) to meet them there.'));
+  else if (prov.inWorld && !prov.inWorld()) detail.append(el('p', 'px-note', 'Your family keeps out of sight: "Family In World" is off in Project Legacy\'s settings.'));
   else detail.append(el('p', 'px-note', 'Your family lives in the world while you play another of them. Speak with one to play as them.'));
   const fallen = family.people.filter((p) => p.died).sort((a, b) => (b.died.at ?? 0) - (a.died.at ?? 0));
   if (fallen.length) {

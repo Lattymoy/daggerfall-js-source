@@ -415,7 +415,7 @@ function chargenWizard(flow, { onDone, onCancel, hudScale = 2 } = {}) {
  *
  * `isChoiceWindow` is a GETTER for the same reason: the wizard wants
  * raw key codes and the question wants the shared overlayAction names,
- * and the hosts read that flag at routing time (townTalk.js:430,
+ * and the hosts read that flag at routing time (townTalk.js:431,
  * worldModes.js's overlayIsNative), so one object can want both in
  * turn.
  *
@@ -544,8 +544,8 @@ function classicChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {}) {
     // the port's only reading of it - without this the thumb could
     // latch on the press and then never move. Every host that runs
     // the wizard already routes a mousemove here: world.js and
-    // exterior.js through `townTalk.hover` (townTalk.js:1330-1341,
-    // the route itself :1339), dungeonContext.js through `overlayHover`
+    // exterior.js through `townTalk.hover` (townTalk.js:1331-1342,
+    // the route itself :1340), dungeonContext.js through `overlayHover`
     // (:9261), which dungeon.js:562 and worldModes.js:11114 both feed.
     // (ROAD-G G4 review: all four were stale - re-resolved by content,
     // against the same six routes G4-11 sweeps.) Hovering never

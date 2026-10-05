@@ -1,0 +1,308 @@
+[
+  {
+    "name": "AUDIT-LEGACY-II-A1-tick-acts-for-the-heir",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (!p || !isAlive(p) || !playedHere(p)) return null;",
+    "new": "    if (!p || !isAlive(p)) return null;",
+    "tests": [
+      "test/auditlegacy2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEGACY-II-B1-settled-at-the-choice",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    // AUDIT LEGACY II B1: the waiting fall is answered when the heir LANDS",
+    "new": "    settlePending(heir);\n    // AUDIT LEGACY II B1: the waiting fall is answered when the heir LANDS",
+    "tests": [
+      "test/auditlegacy2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEGACY-II-A2-birth-kept-without-save",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    family = readFamily(was);\n    deps.say(LEGACY_TEXT.notBorn(p.given));",
+    "new": "    store();\n    deps.say(LEGACY_TEXT.notBorn(p.given));",
+    "tests": [
+      "test/auditlegacy2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEGACY-II-A2-birth-door-refuses-saveless",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (p.characterId && (!deps.hasSave || deps.hasSave(p.characterId))) return null;",
+    "new": "    if (p.characterId) return null;",
+    "tests": [
+      "test/auditlegacy2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEGACY-II-A2-play-loads-no-one",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (p.characterId && deps.hasSave && !deps.hasSave(p.characterId)) { p.characterId = null; touch(family); store(); }",
+    "new": "",
+    "tests": [
+      "test/auditlegacy2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEGACY-II-H2-rewind-drops-the-claim",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (r.by !== me.id) continue;   // nobody's, or another member's: the store's",
+    "new": "    if (r.by != null && r.by !== me.id) continue;",
+    "tests": [
+      "test/auditlegacy2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEGACY-II-A3-lapse-keeps-first-laid",
+    "file": "src/scenes/legacyHost.js",
+    "old": "r.state = 'lying'; r.first = JSON.parse(JSON.stringify(r.items)); lapsed = true;",
+    "new": "r.state = 'lying'; lapsed = true;",
+    "tests": [
+      "test/auditlegacy2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEGACY-II-A3-lapse-unstored",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (lapsed) { touch(family); store(); }",
+    "new": "    if (lapsed) touch(family);",
+    "tests": [
+      "test/auditlegacy2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEGACY-II-H5-claimed-at-the-open",
+    "file": "src/scenes/legacyHost.js",
+    "old": "          if (r.by == null && !openedSig.has(r.id)) openedSig.set(r.id, itemsSig(r.items));   // claimed once changed (claimTouched)",
+    "new": "          r.by = me.id;",
+    "tests": [
+      "test/auditlegacy2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEGACY-II-H5-no-word-of-others-claim",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    }).concat(claimedByOthers().map((r) => {",
+    "new": "    }).concat([].map((r) => {",
+    "tests": [
+      "test/auditlegacy2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEGACY-II-P1-refused-write-forgotten",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (unstored) store();   // AUDIT LEGACY II P1: a refused write, tried again - first: a death's above all",
+    "new": "",
+    "tests": [
+      "test/auditlegacy2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEGACY-II-P1-refused-write-unsaid",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (!ok && !unstoredSaid) { unstoredSaid = true; deps.say(LEGACY_TEXT.notStored); }",
+    "new": "",
+    "tests": [
+      "test/auditlegacy2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEGACY-II-A6-houses-at-the-tick",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    payEstateOf(p);\n    remainsStep();",
+    "new": "    syncHousesNow(p);\n    payEstateOf(p);\n    remainsStep();",
+    "tests": [
+      "test/auditlegacy2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEGACY-II-F2-realm-homes-the-lines",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (!deps.heldHouses || deps.online()) return false;",
+    "new": "    if (!deps.heldHouses) return false;",
+    "tests": [
+      "test/auditlegacy2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEGACY-II-A7-parked-by-a-rise",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (!saving) return;\n",
+    "new": "    if (!saving) { const h = deps.houseHere?.() ?? null; p.parked = h && (family.houses ?? []).some((x) => sameHouse(x, h)) ? { mapId: h.mapId, buildingKey: h.buildingKey } : (deps.houseHere ? null : p.parked); return; }\n",
+    "tests": [
+      "test/auditlegacy2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEGACY-II-P3-dressed-anew-every-ask",
+    "file": "src/scenes/legacyHost.js",
+    "old": "      if (was?.sig === sigs[i]) return was.res;",
+    "new": "",
+    "tests": [
+      "test/auditlegacy2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEGACY-II-H1-foreign-record-kept",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (!me) { family = null; return; }",
+    "new": "    if (!me) return;",
+    "tests": [
+      "test/auditlegacy2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEGACY-II-B5-no-living-world-gate",
+    "file": "src/scenes/legacyHost.js",
+    "old": " && (deps.livingWorld?.() ?? true);",
+    "new": ";",
+    "tests": [
+      "test/auditlegacy2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEGACY-II-U11-none-said",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    const refusal = why === 'none' ? LEGACY_TEXT.notNow : why;",
+    "new": "    const refusal = why;",
+    "tests": [
+      "test/auditlegacy2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEGACY-II-A4-stale-write-refused",
+    "file": "src/systems/legacy/store.js",
+    "old": "    if (was && was.rev >= family.rev) {\n      mergeFacts(family, was);",
+    "new": "    if (was && was.rev > family.rev) return false;\n    if (was && was.rev >= family.rev) {\n      mergeFacts(family, was);",
+    "tests": [
+      "test/auditlegacy2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEGACY-II-A4-death-not-merged",
+    "file": "src/systems/legacy/store.js",
+    "old": "    if (!p.died && o.died) p.died = o.died;",
+    "new": "",
+    "tests": [
+      "test/auditlegacy2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEGACY-II-A4-answered-fall-retaken",
+    "file": "src/systems/legacy/store.js",
+    "old": "&& knew.get(other.pending.fallenId) === false) mine.pending",
+    "new": "&& knew.has(other.pending.fallenId)) mine.pending",
+    "tests": [
+      "test/auditlegacy2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEGACY-II-A5-houses-rebuilt",
+    "file": "src/systems/legacy/household.js",
+    "old": "  const next = was.filter((h) => h.by !== personId || mine.some((m) => sameHouse(m, h)));\n  for (const m of mine) if (!next.some((h) => sameHouse(h, m))) next.push(m);",
+    "new": "  const others = was.filter((h) => h.by !== personId);\n  const next = [...others, ...mine.filter((h) => !others.some((o) => sameHouse(o, h)))];",
+    "tests": [
+      "test/auditlegacy2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEGACY-II-A9-cycle-kept",
+    "file": "src/systems/legacy/family.js",
+    "old": "  for (const p of people) p.parents = p.parents.filter((q) => q !== p.id && !(byId.has(q) && ancestorOf(byId.get(q), p.id)));",
+    "new": "",
+    "tests": [
+      "test/auditlegacy2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEGACY-II-A10-first-unshaped",
+    "file": "src/systems/legacy/family.js",
+    "old": "    first: Array.isArray(r.first) ? r.first.filter((it) => it && typeof it === 'object') : (Array.isArray(r.items) ? r.items.filter((it) => it && typeof it === 'object') : []),",
+    "new": "",
+    "tests": [
+      "test/auditlegacy2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEGACY-II-H1-offline-copy-keeps-lineage",
+    "file": "src/systems/offlineCopy.js",
+    "old": "  if (!copy || typeof copy !== 'object') return copy;\n  dropLineage(copy);\n  const own",
+    "new": "  if (!copy || typeof copy !== 'object') return copy;\n  const own",
+    "tests": [
+      "test/auditlegacy2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEGACY-II-H1-customs-keeps-lineage",
+    "file": "src/systems/offlineCopy.js",
+    "old": "  dropLineage(copy);\n  if (!Number.isFinite(worldNow)) return copy;",
+    "new": "  if (!Number.isFinite(worldNow)) return copy;",
+    "tests": [
+      "test/auditlegacy2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEGACY-II-H4-bones-anywhere",
+    "file": "src/systems/itemTransfer.js",
+    "old": "  if (item.legacyRemains && !usingWagon && remote?.[REMAINS_LIST] !== item.legacyRemains.of) return { ok: false, refusal: REFUSAL.remains };",
+    "new": "",
+    "tests": [
+      "test/auditlegacy2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEGACY-II-B2-census-household",
+    "file": "src/systems/legacy/household.js",
+    "old": "    household: `F${family.id}`,",
+    "new": "",
+    "tests": [
+      "test/auditlegacy2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEGACY-II-B2-keepsake-for-the-line",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    if (!res || res.household != null) return null;",
+    "new": "    if (!res) return null;",
+    "tests": [
+      "test/auditlegacy2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEGACY-II-B3-plan-kept-by-the-day",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "e.day !== day || e.home !== res.home ||",
+    "new": "e.day !== day ||",
+    "tests": [
+      "test/auditlegacy2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEGACY-II-U1-held-key-presses",
+    "file": "src/ui/legacyDoor.js",
+    "old": "{ if (!e?.repeat) (btns[at] ?? btns[0]).click?.(); return true; }",
+    "new": "{ (btns[at] ?? btns[0]).click?.(); return true; }",
+    "tests": [
+      "test/auditlegacy2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEGACY-II-U14-back-over-the-succession",
+    "file": "src/ui/plusPad.js",
+    "old": "  if (back) rows.push([[uiBack], 'Back']);",
+    "new": "  rows.push([[uiBack], 'Back']);",
+    "tests": [
+      "test/auditlegacy2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEGACY-II-U3-tab-swallowed",
+    "file": "src/ui/input.js",
+    "old": "  return e?.key === 'Tab' && !!e.target?.closest?.('[data-dom-focus]');",
+    "new": "  return false;",
+    "tests": [
+      "test/auditlegacy2.test.js"
+    ]
+  }
+]

@@ -12848,11 +12848,14 @@ export async function bootWorld(canvas, renderer, params, status) {
   function legacyMeetKin(person, talk) {
     const kin = legacyHost?.kinOfResident(person?.living?.res) ?? null;
     if (!kin) return false;
+    const resId = person.living.res.id;
     const ov = createKinOverlay({
       title: kin.name, lines: [kin.is, ...kin.lines], who: kin.person, name: kin.name, sub: legacyIdentity(kin.person),
       act: LEGACY_TEXT.playAs(kin.person.given), why: kin.refusal, faces: legacyFaces,
       play: () => legacyHost?.switchTo(kin.person.id, { here: true }) ?? { ok: false, why: LEGACY_TEXT.notSaved },   // a member never played is born where they were met
-      talk,
+      // AUDIT LEGACY II B6: the body may have gone on its way under the card (online the world's clock runs, and a walker
+      // gone indoors is let go and dressed as someone else) - talked to only while it is still them
+      talk: () => { if (person.living?.res?.id === resId) talk(); else townTalk.say(`${kin.person.given} has gone on their way.`); },
     });
     if (!ov) return false;
     townTalk.showOverlay(ov);
@@ -15235,7 +15238,7 @@ export async function bootWorld(canvas, renderer, params, status) {
      *  GameManager.Instance.WeaponManager.ToggleSheath() - a SINGLETON
      *  call with no scene gate at all, registered for both buttons at
      *  :211-212, so the panel is live on every screen the bar is drawn
-     *  on. Here routeAction's arm is optional (ui/input.js:815) and
+     *  on. Here routeAction's arm is optional (ui/input.js:823) and
      *  only dungeonContext.js carried the door, so above ground, in
      *  ?exterior and inside a building the click was swallowed by
      *  routeLargeHudClick's unconditional `return true` and nothing
@@ -15644,7 +15647,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // gates the position now, not just the presence.
         // WEAPON-VIS2: this ladder never calls routeKey (the comment
         // above the Escape arm says so directly), so routeKey's own
-        // `POLLED_ACTIONS.has(act)` decline (ui/input.js:774) never
+        // `POLLED_ACTIONS.has(act)` decline (ui/input.js:782) never
         // touched this door. hudCtx carries toggleSheath (AUDIT 58, for
         // the large HUD's sheath panel), so 'ReadyWeapon' - Z - reached
         // routeAction from BOTH here AND the frame's own poll below
@@ -22162,6 +22165,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // LEGACY-HOME: the houses the one played holds (a deed that stands - banking.js deedStands), and the house they are in
     heldHouses: () => (playerEntity.houses ?? []).filter((h) => (h?.buildingKey | 0) > 0 && deedStands(h)),
     houseHere: () => { const b = (modes?.mode ?? 'exterior') === 'interior' ? modes?.interiorBuilding : null; return b?.buildingKey > 0 && b.townMapId ? { mapId: b.townMapId >>> 0, buildingKey: b.buildingKey } : null; },
+    hasSave: (cid) => newestSaveOf(enumerateSaves().info, cid) >= 0,   // AUDIT LEGACY II A2/B1: a person's character stands only with a save of them
+    livingWorld: () => livingWorldOn(),   // AUDIT LEGACY II B5: the line stands only in the Living World's towns
     takeItem: (it) => { for (const k of ['items', 'wagonItems', 'bagItems']) if (Array.isArray(playerEntity[k])) playerEntity[k] = playerEntity[k].filter((x) => x !== it); },   // LEGACY4: the remains given up at the rest, wherever they were kept
   });
   /** AUDIT LEGACY U4: an act the Family page asked for and the host refused after the pause went down - said on the HUD. */
@@ -22180,7 +22185,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     passMantle: () => legacySaid(legacyPassMantle()),
     hall: () => listFamilies(appStorage()),
     date: (m) => legacyDateText(m),
-    inWorld: () => legacySettings().familyInWorld,   // LEGACY-HOME
+    inWorld: () => legacySettings().familyInWorld && livingWorldOn(),   // LEGACY-HOME; AUDIT LEGACY II B5: in the Living World's towns alone
+    livingWorld: () => livingWorldOn(),
     markHome: (h) => !!legacyHost?.markHome(h),
   });
   if (params.has('legacyborn')) legacyHost.takeBorn(params.get('legacyborn'));   // LEGACY1: the waiting birth, before the new game's mod records are made
@@ -26894,7 +26900,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // window held in the townTalk slot while the player was inside a
       // building or a dungeon, and gated it on the window existing -
       // but townTalk.frame ticks and draws the HUD TEXT LAYER too
-      // (townTalk.js:666, :674). So every HUD line raised in a modal
+      // (townTalk.js:667, :675). So every HUD line raised in a modal
       // mode had nowhere to land, which is why the interior weapon
       // rig's `say` was a console.warn and the interior ticker's was a
       // console.log. Drawn ABOVE the modal render, which is where

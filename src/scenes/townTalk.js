@@ -43,7 +43,7 @@ import { TalkWindow } from '../ui/talkWindow.js';
 import { hudScale } from '../ui/hud.js';
 import { hudRenderEnabled } from '../ui/hudShortcuts.js';   // AUDIT 64 F37: DaggerfallHUD's Draw override covers popupText too
 import { setMidScreenText, midScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: the HUD's OTHER text surface, and its notebook tail
-import { overlayAction, actionsOf, isTextEntryTarget, isDomControlTarget } from '../ui/input.js';   // AUDIT 58: the mode keys read the registry, not e.code; CG2: a DOM field's key is the field's
+import { overlayAction, actionsOf, isTextEntryTarget, isDomControlTarget, isDomFocusWalk } from '../ui/input.js';   // AUDIT 58: the mode keys read the registry, not e.code; CG2: a DOM field's key is the field's
 import { makeWindowStack, pauseWhileOpen, hidesHud } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this host's one slot; ROAD-tail: and its PAUSE
 import { hudFade } from '../ui/fadeLayer.js';   // D4: PushWindow's ClearFade
 import {
@@ -407,6 +407,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       // AUDIT 28 H11: Enter or Space on a DOM window's own button is the browser's press of it - the payday notice's
       // "Take the reward", the boards' every act - never prevented under the window that drew it
       if ((e.key === 'Enter' || e.key === ' ') && isDomControlTarget(e.target)) return true;
+      if (isDomFocusWalk(e)) return true;   // AUDIT LEGACY II U3: Tab walks a DOM window that owns the focus
       e.preventDefault();
       // E says goodbye too - the touch layer's E button opens AND
       // closes talk (desktop-consistent; Esc/Enter unchanged). Choice

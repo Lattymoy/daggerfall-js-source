@@ -50,6 +50,7 @@ import { entityMaxEncumbrance } from '../combat/formulas.js';
 import { makeItemPermanent } from './quest/item.js';   // TransferItem's MakePermanent arm (:1502-1504)
 import { getBool } from './settings.js';   // GUI/CanDropQuestItems
 import { setLightSource } from './lightSource.js';   // DISC7: the light in hand's one door
+import { REMAINS_LIST } from './legacy/heirloom.js';   // AUDIT LEGACY II H4: a remains' list, open
 import { BAG_WORDS, isBagItem, holdsOtherBag } from '../net/bagLaw.js';   // BAG1: a loaded Materials Bag never leaves the pack; ONE-BAG: one to a character
 
 /** ItemHelper.WagonKgLimit (:56). */
@@ -79,6 +80,7 @@ export const REFUSAL = Object.freeze({
   /** AUDIT 26: the quest arm's refusal shares the summoned one's
    *  words, because DFU pops the same string for both. */
   questItem: { reason: 'questItem', text: CANNOT_REMOVE_ITEM_TEXT },
+  remains: { reason: 'remains', text: 'These are the remains of your blood. Carry them home, or leave them where they lie.' },   // AUDIT LEGACY II H4
   chooseOnePile: { reason: 'chooseOnePile', text: null },
   wagonFull: { reason: 'wagonFull', text: CANNOT_HOLD_TEXT },
   cannotCarry: { reason: 'cannotCarry', text: CANNOT_CARRY_TEXT },
@@ -247,6 +249,10 @@ export function planStore(item, {
   if (groundRefusal) return { ok: false, refusal: { reason: 'ground', text: groundRefusal } };
   if (item.group === 'Transportation') return { ok: false, refusal: REFUSAL.transport };
   if (isSummoned(item)) return { ok: false, refusal: REFUSAL.summoned };
+  // AUDIT LEGACY II H4: an ancestor's remains (Project Legacy) leave the character's keeping - the pack, the wagon -
+  // only back into the list they were taken from (it bears their mark while open, systems/legacy/heirloom.js
+  // REMAINS_LIST); a chest, a pile or the ground would hold a second set of bones the quest never reads
+  if (item.legacyRemains && !usingWagon && remote?.[REMAINS_LIST] !== item.legacyRemains.of) return { ok: false, refusal: REFUSAL.remains };
   // AUDIT 26 F156: THE MAP ARM (:1471-1478), between the summoned
   // guard and the quest arm. A MiscItems.Map in EITHER direction is
   // intercepted: RecordLocationFromMap runs, the item is removed, and
