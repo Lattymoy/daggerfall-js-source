@@ -27,6 +27,7 @@
 import { INK_RGB } from './inkMap.js';
 import { slicingPositionY, DEFAULT_SLICING_BIAS_Y } from '../systems/automap.js';
 import { EYE_HEIGHT } from '../player/motor.js';
+import { FLOOR_NY } from '../systems/automapFloors.js';   // FIELD BUGS 2026-10-05c (RAMP-INK): the plan's floor law
 import { loseGlContext, onPageGone } from '../render/glRelease.js';   // GL-LEAK: the context let go at once, and as the page goes
 
 /** How far over the player's feet the slice cuts (metres) - the classic window's own law (automap.js
@@ -52,6 +53,17 @@ export const WAVE_STEP = 1.6, WAVE_SHARE = 0.6;
 export const STONE = 1, JOINT_TONE = 0.24, WATER_RULE = 0.3;
 /** ALL-FLOORS: how strongly a floor that is not the player's is inked when every floor is shown (the player's is 1). */
 export const OTHER_FLOOR = 0.3;
+/** FIELD BUGS 2026-10-05c (RAMP-INK; "where there is a steep upward incline in a hallway, never gets filled properly"):
+ *  a face is inked as FLOOR - the pencil, the flagstones, a flooded floor's wash, a climbing face no storey's cut takes
+ *  apart - when it leans up no further than the motor walks: the plan's own law (automapFloors.js FLOOR_NY, the motor's
+ *  SLOPE_LIMIT_DEG). A literal 0.6 (53.13 degrees) inked every steeper ramp the player walks - Daggerfall's run to 55 -
+ *  as a WALL: a bare wash, never the grey of ground walked, so a hallway's climb read as never visited. */
+export const FLOOR_FACE_NY = FLOOR_NY;
+/** The ink a face takes by its normal's lean (`ny`), as FS_A chooses it: a floor, a ceiling (looking down past 0.6), or a
+ *  wall. */
+export const faceInkOf = (ny) => (ny > FLOOR_FACE_NY ? 'floor' : ny < -0.6 ? 'ceiling' : 'wall');
+/** The floor's lean as FS_A's literal. */
+const FNY = FLOOR_FACE_NY.toFixed(6);
 
 const VS_A = `#version 300 es
 in vec3 aPos; in vec4 aNrm; in float aWater; in float aRowY;
@@ -98,7 +110,7 @@ void main() {
     float base = uStoreys[0];
     for (int i = 0; i < 32; i++) { if (i >= uStoreyN) break; if (uStoreys[i] <= vRowY + 0.75) base = max(base, uStoreys[i]); }
     clipHere = min(uClipY, base + uSliceAbove);
-    bool climbs = (n.y > 0.6 && n.y < 0.97) || (vN.w > 1.2 && vN.w < 1.5);
+    bool climbs = (n.y > ${FNY} && n.y < 0.97) || (vN.w > 1.2 && vN.w < 1.5);
     if (vW.y > clipHere && !climbs) discard;
     // the player's storey in full, the others faint
     if (abs(base - uFocus) > 0.75) dim = uOther;
@@ -120,7 +132,7 @@ void main() {
   bool wet = vW.y <= vWater;
   float stones = 0.0;   // how much of the flagstone pattern is laid (0 = none: too small to draw, or not a floor)
   float joint = 0.0, bevel = 0.0; vec2 cell = vec2(0.0);
-  if (n.y > 0.6) {
+  if (n.y > ${FNY}) {
     // FLAGSTONES (Mac: "make the blocky floor a bit more visible"): courses a stone deep, each course set half a
     // stone over, every stone a little its own shade, its joint a crisp pen line and its far edges a touch shaded,
     // as a draughtsman shades a paving
@@ -137,7 +149,7 @@ void main() {
     bevel = mix(ba, bb, t) * (k0 < 0.5 ? 1.0 - t : 0.0);
     stones = 1.0;
   }
-  if (n.y > 0.6) {
+  if (n.y > ${FNY}) {
     // floor (Mac: "the ground has to be very slightly grey like youve done it with a pencil"): a light graphite
     // shading in close diagonal strokes that wander a little, with the flagstones in it
     float grain = 0.5 + 0.5 * sin((vW.x - vW.z) * 23.0 + h(floor(vec2(vW.x + vW.z, vW.y) * 1.3)) * 6.0);
@@ -161,7 +173,7 @@ void main() {
   if (wet) {
     pencil = 0.5;
     float deep = clamp((vWater - vW.y) / 2.5, 0.0, 1.0);
-    if (n.y > 0.6) {
+    if (n.y > ${FNY}) {
       // the wash: deeper is darker, and it clouds a little, as a watercolour wash dries - the stones faint under it
       float cloud = vn(vW.xz * 0.45) * 0.6 + vn(vW.xz * 1.3 + 17.0) * 0.4;
       tone = 0.2 + 0.12 * deep + 0.07 * (cloud - 0.5) + 0.05 * joint;
@@ -189,7 +201,7 @@ void main() {
     }
   }
   // the WATERLINE itself, on any upright face the water meets (just above the level as well as under it)
-  if (vWater > -1e8 && abs(n.y) <= 0.6) {
+  if (vWater > -1e8 && n.y <= ${FNY} && n.y >= -0.6) {
     float wPx = abs(vW.y - vWater) / max(fwidth(vW.y), 1e-5);
     float line = 1.0 - smoothstep(0.7, 1.7, wPx);
     if (line > 0.0) { pencil = 0.5; tone = max(tone, 0.9 * line); }
@@ -311,7 +323,7 @@ export function rowMesh(r) {
   // per-storey cut never takes a flight apart between two floors
   let risers = 0;
   for (let k = 0; k < n; k += 3) if (nrm[k * 4 + 3] > 1.5) risers++;
-  if (risers >= 4 * 2) for (let k = 0; k < n; k += 3) if (nrm[k * 4 + 3] < 1.5 && nrm[k * 4 + 1] > 0.6) for (let v = 0; v < 3; v++) nrm[(k + v) * 4 + 3] = 1.4;
+  if (risers >= 4 * 2) for (let k = 0; k < n; k += 3) if (nrm[k * 4 + 3] < 1.5 && nrm[k * 4 + 1] > FLOOR_FACE_NY) for (let v = 0; v < 3; v++) nrm[(k + v) * 4 + 3] = 1.4;
   // ALL-FLOORS: the storey a row stands on is read off ITS FLOOR - the height where most of its up-facing area lies
   // (Mac: "when i press all it should still highlight my floor"): the lowest point was the bottom of the rock under
   // a room, or a slab's underside, a storey too low - so the player's own rooms were drawn as another floor, faint.

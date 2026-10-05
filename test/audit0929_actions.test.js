@@ -16,7 +16,8 @@ import { PlayerMotor, FIXED_DT, CAPSULE_HEIGHT, CAPSULE_RADIUS, motionBagOf } fr
 import {
   ActionSystem, actionContact, standsOnAction, hasActionCollision, classifyPlacementAction, COLLISION_TIMEOUT_S, WALK_ON_DIR_Y, TRIGGER_SKIN_WIDTH,
 } from '../src/world/actionSystem.js';
-import { layoutRdbBlock, TRIGGER_FLAGS } from '../src/world/rdbLayout.js';
+import { layoutRdbBlock, TRIGGER_FLAGS, ACTION_FLAGS } from '../src/world/rdbLayout.js';
+import { RDB_RESOURCE_TYPES } from '../src/formats/blocksFile.js';
 import { worldAabb } from '../src/player/activate.js';
 import { BlocksFile } from '../src/formats/blocksFile.js';
 import { Arch3dFile } from '../src/formats/arch3dFile.js';
@@ -236,4 +237,34 @@ test('AUDIT PRE-MERGE 0929 D1: the throne puzzle (N0000037) at the motor\'s own 
   const throne = heard.filter(([k]) => k === 'act:0:22979' || k === 'act:0:22908');
   assert.ok(throne.some(([, t]) => t === 'WalkOn'), `the throne heard ${JSON.stringify(throne.slice(0, 4))}`);
   assert.ok(events.includes('cast'), 'the throne casts its spell');
+});
+
+test('FIELD BUGS 2026-10-05c FLAT-RELAY ("red brick sections are not always working at teleporters"): a Teleport an RDB FLAT carries, Collision03, is heard by its box when walked into and sends the body to its next object - the relay keeps the flat\'s mark (addRelay isFlat), as an effect and a moving flat do; a model\'s relay is no flat (mutants: the mark dropped, every relay a flat)', () => {
+  // the flat as BlocksFile mints it (no ARENA2): an editor flat (199.11) whose Teleport links to a start marker 50 units away
+  const flat = (position, record, { x = 0, z = 0, action = 0, flags = 0, next = -1 } = {}) => ({
+    position, xPos: x, yPos: 0, zPos: z, type: RDB_RESOURCE_TYPES.Flat,
+    resources: { flatResource: { textureArchive: 199, textureRecord: record, flags, magnitude: 0, soundIndex: 0, factionOrMobileId: 0, nextObjectOffset: next, action } },
+  });
+  const block = { position: 0, rdbBlock: { modelReferenceList: [], objectRootList: [{ rdbObjects: [
+    flat(100, 11, { action: ACTION_FLAGS.Teleport, flags: TRIGGER_FLAGS.Collision03, next: 200 }), flat(200, 10, { x: 2000, z: 2000 }),
+  ] }, { rdbObjects: null }] } };
+  const layout = layoutRdbBlock(block, 0, false, () => null);
+  const { action } = layout.markers.find((m) => m.position === 100);
+  assert.equal(action.isFlat, true, 'the producer marks a flat\'s action');
+  // registered as dungeonContext.js registerFlatAction registers it: a relay over its billboard's box, no triangles
+  const collider = new Collider(() => -Infinity), triggerSurfaces = new Collider(() => -Infinity);
+  const actions = new ActionSystem(collider, {});
+  const sent = [];
+  actions.onTeleport = (dest) => sent.push(dest);
+  actions.resolvePosition = (_ns, pos) => (pos === 200 ? { pos: [50, 0, 50], yawDeg: 0 } : null);
+  const o = actions.addRelay(0, 100, action, { min: [-0.5, -1, -0.5], max: [0.5, 1, 0.5] }, [0, 0, 0]);
+  assert.equal(o.isFlat, true, 'the relay keeps the mark');
+  const heard = [];
+  pass({ actions, collider, triggerSurfaces }, COLLISION_TIMEOUT_S, [0.6, -1, 0], [-1, 0], heard);
+  assert.deepEqual(heard, [[o.key, 'WalkInto']], 'walked into, heard');
+  actions.update?.(FIXED_DT);
+  assert.equal(sent.length, 1, 'and sent on');
+  assert.deepEqual(sent[0].pos, [50, 0, 50]);
+  // a model's relay (rdbLayout modelAction: isFlat false) is not heard by its box
+  assert.equal(actions.addRelay(0, 300, { ...action, isFlat: false }, null).isFlat, false);
 });

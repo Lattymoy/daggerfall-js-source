@@ -14,7 +14,7 @@ import { EnemyAI, FOLLOW_STOP, FOLLOW_SLACK, FOLLOW_LEASH } from '../src/charact
 import { Collider } from '../src/player/collider.js';
 import { bakeNavFromCollider } from '../src/ai/navBake.js';
 import { EnhancedEnemyAI, makeNavWorld } from '../src/ai/enhancedMotor.js';
-import { runTargetMachine, getTargets } from '../src/characters/enemyTargets.js';
+import { runTargetMachine, getTargets, PLAYER_TARGET, fightsOurSide, targetPriority, COMPANION_ASSIST_PRIORITY } from '../src/characters/enemyTargets.js';
 import { createCrewLife } from '../src/systems/naval/crewLife.js';
 import { MORALE_EVENT, createShipCrew } from '../src/systems/naval/shipCrew.js';
 import { boatMenuRows, BOAT_VERB } from '../src/systems/csaBoatMenu.js';
@@ -415,4 +415,61 @@ test('CREW-COMPANIONS by source: the world stands the party in every place and e
   assert.match(n, /raids: \[\.\.\.raidUids\], party: companions\.snapshot\(\) \};/);
   assert.match(n, /companions = createCompanions\(r\?\.party \?\? null, deps\.packedItems \?\? null\);/);
   assert.match(n, /const live = boatState\.get\(c\.boat\);\n\s*if \(live\) live\.crew\.event\('knocked'\);/);
+});
+
+test('FIELD BUGS 2026-10-05c ASSIST (\'revenants just "stand there" during fight sometimes\'): a companion takes the foe striking his leader, whichever way he faces, over an idle foe behind a wall (DFU\'s +5 for "targets no one" kept every other pair); he never walks into the wall at it, and it is not pulled onto him (mutants: the assist unread, a foe fighting a companion not his side)', () => {
+  // a wall at x = 3: any ray crossing it is stopped there, and no step crosses it
+  const walled = () => ({
+    raycast: (o, d, max = Infinity) => {
+      if (d[1] < -0.5) return Math.max(0, o[1]) + 0.5;
+      if (Math.abs(d[0]) > 1e-9) { const t = (3 - o[0]) / d[0]; if (t > 0 && t < max) return t; }
+      return Infinity;
+    },
+    capsuleCast: () => ({ dist: Infinity, key: null }),
+    move: (feet, dx, dy, dz) => { if ((feet[0] < 3) !== (feet[0] + dx < 3)) dx = 0; feet[0] += dx; feet[2] += dz; return { grounded: true }; },
+  });
+  const body = (feet, team, yaw, companion = null) => {
+    const ai = new EnemyAI(walled(), feet, yaw);
+    ai.isHostile = true;
+    return { ai, entity: { team, mobileTeam: team, health: 200, basics: { team } }, companion };
+  };
+  for (const yaw of [0, Math.PI, -Math.PI / 2]) {
+    const leader = [0, 0, 0];
+    const mate = body([0, 0, -2.5], 'PlayerAlly', yaw, 'k');
+    mate.ai.follow = { feet: () => leader, stop: 2.5 };
+    const orc = body([0, 0, 1.5], 'Orcs', Math.PI);   // at the leader's face, striking him
+    orc.ai.target = PLAYER_TARGET; orc.ai.update = () => {}; orc.ai.wouldBeSpawned = true;
+    const rat = body([5, 0, -4], 'Rats', 0);          // through the wall, idle, in the spawn band
+    rat.ai.update = () => {}; rat.ai.wouldBeSpawned = true;
+    const pool = [mate, orc, rat];
+    const targeting = armed(pool);
+    for (let t = 0; t < 8; t += 1 / 60) mate.ai.update(1 / 60, leader, mkSenses({ targeting }));
+    assert.equal(mate.ai.target, orc, `facing ${yaw.toFixed(2)}: the foe striking his leader`);
+    assert.notEqual(rat.ai.target, mate, 'the idle foe is not pulled onto him');
+    assert.ok(mate.ai.feet[0] < 2.5, 'not pressed to the wall');
+  }
+  // a plain summon (an ally, no companion) keeps DFU's chain verbatim: facing away, the idle foe behind the wall wins
+  {
+    const leader = [0, 0, 0];
+    const summon = body([0, 0, -2.5], 'PlayerAlly', Math.PI);
+    const orc = body([0, 0, 1.5], 'Orcs', Math.PI);
+    orc.ai.target = PLAYER_TARGET; orc.ai.update = () => {}; orc.ai.wouldBeSpawned = true;
+    const rat = body([5, 0, -4], 'Rats', 0);
+    rat.ai.update = () => {}; rat.ai.wouldBeSpawned = true;
+    const pool = [summon, orc, rat];
+    const targeting = armed(pool);
+    for (let t = 0; t < 2; t += 1 / 60) summon.ai.update(1 / 60, leader, mkSenses({ targeting }));
+    assert.equal(summon.ai.target, rat, 'no companion, no assist: DFU\'s priority as it is');
+  }
+  // the rule itself: a foe fighting his side - a player, a companion, himself - and nobody else's
+  const self = { companion: 'k' };
+  assert.equal(fightsOurSide({ target: PLAYER_TARGET }, self), true);
+  assert.equal(fightsOurSide({ target: { companion: 'j' } }, self), true);
+  assert.equal(fightsOurSide({ target: self }, self), true);
+  assert.equal(fightsOurSide({ target: { companion: null } }, self), false, 'a foe fighting another foe');
+  assert.equal(fightsOurSide({ target: null }, self), false);
+  // the weight: an unseen fighter outranks an unseen idle foe unless the idle one stands fifteen metres nearer
+  assert.equal(COMPANION_ASSIST_PRIORITY, 20);
+  assert.ok(targetPriority(false, false, 19.9) + COMPANION_ASSIST_PRIORITY > targetPriority(true, false, 5));
+  assert.ok(targetPriority(false, false, 20.1) + COMPANION_ASSIST_PRIORITY < targetPriority(true, false, 5));
 });

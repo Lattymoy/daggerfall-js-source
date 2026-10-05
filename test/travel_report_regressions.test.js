@@ -34,7 +34,7 @@ test('a failed boat landfall never packs the boat without putting the player ash
     journey = createTravelOptions({ settings: readTravelOptionsSettings(), ui: travelControlUI, pushWindow: w => w.show(), setTimeScale: () => {} });
     journey.beginTravelToCoords({ x: 501, y: 250 });
     const scope = { tvSea: { boat, phase: 'landing', means: { again: true } },
-      csaRuntime: { AllBoats: [boat], deedMissing: () => false, PackBoat: () => events.push('packed') },
+      csaRuntime: { AllBoats: [boat], deedMissing: () => false, partsTooHeavy: () => false, PackBoat: () => events.push('packed') },
       csaQuatRotate: () => [0, 0, 1], TV_SEA_ASHORE_M: 40, tvSeaWaterAt: () => !dry, heightAt: () => 2, tvSeaY: () => 0,
       player: { spawn: () => events.push('ashore') }, csaPassengersOn: () => passengers, csaCall: f => f(),
       travelControlUI, tvSeaRelease: () => {}, tvSay: line => { if (line !== 'No safe shore.') events.push('moored'); },

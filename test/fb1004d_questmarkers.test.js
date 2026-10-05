@@ -26,7 +26,8 @@ import { join } from 'node:path';
 
 import { QuestMachine } from '../src/systems/quest/machine.js';
 import { SITE_TYPES, MARKER_TYPES } from '../src/systems/quest/place.js';
-import { CURATED_QUEST_MARKERS, curatedMarkerSpot } from '../src/systems/quest/markerCuration.js';
+import { CURATED_QUEST_MARKERS, curatedMarkerSpot, mendedFoeSpot } from '../src/systems/quest/markerCuration.js';
+import { restandMendedQuestFoe, SEALED_SAVE_REACH_M, SEALED_SAVE_LEVEL_M } from '../src/scenes/questFoeHost.js';
 import { addQuestResourceObjects, markerScenePosition, siteMarkerSpots, standSpot, MARKER_FLOOR_REACH } from '../src/systems/quest/sceneMount.js';
 import { registerWorldDataAsset, _resetWorldDataReplacement, installWorldDataReplacement, buildingDataFromJson } from '../src/formats/worldDataReplacement.js';
 import { ROW_CODECS } from '../src/formats/worldDataPack.js';
@@ -211,6 +212,33 @@ test('QUEST-MARKERS, at load: a site enumerated before the curation (a save\'s) 
   assert.deepEqual(sd.questSpawnMarkers.map((m) => m.flatPosition), [flat([40, 0, 40])], 'a sound marker untouched');
   assert.equal(v.machine.getSiteLinks(SITE_TYPES.Building, MAP_ID, key).length, 1, 'its link stands');
   assert.equal(place.mendCuratedMarkers(v.world), 0, 'nothing left to move');
+});
+
+test('FIELD BUGS 2026-10-05c SEALED-SAVE ("Haunted House quest has enemy under the floor"): the load\'s mend keeps where a moved marker stood, and what it holds is found by its symbol\'s NAME (a restored behaviour\'s symbol is a deserialized one) - the old spot and the new; a marker the mend never moved, another symbol, another quest: none. The interior host stands a restored quest foe found at the old spot at the new, the pool asking it before the foe stands (mutants: the old spot unkept, the restand unasked)', () => {
+  const v = village({ qbn: GEM, carried: false });
+  const place = v.place('house');
+  registerWorldDataAsset('RESIGM02.RMB.json', {}, null, { vendor: BV });
+  v.machine.reseatMovedSites(v.world);
+  const sd = place.siteDetails;
+  assert.deepEqual(sd.selectedMarker.curatedFrom, flat(AT), 'where it stood');
+  assert.deepEqual(sd.questSpawnMarkers[0].curatedFrom, undefined, 'a sound marker was never moved');
+  const restored = { questUID: v.quest.uid, targetSymbol: { name: 'gem' } };   // a new Symbol, as RestoreSaveData makes
+  assert.deepEqual(mendedFoeSpot(v.machine, restored), { from: flat(AT), to: flat(TO) });
+  assert.equal(mendedFoeSpot(v.machine, { ...restored, targetSymbol: { name: 'house' } }), null, 'another symbol');
+  assert.equal(mendedFoeSpot(v.machine, { ...restored, questUID: v.quest.uid + 1 }), null, 'another quest');
+  assert.equal(mendedFoeSpot(null, restored), null, 'no machine');
+  const MODES = readFileSync(new URL('../src/scenes/worldModes.js', import.meta.url), 'utf8');
+  const FOES = readFileSync(new URL('../src/scenes/exteriorFoes.js', import.meta.url), 'utf8');
+  assert.match(MODES, /interiorFoes\?\.restoreWorld\(saved\.foes, fromNative, yOffset, \{ reviveQuestBehaviour, restandQuestFoe: \(b, feet\) => restandMendedQuestFoe\(questBridge\?\.machine \?\? null, interiorCtx, b, feet, INTERIOR_MARKER_FEET_LIFT\) \}\);/);
+  // the restand itself: a room's frame 100 m east and 50 m north (room()'s parentPt); the foe on the old spot's level
+  // within reach is stood at the new spot, lifted as standFoe lifts it; off its level, or out of reach, it stays
+  const ctx = { parentPt: (x, y, z) => [x + 100, y, z + 50] };
+  const was = ctx.parentPt(flat(AT).x, flat(AT).y + 0.1, flat(AT).z);
+  assert.deepEqual(restandMendedQuestFoe(v.machine, ctx, restored, [was[0] + 2, was[1], was[2]], 0.1), ctx.parentPt(flat(TO).x, flat(TO).y + 0.1, flat(TO).z));
+  assert.equal(restandMendedQuestFoe(v.machine, ctx, restored, [was[0], was[1] + SEALED_SAVE_LEVEL_M + 0.1, was[2]], 0.1), null, 'another storey');
+  assert.equal(restandMendedQuestFoe(v.machine, ctx, restored, [was[0] + SEALED_SAVE_REACH_M + 0.1, was[1], was[2]], 0.1), null, 'out of reach');
+  assert.equal(restandMendedQuestFoe(v.machine, null, restored, was, 0.1), null, 'no room');
+  assert.match(FOES, /const feet = \(questBehaviour && restandQuestFoe\?\.\(questBehaviour, \[lx, sf\.y \+ yOffset, lz\]\)\) \|\| \[lx, sf\.y \+ yOffset, lz\];\n\s+spawnFoe\(sf\.mobileType, feet,/);
 });
 
 // ---- the backstop: worldModes.js's building stands over a real floor ----
