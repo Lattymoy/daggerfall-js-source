@@ -475,3 +475,21 @@ pins of the plaque's, the plates' and the sight line's call sites (`test/elitedu
 `test/spawneddungeons.test.js`, `test/tv6_dungeons.test.js`, `test/worldhover.test.js`, `test/arena_fix.test.js`,
 `test/seat1a_client.test.js`); `tools/mutants/tier1.json` (14, all dead), and the mutant records the change moved
 re-aimed by content (`hub1`, `worldhover`, `survtiers3`).
+
+### SD1 - shipped 2026-10-05
+
+`net/sdLaw.js`, the pure law sections 2-4 name, the relay's and every client's: the numbers; `validSdRecord` (the
+record at both ends, projected); `sdPhase` and what each phase means (`sdStands`, `sdMarked`, `sdAdmits`, `sdHolds`),
+all derived from the record's own instants; one function per move (`sdFirst`, `sdRise`, `sdFind`, `sdFell`, `sdGone`),
+each refusing what its phase does not allow, and the director's step (`sdDue`); `pickSdRegion` (the census);
+`sdFindBelieved` (a find the relay can check without map data: a pose in the MapsFile frame within SD_FOUND_RADIUS_M
+of the claimed pixel's centre, where a spawned dungeon stands); `sdNameOf`; the room `sd:<s>`; the chat's words. It
+imports `wire.js` and `gateLaw.js` (the port's one mix, gateHash, and a pixel's side) alone - both the relay bundle's
+already.
+
+One change from this page: the Hollow stands CENTRED in its pixel, as every spawned dungeon does
+(`world/spawnedDungeons.js spawnedLocationCentreLocal`), not at a spot drawn inside it - so the find is checked against
+the pixel's centre, and the slot needs no spot law.
+
+Pins: `test/sd1_sdlaw.test.js` (9); `tools/mutants/sd1.json` (17, all dead - one survivor at first, the standing
+check under an early `next`, now pinned). Wired by nothing yet: SD2 places the Hollow, SD3 runs the director.
