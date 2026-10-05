@@ -110,11 +110,12 @@ ALLOWED_ORIGIN = "*"
 # the glyph, /red, and /mute and /unmute (titles.js canModerate).
 # DEV3 (2026-09-26, Mac: "grant Tabby the developer title/glyph"): the
 # fourth, with the same whole set.
-# DEV4 (2026-10-05, the owner: "Also add RookieG(Dev) as developer"; asked,
-# the account's handle is exactly "RookieG(Dev)" - a handle may carry the
-# brackets, net/handleShape.js HANDLE_RE): the fifth, with the same whole
-# set and the developers' Seraph Wings. Not "RookieG" - another handle.
-DEVELOPER_HANDLES = "Lattymoy,trashBattery,LostMyLeg,Tabby,RookieG(Dev)"
+# DEV4 (2026-10-05, the owner: "Also add RookieG(Dev) as developer", then
+# "Change RookieG(Dev) to RookieG"): RookieG, the fifth, with the same whole
+# set and the developers' Seraph Wings. The handle exactly - "RookieG(Dev)"
+# (a handle may carry brackets, net/handleShape.js HANDLE_RE) is another
+# account and holds none of it.
+DEVELOPER_HANDLES = "Lattymoy,trashBattery,LostMyLeg,Tabby,RookieG"
 # MOD1: THE MODERATORS - the blue shield beside the name, and /mute and
 # /unmute in chat. Comma-separated handles, case-insensitive, the same
 # as the line above; a developer may already moderate without being

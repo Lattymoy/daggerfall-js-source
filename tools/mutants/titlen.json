@@ -156,22 +156,22 @@
   {
     "name": "DEV3-tabby-not-granted",
     "file": "server-account/wrangler.toml",
-    "old": "DEVELOPER_HANDLES = \"Lattymoy,trashBattery,LostMyLeg,Tabby,RookieG(Dev)\"",
-    "new": "DEVELOPER_HANDLES = \"Lattymoy,trashBattery,LostMyLeg,RookieG(Dev)\"",
+    "old": "DEVELOPER_HANDLES = \"Lattymoy,trashBattery,LostMyLeg,Tabby,RookieG\"",
+    "new": "DEVELOPER_HANDLES = \"Lattymoy,trashBattery,LostMyLeg,RookieG\"",
     "tests": [
       "test/titlen.test.js"
     ],
-    "note": "DEV4 (re-aimed by content): the list gained RookieG(Dev)."
+    "note": "DEV4 (re-aimed by content): the list gained RookieG."
   },
   {
     "name": "DEV4-rookieg-not-granted",
     "file": "server-account/wrangler.toml",
-    "old": "DEVELOPER_HANDLES = \"Lattymoy,trashBattery,LostMyLeg,Tabby,RookieG(Dev)\"",
-    "new": "DEVELOPER_HANDLES = \"Lattymoy,trashBattery,LostMyLeg,Tabby,RookieG\"",
+    "old": "DEVELOPER_HANDLES = \"Lattymoy,trashBattery,LostMyLeg,Tabby,RookieG\"",
+    "new": "DEVELOPER_HANDLES = \"Lattymoy,trashBattery,LostMyLeg,Tabby,RookieG(Dev)\"",
     "tests": [
       "test/titlen.test.js"
     ],
-    "note": "The bare RookieG listed for the account RookieG(Dev): the developer's rights to whoever registers the other name."
+    "note": "The bracketed handle listed for the account RookieG (the owner: \"Change RookieG(Dev) to RookieG\"): RookieG holds nothing, and the developer's rights go to whoever registers the other name."
   },
   {
     "name": "DISC-flylighter-not-granted",

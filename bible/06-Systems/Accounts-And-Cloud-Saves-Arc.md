@@ -5110,14 +5110,15 @@ read here; the aura is drawn from the sentence.
   ring of fire does; one program draws all six auras, so a compile failure would take them all (the eager compile in
   `test/shadowcloak.test.js` and the probe are the guard).
 
-## DEV4 — RookieG(Dev) a developer (2026-10-05, with CRYSTAL-FIST's acct83)
+## DEV4 — RookieG a developer (2026-10-05, with CRYSTAL-FIST's acct83)
 
-The owner: "Also add RookieG(Dev) as developer"; asked whether the brackets are part of the name, the handle is exactly
-`RookieG(Dev)` (a handle may carry them - `net/handleShape.js` HANDLE_RE). `DEVELOPER_HANDLES` gains it, fifth: the
-developer title, the dev glyph, /red, /mute and /unmute (titles.js `canModerate`) and the developers' Seraph Wings,
-case-folded as every list is. The bare `RookieG` is another handle and holds none of it. Pins: `test/titlen.test.js`
-(the list, the handle case-folded, four near names refused); `tools/mutants/titlen.json` DEV4-rookieg-not-granted (dead)
-and DEV3's record re-aimed by content.
+The owner: "Also add RookieG(Dev) as developer"; asked whether the brackets were part of the name, "RookieG(Dev)" - and
+then "Change RookieG(Dev) to RookieG". `DEVELOPER_HANDLES` holds `RookieG`, fifth: the developer title, the dev glyph,
+/red, /mute and /unmute (titles.js `canModerate`) and the developers' Seraph Wings, case-folded as every list is. The
+handle exactly: `RookieG(Dev)` (a handle may carry brackets - `net/handleShape.js` HANDLE_RE) is another account and
+holds none of it, nor does a near name. Pins: `test/titlen.test.js` (the list, the handle case-folded, the bracketed
+handle and four near names refused); `tools/mutants/titlen.json` DEV4-rookieg-not-granted (the bracketed handle listed
+instead - dead) and DEV3's record re-aimed by content.
 
 ### CRYSTAL-FIST AUDIT (2026-10-05, the owner: "Audit this")
 

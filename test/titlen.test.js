@@ -79,16 +79,16 @@ test('TITLE-N grants: the Dungeon Master is SquidKamer\'s alone and Disciple is 
   assert.equal(v('APOSTLE_HANDLES'), '', 'SirMcMobdon is no longer an Apostle');
   assert.deepEqual(titlesHeld({ handle: 'sirmcmobdon', created_at: 1_800_000_000, registered_at: 1_900_000_000 }, { APOSTLE_HANDLES: v('APOSTLE_HANDLES') }), [], 'SirMcMobdon holds no Apostle title');
   assert.deepEqual(glyphsOf({ handle: 'SirMcMobdon', created_at: 0 }, { APOSTLE_HANDLES: v('APOSTLE_HANDLES') }, 10 ** 10), [], 'and no Apostle glyph');
-  assert.equal(v('DEVELOPER_HANDLES'), 'Lattymoy,trashBattery,LostMyLeg,Tabby,RookieG(Dev)', 'DEV2, Mac: "Give trashBattery, LostMyLeg the developer title/glyph"; DEV3: "grant Tabby the developer title/glyph"; DEV4, the owner: "Also add RookieG(Dev) as developer" - the handle, brackets and all');
-  for (const h of ['trashbattery', 'LOSTMYLEG', 'tabby', 'RookieG(Dev)', 'rookieg(dev)']) {
+  assert.equal(v('DEVELOPER_HANDLES'), 'Lattymoy,trashBattery,LostMyLeg,Tabby,RookieG', 'DEV2, Mac: "Give trashBattery, LostMyLeg the developer title/glyph"; DEV3: "grant Tabby the developer title/glyph"; DEV4, the owner: "Also add RookieG(Dev) as developer", then "Change RookieG(Dev) to RookieG"');
+  for (const h of ['trashbattery', 'LOSTMYLEG', 'tabby', 'RookieG', 'rookieg', 'ROOKIEG']) {
     const dev = { handle: h, created_at: 1_800_000_000, registered_at: 1_900_000_000 };   // FOUNDER3: first played after the cutoff too, so no Founder
     const denv = { DEVELOPER_HANDLES: v('DEVELOPER_HANDLES') };
     assert.deepEqual(titlesHeld(dev, denv), ['developer'], `${h}: the Developer title, case-folded`);
     assert.deepEqual(glyphsOf(dev, denv, 1_900_000_000), ['dev'], `${h}: the dev glyph`);
   }
-  // DEV4: the handle whole - the brackets are the account's name, so a player who registers the bare "RookieG" (or
-  // "RookieG(Dev") is not a developer and holds none of its rights
-  for (const h of ['RookieG', 'RookieG(Dev', 'RookieGDev', 'RookieG(Dev)x']) {
+  // DEV4: the handle whole - "RookieG(Dev)" (a handle may carry brackets) is another account, and a near name is no
+  // developer either: none of them holds its rights
+  for (const h of ['RookieG(Dev)', 'RookieGDev', 'Rookie', 'RookieGG', 'RookieG_']) {
     assert.deepEqual(titlesHeld({ handle: h, created_at: 1_800_000_000, registered_at: 1_900_000_000 }, { DEVELOPER_HANDLES: v('DEVELOPER_HANDLES') }), [], `${h}: not a developer`);
   }
   // MOD2 (2026-10-02, Mac: "give tabbyvish the moderator title/glyph for ingame"): the moderator list, case-folded
