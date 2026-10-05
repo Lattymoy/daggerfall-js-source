@@ -299,8 +299,8 @@
   {
     "name": "CSA-E-power-lateen-bad-tack",
     "file": "src/systems/comeSailAway.js",
-    "old": "        if (vSignedAngle(forwardOf(sail), state.windVectorCurrent, V_UP) > 0) num2 = f(num2 * f(0.85));",
-    "new": "        if (vSignedAngle(forwardOf(sail), state.windVectorCurrent, V_UP) < 0) num2 = f(num2 * f(0.85));",
+    "old": "        if (!at && vSignedAngle(forwardOf(sail), state.windVectorCurrent, V_UP) > 0) num2 = f(num2 * f(0.85));",
+    "new": "        if (!at && vSignedAngle(forwardOf(sail), state.windVectorCurrent, V_UP) < 0) num2 = f(num2 * f(0.85));",
     "tests": [
       "test/csa_wind.test.js"
     ]
@@ -398,7 +398,7 @@
   {
     "name": "CSA-E-raise-square-always",
     "file": "src/systems/comeSailAway.js",
-    "old": "        if (!b.SailsSquare.includes(sail) || !trimAutoSquareUpwind() || !flag) {",
+    "old": "        if (!b.SailsSquare.includes(sail) || !trimAutoSquareUpwind() || !flag || responsive()) {",
     "new": "        if (true) {",
     "tests": [
       "test/csa_wind.test.js"
@@ -407,8 +407,8 @@
   {
     "name": "CSA-E-raise-assist-ignored",
     "file": "src/systems/comeSailAway.js",
-    "old": "        if (!b.SailsSquare.includes(sail) || !trimAutoSquareUpwind() || !flag) {",
-    "new": "        if (!b.SailsSquare.includes(sail) || !flag) {",
+    "old": "        if (!b.SailsSquare.includes(sail) || !trimAutoSquareUpwind() || !flag || responsive()) {",
+    "new": "        if (!b.SailsSquare.includes(sail) || !flag || responsive()) {",
     "tests": [
       "test/csa_wind.test.js"
     ]
@@ -650,8 +650,8 @@
   {
     "name": "CSA-E-arm-rudder-mod",
     "file": "src/systems/comeSailAway.js",
-    "old": "    state.TurnTarget = f(num18 * f(f(f(responsive() ? steerage(way) : way) * f(boat.modifierRudder)) / 10));",
-    "new": "    state.TurnTarget = f(num18 * f(f(f(responsive() ? steerage(way) : way) * f(boat.modifierRudder)) / 5));",
+    "old": "    state.TurnTarget = f(num18 * f(f(f(responsive() ? steerage(way / SAIL_FREE.gain) : way) * f(boat.modifierRudder)) / 10));",
+    "new": "    state.TurnTarget = f(num18 * f(f(f(responsive() ? steerage(way / SAIL_FREE.gain) : way) * f(boat.modifierRudder)) / 5));",
     "tests": [
       "test/csa_wind.test.js"
     ]

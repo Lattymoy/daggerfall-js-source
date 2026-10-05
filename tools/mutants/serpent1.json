@@ -66,7 +66,7 @@
   {
     "name": "SERPENT1-brain-head-always",
     "file": "src/net/serpentBrain.js",
-    "old": "const x = (z === ZONES.head && headExposed(f, pts, now, stun) ? HEAD_X : 1) * (stun ? STUN_X : 1);",
+    "old": "const x = (z === ZONES.head && headExposed(f, pts, at, stun) ? HEAD_X : 1) * (stun ? STUN_X : 1);",
     "new": "const x = (z === ZONES.head ? HEAD_X : 1) * (stun ? STUN_X : 1);",
     "tests": [
       "test/serpent1_law.test.js"
@@ -75,8 +75,8 @@
   {
     "name": "SERPENT1-brain-reach-unbounded",
     "file": "src/net/serpentBrain.js",
-    "old": "if (!near || near.d > GUN_REACH_M + SERPENT_POSE_SLACK) return out;",
-    "new": "if (!near) return out;",
+    "old": "if (near && near.d <= GUN_REACH_M + SERPENT_POSE_SLACK) { pts = seen; at = now - back; break; }",
+    "new": "if (near) { pts = seen; at = now - back; break; }",
     "tests": [
       "test/serpent1_law.test.js"
     ]
@@ -311,8 +311,8 @@
   {
     "name": "SERPENT1-strike-grip-carry-dropped",
     "file": "src/systems/serpentStrike.js",
-    "old": "const hull = carry.hull + (GRIP.hull * whole.maxHull + GRIP.base) * dtS, crew = carry.crew + GRIP.crew * dtS;",
-    "new": "const hull = (GRIP.hull * whole.maxHull + GRIP.base) * dtS, crew = GRIP.crew * dtS;",
+    "old": "const hull = carry.hull + (GRIP.hull * whole.maxHull + GRIP.base) * dtS * k, crew = carry.crew + GRIP.crew * dtS * k;",
+    "new": "const hull = (GRIP.hull * whole.maxHull + GRIP.base) * dtS * k, crew = GRIP.crew * dtS * k;",
     "tests": [
       "test/serpent1_client.test.js"
     ]

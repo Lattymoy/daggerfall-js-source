@@ -291,7 +291,7 @@ export function drawEnhancedHelm(state = {}, hooks = {}, { doc = globalThis.docu
 /**
  * HELM-KEYS (2026-09-29, the player: "make the ship controls more intuitive instead of a bunch of buttons and key
  * binds"): the bar's line under its name - in irons, how she comes out (the key that strikes sail and the one that
- * rows - under the responsive helm the rudder's keys first, AUDIT NAV2 F18); else, on a keyboard, the helm's whole
+ * rows - the mod's helm alone lies in irons, SAIL-FREE); else, on a keyboard, the helm's whole
  * hand at a glance - the sails on the arrows, the rudder on the turn keys - and while the look holds the mouse, how to
  * free it for the buttons. A finger reads the buttons themselves. Every key is the one bound now (`keyOf`); one bound
  * to nothing is left out. HELM-LADDER (2026-10-04): the hand is the ladder's now - W, S and the up and down arrows her
@@ -303,11 +303,7 @@ export function helmHint(h, state = {}) {
   if (h.inIrons) {
     // HELM-LADDER: one rung down strikes the last of her sail and puts her on her oars, pulling ahead
     const strike = [key('MoveBackwards'), key(A.less)].filter(Boolean).join(' ');
-    const oars = `strike sail${strike ? ` (${strike})` : ''} and row her round`;
-    if (!h.responsive) return `In irons - ${oars}`;
-    // AUDIT NAV2 F18: the responsive helm's rudder answers at rest (HELM-WAY) - the helm alone brings her off the wind
-    const steer = [key('TurnLeft'), key('TurnRight')].filter(Boolean).join(' ');
-    return `In irons - put the helm over${steer ? ` (${steer})` : ''}, or ${oars}`;
+    return `In irons - strike sail${strike ? ` (${strike})` : ''} and row her round`;
   }
   if (state.touch) return '';
   const keys = (label, ...as) => { const ks = [...new Set(as.map(key).filter(Boolean))]; return ks.length ? `${label} ${ks.join(' ')}` : ''; };

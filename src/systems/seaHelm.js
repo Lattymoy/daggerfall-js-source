@@ -32,7 +32,10 @@
 //     pull times the course's share toward the mark is best): then the
 //     boat beats up on a tack, `noGo` off the eye, and goes about when
 //     the mark's bearing has swung `laneDeg` past the eye to the other
-//     side, so it zig-zags up a lane about the wind's line;
+//     side, so it zig-zags up a lane about the wind's line - SAIL-FREE
+//     (2026-10-05, Mac's "No tacking, Black Flag"; systems/helmWay.js):
+//     under the responsive helm (`free`) she makes the most of her way
+//     sailing straight for it, so there is no cone and no tack;
 //   - land close ahead turns the boat to the freer side (the host's
 //     probe of the water ahead and to either hand);
 //   - the rudder: held toward the course while the heading is more than
@@ -80,11 +83,12 @@ export const createSeaHelm = () => ({ tack: 0, stall: 0, oars: 0 });
  * @param {{ tack: number, stall: number, oars: number }} st
  * @param {{ heading: number, bearing: number, wind: number[], hasSails: boolean, squareOnly?: boolean, sailsUp: boolean,
  *   canSail: boolean, way: number, dt: number, landfall?: boolean, landAhead?: number, freer?: number, crewed?: boolean,
- *   oarWay?: number, sailWay?: number }} q
+ *   oarWay?: number, sailWay?: number, free?: boolean }} q
  *   `heading` the bow's and `bearing` the mark's (degrees, clockwise from north); `wind` the wind's flat vector (where
  *   it blows); `way` the boat's speed along its bow (m/s, astern negative); `landAhead` the metres to land along the
  *   bow (Infinity: none seen); `freer` the hand with more water (-1 left, 1 right); `landfall` this leg ends ashore;
- *   `crewed` a crew at the oars, whose speed is `oarWay` against the sails' `sailWay` in this wind (m/s).
+ *   `crewed` a crew at the oars, whose speed is `oarWay` against the sails' `sailWay` in this wind (m/s); `free` the
+ *   responsive helm's SAIL-FREE, under which no course is too near the wind to sail.
  * @returns {{ turn: -1|0|1, sails: 'raise'|'lower'|null, row: boolean, course: number }}
  */
 export function seaHelmStep(st, q) {
@@ -99,7 +103,7 @@ export function seaHelmStep(st, q) {
   let course = foldDeg(q.bearing);
   if (sailable) {
     const eye = headingOf(-(q.wind[0] ?? 0), -(q.wind[1] ?? 0));   // where the wind comes from
-    const noGo = q.squareOnly ? H.noGoSquare : H.noGoFore;
+    const noGo = q.free ? 0 : q.squareOnly ? H.noGoSquare : H.noGoFore;   // SAIL-FREE: the responsive helm sails straight up
     const off = foldDeg(q.bearing - eye);
     if (Math.abs(off) < noGo) {
       if (st.tack === 0) st.tack = off >= 0 ? 1 : -1;

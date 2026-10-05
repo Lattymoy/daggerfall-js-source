@@ -1,0 +1,237 @@
+[
+  {
+    "name": "SAIL-FREE-the-old-pace",
+    "file": "src/systems/helmWay.js",
+    "old": "export const SAIL_FREE = Object.freeze({ pace: 1.2, gain: 1.643 });",
+    "new": "export const SAIL_FREE = Object.freeze({ pace: 1, gain: 1.643 });",
+    "tests": [
+      "test/sailfree.test.js",
+      "test/auditnav2_helm.test.js"
+    ]
+  },
+  {
+    "name": "SAIL-FREE-no-gain",
+    "file": "src/systems/helmWay.js",
+    "old": "export const SAIL_FREE = Object.freeze({ pace: 1.2, gain: 1.643 });",
+    "new": "export const SAIL_FREE = Object.freeze({ pace: 1.2, gain: 1 });",
+    "tests": [
+      "test/sailfree.test.js",
+      "test/auditnav2_helm.test.js"
+    ]
+  },
+  {
+    "name": "SAIL-FREE-the-head-a-third",
+    "file": "src/systems/helmWay.js",
+    "old": "export const POINT_OF_SAIL = Object.freeze({ run: 0.9, quarter: 45, head: 0.55 });",
+    "new": "export const POINT_OF_SAIL = Object.freeze({ run: 0.9, quarter: 45, head: 0.3 });",
+    "tests": [
+      "test/sailfree.test.js"
+    ]
+  },
+  {
+    "name": "SAIL-FREE-the-run-best",
+    "file": "src/systems/helmWay.js",
+    "old": "export const POINT_OF_SAIL = Object.freeze({ run: 0.9, quarter: 45, head: 0.55 });",
+    "new": "export const POINT_OF_SAIL = Object.freeze({ run: 1.1, quarter: 45, head: 0.55 });",
+    "tests": [
+      "test/sailfree.test.js"
+    ]
+  },
+  {
+    "name": "SAIL-FREE-the-quarter-the-beam",
+    "file": "src/systems/helmWay.js",
+    "old": "export const POINT_OF_SAIL = Object.freeze({ run: 0.9, quarter: 45, head: 0.55 });",
+    "new": "export const POINT_OF_SAIL = Object.freeze({ run: 0.9, quarter: 90, head: 0.55 });",
+    "tests": [
+      "test/sailfree.test.js"
+    ]
+  },
+  {
+    "name": "SAIL-FREE-a-straight-fall",
+    "file": "src/systems/helmWay.js",
+    "old": "  return head + ((1 - head) * (1 + Math.cos((Math.PI * (d - quarter)) / (180 - quarter)))) / 2;",
+    "new": "  return head + ((1 - head) * (180 - d)) / (180 - quarter);",
+    "tests": [
+      "test/sailfree.test.js"
+    ]
+  },
+  {
+    "name": "SAIL-FREE-the-raw-wind",
+    "file": "src/systems/helmWay.js",
+    "old": "export const seaWind = (windLen) => (windLen > 0 ? WIND_RATED * windShare(windLen) : 0);",
+    "new": "export const seaWind = (windLen) => windLen;",
+    "tests": [
+      "test/sailfree.test.js"
+    ]
+  },
+  {
+    "name": "SAIL-FREE-wind-indoors",
+    "file": "src/systems/helmWay.js",
+    "old": "export const seaWind = (windLen) => (windLen > 0 ? WIND_RATED * windShare(windLen) : 0);",
+    "new": "export const seaWind = (windLen) => WIND_RATED * windShare(windLen);",
+    "tests": [
+      "test/sailfree.test.js"
+    ]
+  },
+  {
+    "name": "SAIL-FREE-the-crest-abeam",
+    "file": "src/systems/comeSailAway.js",
+    "old": "export const SAIL_CREST_DEG = 135;",
+    "new": "export const SAIL_CREST_DEG = 90;",
+    "tests": [
+      "test/sailfree.test.js"
+    ]
+  },
+  {
+    "name": "SAIL-FREE-square-at-the-fore-crest",
+    "file": "src/systems/comeSailAway.js",
+    "old": "export const sailCrest = (b, sail) => (b.SailsLateen.includes(sail) || b.SailsGaff.includes(sail) || b.SailsStay.includes(sail) ? SAIL_CREST_DEG : 0);",
+    "new": "export const sailCrest = () => SAIL_CREST_DEG;",
+    "tests": [
+      "test/sailfree.test.js"
+    ]
+  },
+  {
+    "name": "SAIL-FREE-canvas-asked-at-the-wind",
+    "file": "src/systems/comeSailAway.js",
+    "old": "const canvasPull = () => GetSailPower(sailCrest);",
+    "new": "const canvasPull = () => GetSailPower();",
+    "tests": [
+      "test/sailfree.test.js",
+      "test/auditnav2_helm.test.js"
+    ]
+  },
+  {
+    "name": "SAIL-FREE-the-crest-on-its-bad-tack",
+    "file": "src/systems/comeSailAway.js",
+    "old": "if (!at && vSignedAngle(forwardOf(sail), state.windVectorCurrent, V_UP) > 0)",
+    "new": "if (vSignedAngle(forwardOf(sail), state.windVectorCurrent, V_UP) > 0)",
+    "tests": [
+      "test/sailfree.test.js"
+    ]
+  },
+  {
+    "name": "SAIL-FREE-the-mods-drive",
+    "file": "src/systems/comeSailAway.js",
+    "old": "state.MoveVectorTarget = vScale(V_FORWARD, free ? sailDrive(boat) : num17);",
+    "new": "state.MoveVectorTarget = vScale(V_FORWARD, num17);",
+    "tests": [
+      "test/sailfree.test.js",
+      "test/auditnav2_helm.test.js",
+      "test/helmway.test.js"
+    ]
+  },
+  {
+    "name": "SAIL-FREE-drive-in-the-raw-wind",
+    "file": "src/systems/comeSailAway.js",
+    "old": "f(seaWind(vMagnitude(state.windVectorCurrent)))) * f(SAIL_FREE.pace));",
+    "new": "f(vMagnitude(state.windVectorCurrent))) * f(SAIL_FREE.pace));",
+    "tests": [
+      "test/sailfree.test.js"
+    ]
+  },
+  {
+    "name": "SAIL-FREE-square-aback",
+    "file": "src/systems/comeSailAway.js",
+    "old": "boat.SailsSquare.includes(sail) ? f(Math.abs(num11)) : num11",
+    "new": "num11",
+    "tests": [
+      "test/sailfree.test.js"
+    ]
+  },
+  {
+    "name": "SAIL-FREE-fore-and-aft-luffing",
+    "file": "src/systems/comeSailAway.js",
+    "old": "if (!free && !boat.SailsSquare.includes(sail) && (",
+    "new": "if (!boat.SailsSquare.includes(sail) && (",
+    "tests": [
+      "test/sailfree.test.js"
+    ]
+  },
+  {
+    "name": "SAIL-FREE-the-assist-stows",
+    "file": "src/systems/comeSailAway.js",
+    "old": "if (!free && trimAutoSquareUpwind() && boat.SailsSquare.includes(sail)",
+    "new": "if (trimAutoSquareUpwind() && boat.SailsSquare.includes(sail)",
+    "tests": [
+      "test/sailfree.test.js"
+    ]
+  },
+  {
+    "name": "SAIL-FREE-raised-stowed-upwind",
+    "file": "src/systems/comeSailAway.js",
+    "old": "|| !trimAutoSquareUpwind() || !flag || responsive()) {",
+    "new": "|| !trimAutoSquareUpwind() || !flag) {",
+    "tests": [
+      "test/sailfree.test.js"
+    ]
+  },
+  {
+    "name": "SAIL-FREE-way-on-without-gain",
+    "file": "src/systems/comeSailAway.js",
+    "old": "return responsive() ? f(rate * f(SAIL_FREE.gain)) : rate;",
+    "new": "return rate;",
+    "tests": [
+      "test/sailfree.test.js",
+      "test/auditnav2_helm.test.js",
+      "test/helmway.test.js"
+    ]
+  },
+  {
+    "name": "SAIL-FREE-coast-without-gain",
+    "file": "src/systems/comeSailAway.js",
+    "old": "return responsive() ? f(coast * f(SAIL_FREE.gain)) : coast;",
+    "new": "return coast;",
+    "tests": [
+      "test/sailfree.test.js",
+      "test/auditnav2_helm.test.js",
+      "test/helmway.test.js"
+    ]
+  },
+  {
+    "name": "SAIL-FREE-way-on-in-the-raw-wind",
+    "file": "src/systems/comeSailAway.js",
+    "old": "const wind = responsive() ? f(seaWind(vMagnitude(state.windVectorCurrent))) : vMagnitude(state.windVectorCurrent);",
+    "new": "const wind = vMagnitude(state.windVectorCurrent);",
+    "tests": [
+      "test/sailfree.test.js"
+    ]
+  },
+  {
+    "name": "SAIL-FREE-rudder-without-gain",
+    "file": "src/systems/comeSailAway.js",
+    "old": "steerage(way / SAIL_FREE.gain)",
+    "new": "steerage(way)",
+    "tests": [
+      "test/auditnav2_helm.test.js",
+      "test/helmway.test.js"
+    ]
+  },
+  {
+    "name": "SAIL-FREE-the-free-helm-in-irons",
+    "file": "src/systems/comeSailAway.js",
+    "old": "if (state.sailPosition === 0 || b.Sails.length < 1 || responsive()) return false;",
+    "new": "if (state.sailPosition === 0 || b.Sails.length < 1) return false;",
+    "tests": [
+      "test/auditnav2_helm.test.js"
+    ]
+  },
+  {
+    "name": "SAIL-FREE-the-journey-tacks",
+    "file": "src/systems/seaHelm.js",
+    "old": "const noGo = q.free ? 0 : q.squareOnly",
+    "new": "const noGo = q.squareOnly",
+    "tests": [
+      "test/sailfree.test.js"
+    ]
+  },
+  {
+    "name": "SAIL-FREE-the-journey-never-told",
+    "file": "src/scenes/world.js",
+    "old": "free: !!csaRuntime.helmResponsive(),   // SAIL-FREE: straight up to windward",
+    "new": "free: false,   // SAIL-FREE: straight up to windward",
+    "tests": [
+      "test/sailfree.test.js"
+    ]
+  }
+]

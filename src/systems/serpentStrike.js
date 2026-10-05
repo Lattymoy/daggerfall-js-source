@@ -54,20 +54,29 @@ export function ramHead(atk, t) {
   return [ax + (bx - ax) * k, az + (bz - az) * k];
 }
 
+/**
+ * SERPENT3 - A PAIR'S SHARE (2026-10-05, Mac's call: "Two or more ships" - "its blows scale down when fewer than three
+ * ships fight it, so a pair has a real chance; one ship alone still can't"): with exactly two ships afloat at the fight
+ * (`n`, the relay's count - serpentBrain.js `ships`, the whole state's `n`) every blow, grip, crush, grind and venom bite
+ * lands at SERPENT_PAIR_SHARE - each of a pair takes what each of three would; a lone ship, and three or more, the whole.
+ */
+export const SERPENT_PAIR_SHARE = 2 / 3;
+export const fleetShare = (n) => (n === 2 ? SERPENT_PAIR_SHARE : 1);
 /** WHAT A BLOW DOES TO HER: `hull` of her whole hull and `base` more, `sail` of her canvas, `crew` men - her whole her
- *  refits' (`whole` - {maxHull, maxSail}). The damage model's own hurt shape (navalDamage.js apply). */
-export const shipHurt = (A, whole) => ({ hull: Math.round(A.hull * whole.maxHull + A.base), sail: Math.round(A.sail * whole.maxSail), crew: A.crew | 0 });
+ *  refits' (`whole` - {maxHull, maxSail}), times the fleet's share `k` (fleetShare). The damage model's own hurt shape
+ *  (navalDamage.js apply). */
+export const shipHurt = (A, whole, k = 1) => ({ hull: Math.round((A.hull * whole.maxHull + A.base) * k), sail: Math.round(A.sail * whole.maxSail * k), crew: Math.round((A.crew | 0) * k) });
 /** The coil's crush at its end, and its grip for `dtS` seconds (whole points carried on the ship's own fraction -
- *  `carry`, the grip's remainder - so a grip of 3.4 a second is 3.4 a second, not 3). */
-export const crushHurt = (whole) => shipHurt(CRUSH, whole);
-export function gripHurt(whole, dtS, carry = { hull: 0, crew: 0 }) {
-  const hull = carry.hull + (GRIP.hull * whole.maxHull + GRIP.base) * dtS, crew = carry.crew + GRIP.crew * dtS;
+ *  `carry`, the grip's remainder - so a grip of 3.4 a second is 3.4 a second, not 3); each times the fleet's share `k`. */
+export const crushHurt = (whole, k = 1) => shipHurt(CRUSH, whole, k);
+export function gripHurt(whole, dtS, carry = { hull: 0, crew: 0 }, k = 1) {
+  const hull = carry.hull + (GRIP.hull * whole.maxHull + GRIP.base) * dtS * k, crew = carry.crew + GRIP.crew * dtS * k;
   const out = { hull: Math.floor(hull), sail: 0, crew: Math.floor(crew) };
   return { hurt: out, carry: { hull: hull - out.hull, crew: crew - out.crew } };
 }
-/** The maelstrom's eye grinding her for `dtS` seconds (the grip's carry law). */
-export function grindHurt(whole, dtS, carry = 0) {
-  const hull = carry + (MAEL_GRIND.hull * whole.maxHull + MAEL_GRIND.base) * dtS;
+/** The maelstrom's eye grinding her for `dtS` seconds (the grip's carry law), times the fleet's share `k`. */
+export function grindHurt(whole, dtS, carry = 0, k = 1) {
+  const hull = carry + (MAEL_GRIND.hull * whole.maxHull + MAEL_GRIND.base) * dtS * k;
   return { hurt: { hull: Math.floor(hull), sail: 0, crew: 0 }, carry: hull - Math.floor(hull) };
 }
 

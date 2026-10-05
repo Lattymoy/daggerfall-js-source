@@ -245,11 +245,12 @@
   {
     "name": "AUDIT-SERPENT-S2-stray-once",
     "file": "src/net/serpentBrain.js",
-    "old": " && !((f.legs[f.legs.length - 1]?.at ?? 0) > now)) {",
-    "new": ") {",
+    "old": "if (f.fell || f.gone || !(now - t0 > SERPENT_SLEEP_MS)) return out;",
+    "new": "if (f.fell || f.gone) return out;",
     "tests": [
       "test/serpent1_audit.test.js"
-    ]
+    ],
+    "note": "SERPENT3 (re-aimed by content): the stray's surfacing is gone - its once is the resume's now (serpentBrain.js serpentResume), a slept fight taken up once, never every beat"
   },
   {
     "name": "AUDIT-SERPENT-S2-phase-waits",
@@ -458,8 +459,8 @@
   {
     "name": "AUDIT-SERPENT-M3-wake-3d",
     "file": "src/scenes/serpentHost.js",
-    "old": "deps.fx?.('wake', [x, deps.seaY(), z], 1);",
-    "new": "deps.fx?.('wake', [x, z], 1);",
+    "old": "const [x, z] = scene(head[0], head[1]); deps.fx?.('wake', [x, deps.seaY(), z], 1);",
+    "new": "const [x, z] = scene(head[0], head[1]); deps.fx?.('wake', [x, z], 1);",
     "tests": [
       "test/serpent1_auditclient.test.js"
     ]

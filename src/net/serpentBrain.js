@@ -29,7 +29,7 @@
 // Not a DFU member. Ledger A (SERPENT1).
 import {
   LEG, MODE, legFrom, headAt, bodyAt, headExposed, nearestExposed, spinePoint, onTimeline, sameLeg, sameMode,
-  BODY_LEN, LEGS_KEPT, MODES_KEPT, COIL_R, SWIM_MIN_V, MODE_BLEND_MS,
+  BODY_LEN, LEGS_KEPT, MODES_KEPT, COIL_R, SWIM_MIN_V,
 } from './serpentBody.js';
 
 // ── the waters ─────────────────────────────────────────────────────────
@@ -68,9 +68,32 @@ export const RISE_RING = 160;
 export const STEER_TURN = 0.35;
 export const STEER_STRAIGHT = 0.12;
 export const LEG_MIN_MS = 900;
-/** A woken fight whose head has swum past its waters by this much (m) - a room that slept with nobody in it - surfaces
- *  again inside them. */
-export const STRAY_M = 200;
+/** SERPENT3 (2026-10-05, Mac: "the serpent world boss teleports"): IT NEVER LEAPS - every leg is swum from where the last
+ *  left its head. Under the sea it DASHES at DASH_V (the ram's own run) for the place a Rising Maw bursts or a coil
+ *  closes; a dash its wind-up cannot cover waits for it (the wind-up stretched, never shortened). Its jumps placed the
+ *  whole 168 m body somewhere new in one frame - a breach's a median 195 m, a coil's up to a kilometre, the
+ *  Maelstrom's turn 230-480 m, a stray's 384 m - about 2.3 a minute, seen through the water. */
+export const DASH_V = RAM_V;
+/** SERPENT3: a fight its room has not stepped this long (ms) - nobody heard it - is RESUMED circling where its head was
+ *  (serpentResume), never swum on out of its waters to be leapt back (the stray's surfacing it replaces). */
+export const SERPENT_SLEEP_MS = 5000;
+/** SERPENT3: a dash begins this long after it is said (ms) - its head keeps its way meanwhile - so every screen holds the
+ *  word before the head takes it: begun at the beat's own moment, a client a wire's time behind drew its old way and
+ *  then snapped its head on by the dash's start (4 m at 150 ms). */
+export const SERPENT_SAY_AHEAD_MS = 500;
+/** SERPENT3: CLOSING - a Rising Maw or a coil chosen at a ship beyond the dash its own wind-up swims is not begun: it
+ *  surges at her ON THE SURFACE at CLOSE_V (m/s - the galleon's best is 16) until she lies within that dash, and begins
+ *  it then, its telegraph its own length; she outsails it SERPENT_CLOSE_MS (ms) and it chooses again. A wind-up stretched
+ *  to a long dash gave every moving ship ten seconds to sail clear (a lone galleon won 10 fights in 12, simulated). */
+export const CLOSE_V = 20;
+export const SERPENT_CLOSE_MS = 12_000;
+/** SERPENT3: how tight it turns HUNTING (m) - closing on a ship and dashing under her - where it cruises on TURN_R: at
+ *  TURN_R a ship astern took it 9.4 s to face at CLOSE_V, and one lying still inside its round was circled, never faced. */
+export const HUNT_TURN_R = 30;
+/** SERPENT3: a blow is judged where the body lay when the ball struck - asked at its word's moment and back as far as
+ *  these (ms): a volley is gathered HIT_GATHER_MS on its machine and the wire takes its time, and a blow struck as the
+ *  body sounded was thrown away for the water over it when its word came. */
+export const SERPENT_HIT_LOOKBACK_MS = Object.freeze([0, 500, 1000]);
 /** AUDIT SERPENT E1: the serpent goes only at what it can reach - a body within this of its waters' heart (m); its head
  *  is aimed within ARENA_R and orbits its mark at ORBIT_R. */
 export const SERPENT_TARGET_R = 600;
@@ -273,7 +296,7 @@ export function newSerpentFight(day, now, soundAt, boss, sx, sz, yaw = 0) {
     modes: [{ at: now, m: MODE.deep }, { at: now + 1500, m: MODE.breach }, { at: now + 6500, m: MODE.cruise }],
     coil: null, mael: null,
     atk: null, lastA: -1, runA: 0, freeAt: 0, nextAt: now + SERPENT_OPENING_MS, openUntil: now + SERPENT_OPENING_MS, seq: 0, coils: 0,
-    target: null, targetAt: 0, queue: [], pending: null, rearAt: 0,
+    target: null, targetAt: 0, queue: [], pending: null, rearAt: 0, closing: null,
     /** @type {Record<string, {name: string, lv: number, hl: number, ref: number, share: number, dealt: number, clipped: number, bucket: number, bucketAt: number, rate: number, rateAt: number, stoodMs: number, joinedAt: number, seenAt: number, retired: boolean, hits: number, best: number, cd: number, bq?: any, bqAt?: number}>} */
     players: {},
     liveMs: 0,
@@ -398,6 +421,8 @@ export const stunned = (f, now) => now < (f.stunUntil ?? 0);
  * struck. Answers the frames to fan (a coil broken, the kill) - what landed is the fighter's own `dealt`. Refused: a
  * stranger, a fight over or past its sounding, its ward, past the blow rate, a pose away from the fight, nothing of it
  * above the sea, the body beyond a gun's reach. Clipped (and counted): past the one-blow cap, past the bucket.
+ * SERPENT3: the body, its head and its stun are judged at the latest of SERPENT_HIT_LOOKBACK_MS back from the word at
+ * which some of it stood above the sea within her guns' reach - when the ball struck, not when its word came.
  */
 export function applySerpentHit(f, sub, d, z, pose, now) {
   const out = [];
@@ -406,13 +431,17 @@ export function applySerpentHit(f, sub, d, z, pose, now) {
   if (now < f.shieldUntil) return out;
   if (!spendBlow(p, now)) return out;
   if (!pose || !Number.isFinite(pose.x) || !Number.isFinite(pose.z) || Math.hypot(pose.x, pose.z) > ENGAGE_R + SERPENT_POSE_SLACK) return out;
-  const pts = bodyAt(f, now);
-  const near = nearestExposed(pts, pose.x, pose.z);
-  if (!near || near.d > GUN_REACH_M + SERPENT_POSE_SLACK) return out;
+  let pts = null, at = now;
+  for (const back of SERPENT_HIT_LOOKBACK_MS) {
+    const seen = bodyAt(f, now - back);
+    const near = nearestExposed(seen, pose.x, pose.z);
+    if (near && near.d <= GUN_REACH_M + SERPENT_POSE_SLACK) { pts = seen; at = now - back; break; }
+  }
+  if (!pts) return out;
   // AUDIT SERPENT E2: her guns speak - a share retired for their silence comes back at the fraction it stands at
   p.hitAt = now;
   if (p.retired && serpentShareWanted(p, now)) restoreSerpentShare(f, p);
-  const stun = stunned(f, now);
+  const stun = stunned(f, at);
   if (z === ZONES.coil && coilHolds(f, now)) {
     const got = spendPurse(p, d * (stun ? STUN_X : 1), f.coil.h, now);
     p.cd += got;
@@ -424,7 +453,7 @@ export function applySerpentHit(f, sub, d, z, pose, now) {
     if (f.hp <= 1e-6 && f.max > 0) fall(f, now, out);
     return out;
   }
-  const x = (z === ZONES.head && headExposed(f, pts, now, stun) ? HEAD_X : 1) * (stun ? STUN_X : 1);
+  const x = (z === ZONES.head && headExposed(f, pts, at, stun) ? HEAD_X : 1) * (stun ? STUN_X : 1);
   const got = spendPurse(p, d * x, f.hp, now);
   if (got > 0) { p.hits++; p.best = Math.max(p.best, got); f.threat[sub] = (f.threat[sub] ?? 0) + got; }
   f.hp -= got;
@@ -555,22 +584,78 @@ function pushMode(f, at, m, out) {
   while (f.modes.length > MODES_KEPT) f.modes.shift();
   out?.push({ k: 'dv', ...d });
 }
-/** A JUMP: the head placed at (x, z) heading `yw` from `at` - under the sea, between two of its sightings (a breach
- *  rising under a ship, a woken serpent surfacing again, the maelstrom's orbit). The body never reaches back past it. */
-function jumpTo(f, at, x, z, yw, v, out, arc = null) {
-  return pushLeg(f, arc ? { k: LEG.arc, at, x, z, yw, v, r: arc.r, sd: arc.sd, j: 1 } : { k: LEG.line, at, x, z, yw, v, j: 1 }, out);
+/**
+ * SERPENT3: THE WAY ONTO A ROUND - from the head at `p` heading `yw`, a turn of `r1` (HUNT_TURN_R) and then a straight that
+ * leaves the turn's circle and meets the circle of `r2` about `c` tangent, going round it `s2` (+1 clockwise from above,
+ * as legAt turns) - with `r2` 0, the straight runs onto the point `c` (Dubins's turn-and-straight). The shorter of the
+ * two turns that can: `{ s1, turn, len, yw, r }` - the turn's side and its angle (radians, [0, 2PI)), the straight's
+ * length (m), its heading and the turn's radius (r1) - or null (neither can: the round about the head itself).
+ * @param {{x: number, z: number}} p @param {number} yw @param {number} r1 @param {{x: number, z: number}} c
+ */
+export function wayOnto(p, yw, r1, c, r2 = 0, s2 = 1) {
+  let best = null;
+  for (const s1 of [1, -1]) {
+    // the turn's centre stands r1 to its side (serpentBody.js legAt: right of a heading yw is (cos yw, -sin yw))
+    const cx = p.x + s1 * r1 * Math.cos(yw), cz = p.z - s1 * r1 * Math.sin(yw);
+    const dx = c.x - cx, dz = c.z - cz, d = Math.hypot(dx, dz), k = s2 * r2 - s1 * r1;
+    if (!(d > 1e-9) || Math.abs(k) > d * (1 + 1e-9)) continue;
+    // the straight square to both radii: its heading off the centres' bearing by asin(k / d)
+    const ys = Math.atan2(dx, dz) - Math.asin(Math.max(-1, Math.min(1, k / d)));
+    let turn = s1 * serpentWrapYaw(ys - yw);
+    if (turn < 0) turn += 2 * Math.PI;
+    if (turn > 2 * Math.PI - 1e-6) turn = 0;
+    const len = Math.sqrt(Math.max(0, d * d - k * k));
+    if (!best || turn * r1 + len < best.turn * r1 + best.len) best = { s1, turn, len, yw: ys, r: r1 };
+  }
+  return best;
+}
+/** SERPENT3: a way's length (m) - its turn and its straight. */
+export const wayLen = (way) => (way ? way.turn * way.r + way.len : 0);
+/**
+ * SERPENT3: THE HEAD SWIMS `way` (wayOnto's) from `t` at `v`, the straight's last `lead` metres at `vLead` -
+ * each leg begun where the last leaves the head (legFrom), kept and said. Answers the moment it is done (ms).
+ */
+function swimWay(f, t, way, v, out, lead = 0, vLead = v) {
+  let at = Math.round(t);
+  if (!way) return at;
+  const turn = way.turn * way.r, run = Math.max(0, way.len - lead), rise = Math.min(lead, way.len);
+  if (turn >= 0.05) { pushLeg(f, legFrom(f.legs, at, LEG.arc, v, way.r, way.s1), out); at = Math.round(at + (turn * 1000) / v); }
+  if (run >= 0.05) { pushLeg(f, legFrom(f.legs, at, LEG.line, v), out); at = Math.round(at + (run * 1000) / v); }
+  if (rise >= 0.05) { pushLeg(f, legFrom(f.legs, at, LEG.line, vLead), out); at = Math.round(at + (rise * 1000) / vLead); }
+  return at;
+}
+/** SERPENT3: the pace (m/s) that swims `len` metres in `ms`, between SWIM_MIN_V and DASH_V - past DASH_V the wind-up waits. */
+const dashPace = (len, ms) => Math.max(SWIM_MIN_V, Math.min(DASH_V, len / Math.max(1e-3, ms / 1000)));
+/** SERPENT3: THE DASH of attack `A` at `target` from the head `h` (its place and heading where the dash begins): the way
+ *  (wayOnto's) onto a Rising Maw's mark (where she is, kept in its waters) or round a coil's ring about her, and the
+ *  metres swum up at its end - null for an attack that swims none. */
+function dashOf(A, h, target) {
+  if (A === SERPENT_ATTACK_TABLE.breach) {
+    const [px, pz] = keepIn(target?.x ?? 0, target?.z ?? 0, ARENA_R + 60);
+    const way = wayOnto(h, h.yw, HUNT_TURN_R, { x: px, z: pz });
+    return { way, rise: Math.min((CRUISE_V * BREACH_LEAD_MS) / 1000, way?.len ?? 0) };
+  }
+  if (A === SERPENT_ATTACK_TABLE.coil) return { way: wayOnto(h, h.yw, HUNT_TURN_R, { x: target?.x ?? 0, z: target?.z ?? 0 }, COIL_R, 1), rise: 0 };
+  return null;
+}
+/** SERPENT3: does attack `A`'s dash at `target`, begun now, fit its own wind-up (at DASH_V, its rise at CRUISE_V)? */
+export function dashFits(f, A, now, target) {
+  const d = dashOf(A, headAt(f.legs, now + SERPENT_SAY_AHEAD_MS), target);
+  if (!d) return true;
+  return ((wayLen(d.way) - d.rise) / DASH_V + d.rise / CRUISE_V) * 1000 <= serpentWindupOf(A) - SERPENT_SAY_AHEAD_MS + 1;
 }
 
-/** STEER the head toward `aim` at speed `v`: a turn begun past STEER_TURN of error, a straight run within
+/** STEER the head toward `aim` at speed `v`: a turn (of `r`) begun past STEER_TURN of error, a straight run within
  *  STEER_STRAIGHT, a change of pace said as a leg of its own - no leg cut under LEG_MIN_MS. */
-function steer(f, now, aim, v, out) {
+function steer(f, now, aim, v, out, r = TURN_R) {
   const L = f.legs[f.legs.length - 1];
-  if (L && L.at > now) return;   // a jump still to come is the way
+  if (L && L.at > now) return;   // a swim still to come is the way
   const h = headAt(f.legs, now);
   const err = serpentWrapYaw(Math.atan2(aim[0] - h.x, aim[1] - h.z) - h.yw);
   const young = L && now - L.at < LEG_MIN_MS;
   const arc = L?.k === LEG.arc;
-  if (Math.abs(err) > STEER_TURN && (!arc || L.sd !== Math.sign(err)) && !young) { pushLeg(f, legFrom(f.legs, now, LEG.arc, v, TURN_R, Math.sign(err)), out); return; }
+  // SERPENT3: a turn of its own radius `r` - TURN_R cruising, HUNT_TURN_R closing on a ship
+  if (Math.abs(err) > STEER_TURN && (!arc || L.sd !== Math.sign(err) || L.r !== r) && !young) { pushLeg(f, legFrom(f.legs, now, LEG.arc, v, r, Math.sign(err)), out); return; }
   if (Math.abs(err) <= STEER_STRAIGHT && arc && !young) { pushLeg(f, legFrom(f.legs, now, LEG.line, v), out); return; }
   if (L && Math.abs(L.v - v) > 0.5 && !young) pushLeg(f, L.k === LEG.arc ? legFrom(f.legs, now, LEG.arc, v, L.r, L.sd) : legFrom(f.legs, now, LEG.line, v), out);
 }
@@ -594,32 +679,57 @@ export function serpentAtkFrame(a) {
 
 /**
  * BEGIN an attack at `target` (a body, or null for a turn's): where it lands and when, said now so every screen draws its
- * wind-up at once - and the swim and the bearing that go with it.
+ * wind-up at once - and the swim and the bearing that go with it. SERPENT3: THE WHOLE OF ITS SWIM IS SAID WITH IT - every
+ * leg and every change of its ride to its landing and past it, so no screen learns a turn of it a beat late (the ram's
+ * run, said as it began, snapped its head on every screen); and where a Rising Maw bursts or a coil closes is swum to.
  */
 function begin(f, A, now, target, rng, out) {
-  const at = now + serpentWindupOf(A);
+  let at = now + serpentWindupOf(A);
   const h = headAt(f.legs, now);
   let tg = [], yw = h.yw;
   const tx = target?.x ?? 0, tz = target?.z ?? 0;
+  /** @type {{at: number, m: number}[]} the ride said with it, after its wind-up's */
+  const rides = [];
   if (A === SERPENT_ATTACK_TABLE.lash) {
     // the tail's sweep: from the body's rear third, toward the ship
     const p = spinePoint(f.legs, now, BODY_LEN * 0.65);
     yw = Math.atan2(tx - p.x, tz - p.z);
     tg = [[p.x, p.z]];
   } else if (A === SERPENT_ATTACK_TABLE.ram) {
-    // under, turned on the ship, and along a lane at it - the run from the wind-up's end
-    yw = Math.atan2(tx - h.x, tz - h.z);
-    const x0 = h.x + Math.sin(yw) * RAM_WIND_V * (A.windup / 1000), z0 = h.z + Math.cos(yw) * RAM_WIND_V * (A.windup / 1000);
+    // under, turned on the ship, and along a lane at it - the run from the wind-up's end, and up at the lane's end.
+    // SERPENT3: turned SERPENT_SAY_AHEAD_MS on, every screen holding the word first - its whole wind-up from there
+    const go = now + SERPENT_SAY_AHEAD_MS, h1 = headAt(f.legs, go);
+    at = go + serpentWindupOf(A);
+    yw = Math.atan2(tx - h1.x, tz - h1.z);
+    const x0 = h1.x + Math.sin(yw) * RAM_WIND_V * (A.windup / 1000), z0 = h1.z + Math.cos(yw) * RAM_WIND_V * (A.windup / 1000);
     tg = [[x0, z0], [x0 + Math.sin(yw) * ramLen(), z0 + Math.cos(yw) * ramLen()]];
-    pushLeg(f, { k: LEG.line, at: now, x: h.x, z: h.z, yw, v: RAM_WIND_V }, out);
+    pushLeg(f, { k: LEG.line, at: go, x: h1.x, z: h1.z, yw, v: RAM_WIND_V }, out);
+    pushLeg(f, { k: LEG.line, at, x: tg[0][0], z: tg[0][1], yw, v: RAM_V }, out);
+    pushLeg(f, { k: LEG.line, at: at + A.active, x: tg[1][0], z: tg[1][1], yw, v: CRUISE_V }, out);
+    rides.push({ at: at + A.active, m: MODE.breach });
   } else if (A === SERPENT_ATTACK_TABLE.breach) {
-    // it sounds, and comes up under the ship: the mark where she is now
-    const [px, pz] = keepIn(tx, tz, ARENA_R + 60);
-    yw = Math.atan2(px - h.x, pz - h.z);
-    tg = [[px, pz]];
-    const lead = (CRUISE_V * BREACH_LEAD_MS) / 1000;
-    jumpTo(f, at - BREACH_LEAD_MS, px - Math.sin(yw) * lead, pz - Math.cos(yw) * lead, yw, CRUISE_V, out);
-  } else if (A === SERPENT_ATTACK_TABLE.spit || A === SERPENT_ATTACK_TABLE.coil) {
+    // SERPENT3: it sounds and DASHES under the sea for the mark where she is now (dashOf) - a turn and a straight from
+    // where its head is SERPENT_SAY_AHEAD_MS on - its last BREACH_LEAD_MS swum up at CRUISE_V, and bursts there
+    const go = now + SERPENT_SAY_AHEAD_MS;
+    const { way, rise } = /** @type {any} */ (dashOf(A, headAt(f.legs, go), target));
+    const riseMs = (rise / CRUISE_V) * 1000;
+    at = Math.max(at, swimWay(f, go, way, dashPace(wayLen(way) - rise, A.windup - SERPENT_SAY_AHEAD_MS - riseMs), out, rise, CRUISE_V));
+    const burst = headAt(f.legs, at);
+    tg = [[burst.x, burst.z]];
+    yw = burst.yw;
+    rides.push({ at, m: MODE.breach });
+  } else if (A === SERPENT_ATTACK_TABLE.coil) {
+    // SERPENT3: under the sea it dashes onto the round it closes about her - a turn, and a straight meeting it tangent -
+    // and goes round it under her at DRIFT_V, clockwise as the coil lies (serpentBody.js coilPoint), until it closes
+    tg = [[tx, tz]];
+    yw = Math.atan2(tx - h.x, tz - h.z);
+    const go = now + SERPENT_SAY_AHEAD_MS;
+    const { way } = /** @type {any} */ (dashOf(A, headAt(f.legs, go), target));
+    const on = swimWay(f, go, way, dashPace(wayLen(way), A.windup - SERPENT_SAY_AHEAD_MS), out);
+    pushLeg(f, legFrom(f.legs, on, LEG.arc, DRIFT_V, COIL_R, 1), out);
+    at = Math.max(at, on);
+    rides.push({ at, m: MODE.coil });
+  } else if (A === SERPENT_ATTACK_TABLE.spit) {
     tg = [[tx, tz]];
     yw = Math.atan2(tx - h.x, tz - h.z);
   } else if (A === SERPENT_ATTACK_TABLE.roar) {
@@ -628,31 +738,62 @@ function begin(f, A, now, target, rng, out) {
   } else if (A === SERPENT_ATTACK_TABLE.cry) {
     pushLeg(f, legFrom(f.legs, now, LEG.line, REAR_V), out);
   } else if (A === SERPENT_ATTACK_TABLE.mael) {
-    tg = [[0, 0]];
+    // SERPENT3: THE WHIRL FORMS WHERE IT SWIMS - its eye MAEL_ORBIT_R to its left, as the whirl turns (serpentStrike.js
+    // maelPull), drawn in so the whole of its round lies in its waters; it swims onto that round and circles it, and
+    // rears out of it as the whirl forms (it was formed at the waters' heart and the head leapt onto its round)
+    const go = now + SERPENT_SAY_AHEAD_MS, h1 = headAt(f.legs, go);
+    const [ex, ez] = keepIn(h1.x - Math.cos(h1.yw) * MAEL_ORBIT_R, h1.z + Math.sin(h1.yw) * MAEL_ORBIT_R, ARENA_R - MAEL_ORBIT_R);
+    const way = wayOnto(h1, h1.yw, HUNT_TURN_R, { x: ex, z: ez }, MAEL_ORBIT_R, -1);
+    const on = swimWay(f, go, way, dashPace(wayLen(way), A.windup - SERPENT_SAY_AHEAD_MS), out);
+    const round = pushLeg(f, legFrom(f.legs, on, LEG.arc, CRUISE_V, MAEL_ORBIT_R, -1), out);
+    // its eye the round's own centre (the eye sought, to the centimetre - or, drawn in so near that no turn and straight
+    // meets it, the round it swims), so the whirl is always where it circles
+    tg = [[round.x + round.sd * round.r * Math.cos(round.yw), round.z - round.sd * round.r * Math.sin(round.yw)]];
+    at = Math.max(at, on);
+    rides.push({ at, m: MODE.rear });
   }
-  pushMode(f, now, A.mode, out);
+  // SERPENT3: a wind-up stretched for its dash is swum ON THE SURFACE - where the guns reach it - and it sounds for its own
+  // wind-up alone before it lands, as it always did
+  const dive = Math.max(now, at - serpentWindupOf(A));
+  if (dive > now) pushMode(f, now, MODE.cruise, out);
+  pushMode(f, dive, A.mode, out);
+  for (const r of rides) pushMode(f, r.at, r.m, out);
   f.atk = { i: ++f.seq, a: A.id, at, x: h.x, z: h.z, yw, tg, until: at + A.active + A.recover, ...(target ? { s: target.sub } : {}) };
   out.push({ k: 'atk', ...serpentAtkFrame(f.atk) });
 }
 
-/** The attack in flight, on its beat: the ram's run and its rising at the lane's end, the breach's burst, the coil's
- *  winding, the maelstrom's forming. */
+/** SERPENT3: attack `A` at `target` begun now if its dash fits its wind-up (dashFits) - else the serpent CLOSES on her,
+ *  surging at her on the surface at CLOSE_V (`f.closing` - each beat asks again, SERPENT_CLOSE_MS at most). */
+function closeOrBegin(f, A, now, target, rng, out) {
+  if (!target || dashFits(f, A, now, target)) { f.closing = null; begin(f, A, now, target, rng, out); return; }
+  if (!f.closing) f.closing = { a: A.id, s: target.sub, at: now };
+  f.target = target.sub;
+  steer(f, now, closeAim(f, now, target), CLOSE_V, out, HUNT_TURN_R);
+}
+/** SERPENT3: where it surges when closing on `target` - at her, unless she lies inside the round it would turn on to
+ *  face her: then on, straight, until she can be turned onto (turned at, it circled a ship lying still for ever and
+ *  never faced her). */
+export function closeAim(f, now, target) {
+  const h = headAt(f.legs, now);
+  const err = serpentWrapYaw(Math.atan2(target.x - h.x, target.z - h.z) - h.yw);
+  const sd = err >= 0 ? 1 : -1;
+  const cx = h.x + sd * HUNT_TURN_R * Math.cos(h.yw), cz = h.z - sd * HUNT_TURN_R * Math.sin(h.yw);
+  if (Math.abs(err) > STEER_STRAIGHT && Math.hypot(target.x - cx, target.z - cz) < HUNT_TURN_R) return [h.x + Math.sin(h.yw) * HUNT_TURN_R * 2, h.z + Math.cos(h.yw) * HUNT_TURN_R * 2];
+  return keepIn(target.x, target.z, ARENA_R + 60);
+}
+
+/** The attack in flight, on its beat: the coil's winding, the maelstrom's forming (SERPENT3: their swims and rides were
+ *  said as they began). */
 function attackBeat(f, now, here, out) {
   const a = f.atk, A = SERPENT_ATTACK_BY_ID[a.a];
-  if (A === SERPENT_ATTACK_TABLE.ram) {
-    if (!a.ran && now >= a.at) { a.ran = true; pushLeg(f, { k: LEG.line, at: a.at, x: a.tg[0][0], z: a.tg[0][1], yw: a.yw, v: RAM_V }, out); }
-    if (!a.done && now >= a.at + A.active) { a.done = true; pushLeg(f, legFrom(f.legs, a.at + A.active, LEG.line, CRUISE_V), out); pushMode(f, a.at + A.active, MODE.breach, out); }
-  } else if (A === SERPENT_ATTACK_TABLE.breach) {
-    if (!a.done && now >= a.at) { a.done = true; pushMode(f, a.at, MODE.breach, out); }
-  } else if (A === SERPENT_ATTACK_TABLE.coil) {
+  if (A === SERPENT_ATTACK_TABLE.coil) {
     if (!a.done && now >= a.at) { a.done = true; beginCoil(f, a, now, here, out); }
   } else if (A === SERPENT_ATTACK_TABLE.mael) {
     if (!a.done && now >= a.at) {
       a.done = true;
-      f.mael = { at: a.at, x: 0, z: 0 };
-      out.push({ k: 'mael', at: a.at, x: 0, z: 0 });
-      jumpTo(f, a.at, MAEL_ORBIT_R, 0, 0, CRUISE_V, out, { r: MAEL_ORBIT_R, sd: -1 });
-      pushMode(f, a.at, MODE.rear, out);
+      const x = r2(a.tg[0][0]), z = r2(a.tg[0][1]);   // as its word said it (serpentAtkFrame)
+      f.mael = { at: a.at, x, z };
+      out.push({ k: 'mael', at: a.at, x, z });
       f.rearAt = a.at;
     }
   }
@@ -666,7 +807,7 @@ function attackBeat(f, now, here, out) {
 function beginCoil(f, a, now, here, out) {
   // it closes where its ring was said - the ship's own word (`held`) brings it onto her hull's middle
   const cx = a.tg[0][0], cz = a.tg[0][1];
-  const h = headAt(f.legs, now);
+  const h = headAt(f.legs, a.at);   // SERPENT3: where its head goes round her at the landing
   const th = Math.atan2(h.x - cx, h.z - cz);
   // AUDIT SERPENT T3: COIL_TEAM_S of the broadsides of the ships FIGHTING it - afloat, and with some threat on it
   const refs = here.reduce((s, b) => { const p = f.players[b.sub]; return s + (p && !p.wreck && (f.threat[b.sub] ?? 0) > 0 ? p.ref : 0); }, 0);
@@ -674,8 +815,7 @@ function beginCoil(f, a, now, here, out) {
   // its moment the landing's - the moment every client tested its own ship against the ring - not the beat's
   f.coil = { i: a.i, s: a.s ?? null, x: r2(cx), z: r2(cz), th: r4(th), at: a.at, until: a.at + COIL_MS, off: 0, h: m, m, held: false, why: null };
   f.coils = (f.coils ?? 0) + 1;
-  jumpTo(f, a.at, cx + Math.sin(th) * COIL_R, cz + Math.cos(th) * COIL_R, serpentWrapYaw(th + Math.PI / 2), DRIFT_V, out);
-  pushMode(f, a.at, MODE.coil, out);
+  // SERPENT3: its head is on the round already, going round it (begin) - its ride said with its wind-up
   out.push(coilFrame(f.coil));
   // AUDIT SERPENT S3/B1: her word, said at the landing on her own clock, came before the beat that wound it - heard now
   if (a.word) out.push(...coilWord(f, a.word.sub, a.word.k, a.i, a.word.x, a.word.z, Math.max(now, f.coil.at)));
@@ -730,15 +870,39 @@ export function coilWord(f, sub, k, i, x, z, now) {
 }
 
 /**
+ * SERPENT3: A FIGHT RESUMED after its room slept - not stepped for SERPENT_SLEEP_MS (the relay beats a fight only while
+ * someone hears it). From its last beat its head circles where it was, cruising, on a round toward its waters' heart -
+ * its track laid again from there, every leg and ride said since let go - and the attack it had in flight landed on
+ * empty waters; a coil holding a ship keeps its round until its own clock ends it. Answers the frames to fan. Every beat
+ * asks it first (stepSerpentBrain), and the relay before a joiner's whole state and before a word is judged
+ * (server/src/index.js _serpentIn, _serpentFrame). The
+ * stray's surfacing it replaces leapt a head that had swum on out of its waters back into them, seen through the water.
+ */
+export function serpentResume(f, now) {
+  const out = [];
+  const t0 = f.lastTickAt;
+  if (f.fell || f.gone || !(now - t0 > SERPENT_SLEEP_MS)) return out;
+  f.lastTickAt = now;
+  if (coilHolds(f, now)) return out;
+  if (f.atk) { f.atk = null; f.target = null; f.nextAt = Math.max(f.nextAt, now + SERPENT_BREATH_MS); }
+  f.closing = null;
+  const h = headAt(f.legs, t0);
+  const sd = h.x * Math.cos(h.yw) - h.z * Math.sin(h.yw) <= 0 ? 1 : -1;   // the heart to its right: turn right
+  pushLeg(f, legFrom(f.legs, t0, LEG.arc, CRUISE_V, ORBIT_R, sd), out);
+  pushMode(f, t0, MODE.cruise, out);
+  return out;
+}
+
+/**
  * ONE BEAT. `bodies` are the fight's players about it now ({sub, x, z, dead} - the site frame), `rng` a [0,1) source.
  * Answers the frames to send, in order, as plain objects the relay stamps and fans (the `serpent` frame's kinds). Moves
  * the state in place.
  */
 export function stepSerpentBrain(f, now, bodies, rng) {
-  const out = [];
+  const out = serpentResume(f, now);   // SERPENT3: a room that slept - nobody heard it - takes it up circling where it was
   const dt = Math.min(SERPENT_STEP_MAX_MS, Math.max(0, now - f.lastTickAt));
   f.lastTickAt = now;
-  pruneLegs(f, now);
+  pruneLegs(f, now - SERPENT_HIT_LOOKBACK_MS[SERPENT_HIT_LOOKBACK_MS.length - 1]);   // SERPENT3: the body a blow is judged on
   if (f.fell || f.gone) { stateFrame(f, now, out); return out; }
   if (now >= f.soundAt) { sound(f, now, out); return out; }
   const here = bodies.filter((b) => !b.dead && f.players[b.sub] && Math.hypot(b.x, b.z) <= ENGAGE_R);
@@ -754,15 +918,6 @@ export function stepSerpentBrain(f, now, bodies, rng) {
   f.ships = here.filter((b) => f.players[b.sub].hl >= 0 && !f.players[b.sub].wreck).length;
   const keep = Math.pow(1 - SERPENT_THREAT_DECAY, dt / 1000);
   for (const k of Object.keys(f.threat)) { f.threat[k] *= keep; if (f.threat[k] < 0.5) delete f.threat[k]; }
-  // a room that slept while its head swam on: it surfaces again inside its waters (under the sea, unseen)
-  const h0 = headAt(f.legs, now);
-  // AUDIT SERPENT S2: once - a surfacing already on its way (its jump still to come) is never asked again each beat
-  if (Math.hypot(h0.x, h0.z) > ARENA_R + STRAY_M && !f.atk && !coilHolds(f, now) && !((f.legs[f.legs.length - 1]?.at ?? 0) > now)) {
-    const [x, z] = keepIn(h0.x, h0.z, ARENA_R * 0.6);
-    pushMode(f, now, MODE.deep, out);
-    jumpTo(f, now + MODE_BLEND_MS + 200, x, z, Math.atan2(-x, -z), CRUISE_V, out);
-    pushMode(f, now + MODE_BLEND_MS + 1200, MODE.cruise, out);
-  }
   // a phase crossed: its ward, and the phase's turn. AUDIT SERPENT S2: an attack in flight lands as every screen was
   // told it would (the turn waits for its span - nothing said is unsaid); a coil holding a ship lets her go
   if (f.max > 0 && f.phase < 3 && f.hp / f.max <= SERPENT_PHASE_AT[f.phase - 1]) {
@@ -773,6 +928,7 @@ export function stepSerpentBrain(f, now, bodies, rng) {
     out.push({ k: 'ph', n: f.phase, until: f.shieldUntil });
     f.queue = [...SERPENT_PHASE_TURN[f.phase]];
     f.pending = null;
+    f.closing = null;   // SERPENT3: the turn's own attacks first
     if (!f.atk) { const [first, ...rest] = f.queue; f.queue = rest; begin(f, SERPENT_ATTACK_TABLE[first], now, null, rng, out); }
   }
   // the coil's own clock: its crush at its end
@@ -799,11 +955,19 @@ export function stepSerpentBrain(f, now, bodies, rng) {
     if (A.mode !== MODE.cruise && A !== SERPENT_ATTACK_TABLE.coil && A !== SERPENT_ATTACK_TABLE.mael) pushMode(f, now, MODE.cruise, out);
     if (f.queue.length) { f.pending = f.queue.shift(); f.nextAt = now + SERPENT_BREATH_MS; }
   }
+  // SERPENT3: CLOSING on a ship for a dash its wind-up cannot swim yet - on the surface, at her - and the dash begun the
+  // beat she lies within it; she outsailed it, or is gone, and it chooses again
+  if (f.closing) {
+    const c = f.closing, A = SERPENT_ATTACK_BY_ID[c.a];
+    const t = here.find((b) => b.sub === c.s && !f.players[b.sub]?.wreck) ?? null;
+    if (t && now - c.at < SERPENT_CLOSE_MS) { closeOrBegin(f, A, now, t, rng, out); endFrames(f, now, out); return out; }
+    f.closing = null;
+  }
   if (f.pending && now >= f.nextAt) {
     const A = SERPENT_ATTACK_TABLE[f.pending];
     f.pending = null;
     const t = A === SERPENT_ATTACK_TABLE.coil ? pickSerpentTarget(f, here, rng, true) : null;
-    if (A && (A !== SERPENT_ATTACK_TABLE.coil || t)) { begin(f, A, now, t, rng, out); endFrames(f, now, out); return out; }
+    if (A && (A !== SERPENT_ATTACK_TABLE.coil || t)) { closeOrBegin(f, A, now, t, rng, out); endFrames(f, now, out); return out; }
   }
   // choose: a target kept a while, and what can be done to it from here
   let target = f.target ? here.find((b) => b.sub === f.target) ?? null : null;
@@ -812,7 +976,7 @@ export function stepSerpentBrain(f, now, bodies, rng) {
     const h = headAt(f.legs, now);
     if (now - (f.freeAt ?? 0) >= 6000) f.runA = 0;
     const can = serpentAttacksFor(f.phase, dist(target.x, target.z, h.x, h.z), f.players[target.sub].hl >= 0, f.lastA, f.runA);
-    if (can.length) { begin(f, chooseSerpentAttack(can, rng), now, target, rng, out); endFrames(f, now, out); return out; }
+    if (can.length) { closeOrBegin(f, chooseSerpentAttack(can, rng), now, target, rng, out); endFrames(f, now, out); return out; }
   }
   // the Maelstrom's rearing: its head up out of the whirl, then down again
   if (f.mael && !f.atk) {

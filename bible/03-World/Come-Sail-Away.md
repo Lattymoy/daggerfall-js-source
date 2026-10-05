@@ -2230,13 +2230,11 @@ on the mod's own states (`bible/10-UI/Controls.md` HELM-KEYS has the keys):
   too (GALLEON), never the sea's current, which under the mod's default waves is half
   the wind and kept the tell off: AUDIT NAV2 F15 - her sails up): the helm is told
   once how she comes out, again only after
-  she has been out of them - under the Classic helm `IRONS_TEXT` (strike sail and
-  row her round), under the Responsive one `IRONS_HELM_TEXT` (put the helm over, or
-  strike sail and row: her rudder answers at rest, and the helm alone brought the
-  mod's galleon 40 deg off the wind's eye in about 10 s, the new galleon in 6.4 s -
-  AUDIT NAV2 F18);
-  `helmPanelState().inIrons` and `.responsive` put the right advice, with the
-  keys, on the panel's line while it lasts (`ui/enhancedHelm.js helmHint`).
+  she has been out of them - `IRONS_TEXT` (strike sail and row her round), and
+  `helmPanelState().inIrons` puts it, with the keys, on the panel's line while it
+  lasts (`ui/enhancedHelm.js helmHint`). The Classic helm's alone: under the
+  Responsive one (SAIL-FREE, below) her canvas draws in the wind's eye and drives her
+  up into it, so she is never in irons.
 - **The panel teaches the arrows**: its line is the helm's hand at a glance.
   HELM-LADDER (below) moved its sails' button to the mod's own toggle.
 
@@ -2309,13 +2307,65 @@ GALLEON (2026-10-01): the Small Ship is Mac's galleon now (The new galleon, belo
 carried two lateens - and helmWay.js's header carries her figures, re-measured like for like (AUDIT NAV2 F20's pin
 holds them): under the mod's handling she takes 29.2 s to her full way of 8.75 m/s and 43.7 s (191 m) to lose it,
 0.75 deg/s at 1 m/s and 6.56 at her full way on the same 153 m circle; under the responsive helm 8.33 s to her full
-way and 14.6 s (64 m) to lose it, her rudder 8.49 deg/s at her full way on a 118 m circle. AUDIT GALLEON T11, the rest
+way and 14.6 s (64 m) to lose it, her rudder 8.49 deg/s at her full way on a 118 m circle (HELM-WAY's alone - SAIL-FREE,
+below, made her way 14.38 m/s on her beam in the same times: 105 m to lose it, a 194 m circle). AUDIT GALLEON T11, the rest
 of hers like for like: to 95% of her way in 7.92 s (27.72 s the mod's handling), struck to 2.5 m/s in 10.42 s (31.25
 s), head to wind with the helm held over 40 deg off its eye in 6.37 s (the mod's handling stays in irons: she swings
 to about 30 deg off it in a minute and lies there, no way on); her rudder at rest, at 4.5 and 9 m/s and two seconds
 from rest as the mod's galleon's above. The
 mod's galleon's figures above stand for the record - she is hull 2 again whenever the new galleon's model will not
 load.
+
+## Her way under sail (SAIL-FREE, 2026-10-05 - DECLARED)
+
+Mac: *"Currently its too hard to sail against the wind, ships need more speed"*; his calls: *"No tacking, Black Flag"*
+and, for the speed, *"nothing that breaks immersion"*. Measured first on the real runtime (a 1.5 m/s wind, waves off):
+the mod's GetSailPower gives a fore-and-aft sail a quarter to half of its pull close-hauled and drives it ASTERN within
+30 degrees of the wind's eye, and a square sail nothing forward of the beam - Mac's galleon made 10.2 m/s at her best,
+4.7 m/s 45 degrees off the eye and went astern at 30, a Carrack 1.8 m/s close-hauled, a Large Galley nothing at all
+once the wind was ahead of her beam - while every captain on the Bay sails by `navalAI.js windFactor` (70% close-hauled,
+never astern); and the mod's speeds were set for its time dial, which online is gone (HELM-TIME-ONLINE).
+
+**The law** (`systems/helmWay.js` SAIL_FREE, POINT_OF_SAIL, `pointOfSail`, `seaWind`; `systems/comeSailAway.js`
+`canvasPull`, `sailDrive` - DECLARED, the Port-Ledger's HELM-WAY row), under the Responsive helm alone - Classic is the
+mod to the letter:
+- **Her canvas** is every sail she has set asked at the crest of its own curve in GetSailPower (`SAIL_CREST_DEG`, 135,
+  for a lateen, a gaff and a staysail; running dead before it for a square sail), kind for kind and size for size - the
+  mod's law draws a mixed rig's square and fore-and-aft sails at their best on different headings, so it never had all
+  of its canvas drawing at once. A lateen at its crest is on its good tack: the bad tack's 15% is a heading's, and read
+  off the wind it laid the Large Boat's lone lateen 15% short on one tack, where two legs made 10% more toward a mark
+  10 degrees off the eye than sailing straight for it.
+- **The point of sail** takes a share of it (`pointOfSail`): POINT_OF_SAIL.run (0.9) running dead before the wind, the
+  whole with it on her quarter, eased down to POINT_OF_SAIL.head (0.55) in the wind's eye - never nothing, never astern.
+  The fall is a cosine's, so the polar is convex: no two legs ever make more toward any mark than sailing straight for
+  it. There is no tack.
+- **The wind** is the captains' bounded share of the rated wind (`seaWind` - WIND_RATED, WIND_SHARE and `windShare`
+  have one home now, which navalAI.js re-exports): a fog's tenth no longer lays her becalmed (0.3 of her way), a storm
+  drives her at most twice; where none blows (a building's or a dungeon's water) nothing.
+- **Her pace**: every way under sail a fifth again (SAIL_FREE.pace, 1.2).
+- **Her handling at her new way** (SAIL_FREE.gain, 1.643 - the galleon's way on her beam, 14.38 m/s, over the mod's
+  8.75): her way comes on and off at HELM-WAY's rates times it, and her rudder reads her way over it
+  (`steerage(way / gain)`), so she gathers her way, loses it and swings at her full way as she did under HELM-WAY - on a
+  wider circle, as a faster hull does.
+- **Her sails draw on every heading**: no fore-and-aft sail luffs in the wind's eye, no square sail is laid aback (its
+  Animator's Wind the wind's own), and the square-sail assist stows none upwind - raised there (RaiseSails) or brought
+  there (the update's assist).
+- **She is never in irons** (`inIrons` is the Classic helm's alone): her canvas drives her up into the wind's eye, and
+  with no way at all - her canvas shot away, a heave-to - the wind is not what holds her. AUDIT NAV2 F18's "put the helm
+  over" word (`IRONS_HELM_TEXT`) and the panel's responsive line went with its irons.
+- **The Overworld journey** sails her straight for a mark to windward (`systems/seaHelm.js`'s `free`, which the world
+  says from `csaRuntime.helmResponsive()`): no cone, no tack.
+- **The captains are as they were** - their own point of sail and HELM-WAY's pace and rates: scaled to the player's
+  they broke some twenty of their tuned duels, boardings and berthings (AUDIT NAV2 F25, Mac's bar, among them). Whether
+  the Bay's ships sail faster too is Mac's call, open.
+
+Measured after (`test/sailfree.test.js`, a rated wind): the galleon makes 8.91 m/s dead into the wind (the mod's went
+astern), 14.38 on her beam (8.75) and 16.2 with the wind on her quarter; a Carrack 10.7, 17.3 and 19.4; a Large Galley
+4.5, 7.2 and 8.1; a Large Boat 3.0, 4.8 and 5.4 - the same on either tack. Her handling is HELM-WAY's: 8.35 s to her
+full way and 14.6 s (105 m) to lose it; her rudder 2.25 deg/s at rest, 10.50 at 7.4 m/s (an 81 m circle) and 8.49 at
+her full way (a 194 m circle); two seconds from rest with the helm over, 8.8 deg/s (helmWay.js's header - AUDIT NAV2
+F20's pin holds it). Pins: `test/sailfree.test.js`, and the HELM-WAY and AUDIT NAV2 pins it moved;
+`tools/mutants/sailfree.json` (25, all dead).
 
 ## The Overworld's crossing (OWS2, 2026-09-28)
 

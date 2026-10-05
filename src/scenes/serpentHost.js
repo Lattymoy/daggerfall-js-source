@@ -29,11 +29,11 @@
 // }
 //
 // Not a DFU member. Ledger A (SERPENT1).
-import { bodyAt, segmentBox, segExposed, headExposed, coilWeight, SEG_N, MODE, modeAt } from '../net/serpentBody.js';
-import { SERPENT_ATTACK_BY_ID, SERPENT_ATTACK_TABLE, ADMIT_R, FAN_R, ENGAGE_R, SERPENT_POOL_TICK_MS, ZONES, SERPENT_PHASE_NAMES, MAEL_R, SERPENT_SHIELD_MS, refOf } from '../net/serpentBrain.js';
+import { bodyAt, segmentBox, segExposed, headExposed, coilWeight, SEG_N, MODE, modeAt, headAt, legIndexAt } from '../net/serpentBody.js';
+import { SERPENT_ATTACK_BY_ID, SERPENT_ATTACK_TABLE, ADMIT_R, FAN_R, ENGAGE_R, SERPENT_POOL_TICK_MS, ZONES, SERPENT_PHASE_NAMES, MAEL_R, SERPENT_SHIELD_MS, CRUISE_V, refOf } from '../net/serpentBrain.js';
 import { serpentBossById, serpentCountdown, serpentCountdownWords, serpentSwims, SERPENT_BRAIN_V, SERPENT_DIVE_MS } from '../net/serpentLaw.js';
 import { cellRoomOfWire } from '../net/wire.js';
-import { shapeMeets, shipHurt, crushHurt, gripHurt, grindHurt, shoveOf, shoveLeft, maelPull, globAt, poolOf, poolBites, ramHead, SHOVE_S } from '../systems/serpentStrike.js';
+import { shapeMeets, shipHurt, crushHurt, gripHurt, grindHurt, shoveOf, shoveLeft, maelPull, globAt, poolOf, poolBites, ramHead, fleetShare, SHOVE_S } from '../systems/serpentStrike.js';
 
 /** How often an `in` is said again while I am within its waters' sight (a reconnect, a halo come up, a share back). */
 export const IN_RESEND_MS = 20_000;
@@ -154,9 +154,12 @@ export function createSerpentHost(deps) {
     if (deps.online?.send?.({ k: 'wr', w }, cellRoomOfWire(sw.site.sx, sw.site.sz))) wreckSaid = w;
   }
 
+  /** SERPENT3: the share of its blows a ship of this fight takes - a pair's SERPENT_PAIR_SHARE (the relay's count of the
+   *  ships afloat at it, the whole state's `n`), else the whole. */
+  const share = () => fleetShare(deps.link.state().n);
   /** My ship struck by attack `a` (a word of the cell's): her hurt, her throw, the line. */
   function strikeMe(a, A, ship, t) {
-    deps.strike?.(ship.boat, shipHurt(A, ship), { shake: A.hull >= 0.18 ? 2.6 : 1.8, line: `${A.name}!` });
+    deps.strike?.(ship.boat, shipHurt(A, ship, share()), { shake: A.hull >= 0.18 ? 2.6 : 1.8, line: `${A.name}!` });
     const v = shoveOf(a, ship);
     if (v[0] || v[1]) shove = { v, at: t };
   }
@@ -213,6 +216,17 @@ export function createSerpentHost(deps) {
       deps.online?.send?.({ k: 'esc', i: a.i }, cell);
       deps.say?.('You slip clear as its coils close on empty sea.', 4);
     }
+  }
+  /** SERPENT3: ITS DASH UNDER THE SEA, SEEN ON IT - the bow wave over its head while it swims sounded faster than it
+   *  cruises (a Rising Maw's dash, a coil's, the whirl's own swim; the ram's run has its own off its lane - ramHead), so a
+   *  ship sees it come where its jumps showed nothing until it was there. */
+  function dashWake(s, t) {
+    if (s.fell || s.gone || modeAt(s.modes, t) !== MODE.deep || (s.atk && ramHead(s.atk, t))) return;
+    const L = s.legs[legIndexAt(s.legs, t)];
+    if (!L || !(L.v > CRUISE_V)) return;
+    const h = headAt(s.legs, t);
+    const [x, z] = scene(h.x, h.z);
+    deps.fx?.('wake', [x, deps.seaY(), z], 1);
   }
   /** A word's cue as it is begun (its sound from where it will land). */
   function cue(A, a) {
@@ -273,12 +287,12 @@ export function createSerpentHost(deps) {
     if (t > c.until + COIL_LOST_MS) { held = null; return; }   // its end never heard (a socket lost mid-coil): she is let go
     if (s.crushed && s.crushed === c.off && crushed !== c.i) {
       crushed = c.i;
-      deps.strike?.(ship.boat, crushHurt(ship), { shake: 3, line: 'The coils crush your hull!' });
+      deps.strike?.(ship.boat, crushHurt(ship, share()), { shake: 3, line: 'The coils crush your hull!' });
     }
     if (c.off > 0) { held = null; return; }
     const dtS = Math.max(0, (t - gripAt) / 1000);
     gripAt = t;
-    const g = gripHurt(ship, Math.min(1, dtS), grip);
+    const g = gripHurt(ship, Math.min(1, dtS), grip, share());
     grip = g.carry;
     if (g.hurt.hull > 0 || g.hurt.crew > 0) deps.strike?.(ship.boat, g.hurt, { shake: 0.4 });
   }
@@ -290,7 +304,7 @@ export function createSerpentHost(deps) {
     const dtS = Math.max(0, Math.min(1, (t - grindAt) / 1000));
     grindAt = t;
     if (!p.eye) return;
-    const g = grindHurt(ship, dtS, grind);
+    const g = grindHurt(ship, dtS, grind, share());
     grind = g.carry;
     if (g.hurt.hull > 0) deps.strike?.(ship.boat, g.hurt, { shake: 0.6, line: 'The maelstrom\'s eye grinds at your hull!' });
   }
@@ -303,7 +317,8 @@ export function createSerpentHost(deps) {
     const p = pools.find((q) => poolBites(q, me[0], me[1], t));
     if (!p) return;
     poolBiteAt = t;
-    deps.hurt?.(p.pct, p.base, 'poison');
+    const k = share();
+    deps.hurt?.(p.pct * k, p.base * k, 'poison');
   }
 
   return {
@@ -328,6 +343,7 @@ export function createSerpentHost(deps) {
       wreckWord(sw);
       tellings(s, t);
       attacks(s, t);
+      dashWake(s, t);
       coilOnMe(s, t);
       eyeOnMe(s, t);
       venomOnMe(t, me);
@@ -440,10 +456,13 @@ export function createSerpentHost(deps) {
         const e = a.tg?.[1] ? scene(a.tg[1][0], a.tg[1][1]) : null;
         tele.push({ shape: A.shape, key: A.key, c, e, r: A.r ?? 0, r0: A.r0 ?? 0, r1: A.r1 ?? 0, width: A.width ?? 0, arc: A.arc ?? 0, yw: a.yw, k, landed: t >= a.at, mine: !!a.s && a.s === mine() });
       } else if (A === SERPENT_ATTACK_TABLE.mael && t < a.at && !s.mael) {
-        // AUDIT SERPENT T8: the maelstrom's waters laid on the sea as it winds up - its eye forms at the heart of them
+        // AUDIT SERPENT T8: the maelstrom's waters laid on the sea as it winds up - its eye forms at the heart of them.
+        // SERPENT3: where its word says it forms (`tg` - beside the serpent, net/serpentBrain.js begin), no longer always
+        // its waters' heart
         const from = seen.get(a.i) ?? a.at - A.windup;
         const k = Math.max(0, Math.min(1, (t - from) / Math.max(1, a.at - from)));
-        tele.push({ shape: 'disc', key: A.key, c: scene(0, 0), e: null, r: MAEL_R, r0: 0, r1: 0, width: 0, arc: 0, yw: 0, k, landed: false, mine: false });
+        const eye = a.tg?.[0] ? scene(a.tg[0][0], a.tg[0][1]) : scene(0, 0);
+        tele.push({ shape: 'disc', key: A.key, c: eye, e: null, r: MAEL_R, r0: 0, r1: 0, width: 0, arc: 0, yw: 0, k, landed: false, mine: false });
       }
       const mael = s.mael && !s.gone ? { c: scene(s.mael.x, s.mael.z), r: MAEL_R, at: s.mael.at, fade: s.fell ? Math.max(0, 1 - (t - s.fell.at) / SERPENT_DIVE_MS) : 1 } : null;
       const g = a ? globAt(a, t) : null;

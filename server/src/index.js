@@ -4133,6 +4133,7 @@ export class Room {
     const by = this._serpentFightBy(fights, a.sub);
     if (!by) return;
     const [id, f] = by;
+    this._serpentFan(fights, id, f, serpentBrain.serpentResume(f, now));   // SERPENT3: judged on a fight taken up, never one asleep
     if (m.k === 'hit') {
       const pose = a.pose && !a.pose.dd ? this._serpentFrameOf(f, a.pose) : null;   // the dead strike nothing
       // the kill is said by _serpentFall alone, its receipts minted and kept first (AUDIT WB A10's law) - never the brain's word of it here
@@ -4176,6 +4177,8 @@ export class Room {
       await this._serpentIndex(fights);
       born = true;
     }
+    // SERPENT3: a fight its room let sleep (nobody heard it) taken up circling where it was before anyone is told it
+    else this._serpentFan(fights, id, f, serpentBrain.serpentResume(f, now));
     this._setAttach(ws, { ...(this._all().get(ws) ?? a), sps: id, spd: t.day });
     const present = new Set();
     for (const [, sock] of this._all()) if (sock.id && sock.sub) present.add(sock.sub);   // the accounts about the cell now - a full fight frees a seat no one holds

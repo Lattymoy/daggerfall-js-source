@@ -362,7 +362,7 @@ test('SERPENT1 brain: the opening - it surfaces and circles SERPENT_OPENING_MS b
   for (const A of SERPENT_ATTACK_BY_ID) assert.ok(A.windup >= 2600, `${A.key}: a wind-up a ship can see coming`);
 });
 
-test('SERPENT1 brain: THE TURNS - at 66% its ward and Satakal\'s Call then a coil on the ship it hates most; at 33% its ward, the Maelstrom forming at the waters\' heart and the Abyssal Roar from its eye, the serpent circling the eye reared (mutants: a phase threshold off; no ward; the coil not following the call)', () => {
+test('SERPENT1 brain: THE TURNS - at 66% its ward and Satakal\'s Call then a coil on the ship it hates most; at 33% its ward, the Maelstrom forming where it swims (SERPENT3; the waters\' heart before) and the Abyssal Roar from its eye, the serpent circling the eye reared (mutants: a phase threshold off; no ward; the coil not following the call)', () => {
   const f = surfaced(fightOf([HULL.Carrack, HULL.SmallShip]));
   const rng = seeded(5);
   const bodies = [body('s1', 120, 40), body('s2', -90, 60)];
@@ -388,9 +388,13 @@ test('SERPENT1 brain: THE TURNS - at 66% its ward and Satakal\'s Call then a coi
   }
   assert.deepEqual(w2.filter((o) => o.k === 'atk').map((o) => SERPENT_ATTACK_BY_ID[o.a].key).slice(0, 2), SERPENT_PHASE_TURN[3]);
   const m = w2.find((o) => o.k === 'mael');
-  assert.deepEqual([m.x, m.z], [0, 0], 'the waters\' heart');
-  assert.equal(m.at, w2.find((o) => o.k === 'atk' && o.a === SERPENT_ATTACK_TABLE.mael.id).at, 'formed at the forming\'s landing');
-  assert.ok(Math.abs(Math.hypot(seen.h.x, seen.h.z) - MAEL_ORBIT_R) < 1, `circling the eye: ${Math.hypot(seen.h.x, seen.h.z)}`);
+  const forming = w2.find((o) => o.k === 'atk' && o.a === SERPENT_ATTACK_TABLE.mael.id);
+  // PIN MOVED (SERPENT3): the whirl forms where it swims - where its word said it would, its round inside its waters -
+  // no longer at the waters' heart, where its head leapt onto the round
+  assert.deepEqual([m.x, m.z], forming.tg[0], 'where its word said it forms');
+  assert.ok(Math.hypot(m.x, m.z) <= ARENA_R - MAEL_ORBIT_R + 0.01, 'its round inside its waters');
+  assert.equal(m.at, forming.at, 'formed at the forming\'s landing');
+  assert.ok(Math.abs(Math.hypot(seen.h.x - m.x, seen.h.z - m.z) - MAEL_ORBIT_R) < 1, `circling the eye: ${Math.hypot(seen.h.x - m.x, seen.h.z - m.z)}`);
   assert.equal(seen.m, MODE.rear, 'reared out of the whirl');
 });
 

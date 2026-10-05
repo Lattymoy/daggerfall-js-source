@@ -141,8 +141,8 @@ binds") - THE ARROWS ARE THE HELM (DECLARED, the Port-Ledger's HELM-KEYS row):
 - **The helm panel teaches them**: its line under the name is the helm's hand at a glance - her oars and her sails on
   W, S and the arrows, the rudder on A, D and the turn keys, as bound now - and its sails' button is the toggle (End). IN IRONS (her sails up, her bow within IRONS_TELL_DEG of the wind's eye, her way ahead through the water under
   IRONS_TELL_WAY - sternway counts, never the sea's current: AUDIT NAV2 F15) the helm is told once how she comes out -
-  under the Classic helm strike sail and row her round, under the Responsive one put the helm over first (AUDIT NAV2
-  F18) - and the panel's line says it, with the keys, while it lasts. AUDIT NAV2 F17: while an Overworld journey holds
+  strike sail and row her round - and the panel's line says it, with the keys, while it lasts: the Classic helm's alone,
+  the Responsive one's canvas driving her up into the wind's eye (SAIL-FREE, `03-World/Come-Sail-Away.md`). AUDIT NAV2 F17: while an Overworld journey holds
   the helm (the travel view up) the panel is covered and the arrows' More sail and Less sail, and the sail toggle, stand
   down - the journey sets her sails, and the turn keys were already the view's there.
 
