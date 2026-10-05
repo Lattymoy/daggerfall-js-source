@@ -1008,11 +1008,13 @@
   {
     "name": "WINGSFIT-facing-nowhere-the-cameras",
     "file": "src/player/eotbBody.js",
-    "old": "return Math.hypot(ex, ez) > 1e-6 ? Math.atan2(ex, ez) : null;",
-    "new": "return null;",
+    "old": "facingDrawn = seen === null ? null : { yaw: seen, turn: turnYaw() ?? seen };",
+    "new": "facingDrawn = seen === null ? null : { yaw: seen, turn: turnYaw() ?? cam.yaw };",
     "tests": [
-      "test/seraphwings.test.js"
-    ]
+      "test/seraphwings.test.js",
+      "test/spriteface.test.js"
+    ],
+    "note": "SPRITE-FACE (re-aimed, the AUDIT's mutation run: it SURVIVED on turnYaw's eye-bearing fallback, which facing()'s `?? seen` had made dead - the fallback gone, the record aimed at the one fallback left): facing nowhere, the body turning as the camera looks rather than as its picture faces."
   },
   {
     "name": "WINGSFIT-the-old-reach",

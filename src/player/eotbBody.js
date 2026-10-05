@@ -279,16 +279,16 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
   const lanternShown = () => lanternHangs() && isRearView(shown?.orientation);
   /** SPRITE-FACE (2026-10-05, Mac: "The sprite rotation on character input is a little finicky and make the aura
    *  misallign"): THE FACING THE BODY TURNS BY, as a yaw (forward (sin, cos)) - its walk's facing (UpdateOrientation's
-   *  `lastMoveDirection`); with none (Vector3.zero, before a first walk or placing) SignedAngle reads the camera's own
-   *  line and the sprite shows the eye its FRONT (ARENA-FIX 14), so it faces the eye (WINGS-FIT). Null only with
-   *  neither. Not where an aura is HUNG - that is the picture's facing (facing().yaw): this one turns smoothly where the
-   *  picture snaps a bucket at a time, and ahead of it by the delayed repaint; it is what the aura's swing reads, so the
-   *  hem and the wing tips answer the body's turning, never a picture's change. */
+   *  `lastMoveDirection`), or null with none (Vector3.zero, before a first walk or placing). Not where an aura is HUNG -
+   *  that is the picture's facing (facing().yaw): this one turns smoothly where the picture snaps a bucket at a time,
+   *  and ahead of it by the delayed repaint; it is what the aura's swing reads, so the hem and the wing tips answer the
+   *  body's turning, never a picture's change. With none, the body turns as its picture faces (facing()'s `?? seen`):
+   *  SignedAngle reads the camera's own line and the sprite shows the eye its FRONT (ARENA-FIX 14), so it faces the eye
+   *  (WINGS-FIT) - which is the picture's own facing, so no second reading of the eye is kept here (the AUDIT's mutation
+   *  run: one could never differ from the other). */
   function turnYaw() {
     const f = lastMoveDirection;
-    if (f && Math.hypot(f[0], f[2]) > 1e-6) return Math.atan2(f[0], f[2]);
-    const ex = cam.pos[0] - cam.feet[0], ez = cam.pos[2] - cam.feet[2];
-    return Math.hypot(ex, ez) > 1e-6 ? Math.atan2(ex, ez) : null;
+    return f && Math.hypot(f[0], f[2]) > 1e-6 ? Math.atan2(f[0], f[2]) : null;
   }
   /** The frame the sprite faces: its walk's facing (UpdateOrientation's `lastMoveDirection`), else the yaw. */
   function facingBasis() {

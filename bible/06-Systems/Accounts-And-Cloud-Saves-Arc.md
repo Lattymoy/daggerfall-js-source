@@ -5165,8 +5165,10 @@ make the aura misallign".
   middle of its bucket. A figure facing it is drawn in that picture from every line of sight; any facing portrays its
   bucket's middle, never more than half a picture off; no line of sight, no facing.
 - **Mine** (`player/eotbBody.js` `facing()`): each frame drawn, `{ yaw, turn }` - `yaw` the picture SHOWN (the repaint
-  that has landed) about the eye of the frame it was drawn in, `turn` the walk's facing (`turnYaw`, WINGS-FIT's facing
-  the eye before any walk). In the saddle too (the horse's picture faces as the rider's does - no figure, no shoulders,
+  that has landed) about the eye of the frame it was drawn in, `turn` the walk's facing (`turnYaw`) - before any walk
+  the picture's own, its front to the eye (WINGS-FIT's law; the re-run of the re-aimed mutant lists found `turnYaw`'s own
+  reading of the eye could never differ from it - `WINGSFIT-facing-nowhere-the-cameras` survived on it - so that branch
+  is gone and the record aimed at the one fallback left). In the saddle too (the horse's picture faces as the rider's does - no figure, no shoulders,
   but a facing); none in first person (the billboard on the camera faces no bearing) or undrawn. The figure keeps its
   shoulders and no longer carries a facing. `player/mwView.js` keeps it beside the figure (`mwViewSpriteFacing`).
 - **A peer's** (`net/peerRiders.js` `faceOf`, the walkers' and the riders' layers alike): the view each figure is drawn

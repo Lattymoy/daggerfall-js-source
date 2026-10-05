@@ -73,6 +73,14 @@ const pictureYaw = (b, cam) => portrayedYaw(b.state().shown.orientation, [cam[0]
 
 test('SPRITE-FACE my body: every frame drawn, facing().yaw is the picture SHOWN - the repaint that has landed - and facing().turn the walk\'s; a key that turns the walk turns `turn` at once and `yaw` only when the picture changes, never before (the mod\'s delayed repaint); stood still, the eye going round turns the picture a bucket at a time and the facing with it, the walk\'s facing still; in the saddle a facing and no figure; in first person neither (mutants: the walk\'s facing hung, the facing read before the repaint, the eye of another frame, the saddle\'s facing dropped)', async () => {
   const b = await standingBody();
+  // FACING NOWHERE YET (no walk, no placing): its front to the eye - and the body turns as that picture faces, the swing's
+  // frame the picture's (WINGS-FIT's law, held by the picture's own facing)
+  const front = camAt(2.2);
+  for (let i = 0; i < 12; i++) frame(b, { cam: front, yaw: 2.2 + Math.PI });
+  await new Promise((res) => setTimeout(res, 2));
+  frame(b, { cam: front, yaw: 2.2 + Math.PI });
+  assert.equal(b.state().shown.orientation, 0, 'facing nowhere: its front to the eye');
+  assert.ok(Math.abs(wrap(b.facing().yaw - 2.2)) < 1e-9 && Math.abs(wrap(b.facing().turn - b.facing().yaw)) < 1e-12, `facing nowhere: facing the eye, and turning as its picture faces (${b.facing().yaw}, ${b.facing().turn})`);
   // walking forward away from a camera behind: its back to the eye
   const yaw = 0.2, behind = camAt(yaw + Math.PI);
   for (let i = 0; i < 30; i++) frame(b, { cam: behind, yaw, motion: { forward: 1, strafe: 0, standing: false, speed: 3, grounded: true, height: 1.8 } });
