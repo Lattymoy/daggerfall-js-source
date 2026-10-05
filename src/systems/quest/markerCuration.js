@@ -242,8 +242,8 @@ export function curatedMarkerSpot(dfBlock, recordIndex, textureRecord, xPos, yPo
 }
 
 /** A building site enumerated before the curation keeps the markers it was given: every one standing where the
- *  curation moves it (the spawn list, the item list, the selected marker) is moved, what it holds with it. Answers how
- *  many moved. */
+ *  curation moves it (the spawn list, the item list, the selected marker) is moved, what it holds with it - and keeps
+ *  where it stood (`curatedFrom`), for the foe a save stood there (mendedFoeSpot). Answers how many moved. */
 export function curateSiteMarkers(siteDetails, dfBlock, recordIndex) {
   let moved = 0;
   const mend = (m, record) => {
@@ -251,6 +251,7 @@ export function curateSiteMarkers(siteDetails, dfBlock, recordIndex) {
     if (!p) return;
     const spot = curatedMarkerSpot(dfBlock, recordIndex, record, Math.round(p.x / UNIT), Math.round(-p.y / UNIT) || 0, Math.round(p.z / UNIT));
     if (!spot) return;
+    m.curatedFrom = { ...p };   // SEALED-SAVE (FIELD BUGS 2026-10-05c): where it stood - a foe a save stood there follows it (mendedFoeSpot)
     m.flatPosition = { x: spot[0] * UNIT, y: -spot[1] * UNIT, z: spot[2] * UNIT };
     moved++;
   };
@@ -258,4 +259,25 @@ export function curateSiteMarkers(siteDetails, dfBlock, recordIndex) {
   for (const m of siteDetails?.questItemMarkers ?? []) mend(m, 18);
   mend(siteDetails?.selectedMarker, siteDetails?.selectedMarker?.markerType);
   return moved;
+}
+
+/** SEALED-SAVE (FIELD BUGS 2026-10-05c; the report: "Haunted House quest has enemy under the floor" - Woodwing Palace,
+ *  Wayrest, Beautiful Villages' MANRAS02 #3, SEALED-CELLAR's own house). The load's mend moves a site's marker to the
+ *  hatch's near side, but a quest foe a save made INSIDE the house holds is restored where it stood (SerializableEnemy's
+ *  position) - in the cellar the marker was moved out of, where no blow reaches it, whatever the mend did. Where the
+ *  foe a restored behaviour stands for was stood by a marker the curation moved: `{ from, to }`, the marker's old and new
+ *  flat positions; else null. `behaviour` is the revived QuestResourceBehaviour (its symbol a deserialized one - asked by
+ *  name, as the quest's resources are keyed). */
+export function mendedFoeSpot(machine, behaviour) {
+  const quest = behaviour?.questUID != null ? machine?.getQuest?.(behaviour.questUID) : null;
+  const name = behaviour?.targetSymbol?.name;
+  if (!quest || !name) return null;
+  for (const r of quest.resources?.values?.() ?? []) {
+    if (!r?.isPlace) continue;
+    const sd = r.siteDetails;
+    for (const m of [sd?.selectedMarker, ...(sd?.questSpawnMarkers ?? [])]) {
+      if (m?.curatedFrom && m.flatPosition && (m.targetResources ?? []).some((s) => s?.name === name)) return { from: m.curatedFrom, to: m.flatPosition };
+    }
+  }
+  return null;
 }

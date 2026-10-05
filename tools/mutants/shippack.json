@@ -174,8 +174,8 @@
   {
     "name": "SHPK-menu-deed-ignored",
     "file": "src/systems/csaBoatMenu.js",
-    "old": "      : s.noDeed ? BOAT_MENU_WHY.noDeed : null;",
-    "new": "      : null;",
+    "old": "      : s.noDeed ? BOAT_MENU_WHY.noDeed",
+    "new": "      : false ? BOAT_MENU_WHY.noDeed",
     "tests": [
       "test/boatmenu.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "SHPK-menu-refusal-words",
     "file": "src/systems/csaBoatMenu.js",
-    "old": "        : why === BOAT_MENU_WHY.noDeed ? 'Her deed must be in your pack to pick her up.' : null);",
-    "new": "        : null);",
+    "old": "        : why === BOAT_MENU_WHY.noDeed ? 'Her deed must be in your pack to pick her up.'",
+    "new": "        : why === BOAT_MENU_WHY.noDeed ? null",
     "tests": [
       "test/boatmenu.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "SHPK-landfall-unguarded",
     "file": "src/scenes/world.js",
-    "old": " && !csaRuntime.deedMissing(boat)) csaCall(",
-    "new": ") csaCall(",
+    "old": " && !csaRuntime.deedMissing(boat) && !csaRuntime.partsTooHeavy(boat)) csaCall(",
+    "new": " && !csaRuntime.partsTooHeavy(boat)) csaCall(",
     "tests": [
       "test/shippack.test.js"
     ]

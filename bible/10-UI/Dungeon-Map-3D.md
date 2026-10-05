@@ -19,6 +19,9 @@ window. Port-Ledger section A carries the departure.
   washes, flagstones (running bond, a level of detail by zoom) and water (`waterLevel` per row: a darkening wash, waves,
   level lines on walls, a waterline); pass two inks creases, cuts and outlines from the depth's curvature, with a wobble.
   A short upright face (`RISER_MAX`) is a riser, inked as part of its slope, so a flight is never a black band.
+  A face is a FLOOR by the plan's own law - leaning up no further than the motor walks (`FLOOR_FACE_NY`, automapFloors'
+  `FLOOR_NY`): a literal 0.6 (53 degrees) inked Daggerfall's 55-degree ramps as walls, a hallway's climb never the grey
+  of ground walked (RAMP-INK, `01-Overview/Field-Bugs-2026-10-05c.md`).
 - **Without WebGL2** (node, the pins) the cell model draws instead (`ui/inkDungeonSolid.js`): the walkable floor seeded at
   each storey and grown across a climbable rise, thin walls, ramps for flights, a cutaway by turn step.
 - **All floors** (L): every explored storey, each row cut at its own storey's slice; the player's storey in full and the
