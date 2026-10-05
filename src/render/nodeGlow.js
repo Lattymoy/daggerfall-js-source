@@ -82,7 +82,7 @@ export const createNodeGlowState = () => /** @type {NodeGlowState} */ ({ nodes: 
  * first stands near and fading toward nothing from NODE_GLOW_FADE_M to NODE_GLOW_M - written into `out` (one list,
  * refilled from the state's own records - AUDIT NODE-MARKS: none made a frame) and answered. A node no longer marked is
  * forgotten (it kindles again when it next stands near). `nowS` any clock in seconds. Pure but for `state` and `out`.
- * @param {ReadonlyArray<{ key: string, profession: string, at: number[], w: number, h: number }>|null|undefined} marks
+ * @param {ReadonlyArray<{ key: string, profession?: string, at: number[], w: number, h: number, rgb?: readonly number[], gain?: number }>|null|undefined} marks
  * @param {number[]|null|undefined} eye @param {number} nowS @param {NodeGlowState} state @param {NodeGlow[]} out
  */
 export function nodeGlows(marks, eye, nowS, state, out) {
@@ -99,10 +99,13 @@ export function nodeGlows(marks, eye, nowS, state, out) {
       let n = state.nodes.get(m.key);
       if (!n) { n = { kindle: 0, seen: frame, seed: nodeGlowSeed(m.key) }; state.nodes.set(m.key, n); } else n.kindle = Math.min(1, n.kindle + dt / NODE_GLOW_KINDLE_S);
       n.seen = frame;
-      const alpha = n.kindle * (1 - smooth(NODE_GLOW_FADE_M, NODE_GLOW_M, d));
+      // SENSE1: a mark may carry its own colour (`rgb`) and a gain over its kindling (`gain`, 0..1 - the sense pulse's
+      // fade); a node carries neither and is lit as it always was
+      const alpha = n.kindle * (1 - smooth(NODE_GLOW_FADE_M, NODE_GLOW_M, d)) * (Number.isFinite(m.gain) ? Math.min(1, Math.max(0, m.gain)) : 1);
       if (!(alpha > 0.001)) continue;
-      const g = state.pool[out.length] ??= { at: m.at, w: 0, h: 0, rgb: nodeMarkRgb(m.profession), alpha: 0, seed: 0 };
-      g.at = m.at; g.w = m.w; g.h = m.h; g.rgb = nodeMarkRgb(m.profession); g.alpha = alpha; g.seed = n.seed;
+      const rgb = m.rgb ?? nodeMarkRgb(m.profession);
+      const g = state.pool[out.length] ??= { at: m.at, w: 0, h: 0, rgb, alpha: 0, seed: 0 };
+      g.at = m.at; g.w = m.w; g.h = m.h; g.rgb = rgb; g.alpha = alpha; g.seed = n.seed;
       out.push(g);
     }
   }
@@ -255,6 +258,14 @@ export class NodeGlowRenderer {
     gl.depthMask(true);
     gl.disable(gl.BLEND);
   }
+
+  /** SENSE1 (EVERY ALLOCATION HAS AN OWNER): the program, the VAO and the buffer, freed - a dungeon's pass ends with
+   *  its dungeon (the world host's lives as long as the page). */
+  dispose() {
+    const gl = this.gl;
+    gl.deleteProgram(this.program); gl.deleteVertexArray(this.vao); gl.deleteBuffer(this.vbo);
+    this.program = null; this.vao = null; this.vbo = null;
+  }
 }
 
 /** AUDIT NODE-MARKS: the system's reduced motion, asked once a second at most - ui/profHud.js's own reading. */
@@ -281,8 +292,8 @@ const idleCall = (fn) => (globalThis.requestIdleCallback ? globalThis.requestIdl
  */
 export function createNodeGlowPass(renderer, { now = () => performance.now() / 1000, build = (gl) => new NodeGlowRenderer(gl), idle = idleCall, reduced = reducedMotionReader() } = {}) {
   const state = createNodeGlowState(), list = /** @type {NodeGlow[]} */ ([]);
-  let pass = /** @type {NodeGlowRenderer|null} */ (null), asked = false;
-  const make = () => { try { pass = build(renderer.gl); } catch (e) { console.warn('[prof] the nodes\' glow would not build', e?.message ?? e); pass = null; } };
+  let pass = /** @type {NodeGlowRenderer|null} */ (null), asked = false, dead = false;
+  const make = () => { if (dead) return; try { pass = build(renderer.gl); } catch (e) { console.warn('[prof] the nodes\' glow would not build', e?.message ?? e); pass = null; } };   // SENSE1: an idle build after the end builds nothing
   return {
     /** @param {Parameters<typeof nodeGlows>[0]} marks */
     draw(marks) {
@@ -294,5 +305,7 @@ export function createNodeGlowPass(renderer, { now = () => performance.now() / 1
       renderer.markForeignPass();
       return pass.drawn;
     },
+    /** SENSE1: the pass's end - its program freed, and never built again (an idle build still waiting builds nothing). */
+    dispose() { dead = true; asked = true; pass?.dispose?.(); pass = null; },
   };
 }

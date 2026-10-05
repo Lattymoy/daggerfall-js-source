@@ -1,0 +1,137 @@
+[
+  {
+    "name": "WAYOUT1-the-cell-off-its-middle",
+    "file": "src/systems/wayOut.js",
+    "old": "    out.pts.push([x + 0.5, y, z + 0.5]);",
+    "new": "    out.pts.push([x, y, z]);",
+    "tests": [
+      "test/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "WAYOUT1-the-snap-unbounded",
+    "file": "src/systems/wayOut.js",
+    "old": "  let best = -1, bestD = snap;",
+    "new": "  let best = -1, bestD = Infinity;",
+    "tests": [
+      "test/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "WAYOUT1-a-cliff-is-a-step",
+    "file": "src/systems/wayOut.js",
+    "old": "          if (seen[j] || Math.abs(cells.pts[j][1] - py) > WAY_STEP_DY) continue;\n          seen[j] = 1; next[j] = i; queue[tail++] = j;\n        }\n      }\n    }",
+    "new": "          if (seen[j]) continue;\n          seen[j] = 1; next[j] = i; queue[tail++] = j;\n        }\n      }\n    }",
+    "tests": [
+      "test/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "WAYOUT1-a-teleporter-both-ways",
+    "file": "src/systems/wayOut.js",
+    "old": "    if (a >= 0 && b >= 0 && a !== b) { const l = back.get(b); if (l) l.push(a); else back.set(b, [a]); }",
+    "new": "    if (a >= 0 && b >= 0 && a !== b) { for (const [x, y] of [[a, b], [b, a]]) { const l = back.get(y); if (l) l.push(x); else back.set(y, [x]); } }",
+    "tests": [
+      "test/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "WAYOUT1-the-jump-unmarked",
+    "file": "src/systems/wayOut.js",
+    "old": "      seen[j] = 1; next[j] = i; jump[j] = 1; queue[tail++] = j;",
+    "new": "      seen[j] = 1; next[j] = i; queue[tail++] = j;",
+    "tests": [
+      "test/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "WAYOUT1-past-the-jump",
+    "file": "src/systems/wayOut.js",
+    "old": "    if (field.jump[i] === 1) { first ??= cells.pts[i]; break; }   // the teleporter's own cell: the mark stands on it\n",
+    "new": "",
+    "tests": [
+      "test/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "WAYOUT1-the-nearest-seen",
+    "file": "src/systems/wayOut.js",
+    "old": "    if (sees(p)) best = p;",
+    "new": "    if (sees(p)) best ??= p;",
+    "tests": [
+      "test/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "WAYOUT1-the-look-unbounded",
+    "file": "src/systems/wayOut.js",
+    "old": "  for (let s = 0; s < look; s++) {",
+    "new": "  for (let s = 0; s < look * 3; s++) {",
+    "tests": [
+      "test/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "WAYOUT1-unseen-is-the-way-in",
+    "file": "src/systems/wayOut.js",
+    "old": "  return best ?? first ?? cells.pts[from];",
+    "new": "  return best ?? cells.pts[from];",
+    "tests": [
+      "test/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "WAYOUT1-at-the-door-still-marked",
+    "file": "src/systems/wayOut.js",
+    "old": "      if (Math.hypot(exitAt[0] - feet[0], exitAt[2] - feet[2]) <= WAY_HERE_M && Math.abs(exitAt[1] - feet[1]) <= WAY_STEP_DY * 2) return null;\n",
+    "new": "",
+    "tests": [
+      "test/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "WAYOUT1-no-walked-way-no-mark",
+    "file": "src/systems/wayOut.js",
+    "old": "      return p ? [p[0], p[2]] : [exitAt[0], exitAt[2]];",
+    "new": "      return p ? [p[0], p[2]] : null;",
+    "tests": [
+      "test/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "WAYOUT1-rebuilt-every-frame",
+    "file": "src/systems/wayOut.js",
+    "old": "(n < size || nowS - builtAt >= fieldEvery || !cells || ek !== exitKey)",
+    "new": "(true)",
+    "tests": [
+      "test/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "WAYOUT1-another-run-waits",
+    "file": "src/systems/wayOut.js",
+    "old": "(n < size || nowS - builtAt >= fieldEvery",
+    "new": "(nowS - builtAt >= fieldEvery",
+    "tests": [
+      "test/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "WAYOUT1-before-the-way-in-is-found",
+    "file": "src/scenes/dungeonContext.js",
+    "old": " || !sm || !automapRec?.entranceDiscovered) { _wayAt = null; return null; }",
+    "new": " || !sm) { _wayAt = null; return null; }",
+    "tests": [
+      "test/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "WAYOUT1-the-compass-left-blank",
+    "file": "src/ui/hud.js",
+    "old": "      wayOut: wayOut ?? null,",
+    "new": "      wayOut: null,",
+    "tests": [
+      "test/wayout1_wayout.test.js"
+    ]
+  }
+]

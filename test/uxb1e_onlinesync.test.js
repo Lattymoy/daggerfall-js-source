@@ -43,7 +43,7 @@ test('UXB1-E: the plan is the lane\'s tables, whole - every forced pref, every f
   assert.ok(!ids.includes('prefs:mwArms'), 'MWA4: the arms\' switch is retired - the attached files are it, so there is nothing to copy');
   assert.ok(ids.includes('settings:Experimental/SmallerDungeons'), 'online every dungeon is full size (useSmallerDungeon)');
   assert.equal(ONLINE_LAYOUT_SETTINGS.Experimental.SmallerDungeons, 'False');
-  assert.match(read('src/world/smallerDungeons.js'), /if \(online\) return false;/, '...which is the law the row copies');
+  assert.match(read('src/world/smallerDungeons.js'), /if \(online\) return 'full';/, '...which is the law the row copies (DSIZE1: the size law answers a size, and online it is the whole dungeon)');
   for (const r of plan) assert.ok(r.label && !/^[a-z]+[A-Z]/.test(r.label), `${r.id} reads as words: ${r.label}`);
   assert.equal(onlineSyncPlan({ search: '?online' }), null, 'online, every read is the room\'s - the player\'s own cannot be seen');
 });

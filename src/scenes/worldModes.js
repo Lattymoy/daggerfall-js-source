@@ -159,7 +159,7 @@ import { worldHoverFrame, hideWorldPlaque, destroyWorldPlaque } from '../ui/worl
 import { quickLootTake, quickLootSpend, plaqueActionFor } from '../systems/quickLoot.js'; import { showPickups } from '../ui/pickupFeed.js';   // QUICK-LOOT B4: the take, through the window's own door; HOME2: the verb the plaque lit over a door; PICKUP-FEED: what a take moved, as cards (the take's `took`)
 import { lootPile } from '../player/lootStack.js';   // LOOT-STACK: the pile under the reticle, as the loot window's tabs
 import { staticDoorName, npcHoverName, questResourceName, questStandItem, worldTooltipsOn, hideInteractTooltip,
-  houseContainerName, houseContainerHover, actionName, actionDoorName, lootPileName,
+  houseContainerName, houseContainerHover, actionObjectName, lootPileName,
   BOOKSHELF_TEXT, SHOP_SHELF_TEXT, LADDER_TEXT, BULLETIN_BOARD_TEXT, mobileEntityName, liveEntityName } from '../systems/worldTooltips.js';   // WORLD-HOVER: the mod's ladder for the families THIS host stands   // WORLD-HOVER: the mod's ladder for the families THIS host stands
 import { LOCATION_TYPES, REGION_NAMES } from '../formats/mapsFile.js';   // WORLD-HOVER: .cs:777-782 - a dungeon exit names its town, or the region   // WORLD-HOVER: the texture record is DERIVED at its one reader, off the stored model id
 import { isShop, isRepairShop, stockShopShelf, stockHouseContainer, PRIVATE_PROPERTY_TEXT_ID, privatePropertyRows, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem, stockSoulGems, stockGuildMagicItems, stockGuildPotions, dayShelf, createStockedDate, needsRestock, stockSearched, restockEndless } from '../systems/shopStock.js';   // X6: the soul-gem shelf; G4: the two guild shelves; A2: the daily restock; ENDLESS-STOCK: the bag and the Campfire never sell out
@@ -173,6 +173,8 @@ import { createCharSheetWindow } from '../ui/charSheetDoor.js';   // AUDIT 21 ho
 import { NativeTradeWindow, preloadTradeArt, TRADE_RECTS } from '../ui/nativeTrade.js';   // U8c
 import { createTradeWindow, tradeDoorReady } from '../ui/tradeDoor.js';   // the enhanced/native fork, same law as ui/inventoryDoor.js
 import { isEnhanced } from '../systems/uiSkin.js';
+import { guidanceTier, dungeonQuestMarks } from '../systems/questGuidance.js';   // GUIDE8 (the delve arc): the Exact tier, underground
+import { questTracker } from '../ui/questTracker.js';   // GUIDE8: the quest the player follows - its marks filled
 // U23: the static-NPC seam and the guild service popup.
 import { STATIC_NPC_ACTIVATION_DISTANCE, DEFAULT_ACTIVATION_DISTANCE, RAY_DISTANCE } from '../systems/talk.js';
 // PlayerActivate.ActivateBulletinBoard (:706-739) - the town sign's arm
@@ -1719,10 +1721,10 @@ export function createWorldModes(host) {
    *  billboard is CENTRE-anchored, so the base ends up ON the marker
    *  inside a building and half a height BELOW it inside a dungeon.
    *  This port's billboard shader is BOTTOM-anchored (position = base,
-   *  the C11 law dungeonContext.js:2317 states), so the same visual
+   *  the C11 law dungeonContext.js:2321 states), so the same visual
    *  result needs the shift on the DUNGEON side - which is exactly the
    *  shift the dungeon's own RDB flats already take
-   *  (dungeonContext.js:2202, `y - size.h / 2`), and which a building's
+   *  (dungeonContext.js:2206, `y - size.h / 2`), and which a building's
    *  flats correctly do not (interiorContext.js passes its centers
    *  straight through).
    *
@@ -1844,6 +1846,25 @@ export function createWorldModes(host) {
     standQuestFlatIn(questFlats, () => interiorCtx, (ctx, p) => ctx.parentPt(p.x, p.y, p.z), false, ...args);
   const standDungeonQuestFlat = (...args) =>
     standQuestFlatIn(dungeonQuestFlats, () => dungeonCtx, (_ctx, p) => [p.x, p.y, p.z], true, ...args);
+  /** GUIDE8 (the delve arc, systems/questGuidance.js): THE EXACT TIER'S MARKS, underground - the stands and the quest
+   *  foes this dungeon holds, named as the plaque names an item, and which of them the tracker's quest owns. Null under
+   *  any other tier, so the context draws none. */
+  const dungeonQuestMarksHere = () => (guidanceTier() !== 'exact' ? null : dungeonQuestMarks({
+    stands: dungeonQuestFlats, foes: dungeonCtx?.foes ?? [], boxOf: questStandBox, followedId: questTracker.tracked()?.id ?? null,
+    itemName: (st) => dungeonQuestFlatName(`questflat:${dungeonQuestFlats.indexOf(st)}`)?.title ?? null,   // the plaque's own word for it
+    foeName: (f) => enemyDisplayName(f.mobileType),
+  }));
+  /** .cs:483-512 - a quest ITEM stand is named by the long name, and one billboard by hand. A quest PERSON or FOE stand
+   *  answers nothing, exactly as the mod's `is Item` gate does. The dungeon's arm of the plaque's ladder (registered at
+   *  the mount); GUIDE8: hoisted, so the Exact tier's marks name an item by the plaque's one word. */
+  const dungeonQuestFlatName = (key) => {
+    if (typeof key !== 'string' || !key.startsWith('questflat:')) return null;   // AUDIT-WH2 L2-F5: C1's guard
+    const st = dungeonQuestFlats[Number(key.split(':')[1])];
+    const res = st?.behaviour?.targetResource ?? null;
+    if (!res || res.isPerson === true || res.isFoe === true) return null;
+    const t = questResourceName(questStandItem(res), { archive: st.archive ?? -1, record: st.record ?? -1, getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null });   // WHERE-ROBES: the Item's own item; AUDIT N1: a letter's signoff
+    return t ? { title: t } : null;
+  };
   /** DQ1: a quest stand's activation target, for whichever list the
    *  host keeps. Extracted at DQ1 because the DUNGEON ray needed the
    *  same walk and the alternative was a second copy of it - the shape
@@ -2355,9 +2376,7 @@ export function createWorldModes(host) {
       if (key.startsWith('door:') || key.startsWith('act:')) {
         const o = interiorCtx.actions.objects.get(key) ?? null;
         if (!o) return null;
-        if (o.kind === 'door') return actionDoorName((o.currentLockValue ?? 0) > 0, o.currentLockValue ?? 0);   // .cs:641-650
-        const t = actionName(o.triggerFlag, o.modelIdNum, { hideInteract: hide });   // .cs:400-471
-        return t ? { title: t } : null;
+        return actionObjectName(o, { hideInteract: hide });   // .cs:400-471 then .cs:641-650 - SENSE1: the mod's order, and a special door is no DaggerfallActionDoor
       }
       // .cs:325-393, through the port's own StaticNPC.DisplayName -
       // the same member the Info click speaks through, so the plaque
@@ -3323,7 +3342,7 @@ export function createWorldModes(host) {
     // does not write, so every shopkeeper, priest and guild clerk in
     // the game reached TalkManager as ''. The visible half is
     // TalkManager's greeting, which says the NPC's name once reaction
-    // is above zero and "stranger" below it (townTalk.js:568) - so
+    // is above zero and "stranger" below it (townTalk.js:569) - so
     // every static NPC stayed a stranger no matter how well liked -
     // and topicTree's same-building-static test (:558), which matches
     // a topic caption against this name and therefore never matched.
@@ -8085,7 +8104,7 @@ export function createWorldModes(host) {
           arenaRival: () => host.arenaRival?.() ?? null,   // ARENA4: my opponent on a relay's sand as a body my blows meet (none outside such a bout)
           onArenaHit: (hit) => !!host.onArenaHit?.(hit),   // ARENA4: and the door a blow's number on them leaves through - to the referee
           spoilContents: (key) => host.spoilContents?.(key) ?? null,   // WB9f: a piece of his spoils, listed on the plaque
-          onActions: (data) => host.onActions?.(data), peers: () => host.peers?.() ?? null, selfId: () => host.selfId?.() ?? null, party: () => host.partyNear?.() ?? [], nodeMarks: (feet) => host.professionMarks?.(feet) ?? null,   // NODE-MARKS: the dungeon's nodes on its compass, at its own feet; WORLD3: a door moved goes out; the peers the foes see; whose blow a puppet's is
+          onActions: (data) => host.onActions?.(data), peers: () => host.peers?.() ?? null, selfId: () => host.selfId?.() ?? null, party: () => host.partyNear?.() ?? [], nodeMarks: (feet) => host.professionMarks?.(feet) ?? null, questMarks: () => dungeonQuestMarksHere(),   // GUIDE8: the Exact tier's quest resources, on the dungeon's map and compass; NODE-MARKS: the dungeon's nodes on its compass, at its own feet; WORLD3: a door moved goes out; the peers the foes see; whose blow a puppet's is
           postItem: (text) => host.postItem?.(text) ?? false, canPostItem: () => host.canPostItem?.() ?? false,   // CHAT-POST: the dungeon's pack posts through the outer host
           allyMarks: (sp) => host.allyMarks?.(sp) ?? null,   // AID1 onto ALLY-CAST: the party mates' bodies, in the dungeon's frame - SPELL-GIFT: with the spell
           companionBodies: () => host.companionBodies?.() ?? null,   // COMPANION-KIT: my companions underground (the dungeon's own records)
@@ -8139,7 +8158,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:8446), so the OUTER host's one rides in.
+          // (dungeonContext.js:8570), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:847 -> the
@@ -8256,17 +8275,7 @@ export function createWorldModes(host) {
         const t = npcHoverName(display, { archive: pn.archive ?? -1, record: pn.record ?? -1 });
         return t ? { title: t } : null;
       });
-      // .cs:483-512 - a quest ITEM stand is named by the long name, and
-      // one billboard by hand. A quest PERSON or FOE stand answers
-      // nothing, exactly as the mod's `is Item` gate does.
-      ctx.addActivationNamer((key) => {
-        if (typeof key !== 'string' || !key.startsWith('questflat:')) return null;   // AUDIT-WH2 L2-F5: C1's guard
-        const st = dungeonQuestFlats[Number(key.split(':')[1])];
-        const res = st?.behaviour?.targetResource ?? null;
-        if (!res || res.isPerson === true || res.isFoe === true) return null;
-        const t = questResourceName(questStandItem(res), { archive: st.archive ?? -1, record: st.record ?? -1, getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null });   // WHERE-ROBES: the Item's own item; AUDIT N1: a letter's signoff
-        return t ? { title: t } : null;
-      });
+      ctx.addActivationNamer(dungeonQuestFlatName);   // .cs:483-512 - a quest ITEM stand's long name (the namer is hoisted above; GUIDE8's marks ask it too)
       _dungeonAuthority = host.dungeonAuthority?.() ?? true; ctx.setAuthority?.(_dungeonAuthority);   // WORLD2: a dungeon built while another hosts starts as puppets
       // P10 host parity (2026-08-16 audit: only the standalone scene
       // installed the warp - a world-mode teleporter logged and
@@ -8825,7 +8834,7 @@ export function createWorldModes(host) {
     // jump while the player still falls), and it was standing in for
     // both: a fall opened under a menu completed under it and
     // applyFallLanding charged the damage, a swimmer kept sinking, and
-    // the crouch edge still toggled. dungeon.js:581 is this same gate
+    // the crouch edge still toggled. dungeon.js:582 is this same gate
     // ("no movers, no motor").
     if (!overlayHeld) {
       // Audit F3: crouch stays live while paralyzed (DFU gates movement/jump only)
@@ -8951,7 +8960,7 @@ export function createWorldModes(host) {
       if (!overlayHeld) dungeonCtx.reportActivity?.({ running: player.isRunning && !player.standing, runningTally: player.isRunning && !player.riding, standing: !!player.standing, swimming: player.swimming, climbing: !!player.climb?.isClimbing, jumped: player.jumped, parkoured: player.parkoured, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, grip: player.gripShown, fell: player.landedFallDistance, odometer: player.odometer });   // P13 sneak state + P14 fall landing (AUDIT 26 F083: + the climbing arm; MOVE-REAL: + the odometer; CLIMB2: + the grip the context's HUD draws)
       // PlayerMotor.StartRestGroundedCheck (:184-194) reads the LIVE
       // grounded state; dungeonContext's `_grounded` is host-fed and
-      // only dungeon.js:423 fed it, so in a world-hosted dungeon the
+      // only dungeon.js:424 fed it, so in a world-hosted dungeon the
       // rest gate read the initialiser `true` for the whole session
       // and R mid-fall opened the window DFU refuses (TEXT.RSC 355).
       if (!overlayHeld) dungeonCtx.reportMotor?.(player.grounded, player.velY, cam.yaw);
@@ -10105,7 +10114,7 @@ export function createWorldModes(host) {
     // V4 (the first-hour playthrough probe): THE WORLD HOST'S DUNGEON
     // MODE HAD NO COMBAT OR LOOT SURFACE AT ALL. worldModes mounts a
     // real dungeonContext but installed none of the hooks
-    // scenes/dungeon.js:440-495 carries, so a probe could take the
+    // scenes/dungeon.js:441-496 carries, so a probe could take the
     // classic start into Privateer's Hold and then see nothing inside
     // it - no foes, no vitals, no corpses. Same names and same shapes
     // as the standalone host's, so one probe reads either.
@@ -12169,7 +12178,7 @@ export function createWorldModes(host) {
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
      *  HARD2c: this used to spell them out, and named `world.js:11259`
-     *  and `dungeonContext.js:8458` for its two sibling copies - lines
+     *  and `dungeonContext.js:8582` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {

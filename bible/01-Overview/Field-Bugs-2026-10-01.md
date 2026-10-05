@@ -30,7 +30,7 @@ Houseguest", is the other tiger in the pack: a house, and a kill.)
 `scenes/world.js` questShareSeam):
 
 - The quest's own mount stands it on its player's machine alone (`systems/quest/sceneMount.js:124` - only while
-  `killCount < spawnCount`), past the layout's run (`dungeonContext.js:1585` spawnQuestFoe). The room's stream carries
+  `killCount < spawnCount`), past the layout's run (`dungeonContext.js:1589` spawnQuestFoe). The room's stream carries
   the layout alone (`foesFrame`), and a peer's blow past the run is refused (`applyHit`, `i >= _layoutFoes`).
 - Shared with the party (QUEST-PARTY), it rides the room's own lane to the party alone, stood as a puppet for a LINKED
   copy only (DISC28-J's `accepts`), struck only by the party, hunting only the party (`isPrivateQuestFoe`,

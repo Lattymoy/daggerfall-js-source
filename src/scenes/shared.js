@@ -990,11 +990,21 @@ export const containerNearbyRecord = (c) => lootNearbyRecord({
  *  Treasure is actually cast. Each host now names its own kinds and
  *  this walk does the rest, which is the only shape in which "every
  *  active loot container" can be one sentence again. */
-export const nearbyLootRecords = ({ piles = [], containers = [], foes = [] } = {}) => [
+export const nearbyLootRecords = ({ piles = [], containers = [], foes = [], searched = [] } = {}) => [
   ...piles.map(lootNearbyRecord),
   ...containers.map(containerNearbyRecord),
   ...corpseNearbyRecords(foes),
+  ...searched.map(searchedNearbyRecord),
 ];
+
+/** DETECT-FINDS (the delve arc): A SEARCHED OBJECT'S FIND is a loot container too - SEARCH1's coffins, shelves, chests
+ *  and crates (systems/searchables.js) hold the room's rolled find in `items` until it is taken, the port's own
+ *  DaggerfallLoot - so the one loot walk carries it, at its box's middle. Unsearched, it holds nothing yet (the find is
+ *  rolled at the search) and GetLootFlags gives it no Treasure bit, exactly as an empty corpse. */
+export const searchedNearbyRecord = (sb) => lootNearbyRecord({
+  pos: sb?.aabb ? [(sb.aabb.min[0] + sb.aabb.max[0]) / 2, (sb.aabb.min[1] + sb.aabb.max[1]) / 2, (sb.aabb.min[2] + sb.aabb.max[2]) / 2] : null,
+  items: sb?.items ?? [],
+});
 
 /** X1: the ARMED Open/Lock spell a host hands to actions.activate.
  *  Answers null when nothing is armed.

@@ -1,0 +1,146 @@
+[
+  {
+    "name": "DSIZE1-the-threshold-off-by-one",
+    "file": "src/world/smallerDungeons.js",
+    "old": "  if (!blocks || blocks.length <= MEDIUM_DUNGEON_THRESHOLD) return dfLocation;",
+    "new": "  if (!blocks || blocks.length < MEDIUM_DUNGEON_THRESHOLD) return dfLocation;",
+    "tests": [
+      "test/dsize1_mediumdungeons.test.js"
+    ]
+  },
+  {
+    "name": "DSIZE1-unseeded",
+    "file": "src/world/smallerDungeons.js",
+    "old": "  setSeed(dfLocation.mapTableData.mapId);\n  const layout = MEDIUM_LAYOUT",
+    "new": "  const layout = MEDIUM_LAYOUT",
+    "tests": [
+      "test/dsize1_mediumdungeons.test.js"
+    ]
+  },
+  {
+    "name": "DSIZE1-the-ring-from-the-interior-pool",
+    "file": "src/world/smallerDungeons.js",
+    "old": "  const layout = MEDIUM_LAYOUT.map(([x, z, border], i) => generateRdbBlock(x, z, border, i === 0, dfLocation));",
+    "new": "  const layout = MEDIUM_LAYOUT.map(([x, z], i) => generateRdbBlock(x, z, false, i === 0, dfLocation));",
+    "tests": [
+      "test/dsize1_mediumdungeons.test.js"
+    ]
+  },
+  {
+    "name": "DSIZE1-no-start",
+    "file": "src/world/smallerDungeons.js",
+    "old": "generateRdbBlock(x, z, border, i === 0, dfLocation));",
+    "new": "generateRdbBlock(x, z, border, false, dfLocation));",
+    "tests": [
+      "test/dsize1_mediumdungeons.test.js"
+    ]
+  },
+  {
+    "name": "DSIZE1-the-ring-open",
+    "file": "src/world/smallerDungeons.js",
+    "old": "[0, -2, true], [-1, -1, true], [1, -1, true],",
+    "new": "[0, -3, true], [-1, -1, true], [1, -1, true],",
+    "tests": [
+      "test/dsize1_mediumdungeons.test.js"
+    ]
+  },
+  {
+    "name": "DSIZE1-medium-beats-small",
+    "file": "src/world/smallerDungeons.js",
+    "old": "  return setting ? 'small' : medium ? 'medium' : 'full';",
+    "new": "  return medium ? 'medium' : setting ? 'small' : 'full';",
+    "tests": [
+      "test/dsize1_mediumdungeons.test.js"
+    ]
+  },
+  {
+    "name": "DSIZE1-the-quest-frozen-medium-ignored",
+    "file": "src/world/smallerDungeons.js",
+    "old": "    if (quest && quest.smallerDungeonsState === MEDIUM_DUNGEONS_STATE) return 'medium';   // DSIZE1\n",
+    "new": "",
+    "tests": [
+      "test/dsize1_mediumdungeons.test.js"
+    ]
+  },
+  {
+    "name": "DSIZE1-medium-online",
+    "file": "src/world/smallerDungeons.js",
+    "old": "  if (online) return 'full';",
+    "new": "  if (online && !medium) return 'full';",
+    "tests": [
+      "test/dsize1_mediumdungeons.test.js"
+    ]
+  },
+  {
+    "name": "DSIZE1-the-quest-stamped-full",
+    "file": "src/world/smallerDungeons.js",
+    "old": "  return medium ? MEDIUM_DUNGEONS_STATE : SMALLER_DUNGEONS_STATE.Disabled;",
+    "new": "  return SMALLER_DUNGEONS_STATE.Disabled;",
+    "tests": [
+      "test/dsize1_mediumdungeons.test.js"
+    ]
+  },
+  {
+    "name": "DSIZE1-the-save-stamped-full",
+    "file": "src/world/smallerDungeons.js",
+    "old": "  if (isMediumDungeon(dfLocation)) return MEDIUM_DUNGEONS_STATE;   // DSIZE1: the build, at its own value\n",
+    "new": "",
+    "tests": [
+      "test/dsize1_mediumdungeons.test.js"
+    ]
+  },
+  {
+    "name": "DSIZE1-the-old-warp",
+    "file": "src/world/smallerDungeons.js",
+    "old": "  return savedState !== smallerDungeonsStamp(dfLocation);",
+    "new": "  return (savedState === SMALLER_DUNGEONS_STATE.Enabled) !== isSmallerDungeon(dfLocation);",
+    "tests": [
+      "test/dsize1_mediumdungeons.test.js"
+    ]
+  },
+  {
+    "name": "DSIZE1-the-door-builds-small",
+    "file": "src/world/smallerDungeons.js",
+    "old": "  return size === 'medium' ? generateMediumDungeon(dfLocation) : dfLocation;",
+    "new": "  return size === 'medium' ? generateSmallerDungeon(dfLocation) : dfLocation;",
+    "tests": [
+      "test/dsize1_mediumdungeons.test.js"
+    ]
+  },
+  {
+    "name": "DSIZE1-on-the-classic-skin",
+    "file": "src/world/smallerDungeons.js",
+    "old": "export const mediumDungeonsWanted = () => isEnhanced() && getPref(MEDIUM_DUNGEONS_PREF) === true;",
+    "new": "export const mediumDungeonsWanted = () => getPref(MEDIUM_DUNGEONS_PREF) === true;",
+    "tests": [
+      "test/dsize1_mediumdungeons.test.js"
+    ]
+  },
+  {
+    "name": "DSIZE1-the-row-online",
+    "file": "src/systems/features.js",
+    "old": "key: 'mediumDungeons', initial: false, online: false }",
+    "new": "key: 'mediumDungeons', initial: false, online: 'player' }",
+    "tests": [
+      "test/dsize1_mediumdungeons.test.js"
+    ]
+  },
+  {
+    "name": "DETECT-FINDS-the-finds-unwalked",
+    "file": "src/scenes/shared.js",
+    "old": "  ...searched.map(searchedNearbyRecord),\n",
+    "new": "",
+    "tests": [
+      "test/dsize1_mediumdungeons.test.js"
+    ]
+  },
+  {
+    "name": "DETECT-FINDS-an-empty-shelf-is-treasure",
+    "file": "src/scenes/shared.js",
+    "old": "  items: sb?.items ?? [],\n});",
+    "new": "  items: [{}],\n});",
+    "tests": [
+      "test/dsize1_mediumdungeons.test.js"
+    ]
+  }
+]

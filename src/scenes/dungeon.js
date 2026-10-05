@@ -18,7 +18,7 @@ import { WORLD_FRAME } from '../render/renderer.js';   // AUDIT-EL F5
 import { frameBegin, frameEnd, frameAbort } from '../systems/frameClock.js';   // PERF1: the frame's script time; AUDIT-WH2 L1-F4: and the door an early return takes
 import { frameCapSkip } from '../systems/frameCap.js';   // FPS-CAP1: DFU's TargetFrameRate - a held frame re-arms before the clock and the input frame
 import { INTERIOR_CLEAR } from '../render/renderer.js';
-import { getInteractionMode, setInteractionMode, MODE_ACTIONS } from '../player/interactionMode.js';   // R1: the global PlayerActivate mode; AUDIT 58: its four ACTIONS
+import { getInteractionMode, setInteractionMode, MODE_ACTIONS, askInteractionMode } from '../player/interactionMode.js';   // R1: the global PlayerActivate mode; AUDIT 58: its four ACTIONS
 import { setMidScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: DaggerfallHUD's centred label
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { immersiveFootsteps } from '../systems/immersiveFootsteps.js';
@@ -152,7 +152,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       motorState: () => (_motorRef ? { eyeLevel: _motorRef.eye[1] - _motorRef.pos[1], capsule: _motorRef.height } : null),
       placePlayer: placeLoadedPlayer,   // DIAL-LOAD: the host's load law, for every load the context runs - not routeKey's alone
       // MAC1 J: this host's canvas, for the pause door's relock. The
-      // context owns none of its own (dungeonContext.js:8450), so each
+      // context owns none of its own (dungeonContext.js:8574), so each
       // dungeon host hands its own in and the resume gesture carries
       // the pointer back with it (ui/pauseDoor.js:143-167).
       relock: () => requestLook(canvas) });
@@ -367,6 +367,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       e.preventDefault();   // ALWAYS consumed - a repeat press must not reach the browser (F1 = help)
       // AUDIT 64 F34: PlayerActivate.cs:1424 - the mode line is
       // SetMidScreenText's, in EVERY host (one C# call site).
+      if (!ctx.uiOverlayActive) askInteractionMode(im);   // SENSE1: asked, changed or not - the context's look round reads the count
       if (!ctx.uiOverlayActive && im !== getInteractionMode()) { setInteractionMode(im); setMidScreenText(`Interaction is now in ${im} mode.`); }
     }
     // DFU parity: mouselook is the resting state - any gameplay

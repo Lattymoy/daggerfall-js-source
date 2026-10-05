@@ -59,6 +59,7 @@ import { itemLongName } from './itemInfo.js';   // RF6: ResolveItemLongName, the
 import { buildingClosedText, buildingLockValue } from './buildingLocks.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { TRIGGER_FLAGS } from '../world/rdbLayout.js';   // DFBlock.RdbTriggerFlags has ONE home; this arm compares against it rather than a second copy by name
+import { isActionDoorObject } from '../world/actionSystem.js';   // SENSE1: GetComponent<DaggerfallActionDoor>, the door band's own question
 
 /** The mod's switch, and its one knob. Online forces every mod on
  *  (OL1), which `modSetting` already applies - right for this one: a
@@ -406,6 +407,26 @@ export function questResourceName(item, { archive = -1, record = -1, getQuest = 
  *  back apart at the draw would parse what the namer already knew. */
 export function actionDoorName(locked, lockValue) {
   return locked ? { title: 'Door', subs: [`Lock Level: ${lockValue}`] } : { title: 'Door' };
+}
+
+/**
+ * SENSE1 (the delve arc): ONE ACTION OBJECT'S WORD, THE MOD'S TWO BANDS IN THE MOD'S ORDER - the action band
+ * (.cs:400-471: the object's DaggerfallAction, by trigger flag and model) and, only when it said nothing, the door band
+ * (.cs:641-650: `CheckComponent<DaggerfallActionDoor>`). Both hosts had the door band FIRST and asked it of every
+ * `kind === 'door'`, and that is two departures from the mod:
+ *   - a SPECIAL door (DaggerfallActionDoorSpecial - the wall a lever swings open) is a separate MonoBehaviour the
+ *     door band's GetComponent never returns (isActionDoorObject), so the mod names it only by its action band, which
+ *     is silent for the chain-only trigger flags such walls carry. The port called every secret wall "Door".
+ *   - an action door whose own record is Direct-flagged is "<Interact>" (or its model's name) in the mod, because the
+ *     action band runs first and the door band is guarded on an empty `ret`.
+ * `o` is the action system's object (its triggerFlag, modelIdNum, kind, special, currentLockValue).
+ */
+export function actionObjectName(o, { hideInteract = false } = {}) {
+  if (!o) return null;
+  const t = actionName(o.triggerFlag, o.modelIdNum, { hideInteract });
+  if (t) return { title: t };
+  if (isActionDoorObject(o)) return actionDoorName((o.currentLockValue ?? 0) > 0, o.currentLockValue ?? 0);
+  return null;
 }
 
 /**

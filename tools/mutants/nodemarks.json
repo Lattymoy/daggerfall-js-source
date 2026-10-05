@@ -228,8 +228,8 @@
   {
     "name": "NODE-MARKS-glow-no-fade",
     "file": "src/render/nodeGlow.js",
-    "old": "      const alpha = n.kindle * (1 - smooth(NODE_GLOW_FADE_M, NODE_GLOW_M, d));",
-    "new": "      const alpha = n.kindle;",
+    "old": "      const alpha = n.kindle * (1 - smooth(NODE_GLOW_FADE_M, NODE_GLOW_M, d)) * (Number.isFinite(m.gain) ? Math.min(1, Math.max(0, m.gain)) : 1);",
+    "new": "      const alpha = n.kindle * (Number.isFinite(m.gain) ? Math.min(1, Math.max(0, m.gain)) : 1);",
     "tests": [
       "test/nodemarks.test.js"
     ]
@@ -393,8 +393,8 @@
   {
     "name": "AUDIT-NODE-MARKS-a-build-failure-costs-the-game",
     "file": "src/render/nodeGlow.js",
-    "old": "  const make = () => { try { pass = build(renderer.gl); } catch (e) { console.warn('[prof] the nodes\\' glow would not build', e?.message ?? e); pass = null; } };",
-    "new": "  const make = () => { pass = build(renderer.gl); };",
+    "old": "  const make = () => { if (dead) return; try { pass = build(renderer.gl); } catch (e) { console.warn('[prof] the nodes\\' glow would not build', e?.message ?? e); pass = null; } };   // SENSE1: an idle build after the end builds nothing",
+    "new": "  const make = () => { if (dead) return; pass = build(renderer.gl); };",
     "tests": [
       "test/nodemarks.test.js"
     ]

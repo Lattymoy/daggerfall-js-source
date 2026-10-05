@@ -59,7 +59,7 @@ FM-bank audit. Audio.md also still disowns `ActivateLockUnlock = 316`
 (`:158` "NOT OURS... neither of which is ported") - it sits in
 `soundClips.js:10` with three consumers (R1) - and still claims
 `deps.inCastle` stays false (`:105`), live since AUDIT 21
-(`dungeonContext.js:3270`). This is the one page whose live-queue
+(`dungeonContext.js:3274`). This is the one page whose live-queue
 claims actively contradict the code, the Ledger, and the rest of the
 bible at once.
 
@@ -106,7 +106,7 @@ direction). The real staleness is where the sweep cannot see:
   row's own title records the previous three.
 - `:340` residue "a static NPC currently answers with the
   no-response line" - contradicts the same row's own head and row
-  `:446` (B7); `worldModes.js:1665-1676` opens the real talk window.
+  `:446` (B7); `worldModes.js:1667-1678` opens the real talk window.
 - `:339` "house/ship PURCHASE popups... still out" - contradicts row
   `:441` ("this row is now CLOSED", H1-H3) and
   `ui/bankPurchaseWindow.js`.
@@ -121,7 +121,7 @@ prose; the standing lists were maintained inconsistently. The worst
 per arc:
 - *Systems-Arc*: `:1445-1454` (S27) "Open and Lock are still not
   wired" with a pin "that fails the moment either context calls
-  triggerOpen" - both are called from `world/actionSystem.js:1029-1030`
+  triggerOpen" - both are called from `world/actionSystem.js:1049-1050`
   (X1) and the pin never fired because it greps only
   dungeonContext/interiorContext, not the file the wiring landed in
   (`mysticism.test.js:225-239`). The doc, the pin's design, and
@@ -131,7 +131,7 @@ per arc:
   first-arm); S40's "house ledger is unported" flag
   (`banking.js:174 isHouseOwned` feeds the rest seam); S16's
   "monsters 0-42 still spawn as billboards" (C11 pivoted them to real
-  foes, `dungeonContext.js:1061-1112`); the mid-file Queue
+  foes, `dungeonContext.js:1065-1116`); the mid-file Queue
   (`:742-748`) still carries FreeAction / Create Item / enchantment
   value / rest-UI / "Later: guilds, shops, dialog, calendar" - all
   shipped, list actively maintained (it struck its fatigue line).
@@ -163,7 +163,7 @@ per arc:
   `:3368`); `:4722` is now flatly false ("the interior host's
   char-sheet and inventory panels swallow their click and do
   nothing") and contradicts U43 in the same file
-  (`worldModes.js:6609-6610` routes them). UI-Arc carries no records
+  (`worldModes.js:6628-6629` routes them). UI-Arc carries no records
   at all for H1-H3 - the banking windows exist only in the Ledger.
 - *Combat.md*: the status head (first 51 lines) is the stale part -
   DrainMagicka "INTERIM no-op" (`:19`, real since S4a and
@@ -216,10 +216,10 @@ own AUDIT-18 correction.
 Doc review only, nothing fixed - but four code comments assert the
 opposite of their own code and deserve a slice's attention:
 - `src/ui/deathScreen.js:89-90` claims "`drop` is read by each host's
-  frame" - no host reads it (the Ledger row `:553` is right, the
+  frame" - no host reads it (the Ledger row `:554` is right, the
   comment is wrong).
 - `src/systems/mysticism.js:53` header "OPEN AND LOCK ARE NOT WIRED" -
-  they are (X1, `actionSystem.js:1029-1030`).
+  they are (X1, `actionSystem.js:1049-1050`).
 - `src/systems/regionPower.js` "alliance mutators... which the port
   does not have" - `factionRelations.js` ships them (S44).
 - `src/combat/fpsWeapon.js:22` weaponOffsetHeight 0 - now a real gap
@@ -233,9 +233,9 @@ opposite of their own code and deserve a slice's attention:
 
 ## Line-citation drift (low, batched)
 
-`Port-Ledger.md:650` (save.js:41/:630/:650 → :28/:734/:768), `:681`
+`Port-Ledger.md:651` (save.js:41/:630/:650 → :28/:734/:768), `:681`
 (world.js:5591 → :2412); `Quest-Arc.md:724`/`:2911`
-(worldModes.js:684 → :903); `Player-Arc.md:979` (worldModes.js:1041 →
+(worldModes.js:686 → :903); `Player-Arc.md:979` (worldModes.js:1043 →
 :2764), `:304` (world.js "531 lines" → 3,564); `Characters-Arc.md:190`
 (CHAR_PIXEL "7" - `renderer.js:753` ships 9, and the doc missed two
 later revisions recorded in `paperdollViewer.js:138`), `:2114`

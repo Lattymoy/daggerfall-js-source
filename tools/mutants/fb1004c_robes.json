@@ -87,8 +87,8 @@
   {
     "name": "ROBES-name-dungeon-namer-reverted",
     "file": "src/scenes/worldModes.js",
-    "old": "        const st = dungeonQuestFlats[Number(key.split(':')[1])];\n        const res = st?.behaviour?.targetResource ?? null;\n        if (!res || res.isPerson === true || res.isFoe === true) return null;\n        const t = questResourceName(questStandItem(res),",
-    "new": "        const st = dungeonQuestFlats[Number(key.split(':')[1])];\n        const res = st?.behaviour?.targetResource ?? null;\n        if (!res || res.isPerson === true || res.isFoe === true) return null;\n        const t = questResourceName(res.daggerfallItem ?? res.item ?? null,",
+    "old": "    const st = dungeonQuestFlats[Number(key.split(':')[1])];\n    const res = st?.behaviour?.targetResource ?? null;\n    if (!res || res.isPerson === true || res.isFoe === true) return null;\n    const t = questResourceName(questStandItem(res),",
+    "new": "    const st = dungeonQuestFlats[Number(key.split(':')[1])];\n    const res = st?.behaviour?.targetResource ?? null;\n    if (!res || res.isPerson === true || res.isFoe === true) return null;\n    const t = questResourceName(res.daggerfallItem ?? res.item ?? null,",
     "tests": [
       "test/fb1004c_robes.test.js"
     ]

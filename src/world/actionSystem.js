@@ -439,6 +439,7 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
     this.onTeleportPortal = null;
     this.onLockedDoor = null;
     this.onActionSound = null;
+    this.onPlayed = null;   // ECHO1: (o, triggerType) - every Receive that passed the gate, before its Play (systems/dungeonEcho.js)
     this.onShowText = null;
     this.onShowTextInput = null;
     this.onDoorText = null;
@@ -541,6 +542,24 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
    *  sceneMarkerMover). */
   objectAt(ns, positionKey) {
     return this._links.get(`${ns}:${positionKey}`) ?? null;
+  }
+
+  /** ECHO1: the object `o`'s chain link - `_next`, DFU's ActivateNext, for a reader that walks the chain without
+   *  playing it (systems/dungeonEcho.js chainMovers). */
+  nextOf(o) {
+    return this._next(o);
+  }
+
+  /** SENSE1 (the delve arc): every object some OTHER object's chain reaches - the keys `_next` resolves to. The look
+   *  round's secrets tier asks it which movers only a chain moves (systems/dungeonSense.js isSecretMover). A read of
+   *  the graph DFU only ever walks forward - not a DFU member. */
+  chainTargets() {
+    const out = new Set();
+    for (const o of this.objects.values()) {
+      const n = this._next(o);
+      if (n && n !== o) out.add(n.key);
+    }
+    return out;
   }
 
   /** Register an effect action (Hurt/Poison/DrainMagicka/CastSpell):
@@ -957,6 +976,7 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
       if (!allowed || !allowed.includes(triggerType)) return;
     }
     o.activationCount = (o.activationCount ?? 0) + 1;   // verbatim: Receive increments, then Plays
+    this.onPlayed?.(o, triggerType);   // ECHO1: what this graph set going, and by which trigger (an observer - nothing reads back)
     this._play(o);
   }
 

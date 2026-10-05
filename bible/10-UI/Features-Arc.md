@@ -206,9 +206,10 @@ face does.
 **Not done, by name.** The standalone dev host `scenes/dungeon.js:127`
 still reads the raw location - a probe door, sized by nothing, as the
 struck Ledger C row already says. Building on the feature (Mac's
-"genuine enhanced feature we can build on") is a design decision, not
-taken here: a size tier, a shape other than the plus, or a seed the
-player picks would each earn the Enhanced label. `test/ft1_smallerdungeons.test.js`.
+"genuine enhanced feature we can build on"): the SIZE TIER is DSIZE1's
+(2026-10-05, `03-World/Delve-Arc.md` - Medium dungeons, its own Enhanced
+row beside this one, which stays DFU's switch); a shape other than the
+plus, or a seed the player picks, would each earn the Enhanced label. `test/ft1_smallerdungeons.test.js`.
 
 ## FT2 - LAND VIEW DISTANCE, THE FIRST CONDENSED ROW (2026-09-14)
 

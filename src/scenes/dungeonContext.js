@@ -74,7 +74,11 @@ import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, damageShieldPool
 import { addItem, spendAmmoFor, isEnchanted } from '../systems/inventory.js';
 import { useQuickslot, swapQuickslot, offHandQuickslot, spellQuickslotPress, offHandOffersSwap, tickQuickslotHold } from '../systems/quickslots.js';   // QS2/QS4: the diamond's performers   // QS6: the spell slot, the off hand's swap question, and the hold machine
 import { worldAabb, objectAabb, peacefulFoePass, doorDistanceOf } from '../player/activate.js';   // AUDIT 63 F37/F38: objectAabb is the LIVE box a ray or a collision meets
-import { getInteractionMode } from '../player/interactionMode.js';   // AUDIT TACT C5: a pickpocket's plaque names the mark
+import { getInteractionMode, interactionModeAsks } from '../player/interactionMode.js';   // AUDIT TACT C5: a pickpocket's plaque names the mark; SENSE1: the asks for Info, the look round's cue
+import { SENSE_PREF, SENSE_MAX, senseTier, senseFinds, senseSecrets, inPlainSight, createSensePulse, senseCard, boxDistance } from '../systems/dungeonSense.js';   // SENSE1 (the delve arc): the look round
+import { WAY_PREF, createWayOut } from '../systems/wayOut.js';   // WAYOUT1 (the delve arc): the way out on the compass
+import { ECHO_PREF, ECHO_NEAR_M, ECHO_FIND_M, ECHO_LOOK_S, isEchoMover, echoLine, examineLine, boxMiddle, createEchoBook } from '../systems/dungeonEcho.js';   // ECHO1 (the delve arc): the chain's echo, and its examine
+import { createNodeGlowPass } from '../render/nodeGlow.js';   // SENSE1: the professions' glow, for what the look round finds
 import { createWeaponRig, envAttack, sheetHolderOf } from '../combat/weaponRig.js';   // C10: the shared FP-weapon surface; MW-MAP1: the held map's holder
 import { mwViewFirstPerson } from '../player/mwView.js';   // MW-MAP1: the automap is read in the head (MAP-POV's law), underground too
 import { weaponPoseOf, applyWeaponPose } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law (SerializablePlayer.cs:175-176 / :420-421)
@@ -247,7 +251,7 @@ import { avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   //
 import { activationTargets, liveFoeTargets, liveFoeFor, pickActivatableHit, RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE, presentNpcInfoText } from '../player/activate.js';   // SEARCH1: an Info look at a searchable
 import { raceWinner } from '../player/activationRace.js';   // WORLD-HOVER H2: the ONE precedence the press and the plaque share
 import { composeActivationTargets, composeNamer } from '../systems/worldHover.js';
-import { worldTooltipsOn, hideInteractTooltip, corpseName, mobileEntityName, liveEntityName, lootPileName, actionName, actionDoorName } from '../systems/worldTooltips.js';   // WORLD-HOVER: the mod's ladder, arm by arm   // WORLD-HOVER: the composition law is pure, so it lives with the model and can be DRIVEN   // WORLD-HOVER: the ONE construction seam composes the action objects' targets here; AUDIT 65 MC-2: the ray's reach, and each family's own
+import { worldTooltipsOn, hideInteractTooltip, corpseName, mobileEntityName, liveEntityName, lootPileName, actionObjectName } from '../systems/worldTooltips.js';   // WORLD-HOVER: the mod's ladder, arm by arm   // WORLD-HOVER: the composition law is pure, so it lives with the model and can be DRIVEN   // WORLD-HOVER: the ONE construction seam composes the action objects' targets here; AUDIT 65 MC-2: the ray's reach, and each family's own
 import { worldHoverFrame, destroyWorldPlaque } from '../ui/worldPlaque.js';   // PX21c, WORLD-HOVER: one seam, one plaque
 import { quickLootTake, plaqueActionFor } from '../systems/quickLoot.js'; import { showPickups } from '../ui/pickupFeed.js';   // QUICK-LOOT B4: the take, through the window's own door; PICKUP-FEED: what a take moved, as cards (the take's `took`)
 import { combatVisualsOn, foeDraw, markConcealedHit } from '../systems/combatVisuals.js';   // ECV1: what the enhanced skin draws for a concealed foe
@@ -2207,7 +2211,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // had just made and the sack you had just dropped - the F207
     // finding exactly, one host over, and this is where it bites
     // hardest because a dungeon is where the spell gets cast.
-    loot: () => nearbyLootRecords({ piles: [...lootPiles, ...droppedLoot._piles], foes }),
+    loot: () => nearbyLootRecords({ piles: [...lootPiles, ...droppedLoot._piles], foes, searched: searchables }),   // DETECT-FINDS: and a searched object's find, still lying in it
     feet: () => lastPlayerFeet ?? [0, 0, 0],
   });
   // A2: DaggerfallAction.Play's sound - the RDB sound field fires from
@@ -2803,7 +2807,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:1457,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:1459,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -3350,7 +3354,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1126 against :1156; worldModes.js:8688 against :8708).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1127 against :1157; worldModes.js:8697 against :8717).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -4264,7 +4268,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
               // playerArrowHitFoe is the one copy world.js:27929,
-              // exterior.js:5640 and worldModes.js:9412 already ran;
+              // exterior.js:5640 and worldModes.js:9421 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -7228,6 +7232,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // INVIS-LOOK (2026-09-27): the host's concealed peers' bodies, translucent - after the last opaque flat (the foes),
     // before the water and the screen quads that end the world pass (WATER-D1's law, below)
     opts.lateWorldDraw?.();
+    senseFrame(eye);   // SENSE1: the look round - asked for (Info mode), then lit; after the last opaque flat, as the nodes' glow is
     // WATER-D1 (2026-09-21, LostMyLeg: "you can see 2 Watertiles/textures
     // floating around ... the console says 2 Water in every dungeon";
     // Mac's AIWATER report before it: "shown well below the floor, in
@@ -7282,6 +7287,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         windowCoversHud: !!activeOverlay && dungeonWindows.hudCovered(activeOverlay),
         hudHidden: hidesHud(activeOverlay),   // AUDIT PRE-MERGE 0928 U8: a window that takes the HUD away outright, large HUD and all (MAP-FIELD2's word - Come Sail Away's position map, PauseGame(true, true), mounts here too)
         detected, playerXZ: playerFeet ? [playerFeet[0], playerFeet[2]] : null,
+        quest: questCompassMark(playerFeet), wayOut: wayOutMark(playerFeet, eye),   // GUIDE8: the Exact tier's quest mark; WAYOUT1: the way out
         party: partyCompassPoints({ bodies: opts.party ?? null }), nodes: playerFeet ? withFireMarks(opts.nodeMarks?.(playerFeet) ?? null, dungeonFires, playerFeet) : null,   // COMPASS-PARTY: the mates standing in this dungeon, at their feet in its frame; NODE-MARKS: the professions' nodes standing here (its veins), in its frame   // REST3: and the dungeon's own campfires, in the flame's yellow
         largeHud: largeHudOptions({ renderer, fetchBytes, palette }, playerEntity),
         // AUDIT 39: the enhanced HUD's two hand plaques - see world.js.
@@ -7681,16 +7687,132 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (key.startsWith('door:') || key.startsWith('act:')) {
       const o = actions.objects.get(key) ?? null;
       if (!o) return null;
-      // .cs:641-650 - an action door says "Door", and its lock level
-      // when it is locked. DaggerfallActionDoor.IsLocked is
-      // currentLockValue > 0.
-      if (o.kind === 'door') return actionDoorName((o.currentLockValue ?? 0) > 0, o.currentLockValue ?? 0);
-      // .cs:400-471 - Direct/Direct6/MultiTrigger only, by model id.
-      const t = actionName(o.triggerFlag, o.modelIdNum, { hideInteract: hide });
-      return t ? { title: t } : null;
+      // .cs:400-471 then .cs:641-650 - the action band (Direct/Direct6/MultiTrigger, by model id), then an action
+      // door's "Door" and its lock level (DaggerfallActionDoor.IsLocked is currentLockValue > 0). SENSE1: in the mod's
+      // order, and a special door is no DaggerfallActionDoor (worldTooltips.js actionObjectName).
+      const named = actionObjectName(o, { hideInteract: hide });
+      // ECHO1: THE EXAMINE - in Info mode, the way the object's chain works, under its name (never under the author's hide)
+      const why = named && !hide && getInteractionMode() === 'info' && echoesOn() ? examineLine(o, (x) => actions.nextOf(x), objectAabb) : null;
+      return why ? { ...named, subs: [...(named.subs ?? []), why] } : named;
     }
     return null;
   }
+  // SENSE1 (the delve arc, bible/03-World/Delve-Arc.md): THE LOOK ROUND (systems/dungeonSense.js). An ask for Info mode
+  // - its key, the HUD's cycle, the pad's, changed or not (player/interactionMode.js interactionModeAsks) - lights for a
+  // few seconds what is within SENSE_M of the eye and in plain sight that the plaque would name: THE PRESS'S OWN LIST
+  // (dungeonActivationTargets) through THE PLAQUE'S OWN LADDER (`_namer`; the action objects by the mod's own two bands,
+  // asked as though the mod were on - a player who turned the plaque off still looks round - with the author's
+  // HideDefaultInteractTooltip kept). The secrets tier adds the walls and doors only a chain moves. Enhanced skin only,
+  // the `dungeon-sense` row's tier; the glow is the context's own pass, freed with the context (destroy).
+  const sensePulse = createSensePulse();
+  const senseGlow = createNodeGlowPass(renderer);
+  let _infoAsks = interactionModeAsks('info');
+  function senseLookRound(eye, t) {
+    const tier = senseTier(getPref(SENSE_PREF));
+    if (!isEnhanced() || tier === 'off' || !eye) return 0;
+    const hide = hideInteractTooltip();
+    const nameOf = (key) => ((key.startsWith('act:') || key.startsWith('door:'))
+      ? actionObjectName(actions.objects.get(key) ?? null, { hideInteract: hide })?.title
+      : _namer(key, null)?.title) ?? null;
+    const sees = (tg) => inPlainSight(collider, eye, tg.aabb, { skip: actions.objects.has(tg.key) ? tg.key : null, noSurface: tg.noSurface === true });
+    const finds = senseFinds(api.dungeonActivationTargets(), eye, { nameOf, sees });
+    if (tier === 'secrets') {
+      finds.push(...senseSecrets(actions.objects.values(), actions.chainTargets(), eye, { boxOf: objectAabb, sees: (o, box) => inPlainSight(collider, eye, box, { skip: o.key }) }));
+      finds.sort((a, b) => a.d - b.d);
+      if (finds.length > SENSE_MAX) finds.length = SENSE_MAX;
+    }
+    return sensePulse.pulse(t, finds);
+  }
+  function senseFrame(eye) {
+    const t = performance.now() / 1000;
+    const asks = interactionModeAsks('info');
+    if (asks !== _infoAsks) { _infoAsks = asks; senseLookRound(eye, t); }
+    echoFrame(eye, t);
+    const a = sensePulse.lit(t), b = echoPulse.lit(t);
+    _senseMarks.length = 0;
+    if (a) _senseMarks.push(...sensePulse.marks(t));
+    if (b) _senseMarks.push(...echoPulse.marks(t));
+    senseGlow.draw(_senseMarks.length ? _senseMarks : null);
+  }
+  const _senseMarks = [];
+  // WAYOUT1 (the delve arc, systems/wayOut.js): THE WAY OUT ON THE COMPASS - the walked trail (the held map's record)
+  // walked back to the way in (the start marker, the map's own beacon), once the way in has been found; the farthest
+  // cell along it the eye can see, a few times a second. Enhanced skin only, the `dungeon-way-out` row.
+  const wayOut = createWayOut();
+  let _wayAt = null, _wayT = -Infinity;
+  function wayOutMark(feet, eye) {
+    const sm = dungeon.startMarker;
+    if (!isEnhanced() || getPref(WAY_PREF) === false || !feet || !eye || !sm || !automapRec?.entranceDiscovered) { _wayAt = null; return null; }
+    const t = performance.now() / 1000;
+    if (t - _wayT < 0.25) return _wayAt;
+    _wayT = t;
+    const sees = (p) => {
+      const dx = p[0] - eye[0], dy = p[1] + 1 - eye[1], dz = p[2] - eye[2], len = Math.hypot(dx, dy, dz);
+      if (!(len > 1e-3)) return true;
+      return !(collider.raycast(eye, [dx / len, dy / len, dz / len], len) < len - 0.1);
+    };
+    _wayAt = wayOut.aim(automapRec.trail, automapRec.teleporters?.values?.() ?? null, [sm.x, sm.y, sm.z], feet, sees, t);
+    return _wayAt;
+  }
+  /** GUIDE8 (the delve arc): the Exact tier's mark on the compass - of the host's quest marks standing here
+   *  (opts.questMarks, the quest debugger's knowledge), the followed quest's nearest, else the nearest. */
+  function questCompassMark(feet) {
+    const list = feet ? opts.questMarks?.() ?? null : null;
+    if (!list?.length) return null;
+    let best = null, bestD = Infinity;
+    for (const pass of [true, false]) {
+      for (const q of list) {
+        if (pass && !q.followed) continue;
+        const d = Math.hypot(q.at[0] - feet[0], q.at[1] - feet[1], q.at[2] - feet[2]);
+        if (d < bestD) { bestD = d; best = q; }
+      }
+      if (best) break;
+    }
+    return best ? [best.at[0], best.at[2]] : null;
+  }
+  // ECHO1 (the delve arc, systems/dungeonEcho.js): THE CHAIN'S ECHO. Every Receive the action system lets through
+  // (`onPlayed`) is heard; a cascade's play (ActionObject - what a press set going, never what was pressed) of a mover
+  // farther than ECHO_NEAR_M from the eye and out of plain sight is said once a press (the first such, in chain order),
+  // goes in the book the held map draws (`echoes`), and is FOUND - glowing in the secrets' colour for the hold - when it
+  // stands in plain sight within ECHO_FIND_M. Another player's change comes through applyRemote, not Receive, and is
+  // not heard. Enhanced skin only, the `dungeon-echoes` row.
+  const echoBook = createEchoBook();
+  const echoPulse = createSensePulse();
+  const _echoPlayed = [];
+  let _echoLookT = -Infinity;
+  const echoesOn = () => isEnhanced() && getPref(ECHO_PREF) !== false;
+  actions.onPlayed = (o, triggerType) => { if (triggerType === 'ActionObject' && _echoPlayed.length < 64) _echoPlayed.push(o); };
+  function echoFrame(eye, t) {
+    if (_echoPlayed.length) {
+      if (eye && echoesOn()) {
+        let said = false;
+        for (const o of _echoPlayed) {
+          if (!isEchoMover(o)) continue;
+          const box = objectAabb(o);
+          if (!box) continue;
+          const at = boxMiddle(box);
+          if (Math.hypot(at[0] - eye[0], at[1] - eye[1], at[2] - eye[2]) <= ECHO_NEAR_M) continue;
+          if (inPlainSight(collider, eye, box, { skip: o.key })) continue;
+          echoBook.add(o.key, at);
+          if (!said) { hudText.add(echoLine(o, eye, at)); said = true; }
+        }
+      }
+      _echoPlayed.length = 0;
+    }
+    if (!eye || !echoBook.size || t - _echoLookT < ECHO_LOOK_S) return;
+    _echoLookT = t;
+    const found = echoBook.take((e) => {
+      const o = actions.objects.get(e.key), box = o ? objectAabb(o) : null;
+      return !box || (boxDistance(box, eye) <= ECHO_FIND_M && inPlainSight(collider, eye, box, { skip: e.key }));
+    });
+    const lit = [];
+    for (const e of found) {
+      const o = actions.objects.get(e.key), box = o ? objectAabb(o) : null;
+      if (box) lit.push({ key: e.key, kind: 'secret', d: boxDistance(box, eye), ...senseCard(box) });
+    }
+    if (lit.length && echoesOn()) echoPulse.pulse(t, lit);
+  }
+
   /**
    * AUDIT-WH M10: THE EXTENSION NAMERS RUN FIRST, and the mod's own
    * ladder last.
@@ -8169,6 +8291,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         party: opts.party ?? null,   // DISC23-A: the party members standing in this dungeon, at their feet in its frame
         portals: automapPortals,   // TP-SEEN: every teleporter in the level, shown once its spot has been seen
         fires: dungeonFires,   // REST3: the dungeon's own campfires, on the held map once their spot has been seen
+        echoes: () => (echoesOn() ? echoBook.points() : null),   // ECHO1: where a chain moved something out of sight, until it is found
+        quests: () => opts.questMarks?.() ?? null,   // GUIDE8: the Exact tier's quest resources standing here (the host's, null under any other tier)
         // ROAD-C c2/S8: the Ctrl+Shift debug-teleport click
         // (TryTeleportPlayerToDungeonSegmentAtScreenPosition, :858-870).
         // It goes through the SAME `onTeleport` door the Teleport action
@@ -9494,6 +9618,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // player outside and, at AutomapNumberOfDungeons = 0, forgets
       // the map the moment you leave (Automap.cs:2530-2534).
       exitDungeonAutomap(classicMinutesRef.value);   // AUDIT-AMAP F11: stamped with the EXIT time (:2155)
+      senseGlow.dispose(); sensePulse.clear(); echoPulse.clear(); echoBook.clear(); wayOut.reset(); actions.onPlayed = null;   // SENSE1/ECHO1: the look round's glow is OURS - its program ends with the context
       bloodMarks.dispose();   // BLOOD1a (HARD1): the ring is OURS - a vertex buffer and a VAO handed to nobody - so it ends here, by its own name and not through the hand-off pool
       // ROAD-B B1: RemoveWindow runs OnPop on every window it removes
       // (UserInterfaceManager.cs:189-196) and ChangeWindow removes them

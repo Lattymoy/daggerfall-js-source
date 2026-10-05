@@ -292,6 +292,22 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['classic']),
     control: Object.freeze({ store: 'settings', key: 'Experimental/SmallerDungeons' }),
   }),
+  // DSIZE1 (2026-10-05, the delve arc): MEDIUM DUNGEONS - the size tier the smaller-dungeons row's note left open
+  // (Features-Arc.md: "a size tier ... would earn the Enhanced label"): over thirteen blocks, a cross of five ringed by
+  // eight, by GenerateSmallerDungeon's own law (world/smallerDungeons.js generateMediumDungeon). Its own row because the
+  // row above is DFU's switch, kept whole; that switch wins when both are on. Off by default; online every dungeon is
+  // full size, so the lane forces it off there.
+  Object.freeze({
+    id: 'medium-dungeons',
+    group: 'world',
+    title: 'Medium dungeons',
+    note: 'Dungeons bigger than thirteen blocks are cut down to thirteen: five blocks in a cross, closed by eight '
+      + 'more, the same every visit. Smaller dungeons wins when both are on. Main-story dungeons keep full size, a '
+      + 'quest\u2019s dungeon keeps the size it had when the quest began, and online every dungeon is full size.',
+    effect: 'Takes effect on the next dungeon you enter. A save made at another size puts you at the dungeon\u2019s start.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'mediumDungeons', initial: false, online: false }),   // world/smallerDungeons.js MEDIUM_DUNGEONS_PREF
+  }),
   // FT2 (2026-09-14): LAND VIEW DISTANCE - the first CONDENSED row. Two
   // controls for one radius: the pref (LV1, the enhanced lane's 1..6)
   // and DFU's Experimental/TerrainDistance (D1, the 1:1 lane's 1..4).
@@ -1027,6 +1043,62 @@ export const FEATURES = Object.freeze([
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'questMarks', initial: true, online: 'player' }),   // ui/questMarks.js MARKS_PREF
+  }),
+  // GUIDE8 (2026-10-05, the delve arc - Quest-Guide-Arc.md DECISIONS 3, "a player who cannot read a dungeon should be
+  // able to ask for it"): THE GUIDANCE TIERS. Journal is GUIDE5's law; Exact is the quest debugger's knowledge - every
+  // quest resource in a dungeon on its map (its floor on the strip) and the followed one on the compass
+  // (systems/questGuidance.js, read by scenes/worldModes.js for scenes/dungeonContext.js). The one tier that can spoil:
+  // off by default, its own row. The Town tier GUIDE8 names stays open.
+  Object.freeze({
+    id: 'quest-guidance',
+    group: 'interface',
+    title: 'Quest guidance',
+    note: 'Exact marks where a quest\u2019s item, person or foe is inside a dungeon, on its map and your compass. It can '
+      + 'spoil a search. Journal marks only places your map already holds.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'questGuidance', initial: 'journal', online: 'player', classic: 'journal', tiers: Object.freeze([['journal', 'Journal'], ['exact', 'Exact']]) }),   // systems/questGuidance.js GUIDANCE_PREF
+  }),
+  // SENSE1 (2026-10-05, the delve arc - bible/03-World/Delve-Arc.md): THE LOOK ROUND. Asking for Info mode underground
+  // lights what is near, in sight, and named by the plaque (systems/dungeonSense.js, read by scenes/dungeonContext.js
+  // at the ask). On by default: it lights nothing a press or the plaque would not reach. The secrets tier lights what
+  // nothing else names - a wall only a lever moves - so it is the player's own ask.
+  Object.freeze({
+    id: 'dungeon-sense',
+    group: 'interface',
+    title: 'Look around',
+    note: 'In a dungeon, switching to Info mode makes the levers, doors and containers near you and in sight glow for '
+      + 'a few seconds. With secrets, walls that only a lever moves glow too.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'dungeonSense', initial: 'on', online: 'player', tiers: Object.freeze([['off', 'Off'], ['on', 'On'], ['secrets', 'With secrets']]) }),   // systems/dungeonSense.js SENSE_PREF
+  }),
+  // ECHO1 (2026-10-05, the delve arc): THE CHAIN'S ECHO - a press that moves something out of sight says which way, marks
+  // it on the dungeon map and lights it when it is reached; and in Info mode a lever's plaque says which way its work
+  // lies (systems/dungeonEcho.js, read by scenes/dungeonContext.js). On by default: it says only what the press itself
+  // set going - the sound a room away the classic game never gives a direction to.
+  Object.freeze({
+    id: 'dungeon-echoes',
+    group: 'interface',
+    title: 'Lever echoes',
+    note: 'When a lever or a plate moves something out of sight, a line says which way, the map marks it, and it glows '
+      + 'when you reach it. In Info mode, a lever tells you which way its work lies.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'dungeonEchoes', initial: true, online: 'player' }),   // systems/dungeonEcho.js ECHO_PREF
+  }),
+  // WAYOUT1 (2026-10-05, the delve arc): THE WAY OUT ON THE COMPASS - the walked trail walked back to the way in, once
+  // the way in has been found (systems/wayOut.js, read by scenes/dungeonContext.js). On by default: it points only
+  // along where the player has already stood, toward the door they came in by - the held map's own beacon, said on the
+  // compass.
+  Object.freeze({
+    id: 'dungeon-way-out',
+    group: 'interface',
+    title: 'Way out',
+    note: 'In a dungeon, an arrow on the compass leads back along the way you walked to the way in.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'dungeonWayOut', initial: true, online: 'player' }),   // systems/wayOut.js WAY_PREF
   }),
   // CAMP1 (2026-09-17, Mac: camps and roaming packs in the wilderness):
   // an original addition, not a DFU classic feature - the classic game

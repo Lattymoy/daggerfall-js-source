@@ -1257,6 +1257,20 @@ export function paintQuestMark(ctx, view, m) {
   ctx.restore();
 }
 
+/** GUIDE8 (the delve arc): the quest's diamond ALONE, centred at (x, y) with half-diagonal `k` - the dungeon strip's
+ *  mark for a floor a quest stands on (ui/inkAutomap.js paintFloorStrip), in paintQuestMark's own two strokes (the pen's
+ *  ink under the journal's gold), so the gold has one home on the sheets. `s` scales the strokes. */
+export function paintQuestDiamond(ctx, x, y, k, s = 1) {
+  ctx.beginPath();
+  ctx.moveTo(x, y - k); ctx.lineTo(x + k, y); ctx.lineTo(x, y + k); ctx.lineTo(x - k, y); ctx.closePath();
+  ctx.lineWidth = 2.4 * s;
+  ctx.strokeStyle = PEN.line;
+  ctx.stroke();
+  ctx.lineWidth = 1.4 * s;
+  ctx.strokeStyle = QUEST_MARK_CSS;
+  ctx.stroke();
+}
+
 /** The stack of party labels on ONE pixel: each member's name this
  *  much further down than the last (AUDIT SOC D2's law, on ink). */
 export const PARTY_LABEL_STACK = 13;

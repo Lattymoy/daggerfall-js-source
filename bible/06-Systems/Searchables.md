@@ -4,6 +4,10 @@ The port's own; classic Daggerfall searches none of these objects and caps no dr
 
 ## SEARCH1 - what can be searched
 
+DETECT-FINDS (2026-10-05, `03-World/Delve-Arc.md`): a searched object's find, while it lies in it, is in the dungeon's
+Detect Treasure walk (`scenes/shared.js nearbyLootRecords`'s `searched`); unsearched, it holds nothing and is no treasure.
+The look round (SENSE1) lights a searchable the plaque names, in the finds' colour.
+
 Mac: "can you make those objects interactable? with a 33/33/33 check to spawn either and undead enemy (even undead
 elites 50%) or ... loot ... 1-4 random items 1 of them always gold ... or a message that you found nothing valuable".
 

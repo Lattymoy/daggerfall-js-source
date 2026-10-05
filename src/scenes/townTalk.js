@@ -84,7 +84,7 @@ export const TONE_NAMES = ['Polite', 'Normal', 'Blunt'];   // T3f: TalkTone -> i
 // currentMode is GLOBAL - the dungeon door ladder reads it too);
 // townTalk keeps the keydown, the HUD line and these re-exports.
 export { MODES, nextInteractionMode } from '../player/interactionMode.js';
-import { MODES, MODE_ACTIONS, getInteractionMode, setInteractionMode, nextInteractionMode } from '../player/interactionMode.js';
+import { MODES, MODE_ACTIONS, getInteractionMode, setInteractionMode, nextInteractionMode, askInteractionMode } from '../player/interactionMode.js';
 import { getClassicQuestionIndex } from '../systems/answerPipeline.js';   // F042
 // AUDIT 58 (talk lane): the four modes ride the keybinding registry
 // now - MODE_ACTIONS lives beside the mode it sets
@@ -375,6 +375,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   };
 
   function setMode(m) {
+    askInteractionMode(m);   // SENSE1: asked, changed or not (the dungeon's look round reads the count)
     if (m === getInteractionMode()) return;   // ChangeInteractionMode: no-op on the same mode
     setInteractionMode(m);
     // AUDIT 64 F34: PlayerActivate.cs:1424 ends ChangeInteractionMode

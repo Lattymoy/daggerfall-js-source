@@ -500,7 +500,7 @@ test('S41 re-entrancy: the exhaustion collapse re-enters the tick, and one midni
           entity: e, classicMinutes: worldMinutes(), dt, sinks,
           rolls: () => 0.99, say: () => {},
         });
-        setWorldMinutes(r.classicMinutes);          // shared.js:998 - the write-back
+        setWorldMinutes(r.classicMinutes);          // shared.js:999 - the write-back
         return r;
       },
       advance(m) { return m > 0 ? this.tick(m / CLASSIC_MINUTES_PER_SECOND) : null; },
