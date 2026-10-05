@@ -365,7 +365,8 @@ test('OWS2 host wiring by source: the boat a journey crosses in; the plan asked 
   assert.match(w, /csaHelmPress\(CSA_BOAT_ACTIONS\.disembark\);/);
   assert.match(w, /if \(csaRuntime\.state\.disembarking == null && !csaRuntime\.isSailing\(\)\) tvSeaAshore\(\);/);
   // SHIP-PACK (PIN MOVED): a ship packs at her landfall too - with her deed in the pack, else she is left moored
-  assert.match(w, /if \(tvSea\.means\?\.again && boat\.packable && csaPassengersOn\(boat\) === 0 && !csaRuntime\.deedMissing\(boat\)\) csaCall\(\(\) => csaRuntime\.PackBoat\(boat, true\)\);/);
+  // PIN MOVED (HOLD-WEIGHT, FIELD BUGS 2026-10-05c): and only parts her bearer can carry (test/fb1005c_holdweight.test.js)
+  assert.match(w, /if \(tvSea\.means\?\.again && boat\.packable && csaPassengersOn\(boat\) === 0 && !csaRuntime\.deedMissing\(boat\) && !csaRuntime\.partsTooHeavy\(boat\)\) csaCall\(\(\) => csaRuntime\.PackBoat\(boat, true\)\);/);
   assert.match(w, /if \(!Number\.isFinite\(h\) \|\| h < tvSeaY\(\) \+ 0\.2\) continue;/);
   // the journey over: the hand off the helm, the sails down
   assert.match(w, /if \(csaRuntime\?\.isSailing\(\) && csaRuntime\.state\.sailPosition > 0\) csaHelmPress\(CSA_BOAT_ACTIONS\.toggleSail\);/);

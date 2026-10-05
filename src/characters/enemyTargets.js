@@ -92,6 +92,20 @@ export const staticTeamOf = (mobileType) => ENEMY_BASICS[mobileType]?.team ?? 'P
 /** GetTargets' priority arithmetic (:829-841): +5 when the candidate
  *  is not already targeting someone, +10 when seen, plus the distance
  *  band 30 - d floored at 0. */
+/** ASSIST (FIELD BUGS 2026-10-05c, the port's own; 'revenants just "stand there" during fight sometimes' - "have to kite
+ *  them INTO the enemy at times to register even if enemy is hitting me or im hitting them"): a COMPANION (a sworn
+ *  revenant, a ship's hand ashore - CREW-COMPANIONS) puts a foe fighting his side first: one whose target is a player,
+ *  another companion, or himself. DFU has no companion and its chain knows no fight but the candidate's own: its +5 goes
+ *  to a foe that targets NO ONE, so an idle foe in the spawn band behind a wall (unseen candidates are kept there,
+ *  :824-825) outranked the one striking the player whenever it stood outside the companion's view cone - he walked into
+ *  the wall at it, or stood at heel holding it. 20 outweighs the idle foe's +5 and fifteen metres of the distance band:
+ *  a foe in the fight is taken unless an idle one stands that much nearer. Every other foe keeps DFU's arithmetic. */
+export const COMPANION_ASSIST_PRIORITY = 20;
+/** Whether a candidate foe (its AI) is fighting `self`'s side - a player, a companion, or `self`. */
+export const fightsOurSide = (targetAi, self) => {
+  const t = targetAi?.target ?? null;
+  return t != null && (isPlayerTarget(t) || t.companion != null || t === self);
+};
 export function targetPriority(targetHasNoTarget, seen, distance) {
   let p = 0;
   if (targetHasNoTarget) p += 5;
@@ -247,7 +261,8 @@ export function getTargets(self, candidates, playerFeet, {
     // Neither visible nor in the area around the player (:824-825) -
     // foe candidates only; the player has no senses.
     if (targetAi && !targetAi.wouldBeSpawned && !see) continue;
-    const priority = targetPriority(targetAi ? (targetAi.target ?? null) === null : false, see, distance);
+    let priority = targetPriority(targetAi ? (targetAi.target ?? null) === null : false, see, distance);
+    if (self.companion != null && fightsOurSide(targetAi, self)) priority += COMPANION_ASSIST_PRIORITY;   // ASSIST (FIELD BUGS 2026-10-05c)
     if (priority > highestPriority) {
       secondHighestPriority = highestPriority;
       highestPriority = priority;

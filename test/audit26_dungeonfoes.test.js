@@ -215,7 +215,7 @@ test('F218: applyWorld destroys the live foes past the snapshot (SerializableSta
   // retried, falsifying the law mobileEnemyActivate.js:44-47 states in
   // its own header. A PRE-PASS over the whole live pool, because the
   // per-record loop only ever visits the indices the record carries.
-  assert.match(XF, /spawnFoe\(sf\.mobileType, \[lx, sf\.y \+ yOffset, lz\]/, 'the exterior pool RE-MINTS on restore, so its latch dies with the pool');
+  assert.match(XF, /spawnFoe\(sf\.mobileType, feet,/, 'the exterior pool RE-MINTS on restore, so its latch dies with the pool');   // PIN MOVED (SEALED-SAVE, FIELD BUGS 2026-10-05c): its feet the saved ones, or the moved marker's
   // Mounted, not matched: the statements below are the ones in src/.
   const run = (foes, w) => {
     const scope = new Proxy({ foes, w }, {

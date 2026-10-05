@@ -143,7 +143,10 @@ With every lens's fix in, the whole suite and a re-run of every committed mutant
 ## Not changed, and why
 
 - **The acting flats keep the box.** DFU gives a flat's action a BoxCollider with `isTrigger` (RDBLayout.cs:977-987),
-  which the port has always read as a box; D1/D2's contact is for the models, which have triangles.
+  which the port has always read as a box; D1/D2's contact is for the models, which have triangles. [FLAT-RELAY, FIELD
+  BUGS 2026-10-05c: kept for the effects and the moving flats, lost for the RELAYS - `addRelay` never carried the flat's
+  mark, so a flat Teleport (Collision03) walked into asked triangles it has none of and never fired: the "red brick"
+  teleporters that only sometimes worked. It carries it now (`01-Overview/Field-Bugs-2026-10-05c.md`).]
 - **The claws' clip keeps the IL's fixed tick.** S1 plays it once a blow; stretching it over the blow (a second departure
   from the IL) was left for Mac.
 - **The nine direction-dependent spots** (D2): a lip or an arm beside the body, where DFU's hit order decides too.
