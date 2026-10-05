@@ -16,7 +16,7 @@ import {
   newSerpentFight, joinSerpentFight, stepSerpentBrain, serpentStateOf, serpentAttacksFor, ramReach, refOf,
   SERPENT_ATTACK_TABLE, SERPENT_TICK_MS, SERPENT_TTK_S, FAN_R, ENGAGE_R, ARENA_R, SERPENT_SLEEP_MS,
 } from '../src/net/serpentBrain.js';
-import { LEG, MODE, headAt } from '../src/net/serpentBody.js';
+import { LEG, MODE, headAt, onTimeline, sameMode } from '../src/net/serpentBody.js';
 import { createSerpentLink } from '../src/net/serpentLink.js';
 import { createSerpentHost, LAND_JUDGE_MS, HIT_GATHER_MS } from '../src/scenes/serpentHost.js';
 import { HULL } from '../src/systems/naval/navalShips.js';
@@ -135,6 +135,21 @@ test('AUDIT SERPENT 2 F2: a word that changes nothing is never kept twice - a br
     assert.ok(f.modes.every((m, i) => !i || m.at !== f.modes[i - 1].at || m.m !== f.modes[i - 1].m), `seed ${seed}: no mode kept twice`);
   }
   assert.ok(breaches > 0, 'an attack begun in the beat that took it up');
+  // the law itself, both halves: a ride already ridden, said again as the word that drops one still to come, changes the
+  // track (said - every client drops it too) and is kept once; said again, it changes nothing and is never kept twice
+  const modes = [{ at: 1, m: MODE.deep }, { at: 5, m: MODE.breach }];
+  assert.equal(onTimeline(modes, { at: 3, m: MODE.deep }, sameMode), true, 'said: it dropped the breach still to come');
+  assert.deepEqual(modes, [{ at: 1, m: MODE.deep }]);
+  assert.equal(onTimeline(modes, { at: 3, m: MODE.deep }, sameMode), false, 'said again: nothing');
+  assert.deepEqual(modes, [{ at: 1, m: MODE.deep }], 'never kept twice');
+  // the client folds the rule FIRST: a word naming a ride it already holds still drops the ride the relay dropped
+  const L = createSerpentLink({ now: () => T0, site: () => ({ day: DAY, sx: 0, sz: 0 }) });
+  const f0 = newSerpentFight(DAY, T0 - 60_000, T0 + 25 * 60_000, 'sethrakul', 0, 0, 0);
+  assert.ok(joinSerpentFight(f0, 'acct-0001', 'Ama', 20, HULL.Carrack, T0 - 60_000, true));
+  f0.modes = [{ at: T0 - 1000, m: MODE.deep }, { at: T0 + 2000, m: MODE.breach }];
+  L.word(validSerpentOut(serpentStateOf(f0)));
+  L.word(validSerpentOut({ k: 'dv', at: T0 - 1000, m: MODE.deep, sx: 0, sz: 0 }));
+  assert.deepEqual(L.state().modes, [{ at: T0 - 1000, m: MODE.deep }], 'the breach the relay dropped, dropped');
 });
 
 // ═══ F5 / F7: THE BRAIN ═════════════════════════════════════════════════════════════════════════════════

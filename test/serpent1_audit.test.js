@@ -13,7 +13,7 @@ import {
   ENGAGE_R, SERPENT_STAND_R, SERPENT_TARGET_R, SERPENT_IDLE_RETIRE_MS, SERPENT_ABSENT_RETIRE_MS, SERPENT_RECEIPT_SHARE, SERPENT_STOOD_SHARE,
   SERPENT_PHASE_AT, SERPENT_TICK_MS, ORBIT_R, CRUISE_V, SERPENT_SLEEP_MS, COIL_ESC_MS, SERPENT_COIL_PASS,
 } from '../src/net/serpentBrain.js';
-import { LEG, MODE, bodyAt, headAt, supersede } from '../src/net/serpentBody.js';
+import { LEG, MODE, bodyAt, headAt, modeAt, supersede } from '../src/net/serpentBody.js';
 import { createSerpentLink, foldSerpent, SERPENT_STATE_EMPTY } from '../src/net/serpentLink.js';
 import { validSerpentOut } from '../src/net/wire.js';
 import { HULL } from '../src/systems/naval/navalShips.js';
@@ -78,8 +78,8 @@ test('AUDIT SERPENT S2: a word said now supersedes every leg or mode still to co
   assert.ok(worstD < 0.01, `every client's body is the relay's (${worstD.toFixed(3)} m apart at worst)`);
 });
 
-test('AUDIT SERPENT S2: a kill while a Rising Maw\'s dash is still to come, and the sounding while a ram\'s run is - the relay\'s legs and modes and the client\'s stay in time order and the same, the words to come superseded (PIN MOVED, SERPENT3: a breach\'s jump and a woken room\'s surfacing were the words to come; every attack\'s swim is said as it begins now) (mutants: the rule dropped from either side\'s legs or modes)', () => {
-  for (const [end, want] of [['fell', SERPENT_ATTACK_TABLE.breach.id], ['gone', SERPENT_ATTACK_TABLE.ram.id]]) {
+test('AUDIT SERPENT S2: a kill while a ram\'s run is still to come, and the sounding while a Rising Maw\'s burst is (it rides the deep already: its word said for what it drops) - the relay\'s legs and modes and the client\'s stay in time order and the same, the words to come superseded (PIN MOVED, SERPENT3: a breach\'s jump and a woken room\'s surfacing were the words to come; every attack\'s swim is said as it begins now) (mutants: the rule dropped from either side\'s legs or modes; a mode said away unsaid)', () => {
+  for (const [end, want] of [['fell', SERPENT_ATTACK_TABLE.ram.id], ['gone', SERPENT_ATTACK_TABLE.breach.id]]) {
     const f = surfaced(fightOf([HULL.Carrack], acct));
     const rng = seeded(11);
     const b = [body(acct(0), 120, 0)];
@@ -89,9 +89,12 @@ test('AUDIT SERPENT S2: a kill while a Rising Maw\'s dash is still to come, and 
     let begun = null;
     while (now < T0 + 300_000 && !begun) { now += SERPENT_TICK_MS; const ws = stepSerpentBrain(f, now, b, rng); fold(ws); begun = ws.find((w) => w.k === 'atk' && w.a === want); }
     assert.ok(begun, `${end}: its ${SERPENT_ATTACK_BY_ID[want].key} begun`);
+    // the Maw sounded mid-dash, under the sea already, its burst still to come: the sounding's word is the ride it
+    // rides - it changes the track only by what it drops, and is said so every client drops it too
+    if (end === 'gone') { now += 1000; fold(stepSerpentBrain(f, now, b, rng)); assert.equal(modeAt(f.modes, now), MODE.deep, 'under the sea'); }
     assert.ok(f.legs.at(-1).at > now && f.modes.at(-1).at > now, 'its swim and its ride still to come');
     now += 10;
-    if (end === 'gone') { f.soundAt = now; fold(stepSerpentBrain(f, now, b, rng)); assert.ok(f.gone, 'sounded'); }
+    if (end === 'gone') { f.soundAt = now; const said = stepSerpentBrain(f, now, b, rng); fold(said); assert.ok(f.gone, 'sounded'); assert.ok(said.some((w) => w.k === 'dv' && w.at === now && w.m === MODE.deep), 'its ride said, though it rides it already'); }
     else { f.hp = 1; f.shieldUntil = 0; fold(applySerpentHit(f, acct(0), 50, ZONES.body, b[0], now)); assert.ok(f.fell, 'slain as its dash begins'); }
     const inOrder = (xs) => xs.every((x, i) => !i || xs[i - 1].at <= x.at);
     assert.ok(inOrder(f.legs) && inOrder(f.modes), `the relay's in order (${end})`);
