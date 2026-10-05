@@ -104,19 +104,28 @@
 // look - A RING OF SQUARES RISING AND FALLING:
 //   - THE WALL: RESONANCE_COLUMNS columns round the feet at RESONANCE_R, one on each face of the pass's own strip (it is
 //     AURA_STEPS round), each a stack of tiny squares, RESONANCE_SQUARE_M a side, RESONANCE_CELLS high at most. How
-//     many of a column's squares stand lit is its level now (resonanceLevel - the shader's and node's one law): a wave
+//     many of a column's squares stand lit is its level now (resonanceLevel, in node alone - AUDIT: the draw counts each
+//     column's lit squares once a frame, `resonanceLitInto`, and hands them to the shader, `uResLit`): a wave
 //     running round the ring, a second against it, each column's own bounce and a beat through them all, so the columns
 //     go up and down out of the ground as a visualiser's do. Every square the same - ONE colour, the
 //     reference's purple (the Crystal Fist's own, ui/playerBadge.js CRYSTAL_PURPLE), as asked: no gradient.
-//   - THE GROUND: each column's foot, a square lying on the ring, and a faint purple glow along the ring.
+//   - THE GROUND: each column's foot, a square lying on the ring.
 // It kindles UP - the columns rise out of the ground. Every rate whole over the clock (resonanceRatesWhole); every
 // wave round the ring a whole number of crests, so no seam behind the wearer. No third draw, no host changed.
+//   AUDIT (2026-10-05, the owner: "Audit this"): ONE LAW, ON EVERY GPU - the level's per-column hash is fract(sin(x) *
+//   43758), which float32 and every vendor's sin answer differently, so the shader lit other squares than node's law in
+//   nearly half the samples; the count is node's now, handed over. ONE COLOUR ON SCREEN - added (ONE, ONE), a square
+//   over its foot, the far wall through the near and any bright ground summed past the purple to a pale pink; it is
+//   drawn premultiplied (AURA_LOOK `shade`): a square COVERS what is behind it in the purple, however many lie over each
+//   other. NO SHIMMER - each square's edge is as wide as a pixel there (the scene's own derivatives), and a square under
+//   a pixel or two fades to its cell's average cover, so the rows do not moire far off; the glow round a square, which a
+//   cell's edge cut into a line over each column's top, is gone. AND A WEARER'S OWN PULSE - `uSeed` offsets its clock.
 //
 // Not a DFU member. Ledger A (WB).
 import { FOG_FACTOR_GLSL } from './labGrass.js';
 import { buildProgram } from './glProgram.js';
 import { wrapAngle } from '../world/mat4.js';
-import { GLYPH_PATH, GLYPH_DETAIL } from '../ui/playerBadge.js';   // SHADOW-CLOAK: the wearer's own glyph, its emblem
+import { GLYPH_PATH, GLYPH_DETAIL, CRYSTAL_PURPLE } from '../ui/playerBadge.js';   // SHADOW-CLOAK: the wearer's own glyph, its emblem; CRYSTAL-FIST AUDIT: the Crystal Fist's purple, the resonance's one colour
 
 /** The ring's radius about the feet (m), the ground quad's half-width, the flames' height, and the ground's lift. */
 export const AURA_RING_R = 0.85;
@@ -338,19 +347,21 @@ export const RESONANCE_CELLS = 10;
 export const RESONANCE_PITCH_M = 0.06;
 export const RESONANCE_SQUARE_M = 0.042;
 export const RESONANCE_H = RESONANCE_CELLS * RESONANCE_PITCH_M;
-/** Its rates (Hz), each a whole number of cycles over AURA_CLOCK_PERIOD: the wave running round the ring and the one
- *  against it, each column's own bounce, and the beat through them all; and the crests each wave has round the ring
- *  (whole, so it closes behind the wearer). */
-export const RESONANCE_HZ = Object.freeze({ wave: 1 / 2, counter: 1 / 3, bounce: 1 / 2, beat: 1 });
+/** Its rates (Hz), each a whole number of cycles over AURA_CLOCK_PERIOD: the wave running round the ring (about every
+ *  two seconds) and the one against it (about every three), each column's own bounce, and the beat through them all
+ *  once a second; and the crests each wave has round the ring (whole, so it closes behind the wearer). AUDIT: the three
+ *  free rates are whole cycles over the clock with no common divisor (61, 41, 59 of them in 120 s) - at 1/2, 1/3 and
+ *  1/2 Hz the whole ring repeated every six seconds, and two wearers' seeds six seconds apart rose and fell as one. */
+export const RESONANCE_HZ = Object.freeze({ wave: 61 / 120, counter: 41 / 120, bounce: 59 / 120, beat: 1 });
 export const RESONANCE_CRESTS = Object.freeze({ wave: 3, counter: 2 });
 /** Every resonance rate whole over the clock. Pure. */
-export const resonanceRatesWhole = () => Object.values(RESONANCE_HZ).every((r) => Number.isInteger(Math.round(r * AURA_CLOCK_PERIOD * 1e6) / 1e6));
-/** Its light: the reference's purple, #a349a4 - the Crystal Fist's title and glyph (ui/playerBadge.js CRYSTAL_PURPLE).
- *  RGB 0..1. One colour. */
-export const RESONANCE_RGB = Object.freeze({ purple: Object.freeze([0.639, 0.286, 0.643]) });
+export const resonanceRatesWhole = () => Object.values(RESONANCE_HZ).every((r) => r > 0 && Number.isInteger(Math.round(r * AURA_CLOCK_PERIOD * 1e6) / 1e6));   // AUDIT: and none stopped
+/** Its light: the reference's purple, #a349a4 - the Crystal Fist's title and glyph, read from ui/playerBadge.js
+ *  CRYSTAL_PURPLE (AUDIT: one literal, not two). RGB 0..1. One colour. */
+export const RESONANCE_RGB = Object.freeze({ purple: Object.freeze(CRYSTAL_PURPLE.slice(0, 3)) });
 const resHash = (k, a, b) => { const x = Math.sin(k * a + b) * 43758.5453; return x - Math.floor(x); };
 /** CRYSTAL-FIST: COLUMN k's LEVEL at the clock `t`, 0..1 - the share of its squares standing lit: the wave round the
- *  ring, the one against it, its own bounce and the beat. The shader's resonanceLevel, the same arithmetic, so a pin
+ *  ring, the one against it, its own bounce and the beat. In node alone (AUDIT): the shader is handed the counts
  *  reads the ring off node. Pure. */
 export function resonanceLevel(k, t) {
   const TAU = Math.PI * 2, N = RESONANCE_COLUMNS;
@@ -362,8 +373,17 @@ export function resonanceLevel(k, t) {
   return Math.max(0, Math.min(1, 0.08 + 0.34 * wave + 0.28 * counter * bounce + 0.3 * beat * (0.4 + 0.6 * h2)));
 }
 /** CRYSTAL-FIST: how many of column k's squares stand lit at `t`, kindled `kindle` 0..1 - at least the one at its foot
- *  once it kindles at all. The shader's own count. Pure. */
-export const resonanceLit = (k, t, kindle = 1) => (kindle > 0 ? Math.max(1, Math.ceil(resonanceLevel(k, t) * Math.max(0, Math.min(1, kindle)) * RESONANCE_CELLS - 1e-9)) : 0);
+ *  once it kindles at all, since a level is never under its 0.08 floor (AUDIT: so no guard is kept for one). Pure. */
+export const resonanceLit = (k, t, kindle = 1) => (kindle > 0 ? Math.ceil(resonanceLevel(k, t) * Math.min(1, kindle) * RESONANCE_CELLS) : 0);
+/** AUDIT: A WEARER'S CLOCK - the frame's, offset by the wearer's own seed (0..1 of the clock), so two wearers side by
+ *  side do not rise and fall as one. Pure. */
+export const resonanceClock = (seconds, seed) => auraClock(seconds) + (Number.isFinite(seed) ? seed : 0) * AURA_CLOCK_PERIOD;
+/** AUDIT: EVERY COLUMN'S COUNT AT ONCE, into `out` (RESONANCE_COLUMNS long) - what the draw hands the shader (`uResLit`),
+ *  so the squares a GPU lights are node's law's and no float32 sin's. Pure but for `out`. */
+export function resonanceLitInto(out, t, kindle = 1) {
+  for (let k = 0; k < RESONANCE_COLUMNS; k++) out[k] = resonanceLit(k, t, kindle);
+  return out;
+}
 
 /** Every rate the wings take is whole over the clock, and every spark's life divides it. Pure. */
 export const wingRatesWhole = () => [...Object.values(WING_HZ), WING_FLOW.rate, WING_FLOW.fray].every((hz) => Number.isInteger(Math.round(hz * AURA_CLOCK_PERIOD * 1e6) / 1e6))
@@ -379,7 +399,7 @@ export const AURA_LOOK = Object.freeze({
   radiance: Object.freeze({ kind: 2, ringR: RADIANCE_R, flameH: RADIANCE_H, glyphs: 0 }),   // PRIMARCH: the column about the body
   shadowcloak: Object.freeze({ kind: 3, ringR: CLOAK_HEM_R, flameH: CLOAK_H, glyphs: CLOAK_EMBLEMS, shreds: CLOAK_SHREDS, mesh: 'cloak', shade: true }),   // SHADOW-CLOAK: the cape on the body, its emblems, and its shreds when it tears
   seraphwings: Object.freeze({ kind: 4, ringR: WING_POOL_R, flameH: WING_REACH[1], glyphs: WING_CARDS, mesh: 'wings' }),   // SERAPH-WINGS: the wings on the body, their sparks and their backlight
-  resonance: Object.freeze({ kind: 5, ringR: RESONANCE_R, flameH: RESONANCE_H, glyphs: 0 }),   // CRYSTAL-FIST: the ring of columns of squares, on the strip
+  resonance: Object.freeze({ kind: 5, ringR: RESONANCE_R, flameH: RESONANCE_H, glyphs: 0, shade: true }),   // CRYSTAL-FIST: the ring of columns of squares, on the strip; AUDIT: drawn premultiplied, so the squares stay the one purple
 });
 /** The look a wearer's aura is drawn with - Dagon's Fire for one that names none (the fire was the only aura before). */
 export const auraLookOf = (aura) => (typeof aura === 'string' && Object.hasOwn(AURA_LOOK, aura) ? AURA_LOOK[aura] : AURA_LOOK.dagonfire);
@@ -609,50 +629,45 @@ vec3 radianceWall(vec2 q) {
 }
 `;
 /** CRYSTAL-FIST: THE CRYSTAL RESONANCE - its columns of squares (the wall, on the strip: u round, v up) and their feet
- *  on the ground. A square is lit whole and edged soft, with a faint glow of the same purple round it. */
+ *  on the ground, each answered PREMULTIPLIED (the purple times its cover, its cover): a square covers what is behind it.
+ *  AUDIT: the counts are node's (`uResLit`); a square's edge is a pixel wide where it is drawn (`resPixel`, the scene's
+ *  own derivatives), and a square under a couple of pixels fades to its cell's average cover. */
 const RESONANCE_GLSL = `
 const vec3 RES_PURPLE = ${v3(RESONANCE_RGB.purple)};
 const float RES_N = ${RESONANCE_COLUMNS.toFixed(1)};
-float resHash(float k, float a, float b) { return fract(sin(k * a + b) * 43758.5453); }
-// column k's level at the clock t, 0..1 - auraRing.js resonanceLevel, the same arithmetic
-float resonanceLevel(float k, float t) {
-  float h1 = resHash(k, 12.9898, 4.1), h2 = resHash(k, 78.233, 1.7);
-  float wave = 0.5 + 0.5 * sin(TAU * (t ${hzGlsl(RESONANCE_HZ.wave)} - k * ${RESONANCE_CRESTS.wave.toFixed(1)} / RES_N));
-  float counter = 0.5 + 0.5 * sin(TAU * (t ${hzGlsl(RESONANCE_HZ.counter)} + k * ${RESONANCE_CRESTS.counter.toFixed(1)} / RES_N) + 1.3);
-  float bounce = abs(sin(TAU * (t ${hzGlsl(RESONANCE_HZ.bounce)} + h1)));
-  float beat = pow(0.5 + 0.5 * cos(TAU * t ${hzGlsl(RESONANCE_HZ.beat)}), 4.0);
-  return clamp(0.08 + 0.34 * wave + 0.28 * counter * bounce + 0.3 * beat * (0.4 + 0.6 * h2), 0.0, 1.0);
+const float RES_SQ = ${RESONANCE_SQUARE_M.toFixed(3)};
+const float RES_PITCH = ${RESONANCE_PITCH_M.toFixed(3)};
+// the metres a pixel spans here, never under a few millimetres
+float resPixel() { return max(max(length(dFdx(vWorld)), length(dFdy(vWorld))), 0.002); }
+// the cover of a square of side RES_SQ at (x, y) from its middle (m), in a cell pitchX by pitchY: its edge a pixel wide,
+// and, once the cell is a couple of pixels or less, the cell's average cover instead - so the rows do not moire far off
+float resCover(vec2 q, float pitchX, float pitchY) {
+  float px = resPixel();
+  vec2 e = clamp((vec2(RES_SQ * 0.5) - abs(q)) / px + 0.5, 0.0, 1.0);
+  float avg = RES_SQ * RES_SQ / (pitchX * pitchY);
+  return mix(e.x * e.y, avg, smoothstep(0.35, 0.7, px / min(pitchX, pitchY)));
 }
-// a square of side s about its middle, at (x, y) from it (m): 1 inside - the purple itself - soft at its edge, and a
-// faint glow round it outside
-float resSquare(vec2 q, float s) {
-  float d = max(abs(q.x), abs(q.y)) - s * 0.5;
-  float fill = 1.0 - smoothstep(-0.003, 0.003, d), g = max(d, 0.0);
-  return fill + (1.0 - fill) * exp(-g * g / 0.00025) * 0.22;
-}
-vec3 resonanceWall(vec2 q) {
+vec4 resonanceWall(vec2 q) {
   float u = fract(q.x), v = q.y;
   float cu = u * RES_N, k = floor(cu);
   float pitch = TAU * uRingR / RES_N;
-  float y = v * uFlameH, j = floor(y / ${RESONANCE_PITCH_M.toFixed(3)});
-  if (uKindle <= 0.0) return vec3(0.0);
-  float lit = max(1.0, ceil(resonanceLevel(k, uTime) * clamp(uKindle, 0.0, 1.0) * ${RESONANCE_CELLS.toFixed(1)} - 1e-9));
-  if (j >= lit) return vec3(0.0);
-  vec2 at = vec2((fract(cu) - 0.5) * pitch, y - (j + 0.5) * ${RESONANCE_PITCH_M.toFixed(3)});
-  return RES_PURPLE * resSquare(at, ${RESONANCE_SQUARE_M.toFixed(3)});
+  float y = v * uFlameH, j = floor(y / RES_PITCH);
+  float lit = uResLit[int(clamp(k, 0.0, RES_N - 1.0))];   // node's count for this column (resonanceLitInto)
+  if (j >= lit) return vec4(0.0);
+  float c = resCover(vec2((fract(cu) - 0.5) * pitch, y - (j + 0.5) * RES_PITCH), pitch, RES_PITCH);
+  return vec4(RES_PURPLE * c, c);
 }
-vec3 resonanceGround(vec2 p) {
-  float r = length(p), a = atan(p.y, p.x);
+vec4 resonanceGround(vec2 p) {
+  float r = length(p);
   if (r > uGroundR) discard;
-  float R = uRingR, cu = fract(a / TAU) * RES_N;
-  // each column's foot, a square lying on the ring under it, pulsing with the beat
-  vec2 at = vec2((fract(cu) - 0.5) * TAU * r / RES_N, r - R);
-  float beat = pow(0.5 + 0.5 * cos(TAU * uTime ${hzGlsl(RESONANCE_HZ.beat)}), 4.0);
-  vec3 col = RES_PURPLE * resSquare(at, ${RESONANCE_SQUARE_M.toFixed(3)}) * (0.75 + 0.35 * beat);
-  // a faint glow along the ring
-  float dr = r - R;
-  col += RES_PURPLE * exp(-dr * dr / 0.006) * 0.16;
-  return col * (1.0 - smoothstep(uGroundR - 0.2, uGroundR, r));
+  // nothing but the feet, on the ring - and never the angle at the middle, where atan(0, 0) is no number and a NaN under
+  // the premultiplied blend paints the floor white (AUDIT)
+  if (abs(r - uRingR) > RES_SQ) return vec4(0.0);
+  float cu = fract(atan(p.y, p.x) / TAU) * RES_N;
+  // each column's foot, a square lying on the ring under it
+  float pitch = TAU * r / RES_N;
+  float c = resCover(vec2((fract(cu) - 0.5) * pitch, r - uRingR), pitch, RES_PITCH) * uKindle;
+  return vec4(RES_PURPLE * c, c);
 }
 `;
 /** SHADOW-CLOAK: A GLYPH'S OUTLINE AS STRAIGHT EDGES - an SVG path of absolute M, L, Q and Z (ui/playerBadge.js
@@ -1267,6 +1282,7 @@ uniform int uSide;      // SHADOW-CLOAK: which side of the cloth this draw lays 
 uniform float uTorn;    // SHADOW-CLOAK: the seconds since the wearer turned beast (negative while not)
 uniform vec4 uSwing, uCapeH;   // SHADOW-CLOAK: the swing - its lag on a turn (w) turns the cloth's facing too; the head's middle (uCapeH) - the hood an eye can stand inside
 uniform float uTime, uSeed, uKindle, uRingR, uGroundR, uFlameH;
+uniform float uResLit[${RESONANCE_COLUMNS}];   // CRYSTAL-FIST AUDIT: each column's lit squares, node's count (resonanceLitInto)
 uniform int uFogMode;
 uniform float uFogDensity;
 uniform vec2 uFogRange;
@@ -1283,7 +1299,7 @@ void main() {
     o = vec4(c.rgb * f, c.a * f);
     return;
   }
-  if (uAura == 5) { vec3 res = uKind == 0 ? resonanceGround(vP) : resonanceWall(vP); o = vec4(res * uKindle * fogFactorAt(vWorld), 1.0); return; }   // CRYSTAL-FIST: the columns rise as it kindles (resonanceWall), and its light with it
+  if (uAura == 5) { vec4 c = uKind == 0 ? resonanceGround(vP) : resonanceWall(vP); float f = fogFactorAt(vWorld); o = vec4(c.rgb * f, c.a * f); return; }   // CRYSTAL-FIST: premultiplied (AURA_LOOK shade), fogged to nothing; AUDIT: the columns rise as it kindles by node's counts (uResLit), the feet by uKindle
   if (uAura == 2) { vec3 rad = uKind == 0 ? radianceGround(vP) : radianceWall(vP); o = vec4(rad * uKindle * fogFactorAt(vWorld), 1.0); return; }   // PRIMARCH
   if (uAura == 1) { vec3 ward = uKind == 0 ? wardGround(vP) : uKind == 1 ? wardWall(vP) : wardSymbol(vP, vS); o = vec4(ward * uKindle * fogFactorAt(vWorld), 1.0); return; }   // AEGIS
   // every rate a whole number of cycles over the clock, in turns a second times TAU - never a rounded radian rate, which
@@ -1573,7 +1589,7 @@ export class AuraRingRenderer {
     this.gl = gl;
     this.program = buildProgram(gl, AURA_VS, AURA_FS, 'aura ring');
     this.u = {};
-    for (const n of ['uVP', 'uKind', 'uAura', 'uAt', 'uGroundR', 'uRingR', 'uFlameH', 'uLift', 'uTime', 'uSeed', 'uKindle', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uYaw', 'uSide', 'uTorn', 'uSwing', 'uCapeS', 'uCapeH', 'uKneeL', 'uKneeR', 'uTorsoU', 'uTorsoF', 'uWingBack']) this.u[n] = gl.getUniformLocation(this.program, n);
+    for (const n of ['uVP', 'uKind', 'uAura', 'uAt', 'uGroundR', 'uRingR', 'uFlameH', 'uLift', 'uTime', 'uSeed', 'uKindle', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uYaw', 'uSide', 'uTorn', 'uSwing', 'uCapeS', 'uCapeH', 'uKneeL', 'uKneeR', 'uTorsoU', 'uTorsoF', 'uWingBack', 'uResLit']) this.u[n] = gl.getUniformLocation(this.program, n);
     this.quadVao = gl.createVertexArray();
     gl.bindVertexArray(this.quadVao);
     this.quadBuf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, this.quadBuf);
@@ -1601,6 +1617,7 @@ export class AuraRingRenderer {
     gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
     gl.bindVertexArray(null);
     this._vp = new Float32Array(16);
+    this._resLit = new Float32Array(RESONANCE_COLUMNS);   // CRYSTAL-FIST AUDIT: one list, refilled per wearer
     /** how many auras the last draw burned, for the stats and the tests */
     this.drawn = 0;
   }
@@ -1653,6 +1670,8 @@ export class AuraRingRenderer {
         const torso = pose.torso ?? CLOAK_REST_POSE.torso;   // SERAPH-WINGS: the back the wings grow from
         gl.uniform3f(U.uTorsoU, torso[0], torso[1], torso[2]); gl.uniform3f(U.uTorsoF, torso[3], torso[4], torso[5]);
         gl.uniform1f(U.uWingBack, Number.isFinite(pose.wingBack) ? pose.wingBack : 0);   // WINGS-FIT: a sprite's wings rooted further back
+        // CRYSTAL-FIST AUDIT: the resonance's counts, node's law on the wearer's own clock - the GPU lights exactly these
+        if (look === AURA_LOOK.resonance) gl.uniform1fv(U.uResLit, resonanceLitInto(this._resLit, resonanceClock(seconds, w.seed), Math.max(0, Math.min(1, Number.isFinite(w.kindle) ? w.kindle : 1))));
         // SHADOW-CLOAK: a look that SHADES is drawn premultiplied - its light added, what is behind it covered by its
         // alpha - and every other look as it always was, its light added whole
         if (look.shade) gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);

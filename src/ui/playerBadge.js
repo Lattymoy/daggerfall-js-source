@@ -162,8 +162,11 @@ const PRIMARCH_GOLD = Object.freeze([0.847, 0.812, 0.682, 1]);   // #d8cfae
 /** CRYSTAL-FIST (2026-10-05, the owner, for Flylighter: "Title: Crystal Fist", the glyph "referenced above" - three
  *  purple slashes - and the aura "also purple", "the color 'gradient' would be unnecessary"). The reference's own
  *  purple, #a349a4, every one of its glyph's pixels: ONE colour for the title, the glyph and the aura (render/auraRing.js
- *  RESONANCE_RGB), as the three were asked in one. A one-colour title wears every face's black text shadow. */
-const CRYSTAL_PURPLE = Object.freeze([0.639, 0.286, 0.643, 1]);   // #a349a4
+ *  RESONANCE_RGB, which reads it from here), as the three were asked in one. AUDIT: like every one-colour title it wears
+ *  the DOM faces' black text shadow, and on the classic face (net/remotePlayers.js drawNames) a bare tint with no edge -
+ *  over a night sky it is the weakest one-colour title (WCAG 3.65 against the Protector's 4.36), the reference's own
+ *  colour kept as asked. */
+export const CRYSTAL_PURPLE = Object.freeze([0.639, 0.286, 0.643, 1]);   // #a349a4
 
 /** A title's colour, RGBA 0..1 - the same shape SOC4's PARTY_GREEN is
  *  in, so `nameLayer.cssRgba` turns it into CSS and `drawText` takes it
@@ -381,9 +384,11 @@ export const GLYPH_PATH = Object.freeze({
   // CRYSTAL-FIST: FLYLIGHTER'S REFERENCE (2026-10-05), traced off its pixels - THREE SLASHES falling down to the right,
   // parallel, a claw's: the middle one the longest, corner to corner; the one above it and the one below it two thirds
   // its length, each beside its middle, the upper a little further down it. Each a band of one thickness (the
-  // reference's seven pixels across, a gap of six between), its ends cut square to it; filled, one colour, every
-  // outline wound the same way round. Scaled whole into the box, the measures the reference's.
-  crystalfist: 'M0.4 6.63L1.68 5.34L10.47 14.13L9.19 15.42ZM0.4 1.87L1.68 0.58L14.87 13.77L13.59 15.05ZM5.53 2.23L6.81 0.95L15.6 9.74L14.32 11.02Z',
+  // reference's seven pixels across, a gap of six between), its ends cut square to it with their corners taken off as the
+  // reference's are (AUDIT: two pixels back along the slash at each corner, so an end reads rounded, not squared, at the
+  // account card's and the profile's sizes); filled, one colour, every outline wound the same way round. Scaled whole
+  // into the box by the uncut bands, the measures the reference's.
+  crystalfist: 'M0.77 6.99L0.77 6.26L1.32 5.71L2.05 5.71L10.11 13.77L10.11 14.5L9.56 15.05L8.82 15.05ZM0.77 2.23L0.77 1.5L1.32 0.95L2.05 0.95L14.5 13.4L14.5 14.13L13.95 14.68L13.22 14.68ZM5.89 2.6L5.89 1.87L6.44 1.32L7.18 1.32L15.23 9.37L15.23 10.11L14.68 10.66L13.95 10.66Z',
 });
 
 /** Is this glyph DRAWN as an outline rather than filled? The sprout is

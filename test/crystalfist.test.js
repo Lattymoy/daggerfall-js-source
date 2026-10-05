@@ -32,8 +32,9 @@ import { perspective, mirrorProjectionX, lookAt } from '../src/world/mat4.js';
 import { standService } from './accountDb.mjs';
 import {
   AURA_LOOK, auraLookOf, AURA_RING_R, AURA_GROUND_R, AURA_LIFT_M, AURA_STEPS, AURA_CLOCK_PERIOD, AURA_VS, AURA_FS,
-  RESONANCE_R, RESONANCE_COLUMNS, RESONANCE_CELLS, RESONANCE_PITCH_M, RESONANCE_SQUARE_M, RESONANCE_H, RESONANCE_HZ,
-  RESONANCE_CRESTS, RESONANCE_RGB, resonanceRatesWhole, resonanceLevel, resonanceLit, AuraRingRenderer, RADIANCE_R, RADIANCE_H,
+  RESONANCE_R, RESONANCE_COLUMNS, RESONANCE_CELLS, RESONANCE_PITCH_M, RESONANCE_SQUARE_M, RESONANCE_H,
+  RESONANCE_CRESTS, RESONANCE_RGB, resonanceRatesWhole, resonanceLevel, resonanceLit, resonanceLitInto, resonanceClock, AuraRingRenderer,
+  RADIANCE_R, RADIANCE_H,
 } from '../src/render/auraRing.js';
 import { glslFunctions, GlslDiscard } from './glsl.mjs';
 
@@ -125,19 +126,32 @@ const subpathsOf = (d) => d.split(/(?=M)/).map((sub) => [...sub.matchAll(/[ML]([
 /** A closed outline's signed area (the shoelace) - its sign is which way round it is wound. */
 const areaOf = (pts) => pts.reduce((s, [x, y], i) => { const [x2, y2] = pts[(i + 1) % pts.length]; return s + (x * y2 - x2 * y); }, 0) / 2;
 
-test('CRYSTAL-FIST the glyph\'s shape: Flylighter\'s three slashes - each a band falling down to the right at the reference\'s 45 degrees, its ends cut square to it, all three parallel and one thickness, a gap of one width between them; the middle the longest, corner to corner; the upper and the lower two thirds its length, each beside its middle; every outline wound the same way round; inside the box (mutants: a slash turned, the middle as short as the others, a slash thicker, a slash wound the other way)', () => {
+test('CRYSTAL-FIST the glyph\'s shape: Flylighter\'s three slashes - each a band falling down to the right at the reference\'s 45 degrees, its ends cut square to it and their corners taken off alike (AUDIT), all three parallel and one thickness, a gap of one width between them; the middle the longest, corner to corner; the upper and the lower two thirds its length, each beside its middle; every outline wound the same way round; inside the box (mutants: a slash turned, the middle as short as the others, a slash thicker, a slash wound the other way, a corner left square)', () => {
   const parts = subpathsOf(GLYPH_PATH.crystalfist);
   assert.equal(parts.length, 3, 'three slashes');
   for (const [x, y] of parts.flat()) assert.ok(x >= 0 && x <= 16 && y >= 0 && y <= 16, `inside the box: ${x},${y}`);
   // in the slash's own frame: s along it (down to the right), d across it (up to the right)
   const bands = parts.map((p) => {
-    assert.equal(p.length, 4, 'four corners each');
+    assert.equal(p.length, 8, 'a band with its four corners taken off: eight corners each');
     const s = p.map(([x, y]) => (x + y) / Math.SQRT2), d = p.map(([x, y]) => (x - y) / Math.SQRT2);
-    // a band of the frame: two corners at each end (one s), two along each side (one d)
-    const sv = [...new Set(s.map((q) => q.toFixed(1)))], dv = [...new Set(d.map((q) => q.toFixed(1)))];
-    assert.equal(sv.length, 2, `its ends cut square to it: ${s.map((q) => q.toFixed(2))}`);
-    assert.equal(dv.length, 2, `its two sides along it, at 45 degrees down to the right: ${d.map((q) => q.toFixed(2))}`);
-    return { s0: Math.min(...s), s1: Math.max(...s), d0: Math.min(...d), d1: Math.max(...d), area: areaOf(p) };
+    const s0 = Math.min(...s), s1 = Math.max(...s), d0 = Math.min(...d), d1 = Math.max(...d);
+    const at = (v, w) => Math.abs(v - w) < 0.02;
+    // a band of the frame: two corners on each side along it (one d each - at 45 degrees down to the right), two on each
+    // end square to it (one s each)
+    for (const [name, vs, w] of [['its upper side along it', d, d1], ['its lower side along it', d, d0], ['its upper end square to it', s, s0], ['its lower end square to it', s, s1]]) {
+      assert.equal(vs.filter((q) => at(q, w)).length, 2, `${name}: ${vs.map((q) => q.toFixed(2))}`);
+    }
+    // AUDIT: each corner taken off by the same cut, back along the slash and in across it alike - the reference's ends
+    // rounded two pixels at their corners - and never so deep the end is a point
+    const edges = p.map(([x, y], i) => {
+      const [x2, y2] = p[(i + 1) % p.length];
+      const sa = (x + y) / Math.SQRT2, sb = (x2 + y2) / Math.SQRT2, da = (x - y) / Math.SQRT2, db = (x2 - y2) / Math.SQRT2;
+      return { len: Math.hypot(x2 - x, y2 - y), kind: at(da, db) ? 'side' : at(sa, sb) ? 'end' : 'cut' };
+    });
+    assert.deepEqual(['side', 'end', 'cut'].map((k) => edges.filter((e) => e.kind === k).length), [2, 2, 4], 'two sides along it, two ends square to it, four corners cut on the slant');
+    const cut = edges.filter((e) => e.kind === 'cut').map((e) => e.len);
+    assert.ok(cut.every((c) => Math.abs(c - cut[0]) < 0.02) && cut[0] > 0.2 && cut[0] < 0.4 * (d1 - d0) * Math.SQRT2, `every corner cut alike, a rounding and not a point (${cut.map((c) => c.toFixed(2))})`);
+    return { s0, s1, d0, d1, area: areaOf(p) };
   }).sort((a, b) => a.d0 - b.d0);   // lower-left, middle, upper-right
   const [lower, middle, upper] = bands;
   const width = (b) => b.d1 - b.d0, len = (b) => b.s1 - b.s0;
@@ -293,26 +307,27 @@ test('CRYSTAL-FIST the classic face: the name run carries the slash\'s mark, and
 
 // ── THE RESONANCE (render/auraRing.js) ──────────────────────────────
 
-test('CRYSTAL-FIST the resonance\'s law: a look for every aura - the resonance the sixth kind, its ring inside the fire\'s and clear of the body, its wall the tallest column, no symbols; a column on each face of the strip; tiny squares, square, with room between them; every rate whole over the clock, every wave a whole number of crests round; its light the Crystal Fist\'s own purple - one colour (mutants: the kind, the radius, a rate off whole, the colour)', () => {
+test('CRYSTAL-FIST the resonance\'s law: a look for every aura - the resonance the sixth kind, drawn premultiplied (it COVERS, so it stays the one purple), its ring inside the fire\'s and clear of the body, no symbols; tiny squares with room between them; every rate whole over the clock and none stopped, every wave a whole number of crests round; its light the Crystal Fist\'s own purple - one colour (mutants: the kind, the radius, a rate off whole, a rate stopped, the colour, added not covered)', () => {
   for (const a of AURAS) assert.ok(Object.hasOwn(AURA_LOOK, a), `a look for ${a}`);
-  assert.deepEqual({ ...AURA_LOOK.resonance }, { kind: 5, ringR: RESONANCE_R, flameH: RESONANCE_H, glyphs: 0 }, 'the sixth kind, at its own radius and height, no symbols');
+  assert.deepEqual({ ...AURA_LOOK.resonance }, { kind: 5, ringR: RESONANCE_R, flameH: RESONANCE_H, glyphs: 0, shade: true }, 'the sixth kind, at its own radius and height, no symbols - AUDIT: premultiplied, a square over a square or over a bright ground still the purple');
   assert.equal(new Set(Object.values(AURA_LOOK).map((l) => l.kind)).size, AURAS.length, 'a kind each');
   assert.equal(auraLookOf('resonance'), AURA_LOOK.resonance);
-  assert.ok(RESONANCE_R > RADIANCE_R && RESONANCE_R < AURA_RING_R + 0.05 && RESONANCE_R < AURA_GROUND_R - 0.3, 'a circle about the feet, clear of the body, inside the ground quad');
-  assert.equal(RESONANCE_COLUMNS, AURA_STEPS, 'a column on each face of the strip the wall is drawn on');
-  assert.ok(Math.abs(RESONANCE_H - RESONANCE_CELLS * RESONANCE_PITCH_M) < 1e-12, 'the wall the tallest column');
+  assert.ok(RESONANCE_R > RADIANCE_R && RESONANCE_R < AURA_RING_R, 'a circle about the feet, clear of the body, inside the fire\'s ring (AUDIT: strictly)');
   assert.ok(RESONANCE_SQUARE_M < 0.06, `tiny (${RESONANCE_SQUARE_M} m)`);
   assert.ok(RESONANCE_SQUARE_M < RESONANCE_PITCH_M * 0.8 && RESONANCE_SQUARE_M < (2 * Math.PI * RESONANCE_R / RESONANCE_COLUMNS) * 0.6, 'room between them, up a column and round the ring');
-  assert.ok(resonanceRatesWhole(), 'every resonance rate whole over the clock');
-  for (const r of Object.values(RESONANCE_HZ)) assert.ok(Number.isInteger(Math.round(r * AURA_CLOCK_PERIOD * 1e6) / 1e6), `whole: ${r}`);
+  assert.ok(resonanceRatesWhole(), 'every resonance rate whole over the clock, and none stopped');
   for (const c of Object.values(RESONANCE_CRESTS)) assert.ok(Number.isInteger(c) && c > 0, `whole crests round the ring: ${c}`);
   const rgb = (c) => [...c].slice(0, 3).map((x) => +x.toFixed(3));
   assert.deepEqual(Object.keys(RESONANCE_RGB), ['purple'], 'one colour - "the color \'gradient\' would be unnecessary"');
   assert.deepEqual(rgb(RESONANCE_RGB.purple), rgb(TITLE_RGBA.crystalfist), 'the title\'s purple - "Aura, also purple"');
 });
 
-test('CRYSTAL-FIST the columns\' law: each column\'s level between nothing and its top, at least its foot lit; columns differ round the ring; each goes UP AND DOWN over time; the shader\'s level IS node\'s - the same arithmetic, run; the wrap whole (mutants: the bounce frozen, the beat dropped, the shader\'s level drifted from node\'s)', () => {
-  const f = glslFunctions(AURA_FS, { uTime: 0, uKindle: 1, uRingR: RESONANCE_R, uFlameH: RESONANCE_H });
+/** AUDIT: the level's law at recorded moments - the wave, the counter-wave, each column's bounce and the beat all in
+ *  it, so a term dropped, frozen or retimed moves these (float64, node's alone: the GPU is handed the counts). */
+const LEVELS = [[0, 0.37, 0.5125467715120549], [5, 3.3, 0.39510160855532445], [11, 13.3, 0.5558466109861463], [23, 47.9, 0.4041532094309946], [30, 61.25, 0.501381747491689], [47, 119.6, 0.15688039438263884], [17, 88.8, 0.5017048053353554], [40, 7.07, 0.7318089849489025]];
+
+test('CRYSTAL-FIST the columns\' law: the level at recorded moments; each column between its foot and its top; columns differ round the ring; each goes UP AND DOWN over time; kindling, every column\'s foot first and the rest rising after; the wrap whole; every count at once, on a wearer\'s own clock - two wearers do not rise as one (mutants: the bounce frozen, the beat dropped, a wave retimed, the rates back on a six-second loop, the foot unlit while kindling, the seed ignored)', () => {
+  for (const [k, t, want] of LEVELS) assert.ok(Math.abs(resonanceLevel(k, t) - want) < 1e-9, `column ${k} at ${t}: ${resonanceLevel(k, t)} (the law records ${want})`);
   const times = Array.from({ length: 40 }, (_, i) => 0.37 + i * 0.29);
   for (let k = 0; k < RESONANCE_COLUMNS; k++) {
     const lits = times.map((t) => resonanceLit(k, t));
@@ -320,7 +335,6 @@ test('CRYSTAL-FIST the columns\' law: each column\'s level between nothing and i
     let ups = 0, downs = 0;
     for (let i = 1; i < lits.length; i++) { if (lits[i] > lits[i - 1]) ups++; else if (lits[i] < lits[i - 1]) downs++; }
     assert.ok(ups >= 4 && downs >= 4, `column ${k} goes up and down (${ups} up, ${downs} down: ${lits.join(' ')})`);
-    for (const t of [0, 1.3, 7.77, 59.5, 118.2]) assert.ok(Math.abs(f.resonanceLevel(k, t) - resonanceLevel(k, t)) < 1e-12, `the shader's level is node's: column ${k} at ${t}`);
     assert.ok(Math.abs(resonanceLevel(k, 0) - resonanceLevel(k, AURA_CLOCK_PERIOD)) < 1e-9, `the wrap whole: column ${k}`);
   }
   for (const t of times) {
@@ -329,25 +343,43 @@ test('CRYSTAL-FIST the columns\' law: each column\'s level between nothing and i
   }
   const all = times.flatMap((t) => Array.from({ length: RESONANCE_COLUMNS }, (_, k) => resonanceLit(k, t)));
   assert.ok(all.includes(RESONANCE_CELLS) && Math.min(...all) <= 2, `from a square or two to the column's top (${Math.min(...all)} to ${Math.max(...all)})`);
+  // kindling: nothing unkindled; every column's foot from the first moment; the rest rising after
   assert.equal(resonanceLit(3, 5, 0), 0, 'unkindled: none');
-  assert.ok(times.every((t) => resonanceLit(7, t, 0.4) <= resonanceLit(7, t, 1)), 'kindling, lower than whole');
+  for (let k = 0; k < RESONANCE_COLUMNS; k++) assert.equal(resonanceLit(k, 5, 0.05), 1, `kindling, column ${k}'s foot first - out of the ground`);
+  assert.ok(times.every((t) => resonanceLit(7, t, 0.4) <= resonanceLit(7, t, 1)) && times.some((t) => resonanceLit(7, t, 0.4) < resonanceLit(7, t, 1)), 'kindling, lower than whole');
+  // every count at once, on the wearer's own clock
+  const out = new Float32Array(RESONANCE_COLUMNS);
+  assert.equal(resonanceLitInto(out, 13.3, 0.6), out, 'into the list it is handed');
+  assert.deepEqual([...out], Array.from({ length: RESONANCE_COLUMNS }, (_, k) => resonanceLit(k, 13.3, 0.6)));
+  assert.ok(Math.abs(resonanceClock(13.3, 0) - 13.3) < 1e-9, 'a seed of nothing: the frame\'s clock');
+  assert.ok(Math.abs(resonanceClock(13.3 + AURA_CLOCK_PERIOD, 0.25) - (13.3 + 0.25 * AURA_CLOCK_PERIOD)) < 1e-9, 'the frame\'s clock wrapped, then the wearer\'s seed');
+  assert.ok(Math.abs(resonanceClock(13.3, undefined) - 13.3) < 1e-9, 'a wearer with no seed on the frame\'s');
+  // AUDIT: the ring never repeats inside the clock - at 1/2, 1/3 and 1/2 Hz it repeated every six seconds - so no two
+  // seeds rise and fall as one
+  const ringAt = (tt) => [...resonanceLitInto(new Float32Array(RESONANCE_COLUMNS), tt)].join(' ');
+  for (let d = 0.5; d < AURA_CLOCK_PERIOD; d += 0.5) assert.notEqual(ringAt(13.3 + d), ringAt(13.3), `the ring ${d} s on is another ring`);
+  const a = [...resonanceLitInto(new Float32Array(RESONANCE_COLUMNS), resonanceClock(13.3, 0.1))], b = [...resonanceLitInto(new Float32Array(RESONANCE_COLUMNS), resonanceClock(13.3, 0.6))];
+  assert.notDeepEqual(a, b, 'two wearers side by side do not rise and fall as one');
 });
 
-/** The resonance's colour at a point - the shader's own main(), run, with `uAura` the resonance's. */
-const resAt = (kind, vP, { t = 13.3, kindle = 1, world = [0, 0, 0], fog = null, eye = [0, 1.2, 5] } = {}) => {
+/** The resonance's colour at a point - the shader's own main(), run, with `uAura` the resonance's and the counts node's
+ *  law hands it (`uResLit`). `px` the metres a pixel spans there (the scene's derivatives). Premultiplied: rgb, cover. */
+const resAt = (kind, vP, { t = 13.3, kindle = 1, world = [0, 0, 0], fog = null, eye = [0, 1.2, 5], px = 0.001, lits = null } = {}) => {
   const f = glslFunctions(AURA_FS, {
-    vP, vWorld: world, uKind: kind, uAura: 5, uTime: t, uSeed: 0.37, uKindle: kindle, uRingR: RESONANCE_R, uGroundR: AURA_GROUND_R,
+    vP, vWorld: world, uKind: kind, uAura: 5, uTime: t, uSeed: 0, uKindle: kindle, uRingR: RESONANCE_R, uGroundR: AURA_GROUND_R,
     uFlameH: RESONANCE_H, uFogMode: fog ? 2 : 0, uFogDensity: fog?.density ?? 0, uFogRange: [0, 1], uCamPos: eye, uAt: [0, 0, 0], uFocus: [0, 0, 0, 0],
+    uResLit: lits ?? [...resonanceLitInto(new Float32Array(RESONANCE_COLUMNS), t, kindle)],
+    dFdx: () => [px, 0, 0], dFdy: () => [0, px, 0],
   });
   f.main();
   return f.globals.o;
 };
 const lum = (c) => c[0] + c[1] + c[2];
 const near3 = (c, want) => [0, 1, 2].every((i) => Math.abs(c[i] - want[i]) < 1e-3);
-/** Square j of column k on the wall: its middle in (u, v), and a point across the gap beside it. */
+/** Square j of column k on the wall: its middle in (u, v). */
 const square = (k, j) => [(k + 0.5) / RESONANCE_COLUMNS, ((j + 0.5) * RESONANCE_PITCH_M) / RESONANCE_H];
 
-test('CRYSTAL-FIST the resonance\'s wall, the shader RUN: every square the law stands lit is lit, in the purple itself and nothing else; every square over a column\'s top dark; the gaps between squares dark, up a column and round the ring; another moment, other squares; added onto the frame; unkindled nothing, half kindled lower; the wrap whole; the vertex half stands it at its radius to its height (mutants: the count off by one, the gap filled, the colour drifted, the kindle dropped)', () => {
+test('CRYSTAL-FIST the resonance\'s wall, the shader RUN: every square node\'s count stands lit is lit - the purple itself, covering whole - and every square over a column\'s top is nothing; the gaps between squares nothing, up a column and round the ring; an edge a pixel wide; far off, a cell its average cover and no moire; another moment, other squares; unkindled nothing, kindling only the feet; the vertex half stands it at its radius to its height (mutants: the count off by one, the counts ignored, the gap filled, the colour drifted, the fade dropped)', () => {
   const P = RESONANCE_RGB.purple;
   let litN = 0, darkN = 0;
   for (const t of [3.3, 13.3, 47.9]) {
@@ -355,34 +387,38 @@ test('CRYSTAL-FIST the resonance\'s wall, the shader RUN: every square the law s
       const n = resonanceLit(k, t);
       for (let j = 0; j < RESONANCE_CELLS; j++) {
         const c = resAt(1, square(k, j), { t });
-        if (j < n) { assert.ok(near3(c, P), `column ${k} square ${j} lit at ${t}: ${c.slice(0, 3).map((x) => x.toFixed(3))}`); litN++; }
-        else { assert.equal(lum(c), 0, `column ${k} square ${j} dark over its top (${n}) at ${t}`); darkN++; }
+        if (j < n) { assert.ok(near3(c, P) && Math.abs(c[3] - 1) < 1e-9, `column ${k} square ${j} lit at ${t}, covering whole: ${c.map((x) => x.toFixed(3))}`); litN++; }
+        else { assert.deepEqual(c, [0, 0, 0, 0], `column ${k} square ${j} nothing over its top (${n}) at ${t}`); darkN++; }
       }
     }
   }
   assert.ok(litN > 40 && darkN > 40, `both judged (${litN} lit, ${darkN} dark)`);
-  assert.equal(resAt(1, square(5, 0))[3], 1, 'alpha 1 under ONE, ONE: the light is ADDED');
-  // the gaps: between two squares of a lit column, and between two columns, darker than a square by far
-  const k = 0, t = 13.3, n = resonanceLit(k, t);
-  assert.ok(n >= 2, 'a column with two squares to judge between');
+  // the counts ARE what it draws: a column handed a count is drawn to it, whatever the clock says
+  const lits = Array(RESONANCE_COLUMNS).fill(1); lits[11] = 7;
+  assert.ok(lum(resAt(1, square(11, 6), { lits })) > 0 && lum(resAt(1, square(11, 7), { lits })) === 0 && lum(resAt(1, square(12, 1), { lits })) === 0, 'drawn to the count it is handed - node\'s, never a float32 sin\'s');
+  // the gaps, and the edge
+  const t = 13.3, k = [...Array(RESONANCE_COLUMNS).keys()].find((kk) => resonanceLit(kk, t) >= 2);
+  assert.ok(k !== undefined, 'a column with two squares to judge between');
   const between = resAt(1, [(k + 0.5) / RESONANCE_COLUMNS, RESONANCE_PITCH_M / RESONANCE_H], { t });
   const beside = resAt(1, [(k + 1) / RESONANCE_COLUMNS, (0.5 * RESONANCE_PITCH_M) / RESONANCE_H], { t });
-  assert.ok(lum(between) < 0.25 * lum(P) && lum(beside) < 0.25 * lum(P), `squares, not bars: up the column ${lum(between).toFixed(3)}, round the ring ${lum(beside).toFixed(3)}`);
+  assert.deepEqual([between[3], beside[3]], [0, 0], 'squares, not bars: nothing up the column between them or round the ring between columns');
+  const edgeAt = (dx) => resAt(1, [(k + 0.5) / RESONANCE_COLUMNS + dx / (2 * Math.PI * RESONANCE_R), square(k, 0)[1]], { t, px: 0.004 })[3];
+  const half = RESONANCE_SQUARE_M / 2;
+  assert.ok(Math.abs(edgeAt(half) - 0.5) < 0.02 && edgeAt(half - 0.004) > 0.95 && edgeAt(half + 0.004) < 0.05, `an edge a pixel wide (${edgeAt(half - 0.004).toFixed(2)}, ${edgeAt(half).toFixed(2)}, ${edgeAt(half + 0.004).toFixed(2)})`);
+  // far off - a pixel as wide as a cell - every point of a lit cell its average cover: no row to moire
+  const pitchX = 2 * Math.PI * RESONANCE_R / RESONANCE_COLUMNS, avg = RESONANCE_SQUARE_M ** 2 / (pitchX * RESONANCE_PITCH_M);
+  for (const [du, dv] of [[0, 0], [0.4, 0], [0, 0.45], [0.45, 0.45]]) {
+    const c = resAt(1, [(k + 0.5 + du) / RESONANCE_COLUMNS, (0.5 + dv) * RESONANCE_PITCH_M / RESONANCE_H], { t, px: 0.08 });
+    assert.ok(Math.abs(c[3] - avg) < 1e-6 && near3(c, P.map((x) => x * avg)), `far off, the cell's average cover everywhere in it (${c[3].toFixed(4)} vs ${avg.toFixed(4)})`);
+  }
   // another moment, other squares
   let moved = 0;
-  for (let kk = 0; kk < RESONANCE_COLUMNS; kk += 4) for (let j = 0; j < RESONANCE_CELLS; j++) if ((lum(resAt(1, square(kk, j), { t: 3.3 })) > 0) !== (lum(resAt(1, square(kk, j), { t: 3.8 })) > 0)) moved++;
+  for (let kk = 0; kk < RESONANCE_COLUMNS; kk += 4) for (let j = 0; j < RESONANCE_CELLS; j++) if ((resAt(1, square(kk, j), { t: 3.3 })[3] > 0) !== (resAt(1, square(kk, j), { t: 3.8 })[3] > 0)) moved++;
   assert.ok(moved >= 6, `up and down out of the ground (${moved} squares changed in half a second)`);
   // kindling
   assert.equal(lum(resAt(1, square(5, 0), { kindle: 0 })), 0, 'unkindled: nothing');
   const tall = [...Array(RESONANCE_COLUMNS).keys()].find((kk) => resonanceLit(kk, 13.3) >= 4);
-  assert.ok(tall !== undefined, 'a tall column to judge');
-  const top = resonanceLit(tall, 13.3) - 1;
-  assert.ok(lum(resAt(1, square(tall, top))) > 0 && lum(resAt(1, square(tall, top), { kindle: 0.3 })) === 0, 'half kindled, the column not yet at its top');
-  // the wrap
-  for (let i = 0; i < 12; i++) {
-    const p = square((i * 7) % RESONANCE_COLUMNS, i % RESONANCE_CELLS);
-    assert.ok(Math.abs(lum(resAt(1, p, { t: 0 })) - lum(resAt(1, p, { t: AURA_CLOCK_PERIOD }))) < 1e-6, 'the wall at the wrap is the wall at zero');
-  }
+  assert.ok(lum(resAt(1, square(tall, 0), { kindle: 0.05 })) > 0 && lum(resAt(1, square(tall, 1), { kindle: 0.05 })) === 0, 'kindling: its foot lit, nothing over it - rising out of the ground');
   assert.ok(lum(resAt(1, square(5, 0), { world: [0, 0, 400], fog: { density: 0.01 } })) < lum(resAt(1, square(5, 0))) * 0.1, 'the fog thins it');
   // the vertex half: the strip's foot on the ring, its top the tallest column's
   const I = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
@@ -392,24 +428,25 @@ test('CRYSTAL-FIST the resonance\'s wall, the shader RUN: every square the law s
   assert.ok(near(vs([0.25, 1]), [10, 2 + AURA_LIFT_M + RESONANCE_H, -4 + RESONANCE_R]), 'its top the tallest column\'s');
 });
 
-test('CRYSTAL-FIST the resonance\'s ground, the shader RUN: a square at each column\'s foot on the ring, purple; dark between them, within the ring and past it; the quad\'s corners round; unkindled nothing (mutants: the feet dropped, the feet off their columns)', () => {
-  const R = RESONANCE_R;
+test('CRYSTAL-FIST the resonance\'s ground, the shader RUN: a square at each column\'s foot on the ring, the purple covering whole; nothing between them, within the ring and past it - and the middle, where the angle is no number, nothing (AUDIT: it painted white); the quad\'s corners round; unkindled nothing (mutants: the feet dropped, the feet off their columns, the ring\'s guard dropped)', () => {
+  const R = RESONANCE_R, P = RESONANCE_RGB.purple;
   for (let k = 0; k < RESONANCE_COLUMNS; k++) {
     const a = ((k + 0.5) / RESONANCE_COLUMNS) * Math.PI * 2, c = resAt(0, [Math.cos(a) * R, Math.sin(a) * R]);
-    assert.ok(lum(c) > 0.6 * lum(RESONANCE_RGB.purple), `column ${k}'s foot lit (${lum(c).toFixed(3)})`);
-    assert.ok(purple(c), `in the purple: ${c.slice(0, 3).map((x) => x.toFixed(3))}`);
+    assert.ok(near3(c, P) && Math.abs(c[3] - 1) < 1e-9, `column ${k}'s foot, the purple covering whole: ${c.map((x) => x.toFixed(3))}`);
     const g = (k / RESONANCE_COLUMNS) * Math.PI * 2;
-    assert.ok(lum(resAt(0, [Math.cos(g) * R, Math.sin(g) * R])) < 0.5 * lum(c), `dark between column ${k - 1} and ${k}'s feet`);
+    assert.equal(resAt(0, [Math.cos(g) * R, Math.sin(g) * R])[3], 0, `nothing between column ${k - 1} and ${k}'s feet`);
   }
-  assert.ok(lum(resAt(0, [0.1, 0.2])) < 0.02, 'dark within the ring');
-  assert.ok(lum(resAt(0, [0, R + 0.35])) < 0.02, 'and past it');
+  for (const p of [[0, 0], [1e-9, 0], [0.1, 0.2], [0, R - 0.1], [0, R + 0.1], [0, R + 0.35]]) {
+    const c = resAt(0, p);
+    assert.ok(c.every((x) => x === 0), `nothing off the ring at ${p} - never a NaN (${c})`);
+  }
   assert.throws(() => resAt(0, [AURA_GROUND_R * 0.8, AURA_GROUND_R * 0.8]), GlslDiscard, 'the quad\'s corners are round');
-  assert.equal(lum(resAt(0, [R, 0.01], { kindle: 0 })), 0, 'unkindled: nothing');
+  assert.equal(resAt(0, [R, 0.01], { kindle: 0 })[3], 0, 'unkindled: nothing');
 });
 
-test('CRYSTAL-FIST the resonance\'s draw: each wearer in its own look - the radiance and the resonance - the resonance\'s kind, radius and height set beside its place, its ground and its wall drawn and no symbols; one program (mutants: the look\'s kind)', () => {
+test('CRYSTAL-FIST the resonance\'s draw: each wearer in its own look - the radiance added, the resonance premultiplied and handed back added - the resonance\'s kind, radius and height beside its place, node\'s counts on its own clock handed over, its ground and its wall drawn and no symbols; one program (mutants: the look\'s kind, the counts not handed, the seed ignored, added not covered)', () => {
   const calls = [];
-  const gl = new Proxy({ VERTEX_SHADER: 1, FRAGMENT_SHADER: 2, COMPILE_STATUS: 3, LINK_STATUS: 4, ARRAY_BUFFER: 5, STATIC_DRAW: 6, FLOAT: 7, TRIANGLES: 8, BLEND: 9, ONE: 10, CULL_FACE: 11, POLYGON_OFFSET_FILL: 12 }, {
+  const gl = new Proxy({ VERTEX_SHADER: 1, FRAGMENT_SHADER: 2, COMPILE_STATUS: 3, LINK_STATUS: 4, ARRAY_BUFFER: 5, STATIC_DRAW: 6, FLOAT: 7, TRIANGLES: 8, BLEND: 9, ONE: 10, CULL_FACE: 11, POLYGON_OFFSET_FILL: 12, ONE_MINUS_SRC_ALPHA: 13 }, {
     get(tg, k) {
       if (k in tg) return tg[k];
       return (...a) => { calls.push([k, ...a]); if (k === 'getShaderParameter' || k === 'getProgramParameter') return true; if (k === 'getUniformLocation') return a[1]; return {}; };
@@ -419,12 +456,17 @@ test('CRYSTAL-FIST the resonance\'s draw: each wearer in its own look - the radi
   assert.equal(calls.filter((c) => c[0] === 'createProgram').length, 1, 'one program for every aura');
   const I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
   calls.length = 0;
-  r.draw([{ at: [1, 0, 1], aura: 'resonance' }, { at: [5, 0, 5], aura: 'radiance' }], I, I, [0, 0, 0], 10);
+  r.draw([{ at: [1, 0, 1], aura: 'resonance', seed: 0.3, kindle: 0.7 }, { at: [5, 0, 5], aura: 'radiance' }], I, I, [0, 0, 0], 10);
   assert.equal(r.drawn, 2);
   const per = (name, kind) => calls.filter((c) => c[0] === kind && c[1] === name).map((c) => c[2]);
   assert.deepEqual(per('uAura', 'uniform1i'), [2, 5], 'farthest first: the radiance, then the resonance');
   assert.deepEqual(per('uRingR', 'uniform1f'), [RADIANCE_R, RESONANCE_R], 'each at its own radius');
   assert.deepEqual(per('uFlameH', 'uniform1f'), [RADIANCE_H, RESONANCE_H], 'each wall at its own height');
+  const handed = calls.filter((c) => c[0] === 'uniform1fv' && c[1] === 'uResLit');
+  assert.equal(handed.length, 1, 'the counts handed for the resonance alone');
+  assert.deepEqual([...handed[0][2]], [...resonanceLitInto(new Float32Array(RESONANCE_COLUMNS), resonanceClock(10, 0.3), 0.7)], 'node\'s counts, on the wearer\'s own clock and kindle');
+  const blends = calls.filter((c) => c[0] === 'blendFunc' || c[0] === 'uniform1i' && c[1] === 'uAura').map((c) => (c[0] === 'blendFunc' ? c.slice(1).join('/') : `aura${c[2]}`));
+  assert.deepEqual(blends.slice(0, 5), ['10/10', 'aura2', 'aura5', '10/13', '10/10'], 'added for the radiance; the resonance premultiplied (ONE, ONE_MINUS_SRC_ALPHA) and the blend handed back');
   const draws = calls.filter((c) => c[0] === 'drawArrays').map((c) => c[3]);
   assert.deepEqual(draws, [6, AURA_STEPS * 6, 6, AURA_STEPS * 6], 'the resonance\'s ground and its wall on the strip, no symbols');
   assert.equal(calls.filter((c) => c[0] === 'useProgram').length, 1, 'the program bound once for the frame');
