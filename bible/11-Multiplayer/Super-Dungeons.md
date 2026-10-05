@@ -493,3 +493,22 @@ the pixel's centre, and the slot needs no spot law.
 
 Pins: `test/sd1_sdlaw.test.js` (9); `tools/mutants/sd1.json` (17, all dead - one survivor at first, the standing
 check under an early `next`, now pinned). Wired by nothing yet: SD2 places the Hollow, SD3 runs the director.
+
+### SD2a - shipped 2026-10-05 (the site's law)
+
+`systems/sdSite.js`, pure over the map data every client holds: `sdCities` (a region's places ranked by the hubs' own
+claim - `systems/regionHubs.js` exports its `outranks` for it - or the Bay's eight largest cities), `findSdSite` (a
+pixel the GATE's own scan calls suitable - `systems/gateSite.js scanGatePixels`, so the Hollow inherits every one of
+its tests: land, no location on it or its neighbours, no spawned dungeon rolled there, a province's - whose nearest
+fast-travel town is the city, two to four pixels out, by the slot's roll; a city with none passes to the next),
+`sdTemplates`/`pickSdTemplate` (a labyrinth or a keep of twelve blocks or more with a spawn's clearance), and
+`sdHollowLocation` (the template cloned on the site under the slot's OWN map id - `sdSalt`, 2049..4095, never
+`WORLD_SALT` - so a later Hollow on the same pixel is another dungeon with another room and another memory; named;
+`superTier`; a spawned dungeon's machinery). The design's "Chebyshev 2 to 5" is the gate scan's 2 to 4.
+
+Known, recorded: a gate day may roll the Hollow's pixel for its own (the gate's site is the clock's alone, and the
+Hollow is no roll the gate's scan can see) - a chance of about one in the region's suitable pixels per day of a
+Hollow's life; both then stand in the pixel.
+
+Pins: `test/sd2_sdsite.test.js` (5, over the real gate scanner); `tools/mutants/sd2.json` (13, all dead - one
+survivor at first, a fixture whose cities outnumbered eight, now pinned with fewer).

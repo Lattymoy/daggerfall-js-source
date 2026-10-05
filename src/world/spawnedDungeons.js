@@ -140,7 +140,7 @@ export const pickTemplate = (templates, salt, px, py) => (templates?.length ? te
  * property of WHERE it stands - region, politic, climate (`where`, from the host, which owns the map files).
  * `locationIndex` is -1: the quest machine and the music read it as "a real table row", and this is none.
  * @param {object} template a real, non-main-story location with hasDungeon
- * @param {{salt:number, px:number, py:number, where?:{regionIndex?:number, regionName?:string, politic?:number, climate?:object}}} o
+ * @param {{salt:number, px:number, py:number, where?:{regionIndex?:number, regionName?:string, politic?:number, climate?:object}, elite?:boolean}} o
  */
 export function synthesizeDungeonLocation(template, { salt, px, py, where = {}, elite = false }) {
   const mapId = spawnedMapId(salt, px, py);
