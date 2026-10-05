@@ -355,6 +355,16 @@ export const CREDITS = Object.freeze({
       vendor: Object.freeze(['detailed-ships']),
       link: 'https://www.nexusmods.com/daggerfallunity/mods/1080',
     }),
+    Object.freeze({
+      title: 'Betony Restored',
+      version: '1.1.3',
+      author: 'Cliffworms',
+      what: 'The places of the Betony demo on the island of Betony (BET1): Betony City under Lord Mogref - its palace, its marketplace whose traders keep the hours and the weather, its guilds - four villages, seven dungeons and thirteen homes, farms, a tavern and shrines, connected by roads. The sitting patrons are Kamer’s, the extinguished lights Ralzar’s and the Mara statue WilhelmBlack’s and King of Worms’, as the author’s readme credits them; the marketplace’s schedule script is Hazelnut’s; the pieces the mod borrows from Daggerfall Expanded Textures and the RMB Resource Pack are the port’s own stand-ins.',
+      terms: 'Distributed under the author’s own terms, which ask only for credit: “The mod may be distributed/translated without my authorization as long as I am credited as the author.” The author’s places and edits, script and drawings are vendored; the blocks and the classic pictures are rebuilt from your own game files - see vendor/betony-restored/README.md for the permission record.',
+      contact: 'Cliffworms, through the Nexus page (daggerfallunity mod 515)',
+      vendor: Object.freeze(['betony-restored']),
+      link: 'https://www.nexusmods.com/daggerfallunity/mods/515',
+    }),
     // WD3: carademono's two town mods, one entry each (two vendors, two pages).
     Object.freeze({
       title: 'Beautiful Villages of Daggerfall',

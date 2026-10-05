@@ -699,8 +699,9 @@ import { discoverRandomLocation, discoverLocation, undiscoverBuilding, discoverB
 import {
   WEATHER_TYPES, fogForWeather, scaleFogForDistance, skyOffsetForWeather, weatherSunlightScale,
   weatherRng, fogFactor, precipitationForWeather,
-  LightningPlayer,
+  LightningPlayer, weatherFlags,
 } from '../world/weather.js';
+import { betonyLoaded, updateExteriorNpcs as betonyUpdateExteriorNpcs, createBetonyEvents, withBetonyRoads } from '../systems/betonyRestored.js';   // BET1: Betony Restored's script - its street people by the hour and the rain; its roads
 import { PrecipitationRenderer } from '../render/precipitation.js';
 import { warmPrograms } from '../render/warmPrograms.js';
 import { ROTOR_HUB, rotorPhase, advanceRotor, mountRotor, MILL_SOUND, millSoundPosition } from '../world/windmills.js';   // WM2b: the sails; WM4c: the hum
@@ -1095,7 +1096,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       rebuildRoadless();
       return;
     }
-    if (his) { terrainGen.setRoadsData({ ...his, ...roadSwitches }, (st) => console.log(`[roads] Basic Roads, 1:1: ${st.roadPixels ?? '?'} road pixels (Hazelnut)${roadSwitches.water ? ', rivers and streams on' : ''}${roadSwitches.smooth ? '' : ', smoothing off'}`)); rebuildRoadless(); return; }
+    if (his && betonyLoaded()) his = withBetonyRoads(his);   // BET1: the mod's roadData and trackData replace Basic Roads' own while it is loaded - Hazelnut's with the island's roads drawn in
+    if (his) { terrainGen.setRoadsData({ ...his, ...roadSwitches }, (st) => console.log(`[roads] Basic Roads, 1:1: ${st.roadPixels ?? '?'} road pixels (Hazelnut${his.stats?.betony ? ', Betony Restored\'s' : ''})${roadSwitches.water ? ', rivers and streams on' : ''}${roadSwitches.smooth ? '' : ', smoothing off'}`)); rebuildRoadless(); return; }
     console.warn('[roads] Basic Roads data did not load - generating our own network');
     terrainGen.setRoads(settlementsOf(maps), logRoads, roadSwitches);
     rebuildRoadless();
@@ -4658,6 +4660,26 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  in the world (:1477), and `worldQuickLoad` likewise restores the
    *  session before `_teleportToPixel` rebuilds every pixel.
    */
+  /** BET1: the person's host, marking the quest's word on it - `questAway` when SetupIndividualStaticNPC's away arm (or
+   *  any later quest act) set it inactive - so Betony Restored's street-people update never stands a person back up
+   *  that a quest has placed somewhere else (BET-FIX, systems/betonyRestored.js updateExteriorNpcs). */
+  function betonyAwareHost(pn) {
+    const host = makeStaticNpcHost(pn);
+    const setActive = host.setActive;
+    host.setActive = (active) => { pn.questAway = !active; setActive(active); };
+    return host;
+  }
+  /** BET1: Betony Restored's UpdateExteriorNPCs over every built pixel's street people (DFU walks the whole exterior
+   *  parent - every location the stream holds) - the day and the rain as this host's sky and weather have them; a
+   *  pixel whose people changed is stood again. Nothing while the mod is not loaded, nothing indoors (the mod's own
+   *  IsPlayerInTown(false, true)). */
+  function betonyStreetPeople() {
+    if (!betonyLoaded()) return;
+    const ctx = { locationType: _musicLocationType(), inside: (modes?.mode ?? 'exterior') !== 'exterior', isDay: !isNight(minuteNow()), isRaining: weatherFlags(weather).raining };
+    for (const p of [...built.values()]) {
+      if (p.npcs?.length && betonyUpdateExteriorNpcs(p.npcs, ctx)) standPixelNpcs(p);
+    }
+  }
   async function standPixelNpcs(entry) {
     if (!entry?.npcs?.length) return;
     const machine = questBridge?.machine ?? null;
@@ -4667,7 +4689,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // DaggerfallInterior's alone, so nothing flips this one after
     // layout and the hookless (flag-only) shape is the whole story.
     if (!entry.npcQuestPass) {
-      entry.npcQuestPass = setupExteriorQuestStaticNpcs(entry.npcs, machine, makeStaticNpcHost);
+      entry.npcQuestPass = setupExteriorQuestStaticNpcs(entry.npcs, machine, betonyAwareHost);
     }
     // The stand: one batch per archive/record over the ACTIVE NPCs,
     // appended to the pixel's own list so the frame walk draws them,
@@ -5399,6 +5421,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // transition pair edges on. ResetState (:398-401) drops it WITHOUT
   // firing exit - the teleport core is the port's ResetState.
   let _wasInLocationRect = false;
+  const betonyEvents = createBetonyEvents();   // BET1: the hour's and the weather's edges Betony Restored's script listens on
   /** AUDIT-SEATS C4: whether the player still stands in the location `mapId` names - the rect's own edge, and that
    *  location (an arrival said late, once the seats' read answers, is said only there). */
   const stillAt = (mapId) => _wasInLocationRect && _musicLoc?.mapTableData?.mapId === mapId;
@@ -25657,6 +25680,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // told nobody until its player walked out, and a partner in the same house finished their own copy meanwhile. What
     // this frame's tick queues goes out on the next frame, in every mode.
     questSyncTick();
+    // BET1: Betony Restored's UpdateExteriorNPCs on WorldTime.OnDawn / OnDusk and WeatherManager.OnWeatherChange (InitMod,
+    // IL_02ab-02d9) - ABOVE THE MODAL GATE, as the ambient text's tick is: the clock raises its edges indoors too, and
+    // the mod's own IsPlayerInTown(false, true) is what makes them nothing there. OnEnterLocationRect is the edge below.
+    if (betonyLoaded() && betonyEvents.tick(Math.floor(minuteNow() / 60), weather)) betonyStreetPeople();
     // AUDIT 66 F11: the torch sweep runs HERE, above the modal
     // return, because that is where the transition is. It used to sit
     // with the tick at the foot of the exterior frame - which this
@@ -27451,6 +27478,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // the whole handler is under `!isPlayerInside` (:1362), which
         // is this branch of the frame loop.
         if (holidayTextPrimesFor(_musicLocationType())) _holidayText.enterLocationRect(_musicLoc);
+        betonyStreetPeople();   // BET1: PlayerGPS.OnEnterLocationRect -> UpdateExteriorNPCs_OnEnterLocationRect (IL_038f)
       } else if (!_inRect) {
         ambience.setCemeteryNearby(false);
       }

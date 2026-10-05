@@ -279,7 +279,7 @@ test('DEGENERATE-BAKE ROOT: every place agents live is kept - a foe’s room wit
 // The field dungeon itself, and Privateer's Hold beside it, through the host's own parameters. The collider is laid
 // out exactly as buildDungeonContext lays it (dungeonContext.js:628-791: every placement's model in the 'dungeon'
 // bucket save the movers and special doors, which the action system files under their own keys with the doors),
-// each model built as the pipeline builds it (dataPipeline.js:373: DUNGEON-SEAMS' patchSeams over the archive's mesh -
+// each model built as the pipeline builds it (dataPipeline.js:379: DUNGEON-SEAMS' patchSeams over the archive's mesh -
 // AUDIT PRE-MERGE 0928 N6: the raw mesh is not the floor a player walks, since the merge brought the seams).
 async function realDungeon(which) {
   const { MapsFile, longitudeLatitudeToMapPixel } = await import('../src/formats/mapsFile.js');
@@ -301,7 +301,7 @@ async function realDungeon(which) {
   const blocks = new BlocksFile(); blocks.load(rd('BLOCKS.BSA'));
   const arch = new Arch3dFile(); arch.load(rd('ARCH3D.BSA'));
   let loc;
-  if (which === 'm1204685') {   // world.js:1174-1214's index, :1852-1858's pick: map pixel (109,156), salt 1
+  if (which === 'm1204685') {   // world.js:1176-1216's index, :1854-1860's pick: map pixel (109,156), salt 1
     const index = new Map();
     for (let r = 0; r < maps.regionCount; r++) { const region = maps.getRegion(r); if (!region) continue;
       for (let l = 0; l < region.locationCount; l++) { const L = maps.getLocation(r, l); if (!L?.exterior?.exteriorData) continue;

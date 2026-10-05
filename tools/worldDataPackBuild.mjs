@@ -5,10 +5,12 @@
 //   node tools/worldDataPackBuild.mjs <arena2> <bundle.dfmod> <vendor> <out.json> [--title T] [--author A] [--version V]
 //
 // What it does, file by file, for every world-data TextAsset in the bundle that DFU's WorldDataReplacement reads
-// (`location-<r>-<i>.json`, `<BLOCK>.RMB.json`; a TextAsset no DFU name reaches is reported and not carried):
+// (`location-<r>-<i>.json`, `<BLOCK>.RMB.json`, and since BET1 `locationnew-<name>-<region>.json`; a TextAsset no DFU
+// name reaches is reported and not carried):
 //   1. parses the author's file as FullSerializer does (`\0` and `\a` are its escapes, not JSON's);
 //   2. takes its BASE - the classic location (MAPS.BSA) or block (BLOCKS.BSA) of its own name; for a block
-//      BLOCKS.BSA has not got, the classic block or the pack's own file it is nearest to (fewest bytes of edit);
+//      BLOCKS.BSA has not got, the classic block or the pack's own file it is nearest to (fewest bytes of edit); for a
+//      NEW location (BET1) nothing - no classic location is one, so the author's record is carried whole;
 //   3. writes the EDIT, subtree by subtree, each the smaller of WD1's op script and a whole value, values encoded:
 //      a large piece the classic game has is a reference into the player's BLOCKS.BSA (with the author's edits to
 //      it, when that is smaller), a large piece the pack already holds is its node number, records are rows;
@@ -45,21 +47,30 @@ export function parseFullSerializerJson(text) {
   return JSON.parse(start === 0 ? text : out + text.slice(start));
 }
 
-/** The DFU file name a bundle TextAsset is looked up by, or null (DFU's asset lookup is case-blind; the port's door
- *  asks with the block name as the location spells it, upper case). */
+/** The DFU file name a bundle TextAsset is looked up by, or null (DFU's asset lookup is case-blind, and so is the
+ *  port's door since BET1 - formats/worldDataReplacement.js `assetKey`; a block is named upper case, as a classic
+ *  location spells it). BET1: a NEW location (`locationnew-<name>-<region><variant>.json`, the region suffix all its
+ *  lookup reads) keeps its name as the path spells it - the manifest's spelling, which the container path lowercased. */
 export function dfuWorldDataName(containerPath) {
   const base = containerPath.split('/').pop();
   if (/^location-\d+-\d+\.json$/i.test(base)) return base.toLowerCase();
+  if (/^locationnew-.+-\d+[^-]*\.json$/i.test(base)) return base;
   const m = /^(.+\.(?:rmb|rdb|rdi))\.json$/i.exec(base);
   if (m) return `${m[1].toUpperCase()}.json`;
   return null;
 }
+/** BET1: whether a DFU world-data name is a NEW location's (WorldDataReplacement.GetDFRegionAdditionalLocationData's
+ *  `StartsWith("locationnew-")`, :164). */
+export const isNewLocationName = (name) => /^locationnew-/i.test(name);
 
 const sha256 = (s) => createHash('sha256').update(s).digest('hex');
 const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 const size = (v) => JSON.stringify(v).length;
 
-/** The bundle's world-data TextAssets: Map<dfuName, {path, text}>, and the ones no DFU name reaches. */
+/** The bundle's world-data TextAssets: Map<dfuName, {path, text}>, and the ones no DFU name reaches. BET1: and
+ *  `order` - every packed name in the order of the manifest's Files list, which is the order DFU's FindAssets walks a
+ *  mod's assets in (Mod.FindAssetNames, Mod.cs:435) and so the order a region's NEW locations take their indices in;
+ *  null for a mod that adds no location (no index hangs on its order). */
 export function bundleWorldData(bytes) {
   const fs = readUnityFs(bytes);
   const main = fs.files.find((f) => !/\.res(S|ource)$/.test(f.path));
@@ -67,14 +78,20 @@ export function bundleWorldData(bytes) {
   const byId = new Map(sf.objects.map((o) => [String(o.pathId), o]));
   const ab = sf.objects.find((o) => o.classId === CLASS_ID.AssetBundle).read();
   const found = new Map(), ignored = [];
+  const texts = [];
   let manifest = null;
   for (const p of ab.m_Container) {
     const path = p.first;
     const o = byId.get(String(p.second.asset.m_PathID));
     if (o?.classId !== CLASS_ID.TextAsset) continue;
     if (/\.dfmod\.json$/i.test(path)) { manifest = new TextDecoder().decode(o.read().m_Script); continue; }
-    if (!/\/worlddata\//i.test(path)) continue;
-    const name = dfuWorldDataName(path);
+    if (/\/worlddata\//i.test(path)) texts.push([path, o]);
+  }
+  // BET1: the container path is lowercased by Unity's bundler; the manifest keeps the author's spelling
+  const files = manifest ? (JSON.parse(manifest).Files ?? []) : [];
+  const spelled = new Map(files.map((f) => [f.toLowerCase(), f]));
+  for (const [path, o] of texts) {
+    const name = dfuWorldDataName(spelled.get(path.toLowerCase()) ?? path);
     const text = new TextDecoder().decode(o.read().m_Script);
     if (!name) { ignored.push(path); continue; }
     if (found.has(name)) {
@@ -83,7 +100,13 @@ export function bundleWorldData(bytes) {
     }
     found.set(name, { path, text });
   }
-  return { files: found, ignored, manifest };
+  let order = null;
+  if ([...found.keys()].some(isNewLocationName)) {
+    order = [];
+    for (const f of files) { const n = /\/worlddata\//i.test(f) ? dfuWorldDataName(f) : null; if (n && found.has(n) && !order.includes(n)) order.push(n); }
+    for (const n of found.keys()) if (!order.includes(n)) order.push(n);   // a file the manifest does not list keeps the container's order, after
+  }
+  return { files: found, ignored, manifest, order };
 }
 
 // ---- the classic game's pieces, by content ------------------------------------------------------------------------
@@ -344,7 +367,7 @@ export function buildPack({ arena2, bundleBytes, vendor, mod = {}, log = () => {
   if (!blocks.load(new Uint8Array(readFileSync(join(arena2, 'BLOCKS.BSA'))))) throw new Error('BLOCKS.BSA did not load');
   const maps = new MapsFile();
   if (!maps.load(new Uint8Array(readFileSync(join(arena2, 'MAPS.BSA'))), new Uint8Array(readFileSync(join(arena2, 'CLIMATE.PAK'))), new Uint8Array(readFileSync(join(arena2, 'POLITIC.PAK'))))) throw new Error('MAPS.BSA did not load');
-  const { files, ignored, manifest } = bundleWorldData(bundleBytes);
+  const { files, ignored, manifest, order: findOrder } = bundleWorldData(bundleBytes);
   log(`${vendor}: ${files.size} world-data files (${ignored.length} TextAssets no DFU name reaches: ${ignored.map((p) => p.split('/').pop()).join(', ') || 'none'})`);
   const t0 = Date.now();
   const classic = classicIndex(blocks);
@@ -359,6 +382,8 @@ export function buildPack({ arena2, bundleBytes, vendor, mod = {}, log = () => {
   const bases = new Map();
   const pending = [];
   for (const [name, json] of parsed) {
+    // BET1: a NEW location is no classic location's edit - the author's own record, carried whole on no base
+    if (isNewLocationName(name)) { bases.set(name, { base: ['n'], json: {}, depth: 0 }); continue; }
     const loc = /^location-(\d+)-(\d+)\.json$/.exec(name);
     if (loc) {
       const [r, i] = [Number(loc[1]), Number(loc[2])];
@@ -390,6 +415,7 @@ export function buildPack({ arena2, bundleBytes, vendor, mod = {}, log = () => {
   }
 
   const out = { format: PACK_FORMAT, vendor, mod, files: {}, nodes: enc.nodes };
+  if (findOrder) out.order = findOrder;   // BET1: the manifest's order - a region's new locations take their indices in it
   let done = 0;
   const order = [...parsed.keys()].sort();
   for (const name of order) {
@@ -416,12 +442,13 @@ export function buildPack({ arena2, bundleBytes, vendor, mod = {}, log = () => {
 }
 
 /** The pack as shipped: each file's entry and each node its own JSON text (read when first wanted), the files other
- *  files are based on named up front, the whole gzipped by the caller. */
+ *  files are based on named up front, the manifest's order where it decides an index (BET1), the whole gzipped by the
+ *  caller. */
 export function serialisePack(pack) {
   const bases = [...new Set(Object.values(pack.files).filter(([, b]) => b?.[0] === 'f').map(([, b]) => b[1]))].sort();
   const files = {};
   for (const name of Object.keys(pack.files).sort()) files[name] = JSON.stringify(pack.files[name]);
-  return JSON.stringify({ format: pack.format, vendor: pack.vendor, mod: pack.mod, bases, ...(pack.classicNames ? { classicNames: pack.classicNames } : {}), files, nodes: pack.nodes.map((n) => JSON.stringify(n)) });
+  return JSON.stringify({ format: pack.format, vendor: pack.vendor, mod: pack.mod, bases, ...(pack.classicNames ? { classicNames: pack.classicNames } : {}), ...(pack.order ? { order: pack.order } : {}), files, nodes: pack.nodes.map((n) => JSON.stringify(n)) });
 }
 
 if (isMain(import.meta.url)) {

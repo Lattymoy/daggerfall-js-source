@@ -7,6 +7,9 @@
 // the port's own drawings: a woven field, a border, a charge or a god's sign, at Daggerfall's own coarse pixel, made
 // the same way every time (no file, no randomness at run time - one seed per picture).
 //
+// BET1 (2026-10-05): Betony Restored hangs DET's tapestry and banner of Betony on its city's walls and in Lord Mogref's
+// palace - two more of the port's own, appended (records 48 and 49), so no record above moves.
+//
 // One archive, `TOWN_PICTURE_ARCHIVE`, past every classic and mod archive the port knows; each record a picture
 // (`TOWN_PICTURES`, by record). The models that wear them name (archive, record) as any model names a classic
 // texture, so they upload through the same door (systems/textureReplacement.js, `standIn` entries built here).
@@ -83,6 +86,7 @@ const SIGNS = Object.freeze({
   tower: (u, v) => (Math.abs(u) < 0.46 && v > -0.45 && v < 0.85) || (v > -0.8 && v <= -0.45 && Math.abs(u) < 0.66 && (Math.floor((u + 0.66) / 0.26) % 2 === 0)),
   star: (u, v) => starPolygon(u, v),
   stripes: (u, v) => Math.floor((v + 1) * 3) % 2 === 0,
+  waves: (u, v) => { const w = v - Math.sin(u * Math.PI * 1.5) * 0.12; return Math.abs(u) < 0.9 && [-0.45, 0, 0.45].some((b) => Math.abs(w - b) < 0.11); },   // BET1: Betony, an island of the Bay
 });
 
 // ---- the pictures --------------------------------------------------------------------------------------------------
@@ -164,6 +168,10 @@ const REGION = Object.freeze({
   Santaki: { field: C.red, border: C.gold, sign: 'saltire', ink: C.gold },
   'Abibon-Gora': { field: C.purple, border: C.silver, sign: 'star', ink: C.silver },
 });
+/** BET1: the regions whose arms came later (Betony Restored's), drawn the same way - after every record above. */
+const REGION_LATER = Object.freeze({
+  Betony: { field: C.teal, border: C.silver, sign: 'waves', ink: C.white },
+});
 // The Eight - each in a field and a sign the port gives them (the faiths' own colours as the temples wear them nowhere in data).
 const DIVINE = Object.freeze({
   Akatosh: { field: C.blueDark, border: C.gold, sign: 'hourglass', ink: C.gold },
@@ -200,11 +208,15 @@ export const TOWN_PICTURES = Object.freeze([
   ...RUGS.map((s, k) => ({ name: `rug ${k + 1}`, draw: () => rug({ ...s, seed: 601 + k }) })),                                               // 40-43
   { name: 'leaves', draw: () => foliage(701) },                                                                                           // 44
   ...DECOR.slice(0, 3).map((s, k) => ({ name: `small hanging ${k + 1}`, draw: () => patterned({ ...s, w: 16, h: 24, seed: 801 + k }) })),   // 45-47
+  ...Object.entries(REGION_LATER).flatMap(([name, s], k) => [
+    { name: `tapestry of ${name}`, draw: () => tapestry({ ...s, seed: 106 + k }) },                                                     // 48
+    { name: `banner of ${name}`, draw: () => banner({ ...s, seed: 206 + k }) },                                                         // 49
+  ]),
 ]);
 /** Record numbers by what they are - the models' side of the table above. */
 export const PICTURE = Object.freeze({
-  regionTapestry: (name) => Object.keys(REGION).indexOf(name),
-  regionBanner: (name) => 5 + Object.keys(REGION).indexOf(name),
+  regionTapestry: (name) => (name in REGION_LATER ? 48 + 2 * Object.keys(REGION_LATER).indexOf(name) : Object.keys(REGION).indexOf(name)),
+  regionBanner: (name) => (name in REGION_LATER ? 49 + 2 * Object.keys(REGION_LATER).indexOf(name) : 5 + Object.keys(REGION).indexOf(name)),
   divineTapestry: (god) => 10 + DIVINE_ORDER.indexOf(god),
   divineBanner: (god) => 18 + DIVINE_ORDER.indexOf(god),
   decorative: (k) => 26 + (k % DECOR.length),

@@ -22,9 +22,16 @@ import { FACTION_TYPES } from '../formats/factionFile.js';
 // (RoleplayRealism.cs:1017-1023) - a mod rewrites FLATS.CFG's face for a
 // flat it re-drew, keyed by the flat the person was born as, the last
 // writer winning. The pipeline's flatFaceIndex asks here first.
+// BET1: or a face asked when it is read - `faceIndex` a function answering the face or null (Betony Restored's rules for
+// Flat Replacer write a face only while the mod is loaded, and a mod's picture face only while a mod carries it).
 const _faceOverrides = new Map();
-export function setFlatFaceOverride(archive, record, faceIndex) { if (faceIndex == null) _faceOverrides.delete(`${archive}:${record}`); else _faceOverrides.set(`${archive}:${record}`, faceIndex | 0); }
-export const flatFaceOverride = (archive, record) => _faceOverrides.get(`${archive}:${record}`) ?? null;
+export function setFlatFaceOverride(archive, record, faceIndex) { if (faceIndex == null) _faceOverrides.delete(`${archive}:${record}`); else _faceOverrides.set(`${archive}:${record}`, typeof faceIndex === 'function' ? faceIndex : faceIndex | 0); }
+export const flatFaceOverride = (archive, record) => {
+  const v = _faceOverrides.get(`${archive}:${record}`);
+  if (typeof v !== 'function') return v ?? null;
+  const face = v();
+  return face == null ? null : face | 0;
+};
 export function _resetFlatFaceOverrides() { _faceOverrides.clear(); }
 
 /** StaticNPC.Context (:113-118). */

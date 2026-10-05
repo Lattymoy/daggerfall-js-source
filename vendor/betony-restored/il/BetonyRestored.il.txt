@@ -1,0 +1,217 @@
+==== TYPE .<Module> (fields: [])
+==== TYPE BetonyRestored.BetonyRestoredMod (fields: ['npcFlagHideDay', 'npcFlagHideNight', 'npcFlagHideWeather', 'mod'])
+
+---- BetonyRestoredMod::Init rva=2050
+  maxstack=8 locals_sig=None size=33
+  IL_0251: ldarg.0        
+  IL_0252: ldfld          DaggerfallWorkshop.Game.Utility.ModSupport.InitParams::Mod
+  IL_0257: stsfld         BetonyRestoredMod::mod
+  IL_025c: ldsfld         BetonyRestoredMod::mod
+  IL_0261: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.Mod::get_Title
+  IL_0266: newobj         UnityEngine.GameObject::.ctor
+  IL_026b: callvirt       methodspec:UnityEngine.GameObject::AddComponent
+  IL_0270: pop            
+  IL_0271: ret            
+
+---- BetonyRestoredMod::Awake rva=2072
+  maxstack=8 locals_sig=None size=17
+  IL_0273: call           BetonyRestoredMod::InitMod
+  IL_0278: ldsfld         BetonyRestoredMod::mod
+  IL_027d: ldc.i4.1       
+  IL_027e: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.Mod::set_IsReady
+  IL_0283: ret            
+
+---- BetonyRestoredMod::InitMod rva=2084
+  maxstack=2 locals_sig=None size=106
+  IL_0290: ldstr          "Begin mod init: BetonyRestored"
+  IL_0295: call           UnityEngine.Debug::Log
+  IL_029a: ldnull         
+  IL_029b: ldftn          BetonyRestoredMod::UpdateExteriorNPCs_OnEnterLocationRect
+  IL_02a1: newobj         OnEnterLocationRectEventHandler::.ctor
+  IL_02a6: call           DaggerfallWorkshop.PlayerGPS::add_OnEnterLocationRect
+  IL_02ab: ldnull         
+  IL_02ac: ldftn          BetonyRestoredMod::UpdateExteriorNPCs_OnWeatherChange
+  IL_02b2: newobj         OnWeatherChangeHandler::.ctor
+  IL_02b7: call           DaggerfallWorkshop.Game.WeatherManager::add_OnWeatherChange
+  IL_02bc: ldnull         
+  IL_02bd: ldftn          BetonyRestoredMod::UpdateExteriorNPCs
+  IL_02c3: newobj         OnDawnEventHandler::.ctor
+  IL_02c8: call           DaggerfallWorkshop.WorldTime::add_OnDawn
+  IL_02cd: ldnull         
+  IL_02ce: ldftn          BetonyRestoredMod::UpdateExteriorNPCs
+  IL_02d4: newobj         OnDuskEventHandler::.ctor
+  IL_02d9: call           DaggerfallWorkshop.WorldTime::add_OnDusk
+  IL_02de: call           BetonyRestoredMod::RegisterFactionIds
+  IL_02e3: brtrue.s       751
+  IL_02e5: ldstr          "BetonyRestored: Failed to register faction ids."
+  IL_02ea: call           UnityEngine.Debug::LogWarning
+  IL_02ef: ldstr          "Finished mod init: BetonyRestored"
+  IL_02f4: call           UnityEngine.Debug::Log
+  IL_02f9: ret            
+
+---- BetonyRestoredMod::RegisterFactionIds rva=20fc
+  maxstack=3 locals_sig=token(0x11000001) size=134
+  IL_0308: ldc.i4         1432
+  IL_030d: ldloca.s       local(0x0000)
+  IL_030f: initobj        typeref:FactionData
+  IL_0315: ldloca.s       local(0x0000)
+  IL_0317: ldc.i4         1532
+  IL_031c: stfld          FactionData::id
+  IL_0321: ldloca.s       local(0x0000)
+  IL_0323: ldc.i4         203
+  IL_0328: stfld          FactionData::parent
+  IL_032d: ldloca.s       local(0x0000)
+  IL_032f: ldc.i4.4       
+  IL_0330: stfld          FactionData::type
+  IL_0335: ldloca.s       local(0x0000)
+  IL_0337: ldstr          "Lord Mogref"
+  IL_033c: stfld          FactionData::name
+  IL_0341: ldloca.s       local(0x0000)
+  IL_0343: ldc.i4.m1      
+  IL_0344: stfld          FactionData::summon
+  IL_0349: ldloca.s       local(0x0000)
+  IL_034b: ldc.i4.s       20
+  IL_034d: stfld          FactionData::region
+  IL_0352: ldloca.s       local(0x0000)
+  IL_0354: ldc.i4.s       18
+  IL_0356: stfld          FactionData::power
+  IL_035b: ldloca.s       local(0x0000)
+  IL_035d: ldc.i4         405
+  IL_0362: stfld          FactionData::face
+  IL_0367: ldloca.s       local(0x0000)
+  IL_0369: ldc.i4.3       
+  IL_036a: stfld          FactionData::race
+  IL_036f: ldloca.s       local(0x0000)
+  IL_0371: ldc.i4.3       
+  IL_0372: stfld          FactionData::sgroup
+  IL_0377: ldloca.s       local(0x0000)
+  IL_0379: ldc.i4.m1      
+  IL_037a: stfld          FactionData::ggroup
+  IL_037f: ldloca.s       local(0x0000)
+  IL_0381: ldnull         
+  IL_0382: stfld          FactionData::children
+  IL_0387: ldloc.0        
+  IL_0388: call           DaggerfallConnect.Arena2.FactionFile::RegisterCustomFaction
+  IL_038d: ret            
+
+---- BetonyRestoredMod::UpdateExteriorNPCs_OnEnterLocationRect rva=218e
+  maxstack=8 locals_sig=None size=6
+  IL_038f: call           BetonyRestoredMod::UpdateExteriorNPCs
+  IL_0394: ret            
+
+---- BetonyRestoredMod::UpdateExteriorNPCs_OnWeatherChange rva=218e
+  maxstack=8 locals_sig=None size=6
+  IL_038f: call           BetonyRestoredMod::UpdateExteriorNPCs
+  IL_0394: ret            
+
+---- BetonyRestoredMod::UpdateExteriorNPCs rva=2198
+  maxstack=3 locals_sig=token(0x11000002) size=269
+  IL_03a4: call           DaggerfallWorkshop.Game.GameManager::get_Instance
+  IL_03a9: callvirt       DaggerfallWorkshop.Game.GameManager::get_PlayerGPS
+  IL_03ae: call           DaggerfallWorkshop.Game.GameManager::get_Instance
+  IL_03b3: callvirt       DaggerfallWorkshop.Game.GameManager::get_PlayerEnterExit
+  IL_03b8: stloc.0        
+  IL_03b9: call           DaggerfallWorkshop.DaggerfallUnity::get_Instance
+  IL_03be: callvirt       DaggerfallWorkshop.DaggerfallUnity::get_WorldTime
+  IL_03c3: callvirt       DaggerfallWorkshop.WorldTime::get_Now
+  IL_03c8: callvirt       DaggerfallWorkshop.Utility.DaggerfallDateTime::get_IsDay
+  IL_03cd: stloc.1        
+  IL_03ce: call           DaggerfallWorkshop.Game.GameManager::get_Instance
+  IL_03d3: callvirt       DaggerfallWorkshop.Game.GameManager::get_WeatherManager
+  IL_03d8: callvirt       DaggerfallWorkshop.Game.WeatherManager::get_IsRaining
+  IL_03dd: stloc.2        
+  IL_03de: ldc.i4.0       
+  IL_03df: ldc.i4.1       
+  IL_03e0: callvirt       DaggerfallWorkshop.PlayerGPS::IsPlayerInTown
+  IL_03e5: brfalse        1200
+  IL_03ea: ldnull         
+  IL_03eb: stloc.3        
+  IL_03ec: ldloc.0        
+  IL_03ed: ldfld          DaggerfallWorkshop.Game.PlayerEnterExit::ExteriorParent
+  IL_03f2: ldc.i4.1       
+  IL_03f3: callvirt       methodspec:UnityEngine.GameObject::GetComponentsInChildren
+  IL_03f8: stloc.s        local(0x0004)
+  IL_03fa: ldc.i4.0       
+  IL_03fb: stloc.s        local(0x0005)
+  IL_03fd: br             1189
+  IL_0402: ldloc.s        local(0x0004)
+  IL_0404: ldloc.s        local(0x0005)
+  IL_0406: ldelem.ref     
+  IL_0407: stloc.s        local(0x0006)
+  IL_0409: ldloc.s        local(0x0006)
+  IL_040b: callvirt       methodspec:UnityEngine.Component::GetComponent
+  IL_0410: stloc.3        
+  IL_0411: ldloc.3        
+  IL_0412: ldnull         
+  IL_0413: call           UnityEngine.Object::op_Inequality
+  IL_0418: brfalse        1183
+  IL_041d: ldloc.3        
+  IL_041e: callvirt       DaggerfallWorkshop.Game.StaticNPC::get_Data
+  IL_0423: ldfld          NPCData::factionID
+  IL_0428: brfalse.s      1183
+  IL_042a: ldloc.3        
+  IL_042b: callvirt       DaggerfallWorkshop.Game.StaticNPC::get_Data
+  IL_0430: ldfld          NPCData::flags
+  IL_0435: ldc.i4.4       
+  IL_0436: and            
+  IL_0437: ldc.i4.0       
+  IL_0438: cgt.un         
+  IL_043a: ldloc.2        
+  IL_043b: and            
+  IL_043c: stloc.s        local(0x0007)
+  IL_043e: ldloc.3        
+  IL_043f: callvirt       DaggerfallWorkshop.Game.StaticNPC::get_Data
+  IL_0444: ldfld          NPCData::flags
+  IL_0449: ldc.i4.1       
+  IL_044a: and            
+  IL_044b: brfalse.s      1126
+  IL_044d: ldloc.s        local(0x0006)
+  IL_044f: callvirt       UnityEngine.Component::get_gameObject
+  IL_0454: ldloc.1        
+  IL_0455: brtrue.s       1118
+  IL_0457: ldloc.s        local(0x0007)
+  IL_0459: ldc.i4.0       
+  IL_045a: ceq            
+  IL_045c: br.s           1119
+  IL_045e: ldc.i4.0       
+  IL_045f: callvirt       UnityEngine.GameObject::SetActive
+  IL_0464: br.s           1183
+  IL_0466: ldloc.3        
+  IL_0467: callvirt       DaggerfallWorkshop.Game.StaticNPC::get_Data
+  IL_046c: ldfld          NPCData::flags
+  IL_0471: ldc.i4.2       
+  IL_0472: and            
+  IL_0473: brfalse.s      1166
+  IL_0475: ldloc.s        local(0x0006)
+  IL_0477: callvirt       UnityEngine.Component::get_gameObject
+  IL_047c: ldloc.1        
+  IL_047d: brfalse.s      1158
+  IL_047f: ldloc.s        local(0x0007)
+  IL_0481: ldc.i4.0       
+  IL_0482: ceq            
+  IL_0484: br.s           1159
+  IL_0486: ldc.i4.0       
+  IL_0487: callvirt       UnityEngine.GameObject::SetActive
+  IL_048c: br.s           1183
+  IL_048e: ldloc.s        local(0x0006)
+  IL_0490: callvirt       UnityEngine.Component::get_gameObject
+  IL_0495: ldloc.s        local(0x0007)
+  IL_0497: ldc.i4.0       
+  IL_0498: ceq            
+  IL_049a: callvirt       UnityEngine.GameObject::SetActive
+  IL_049f: ldloc.s        local(0x0005)
+  IL_04a1: ldc.i4.1       
+  IL_04a2: add            
+  IL_04a3: stloc.s        local(0x0005)
+  IL_04a5: ldloc.s        local(0x0005)
+  IL_04a7: ldloc.s        local(0x0004)
+  IL_04a9: ldlen          
+  IL_04aa: conv.i4        
+  IL_04ab: blt            1026
+  IL_04b0: ret            
+
+---- BetonyRestoredMod::.ctor rva=22b1
+  maxstack=8 locals_sig=None size=7
+  IL_04b2: ldarg.0        
+  IL_04b3: call           UnityEngine.MonoBehaviour::.ctor
+  IL_04b8: ret            

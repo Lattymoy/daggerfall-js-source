@@ -111,3 +111,34 @@ The two packs: Beautiful Villages 7,526 files in 2,712 nodes, 2.58 MB
 gzipped; Beautiful Cities 1,021 files in 4,339 nodes, 2.17 MB. With
 `ARENA2_PATH` set, `test/wd3_pack.test.js` rebuilds all 8,547 of them
 from the player's own BSA files, sha256 for sha256 (about eight seconds).
+
+## BET1 - a new place, the manifest's order, the door's case (2026-10-05)
+
+Betony Restored (`03-World/Betony-Restored.md`) is a pack of 39 files - 25
+`locationnew-<name>-19.json` places and fourteen new blocks - and it needed
+three things WD3's town mods never asked for:
+
+- **A base of nothing**, `['n']`: a new place is no classic location's edit
+  but the author's own record, every key set on an empty object
+  (`openWorldDataPack`'s rebuild answers `{}` for it, and the ops lay the
+  record). The builder takes it for every `locationnew-` file
+  (`tools/worldDataPackBuild.mjs` `isNewLocationName`).
+- **The manifest's order**, `order` (optional): every file's name in the
+  order of the manifest's `Files`. DFU's `ModManager.FindAssets` walks a
+  mod's files in that order (`Mod.FindAssetNames`, Mod.cs:428-460), and it
+  is the order a region's new places take their indices in - the pack
+  without it answered its object's own order, and every Betony place stood
+  at another index than DFU's. `names()` answers it; a pack whose order
+  misses a file, names one twice or names a stranger is refused.
+- **The door's case.** `ModManager.TryGetAsset` asks
+  `AssetBundle.Contains`, which is case-blind (a bundle keeps its names
+  lowercased): Betony City's grid spells `WALLAA00Betony.RMB`, the bundle's
+  file is `wallaa00betony.rmb.json`, and the door, exact in case, served
+  Daggerfall's own block there. Every name is keyed through `assetKey`
+  (`formats/worldDataReplacement.js`). FindAssets keeps DFU's own rule - the
+  suffix compared ordinal against the name as the mod spells it - so each
+  entry keeps its `name`.
+
+The pack: 39 files in 111 nodes, 58,812 bytes gzipped. Without the player's
+data `test/bet1_betony.test.js` rebuilds its 25 places (they read nothing of
+MAPS.BSA); with `ARENA2_PATH` all 39, sha256 for sha256.

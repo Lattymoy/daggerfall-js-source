@@ -30,11 +30,12 @@
   {
     "name": "AD28Q-S2-sync-gone-from-the-frame",
     "file": "src/scenes/world.js",
-    "old": "    questSyncTick();\n    // AUDIT 66 F11: the torch sweep runs HERE",
-    "new": "    // AUDIT 66 F11: the torch sweep runs HERE",
+    "old": "    questSyncTick();\n    // BET1: Betony Restored's UpdateExteriorNPCs",
+    "new": "    // BET1: Betony Restored's UpdateExteriorNPCs",
     "tests": [
       "test/auditdisc28_quests.test.js"
-    ]
+    ],
+    "note": "BET1 (PIN MOVED): re-aimed by content - Betony Restored's street-people tick stands directly under the sync now, so the mutant takes the sync out from above it."
   },
   {
     "name": "AD28Q-S3-final-refusal-said",

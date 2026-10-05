@@ -194,6 +194,20 @@ export const MOD_SETTINGS = Object.freeze({
       }),
     }),
   }),
+  // BET1 (2026-10-05): BETONY RESTORED 1.1.3 (Cliffworms). No modsettings of its own - 25 new places, fourteen blocks,
+  // a script and its pictures - so one switch: the port's Enabled, read once when the game loads (scenes/modWorldData.js
+  // latches it with the pack - a town never appears or goes under the player), online the room's (systems/onlineLane.js).
+  'betony-restored': Object.freeze({
+    title: 'Betony Restored',
+    author: 'Cliffworms',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'The island of Betony as the demo had it: Betony City, four villages, seven dungeons, thirteen '
+          + 'homes, farms, a tavern and shrines, and the roads between. The city\'s market traders keep the hours and the weather.',
+      }),
+    }),
+  }),
   // WA1 (2026-09-25): WARM ASHES - SHIPS 1.1 (Kamer). No modsettings of its
   // own - a travel hook, a quest action and six world-data variants - so
   // one switch.

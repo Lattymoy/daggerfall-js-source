@@ -776,6 +776,7 @@ export const FEATURES = Object.freeze([
   // under the player; online the room owns both.
   modFeature('beautiful-villages', 'Takes effect when the game is next started (an in-game Load keeps the towns it started with). Offline it also needs Replace Game Artwork.', 'world'),   // AUDIT WD3 B9
   modFeature('beautiful-cities', 'Takes effect when the game is next started (an in-game Load keeps the towns it started with). Offline it also needs Replace Game Artwork.', 'world'),   // AUDIT WD3 B9
+  modFeature('betony-restored', 'Takes effect when the game is next started (an in-game Load keeps the island it started with). Offline it also needs Replace Game Artwork.', 'world'),   // BET1
   // WA1 (2026-09-25): WARM ASHES - SHIPS - `world`, the sea voyage. The travel
   // hook reads the switch as a journey starts; an ambush already at sea
   // finishes either way.

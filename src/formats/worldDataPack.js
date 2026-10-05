@@ -22,6 +22,11 @@
 // base:  ['b', blockName, index]        a classic block, checked by name at its index
 //        ['l', region, index, name]     a classic location, checked by name
 //        ['f', fileName]                another file of the same pack (rebuilt first)
+//        ['n']                          nothing (BET1): a NEW location (`locationnew-<name>-<region>.json`) is no classic
+//                                       location's edit - the author's own record, every key set on an empty object
+// order: (BET1, optional) every file's name in the manifest's Files order - DFU's FindAssets walks a mod's assets in it
+//        (Mod.FindAssetNames, Mod.cs:435), so it is the order a region's new locations take their indices in, and the
+//        order `names()` answers
 // ops:   WD1's (['s'|'i', path, value], ['d'|'r', path]) and ['sr', path, runs] - runs [start, [values], ...]:
 //        consecutive elements of an array set at once (an automap with 1,400 cells changed is one op, not 1,400).
 // values may hold, anywhere inside them:
@@ -155,6 +160,14 @@ export function openWorldDataPack(pack, env) {
   const baseTargets = new Set(pack.bases ?? []);
   if (!pack.bases) for (const name of Object.keys(rawFiles)) { const base = fileEntry(name)?.[1]; if (base?.[0] === 'f') baseTargets.add(base[1]); }
   const onRebuilt = typeof env.onRebuilt === 'function' ? env.onRebuilt : null;
+  // BET1: the manifest's order, where a pack carries one - it must name every file once and nothing else
+  const order = pack.order ?? null;
+  if (order) {
+    const want = Object.keys(rawFiles);
+    if (!Array.isArray(order) || order.length !== want.length || new Set(order).size !== order.length || !order.every((n) => Object.hasOwn(rawFiles, n))) {
+      throw new Error(`world-data pack: ${pack.vendor}: its order does not name every file once`);
+    }
+  }
 
   function classicBlockJson(index, wantName = null) {
     let j = classicJson.get(index);
@@ -253,6 +266,7 @@ export function openWorldDataPack(pack, env) {
       return locationToDfuJson(loc);
     }
     if (base[0] === 'f') return rebuild(base[1], maps);
+    if (base[0] === 'n' && base.length === 1) return {};   // BET1: a new location, carried whole
     throw new Error(`world-data pack: ${pack.vendor}: ${name}: unknown base ${JSON.stringify(base)}`);
   }
 
@@ -272,7 +286,7 @@ export function openWorldDataPack(pack, env) {
   return Object.freeze({
     vendor: pack.vendor,
     mod: pack.mod ?? null,
-    names: () => Object.keys(rawFiles),
+    names: () => (order ? [...order] : Object.keys(rawFiles)),   // BET1: in the manifest's order where the pack keeps it
     has: (name) => Object.hasOwn(rawFiles, name),
     sha256Of: (name) => (Object.hasOwn(rawFiles, name) ? fileEntry(name)[0] : null),
     baseOf: (name) => (Object.hasOwn(rawFiles, name) ? fileEntry(name)[1] : null),

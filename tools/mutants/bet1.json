@@ -1,0 +1,433 @@
+[
+  {
+    "name": "BET1-1-day-hides-at-night",
+    "file": "src/systems/betonyRestored.js",
+    "old": "if (flags & BETONY_NPC_FLAGS.hideDay) return isDay ? false : !hideWeather;",
+    "new": "if (flags & BETONY_NPC_FLAGS.hideDay) return isDay ? !hideWeather : false;",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "A person flagged to hide by day is shown only at night (IL_0435)."
+  },
+  {
+    "name": "BET1-2-rain-or",
+    "file": "src/systems/betonyRestored.js",
+    "old": "const hideWeather = (flags & BETONY_NPC_FLAGS.hideWeather) !== 0 && isRaining;",
+    "new": "const hideWeather = (flags & BETONY_NPC_FLAGS.hideWeather) !== 0 || isRaining;",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "The weather hides only the flagged, and only in the rain (IL_0471)."
+  },
+  {
+    "name": "BET1-3-night-first",
+    "file": "src/systems/betonyRestored.js",
+    "old": "  if (flags & BETONY_NPC_FLAGS.hideDay) return isDay ? false : !hideWeather;\n  if (flags & BETONY_NPC_FLAGS.hideNight) return isDay ? !hideWeather : false;\n",
+    "new": "  if (flags & BETONY_NPC_FLAGS.hideNight) return isDay ? !hideWeather : false;\n  if (flags & BETONY_NPC_FLAGS.hideDay) return isDay ? false : !hideWeather;\n",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "The day bit is tested first: flags 3 and 7 are day-hiders."
+  },
+  {
+    "name": "BET1-4-quest-away-stands",
+    "file": "src/systems/betonyRestored.js",
+    "old": "const shown = !pn.questAway && betonyNpcShown(",
+    "new": "const shown = betonyNpcShown(",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "BET-FIX: a person a quest has placed elsewhere stays down."
+  },
+  {
+    "name": "BET1-5-indoors-too",
+    "file": "src/systems/betonyRestored.js",
+    "old": "mustBeOutside: true, inside: !!inside",
+    "new": "mustBeOutside: false, inside: !!inside",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "IsPlayerInTown(false, true): nothing with the player indoors."
+  },
+  {
+    "name": "BET1-6-no-faction-set",
+    "file": "src/systems/betonyRestored.js",
+    "old": "if (!pn || !pn.factionID) continue;",
+    "new": "if (!pn) continue;",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "A billboard with no faction has no StaticNPC to set (IL_041d-0428)."
+  },
+  {
+    "name": "BET1-7-dawn-every-frame",
+    "file": "src/systems/betonyRestored.js",
+    "old": "const dawn = !first && lastHour !== DAWN_HOUR && hour === DAWN_HOUR;",
+    "new": "const dawn = !first && hour === DAWN_HOUR;",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "OnDawn is the hour's edge, not every frame of six."
+  },
+  {
+    "name": "BET1-8-first-frame-weather",
+    "file": "src/systems/betonyRestored.js",
+    "old": "const weatherChange = !first && weather !== lastWeather;",
+    "new": "const weatherChange = weather !== lastWeather;",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "The first frame only remembers."
+  },
+  {
+    "name": "BET1-9-dusk-at-dawn",
+    "file": "src/systems/betonyRestored.js",
+    "old": "const dusk = !first && lastHour !== DUSK_HOUR && hour === DUSK_HOUR;",
+    "new": "const dusk = !first && lastHour !== DUSK_HOUR && hour === DAWN_HOUR;",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "OnDusk at eighteen."
+  },
+  {
+    "name": "BET1-10-switch-over-loader",
+    "file": "src/systems/betonyRestored.js",
+    "old": "if (!(latched === undefined ? latchModLoaded(BETONY_VENDOR, modSetting(BETONY_VENDOR, 'Enabled') === true) : latched === true)) return true;",
+    "new": "if (!latchModLoaded(BETONY_VENDOR, modSetting(BETONY_VENDOR, 'Enabled') === true)) return true;",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "The world-data loader's latch stands over the switch."
+  },
+  {
+    "name": "BET1-11-classic-face-ungated",
+    "file": "src/systems/betonyRestored.js",
+    "old": "? () => (betonyLoaded() ? p.face : null)",
+    "new": "? () => p.face",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "Flat Replacer's faces only while the mod is loaded."
+  },
+  {
+    "name": "BET1-12-mod-face-unprobed",
+    "file": "src/systems/betonyRestored.js",
+    "old": ": () => (betonyLoaded() && _hasModPortrait('TFAC00I0.RCI', p.face) ? p.face : null));",
+    "new": ": () => (betonyLoaded() ? p.face : null));",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "A mod picture face only while an attached mod carries it."
+  },
+  {
+    "name": "BET1-13-classic-boundary",
+    "file": "src/systems/betonyRestored.js",
+    "old": "classic: r.FlatPortrait < CUSTOM_PORTRAIT_FIRST",
+    "new": "classic: r.FlatPortrait < 300",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "Faces under 503 are Daggerfall's own."
+  },
+  {
+    "name": "BET1-14-roads-in-place",
+    "file": "src/systems/betonyRestored.js",
+    "old": "const roads = Uint8Array.from(net.roads), tracks = Uint8Array.from(net.tracks);",
+    "new": "const roads = net.roads, tracks = net.tracks;",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "Basic Roads' own arrays are never written."
+  },
+  {
+    "name": "BET1-15-tracks-skipped",
+    "file": "src/systems/betonyRestored.js",
+    "old": "for (const [i, v] of diff.tracks.pixels) tracks[i] = v;",
+    "new": "",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "The mod's trackData too."
+  },
+  {
+    "name": "BET1-16-218-a-stand-in",
+    "file": "src/systems/betonyRestored.js",
+    "old": "standIn: !isClassicArchive(at.archive)",
+    "new": "standIn: true",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "TEXTURE.218 stays the player's: one record replaced."
+  },
+  {
+    "name": "BET1-17-stand-ins-hold",
+    "file": "src/systems/betonyRestored.js",
+    "old": "archive, record, frame, fileName, standIn: true, yields: true, gate,",
+    "new": "archive, record, frame, fileName, standIn: true, yields: false, gate,",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "The re-shades' and people's stand-ins yield to the player's own picture."
+  },
+  {
+    "name": "BET1-18-xml-ungated",
+    "file": "src/systems/betonyRestored.js",
+    "old": "registerBillboardXml(BETONY_VENDOR, BETONY_XML, betonyLoaded);",
+    "new": "registerBillboardXml(BETONY_VENDOR, BETONY_XML);",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "The Mara statue's scale only while the mod is loaded."
+  },
+  {
+    "name": "BET1-19-ships-unshared",
+    "file": "src/systems/betonyRestored.js",
+    "old": "  shareDetailedShipsArt(betonyLoaded);",
+    "new": "  void betonyLoaded;",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "Detailed Ships' nine pictures answer to this mod."
+  },
+  {
+    "name": "BET1-20-det-off",
+    "file": "src/systems/betonyRestored.js",
+    "old": "  installDetStandIns(betonyLoaded);",
+    "new": "  installDetStandIns(null);",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "DET's stand-ins on while the mod is loaded."
+  },
+  {
+    "name": "BET1-21-key-over-record-id",
+    "file": "src/formats/factionFile.js",
+    "old": "_customFactions.set(factionId, Object.freeze({ ...newFaction(), id: factionId, ...factionData, ...(factionData?.id == null ? { id: factionId } : {}) }));",
+    "new": "_customFactions.set(factionId, Object.freeze({ ...newFaction(), ...factionData, id: factionId }));",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "The record keeps its own id (1532) under its key (1432)."
+  },
+  {
+    "name": "BET1-22-null-id-kept",
+    "file": "src/formats/factionFile.js",
+    "old": "_customFactions.set(factionId, Object.freeze({ ...newFaction(), id: factionId, ...factionData, ...(factionData?.id == null ? { id: factionId } : {}) }));",
+    "new": "_customFactions.set(factionId, Object.freeze({ ...newFaction(), id: factionId, ...factionData }));",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "A record naming no id takes its key."
+  },
+  {
+    "name": "BET1-23-order-ignored",
+    "file": "src/formats/worldDataPack.js",
+    "old": "names: () => (order ? [...order] : Object.keys(rawFiles)),",
+    "new": "names: () => Object.keys(rawFiles),",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "names() answers the manifest's order - the region's indices."
+  },
+  {
+    "name": "BET1-24-order-dupes",
+    "file": "src/formats/worldDataPack.js",
+    "old": "order.length !== want.length || new Set(order).size !== order.length || ",
+    "new": "order.length !== want.length || ",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "An order naming a file twice is refused."
+  },
+  {
+    "name": "BET1-25-n-base",
+    "file": "src/formats/worldDataPack.js",
+    "old": "if (base[0] === 'n' && base.length === 1) return {};",
+    "new": "if (base[0] === 'n' && base.length === 1) return { Extra: 1 };",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "A new place is built on nothing."
+  },
+  {
+    "name": "BET1-26-door-case",
+    "file": "src/formats/worldDataReplacement.js",
+    "old": "export const assetKey = (fileName) => String(fileName).toLowerCase();",
+    "new": "export const assetKey = (fileName) => String(fileName);",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "The door is case-blind (AssetBundle.Contains)."
+  },
+  {
+    "name": "BET1-27-find-blind",
+    "file": "src/formats/worldDataReplacement.js",
+    "old": "if (a && a.name.endsWith(extension)) out.push(",
+    "new": "if (a && a.name.toLowerCase().endsWith(blind)) out.push(",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "FindAssets matches the mod's own spelling, ordinal (Mod.cs:451)."
+  },
+  {
+    "name": "BET1-28-await-self",
+    "file": "src/scenes/dataPipeline.js",
+    "old": "const t = textureLoading.get(archive) ?? await getTexture(archive);   // BET1: its own archive, read before it is published",
+    "new": "const t = await getTexture(archive);   // BET1: its own archive, read before it is published",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "A record rebuilt off its own archive never awaits itself."
+  },
+  {
+    "name": "BET1-29-one-frame",
+    "file": "src/systems/textureReplacement.js",
+    "old": "getFrameCount: (record) => vendorFrameCount(archive, record ?? 0),",
+    "new": "getFrameCount: () => 1,",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "A mod's animated flat animates."
+  },
+  {
+    "name": "BET1-30-frames-gap",
+    "file": "src/systems/textureReplacement.js",
+    "old": "while (have.has(n)) n++;",
+    "new": "n = have.size;",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "Frames to the first missing one."
+  },
+  {
+    "name": "BET1-31-layer-clear-pixels",
+    "file": "src/formats/derivedTexture.js",
+    "old": "if (tx < 0 || tx >= w || src.data[s + 3] === 0) continue;",
+    "new": "if (tx < 0 || tx >= w) continue;",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "A layer's clear pixels leave what is under them."
+  },
+  {
+    "name": "BET1-32-layer-at",
+    "file": "src/formats/derivedTexture.js",
+    "old": "layers.forEach((layer, k) => layOver(data, w, h, also[k], layer.at ?? [0, 0]));",
+    "new": "layers.forEach((layer, k) => layOver(data, w, h, also[k], [0, 0]));",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "Each layer at its own spot."
+  },
+  {
+    "name": "BET1-33-spec-no-also",
+    "file": "src/formats/derivedTexture.js",
+    "old": "if (layers.length) spec.also = layers;",
+    "new": "",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "The spec round trip writes the layers."
+  },
+  {
+    "name": "BET1-34-canopy-drop",
+    "file": "src/world/detStandIns.js",
+    "old": "low = (30 - drop) * U",
+    "new": "low = (30 - drop / 2) * U",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "The front edge falls 0, 24 or 44."
+  },
+  {
+    "name": "BET1-35-canopy-depth",
+    "file": "src/world/detStandIns.js",
+    "old": "back = -23.5 * U, front = 23.5 * U",
+    "new": "back = 0, front = 47 * U",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "The origin 23.5 out from the wall."
+  },
+  {
+    "name": "BET1-36-betony-models-unregistered",
+    "file": "src/world/detStandIns.js",
+    "old": "{ ...DET_MODELS, ...DET_TOWN_MODELS, ...DET_BETONY_MODELS }",
+    "new": "{ ...DET_MODELS, ...DET_TOWN_MODELS }",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "Betony's DET pieces on the model door."
+  },
+  {
+    "name": "BET1-37-pony-full-size",
+    "file": "src/world/detStandIns.js",
+    "old": "0: [201, 0, 0.75]",
+    "new": "0: [201, 0, 1]",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "A Glen pony the brown horse at three quarters."
+  },
+  {
+    "name": "BET1-38-betony-arms-record",
+    "file": "src/world/townPictures.js",
+    "old": "regionTapestry: (name) => (name in REGION_LATER ? 48 + 2 * ",
+    "new": "regionTapestry: (name) => (name in REGION_LATER ? 49 + 2 * ",
+    "tests": [
+      "test/bet1_betony.test.js",
+      "test/wd3_standins.test.js"
+    ],
+    "note": "Betony's tapestry is record 48."
+  },
+  {
+    "name": "BET1-39-no-tick",
+    "file": "src/scenes/world.js",
+    "old": "    if (betonyLoaded() && betonyEvents.tick(Math.floor(minuteNow() / 60), weather)) betonyStreetPeople();\n",
+    "new": "",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "The update on the hour's and the weather's edges."
+  },
+  {
+    "name": "BET1-40-plain-host",
+    "file": "src/scenes/world.js",
+    "old": "setupExteriorQuestStaticNpcs(entry.npcs, machine, betonyAwareHost)",
+    "new": "setupExteriorQuestStaticNpcs(entry.npcs, machine, makeStaticNpcHost)",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "The away arm marked on the person."
+  },
+  {
+    "name": "BET1-41-face-fn-ignored",
+    "file": "src/characters/staticNpc.js",
+    "old": "typeof faceIndex === 'function' ? faceIndex : faceIndex | 0",
+    "new": "faceIndex | 0",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "A face asked when it is read."
+  },
+  {
+    "name": "BET1-42-face-null-is-zero",
+    "file": "src/characters/staticNpc.js",
+    "old": "return face == null ? null : face | 0;",
+    "new": "return face | 0;",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "A function answering null writes no face."
+  },
+  {
+    "name": "BET1-43-grey-is-brown",
+    "file": "src/world/standInSprites.js",
+    "old": "grayRooster: () => chicken(K.greyFeather, 'stand', true)",
+    "new": "grayRooster: () => chicken(K.feather, 'stand', true)",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "The grey rooster is its own picture."
+  }
+]

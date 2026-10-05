@@ -198,6 +198,16 @@ export function vendorRecordCount(archive) {
   for (const e of _vendor.values()) if (e.standIn && e.archive === Number(archive)) n = Math.max(n, e.record + 1);
   return n;
 }
+/** BET1: how many frames a vendor-only record has - its frames 0, 1, 2... as registered, up to the first missing one
+ *  (DFU imports a billboard's `<archive>_<record>-<frame>` pictures until one is missing; Kamer's sitting patrons in
+ *  Betony Restored are 31 and 32 frames of a drink lifted and set down). One for a record with frame 0 alone. */
+export function vendorFrameCount(archive, record) {
+  const have = new Set();
+  for (const e of _vendor.values()) if (e.standIn && e.archive === Number(archive) && e.record === Number(record) && e.map === 'Albedo') have.add(e.frame);
+  let n = 0;
+  while (have.has(n)) n++;
+  return Math.max(1, n);
+}
 /** A TextureFile stand-in for a vendor-only archive: sizes from the
  *  decoded PNGs, a bitmap the swap arm never reads.
  *
@@ -260,7 +270,7 @@ export function vendorTextureStandIn(archive) {
     // supplies it. Zero stays the answer for art that is never worn -
     // every icon door measures from its own rect and never asks.
     getOffset: (record) => vendorEntryOf(archive, record ?? 0)?.offset ?? { x: 0, y: 0 },
-    getFrameCount: () => 1,
+    getFrameCount: (record) => vendorFrameCount(archive, record ?? 0),   // BET1: a mod's animated flat animates (it answered 1 for every record)
     getWidth: (record) => size(record).width,
     getHeight: (record) => size(record).height,
     // FIELD-GUN4 (Mac, from play: "The paperdoll doesn't equip the

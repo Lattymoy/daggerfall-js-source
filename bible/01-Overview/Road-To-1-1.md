@@ -222,7 +222,7 @@ narrowed while E3 closed the two console verbs
 (`ui/exteriorAutomapWindow.js:96` - the site id the flag list was
 measured on; the closure narrates at `:100` today) by building the
 console host they were waiting on. The SHIP LANDING then took a seventh
-(`scenes/world.js:11382`, the two ship pixels): the owner supplied the
+(`scenes/world.js:11405`, the two ship pixels): the owner supplied the
 real MAPS.BSA, the pixels turned out to carry the two "Your Ship"
 locations rather than open sea, and the boarding became an ordinary
 location arrival. **ROAD-F then took three more**: GS1 closed the
@@ -247,7 +247,7 @@ cross-LOCATION jump a route with no streamer cannot make (set-anchor,
 the same-interior move and the whole cross-context arm INSIDE the
 loaded pixel all ship). ARENA2 (2026-10-02) added one by name: the `?exterior` host runs no
 bout driver (`scenes/exterior.js`, the Arena's bouts are the world
-host's); ARENA-FIX (2026-10-02) wired that host's driver and closed it. That leaves **8** open flags as
+host's); ARENA-FIX (2026-10-02) wired that host's driver and closed it. BET1 (2026-10-05) added one by name: the `?exterior` host stands every street person of a record in one batch, so Betony Restored's hours and rain cannot set one down there (`systems/betonyRestored.js`). That leaves **9** open flags as
 of this wave - the count `node tools/regenOpenFlags.mjs --check`
 answers, and the only count this page may state - each with its
 blocker named at the site: no asset in the repo (the PlayerTorch

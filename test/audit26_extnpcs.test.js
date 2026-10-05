@@ -252,8 +252,11 @@ test('E3: the wiring - world.js runs the pass at layout and stands only the ACTI
   const w = src('src/scenes/world.js');
   // the pass runs where RMBLayout runs it: at layout, per pixel,
   // BEFORE the billboards are batched
-  assert.ok(w.includes('setupExteriorQuestStaticNpcs(entry.npcs, machine, makeStaticNpcHost)'),
+  // BET1: the host each person is handed is the routed one, wrapped so Betony Restored's street update can see the away
+  // arm's mark (`betonyAwareHost` over `makeStaticNpcHost`)
+  assert.ok(w.includes('setupExteriorQuestStaticNpcs(entry.npcs, machine, betonyAwareHost)'),
     'world.js never asks the quest machine about its street NPCs');
+  assert.ok(/function betonyAwareHost\(pn\) \{\n\s+const host = makeStaticNpcHost\(pn\);/.test(w), 'the host is the routed one');
   assert.ok(w.includes('await standPixelNpcs(entry);'), 'the pass is never reached from the pixel build');
   const from = w.indexOf('async function standPixelNpcs(');
   const to = w.indexOf('function restrideTerrain(');   // the next function after the pass (buildFieldFor left with the EE ground revert)

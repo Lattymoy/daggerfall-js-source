@@ -51,6 +51,15 @@
 // loaded (`installDetStandIns` OR's the switches it is handed). The
 // pieces only the towns place are `DET_TOWN_MODELS`; the shared pictures
 // are world/townPictures.js.
+//
+// BET1 (2026-10-05): BETONY RESTORED'S. Its marketplace, palace and city
+// walls place DET's canopies (Level, Mid Slope, Sloped), its hanging hedge
+// and Betony's own tapestry and banner, which nothing before it does -
+// `DET_BETONY_MODELS`, read off the catalogue's names and the 30 canopies'
+// and six hedges' placements - and fifteen of DET's flats no other mod
+// here lays (horses, a pony, grey poultry, resting rats, an ad stand, a
+// bread pan), in the tables below with the rest; the same stand-in for an
+// id whichever mod places it. Bible `03-World/Betony-Restored.md`.
 
 import { registerCustomModel } from './customModels.js';
 import { addVendorTextures } from '../systems/textureReplacement.js';
@@ -75,6 +84,8 @@ const SOIL = [0, 45];        // #4f3f2b
 const BARK = [0, 44];        // #5b4326
 const HEARTWOOD = [0, 69];   // #ad7f4e - a cut stump's face
 const LEAVES = [TOWN_PICTURE_ARCHIVE, PICTURE.leaves];
+// BET1: Daggerfall's own awning cloths (TEXTURE.049 - the cloth its stalls wear, and the RMB Resource Pack's stalls')
+const AWNING = Object.freeze({ red: [49, 6], blue: [49, 4], gold: [49, 5], green: [49, 2] });
 
 /** A mesh in dfMeshToModel's shape, grown one face at a time. Every face is
  *  wound so cross(b - a, c - a) points along its normal - the port's front
@@ -316,6 +327,32 @@ function columnHead() {
   return m.build();
 }
 
+/**
+ * BET1: DET's canopy, read off Betony Restored's thirty: 84 units wide along its own x (the author hangs them side by
+ * side 84 apart, and stretches the free-standing ones along x over their stalls' tables), 47 deep along z - its origin
+ * 23.5 out from every wall it hangs on (eight buildings, measured to the wall's plane), and two back to back 47 apart
+ * close a stall's roof at its ridge. The high edge is the back (-z) at 30 units over the origin, where the market's
+ * thin wooden posts (45082, 85 units from the ground) meet it; `drop` is how far the front edge falls: 0 'Level', 24
+ * 'Mid Slope', 44 'Sloped'. Cloth both sides, a valance at the front, a rod along it.
+ */
+function canopy(cloth, drop) {
+  const m = new MeshBuilder(), hw = 42 * U, back = -23.5 * U, front = 23.5 * U, top = 30 * U, low = (30 - drop) * U, valance = 7 * U;
+  const n = [0, front - back, top - low], l = Math.hypot(...n);
+  m.sheet(cloth, [-hw, top, back], [hw, top, back], [hw, low, front], [-hw, low, front], [0, n[1] / l, n[2] / l], [[0, 0], [2, 0], [2, -1.1], [0, -1.1]]);
+  m.sheet(cloth, [-hw, low, front], [hw, low, front], [hw, low - valance, front], [-hw, low - valance, front], [0, 0, 1], [[0, 0], [2, 0], [2, -0.17], [0, -0.17]]);
+  m.cylinderX(WOOD_DARK, [-hw, low, front], 0.012, 2 * hw, 5);
+  return m.build();
+}
+/** BET1: DET's hanging hedge - a slab of leaves six units thick flat on a wall (its origin three out from the wall, the
+ *  middle of its thickness), 42 wide along z (the author hangs them in rows 42 apart) and 44 tall about its origin (the
+ *  lower row's foot on the ground); three clumps stand proud of it. */
+function hangingHedge() {
+  const m = new MeshBuilder();
+  m.box(LEAVES, [0, 0, 0], [6 * U, 44 * U, 42 * U], 2);
+  for (const [y, z] of [[8, -10], [-10, 6], [14, 15]]) m.box(LEAVES, [4 * U, y * U, z * U], [4 * U, 14 * U, 14 * U], 2);
+  return m.build();
+}
+
 const DECOR_ORDER = Object.freeze([45134, 45135, 45136, 45137, 45138, 45139, 45140, 45158, 45159, 45160, 45161, 45162, 45163, 45164]);
 const decor = (id) => PICTURE.decorative(DECOR_ORDER.indexOf(id));
 const REGIONS = Object.freeze([['Glenpoint', 45008, 45044], ['Totambu', 45023, 45059], ['Lainlyn', 45024, 45060], ['Santaki', 45029, 45065], ['Abibon-Gora', 45034, 45070]]);
@@ -358,6 +395,22 @@ export const DET_TOWN_MODELS = Object.freeze({
   45194: () => rugModel(PICTURE.rug(1), 1.2, 0.8),
 });
 
+/** BET1: the DET models only Betony Restored's blocks place, by id - read off the catalogue's names and the placements
+ *  (bible `03-World/Betony-Restored.md` keeps the table). DET's four canopy cloths are not known; each of its sets
+ *  (45078-80, 45104/06/08, 45105/07, 45131/32 by the catalogue's order) wears one of Daggerfall's own. */
+export const DET_BETONY_MODELS = Object.freeze({
+  // Betony's tapestry and banner, on its city's walls and gates and in Lord Mogref's palace
+  45012: () => hanging(PICTURE.regionTapestry('Betony'), 0.9, 1.35),
+  45048: () => hanging(PICTURE.regionBanner('Betony'), 0.6, 1.6, { banner: true }),
+  // the canopies: over the marketplace's doors and its stalls
+  45078: () => canopy(AWNING.red, 0), 45079: () => canopy(AWNING.red, 24), 45080: () => canopy(AWNING.red, 44),
+  45104: () => canopy(AWNING.blue, 0), 45106: () => canopy(AWNING.blue, 24), 45108: () => canopy(AWNING.blue, 44),
+  45105: () => canopy(AWNING.gold, 0), 45107: () => canopy(AWNING.gold, 24),
+  45131: () => canopy(AWNING.green, 0), 45132: () => canopy(AWNING.green, 24),
+  // the hanging hedge, two rows of three on a marketplace house's front
+  45117: hangingHedge,
+});
+
 // ---- the flats ---------------------------------------------------------------
 
 /** The DET flat records the author places, stood in by the player's own
@@ -388,9 +441,11 @@ export const DET_FLAT_DRAWINGS = Object.freeze({
   10009: Object.freeze({ 14: ['monkey', 0] }),
   10010: Object.freeze({
     3: ['brownRooster', 0], 4: ['brownChickenPecking', 0], 5: ['brownChicken', 0], 6: ['brownChickenLooking', 0],
+    8: ['grayRooster', 0], 9: ['grayChicken', 0],                                                         // BET1
     15: ['sheep', 128], 16: ['sheepFront', 128], 17: ['sheepResting', 128],
     22: ['whiteChickenLooking', 0], 23: ['whiteChicken', 0], 24: ['whiteChickenPecking', 0], 25: ['whiteRooster', 0],
     36: ['blackRat', 0], 38: ['brownRat', 0], 40: ['blackRatSitting', 0],
+    37: ['brownRatResting', 0], 39: ['brownRatResting', 0], 41: ['brownRat', 0],                         // BET1
     42: ['dove', 0], 43: ['dovePecking', 0], 44: ['dove', 0], 45: ['doveWing', 0], 46: ['dovePecking', 0],
     47: ['dove', 0], 48: ['doveWing', 0], 49: ['dovePecking', 0], 50: ['dove', 0],
   }),
@@ -402,15 +457,18 @@ export const DET_FLAT_DRAWINGS = Object.freeze({
   10022: Object.freeze({ 4: ['easel', 64] }),
   10023: Object.freeze({ 0: ['firewood', 0] }),
   10024: Object.freeze({ 0: ['wheatBundle', 64], 1: ['grainPile', 0] }),
-  10025: Object.freeze({ 0: ['brokenBottles', -64] }),
-  10027: Object.freeze({ 1: ['blockToy', -96], 3: ['rollingPin', -96] }),
+  10025: Object.freeze({ 0: ['brokenBottles', -64], 1: ['adStand', 128] }),   // BET1: 1, the catalogue's 'Wood Ad Stand' (1025.1, its old number)
+  10027: Object.freeze({ 1: ['blockToy', -96], 2: ['breadPan', -32], 3: ['rollingPin', -96] }),   // BET1: 2, a bread pan
 });
 /** WD3: the DET records only the towns place whose thing Daggerfall has a sprite of: [archive, record, size] - the
- *  player's own sprite at `size` times the size it stands at itself (a calf is the grazing cow at three fifths). */
+ *  player's own sprite at `size` times the size it stands at itself (a calf is the grazing cow at three fifths; BET1, a
+ *  Glen pony the brown horse at three quarters). */
 export const DET_TOWN_FLATS = Object.freeze({
   10010: Object.freeze({
     18: [201, 3, 1], 19: [201, 4, 0.6], 20: [201, 3, 1.1],                       // a brown cow, a curious calf, a bull
     51: [201, 0, 1], 52: [201, 0, 1],                                          // two brown horses
+    0: [201, 0, 0.75], 2: [201, 0, 1], 32: [201, 0, 1],                        // BET1: a Glen pony, two Alcaire cart horses (grazing, tacked)
+    26: [201, 1, 1], 29: [201, 1, 1],                                          // BET1: Wayrest chargers - the black horse
     73: [201, 9, 1], 74: [201, 10, 1], 75: [201, 9, 1], 76: [201, 10, 1], 77: [201, 9, 1], 78: [201, 10, 1],   // the Great Daenian dogs
   }),
   10024: Object.freeze({ 2: [205, 17, 1] }),        // a sack of grain
@@ -487,7 +545,8 @@ export const DOLPHIN_SCALE = Object.freeze({ width: 384, height: 384 });
 
 let _installed = false;
 const _gates = new Set();
-/** WD3: on while ANY mod that places DET's pieces is loaded - Detailed Ships, Beautiful Villages, Beautiful Cities. */
+/** WD3: on while ANY mod that places DET's pieces is loaded - Detailed Ships, Beautiful Villages, Beautiful Cities (BET1:
+ *  and Betony Restored). */
 export const detStandInsOn = () => { for (const g of _gates) if (g() === true) return true; return false; };
 /** The models on the model door and the flats and pictures on the texture door, once, all behind `detStandInsOn`;
  *  every call adds the switch it is handed to the ones that turn them on (Detailed Ships' own, the town mods'). */
@@ -496,7 +555,7 @@ export function installDetStandIns(isOn) {
   if (_installed) return 0;
   _installed = true;
   const gate = detStandInsOn;
-  for (const [id, build] of Object.entries({ ...DET_MODELS, ...DET_TOWN_MODELS })) registerCustomModel(Number(id), build, gate);
+  for (const [id, build] of Object.entries({ ...DET_MODELS, ...DET_TOWN_MODELS, ...DET_BETONY_MODELS })) registerCustomModel(Number(id), build, gate);
   const entries = [];
   const classic = (archive, record, from, size = 1) => ({
     archive, record, fileName: `det-stand-in-${archive}_${record}`, standIn: true, gate,

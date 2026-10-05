@@ -247,11 +247,13 @@ test('WD3 stand-ins, every built piece is sound - Rosy\'s hangings and rugs, the
 });
 
 // ---- the pictures and the sprites ----------------------------------------------------------------------------------------
-test('WD3 stand-ins, the drawn cloth: forty-eight pictures of archive 38202 - five regions\' tapestries and banners, the Eight\'s, fourteen patterns, four rugs, leaves, three small hangings - every one opaque, behind its switch', async () => {
+test('WD3 stand-ins, the drawn cloth: fifty pictures of archive 38202 - five regions\' tapestries and banners, the Eight\'s, fourteen patterns, four rugs, leaves, three small hangings, and (BET1) Betony\'s tapestry and banner after them - every one opaque, behind its switch', async () => {
   assert.equal(TOWN_PICTURE_ARCHIVE, 38202);
-  assert.equal(TOWN_PICTURES.length, 48);
+  assert.equal(TOWN_PICTURES.length, 50);
   const sizes = TOWN_PICTURES.map((p) => { const pic = p.draw(); return `${pic.width}x${pic.height}`; });
-  assert.deepEqual([...new Set(sizes.slice(0, 5)), ...new Set(sizes.slice(5, 10)), ...new Set(sizes.slice(40, 44)), sizes[44], ...new Set(sizes.slice(45))], ['32x48', '24x64', '48x32', '16x16', '16x24']);
+  assert.deepEqual([...new Set(sizes.slice(0, 5)), ...new Set(sizes.slice(5, 10)), ...new Set(sizes.slice(40, 44)), sizes[44], ...new Set(sizes.slice(45, 48))], ['32x48', '24x64', '48x32', '16x16', '16x24']);
+  assert.deepEqual([sizes[48], sizes[49], TOWN_PICTURES[48].name, TOWN_PICTURES[49].name], ['32x48', '24x64', 'tapestry of Betony', 'banner of Betony'], 'BET1: appended - no record above moved');
+  assert.deepEqual([PICTURE.regionTapestry('Betony'), PICTURE.regionBanner('Betony'), PICTURE.regionTapestry('Abibon-Gora'), PICTURE.regionBanner('Abibon-Gora')], [48, 49, 4, 9]);
   for (const [k, p] of TOWN_PICTURES.entries()) {
     const pic = p.draw();
     assert.equal(pic.data.length, pic.width * pic.height * 4, p.name);
@@ -261,7 +263,7 @@ test('WD3 stand-ins, the drawn cloth: forty-eight pictures of archive 38202 - fi
   assert.deepEqual([PICTURE.regionTapestry('Glenpoint'), PICTURE.regionBanner('Glenpoint'), PICTURE.divineTapestry('Kynareth'), PICTURE.divineBanner('Akatosh'), PICTURE.decorative(15), PICTURE.rug(5), PICTURE.leaves, PICTURE.smallHanging(4)], [0, 5, 10 + PICTURE.divineTapestry('Kynareth') - 10, 18 + PICTURE.divineBanner('Akatosh') - 18, 26 + 1, 41, 44, 46]);
   let on = true;
   const entries = townPictureEntries(() => on);
-  assert.equal(entries.length, 48);
+  assert.equal(entries.length, 50);
   assert.ok(entries.every((e, r) => e.archive === 38202 && e.record === r && e.standIn === true && e.gate() === true));
   on = false;
   assert.ok(entries.every((e) => e.gate() === false));
@@ -270,7 +272,7 @@ test('WD3 stand-ins, the drawn cloth: forty-eight pictures of archive 38202 - fi
 
 test('WD3 stand-ins, the drawn sprites: every one a clear ground and a drawn subject, binary alpha, small as Daggerfall\'s own; every name the DET tables point at is drawn', () => {
   const names = Object.keys(STAND_IN_SPRITES);
-  assert.equal(names.length, 40);
+  assert.equal(names.length, 45, 'BET1: a grey hen and her rooster, a resting rat, an ad stand, a bread pan');
   for (const n of names) {
     const pic = STAND_IN_SPRITES[n]();
     let clear = 0, solid = 0;
@@ -427,7 +429,7 @@ function loadArena2() {
 /** What neither the port nor Daggerfall stands, and why (bible/03-World/Beautiful-Towns.md, "Not stood in"). */
 const NOT_STOOD_IN = Object.freeze({
   models: [43756, 45179, 45181, 45198, 45205, 45206, 52991, 53129, 53130, 53132, 53134, 69465],
-  flats: ['10025_1', '1200_4', '1200_9', '1210_13', '1210_16', '1210_24', '1230_11', '1230_15', '1230_2', '1230_22', '1230_3', '1230_5', '1230_6', '1230_9'],
+  flats: ['1200_4', '1200_9', '1210_13', '1210_16', '1210_24', '1230_11', '1230_15', '1230_2', '1230_22', '1230_3', '1230_5', '1230_6', '1230_9'],   // BET1: 10025_1 is DET's ad stand, drawn
 });
 
 test('WD3 with ARENA2: every model and flat the two packs place is Daggerfall\'s own, stood in by the port, or one of the named few nothing stands (as DFU without the peers) - 2,014 models and 623 flats', { skip: HAVE_ARENA2 ? false : 'ARENA2_PATH not set' }, () => {
@@ -456,7 +458,7 @@ test('WD3 with ARENA2: every model and flat the two packs place is Daggerfall\'s
     else if (a <= LAST_CLASSIC_TEXTURE_ARCHIVE && texture(a) && r < texture(a).recordCount) fcount.classic++;
     else fmissing.push(k);
   }
-  assert.deepEqual([flats.size, fcount.classic, fcount.standIn], [623, 503, 106]);
+  assert.deepEqual([flats.size, fcount.classic, fcount.standIn], [623, 503, 107]);
   assert.deepEqual(fmissing.sort(), [...NOT_STOOD_IN.flats].sort());
   // ...and every stand-in drawn from a classic record names one the player's data has
   const sources = [

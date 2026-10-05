@@ -375,9 +375,13 @@ packs):
 | `45179`, `45198`, `45205`, `45206`, `43756` | 286 | DET pieces no catalogue names, in few blocks |
 | `53129`, `53130` | 18 | the pack's wooden bridges: their rails are in its published files, their decks are not, so neither shape nor size can be read - the six village blocks that place them stand bridgeless |
 | `53132`, `53134` | 13 | its stone bridges: two meshes each under transforms the published files do not settle |
-| `1210_13`, `_16`, `_24` | 75 | Cliffworms' items Detailed Ships does not carry - no picture of them is known |
-| `1230_2` ... `1230_22` (8) | 39 | one record to each of the eight temple blocks' variants, a metre up - by every sign each temple's own deity statue (archive 1230 is King of Worms' and Zoran's statues); only Kynareth's (`1230_30`, Detailed Ships') is known, and it is none of these |
-| `10025_1`, `1200_4`, `1200_9` | 11 | an uncatalogued DET flat; two of StarMadeKnight's NPC billboards |
+| `1210_13`, `_16`, `_24` | 75 | Cliffworms' items Detailed Ships does not carry - no picture of them is known (BET1: Betony Restored carries `_13` and `_16`, Daggerfall's bottles and goblets stood on a shelf, and while that mod is loaded they answer here too, as in DFU - `03-World/Betony-Restored.md`) |
+| `1230_2` ... `1230_22` (8) | 39 | one record to each of the eight temple blocks' variants, a metre up - by every sign each temple's own deity statue (archive 1230 is King of Worms' and Zoran's statues); only Kynareth's (`1230_30`, Detailed Ships') is known, and it is none of these (BET1: `1230_11` is Betony Restored's Mara, WilhelmBlack's and King of Worms', which answers here while that mod is loaded) |
+| `1200_4`, `1200_9` | 2 | two of StarMadeKnight's NPC billboards |
+
+`10025_1` (9 placed) was listed here as an uncatalogued DET flat until BET1: the catalogue names it under DET's old
+number (`1025.1`, "Wood Ad Stand" - the old numbers are the same records, `DET_OLD_ARCHIVES`), and Betony Restored's
+marketplace stands one, so it is drawn now (`standInSprites.js` `adStand`) - for the towns as for Betony.
 
 A record of a stand-in archive that has no picture (the eight statues, the
 three items) draws one clear pixel and is said once by name

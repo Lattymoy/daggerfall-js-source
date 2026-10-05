@@ -308,6 +308,11 @@ export const ONLINE_ROOM_MOD_KEYS = Object.freeze({
   // the room's. The homes bought before them keep the towns they were bought in, for everyone (net/homeLaw.js WD3).
   'beautiful-villages': Object.freeze({ Enabled: true }),
   'beautiful-cities': Object.freeze({ Enabled: true }),
+  // BET1 (2026-10-05): the island of Betony - 25 PLACES the mod adds to the region, at indices past MAPS.BSA's own, with
+  // their buildings, their dungeons and their roads. A player with the switch off has none of them: the others' town is
+  // their open hillside, a location key past the region's count names nothing on their machine, and a building key in
+  // Betony City nothing at all. The switch is the room's; its street people keep the room's sky and weather.
+  'betony-restored': Object.freeze({ Enabled: true }),
   // RAID2 (2026-09-27, Mac on World Events - Raiding Parties online: "1. Server 2. Keep"): the towns' raids are the
   // WORLD's - the day's roll is the shared day's, one player runs each raid and every other stands its raiders as
   // puppets and fights them, and a raid's deaths are every owner's summed. A player with the switch off would walk a

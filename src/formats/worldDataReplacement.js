@@ -60,8 +60,16 @@ const worldDataOn = worldDataDoorOpen;
 // the asset (ModManager.cs:404-427, EnumerateEnabledModsReverse) - so each name keeps every mod's entry, highest
 // load priority first, and the live one answers: a switched-off mod never hides the one under it, and two mods'
 // order is the load order's, never the order their files happened to arrive in.
-const _assets = new Map();   // file name -> [{ json, get, isOn, priority, vendor }], highest priority first
+const _assets = new Map();   // assetKey(file name) -> [{ json, get, isOn, priority, vendor, name }], highest priority first
+/** BET1: THE DOOR IS CASE-BLIND, as DFU's is - ModManager.TryGetAsset asks AssetBundle.Contains (ModManager.cs:404-415),
+ *  and a bundle keeps its asset names lowercased. Betony Restored's grids spell its blocks `WALLAA00Betony.RMB` and the
+ *  bundle's file is `wallaa00betony.rmb.json`: an exact-case door served the classic nothing there. Every name the door
+ *  is handed or asked for is keyed through this one function - and each entry keeps `name`, the file as its mod spells
+ *  it, which FindAssets reads (below). */
+export const assetKey = (fileName) => String(fileName).toLowerCase();
 function addAssetEntry(fileName, entry) {
+  entry.name = String(fileName);
+  fileName = assetKey(fileName);
   const list = _assets.get(fileName) ?? [];
   const mine = list.findIndex((e) => (e.vendor ?? null) === (entry.vendor ?? null));
   if (mine >= 0) list.splice(mine, 1);   // a mod registering its own file again replaces it (a registration naming no mod, WD1's, replaces the last that named none - the C#'s one asset a name)
@@ -99,9 +107,9 @@ function assetOn(a) {
 }
 /** WD3: whether a mod carries a world-data file - the layout pins ask which mods a town's files come from
  *  (systems/layoutPins.js). Answers for the mods on the door: one never loaded carries nothing here. */
-export const worldDataVendorCarries = (vendor, fileName) => (_assets.get(fileName) ?? []).some((a) => a.vendor === vendor);
+export const worldDataVendorCarries = (vendor, fileName) => (_assets.get(assetKey(fileName)) ?? []).some((a) => a.vendor === vendor);
 function liveAsset(fileName) {
-  for (const a of _assets.get(fileName) ?? []) if (assetOn(a)) return a;
+  for (const a of _assets.get(assetKey(fileName)) ?? []) if (assetOn(a)) return a;
   return null;
 }
 /** A pack file that will not rebuild on this player's data is said once and not served (WD1's "a patch whose ops do
@@ -153,11 +161,13 @@ function layered(fileName, json) {
  *  read when asked for - a pack's 7,000 location files are never rebuilt
  *  to be passed over by a `locationnew-` filter. */
 function findAssets(extension) {
-  const out = [];
-  for (const [name] of _assets) {
-    if (!name.endsWith(extension)) continue;
-    const a = liveAsset(name);
-    if (a) out.push({ name, get json() { return assetJson(a, name, null); } });
+  const out = [], blind = assetKey(extension);
+  for (const [key] of _assets) {
+    if (!key.endsWith(blind)) continue;   // the cheap pass over the keys first (a pack's 7,000 names)
+    const a = liveAsset(key);
+    // BET1: the suffix is matched as DFU's Mod.FindAssetNames matches it - ordinal, against the file's name as the mod's
+    // manifest spells it (Mod.cs:451, string.CompareOrdinal); only TryGetAsset's door is case-blind
+    if (a && a.name.endsWith(extension)) out.push({ name: a.name, get json() { return assetJson(a, a.name, null); } });
   }
   return out;
 }
@@ -370,7 +380,7 @@ export function quietLocationOverrides(on) { _quietLocations = !!on; }
 function pinnedHere(locationKey, fileName) {
   const pin = _pinAt(locationKey);
   if (!pin || (!pin.out?.size && !pin.in?.size)) return false;
-  return (_assets.get(fileName) ?? []).some((a) => a.vendor && (pin.out?.has(a.vendor) || pin.in?.has(a.vendor)));
+  return (_assets.get(assetKey(fileName)) ?? []).some((a) => a.vendor && (pin.out?.has(a.vendor) || pin.in?.has(a.vendor)));
 }
 function withPinKey(key, fn) {
   const was = _pinKey;

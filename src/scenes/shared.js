@@ -93,6 +93,7 @@ import { installRaidingParties } from '../systems/raidingParties.js';   // RAID1
 import '../systems/gateSpoils.js'; import '../systems/portalStone.js';   // WB5: the Sigil Stone's own template (570) registers in every host, so a save carrying one loads it in any of the four; PORTAL1: and the Portal Stone's Use (572)
 import '../systems/sigilBroker.js';   // SET7: the Broker's record (what this character bought today) registers its save slot in every host, so a save made anywhere carries it
 import { installImmersiveTravel } from '../systems/immersiveTravel.js';   // IT1: Immersive Travel's Init - the drivers' and sailors' factions, their Fast Travel services
+import { installBetonyRestored, setBetonyPortraitProbe } from '../systems/betonyRestored.js';   // BET1: Betony Restored's Init - Lord Mogref's faction, its pictures, Flat Replacer's portraits
 import { installRoleplayRealism } from '../systems/rrInstall.js';   // RR1: Roleplay & Realism's InitMod - after Items', as DFU loads them (Items is the one it looks up)   // RRI1: the templates, the patches, the art - the same seam, the same reason   // DW3: its icons, on the replacement door - here and not at worldTick's module scope, where the mod's law sits in an import cycle (a TDZ)
 import { getBool, getInt } from '../systems/settings.js';   // M-FM: Audio/AlternateMusic, read once for all three hosts; MAC-O4: Controls/WeaponSwingMode, the drag route's own missing term
 import { SongManager, musicEnvironment, holdEnvironment } from '../systems/songManager.js';
@@ -1330,6 +1331,7 @@ export function ensureAudio(fetch = fetchBytes) {
   // archive that has replacements is actually loaded.
   installImmersiveTravel();   // IT1: Carriage Drivers (8642) and Sailors (8643), and their Fast Travel - before the faction dictionary is built at the load
   installDetailedShipsArt();   // DS1: archives 1210/1230 on the texture door (their pictures built from your own records at the archive's load) and the six xml scales
+  installBetonyRestored();   // BET1: Lord Mogref (1432) before the faction dictionary is built at the load; archives 540/1200/1210/1230 and 218_5 on the texture door; the patrons' portraits
   installForaging();   // FORAGE1: the ForagingQuests list (before any quest bridge is built), the six tools' and five foods' UseItem, the seven pictures, Foraging_Tools
   installWarmAshesShips();   // WA1: the WA_Ships quest list (before any quest bridge is built - LoadQuestLists reads it) and the mod's save record
   installDiverseWeaponsIcons();   // DW3: before the archives load, so 233/234's preload carries the mod's icons
@@ -1347,8 +1349,9 @@ export function ensureAudio(fetch = fetchBytes) {
       // packs card) when a mod will not load on this machine
       if (noMods()) return n;
       return import('../systems/dfmodTextures.js')
-        .then(({ setDfmodSources, setDfmodDetailSource }) => {
+        .then(({ setDfmodSources, setDfmodDetailSource, hasDfmodCifRci }) => {
           setDfmodDetailSource(() => getPref('dfmodTextureDetail'));   // DFMOD2: the packs card's detail choice
+          setBetonyPortraitProbe(hasDfmodCifRci);   // BET1: Flat Replacer's picture faces (TFAC00I0.RCI_1200014-0) answer from an attached RMB Resource Pack
           // DFMOD2: indexes only - a missing one is built in the background, never on the way into the game
           return setDfmodSources(names, loadTextureFile, { saveIndex: saveTextureJson, loadBlob: loadTextureBlob, warm: true });
         })

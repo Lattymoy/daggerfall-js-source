@@ -151,11 +151,16 @@ function parseFactionBlock(block, faction) {
  *  is not in FACTION.TXT, keyed by id; false when the id is taken. The
  *  registry is read by PersistentFactionData.AddCustomFactions (the
  *  port's factionRep.addCustomFactions) when the player's dictionary
- *  is reset, and by the talk host over its own reader. */
+ *  is reset, and by the talk host over its own reader.
+ *  BET1: the record is stored AS GIVEN (`customFactions.Add(factionId,
+ *  factionData)`): its own `id` is the record's, and a record that names
+ *  none takes the key. Betony Restored registers Lord Mogref under 1432
+ *  with a record whose id is 1532 - DFU finds him by the key and keeps
+ *  the record's 1532 (RelinkChildren links his parent to it). */
 const _customFactions = new Map();
 export function registerCustomFaction(factionId, factionData) {
   if (_customFactions.has(factionId)) return false;
-  _customFactions.set(factionId, Object.freeze({ ...newFaction(), ...factionData, id: factionId }));
+  _customFactions.set(factionId, Object.freeze({ ...newFaction(), id: factionId, ...factionData, ...(factionData?.id == null ? { id: factionId } : {}) }));
   return true;
 }
 export const customFactions = () => _customFactions;

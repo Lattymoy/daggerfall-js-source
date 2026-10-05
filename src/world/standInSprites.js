@@ -7,6 +7,9 @@
 // has none, it is one of these: small pictures at Daggerfall's own pixel (one pixel is 2.5 cm at a record scale of
 // 0), outlined and lit from the upper left like the game's own, transparent round the subject (a flat is a cut-out).
 // Deterministic: the same picture every time, no file.
+//
+// BET1 (2026-10-05): Betony Restored's marketplace and palace place five more of DET's that Daggerfall draws nothing
+// like - a grey hen and her rooster, a brown rat lying down, a wooden ad stand, a loaf in its bread pan.
 
 class Sprite {
   constructor(w, h) { this.width = w; this.height = h; this.data = new Uint8Array(w * h * 4); }
@@ -67,6 +70,7 @@ const K = Object.freeze({
   feather: [140, 96, 56], comb: [196, 34, 30], beak: [218, 168, 48], greyFeather: [150, 152, 158], dove: [128, 132, 142],
   wool: [226, 222, 206], face: [64, 56, 52], rat: [112, 92, 72], blackRat: [52, 50, 52], toyRed: [178, 52, 40], toyBlue: [58, 88, 160],
   toyYellow: [216, 180, 60], sky: [126, 160, 200], hill: [90, 120, 70], dark: [40, 34, 30],
+  crust: [176, 112, 52], tin: [74, 74, 80],
 });
 
 // ---- the food ------------------------------------------------------------------------------------------------------
@@ -154,6 +158,22 @@ function firewood() {
   for (const [x, y] of [[3, 8], [8, 8], [13, 8], [17, 8], [5.5, 4], [10.5, 4], [15, 4], [8, 1.2]]) { s.ellipse(x, y, 2.6, 2.4, K.woodDark, 0.1); s.ellipse(x, y, 1.6, 1.4, K.wood, 0.2); }
   return s.outline().picture();
 }
+/** BET1: a loaf risen over its bread pan. */
+function breadPan() {
+  const s = new Sprite(14, 8);
+  s.ellipse(7, 4, 5.5, 3.4, K.crust, 0.35);
+  s.rect(1, 4, 12, 7, K.tin); s.line(1, 4, 12, 4, lit(K.tin, 0.3));   // the tin, its rim
+  return s.outline(0.4).picture();
+}
+/** BET1: a wooden ad stand - a board on two splayed legs, a painted panel on it, its lettering. */
+function adStand() {
+  const s = new Sprite(16, 24);
+  s.line(2, 23, 4, 3, K.woodDark); s.line(13, 23, 11, 3, K.woodDark);
+  s.rect(3, 2, 12, 17, K.wood); s.rect(6, 0, 9, 1, K.woodDark);
+  s.rect(4, 4, 11, 15, K.dark);
+  for (const [x0, x1, y] of [[5, 10, 6], [5, 8, 9], [6, 10, 12]]) s.line(x0, y, x1, y, K.cream);
+  return s.outline(0.4).picture();
+}
 /** A painter's canvas on its easel: three legs, the canvas with a landscape begun on it. */
 function easel() {
   const s = new Sprite(22, 34);
@@ -202,9 +222,16 @@ function sheep(pose = 'side') {
   for (const x of [9, 12, 20, 23]) s.rect(x, 15, x + 1, 21, K.face);
   return s.outline(0.4).picture();
 }
-/** A rat side-on, facing left; `sitting` up on its haunches. */
-function rat(fur, sitting = false) {
-  if (sitting) {
+/** A rat side-on, facing left; `pose` 'side', 'sit' (up on its haunches) or 'rest' (lying down, its tail curled under). */
+function rat(fur, pose = 'side') {
+  if (pose === 'rest') {
+    const s = new Sprite(12, 7);
+    s.ellipse(6.5, 3.6, 4.6, 2.2, fur, 0.3); s.ellipse(2.4, 3.9, 1.8, 1.5, fur, 0.3);
+    s.set(1.4, 3.4, K.dark); s.set(3, 2.2, lit(fur, 0.25));
+    s.line(10.6, 5, 4, 6, lit(fur, 0.2));
+    return s.outline(0.4).picture();
+  }
+  if (pose === 'sit') {
     const s = new Sprite(10, 11);
     s.ellipse(5, 7, 3.2, 3.6, fur, 0.3); s.ellipse(4, 3, 2.2, 2, fur, 0.3);
     s.set(2.5, 2.5, K.dark); s.set(3, 0.8, lit(fur, 0.2)); s.set(5, 0.8, lit(fur, 0.2));
@@ -247,12 +274,13 @@ export const STAND_IN_SPRITES = Object.freeze({
   cherries, pear, plum, peach, olives, cheeseWheel: () => cheeseWheel(false), cheeseWheelCut: () => cheeseWheel(true),
   cheeseSlice: () => cheeseSlice(false), cheeseSliceHoles: () => cheeseSlice(true), softCheese, roastPlatter, porridge,
   grapes: () => grapes(K.grape), whiteGrapes: () => grapes(K.whiteGrape), cabbage, brokenBottles, rollingPin, blockToy,
-  grainPile, wheatBundle, firewood, easel, monkey,
+  grainPile, wheatBundle, firewood, easel, monkey, breadPan, adStand,
   brownRooster: () => chicken(K.feather, 'stand', true), brownChickenPecking: () => chicken(K.feather, 'peck'),
   brownChicken: () => chicken(K.feather, 'stand'), brownChickenLooking: () => chicken(K.feather, 'look'),
   whiteChickenLooking: () => chicken(K.white, 'look'), whiteChicken: () => chicken(K.white, 'stand'),
   whiteChickenPecking: () => chicken(K.white, 'peck'), whiteRooster: () => chicken(K.white, 'stand', true),
+  grayRooster: () => chicken(K.greyFeather, 'stand', true), grayChicken: () => chicken(K.greyFeather, 'stand'),
   sheep: () => sheep('side'), sheepFront: () => sheep('front'), sheepResting: () => sheep('rest'),
-  brownRat: () => rat(K.rat), blackRat: () => rat(K.blackRat), blackRatSitting: () => rat(K.blackRat, true),
+  brownRat: () => rat(K.rat), blackRat: () => rat(K.blackRat), blackRatSitting: () => rat(K.blackRat, 'sit'), brownRatResting: () => rat(K.rat, 'rest'),
   dove: () => dove('stand'), dovePecking: () => dove('peck'), doveWing: () => dove('wing'),
 });

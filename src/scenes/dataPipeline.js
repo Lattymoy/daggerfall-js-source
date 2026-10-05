@@ -34,6 +34,10 @@ export const LAST_CLASSIC_TEXTURE_ARCHIVE = 511;
 export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes }) {
   const textureFiles = new Map();
   const texturePromises = new Map();
+  // BET1: an archive read but not yet published - its replacements are decoding (below). A derived replacement of one of
+  // its OWN records (Betony Restored's 218_5: the classic pot with its smoke taken out) reads the classic record from
+  // here; through getTexture it would await the very promise it is part of, and the archive would never publish.
+  const textureLoading = new Map();
 
   // NPC1: FLATS.CFG, warmed once and shared. It answers two questions
   // about any billboard in the world - what the flat is CALLED (the
@@ -89,6 +93,7 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
         }
         const t = new TextureFile();
         t.load(bytes, texName(archive), palette);
+        textureLoading.set(archive, t);   // BET1
         // M-TEX: the replacement PNGs for this archive decode HERE,
         // where there is already an await and the result is already
         // cached per archive. uploadRecord is synchronous and runs off
@@ -98,6 +103,7 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
         // absent. Never throws: one bad PNG costs that texture.
         await preloadTextureArchive(archive).catch(() => {});
         textureFiles.set(archive, t);
+        textureLoading.delete(archive);
         return t;
       })());
     }
@@ -108,14 +114,14 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
   // ARENA2, the palette the host loaded - never shipped (formats/derivedTexture.js).
   setTextureDeriveContext({
     classicRgba: async (archive, record, frame = 0) => {
-      const t = await getTexture(archive);
+      const t = textureLoading.get(archive) ?? await getTexture(archive);   // BET1: its own archive, read before it is published
       if (!t || t.vendor) return null;
       const bm = t.getDFBitmap(record, frame);
       return bm?.width ? classicRecordRgba(bm, palette) : null;
     },
     /** DS1: the record's own scale (TextureFile.getScale) - what a stand-in for a classic sprite is sized by. */
     classicScale: async (archive, record) => {
-      const t = await getTexture(archive);
+      const t = textureLoading.get(archive) ?? await getTexture(archive);   // BET1
       return !t || t.vendor ? null : t.getScale(record);
     },
   });
