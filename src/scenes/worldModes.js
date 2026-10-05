@@ -374,7 +374,7 @@ import { ItemMakerWindow, preloadItemMakerArt, itemMakerArtLoaded, ITEM_RECTS, r
 import { createPotion, getMagicItemTemplates, LOOT_NEWER_TEXT } from '../systems/loot.js';   // M2: ItemBuilder.CreatePotion, one minter; G4: the MAGIC.DEF registry
 import { SITE_TYPES } from '../systems/quest/place.js';
 import { placeFoeFreely, questStandBox, rideSceneMarker, markerScenePosition, siteMarkerSpots, standSpot, MARKER_FLOOR_REACH } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring, finally called; TOTEM-CAGE: a stand's box where it IS; QUEST-MARKERS: the building's backstop
-import { placeFoeEnv, entityOccupancy, questFoeGender, reviveQuestBehaviour as reviveQuestBehaviourFromSave, heldSpots, holdSpotWhile } from './questFoeHost.js';   // B1 (PlaceFoeFreely reads the fieldOfView import below)   // AUDIT 63 F24: SerializableEnemy.cs:206-217 re-adds the component on restore
+import { placeFoeEnv, entityOccupancy, questFoeGender, reviveQuestBehaviour as reviveQuestBehaviourFromSave, heldSpots, holdSpotWhile, restandMendedQuestFoe } from './questFoeHost.js';   // B1 (PlaceFoeFreely reads the fieldOfView import below)   // AUDIT 63 F24: SerializableEnemy.cs:206-217 re-adds the component on restore
 import { standLooseFoe } from './hostEnchant.js';   // ROAD-G G1: SoulBound's break release / the Sanguine Rose, inside a building
 import { ENEMY_BASICS, enemyDisplayName } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag // WORLD-HOVER H2: GetLocalizedEnemyName - Entity.Name for a live one (.cs:310)
 import { openDoorsStep, foeFrameDt } from '../characters/enemyMotor.js';   // AUDIT 63 F42: EnemyMotor.OpenDoors (EnemyMotor.cs:1424-1442), which lives in the motor and runs wherever an enemy does
@@ -11199,7 +11199,7 @@ export function createWorldModes(host) {
       if (b) interiorFoeStands.push(b);
       return b;
     };
-    interiorFoes?.restoreWorld(saved.foes, fromNative, yOffset, { reviveQuestBehaviour });
+    interiorFoes?.restoreWorld(saved.foes, fromNative, yOffset, { reviveQuestBehaviour, restandQuestFoe: (b, feet) => restandMendedQuestFoe(questBridge?.machine ?? null, interiorCtx, b, feet, INTERIOR_MARKER_FEET_LIFT) });   // SEALED-SAVE (FIELD BUGS 2026-10-05c)
     interiorGuards?.restoreWorld(saved.guards, fromNative, yOffset);
   }
   /** U43-ii: the quest machine's popup, in EVERY modal mode. The

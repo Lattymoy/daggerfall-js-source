@@ -33,6 +33,7 @@ import { QuestResourceBehaviour } from '../systems/quest/resourceBehaviour.js';
 import { questNameIn } from '../systems/quest/machine.js';   // AUDIT CURSE-SYNC: IsProtectedQuest's name test, one home
 import { applySpell } from '../systems/effects.js';
 import { GENDERS } from '../characters/nameHelper.js';
+import { mendedFoeSpot } from '../systems/quest/markerCuration.js';   // SEALED-SAVE (FIELD BUGS 2026-10-05c): a saved quest foe follows its moved marker
 
 export function questFoeGender(foe) { return foe.gender === GENDERS.Female ? 'female' : 'male'; }
 
@@ -415,4 +416,20 @@ export function reviveQuestBehaviour(machine, data) {
   b.restoreSaveData(data);
   if (!b.questUID || b.targetSymbol == null) return null;   // :214-217 - QuestSpawn = false; Destroy(questResourceBehaviour)
   return b;
+}
+
+/** SEALED-SAVE (FIELD BUGS 2026-10-05c; "Haunted House quest has enemy under the floor"): how near a restored quest foe
+ *  stands to its marker's old spot to be its - a sealed cellar's breadth, on the old spot's level (a storey is ~3 m; the
+ *  hatch's near side stands 3.15 m over the report's cellar). */
+export const SEALED_SAVE_REACH_M = 6, SEALED_SAVE_LEVEL_M = 1.5;
+/** SEALED-SAVE: a building's restored quest foe the save stood at the spot the load's mend moved its marker FROM
+ *  (markerCuration.js mendedFoeSpot) stands where the marker stands now - the floor base `ctx.parentPt` maps, `lift`
+ *  above it, as the interior host's standFoe stands it; anywhere else, or with no context, null (it stands where it
+ *  was). worldModes.js restoreInteriorPools hands it to the pool's restore. */
+export function restandMendedQuestFoe(machine, ctx, behaviour, feet, lift) {
+  const m = ctx ? mendedFoeSpot(machine, behaviour) : null;
+  if (!m) return null;
+  const was = ctx.parentPt(m.from.x, m.from.y + lift, m.from.z);
+  if (Math.abs(feet[1] - was[1]) > SEALED_SAVE_LEVEL_M || Math.hypot(feet[0] - was[0], feet[2] - was[2]) > SEALED_SAVE_REACH_M) return null;
+  return ctx.parentPt(m.to.x, m.to.y + lift, m.to.z);
 }

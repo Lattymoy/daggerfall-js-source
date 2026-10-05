@@ -187,5 +187,6 @@ test('SHIP-PACK the world\'s seams: the pack handed to the runtime (where her de
   // PIN MOVED (HOLDINGS): the pack's seam, the Fleet's book's two after it (titles, retitle - test/fleet.test.js)
   assert.match(WORLD, /player: \(\) => \(playerEntity\.items \?\?= \[\]\),/);
   assert.match(WORLD, /noDeed: !!csaRuntime\?\.deedMissing\?\.\(boat\),/);
-  assert.match(WORLD, /if \(tvSea\.means\?\.again && boat\.packable && csaPassengersOn\(boat\) === 0 && !csaRuntime\.deedMissing\(boat\)\) csaCall\(\(\) => csaRuntime\.PackBoat\(boat, true\)\);/);
+  // PIN MOVED (HOLD-WEIGHT, FIELD BUGS 2026-10-05c): the landfall asks her parts' weight after her deed (test/fb1005c_holdweight.test.js)
+  assert.match(WORLD, /if \(tvSea\.means\?\.again && boat\.packable && csaPassengersOn\(boat\) === 0 && !csaRuntime\.deedMissing\(boat\) && !csaRuntime\.partsTooHeavy\(boat\)\) csaCall\(\(\) => csaRuntime\.PackBoat\(boat, true\)\);/);
 });
