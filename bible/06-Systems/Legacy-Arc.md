@@ -231,23 +231,36 @@ authority online until the realm keeps the lineage and its tombstone (section 9)
 
 ## 8. MARRIAGE, CHILDREN AND SURNAMES
 
-*LEGACY5's - NOT BUILT yet: the design this section states is the plan, in the present tense of the slice that builds it.*
+*Built: LEGACY5. The law is `systems/legacy/marriage.js`; the host's half `scenes/legacyHost.js` (`topicRows`,
+`weddingStep`, `childrenStep`, `residentDied`, `holdsResident`, the spouses in `residentsOf`); the talk's rows
+`scenes/townTalk.js` (`legacyTopics`); the wiring `scenes/world.js`; pinned in `test/legacy5_marriage.test.js`,
+mutation-proven in `tools/mutants/legacy5.json`. Two players' characters wed online is LEGACY7's (section 9).*
 
-- **Courting** a Living World resident: an adult whose regard of the player is FRIEND (`FRIEND_AT`, 40) and who is not
-  wed. The enhanced talk's "Court" adds affection once a day (by Personality and Etiquette, like a word's tone); at
-  100 the resident will hear a proposal. A proposal accepted, the two are WED at the temple of the resident's town,
-  through its priest's talk ("We wish to be wed"). The spouse
-  is a person in the family (`kind: 'resident'`, the resident's id - their name, face and trade are the census's
-  forever) and keeps their day; if the player owns a home in their town (Holdings), the spouse's home becomes it.
-- **Online**, two players' characters may wed: both in the same temple, both asking the priest, the service records
-  the union (each family names the other's member as spouse).
+- **Courting** a Living World townsperson of a household (the census's `h` roll - never one of the watch, a traveller
+  on the roads, a visitor or one of the line; every census resident is an adult): one whose regard of the one played is
+  FRIEND (`FRIEND_AT`, 40), or one already courted. Their talk's Tell me about page opens with Project Legacy's own
+  rows, on both skins (`townTalk.js legacyTopics`, answered by the host - never the engine's pipeline): "Courtship"
+  once a day of the one played's own clock - affection by Personality and Etiquette and the question's tone, on a roll
+  (`courtGain`) - then, at 100, "Marriage": a proposal, taken. The courtship keeps the resident as they are (name,
+  sex, race, face, town) - their identity is for life, so the wedding needs no town loaded.
+- **The wedding** is asked at the door of the temple of the betrothed's town, once a visit (the rest's shape -
+  section 7): "Be wed to <name> here, before the gods?", and then "Will <name> take the name <house>?". **Departure
+  (recorded):** the design said through the priest's talk ("We wish to be wed"); the temple's priest is DFU's static
+  NPC, whose talk is the engine's, and a question at the temple's door is the shape the rest already wears.
+- **The spouse** is a person of the house (`kind: 'resident'`, their census id, their own name and face for life,
+  `mapId` the town they live in). They stand in the world as the census's own resident - their outfit, job and day -
+  of the line's household now (`household`), at home in a house of the line's in their town when there is one, else
+  in their own; their census place is the line's for good, living or dead (`holdsResident`; `world.js holderOf`).
+  Unlike the members, they stand whether or not "Family In World" is on: they are the town's people either way. Met,
+  they greet the one played as their spouse; they are never played, never carry the mantle (`successors`). Struck
+  down, they die in the record (section 10b's law). A courted resident who dies ends the courtship, said.
 - **Children.** A wed member has a child with a 25% chance each thirty days of their own clock while the spouse lives,
-  at most six; the child's race is either parent's, the rest by section 5 from both parents (the blood the better of
-  the two, the hearth the played parent's). Children are minors and not played; at a succession any child may take
-  the mantle - they come of age in the telling (section 10's departure).
+  at most six; the child's race is either parent's, the rest by section 5 from both parents (`addChild` reads the
+  spouse). A child is a MINOR: not played (the switch says so), but any child may take the mantle at a succession -
+  they come of age in the telling (section 10's departure); a minor taking the mantle is a minor no longer.
 - **Surnames.** The family's surname is the founder's (their name's last word, or "of <seat>" when they have none). A
-  spouse takes it if the player wishes (the proposal asks); children always carry it - except for the mod's lore
-  change, which founds a cadet branch under the new name on the same tree.
+  spouse takes it if the player answers yes at the wedding; children always carry it - except for the mod's lore
+  change, which founds a cadet branch under the new name on the same tree (section 5's naming).
 
 ## 9. ONLINE
 
@@ -389,7 +402,7 @@ than standing still.
 | LEGACY3 | the Family tab (Enhanced Plus); the Succession; the Hall | built |
 | LEGACY4 | heirlooms, the remains, the death quest, the rest and the blessing | built |
 | AUDIT LEGACY | the five-lens audit of LEGACY1-4 (`01-Overview/Audit-Legacy.md`) - the two authorities, the death at the door | built |
-| LEGACY5 | courting, marriage, children, surnames' cadet branches | not built |
+| LEGACY5 | courting, marriage, children, surnames' cadet branches | built |
 | LEGACY6 | world influence: the inherited standing and regard, the towns' talk, the killer remembered | not built |
 | LEGACY7 | online: the service's lineage, the tombstone, the heir's realm birth, the house name, two players wed | not built |
 | LEGACY-HOME | the bloodline in the world: the family home, the seat's townsfolk, their day, Play as by talking (section 10b) | built |

@@ -1,0 +1,128 @@
+[
+  {
+    "name": "LEGACY5-court-anyone",
+    "file": "src/systems/legacy/marriage.js",
+    "old": "export const courtable = (res) => !!res && res.roll === 'h' && !res.guard && !res.legacy;",
+    "new": "export const courtable = (res) => !!res;",
+    "tests": [
+      "test/legacy5_marriage.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY5-court-twice-a-day",
+    "file": "src/systems/legacy/marriage.js",
+    "old": "  if (c.day === o.day) return { gained: 0, affection: c.affection, again: true };\n",
+    "new": "",
+    "tests": [
+      "test/legacy5_marriage.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY5-propose-before-the-heart",
+    "file": "src/systems/legacy/marriage.js",
+    "old": "  if (!c || c.affection < AFFECTION_MAX || c.betrothed) return false;",
+    "new": "  if (!c || c.betrothed) return false;",
+    "tests": [
+      "test/legacy5_marriage.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY5-other-courtships-kept",
+    "file": "src/systems/legacy/marriage.js",
+    "old": "  member.courting = {};\n  s.mapId",
+    "new": "  s.mapId",
+    "tests": [
+      "test/legacy5_marriage.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY5-children-unbounded",
+    "file": "src/systems/legacy/marriage.js",
+    "old": "  if (childrenTogether(family, member, spouse) >= CHILDREN_MAX || !(rng() < CHILD_CHANCE)) return null;",
+    "new": "  if (!(rng() < CHILD_CHANCE)) return null;",
+    "tests": [
+      "test/legacy5_marriage.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY5-name-never-taken",
+    "file": "src/systems/legacy/marriage.js",
+    "old": "  const surname = takeName ? family.surname : own;",
+    "new": "  const surname = own;",
+    "tests": [
+      "test/legacy5_marriage.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY5-wedding-any-temple",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (!b || weddingAsked || (temple >>> 0) !== (b[1].mapId >>> 0)) return;",
+    "new": "    if (!b || weddingAsked) return;",
+    "tests": [
+      "test/legacy5_marriage.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY5-wedding-asked-every-tick",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (deps.askWed?.(c.name, family.surname, (takeName) => weddingNow(p, rid, c, takeName))) weddingAsked = true;",
+    "new": "    deps.askWed?.(c.name, family.surname, (takeName) => weddingNow(p, rid, c, takeName));",
+    "tests": [
+      "test/legacy5_marriage.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY5-no-children",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    weddingStep(p);\n    childrenStep(p);",
+    "new": "    weddingStep(p);",
+    "tests": [
+      "test/legacy5_marriage.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY5-minor-playable",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (t.minor) return LEGACY_TEXT.minor(t.given);   // LEGACY5: a child is played only once the mantle passes to them\n",
+    "new": "",
+    "tests": [
+      "test/legacy5_marriage.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY5-spouse-place-census",
+    "file": "src/scenes/legacyHost.js",
+    "old": "  const holdsResident = (id) => !!family && deps.on() && (family.people ?? []).some((x) => x.kind === 'resident' && x.residentId === id);",
+    "new": "  const holdsResident = (id) => !!family && deps.on() && (family.people ?? []).some((x) => x.kind === 'resident' && x.residentId === id && isAlive(x));",
+    "tests": [
+      "test/legacy5_marriage.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY5-spouse-not-in-household",
+    "file": "src/scenes/legacyHost.js",
+    "old": "      const res = { ...census, name: fullNameOf(s.given, s.surname), home, household: `F${family.id}`, legacy: { familyId: family.id, personId: s.id } };",
+    "new": "      const res = { ...census, name: fullNameOf(s.given, s.surname), home, legacy: { familyId: family.id, personId: s.id } };",
+    "tests": [
+      "test/legacy5_marriage.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY5-courtship-outlives-the-dead",
+    "file": "src/scenes/legacyHost.js",
+    "old": "      delete p.courting[id];\n      ended = true;",
+    "new": "      ended = true;",
+    "tests": [
+      "test/legacy5_marriage.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY5-talk-rows-unasked",
+    "file": "src/scenes/townTalk.js",
+    "old": "          const own = _toneTarget ? (legacyTopics?.(_toneTarget) ?? []) : [];",
+    "new": "          const own = [];",
+    "tests": [
+      "test/legacy5_marriage.test.js"
+    ]
+  }
+]

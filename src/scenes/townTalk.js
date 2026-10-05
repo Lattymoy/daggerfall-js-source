@@ -137,7 +137,7 @@ export function rayPersonDistance(camPos, fwd, feet) {
   return t / fl * Math.hypot(fwd[0], fwd[1], fwd[2]);
 }
 
-export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, regionIndex, onCrime = null, topics = null, palette = null, rolls = Math.random, talkEngine = null, onBuildingList = null, otherOverlayActive = null, otherHudCovered = null, questBuildingSource = null, livingTalk = null, livingTone = null }) {   // LW2: `livingTalk` the living world's doors - { refuses(person) -> text|null, talked(person), caught(person) } (bible/06-Systems/Living-World.md); LEGACY-HOME: `kin(person, talk)` true when one of the player's line took the activation (`talk` the conversation, should they ask for it); LW7: `livingTone(person, tone)` a question's tone   // AUDIT ENH-NOTICE3 C2: `otherHudCovered` is the mode host's previousWindow-chain answer (modes.hudCovered), for the toasts   // AUDIT 63 F49: PlayerGPS.DiscoverBuilding's quest name-override seam ({ currentMapID, isBuildingQuestResource }), null in a host with no topic tree
+export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, regionIndex, onCrime = null, topics = null, palette = null, rolls = Math.random, talkEngine = null, onBuildingList = null, otherOverlayActive = null, otherHudCovered = null, questBuildingSource = null, livingTalk = null, livingTone = null, legacyTopics = null }) {   // LW2: `livingTalk` the living world's doors - { refuses(person) -> text|null, talked(person), caught(person) } (bible/06-Systems/Living-World.md); LEGACY-HOME: `kin(person, talk)` true when one of the player's line took the activation (`talk` the conversation, should they ask for it); LW7: `livingTone(person, tone)` a question's tone   // AUDIT ENH-NOTICE3 C2: `otherHudCovered` is the mode host's previousWindow-chain answer (modes.hudCovered), for the toasts   // AUDIT 63 F49: PlayerGPS.DiscoverBuilding's quest name-override seam ({ currentMapID, isBuildingQuestResource }), null in a host with no topic tree
   // RP1 - THE REGION IS READ LIVE, NOT CAPTURED AT BOOT.
   //
   // This took a plain number, and the world host had no choice but to
@@ -901,7 +901,13 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
         // whole reason they were blockers is that the tree computed
         // all of this and the window threw it away. Null when no
         // engine is mounted: the window keeps the consumed no-op.
-        tellMeAboutTopics: () => treeFlatTopics(engine()?.tree?.listTopicTellMeAbout),
+        // LEGACY5: Project Legacy's own rows first - a resident courted, a proposal, the wedding, the family - the port's,
+        // answered by the host and never through the engine's pipeline (`legacy`)
+        tellMeAboutTopics: () => {
+          const own = _toneTarget ? (legacyTopics?.(_toneTarget) ?? []) : [];
+          const tree = treeFlatTopics(engine()?.tree?.listTopicTellMeAbout);
+          return own.length ? [...own, ...(tree ?? [])] : tree;
+        },
         peopleTopics: () => treeFlatTopics(engine()?.tree?.listTopicPerson),
         thingsTopics: () => treeFlatTopics(engine()?.tree?.listTopicThing),
         workQuestion: () => (eng?.pipeline ? eng.pipeline.getQuestionText(workListItem(), tone) : null),
@@ -913,6 +919,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
         })),
         answer: (row) => {
           _toneHeard();   // LW7: the question's tone, in a resident's regard
+          if (row.legacy) return row.legacy.answer(tone);   // LEGACY5: the host's answer
           if (row.listItem) return eng.pipeline.getAnswerText(row.listItem, { npcSeed });
           const a = answerText(row); _questionsAsked++; return a;   // AUDIT 17e F13, moved to DFU's own site
         },
@@ -921,7 +928,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
         // shipped selection model), and DFU's GetQuestionText has
         // never touched numQuestionsAsked - GetAnswerText does, which
         // is where the engine path already had it.
-        question: (row) => (row.listItem
+        question: (row) => (row.legacy ? row.legacy.question(tone) : row.listItem
           ? eng.pipeline.getQuestionText(row.listItem, tone)
           : questionText(row)),
         tone: () => tone,

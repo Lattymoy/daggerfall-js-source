@@ -300,7 +300,8 @@ test('LW7b the streaming host: the stands on the roads (the pool\'s loose transi
   const w = rd('src/scenes/world.js');
   assert.match(w, /stands: createRoadStands\(\{\n\s*spawn: \(type, feet, o\) => exteriorFoes\.spawnFoe\(type, feet, \{ allied: o\.allied, yaw: o\.yaw, gender: o\.gender, level: o\.level, loose: true, transient: true \}\),/);
   assert.match(w, /slay: livingSlay, died: livingDied,\n\s*deadAt: livingDeadAt,[^\n]*\n\s*fighting: \(\) => hccThreats\(\)\.some\(\(q\) => Math\.hypot\(q\[0\] - player\.pos\[0\], q\[2\] - player\.pos\[2\]\) <= FIGHT_NEAR_M\),\n\s*say: \(text\) => townTalk\.say\(text\),/);
-  assert.match(w, /const livingDied = \(res, t\) => \{ livingRelations\.turn\('died', turnKey\(res, livingCycleOf\(res, Math\.floor\(\(t - 240\) \/ 1440\)\)\), \{ t, who: res\.name \}\); \};/);
+  // PIN MOVED (LEGACY5): a courtship of the fallen's ends first
+  assert.match(w, /const livingDied = \(res, t\) => \{ (?:legacyHost\?\.residentDied\(res\.id\); )?livingRelations\.turn\('died', turnKey\(res, livingCycleOf\(res, Math\.floor\(\(t - 240\) \/ 1440\)\)\), \{ t, who: res\.name \}\); \};/);
   assert.match(w, /spawnFoe: \(type, feet, o\) => d\.spawnLooseFoe\(type, feet, \{ yawRad: o\.yaw, allied: false, gender: o\.gender, level: o\.level \}\),/);
   assert.match(w, /spawnFoe: [^\n]*\n\s*slay: livingSlay,\n\s*died: livingDied,[^\n]*\n\s*\}\), \{ pool: d \}\);/);
   const lr = rd('src/scenes/livingRoads.js');

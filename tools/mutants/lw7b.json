@@ -524,11 +524,12 @@
   {
     "name": "LW7b-host-died-turn",
     "file": "src/scenes/world.js",
-    "old": "  const livingDied = (res, t) => { livingRelations.turn('died',",
-    "new": "  const livingDied = (res, t) => { livingRelations.turn('slain',",
+    "old": "  const livingDied = (res, t) => { legacyHost?.residentDied(res.id); livingRelations.turn('died',",
+    "new": "  const livingDied = (res, t) => { legacyHost?.residentDied(res.id); livingRelations.turn('slain',",
     "tests": [
       "test/lw7b_beyond.test.js"
-    ]
+    ],
+    "note": "LEGACY5 (PIN MOVED): re-aimed by content."
   },
   {
     "name": "LW7b-host-deep-allied",

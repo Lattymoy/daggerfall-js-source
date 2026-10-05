@@ -104,7 +104,7 @@ export const fullNameOf = (given, sur) => (sur ? `${given} ${sur}` : given);
  *   heir:boolean|null, characterId:string|null, leveling:string|null, kind:'member'|'resident', residentId:string|null,
  *   startAge:number, toll:number, bornOwn:number, lived:number, retired:number|null, bequest?:any[],
  *   parked?:{mapId:number, buildingKey:number}|null, courting?:Record<string, any>, wedAt?:number|null,
- *   childDay?:number|null, minor?:boolean, residentFace?:number|null
+ *   childDay?:number|null, minor?:boolean, residentFace?:number|null, mapId?:number
  * }} Person
  * @typedef {{ v:number, id:string, surname:string, model:string, seat:{region:string, loc:string, mapId?:number}|null, rev:number,
  *   nextId:number, currentId:number, founded:number, ended:number|null, people:Person[], remains:any[], settings?:any,
@@ -461,6 +461,7 @@ export function readFamily(rec) {
     p.childDay = Number.isInteger(raw.childDay) ? raw.childDay : null;
     p.minor = !!raw.minor;
     p.residentFace = Number.isInteger(raw.residentFace) ? raw.residentFace : null;
+    if (p.kind === 'resident') p.mapId = Number.isInteger(raw.mapId) ? raw.mapId : 0;   // LEGACY5: the town a spouse lives in
     // LEGACY-HOME: the house the member's newest save was made in (household.js homeOf), or none
     p.parked = raw.parked && Number.isInteger(raw.parked.mapId) && (raw.parked.buildingKey | 0) > 0 ? { mapId: raw.parked.mapId, buildingKey: raw.parked.buildingKey | 0 } : null;
     people.push(p);

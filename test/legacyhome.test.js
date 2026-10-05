@@ -59,9 +59,11 @@ test('LEGACY-HOME: a family resident\'s id is never a census id, and reads back'
   assert.equal(familyResId('fam-h', 7), 'Ffam-h.7');
   assert.deepEqual(familyResOf('Ffam-h.7'), { familyId: 'fam-h', personId: 7 });
   assert.equal(familyResOf('L5001.3'), null, 'a census resident');
-  assert.equal(isFamilyRes({ id: 'Ffam-h.7', legacy: {} }), true);
-  assert.equal(isFamilyRes({ id: 'Ffam-h.7' }), false, 'the tag and the id, both');
-  assert.equal(isFamilyRes({ id: 'L1.2', legacy: {} }), false);
+  // PIN MOVED (LEGACY5): the TAG says whose they are - a spouse who wed in keeps their census id
+  assert.equal(isFamilyRes({ id: 'Ffam-h.7', legacy: { familyId: 'fam-h', personId: 7 } }), true);
+  assert.equal(isFamilyRes({ id: 'Ffam-h.7' }), false, 'no tag, none of the line');
+  assert.equal(isFamilyRes({ id: 'L1.2', legacy: {} }), false, 'a tag that names no one');
+  assert.equal(isFamilyRes({ id: 'L1.2', legacy: { familyId: 'fam-h', personId: 9 } }), true, 'a spouse: their census id, the line\'s tag');
 });
 
 test('LEGACY-HOME: the line\'s houses are what each holder holds - the one played\'s rows replaced, every other kept, nothing doubled', () => {
@@ -388,7 +390,8 @@ test('LEGACY-HOME: the town reads the line beside its census - the same day\'s p
 
 test('LEGACY-HOME wiring: the town\'s extra people are the host\'s; a family house holds the line only; a kin slain is the record\'s; the talk door meets them first; their own head in the window', () => {
   const w = rd('src/scenes/world.js');
-  assert.match(w, /extraPeople: \(day, town\) => legacyHost\?\.residentsOf\(livingTown\.mapId, \(seed\) => town\.homeFor\(seed\)\) \?\? null,/);
+  // PIN MOVED (LEGACY5): and the census's own record of a spouse who wed in
+  assert.match(w, /extraPeople: \(day, town\) => legacyHost\?\.residentsOf\(livingTown\.mapId, \(seed\) => town\.homeFor\(seed\), \(id\) => town\.residents\.find\(\(r\) => r\.id === id\) \?\? null\) \?\? null,/);
   assert.match(w, /if \(legacyHost\?\.isFamilyHouse\(\{ mapId: b\.townMapId \?\? 0, buildingKey: b\.buildingKey \}\)\) return \{ key: b\.buildingKey, town, only: isFamilyRes \};/);
   assert.match(w, /return modes\?\.interiorCtx\?\.ownedRoom \? null : \{ key: b\.buildingKey, town \};/, 'AUDIT-E1 stands for every other room of the player\'s');
   assert.match(w, /if \(isFamilyRes\(res\)\) return false;   \/\/ LEGACY-HOME/);

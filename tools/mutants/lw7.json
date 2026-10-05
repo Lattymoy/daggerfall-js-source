@@ -732,11 +732,12 @@
   {
     "name": "LW7-host-town-options",
     "file": "src/scenes/world.js",
-    "old": "          holderOf: (res, day) => livingPlaceOf(res, livingCycleOf(res, day)).holder, deadAt: livingDeadAt, slay: livingSlay,",
+    "old": "          holderOf: (res, day) => (legacyHost?.holdsResident(res.id) ? null : livingPlaceOf(res, livingCycleOf(res, day)).holder), deadAt: livingDeadAt, slay: livingSlay,",
     "new": "          deadAt: livingDeadAt, slay: livingSlay,",
     "tests": [
       "test/lw7_deeds.test.js"
-    ]
+    ],
+    "note": "LEGACY5 (PIN MOVED): re-aimed by content."
   },
   {
     "name": "LW7-host-sees-blind",

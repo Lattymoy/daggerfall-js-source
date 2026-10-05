@@ -150,6 +150,7 @@ export function personChips(family, p, livedNow) {
   else if (p.retired != null) out.push({ cls: 'elder', text: 'Retired' });
   if (!p.died && family.model === MODELS.enduring && isElder(p, p.id === family.currentId ? livedNow : p.lived)) out.push({ cls: 'elder', text: 'Elder' });
   if (p.kind === 'resident') out.push({ cls: '', text: 'Wed into the house' });
+  if (!p.died && p.minor) out.push({ cls: '', text: 'A child' });   // LEGACY5: played once the mantle passes to them
   if (!p.died && p.characterId == null && p.id !== family.currentId && p.kind === 'member') out.push({ cls: 'blood', text: 'Not yet played' });
   // U2: the heir answer (B12), drawn - a Bloodline member who would leave a newborn heir
   if (!p.died && p.kind === 'member' && family.model === MODELS.bloodline && p.heir === true) out.push({ cls: 'blood', text: 'Has an heir' });

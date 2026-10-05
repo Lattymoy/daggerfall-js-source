@@ -361,13 +361,14 @@ test('LW7 the streaming host: every resident\'s place by the lives (`livingCycle
   assert.match(w, /return placeCycle\(roster\.find\(\(r\) => r\.slot === res\.slot\) \?\? res, roster, day, livingScale\(\)\);/, 'a traveller\'s place cycle');
   assert.match(w, /if \(!turns\.slain\.size && !turns\.died\.size\) return false;\n\s*const h = livingPlaceOf\(res, livingCycleOf\(res, Math\.floor\(\(t - 240\) \/ 1440\)\)\)\.hand;\n\s*return h != null && h <= t;/);
   // PIN MOVED (LEGACY-HOME): one of Project Legacy's line struck down is the family record's, never the lives' (test/legacyhome.test.js)
-  assert.match(w, /const livingSlay = \(res, t, seen\) => \{\n\s*if \(isFamilyRes\(res\)\) \{ legacyHost\?\.kinSlain\(res\); return; \}[^\n]*\n\s*livingRelations\.turn\('slain', turnKey\(res, livingCycleOf\(res, Math\.floor\(\(t - 240\) \/ 1440\)\)\), \{ t, seen, who: res\.name \}\);\n\s*\};/);
+  assert.match(w, /const livingSlay = \(res, t, seen\) => \{\n\s*if \(isFamilyRes\(res\)\) \{ legacyHost\?\.kinSlain\(res\); return; \}[^\n]*\n(?:\s*legacyHost\?\.residentDied\(res\.id\);[^\n]*\n)?\s*livingRelations\.turn\('slain', turnKey\(res, livingCycleOf\(res, Math\.floor\(\(t - 240\) \/ 1440\)\)\), \{ t, seen, who: res\.name \}\);\n\s*\};/);
   assert.match(w, /got = \{ holder, dies: !pl\.vacant && pl\.dies, hand: pl\.hand \};/);
   assert.match(w, /return pl\.dies && pl\.hand == null; \},   \/\/ LW7/);
   assert.match(w, /f = handsOn\(f, \(m\) => livingPlaceOf\(m, livingCycleOf\(m, Math\.floor\(\(trip\.outT0 - 240\) \/ 1440\)\)\)\.hand\);/);
   assert.match(w, /helped: won\.has\(n\.enc\) \}\)\);/);
   assert.match(w, /const res = livingPlaceOf\(c\.res, livingCycleOf\(c\.res, day\)\)\.holder;/);
-  assert.match(w, /holderOf: \(res, day\) => livingPlaceOf\(res, livingCycleOf\(res, day\)\)\.holder, deadAt: livingDeadAt, slay: livingSlay,/);
+  // PIN MOVED (LEGACY5): a townsperson wed into Project Legacy's line holds no census place (the line's resident now)
+  assert.match(w, /holderOf: \(res, day\) => \(legacyHost\?\.holdsResident\(res\.id\) \? null : livingPlaceOf\(res, livingCycleOf\(res, day\)\)\.holder\), deadAt: livingDeadAt, slay: livingSlay,/);
   assert.match(w, /const hit = collider\.raycast\(\[a\[0\] \+ locOrigin\[0\] \+ tr\[0\], a\[1\] \+ tr\[1\], a\[2\] \+ locOrigin\[2\] \+ tr\[2\]\], \[d\[0\] \/ len, d\[1\] \/ len, d\[2\] \/ len\], len\);\n\s*return !\(Number\.isFinite\(hit\) && hit < len - 0\.25\);/, 'the town\'s line of sight, the collider\'s');
   // the street's seams
   assert.match(w, /pos, fwdYaw: person\.facingYaw, guard: person\.guard, person,/);

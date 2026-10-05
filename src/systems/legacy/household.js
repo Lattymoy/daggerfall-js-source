@@ -31,7 +31,9 @@ export function familyResOf(id) {
   const m = /^F(.+)\.(\d+)$/.exec(String(id ?? ''));
   return m ? { familyId: m[1], personId: Number(m[2]) } : null;
 }
-export const isFamilyRes = (res) => !!res?.legacy && !!familyResOf(res.id);
+/** One of the line among a town's residents - a member (`F<familyId>.<personId>`) or a spouse who wed in, who keeps
+ *  their census id (LEGACY5): the `legacy` tag says whose they are. */
+export const isFamilyRes = (res) => !!res?.legacy && Number.isInteger(res.legacy.personId);
 
 /** The day a family resident keeps: the homemaker's (systems/livingWorld/dayPlan.js) - home-centred, the market and the
  *  town by day, findable. */

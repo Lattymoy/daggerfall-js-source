@@ -105,12 +105,12 @@
   {
     "name": "LEGACY-HOME-retired-playable",
     "file": "src/scenes/legacyHost.js",
-    "old": "    const why = p.retired != null ? LEGACY_TEXT.retiredKin(p.given) : switchRefusal(p.id);",
-    "new": "    const why = switchRefusal(p.id);",
+    "old": "    const why = p.kind === 'resident' ? LEGACY_TEXT.spouseKin(p.given) : p.retired != null ? LEGACY_TEXT.retiredKin(p.given) : switchRefusal(p.id);",
+    "new": "    const why = p.kind === 'resident' ? LEGACY_TEXT.spouseKin(p.given) : switchRefusal(p.id);",
     "tests": [
       "test/legacyhome.test.js"
     ],
-    "note": "AUDIT LEGACY II (PIN MOVED): re-aimed by content - the law it guards now stands at this line."
+    "note": "LEGACY5 (PIN MOVED): re-aimed by content. AUDIT LEGACY II (PIN MOVED): re-aimed by content - the law it guards now stands at this line."
   },
   {
     "name": "LEGACY-HOME-town-keeps-stale-extras",

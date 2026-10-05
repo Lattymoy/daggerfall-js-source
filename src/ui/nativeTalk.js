@@ -932,7 +932,7 @@ export class NativeTalkWindow {
   /** Pointer path (phone taps + mouse): virtual-space hit rects.
    *  AUDIT 65 UI-1: the third and fourth slots are the HOST's, not
    *  this window's. Every overlay slot dispatches
-   *  `click(vx, vy, right, middle)` - townTalk.js:1287,
+   *  `click(vx, vy, right, middle)` - townTalk.js:1294,
    *  worldModes.js:11071, dungeonContext.js:9089 - so the clock that
    *  used to sit in the fourth arrived as `e.button === 1`, a boolean,
    *  and `false ?? Date.now()` kept the `false`: every second click in

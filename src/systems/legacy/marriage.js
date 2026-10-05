@@ -41,6 +41,10 @@ export function splitName(name) {
 /** The member's courtships, minted on first use: `{ [residentId]: { name, mapId, town, affection, day, betrothed } }`. */
 const courtsOf = (member) => (member.courting ??= {});
 
+/** Who may be courted: a townsperson of a household (the census's `h` roll - never one of the watch, a traveller on
+ *  the roads, a visitor or one of the line). Every census resident is an adult (census.js mintResident). */
+export const courtable = (res) => !!res && res.roll === 'h' && !res.guard && !res.legacy;
+
 /** Is this resident one of the house already - a member's spouse? */
 export const residentInHouse = (family, residentId) => (family?.people ?? []).some((p) => p.kind === 'resident' && p.residentId === residentId);
 
@@ -58,6 +62,7 @@ export function spouseOf(family, member) {
  */
 export function topicsFor(family, member, res, regard) {
   if (!family || !member || !isAlive(member) || !res?.id) return [];
+  if (!courtable(res) && !residentInHouse(family, res.id)) return [];
   const spouse = spouseOf(family, member);
   if (spouse) return spouse.residentId === res.id ? [TOPIC.family] : [];
   if (residentInHouse(family, res.id)) return [];
@@ -87,12 +92,14 @@ export function courtGain({ personality = 50, etiquette = 0, tone = 1, roll = 0.
 /**
  * COURTSHIP: once a day, the day's affection. Answers `{ gained, affection, again }` - `again` when this day's was
  * already given (nothing gained).
- * @param {any} member @param {{ id: string, name: string, town: number }} res
+ * @param {any} member @param {{ id: string, name: string, town: number, sex?: string, race?: string, face?: number }} res
  * @param {{ day: number, townName?: string, personality?: number, etiquette?: number, tone?: number, roll?: number }} o
  */
 export function court(member, res, o) {
   const courts = courtsOf(member);
-  const c = (courts[res.id] ??= { name: String(res.name), mapId: res.town | 0, town: String(o.townName ?? ''), affection: 0, day: -1, betrothed: false });
+  // the resident as they are - their identity is for life (the Living World's law), so the wedding needs no town loaded
+  const c = (courts[res.id] ??= { name: String(res.name), mapId: res.town | 0, town: String(o.townName ?? ''), affection: 0, day: -1, betrothed: false,
+    sex: res.sex === 'female' ? 'female' : 'male', race: String(res.race ?? ''), face: res.face | 0 });
   if (c.day === o.day) return { gained: 0, affection: c.affection, again: true };
   const gained = Math.min(AFFECTION_MAX - c.affection, courtGain(o));
   c.affection += gained;
@@ -123,11 +130,12 @@ export function forgetCourtship(member, residentId) {
  * THE WEDDING: the resident made a person of the house (`kind: 'resident'`, their census id, their own name and face
  * for life), wed to the member; every other courtship of the member ends. Answers the spouse.
  * @param {any} family @param {any} member
- * @param {{ id: string, name: string, sex?: string, race?: string, face?: number }} res @param {number} at
+ * @param {{ id: string, name: string, sex?: string, race?: string, face?: number, mapId?: number, town?: number }} res @param {number} at
  */
-export function wed(family, member, res, at) {
+export function wed(family, member, res, at, { takeName = false } = {}) {
   const s = newPerson(family.nextId++);
-  const [given, surname] = splitName(res.name);
+  const [given, own] = splitName(res.name);
+  const surname = takeName ? family.surname : own;
   s.kind = 'resident';
   s.residentId = String(res.id);
   s.given = given;
@@ -142,6 +150,7 @@ export function wed(family, member, res, at) {
   member.spouse = s.id;
   member.wedAt = at;
   member.courting = {};
+  s.mapId = res.mapId ?? res.town ?? 0;   // the town they live in - their census house is there, and their day
   family.people.push(s);
   touch(family);
   return s;

@@ -44,6 +44,10 @@ import { pickHeirloom, markHeirloom, mintRemainsItem, isRemainsItem, isHeirloom,
 import { SKILL_NAMES } from '../systems/skills.js';
 import { syncHouses, householdOf, residentOf, familyResOf, kinGreeting, setFamilyHome, familyHome, sameHouse } from '../systems/legacy/household.js';
 import { goldStack } from '../systems/inventory.js';
+import {
+  topicsFor, topicLabel, topicQuestion, court, propose, betrothalOf, wed, childStep, childLine, spouseOf, childrenTogether,
+  splitName, dayOf as courtDayOf, MARRIAGE_TEXT, TOPIC,
+} from '../systems/legacy/marriage.js';
 
 /** The reflexes a born member starts with - the wizard's own default (ui/chargenArt.js PLAYER_REFLEXES.Average). */
 export const BORN_REFLEXES = 2;
@@ -79,6 +83,8 @@ export const LEGACY_TEXT = Object.freeze({
   notBorn: (given) => `${given}'s first day could not be saved here. Reload to begin it again - nothing of the house is lost.`,   // AUDIT LEGACY II A2
   claimed: (name, by) => `${by} has taken up the search for ${name}'s remains.`,   // AUDIT LEGACY II H5
   retiredKin: (given) => `${given} has passed the mantle on, and keeps the house now.`,
+  minor: (given) => `${given} is a child yet - they come of age when the mantle passes to them.`,   // LEGACY5
+  spouseKin: (given) => `${given} is wed into the house - not of the blood to carry it.`,   // LEGACY5
 });
 
 /** LEGACY4: the death quest's id prefix in the quest log, and its map ring's radius (the bounty board's). */
@@ -131,6 +137,7 @@ export function mergeFamily(stored, saved, cid) {
  *   saveNow:() => boolean, inFight:() => boolean, payEstate?:(gold:number) => void, rng?:() => number,
  *   heldHouses?:() => any[], houseHere?:() => ({mapId:number, buildingKey:number}|null),
  *   hasSave?:(characterId:string) => boolean, livingWorld?:() => boolean,
+ *   templeOf?:() => (number|null), askWed?:(name:string, house:string, done:(takeName:boolean) => void) => boolean,
  * }} deps - AUDIT LEGACY II: `hasSave(cid)` whether a save of that character stands (a person's id stands only with one);
  *   `livingWorld()` whether the Living World runs (the line stands only in its towns)
  */
@@ -534,6 +541,7 @@ export function createLegacyHost(deps) {
       heir = personOf(family, choice?.personId);
       if (!heir || !isAlive(heir) || heir.kind !== 'member' || heir.retired != null) return false;
     }
+    heir.minor = false;   // LEGACY5: they come of age in the telling (Legacy-Arc section 10's departure)
     // AUDIT LEGACY II B1: the waiting fall is answered when the heir LANDS (a member's load: adopt; a birth: onBorn), not
     // at the choice - a boot that never landed (a member whose saves were deleted, a birth whose files failed) settled
     // the fall and moved the estate to someone who could not be played, and the line had no Succession left to answer
@@ -570,6 +578,7 @@ export function createLegacyHost(deps) {
     const t = personOf(family, id);
     if (!family || past || !t || !isAlive(t) || t.kind !== 'member' || t.id === family.currentId || t.retired != null) return 'none';
     if (family.pending) return LEGACY_TEXT.pending;
+    if (t.minor) return LEGACY_TEXT.minor(t.given);   // LEGACY5: a child is played only once the mantle passes to them
     if (deps.online()) return LEGACY_TEXT.online;
     if (deps.inFight()) return LEGACY_TEXT.fight;
     return null;
@@ -726,12 +735,95 @@ export function createLegacyHost(deps) {
     }
     payEstateOf(p);
     remainsStep();
+    weddingStep(p);
+    childrenStep(p);
     if (family.model === MODELS.enduring && !elderSaid && isElder(p, lived())) {
       elderSaid = true;
       deps.say(LEGACY_TEXT.elder(p.given, ageOf(p, lived())));
     }
     return null;
   }
+
+  // ---- LEGACY5: courting, the wedding, children ------------------------------------------------------------------
+  // (Legacy-Arc section 8; the law is systems/legacy/marriage.js)
+
+  /** The day a courtship or a child is counted by: the one played's own clock (section 8). */
+  const ownDay = () => courtDayOf(deps.own() ?? 0);
+  /**
+   * THE TALK'S ROWS for a Living World resident (scenes/townTalk.js legacyTopics): courtship, a proposal, the wedding's
+   * word, the family - each `{ label, legacy: { question(tone), answer(tone) } }`. `ctx`: the resident's regard of the
+   * one played today, the one played's Personality and Etiquette, the town's name.
+   * @param {any} res @param {{ regard:number, personality?:number, etiquette?:number, townName?:string }} ctx
+   */
+  function topicRows(res, ctx) {
+    const me = current();
+    if (!family || past || !me || !deps.on() || !playedHere(me) || !res?.id) return [];
+    return topicsFor(family, me, res, ctx.regard | 0).map((t) => ({
+      label: topicLabel(t),
+      legacy: { question: (tone) => topicQuestion(t, tone), answer: (tone) => answerTopic(t, res, tone, ctx) },
+    }));
+  }
+  function answerTopic(t, res, tone, ctx) {
+    const me = current();
+    const first = splitName(res.name)[0];
+    if (!me) return '';
+    if (t === TOPIC.court) {
+      const r = court(me, res, { day: ownDay(), townName: ctx.townName, personality: ctx.personality, etiquette: ctx.etiquette, tone, roll: rng() });
+      if (!r.again) { touch(family); store(); }
+      return r.again ? MARRIAGE_TEXT.again(first) : MARRIAGE_TEXT.courted(first, r.affection);
+    }
+    if (t === TOPIC.propose) {
+      if (!propose(me, res.id)) return MARRIAGE_TEXT.again(first);
+      touch(family); store();
+      return MARRIAGE_TEXT.accepted(first, me.courting[res.id]?.town ?? '');
+    }
+    if (t === TOPIC.wedding) return MARRIAGE_TEXT.wedding(me.courting?.[res.id]?.town ?? '');
+    const spouse = spouseOf(family, me);
+    return MARRIAGE_TEXT.family(spouse ? childrenTogether(family, me, spouse) : 0);
+  }
+  /** THE WEDDING, at the temple of the betrothed's town - asked once a visit (the rest's shape), the name asked with it. */
+  let weddingAsked = false;
+  function weddingStep(p) {
+    const b = betrothalOf(p);
+    const temple = deps.templeOf?.() ?? null;
+    if (temple == null) { weddingAsked = false; return; }
+    if (!b || weddingAsked || (temple >>> 0) !== (b[1].mapId >>> 0)) return;
+    const [rid, c] = b;
+    if (deps.askWed?.(c.name, family.surname, (takeName) => weddingNow(p, rid, c, takeName))) weddingAsked = true;
+  }
+  function weddingNow(p, rid, c, takeName) {
+    if (!family || spouseOf(family, p) || !betrothalOf(p)) return null;
+    const s = wed(family, p, { id: rid, name: c.name, sex: c.sex, race: c.race, face: c.face, mapId: c.mapId }, deps.now(), { takeName });
+    p.childDay = ownDay();
+    touch(family);
+    store();
+    deps.say(MARRIAGE_TEXT.wed(fullNameOf(s.given, s.surname), family.surname));
+    return s;
+  }
+  /** CHILDREN: on the one played's own clock, while the spouse lives (marriage.js childStep). */
+  function childrenStep(p) {
+    const rev = family.rev;
+    const kid = childStep(family, p, { day: ownDay(), rng, at: deps.now(), settings: legacySettings() });
+    if (kid) deps.say(childLine(kid, spouseOf(family, p)));
+    if (family.rev !== rev) store();
+  }
+  /** A townsperson's death heard (struck down, or fallen at the one played's side): a courtship of theirs, or a
+   *  betrothal, ends with word. Answers whether one did. */
+  function residentDied(id) {
+    let ended = false;
+    for (const p of family?.people ?? []) {
+      const c = p.courting?.[id];
+      if (!c) continue;
+      delete p.courting[id];
+      ended = true;
+      if (p.id === family.currentId) deps.say(MARRIAGE_TEXT.lost(c.name));
+    }
+    if (ended) { touch(family); store(); }
+    return ended;
+  }
+  /** The census ids the line holds - every spouse who wed in, living or dead: their census place is the line's, never
+   *  the census's again (scenes/world.js holderOf). */
+  const holdsResident = (id) => !!family && deps.on() && (family.people ?? []).some((x) => x.kind === 'resident' && x.residentId === id);
 
   // ---- LEGACY-HOME: the bloodline in the world ----------------------------------------------------------------------
 
@@ -751,13 +843,17 @@ export function createLegacyHost(deps) {
   /** @type {Map<string, { sig: string, res: any }>} */
   const residentOfKept = new Map();
   const residentSig = (p, key) => [p.id, key, p.given, p.surname, p.gender, p.race, p.face | 0, p.careerIndex, isCustomCareer(p), p.level | 0].join('|');
-  function residentsOf(mapId, lend = null) {
+  function residentsOf(mapId, lend = null, censusOf = null) {
     const id = mapId >>> 0;
-    if (!inWorld()) { residentsKept.delete(id); return NO_RESIDENTS; }
+    const spouses = spousesOf(id, censusOf);
+    if (!inWorld()) {
+      if (!spouses.length) { residentsKept.delete(id); return NO_RESIDENTS; }
+      return keptList(id, `${family.id}#s#${spouses.map((x) => x.sig).join('#')}`, () => spouses.map((x) => x.res));
+    }
     const rows = householdOf(family).filter(({ home }) => (home.mapId >>> 0) === id);
     const lent = rows.some(({ home }) => home.lent) ? (lend?.(family.id) | 0) : 0;
     const want = rows.map(({ person, home }) => ({ person, key: home.lent ? lent : home.buildingKey })).filter((x) => x.key > 0);
-    const sigs = want.map(({ person, key }) => residentSig(person, `${id}:${key}`));
+    const sigs = want.map(({ person, key }) => residentSig(person, `${id}:${key}`)).concat(spouses.map((x) => x.sig));
     const listKey = `${family.id}#${sigs.join('#')}`;
     const kept = residentsKept.get(id);
     if (kept?.key === listKey) return kept.list;
@@ -768,13 +864,46 @@ export function createLegacyHost(deps) {
       const res = residentOf(family, person, { mapId: id, buildingKey: key });
       residentOfKept.set(k, { sig: sigs[i], res });
       return res;
-    });
+    }).concat(spouses.map((x) => x.res));
     residentsKept.set(id, { key: listKey, list });
     return list;
   }
+  /** A list kept by its key (the same list while it stands). */
+  function keptList(id, key, make) {
+    const kept = residentsKept.get(id);
+    if (kept?.key === key) return kept.list;
+    const list = make();
+    residentsKept.set(id, { key, list });
+    return list;
+  }
+  /**
+   * LEGACY5: THE SPOUSES living in town `mapId` - each the census's own resident (`censusOf(id)`: their name, face,
+   * outfit, job and day, for life), the line's household now, and at home in a house of the line's in their town
+   * when there is one (section 8), else in their own. Each `{ res, sig }`, the same object while nothing changed.
+   */
+  function spousesOf(mapId, censusOf) {
+    if (!family || !deps.on() || !(deps.livingWorld?.() ?? true) || !censusOf) return [];
+    const out = [];
+    for (const s of family.people) {
+      if (s.kind !== 'resident' || !isAlive(s) || (s.mapId >>> 0) !== mapId) continue;
+      const census = censusOf(s.residentId);
+      if (!census) continue;
+      const house = (family.houses ?? []).find((h) => (h.mapId >>> 0) === mapId && sameHouse(h, familyHome(family)))
+        ?? (family.houses ?? []).find((h) => (h.mapId >>> 0) === mapId) ?? null;
+      const home = house ? house.buildingKey : census.home;
+      const sig = `s${s.id}|${s.residentId}|${home}|${s.given}|${s.surname}`;
+      const k = `${family.id}:${s.id}`;
+      const was = residentOfKept.get(k);
+      if (was?.sig === sig) { out.push({ res: was.res, sig }); continue; }
+      const res = { ...census, name: fullNameOf(s.given, s.surname), home, household: `F${family.id}`, legacy: { familyId: family.id, personId: s.id } };
+      residentOfKept.set(k, { sig, res });
+      out.push({ res, sig });
+    }
+    return out;
+  }
   /** The person of the line a family resident is, or null (another family's, or none). */
   function personOfResident(res) {
-    const f = familyResOf(res?.id);
+    const f = res?.legacy ?? familyResOf(res?.id);   // LEGACY5: a spouse keeps their census id - the tag says whose they are
     return f && family && f.familyId === family.id ? personOf(family, f.personId) : null;
   }
   /** A member STRUCK DOWN by the one played (the town's one-hit civilian, livingTown.js slain): dead in the record - a
@@ -796,7 +925,7 @@ export function createLegacyHost(deps) {
     const { word, is, lines } = kinGreeting(family, me, p, { elder: family.model === MODELS.enduring && isElder(p, p.lived) });
     // a retired elder lives at home and is never played again (LEGACY2); anyone else, the switch's own refusals
     // AUDIT LEGACY II U11: the switch's 'none' marker is no sentence - said as one
-    const why = p.retired != null ? LEGACY_TEXT.retiredKin(p.given) : switchRefusal(p.id);
+    const why = p.kind === 'resident' ? LEGACY_TEXT.spouseKin(p.given) : p.retired != null ? LEGACY_TEXT.retiredKin(p.given) : switchRefusal(p.id);
     const refusal = why === 'none' ? LEGACY_TEXT.notNow : why;
     return { person: p, word, is, name: fullNameOf(p.given, p.surname), lines, refusal };
   }
@@ -813,6 +942,10 @@ export function createLegacyHost(deps) {
   return {
     get family() { return family; },
     residentsOf,
+    topicRows,
+    holdsResident,
+    residentDied,
+    weddingNow: (rid) => { const p = current(); const c = p?.courting?.[rid]; return p && c ? weddingNow(p, rid, c, false) : null; },
     kinOfResident,
     kinSlain,
     isFamilyHouse,

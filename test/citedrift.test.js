@@ -566,7 +566,7 @@ const SOURCE_CITES = [
   // the line goes red at the citation instead of at a reader.
   ['src/characters/playerEntity.js', /exterior\.js:(\d+) and applyHeadlessChargen/,
     EX, /createChargenFlow\(fetchBytes\)\.then/],
-  ['src/combat/weaponRig.js', /\(exterior\.js:(\d+), world\.js:10247\)/,
+  ['src/combat/weaponRig.js', /\(exterior\.js:(\d+), world\.js:10251\)/,
     EX, /^ {4}say: \(l\) => townTalk\.say\(l\),$/],
   ['src/scenes/dungeonContext.js', /exterior\.js:(\d+) and worldModes\.js:\d+/,
     EX, /onPlayerArrowHitFoe: \(m, t\) => playerArrowHitFoe\(/],
@@ -678,10 +678,10 @@ const SOURCE_CITES = [
   // to a comment in input.js's header (525) while the Rest arm moved to 813.
   ['src/ui/restWindow.js', /exterior\.js:\d+, ui\/input\.js:(\d+)\)/,
     'src/ui/input.js', /case 'Rest': return ctx\.toggleRest \? \(ctx\.toggleRest\(\), true\) : false;/],   // KB1: the arm answers its door
-  ['test/daychange.test.js', /exterior\.js:(\d+), world\.js:4006/, EX, /playerTicker\.advance\(60\);/],
-  ['test/overlayreentry.test.js', /exterior\.js:(\d+) and world\.js:9327/,
+  ['test/daychange.test.js', /exterior\.js:(\d+), world\.js:4007/, EX, /playerTicker\.advance\(60\);/],
+  ['test/overlayreentry.test.js', /exterior\.js:(\d+) and world\.js:9331/,
     EX, /if \(townTalk\.overlay\?\.isRestWindow\) townTalk\.closeOverlay\?\.\(\);/],
-  ['test/overlayreentry.test.js', /exterior\.js:(\d+), world\.js:9327/,
+  ['test/overlayreentry.test.js', /exterior\.js:(\d+), world\.js:9331/,
     EX, /if \(townTalk\.overlay\?\.isRestWindow\) townTalk\.closeOverlay\?\.\(\);/],
   ['test/probehygiene.test.js', /keydown ladder, exterior\.js:(\d+)-\d+/,
     EX, /addEventListener\('keydown', \(e\) => \{/],
@@ -692,7 +692,7 @@ const SOURCE_CITES = [
   ['test/roade_up_seam.test.js', /exterior\.js:\d+\/:(\d+)/,
     EX, /if \(act === 'Escape' && pauseDoorReady\(\)\) \{ hudCtx\.togglePause\(\); return true; \}/],
   ['bible/01-Overview/Audit-58.md', /`src\/scenes\/exterior\.js:(\d+)` now/, EX, /setDefaultEnchantCtx/],
-  ['bible/06-Systems/Systems-Arc.md', /`exterior\.js:(\d+)`, `world\.js:4002`/, EX, /playerTicker\.advance\(60\);/],
+  ['bible/06-Systems/Systems-Arc.md', /`exterior\.js:(\d+)`, `world\.js:4003`/, EX, /playerTicker\.advance\(60\);/],
   ['bible/09-Testing/Testing.md', /keydown ladder \(exterior\.js:(\d+)-\d+\)/,
     EX, /addEventListener\('keydown', \(e\) => \{/],
   ['bible/10-UI/UI-Arc.md', /exterior\.js:(\d+)\. It is the only window/, EX, /createSpellbookWindow\(\{/],
@@ -700,7 +700,7 @@ const SOURCE_CITES = [
   // and the table captured ONE, with a sixth number baked into the pick - so
   // citeMerge bumped the LITERAL at the BOX1/TI3 merge and left the doc, and
   // four of the five had been stale for waves (`worldModes.js:8924` for a line
-  // that is 5921, `world.js:24689` for 8836, `interior.js:326` for 329,
+  // that is 5921, `world.js:24713` for 8836, `interior.js:326` for 329,
   // `dungeon.js:988` for 959). Every one is captured now, against the
   // projection each host really builds.
   ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(\d+)`, `dungeon\.js:\d+`/, EX, /^ {6}fieldOfView\(\)( \+ climbFeel\.fovRad\(\))?,/],   // CLIMB4: the climb's kick on the lens
@@ -722,7 +722,7 @@ const SOURCE_CITES = [
   // PAIRS never checked. Five Ledger rows cite `world.js:N`, `exterior.js:M`
   // and this table captured M alone - so M was resolved at every wave and N
   // was never read at all. All five N's were stale by thousands of lines
-  // (`world.js:12367` for a line that is 8950; `:2022` for 1215; `:4463` for
+  // (`world.js:12371` for a line that is 8950; `:2022` for 1215; `:4464` for
   // 2194; `:3903` for 3066; `:3920` for 8907), and citeMerge rewrote one of
   // them INSIDE THE PICK REGEX at the QS6 merge - which is WM3's hazard
   // exactly: a literal in the pick decides whether the entry matches at all,
@@ -974,7 +974,7 @@ test('CD6: every `src/` line Port-Status cites is the line it describes', () => 
 //
 // The G1 lane re-resolved ~180 `:NNN` cites after moving code in four
 // hosts, and the pass advanced only the LEADING number of every
-// multi-number citation: `cityGuards.js:1032-936`, `world.js:16681-16586`,
+// multi-number citation: `cityGuards.js:1032-936`, `world.js:16696-16601`,
 // `worldModes.js:1587 against :1354`. Forty of them came out as ranges
 // that cannot exist, and every pin in this file was green throughout,
 // because each one resolves a single number a human chose to list.

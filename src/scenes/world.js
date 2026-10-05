@@ -2336,9 +2336,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   };
   const livingSlay = (res, t, seen) => {
     if (isFamilyRes(res)) { legacyHost?.kinSlain(res); return; }   // LEGACY-HOME: kin struck down - the family's record keeps the death
+    legacyHost?.residentDied(res.id);   // LEGACY5: a courtship of theirs ends
     livingRelations.turn('slain', turnKey(res, livingCycleOf(res, Math.floor((t - 240) / 1440))), { t, seen, who: res.name });
   };
-  const livingDied = (res, t) => { livingRelations.turn('died', turnKey(res, livingCycleOf(res, Math.floor((t - 240) / 1440))), { t, who: res.name }); };   // LW7b: at the player's side
+  const livingDied = (res, t) => { legacyHost?.residentDied(res.id); livingRelations.turn('died', turnKey(res, livingCycleOf(res, Math.floor((t - 240) / 1440))), { t, who: res.name }); };   // LW7b: at the player's side
   /** A traveller's place on a trip, at the trip's own cycle (their town's roster's, by their slot). */
   const livingTripPlace = (res, trip) => {
     const town = livingTownOfId(res.town);
@@ -4674,10 +4675,12 @@ export async function bootWorld(canvas, renderer, params, status) {
           relations: () => livingRelations, playerName: () => playerEntity.name ?? '', weather: () => weather,
           townName: dfLocation.name, regionName: dfLocation.regionName ?? '',
           tripsOf: (day) => livingTripsOf(livingTown, day), armOf: livingArmOf,   // LW3: its travellers away and armed, its visitors
-          extraPeople: (day, town) => legacyHost?.residentsOf(livingTown.mapId, (seed) => town.homeFor(seed)) ?? null,   // LEGACY-HOME: Project Legacy's line, at home here
+          extraPeople: (day, town) => legacyHost?.residentsOf(livingTown.mapId, (seed) => town.homeFor(seed), (id) => town.residents.find((r) => r.id === id) ?? null) ?? null,   // LEGACY-HOME: Project Legacy's line, at home here (LEGACY5: a spouse, the census's own)
           ashore: (res) => livingAshore(livingTown, res), crews: () => livingCrews(livingTown),   // LW5: its sailors by their ships' clock; the crews lying here
           // LW7: a townsperson's place by the lives, a hand's death, the player's, and the town's own lines of sight
-          holderOf: (res, day) => livingPlaceOf(res, livingCycleOf(res, day)).holder, deadAt: livingDeadAt, slay: livingSlay,
+          // LEGACY5: a townsperson wed into Project Legacy's line is the line's resident now (extraPeople) - the census's place
+          // stands empty of them, living or dead
+          holderOf: (res, day) => (legacyHost?.holdsResident(res.id) ? null : livingPlaceOf(res, livingCycleOf(res, day)).holder), deadAt: livingDeadAt, slay: livingSlay,
           sees: (a, b) => {
             const tr = state.pixelTranslation(px, py);
             const d = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], len = Math.hypot(d[0], d[1], d[2]);
@@ -6049,6 +6052,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // own town answers both: systems/livingWorld/livingTown.js)
     livingTalk: { refuses: (person) => person?.living?.town?.refuses(person) ?? null, talked: (person) => person?.living?.town?.talked(person), caught: (person) => person?.living?.town?.caught?.(person),
       kin: (person, talk) => legacyMeetKin(person, talk) },   // LEGACY-HOME: one of the player's line, met
+    legacyTopics: (person) => legacyTopicRows(person),   // LEGACY5: courting, the proposal, the wedding, the family
     livingTone: (person, tone) => person?.living?.town?.toned?.(person, tone),   // LW7: a question's tone, in a resident's regard
     // RP1: a GETTER, not startLoc's number - see the note above. It is
     // declared below this call, so the arrow defers the read to call
@@ -12842,6 +12846,17 @@ export async function bootWorld(canvas, renderer, params, status) {
   }
   const legacyFullName = (p) => (p.surname ? `${p.given} ${p.surname}` : p.given);
   const legacyIdentity = (p) => `${raceWord(p.race)} ${p.className}${p.characterId ? `, level ${p.level}` : ''}`;
+  /** LEGACY5: the talk's rows for a Living World resident - their regard of the one played today, the one played's
+   *  Personality and Etiquette, the town's name (legacyHost.topicRows). */
+  function legacyTopicRows(person) {
+    const res = person?.living?.res;
+    if (!res || !legacyHost) return [];
+    const day = Math.floor((skyMinutes() - 240) / 1440);
+    return legacyHost.topicRows(res, {
+      regard: livingRelations.regard(res.id, day), personality: liveStat(playerEntity, 'personality'),
+      etiquette: skillValue(playerEntity, SKILLS.Etiquette), townName: _townOfMapId.get(res.town >>> 0)?.name ?? '',   // their own town's - the street's, a room's or a road's alike
+    });
+  }
   /** LEGACY-HOME: ONE OF THE LINE, MET (townTalk's kin door) - their card and greeting; Play as them, the town's own
    *  conversation (`talk`), or goodbye. Answers whether the meeting took the activation (not one of this line's: the
    *  town's talk, as anyone's). */
@@ -22167,6 +22182,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     houseHere: () => { const b = (modes?.mode ?? 'exterior') === 'interior' ? modes?.interiorBuilding : null; return b?.buildingKey > 0 && b.townMapId ? { mapId: b.townMapId >>> 0, buildingKey: b.buildingKey } : null; },
     hasSave: (cid) => newestSaveOf(enumerateSaves().info, cid) >= 0,   // AUDIT LEGACY II A2/B1: a person's character stands only with a save of them
     livingWorld: () => livingWorldOn(),   // AUDIT LEGACY II B5: the line stands only in the Living World's towns
+    // LEGACY5: the temple the one played stands in (its town's map id), and the wedding asked there - the name with it
+    templeOf: () => { const b = (modes?.mode ?? 'exterior') === 'interior' ? modes?.interiorBuilding : null; return b?.buildingType === TALK_BUILDING_TYPES.Temple ? (b.townMapId >>> 0) : null; },
+    askWed: (name, house, done) => {
+      if (townTalk.overlayActive && !townTalk.overlayDone) return false;
+      townTalk.showOverlay(new YesNoBoxWindow({ rows: [`Be wed to ${name} here, before the gods?`], onYes: () => {
+        townTalk.showOverlay(new YesNoBoxWindow({ rows: [`Will ${name.split(' ')[0]} take the name ${house}?`], onYes: () => done(true), onNo: () => done(false) }));
+      }, onNo: () => {} }));
+      return true;
+    },
     takeItem: (it) => { for (const k of ['items', 'wagonItems', 'bagItems']) if (Array.isArray(playerEntity[k])) playerEntity[k] = playerEntity[k].filter((x) => x !== it); },   // LEGACY4: the remains given up at the rest, wherever they were kept
   });
   /** AUDIT LEGACY U4: an act the Family page asked for and the host refused after the pause went down - said on the HUD. */
