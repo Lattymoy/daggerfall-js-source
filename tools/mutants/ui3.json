@@ -239,7 +239,7 @@
   {
     "name": "UI3-never-stepped-aside",
     "file": "src/ui/enhancedHud.js",
-    "old": "  if (last.statNone !== none) { last.statNone = none; parts.stat.classList.toggle('noroom', none); }",
+    "old": "  if (last.statNone !== none) { last.statNone = none; parts.stat.classList.toggle('stat-noroom', none); }",
     "new": "",
     "tests": [
       "test/ui3_status.test.js"
@@ -248,7 +248,7 @@
   {
     "name": "UI3-never-beside",
     "file": "src/ui/enhancedHud.js",
-    "old": "  if (last.statSide !== side) { last.statSide = side; parts.stat.classList.toggle('side', side); }",
+    "old": "  if (last.statSide !== side) { last.statSide = side; parts.stat.classList.toggle('stat-side', side); }",
     "new": "",
     "tests": [
       "test/ui3_status.test.js"

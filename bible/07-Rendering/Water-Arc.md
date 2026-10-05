@@ -169,7 +169,9 @@ LW-DRY (2026-10-05) gave the job's height and its water compare one
 home (`terrainTiles.js` `sampleHeight`, `isWaterHeight`), which the
 living world's dry ground reads as well (`world/dryGround.js`: a road
 party's camp, halt and fallen stand where no water shows); PIN MOVED:
-`terrain`.
+`terrain`. AUDIT LW-DRY (the same day): the nature scatter's three
+beach reads (`terrainNature.js`) still wrote the product out
+themselves - they read `sampleHeight` now, and `terrain` pins it.
 
 Two consequences to know. A location on a pixel where every sample
 clamps has its whole rect flattened to the clamp and stamped only

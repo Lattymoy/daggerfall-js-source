@@ -72,60 +72,6 @@
     ]
   },
   {
-    "name": "LW-DRY-night-unsounded",
-    "file": "src/systems/livingWorld/trips.js",
-    "old": "      const c = dryStop(way, s, dir, lo, hi);\n      const on = pace",
-    "new": "      const c = s;\n      const on = pace",
-    "tests": [
-      "test/lwdry_ground.test.js"
-    ]
-  },
-  {
-    "name": "LW-DRY-walk-on-jump",
-    "file": "src/systems/livingWorld/trips.js",
-    "old": "      return on >= Math.abs(c - s) ? placed(phase, c) : { ...placed(phase, s + dir * on), camp: false };",
-    "new": "      return placed(phase, c);",
-    "tests": [
-      "test/lwdry_ground.test.js"
-    ]
-  },
-  {
-    "name": "LW-DRY-morning-jump",
-    "file": "src/systems/livingWorld/trips.js",
-    "old": "    return dir * (c - s) > 0 ? { ...placed(phase, c), camp: true } : placed(phase, s);",
-    "new": "    return placed(phase, s);",
-    "tests": [
-      "test/lwdry_ground.test.js"
-    ]
-  },
-  {
-    "name": "LW-DRY-morning-camp-behind",
-    "file": "src/systems/livingWorld/trips.js",
-    "old": "    if (legT0 >= dawn) return placed(phase, s);   // set out this morning: no camp behind them\n",
-    "new": "",
-    "tests": [
-      "test/lwdry_ground.test.js"
-    ]
-  },
-  {
-    "name": "LW-DRY-trouble-wet",
-    "file": "src/systems/livingWorld/trouble.js",
-    "old": "  const s = dryStop(trip.way, s0, leg === 'out' ? 1 : -1, trip.trim0, trip.way.len - trip.trim1);",
-    "new": "  const s = s0;",
-    "tests": [
-      "test/lwdry_ground.test.js"
-    ]
-  },
-  {
-    "name": "LW-DRY-trouble-early",
-    "file": "src/systems/livingWorld/trouble.js",
-    "old": "  if (!camp && s !== s0) t0 = whenWalked(legStart, wm + Math.abs(s - s0) / trip.pace);\n",
-    "new": "",
-    "tests": [
-      "test/lwdry_ground.test.js"
-    ]
-  },
-  {
     "name": "LW-DRY-host-unwired",
     "file": "src/scenes/world.js",
     "old": "    dryAt: (nx, nz) => (_livingDry ??= nativeDry(createDryGround(woods)))(nx, nz),   // LW-DRY: a party's camp, halt and fallen on dry ground\n",
@@ -160,5 +106,118 @@
     "tests": [
       "test/terrain.test.js"
     ]
+  },
+  {
+    "name": "LW-DRY-night-unsounded",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    let at = sAt(fall), camp = dryStop(way, at, dir, lo, hi);",
+    "new": "    let at = sAt(fall), camp = at;",
+    "tests": [
+      "test/lwdry_ground.test.js"
+    ]
+  },
+  {
+    "name": "LW-DRY-walk-on-cut",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "      const on = pace * (next - fall) >= Math.abs(camp - at) ? camp : at + dir * pace * (next - fall);",
+    "new": "      const on = camp;",
+    "tests": [
+      "test/lwdry_ground.test.js"
+    ],
+    "note": "AUDIT LW-DRY: the night's camp taken as reached by the next dusk - a wet stretch longer than a day's walk on jumped"
+  },
+  {
+    "name": "LW-DRY-dusk-from-walk",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "      at = dir * (w - on) >= 0 ? w : on;",
+    "new": "      at = w;",
+    "tests": [
+      "test/lwdry_ground.test.js"
+    ],
+    "note": "AUDIT LW-DRY: each dusk sounded from the day's walk, not where the party stands - back to it at nightfall"
+  },
+  {
+    "name": "LW-DRY-walk-on-jump",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    return { ...placed(phase, there), camp: reached };   // walking on to the night's camp, or at it",
+    "new": "    return { ...placed(phase, camp), camp: true };   // walking on to the night's camp, or at it",
+    "tests": [
+      "test/lwdry_ground.test.js"
+    ]
+  },
+  {
+    "name": "LW-DRY-day-walk-unread",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    if (daylight(t) && dir * (s - there) >= 0) return { ...placed(phase, s), camp: false };   // the day's walk\n",
+    "new": "",
+    "tests": [
+      "test/lwdry_ground.test.js"
+    ]
+  },
+  {
+    "name": "LW-DRY-halt-unheld",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    if (!h || h.leg !== leg || m < h.t0) return 0;",
+    "new": "    if (!h || h.leg !== leg || m < h.t1) return 0;",
+    "tests": [
+      "test/lwdry_ground.test.js"
+    ],
+    "note": "AUDIT LW-DRY: a nightfall during a halt read where the walk would have been - the party popped ahead as the halt ended"
+  },
+  {
+    "name": "LW-DRY-end-not-town",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  let found = dir > 0 ? hi : lo;",
+    "new": "  let found = s;",
+    "tests": [
+      "test/lwdry_ground.test.js"
+    ],
+    "note": "AUDIT LW-DRY: nothing dry before the leg's end kept the stop in the water"
+  },
+  {
+    "name": "LW-DRY-step-coarse",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "export const DRY_STEP_N = 80;",
+    "new": "export const DRY_STEP_N = 320;",
+    "tests": [
+      "test/lwdry_ground.test.js"
+    ]
+  },
+  {
+    "name": "LW-DRY-trouble-wet",
+    "file": "src/systems/livingWorld/trouble.js",
+    "old": "    const dry = dryStop(trip.way, s, dir, trip.trim0, trip.way.len - trip.trim1);",
+    "new": "    const dry = s;",
+    "tests": [
+      "test/lwdry_ground.test.js"
+    ]
+  },
+  {
+    "name": "LW-DRY-trouble-early",
+    "file": "src/systems/livingWorld/trouble.js",
+    "old": "      for (t0 = Math.ceil(t0); t0 < end; t0++) { const a = partyAt(trip, t0); if (a.s != null && dir * (a.s - s) >= 0) break; }\n",
+    "new": "",
+    "tests": [
+      "test/lwdry_ground.test.js"
+    ]
+  },
+  {
+    "name": "LW-DRY-halted-in-file",
+    "file": "src/scenes/livingRoads.js",
+    "old": "  if (at.camp || at.halt) {",
+    "new": "  if (at.camp) {",
+    "tests": [
+      "test/lwdry_ground.test.js"
+    ]
+  },
+  {
+    "name": "LW-DRY-nature-own-product",
+    "file": "src/world/terrainNature.js",
+    "old": "      const height = sampleHeight(heightmapData[hy + hx * hDim]);",
+    "new": "      const height = Math.fround(heightmapData[hy + hx * hDim] * MAX_TERRAIN_HEIGHT);",
+    "tests": [
+      "test/terrain.test.js"
+    ],
+    "note": "AUDIT LW-DRY (the docs' 'one home'): the nature scatter writes the sample's height out itself again - the same float today, a second literal of WATER1's arithmetic to drift from the tile job's"
   }
 ]

@@ -1675,7 +1675,7 @@ With 22 and 23 as recommended together (measured): the will 100 / 90 / 12%, the 
   health where the 6 px track should be - measured in Chromium, the other states untouched. Every class the track wears
   is its own now (`poise-<state>`, `poise-flash`), and `tell9_screen`'s POISE-BOX pin reads the producer's states and
   the HUD's own class line and holds that no sheet rule styles one of them off the track (mutants:
-  `tools/mutants/tell9.json` POISE-BOX-bare-states, POISE-BOX-bare-flash).
+  `tools/mutants/tell9.json` POISE-BOX-bare-states, POISE-BOX-bare-flash) - read as RULES since the audit (`test/sheetRules.mjs`: a JS read like `b.empty` had stood as a selector), and HUD-CLASS (`10-UI/UI-Arc.md`) holds the same of every class the HUD writes: it found the status widget's `side`, the spell socket's `empty` and an empty gun battery's doing what this did.
 - **The words on the hit** - `ui/hitNumbers.js HIT_TAGS`, `tagHit`, `showWord`: the door decides after the formula
   reports, so the door's word joins the number my last HIT raised on that same foe inside `TAG_JOIN_MS` (250 ms),
   beside a backstab's own; none such (a spell's landing raised no number, a miss is no blow) and it rises alone.

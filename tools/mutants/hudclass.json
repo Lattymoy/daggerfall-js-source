@@ -1,0 +1,122 @@
+[
+  {
+    "name": "HUD-CLASS-bare-side",
+    "file": "src/ui/enhancedHud.js",
+    "old": "parts.stat.classList.toggle('stat-side', side); }",
+    "new": "parts.stat.classList.toggle('side', side); }",
+    "tests": [
+      "test/hudclass_sheets.test.js"
+    ],
+    "note": "HUD-CLASS (AUDIT 2026-10-05): the status widget's state bare again - beside the diamond it wears the windows' .side column, its --ink ground a dark box behind the tiles"
+  },
+  {
+    "name": "HUD-CLASS-bare-socket",
+    "file": "src/ui/enhancedHud.js",
+    "old": "chip.chip.classList.toggle('qspell-empty', !sp);",
+    "new": "chip.chip.classList.toggle('empty', !sp);",
+    "tests": [
+      "test/hudclass_sheets.test.js"
+    ],
+    "note": "HUD-CLASS: the empty spell socket's word bare again - the .empty component's 16px margin under the caption"
+  },
+  {
+    "name": "HUD-CLASS-bare-battery",
+    "file": "src/ui/navalHud.js",
+    "old": "${b.empty ? ' gun-empty' : ''}",
+    "new": "${b.empty ? ' empty' : ''}",
+    "tests": [
+      "test/hudclass_sheets.test.js"
+    ],
+    "note": "HUD-CLASS: an empty gun battery's word bare again - the .empty margin grows its row 36 -> 52px"
+  },
+  {
+    "name": "HUD-CLASS-sheet-bare-on",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".hud-qspell.on { display: flex; }",
+    "new": ".on { display: flex; }",
+    "tests": [
+      "test/hudclass_sheets.test.js"
+    ],
+    "note": "HUD-CLASS: a sheet's rule written bare - every HUD element wearing 'on' takes it"
+  },
+  {
+    "name": "HUD-CLASS-tile-kind-a-component",
+    "file": "src/ui/hudStatus.js",
+    "old": "{ key: 'more', kind: 'more',",
+    "new": "{ key: 'more', kind: 'side',",
+    "tests": [
+      "test/hudclass_sheets.test.js"
+    ],
+    "note": "HUD-CLASS: the producer mints a status tile's kind that is a component's word - the cell wears .side"
+  },
+  {
+    "name": "HUD-CLASS-chunk-a-component",
+    "file": "src/ui/barLoss.js",
+    "old": "cls: Math.floor(n / 2) % 2 ? 'fb' : 'fa'",
+    "new": "cls: Math.floor(n / 2) % 2 ? 'fb' : 'empty'",
+    "tests": [
+      "test/hudclass_sheets.test.js"
+    ],
+    "note": "HUD-CLASS: a bitten span's frame minted as 'empty' - the falling piece wears the .empty box"
+  },
+  {
+    "name": "HUD-CLASS-chip-a-component",
+    "file": "src/ui/navalHud.js",
+    "old": "ship.fire ? 'fire' : null",
+    "new": "ship.fire ? 'empty' : null",
+    "tests": [
+      "test/hudclass_sheets.test.js"
+    ],
+    "note": "HUD-CLASS: a plate chip minted as 'empty'"
+  },
+  {
+    "name": "HUD-CLASS-card-state-a-component",
+    "file": "src/ui/navalHud.js",
+    "old": "return { text: 'Going down', kind: 'sinking' };",
+    "new": "return { text: 'Going down', kind: 'empty' };",
+    "tests": [
+      "test/hudclass_sheets.test.js"
+    ],
+    "note": "HUD-CLASS: the target card's state kind minted as 'empty'"
+  },
+  {
+    "name": "HUD-CLASS-faction-a-component",
+    "file": "src/systems/naval/navalShips.js",
+    "old": "cls('navyCutter', 'navy',",
+    "new": "cls('navyCutter', 'side',",
+    "tests": [
+      "test/hudclass_sheets.test.js"
+    ],
+    "note": "HUD-CLASS: a ship class's faction that is a component's word - her card and tag wear .side"
+  },
+  {
+    "name": "HUD-CLASS-poise-state-unnamed",
+    "file": "src/ui/enhancedHud.js",
+    "old": "` poise-${p.state}`",
+    "new": "` ${p.state}`",
+    "tests": [
+      "test/hudclass_sheets.test.js"
+    ],
+    "note": "HUD-CLASS: POISE-BOX's own bug - the poise state a bare word the data chooses, no longer the track's own and named nowhere"
+  },
+  {
+    "name": "HUD-CLASS-crew-guard-dropped",
+    "file": "src/ui/navalHud.js",
+    "old": "p.kind === 'sing' || p.kind === 'shout' ?",
+    "new": "p.kind ?",
+    "tests": [
+      "test/hudclass_sheets.test.js"
+    ],
+    "note": "HUD-CLASS: the crew line's word no longer the two its guard lets through - its values are no closed list"
+  },
+  {
+    "name": "HUD-CLASS-layout-sheet-unexported",
+    "file": "src/ui/hudLayout.js",
+    "old": "export const HUD_LAYOUT_CSS = `",
+    "new": "const HUD_LAYOUT_CSS = `",
+    "tests": [
+      "test/hudclass_sheets.test.js"
+    ],
+    "note": "HUD-CLASS: the layout editor's sheet laid where it is built and exported nowhere - its selectors, built from the pieces, go unread"
+  }
+]

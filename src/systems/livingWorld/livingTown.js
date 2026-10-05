@@ -38,12 +38,12 @@
 //    talks of it for NEWS_DAYS (`deedNews`): one of its own struck down - and, seen, by whom.
 import { POP_VISIBLE_RANGE, POP_RECYCLE_DISTANCE, maxPopulationFor } from '../townPopulation.js';
 import { PERSON_MOVE_SPEED } from '../../characters/mobilePerson.js';
-import { townPlaces, exitToward, harbourDock, onStreet } from './places.js';
+import { townPlaces, exitToward, harbourDock, streetGeometry } from './places.js';
 import { townCensus, isHome } from './census.js';
 import { dayPlan, entryAt, isOutdoor, DAY_START_MIN, DAY_MIN } from './dayPlan.js';
 import { BUILDING_TYPES } from '../../world/buildingNames.js';
 import { createPathBook, pointOnLine } from './townPaths.js';
-import { spotCircles, circleLine, circleStands, aloneStand, streetReach, ROUND_S, lineMinutes } from './meetups.js';
+import { spotCircles, circleLine, circleStands, aloneStand, ROUND_S, lineMinutes } from './meetups.js';
 import { LIVING_GREETINGS, LIVING_KEEPSAKE, fillLine, firstNameOf } from './lines.js';
 import { keepsakeFor } from './keepsake.js';
 import { lwSeed, textSeed } from './seed.js';
@@ -163,8 +163,9 @@ export class LivingTown {
     this.nav = nav;
     this.o = o;
     this.places = townPlaces(nav, o.doors, o.buildings);
-    /** LW-STAND: may a person stand here - on the street, never in a wall nor over the water (the stands about a spot) */
-    this._standClear = (x, z) => onStreet(this.nav, this.places, x, z);
+    /** LW-STAND: the street a person stands and walks on - never in a wall nor over the water (places.js streetGeometry:
+     *  the stands about a spot, the way to one) */
+    this._street = streetGeometry(this.nav, this.places);
     this.residents = townCensus(o.town, o.buildings);
     this.maxPopulation = maxPopulationFor(o.town.blocks);
     /** @type {Row[]} */
@@ -383,7 +384,7 @@ export class LivingTown {
     }
     if (!isOutdoor(e)) return null;
     const c = this._inCircle.get(res.id);
-    const st = c && c.spot === e.at ? circleStands(e.at, c.circle, this._standClear)[c.index] : aloneStand(e.at, res.id, this._standClear);   // LW-STAND
+    const st = c && c.spot === e.at ? circleStands(e.at, c.circle, this._street)[c.index] : aloneStand(e.at, res.id, this._street);   // LW-STAND
     return { x: st.x, z: st.z, yaw: st.yaw, moving: false, e };
   }
 
@@ -562,7 +563,7 @@ export class LivingTown {
           let vx = dx0, vz = dz0, vd = d;
           if (!w.moving) {
             const ox = w.e.at.x - p.pos[0], oz = w.e.at.z - p.pos[2], od = Math.hypot(ox, oz);
-            if (od > 0.05 && streetReach(p.pos[0], p.pos[2], w.x, w.z, this._standClear) < d) { vx = ox; vz = oz; vd = od; }
+            if (od > 0.05 && !this._street.clear(p.pos[0], p.pos[2], w.x, w.z)) { vx = ox; vz = oz; vd = od; }
           }
           const k = Math.min(1, step / vd);
           p.pos[0] += vx * k; p.pos[2] += vz * k;

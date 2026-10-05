@@ -855,40 +855,67 @@ ARENA2 - its numbers are the CPU's, comparable before and after). Pinned by `tes
 ## LW-STAND - the street's own (2026-10-05)
 
 Mac, from play: "I also noticed sometimes NPC's will get stuck over bodies of water, or be stuck running into walls".
-Three causes in the town, each fixed and pinned (`test/lwstand_street.test.js`, `tools/mutants/lwstand.json`):
+Three causes in the town, each fixed and pinned (`test/lwstand_street.test.js`, `tools/mutants/lwstand.json`, 15
+dead); the audit the same day (the last item) re-cut how a stand is found.
 
-- **A stand is on the street** (`meetups.js` `standOn`, `streetReach`, `circleMiddle`; `places.js` `onStreet`,
-  STAND_REACH_M). The places about a spot - one alone up to 3.5 m out, each circle's middle further out as the circles
-  number, a circle's places 0.6 m about its middle - were drawn by geometry alone, and a spot stands a few cells before
-  a door, or (LW5) at a port's dock on the water's edge: a stand fell in the building's wall or over the harbour, and
-  the walker walked straight into it and stood there all its stay (a fisher's 450 minutes at the dock). Measured, a
-  town built solid to its streets (`test/lwTown.mjs closeTown`) stood one body in view in five inside a building, frame
-  for frame; about a spot on the street's edge, as a dock's is, two stands in five fell off it. Each stand is now
-  sounded out from its anchor - the spot, a circle's middle - a STAND_STEP_M (0.25 m) at a time, and stops short of the
-  first step the street does not hold: the street net's cell (a building's footprint and the water are none -
-  `world/cityNavigation.js`) and every side of it within a body's reach (STAND_REACH_M, 0.4 m). A circle's places are
-  sounded from the spot as well, so every stand at a spot is seen from it over open street; a circle's middle kept on
-  the street, a circle by a wall faces in to the street. A stand the street holds is as drawn; every reader's grid is
-  the same, so is every stand.
+- **The street** (`places.js` `streetGeometry`, STAND_REACH_M). The street net's cells - a building's footprint and the
+  water are none (`world/cityNavigation.js`), nor is the grid's outside - and a body the square of STAND_REACH_M
+  (0.4 m) about its middle. A body stands where the square overlaps no cell off the net (`holds`); a straight way holds
+  it where the square swept along it overlaps none (`clear`, and `reach`: how far along the way it does) - the off-net
+  cells grown by the reach, against the way. Exact, so any part of a way the street holds it holds too. Pure in the
+  grid: every reader's alike.
+- **A stand is on the street** (`meetups.js` `aloneStand`, `circleStands`, `circleMiddle`, `openBearing`). The places
+  about a spot - one alone 1 to 3.5 m out on a bearing of their own (ALONE_NEED_M, ALONE_FAR_M), each circle's middle
+  further out as the circles number, a circle's places CIRCLE_APART/2 (0.625 m) about its middle - were drawn by
+  geometry alone, and a spot stands a few cells before a door, or (LW5) at a port's dock on the water's edge: a stand
+  fell in the building's wall or over the harbour, and the walker walked straight into it and stood there all its stay
+  (a fisher's 450 minutes at the dock). Drawn so, at the law test's spot on the street's edge (a dock's, 6 m before a
+  door; 120 alone and the circles 0 to 5 of two and of three, 150 stands) 67 to 72 of the 150 fell off the street; at
+  the close-built town's own spots, 734 of 1650. Now a spot's open ground is sounded once: how far the street holds a
+  body along each of STAND_BEARINGS (64) bearings, out to STAND_SOUND_M (16 m). A stand drawn on bearing `a` stands on
+  the bearings that hold it - one alone their own distance (to the half-metre over), a circle its middle and a place
+  beyond it - its share of the whole circle kept, so the people about a spot by a wall spread over its open half as they
+  would over the whole circle; as far out as its own place and that bearing hold (STAND_MARGIN_M short of where it
+  stops), facing the spot. A circle's middle stands so, and the circle is turned about it a twelfth of a half-turn at a
+  time till every place in it is held and seen from the spot over open street, its people a pace apart facing the
+  middle; with nowhere about it to turn, they stand along the way out to it, facing in. A spot open all round keeps every
+  stand as drawn. Kept per spot: the street never changes under a town.
 - **The way to a stand is over the street** (`livingTown.js`, the frame's approach). A body walks its last metres to
   its stand straight - from its walk's end, or from last round's place when the circles change partners. Where the
-  straight way is not over the street (a new place round a building's corner, across a fountain) it walks toward the
-  spot, and on from wherever the way opens.
+  street does not hold the straight way (`clear`: a new place round a building's corner, across a fountain) it walks
+  toward the spot, and on from wherever the way opens.
 - **A walk not yet searched is a pause** (`livingTown.js` `row.paused`). LW-PERF searches walks in slices: a resident
   in view whose next walk was not searched yet kept the stride it had and walked on the spot, into whatever it faced,
   till the path came - a second or more in a great city, longer while the queue is full. They stand, idle (the watch's
   own idle), and the pause's minutes are owed as the politeness gate's are, walked off at CATCH_UP: searched, the walk
   is walked from where they stood, never cut straight across, through whatever stood between, to where its clock had
   got to.
-- **Measured and left.** A walker catching up with its walk's point (the frame's straight approach) trails it by under
-  2.5 m, and on both synthetic towns, run as the street runs them, every body in view stood on the street every frame.
-  The street is the navgrid's, as DFU's walkers read it: what stands on a walkable cell without being on the grid is
-  still walked through. Not the town's: the classic lane's pool (DFU's own walkers, kept 1:1).
+- **Measured and left.** The pinned close-built town's day (`lwstand_street`'s last test: its residents at 08:00,
+  13:00 and 18:00, twelve seconds of frames each, the player where two streets cross): before, 34.4% of the
+  body-frames in view stood off the street and 11.2% inside a building (20.5% and none at 08:00, 49.1% and 25.4% at
+  13:00, 33.7% and 8.4% at 18:00); now none, at every hour. A walker catching up with its walk's point (the frame's
+  straight approach) trails it by under 2.5 m. The street is the navgrid's, as DFU's walkers read it: what stands on a
+  walkable cell without being on the grid is still walked through. Not the town's: the classic lane's pool (DFU's own
+  walkers, kept 1:1).
+- **AUDIT (2026-10-05).** The first cut sounded each stand out from its anchor along its own line, a quarter-metre
+  (STAND_STEP_M) at a time, with four probes on a body's axes. A body stood over a building's corner the probes
+  missed; samples a quarter-metre apart found shut a way they had passed as open, and a walker stepped on the spot
+  between the two answers; and every stand whose line met a wall was pulled in toward the spot, so the many whose lines
+  met the same wall stood on one another at its foot, and a circle's places on one another on its middle, facing north.
+  With 30 alone and the circles 0 to 5 at a spot, the close-built town's spots stood 79 to 89 pairs of stands within
+  half a metre of each other (26 to 29 within 0.1 m) and the edge spot 104 to 123; now 16 to 22 and 14, none within
+  0.1 m (drawn over the whole circle, 8). At the close-built town's square (400 alone and the circles 0 to 15 of two
+  and of three, 480 stands), 12 stands were never reached from the spot and 37 of 2995 ways from stand to stand never
+  arrived, walked as the frame walks them; now every one, every step on the street. The exact street and the open
+  bearings are the audit's. Mutants: 15 dead, the audit's 8 among them; the first cut's step-unread, end-only,
+  middle-unkept, middle-unread and member-unseen retired with the soundings they aimed at; `tools/mutants/lw1.json`
+  LW1-stand-apart re-aimed.
 
 ## LW-DRY - a party stops on dry ground (2026-10-05)
 
 The same report's other half, on the roads ("stuck over bodies of water"). Pinned by `test/lwdry_ground.test.js` and
-`tools/mutants/lwdry.json` (18 dead); PIN MOVED: `terrain` (WATER1's compare, its one home).
+`tools/mutants/lwdry.json` (24 dead); PIN MOVED: `terrain` (WATER1's compare, its one home). The audit the same day
+(the last item) re-cut the night and the trouble.
 
 - **The cause.** A way is the planner's straight legs between its pixels' centres (`trips.js wayOf`), and the
   planner's water is a whole pixel's (`travelRoute.js` - a pixel whose WOODS byte is the sea's; the ends never asked).
@@ -899,23 +926,48 @@ The same report's other half, on the roads ("stuck over bodies of water"). Pinne
 - **The ground** (`world/dryGround.js createDryGround`). The terrain cell under a point is dry when its four corners
   are - each the pixel's own sample (the sampler's kernel, `terrainSampler.js sampleKernel`, the samples the pixel is
   built from) above the tile job's water (`terrainTiles.js sampleHeight`, `isWaterHeight` - WATER1's float32 compare,
-  one home now): no water shows on its tile. Pure in the height map, every client's alike. Read in the ways' own frame
-  (`trips.js nativeDry`): x east, z north from the map's southern edge, a pixel's row 499 less.
+  one home now, the nature scatter's beach reads among its readers): no water shows on its tile. Pure in the height
+  map, every client's alike. Read in the ways' own frame (`trips.js nativeDry`): x east, z north from the map's
+  southern edge, a pixel's row 499 less.
 - **A stop on dry ground** (`trips.js dryStop`, STOP_RING_N, DRY_STEP_N). A stop's middle and a ring of 5 m about it -
   past the widest ring the roads stand (a beset party's foes, `livingRoads.js FOE_RING_N`) - must stand dry; a stop
-  that does not is sounded on along its way 8 m at a time to the first place that does, within the leg's walk.
-- **The camp** (`trips.js partyAt`). Night finding a party on a wet stretch, it walks on at its pace to that dry ground
-  and camps there; at first light it waits at the camp till the day's walk comes up to it. Never a camp in the water,
-  never a jump. The trouble (`trouble.js troubleOf`) is met on dry ground too: a stretch of the walk at the first dry
-  place on from it, met as the party walks up to it; a camp's at the camp night made - and its fallen lie there.
-  Measured on the synthetic map with a wet band across its ways: 1440 camped minutes and 75 halted minutes in the
-  water over twelve days before, none after; no minute's step past the catch-up's pace.
+  that does not is sounded on along its way 2 m at a time to the first place that does. None before its leg's end: the
+  leg's end, the town's own ground it was walking to.
+- **The night** (`trips.js partyAt`). A leg is walked by day, 07:00 to 19:00. Where the day's walk stands at nightfall
+  is sounded for the night's camp; a party on a wet stretch walks on at its pace to that dry ground and camps there, and
+  the next nightfall is sounded from where the party then stands - at the camp, or still on its way to it - so a night's
+  walk on is never undone. At first light it waits at the camp till the day's walk comes up to it, and walks on with
+  it; a leg begun before first light (an adventurer sets out from 06:00) is a night's walk until then. One place a
+  minute a leg: never a jump.
+- **The trouble** (`trouble.js troubleOf`) is met on dry ground too: a stretch of the walk at the first dry place on
+  from where it falls, met when the party walks up to it (`partyAt`'s own minute); none before the leg's end, at the
+  end as the party comes to its town. A camp's is met at the camp night made - and its fallen lie there. A halted party
+  stands idle in its ring (`livingRoads.js partyPlaces`, as a camp does), and the halt's minutes are owed from its start,
+  walked off at HALT_CATCH_UP.
+- **Measured.** At LW-DRY, the synthetic map with a wet band across its ways: 1440 camped minutes and 75 halted
+  minutes in the water over twelve days with the ground unread, none read. Since the audit (below), on seven wet
+  grounds offline and online, no jump and no stop in the water while dry ground lies ahead on its leg.
 - **Left.** A location's flattening is not read (the ground beside a town is the kernel's), nor the Rivers and Streams
   mod's water, which a player switches on for themselves and would put the parties of two players in two places. A
-  party walking a wet stretch still walks it - a ford, by day.
+  party walking a wet stretch still walks it - a ford, by day - and one whose leg runs wet to its end camps at the end,
+  its town's own ground.
 - **The four hosts.** `scenes/world.js` - WIRED: the trips' world's `dryAt` (`nativeDry(createDryGround(woods))`).
   `scenes/exterior.js` - FLAGGED: no roads (one location). `scenes/worldModes.js` and `scenes/dungeonContext.js` - no
   roads are stood there; the remains and companies they show are the same trips', read through the host.
+- **AUDIT (2026-10-05).** The first cut sounded the night's camp afresh each nightfall from where the day's walk would
+  be, and waited the morning out there. A wet stretch longer than a night's walk at online's pace (half the calendar's)
+  put the party at the far camp at first light and back on its day's walk at dusk (422 m and 419 m); a camp's trouble
+  at 23:00 stood the party at the camp before it had walked there (288 m, and 33 m back as it ended); a leg begun before
+  07:00 on wet ground leapt to its camp at first light (246 m); a halt's minutes owed from its end jumped the party at a
+  halt that ended near dusk; and the sounding's 8 m stepped over dry ground too narrow to find. On the audit's harness -
+  the synthetic map under seven wet grounds (a band; one wider than four hours' walk; one wider than a day's; wet about
+  every town; the destination's half; a narrow dry islet in a wide band; a band along a way's own row), twelve days
+  offline and online, every minute of every trip that touches one - the first cut jumped up to 189 times a run, the
+  longest 1237 paces, and camped 2880 minutes in the water with dry ground ahead on its leg (1440 at the islet); now,
+  in all fourteen runs, no jump and none. The nature scatter's three beach reads (`terrainNature.js`) wrote WATER1's
+  product out themselves, so its "one home" was two; they read `sampleHeight` now (`terrain` pins it). Mutants: 24
+  dead, the audit's 8 among them; the first cut's morning-jump and morning-camp-behind retired with the morning they
+  aimed at; `tools/mutants/forest1.json` FOREST1-beach-line re-aimed.
 
 ## The four hosts
 

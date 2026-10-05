@@ -69,9 +69,9 @@ export const SEA_TIDE_H = Object.freeze([6, 9]);
 export const CALENDAR_MPM = 1.3 / 0.2;
 /** LW-DRY: the ground a party's stop stands on - its middle and a ring this far about it (native: 5 m, past the widest
  *  of the road's rings, a beset party's foes - livingRoads.js FOE_RING_N) - and the step a stop is sounded along its way
- *  for dry ground (native: 8 m). */
+ *  for dry ground (native: 2 m - AUDIT LW-DRY: 8 m stepped over a dry place too narrow to find). */
 export const STOP_RING_N = 200;
-export const DRY_STEP_N = 320;
+export const DRY_STEP_N = 80;
 
 /**
  * @typedef {import('./census.js').Resident} Resident
@@ -180,7 +180,8 @@ const stopsOf = new WeakMap();
  * runs over the sea's edge, and where night or trouble stopped a party there it camped, fought and lay fallen in the
  * water. The first place at or past `s` along `way`, going `dir` (+1 on the way out, -1 on the way home), within
  * [`lo`, `hi`], where a stop stands dry - its middle and a ring of STOP_RING_N about it, sounded a DRY_STEP_N at a time;
- * none, `s` itself. With no `way.dry`, `s`.
+ * none before the leg's end, its end (AUDIT LW-DRY: the town's own ground - its flattened plateau the kernel does not
+ * read; before, `s` itself, the water). With no `way.dry`, `s`.
  * @param {Way} way @param {number} s @param {1|-1} dir @param {number} lo @param {number} hi
  * @returns {number}
  */
@@ -192,7 +193,7 @@ export function dryStop(way, s, dir, lo, hi) {
   const key = `${dir}:${s}:${lo}:${hi}`;
   const known = kept.get(key);
   if (known !== undefined) return known;
-  let found = s;
+  let found = dir > 0 ? hi : lo;
   for (let at = s; at >= lo && at <= hi; at += dir * DRY_STEP_N) {
     const p = wayAt(way, at);
     let ok = dry(p.x, p.z);
@@ -203,10 +204,8 @@ export function dryStop(way, s, dir, lo, hi) {
   return found;
 }
 
-/** LW-DRY: the last minute walking ended (WALK_TO_H) at or before `t`, and the last it began (WALK_FROM_H). @param {number} t */
+/** LW-DRY: the last minute walking ended (WALK_TO_H) at or before `t`. @param {number} t */
 const lastDusk = (t) => { const d = Math.floor(t / DAY_MIN) * DAY_MIN + WALK_TO_H * 60; return d <= t ? d : d - DAY_MIN; };
-/** @param {number} t */
-const lastDawn = (t) => { const d = Math.floor(t / DAY_MIN) * DAY_MIN + WALK_FROM_H * 60; return d <= t ? d : d - DAY_MIN; };
 
 /** The point `s` native units along a way, and the way it faces (a world yaw: 0 +z, +PI/2 +x). @param {Way} way @param {number} s */
 export function wayAt(way, s) {
@@ -626,30 +625,42 @@ export function partyAt(trip, t) {
     return { phase, x: p.x, z: p.z, yaw: phase === 'back' ? p.yaw + Math.PI : p.yaw, camp: !daylight(t), s, ...extra };
   };
   if (h && t >= h.t0 && t < h.t1) return placed(h.leg, h.s, { halt: true, fight: t < h.fightEnd });
-  // LW-DRY: a leg walked by day - `sAt(m)` the way walked by minute m, the leg begun at `legT0` - and its camp where
-  // night finds the party: on a wet stretch (a coast's edge) they walk on at their pace to the first dry ground
-  // (`dryStop`) and camp there, and at first light wait at that camp till the day's walk comes up to it. Never a camp in
-  // the water, never a jump. With no ground to read (`way.dry`), where the walk has them.
+  // LW-DRY: a leg walked by day - `sAt(m)` the way the day's walk has covered by minute m, the leg begun at `legT0` -
+  // and the camps night makes on it, on dry ground. At each nightfall (the leg's own start, if it sets out by night)
+  // the night's camp is the first dry ground on from where the party stands (`dryStop`); it walks on to it at its pace
+  // - into the next day if it must - and camps, and by day it is wherever is farther on: the day's walk or that walk on
+  // (a camp ahead waits for the day's walk to come up to it). AUDIT LW-DRY: one place a minute, ever on along the leg -
+  // before, each dusk sounded from the day's walk and each dawn stood the party at the night's camp, reached or not, so
+  // a long wet stretch, a start before dawn or a trouble met on the walk on jumped it. With no ground to read
+  // (`way.dry`), the day's walk.
   const walked = (/** @type {'out'|'back'} */ phase, /** @type {number} */ legT0, /** @type {(m: number) => number} */ sAt) => {
     const s = sAt(t);
     if (!way.dry) return placed(phase, s);
     const dir = phase === 'out' ? 1 : -1;
     const lo = trim0, hi = way.len - trim1;
-    if (!daylight(t)) {
-      const c = dryStop(way, s, dir, lo, hi);
-      const on = pace * Math.max(0, t - Math.max(lastDusk(t), legT0));
-      return on >= Math.abs(c - s) ? placed(phase, c) : { ...placed(phase, s + dir * on), camp: false };
+    let fall = daylight(legT0) ? lastDusk(legT0) + DAY_MIN : legT0;
+    if (t < fall) return placed(phase, s);   // its first day's walk
+    // the nights up to `t`, each from where the party stands at its fall
+    let at = sAt(fall), camp = dryStop(way, at, dir, lo, hi);
+    for (let next = lastDusk(fall) + DAY_MIN; next <= t; next += DAY_MIN) {
+      const on = pace * (next - fall) >= Math.abs(camp - at) ? camp : at + dir * pace * (next - fall);
+      const w = sAt(next);
+      at = dir * (w - on) >= 0 ? w : on;
+      fall = next;
+      camp = dryStop(way, at, dir, lo, hi);
     }
-    const dawn = lastDawn(t);
-    if (legT0 >= dawn) return placed(phase, s);   // set out this morning: no camp behind them
-    const c = dryStop(way, sAt(dawn), dir, lo, hi);
-    return dir * (c - s) > 0 ? { ...placed(phase, c), camp: true } : placed(phase, s);
+    const reached = pace * (t - fall) >= Math.abs(camp - at);
+    const there = reached ? camp : at + dir * pace * (t - fall);
+    if (daylight(t) && dir * (s - there) >= 0) return { ...placed(phase, s), camp: false };   // the day's walk
+    return { ...placed(phase, there), camp: reached };   // walking on to the night's camp, or at it
   };
   if (trip.turned && h && t >= h.t1) return walked('back', h.t1, (m) => Math.max(trim0, h.s - Math.min(h.s - trim0, pace * walkedMinutes(h.t1, m))));
   // the lag a halt left - the ground the day's walk would have covered while the party stood - made up at HALT_CATCH_UP
-  // again the pace (a party hurrying on, never a sprint); what is still owed at the leg's end is made up at its town
+  // again the pace (a party hurrying on, never a sprint); what is still owed at the leg's end is made up at its town.
+  // AUDIT LW-DRY: owed from the halt's start - a nightfall during a halt (the camps read the walk at each) is read where
+  // the party stood, never where it would have walked to
   const lag = (/** @type {'out'|'back'} */ leg, /** @type {number} */ m) => {
-    if (!h || h.leg !== leg || m < h.t1) return 0;
+    if (!h || h.leg !== leg || m < h.t0) return 0;
     return Math.max(0, pace * walkedMinutes(h.t0, h.t1) - HALT_CATCH_UP * pace * walkedMinutes(h.t1, m));
   };
   if (t < trip.outT1) return walked('out', trip.outT0, (m) => Math.max(trim0, trim0 + Math.min(walk, pace * walkedMinutes(trip.outT0, m)) - lag('out', m)));

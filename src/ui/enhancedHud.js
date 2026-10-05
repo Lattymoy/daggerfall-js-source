@@ -1210,9 +1210,9 @@ function drawStatus(vitals, opts) {
   const tiles = statOverflow(all, { rows, columns });   // past the screen's middle: the last few folded into "+N"
   const tmpl = `repeat(${Math.max(1, Math.min(tiles.length, rows))}, ${metrics.tile}px)`;
   if (last.statRows !== tmpl) { last.statRows = tmpl; parts.stat.style.gridTemplateRows = tmpl; }
-  if (last.statTight !== tight) { last.statTight = tight; parts.stat.classList.toggle('tight', tight); }
-  if (last.statSide !== side) { last.statSide = side; parts.stat.classList.toggle('side', side); }
-  if (last.statNone !== none) { last.statNone = none; parts.stat.classList.toggle('noroom', none); }   // no band anywhere: it steps aside
+  if (last.statTight !== tight) { last.statTight = tight; parts.stat.classList.toggle('stat-tight', tight); }
+  if (last.statSide !== side) { last.statSide = side; parts.stat.classList.toggle('stat-side', side); }   // HUD-CLASS (AUDIT 2026-10-05): the widget's states are its own words, stat-<state> - as the bare 'side' it took the sheet's .side column (its --ink ground), a dark box behind the tiles beside the diamond
+  if (last.statNone !== none) { last.statNone = none; parts.stat.classList.toggle('stat-noroom', none); }   // no band anywhere: it steps aside
   const top = side ? `${last.statSideOffset ?? 0}px` : '';   // beside the diamond: from under what stands above
   if (last.statTop !== top) { last.statTop = top; parts.stat.style.top = top; }
   const dpr = clampDpr(screenDpr() * (last.scale ?? 1));   // the block rides the HUD's scale: a spell's icon is fitted at it
@@ -1464,7 +1464,7 @@ function drawSpellChip(view, tag) {
   // seen and, on a phone, the first tap has a chip to land on (the
   // tap fills it from the book: spellQuickslotPress). Hidden, the slot
   // could never be filled without a keyboard.
-  chip.chip.classList.toggle('empty', !sp);
+  chip.chip.classList.toggle('qspell-empty', !sp);   // HUD-CLASS: its own word - the bare 'empty' took the sheet's .empty component, its 16px margin under the caption
   if (!sp) {
     chip.chip.classList.remove('readied', 'ghost', 'cycling');
     chip.name.textContent = 'No spell';

@@ -11,7 +11,8 @@
 import './modsOff.js';
 import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
+import { literalSheetRules, selectorsOf, compounds, classesOf } from './sheetRules.mjs';
 import { setPref, PREF_DEFAULTS } from '../src/systems/uiPrefs.js';
 import { Collider } from '../src/player/collider.js';
 import { EnemyAI } from '../src/characters/enemyMotor.js';
@@ -387,17 +388,14 @@ test('POISE-BOX (field, 2026-10-05, the owner\'s screenshot of a black box under
   const write = /parts\.foePoise\.className = `hud-foepoise\$\{p \? ` ([\w-]*)\$\{p\.state\}` : ''\}\$\{flash \? ' ([\w-]+)' : ''\}`;/.exec(rd('src/ui/enhancedHud.js'));
   assert.ok(write, 'the HUD no longer writes the track\'s classes in the shape this pin reads');
   const worn = [...states.map((s) => write[1] + s), write[2]];
-  // every rule naming one of them names it ON the track - in every UI module, each of which may inject a sheet
-  const sheets = readdirSync(new URL('../src/ui/', import.meta.url)).filter((f) => f.endsWith('.js')).map((f) => [`src/ui/${f}`, rd(`src/ui/${f}`)]);
-  assert.ok(sheets.length > 100 && sheets.some(([f]) => f === 'src/ui/enhancedStyle.js'), `the scan must see the UI's modules (${sheets.length})`);
+  // every rule naming one of them names it ON the track - in every UI module's sheets, each of which may inject one,
+  // read as RULES (HUD-CLASS, test/sheetRules.mjs: a comment or a JS read is never a selector there)
+  const { rules, unread } = literalSheetRules();
+  assert.deepEqual(unread, [], 'a sheet the reader could not read');
+  assert.ok(rules.some((r) => r.where.startsWith('src/ui/enhancedStyle.js:') && r.sel === '.hud-foepoise.poise-windup .hud-poisefill'), 'the reader sees the track\'s own rules');
   const off = [];
-  for (const [file, css] of sheets) {
-    for (const cls of worn) {
-      for (const m of css.matchAll(new RegExp(`\\.${cls}(?![\\w-])`, 'g'))) {
-        const before = css.slice(Math.max(0, m.index - 120), m.index);
-        if (!/\.hud-foepoise(?:\.[\w-]+)*$/.test(before)) off.push(`${file}:${css.slice(0, m.index).split('\n').length} .${cls}`);
-      }
-    }
+  for (const r of rules) {
+    for (const sel of selectorsOf(r)) for (const c of compounds(sel)) if (classesOf(c).some((x) => worn.includes(x)) && !classesOf(c).includes('hud-foepoise')) off.push(`${r.where} ${sel}`);
   }
   assert.deepEqual(off, [], 'a sheet rule styles a class the poise track wears, off the track');
   assert.ok(worn.every((c) => c.startsWith('poise-')), worn.join(' '));

@@ -18301,7 +18301,7 @@ Five players, five root causes, one commit. The torch's two are recorded in `06-
 
 **TORCH-BIND, the Continue half (teuton: "Keybind changes do not stick?"; The Frog: "if you scroll up after rebinding, there should be a Continue or Confirm button ... it needs some streamlining").** Rebinds are staged and applied only on Continue, in the head card, 53 rows above the Quickslot and Mouse rows a player binds last, and every walk-away discards - so a player who bound a key at the foot and pressed Escape lost it and read "does not stick". The staging law stands (DFU's OnPop applies on leave; the enhanced pane says what it does in its own copy): the head card is `position: sticky` now, so Continue is in view while the list scrolls, and a second Continue closes the list in a foot card, the same `applyAndSave`. Pin: `test/discord5.test.js` mounts the pane - two Continues, the foot one saves.
 
-**HOTSLOT (!Simple: "Cant change Hotslot spell").** The spell slot had ONE writer a player could reach: a 350 ms HOLD of the quick-spell key, said nowhere - the pane row read "Ready quickslot spell", the chip wore the bare key. A press readies the book's first spell and a second press unreadies it, so from the chair the key was a toggle stuck on spell one. On a phone it was a dead end: the chip that takes the hold was `display: none` until the slot was filled, and only the hold fills it. Four changes: the enhanced spellbook slots a spell - a Quickslot / Unslot button beside Ready, the pair the pack gives a consumable (`quickslotActs`); the empty chip is a SOCKET (drawn dim as "No spell", wearing its key, so the key is seen and a finger has a chip to fill - departure 4's law for the diamond's cells); the pane row says "(hold to cycle the book)"; and `spellCandidates` answers one entry per index - a bought stock spell, a classic import and the vampire/lycanthrope gifts each push a record without asking, and `findIndex` on a doubled book always landed on the first copy, the cycle stuck on one spell. The classic skin keeps the hold. Pins: `test/discord5.test.js` mounts the enhanced book over a DOM fake and slots, re-slots and unslots; the doubled book walks every spell; the socket and the label by source. `test/qs2_inputs.test.js` re-aimed to the label.
+**HOTSLOT (!Simple: "Cant change Hotslot spell").** The spell slot had ONE writer a player could reach: a 350 ms HOLD of the quick-spell key, said nowhere - the pane row read "Ready quickslot spell", the chip wore the bare key. A press readies the book's first spell and a second press unreadies it, so from the chair the key was a toggle stuck on spell one. On a phone it was a dead end: the chip that takes the hold was `display: none` until the slot was filled, and only the hold fills it. Four changes: the enhanced spellbook slots a spell - a Quickslot / Unslot button beside Ready, the pair the pack gives a consumable (`quickslotActs`); the empty chip is a SOCKET (`qspell-empty` since HUD-CLASS, below; drawn dim as "No spell", wearing its key, so the key is seen and a finger has a chip to fill - departure 4's law for the diamond's cells); the pane row says "(hold to cycle the book)"; and `spellCandidates` answers one entry per index - a bought stock spell, a classic import and the vampire/lycanthrope gifts each push a record without asking, and `findIndex` on a doubled book always landed on the first copy, the cycle stuck on one spell. The classic skin keeps the hold. Pins: `test/discord5.test.js` mounts the enhanced book over a DOM fake and slots, re-slots and unslots; the doubled book walks every spell; the socket and the label by source. `test/qs2_inputs.test.js` re-aimed to the label.
 
 Not verified in a browser: none of the five is reproducible headless. `tools/mutants/discord5.json`: 20 records, 20 dead.
 
@@ -18911,3 +18911,33 @@ and both skins' debuffs, under the Enhanced AI switch:
 
 Pins: `test/tell9_screen.test.js` (9); `tools/foeTelegraphProbe.mjs` (the contrast off a real frame).
 
+
+## HUD-CLASS - every class the HUD writes is its own (2026-10-05, the field fixes' audit)
+
+POISE-BOX (field, the owner's screenshot - "enemies seem to have this black transparent bar"; `12-Enhanced-AI/Feud-Arc.md`,
+TELL9's record): the poise track's idle state wore the bare word `empty`, and the windows' sheet (`ui/enhancedStyle.js`)
+names its components with bare words - `.empty` (the "nothing here" box: a dashed border, 26 px of padding, 16 px under
+it), `.side` (a column on the `--ink` ground). Every module under `src/ui` may lay a sheet in the one game document, so a
+HUD element wearing one of those words wears the component. The audit found three more, each measured in Chromium on the
+real HUD over the real sheets, and each gone with the word made the widget's own:
+
+- **The status widget beside the diamond** (`ui/enhancedHud.js`; `side` to `stat-side`, and `tight` and `noroom` to
+  `stat-tight` and `stat-noroom` with it): the `.side` column's `--ink` ground stood a dark box behind the tiles - a
+  phone on its side, or a laptop with the chat open, in the diamond quickslot style.
+- **The empty spell socket** (HOTSLOT; `empty` to `qspell-empty`): `.empty`'s 16 px margin under it - the caption 41 px
+  tall where it is 25, everything above it lifted 16 px, on every character with no quick spell.
+- **An empty gun battery** (`ui/navalHud.js`; `empty` to `gun-empty`): the same margin under the plate - its row
+  36.3 px to 52.3 px, the battery rose 116.8 px to 132.8 px.
+
+The pin reads RULES and WRITES, never source text (`test/sheetRules.mjs`). The sheets: every string the UI's modules
+export that reads as CSS, evaluated - 65 of them, a selector built from a list read as built (the layout editor's,
+`ui/hudLayout.js HUD_LAYOUT_CSS`, exported for it) - and the literals of the ones no module exports, read by a walker
+that takes a text as CSS only when the whole of it is. The writes: every class word the HUD's two modules write
+(`classList`, `className`, `setAttribute('class')`, markup) - a helper's at its callers, a callback's through its host -
+and each word the data chooses named with what its producer mints: a status tile's kind, a bitten span's frame, a
+plate's chip, the target card's state, a ship's faction, a crew line's word. `test/hudclass_sheets.test.js` (4): no rule
+from outside the HUD styles a class the HUD writes - and, given the field's bare words back, it finds `.side` and
+`.empty`; `tools/mutants/hudclass.json` (12 dead). POISE-BOX's own pin (`tell9_screen`) reads the same rules now: it had
+read source text, where a JS read like `b.empty` stood as a selector. PIN MOVED: `ui3_status`, `discord5`, `nav_f_ui`,
+`tools/uiStatusProbe.mjs`; re-aimed: `tools/mutants/ui3.json` UI3-never-beside and UI3-never-stepped-aside,
+`tools/mutants/discord5.json` D5-HOTSLOT-empty-chip-hidden.

@@ -210,8 +210,8 @@ test('HOTSLOT, driven: the enhanced spellbook slots a spell - Quickslot on the p
 
 test('HOTSLOT by source: the HUD\'s empty spell chip is a SOCKET (drawn dim, wearing its key, so a finger has a chip to fill), and the pane says hold', () => {
   const hud = rd('src/ui/enhancedHud.js');
-  assert.match(hud, /chip\.chip\.classList\.toggle\('empty', !sp\);\s*if \(!sp\) \{\s*chip\.chip\.classList\.remove\('readied', 'ghost', 'cycling'\);\s*chip\.name\.textContent = 'No spell';\s*quickTag\(chip, 'spellcap', tag\);\s*return;\s*\}/);
-  assert.match(rd('src/ui/enhancedStyle.js'), /\.hud-qspell\.empty \{ display: flex; opacity: 0\.55; \}/);
+  assert.match(hud, /chip\.chip\.classList\.toggle\('qspell-empty', !sp\);[^\n]*\s*if \(!sp\) \{\s*chip\.chip\.classList\.remove\('readied', 'ghost', 'cycling'\);\s*chip\.name\.textContent = 'No spell';\s*quickTag\(chip, 'spellcap', tag\);\s*return;\s*\}/);
+  assert.match(rd('src/ui/enhancedStyle.js'), /\.hud-qspell\.qspell-empty \{ display: flex; opacity: 0\.55; \}/);   // PIN MOVED (HUD-CLASS): the socket's own word - the bare 'empty' took the sheet's .empty component
   assert.match(rd('src/systems/inputActions.js'), /\['QuickSpell', 'Ready quickslot spell \(hold to cycle the book\) \/ hotbar slot 3'\]/, 'KB1: the label lives in the registry\'s groups');
 });
 

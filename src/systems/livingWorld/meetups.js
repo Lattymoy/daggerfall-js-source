@@ -95,81 +95,156 @@ export const lineMinutes = (minutesPerSecond) => clockMinutes(CREW_LINE_S, minut
 
 /**
  * Where each of a circle stands about the spot's centre (`x`, `z`), and the way each faces (a world yaw, in toward
- * the circle). LW-STAND: with `clear`, the circle's middle and each place in it kept on the street, and each place seen
- * from the spot over it (`standOn`).
- * @param {{ x: number, z: number }} spot @param {Circle} circle @param {((x: number, z: number) => boolean)|null} [clear]
- * @returns {{ x: number, z: number, yaw: number }[]}
+ * the circle's middle). LW-STAND: with `street` (places.js streetGeometry), on the street - AUDIT LW-STAND: the
+ * circle's middle on an open bearing of the spot with room for the circle (`circleMiddle`), and the circle turned
+ * about it, a twelfth of a half-turn at a time, till every place in it is held and seen from the spot (before, each
+ * place was pulled in along its own line, and two of a circle stood on one another, on its middle, facing north);
+ * nowhere about it, its people along the way out to it, facing in. At a spot open all round, as drawn. Read-only: kept
+ * per spot and circle (the street never changes under a town).
+ * @param {{ x: number, z: number, key?: string }} spot @param {{ index: number, members: readonly any[] }} circle
+ * @param {import('./places.js').Street|null} [street]
+ * @returns {readonly { x: number, z: number, yaw: number }[]}
  */
-export function circleStands(spot, circle, clear = null) {
-  const a = circle.index * GOLDEN;
-  const c = circleMiddle(spot, circle, clear);
+export function circleStands(spot, circle, street = null) {
   const n = circle.members.length;
-  return circle.members.map((_, i) => {
-    const b = a + (i / n) * Math.PI * 2;
-    // LW-STAND: a place in the circle, kept on the street from its middle, then from the spot (the walk out to it)
-    const st = standOn(spot, standOn(c, { x: c.x + Math.sin(b) * (CIRCLE_APART / 2), z: c.z + Math.cos(b) * (CIRCLE_APART / 2) }, clear), clear);
-    return { x: st.x, z: st.z, yaw: Math.atan2(c.x - st.x, c.z - st.z) };
+  const a = circle.index * GOLDEN;
+  if (!street) {
+    const c = circleMiddle(spot, circle);
+    return circle.members.map((_, i) => {
+      const b = a + (i / n) * Math.PI * 2;
+      const x = c.x + Math.sin(b) * (CIRCLE_APART / 2), z = c.z + Math.cos(b) * (CIRCLE_APART / 2);
+      return { x, z, yaw: Math.atan2(c.x - x, c.z - z) };
+    });
+  }
+  const kept = keptOf(street).stands;
+  const key = `${spotKeyOf(spot)}|c${circle.index}|${n}`;
+  const known = kept.get(key);
+  if (known) return known;
+  const { b, rc, hold } = middleOf(spot, circle, street);
+  const c = { x: spot.x + Math.sin(b) * rc, z: spot.z + Math.cos(b) * rc };
+  /** @type {{ x: number, z: number, yaw: number }[] | null} */
+  let got = null;
+  for (let t = 0; t < 24 && !got; t++) {
+    const turn = (t % 2 ? -1 : 1) * Math.ceil(t / 2) * (Math.PI / 12);
+    const places = [];
+    for (let i = 0; i < n; i++) {
+      const bb = a + (b - a) + (i / n) * Math.PI * 2 + turn;
+      const x = c.x + Math.sin(bb) * (CIRCLE_APART / 2), z = c.z + Math.cos(bb) * (CIRCLE_APART / 2);
+      if (!street.clear(spot.x, spot.z, x, z)) break;
+      places.push({ x, z, yaw: Math.atan2(c.x - x, c.z - z) });
+    }
+    if (places.length === n) got = places;
+  }
+  // nowhere about its middle: along the way out to it, a pace apart, each facing the middle (the one on it, the spot)
+  got ??= circle.members.map((_, i) => {
+    const d = Math.max(0, Math.min(hold - STAND_MARGIN_M, rc + (i - (n - 1) / 2) * CIRCLE_APART));
+    return { x: spot.x + Math.sin(b) * d, z: spot.z + Math.cos(b) * d, yaw: d < rc ? b : b + Math.PI };
   });
+  kept.set(key, got);
+  return got;
 }
 
 /**
  * The middle of a circle, the point its people face in to: out from the spot's centre on the golden angle, further as
- * the circles number. LW-STAND: with `clear`, kept on the street (`standOn`) - a circle by a wall faces in to the
- * street, never into the wall.
- * @param {{ x: number, z: number }} spot @param {{ index: number }} circle @param {((x: number, z: number) => boolean)|null} [clear]
+ * the circles number. LW-STAND: with `street`, on an open bearing of the spot that holds the circle (`openBearing`), as
+ * far out as it holds it - a circle by a wall faces in to the street, never into the wall.
+ * @param {{ x: number, z: number, key?: string }} spot @param {{ index: number }} circle
+ * @param {import('./places.js').Street|null} [street]
  * @returns {{ x: number, z: number }}
  */
-export function circleMiddle(spot, circle, clear = null) {
+export function circleMiddle(spot, circle, street = null) {
+  const a = circle.index * GOLDEN;
+  if (!street) { const r = CIRCLE_OUT + 0.9 * circle.index; return { x: spot.x + Math.sin(a) * r, z: spot.z + Math.cos(a) * r }; }
+  const { b, rc } = middleOf(spot, circle, street);
+  return { x: spot.x + Math.sin(b) * rc, z: spot.z + Math.cos(b) * rc };
+}
+
+/** A circle's middle with a street: its bearing, how far out, and what that bearing holds. */
+function middleOf(/** @type {{ x: number, z: number, key?: string }} */ spot, /** @type {{ index: number }} */ circle, /** @type {import('./places.js').Street} */ street) {
   const a = circle.index * GOLDEN;
   const r = CIRCLE_OUT + 0.9 * circle.index;
-  return standOn(spot, { x: spot.x + Math.sin(a) * r, z: spot.z + Math.cos(a) * r }, clear);
+  const { b, hold } = openBearing(spot, street, a, CIRCLE_OUT + CIRCLE_APART);
+  const rc = hold >= r + CIRCLE_APART / 2 ? r : Math.max(0, hold - CIRCLE_APART / 2 - STAND_MARGIN_M);
+  return { b, rc, hold };
 }
 
-/** Where one alone stands about the spot (their own place, from their id). @param {{ x: number, z: number }} spot @param {string} id
- *  @param {((x: number, z: number) => boolean)|null} [clear] */
-export function aloneStand(spot, id, clear = null) {
+/**
+ * Where one alone stands about the spot (their own place, from their id), facing it. LW-STAND: with `street`, on an open
+ * bearing of the spot (`openBearing`, their share of the circle kept), as far out as their own and the bearing holds -
+ * AUDIT LW-STAND: before, pulled in along their own line, and those whose lines met a wall stood on one another by the
+ * spot. At a spot open all round, as drawn. Read-only: kept per spot and person.
+ * @param {{ x: number, z: number, key?: string }} spot @param {string} id @param {import('./places.js').Street|null} [street]
+ * @returns {{ x: number, z: number, yaw: number }}
+ */
+export function aloneStand(spot, id, street = null) {
   const k = textSeed(id);
-  const a = (k % 3600) / 3600 * Math.PI * 2, r = 1 + ((k >>> 12) % 1000) / 1000 * 2.5;
-  const st = standOn(spot, { x: spot.x + Math.sin(a) * r, z: spot.z + Math.cos(a) * r }, clear);   // LW-STAND
-  return { x: st.x, z: st.z, yaw: a + Math.PI };
+  const a = (k % 3600) / 3600 * Math.PI * 2, r = ALONE_NEED_M + ((k >>> 12) % 1000) / 1000 * (ALONE_FAR_M - ALONE_NEED_M);
+  if (!street) return { x: spot.x + Math.sin(a) * r, z: spot.z + Math.cos(a) * r, yaw: a + Math.PI };
+  const kept = keptOf(street).stands;
+  const key = `${spotKeyOf(spot)}|${id}`;
+  const known = kept.get(key);
+  if (known) return /** @type {{ x: number, z: number, yaw: number }} */ (known);
+  // their own distance kept, on the bearings that hold it (to the half-metre over): drawn in along a bearing that held
+  // less, the many whose bearings met the same wall stood on one another at its foot
+  const { b, hold } = openBearing(spot, street, a, Math.ceil(r * 2) / 2);
+  const rr = hold >= r ? r : Math.max(0, hold - STAND_MARGIN_M);
+  const got = { x: spot.x + Math.sin(b) * rr, z: spot.z + Math.cos(b) * rr, yaw: b + Math.PI };
+  kept.set(key, got);
+  return got;
 }
 
-/** LW-STAND: the step (m) a stand is sounded at from its anchor - under a fifth of a navgrid cell (1.6 m). */
-export const STAND_STEP_M = 0.25;
+/** AUDIT LW-STAND: the bearings a spot's open ground is sounded along, the farthest it is sounded (m), how short of
+ *  where its bearing stops a stand is kept (m), and the least a bearing holds for one alone to stand on it (m, their
+ *  nearest - the circles', their middle out and a place beyond it). */
+export const STAND_BEARINGS = 64;
+export const STAND_SOUND_M = 16;
+export const STAND_MARGIN_M = 0.05;
+export const ALONE_NEED_M = 1;
+/** The farthest one alone stands from their spot (m): their own place, 1 to 3.5 m out. */
+export const ALONE_FAR_M = 3.5;
+
+/** @type {WeakMap<object, { profiles: Map<string, { reach: Float64Array, open: Map<number, number[]> }>, stands: Map<string, any> }>} */
+const keptBy = new WeakMap();
+const keptOf = (/** @type {object} */ street) => { let k = keptBy.get(street); if (!k) keptBy.set(street, k = { profiles: new Map(), stands: new Map() }); return k; };
+const spotKeyOf = (/** @type {{ x: number, z: number, key?: string }} */ spot) => spot.key ?? `${spot.x},${spot.z}`;
 
 /**
- * LW-STAND: how far (m) the straight way from (`ax`, `az`) toward (`bx`, `bz`) is over the street - sounded a
- * STAND_STEP_M at a time, every step `clear` (the host's: places.js onStreet) holds, up to the first it does not; the
- * way's whole length when every step is, or with no `clear`. Pure.
- * @param {number} ax @param {number} az @param {number} bx @param {number} bz
- * @param {((x: number, z: number) => boolean)|null} clear
+ * AUDIT LW-STAND: THE OPEN GROUND ABOUT A SPOT. Its reach along each of STAND_BEARINGS bearings (the street's own,
+ * places.js streetGeometry - how far out a body stands on it, to STAND_SOUND_M), sounded once a spot. A stand drawn at
+ * bearing `a` stands on the bearings that hold at least `need`, its share of the whole circle kept - so the people
+ * about a spot by a wall spread over its open half as they would over the whole circle - within its bearing's sector
+ * all the way to the next when that one is open too, else toward the sector's middle; and what that bearing holds.
+ * None holding `need`: the one that holds most. Open all round: `a` itself.
+ * @param {{ x: number, z: number, key?: string }} spot @param {import('./places.js').Street} street @param {number} a @param {number} need
+ * @returns {{ b: number, hold: number }}
  */
-export function streetReach(ax, az, bx, bz, clear) {
-  const dx = bx - ax, dz = bz - az, d = Math.hypot(dx, dz);
-  if (!clear || !(d > 0)) return d;
-  let s = 0;
-  for (let k = Math.min(STAND_STEP_M, d); ; k = Math.min(k + STAND_STEP_M, d)) {
-    if (!clear(ax + (dx * k) / d, az + (dz * k) / d)) return s;
-    s = k;
-    if (k >= d) return d;
+export function openBearing(spot, street, a, need) {
+  const kept = keptOf(street).profiles;
+  const sk = spotKeyOf(spot);
+  let prof = kept.get(sk);
+  if (!prof) {
+    const reach = new Float64Array(STAND_BEARINGS);
+    for (let i = 0; i < STAND_BEARINGS; i++) {
+      const b = (i / STAND_BEARINGS) * Math.PI * 2;
+      reach[i] = street.reach(spot.x, spot.z, spot.x + Math.sin(b) * STAND_SOUND_M, spot.z + Math.cos(b) * STAND_SOUND_M);
+    }
+    kept.set(sk, prof = { reach, open: new Map() });
   }
-}
-
-/**
- * LW-STAND (field, 2026-10-05, Mac: "NPCs will get stuck over bodies of water, or be stuck running into walls"):
- * A STAND ON THE STREET. The stands about a spot were drawn by geometry alone - up to 3.5 m out for one alone, further
- * for each circle - and a spot stands a few cells before a door, or at a port's dock on the water's edge: a stand in
- * the building's wall, or over the harbour, and the walker walked straight into it. It is sounded out from `anchor` (a
- * place on the street: the spot, a circle's middle) toward where it would be (`streetReach`) and stops short of the
- * first step the street does not hold - so nobody stands in a wall or over the water, and the way to it from its anchor
- * is over open street. No `clear`: as drawn. Pure: every reader's grid is the same, so is every stand.
- * @param {{ x: number, z: number }} anchor @param {{ x: number, z: number }} st
- * @param {((x: number, z: number) => boolean)|null} clear
- * @returns {{ x: number, z: number }}
- */
-export function standOn(anchor, st, clear) {
-  const dx = st.x - anchor.x, dz = st.z - anchor.z, d = Math.hypot(dx, dz);
-  const s = streetReach(anchor.x, anchor.z, st.x, st.z, clear);
-  if (s >= d) return st;
-  return { x: anchor.x + (dx * s) / d, z: anchor.z + (dz * s) / d };
+  let open = prof.open.get(need);
+  if (!open) {
+    open = [];
+    for (let i = 0; i < STAND_BEARINGS; i++) if (prof.reach[i] >= need) open.push(i);
+    if (!open.length) { let best = 0; for (let i = 1; i < STAND_BEARINGS; i++) if (prof.reach[i] > prof.reach[best]) best = i; open.push(best); }
+    prof.open.set(need, open);
+  }
+  let b = a;
+  if (open.length < STAND_BEARINGS) {
+    const u = a / (Math.PI * 2) - Math.floor(a / (Math.PI * 2));
+    const f = u * open.length, j = Math.min(open.length - 1, Math.floor(f));
+    const i = open[j];
+    const next = open[(j + 1) % open.length] === (i + 1) % STAND_BEARINGS;
+    b = ((i + (f - j) * (next ? 1 : 0.5)) / STAND_BEARINGS) * Math.PI * 2;
+  }
+  const hold = street.reach(spot.x, spot.z, spot.x + Math.sin(b) * STAND_SOUND_M, spot.z + Math.cos(b) * STAND_SOUND_M);
+  return { b, hold };
 }
