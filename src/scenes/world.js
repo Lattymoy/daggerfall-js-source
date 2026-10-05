@@ -744,6 +744,8 @@ import { hudShortcutKey, retroToggleKey, hudRenderEnabled } from '../ui/hudShort
 import { createActivateGate, activateFrame, setClickDelay } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady, pauseOpts } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin; MAC-L1: pauseOpts is the ONE reader of the door's options
 import { isEnhanced, isEnhancedPlus } from '../systems/uiSkin.js';   // WM2d: the mills are an enhanced-only addition
+import { beginLoading, syncLoading, setLoadingPlace, setLoadingAside, loadingPlaceOf, bootLine, BOOT_HOLD_MAX_MS } from '../ui/loadingScreen.js';   // LOAD1: the loading screen - the boot's, and every world move's
+import { setShotPlace } from '../ui/screenshot.js';   // LOAD1: a kept screenshot says where it was taken
 import { drawEnhancedTextLayer, hideEnhancedTextLayer } from '../ui/enhancedTextLayer.js';   // FONT3: a draw list's words in the enhanced face (Come Sail Away's position reading)
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
 import { drawEnhancedStatusLine } from '../ui/enhancedHudText.js';   // FONT1: the online status line in the skin's own face
@@ -851,6 +853,13 @@ export async function bootWorld(canvas, renderer, params, status) {
   // browser's own idle answer, swallows every failure (MENU1's notice is
   // the door's to show), and boots nothing if the player never opens one.
   void import('../ui/enhancedChunk.js').then((m) => m.warmEnhancedChunks()).catch(() => {});
+  // LOAD1 (2026-10-05, ui/loadingScreen.js): THE BOOT'S FACE. From the menu's choice to the first frame the player saw
+  // a bare canvas, the boot's steps named only on the window's title. Every step `status` names is the loading screen's
+  // line too, from here - the realm's join, the data, the first pixel's people, the save - until the boot hands the
+  // first frame its turn (`status(null)`, below). Up at once: no boot is shorter than the screen's delay.
+  const bootLoading = beginLoading({ delay: 0, line: 'Opening the world', maxMs: BOOT_HOLD_MAX_MS, why: 'the boot' });
+  const titleStatus = status;
+  status = (msg) => { if (msg == null) bootLoading.end(); else bootLoading.line(bootLine(msg)); titleStatus(msg); };
   // REALM P1.3 (bible/06-Systems/Realm-Arc.md section 2): AN ONLINE CHARACTER IS THE REALM'S. The Online door boots one
   // with ?realm=<id>: joined under a new lease and its save read from the service before anything below reads a save -
   // never a local slot. A join that fails says why at the door; an online boot with no realm character in it (a stale
@@ -5803,6 +5812,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // came from hosts wiring these by hand.
     createChargenFlow(fetchBytes).then(({ flow, spellsByIndex: sbi }) => {
       spellsByIndex = sbi;   // M2
+      setLoadingAside('window', true);   // AUDIT LOAD1 2: the wizard is shown mid-boot, before any frame asks - it is the player's, never under the screen
       townTalk.showOverlay(createChargenWindow(flow, {
         // ui-chargen-4: the race screen's back cancels the wizard to
         // the front door (DFU unwinds to the start screen); the
@@ -5812,6 +5822,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // follows. A player who presses Cancel has asked to leave.
         onCancel: () => { releaseUnloadGuard(); location.reload(); },
         onDone: (r) => {
+          setLoadingAside('window', false);   // AUDIT LOAD1 2: a boot still going stands its screen again; the frame asks from its first
           finishChargen(playerEntity, r, sbi);
           // AUDIT LIVED1b R4: DFU's AssignCharacter stamps the skill check at WorldTime.Now (PlayerEntity.cs:881); chargen
           // stamps the classic game's start, which is now offline - online the character's clock begins at the world's,
@@ -11217,6 +11228,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (walkMode) player.spawn(TERRAIN_SIZE / 2, player.pos[1], TERRAIN_SIZE / 2);
       cam.pos = walkMode ? player.eyeAt() : [TERRAIN_SIZE / 2, cam.pos[1], TERRAIN_SIZE / 2];
     }
+    _loadingDest = { x: px, y: py }; setLoadingPlace(placeAtPixel(px, py));   // LOAD1: the loading screen's place, named before the build is waited on
     const first = queue.shift();
     if (seasonsActive && modEvent === 'travel') await seasons.onPostFastTravel().catch((e) => console.warn('[seasons] travel:', e?.message ?? e));   // SIB1: OnPostFastTravel, off the arrival month (SIB2: the travel popup's arm alone)
     if (seasonsActive && modEvent === 'load') await seasons.onLoad().catch((e) => console.warn('[seasons] load:', e?.message ?? e));   // SIB2: SaveLoadManager.OnLoad - the forced apply now, the unforced one next frame (seasons.tick)
@@ -12162,7 +12174,7 @@ export async function bootWorld(canvas, renderer, params, status) {
                 // Preserve the ordinary outside/entrance fallback on dry,
                 // supported ground, including a swimming or flying leader.
                 return supportedPartyPosition(collider, fallback, tvSeaY() + 0.05);
-              }, { onWait: () => townTalk.say(PARTY_ARRIVAL_TEXT.waiting) });
+              }, { onWait: () => { _partyWaitLine = PARTY_ARRIVAL_TEXT.waiting; townTalk.say(PARTY_ARRIVAL_TEXT.waiting); } });
               // Stop/pack a departure helm only after success is certain. Its
               // own position write is replaced by the validated spawn below.
               if (csaRuntime) csaCall(() => {
@@ -12460,6 +12472,10 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  spawnFoe lands it. */
   const _reviveQuestBehaviour = (data) => reviveQuestBehaviour(questBridge?.machine ?? null, data);
   let _loading = false;
+  /** LOAD1: the map pixel a world move is bound for - set by the teleport core (_teleportToPixel) before its build is
+   *  waited on, until the frame finds the world still again (ui/loadingScreen.js syncLoading). Null for a door's build. */
+  let _loadingDest = null;
+  let _partyWaitLine = '';   // AUDIT LOAD1 7: the party landing's wait, said on the screen that stands over the chat line saying it
   /** AUDIT 68 S22: IS THE WORLD BEING MOVED - one question for every mover. The private latches never asked each
    *  other, so F11 during a fast travel's build ran a second teleport and the travel's tail landed on the LOADED
    *  character. The core's own window is the arrival latch (WOD6's `arriving` reads it too); a death is never refused. */
@@ -15085,6 +15101,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   console.log(`world: streaming from ${startPixel.x},${startPixel.y}, ${initialCount} initial pixels, ` +
     `player pixel ${playerPixel.location || 'wilderness'}, ${playerPixel.natureCount} nature flats`);
   status(`streaming world - ${locationName}`);
+  if (!params.has('load') && !(params.has('classicload') && peekPendingClassicSave())) setLoadingPlace(startLoc?.name || locationName);   // AUDIT LOAD1 8: a stale ?classicload imports nothing - the start is the place   // LOAD1: where the boot is opening onto - a load's teleport names the save's place itself
 
   // Shot-mode hooks: __move displaces the camera; __streamIdle reports
   // whether the build queue has drained.
@@ -15602,6 +15619,21 @@ export async function bootWorld(canvas, renderer, params, status) {
     const px = playerTravelPixel();
     return maps.getRegionIndexAt(px.x, px.y);
   }
+  // LOAD1: WHERE A LOADING SCREEN AND A KEPT SCREENSHOT SAY THE PLAYER IS - the location at a map pixel, else its region
+  // (the wilderness, the sea); underground, the dungeon's own record, as the quest system's own read has it.
+  function placeAtPixel(px, py) {
+    const key = `${px},${py}`;
+    if (_ohGpsName?.key === key && _ohGpsName.name) return _ohGpsName.name;   // AUDIT LOAD1 4: the abyss wears its own name over the pixel it borrows (_questLoc's law)
+    return locationIndex.get(key)?.name || REGION_NAMES[maps.getRegionIndexAt(px, py)] || '';
+  }
+  function placeHere() {
+    const px = playerTravelPixel();
+    return _questLoc()?.name || placeAtPixel(px.x, px.y);
+  }
+  setShotPlace(placeHere);
+  const loadingPlaceNow = () => loadingPlaceOf({ dest: _loadingDest, moving: worldMoveBusy(), placeAt: placeAtPixel, here: placeHere });
+  const loadingLineNow = () => (_loading ? 'Loading the saved game' : _traveling ? (_partyWaitLine || 'Travelling') : _recalling ? 'Recalling'
+    : _respawning ? 'Returning' : _teleporting ? 'Teleporting' : modes?.transitioning ? 'Entering' : 'Loading');
   /** AUDIT NAV1 (B2) - WARM ASHES' RAID, PARSED WHERE ITS PLACES STAND. The mod parses its raid on arrival from a
    *  voyage, in the destination's land region, and the raid's Person `_KnightlyGuard_` (message 1013's "on your way to
    *  ...") takes a home among that region's houses. Started at sea - the sea fight's boarders (navalHost.js beginFight),
@@ -25584,6 +25616,15 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (onlineOn && playerSpawned && (seatOut() || townTalk.overlay instanceof DeathScreen || modes?.deathUp?.())) { siegeHud?.hide(); siegeNpcs?.leave(); }   // AUDIT SEATS-2 C4: the dead and a tab out of the seat draw no battle - the online frame returns before its tick
     arenaFrame(dt);   // ARENA2: the bout on the city's floor or the instance's - before the modal return, so the instance's runs too
     setCourtRules(modes?.gateArenaDay?.() != null);   // WBX6: the Deadlands keep no regeneration - set before any magic round of this frame, cleared the frame the court is gone
+    // LOAD1: THE LOADING SCREEN STANDS WHILE THE WORLD IS MOVED - AUDIT 68 S22's one question (every mover's latch, the
+    // teleport core's window, the abyss) and a door's build in this host's modes. Above the mode's return, so every
+    // drawn frame asks; below the video's wait (AUDIT 39 #160's head, and AUDIT 28 W7's tick on the frame's dt) - a
+    // film's hold takes the screen aside for its lifetime (scenes/shared.js holdFrame), and the first frame after asks.
+    // AUDIT LOAD1 2: and a window up - a pause, a level-up box, the chargen - is the player's, never under the screen.
+    const _moving = worldMoveBusy() || !!modes?.transitioning;
+    setLoadingAside('window', townTalk.overlayActive || !!modes?.overlayHeld);
+    syncLoading(_moving, { place: loadingPlaceNow, line: loadingLineNow });
+    if (!_moving) { _loadingDest = null; _partyWaitLine = ''; }
     meterFor(renderer.gl)?.markCpu('sim');   // PERF-CPU: everything between here and the next mark is the rest of the simulation
     lookGate(gamePaused());   // a window up frees the cursor; closing re-locks
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];

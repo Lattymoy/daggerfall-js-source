@@ -69,6 +69,8 @@ THE KEYBINDING STANDARD records every departure from DFU's table.
 - **DFU's dead rows: build two, hide two.** `CenterView` (Home) levels the view through the look filter;
   `PrintScreen` (F8) saves the game canvas as a PNG (`ui/screenshot.js`, routed by the hosts like every world
   action, so an automap's own F8 - its third background - stays the automap's) - DFU binds both and reads neither.
+  LOAD1 (2026-10-05): the same PNG is also kept in the menu's Screenshots gallery (`systems/shotGallery.js`), where
+  the loading screens stand on it; the download is the player's switch on that pane (`10-UI/Loading-Screens.md`).
   `ToggleConsole` and `Slide` ship unbound and off the page, freeing `` ` `` and Left Ctrl. The dungeon's
   diagnostics readout, a raw F8 that answered only while F8 was unbound, is the `DebugOverlay` action, unbound.
 
