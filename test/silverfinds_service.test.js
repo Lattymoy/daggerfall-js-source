@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { standService, T0 } from './accountDb.mjs';
-import { herbPatches, nodeKey } from '../src/net/nodeLaw.js';
+import { herbPatches, nodeKey, WITNESS } from '../src/net/nodeLaw.js';
 import { HARVESTS_PER_DAY } from '../src/net/professionLaw.js';
 import { sharedClassicMinutes } from '../src/net/wire.js';
 import {
@@ -59,6 +59,14 @@ const PATCHES = (() => {
 async function stand(extra = {}) {
   const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on', ...extra });
   const raw = s.env.DB._raw;
+  // PIN MOVED (AUDIT 625 S1, Mac: "A week old, like witnesses"): finds and gathering silver open to an account a week
+  // registered - the harness's accounts are a week old; `young` is one registered this moment
+  const young = s.registered;
+  const registered = async (handle, opts) => {
+    const w = await young(handle, opts);
+    raw.prepare('UPDATE players SET registered_at = ? WHERE id = ?').run(NOON - WITNESS.ageS, w.id);
+    return w;
+  };
   let patch = 0;
   /** A harvest of the next common herb patch - `rid` its request id (a fresh one by default). */
   const harvest = (who, { id = rid('harv'), p = PATCHES[patch++] } = {}) => s.call('/v1/prof/harvest', {
@@ -71,7 +79,7 @@ async function stand(extra = {}) {
   /** A faucet's line struck by hand today (the ledger's triggers move the balance as a strike's would). */
   const seed = (who, kind, amount, tag = rid('seed')) => raw.prepare(`INSERT INTO marks_ledger (src_kind, src_id, dst_kind, dst_id, kind, amount, day, at, actor, who, rid)
     VALUES ('mint', NULL, 'account', ?, ?, ?, ?, ?, ?, NULL, ?)`).run(who.id, kind, amount, TODAY, NOON, who.id, `${kind}:${tag}`);
-  return { ...s, raw, harvest, find, lines, balance, seed };
+  return { ...s, registered, young, raw, harvest, find, lines, balance, seed };
 }
 
 // ─── THE LAW ─────────────────────────────────────────────────────────
@@ -226,12 +234,51 @@ test('SILVER-FINDS the loot find\'s doors: a guest holds none; a request id the 
   assert.equal(s.lines('find').length, 1);
 });
 
+test('AUDIT 625 S1 (Mac: "A week old, like witnesses"): finds and gathering silver open to an account a WEEK registered (WITNESS.ageS, the witnesses\' own age) - a younger one\'s loot find is `marks-young` and strikes nothing, its harvest is counted and finds none though the dice found one; at the week to the second it opens (mutants: the age unread at the find; at the harvest; a day short taken)', async () => {
+  const s = await stand();
+  const fresh = await s.young('Newcomer');
+  const r = await s.find(fresh);
+  assert.deepEqual([r.status, r.body], [403, { error: 'marks-young' }]);
+  // its harvest: counted, and the dice that found silver for an aged account find none for it
+  const h = await steered([], 0, () => s.harvest(fresh));
+  assert.equal(h.r.status, 200, JSON.stringify(h.r.body));
+  assert.equal(h.r.body.qty, 1, 'the harvest counted');
+  assert.equal('marks' in h.r.body, false, 'no find, no word of one');
+  assert.deepEqual([s.lines('find').length, s.lines('gather').length, s.balance(fresh)], [0, 0, 0]);
+  // a second short of the week: still young; at the week to the second: open, both faucets
+  s.raw.prepare('UPDATE players SET registered_at = ? WHERE id = ?').run(NOON - WITNESS.ageS + 1, fresh.id);
+  assert.deepEqual((await s.find(fresh)).body, { error: 'marks-young' });
+  s.raw.prepare('UPDATE players SET registered_at = ? WHERE id = ?').run(NOON - WITNESS.ageS, fresh.id);
+  assert.equal((await steered([], 0, () => s.find(fresh))).r.body.struck, 1);
+  assert.deepEqual((await steered([], 0, () => s.harvest(fresh))).r.body.marks, { struck: 2, balance: 3, today: { found: 2, max: 30 } });
+  assert.equal(WITNESS.ageS, 7 * 86_400);
+  // a find made while open is answered whatever the account's age reads now (AUDIT 28 M2's law: the line, before the age)
+  const id = rid();
+  const made = await steered([], 0, () => s.find(fresh, 'pile', id));
+  s.raw.prepare('UPDATE players SET registered_at = ? WHERE id = ?').run(NOON, fresh.id);
+  const again = await s.find(fresh, 'pile', id);
+  assert.deepEqual([again.body.repeat, again.body.struck], [true, made.r.body.struck]);
+});
+
 test('SILVER-FINDS the loot find\'s hour: each find is one of the Marks acts an hour (MARKS_OPS_MAX, shared with the Bank and the guild moves) - past them `marks-rate`, and nothing struck (mutants: the rate unasked)', async () => {
   const s = await stand();
   const mac = await s.registered('Mac');
   for (let i = 0; i < MARKS_OPS_MAX; i++) assert.equal((await s.find(mac)).status, 200, `find ${i}`);
   const over = await s.find(mac);
   assert.deepEqual([over.status, over.body], [429, { error: 'marks-rate' }]);
+});
+
+test('AUDIT 625 S6: the weekly report counts the accounts at SILVER-FINDS\' two caps (the gathering\'s 30 a day, the loot\'s 20) beside the combat\'s and the Bank\'s, the account-days beside them - the two faucets the day alone bounds are the ones a scripted client shows at (mutants: a faucet uncounted; its cap read as the other\'s)', async () => {
+  const s = await stand({ DEVELOPER_HANDLES: 'Devra' });
+  const d = await s.registered('Devra');
+  const [a, b] = [await s.registered('Anna'), await s.registered('Bjorn')];
+  s.seed(a, 'gather', MARKS_FAUCETS.gather.perDay);
+  s.seed(a, 'find', MARKS_FAUCETS.find.perDay);
+  s.seed(b, 'gather', MARKS_FAUCETS.gather.perDay - 1);
+  s.seed(b, 'find', MARKS_FAUCETS.find.perDay - 1);
+  s.seed(b, 'find', 1);
+  const r = (await s.call('/v1/marks/report', {}, d.secret)).body;
+  assert.deepEqual([r.capped, r.cappedDays], [{ combat: 0, bank: 0, gather: 1, find: 2 }, { combat: 0, bank: 0, gather: 1, find: 2 }]);
 });
 
 test('SILVER-FINDS the card: an account\'s balance says the day\'s finds - gathered against 30, found against 20 (mutants: the counts swapped; a max unsaid)', async () => {

@@ -28,8 +28,11 @@ const CH = 'char-0001';
 async function stand(extra = {}) {
   const s = await standService({ MARKS_OPEN: 'on', ...extra });
   const raw = s.env.DB._raw;
-  const serpent = async (who, day, x = 'dealt') => s.call('/v1/serpent/claim', {
+  // PIN MOVED (AUDIT 625 P4): the claim says the embers its build's hoard mints (`stones`), as the production client's does
+  // (net/accountClient.js claimSerpentReceipt) - `stones: null` is a build from before them, which says none
+  const serpent = async (who, day, x = 'dealt', { stones = SERPENT_EMBERS, cid = null } = {}) => s.call('/v1/serpent/claim', {
     receipt: await mintSerpentReceipt({ d: day, b: 'sethrakul', s: who.id, c: 99, x, h: 4, l: 20 }, s.gateKey, { subtle, nowS: _now }), character: CH, name: who.handle,
+    ...(stones != null ? { stones } : {}), ...(cid ? { cid } : {}),
   }, who.secret);
   const balance = (who) => Number(raw.prepare('SELECT balance FROM marks WHERE account = ?').get(who.id)?.balance ?? 0);
   const lines = (kind) => raw.prepare('SELECT * FROM marks_ledger WHERE kind = ? ORDER BY seq').all(kind);
@@ -55,6 +58,38 @@ test('SERPENT-SET the claim: a counted serpent\'s row says its embers (SERPENT_E
   s.raw.prepare('INSERT INTO serpent_kills (day, account, boss, hull, char_id, xp, nonce, at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').run(DAY - 2, ann.id, 'sethrakul', 4, CH, 0, 'n0', T0);
   assert.equal(s.raw.prepare('SELECT stones FROM serpent_kills WHERE day = ? AND account = ?').get(DAY - 2, ann.id).stones, 0, 'a serpent from before paid no ember');
   assert.match(src('server-account/migrations/0083_serpent_embers.sql'), /^ALTER TABLE serpent_kills ADD COLUMN stones INTEGER NOT NULL DEFAULT 0;$/m);
+});
+
+test('AUDIT 625 P4: a serpent\'s row counts the embers the CLAIM says its build\'s hoard mints (`stones`, at most SERPENT_EMBERS) - a build from before them says none and is counted none, so the purse never holds an ember its pack was never given; the answer says the row\'s embers, as the gate\'s does (AUDIT WB12d A1), a repeat the row\'s own (mutants: the row\'s embers the law\'s whatever the claim says; the bound; the answer silent)', async () => {
+  clock(T0);
+  const s = await stand();
+  const [ann, bo, cy] = [await s.registered('Anna', { character: CH }), await s.registered('Bors', { character: CH }), await s.registered('Cyra', { character: CH })];
+  const now = await s.serpent(ann, DAY);
+  assert.deepEqual([now.body.recorded, now.body.stones], [true, SERPENT_EMBERS], 'this build: its hoard\'s embers, said back');
+  const old = await s.serpent(bo, DAY, 'dealt', { stones: null });
+  assert.deepEqual([old.body.recorded, old.body.stones], [true, 0], 'a build from before the embers: none');
+  const greedy = await s.serpent(cy, DAY, 'dealt', { stones: 40 });
+  assert.equal(greedy.body.stones, SERPENT_EMBERS, 'never past the law');
+  const rows = Object.fromEntries(s.raw.prepare('SELECT account, stones FROM serpent_kills').all().map((r) => [r.account, r.stones]));
+  assert.deepEqual([rows[ann.id], rows[bo.id], rows[cy.id]], [SERPENT_EMBERS, 0, SERPENT_EMBERS]);
+  const again = await s.serpent(bo, DAY);
+  assert.deepEqual([again.body.recorded, again.body.why, again.body.stones], [false, 'claimed', 0], 'a repeat: the row\'s own, whatever this ask says');
+  for (const bad of [-1, 1.5, '1']) assert.equal((await s.serpent(ann, DAY + 2 + 2 * [-1, 1.5, '1'].indexOf(bad), 'dealt', { stones: bad })).body.stones, 0, `${JSON.stringify(bad)}: none`);
+});
+
+test('AUDIT 625 P5: the claim in PRODUCTION\'S shape - a device\'s claim id with Marks open - is one batch: the row, the Renown, the hoard\'s row and its read, and the silver last; the claim is given its hoard and its silver, and a second device\'s claim of the same receipt neither (mutants: the hoard\'s answer read off the wrong statement; the silver\'s)', async () => {
+  clock(T0);
+  const s = await stand();
+  const ann = await s.registered('Anna', { character: CH });
+  const first = await s.serpent(ann, DAY, 'dealt', { cid: 'a'.repeat(16) });
+  assert.equal(first.status, 200, JSON.stringify(first.body));
+  assert.deepEqual([first.body.recorded, first.body.spoils, first.body.stones], [true, true, SERPENT_EMBERS]);
+  assert.deepEqual(first.body.marks, { struck: 40, balance: 40, combat: { earned: 40, max: 150 } }, 'the silver, struck in the same batch');
+  assert.equal(s.raw.prepare('SELECT cid FROM serpent_spoils WHERE day = ? AND account = ?').get(DAY, ann.id).cid, 'a'.repeat(16));
+  const second = await s.serpent(ann, DAY, 'dealt', { cid: 'b'.repeat(16) });
+  assert.deepEqual([second.body.recorded, second.body.why, second.body.spoils, second.body.marks], [false, 'claimed', false, undefined], 'the other device: no hoard, no silver');
+  const asked = await s.serpent(ann, DAY, 'dealt', { cid: 'a'.repeat(16) });
+  assert.deepEqual([asked.body.spoils, s.lines('serpent').length], [true, 1], 'the first device asking again is told its hoard - one line struck');
 });
 
 test('SERPENT-SET the insignia: the purse counts a serpent\'s embers with a breach\'s, and the sale reads the same sum - an account that has only fought serpents buys with them; never past them (mutants: the gates alone; the purse and the sale apart)', async () => {

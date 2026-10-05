@@ -65,8 +65,8 @@
   {
     "name": "ONEBAG-the-bag-a-piece",
     "file": "src/systems/decorItems.js",
-    "old": "  if (isBagItem(item)) return null;\n  const flat = decorItemFlat(item);",
-    "new": "  const flat = decorItemFlat(item);",
+    "old": "  if (isBagItem(item) || isPackOnly(item)) return null;\n  const flat = decorItemFlat(item);",
+    "new": "  if (isPackOnly(item)) return null;\n  const flat = decorItemFlat(item);",
     "tests": [
       "test/fb1004_onebag.test.js"
     ]

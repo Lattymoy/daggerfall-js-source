@@ -251,7 +251,8 @@ test('AUDIT 28 M10: the weekly report counts the ACCOUNTS at a cap, once each, w
   now = T0 + DAY;
   await svc.claim(a, 702, now); await svc.claim(a, 703, now); await svc.claim(a, 705, now);
   const r = (await svc.call('/v1/marks/report', {}, d.secret)).body;
-  assert.deepEqual([r.capped, r.cappedDays], [{ combat: 1, bank: 0 }, { combat: 2, bank: 0 }]);
+  // PIN MOVED (AUDIT 625 S6): and SILVER-FINDS' two faucets beside them (test/silverfinds_service.test.js)
+  assert.deepEqual([r.capped, r.cappedDays], [{ combat: 1, bank: 0, gather: 0, find: 0 }, { combat: 2, bank: 0, gather: 0, find: 0 }]);
 });
 
 test('AUDIT 28 M11: the service\'s own line ids carry a `:` no client id can - a client cannot take a gate\'s line', async (t) => {

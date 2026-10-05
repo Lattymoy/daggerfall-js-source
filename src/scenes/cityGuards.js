@@ -761,7 +761,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  which arrowFlight.js calls unconditionally (arrowFlight.js:325)
    *  because `dealDamage` is inside its own `dmg > 0` fork - so the
    *  door is PUBLIC (the returned surface below), exactly as the
-   *  encounter pool's is (exteriorFoes.js:3077). */
+   *  encounter pool's is (exteriorFoes.js:3078). */
   function handleAttackFromPlayer(g, playerFeet = null) {
     if (!g?.ai) return;
     // DISC19-F (AUDIT DISC19): A BLOW ON A DEFENDER IS ASSAULT. The
@@ -858,7 +858,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // already taking this pool's own `rand`. One kill in eight grew
       // two items nobody could predict, and the guard's rations ignored
       // the luck DFU rolls them against. Every pool hands both now.
-      rollCorpseKit(g.entity, { rolls: rand, luck: liveStat(playerEntity, 'luck') });   // KIT-ROLL: a plain watchman's kit on its ladder, before the sigils and the chime read the body (a peer's or a monster's kill left it bare above)
+      rollCorpseKit(g.entity, { rolls: rand, luck: liveStat(playerEntity, 'luck') });   // KIT-ROLL: a watchman's kit on the plain ladder, before the sigils and the chime read the body (a peer's kill, or a DEFENDER's death by a monster or a fall, left it bare above - AUDIT 625 L7)
       stampWonWeapons(g.entity.items, 1, { rolls: rand });   // SIGIL1: a body's Magic+ weapons won online may carry a sigil (the watch is never a party's fight)
       raiseEnemyDeath(g.entity, { rolls: rand, luck: liveStat(playerEntity, 'luck') });
       // G4 (HandleAttackFromSource, verbatim): killing the city watch

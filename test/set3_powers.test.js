@@ -150,7 +150,7 @@ test('SET3 the stat tiers grow together: the numbers stand at the SET\'s stage -
   assert.equal(entityStatMod(asc, 'endurance'), 4, 'Ascendant pieces under a Bright Renown stand at Bright: 2 + 4 x 2/4');
   const w = strip(read('src/scenes/world.js'));
   assert.match(w, /setSigilRenown\(level\);[^\n]*\n\s*computeEntityMods\(playerEntity\);/, 'my Renown adopted: the fold at once');
-  assert.match(w, /const setsWere = setsDueling\(\);\s*setSetsDueling\(!!duelMgr\.live\);[^\n]*\n\s*if \(setsDueling\(\) !== setsWere\) computeEntityMods\(playerEntity\);/, 'a duel begun or ended: the fold at once');
+  assert.match(w, /const setsWere = setsDueling\(\);\s*setSetsDueling\(!!duelMgr\.live \|\| arenaPvpLive\(\)\);[^\n]*\n\s*if \(setsDueling\(\) !== setsWere\) computeEntityMods\(playerEntity\);/, 'a duel begun or ended: the fold at once');   // PIN MOVED (AUDIT 625 P2): a bout between players is one
   assert.match(strip(read('src/systems/worldTick.js')), /computeEntityMods\(entity\);/, 'and every magic round');
 });
 

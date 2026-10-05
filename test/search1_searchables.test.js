@@ -147,7 +147,7 @@ test('CAP-SUPPLIES (LOOT-EASE): a full body keeps a Magic-or-better piece first,
   assert.deepEqual(b.map((i) => (isGoldPieces(i) ? 'gold' : i.name)), ['gold', 'blue', 'potion'], 'the Magic piece first, then the dearer supply');
 });
 
-test('KIT-ROLL (LOOT-EASE): a plain foe\'s dropped kit rolls the plain ladder at its death - never at the spawn, never an Elite Dungeon\'s, a titled foe\'s or a boss\'s; once; marked for the drought; off, nothing (mutants: the kit never rolled; the whole ladder; an Elite Dungeon\'s rolled; rolled twice; the mark dropped)', async () => {
+test('KIT-ROLL (LOOT-EASE): a foe\'s dropped kit rolls the plain ladder at its death - never at the spawn; once; marked for the drought; a piece its spawn\'s roll rolled never; off, nothing (mutants: the ladder never read; the drought\'s mark dropped; the plain ladder lost; the carried piece rolled twice). PIN MOVED (AUDIT 625 L1-L3): the kit is what the spawn\'s roll left unmarked - so the carried piece is the producer\'s, marked `untaken` - laddered as a copy, and every foe\'s rolls (Mac: "The plain ladder"); test/audit625_loot.test.js pins the three', async () => {
   const { rollCorpseKit } = await import('../src/systems/foeLootCap.js');
   const { setPref, _resetForTests } = await import('../src/systems/uiPrefs.js');
   const { createWeapon } = await import('../src/combat/enemyEquipment.js');
@@ -155,34 +155,31 @@ test('KIT-ROLL (LOOT-EASE): a plain foe\'s dropped kit rolls the plain ladder at
   _resetForTests(); setPref('lootRarity', true);
   const body = (mark = {}) => {
     const sword = createWeapon(120, 1);   // a Steel Longsword in its hand
-    const loose = createWeapon(118, 0);   // an Iron Broadsword it carries, never worn
+    const loose = { ...createWeapon(118, 0), untaken: true };   // an Iron Broadsword it carries, never worn - as the spawn's roll leaves it, marked
     return { e: { mobileType: 144, level: 8, lootCap: 3, items: [goldStack(4), sword, loose], equip: { slots: [sword] }, ...mark }, sword, loose };
   };
-  const { e, sword, loose } = body();
-  assert.deepEqual(rollCorpseKit(e, { rolls: () => 0 }), [sword], 'the worn piece rolls - a roll of 0 is the best tier its ladder gives');
-  assert.notEqual(rarityOf(sword), 'common');
-  assert.equal(sword.untaken, true, 'marked: its take counts for the drought');
+  const { e, loose } = body();
+  const won = rollCorpseKit(e, { rolls: () => 0 });
+  assert.equal(won.length, 1, 'the worn piece rolls - a roll of 0 is the best tier its ladder gives');
+  assert.equal(e.items[1], won[0], 'its laddered copy in the body');
+  assert.notEqual(rarityOf(won[0]), 'common');
+  assert.equal(won[0].untaken, true, 'marked: its take counts for the drought');
   assert.equal(rarityOf(loose), 'common', 'a carried piece is the spawn door\'s, never this one\'s');
-  const tier = sword.rarity;
+  const tier = won[0].rarity;
   assert.deepEqual(rollCorpseKit(e, { rolls: () => 0 }), [], 'once');
-  assert.equal(sword.rarity, tier);
+  assert.equal(e.items[1].rarity, tier);
   // the PLAIN ladder: a roll of 0.0899 is under its tier-8 Magic (90 per mille) and over its Rare (15.6); 0.09 is white
   const m = body(); rollCorpseKit(m.e, { rolls: () => 0.0899 });
-  assert.equal(m.sword.rarity, 'magic');
+  assert.equal(m.e.items[1].rarity, 'magic');
   const w = body(); rollCorpseKit(w.e, { rolls: () => 0.09 });
-  assert.equal(rarityOf(w.sword), 'common', 'white over the plain Magic threshold - the whole ladder\'s (220) would have made it blue');
-  assert.equal(w.sword.untaken, true, 'a white roll is a roll');
+  assert.equal(rarityOf(w.e.items[1]), 'common', 'white over the plain Magic threshold - the whole ladder\'s (220) would have made it blue');
+  assert.equal(w.e.items[1].untaken, true, 'a white roll is a roll');
   assert.deepEqual(rollCorpseKit(w.e, { rolls: () => 0 }), [], 'and never again - a second door rolls it no better');
-  assert.equal(rarityOf(w.sword), 'common');
-  for (const mark of [{ elite: true }, { eliteFoe: true }, { champion: 'mighty' }, { revenant: { id: 'r' } }, { lootCap: undefined }]) {
-    const t = body(mark);
-    assert.deepEqual(rollCorpseKit(t.e, { rolls: () => 0 }), [], `${JSON.stringify(mark)}: not the plain ladder's`);
-    assert.equal(rarityOf(t.sword), 'common');
-  }
+  assert.equal(rarityOf(w.e.items[1]), 'common');
   setPref('lootRarity', false);
   const off = body();
   assert.deepEqual(rollCorpseKit(off.e, { rolls: () => 0 }), [], 'off: DFU exactly');
-  assert.equal(off.sword.untaken, undefined);
+  assert.equal(off.e.items[1].untaken, undefined);
   _resetForTests();
 });
 

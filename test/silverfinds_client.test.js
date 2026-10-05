@@ -175,6 +175,15 @@ test('SILVER-FINDS the book\'s refusals: silver not this account\'s (a guest, th
   await r.book.find('corpse');
   assert.deepEqual((await r.book.find('pile')).map((f) => f.kind), ['pile'], 'the refused find is not owed');
   assert.equal(r.asks.length, 2);
+  // PIN MOVED (AUDIT 625 S3): the hour's refusal has an arm of its own now (the rest wait owed for the next hour), so
+  // the arm that lets a refused find go is held here by the refusals of the FIND ITSELF - an id the service cannot
+  // read, a kind of none - which the hour's no longer reaches
+  for (const error of ['marks-rid', 'bad-find']) {
+    const x = bookOver([{ ok: false, error }, found(1, 1, 1)]);
+    await x.book.find('corpse');
+    assert.deepEqual((await x.book.find('pile')).map((f) => f.kind), ['pile'], `${error}: the refused find is not owed`);
+    assert.equal(x.asks.length, 2, `${error}: nor asked again`);
+  }
 });
 
 test('SILVER-FINDS a harvest\'s find, as the book says it: in gathering\'s words, its own day kept apart from the loot\'s; none for none (mutants: the words; the days crossed)', () => {
@@ -223,11 +232,12 @@ test('SILVER-FINDS a body\'s door: a body opened with treasure in it rolls its s
   try {
     const player = { items: [], goldPieces: 0 };
     const body = { corpse: true, corpseMarker: { archive: 400, record: 1, pos: [0, 0, 0] }, entity: { items: [{ name: 'Longsword', group: 'Weapons', templateIndex: 121 }] } };
-    openCorpseLoot(body, { playerEntity: player, openWindow: () => {} });
-    openCorpseLoot(body, { playerEntity: player, openWindow: () => {} });
+    // PIN MOVED (AUDIT 625 D6): a door that OPENED says so - `true` (test/audit625_silver.test.js: a refused one rolls none)
+    openCorpseLoot(body, { playerEntity: player, openWindow: () => true });
+    openCorpseLoot(body, { playerEntity: player, openWindow: () => true });
     assert.deepEqual(asked, ['corpse'], 'once a body');
-    openCorpseLoot({ ...body, entity: { items: [] } }, { playerEntity: player, openWindow: () => {} });
-    openCorpseLoot({ ...body, entity: { items: [{ templateIndex: ARROW_TEMPLATE_INDEX, stackCount: 3 }] } }, { playerEntity: player, openWindow: () => {} });
+    openCorpseLoot({ ...body, entity: { items: [] } }, { playerEntity: player, openWindow: () => true });
+    openCorpseLoot({ ...body, entity: { items: [{ templateIndex: ARROW_TEMPLATE_INDEX, stackCount: 3 }] } }, { playerEntity: player, openWindow: () => true });
     const warn = console.warn;
     console.warn = () => {};
     try { openCorpseLoot({ ...body, entity: { items: [{ templateIndex: 121 }] } }, { playerEntity: player }); } finally { console.warn = warn; }
@@ -237,12 +247,14 @@ test('SILVER-FINDS a body\'s door: a body opened with treasure in it rolls its s
 
 test('SILVER-FINDS every host\'s loot door asks (THE FOUR HOSTS): the dungeon\'s take - a body, a treasure pile, opened with something in it - and its search\'s find at its search; the street\'s bodies through the corpse door, a peer\'s at its grant; a headstone\'s find; the streaming host registers the finder online alone, a card where the feed stands and else the line (mutants: a door unasked; a dropped pile asked; the finder offline; the line lost to a card)', () => {
   const dc = src('src/scenes/dungeonContext.js');
-  assert.match(dc, /if \(source\.length && kind === 'corpse'\) silverFindAt\('corpse', foes\[i\]\);\n\s+else if \(source\.length && kind === 'loot'\) silverFindAt\('pile', lootPiles\[i\]\);/);
-  assert.ok(dc.indexOf("silverFindAt('corpse', foes[i])") > dc.indexOf('if (activeOverlay && !activeOverlay.done) return source.length;'), 'a window already standing is no open');
-  assert.ok(dc.indexOf("silverFindAt('corpse', foes[i])") < dc.indexOf('if (!pileKeys && quickLootTake(key, { items: () => source }'), 'before the quick door and the window alike');
+  // PIN MOVED (AUDIT 625 S5 + D6): a body's and a pile's find named by the room's own name for it, before anything
+  // moves, and rolled by the quick door's take and the window's mount each (test/audit625_silver.test.js)
+  assert.match(dc, /const _find = source\.length && \(kind === 'corpse' \|\| kind === 'loot'\) \? \{ kind: kind === 'corpse' \? 'corpse' : 'pile', key: silverFindKey\(key, kind, i\) \} : null;/);
+  assert.ok(dc.indexOf('const _find = source.length') > dc.indexOf('if (activeOverlay && !activeOverlay.done) return source.length;'), 'a window already standing is no open');
+  assert.ok(dc.indexOf('const _find = source.length') < dc.indexOf('if (!pileKeys && quickLootTake(key, { items: () => source }'), 'named before the quick door and the window alike - before the take empties it');
   assert.match(dc, /onClose = \(\) => \{ if \(!_ctxDead && sb\.items\.length\) \{ silverFindAt\('search', find\); api\.takeLoot\(`srch:\$\{i\}`\); \} \};/);
-  assert.match(src('src/scenes/corpseMarker.js'), /openWindow\(corpseLootHooks\(entry\)\);\n  silverFindAt\('corpse', entry\);\n  return items\.length;/);
-  assert.match(src('src/scenes/exteriorFoes.js'), /if \(n > 0\) silverFindAt\('corpse', f\);/);
+  assert.match(src('src/scenes/corpseMarker.js'), /if \(openWindow\(corpseLootHooks\(entry\)\) === true\) silverFindAt\('corpse', entry\);\n  return items\.length;/);
+  assert.match(src('src/scenes/exteriorFoes.js'), /if \(n > 0 && !arrows\) silverFindAt\('corpse', f\);/);
   const w = src('src/scenes/world.js');
   assert.match(w, /if \(!pile\) return;\n\s+silverFindAt\('search', items\);/);
   assert.match(w, /if \(marksBook\) \{\n\s+setSilverFinder\(\(kind\) => \{\n\s+marksBook\.find\(kind\)\.then\(\(finds\) => \{/);

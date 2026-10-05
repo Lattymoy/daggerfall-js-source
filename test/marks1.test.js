@@ -332,7 +332,7 @@ test('MARKS1 the weekly report: a developer\'s alone - struck by faucet, burnt b
   assert.deepEqual([r.mintedTotal, r.burntTotal, r.ratio], [200, 40, 5]);
   assert.deepEqual(r.circulation, { accounts: 160, guilds: 0, escrow: 0, holders: 2 });   // PROF5: the buy orders' escrow beside the balances
   assert.deepEqual(r.days, [{ day: utcDay(T0), minted: 200, burnt: 40 }]);
-  assert.deepEqual(r.capped, { combat: 1, bank: 0 });   // PIN MOVED (SILVER-WAYS): the accounts at the day's combat cap, the gates' and the raids'
+  assert.deepEqual(r.capped, { combat: 1, bank: 0, gather: 0, find: 0 });   // PIN MOVED (SILVER-WAYS): the accounts at the day's combat cap, the gates' and the raids'; PIN MOVED (AUDIT 625 S6): and SILVER-FINDS' two faucets'
   assert.equal(r.to - r.from, 6, 'seven UTC days');
 });
 

@@ -154,7 +154,9 @@ test('MAC-E: both exterior pools take the host’s inventory door, and both host
     // through to exactly the call that was here before.
     // LOOT-STACK: the decline is a PRESS's only (a pile tab asks for that
     // body's window), and the window is handed the pile beside the hooks.
-    assert.match(arm, /inventoryDoorReady\(\) \? \(loot\) => \{\n\s*if \(!pileKeys && quickLootTake\(lootKey, loot, playerEntity, \(l\) => townTalk\.say\(l\), \{ getQuest: [^}]*\}\)\) return;[^\n]*\n\s*const pile = lootPile\([^\n]*\n\s*const w = makeInventoryWindow\(\{ loot: pile \? \{ \.\.\.loot, pile \} : loot \}\);\n\s*if \(w\) townTalk\.showOverlay\(w\);[^\n]*\n\s*\} : null/,   // DISC10-E L3 re-aim: the door answers null for a refused pack, which mounts nothing
+    // PIN MOVED (AUDIT 625 D6): and the door ANSWERS whether it opened - `true` for the quick take, the window's own for
+    // the window (a refused pack's null is no open) - which the corpse door rolls a body's silver on
+    assert.match(arm, /inventoryDoorReady\(\) \? \(loot\) => \{\n\s*if \(!pileKeys && quickLootTake\(lootKey, loot, playerEntity, \(l\) => townTalk\.say\(l\), \{ getQuest: [^}]*\}\)\) return true;[^\n]*\n\s*const pile = lootPile\([^\n]*\n\s*const w = makeInventoryWindow\(\{ loot: pile \? \{ \.\.\.loot, pile \} : loot \}\);\n\s*if \(w\) townTalk\.showOverlay\(w\);[^\n]*\n\s*return !!w;[^\n]*\n\s*\} : null/,   // DISC10-E L3 re-aim: the door answers null for a refused pack, which mounts nothing
       `${f}: ...and the host's OWN inventory factory is the door, behind the same art gate every pack arm takes`);
   }
 });

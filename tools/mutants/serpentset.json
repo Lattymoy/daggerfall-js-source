@@ -203,8 +203,8 @@
   {
     "name": "SERPENT-SET-one-coil-for-every-foe",
     "file": "src/systems/sigilSetPowers.js",
-    "old": "const had = coiledFoe(now) === target ? coilStacks(now) : 0;",
-    "new": "const had = coilStacks(now);",
+    "old": "n: Math.min(COIL_STACKS, coilStacksAt(target, now) + 1)",
+    "new": "n: Math.min(COIL_STACKS, coilStacks(now) + 1)",
     "why": "a blow on another foe carries the coil over",
     "tests": [
       "test/serpentset.test.js"
@@ -213,8 +213,8 @@
   {
     "name": "SERPENT-SET-the-coil-uncapped",
     "file": "src/systems/sigilSetPowers.js",
-    "old": "_s.coil = Math.min(COIL_STACKS, had + 1);",
-    "new": "_s.coil = had + 1;",
+    "old": "{ n: Math.min(COIL_STACKS, coilStacksAt(target, now) + 1),",
+    "new": "{ n: coilStacksAt(target, now) + 1,",
     "why": "no cap on the stacks",
     "tests": [
       "test/serpentset.test.js"
@@ -223,8 +223,8 @@
   {
     "name": "SERPENT-SET-the-window-doubled",
     "file": "src/systems/sigilSetPowers.js",
-    "old": "_s.coilUntil = now + COIL_SECONDS;",
-    "new": "_s.coilUntil = now + 2 * COIL_SECONDS;",
+    "old": "until: now + COIL_SECONDS });",
+    "new": "until: now + 2 * COIL_SECONDS });",
     "why": "the coil held twice as long",
     "tests": [
       "test/serpentset.test.js"
@@ -243,7 +243,7 @@
   {
     "name": "SERPENT-SET-the-death-ignored",
     "file": "src/systems/sigilSetPowers.js",
-    "old": "  if (entity && _s.coilFoe === entity) _s.coilUntil = 0;",
+    "old": "  if (entity) _s.coils.delete(entity);",
     "new": "",
     "why": "a dead foe's coil held on",
     "tests": [
@@ -263,7 +263,7 @@
   {
     "name": "SERPENT-SET-the-blow-at-anyone",
     "file": "src/systems/sigilSetPowers.js",
-    "old": "if (coil?.[1] && coiledFoe(now) === target) pct += coil[1].stack * coilStacks(now);",
+    "old": "if (coil?.[1]) pct += coil[1].stack * coilStacksAt(target, now);",
     "new": "if (coil?.[1]) pct += coil[1].stack * coilStacks(now);",
     "why": "the coil's stacks at every foe",
     "tests": [
@@ -283,8 +283,8 @@
   {
     "name": "SERPENT-SET-shed-on-a-killing-blow",
     "file": "src/systems/sigilSetPowers.js",
-    "old": "  const v = tierOf(entity, 'coilscale', 2);\n  const max = entity?.maxHealth;\n  if (!v || !(max > 0) || !(after > 0)) return;",
-    "new": "  const v = tierOf(entity, 'coilscale', 2);\n  const max = entity?.maxHealth;\n  if (!v || !(max > 0)) return;",
+    "old": "  const v = tierOf(entity, 'coilscale', 2);\n  const max = entity?.maxHealth;\n  if (!v || !(max > 0) || !(after > 0) || saved) return;",
+    "new": "  const v = tierOf(entity, 'coilscale', 2);\n  const max = entity?.maxHealth;\n  if (!v || !(max > 0) || saved) return;",
     "why": "a killing blow spends the shed",
     "tests": [
       "test/serpentset.test.js"
@@ -394,7 +394,7 @@
   {
     "name": "SERPENT-SET-embers-unwritten",
     "file": "server-account/src/serpents.js",
-    "old": ".bind(c.d, player.id, c.b, c.h, character, xp, nonce, nowS, SERPENT_EMBERS),",
+    "old": ".bind(c.d, player.id, c.b, c.h, character, xp, nonce, nowS, embers),",
     "new": ".bind(c.d, player.id, c.b, c.h, character, xp, nonce, nowS, 0),",
     "why": "a serpent's row with no embers",
     "tests": [

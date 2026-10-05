@@ -146,7 +146,7 @@ test('AUDIT REALM F1: a Sigil Stone never changes hands through the realm - the 
   assert.deepEqual([await record(A.io, A.char.id), await record(B.io, B.char.id)], before, 'both records as they were: three stones with A, none with B');
 });
 
-test('AUDIT REALM F1: BOUND_TEMPLATES is every row the game registers with `bound` - the classic table, each registrar\'s rows and RRI\'s patches - and the registrars are the eight it reads (Come Sail Away\'s the sixth, at the merge with main; Foraging\'s and the professions\' the seventh and eighth, at MERGE 2)', () => {
+test('AUDIT REALM F1: BOUND_TEMPLATES is every row the game registers with `bound` - the classic table, each registrar\'s rows and RRI\'s patches - and the registrars are the twelve it reads (Come Sail Away\'s the sixth, at the merge with main; Foraging\'s and the professions\' the seventh and eighth, at MERGE 2; the carpenter\'s stores the ninth, the rest supplies the tenth, the keepsake the eleventh, the wallet the twelfth)', () => {
   const rows = [
     ...ITEM_TEMPLATES.map((t, i) => ({ ...t, index: t.index ?? i })),
     ...SURVIVAL_TEMPLATES, ...DEEP_WATERS_FISH_TEMPLATES, ...SIGIL_STONE_TEMPLATES, ...WELKYND_SHARD_TEMPLATES, ...PORTAL_STONE_TEMPLATES, ...THUNDERLOCK_TEMPLATES, ...CSA_ITEM_TEMPLATES, ...RRI_TEMPLATES, ...RRI_TEMPLATE_PATCHES,

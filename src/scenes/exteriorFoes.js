@@ -67,7 +67,7 @@ const NO_PUPPET_BLOW = Object.freeze({ hold: false, staggered: false });
 import { CORPSE_ACTIVATION_DISTANCE, liveFoeTargets, liveFoeFor } from '../player/activate.js';   // WORLD-HOVER H2: the LIVE bodies, in the shape the hover's one seam takes
 import { WEAPON_REACH } from '../combat/playerWeapon.js';   // AUDIT WATCH1 B2: a peer's melee blow on my watch lands from the player's own reach, no farther   // AUDIT WORLD6b-iii(c) A1/C7: the owner reads the taker's reach
 import { createWeapon, bowDamageArrow } from '../combat/enemyEquipment.js';   // MAC-N1: the recovered shaft is CreateWeapon's arrow, value and all   // AUDIT WORLD6b-ii B2: a puppet's weapon is its owner's word, rebuilt from the descriptor   // AUDIT WORLD6b B3/C2: a cell's record projected and its puppets capped, the wire's law
-import { mintCorpseMarker, playBodyFall, playRareDrop, corpseLootTargets, corpseEntryFor, corpseContents, takeCorpseLoot, openCorpseLoot, pileBody, sayEnemyDied, raiseEnemyDeath } from './corpseMarker.js';
+import { mintCorpseMarker, playBodyFall, playRareDrop, corpseLootTargets, corpseEntryFor, corpseContents, takeCorpseLoot, openCorpseLoot, pileBody, sayEnemyDied, raiseEnemyDeath, arrowsOnly } from './corpseMarker.js';
 import { silverFindAt } from '../systems/silverFinds.js';   // SILVER-FINDS: a peer's body's pile, handed over
 import { rollCorpseKit } from '../systems/foeLootCap.js';   // KIT-ROLL: a plain foe's kit, laddered at its death by every body door
 import { floorLanding } from '../player/enterExit.js';   // REVENANT-FATE (the 2026-10-02 audit): a flyer kneels, and its pile lies, on the ground below
@@ -2763,9 +2763,10 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       }
       if (!asked) return false;
       f._takeAsked = null;
+      const arrows = arrowsOnly(grant);   // AUDIT 625 S7: asked before the take empties it - a body of arrows alone, as my own body's door reads one
       const n = takeCorpseLoot({ entity: { items: grant } }, playerEntity, say ?? (() => {}));   // the one take law: arrows whole, gold to the counter, the count said
       if (n > 0) playRareDrop(audio, f.corpseMarker?.pos ?? f.ai?.feet ?? null, grant);   // B10: the rare-drop chime rings over a peer's body too
-      if (n > 0) silverFindAt('corpse', f);   // SILVER-FINDS: a peer's body, its pile handed over - its silver rolled once, as my own body's at its door
+      if (n > 0 && !arrows) silverFindAt('corpse', f);   // SILVER-FINDS: a peer's body, its pile handed over - its silver rolled once, as my own body's at its door (AUDIT 625 S7: and, as at its door, none for arrows alone)
       if (f._pup) f._pup.o = 0;
       if (n === 0) { f.corpseDisabled = true; f._closedN = Number.isInteger(data.n) ? data.n : (_owners.get(from)?.n ?? -1); }   // A7: closed as of the owner's frame counter
       return true;

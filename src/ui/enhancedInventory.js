@@ -3307,21 +3307,24 @@ function openInfo(item) {
 
 /**
  * WALLET1: THE WALLET'S SHEET - what it holds, in the classic box's own words (systems/walletItem.js walletLines: the
- * gold, the silver, the letters and what they are worth, the embers, the shards), then each piece it holds as a row that
- * opens that piece's own card, whose acts are the pack's (its lock, its stow, the bound law's refusals). The account's
- * silver is asked afresh of the host once a mount, as the sheet first shows, and the pack redrawn with the answer
- * WHATEVER IS PICKED as it lands: a model kept back while a piece was picked was the sheet's for the rest of the mount
- * (the way back draws, it does not refresh), its silver "kept online" though the answer had come. A repaint landing
- * after a press is the pack's own contract (refreshFigure's, the fpArm's), and after the unmount none (JAN2).
+ * gold, the silver, the letters and what they are worth, the embers, the shards), then each piece it holds as the
+ * PACK'S OWN ROW (AUDIT 625 W3: `itemRow`, the page's - its picture, its count, its hotbar chip, and every gesture a page
+ * gives a piece: the click that opens its card, whose acts are the pack's (its lock, its stow, the bound law's
+ * refusals); Shift into the store beside it; the double click that wears a crystal; the drag; the right click's menu;
+ * the pad's quick act. A button that only opened the card took all but the first from the letters, the embers and the
+ * shards the wallet gathered off their pages). The account's silver is asked afresh of the host once a mount, as the
+ * sheet first shows, and the pack redrawn with the answer WHATEVER IS PICKED as it lands: a model kept back while a
+ * piece was picked was the sheet's for the rest of the mount (the way back draws, it does not refresh), its silver
+ * "kept online" though the answer had come. A repaint landing after a press is the pack's own contract
+ * (refreshFigure's, the fpArm's), and after the unmount none (JAN2).
  */
 function walletSheet(w) {
   const box = el('div', 'walletsheet');
   for (const text of walletLines(w).slice(1)) box.append(el('p', 'meta', text));
-  for (const it of w.held) {
-    const line = itemLine(it, deps.entity);
-    const b = el('button', 'act walletpiece', line.name + (line.stack ? ` ×${line.stack}` : ''));
-    b.onclick = () => { picked = it; side = 'local'; notice = null; render(); };
-    box.append(b);
+  if (w.held.length) {
+    const rows = el('div', 'walletpieces');
+    for (const it of w.held) rows.append(itemRow(it));
+    box.append(rows);
   }
   if (!walletAsked) {
     walletAsked = true;

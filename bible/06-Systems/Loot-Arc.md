@@ -902,7 +902,10 @@ all: `REST_ITEMS_ONLINE` was still the release-ahead switch's off.
   (`dungeonContext.js`), the street's kill (`exteriorFoes.js`), the watch's (`cityGuards.js`); an execution is a
   revenant's alone, titled, and needs none. The spawn never calls it. THE FOUR HOSTS, all through those three pools:
   `scenes/world.js` and `scenes/exterior.js` stand the street's and the watch's; `scenes/worldModes.js` stands both
-  indoors and builds `dungeonContext.js` for its dungeons, as `scenes/dungeon.js` does.
+  indoors and builds `dungeonContext.js` for its dungeons, as `scenes/dungeon.js` does. AUDIT 625 (section 21) widened
+  and mended it: EVERY foe's kit on the plain ladder (Mac: "The plain ladder"), the kit known by what the spawn's roll
+  left unmarked rather than by the foe's table (so a foe restored from a save rolls it), and a copy laddered in the
+  body, never the piece the foe's own hand holds.
 - CAP-SUPPLIES (`foeLootCap.js` `capLootList`, `isLootSupply`, `registerLootSupply`): the cap keeps gold, a quest's
   items, then a Magic-or-better piece by its tier, then a SUPPLY (a potion - DFU's IsPotion; the seven rest supplies,
   registered by `restItems.js`), then the rest - the dearer first within each. The three is untouched.
@@ -957,8 +960,9 @@ opens - the sigils' own five (`sigil.js` `renownSigilStage`: Renown 1, 10, 20, 3
 The live game before LOOT-EASE: 50% kept, 4% blue, 6 / 12 healing, no Restore Power, no rest supply online. Every
 stage is above it, and Renown 40 is under the loot before PLAIN-LOOT (section 18).
 
-**What stays whole at every stage.** What LOOT-EASE fixed rather than tuned: a plain foe's worn kit rolls the ladder at
-its death (KIT-ROLL), the cap keeps a supply before plain gear (CAP-SUPPLIES), the rest supplies drop online at all.
+**What stays whole at every stage.** What LOOT-EASE fixed rather than tuned: a foe's worn kit rolls the plain ladder at
+its death (KIT-ROLL - every foe's since AUDIT 625, section 21), the cap keeps a supply before plain gear
+(CAP-SUPPLIES), the rest supplies drop online at all.
 
 **Whose Renown.** The roller's: the page that rolls the loot - a dungeon's host for its foes, a street cell's owner
 for its foes, and for a treasure pile the page that builds the dungeon (each player's own, `dungeonContext.js`
@@ -985,3 +989,31 @@ Renown 1 / 20 / 40, Restore Power on 2.2% / 4.3% / 8.2%, a rest supply on 2.4% /
 Pinned: `test/renownloot.test.js` (6 - the stage and its door, the table, the keep through the real spawn, the kit at
 death, the supplies through the real hooks with their draws counted, the hosts). Moved: `test/rf2_spawnloot.test.js`
 (the chain's text - `ease` read once). `tools/mutants/renownloot.json` (26, all dead).
+
+## 21. AUDIT 625 - the loot lens (2026-10-05)
+
+Mac: *"Lets do a comprehensive audit on this"*, of PR #625. The whole record is `01-Overview/Audit-625.md`; what it
+moved here:
+
+- **L1, a foe restored from a save rolled no kit.** KIT-ROLL found the kit by the foe's equip table, object by object,
+  and every restore lays the save's COPIES over a foe's list and leaves its table alone (the dungeon's in-place patch,
+  the street's and the watch's re-spawn and overlay) - so after any load the "only steel" was back. The kit is now
+  every rarity-eligible piece the spawn's roll left UNMARKED (it marks what it rolls `untaken`, a saved field that
+  rides every copy).
+- **L2, the live piece laddered.** The droppable cut shares its objects with the foe's table and hand, so a foe brought
+  back to life in place (the save's rewind, the stream's un-death) fought with the piece its death had laddered -
+  LR4's rule broken. The body holds a marked COPY; the table's piece is what it was minted.
+- **L3, the order flipped (Mac: "The plain ladder").** A plain foe's kit rolled and a champion's, an Elite Dungeon
+  foe's and a boss's (every humanoid from level 18) stayed Common, so they left less colour than a plain foe. Every
+  foe's kit rolls the PLAIN ladder now - never a boss's multiplied one, never an Elite Dungeon's quality; their better
+  ladders stay their carried loot's. A revenant's never: its list is a player's own pieces.
+- **L4** an Ember Jar's fire crosses the camp wire as a jar (`j: 1`; REST-LOOT opened its use online and a peer saw a
+  campfire); **L5** a joiner's copy of a body and an arrival's are capped as the host's death caps its own, after their
+  kit, food and sigils; **L6** KIT-ROLL's luck, finders, last pass and family pinned (four mutants had survived every
+  suite); **L7** the cap's potion is DFU's IsPotion through its one export (`useItem.js` `isPotion`), and the watch's
+  comment says why its kit is rolled where it is.
+
+Pinned: `test/audit625_loot.test.js` (6); moved: `search1_searchables` (KIT-ROLL's scope), `renownloot` (the body's
+copy; the keep's threshold itself, not a band), `sigil1` and `survtiers3` (the copies' cap), and the mounted dungeon
+harnesses' stubs (`audit68_dungeonctx`, `loot7check`, `corpsegold`, `seatheal`). `tools/mutants/audit625.json` (the L
+records); `lootease.json`'s KIT-ROLL records re-aimed by content (the reversed law's record says so).

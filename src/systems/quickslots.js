@@ -43,7 +43,7 @@
 // stop - so the swap takes the same snapshot-and-bill the window
 // takes, around the one equip it makes.
 import { isPotion, isDrug, isLightSource, useItem, USE_PENDING } from './useItem.js';   // ...and the ladder's own stand-ins for a host that handed no hook
-import { walletContents, walletLines } from './walletItem.js';   // WALLET1: the wallet pressed says what it holds
+import { walletContents, walletLines, refreshWalletSilver } from './walletItem.js';   // WALLET1: the wallet pressed says what it holds
 import { equipItem, equipTableOf, EQUIP_SLOTS, isBrokenItem, isForbiddenEquip, isEquipped, unequipSlot, oneEquipAct,
   getItemHands, ITEM_HANDS, getEquipSlot,   // UI2: the equip table's own answer - which pieces a slot of the body takes
   equipDelaySnapshot, billEquipDelayOnClose, ITEM_BROKEN_TEXT_ID, FORBIDDEN_EQUIPMENT_TEXT_ID } from './equip.js';
@@ -370,9 +370,12 @@ function useQuickslotNow(slot, { entity = null, items = null, hooks = {}, say = 
     if (hooks.openPortal(res.item ?? r.item, pack) === false) return { kind: 'refused', name: r.name, result: res };
     return { kind: 'used', name: r.name, result: res };
   }
-  // WALLET1: the wallet says what it holds on the HUD's line - a slot has no window to open its sheet in
+  // WALLET1: the wallet says what it holds on the HUD's line - a slot has no window to open its sheet in; AUDIT 625 W5:
+  // and asks the account's silver afresh for the next press, as the classic box asks it for the next look (a line
+  // cannot be redrawn) - it never asked, so a book no other door had asked left every press without a figure
   if (res?.kind === 'wallet') {
     say?.(walletLines(walletContents(pack, entity)).slice(1).join(' · '));
+    refreshWalletSilver();
     return { kind: 'used', name: r.name, result: res };
   }
   if ((res?.kind === 'book' || res?.kind === 'spellbook' || res?.kind === 'pitchCamp' || res?.kind === 'placeFire' || res?.kind === 'openPortal') && USE_PENDING[res.kind]) {

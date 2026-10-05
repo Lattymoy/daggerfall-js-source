@@ -147,7 +147,8 @@ test('WALLET1 what it holds: DFU\'s letters of credit, the Deadlands Embers and 
   const worn = Object.assign(sigilStone(), { stackCount: 3, equipSlot: 6 });
   e.items.push(worn);
   const c = walletContents(e.items, e, { silver: 35 });
-  assert.deepEqual({ ...c, held: undefined }, { gold: 1240, silver: 35, letters: { count: 2, gold: 12000 }, embers: 12, shards: 40, held: undefined });
+  // PIN MOVED (AUDIT 625 W5): and why no figure is counted - none to say for a counted one
+  assert.deepEqual({ ...c, held: undefined }, { gold: 1240, silver: 35, silverWhy: null, letters: { count: 2, gold: 12000 }, embers: 12, shards: 40, held: undefined });
   assert.deepEqual(c.held, [letters[0], embers, shards, letters[1]], 'in the pack\'s own order, the worn one aside');
   assert.deepEqual(walletLines(c), ['Your wallet holds:', 'Gold: 1,240', 'Silver: 35', 'Letters of credit: 2, worth 12,000 gold', 'Deadlands Embers: 12', 'Welkynd Shards: 40']);
   assert.deepEqual(walletLines(walletContents([], { goldPieces: 0 }, { silver: null })).slice(1),
@@ -241,7 +242,8 @@ test('WALLET1 the sheet\'s silver: asked afresh of the host once a mount, as the
         return { host, view, press, sheet: () => host.querySelector('.walletsheet') };
       };
       const first = open();
-      assert.match(text(first.sheet()), /Silver: kept by your account online/, 'not known yet');
+      // PIN MOVED (AUDIT 625 W5): online and not known yet, the page is ASKING - the offline words were the wrong ones
+      assert.match(text(first.sheet()), /Silver: asking your account/, 'not known yet');
       assert.equal(asked, 1, 'asked as the sheet first shows');
       answer(); await flush();
       assert.match(text(first.sheet()), /Silver: 35/, 'redrawn with the answer');
@@ -294,6 +296,7 @@ test('WALLET1 the Use: the wallet\'s use is its own kind - the classic window sh
 
 test('WALLET1 the hosts: the streaming host tells the wallet the account\'s silver (the marks book\'s balance, refreshed as the sheet opens) - online alone; THE FOUR HOSTS read no door of their own (mutants: the reader unregistered; registered offline)', () => {
   const w = src('src/scenes/world.js');
-  assert.match(w, /if \(marksBook\) setWalletSilver\(\(\) => \(marksBook\.state\.open === false \? null : marksBook\.state\.balance\), \(\) => marksBook\.refresh\(\)\);/);
+  // PIN MOVED (AUDIT 625 W5): an account that holds none answers false (the wallet says none), never null (the wait)
+  assert.match(w, /if \(marksBook\) setWalletSilver\(\(\) => \(marksBook\.state\.open === false \? false : marksBook\.state\.balance\), \(\) => marksBook\.refresh\(\)\);/);
   for (const f of ['src/scenes/exterior.js', 'src/scenes/worldModes.js', 'src/scenes/dungeonContext.js']) assert.doesNotMatch(src(f), /setWalletSilver/, f);
 });

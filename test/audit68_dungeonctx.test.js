@@ -491,7 +491,7 @@ test('AUDIT SET P-M3: a joiner\'s killing blow, applied at the host, is named on
     const foes = [foeRec(), foeRec()];
     const state = {
       foes, _layoutFoes: 2, _retyping: new Set(), _authority: false, validFoeRecord, opts: { selfId: () => self },
-      renownFoeDied: () => {}, reportPlayerKill: (e, info) => kills.push([self, e, info]), rollCorpseKit: () => [], addCorpseFood: () => {}, stampWonWeapons: () => {},
+      renownFoeDied: () => {}, reportPlayerKill: (e, info) => kills.push([self, e, info]), rollCorpseKit: () => [], addCorpseFood: () => {}, stampWonWeapons: () => {}, capFoeLoot: () => [],
       sayEnemyDied, hudText: { add: () => {} },   // LOOT7-CHECK DUNGEON-DIED: the striker's notice (test/loot7check.test.js reads its line)
       liveStat: () => 50, playerEntity: { isPlayer: true, items: [] }, setFoeDead: (f, d) => { f.dead = d; }, retypeFoe: async () => false,
     };

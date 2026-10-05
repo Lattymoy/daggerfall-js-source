@@ -35,8 +35,7 @@ import {
   corpseSource, rarityRank, lootRarityOn, rarityEligible, rollRarity, applyRarity, lastPass, legendaryFindMult,
 } from './lootRarity.js';
 import { isGoldPieces } from './inventory.js';
-import { POTION_TEMPLATE_INDEX } from './loot.js';   // CAP-SUPPLIES: a potion IS the glass bottle (DFU's IsPotion)
-import { equipTableOf } from './equip.js';   // KIT-ROLL: what the foe wore
+import { isPotion } from './useItem.js';   // CAP-SUPPLIES: a potion IS the glass bottle - DFU's IsPotion, its one export (AUDIT 625 L7)
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // KIT-ROLL: the row every host hands its spawn
 import { renownLootQuarters, lootEased } from './renownLoot.js';   // RENOWN-LOOT: the plain ladder by the roller's Renown
 
@@ -102,7 +101,7 @@ const _supplies = new Map();
 export function registerLootSupply(name, fn) { if (typeof fn === 'function') _supplies.set(name, fn); else _supplies.delete(name); }
 export function isLootSupply(item) {
   if (!item) return false;
-  if (item.group === 'UselessItems1' && item.templateIndex === POTION_TEMPLATE_INDEX) return true;
+  if (isPotion(item)) return true;
   for (const fn of _supplies.values()) { try { if (fn(item)) return true; } catch { /* a predicate's throw is not the cap's */ } }
   return false;
 }
@@ -150,30 +149,43 @@ export function capFoeLoot(entity) {
 /**
  * KIT-ROLL (LOOT-EASE, 2026-10-05, Mac: "Players are reporting only recieving steel items also"). LR4 rolls a foe's
  * ladder over what it CARRIES and never what it WEARS - a piece the ladder made would be fought with
- * (lootRarity.js rollCorpseLoot) - and a plain humanoid's droppable kit is 85-98% of the gear its body leaves: measured
+ * (lootRarity.js rollCorpseLoot) - and a humanoid's droppable kit is 85-98% of the gear its body leaves: measured
  * through the spawn chain, that gear was Common 99 times in 100 at every level, the Iron and Steel blades and the
- * leather, chain and plate the kit is minted in, and nothing else. AT ITS DEATH NOBODY WEARS IT. A plain foe on the
- * plain ladder - its spawn stamped `lootCap`; never an Elite Dungeon's foe (its ladder is the whole one), never a titled
- * foe, never a boss (LR4's own case: a Daedra Lord's hand) - rolls each piece of its kit its body still carries on the
- * ladder its carried loot rolled at the spawn: the same source (the row every host hands spawnEnemyLoot, ENEMY_BASICS by
- * its mobile type), the player's luck, the finders, and the door's last pass. Once: a piece rolled here is `untaken`
- * (LOOT8's mark, so its take counts for the drought as any source door's piece does) and a second call passes it by.
- * Every body door calls it BEFORE anything reads the body's tiers - the chime (LR3), the sigil (SIGIL1), the cap.
- * Off, or no plain foe, nothing. Answers the pieces it laddered.
+ * leather, chain and plate the kit is minted in, and nothing else. AT ITS DEATH NOBODY WEARS IT. Each piece of its kit
+ * its body still carries rolls, once, on the PLAIN ladder (at the roller's Renown, RENOWN-LOOT) at the foe's own tier:
+ * the source its carried loot rolled at the spawn (the row every host hands spawnEnemyLoot, ENEMY_BASICS by its mobile
+ * type), the player's luck, the finders, the door's last pass. Every body door calls it BEFORE anything reads the
+ * body's tiers - the chime (LR3), the sigil (SIGIL1), the cap. Off, nothing. Answers the pieces it laddered.
+ *
+ * AUDIT 625 (2026-10-05):
+ *  - L1, THE KIT IS WHAT THE SPAWN'S ROLL LEFT UNMARKED. It was found by the foe's table (`equipTableOf`), object by
+ *    object - and every restore lays the save's COPIES over a foe's list and leaves its table alone (the dungeon's
+ *    in-place patch, the street's and the watch's re-spawn and overlay), so after any load no foe standing rolled its
+ *    kit: the "only steel" back. The spawn's roll marks every piece it rolls `untaken` (LOOT8's mark, a saved field)
+ *    and passes the worn kit by, so a rarity-eligible piece of a body WITHOUT the mark is its kit - and the mark rides
+ *    every copy.
+ *  - L2, A COPY IS LADDERED, never the live piece. The droppable cut shares its objects with the foe's table and its
+ *    hand (`entity.weapon`), and a foe brought back to life in place (the save's rewind, the stream's un-death) fought
+ *    on with the piece its death had laddered - LR4's own rule broken. The body now holds a marked copy; the table's
+ *    piece is what it was minted.
+ *  - L3, EVERY FOE (Mac: "The plain ladder"). It was a plain foe's alone, and that flipped the order it was meant to
+ *    keep: a champion's, an Elite Dungeon foe's and a boss's kit stayed Common - every humanoid's from level 18, when a
+ *    class foe stands a boss (lootRarity.js BOSS_LEVEL) - so they left less colour than a plain foe of their kind. Every
+ *    foe's kit rolls the plain ladder now, never a boss's multiplied one (`boss: false`) or an Elite Dungeon's quality;
+ *    their better ladders stay their carried loot's. A revenant never: its list holds a player's own pieces.
  */
 export function rollCorpseKit(entity, { rolls = Math.random, luck = 50 } = {}) {
-  if (!lootRarityOn() || !entity || !Array.isArray(entity.items) || !Number.isInteger(entity.lootCap) || entity.elite || titledFoe(entity)) return [];
-  const worn = new Set(entity.equip ? equipTableOf(entity).filter(Boolean) : []);
-  if (!worn.size) return [];
-  const source = { ...corpseSource(ENEMY_BASICS[entity.mobileType] ?? null, entity.level, entity.mobileType), weights: plainFoeRarityWeights() };   // RENOWN-LOOT: the death's roller's Renown
+  if (!lootRarityOn() || !entity || !Array.isArray(entity.items) || entity.revenant) return [];
+  const source = { ...corpseSource(ENEMY_BASICS[entity.mobileType] ?? null, entity.level, entity.mobileType), boss: false, weights: plainFoeRarityWeights() };   // RENOWN-LOOT: the death's roller's Renown; AUDIT 625 L3: the plain ladder for every foe
   const find = legendaryFindMult();
   const minted = [];
-  for (const it of entity.items) {
-    if (!worn.has(it) || it.untaken === true || !rarityEligible(it)) continue;
-    it.untaken = true;
+  entity.items.forEach((it, i) => {
+    if (!it || it.untaken === true || !rarityEligible(it)) return;   // AUDIT 625 L1: no mark - the kit the spawn's roll passed by
+    const piece = { ...it, untaken: true };   // AUDIT 625 L2: a copy in the body; the table's piece stays as it was minted
+    entity.items[i] = piece;
     const tier = rollRarity({ ...source, luck, find }, rolls);
-    if (tier !== 'common') { applyRarity(it, tier, rolls, null, { family: source.family ?? null }); minted.push(it); }
-  }
+    if (tier !== 'common') { applyRarity(piece, tier, rolls, null, { family: source.family ?? null }); minted.push(piece); }
+  });
   lastPass(minted, rolls);
   return minted;
 }

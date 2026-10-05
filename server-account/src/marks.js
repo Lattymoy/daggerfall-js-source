@@ -57,6 +57,7 @@ import {
 import { dice } from './unitRoll.js';   // SILVER-FINDS: a loot find's amount is the service's dice
 import { guildMay } from '../../src/net/guildLaw.js';
 import { medianOf, MARKET_REPORT_MEDIANS } from '../../src/net/marketLaw.js';   // PROF5: the report's medians
+import { WITNESS } from '../../src/net/nodeLaw.js';   // AUDIT 625 S1: the finds open at the witnesses' own age
 
 /** Whether Marks are open to this account: the switch, and at `dev` the developers alone. */
 export function marksOpenFor(player, env) {
@@ -103,6 +104,11 @@ function whoAsks(player, rid, { needRid = true } = {}) {
 }
 /** The switch - asked AFTER the line an act's request may already have made (AUDIT 28 M2). */
 const shut = (player, env) => (marksOpenFor(player, env) ? null : { error: 'marks-closed' });
+/** AUDIT 625 S1 (Mac: "A week old, like witnesses"): SILVER-FINDS' two faucets open to an account a WEEK registered -
+ *  the witnesses' own age (nodeLaw.js WITNESS.ageS: a pixel's, a seat's, a market's witness). They are bounded, not
+ *  witnessed, so every account added is another day's cap: a week's wait is what an alt costs. Asked after the line, as
+ *  the switch is - a find made is answered whatever the clock says now. */
+const findsOpenFor = (player, nowS) => Number.isSafeInteger(player?.registered_at) && player.registered_at <= nowS - WITNESS.ageS;
 /** Runs one deciding INSERT; a UNIQUE clash (the same request, racing itself) reads as "made no line". */
 async function decide(stmt) {
   try { return Number((await stmt.run())?.meta?.changes ?? 0) > 0; } catch (e) {
@@ -290,7 +296,7 @@ function findStrikeStatement({ db, nowS }, player, kind, rid, amount, guard = '1
  * the dice found none.
  */
 export function gatherStrikeStatement(ctx, player, env, { rid, nonce, amount }) {
-  if (!strikesFor(player, env) || !(amount > 0) || typeof rid !== 'string' || typeof nonce !== 'string') return null;
+  if (!strikesFor(player, env) || !findsOpenFor(player, ctx.nowS) || !(amount > 0) || typeof rid !== 'string' || typeof nonce !== 'string') return null;   // AUDIT 625 S1: a week registered
   return findStrikeStatement(ctx, player, 'gather', gatherStrikeRid(rid), amount,
     'EXISTS (SELECT 1 FROM node_harvests WHERE player = ?1 AND rid = ?8 AND n = ?9)', [rid, nonce]);
 }
@@ -314,7 +320,8 @@ export async function findLineAnswer({ db, nowS }, player, env, lineRid) {
  * the day - MARKS_FAUCETS.find.perDay an account a UTC day, the day's last find what it has left - and its hour (the
  * Marks acts' own rate). A request asked twice is one line (`repeat`), answered before the switch. Answers
  * `{ ok, struck, balance, today: { found, max } }`, `struck` 0 with `why` ('cap' - the day's met; 'full' - the purse
- * at its most), or `{ error }`: marks-need-account, marks-rid, marks-closed, bad-find, marks-rate.
+ * at its most), or `{ error }`: marks-need-account, marks-rid, marks-closed, bad-find, marks-young (AUDIT 625 S1: an
+ * account not yet a week registered), marks-rate.
  */
 export async function findMarks(ctx, player, env, { kind, rid } = {}) {
   const { db, nowS, rand } = ctx;
@@ -332,6 +339,7 @@ export async function findMarks(ctx, player, env, { kind, rid } = {}) {
   const closed = shut(player, env);
   if (closed) return closed;
   if (!FIND_KINDS.includes(kind)) return { error: 'bad-find' };
+  if (!findsOpenFor(player, nowS)) return { error: 'marks-young' };   // AUDIT 625 S1: a week registered, before the hour is spent
   if (await overRate(ctx, `marks:${player.id}`, MARKS_OPS_MAX, MARKS_OPS_WINDOW_S)) return { error: 'marks-rate' };
   await decide(findStrikeStatement(ctx, player, 'find', rid, lootFindOf(dice(rand))));
   return answer();
@@ -511,12 +519,19 @@ export async function marksReport({ db, nowS }, player, env) {
     WHERE dst_kind = 'account' AND kind IN (${COMBAT_KINDS_SQL}) AND day >= ? GROUP BY dst_id, day HAVING SUM(amount) >= ?)`).bind(from, MARKS_COMBAT.perDay).first();
   const bankCapped = await db.prepare(`SELECT COUNT(DISTINCT src_id) AS n, COUNT(*) AS d FROM (SELECT src_id FROM marks_ledger WHERE kind = 'exchange' AND day >= ?
     GROUP BY src_id, day HAVING SUM(amount) >= ?)`).bind(from, MARKS_BANK.perDay).first();
+  // AUDIT 625 S6: and SILVER-FINDS' two faucets - bounded, not witnessed, the day their one bound - so the accounts at
+  // their caps are the signal a scripted client leaves
+  const faucetCapped = (kind) => db.prepare(`SELECT COUNT(DISTINCT dst_id) AS n, COUNT(*) AS d FROM (SELECT dst_id FROM marks_ledger
+    WHERE dst_kind = 'account' AND kind = ?1 AND day >= ?2 GROUP BY dst_id, day HAVING SUM(amount) >= ?3)`).bind(kind, from, MARKS_FAUCETS[kind].perDay).first();
+  const gatherCapped = await faucetCapped('gather');
+  const findCapped = await faucetCapped('find');
   const m = sum(minted), b = sum(burnt);
   return {
     from, to: today, minted, burnt, moved, mintedTotal: m, burntTotal: b, ratio: b > 0 ? Math.round((m / b) * 100) / 100 : null,
     circulation: { accounts: Number(acc?.s ?? 0), guilds: Number(gld?.s ?? 0), escrow: Number(esc?.s ?? 0), holders: Number(acc?.n ?? 0) },
-    days, capped: { combat: Number(combatCapped?.n ?? 0), bank: Number(bankCapped?.n ?? 0) },
-    cappedDays: { combat: Number(combatCapped?.d ?? 0), bank: Number(bankCapped?.d ?? 0) },
+    days,
+    capped: { combat: Number(combatCapped?.n ?? 0), bank: Number(bankCapped?.n ?? 0), gather: Number(gatherCapped?.n ?? 0), find: Number(findCapped?.n ?? 0) },
+    cappedDays: { combat: Number(combatCapped?.d ?? 0), bank: Number(bankCapped?.d ?? 0), gather: Number(gatherCapped?.d ?? 0), find: Number(findCapped?.d ?? 0) },
     medians,
   };
 }

@@ -298,10 +298,11 @@ const GUILD_STATUS = Object.freeze({
   // REALM P2.2: a realm character's record moves with the act - where it stands, and whether it can pay
   'realm-needed': 400, 'realm-gold': 409, lease: 409, seq: 409, 'no-realm-character': 404, 'no-data': 404, 'no-storage': 503,
 });
-/** MARKS1: each Marks refusal's status - not this account's (a guest, the switch, a rank, a developer's) 403, no
- *  guild 404, short or capped 409, the hour's acts spent 429, a bad shape 400 (the default). */
+/** MARKS1: each Marks refusal's status - not this account's (a guest, the switch, a rank, a developer's; AUDIT 625 S1:
+ *  the finds of an account not yet a week registered) 403, no guild 404, short or capped 409, the hour's acts spent
+ *  429, a bad shape 400 (the default). */
 const MARKS_STATUS = Object.freeze({
-  'marks-need-account': 403, 'marks-closed': 403, 'not-developer': 403, 'guild-rank': 403, 'guilds-need-account': 403,
+  'marks-need-account': 403, 'marks-closed': 403, 'marks-young': 403, 'not-developer': 403, 'guild-rank': 403, 'guilds-need-account': 403,
   'no-guild': 404,
   'marks-short': 409, 'marks-bank-cap': 409, 'marks-full': 409, 'guild-marks-short': 409, 'guild-marks-full': 409,
   'marks-rate': 429,
@@ -892,7 +893,7 @@ const service = {
         // hoard. A level that ROSE comes back with a signed order, as a raid's does.
         // SERPENT-SET: and its silver, a combat strike in the row's own batch (marks.js serpentStrikeStatement - 40, a ship
         // that stood half, under the day's combat cap with the gates and the raids), answered as `marks` where it recorded
-        const r = await claimSerpent(ctx, who.player, { receipt: body.receipt, character: body.character, name: body.name ?? null, cid: body.cid ?? null }, await gatePublicKey(env, subtle), {
+        const r = await claimSerpent(ctx, who.player, { receipt: body.receipt, character: body.character, name: body.name ?? null, cid: body.cid ?? null, stones: body.stones ?? null }, await gatePublicKey(env, subtle), {   // AUDIT 625 P4: the embers its build mints
           strike: (d, nonce, earned) => serpentStrikeStatement(ctx, who.player, env, d, nonce, earned),
         });
         if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, r.error === 'no-gate-key' ? 503 : r.error === 'not-yours' ? 403 : 400, origin);

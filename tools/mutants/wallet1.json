@@ -202,7 +202,7 @@
   {
     "name": "WALLET1-lines-silver-unknown",
     "file": "src/systems/walletItem.js",
-    "old": "`Silver: ${c.silver == null ? 'kept by your account online' : num(c.silver)}`",
+    "old": "`Silver: ${c.silver == null ? SILVER_WHY[c.silverWhy] ?? SILVER_WHY.offline : num(c.silver)}`",
     "new": "`Silver: ${num(c.silver ?? 0)}`",
     "why": "an unknown silver said as none",
     "tests": [
@@ -396,8 +396,8 @@
   {
     "name": "WALLET1-piece-unreachable",
     "file": "src/ui/enhancedInventory.js",
-    "old": "    b.onclick = () => { picked = it; side = 'local'; notice = null; render(); };\n    box.append(b);",
-    "new": "    b.onclick = () => {};\n    box.append(b);",
+    "old": "    for (const it of w.held) rows.append(itemRow(it));",
+    "new": "    for (const it of w.held) rows.append(el('p', 'meta', itemLine(it, deps.entity).name));",
     "why": "a held piece's row opens nothing",
     "tests": [
       "test/wallet1.test.js"
@@ -536,7 +536,7 @@
   {
     "name": "WALLET1-world-closed-book",
     "file": "src/scenes/world.js",
-    "old": "setWalletSilver(() => (marksBook.state.open === false ? null : marksBook.state.balance),",
+    "old": "setWalletSilver(() => (marksBook.state.open === false ? false : marksBook.state.balance),",
     "new": "setWalletSilver(() => marksBook.state.balance,",
     "why": "a closed book's balance counted",
     "tests": [

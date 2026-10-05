@@ -170,8 +170,8 @@ carried only the first of the two lines, so a player fighting with the
 left-hand weapon loaded back holding the right hand's item, or bare
 fists. By the time it was found, the two restore lines had drifted six
 and thirteen lines apart inside their own hosts, and the comment in
-`worldModes.js` that pointed between them cited `world.js:12023` and
-`dungeonContext.js:8723` - lines that had moved to `:6921` and `:8695`.
+`worldModes.js` that pointed between them cited `world.js:12024` and
+`dungeonContext.js:8737` - lines that had moved to `:6935` and `:8709`.
 *Three copies of a rule, and the signpost between them stale as well.*
 
 The pair lives in `src/combat/playerWeapon.js` now - `weaponPoseOf`,
@@ -249,13 +249,13 @@ three collapsed on verification.**
 2. *"`npcSession.onWorldChanged()` is on both door exits and not on the
    teleport/load path."* True, and correct: every caller of
    `forceExitToExterior` follows it with `_teleportToPixel`, and THAT
-   function owns the call (`world.js:11995`, DFU's `OnMapPixelChanged` /
+   function owns the call (`world.js:11996`, DFU's `OnMapPixelChanged` /
    `OnLoadEvent`). The quickload caller goes through
    `restoreSessionState` instead. Calling it in both places would be the
    redundancy, not the fix.
-3. *"`worldModes.js:11887` disposes the dungeon overlay that
+3. *"`worldModes.js:11903` disposes the dungeon overlay that
    `dungeonCtx.destroy()` disposes again - HARD1's double free."* Already
-   known, already written down, at `dungeonContext.js:9616-9617`:
+   known, already written down, at `dungeonContext.js:9630-9631`:
    *"dispose() is idempotent (A2), which is what makes the outer host's
    call harmless."* The tree had the answer before the audit asked.
 
@@ -454,6 +454,10 @@ pins that matched a page's line in Home.md (BA1, IF1, WATER, WEATHER2a, 2b
 and 2d) read that page now, not the derived index: three of their pages
 are named in Active-Arcs too, so through the whole index those three
 could no longer fail when their own line went. Home.md is 23 KB again.
+AUDIT 625 (D7) found the move half done: it took the 53 lines that stood
+together and left eight that stood among the folder lines, while the stub
+said the page index had gone - two places a new page's line could go.
+The eight followed, byte for byte; the page holds all 61.
 
 ## AUDIT-HARD, 2026-09-15 - the program audited against itself
 

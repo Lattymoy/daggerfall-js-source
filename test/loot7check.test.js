@@ -230,7 +230,7 @@ function joiner(self) {
   const foes = [foeRec(0), foeRec(7, { champion: 'vampiric' })];
   const state = {
     foes, _layoutFoes: 2, _retyping: new Set(), _authority: false, validFoeRecord, opts: { selfId: () => self },
-    renownFoeDied: () => {}, reportPlayerKill: () => {}, rollCorpseKit: () => [], addCorpseFood: () => {}, stampWonWeapons: () => {}, liveStat: () => 50,
+    renownFoeDied: () => {}, reportPlayerKill: () => {}, rollCorpseKit: () => [], addCorpseFood: () => {}, stampWonWeapons: () => {}, capFoeLoot: () => [], liveStat: () => 50,
     playerEntity: { isPlayer: true, items: [] }, setFoeDead: (f, d) => { f.dead = d; }, retypeFoe: async () => false,
     sayEnemyDied, hudText: { add: (l) => hud.push(l) },
   };

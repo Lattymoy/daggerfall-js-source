@@ -12,9 +12,17 @@
 // EVERY HOST'S LOOT DOOR ASKS HERE (THE FOUR HOSTS): scenes/dungeonContext.js takeLoot (a body, a pile, a searched
 // object's find); scenes/corpseMarker.js openCorpseLoot (a body of the street's, the watch's, the bench's and an
 // interior's pools - world.js, exterior.js and worldModes.js open them through it) and scenes/exteriorFoes.js's grant
-// (a body another player's foe left, its items handed over); scenes/world.js activateGrave (a headstone's find). The
-// streaming host registers the finder online (scenes/world.js: the book's find, its card, its line); with none - offline,
-// the bench - nothing is found.
+// (a body another player's foe left, its items handed over); scenes/world.js activateGrave (a headstone's find). AUDIT
+// 625 S2: and a scene's own TREASURE container - an interior's (worldModes.js, a tavern's and a guild hall's
+// RandomTreasure), the streaming host's (World of Daggerfall's piles, Deep Waters' chests) - at its pile door. The
+// streaming host registers the finder online (scenes/world.js: the book's find, its card, its line); with none -
+// offline (exterior.js, the town page, is never online), the bench - nothing is found.
+//
+// AUDIT 625. D6: a door rolls once it OPENED the container - a window that stood, or the quick door's take - never on an
+// open the host refused (a werebeast's pack). S5: a container is named as its host names it for good - the dungeon by
+// its map and the room's key for the container (a body with its death's stamp), an interior's pile by its town, its
+// building and its marker - so leaving and coming back rolls nothing again; a container a host mints afresh (an unsaved
+// scene container, a street's body) is its own object.
 //
 // Pure but for the finder and what was rolled. Not a DFU member. Ledger A (SILVER-FINDS).
 import { findChanceOf, FIND_KINDS } from '../net/marksLaw.js';

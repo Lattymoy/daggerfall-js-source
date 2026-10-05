@@ -393,7 +393,10 @@ route `/v1/serpent/claim`):
   under the day's one combat cap of 150 with the gates and the raids (`src/net/marksLaw.js` MARKS_COMBAT), its line
   `serpent:<day>`; the route answers it as `marks` where it recorded, and the game says it as a raid's is (the claim's
   `onMarks`, the haul card's "Serpent slain"). The hoard's law is a file of its own because the relay bundles
-  `net/serpentLaw.js` and hashes its graph: a constant written there would have been a relay deploy.
+  `net/serpentLaw.js` and hashes its graph: a constant written there would have been a relay deploy. AUDIT 625 P4: the
+  row's embers are what the CLAIM says its build's hoard mints (`stones` - every row had counted SERPENT_EMBERS, so a
+  build from before the embers, whose pack was given none, put one in the purse), and the answer says the row's, a
+  repeat's too, as a gate's does (section 11).
 
 **The hoard** (`systems/serpentSpoils.js`, rolled on the receipt's seed so every crew's is its own):
 - gold: `SERPENT_SPOILS_GOLD_PER_LEVEL` (160) a level, the seed varying it a fifth either way;
@@ -474,8 +477,16 @@ After the kill the bar holds a moment and fades.
 - **The account service: `acct78`** (acct75, acct76 then acct77 on its branch, renumbered past main's HOME-PRICE (acct75), PRIMARCH and FOUNDER4 (acct76) and KNIGHT-HOUSE (acct77) at the merges). Apply migration `0081_serpent_kills.sql` (0078 then 0079 on its branch, past main's FOUNDER4 `0078_founder_links.sql`, KNIGHT-HOUSE `0079_home_deed.sql` and HOME-VENDOR `0080_home_vendors.sql`), then deploy (the deploy's path filter
   carries `src/net/serpentReceipt.js`). Before acct78 the route answers nothing and a receipt waits on the device for
   its week.
+- **SERPENT-SET's account service: `acct83`** (with SILVER-FINDS). Apply migration `0083_serpent_embers.sql` (a
+  serpent's row's `stones`, the embers its hoard paid, which the insignia's purse counts with a breach's), then deploy -
+  the deploy's path filter carries `src/net/serpentHoardLaw.js` (SERPENT_EMBERS) as it carries the receipt. The relay
+  is untouched: it never reads the hoard's law, and its version stands (`world166`). AUDIT 625 P4: the row counts the
+  embers the CLAIM says its build's hoard mints (`stones`, at most SERPENT_EMBERS - `net/accountClient.js`
+  claimSerpentReceipt), so a build from before them, saying none, is counted none; the answer says the row's embers,
+  as a gate's claim does (AUDIT WB12d A1).
 - **The order:** the relay first (it signs), then the service (it counts), then the client. A client on an older
-  relay sees the omen and no fight.
+  relay sees the omen and no fight. SERPENT-SET: the service's migration and acct83 before the client too - a client
+  of SERPENT-SET's claiming of a service before acct83 would mint an ember into the pack that no purse counts.
 
 ## 12. Not done, and why
 
@@ -506,9 +517,13 @@ After the kill the bar holds a moment and fades.
 - SERPENT2's: `test/serpent2_herald.test.js` (13 - the herald's law, the `site` word, the hub with Discord stubbed, the
   client's word, the Timers rows) and `tools/mutants/serpent2.json` (49), all dead.
 - SERPENT-SET's: `test/serpentset.test.js` (12 - the Coilscale's law, records, drop and powers, the hoard's embers and
-  piece, the one heal, the host's doors and the claim's silver lines) and `test/serpentset_service.test.js` (6 - the
+  piece, the one heal, the host's doors and the claim's silver lines) and `test/serpentset_service.test.js` (8 - the
   row's embers, the insignia's purse and sale, the serpent's silver under the combat cap, the switch and the guest, the
-  deploy); `tools/mutants/serpentset.json` (48), all dead.
+  deploy; AUDIT 625 P4, the embers the claim says, and P5, the claim in production's shape);
+  `tools/mutants/serpentset.json` (48), all dead.
+- AUDIT 625's (`01-Overview/Audit-625.md`): `test/audit625_serpent.test.js` (6 - Shed Skin and a saved death, the duel's
+  one word and an arena bout between players, a coil per foe, the claim's embers, the powers on minted pieces, the
+  card's source and the embers' tier) and the AUDIT 625 records of `tools/mutants/audit625.json`, all dead.
 
 ## 14. The herald and the timers (SERPENT2, 2026-10-04)
 

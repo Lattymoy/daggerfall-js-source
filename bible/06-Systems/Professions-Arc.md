@@ -917,8 +917,11 @@ save's" - GUILD1), so anything paid in purse gold can be paid by a client that n
     (the book's ask; each answered find its card where the feed stands - the world walked, nothing over it - else its
     line in the chat); the street's, the watch's and an interior's bodies through `scenes/corpseMarker.js`
     openCorpseLoot (`scenes/exteriorFoes.js` and `scenes/cityGuards.js` open through it), and a peer's body at
-    `exteriorFoes.js`'s grant; `scenes/worldModes.js` (interiors) holds no door of its own - its bodies are the corpse
-    door's, its dungeons `dungeonContext.js`'s - and a stranger's cupboard is NO find: theft is its own law (PT1);
+    `exteriorFoes.js`'s grant; `scenes/worldModes.js` (interiors) - its bodies are the corpse door's, its dungeons
+    `dungeonContext.js`'s, and (AUDIT 625 S2: the first cut named it no door, and a tavern's or a guild hall's treasure
+    never rolled) its TREASURE piles' door is its own, the `droppedLoot:` arm, for the scene's containers alone
+    (`container: true`); a stranger's cupboard is NO find: theft is its own law (PT1); the streaming host's own scene
+    containers (World of Daggerfall's piles and casket, Deep Waters' chests) at its pile door the same way (S2);
     `scenes/exterior.js` (the offline town page) opens its bodies through the same corpse door and registers no finder,
     so offline, and on the bench, nothing is found.
   - **What it says**: a harvest's find its own card beside the goods' (`src/ui/haulCards.js` findHaul, through
@@ -930,6 +933,21 @@ save's" - GUILD1), so anything paid in purse gold can be paid by a client that n
     kind check, lived under a pin whose scripted door answered nothing either way; the pin now asks whether the door
     was asked). ACCOUNT_VERSION acct83, with SERPENT-SET. Forcing every harvest to find (the chance at 1) left all 139
     harvest pins green - none reads a balance a find could move.
+  - **AUDIT 625 (2026-10-05, `01-Overview/Audit-625.md`)** - Mac's call on S1, "A week old, like witnesses": both
+    faucets open to an account a WEEK registered (`nodeLaw.js` WITNESS.ageS, the witnesses' own age) - bounded, not
+    witnessed, every account added was another day's cap; a younger one's loot find is `marks-young` (403) and its
+    harvest finds none though the dice found one, asked after the line as the switch is (S1; the book then holds the
+    account's day met, none owed). The marks book keeps an owed find through every answer that says nothing of it - the
+    switch shut, a guest, no session, a session refused - and lets one go only on a refusal of the find itself (an id
+    the service cannot read, a kind of none, its hour spent); the owed are KEPT in the store beside the Bank's kept
+    sale (`marks1.owedFinds`), and each is asked under its own account's session or not at all - the door reads the
+    session once and checks it (S3, S4). A container is named as its host names it for good: the dungeon's by its map
+    and the room's key (a body with its death's stamp - the hour's respawn leaves a body anew; the hour's restock is
+    the same pile), an interior's by its town, building and marker - leaving and coming back rolls nothing again (S5).
+    A door rolls once it OPENED - a window that stood, or the quick door's take - never on a pack the host refused (D6);
+    a peer's body of arrows alone rolls none, as one's own (S7). The weekly report counts the accounts at both finds'
+    caps beside the combat's and the Bank's (S6). Pinned: `test/audit625_silver.test.js` and the AUDIT 625 pins of
+    `test/silverfinds_service.test.js`; `tools/mutants/audit625.json`.
 
 ### 10.6 Player notes
 

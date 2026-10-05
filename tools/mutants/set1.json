@@ -93,7 +93,7 @@
   {
     "name": "SET1-the-duel-unread",
     "file": "src/systems/sigilSets.js",
-    "old": "export const setsAwake = () => sigilRenown() != null && !_dueling;",
+    "old": "export const setsAwake = () => sigilRenown() != null && !sigilDueling();",
     "new": "export const setsAwake = () => sigilRenown() != null;",
     "tests": [
       "test/set1_law.test.js"

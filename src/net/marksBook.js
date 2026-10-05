@@ -38,11 +38,17 @@
 // account asks - so a lost answer is the line it made, never a second,
 // and a find the asks never reached is not lost to a dropped line. A
 // harvest's find rides the harvest's own answer (`findLine`).
+// AUDIT 625 (S3, S4): an owed find is KEPT (MARKS_OWED_KEY), as a sale
+// is - a reload asks it again - and stays owed through every answer that
+// says nothing about it (the switch shut, a guest, no session or a
+// refused one, the network); only a refusal of the find itself lets it
+// go. And it is ITS ACCOUNT'S, as a kept sale is: the door sends it under
+// that account's session or not at all.
 //
 // Pure - the door, the store and the ids are handed in - so the pins drive
 // it without a network.
 // ═══════════════════════════════════════════════════════════════════
-import { MARKS_BANK, MARKS_COMBAT, MARKS_MOVE_MAX, marksAmountOk, marksText, exchangeGold, FIND_KINDS, utcDay } from './marksLaw.js';
+import { MARKS_BANK, MARKS_COMBAT, MARKS_MOVE_MAX, marksAmountOk, marksText, exchangeGold, FIND_KINDS, utcDay, MARKS_RID_RE } from './marksLaw.js';
 import { accountRefusalText } from './accountClient.js';
 import { jittered } from './backoff.js';   // SCALE1: a press's asks spread out
 
@@ -66,6 +72,17 @@ export const FIND_WORDS = Object.freeze({ corpse: 'on the body', pile: 'among th
 /** SILVER-FINDS: the finds a book keeps owed at most - asks never answered, asked again by the next find; past it a
  *  find is let go (the service's day bounds what they could strike: marksLaw.js MARKS_FAUCETS.find). */
 export const FINDS_OWED_MAX = 20;
+/** AUDIT 625 S3: the finds owed, KEPT beside the Bank's kept sale - `[{ rid, kind, account }]` - so a reload, or a tab
+ *  closed before the next find, never loses one; read back under its own law (an id the service reads, a kind of
+ *  FIND_KINDS, an account), FINDS_OWED_MAX at most. One device's list: a second tab's book writes over the first's. */
+export const MARKS_OWED_KEY = 'marks1.owedFinds';
+/** AUDIT 625 S3: the answers that say nothing struck and nothing refused for good - the network, the service's own
+ *  fault, no session here (or another account's: S4), a session the service refused. A find answered so stays owed,
+ *  and the rest wait owed unasked behind it. The switch shut and a guest (`marks-need-account`, `marks-closed`) keep
+ *  theirs owed too, and read the book closed. */
+const FIND_KEPT = Object.freeze(['offline', 'server', 'no-session', 'auth']);
+const owedFind = (/** @type {any} */ f) => !!f && typeof f === 'object' && typeof f.rid === 'string' && MARKS_RID_RE.test(f.rid)
+  && FIND_KINDS.includes(f.kind) && typeof f.account === 'string' && f.account.length > 0;
 
 /** The words. */
 export const MARKS_TEXT = Object.freeze({
@@ -148,8 +165,18 @@ export function createMarksBook({ door, store = null, character = () => null, ri
   /** Guild moves whose answers did not come, by what they move - a press after a lost answer is the same move. */
   const moving = new Map();
   /** SILVER-FINDS: the finds whose asks were never answered (the network, the service's own fault) - `{ rid, kind,
-   *  account }`, asked again with the same id by the next find that account asks; FINDS_OWED_MAX at most. */
-  const owed = [];
+   *  account }`, asked again with the same id by the next find that account asks; FINDS_OWED_MAX at most. AUDIT 625 S3:
+   *  and every one an answer left owed (FIND_KEPT, the switch, a guest) - read from the store at the book's making,
+   *  written back as a find settles. A store that refuses a write leaves them owed in memory. */
+  const owed = (() => {
+    let v = null;
+    try { v = store?.get(MARKS_OWED_KEY) ?? null; } catch { v = null; }
+    return Array.isArray(v) ? v.filter(owedFind).slice(-FINDS_OWED_MAX).map(({ rid: r, kind, account: a }) => ({ rid: r, kind, account: a })) : [];
+  })();
+  const keepOwed = () => {
+    if (!store) return;
+    try { store.set(MARKS_OWED_KEY, owed.length ? owed.map(({ rid: r, kind, account: a }) => ({ rid: r, kind, account: a })) : null); } catch { /* refused: owed in memory */ }
+  };
   /** SILVER-FINDS: the account and the UTC day (the book's clock) the service said that account's finds were met - none
    *  is asked again until the day turns (another account signed in asks its own). */
   let findsMet = /** @type {{ account: string, day: number }|null} */ (null);
@@ -219,6 +246,11 @@ export function createMarksBook({ door, store = null, character = () => null, ri
      * Answers every find this ask settled, the owed first - `{ kind, found, line }`, `found` the service's answer and
      * `line` its words (null where it struck none) - and none where Marks are not this account's (no session, a guest,
      * the switch shut) or its day's finds are met.
+     * AUDIT 625: S3 - an answer that says nothing of the find (FIND_KEPT; the switch, a guest - the book then closed)
+     * leaves it OWED, and the rest owed unasked behind it, every one kept in the store; only a refusal of the find
+     * itself lets it go (an id the service cannot read, a kind of none, its hour spent - the rest then wait owed). S4 -
+     * each asked under ITS account (the door refuses another's session). S1 - `marks-young`, an account not yet a week
+     * registered: its finds are none of its own - none owed - and its day is met.
      * @param {string} kind @returns {Promise<Array<{ kind: string, found: any, line: string|null }>>}
      */
     async find(kind) {
@@ -230,21 +262,31 @@ export function createMarksBook({ door, store = null, character = () => null, ri
       for (let i = owed.length - 1; i >= 0; i--) if (owed[i].account === me) asks.unshift(...owed.splice(i, 1));
       asks.push({ rid: rid(), kind, account: me });
       const out = [];
-      let down = false;   // an ask the network never answered: the rest are owed unasked - one find's tries, never twenty's
+      // why the rest wait owed, unasked: an ask nothing answered (the network, the session), the switch, its hour spent -
+      // one find's tries, never twenty's; or `young`, and none of them is owed at all
+      let held = null;
+      const owe = (/** @type {any} */ f) => { if (owed.length < FINDS_OWED_MAX) owed.push(f); };
       for (const f of asks) {
-        const r = down ? null : await ask(() => door.find(f.kind, f.rid));
-        if (r?.ok) {
+        if (held) { if (held !== 'marks-young') owe(f); continue; }
+        const r = await ask(() => door.find(f.kind, f.rid, f.account));
+        const error = r?.ok ? null : (r?.error ?? 'offline');
+        if (!error) {
           const found = r.data ?? {};
           if (Number.isSafeInteger(found.today?.found) && found.today.found >= found.today.max) findsMet = { account: me, day };
           out.push({ kind: f.kind, found, line: this.findLine(found, f.kind) });
-        } else if (r?.error === 'marks-need-account' || r?.error === 'marks-closed') {
+        } else if (error === 'marks-young') {
+          findsMet = { account: me, day };   // AUDIT 625 S1: none of its finds struck today - none asked again until the day turns
+          held = error;
+        } else if (error === 'marks-need-account' || error === 'marks-closed') {
           state.open = false; state.balance = null;   // not this account's: refresh's own reading, and nothing asked again
-          return out;
-        } else if (down || RETRY.includes(r?.error)) {
-          down = true;
-          if (owed.length < FINDS_OWED_MAX) owed.push(f);   // never answered: owed
-        }
+          owe(f); held = error;   // AUDIT 625 S3: this find and the rest owed, asked when silver is this account's again
+        } else if (FIND_KEPT.includes(error)) {
+          owe(f); held = error;   // never answered: owed
+        } else if (error === 'marks-rate') {
+          held = error;   // its hour spent: this find let go (MARKS_FINAL's law), the rest wait owed for the next hour
+        }   // an id the service cannot read, a kind of none, a word this build does not know: this find let go
       }
+      keepOwed();
       return out;
     },
 

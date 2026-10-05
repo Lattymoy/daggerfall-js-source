@@ -103,6 +103,12 @@ test('RENOWN-LOOT the keep, through the real spawn: a plain foe\'s pieces kept o
     offline();
     assert.ok(kept(0.7) > 0, 'offline: three in four, as LOOT-EASE left it');
     assert.equal(kept(0.8), 0);
+    // AUDIT 625 L6: the threshold itself, not a band around it - 0.7499 keeps and 0.75 does not
+    assert.ok(kept(0.7499) > 0);
+    assert.equal(kept(0.75), 0);
+    page(true, 40);
+    assert.ok(kept(0.8749) > 0, 'Renown 40: under 87.5% keeps');
+    assert.equal(kept(0.875), 0, 'and 87.5% does not');
   } finally { offline(); _resetPrefsForTests(); }
 });
 
@@ -112,7 +118,7 @@ test('RENOWN-LOOT the kit at death: a plain foe\'s worn piece rolls the plain la
     const sword = createWeapon(120, 1);
     return { e: { mobileType: 144, level: 8, lootCap: 3, items: [goldStack(4), sword], equip: { slots: [sword] } }, sword };
   };
-  const tierAt = (renown, roll) => { page(true, renown); const b = body(); rollCorpseKit(b.e, { rolls: at(roll) }); return rarityOf(b.sword); };
+  const tierAt = (renown, roll) => { page(true, renown); const b = body(); rollCorpseKit(b.e, { rolls: at(roll) }); return rarityOf(b.e.items[1]); };   // the body's piece (AUDIT 625 L2: a laddered copy)
   try {
     // tier 8's Magic threshold, per mille: 45 + 8 x 4.5 = 81 at Renown 1, 90 at Renown 20, 99 at Renown 40
     assert.equal(tierAt(1, 0.085), 'common');
@@ -121,7 +127,7 @@ test('RENOWN-LOOT the kit at death: a plain foe\'s worn piece rolls the plain la
     assert.equal(tierAt(40, 0.095), 'magic');
     offline();
     const b = body(); rollCorpseKit(b.e, { rolls: at(0.085) });
-    assert.equal(rarityOf(b.sword), 'magic', 'offline: LOOT-EASE\'s ladder (90 at tier 8)');
+    assert.equal(rarityOf(b.e.items[1]), 'magic', 'offline: LOOT-EASE\'s ladder (90 at tier 8)');
   } finally { offline(); _resetPrefsForTests(); }
 });
 

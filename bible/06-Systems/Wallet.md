@@ -24,6 +24,7 @@ the wallet's pieces unchanged, and no spender, save or service changed for it.
 |---|---|
 | `src/systems/walletItem.js` | the piece: template 580, its row (DFU's Small Sack's picture and price - TEXTURE.205 record 18, 1 gold - no weight, one to a slot, `bound`, `packOnly`), `mintWallet`, `isWalletItem`; WHAT IT HOLDS (`WALLET_HOLDS`: templates 275, 570, 571; `walletHolds`); `walletContents` (the gold, the silver, the letters and the gold they are worth, the embers, the shards, the pieces in the pack's order, worn ones aside) and `walletLines` (the words both skins say); the silver's door (`setWalletSilver`, `walletSilver`, `refreshWalletSilver`); the gift (`giveWallet`, `WALLET_GIFT`, `giveWalletGift`); the card's lines; the Use's registered arm (`wallet`) |
 | `src/systems/itemBound.js` | `isPackOnly` (the row's `packOnly`) and `packOnlyText`: a pack-only piece is refused by every place, the player's own wagon and storage too |
+| `src/systems/decorItems.js`, `src/systems/revenant.js` | AUDIT 625 W1/W2: the two doors out of the pack that are no place - a home's decoration (`decorStandOf`) and a revenant's theft (`revenantMayTake`) - refuse a pack-only piece too |
 | `src/net/realmTradeLaw.js` | `BOUND_TEMPLATES` names 580 - the realm's trade service refuses it as the client does (acct83) |
 | `src/ui/packPages.js` | the wallet's page is Valuables; and the letter of credit's (below) |
 | `src/ui/enhancedInventory.js` | `packModel`: what the wallet holds leaves the pages (`paged`) and rides `model.wallet`; the wallet's SHEET in its card's body (`walletSheet`); a held piece's way back (`walletBack`); the Use's arm (`pickWallet`); the pack-only refusal |
@@ -38,14 +39,20 @@ the wallet's pieces unchanged, and no spender, save or service changed for it.
 - **The enhanced pack** (the port's own screen, both enhanced skins): while the pack holds a wallet, the letters, the
   embers and the shards leave the pages and the wallet stands on Valuables. Picked (or Used), its card's body is its
   SHEET: the gold, the silver, the letters and what they are worth, the embers, the shards - `walletLines`' words - and
-  each piece it holds as a row that opens that piece's own card. Every act a piece had on its page it has there: its
-  lock, its Stow, the bound law's refusals - and a way back to the wallet. The pages and the wallet together are still a
-  partition of what the pack holds unworn (PX31's law, extended). A worn crystal (an ember or a shard in a crystal slot)
-  is the doll's, as the pages leave it. The account's silver is asked afresh of the marks book once a mount, as the
-  sheet first shows.
+  each piece it holds as the PACK'S OWN ROW (`itemRow`, the page's tile, its tier's frame and all - AUDIT 625 W3: it was
+  a button that only opened the card). Every act a piece had on its page it has there: the click that opens its card
+  (its lock, its Stow, the bound law's refusals - and a way back to the wallet), Shift into the store beside it, the
+  double click that wears a crystal, the drag, the right click's menu, the pad's quick act. The pages and the wallet
+  together are still a partition of what the pack holds unworn (PX31's law, extended). A worn crystal (an ember or a
+  shard in a crystal slot) is the doll's, as the pages leave it. The account's silver is asked afresh of the marks book
+  once a mount, as the sheet first shows.
 - **The classic window** is DFU's and keeps DFU's four tabs, every currency piece where it always was. The wallet
   stands on Clothing & Misc, and its Use says its lines in DFU's own click-anywhere box.
-- **The hotbar**: a wallet pressed says its figures on the HUD's line.
+- **The hotbar**: a wallet pressed says its figures on the HUD's line, and asks the silver afresh for its next press, as
+  the classic box asks it for its next look - one ask in flight at a time (AUDIT 625 W5: it never asked).
+- **The silver's words** where no figure is counted say why (AUDIT 625 W5 - every case once said the offline words):
+  offline "kept by your account online"; online and not known yet "asking your account" (every look asks); an account
+  that holds none - a guest's, or the counting-houses not striking yet - "none".
 - **Not held**: the Portal Stone (a thing used, not spent); gold, which is E4's counter and never a piece; silver, the
   account's (shown, never a piece).
 
@@ -64,7 +71,10 @@ Materials Bag's group.
 
 **BOUND** (`systems/itemBound.js` SS1): never dropped, traded or sold, and the realm's service refuses it in a realm
 trade. **PACK-ONLY** (WALLET1): not even the player's own wagon or storage take it - a wallet that left the pack would
-leave what it holds back on the pages. Both windows refuse it in its own words: "Wallet stays in your pack."
+leave what it holds back on the pages. Both windows refuse it in its own words: "Wallet stays in your pack." AUDIT 625:
+and the two doors out of the pack that are no window's place - a HOME'S DECORATION (the decorate panel lists no row
+for it: `decorItems.js decorStandOf`, beside the Materials Bag - W1) and a REVENANT'S THEFT (RVN8's pick passes it by:
+`revenant.js revenantMayTake` - W2; one that escaped would keep it, and the gift is given once).
 
 ## The gift
 
@@ -80,7 +90,9 @@ boot among them). A round trip gives none: `snapshotPlayer` writes the mark.
 - `scenes/world.js` - the silver's door, online alone: the marks book's balance, and its refresh as the wallet's sheet
   opens. Every mode of the streaming page reads it (its interiors, its dungeons).
 - `scenes/worldModes.js` (interiors) and `scenes/dungeonContext.js` (dungeons) - no door of their own: the wallet lives
-  in the pack, and the pack's windows are the same windows.
+  in the pack, and the pack's windows are the same windows. AUDIT 625 W1: the interiors host one more way out of the
+  pack - the decorate tool's (`packTake`, a home's own things) - and its panel lists rows through the shared
+  `decorOwnEntry`, which stands no pack-only piece; a home's yard lists no pack at all (`homeYards.js`).
 - `scenes/exterior.js` (the offline town page) - no silver door: offline the wallet says the silver is kept online.
 
 ## Calls made here, put to the owner
@@ -93,7 +105,9 @@ boot among them). A round trip gives none: `snapshotPlayer` writes the mark.
 
 ## Pinned
 
-`test/wallet1.test.js` (10 - the piece, the gift, the pack-only law on both skins and the service's bound row, what it holds,
+`test/audit625_wallet.test.js` (4 - AUDIT 625's: the decoration and the revenant pass it by, the sheet's rows the pack's
+own with every gesture and frame, the silver's words and the hotbar's ask). `test/wallet1.test.js` (10 - the piece, the
+gift, the pack-only law on both skins and the service's bound row, what it holds,
 the silver's door, the enhanced pack's partition, the sheet driven through the mounted pack, the sheet's silver - asked
 once a mount, an answer that lands while a piece is picked kept for the way back - the Use on both skins and the
 hotbar, the hosts). Moved: `test/packPages.test.js` (the letter's page, the pages' list), `test/auditrealm.test.js`

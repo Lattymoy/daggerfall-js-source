@@ -82,7 +82,7 @@
   {
     "name": "CAP-SUPPLIES-no-potion",
     "file": "src/systems/foeLootCap.js",
-    "old": "  if (item.group === 'UselessItems1' && item.templateIndex === POTION_TEMPLATE_INDEX) return true;",
+    "old": "  if (isPotion(item)) return true;",
     "new": "  if (false) return true;",
     "why": "a potion is no supply",
     "tests": [
@@ -102,28 +102,30 @@
   {
     "name": "KIT-ROLL-never",
     "file": "src/systems/foeLootCap.js",
-    "old": "    if (!worn.has(it) || it.untaken === true || !rarityEligible(it)) continue;",
-    "new": "    continue;",
+    "old": "    if (!it || it.untaken === true || !rarityEligible(it)) return;   // AUDIT 625 L1: no mark - the kit the spawn's roll passed by",
+    "new": "    return;",
     "why": "no kit ever rolled - the steel stays white",
     "tests": [
       "test/search1_searchables.test.js"
-    ]
+    ],
+    "note": "AUDIT 625 L1 (re-aimed by content): the kit is what the spawn's roll left unmarked, never the table's objects."
   },
   {
     "name": "KIT-ROLL-a-carried-piece-too",
     "file": "src/systems/foeLootCap.js",
-    "old": "    if (!worn.has(it) || it.untaken === true || !rarityEligible(it)) continue;",
-    "new": "    if (it.untaken === true || !rarityEligible(it)) continue;",
+    "old": "    if (!it || it.untaken === true || !rarityEligible(it)) return;   // AUDIT 625 L1: no mark - the kit the spawn's roll passed by",
+    "new": "    if (!it || !rarityEligible(it)) return;",
     "why": "the carried piece rolled a second time at the death",
     "tests": [
       "test/search1_searchables.test.js"
-    ]
+    ],
+    "note": "AUDIT 625 L1 (re-aimed by content): a carried piece is the one the spawn's roll marked."
   },
   {
     "name": "KIT-ROLL-the-whole-ladder",
     "file": "src/systems/foeLootCap.js",
-    "old": "entity.level, entity.mobileType), weights: plainFoeRarityWeights() };",
-    "new": "entity.level, entity.mobileType) };",
+    "old": "entity.level, entity.mobileType), boss: false, weights: plainFoeRarityWeights() };",
+    "new": "entity.level, entity.mobileType), boss: false };",
     "why": "the kit on the whole ladder: 0.09 is blue",
     "tests": [
       "test/search1_searchables.test.js"
@@ -133,38 +135,44 @@
   {
     "name": "KIT-ROLL-an-elite-dungeon's",
     "file": "src/systems/foeLootCap.js",
-    "old": "!Number.isInteger(entity.lootCap) || entity.elite || titledFoe(entity)) return [];",
-    "new": "!Number.isInteger(entity.lootCap) || titledFoe(entity)) return [];",
-    "why": "an Elite Dungeon foe's kit on the plain ladder",
+    "old": "  if (!lootRarityOn() || !entity || !Array.isArray(entity.items) || entity.revenant) return [];",
+    "new": "  if (!lootRarityOn() || !entity || !Array.isArray(entity.items) || entity.revenant || entity.elite) return [];",
+    "why": "AUDIT 625 L3 (Mac: \"The plain ladder\"), the old law brought back: an Elite Dungeon foe's kit left Common",
     "tests": [
+      "test/audit625_loot.test.js",
       "test/search1_searchables.test.js"
-    ]
+    ],
+    "note": "AUDIT 625 L3 (re-aimed by content): the law it guarded is reversed - every foe's kit rolls the plain ladder now, so this mutant is the old exclusion brought back."
   },
   {
     "name": "KIT-ROLL-a-titled-foe's",
     "file": "src/systems/foeLootCap.js",
-    "old": "!Number.isInteger(entity.lootCap) || entity.elite || titledFoe(entity)) return [];",
-    "new": "!Number.isInteger(entity.lootCap) || entity.elite) return [];",
-    "why": "an elite foe's, a champion's, a revenant's kit rolled",
+    "old": "  if (!lootRarityOn() || !entity || !Array.isArray(entity.items) || entity.revenant) return [];",
+    "new": "  if (!lootRarityOn() || !entity || !Array.isArray(entity.items) || titledFoe(entity)) return [];",
+    "why": "AUDIT 625 L3, the old law brought back: a champion's, a titled foe's, a world boss's kit left Common",
     "tests": [
+      "test/audit625_loot.test.js",
       "test/search1_searchables.test.js"
-    ]
+    ],
+    "note": "AUDIT 625 L3 (re-aimed by content): the law it guarded is reversed - every foe's kit rolls the plain ladder now, so this mutant is the old exclusion brought back."
   },
   {
     "name": "KIT-ROLL-no-stamp",
     "file": "src/systems/foeLootCap.js",
-    "old": "if (!lootRarityOn() || !entity || !Array.isArray(entity.items) || !Number.isInteger(entity.lootCap) || entity.elite",
-    "new": "if (!lootRarityOn() || !entity || !Array.isArray(entity.items) || entity.elite",
-    "why": "a foe its spawn never stamped plain - a boss - rolled",
+    "old": "  if (!lootRarityOn() || !entity || !Array.isArray(entity.items) || entity.revenant) return [];",
+    "new": "  if (!lootRarityOn() || !entity || !Array.isArray(entity.items) || !Number.isInteger(entity.lootCap) || entity.revenant) return [];",
+    "why": "AUDIT 625 L3, the old law brought back: a foe its spawn never stamped plain - a boss, every humanoid from level 18 - left Common",
     "tests": [
+      "test/audit625_loot.test.js",
       "test/search1_searchables.test.js"
-    ]
+    ],
+    "note": "AUDIT 625 L3 (re-aimed by content): the law it guarded is reversed - every foe's kit rolls the plain ladder now, so this mutant is the old exclusion brought back."
   },
   {
     "name": "KIT-ROLL-off-too",
     "file": "src/systems/foeLootCap.js",
-    "old": "if (!lootRarityOn() || !entity || !Array.isArray(entity.items) || !Number.isInteger(entity.lootCap)",
-    "new": "if (!entity || !Array.isArray(entity.items) || !Number.isInteger(entity.lootCap)",
+    "old": "  if (!lootRarityOn() || !entity || !Array.isArray(entity.items) || entity.revenant) return [];",
+    "new": "  if (!entity || !Array.isArray(entity.items) || entity.revenant) return [];",
     "why": "the ladder off and the kit still rolled",
     "tests": [
       "test/search1_searchables.test.js"
@@ -173,22 +181,24 @@
   {
     "name": "KIT-ROLL-twice",
     "file": "src/systems/foeLootCap.js",
-    "old": "    if (!worn.has(it) || it.untaken === true || !rarityEligible(it)) continue;",
-    "new": "    if (!worn.has(it) || !rarityEligible(it)) continue;",
+    "old": "    const piece = { ...it, untaken: true };   // AUDIT 625 L2: a copy in the body; the table's piece stays as it was minted",
+    "new": "    const piece = { ...it };",
     "why": "a white roll rolled again at a second door",
     "tests": [
       "test/search1_searchables.test.js"
-    ]
+    ],
+    "note": "AUDIT 625 L1/L2 (re-aimed by content): the kit is known by the mark the spawn's roll leaves, and the body holds a marked copy - the second door's pass is the copy's mark."
   },
   {
     "name": "KIT-ROLL-unmarked",
     "file": "src/systems/foeLootCap.js",
-    "old": "    it.untaken = true;\n    const tier = rollRarity({ ...source, luck, find }, rolls);",
-    "new": "    const tier = rollRarity({ ...source, luck, find }, rolls);",
+    "old": "    const piece = { ...it, untaken: true };   // AUDIT 625 L2: a copy in the body; the table's piece stays as it was minted",
+    "new": "    const piece = { ...it, untaken: undefined };",
     "why": "a kit piece's take never counts for the drought",
     "tests": [
       "test/search1_searchables.test.js"
-    ]
+    ],
+    "note": "AUDIT 625 L2 (re-aimed by content): the copy carries the mark the drought counts."
   },
   {
     "name": "KIT-ROLL-dungeon-kill-door",

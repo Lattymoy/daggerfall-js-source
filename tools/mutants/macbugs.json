@@ -2,7 +2,7 @@
   {
     "name": "MAC-E-the-body-empties-itself-again-the-vacuum",
     "file": "src/scenes/corpseMarker.js",
-    "old": "  openWindow(corpseLootHooks(entry));\n  silverFindAt('corpse', entry);\n  return items.length;",
+    "old": "  if (openWindow(corpseLootHooks(entry)) === true) silverFindAt('corpse', entry);\n  return items.length;",
     "new": "  for (const item of items) addItem(playerEntity.items, item);\n  items.length = 0;\n  silverFindAt('corpse', entry);\n  return 1;",
     "tests": [
       "test/mace_corpse_window.test.js"
@@ -30,8 +30,8 @@
   {
     "name": "MAC-E-the-empty-body-is-disabled-on-the-take-so-the-line-is-never-heard",
     "file": "src/scenes/corpseMarker.js",
-    "old": "  if (!items?.length) {\n    entry.corpseDisabled = true;\n    say('The body has no treasure.');   // theBodyHasNoTreasure\n    return 0;\n  }\n  // :948-952 - one item and it is arrows: taken whole, no window.\n  if (items.length === 1 && items[0]?.templateIndex === ARROW_TEMPLATE_INDEX) {",
-    "new": "  if (!items?.length) {\n    entry.corpseDisabled = true;\n    return 0;\n  }\n  // :948-952 - one item and it is arrows: taken whole, no window.\n  if (items.length === 1 && items[0]?.templateIndex === ARROW_TEMPLATE_INDEX) {",
+    "old": "  if (!items?.length) {\n    entry.corpseDisabled = true;\n    say('The body has no treasure.');   // theBodyHasNoTreasure\n    return 0;\n  }\n  // :948-952 - one item and it is arrows: taken whole, no window.\n  if (arrowsOnly(items)) {",
+    "new": "  if (!items?.length) {\n    entry.corpseDisabled = true;\n    return 0;\n  }\n  // :948-952 - one item and it is arrows: taken whole, no window.\n  if (arrowsOnly(items)) {",
     "tests": [
       "test/mace_corpse_window.test.js",
       "test/cityguards.test.js"

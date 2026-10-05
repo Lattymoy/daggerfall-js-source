@@ -70,7 +70,12 @@ greaves, the boots, the shield and the weapon.
   the line: `faint + (ascendant - faint) x stage / 4`, rounded as the number reads (whole points, whole per cents,
   whole seconds). So a set is felt from its first stage and is twice to three times that at its last.
 - **Asleep.** Offline, online before the page knows its Renown, and while the wearer is in a duel, every set sleeps:
-  no tier is awake, no number moves, no piece drinks. The card still shows what the set would do.
+  no tier is awake, no number moves, no piece drinks. The card still shows what the set would do. AUDIT 625 P2: a bout
+  between players on an arena's relay sand is a duel too - the opponent stands as a Daedra Lord's stand-in for the
+  formulas, no player, so the gates that refuse a blow at a player never saw one, and every set, the loot's powers and
+  the weapon's sigil woke in the ring. The duel's word is ONE now, kept by SIGIL1's door (`systems/sigil.js`
+  setSigilDueling; `systems/sigilSets.js` setSetsDueling and setsDueling its names here), raised by `scenes/world.js
+  duelFrame` for a duel and for a live bout between players (`arenaPvpLive`), and the weapon's own blow reads it.
 
 ## 3. The four sets of the world (SET3)
 
@@ -230,8 +235,8 @@ Tide-Walker Boots, The Maelstrom's Eye (Kite Shield), Sethrakul's Fang (Katana).
 | pieces | ability | Faint -> Ascendant |
 |---|---|---|
 | 2 | **Sea-Scale** - frost resistance, Endurance | +10 -> +30; +2 -> +6 |
-| 4 | **Constrict** - each weapon blow of yours that LANDS on the same foe tightens the coil: weapon damage to that foe a stack, up to five, held 6 s after the last; a blow that lands on another foe starts it again, a bow's blow counts, the coiled foe's death ends it | +3% -> +8% a stack |
-| 6 | **Shed Skin** - a foe's blow that takes you under 35% of your health (from at or over it, still standing) sheds your skin: that share of your health returns at once; then it must recover. A killing blow, a fall or a spell sheds nothing | 10% -> 30%; recovers 240 -> 120 s |
+| 4 | **Constrict** - each weapon blow of yours that LANDS on a foe tightens ITS coil: weapon damage to that foe a stack, up to five, held 6 s after the last blow on it; every foe holds its own coil (AUDIT 625 P3, Mac: "A coil per foe" - one coil had moved to whichever foe was struck last, so a sweep that met two never built it), a bow's blow counts, a coiled foe's death ends its own | +3% -> +8% a stack |
+| 6 | **Shed Skin** - a foe's blow that takes you under 35% of your health (from at or over it, still standing) sheds your skin: that share of your health returns at once; then it must recover. A killing blow, a fall or a spell sheds nothing - nor a killing blow a death save turned aside (AUDIT 625 P1: Unbroken, Divine Grace) | 10% -> 30%; recovers 240 -> 120 s |
 
 Shed Skin heals through the one heal a power gives (`systems/playerHeal.js` - LOOT4's leech and its heals moved there
 from `systems/lootPowers.js`, which reads the blow's law out of `systems/sigilSetPowers.js` and so may not be imported
@@ -371,7 +376,8 @@ Every seam the powers read, each a no-op until registered:
   two gates (a Destruction effect, room in the magicka).
 - **The door** (`systems/playerDoor.js`): the running host's magic engine publishes its live foes (the town's
   defenders passed by), my feet, a hurt as mine through the foe's own sinks, and a spell on me - every frame it runs.
-- **The duel's word**: `scenes/world.js duelFrame` tells `setSetsDueling`.
+- **The duel's word**: `scenes/world.js duelFrame` tells `setSetsDueling` (AUDIT 625 P2: kept by `systems/sigil.js`
+  setSigilDueling, and raised for an arena's bout between players too).
 
 Pinned: `test/set2_seams.test.js` (8); `tools/mutants/set2.json` (20, all dead).
 
@@ -879,8 +885,9 @@ mutants all dead; the stream's law in `test/restsync.test.js` and `test/questpar
 Section 6c, whole; the hoard's half is `Sea-Serpent.md` section 8. The law (`systems/sigilSets.js` `coilscale`,
 Aetheric and naming no raiding party; `COIL_STACKS`, `COIL_SECONDS`, `SHED_BELOW`; `systems/sigil.js` names it after the
 raids' three), its three powers through SET2's seams (`systems/sigilSetPowers.js` - the fold for Sea-Scale; the strike
-listener tightening Constrict's coil, a bow's blow too, and the blow reading its stacks at the coiled foe alone; the
-kill ending a coiled foe's coil; the hurt listener for Shed Skin, beside the Wrath and never on a killing blow; the
+listener tightening Constrict's coil, a bow's blow too, and the blow reading its stacks at the coiled foe alone (AUDIT
+625 P3: every foe its own coil - `coilStacksAt`); the kill ending a coiled foe's coil; the hurt listener for Shed Skin,
+beside the Wrath and never on a killing blow (AUDIT 625 P1: nor a saved one - the damage door's `saved`); the
 round's "ready again"; Shed Skin's chip), the nine records (`systems/aetheric.js` `SERPENT_SET_PIECES`,
 `SERPENT_SET_POWER`, `SERPENT_SET_CHANCE`, `rollSerpentSetPiece`; `AETHERIC_RECORDS` the Regalia, the raids' and then
 these, so the Test Room's ladder and the Codex take them with no word of their own), and the one heal a power gives

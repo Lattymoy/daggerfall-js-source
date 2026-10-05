@@ -12,7 +12,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  setBlow, setStrike, setStruck, setRound, setPowerStates, setHudChips, setSetPowersVoice, coilStacks, coiledFoe, awakeTiersOf,
+  setBlow, setStrike, setStruck, setRound, setPowerStates, setHudChips, setSetPowersVoice, coilStacks, coiledFoe, coilStacksAt, awakeTiersOf,
   _setSetPowersClockForTests, _resetSetPowersForTests,
 } from '../src/systems/sigilSetPowers.js';
 import { setSigilOnline, setSigilRenown, SIGIL_STAGES, SIGIL_SET_IDS, SIGIL_BANDS, _resetSigilForTests } from '../src/systems/sigil.js';
@@ -118,7 +118,7 @@ test('SERPENT-SET the law: Sethrakul\'s Coilscale after the raids\' three - Aeth
     }
   }
   assert.equal(s.tiers[2].brief(tierValues(s.tiers[2], 0)), 'Under 35%: shed skin, heal 10%');
-  assert.equal(s.tiers[1].brief(tierValues(s.tiers[1], SET_STAGE_MAX)), '+8% a blow on one foe, to 5');
+  assert.equal(s.tiers[1].brief(tierValues(s.tiers[1], SET_STAGE_MAX)), '+8% a blow on each foe, to 5');   // PIN MOVED (AUDIT 625 P3): each foe its own coil
 });
 
 test('SERPENT-SET the records: nine in the places\' order - the seven body pieces, a kite shield and a ONE-HANDED Katana (so all nine are worn at once) - Ebony, the set\'s own; every affix at the Legendary band\'s middle (over a town\'s thanks, under the Warden), the blow the band\'s middle too; never a frost resistance and one resistance of an element at most; AETHERIC_RECORDS the Regalia, the raids\' and then these (mutants: a number off the middle; a frost piece; the make; the order)', () => {
@@ -235,7 +235,7 @@ test('SERPENT-SET Sea-Scale (2): one fold over RF1\'s channels - frost resistanc
   assert.deepEqual(entityModsOf(wearSet(player(), 'coilscale', 2)).resist, {}, 'offline the sets sleep');
 });
 
-test('SERPENT-SET Constrict (4): each weapon blow of mine that LANDS on the same foe tightens the coil - its per cent a stack at that foe, up to COIL_STACKS, held COIL_SECONDS from the last; another foe starts it again; a bow\'s blow counts; the coiled foe\'s death ends it; never on a player, nor asleep (mutants: the cap; the window; one coil for every foe; the bow refused; the death ignored)', () => {
+test('SERPENT-SET Constrict (4): each weapon blow of mine that LANDS on a foe tightens ITS coil - its per cent a stack at that foe, up to COIL_STACKS, held COIL_SECONDS from the last; another foe starts its own and the first keeps its (AUDIT 625 P3, Mac: "A coil per foe"); a bow\'s blow counts; the coiled foe\'s death ends it; never on a player, nor asleep (mutants: the cap; the window; one coil moved foe to foe; the bow refused; the death ignored)', () => {
   fresh(); online(1);
   const e = wearSet(player(), 'coilscale', 4);
   door([], { me: e });
@@ -244,13 +244,16 @@ test('SERPENT-SET Constrict (4): each weapon blow of mine that LANDS on the same
   assert.deepEqual([1, 2, 3, 4, 5, 6, 7].map(() => swing(e, s, RAT)), [100, 103, 106, 109, 112, 115, 115], 'three per cent a stack at Faint, five at the most');
   assert.equal(coilStacks(10), COIL_STACKS);
   assert.equal(coiledFoe(10), RAT);
-  assert.equal(swing(e, s, WOLF), 100, 'another foe: nothing yet');
-  assert.equal(coiledFoe(10), WOLF, 'the coil moved to it');
-  assert.equal(swing(e, s, RAT), 100, 'the first foe\'s coil was let go');
+  assert.equal(swing(e, s, WOLF), 100, 'another foe: its own coil, nothing yet');
+  assert.equal(coiledFoe(10), WOLF, 'the states say the foe struck last');
+  // PIN MOVED (AUDIT 625 P3, Mac: "A coil per foe"): the first foe's coil was let go - it is its own now, and holds
+  assert.equal(swing(e, s, RAT), 115, 'the first foe keeps its own five');
   at(10 + COIL_SECONDS - 0.01);
-  assert.equal(coilStacks(), 1, 'held to the window\'s end');
+  assert.equal(coilStacks(), COIL_STACKS, 'held to the window\'s end');
+  assert.equal(coilStacksAt(WOLF), 1, 'the other foe its own');
   at(10 + COIL_SECONDS + 0.01);
   assert.equal(coilStacks(), 0, 'and gone past it');
+  assert.equal(coilStacksAt(WOLF), 0);
   assert.equal(swing(e, s, RAT), 100);
   at(20);
   swing(e, bow(), RAT, 10);

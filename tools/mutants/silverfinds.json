@@ -178,12 +178,13 @@
   {
     "name": "SILVER-FINDS-gather-switch-unread",
     "file": "server-account/src/marks.js",
-    "old": "  if (!strikesFor(player, env) || !(amount > 0) || typeof rid !== 'string' || typeof nonce !== 'string') return null;",
-    "new": "  if (!(amount > 0) || typeof rid !== 'string' || typeof nonce !== 'string') return null;",
+    "old": "  if (!strikesFor(player, env) || !findsOpenFor(player, ctx.nowS) || !(amount > 0)",
+    "new": "  if (!findsOpenFor(player, ctx.nowS) || !(amount > 0)",
     "why": "a harvest finds silver with the switch shut",
     "tests": [
       "test/silverfinds_service.test.js"
-    ]
+    ],
+    "note": "AUDIT 625 (re-aimed by content): the same law at its line as the audit left it."
   },
   {
     "name": "SILVER-FINDS-switch-before-the-line",
@@ -458,22 +459,24 @@
   {
     "name": "SILVER-FINDS-door-route",
     "file": "src/net/accountClient.js",
-    "old": "find: (kind, rid) => post('/v1/marks/find', { kind, rid }),",
-    "new": "find: (kind, rid) => post('/v1/marks/found', { kind, rid }),",
+    "old": "find: (kind, rid, account = null) => post('/v1/marks/find', { kind, rid }, account),",
+    "new": "find: (kind, rid, account = null) => post('/v1/marks/found', { kind, rid }, account),",
     "why": "the wrong door",
     "tests": [
       "test/silverfinds_client.test.js"
-    ]
+    ],
+    "note": "AUDIT 625 (re-aimed by content): the same law at its line as the audit left it."
   },
   {
     "name": "SILVER-FINDS-door-body",
     "file": "src/net/accountClient.js",
-    "old": "find: (kind, rid) => post('/v1/marks/find', { kind, rid }),",
-    "new": "find: (kind, rid) => post('/v1/marks/find', { kind }),",
+    "old": "find: (kind, rid, account = null) => post('/v1/marks/find', { kind, rid }, account),",
+    "new": "find: (kind, rid, account = null) => post('/v1/marks/find', { kind }, account),",
     "why": "no request id sent",
     "tests": [
       "test/silverfinds_client.test.js"
-    ]
+    ],
+    "note": "AUDIT 625 (re-aimed by content): the same law at its line as the audit left it."
   },
   {
     "name": "SILVER-FINDS-door-words",
@@ -548,12 +551,13 @@
   {
     "name": "SILVER-FINDS-book-asked-while-down",
     "file": "src/net/marksBook.js",
-    "old": "const r = down ? null : await ask(() => door.find(f.kind, f.rid));",
-    "new": "const r = await ask(() => door.find(f.kind, f.rid));",
+    "old": "        if (held) { if (held !== 'marks-young') owe(f); continue; }\n",
+    "new": "",
     "why": "every owed find asked its tries while the network is down",
     "tests": [
       "test/silverfinds_client.test.js"
-    ]
+    ],
+    "note": "AUDIT 625 (re-aimed by content): the same law at its line as the audit left it."
   },
   {
     "name": "SILVER-FINDS-book-owed-bound",
@@ -568,42 +572,46 @@
   {
     "name": "SILVER-FINDS-book-never-owed",
     "file": "src/net/marksBook.js",
-    "old": "} else if (down || RETRY.includes(r?.error)) {",
-    "new": "} else if (down) {",
+    "old": "          owe(f); held = error;   // never answered: owed",
+    "new": "          held = error;   // never answered: owed",
     "why": "a find the network lost, lost",
     "tests": [
       "test/silverfinds_client.test.js"
-    ]
+    ],
+    "note": "AUDIT 625 (re-aimed by content): the same law at its line as the audit left it."
   },
   {
     "name": "SILVER-FINDS-book-refused-owed",
     "file": "src/net/marksBook.js",
-    "old": "} else if (down || RETRY.includes(r?.error)) {",
-    "new": "} else {",
+    "old": "        }   // an id the service cannot read, a kind of none, a word this build does not know: this find let go",
+    "new": "        } else { owe(f); held = error; }   // an id the service cannot read, a kind of none, a word this build does not know: this find let go",
     "why": "a refused find owed and asked for ever",
     "tests": [
       "test/silverfinds_client.test.js"
-    ]
+    ],
+    "note": "AUDIT 625 (re-aimed by content): the same law at its line as the audit left it."
   },
   {
     "name": "SILVER-FINDS-book-closed-word",
     "file": "src/net/marksBook.js",
-    "old": "} else if (r?.error === 'marks-need-account' || r?.error === 'marks-closed') {",
-    "new": "} else if (r?.error === 'marks-need-account') {",
+    "old": "        } else if (error === 'marks-need-account' || error === 'marks-closed') {",
+    "new": "        } else if (error === 'marks-need-account') {",
     "why": "the switch shut asked again",
     "tests": [
       "test/silverfinds_client.test.js"
-    ]
+    ],
+    "note": "AUDIT 625 (re-aimed by content): the same law at its line as the audit left it."
   },
   {
     "name": "SILVER-FINDS-book-new-id",
     "file": "src/net/marksBook.js",
-    "old": "const r = down ? null : await ask(() => door.find(f.kind, f.rid));",
-    "new": "const r = down ? null : await ask(() => door.find(f.kind, rid()));",
+    "old": "const r = await ask(() => door.find(f.kind, f.rid, f.account));",
+    "new": "const r = await ask(() => door.find(f.kind, rid(), f.account));",
     "why": "every try a new id - a lost answer a second line",
     "tests": [
       "test/silverfinds_client.test.js"
-    ]
+    ],
+    "note": "AUDIT 625 (re-aimed by content): the same law at its line as the audit left it."
   },
   {
     "name": "SILVER-FINDS-book-days-crossed",
@@ -743,12 +751,13 @@
   {
     "name": "SILVER-FINDS-body-unasked",
     "file": "src/scenes/corpseMarker.js",
-    "old": "  openWindow(corpseLootHooks(entry));\n  silverFindAt('corpse', entry);\n",
+    "old": "  if (openWindow(corpseLootHooks(entry)) === true) silverFindAt('corpse', entry);\n",
     "new": "  openWindow(corpseLootHooks(entry));\n",
     "why": "a body never holds silver",
     "tests": [
       "test/silverfinds_client.test.js"
-    ]
+    ],
+    "note": "AUDIT 625 (re-aimed by content): the same law at its line as the audit left it."
   },
   {
     "name": "SILVER-FINDS-body-before-prelude",
@@ -763,22 +772,24 @@
   {
     "name": "SILVER-FINDS-dungeon-body-unasked",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      if (source.length && kind === 'corpse') silverFindAt('corpse', foes[i]);\n      else if",
-    "new": "      if (false) silverFindAt('corpse', foes[i]);\n      else if",
+    "old": "      const _find = source.length && (kind === 'corpse' || kind === 'loot') ? { kind: kind === 'corpse' ? 'corpse' : 'pile', key: silverFindKey(key, kind, i) } : null;",
+    "new": "      const _find = source.length && kind === 'loot' ? { kind: 'pile', key: silverFindKey(key, kind, i) } : null;",
     "why": "a dungeon's body never holds silver",
     "tests": [
       "test/silverfinds_client.test.js"
-    ]
+    ],
+    "note": "AUDIT 625 (re-aimed by content): the same law at its line as the audit left it."
   },
   {
     "name": "SILVER-FINDS-dungeon-pile-unasked",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      else if (source.length && kind === 'loot') silverFindAt('pile', lootPiles[i]);\n",
-    "new": "",
+    "old": "      const _find = source.length && (kind === 'corpse' || kind === 'loot') ? { kind: kind === 'corpse' ? 'corpse' : 'pile', key: silverFindKey(key, kind, i) } : null;",
+    "new": "      const _find = source.length && kind === 'corpse' ? { kind: 'corpse', key: silverFindKey(key, kind, i) } : null;",
     "why": "a treasure pile never holds silver",
     "tests": [
       "test/silverfinds_client.test.js"
-    ]
+    ],
+    "note": "AUDIT 625 (re-aimed by content): the same law at its line as the audit left it."
   },
   {
     "name": "SILVER-FINDS-dungeon-search-unasked",
@@ -793,12 +804,13 @@
   {
     "name": "SILVER-FINDS-peer-body-unasked",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "      if (n > 0) silverFindAt('corpse', f);",
+    "old": "      if (n > 0 && !arrows) silverFindAt('corpse', f);",
     "new": "",
     "why": "a peer's body never holds silver",
     "tests": [
       "test/silverfinds_client.test.js"
-    ]
+    ],
+    "note": "AUDIT 625 (re-aimed by content): the same law at its line as the audit left it."
   },
   {
     "name": "SILVER-FINDS-grave-unasked",

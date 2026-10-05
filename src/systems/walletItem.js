@@ -75,42 +75,60 @@ export function giveWalletGift(/** @type {any} */ entity) {
   return giveWallet(entity);
 }
 
-/** The account's silver, as the host knows it (online, the marks book's balance) - or none (offline, the bench) - and the
- *  host's ask to learn it afresh (the book's refresh). */
-/** @type {(() => (number|null)) | null} */
+/** The account's silver, as the host knows it - online, the marks book's: its balance, null while it is not known yet,
+ *  false for an account that holds none (a guest's, or silver not struck yet) - or no host at all (offline, the bench);
+ *  and the host's ask to learn it afresh (the book's refresh). */
+/** @type {(() => (number|null|false)) | null} */
 let _silver = null;
 /** @type {(() => any) | null} */
 let _refresh = null;
+/** AUDIT 625 W5: the one ask in flight - a look while it is out waits on it, never asks again beside it. */
+/** @type {Promise<void> | null} */
+let _asking = null;
 export function setWalletSilver(/** @type {any} */ read, /** @type {any} */ refresh = null) {
   _silver = typeof read === 'function' ? read : null;
   _refresh = typeof refresh === 'function' ? refresh : null;
+  _asking = null;
 }
-/** The silver asked afresh of the host, as the wallet opens - a promise that settles when the host has answered (or
- *  could not), never one that rejects. */
+/** The silver asked afresh of the host, as the wallet is looked at - a promise that settles when the host has answered
+ *  (or could not), never one that rejects; while an ask is out, that ask. */
 export function refreshWalletSilver() {
-  try { return Promise.resolve(_refresh?.()).then(() => undefined, () => undefined); } catch { return Promise.resolve(); }
+  if (_asking) return _asking;
+  let ask;
+  try { ask = Promise.resolve(_refresh?.()).then(() => undefined, () => undefined); } catch { return Promise.resolve(); }
+  const mine = ask.then(() => { if (_asking === mine) _asking = null; });
+  _asking = mine;
+  return mine;
 }
-/** The silver the wallet counts: a whole number of it, or null where it is not known here. */
+/** AUDIT 625 W5: whether this page counts the account's silver at all - a host told it how (online). */
+export const walletSilverHere = () => _silver != null;
+/** The silver the wallet counts: a whole number of it; false where the account holds none; null where it is not known
+ *  here. */
 export function walletSilver() {
   try {
     const n = _silver?.() ?? null;
+    if (n === false) return false;
     return Number.isSafeInteger(n) && n >= 0 ? n : null;
   } catch { return null; }
 }
 
 /**
  * WHAT THE WALLET HOLDS, from the pack (`items`) and the purse (`entity`): the gold, the silver (null where it is not
- * known), the letters of credit (how many, and the gold they are worth), the embers and the shards (their counts, every
- * stack together), and the pieces themselves (`held`, in the pack's own order - worn ones aside, as the pages leave them).
+ * counted here, and `silverWhy` why - AUDIT 625 W5), the letters of credit (how many, and the gold they are worth), the
+ * embers and the shards (their counts, every stack together), and the pieces themselves (`held`, in the pack's own order
+ * - worn ones aside, as the pages leave them).
  * @param {any[]} items @param {any} entity
  */
-export function walletContents(items, entity, { silver = walletSilver() } = {}) {
+export function walletContents(items, entity, { silver = walletSilver(), here = walletSilverHere() } = {}) {
   const held = (Array.isArray(items) ? items : []).filter((it) => walletHolds(it) && !isEquipped(it));
   const count = (t) => held.reduce((n, it) => n + (it.templateIndex === t ? Math.max(1, Math.trunc(Number(it.stackCount) || 1)) : 0), 0);
   const letters = held.filter((it) => it.templateIndex === LETTER_OF_CREDIT_TEMPLATE);
   return {
     gold: Math.max(0, Math.trunc(Number(entity?.goldPieces) || 0)),
-    silver: Number.isSafeInteger(silver) ? silver : null,
+    silver: typeof silver === 'number' && Number.isSafeInteger(silver) ? silver : null,   // a count, or none counted (`false` is the account's none: silverWhy says so)
+    // AUDIT 625 W5: why none is counted - offline the account keeps it online; online the page is asking (every look asks
+    // afresh), or the account holds none
+    silverWhy: Number.isSafeInteger(silver) ? null : !here ? 'offline' : silver === false ? 'none' : 'asking',
     letters: { count: letters.length, gold: letters.reduce((g, it) => g + Math.max(0, Math.trunc(Number(it.value) || 0)), 0) },
     embers: count(SIGIL_STONE_TEMPLATE),
     shards: count(WELKYND_SHARD_TEMPLATE),
@@ -119,13 +137,18 @@ export function walletContents(items, entity, { silver = walletSilver() } = {}) 
 }
 
 const num = (/** @type {number} */ n) => Number(n).toLocaleString('en-US');
+/** AUDIT 625 W5: the silver's words where no figure is counted, by why (walletContents' `silverWhy`): offline the
+ *  account keeps it; online the page is asking it (every look asks afresh - the sheet, the classic box, the hotbar); an
+ *  account that holds none (a guest's, the counting-houses not striking yet). The online wait once said the offline
+ *  words. */
+export const SILVER_WHY = Object.freeze({ offline: 'kept by your account online', asking: 'asking your account', none: 'none' });
 /** The wallet's lines, as the classic window's box says them (and the enhanced sheet's figures): every currency, a
- *  `none` where it holds none, the silver's where it is not known here said so. */
+ *  `none` where it holds none, the silver's where it is not counted here said why. */
 export function walletLines(/** @type {ReturnType<typeof walletContents>} */ c) {
   return [
     'Your wallet holds:',
     `Gold: ${num(c.gold)}`,
-    `Silver: ${c.silver == null ? 'kept by your account online' : num(c.silver)}`,
+    `Silver: ${c.silver == null ? SILVER_WHY[c.silverWhy] ?? SILVER_WHY.offline : num(c.silver)}`,
     `Letters of credit: ${c.letters.count ? `${num(c.letters.count)}, worth ${num(c.letters.gold)} gold` : 'none'}`,
     `Deadlands Embers: ${c.embers ? num(c.embers) : 'none'}`,
     `Welkynd Shards: ${c.shards ? num(c.shards) : 'none'}`,
@@ -143,4 +166,4 @@ export const WALLET_CARD_LINES = Object.freeze([
 registerItemUseHandler(WALLET_TEMPLATE, (item) => ({ kind: 'wallet', item }));
 
 /** Tests only: no silver known, none asked. */
-export function _resetWalletForTests() { _silver = null; _refresh = null; }
+export function _resetWalletForTests() { _silver = null; _refresh = null; _asking = null; }

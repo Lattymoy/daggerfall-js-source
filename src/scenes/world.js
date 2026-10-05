@@ -10383,7 +10383,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:3262 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:7299
+  // that context through modes.dungeonCtx - so worldModes.js:7300
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -11181,10 +11181,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   const openBodyLoot = (lootKey, pileKeys = null) => {
     bodyPool(lootKey).takeLoot(lootKey, (l) => townTalk.say(l),
       inventoryDoorReady() ? (loot) => {
-        if (!pileKeys && quickLootTake(lootKey, loot, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null, took: showPickups })) return;   // AUDIT QL-WEIGHT1: the window's own resolver; PICKUP-FEED: the cards
+        if (!pileKeys && quickLootTake(lootKey, loot, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null, took: showPickups })) return true;   // AUDIT QL-WEIGHT1: the window's own resolver; PICKUP-FEED: the cards
         const pile = lootPile(lootKey, { keys: pileKeys, describe: (k) => bodyPool(k).pileBody(k), open: openBodyLoot });
         const w = makeInventoryWindow({ loot: pile ? { ...loot, pile } : loot });
         if (w) townTalk.showOverlay(w);   // DISC10-E L3: a refused pack is null
+        return !!w;   // AUDIT 625 D6: whether it OPENED - the corpse door rolls a body's silver on this answer alone
       } : null);
   };
   // U42: the CLASSIC spellbook. PlayerEntity.GetSpells() is the
@@ -13147,7 +13148,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:8695), so exterior mode and a
+    // composer, dungeonContext.js:8709), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -16431,7 +16432,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:11005-11069 -
+  // worldModes answers it in BOTH modes (worldModes.js:11021-11085 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -19878,6 +19879,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     },
     verdictHeard: () => arenaGate.settle(),   // ARENA4b: an exhibition's verdict asked of its room settles the book as it comes
   });
+  /** AUDIT 625 P2: A BOUT BETWEEN PLAYERS IS A DUEL. While I fight in one on a relay's sand (its call to its end), the
+   *  duel's word stands (duelFrame: systems/sigil.js setSigilDueling) and every power that sleeps in a duel sleeps - the
+   *  sets, the loot's powers, the weapon's sigil. My opponent is a Daedra Lord's stand-in for the formulas (below), no
+   *  player, so the gates that refuse a blow at a player never saw one: a set's Constrict, a sigil's per cent, a
+   *  Legendary's thorns all bit in the ring, and the sets' shields stood. */
+  const arenaPvpLive = () => { const b = arenaOnline?.bout(), r = arenaBouts.relay(); return !!b && b.kind === 'pvp' && !!r?.me; };
   /** ARENA4: MY OPPONENT on a relay's sand, as a body my blows meet (scenes/dungeonContext.js arenaRivalBody): the one
    *  body the bout's room draws (the stands have none), its stand-in for the formulas - unarmoured, every blow's number
    *  the referee's to judge. Null outside a bout between players. */
@@ -19941,7 +19948,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // chat. Online only: offline, and on the bench, nothing is found.
   // WALLET1 (bible/06-Systems/Wallet.md): the wallet counts the account's silver - the marks book's balance, asked afresh
   // as the wallet's sheet opens; online alone (offline the wallet says the silver is kept online)
-  if (marksBook) setWalletSilver(() => (marksBook.state.open === false ? null : marksBook.state.balance), () => marksBook.refresh());
+  if (marksBook) setWalletSilver(() => (marksBook.state.open === false ? false : marksBook.state.balance), () => marksBook.refresh());   // AUDIT 625 W5: an account that holds none says none, never the offline words
   if (marksBook) {
     setSilverFinder((kind) => {
       marksBook.find(kind).then((finds) => {
@@ -20600,7 +20607,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const duelFrame = () => {
     duelMgr.tick();
     const setsWere = setsDueling();
-    setSetsDueling(!!duelMgr.live);   // SET2: a duel (its countdown too) - every set sleeps while it stands (systems/sigilSets.js)
+    setSetsDueling(!!duelMgr.live || arenaPvpLive());   // SET2: a duel (its countdown too) - every set sleeps while it stands (systems/sigilSets.js); AUDIT 625 P2: and a bout between players
     if (setsDueling() !== setsWere) computeEntityMods(playerEntity);   // SET3: the stat tiers leave with the duel's first frame and return with its last
     // my ring rose or fell: the onlookers hear it on the next frame - in a CELL room, the only one whose foes frame carries
     // it (AUDIT DUEL1 C1: a duel ended in a dungeon left every one of that room's frames forced full)
@@ -27405,6 +27412,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
               // window and the frame runs on (worldModes' own negated take). test/ql_frame.test.js holds every return.
               if (pile || _fish) {
                 const _hooks = _fish ? dwFishLootHooks(_fish) : droppedLootHooks(pile);
+                // SILVER-FINDS (AUDIT 625 S2): a scene's own TREASURE container out here - World of Daggerfall's piles and
+                // casket, Deep Waters' chests (`container: true`) - rolls its find as an interior's and a dungeon's pile does,
+                // with something in it, once it OPENED (D6); each is unsaved (LoadID 0), minted afresh with its contents, so
+                // its object is its name. The player's own drops and a fish never
+                const _find = pile?.container === true && pile.items.length ? pile : null;
                 // QUICK-LOOT B4: the same door, on the player's own pile -
                 // the hooks this arm was already building for the window.
                 if (!quickLootTake(dropKey, _hooks, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null, took: showPickups })) {   // AUDIT QL-WEIGHT1; PICKUP-FEED: the cards
@@ -27417,7 +27429,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
                     loot: _hooks,   // G5: DaggerfallLoot's own identity
                   });
                   if (w) townTalk.showOverlay(w);   // DISC10-E L3: a refused pack is null
-                } else droppedLoot.releaseEmptied();   // AUDIT 68 S20: a take is its own window close - an emptied pile is freed
+                  if (w && _find) silverFindAt('pile', _find);
+                } else {
+                  if (_find) silverFindAt('pile', _find);
+                  droppedLoot.releaseEmptied();   // AUDIT 68 S20: a take is its own window close - an emptied pile is freed
+                }
               }
             }
             else modes.tryEnter().then((opened) => {

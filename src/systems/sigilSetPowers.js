@@ -42,7 +42,8 @@
 // SERPENT-SET (2026-10-05) - THE OLD COIL'S OWN, Sethrakul's Coilscale (Sigil-Sets.md section 6c), through the same seams:
 //   Sea-Scale                  the FOLD
 //   Constrict                  the STRIKE listener tightens the coil (a weapon blow that LANDED on a foe, a bow's too);
-//                              the BLOW reads its stacks at the coiled foe; the KILL of that foe ends it
+//                              the BLOW reads its stacks at the coiled foe; the KILL of that foe ends it - AUDIT 625 P3
+//                              (Mac: "A coil per foe"): every foe its own coil
 //   Shed Skin                  the HURT listener: a foe's blow that takes me under its line heals me
 //                              (systems/playerHeal.js, the loot's own heal)
 //
@@ -84,7 +85,8 @@ const fresh = () => ({
   marked: null, markUntil: 0,         // RAID4b: the Thief-Taker's Garb (6) - the marked foe's entity
   blood: 0, bloodUntil: 0,            // RAID4b: Orcsbane Harness (4)
   ward: 0, wardReady: 0,              // RAID4b: Orcsbane Harness (6) - the ward's points left
-  coilFoe: null, coil: 0, coilUntil: 0, // SERPENT-SET: Sethrakul's Coilscale (4) - the coiled foe's entity and its stacks
+  coils: new WeakMap(),               // SERPENT-SET: Sethrakul's Coilscale (4) - AUDIT 625 P3: each foe's own coil, entity -> { n, until }
+  coilFoe: null,                      // the foe my last landed blow coiled - the one the states say
   shedReady: 0,                       // SERPENT-SET: Sethrakul's Coilscale (6)
   recovering: new Set(),              // the powers whose "ready again" is still to be said
 });
@@ -148,10 +150,17 @@ export const rampageStacks = (now = _now()) => (now < _s.rampageUntil ? _s.rampa
  *  has run out. */
 export const bloodStacks = (now = _now()) => (now < _s.bloodUntil ? _s.blood : 0);
 export const markedFoe = (now = _now()) => (now < _s.markUntil && !(_s.marked?.health <= 0) ? _s.marked : null);   // AUDIT SETS L1: a mark on a body is none (a peer's kill of it reaches no setKill of mine)
-/** SERPENT-SET: Constrict's coiled foe (its entity) and its stacks now - none once the window has run out, or over a body
- *  (a peer's kill of it reaches no setKill of mine: the mark's own law). */
-export const coiledFoe = (now = _now()) => (now < _s.coilUntil && !(_s.coilFoe?.health <= 0) ? _s.coilFoe : null);
-export const coilStacks = (now = _now()) => (coiledFoe(now) ? _s.coil : 0);
+/** SERPENT-SET, AUDIT 625 P3 (Mac: "A coil per foe"): A FOE'S OWN COIL - its stacks now, none once its window has run
+ *  out, or over a body (a peer's kill of it reaches no setKill of mine: the mark's own law). One coil once, moved to
+ *  whichever foe a blow landed on last, so a swing that met two foes - a crowd's, a sweep's - unwound it on each in
+ *  turn and never built it; every foe holds its own now, each its stacks and its window. */
+export const coilStacksAt = (foe, now = _now()) => {
+  const c = foe && !(foe.health <= 0) ? _s.coils.get(foe) : null;
+  return c && now < c.until ? c.n : 0;
+};
+/** The foe my last landed blow coiled, while its coil holds, and its stacks (the states' - a card's, the pins'). */
+export const coiledFoe = (now = _now()) => (coilStacksAt(_s.coilFoe, now) ? _s.coilFoe : null);
+export const coilStacks = (now = _now()) => coilStacksAt(_s.coilFoe, now);
 const belowHalf = (e) => Number.isFinite(e?.health) && e.maxHealth > 0 && e.health < e.maxHealth / 2;
 const ranged = (w) => weaponSkillUsed(w?.templateIndex) === SKILLS.Archery;
 /** @type {WeakMap<object, number>} */
@@ -188,7 +197,7 @@ export function setBlow(weapon, damage, attacker, target, info) {
   const orcs = t.get('orcsbane');
   if (orcs?.[1]) pct += orcs[1].stack * bloodStacks(now);   // RAID4b: Blood for Blood
   const coil = t.get('coilscale');
-  if (coil?.[1] && coiledFoe(now) === target) pct += coil[1].stack * coilStacks(now);   // SERPENT-SET: Constrict
+  if (coil?.[1]) pct += coil[1].stack * coilStacksAt(target, now);   // SERPENT-SET: Constrict, at that foe's own coil (AUDIT 625 P3)
   let out = damage;
   if (pct > 0) {
     const key = weapon ?? attacker;
@@ -212,15 +221,14 @@ export function setStrike(attacker, target, damage, weapon) {
   if (v) cleave(target, (damage * v.share) / 100, weapon);
 }
 /** SERPENT-SET, CONSTRICT: a weapon blow of mine that LANDED on a foe tightens the coil on it - a stack more, up to
- *  COIL_STACKS, the window renewed to COIL_SECONDS; a blow that lands on another foe starts the coil on that one. Never
- *  on a player (a duel: the sets sleep), and only while the tier is awake on me. */
+ *  COIL_STACKS, its window renewed to COIL_SECONDS; a blow that lands on another foe starts that foe's own coil, and the
+ *  first keeps its own (AUDIT 625 P3, Mac: "A coil per foe"). Never on a player (a duel: the sets sleep), and only while
+ *  the tier is awake on me. */
 function coiled(attacker, target) {
   if (!target || target.isPlayer || !tierOf(attacker, 'coilscale', 1)) return;
   const now = _now();
-  const had = coiledFoe(now) === target ? coilStacks(now) : 0;
+  _s.coils.set(target, { n: Math.min(COIL_STACKS, coilStacksAt(target, now) + 1), until: now + COIL_SECONDS });   // AUDIT 625 P3: its own
   _s.coilFoe = target;
-  _s.coil = Math.min(COIL_STACKS, had + 1);
-  _s.coilUntil = now + COIL_SECONDS;
 }
 
 const flat2 = (a, b) => Math.hypot(a[0] - b[0], a[2] - b[2]);
@@ -353,7 +361,7 @@ const _landed = new Map();
 export function registerPlayerBlowLanded(name, fn) { if (typeof fn === 'function') _landed.set(name, fn); else _landed.delete(name); }
 
 // ── Wrath of the Warden: a blow that leaves me under the line ───────
-export function setHurt(entity, { before, after }) {
+export function setHurt(entity, { before, after, saved = false }) {
   if (!entity?.isPlayer || entity.peer) return;
   const blow = _pending;
   _pending = null;
@@ -361,7 +369,7 @@ export function setHurt(entity, { before, after }) {
   if (before - after > 0) for (const fn of _landed.values()) { try { fn(entity, blow.attacker, before - after); } catch { /* the loot is not the blow's problem */ } }   // LOOT4
   spite(entity, blow, before - after);
   if (before - after > 0) bloodied(entity);   // RAID4b: Riposte, Blood for Blood
-  shed(entity, before, after);   // SERPENT-SET: Shed Skin
+  shed(entity, before, after, saved);   // SERPENT-SET: Shed Skin
   const v = tierOf(entity, 'ruhn', 2);
   const max = entity?.maxHealth;
   if (!v || !(max > 0) || !(after > 0)) return;
@@ -392,11 +400,13 @@ function bloodied(entity) {
 /** SERPENT-SET, SHED SKIN: a foe's blow that takes me under SHED_BELOW of my health - from at or over it, still standing,
  *  and while it is ready - sheds my skin: its share of my health returns at once (systems/playerHeal.js), and it must
  *  recover. A blow that kills me sheds nothing (the death is another tier's: Unbroken's), nor does a fall or a spell
- *  (no foe's blow - setHurt's own law). */
-function shed(entity, before, after) {
+ *  (no foe's blow - setHurt's own law). AUDIT 625 P1: nor a killing blow a death save turned aside (`saved` - Unbroken,
+ *  Divine Grace: the door left me at 1, standing) - it was a killing blow, and the save was the save; Shed Skin on top
+ *  healed a second time and spent its recovery on a death it never met. */
+function shed(entity, before, after, saved = false) {
   const v = tierOf(entity, 'coilscale', 2);
   const max = entity?.maxHealth;
-  if (!v || !(max > 0) || !(after > 0)) return;
+  if (!v || !(max > 0) || !(after > 0) || saved) return;
   const line = max * SHED_BELOW;
   if (!(before >= line && after < line)) return;
   const now = _now();
@@ -464,7 +474,7 @@ export function setKill(entity = null) {
     sound('eventide');
   }
   if (entity && _s.marked === entity) _s.markUntil = 0;   // AUDIT SETS L1: the marked foe's own death ends its mark (its chip counted on over a body)
-  if (entity && _s.coilFoe === entity) _s.coilUntil = 0;   // SERPENT-SET: the coiled foe's death ends the coil - the next foe starts it again
+  if (entity) _s.coils.delete(entity);   // SERPENT-SET: a coiled foe's death ends its coil (AUDIT 625 P3: its own - every other foe keeps theirs)
   if (t.get('thieftaker')?.[2]) markNext(door, entity, now);
   const hide = t.get('orcsbane')?.[2];
   if (hide && now >= _s.wardReady) {   // RAID4b: Iron Hide - a fresh ward, never one on top of another
@@ -553,7 +563,7 @@ export function setPowerStates(now = _now()) {
     riposteLeft: left(_s.riposteUntil), blood: bloodStacks(now), bloodLeft: bloodStacks(now) ? left(_s.bloodUntil) : 0,
     markLeft: markedFoe(now) ? left(_s.markUntil) : 0, ward: _s.ward, wardRecoverLeft: left(_s.wardReady),
     // SERPENT-SET: Constrict's stacks and window, Shed Skin's recovery
-    coil: coilStacks(now), coilLeft: coilStacks(now) ? left(_s.coilUntil) : 0, shedRecoverLeft: left(_s.shedReady),
+    coil: coilStacks(now), coilLeft: coilStacks(now) ? left(_s.coils.get(_s.coilFoe).until) : 0, shedRecoverLeft: left(_s.shedReady),
   };
 }
 

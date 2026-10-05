@@ -43,7 +43,7 @@
 
 import {
   SIGIL_STAGES, SIGIL_SET_IDS, SIGIL_BANDS, sigilSetId, sigilRank, sigilStageIn, renownSigilStage, sigilRenown, sigilChance,
-  sigilParty, drinkSigil, sigilRiseLine, sigilOnline, sigilLines, sigilHasBlow,
+  sigilParty, drinkSigil, sigilRiseLine, sigilOnline, sigilLines, sigilHasBlow, setSigilDueling, sigilDueling,
 } from './sigil.js';
 import { equipTableOf } from './equip.js';
 import { isShieldTemplate } from './armorMaterials.js';
@@ -244,8 +244,8 @@ export const SIGIL_SETS = Object.freeze({
         (v) => `+${v.frost} frost resistance, +${v.endurance} Endurance`,
         (v) => `+${v.frost} frost resist, +${v.endurance} Endurance`),
       tier(4, 'constrict', 'Constrict', { stack: [3, 8] },
-        (v) => `Each weapon blow of yours that lands on the same foe tightens the coil: +${v.stack}% weapon damage to it a blow, up to ${COIL_STACKS}, for ${COIL_SECONDS} s after the last. A blow on another foe starts it again`,
-        (v) => `+${v.stack}% a blow on one foe, to ${COIL_STACKS}`),
+        (v) => `Each weapon blow of yours that lands on a foe tightens its coil: +${v.stack}% weapon damage to it a blow, up to ${COIL_STACKS}, for ${COIL_SECONDS} s after the last. Every foe holds its own coil`,   // AUDIT 625 P3 (Mac: "A coil per foe")
+        (v) => `+${v.stack}% a blow on each foe, to ${COIL_STACKS}`),
       tier(6, 'shed-skin', 'Shed Skin', { heal: [10, 30], recover: [240, 120] },
         (v) => `When a foe's blow takes you below ${Math.round(SHED_BELOW * 100)}% health, you shed your skin and ${v.heal}% of your health returns. Recovers in ${v.recover} s`,
         (v) => `Under ${Math.round(SHED_BELOW * 100)}%: shed skin, heal ${v.heal}%`),
@@ -312,12 +312,12 @@ export function wornSetPieces(entity) {
 }
 
 // ── the session: the duel (online-ness and Renown are sigil.js's) ──
-let _dueling = false;
-/** The host's word (scenes/world.js, at a duel's start and end): the player is in a duel, and every set sleeps. */
-export function setSetsDueling(on) { _dueling = !!on; }
-export const setsDueling = () => _dueling;
+/** The host's word (scenes/world.js, at a duel's start and end): the player is in a duel, and every set sleeps. AUDIT
+ *  625 P2: kept by sigil.js (setSigilDueling), where the weapon's own blow reads it too - one word, every power. */
+export function setSetsDueling(on) { setSigilDueling(on); }
+export const setsDueling = () => sigilDueling();
 /** Are sets awake at all: online, my Renown known, not in a duel. */
-export const setsAwake = () => sigilRenown() != null && !_dueling;
+export const setsAwake = () => sigilRenown() != null && !sigilDueling();
 
 /**
  * A WORN SET'S STATE for a Renown: how many of its pieces are worn, the stage it stands at (-1 asleep), what holds it
@@ -431,7 +431,7 @@ export function drinkWorn(entity, held, xp, nameOf = (it) => String(it?.name ?? 
   const was = new Map([...worn].map(([id, pieces]) => [id, lowestRank(pieces)]));
   // AUDIT SET D8: a set's weapon sleeps with its set in a duel (section 2: "no piece drinks"); a plain sigil weapon
   // drinks as SIGIL1 says
-  const rank = setIdOf(held) && _dueling ? null : drinkSigil(held, xp);
+  const rank = setIdOf(held) && sigilDueling() ? null : drinkSigil(held, xp);
   for (const pieces of worn.values()) for (const p of pieces) if (p !== held) drinkSigil(p, xp);
   const risen = [];
   for (const [id, pieces] of worn) { const now = lowestRank(pieces); if (now > was.get(id)) risen.push([id, now]); }
@@ -467,7 +467,7 @@ export function setPlacesWorn(entity, id) {
   return out;
 }
 /** Why every set sleeps now, or null while they wake: 'offline', 'renown' (online, my Renown not yet known), 'duel'. */
-export const setsSleep = () => (!sigilOnline() ? 'offline' : sigilRenown() == null ? 'renown' : _dueling ? 'duel' : null);
+export const setsSleep = () => (!sigilOnline() ? 'offline' : sigilRenown() == null ? 'renown' : sigilDueling() ? 'duel' : null);
 
 /**
  * THE VIEW OF A SET PIECE'S SET for a wearer (the player by default): the set (`name`, `prince`, `role`, `colour`,
@@ -499,7 +499,7 @@ export const setSleepText = (sleep) => SLEEP_WORDS[sleep] ?? null;
  *  own lines: its blow is SIGIL1's, foes only, and lands on a foe in a duel as any sigil weapon's does. */
 export function setSigilLines(item) {
   const lines = sigilLines(item);
-  return lines.length && _dueling && setIdOf(item) && !sigilHasBlow(item.sigil) ? ['Sigil (asleep in a duel)'] : lines;
+  return lines.length && sigilDueling() && setIdOf(item) && !sigilHasBlow(item.sigil) ? ['Sigil (asleep in a duel)'] : lines;
 }
 /** The set in words, for a tooltip that prints lines (the classic skin's, a plaque's, the trade window's, a chat post):
  *  its name and what is worn, then a line a tier - which are awake, and what each wants. CARD-FIT: each tier by its
@@ -514,4 +514,4 @@ export function setLines(item, wearer = setsWearer()) {
 }
 
 /** Tests only: forget the duel and the wearer. */
-export function _resetSigilSetsForTests() { _dueling = false; _wearer = () => null; }
+export function _resetSigilSetsForTests() { setSigilDueling(false); _wearer = () => null; }
