@@ -108,7 +108,7 @@ test('SERPENT1 wire: the client says five things - `in` with its day, law, level
   assert.equal(parseClient(JSON.stringify({ t: 'serpent', k: 'hit', d: -1, z: 0 }), { hasHello: true }).error, 'bad serpent');
   assert.equal(SERPENT_RELAY_MIN, 165);
   assert.ok(relayVersionAtLeast(SERPENT_RELAY_MIN), 'the relay this tree builds holds a serpent');
-  assert.equal(RELAY_VERSION, 'world167');   // SHADOW-CLOAK moved it on last (world167: the cloak's aura word on the token - world165 on its branch, renumbered past SERPENT1 and SERPENT2 at the merges); SERPENT2 moved it on (world166: the serpent herald)
+  assert.equal(RELAY_VERSION, 'world169');   // AUDIT ARENA-LADDER moved it on last (world169: the arena ladder audit - elite champions, telegraphed blows, a judging floor and the attempt ticket - world167 on its branch, renumbered past SHADOW-CLOAK and SERAPH-WINGS at the merges); SERAPH-WINGS moved it on (world168: the Seraph Wings join the aura vocabulary of the token - a relay before it refuses the token of a developer wearing them); SHADOW-CLOAK moved it on (world167: the cloak's aura word on the token - world165 on its branch, renumbered past SERPENT1 and SERPENT2 at the merges); SERPENT2 moved it on (world166: the serpent herald)
   assert.ok(relaySupportsSerpent('world165') && !relaySupportsSerpent('world164') && !relaySupportsSerpent(undefined));
   let b = null, pass = 0;
   for (let i = 0; i < 40; i++) { const g = serpentGate(b, 1000); b = g.bucket; if (g.pass) pass++; }

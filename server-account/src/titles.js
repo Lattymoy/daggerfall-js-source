@@ -265,12 +265,18 @@ export function titlesHeld(player, env) {
   return held;
 }
 
+/** SERAPH-WINGS (2026-10-05, Mac: "I want to build an aura for the developers ... Golden Angel wings that flow"): THE
+ *  DEVELOPERS' AURA - held while the handle is in DEVELOPER_HANDLES, as the developer title and glyph are, and gone on
+ *  the next token once it is not. */
+export const DEVELOPER_AURA = 'seraphwings';
 /** WB9g: THE AURAS THIS PLAYER HOLDS - the Broker's, bought (the row's `insignia`), in the offers' order. AEGIS: and,
  *  first, the auras their listed titles carry (TIER_AURA), in TIER_AURA's own order - read off the config as the title is,
- *  so `env` is owed wherever a list could grant one (a caller without it reads the Broker's alone, as before). */
+ *  so `env` is owed wherever a list could grant one (a caller without it reads the Broker's alone, as before).
+ *  SERAPH-WINGS: and, after those, a developer's wings (DEVELOPER_AURA). */
 export function aurasHeld(player, env) {
   const held = [];
   for (const [t, a] of Object.entries(TIER_AURA)) if (holdsTier(t, player, env) && !held.includes(a)) held.push(a);
+  if (isDeveloper(player, env) && !held.includes(DEVELOPER_AURA)) held.push(DEVELOPER_AURA);
   for (const a of insigniaKeys(player?.insignia, 'aura')) if (!held.includes(a)) held.push(a);
   return held;
 }

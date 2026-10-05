@@ -82,12 +82,12 @@
   {
     "name": "AEGIS-the-wards-button-in-the-fire",
     "file": "src/ui/playerBadge.js",
-    "old": "oblivionward: 'aegis', radiance: 'primarch', shadowcloak: 'shadowfang' });",
-    "new": "oblivionward: 'gatebreaker', radiance: 'primarch', shadowcloak: 'shadowfang' });",
+    "old": "oblivionward: 'aegis', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder' });",
+    "new": "oblivionward: 'gatebreaker', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder' });",
     "tests": [
       "test/aegis.test.js"
     ],
-    "note": "The Oblivion Ward's button on the card painted in Dagon's fire. PRIMARCH (re-aimed by content): the line gained the radiance's paint. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line."
+    "note": "The Oblivion Ward's button on the card painted in Dagon's fire. PRIMARCH (re-aimed by content): the line gained the radiance's paint. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. SERAPH-WINGS (re-aimed by content): the wings joined the list."
   },
   {
     "name": "AEGIS-the-list-renamed",
@@ -112,12 +112,12 @@
   {
     "name": "AEGIS-the-brokers-first",
     "file": "server-account/src/titles.js",
-    "old": "  for (const [t, a] of Object.entries(TIER_AURA)) if (holdsTier(t, player, env) && !held.includes(a)) held.push(a);\n  for (const a of insigniaKeys(player?.insignia, 'aura')) if (!held.includes(a)) held.push(a);",
-    "new": "  for (const a of insigniaKeys(player?.insignia, 'aura')) if (!held.includes(a)) held.push(a);\n  for (const [t, a] of Object.entries(TIER_AURA)) if (holdsTier(t, player, env) && !held.includes(a)) held.push(a);",
+    "old": "  for (const [t, a] of Object.entries(TIER_AURA)) if (holdsTier(t, player, env) && !held.includes(a)) held.push(a);\n  if (isDeveloper(player, env) && !held.includes(DEVELOPER_AURA)) held.push(DEVELOPER_AURA);\n  for (const a of insigniaKeys(player?.insignia, 'aura')) if (!held.includes(a)) held.push(a);",
+    "new": "  for (const a of insigniaKeys(player?.insignia, 'aura')) if (!held.includes(a)) held.push(a);\n  for (const [t, a] of Object.entries(TIER_AURA)) if (holdsTier(t, player, env) && !held.includes(a)) held.push(a);\n  if (isDeveloper(player, env) && !held.includes(DEVELOPER_AURA)) held.push(DEVELOPER_AURA);",
     "tests": [
       "test/aegis.test.js"
     ],
-    "note": "The Broker's auras offered before the list's."
+    "note": "The Broker's auras offered before the list's. SERAPH-WINGS (re-aimed by content): the wings joined the list."
   },
   {
     "name": "AEGIS-the-wardrobe-without-the-config",
@@ -162,12 +162,12 @@
   {
     "name": "AEGIS-the-vocabulary-without-the-ward",
     "file": "src/net/identityToken.js",
-    "old": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak']);",
-    "new": "export const AURAS = Object.freeze(['dagonfire', 'radiance', 'shadowcloak']);",
+    "old": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings']);",
+    "new": "export const AURAS = Object.freeze(['dagonfire', 'radiance', 'shadowcloak', 'seraphwings']);",
     "tests": [
       "test/aegis.test.js"
     ],
-    "note": "The relay refuses Sureme's token. PRIMARCH (re-aimed by content): the list gained the radiance, which stays. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line."
+    "note": "The relay refuses Sureme's token. PRIMARCH (re-aimed by content): the list gained the radiance, which stays. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. SERAPH-WINGS (re-aimed by content): the wings joined the list."
   },
   {
     "name": "AEGIS-a-gap-in-the-ring",
@@ -292,8 +292,8 @@
   {
     "name": "AEGIS-the-symbols-never-drawn",
     "file": "src/render/auraRing.js",
-    "old": "          if (look.glyphs) {   // AEGIS: the ward's floating symbols, a third draw",
-    "new": "          if (false) {   // AEGIS: the ward's floating symbols, a third draw",
+    "old": "          if (look.glyphs && !closed) {",
+    "new": "          if (false) {",
     "tests": [
       "test/aegis.test.js"
     ],

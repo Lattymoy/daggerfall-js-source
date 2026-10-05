@@ -66,7 +66,7 @@ import { renownFoeStruck, renownFoeDied } from '../net/renownTracker.js';   // R
 import { reportPlayerKill } from '../systems/playerKills.js';   // SET2: my own kills, told
 import { partyFoeLoses, partyFoeHits, partyFoeHeals, noteFighter, foeFighters, takeWholeBlow, PARTY_ME } from '../systems/partyScale.js';   // PSCALE1: a shared foe weighs whoever fights it
 import { stampWonWeapons } from '../systems/lootRarity.js';   // SIGIL1: a body's weapons won online
-import { corpseName, mobileEntityName, liveEntityName } from '../systems/worldTooltips.js';   // WORLD-HOVER: "<who> (dead)", the mod's own word (.cs:526); H2: and a LIVE one's, when it is not hostile (.cs:304-312)
+import { corpseName, mobileEntityName, liveEntityName } from '../systems/worldTooltips.js'; import { questFoeSubs } from '../systems/questFoeLine.js';   // QUEST-FOE-LINE: a quest's foe says whose it is; WORLD-HOVER: "<who> (dead)", the mod's own word (.cs:526); H2: and a LIVE one's, when it is not hostile (.cs:304-312)
 import { enemyDisplayName } from '../characters/enemyBasics.js';   // GetLocalizedEnemyName, the index law in one place
 import { bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { bloodHit } from '../combat/bloodDecals.js';   // BLOOD1b: the blow, in the shape the mark's ladder reads
@@ -1497,7 +1497,8 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
           // falls through to its hand-to-hand attack.
           const fwpn = chooseEnemyWeapon(dropWeaponIfTargetImmune(f.entity.weapon, _foeTarget.entity), ENEMY_BASICS[f.mobileType]);
           const ffwd = [Math.sin(f.ai.yaw), 0, Math.cos(f.ai.yaw)];   // transform.forward (:208)
-          if (meleeHitConnects(f.ai._dist, f.ai.inSight, withinYaw(f.ai.yaw, fdx, fdz, MELEE_HIT_YAW_DEG))) {
+          // AUDIT ARENA-LADDER: a telegraphed blow at a bout-mate (ai/tactics.js blowAim) - decided and weighed by its shape
+          if (blowConnects(f.ai, meleeHitConnects(f.ai._dist, f.ai.inSight, withinYaw(f.ai.yaw, fdx, fdz, MELEE_HIT_YAW_DEG)))) {
             applyDamageToNonPlayer(f, _foeTarget, {
               weapon: fwpn, direction: ffwd, rolls,
               calculateAttackDamage,
@@ -1506,7 +1507,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
               // guard pool's door (the host wires that through the
               // candidate's `hurtFromFoe`, the `_encounter` split
               // world.js already uses for spell sinks).
-              dealDamage: (t, d) => (t.hurtFromFoe ? t.hurtFromFoe(d, ffwd, f) : damageFoe(t, d, null, ffwd)),
+              dealDamage: (t, d) => { d = blowScaled(f.ai, d); return t.hurtFromFoe ? t.hurtFromFoe(d, ffwd, f) : damageFoe(t, d, null, ffwd); },   // AUDIT ARENA-LADDER: the shape's weight
               audio, hitEffects,
               // AUDIT 58: FormulaHelper.cs:691-696 has NO player gate -
               // a poisoned foe blade doses the foe it strikes. Without
@@ -1708,7 +1709,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     const f = liveFoeFor(foes, key, 'mobileFoe', { idOf });
     if (!f) return null;
     const t = mobileEntityName(liveEntityName(f, enemyDisplayName(f.mobileType)), { hostile: !!f.ai?.isHostile && !f.yielded && !f._pupYield });   // HOVER-PLAIN: a hostile foe is never named here, a champion, an elite or a revenant included - its name stands on its health bar alone; a kneeling revenant (mine or a peer's, still hostile in its motor) is done fighting, so it says so below
-    return t ? { title: f.yielded || f._pupYield ? `${t} - beaten` : t } : null;   // REVENANT-FATE: a kneeling revenant says so
+    return t ? { title: f.yielded || f._pupYield ? `${t} - beaten` : t, subs: questFoeSubs(f) } : null;   // REVENANT-FATE: a kneeling revenant says so; QUEST-FOE-LINE (FIELD BUGS 2026-10-04f): a quest's foe at peace says whose it is
   };
   // MAC-E: and the general arm is the WINDOW now (PlayerActivate.cs:957),
   // not a bulk transfer - `openWindow` is the host's own inventory door.

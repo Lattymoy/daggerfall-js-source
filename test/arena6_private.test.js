@@ -327,7 +327,9 @@ test('ARENA6 the seats: a session holds ARENA_PRIVATE_MEMBERS_MAX (the stands\' 
   await R.hello(stranger, 'peer-str', null, { name: 'Stranger', kind: 'linked', tokenSub: 'acct-str' });
   await word(R, stranger, { k: 'in', r: 'f', tier: 0, bout: 0, lv: 5 });
   assert.equal(last(stranger, 'no').m, 'not member');
-  await word(R, socks[0], { k: 'in', r: 'f', tier: 0, bout: 0, lv: 5 });
+  // AUDIT ARENA-LADDER 2 (PIN MOVED): with a ticket - a ticketless ladder `in` is told 'no bout' by the ladder's own door, so
+  // only a ticketed one shows the session room refusing to open a ladder bout
+  await word(R, socks[0], { k: 'in', r: 'f', tier: 0, bout: 0, lv: 5, z: 'feedc0de000000e1' });
   assert.equal(last(socks[0], 'no').m, 'no bout', 'a member\'s `in` with no bout standing - and an `in` here opens no ladder bout');
   assert.equal(await R.room._boutOf(), null);
   await ps(R, host, 'go');

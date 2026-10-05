@@ -91,7 +91,7 @@ const find = (n, cls) => {
 test('PRIMARCH vocabulary: the title and the glyph join the closed lists last, the aura joins AURAS after the ward; "Primarch" and "Golden Radiance" in words; the title ONE colour - the pixel menu\'s own light gold, #d8cfae, held to the menu\'s rule - no gradient, no edge; the glyph in it, filled; `Y` on the classic face; the radiance\'s button in the Primarch\'s gold; the wire keeps all three (mutants: the colour, the glyph\'s colour, the mark, the fill, the button\'s paint, the words)', () => {
   assert.equal(TITLES.at(-1), 'primarch', 'the vocabulary\'s newest');
   assert.equal(GLYPHS.at(-1), 'primarch');
-  assert.deepEqual([...AURAS], ['dagonfire', 'oblivionward', 'radiance', 'shadowcloak'], 'the Broker\'s fire, the ward, then the radiance - SHADOW-CLOAK\'s cloak after it (PIN MOVED)');
+  assert.deepEqual([...AURAS], ['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings'], 'the Broker\'s fire, the ward, then the radiance - SHADOW-CLOAK\'s cloak after it, SERAPH-WINGS\' wings after that (PIN MOVED)');
   assert.equal(TITLE_TEXT.primarch, 'Primarch', 'GA00250: "the title will be Primarch"');
   assert.equal(AURA_TEXT.radiance, 'Golden Radiance');
   assert.equal(GLYPH_LABEL.primarch, 'Primarch', 'named on the account card');
@@ -116,7 +116,7 @@ test('PRIMARCH vocabulary: the title and the glyph join the closed lists last, t
   assert.ok(GLYPH_MARK.primarch.charCodeAt(0) >= FONT_GLYPH_MIN && GLYPH_MARK.primarch.charCodeAt(0) <= FONT_GLYPH_MAX, 'inside the font');
   for (const a of AURAS) assert.ok(AURA_TEXT[a] && TITLES.includes(AURA_PAINT[a]), `every aura has a word and a title's paint for its button: ${a}`);
   assert.equal(AURA_PAINT.radiance, 'primarch', 'the radiance in the Primarch\'s own gold');
-  assert.deepEqual({ ...AURA_PAINT }, { dagonfire: 'gatebreaker', oblivionward: 'aegis', radiance: 'primarch', shadowcloak: 'shadowfang' }, 'the fire and the ward as before - SHADOW-CLOAK\'s cloak in the Shadow Fang\'s paint after them (PIN MOVED)');
+  assert.deepEqual({ ...AURA_PAINT }, { dagonfire: 'gatebreaker', oblivionward: 'aegis', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder' }, 'the fire and the ward as before - SERAPH-WINGS\' wings in the Founder\'s gold (PIN MOVED) - SHADOW-CLOAK\'s cloak in the Shadow Fang\'s paint after them (PIN MOVED)');
   const badge = titleBadge({ title: 'primarch' });
   assert.deepEqual({ text: badge.text, rgba: badge.rgba, gradient: badge.gradient, edge: badge.edge }, { text: 'Primarch', rgba: TITLE_RGBA.primarch, gradient: null, edge: null });
   assert.deepEqual(readBadge({ title: 'primarch', glyphs: ['primarch'] }), { title: 'primarch', glyphs: ['primarch'] }, 'the wire keeps it');
@@ -243,7 +243,7 @@ test('PRIMARCH the service end to end: GA00250 registers, holds the title, the g
 });
 
 test('PRIMARCH token and relay: a token may carry the title, the glyph and the radiance and verifies; every glyph at once still fits; the relay - world162, the one that knows the words - reads all three out of the signature onto the peer\'s row (mutants: the vocabulary\'s aura)', async () => {
-  assert.equal(RELAY_VERSION, 'world167', 'PRIMARCH moved it on (world162): the vocabulary rides the relay\'s bundle; SUNBABY1 after it (world163, a live event\'s word - PIN MOVED); PARTY-LEAD after that (world164, the hub\'s party.lead act - PIN MOVED); SERPENT1 after it (world165, the serpent frame - PIN MOVED); SERPENT2 after that (world166, the serpent herald - PIN MOVED); SHADOW-CLOAK after it (world167, the cloak\'s word - PIN MOVED)');
+  assert.equal(RELAY_VERSION, 'world169', 'PRIMARCH moved it on (world162): the vocabulary rides the relay\'s bundle; SUNBABY1 after it (world163, a live event\'s word - PIN MOVED); PARTY-LEAD after that (world164, the hub\'s party.lead act - PIN MOVED); SERPENT1 after it (world165, the serpent frame - PIN MOVED); SERPENT2 after that (world166, the serpent herald - PIN MOVED); SHADOW-CLOAK after it (world167, the cloak\'s word - PIN MOVED); SERAPH-WINGS after it (world168, the wings word - PIN MOVED); AUDIT ARENA-LADDER after that (world169, the arena ladder audit - PIN MOVED)');
   const kp = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
   const pub = await importPublicKeyB64(Buffer.from(new Uint8Array(await subtle.exportKey('raw', kp.publicKey))).toString('base64url'), { subtle });
   const nowS = 1_760_000_000;
@@ -410,6 +410,11 @@ test('PRIMARCH the radiance\'s column, the shader RUN: light ROUND the body - fa
   let veil = 0, seen = 0;
   for (const [u, vv] of [[0.25, 0.5], [0.3, 0.4], [0.2, 0.7], [0.75, 0.5], [0, 0.3], [0.5, 0.6]]) { veil += lum(wallAt(u, vv, inside)); seen += lum(wallAt(u, vv, out)); }
   assert.ok(veil < 0.15 * seen, `no gold veil from inside it (${veil.toFixed(3)} against ${seen.toFixed(3)} from outside)`);
+  // AUDIT 3 (2026-10-05): inside is INSIDE - over its axis but high above its top (a balcony, a high camera), the eye is
+  // outside it, and the column shows; it faded by the distance across the ground alone
+  let over = 0;
+  for (const [u, vv] of [[0.25, 0.5], [0.3, 0.4], [0.2, 0.7], [0.75, 0.5], [0, 0.3], [0.5, 0.6]]) over += lum(wallAt(u, vv, { eye: [0, 7, 0.05] }));
+  assert.ok(over > 4 * veil + 0.05, `seen from high over it (${over.toFixed(3)} against ${veil.toFixed(3)} from inside)`);
   // kindled up: nothing, then the column to the waist and not past it
   assert.equal(lum(wallAt(0, 0.3, { kindle: 0 })), 0, 'unkindled: nothing');
   assert.ok(lum(wallAt(0, 0.2, { kindle: 0.5 })) > 0.15, 'half kindled: the column at the knee');

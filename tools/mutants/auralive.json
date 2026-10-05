@@ -1,0 +1,110 @@
+[
+  {
+    "name": "AURALIVE-the-gap-never-kept",
+    "file": "src/net/online.js",
+    "old": "    this._rehelloAt = now;\n",
+    "new": "",
+    "tests": [
+      "test/auralive.test.js"
+    ]
+  },
+  {
+    "name": "AURALIVE-promoted-over-anything",
+    "file": "src/net/online.js",
+    "old": "if (this.terminal || this._closedByUs || !cur || cur !== s.old || !open) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/auralive.test.js"
+    ]
+  },
+  {
+    "name": "AURALIVE-a-refused-replacement-keeps-the-old",
+    "file": "src/net/online.js",
+    "old": "      this._retire(ws);   // AURA-LIVE: a replacement refused",
+    "new": "      // AURA-LIVE: a replacement refused",
+    "tests": [
+      "test/auralive.test.js"
+    ]
+  },
+  {
+    "name": "AURALIVE-the-welcome-keeps-the-old",
+    "file": "src/net/online.js",
+    "old": "      this._retire(primary ? this._ws : this._halo.get(room)?.ws);",
+    "new": "",
+    "tests": [
+      "test/auralive.test.js"
+    ]
+  },
+  {
+    "name": "AURALIVE-a-replacement-immortal",
+    "file": "src/net/online.js",
+    "old": "if (now - s.since > BACKOFF_MAX_MS) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/auralive.test.js"
+    ]
+  },
+  {
+    "name": "AURALIVE-the-leave-keeps-the-replacements",
+    "file": "src/net/online.js",
+    "old": "    for (const [, s] of this._swap) { try { s.ws.close(1000, 'leaving'); } catch { /* already closed */ } }\n",
+    "new": "",
+    "tests": [
+      "test/auralive.test.js"
+    ]
+  },
+  {
+    "name": "AURALIVE-promoted-before-its-token",
+    "file": "src/net/online.js",
+    "old": "      if (this._roomOf(ws) == null && !this._promote(ws, room)) return;   // AURA-LIVE",
+    "new": "      // AURA-LIVE",
+    "tests": [
+      "test/auralive.test.js"
+    ]
+  },
+  {
+    "name": "AURALIVE-the-halo-left-out",
+    "file": "src/net/online.js",
+    "old": "    for (const [room, h] of this._halo) if (h.ws && h.status === 'open') open.push([room, h.ws]);\n",
+    "new": "",
+    "tests": [
+      "test/auralive.test.js"
+    ]
+  },
+  {
+    "name": "AURALIVE-the-host-never-asks",
+    "file": "src/scenes/world.js",
+    "old": "mine !== _auraHeard && online.rehello?.()",
+    "new": "mine !== _auraHeard && false",
+    "tests": [
+      "test/auralive.test.js"
+    ]
+  },
+  {
+    "name": "AURALIVE-the-mint-unheard",
+    "file": "src/scenes/world.js",
+    "old": "if (who && 'aura' in who) _auraHeard = who.aura ?? null;",
+    "new": "",
+    "tests": [
+      "test/auralive.test.js"
+    ]
+  },
+  {
+    "name": "AURALIVE-the-cap-sixteen",
+    "file": "src/render/auraRing.js",
+    "old": "export const AURA_DRAW_MAX = 32;",
+    "new": "export const AURA_DRAW_MAX = 16;",
+    "tests": [
+      "test/auralive.test.js"
+    ]
+  },
+  {
+    "name": "AURALIVE-the-pool-forgets-at-once",
+    "file": "src/scenes/world.js",
+    "old": "if (t - w.seen > AURA_FORGET_S) _auraPool.delete(id);",
+    "new": "if (w.seen !== t) _auraPool.delete(id);",
+    "tests": [
+      "test/auralive.test.js"
+    ]
+  }
+]

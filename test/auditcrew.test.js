@@ -483,7 +483,7 @@ test('AUDIT CC-E2 (major): underground my companion rides the room\'s own lane (
   assert.match(d, /if \(coop\?\.al === 1\) opts\.onFoeHit\?\.\(\{ \.\.\.\(foe\._encId != null \? \{ i: foe\._encId, xs: 1 \} : \{ i: pi \}\), \.\.\.coop \}\);/, 'the room\'s foes, as a joiner');
   assert.match(d, /if \(data\.fb === 1\) \{\n\s*if \(!f \|\| f\.dead \|\| f\.companion == null/, 'the foe\'s blow lands on my companion');
   assert.match(d, /rec\.hurtFromFoe = \(dmg, dir, striker = null\) => damageFoe\(rec, dmg, null, dir \?\? null, \{ fromPlayer: false, striker \}\);/);
-  assert.match(d, /dealDamage: \(tt, d\) => tt\.hurtFromFoe\?\.\(d, fwd, f\),/);
+  assert.match(d, /dealDamage: \(tt, d\) => tt\.hurtFromFoe\?\.\(blowScaled\(f\.ai, d\), fwd, f\),/);   // PIN MOVED (AUDIT ARENA-LADDER): a telegraphed blow's weight on it
 });
 
 test('AUDIT CC-E3/E4: a companion lifted on the street makes the next frame whole (the room lets him go at once); a ship another stands that strikes to my guns cheers my crew', async () => {

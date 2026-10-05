@@ -106,7 +106,7 @@ test('HOTFIX 1003f a bout\'s stands are bodies: a spectator\'s welcome names the
   const R = W.room(arenaBoutRoom('00000000000000aa'));
   const f = R.connect();
   await R.hello(f, 'fight-ceryn', { x: C[0] - 6, y: 0.3, z: C[2], yaw: 0, pitch: 0, mv: 0 }, { name: 'Ceryn', kind: 'linked', tokenSub: 'acct-ceryn' });
-  await word(R, f, { k: 'in', r: 'f', tier: 0, bout: 1, lv: 6, mh: 90 });
+  await word(R, f, { k: 'in', r: 'f', tier: 0, bout: 1, lv: 6, mh: 90, z: 'feedc0de00000001' });
   assert.equal(last(f, 'st')?.kind, 'pve', 'a ladder bout on the sand');
   const s1 = R.connect(), s2 = R.connect();
   await R.hello(s1, 'seat-sola', at(1), { name: 'Sola' });

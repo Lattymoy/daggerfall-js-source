@@ -76,7 +76,8 @@ test('MT-iv: MeleeDamage\'s two-arm split lives in ONE home, above both call sit
   assert.match(DG, /if \(!vsPlayer && resolveFoeMeleeVsFoe\(f\)\) return;/, 'and the player arm is the ELSE');
   assert.match(DG, /applyDamageToNonPlayer\(f, t, \{/, 'the foe arm routes through the SHARED payload');
   // PIN MOVED (AUDIT CC-E1): and the striking foe, so a blow on another client's companion knows whose
-  assert.match(DG, /dealDamage: \(tt, d\) => tt\.hurtFromFoe\?\.\(d, fwd, f\)/,
+  // PIN MOVED (AUDIT ARENA-LADDER): and a telegraphed blow's weight on it (ai/foeBlows.js blowScaled - a bout-mate's)
+  assert.match(DG, /dealDamage: \(tt, d\) => tt\.hurtFromFoe\?\.\(blowScaled\(f\.ai, d\), fwd, f\)/,
     'and the TARGET\'s own pool owns its death chain');
   // both call sites reach it, and neither gates on the player's feet
   assert.ok(DG.includes('if (!f.mobile) resolveFoeMelee(f, _pf);'), 'the rig path');

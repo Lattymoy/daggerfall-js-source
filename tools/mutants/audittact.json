@@ -104,8 +104,8 @@
   {
     "name": "ATACT-D6-verdict-on-others",
     "file": "src/ai/tactics.js",
-    "old": "    if (_me && targetKey(ai) === LOCAL) {",
-    "new": "    if (_me) {",
+    "old": "    const at = key === (s.blow.tg ?? LOCAL) ? blowAim(ai, key) : null;",
+    "new": "    const at = _me?.feet ?? null;",
     "tests": [
       "test/audittact.test.js"
     ]

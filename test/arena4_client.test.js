@@ -290,7 +290,7 @@ test('ARENA4 the host\'s glue: the window queues in the hall, a call sends me to
   assert.deepEqual(claimed, [r], 'carried to the service');
   // the ladder online: the account's next bout, with my level and health in the `in`
   const sB = { ...session, room: 'world:1,1' };
-  const B = createArenaOnline({ now: () => 0, session: () => sB, makeHall: () => hallLink, bouts, account: { board: async () => ({ ok: true, data: board }), claim: async () => ({ ok: true, data: {} }), me: () => null }, enterFloor: (k, o) => { entered.push([k, o]); return true; }, level: () => 12, maxHealth: () => 140 });
+  const B = createArenaOnline({ now: () => 0, session: () => sB, makeHall: () => hallLink, bouts, account: { board: async () => ({ ok: true, data: board }), claim: async () => ({ ok: true, data: {} }), attempt: async (tier, bout) => ({ ok: true, data: { ticket: 'abcdef0123456789', tier, bout } }), me: () => null }, enterFloor: (k, o) => { entered.push([k, o]); return true; }, level: () => 12, maxHealth: () => 140 });
   B.model();
   await new Promise((res) => setTimeout(res, 0));
   assert.deepEqual(B.fightLadder(), { ok: true, text: '' });
@@ -299,7 +299,11 @@ test('ARENA4 the host\'s glue: the window queues in the hall, a call sends me to
   assert.match(o2, /^[0-9a-f]{16}$/);
   assert.equal(B.bout().bout, 1, 'the Pit\'s second bout');
   sB.room = `arena:b${o2}`;
+  const before = boutSent.length;
   B.tick();
-  assert.deepEqual(boutSent.at(-1), { k: 'in', r: 'f', tier: 0, bout: 1, lv: 12 }, 'ARENA5: in its room, the ladder\'s `in` - its tier, its bout, my level');
+  assert.equal(boutSent.length, before, 'AUDIT ARENA-LADDER: no `in` before the attempt\'s ticket');
+  await new Promise((res) => setTimeout(res, 0));
+  B.tick();
+  assert.deepEqual(boutSent.at(-1), { k: 'in', r: 'f', tier: 0, bout: 1, lv: 12, z: 'abcdef0123456789' }, 'ARENA5: in its room, the ladder\'s `in` - its tier, its bout, my level; AUDIT ARENA-LADDER: and its ticket');
   assert.match(newBoutId(), /^[0-9a-f]{16}$/);
 });

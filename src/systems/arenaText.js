@@ -133,6 +133,7 @@ export const ARENA_TEXT = F({
     grand: (w) => `${w} is the Grand Champion of the Arena!`,
     tier: (w, t) => `${w} is the ${t} Champion!`,
     forfeit: (w, l) => `${l} has left the sand! ${w} wins by forfeit.`,   // ARENA4: a fighter gone from a refereed bout
+    void: 'The bout is void.',   // AUDIT ARENA-LADDER A2: a fighter gone from the sand without falling - nothing is won or lost
   }),
   /** The purse, said after the verdict. */
   purse: F({
@@ -140,12 +141,14 @@ export const ARENA_TEXT = F({
     favoured: (gold) => `The crowd loves you! Purse: ${gold} gold.`,
     hated: (gold) => `The crowd hates you. Purse cut to ${gold} gold.`,
     lost: 'No purse for the beaten.',
+    repeat: 'You have won this bout before, so it pays no purse this time.',   // AUDIT ARENA-LADDER 2: a step won again after a lost run
   }),
   /** The ladder's progress, said after a win. */
   ladder: F({
     boutWon: (n) => `${n} of 3 won in this tier.`,
     champOpen: (tier) => `The ${tier} Champion will see you now.`,
     tierUp: (tier) => `You climb to ${tier}.`,
+    runLost: (tier) => `Your run in ${tier} is over. Win three in a row to face its champion.`,   // AUDIT ARENA-LADDER: a loss breaks the tier's run
     /** ARENA3: the team points a win gave the banner worn. */
     points: (n, b) => `${n} point${n === 1 ? '' : 's'} for ${b}.`,
   }),
@@ -161,6 +164,8 @@ export const ARENA_TEXT = F({
     save: 'You cannot save during a bout.',
     map: 'Nothing to map here but sand.',
     yieldEarly: 'You can only yield when badly hurt.',
+    potion: 'No potions on the sand.',   // AUDIT ARENA-LADDER: the kit law (systems/arenaKit.js)
+    magic: 'That magic is not allowed on the sand.',
   }),
   /** The way out of the floor, on the plaque. */
   wayOut: 'The gate to the city',
@@ -464,7 +469,9 @@ export const ARENA_TEXT = F({
       ]) }),
       F({ head: 'The ladder', lines: F([
         'Ten tiers of three bouts. Win all three to face the Tier Champion.',
-        'Beat the champion to move up and earn a title. A loss costs only the purse.',
+        'Beat the champion to move up and earn a title. Lose and you start the tier again.',
+        'Tier champions fight as elites. Watch for the marks of their heavy blows.',
+        'No potions on the sand, and no Levitate, Invisibility, Chameleon, Shadow or Calm.',
         'In tier nine you fight two at once. Tier ten is the Grand Melee.',
         'Beat the tier ten champion to become Grand Champion.',
         'The Pit Master in the undercroft will spar with you for practice.',
@@ -603,12 +610,16 @@ export const ARENA_TEXT = F({
     pvpWon: (d, r) => `Victory! Your rating is now ${r} (+${d}).`,
     pvpLost: (d, r) => `Defeat. Your rating is now ${r} (-${d}).`,
     pvpDraw: (r) => `Draw. Your rating stays at ${r}.`,
-    unrated: 'Not rated. You have fought this player too often today.',
+    unrated: 'Not rated. You have fought this player too often.',   // AUDIT ARENA-LADDER O2: a day's bound, and now a season's
     ladderKept: 'Bout saved to your record.',
     grand: 'You are the Grand Champion of the Arena!',
     order: 'This win was not your next ladder bout, so it does not count.',
     /** AUDIT PRE-MERGE 1003 S4: the service's `reused` - the bout's id is already on the record as another bout. */
     reused: 'This bout was already recorded, so it does not count.',
+    forfeit: 'You started another ladder bout before this one was recorded, so it counts as a loss.',   // AUDIT ARENA-LADDER: an attempt left open is forfeit
+    ticketFail: 'The Herald could not enter your bout. Try again in a moment.',   // AUDIT ARENA-LADDER: no attempt's ticket from the service
+    stillRecording: 'Your last ladder bout is still being recorded. Try again in a moment.',   // AUDIT ARENA-LADDER 2: a ticketed receipt still kept
+    guestLadder: 'Register this account to climb the ladder online.',   // AUDIT ARENA-LADDER 2
     guest: 'Register your account to keep your bouts.',
     points: (n, b) => `+${n} for ${b}.`,
     // the stands

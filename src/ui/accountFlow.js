@@ -410,7 +410,7 @@ export function AccountFlow({ io, storage, onChange = () => {} }) {
    * WB9g - WEAR ONE AURA, OR NONE: `equip`'s law at the feet (Mac: "an animated burning ground aura that circles the
    * ground where your character stands"). It asks; the service decides what is held; the answer replaces the wardrobe;
    * pressing the one worn takes it off. The stored session learns it (net/accountClient.js adoptIdentity), so the fire
-   * at the player's own feet lights or goes out at once - the room sees it from the next hello the token signs.
+   * at the player's own feet lights or goes out at once - and the room's at once (AURA-LIVE: world.js auraFrame - online.js rehello).
    */
   self.wearAura = async (aura) => {
     if (self.busy || self.stage !== 'in') return false;

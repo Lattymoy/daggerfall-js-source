@@ -230,7 +230,7 @@ test('ROAD-G G1(a): a ZERO-DAMAGE player ARROW reaches the watch\'s door too', (
 
 test('ROAD-G G1(a): all three arrow hosts ROUTE the hostility seam by pool', () => {
   // The door is PUBLIC now, as the encounter pool's has always been
-  // (exteriorFoes.js:2702), so every host can reach it.
+  // (exteriorFoes.js:2703), so every host can reach it.
   const cg = read('src/scenes/cityGuards.js');
   assert.match(cg, /restoreWorld, removeGuard, handleAttackFromPlayer,/,
     'the watch exports its hostility pair on the returned surface');

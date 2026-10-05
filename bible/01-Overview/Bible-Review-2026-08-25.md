@@ -59,7 +59,7 @@ FM-bank audit. Audio.md also still disowns `ActivateLockUnlock = 316`
 (`:158` "NOT OURS... neither of which is ported") - it sits in
 `soundClips.js:10` with three consumers (R1) - and still claims
 `deps.inCastle` stays false (`:105`), live since AUDIT 21
-(`dungeonContext.js:3274`). This is the one page whose live-queue
+(`dungeonContext.js:3282`). This is the one page whose live-queue
 claims actively contradict the code, the Ledger, and the rest of the
 bible at once.
 
@@ -216,7 +216,7 @@ own AUDIT-18 correction.
 Doc review only, nothing fixed - but four code comments assert the
 opposite of their own code and deserve a slice's attention:
 - `src/ui/deathScreen.js:89-90` claims "`drop` is read by each host's
-  frame" - no host reads it (the Ledger row `:554` is right, the
+  frame" - no host reads it (the Ledger row `:556` is right, the
   comment is wrong).
 - `src/systems/mysticism.js:53` header "OPEN AND LOCK ARE NOT WIRED" -
   they are (X1, `actionSystem.js:1049-1050`).
@@ -233,7 +233,7 @@ opposite of their own code and deserve a slice's attention:
 
 ## Line-citation drift (low, batched)
 
-`Port-Ledger.md:651` (save.js:41/:630/:650 → :28/:734/:768), `:681`
+`Port-Ledger.md:653` (save.js:41/:630/:650 → :28/:734/:768), `:681`
 (world.js:5591 → :2412); `Quest-Arc.md:724`/`:2911`
 (worldModes.js:686 → :903); `Player-Arc.md:979` (worldModes.js:1043 →
 :2764), `:304` (world.js "531 lines" → 3,564); `Characters-Arc.md:190`

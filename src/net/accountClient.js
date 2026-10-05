@@ -154,6 +154,11 @@ export const REFUSALS = Object.freeze({
   guest: 'Insignia need a registered account. Add a username and password first.',
   // ARENA4, the banners (server-account/src/arena.js arenaTeam)
   'bad-banner': 'The arena knows only the Red Banner and the Blue. The game may need updating.',
+  // AUDIT ARENA-LADDER, a ladder attempt's ticket (arena.js arenaAttempt): a bout that is not the climb's next, and a
+  // tier or bout out of the ladder's
+  'order': 'That is not your next ladder bout. Open the Arena window to see where you stand.',
+  'bad-bout': 'The arena has no such ladder bout. The game may need updating.',
+  'ladder-needs-account': 'The ladder online needs a username and a password. Give this account one and your climb is kept.',   // AUDIT ARENA-LADDER 2: a guest climbs nothing online
   joined: 'You already fight under a banner. Quit it at its own recruiter first.',
   season: 'You quit the other banner this season. You may join it when the next season opens.',
   // PATREON-LINK, a patron's own Patreon (server-account/src/patreon.js). `signature` is the webhook's, met by Patreon
@@ -1080,6 +1085,8 @@ export function accountArena({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
     claim: (receipt, character = null, name = null) => post('/v1/arena/claim', { receipt, ...(character ? { character } : {}), ...(name ? { name } : {}) }),
     board: () => post('/v1/arena/board', {}),
     team: (banner) => post('/v1/arena/team', { banner: banner ?? null }),
+    // AUDIT ARENA-LADDER: an attempt at the account's next ladder bout - its ticket, which the relay opens the bout for
+    attempt: (tier, bout, room) => post('/v1/arena/attempt', { tier, bout, room }),   // AUDIT ARENA-LADDER 2: for the room it is fought in
     me: () => storedSession(storage)?.id ?? null,
   };
 }

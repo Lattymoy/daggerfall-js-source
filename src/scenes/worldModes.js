@@ -160,7 +160,7 @@ import { quickLootTake, quickLootSpend, plaqueActionFor } from '../systems/quick
 import { lootPile } from '../player/lootStack.js';   // LOOT-STACK: the pile under the reticle, as the loot window's tabs
 import { staticDoorName, npcHoverName, questResourceName, questStandItem, worldTooltipsOn, hideInteractTooltip,
   houseContainerName, houseContainerHover, actionObjectName, lootPileName,
-  BOOKSHELF_TEXT, SHOP_SHELF_TEXT, LADDER_TEXT, BULLETIN_BOARD_TEXT, mobileEntityName, liveEntityName } from '../systems/worldTooltips.js';   // WORLD-HOVER: the mod's ladder for the families THIS host stands   // WORLD-HOVER: the mod's ladder for the families THIS host stands
+  BOOKSHELF_TEXT, SHOP_SHELF_TEXT, LADDER_TEXT, BULLETIN_BOARD_TEXT, mobileEntityName, liveEntityName } from '../systems/worldTooltips.js'; import { questFoeSubs } from '../systems/questFoeLine.js';   // WORLD-HOVER: the mod's ladder for the families THIS host stands; QUEST-FOE-LINE: a quest's foe says whose it is   // WORLD-HOVER: the mod's ladder for the families THIS host stands
 import { LOCATION_TYPES, REGION_NAMES } from '../formats/mapsFile.js';   // WORLD-HOVER: .cs:777-782 - a dungeon exit names its town, or the region   // WORLD-HOVER: the texture record is DERIVED at its one reader, off the stored model id
 import { isShop, isRepairShop, stockShopShelf, stockHouseContainer, PRIVATE_PROPERTY_TEXT_ID, privatePropertyRows, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem, stockSoulGems, stockGuildMagicItems, stockGuildPotions, dayShelf, createStockedDate, needsRestock, stockSearched, restockEndless } from '../systems/shopStock.js';   // X6: the soul-gem shelf; G4: the two guild shelves; A2: the daily restock; ENDLESS-STOCK: the bag and the Campfire never sell out
 import { BAG_WORDS, isBagItem, holdsOtherBag } from '../net/bagLaw.js';   // ONE-BAG: one Materials Bag to a character, on the keyed shelf too
@@ -552,7 +552,7 @@ export function createWorldModes(host) {
    *
    * AUDIT-WH H5. Three hover arms wrote `.Name` - the C# property, as
    * the mod's own source spells it (.cs:764, :725, :777) - and the
-   * record these hosts mint spells it `name` (exterior.js:4084 hands
+   * record these hosts mint spells it `name` (exterior.js:4087 hands
    * `dfLocation`, world.js hands `_questLoc()`; both are the port's
    * location record). `.Name` on it is `undefined`, so all three arms
    * fell to `''`, and `staticDoorName` answers NULL on an empty
@@ -2371,7 +2371,7 @@ export function createWorldModes(host) {
         const f = liveFoeFor(interiorFoePool(), key, 'mobileFoe');
         if (!f) return null;
         const t = mobileEntityName(liveEntityName(f, enemyDisplayName(f.mobileType)), { hostile: !!f.ai?.isHostile });   // HOVER-PLAIN: a hostile foe is never named here, a champion, an elite or a revenant included - its name stands under its health bar alone
-        return t ? { title: t } : null;
+        return t ? { title: t, subs: questFoeSubs(f) } : null;   // QUEST-FOE-LINE (FIELD BUGS 2026-10-04f): a quest's foe at peace says whose it is
       }
       if (key.startsWith('door:') || key.startsWith('act:')) {
         const o = interiorCtx.actions.objects.get(key) ?? null;
@@ -7763,7 +7763,7 @@ export function createWorldModes(host) {
     _arenaStage = {
       kind: 'floor',
       centre: () => c,
-      spawn: (mobile, feet, o) => ctx.spawnLooseFoe?.(mobile, [feet[0], feet[1] + 0.9, feet[2]], { gender: o.gender ?? null, yawRad: o.yaw ?? null, level: o.level ?? null, bout: o.bout ?? null }) ?? null,
+      spawn: (mobile, feet, o) => ctx.spawnLooseFoe?.(mobile, [feet[0], feet[1] + 0.9, feet[2]], { gender: o.gender ?? null, yawRad: o.yaw ?? null, level: o.level ?? null, bout: o.bout ?? null, eliteFoe: !!o.elite }) ?? null,   // AUDIT ARENA-LADDER: a tier champion stands as an elite
       remove: (f) => ctx.removeLooseFoe?.(f),
       heightAt: (x, z) => { const top = c[1] + 24; const d = ctx.collider.raycast([x, top, z], [0, -1, 0], 48); return Number.isFinite(d) ? top - d : null; },
     };
@@ -7787,7 +7787,7 @@ export function createWorldModes(host) {
       kind: 'pit', gates: false, radius: PIT_RING_R, markScale: 0.5,
       axis: ctx.arenaPitAxis ? [-ctx.arenaPitAxis[0], -ctx.arenaPitAxis[1]] : null,
       centre: () => c,
-      spawn: (mobile, feet, o) => ctx.spawnLooseFoe?.(mobile, [feet[0], feet[1] + 0.9, feet[2]], { gender: o.gender ?? null, yawRad: o.yaw ?? null, level: o.level ?? null, bout: o.bout ?? null }) ?? null,
+      spawn: (mobile, feet, o) => ctx.spawnLooseFoe?.(mobile, [feet[0], feet[1] + 0.9, feet[2]], { gender: o.gender ?? null, yawRad: o.yaw ?? null, level: o.level ?? null, bout: o.bout ?? null, eliteFoe: !!o.elite }) ?? null,   // AUDIT ARENA-LADDER: a tier champion stands as an elite
       remove: (f) => ctx.removeLooseFoe?.(f),
       heightAt: () => null,   // no stands down here - no crowd is sought
     };
@@ -8158,7 +8158,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:8570), so the OUTER host's one rides in.
+          // (dungeonContext.js:8580), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:847 -> the
@@ -9217,7 +9217,7 @@ export function createWorldModes(host) {
       iilSyncLane(renderer, true);   // IIL2: the mod's own shadows, on its classic-look lane, when the row asks
       const _iilOn = iilActive(renderer.lightingLane);
       const _iilDg = _iilOn ? iilDungeonLights(dungeonCtx.iilLightFlats ?? []) : null;
-      const _dgTint = (l) => (l ? { ...l, color: _iilOn ? iilTorch(l).color : _dgColor } : l);   // IIL1: the player's flames in the mod's torch colour
+      const _dgTint = (l) => (l && !l.aura ? { ...l, color: _iilOn ? iilTorch(l).color : _dgColor } : l);   // IIL1: the player's flames in the mod's torch colour; AUDIT 3 (SERAPH-WINGS): an aura's light (`aura`) keeps its own - the wings' gold is no flame
       // LA-AUDIT A5: on the lane, one torch past the cap, for the cap's fade (capFadePairs; the court's braziers ride
       // after every light, so the gate's court keeps the cut)
       const _dgFade = !!renderer.lightingLane && !isGateArena(dungeonLoc);
@@ -9396,7 +9396,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:16560's own wave-46 note); the interior
+          // a blow (world.js:16565's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -10338,7 +10338,7 @@ export function createWorldModes(host) {
   addEventListener('mousedown', (e) => {
     // AUDIT-MACK F2: THIS HOST DOES NOT FEED THE HELD SET, and MAC-K1
     // briefly made it. `keys` is not this host's - it arrives on the
-    // host bag (`exterior.js:4146`, `world.js`'s twin), and the OUTER
+    // host bag (`exterior.js:4149`, `world.js`'s twin), and the OUTER
     // host's own mousedown writes `keys.add(mouseCode(e.button))`
     // UNGATED, before any mode test, on a listener that is never
     // removed. So the three button codes were already in the Set while
@@ -12126,9 +12126,9 @@ export function createWorldModes(host) {
      *  .cs:175-176 writes `weaponDrawn`/`usingLeftHand` off it,
      *  :420-421 restores them onto it. The port has FOUR PlayerWeapons
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
-     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3687-3709), and IS1 routed the inside-a-building save to
+     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3690-3712), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:12354). So an F9 pressed in a shop
+     *  unconditionally (world.js:12359). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -12167,7 +12167,7 @@ export function createWorldModes(host) {
       if (interiorOverlay instanceof DeathScreen) { interiorOverlay.restoreView(); interiorOverlay = null; }
     },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:12713)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:12718)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -12177,8 +12177,8 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:11259`
-     *  and `dungeonContext.js:8582` for its two sibling copies - lines
+     *  HARD2c: this used to spell them out, and named `world.js:11261`
+     *  and `dungeonContext.js:8592` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {

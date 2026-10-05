@@ -38,7 +38,7 @@ import { createArenaBouts } from './arenaBouts.js';   // ARENA2: the bout on thi
 import { createArenaSound } from '../systems/arenaSound.js';   // ARENA2: the crowd, heard - built from DAGGER.SND's own voices
 import { arenaScoreSongs, ARENA_SCORE_SILENCE } from '../systems/arenaScore.js';   // ARENA2: the march and the fanfare
 import { drawArenaHud } from '../ui/arenaHud.js';   // ARENA2: the versus bar, the crowd's meter, the clock
-import { setPlayerBout } from '../characters/enemyTargets.js';   // ARENA2: the bout team's player arm
+import { setPlayerBout, inBout } from '../characters/enemyTargets.js';   // ARENA2: the bout team's player arm; AUDIT ARENA-LADDER A2: a fighter on the sand is its bout's
 import { keptOffArenaGround, ARENA_GROUND_M } from '../systems/arenaGround.js';   // CURSE-OFF-SAND: the curse's dead keep off the arena's grounds
 import { exhibitionFor, nextLadderBout, arenaLadderRestore, practiceBout } from '../systems/arenaLadder.js';   // ARENA2: the hour's exhibition, the ladder's next bout
 import { arenaReplaysRestore } from '../systems/arenaReplay.js';   // ARENA5: your ladder replay
@@ -349,7 +349,7 @@ import { composeContents } from '../systems/worldHover.js';   // WORLD-HOVER: th
 import { mobilePersonName, lootPileName } from '../systems/worldTooltips.js';   // WORLD-HOVER H2: MobilePersonNPC.NameNPC (.cs:299-302); M5: a dropped pile's word (.cs:534-548), outdoors too
 import { wagonHoverName } from '../player/eotbWagon.js';   // WORLD-HOVER M6: the cart's word, beside its producer
 import { waterSourceHoverName } from '../systems/survival/items.js';   // WORLD-HOVER M6: a water source's word, beside its producer
-import { mwViewFirstPerson, mwViewFrame, mwViewWheel, mwViewDrawBody, mwViewBodyBones, mwViewFootstep, mwViewLoadPose, mwViewNewGame, mwViewRebase, mwViewAttachWagon, mwViewDrawWagon, mwViewWagonTargets, setEotbCartYields, mwViewWagonActivate, setEotbComeSailAway, mwViewHoldThird, mwViewHoldChanged, mwViewSaveCamera, mwViewTogglePerspective } from '../player/mwView.js';   // MW-D25: the Morrowind camera; AUDIT-EOTB2: the sprite's stride and the load's POV; CSA-J: EOTB's boat
+import { mwViewFirstPerson, mwViewFrame, mwViewWheel, mwViewDrawBody, mwViewBodyBones, mwViewSpriteFigure, mwViewFootstep, mwViewLoadPose, mwViewNewGame, mwViewRebase, mwViewAttachWagon, mwViewDrawWagon, mwViewWagonTargets, setEotbCartYields, mwViewWagonActivate, setEotbComeSailAway, mwViewHoldThird, mwViewHoldChanged, mwViewSaveCamera, mwViewTogglePerspective } from '../player/mwView.js';   // MW-D25: the Morrowind camera; AUDIT-EOTB2: the sprite's stride and the load's POV; CSA-J: EOTB's boat
 import { seaZoomReach } from '../player/seaZoom.js';   // FIELD BUGS 2026-09-29 (the sea) #3: the zoom at a helm
 import { mwCamera } from '../player/mwCamera.js';   // MW-D30: persistence
 import { pickActivatableHit, pickQuestFoe, pickFoe, peacefulFoePass } from '../player/activate.js';   // G3: corpse loot; QG1: the foe-click door; TI1: the lock-on pick
@@ -504,7 +504,7 @@ import { TerrainGenClient } from '../world/terrainGenClient.js';   // EV7: the p
 import { getPref } from '../systems/uiPrefs.js';
 import { createCoverIndex, isCoverFlat, coverProxy, coverProxies, FELLED } from '../ai/cover.js';   // TACT1: billboards are cover; LPT1: a felled tree stands no 3D tree
 import { noteLocalPlayer, tacticsNow, tickTactics, offsetTactics } from '../ai/tactics.js';   // TACT2; TACT4: the brain's clock; AUDIT TACT: its tick, the recentre's shift
-import { drawableBlows } from '../ai/foeBlows.js';   // TACT4
+import { drawableBlows, registerBlowDodgedListener } from '../ai/foeBlows.js';   // TACT4; AUDIT ARENA-LADDER: a dodge told
 import { landViewRead } from '../world/landView.js';   // LV1: the enhanced lane's own streamed radius; FT2: the read is the module's
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, hourOf, daylightScale, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { dungeonLocationFor } from '../world/smallerDungeons.js';   // AUDIT 28 F-B2: the quest layer sees the sized dungeon
@@ -645,7 +645,7 @@ import { createSeatBanners, seatBannerAnchors, palaceKeysOf, townCentreOf } from
 import { createFestivalStage, festivalBannerAnchors, festivalLanternsOf } from './seatFestival.js';   // FESTIVAL-STAGE: a Festival's music, banners and lanterns
 import { drawBanner } from '../ui/heraldryArt.js';   // GUILD1d: ...its heraldry painted on it
 import { heraldryLookup } from '../ui/heraldrySwatch.js';   // HERALDRY-SHOWN: a guild's heraldry by its tag, off what this client holds
-import { AuraRingRenderer, auraWearers, auraBeastStep, auraMotionStep, auraCapeStep, CLOAK_BONES, AURA_KINDLE_S } from '../render/auraRing.js'; import { peerBodyYaw } from '../net/peerClimb.js';   // WB9g: Dagon's Fire at a wearer's feet; SHADOW-CLOAK: a peer's facing, the cloak's front (on this line, so no cite below it moves)
+import { AuraRingRenderer, auraWearers, auraLookOf, auraBeastStep, auraMotionStep, auraCapeStep, auraSpriteBones, auraSpritePosed, auraWingLights, CLOAK_BONES, AURA_KINDLE_S, AURA_FORGET_S } from '../render/auraRing.js'; import { peerBodyYaw } from '../net/peerClimb.js';   // WB9g: Dagon's Fire at a wearer's feet; SHADOW-CLOAK: a peer's facing, the cloak's front (on this line, so no cite below it moves)
 import { duelAttackerOf, duelWeaponOf, duelSwingOf, resolveDuelStrike, duelBlowPlausible, duelSpellOf, duelSpellFromWire, duelWearDamage, DUEL_TRAIL_MS, duelStub } from '../combat/duelCombat.js';   // DUEL1: the blow between two duellists, both halves
 import { createPageWindow, pageView } from '../ui/pageWindow.js';   // JOURNAL1: a page another player holds out, read and kept
 import { PageOffers, pageOfferText, pageShownText, pageTooFarText, keptPageTokens, keptLetterTokens, letterOfPage, PAGE_UNSUPPORTED_TEXT, PAGE_NO_READERS_TEXT, PAGE_GONE_TEXT } from '../net/journalPage.js';   // JOURNAL1: a page of the journal shown, and one shown to me kept
@@ -3491,12 +3491,12 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  AUDIT-FIELD F7: A FLOOR, NOT THE WHOLE DISTANCE. The first cut
    *  called 64 "more than the fastest accelerated step", which is true
    *  of a fixed physics STEP and false of a FRAME: the motor moves
-   *  `speed * min(dt, MAX_FRAME_DT) * scale` in one go (motor.js:1442),
+   *  `speed * min(dt, MAX_FRAME_DT) * scale` in one go (motor.js:1446),
    *  and the frame that hitches is exactly the frame in which the
    *  streamer is behind. A horse at the shipped default limit of sixty
    *  covers ~65 units in a 10 fps frame and ~120 at the mod's ceiling of
    *  a hundred - past a 64-unit probe, off the built world, and once the
-   *  motor is airborne `airControl` is false (motor.js:3116) so zeroing
+   *  motor is airborne `airControl` is false (motor.js:3120) so zeroing
    *  the drive on the NEXT frame no longer steers: the fall is already
    *  paid for. `travelLookahead` measures the frame that is about to
    *  run instead, and keeps 64 as its floor. */
@@ -8682,6 +8682,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ARENA-FIX 9/10: every attack's resolution and every swing of mine, told to the bout (its misses, its crits)
   registerAttackResolutionListener('arena', (r) => arenaBouts.attackResolved(r));
   registerPlayerSwingListener('arena', (n) => arenaBouts.playerSwing(n));
+  registerBlowDodgedListener('arena', (ai) => arenaBouts.blowDodged(ai));   // AUDIT ARENA-LADDER: a dodged telegraph is a miss for the judges
   // ARENA3: the banners' recruiters (and the book's bookmaker) at the gate - one home for both hosts (scenes/arenaGate.js)
   const arenaGate = createArenaGate({
     playerEntity, gameMinutes: () => worldMinutes(), showOverlay: (w) => townTalk.showOverlay(w), say: (l) => townTalk.say(l),
@@ -9587,7 +9588,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // by the same table that exempts them from Pacify Humanoid.
     onDispel: ({ group, chance }) => {
       const list = getNearbyObjects(detectFeed.scanNow(), group) ?? [];
-      const gone = dispelNearby(list.map((no) => no.ref), () => Math.floor(Math.random() * 100) < chance);
+      const gone = dispelNearby(list.map((no) => no.ref).filter((f) => !inBout(f)), () => Math.floor(Math.random() * 100) < chance);   // AUDIT ARENA-LADDER A2: an exhibition's fighter is its bout's
       for (const f of gone) exteriorFoes.removeFoe(f);
       if (gone.length) townTalk.say(`${gone.length} dispelled.`);
     },
@@ -9631,7 +9632,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:3075 mounts the same one, gated on
+  // and dungeonContext.js:3082 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:7305
@@ -9714,6 +9715,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const f = enchantFoes().find((x) => !x.dead && x.entity === targetEntity);
     if (!f || f.puppet) return;   // AUDIT WORLD6b B9: a peer's foe is not mine to re-stand (the pool refuses its removal too)
     if (f.questBehaviour && !f.questBehaviour.isFoeDead) return;
+    if (inBout(f)) return;   // AUDIT ARENA-LADDER A2: the Wabbajack changes no fighter on the sand
     const feet = f.ai?.feet ? centreFromFeet(f.ai.feet, f.idleH ?? f.ai.height) : enchantFeet();   // REVIEW 2026-09-05: WabbajackEffect.cs:90 hands CreateEnemy the struck foe's TRANSFORM (its sprite centre); the spawn chain reads a marker
     const missing = (targetEntity.maxHealth ?? 0) - (targetEntity.health ?? 0);
     const stamp = (nf) => {
@@ -11615,6 +11617,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   async function recallToAnchor() {
     if (worldMoveBusy()) return;   // AUDIT 68 S22
     if (_recalling) return;
+    // AUDIT ARENA-LADDER A5: NO RECALL OFF THE SAND - my bout holds me as its doors do (the duel's law: no door, no rest, no
+    // travel). Recall tore the floor down under a losing bout, which went unsaid: no loss, no run lost, the climb untouched.
+    if (arenaBouts.holds()) { townTalk.say(ARENA_TEXT.refuse.travel); return; }
     const anchor = playerEntity.anchorPosition;
     const plan = teleportPlan(anchor, {
       ...(modes?.insideContext?.() ?? { insideBuilding: false, insideDungeon: false, buildingKey: 0 }),
@@ -12370,7 +12375,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:8554), so exterior mode and a
+    // composer, dungeonContext.js:8564), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -17366,7 +17371,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   let renownNow = null;
   // RENOWN4: and the account's TOTAL, for my own bar (ui/hudRenown.js) - the mint's answer and every report's carry it,
   // and like the level it only rises: a total never falls, and an answer that arrives late must not take one back.
-  let renownXp = null;
+  let renownXp = null, _auraHeard;   // AURA-LIVE: `_auraHeard` the aura the last minted token said (undefined until a service that says one) - auraFrame says a change since again (online.rehello)
   const renownXpAdopt = (xp) => {
     if (onlineOn && Number.isSafeInteger(xp) && xp >= 0 && (renownXp === null || xp > renownXp)) renownXp = xp;
   };
@@ -17388,7 +17393,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // read every glyph that is true (hiding one is paint alone)
     const off = Array.isArray(who?.glyphsOff) ? who.glyphsOff : [];
     who = { ...who, glyphs: _staffGlyphs.filter((g) => !off.includes(g)) };
-    online?.adoptIdentity?.(who);
+    online?.adoptIdentity?.(who); if (who && 'aura' in who) _auraHeard = who.aura ?? null;
     for (const link of chatLinks?.values?.() ?? []) link.adoptIdentity?.(who);
   };
   /** STAFF1: MY GLYPHS AS THE ACCOUNT SERVICE LAST ISSUED THEM (never the device's stored copy, which is only a cache). */
@@ -19639,7 +19644,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  gates paying - server-account/src/accounts.js buyInsignia) and the pack's (its stones held before the service is
    *  asked, and given back unless it holds the sale - AUDIT WB9: systems/sigilBroker.js insigniaSale); wearing
    *  one is the account card's own door (equipTitle, equipAura), and my own name and feet show it at once - the room
-   *  sees it from the next hello the token signs. */
+   *  sees it from the next hello the token signs (AURA-LIVE: said again at once - auraFrame's online.rehello). */
   let _insignia = { loaded: false, busy: false, held: [], title: null, aura: null };
   const insigniaIo = () => { const st = appStorage(); const ses = storedSession(st); return ses ? { fetch: (u, i) => globalThis.fetch(u, i), base: serviceBase(st), secret: ses.secret } : null; };
   const insigniaAdopt = (w) => { if (w && typeof w === 'object') _insignia = { ..._insignia, loaded: true, held: Array.isArray(w.insignia) ? w.insignia : _insignia.held, title: w.title ?? null, aura: w.aura ?? null }; };
@@ -19698,7 +19703,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (!r.ok) return { ok: false, text: accountRefusalText(r.error) };
       insigniaAdopt(r.data);
       insigniaSelf(r.data, io.secret);
-      return { ok: true, text: want ? `Wearing ${row.name}. Others see it once you change area.` : `${row.name} taken off.` };
+      return { ok: true, text: want ? `Wearing ${row.name}.` : `${row.name} taken off.` };
     } catch { return { ok: false, text: accountRefusalText('offline') }; } finally { _insignia.busy = false; }
   }
   const openBroker = () => {
@@ -22134,7 +22139,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (_peerLights.length > PEER_LIGHTS_MAX) { _peerLights.sort((a, b) => a._d - b._d); _peerLights.length = PEER_LIGHTS_MAX; }
     for (const l of _peerCandleLights) _peerLights.push(l);   // PEERLIGHT2: and their Light spells' candles
     if (_peerLightPhase.size > 64) _peerLightPhase.clear();
-    return _peerLights;
+    for (const l of auraWingLights(_auraWearers, cam.pos, _auraLights)) _peerLights.push(l); return _peerLights;   // SERAPH-WINGS: and the gold of the nearest wings, in every host's light list
   };
   const peerFxFrame = () => {
     _peerFxHp = playerEntity?.health ?? null;
@@ -22579,7 +22584,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  (the renderer's frame, as the fog it takes) through the veiled bodies' hook - every host calls it: the street, the
    *  dungeon's lateWorldDraw, the building - added and fogged; never under the travel view, and a concealed peer's
    *  fire is concealed with them. */
-  const _auraWearers = [], _auraDraw = [], _auraPool = new Map();
+  const _auraWearers = [], _auraDraw = [], _auraPool = new Map(), _auraLights = [];
   const _auraSelf = { id: 'self', at: [0, 0, 0], aura: null, seed: 0.37, kindle: 1, since: 0, yaw: 0 };   // SHADOW-CLOAK: `yaw` the facing the cloak's opening faces
   let _auraPass = null, _auraTried = false;
   const auraSeedOf = (id) => { let h = 2166136261; for (const ch of String(id)) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return ((h >>> 0) % 997) / 997; };
@@ -22587,11 +22592,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     _auraWearers.length = 0;
     if (!online || travelView?.active) return;
     const t = performance.now() / 1000;
-    const mine = ownAura();   // the service's last word on my own - a mint's, a wear's from any door
+    const mine = ownAura(); if (_auraHeard !== undefined && mine !== _auraHeard && online.rehello?.()) _auraHeard = mine;   // the service's last word on my own - a mint's, a wear's from any door; AURA-LIVE: one the room's token did not say (a wear since) is said again, so the room sees it now
     if (mine && playerSpawned) {
       const f = player.feetAt();
       if (_auraSelf.aura !== mine) _auraSelf.since = t;
-      _auraSelf.at[0] = f[0]; _auraSelf.at[1] = f[1]; _auraSelf.at[2] = f[2]; _auraSelf.aura = mine; _auraSelf.yaw = player.bodyYawFor(cam.yaw); auraBeastStep(_auraSelf, !!liveLycanthropy(playerEntity)?.isTransformed, t);   // SHADOW-CLOAK: the body's own facing, as its third person is drawn; turned beast, the cloak torn
+      _auraSelf.at[0] = f[0]; _auraSelf.at[1] = f[1]; _auraSelf.at[2] = f[2]; _auraSelf.aura = mine; _auraSelf.yaw = mwViewSpriteFigure()?.yaw ?? player.bodyYawFor(cam.yaw); auraBeastStep(_auraSelf, !!liveLycanthropy(playerEntity)?.isTransformed, t);   // SHADOW-CLOAK: the body's own facing, as its third person is drawn; turned beast, the cloak torn
       _auraSelf.kindle = Math.min(1, (t - _auraSelf.since) / AURA_KINDLE_S); _auraSelf.mounted = !!player.riding;   // SHADOW-CLOAK: a rider's cape folded away
       _auraWearers.push(_auraSelf);
     } else _auraSelf.aura = null;
@@ -22606,14 +22611,14 @@ export async function bootWorld(canvas, renderer, params, status) {
       w.kindle = Math.min(1, (t - w.since) / AURA_KINDLE_S); w.seen = t; w.mounted = !!d.shown.rd;   // SHADOW-CLOAK: a rider's (a horse, a cart) cape folded away
       _auraWearers.push(w);
     }
-    if (_auraPool.size) for (const [id, w] of _auraPool) if (w.seen !== t) _auraPool.delete(id);   // the gone forget their kindling
+    if (_auraPool.size) for (const [id, w] of _auraPool) if (t - w.seen > AURA_FORGET_S) _auraPool.delete(id);   // the gone forget their kindling - AUDIT 3: the gone, not the blinked (AURA_FORGET_S)
   }
   function drawAuras() {
     if (!_auraWearers.length) return;
     const proj = renderer._proj, view = renderer._view, eye = renderer._camPos;   // the frame's camera, the world's own
     if (proj && view && eye && auraWearers(_auraWearers, eye, _auraDraw).length) {
       if (!_auraTried) { _auraTried = true; try { _auraPass = new AuraRingRenderer(renderer.gl); } catch (e) { console.warn('[online] the aura would not build', e?.message ?? e); _auraPass = null; } }
-      const auraNow = performance.now() / 1000; for (const w of _auraDraw) if (w.aura === 'shadowcloak') { auraCapeStep(w, w === _auraSelf ? { feet: player.bodyFeetAt(), yaw: player.bodyYawFor(cam.yaw), bones: mwViewBodyBones(CLOAK_BONES) } : peerBodies?.bonesOf(w.id, CLOAK_BONES), w === _auraSelf ? player.height / CAPSULE_HEIGHT : 1); auraMotionStep(w, auraNow); } _auraPass?.draw(_auraDraw, proj, view, eye, auraNow, { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, camPos: renderer._camPos, focus: renderer._focus });   // SHADOW-CLOAK: each cape hung on its body as drawn this frame - its bones posed by now (mine, or a peer's), else at rest, crouched with a crouch - and swung by how it moves where it is drawn
+      const auraNow = performance.now() / 1000; for (const w of _auraDraw) if (auraLookOf(w.aura).mesh) { auraCapeStep(w, w === _auraSelf ? { feet: player.bodyFeetAt(), yaw: mwViewSpriteFigure()?.yaw ?? player.bodyYawFor(cam.yaw), bones: mwViewBodyBones(CLOAK_BONES) ?? auraSpriteBones(mwViewSpriteFigure()) } : peerBodies?.bonesOf(w.id, CLOAK_BONES) ?? auraSpritePosed(w, peerWalkers?.figureOf(w.id) ?? peerRiders?.figureOf?.(w.id)), w === _auraSelf ? player.height / CAPSULE_HEIGHT : 1); auraMotionStep(w, auraNow); } _auraPass?.draw(_auraDraw, proj, view, eye, auraNow, { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, camPos: renderer._camPos, focus: renderer._focus });   // SHADOW-CLOAK: each cape hung on its body as drawn this frame - its bones posed by now (mine, or a peer's), else at rest, crouched with a crouch - and swung by how it moves where it is drawn
       if (_auraPass?.drawn) renderer.markForeignPass();
     }
     _auraWearers.length = 0;   // this frame's, drawn once: a frame that gathers none (the seat left, death, offline) draws none

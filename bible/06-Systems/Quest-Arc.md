@@ -5499,15 +5499,15 @@ knows its one city outright.
 This host owns a cast engine of its own, and `worldModes` takes *that
 instance* for the interior mode, so it covers the shops entered from
 `?exterior` too. It passed neither of `EntityEffectManager`'s two
-ready-spell events (`hostMagic.js:102-103`), and those two doors are the
+ready-spell events (`hostMagic.js:103-104`), and those two doors are the
 *only* route into the machine's `CastSpellDo` / `CastEffectDo` latches
 (`machine.js:935`/`:918`; C# subscribes them in the action's
 constructor). Every `cast X spell do` and `cast X effect do` on this
 whole route could therefore never latch and never fire. The pair the
-other two engine-owning hosts wire (`world.js:9092-9093`,
-`dungeonContext.js:2845-2846`) is wired here now, and with it
+other two engine-owning hosts wire (`world.js:9093-9094`,
+`dungeonContext.js:2852-2853`) is wired here now, and with it
 `CastSpellDo`'s two world reads — `getClassicSpellEffects` and the
-byte-folded `spellHasMatchForClassicEffect` (`world.js:15614-15617`),
+byte-folded `spellHasMatchForClassicEffect` (`world.js:15619-15622`),
 absent which the action self-completes at *parse*
 (`actions.js:2812`/`:2819`) and the task can never arm at all.
 

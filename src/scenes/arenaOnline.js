@@ -202,10 +202,10 @@ export function createArenaOnline(deps) {
     const d = a?.ok ? a.data : null;
     if (d?.ladder && board?.me) board = { ...board, me: { ...board.me, ladder: d.ladder } };
     let won = null;
-    if (d?.recorded === true) won = d.won === true;
+    if (d?.recorded === true) won = d.won === true && d.repeat !== true;   // AUDIT ARENA-LADDER 2: a step won again pays no purse
     else if (d?.why === 'claimed') won = c.r === 1;   // kept before: the receipt's own result (a ladder receipt's r 1 is a win)
     else if (arenaClaimVerdict(a) === 'done' || d?.why === 'guest') won = false;   // out of the climb's order, a guest's, a receipt refused for good
-    if (d?.recorded === false && (d.why === 'order' || d.why === 'reused')) say(O[d.why]);   // AUDIT PRE-MERGE 1003 S4: a reused bout's own words - and, never `claimed`, no purse
+    if (d?.recorded === false && (d.why === 'order' || d.why === 'reused' || d.why === 'forfeit')) say(O[d.why]);   // AUDIT PRE-MERGE 1003 S4: a reused bout's own words - and, never `claimed`, no purse; AUDIT ARENA-LADDER: a forfeit's
     if (won === null) return;
     const e = owed.get(c.j) ?? { gold: null, pay: null, won: null, at: now() };
     e.won = won;
@@ -648,11 +648,11 @@ export function createArenaOnline(deps) {
     if (bout && s) {
       const here = s.room === bout.room && s.status === 'open';
       if (!here) bout.sent = false;
-      else if (!bout.sent) {
+      else if (!bout.sent && (bout.kind !== 'pve' || bout.ticket)) {   // AUDIT ARENA-LADDER: a ladder bout's `in` waits for its ticket
         // ARENA4b: a ladder bout's `in` names my level (believed only from a token before the signed one, held to the
         // tier's cap) and no health - the relay's vitality is the signed character level's (net/arenaLaw.js ladderVitality)
         const inWord = bout.kind === 'watch' ? { k: 'in', r: 's' }
-          : bout.kind === 'pve' ? { k: 'in', r: 'f', tier: bout.tier, bout: bout.bout, lv: Math.max(1, Math.floor(deps.level?.() ?? 1)), ...myBanner() }
+          : bout.kind === 'pve' ? { k: 'in', r: 'f', tier: bout.tier, bout: bout.bout, lv: Math.max(1, Math.floor(deps.level?.() ?? 1)), ...myBanner(), ...(bout.ticket ? { z: bout.ticket } : {}) }   // AUDIT ARENA-LADDER: the attempt's ticket
             : { k: 'in', r: 'f' };
         bout.sent = s.sendArena?.(inWord) === true;
       }
@@ -735,8 +735,36 @@ export function createArenaOnline(deps) {
     if (!L) return { ok: false, text: O.climbWait };
     const next = nextLadderBout(L);
     if (!next) return { ok: false, text: ARENA_TEXT.herald.ladderDone };
-    void goTo({ o: newBoutId(), kind: 'pve', tier: next.tier, bout: next.bout, next });
+    if (deps.guest?.()) return { ok: false, text: O.guestLadder };   // AUDIT ARENA-LADDER 2: the ladder online takes a registered account
+    // AUDIT ARENA-LADDER 2: the ticket asked once the floor is entered and the bout still mine - an attempt is spent when it is
+    // asked (the next forfeits it), so one asked for a bout the floor never held cost the tier's run unfought
+    const go = goTo({ o: newBoutId(), kind: 'pve', tier: next.tier, bout: next.bout, next });
+    const b = bout;
+    void Promise.resolve(go).then((ok) => { if (ok && bout === b) return askTicket(b); return null; });
     return { ok: true, text: '' };
+  }
+  /**
+   * AUDIT ARENA-LADDER: THE ATTEMPT'S TICKET - the relay opens a ladder bout only for one (the account service's,
+   * net/arenaLaw.js ARENA_TICKET_RE, signed into its receipt), so my `in` waits for it (`tick`). Asking forfeits every
+   * attempt still open, so every receipt this device carries is offered first: a win fought and not yet kept is counted,
+   * never forfeit. No ticket (the service down, a device behind the climb - its ladder taken) and the bout is let go, said.
+   */
+  async function askTicket(b) {
+    if (!b || b.kind !== 'pve') return;
+    // AUDIT ARENA-LADDER 2: every receipt carried and ANSWERED first (a flush already running is waited out), and none of
+    // my ticketed ladder receipts still kept - the next attempt forfeits an attempt left open, a win among them too
+    try { await claims.flush(); await claims.idle?.(); } catch { /* carried again later */ }
+    if (bout !== b) return;
+    if (claims.ladderKept?.()) { say(O.stillRecording); endBout(); return; }
+    const r = await Promise.resolve(deps.account.attempt?.(b.tier, b.bout, b.o)).catch(() => null);
+    if (bout !== b) return;
+    const tk = r?.ok ? r.data?.ticket : null;
+    if (typeof tk === 'string') { b.ticket = tk; return; }
+    // AUDIT ARENA-LADDER 2: a device behind the climb (the service's 409 carries no body here - net/accountClient.js call):
+    // the board asked again, and the service's own words said
+    if (r && !r.ok && r.error === 'order') askBoard(true);
+    say(r && !r.ok && (r.error === 'order' || r.error === 'ladder-needs-account') ? accountRefusalText(r.error) : O.ticketFail);
+    endBout();
   }
   /** A banner joined (`'red'`/`'blue'`) or quit (null) on the account: the service's word said when it refuses. ARENA4b:
    *  a guest is told here (a banner takes a registered fighter); a join or quit the service took is the board's at once

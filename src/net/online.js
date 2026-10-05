@@ -157,6 +157,9 @@ export const tokenRetryable = (/** @type {string|null|undefined} */ why) => type
 /** Reconnect backoff bounds, ms. */
 export const BACKOFF_MIN_MS = 1000;
 export const BACKOFF_MAX_MS = 8000;
+/** AURA-LIVE: a badge said again (`rehello`) at most once this often - a player trying aura after aura costs the room's
+ *  hello budget one hello a socket per gap, and it is the LATEST badge that goes. */
+export const REHELLO_GAP_MS = 3000;
 /** How often a world room's host publishes the room's memory (WORLD1); the relay drops one sooner than WORLD_MIN_MS. */
 export const WORLD_PUBLISH_MS = 15000;
 /** SCALE2b: a host whose room's memory has not changed says it again at least this often (world.js worldPublish skips
@@ -505,6 +508,10 @@ export class OnlineSession {
     this.lookOk = false;          // PROFILE2: the relay that welcomed my primary socket knows the `look` frame (a halo's own welcome says for the halo)
     this._lookDirty = false;      // PROFILE2: my look changed since the sockets now open said hello - to be said again
     this._lkbucket = null;        // PROFILE2: my looks out, LOOK_HZ_MAX a second (the relay's per-socket gate, never tripped)
+    this._rehelloWant = false;    // AURA-LIVE: my badge changed since the sockets now open said hello - to be said again (rehello)
+    this._rehelloAt = -Infinity;  // AURA-LIVE: when the last one went (REHELLO_GAP_MS)
+    this._swap = new Map();       // AURA-LIVE: room -> { ws, old, since } - a socket opening to take an open one's place, its hello on a fresh token
+    this._retired = new Map();    // AURA-LIVE: new socket -> the one it replaced, closed by my own hand once the new is welcomed (or gone)
     this._tbucket = null;         // TRADE1: the trade frames' own gate at home (TRADE_HZ_MAX)
     this._inCastBuckets = new Map();   // ALLY-CAST: the gate on cast frames coming in, per sender - the trade gate's shape
     this._castBucket = null;   // ALLY-CAST: my own casts out, castGate's law. CHAT-CHAN: its OWN field - this was `_cbucket`, the chat gate's own
@@ -709,6 +716,10 @@ export class OnlineSession {
     const ws = this._ws;
     this._ws = null;
     if (ws) { try { ws.close(1000, 'leaving'); } catch { /* already closed */ } }
+    // AURA-LIVE: a replacement on its way and a socket replaced go with the room - the next hello says the badge
+    for (const [, s] of this._swap) { try { s.ws.close(1000, 'leaving'); } catch { /* already closed */ } }
+    for (const [, old] of this._retired) { try { old.close(1000, 'leaving'); } catch { /* already closed */ } }
+    this._swap.clear(); this._retired.clear(); this._rehelloWant = false;
     this._endHalo();
     this._rooms.clear();
     this._retryAt = null;
@@ -970,6 +981,72 @@ export class OnlineSession {
     this._lookDirty = false;
     const s = JSON.stringify({ t: 'look', look: this.look });
     for (const ws of socks) { try { ws.send(s); this.stats.sent++; } catch { /* the close will say; its reconnect's hello carries the look */ } }
+  }
+
+  /** AURA-LIVE (2026-10-05, Mac: "Ensure other players can see all auras"): MY BADGE AGAIN, MID-SESSION - an aura worn
+   *  or taken off on the account card or at the Broker. The relay reads a badge (the aura, the title, the glyphs) off
+   *  the TOKEN alone, and a token rides a hello, so every room I was already in kept drawing the old one until I
+   *  changed area. Each open socket says hello again, on a fresh token, through a NEW socket of the same id - which the
+   *  relay already takes as a reconnect: the old socket loses the id and is closed CLOSE_REPLACED with no leave said,
+   *  the first hello's stamp is kept (a host keeps its seat - AUDIT WORLD A4), and the new hello's JOIN is fanned to
+   *  the room, which every peer reads as "this peer's badge is now this" (`_refresh`). The old socket stays this
+   *  session's until the new one's hello is ready (`_promote`), so nothing goes unsaid but a hello's round trip, and
+   *  its close - my own hand's - is not the one-seat verdict. At most once a REHELLO_GAP_MS (`_flushRehello` on tick).
+   *  True when it is owed (a socket open to say it). */
+  rehello() {
+    if (this.terminal || this._closedByUs || !this.url || !this._WS) return false;
+    this._rehelloWant = true;
+    this._flushRehello();
+    return true;
+  }
+  _flushRehello() {
+    const now = this._now();
+    // a replacement that never opens and never closes is not immortal (the halo's A7 law): past the longest backoff it
+    // is dropped, the old socket standing - and the badge owed again
+    for (const [room, s] of [...this._swap]) if (now - s.since > BACKOFF_MAX_MS) { this._swap.delete(room); this._rehelloWant = true; try { s.ws.close(1000, 'leaving'); } catch { /* already closed */ } }
+    if (!this._rehelloWant || this.terminal || this._closedByUs) return;
+    if (now - this._rehelloAt < REHELLO_GAP_MS || this._swap.size) return;   // held: the tick tries again, and the latest badge goes
+    const open = [];
+    if (this._ws && this.status === 'open' && this.room) open.push([this.room, this._ws]);
+    for (const [room, h] of this._halo) if (h.ws && h.status === 'open') open.push([room, h.ws]);
+    this._rehelloWant = false;
+    if (!open.length) return;   // nothing open: whatever opens next says hello on a fresh token, so nothing is owed
+    this._rehelloAt = now;
+    for (const [room, old] of open) {
+      let ws;
+      try { ws = new this._WS(`${this.url}/room/${room}`); } catch { continue; }   // the old socket stands; the next change asks again
+      this._swap.set(room, { ws, old, since: now });
+      this._bind(ws);
+    }
+  }
+  /** AURA-LIVE: the room a replacing socket is opening for, or null. */
+  _swapRoom(ws) {
+    for (const [room, s] of this._swap) if (s.ws === ws) return room;
+    return null;
+  }
+  /** AURA-LIVE: the replacing socket takes the old one's place - only now, its token minted and its hello ready, and
+   *  only while the old one is still the room's open socket (a crossing, a leave or a drop in the meantime: the new
+   *  one is closed, and the old one's own paths stand). False when it did not. */
+  _promote(ws, room) {
+    const s = this._swap.get(room);
+    if (!s || s.ws !== ws) return false;
+    this._swap.delete(room);
+    const primary = room === this.room;
+    const h = primary ? null : this._halo.get(room);
+    const cur = primary ? this._ws : h?.ws;
+    const open = primary ? this.status === 'open' : h?.status === 'open';
+    if (this.terminal || this._closedByUs || !cur || cur !== s.old || !open) { try { ws.close(1000, 'leaving'); } catch { /* already closed */ } return false; }
+    if (primary) { this._ws = ws; this.ownOk = false; } else h.ws = ws;   // the own lane waits for ITS welcome, as `_open`'s does (OWN1 O2)
+    this._retired.set(ws, s.old);
+    return true;
+  }
+  /** AURA-LIVE: the socket a replacement took the place of, closed - by the relay already (CLOSE_REPLACED, at the new
+   *  hello), or, when the new one was refused, by this hand: its events were ignored from the promotion on. */
+  _retire(ws) {
+    const old = this._retired.get(ws);
+    if (!old) return;
+    this._retired.delete(ws);
+    try { old.close(1000, 'leaving'); } catch { /* already closed */ }
   }
 
   /** WORLD2: a blow on the host's foe out - anyone but the host (the host applies its own), in a world room. */
@@ -1392,8 +1469,9 @@ export class OnlineSession {
   /** The one handler set for a socket, the primary's or a halo's - the role is read at event time (_roomOf). */
   _bind(ws) {
     ws.onopen = async () => {
-      const room = this._roomOf(ws);
+      const room = this._roomOf(ws) ?? this._swapRoom(ws);   // AURA-LIVE: or a socket opening to replace one (rehello)
       if (room == null) return;
+      const live = () => this._roomOf(ws) != null || this._swapRoom(ws) != null;
       // ACC1d: A FRESH TOKEN PER CONNECTION, minted here because the
       // relay spends each one once. Awaiting before the hello is safe -
       // the relay says nothing until it has heard one - and it is
@@ -1404,7 +1482,7 @@ export class OnlineSession {
       if (this.mintToken) {
         this.token = await this._mint(room);
         // the socket may have been replaced or closed while we waited
-        if (this._roomOf(ws) == null) return;
+        if (!live()) return;
         // SCALE2: why this socket's hello goes without one - its close is read by it (tokenRetryable)
         if (this.token) this._tokenless.delete(ws); else this._tokenless.set(ws, this._tokenWhy ?? 'refused');
       }
@@ -1415,8 +1493,9 @@ export class OnlineSession {
         try {
           this._siegePass = await Promise.race([Promise.resolve(this.mintSiegePass(room)).catch(() => null), new Promise((r) => { timer = setTimeout(() => r(null), TOKEN_WAIT_MS); })]);
         } catch { this._siegePass = null; } finally { clearTimeout(timer); }
-        if (this._roomOf(ws) == null) return;
+        if (!live()) return;
       }
+      if (this._roomOf(ws) == null && !this._promote(ws, room)) return;   // AURA-LIVE: a replacement takes its place now, its hello ready
       const frame = this._helloFrame();
       const hello = JSON.stringify(frame);
       if (room === this.room) {
@@ -1439,6 +1518,8 @@ export class OnlineSession {
     // and painted the overlay. Driven in a real browser to prove it. The frame is one contained act from the outside in.
     ws.onmessage = (ev) => this._deliver('frame', () => { const room = this._roomOf(ws); if (room != null) this._receive(ev.data, room); });
     ws.onclose = (ev) => {
+      this._retire(ws);   // AURA-LIVE: a replacement refused - the socket it replaced goes too (the retry below says hello)
+      for (const [r, s] of this._swap) if (s.ws === ws) this._swap.delete(r);   // AURA-LIVE: one that never took its place
       const room = this._roomOf(ws);
       if (room == null) return;
       const code = ev?.code ?? 1005;
@@ -2096,6 +2177,7 @@ export class OnlineSession {
       // doubling SLAM2 was written for never happened in the one case it was written for. A welcome is the relay
       // saying yes; that is when the retry ladder starts over.
       if (primary) this._backoff = BACKOFF_MIN_MS; else { const h = this._halo.get(room); if (h) h.backoff = BACKOFF_MIN_MS; }
+      this._retire(primary ? this._ws : this._halo.get(room)?.ws);   // AURA-LIVE: welcomed - the socket it replaced goes (the relay has closed it already)
       // SRV-N: WHICH RELAY IS THIS. Read ABOVE the `primary` gate below on purpose - a halo room's welcome comes off
       // the same Worker as my own room's, and a chat channel's welcome is the only one a chat link ever gets, so
       // gating this on the primary room would have made the chat's own sessions blind to the restart that just
@@ -2775,6 +2857,7 @@ export class OnlineSession {
     if (this._rnOrder) this._flushRenown(now);   // AUDIT RENOWN1 WIRE-2: a rise a room has not confirmed goes again, on each socket's own gate
     if (this._gdHeld.length) this._flushGuild(now);   // GUILD1c: a held guild order a socket's gate kept back goes now
     this._flushLook();   // PROFILE2: a look the gate held back
+    this._flushRehello();   // AURA-LIVE: and a badge
     for (const p of [...this.peers.values()]) {
       // SLAM14 B2: a peer a welcome left unnamed, and that no pose or join has confirmed since, leaves each such room
       // when the silence law hides it - the moment it would have vanished from the screen in any case

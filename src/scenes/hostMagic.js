@@ -63,6 +63,7 @@ import { duelSpellOf } from '../combat/duelCombat.js';   // DUEL1: the harmful h
 import { markPlayerHarm } from '../systems/harmMark.js';   // REVENANT-HARM: a foe's spell on the player leaves its mark (a death no blow names is its)
 import { sparedByPlayer, isShipmate, boutTeammates } from '../combat/friendlyFire.js';   // SHIPMATES: who the player's spells pass by, and whose blasts pass the player by
 import { coverDistance, coverStep } from '../ai/cover.js';   // TACT1: billboards are cover; AUDIT TACT B5: met by touch
+import { sandSpellRefusal } from '../systems/arenaKit.js';   // AUDIT ARENA-LADDER: the sand's kit law
 
 /** SUNBABY2: a sky fireball (skyFire) is drawn this many times its flat's size, its flash too - a ball a sun throws,
  *  seen falling from far up - and heard this far (metres) from where it lands. */
@@ -204,7 +205,7 @@ export function createPlayerMagic({
    *  true when it is. A host's seam that throws refuses nothing. */
   function wardedHere(sp) {
     let why = null;
-    try { why = spellRefusal?.(sp) ?? null; } catch { why = null; }
+    try { why = spellRefusal?.(sp) ?? sandSpellRefusal(sp); } catch { why = null; }   // AUDIT ARENA-LADDER: and the sand's kit law, in every host (systems/arenaKit.js)
     if (!why) return false;
     readiedSpell = null; readiedFree = false; readiedCost = 0;
     say(why);

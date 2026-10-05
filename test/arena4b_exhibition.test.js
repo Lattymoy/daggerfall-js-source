@@ -166,7 +166,7 @@ test('ARENA4b the window holds: past its first twenty minutes nobody opens the h
   const W2 = fakeRooms();
   await onClock(NOON + 1, async () => {
     const S = await stands(W2, hour);
-    await word(S.R, S.b, { k: 'in', r: 'f', tier: 0, bout: 0, lv: 3 });
+    await word(S.R, S.b, { k: 'in', r: 'f', tier: 0, bout: 0, lv: 3, z: 'feedc0de00000001' });
     assert.equal(last(S.b, 'no').m, 'no bout', 'a fighter\'s word opens no exhibition');
   });
   void b;

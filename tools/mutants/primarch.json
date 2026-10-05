@@ -102,12 +102,12 @@
   {
     "name": "PRIMARCH-the-radiances-button-in-violet",
     "file": "src/ui/playerBadge.js",
-    "old": "radiance: 'primarch', shadowcloak: 'shadowfang' });",
-    "new": "radiance: 'aegis', shadowcloak: 'shadowfang' });",
+    "old": "radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder' });",
+    "new": "radiance: 'aegis', shadowcloak: 'shadowfang', seraphwings: 'founder' });",
     "tests": [
       "test/primarch.test.js"
     ],
-    "note": "The Golden Radiance's button on the card painted in the Aegis of Oblivion's violets. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line."
+    "note": "The Golden Radiance's button on the card painted in the Aegis of Oblivion's violets. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. SERAPH-WINGS (re-aimed by content): the wings joined the list."
   },
   {
     "name": "PRIMARCH-the-title-misspelt",
@@ -192,12 +192,12 @@
   {
     "name": "PRIMARCH-the-vocabularys-aura",
     "file": "src/net/identityToken.js",
-    "old": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak']);",
-    "new": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'shadowcloak']);",
+    "old": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings']);",
+    "new": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'shadowcloak', 'seraphwings']);",
     "tests": [
       "test/primarch.test.js"
     ],
-    "note": "A token carrying the radiance refused: the aura never reaches a screen. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line."
+    "note": "A token carrying the radiance refused: the aura never reaches a screen. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. SERAPH-WINGS (re-aimed by content): the wings joined the list."
   },
   {
     "name": "PRIMARCH-the-looks-kind",
@@ -338,5 +338,15 @@
       "test/primarch.test.js"
     ],
     "note": "Every wearer drawn at the world's origin, and the column's axis lost."
+  },
+  {
+    "name": "PRIMARCH-inside-by-the-ground-alone",
+    "file": "src/render/auraRing.js",
+    "old": "length(vec2(length(uCamPos.xz - uAt.xz), max(max(uAt.y - uCamPos.y, uCamPos.y - uAt.y - uFlameH), 0.0)))",
+    "new": "length(uCamPos.xz - uAt.xz)",
+    "tests": [
+      "test/primarch.test.js"
+    ],
+    "note": "AUDIT 3 (SERAPH-WINGS round): the column's inside fade read the distance across the ground alone - a camera high over a wearer saw no column."
   }
 ]

@@ -35,18 +35,21 @@ export const BOUTS_PER_TIER = 3;
  * its own (the Grand Melee). `beasts` - the crowd thinks it unfair.
  */
 const b = (mobile, level = null) => Object.freeze({ mobile, level });
-/** @type {ReadonlyArray<{ bouts: ReadonlyArray<ReadonlyArray<{ mobile: number, level: number|null }>>, champion: ReadonlyArray<{ mobile: number, level: number|null }>, free?: boolean, beasts?: boolean }>} */
+/** AUDIT ARENA-LADDER (the owner's call, "Elite champions"): a tier's CHAMPION fights as an ELITE FOE (systems/eliteFoes.js -
+ *  its health and its blows raised, and of the tier that telegraphs its heavy blows, ai/foeBlows.js blowTier). */
+const champ = (mobile, level = null) => Object.freeze({ mobile, level, elite: true });
+/** @type {ReadonlyArray<{ bouts: ReadonlyArray<ReadonlyArray<{ mobile: number, level: number|null }>>, champion: ReadonlyArray<{ mobile: number, level: number|null, elite?: boolean }>, free?: boolean, beasts?: boolean }>} */
 export const LADDER_TIERS = Object.freeze([
-  Object.freeze({ bouts: [[b(M.Thief, 1)], [b(M.Rogue, 2)], [b(M.Barbarian, 3)]], champion: [b(M.Barbarian, 3)] }),
-  Object.freeze({ bouts: [[b(M.Warrior, 3)], [b(M.Monk, 4)], [b(M.Archer, 5)]], champion: [b(M.Knight, 5)] }),
-  Object.freeze({ bouts: [[b(M.Spellsword, 5)], [b(M.Nightblade, 6)], [b(M.Ranger, 7)]], champion: [b(M.Battlemage, 7)] }),
-  Object.freeze({ bouts: [[b(M.Knight, 7)], [b(M.Barbarian, 8)], [b(M.Healer, 9)]], champion: [b(M.Assassin, 9)] }),
-  Object.freeze({ bouts: [[b(M.Battlemage, 9)], [b(M.Sorcerer, 10)], [b(M.Warrior, 11)]], champion: [b(M.Warrior, 11), b(M.Warrior, 11)] }),
-  Object.freeze({ bouts: [[b(M.GrizzlyBear)], [b(M.SabertoothTiger)], [b(M.GiantScorpion)]], champion: [b(M.Spriggan)], beasts: true }),
-  Object.freeze({ bouts: [[b(M.Knight, 13)], [b(M.Spellsword, 14)], [b(M.Nightblade, 15)]], champion: [b(M.OrcWarlord)] }),
-  Object.freeze({ bouts: [[b(M.Assassin, 15)], [b(M.Battlemage, 16)], [b(M.Monk, 17)]], champion: [b(M.DaedraSeducer)] }),
-  Object.freeze({ bouts: [[b(M.Knight, 17), b(M.Healer, 17)], [b(M.Warrior, 18), b(M.Mage, 18)], [b(M.Knight, 19), b(M.Mage, 19)]], champion: [b(M.Vampire)] }),
-  Object.freeze({ bouts: [[b(M.Knight, 20), b(M.Warrior, 20), b(M.Healer, 20)], [b(M.Assassin, 21), b(M.Battlemage, 21), b(M.Monk, 21)], [b(M.Vampire), b(M.DaedraSeducer), b(M.OrcWarlord)]], champion: [b(M.IronAtronach)], free: true }),
+  Object.freeze({ bouts: [[b(M.Thief, 1)], [b(M.Rogue, 2)], [b(M.Barbarian, 3)]], champion: [champ(M.Barbarian, 3)] }),
+  Object.freeze({ bouts: [[b(M.Warrior, 3)], [b(M.Monk, 4)], [b(M.Archer, 5)]], champion: [champ(M.Knight, 5)] }),
+  Object.freeze({ bouts: [[b(M.Spellsword, 5)], [b(M.Nightblade, 6)], [b(M.Ranger, 7)]], champion: [champ(M.Battlemage, 7)] }),
+  Object.freeze({ bouts: [[b(M.Knight, 7)], [b(M.Barbarian, 8)], [b(M.Healer, 9)]], champion: [champ(M.Assassin, 9)] }),
+  Object.freeze({ bouts: [[b(M.Battlemage, 9)], [b(M.Sorcerer, 10)], [b(M.Warrior, 11)]], champion: [champ(M.Warrior, 11), champ(M.Warrior, 11)] }),
+  Object.freeze({ bouts: [[b(M.GrizzlyBear)], [b(M.SabertoothTiger)], [b(M.GiantScorpion)]], champion: [champ(M.Spriggan)], beasts: true }),
+  Object.freeze({ bouts: [[b(M.Knight, 13)], [b(M.Spellsword, 14)], [b(M.Nightblade, 15)]], champion: [champ(M.OrcWarlord)] }),
+  Object.freeze({ bouts: [[b(M.Assassin, 15)], [b(M.Battlemage, 16)], [b(M.Monk, 17)]], champion: [champ(M.DaedraSeducer)] }),
+  Object.freeze({ bouts: [[b(M.Knight, 17), b(M.Healer, 17)], [b(M.Warrior, 18), b(M.Mage, 18)], [b(M.Knight, 19), b(M.Mage, 19)]], champion: [champ(M.Vampire)] }),
+  Object.freeze({ bouts: [[b(M.Knight, 20), b(M.Warrior, 20), b(M.Healer, 20)], [b(M.Assassin, 21), b(M.Battlemage, 21), b(M.Monk, 21)], [b(M.Vampire), b(M.DaedraSeducer), b(M.OrcWarlord)]], champion: [champ(M.IronAtronach)], free: true }),
 ].map((t) => Object.freeze({ ...t, bouts: Object.freeze(t.bouts.map((x) => Object.freeze(x))), champion: Object.freeze(t.champion) })));
 
 /** THE PURSES, gold: a bout won in each tier, its champion beaten, and the Grand Champion's. */
@@ -58,7 +61,7 @@ export const EXHIBITION_PURSE = 100;
 /** A fresh ladder: tier 0, nothing won. */
 export function newArenaLadder() {
   return {
-    v: ARENA_LADDER_VERSION, tier: 0, won: 0, champs: Array(LADDER_TIERS.length).fill(false), grand: false,
+    v: ARENA_LADDER_VERSION, tier: 0, won: 0, paid: 0, champs: Array(LADDER_TIERS.length).fill(false), grand: false,
     record: { wins: 0, losses: 0, yields: 0, falls: 0, ringouts: 0, purses: 0, streak: 0, best: 0 },
   };
 }
@@ -70,6 +73,7 @@ export function arenaLadderRestore(raw) {
   if (!raw || typeof raw !== 'object') return L;
   L.tier = int(raw.tier, 0, LADDER_TIERS.length - 1);
   L.won = int(raw.won, 0, BOUTS_PER_TIER);
+  L.paid = Math.max(L.won, int(raw.paid, 0, BOUTS_PER_TIER, L.won));   // AUDIT ARENA-LADDER 2: a save before it - what is won was paid
   if (Array.isArray(raw.champs)) L.champs = L.champs.map((_, i) => raw.champs[i] === true);
   L.grand = raw.grand === true;
   // a champion beaten below the tier is the climb's own record - a tier above any champion beaten is the next
@@ -80,11 +84,13 @@ export function arenaLadderRestore(raw) {
 /** The ladder as the save writes it (a copy). */
 export function arenaLadderSnapshot(L) {
   const s = arenaLadderRestore(L);
-  return { v: ARENA_LADDER_VERSION, tier: s.tier, won: s.won, champs: [...s.champs], grand: s.grand, record: { ...s.record } };
+  return { v: ARENA_LADDER_VERSION, tier: s.tier, won: s.won, paid: s.paid, champs: [...s.champs], grand: s.grand, record: { ...s.record } };
 }
 
-/** THE NEXT BOUT on the ladder: `{ tier, bout, champion, grand, opponents, free, beasts, purse, label }` - the bout
- *  index (0..2), or the champion once three are won; null when the Grand Champion has been beaten. */
+/** THE NEXT BOUT on the ladder: `{ tier, bout, champion, grand, opponents, free, beasts, purse, label, repeat }` - the bout
+ *  index (0..2), or the champion once three are won; null when the Grand Champion has been beaten. AUDIT ARENA-LADDER 2:
+ *  `repeat` a bout of the tier already won once and won again after a lost run (`paid`, the tier's bouts ever won) - it
+ *  pays no purse and no banner points, so a broken run is never a purse to farm. */
 export function nextLadderBout(L) {
   const s = arenaLadderRestore(L);
   if (s.grand) return null;
@@ -92,9 +98,10 @@ export function nextLadderBout(L) {
   const champion = s.won >= BOUTS_PER_TIER;
   const grand = champion && s.tier === LADDER_TIERS.length - 1;
   const opponents = champion ? t.champion : t.bouts[s.won];
+  const repeat = !champion && s.won < s.paid;
   return {
     tier: s.tier, bout: champion ? BOUTS_PER_TIER : s.won, champion, grand, opponents, free: !!t.free && !champion, beasts: !!t.beasts,
-    purse: champion ? CHAMPION_PURSE[s.tier] : BOUT_PURSE[s.tier],
+    purse: champion ? CHAMPION_PURSE[s.tier] : repeat ? 0 : BOUT_PURSE[s.tier], repeat,
     label: grand ? ARENA_TEXT.grandLabel : champion ? ARENA_TEXT.champLabel : ARENA_TEXT.boutLabel(s.won + 1),
     tierName: ARENA_TEXT.tiers[s.tier],
   };
@@ -102,13 +109,16 @@ export function nextLadderBout(L) {
 
 /**
  * A LADDER BOUT'S END on the ladder: a win counts the bout (the champion beaten moves the tier up and gives its
- * title; the last one is the Grand Champion), a loss counts nothing but the record. `how` the bout's ending for the
- * player ('yield', 'fall', 'ringout', 'judges', 'draw'). Answers `{ ladder, title, tierUp, grand }` - a new ladder.
+ * title; the last one is the Grand Champion); a loss - a draw at the judges is one - BREAKS THE TIER'S RUN: back to its
+ * first bout, three to win again before its champion (AUDIT ARENA-LADDER, the owner's call: "Lose the tier's run" - a
+ * loss had cost only the purse, so the mountain was climbed by retrying each step until it fell). A champion already
+ * beaten stays beaten. `how` the bout's ending for the player ('yield', 'fall', 'ringout', 'judges', 'draw').
+ * Answers `{ ladder, title, tierUp, grand, runLost }` - a new ladder; `runLost` when a run of wins went.
  */
 export function ladderAfter(L, { won, how = '', purse = 0 }) {
   const s = arenaLadderRestore(L);
   const next = nextLadderBout(s);
-  const out = { ladder: s, title: null, tierUp: false, grand: false };
+  const out = { ladder: s, title: null, tierUp: false, grand: false, runLost: false };
   if (!next) return out;
   const r = s.record;
   if (won) {
@@ -117,10 +127,12 @@ export function ladderAfter(L, { won, how = '', purse = 0 }) {
       s.champs[next.tier] = true;
       out.title = ARENA_TEXT.titles[next.tier];
       if (next.grand) { s.grand = true; out.grand = true; s.won = BOUTS_PER_TIER; }
-      else { s.tier = Math.min(LADDER_TIERS.length - 1, s.tier + 1); s.won = 0; out.tierUp = true; }
-    } else s.won = Math.min(BOUTS_PER_TIER, s.won + 1);
+      else { s.tier = Math.min(LADDER_TIERS.length - 1, s.tier + 1); s.won = 0; s.paid = 0; out.tierUp = true; }
+    } else s.won = Math.min(BOUTS_PER_TIER, s.won + 1);   // AUDIT ARENA-LADDER 2: `paid` follows - arenaLadderRestore keeps it at least `won`
   } else {
     r.losses++; r.streak = 0;
+    out.runLost = s.won > 0;
+    s.won = 0;
     if (how === 'yield') r.yields++;
     else if (how === 'fall') r.falls++;
     else if (how === 'ringout') r.ringouts++;

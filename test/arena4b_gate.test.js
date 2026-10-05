@@ -48,6 +48,7 @@ function onlineOf({ board = boardOf(), guest = false, team = null } = {}) {
         svc.board = { ...svc.board, me: { ...svc.board.me, banner: b, ...(b === null ? { left: was, leftSeason: svc.board.season } : {}) } };
         return { ok: true, data: { ok: true, banner: b } };
       },
+      attempt: async (tier, bout) => ({ ok: true, data: { ticket: 'feedc0de00000002', tier, bout } }),   // AUDIT ARENA-LADDER: the attempt's ticket
       me: () => 'acct-alva',
     },
     enterFloor: () => true, level: () => 12, maxHealth: () => 140, inBout: () => false,

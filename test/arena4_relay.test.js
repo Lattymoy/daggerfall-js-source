@@ -64,7 +64,7 @@ test('ARENA4 the door and the wire: the Worker opens the hall and a bout\'s room
   assert.equal(arenaBlowCap({ r: ARENA_HIT.Melee, w: 123, m: 9 }), 2 * (21 + 6 + 20), 'a Daedric dai-katana, a critical\'s double');
   assert.equal(arenaBlowCap({ r: ARENA_HIT.Spell }), 60);
   assert.equal(arenaBlowCap({ r: ARENA_HIT.Melee }), 2 * (41 + 20), 'ARENA5: a bare hand\'s most (DFU\'s past the softcap) and the modifiers\' room, doubled');
-  assert.equal(RELAY_VERSION, 'world167');   // world142 on its branch, renumbered past main's world154 at the merge; AEGIS moved it on (world160), GUILD2 after it (world161, no wire change), PRIMARCH after that (world162), SUNBABY1 after it (world163, a live event's word), PARTY-LEAD after that (world164, the hub's party.lead act), SERPENT1 after it (world165, the serpent frame), SERPENT2 after that (world166, the serpent herald); SHADOW-CLOAK after it (world167, the cloak's word - PIN MOVED)
+  assert.equal(RELAY_VERSION, 'world169');   // world142 on its branch, renumbered past main's world154 at the merge; AEGIS moved it on (world160), GUILD2 after it (world161, no wire change), PRIMARCH after that (world162), SUNBABY1 after it (world163, a live event's word), PARTY-LEAD after that (world164, the hub's party.lead act), SERPENT1 after it (world165, the serpent frame), SERPENT2 after that (world166, the serpent herald); SHADOW-CLOAK after it (world167, the cloak's word - PIN MOVED); SERAPH-WINGS after it (world168, the wings word - PIN MOVED); AUDIT ARENA-LADDER after that (world169, the arena ladder audit - PIN MOVED)
   assert.equal(relaySupportsArena('world154'), false, 'main\'s FRIENDS-SYNC through BROKER-CAGE took world142-154 and open no arena room');
   assert.equal(relaySupportsArena('world142'), false);
   assert.equal(relaySupportsArena('world155'), true);
@@ -301,7 +301,7 @@ test('ARENA4 the ladder on the relay: the fighter\'s own `in` opens a ladder bou
   const p = R.connect();
   let px = C[0] - 6;
   await R.hello(p, 'fight-ceryn', { x: px, y: 0.3, z: C[2], yaw: 0, pitch: 0, mv: 0 }, { name: 'Ceryn', kind: 'linked', tokenSub: 'acct-ceryn' });
-  await word(R, p, { k: 'in', r: 'f', tier: 0, bout: 1, lv: 6, mh: 90 });
+  await word(R, p, { k: 'in', r: 'f', tier: 0, bout: 1, lv: 6, mh: 90, z: 'feedc0de00000001' });
   const st = last(p, 'st');
   assert.equal(st.kind, 'pve');
   assert.deepEqual([st.tier, st.bout], [0, 1]);

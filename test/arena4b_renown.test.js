@@ -62,7 +62,9 @@ test('ARENA4b a ladder win pays the claiming character, once - a loss and a clai
   assert.deepEqual([twice.body.recorded, twice.body.why, twice.body.renown], [false, 'claimed', undefined], 'once a bout');
   const lost = await claim(S, a, await ladder(S, a, 0, 2, 0));
   assert.deepEqual([lost.body.recorded, lost.body.renown], [true, undefined], 'a loss is kept and pays none');
-  const bare = await claim(S, a, await ladder(S, a, 0, 2), {});
+  // AUDIT ARENA-LADDER: the loss broke the tier's run - the climb is back at the Pit's first bout
+  assert.deepEqual([lost.body.ladder.tier, lost.body.ladder.won], [0, 0], 'a loss breaks the run');
+  const bare = await claim(S, a, await ladder(S, a, 0, 0, 1, 'c'.repeat(16)), {});
   assert.deepEqual([bare.body.recorded, bare.body.renown], [true, undefined], 'an older build names no character: kept, unpaid');
   assert.equal(trackOf(S, a), 330);
   assert.equal(S.env.DB._raw.prepare('SELECT COUNT(*) AS n FROM arena_renown WHERE player = ?').get(a.id).n, 2, 'one row a won bout');

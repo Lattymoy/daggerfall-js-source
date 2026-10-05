@@ -28,6 +28,7 @@ import { effectiveLevel } from '../src/systems/mentorMode.js';   // SOFTCAP2: th
 import { applyChampion } from '../src/systems/champions.js';   // LOOT7: applyEliteScaling stands a layout champion (a free name there, the module's own import)
 import { inFireWard } from '../src/world/dungeonFires.js';   // REST3: the spawn's ward (a free name there, the module's own import)
 import { freeLodgedFeet } from '../src/characters/foeSpacing.js';   // FIELD BUGS 2026-10-04d CRATE-FREE: the build's stand (a free name there, the module's own import)
+import { auraWingLights } from '../src/render/auraRing.js';   // SERAPH-WINGS: peerTorchLights' tail
 
 function sliced(path) {
   const S = readFileSync(new URL(path, import.meta.url), 'utf8');
@@ -346,6 +347,7 @@ function dungeonLights(abyss) {
     online: { peers: new Map([['p1', { id: 'p1', shown: pose }]]), visible: () => true },
     cam: { pos: [8, 1.7, 4], yaw: 0 }, onlineToScene: (s) => [s.x, s.y, s.z], peerTorchLight, _peerCandleLights: [candle],
     performance: { now: () => 0 },
+    auraWingLights, _auraWearers: [], _auraLights: [],   // SERAPH-WINGS: the list's tail - no wings worn here
   });
   const dgColor = new Float32Array([0.8, 0.6, 0.4]);
   const lit = mount(`

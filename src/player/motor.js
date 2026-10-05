@@ -1016,6 +1016,10 @@ export class PlayerMotor {
     const a = this.arena;
     const c = a?.centre;
     if (!c || !(a.radius > 0)) return;
+    // AUDIT ARENA-LADDER: A CEILING OVER THE SAND (the owner's kit law, 'No cheese spells or potions' - systems/arenaKit.js
+    // SAND_CEILING_M): a ring that names one (`ceilAbove`, metres over its centre - the sand) holds the body under it, its
+    // rise taken away; the duel's and the gate's rings name none, and their height is never touched
+    if (Number.isFinite(a.ceilAbove) && this.pos[1] > c[1] + a.ceilAbove) { this.pos[1] = c[1] + a.ceilAbove; if (this.velY > 0) this.velY = 0; }
     // WB9b: an arena with a clamp of its own - the gate's three courts and the walkways laid between them
     // (world/gateArena.js courtArena, net/gateBrain.js clampToFloor - the relay's law of the floor)
     if (typeof a.clamp === 'function') { this._putBack(a.clamp(this.pos, CAPSULE_RADIUS)); return; }

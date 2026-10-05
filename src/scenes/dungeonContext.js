@@ -251,7 +251,7 @@ import { avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   //
 import { activationTargets, liveFoeTargets, liveFoeFor, pickActivatableHit, RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE, presentNpcInfoText } from '../player/activate.js';   // SEARCH1: an Info look at a searchable
 import { raceWinner } from '../player/activationRace.js';   // WORLD-HOVER H2: the ONE precedence the press and the plaque share
 import { composeActivationTargets, composeNamer } from '../systems/worldHover.js';
-import { worldTooltipsOn, hideInteractTooltip, corpseName, mobileEntityName, liveEntityName, lootPileName, actionObjectName } from '../systems/worldTooltips.js';   // WORLD-HOVER: the mod's ladder, arm by arm   // WORLD-HOVER: the composition law is pure, so it lives with the model and can be DRIVEN   // WORLD-HOVER: the ONE construction seam composes the action objects' targets here; AUDIT 65 MC-2: the ray's reach, and each family's own
+import { worldTooltipsOn, hideInteractTooltip, corpseName, mobileEntityName, liveEntityName, lootPileName, actionObjectName } from '../systems/worldTooltips.js'; import { questFoeSubs } from '../systems/questFoeLine.js';   // QUEST-FOE-LINE: a quest's foe says whose it is; WORLD-HOVER: the mod's ladder, arm by arm   // WORLD-HOVER: the composition law is pure, so it lives with the model and can be DRIVEN   // WORLD-HOVER: the ONE construction seam composes the action objects' targets here; AUDIT 65 MC-2: the ray's reach, and each family's own
 import { worldHoverFrame, destroyWorldPlaque } from '../ui/worldPlaque.js';   // PX21c, WORLD-HOVER: one seam, one plaque
 import { quickLootTake, plaqueActionFor } from '../systems/quickLoot.js'; import { showPickups } from '../ui/pickupFeed.js';   // QUICK-LOOT B4: the take, through the window's own door; PICKUP-FEED: what a take moved, as cards (the take's `took`)
 import { combatVisualsOn, foeDraw, markConcealedHit } from '../systems/combatVisuals.js';   // ECV1: what the enhanced skin draws for a concealed foe
@@ -303,7 +303,7 @@ const q3 = (v) => Math.round(v * 1000) / 1000; const GENDER_BIT = ['male', 'fema
 const HIT_POS_MAX = 1e6;
 // AUDIT FOES FOE5: the most damage one peer's blow may claim. The host TRUSTS the number (it never recomputes - the
 // striker's own calc is the game's), so without a bound any joiner could one-shot every foe in the room and empty it
-// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:2702); the dungeon
+// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:2703); the dungeon
 // had none. Past anything a legal swing, shaft or blast can roll.
 const HIT_DMG_MAX = 10000;
 /** REST-SYNC: a joiner's ask is answered - or given up on - inside this long: its rest breaks once, at the next hour. */
@@ -1100,7 +1100,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // AUDIT 68 S04-v-dungeon-dead-rig-deps: the rig's engineRig/raceCharacter imports and the BODY00I0 ramp derive
     // fed foeDeps keys nothing read (class enemies are sprite mobiles since C17), and a failure in them cost the dungeon its class enemies.
     const [{ EnemyAI, withinYaw, isBackFacing, openDoorsStep }, { EnemyAttack }, { makeEnemyEntity, loadMonsterCareer, applyProgressionScaling }, { EnemyCaster, castEnemySpell: castShared, hasMagickaToCast },
-      { runTargetMachine, boutGate, isPlayerTarget, isLocalPlayerTarget, PLAYER_TARGET, PEER_CAST_TARGET, resetAllyTeamOnPlayerAttack, targetAimPoint, enemyArrowOrigin, enemyTransformPoint, arrowAimDirection, bumpAtkCount }] = await Promise.all([
+      { runTargetMachine, boutGate, isPlayerTarget, isLocalPlayerTarget, PLAYER_TARGET, PEER_CAST_TARGET, resetAllyTeamOnPlayerAttack, targetAimPoint, enemyArrowOrigin, enemyTransformPoint, arrowAimDirection, bumpAtkCount, inBout, playerBoutOf }] = await Promise.all([
       import('../characters/enemyMotor.js'), import('../characters/enemyAttack.js'),
       import('../characters/enemyEntity.js'), import('../characters/enemyCasting.js'),
       // MT-iv: dynamic, as the rest of this block. (AUDIT DISC19: the
@@ -1134,7 +1134,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // MT-iv: the target machine. Every consumer below the lazy block
       // reads foeDeps.* and must guard on foeDeps first, as
       // resolvePlayerHit already does.
-      runTargetMachine, isPlayerTarget, isLocalPlayerTarget, PLAYER_TARGET, PEER_CAST_TARGET, resetAllyTeamOnPlayerAttack, boutGate, bumpAtkCount,   // ARENA2: the bout team's gate (the foe yield floor's twin below); AUDIT WATCH1 (one home): the attack count's spelling on the wire, through the LAZY subsystem (MT-iv)   // AUDIT WORLD3 C3: the local player, told from any player; AUDIT WORLD6b-iii(a) A10: the peer's cast stand-in
+      runTargetMachine, isPlayerTarget, isLocalPlayerTarget, PLAYER_TARGET, PEER_CAST_TARGET, resetAllyTeamOnPlayerAttack, boutGate, bumpAtkCount, inBout, playerBoutOf,   // AUDIT ARENA-LADDER A2 (2: and my bout, for the collapse in its call): a fighter on the sand is its bout's (the lazy module's, MT-iv); ARENA2: the bout team's gate (the foe yield floor's twin below); AUDIT WATCH1 (one home): the attack count's spelling on the wire, through the LAZY subsystem (MT-iv)   // AUDIT WORLD3 C3: the local player, told from any player; AUDIT WORLD6b-iii(a) A10: the peer's cast stand-in
       targetAimPoint, enemyArrowOrigin, enemyTransformPoint, arrowAimDirection,   // AUDIT 62 F21 (review): the ONE aim-point law, shared with the exterior pool   // ROAD-H H1/H1b: and the ONE arrow loose point + the crouch dip beside it
     };
     // ENHANCED AI 4: the routes' world - the per-frame findPath budget
@@ -2167,7 +2167,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:16780 / exterior.js:3977), set
+  // host's own townTalk sink (world.js:16785 / exterior.js:3980), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2730,6 +2730,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     });
     // SWIM-SPENT (rest.js): in the dungeon's water a share of the health and a line - no box, no death heard
     if (out.kind === 'drown') { hudText.add(out.line); hurtEntity(playerEntity, out.damage, { bypassShield: true }); surfacePlayer(); return; }
+    // AUDIT ARENA-LADDER A1: ON THE SAND THE COLLAPSE IS A FALL. A bout's foe is always nearby, so exhaustionOutcome
+    // answered death, and this door killed the player on the floor where nobody dies (a long bout, a tired start, an
+    // enemy's Damage Fatigue). Under the bout's spare the collapse leaves 1 health and is the bout's fall - never the
+    // death screen, and never the hour of rest the other arm would raise mid-fight. The duel's own law (shared.js
+    // drainFatigue, DUEL1 B3).
+    const sandSpare = opts.playerSpare?.() ?? null;
+    if (sandSpare) { hurtEntity(playerEntity, playerEntity.health, { bypassShield: true, ...sandSpare }); playerEntity.fatigue = Math.max(playerEntity.fatigue ?? 0, 1); surfacePlayer(); return; }   // a breath of fatigue, as the duel leaves: the collapse is said once, not every frame   if (foeDeps?.playerBoutOf?.()) { playerEntity.fatigue = Math.max(playerEntity.fatigue ?? 0, 1); surfacePlayer(); return; }   // AUDIT ARENA-LADDER 2: in my bout before its fight or after it (no spare yet) - a breath, never an hour of rest in the Herald's call
     opts.csaOnPlayerDeath?.();   // CSA-J (the audit): PlayerEntity.OnExhausted -> ComeSailAway.OnPlayerDeath, underground too
     const lines = rscLines(out.textId);
     // AUDIT 68 S19-exhaustion-latch-stuck: a PUSH (ROAD-B B5) - DaggerfallUI.MessageBox never asks what else is open.
@@ -3022,7 +3029,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     },
     onDispel: ({ group, chance }) => {
       const list = getNearbyObjects(detectFeed.scanNow(), group) ?? [];
-      const gone = dispelNearby(list.map((no) => no.ref), () => Math.floor(Math.random() * 100) < chance);
+      const gone = dispelNearby(list.map((no) => no.ref).filter((f) => !foeDeps?.inBout?.(f)), () => Math.floor(Math.random() * 100) < chance);   // AUDIT ARENA-LADDER A2: a fighter on the sand is its bout's
       for (const f of gone) questPoolOps.removeFoe(f);
       if (gone.length) hudText.add(`${gone.length} dispelled.`);
     },
@@ -3088,6 +3095,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!f) return;
     if ((!_authority && isRoomFoe(f)) || f._ownFrom != null) return;   // SUMMON-SYNC: a puppet is its runner's, not mine to re-stand (AUDIT WORLD6b B9, the cell's law) - its change would ride the room beside the runner's foe
     if (f.questBehaviour && !f.questBehaviour.isFoeDead) return;
+    if (foeDeps?.inBout?.(f)) return;   // AUDIT ARENA-LADDER A2: the Wabbajack changes no fighter on the sand
     const at = f.ai?.feet ? centreFromFeet(f.ai.feet, f.idleH ?? f.ai.height) : (lastPlayerFeet ?? [0, 0, 0]);   // REVIEW 2026-09-05: WabbajackEffect.cs:90 hands CreateEnemy the struck foe's TRANSFORM (its sprite centre), which the spawn chain reads as a marker
     const missing = (targetEntity.maxHealth ?? 0) - (targetEntity.health ?? 0);
     questPoolOps.removeFoe(f);
@@ -4267,8 +4275,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:27929,
-              // exterior.js:5640 and worldModes.js:9421 already ran;
+              // playerArrowHitFoe is the one copy world.js:27934,
+              // exterior.js:5644 and worldModes.js:9421 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -5148,7 +5156,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const i = data.i | 0, dmg = Number(data.dmg);
     const xs = data.xs === 1;   // REST-SYNC: a shared encounter, by the room's number - not a layout index
     const f = xs ? (_sharedById.get(i) ?? null) : foes[i];
-    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:2702). The number is a peer's
+    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:2703). The number is a peer's
     // word and the host trusts it without recomputing, so an unbounded one let any joiner one-shot every foe in the
     // room - and, through the kill door, empty it. 10000 is past anything a legal swing, shaft or blast can roll.
     if (!f || (!xs && i >= _layoutFoes) || f.dead || !Number.isFinite(dmg) || dmg < 0 || dmg > HIT_DMG_MAX) return false;
@@ -5727,7 +5735,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // InstantiatePrefab's a fresh GameObject per saved record, so
     // EnemyEntity's `PickpocketByPlayerAttempted` default is the loaded
     // truth for every enemy. The re-minting pools match that by
-    // construction (exteriorFoes.js:2053's restoreWorld goes through
+    // construction (exteriorFoes.js:2054's restoreWorld goes through
     // spawnFoe), but this host patches the LIVE foes in place, so a
     // same-dungeon reload kept a raised latch and a failed pickpocket
     // could never be retried - falsifying the law
@@ -6193,11 +6201,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // silent report(0) the material gate hands enemies.
     const wpn = foeDeps.chooseEnemyWeapon(foeDeps.dropWeaponIfTargetImmune(f.entity.weapon, t.entity), ENEMY_BASICS[f.mobileType]);
     const fwd = [Math.sin(f.ai.yaw), 0, Math.cos(f.ai.yaw)];   // transform.forward (:208)
-    if (foeDeps.meleeHitConnects(f.ai._dist, f.ai.inSight, foeDeps.withinYaw(f.ai.yaw, fdx, fdz, foeDeps.MELEE_HIT_YAW_DEG))) {
+    // AUDIT ARENA-LADDER: a telegraphed blow at a bout-mate (ai/tactics.js blowAim) is decided by its shape and weighed
+    // by it here, as at the player - its verdict spent on this swing, never left for a later one at me
+    if (blowConnects(f.ai, foeDeps.meleeHitConnects(f.ai._dist, f.ai.inSight, foeDeps.withinYaw(f.ai.yaw, fdx, fdz, foeDeps.MELEE_HIT_YAW_DEG)))) {
       applyDamageToNonPlayer(f, t, {
         weapon: wpn, direction: fwd, rolls: Math.random,
         calculateAttackDamage: foeDeps.calculateAttackDamage,
-        dealDamage: (tt, d) => tt.hurtFromFoe?.(d, fwd, f),
+        dealDamage: (tt, d) => tt.hurtFromFoe?.(blowScaled(f.ai, d), fwd, f),
         audio, hitEffects,
         // AUDIT 58: FormulaHelper.cs:691-696 has NO player gate - a
         // poisoned foe blade doses the foe it strikes, on DFU's own
@@ -7682,7 +7692,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const f = liveFoeFor(foes, key, 'mobileFoe');
       if (!f) return null;
       const t = mobileEntityName(liveEntityName(f, enemyDisplayName(f.mobileType)), { hostile: !!f.ai?.isHostile && !f.yielded });   // HOVER-PLAIN: a hostile foe is never named here, a champion, an elite or a revenant included - its name stands on its health bar alone; a kneeling revenant (still hostile in its motor) is done fighting, so it says so below
-      return t ? { title: f.yielded ? `${t} - beaten` : t } : null;   // REVENANT-FATE (the 2026-10-02 audit): a kneeling revenant says so, as the street's does
+      return t ? { title: f.yielded ? `${t} - beaten` : t, subs: questFoeSubs(f) } : null;   // REVENANT-FATE (the 2026-10-02 audit): a kneeling revenant says so, as the street's does; QUEST-FOE-LINE (FIELD BUGS 2026-10-04f): a quest's foe at peace says whose it is
     }
     if (key.startsWith('door:') || key.startsWith('act:')) {
       const o = actions.objects.get(key) ?? null;

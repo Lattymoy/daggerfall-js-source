@@ -384,10 +384,11 @@
   {
     "name": "ARENA4-CHAMPION-MIN-BOUTS",
     "file": "src/net/arenaLaw.js",
-    "old": "export const ARENA_CHAMPION_MIN_BOUTS = 3;",
-    "new": "export const ARENA_CHAMPION_MIN_BOUTS = 2;",
+    "old": "export const ARENA_CHAMPION_MIN_BOUTS = 10;",
+    "new": "export const ARENA_CHAMPION_MIN_BOUTS = 9;",
     "tests": [
-      "test/arena4_service.test.js"
+      "test/arena4_service.test.js",
+      "test/arenaladder_audit.test.js"
     ]
   },
   {
@@ -636,8 +637,8 @@
   {
     "name": "ARENA4-OWED-LADDER-WON",
     "file": "src/net/arenaBrain.js",
-    "old": "r: r.side === 0 ? 1 : 0, h: r.how }];",
-    "new": "r: r.side === 0 ? 0 : 1, h: r.how }];",
+    "old": "r: r.side === 0 ? 1 : 0, h: r.how, ...(st.f[0].tk",
+    "new": "r: r.side === 0 ? 0 : 1, h: r.how, ...(st.f[0].tk",
     "tests": [
       "test/arena4_relay.test.js"
     ]
@@ -717,8 +718,8 @@
   {
     "name": "ARENA4-AI-BLOW-IN-REACH",
     "file": "src/net/arenaBrain.js",
-    "old": "if (t && !t.out && p && Math.hypot(p[0] - here[0], p[1] - here[1]) <= a.reach + ARENA_POSE_SLACK * 0.5) {",
-    "new": "if (t && !t.out && p) {",
+    "old": ": Math.hypot(p[0] - here[0], p[1] - here[1]) <= a.reach + ARENA_POSE_SLACK * 0.5);",
+    "new": ": true);",
     "tests": [
       "test/arena4_relay.test.js"
     ]
@@ -1122,8 +1123,8 @@
   {
     "name": "ARENA4-PUPPET-TELEGRAPH",
     "file": "src/scenes/arenaBouts.js",
-    "old": "if (foe?._pup) { foe._pup.strike = 'melee';",
-    "new": "if (foe?._pup) { foe._pup.strike = null;",
+    "old": "if (foe?._pup) { if (!w.s) foe._pup.strike = 'melee';",
+    "new": "if (foe?._pup) { if (!w.s) foe._pup.strike = null;",
     "tests": [
       "test/arena4_client.test.js"
     ]
@@ -1221,8 +1222,8 @@
   {
     "name": "ARENA4-GLUE-LADDER-NEXT",
     "file": "src/scenes/arenaOnline.js",
-    "old": "void goTo({ o: newBoutId(), kind: 'pve', tier: next.tier, bout: next.bout, next });",
-    "new": "void goTo({ o: newBoutId(), kind: 'pve', tier: next.tier, bout: 0, next });",
+    "old": "const go = goTo({ o: newBoutId(), kind: 'pve', tier: next.tier, bout: next.bout, next });",
+    "new": "const go = goTo({ o: newBoutId(), kind: 'pve', tier: next.tier, bout: 0, next });",
     "tests": [
       "test/arena4_client.test.js"
     ]
@@ -1475,7 +1476,7 @@
   {
     "name": "ARENA4-SVC-CLIMB-IN-ORDER",
     "file": "server-account/src/arena.js",
-    "old": "WHERE ?6 = 0 OR (SELECT COUNT(*) FROM arena_pve WHERE player = ?2 AND won = 1) = ?10",
+    "old": "WHERE ?6 = 0 OR (SELECT COUNT(*) FROM arena_pve WHERE player = ?2 AND won = 1 AND voided = 0) = ?10",
     "new": "WHERE ?6 = 0 OR 1",
     "tests": [
       "test/arena4_service.test.js"
@@ -1484,8 +1485,8 @@
   {
     "name": "ARENA4-SVC-LOSS-ANY-ORDER",
     "file": "server-account/src/arena.js",
-    "old": "WHERE ?6 = 0 OR (SELECT COUNT(*) FROM arena_pve WHERE player = ?2 AND won = 1) = ?10",
-    "new": "WHERE (SELECT COUNT(*) FROM arena_pve WHERE player = ?2 AND won = 1) = ?10",
+    "old": "WHERE ?6 = 0 OR (SELECT COUNT(*) FROM arena_pve WHERE player = ?2 AND won = 1 AND voided = 0) = ?10",
+    "new": "WHERE (SELECT COUNT(*) FROM arena_pve WHERE player = ?2 AND won = 1 AND voided = 0) = ?10",
     "tests": [
       "test/arena4_service.test.js"
     ]
@@ -1538,8 +1539,8 @@
   {
     "name": "ARENA4-SVC-GRAND-SAID",
     "file": "server-account/src/arena.js",
-    "old": "grand: won && c.q === GRAND_TIER && c.u === ARENA_TIER_BOUTS,",
-    "new": "grand: false,",
+    "old": "\n    points: won && banner ? pvePoints(c.q, c.u) : 0, banner, grand: won && c.q === GRAND_TIER && c.u === ARENA_TIER_BOUTS,",
+    "new": "\n    points: won && banner ? pvePoints(c.q, c.u) : 0, banner, grand: false,",
     "tests": [
       "test/arena4_service.test.js"
     ]
@@ -1601,8 +1602,8 @@
   {
     "name": "ARENA4-SVC-PAIR-DAY",
     "file": "server-account/src/arena.js",
-    "old": "const rated = Number(pair?.n ?? 0) < ARENA_PAIR_DAY_MAX;",
-    "new": "const rated = true;",
+    "old": "const rated = Number(pair?.n ?? 0) < ARENA_PAIR_DAY_MAX && ",
+    "new": "const rated = true && ",
     "tests": [
       "test/arena4_service.test.js"
     ]
@@ -1664,17 +1665,18 @@
   {
     "name": "ARENA4-SVC-LAUREL-BOUTS-TOKEN",
     "file": "server-account/src/arena.js",
-    "old": "const top = rows.find((r) => Number(r.bouts) >= ARENA_CHAMPION_MIN_BOUTS) ?? null;",
-    "new": "const top = rows[0] ?? null;",
+    "old": "!!r && Number(r.bouts) >= ARENA_CHAMPION_MIN_BOUTS && ",
+    "new": "!!r && ",
     "tests": [
-      "test/arena4_service.test.js"
+      "test/arena4_service.test.js",
+      "test/arenaladder_audit.test.js"
     ]
   },
   {
     "name": "ARENA4-SVC-LAUREL-BOUTS-BOARD",
     "file": "server-account/src/arena.js",
-    "old": "const top = pvpAll.find((r) => Number(r.bouts) >= ARENA_CHAMPION_MIN_BOUTS) ?? null;",
-    "new": "const top = pvpAll[0] ?? null;",
+    "old": "const champion = laurelOfBoard(pvpAll);",
+    "new": "const champion = pvpAll[0]?.player ?? null;",
     "tests": [
       "test/arena4_service.test.js"
     ]
@@ -1682,17 +1684,18 @@
   {
     "name": "ARENA4-SVC-LAUREL-SECOND-ROW",
     "file": "server-account/src/arena.js",
-    "old": "return top && top === rows[0] ? top.player : null;",
-    "new": "return top && top === rows[1] ? top.player : null;",
+    "old": "(laurelWorthy(rows?.[0]) ? rows[0].player : null)",
+    "new": "(laurelWorthy(rows?.[1]) ? rows[1].player : null)",
     "tests": [
-      "test/arena4_service.test.js"
+      "test/arena4_service.test.js",
+      "test/arenaladder_audit.test.js"
     ]
   },
   {
     "name": "ARENA4-SVC-LAUREL-TOP-TOKEN",
     "file": "server-account/src/arena.js",
-    "old": "return top && top === rows[0] ? top.player : null;",
-    "new": "return top ? top.player : null;",
+    "old": "  const rows = (await db.prepare(`${BOARD_SQL} LIMIT 1`).bind(season).all()).results ?? [];\n  return laurelOfBoard(rows);",
+    "new": "  const rows = (await db.prepare(`${BOARD_SQL} LIMIT 25`).bind(season).all()).results ?? [];\n  return rows.find(laurelWorthy)?.player ?? null;",
     "tests": [
       "test/arena4_service.test.js"
     ]
@@ -1700,8 +1703,8 @@
   {
     "name": "ARENA4-SVC-LAUREL-TOP-BOARD",
     "file": "server-account/src/arena.js",
-    "old": "const champion = top && top === pvpAll[0] ? top.player : null;",
-    "new": "const champion = top ? top.player : null;",
+    "old": "const champion = laurelOfBoard(pvpAll);",
+    "new": "const champion = pvpAll.find(laurelWorthy)?.player ?? null;",
     "tests": [
       "test/arena4_service.test.js"
     ]

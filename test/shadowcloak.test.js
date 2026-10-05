@@ -57,8 +57,8 @@ const TAU = 2 * Math.PI;
 
 // ── THE VOCABULARY, THE GRANT, THE WIRE ─────────────────────────────
 
-test('SHADOW-CLOAK vocabulary: the cloak joins AURAS last, "Holo Shadow Cloak" in words, its button in the Shadow Fang\'s paint; a look of its own - the fourth kind, its own mesh, and it SHADES; its colours the title\'s own black and crimson (mutants: the word, the paint, the kind, the colour)', () => {
-  assert.deepEqual([...AURAS], ['dagonfire', 'oblivionward', 'radiance', 'shadowcloak'], 'the Broker\'s fire, the ward, the radiance, then the cloak');
+test('SHADOW-CLOAK vocabulary: the cloak joins AURAS after the radiance (SERAPH-WINGS\' wings after it), "Holo Shadow Cloak" in words, its button in the Shadow Fang\'s paint; a look of its own - the fourth kind, its own mesh, and it SHADES; its colours the title\'s own black and crimson (mutants: the word, the paint, the kind, the colour)', () => {
+  assert.deepEqual([...AURAS], ['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings'], 'the Broker\'s fire, the ward, the radiance, then the cloak - SERAPH-WINGS\' wings after it (PIN MOVED)');
   assert.equal(AURA_TEXT.shadowcloak, 'Holo Shadow Cloak', 'the owner\'s words: "A holo shadow cloak"');
   assert.equal(AURA_PAINT.shadowcloak, 'shadowfang', 'its button in the Shadow Fang\'s black and crimson');
   assert.ok(TITLES.includes(AURA_PAINT.shadowcloak));
@@ -150,8 +150,8 @@ test('SHADOW-CLOAK the account card: wearing the cloak, the card says its name -
   assert.equal(flow.note, 'Wearing Holo Shadow Cloak.');
 });
 
-test('SHADOW-CLOAK token and relay: a token may carry the cloak and verifies; the relay - world167, the one that knows the word - reads it out of the signature onto their row for everyone near (mutants: the vocabulary\'s aura)', async () => {
-  assert.equal(RELAY_VERSION, 'world167', 'SHADOW-CLOAK moved it on (world167 - world165 on its branch, renumbered past SERPENT1 and SERPENT2 at the merges): the vocabulary rides the relay\'s bundle');
+test('SHADOW-CLOAK token and relay: a token may carry the cloak and verifies; the relay - world167 and after, the ones that know the word - reads it out of the signature onto their row for everyone near (mutants: the vocabulary\'s aura)', async () => {
+  assert.equal(RELAY_VERSION, 'world169', 'SHADOW-CLOAK moved it on (world167 - world165 on its branch, renumbered past SERPENT1 and SERPENT2 at the merges), SERAPH-WINGS after it (world168 - PIN MOVED), AUDIT ARENA-LADDER after that (world169, the arena ladder audit - PIN MOVED): the vocabulary rides the relay\'s bundle');
   const kp = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
   const pub = await importPublicKeyB64(Buffer.from(new Uint8Array(await subtle.exportKey('raw', kp.publicKey))).toString('base64url'), { subtle });
   const nowS = 1_760_000_000;
@@ -241,7 +241,7 @@ test('SHADOW-CLOAK the law: a CAPE clasped at the throat, its hood up round the 
   assert.ok(cloakRatesWhole(), 'every cloak rate whole over the clock');
   for (const r of [...Object.values(CLOAK_HZ), ...Object.values(CLOAK_FLOW), ...Object.values(CLOAK_SHRED_HZ)]) assert.ok(Number.isInteger(Math.round(r * AURA_CLOCK_PERIOD * 1e6) / 1e6), `whole: ${r}`);
   for (const l of CLOAK_EMBLEM_LIFE) assert.equal(AURA_CLOCK_PERIOD % l, 0, `an emblem's life divides the clock: ${l}`);
-  assert.equal(AURA_CARDS, Math.max(WARD_GLYPHS, CLOAK_EMBLEMS + CLOAK_SHREDS), 'the third draw has cards enough for the most any look floats');
+  assert.equal(AURA_CARDS, Math.max(WARD_GLYPHS, CLOAK_EMBLEMS + CLOAK_SHREDS, AURA_LOOK.seraphwings.glyphs), 'the third draw has cards enough for the most any look floats (SERAPH-WINGS: its sparks and backlight - PIN MOVED)');
   for (const gone of ['cloakHex', 'cloakRain', 'cloakGlitch', 'cloakWisp', 'flicker']) assert.ok(!AURA_VS.includes(gone) && !AURA_FS.includes(gone), `"less digital": no ${gone}`);
 });
 
@@ -562,17 +562,17 @@ test('SHADOW-CLOAK the hosts: the one gather every host draws through hands each
   // commented out whole still matched)
   const codeMatch = (src, re, msg) => { const m = re.exec(src); assert.ok(m, msg ?? String(re)); const from = src.lastIndexOf('\n', m.index) + 1; const lines = src.slice(from, m.index + m[0].length).split('\n'); assert.ok(!lines[0].slice(0, m.index - from).includes('//') && lines.slice(1).every((l) => !l.trim().startsWith('//')), `${msg ?? re}: not commented out`); };
   const w = rd('src/scenes/world.js');
-  codeMatch(w, /import \{ AuraRingRenderer, auraWearers, auraBeastStep, auraMotionStep, auraCapeStep, CLOAK_BONES, AURA_KINDLE_S \} from '\.\.\/render\/auraRing\.js'; import \{ peerBodyYaw \} from '\.\.\/net\/peerClimb\.js';/);
-  codeMatch(w, /import \{ mwViewFirstPerson, mwViewFrame, mwViewWheel, mwViewDrawBody, mwViewBodyBones,/);
-  codeMatch(w, /_auraSelf\.aura = mine; _auraSelf\.yaw = player\.bodyYawFor\(cam\.yaw\); auraBeastStep\(_auraSelf, !!liveLycanthropy\(playerEntity\)\?\.isTransformed, t\);/, 'mine: the body\'s facing, and turned beast');
+  codeMatch(w, /import \{ AuraRingRenderer, auraWearers, auraLookOf, auraBeastStep, auraMotionStep, auraCapeStep, auraSpriteBones, auraSpritePosed, auraWingLights, CLOAK_BONES, AURA_KINDLE_S, AURA_FORGET_S \} from '\.\.\/render\/auraRing\.js'; import \{ peerBodyYaw \} from '\.\.\/net\/peerClimb\.js';/);
+  codeMatch(w, /import \{ mwViewFirstPerson, mwViewFrame, mwViewWheel, mwViewDrawBody, mwViewBodyBones, mwViewSpriteFigure,/);
+  codeMatch(w, /_auraSelf\.aura = mine; _auraSelf\.yaw = mwViewSpriteFigure\(\)\?\.yaw \?\? player\.bodyYawFor\(cam\.yaw\); auraBeastStep\(_auraSelf, !!liveLycanthropy\(playerEntity\)\?\.isTransformed, t\);/, 'mine: the body\'s facing, and turned beast');
   codeMatch(w, /w\.at\[2\] = p\[2\]; w\.yaw = peerBodyYaw\(d\.shown\) \?\? 0; auraBeastStep\(w, !!d\.shown\.wb, t\);/, 'a peer\'s: their pose\'s');
   codeMatch(w, /auraBeastStep\(_auraSelf[^\n]*\n\s+_auraSelf\.kindle = Math\.min\(1, \(t - _auraSelf\.since\) \/ AURA_KINDLE_S\); _auraSelf\.mounted = !!player\.riding;/, 'stepped before the kindling is read, so turning back kindles it again; and riding');
   codeMatch(w, /auraBeastStep\(w, [^\n]*\n\s+w\.kindle = Math\.min\(1, \(t - w\.since\) \/ AURA_KINDLE_S\); w\.seen = t; w\.mounted = !!d\.shown\.rd;/, 'a peer\'s too - a horse or a cart');
   // THE DRAW LINE, read as code - its comment cut off first (a call after a // is no call: FOE1's trap, met here once)
-  const line = w.split('\n').find((l) => l.includes('for (const w of _auraDraw) if (w.aura === \'shadowcloak\')'));
+  const line = w.split('\n').find((l) => l.includes('for (const w of _auraDraw) if (auraLookOf(w.aura).mesh)'));
   const code = line.slice(0, line.indexOf('   //'));
   assert.ok(!code.includes('//'), 'no comment inside the code half');
-  assert.match(code, /const auraNow = performance\.now\(\) \/ 1000; for \(const w of _auraDraw\) if \(w\.aura === 'shadowcloak'\) \{ auraCapeStep\(w, w === _auraSelf \? \{ feet: player\.bodyFeetAt\(\), yaw: player\.bodyYawFor\(cam\.yaw\), bones: mwViewBodyBones\(CLOAK_BONES\) \} : peerBodies\?\.bonesOf\(w\.id, CLOAK_BONES\), w === _auraSelf \? player\.height \/ CAPSULE_HEIGHT : 1\); auraMotionStep\(w, auraNow\); \} _auraPass\?\.draw\(_auraDraw, proj, view, eye, auraNow, \{/, 'each cape hung on its body and swung where it is drawn, THEN every aura drawn');
+  assert.match(code, /const auraNow = performance\.now\(\) \/ 1000; for \(const w of _auraDraw\) if \(auraLookOf\(w\.aura\)\.mesh\) \{ auraCapeStep\(w, w === _auraSelf \? \{ feet: player\.bodyFeetAt\(\), yaw: mwViewSpriteFigure\(\)\?\.yaw \?\? player\.bodyYawFor\(cam\.yaw\), bones: mwViewBodyBones\(CLOAK_BONES\) \?\? auraSpriteBones\(mwViewSpriteFigure\(\)\) \} : peerBodies\?\.bonesOf\(w\.id, CLOAK_BONES\) \?\? auraSpritePosed\(w, peerWalkers\?\.figureOf\(w\.id\) \?\? peerRiders\?\.figureOf\?\.\(w\.id\)\), w === _auraSelf \? player\.height \/ CAPSULE_HEIGHT : 1\); auraMotionStep\(w, auraNow\); \} _auraPass\?\.draw\(_auraDraw, proj, view, eye, auraNow, \{/, 'each cape hung on its body and swung where it is drawn, THEN every aura drawn');
   codeMatch(w, /const drawVeiledPeerBodies = \(\) => \{ peerBodies\?\.drawVeiled\(\); drawAuras\(\);/, 'drawn through the hook the street, the building and the dungeon all call - after the bodies');
   const a = rd('src/combat/fpArm.js');
   codeMatch(a, /lastThirdModel = model;[^\n]*\n\s+drawnArm = t\.arm; drawnMats = t\.arm\.mats;/, 'the body\'s bones read in the pose it was drawn in');

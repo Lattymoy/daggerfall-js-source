@@ -88,7 +88,7 @@ test('PROF9 service: a Hunter\'s Stew at the fire - its Raw Meat, Mushroom and R
   assert.deepEqual([supN.status, supN.body.first, supN.body.xp], [200, true, 20 + FIRST_CRAFT_XP], 'a Supper: its own 500');
   const supS = await s.cook(mac, 'supper:south');
   assert.deepEqual([supS.status, supS.body.first, supS.body.xp], [200, false, 40], 'the southern Supper: none (the rank\'s tier 2 now - 20 x 2)');
-  assert.match(ACCOUNT_VERSION, /^acct80$/   /* PIN MOVED (PROF10, PROF12, AUDIT PROF-541, SILVER-WAYS' acct71, the arena merge's acct72, AEGIS's acct73, BAG1 and GUILD2's acct74, HOME-PRICE's acct75, PRIMARCH and FOUNDER4's acct76, FIELD BUGS 2026-10-04d KNIGHT-HOUSE's acct77, SERPENT1's acct78, GLOBAL-MARKET's acct79, SHADOW-CLOAK's acct80): the live version */);
+  assert.match(ACCOUNT_VERSION, /^acct82$/   /* PIN MOVED (PROF10, PROF12, AUDIT PROF-541, SILVER-WAYS' acct71, the arena merge's acct72, AEGIS's acct73, BAG1 and GUILD2's acct74, HOME-PRICE's acct75, PRIMARCH and FOUNDER4's acct76, FIELD BUGS 2026-10-04d KNIGHT-HOUSE's acct77, SERPENT1's acct78, GLOBAL-MARKET's acct79, SHADOW-CLOAK's acct80, SERAPH-WINGS' acct81, AUDIT ARENA-LADDER's acct82): the live version */);
 });
 
 test('PROF9 service: a dish\'s rank is asked (the Tart 10, the Feast 70 - refused below, nothing spent); XP follows the rank - a stew at rank 55 is 20 x tier 5, never a quarter; a Master\'s full track credits none, answered so', async () => {

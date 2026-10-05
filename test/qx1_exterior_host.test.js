@@ -38,6 +38,7 @@ import { GLOBAL_SCALE } from '../src/world/meshReader.js';
 import { STREAMING_TERRAIN_SCALE } from '../src/world/terrainSampler.js';
 import { GROUND_OFFSET } from '../src/world/rmbLayout.js';
 import { ActionTextBox } from '../src/ui/actionText.js';
+import { ARENA_TEXT } from '../src/systems/arenaText.js';   // AUDIT ARENA-LADDER A5: the bout's refusal of a Recall
 import { plainLines } from '../src/scenes/shared.js';
 import { ensureFactionRep, changeReputation } from '../src/systems/factionRep.js';
 import { findFactions, findFactionByTypeAndRegion, getPeopleOfCurrentRegion, getCourtOfCurrentRegion } from '../src/systems/talk.js';
@@ -109,7 +110,7 @@ const QW_PARAMS = [
   'placeFoeEnv', 'placeFoeFreely', 'entityOccupancy', 'questFoeGender', 'ENEMY_BASICS',
   'fieldOfView', 'walkMode', 'player', 'cam', 'collider', 'exteriorFoes', 'exteriorFoePool',
   // ...and the G4 spell registry CastSpellDo reads through this host's
-  // own `getClassicSpellEffects` (world.js:15804's seam).
+  // own `getClassicSpellEffects` (world.js:15809's seam).
   'spellRecordOfIndex',
   // QUEST-WAVE: the held spots a placement keeps until its stand lands (questFoeHost.js) - appended, as above
   'heldSpots', 'holdSpotWhile',
@@ -308,7 +309,7 @@ test('QX1 review: every faction read is the PERSISTENT store, and the Person cha
   // (4) ...and the family degrades to the charter's refusal when
   // FACTION.TXT has not loaded - never a throw on `store.dict`. The
   // People/Courts pair is left out of this arm deliberately: their
-  // expressions are world.js:15858/15863's verbatim, and talk.js's
+  // expressions are world.js:15863/15868's verbatim, and talk.js's
   // findFactions dereferences the dictionary it is handed, so the two
   // hosts share one shape there and neither invents a private guard.
   const cold = mountQuestWorld({ factionDict: null });
@@ -490,7 +491,7 @@ test('ROAD-G G2: the outdoor arm is PlaceFoeExteriorLocation - the 5/20 ring, th
 // ─── ROAD-G G2 review: the seams the lane shipped and nothing held ───
 
 test('ROAD-G G2 review: the cast engine raises the two ready-spell doors into THIS host\'s machine', () => {
-  // hostMagic.js:102-103 declares `onNewReadySpell` / `onCastReadySpell`
+  // hostMagic.js:103-104 declares `onNewReadySpell` / `onCastReadySpell`
   // and is the ONLY raiser in the tree (SetReadySpell raises NEW right
   // after `readiedSpell = sp`; `done()` raises CAST on every release
   // path, before the ready clears). machine.js:935/:941 fan them out,
@@ -499,8 +500,8 @@ test('ROAD-G G2 review: the cast engine raises the two ready-spell doors into TH
   // host owns its own cast engine, and worldModes takes THIS instance
   // for the interior mode, so while the mount passed neither key every
   // `cast X spell do` / `cast X effect do` on this route - and in every
-  // shop entered from it - was permanently deaf. world.js:9546-9547 and
-  // dungeonContext.js:2845-2846 wire the identical pair.
+  // shop entered from it - was permanently deaf. world.js:9547-9548 and
+  // dungeonContext.js:2852-2853 wire the identical pair.
   const doorSrc = slice('    onNewReadySpell: (sp) => questBridge',
     '    // ROAD-G G2 (a): THE THREE-ARM SHAPE');
   // ...and they are keys of the ENGINE MOUNT, not of some other bag:
@@ -535,7 +536,7 @@ test('ROAD-G G2 review: questWorld answers CastSpellDo\'s two classic-spell read
   // Without these the action self-completes at PARSE
   // (actions.js:2812/:2819 - no effects, so C#'s template completes and
   // the task can never fire), which would have left `cast X spell do`
-  // dead on this route even with the doors above wired. world.js:15804's
+  // dead on this route even with the doors above wired. world.js:15809's
   // pair, byte-folded on both sides exactly as MakeClassicKey folds.
   const { world } = mountQuestWorld();
   assert.deepEqual(world.getClassicSpellEffects(0x105), [{ type: 5, subType: 1 }],
@@ -576,7 +577,7 @@ test('ROAD-G G2 review: the encounter pool\'s frame seams - the tick, the draw, 
   assert.match(senses, /candidates: \(\) => exteriorFoePool\(\)\.filter\(\(f\) => !f\.dead\),/,
     'the senses walk the UNNARROWED street database, live records only');
 
-  // world.js:27385-27473's arrow shape: an enemy shaft hunts a WALKING
+  // world.js:27390-27478's arrow shape: an enemy shaft hunts a WALKING
   // player (the fly camera has no capsule), and both live pools are
   // impact candidates. `playerFeet: null` is every enemy arrow passing
   // through the player - the whole enemy arm the lane shipped.
@@ -817,7 +818,7 @@ test('QX1: the journal doors U43 left hanging finally have something to open', (
 const RSC = new Map([[ANCHOR_MUST_BE_SET, [{ text: 'An Anchor must be set before you can Teleport.', center: true }]]]);
 
 /** Mount the host's SHIPPED Recall block on stubs. */
-function mountRecall({ anchorContext, insideContext, mode = 'exterior', startInDungeon = null, restoreInterior = null } = {}) {
+function mountRecall({ anchorContext, insideContext, mode = 'exterior', startInDungeon = null, restoreInterior = null, inBout = false } = {}) {
   const body = slice('  const _anchorRect = locationWorldRect(', '  const magic = createPlayerMagic({');
   const dfLocation = {
     name: 'Daggerfall',
@@ -846,12 +847,12 @@ function mountRecall({ anchorContext, insideContext, mode = 'exterior', startInD
     'locationWorldRect', 'GLOBAL_SCALE', 'GROUND_OFFSET', 'WORLD_CONTEXT', 'makeAnchor', 'teleportPlan',
     'ANCHOR_MUST_BE_SET', 'ActionTextBox', 'plainLines', 'STREAMING_TERRAIN_SCALE',
     'dfLocation', 'locationName', '_locPixel', 'walkMode', 'player', 'cam', 'playerEntity',
-    'townTalk', 'surfacePlayer', 'ChoiceWindow', 'modes',
+    'townTalk', 'surfacePlayer', 'ChoiceWindow', 'modes', 'arenaBouts', 'ARENA_TEXT',
     `${body} return { setRecallAnchor, recallToAnchor, teleportPrompt, anchorLanding };`,
   )(locationWorldRect, GLOBAL_SCALE, GROUND_OFFSET, WORLD_CONTEXT, makeAnchor, teleportPlan,
     ANCHOR_MUST_BE_SET, ActionTextBox, plainLines, STREAMING_TERRAIN_SCALE,
     dfLocation, 'Daggerfall', { x: 207, y: 213 }, true, player, cam, playerEntity,
-    townTalk, () => calls.push(['surfacePlayer']), function ChoiceWindow(o) { Object.assign(this, o); }, modes);
+    townTalk, () => calls.push(['surfacePlayer']), function ChoiceWindow(o) { Object.assign(this, o); }, modes, { holds: () => inBout }, ARENA_TEXT);   // AUDIT ARENA-LADDER A5: my bout's hold
   return { ...api, calls, said, player, cam, playerEntity, modes };
 }
 
@@ -1079,4 +1080,15 @@ test('TP2 INTERIM: the ONE arm this host cannot take refuses BY NAME, and keeps 
   assert.match(flag, /a jump to an anchor on ANOTHER map pixel/);
   assert.match(flag, /`\?exterior` loads ONE fixed city and runs no streamer/);
   assert.equal(/Recall pends here/.test(SRC), false, 'the whole-spell refusal is gone');
+});
+
+test('AUDIT ARENA-LADDER A5: no Recall off the sand - my bout holds me, said, the anchor kept and nothing torn down (mutants: the refusal dropped)', () => {
+  const h = mountRecall({ inBout: true });
+  h.setRecallAnchor();
+  const a = h.playerEntity.anchorPosition;
+  h.calls.length = 0;
+  h.recallToAnchor();
+  assert.deepEqual(h.said, [ARENA_TEXT.refuse.travel], 'the bout\'s own refusal');
+  assert.deepEqual(h.calls, [], 'no box, no placement, nothing torn down');
+  assert.equal(h.playerEntity.anchorPosition, a, 'the anchor kept');
 });

@@ -125,7 +125,7 @@ test('SERPENT2 wire: the `site` word - its day, its native point to the whole un
     { sx: POSE_BOUND + 1 }, { sz: -POSE_BOUND - 1 }, { sx: 1.5 }, { sz: '1' }, { d: -1 }, { d: '611' }, { d: 1.5 }]) assert.equal(validSerpentIn({ ...ok, ...bad }), null, JSON.stringify(bad));
   assert.deepEqual(parseClient(JSON.stringify({ t: 'serpent', ...ok, extra: 1 }), { hasHello: true }), { t: 'serpent', ...ok });
   assert.equal(SERPENT_SITE_RELAY_MIN, 166);
-  assert.equal(RELAY_VERSION, 'world167');   // SHADOW-CLOAK moved it on after (world167, the cloak's word - PIN MOVED); the site's floor stays world166
+  assert.equal(RELAY_VERSION, 'world169');   // SHADOW-CLOAK moved it on after (world167, the cloak's word - PIN MOVED), SERAPH-WINGS after that (world168, the wings word - PIN MOVED), AUDIT ARENA-LADDER after that (world169, the arena ladder audit - PIN MOVED); the site's floor stays world166
   assert.ok(relaySupportsSerpentSite('world166') && relaySupportsSerpentSite(RELAY_VERSION) && !relaySupportsSerpentSite('world165') && !relaySupportsSerpentSite(null), 'never said to a relay that would close the socket on it');
 });
 

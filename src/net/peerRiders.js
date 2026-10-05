@@ -129,7 +129,7 @@ function figureLayer(art) {
         if (r.batch.bounds) r.batch.bounds[3] = quadHalfDiagonal(size);
         r.batchKey = key;
       }
-      r.size = size; r.xml = xml; r.mirror = s.mirror; r.g = g;
+      r.size = size; r.xml = xml; r.mirror = s.mirror; r.g = g; r.px = up.h; r.form = mode?.riding ? 'rider' : mode?.transformed ? 'beast' : 'walker';   // AUDIT 3 (SERAPH-WINGS): its pixels tall and its form - an aura's figure (figureOf)
       if (r.batch) r.batch.noShadow = g > 1;
     }
     if (r.batch && r.xml) {
@@ -152,6 +152,11 @@ function figureLayer(art) {
     isDrawn: (id) => !!figs.get(id)?.batch,
     batchOf: (id) => figs.get(id)?.batch ?? null,   // PEERFX3: the one sprite a hurt flash tints
     heightOf: (id) => { const r = figs.get(id); return r?.batch && r.size && r.xml ? r.size.h + (r.xml.y / r.xml.scale) * (r.g ?? 1) : 0; },
+    /** SERAPH-WINGS (2026-10-05): the figure as drawn - { base, mpp, beast }, its quad's foot over the feet (m), its metres
+     *  a pixel and whether it is a beast's (AUDIT 3: the shoulders by the pixel) - or null, and null in the saddle (the
+     *  frame is the horse's too): what an aura on its back reads for the bones a sprite has not got (render/auraRing.js
+     *  auraSpriteBones). */
+    figureOf: (id) => { const r = figs.get(id); return r?.batch && r.size && r.xml && r.px > 0 && r.form !== 'rider' ? { base: (r.xml.y / r.xml.scale) * (r.g ?? 1), mpp: r.size.h / r.px, beast: r.form === 'beast' } : null; },
     batches: () => [...figs.values()].map((r) => r.batch).filter(Boolean),
     offsetAll(offset) {
       for (const r of figs.values()) {
@@ -268,6 +273,7 @@ export function createPeerRiders({ renderer = null, urlFor = eotbSpriteUrl, deco
     /** The name tag's height over a rider's feet (0: not drawn) - remotePlayers' `bodyHeight` hand-off: the sprite's
      *  own top this frame (its size over the feet plus EOTB's y offset), as a body's head is its own. */
     heightOf: layer.heightOf,
+    figureOf: layer.figureOf,   // AUDIT 3 (SERAPH-WINGS): a beast's on foot - none in the saddle
     batches: layer.batches,
     offsetAll: layer.offsetAll,
     destroy: layer.destroy,
@@ -430,6 +436,7 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
     isWalking: layer.isDrawn,
     batchOf: layer.batchOf,   // PEERFX3
     heightOf: layer.heightOf,
+    figureOf: layer.figureOf,   // SERAPH-WINGS
     batches: layer.batches,
     drawLanterns,   // HT-WAIST-BACK
     offsetAll: layer.offsetAll,

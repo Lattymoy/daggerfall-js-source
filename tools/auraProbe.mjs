@@ -31,7 +31,8 @@
 //
 //     node tools/auraProbe.mjs [--shots <dir>]     (writes aura.png / aura_side.png / ward.png / ward_side.png /
 //                                                   radiance.png / radiance_side.png / cloak_back.png /
-//                                                   cloak_front.png / cloak_top.png / cloak_torn.png there)
+//                                                   cloak_front.png / cloak_top.png / cloak_torn.png /
+//                                                   wings_back.png there)
 import { chromium } from 'playwright';
 import { glyphEdges, CLOAK_GLYPH } from '../src/render/auraRing.js';   // SHADOW-CLOAK: where the wearer's glyph is, to read it back
 import http from 'node:http';
@@ -318,6 +319,41 @@ try {
     const [b, f] = [backSeen.px[0], frontSeen.px[0]];
     check(`its two sides by its own winding${mirror ? ', as the game mirrors it' : ''} - its outside dark from behind, its lining red from the front`, lum(b) < 120 && f[0] > 2 * f[1] && f[0] > b[0] + 25, `${JSON.stringify(b)} from behind, ${JSON.stringify(f)} from the front`);
   }
+  // ── SERAPH-WINGS: THE SERAPH WINGS ──
+  // from behind, over the wLitNow floor: gold light out to either side of the wearer and over the head, gold in colour,
+  // nothing wPast their reach; flowing (another moment, another picture) and the same at the wrap; nothing unkindled and
+  // less half kindled; from the wearer's own eye looking wAhead nothing over the view; as the game mirrors it, the same
+  const wg = (eye, t, k, pts, at, swOpts = {}) => page.evaluate(([e, tt, kk, ps, a, l, o]) => window.draw(e, tt, kk, ps, 'seraphwings', a, 0, l, -1, null, { strict: true, ...o }), [eye, t, k, pts, at, LIT, swOpts]);
+  const wBehind = [0, 1.6, -4.6], wAt = [0, 1.5, 0];
+  const wGrid = Array.from({ length: 41 * 28 }, (_, i) => [-2 + (i % 41) * 0.1, 0.4 + Math.floor(i / 41) * 0.1, -0.35]);   // WINGS-FIT: every 0.1 m - slim strands fall between a coarser grid's points
+  const wBare = await wg(wBehind, 13.2, 1, wGrid, wAt, { none: true }), wWhole = await wg(wBehind, 13.2, 1, wGrid, wAt);
+  if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'wings_back.png') });
+  check('the wings draw without a GL error', wWhole.error === 0 && wWhole.drawn === 1, `error ${wWhole.error}, drawn ${wWhole.drawn}`);
+  const wLit = (f) => f.px.map((c, i) => lum(c) > lum(wBare.px[i]) + 60);
+  const wLitNow = wLit(wWhole), wSide = (pred) => wGrid.filter((q, i) => wLitNow[i] && pred(q)).length;
+  // WINGS-FIT: slim, shorter strands with dark between them (the old blaze lit 12 a side on a grid twice as coarse) - out
+  // past the shoulders either side, and over the crown of the rest pose (CLOAK_H 1.88 m)
+  check('gold light out to either side of the wearer and over the head', wSide((q) => q[0] < -0.5) >= 4 && wSide((q) => q[0] > 0.5) >= 4 && wSide((q) => q[1] > 1.95) >= 4, `left ${wSide((q) => q[0] < -0.5)}, right ${wSide((q) => q[0] > 0.5)}, over the head ${wSide((q) => q[1] > 1.95)}`);
+  const wGolds = wWhole.px.filter((c, i) => wLitNow[i]), wGoldN = wGolds.filter((c) => c[0] >= c[1] && c[1] >= c[2]).length, wWarm = wGolds.filter((c) => c[0] > c[2] + 20).length;
+  check('in gold - red over green over blue, white only where it burns hottest', wGoldN === wGolds.length && wWarm >= wGolds.length * 0.6, `${wGoldN} gold or white, ${wWarm} warm, of ${wGolds.length}`);
+  const wPast = [[1.8, 1.4, -0.35], [-1.8, 1.4, -0.35], [1.7, 0.6, -0.35], [-1.6, 2.7, -0.35]];   // WINGS-FIT: their shorter reach (1.3 m; at 2.2 m these lay inside it)
+  const wPBare = await wg(wBehind, 13.2, 1, wPast, wAt, { none: true }), wPWhole = await wg(wBehind, 13.2, 1, wPast, wAt);
+  check('nothing past their reach', wPWhole.px.every((c, i) => Math.abs(lum(c) - lum(wPBare.px[i])) < 12), wPWhole.px.map(lum).join(' '));
+  const wLater = await wg(wBehind, 14.7, 1, wGrid, wAt), wFlow = wWhole.px.reduce((a, c, i) => a + Math.abs(lum(c) - lum(wLater.px[i])), 0);
+  check('flowing - another moment, another picture', wFlow > 2000, `${wFlow}`);
+  const wB = await wg(wBehind, p.period - 1 / 240, 1, wGrid, wAt), wA = await wg(wBehind, 1 / 240, 1, wGrid, wAt);
+  const swWJump = Math.max(...wB.px.map((c, i) => Math.abs(lum(c) - lum(wA.px[i]))));
+  const wMidA = await wg(wBehind, 60 - 1 / 240, 1, wGrid, wAt), wMidB = await wg(wBehind, 60 + 1 / 240, 1, wGrid, wAt);
+  const wStep = Math.max(...wMidA.px.map((c, i) => Math.abs(lum(c) - lum(wMidB.px[i]))));
+  check('no jump where the clock wraps - no more than their own motion over the same moment', swWJump <= Math.max(45, 1.5 * wStep + 10), `${swWJump} at the wrap, ${wStep} mid-clock`);
+  const wCold = await wg(wBehind, 13.2, 0, wGrid, wAt), swWHalf = await wg(wBehind, 13.2, 0.5, wGrid, wAt);
+  const wHalfN = wLit(swWHalf).filter(Boolean).length, wWholeN = wLitNow.filter(Boolean).length;
+  check('unkindled nothing, half kindled less', wCold.px.every((c, i) => Math.abs(lum(c) - lum(wBare.px[i])) < 6) && wHalfN > 0 && wHalfN < wWholeN * 0.7, `half ${wHalfN} of ${wWholeN}`);
+  const wAhead = [[0, 1.6, 2], [0.6, 1.9, 2], [-0.6, 1.3, 2], [0.9, 1.6, 2.5], [-0.9, 1.6, 2.5]];
+  const wFpBare = await wg([0, 1.7, 0.05], 13.2, 1, wAhead, [0, 1.65, 3], { none: true }), wFp = await wg([0, 1.7, 0.05], 13.2, 1, wAhead, [0, 1.65, 3]);
+  check('from the wearer\'s own eye looking ahead, nothing over the view', wFp.px.every((c, i) => Math.abs(lum(c) - lum(wFpBare.px[i])) < 6), wFp.px.map(lum).join(' '));
+  const wm = await wg(wBehind, 13.2, 1, wGrid, wAt, { mirror: true }), wLitM = wm.px.map((c, i) => lum(c) > lum(wBare.px[i]) + 60).filter(Boolean).length;
+  check('as the game mirrors it, the same light', wm.error === 0 && Math.abs(wLitM - wWholeN) <= wWholeN * 0.25, `${wLitM} vs ${wWholeN}`);
   check('no page error', errs.length === 0, errs.join('; '));
 } finally {
   await browser.close();

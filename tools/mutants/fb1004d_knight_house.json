@@ -282,12 +282,12 @@
   {
     "name": "KNIGHT-HOUSE-version-unmoved",
     "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct80';",
+    "old": "export const ACCOUNT_VERSION = 'acct82';",
     "new": "export const ACCOUNT_VERSION = 'acct76';",
     "tests": [
       "test/fb1004d_knight_house.test.js"
     ],
-    "note": "A deploy that did not happen looks like one that did. SERPENT1 (PIN MOVED, re-aimed by content at its merge of main): acct78. GLOBAL-MARKET (PIN MOVED): acct79. SHADOW-CLOAK (PIN MOVED at its merges of main, past SERPENT1 and GLOBAL-MARKET): acct80."
+    "note": "A deploy that did not happen looks like one that did. SERPENT1 (PIN MOVED, re-aimed by content at its merge of main): acct78. GLOBAL-MARKET (PIN MOVED): acct79. SHADOW-CLOAK (PIN MOVED at its merges of main, past SERPENT1 and GLOBAL-MARKET): acct80. SERAPH-WINGS (PIN MOVED): acct81. AUDIT ARENA-LADDER (PIN MOVED at its merges of main, past GLOBAL-MARKET, SHADOW-CLOAK and SERAPH-WINGS): acct82."
   },
   {
     "name": "KNIGHT-HOUSE-column-unadded",

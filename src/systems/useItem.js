@@ -39,6 +39,7 @@ import { survivalRules } from './survival/switch.js';   // SURV-TIERS: a meal's 
 import { SURVIVAL_RULES } from './survival/difficulty.js';   // AUDIT SURV-TIERS: and with the arc off, Casual's - none
 import { setLightSource } from './lightSource.js';   // DISC7: the light in hand's one door
 import { hoodCapable, hoodUp } from './survival/temperature.js';   // HOOD-SAID: the one hood law, for toggleHood
+import { sandPotionRefusal } from './arenaKit.js';   // AUDIT ARENA-LADDER: no potion on the sand
 
 /** THE ARMS WHOSE DESTINATION WINDOW THE PORT HAS NOT BUILT, named so a use
  *  SAYS something rather than eating itself. Keyed by this module's own result
@@ -362,6 +363,9 @@ export function useItem(item, collection, {
   // the ruined-book box - failText - which the WINDOW shows on the
   // hook's failure callback, not immediately).
   else if (isBook(item)) out = { kind: 'book', item, failText: named('bookUnavailable') };
+
+  // AUDIT ARENA-LADDER: the sand's kit law - no potion in a bout of one's own, and the bottle is kept (systems/arenaKit.js)
+  else if (isPotion(item) && sandPotionRefusal()) out = { kind: 'refused', refused: true, text: sandPotionRefusal() };
 
   else if (isPotion(item)) {
     // DrinkPotion + RemoveOne. AUDIT 22 F5: RemoveOne takes THIS

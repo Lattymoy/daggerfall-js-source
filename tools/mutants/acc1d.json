@@ -92,12 +92,14 @@
   {
     "name": "ACC1d-10-a-late-token-is-sent-down-a-dead-socket",
     "file": "src/net/online.js",
-    "old": "        this.token = await this._mint(room);\n        // the socket may have been replaced or closed while we waited\n        if (this._roomOf(ws) == null) return;",
+    "old": "        this.token = await this._mint(room);\n        // the socket may have been replaced or closed while we waited\n        if (!live()) return;",
     "new": "        this.token = await this._mint(room);",
     "tests": [
       "test/acc1dclient.test.js"
     ],
-    "note": "The mint is an await, and a room change or a drop during it replaces the socket. Without the re-check, the hello goes out on a closed socket and the token is spent on nothing."
+    "note": "The mint is an await, and a room change or a drop during it replaces the socket. Without the re-check, the hello goes out on a closed socket and the token is spent on nothing.",
+    "equivalent": true,
+    "why": "AURA-LIVE (SERAPH-WINGS AUDIT 3): the promotion's own guard after the passes (`this._roomOf(ws) == null && !this._promote(ws, room)` - a replaced socket is no room's and no replacement) refuses the late hello too, so without this check the token still never goes down a dead socket; this one now spares only a battle room's pass mint for a socket already gone. The law stays pinned through AURALIVE-promoted-before-its-token's site."
   },
   {
     "name": "ACC1d-11-a-bad-minute-signs-the-player-out",
