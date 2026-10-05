@@ -16,7 +16,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { collectBlockFlats } from '../src/world/rmbFlats.js';
-import { collectExteriorNpcs, exteriorNpcRecord, setupExteriorQuestStaticNpcs } from '../src/characters/exteriorNpcs.js';
+import { collectExteriorNpcs, exteriorNpcRecord, setupExteriorQuestStaticNpcs, planNpcBatches } from '../src/characters/exteriorNpcs.js';
 import { makeInteriorPersonHost } from '../src/scenes/interiorContext.js';
 import { QuestMachine } from '../src/systems/quest/machine.js';
 import { QuestResourceBehaviour } from '../src/systems/quest/resourceBehaviour.js';
@@ -262,7 +262,12 @@ test('E3: the wiring - world.js runs the pass at layout and stands only the ACTI
   const to = w.indexOf('function restrideTerrain(');   // the next function after the pass (buildFieldFor left with the EE ground revert)
   assert.ok(from > 0 && to > from, 'standPixelNpcs changed shape');
   const stand = w.slice(from, to);
-  assert.ok(/if \(!pn\.active\) continue;/.test(stand),
+  // BET1 (AUDIT B4): the groups are planned by exteriorNpcs.js planNpcBatches - the stand builds only what it plans
+  assert.ok(stand.includes('const plan = planNpcBatches(entry.npcs, entry.npcBatches);') && stand.includes('for (const { key, sig, centers } of plan.build) {'),
+    'the stand no longer batches what the plan groups');
+  const inactive = { active: false, drawArchive: 182, drawRecord: 3, x: 1, y: 2, z: 3 };
+  const plan = planNpcBatches([inactive, { ...inactive, active: true, x: 9 }]);
+  assert.deepEqual(plan.build.map((b) => b.centers), [[[9, 2, 3]]],
     'a deactivated NPC must not reach a billboard batch - that is the whole of the away arm');
   assert.ok(stand.indexOf('setupExteriorQuestStaticNpcs') < stand.indexOf('createBillboardBatch'),
     'the pass must answer BEFORE the batch is built, or the away arm has nothing to remove');

@@ -48,11 +48,14 @@ picture that does not rebuild its every visible pixel.
 
 - `betony-restored.dfmod.json` - the manifest, verbatim. `Readme_BetonyRestored.txt` and
   `FlatReplacements/BetonyRestoredFlatReplacements.json` - verbatim from the archive.
+- `betony-restored.files.json` - the tool's listing of every file it writes under `Textures/`, with
+  the bundle's sha256: what `test/doctrine.test.js` lets stand there (AUDIT BET1 D1 - the bundle's
+  own manifest names pictures the port does not carry).
 - `BetonyRestored.dll` - the shipped assembly, byte for byte (the bundle's TextAsset
   `Betony Restored.dll`), and `il/BetonyRestored.il.txt` - every method body as CIL, dumped by
   `tools/ilDump.py`. `src/systems/betonyRestored.js` cites the offsets it restates.
 - `WorldDataPack/betony-restored.pack.json.gz` - the 39 world-data files as one WD3 pack (58,812
-  bytes from the bundle's 4.4 MB): the 25 places carried WHOLE on no base (`['n']` - they are the
+  bytes gzipped, from 6,290,798 bytes of JSON in the bundle): the 25 places carried WHOLE on no base (`['n']` - they are the
   author's), the fourteen blocks as edits of their classic namesakes, rebuilt at load from the
   player's own `BLOCKS.BSA`. Of the 6,692 records the pack carries, 35 coincide with a classic one;
   every interior Daggerfall already has is a reference into the player's file. The pack keeps the

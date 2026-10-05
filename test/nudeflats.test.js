@@ -124,7 +124,9 @@ test('NUDE-FLATS by source: every host that draws a person asks drawnFlat, and t
   assert.match(w, /const \[drawArchive, drawRecord\] = drawnFlat\(flat\.archive, flat\.record\);\s*const t = await getTexture\(drawArchive\);\s*if \(!t \|\| drawRecord >= t\.recordCount\) continue;\s*const size = billboardSize\(t, drawRecord\);/,
     'a street NPC\'s box is its picture\'s');
   assert.match(w, /pixelNpcs\.push\(\{ \.\.\.pn, drawArchive, drawRecord, width: size\.w,/);
-  assert.match(w, /const k = `\$\{pn\.drawArchive \?\? pn\.textureArchive\}_\$\{pn\.drawRecord \?\? pn\.textureRecord\}`;/, 'and its stand draws that picture');
+  // BET1 (AUDIT B4): the stand's groups are characters/exteriorNpcs.js planNpcBatches'
+  assert.match(src('src/characters/exteriorNpcs.js'), /const k = `\$\{pn\.drawArchive \?\? pn\.textureArchive\}_\$\{pn\.drawRecord \?\? pn\.textureRecord\}`;/, 'and its stand draws that picture');
+  assert.match(w, /const plan = planNpcBatches\(entry\.npcs, entry\.npcBatches\);[\s\S]{0,400}?for \(const \{ key, sig, centers \} of plan\.build\) \{\s*const \[archive, record\] = key\.split\('_'\)\.map\(Number\);/, 'the stand builds the plan\'s pictures');
   const e = src('src/scenes/exterior.js');
   assert.match(e, /const key = drawnFlat\(flat\.archive, flat\.record\)\.join\('_'\);/, 'the one-location host\'s batches');
   assert.match(e, /const \[da, dr\] = drawnFlat\(flat\.archive, flat\.record\);[^\n]*\n\s*const t = textureFiles\.get\(da\) \?\? await getTexture\(da\);\s*if \(!t \|\| dr >= t\.recordCount\) continue;\s*const size = billboardSize\(t, dr\);/,

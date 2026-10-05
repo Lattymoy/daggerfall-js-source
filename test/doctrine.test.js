@@ -579,6 +579,13 @@ const BUNDLE_ART = new Map([
   ['vendor/come-sail-away/Textures/',
     { manifest: 'vendor/come-sail-away/come-sail-away.files.json',
       why: "THIRD-PARTY - Come Sail Away 2.1 (RedRoryOTheGlen); the mod's own splash and wind-widget frames and the waves' two paints (the author's pixels, the Daggerfall snow under the crests taken out and rebuilt from the player's own TEXTURE.303), re-encoded as indexed PNG by tools/comeSailAwayExtract.mjs after measuring each against every TEXTURE record (see the vendor README)" }],
+  // BET1 (AUDIT BET1 D1): Betony Restored's pictures - AUDIT-TO1 F3's trap a fourth time: the integration ran its suite
+  // BEFORE `git add`, pushed, and this gate was red on its head over 66 files. Come Sail Away's way: the port carries
+  // less than the bundle names (its pictures of Daggerfall's records ride as specs rebuilt from the player's own files,
+  // its re-shades not at all, Detailed Ships' are shared), so the authority is the vendoring tool's own listing.
+  ['vendor/betony-restored/Textures/',
+    { manifest: 'vendor/betony-restored/betony-restored.files.json',
+      why: "THIRD-PARTY - Betony Restored 1.1.3 (Cliffworms), carried under the author's readme; the pictures no classic record is - Kamer's sitting patrons (every frame), Cliffworms' two bottle shelves and the Mara statue (WilhelmBlack and King of Worms), each credited by the readme - written as PNG from the bundle's Texture2D objects after tools/betonyRestoredAssets.mjs measured each against every TEXTURE record (see the vendor README)" }],
   // DW-E3: Iliac Puddle No More's seven fish - the author's own pictures (no classic record covers any: the
   // extractor measures each against every TEXTURE file, DS1's search, and refuses one a record covers).
   ['vendor/iliac-puddle-no-more/Flats/',

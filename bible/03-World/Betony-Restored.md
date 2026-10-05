@@ -40,7 +40,8 @@ the island would stand on open hillside where the others see a city.
 ### The world data: a WD3 pack, and two things it lacked
 
 `vendor/betony-restored/WorldDataPack/betony-restored.pack.json.gz` - 39 files
-in 111 nodes, 58,812 bytes gzipped from the bundle's 4.4 MB, written by
+in 111 nodes, 58,812 bytes gzipped from 6,290,798 bytes of JSON in the bundle
+(AUDIT D5: not "the bundle's 4.4 MB" - one of its two files), written by
 `tools/betonyRestoredAssets.mjs` (which refuses a pack one of whose files does
 not rebuild the author's sha256) and loaded as WD3's are
 (`scenes/modWorldData.js`: globbed, fetched only when the mod is loaded for
@@ -63,7 +64,18 @@ the game, latched loaded only once the pack is on the door).
   `FindAssetNames` compares the suffix ordinal against the manifest's own
   spelling, and the region reader asks the asset's own name
   `StartsWith("locationnew-")` - so each entry keeps the name as its mod
-  spells it, and `findAssets` reads that.
+  spells it, and `findAssets` reads that. Under one case-blind key (AUDIT
+  C3) a registration naming no mod (a loose file, WD1's) replaces one of its
+  own spelling only, and FindAssets takes the first LIVE entry whose own
+  spelling ends so - a higher-priority mod's `.JSON` hides no lower mod's
+  `.json` place.
+- **A pack of new places is no TOWN pack** (AUDIT C1, C2). WD3's gates are
+  the layout packs' (`isLayoutPack`, the layout pins' own `LAYOUT_MODS`):
+  online, a client whose Betony pack did not land buys homes as before
+  (`worldDataPacksMissing` - counted with the town packs, it refused every
+  home, hall and yard in every town for the session), the town mods'
+  stand-ins are on only while a town pack serves, and the 25 places are
+  said as any location is.
 
 ### The script (`systems/betonyRestored.js`, off `il/BetonyRestored.il.txt`)
 
@@ -71,13 +83,16 @@ the game, latched loaded only once the pack is on the door).
 byte and its every method dumped as CIL (`tools/ilDump.py`). The module cites
 the offsets it restates.
 
-- **Init** (`installBetonyRestored`, at every host's boot -
-  `scenes/shared.js`): the mod loaded for the game or not - the world-data
-  loader's latch where it has answered (world.js loads the packs before the
-  boot's Init; a pack that did not land, or a closed door, is a mod not
-  loaded), else the switch - then "Begin mod init: BetonyRestored", the
-  faction, "Finished mod init: BetonyRestored", the pictures and the
-  portraits.
+- **Init** (`installBetonyRestored`, from every host's boot -
+  `scenes/shared.js` - and the world-data loader): the mod loaded for the
+  game is the loader's latch (a pack that did not land, or a closed door, is
+  a mod not loaded), and Init WAITS for it (AUDIT B3) - a host that reaches
+  Init first (the classic skin's splash boots the audio, and every Init with
+  it, before any world is read) is answered nothing, and the loader calls it
+  again once every pack is latched; before, that host latched the switch and
+  registered Lord Mogref into a game whose pack then did not land. Then,
+  while the mod is loaded, "Begin mod init: BetonyRestored", the faction,
+  "Finished mod init: BetonyRestored", the pictures and the portraits.
 - **Lord Mogref's faction** (RegisterFactionIds, IL_0308-038d): the IL calls
   `RegisterCustomFaction(1432, data)` with `data.id = 1532`. DFU keys the
   dictionary by the argument and keeps the record as given, so the palace's
@@ -86,11 +101,20 @@ the offsets it restates.
   overwriting the record's id with the key; `registerCustomFaction` stores the
   record as given now, a record naming no id taking its key.
 - **UpdateExteriorNPCs** (IL_03a4-04b0): nothing unless `IsPlayerInTown(false,
-  true)` - a town's map pixel and the player outside. Then every street
-  StaticNPC with a faction takes the law below (`betonyNpcShown`). DFU walks
+  true)` - a town's location type and the player outside. The type is
+  `PlayerGPS.currentLocationType` as DFU keeps it (AUDIT A1,
+  `createBetonyLocationType`): TownCity before any location, written only on a
+  map pixel that has one (PlayerGPS.cs:627) and never cleared - so the update
+  runs in the wilderness after a town, and not after a dungeon's pixel. Then
+  every street StaticNPC with a faction takes the law below
+  (`betonyNpcShown`). DFU walks
   `ExteriorParent.GetComponentsInChildren<Billboard>(true)` - every location
   the streaming world holds - so world.js hands in every built pixel's people
-  and stands again the pixels whose people changed.
+  and stands again the pixels whose people changed: ONE STAND AT A TIME over a
+  pixel's batches (AUDIT B7, `npcStandTurn` - two at once drew both stands'
+  people, the trader dusk took down standing on until the next edge), a group
+  whose people are the same keeping its batch (AUDIT B4, `planNpcBatches` -
+  every edge freed and built a market of a hundred anew).
 
   | flags | day, dry | day, rain | night, dry | night, rain |
   |---|---|---|---|---|
@@ -104,19 +128,36 @@ the offsets it restates.
   (1 + 2 is the day bit's: the IL tests it first.) Of Daggerfall's own 76
   street people with a faction one carries a bit - `SENT7.RMB`'s `210_0`,
   flags 81: with the mod loaded DFU hides it by day, and so does the port.
+  The law reads every town's street people, not Betony's alone: while the
+  mod is loaded Beautiful Villages' markets (279 flagged street people) and
+  Beautiful Cities' (71) keep its hours too - as DFU does for a player of all
+  three (AUDIT B5).
 - **Its events** (InitMod, IL_029a-02d9): `PlayerGPS.OnEnterLocationRect`,
   `WorldTime.OnDawn`, `WorldTime.OnDusk`, `WeatherManager.OnWeatherChange`.
   Dawn and dusk are an hour's EDGE into 6 and 18 (WorldTime.cs:84-95) - a
   jump past them raises none (`createBetonyEvents`); world.js asks each
   frame above its modal gate, where its other clock edges are, and on the
-  rect's entry edge.
+  rect's entry edge - and as a pixel's people stand and on the way out of a
+  building (BET-FIX 2, below).
 - **BET-FIX, a recorded departure** (Port-Ledger A): the mod's
   `SetActive(true)` also stands back up an individual a live quest has placed
   somewhere else - the away arm of `SetupIndividualStaticNPC` set that home
   copy inactive at layout - so after the next dawn the questor stands twice in
   the world. The port keeps the quest's word: world.js marks `questAway` on a
   person whose quest host sets it inactive, and an away person stays down
-  whatever the hour.
+  whatever the hour. DEFENSIVE (AUDIT A5): the away arm acts on individuals
+  alone (a faction of type 4), and no street person of Daggerfall's, of this
+  mod's or of the town mods' carries one - a block a later mod lays may.
+- **BET-FIX 2, a recorded departure** (Port-Ledger A, AUDIT B2): THE STATE,
+  NOT THE HISTORY. DFU's market is what the last dawn, dusk, rain or rect
+  entry left it - a dawn passed indoors leaves it as it was until the next
+  edge - and DFU runs the update on every load (`WeatherManager.OnLoad` ->
+  `SetWeather` -> `OnWeatherChange`). The port builds and rebuilds pixels
+  where DFU keeps its GameObjects (a season's flip, the roads arriving, a
+  pin's town), and a rebuilt street stood every trader up at any hour - two
+  players in one room saw two markets. A pixel's people take the mod's hours
+  and rain as they stand (after the quest's pass: its word stands), and the
+  street takes them again on the way out of a building.
 
 ### The pictures (`installBetonyArt`)
 
@@ -131,8 +172,11 @@ Measured by the tool's `classifyPicture`, each kept as the doctrine says
 | Detailed Ships' (`1210_8` to `_12`, `_17` to `_20`), identical pixel for pixel | 9 | that mod's, shared (`shareDetailedShipsArt`) |
 | the RMB Resource Pack's people the blocks place (`1200_13`, `_14`, `_19`) | 3 | Daggerfall's own people of the kind (`183_10`, `183_5`, `182_45`), yielding to the player's own pack |
 
-89 entries on the texture door, all behind the mod's latch. Three seams BET1
-found on the way:
+89 entries on the texture door, all behind the mod's latch. The tool writes
+its listing of `Textures/` (`betony-restored.files.json`), which the
+doctrine's gate holds the directory to both ways (AUDIT D1: the integration's
+head carried the 66 with no row, and that gate was red on it). Three seams
+BET1 found on the way:
 
 1. **A record rebuilt off its own archive deadlocked the archive.** `218_5`
    is built from `218_5`; the pipeline decodes an archive's replacements
@@ -140,9 +184,11 @@ found on the way:
    `getTexture(218)` - the very promise in flight. The pipeline reads the
    file in hand now (`scenes/dataPipeline.js` `textureLoading`).
 2. **A mod's animated flat stood still.** A vendor archive's stand-in
-   answered one frame for every record; it answers the frames registered,
-   0, 1, 2 ... to the first missing one (`vendorFrameCount`), as DFU imports
-   a billboard's `<archive>_<record>-<frame>` pictures until one is missing.
+   answered one frame for every record; it answers the frames any tier
+   answers - the port's, a loose file's, an attached mod's (AUDIT C4) - 0, 1,
+   2 ... to the first missing one (`vendorFrameCount`), as DFU imports a
+   billboard's `<archive>_<record>-<frame>` pictures until one is missing
+   (TextureReplacement.cs:537-546).
 3. **A rebuilt picture of several records** - the shelves are a classic
    bottle and a goblet stood on the author's plank: WD2's spec takes `also`,
    further records laid over the first at their own spots, opaque pixels
@@ -162,8 +208,13 @@ the face is DFU's own pick.
 ### Betony's roads
 
 The mod ships Basic Roads' `roadData` and `trackData` with the island's roads
-drawn in; ModManager asks the mods loaded last first, and the mod loads after
-its dependencies, so its arrays replace Hazelnut's. `roads.json` carries the
+drawn in. Basic Roads reads them through `ModManager.TryGetAsset`
+(BasicRoadsTexturing.cs:126-139), which answers from the mod loaded LAST -
+and Basic Roads is no dependency of this mod's (AUDIT A3): by DFU's default
+order (the mods folder's listing, `basicroads.dfmod` before `betony
+restored.dfmod`) the island's arrays answer, as the readme expects; a player
+who loads Basic Roads after it gets Hazelnut's. The port takes the default.
+`roads.json` carries the
 7 road and 24 track map pixels that differ (x 111-126, y 256-270) and each
 array's sha256 before and after; world.js lays them over Basic Roads' own
 while the mod is loaded (`withBetonyRoads`). The bundle's travel-map picture
@@ -175,9 +226,10 @@ arrays.
 The mod requires Daggerfall Expanded Textures 1.2.0 and the RMB Resource
 Pack 0.3.0; the port carries neither and stands its own pieces in - the same
 stand-in for an id whichever mod places it (`world/detStandIns.js`, on while
-any mod that places DET's pieces is loaded). Of the 437 models the fourteen
-blocks place, 411 are Daggerfall's and 24 stood in; of the 343 flats, 71 are
-the mod's, Detailed Ships' or stood in. Read off DET's catalogue (the RMB
+any mod that places DET's pieces is loaded). Of the 437 distinct models the
+fourteen blocks place, 411 are Daggerfall's, 24 stood in and two stand
+nothing (below); of the 343 distinct flat records, 71 are the mod's, Detailed
+Ships' or stood in (AUDIT D6). Read off DET's catalogue (the RMB
 Resource Pack's) and the placements:
 
 | ids | what the catalogue names | read off the placements | the stand-in |
@@ -206,13 +258,14 @@ stand-ins already.
 
 | id | placed | why |
 |---|---|---|
-| `45187` | 9 | a DET piece no catalogue names, placed only in the palace, 24-33 units behind the room's wall at each of its fireplaces, at 0.9 - by every sign the chimney behind the wall; nothing was known to make |
+| `45187` | 9 | a DET piece no catalogue names, placed only in the palace's interior, at 0.9: each 33-34 units out from one of its ten fireplaces, behind the room's wall - six above theirs (46 to 299 units up), three 248 units below the upper floor's three. What it is is not known (AUDIT D8: "the chimney behind the wall" was a guess the three below do not carry); nothing was known to make |
 | `52991` | 23 | the RMB Resource Pack's winter-smoke marker: an effect, no mesh (as WD3) |
 
 ## The four hosts
 
 `scenes/world.js` WIRED: the street people's update on the frame's edges
-(above the modal gate, and the location rect's entry), the quest's away arm
+(above the modal gate, and the location rect's entry), as a pixel's people
+stand and on the way out of a building (BET-FIX 2), the quest's away arm
 marked on its people, Betony's roads on its terrain. `scenes/worldModes.js`
 and `scenes/dungeonContext.js` stand no street - the update walks
 ExteriorParent's people alone. `scenes/exterior.js` (the bench) FLAGGED: it
@@ -223,8 +276,8 @@ portraits are doors every host reads.
 
 ## Pins
 
-`test/bet1_betony.test.js` (24): the vendored files against the manifest (the
-author's 66 pictures by hash); the pack (its 39 files, `['n']`, the order and
+`test/bet1_betony.test.js` (32): the vendored files against the manifest (the
+author's 66 pictures by hash, the tool's listing the doctrine reads); the pack (its 39 files, `['n']`, the order and
 its refusals; every new place rebuilt sha256 for sha256 with no MAPS.BSA); the
 door (case-blind TryGetAsset, ordinal FindAssets, the region's indices in the
 manifest's order); the faction; Init and the latch; the law's every flag, day
@@ -232,8 +285,13 @@ and night, dry and rain; the street update (town, outside, faction, BET-FIX);
 the events; the pictures (89, gated, yielding where they stand in); the
 patrons' frames; the `also` layers; the pipeline's own-archive build; the
 portraits; the roads (sha256 for sha256 over Hazelnut's); the DET pieces and
-flats; the switch, room and credit; the hosts' wiring - and with
+flats; the switch, room and credit; the hosts' wiring; and AUDIT BET1's -
+the sticky location type, the stand's plan, one stand at a time and the
+hours as a pixel stands (both on world.js's own stand, run over a test host),
+a pack of new places no town pack, the door's spellings, the frames of any
+tier, the portrait file and the producer's records - and with
 `ARENA2_PATH`, every pack file rebuilt from the player's BSA files, the
 region off the player's MAPS.BSA, the thirteen rebuilt pictures the author's
 (hashes pinned), and every placement classic, stood in or one of the two
-above. `tools/mutants/bet1.json`: 43 mutants, 43 dead.
+above. `tools/mutants/bet1.json`: 74 mutants, 74 dead. Audited the same day:
+`01-Overview/Audit-Betony-Restored.md` (AUDIT BET1).

@@ -90,7 +90,7 @@ import { isBulletinBoard, isCityGate, CITY_GATE_OPEN_MODEL_ID, CITY_GATE_CLOSED_
 import { makeCityGate, updateCityGate } from '../world/cityGate.js';   // AUDIT 64 F14: DaggerfallCityGate
 import { staticBuildingBox, staticBuildingWorldAabb } from '../world/staticBuildings.js';   // AUDIT 64 F11: RMBLayout's StaticBuilding array
 import { targetAimPoint, missileAimDirection, isLocalPlayerTarget, PLAYER_TARGET } from '../characters/enemyTargets.js';   // AUDIT WORLD6b-iii(a) C3: the ONE aim law for an enemy missile (the peer's transform, mine otherwise); HCC: CollectThreats' `senses.Target == player`
-import { collectExteriorNpcs, exteriorNpcRecord, setupExteriorQuestStaticNpcs } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs; E3: their quest pass
+import { collectExteriorNpcs, exteriorNpcRecord, setupExteriorQuestStaticNpcs, planNpcBatches, npcStandTurn } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs; E3: their quest pass; BET1 AUDIT B4, B7: the stand's plan and its turn
 import { drawnFlat } from '../characters/nudeFlats.js';   // NUDE-FLATS: Show Nudity off draws a nude figure's clothed stand-in
 import { installConsoleProbe, registerCommand } from '../systems/consoleCommands.js';   // E3: the console's door; CSA-C: the mod's commands
 import { registerTravelMapConsoleCommands } from '../ui/travelMapWindow.js';   // E3: TravelMapConsoleCommands
@@ -701,7 +701,7 @@ import {
   weatherRng, fogFactor, precipitationForWeather,
   LightningPlayer, weatherFlags,
 } from '../world/weather.js';
-import { betonyLoaded, updateExteriorNpcs as betonyUpdateExteriorNpcs, createBetonyEvents, withBetonyRoads } from '../systems/betonyRestored.js';   // BET1: Betony Restored's script - its street people by the hour and the rain; its roads
+import { betonyLoaded, updateExteriorNpcs as betonyUpdateExteriorNpcs, createBetonyEvents, createBetonyLocationType, withBetonyRoads } from '../systems/betonyRestored.js';   // BET1: Betony Restored's script - its street people by the hour and the rain; its roads
 import { PrecipitationRenderer } from '../render/precipitation.js';
 import { warmPrograms } from '../render/warmPrograms.js';
 import { ROTOR_HUB, rotorPhase, advanceRotor, mountRotor, MILL_SOUND, millSoundPosition } from '../world/windmills.js';   // WM2b: the sails; WM4c: the hum
@@ -2052,6 +2052,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   }
   const timeScaleMult = params.has('timescale') && !sharedClockOn() ? Number(params.get('timescale')) / 12 : 1;
   const minuteNow = () => skyMinutes() % 1440;   // TIME1: THE SKY's hour - every isNight, hour and sky read below takes it
+  const betonyEvents = createBetonyEvents();   // BET1: the hour's and the weather's edges Betony Restored's script listens on
+  // BET1 (AUDIT A1): PlayerGPS.currentLocationType, sticky as DFU keeps it - up here, before the start pixel stands (its
+  // street people take the mod's hours as they stand: AUDIT B2), not beside the frame loop that notes it
+  const betonyLocation = createBetonyLocationType();
 
   // A5b: OUTDOOR MUSIC. AssignPlaylist's City/Wilderness arms - night
   // overrides everything, and by day the weather picks the list
@@ -4488,7 +4492,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       groundNormals: labGrass && stride === 1 ? normals : null,   // GRASS-LIT2: the near grid's vertex normals - the grass reads its slope off them; AUDIT B1: only where there is grass (200 KB a pixel)
       population, locOrigin, personBatches,   // T2 towns
       npcs: pixelNpcs,   // AUDIT 26 (F019): RMBLayout's street StaticNPCs, pixel-local
-      npcBatches: [], npcQuestPass: false,   // E3: their billboards (a subset of `batches`) and the one-shot SetupIndividualStaticNPC latch
+      npcBatches: new Map(), npcStand: null, npcQuestPass: false,   // E3: their billboards (a subset of `batches`; BET1 AUDIT B4: by their group's signature), the stand in hand (AUDIT B7) and the one-shot SetupIndividualStaticNPC latch
       boards: pixelBoards,   // the block's bulletin boards (41739), pixel-local boxes
       graves: pixelGraves,   // SEARCH1: a graveyard's headstones, pixel-local boxes
       cityGates: pixelGates,   // AUDIT 64 F14: DaggerfallCityGate's placements (446/447), ticked each frame
@@ -4675,13 +4679,30 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  IsPlayerInTown(false, true)). */
   function betonyStreetPeople() {
     if (!betonyLoaded()) return;
-    const ctx = { locationType: _musicLocationType(), inside: (modes?.mode ?? 'exterior') !== 'exterior', isDay: !isNight(minuteNow()), isRaining: weatherFlags(weather).raining };
+    const ctx = betonyContext();
     for (const p of [...built.values()]) {
-      if (p.npcs?.length && betonyUpdateExteriorNpcs(p.npcs, ctx)) standPixelNpcs(p);
+      if (p.npcs?.length && betonyUpdateExteriorNpcs(p.npcs, ctx)) restandPixelNpcs(p);
     }
   }
+  /** BET1: what the mod's update reads - PlayerGPS's location type as DFU keeps it (sticky: AUDIT A1, `betonyLocation`),
+   *  the player outside, the hour of this host's sky (TIME1), the weather word's rain. */
+  function betonyContext() {
+    return { locationType: betonyLocation.type(), inside: (modes?.mode ?? 'exterior') !== 'exterior', isDay: !isNight(minuteNow()), isRaining: weatherFlags(weather).raining };
+  }
+  /** BET1 (AUDIT B7): a pixel's people stood again - its failure said, never an unhandled rejection. */
+  function restandPixelNpcs(entry) {
+    return standPixelNpcs(entry).catch((e) => console.error(`[betony] a pixel's street people did not stand again: ${e?.message ?? e}`));
+  }
+  /** E3's stand of a pixel's street people. BET1 (AUDIT B7): ONE AT A TIME over its batches - each waits for the one
+   *  before (ASYNC NEVER DROPS). A dawn's edge that met a pixel's own stand mid-await planned over the same batches and
+   *  drew both stands' people: the trader dusk took down stood on until the next edge. */
   async function standPixelNpcs(entry) {
     if (!entry?.npcs?.length) return;
+    const done = await npcStandTurn(entry);
+    try { await standPixelNpcsNow(entry); } finally { done(); }
+  }
+  async function standPixelNpcsNow(entry) {
+    if (built.get(`${entry.px},${entry.py}`) !== entry) return;   // BET1 (AUDIT B7): a stand that waited its turn past its pixel's teardown - destroyPixel freed what it would
     const machine = questBridge?.machine ?? null;
     // The host is the interior person's, unchanged: above ground a
     // StaticNPC is the same GameObject with the same one act on it
@@ -4691,26 +4712,21 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!entry.npcQuestPass) {
       entry.npcQuestPass = setupExteriorQuestStaticNpcs(entry.npcs, machine, betonyAwareHost);
     }
+    // BET1 (AUDIT B2): Betony Restored's hours and rain AS THE PIXEL STANDS - the state, not the history. DFU's market
+    // is what the last dawn, dusk or rain left it; the port builds and rebuilds pixels where DFU keeps its GameObjects
+    // (a season's flip, the roads arriving, a pin's town), and a rebuilt street stood every trader up at any hour, two
+    // players in one room seeing two markets (Port-Ledger A, BET-FIX 2). After the quest's pass: its word stands.
+    if (betonyLoaded()) betonyUpdateExteriorNpcs(entry.npcs, betonyContext());
     // The stand: one batch per archive/record over the ACTIVE NPCs,
     // appended to the pixel's own list so the frame walk draws them,
     // the culling test carries them and destroyPixel frees them with
-    // everything else.
-    for (const b of entry.npcBatches ?? []) {
-      const i = entry.batches.indexOf(b);
-      if (i >= 0) entry.batches.splice(i, 1);
-      entry.flatAnims.remove(b);
-      renderer.destroyBatch(b);
-    }
-    entry.npcBatches = [];
-    const npcGroups = new Map();
-    for (const pn of entry.npcs) {
-      if (!pn.active) continue;
-      const k = `${pn.drawArchive ?? pn.textureArchive}_${pn.drawRecord ?? pn.textureRecord}`;   // NUDE-FLATS: the picture the build chose
-      if (!npcGroups.has(k)) npcGroups.set(k, []);
-      npcGroups.get(k).push([pn.x, pn.y, pn.z]);
-    }
-    for (const [k, centers] of npcGroups) {
-      const [archive, record] = k.split('_').map(Number);
+    // everything else. AUDIT B4 (BET1): a group whose people are the
+    // same keeps its batch; the rest are built, and the gone freed -
+    // held until they are (a stand that fails part-way leaves nothing
+    // standing that the next one cannot see).
+    const plan = planNpcBatches(entry.npcs, entry.npcBatches);
+    for (const { key, sig, centers } of plan.build) {
+      const [archive, record] = key.split('_').map(Number);
       const t = await getTexture(archive);
       if (built.get(`${entry.px},${entry.py}`) !== entry) return;   // AUDIT (49faf853) B2: torn down during the await - a batch made now would be nobody's
       if (!t || record >= t.recordCount) continue;
@@ -4719,8 +4735,15 @@ export async function bootWorld(canvas, renderer, params, status) {
       const batch = renderer.createBillboardBatch(archive, record, size, centers);
       batch._box = flatBatchAabb(centers, size);   // EV3
       armFlatAnim(batch, t, archive, record, entry.flatAnims, (entry.placeHold ?? pipeline).uploadRecordFrame);
-      entry.npcBatches.push(batch);
+      entry.npcBatches.set(sig, batch);
       entry.batches.push(batch);
+    }
+    for (const [sig, b] of plan.free) {
+      entry.npcBatches.delete(sig);
+      const i = entry.batches.indexOf(b);
+      if (i >= 0) entry.batches.splice(i, 1);
+      entry.flatAnims.remove(b);
+      renderer.destroyBatch(b);
     }
   }
 
@@ -5421,7 +5444,6 @@ export async function bootWorld(canvas, renderer, params, status) {
   // transition pair edges on. ResetState (:398-401) drops it WITHOUT
   // firing exit - the teleport core is the port's ResetState.
   let _wasInLocationRect = false;
-  const betonyEvents = createBetonyEvents();   // BET1: the hour's and the weather's edges Betony Restored's script listens on
   /** AUDIT-SEATS C4: whether the player still stands in the location `mapId` names - the rect's own edge, and that
    *  location (an arrival said late, once the seats' read answers, is said only there). */
   const stillAt = (mapId) => _wasInLocationRect && _musicLoc?.mapTableData?.mapId === mapId;
@@ -22748,7 +22770,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     csaOnPlayerDeath: () => { if (csaRuntime) csaCall(() => csaRuntime.OnPlayerDeath()); },   // CSA-J (the audit): PlayerEntity.OnDeath and OnExhausted reach ComeSailAway.OnPlayerDeath in every mode (Start 1059-1060)
     csaFrame: (dt, axes) => { _csaAxes = axes; csaFrame(dt); },   // CSA-C: a MonoBehaviour's Update and LateUpdate indoors too - a boat placed on a dungeon's water is baked, lit and drawn there; CSA-J (the audit): from the modes' frame, after its motor, on its axes
     onTransitionInterior: () => { navalStow(); csaOnTransition(); navalTransition(); },   // CSA-C: PlayerEnterExit.OnTransitionInterior; NAV-H: a building has no sea
-    onTransitionExterior: () => { navalStow(); csaOnTransition(); navalTransition(); },   // CSA-C: PlayerEnterExit.OnTransitionExterior; NAV-H: a fresh sea at the door
+    onTransitionExterior: () => { navalStow(); csaOnTransition(); navalTransition(); betonyStreetPeople(); },   // CSA-C: PlayerEnterExit.OnTransitionExterior; NAV-H: a fresh sea at the door; BET1 (AUDIT B2): a dawn passed indoors is the street's at the door
     gateCourtLights: () => gateCourt?.lights() ?? [],   // WB4: the glow on him, in the court's light channel
     gateBoss: () => gateCourt?.target() ?? null,   // WB4b: him as a body my blows meet
     gateFloor: () => { _gateFloor.xa = gateLink?.state()?.xa ?? _gateFloor.none; _gateFloor.now = Date.now() + _sharedOffsetMs; return _gateFloor; },   // WB9b: the walkways laid between the courts, on the relay's clock (one object, refilled - AUDIT WB D10's law)
@@ -25683,7 +25705,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // BET1: Betony Restored's UpdateExteriorNPCs on WorldTime.OnDawn / OnDusk and WeatherManager.OnWeatherChange (InitMod,
     // IL_02ab-02d9) - ABOVE THE MODAL GATE, as the ambient text's tick is: the clock raises its edges indoors too, and
     // the mod's own IsPlayerInTown(false, true) is what makes them nothing there. OnEnterLocationRect is the edge below.
-    if (betonyLoaded() && betonyEvents.tick(Math.floor(minuteNow() / 60), weather)) betonyStreetPeople();
+    if (betonyLoaded()) {
+      betonyLocation.note(_musicLocationType());   // AUDIT A1: written only on a pixel with a location, never cleared
+      if (betonyEvents.tick(Math.floor(minuteNow() / 60), weather)) betonyStreetPeople();
+    }
     // AUDIT 66 F11: the torch sweep runs HERE, above the modal
     // return, because that is where the transition is. It used to sit
     // with the tick at the foot of the exterior frame - which this

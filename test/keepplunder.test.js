@@ -106,7 +106,7 @@ test('KEEP-PLUNDER: THE CASKS OF A SHIP I SANK ARE HAULED IN before the sea goes
 
 test('KEEP-PLUNDER / KEEP-BOATS: THE WORLD\'S WIRING - the crew stows before every transition (ahead of Come Sail Away\'s own, while my boats still stand), before a jump but never a load\'s, and before a fast travel packs her; a boat placed in a dungeon is kept by default (the mod\'s key, its shipped default moved) (mutants: a hook unwired, a load stowed, the default the mod\'s)', () => {
   assert.match(WORLD, /const navalStow = \(\) => \{ if \(!_loading\) naval\?\.stowPlunder\?\.\(\); \};/);
-  for (const hook of ['onTransitionInterior: () => { navalStow(); csaOnTransition(); navalTransition(); },', 'onTransitionExterior: () => { navalStow(); csaOnTransition(); navalTransition(); },',
+  for (const hook of ['onTransitionInterior: () => { navalStow(); csaOnTransition(); navalTransition(); },', 'onTransitionExterior: () => { navalStow(); csaOnTransition(); navalTransition(); betonyStreetPeople(); },',   // BET1 (AUDIT B2): the street's people after the sea
     'onTransitionDungeonInterior: (ctx) => { navalStow(); ohAbyss', 'onTransitionDungeonExterior: () => { navalStow(); ohAbyss']) assert.ok(WORLD.includes(hook), hook);
   assert.match(WORLD, /if \(modEvent !== 'load'\) navalStow\(\);[^\n]*\n\s+csaOnTeleport\(\);/);
   assert.match(WORLD, /navalStow\(\);[^\n]*\n\s+if \(csaRuntime && !partyArrival\) csaCall\(\(\) => csaRuntime\.OnPreFastTravel\(\)\);/);

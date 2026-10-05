@@ -12,7 +12,8 @@ import { registerWorldDataAsset, registerWorldDataPack, installWorldDataReplacem
 import { rebuildWorldDataPatch, canonicalSha256 } from '../formats/worldDataPatch.js';
 import { openWorldDataPack, packFileSha256, readPackText } from '../formats/worldDataPack.js';
 import { modSetting, latchModLoaded, modLatchedOn } from '../systems/modSettings.js';
-import { configureLayoutPins, vendorsPinnedIn } from '../systems/layoutPins.js';   // WD3: the layout a save's towns were made in
+import { configureLayoutPins, vendorsPinnedIn, LAYOUT_MODS } from '../systems/layoutPins.js';   // WD3: the layout a save's towns were made in
+import { installBetonyRestored } from '../systems/betonyRestored.js';   // BET1 (AUDIT B3): its Init waits for the latch below
 import { installTownStandIns } from '../world/townStandIns.js';   // WD3: the peer mods' pieces the town packs place, the port's own
 import { installArena } from '../world/arenaCity.js';   // ARENA1: the Arena of Daggerfall - the port's own block, the city's edit and the colosseum
 import { installImmersiveTravelGates } from '../world/immersiveTravelGates.js';   // IT1: the carriages, on whichever gate is served
@@ -87,6 +88,9 @@ export async function loadModWorldData() {
       if (on && door && !got) _missing.add(vendor);
       return got;
     }));
+    // BET1 (AUDIT B3): Betony Restored's Init waits for its latch - a host that booted its audio first (the classic
+    // skin's splash runs every Init before any world is read) was answered nothing; this is the call that counts
+    installBetonyRestored();
     return n + counts.reduce((a, b) => a + b, 0);
   })();
   return _loaded;
@@ -106,13 +110,18 @@ export async function ensureWorldDataPack(vendor) {
 }
 const _pending = new Map();   // vendor -> the pack's load in flight
 
+/** BET1 (AUDIT C1, C2): a pack that LAYS OUT the towns a home is keyed in (systems/layoutPins.js) - not one of new places
+ *  (Betony Restored's), which moves no building of a town: neither its absence nor its stand-ins are the towns'. */
+export const isLayoutPack = (v) => LAYOUT_MODS.includes(v);
 /** WD3: whether a town pack serves any town - loaded for the game, or let in by a save's pin. */
-const townPacksLive = () => { const pinned = vendorsPinnedIn(); return [..._packs.keys()].some((v) => modLatchedOn(v) === true || pinned.has(v)); };
+const townPacksLive = () => { const pinned = vendorsPinnedIn(); return [..._packs.keys()].filter(isLayoutPack).some((v) => modLatchedOn(v) === true || pinned.has(v)); };
 
 const _missing = new Set();   // vendors switched on whose pack did not load
-/** WD3 (AUDIT WD3 B1): the packed mods switched on for this game whose packs did not load - online, the room's towns
- *  this client cannot stand (a home bought here would be keyed in another layout than the room's). */
-export const worldDataPacksMissing = () => [..._missing];
+/** WD3 (AUDIT WD3 B1): the packed TOWN mods switched on for this game whose packs did not load - online, the room's
+ *  towns this client cannot stand (a home bought here would be keyed in another layout than the room's). BET1 (AUDIT
+ *  C1): a pack of new places that did not load is not one - Betony Restored's moved no town, and counted here it
+ *  refused every home, hall and yard in every town for the session. */
+export const worldDataPacksMissing = () => [..._missing].filter(isLayoutPack);
 
 /** The packs on the door, by vendor. */
 export const loadedWorldDataPacks = () => new Map(_packs);
@@ -128,7 +137,7 @@ async function loadPackFrom(vendor, url, isOn) {
     const text = await readPackText(new Uint8Array(await res.arrayBuffer()));
     const pack = openWorldDataPack(JSON.parse(text), { blocks, onRebuilt: spotCheck(vendor) });
     _packs.set(vendor, pack);
-    quietLocationOverrides(true);   // a pack's 7,000 towns are counted once here, not logged one by one as they are read
+    if (isLayoutPack(vendor)) quietLocationOverrides(true);   // a pack's 7,000 towns are counted once here, not logged one by one as they are read (AUDIT C2: a town pack's - 25 new places are said as any are)
     const n = registerWorldDataPack(pack, isOn, { priority: WORLD_DATA_PRIORITY[vendor] ?? 0 });
     // once, whichever pack opens first - on while a town pack is loaded for the game or a pin lets one in (AUDIT WD3 T2)
     installTownStandIns(townPacksLive);

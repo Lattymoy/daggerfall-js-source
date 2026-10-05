@@ -56,10 +56,11 @@
 // walls place DET's canopies (Level, Mid Slope, Sloped), its hanging hedge
 // and Betony's own tapestry and banner, which nothing before it does -
 // `DET_BETONY_MODELS`, read off the catalogue's names and the 30 canopies'
-// and six hedges' placements - and fifteen of DET's flats no other mod
-// here lays (horses, a pony, grey poultry, resting rats, an ad stand, a
-// bread pan), in the tables below with the rest; the same stand-in for an
-// id whichever mod places it. Bible `03-World/Betony-Restored.md`.
+// and six hedges' placements - and twelve of DET's flats (AUDIT BET1 D4:
+// not fifteen): horses, a pony, grey poultry, resting rats and a bread pan
+// no other mod here lays, and the ad stand the town mods place too, in the
+// tables below with the rest; the same stand-in for an id whichever mod
+// places it. Bible `03-World/Betony-Restored.md`.
 
 import { registerCustomModel } from './customModels.js';
 import { addVendorTextures } from '../systems/textureReplacement.js';

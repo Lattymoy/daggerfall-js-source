@@ -16,7 +16,8 @@
 // A LEAF apart from the settings store and the doors it registers on: no DOM, no world - the hosts hand in what
 // PlayerGPS, WorldTime and WeatherManager answer.
 //
-// Four hosts: world.js WIRED (the street people's update on its frame's edges, Betony's roads on its terrain);
+// Four hosts: world.js WIRED (the street people's update on its frame's edges, as a pixel's people stand and at a
+// building's door - BET-FIX 2 - and Betony's roads on its terrain);
 // worldModes.js and dungeonContext.js stand no street (the update walks ExteriorParent's people alone); exterior.js
 // (the bench) FLAGGED - it stands every street person of a record in one batch for the whole city, up front, and
 // cannot set one down (its own note at its exterior-NPC pass). The faction, the pictures, the DET stand-ins and the
@@ -26,7 +27,7 @@ import DERIVED from '../../vendor/betony-restored/Textures/derived.json' with { 
 import RESHADED from '../../vendor/betony-restored/Textures/reshaded.json' with { type: 'json' };
 import FLAT_REPLACEMENTS from '../../vendor/betony-restored/FlatReplacements/BetonyRestoredFlatReplacements.json' with { type: 'json' };
 import ROADS_DIFF from '../../vendor/betony-restored/roads.json' with { type: 'json' };
-import { modSetting, latchModLoaded, modLatchedOn } from './modSettings.js';
+import { modLatchedOn } from './modSettings.js';
 import { registerCustomFaction } from '../formats/factionFile.js';
 import { addVendorTextures } from './textureReplacement.js';
 import { registerBillboardXml } from '../world/billboardXml.js';
@@ -36,10 +37,11 @@ import { installDetStandIns } from '../world/detStandIns.js';
 import { setFlatFaceOverride } from '../characters/staticNpc.js';
 import { isPlayerInTown } from './nearbyObjects.js';
 import { DAWN_HOUR, DUSK_HOUR } from './gameDate.js';
+import { LOCATION_TYPES } from '../formats/mapsFile.js';
 
 export const BETONY_VENDOR = 'betony-restored';
 /** The mod loaded for the game - the world-data loader's latch once its pack is on the door (a pack that did not load
- *  is a mod not loaded, as WD3's are), or its Init's (installBetonyRestored) in a host that inits before the packs load. */
+ *  is a mod not loaded, as WD3's are); not loaded until the loader has answered. */
 export const betonyLoaded = () => modLatchedOn(BETONY_VENDOR) === true;
 
 // ── the script: BetonyRestoredMod (il/BetonyRestored.il.txt) ───────────────────────────────────────────────────────
@@ -81,7 +83,9 @@ export function betonyNpcShown(flags, isDay, isRaining) {
  * RECORDED DEPARTURE (BET-FIX, Port-Ledger A): the mod's SetActive(true) also stands back up an individual a live quest
  * has placed somewhere else (the away arm of SetupIndividualStaticNPC set that home copy inactive at layout) - a
  * questor twice in the world after the next dawn. The port keeps the quest's word: `pn.questAway` is the away arm's
- * mark (the hosts set it), and an away person stays down whatever the hour.
+ * mark (the hosts set it), and an away person stays down whatever the hour. DEFENSIVE (AUDIT A5): the away arm acts
+ * on individuals alone (a faction of type 4), and no street person of Daggerfall's, of this mod's or of the town
+ * mods' carries one - a block a later mod lays may.
  *
  * @param {Array<{factionID:number, flags:number, active:boolean, questAway?:boolean}>} npcs
  * @returns {number} how many changed - the host stands a pixel's batches again when its people did
@@ -95,6 +99,20 @@ export function updateExteriorNpcs(npcs, { locationType, inside, isDay, isRainin
     if (pn.active !== shown) { pn.active = shown; changed++; }
   }
   return changed;
+}
+
+/**
+ * AUDIT A1: PlayerGPS.currentLocationType, as the mod's IsPlayerInTown(false, true) reads it - DFU writes it only on a
+ * map pixel that has a location (PlayerGPS.cs:627) and never clears it, so it starts at the enum's 0 (TownCity) and
+ * outlives a walk into the wilderness: the mod's update runs there. The hosts `note` the pixel's own type each frame
+ * (LOCATION_TYPES.None, 0xffff, for a pixel with none) and hand `type()` to the update.
+ */
+export function createBetonyLocationType() {
+  let type = LOCATION_TYPES.TownCity;
+  return {
+    note(t) { if (t != null && t !== LOCATION_TYPES.None) type = t; return type; },
+    type: () => type,
+  };
 }
 
 /**
@@ -121,20 +139,23 @@ export function createBetonyEvents() {
 
 let _installed = false;
 /**
- * Init + Awake + InitMod, once, at the boot every host shares (scenes/shared.js): the mod latched loaded for the game
- * or not, then while it is loaded "Begin mod init: BetonyRestored", the faction (its failure logged as the mod logs it,
- * "BetonyRestored: Failed to register faction ids."), "Finished mod init: BetonyRestored" - and the port's halves the
- * script has no word for: the pictures and Flat Replacer's portraits. The four event subscriptions are the hosts' (the
- * frame loop's edges; world.js).
+ * Init + Awake + InitMod, once, from the boot every host shares (scenes/shared.js) and the world-data loader's latch
+ * (scenes/modWorldData.js), whichever finds the latch answered: while the mod is loaded "Begin mod init:
+ * BetonyRestored", the faction (its failure logged as the mod logs it, "BetonyRestored: Failed to register faction
+ * ids."), "Finished mod init: BetonyRestored" - and the port's halves the script has no word for: the pictures and Flat
+ * Replacer's portraits. The four event subscriptions are the hosts' (the frame loop's edges; world.js).
  */
 export function installBetonyRestored({ fetchBytes = null } = {}) {
   if (_installed) return false;
-  _installed = true;
-  // The world-data loader latches the mod as its pack lands on the door (scenes/modWorldData.js: a pack that did not
-  // load, or a closed door, is a mod not loaded - WD3's law) and world.js loads the packs BEFORE this Init: its answer
-  // stands. A host that inits first latches the switch, and the loader's answer replaces it when it comes.
+  // The mod loaded for the game is the world-data loader's word (scenes/modWorldData.js latches it as the pack lands on
+  // the door - a pack that did not land, or a closed door, is a mod not loaded: WD3's law), and Init WAITS for it (AUDIT
+  // B3): a host that reaches Init first - the classic skin's splash boots the audio, and every Init with it, before any
+  // world is read - is answered nothing, and the loader calls this again once it has latched. Before, that host latched
+  // the switch and registered Lord Mogref into a game whose pack then did not load, and the save kept him.
   const latched = modLatchedOn(BETONY_VENDOR);
-  if (!(latched === undefined ? latchModLoaded(BETONY_VENDOR, modSetting(BETONY_VENDOR, 'Enabled') === true) : latched === true)) return true;
+  if (latched === undefined) return false;
+  _installed = true;
+  if (latched !== true) return true;
   console.log('Begin mod init: BetonyRestored');
   if (!registerCustomFaction(LORD_MOGREF_FACTION_KEY, LORD_MOGREF_FACTION)) console.warn('BetonyRestored: Failed to register faction ids.');
   console.log('Finished mod init: BetonyRestored');
@@ -178,9 +199,10 @@ export const BETONY_NPC_ARCHIVE = 1200;
 
 export const betonyArtUrl = (name) => new URL(`../../vendor/betony-restored/Textures/${name}.png`, import.meta.url).href;
 const parseName = (name) => { const m = /^(\d+)_(\d+)-(\d+)$/.exec(name); return { archive: Number(m[1]), record: Number(m[2]), frame: Number(m[3]) }; };
-/** A record of one of Daggerfall's own archives the mod replaces (218_5) - every other picture here is of an archive no
- *  TEXTURE file has (540, 1200, 1210, 1230), which stands on the door as that archive. */
-const isClassicArchive = (archive) => archive <= 511;
+/** The archives the mod adds - no TEXTURE file has them, and each stands on the door as that archive. Every other
+ *  picture here is a record of one of Daggerfall's own (218_5), overridden as a texture pack overrides one (AUDIT D3: by
+ *  the mod's own list - the port's last classic archive is dataPipeline.js's, one export). */
+export const BETONY_ARCHIVES = Object.freeze([540, 1200, 1210, 1230]);
 
 let _artInstalled = false;
 /** The pictures on the texture door, behind the mod's latch: the drawings by fetch, the classic ones built from the
@@ -200,7 +222,7 @@ export function installBetonyArt({ fetchBytes = null } = {}) {
     const at = parseName(name);
     // 218_5 is ONE RECORD of a real archive (TEXTURE.218), overridden as a texture pack overrides one - never a stand-in
     // for the archive (textureReplacement.js `standIn`: the archive number cannot tell, the registration says)
-    return { ...at, fileName: name, standIn: !isClassicArchive(at.archive), gate, build: (ctx) => buildDerivedPicture(spec, ctx.classicRgba) };
+    return { ...at, fileName: name, standIn: BETONY_ARCHIVES.includes(at.archive), gate, build: (ctx) => buildDerivedPicture(spec, ctx.classicRgba) };
   });
   const classicStandIn = (archive, record, frame, from, fileName) => ({
     archive, record, frame, fileName, standIn: true, yields: true, gate,
@@ -235,6 +257,10 @@ export function flatReplacerPortraits(rules = FLAT_REPLACEMENTS) {
 /** TFAC00I0.RCI holds 503 classic faces (0..502, hudEscortFaces.js: "61..502 -> TFAC00I0.RCI"); anything past is a
  *  mod's picture. */
 export const CUSTOM_PORTRAIT_FIRST = 503;
+/** DaggerfallTalkWindow's CommonFaces file - ui/nativeTalk.js `PORTRAIT_ARCHIVE.CommonFaces` is its export, which a
+ *  leaf cannot import (its closure is the talk window's five hundred modules): named here once, and held equal to that
+ *  export by test/bet1_betony.test.js (AUDIT D7). */
+export const BETONY_PORTRAIT_FILE = 'TFAC00I0.RCI';
 let _hasModPortrait = () => false;
 /** The host's answer to "does an attached mod carry this face" (systems/dfmodTextures.js hasDfmodCifRci) - set where
  *  the hosts wire the door, so this module stays a leaf. */
@@ -243,14 +269,17 @@ function installFlatReplacerPortraits() {
   for (const p of flatReplacerPortraits()) {
     setFlatFaceOverride(p.archive, p.record, p.classic
       ? () => (betonyLoaded() ? p.face : null)
-      : () => (betonyLoaded() && _hasModPortrait('TFAC00I0.RCI', p.face) ? p.face : null));
+      : () => (betonyLoaded() && _hasModPortrait(BETONY_PORTRAIT_FILE, p.face) ? p.face : null));
   }
 }
 
 // ── Betony's roads ─────────────────────────────────────────────────────────────────────────────────────────────────
-/** Basic Roads' arrays as the mod ships them (its roadData and trackData replace Basic Roads' own: ModManager asks the
- *  mods loaded last first, and the mod loads after its dependencies): Hazelnut's, with the island's roads written in.
- *  `net` is world/roadsProducer.js loadModRoads' answer; a new one is returned, the arrays copied. */
+/** Basic Roads' arrays as the mod ships them: Hazelnut's, with the island's roads written in. Basic Roads reads them
+ *  through ModManager.TryGetAsset (BasicRoadsTexturing.cs:126-139), which answers from the mod loaded LAST - and Basic
+ *  Roads is no dependency of this mod's (AUDIT A3): by DFU's default order (the mods folder's listing,
+ *  `basicroads.dfmod` before `betony restored.dfmod`) the island's arrays answer, as the readme expects; a player who
+ *  loads Basic Roads after it gets Hazelnut's. The port takes the default. `net` is world/roadsProducer.js
+ *  loadModRoads' answer; a new one is returned, the arrays copied. */
 export function withBetonyRoads(net, diff = ROADS_DIFF) {
   if (!net?.roads || !net?.tracks) return net;
   const roads = Uint8Array.from(net.roads), tracks = Uint8Array.from(net.tracks);

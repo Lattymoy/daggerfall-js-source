@@ -71,7 +71,9 @@ function addAssetEntry(fileName, entry) {
   entry.name = String(fileName);
   fileName = assetKey(fileName);
   const list = _assets.get(fileName) ?? [];
-  const mine = list.findIndex((e) => (e.vendor ?? null) === (entry.vendor ?? null));
+  // BET1 (AUDIT C3): ...and a registration naming no mod replaces one of its own SPELLING only - under a case-blind key
+  // a loose `x.json` is not the `X.JSON` beside it
+  const mine = list.findIndex((e) => (e.vendor ?? null) === (entry.vendor ?? null) && (entry.vendor != null || e.name === entry.name));
   if (mine >= 0) list.splice(mine, 1);   // a mod registering its own file again replaces it (a registration naming no mod, WD1's, replaces the last that named none - the C#'s one asset a name)
   // a later registration of equal priority stands in front (the C# Map.set's last-writer rule, kept for WD1's files)
   let at = list.findIndex((e) => e.priority <= entry.priority);
@@ -162,12 +164,13 @@ function layered(fileName, json) {
  *  to be passed over by a `locationnew-` filter. */
 function findAssets(extension) {
   const out = [], blind = assetKey(extension);
-  for (const [key] of _assets) {
+  for (const [key, list] of _assets) {
     if (!key.endsWith(blind)) continue;   // the cheap pass over the keys first (a pack's 7,000 names)
-    const a = liveAsset(key);
     // BET1: the suffix is matched as DFU's Mod.FindAssetNames matches it - ordinal, against the file's name as the mod's
-    // manifest spells it (Mod.cs:451, string.CompareOrdinal); only TryGetAsset's door is case-blind
-    if (a && a.name.endsWith(extension)) out.push({ name: a.name, get json() { return assetJson(a, a.name, null); } });
+    // manifest spells it (Mod.cs:451, string.CompareOrdinal); only TryGetAsset's door is case-blind. AUDIT C3: the first
+    // LIVE entry that so ends - a higher-priority mod's `.JSON` under the same key hides no lower mod's `.json`
+    const a = list.find((e) => assetOn(e) && e.name.endsWith(extension));
+    if (a) out.push({ name: a.name, get json() { return assetJson(a, a.name, null); } });
   }
   return out;
 }

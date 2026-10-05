@@ -64,11 +64,12 @@
   },
   {
     "name": "NUDEFLATS-world-street-npc-born",
-    "file": "src/scenes/world.js",
-    "old": "      const k = `${pn.drawArchive ?? pn.textureArchive}_${pn.drawRecord ?? pn.textureRecord}`;",
-    "new": "      const k = `${pn.textureArchive}_${pn.textureRecord}`;",
+    "file": "src/characters/exteriorNpcs.js",
+    "old": "    const k = `${pn.drawArchive ?? pn.textureArchive}_${pn.drawRecord ?? pn.textureRecord}`;",
+    "new": "    const k = `${pn.textureArchive}_${pn.textureRecord}`;",
     "tests": [
-      "test/nudeflats.test.js"
+      "test/nudeflats.test.js",
+      "test/bet1_betony.test.js"
     ]
   },
   {

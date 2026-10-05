@@ -26,8 +26,11 @@ import {
   BETONY_VENDOR, betonyLoaded, LORD_MOGREF_FACTION_KEY, LORD_MOGREF_FACTION, BETONY_NPC_FLAGS, betonyNpcShown, updateExteriorNpcs,
   createBetonyEvents, installBetonyRestored, installBetonyArt, _resetBetonyRestored, BETONY_OWN_ART, BETONY_DERIVED, BETONY_RESHADED,
   BETONY_XML, BETONY_NPC_STAND_INS, BETONY_NPC_ARCHIVE, flatReplacerPortraits, CUSTOM_PORTRAIT_FIRST, setBetonyPortraitProbe,
-  withBetonyRoads, BETONY_ROADS,
+  withBetonyRoads, BETONY_ROADS, createBetonyLocationType, BETONY_PORTRAIT_FILE, BETONY_ARCHIVES,
 } from '../src/systems/betonyRestored.js';
+import { planNpcBatches, npcStandTurn, exteriorNpcRecord, collectExteriorNpcs } from '../src/characters/exteriorNpcs.js';
+import { isLayoutPack, worldDataPacksMissing } from '../src/scenes/modWorldData.js';
+import { PORTRAIT_ARCHIVE } from '../src/ui/nativeTalk.js';
 import { openWorldDataPack, packFileSha256 } from '../src/formats/worldDataPack.js';
 import {
   registerWorldDataAsset, registerWorldDataPack, installWorldDataReplacement, bindWorldDataBlocks, _resetWorldDataReplacement,
@@ -120,6 +123,10 @@ test('BET1 the vendored mod: the manifest, the readme and Flat Replacer\'s rules
   const files = readdirSync(join(VENDOR, 'Textures')).sort();
   assert.deepEqual(files, [...BETONY_OWN_ART.map((n) => `${n}.png`), '1230_11-0.xml', 'derived.json', 'reshaded.json'].sort());
   assert.equal(BETONY_OWN_ART.length, 66);
+  // AUDIT D1: the tool's listing of them - what test/doctrine.test.js lets stand under Textures/ - and the bundle it read
+  const listing = JSON.parse(read('vendor/betony-restored/betony-restored.files.json'));
+  assert.deepEqual([[...listing.Files].sort(), listing.Bundle, listing.BundleSha256], [files, 'Mods/betony restored.dfmod', '8d0c209c61278b92e5740820f1575c91138c5701a593cc70e1dd8e0d4a9533f5']);
+  assert.ok(read('test/doctrine.test.js').includes("['vendor/betony-restored/Textures/',\n    { manifest: 'vendor/betony-restored/betony-restored.files.json',"), 'the doctrine\'s row reads it');
   assert.deepEqual(Object.keys(BETONY_DERIVED), Object.keys(AUTHOR_DERIVED));
   assert.deepEqual(BETONY_RESHADED, { '540_0-0': [210, 0, 2], '540_21-0': [210, 21, 4], '540_22-0': [210, 22], '540_24-0': [101, 6], '540_25-0': [101, 7], '540_26-0': [101, 8], '540_27-0': [101, 9] });
   // the scale, read back off the file
@@ -236,34 +243,32 @@ test('BET1 Lord Mogref (RegisterFactionIds, IL_0308-038d): registered under the 
   resetAll();
 });
 
-test('BET1 Init: "Begin mod init", the faction, "Finished mod init", the pictures and the portraits - once; nothing while the mod is not loaded; the world-data loader\'s latch stands over the switch (a pack that did not load is a mod not loaded), the switch latched only where no loader answered first', (t) => {
+test('BET1 Init: "Begin mod init", the faction, "Finished mod init", the pictures and the portraits - once, and only once the world-data loader has latched the mod (AUDIT B3): a host that reaches Init first is answered nothing - no faction of a mod whose pack then does not land, none in the save - and the loader\'s own call inits it; nothing while it is not loaded', (t) => {
   resetAll();
   const logs = [];
   t.mock.method(console, 'log', (...a) => logs.push(a.join(' ')));
   t.mock.method(console, 'warn', () => {});
-  // the loader latched the mod NOT loaded (its pack did not land) - the switch on changes nothing
-  setModSetting(BETONY_VENDOR, 'Enabled', true);
-  latchModLoaded(BETONY_VENDOR, false);
-  assert.equal(installBetonyRestored({ fetchBytes: async () => new Uint8Array(0) }), true);
-  assert.equal(betonyLoaded(), false);
-  assert.equal(customFactions().has(1432), false);
-  assert.deepEqual(logs, []);
-  // no loader first: the switch, latched
-  resetAll(); logs.length = 0;
+  // the classic skin's splash: every Init before any world is read - the latch unanswered, the switch on
   setModSetting(BETONY_VENDOR, 'Enabled', true);
   assert.equal(modLatchedOn(BETONY_VENDOR), undefined);
+  assert.equal(installBetonyRestored({ fetchBytes: async () => new Uint8Array(0) }), false, 'answered nothing');
+  assert.deepEqual([modLatchedOn(BETONY_VENDOR), betonyLoaded(), customFactions().has(1432), logs.length], [undefined, false, false, 0], 'no latch of its own, no faction, no word');
+  // ...then the loader: the pack did not land (a closed door, the network) - the mod is not loaded, and stays so
+  latchModLoaded(BETONY_VENDOR, false);
   assert.equal(installBetonyRestored({ fetchBytes: async () => new Uint8Array(0) }), true);
   assert.equal(installBetonyRestored({ fetchBytes: async () => new Uint8Array(0) }), false, 'once');
-  assert.deepEqual([modLatchedOn(BETONY_VENDOR), betonyLoaded(), customFactions().get(1432)?.id], [true, true, 1532]);
-  assert.deepEqual(logs, ['Begin mod init: BetonyRestored', 'Finished mod init: BetonyRestored']);
-  // the loader's answer, when it comes, is the one that stands
-  latchModLoaded(BETONY_VENDOR, false);
-  assert.equal(betonyLoaded(), false);
-  // the switch off: nothing
-  resetAll(); logs.length = 0;
-  setModSetting(BETONY_VENDOR, 'Enabled', false);
-  installBetonyRestored({ fetchBytes: async () => new Uint8Array(0) });
   assert.deepEqual([betonyLoaded(), customFactions().has(1432), logs.length], [false, false, 0]);
+  // the pack landed: the loader's call inits it - the faction, the two lines, once
+  resetAll(); logs.length = 0;
+  latchModLoaded(BETONY_VENDOR, true);
+  assert.equal(installBetonyRestored({ fetchBytes: async () => new Uint8Array(0) }), true);
+  assert.equal(installBetonyRestored({ fetchBytes: async () => new Uint8Array(0) }), false, 'once');
+  assert.deepEqual([betonyLoaded(), customFactions().get(1432)?.id], [true, 1532]);
+  assert.deepEqual(logs, ['Begin mod init: BetonyRestored', 'Finished mod init: BetonyRestored']);
+  // the loader calls Init once its latch is set, whatever host boots it (scenes/modWorldData.js)
+  const M = read('src/scenes/modWorldData.js');
+  const latch = M.indexOf('if (on && door && !got) _missing.add(vendor);'), call = M.indexOf('    installBetonyRestored();\n');
+  assert.ok(latch > 0 && call > latch && call < M.indexOf('return n + counts.reduce('), 'Init after every pack is latched, inside the load');
   resetAll();
 });
 
@@ -448,7 +453,7 @@ test('BET1 Flat Replacer\'s six rules: the talk window\'s face for the custom pe
   assert.equal(CUSTOM_PORTRAIT_FIRST, 503);
   assert.deepEqual(flatReplacerPortraits().map((p) => [p.archive, p.record, p.face, p.classic]), [[1200, 14, 1200014, false], [1200, 15, 1200015, false], [1200, 17, 1200017, false], [1200, 19, 1200019, false], [1200, 53, 360, true], [1200, 54, 243, true]]);
   assert.deepEqual(flatReplacerPortraits([{ TextureArchive: 1200, TextureRecord: 1, ReplaceTextureArchive: 1200, ReplaceTextureRecord: 2, FlatPortrait: 5 }, { TextureArchive: 1, TextureRecord: 1, ReplaceTextureArchive: 1, ReplaceTextureRecord: 1, FlatPortrait: -1 }]), [], 'a replacement of the picture, or no portrait: none');
-  setModSetting(BETONY_VENDOR, 'Enabled', true);
+  latchModLoaded(BETONY_VENDOR, true);
   installBetonyRestored({ fetchBytes: async () => new Uint8Array(0) });
   assert.deepEqual([flatFaceOverride(1200, 53), flatFaceOverride(1200, 54)], [360, 243]);
   assert.equal(flatFaceOverride(1200, 14), null, 'no mod carries 1200014');
@@ -529,18 +534,232 @@ test('BET1 the switch, the room and the credit: Enabled on by default, read when
   assert.ok(c.terms.includes('as long as I am credited as the author'));
 });
 
-test('BET1 the hosts: world.js runs the update on the hour\'s and the weather\'s edges ABOVE its modal gate and on the location rect\'s entry, marks the quest\'s away arm on its people, and lays Betony\'s roads over Basic Roads\'; every host\'s boot installs the mod and its portrait probe; exterior.js FLAGGED by name', () => {
+test('BET1 the hosts: world.js runs the update on the hour\'s and the weather\'s edges ABOVE its modal gate, on the location rect\'s entry and on the way out of a building (AUDIT B2), and as a pixel\'s people stand, after the quest\'s pass; its context pinned by value - the sticky location type (AUDIT A1), outside, the sky\'s hour, the weather word\'s rain; the host state declared before the start pixel stands; a re-stand queued and caught (AUDIT B7) over the stand\'s plan (AUDIT B4); Betony\'s roads; every host\'s boot installs the mod; exterior.js FLAGGED by name', () => {
   const world = read('src/scenes/world.js'), shared = read('src/scenes/shared.js'), mod = read('src/systems/betonyRestored.js');
-  const tick = world.indexOf('if (betonyLoaded() && betonyEvents.tick(Math.floor(minuteNow() / 60), weather)) betonyStreetPeople();');
-  assert.ok(tick > 0);
+  const tick = world.indexOf('    if (betonyLoaded()) {\n      betonyLocation.note(_musicLocationType());   // AUDIT A1: written only on a pixel with a location, never cleared\n      if (betonyEvents.tick(Math.floor(minuteNow() / 60), weather)) betonyStreetPeople();\n    }');
+  assert.ok(tick > 0, 'the frame notes the pixel\'s location type and raises the edges');
   assert.ok(tick > world.indexOf('    questSyncTick();\n'), 'with the frame\'s other edges');
+  assert.ok(world.includes("    return { locationType: betonyLocation.type(), inside: (modes?.mode ?? 'exterior') !== 'exterior', isDay: !isNight(minuteNow()), isRaining: weatherFlags(weather).raining };"), 'the context, by value');
+  assert.equal((world.match(/betonyUpdateExteriorNpcs\(/g) ?? []).length, 2, 'the event walk and the stand');
+  assert.ok(world.includes('      if (p.npcs?.length && betonyUpdateExteriorNpcs(p.npcs, ctx)) restandPixelNpcs(p);'));
+  assert.ok(world.includes("    return standPixelNpcs(entry).catch((e) => console.error(`[betony] a pixel's street people did not stand again: ${e?.message ?? e}`));"), 'its failure said');
+  assert.ok(world.includes('    const done = await npcStandTurn(entry);\n    try { await standPixelNpcsNow(entry); } finally { done(); }'), 'every stand of a pixel takes its turn, and gives it back failed or not');
+  const stand = world.slice(world.indexOf('async function standPixelNpcs('), world.indexOf('function restrideTerrain('));
+  const pass = stand.indexOf('entry.npcQuestPass = setupExteriorQuestStaticNpcs(entry.npcs, machine, betonyAwareHost);');
+  const rule = stand.indexOf('    if (betonyLoaded()) betonyUpdateExteriorNpcs(entry.npcs, betonyContext());');
+  const plan = stand.indexOf('    const plan = planNpcBatches(entry.npcs, entry.npcBatches);');
+  assert.ok(pass > 0 && rule > pass && plan > rule, 'the quest\'s pass, then the hours and the rain, then the plan');
+  assert.ok(stand.includes('    for (const [sig, b] of plan.free) {\n      entry.npcBatches.delete(sig);') && stand.includes('      entry.npcBatches.set(sig, batch);'), 'the gone freed, a new batch held by its signature');
+  assert.ok(world.includes('      npcBatches: new Map(), npcStand: null, npcQuestPass: false,'), 'the pixel born with both (PERF-EXT10\'s shape law: nothing written on a batch after birth)');
+  assert.ok(world.includes('    onTransitionExterior: () => { navalStow(); csaOnTransition(); navalTransition(); betonyStreetPeople(); },'), 'out of a building');
   assert.ok(world.includes('        betonyStreetPeople();   // BET1: PlayerGPS.OnEnterLocationRect'));
-  assert.ok(world.includes('entry.npcQuestPass = setupExteriorQuestStaticNpcs(entry.npcs, machine, betonyAwareHost);'));
   assert.ok(world.includes('host.setActive = (active) => { pn.questAway = !active; setActive(active); };'));
   assert.ok(world.includes('if (his && betonyLoaded()) his = withBetonyRoads(his);'));
-  assert.ok(world.includes("isRaining: weatherFlags(weather).raining"));
+  // the host state is there before the start pixel's people stand - they take the mod's hours as they stand (a TDZ
+  // before: the declaration sat beside the frame loop, 3,000 lines below the start pixel's build)
+  const declared = world.indexOf('  const betonyLocation = createBetonyLocationType();'), startPixel = world.indexOf('const playerPixel = await awaitedBuild(first.px, first.py);');
+  assert.ok(declared > 0 && startPixel > declared, 'declared before the start pixel stands');
+  assert.ok(world.indexOf('  const betonyEvents = createBetonyEvents();') < startPixel);
   assert.ok(shared.includes('  installBetonyRestored();   // BET1') && shared.includes('setBetonyPortraitProbe(hasDfmodCifRci);'));
   assert.ok(mod.includes('exterior.js\n// (the bench) FLAGGED - it stands every street person of a record in one batch'));
+});
+
+test('BET1 AUDIT A1: the location type the mod reads is PlayerGPS\'s as DFU keeps it - TownCity before any location, written only on a pixel that has one, never cleared - so its update runs in the wilderness after a town, and not after a dungeon\'s pixel', () => {
+  const loc = createBetonyLocationType();
+  assert.equal(loc.type(), LOCATION_TYPES.TownCity, 'the enum\'s 0 before any location');
+  assert.equal(loc.note(LOCATION_TYPES.None), LOCATION_TYPES.TownCity, 'a pixel with none writes nothing');
+  assert.equal(loc.note(LOCATION_TYPES.DungeonKeep), LOCATION_TYPES.DungeonKeep);
+  assert.equal(loc.note(LOCATION_TYPES.None), LOCATION_TYPES.DungeonKeep, 'never cleared');
+  assert.equal(loc.note(null), LOCATION_TYPES.DungeonKeep);
+  const ware = () => [{ factionID: 584, flags: 2, active: true }];   // hides by night
+  const night = { inside: false, isDay: false, isRaining: false };
+  let npcs = ware();
+  assert.equal(updateExteriorNpcs(npcs, { ...night, locationType: loc.type() }), 0, 'after a dungeon\'s pixel: no town');
+  loc.note(LOCATION_TYPES.TownVillage); loc.note(LOCATION_TYPES.None);
+  assert.equal(updateExteriorNpcs(npcs, { ...night, locationType: loc.type() }), 1, 'in the wilderness after a village: the update runs');
+  assert.equal(npcs[0].active, false);
+  npcs = ware();
+  assert.equal(updateExteriorNpcs(npcs, { ...night, locationType: createBetonyLocationType().type() }), 1, 'before any location: TownCity');
+});
+
+test('BET1 AUDIT B4: the stand\'s plan - one batch a drawn picture over the ACTIVE people (the away arm\'s person out of the draw); a group whose people are the same keeps its batch, a changed one is built again, a gone one freed', () => {
+  const pn = (x, archive = 182, record = 3, active = true, extra = {}) => ({ x, y: 0, z: 5, textureArchive: archive, textureRecord: record, active, ...extra });
+  const npcs = [pn(1), pn(2), pn(3, 184, 7), pn(4, 184, 7, false), pn(5, 1200, 13, true, { drawArchive: 183, drawRecord: 10 })];
+  const first = planNpcBatches(npcs);
+  assert.deepEqual(first.build.map((b) => [b.key, b.centers.length]), [['182_3', 2], ['184_7', 1], ['183_10', 1]], 'the inactive person out; the picture the build chose');
+  assert.deepEqual([first.keep.size, first.free], [0, []]);
+  const standing = new Map(first.build.map((b) => [b.sig, { name: b.key }]));
+  const names = (m) => [...m.values()].map((b) => b.name);
+  const same = planNpcBatches(npcs, standing);
+  assert.deepEqual([names(same.keep), [...same.keep.keys()], same.build, same.free], [['182_3', '184_7', '183_10'], [...standing.keys()], [], []], 'nothing changed: nothing built, nothing freed');
+  npcs[1].active = false;   // one of the 182_3 pair goes in
+  npcs[3].active = true;    // the 184_7 pair is two again
+  npcs[4].active = false;   // the 183_10 one gone
+  const next = planNpcBatches(npcs, standing);
+  assert.deepEqual([names(next.keep), next.build.map((b) => [b.key, b.centers.length]), next.free.map(([sig, b]) => [sig, b.name])], [[], [['182_3', 1], ['184_7', 2]], [...standing].map(([sig, b]) => [sig, b.name])]);
+  npcs[1].active = true;    // and back: the 182_3 pair keeps its batch, the rest as they were
+  const back = planNpcBatches(npcs, standing);
+  assert.deepEqual([names(back.keep), back.build.map((b) => b.key), back.free.map(([, b]) => b.name)], [['182_3'], ['184_7'], ['184_7', '183_10']]);
+  assert.notEqual(planNpcBatches([pn(1), pn(2)]).build[0].sig, planNpcBatches([pn(2), pn(1)]).build[0].sig, 'the centres in order are the signature');
+});
+
+/** world.js's own stand of a pixel's street people (standPixelNpcs and standPixelNpcsNow, as written), run over a host of
+ *  the test's: one pixel, its pictures loading a moment late, a renderer that counts what stands. */
+function worldStand({ loaded = false, ctx = null } = {}) {
+  const w = read('src/scenes/world.js');
+  const from = w.indexOf('  async function standPixelNpcs(entry) {'), to = w.indexOf('\n  // EV4: a built pixel crosses');
+  assert.ok(from > 0 && to > from, 'the stand moved');
+  const live = new Set();
+  const host = {
+    npcStandTurn, planNpcBatches, setupExteriorQuestStaticNpcs: () => true, betonyAwareHost: null, questBridge: null,
+    betonyLoaded: () => loaded, betonyUpdateExteriorNpcs: updateExteriorNpcs, betonyContext: () => ctx,
+    getTexture: (archive) => host.texture(archive),
+    texture: async () => { await new Promise((r) => setTimeout(r, 2)); return { recordCount: 99 }; },
+    pipeline: { uploadRecord() {}, uploadRecordFrame() {} }, billboardSize: () => ({ w: 1, h: 2 }), flatBatchAabb: () => null, armFlatAnim: () => {},
+    renderer: {
+      createBillboardBatch: (archive, record, size, centers) => { const b = { archive, record, centers: centers.map((c) => c.join(',')).join(' ') }; live.add(b); return b; },
+      destroyBatch: (b) => { live.delete(b); },
+    },
+    built: new Map(),
+  };
+  host.renderer.destroyed = 0;
+  const destroy = host.renderer.destroyBatch;
+  host.renderer.destroyBatch = (b) => { host.renderer.destroyed++; destroy(b); };
+  const names = Object.keys(host).filter((k) => k !== 'texture');
+  const stand = new Function(...names, `${w.slice(from, to)}\nreturn standPixelNpcs;`)(...names.map((k) => host[k]));
+  const pixel = (npcs) => {
+    const entry = { px: 0, py: 0, npcs, batches: [], flatAnims: { remove() {} }, npcBatches: new Map(), npcStand: null, npcQuestPass: false };
+    host.built.set('0,0', entry);
+    return entry;
+  };
+  return { stand, pixel, live, host, drawn: (entry) => entry.batches.map((b) => b.centers) };
+}
+const streetPerson = (x, flags = 0) => ({ x, y: 0, z: 0, textureArchive: 182, textureRecord: 3, factionID: 584, flags, active: true });
+/** A stand that never ends is a pin that never answers: each is given a second. */
+const within = (p, what) => Promise.race([p, new Promise((_, no) => { setTimeout(() => no(new Error(what)), 1000).unref?.(); })]);
+
+test('BET1 AUDIT B7: ONE STAND AT A TIME over a pixel\'s batches - a re-stand asked for while the pixel\'s own stand awaits its picture waits for it, and draws only the people of its own plan (the shipped stand drew both plans\' - the trader dusk took down stood on until the next edge); a stand that fails gives its turn back; one whose turn comes after its pixel\'s teardown touches nothing', async () => {
+  const { stand, pixel, live, host, drawn } = worldStand();
+  const entry = pixel([streetPerson(1), streetPerson(2)]);
+  const own = stand(entry);
+  await new Promise((r) => setTimeout(r, 0));   // the pixel's own stand has planned, and awaits its picture
+  entry.npcs[1].active = false;                 // dusk takes a trader down...
+  const again = stand(entry);                   // ...and the host stands the pixel again
+  await within(Promise.all([own, again]), 'the two stands never finished');
+  assert.deepEqual(drawn(entry), ['1,0,0'], 'the later stand\'s people alone');
+  assert.deepEqual([live.size, entry.npcBatches.size], [1, 1], 'nothing standing that nothing holds');
+  // the turn: two asked at once run one after the other
+  const turnA = npcStandTurn(entry), turnB = npcStandTurn(entry);
+  let bHas = false;
+  turnB.then(() => { bHas = true; });
+  const doneA = await turnA;
+  await new Promise((r) => setTimeout(r, 1));
+  assert.equal(bHas, false, 'the second waits for the first');
+  doneA();
+  (await within(turnB, 'the second turn never came'))();
+  assert.equal(bHas, true);
+  // a stand that fails still gives its turn back, and leaves nothing standing that the next cannot see
+  host.texture = async () => { throw new Error('the picture would not load'); };
+  entry.npcs[1].active = true;
+  await assert.rejects(within(stand(entry), 'the failing stand never ended'), /would not load/);
+  assert.deepEqual([drawn(entry), entry.npcBatches.size], [['1,0,0'], 1], 'the old batch still held');
+  host.texture = async () => ({ recordCount: 99 });
+  await within(stand(entry), 'the failed stand never gave its turn back');
+  assert.deepEqual(drawn(entry), ['1,0,0 2,0,0'], 'the next stand ran, and freed what the failed one meant to');
+  assert.deepEqual([live.size, entry.npcBatches.size], [1, 1]);
+  // a stand whose turn comes after the pixel's teardown touches nothing (destroyPixel freed the pixel's batches)
+  const first = stand(entry), second = stand(entry);   // two asked for at once
+  for (const pn of entry.npcs) pn.active = false;      // everyone gone in: each would free the batch...
+  host.built.delete('0,0');                            // ...but the pixel is torn down before either's turn
+  const before = host.renderer.destroyed;
+  await within(Promise.all([first, second]), 'the stands never finished');
+  assert.equal(host.renderer.destroyed, before, 'nothing freed twice on a pixel already gone');
+});
+
+test('BET1 AUDIT B2: a pixel\'s people take the mod\'s hours and rain AS THEY STAND (Port-Ledger A, BET-FIX 2) - a market stood at night draws no one who hides by night, whatever the last edge left; the quest\'s word kept; nothing while the mod is not loaded', async () => {
+  const night = { locationType: LOCATION_TYPES.TownCity, inside: false, isDay: false, isRaining: false };
+  const market = () => [streetPerson(1, 1), streetPerson(2, 2), streetPerson(3, 2), { ...streetPerson(4, 1), questAway: true, active: false }];
+  let w = worldStand({ loaded: true, ctx: night });
+  let entry = w.pixel(market());
+  await w.stand(entry);
+  assert.deepEqual(w.drawn(entry), ['1,0,0'], 'the day trader alone - the night\'s two down, the quest\'s away person kept down');
+  w = worldStand({ loaded: true, ctx: { ...night, isDay: true } });
+  entry = w.pixel(market());
+  await w.stand(entry);
+  assert.deepEqual(w.drawn(entry), ['2,0,0 3,0,0'], 'by day the other two');
+  w = worldStand({ loaded: false, ctx: night });
+  entry = w.pixel(market());
+  await w.stand(entry);
+  assert.deepEqual(w.drawn(entry), ['1,0,0 2,0,0 3,0,0'], 'the mod not loaded: everyone as the layout left them');
+});
+
+test('BET1 AUDIT C1, C2: a pack of new places is no TOWN pack - online its missing pack refuses no home, hall or yard in any town (worldDataPacksMissing names the layout packs alone), its presence switches on none of the town mods\' stand-ins, and it quiets no location\'s line', () => {
+  assert.deepEqual(['beautiful-villages', 'beautiful-cities', BETONY_VENDOR, 'roleplay-realism'].map(isLayoutPack), [true, true, false, false]);
+  assert.deepEqual(worldDataPacksMissing(), [], 'none missing before any load');
+  const M = read('src/scenes/modWorldData.js');
+  assert.ok(M.includes('export const worldDataPacksMissing = () => [..._missing].filter(isLayoutPack);'));
+  assert.ok(M.includes('const townPacksLive = () => { const pinned = vendorsPinnedIn(); return [..._packs.keys()].filter(isLayoutPack).some((v) => modLatchedOn(v) === true || pinned.has(v)); };'));
+  assert.ok(M.includes('    if (isLayoutPack(vendor)) quietLocationOverrides(true);'));
+});
+
+test('BET1 AUDIT C3: under a case-blind key a loose file replaces one of its own spelling only, and FindAssets takes the first LIVE entry whose own spelling ends so - a higher-priority mod\'s `.JSON` hides no lower mod\'s `.json` new place', (t) => {
+  quiet(t);
+  door();
+  const blockA = blockToDfuJson(tinyRmb(7, 'FOOAA00.RMB')), blockB = blockToDfuJson(tinyRmb(7, 'FOOAA00.RMB'));
+  blockA.RmbBlock.SubRecords[0].Exterior.Block3dObjectRecords[0].XPos = 111; blockB.RmbBlock.SubRecords[0].Exterior.Block3dObjectRecords[0].XPos = 222;
+  registerWorldDataAsset('FOOAA00.RMB.json', blockA);
+  registerWorldDataAsset('fooaa00.rmb.json', blockB);
+  const xOf = (b) => b?.rmbBlock?.subRecords?.[0]?.exterior?.block3dObjectRecords?.[0]?.xPos;
+  assert.equal(xOf(getDFBlockReplacementData(7, 'FOOAA00.RMB')), 222, 'the later spelling answers the case-blind ask');
+  _resetWorldDataReplacement(); door();
+  registerWorldDataAsset('FOOAA00.RMB.json', blockA);
+  registerWorldDataAsset('FOOAA00.RMB.json', blockB);
+  assert.equal(xOf(getDFBlockReplacementData(7, 'FOOAA00.RMB')), 222, 'its own spelling again: replaced');
+  // two loose files, one key: the `.JSON` beside it leaves the `.json` new place standing (it replaced it before)
+  _resetWorldDataReplacement(); door(); quietLocationOverrides(true);
+  const cabin = openWorldDataPack(packJson(), { blocks: fakeBlocks() }).rebuild('locationnew-TheYeomfordCabin-19.json', null);
+  const region1 = () => ({ name: 'Betony', locationCount: 1, mapNames: ['Classic'], mapTable: [{ mapId: 1, locationId: 0 }], mapNameLookup: new Map([['Classic', 0]]), mapIdLookup: new Map([[1, 0]]) });
+  registerWorldDataAsset('locationnew-Loose-19.json', { ...cabin, Name: 'Loose' });
+  registerWorldDataAsset('locationnew-loose-19.JSON', { ...cabin, Name: 'Shout' });
+  const loose = region1();
+  assert.equal(getDFRegionAdditionalLocationData(19, loose), true);
+  assert.deepEqual(loose.mapNames, ['Classic', 'Loose']);
+  // the new places: two mods, one key, two spellings
+  _resetWorldDataReplacement(); door(); quietLocationOverrides(true);
+  registerWorldDataAsset('locationnew-Lo-19.JSON', { ...cabin, Name: 'Hi' }, () => true, { priority: 20, vendor: 'loud' });
+  registerWorldDataAsset('locationnew-lo-19.json', { ...cabin, Name: 'Lo' }, () => true, { priority: 10, vendor: 'quiet' });
+  const region = { name: 'Betony', locationCount: 1, mapNames: ['Classic'], mapTable: [{ mapId: 1, locationId: 0 }], mapNameLookup: new Map([['Classic', 0]]), mapIdLookup: new Map([[1, 0]]) };
+  assert.equal(getDFRegionAdditionalLocationData(19, region), true);
+  assert.deepEqual(region.mapNames, ['Classic', 'Lo']);
+  _resetWorldDataReplacement(); resetToDefaults();
+});
+
+test('BET1 AUDIT C4: a vendor record\'s frames are the frames ANY tier answers - an attached mod\'s animation over a stand-in\'s still picture animates, as DFU imports frames until one is missing', () => {
+  resetAll();
+  setValue('Enhancements', 'AssetInjection', 'True');
+  addVendorTextures([{ archive: 9002, record: 3, standIn: true, yields: true, build: async () => synthetic(2, 2) }]);
+  assert.equal(vendorFrameCount(9002, 3), 1);
+  setBundleTextures([1, 2, 3].map((frame) => ({ archive: 9002, record: 3, frame, fileName: `det.dfmod:9002_3-${frame}`, image: async () => synthetic(2, 2) })));
+  assert.equal(vendorFrameCount(9002, 3), 4, 'the attached mod\'s frames 1-3 after the stand-in\'s 0');
+  assert.equal(vendorTextureStandIn(9002).getFrameCount(3), 4);
+  setValue('Enhancements', 'AssetInjection', 'False');
+  assert.equal(vendorFrameCount(9002, 3), 1, 'Replace Game Artwork off: the stand-in\'s alone');
+  setBundleTextures([]); resetToDefaults();
+  resetAll();
+});
+
+test('BET1 AUDIT D7, D9: the portrait file is the talk window\'s CommonFaces; the street update over the records the producer mints (exteriorNpcRecord, as world.js stands them) - the gender repair\'s bit leaves the mod\'s three alone', () => {
+  assert.equal(BETONY_PORTRAIT_FILE, PORTRAIT_ARCHIVE.CommonFaces);
+  assert.deepEqual([...BETONY_ARCHIVES], [540, 1200, 1210, 1230]);
+  const flats = [
+    { x: 1, y: 0, z: 2, archive: 182, record: 3, factionID: 584, flags: 1, recordPosition: 7 },   // a trader who hides by day
+    { x: 3, y: 0, z: 2, archive: 184, record: 7, factionID: 584, flags: 6, recordPosition: 8 },   // a ware: by night, in the rain
+    { x: 5, y: 0, z: 2, archive: 205, record: 1, factionID: 0, flags: 1, recordPosition: 9 },     // no faction: no StaticNPC
+  ];
+  const people = collectExteriorNpcs(flats).map((f) => ({ ...exteriorNpcRecord(f, { gender: '2' }), active: true, questBehaviour: null, host: null }));
+  assert.deepEqual(people.map((p) => p.flags), [33, 38], 'the repair\'s bit 32 on both, the mod\'s bits untouched');
+  assert.equal(updateExteriorNpcs(people, { locationType: LOCATION_TYPES.TownCity, inside: false, isDay: true, isRaining: true }), 2);
+  assert.deepEqual(people.map((p) => p.active), [false, false], 'by day the trader is down, and in the rain the ware');
 });
 
 // ---- with the player's data ---------------------------------------------------------------------------------------------------

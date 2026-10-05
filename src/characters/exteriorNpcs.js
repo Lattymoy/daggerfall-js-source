@@ -104,3 +104,49 @@ export function setupExteriorQuestStaticNpcs(npcs, machine, makeHost) {
   }
   return true;
 }
+
+/**
+ * The stand's plan over a pixel's street people - one billboard batch per drawn picture over the ACTIVE people only
+ * (the away arm's SetActive(false) takes a person out of the draw and the ray) - against the batches already standing.
+ * BET1 (AUDIT B4): Betony Restored's dawn, dusk and rain stand a market of a hundred again, and every batch was freed
+ * and built anew each time (96 freed and 80 built at a dawn); a group whose people are the same people keeps its
+ * batch now. A group's signature is its picture and every centre, in order; the batches are held by it (never written
+ * on a batch: PERF-EXT10, a field the factory does not mint splits the batches' shape).
+ *
+ * @param npcs      the pixel's exteriorNpcRecord()s
+ * @param standing  the batches standing for them, by their group's signature - the host adds what it builds and deletes
+ *                  what it frees, so it holds every batch standing whatever becomes of the stand
+ * @returns {{ keep: Map<string, object>, build: Array<{ key:string, sig:string, centers:number[][] }>, free: Array<[string, object]> }}
+ */
+export function planNpcBatches(npcs, standing = new Map()) {
+  const groups = new Map();
+  for (const pn of npcs ?? []) {
+    if (!pn.active) continue;
+    const k = `${pn.drawArchive ?? pn.textureArchive}_${pn.drawRecord ?? pn.textureRecord}`;   // NUDE-FLATS: the picture the build chose
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push([pn.x, pn.y, pn.z]);
+  }
+  const keep = new Map(), build = [];
+  for (const [key, centers] of groups) {
+    const sig = `${key}|${centers.map((c) => c.join(',')).join(';')}`;
+    if (standing.has(sig)) keep.set(sig, standing.get(sig)); else build.push({ key, sig, centers });
+  }
+  return { keep, build, free: [...standing].filter(([sig]) => !keep.has(sig)) };
+}
+
+/**
+ * BET1 (AUDIT B7): a pixel's turn to stand its people - ONE STAND AT A TIME over its batches (ASYNC NEVER DROPS).
+ * Resolves, once the stand before it has finished, to the release its caller calls when its own is done, failed or
+ * not (world.js standPixelNpcs: `finally`). The turn is taken as the call is made, so a stand asked for while another
+ * awaits waits for it.
+ *
+ * @param entry  the pixel (its `npcStand`: the stand in hand)
+ * @returns {Promise<() => void>}
+ */
+export async function npcStandTurn(entry) {
+  const before = entry.npcStand;
+  let done;
+  entry.npcStand = new Promise((resolve) => { done = resolve; });
+  if (before) await before;
+  return done;
+}

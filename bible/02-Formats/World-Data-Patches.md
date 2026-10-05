@@ -137,7 +137,15 @@ three things WD3's town mods never asked for:
   Daggerfall's own block there. Every name is keyed through `assetKey`
   (`formats/worldDataReplacement.js`). FindAssets keeps DFU's own rule - the
   suffix compared ordinal against the name as the mod spells it - so each
-  entry keeps its `name`.
+  entry keeps its `name`. AUDIT BET1 C3: under one case-blind key a
+  registration naming no mod (a loose file, WD1's) replaces one of its own
+  spelling only, and FindAssets takes the first LIVE entry whose own spelling
+  ends so - a higher-priority mod's `.JSON` hides no lower mod's `.json`.
+- **A pack of new places is no town pack** (AUDIT BET1 C1, C2). WD3's gates
+  read the layout packs alone (`scenes/modWorldData.js` `isLayoutPack`, the
+  layout pins' `LAYOUT_MODS`): `worldDataPacksMissing` - online, a missing
+  Betony pack refused every home, hall and yard in every town - the town
+  mods' stand-ins (`townPacksLive`) and the pack's quieted location lines.
 
 The pack: 39 files in 111 nodes, 58,812 bytes gzipped. Without the player's
 data `test/bet1_betony.test.js` rebuilds its 25 places (they read nothing of

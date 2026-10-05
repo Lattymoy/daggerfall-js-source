@@ -284,6 +284,10 @@ elsewhere.
   of its own in ARCH3D (`housesForSale` `stands`, the record's radius; the wall
   piece's stand-in below is the port's, and gives it none), as no door could
   open it.
+- **Another mod's script keeps their markets' hours.** Betony Restored's script reads three bits of a street
+  person's flags (1 hides it by day, 2 by night, 4 in the rain) on every town's people with a faction, not its own
+  alone: while that mod is loaded, the 279 of Beautiful Villages' street people that carry one and the 71 of Beautiful
+  Cities' keep its hours too - as DFU's does for a player of all three (AUDIT BET1 B5; `03-World/Betony-Restored.md`).
 
 ## The pieces the mods borrow - the port's own stand-ins
 

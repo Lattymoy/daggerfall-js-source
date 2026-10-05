@@ -90,14 +90,14 @@
     "note": "OnDusk at eighteen."
   },
   {
-    "name": "BET1-10-switch-over-loader",
+    "name": "BET1-10-unloaded-inits",
     "file": "src/systems/betonyRestored.js",
-    "old": "if (!(latched === undefined ? latchModLoaded(BETONY_VENDOR, modSetting(BETONY_VENDOR, 'Enabled') === true) : latched === true)) return true;",
-    "new": "if (!latchModLoaded(BETONY_VENDOR, modSetting(BETONY_VENDOR, 'Enabled') === true)) return true;",
+    "old": "  if (latched !== true) return true;\n",
+    "new": "",
     "tests": [
       "test/bet1_betony.test.js"
     ],
-    "note": "The world-data loader's latch stands over the switch."
+    "note": "AUDIT B3: a mod the loader latched off inits nothing - no faction, no word."
   },
   {
     "name": "BET1-11-classic-face-ungated",
@@ -112,7 +112,7 @@
   {
     "name": "BET1-12-mod-face-unprobed",
     "file": "src/systems/betonyRestored.js",
-    "old": ": () => (betonyLoaded() && _hasModPortrait('TFAC00I0.RCI', p.face) ? p.face : null));",
+    "old": ": () => (betonyLoaded() && _hasModPortrait(BETONY_PORTRAIT_FILE, p.face) ? p.face : null));",
     "new": ": () => (betonyLoaded() ? p.face : null));",
     "tests": [
       "test/bet1_betony.test.js"
@@ -152,7 +152,7 @@
   {
     "name": "BET1-16-218-a-stand-in",
     "file": "src/systems/betonyRestored.js",
-    "old": "standIn: !isClassicArchive(at.archive)",
+    "old": "standIn: BETONY_ARCHIVES.includes(at.archive)",
     "new": "standIn: true",
     "tests": [
       "test/bet1_betony.test.js"
@@ -262,8 +262,8 @@
   {
     "name": "BET1-27-find-blind",
     "file": "src/formats/worldDataReplacement.js",
-    "old": "if (a && a.name.endsWith(extension)) out.push(",
-    "new": "if (a && a.name.toLowerCase().endsWith(blind)) out.push(",
+    "old": "    const a = list.find((e) => assetOn(e) && e.name.endsWith(extension));",
+    "new": "    const a = list.find((e) => assetOn(e) && e.name.toLowerCase().endsWith(blind));",
     "tests": [
       "test/bet1_betony.test.js"
     ],
@@ -292,8 +292,8 @@
   {
     "name": "BET1-30-frames-gap",
     "file": "src/systems/textureReplacement.js",
-    "old": "while (have.has(n)) n++;",
-    "new": "n = have.size;",
+    "old": "  while (n < VENDOR_FRAMES_MAX && hasTextureReplacement(archive, record, n)) n++;",
+    "new": "  for (let f = 0; f < VENDOR_FRAMES_MAX; f++) if (hasTextureReplacement(archive, record, f)) n = f + 1;",
     "tests": [
       "test/bet1_betony.test.js"
     ],
@@ -383,7 +383,7 @@
   {
     "name": "BET1-39-no-tick",
     "file": "src/scenes/world.js",
-    "old": "    if (betonyLoaded() && betonyEvents.tick(Math.floor(minuteNow() / 60), weather)) betonyStreetPeople();\n",
+    "old": "      if (betonyEvents.tick(Math.floor(minuteNow() / 60), weather)) betonyStreetPeople();\n",
     "new": "",
     "tests": [
       "test/bet1_betony.test.js"
@@ -429,5 +429,315 @@
       "test/bet1_betony.test.js"
     ],
     "note": "The grey rooster is its own picture."
+  },
+  {
+    "name": "BET1-44-audit-A1-type-starts-none",
+    "file": "src/systems/betonyRestored.js",
+    "old": "  let type = LOCATION_TYPES.TownCity;",
+    "new": "  let type = LOCATION_TYPES.None;",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "AUDIT A1: PlayerGPS.currentLocationType starts at the enum's 0, TownCity."
+  },
+  {
+    "name": "BET1-45-audit-A1-type-cleared",
+    "file": "src/systems/betonyRestored.js",
+    "old": "    note(t) { if (t != null && t !== LOCATION_TYPES.None) type = t; return type; },",
+    "new": "    note(t) { type = t ?? LOCATION_TYPES.None; return type; },",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "AUDIT A1: written only on a pixel with a location, never cleared."
+  },
+  {
+    "name": "BET1-46-audit-A1-pixel-type",
+    "file": "src/scenes/world.js",
+    "old": "    return { locationType: betonyLocation.type(), inside:",
+    "new": "    return { locationType: _musicLocationType(), inside:",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "AUDIT A1: the update reads the sticky type, not the pixel's own."
+  },
+  {
+    "name": "BET1-47-audit-A1-never-noted",
+    "file": "src/scenes/world.js",
+    "old": "      betonyLocation.note(_musicLocationType());   // AUDIT A1: written only on a pixel with a location, never cleared\n",
+    "new": "",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "AUDIT A1: the frame notes the pixel's type."
+  },
+  {
+    "name": "BET1-48-audit-A1-declared-late",
+    "file": "src/scenes/world.js",
+    "old": "  const betonyLocation = createBetonyLocationType();\n",
+    "new": "",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "AUDIT A1/B2: the host state declared before the start pixel stands."
+  },
+  {
+    "name": "BET1-49-audit-B2-stand-ignores-hours",
+    "file": "src/scenes/world.js",
+    "old": "    if (betonyLoaded()) betonyUpdateExteriorNpcs(entry.npcs, betonyContext());\n",
+    "new": "",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "AUDIT B2 (BET-FIX 2): a pixel's people take the mod's hours and rain as they stand."
+  },
+  {
+    "name": "BET1-50-audit-B2-exit-unstood",
+    "file": "src/scenes/world.js",
+    "old": "navalTransition(); betonyStreetPeople(); },",
+    "new": "navalTransition(); },",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "AUDIT B2: a dawn passed indoors is the street's at the door."
+  },
+  {
+    "name": "BET1-51-audit-B3-init-before-loader",
+    "file": "src/systems/betonyRestored.js",
+    "old": "  if (latched === undefined) return false;\n",
+    "new": "",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "AUDIT B3: Init before the loader's latch is answered nothing."
+  },
+  {
+    "name": "BET1-52-audit-B3-loader-never-inits",
+    "file": "src/scenes/modWorldData.js",
+    "old": "    installBetonyRestored();\n    return n + counts.reduce(",
+    "new": "    return n + counts.reduce(",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "AUDIT B3: the loader calls Init once it has latched."
+  },
+  {
+    "name": "BET1-53-audit-B4-never-kept",
+    "file": "src/characters/exteriorNpcs.js",
+    "old": "    if (standing.has(sig)) keep.set(sig, standing.get(sig)); else build.push({ key, sig, centers });",
+    "new": "    build.push({ key, sig, centers });",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "AUDIT B4: a group whose people are the same keeps its batch."
+  },
+  {
+    "name": "BET1-54-audit-B4-gone-kept",
+    "file": "src/characters/exteriorNpcs.js",
+    "old": "  return { keep, build, free: [...standing].filter(([sig]) => !keep.has(sig)) };",
+    "new": "  return { keep, build, free: [] };",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "AUDIT B4: a gone group's batch is freed."
+  },
+  {
+    "name": "BET1-55-audit-B4-unordered-sig",
+    "file": "src/characters/exteriorNpcs.js",
+    "old": "    const sig = `${key}|${centers.map((c) => c.join(',')).join(';')}`;",
+    "new": "    const sig = `${key}|${centers.length}`;",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "AUDIT B4: the signature is the picture and every centre, in order."
+  },
+  {
+    "name": "BET1-56-audit-B4-plan-drops-the-gone",
+    "file": "src/scenes/world.js",
+    "old": "    const plan = planNpcBatches(entry.npcs, entry.npcBatches);\n    for (const { key, sig, centers } of plan.build) {",
+    "new": "    const plan = planNpcBatches(entry.npcs, entry.npcBatches);\n    entry.npcBatches = plan.keep;\n    for (const { key, sig, centers } of plan.build) {",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "AUDIT B4/B7: the gone held until freed - a failed stand leaves nothing untracked."
+  },
+  {
+    "name": "BET1-57-audit-B4-freed-still-held",
+    "file": "src/scenes/world.js",
+    "old": "      entry.npcBatches.delete(sig);\n",
+    "new": "",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "AUDIT B4: a freed batch is let go."
+  },
+  {
+    "name": "BET1-58-audit-B4-built-unheld",
+    "file": "src/scenes/world.js",
+    "old": "      entry.npcBatches.set(sig, batch);\n",
+    "new": "",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "AUDIT B4: a built batch is held by its signature."
+  },
+  {
+    "name": "BET1-59-audit-B7-no-turn",
+    "file": "src/scenes/world.js",
+    "old": "    const done = await npcStandTurn(entry);",
+    "new": "    const done = () => {};",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "AUDIT B7: every stand of a pixel takes its turn."
+  },
+  {
+    "name": "BET1-60-audit-B7-turn-kept-on-failure",
+    "file": "src/scenes/world.js",
+    "old": "    try { await standPixelNpcsNow(entry); } finally { done(); }",
+    "new": "    await standPixelNpcsNow(entry); done();",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "AUDIT B7: a stand that fails gives its turn back."
+  },
+  {
+    "name": "BET1-61-audit-B7-turn-unwaited",
+    "file": "src/characters/exteriorNpcs.js",
+    "old": "  if (before) await before;\n",
+    "new": "",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "AUDIT B7: a turn waits for the one before."
+  },
+  {
+    "name": "BET1-62-audit-B7-restand-uncaught",
+    "file": "src/scenes/world.js",
+    "old": "    return standPixelNpcs(entry).catch((e) => console.error(`[betony] a pixel's street people did not stand again: ${e?.message ?? e}`));",
+    "new": "    return standPixelNpcs(entry);",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "AUDIT B7: a re-stand's failure said, never an unhandled rejection."
+  },
+  {
+    "name": "BET1-63-audit-B7-event-walk-unqueued",
+    "file": "src/scenes/world.js",
+    "old": "betonyUpdateExteriorNpcs(p.npcs, ctx)) restandPixelNpcs(p);",
+    "new": "betonyUpdateExteriorNpcs(p.npcs, ctx)) standPixelNpcs(p);",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "AUDIT B7: the event walk stands through the caught re-stand."
+  },
+  {
+    "name": "BET1-64-audit-C1-missing-any-pack",
+    "file": "src/scenes/modWorldData.js",
+    "old": "export const worldDataPacksMissing = () => [..._missing].filter(isLayoutPack);",
+    "new": "export const worldDataPacksMissing = () => [..._missing];",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "AUDIT C1: a missing pack of new places refuses no home online."
+  },
+  {
+    "name": "BET1-65-audit-C1-every-pack-a-town",
+    "file": "src/scenes/modWorldData.js",
+    "old": "export const isLayoutPack = (v) => LAYOUT_MODS.includes(v);",
+    "new": "export const isLayoutPack = (v) => typeof v === 'string';",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "AUDIT C1/C2: a town pack is one of the layout pins' mods."
+  },
+  {
+    "name": "BET1-66-audit-C2-standins-any-pack",
+    "file": "src/scenes/modWorldData.js",
+    "old": "return [..._packs.keys()].filter(isLayoutPack).some(",
+    "new": "return [..._packs.keys()].some(",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "AUDIT C2: the town mods' stand-ins on only while a TOWN pack serves."
+  },
+  {
+    "name": "BET1-67-audit-C2-quiet-any-pack",
+    "file": "src/scenes/modWorldData.js",
+    "old": "    if (isLayoutPack(vendor)) quietLocationOverrides(true);",
+    "new": "    quietLocationOverrides(true);",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "AUDIT C2: a pack of new places quiets no location's line."
+  },
+  {
+    "name": "BET1-68-audit-C3-any-spelling-replaced",
+    "file": "src/formats/worldDataReplacement.js",
+    "old": "  const mine = list.findIndex((e) => (e.vendor ?? null) === (entry.vendor ?? null) && (entry.vendor != null || e.name === entry.name));",
+    "new": "  const mine = list.findIndex((e) => (e.vendor ?? null) === (entry.vendor ?? null));",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "AUDIT C3: a loose file replaces one of its own spelling only."
+  },
+  {
+    "name": "BET1-69-audit-C3-first-entry-only",
+    "file": "src/formats/worldDataReplacement.js",
+    "old": "    const a = list.find((e) => assetOn(e) && e.name.endsWith(extension));\n    if (a) out.push(",
+    "new": "    const a = liveAsset(key);\n    if (a && a.name.endsWith(extension)) out.push(",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "AUDIT C3: FindAssets takes the first LIVE entry whose own spelling ends so."
+  },
+  {
+    "name": "BET1-70-audit-C4-vendor-frames-only",
+    "file": "src/systems/textureReplacement.js",
+    "old": "  while (n < VENDOR_FRAMES_MAX && hasTextureReplacement(archive, record, n)) n++;",
+    "new": "  while (n < VENDOR_FRAMES_MAX && [..._vendor.values()].some((e) => e.standIn && e.archive === Number(archive) && e.record === Number(record) && e.frame === n)) n++;",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "AUDIT C4: a frame is one any tier answers."
+  },
+  {
+    "name": "BET1-71-audit-D3-archives",
+    "file": "src/systems/betonyRestored.js",
+    "old": "export const BETONY_ARCHIVES = Object.freeze([540, 1200, 1210, 1230]);",
+    "new": "export const BETONY_ARCHIVES = Object.freeze([540, 1200, 1210]);",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "AUDIT D3: the mod's own archives, by its own list."
+  },
+  {
+    "name": "BET1-72-audit-D7-portrait-file",
+    "file": "src/systems/betonyRestored.js",
+    "old": "export const BETONY_PORTRAIT_FILE = 'TFAC00I0.RCI';",
+    "new": "export const BETONY_PORTRAIT_FILE = 'TFAC00I1.RCI';",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "AUDIT D7: the talk window's CommonFaces."
+  },
+  {
+    "name": "BET1-73-audit-D9-flags-by-value",
+    "file": "src/systems/betonyRestored.js",
+    "old": "  const hideWeather = (flags & BETONY_NPC_FLAGS.hideWeather) !== 0 && isRaining;",
+    "new": "  const hideWeather = [4, 5, 6, 7].includes(flags) && isRaining;",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "AUDIT D9: the bits read on the records the producer mints (the gender repair's bit 32 beside them)."
+  },
+  {
+    "name": "BET1-74-audit-B7-stands-on-a-dead-pixel",
+    "file": "src/scenes/world.js",
+    "old": "    if (built.get(`${entry.px},${entry.py}`) !== entry) return;   // BET1 (AUDIT B7): a stand that waited its turn past its pixel's teardown - destroyPixel freed what it would\n",
+    "new": "",
+    "tests": [
+      "test/bet1_betony.test.js"
+    ],
+    "note": "AUDIT B7: a stand whose turn comes after its pixel's teardown touches nothing."
   }
 ]

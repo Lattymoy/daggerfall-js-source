@@ -198,14 +198,15 @@ export function vendorRecordCount(archive) {
   for (const e of _vendor.values()) if (e.standIn && e.archive === Number(archive)) n = Math.max(n, e.record + 1);
   return n;
 }
-/** BET1: how many frames a vendor-only record has - its frames 0, 1, 2... as registered, up to the first missing one
- *  (DFU imports a billboard's `<archive>_<record>-<frame>` pictures until one is missing; Kamer's sitting patrons in
- *  Betony Restored are 31 and 32 frames of a drink lifted and set down). One for a record with frame 0 alone. */
+/** BET1: how many frames a vendor-only record has - its frames 0, 1, 2... up to the first missing one (DFU imports a
+ *  billboard's `<archive>_<record>-<frame>` pictures until one is missing, TextureReplacement.cs:537-546; Kamer's
+ *  sitting patrons in Betony Restored are 31 and 32 frames of a drink lifted and set down). AUDIT C4: a frame is one
+ *  any tier answers - the port's own, a loose file, an attached mod's - so the player's own animated pack animates over
+ *  a stand-in's still picture. One for a record with frame 0 alone, or none. */
+export const VENDOR_FRAMES_MAX = 256;
 export function vendorFrameCount(archive, record) {
-  const have = new Set();
-  for (const e of _vendor.values()) if (e.standIn && e.archive === Number(archive) && e.record === Number(record) && e.map === 'Albedo') have.add(e.frame);
   let n = 0;
-  while (have.has(n)) n++;
+  while (n < VENDOR_FRAMES_MAX && hasTextureReplacement(archive, record, n)) n++;
   return Math.max(1, n);
 }
 /** A TextureFile stand-in for a vendor-only archive: sizes from the
