@@ -931,7 +931,7 @@ save's" - GUILD1), so anything paid in purse gold can be paid by a client that n
   - Pinned: `test/silverfinds_service.test.js`, `test/silverfinds_client.test.js` and a gathering-host pin in
     `test/haulcards.test.js`; `tools/mutants/silverfinds.json` (86, all dead - the first run's one survivor, the book's
     kind check, lived under a pin whose scripted door answered nothing either way; the pin now asks whether the door
-    was asked). ACCOUNT_VERSION acct83, with SERPENT-SET. Forcing every harvest to find (the chance at 1) left all 139
+    was asked). ACCOUNT_VERSION acct84 (acct83 on the branch, renumbered past CRYSTAL-FIST's at the merge of main), with SERPENT-SET. Forcing every harvest to find (the chance at 1) left all 139
     harvest pins green - none reads a balance a find could move.
   - **AUDIT 625 (2026-10-05, `01-Overview/Audit-625.md`)** - Mac's call on S1, "A week old, like witnesses": both
     faucets open to an account a WEEK registered (`nodeLaw.js` WITNESS.ageS, the witnesses' own age) - bounded, not

@@ -47,6 +47,10 @@ import { onPathTile } from '../player/exteriorSurface.js';   // FB1001 ROAD-LOT:
 import { RMB_TILE_SIDE } from '../world/locationEntrance.js';   // FB1001 ROAD-LOT: RMBLayout.RMBTileSide, a ground tile's side
 import { TERRAIN_TILE_DIM } from '../world/terrainSurface.js';
 import { homeOutsideKept, homeYardWhere } from '../systems/onlineHomes.js';   // GUILD-YARD: a hall's keepers keep its outside
+import { createYardNature, isNaturePiece, yardNatureFlat, yardTreeSet } from './yardNature.js';   // DECOR-OUTDOOR: a yard's trees and plants, in its town's season; DECOR-LPT: as Low Poly Trees' own
+import { remapSubMeshes } from '../world/texRemap.js';   // DECOR-OUTDOOR: a yard's models in its town's climate
+import { applyClimate } from '../world/climateSwaps.js';
+import { isNatureArchive } from '../world/rmbFlats.js';
 
 /** AUDIT: how far from the eye a yard's pieces are drawn, metres (its flats stand in the billboard pass's own cull). */
 export const YARD_DRAW_M = 300;
@@ -238,6 +242,11 @@ export function yardLotQuads(lot, origin, high = YARD_MARK_HIGH, roads = []) {
  *   character(), realm(), wallet(region) - who writes, their record's act, the purse and the home's region's account
  *   doc, win, canvas, touch, actionOf(e), locked(), cursorOff(), stick(), say(line), refusal(word), openSlot(o), now()
  *   look         - HOME-LOOK: `{ preview(mapId, key, look|undefined), season() }` - the painter's preview on the house
+ *   seasonal()   - DECOR-OUTDOOR: Seasons of the Iliac Bay's helper while it stands, else null (scenes/yardNature.js)
+ *   trees        - DECOR-LPT: the world's Low Poly Trees, `{ door, sway(proto, share) }` (scenes/yardNature.js), or null -
+ *                  a yard's tree stands as the mod's own; the world reads the yards' near sets back (`treeSets`)
+ * DECOR-OUTDOOR: a built pixel also carries its `texRemap`, `season`, `townClimate`, `flatAnims` and `forest` ({ base, archive }:
+ * its climate's nature set and the season's archive of it) - a yard's pieces stand in its town's climate and season.
  */
 export function createHomeYards(deps) {
   const now = () => deps.now?.() ?? Date.now();
@@ -245,7 +254,7 @@ export function createHomeYards(deps) {
   const towns = new Map();
   const asking = new Map();
   const failed = new Map();
-  /** @type {Map<string, {pool: any, px: number, py: number, mapId: number, bk: number, t: number[], sig: string, lot: any, frame: any}>} */
+  /** @type {Map<string, {pool: any, px: number, py: number, mapId: number, bk: number, t: number[], sig: string, lot: any, frame: any, entry: any, trees: Map<string, any>, treeSet: any}>} */
   const yards = new Map();
   let syncIn = 0;
   /** @type {any} the owner's own yard the decorator stands in, or null */
@@ -278,6 +287,30 @@ export function createHomeYards(deps) {
     asking.set(mapId, p);
   }
 
+  /** DECOR-OUTDOOR: the built pixel a yard stands in, now (a season's turn builds it again). */
+  const entryOf = (y) => deps.built?.()?.get?.(`${y.px},${y.py}`) ?? null;
+  const nature = createYardNature({ renderer: deps.renderer, getTexture: deps.getTexture, uploadRecord: deps.uploadRecord, seasonal: () => deps.seasonal?.() ?? null, trees: deps.trees ?? null });
+  /** DECOR-LPT: A YARD'S TREE JOINS ITS NEAR SET while its piece stands (`got` - yardNature.js stand's answer, `live()`
+   *  whether the piece still stands as it was asked), and leaves it with the piece: the room lets go of what a stand holds
+   *  (`release`), the tree with it. A stand the piece outlived plants nothing - an older answer landing after a newer one
+   *  would stand in its place - and a release takes only the tree it planted. */
+  function plantTree(y, id, got, live) {
+    if (!got?.tree || !live()) return got;
+    const { tree, release } = got;
+    y.trees.set(id, tree);
+    y.treeSet = null;
+    return { ...got, release: () => { if (y.trees.get(id) === tree) { y.trees.delete(id); y.treeSet = null; } release?.(); } };
+  }
+  /** DECOR-OUTDOOR: A YARD'S MODEL IN ITS TOWN'S CLIMATE - its swaps written into the pixel's own table (the one the yard
+   *  draws with, `remapOf`), by the town's climate and season, as the town's own models' are (scenes/world.js
+   *  buildPixelNow's remapSubMeshes): the table held only the swaps of the models the town itself stood, so a fence the
+   *  town never stood drew in another climate's wood. */
+  function climateOf(y, gpu) {
+    const p = entryOf(y);
+    if (!p?.texRemap || p.townClimate == null) return null;
+    return remapSubMeshes(gpu?.subMeshes, p.texRemap, (a, r) => applyClimate(a, r, p.townClimate, p.season), { getTexture: deps.getTexture, uploadRecord: deps.uploadRecord });
+  }
+
   /** The world point a yard's frame stands at, now. */
   const originOf = (y) => {
     const t = deps.translation(y.px, y.py);
@@ -285,10 +318,19 @@ export function createHomeYards(deps) {
     return [t[0] + f.at[0], t[1] + f.at[1], t[2] + f.at[2]];
   };
   function makeYard(key, p, bk, frame) {
-    const y = { key, px: p.px, py: p.py, mapId: p.homeTown, bk, frame, t: [...deps.translation(p.px, p.py)], sig: '', lot: yardLot(frame.at, frame.box), pool: null };
+    const y = { key, px: p.px, py: p.py, mapId: p.homeTown, bk, frame, t: [...deps.translation(p.px, p.py)], sig: '', lot: yardLot(frame.at, frame.box), pool: null, entry: p, trees: new Map(), treeSet: null };
     y.pool = createDecorRoom({
       meshes: deps.meshes, renderer: deps.renderer, getTexture: deps.getTexture, uploadRecord: deps.uploadRecord, uploadRecordFrame: deps.uploadRecordFrame,
       collider: () => deps.collider?.() ?? null, origin: () => originOf(y),
+      flatAnims: () => entryOf(y)?.flatAnims ?? null,   // DECOR-OUTDOOR: a street's animal or flame moves as its town's own (the pixel's animator, ticked with it)
+      prepareModel: (gpu) => climateOf(y, gpu),   // DECOR-OUTDOOR: its town's climate
+      // DECOR-OUTDOOR: a tree or a plant in its town's season - the climate's own, drawn as its pixel draws its nature;
+      // DECOR-LPT: a tree Low Poly Trees stands, into the yard's near set while it stands
+      standFlat: (piece, at, live) => {
+        if (!isNaturePiece(piece)) return null;
+        const pe = entryOf(y);
+        return nature.stand(piece, at, { season: pe?.season ?? 0, natureArchive: pe?.forest?.archive ?? null, live }).then((got) => plantTree(y, piece.id, got, live));
+      },
     });
     yards.set(key, y);
     return y;
@@ -312,10 +354,19 @@ export function createHomeYards(deps) {
         const t = deps.translation(p.px, p.py);
         const moved = t[0] !== y.t[0] || t[1] !== y.t[1] || t[2] !== y.t[2];
         const sig = pieces ? JSON.stringify(pieces) : '';
-        if (moved || (sig !== y.sig && !(cur?.yard === y && busyWriting()))) {
+        // DECOR-OUTDOOR: its pixel BUILT AGAIN (a season's turn, an install, a painted home leaving the merge) - every piece
+        // stood again in the new pixel's climate table, animator and season, as the town's own flats are
+        const rebuilt = y.entry !== p;
+        // AUDIT 05b A4: the owner writing this yard holds it - the pieces standing are the truth until the decorator
+        // is put away, and the town's answer waits (its `sig` unread); moved or built again meanwhile, it stands again as it
+        // stands. The rebuild stood the town's answer under the open decorator - a hall's other keeper's write the panel
+        // was holding back, a piece being moved gone from under it.
+        const holding = cur?.yard === y && busyWriting();
+        if (moved || rebuilt || (sig !== y.sig && !holding)) {
           y.t = [...t];
-          y.sig = sig;
-          y.pool.set(pieces ?? y.pool.list());
+          y.entry = p;
+          if (!holding) y.sig = sig;
+          y.pool.set(holding ? y.pool.list() : pieces ?? y.pool.list());
         }
       }
     }
@@ -387,7 +438,14 @@ export function createHomeYards(deps) {
   const tool = createDecorTool({
     doc: deps.doc ?? null, win: deps.win ?? null, canvas: deps.canvas ?? null, touch: !!deps.touch, renderer: deps.renderer, pool, names: new Map(),
     // GUILD-YARD: a hall's yard is `hall` - a piece's half goes to the guild's treasury, never the purse (decorTool.js)
-    room: () => (cur ? { kind: 'home', yard: true, ...(cur.hall ? { hall: true } : {}), where: homeYardWhere(cur), mapId: cur.yard.mapId, buildingKey: cur.yard.bk } : null),
+    // DECOR-OUTDOOR: `natureBase` - its climate's nature set, the one its catalogue offers trees and plants of
+    room: () => (cur ? { kind: 'home', yard: true, ...(cur.hall ? { hall: true } : {}), where: homeYardWhere(cur), mapId: cur.yard.mapId, buildingKey: cur.yard.bk, natureBase: entryOf(cur.yard)?.forest?.base ?? null } : null),
+    // DECOR-OUTDOOR: and the picture a nature piece is - in the ghost and the lists - in the yard's season
+    flatAs: (flat) => (cur && isNatureArchive(flat?.[0]) ? yardNatureFlat(flat, entryOf(cur.yard)?.season ?? 0) : flat),
+    // DECOR-LPT: the ghost of a tree or a plant is the picture it will stand as - the one door its piece asks
+    flatPicture: (flat) => (cur && isNatureArchive(flat?.[0]) ? nature.picture(flat, entryOf(cur.yard)?.season ?? 0, entryOf(cur.yard)?.forest?.archive ?? null) : null),
+    // AUDIT 05b A5: and a model it draws (the ghost, the preview) in the yard's town's climate first, as its pieces stand
+    prepareModel: (gpu) => (cur ? climateOf(cur.yard, gpu) : null),
     scanDeps: () => deps.scanDeps(),
     base: () => null,
     getGpuMesh: (id) => deps.meshes.getGpuMesh(id), cpuModels: deps.meshes.cpuModels, getTexture: deps.getTexture, uploadRecord: deps.uploadRecord, iconUrl: deps.iconUrl,
@@ -444,8 +502,9 @@ export function createHomeYards(deps) {
    */
   function frame({ dt, cam, overlayUp }) {
     syncIn -= dt > 0 ? dt : 0;
-    // AUDIT: the world recentred - every yard stood again this frame, never half a second in the old place
-    if (syncIn > 0) for (const y of yards.values()) { const t = deps.translation(y.px, y.py); if (t[0] !== y.t[0] || t[1] !== y.t[1] || t[2] !== y.t[2]) { syncIn = 0; break; } }
+    // AUDIT: the world recentred - every yard stood again this frame, never half a second in the old place; DECOR-OUTDOOR:
+    // nor half a second out of its rebuilt pixel's climate and season
+    if (syncIn > 0) for (const y of yards.values()) { const t = deps.translation(y.px, y.py); if (t[0] !== y.t[0] || t[1] !== y.t[1] || t[2] !== y.t[2] || entryOf(y) !== y.entry) { syncIn = 0; break; } }
     if (syncIn <= 0) { syncIn = YARD_SYNC_S; sync(); }
     if (!tool.flying() && !tool.panelOpen()) cur = ownYardHere();   // the yard is held while the decorator is up
     else if (cur && yards.get(cur.yard.key) !== cur.yard) {
@@ -473,6 +532,22 @@ export function createHomeYards(deps) {
     }
   }
 
+  const _treeSets = [];
+  /** DECOR-LPT: THE YARDS' NEAR SETS this frame - each yard standing a tree, its set (yardNature.js yardTreeSet) where the
+   *  yard stands now (a recentre moves it with its pieces); made again only when its trees changed, so the world's near
+   *  set is gathered again only then. */
+  function treeSets() {
+    _treeSets.length = 0;
+    for (const y of yards.values()) {
+      if (!y.trees.size) continue;
+      y.treeSet ??= { ox: 0, oy: 0, oz: 0, ...yardTreeSet([...y.trees.values()]) };
+      const o = originOf(y);
+      y.treeSet.ox = o[0]; y.treeSet.oy = o[1]; y.treeSet.oz = o[2];
+      _treeSets.push(y.treeSet);
+    }
+    return _treeSets;
+  }
+
   return {
     frame,
     rebase,
@@ -492,9 +567,11 @@ export function createHomeYards(deps) {
     },
     /** The yards' flats and the flat being placed, for the world's billboard pass. */
     batches: () => [...[...yards.values()].flatMap((y) => y.pool.batches()), ...tool.batches()],
+    /** DECOR-LPT: the yards' 3D trees, for the world's near set (scenes/world.js lowPolyTreesFrame). */
+    treeSets,
     /** The lot's edge while a piece is placed, on the world's decal pass. */
     drawDecals: (r = deps.renderer) => tool.drawMounts(r),
-    drawPreview: () => tool.drawPreview(null),
+    drawPreview: () => tool.drawPreview(cur ? remapOf(cur.yard) : null),   // AUDIT 05b A5: in the yard's climate, as it will stand
     cameraOverride: (c) => tool.cameraOverride(c),
     flying: () => tool.flying(),
     panelOpen: () => tool.panelOpen(),

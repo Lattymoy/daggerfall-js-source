@@ -154,7 +154,7 @@ test('CLIMB5 C4: the others draw a climber facing the wall, off the ground, neve
   assert.match(pb, /yaw: peerBodyYaw\(shown\), speed: 0,/, 'and stands at it');
   const pr = rd('src/net/peerRiders.js');
   assert.match(pr, /const standing = \(pose\) => chooseTable\(\{ stopped: !peerMoving\(pose\)/, 'the walkers stand on the wall (not only the beast: AUDIT CLIMB-ARC N2 says the same words there)');
-  assert.match(pr, /const view = viewOf\(peerBodyYaw\(pose\), feet, eye\);/);
+  assert.match(pr, /const yaw = peerBodyYaw\(pose\), view = viewOf\(yaw, feet, eye\);   \/\/ CLIMB5: facing the wall it climbs/);   // SPRITE-FACE (PIN MOVED): the walker's facing named once, its view and its aura's facing off it
   assert.match(pr, /spriteStride\(peerMoving\(pose\) && !r\.shot,/);
 });
 

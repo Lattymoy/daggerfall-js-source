@@ -48,7 +48,7 @@ import {
   chooseTable, deathTable, ORIENTATIONS, orientationFor, facingFor, boatForwardOf, frameTime, speedMod, frameCount, isFootstepFrame,
   stateFor, STATE_TABLES, STRING, meleeAnimTickTime, RANGED_TICK, SPELL_TICK, LYCAN_TICK, DEATH_TICK,
   usesPingPong, pingPongFrames, forwardFrames, holdDrawFrames, pingPongTickFrames, mirrorFlips, mirrorRevertTime,
-  DELAYED_FRAMES, ORIENTATION_TIME, signedAngleY, tableMoveSpeed,
+  DELAYED_FRAMES, ORIENTATION_TIME, signedAngleY, tableMoveSpeed, portrayedYaw,
 } from './eotbBillboard.js';
 import { spriteFor, eotbSpriteUrl, spriteCount, spriteSize, spriteOffset, flipRows, worldOrderColors } from './eotbSprite.js';
 import { decodePng } from '../systems/textureReplacement.js';   // EOTB-FLIP: the one PNG decoder the world's other PNG billboards take
@@ -260,7 +260,8 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
   let batch = null;
   let batchRec = null;
   let batchSize = null, batchPx = 0;   // AUDIT 3 (SERAPH-WINGS): and the frame's own pixels tall - the figure's metres a pixel
-  let figure = null;   // SERAPH-WINGS: the frame last drawn, as an aura reads it - its base over the feet (m), its metres a pixel, its form and its facing (AUDIT 3)
+  let figure = null;   // SERAPH-WINGS: the frame last drawn, as an aura reads it - its base over the feet (m), its metres a pixel and its form (AUDIT 3)
+  let facingDrawn = null;   // SPRITE-FACE: the frame last drawn's facing, as an aura reads it - { yaw, turn } (facing(), below)
   /** The one sprite that decides whether this lane may open at all. See `ready()`. */
   let firstUp = false;
 
@@ -276,16 +277,18 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
   /** HT-WAIST-BACK: is it DRAWN this frame - it hangs, and the sprite is painted from behind (eotbLantern.js
    *  isRearView: orientation 4). */
   const lanternShown = () => lanternHangs() && isRearView(shown?.orientation);
-  /** WINGS-FIT (2026-10-05): the way the drawn sprite faces, as a yaw (forward (sin, cos)) - its walk's facing
-   *  (UpdateOrientation's `lastMoveDirection`); with none (Vector3.zero, before a first walk or placing) SignedAngle reads
-   *  the camera's own line and the sprite shows the eye its FRONT (ARENA-FIX 14), so it faces the eye. It answered null
-   *  there, and the camera's yaw stood in: the wings were hung on the side toward the eye, laid over a sprite showing its
-   *  face and turning with the camera round it. Null only with neither. */
-  function figureYaw() {
+  /** SPRITE-FACE (2026-10-05, Mac: "The sprite rotation on character input is a little finicky and make the aura
+   *  misallign"): THE FACING THE BODY TURNS BY, as a yaw (forward (sin, cos)) - its walk's facing (UpdateOrientation's
+   *  `lastMoveDirection`), or null with none (Vector3.zero, before a first walk or placing). Not where an aura is HUNG -
+   *  that is the picture's facing (facing().yaw): this one turns smoothly where the picture snaps a bucket at a time,
+   *  and ahead of it by the delayed repaint; it is what the aura's swing reads, so the hem and the wing tips answer the
+   *  body's turning, never a picture's change. With none, the body turns as its picture faces (facing()'s `?? seen`):
+   *  SignedAngle reads the camera's own line and the sprite shows the eye its FRONT (ARENA-FIX 14), so it faces the eye
+   *  (WINGS-FIT) - which is the picture's own facing, so no second reading of the eye is kept here (the AUDIT's mutation
+   *  run: one could never differ from the other). */
+  function turnYaw() {
     const f = lastMoveDirection;
-    if (f && Math.hypot(f[0], f[2]) > 1e-6) return Math.atan2(f[0], f[2]);
-    const ex = cam.pos[0] - cam.feet[0], ez = cam.pos[2] - cam.feet[2];
-    return Math.hypot(ex, ez) > 1e-6 ? Math.atan2(ex, ez) : null;
+    return f && Math.hypot(f[0], f[2]) > 1e-6 ? Math.atan2(f[0], f[2]) : null;
   }
   /** The frame the sprite faces: its walk's facing (UpdateOrientation's `lastMoveDirection`), else the yaw. */
   function facingBasis() {
@@ -800,6 +803,11 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
      *  this frame's; null when nothing was drawn or in the saddle. What an aura on the back reads for the bones a sprite
      *  has not got (render/auraRing.js auraSpriteBones). */
     figure() { return figure; },
+    /** SPRITE-FACE (2026-10-05): THE WAY THE FRAME LAST DRAWN FACES - { yaw, turn }: `yaw` the facing its picture shows
+     *  (the shown orientation about the eye it was drawn for - eotbBillboard.js portrayedYaw), `turn` the facing the body
+     *  turns by (its walk's); this frame's, in the saddle too; null when nothing was drawn or in first person. An aura on
+     *  the sprite is hung on `yaw` and swings by `turn` (render/auraRing.js auraCapeStep, auraMotionStep). */
+    facing() { return facingDrawn; },
     faceYaw,
     /**
      * Called by `combat/weaponRig.js` beside `fpArm.attach`.
@@ -826,7 +834,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       if (renderer) {
         preload();
         setEotbBodyReady(() => this.ready());
-        setEotbDrawBody((canvas, f) => this.draw(canvas, f), () => this.figure());   // SERAPH-WINGS: and the figure it drew
+        setEotbDrawBody((canvas, f) => this.draw(canvas, f), () => this.figure(), () => this.facing());   // SERAPH-WINGS: and the figure it drew; SPRITE-FACE: and the way it faces
         setEotbPlayerState(playerState);
       }
       eotbCamera.setBillboard(this);
@@ -910,7 +918,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
 
     draw(canvas, { eye, feet, yaw, face: faceNow = null } = {}) {
       face = faceNow && Number.isFinite(faceNow.yaw) ? faceNow : null;
-      figure = null;
+      figure = null; facingDrawn = null;
       if (!renderer || !activeFlag || !shown) return false;
       if (!cfg.graphic) { dropLantern(); return false; }   // HT-WAIST: no body drawn, no lantern on it
       if (feet) cam.feet = feet;
@@ -944,7 +952,12 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       const c = place();
       if (!c) return false;
       batch.origin[0] = c[0]; batch.origin[1] = c[1]; batch.origin[2] = c[2];
-      figure = last.riding || FP ? null : { base: c[1] - cam.feet[1], mpp: batchPx > 0 ? batchSize.h * grow / batchPx : 0, beast: !!last.transformed, yaw: figureYaw() };   // SERAPH-WINGS: a rider's frame is the horse's too - no shoulders read off it; AUDIT 3: nor the first-person billboard's (the camera is in it), and its metres a pixel (the shoulders by the pixel - auraSpriteBones), its form, and the way it FACES (UpdateOrientation's facing - not the camera's: a sprite walking back shows its face)
+      figure = last.riding || FP ? null : { base: c[1] - cam.feet[1], mpp: batchPx > 0 ? batchSize.h * grow / batchPx : 0, beast: !!last.transformed };   // SERAPH-WINGS: a rider's frame is the horse's too - no shoulders read off it; AUDIT 3: nor the first-person billboard's (the camera is in it), and its metres a pixel (the shoulders by the pixel - auraSpriteBones) and its form
+      // SPRITE-FACE: AND THE WAY THIS FRAME FACES - the picture's (portrayedYaw: the shown orientation about this frame's
+      // eye, the repaint that has LANDED), which the wings and the cloak hang on; and the body's own turning (turnYaw),
+      // which their swing reads. In the saddle too (the horse's picture faces as the rider's does); none in first person
+      const seen = FP ? null : portrayedYaw(shown.orientation, [cam.pos[0] - cam.feet[0], 0, cam.pos[2] - cam.feet[2]]);
+      facingDrawn = seen === null ? null : { yaw: seen, turn: turnYaw() ?? seen };
       batch.conceal = material();
       // AUDIT DEEP R-2: under the travel view the quad turns to the VIEW's eye (and leans with the flats) - on the
       // traveller's own heading it went edge-on as the view orbited, a sliver at 90 degrees, mirrored at 180

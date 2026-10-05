@@ -208,6 +208,23 @@ export function orientationFor(facing, toCamera) {
   return ((o % ORIENTATIONS) + ORIENTATIONS) % ORIENTATIONS;
 }
 
+/**
+ * SPRITE-FACE (2026-10-05, Mac: "For the wing aura we implemented for developers. The sprite rotation on character input
+ * is a little finicky and make the aura misallign"): THE FACING A FRAME PORTRAYS - `orientationFor` run backwards. The
+ * sprite is drawn from one of ORIENTATIONS pictures, ANGLE_PER_ORIENTATION apart about the line from the figure to the
+ * camera, so the way it is SEEN to face is that line's bearing turned back by the picture's angle - the middle of the
+ * picture's bucket, whatever facing chose it. An aura hung on the sprite (render/auraRing.js - the Seraph Wings, the
+ * Shadow Cloak) faces THIS, not the facing the walk wants: that one runs up to half a bucket (22.5 degrees) off the
+ * picture, and ahead of it by the mod's delayed repaint (UpdateBillboardDelayed, DELAYED_FRAMES). A yaw (forward
+ * (sin, cos)) in (-pi, pi], or null with no line of sight (`toCamera` zero: signedAngleY's 0, the front picture, which
+ * faces no bearing). Pure.
+ */
+export function portrayedYaw(orientation, toCamera) {
+  if (!Number.isInteger(orientation) || !toCamera || (!toCamera[0] && !toCamera[2])) return null;
+  const y = Math.atan2(toCamera[0], toCamera[2]) - orientation * ANGLE_PER_ORIENTATION * Math.PI / 180;
+  return Math.atan2(Math.sin(y), Math.cos(y));
+}
+
 /** Graphics.TurnToView's options, by index. */
 export const TURN_TO_VIEW = Object.freeze(['Never', 'OnlyWhenAnimating', 'WhenWeaponReadied', 'Always']);
 

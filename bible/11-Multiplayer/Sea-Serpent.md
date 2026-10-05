@@ -384,7 +384,7 @@ route `/v1/serpent/claim`):
 - A guest is not counted, but is given its hoard once.
 - The account card and the inspect answer say `serpents: { slain }`, and the game says it: the account card's
   *Serpents slain* row, and the inspect card's line (D4).
-- **SERPENT-SET (2026-10-05, acct83).** The row says the embers its hoard paid (`stones`, migration
+- **SERPENT-SET (2026-10-05, acct84).** The row says the embers its hoard paid (`stones`, migration
   `0083_serpent_embers.sql` - `SERPENT_EMBERS`, `net/serpentHoardLaw.js`; 0 for every row before it, whose hoard paid
   none), and the insignia's purse and its sale read ONE sum of a breach's and a serpent's (`accounts.js`
   `EMBERS_EARNED_SQL`), so an ember won at sea buys at the Broker's insignia counter as a breach's does. And the kill
@@ -477,7 +477,7 @@ After the kill the bar holds a moment and fades.
 - **The account service: `acct78`** (acct75, acct76 then acct77 on its branch, renumbered past main's HOME-PRICE (acct75), PRIMARCH and FOUNDER4 (acct76) and KNIGHT-HOUSE (acct77) at the merges). Apply migration `0081_serpent_kills.sql` (0078 then 0079 on its branch, past main's FOUNDER4 `0078_founder_links.sql`, KNIGHT-HOUSE `0079_home_deed.sql` and HOME-VENDOR `0080_home_vendors.sql`), then deploy (the deploy's path filter
   carries `src/net/serpentReceipt.js`). Before acct78 the route answers nothing and a receipt waits on the device for
   its week.
-- **SERPENT-SET's account service: `acct83`** (with SILVER-FINDS). Apply migration `0083_serpent_embers.sql` (a
+- **SERPENT-SET's account service: `acct84`** (with SILVER-FINDS; `acct83` on its branch, renumbered past CRYSTAL-FIST's acct83 at its merge of main). Apply migration `0083_serpent_embers.sql` (a
   serpent's row's `stones`, the embers its hoard paid, which the insignia's purse counts with a breach's), then deploy -
   the deploy's path filter carries `src/net/serpentHoardLaw.js` (SERPENT_EMBERS) as it carries the receipt. The relay
   is untouched: it never reads the hoard's law, and its version stands (`world166`). AUDIT 625 P4: the row counts the
@@ -485,8 +485,8 @@ After the kill the bar holds a moment and fades.
   claimSerpentReceipt), so a build from before them, saying none, is counted none; the answer says the row's embers,
   as a gate's claim does (AUDIT WB12d A1).
 - **The order:** the relay first (it signs), then the service (it counts), then the client. A client on an older
-  relay sees the omen and no fight. SERPENT-SET: the service's migration and acct83 before the client too - a client
-  of SERPENT-SET's claiming of a service before acct83 would mint an ember into the pack that no purse counts.
+  relay sees the omen and no fight. SERPENT-SET: the service's migration and acct84 before the client too - a client
+  of SERPENT-SET's claiming of a service before acct84 would mint an ember into the pack that no purse counts.
 
 ## 12. Not done, and why
 

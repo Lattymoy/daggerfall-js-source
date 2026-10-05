@@ -48,19 +48,22 @@ export const SHOUT_TOP_HZ = 3400;
 export const ARENA_SOUND_SEED = 0x43524f57;
 
 /** A voice resampled by `ratio` (2 an octave up) into `n` samples at `rate`, read from `src` at `srcRate`, starting at
- *  `offset` seconds into the output and wrapping round it when `wrap` (a periodic layer). Added into `out` at `gain`. */
-export function addVoice(out, rate, src, srcRate, { ratio = 1, offset = 0, gain = 1, wrap = false, env = null } = {}) {
+ *  `offset` seconds into the output and wrapping round it when `wrap` (a periodic layer). Added into `out` at `gain`.
+ *  IMPACTFX: the made sounds' ONE mixer - the spell impacts' layers (systems/spellImpactSound.js) cut a voice to its
+ *  first `take` seconds and fade it in over `fadeIn` and out over its last `fadeOut`; with neither fade, as before. */
+export function addVoice(out, rate, src, srcRate, { ratio = 1, offset = 0, gain = 1, wrap = false, env = null, take = Infinity, fadeIn = 0, fadeOut = 0 } = {}) {
   if (!src?.length) return out;
   const step = (srcRate / rate) * ratio;
-  const len = Math.floor(src.length / step);
+  const len = Math.min(Math.floor(src.length / step), Math.floor(take * rate));
   const start = Math.floor(offset * rate);
+  const faded = fadeIn > 0 || fadeOut > 0, fi = Math.max(1, fadeIn * rate), fo = Math.max(1, fadeOut * rate);
   for (let i = 0; i < len; i++) {
     let j = start + i;
     if (wrap) j = ((j % out.length) + out.length) % out.length;
     else if (j < 0 || j >= out.length) continue;
     const p = i * step, k = Math.floor(p), f = p - k;
     const s = (src[k] ?? 0) * (1 - f) + (src[k + 1] ?? src[k] ?? 0) * f;
-    out[j] += s * gain * (env ? env(j / out.length) : 1);
+    out[j] += s * gain * (env ? env(j / out.length) : 1) * (faded ? Math.min(1, i / fi, (len - i) / fo) : 1);
   }
   return out;
 }

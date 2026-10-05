@@ -1,0 +1,141 @@
+[
+  {
+    "name": "DECORLPT-tree-classic",
+    "file": "src/scenes/yardNature.js",
+    "old": "    const door = trees?.door ?? null;",
+    "new": "    const door = null;",
+    "tests": [
+      "test/decorlpt.test.js"
+    ],
+    "note": "AUDIT 05b (PIN MOVED): re-aimed by content - the yard asks the one choice (world/naturePicture.js, A12)."
+  },
+  {
+    "name": "DECORLPT-scale-lost",
+    "file": "src/scenes/yardNature.js",
+    "old": "      const batch = renderer.createBillboardBatch(pic.archive, pic.key, pic.handle.size, where, { scales: [piece.scale / LPT_SCALE_MAX] });",
+    "new": "      const batch = renderer.createBillboardBatch(pic.archive, pic.key, pic.handle.size, where, { scales: [1 / LPT_SCALE_MAX] });",
+    "tests": [
+      "test/decorlpt.test.js"
+    ]
+  },
+  {
+    "name": "DECORLPT-not-cut",
+    "file": "src/scenes/yardNature.js",
+    "old": "      batch.lptProto = pic.handle;\n",
+    "new": "",
+    "tests": [
+      "test/decorlpt.test.js"
+    ]
+  },
+  {
+    "name": "DECORLPT-unheld",
+    "file": "src/scenes/yardNature.js",
+    "old": "      door.acquire(far);\n",
+    "new": "",
+    "tests": [
+      "test/decorlpt.test.js"
+    ]
+  },
+  {
+    "name": "DECORLPT-lean-unrecorded",
+    "file": "src/scenes/yardNature.js",
+    "old": "      trees?.sway?.(pic.proto, sway);   // its 3D trees lean as its far pictures do (the pixel's own record of it)\n",
+    "new": "",
+    "tests": [
+      "test/decorlpt.test.js"
+    ],
+    "note": "AUDIT 05b (PIN MOVED): re-aimed by content - the yard asks the one choice (world/naturePicture.js, A12)."
+  },
+  {
+    "name": "DECORLPT-yaw-lost",
+    "file": "src/scenes/yardNature.js",
+    "old": "tree: { handle: pic.handle, pos: [...piece.pos], scale: piece.scale, yaw: yardTreeYaw(piece) } };",
+    "new": "tree: { handle: pic.handle, pos: [...piece.pos], scale: piece.scale, yaw: 0 } };",
+    "tests": [
+      "test/decorlpt.test.js"
+    ]
+  },
+  {
+    "name": "DECORLPT-tree-unplanted",
+    "file": "src/scenes/homeYards.js",
+    "old": ".then((got) => plantTree(y, piece.id, got, live));",
+    "new": ";",
+    "tests": [
+      "test/decorlpt.test.js"
+    ]
+  },
+  {
+    "name": "DECORLPT-set-unplaced",
+    "file": "src/scenes/homeYards.js",
+    "old": "      y.treeSet.ox = o[0]; y.treeSet.oy = o[1]; y.treeSet.oz = o[2];\n",
+    "new": "",
+    "tests": [
+      "test/decorlpt.test.js"
+    ]
+  },
+  {
+    "name": "DECORLPT-release-lost",
+    "file": "src/scenes/homeYards.js",
+    "old": "    return { ...got, release: () => { if (y.trees.get(id) === tree) { y.trees.delete(id); y.treeSet = null; } release?.(); } };",
+    "new": "    return got;",
+    "tests": [
+      "test/decorlpt.test.js"
+    ]
+  },
+  {
+    "name": "DECORLPT-ghost-classic",
+    "file": "src/scenes/decorTool.js",
+    "old": "      const hosted = Promise.resolve(deps.flatPicture?.(entry.flat) ?? null).catch(() => null);",
+    "new": "      const hosted = Promise.resolve(null);",
+    "tests": [
+      "test/decorlpt.test.js"
+    ]
+  },
+  {
+    "name": "DECORLPT-ghost-mirrored",
+    "file": "src/scenes/decorTool.js",
+    "old": "          p.mirrors = own.mirrors !== false;   // a tree turns in earnest - its picture never mirrors",
+    "new": "          p.mirrors = true;",
+    "tests": [
+      "test/decorlpt.test.js"
+    ]
+  },
+  {
+    "name": "DECORLPT-ghost-held",
+    "file": "src/scenes/decorTool.js",
+    "old": "    p?.release?.();   // DECOR-LPT: what the host's picture held (a tree's far picture)\n",
+    "new": "",
+    "tests": [
+      "test/decorlpt.test.js"
+    ]
+  },
+  {
+    "name": "DECORLPT-world-unwired",
+    "file": "src/scenes/world.js",
+    "old": "    for (const set of yards?.treeSets() ?? []) _lptSets.push(set);   // DECOR-LPT: the yards' placed trees, where their yards stand now\n",
+    "new": "",
+    "tests": [
+      "test/decorlpt.test.js"
+    ]
+  },
+  {
+    "name": "DECORLPT-late-unshifted",
+    "file": "src/scenes/decorRoom.js",
+    "old": "      if (d[0] || d[1] || d[2]) { const b = got.batch.origin ?? [0, 0, 0]; got.batch.origin = [b[0] + d[0], b[1] + d[1], b[2] + d[2]]; }",
+    "new": "",
+    "tests": [
+      "test/decorlpt.test.js"
+    ],
+    "note": "AUDIT 05b A1: a picture landing after a recentre stood from the origin it was asked at"
+  },
+  {
+    "name": "DECORLPT-ghost-leaks",
+    "file": "src/scenes/decorTool.js",
+    "old": "      const tex = Promise.resolve().then(() => deps.getTexture?.(ga)).catch(() => null);",
+    "new": "      const tex = Promise.resolve().then(() => deps.getTexture?.(ga));",
+    "tests": [
+      "test/decorlpt.test.js"
+    ],
+    "note": "AUDIT 05b A6: a texture that will not load throws the host's held picture away with it"
+  }
+]

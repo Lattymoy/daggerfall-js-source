@@ -246,7 +246,7 @@ import { herbKind } from './herbHost.js';   // PROF1: Herbalism's patches, a kin
 import { mineKind } from './mineHost.js'; import { nodeCompassPoints } from '../ui/nodeMarks.js'; import { createNodeGlowPass } from '../render/nodeGlow.js';   // PROF2: Mining's veins and Quarrying's boulders, a kind in it; NODE-MARKS: every profession's nodes on the compass in its colour, and lit where they stand
 import { treeKind, isTreeRecord, FOREST_STAMP } from './treeHost.js';   // PROF4: Logging's trees - the forest's own - a kind in it; LPT1: the felled trees' count, the near 3D trees' regather
 import { createLowPolyTrees } from '../systems/lowPolyTreesAssets.js';   // LPT1: Low Poly Trees - the host's one door
-import { LPT_ARCHIVES, LPT_SCALE_MAX, lptVariety, buildTreeSet } from '../world/lowPolyTrees.js';   // LPT1: which flats it stands for, each tree's own draw, and a near pixel's set
+import { LPT_SCALE_MAX, lptVariety, buildTreeSet } from '../world/lowPolyTrees.js'; import { naturePicture } from '../world/naturePicture.js';   // LPT1: each tree's own draw, and a near pixel's set; AUDIT 05b A12: which picture a nature flat stands as, every host's one choice
 import { realForestsOn, FOREST_HIDDEN_LOCATION_TYPES } from './shared.js';   // FOREST1: the Real forests switch, and the places the woods hide
 import { insideRocks, forestAt } from '../world/terrainNature.js';   // FOREST1 (AUDIT F1): a wood's flats keep out of the rock pieces; GRASS-LIT2: the shot hook's woods
 import { huntKind, createBodyStamps, bodiesOf, trackerMarks } from './huntHost.js';   // PROF7: Hunting's bodies - a kind in it, the kills that stamp them, a Tracker's marks
@@ -383,7 +383,7 @@ import { composeContents } from '../systems/worldHover.js';   // WORLD-HOVER: th
 import { mobilePersonName, lootPileName } from '../systems/worldTooltips.js';   // WORLD-HOVER H2: MobilePersonNPC.NameNPC (.cs:299-302); M5: a dropped pile's word (.cs:534-548), outdoors too
 import { wagonHoverName } from '../player/eotbWagon.js';   // WORLD-HOVER M6: the cart's word, beside its producer
 import { waterSourceHoverName } from '../systems/survival/items.js';   // WORLD-HOVER M6: a water source's word, beside its producer
-import { mwViewFirstPerson, mwViewFrame, mwViewWheel, mwViewDrawBody, mwViewBodyBones, mwViewSpriteFigure, mwViewFootstep, mwViewLoadPose, mwViewNewGame, mwViewRebase, mwViewAttachWagon, mwViewDrawWagon, mwViewWagonTargets, setEotbCartYields, mwViewWagonActivate, setEotbComeSailAway, mwViewHoldThird, mwViewHoldChanged, mwViewSaveCamera, mwViewTogglePerspective } from '../player/mwView.js';   // MW-D25: the Morrowind camera; AUDIT-EOTB2: the sprite's stride and the load's POV; CSA-J: EOTB's boat
+import { mwViewFirstPerson, mwViewFrame, mwViewWheel, mwViewDrawBody, mwViewBodyBones, mwViewSpriteFigure, mwViewSpriteFacing, mwViewFootstep, mwViewLoadPose, mwViewNewGame, mwViewRebase, mwViewAttachWagon, mwViewDrawWagon, mwViewWagonTargets, setEotbCartYields, mwViewWagonActivate, setEotbComeSailAway, mwViewHoldThird, mwViewHoldChanged, mwViewSaveCamera, mwViewTogglePerspective } from '../player/mwView.js';   // MW-D25: the Morrowind camera; AUDIT-EOTB2: the sprite's stride and the load's POV; CSA-J: EOTB's boat
 import { seaZoomReach } from '../player/seaZoom.js';   // FIELD BUGS 2026-09-29 (the sea) #3: the zoom at a helm
 import { mwCamera } from '../player/mwCamera.js';   // MW-D30: persistence
 import { pickActivatableHit, pickQuestFoe, pickFoe, peacefulFoePass } from '../player/activate.js';   // G3: corpse loot; QG1: the foe-click door; TI1: the lock-on pick
@@ -743,8 +743,8 @@ import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate
 import { homeLookRemap, HOME_LOOK_BUILD_WAIT_MS } from '../world/homeLook.js';   // HOME-LOOK: a painted house's own table
 import { createHomeYards } from './homeYards.js';   // HOME-YARD: the town's yards, and the owner's decorator outside
 import { loadIcon } from '../ui/textureCanvas.js';   // HOME-YARD: the decorator's pictures
-import { BLOCK_TYPES } from '../formats/blocksFile.js';   // HOME-YARD: the catalogue's town blocks
-import { GLOBAL_SCALE, DOOR_TYPE } from '../world/meshReader.js';   // ARENA1: DOOR_TYPE too - the undercroft's stair is a dungeon entrance
+import { decorScanDeps } from '../systems/decorScan.js';   // HOME-YARD: the catalogue's scan (DECOR-DUNGEON: one constructor for both hosts)
+import { DOOR_TYPE } from '../world/meshReader.js';   // ARENA1: the undercroft's stair is a dungeon entrance (DECOR-DUNGEON: GLOBAL_SCALE went with the yards' scan deps, systems/decorScan.js)
 import { homeLookSig } from '../net/homeLaw.js';
 import { setWeather, setHeardWeather, heardWeather, currentWeather, currentWeatherRaw, tickWeather, weatherRespawn, applyClimateWeather, importClimateWeathers, weatherJumpStamp, setSharedWeather, rollClimateWeathersForDay, sampleWeatherField, weatherCrossingStamp, currentFieldCells, currentWeatherIntensity, currentCloudBase, currentWindApproach, currentMapSystems, sampleWeatherIndoors, weatherArrivalStamp, mapGround } from '../systems/weatherSim.js';
 import { createDistantStorms, thunderSourceAt, THUNDER_SOURCE_M } from '../systems/distantStorms.js';   // WEATHER3d: the storms at a distance
@@ -4873,16 +4873,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       // frame) while a season is installed over it, the classic record
       // otherwise. The seasonal texture keys on the install so a later
       // season never reads an earlier one's upload.
-      const sib = seasonsActive ? seasons.lookup(archive, record) : null;
       // LPT1: A FLAT LOW POLY TREES HAS A TREE FOR stands as that tree's far picture - the batch sized for the tallest
       // tree it stands, each flat's own scale on its corner - and as the tree itself near the eye (the pixel's
       // `lowPolyTrees` set). Its cover, its sway, its forest and the far rings' rule are the flat's own (the season's,
-      // while one stands).
-      const lpt = lowPolyTrees && LPT_ARCHIVES.includes(archive) && (await lowPolyTrees.load()) ? lowPolyTrees.proto(archive, record) : null;
-      const far = lpt ? await lowPolyTrees.farPicture(lpt) : null;
+      // while one stands). AUDIT 05b A12: the choice is every host's one (world/naturePicture.js - a location's, a yard's)
+      const { sib, proto: lpt, far, plain, key: rkey } = await naturePicture({ door: lowPolyTrees, seasons: seasonsActive ? seasons : null, renderer, uploadRecord }, t, archive, record);
       if (far) {
         lowPolyTrees.acquire(far); lptHandles.push(far);   // AUDIT LPT B5: held until the pixel goes
-        const plain = sib ? sib.size : billboardSize(t, record);
         const scales = new Float32Array(centers.length), wild = new Uint8Array(centers.length);
         centers.forEach((c, i) => {
           wild[i] = wildFlats.has(`${k}#${i}`) ? 1 : 0;
@@ -4901,10 +4898,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         if (isCoverFlat(archive, record, plain)) for (const c of centers) coverItems.push(...coverProxies(c, plain, { tree: archive === natureArchive && isTreeRecord(natureArchive, record) }));
         continue;
       }
-      if (sib) {
-        const rkey = `${record}#season${seasons.installedSeason}`;
-        const img = sib.texture.image;
-        renderer.uploadTexture(archive, rkey, img, { mips: false, variant: '' });   // TEX1: the door already answers the upload path's shape - no re-wrap at the site (H4's own law)   // AUDIT 61: the mod's atlas has NO mip chain (mipChain:false, Apply(false), Point) - one NEAREST level at every distance, unlike the classic flats
+      if (sib) {   // uploaded under the install's key, with no mip chain (AUDIT 61) - world/naturePicture.js
         const batch = renderer.createBillboardBatch(archive, rkey, sib.size, centers);
         batch._box = flatBatchAabb(centers, sib.size);   // EV3
         batch.sway = floraSwayOf(archive, natureArchive, sib.size.h);   // WIND3: the season's trees lean too
@@ -4914,8 +4908,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         if (isCoverFlat(archive, record, sib.size)) for (const c of centers) coverItems.push(...coverProxies(c, sib.size, { tree: archive === natureArchive && isTreeRecord(natureArchive, record) }));   // AUDIT TACT B2: a tree's trunk and crown
         continue;
       }
-      uploadRecord(archive, record);
-      const size = billboardSize(t, record);
+      const size = plain;   // the record, uploaded (world/naturePicture.js)
       const batch = renderer.createBillboardBatch(archive, record, size, centers);
       batch._box = flatBatchAabb(centers, size);   // EV3
       batch.sway = floraSwayOf(archive, natureArchive, size.h);   // WIND3: the flora lean with the wind, nothing else does
@@ -5041,6 +5034,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       seatAnchors, _boardSplit: pixelBoardSplit, festivalAnchors, festivalLanterns,   // SEAT1a (above); FESTIVAL-STAGE (above)
       px, py, terrain, water, tilemapTex, tilemap, groundArchive, models, windmills, batches, flatAnims, texRemap, lights: pixelLights, hearths: pixelHearths, animals: pixelAnimals, springs: pixelSprings, skyBase: climate.skyBase, samples, natureCount: nature.length,
       tilemapBytes, season,   // GR1: the placer reads the tiles and the season
+      townClimate: townClimateBase,   // DECOR-OUTDOOR: the climate its town's buildings wear - a yard's pieces wear it too (scenes/homeYards.js)
       paths,   // GRASS-PATH1: which tiles the road painter wrote; null on a pixel built before the network arrived
       withRoads,   // ROADS 25: painted with the network present, or before it arrived (see below)
       _box: bounds,   // EV3: pixel-local presentation bounds (terrain + models + flats)
@@ -5354,7 +5348,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** LPT1: the frame's near 3D trees - the eye's pixel's and its neighbours' sets, each at its translation this frame,
    *  gathered (when the eye or they moved, or a tree was felled), culled to the view (`planes`, the frame's normalised
    *  ones - null when culling is off) and handed to the renderer for the flats' call. A set is made as its pixel comes
-   *  into the eye's 3x3 and let go once it is past the 5x5 (AUDIT LPT B10). */
+   *  into the eye's 3x3 and let go once it is past the 5x5 (AUDIT LPT B10). DECOR-LPT: and the yards' placed trees. */
   function lowPolyTreesFrame(planes) {
     _lptSets.length = 0;
     for (let i = 0; i < _pixelOrder.length; i++) {
@@ -5366,6 +5360,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       set.ox = p._t[0]; set.oy = p._t[1]; set.oz = p._t[2];
       _lptSets.push(set);
     }
+    for (const set of yards?.treeSets() ?? []) _lptSets.push(set);   // DECOR-LPT: the yards' placed trees, where their yards stand now
     _lptOpts.stamp = FOREST_STAMP.n;
     _lptOpts.planes = planes;
     lowPolyTrees.frame(_lptSets, cam.pos[0], cam.pos[1], cam.pos[2], _lptOpts);
@@ -10383,7 +10378,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:3262 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:7300
+  // that context through modes.dungeonCtx - so worldModes.js:7283
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -10773,11 +10768,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     eye: () => cam.pos,
     collider: () => collider, meshes: { getGpuMesh, cpuModels }, renderer, getTexture, uploadRecord, uploadRecordFrame,
     iconUrl: (a, r) => loadIcon(a, r, { scale: 1 }),
-    scanDeps: () => ({
-      blocks, isTownBlock: (t) => t === BLOCK_TYPES.Rmb,
-      modelRadius: (id) => { const rec = arch?.getRecordIndex?.(id); if (rec == null || rec < 0) return null; const r = arch.getMesh(rec)?.radius ?? 0; return r > 0 ? r * GLOBAL_SCALE : null; },
-      flatRadius: async (a, r) => { const t = await getTexture(a); if (!t || !(r < t.recordCount)) return null; const size = billboardSize(t, r); return Math.hypot(size.w, size.h) / 2; },
-    }),
+    scanDeps: () => decorScanDeps({ blocks, arch, getTexture }),   // DECOR-DUNGEON: the interior host's own constructor
+    seasonal: () => (seasonsActive ? seasons : null),   // DECOR-OUTDOOR: a yard's trees in Seasons of the Iliac Bay's season, as the town's
+    trees: lowPolyTrees ? { door: lowPolyTrees, sway: (proto, share) => _lptSway.set(proto, Math.max(_lptSway.get(proto) ?? 0, share)) } : null,   // DECOR-LPT: a yard's tree as Low Poly Trees' own - its 3D tree in the near set (lowPolyTreesFrame)
     character: () => characterIdOf(playerEntity),
     realm: () => (realmSession ? (o) => realmGoldAct({ session: realmSession, checkpoint: () => onlineCheckpoint(), ...o }) : null),
     wallet: (region) => homeYardWallet(region), regionOf: (y) => built.get(`${y.px},${y.py}`)?.homeRegion ?? 0,
@@ -13148,7 +13141,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:8709), so exterior mode and a
+    // composer, dungeonContext.js:8710), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -16432,7 +16425,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:11021-11085 -
+  // worldModes answers it in BOTH modes (worldModes.js:11005-11069 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -23431,7 +23424,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (mine && playerSpawned) {
       const f = player.feetAt();
       if (_auraSelf.aura !== mine) _auraSelf.since = t;
-      _auraSelf.at[0] = f[0]; _auraSelf.at[1] = f[1]; _auraSelf.at[2] = f[2]; _auraSelf.aura = mine; _auraSelf.yaw = mwViewSpriteFigure()?.yaw ?? player.bodyYawFor(cam.yaw); auraBeastStep(_auraSelf, !!liveLycanthropy(playerEntity)?.isTransformed, t);   // SHADOW-CLOAK: the body's own facing, as its third person is drawn; turned beast, the cloak torn
+      _auraSelf.at[0] = f[0]; _auraSelf.at[1] = f[1]; _auraSelf.at[2] = f[2]; _auraSelf.aura = mine; _auraSelf.yaw = mwViewSpriteFacing()?.yaw ?? player.bodyYawFor(cam.yaw); auraBeastStep(_auraSelf, !!liveLycanthropy(playerEntity)?.isTransformed, t);   // SHADOW-CLOAK: the body's own facing, as its third person is drawn (SPRITE-FACE: a sprite's, as its picture faces); turned beast, the cloak torn
       _auraSelf.kindle = Math.min(1, (t - _auraSelf.since) / AURA_KINDLE_S); _auraSelf.mounted = !!player.riding;   // SHADOW-CLOAK: a rider's cape folded away
       _auraWearers.push(_auraSelf);
     } else _auraSelf.aura = null;
@@ -23442,7 +23435,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       let w = _auraPool.get(d.id);
       if (!w || w.aura !== au) { w = { id: d.id, at: [0, 0, 0], aura: au, seed: auraSeedOf(d.id), kindle: 0, since: t }; _auraPool.set(d.id, w); }
       const p = onlineToScene(d.shown);
-      w.at[0] = p[0]; w.at[1] = p[1]; w.at[2] = p[2]; w.yaw = peerBodyYaw(d.shown) ?? 0; auraBeastStep(w, !!d.shown.wb, t);   // SHADOW-CLOAK: the peer's facing (to the wall on a climb); turned beast (the pose's `wb`), the cloak torn
+      w.at[0] = p[0]; w.at[1] = p[1]; w.at[2] = p[2]; w.yaw = (peerWalkers?.faceOf?.(d.id) ?? peerRiders?.faceOf?.(d.id))?.yaw ?? peerBodyYaw(d.shown) ?? 0; auraBeastStep(w, !!d.shown.wb, t);   // SHADOW-CLOAK: the peer's facing (to the wall on a climb) - SPRITE-FACE: a sprite's as its picture is drawn this frame (the layers synced above), so its wings' light stands where its wings do; turned beast (the pose's `wb`), the cloak torn
       w.kindle = Math.min(1, (t - w.since) / AURA_KINDLE_S); w.seen = t; w.mounted = !!d.shown.rd;   // SHADOW-CLOAK: a rider's (a horse, a cart) cape folded away
       _auraWearers.push(w);
     }
@@ -23453,7 +23446,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const proj = renderer._proj, view = renderer._view, eye = renderer._camPos;   // the frame's camera, the world's own
     if (proj && view && eye && auraWearers(_auraWearers, eye, _auraDraw).length) {
       if (!_auraTried) { _auraTried = true; try { _auraPass = new AuraRingRenderer(renderer.gl); } catch (e) { console.warn('[online] the aura would not build', e?.message ?? e); _auraPass = null; } }
-      const auraNow = performance.now() / 1000; for (const w of _auraDraw) if (auraLookOf(w.aura).mesh) { auraCapeStep(w, w === _auraSelf ? { feet: player.bodyFeetAt(), yaw: mwViewSpriteFigure()?.yaw ?? player.bodyYawFor(cam.yaw), bones: mwViewBodyBones(CLOAK_BONES) ?? auraSpriteBones(mwViewSpriteFigure()) } : peerBodies?.bonesOf(w.id, CLOAK_BONES) ?? auraSpritePosed(w, peerWalkers?.figureOf(w.id) ?? peerRiders?.figureOf?.(w.id)), w === _auraSelf ? player.height / CAPSULE_HEIGHT : 1); auraMotionStep(w, auraNow); } _auraPass?.draw(_auraDraw, proj, view, eye, auraNow, { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, camPos: renderer._camPos, focus: renderer._focus });   // SHADOW-CLOAK: each cape hung on its body as drawn this frame - its bones posed by now (mine, or a peer's), else at rest, crouched with a crouch - and swung by how it moves where it is drawn
+      const auraNow = performance.now() / 1000; for (const w of _auraDraw) if (auraLookOf(w.aura).mesh) { auraCapeStep(w, w === _auraSelf ? { feet: player.bodyFeetAt(), yaw: mwViewSpriteFacing()?.yaw ?? player.bodyYawFor(cam.yaw), turn: mwViewSpriteFacing()?.turn, bones: mwViewBodyBones(CLOAK_BONES) ?? auraSpriteBones(mwViewSpriteFigure()) } : peerBodies?.bonesOf(w.id, CLOAK_BONES) ?? auraSpritePosed(w, peerWalkers?.figureOf(w.id) ?? peerRiders?.figureOf?.(w.id), peerWalkers?.faceOf?.(w.id) ?? peerRiders?.faceOf?.(w.id)), w === _auraSelf ? player.height / CAPSULE_HEIGHT : 1); auraMotionStep(w, auraNow); } _auraPass?.draw(_auraDraw, proj, view, eye, auraNow, { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, camPos: renderer._camPos, focus: renderer._focus });   // SHADOW-CLOAK: each cape hung on its body as drawn this frame - its bones posed by now (mine, or a peer's), else at rest, crouched with a crouch - and swung by how it moves where it is drawn; SPRITE-FACE (Mac: "The sprite rotation on character input is a little finicky and make the aura misallign"): a sprite's faced as its PICTURE is (the eight-way view drawn, mine after the mod's delayed repaint has landed - mwViewSpriteFacing, a peer's faceOf), in the saddle too, and swung by the way the body turns (`turn`)
       if (_auraPass?.drawn) renderer.markForeignPass();
     }
     _auraWearers.length = 0;   // this frame's, drawn once: a frame that gathers none (the seat left, death, offline) draws none
@@ -28299,6 +28292,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     renderer.setFlatWind(floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], now / 1000, wd.gust] : null);   // WIND3: the flats lean with the one wind; the flora batches carry their share (sway)
     renderer.drawBillboards(allBatches, camRight, bbUp);
     if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, bbUp);   // M2: spell missiles
+    magic.drawFx?.();   // IMPACTFX: the spells' landings in light, over their flashes
     yards?.drawPreview();   // HOME-YARD: the decorator's panel, its pointed model turning in the preview box
     // T2 towns: every built populated pixel runs its own pool
     // (PopulationManager is per-location); the pool sees the player in

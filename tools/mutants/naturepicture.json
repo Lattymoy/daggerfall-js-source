@@ -1,0 +1,72 @@
+[
+  {
+    "name": "NATUREPIC-trees-after-season",
+    "file": "src/world/naturePicture.js",
+    "old": "  if (far) return { key: far.record, size: far.size, plain, sib, proto, far };",
+    "new": "  if (far && !sib) return { key: far.record, size: far.size, plain, sib, proto, far };",
+    "tests": [
+      "test/naturepicture.test.js"
+    ],
+    "note": "a season standing over the archive takes the trees' place"
+  },
+  {
+    "name": "NATUREPIC-plain-classic",
+    "file": "src/world/naturePicture.js",
+    "old": "  const plain = sib ? sib.size : billboardSize(t, record);",
+    "new": "  const plain = billboardSize(t, record);",
+    "tests": [
+      "test/naturepicture.test.js"
+    ],
+    "note": "the flat's own size the classic record's under a season - its lean, cover and far rings' height off the wrong picture"
+  },
+  {
+    "name": "NATUREPIC-season-mipped",
+    "file": "src/world/naturePicture.js",
+    "old": "{ mips: false, variant: '' });   // TEX1",
+    "new": "{ variant: '' });   // TEX1",
+    "tests": [
+      "test/naturepicture.test.js"
+    ],
+    "note": "AUDIT 61: the mod's atlas uploaded with a mip chain it does not have"
+  },
+  {
+    "name": "NATUREPIC-season-key-shared",
+    "file": "src/world/naturePicture.js",
+    "old": "export const seasonPictureKey = (record, installedSeason) => `${record}#season${installedSeason}`;",
+    "new": "export const seasonPictureKey = (record, _installedSeason) => `${record}#season`;",
+    "tests": [
+      "test/naturepicture.test.js"
+    ],
+    "note": "a later season reads an earlier one's upload"
+  },
+  {
+    "name": "NATUREPIC-record-unloaded",
+    "file": "src/world/naturePicture.js",
+    "old": "  uploadRecord(archive, record);\n",
+    "new": "",
+    "tests": [
+      "test/naturepicture.test.js"
+    ],
+    "note": "the classic record batched, never uploaded"
+  },
+  {
+    "name": "NATUREPIC-world-unwired",
+    "file": "src/scenes/world.js",
+    "old": "await naturePicture({ door: lowPolyTrees, seasons: seasonsActive ? seasons : null, renderer, uploadRecord }, t, archive, record)",
+    "new": "await naturePicture({ door: null, seasons: seasonsActive ? seasons : null, renderer, uploadRecord }, t, archive, record)",
+    "tests": [
+      "test/naturepicture.test.js"
+    ],
+    "note": "the town's pixels hand the choice no trees"
+  },
+  {
+    "name": "NATUREPIC-exterior-unwired",
+    "file": "src/scenes/exterior.js",
+    "old": "await naturePicture({ door: lowPolyTrees, seasons, renderer, uploadRecord }, t, archive, record)",
+    "new": "await naturePicture({ door: lowPolyTrees, seasons: null, renderer, uploadRecord }, t, archive, record)",
+    "tests": [
+      "test/naturepicture.test.js"
+    ],
+    "note": "a location's flats hand the choice no season"
+  }
+]

@@ -325,7 +325,7 @@ const DECOR_STATION_REFUSED = 'You cannot use the station right now.';
 import { createDecorRoom, decorIdOfKey, askDecorList } from './decorRoom.js';
 // DECOR1d: the decorator itself - the button, the panel, the free camera - and what its catalogue scan reads
 import { createDecorTool } from './decorTool.js';
-import { BLOCK_TYPES } from '../formats/blocksFile.js';
+import { decorScanDeps } from '../systems/decorScan.js';   // DECOR-DUNGEON: the scan's deps, one constructor for both hosts
 import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { loadIcon } from '../ui/textureCanvas.js';
 import { isTouchDevice } from '../ui/touchDevice.js';
@@ -554,7 +554,7 @@ export function createWorldModes(host) {
    *
    * AUDIT-WH H5. Three hover arms wrote `.Name` - the C# property, as
    * the mod's own source spells it (.cs:764, :725, :777) - and the
-   * record these hosts mint spells it `name` (exterior.js:4096 hands
+   * record these hosts mint spells it `name` (exterior.js:4091 hands
    * `dfLocation`, world.js hands `_questLoc()`; both are the port's
    * location record). `.Name` on it is `undefined`, so all three arms
    * fell to `''`, and `staticDoorName` answers NULL on an empty
@@ -830,7 +830,7 @@ export function createWorldModes(host) {
   const decorTool = createDecorTool({
     doc: typeof document !== 'undefined' ? document : null, win: typeof window !== 'undefined' ? window : null,
     canvas, touch: isTouchDevice(), renderer, pool: interiorDecor, names: decorNames,
-    room: () => decorRoomHere(), scanDeps: () => decorScanDeps(),
+    room: () => decorRoomHere(), scanDeps: () => decorScanDepsHere(),
     base: () => interiorCtx?.base ?? null,   // BASE-HIDE: the room's own furniture, piece by piece
     getGpuMesh, cpuModels, getTexture, uploadRecord, iconUrl: (a, r, dye = null, dyeTarget = null) => loadIcon(a, r, { scale: 1, dye, dyeTarget }),
     mwPicture: decorMwPicture,   // MW-MOUNT: the ghost hangs as the room will
@@ -4039,26 +4039,9 @@ export function createWorldModes(host) {
     if (b.buildingType === BUILDING_TYPES.Ship) return { kind: 'ship', where: 'Your ship' };
     return { kind: 'house', where: 'Your house' };
   }
-  /** DECOR1d: what the catalogue scan reads - the town blocks, a model's radius off its ARCH3D header (the house
-   *  price's own read, houseMeshRadius), a flat's billboard as the room stands it - in metres. */
-  function decorScanDeps() {
-    return {
-      blocks,
-      isTownBlock: (t) => t === BLOCK_TYPES.Rmb,
-      modelRadius: (id) => {
-        const rec = arch?.getRecordIndex?.(id);
-        if (rec == null || rec < 0) return null;
-        const r = arch.getMesh(rec)?.radius ?? 0;
-        return r > 0 ? r * GLOBAL_SCALE : null;
-      },
-      flatRadius: async (a, r) => {
-        const t = await getTexture(a);
-        if (!t || !(r < t.recordCount)) return null;
-        const size = billboardSize(t, r);
-        return Math.hypot(size.w, size.h) / 2;
-      },
-    };
-  }
+  /** DECOR1d: what the catalogue scan reads - the town blocks (DECOR-DUNGEON: and the dungeons'), a model's radius off
+   *  its ARCH3D header, a flat's billboard as the room stands it - the one constructor the yards' host builds too. */
+  const decorScanDepsHere = () => decorScanDeps({ blocks, arch, getTexture });
   /** DECOR1e: A SOLD HOUSE'S OR SHIP'S PLACED PIECES (the save's - scene cache) go with it, and half of what each
    *  cost comes back into the account the sale pays into, as removing each would give; said, when there were any. */
   function decorSold(sceneName, region) {
@@ -8172,7 +8155,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:8725), so the OUTER host's one rides in.
+          // (dungeonContext.js:8726), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:847 -> the
@@ -9422,7 +9405,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:17372's own wave-46 note); the interior
+          // a blow (world.js:17365's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -9548,6 +9531,7 @@ export function createWorldModes(host) {
       magic.firePending([...cam.pos], eyeDir());
       magic.update(dt, player.pos, eyeDir(), player.height, player.feetAt());   // X11: the candle hangs off the look direction; DISC13-A off the render feet
       if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, UP_Y);
+      magic.drawFx?.();   // IMPACTFX: the spells' landings in light, over their flashes
     }
     // LM1: the transformed move-sound loop, in this host's INTERIOR
     // arm (dungeon mode runs dungeonContext's frame, which carries its
@@ -10367,7 +10351,7 @@ export function createWorldModes(host) {
   addEventListener('mousedown', (e) => {
     // AUDIT-MACK F2: THIS HOST DOES NOT FEED THE HELD SET, and MAC-K1
     // briefly made it. `keys` is not this host's - it arrives on the
-    // host bag (`exterior.js:4158`, `world.js`'s twin), and the OUTER
+    // host bag (`exterior.js:4153`, `world.js`'s twin), and the OUTER
     // host's own mousedown writes `keys.add(mouseCode(e.button))`
     // UNGATED, before any mode test, on a listener that is never
     // removed. So the three button codes were already in the Set while
@@ -12157,9 +12141,9 @@ export function createWorldModes(host) {
      *  .cs:175-176 writes `weaponDrawn`/`usingLeftHand` off it,
      *  :420-421 restores them onto it. The port has FOUR PlayerWeapons
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
-     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3698-3720), and IS1 routed the inside-a-building save to
+     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3693-3715), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:13132). So an F9 pressed in a shop
+     *  unconditionally (world.js:13125). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -12198,7 +12182,7 @@ export function createWorldModes(host) {
       if (interiorOverlay instanceof DeathScreen) { interiorOverlay.restoreView(); interiorOverlay = null; }
     },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:13495)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:13488)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -12208,8 +12192,8 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:12024`
-     *  and `dungeonContext.js:8737` for its two sibling copies - lines
+     *  HARD2c: this used to spell them out, and named `world.js:12017`
+     *  and `dungeonContext.js:8738` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {
