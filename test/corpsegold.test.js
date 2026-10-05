@@ -82,7 +82,7 @@ function restoreHarness(foes) {
     validSharedFoe, respawnDue, validActionRecord, validLootList, unbound, keepRebuiltSpawn, renownFoeCarry, renownFoeRevived, registerFoeDoor, ENEMY_BASICS,
     _wallNow: () => null,   // no shared clock: nothing is due back (WORLD8's hour is not this seam)
     liveStat: () => 50,
-    addCorpseFood: () => {}, stampWonWeapons: () => {},   // the body's food and sigils: rolled on the copy, not this seam
+    rollCorpseKit: () => [], addCorpseFood: () => {}, stampWonWeapons: () => {},   // the body's kit, food and sigils: rolled on the copy, not this seam
     spawnCorpseNow: async () => {},   // the flat's mint; the corpse FLAG is spawnCorpse's own, raised before it
     applyCampMemory: () => {}, clearOwnPuppets: () => {}, respawnFoe: () => false, dropCandidate: () => {}, damageFoe: () => {}, settleLootFlat: () => {},
     actions: { restoreSaveData: () => {} },

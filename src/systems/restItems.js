@@ -23,6 +23,12 @@
 // (loot.js validLootItem), so online the templates land a release before any shelf, pile, foe or recipe carries one:
 // REST_ITEMS_ONLINE is that release's switch. Offline there is no older client to meet one: they are on now, with
 // Climates & Calories, as its provisions are.
+//
+// REST-LOOT (LOOT-EASE, 2026-10-05, Mac: "the new resting items we added ... should be more common loot drops"). The
+// templates shipped with the arc's merge (#554, 2026-10-03) and every release since has carried them, so the switch is
+// ON: online the shelves, the piles and the foes carry them, and customs lets a character's own walk in. And the
+// loot is wider and commoner: a looting foe five of the seven (it was the Ember Jar alone, 2 in 100), a J-O pile six
+// (the Ember Jar and the Tonic, 4 each). The Bedroll stays the counter's - online's own rest point, bought.
 // ═══════════════════════════════════════════════════════════════════
 import { registerCustomTemplates, registerItemUseHandler, templateByIndex, mintCondition, setItemFields } from './itemTemplates.js';
 import { ICON_TWIGS } from '../net/professionLaw.js';
@@ -32,15 +38,23 @@ import { survivalOf, sleepStage, wakingHeld, WAKING_DEBT_HOURS } from './surviva
 import { ownMinutes } from './worldTick.js';
 import { maxFatigue } from './statMods.js';
 import { registerTabledLootHandler, registerEnemyLootExtra } from './loot.js';
+import { registerLootSupply } from './foeLootCap.js';   // CAP-SUPPLIES: the seven are supplies to a body's cap
 
 /** The block (Rest-Arc.md section 6: 1700-1709, the last three spare). */
 export const REST_ITEM = Object.freeze({ Bedroll: 1700, EmberJar: 1701, Firewood: 1702, Tonic: 1703, Candle: 1704, Salts: 1705, Draught: 1706 });
 export const REST_ITEM_GROUP = 'UselessItems2';
-/** The online sources' switch (shelves, piles, foes, recipes) - false for the release the templates ship in. */
-export const REST_ITEMS_ONLINE = false;
+/** The online sources' switch (shelves, piles, foes, recipes) - false for the release the templates shipped in, on since
+ *  (REST-LOOT, 2026-10-05). Off again is the way back if an older client ever meets one it cannot read. */
+export const REST_ITEMS_ONLINE = true;
+let _restItemsOnline = REST_ITEMS_ONLINE;
+/** The switch as every reader asks it (the sources here, the use gate below, customs) - REST_ITEMS_ONLINE, unless a test
+ *  shut it to pin the way back: the shut release's laws still stand behind the switch, and still answer for it. */
+export const restItemsOnline = () => _restItemsOnline;
+/** Tests only: the switch set (null puts REST_ITEMS_ONLINE back). */
+export function _setRestItemsOnlineForTests(on) { _restItemsOnline = on == null ? REST_ITEMS_ONLINE : !!on; }
 /** Whether a source may mint one here: offline with Climates & Calories (the survival arc they belong to, as the
- *  provisions shelf is); online once REST_ITEMS_ONLINE is on. */
-export const restItemsAvailable = (online = isOnlinePage()) => (online ? REST_ITEMS_ONLINE : survivalOn());
+ *  provisions shelf is); online while the switch is on. */
+export const restItemsAvailable = (online = isOnlinePage()) => (online ? restItemsOnline() : survivalOn());
 
 export const BEDROLL_NIGHTS = 10;
 export const BEDROLL_CHANNEL_SECONDS = 10;
@@ -79,6 +93,7 @@ registerCustomTemplates(REST_ITEM_ROWS);
 
 const INDICES = new Set(Object.values(REST_ITEM));
 export const isRestItem = (item) => !!item && INDICES.has(item.templateIndex);
+registerLootSupply('REST', isRestItem);   // CAP-SUPPLIES: a full body's cap keeps one before a Common piece (foeLootCap.js)
 export const isBedroll = (item) => item?.templateIndex === REST_ITEM.Bedroll;
 export const isEmberJar = (item) => item?.templateIndex === REST_ITEM.EmberJar;
 export const isFirewood = (item) => item?.templateIndex === REST_ITEM.Firewood;
@@ -210,11 +225,12 @@ export function meditate(entity) {
 /** A kneel stopped, or another rest begun: the candle goes back to the pack unspent. */
 export const snuffCandle = () => { _candle = null; };
 
-/** AUDIT REST-PARTY B4: ONLINE, NONE IS USED WHILE ITS SOURCES ARE SHUT (REST_ITEMS_ONLINE). Customs keeps them offline
- *  now (realmCustoms.js), but a door customs never closed - an older realm save, a trade from a build that sold them -
+/** AUDIT REST-PARTY B4: ONLINE, NONE IS USED WHILE ITS SOURCES ARE SHUT (restItemsOnline). Customs keeps them offline
+ *  then (realmCustoms.js), but a door customs never closed - an older realm save, a trade from a build that sold them -
  *  had them in hand and working online: a laid Bedroll a rest point, a Tonic a draught. The card offers no Use
- *  (`usable`, useItem.js usableItem) and a hotbar press is told why; offline as ever. */
-const restItemsShut = () => isOnlinePage() && !REST_ITEMS_ONLINE;
+ *  (`usable`, useItem.js usableItem) and a hotbar press is told why; offline as ever. REST-LOOT: open now, every one
+ *  is used online as offline - this is the switch's way back. */
+const restItemsShut = () => isOnlinePage() && !restItemsOnline();
 const offlineUse = (fn) => {
   const h = (item, list, ctx) => (restItemsShut() ? { kind: 'text', text: REST_ITEM_TEXT.notOnline } : fn(item, list, ctx));
   h.usable = () => !restItemsShut();
@@ -249,9 +265,11 @@ export function restItemsStock(kind, quality = 10, rolls = Math.random, { online
   }
   return out;
 }
-/** A dungeon pile's (keys J-O) and a looting foe's chances, in percent. */
-export const REST_PILE_CHANCES = Object.freeze([[REST_ITEM.EmberJar, 4], [REST_ITEM.Tonic, 4]]);
-export const REST_FOE_CHANCES = Object.freeze([[REST_ITEM.EmberJar, 2]]);
+/** A dungeon pile's (keys J-O) and a looting foe's chances, in percent - each item its own roll. REST-LOOT: the fire's
+ *  two (the Ember Jar, the Tonic) the commonest, the dearer charged three (Candle, Salts, Draught) the rarest, Firewood
+ *  in a pile alone, the Bedroll never (the counter's). */
+export const REST_PILE_CHANCES = Object.freeze([[REST_ITEM.EmberJar, 6], [REST_ITEM.Tonic, 6], [REST_ITEM.Firewood, 4], [REST_ITEM.Candle, 2], [REST_ITEM.Salts, 2], [REST_ITEM.Draught, 2]]);
+export const REST_FOE_CHANCES = Object.freeze([[REST_ITEM.EmberJar, 3], [REST_ITEM.Tonic, 3], [REST_ITEM.Candle, 1], [REST_ITEM.Salts, 1], [REST_ITEM.Draught, 1]]);
 /** A pile's or a foe's roll: each item at its chance, minted into `items`. */
 export function rollRestLoot(items, chances, rolls = Math.random, { online = isOnlinePage() } = {}) {
   if (!Array.isArray(items) || !restItemsAvailable(online)) return items;

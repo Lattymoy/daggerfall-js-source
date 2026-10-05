@@ -292,12 +292,12 @@ recommendations (OPEN 13).
 | # | Item | Gap it fills | Effect | Uses, weight, base price | Sources |
 |---|---|---|---|---|---|
 | 1700 | **Bedroll** | no fire, a night needed | a rough rest point anywhere a camp could stand, in dungeons too; the Rough row of 2.4 | 10 nights, 2.5 kg, 80 | General Store; Outfitting (hide + cloth, tier 1) |
-| 1701 | **Ember Jar** | the Campfire is out of fuel, or left behind | lights a one-night fire where a Campfire could stand: a Camp rest point and a cooking fire for 180 world minutes; cannot be picked up | 1, 0.5 kg, 15 | General Store, tavern; dungeon piles J-O 4%, foes 2% |
-| 1702 | **Firewood** | the Campfire's fuel | +3 charges to a Campfire (to 8) | 1, 1.5 kg, 8 | General Store; Logging (a new BURN/SAW output) |
-| 1703 | **Restorative Tonic** | mid-dungeon, no time to sit | at once: +40% fatigue, and with C&C the sleep need 4 h lighter | 1, 0.2 kg, 30 | Alchemist, General Store; Alchemy (PROF9) or Herbalism; piles 4% |
-| 1704 | **Meditation Candle** | magicka without a night | kneel 6 s (the rest's channel rules): +50% magicka | 3, 0.3 kg, 35 | Temples, Mages Guild; Carpentry wax or Masonry (OPEN 13) |
-| 1705 | **Waking Salts** | Drowsy or Exhausted with no rest point | an hour of play with the sleep need's penalties held off; the debt keeps growing, and 2 h more lands when it ends | 3, 0.1 kg, 40 | Alchemist; Alchemy |
-| 1706 | **Sleeping Draught** | a hard night (Hard, rough) | the next night sleeps as a bed: full yield, no stiffness, the bed's sleep rate | 1, 0.2 kg, 45 | Alchemist, tavern |
+| 1701 | **Ember Jar** | the Campfire is out of fuel, or left behind | lights a one-night fire where a Campfire could stand: a Camp rest point and a cooking fire for 180 world minutes; cannot be picked up | 1, 0.5 kg, 15 | General Store, tavern; dungeon piles J-O 4%, foes 2% (REST-LOOT: 6% and 3%) |
+| 1702 | **Firewood** | the Campfire's fuel | +3 charges to a Campfire (to 8) | 1, 1.5 kg, 8 | General Store; Logging (a new BURN/SAW output); REST-LOOT: piles 4% |
+| 1703 | **Restorative Tonic** | mid-dungeon, no time to sit | at once: +40% fatigue, and with C&C the sleep need 4 h lighter | 1, 0.2 kg, 30 | Alchemist, General Store; Alchemy (PROF9) or Herbalism; piles 4% (REST-LOOT: 6%, foes 3%) |
+| 1704 | **Meditation Candle** | magicka without a night | kneel 6 s (the rest's channel rules): +50% magicka | 3, 0.3 kg, 35 | Temples, Mages Guild; Carpentry wax or Masonry (OPEN 13); REST-LOOT: piles 2%, foes 1% |
+| 1705 | **Waking Salts** | Drowsy or Exhausted with no rest point | an hour of play with the sleep need's penalties held off; the debt keeps growing, and 2 h more lands when it ends | 3, 0.1 kg, 40 | Alchemist; Alchemy; REST-LOOT: piles 2%, foes 1% |
+| 1706 | **Sleeping Draught** | a hard night (Hard, rough) | the next night sleeps as a bed: full yield, no stiffness, the bed's sleep rate | 1, 0.2 kg, 45 | Alchemist, tavern; REST-LOOT: piles 2%, foes 1% |
 
 Already there, and kept in the family: the **Bandage** (DFU's 249; RRI bandaging heals the lesser of Medical/3 and 40%
 of maximum health and tallies Medical - `src/systems/rriKits.js` `useBandage`), stocked at every General Store and
@@ -619,9 +619,10 @@ Mac: "Go" - every recommendation of section 15 taken. Slices REST1-REST6 and RES
   spot (not a camp record: nothing on the wire, nothing saved) and its Use begins the rest on it at once; the Candle is
   lit from the pack and the next rest is its kneel (both windows; offline too); the shelves are a General Store's and
   an Alchemist's (the port's temples, guilds and taverns keep no shelf), so the Candle and the Draught are the
-  Alchemist's and the Ember Jar the General Store's. **Online every source is shut** - `REST_ITEMS_ONLINE` is false for
-  this release (section 6's last rule: the templates ship a release before any shelf, pile, foe or recipe carries
-  them); offline the shelves and the piles carry them with Climates & Calories.
+  Alchemist's and the Ember Jar the General Store's. **Online every source was shut** - `REST_ITEMS_ONLINE` false for
+  the release the templates shipped in (section 6's last rule: the templates ship a release before any shelf, pile, foe
+  or recipe carries them) - until REST-LOOT opened them (below); offline the shelves and the piles carry them with
+  Climates & Calories.
 - **AUDIT REST** (2026-10-03, an independent pass over REST1-REST6; `test/auditrest.test.js`, `tools/mutants/auditrest.json`).
   Fixed: a Campfire left standing in a dungeon was lost at the exit - the dungeon keeps nothing of mine, so it now comes
   back into the pack with its fuel (`camps.js` packOwnFires; an Ember Jar's goes with the dungeon); the Draught makes
@@ -884,7 +885,8 @@ Mac: "Go" - every recommendation of section 15 taken. Slices REST1-REST6 and RES
   and AUDIT OW5b E1's stander scope given the two new names.
 - **REST7 - crafting: NOT BUILT, deliberately.** The recipes are a source like the shelves, so they could not open
   before `REST_ITEMS_ONLINE` does; adding them now changes the account service's bundle (an `acct` bump) for rows that
-  stay shut. They ride the release that turns the switch on, with the shelves.
+  stay shut. They were to ride the release that turns the switch on, with the shelves; REST-LOOT (below) turned it on
+  for the loot Mac asked for, and the recipes are still a slice of their own (the `acct` bump).
 - **DECK-CAMP (2026-10-04, from the field: "Campfires placed on a boat dont attach to a boat")** - a Campfire or a tent
   placed on a boat's deck rides her. Come Sail Away's boats stand in the world's collider, so the placing's probe found
   her deck - and the camp kept the scene point it was stood at as she sailed on. Now the host reads the boat under the
@@ -906,6 +908,19 @@ Mac: "Go" - every recommendation of section 15 taken. Slices REST1-REST6 and RES
   THE FOUR HOSTS: `scenes/world.js` hands the boats; a building (`worldModes.js`) and a dungeon (`dungeonContext.js`)
   stand no boat of the camps', the standalone street (`exterior.js`) no Come Sail Away. `test/deckcamp.test.js`,
   `tools/mutants/deckcamp.json` (20, all dead).
+- **REST-LOOT (2026-10-05, Mac: "the new resting items we added, along with majicka potions should be more common loot
+  drops"; `Loot-Arc.md` section 19, LOOT-EASE)** - the switch is ON: the templates have been in every release since the
+  arc's merge (#554), which is the rule section 6 set, so online the shelves, the piles and the foes carry the seven
+  and customs lets a character's own in (`restItems.js` `REST_ITEMS_ONLINE`, read through `restItemsOnline` by the
+  sources, the use gate and `realmCustoms.js`). And the loot is wider and commoner, each item its own roll: a J-O pile
+  the Ember Jar 6 in 100, the Tonic 6, Firewood 4, the Candle, the Salts and the Draught 2 each (it was the Ember Jar
+  and the Tonic, 4 each); a looting foe the Ember Jar 3, the Tonic 3, the Candle, the Salts and the Draught 1 each (it
+  was the Ember Jar alone, 2) - before PLAIN-LOOT's three in four on a plain foe. The Bedroll stays the counter's,
+  online's rest point bought. A full body's cap keeps a supply before a Common piece (`foeLootCap.js`
+  `registerLootSupply`). The shut release stands behind the switch, every pin of it kept through
+  `_setRestItemsOnlineForTests` - the way back if an older client ever meets one. `test/rest6_consumables.test.js`
+  (REST-LOOT), the customs pins re-aimed (`auditrest2_camps`, `auditrest3`, `auditrestparty_camps`);
+  `tools/mutants/lootease.json`'s REST-LOOT rows, `rest6.json`'s switch record turned round.
 
 ## Record
 
@@ -957,3 +972,5 @@ Mac: "Go" - every recommendation of section 15 taken. Slices REST1-REST6 and RES
   Tired or Drowsy no longer waits out the night interval at the fire; still no clock moved.
 - 2026-10-04: CAMP-ROLL (As built, from play): one ambush roll a camp - members who press Rest together elect one
   roller off the pose, and the others wait on its night and sleep it, or break with its ambush.
+- 2026-10-05: REST-LOOT (As built; `Loot-Arc.md` section 19): `REST_ITEMS_ONLINE` on - the seven online from the
+  shelves, the piles and the foes - and their loot wider and commoner.

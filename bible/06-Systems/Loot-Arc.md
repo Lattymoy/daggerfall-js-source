@@ -867,3 +867,66 @@ chance at every step and rolls it truncated to whole percent (`dice100(Math.trun
 the ladder and a 1-3% chance fell to nothing: measured exactly over the live tables at levels 1, 10 and 25, it kept
 33-50% of the table, and none of a level-1 humanoid's on table A. A coin per piece keeps half of whatever the ladder
 made, at any chance. `test/rf2_spawnloot.test.js` PLAIN-LOOT; `tools/mutants/plainloot.json` (5, all dead).
+
+LOOT-EASE (section 19) keeps three pieces in four since 2026-10-05.
+
+## 19. LOOT-EASE - the drops eased, the kit rolled, the supplies kept (2026-10-05)
+
+Mac: *"I think loot was way overtuned as a nerf. We need to bring their drop rates up. Players are reporting only
+recieving steel items also."* and *"Lets not overture the drop rates, but they definitely need a buff. Also the new
+resting items we added, along with majicka potions should be more common loot drops, same with health pots"*.
+
+**What was measured.** The real chain - `hostCombat.js` `spawnEnemyLoot`, then the body door and `raiseEnemyDeath` -
+seeded, every shipped loot hook installed, 3,000 bodies a cell, offline and online. A plain humanoid's body held 0.9
+pieces besides its gold and a third held nothing else (1.9 and an eighth bare before PLAIN-LOOT, section 18); a
+skeleton's 0.3, seven in ten bare. Of a plain humanoid's weapons and armour, 85-98% were its own WORN KIT, which LR4
+never ladders (`lootRarity.js` `rollCorpseLoot`: a foe never fights with a piece the ladder made) - so that gear was
+Common 99 times in 100 at every level: Iron and Steel blades, leather, chain, Iron and Steel plate. That is the "only
+steel". Not the metal roll - Unleveled Loot, the room's whole online, is about 45% Iron and 43% Steel at Luck 50 with
+Silver and up the rest - but the TIER: no colour on a regular humanoid's body, and FOE-CAP's cap, best by tier and then
+by worth, kept the dearest Common piece (the steel one) and threw a potion away first. Online no rest supply dropped at
+all: `REST_ITEMS_ONLINE` was still the release-ahead switch's off.
+
+**What changed:**
+- PLAIN-LOOT keeps three pieces in four (`hostCombat.js` `PLAIN_FOE_LOOT_KEEP` 0.5 -> 0.75): half the cut given back.
+- The plain ladder (`foeLootCap.js` `PLAIN_FOE_RARITY_WEIGHTS`): Magic 5% + 0.5 a tier (19% at most), Rare 0.6% + 0.12
+  (3.8%), Legendary 0.015% + 0.0075 (0.3%) - a quarter more blue, half again the yellow and the orange, Mac's order
+  ("whites, rare = blue items, very rare = yellow, almost impossible = orange") kept; at every tier still at most half
+  the whole ladder's blue and yellow and a quarter its orange.
+- KIT-ROLL (`foeLootCap.js` `rollCorpseKit`): at its death nobody wears the kit. A plain foe on the plain ladder rolls
+  each kit piece its body still carries on the source its carried loot rolled at the spawn (`ENEMY_BASICS` by its
+  mobile type, the row every host hands `spawnEnemyLoot`), the player's luck, the finders, the door's last pass; once
+  (`untaken`, LOOT8's mark - its take counts for the drought, and a second door passes it by). Never an Elite Dungeon's
+  foe (its ladder is the whole one), a titled foe or a boss (LR4's own case: a Daedra Lord's hand). Every body door
+  calls it before the chime and the sigils read the body: the dungeon's kill, a joiner's copy and an arrival's
+  (`dungeonContext.js`), the street's kill (`exteriorFoes.js`), the watch's (`cityGuards.js`); an execution is a
+  revenant's alone, titled, and needs none. The spawn never calls it. THE FOUR HOSTS, all through those three pools:
+  `scenes/world.js` and `scenes/exterior.js` stand the street's and the watch's; `scenes/worldModes.js` stands both
+  indoors and builds `dungeonContext.js` for its dungeons, as `scenes/dungeon.js` does.
+- CAP-SUPPLIES (`foeLootCap.js` `capLootList`, `isLootSupply`, `registerLootSupply`): the cap keeps gold, a quest's
+  items, then a Magic-or-better piece by its tier, then a SUPPLY (a potion - DFU's IsPotion; the seven rest supplies,
+  registered by `restItems.js`), then the rest - the dearer first within each. The three is untouched.
+- MAGICKA-COMMON and POTION-COMMON's numbers (`healingSupply.js`): the Potion of Healing 10 in 100 a looting foe and 18
+  a J-O pile (6 and 12 before); DFU's own Potion of Restore Power, new to those two doors, 6 and 10, drawn after it.
+- REST-LOOT (`restItems.js`, `06-Systems/Rest-Arc.md`): `REST_ITEMS_ONLINE` on - the templates have been in every
+  release since the arc's merge (#554, 2026-10-03), the rule section 6 set - so online the shelves, the piles and the
+  foes carry them and customs lets a character's own in; a J-O pile rolls six of the seven (Ember Jar 6, Tonic 6,
+  Firewood 4, Candle 2, Salts 2, Draught 2) and a looting foe five (Ember Jar 3, Tonic 3, Candle 1, Salts 1, Draught
+  1), each its own roll; the Bedroll stays bought. The shut release stands behind the switch (`restItemsOnline`), its
+  pins kept through `_setRestItemsOnlineForTests` - the way back.
+
+**Measured after**, the same harness (levels 1 / 8 / 15): a plain humanoid's body 1.3 pieces, a fifth bare; a Magic or
+better piece on 5% / 8% / 12% of them, a Rare 1% / 1.2% / 2.5%, a Legendary about one in a thousand; a skeleton's 0.6
+pieces, half bare; a Potion of Healing on 7-8% of looting foes, Restore Power on 4.5-5%, a rest supply on about 7% -
+online too. No body past its cap.
+
+**Kept, and why.** The cap's three (FOE-CAP, Mac's rule), the humanoid quarter (an older call: the kit gains a colour,
+not a count), the champions', elites' and Elite Dungeons' own drops, and the metal - Unleveled Loot is a 1:1 mod, the
+room's whole online; more Silver and up is its dungeon-quality ladder's call, and Mac's.
+
+Pinned: `test/search1_searchables.test.js` (the ladder, CAP-SUPPLIES, KIT-ROLL and its doors swept against the pools'
+sigil stamps), `rf2_spawnloot` (three in four), `potion_common` (MAGICKA-COMMON), `rest6_consumables` (REST-LOOT);
+re-aimed - SIGIL1's and SURVTIERS3's door regexes, the customs pins under the shut switch (`auditrest2_camps`,
+`auditrest3`, `auditrestparty_camps`), the mounted dungeon harnesses' stubs (`audit68_dungeonctx`, `loot7check`,
+`corpsegold`, `seatheal`). `tools/mutants/lootease.json` (39, all dead); `plainloot`, `potioncommon`, `rest6`,
+`auditrestparty` and `survtiers3` re-aimed by content.

@@ -11,7 +11,7 @@
   {
     "name": "POTION-COMMON-foe-chance-zero",
     "file": "src/systems/healingSupply.js",
-    "old": "export const HEALING_ENEMY_CHANCE = 6;",
+    "old": "export const HEALING_ENEMY_CHANCE = 10;",
     "new": "export const HEALING_ENEMY_CHANCE = 0;",
     "tests": [
       "test/potion_common.test.js"
@@ -20,7 +20,7 @@
   {
     "name": "POTION-COMMON-pile-chance-zero",
     "file": "src/systems/healingSupply.js",
-    "old": "export const HEALING_PILE_CHANCE = 12;",
+    "old": "export const HEALING_PILE_CHANCE = 18;",
     "new": "export const HEALING_PILE_CHANCE = 0;",
     "tests": [
       "test/potion_common.test.js"
@@ -47,8 +47,8 @@
   {
     "name": "POTION-COMMON-every-pile",
     "file": "src/systems/healingSupply.js",
-    "old": "    if (i >= 10 && i <= 15) maybeAddHealingPotion(items, HEALING_PILE_CHANCE, rolls);",
-    "new": "    maybeAddHealingPotion(items, HEALING_PILE_CHANCE, rolls);",
+    "old": "    if (i >= 10 && i <= 15) { maybeAddHealingPotion(items, HEALING_PILE_CHANCE, rolls);",
+    "new": "    { maybeAddHealingPotion(items, HEALING_PILE_CHANCE, rolls);",
     "tests": [
       "test/potion_common.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "POTION-COMMON-I-to-P",
     "file": "src/systems/healingSupply.js",
-    "old": "    if (i >= 10 && i <= 15) maybeAddHealingPotion(items, HEALING_PILE_CHANCE, rolls);",
-    "new": "    if (i >= 9 && i <= 16) maybeAddHealingPotion(items, HEALING_PILE_CHANCE, rolls);",
+    "old": "    if (i >= 10 && i <= 15) { maybeAddHealingPotion(",
+    "new": "    if (i >= 9 && i <= 16) { maybeAddHealingPotion(",
     "tests": [
       "test/potion_common.test.js"
     ]
