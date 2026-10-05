@@ -585,6 +585,7 @@ export const TRAVEL_VIEW_MARK_COLORS = Object.freeze({
   lair: '#b0443a',   // TV6: an undiscovered dungeon - a lair's dull red
   band: '#e0503c',   // TV7: a roaming band - the enemy's red
   camp: '#d9622b',   // OW6: a camp, a pack or a band stood - an ember's red-orange, apart from the roaming bands
+  wayfarer: '#c9a96e',   // LW3: the living world's parties on the road - road dust, apart from a player's verdigris
   bounty: '#0b0b0b', bountyRim: '#e6dccb',   // BOUNTY-OVERWORLD: a held bounty's hunt - BLACK, the maps' own circle (ui/bountyMapMark.js), with the legend's pale rim so it reads on dark ground
 });
 /** The plates' face - the stylesheet's --display, as the DOM plates had it. */
@@ -648,6 +649,7 @@ const lookOf = (m) => {
   const k = (m.kind ?? '').split(' ')[0];
   if (k === 'bounty') return k;   // BOUNTY-OVERWORLD: a held bounty's hunt
   if (k === 'gather') return k;   // GATHER-OW: a profession's group of nodes
+  if (k === 'wayfarer') return k;   // LW3: the living world's parties on the road
   return k === 'place' || k === 'far' || k === 'dest' || k === 'target' || k === 'party' || k === 'lair' || k === 'band' || k === 'raider' || k === 'camp' ? k : 'traveller';
 };
 /** OW-THEME (2026-09-28, Mac: "The overworld ui needs to follow enhanced ui theme"): the plates' stone - the Enhanced
@@ -917,7 +919,7 @@ function drawMarks(marks, vw, vh, dpr, feet = null) {
   for (const q of placed) {
     const { m, held, x, y, look } = q;
     g.globalAlpha = q.fade ? TV_UNDER_HUD_ALPHA : 1;   // OW-EDGES: faint where it would lie over the compass or the hotbar
-    const color = look === 'gather' ? (m.color ?? C.brass) : look === 'party' ? C.party : look === 'traveller' ? C.traveller : look === 'lair' ? C.lair : look === 'band' ? C.band : look === 'raider' ? C.raider : look === 'camp' ? C.camp : look === 'bounty' ? C.bounty : C.brass;   // OWS3: a raider in the cinnabar; OW6: a camp in the ember
+    const color = look === 'gather' ? (m.color ?? C.brass) : look === 'party' ? C.party : look === 'traveller' ? C.traveller : look === 'lair' ? C.lair : look === 'band' ? C.band : look === 'raider' ? C.raider : look === 'camp' ? C.camp : look === 'bounty' ? C.bounty : look === 'wayfarer' ? (/\bfight\b/.test(m.kind ?? '') ? C.band : C.wayfarer) : C.brass;   // OWS3: a raider in the cinnabar; OW6: a camp in the ember; LW3: a party on the road in its dust (LW4: beset, in the bands' red)
     g.fillStyle = color; g.strokeStyle = '#000'; g.lineWidth = 1;
     if (held) {   // the arrow, turned the way it lies (0 up, clockwise)
       g.save(); g.translate(x, y); g.rotate((held.angle * Math.PI) / 180);
@@ -941,6 +943,9 @@ function drawMarks(marks, vw, vh, dpr, feet = null) {
       wheelPath(g, x, y, TV_WHEEL_R);
       g.lineWidth = 3; g.strokeStyle = '#000'; g.stroke();
       g.lineWidth = 1.5; g.strokeStyle = C.brass; g.stroke();
+    } else if (look === 'wayfarer') {   // LW3: a party on the road - a pack's square, a caravan's the larger
+      const r = /\bcaravan\b/.test(m.kind ?? '') ? 5 : 3.5;
+      g.beginPath(); g.rect(x - r, y - r, r * 2, r * 2); g.fill(); g.stroke();
     } else {
       const r = look === 'dest' || /\bcrowd\b/.test(m.kind ?? '') ? 7 : look === 'place' || look === 'far' ? 4 : 5;   // OW-CROWD: a crowd's dot the larger
       g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); g.stroke();

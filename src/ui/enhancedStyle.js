@@ -2687,20 +2687,10 @@ html.plus-pad-prompts-visible .px-over > .px-stage:not(.px-acctstage):not(.px-ti
 .travelpanel.following .travelpanel-name { color: var(--brass); }
 .travelpanel-speed { display: flex; flex-direction: column; justify-content: center; gap: 2px;
   padding: 7px 14px; border-left: 1px solid rgba(192,138,62,0.25); }
-.travelpanel-stepper { display: flex; align-items: center; gap: 6px; }
-/* ENEMY-PACE: the second clock, under the first - only while enemies hold the journey (the node's hidden attribute takes it away) */
-.travelpanel-foe { display: flex; flex-direction: column; align-items: inherit; gap: 3px; margin-top: 8px; }
-.travelpanel-foe[hidden] { display: none; }
-.travelpanel-foe > .travelpanel-label { white-space: nowrap; }
-.travelpanel-foeaccel { color: #d9a441; }
-.travelpanel.foes .travelpanel-msg { top: calc(var(--tp-top, 66px) + 148px); }
-.travelpanel.foes .travelpanel-junction { top: calc(var(--tp-top, 66px) + 156px); }
 .travelpanel-accel { font-family: var(--display); font-size: 19px; min-width: 46px; text-align: center; color: var(--brass); }
-.travelpanel-accel.held { font-size: 15px; min-width: 84px; color: #d9a441; }   /* TV2: held while the land loads */
-.travelpanel-step { pointer-events: auto; width: 22px; height: 22px; line-height: 1;
-  background: rgba(43,50,59,0.9); color: var(--bone); border: 1px solid rgba(192,138,62,0.4);
-  border-radius: 2px; font-size: 14px; cursor: pointer; }
-.travelpanel-step:hover { background: rgba(78,127,114,0.35); border-color: var(--verdigris); }
+.travelpanel-accel.held { font-size: 15px; min-width: 84px; color: #d9a441; }   /* TV2: held while the land loads; OW6: or an alerted enemy near */
+/* RATE-LAW: the ground the rate is the ground's of, under the readout - a word, no control */
+.travelpanel-ground { font-size: 11px; letter-spacing: 0.06em; color: var(--dim); white-space: nowrap; text-align: center; }
 .travelpanel-acts { display: flex; align-items: center; gap: 6px; padding: 7px 12px;
   border-left: 1px solid rgba(192,138,62,0.25); }
 .travelpanel-act { pointer-events: auto; padding: 6px 12px; cursor: pointer;
@@ -2770,10 +2760,9 @@ html.plus-pad-prompts-visible .px-over > .px-stage:not(.px-acctstage):not(.px-ti
 #travel-view .tview-dock .travelpanel-name { display: block; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #travel-view .tview-dock .travelpanel-speed { flex: 0 0 auto; flex-direction: column; align-items: flex-start; justify-content: center; gap: 0; padding: 3px 0 9px 12px; }
 #travel-view .tview-dock .travelpanel-speed > .travelpanel-label { display: none; }
-/* ENEMY-PACE: the clock on the left (its near-enemies stepper under it while enemies hold the clock), Camp ABOVE Exit on the right */
+/* the clock on the left, Camp ABOVE Exit on the right */
 #travel-view .tview-dock .travelpanel-acts { flex: 0 0 auto; margin-left: auto; display: flex; flex-direction: column; align-items: stretch; justify-content: center; gap: 6px; padding: 3px 12px 9px 8px; }
 #travel-view .tview-dock .travelpanel-acts .travelpanel-act { min-width: 78px; text-align: center; }
-#travel-view .tview-dock .travelpanel-foe { margin-top: 6px; }
 #travel-view .tview-dock .travelpanel-act[data-act="map"] { display: none; }
 #travel-view .tview-dock .travelpanel-act { padding: 5px 9px; }
 #travel-view .tview-dock > .travelpanel-msg { position: absolute; right: 0; left: auto; top: auto; bottom: calc(100% + 10px); transform: none;
@@ -2887,6 +2876,27 @@ html.plus-pad-prompts-visible .px-over > .px-stage:not(.px-acctstage):not(.px-ti
 .hud-bladeempty, .hud-bladefull { position: absolute; inset: 0; display: block;
   background-position: center; background-size: 100% 100%; background-repeat: no-repeat; }
 .hud-bladeempty { opacity: 0.72; }   /* FOEBAR1b: the drained bar lets the world through, as the friend's picture does */
+/* TELL9 (bible/12-Enhanced-AI/Feud-Arc.md 11.1): THE POISE TRACK under the foe's health - its wind-up read. Empty
+   outside one; amber, filling toward its poise; red and HATCHED for iron (never by colour alone); a white flash at a
+   break, "Staggered"; "Open" through an overreach. AUDIT TELL U3: the word stands centred UNDER the track (beside it, it
+   ran past the bar's right under a narrow screen's quest card), and the card clears it (the --qt-clear rules below).
+   U4: the flash plays on THIS foe's break alone (its flash class, enhancedHud.js) - never on a bar turned onto a staggered one. */
+.hud-foepoise { display: none; position: relative; width: min(280px, 40vw); height: 6px;
+  background: rgba(10,12,17,0.6); border: 1px solid rgba(125,116,96,0.45); }
+.hud-foe.poised .hud-foepoise { display: block; }
+.hud-poisefill { display: block; height: 100%; width: 0; background: transparent; }
+.hud-foepoise.windup .hud-poisefill { background: #e0a43a; }
+.hud-foepoise.iron .hud-poisefill { background: repeating-linear-gradient(135deg, #d8342c 0 4px, #7a1410 4px 6px); }
+.hud-foepoise.staggered .hud-poisefill { background: #fff; }
+.hud-foepoise.staggered.flash .hud-poisefill { animation: hud-poise-flash 0.45s ease-out; }
+.hud-foepoise.open { border-color: rgba(241,192,79,0.9); }
+.hud-poiseword { position: absolute; left: 50%; top: calc(100% + 3px); transform: translateX(-50%); white-space: nowrap; line-height: 13px;
+  font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; }
+.hud-foepoise.iron .hud-poiseword { color: #ff6a5a; }
+.hud-foepoise.staggered .hud-poiseword { color: #fff; }
+.hud-foepoise.open .hud-poiseword { color: #f1c04f; }
+@keyframes hud-poise-flash { 0% { box-shadow: 0 0 10px 3px rgba(255,255,255,0.9); } 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); } }
+@media (prefers-reduced-motion: reduce) { .hud-foepoise.staggered.flash .hud-poisefill { animation: none; } }
 
 /* THE VITALS. Magicka, health, fatigue - the reference's own order and
    DFU's own three, each with its number beside it. */
@@ -4055,6 +4065,11 @@ html.plus-pad-prompts-visible .px-over > .px-stage:not(.px-acctstage):not(.px-ti
 .hitnum-heal { top: 50%; color: #8fe27f; text-shadow: 2px 2px 0 rgba(0,40,0,0.9), 0 0 8px rgba(120,220,100,0.35); }
 .hitnum-tag { display: block; font-size: calc(12px * var(--hud-scale, 1)); font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase;
   text-align: center; color: #f1c04f; margin-top: -2px; }
+/* TELL9 (bible/12-Enhanced-AI/Feud-Arc.md 11.2): a word alone - a door's word with no number to join ("Holds" on a spell's
+   landing), and a perfect dodge's "Perfect", bright, a little under the reticle where no blow of mine rises */
+.hitnum-word { font-size: calc(16px * var(--hud-scale, 1)); font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: #f1c04f; }
+.hitnum-perfect { top: 50%; font-size: calc(24px * var(--hud-scale, 1)); font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase;
+  color: #fff6d8; text-shadow: 2px 2px 0 rgba(60,40,0,0.95), 0 0 12px rgba(255,236,170,0.6); }
 @keyframes hitnum-rise {
   0%   { opacity: 0; transform: translate(calc(-50% + var(--dx, 0px)), 10px) scale(0.9); }
   12%  { opacity: 1; transform: translate(calc(-50% + var(--dx, 0px)), 0) scale(1); }
@@ -5519,6 +5534,10 @@ button.lv-note.lv-clickable:hover, button.lv-note.lv-clickable:focus-visible {
 @media (max-width: 900px) {
   body:has(.hud-foe.on) .qtrack { --qt-clear: calc(18px + 28px * var(--hud-scale, 1) + 30px + 46px * var(--hud-scale, 1)); }
   body:has(.hud-foe.on.blade) .qtrack { --qt-clear: calc(18px + 28px * var(--hud-scale, 1) + 30px + 76px * var(--hud-scale, 1)); }
+  /* TELL9: the poise track under it - its 6px, its border and its 4px gap more; AUDIT TELL U3: and its word under it,
+     13px and a 3px gap */
+  body:has(.hud-foe.on.poised) .qtrack { --qt-clear: calc(18px + 28px * var(--hud-scale, 1) + 30px + 74px * var(--hud-scale, 1)); }
+  body:has(.hud-foe.on.blade.poised) .qtrack { --qt-clear: calc(18px + 28px * var(--hud-scale, 1) + 30px + 104px * var(--hud-scale, 1)); }
 }
 /* AUDIT GUIDE T1/D1, U1, U7: the card steps aside - keeping its line, so the party list never jumps - for what stands
    in its corner a while: the Overworld's block at the top of a touch screen, a narrow screen's chat lines, a journey's

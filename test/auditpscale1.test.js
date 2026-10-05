@@ -233,7 +233,7 @@ test('AUDIT PSCALE1 the dungeon, mounted: a layout foe is as tough as the player
   assert.match(S, /if \(!f\.dead && _sharedFoe\(f\)\) \{ const n = fightN\(f\); if \(n > 1\) r\.n = n; \}/, 'the host streams n');
   assert.match(S, /f\._fightN = r\.n \?\? 1;/, 'a joiner reads n');
   assert.match(S, /if \(fromPlayer\) noteFighter\(foe, peer \? peerId : PARTY_ME, performance\.now\(\)\);/, 'the door names every player\'s blow a fighter');
-  assert.match(S, /damageFoe\(f, dmg, at, dir, \{ fromPlayer: true, peer: true, kind, peerId: id, whole: data\.z === 1 \}\);/, 'a joiner\'s kill is a kill at the host');
+  assert.match(S, /damageFoe\(f, dmg, at, dir, \{ fromPlayer: true, peer: true, kind, peerId: id, whole: data\.z === 1(?:, \.\.\.\(data\.wc != null \? \{ wc: hitClassOf\(data\) \} : \{\}\))? \}\);/, 'a joiner\'s kill is a kill at the host');
 });
 
 test('AUDIT PSCALE1 the count\'s other readers: the outdoor roll counts the partymates within the radius (outdoors only - the dungeon arm is gone), and a shared foe\'s Renown bonus counts no more partymates than fought it (mutants: strangers counted, a far mate counted, the bonus uncapped)', () => {

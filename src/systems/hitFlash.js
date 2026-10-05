@@ -161,3 +161,39 @@ vec3 eliteGlowLit(vec3 lit, vec3 albedo, float k) {
   float s = clamp((k - 0.55) / 0.45, 0.0, 1.0);
   return lit * mix(vec3(1.0), vec3(1.10, 1.04, 0.82), s) + ELITE_GOLD * (0.035 * s * l);
 }`;
+
+// TELL2 (bible/12-Enhanced-AI/Feud-Arc.md section 4.2; Mac, 2026-10-04: "breath more depth into it"): A WIND-UP'S GLINT
+// - a per-batch value (`batch.glint`, [r, g, b, strength] or none) read by both billboard shaders beside the elite glow:
+// the sprite's OUTLINE (the elite rim's own texel test, `eliteRim` above) in the blow's colour, and the body lifted
+// toward it. A flare as the wind-up begins, a steady rim through it, a rise to full in its last 0.2 s (ai/tells.js
+// glintStrength). The batch's quad widens for it as an elite's does (TELL_GLINT_PAD, the vertex shader's floor of two
+// texels a side), so the outline has room.
+export const GLINT_GLSL = `
+vec3 glintRimColor(vec4 g) { return min(g.rgb * (0.55 + 0.75 * g.a), vec3(1.0)); }
+vec3 glintLit(vec3 lit, vec3 albedo, vec4 g) {
+  if (g.a <= 0.0) return lit;
+  const vec3 LUM = vec3(0.299, 0.587, 0.114);
+  float l = dot(albedo, LUM);
+  vec3 c = g.rgb * max(dot(lit, LUM) * 1.4, 0.35 + 0.8 * l);
+  return mix(lit, c, clamp(g.a, 0.0, 1.0) * 0.45);
+}`;
+/** The pad a glinting batch's quad takes (left, bottom, right, top): any positive pad, and the vertex shader floors it at
+ *  two texels a side - the outline's room, never the embers' (a top under 0.1). */
+export const TELL_GLINT_PAD = Object.freeze([0.001, 0.001, 0.001, 0.001]);
+/** Put a glint on a billboard batch: `g` [r, g, b, strength] or null (written only when it changes). */
+export function setBatchGlint(batch, g) {
+  if (!batch) return;
+  const cur = batch.glint;
+  if (!g || !(g[3] > 0)) { if (cur) batch.glint = undefined; return; }
+  if (cur && cur[0] === g[0] && cur[1] === g[1] && cur[2] === g[2] && cur[3] === g[3]) return;
+  if (cur) { cur[0] = g[0]; cur[1] = g[1]; cur[2] = g[2]; cur[3] = g[3]; return; }   // AUDIT TELL U9: a glint that changes every frame is rewritten in place - no array a frame
+  batch.glint = [g[0], g[1], g[2], g[3]];
+}
+let _reducedAt = -Infinity, _reduced = false;
+/** The viewer's reduced motion (`prefers-reduced-motion`), read at most once a second; false where there is no window. */
+export function prefersReducedMotion(nowMs = Date.now()) {
+  if (nowMs - _reducedAt < 1000) return _reduced;
+  _reducedAt = nowMs;
+  try { _reduced = !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches; } catch { _reduced = false; }
+  return _reduced;
+}

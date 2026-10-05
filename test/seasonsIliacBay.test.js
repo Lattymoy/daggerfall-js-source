@@ -583,13 +583,16 @@ test('SIB1: both climate hosts take the cache\'s answer for a flat, and the stre
   const exterior = read('src/scenes/exterior.js');
   for (const [name, src] of [['world.js', world], ['exterior.js', exterior]]) {
     assert.match(src, /new SeasonHelper\(\{/, `${name} builds the helper`);
-    assert.match(src, /seasons\??\.lookup\(archive, record\)/, `${name} asks the cache per flat`);
+    // AUDIT 05b A12: through the one choice every host makes (world/naturePicture.js - test/naturepicture.test.js)
+    assert.match(src, /await naturePicture\(\{ door: lowPolyTrees, seasons[^}]*\}, t, archive, record\)/, `${name} asks the cache per flat, through the one choice`);
     assert.match(src, /renderer\.createBillboardBatch\(archive, rkey, sib\.size, centers\)/, `${name} draws the seasonal record at the mod's size`);
-    assert.match(src, /renderer\.uploadTexture\(archive, rkey, img, \{ mips: false, variant: '' \}\);/, `${name} uploads it WITHOUT a mip chain under the plain batch key (AUDIT 61: the mod's atlas is mipChain:false, Point)`);
     assert.match(src, /modSetting\('seasons-iliac-bay', 'Enabled'\)/, `${name} honours the switch`);
     assert.match(src, /await seasonsInstalled\(\)/, `${name} is inert without the player's copy`);
     assert.match(src, /seasonValue\(dateFromClassicMinutes\(/, `${name} reads DFU's four-valued season`);
   }
+  const seam = read('src/world/naturePicture.js');
+  assert.match(seam, /seasons\?\.lookup\?\.\(archive, record\)/, 'the one choice asks the cache per flat');
+  assert.match(seam, /renderer\.uploadTexture\(archive, key, sib\.texture\.image, \{ mips: false, variant: '' \}\);/, 'and uploads the season\'s picture WITHOUT a mip chain under the install\'s key (AUDIT 61: the mod\'s atlas is mipChain:false, Point)');
   // the streaming host: the five subscriptions, in the seams they belong to
   assert.match(world, /seasons\.onLoad\(\)/, 'SaveLoadManager.OnLoad at boot');
   assert.match(world, /seasons\.onTerrainInstantiated\(\)/, 'DaggerfallTerrain.OnInstantiateTerrain per pixel');
@@ -620,7 +623,8 @@ test('SIB1: both climate hosts take the cache\'s answer for a flat, and the stre
   assert.match(ds, /textureStoreKey\(f, deps\)/, 'the texture pick decides every file through the one exported decision');
   assert.match(ds, /storeAssets\(TEXTURE_STORE, keyed\.map\(\(\[f\]\) => f\), \(\) => true, \(f\) => keyOf\.get\(f\)\)/, 'and storeAssets does not re-decide on the basename');
   assert.match(ds, /setSeasonsSources\(names, loadTextureFile\)/, 'and registers them');
-  assert.match(read('src/scenes/shared.js'), /setSeasonsSources\(names, loadTextureFile\)/, 'the boot registers them on the same seam');
+  // PIN MOVED (AUDIT VE R2): the boot's registration is the store's one - the call above, reached from the seam
+  assert.match(read('src/scenes/shared.js'), /const textures = registerTextureStore\(\)/, 'the boot registers them on the same seam');
   // the switch and the credit
   assert.equal(MOD_SETTINGS['seasons-iliac-bay'].keys.Enabled.default, true);
   const row = CREDITS.mods.find((m) => m.title === 'Seasons of the Iliac Bay');

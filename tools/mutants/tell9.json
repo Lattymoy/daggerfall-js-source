@@ -1,0 +1,452 @@
+[
+  {
+    "name": "TELL9-track-switch-unread",
+    "file": "src/ai/tactics.js",
+    "old": "  if (!s || !tacticsSwitchOn()) return null;\n  if (unseen(s, clock()))",
+    "new": "  if (!s) return null;\n  if (unseen(s, clock()))",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-track-staggered",
+    "file": "src/ai/tactics.js",
+    "old": "  if (s.state === 'staggered') return { state: 'staggered', fill: 1, word: 'Staggered' };",
+    "new": "  if (s.state === 'staggered') return { state: 'empty', fill: 0, word: '' };",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-track-open",
+    "file": "src/ai/tactics.js",
+    "old": "  if (s.state === 'overreach') return { state: 'open', fill: 0, word: 'Open' };",
+    "new": "  if (s.state === 'overreach') return { state: 'empty', fill: 0, word: '' };",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-track-dash",
+    "file": "src/ai/tactics.js",
+    "old": "  const b = s.state === 'windup' ? s.blow : null;   // AUDIT TELL: a charge's run",
+    "new": "  const b = s.state === 'windup' ? s.blow : s.state === 'dash' ? s.dash?.blow ?? null : null;   // AUDIT TELL: a charge's run",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-track-iron",
+    "file": "src/ai/tactics.js",
+    "old": "  if (b.guard === 'iron') return { state: 'iron', fill: 1, word: 'Iron' };",
+    "new": "  if (b.guard === 'iron') return { state: 'windup', fill: 1, word: '' };",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-track-unclamped",
+    "file": "src/ai/tactics.js",
+    "old": "fill: b.poise > 0 ? Math.min(1, (b.taken ?? 0) / b.poise) : 0, word: '' };",
+    "new": "fill: b.poise > 0 ? (b.taken ?? 0) / b.poise : 0, word: '' };",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-track-feint-hidden",
+    "file": "src/ai/tactics.js",
+    "old": "  if (b.guard === 'iron') return { state: 'iron', fill: 1, word: 'Iron' };\n",
+    "new": "  if (b.feint) return { state: 'empty', fill: 0, word: '' };\n  if (b.guard === 'iron') return { state: 'iron', fill: 1, word: 'Iron' };\n",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-yield-seconds",
+    "file": "src/ui/hudFoeTarget.js",
+    "old": "export const THREAT_YIELD_S = 2;",
+    "new": "export const THREAT_YIELD_S = 1;",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-yield-gone",
+    "file": "src/ui/hudFoeTarget.js",
+    "old": "  if (_foe && _foe !== foe && !_foe.dead && (_sinceStruck < THREAT_YIELD_S || _foe.duel)) return;   // AUDIT TELL U7: nor while my duel's opponent holds it (its health comes only as the duel's word does)\n",
+    "new": "",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-yield-forever",
+    "file": "src/ui/hudFoeTarget.js",
+    "old": "  if (_foe && _foe !== foe && !_foe.dead && (_sinceStruck < THREAT_YIELD_S || _foe.duel)) return;",
+    "new": "  if (_foe && _foe !== foe && !_foe.dead) return;",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-struck-unstamped",
+    "file": "src/ui/hudFoeTarget.js",
+    "old": "  _sinceStruck = 0;   // TELL9: a threat yields to it for THREAT_YIELD_S\n",
+    "new": "",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-since-frozen",
+    "file": "src/ui/hudFoeTarget.js",
+    "old": "  _sinceStruck += dt;\n",
+    "new": "",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-threat-no-refresh",
+    "file": "src/ui/hudFoeTarget.js",
+    "old": "  _foe = foe;\n  _left = FOE_TARGET_SECONDS;\n}\n\n/** Per-frame decay",
+    "new": "  if (_foe !== foe) _left = FOE_TARGET_SECONDS;\n  _foe = foe;\n}\n\n/** Per-frame decay",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-threat-bout",
+    "file": "src/ui/hudFoeTarget.js",
+    "old": "  const bout = foe.entity.bout;\n  if (bout && !bout.chained) return;\n  if (_foe && _foe !== foe",
+    "new": "  if (_foe && _foe !== foe",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-threat-dead",
+    "file": "src/ui/hudFoeTarget.js",
+    "old": "  if (!foe?.entity || foe.dead) return;\n  const bout",
+    "new": "  if (!foe?.entity) return;\n  const bout",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-poise-unread",
+    "file": "src/ui/hudFoeTarget.js",
+    "old": "    poise: _poiseOf ? _poiseOf(_foe) ?? null : null,",
+    "new": "    poise: null,",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-join-window",
+    "file": "src/ui/hitNumbers.js",
+    "old": "export const TAG_JOIN_MS = 250;",
+    "new": "export const TAG_JOIN_MS = 5000;",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-join-target",
+    "file": "src/ui/hitNumbers.js",
+    "old": "  if (l && target != null && l.target === target && now - l.at <= TAG_JOIN_MS",
+    "new": "  if (l && now - l.at <= TAG_JOIN_MS",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-join-never",
+    "file": "src/ui/hitNumbers.js",
+    "old": "  if (l && target != null && l.target === target && now - l.at <= TAG_JOIN_MS && l.node?.isConnected) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-join-miss",
+    "file": "src/ui/hitNumbers.js",
+    "old": "    _lastHit = node && r?.hit && !r.ineffective ? {",
+    "new": "    _lastHit = node ? {",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-word-unmounted",
+    "file": "src/ui/hitNumbers.js",
+    "old": "  if (!registered || !text) return null;\n  return showNumber",
+    "new": "  if (!text) return null;\n  return showNumber",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-tag-word-unread",
+    "file": "src/ui/hitNumbers.js",
+    "old": "  if (!word) return null;   // unmounted",
+    "new": "  if (false) return null;   // unmounted",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-tags-hold",
+    "file": "src/ui/hitNumbers.js",
+    "old": "hold: 'Holds'",
+    "new": "hold: 'Hold'",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-door-peer-tags",
+    "file": "src/scenes/hostCombat.js",
+    "old": "  if (mine) { windupTag(word, f, false); feudNoteWord(word, f, back); }",
+    "new": "  windupTag(word, f, false); if (mine) feudNoteWord(word, f, back);",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-door-untagged",
+    "file": "src/scenes/hostCombat.js",
+    "old": "  if (mine) { windupTag(word, f, false); feudNoteWord(word, f, back); }",
+    "new": "  if (mine) { feudNoteWord(word, f, back); }",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-door-open-untagged",
+    "file": "src/scenes/hostCombat.js",
+    "old": "    if (mine) { windupTag(word, f, true); feudNoteWord(word, f, false); }",
+    "new": "    if (mine) { feudNoteWord(word, f, false); }",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-tag-break-speaks",
+    "file": "src/scenes/hostCombat.js",
+    "old": "word === 'hold' ? HIT_TAGS.hold : (open && !word) ? HIT_TAGS.open : null;",
+    "new": "word === 'hold' || word === 'break' ? HIT_TAGS.hold : (open && !word) ? HIT_TAGS.open : null;",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-tag-open-always",
+    "file": "src/scenes/hostCombat.js",
+    "old": "word === 'hold' ? HIT_TAGS.hold : (open && !word) ? HIT_TAGS.open : null;",
+    "new": "word === 'hold' ? HIT_TAGS.hold : !word ? HIT_TAGS.open : null;",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-threat-unmarked",
+    "file": "src/scenes/hostCombat.js",
+    "old": "    if (s.key === LOCAL_TARGET) { markFoeThreat(f); try { _windupAtMe?.(f, b); } catch { /* a warning is no blow's business */ } }",
+    "new": "    if (s.key === LOCAL_TARGET) { try { _windupAtMe?.(f, b); } catch { /* a warning is no blow's business */ } }",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-threat-any-target",
+    "file": "src/scenes/hostCombat.js",
+    "old": "    if (s.key === LOCAL_TARGET) { markFoeThreat(f); try {",
+    "new": "    markFoeThreat(f); if (s.key === LOCAL_TARGET) { try {",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-perfect-silent",
+    "file": "src/scenes/hostCombat.js",
+    "old": "play(SOUND.Parry6, TELL.PERFECT_PITCH); showWord(HIT_TAGS.perfect, 'perfect'); }",
+    "new": "play(SOUND.Parry6, TELL.PERFECT_PITCH); }",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-reader-unregistered",
+    "file": "src/scenes/hostCombat.js",
+    "old": "setFoePoiseReader((f) => poiseTrack(f?.ai));",
+    "new": "setFoePoiseReader(null);",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-contrast-never",
+    "file": "src/render/foeTelegraph.js",
+    "old": "    gl.uniform1f(U.uContrast, contrast ? 1 : 0);   // TELL9",
+    "new": "    gl.uniform1f(U.uContrast, 0);   // TELL9",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-contrast-pref-unread",
+    "file": "src/render/foeTelegraph.js",
+    "old": "export const telegraphContrastOn = () => getPref('telegraphContrast') === true;",
+    "new": "export const telegraphContrastOn = () => false;",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-contrast-unapplied",
+    "file": "src/render/foeTelegraph.js",
+    "old": "  if (uContrast > 0.5) oColor = telegraphContrast(",
+    "new": "  if (uContrast > 1.5) oColor = telegraphContrast(",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-dots-on-iron",
+    "file": "src/render/telegraphStyle.js",
+    "old": "  float dots = (1.0 - iron) * fin",
+    "new": "  float dots = fin",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-keyline-dark",
+    "file": "src/render/telegraphStyle.js",
+    "old": "vec3(1.0) * kw * 0.85",
+    "new": "vec3(0.0) * kw * 0.85",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-dots-spacing",
+    "file": "src/render/telegraphStyle.js",
+    "old": "export const CONTRAST_DOTS = 0.3;",
+    "new": "export const CONTRAST_DOTS = 0.4;",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-part-gone",
+    "file": "src/systems/features.js",
+    "old": "      parts: Object.freeze([Object.freeze({ key: 'telegraphContrast', label: 'Telegraph contrast' })]),\n",
+    "new": "",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-contrast-forced-online",
+    "file": "src/systems/features.js",
+    "old": "key: 'telegraphContrast', initial: false, online: 'player' }",
+    "new": "key: 'telegraphContrast', initial: false, online: true }",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-contrast-on-default",
+    "file": "src/systems/features.js",
+    "old": "key: 'telegraphContrast', initial: false, online: 'player' }",
+    "new": "key: 'telegraphContrast', initial: true, online: 'player' }",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-bleed-tile-gone",
+    "file": "src/ui/hudStatus.js",
+    "old": "  if (bleed && bleed.left > 0) out.push({ key: 'bleed', name: 'Bleeding', glyph: 'bleed', foot: String(bleed.left), blink: bleed.left < 2 });",
+    "new": "",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-bleed-tile-footless",
+    "file": "src/ui/hudStatus.js",
+    "old": "glyph: a.glyph, foot: a.foot ?? null, blink: !!a.blink });",
+    "new": "glyph: a.glyph });",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-bleed-blink",
+    "file": "src/ui/hudStatus.js",
+    "old": "glyph: 'bleed', foot: String(bleed.left), blink: bleed.left < 2 });",
+    "new": "glyph: 'bleed', foot: String(bleed.left), blink: bleed.left < 1 });",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-glyph32-outline",
+    "file": "src/ui/hudStatus.js",
+    "old": "      const hex = ch === 'k' ? OUTLINE : g.pal[ch];",
+    "new": "      const hex = g.pal[ch] ?? '#000000';",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-glyph32-clear",
+    "file": "src/ui/hudStatus.js",
+    "old": "      if (!ch || ch === '.') continue;\n      const hex",
+    "new": "      if (!ch) continue;\n      const hex = ch === '.' ? '#000000' : ch === 'k' ? OUTLINE : g.pal[ch];\n      const _h",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-classic-atlas",
+    "file": "src/ui/hudActiveSpells.js",
+    "old": "    if (icon.glyph) drawGlyphIcon(renderer, m, icon.glyph, icon.rect);   // TELL9: an icon of the port's own\n    else drawSpellIcon",
+    "new": "    drawSpellIcon",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-classic-glyphless",
+    "file": "src/ui/hudActiveSpells.js",
+    "old": "{ iconIndex: BLEED_ICON, glyph: BLEED_GLYPH, displayName: 'Bleeding'",
+    "new": "{ iconIndex: BLEED_ICON, displayName: 'Bleeding'",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-hud-track-undrawn",
+    "file": "src/ui/enhancedHud.js",
+    "old": "      width(parts.foePoiseFill, 'foePoiseFill', p.fill * 100);\n",
+    "new": "",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "TELL9-hud-unpoised",
+    "file": "src/ui/enhancedHud.js",
+    "old": "      parts.foe.classList.toggle('poised', !!p);\n",
+    "new": "",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  }
+]

@@ -178,8 +178,8 @@
   {
     "name": "DISC10-D-H1-the-dungeon-damaging-connect-dispatches-nothing",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      damageFoe(foe, damage, playerFeet, lookDir);   // C15: the attack ray knocks back; rigs also stagger (HurtFront/Back)\n      playerWeaponHitEntity(playerEntity, foe.entity, { mobileType: foe.mobileType });",
-    "new": "      damageFoe(foe, damage, playerFeet, lookDir);   // C15: the attack ray knocks back; rigs also stagger (HurtFront/Back)",
+    "old": "      damageFoe(foe, damage, playerFeet, lookDir, { weapon: playerWeapon.strikingWeapon });   // C15: the attack ray knocks back; rigs also stagger (HurtFront/Back); TELL1: the blow's weapon weighs it on a wind-up's poise\n      playerWeaponHitEntity(playerEntity, foe.entity, { mobileType: foe.mobileType });",
+    "new": "      damageFoe(foe, damage, playerFeet, lookDir, { weapon: playerWeapon.strikingWeapon });   // C15: the attack ray knocks back; rigs also stagger (HurtFront/Back); TELL1: the blow's weapon weighs it on a wind-up's poise",
     "tests": [
       "test/disc10_lycan.test.js"
     ]

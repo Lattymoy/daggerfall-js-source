@@ -21,6 +21,12 @@ away (bible/03-World/Parkour-Arc.md, CLIMB4), built by `tools/climbSfx.mjs` from
 the same kit and the same bake. DAGGER.SND has a body falling and the stride; it
 has no hand on stone.
 
+The `spell-heal.wav` file is the heal spell's landing (IMPACTFX, HEAL-FILE): the project owner's chosen heal sound
+(`02_Heal_02.wav`), softened for the game - its top tilted down 4.5 dB from 4.5 kHz and rolled off over 9 kHz, a soft
+diffuse bloom mixed under it, its sparkle's flicker evened out with a slow 3:1 compressor, a 25 ms fade in and a
+450 ms fade out. It is kept at **22050 Hz 16-bit mono** rather than baked to 11025 Hz 8-bit: 84% of its energy lies
+over 5 kHz, which DAGGER.SND's format cannot hold. **Source and license: to be filled in by the owner before merge.**
+
 | file | slot | source | by | license | why |
 | --- | --- | --- | --- | --- | --- |
 | `fire-shotgun.wav` | fire | [Shotgun Shot 03.wav](https://freesound.org/people/LilMati/sounds/473846/) | LilMati | CC0 | a 6ms transient - the cleanest crack in the set, and the reason it is the default |
@@ -59,3 +65,4 @@ has no hand on stone.
 | `climb-pull.wav` | climb: the haul over a lip | `tools/climbSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the leathers stretching (a swelling rustle with a flutter in it), the body sliding over the stone edge, a buckle's clink, a knee set down on top (CLIMB4) |
 | `climb-whoosh.wav` | climb: a body through the air (a leap, the eject, a wall run) | `tools/climbSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - wind through a band sweeping 350 to 1100 to 450 Hz, the clothes fluttering in it (CLIMB4) |
 | `climb-crumble.wav` | climb: the grip failing | `tools/climbSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a dense crumble of grit, then four pebbles ticking down the wall away from the ear (each bounce quieter and duller), and the sand's hiss (CLIMB4) |
+| `spell-heal.wav` | heal impact | `02_Heal_02.wav`, supplied by the project owner (2026-10-05) | TO FILL IN | TO FILL IN | the heal the player picked as perfect, softened and smoothed; kept at 22050 Hz 16-bit so its shimmer survives |

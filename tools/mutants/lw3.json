@@ -1,0 +1,526 @@
+[
+  {
+    "name": "LW3-walk-from",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "export const WALK_FROM_H = 7;",
+    "new": "export const WALK_FROM_H = 8;",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-walk-to",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "export const WALK_TO_H = 19;",
+    "new": "export const WALK_TO_H = 20;",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-night-walked",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    if (hi > lo) total += hi - lo;",
+    "new": "    total += hi - lo;",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-when-overshoots",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "      if (hi - lo >= left) return lo + left;",
+    "new": "      if (hi - lo >= left) return hi;",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-pixel-corner",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  const pts = (plan?.pixels ?? []).map((p) => [p.x * NATIVE_PIXEL + NATIVE_PIXEL / 2, (499 - p.y) * NATIVE_PIXEL + NATIVE_PIXEL / 2]);",
+    "new": "  const pts = (plan?.pixels ?? []).map((p) => [p.x * NATIVE_PIXEL, (499 - p.y) * NATIVE_PIXEL]);",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-way-facing",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  return { x: a[0] + (b[0] - a[0]) * k, z: a[1] + (b[1] - a[1]) * k, yaw: Math.atan2(b[0] - a[0], b[1] - a[1]) };",
+    "new": "  return { x: a[0] + (b[0] - a[0]) * k, z: a[1] + (b[1] - a[1]) * k, yaw: Math.atan2(b[1] - a[1], b[0] - a[0]) };",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-trim-margin",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "export const townTrim = (town) => (Math.ceil(Math.sqrt(Math.max(1, town.blocks | 0))) * NATIVE_BLOCK) / 2 + NATIVE_BLOCK / 2;",
+    "new": "export const townTrim = (town) => (Math.ceil(Math.sqrt(Math.max(1, town.blocks | 0))) * NATIVE_BLOCK) / 2;",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-range-floor",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    .filter((t) => t.mapId !== home.mapId && Math.max(Math.abs((t.px ?? 0) - (home.px ?? 0)), Math.abs((t.py ?? 0) - (home.py ?? 0))) >= rMin);",
+    "new": "    .filter((t) => t.mapId !== home.mapId);",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-cycle-exact-unread",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    if (backT1 > (start + len) * DAY_MIN + DAY_START_MIN) continue;",
+    "new": "    if (false) continue;",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ],
+    "equivalent": true,
+    "why": "Belt and braces: the estimate before it (2 x ceil(walk / a day's 720 walking minutes) + the stay + 1) never admits a trip that ends past its cycle - a leg set out by nine walks at least ten hours its first day, and the +1 covers a no-stay trip's next-morning start - so the exact check never binds; it is kept so a later pace or a later stay rule the estimate does not foresee still cannot overrun the cycle."
+  },
+  {
+    "name": "LW3-chance-unread",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  if (rng() >= chance && !world.fated?.(res, k)) return null;   // LW4: a death the lives hold for this cycle is met on the road",
+    "new": "  if (rng() >= 1 && !world.fated?.(res, k)) return null;   // LW4: a death the lives hold for this cycle is met on the road",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-pick-per-town",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  const first = near.find((t) => String(t.mapId) === pick);",
+    "new": "  const first = near.find((t) => String(t.mapId) === pickWeighted(rng, weights));",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-hire-order",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  sellswords: roster.filter((r) => r.job === 'mercenary').sort((a, b) => a.slot - b.slot),",
+    "new": "  sellswords: roster.filter((r) => r.job === 'mercenary').sort((a, b) => b.slot - a.slot),",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-contract-unread",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "      const contract = mi < 0 ? [] : sellswords.filter((_, i) => i % merchants.length === mi);",
+    "new": "      const contract = mi < 0 ? [] : sellswords;",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-contract-one-merchant",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "      const contract = mi < 0 ? [] : sellswords.filter((_, i) => i % merchants.length === mi);",
+    "new": "      const contract = mi < 0 ? [] : sellswords.filter((_, i) => i % merchants.length === 0);",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-no-joiners",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "        if (jt && jt.to.mapId === tr.to.mapId && dayOf(jt) === d && trainOf(jt)?.id === tr.id) joined.push(jt.leader);",
+    "new": "        if (false) joined.push(jt.leader);",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-joiner-every-train",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "        if (jt && jt.to.mapId === tr.to.mapId && dayOf(jt) === d && trainOf(jt)?.id === tr.id) joined.push(jt.leader);",
+    "new": "        if (jt && jt.to.mapId === tr.to.mapId && dayOf(jt) === d) joined.push(jt.leader);",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-joiner-own-trip",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    } else if (!(JOINS.has(tr.kind) && trainOf(tr))) out.push(tr);",
+    "new": "    } else out.push(tr);",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-train-of-the-window",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "      const mt = placeTrip(m, d);",
+    "new": "      const mt = trips.find((x) => x.leader.slot === m.slot) ?? null;",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-hire-cap",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "export const HIRE_MAX = 3;",
+    "new": "export const HIRE_MAX = 4;",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-night-walking",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    return { phase, x: p.x, z: p.z, yaw: phase === 'back' ? p.yaw + Math.PI : p.yaw, camp: !daylight(t), s, ...extra };",
+    "new": "    return { phase, x: p.x, z: p.z, yaw: phase === 'back' ? p.yaw + Math.PI : p.yaw, camp: false, s, ...extra };",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-home-faced-wrong",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    return { phase, x: p.x, z: p.z, yaw: phase === 'back' ? p.yaw + Math.PI : p.yaw, camp: !daylight(t), s, ...extra };",
+    "new": "    return { phase, x: p.x, z: p.z, yaw: p.yaw, camp: !daylight(t), s, ...extra };",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-trim-unread",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  if (t < trip.outT1) return placed('out', Math.max(trim0, trim0 + Math.min(walk, pace * walkedMinutes(trip.outT0, t)) - lag('out')));",
+    "new": "  if (t < trip.outT1) return placed('out', Math.max(0, Math.min(walk, pace * walkedMinutes(trip.outT0, t)) - lag('out')));",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-home-before-arrival",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    const backT0 = Math.max(outT1 + 60, stay > 0 ? morning(arriveDay + stay) : (outT1 - arriveDay * DAY_MIN < 12 * 60 ? outT1 + 120 : morning(arriveDay + 1)));",
+    "new": "    const backT0 = stay > 0 ? morning(arriveDay + stay) : morning(arriveDay);",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-visit-window",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "      if (tr.to.mapId !== town.mapId || tr.turned || !(tr.outT1 < D1 && tr.backT0 > D0)) continue;   // LW4: a party turned home never comes",
+    "new": "      if (tr.to.mapId !== town.mapId || tr.turned) continue;   // LW4: a party turned home never comes",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-away-armed",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    out.push({ t0: tr.outT0, t1: fell ? Infinity : tr.backT1, yaw: leavingYaw(tr), armed: res.cls != null, dock: !!tr.sea });",
+    "new": "    out.push({ t0: tr.outT0, t1: fell ? Infinity : tr.backT1, yaw: leavingYaw(tr), armed: true, dock: !!tr.sea });",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-near-reach",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    if (Math.max(Math.abs(ppx - px), Math.abs(ppy - py)) <= rPx) parties.push({ trip, at });",
+    "new": "    if (Math.max(Math.abs(ppx - px), Math.abs(ppy - py)) <= rPx + 4) parties.push({ trip, at });",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-reach-px",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "export const TRIP_REACH_PX = 18;",
+    "new": "export const TRIP_REACH_PX = 17;",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-file-ahead",
+    "file": "src/scenes/livingRoads.js",
+    "old": "    const s = /** @type {number} */ (at.s) + (back ? 1 : -1) * i * FILE_GAP_N;   // behind the leader, the way they walk",
+    "new": "    const s = /** @type {number} */ (at.s) + (back ? -1 : 1) * i * FILE_GAP_N;   // behind the leader, the way they walk",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-file-one-side",
+    "file": "src/scenes/livingRoads.js",
+    "old": "    const side = i === 0 ? 0 : (i % 2 ? 1 : -1) * FILE_SIDE_N;",
+    "new": "    const side = i === 0 ? 0 : FILE_SIDE_N;",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-ring-facing",
+    "file": "src/scenes/livingRoads.js",
+    "old": "      out.push({ res: trip.party[i], x, z, yaw: Math.atan2(/** @type {number} */ (at.x) - x, /** @type {number} */ (at.z) - z), moving: false });",
+    "new": "      out.push({ res: trip.party[i], x, z, yaw: 0, moving: false });",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-play-reach",
+    "file": "src/scenes/livingRoads.js",
+    "old": "      const reach = overworld ? TRAVELLER_FAR_M + 60 : ROADS_PLAY_M;",
+    "new": "      const reach = overworld ? TRAVELLER_FAR_M + 60 : ROADS_PLAY_M * 40;",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-stranger-known",
+    "file": "src/scenes/livingRoads.js",
+    "old": "        : rel?.known(m.res.id) ? ROAD_GREETINGS.known : ROAD_GREETINGS.stranger;",
+    "new": "        : ROAD_GREETINGS.known;",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-caravan-unmarked",
+    "file": "src/scenes/livingRoads.js",
+    "old": "        kind: `${p.trip.kind === 'merchant' ? 'wayfarer caravan' : 'wayfarer'}${beset ? ' fight' : ''}`, trip: p.trip });",
+    "new": "        kind: `wayfarer${beset ? ' fight' : ''}`, trip: p.trip });",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-caught-unnoted",
+    "file": "src/scenes/livingRoads.js",
+    "old": "      deps.relations?.()?.note(id, 'crime', dayOf(deps.clock()));",
+    "new": "      deps.relations?.()?.note(id, 'talk', dayOf(deps.clock()));",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-enemy-talks-on-road",
+    "file": "src/scenes/livingRoads.js",
+    "old": "      return s === 'enemy' || s === 'hostile' ? fillLine(LIVING_REFUSAL, { a: firstNameOf(person.nameNPC) }) : null;",
+    "new": "      return s === 'hostile' ? fillLine(LIVING_REFUSAL, { a: firstNameOf(person.nameNPC) }) : null;",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-sprite-male-only",
+    "file": "src/world/travellerSprites.js",
+    "old": "  const archive = res.sex === 'female' && basics.femaleTexture ? basics.femaleTexture : basics.maleTexture;",
+    "new": "  const archive = basics.maleTexture;",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-batch-unfreed",
+    "file": "src/world/travellerSprites.js",
+    "old": "    if (b?.batch) renderer?.destroyBillboardBatch?.(b.batch);",
+    "new": "    void b;",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-fade-unread",
+    "file": "src/world/travellerSprites.js",
+    "old": "      const target = ground ? 1 : bandSpriteReach(m.distM) * Math.max(0, Math.min(1, fade));",
+    "new": "      const target = 1;",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-sky-talk",
+    "file": "src/world/travellerSprites.js",
+    "old": "      if (ground && b.person && m.talk !== false) seats.push({ person: b.person, pos: f });",
+    "new": "      if (b.person && m.talk !== false) seats.push({ person: b.person, pos: f });",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-armed-frames-unread",
+    "file": "src/characters/residentWalker.js",
+    "old": "    if (this.armed && this.unit) return this.unit.update(dt, { moving: this.moving && !wantsToStop }, this.yaw, this.pos, cameraPos);",
+    "new": "    void this.unit;",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-never-armed",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      const armed = !!w.e.armed && res.cls != null;",
+    "new": "      const armed = false;",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-visitor-unread",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      const visit = roads?.visitorOf.get(res.id) ?? null;",
+    "new": "      const visit = null;",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-lodged-in-the-street",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    return taverns.length ? taverns[lwSeed(textSeed(res.id), 0x6c6f6467) % taverns.length] : (this.places.square ?? null);   // 'lodg'",
+    "new": "    return this.places.square ?? null;",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-host-mods-rows",
+    "file": "src/scenes/world.js",
+    "old": "    for (const loc of _hubRows) {\n      const md = loc.mapTableData;\n      if (!md || !populatesWanderingNpcs(md.locationType)) continue;",
+    "new": "    for (const loc of _hubRows) {\n      const md = loc.mapTableData;\n      if (!md) continue;",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-ways-both-ways",
+    "file": "src/systems/livingWorld/ways.js",
+    "old": "      const flip = a.mapId > b.mapId;",
+    "new": "      const flip = false;",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-ways-budget-unspent",
+    "file": "src/systems/livingWorld/ways.js",
+    "old": "        if (budget <= 0) return undefined;",
+    "new": "        if (budget < -99) return undefined;",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-ways-network-kept",
+    "file": "src/systems/livingWorld/ways.js",
+    "old": "      if (raw.roads !== net) { if (net !== null) { book.clear(); generation++; } net = raw.roads; }",
+    "new": "      if (raw.roads !== net) { net = raw.roads; }",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-ways-no-roads-none",
+    "file": "src/systems/livingWorld/ways.js",
+    "old": "      if (!raw) return undefined;",
+    "new": "      if (!raw) return null;",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-host-ground-misbound",
+    "file": "src/scenes/world.js",
+    "old": "routeGround((px, py) => maps.getClimateIndex(px, py), (px, py) => woods.getHeightMapValue(px, py), WATER_BYTE)",
+    "new": "routeGround((px, py) => woods.getHeightMapValue(px, py), (px, py) => maps.getClimateIndex(px, py), WATER_BYTE)",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-host-network-memo-kept",
+    "file": "src/scenes/world.js",
+    "old": "    livingWays.frame(); livingMemoFresh();   // LW3: a new network, new ways",
+    "new": "    livingWays.frame();   // LW3: a new network, new ways",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-host-roads-unwired",
+    "file": "src/scenes/world.js",
+    "old": "      livingRoadsOf().frame(townTalk.overlayActive ? 0 : dt, cam.pos, { overworld: tvf ? { grow: tvf.grow, blend: tvf.blend } : null });",
+    "new": "      void livingRoadsOf;",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-host-indoors-kept",
+    "file": "src/scenes/world.js",
+    "old": "      if (livingRoads) livingRoads.clear();   // LW3: indoors, underground - the road's bodies freed with the open world they stood in",
+    "new": "      // LW3: indoors",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-host-talk-town-only",
+    "file": "src/scenes/world.js",
+    "old": "          else if (!townTalk.tryActivate(cam.pos, useFwd, _talkPersons(), _nonPersonRival)) {   // LW3: the road's people beside the town's",
+    "new": "          else if (!townTalk.tryActivate(cam.pos, useFwd, _livePersons, _nonPersonRival)) {   // LW3: the road's people beside the town's",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-host-marks-unwired",
+    "file": "src/scenes/world.js",
+    "old": "      for (const m of livingRoads.marks()) if (markShown({ kind: m.kind })) marks.push({ key: m.key, at: [m.at[0], m.at[1] + 2, m.at[2]], label: m.label, kind: m.kind });",
+    "new": "      void markShown;",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-host-tripless-town",
+    "file": "src/scenes/world.js",
+    "old": "          tripsOf: (day) => livingTripsOf(livingTown, day), armOf: livingArmOf,   // LW3: its travellers away and armed, its visitors",
+    "new": "          // LW3",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-road-watch",
+    "file": "src/scenes/townTalk.js",
+    "old": "      if (!r.success) { livingTalk?.caught?.(target.person); if (!target.person?.living?.town?.roadside) onCrime?.(); }",
+    "new": "      if (!r.success) onCrime?.();",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-wayfarer-ungrouped",
+    "file": "src/systems/travelViewFilters.js",
+    "old": "  if (k === 'traveller' || k === 'wayfarer') return 'travellers';   // LW3: the living world's parties beside the players",
+    "new": "  if (k === 'traveller') return 'travellers';   // LW3: the living world's parties beside the players",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  },
+  {
+    "name": "LW3-wayfarer-look",
+    "file": "src/ui/travelViewHud.js",
+    "old": "  if (k === 'wayfarer') return k;   // LW3: the living world's parties on the road",
+    "new": "  if (false) return k;   // LW3: the living world's parties on the road",
+    "tests": [
+      "test/lw3_roads.test.js"
+    ]
+  }
+]

@@ -2,8 +2,8 @@
   {
     "name": "TACT4-tier-floor",
     "file": "src/ai/foeBlows.js",
-    "old": "  return (entity.level ?? 0) >= BLOW_TIER_LEVEL || entity.elite === true || entity.eliteFoe === true;",
-    "new": "  return (entity.level ?? 0) >= 0 || entity.elite === true || entity.eliteFoe === true;",
+    "old": "  return (entity.level ?? 0) >= BLOW_TIER_LEVEL || isElite(entity) || !!entity.champion || !!entity.revenant;",
+    "new": "  return (entity.level ?? 0) >= 0 || isElite(entity) || !!entity.champion || !!entity.revenant;",
     "tests": [
       "test/tact4.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "TACT4-elite-ignored",
     "file": "src/ai/foeBlows.js",
-    "old": "  return (entity.level ?? 0) >= BLOW_TIER_LEVEL || entity.elite === true || entity.eliteFoe === true;",
-    "new": "  return (entity.level ?? 0) >= BLOW_TIER_LEVEL || entity.eliteFoe === true;",
+    "old": "  return (entity.level ?? 0) >= BLOW_TIER_LEVEL || isElite(entity) || !!entity.champion || !!entity.revenant;",
+    "new": "  return (entity.level ?? 0) >= BLOW_TIER_LEVEL || entity.eliteFoe === true || !!entity.champion || !!entity.revenant;",
     "tests": [
       "test/tact4.test.js"
     ]
@@ -92,11 +92,12 @@
   {
     "name": "TACT4-range-ignored",
     "file": "src/ai/foeBlows.js",
-    "old": "    if (near && Math.hypot(b.origin[0] - near[0], b.origin[2] - near[2]) > (b.sand ? Math.max(range, SAND_DRAW_RANGE) : range)) continue;",
-    "new": "    void range;",
+    "old": "    if (near && d > (b.sand ? Math.max(range, SAND_DRAW_RANGE) : range)) continue;\n    out.push({ blow: b, phase, nearFloor",
+    "new": "    void range;\n    out.push({ blow: b, phase, nearFloor",
     "tests": [
       "test/tact4.test.js"
-    ]
+    ],
+    "note": "FEUD's MERGE of main's #586-#622 (PIN MOVED): re-aimed by content - the range is the sand's for a blow wound up on the sand."
   },
   {
     "name": "TACT4-verdict-kept",
@@ -146,7 +147,7 @@
   {
     "name": "TACT4-many-windups",
     "file": "src/ai/foeBlows.js",
-    "old": "    if (ai === except || now >= b.land || gone(ai, now)) continue;",
+    "old": "    if (ai === except || b.cut != null || gone(ai, now)) continue;",
     "new": "    continue;",
     "tests": [
       "test/tact4.test.js"
@@ -164,8 +165,8 @@
   {
     "name": "TACT4-no-tier-gate",
     "file": "src/ai/tactics.js",
-    "old": "    if (throwsBlows(ent) && !windupNear(aim, now, ai) && Math.random() < BLOW_CHANCE) {",
-    "new": "    if (!windupNear(aim, now, ai) && Math.random() < BLOW_CHANCE) {",
+    "old": "  const all = throwsBlows(ent) ? blowShapesOf(ent.mobileType, ent) : [];",
+    "new": "  const all = blowShapesOf(ent.mobileType, ent);",
     "tests": [
       "test/tact4.test.js"
     ]
@@ -200,20 +201,22 @@
   {
     "name": "TACT4-verdict-always",
     "file": "src/ai/tactics.js",
-    "old": "      ai._blowVerdict = inBlow(s.blow, at[0], at[2]);",
-    "new": "      ai._blowVerdict = true;",
+    "old": "    if (tf) return resolveLanding(ai, s, s.blow, arrived && inBlow(s.blow, tf[0], tf[2]), now, cooled, atMe, judgedHere(ai, key));",
+    "new": "    if (tf) return resolveLanding(ai, s, s.blow, true, now, cooled, atMe, judgedHere(ai, key));",
     "tests": [
       "test/tact4.test.js"
-    ]
+    ],
+    "note": "FEUD's MERGE of main's #586-#622 (PIN MOVED): re-aimed by content - the landing passes judgedHere beside atMe. TELL8 (PIN MOVED): re-aimed by content - the owner winds up at a peer it hunts (`tf` its target's feet, `atMe` the damage's gate), a peer's blow carries its class, the relay moved to world162."
   },
   {
     "name": "TACT4-no-forced-swing",
     "file": "src/ai/tactics.js",
-    "old": "    ai._blowMult = s.blow.mult; ai._blowAt = now; ai._blowSwing = true;",
-    "new": "    ai._blowMult = s.blow.mult; ai._blowAt = now;",
+    "old": "  ai._blowMult = judged ? b.mult : undefined; ai._blowAt = now; ai._blowSwing = true;",
+    "new": "  ai._blowMult = judged ? b.mult : undefined; ai._blowAt = now;",
     "tests": [
       "test/tact4.test.js"
-    ]
+    ],
+    "note": "FEUD's MERGE of main's #586-#622 (PIN MOVED): the weight is a judged landing's (mine or a bout-mate's - judgedHere), the swing forced as before. TELL8 (PIN MOVED): re-aimed by content - the owner winds up at a peer it hunts (`tf` its target's feet, `atMe` the damage's gate), a peer's blow carries its class, the relay moved to world162."
   },
   {
     "name": "TACT4-sight-breaks",

@@ -297,7 +297,7 @@ test('RR2 the trample and the charge on the hosts: the contacts each frame, the 
   assert.match(rh, /if \(isGuardRecord\(f\)\) hurtGuard\(f, damage, at\);\s*else damageFoe\(f, damage, at\);/, 'AUDIT-RR F17: DamageHealthFromSource - no knock direction handed to the weapon path');
   assert.match(rh, /const out = rrTrampleOutcome\(\{ isGuard: !!person\.guard, female: person\.gender === GENDERS\.Female \}\);/);
   assert.match(rh, /if \(out\.clip\) playClip\(SOUND\[out\.clip\], ridingVolumeScale\(\)\);/, 'AUDIT-RR F16: RidingVolumeScale');
-  assert.match(rh, /spawnCityGuard\(\[\.\.\.seat\.pos\], person\.facingYaw \?\? yaw\(\), \[\.\.\.at\]\)\)\.then\(\(g\) => \{ if \(g\) chargeFoe\(g, fwd\); \}\)/, 'SpawnCityGuard + HandleCharge');
+  assert.match(rh, /spawnCityGuard\(\[\.\.\.seat\.pos\], person\.facingYaw \?\? yaw\(\), \[\.\.\.at\]\)\)\.then\(\(g\) => \{ if \(g\) \{ g\.livingFrom = from; chargeFoe\(g, fwd\); \} \}\)/, 'SpawnCityGuard + HandleCharge');   // LW-FIX2: the guard marks whom it stands for (the living world's turned watch - LW-FIX5: the struck body's identity, read before the spawn)
   assert.match(rh, /if \(out\.remove\) \{ person\.trampled = true; retire\(person\); \}/);
   for (const h of ['world', 'exterior']) {
     const s = rd(`src/scenes/${h}.js`);

@@ -342,7 +342,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   for (const [pi, p] of interior.placements.entries()) {
     const matrix = parent(p.matrix);
     // NEVER TRAPS: getGpuMesh returns NULL for a model id this data set
-    // does not carry (dataPipeline.js:150, and it CACHES the null), and
+    // does not carry (dataPipeline.js:175, and it CACHES the null), and
     // cpuModels is written only on its success path - so an absent
     // model used to push a {mesh: null} draw entry AND then read
     // `cpu.positions` off undefined one line later. Every other builder

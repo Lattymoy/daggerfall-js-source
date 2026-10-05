@@ -153,6 +153,13 @@ export const STATUS_GLYPHS = Object.freeze({
     '.kkaaaaaaaaaakk.', '..kaaaakkaaack..', '..kkaaaaaaackk..', '...kkaaaaackk...',
     '....kakaakck....', '....kaaaccck....', '....kkkkkkkk....', '................',
   ] }),
+  // TELL9 (bible/12-Enhanced-AI/Feud-Arc.md 8.2, 11): two drops of blood - a sweep's BLEED, its own icon on both skins
+  bleed: Object.freeze({ pal: { a: '#c8202a', b: '#ff7a6a', c: '#7a0e14' }, rows: [
+    '....kkkk........', '....kaak........', '...kkaakk.......', '...kaaaak.......',
+    '..kkbaaakk......', '..kbaaaaak......', '.kkbaaaaakk.....', '.kbaaaaaaak.....',
+    '.kbaaaaaaak.kkk.', '.kbaaaaaackkkakk', '.kaaaaaaackkaaak', '.kkaaaaacckkaaak',
+    '..kkaaacckkkbaak', '...kkkkkkk.kacck', '...........kkkkk', '................',
+  ] }),
   // a spore
   disease: Object.freeze({ pal: { a: '#c8d24a', b: '#eef59a', c: '#6e7a18' }, rows: [
     '....kkkkkkkk....', '...kkaakkaakk...', '...kaaakkaaak...', '.kkkkaakkaakkkk.',
@@ -180,6 +187,24 @@ export function statusGlyphSvg(name) {
   });
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges">${body}</svg>`;
 }
+/** TELL9: a glyph as Color32 pixels on its 16px grid (`{ width, height, colors }`, RGBA, '.' clear) - the classic row's
+ *  texture (ui/hudActiveSpells.js), or null for a name there is none of. */
+export function statusGlyphColor32(name) {
+  const g = Object.hasOwn(STATUS_GLYPHS, name) ? STATUS_GLYPHS[name] : null;
+  if (!g) return null;
+  const colors = new Uint32Array(16 * 16);
+  const u8 = new Uint8Array(colors.buffer);
+  g.rows.forEach((row, y) => {
+    for (let x = 0; x < 16; x++) {
+      const ch = row[x];
+      if (!ch || ch === '.') continue;
+      const hex = ch === 'k' ? OUTLINE : g.pal[ch];
+      const n = parseInt(hex.slice(1), 16), o = (y * 16 + x) * 4;
+      u8[o] = n >> 16; u8[o + 1] = (n >> 8) & 255; u8[o + 2] = n & 255; u8[o + 3] = 255;
+    }
+  });
+  return { width: 16, height: 16, colors };
+}
 const _srcs = new Map();
 /** A glyph as a picture's source (an `<img>`'s src), made once a name. */
 export function statusGlyphSrc(name) {
@@ -194,9 +219,9 @@ export function statusGlyphSrc(name) {
  * The poisons and diseases the widget shows - the Status box's law (systems/healthStatus.js healthStatusRows): ONE
  * tile for being poisoned, once any poison has left its waiting (the game names none: "You have been poisoned."); a
  * tile a disease whose incubation is over, by its name; nothing for an entry that has ended, one still waiting or
- * incubating, or an infection (no disease row: `disease` null).
+ * incubating, or an infection (no disease row: `disease` null). TELL9: and a blow's bleed, its ticks left at its foot.
  * @param {any} entity
- * @returns {{ key: string, name: string, glyph: string }[]}
+ * @returns {{ key: string, name: string, glyph: string, foot?: string, blink?: boolean }[]}
  */
 export function afflictionRows(entity) {
   const out = [];
@@ -209,6 +234,10 @@ export function afflictionRows(entity) {
     }
   }
   if (poisoned) out.unshift({ key: 'poison', name: 'Poisoned', glyph: 'poison' });
+  // TELL9 (bible/12-Enhanced-AI/Feud-Arc.md 8.2): a sweep's BLEED (systems/blowEffects.js) - its ticks left at its foot,
+  // the last blinking, as a spell's rounds
+  const bleed = entity?.bleed;
+  if (bleed && bleed.left > 0) out.push({ key: 'bleed', name: 'Bleeding', glyph: 'bleed', foot: String(bleed.left), blink: bleed.left < 2 });
   return out;
 }
 
@@ -251,7 +280,7 @@ export function statusTiles({ spells = [], powers = [], afflictions = [], needs 
     bundle: e.bundleId ?? null, endable: !!e.endable && e.bundleId != null,   // BUFF-END: a right-click ends it (ui/enhancedHud.js)
   }));
   for (const c of powers) tile({ key: `set:${c.key}`, kind: 'set', name: String(c.name ?? ''), foot: c.text ? String(c.text) : null, recovering: c.state === 'recovering', set: c.set ?? null });
-  for (const a of afflictions) tile({ key: a.key, kind: 'debuff', name: a.name, glyph: a.glyph });
+  for (const a of afflictions) tile({ key: a.key, kind: 'debuff', name: a.name, glyph: a.glyph, foot: a.foot ?? null, blink: !!a.blink });   // TELL9: a bleed's ticks
   // NEED-TIER: and how bad, at its foot ("2/3" - Hungry of Peckish, Hungry, Starving), as a spell's rounds are: the glyph
   // is one picture for every stage and the name goes where there is no room, so the foot is what says it there
   for (const c of needs) tile({ key: `need:${c.key}`, kind: c.level === 'danger' ? 'danger' : 'warn', name: String(c.text ?? ''), glyph: needGlyph(c), foot: c.tier ? `${c.tier}/${c.of}` : null });

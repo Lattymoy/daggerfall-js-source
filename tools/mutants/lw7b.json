@@ -1,0 +1,551 @@
+[
+  {
+    "name": "LW7b-draw-m",
+    "file": "src/scenes/roadStands.js",
+    "old": "export const DRAW_M = 45;",
+    "new": "export const DRAW_M = 50;",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-help-m",
+    "file": "src/scenes/roadStands.js",
+    "old": "export const HELP_M = 70;",
+    "new": "export const HELP_M = 80;",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-keep-m",
+    "file": "src/scenes/roadStands.js",
+    "old": "export const KEEP_M = 200;",
+    "new": "export const KEEP_M = 260;",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-calm-s",
+    "file": "src/scenes/roadStands.js",
+    "old": "export const CALM_S = 8;",
+    "new": "export const CALM_S = 4;",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-fight-near-m",
+    "file": "src/scenes/roadStands.js",
+    "old": "export const FIGHT_NEAR_M = 30;",
+    "new": "export const FIGHT_NEAR_M = 40;",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-draw-reach",
+    "file": "src/scenes/roadStands.js",
+    "old": "          if (standing === 'hostile' && distM <= DRAW_M) stand(c, 'foe');",
+    "new": "          if (standing === 'hostile' && distM <= DRAW_M * 2) stand(c, 'foe');",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-draw-enemy",
+    "file": "src/scenes/roadStands.js",
+    "old": "          if (standing === 'hostile' && distM <= DRAW_M) stand(c, 'foe');",
+    "new": "          if ((standing === 'hostile' || standing === 'enemy') && distM <= DRAW_M) stand(c, 'foe');",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-draw-unarmed",
+    "file": "src/scenes/roadStands.js",
+    "old": "          if (c.res?.cls == null || stands.has(c.res.id)) continue;",
+    "new": "          if (stands.has(c.res.id)) continue;",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-draw-twice",
+    "file": "src/scenes/roadStands.js",
+    "old": "          if (c.res?.cls == null || stands.has(c.res.id)) continue;",
+    "new": "          if (c.res?.cls == null) continue;",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-help-no-fight",
+    "file": "src/scenes/roadStands.js",
+    "old": "          else if (standing === 'friend' && fight && distM <= HELP_M) stand(c, 'friend');",
+    "new": "          else if (standing === 'friend' && distM <= HELP_M) stand(c, 'friend');",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-help-reach",
+    "file": "src/scenes/roadStands.js",
+    "old": "          else if (standing === 'friend' && fight && distM <= HELP_M) stand(c, 'friend');",
+    "new": "          else if (standing === 'friend' && fight && distM <= HELP_M * 2) stand(c, 'friend');",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-gate-sky",
+    "file": "src/scenes/roadStands.js",
+    "old": "      const can = !!here && ground && deps.ready();",
+    "new": "      const can = !!here && deps.ready();",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-gate-ready",
+    "file": "src/scenes/roadStands.js",
+    "old": "      const can = !!here && ground && deps.ready();",
+    "new": "      const can = !!here && ground;",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-foe-allied",
+    "file": "src/scenes/roadStands.js",
+    "old": "allied: kind === 'friend', gender: c.res.sex ?? 'male' }",
+    "new": "allied: true, gender: c.res.sex ?? 'male' }",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-foe-where",
+    "file": "src/scenes/roadStands.js",
+    "old": "Promise.resolve(deps.spawn(c.res.cls, deps.sceneOf(c.x, c.z),",
+    "new": "Promise.resolve(deps.spawn(c.res.cls, deps.sceneOf(c.z, c.x),",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-foe-unnamed",
+    "file": "src/scenes/roadStands.js",
+    "old": "        if (rec.entity) rec.entity.name = c.res.name;",
+    "new": "        void 0;",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-foe-unliving",
+    "file": "src/scenes/roadStands.js",
+    "old": "        rec.living = { id: c.res.id, res: c.res, town: deps.door ?? null };",
+    "new": "        void 0;",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-friend-not-shipmate",
+    "file": "src/scenes/roadStands.js",
+    "old": "          rec.shipmate = true;",
+    "new": "          void 0;",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-friend-team",
+    "file": "src/scenes/roadStands.js",
+    "old": "          if (rec.entity) { rec.entity.team = 'PlayerAlly'; rec.entity.mobileTeam = 'PlayerAlly'; }",
+    "new": "          void 0;",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-foe-slain-unmade",
+    "file": "src/scenes/roadStands.js",
+    "old": "            deps.slay(s.res, t, true);   // struck down before their party",
+    "new": "            void 0;   // struck down before their party",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-foe-unseen",
+    "file": "src/scenes/roadStands.js",
+    "old": "            deps.slay(s.res, t, true);   // struck down before their party",
+    "new": "            deps.slay(s.res, t, false);   // struck down before their party",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-foe-party-spared",
+    "file": "src/scenes/roadStands.js",
+    "old": "            for (const m of membersAt(s.trip, t)) if (m.id !== s.res.id) rel?.note(m.id, 'slain', day);",
+    "new": "            void membersAt;",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-friend-died-unmade",
+    "file": "src/scenes/roadStands.js",
+    "old": "          } else deps.died(s.res, t);   // fallen at the player's side",
+    "new": "          } else void 0;   // fallen at the player's side",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-dead-taken",
+    "file": "src/scenes/roadStands.js",
+    "old": "    if (!s.rec?.dead) takeOut(s.rec);   // the dead are the pool's own",
+    "new": "    takeOut(s.rec);   // the dead are the pool's own",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-far",
+    "file": "src/scenes/roadStands.js",
+    "old": "        const far = !here || Math.hypot(s.at.x - here.x, s.at.z - here.z) / NATIVE_PER_M > KEEP_M;",
+    "new": "        const far = !here || Math.hypot(s.at.x - here.x, s.at.z - here.z) / NATIVE_PER_M > KEEP_M * 2;",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-calm-reset",
+    "file": "src/scenes/roadStands.js",
+    "old": "        if (s.kind === 'friend') s.calm = deps.fighting() ? 0 : s.calm + dt;",
+    "new": "        if (s.kind === 'friend') s.calm = s.calm + dt;",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-calm-ignored",
+    "file": "src/scenes/roadStands.js",
+    "old": "        if (far || !can || (s.kind === 'friend' && s.calm >= CALM_S)) letGo(id);",
+    "new": "        if (far || !can) letGo(id);",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-gone-unheld",
+    "file": "src/scenes/roadStands.js",
+    "old": "        if (far || !can || (s.kind === 'friend' && s.calm >= CALM_S)) letGo(id);",
+    "new": "        if (far || (s.kind === 'friend' && s.calm >= CALM_S)) letGo(id);",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-failed-redrawn",
+    "file": "src/scenes/roadStands.js",
+    "old": "    stood: (id) => { const s = stands.get(id); return !!s && !s.failed; },",
+    "new": "    stood: (id) => stands.has(id),",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-failed-retried",
+    "file": "src/scenes/roadStands.js",
+    "old": "        if (!rec) { fail(); return; }",
+    "new": "        if (!rec) { stands.delete(c.res.id); return; }",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-say",
+    "file": "src/scenes/roadStands.js",
+    "old": "    deps.say?.(kind === 'foe' ? `${first} draws on you!` : `${first} comes to your side.`);",
+    "new": "    deps.say?.('');",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-clear",
+    "file": "src/scenes/roadStands.js",
+    "old": "    clear() { for (const id of [...stands.keys()]) letGo(id); },",
+    "new": "    clear() {},",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-roads-skip",
+    "file": "src/scenes/livingRoads.js",
+    "old": "          if (deps.stands?.stood(m.res.id)) continue;   // LW7b",
+    "new": "          void 0;   // LW7b",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-roads-unarmed",
+    "file": "src/scenes/livingRoads.js",
+    "old": "if (m.res.cls != null) cands.push(",
+    "new": "if (true) cands.push(",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-roads-fight",
+    "file": "src/scenes/livingRoads.js",
+    "old": "          if ((at.phase !== 'out' && at.phase !== 'back') || at.fight) continue;",
+    "new": "          if (at.phase !== 'out' && at.phase !== 'back') continue;",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-roads-sky",
+    "file": "src/scenes/livingRoads.js",
+    "old": "      if (here && !overworld) {\n        for (const p of parties) {",
+    "new": "      if (here) {\n        for (const p of parties) {",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-roads-ground",
+    "file": "src/scenes/livingRoads.js",
+    "old": "      deps.stands.frame(cands, here, t, { dt, ground: !overworld });",
+    "new": "      deps.stands.frame(cands, here, t, { dt, ground: true });",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-roads-clear",
+    "file": "src/scenes/livingRoads.js",
+    "old": " deps.fights?.clear(); deps.stands?.clear();",
+    "new": " deps.fights?.clear();",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-fight-enemy-ally",
+    "file": "src/scenes/roadFights.js",
+    "old": "      if (standing === 'enemy' || standing === 'hostile') return;   // LW7b",
+    "new": "      void standing;   // LW7b",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-deep-hostile-unread",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "    const hostile = deps.spawnFoe ? armed.filter((m) => standing(m) === 'hostile') : [];",
+    "new": "    const hostile = [];",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-deep-foe-unnamed",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "          if (rec.entity) rec.entity.name = m.name;",
+    "new": "          void 0;",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-deep-foe-unliving",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "          rec.living = { id: m.id, res: m, town: deps.door ?? null };\n          if (rec.entity) rec.entity.name = m.name;",
+    "new": "          if (rec.entity) rec.entity.name = m.name;",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-deep-foe-behind",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "deps.spot(L.feet, Math.sin(L.yaw) * DIVER_STAND_M + Math.cos(L.yaw) * side, Math.cos(L.yaw) * DIVER_STAND_M - Math.sin(L.yaw) * side);",
+    "new": "deps.spot(L.feet, -Math.sin(L.yaw) * DIVER_STAND_M + Math.cos(L.yaw) * side, -Math.cos(L.yaw) * DIVER_STAND_M - Math.sin(L.yaw) * side);",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-deep-rest-stood",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "      deps.say?.(`${trip.leader.name}'s company - and ${firstNameOf(hostile[0].name)} draws on you!`);\n      return;",
+    "new": "      deps.say?.(`${trip.leader.name}'s company - and ${firstNameOf(hostile[0].name)} draws on you!`);",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-deep-line",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "      deps.say?.(`${trip.leader.name}'s company - and ${firstNameOf(hostile[0].name)} draws on you!`);",
+    "new": "      deps.say?.('');",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-deep-slain-unmade",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "    deps.slay?.(rec.living.res, t, true);",
+    "new": "    void 0;",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-deep-unseen",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "    deps.slay?.(rec.living.res, t, true);",
+    "new": "    deps.slay?.(rec.living.res, t, false);",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-deep-company-spared",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "    for (const m of membersAt(c.trip, t)) if (m.id !== mid) rel?.note(m.id, 'slain', deps.day());",
+    "new": "    void rel;",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-deep-slain-twice",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "        for (const [mid, rec] of c.foes) if (rec.dead && !c.fell.has(mid)) slain(c, mid, rec, t);   // LW7b",
+    "new": "        for (const [mid, rec] of c.foes) if (rec.dead) slain(c, mid, rec, t);   // LW7b",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-deep-dead-taken",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "    for (const rec of c.foes.values()) if (!rec.dead) takeOut(rec);",
+    "new": "    for (const rec of c.foes.values()) takeOut(rec);",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-deep-living-left",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "    for (const rec of c.foes.values()) if (!rec.dead) takeOut(rec);",
+    "new": "    for (const rec of c.foes.values()) if (false) takeOut(rec);",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-deep-enemy-stood",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "(standing(m) !== 'enemy' && standing(m) !== 'hostile'));   // LW7b",
+    "new": "(standing(m) !== 'hostile'));   // LW7b",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-deep-pass-by",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "    if (!stand.some((m) => m.cls != null)) { deps.say?.(`${trip.leader.name}'s company passes you by.`); return; }",
+    "new": "    if (false) { deps.say?.(`${trip.leader.name}'s company passes you by.`); return; }",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-host-stands-off",
+    "file": "src/scenes/world.js",
+    "old": "    stands: createRoadStands({",
+    "new": "    stands: null && createRoadStands({",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-host-stands-allied",
+    "file": "src/scenes/world.js",
+    "old": "exteriorFoes.spawnFoe(type, feet, { allied: o.allied, yaw: o.yaw,",
+    "new": "exteriorFoes.spawnFoe(type, feet, { allied: false, yaw: o.yaw,",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-host-died-unwired",
+    "file": "src/scenes/world.js",
+    "old": "      slay: livingSlay, died: livingDied,",
+    "new": "      slay: livingSlay, died: () => {},",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-host-fight-reach",
+    "file": "src/scenes/world.js",
+    "old": "<= FIGHT_NEAR_M),",
+    "new": "<= FIGHT_NEAR_M * 9),",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-host-say",
+    "file": "src/scenes/world.js",
+    "old": "      say: (text) => townTalk.say(text),",
+    "new": "      say: () => {},",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-host-died-turn",
+    "file": "src/scenes/world.js",
+    "old": "  const livingDied = (res, t) => { livingRelations.turn('died',",
+    "new": "  const livingDied = (res, t) => { livingRelations.turn('slain',",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-host-deep-allied",
+    "file": "src/scenes/world.js",
+    "old": "d.spawnLooseFoe(type, feet, { yawRad: o.yaw, allied: false, gender: o.gender, level: o.level }),   // LW7b",
+    "new": "d.spawnLooseFoe(type, feet, { yawRad: o.yaw, allied: true, gender: o.gender, level: o.level }),   // LW7b",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  },
+  {
+    "name": "LW7b-host-deep-slay",
+    "file": "src/scenes/world.js",
+    "old": "        slay: livingSlay,\n        died: livingDied,   // AUDIT-C3",
+    "new": "        slay: null,\n        died: livingDied,   // AUDIT-C3",
+    "tests": [
+      "test/lw7b_beyond.test.js"
+    ]
+  }
+]

@@ -9,6 +9,8 @@
 // skins (Classic and GrimoireUI) draw this strip; the enhanced one is DOM and was never affected.
 //
 // The gate is the lock now: driven through the predicate world.js calls and the real strip.
+// RATE-LAW (2026-10-04, Mac: "Remove travel options dials"): the spinner itself is gone - the gate stands for Map,
+// Camp and Exit, and the recess shows the rate the journey's ground runs at.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -29,18 +31,22 @@ test('DISC22-E: I2 stands - a LOCKED click (frozen coordinates) never reaches it
   assert.equal(stripTakesClick({ ...base, showing: false }), false);
 });
 
-test('DISC22-E: the spinner a free click lands on steps the speed past 10 - up by the top half, down by the bottom', () => {
-  const changed = [];
-  const ui = createTravelControlUI({ defaultStartingAccel: 10, accelerationLimit: 60, onTimeAccelerationChanged: (n) => changed.push(n) });
+test('DISC22-E x RATE-LAW: the recess the spinner sat in is a READOUT - a free click there is the strip\'s (swallowed) and moves nothing; the journey alone sets the rate it shows (mutants: a click that steps it, a readout that never takes the rate)', () => {
+  const ui = createTravelControlUI({});
   ui.show();
   const x0 = Math.trunc((NATIVE_W - CONTROL_RECTS.panel[2]) / 2);
   const [sx, sy] = CONTROL_RECTS.timeAccel;
-  const up = [x0 + sx + 7, sy + 2], down = [x0 + sx + 7, sy + UD_SPINNER.down[1] + 2];
-  assert.equal(ui.timeAcceleration, 10);
-  for (let i = 0; i < 3; i++) assert.equal(ui.click(...up), true);
-  assert.equal(ui.timeAcceleration, 25, 'three clicks up from 10');
-  assert.equal(ui.click(...down), true);
-  assert.equal(ui.timeAcceleration, 20);
+  ui.setRate(100, true);
+  assert.deepEqual([ui.timeAcceleration, ui.onRoad], [100, true]);
+  const [vx, vy, vw, vh] = UD_SPINNER.value;
+  for (const at of [[x0 + sx + 7, sy + 2], [x0 + sx + vx + vw / 2, sy + vy + vh / 2], [x0 + sx + 7, sy + 17]]) {
+    assert.equal(ui.click(...at), true, 'inside the strip: swallowed');
+    assert.equal(ui.timeAcceleration, 100, 'and nothing stepped');
+  }
+  assert.equal(typeof ui.faster, 'undefined', 'no spinner left to step');
+  assert.equal(typeof ui.slower, 'undefined');
+  ui.setRate(60, false);
+  assert.deepEqual([ui.timeAcceleration, ui.onRoad], [60, false]);
 });
 
 test('DISC22-E: the host asks the lock, not the flag', () => {

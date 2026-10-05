@@ -93,8 +93,8 @@
   {
     "name": "AUDIT0928-N7-classic-flats-lose-the-flash-term",
     "file": "src/render/renderer.js",
-    "old": "${COLUMN_GLSL}\n${HIT_FLASH_GLSL}\n${ELITE_GLOW_GLSL}\n${FLAT_DISSOLVE_GLSL}\nvoid main() {\n  // ECV1",
-    "new": "${COLUMN_GLSL}\n${ELITE_GLOW_GLSL}\n${FLAT_DISSOLVE_GLSL}\nvoid main() {\n  // ECV1",
+    "old": "${COLUMN_GLSL}\n${HIT_FLASH_GLSL}\n${ELITE_GLOW_GLSL}\n${GLINT_GLSL}\n${FLAT_DISSOLVE_GLSL}\nvoid main() {\n  // ECV1",
+    "new": "${COLUMN_GLSL}\n${ELITE_GLOW_GLSL}\n${GLINT_GLSL}\n${FLAT_DISSOLVE_GLSL}\nvoid main() {\n  // ECV1",
     "tests": [
       "test/dwf_audit.test.js"
     ]

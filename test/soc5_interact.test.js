@@ -600,7 +600,7 @@ test('AUDIT SOC D14: the pick header says the two things it does NOT do - the cy
   assert.equal(rayPersonDistance(cam, fwd, [0, 0, 0]), Infinity, 'a body at my own feet has no along-ray distance');
   assert.equal(pickPeerInFront(cam, fwd, [peer('feet', [0, 0, 0]), peer('ahead', [0, 0, 3])], SOCIAL_REACH, rayPersonDistance).peer.id, 'ahead');
   // the street own arm measures a person with the very same call and no collider of its own
-  assert.match(rd('src/scenes/world.js'), /personDistances: _livePersons\.map\(\(p\) => rayPersonDistance\(/, 'one cylinder, both arms');
+  assert.match(rd('src/scenes/world.js'), /personDistances: _talkPersons\(\)\.map\(\(p\) => rayPersonDistance\(/, 'one cylinder, both arms');   // LW3: the town's and the road's people
 });
 
 // ── FONT1 (2026-09-16, Mac: "Any enhanced UI or text must be our

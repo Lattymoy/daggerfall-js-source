@@ -183,7 +183,7 @@
   {
     "name": "TACT2-motor-ignores",
     "file": "src/characters/enemyMotor.js",
-    "old": "    if (_took && (!detouring || this.fleeLeft > 0 || this._tac?.state === 'windup')) return;",
+    "old": "    if (_took && (!detouring || this.fleeLeft > 0 || this._tac?.state === 'windup' || this._tac?.state === 'dash')) return;",
     "new": "    void _took;",
     "tests": [
       "test/tact2.test.js"
@@ -210,8 +210,8 @@
   {
     "name": "TACT2-blow-unseen",
     "file": "src/characters/enemyAttack.js",
-    "old": "        if (machineAttack(this.machine, strike)) { this.firedRanged = false; this.swingSeq++; ai._tacSwung = (ai._tacSwung ?? 0) + 1; }   // TACT2: the brain sees its blow",
-    "new": "        if (machineAttack(this.machine, strike)) { this.firedRanged = false; this.swingSeq++; }   // TACT2: the brain sees its blow",
+    "old": "        if (machineAttack(this.machine, strike)) { this.firedRanged = false; this.swingSeq++; this._held = false; ai._tacSwung = (ai._tacSwung ?? 0) + 1; }   // TACT2: the brain sees its blow",
+    "new": "        if (machineAttack(this.machine, strike)) { this.firedRanged = false; this.swingSeq++; this._held = false; }   // TACT2: the brain sees its blow",
     "tests": [
       "test/tact2.test.js"
     ]

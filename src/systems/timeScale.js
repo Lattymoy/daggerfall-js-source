@@ -3,8 +3,9 @@
 // Options needs.
 //
 // WHAT IT IS FOR. An accelerated journey is not a fade to black: the
-// player really walks, and the world really runs, at up to sixty times
-// speed. The mod does that in one method
+// player really walks, and the world really runs, at sixty times speed
+// off the road and a hundred on it (RATE-LAW, below). The mod does that
+// in one method
 // (TravelOptionsMod.cs:382-390):
 //
 //     Time.timeScale = timeScale;
@@ -42,18 +43,25 @@
 // (systems/comeSailAway.js SetTimeScale) - and it is 1 whenever neither
 // runs.
 
-/** TravelControlUI.cs:76-79 - the acceleration the panel can reach:
- *  the setting rounded DOWN to a multiple of five (`(limit / 5) * 5`),
- *  and half of that while following a path (`(limit / 10) * 5`, which
- *  is the same rounding of half the number). The panel owns the
- *  spinner; these are here because the scale is what they bound. */
-export const accelLimitOf = (limit) => Math.trunc(limit / 5) * 5;
-export const halfAccelLimitOf = (limit) => Math.trunc(limit / 10) * 5;
-
-/** The scale a journey may never exceed, whatever a setting says. The
- *  mod's own AccelerationLimit slider stops at 100 (modsettings.json),
- *  and a scale beyond that is a physics step of a second and a half. */
+/** The scale a journey may never exceed. The mod's own AccelerationLimit
+ *  slider stopped at 100 (modsettings.json), and a scale beyond that is
+ *  a physics step of a second and a half. */
 export const MAX_TIME_SCALE = 100;
+
+/** RATE-LAW (2026-10-04, Mac: "Remove travel options dials" / "Roads now
+ *  travel at x100 and non roads at x60"): A JOURNEY'S RATE IS ITS GROUND'S.
+ *  The panel's spinner, the mod's starting acceleration, its limit dial,
+ *  the half limit while a path is followed and the near-enemies stepper
+ *  are gone; a fast traveller on a road or a track runs at the road's
+ *  rate and anywhere else - the open ground, a town's ring, the sea - at
+ *  the open rate. What still holds the clock under the rate is not a
+ *  dial: the land loading (systems/travelGovernor.js), an alerted enemy
+ *  (systems/travelThreat.js) and the ring walk's own ceiling
+ *  (travelPaths.js MAX_CIRCUMNAVIGATION_ACCEL). */
+export const TRAVEL_ROAD_RATE = MAX_TIME_SCALE;
+export const TRAVEL_OPEN_RATE = 60;
+/** The rate a fast traveller's ground asks for: a road or a track, or not. */
+export const travelRateOf = (onRoad) => (onRoad ? TRAVEL_ROAD_RATE : TRAVEL_OPEN_RATE);
 
 let _scale = 1;
 

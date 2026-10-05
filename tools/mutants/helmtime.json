@@ -1,0 +1,92 @@
+[
+  {
+    "name": "HELM-TIME-gate-dropped",
+    "file": "src/systems/comeSailAway.js",
+    "old": "    if (deps.timeLocked?.()) {\n      if (BOAT_TIME_ACTIONS",
+    "new": "    if (false) {\n      if (BOAT_TIME_ACTIONS",
+    "tests": [
+      "test/csa_time_audio.test.js"
+    ]
+  },
+  {
+    "name": "HELM-TIME-line-unsaid",
+    "file": "src/systems/comeSailAway.js",
+    "old": "      if (BOAT_TIME_ACTIONS.some((a) => deps.input.started(a))) deps.midScreenText(HELM_TIME_LOCKED_TEXT, f(1.5));\n",
+    "new": "",
+    "tests": [
+      "test/csa_time_audio.test.js"
+    ]
+  },
+  {
+    "name": "HELM-TIME-reset-key-left-live",
+    "file": "src/systems/comeSailAway.js",
+    "old": "export const BOAT_TIME_ACTIONS = Object.freeze([BOAT_ACTIONS.timeScaleUp, BOAT_ACTIONS.timeScaleDown, BOAT_ACTIONS.timeScaleReset]);",
+    "new": "export const BOAT_TIME_ACTIONS = Object.freeze([BOAT_ACTIONS.timeScaleUp, BOAT_ACTIONS.timeScaleDown]);",
+    "tests": [
+      "test/csa_time_audio.test.js"
+    ]
+  },
+  {
+    "name": "HELM-TIME-state-always-dial",
+    "file": "src/systems/comeSailAway.js",
+    "old": "        timeDial: !deps.timeLocked?.(),",
+    "new": "        timeDial: true,",
+    "tests": [
+      "test/csa_time_audio.test.js"
+    ]
+  },
+  {
+    "name": "HELM-TIME-presses-kept-online",
+    "file": "src/ui/enhancedHelm.js",
+    "old": "  if (h.timeDial !== false) out.push({ act: 'slower'",
+    "new": "  out.push({ act: 'slower'",
+    "tests": [
+      "test/csa_time_audio.test.js"
+    ]
+  },
+  {
+    "name": "HELM-TIME-pad-still-steps",
+    "file": "src/ui/enhancedHelm.js",
+    "old": "    else if (h.timeDial === false) return false;   // HELM-TIME-ONLINE: no dial to step\n",
+    "new": "",
+    "tests": [
+      "test/csa_time_audio.test.js"
+    ]
+  },
+  {
+    "name": "HELM-TIME-pad-hold-puts-back",
+    "file": "src/ui/enhancedHelm.js",
+    "old": "  if (h.timeDial === false) return false;   // HELM-TIME-ONLINE: no time to put back\n",
+    "new": "",
+    "tests": [
+      "test/csa_time_audio.test.js"
+    ]
+  },
+  {
+    "name": "HELM-TIME-prompt-says-the-dial",
+    "file": "src/ui/enhancedHelm.js",
+    "old": "  if (h.timeDial === false) { if (trims) rows.push",
+    "new": "  if (false) { if (trims) rows.push",
+    "tests": [
+      "test/csa_time_audio.test.js"
+    ]
+  },
+  {
+    "name": "HELM-TIME-host-unwired",
+    "file": "src/scenes/world.js",
+    "old": "    timeLocked: () => sharedClockOn(),",
+    "new": "    timeLocked: () => false,",
+    "tests": [
+      "test/csa_time_audio.test.js"
+    ]
+  },
+  {
+    "name": "HELM-TIME-said-unasked",
+    "file": "src/systems/comeSailAway.js",
+    "old": "      if (BOAT_TIME_ACTIONS.some((a) => deps.input.started(a))) deps.midScreenText(",
+    "new": "      if (true) deps.midScreenText(",
+    "tests": [
+      "test/csa_time_audio.test.js"
+    ]
+  }
+]

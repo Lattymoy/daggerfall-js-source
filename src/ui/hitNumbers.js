@@ -100,17 +100,52 @@ export function showNumber(n, { scatter01 = Math.random } = {}) {
   return node;
 }
 
+// ── TELL9: THE WORDS ON THE HIT (bible/12-Enhanced-AI/Feud-Arc.md 11.2) ──
+/** What a telegraphed blow's fight adds to a number: my blow on a wind-up that broke into a STAGGER, one that HOLDS, one
+ *  on an overreached foe it could not stagger (OPEN); a PERFECT dodge, a word alone; a revenant's WEAKNESS (RVN3's). */
+export const HIT_TAGS = Object.freeze({ stagger: 'Stagger', hold: 'Holds', open: 'Open', perfect: 'Perfect', weakness: 'Weakness' });
+/** A door's word joins the number my blow raised this long before it (the same frame: the formula reports, then the
+ *  door decides). */
+export const TAG_JOIN_MS = 250;
+/** The number my last blow that HIT raised: `{ target, node, at }`. */
+let _lastHit = null;
+
+/** A word alone on the layer - `kind` its class (`word`, `perfect`): only while the enhanced HUD has mounted the numbers. */
+export function showWord(text, kind = 'word') {
+  if (!registered || !text) return null;
+  return showNumber({ kind, text: String(text), tag: null });
+}
+
+/** A word on the number my blow on `target` just raised (a hit, inside TAG_JOIN_MS); none such - a spell's landing
+ *  raises no number, another foe's is not this one's - and the word rises alone. Nothing without the enhanced HUD. */
+export function tagHit(target, word, { now = Date.now() } = {}) {
+  if (!word) return null;   // unmounted: no number joined (`_lastHit` is the mounted hook's), and showWord draws none
+  const l = _lastHit;
+  if (l && target != null && l.target === target && now - l.at <= TAG_JOIN_MS && l.node?.isConnected) {
+    const tag = document.createElement('small');
+    tag.className = 'hitnum-tag';
+    tag.textContent = String(word);
+    l.node.append(tag);
+    return l.node;
+  }
+  return showWord(word);
+}
+
 let registered = false;
 /** Register with the formula seam - the enhanced HUD calls this once. */
 export function mountHitNumbers() {
   if (registered) return;
   registered = true;
-  setPlayerAttackHook((r) => { showNumber(numberFor(r)); });
+  setPlayerAttackHook((r) => {
+    const node = showNumber(numberFor(r));
+    _lastHit = node && r?.hit && !r.ineffective ? { target: r.target ?? null, node, at: Date.now() } : null;   // TELL9: the door's word joins it
+  });
 }
 /** For tests and the classic skin's guarantee: nothing registered. */
 export function unmountHitNumbers() {
   if (!registered) return;
   registered = false;
+  _lastHit = null;
   setPlayerAttackHook(null);
   if (layer) { layer.remove(); layer = null; }
 }

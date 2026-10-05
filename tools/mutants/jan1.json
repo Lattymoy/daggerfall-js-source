@@ -173,8 +173,8 @@
   {
     "name": "JAN1-the-walkers-stand-on-the-average-again",
     "file": "src/scenes/world.js",
-    "old": "                return Number.isFinite(h) ? h - t[1] + 2.0 * 0.025 : locOrigin[1];",
-    "new": "                return locOrigin[1];",
+    "old": "          return Number.isFinite(h) ? h - t[1] + 2.0 * 0.025 : locOrigin[1];",
+    "new": "          return locOrigin[1];",
     "tests": [
       "test/jan1_field.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "JAN1-the-walkers-keep-the-pixels-translation",
     "file": "src/scenes/world.js",
-    "old": "                return Number.isFinite(h) ? h - t[1] + 2.0 * 0.025 : locOrigin[1];",
-    "new": "                return Number.isFinite(h) ? h + 2.0 * 0.025 : locOrigin[1];",
+    "old": "          return Number.isFinite(h) ? h - t[1] + 2.0 * 0.025 : locOrigin[1];",
+    "new": "          return Number.isFinite(h) ? h + 2.0 * 0.025 : locOrigin[1];",
     "tests": [
       "test/jan1_field.test.js"
     ]

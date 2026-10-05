@@ -99,7 +99,9 @@ mod is inert.
   level at every distance while the classic flats keep their chain
   (`uploadTexture(..., { mips: false, variant: '' })`: the un-mipped
   upload keeps the plain batch key, which only the item icons had
-  re-keyed to `#ui` before).
+  re-keyed to `#ui` before). One site uploads it for every host - the
+  town's pixels, a location's flats, a yard's tree - `world/naturePicture.js`
+  (AUDIT 05b A12).
 - **The refresh.** DFU's `RefreshLoadedNatureBatches` re-applies every
   batch in place, which is free. This host bakes its batches, so the
   refresh is answered with the same destroy-and-requeue sweep
@@ -211,13 +213,14 @@ needs ARENA2, which the container lacks.
 plant drew UPSIDE-DOWN.** The port's texel convention is bottom-up:
 `getColor32` writes `dstRow = (height - 1 - y) * width`
 (`baseImageFile.js:143`, `BaseImageFile.cs:250`), `uploadTexture`
-uploads as-is with `UNPACK_FLIP_Y_WEBGL` off (`renderer.js:3419`), and
+uploads as-is with `UNPACK_FLIP_Y_WEBGL` off (`renderer.js:3426`), and
 `BB_VS` samples the quad's TOP at v=1, i.e. the LAST row
 (`renderer.js:450-452`). The seasonal record arrived in PNG raster
 order instead - `decodeTexture2D` flips Unity's bottom-up rows to
 top-down for its own consumers, and the loose arm is a canvas
-`getImageData` - and `world.js:4138` / `exterior.js:1044` handed that
-straight to `uploadTexture`. So a seasonal flat drew mirrored against
+`getImageData` - and `world.js:4687` / `exterior.js` handed that
+straight to `uploadTexture` (the one upload site is `naturePicture.js:54`
+now - AUDIT 05b A12). So a seasonal flat drew mirrored against
 the classic flat uploaded five lines later in the same batch loop. In
 DFU there is nothing to reconcile: the mod's asset is a Unity
 `Texture2D` and so is every texture `TextureReader` builds from

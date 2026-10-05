@@ -47,6 +47,7 @@ import { toColor32 } from '../formats/color32Order.js';   // MW-MOUNT: a rendere
 import { preloadTextureRecord } from '../systems/textureReplacement.js';   // MOUNT-LAZY: the record's own replacement, decoded before its upload
 import { writeDecalQuad, clearDecalQuad, DECAL_FLOATS } from '../combat/bloodDecals.js';
 import { decorIsDoor } from '../systems/decorDoorways.js';   // HOME-DOORS: a door piece hangs as one of the room's own doors
+import { drawnFlat } from '../characters/nudeFlats.js';   // NUDE-DECOR: a nude figure stands as its clothed stand-in while Show Nudity is off
 
 /** How far the eye reaches a placed piece - the room's own furniture's reach (a bed's, a shelf's: 128 units). */
 export const DECOR_REACH = DEFAULT_ACTIVATION_DISTANCE;
@@ -163,12 +164,18 @@ export function decorMatrix(piece, origin) {
  *                  room's own doors (world/actionSystem.js addDoor: it swings, blocks while shut, is saved and shared,
  *                  and the host draws, ticks and names it) and answers it, or null; `remove(id)` takes it down. With
  *                  none, a door piece stands as any model does
+ *   prepareModel(gpu) - DECOR-OUTDOOR: the host's own law over a model before it stands (a yard's: its town's climate
+ *                  swaps, scenes/homeYards.js), a Promise awaited first; none for a room, which draws with its own
+ *   standFlat(piece, at, live) - DECOR-OUTDOOR: the host's own way of standing a flat it knows (a yard's nature, in its
+ *                  season - scenes/yardNature.js): null for one it leaves to the room, else a Promise of `{ batch, size,
+ *                  release? }` (the room destroys the batch with the piece and calls `release`) or of null (nothing to
+ *                  draw); `live()` whether the piece still stands as it was asked
  */
 export function createDecorRoom({
   meshes, renderer, getTexture, uploadRecord, uploadRecordFrame, flatAnims = () => null, collider, origin, roomLights = () => null,
-  mwPicture = null, later = setTimeout, doors = null,
+  mwPicture = null, later = setTimeout, doors = null, prepareModel = null, standFlat = null,
 }) {
-  /** @type {Map<string, {piece: any, o: number[], gpu: any, box: any, cpu: any, matrix: Float32Array, batch: any, anims: any, size: any, light: any, mount: any, door: any}>} */
+  /** @type {Map<string, {piece: any, o: number[], gpu: any, box: any, cpu: any, matrix: Float32Array, batch: any, anims: any, size: any, light: any, mount: any, door: any, release?: any}>} */
   const standing = new Map();
   const models = new Map();   // model id -> Promise<{gpu, cpu, box}>
   const flats = new Map();    // "a.r" -> Promise<{t, w, h} | null>
@@ -258,12 +265,37 @@ export function createDecorRoom({
       renderer?.destroyBillboardBatch?.(entry.batch);
       entry.batch = null;
     }
+    if (entry.release) { const r = entry.release; entry.release = null; r(); }   // DECOR-OUTDOOR: what the host's stand holds (scenes/yardNature.js)
     const lights = roomLights?.();
     if (lights && entry.light) {
       const i = lights.indexOf(entry.light);
       if (i >= 0) lights.splice(i, 1);
     }
     entry.light = null;
+  }
+
+  /** DECOR-OUTDOOR: A FLAT THE HOST STANDS ITS OWN WAY (`standFlat` - a yard's nature, in its season): asked once;
+   *  whether the host took it. Its answer stands where the room's own would - its batch the piece's, destroyed with it,
+   *  and what it holds let go with it (`release`); an answer landing for a piece moved or gone is let go at once.
+   *  AUDIT 05b A1: the host stands it from the origin it was asked at - an answer landing after a restand() is moved by
+   *  the recentre it missed, as restand() moves a batch already standing (else it stood a whole recentre off its yard,
+   *  and its 3D tree, until the yard was set again). */
+  function standOwn(entry) {
+    const { piece } = entry;
+    const live = () => standing.get(piece.id) === entry;
+    const at = entry.o;
+    const asked = standFlat ? standFlat(piece, at, live) : null;
+    if (!asked) return false;
+    Promise.resolve(asked).then((got) => {
+      if (!got) return;
+      if (!live()) { renderer?.destroyBillboardBatch?.(got.batch); got.release?.(); return; }
+      const d = [entry.o[0] - at[0], entry.o[1] - at[1], entry.o[2] - at[2]];
+      if (d[0] || d[1] || d[2]) { const b = got.batch.origin ?? [0, 0, 0]; got.batch.origin = [b[0] + d[0], b[1] + d[1], b[2] + d[2]]; }
+      entry.batch = got.batch;
+      entry.size = got.size;
+      entry.release = got.release ?? null;
+    }, () => {});
+    return true;
   }
 
   /** Stand one piece - a fresh placement, a move, a restore. Replaces a piece of the same id. */
@@ -295,12 +327,20 @@ export function createDecorRoom({
         // HOME-DOORS: a door hangs as one of the room's own doors - the host's to draw, swing and share, never a solid
         // piece of furniture in the doorway
         if (decorIsDoor(piece) && doors && m.cpu?.positions && m.cpu?.indices) { entry.door = doors.add(piece, m, entry.matrix) ?? null; if (entry.door) return; }
-        entry.gpu = m.gpu;
-        if (m.cpu?.positions && m.cpu?.indices) { entry.cpu = m.cpu; collider?.()?.addMesh?.(decorKeyOf(piece.id), m.cpu.positions, m.cpu.indices, entry.matrix); }
+        const solid = () => {
+          entry.gpu = m.gpu;
+          if (m.cpu?.positions && m.cpu?.indices) { entry.cpu = m.cpu; collider?.()?.addMesh?.(decorKeyOf(piece.id), m.cpu.positions, m.cpu.indices, entry.matrix); }
+        };
+        // DECOR-OUTDOOR: the host's own law first (a yard's town's climate swaps) - the piece stands once it is in place,
+        // never in the textures a moment and the town's the next
+        if (!prepareModel) { solid(); return; }
+        Promise.resolve().then(() => prepareModel(m.gpu)).catch(() => {}).then(() => { if (standing.get(piece.id) === entry) solid(); });
       });
       stand();
-    } else {
-      const [a, r] = piece.flat;
+    } else if (!standOwn(entry)) {
+      // NUDE-DECOR: the picture a flat DRAWS - a nude figure's clothed stand-in while Show Nudity is off, on the piece's
+      // own base, at the stand-in's size; the piece stays the figure it was placed as (its key, its name, its station)
+      const [a, r] = drawnFlat(piece.flat[0], piece.flat[1]);
       // MW-ASSIGN: one's own thing set down stands as its Morrowind picture while a build stands (a garment, not the
       // classic pile of cloth), on the billboard pass as every flat - else as its own world picture, as ever
       const mw = decorStandsOwn(piece) ? standArtOf(piece.item) : Promise.resolve(null);

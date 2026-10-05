@@ -478,7 +478,7 @@ test('LV1: every attribute has the port\'s OWN sentence, and no ARENA2 is read t
   // the code, so the code it points at has to be the code that runs.
   const v = src('src/ui/levelUpView.js');
   assert.match(v, /systems\/spellcast\.js:158/, 'willpower names the saving throw that consumes MagicResist');
-  assert.match(v, /formulas\.js:308-309 statsToHit/, 'agility names the term inside the hit roll');
+  assert.match(v, /formulas\.js:309-310 statsToHit/, 'agility names the term inside the hit roll');
   // derived, not a literal: the motor's own walkSpeed read, wherever it now stands (a literal went stale three times)
   const walkAt = src('src/player/motor.js').split('\n').findIndex((l) => /this\.speed = walkSpeed\(this\.stats\.speed\);/.test(l)) + 1;
   assert.ok(walkAt > 0, 'the motor still reads walkSpeed');

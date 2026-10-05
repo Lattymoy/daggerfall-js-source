@@ -1,0 +1,427 @@
+[
+  {
+    "name": "LW8-inside-any-building",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      if (!e || e.kind === 'walk' || isOutdoor(e) || e.at?.building !== key) continue;",
+    "new": "      if (!e || e.kind === 'walk' || isOutdoor(e)) continue;",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-inside-outdoor",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      if (!e || e.kind === 'walk' || isOutdoor(e) || e.at?.building !== key) continue;",
+    "new": "      if (!e || e.kind === 'walk' || e.at?.building !== key) continue;",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ],
+    "equivalent": true,
+    "why": "Belt and braces: an outdoor entry before a building's door (the social spot a tavern keeps) is a stand in the street, and the late check after it (`where` answers a place for every outdoor stand) holds it out all the same; the outdoor test spares that read for the whole street's stands and says what the rule is."
+  },
+  {
+    "name": "LW8-inside-asleep",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      if (e.kind === 'sleep' || (e.kind === 'work' && !house && res.work === key)) continue;",
+    "new": "      if (e.kind === 'work' && !house && res.work === key) continue;",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-inside-staff",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      if (e.kind === 'sleep' || (e.kind === 'work' && !house && res.work === key)) continue;",
+    "new": "      if (e.kind === 'sleep') continue;",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-inside-dead",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      if (this._taken.get(res.id) === day || this._gone(res) || this.o.deadAt?.(res, t)) continue;\n      const at = this.entryOf(res, t);\n      const e = at?.e;",
+    "new": "      if (this._taken.get(res.id) === day || this._gone(res)) continue;\n      const at = this.entryOf(res, t);\n      const e = at?.e;",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-inside-taken",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      if (this._taken.get(res.id) === day || this._gone(res) || this.o.deadAt?.(res, t)) continue;\n      const at = this.entryOf(res, t);\n      const e = at?.e;",
+    "new": "      if (this._gone(res) || this.o.deadAt?.(res, t)) continue;\n      const at = this.entryOf(res, t);\n      const e = at?.e;",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-inside-late",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      if (this.where(res, t, false)) continue;   // still in the street: a walk running late",
+    "new": "      void 0;   // still in the street: a walk running late",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-fan",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "export const INDOOR_FAN = 12;",
+    "new": "export const INDOOR_FAN = 10;",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-spread",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "export const INDOOR_SPREAD_M = Object.freeze([2.4, 3.8, 5.2, 6.6]);",
+    "new": "export const INDOOR_SPREAD_M = Object.freeze([2.4, 3.8, 5.2]);",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-apart",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "export const INDOOR_APART_M = 1.3;",
+    "new": "export const INDOOR_APART_M = 1.0;",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-clear",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "export const INDOOR_CLEAR_M = 1.1;",
+    "new": "export const INDOOR_CLEAR_M = 0.8;",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-door",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "export const INDOOR_DOOR_M = 1.8;",
+    "new": "export const INDOOR_DOOR_M = 1.0;",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-max",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "export const INDOOR_MAX = 12;",
+    "new": "export const INDOOR_MAX = 16;",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-seen",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "export const INDOOR_SEEN_M = 14;",
+    "new": "export const INDOOR_SEEN_M = 10;",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-tick-s",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "export const INDOOR_TICK_S = 1;",
+    "new": "export const INDOOR_TICK_S = 2;",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-walls",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "      try { collider.move(q, Math.sin(a) * dist, 0, Math.cos(a) * dist, 1.8); } catch { continue; }",
+    "new": "      q[0] += Math.sin(a) * dist; q[2] += Math.cos(a) * dist;",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-floor-unread",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "      if (y == null || !Number.isFinite(y) || Math.abs(y - origin[1]) > 1.2) continue;",
+    "new": "      if (false) continue;",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-other-floor",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "      if (y == null || !Number.isFinite(y) || Math.abs(y - origin[1]) > 1.2) continue;",
+    "new": "      if (y == null || !Number.isFinite(y)) continue;",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-door-crowded",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "      if (Math.hypot(p[0] - origin[0], p[2] - origin[2]) < INDOOR_DOOR_M) continue;",
+    "new": "      void 0;",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-apart-unchecked",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "      if (!far(p, spots, INDOOR_APART_M) || !far(p, keepClear, INDOOR_CLEAR_M) ||",
+    "new": "      if (!far(p, keepClear, INDOOR_CLEAR_M) ||",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-clear-unchecked",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "      if (!far(p, spots, INDOOR_APART_M) || !far(p, keepClear, INDOOR_CLEAR_M) ||",
+    "new": "      if (!far(p, spots, INDOOR_APART_M) ||",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-arrival",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "        return arriving || Math.hypot(dx, dz) > INDOOR_SEEN_M ||",
+    "new": "        return Math.hypot(dx, dz) > INDOOR_SEEN_M ||",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-unseen-always",
+    "file": "src/scenes/livingIndoors.js",
+    "old": " || dx * Math.sin(viewYaw) + dz * Math.cos(viewYaw) <= 0;",
+    "new": " || true;",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-unarmed",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "        stood.set(res.id, { res: { ...res, cls: null }, spot, next:",
+    "new": "        stood.set(res.id, { res, spot, next:",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-facing",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "yaw: Math.atan2(toward[0] - p[0], toward[2] - p[2]),",
+    "new": "yaw: 0,",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-cap",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "        inside = b.town.insideAt(b.key, deps.clock()).slice(0, INDOOR_MAX);",
+    "new": "        inside = b.town.insideAt(b.key, deps.clock());",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-tick",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "      if (timer >= INDOOR_TICK_S) {",
+    "new": "      if (true) {",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-clear-building",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "      if (!room || room.key !== b.key) {",
+    "new": "      if (!room) {",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-clear-none",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "      if (!b?.town || deps.ready?.() === false) { if (room || stood.size) clear(); return; }",
+    "new": "      if (!b?.town || deps.ready?.() === false) { return; }",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-caught-robbed",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "      rel?.note(id, 'crime', day);",
+    "new": "      void 0;",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-caught-room",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "        rel?.note(w, 'crime', day);",
+    "new": "        void 0;",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-caught-reach",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "Math.hypot(seat.pos[0] - at[0], seat.pos[2] - at[2]) > WITNESS_M) continue;",
+    "new": "Math.hypot(seat.pos[0] - at[0], seat.pos[2] - at[2]) > WITNESS_M * 9) continue;",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-caught-self",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "        if (!w || w === id || !at ||",
+    "new": "        if (!w || !at ||",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-press-unoffered",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (host.livingPersonsAct?.(eye, dir, _pick?.distance ?? Infinity)) return true;",
+    "new": "    void 0;",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-draw-unpassed",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (livingInside.length) renderer.drawBillboards(livingInside, camRight, UP_Y);",
+    "new": "    if (false) renderer.drawBillboards(livingInside, camRight, UP_Y);",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-host-billboards",
+    "file": "src/scenes/world.js",
+    "old": "    livingBillboards: () => (livingIndoors?.batches() ?? []),",
+    "new": "    livingBillboards: () => [],",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-host-act",
+    "file": "src/scenes/world.js",
+    "old": "    livingPersonsAct: (eye, dir, nearer) => !!livingIndoors?.size && townTalk.tryActivate(eye, dir, livingIndoors.seats(), nearer),",
+    "new": "    livingPersonsAct: () => false,",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-host-mode",
+    "file": "src/scenes/world.js",
+    "old": "    if (!livingWorldOn() || _mode() !== 'interior') { if (livingIndoors?.size || livingIndoors?.spots().length) livingIndoors.clear(); return; }",
+    "new": "    if (!livingWorldOn()) { if (livingIndoors?.size || livingIndoors?.spots().length) livingIndoors.clear(); return; }",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-host-building",
+    "file": "src/scenes/world.js",
+    "old": "      building: () => { const b = modes?.interiorBuilding; const town = b && !modes?.interiorCtx?.ownedRoom ? livingTownOfMap(b.townMapId ?? 0) : null; return b && town ? { key: b.buildingKey, town } : null; },",
+    "new": "      building: () => null,",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-host-floor",
+    "file": "src/scenes/world.js",
+    "old": "      floorAt: (x, y, z) => { const d = modes?.interiorCollider?.raycast([x, y, z], [0, -1, 0], 3); return Number.isFinite(d) ? y - d : null; },",
+    "new": "      floorAt: () => 0,",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-host-statics",
+    "file": "src/scenes/world.js",
+    "old": "      staticFeet: () => (modes?.interiorCtx?.people ?? []).filter((p) => p.active !== false).map((p) => [p.x, p.y, p.z]).concat(modes?.interiorQuestFeet?.() ?? []),",
+    "new": "      staticFeet: () => [],",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-host-town-match",
+    "file": "src/scenes/world.js",
+    "old": "if (p.population instanceof LivingTown && (p.population.o.town.mapId >>> 0) === (mapId >>> 0)) return p.population;",
+    "new": "if (p.population instanceof LivingTown) return p.population;",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-host-step",
+    "file": "src/scenes/world.js",
+    "old": "      livingIndoorsStep(townTalk.overlayActive ? 0 : dt);   // LW8",
+    "new": "      void 0;   // LW8",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-host-street-clear",
+    "file": "src/scenes/world.js",
+    "old": "    if (livingIndoors?.size || livingIndoors?.spots().length) livingIndoors.clear();   // LW8: the street again",
+    "new": "    void 0;   // LW8: the street again",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-host-caught",
+    "file": "src/scenes/world.js",
+    "old": "    caught: (p) => livingIndoors?.caught(p) ?? null,",
+    "new": "    caught: () => null,",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-host-refuses",
+    "file": "src/scenes/world.js",
+    "old": "    refuses: (p) => livingIndoors?.town()?.refuses(p) ?? null,",
+    "new": "    refuses: () => null,",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "LW8-host-toned",
+    "file": "src/scenes/world.js",
+    "old": "    toned: (p, tone) => livingIndoors?.town()?.toned(p, tone) ?? null,",
+    "new": "    toned: () => null,",
+    "tests": [
+      "test/lw8_indoors.test.js"
+    ]
+  }
+]

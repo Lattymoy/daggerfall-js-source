@@ -172,6 +172,7 @@ const CONTEXTS = [
     file: 'src/scenes/hostMagic.js',
     teardowns: ['destroy'],
     declared: {
+      impactSounds: 'IMPACTFX: createSpellImpactSounds holds no handle - its sounds are registered on the shared audio engine by key (audio.registerSamples, idempotent: the engine keeps one buffer a key for the session, as it does the wind\'s and the arena\'s made sounds) and played as one-shots; the rest is a few Maps of last-played times and the heal clip\'s bytes. It goes with the engine',
       giftGate: 'GIFT-QUIET\'s gate is a closure over a Map of a few lines\' last-said times (64 at most) - no batch, mesh, loop or listener; it goes with the engine',
     },
     // NOT a leak and NOT resource-free: a HAND-OFF. The pool mints

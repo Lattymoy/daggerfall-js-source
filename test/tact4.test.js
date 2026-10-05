@@ -19,6 +19,7 @@ import {
   drawableBlows, resetBlows, windupNear, BLOW_TIER_LEVEL, BLOW_COOLDOWN_MIN, BLOW_FLASH, BLOW_VERDICT_LIFE, BLOW_NEAR,
 } from '../src/ai/foeBlows.js';
 import { blowField, BLOW_QUAD_HALF } from '../src/render/foeTelegraph.js';
+import { TELL } from '../src/ai/tells.js';   // TELL5: the trackers
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 const DT = 1 / 60;
@@ -160,24 +161,30 @@ function untilWindup(foes, f, player, secs = 60) {
 test('TACT4: a foe of the tier winds up and stands it, its aim locked; the swing comes at the landing, and standing in the shape it lands', () => {
   const f = foe();
   const player = [0, 0, 0];
-  let blow = null, at = null, yaw = null, moved = 0, turned = 0, swingAt = null, verdict = null, seqAt = null, swungAt = null, lastSeq = 0;
+  // PIN MOVED (TELL2, bible/12-Enhanced-AI/Feud-Arc.md 4.1): the swing BEGINS with the wind-up (held at its raised arm)
+  // and the landing RELEASES it - the brain sees its blow at the landing (`_tacSwung`), never a second swing
+  let blow = null, at = null, yaw = null, moved = 0, turned = 0, swingAt = null, verdict = null, tacAt = null, swungAt = null, began = null, seqAtStart = null, seqAtEnd = null, startAt = null, prevSeq = f.atk.swingSeq, prevTac = f.ai._tacSwung ?? 0;
   run([f], 60, player, () => {
-    if (!blow && f.ai._tac?.state === 'windup') { blow = liveBlows().get(f.ai); at = [...f.ai.feet]; yaw = f.ai.yaw; }
+    if (!blow && f.ai._tac?.state === 'windup') { blow = liveBlows().get(f.ai); at = [...f.ai.feet]; yaw = f.ai.yaw; startAt = T; seqAtStart = prevSeq; }   // the count before this frame - the swing may begin in the very frame the wind-up does
+    prevSeq = f.atk.swingSeq;
+    if (blow && began == null && f.atk.swingSeq !== seqAtStart) began = T;
     if (blow && f.ai._tac?.state === 'windup') f.atk.meleeTimer = 99;   // DFU's own clock could not swing now: only the landing can
     if (blow && f.ai._tac?.state === 'windup' && liveBlows().get(f.ai) === blow) {
       moved = Math.max(moved, Math.hypot(f.ai.feet[0] - at[0], f.ai.feet[2] - at[2]));
       turned = Math.max(turned, Math.abs(f.ai.yaw - yaw));
     }
-    if (blow && verdict == null && f.ai._blowVerdict != null) { verdict = f.ai._blowVerdict; swingAt = T; seqAt = lastSeq; }
-    if (seqAt != null && swungAt == null && f.atk.swingSeq !== seqAt) swungAt = T;
-    lastSeq = f.atk.swingSeq;
+    if (blow && verdict == null && f.ai._blowVerdict != null) { verdict = f.ai._blowVerdict; swingAt = T; tacAt = prevTac; seqAtEnd = f.atk.swingSeq; }   // the count before this frame - the release may come in the landing's own frame
+    if (tacAt != null && swungAt == null && (f.ai._tacSwung ?? 0) !== tacAt) swungAt = T;
+    prevTac = f.ai._tacSwung ?? 0;
   });
+  assert.ok(began != null && began - startAt < 0.13, `the swing began with the wind-up (${startAt}, ${began})`);
   assert.ok(blow, 'it wound one up');
   assert.ok(moved < 0.02, `stood its wind-up (${moved.toFixed(3)})`);
   assert.ok(turned < 1e-9, 'its aim locked');
   assert.equal(verdict, true, 'the player stood in it');
   assert.ok(swingAt >= blow.land - 1e-9 && swingAt - blow.land < 0.1, 'the verdict at the landing');
-  assert.ok(swungAt != null && swungAt - swingAt < 0.13, `and the swing with it (${swungAt})`);
+  assert.ok(swungAt != null && swungAt - swingAt < 0.13, `and the swing released with it (${swungAt})`);
+  assert.equal(seqAtEnd, began != null ? seqAtStart + 1 : seqAtEnd, 'the one swing - begun at the wind-up, never a second at the landing');
 });
 
 test('TACT4: a step out of the shape during the wind-up dodges it', () => {
@@ -185,6 +192,11 @@ test('TACT4: a step out of the shape during the wind-up dodges it', () => {
   const player = [0, 0, 0];
   const blow = untilWindup([f], f, player);
   assert.ok(blow);
+  // PIN MOVED (TELL5, bible/12-Enhanced-AI/Feud-Arc.md 7.2): a lunge turns after its target through the first half of its
+  // wind-up, then locks - "a sidestep the moment the mark appears no longer beats a lunge". The step comes once its aim
+  // is locked (at once for a sweep or a slam, which lock at their start)
+  const lockAt = TELL.TRACKERS.includes(blow.kind) ? blow.start + TELL.TRACK_SHARE * (blow.land - blow.start) + 0.07 : 0;
+  run([f], Math.max(0, lockAt - T), player);
   const at = [...f.ai.feet], yaw = f.ai.yaw;
   player[0] += 3.5; player[2] -= 1;   // out of every shape's reach from where it aimed
   let verdict = null, moved = 0, turned = 0;

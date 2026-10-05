@@ -35,6 +35,7 @@ import { DIR_DELTA } from '../src/world/roadNetwork.js';
 import { worldCoordToMapPixel } from '../src/formats/mapsFile.js';
 import { TRAVEL_VIEW_TEXT, travelTripLine, travelWalkRate, TV_MOVE_ACTIONS } from '../src/scenes/travelView.js';
 import { createLoadGovernor, unbuiltAround } from '../src/systems/travelGovernor.js';
+import { foePaced } from '../src/systems/travelThreat.js';   // RATE-LAW: ENEMY-PACE's fixed floor, which the governor calls
 import { travelPathUsesRoads, TRAVEL_PATH_TEXT, setTravelPathMode } from '../src/systems/travelPathMode.js';
 import { timeScale, setTimeScale, resetTimeScale, MAX_TIME_SCALE } from '../src/systems/timeScale.js';
 
@@ -232,7 +233,7 @@ test('TO-ROADS REPRODUCED, then fixed (the host\'s own code over the real planne
 
 /** world.js's governor, mounted from its own source (test/ow_toggle.test.js's way): `let tvHeld` through travelViewGovern. */
 function mountGovernor(env) {
-  const from = WORLD.indexOf('  let tvFoeRate = ');   // ENEMY-PACE: the near-enemies pace and its floor ride in front of tvHeld
+  const from = WORLD.indexOf('  let tvHeld = null;');   // RATE-LAW: ENEMY-PACE's stepper rate is gone - its floor is travelThreat.js foePaced
   const fn = WORLD.indexOf('  function travelViewGovern(dt) {', from);
   const end = WORLD.indexOf('\n  }\n', fn) + 4;
   assert.ok(from >= 0 && fn > from && end > fn, 'the governor\'s source');
@@ -268,7 +269,8 @@ test('TO-ROADS, the journey\'s life (the host\'s own code): a foe stops it as th
     resetTimeScale();
     setTimeScale(20);   // the journey's own ask, set by the mod's panel
     const g = mountGovernor({
-      travelControlUI: { isShowing: true, timeAcceleration: 20, accelerationLimit: () => 100 },
+      travelControlUI: { isShowing: true },   // RATE-LAW: no spinner, no limit - the journey's ask is travelAsked below
+      foePaced, travellerOnRoad: () => false,
       travelOptions: { state: { autopilot: {} } },
       travelWalkRate, TV_MOVE_ACTIONS,
       travelView: { active: false, state: 'off' },   // the view left down

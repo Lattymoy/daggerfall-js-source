@@ -630,7 +630,8 @@ test('WW1: the rig runs the clone beside the machine - the late update after the
   assert.match(lf, /export function takeFrameLook\(\) \{ const v = \[_frameYaw, _framePitch\]; _frameYaw = 0; _framePitch = 0; return v; \}/);
   assert.match(lf, /_frameYaw \+= dyaw; _framePitch \+= dpitch;/, 'latched where the look is applied');
   // the bundle door registered from the textures pick, beside the seasons'
-  assert.match(rd('src/scenes/shared.js'), /setWeaponWidgetSources\(names, loadTextureFile\);/);
+  // PIN MOVED (AUDIT VE R2): one registration of the store - the boot seam reaches it, it no longer copies it
+  assert.match(rd('src/scenes/shared.js'), /const textures = registerTextureStore\(\)/);
   assert.match(rd('src/scenes/dataSource.js'), /setWeaponWidgetSources\(names, loadTextureFile\);/);
   assert.match(rd('src/systems/features.js'), /modFeature\('weapon-widget', 'Takes effect at once\.', '\w+'\)/);
 });

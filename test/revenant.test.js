@@ -231,7 +231,9 @@ test('REVENANT THE HOSTS: the open world\'s pool rolls the flee once under a fif
   assert.match(x, /if \(_flee === 'start' \|\| _flee === 'run'\) \{ fleeWalk\(f, dt, eye\); continue; \}/, 'running: its walk and nothing else');
   assert.match(x, /function fleeWalk\(f, dt, eye\) \{\s*\n\s*f\._mout = f\.mobile\.update\(dt, \{ moving: f\.ai\.moving, striking: false, rangedStriking: false, hurting: f\.ai\.hurtKnock, casting: false \}/, 'no blow and no cast in it');
   assert.match(x, /else if \(_flee === 'cornered'\) revenantSay\(revenantCorneredEvent\(/, 'cornered: said');
-  assert.match(x, /function escapeFoe\(f(?:, \{ slip = false \} = \{\})?\) \{\s*\n\s*releaseFoeBatch\(f\);\s*\n\s*f\.dead = true;[\s\S]{0,300}revenantDeed\(playerEntity, f\.entity, 'fled'/, 'gone without a corpse, made a revenant');
+  // PIN MOVED (RVN3: the unbroken's escape - the same door, its own words)
+  // PIN MOVED (RVN6: its band scatters first - bible/12-Enhanced-AI/Feud-Arc.md 17)
+  assert.match(x, /function escapeFoe\(f(?:, \{ slip = false(?:, unbroken = false)? \} = \{\})?\) \{\s*\n(?:\s*scatterBand\(f\);[^\n]*\n)?\s*releaseFoeBatch\(f\);\s*\n\s*f\.dead = true;[\s\S]{0,300}revenantDeed\(playerEntity, f\.entity, 'fled'/, 'gone without a corpse, made a revenant');
   const esc = x.indexOf('function escapeFoe(f');   // AUDIT (2026-10-02): the slip's option widened the head - the old '(f)' read nothing, and this passed on an empty slice
   assert.ok(esc > 0);
   assert.doesNotMatch(x.slice(esc, esc + 600), /f\.corpse = true|sayEnemyDied|reportPlayerKill/, 'no corpse, no kill');
@@ -240,7 +242,7 @@ test('REVENANT THE HOSTS: the open world\'s pool rolls the flee once under a fif
   const spawn = x.slice(x.indexOf('async function spawnFoe('), x.indexOf('const gender = MobileUnit.resolveGender'));
   assert.match(spawn, /revenant \? revenant\.elite : rollOverworldElite\(Math\.random\)\)/, 'an elite stands as one again, never a fresh roll');
   assert.match(spawn, /revenant \? \(revenant\.trait \? championIndex\(revenant\.trait\) : null\)/, 'its trait, never a fresh one');
-  const iApply = spawn.indexOf('applyRevenant(entity, revenant)'), iLoot = spawn.indexOf('spawnEnemyLoot(entity');
+  const iApply = spawn.indexOf('applyRevenant(entity, revenant, { turned })'), iLoot = spawn.indexOf('spawnEnemyLoot(entity');   // PIN MOVED (RVN11c: a betrayer's turning is no return)
   assert.ok(iApply > spawn.indexOf('applyChampion(entity') && iApply < iLoot, 'its rank over its trait, before its loot');
   assert.match(spawn, /if \(entity\.revenant\) grantRevenantLoot\(entity, builtLevel\);/);
   const w = read('src/scenes/world.js');

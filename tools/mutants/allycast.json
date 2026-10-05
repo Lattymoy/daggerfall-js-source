@@ -101,8 +101,8 @@
   {
     "name": "AC-host-heals-self-too",
     "file": "src/scenes/hostMagic.js",
-    "old": "      sayGift(allyCastCasterLine(sp.name, ally.name));   // GIFT-QUIET\n      return done(true);\n    }",
-    "new": "      sayGift(allyCastCasterLine(sp.name, ally.name));   // GIFT-QUIET\n    }",
+    "old": "      sayGift(allyCastCasterLine(sp.name, ally.name));   // GIFT-QUIET\n      if (Number.isFinite(ally.distance)) giftFx(sp, alongAim(eye, dir, ally.distance));   // IMPACTFX: a heal rising at the mate\n      return done(true);\n    }",
+    "new": "      sayGift(allyCastCasterLine(sp.name, ally.name));   // GIFT-QUIET\n      if (Number.isFinite(ally.distance)) giftFx(sp, alongAim(eye, dir, ally.distance));   // IMPACTFX: a heal rising at the mate\n    }",
     "tests": [
       "test/allycast.test.js"
     ]

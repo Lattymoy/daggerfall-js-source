@@ -10,6 +10,8 @@ import { readFileSync } from 'node:fs';
 import * as acorn from 'acorn';
 import { validFoeRecord, hitPoisonOf, hitSpellOf, FOE_HEALTH_MAX, FOE_LEVEL_MAX, FOES_FRAME_MAX, PARTY_MAX } from '../src/net/wire.js';
 import { ELITE_FOE_MULTIPLIER } from '../src/world/spawnedDungeons.js';
+import { blowClassOf } from '../src/ai/puppetBlows.js';   // AUDIT FEUD: the hit door builds a blow's class whenever its weakness rides (the real one)
+import { feudWeakBlow } from '../src/systems/feudLedger.js';   // AUDIT FEUD: ...asked of the real test (none registered here)
 import { ARENA_PUPPET_OWNER } from '../src/net/arenaLaw.js';   // ARENA4: the kill door's puppet test, the real owner word (no puppet here)
 
 const D = readFileSync(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
@@ -68,6 +70,7 @@ function restDoors(over = {}) {
     // (encounterSpot), and a night running hears the ask at once (ambushNight) - here a spot stands and no night runs
     // (a paced window), so these doors keep their own question; test/auditrest2_fires.test.js asks the others
     encounterSpot: () => ({ x: 9, y: 0, z: 9 }), ambushNight: () => false,
+    restReturn: () => false,   // PIN MOVED (RVN7d: offline a due revenant may answer the rest's roll - none here)
     ...over,
   };
   state.Date = { now: () => state.clock };
@@ -296,7 +299,7 @@ test('REST-SYNC: a joiner\'s blow at the room\'s encounter goes to the host by t
   const sent = [];
   const layout0 = foe(), pup = foe({ _encId: 7 });
   const j = {
-    _authority: false, ARENA_PUPPET_OWNER, foes: [layout0, pup], _layoutFoes: 1, lastPlayerFeet: [1, 0, 1], _ecvT: 0,
+    _authority: false, ARENA_PUPPET_OWNER, blowClassOf, feudWeakBlow, foes: [layout0, pup], _layoutFoes: 1, lastPlayerFeet: [1, 0, 1], _ecvT: 0,
     opts: { onFoeHit: (h) => sent.push(h) }, renownFoeStruck() {}, takeWholeBlow: () => false, markFoeStruck() {}, markConcealedHit() {},
   };
   const jd = mount(`${consts()}\n${declSrc('isRoomFoe')}\n${fnSrc('damageFoe')}\nreturn { damageFoe };`, j);

@@ -1,0 +1,209 @@
+[
+  {
+    "name": "LW6c-template",
+    "file": "src/systems/livingWorld/keepsake.js",
+    "old": "export const KEEPSAKE_TEMPLATE = 1800;",
+    "new": "export const KEEPSAKE_TEMPLATE = 1801;",
+    "tests": [
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW6c-price",
+    "file": "src/systems/livingWorld/keepsake.js",
+    "old": "hitPoints: 100, capacityOrTarget: 0, basePrice: 1,",
+    "new": "hitPoints: 100, capacityOrTarget: 0, basePrice: 100,",
+    "tests": [
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW6c-stack",
+    "file": "src/systems/livingWorld/keepsake.js",
+    "old": "  playerTextureRecord: 0, stackable: false,",
+    "new": "  playerTextureRecord: 0, stackable: true,",
+    "tests": [
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW6c-kind",
+    "file": "src/systems/livingWorld/keepsake.js",
+    "old": "KEEPSAKE_KINDS[lwSeed(textSeed(res.id), 0x6b656570) % KEEPSAKE_KINDS.length]",
+    "new": "KEEPSAKE_KINDS[0]",
+    "tests": [
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW6c-name",
+    "file": "src/systems/livingWorld/keepsake.js",
+    "old": "name: `${res.name}'s ${kind}`,",
+    "new": "name: `${kind}`,",
+    "tests": [
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW6c-mark",
+    "file": "src/systems/livingWorld/keepsake.js",
+    "old": "town: res.town >>> 0, home: res.home ?? null } };",
+    "new": "town: res.town >>> 0, home: null } };",
+    "tests": [
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW6c-is",
+    "file": "src/systems/livingWorld/keepsake.js",
+    "old": "it?.templateIndex === KEEPSAKE_TEMPLATE && !!it?.livingKeepsake;",
+    "new": "it?.templateIndex === KEEPSAKE_TEMPLATE;",
+    "tests": [
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW6c-town",
+    "file": "src/systems/livingWorld/keepsake.js",
+    "old": "isKeepsake(it) && it.livingKeepsake.town === (town >>> 0)",
+    "new": "isKeepsake(it)",
+    "tests": [
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW6c-home",
+    "file": "src/systems/livingWorld/keepsake.js",
+    "old": "    && (it.livingKeepsake.home ?? homeOf?.(it.livingKeepsake.id) ?? null) === home",
+    "new": "    && true",
+    "tests": [
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW6c-no-home",
+    "file": "src/systems/livingWorld/keepsake.js",
+    "old": "  if (home == null) return null;",
+    "new": "  void 0;",
+    "tests": [
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW6c-place",
+    "file": "src/systems/livingWorld/keepsake.js",
+    "old": "    && placeIdOf(it.livingKeepsake.id) !== placeIdOf(holder)) ?? null;",
+    "new": "    ) ?? null;",
+    "tests": [
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW6c-place-gen",
+    "file": "src/systems/livingWorld/keepsake.js",
+    "old": "const placeIdOf = (id) => String(id ?? '').split('~')[0];",
+    "new": "const placeIdOf = (id) => String(id ?? '');",
+    "tests": [
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW6c-handed",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    this.o.takeKeepsake?.(item);",
+    "new": "    void 0;",
+    "tests": [
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW6c-saved",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    rel?.note(res.id, 'saved', day);\n    for (const k of this.kinOf(res))",
+    "new": "    rel?.note(res.id, 'helped', day);\n    for (const k of this.kinOf(res))",
+    "tests": [
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW6c-household",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    for (const k of this.kinOf(res)) if (k.town === res.town) rel?.note(k.id, 'helped', day);",
+    "new": "    void 0;",
+    "tests": [
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW6c-words",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "LIVING_KEEPSAKE[lwSeed(textSeed(res.id), textSeed(item.livingKeepsake.id)) % LIVING_KEEPSAKE.length]",
+    "new": "LIVING_KEEPSAKE[0]",
+    "tests": [
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW6c-who",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "fillLine(w, { who: firstNameOf(item.livingKeepsake.name),",
+    "new": "fillLine(w, { who: item.livingKeepsake.name,",
+    "tests": [
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW6c-none",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    if (!item) return null;\n    this.o.takeKeepsake",
+    "new": "    if (!item) return [];\n    this.o.takeKeepsake",
+    "tests": [
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW6c-parchment",
+    "file": "src/scenes/townTalk.js",
+    "old": "    if (moment) { showOverlay(new ActionTextBox(moment)); return; }",
+    "new": "    void moment;",
+    "tests": [
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW6c-room-door",
+    "file": "src/scenes/world.js",
+    "old": "    moment: (p) => livingIndoors?.town()?.moment?.(p) ?? null,",
+    "new": "    moment: () => null,",
+    "tests": [
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW6c-carried",
+    "file": "src/scenes/world.js",
+    "old": "          keepsakes: () => playerEntity.items ?? [],",
+    "new": "          keepsakes: () => [],",
+    "tests": [
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW6c-handed-host",
+    "file": "src/scenes/world.js",
+    "old": "if (i >= 0) playerEntity.items.splice(i, 1); },",
+    "new": "void i; },",
+    "tests": [
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW6c-laid",
+    "file": "src/scenes/world.js",
+    "old": "    items.push(mintKeepsake(res));",
+    "new": "    void mintKeepsake;",
+    "tests": [
+      "test/lw6c_keepsake.test.js"
+    ]
+  }
+]

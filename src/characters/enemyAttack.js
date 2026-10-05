@@ -30,6 +30,7 @@
 
 import { rand } from '../formats/dfRandom.js';
 import { tacticsNow } from '../ai/tacticsClock.js';   // AUDIT TACT: a landing's swing is on the foes' own time
+import { TELL } from '../ai/tells.js';   // TELL6d: one shot in three aimed
 import {
   createWeaponMachine, machineAttack, machineStep,
   MELEE_NUM_FRAMES, CLASSIC_UPDATE_INTERVAL,
@@ -94,6 +95,8 @@ export class EnemyAttack {
     // strike edge. A cut that restarts the machine inside one update()
     // never shows the hosts an Idle frame, so a state edge missed it.
     this.swingSeq = 0;
+    this._held = false;   // TELL2: the running swing began at a telegraphed wind-up and waits on its landing
+    this._heldStrike = 'Idle';   // ...and the strike it rolled then
   }
 
   /** EnemyAttack.cs:70 - a READ, not a field, so nothing can freeze it. */
@@ -170,10 +173,40 @@ export class EnemyAttack {
       // bow band (AUDIT TACT A4/D5: above the band's arm, so an archer's landing is never parked for later); a landing
       // the swing could not take at once is spent, never fired seconds later off a stale verdict. Never set with the
       // switch off.
+      // TELL2 (bible/12-Enhanced-AI/Feud-Arc.md section 4.1): THE WIND-UP IS THE SWING, HELD. It begins with the wind-up
+      // (the sprite holds before its strike - characters/mobileUnit.js `hold`); a broken wind-up drops it; the landing
+      // below releases it and the brain sees its blow then. Never set with the switch off.
+      // TELL6d: an aimed shot's landing - the bow drawn now, its arrow loosed by the sprite along the locked line
+      if (ai._blowShot && !ai._blowShot.fired) {
+        ai._blowShot.fired = true;
+        if (oneShot) { this.machine.state = 'Idle'; this.machine.acc = 0; }
+        const strike = STRIKES[Math.floor(this.rolls() * STRIKES.length)];
+        if (machineAttack(this.machine, strike)) { this.firedRanged = true; this.swingSeq++; this._held = false; ai._tacShot = (ai._tacShot ?? 0) + 1; }
+        continue;
+      }
+      if (ai._blowWind) {
+        ai._blowWind = false;
+        if (oneShot) { this.machine.state = 'Idle'; this.machine.acc = 0; }
+        const strike = STRIKES[Math.floor(this.rolls() * STRIKES.length)];
+        if (machineAttack(this.machine, strike)) { this.firedRanged = false; this.swingSeq++; this._held = true; this._heldStrike = strike; }
+        this.meleeTimer = resetMeleeTimer(this.playerLevel, this.reflexes, this.rolls());
+        continue;
+      }
+      if (this._held && ai._blowHold === 'cancel') { this._held = false; this.machine.state = 'Idle'; this.machine.acc = 0; }
       if (ai._blowSwing) {
         ai._blowSwing = false;
-        if (ai._blowAt != null && tacticsNow() - ai._blowAt > BLOW_SWING_LATE) { ai._blowVerdict = null; ai._blowMult = undefined; }
-        else {
+        if (ai._blowAt != null && tacticsNow() - ai._blowAt > BLOW_SWING_LATE) { ai._blowVerdict = null; ai._blowMult = undefined; this._held = false; }
+        else if (this._held) {
+          // TELL2: the held swing strikes now - no second swing; the brain sees its blow. The machine times its strike and
+          // follow-through from here, as the forced swing did (a swing in flight holds the bow roll, DFU's IsPlayingOneShot):
+          // its own swing ran out under the hold. The strike it rolled at the start - no new draw.
+          this._held = false;
+          this.machine.state = 'Idle'; this.machine.acc = 0;
+          machineAttack(this.machine, this._heldStrike);
+          ai._tacSwung = (ai._tacSwung ?? 0) + 1;
+          this.meleeTimer = resetMeleeTimer(this.playerLevel, this.reflexes, this.rolls());
+          continue;
+        } else {
           if (oneShot) { this.machine.state = 'Idle'; this.machine.acc = 0; }
           const strike = STRIKES[Math.floor(this.rolls() * STRIKES.length)];
           if (machineAttack(this.machine, strike)) { this.firedRanged = false; this.swingSeq++; ai._tacSwung = (ai._tacSwung ?? 0) + 1; }
@@ -186,8 +219,9 @@ export class EnemyAttack {
         // ...and the 1/32 roll itself sits behind `if (!isPlayingOneShot)`
         // (:587), so a swing in flight DOES hold the bow roll.
         if (!oneShot && withinYaw(ai.yaw, dx, dz, ATTACK_YAW_DEG) && ai._tacShoot !== false && this.rolls() < BOW_SHOT_CHANCE) {   // TACT2: no ranged token, no shot (unset with the switch off)
+          if (ai._aimReady === true && this.rolls() < TELL.AIMED_SHARE) { ai._wantAimed = true; continue; }   // TELL6d: this shot aimed - the brain winds it up (never set with the switch off)
           const strike = STRIKES[Math.floor(this.rolls() * STRIKES.length)];
-          if (machineAttack(this.machine, strike)) { this.firedRanged = true; this.swingSeq++; ai._tacShot = (ai._tacShot ?? 0) + 1; }   // AUDIT TACT A2: a shot spends the ranged token
+          if (machineAttack(this.machine, strike)) { this.firedRanged = true; this.swingSeq++; this._held = false; ai._tacShot = (ai._tacShot ?? 0) + 1; ai._blowShot = null; }   // AUDIT TACT A2: a shot spends the ranged token; AUDIT TELL B11: a plain shot is never an aimed one a Hurt cut short (its bearing and its weight)
         }
         continue;
       }
@@ -217,7 +251,7 @@ export class EnemyAttack {
       if (!oneShot || this.firedRanged) {
         if (oneShot) { this.machine.state = 'Idle'; this.machine.acc = 0; }
         const strike = STRIKES[Math.floor(this.rolls() * STRIKES.length)];
-        if (machineAttack(this.machine, strike)) { this.firedRanged = false; this.swingSeq++; ai._tacSwung = (ai._tacSwung ?? 0) + 1; }   // TACT2: the brain sees its blow
+        if (machineAttack(this.machine, strike)) { this.firedRanged = false; this.swingSeq++; this._held = false; ai._tacSwung = (ai._tacSwung ?? 0) + 1; }   // TACT2: the brain sees its blow
       }
       this.meleeTimer = resetMeleeTimer(this.playerLevel, this.reflexes, this.rolls());
     }

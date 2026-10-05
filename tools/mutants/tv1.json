@@ -732,8 +732,8 @@
   {
     "name": "AUDIT-DEEP2-A9-out-of-a-duel",
     "file": "src/scenes/world.js",
-    "old": "    danger: () => duelEnemyNear() || areEnemiesNearby(exteriorFoePool()),",
-    "new": "    danger: () => areEnemiesNearby(exteriorFoePool()),",
+    "old": "    danger: () => duelEnemyNear() || areEnemiesNearby(wildSeen(exteriorFoePool())),",
+    "new": "    danger: () => areEnemiesNearby(wildSeen(exteriorFoePool())),",
     "tests": [
       "test/tv1_travel_view.test.js"
     ],

@@ -230,11 +230,12 @@
   {
     "name": "GUILD1e-scan-without-the-board",
     "file": "src/systems/decorScan.js",
-    "old": "[...decorCatalogue(collected), HALL_BOARD_ENTRY]",
-    "new": "[...decorCatalogue(collected)]",
+    "old": "[...decorCatalogue(mods ? addDecorMods(read) : read), HALL_BOARD_ENTRY]",
+    "new": "[...decorCatalogue(mods ? addDecorMods(read) : read)]",
     "tests": [
       "test/guild1e_client.test.js"
-    ]
+    ],
+    "note": "DECOR-MODS (FIELD BUGS 2026-10-05b, PIN MOVED): re-aimed by content - the town mods' furnishings join before the board. AUDIT 05b (PIN MOVED): re-aimed by content - the mods join whatever is on (A3)."
   },
   {
     "name": "GUILD1e-any-model-a-board",

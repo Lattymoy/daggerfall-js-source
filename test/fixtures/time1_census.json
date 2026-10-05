@@ -748,6 +748,18 @@
    "why": "a moon power's night"
   },
   {
+   "file": "src/systems/revenant.js",
+   "has": "const skyIsNight = () => { try { return isNight(skyMinutes()); }",
+   "clock": "sky",
+   "why": "RVN1/RVN2: whether a fight with a revenant began by night (its ledger's night scar), and a Night-stalker's night - its return and its blows"
+  },
+  {
+   "file": "src/systems/revenant.js",
+   "has": "const skyIsDay = () => { try { return !isNight(skyMinutes()); }",
+   "clock": "sky",
+   "why": "RVN3: whether the sky reads day - a daylight weakness bites"
+  },
+  {
    "file": "src/systems/save.js",
    "has": "? Math.floor(worldMinutes()), worldMinutes",
    "clock": "event",
@@ -928,6 +940,42 @@
    "has": "rosterGrandChampions(playerEntity.arenaLeague, Math.floor(worldMinutes()))",
    "clock": "event",
    "why": "ARENA3: the Keeper of the Hall reads the Hall of Champions - the roster's Grand Champions by the season"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "const nowS = raidNowMs() / 1000, t = skyMinutes(), rate = livingBaseRate();",
+   "clock": "sky",
+   "why": "LW5: a visiting crew's stay - her dwell on the ships' clock turned into the sky's minutes the living world lives by"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "day: () => Math.floor((skyMinutes() - 240) / 1440),",
+   "clock": "sky",
+   "why": "LW6: the living day a regard is noted on, met in the deep"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "_livingDiversList = here ? diversAt(here, skyMinutes(), livingTripWorld,",
+   "clock": "sky",
+   "why": "LW6: the companies diving the player's dungeon at the sky's minute"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "_livingRemainsList = here ? fallenIn(here, skyMinutes(), livingTripWorld,",
+   "clock": "sky",
+   "why": "LW6b: the dead of the dives into the player's dungeon at the sky's minute"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "livingDivers.frame(_livingDiversList, skyMinutes());",
+   "clock": "sky",
+   "why": "LW6: the companies met read at the sky's minute - their hours done"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "people: livingWorldOn() ? () => peoplePage(livingRelations, Math.floor((skyMinutes() - 240) / 1440), livingTownOfId) : undefined,",
+   "clock": "sky",
+   "why": "LW7c: the People page reads each regard on the living day - the sky's"
   }
  ]
 }

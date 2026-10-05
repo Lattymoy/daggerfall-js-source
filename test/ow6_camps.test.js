@@ -170,7 +170,7 @@ test('OW6 camps wiring: the host stands each group under the pool\'s one counter
   assert.match(W, /f\.campId = campId; f\.campAlertRadius = hit\.alertRadius;\n\s*f\.campKind = hit\.kind \?\? 'pack';/);
   assert.match(W, /_standCampEncounter\(\{ kind: 'band', mobileTypes: mk\.mobileTypes,/);
   assert.match(W, /\n\s+handOverWalkedAway\(performance\.now\(\)\);   \/\/ OW6/, 'the walk-away handover runs every exterior frame');
-  assert.match(W, /for \(const c of travelViewCamps\(\)\) marks\.push\(\{ key: `camp:\$\{c\.key\}`, at: \[c\.at\[0\], c\.at\[1\] \+ 2, c\.at\[2\]\], label: c\.label, kind: 'camp', pick: true \}\);/);   // OW-ATTACK: pressable
+  assert.match(W, /for \(const c of travelViewCamps\(\)\) marks\.push\(\{ key: `camp:\$\{c\.key\}`, at: \[c\.at\[0\], c\.at\[1\] \+ 2, c\.at\[2\]\], label: wildCamps\.has\(c\.key\) \? `\$\{WILD_MARK\} \$\{c\.label\}` : c\.label, kind: 'camp', pick: true \}\);/);   // WILD-ALERT: an alerted camp's mark wears the "!"   // OW-ATTACK: pressable
   assert.equal(TRAVEL_VIEW_MARK_COLORS.camp, '#d9622b');
   const hud = read('src/ui/travelViewHud.js');
   assert.match(hud, /\|\| k === 'camp' \? k : 'traveller';/);

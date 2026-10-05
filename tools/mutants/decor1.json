@@ -227,8 +227,8 @@
   {
     "name": "DECOR1-the-count-unkept",
     "file": "src/systems/decorCatalogue.js",
-    "old": "    if (had) had.count++;",
-    "new": "    if (had) had.count = 1;",
+    "old": "    else had.count++;",
+    "new": "    else had.count = 1;",
     "tests": [
       "test/decor1.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "DECOR1-a-shared-name-unnumbered",
     "file": "src/systems/decorCatalogue.js",
-    "old": "list.forEach((e, i) => { e.name = list.length > 1 ? `${e.base} ${i + 1}` : e.base; });",
-    "new": "list.forEach((e) => { e.name = e.base; });",
+    "old": "      for (let k = i; k < j; k++) list[k].name = lone ? list[k].base : `${list[k].base} ${taken + k - i + 1}`;",
+    "new": "      for (let k = i; k < j; k++) list[k].name = list[k].base;",
     "tests": [
       "test/decor1.test.js"
     ]

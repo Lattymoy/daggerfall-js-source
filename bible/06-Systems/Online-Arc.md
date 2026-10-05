@@ -4417,7 +4417,7 @@ room exists.
 
 **The boundary that makes that safe is `_layoutFoes`** - the dungeon
 host's index of where the layout's own run ends. Every foe past it "is
-this player's own" (`dungeonContext.js:1493`, AUDIT WORLD B2): a quest
+this player's own" (`dungeonContext.js:1512`, AUDIT WORLD B2): a quest
 foe is minted above it, never streamed, never puppet-ised by the room's
 authority switch, and never touched by a joiner's stream. So a joiner's
 quest foe really does spawn and really can be killed by the player whose
@@ -4801,7 +4801,7 @@ appended its own note to the end of the line that already carried
 **Why that is an invulnerable enemy.** Online, a joiner applies no local
 damage to a layout foe - `damageFoe`'s non-authority arm hands the blow
 to the room's host through `opts.onFoeHit?.(...)` and RETURNS
-(`dungeonContext.js:5870`). With the property missing that call is a
+(`dungeonContext.js:6060`). With the property missing that call is a
 no-op on `undefined`: no damage, no frame, no warning, nothing on the
 console. Every layout foe in every online dungeon absorbed every blow
 from everyone but the room's authority, for eight slices, in silence.
@@ -4928,9 +4928,9 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:9539` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:10263` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
-  provenance argument `applySpellToFoe` hands them (`hostMagic.js:496`)
+  provenance argument `applySpellToFoe` hands them (`hostMagic.js:646`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
   Threading it touches four hosts.
 - **A building interior streams no foes at all.** `makeInteriorFoes`
@@ -7158,7 +7158,7 @@ answers that exact string in the object's sleep, no event, no wake. Only a
 CHANNEL session (chat, `presence: false`) used it. A presence session's
 liveness rode the pose.
 
-**Now (`src/net/wire.js:1143`, `src/net/online.js:2533`):**
+**Now (`src/net/wire.js:1198`, `src/net/online.js:2533`):**
 
 - `HEARTBEAT_MS` 5000 -> 20000. The pose goes when it MOVED (at POSE_HZ, as
   before) or every 20 s standing, as the peers' proof of life and the silence
@@ -9523,7 +9523,16 @@ changes to a placed piece.
   table names them - and otherwise the kind numbered in id order. A house container holds things by default; a light
   carries Daggerfall's own light (its range, intensity and colour). The panel's filters are here too: kinds, words
   (every word in the name or the kind), a size band (small under half a metre of radius, large from a metre and a
-  quarter), holds-things, gives-light; most common first, cheapest first, or by name.
+  quarter), holds-things, gives-light; most common first, cheapest first, or by name. DECOR-DUNGEON (FIELD BUGS
+  2026-10-05b, the owner: "a lot of missing decor items"): and the dungeon blocks' furnishings - a model of the furniture
+  families, or one of the 37 things Daggerfall stands outside them (measured: its statues, arms, pedestals, coffins,
+  hangings), that stands doing nothing (no action, never a door), a flat but a marker, an acting flat or nature; found
+  only there, a piece is "Dungeon furniture"; every place's names are numbered after the earlier places' (a room's
+  first), so no room's name moves (`01-Overview/Field-Bugs-2026-10-05b.md`). DECOR-MODS (the same record, the town
+  mods' furnishings): and the pieces it stands in for what Beautiful Villages, Beautiful Cities and Detailed Ships place
+  - 297, measured over their own blocks, a room's or a street's as the mods stand them, never the town's own structure -
+  named and numbered after every place of Daggerfall's (`systems/decorMods.js`), every one catalogued whatever is on and
+  offered while the port stands it (AUDIT 05b A3: asked as the offer is made).
 
 Pinned: `test/decor1.test.js` (4 of its 7) - the law, the store through the real Worker with every migration
 applied, the client's door and the deploy, the catalogue and its filters.
@@ -10042,6 +10051,18 @@ home's alone - they are about other players.
   service with `yard`, paid from the purse and the town's region's account (or the realm record's act).
 - Four hosts: `world.js` WIRED (the yards, the frames, the passes, the eye and the stick); `worldModes.js` and
   `dungeonContext.js` stand no street; `exterior.js` (the bench) FLAGGED - no online homes.
+- **The street and the nature** (DECOR-OUTDOOR, FIELD BUGS 2026-10-05b, the owner: "a lot of missing decor items"): a
+  yard's catalogue holds what Daggerfall stands in its streets - each town block's own models (never a mill, a gate, the
+  town's board or the ladder) and flats, and its buildings' outside flats - and its climate's trees and plants (every
+  record of its set, the set its pixel names); neither is offered indoors. A yard's model stands in its town's climate
+  (its swaps written into the pixel's own table before it stands), a street's animal or flame moves with the town's
+  animator, and a tree or a plant is drawn as the pixel draws its nature: the season's archive of its set, Seasons of the
+  Iliac Bay's picture where the mod re-skins it, the wind's lean; when the pixel is built again (a season's turn, an
+  install) the yard stands again in it. The ghost and the panel's pictures are the season's too. DECOR-LPT (FIELD BUGS
+  2026-10-05b, the owner: "elements should recieve the low poly overhaul style like trees got"): a tree or a plant Low
+  Poly Trees has a tree for stands as the world's do - its 3D tree near the eye (the piece's scale and turn), its own far
+  picture beyond (its handle held while it stands) - and the ghost is the picture it will stand as
+  (`07-Rendering/Low-Poly-Trees.md`).
 - Known limits: the lot is a box round the footprint (a building turned off the grid has a wider lot); yard pieces are
   not activation targets; the street's wandering folk are not steered round them.
 
@@ -10137,7 +10158,8 @@ and `test/decor2b.test.js` (the sale's line, the tap under a flight) and the ACC
   the item, the owner and the town (vendorSearch).
 - **The catalogue** (`systems/decorCatalogue.js`): the people Daggerfall stands in its rooms (`blockPeopleRecords`) are
   catalogue pieces too, kind Vendors (Mac: "People category sounds wrong call it vendors") - placed, one is made the
-  trader.
+  trader. NUDE-HOSTS (FIELD BUGS 2026-10-05b): Show Nudity governs them as it does the world's people - off, no nude
+  figure is offered, and one placed stands, flies and is pictured as its clothed stand-in (`01-Overview/Field-Bugs-2026-10-05b.md`).
 - **The service** (`server-account/src/market.js` over `migrations/0080_home_vendors.sql` - `market_listings.vendor_map`,
   `vendor_id`; routes `/v1/market/vendor`, `/vendors`, `/myvendors`). A listing named at a trader is the owner's
   character's own trader (`vendor-not-yours`), in the HOME's region whatever the client says; it is filtered out of the
@@ -14681,3 +14703,38 @@ else's until they changed area; the Broker said as much ("Others see it once you
 - Pins: `test/auralive.test.js` (6) - end to end through the real Room (a peer draws the wings; no leave; the host's
   seat kept; not superseded; taken off the same way), a run of changes one hello, the halo's socket, the refusals, the
   host's ask; `tools/mutants/auralive.json` (12).
+
+## RVN13 - a revenant on the foe stream (2026-10-05)
+
+The Feud arc's revenants online (`bible/12-Enhanced-AI/Feud-Arc.md` section 25 and its RVN13 record; relay
+**world164**): both foe streams carry a revenant's own - `ad` its adaptations (a mask), `wq` its weakness (an index),
+`p2` its last stand's second phase - and the street's a band follower's master (`rt`, by its number, for its name). A
+puppet stands with them, so a peer's roll against it sees what its owner's would (the owner applies none twice: a
+relayed blow is a final number). A peer's blow of the owner's revenant's weakness (the hit's `wc`) reveals it to the
+owner. The theft, loyalty, festering, the lair and the rumours stay the character's own.
+
+**AUDIT FEUD (2026-10-05)**: that reveal never fired - no sender set the class's weakness bit, and a class rode only
+while the puppet wound up. Now both senders pass it (`ai/puppetBlows.js blowClassOf`'s fourth argument, the blow's own
+weakness test on the puppet's wire-stood record), and a blow of its weakness carries its class winding up or not (no
+facing, so never from behind) - the owner's reveal and its poise meter read it. No new field: the relay is unchanged.
+An heir's stream (a foe adopted after its owner left, a room's new authority) keeps writing `ad`, `wq` and `p2`.
+AUDIT FEUD 2: only a blow that landed (`damage > 0`) carries the weakness - a miss carried it as "bare hands"; the
+owner's reveal raises no word on its own screen for a peer's blow (the peer's says it); each player's shaft carries its
+bow, so a metal weakness rides too.
+**FEUD WIRE (2026-10-05; relay world165)**: both streams carry `rb` - a revenant's stand's blows over its kind's (its
+rank's, its wrath's, a Night-stalker's night), per mille - and a wind-up's signature flag (`wk` +64). A puppet folds `rb`
+and phase two's x1.2 (`p2`) onto its own `damageScale` once (the last factor taken out first) and strikes a flagged
+signature at x2.0, so a peer is struck as the owner is; an heir writes `rb` back. The pyre and the signature's called
+name stay the owner's.
+
+## TELL8 - a wind-up on the foe stream (2026-10-04)
+
+The Feud arc's online slice (`bible/12-Enhanced-AI/Feud-Arc.md` section 10 and its TELL8 record; relay **world162**):
+both foe streams (the exterior's cells and the dungeon's rooms) carry a foe's telegraphed wind-up - `wk` its shape and
+flags, `wy` its yaw, `wl` ms to its landing (relative: each client's foes run on their own clock), `wo` its origin,
+`wp` a leap's or a shot's point - and `ws` its stagger or overreach (`net/wire.js validFoeRecord`). Every puppet draws
+the mark, the glint, the held arm and the cues from them (`ai/puppetBlows.js`), and a wind-up AT a player is judged
+on that player's own machine at its landing - the world boss's law (`net/gateStrike.js`). An owner's foe now winds up
+at a peer it hunts as at its owner; the owner's own view of the peer's feet decides only its foe's punish window. A
+peer's blow on a foe winding up carries its class (`wc`, `hitClassOf`) so the owner's poise meter weighs it as its own.
+

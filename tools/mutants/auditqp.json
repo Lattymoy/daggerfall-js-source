@@ -318,8 +318,8 @@
   {
     "name": "AQP-Q4-cull-takes-the-partys-fight",
     "file": "src/scenes/exteriorFoes.js",
-    "old": " && !(_qTag(f) && partyNearFoe(f, _cullAt))) {",
-    "new": ") {",
+    "old": " && !(_qTag(f) && partyNearFoe(f, _cullAt)) && !_relentless) {",
+    "new": " && !_relentless) {",
     "tests": [
       "test/questparty2.test.js"
     ]

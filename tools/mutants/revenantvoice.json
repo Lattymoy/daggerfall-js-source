@@ -16,8 +16,8 @@
   {
     "name": "REVENANT-VOICE-the-name-unfilled",
     "file": "src/systems/revenantPersonality.js",
-    "old": "const fill = (s, p) => s.replace(/\\{p\\}/g, () => p);",
-    "new": "const fill = (s, p) => s;",
+    "old": "const fill = (s, vars) => s.replace(PLACEHOLDER, (_, k) => String(vars[k]));",
+    "new": "const fill = (s, vars) => s;",
     "tests": ["test/revenant_voice.test.js"]
   },
   {
@@ -44,8 +44,8 @@
   {
     "name": "REVENANT-VOICE-an-older-record-without",
     "file": "src/systems/revenant.js",
-    "old": "    personality: isPersonality(r.personality) ? r.personality : personalityFor(r.id, r.mobileType),",
-    "new": "    personality: r.personality,",
+    "old": "  const personality = isPersonality(r.personality) ? r.personality : personalityFor(r.id, r.mobileType);   // REVENANT-VOICE: an older record's, drawn from its id as a new one's is",
+    "new": "  const personality = r.personality;",
     "tests": ["test/revenant_voice.test.js"]
   },
   {

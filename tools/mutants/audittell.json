@@ -1,0 +1,720 @@
+[
+  {
+    "name": "AUDITTELL-B1-holds-unseen",
+    "file": "src/ai/tactics.js",
+    "old": "ai.canAct !== false && !unseen(s, clock()) && tacticsSwitchOn();",
+    "new": "ai.canAct !== false && tacticsSwitchOn();",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-B1-holds-canact",
+    "file": "src/ai/tactics.js",
+    "old": "return !!s && s.state === 'windup' && !!s.blow && ai.canAct !== false && !unseen",
+    "new": "return !!s && s.state === 'windup' && !!s.blow && !unseen",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-B1-glint-unseen",
+    "file": "src/ai/tactics.js",
+    "old": "if (!b || b.feint || unseen(s, now)) return null;",
+    "new": "if (!b || b.feint) return null;",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-B1-track-unseen",
+    "file": "src/ai/tactics.js",
+    "old": "if (unseen(s, clock())) return { state: 'empty', fill: 0, word: '' };",
+    "new": "if (false) return { state: 'empty', fill: 0, word: '' };",
+    "tests": [
+      "test/audittell.test.js",
+      "test/tell9_screen.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-B1-skipped-gap",
+    "file": "src/ai/tactics.js",
+    "old": "const skipped = !!ai._tacSkipped || unseen(s, now);",
+    "new": "const skipped = !!ai._tacSkipped;",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-B1-break-puppet",
+    "file": "src/ai/tactics.js",
+    "old": "if (!s || s.puppet || (s.state !== 'windup'",
+    "new": "if (!s || (s.state !== 'windup'",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-B1-break-cooldown",
+    "file": "src/ai/tactics.js",
+    "old": "  s.blow = null; s.dash = null; s.state = 'engage'; s.blowReady = cooled;",
+    "new": "  s.blow = null; s.dash = null; s.state = 'engage';",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-B1-break-swing",
+    "file": "src/ai/tactics.js",
+    "old": "  clearBlowState(ai); dropSwing(ai);\n  ai._tacDir = null;\n  return true;",
+    "new": "  clearBlowState(ai);\n  ai._tacDir = null;\n  return true;",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-B1-motor-canact",
+    "file": "src/characters/enemyMotor.js",
+    "old": "if (!this.canAct && this._tac?.state && !locked) breakWindup(this);",
+    "new": "if (false && !this.canAct && this._tac?.state && !locked) breakWindup(this);",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-B1-flee",
+    "file": "src/characters/enemyMotor.js",
+    "old": "    breakWindup(this);   // AUDIT TELL B1: a routed foe's wind-up goes with its fight",
+    "new": "    // AUDIT TELL B1: a routed foe's wind-up goes with its fight",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-B4-release-shot",
+    "file": "src/ai/tactics.js",
+    "old": "ai._aimReady = false; ai._wantAimed = false; ai._blowShot = null;   // AUDIT TELL B4: an archer's aimed shot goes too",
+    "new": "ai._aimReady = false; ai._wantAimed = false;   // AUDIT TELL B4: an archer's aimed shot goes too",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-B5-held-swing",
+    "file": "src/ai/tactics.js",
+    "old": "clearBlowState(ai); ai._blowHold = false; ai._blowWind = false; ai._blowFx = null;",
+    "new": "clearBlowState(ai); ai._blowFx = null;",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-B5-held-stagger",
+    "file": "src/ai/tactics.js",
+    "old": "if (pe.staggerUntil === PUPPET_HELD_UNTIL) pe.staggerUntil = 0; ",
+    "new": "",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-B5-own-stagger",
+    "file": "src/ai/tactics.js",
+    "old": "if (pe.staggerUntil === PUPPET_HELD_UNTIL) pe.staggerUntil = 0;",
+    "new": "pe.staggerUntil = 0;",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-B8-turn",
+    "file": "src/ai/tactics.js",
+    "old": "  if (b0.key !== undefined && key !== b0.key) { breakWindup(ai); return false; }\n",
+    "new": "",
+    "tests": [
+      "test/audittell.test.js",
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-B9-spend",
+    "file": "src/ai/tactics.js",
+    "old": "(ai._blowVerdict != null && now < s.chainAt + CHAIN_SPEND_MAX)",
+    "new": "false",
+    "tests": [
+      "test/audittell.test.js",
+      "test/tell5_patterns.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-B3-leap-arrived",
+    "file": "src/ai/tactics.js",
+    "old": "if (tf) return resolveLanding(ai, s, s.blow, arrived && inBlow(",
+    "new": "if (tf) return resolveLanding(ai, s, s.blow, inBlow(",
+    "tests": [
+      "test/audittell.test.js",
+      "test/tell6c_leap.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-B11-plain-shot",
+    "file": "src/characters/enemyAttack.js",
+    "old": "ai._tacShot = (ai._tacShot ?? 0) + 1; ai._blowShot = null; }",
+    "new": "ai._tacShot = (ai._tacShot ?? 0) + 1; }",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-shatter-never",
+    "file": "src/ai/foeBlows.js",
+    "old": "if (b && b.cut == null && now < b.land) _shards.push({ blow: b, at: now });",
+    "new": "if (false) _shards.push({ blow: b, at: now });",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-shatter-endless",
+    "file": "src/ai/foeBlows.js",
+    "old": "if (!(after >= 0 && after <= BLOW_SHATTER)) { _shards.splice(i, 1); continue; }",
+    "new": "if (!(after >= 0)) { _shards.splice(i, 1); continue; }",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-shatter-reset",
+    "file": "src/ai/foeBlows.js",
+    "old": "export function resetBlows() { _live.clear(); _shards.length = 0; }",
+    "new": "export function resetBlows() { _live.clear(); }",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-shatter-offset",
+    "file": "src/ai/foeBlows.js",
+    "old": "[..._live.values(), ..._shards.map((x) => x.blow)]",
+    "new": "[..._live.values()]",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-shatter-cut",
+    "file": "src/ai/foeBlows.js",
+    "old": "if (b && b.cut == null && now < b.land)",
+    "new": "if (b && now < b.land)",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-shatter-brain",
+    "file": "src/ai/tactics.js",
+    "old": "  shatterBlow(ai, now); s.blow = null;   // AUDIT TELL (3.2): its mark shatters",
+    "new": "  setLiveBlow(ai, null); s.blow = null;   // AUDIT TELL (3.2): its mark shatters",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-shatter-puppet",
+    "file": "src/ai/puppetBlows.js",
+    "old": "if (r.ws === 1) shatterBlow(ai, now); else setLiveBlow(ai, null);",
+    "new": "setLiveBlow(ai, null);",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-shatter-shader",
+    "file": "src/render/foeTelegraph.js",
+    "old": "      gl.uniform1f(U.uShatter, phase.shatter > 0 ? phase.shatter : 0);   // AUDIT TELL (3.2)\n",
+    "new": "",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-L1-drain-dead",
+    "file": "src/systems/blowEffects.js",
+    "old": "  if (entity && !(entity.health > 0)) { _queue.length = 0; return; }   // AUDIT TELL L1: a dead body takes nothing\n",
+    "new": "",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-L1-bleed-start",
+    "file": "src/systems/blowEffects.js",
+    "old": "  if (!(entity?.health > 0)) return;   // AUDIT TELL L1: a dead body never bleeds",
+    "new": "  // AUDIT TELL L1: a dead body never bleeds",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-L1-bleed-tick",
+    "file": "src/systems/blowEffects.js",
+    "old": "if (entity.health > b.health || !(entity.health > 0)) { entity.bleed = null; return 0; }",
+    "new": "if (entity.health > b.health) { entity.bleed = null; return 0; }",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-L2-reset-bleed",
+    "file": "src/systems/blowEffects.js",
+    "old": "  if (entity) entity.bleed = null;\n}",
+    "new": "}",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-L2-reset-queue",
+    "file": "src/systems/blowEffects.js",
+    "old": "  _queue.length = 0; _downUntil = -Infinity; _guardUntil = -Infinity; _downMotor = null;",
+    "new": "  _downUntil = -Infinity; _guardUntil = -Infinity; _downMotor = null;",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-L2-save",
+    "file": "src/systems/save.js",
+    "old": "  resetBlowEffects(entity);   // AUDIT TELL L2",
+    "new": "  // AUDIT TELL L2",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-L2-spawn",
+    "file": "src/player/motor.js",
+    "old": "    this._pushX = 0; this._pushZ = 0; this._downLeft = 0; this._rattleLeft = 0;   // AUDIT TELL L2",
+    "new": "    // AUDIT TELL L2",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-L3-freeze",
+    "file": "src/player/motor.js",
+    "old": "if (this.freezeMotor > 0 || this.climb?.isClimbing || this._wall || this._pkMove) { this._pushX = 0;",
+    "new": "if (this.climb?.isClimbing || this._wall || this._pkMove) { this._pushX = 0;",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-L3-wall",
+    "file": "src/player/motor.js",
+    "old": "if (this.freezeMotor > 0 || this.climb?.isClimbing || this._wall || this._pkMove) { this._pushX = 0;",
+    "new": "if (this.freezeMotor > 0 || this.climb?.isClimbing || this._pkMove) { this._pushX = 0;",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-L3-snap",
+    "file": "src/player/motor.js",
+    "old": "this.height, this.grounded && !this.jumping && !this.swimming && !this.levitating);",
+    "new": "this.height, true);",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-L4-swim",
+    "file": "src/player/motor.js",
+    "old": "|| this._pkMove || this.swimming || this.levitating) return false;",
+    "new": "|| this._pkMove || this.levitating) return false;",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-L4-levitate",
+    "file": "src/player/motor.js",
+    "old": "|| this._pkMove || this.swimming || this.levitating) return false;",
+    "new": "|| this._pkMove || this.swimming) return false;",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-L4-wall",
+    "file": "src/player/motor.js",
+    "old": "if (this.climb?.isClimbing || this._wall || this._pkMove || this.swimming",
+    "new": "if (this.climb?.isClimbing || this._pkMove || this.swimming",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-L4-refusal-heard",
+    "file": "src/systems/blowEffects.js",
+    "old": "motor?.blowKnockDown?.(BLOW_EFFECT.KNOCKDOWN_S, BLOW_EFFECT.KNOCKDOWN_DROP) !== false)",
+    "new": "(motor?.blowKnockDown?.(BLOW_EFFECT.KNOCKDOWN_S, BLOW_EFFECT.KNOCKDOWN_DROP), true))",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-L5-round",
+    "file": "src/systems/blowEffects.js",
+    "old": "    const n = Math.round(rem / b.left);",
+    "new": "    const n = Math.max(1, Math.round(b.per));",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-L5-carry",
+    "file": "src/systems/blowEffects.js",
+    "old": "    b.per = b.left > 0 ? (rem - n) / b.left : 0;\n",
+    "new": "",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-L5-nothing",
+    "file": "src/systems/blowEffects.js",
+    "old": "    if (n > 0) {\n      if (b.foe)",
+    "new": "    if (true) {\n      if (b.foe)",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-L9-motor",
+    "file": "src/systems/blowEffects.js",
+    "old": "now < _downUntil && (_downMotor?.isDown?.() ?? true);",
+    "new": "now < _downUntil;",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-L9-bound",
+    "file": "src/systems/blowEffects.js",
+    "old": "now < _downUntil && (_downMotor?.isDown?.() ?? true);",
+    "new": "(_downMotor?.isDown?.() ?? now < _downUntil);",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-L8-street",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "landBlowEffect(f, hp0 - playerEntity.health, playerFeet);",
+    "new": "landBlowEffect(f, dmg, playerFeet);",
+    "tests": [
+      "test/audittell.test.js",
+      "test/tell6e_landing.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-L8-watch",
+    "file": "src/scenes/cityGuards.js",
+    "old": "landBlowEffect(g, hp0 - playerEntity.health, playerFeet);",
+    "new": "landBlowEffect(g, dmg, playerFeet);",
+    "tests": [
+      "test/audittell.test.js",
+      "test/tell6e_landing.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-L8-dungeon",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "landBlowEffect(f, hp0 - playerEntity.health, playerFeet);",
+    "new": "landBlowEffect(f, dmg, playerFeet);",
+    "tests": [
+      "test/audittell.test.js",
+      "test/tell6e_landing.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-H1-dungeon",
+    "file": "src/scenes/dungeon.js",
+    "old": "tickTactics(foeFrameDt(ctx.uiOverlayActive ? 0 : dt));",
+    "new": "tickTactics(foeFrameDt(dt));",
+    "tests": [
+      "test/audittell.test.js",
+      "test/audittact.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-H1-world",
+    "file": "src/scenes/world.js",
+    "old": "tickTactics(foeFrameDt(_questBoxHoldsFoes() || (_mode() === 'dungeon' && !!modes?.dungeonCtx?.uiOverlayActive) ? 0 : dt));",
+    "new": "tickTactics(foeFrameDt(_questBoxHoldsFoes() ? 0 : dt));",
+    "tests": [
+      "test/audittell.test.js",
+      "test/audittact.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-L6-building",
+    "file": "src/scenes/worldModes.js",
+    "old": "never all at once on the close\n    if (!overlayHeld) {",
+    "new": "never all at once on the close\n    if (!overlayHeld) { if (false)",
+    "tests": [
+      "test/audittell.test.js",
+      "test/tell6e_landing.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-H6-watch",
+    "file": "src/scenes/cityGuards.js",
+    "old": "    }, { audio, hitEffects, shake: fromPlayer && !peer && !striker ? shake : null });",
+    "new": "    }, { audio, hitEffects });",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-H6-striker",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "shake: fromPlayer && !peer && !striker ? shake : null, rolls });",
+    "new": "shake: fromPlayer && !peer ? shake : null, rolls });",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-H6-dungeon-host",
+    "file": "src/scenes/dungeon.js",
+    "old": "      shakeCamera: (k) => betterAmbience.weaponKick(k),   // AUDIT TELL H6",
+    "new": "      // AUDIT TELL H6",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-U6-tag",
+    "file": "src/scenes/hostCombat.js",
+    "old": "  const mine = fromPlayer && !peer && !striker;",
+    "new": "  const mine = !peer && !striker;",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-U6-pool",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "wc, fromPlayer, element,   // TELL8: a joiner's blow's class; AUDIT TELL U6: whose blow",
+    "new": "wc, element,   // TELL8: a joiner's blow's class; AUDIT TELL U6: whose blow",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-U7-duel",
+    "file": "src/ui/hudFoeTarget.js",
+    "old": "(_sinceStruck < THREAT_YIELD_S || _foe.duel)",
+    "new": "_sinceStruck < THREAT_YIELD_S",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-U9-cues",
+    "file": "src/scenes/hostCombat.js",
+    "old": "  if (!b && !c.blow && !c.land) return NO_CUES;",
+    "new": "  if (!b && !c.blow && !c.land) return [];",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-U9-batch",
+    "file": "src/systems/hitFlash.js",
+    "old": "  if (cur) { cur[0] = g[0]; cur[1] = g[1]; cur[2] = g[2]; cur[3] = g[3]; return; }",
+    "new": "",
+    "tests": [
+      "test/audittell.test.js",
+      "test/tell2_tell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-U9-glint",
+    "file": "src/ai/tactics.js",
+    "old": "  return _glint;\n}",
+    "new": "  return [..._glint];\n}",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-U4-flash",
+    "file": "src/ui/enhancedHud.js",
+    "old": "const flash = pk === 'staggered' && last.foePoiseRef === ref && last.foePoise !== 'staggered';",
+    "new": "const flash = pk === 'staggered';",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-U5-sig",
+    "file": "src/ui/questTracker.js",
+    "old": "${foe?.classList?.contains?.('poised') ? '|poised' : ''}`;",
+    "new": "`;",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-U1-cap",
+    "file": "src/render/telegraphStyle.js",
+    "old": "export const CONTRAST_BAND_CAP = 0.0625;",
+    "new": "export const CONTRAST_BAND_CAP = 0.1;",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-U2-dark",
+    "file": "src/render/telegraphStyle.js",
+    "old": "  float kd = (1.0 - fin) * smoothstep(4.0 * aa, 4.4 * aa, edge) * (1.0 - smoothstep(5.0 * aa, 5.4 * aa, edge));",
+    "new": "  float kd = 0.0;",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-U8-rear",
+    "file": "src/render/foeTelegraph.js",
+    "old": "dist = inside ? (d < 0.5 && ang > uP.y ? 0.5 - d : min(uP.x - d, d >= 0.5 ? (uP.y - ang) * d : 1e3)) : min(max(d - uP.x, (ang - uP.y) * d), d - 0.5);",
+    "new": "dist = inside ? min(uP.x - d, d >= 0.5 ? (uP.y - ang) * d : 1e3) : max(d - uP.x, d >= 0.5 ? (ang - uP.y) * d : 0.0);",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-U10-discard",
+    "file": "src/render/foeTelegraph.js",
+    "old": "  if (beyond) oColor = vec4(0.0);",
+    "new": "  if (beyond) discard;",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-wound-cadence",
+    "file": "src/combat/bloodBleed.js",
+    "old": "      if (wound && s.next > WOUND_WAIT) s.next = WOUND_WAIT;   // AUDIT TELL: a wound opened drips on its own cadence\n",
+    "new": "",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-wound-share",
+    "file": "src/combat/bloodBleed.js",
+    "old": "const share = Math.max(bleedShare(v.health, v.maxHealth), wound ? WOUND_SHARE : 0);",
+    "new": "const share = bleedShare(v.health, v.maxHealth);",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-wound-view",
+    "file": "src/scenes/hitEffects.js",
+    "old": "strides: false, wound: !!entity.bleed });",
+    "new": "strides: false });",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-floor-law",
+    "file": "src/ai/tells.js",
+    "old": "return (c === 'massive' ? Math.max(base, TELL.POISE_FLOOR_MASSIVE) : base) * poiseSpecial(entity);",
+    "new": "return base * poiseSpecial(entity);",
+    "tests": [
+      "test/audittell.test.js",
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-floor-under-the-largest-blow",
+    "file": "src/ai/tells.js",
+    "old": "  POISE_FLOOR_MASSIVE: 60,",
+    "new": "  POISE_FLOOR_MASSIVE: 50,",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-P1-kind",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "data.wc != null ? hitClassOf(data) : null, kind);",
+    "new": "data.wc != null ? hitClassOf(data) : null);",
+    "tests": [
+      "test/tell8_online.test.js",
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-back-feet",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "round }, playerFeet, !round && damage > 0 && feudWeakBlow(foe.entity",
+    "new": "round }, playerFeet ?? lastPlayerFeet, !round && damage > 0 && feudWeakBlow(foe.entity",
+    "tests": [
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-O4-release",
+    "file": "src/ai/puppetBlows.js",
+    "old": "  if (ai._tac && !ai._tac.puppet) releaseTactics(ai);   // AUDIT TELL O4",
+    "new": "  // AUDIT TELL O4",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-O6-mine",
+    "file": "src/ai/puppetBlows.js",
+    "old": "if (!l || !l.mine || l.used ||",
+    "new": "if (!l || l.used ||",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-O6-once",
+    "file": "src/ai/puppetBlows.js",
+    "old": "  l.used = true;\n",
+    "new": "",
+    "tests": [
+      "test/tell8_online.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-O5-mine",
+    "file": "src/ai/tactics.js",
+    "old": "  if (perfect && atMe) ai._perfectAt = now;",
+    "new": "  if (perfect) ai._perfectAt = now;",
+    "tests": [
+      "test/tell8_online.test.js",
+      "test/tell4_punish.test.js",
+      "test/audittell.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTELL-O7-kmax",
+    "file": "src/net/wire.js",
+    "old": "export const HIT_CLASS_K_MAX = 175;",
+    "new": "export const HIT_CLASS_K_MAX = 150;",
+    "tests": [
+      "test/tell8_online.test.js",
+      "test/audittell.test.js"
+    ]
+  }
+]

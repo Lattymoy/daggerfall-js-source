@@ -1,0 +1,236 @@
+[
+  {
+    "name": "LW4b-reach",
+    "file": "src/scenes/roadFights.js",
+    "old": "          if (Math.hypot(at.x - here.x, at.z - here.z) / NATIVE_PER_M > LIVE_M) continue;",
+    "new": "          if (Math.hypot(at.x - here.x, at.z - here.z) / NATIVE_PER_M > LIVE_M * 10) continue;",
+    "tests": [
+      "test/lw4b_roadFights.test.js"
+    ]
+  },
+  {
+    "name": "LW4b-election",
+    "file": "src/scenes/roadFights.js",
+    "old": "          if (!deps.owner(deps.sceneOf(at.x, at.z))) continue;",
+    "new": "          void deps.owner;",
+    "tests": [
+      "test/lw4b_roadFights.test.js"
+    ]
+  },
+  {
+    "name": "LW4b-from-the-sky",
+    "file": "src/scenes/roadFights.js",
+    "old": "      if (can && ground) {",
+    "new": "      if (can) {",
+    "tests": [
+      "test/lw4b_roadFights.test.js"
+    ]
+  },
+  {
+    "name": "LW4b-unready",
+    "file": "src/scenes/roadFights.js",
+    "old": "      const can = !!here && deps.ready();",
+    "new": "      const can = !!here;",
+    "tests": [
+      "test/lw4b_roadFights.test.js"
+    ]
+  },
+  {
+    "name": "LW4b-foes-on-the-party",
+    "file": "src/scenes/roadFights.js",
+    "old": "      const r = (near + ((lwSeed(textSeed(enc.id), i, 0x72) % 1000) / 1000) * (far - near)) * NATIVE_PER_M;",
+    "new": "      const r = 0;",
+    "tests": [
+      "test/lw4b_roadFights.test.js"
+    ]
+  },
+  {
+    "name": "LW4b-foe-level",
+    "file": "src/scenes/roadFights.js",
+    "old": "level: enc.level, allied: false, gender: 'male' }))",
+    "new": "level: 1, allied: false, gender: 'male' }))",
+    "tests": [
+      "test/lw4b_roadFights.test.js"
+    ]
+  },
+  {
+    "name": "LW4b-unarmed-stood",
+    "file": "src/scenes/roadFights.js",
+    "old": "      if (m.cls == null) return;",
+    "new": "      if (false) return;",
+    "tests": [
+      "test/lw4b_roadFights.test.js"
+    ]
+  },
+  {
+    "name": "LW4b-ally-struck-by-player",
+    "file": "src/scenes/roadFights.js",
+    "old": "          rec.shipmate = true;",
+    "new": "          void rec;",
+    "tests": [
+      "test/lw4b_roadFights.test.js"
+    ]
+  },
+  {
+    "name": "LW4b-ally-nameless",
+    "file": "src/scenes/roadFights.js",
+    "old": "          if (rec.entity) { rec.entity.name = m.name; rec.entity.team = 'PlayerAlly'; rec.entity.mobileTeam = 'PlayerAlly'; }",
+    "new": "          if (rec.entity) { rec.entity.team = 'PlayerAlly'; rec.entity.mobileTeam = 'PlayerAlly'; }",
+    "tests": [
+      "test/lw4b_roadFights.test.js"
+    ]
+  },
+  {
+    "name": "LW4b-fallen-unturned",
+    "file": "src/scenes/roadFights.js",
+    "old": "      fell(rec.living.res, f.trip, t);   // cut down beside the player: the lives read it",
+    "new": "      void fell;   // cut down beside the player: the lives read it",
+    "tests": [
+      "test/lw4b_roadFights.test.js"
+    ]
+  },
+  {
+    "name": "LW4b-won-unturned",
+    "file": "src/scenes/roadFights.js",
+    "old": "      turn('won', f.enc.id);",
+    "new": "      void f.enc.id;",
+    "tests": [
+      "test/lw4b_roadFights.test.js"
+    ]
+  },
+  {
+    "name": "LW4b-spared-unturned",
+    "file": "src/scenes/roadFights.js",
+    "old": "        if (fated) turn('spared', deps.turnKeyOf(m, f.trip));",
+    "new": "        void fated;",
+    "tests": [
+      "test/lw4b_roadFights.test.js"
+    ]
+  },
+  {
+    "name": "LW4b-regard-flat",
+    "file": "src/scenes/roadFights.js",
+    "old": "        rel?.note(m.id, fated ? 'saved' : 'helped', day());",
+    "new": "        rel?.note(m.id, 'helped', day());",
+    "tests": [
+      "test/lw4b_roadFights.test.js"
+    ]
+  },
+  {
+    "name": "LW4b-fallen-thanked",
+    "file": "src/scenes/roadFights.js",
+    "old": "        if (f.fell.has(m.id)) continue;",
+    "new": "        if (false) continue;",
+    "tests": [
+      "test/lw4b_roadFights.test.js"
+    ]
+  },
+  {
+    "name": "LW4b-lost-unturned",
+    "file": "src/scenes/roadFights.js",
+    "old": "      turn('lost', f.enc.id);",
+    "new": "      void f.enc.id;",
+    "tests": [
+      "test/lw4b_roadFights.test.js"
+    ]
+  },
+  {
+    "name": "LW4b-lost-foes-taken",
+    "file": "src/scenes/roadFights.js",
+    "old": "    if (f.state !== 'lost') for (const rec of f.foes) takeOut(rec);",
+    "new": "    for (const rec of f.foes) takeOut(rec);",
+    "tests": [
+      "test/lw4b_roadFights.test.js"
+    ]
+  },
+  {
+    "name": "LW4b-far-kept",
+    "file": "src/scenes/roadFights.js",
+    "old": "        const far = !here || Math.hypot(f.trip.enc.x - here.x, f.trip.enc.z - here.z) / NATIVE_PER_M > LIVE_KEEP_M;",
+    "new": "        const far = !here;",
+    "tests": [
+      "test/lw4b_roadFights.test.js"
+    ]
+  },
+  {
+    "name": "LW4b-late-kept",
+    "file": "src/scenes/roadFights.js",
+    "old": "        const late = t > f.enc.t1 + LIVE_GRACE_MIN;",
+    "new": "        const late = false;",
+    "tests": [
+      "test/lw4b_roadFights.test.js"
+    ]
+  },
+  {
+    "name": "LW4b-walk-on-kept",
+    "file": "src/scenes/roadFights.js",
+    "old": "        const walkedOn = f.state === 'won' && t >= f.enc.t1;",
+    "new": "        const walkedOn = false;",
+    "tests": [
+      "test/lw4b_roadFights.test.js"
+    ]
+  },
+  {
+    "name": "LW4b-clear-kept",
+    "file": "src/scenes/roadFights.js",
+    "old": "    clear() { for (const id of [...fights.keys()]) letGo(id); },",
+    "new": "    clear() { fights.clear(); },",
+    "tests": [
+      "test/lw4b_roadFights.test.js"
+    ]
+  },
+  {
+    "name": "LW4b-roads-draw-allies",
+    "file": "src/scenes/livingRoads.js",
+    "old": "          if (allies?.has(m.res.id)) continue;",
+    "new": "          if (false) continue;",
+    "tests": [
+      "test/lw4b_roadFights.test.js"
+    ]
+  },
+  {
+    "name": "LW4b-roads-draw-live-foes",
+    "file": "src/scenes/livingRoads.js",
+    "old": "        if (fight && !live && !peerLive) {",
+    "new": "        if (fight && !peerLive) {",
+    "tests": [
+      "test/lw4b_roadFights.test.js"
+    ]
+  },
+  {
+    "name": "LW4b-roads-draw-peer-foes",
+    "file": "src/scenes/livingRoads.js",
+    "old": "        const peerLive = fight && !live && !!fights && !overworld && fights.peerStands(",
+    "new": "        const peerLive = fight && !live && !!fights && !overworld && false && fights.peerStands(",
+    "tests": [
+      "test/lw4b_roadFights.test.js"
+    ]
+  },
+  {
+    "name": "LW4b-roads-fights-kept",
+    "file": "src/scenes/livingRoads.js",
+    "old": "    clear() { deps.sprites.clear(); deps.fights?.clear();",
+    "new": "    clear() { deps.sprites.clear();",
+    "tests": [
+      "test/lw4b_roadFights.test.js"
+    ]
+  },
+  {
+    "name": "LW4b-host-saved-foes",
+    "file": "src/scenes/world.js",
+    "old": "allied: o.allied, loose: true, transient: true }),",
+    "new": "allied: o.allied, loose: true }),",
+    "tests": [
+      "test/lw4b_roadFights.test.js"
+    ]
+  },
+  {
+    "name": "LW4b-host-election-short",
+    "file": "src/scenes/world.js",
+    "old": "p.feet[2] - feet[2]) <= LIVE_M), Infinity),",
+    "new": "p.feet[2] - feet[2]) <= LIVE_M / 2), Infinity),",
+    "tests": [
+      "test/lw4b_roadFights.test.js"
+    ]
+  }
+]

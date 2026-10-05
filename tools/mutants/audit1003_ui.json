@@ -74,20 +74,22 @@
   {
     "name": "AUDIT-1003-U3-the-bout-fighter-framed",
     "file": "src/ui/hudFoeTarget.js",
-    "old": "  if (bout && !bout.chained) return;",
-    "new": "  /* every blow framed */",
+    "old": "  if (bout && !bout.chained) return;\n  _foe = foe;\n  _left = FOE_TARGET_SECONDS;\n  _sinceStruck = 0;",
+    "new": "  /* every blow framed */\n  _foe = foe;\n  _left = FOE_TARGET_SECONDS;\n  _sinceStruck = 0;",
     "tests": [
       "test/audit1003_ui.test.js"
-    ]
+    ],
+    "note": "TELL9 (PIN MOVED): re-aimed by content to markFoeStruck - markFoeThreat holds the same guard (tools/mutants/tell9.json TELL9-threat-bout)."
   },
   {
     "name": "AUDIT-1003-U3-the-chained-beast-unframed",
     "file": "src/ui/hudFoeTarget.js",
-    "old": "  if (bout && !bout.chained) return;",
-    "new": "  if (bout) return;",
+    "old": "  if (bout && !bout.chained) return;\n  _foe = foe;\n  _left = FOE_TARGET_SECONDS;\n  _sinceStruck = 0;",
+    "new": "  if (bout) return;\n  _foe = foe;\n  _left = FOE_TARGET_SECONDS;\n  _sinceStruck = 0;",
     "tests": [
       "test/audit1003_ui.test.js"
-    ]
+    ],
+    "note": "TELL9 (PIN MOVED): re-aimed by content to markFoeStruck - markFoeThreat holds the same guard."
   },
   {
     "name": "AUDIT-1003-U4-never-on",

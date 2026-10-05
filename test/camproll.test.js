@@ -330,6 +330,7 @@ test('CAMP-ROLL the placement\'s passes: no camp, DFU\'s one; a camp, its band f
     LOOSE_FOE_PLACE_ATTEMPTS: 2, ENEMY_BASICS: {}, journeyMet: () => {}, ambushNight: () => false,
     placeFoeFreely: (e) => { const p = { x: 4, y: 0, z: 0 }; seen.push(e); return e.overlapSphere(p, 0.65) ? null : p; },
     campFeet: () => [[0, 0, 0]], campPasses,
+    wildTravelling: () => false,   // WILD-ALERT: no fast traveller here - the wanderer's placement roll is test/encounterplace.test.js's
   };
   const k = Object.keys(scope);
   const stand = new Function(...k, `${src}\nreturn _standEncounterFoe;`)(...k.map((x) => scope[x]));

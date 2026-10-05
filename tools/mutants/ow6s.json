@@ -122,7 +122,7 @@
   {
     "name": "OW6-S-classic-ungoverned",
     "file": "src/scenes/world.js",
-    "old": "      const rate = csaHoldsTimeScale() ? null : foeFloor(foes.cap, travelAsked);",
+    "old": "      const rate = csaHoldsTimeScale() ? null : foePaced(foes.cap, travelAsked);",
     "new": "      const rate = csaHoldsTimeScale() ? null : travelAsked;",
     "tests": [
       "test/ow6_slowdown.test.js"
@@ -138,16 +138,6 @@
       "test/ow6_slowdown.test.js"
     ],
     "note": "The panel says the land is loading while an enemy holds the journey."
-  },
-  {
-    "name": "OW6-S-spent-band-slows",
-    "file": "src/scenes/world.js",
-    "old": "        if (_bandSpent.has(b.id) || _bandChase.has(b.id) || !bandMake(b)) continue;",
-    "new": "        if (_bandChase.has(b.id) || !bandMake(b)) continue;",
-    "tests": [
-      "test/ow6_slowdown.test.js"
-    ],
-    "note": "A band already fought still slows the journey."
   },
   {
     "name": "OW6-S-chase-uncounted",
@@ -172,7 +162,7 @@
   {
     "name": "OW6-S-friends-too",
     "file": "src/scenes/world.js",
-    "old": "      if (!foeHostile(f) || !f.ai.feet || f.ai.unreachable) continue;",
+    "old": "      if (!foeAlerted(f) || !f.ai.feet || f.ai.unreachable) continue;",
     "new": "      if (!f.ai?.feet || f.ai.unreachable) continue;",
     "tests": [
       "test/ow6_slowdown.test.js"
@@ -263,8 +253,8 @@
   {
     "name": "OW6-S-classic-over-helm",
     "file": "src/scenes/world.js",
-    "old": "      const rate = csaHoldsTimeScale() ? null : foeFloor(foes.cap, travelAsked);",
-    "new": "      const rate = foeFloor(foes.cap, travelAsked);",
+    "old": "      const rate = csaHoldsTimeScale() ? null : foePaced(foes.cap, travelAsked);",
+    "new": "      const rate = foePaced(foes.cap, travelAsked);",
     "tests": [
       "test/ow6_slowdown.test.js"
     ],

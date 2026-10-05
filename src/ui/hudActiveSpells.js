@@ -47,6 +47,7 @@
 // are already a Ledger note on ui/spellIcons.js and stay one.
 
 import { drawSpellIcon, spellIconsLoaded } from './spellIcons.js';
+import { statusGlyphColor32 } from './hudStatus.js';   // TELL9: the bleed's own icon, the enhanced widget's glyph
 import { uiCanvas, toUiPoint } from './uiScreen.js';   // RETRO-UI: the HUD's own space under the pillarbox
 import { liveBundles, canEndBundle } from '../systems/mysticism.js';   // BUFF-END: and which the player may end
 import { getString } from '../systems/settings.js';
@@ -150,7 +151,26 @@ export function activeSpellIcons(entity) {
     // the buffs. DFU's null-caster arm sent it to the debuff row, where only a foe's spell has ever landed in DFU.
     (bundle.selfCast || bundle.ally ? self : other).push(item);
   }
+  // TELL6e (bible/12-Enhanced-AI/Feud-Arc.md 8.2): a sweep's BLEED is no spell's bundle, but it is shown as one, with
+  // the debuffs, its rounds its ticks left. TELL9: drawn from its own glyph (two drops of blood - ui/hudStatus.js), its
+  // index the atlas's first as an iconless bundle's (what a reader of DFU's shape finds)
+  const bleed = entity?.bleed;
+  if (bleed && bleed.left > 0) other.push({ iconIndex: BLEED_ICON, glyph: BLEED_GLYPH, displayName: 'Bleeding', poolIndex: poolIndex++, expiring: bleed.left < 2, isItem: false, bundleId: null, endable: false });
   return { self, other };
+}
+/** TELL6e: the bleed's index - the atlas's first, as an iconless bundle's. */
+export const BLEED_ICON = 0;
+/** TELL9: the bleed's own icon - its glyph on the kit's grid (ui/hudStatus.js STATUS_GLYPHS). */
+export const BLEED_GLYPH = 'bleed';
+/** TELL9: a glyph's pixels, made once a name; its texture uploaded once (the renderer keys it). */
+const _glyphPixels = new Map();
+function drawGlyphIcon(renderer, m, name, [dx, dy, dw, dh]) {
+  if (!_glyphPixels.has(name)) _glyphPixels.set(name, statusGlyphColor32(name));
+  const c32 = _glyphPixels.get(name);
+  if (!c32) return false;
+  const tex = renderer.uploadTexture('glyph', name, c32);
+  renderer.drawScreenQuad(tex, { x: m.ox + dx * m.s, y: m.oy + dy * m.s, w: dw * m.s, h: dh * m.s });
+  return true;
 }
 
 /**
@@ -235,7 +255,8 @@ export function drawActiveSpells(renderer, m, entity, {
   ];
   for (const icon of placed) {
     if (!iconVisible(icon, blinkState, paused)) continue;
-    drawSpellIcon(renderer, m, icon.iconIndex, icon.rect);
+    if (icon.glyph) drawGlyphIcon(renderer, m, icon.glyph, icon.rect);   // TELL9: an icon of the port's own
+    else drawSpellIcon(renderer, m, icon.iconIndex, icon.rect);
   }
   return placed;
 }

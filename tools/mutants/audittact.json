@@ -41,8 +41,8 @@
   {
     "name": "ATACT-A2-shot-uncounted",
     "file": "src/characters/enemyAttack.js",
-    "old": "this.swingSeq++; ai._tacShot = (ai._tacShot ?? 0) + 1; }",
-    "new": "this.swingSeq++; }",
+    "old": "if (machineAttack(this.machine, strike)) { this.firedRanged = true; this.swingSeq++; this._held = false; ai._tacShot = (ai._tacShot ?? 0) + 1; ai._blowShot = null; }   // AUDIT TACT A2",
+    "new": "if (machineAttack(this.machine, strike)) { this.firedRanged = true; this.swingSeq++; this._held = false; ai._blowShot = null; }   // AUDIT TACT A2",
     "tests": [
       "test/audittact.test.js"
     ]
@@ -86,8 +86,8 @@
   {
     "name": "ATACT-A4-swing-parked",
     "file": "src/characters/enemyAttack.js",
-    "old": "        if (ai._blowAt != null && tacticsNow() - ai._blowAt > BLOW_SWING_LATE) { ai._blowVerdict = null; ai._blowMult = undefined; }",
-    "new": "        if (ai._blowAt != null && tacticsNow() - ai._blowAt > 1e9) { ai._blowVerdict = null; ai._blowMult = undefined; }",
+    "old": "        if (ai._blowAt != null && tacticsNow() - ai._blowAt > BLOW_SWING_LATE) { ai._blowVerdict = null; ai._blowMult = undefined; this._held = false; }",
+    "new": "        if (ai._blowAt != null && tacticsNow() - ai._blowAt > 1e9) { ai._blowVerdict = null; ai._blowMult = undefined; this._held = false; }",
     "tests": [
       "test/audittact.test.js"
     ]
@@ -104,11 +104,13 @@
   {
     "name": "ATACT-D6-verdict-on-others",
     "file": "src/ai/tactics.js",
-    "old": "    const at = key === (s.blow.tg ?? LOCAL) ? blowAim(ai, key) : null;",
-    "new": "    const at = _me?.feet ?? null;",
+    "old": "const judgedHere = (ai, key) => (key === LOCAL ? !!_me : !ai?.target?.isPeer);",
+    "new": "const judgedHere = (ai, key) => !!_me;",
     "tests": [
-      "test/audittact.test.js"
-    ]
+      "test/audittact.test.js",
+      "test/tell8_online.test.js"
+    ],
+    "note": "FEUD's MERGE of main's #586-#622 (PIN MOVED): re-aimed by content to judgedHere - AUDIT ARENA-LADDER's bout-mate verdict and TELL8's peer gate are one law there. TELL8 (PIN MOVED): re-aimed by content - the owner winds up at a peer it hunts (`tf` its target's feet, `atMe` the damage's gate), a peer's blow carries its class, the relay moved to world162."
   },
   {
     "name": "ATACT-A5-backoff-ring",
@@ -122,7 +124,7 @@
   {
     "name": "ATACT-A6-detour-walks",
     "file": "src/characters/enemyMotor.js",
-    "old": "    if (_took && (!detouring || this.fleeLeft > 0 || this._tac?.state === 'windup')) return;",
+    "old": "    if (_took && (!detouring || this.fleeLeft > 0 || this._tac?.state === 'windup' || this._tac?.state === 'dash')) return;",
     "new": "    if (_took && !detouring) return;",
     "tests": [
       "test/audittact.test.js"
@@ -149,7 +151,7 @@
   {
     "name": "ATACT-D3-blows-unshifted",
     "file": "src/ai/foeBlows.js",
-    "old": "  for (const b of _live.values()) { b.origin[0] += offset[0]; b.origin[1] += offset[1]; b.origin[2] += offset[2]; }",
+    "old": "  for (const b of [..._live.values(), ..._shards.map((x) => x.blow)]) { b.origin[0] += offset[0]; b.origin[1] += offset[1]; b.origin[2] += offset[2]; }",
     "new": "  void offset;",
     "tests": [
       "test/audittact.test.js"
@@ -167,8 +169,8 @@
   {
     "name": "ATACT-D4-dead-blocks",
     "file": "src/ai/foeBlows.js",
-    "old": "    if (ai === except || now >= b.land || gone(ai, now)) continue;",
-    "new": "    if (ai === except || now >= b.land) continue;",
+    "old": "    if (ai === except || b.cut != null || gone(ai, now)) continue;",
+    "new": "    if (ai === except || b.cut != null) continue;",
     "tests": [
       "test/audittact.test.js"
     ]
@@ -185,7 +187,7 @@
   {
     "name": "ATACT-D8-flat",
     "file": "src/ai/foeBlows.js",
-    "old": "  b.slope = [hw == null ? 0 : clamp((hw - h0) / 2), hf == null ? 0 : clamp((hf - h0) / 2)];",
+    "old": "  b.slope = [hw == null ? 0 : clamp((hw - h0) / 2), hf == null ? 0 : clamp((hf - h0) / far)];",
     "new": "  b.slope = [0, 0];",
     "tests": [
       "test/audittact.test.js"
@@ -203,8 +205,8 @@
   {
     "name": "ATACT-D9-unfogged",
     "file": "src/render/foeTelegraph.js",
-    "old": "  a *= fogFactorAt(vWorld);",
-    "new": "  a *= 1.0;",
+    "old": "  float fogK = max(fogFactorAt(vWorld), uNearFloor);",
+    "new": "  float fogK = 1.0;",
     "tests": [
       "test/audittact.test.js"
     ]

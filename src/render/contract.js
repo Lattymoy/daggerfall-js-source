@@ -55,6 +55,7 @@
  * @property {number} [eliteGlow]                    ELITE FOES: the glow's pulse (0 off; negative an elite's corpse, the rim alone) - systems/eliteFoes.js
  * @property {number} [eliteTime]                    ELITE FOES: the embers' clock, seconds
  * @property {ReadonlyArray<number> | null} [elitePad] ELITE FOES: the quad widened past the sprite (left, bottom, right, top, as fractions of it)
+ * @property {ReadonlyArray<number>} [glint]          TELL2: a wind-up's glint, [r, g, b, strength] - its outline and its body (systems/hitFlash.js setBatchGlint)
  * @property {ReadonlyArray<number> | null} [dissolve] DISSOLVE: [share gone 0..1, r, g, b] - a body burnt away or gathering through a portal (systems/dissolve.js)
  * @property {ReadonlyArray<number> | null} [tint]     ARENA5: a soft wash multiplied into the lit flat after both maps are sampled ([r, g, b], display colour; none - white) - the arena crowd's half in a banner's colours (scenes/arenaBouts.js buildCrowd)
  * @property {Float32Array} [bounds]                  EL5: the sphere [cx, cy, cz, r] about the origin the shadow and air replays cull by

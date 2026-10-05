@@ -1,0 +1,184 @@
+[
+  {
+    "name": "TELL6c-r",
+    "file": "src/ai/blowShapes.js",
+    "old": "leap: Object.freeze({ windup: 1.0, r: 1.8, mult: 1.6, from: 3, range: 9, arc: 0.35 }),",
+    "new": "leap: Object.freeze({ windup: 1.0, r: 1.4, mult: 1.6, from: 3, range: 9, arc: 0.35 }),",
+    "tests": [
+      "test/tell6c_leap.test.js"
+    ]
+  },
+  {
+    "name": "TELL6c-from",
+    "file": "src/ai/blowShapes.js",
+    "old": "leap: Object.freeze({ windup: 1.0, r: 1.8, mult: 1.6, from: 3, range: 9, arc: 0.35 }),",
+    "new": "leap: Object.freeze({ windup: 1.0, r: 1.8, mult: 1.6, from: 2, range: 9, arc: 0.35 }),",
+    "tests": [
+      "test/tell6c_leap.test.js"
+    ]
+  },
+  {
+    "name": "TELL6c-range",
+    "file": "src/ai/blowShapes.js",
+    "old": "leap: Object.freeze({ windup: 1.0, r: 1.8, mult: 1.6, from: 3, range: 9, arc: 0.35 }),",
+    "new": "leap: Object.freeze({ windup: 1.0, r: 1.8, mult: 1.6, from: 3, range: 12, arc: 0.35 }),",
+    "tests": [
+      "test/tell6c_leap.test.js"
+    ]
+  },
+  {
+    "name": "TELL6c-arc",
+    "file": "src/ai/blowShapes.js",
+    "old": "leap: Object.freeze({ windup: 1.0, r: 1.8, mult: 1.6, from: 3, range: 9, arc: 0.35 }),",
+    "new": "leap: Object.freeze({ windup: 1.0, r: 1.8, mult: 1.6, from: 3, range: 9, arc: 0.2 }),",
+    "tests": [
+      "test/tell6c_leap.test.js"
+    ]
+  },
+  {
+    "name": "TELL6c-mult",
+    "file": "src/ai/blowShapes.js",
+    "old": "leap: Object.freeze({ windup: 1.0, r: 1.8, mult: 1.6, from: 3, range: 9, arc: 0.35 }),",
+    "new": "leap: Object.freeze({ windup: 1.0, r: 1.8, mult: 1.5, from: 3, range: 9, arc: 0.35 }),",
+    "tests": [
+      "test/tell6c_leap.test.js"
+    ]
+  },
+  {
+    "name": "TELL6c-disc-at-feet",
+    "file": "src/ai/blowShapes.js",
+    "old": "  if (b.kind === 'leap') return Math.hypot(along - (b.ahead ?? 0), across) <= BLOW.leap.r;",
+    "new": "  if (b.kind === 'leap') return Math.hypot(along, across) <= BLOW.leap.r;",
+    "tests": [
+      "test/tell6c_leap.test.js"
+    ],
+    "note": "FEUD's MERGE of main's #586-#622 (PIN MOVED): inBlow lives in the leaf ai/blowShapes.js since AUDIT ARENA-LADDER - the same line, its new file."
+  },
+  {
+    "name": "TELL6c-fit-near",
+    "file": "src/ai/foeBlows.js",
+    "old": "  const far = b.ahead > 2 ? b.ahead : 2;",
+    "new": "  const far = 2;",
+    "tests": [
+      "test/tell6c_leap.test.js"
+    ]
+  },
+  {
+    "name": "TELL6c-terrain-unseen",
+    "file": "src/ai/foeBlows.js",
+    "old": "const d = collider.surfaceHit ? collider.surfaceHit(o, DOWN, 5)?.dist : collider.raycast(o, DOWN, 5);",
+    "new": "const d = collider.raycast(o, DOWN, 5);",
+    "tests": [
+      "test/tell6c_leap.test.js"
+    ]
+  },
+  {
+    "name": "TELL6c-mirror-at-feet",
+    "file": "src/render/foeTelegraph.js",
+    "old": "    const r = BLOW[kind].r, d = Math.hypot(across, along - ahead);",
+    "new": "    const r = BLOW[kind].r, d = Math.hypot(across, along);",
+    "tests": [
+      "test/tell6c_leap.test.js"
+    ]
+  },
+  {
+    "name": "TELL6c-up-unset",
+    "file": "src/render/foeTelegraph.js",
+    "old": "      else if (b.kind === 'leap' || b.kind === 'pyre') gl.uniform4f(U.uP, P.r, b.ahead ?? 0, 0, 0);   // RVN5: the pyre's disc at its point\n",
+    "new": "",
+    "tests": [
+      "test/tell6c_leap.test.js"
+    ]
+  },
+  {
+    "name": "TELL6c-quad-fixed",
+    "file": "src/render/foeTelegraph.js",
+    "old": "ahead + (kind === 'leap' ? BLOW.leap.r : kind === 'pyre' ? BLOW.pyre.r : 0) :",
+    "new": "ahead + (kind === 'pyre' ? BLOW.pyre.r : 0) :",
+    "tests": [
+      "test/tell6c_leap.test.js"
+    ]
+  },
+  {
+    "name": "TELL6c-kind-id",
+    "file": "src/render/foeTelegraph.js",
+    "old": "ring: 3, charge: 0, leap: 2, aimed: 0, pyre: 2 });",
+    "new": "ring: 3, charge: 0, leap: 3, aimed: 0, pyre: 2 });",
+    "tests": [
+      "test/tell6c_leap.test.js"
+    ]
+  },
+  {
+    "name": "TELL6c-not-closer",
+    "file": "src/ai/tactics.js",
+    "old": "export const GAP_CLOSERS = Object.freeze(['charge', 'leap']);",
+    "new": "export const GAP_CLOSERS = Object.freeze(['charge']);",
+    "tests": [
+      "test/tell6c_leap.test.js",
+      "test/tell6b_charge.test.js"
+    ]
+  },
+  {
+    "name": "TELL6c-band",
+    "file": "src/ai/tactics.js",
+    "old": "  if (!(dist >= P.from && dist <= (kind === 'charge' ? P.to : P.range))) return false;",
+    "new": "  if (!(dist >= P.from && dist <= (kind === 'charge' ? P.to : 99))) return false;",
+    "tests": [
+      "test/tell6c_leap.test.js"
+    ]
+  },
+  {
+    "name": "TELL6c-flyer",
+    "file": "src/ai/tactics.js",
+    "old": "  if (kind === 'leap' && ENEMY_BASICS[ent?.mobileType]?.behaviour === 'Flying') return false;\n",
+    "new": "",
+    "tests": [
+      "test/tell6c_leap.test.js"
+    ]
+  },
+  {
+    "name": "TELL6c-ground-ignored",
+    "file": "src/ai/tactics.js",
+    "old": "    if (!Number.isFinite(g)) return false;\n",
+    "new": "",
+    "tests": [
+      "test/tell6c_leap.test.js"
+    ]
+  },
+  {
+    "name": "TELL6c-point-unlocked",
+    "file": "src/ai/tactics.js",
+    "old": "if (shape === 'leap') { b.ahead = Math.min(BLOW.leap.range, Math.hypot(dx, dz));",
+    "new": "if (shape === 'leap') { b.ahead = 0;",
+    "tests": [
+      "test/tell6c_leap.test.js"
+    ]
+  },
+  {
+    "name": "TELL6c-no-jump",
+    "file": "src/ai/tactics.js",
+    "old": "  if (b0.kind === 'leap' && now >= b0.jumpAt && now < b0.land) return leapStep(ai, b0);   // TELL6c: the jump\n",
+    "new": "",
+    "tests": [
+      "test/tell6c_leap.test.js"
+    ]
+  },
+  {
+    "name": "TELL6c-no-arc",
+    "file": "src/ai/tactics.js",
+    "old": "  if (!b.jumping) { b.jumping = true; ai.velY = (GRAVITY * BLOW.leap.arc) / 2; }",
+    "new": "  if (!b.jumping) { b.jumping = true; }",
+    "tests": [
+      "test/tell6c_leap.test.js"
+    ]
+  },
+  {
+    "name": "TELL6c-jump-at-start",
+    "file": "src/ai/tactics.js",
+    "old": "b.jumpAt = b.land - BLOW.leap.arc;",
+    "new": "b.jumpAt = b.start;",
+    "tests": [
+      "test/tell6c_leap.test.js"
+    ]
+  }
+]

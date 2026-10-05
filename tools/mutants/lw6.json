@@ -1,0 +1,294 @@
+[
+  {
+    "name": "LW6-dive-chance",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "export const DIVE_CHANCE = 0.55;",
+    "new": "export const DIVE_CHANCE = 0.75;",
+    "tests": [
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW6-dive-reach",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "export const DIVE_RANGE_PX = Object.freeze([1, 8]);",
+    "new": "export const DIVE_RANGE_PX = Object.freeze([1, 12]);",
+    "tests": [
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW6-dive-hours",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "export const DIVE_MIN = Object.freeze([240, 600]);",
+    "new": "export const DIVE_MIN = Object.freeze([240, 900]);",
+    "tests": [
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW6-dive-shared-dice",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    const drng = lwRng(res.town, res.slot, k, 0x64697665);   // 'dive'",
+    "new": "    const drng = rng;   // 'dive'",
+    "tests": [
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW6-dive-any-trade",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  if (res.job === 'adventurer' && world.dungeonsNear) {",
+    "new": "  if (world.dungeonsNear) {",
+    "tests": [
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW6-dive-unreached",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    .filter((d) => Math.max(Math.abs((d.px ?? 0) - (home.px ?? 0)), Math.abs((d.py ?? 0) - (home.py ?? 0))) >= rMin);",
+    "new": "    .filter((d) => d);",
+    "tests": [
+      "test/lw6_deep.test.js"
+    ],
+    "equivalent": true,
+    "why": "Belt and braces: a dungeon on the town's own pixel has a one-pixel way (the planner's answer for a walk that goes nowhere, and the synthetic map's), which the walk's own check - two pixels at least - refuses before the floor matters; kept so a host whose way between two places on one pixel were a real walk still never dives under its own town."
+  },
+  {
+    "name": "LW6-dive-far-likelier",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  for (const d of near) weights[String(d.mapId)] = 1 / (1 + dist(d) / 4);",
+    "new": "  for (const d of near) weights[String(d.mapId)] = 1 + dist(d);",
+    "tests": [
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW6-dive-no-hours",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    const backT0 = outT1 + inside;   // out of the dungeon",
+    "new": "    const backT0 = outT1;   // out of the dungeon",
+    "tests": [
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW6-dive-overruns",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    if (estDays > len - 1) continue;\n    const dayOffset = Math.floor(offsetRoll * (len - estDays));\n    const outT0 = (start + dayOffset) * DAY_MIN + Math.floor(departH * 60);\n    const outT1 = whenWalked(outT0, walk);\n    const backT0 = outT1 + inside;",
+    "new": "    if (false) continue;\n    const dayOffset = Math.floor(offsetRoll * (len - estDays));\n    const outT0 = (start + dayOffset) * DAY_MIN + Math.floor(departH * 60);\n    const outT1 = whenWalked(outT0, walk);\n    const backT0 = outT1 + inside;",
+    "tests": [
+      "test/lw6_deep.test.js"
+    ],
+    "equivalent": true,
+    "why": "Belt and braces: within DIVE_RANGE_PX (eight pixels - two days' walk each way at the slowest pace, the sky's cycles doubling with its walk) and DIVE_MIN's most (a day inside at most), every dive's estimate fits its cycle, so the check never binds; kept so a farther reach or a longer dive never sets out over a negative span (its day's offset before its cycle)."
+  },
+  {
+    "name": "LW6-divers-whenever",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "      if (!trip.dive || trip.to?.mapId !== dungeon.mapId || !(trip.dive.t0 <= t && t < trip.backT0)) continue;",
+    "new": "      if (!trip.dive || trip.to?.mapId !== dungeon.mapId) continue;",
+    "tests": [
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW6-divers-anywhere",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "      if (!trip.dive || trip.to?.mapId !== dungeon.mapId || !(trip.dive.t0 <= t && t < trip.backT0)) continue;",
+    "new": "      if (!trip.dive || !(trip.dive.t0 <= t && t < trip.backT0)) continue;",
+    "tests": [
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW6-remains-at-the-door",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "      if (f.inside || f.atSea || !(f.t <= t && t < f.t + REMAINS_MIN)) return;",
+    "new": "      if (f.atSea || !(f.t <= t && t < f.t + REMAINS_MIN)) return;",
+    "tests": [
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW6-deep-on-the-road",
+    "file": "src/systems/livingWorld/trouble.js",
+    "old": "  if (trip.dive && (fated.length || dead.length)) return diveTrouble(trip, dead, world, fated);",
+    "new": "  void diveTrouble;",
+    "tests": [
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW6-deep-table-unread",
+    "file": "src/systems/livingWorld/trouble.js",
+    "old": "dungeonType: /** @type {any} */ (trip.to).dungeonType ?? 0,",
+    "new": "dungeonType: 0,",
+    "tests": [
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW6-deep-leader-unread",
+    "file": "src/systems/livingWorld/trouble.js",
+    "old": "  const kind = dead.includes(trip.leader.id) ? 'fell' : 'won';",
+    "new": "  const kind = 'won';",
+    "tests": [
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW6-deep-hour",
+    "file": "src/systems/livingWorld/trouble.js",
+    "old": "  const t0 = dive.t0 + (dive.t1 - dive.t0) * (0.2 + 0.6 * rng());",
+    "new": "  const t0 = dive.t1 + (dive.t1 - dive.t0) * (0.2 + 0.6 * rng());",
+    "tests": [
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW6-deep-stay-in",
+    "file": "src/systems/livingWorld/trouble.js",
+    "old": "    const backT0 = Math.min(trip.backT0, enc.t1);",
+    "new": "    const backT0 = trip.backT0;",
+    "tests": [
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW6-deep-fallen-outside",
+    "file": "src/systems/livingWorld/trouble.js",
+    "old": "    const fallen = enc.dead.map((id) => ({ res: byId.get(id), t: fallAt, s: enc.s, inside: true })).filter((f) => f.res);",
+    "new": "    const fallen = enc.dead.map((id) => ({ res: byId.get(id), t: fallAt, s: enc.s })).filter((f) => f.res);",
+    "tests": [
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW6-news-the-road",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "      : (item.dive ? DIVE_NEWS : ROAD_NEWS)[",
+    "new": "      : (ROAD_NEWS)[",
+    "tests": [
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW6-meet-a-peers",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "        if (!companies.has(trip.id) && !ended.has(trip.id) && deps.owner() && members.some((m) => m.cls != null)) meet(trip, members);",
+    "new": "        if (!companies.has(trip.id) && !ended.has(trip.id) && members.some((m) => m.cls != null)) meet(trip, members);",
+    "tests": [
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW6-met-ahead",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "      const dx = -Math.sin(L.yaw) * back + Math.cos(L.yaw) * side, dz = -Math.cos(L.yaw) * back - Math.sin(L.yaw) * side;",
+    "new": "      const dx = Math.sin(L.yaw) * back + Math.cos(L.yaw) * side, dz = Math.cos(L.yaw) * back - Math.sin(L.yaw) * side;",
+    "tests": [
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW6-unfollowing",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "        if (rec.ai) rec.ai.follow = { feet: () => deps.leader()?.feet ?? null, stop: DIVER_HEEL_M + i * DIVER_HEEL_STEP_M };",
+    "new": "        void DIVER_HEEL_STEP_M;",
+    "tests": [
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW6-divers-struck",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "        rec.shipmate = true;",
+    "new": "        void rec.shipmate;",
+    "tests": [
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW6-fallen-unturned",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "          if (deps.died) deps.died(rec.living.res, t); else turn('fallen', deps.turnKeyOf(rec.living.res, c.trip));",
+    "new": "          void turn;",
+    "tests": [
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW6-spared-unturned",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "            if (fated) turn('spared', deps.turnKeyOf(m, c.trip));",
+    "new": "            void fated;",
+    "tests": [
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW6-regard-flat",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "            rel?.note(m.id, fated ? 'saved' : 'helped', deps.day());",
+    "new": "            rel?.note(m.id, 'helped', deps.day());",
+    "tests": [
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW6-fallen-thanked",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "            if (c.fell.has(mid) || rec.dead) continue;",
+    "new": "            if (false) continue;",
+    "tests": [
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW6-company-stays",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "        if (t >= c.trip.backT0 || !listed.has(id)) {",
+    "new": "        if (false) {",
+    "tests": [
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW6-host-dive-kinds",
+    "file": "src/scenes/world.js",
+    "old": "const LIVING_DIVE_TYPES = new Set([LOCATION_TYPES.DungeonLabyrinth, LOCATION_TYPES.DungeonKeep, LOCATION_TYPES.DungeonRuin, LOCATION_TYPES.Graveyard]);",
+    "new": "const LIVING_DIVE_TYPES = new Set([LOCATION_TYPES.DungeonLabyrinth]);",
+    "tests": [
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW6-host-deep-from-the-land",
+    "file": "src/scenes/world.js",
+    "old": "    foesOf: ({ climateIndex, dungeonType, minute, level, size, rolls }) => (dungeonType != null",
+    "new": "    foesOf: ({ climateIndex, dungeonType, minute, level, size, rolls }) => (false",
+    "tests": [
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW6-host-divers-unmet",
+    "file": "src/scenes/world.js",
+    "old": "      livingDiversStep(now);   // LW6: underground, the companies diving here met",
+    "new": "      // LW6: underground, the companies diving here met",
+    "tests": [
+      "test/lw6_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW6-host-divers-hostile",
+    "file": "src/scenes/world.js",
+    "old": "d.spawnLooseFoe(type, feet, { yawRad: o.yaw, allied: true, gender: o.gender, level: o.level }),",
+    "new": "d.spawnLooseFoe(type, feet, { yawRad: o.yaw, gender: o.gender, level: o.level }),",
+    "tests": [
+      "test/lw6_deep.test.js"
+    ]
+  }
+]

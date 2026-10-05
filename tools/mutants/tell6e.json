@@ -1,0 +1,291 @@
+[
+  {
+    "name": "TELL6e-push",
+    "file": "src/systems/blowEffects.js",
+    "old": "  PUSH: Object.freeze({ lunge: 3, charge: 5 }),",
+    "new": "  PUSH: Object.freeze({ lunge: 3, charge: 3 }),",
+    "tests": [
+      "test/tell6e_landing.test.js"
+    ]
+  },
+  {
+    "name": "TELL6e-rattle-shapes",
+    "file": "src/systems/blowEffects.js",
+    "old": "  RATTLE: Object.freeze(['slam', 'ring', 'leap']),",
+    "new": "  RATTLE: Object.freeze(['slam', 'ring']),",
+    "tests": [
+      "test/tell6e_landing.test.js"
+    ]
+  },
+  {
+    "name": "TELL6e-rattle-walk",
+    "file": "src/systems/blowEffects.js",
+    "old": "  RATTLE_WALK: 0.6,",
+    "new": "  RATTLE_WALK: 0.8,",
+    "tests": [
+      "test/tell6e_landing.test.js"
+    ]
+  },
+  {
+    "name": "TELL6e-bleed-share",
+    "file": "src/systems/blowEffects.js",
+    "old": "  BLEED_SHARE: 0.3,",
+    "new": "  BLEED_SHARE: 0.5,",
+    "tests": [
+      "test/tell6e_landing.test.js"
+    ]
+  },
+  {
+    "name": "TELL6e-knock-shapes",
+    "file": "src/systems/blowEffects.js",
+    "old": "  KNOCKDOWN: Object.freeze(['slam', 'ring', 'charge']),   // iron's alone",
+    "new": "  KNOCKDOWN: Object.freeze(['slam', 'ring', 'charge', 'leap']),   // iron's alone",
+    "tests": [
+      "test/tell6e_landing.test.js"
+    ]
+  },
+  {
+    "name": "TELL6e-knock-guard",
+    "file": "src/systems/blowEffects.js",
+    "old": "  KNOCKDOWN_GUARD: 5,",
+    "new": "  KNOCKDOWN_GUARD: 1,",
+    "tests": [
+      "test/tell6e_landing.test.js"
+    ]
+  },
+  {
+    "name": "TELL6e-iron-ignored",
+    "file": "src/systems/blowEffects.js",
+    "old": "    knockdown: !!iron && BLOW_EFFECT.KNOCKDOWN.includes(kind),",
+    "new": "    knockdown: BLOW_EFFECT.KNOCKDOWN.includes(kind),",
+    "tests": [
+      "test/tell6e_landing.test.js"
+    ]
+  },
+  {
+    "name": "TELL6e-guard-ignored",
+    "file": "src/systems/blowEffects.js",
+    "old": "    if (fx.knockdown && now >= _guardUntil && motor?.blowKnockDown?.(",
+    "new": "    if (fx.knockdown && motor?.blowKnockDown?.(",
+    "tests": [
+      "test/tell6e_landing.test.js"
+    ]
+  },
+  {
+    "name": "TELL6e-push-beside-down",
+    "file": "src/systems/blowEffects.js",
+    "old": "    } else if (fx.push > 0 && dir) {",
+    "new": "    }\n    if (fx.push > 0 && dir) {",
+    "tests": [
+      "test/tell6e_landing.test.js"
+    ]
+  },
+  {
+    "name": "TELL6e-push-reversed",
+    "file": "src/systems/blowEffects.js",
+    "old": "      if (l > 0) motor?.blowPush?.((dir[0] / l) * fx.push, (dir[1] / l) * fx.push);",
+    "new": "      if (l > 0) motor?.blowPush?.(-(dir[0] / l) * fx.push, -(dir[1] / l) * fx.push);",
+    "tests": [
+      "test/tell6e_landing.test.js"
+    ]
+  },
+  {
+    "name": "TELL6e-no-dip",
+    "file": "src/systems/blowEffects.js",
+    "old": "    if (fx.rattle) { motor?.blowRattle?.(BLOW_EFFECT.RATTLE_S, BLOW_EFFECT.RATTLE_WALK); shake?.(BLOW_EFFECT.RATTLE_SHAKE); }",
+    "new": "    if (fx.rattle) { motor?.blowRattle?.(BLOW_EFFECT.RATTLE_S, BLOW_EFFECT.RATTLE_WALK); }",
+    "tests": [
+      "test/tell6e_landing.test.js"
+    ]
+  },
+  {
+    "name": "TELL6e-no-bleed",
+    "file": "src/systems/blowEffects.js",
+    "old": "    if (fx.bleed && entity && dmg > 0) startBleed(entity, dmg * BLOW_EFFECT.BLEED_SHARE, foe, now);",
+    "new": "",
+    "tests": [
+      "test/tell6e_landing.test.js"
+    ]
+  },
+  {
+    "name": "TELL6e-bleed-no-remainder",
+    "file": "src/systems/blowEffects.js",
+    "old": "  const left = b ? b.per * b.left : 0;",
+    "new": "  const left = 0;",
+    "tests": [
+      "test/tell6e_landing.test.js"
+    ]
+  },
+  {
+    "name": "TELL6e-heal-ignored",
+    "file": "src/systems/blowEffects.js",
+    "old": "  if (entity.health > b.health || !(entity.health > 0)) { entity.bleed = null; return 0; }",
+    "new": "  if (!(entity.health > 0)) { entity.bleed = null; return 0; }",
+    "tests": [
+      "test/tell6e_landing.test.js"
+    ]
+  },
+  {
+    "name": "TELL6e-bleed-unmarked",
+    "file": "src/systems/blowEffects.js",
+    "old": "    if (b.foe) markPlayerHarm(b.foe, { ms: HARM_MARK_STRUCK_MS });",
+    "new": "",
+    "tests": [
+      "test/tell6e_landing.test.js"
+    ]
+  },
+  {
+    "name": "TELL6e-bleed-endless",
+    "file": "src/systems/blowEffects.js",
+    "old": "    if (b.left <= 0 || !(entity.health > 0)) entity.bleed = null;",
+    "new": "    if (!(entity.health > 0)) entity.bleed = null;",
+    "tests": [
+      "test/tell6e_landing.test.js"
+    ]
+  },
+  {
+    "name": "TELL6e-decay",
+    "file": "src/player/motor.js",
+    "old": "export const BLOW_PUSH_DECAY = 12;",
+    "new": "export const BLOW_PUSH_DECAY = 6;",
+    "tests": [
+      "test/tell6e_landing.test.js"
+    ]
+  },
+  {
+    "name": "TELL6e-edge-ignored",
+    "file": "src/player/motor.js",
+    "old": "    if (!Number.isFinite(below)) { this._pushX = 0; this._pushZ = 0; return; }   // an edge: no cliff takes a push",
+    "new": "",
+    "tests": [
+      "test/tell6e_landing.test.js"
+    ]
+  },
+  {
+    "name": "TELL6e-push-unstepped",
+    "file": "src/player/motor.js",
+    "old": "      this._pushStep(step);   // TELL6e",
+    "new": "      // TELL6e",
+    "tests": [
+      "test/tell6e_landing.test.js"
+    ]
+  },
+  {
+    "name": "TELL6e-rattle-unread",
+    "file": "src/player/motor.js",
+    "old": "    if (this._rattleLeft > 0) speed *= this._rattleShare;",
+    "new": "",
+    "tests": [
+      "test/tell6e_landing.test.js"
+    ]
+  },
+  {
+    "name": "TELL6e-down-moves",
+    "file": "src/player/motor.js",
+    "old": "    const moveInput = this._downLeft > 0 ?",
+    "new": "    const moveInput = false ?",
+    "tests": [
+      "test/tell6e_landing.test.js"
+    ]
+  },
+  {
+    "name": "TELL6e-eye-stays",
+    "file": "src/player/motor.js",
+    "old": "feetY + this._eyeLevel() + b[1] - this._downEye(),",
+    "new": "feetY + this._eyeLevel() + b[1],",
+    "tests": [
+      "test/tell6e_landing.test.js"
+    ]
+  },
+  {
+    "name": "TELL6e-down-endless",
+    "file": "src/player/motor.js",
+    "old": "      if (this._downLeft > 0) this._downLeft = Math.max(0, this._downLeft - step);",
+    "new": "",
+    "tests": [
+      "test/tell6e_landing.test.js"
+    ]
+  },
+  {
+    "name": "TELL6e-stale-queued",
+    "file": "src/scenes/hostCombat.js",
+    "old": "  if (!(dmg > 0) || now - w.at > BLOW_VERDICT_LIFE || !playerFeet) return null;",
+    "new": "  if (!(dmg > 0) || !playerFeet) return null;",
+    "tests": [
+      "test/tell6e_landing.test.js"
+    ]
+  },
+  {
+    "name": "TELL6e-word-kept",
+    "file": "src/scenes/hostCombat.js",
+    "old": "  if (!w) return null;\n  f.ai._blowFx = null;",
+    "new": "  if (!w) return null;",
+    "tests": [
+      "test/tell6e_landing.test.js"
+    ]
+  },
+  {
+    "name": "TELL6e-frame-no-bleed",
+    "file": "src/scenes/hostCombat.js",
+    "old": "  if (entity && hurt) tickBleed(entity, hurt);",
+    "new": "",
+    "tests": [
+      "test/tell6e_landing.test.js"
+    ]
+  },
+  {
+    "name": "TELL6e-miss-stamped",
+    "file": "src/ai/tactics.js",
+    "old": "  ai._blowFx = atMe && verdict ? { kind: b.kind, iron: b.guard === 'iron', at: now } : null;",
+    "new": "  ai._blowFx = atMe ? { kind: b.kind, iron: b.guard === 'iron', at: now } : null;",
+    "tests": [
+      "test/tell6e_landing.test.js"
+    ],
+    "note": "TELL8 (PIN MOVED): re-aimed by content - the owner winds up at a peer it hunts (`tf` its target's feet, `atMe` the damage's gate), a peer's blow carries its class, the relay moved to world162."
+  },
+  {
+    "name": "TELL6e-hud-no-bleed",
+    "file": "src/ui/hudActiveSpells.js",
+    "old": "  if (bleed && bleed.left > 0) other.push(",
+    "new": "  if (false) other.push(",
+    "tests": [
+      "test/tell6e_landing.test.js"
+    ]
+  },
+  {
+    "name": "TELL6e-cast-while-down",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    if (knockedDown()) return false;   // TELL6e",
+    "new": "    // TELL6e",
+    "tests": [
+      "test/tell6e_landing.test.js"
+    ]
+  },
+  {
+    "name": "TELL6e-pool-unasked-exteri",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "landBlowEffect(f, hp0 - playerEntity.health, playerFeet);",
+    "new": "void hp0;",
+    "tests": [
+      "test/tell6e_landing.test.js"
+    ]
+  },
+  {
+    "name": "TELL6e-pool-unasked-dungeo",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "landBlowEffect(f, hp0 - playerEntity.health, playerFeet);",
+    "new": "void hp0;",
+    "tests": [
+      "test/tell6e_landing.test.js"
+    ]
+  },
+  {
+    "name": "TELL6e-pool-unasked-cityGu",
+    "file": "src/scenes/cityGuards.js",
+    "old": "landBlowEffect(g, hp0 - playerEntity.health, playerFeet);",
+    "new": "void hp0;",
+    "tests": [
+      "test/tell6e_landing.test.js"
+    ]
+  }
+]

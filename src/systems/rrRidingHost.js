@@ -94,7 +94,8 @@ export function createRrRidingContacts({
         if (out.blood) splashBlood([at[0] + fwd[0] * 2, at[1] + 1, at[2] + fwd[2] * 2], fwd);   // blood.ShowBloodSplash(0, BloodPos()) (:149) - 2 ahead, 1 up
         if (out.clip) playClip(SOUND[out.clip], ridingVolumeScale());   // RidingVolumeScale x SoundVolume (:151) - the master bus carries SoundVolume (AUDIT-RR F16)
         if (out.spawnGuards) spawnGuards();   // SpawnCityGuards(true) (:152)
-        if (out.chargeGuard) Promise.resolve(spawnCityGuard([...seat.pos], person.facingYaw ?? yaw(), [...at])).then((g) => { if (g) chargeFoe(g, fwd); }).catch((e) => console.error('[guards]', e));   // SpawnCityGuard + HandleCharge (:156-158)
+        const from = person.living ?? null;   // AUDIT-C6: whom it stands for, read now - the body is the town's pool's, and dressed again
+        if (out.chargeGuard) Promise.resolve(spawnCityGuard([...seat.pos], person.facingYaw ?? yaw(), [...at])).then((g) => { if (g) { g.livingFrom = from; chargeFoe(g, fwd); } }).catch((e) => console.error('[guards]', e));   // SpawnCityGuard + HandleCharge (:156-158); LW-FIX2: the guard marks whom it stands for
         setCrime(CRIMES[out.crime]);   // (:160)
         if (out.remove) { person.trampled = true; retire(person); }   // (:161)
       }

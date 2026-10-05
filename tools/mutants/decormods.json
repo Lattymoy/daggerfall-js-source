@@ -1,0 +1,193 @@
+[
+  {
+    "name": "DECORMODS-structure-offered",
+    "file": "src/systems/decorMods.js",
+    "old": "    45170: 14,\n",
+    "new": "    45170: 14, 53160: 1,\n",
+    "tests": [
+      "test/decormods.test.js"
+    ]
+  },
+  {
+    "name": "DECORMODS-twin-offered",
+    "file": "src/systems/decorMods.js",
+    "old": "    45169: 42, 45190: 548, 45191: 363, 45192: 14, 45194: 8,\n",
+    "new": "    45169: 42, 45190: 548, 45191: 363, 45192: 14, 45194: 8, 45113: 1,\n",
+    "tests": [
+      "test/decormods.test.js"
+    ]
+  },
+  {
+    "name": "DECORMODS-unswitched",
+    "file": "src/systems/decorMods.js",
+    "old": "  for (const e of entries ?? []) if (isDecorModEntry(e) && live(e)) out.add(e.key);",
+    "new": "  for (const e of entries ?? []) if (isDecorModEntry(e)) out.add(e.key);",
+    "tests": [
+      "test/decormods.test.js"
+    ],
+    "note": "AUDIT 05b (PIN MOVED): re-aimed by content - the switch is asked as a piece is offered (decorModsLive), never as the catalogue is read (A3)."
+  },
+  {
+    "name": "DECORMODS-place-overwritten",
+    "file": "src/systems/decorMods.js",
+    "old": "    if (into.has(key)) return;\n    into.set(key, { ...what, count, from, ...decorModNaming(what) });",
+    "new": "    into.set(key, { ...what, count, from, ...decorModNaming(what) });",
+    "tests": [
+      "test/decormods.test.js"
+    ],
+    "note": "AUDIT 05b (PIN MOVED): re-aimed by content - every piece joins whatever is on (A3)."
+  },
+  {
+    "name": "DECORMODS-filed-as-itself",
+    "file": "src/systems/decorCatalogue.js",
+    "old": "    let kind = c.model != null ? modelKind(c.as ?? c.model) : c.person ? 'people' : flatKind(c.as ?? c.flat[0]);",
+    "new": "    let kind = c.model != null ? modelKind(c.model) : c.person ? 'people' : flatKind(c.flat[0]);",
+    "tests": [
+      "test/decormods.test.js"
+    ]
+  },
+  {
+    "name": "DECORMODS-unnamed",
+    "file": "src/systems/decorCatalogue.js",
+    "old": "    const own = c.base ?? (c.model != null",
+    "new": "    const own = (c.model != null",
+    "tests": [
+      "test/decormods.test.js"
+    ]
+  },
+  {
+    "name": "DECORMODS-numbered-first",
+    "file": "src/systems/decorCatalogue.js",
+    "old": "nature: 3, mod: 4, modstreet: 5 });",
+    "new": "nature: 3, mod: -1, modstreet: 5 });",
+    "tests": [
+      "test/decormods.test.js"
+    ]
+  },
+  {
+    "name": "DECORMODS-kind-unset",
+    "file": "src/systems/decorCatalogue.js",
+    "old": "    if (c.from === 'mod' && (kind === 'furniture' || kind === 'decor')) kind = 'mods';",
+    "new": "    if (false) kind = 'mods';",
+    "tests": [
+      "test/decormods.test.js"
+    ]
+  },
+  {
+    "name": "DECORMODS-street-indoors",
+    "file": "src/systems/decorCatalogue.js",
+    "old": "const OUTSIDE = new Set(['street', 'nature', 'modstreet']);",
+    "new": "const OUTSIDE = new Set(['street', 'nature']);",
+    "tests": [
+      "test/decormods.test.js"
+    ]
+  },
+  {
+    "name": "DECORMODS-scan-unjoined",
+    "file": "src/systems/decorScan.js",
+    "old": "[...decorCatalogue(mods ? addDecorMods(read) : read), HALL_BOARD_ENTRY]",
+    "new": "[...decorCatalogue(read), HALL_BOARD_ENTRY]",
+    "tests": [
+      "test/decormods.test.js"
+    ],
+    "note": "AUDIT 05b (PIN MOVED): re-aimed by content - the scan joins every piece, the switch asked at the offer (A3)."
+  },
+  {
+    "name": "DECORMODS-stand-in-unmeasured",
+    "file": "src/systems/decorScan.js",
+    "old": "      return standInRadius(id);",
+    "new": "      return null;",
+    "tests": [
+      "test/decormods.test.js"
+    ]
+  },
+  {
+    "name": "DECORMODS-alias-unmeasured",
+    "file": "src/systems/decorScan.js",
+    "old": "      const rec = arch?.getRecordIndex?.(classicModelIdOf(id));",
+    "new": "      const rec = arch?.getRecordIndex?.(id);",
+    "tests": [
+      "test/decormods.test.js"
+    ]
+  },
+  {
+    "name": "DECORMODS-offered-unswitched",
+    "file": "src/systems/decorCatalogue.js",
+    "old": "    && (!MOD_FROM.has(e.from) || !!mods?.has(e.key))) ?? null;",
+    "new": "    ) ?? null;",
+    "tests": [
+      "test/decormods.test.js"
+    ],
+    "note": "AUDIT 05b A3: the offer never asks what stands"
+  },
+  {
+    "name": "DECORMODS-live-once",
+    "file": "src/scenes/decorTool.js",
+    "old": "    if (modsLiveIn > 0 && modsLiveOf === list) return modsLive;",
+    "new": "    if (modsLiveOf === list) return modsLive;",
+    "tests": [
+      "test/decormods.test.js"
+    ],
+    "note": "AUDIT 05b A3: the switches asked once a catalogue - a session"
+  },
+  {
+    "name": "DECORMODS-never-remeasured",
+    "file": "src/systems/decorScan.js",
+    "old": "    else if (phase === 'done') measureLate(modelsPerStep);\n",
+    "new": "",
+    "tests": [
+      "test/decormods.test.js"
+    ],
+    "note": "AUDIT 05b A3: a piece standing only after the scan is never measured, so never priced"
+  },
+  {
+    "name": "DECORMODS-late-unlisted",
+    "file": "src/ui/decorPanel.js",
+    "old": "view?.ready ? 1 : 0, view?.sized ?? 0, view?.gold ?? 0,",
+    "new": "view?.ready ? 1 : 0, view?.gold ?? 0,",
+    "tests": [
+      "test/decormods.test.js"
+    ],
+    "note": "AUDIT 05b A3: a piece measured late stays '...' until something else lists again"
+  },
+  {
+    "name": "DECORMODS-picture-table-unread",
+    "file": "src/systems/decorMods.js",
+    "old": "    const pic = DET_PICTURES[id] ?? ROSYS_PICTURES[id];",
+    "new": "    const pic = null;",
+    "tests": [
+      "test/decormods.test.js"
+    ],
+    "note": "AUDIT 05b A8: a hanging named by no picture"
+  },
+  {
+    "name": "DECORMODS-builder-off-table",
+    "file": "src/world/detStandIns.js",
+    "old": "    [tapestry, () => hanging(DET_PICTURES[tapestry], 0.9, 1.35)],",
+    "new": "    [tapestry, () => hanging(PICTURE.regionBanner('Glenpoint'), 0.9, 1.35)],",
+    "tests": [
+      "test/decormods.test.js"
+    ],
+    "note": "AUDIT 05b A8: a builder wearing a picture its name's table does not say"
+  },
+  {
+    "name": "DECORMODS-bed-unfiled",
+    "file": "src/systems/decorMods.js",
+    "old": "as: bed.model };",
+    "new": "as: id };",
+    "tests": [
+      "test/decormods.test.js"
+    ],
+    "note": "AUDIT 05b A3: a coloured bed filed by its own id (as the switch filed it while off) - no bed"
+  },
+  {
+    "name": "DECORMODS-key-own-format",
+    "file": "src/systems/decorMods.js",
+    "old": "    const key = decorKey(what);",
+    "new": "    const key = what.model != null ? `m${what.model}` : `f${what.flat[0]}_${what.flat[1]}`;",
+    "tests": [
+      "test/decormods.test.js"
+    ],
+    "note": "AUDIT 05b A11: a second copy of the key's format, drifted - the mods' flats never meet their entries or a room's"
+  }
+]

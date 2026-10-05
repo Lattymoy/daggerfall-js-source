@@ -1,0 +1,470 @@
+[
+  {
+    "name": "RVN11a-won-moved",
+    "file": "src/systems/revenantFeud.js",
+    "old": "WON: 3,",
+    "new": "WON: 4,",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-day_with-moved",
+    "file": "src/systems/revenantFeud.js",
+    "old": "DAY_WITH: 2,",
+    "new": "DAY_WITH: 3,",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-called-moved",
+    "file": "src/systems/revenantFeud.js",
+    "old": "CALLED: 10,",
+    "new": "CALLED: 8,",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-day_away-moved",
+    "file": "src/systems/revenantFeud.js",
+    "old": "DAY_AWAY: -1,",
+    "new": "DAY_AWAY: -2,",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-knocked-moved",
+    "file": "src/systems/revenantFeud.js",
+    "old": "KNOCKED: -8,",
+    "new": "KNOCKED: -6,",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-sent_twice-moved",
+    "file": "src/systems/revenantFeud.js",
+    "old": "SENT_TWICE: -10,",
+    "new": "SENT_TWICE: -8,",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-kin_executed-moved",
+    "file": "src/systems/revenantFeud.js",
+    "old": "KIN_EXECUTED: -15 });",
+    "new": "KIN_EXECUTED: -12 });",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-devoted-at-moved",
+    "file": "src/systems/revenantFeud.js",
+    "old": "export const DEVOTED = Object.freeze({ AT: 90, BLOWS: 1.1, WARN_S: 15 });",
+    "new": "export const DEVOTED = Object.freeze({ AT: 85, BLOWS: 1.1, WARN_S: 15 });",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-devoted-blows-moved",
+    "file": "src/systems/revenantFeud.js",
+    "old": "export const DEVOTED = Object.freeze({ AT: 90, BLOWS: 1.1, WARN_S: 15 });",
+    "new": "export const DEVOTED = Object.freeze({ AT: 90, BLOWS: 1.2, WARN_S: 15 });",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-warn-wait-moved",
+    "file": "src/systems/revenantFeud.js",
+    "old": "export const DEVOTED = Object.freeze({ AT: 90, BLOWS: 1.1, WARN_S: 15 });",
+    "new": "export const DEVOTED = Object.freeze({ AT: 90, BLOWS: 1.1, WARN_S: 30 });",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-loyal-line-moved",
+    "file": "src/systems/revenantFeud.js",
+    "old": "[[DEVOTED.AT, 'Devoted'], [50, 'Loyal'], [20, 'Wavering'], [0, 'Restless']]",
+    "new": "[[DEVOTED.AT, 'Devoted'], [60, 'Loyal'], [20, 'Wavering'], [0, 'Restless']]",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-wavering-line-moved",
+    "file": "src/systems/revenantFeud.js",
+    "old": "[[DEVOTED.AT, 'Devoted'], [50, 'Loyal'], [20, 'Wavering'], [0, 'Restless']]",
+    "new": "[[DEVOTED.AT, 'Devoted'], [50, 'Loyal'], [25, 'Wavering'], [0, 'Restless']]",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-clamp-top",
+    "file": "src/systems/revenantFeud.js",
+    "old": "export const movedLoyalty = (v, d) => Math.max(0, Math.min(100, Math.round(",
+    "new": "export const movedLoyalty = (v, d) => Math.max(0, Math.min(1000, Math.round(",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-clamp-floor",
+    "file": "src/systems/revenantFeud.js",
+    "old": "export const movedLoyalty = (v, d) => Math.max(0, Math.min(100, Math.round(",
+    "new": "export const movedLoyalty = (v, d) => Math.max(-100, Math.min(100, Math.round(",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-devoted-strict",
+    "file": "src/systems/revenantFeud.js",
+    "old": "export const isDevoted = (v) => Number.isFinite(v) && v >= DEVOTED.AT;",
+    "new": "export const isDevoted = (v) => Number.isFinite(v) && v > DEVOTED.AT;",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-kin-faction-unread",
+    "file": "src/systems/revenantFeud.js",
+    "old": "(a === b || (factionOf(a) != null && factionOf(a) === factionOf(b)));",
+    "new": "(a === b);",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-kin-solitary-any",
+    "file": "src/systems/revenantFeud.js",
+    "old": "(a === b || (factionOf(a) != null && factionOf(a) === factionOf(b)));",
+    "new": "(a === b || factionOf(a) === factionOf(b));",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-days-unread",
+    "file": "src/systems/revenant.js",
+    "old": "      r.companion.loyalty = movedLoyalty(r.companion.loyalty, st === 'with' ? LOYALTY.DAY_WITH : LOYALTY.DAY_AWAY);\n",
+    "new": "",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-resting-moved",
+    "file": "src/systems/revenant.js",
+    "old": "      if (st !== 'with' && st !== 'away') continue;\n",
+    "new": "",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-rested-kept-anyway",
+    "file": "src/systems/revenant.js",
+    "old": "    rested: state === 'away' && c?.rested === true,",
+    "new": "    rested: c?.rested === true,",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-rested-unsaved",
+    "file": "src/systems/revenant.js",
+    "old": "    rested: state === 'away' && c?.rested === true,",
+    "new": "    rested: false,",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-sentday-bad-kept",
+    "file": "src/systems/revenant.js",
+    "old": "    sentDay: Number.isInteger(c?.sentDay) && c.sentDay >= 0 ? c.sentDay : null,",
+    "new": "    sentDay: Number.isInteger(c?.sentDay) ? c.sentDay : null,",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-warn-mute-speaks",
+    "file": "src/systems/revenant.js",
+    "old": "  const v = voiceParts(r, 'devoted_warn', capFirst(firstWord(playerName)), rolls);",
+    "new": "  const v = voiceParts({ ...r, mobileType: 128 }, 'devoted_warn', capFirst(firstWord(playerName)), rolls);",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-warn-kicker",
+    "file": "src/systems/revenant.js",
+    "old": "  warn: 'Companion', deserted: 'Oathbreaker',",
+    "new": "  deserted: 'Oathbreaker',",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-call-reward-unread",
+    "file": "src/systems/revenantCompanions.js",
+    "old": "    if (c.rested) { c.rested = false; c.loyalty = movedLoyalty(c.loyalty, LOYALTY.CALLED); }\n",
+    "new": "",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-call-reward-twice",
+    "file": "src/systems/revenantCompanions.js",
+    "old": "    if (c.rested) { c.rested = false; c.loyalty",
+    "new": "    if (c.rested) { c.loyalty",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-every-sending-costs",
+    "file": "src/systems/revenantCompanions.js",
+    "old": "    if (c.sentDay === day) c.loyalty = movedLoyalty(c.loyalty, LOYALTY.SENT_TWICE);",
+    "new": "    c.loyalty = movedLoyalty(c.loyalty, LOYALTY.SENT_TWICE);",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-sending-day-unnoted",
+    "file": "src/systems/revenantCompanions.js",
+    "old": "    c.sentDay = day;\n",
+    "new": "",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-hold-costs",
+    "file": "src/systems/revenantCompanions.js",
+    "old": "    if (!byYou) return;\n",
+    "new": "",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-devoted-blows-unread",
+    "file": "src/systems/revenantCompanions.js",
+    "old": " * (isDevoted(r.companion?.loyalty) ? DEVOTED.BLOWS : 1);",
+    "new": "",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-wake-unmarked",
+    "file": "src/systems/revenantCompanions.js",
+    "old": "c.health = null; c.rested = true; });",
+    "new": "c.health = null; });",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-fall-free",
+    "file": "src/systems/revenantCompanions.js",
+    "old": "c.health = null; c.loyalty = movedLoyalty(c.loyalty, LOYALTY.KNOCKED); });",
+    "new": "c.health = null; });",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-dead-target-alive",
+    "file": "src/systems/revenantCompanions.js",
+    "old": "  const tgt = t?.entity && !t.dead && t.entity.health > 0 ? t : null;",
+    "new": "  const tgt = t?.entity ? t : null;",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-standing-a-win",
+    "file": "src/systems/revenantCompanions.js",
+    "old": "  return !(last.entity?.health > 0);",
+    "new": "  return true;",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-won-twice",
+    "file": "src/systems/revenantCompanions.js",
+    "old": "  rec._fightLast = null;\n  return !(last.entity",
+    "new": "  return !(last.entity",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-won-free",
+    "file": "src/systems/revenantCompanions.js",
+    "old": "  return revenantCompanionUpdate(_player, id, (c) => { c.loyalty = movedLoyalty(c.loyalty, LOYALTY.WON); });",
+    "new": "  return revenantCompanionUpdate(_player, id, () => {});",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-witness-any-kind",
+    "file": "src/systems/revenantCompanions.js",
+    "old": "    if (!sameKin(r.mobileType, mobileType) || !(swornBodyOf(r.id)?.health > 0)) continue;",
+    "new": "    if (!(swornBodyOf(r.id)?.health > 0)) continue;",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-witness-unseen",
+    "file": "src/systems/revenantCompanions.js",
+    "old": "    if (!sameKin(r.mobileType, mobileType) || !(swornBodyOf(r.id)?.health > 0)) continue;",
+    "new": "    if (!sameKin(r.mobileType, mobileType)) continue;",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-devoted-loyal",
+    "file": "src/systems/revenantCompanions.js",
+    "old": "export const devotedWithYou = () => revenantsWithYou().find((r) => isDevoted(r.companion?.loyalty) && swornBodyOf(r.id)?.health > 0) ?? null;",
+    "new": "export const devotedWithYou = () => revenantsWithYou().find((r) => swornBodyOf(r.id)?.health > 0) ?? null;",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-devoted-down",
+    "file": "src/systems/revenantCompanions.js",
+    "old": "export const devotedWithYou = () => revenantsWithYou().find((r) => isDevoted(r.companion?.loyalty) && swornBodyOf(r.id)?.health > 0) ?? null;",
+    "new": "export const devotedWithYou = () => revenantsWithYou().find((r) => isDevoted(r.companion?.loyalty)) ?? null;",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-witness-unwired",
+    "file": "src/systems/revenantFate.js",
+    "old": "  swornWitness(f.mobileType ?? f.entity?.mobileType);",
+    "new": "",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-hook-unwired",
+    "file": "src/scenes/hostCombat.js",
+    "old": "{ markFoeThreat(f); try { _windupAtMe?.(f, b); } catch { /* a warning is no blow's business */ } }",
+    "new": "{ markFoeThreat(f); }",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-hook-every-frame",
+    "file": "src/scenes/hostCombat.js",
+    "old": "    if (s.key === LOCAL_TARGET) { markFoeThreat(f); try { _windupAtMe?.(f, b); } catch { /* a warning is no blow's business */ } }",
+    "new": "    if (s.key === LOCAL_TARGET) markFoeThreat(f);\n    try { _windupAtMe?.(f, b); } catch { /* a warning is no blow's business */ }",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-fight-unwired",
+    "file": "src/scenes/world.js",
+    "old": "    for (const rec of revenantAshore.bodies()) if (rec.revenantCompanion && !rec.dead && swornFightStep(rec)) swornFightWon(rec.revenantCompanion);\n",
+    "new": "",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-hold-by-you",
+    "file": "src/scenes/world.js",
+    "old": "sendRevenantAway(last.id, { byYou: false })",
+    "new": "sendRevenantAway(last.id)",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-warn-back-unread",
+    "file": "src/scenes/world.js",
+    "old": "    if (!isBackFacing(cam.yaw, player.feetAt(), f.ai.feet)) return;\n",
+    "new": "",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-warn-untold",
+    "file": "src/scenes/world.js",
+    "old": "    revenantSay(revenantWarnEvent(r, playerEntity?.name), (l) => townTalk.say(l));\n  });",
+    "new": "  });",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-page-row-dropped",
+    "file": "src/ui/companionRoster.js",
+    "old": "  text.append(...loyaltyRow(el, r, meter));   // RVN11 (22.4): its loyalty, wherever it is\n",
+    "new": "",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-page-away-unshown",
+    "file": "src/ui/companionRoster.js",
+    "old": "  text.append(...loyaltyRow(el, r, meter));",
+    "new": "  if (state === 'with') text.append(...loyaltyRow(el, r, meter));",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-page-word-class",
+    "file": "src/ui/companionRoster.js",
+    "old": "el('span', `cmp-loyw is-${word.toLowerCase()}`, word)",
+    "new": "el('span', 'cmp-loyw', word)",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-page-title",
+    "file": "src/ui/companionRoster.js",
+    "old": "  lb.title = `Loyalty ${v} of 100`;\n",
+    "new": "",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  },
+  {
+    "name": "RVN11a-page-bar-max",
+    "file": "src/ui/companionRoster.js",
+    "old": "meter(v, 100, '')",
+    "new": "meter(v, 90, '')",
+    "tests": [
+      "test/rvn11a_loyalty.test.js"
+    ]
+  }
+]

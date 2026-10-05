@@ -150,6 +150,7 @@ export function boutGate(self, c, isPlayer, playerBout = _playerBout) {
  */
 export function getTargets(self, candidates, playerFeet, {
   noTargetMode = false,
+  dropLocal = false,   // AUDIT-F5 (the port's own, WILD-ALERT): the LOCAL player left off the list, every other candidate kept
   infighting = enemyInfightingEnabled(),
   // AUDIT 62 F23: the PLAYER candidate's LIVE controller height - DFU
   // reads the component (EnemySenses.cs:896-898 for the eye,
@@ -193,6 +194,7 @@ export function getTargets(self, candidates, playerFeet, {
     if (bout !== true) {
     // NoTarget mode (:776-777): the BASICS team here
     if ((noTargetMode || !ai.isHostile || selfMobileTeam === 'PlayerAlly' || self.companion != null) && isPlayer) continue;   // AUDIT CC-B2: a companion never the player's foe, whatever his team reads
+    if (dropLocal && isLocalPlayerTarget(c)) continue;   // AUDIT-F5: a wilderness foe unaware of a fast traveller (scenes/exteriorFoes.js) - them alone
     // Pacified enemies should not attack player allies (:780-781)
     if (!ai.isHostile && targetEntity && targetEntity.team === 'PlayerAlly') continue;
     // Player allies should not attack pacified enemies (:784-789)
@@ -435,6 +437,7 @@ const targetHealth = (c, playerEntity) =>
  */
 export function runTargetMachine(self, candidates, playerFeet, classicDt, {
   noTargetMode = false,
+  dropLocal = false,   // AUDIT-F5: getTargets' own
   infighting,
   playerEntity = null,
   playerHeight = CAPSULE_HEIGHT,   // AUDIT 62 F23: the live player capsule, off the senses context
@@ -494,7 +497,7 @@ export function runTargetMachine(self, candidates, playerFeet, classicDt, {
     ai.classicTargetUpdateTimer = 0;
     // Is enemy in area around player or can see player? (:392-401)
     if (ai.wouldBeSpawned || playerInSight) {
-      const got = getTargets(self, candidates, playerFeet, { noTargetMode, infighting, playerHeight, playerBout });
+      const got = getTargets(self, candidates, playerFeet, { noTargetMode, dropLocal, infighting, playerHeight, playerBout });
       ai.target = got.target;
       ai.sawSecondaryTarget = got.sawSecondaryTarget;
       // `targetSenses = target.GetComponent<EnemySenses>()` (:397-400)

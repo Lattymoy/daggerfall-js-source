@@ -56,7 +56,7 @@ test('WATER-FOES THE WORLD\'S WIRING by source: the reach latched over the watch
   const w = read('src/scenes/world.js');
   assert.match(w, /if \(playerSpawned\) raidingPartiesFrame\(gamePaused\(\) \? 0 : foeDt\);[^\n]*\n\s+markFoeReach\(\[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\], \{ aboard: playerAfloat\(\) && !\(walkMode && playerSpawned && player\.isPlayerSwimming\), seaY: tvSeaY\(\) \}\);/);
   assert.equal((w.match(/markFoeReach\(/g) ?? []).length, 1, 'one latch');
-  assert.match(w, /if \(!foeHostile\(f\) \|\| !f\.ai\.feet \|\| f\.ai\.unreachable\) continue;/);
+  assert.match(w, /if \(!foeAlerted\(f\) \|\| !f\.ai\.feet \|\| f\.ai\.unreachable\) continue;/);   // WILD-ALERT: an alerted foe alone holds the clock
   for (const host of ['src/scenes/exterior.js', 'src/scenes/worldModes.js', 'src/scenes/dungeonContext.js']) assert.ok(!read(host).includes('markFoeReach'), `${host}: no latch`);
   assert.match(read('src/systems/encounters.js'), /if \(!f \|\| f\.dead \|\| !f\.ai\) continue;\n[^\n]*\n[^\n]*\n\s+if \(f\.ai\.unreachable\) continue;/);
 });

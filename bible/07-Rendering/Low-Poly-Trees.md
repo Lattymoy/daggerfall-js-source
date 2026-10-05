@@ -144,10 +144,30 @@ none of their own.
 **The four hosts.** `scenes/world.js` and `scenes/exterior.js` are WIRED
 (every flat of the `?exterior` host is a location's; its season is
 installed once, before its flats, and it holds its handles for its life).
+Which picture a nature flat stands as - the mod's far picture, the
+season's, the record - is one choice every host asks
+(`world/naturePicture.js`, AUDIT 05b A12: the yards had a third copy).
 `scenes/worldModes.js` (interiors) and `scenes/dungeonContext.js` are
 FLAGGED: they stand no terrain nature, and a dungeon block's rare nature
 flat stays the flat (DFU stands the mod there too: S0000041.RDB, 15 of
 its 21 nature flats - AUDIT LPT C8).
+
+**A yard's placed trees** (DECOR-LPT, `01-Overview/Field-Bugs-2026-10-05b.md`).
+An online home's yard stands its climate's trees and plants (DECOR-OUTDOOR,
+`scenes/yardNature.js`); one the mod has a tree for stands as the world's
+do. Its far picture is a batch of the yard's - sized for the tallest tree,
+the piece's scale on its corner, `lptProto` its handle (no far height: a
+yard's flats stand outside MAC1's rings, AUDIT 05b A9) - and the yard
+HOLDS its handle while the piece stands; one landing after a recentre is
+moved by it (AUDIT 05b A1). Its 3D tree is in the yard's own near set (`yardTreeSet`, a
+pixel's shape) at the yard's place now (`scenes/homeYards.js treeSets`,
+moved by a recentre with the pieces), which `lowPolyTreesFrame` gathers
+with the pixels'. The piece's scale is the tree's (a location's tree is
+the prefab at 1) and its turn the tree's (the record's yaw, the way a
+model turns), so its picture never mirrors; its lean is its flat's,
+recorded for its prototype as a pixel's is. The decorator's ghost asks the
+same door (`yardNature.js picture`): the tree placed is the tree that
+stands. The yards stand in `world.js` alone.
 
 **Online.** The player's own (`systems/onlineLane.js
 ONLINE_PLAYERS_OWN_MODS`): how a tree is drawn, where the same flat

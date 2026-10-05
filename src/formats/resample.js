@@ -2,6 +2,15 @@
 // classic rect with it, and the bundle worker (unityBundle.js) shrinks a picture past the chosen texture detail with it
 // when the mod carries no smaller mip.
 
+/** VE4: the size a mip chain reaches under `maxSize` on its longer side - halved until it fits, the level
+ *  unityBundle.mipLevelFor picks - so a picture that carries no mips (a shipped PNG) is fitted to the texture detail at
+ *  the size an attached bundle's would be. Pure: the page and the shipped pack's decode worker both read it. */
+export function mipFitSize(width, height, maxSize = Infinity) {
+  let w = width, h = height;
+  while (Math.max(w, h) > maxSize && (w > 1 || h > 1)) { w = Math.max(1, w >> 1); h = Math.max(1, h >> 1); }
+  return [w, h];
+}
+
 /** Box-filter an RGBA picture to w x h (alpha-weighted, so a sprite's clear edge does not bleed dark). */
 export function resampleRgba(img, w, h) {
   w = Math.max(1, Math.round(w)); h = Math.max(1, Math.round(h));
