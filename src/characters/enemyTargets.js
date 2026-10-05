@@ -112,9 +112,17 @@ export function targetPriority(targetHasNoTarget, seen, distance) {
  * bout on either side - the classic chain decides). Pure.
  */
 let _playerBout = null;
-/** The player's bout - `{ id, side, out? }` - or null (the host's, set as a ladder bout stands and cleared after). */
-export function setPlayerBout(b) { _playerBout = b ? { id: String(b.id), side: b.side | 0, out: !!b.out } : null; }
-export const playerBoutOf = () => _playerBout;
+/** The player's bout - `{ id, side, out?, hold? }` - or null (the host's, set as a ladder bout stands and cleared after).
+ *  AUDIT ARENA-LADDER A3: THE DRIVER'S OWN TAG, HELD LIVE. The driver writes `out` and `hold` on it as the bout runs (a
+ *  yield, a fall, the word, the verdict - scenes/arenaBouts.js); a copy taken at the bell missed every one, so a player
+ *  out of a Grand Melee stayed the fighters' target, beaten at the breath of life to its end. boutGate reads its fields
+ *  as it reads a fighter's (`String(id)`, `side | 0`); `playerBoutOf` answers the read as plain data. */
+export function setPlayerBout(b) { _playerBout = b ?? null; }
+export const playerBoutOf = () => (_playerBout ? { id: String(_playerBout.id), side: _playerBout.side | 0, out: !!_playerBout.out, ...(_playerBout.hold ? { hold: true } : {}), ...(_playerBout.kit ? { kit: true } : {}) } : null);   // AUDIT ARENA-LADDER 2: `kit` a ladder bout's (systems/arenaKit.js)
+/** AUDIT ARENA-LADDER A2: a fighter on the sand is its bout's alone - no Dispel Daedra/Undead sends it off and no
+ *  Wabbajack changes it (either door removed the body past the foe yield floor, and the driver read the gone body as a
+ *  FALL: a champion dispelled in the Herald's call was a champion beaten, its purse and its title paid). */
+export const inBout = (f) => !!f?.entity?.bout;
 export function boutGate(self, c, isPlayer, playerBout = _playerBout) {
   const sb = self?.entity?.bout ?? null;
   const tb = isPlayer ? (isPeerTarget(c) ? (c.bout ?? null) : playerBout) : (c?.entity?.bout ?? null);

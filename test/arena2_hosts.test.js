@@ -56,7 +56,7 @@ test('ARENA2 hosts - worldModes.js: the Herald, the instance, its gates and its 
   assert.match(M, /playerSpare: \(\) => host\.arenaPlayerSpare\?\.\(\) \?\? null,/);
   assert.match(M, /if \(isArenaFloor\(dungeonLoc\)\) renderer\.setLighting\(new Float32Array\(ARENA_FLOOR_AMBIENT\), 0\);/);
   assert.match(M, /if \(isArenaFloor\(dungeonLoc\)\) applyFog\(renderer, dungeonFog\(!!renderer\.lightingLane, ARENA_FLOOR_FOG\)\);/);
-  assert.match(M, /spawn: \(mobile, feet, o\) => ctx\.spawnLooseFoe\?\.\(mobile, \[feet\[0\], feet\[1\] \+ 0\.9, feet\[2\]\], \{ gender: o\.gender \?\? null, yawRad: o\.yaw \?\? null, level: o\.level \?\? null, bout: o\.bout \?\? null \}\)/);
+  assert.match(M, /spawn: \(mobile, feet, o\) => ctx\.spawnLooseFoe\?\.\(mobile, \[feet\[0\], feet\[1\] \+ 0\.9, feet\[2\]\], \{ gender: o\.gender \?\? null, yawRad: o\.yaw \?\? null, level: o\.level \?\? null, bout: o\.bout \?\? null, eliteFoe: !!o\.elite \}\)/);   // AUDIT ARENA-LADDER: a tier champion stands as an elite
   assert.match(M, /enterArenaFloor, enterArenaUndercroft, arenaFloorStage, arenaPitStage,/);
   assert.match(M, /const e = entries\.find\(\(x\) => isUndercroftDoor\(x, DOOR_TYPE\.DUNGEON_ENTRANCE\) && x\.dfLocation\?\.arenaUndercroft\);/, 'the fighters\' hall is the stair\'s own door');
 });

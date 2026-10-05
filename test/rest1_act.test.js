@@ -251,7 +251,7 @@ test('REST1 the enhanced card online: the channel card with its meter, the night
 test('REST1 by source: every host that rests online names its rest point - the open road\'s fire or a pressed bed, a building (CanRest decides), a dungeon\'s fire - and the save keeps the night\'s stamp', () => {
   assert.match(rd('src/scenes/world.js'), /restPoint: \(\) => \(_restFromBed \? \{ kind: 'bed', where: null \} : camps\.restPointAt\(/);
   assert.match(rd('src/scenes/worldModes.js'), /restPoint: \(\) => \{ const p = interiorRestPlaceHere\(\); return \{ kind:/);
-  assert.match(rd('src/scenes/dungeonContext.js'), /restPoint: \(\) => \(_fpFeet \? camps\.restPointAt\(_fpFeet\) : null\)/);
+  assert.match(rd('src/scenes/dungeonContext.js'), /restPoint: \(\) => \(_restFromBed \|\| bedInReach\(dungeonBeds, _fpFeet\) \? \{ kind: 'bed', where: null \} : _fpFeet \? camps\.restPointAt\(_fpFeet\) : null\)/);   // FIELD BUGS 2026-10-05 DUNGEON-BEDS: and a bed
   assert.match(rd('src/systems/save.js'), /'restNightAt',\n\];/);
 });
 

@@ -84,14 +84,18 @@ const share = (f) => (f.maxHealth > 0 ? clamp01(f.health / f.maxHealth) : 0);
  * A NEW BOUT, in its call. `fighters` each `{ id, name, side, maxHealth, health?, temper?, ai?, home?, epithet? }` - two
  * sides or more (a Grand Melee is every fighter a side of its own); `ring` `{ centre: [x, z], radius }` on the ground;
  * `kind` the bout's ('exhibition', 'ladder', 'champion', 'grand', 'melee'); `limitMs` the fight's limit.
- * @param {{ id: string, kind?: string, fighters: any[], ring: { centre: number[], radius: number }, now: number, limitMs?: number, tier?: number, label?: string }} o
+ * AUDIT ARENA-LADDER: `judgesFloor` - a share of the opponents' whole health a side holding a player (a fighter not
+ * `ai`) must have taken to win on the judges' card; short of it the card goes to the best side without one (0, the
+ * default: the judges as they always were - the relay's ladder alone passes net/arenaLaw.js LADDER_JUDGES_SHARE).
+ * @param {{ id: string, kind?: string, fighters: any[], ring: { centre: number[], radius: number }, now: number, limitMs?: number, tier?: number, label?: string, judgesFloor?: number }} o
  */
-export function newBout({ id, kind = 'exhibition', fighters, ring, now, limitMs = BOUT_LIMIT_MS, tier = 0, label = '' }) {
+export function newBout({ id, kind = 'exhibition', fighters, ring, now, limitMs = BOUT_LIMIT_MS, tier = 0, label = '', judgesFloor = 0 }) {
   if (!Array.isArray(fighters) || fighters.length < 2) throw new Error('arenaBout: a bout needs two fighters');
   const sides = new Set(fighters.map((f) => f.side));
   if (sides.size < 2) throw new Error('arenaBout: a bout needs two sides');
   const b = {
     id: String(id), kind, tier, label, limitMs, phase: 'call', phaseAt: now, startAt: now, fightAt: NaN, endAt: NaN,
+    judgesFloor: Number.isFinite(judgesFloor) && judgesFloor > 0 ? Math.min(1, judgesFloor) : 0,   // AUDIT ARENA-LADDER
     ring: { centre: [ring.centre[0], ring.centre[1]], radius: ring.radius },
     /** @type {BoutFighter[]} */
     fighters: fighters.map((f) => ({
@@ -260,7 +264,18 @@ export function boutTallies(b) {
 function timeUp(b, now) {
   emit(b, { k: 'timeout', at: now });
   const tallies = boutTallies(b).filter((t) => t.standing);
-  finish(b, judgeBout(tallies), 'judges', now, tallies);
+  let side = judgeBout(tallies);
+  // AUDIT ARENA-LADDER: THE JUDGES' FLOOR - a player's side short of `judgesFloor` of its opponents' whole health wins no
+  // card: it goes to the best of the sides with no player in them (or none - a draw)
+  if (b.judgesFloor > 0 && side !== null && b.fighters.some((f) => f.side === side && !f.ai)) {
+    const theirs = b.fighters.filter((f) => f.side !== side).reduce((n, f) => n + f.maxHealth, 0);
+    const dealt = tallies.find((t) => t.side === side)?.dealt ?? 0;
+    if (dealt < b.judgesFloor * theirs) {
+      const ai = tallies.filter((t) => !b.fighters.some((f) => f.side === t.side && !f.ai));
+      side = ai.length ? judgeBout(ai) : null;   // AUDIT ARENA-LADDER 2: fighters level on the card - a draw, never the first one's
+    }
+  }
+  finish(b, side, 'judges', now, tallies);
 }
 
 /**

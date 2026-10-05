@@ -5,13 +5,15 @@
 // PvP results that award a title are refereed by the relay ... and signs the result".
 //
 //     a1.<base64url(claims)>.<base64url(64-byte Ed25519 signature)>
-//       a ladder bout:   { a: 'l', j, s, q, u, r, h, i, e }
+//       a ladder bout:   { a: 'l', j, s, q, u, r, h, z?, i, e }
 //       a players' bout: { a: 'p', j, f: [subA, subB], r, h, i, e }
 //         a the kind ('l' the ladder, 'p' players)   j the bout's id (16 hex - one bout, one result)
 //         s the account (the identity token's sub)   q the tier (0..9)   u the bout (0..2, 3 the champion)
 //         f the two accounts, side 0 first          r the result - a ladder bout 1 won / 0 lost; players' 0 side 0 won,
 //                                                     1 side 1 won, 2 a draw
 //         h how it ended (net/arenaLaw.js ARENA_HOW)  i issued, epoch seconds   e expires (i + ARENA_RECEIPT_TTL_S)
+//         z AUDIT ARENA-LADDER: the ladder attempt's ticket (net/arenaLaw.js ARENA_TICKET_RE) - the account service's,
+//           which keys the bout's row by it; a ladder receipt from a relay before it carries none
 //
 // ONE KEY, THREE THINGS, NEVER CONFUSED. The relay's one secret (GATE_SIGNING_KEY) signs this as it signs a gate's kill
 // and a raid's cleanse, and the version is INSIDE the signed bytes: `a1` is refused by the gate's verifier (its `r1` is
@@ -25,7 +27,7 @@
 //
 // Not a DFU member. Ledger A (ARENA).
 import { _b64url, SIG_BYTES, SKEW_S, ID_RE } from './identityToken.js';
-import { ARENA_BOUT_ID_RE, ARENA_TIERS, ARENA_TIER_BOUTS, ARENA_HOW } from './arenaLaw.js';
+import { ARENA_BOUT_ID_RE, ARENA_TIERS, ARENA_TIER_BOUTS, ARENA_HOW, ARENA_TICKET_RE } from './arenaLaw.js';
 
 /** The only version this file reads or writes. */
 export const ARENA_RECEIPT_V = 'a1';
@@ -54,8 +56,9 @@ export function arenaReceiptValid(c) {
     if (!Number.isInteger(c.q) || c.q < 0 || c.q >= ARENA_TIERS) return false;
     if (!Number.isInteger(c.u) || c.u < 0 || c.u > ARENA_TIER_BOUTS) return false;
     if (c.r !== 0 && c.r !== 1) return false;
+    if (c.z !== undefined && (typeof c.z !== 'string' || !ARENA_TICKET_RE.test(c.z))) return false;   // AUDIT ARENA-LADDER
   } else if (c.a === 'p') {
-    if (c.s !== undefined || c.q !== undefined || c.u !== undefined) return false;
+    if (c.s !== undefined || c.q !== undefined || c.u !== undefined || c.z !== undefined) return false;
     if (!Array.isArray(c.f) || c.f.length !== 2 || !c.f.every((s) => typeof s === 'string' && ID_RE.test(s)) || c.f[0] === c.f[1]) return false;
     if (c.r !== 0 && c.r !== 1 && c.r !== 2) return false;
   } else return false;
@@ -67,7 +70,7 @@ export function arenaReceiptValid(c) {
 /** The claims in the order the minter writes them - one byte string for one receipt. */
 function claimsOf(what, nowS) {
   const head = what.a === 'l'
-    ? { a: 'l', j: what.j, s: what.s, q: what.q, u: what.u, r: what.r, h: what.h }
+    ? { a: 'l', j: what.j, s: what.s, q: what.q, u: what.u, r: what.r, h: what.h, ...(what.z !== undefined ? { z: what.z } : {}) }
     : { a: 'p', j: what.j, f: [what.f?.[0], what.f?.[1]], r: what.r, h: what.h };
   return { ...head, i: nowS, e: nowS + ARENA_RECEIPT_TTL_S };
 }

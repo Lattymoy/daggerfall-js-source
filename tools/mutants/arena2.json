@@ -164,8 +164,8 @@
   {
     "name": "ARENA2-TIER5-TWO",
     "file": "src/systems/arenaLadder.js",
-    "old": "champion: [b(M.Warrior, 11), b(M.Warrior, 11)] }",
-    "new": "champion: [b(M.Warrior, 11)] }",
+    "old": "champion: [champ(M.Warrior, 11), champ(M.Warrior, 11)] }",
+    "new": "champion: [champ(M.Warrior, 11)] }",
     "tests": [
       "test/arena2_ladder.test.js"
     ]
@@ -173,17 +173,19 @@
   {
     "name": "ARENA2-LOSS-MOVES",
     "file": "src/systems/arenaLadder.js",
-    "old": "    } else s.won = Math.min(BOUTS_PER_TIER, s.won + 1);\n  } else {\n    r.losses++; r.streak = 0;",
-    "new": "    } else s.won = Math.min(BOUTS_PER_TIER, s.won + 1);\n  } else {\n    r.losses++; r.streak = 0; s.won = 0;",
+    "old": "  } else {\n    r.losses++; r.streak = 0;\n",
+    "new": "  } else {\n    r.losses++; r.streak = 0; s.tier = Math.max(0, s.tier - 1);\n",
     "tests": [
-      "test/arena2_ladder.test.js"
-    ]
+      "test/arena2_ladder.test.js",
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "AUDIT ARENA-LADDER (re-aimed - a loss now breaks the run, so the old mutant, s.won = 0, was the law itself): a loss takes a tier back."
   },
   {
     "name": "ARENA2-TIER-UP",
     "file": "src/systems/arenaLadder.js",
-    "old": "      else { s.tier = Math.min(LADDER_TIERS.length - 1, s.tier + 1); s.won = 0; out.tierUp = true; }",
-    "new": "      else { s.won = 0; out.tierUp = true; }",
+    "old": "      else { s.tier = Math.min(LADDER_TIERS.length - 1, s.tier + 1); s.won = 0; s.paid = 0; out.tierUp = true; }",
+    "new": "      else { s.won = 0; s.paid = 0; out.tierUp = true; }",
     "tests": [
       "test/arena2_driver.test.js",
       "test/arena2_ladder.test.js"
@@ -612,8 +614,8 @@
   {
     "name": "ARENA2-NO-LOOT",
     "file": "src/scenes/arenaBouts.js",
-    "old": "          if (foe.entity) { foe.entity.bout = tags.get(f.id); foe.entity.items = []; }",
-    "new": "          if (foe.entity) { foe.entity.bout = tags.get(f.id); }",
+    "old": "          if (foe.entity) { foe.entity.bout = tags.get(f.id); foe.entity.items = []; foe.entity.pacifyImmune = true; }",
+    "new": "          if (foe.entity) { foe.entity.bout = tags.get(f.id); foe.entity.pacifyImmune = true; }",
     "tests": [
       "test/arena2_driver.test.js"
     ]

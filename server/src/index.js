@@ -2842,7 +2842,13 @@ export class Room {
         // stands only for a token from a service before it, held to the tier's cap, and its `mh` is read by nothing
         // (net/arenaLaw.js ladderVitality - AUDIT PRE-MERGE 1003 S2: the signed level held to the same cap)
         if (m.r !== 'f' || m.tier === undefined) { this._arenaSend(ws, { k: 'no', m: 'no bout' }); return; }
-        st = this._bout = openBout({ o: arenaBoutIdOf(a.key), kind: 'pve', f: [{ sub: a.sub, name: a.name, lv: m.lv ?? a.lv ?? 1, cl: a.cl ?? null, title: a.title ?? null, banner: m.b ?? null }], tier: m.tier, bout: m.bout, now });   // ARENA4b: `banner` the word's claim, billed on the list to watch
+        // AUDIT ARENA-LADDER: AND ONLY FOR AN ATTEMPT'S TICKET - the account service's (server-account/src/arena.js
+        // arenaAttempt), signed into the receipt (`z`): the service keys the bout's row by it and counts an attempt never
+        // claimed as a loss, so a ladder bout lost is lost whether or not its receipt is carried
+        // AUDIT ARENA-LADDER 2: every ladder `in` of a site at world169 or later carries its ticket, so one without is an older
+        // build's - answered with a word that build ends its bout on ('no bout'), never one it would only print and stand in
+        if (typeof m.z !== 'string') { this._arenaSend(ws, { k: 'no', m: 'no bout' }); return; }
+        st = this._bout = openBout({ o: arenaBoutIdOf(a.key), kind: 'pve', f: [{ sub: a.sub, name: a.name, lv: m.lv ?? a.lv ?? 1, cl: a.cl ?? null, title: a.title ?? null, banner: m.b ?? null, tk: m.z }], tier: m.tier, bout: m.bout, now });   // ARENA4b: `banner` the word's claim, billed on the list to watch
         await this._boutTellHall(st);
       } else if (boutFinished(st) && (exRoom || fighterOfSub(st, a.sub))) {
         // ARENA4b: a finished exhibition is kept for its verdict (ARENA_EX_KEEP_MS): an `in` is answered with the whole

@@ -276,6 +276,17 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
   /** HT-WAIST-BACK: is it DRAWN this frame - it hangs, and the sprite is painted from behind (eotbLantern.js
    *  isRearView: orientation 4). */
   const lanternShown = () => lanternHangs() && isRearView(shown?.orientation);
+  /** WINGS-FIT (2026-10-05): the way the drawn sprite faces, as a yaw (forward (sin, cos)) - its walk's facing
+   *  (UpdateOrientation's `lastMoveDirection`); with none (Vector3.zero, before a first walk or placing) SignedAngle reads
+   *  the camera's own line and the sprite shows the eye its FRONT (ARENA-FIX 14), so it faces the eye. It answered null
+   *  there, and the camera's yaw stood in: the wings were hung on the side toward the eye, laid over a sprite showing its
+   *  face and turning with the camera round it. Null only with neither. */
+  function figureYaw() {
+    const f = lastMoveDirection;
+    if (f && Math.hypot(f[0], f[2]) > 1e-6) return Math.atan2(f[0], f[2]);
+    const ex = cam.pos[0] - cam.feet[0], ez = cam.pos[2] - cam.feet[2];
+    return Math.hypot(ex, ez) > 1e-6 ? Math.atan2(ex, ez) : null;
+  }
   /** The frame the sprite faces: its walk's facing (UpdateOrientation's `lastMoveDirection`), else the yaw. */
   function facingBasis() {
     const f = lastMoveDirection && (lastMoveDirection[0] || lastMoveDirection[2]) ? lastMoveDirection : cam.forward;
@@ -933,7 +944,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       const c = place();
       if (!c) return false;
       batch.origin[0] = c[0]; batch.origin[1] = c[1]; batch.origin[2] = c[2];
-      figure = last.riding || FP ? null : { base: c[1] - cam.feet[1], mpp: batchPx > 0 ? batchSize.h * grow / batchPx : 0, beast: !!last.transformed, yaw: Math.hypot(lastMoveDirection?.[0] ?? 0, lastMoveDirection?.[2] ?? 0) > 1e-6 ? Math.atan2(lastMoveDirection[0], lastMoveDirection[2]) : null };   // SERAPH-WINGS: a rider's frame is the horse's too - no shoulders read off it; AUDIT 3: nor the first-person billboard's (the camera is in it), and its metres a pixel (the shoulders by the pixel - auraSpriteBones), its form, and the way it FACES (UpdateOrientation's facing - not the camera's: a sprite walking back shows its face)
+      figure = last.riding || FP ? null : { base: c[1] - cam.feet[1], mpp: batchPx > 0 ? batchSize.h * grow / batchPx : 0, beast: !!last.transformed, yaw: figureYaw() };   // SERAPH-WINGS: a rider's frame is the horse's too - no shoulders read off it; AUDIT 3: nor the first-person billboard's (the camera is in it), and its metres a pixel (the shoulders by the pixel - auraSpriteBones), its form, and the way it FACES (UpdateOrientation's facing - not the camera's: a sprite walking back shows its face)
       batch.conceal = material();
       // AUDIT DEEP R-2: under the travel view the quad turns to the VIEW's eye (and leans with the flats) - on the
       // traveller's own heading it went edge-on as the view orbited, a sliver at 90 degrees, mirrored at 180

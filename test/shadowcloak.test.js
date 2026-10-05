@@ -151,7 +151,7 @@ test('SHADOW-CLOAK the account card: wearing the cloak, the card says its name -
 });
 
 test('SHADOW-CLOAK token and relay: a token may carry the cloak and verifies; the relay - world167 and after, the ones that know the word - reads it out of the signature onto their row for everyone near (mutants: the vocabulary\'s aura)', async () => {
-  assert.equal(RELAY_VERSION, 'world168', 'SHADOW-CLOAK moved it on (world167 - world165 on its branch, renumbered past SERPENT1 and SERPENT2 at the merges), SERAPH-WINGS after it (world168 - PIN MOVED): the vocabulary rides the relay\'s bundle');
+  assert.equal(RELAY_VERSION, 'world169', 'SHADOW-CLOAK moved it on (world167 - world165 on its branch, renumbered past SERPENT1 and SERPENT2 at the merges), SERAPH-WINGS after it (world168 - PIN MOVED), AUDIT ARENA-LADDER after that (world169, the arena ladder audit - PIN MOVED): the vocabulary rides the relay\'s bundle');
   const kp = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
   const pub = await importPublicKeyB64(Buffer.from(new Uint8Array(await subtle.exportKey('raw', kp.publicKey))).toString('base64url'), { subtle });
   const nowS = 1_760_000_000;

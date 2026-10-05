@@ -79,7 +79,7 @@ test('PROF10 service: a Silver Ruby Ring at the jeweller\'s bench - its Silver a
   assert.deepEqual((await s.cut(mac, 'ring:silver:ruby')).body, { error: 'stores-short' });
   assert.deepEqual((await s.cut(mac, 'ring:silver:emerald')).body, { error: 'stores-short' }, 'every gem its own');
   assert.equal(s.xpOf(mac), 540);
-  assert.match(ACCOUNT_VERSION, /^acct81$/   /* PIN MOVED (PROF12, AUDIT PROF-541, SILVER-WAYS' acct71, the arena merge's acct72, AEGIS's acct73, BAG1 and GUILD2's acct74, HOME-PRICE's acct75, PRIMARCH and FOUNDER4's acct76, FIELD BUGS 2026-10-04d KNIGHT-HOUSE's acct77, SERPENT1's acct78, GLOBAL-MARKET's acct79, SHADOW-CLOAK's acct80, SERAPH-WINGS' acct81): the live version */);
+  assert.match(ACCOUNT_VERSION, /^acct82$/   /* PIN MOVED (PROF12, AUDIT PROF-541, SILVER-WAYS' acct71, the arena merge's acct72, AEGIS's acct73, BAG1 and GUILD2's acct74, HOME-PRICE's acct75, PRIMARCH and FOUNDER4's acct76, FIELD BUGS 2026-10-04d KNIGHT-HOUSE's acct77, SERPENT1's acct78, GLOBAL-MARKET's acct79, SHADOW-CLOAK's acct80, SERAPH-WINGS' acct81, AUDIT ARENA-LADDER's acct82): the live version */);
 });
 
 test('AUDIT PROF-541 J7 service: the first time\'s 500 once a piece and base - a Silver Ruby Ring\'s, then a Silver Emerald Ring and a plain Silver Ring none; a Silver Mark and a Gold Ruby Ring each their own', async () => {

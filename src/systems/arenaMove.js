@@ -75,7 +75,9 @@ export function arenaHouseFor({ mapId, oldKey, oldType }, summaries, { held = ne
  * it; the service checks the keys (server-account/src/homes.js arenaMoveHome). Pure; null for none.
  */
 export function arenaHomeFor(o, summaries, opts = {}) {
-  return arenaHouseFor(o, (summaries ?? []).filter((s) => homeCandidate(s)), opts);
+  // AUDIT FB1005 C2: never into a room that cannot be laid out - Daggerfall's GRVEAL27 holds twelve House5 graves and
+  // CUSTAA05 two House6 with no room (FIELD BUGS 2026-10-05 CRYPT-SALE's law, homePurchasable's)
+  return arenaHouseFor(o, (summaries ?? []).filter((s) => homeCandidate(s) && s.hasInterior !== false), opts);
 }
 
 /** The key of the new house's first container in its scene (scenes/worldModes.js restoreInteriorScene's `container:i`). */

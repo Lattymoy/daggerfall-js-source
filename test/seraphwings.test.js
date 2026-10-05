@@ -25,6 +25,7 @@ import {
   WING_MOTE_LIFE, WING_POOL_R, WING_RGB, WING_STRAND_COUNT, WING_VERTS, wingRatesWhole, auraWingsGrid,
   CLOAK_SHOULDER_Y, CLOAK_HOOD_Y, CLOAK_REST_POSE, CLOAK_ACROSS, auraTorso, auraSpriteBones, auraSpritePosed, auraCapePose, auraCapeStep,
   EOTB_FIGURE, AURA_SADDLE_M, WING_HALO_NEAR, WING_COVERT, WING_BEAT, WING_HALO_M, WING_MOTE_LEN, WING_MOTE_M, WING_LIGHT, auraWingLights,
+  WING_SPRITE_BACK,
 } from '../src/render/auraRing.js';
 import { createEotbBody } from '../src/player/eotbBody.js';
 import { createPeerWalkers, createPeerRiders, createEotbArt } from '../src/net/peerRiders.js';
@@ -125,8 +126,8 @@ test('SERAPH-WINGS the account card: wearing the wings, the card says their name
   assert.equal(flow.note, 'Wearing Seraph Wings.');
 });
 
-test('SERAPH-WINGS token and relay: a token may carry the wings and verifies; the relay - world168, the one that knows the word - reads it out of the signature for everyone near; a token with every glyph and the wings inside the relay\'s bound (mutants: the vocabulary\'s word)', async () => {
-  assert.equal(RELAY_VERSION, 'world168', 'SERAPH-WINGS moved it on (world168): the vocabulary rides the relay\'s bundle');
+test('SERAPH-WINGS token and relay: a token may carry the wings and verifies; the relay - world168 and after, the ones that know the word - reads it out of the signature for everyone near; a token with every glyph and the wings inside the relay\'s bound (mutants: the vocabulary\'s word)', async () => {
+  assert.equal(RELAY_VERSION, 'world169', 'SERAPH-WINGS moved it on (world168): the vocabulary rides the relay\'s bundle; AUDIT ARENA-LADDER after it (world169, the arena ladder audit - PIN MOVED)');
   const kp = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
   const pub = await importPublicKeyB64(Buffer.from(new Uint8Array(await subtle.exportKey('raw', kp.publicKey))).toString('base64url'), { subtle });
   const nowS = 1_760_000_000;
@@ -149,7 +150,7 @@ test('SERAPH-WINGS token and relay: a token may carry the wings and verifies; th
 // ── THE WINGS' LAW AND SHAPE ────────────────────────────────────────
 
 const I = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
-const BASE = { uSeed: 0.37, uRingR: WING_POOL_R, uGroundR: AURA_GROUND_R, uFlameH: WING_REACH[1], uFogMode: 0, uFogDensity: 0, uFogRange: [0, 1], uAt: [0, 0, 0], uFocus: [0, 0, 0, 0], uLift: AURA_LIFT_M, uVP: I, uAura: 4, uSide: 1, uTorn: -1, uSwing: [0, 0, 0, 0], uCapeS: [0, CLOAK_SHOULDER_Y, 0, 1], uCapeH: [0, CLOAK_HOOD_Y, 0, 0], uKneeL: [0, 0, 0], uKneeR: [0, 0, 0], uTorsoU: [0, 1, 0], uTorsoF: [0, 0, 1] };
+const BASE = { uWingBack: 0, uSeed: 0.37, uRingR: WING_POOL_R, uGroundR: AURA_GROUND_R, uFlameH: WING_REACH[1], uFogMode: 0, uFogDensity: 0, uFogRange: [0, 1], uAt: [0, 0, 0], uFocus: [0, 0, 0, 0], uLift: AURA_LIFT_M, uVP: I, uAura: 4, uSide: 1, uTorn: -1, uSwing: [0, 0, 0, 0], uCapeS: [0, CLOAK_SHOULDER_Y, 0, 1], uCapeH: [0, CLOAK_HOOD_Y, 0, 0], uKneeL: [0, 0, 0], uKneeR: [0, 0, 0], uTorsoU: [0, 1, 0], uTorsoF: [0, 0, 1] };
 const FAR = [0, 1.5, -6];   // an eye well behind the wearer
 /** Strand k's point at its length's share t, as the vertex half lays it (the middle of its ribbon). */
 const strandAt = (k, t, { time = 13.2, yaw = 0, eye = FAR, pose = {} } = {}) => {
@@ -271,7 +272,7 @@ test('SERAPH-WINGS the light, RUN: gold - white-hot at a strand\'s heart, gold t
 
 test('SERAPH-WINGS the ground and the motes, RUN: a faint pool of gold at the feet, none past it, none unkindled; a mote a small round light, nothing past its disc, nothing as it begins and as it ends, none till the wings have unfurled (mutants: the pool, the mote\'s fade, its kindle gate)', () => {
   const g0 = fsW(0, [0, 0]), gEdge = fsW(0, [WING_POOL_R - 0.05, 0]);
-  assert.ok(lum(g0) > 0.2 && lum(g0) < 1.2 && g0[0] > g0[2], `a faint pool of gold (${lum(g0).toFixed(2)})`);
+  assert.ok(lum(g0) > 0.08 && lum(g0) < 0.2 && g0[0] > g0[2], `a faint pool of gold (${lum(g0).toFixed(2)}) - WINGS-FIT: fainter (it was 0.33)`);
   assert.ok(lum(gEdge) < lum(g0) * 0.1, 'fading to its edge');
   assert.equal(fsW(0, [WING_POOL_R + 0.02, 0]), 'discard', 'none past it');
   assert.equal(lum(fsW(0, [0.2, 0.1], { kindle: 0 })), 0, 'none unkindled');
@@ -362,7 +363,7 @@ test('SERAPH-WINGS on the back of a Morrowind body: the torso read off the rig -
   const rest = at({}), c = Math.cos(0.4), sn = Math.sin(0.4);
   const leant = at({ uTorsoU: [0, c, sn], uTorsoF: [0, -sn, c] }), turned = at({ uTorsoU: [0, 1, 0], uTorsoF: [Math.sin(0.5), 0, Math.cos(0.5)] });
   assert.ok(leant[2] > rest[2] + 0.3, `a lean tips them forward (${rest[2].toFixed(2)} to ${leant[2].toFixed(2)})`);
-  assert.ok(Math.hypot(turned[0] - rest[0], turned[2] - rest[2]) > 0.3, 'a turn turns them');
+  assert.ok(Math.hypot(turned[0] - rest[0], turned[2] - rest[2]) > 0.15, 'a turn turns them');   // WINGS-FIT: the shorter tip half a radian round (it was 0.3 at 2.2 m)
   assert.ok(near(strandAt(k, 0, { pose: { uTorsoU: [0, c, sn], uTorsoF: [0, -sn, c] } }).mid, [WING_ROOT.apart, CLOAK_SHOULDER_Y - WING_ROOT.below * c - WING_ROOT.back * -sn, -WING_ROOT.below * sn - WING_ROOT.back * c], 1e-5), 'the roots on the back as it leans');
 });
 
@@ -422,7 +423,10 @@ test('SERAPH-WINGS on the back of an Eye of the Beholder sprite: its bones read 
   assert.equal(b.draw(null, { eye: [0, 3.5, -2], feet: [0, 2, 0], yaw: 0 }), true);
   const drawn = r.batches.at(-1), fig = b.figure();
   assert.ok(fig && Math.abs(fig.mpp - drawn.size.h / 6) < 1e-9 && Math.abs(fig.base - (drawn.origin[1] - 2)) < 1e-9 && fig.beast === false, `the frame drawn, over its feet, its metres a pixel (${JSON.stringify(fig)})`);
-  assert.equal(fig.yaw, null, 'facing nowhere yet: the camera\'s stands');
+  // WINGS-FIT: facing nowhere yet (Vector3.zero) the sprite shows the eye its FRONT (orientation 0) - so it faces the eye,
+  // and the wings hang behind it; it answered null, and the camera's yaw hung them over the sprite's face
+  assert.equal(b.state().orientation, 0, 'facing nowhere: its front to the eye');
+  assert.ok(Math.abs(Math.atan2(Math.sin(fig.yaw - Math.PI), Math.cos(fig.yaw - Math.PI))) < 1e-9, `facing nowhere yet: facing the eye (${fig.yaw})`);
   // AUDIT 3: WALKING BACK, THE SPRITE FACES THE CAMERA - and so do the cloak and the wings (they were the camera's way: the cape over its face)
   const yaw = 0.3, cp = [-Math.sin(yaw) * 2, 3.5, -Math.cos(yaw) * 2];
   for (let i = 0; i < 40; i++) b.tick(1 / 60, { motion: { forward: -1, strafe: 0, standing: false, speed: 3, grounded: true, height: 1.8 }, feet: [0, 2, 0], yaw, cameraPos: cp });
@@ -527,6 +531,76 @@ test('SERAPH-WINGS AUDIT 4: a pose reused after a swim is not left sunk - a swim
   assert.equal(flipped, 0, 'no strand twisted at its tip');
 });
 
+// ── WINGS-FIT ───────────────────────────────────────────────────────
+
+test('SERAPH-WINGS WINGS-FIT (Mac: "the wings should sit farther back on the eye of the beholder skin ... clips on certain rotational directions", "the aura itself is WAY too bright ... match this and the slimness of the wings"): a Beholder sprite is a flat card through its feet, so its wings root WING_SPRITE_BACK further back - seen from its front round to either side no wing is laid over the body it grows from (a hand behind the card, the root stood inside the body\'s outline from the side and was drawn over it); the pose carries the depth, a rig\'s and the rest pose\'s none, the pass uploads it; and slim, short and soft as the painting - three strands a plume, slim ribbons, six tenths as long, no strand\'s heart, backlight or pool at the old blaze (mutants: the depth, its carriage, its upload, the slimness, the light)', () => {
+  // the depth: the sprite's, as big as it is drawn; carried by the pose; none for a rig or at rest; dropped with the sprite
+  const fig = { base: 0, mpp: EOTB_FIGURE.mpp };
+  assert.equal(auraSpriteBones(fig).wingBack, WING_SPRITE_BACK);
+  assert.ok(Math.abs(auraSpriteBones({ base: 0, mpp: EOTB_FIGURE.mpp * 1.2 }).wingBack - WING_SPRITE_BACK * 1.2) < 1e-9, 'a sprite drawn bigger: further back');
+  const sp = auraCapePose(auraSpriteBones(fig));
+  assert.equal(sp.wingBack, WING_SPRITE_BACK, 'the pose carries it');
+  const rig = { 'bip01 l upperarm': [-0.2, 1.45, 0], 'bip01 r upperarm': [0.2, 1.45, 0], 'bip01 neck': [0, 1.5, 0], 'bip01 head': [0, 1.6, 0] };
+  assert.equal(auraCapePose(rig, auraCapePose(auraSpriteBones(fig))).wingBack, 0, 'a rig has a back of its own - and a pose reused from a sprite drops its depth');
+  assert.equal(CLOAK_REST_POSE.wingBack, 0);
+  const w = { at: [0, 0, 0], aura: 'seraphwings', yaw: 0 };
+  auraCapeStep(w, { feet: [0, 0, 0], yaw: 0, bones: auraSpriteBones(fig) }, 1);
+  assert.equal(w.cape.wingBack, WING_SPRITE_BACK);
+  w.mounted = true; auraCapeStep(w, null, 1);
+  assert.equal(w.cape.wingBack, 0, 'hung from the rest pose again: none');
+  // the pass uploads it with the pose
+  const calls = [];
+  const gl = new Proxy({ TRIANGLES: 8, BLEND: 9, ONE: 10, CULL_FACE: 11, POLYGON_OFFSET_FILL: 12, ONE_MINUS_SRC_ALPHA: 13, FRONT: 14, BACK: 15 }, {
+    get(tg, k) { if (k in tg) return tg[k]; return (...a) => { calls.push([k, ...a]); if (k === 'getShaderParameter' || k === 'getProgramParameter') return true; if (k === 'getUniformLocation') return a[1]; return {}; }; },
+  });
+  const r0 = new AuraRingRenderer(gl);
+  const upload = (cape) => { calls.length = 0; r0.draw([{ at: [0, 0, 0], aura: 'seraphwings', yaw: 0, cape }], new Float32Array(I), new Float32Array(I), [0, 1.5, -5], 10); return calls.filter((c) => c[0] === 'uniform1f' && c[1] === 'uWingBack').map((c) => c[2]); };
+  assert.deepEqual(upload(sp), [WING_SPRITE_BACK], 'uploaded with the pose');
+  assert.deepEqual(upload(undefined), [0], 'none at rest');
+  // the shader roots them there
+  const root = strandAt(broad(1, 3), 0, { pose: { uWingBack: WING_SPRITE_BACK } }).mid;
+  assert.ok(Math.abs(root[2] + WING_ROOT.back + WING_SPRITE_BACK) < 1e-6, `rooted further back (${root[2].toFixed(3)})`);
+  const haloAt = (back) => { const f = glslFunctions(AURA_VS, { ...BASE, uWingBack: back, aP: [WING_MOTES * 2 + 0.5, 0.5], uKind: 2, uTime: QUIET, uYaw: 0, uAt: [0, 0, 0], uCamPos: FAR }); f.main(); return f.globals.vWorld; };
+  assert.ok(Math.abs(haloAt(WING_SPRITE_BACK)[2] - (haloAt(0)[2] - WING_SPRITE_BACK)) < 1e-6, 'the backlight behind the roots, where they are');
+  const lit = [];
+  auraWingLights([{ at: [0, 0, 0], aura: 'seraphwings', yaw: 0, cape: sp }], [0, 1.6, -5], lit);
+  assert.ok(Math.abs(lit[0].z + WING_LIGHT.back + WING_SPRITE_BACK) < 1e-6, `and the light on the world (${lit[0].z.toFixed(3)})`);
+  // THE LAW: the card stands through the axis square to the eye, and the body in it about 0.25 m either side of the axis
+  // to its head. From its front round to either side - where the sprite shows its front or its side, never its back -
+  // no point of a wing lies nearer the eye than the card AND inside that outline (drawn over the body it grows from)
+  const F = glslFunctions(AURA_VS, { ...BASE, uCapeS: [...sp.shoulders], uCapeH: [...sp.head], uKind: 1, uTime: QUIET, uYaw: 0, uCamPos: FAR });
+  const headTop = sp.head[1] + 0.12;
+  const overBody = (back) => {
+    F.globals.uWingBack = back;
+    let n = 0;
+    for (const deg of [0, 30, 60, 90, -30, -60, -90]) {
+      const ph = deg * Math.PI / 180, to = [Math.sin(ph), Math.cos(ph)];   // the eye's way from the feet - the wearer faces +z
+      for (let k = 0; k < WING_STRAND_COUNT; k++) for (let i = 1; i <= 10; i++) {
+        const p = F.wingPoint(k, i / 10, QUIET);
+        if (p[0] * to[0] + p[2] * to[1] > 0 && Math.abs(p[0] * to[1] - p[2] * to[0]) < 0.25 && p[1] < headTop) n++;
+      }
+    }
+    return n;
+  };
+  assert.equal(overBody(WING_SPRITE_BACK), 0, 'no wing laid over the body, from its front round to either side');
+  const was = overBody(0);
+  assert.ok(was > 50, `a hand behind the card, they were (${was} points over the body)`);
+  // SLIM, SHORT AND SOFT ("way to long, too large and overbearing"): three strands a plume, slim ribbons, about six
+  // tenths as long, the backlight smaller; the brightest a strand's heart burns over the clock, the
+  // backlight's heart and the pool all well under what they were (2.7, 3.6 and 0.33)
+  assert.ok(WING_STRANDS === 3 && WING_W.broad <= 0.12 && WING_W.fine <= 0.04 && WING_HALO_M <= 1.2 && WING_REACH[1] <= 1.3 && WING_COVERT.reach[1] <= 0.5, `slim and short (${WING_STRANDS} strands, ${WING_W.broad} m)`);
+  const L = glslFunctions(AURA_FS, { ...BASE, vP: [0.5, 0.5], vWorld: [0, 1.6, -0.6], vS: [0, 0, 0], uKind: 1, uTime: 0, uYaw: 0, uKindle: 1, uCamPos: FAR, uAt: [0, 0, 0] });
+  let hot = 0, halo = 0;
+  for (let i = 0; i < 240; i++) {
+    L.globals.uTime = i * 0.5;
+    L.globals.uKind = 1; L.globals.vS = [broad(1, 3), 0, 0]; L.globals.vWorld = [0, 1.6, -0.6];
+    for (const t of [0.3, 0.45, 0.6]) { L.globals.vP = [0.5, t]; L.main(); hot = Math.max(hot, ...L.globals.o.slice(0, 3)); }
+    L.globals.uKind = 2; L.globals.vS = [1, 2, WING_MOTES]; L.globals.vWorld = [0, CLOAK_SHOULDER_Y, -0.6]; L.globals.vP = [0.5, 0.5]; L.main(); halo = Math.max(halo, lum(L.globals.o));
+  }
+  assert.ok(hot > 0.6 && hot < 1.5, `a strand's heart at its brightest (${hot.toFixed(2)})`);
+  assert.ok(halo > 0.3 && halo < 1.2, `the backlight's heart at its brightest (${halo.toFixed(2)})`);
+});
+
 // ── THE INSANE PARTS ────────────────────────────────────────────────
 
 test('SERAPH-WINGS the coverts and the beat, RUN: inside the primaries a layer of short coverts, shorter and softer; every eight seconds a slow stroke - the fan swept down and its tips forward, fast down and slow back, the tips after the roots - and the light flaring with it (mutants: the coverts\' reach, the stroke, its lag, the flare)', () => {
@@ -535,6 +609,9 @@ test('SERAPH-WINGS the coverts and the beat, RUN: inside the primaries a layer o
   const covertMost = Math.max(...Array.from({ length: WING_COVERTS }, (_, q) => reachOf(covert(1, q))));
   const primaryLeast = Math.min(...Array.from({ length: WING_PLUMES }, (_, p) => reachOf(broad(1, p))));
   assert.ok(covertMost < primaryLeast + 0.1 && covertMost < WING_COVERT.reach[1] + 0.2, `the coverts short (${covertMost.toFixed(2)} m at most, the primaries ${primaryLeast.toFixed(2)} at least)`);
+  // WINGS-FIT: the low primaries short and the high ones long, in the shape itself (the lowest tip's height pinned it
+  // while the wings were 2.2 m; at 1.3 m every plume as long as the highest still hung its lowest tip off the ground)
+  assert.ok(reachOf(broad(1, 0)) < reachOf(broad(1, WING_PLUMES - 1)) * 0.7, `the low plumes short (${reachOf(broad(1, 0)).toFixed(2)} m, the highest ${reachOf(broad(1, WING_PLUMES - 1)).toFixed(2)})`);
   assert.ok(lum(fsW(1, [0.5, 0.5], { s: [covert(1, 3), 0, 1] })) < lum(fsW(1, [0.5, 0.5], { s: [covert(1, 3), 0, 0] })) * 0.6, 'and softer');
   const F = glslFunctions(AURA_FS, { ...BASE, vP: [0, 0], vWorld: [0, 0, 0], vS: [0, 0, 0], uKind: 1, uTime: 0, uYaw: 0, uKindle: 1, uCamPos: FAR });
   const peak = 0.18 * 8, rest = 0.9 * 8;
@@ -593,11 +670,12 @@ test('SERAPH-WINGS the light on the world: a gold light behind the shoulders of 
   assert.equal(out.length, 1, 'one light, for the wings alone');
   const l = out[0];
   assert.ok(Math.abs(l.y - (CLOAK_SHOULDER_Y + WING_LIGHT.lift)) < 1e-6 && Math.abs(l.z + WING_LIGHT.back) < 1e-6 && Math.abs(l.x) < 1e-6, 'behind the shoulders');
-  assert.ok(l.carried === true && l.range === WING_LIGHT.range && l.color[0] === 1 && l.color[0] > l.color[1] && l.color[1] > l.color[2], 'carried, its full range, gold');
+  assert.ok(l.carried === true && l.range === WING_LIGHT.range && l.color[0] === WING_LIGHT.rgb[0] && l.color[0] > l.color[1] && l.color[1] > l.color[2], 'carried, its full range, gold');
+  assert.ok(WING_LIGHT.range <= 4.5 && WING_LIGHT.rgb[0] <= 0.7, 'WINGS-FIT: a soft light (it was 7 m at full)');
   auraWingLights([wearer([0, 0, 0], { yaw: Math.PI / 2 })], [0, 0, 0], out);
   assert.ok(Math.abs(out[0].x + WING_LIGHT.back) < 1e-6 && Math.abs(out[0].z) < 1e-6, 'behind them as they face');
   auraWingLights([wearer([0, 0, 0], { kindle: 0 }), wearer([0, 0, 0], { kindle: 0.5 })], [0, 0, 0], out);
-  assert.ok(out.length === 1 && Math.abs(out[0].range - WING_LIGHT.range * 0.75) < 1e-6 && Math.abs(out[0].color[0] - 0.5) < 1e-6, 'none unkindled; half kindled, dimmer and nearer');
+  assert.ok(out.length === 1 && Math.abs(out[0].range - WING_LIGHT.range * 0.75) < 1e-6 && Math.abs(out[0].color[0] - WING_LIGHT.rgb[0] * 0.5) < 1e-6, 'none unkindled; half kindled, dimmer and nearer');
   auraWingLights([10, 2, 30, 5, 60].map((d) => wearer([d, 0, 0])), [0, 1.6, 0], out);
   assert.deepEqual(out.map((x) => Math.round(x.x)), [2, 5, 10], 'the nearest three within reach, nearest first');
   assert.equal(auraWingLights([wearer([WING_LIGHT.reach + 5, 0, 0])], [0, 1.6, 0], out).length, 0, 'none past its reach');

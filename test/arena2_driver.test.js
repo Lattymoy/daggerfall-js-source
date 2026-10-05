@@ -4,6 +4,7 @@
 // exhibition between two AI fighters, the stranger's blow on it warned then a crime; a blow before the word made good;
 // the healers; the fighters off the sand; the stage going takes its bout unsaid; the HUD, the music, the duel's law.
 import { test } from 'node:test';
+import { SAND_CEILING_M } from '../src/systems/arenaKit.js';
 import assert from 'node:assert/strict';
 import { createArenaBouts, YOU, CRIT_SHARE, LEAVE_AFTER_MS } from '../src/scenes/arenaBouts.js';
 import { newArenaLadder, nextLadderBout, exhibitionFor, BOUT_PURSE } from '../src/systems/arenaLadder.js';
@@ -51,9 +52,9 @@ test('ARENA2 driver: a ladder bout - the call, the fight, my blows, the floor, t
   assert.deepEqual(f.entity.items, [], 'no loot on the sand');
   assert.equal(f.entity.bout.side, 1);
   assert.equal(f.entity.bout.hold, true, 'held before the word');
-  assert.deepEqual(r.log.bouts[0], { id: r.A.bout()?.id ?? r.log.bouts[0].id, side: 0, out: false, hold: true });
+  assert.deepEqual(r.log.bouts[0], { id: r.A.bout()?.id ?? r.log.bouts[0].id, side: 0, out: false, hold: true, kit: true });   // AUDIT ARENA-LADDER 2: `kit` - a ladder bout's law
   assert.ok(r.A.holds(), 'the duel\'s law from the call');
-  assert.deepEqual(r.A.ring(), { centre: [50, 0, 40], radius: RING_R });
+  assert.deepEqual(r.A.ring(), { centre: [50, 0, 40], radius: RING_R, ceilAbove: SAND_CEILING_M });   // AUDIT ARENA-LADDER: and the kit law's ceiling over the sand
   assert.equal(r.A.scoreWant(), ARENA_SONGS.march);
   // a blow before the word: made good, nothing counted
   strike(f, 10);

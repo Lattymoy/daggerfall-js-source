@@ -4835,24 +4835,26 @@ painting is used.
   seraphwings: 'founder'`) - the wings' own colour, where the developer title's paint is a red.
 - **The look** (`src/render/auraRing.js`, the fifth: `AURA_LOOK.seraphwings`, kind 4, its own mesh `wings`, added whole -
   light, never a shadow):
-  - THE WINGS: two layers a side - WING_PLUMES (9) long primaries fanned from below level (-0.7 rad) to high over the
-    head (1.25 rad), the high ones long (WING_REACH 0.95 - 2.2 m), and inside them WING_COVERTS (6) short coverts
-    (WING_COVERT: 0.45 - 0.8 m) that give a wing its body, softer. Each plume a broad strand (0.34 m with its glow's
-    sheath) and four fine ones bundled about it as a feather's barbs; ribbons of WING_SEGS (32) segments
-    (`auraWingsGrid`, 150 strands), laid along a curve out of the upper back - rising first, then out along the
+  - THE WINGS: two layers a side - WING_PLUMES (8; 9 before WINGS-FIT) long primaries fanned from below level (-0.7
+    rad) to high over the head (1.25 rad), the high ones long (WING_REACH 0.6 - 1.3 m; were 0.95 - 2.2), and inside
+    them WING_COVERTS (4; was 6) short coverts (WING_COVERT: 0.28 - 0.5 m; were 0.45 - 0.8) that give a wing its
+    body, softer. Each plume a broad strand
+    (0.12 m with its glow's sheath; was 0.34) and two fine ones (0.035 m; were four, 0.08) bundled about it as a
+    feather's barbs; ribbons of WING_SEGS (32) segments (`auraWingsGrid`, 72 strands; were 150), laid along a curve
+    out of the upper back - rising first, then out along the
     plume's angle, the tips drooping as a long feather's do - turned to the eye along their length.
   - THEY FLOW: waves run out along each strand (1/4 Hz, and a flutter at 1/2 Hz on every strand); the fan breathes (1/6 Hz);
     and every eight seconds THE BEAT (`wingBeat`, WING_BEAT): a slow stroke, the fan swept down and its tips forward,
     fast down and slow back up, the tips after the roots - the light flaring with it. In the fragment half noise and a
     pulse of light run out along each strand; gold (WING_RGB), white-hot at the heart, amber at a frayed edge, the tips
     burning as they fray; faint where they leave the back.
-  - THE BACKLIGHT: one card of radiance behind the upper back (WING_HALO_M 2.6 m), square to the eye - a soft gold glow,
+  - THE BACKLIGHT: one card of radiance behind the upper back (WING_HALO_M 1.2 m; 2.6 before WINGS-FIT), square to the eye - a soft gold glow,
     white at its heart, rays turning slowly in it (1/30 Hz and 1/15 Hz), flaring with the beat.
-  - THE SPARKS (WING_MOTES 24): streaks of light riding a strand out and past its tip, long along their way as the eye
+  - THE SPARKS (WING_MOTES 24; 0.04 by 0.18 m since WINGS-FIT, were 0.05 by 0.26): streaks of light riding a strand out and past its tip, long along their way as the eye
     sees it and brightest at their head; their lives (3, 4, 5 s) dividing the clock.
-  - THE GROUND: a faint pool of gold beneath (WING_POOL_R 1.3 m).
+  - THE GROUND: a faint pool of gold beneath (WING_POOL_R 1.0 m; was 1.3).
   - THE LIGHT ON THE WORLD (`auraWingLights`, WING_LIGHT): a gold carried light behind the shoulders of the nearest
-    three wearers within 40 m of the eye (7 m as kindled), fed into every host's light list through world.js
+    three wearers within 40 m of the eye (4.5 m as kindled, at seven tenths - WINGS-FIT; was 7 m), fed into every host's light list through world.js
     `peerTorchLights` - the open world's (where the city's light colour stands for every carried light) and the
     dungeon's and the building's (where it is gold: the light is tagged `aura`, and the dungeon's flame tint,
     worldModes.js `_dgTint`, passes it by - AUDIT 3; in the abyss with its torches out it stays, halved by the
@@ -4983,3 +4985,55 @@ the grant, versions and docs. What they found, and what was done:
 - Pins: `test/seraphwings.test.js` 20 (the backlight's fade from the eye; a swim then a ride or a crouch, open and lit;
   no strand twisted at its tip); `tools/mutants/seraphwings.json` 97 (four new, one re-aimed). The probe 62/62.
 
+### WINGS-FIT (2026-10-05, Mac: "the wings should sit farther back on the eye of the beholder skin. Currently it attachs way to close and clips on certain rotational directions instead of moving with rotation. Also, the aura itself is WAY too bright. It really needs to match this and the slimness of the wings"; then "I also think theyre way to long, too large and overbearing")
+
+Sent with the reference painting again: slim ribbons of pale gold, apart, with dark between them, and a faint glow
+behind the head.
+
+- **WHY A BEHOLDER'S WINGS CLIPPED.** The sprite is a flat card through its feet, square to the eye, and it writes
+  depth over its whole figure. The wings rooted a hand (WING_ROOT.back 0.12 m) behind the card's axis - inside the
+  body as it stands - so seen from a side or a three-quarter the near wing's root stood inside the body's outline on
+  the screen and nearer the eye than the card: laid over the body with a hard edge where the strand passed through
+  the card. Measured through the vertex half (the shader RUN, 40 points a strand, every strand): from 45 degrees off
+  the front round to the side, 7 - 981 points of a wing nearer the eye than the card and inside the body's outline
+  (0.25 m of the axis, under the head); rooted deeper, none from the front round to 97.5 degrees (the nearest 0.31 m
+  from the axis) - past that the eye is behind the wearer and the near wing nearer it than the body. Seen in headless Chromium's WebGL2 over a stand-in flat card from eight
+  bearings, before and after.
+- **THE FIX** (`render/auraRing.js`): a sprite's wings root WING_SPRITE_BACK (0.25 m, as big as the sprite is drawn)
+  further back - `auraSpriteBones` gives it as `wingBack`, `auraCapePose` carries it on the pose (0 for a rig's bones,
+  which have a back of their own; a pose reused from a sprite drops it, and the rest, crouch and saddle path clears
+  it), the pass uploads it (`uWingBack`) and the vertex half roots every strand and the backlight that much deeper;
+  the light on the world sits behind the roots where they are. A wing crosses the card no nearer the axis, as the eye
+  sees it, than its own depth behind the axis (`|z| / sin` of the bearing) - past the body's outline. A Morrowind body
+  is unchanged.
+- **AND TURNING WITH IT** (`player/eotbBody.js` `figureYaw`): a sprite facing nowhere yet (Vector3.zero - before a
+  first walk or placing) shows the eye its FRONT (ARENA-FIX 14), but its figure answered no facing and the camera's yaw
+  stood in: the wings hung on the eye's side, over the sprite's face, and turned with the camera round it. It now
+  faces the eye there, so the wings hang behind it.
+- **SLIM, SHORT AND SOFT, to the painting:** about six tenths as long - the primaries 0.6 - 1.3 m (were 0.95 - 2.2,
+  a span of four metres over a two-metre body; now about the body's height), the coverts 0.28 - 0.5 m (were 0.45 -
+  0.8), the pool 1.0 m (was 1.3), the sparks 0.04 by 0.18 m (were 0.05 by 0.26); three strands a plume (one broad, two fine; were five), a third as broad (0.12 m
+  and 0.035 m; were 0.34 and 0.08), eight primaries and four coverts a side (were nine and six) - 72 strands, 13,824
+  vertices (were 150, 28,800); each strand's light about half (its sheath 0.1, its glow 0.32, its heart 0.42 - 0.70 with
+  the pulse; were 0.22, 0.55, 0.6 - 1.2) and the beat's flare 0.25 (was 0.4); the backlight 1.2 m (was 2.6) and about a
+  third as bright; the pool under half (0.07); the sparks softer; the light on the world 4.5 m at seven tenths (was 7 m
+  at full). A strand's heart at its brightest over the clock 1.34 (was 2.70), the backlight's 0.96 (was 3.65), the pool
+  0.15 (was 0.33).
+- Pins: `test/seraphwings.test.js` 21 - WINGS-FIT's own (the depth carried, dropped and uploaded, the roots there, THE
+  LAW from the front round to either side and many at the old depth, the backlight and the world's light behind the
+  roots, the slimness, the length and the light's caps; the low plumes short in the shape);
+  the figure facing nowhere facing the eye; the pool and the world's light re-pinned dimmer; a turn's sweep of the
+  shorter tip (0.15 m for half a radian; was 0.3). `tools/auraProbe.mjs`: the wings' grid every 0.1 m (slim strands
+  fell between a 0.2 m grid's points), out either side and over the rest pose's crown, and nothing past 1.6 - 1.8 m
+  (their reach; at 2.2 m those points lay inside it). `tools/mutants/seraphwings.json` 115,
+  all dead (eighteen new; eight re-aimed by content - the root, the heart, the figure, the backlight's place, rays and
+  heart, my facing, the light's pose). One older record, every plume as long as the highest, survived the shorter wings
+  (its only killer was the lowest tip's height, off the ground at 2.2 m but not at 1.3) - pinned now in the shape:
+  the lowest primary under seven tenths of the highest. The backlight and the light on the world behind a sprite's
+  roots, pinned. The probe 62/62.
+- **Left as it is, said:** from the side a Beholder's wings now start a hand behind its back, where a Morrowind body's
+  leave the back itself (the card cannot hide a root nearer it); from a back three-quarter the near wing still lies
+  over the body - it is nearer the eye than the body there, as it would be; at the beat's height the tips sweep
+  forward and from the side the near one passes in front of the body - it is in front of it; the body's outline in
+  the law is one measure (0.25 m either side) for every set, not read off the frames; not seen in a running game
+  client with a real sprite.

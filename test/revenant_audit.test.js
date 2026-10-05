@@ -254,7 +254,7 @@ test('AUDIT B2/B3/B5/P1-P3: the execution pays its Renown and takes its soul; a 
   const base = { i: 1, t: 2, x: 0, f: [0, 0, 0], y: 0 };
   assert.equal(validFoeRecord({ ...base, sp: 1 })?.sp, 1, 'the oath rides the wire');
   assert.equal(validFoeRecord({ ...base, sp: 2 }), null, '1 or absent');
-  assert.match(d, /return t \? \{ title: f\.yielded \? `\$\{t\} - beaten` : t \} : null;/, 'the dungeon\'s hover says beaten');
+  assert.match(d, /return t \? \{ title: f\.yielded \? `\$\{t\} - beaten` : t, subs: questFoeSubs\(f\) \} : null;/, 'the dungeon\'s hover says beaten (QUEST-FOE-LINE: and a quest foe\'s line beside it)');
 });
 
 // ── THE UI ───────────────────────────────────────────────────────────────────────────────────────────────────────

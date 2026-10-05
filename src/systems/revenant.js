@@ -298,6 +298,7 @@ const dueFrom = (now, rolls) => now + REVENANT_RETURN_MIN_MINUTES + Math.floor(r
  *  never the watch or an ally; `rec` the pool's record when there is one - never a quest's foe or a summons. */
 export function revenantCandidate(entity, rec = null) {
   if (!entity || !revenantOn()) return false;
+  if (entity.bout) return false;   // AUDIT ARENA-LADDER 2: a fighter on the sand is its bout's - an elite champion never flees it as a revenant, nor becomes one
   const special = !!entity.revenant || !!entity.eliteFoe || (typeof entity.champion === 'string' && !!entity.champion);
   if (!special) return false;
   if ((entity.level | 0) < REVENANT_MIN_LEVEL) return false;

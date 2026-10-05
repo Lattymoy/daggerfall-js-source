@@ -153,7 +153,9 @@ the floor yields - no corpse, no loot, no renown, the same 1 HP the player keeps
 generator by race; an epithet and a home town from the bout's seed ("Gorlak gro-Mazgul of Wayrest, the Unbroken").
 
 **The Ladder - ten tiers.** A tier is three bouts; a fourth, the **Tier Champion**, opens when three are won. Losing
-a bout costs nothing but the purse; a tier's champion beaten moves you up. Opponents scale with the tier, never with
+a bout breaks the tier's run - back to its first bout, three to win again before its champion (AUDIT ARENA-LADDER, the
+owner: "Lose the tier's run"; it had cost only the purse, so every step fell to retries) - and a tier's champion,
+who fights as an ELITE FOE (the owner: "Elite champions"), beaten moves you up for good. Opponents scale with the tier, never with
 you - the ladder is a fixed mountain, as the Arena of TES I was:
 
 | Tier | Name | Opponents (Daggerfall's own) | Level | Champion |
@@ -225,6 +227,8 @@ names, banners, health; your stamina), the **crowd meter**, the **timer**, the H
 - **Arena Champion and the Laurel** (PvP) - the #1 of the season's refereed PvP board wears the title `arenachampion`
   and the **laurel glyph** while they are #1: derived at the token's mint from the board (as Sprout is derived from
   an account's age), so it passes to whoever takes the top and lapses by itself. Not shown offline (no PvP offline).
+  AUDIT ARENA-LADDER: the #1 wears it over ten rated bouts against five different accounts at least, and a pair's rated
+  bouts are counted ten a season (`net/arenaLaw.js` ARENA_CHAMPION_MIN_BOUTS, ARENA_CHAMPION_MIN_FOES, ARENA_PAIR_SEASON_MAX).
 
 ## 7. Online (ARENA4)
 
@@ -1020,3 +1024,38 @@ shotTally.js` - never an arrow dropped there); the Curse of Daggerfall's ghosts 
 there is never broken, `systems/arenaGround.js`); a two-against-one's pair seemed to fight each other (ARENA-TEAMS - an area spell's blast passes
 a bout teammate by, and a Grand Melee's HUD says "each alone"); the undercroft held no enemies (UNDERCROFT-DEEP, above).
 The record: `01-Overview/Field-Bugs-2026-10-04e.md`.
+
+## AUDIT ARENA-LADDER (2026-10-05) - fighters telegraph at each other; the climb costs; the bout's holes closed
+
+The owner, before the merge: "Ensure AI enemies sometimes recieve telegraphed attacks, ensure climbing the PvE ladder
+isnt an easy feat, and look at where we can make improvements"; asked, "Lose the tier's run", "No cheese spells or
+potions", "Elite champions", "Relay and service". Four read-only lenses (the telegraphs, the climb, the bout's
+correctness, the online trust), every finding reproduced and fixed here:
+
+- **Telegraphs between fighters.** On the sand a token holder of TACT4's tier winds up at its BOUT-MATE (a fighter of
+  the same live bout on another side, `ai/tactics.js` `blowAim`), the verdict where that fighter stands, the foe-vs-foe
+  hit paths asking `blowConnects`/`blowScaled`; drawn for the stands to 100 m. A dodged telegraph is a miss for the
+  judges (`registerBlowDodgedListener`). The relay's ladder fighters throw the same shapes (`net/arenaBrain.js`, the
+  families moved to the leaf `ai/blowShapes.js`), the `atk` word carrying the shape, its facing and its origin.
+- **The climb.** A loss breaks the tier's run (`systems/arenaLadder.js` `ladderAfter`, said); every tier's champion an
+  elite (offline and on the relay); the sand's kit law (`systems/arenaKit.js`: no potion, no Invisibility, Levitate,
+  Chameleon, Shadow, Charm or Teleport, those already on the fighter stripped, a ceiling 4 m over the sand); on the
+  relay the fighters run (5.0 / 6.0 m/s), a time-out is the fighter's card unless the player took half its whole
+  health (`LADDER_JUDGES_SHARE`), and a ladder bout opens only for the account service's attempt ticket - an attempt
+  never claimed is a loss (migration 0082, `arena_attempts`, `arena_pve.voided`).
+- **The bout's holes.** The sand's collapse is a fall, never a death; a dispel or a Wabbajack takes no fighter, and a
+  body gone without falling voids the bout; the player's tag is held live (out of a Grand Melee, out of its fight);
+  my damage is the striker's the formula named; bodies come off the stage they stood on; no Recall off the sand.
+- **The laurel.** Ten rated bouts against five accounts, a pair's rated bouts ten a season.
+- **AUDIT ARENA-LADDER 2 (2026-10-05, the owner: "Audit this").** The audit of the audit, four lenses again: a ticket
+  is one bout (asked for its room, refused past `ARENA_ATTEMPT_LIFE_S`, migration 0082's `room`); a run broken under a
+  beaten champion no more (it had bricked the climb); the ticket asked once the floor is entered, the receipts carried
+  first (`flush`'s `idle`, a kept ladder receipt holding the ask); the service's `order` reaching the client; A STEP
+  WON AGAIN PAYS NOTHING (no purse, no banner points, no Renown - the ladder's `paid`); the ladder online for a
+  registered account alone; Calm barred and every fighter `pacifyImmune`; no fighter a revenant; a gone body after my
+  yield the loss it was; a held ring's effect restored after the strip; the kit law the ladder's alone; a collapse in
+  the call a breath; a landed verdict its mark's (`_blowFor`); on the relay one wind-up at a time, the mark landing
+  on the relay's clock, a tie a draw, a champion stood elite, an old client's ladder `in` answered `no bout`.
+
+Deploy order: the account service (acct82, migration 0082) BEFORE the relay (world169), BEFORE the site. The record:
+`01-Overview/Audit-Arena-Ladder.md`.

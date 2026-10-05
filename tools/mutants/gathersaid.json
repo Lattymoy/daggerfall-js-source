@@ -109,8 +109,8 @@
   {
     "name": "GATHERSAID-stopped-unsaid",
     "file": "src/scenes/gatherHost.js",
-    "old": "        if (act.act.state.cancelled || away || !here) { act = null; hud.setMeter(null); hud.toast(ACT_STOPPED_LINE); }",
-    "new": "        if (act.act.state.cancelled || away || !here) { act = null; hud.setMeter(null); }",
+    "old": "          act = null; hud.setMeter(null); hud.toast(ACT_STOPPED_LINE);\n        }",
+    "new": "          act = null; hud.setMeter(null);\n        }",
     "tests": [
       "test/gathersaid.test.js"
     ]

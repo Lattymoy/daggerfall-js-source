@@ -20,8 +20,8 @@
   {
     "name": "ARENA3-POINTS-LOSS",
     "file": "src/systems/arenaLeague.js",
-    "old": "export const boutPoints = ({ won, champion = false, grand = false }) => (!won ? 0 :",
-    "new": "export const boutPoints = ({ won, champion = false, grand = false }) => (false ? 0 :",
+    "old": "export const boutPoints = ({ won, champion = false, grand = false, repeat = false }) => (!won || repeat ? 0 :",
+    "new": "export const boutPoints = ({ won, champion = false, grand = false, repeat = false }) => (repeat ? 0 :",
     "tests": [
       "test/arena3_teams.test.js"
     ]

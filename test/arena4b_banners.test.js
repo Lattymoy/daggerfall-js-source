@@ -72,7 +72,7 @@ test('ARENA4b the relay bills each fighter\'s banner: two queued under their ban
   const L = W.room(arenaBoutRoom('00000000000000cd'));
   const p = L.connect();
   await L.hello(p, 'fight-ceryn', { x: C[0] - 6, y: 0.3, z: C[2], yaw: 0, pitch: 0, mv: 0 }, { name: 'Ceryn', kind: 'linked', tokenSub: 'acct-ceryn' });
-  await word(L, p, { k: 'in', r: 'f', tier: 0, bout: 0, lv: 3, b: 'blue' });
+  await word(L, p, { k: 'in', r: 'f', tier: 0, bout: 0, lv: 3, b: 'blue', z: 'feedc0de00000001' });
   const lst = await L.room._boutOf();
   assert.equal(lst.f[0].banner, 'blue');
   await word(H, A, { k: 'ls' });
@@ -92,7 +92,7 @@ test('ARENA4b the client claims my banner: the queue word and a ladder bout\'s `
   const session = { status: 'open', arenaOk: true, room: 'world:1,1', sendArena: (w) => { boutSent.push(w); return true; } };
   let board = { me: { ladder: arenaLadderOf([]) } };
   const deps = { now: () => 0, session: () => session, makeHall: () => hallLink, bouts: { ask() {}, relayWord: () => true, exhibitionWord: () => true, dismiss() {}, holds: () => false, relay: () => null },
-    account: { board: async () => ({ ok: true, data: board }), claim: async () => ({ ok: true, data: {} }), me: () => null }, enterFloor: (k, o) => { entered.push([k, o]); return true; }, level: () => 12,
+    account: { board: async () => ({ ok: true, data: board }), claim: async () => ({ ok: true, data: {} }), attempt: async (tier, bout) => ({ ok: true, data: { ticket: 'feedc0de00000002', tier, bout } }), me: () => null }, enterFloor: (k, o) => { entered.push([k, o]); return true; }, level: () => 12,
     names: (seed) => (i, mob) => fighterIdentity(seed, i, mob) };
   const A = createArenaOnline(deps);
   A.model();
@@ -118,8 +118,9 @@ test('ARENA4b the client claims my banner: the queue word and a ladder bout\'s `
   await new Promise((r) => setTimeout(r, 0));
   assert.equal(C2.fightLadder().ok, true);
   session.room = arenaBoutRoom(entered.at(-1)[1]);
+  await new Promise((r) => setTimeout(r, 0));   // AUDIT ARENA-LADDER: the attempt's ticket in
   C2.tick();
-  assert.deepEqual(boutSent.at(-1), { k: 'in', r: 'f', tier: 0, bout: 0, lv: 12, b: 'red' }, 'and on my ladder bout\'s `in`');
+  assert.deepEqual(boutSent.at(-1), { k: 'in', r: 'f', tier: 0, bout: 0, lv: 12, b: 'red', z: 'feedc0de00000002' }, 'and on my ladder bout\'s `in`');
   // the exhibition on the list: the relay's banners kept (here billed the other way about), the names off the hour
   const ex = exhibitionFor(600 * 1440 + 12 * 60 + 2);
   hallLink.onArena({ k: 'live', l: [{ o: exhibitionBoutId(ex.hour), kind: 'ex', h: ex.hour, a: { b: 'blue' }, b: { b: 'red' }, tier: ex.tier, sp: 1, at: 1 }] });

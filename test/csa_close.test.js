@@ -402,7 +402,7 @@ test('CSA-J (the audit): the hosts - the Transport press leaves the helm before 
   assert.doesNotMatch(w, /!== 'exterior'\) csaFrame\(dt\)/, 'no longer ahead of the modes\' frame');
   const d = src('scenes/dungeonContext.js');
   assert.match(d, /const _prevDeathPresenter = setDeathPresenter\(\(\) => \{\n\s+opts\.csaOnPlayerDeath\?\.\(\);/);
-  assert.match(d, /function onExhausted\(\) \{\n[\s\S]{0,900}?if \(out\.kind === 'drown'\) \{[^\n]*return; \}\n\s+opts\.csaOnPlayerDeath\?\.\(\);/);   // FIELD BUGS 2026-09-30b SWIM-SPENT (PIN MOVED): a swimmer's drain to nothing is no death - the collapse's arms alone reach OnPlayerDeath
+  assert.match(d, /function onExhausted\(\) \{\n[\s\S]{0,900}?if \(out\.kind === 'drown'\) \{[^\n]*return; \}\n[\s\S]{0,800}?const sandSpare = opts\.playerSpare\?\.\(\) \?\? null;\n\s+if \(sandSpare\) \{[^\n]*return; \}[^\n]*\n\s+opts\.csaOnPlayerDeath\?\.\(\);/);   // PIN MOVED (AUDIT ARENA-LADDER A1): the sand's collapse a fall, asked before it   // FIELD BUGS 2026-09-30b SWIM-SPENT (PIN MOVED): a swimmer's drain to nothing is no death - the collapse's arms alone reach OnPlayerDeath
   assert.match(d, /drainPlayerFatigue: \(n\) => drainFatigue\(n\),/);
 });
 

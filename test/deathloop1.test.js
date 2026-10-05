@@ -72,8 +72,10 @@ test('DEATHLOOP1: a disease is KEPT - curing it would be the cheapest cure in th
   assert.ok(p.activeEffects.some((e) => e.infection === 'vampirism'),
     'an infection survives a death - it is a timer, not a wound');
 
-  // Paralysis is kept for the same reason: it drains nothing and wears
-  // off, so it cannot be the thing that re-kills.
+  // Paralysis is not a DRAIN - it cannot be the thing that re-kills. It
+  // is ended all the same, on its own list (FIELD BUGS 2026-10-05
+  // DEATH-HOLDS, test/fb1005_deathholds.test.js): it does not wear off
+  // across a death, and it froze the revived beside their killer.
   assert.ok(!LETHAL_DRAINS.includes('paralyze'), 'paralysis is not a drain');
   assert.ok(!LETHAL_DRAINS.includes('disease'), 'nor is a disease');
 });

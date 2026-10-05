@@ -12,9 +12,9 @@ import { mintReceipt, readReceipt } from '../src/net/gateReceipt.js';
 import { verifyToken } from '../src/net/identityToken.js';
 import {
   arenaSeasonOf, arenaSeasonEndsS, arenaSeasonDay, ARENA_SEASON_EPOCH_S, ARENA_SEASON_S, eloAfter, eloExpected, ARENA_ELO_START, ARENA_ELO_MIN,
-  arenaLadderOf, arenaNextOf, ladderKey, ARENA_PAIR_DAY_MAX, ARENA_CHAMPION_MIN_BOUTS, ARENA_TEAM_POINTS,
+  arenaLadderOf, arenaNextOf, ladderKey, ARENA_PAIR_DAY_MAX, ARENA_CHAMPION_MIN_BOUTS, ARENA_CHAMPION_MIN_FOES, ARENA_TEAM_POINTS,
 } from '../src/net/arenaLaw.js';
-import { _resetArenaCache } from '../server-account/src/arena.js';
+import { _resetArenaCache, laurelWorthy, laurelOfBoard } from '../server-account/src/arena.js';
 import { titlesHeld, glyphsOf, equipRefusal } from '../server-account/src/titles.js';
 import { TEAM_POINTS } from '../src/systems/arenaLeague.js';
 
@@ -185,48 +185,48 @@ test('ARENA4 bouts between players: one row a bout whoever claims it, both ratin
   assert.equal((await tokenOf(S, A)).claims.ar, st.me.pvp.rating, 'the token carries the season\'s rating');
 });
 
-test('ARENA4 the laurel: the season\'s #1 with three rated bouts wears arenachampion and the laurel at the mint - and loses both to whoever takes the top; one short of the bouts and nobody wears it (mutants: the bouts bound off; the laurel without the title; the top read from the second row; the laurel passed down past a #1 short of the bouts)', async () => {
+test('ARENA4 the laurel: the season\'s #1 wears arenachampion and the laurel at the mint - AUDIT ARENA-LADDER O2: over ten rated bouts against five accounts (two second accounts traded it in three) - and loses both to whoever takes the top; short of the bouts or the foes nobody wears it (mutants: the bouts bound off; the foes bound off; the laurel without the title; the top read from the second row; the laurel passed down past a #1 short of the bouts)', async () => {
   _resetArenaCache();
   const S = await standService();
-  const A = await S.registered('Gwyn'), B = await S.registered('Hask'), C = await S.registered('Ivo');
-  await claimOf(S, A, await pvpReceipt(S, A, B, 0));
-  await claimOf(S, A, await pvpReceipt(S, A, B, 0));
+  const A = await S.registered('Gwyn');
+  const foes = [];
+  for (const n of ['Hask', 'Ivo', 'Jorn', 'Kael', 'Lyra']) foes.push(await S.registered(n));
+  assert.equal(ARENA_CHAMPION_MIN_BOUTS, 10);
+  assert.equal(ARENA_CHAMPION_MIN_FOES, 5);
+  // ten rated wins against two accounts: the top, and no laurel - two foes are not five
+  for (let i = 0; i < 5; i++) { await claimOf(S, A, await pvpReceipt(S, A, foes[0], 0)); await claimOf(S, A, await pvpReceipt(S, A, foes[1], 0)); }
   _resetArenaCache();
   let board = (await S.call('/v1/arena/board', {}, A.secret)).body;
-  assert.equal(board.pvp.rows[0].name, 'Gwyn');
-  assert.equal(board.champion, null, `two bouts are not ${ARENA_CHAMPION_MIN_BOUTS}`);
+  assert.deepEqual([board.pvp.rows[0].name, board.pvp.rows[0].bouts], ['Gwyn', 10]);
+  assert.equal(board.champion, null, `two foes are not ${ARENA_CHAMPION_MIN_FOES}`);
   assert.ok(!(await tokenOf(S, A)).claims.g?.includes('laurel'));
-  await claimOf(S, A, await pvpReceipt(S, A, C, 0));
+  // three more accounts beaten: thirteen bouts, five foes - the laurel
+  for (const f of foes.slice(2)) await claimOf(S, A, await pvpReceipt(S, A, f, 0));
   _resetArenaCache();
-  board = (await S.call('/v1/arena/board', {}, B.secret)).body;
+  board = (await S.call('/v1/arena/board', {}, foes[0].secret)).body;
   assert.equal(board.champion.name, 'Gwyn');
   assert.ok(board.champion.glyphs.includes('laurel'), 'the board wears the laurel on its #1');
   const tA = await tokenOf(S, A);
   assert.ok(tA.claims.g.includes('laurel'), 'the laurel rides the token');
   assert.equal((await S.call('/v1/account/title', { title: 'arenachampion' }, A.secret)).status, 200, 'the #1 may wear the title');
   assert.equal((await tokenOf(S, A)).claims.t, 'arenachampion');
-  // Ivo beats Gwyn three times: the top passes, and the laurel with it - no cron
-  for (let i = 0; i < 3; i++) await claimOf(S, C, await pvpReceipt(S, C, A, 0));
+  // a newcomer beats Gwyn five times (the pair's day): the top passes - short of the bouts - and the laurel lapses with it, no cron
+  const Z = await S.registered('Zora');
+  for (let i = 0; i < ARENA_PAIR_DAY_MAX; i++) await claimOf(S, Z, await pvpReceipt(S, Z, A, 0));
   _resetArenaCache();
   board = (await S.call('/v1/arena/board', {}, A.secret)).body;
-  assert.equal(board.champion.name, 'Ivo');
+  assert.equal(board.pvp.rows[0].name, 'Zora', 'the top passes');
+  assert.equal(board.champion, null, 'its five bouts wear no laurel - and nobody under it does');
   const after = await tokenOf(S, A);
   assert.ok(!after.claims.g?.includes('laurel'), 'the laurel lapses by itself');
   assert.equal(after.claims.t, undefined, 'and the title worn is worn no longer');
-  assert.ok((await tokenOf(S, C)).claims.g.includes('laurel'));
   assert.deepEqual(glyphsOf({ handle: 'x', created_at: 0, arena: { champion: true } }, {}, 1e10), ['laurel']);
   assert.equal(equipRefusal('arenachampion', { handle: 'x', arena: { champion: false } }, {}), 'not-held');
-  // ARENA5: the #1 short of the bouts holds the top all the same - nobody under them wears the laurel in their place
-  // (Jarl one rated win; Lorn three draws with Kesh, under him)
-  _resetArenaCache();
-  const S2 = await standService();
-  const J = await S2.registered('Jarl'), K = await S2.registered('Kesh'), L = await S2.registered('Lorn');
-  await claimOf(S2, J, await pvpReceipt(S2, J, K, 0));
-  for (let i = 0; i < 3; i++) await claimOf(S2, K, await pvpReceipt(S2, K, L, 2, 'judges'));
-  const b2 = (await S2.call('/v1/arena/board', {}, L.secret)).body;
-  assert.deepEqual(b2.pvp.rows.map((r) => [r.name, r.bouts]), [['Jarl', 1], ['Lorn', 3], ['Kesh', 4]]);
-  assert.equal(b2.champion, null, 'the top is one bout\'s - no laurel on the board');
-  assert.ok(!(await tokenOf(S2, L)).claims.g?.includes('laurel'), 'and none at the mint for the best of the rest');
+  // the law, row by row (laurelWorthy): the bouts and the foes both
+  assert.equal(laurelWorthy({ bouts: 10, foes: 5 }), true);
+  assert.equal(laurelWorthy({ bouts: 9, foes: 5 }), false);
+  assert.equal(laurelWorthy({ bouts: 10, foes: 4 }), false);
+  assert.equal(laurelOfBoard([{ player: 'b', bouts: 3, foes: 1 }, { player: 'a', bouts: 20, foes: 9 }]), null, 'the #1 short holds the top - the laurel never passes down');
 });
 
 test('ARENA4 the banners: join free, a second refused, quit at once, the other banner waits a season and the quit one takes you back; points counted from the rows by the banner worn at the claim (mutants: the season wait dropped; a loss scored; the champion scored as a bout)', async () => {

@@ -65,8 +65,8 @@
   {
     "name": "ARENA4b-BAN-LADDER-UNCARRIED",
     "file": "server/src/index.js",
-    "old": "title: a.title ?? null, banner: m.b ?? null }]",
-    "new": "title: a.title ?? null }]",
+    "old": "title: a.title ?? null, banner: m.b ?? null, tk: m.z }]",
+    "new": "title: a.title ?? null, tk: m.z }]",
     "tests": [
       "test/arena4b_banners.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "ARENA4b-BAN-CLIENT-IN",
     "file": "src/scenes/arenaOnline.js",
-    "old": "bout: bout.bout, lv: Math.max(1, Math.floor(deps.level?.() ?? 1)), ...myBanner() }",
-    "new": "bout: bout.bout, lv: Math.max(1, Math.floor(deps.level?.() ?? 1)) }",
+    "old": "lv: Math.max(1, Math.floor(deps.level?.() ?? 1)), ...myBanner(), ...(bout.ticket",
+    "new": "lv: Math.max(1, Math.floor(deps.level?.() ?? 1)), ...(bout.ticket",
     "tests": [
       "test/arena4b_banners.test.js"
     ]

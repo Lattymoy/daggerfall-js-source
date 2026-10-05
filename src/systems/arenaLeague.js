@@ -189,12 +189,12 @@ export function quitBanner(L, gameMinutes) {
 }
 
 // ── A BOUT RECORDED ──────────────────────────────────────────────────────────────────────────────────────────
-/** The points a won ladder bout gives the banner worn. */
-export const boutPoints = ({ won, champion = false, grand = false }) => (!won ? 0 : grand ? TEAM_POINTS.grand : champion ? TEAM_POINTS.champion : TEAM_POINTS.bout);
+/** The points a won ladder bout gives the banner worn - AUDIT ARENA-LADDER 2: none for a bout won again after a lost run. */
+export const boutPoints = ({ won, champion = false, grand = false, repeat = false }) => (!won || repeat ? 0 : grand ? TEAM_POINTS.grand : champion ? TEAM_POINTS.champion : TEAM_POINTS.bout);
 /**
  * A LADDER BOUT'S END in the league: kept for the Records page (the newest first, BOUTS_KEPT of them), its points
  * given to the banner worn, the first bout's and the Grand Champion's minute stamped (the fastest Grand Champion's
- * board). `o` `{ gameMinutes, tier, label, opp, won, how, purse, champion, grand }`. A new record.
+ * board). `o` `{ gameMinutes, tier, label, opp, won, how, purse, champion, grand, repeat }`. A new record.
  */
 export function leagueAfterBout(L, o) {
   const gm = Math.max(0, Math.floor(Number(o.gameMinutes) || 0));

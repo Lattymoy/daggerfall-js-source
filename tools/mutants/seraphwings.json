@@ -2,8 +2,8 @@
   {
     "name": "SERAPHWINGS-the-root-in-front",
     "file": "src/render/auraRing.js",
-    "old": "-${g3(WING_ROOT.back)});",
-    "new": "${g3(WING_ROOT.back)});",
+    "old": "-${g3(WING_ROOT.back)} - uWingBack);",
+    "new": "${g3(WING_ROOT.back)} - uWingBack);",
     "tests": [
       "test/seraphwings.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "SERAPHWINGS-no-heart",
     "file": "src/render/auraRing.js",
-    "old": "+ WING_CORE * core * (0.6 + 0.6 * pulse)",
-    "new": "+ WING_CORE * 0.0 * (0.6 + 0.6 * pulse)",
+    "old": "+ WING_CORE * core * (0.42 + 0.28 * pulse)",
+    "new": "+ WING_CORE * 0.0 * (0.42 + 0.28 * pulse)",
     "tests": [
       "test/seraphwings.test.js"
     ]
@@ -461,7 +461,7 @@
   {
     "name": "SERAPHWINGS-the-figure-never-kept",
     "file": "src/player/eotbBody.js",
-    "old": "      figure = last.riding || FP ? null : { base: c[1] - cam.feet[1], mpp: batchPx > 0 ? batchSize.h * grow / batchPx : 0, beast: !!last.transformed, yaw: Math.hypot(lastMoveDirection?.[0] ?? 0, lastMoveDirection?.[2] ?? 0) > 1e-6 ? Math.atan2(lastMoveDirection[0], lastMoveDirection[2]) : null };   // SERAPH-WINGS: a rider's frame is the horse's too - no shoulders read off it; AUDIT 3: nor the first-person billboard's (the camera is in it), and its metres a pixel (the shoulders by the pixel - auraSpriteBones), its form, and the way it FACES (UpdateOrientation's facing - not the camera's: a sprite walking back shows its face)",
+    "old": "      figure = last.riding || FP ? null : { base: c[1] - cam.feet[1], mpp: batchPx > 0 ? batchSize.h * grow / batchPx : 0, beast: !!last.transformed, yaw: figureYaw() };   // SERAPH-WINGS: a rider's frame is the horse's too - no shoulders read off it; AUDIT 3: nor the first-person billboard's (the camera is in it), and its metres a pixel (the shoulders by the pixel - auraSpriteBones), its form, and the way it FACES (UpdateOrientation's facing - not the camera's: a sprite walking back shows its face)",
     "new": "",
     "tests": [
       "test/seraphwings.test.js"
@@ -551,8 +551,8 @@
   {
     "name": "SERAPHWINGS-the-backlight-in-front",
     "file": "src/render/auraRing.js",
-    "old": "vec3 c = wingWorld(wingBack(vec3(0.0, 0.12, -0.32)));",
-    "new": "vec3 c = wingWorld(wingBack(vec3(0.0, 0.12, 0.32)));",
+    "old": "vec3 c = wingWorld(wingBack(vec3(0.0, 0.12, -0.32 - uWingBack)));",
+    "new": "vec3 c = wingWorld(wingBack(vec3(0.0, 0.12, 0.32 - uWingBack)));",
     "tests": [
       "test/seraphwings.test.js"
     ]
@@ -569,7 +569,7 @@
   {
     "name": "SERAPHWINGS-the-backlight-without-rays",
     "file": "src/render/auraRing.js",
-    "old": "+ rays * exp(-r * 2.6) * 0.32)",
+    "old": "+ rays * exp(-r * 2.6) * 0.1)",
     "new": ")",
     "tests": [
       "test/seraphwings.test.js"
@@ -578,8 +578,8 @@
   {
     "name": "SERAPHWINGS-the-backlight-not-white",
     "file": "src/render/auraRing.js",
-    "old": "vec3 col = WING_CORE * exp(-r * r * 16.0) * 0.25 + WING_GOLD *",
-    "new": "vec3 col = WING_GOLD * exp(-r * r * 16.0) * 0.25 + WING_GOLD *",
+    "old": "vec3 col = WING_CORE * exp(-r * r * 16.0) * 0.07 + WING_GOLD *",
+    "new": "vec3 col = WING_GOLD * exp(-r * r * 16.0) * 0.07 + WING_GOLD *",
     "tests": [
       "test/seraphwings.test.js"
     ]
@@ -686,8 +686,8 @@
   {
     "name": "SERAPHWINGS-the-camera-facing",
     "file": "src/player/eotbBody.js",
-    "old": "yaw: Math.hypot(lastMoveDirection?.[0] ?? 0, lastMoveDirection?.[2] ?? 0) > 1e-6 ? Math.atan2(lastMoveDirection[0], lastMoveDirection[2]) : null };",
-    "new": "yaw: null };",
+    "old": "beast: !!last.transformed, yaw: figureYaw() };",
+    "new": "beast: !!last.transformed, yaw: null };",
     "tests": [
       "test/seraphwings.test.js"
     ]
@@ -830,8 +830,8 @@
   {
     "name": "SERAPHWINGS-the-light-at-rest",
     "file": "src/render/auraRing.js",
-    "old": "sh = (w.cape ?? CLOAK_REST_POSE).shoulders;",
-    "new": "sh = CLOAK_REST_POSE.shoulders;",
+    "old": "pose = w.cape ?? CLOAK_REST_POSE, sh = pose.shoulders;",
+    "new": "pose = CLOAK_REST_POSE, sh = pose.shoulders;",
     "tests": [
       "test/seraphwings.test.js"
     ]
@@ -868,6 +868,168 @@
     "file": "src/render/auraRing.js",
     "old": "wingNear() * away;",
     "new": "wingNear();",
+    "tests": [
+      "test/seraphwings.test.js"
+    ]
+  },
+  {
+    "name": "WINGSFIT-no-depth",
+    "file": "src/render/auraRing.js",
+    "old": "export const WING_SPRITE_BACK = 0.25;",
+    "new": "export const WING_SPRITE_BACK = 0.1;",
+    "tests": [
+      "test/seraphwings.test.js"
+    ]
+  },
+  {
+    "name": "WINGSFIT-the-shader-ignores-the-depth",
+    "file": "src/render/auraRing.js",
+    "old": "-${g3(WING_ROOT.back)} - uWingBack);",
+    "new": "-${g3(WING_ROOT.back)});",
+    "tests": [
+      "test/seraphwings.test.js"
+    ]
+  },
+  {
+    "name": "WINGSFIT-the-backlight-left-at-the-card",
+    "file": "src/render/auraRing.js",
+    "old": "vec3(0.0, 0.12, -0.32 - uWingBack)",
+    "new": "vec3(0.0, 0.12, -0.32)",
+    "tests": [
+      "test/seraphwings.test.js"
+    ]
+  },
+  {
+    "name": "WINGSFIT-the-pose-drops-it",
+    "file": "src/render/auraRing.js",
+    "old": "o.wingBack = Number.isFinite(bones.wingBack) ? bones.wingBack : 0;",
+    "new": "o.wingBack = 0;",
+    "tests": [
+      "test/seraphwings.test.js"
+    ]
+  },
+  {
+    "name": "WINGSFIT-the-pose-keeps-a-sprites",
+    "file": "src/render/auraRing.js",
+    "old": "o.wingBack = Number.isFinite(bones.wingBack) ? bones.wingBack : 0;",
+    "new": "if (Number.isFinite(bones.wingBack)) o.wingBack = bones.wingBack;",
+    "tests": [
+      "test/seraphwings.test.js"
+    ]
+  },
+  {
+    "name": "WINGSFIT-the-rest-keeps-a-sprites",
+    "file": "src/render/auraRing.js",
+    "old": "c.sunk = false; c.wingBack = 0;",
+    "new": "c.sunk = false;",
+    "tests": [
+      "test/seraphwings.test.js"
+    ]
+  },
+  {
+    "name": "WINGSFIT-the-sprite-not-scaled",
+    "file": "src/render/auraRing.js",
+    "old": "wingBack: WING_SPRITE_BACK * m / EOTB_FIGURE.mpp,",
+    "new": "wingBack: WING_SPRITE_BACK,",
+    "tests": [
+      "test/seraphwings.test.js"
+    ]
+  },
+  {
+    "name": "WINGSFIT-not-uploaded",
+    "file": "src/render/auraRing.js",
+    "old": "gl.uniform1f(U.uWingBack, Number.isFinite(pose.wingBack) ? pose.wingBack : 0);",
+    "new": "",
+    "tests": [
+      "test/seraphwings.test.js"
+    ]
+  },
+  {
+    "name": "WINGSFIT-the-old-blaze",
+    "file": "src/render/auraRing.js",
+    "old": "+ WING_CORE * core * (0.42 + 0.28 * pulse)",
+    "new": "+ WING_CORE * core * (0.6 + 0.6 * pulse)",
+    "tests": [
+      "test/seraphwings.test.js"
+    ]
+  },
+  {
+    "name": "WINGSFIT-the-old-backlight",
+    "file": "src/render/auraRing.js",
+    "old": "float glow = exp(-r * r * 7.0) * 0.16 + exp(-r * r * 2.2) * 0.05;",
+    "new": "float glow = exp(-r * r * 7.0) * 0.55 + exp(-r * r * 2.2) * 0.16;",
+    "tests": [
+      "test/seraphwings.test.js"
+    ]
+  },
+  {
+    "name": "WINGSFIT-the-old-breadth",
+    "file": "src/render/auraRing.js",
+    "old": "broad: 0.12, fine: 0.035",
+    "new": "broad: 0.34, fine: 0.08",
+    "tests": [
+      "test/seraphwings.test.js"
+    ]
+  },
+  {
+    "name": "WINGSFIT-the-old-light",
+    "file": "src/render/auraRing.js",
+    "old": "range: 4.5, rgb: Object.freeze([0.7, 0.53, 0.24])",
+    "new": "range: 7, rgb: Object.freeze([1.0, 0.76, 0.34])",
+    "tests": [
+      "test/seraphwings.test.js"
+    ]
+  },
+  {
+    "name": "WINGSFIT-the-old-pool",
+    "file": "src/render/auraRing.js",
+    "old": "exp(-r * r / 0.45) * 0.07 *",
+    "new": "exp(-r * r / 0.45) * 0.16 *",
+    "tests": [
+      "test/seraphwings.test.js"
+    ]
+  },
+  {
+    "name": "WINGSFIT-the-light-at-the-card",
+    "file": "src/render/auraRing.js",
+    "old": "const back = L.back + (Number.isFinite(pose.wingBack) ? pose.wingBack : 0);",
+    "new": "const back = L.back;",
+    "tests": [
+      "test/seraphwings.test.js"
+    ]
+  },
+  {
+    "name": "WINGSFIT-facing-nowhere-the-cameras",
+    "file": "src/player/eotbBody.js",
+    "old": "return Math.hypot(ex, ez) > 1e-6 ? Math.atan2(ex, ez) : null;",
+    "new": "return null;",
+    "tests": [
+      "test/seraphwings.test.js"
+    ]
+  },
+  {
+    "name": "WINGSFIT-the-old-reach",
+    "file": "src/render/auraRing.js",
+    "old": "export const WING_REACH = Object.freeze([0.6, 1.3]);",
+    "new": "export const WING_REACH = Object.freeze([0.95, 2.2]);",
+    "tests": [
+      "test/seraphwings.test.js"
+    ]
+  },
+  {
+    "name": "WINGSFIT-the-old-coverts",
+    "file": "src/render/auraRing.js",
+    "old": "reach: Object.freeze([0.28, 0.5]) });",
+    "new": "reach: Object.freeze([0.45, 0.8]) });",
+    "tests": [
+      "test/seraphwings.test.js"
+    ]
+  },
+  {
+    "name": "WINGSFIT-the-old-backlight-size",
+    "file": "src/render/auraRing.js",
+    "old": "export const WING_HALO_M = 1.2;",
+    "new": "export const WING_HALO_M = 1.8;",
     "tests": [
       "test/seraphwings.test.js"
     ]

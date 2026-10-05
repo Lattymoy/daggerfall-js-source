@@ -20,11 +20,11 @@ function client(version) {
 }
 
 test('FG-03: inventory handover waits for the required advertised relay protocol', () => {
-  for (const version of [undefined, 'world154', 'world155', 'world156', 'world157', 'world158', 'world159', 'world160', 'world161', 'world162', 'world163', 'world164', 'world165', 'world166', 'world167', 'world168']) {
+  for (const version of [undefined, 'world154', 'world155', 'world156', 'world157', 'world158', 'world159', 'world160', 'world161', 'world162', 'world163', 'world164', 'world165', 'world166', 'world167', 'world168', 'world169']) {
     const { s, ws } = client(version);
     const items = [goldStack(125)];
     const data = { n: 1, k: s.room, full: 0, f: [{ i: 1, t: 0, d: 0, e: 'bob-0002', it: items }] };
-    const capable = version === 'world159' || version === 'world160' || version === 'world161' || version === 'world162' || version === 'world163' || version === 'world164' || version === 'world165' || version === 'world166' || version === 'world167' || version === 'world168';
+    const capable = version === 'world159' || version === 'world160' || version === 'world161' || version === 'world162' || version === 'world163' || version === 'world164' || version === 'world165' || version === 'world166' || version === 'world167' || version === 'world168' || version === 'world169';
     assert.equal(relaySupportsFoeInventory(version), capable, 'upstream arena and unpublished candidates must not advertise combined inventory handover');
     assert.equal(s.foeInventoryOk, capable);
     assert.equal(s.sendFoes(data), capable);

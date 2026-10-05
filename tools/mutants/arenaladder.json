@@ -1,0 +1,862 @@
+[
+  {
+    "name": "ARENA-LADDER-family-number-off",
+    "file": "src/ai/blowShapes.js",
+    "old": "[16, BRUTE], [24, BRUTE]",
+    "new": "[16, BRUTE], [23, BRUTE]",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "The Orc Warlord's number off by one: the leaf names a kind the brain never meant."
+  },
+  {
+    "name": "ARENA-LADDER-caster-throws",
+    "file": "src/ai/blowShapes.js",
+    "old": "export const BLOW_CASTERS = Object.freeze(new Set([128, 131, 132]));",
+    "new": "export const BLOW_CASTERS = Object.freeze(new Set([128, 131]));",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "The Healer, a caster, swings a telegraphed blade."
+  },
+  {
+    "name": "ARENA-LADDER-reexport-copy",
+    "file": "src/ai/foeBlows.js",
+    "old": "export { BLOW, blowShapesOf, inBlow } from './blowShapes.js';",
+    "new": "export { BLOW, inBlow } from './blowShapes.js';\nconst _copy = (t) => blowShapesOf(t).slice();\nexport { _copy as blowShapesOf };",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "The brain's families a copy of the leaf's - two homes."
+  },
+  {
+    "name": "ARENA-LADDER-aim-me-alone",
+    "file": "src/ai/tactics.js",
+    "old": "  if (key === LOCAL) return _me?.feet ?? null;\n  const t = ai.target;",
+    "new": "  if (key === LOCAL) return _me?.feet ?? null;\n  return null;\n  const t = ai.target;",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "No fighter winds up at its bout-mate: the arena's AI never receives a telegraph."
+  },
+  {
+    "name": "ARENA-LADDER-aim-bout-unread",
+    "file": "src/ai/tactics.js",
+    "old": "if (String(sb.id) !== String(tb.id) || sb.out",
+    "new": "if (sb.out",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A fighter of another bout is a mark."
+  },
+  {
+    "name": "ARENA-LADDER-aim-side-unread",
+    "file": "src/ai/tactics.js",
+    "old": " || (sb.side | 0) === (tb.side | 0)) return null;",
+    "new": ") return null;",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A fighter winds up at its own side."
+  },
+  {
+    "name": "ARENA-LADDER-aim-out-unread",
+    "file": "src/ai/tactics.js",
+    "old": "sb.out || tb.out || sb.hold",
+    "new": "sb.out || sb.hold",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A fighter already out is wound up at."
+  },
+  {
+    "name": "ARENA-LADDER-landing-at-me",
+    "file": "src/ai/tactics.js",
+    "old": "      ai._blowVerdict = inBlow(s.blow, at[0], at[2]);",
+    "new": "      ai._blowVerdict = _me ? inBlow(s.blow, _me.feet[0], _me.feet[2]) : false;",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "The bout-mate's blow is decided where the player stands."
+  },
+  {
+    "name": "ARENA-LADDER-landing-mark-unread",
+    "file": "src/ai/tactics.js",
+    "old": "    const at = key === (s.blow.tg ?? LOCAL) ? blowAim(ai, key) : null;",
+    "new": "    const at = blowAim(ai, key);",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A wind-up whose foe turned on another lands on the new one."
+  },
+  {
+    "name": "ARENA-LADDER-sand-draw-range",
+    "file": "src/ai/foeBlows.js",
+    "old": "(b.sand ? Math.max(range, SAND_DRAW_RANGE) : range)",
+    "new": "range",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "The stands past 40 m never see a sand blow."
+  },
+  {
+    "name": "ARENA-LADDER-dodge-untold",
+    "file": "src/ai/foeBlows.js",
+    "old": "  if (!v) { ai._blowMult = undefined; tellDodged(ai); }",
+    "new": "  if (!v) { ai._blowMult = undefined; }",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A dodged telegraph is no miss for the judges."
+  },
+  {
+    "name": "ARENA-LADDER-relay-tier-unread",
+    "file": "src/net/arenaBrain.js",
+    "old": "const shapes = (a.level >= ARENA_BLOW_TIER_LEVEL || a.elite) && now",
+    "new": "const shapes = (a.level >= 0 || a.elite) && now",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "The Pit's thief telegraphs."
+  },
+  {
+    "name": "ARENA-LADDER-relay-verdict-reach",
+    "file": "src/net/arenaBrain.js",
+    "old": "(s ? inBlow({ kind: s, origin: [ox, 0, oz], yaw: yw }, p[0], p[1]) : Math.hypot",
+    "new": "(Math.hypot",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A relay's telegraph lands by reach: a step out of its shape is still struck."
+  },
+  {
+    "name": "ARENA-LADDER-relay-weight-dropped",
+    "file": "src/net/arenaBrain.js",
+    "old": "const dmg = s ? Math.max(1, Math.round(roll * BLOW[s].mult)) : roll;",
+    "new": "const dmg = roll;",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A telegraphed blow on the relay weighs no more than a plain one."
+  },
+  {
+    "name": "ARENA-LADDER-relay-cooldown-unset",
+    "file": "src/net/arenaBrain.js",
+    "old": "        a.blowAt = now + ARENA_BLOW_COOLDOWN_MIN_MS",
+    "new": "        a.blowAt = now + 0 * ARENA_BLOW_COOLDOWN_MIN_MS",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A relay fighter telegraphs every blow."
+  },
+  {
+    "name": "ARENA-LADDER-run-kept",
+    "file": "src/systems/arenaLadder.js",
+    "old": "    out.runLost = s.won > 0;\n    s.won = 0;",
+    "new": "    out.runLost = s.won > 0;",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A loss costs the purse alone: the climb retried step by step."
+  },
+  {
+    "name": "ARENA-LADDER-runlost-always",
+    "file": "src/systems/arenaLadder.js",
+    "old": "    out.runLost = s.won > 0;",
+    "new": "    out.runLost = true;",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A loss at the run's start says a run was lost."
+  },
+  {
+    "name": "ARENA-LADDER-champion-plain",
+    "file": "src/systems/arenaLadder.js",
+    "old": "champion: [champ(M.Knight, 5)]",
+    "new": "champion: [b(M.Knight, 5)]",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "The second tier's champion, the Knight, a plain foe."
+  },
+  {
+    "name": "ARENA-LADDER-spawn-elite-dropped",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "{ level: f.spec.level, elite: !!f.spec.elite,",
+    "new": "{ level: f.spec.level,",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "The driver never asks the floor for an elite."
+  },
+  {
+    "name": "ARENA-LADDER-relay-champion-plain",
+    "file": "src/net/arenaLaw.js",
+    "old": "foes: list.map(([m, l]) => arenaFoeStats(m, l, { elite: champion }))",
+    "new": "foes: list.map(([m, l]) => arenaFoeStats(m, l))",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "The relay's champions plain."
+  },
+  {
+    "name": "ARENA-LADDER-relay-old-speed",
+    "file": "src/net/arenaLaw.js",
+    "old": "export const ARENA_CLASS_SPEED = 5.0;",
+    "new": "export const ARENA_CLASS_SPEED = 3.2;",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A class fighter walked away from."
+  },
+  {
+    "name": "ARENA-LADDER-judges-floor-unread",
+    "file": "src/systems/arenaBout.js",
+    "old": "    if (dealt < b.judgesFloor * theirs) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "One blow and the clock walked away from wins the card."
+  },
+  {
+    "name": "ARENA-LADDER-judges-floor-not-passed",
+    "file": "src/net/arenaBrain.js",
+    "old": "judgesFloor: st.kind === 'pve' ? LADDER_JUDGES_SHARE : 0 });",
+    "new": "judgesFloor: 0 });",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "The relay's ladder sets no floor."
+  },
+  {
+    "name": "ARENA-LADDER-kit-type-dropped",
+    "file": "src/systems/arenaKit.js",
+    "old": "export const SAND_BARRED_EFFECTS = Object.freeze([13, 14, 23, 24, 33, 34, 43]);",
+    "new": "export const SAND_BARRED_EFFECTS = Object.freeze([13, 23, 24, 33, 34, 43]);",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "Levitate cast over the ring."
+  },
+  {
+    "name": "ARENA-LADDER-kit-bottle-eaten",
+    "file": "src/systems/useItem.js",
+    "old": "  else if (isPotion(item) && sandPotionRefusal()) out = { kind: 'refused', refused: true, text: sandPotionRefusal() };\n",
+    "new": "",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A potion drunk mid-bout."
+  },
+  {
+    "name": "ARENA-LADDER-kit-strip-unread",
+    "file": "src/systems/arenaKit.js",
+    "old": "  for (const k of SAND_BARRED_KINDS) {\n    if (!hasActiveEffect(entity, k)) continue;",
+    "new": "  for (const k of SAND_BARRED_KINDS.slice(1)) {\n    if (!hasActiveEffect(entity, k)) continue;",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "An Invisibility cast at the gate kept through the fight."
+  },
+  {
+    "name": "ARENA-LADDER-kit-engine-unasked",
+    "file": "src/scenes/hostMagic.js",
+    "old": "why = spellRefusal?.(sp) ?? sandSpellRefusal(sp);",
+    "new": "why = spellRefusal?.(sp) ?? null;",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "The cast engine never asks the sand's law."
+  },
+  {
+    "name": "ARENA-LADDER-collapse-kills",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (sandSpare) { hurtEntity(playerEntity, playerEntity.health, { bypassShield: true, ...sandSpare });",
+    "new": "    if (false) { hurtEntity(playerEntity, playerEntity.health, { bypassShield: true, ...sandSpare });",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "The collapse on the sand is a death."
+  },
+  {
+    "name": "ARENA-LADDER-dispel-unfiltered",
+    "file": "src/scenes/world.js",
+    "old": "dispelNearby(list.map((no) => no.ref).filter((f) => !inBout(f)),",
+    "new": "dispelNearby(list.map((no) => no.ref),",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A champion dispelled is a champion beaten."
+  },
+  {
+    "name": "ARENA-LADDER-dungeon-inbout-unpublished",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "resetAllyTeamOnPlayerAttack, boutGate, bumpAtkCount, inBout,",
+    "new": "resetAllyTeamOnPlayerAttack, boutGate, bumpAtkCount,",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "The dungeon never publishes inBout on foeDeps: its dispel and Wabbajack guards read nothing, and a champion is dispelled again."
+  },
+  {
+    "name": "ARENA-LADDER-gone-a-fall",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "if (!C.ex && !boutFighter(C.b, YOU)?.out) { voidBout(C); return; } boutFell(C.b, fid, t);",
+    "new": "boutFell(C.b, fid, t);",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A body gone without falling is a fall: its purse and title paid."
+  },
+  {
+    "name": "ARENA-LADDER-tag-a-copy",
+    "file": "src/characters/enemyTargets.js",
+    "old": "export function setPlayerBout(b) { _playerBout = b ?? null; }",
+    "new": "export function setPlayerBout(b) { _playerBout = b ? { id: String(b.id), side: b.side | 0, out: !!b.out } : null; }",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "The player's tag copied at the bell: out of a Grand Melee and still a mark."
+  },
+  {
+    "name": "ARENA-LADDER-out-striker-counted",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "    if (boutFighter(C.b, from)?.out) { if (foe?.entity) foe.entity.health = Math.min(foe.entity.maxHealth ?? foe.entity.health, foe.entity.health + dmg); return; }\n",
+    "new": "",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A blow of mine after my yield decides the melee."
+  },
+  {
+    "name": "ARENA-LADDER-told-striker-unread",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "    if (told && lawNow() - told.at <= RESOLUTION_MS && !boutFighter(C.b, told.from)?.out) return told.from;\n",
+    "new": "",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "My damage carded to the nearest fighter facing me."
+  },
+  {
+    "name": "ARENA-LADDER-recall-off-sand",
+    "file": "src/scenes/exterior.js",
+    "old": "    if (arenaBouts.holds()) { townTalk.say(ARENA_TEXT.refuse.travel); return; }   // AUDIT ARENA-LADDER A5",
+    "new": "    if (false) { townTalk.say(ARENA_TEXT.refuse.travel); return; }   // AUDIT ARENA-LADDER A5",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "Recall off a losing bout in the streaming world."
+  },
+  {
+    "name": "ARENA-LADDER-ticket-any-shape",
+    "file": "src/net/arenaLaw.js",
+    "old": "      if (m.z !== undefined) { if (typeof m.z !== 'string' || !ARENA_TICKET_RE.test(m.z)) return null; out.z = m.z; }",
+    "new": "      if (m.z !== undefined) { out.z = m.z; }",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A ticket of any shape on the wire."
+  },
+  {
+    "name": "ARENA-LADDER-atk-shape-any",
+    "file": "src/net/arenaLaw.js",
+    "old": "        if (!ARENA_BLOW_SHAPES.includes(m.s) || num(m.yw, 10) == null",
+    "new": "        if (num(m.yw, 10) == null",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A shape the client cannot draw on the wire."
+  },
+  {
+    "name": "ARENA-LADDER-receipt-z-players",
+    "file": "src/net/arenaReceipt.js",
+    "old": "    if (c.s !== undefined || c.q !== undefined || c.u !== undefined || c.z !== undefined) return false;",
+    "new": "    if (c.s !== undefined || c.q !== undefined || c.u !== undefined) return false;",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A players' receipt carrying a ladder ticket."
+  },
+  {
+    "name": "ARENA-LADDER-receipt-z-unsigned",
+    "file": "src/net/arenaBrain.js",
+    "old": "h: r.how, ...(st.f[0].tk ? { z: st.f[0].tk } : {}) }];",
+    "new": "h: r.how }];",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "The relay's receipt drops the ticket: the service cannot match the claim."
+  },
+  {
+    "name": "ARENA-LADDER-ticket-unrequired",
+    "file": "server/src/index.js",
+    "old": "        if (typeof m.z !== 'string') { this._arenaSend(ws, { k: 'no', m: 'no bout' }); return; }\n",
+    "new": "",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "The relay opens a ladder bout without an attempt: a loss never claimed is never counted."
+  },
+  {
+    "name": "ARENA-LADDER-service-order-unchecked",
+    "file": "server-account/src/arena.js",
+    "old": "  if (!next || next.tier !== tier || next.bout !== bout) return { error: 'order', ladder: await arenaLadderOfAccount(ctx, player.id), forfeits: open.length };\n",
+    "new": "",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A ticket for any bout."
+  },
+  {
+    "name": "ARENA-LADDER-service-run-kept",
+    "file": "server-account/src/arena.js",
+    "old": "      ...(won ? [] : [breakRun(db, player.id, c.q, { ticket: c.z })]),",
+    "new": "      ...([]),",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A ticketed loss claimed breaks no run."
+  },
+  {
+    "name": "ARENA-LADDER-service-forfeit-unwritten",
+    "file": "server-account/src/arena.js",
+    "old": "      stmts.push(ladderRow(db, a.id, player.id, season, { q: Number(a.tier), u: Number(a.step), h: 'forfeit' }, false, member?.banner ?? null, nowS));\n",
+    "new": "",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "An attempt walked away from leaves no loss row."
+  },
+  {
+    "name": "ARENA-LADDER-service-owner-unread",
+    "file": "server-account/src/arena.js",
+    "old": "    if (!att || att.player !== player.id || Number(att.tier) !== c.q",
+    "new": "    if (!att || Number(att.tier) !== c.q",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "Another account's ticket takes its row."
+  },
+  {
+    "name": "ARENA-LADDER-service-champion-voided",
+    "file": "server-account/src/arena.js",
+    "old": "WHERE player = ?1 AND tier = ?2 AND step < ${ARENA_TIER_BOUTS} AND won = 1 AND voided = 0",
+    "new": "WHERE player = ?1 AND tier >= ?2 - 1 AND won = 1 AND voided = 0",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A loss in the next tier takes the champion beaten back."
+  },
+  {
+    "name": "ARENA-LADDER-laurel-foes-unread",
+    "file": "server-account/src/arena.js",
+    "old": "Number(r.bouts) >= ARENA_CHAMPION_MIN_BOUTS && Number(r.foes ?? 0) >= ARENA_CHAMPION_MIN_FOES",
+    "new": "Number(r.bouts) >= ARENA_CHAMPION_MIN_BOUTS",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "Thirty bouts against four second accounts wear the laurel."
+  },
+  {
+    "name": "ARENA-LADDER-pair-season-off",
+    "file": "server-account/src/arena.js",
+    "old": " && Number(pairSeason?.n ?? 0) < ARENA_PAIR_SEASON_MAX;",
+    "new": ";",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A pair trades rated wins all season."
+  },
+  {
+    "name": "ARENA-LADDER-client-no-flush",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "    try { await claims.flush(); await claims.idle?.(); } catch { /* carried again later */ }\n",
+    "new": "",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A win fought and not yet carried is forfeit by the next attempt."
+  },
+  {
+    "name": "ARENA-LADDER-client-in-unticketed",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "      else if (!bout.sent && (bout.kind !== 'pve' || bout.ticket)) {",
+    "new": "      else if (!bout.sent) {",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "The `in` goes before the ticket: the relay refuses it."
+  },
+  {
+    "name": "ARENA-LADDER-client-fail-silent",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "    say(r && !r.ok && (r.error === 'order' || r.error === 'ladder-needs-account') ? accountRefusalText(r.error) : O.ticketFail);\n    endBout();",
+    "new": "    endBout();",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "No ticket and nothing said."
+  },
+  {
+    "name": "ARENA-LADDER-ceiling-unread",
+    "file": "src/player/motor.js",
+    "old": "    if (Number.isFinite(a.ceilAbove) && this.pos[1] > c[1] + a.ceilAbove) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "Levitate over the ring's melee fighters, the ceiling never read."
+  },
+  {
+    "name": "ARENA-LADDER-ceiling-rise-kept",
+    "file": "src/player/motor.js",
+    "old": "this.pos[1] = c[1] + a.ceilAbove; if (this.velY > 0) this.velY = 0; }",
+    "new": "this.pos[1] = c[1] + a.ceilAbove; }",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "Held at the ceiling with its rise kept: the body pressed into it frame on frame."
+  },
+  {
+    "name": "ARENA-LADDER-ceiling-unnamed",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "radius: cur.ring ?? RING_R, ...(kitBout(cur) ? { ceilAbove: SAND_CEILING_M } : {}) });",
+    "new": "radius: cur.ring ?? RING_R });",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "My bout's ring names no ceiling."
+  },
+  {
+    "name": "ARENA-LADDER-service-grand-unsaid",
+    "file": "server-account/src/arena.js",
+    "old": "\n      points: won && banner ? pvePoints(c.q, c.u) : 0, banner, grand: won && c.q === GRAND_TIER && c.u === ARENA_TIER_BOUTS,",
+    "new": "\n      points: won && banner ? pvePoints(c.q, c.u) : 0, banner, grand: false,",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A ticketed Grand Champion's claim says nothing of the title."
+  },
+  {
+    "name": "ARENA-LADDER-2-champion-guard",
+    "file": "server-account/src/arena.js",
+    "old": "      AND NOT EXISTS (SELECT 1 FROM arena_pve WHERE player = ?1 AND tier = ?2 AND step = ${ARENA_TIER_BOUTS} AND won = 1)\n",
+    "new": "",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A late loss voids a tier under its beaten champion: the climb bricked, every win after it refused."
+  },
+  {
+    "name": "ARENA-LADDER-2-room-unread",
+    "file": "server-account/src/arena.js",
+    "old": " || att.room !== c.j || c.i > Number(att.at) + ARENA_ATTEMPT_LIFE_S)",
+    "new": " || c.i > Number(att.at) + ARENA_ATTEMPT_LIFE_S)",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "One ticket fights in any number of rooms: a loss dropped, the bout fought again."
+  },
+  {
+    "name": "ARENA-LADDER-2-life-unread",
+    "file": "server-account/src/arena.js",
+    "old": " || att.room !== c.j || c.i > Number(att.at) + ARENA_ATTEMPT_LIFE_S)",
+    "new": " || att.room !== c.j)",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "One ticket fights its room again once the relay forgets the first bout."
+  },
+  {
+    "name": "ARENA-LADDER-2-room-twice",
+    "file": "server-account/migrations/0082_arena_attempts.sql",
+    "old": "CREATE UNIQUE INDEX IF NOT EXISTS idx_arena_attempts_room ON arena_attempts (room);\n",
+    "new": "",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "Two tickets for one room."
+  },
+  {
+    "name": "ARENA-LADDER-2-done-unread",
+    "file": "server-account/src/arena.js",
+    "old": "    if (Number(att.done) === 1) return { recorded: false, why: 'order', ladder: await arenaLadderOfAccount(ctx, player.id) };\n",
+    "new": "",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A done attempt records again."
+  },
+  {
+    "name": "ARENA-LADDER-2-repeat-unread",
+    "file": "server-account/src/arena.js",
+    "old": "  const repeat = won && await wonBefore(db, player.id, c.q, c.u);",
+    "new": "  const repeat = false;",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A step won again pays banner points again: the Pit farmed."
+  },
+  {
+    "name": "ARENA-LADDER-2-repeat-renown",
+    "file": "server-account/src/arena.js",
+    "old": "  if (!won || r.repeat) return r;",
+    "new": "  if (!won) return r;",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A step won again pays Renown again."
+  },
+  {
+    "name": "ARENA-LADDER-2-paid-unsaid",
+    "file": "server-account/src/arena.js",
+    "old": "  return { ...L, paid: Math.max(L.won ?? 0, Math.min(ARENA_TIER_BOUTS, Number(p?.n ?? 0) || 0)) };",
+    "new": "  return L;",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "The client holds a purse for a step won again."
+  },
+  {
+    "name": "ARENA-LADDER-2-guest-minted",
+    "file": "server-account/src/arena.js",
+    "old": "  if (!player.handle) return { error: 'ladder-needs-account' };\n",
+    "new": "",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A guest climbs online, its losses breaking nothing."
+  },
+  {
+    "name": "ARENA-LADDER-2-nothing-pruned",
+    "file": "server-account/src/arena.js",
+    "old": "  await db.prepare('DELETE FROM arena_attempts WHERE player = ?1 AND done = 1 AND at < ?2').bind(player.id, nowS - ARENA_ATTEMPTS_KEEP_S).run();\n",
+    "new": "",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "The attempts table grows for ever."
+  },
+  {
+    "name": "ARENA-LADDER-2-client-guest-asked",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "    if (deps.guest?.()) return { ok: false, text: O.guestLadder };",
+    "new": "",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A guest is sent to the floor for a ticket it is refused."
+  },
+  {
+    "name": "ARENA-LADDER-2-ticket-before-floor",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "    void Promise.resolve(go).then((ok) => { if (ok && bout === b) return askTicket(b); return null; });",
+    "new": "    void Promise.resolve(go); void askTicket(b);",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A ticket asked for a floor never entered: forfeit, a run lost unfought."
+  },
+  {
+    "name": "ARENA-LADDER-2-room-unsent",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "deps.account.attempt?.(b.tier, b.bout, b.o)",
+    "new": "deps.account.attempt?.(b.tier, b.bout)",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "The ticket asked for no room."
+  },
+  {
+    "name": "ARENA-LADDER-2-board-unasked",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "    if (r && !r.ok && r.error === 'order') askBoard(true);\n",
+    "new": "",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A device behind the climb asks the stale bout for ever."
+  },
+  {
+    "name": "ARENA-LADDER-2-kept-unread",
+    "file": "src/scenes/arenaOnline.js",
+    "old": "    if (claims.ladderKept?.()) { say(O.stillRecording); endBout(); return; }\n",
+    "new": "",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A ticket asked while a win is still on its way: forfeit."
+  },
+  {
+    "name": "ARENA-LADDER-2-flush-quiet",
+    "file": "src/net/arenaClaims.js",
+    "old": "    if (running) { again = true; return running; }",
+    "new": "    if (running) { again = true; return Promise.resolve(0); }",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A flush asked mid-flight answers 0 at once."
+  },
+  {
+    "name": "ARENA-LADDER-2-immunity-unset",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "foe.entity.items = []; foe.entity.pacifyImmune = true; }",
+    "new": "foe.entity.items = []; }",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A Calm through a weapon, or a tongue, sways a fighter."
+  },
+  {
+    "name": "ARENA-LADDER-2-revenant-gate",
+    "file": "src/systems/revenant.js",
+    "old": "  if (entity.bout) return false;   // AUDIT ARENA-LADDER 2",
+    "new": "  // AUDIT ARENA-LADDER 2",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "An elite champion flees the sand as a revenant."
+  },
+  {
+    "name": "ARENA-LADDER-2-held-unmarked",
+    "file": "src/systems/arenaKit.js",
+    "old": "    if (entity.activeEffects.some((a) => a.kind === k && a.heldItem)) entity._sandHeld = true;\n",
+    "new": "",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A ring of Chameleon dead until it is worn again."
+  },
+  {
+    "name": "ARENA-LADDER-2-calm-unbarred",
+    "file": "src/systems/arenaKit.js",
+    "old": "export const SAND_BARRED_EFFECTS = Object.freeze([13, 14, 23, 24, 33, 34, 43]);",
+    "new": "export const SAND_BARRED_EFFECTS = Object.freeze([13, 14, 23, 24, 34, 43]);",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "Calm Humanoid on the champion, then the judges."
+  },
+  {
+    "name": "ARENA-LADDER-2-kit-any-bout",
+    "file": "src/systems/arenaKit.js",
+    "old": "export const onTheSand = () => playerBoutOf()?.kit === true;",
+    "new": "export const onTheSand = () => playerBoutOf() != null;",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A bout between players held to the ladder's kit."
+  },
+  {
+    "name": "ARENA-LADDER-2-paid-unkept",
+    "file": "src/systems/arenaLadder.js",
+    "old": "  L.paid = Math.max(L.won, int(raw.paid, 0, BOUTS_PER_TIER, L.won));",
+    "new": "  L.paid = int(raw.paid, 0, BOUTS_PER_TIER, L.won);",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "Every step won again pays its purse."
+  },
+  {
+    "name": "ARENA-LADDER-2-repeat-purse",
+    "file": "src/systems/arenaLadder.js",
+    "old": "    purse: champion ? CHAMPION_PURSE[s.tier] : repeat ? 0 : BOUT_PURSE[s.tier], repeat,",
+    "new": "    purse: champion ? CHAMPION_PURSE[s.tier] : BOUT_PURSE[s.tier], repeat,",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "The repeat known, its purse paid."
+  },
+  {
+    "name": "ARENA-LADDER-2-repeat-points",
+    "file": "src/systems/arenaLeague.js",
+    "old": "(!won || repeat ? 0 :",
+    "new": "(!won ? 0 :",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A step won again pays its banner points."
+  },
+  {
+    "name": "ARENA-LADDER-2-one-at-a-time",
+    "file": "src/net/arenaBrain.js",
+    "old": " && !st.ai.some((o) => o !== a && o.atk?.s && o.atk.at > now)",
+    "new": "",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "Two elite champions land two telegraphs at once."
+  },
+  {
+    "name": "ARENA-LADDER-2-tie-first",
+    "file": "src/systems/arenaBout.js",
+    "old": "      side = ai.length ? judgeBout(ai) : null;",
+    "new": "      side = ai.length ? judgeBout(ai) ?? ai[0].side : null;",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "Fighters level on the card: the first one's."
+  },
+  {
+    "name": "ARENA-LADDER-2-clock-unread",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "    return Number.isFinite(w.at) ? Math.max(t, Math.min(t + wind, w.at - (C.clock.off ?? 0))) : t + wind;",
+    "new": "    return t + wind;",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "The mark flashes a round trip after the relay judged it."
+  },
+  {
+    "name": "ARENA-LADDER-2-swing-at-word",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "if (foe?._pup) { if (!w.s) foe._pup.strike = 'melee';",
+    "new": "if (foe?._pup) { foe._pup.strike = 'melee';",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "The swing played out before the mark has filled."
+  },
+  {
+    "name": "ARENA-LADDER-2-elite-unsent",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "elite: C.relay.kind === 'pve' && !!C.relay.next?.champion,",
+    "new": "elite: false,",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "An online champion looks plain."
+  },
+  {
+    "name": "ARENA-LADDER-2-mark-unread",
+    "file": "src/ai/foeBlows.js",
+    "old": "  const turned = ai._blowFor !== undefined && !!_blowTargetOf && _blowTargetOf(ai) !== ai._blowFor;",
+    "new": "  const turned = false;",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A lunge landed on a bout-mate decides the next blow at me."
+  },
+  {
+    "name": "ARENA-LADDER-2-void-after-out",
+    "file": "src/scenes/arenaBouts.js",
+    "old": "if (!C.ex && !boutFighter(C.b, YOU)?.out) { voidBout",
+    "new": "if (!C.ex) { voidBout",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "A body gone after my yield voids my loss."
+  },
+  {
+    "name": "ARENA-LADDER-2-collapse-in-call",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "   if (foeDeps?.playerBoutOf?.()) { playerEntity.fatigue",
+    "new": "   if (false) { playerEntity.fatigue",
+    "tests": [
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "An hour of rest in the Herald's call."
+  }
+]

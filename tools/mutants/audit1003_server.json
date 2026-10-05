@@ -122,8 +122,8 @@
   {
     "name": "AUDIT1003-S4-reused-unsaid-on-the-client",
     "file": "src/scenes/arenaOnline.js",
-    "old": "if (d?.recorded === false && (d.why === 'order' || d.why === 'reused')) say(O[d.why]);",
-    "new": "if (d?.recorded === false && d.why === 'order') say(O[d.why]);",
+    "old": "if (d?.recorded === false && (d.why === 'order' || d.why === 'reused' || d.why === 'forfeit')) say(O[d.why]);",
+    "new": "if (d?.recorded === false && (d.why === 'order' || d.why === 'forfeit')) say(O[d.why]);",
     "tests": [
       "test/audit1003_server.test.js"
     ]

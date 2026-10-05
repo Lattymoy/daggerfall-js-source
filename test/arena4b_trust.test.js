@@ -58,7 +58,7 @@ async function ladderBout(extra, inWord) {
   const R = W.room(arenaBoutRoom('00000000000000ab'));
   const p = R.connect();
   await R.hello(p, 'fight-ceryn', { x: C[0] - 6, y: 0.3, z: C[2], yaw: 0, pitch: 0, mv: 0 }, { name: 'Ceryn', kind: 'linked', tokenSub: 'acct-ceryn', ...extra });
-  await word(R, p, { k: 'in', r: 'f', tier: 0, bout: 1, ...inWord });
+  await word(R, p, { k: 'in', r: 'f', tier: 0, bout: 1, ...inWord, z: 'feedc0de00000001' });
   return { R, p, st: last(p, 'st') };
 }
 
@@ -82,11 +82,12 @@ test('ARENA4b the client\'s ladder `in`: the tier, the bout and my level - no he
   const board = { me: { ladder: arenaLadderOf([{ tier: 0, bout: 0 }]) } };
   const entered = [];
   const A = createArenaOnline({ now: () => 0, session: () => session, makeHall: () => ({ status: 'open', join() {}, leave() {}, sendArena: () => true }), bouts: { ask() {}, relayWord: () => true, dismiss() {}, holds: () => false, relay: () => null },
-    account: { board: async () => ({ ok: true, data: board }), claim: async () => ({ ok: true, data: {} }), me: () => null }, enterFloor: (k, o) => { entered.push([k, o]); return true; }, level: () => 12, maxHealth: () => 140 });
+    account: { board: async () => ({ ok: true, data: board }), claim: async () => ({ ok: true, data: {} }), attempt: async (tier, bout) => ({ ok: true, data: { ticket: 'feedc0de00000002', tier, bout } }), me: () => null }, enterFloor: (k, o) => { entered.push([k, o]); return true; }, level: () => 12, maxHealth: () => 140 });
   A.model();
   await new Promise((r) => setTimeout(r, 0));
   assert.equal(A.fightLadder().ok, true);
   session.room = arenaBoutRoom(entered.at(-1)[1]);
+  await new Promise((r) => setTimeout(r, 0));   // AUDIT ARENA-LADDER: the attempt's ticket in
   A.tick();
-  assert.deepEqual(boutSent, [{ k: 'in', r: 'f', tier: 0, bout: 1, lv: 12 }]);
+  assert.deepEqual(boutSent, [{ k: 'in', r: 'f', tier: 0, bout: 1, lv: 12, z: 'feedc0de00000002' }]);
 });

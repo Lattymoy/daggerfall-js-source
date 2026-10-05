@@ -235,7 +235,8 @@ test('AUDIT TACT A7: a board for a target nobody fights any more is dropped - no
 });
 
 test('AUDIT TACT: an opportunist (no token, a turned back) strikes but never telegraphs - a blow is a token holder\'s', () => {
-  assert.match(rd('src/ai/tactics.js'), /s\.state === 'engage' && b\.melee\.has\(ai\) && key === LOCAL/);
+  // AUDIT ARENA-LADDER: the mark is blowAim's (me, or a bout-mate on the sand) - asked of a token holder alone
+  assert.match(rd('src/ai/tactics.js'), /const aim = s\.state === 'engage' && b\.melee\.has\(ai\) \? blowAim\(ai, key\) : null;/);
 });
 
 // ── D: the hosts, the ground ────────────────────────────────────────

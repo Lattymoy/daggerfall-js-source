@@ -145,7 +145,7 @@ test('AUDIT PRE-MERGE 1003 S2: THE SIGNED LEVEL IS CAPPED - a token\'s `cl` is t
   const R = W.room(arenaBoutRoom('00000000000010a2'));
   const p = R.connect();
   await R.hello(p, 'fight-ceryn', at(C[0] - 6), { name: 'Ceryn', kind: 'linked', tokenSub: 'acct-ceryn', charLevel: 1000 });
-  await word(R, p, { k: 'in', r: 'f', tier: 0, bout: 0, lv: 1 });
+  await word(R, p, { k: 'in', r: 'f', tier: 0, bout: 0, lv: 1, z: 'feedc0de00000001' });
   assert.equal(R.room._attach(p).cl, 1000, 'the signed thousand carried onto the socket');
   assert.equal(last(p, 'st').f.find((f) => f[0] === 'p0')[4], ladderVitalityAt(ladderLevelCap(0)), 'the Pit\'s cap, not two thousand');
 });
@@ -230,7 +230,7 @@ test('AUDIT PRE-MERGE 1003 S4: THE CLIENT PAYS NO PURSE ON A REUSED BOUT - the s
   const A = createArenaOnline({
     now: () => 0, session: () => session, makeHall: () => null, say: (l) => said.push(l), guest: () => false,
     bouts: { ask: (p) => asked.push(p), relayWord: () => true, dismiss() {}, holds: () => false, setRealm() {} },
-    account: { board: async () => ({ ok: true, data: board }), claim: async () => answer, team: async () => ({ ok: false }), me: () => 'acct-alva' },
+    account: { board: async () => ({ ok: true, data: board }), claim: async () => answer, team: async () => ({ ok: false }), attempt: async (tier, bout) => ({ ok: true, data: { ticket: 'feedc0de00000002', tier, bout } }), me: () => 'acct-alva' },
     enterFloor: () => true, level: () => 12, maxHealth: () => 140, inBout: () => false,
   });
   A.model();
@@ -257,7 +257,7 @@ test('AUDIT PRE-MERGE 1003 S5: A LADDER WIN SURVIVES A BLIP - a fighter whose so
   const who = { name: 'Ceryn', kind: 'linked', tokenSub: 'acct-ceryn', charLevel: 5 };
   const p = R.connect();
   await R.hello(p, 'fight-ceryn', at(C[0] - 6), who);
-  await word(R, p, { k: 'in', r: 'f', tier: 0, bout: 0 });
+  await word(R, p, { k: 'in', r: 'f', tier: 0, bout: 0, z: 'feedc0de00000001' });
   // stand and strike until the Pit's first fighter falls - and the socket goes with the blow, before the beat that ends it
   let fell = false;
   for (let i = 0; i < 600 && !fell; i++) {
@@ -361,7 +361,7 @@ test('AUDIT PRE-MERGE 1003 S7: THE ROOM IS MINTED AT THE GO - a pair member who 
   const S = W.room(arenaBoutRoom(of));
   const s = S.connect();
   await S.hello(s, 'peer-alva-b', at(C[0]), { name: 'Alva', kind: 'linked', tokenSub: 'acct-alva' });
-  await word(S, s, { k: 'in', r: 'f', tier: 0, bout: 0 });
+  await word(S, s, { k: 'in', r: 'f', tier: 0, bout: 0, z: 'feedc0de00000001' });
   assert.equal((await S.room._boutOf()).kind, 'pve', 'the offered id\'s room squatted by a ladder bout');
   await word(H, A, { k: 'y', o: of }); await word(H, B, { k: 'y', o: of });
   const ga = last(A, 'go'), gb = last(B, 'go');
@@ -391,9 +391,11 @@ test('AUDIT PRE-MERGE 1003 S8: A GRAND CHAMPION\'S LETTER WEARS THE TITLE - the 
   assert.equal(inbox.letters[0].title, 'grandchampion', 'the inbox shows the Grand Champion');
   const opened = await S.call('/v1/mail/read', { id: inbox.letters[0].id }, b.secret);
   assert.equal(opened.body.letter?.title, 'grandchampion', `the opened letter too: ${JSON.stringify(opened.body)}`);
-  // the season's #1 (three rated wins): the laurel on Cyra's letter
-  for (let i = 0; i < 3; i++) {
-    const rc = await mintArenaReceipt({ a: 'p', j: (0x10038000 + i).toString(16).padStart(16, '0'), f: [c.id, b.id], r: 0, h: 'fall' }, S.gatePriv, { subtle, nowS: T0 });
+  // the season's #1: the laurel on Cyra's letter - AUDIT ARENA-LADDER O2: ten rated wins over five accounts (two each)
+  const beaten = [b];
+  for (const n of ['Dain', 'Eddra', 'Fenn', 'Gisla']) beaten.push(await S.registered(n));
+  for (let i = 0; i < 10; i++) {
+    const rc = await mintArenaReceipt({ a: 'p', j: (0x10038000 + i).toString(16).padStart(16, '0'), f: [c.id, beaten[i % 5].id], r: 0, h: 'fall' }, S.gatePriv, { subtle, nowS: T0 });
     assert.equal((await S.call('/v1/arena/claim', { receipt: rc }, c.secret)).body.recorded, true);
   }
   _resetArenaCache();

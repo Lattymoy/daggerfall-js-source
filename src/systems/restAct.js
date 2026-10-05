@@ -29,6 +29,7 @@ import { restCost, REST_KIND } from './survival/rest.js';
 import { paySleep } from './survival/needs.js';   // REST-SLEEP1: the short rest sleeps by the minute law's own pay
 import { liveVampirism } from './racialLive.js';
 import { roomRemainingHours } from './tavern.js';   // AUDIT REST II P6: an old save's room, its nights read off its hours
+import { BY_FIRE_REACH } from './survival/camp.js';   // FIELD BUGS 2026-10-05 DUNGEON-BEDS: a bed's reach is a fire's
 
 /** A night: DFU's customary eight hours, on the character's own clock. */
 export const NIGHT_HOURS = 8;
@@ -58,6 +59,26 @@ export const REST_ACT_TEXT = Object.freeze({
   carriedTown: (name) => `${name} rests here - it is illegal to camp in town.`,   // AUDIT REST II P4: the act's own town law, for a member it would carry
   campWait: (name) => `Resting with ${name}...`,   // CAMP-ROLL: a camp mate's night is the camp's - held until it lands
 });
+
+/**
+ * FIELD BUGS 2026-10-05 DUNGEON-BEDS (Discord, "Dungeon Beds (Sleeping)": "Beds in dungeons should count as beds so I
+ * can rest in a dungeon" - "Find a fire or a bed to rest." beside one). Whether the feet stand within `reach` of a
+ * bed - each `{ aabb }` a placed bed model's world box (Roleplay Realism's three, rrRealism.js BED_MODELS) - measured
+ * to the box's nearest point, a fire's own BY_FIRE_REACH. The dungeon host's rest point (dungeonContext.js): 108 beds
+ * stand in 42 of Daggerfall's 187 RDB blocks, in 2,056 of its 4,232 dungeons, and the online rest saw none of them.
+ * AUDIT FB1005 B4: on the bed's own floor - the feet within BED_STOREY_M of the bed's foot; a dungeon's storeys stand
+ * some 3.2 m apart, and five of the 108 beds were in reach from the storey above or below.
+ */
+export const BED_STOREY_M = 1.5;
+export function bedInReach(beds, pos, reach = BY_FIRE_REACH) {
+  if (!pos || !beds?.length) return false;
+  for (const { aabb } of beds) {
+    if (Math.abs(pos[1] - aabb.min[1]) > BED_STOREY_M) continue;   // AUDIT FB1005 B4: the bed's own floor, not the storey above or below
+    const d = [0, 1, 2].map((k) => Math.max(aabb.min[k] - pos[k], 0, pos[k] - aabb.max[k]));
+    if (Math.hypot(d[0], d[1], d[2]) <= reach) return true;
+  }
+  return false;
+}
 
 /** Whether a night may pass now: none yet, the interval run out, or a clock behind the stamp (a load from another
  *  timeline) - never a night refused for a stamp from the future. */

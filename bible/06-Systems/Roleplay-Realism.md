@@ -498,7 +498,8 @@ slices (RR1-RR3b) are below, numbered as the code comments carry them
 **Named, not changed:** the shipLocation departure at d02eb562 (fixed
 by RR2); RRI-present-but-disabled semantics (a class registered under a
 switch that is off answers null, as an unregistered class does); the
-standalone dungeon host has no HUD say; beds only in buildings; the C#
+standalone dungeon host has no HUD say; beds only in buildings (as a click target - a dungeon's bed is a rest point
+since FIELD BUGS 2026-10-05 DUNGEON-BEDS); the C#
 gender-carry quirk in the sprite variants (the port normalises it); the
 contact geometry (a trigger sphere against the port's 0.9 reach); the
 PitchMaxLimit snap and the 75-degree floor; the walker at 1 FPS against

@@ -29,7 +29,9 @@ import {
   ARENA_POSE_SLACK, ARENA_BOW_REACH, ARENA_SPELLS_IN, ARENA_SPELL_WINDOW_MS, ARENA_SPEED_MAX, ARENA_SPEED_SLACK, ARENA_JOIN_WAIT_MS,
   ARENA_GONE_MS, arenaBlowCap, pvpVitality, ladderVitality, arenaLadderBout, ARENA_SPECTATORS_MAX, ARENA_CHEER_MS, arenaFoeStats, bannerClaim, ARENA_EX_BANNERS,
   ARENA_PRIVATE_VITALITY, ARENA_PRIVATE_MEMBERS_MAX, ARENA_PRIVATE_HIST_MAX, ARENA_PRIVATE_KICKED_MAX, ARENA_MEMBER_ID_RE,   // ARENA6: a private session
+  ARENA_BLOW_TIER_LEVEL, ARENA_BLOW_CHANCE, ARENA_BLOW_COOLDOWN_MIN_MS, ARENA_BLOW_COOLDOWN_MAX_MS, LADDER_JUDGES_SHARE, ARENA_TICKET_RE,   // AUDIT ARENA-LADDER
 } from './arenaLaw.js';
+import { BLOW, blowShapesOf, inBlow } from '../ai/blowShapes.js';   // AUDIT ARENA-LADDER: the foes' shapes - a leaf, the relay's to read
 
 /** A fighter of a bout between players stands on its mark once it says `in`; an AI fighter stands on its own. */
 const C = ARENA_FLOOR_CENTRE;
@@ -78,7 +80,7 @@ export function openBout({ o, kind, f, tier = 0, bout = 0, ex = null, casual = f
   const st = {
     o, kind, at: now, seed, phase: 'wait', tier: kind === 'ex' ? ex.tier : tier, bout, b: null, res: null, owed: [], said: false, endAt: NaN, spectators: 0, cheer: {},
     // ARENA4b: `banner` the fighter's word's claim (bannerClaim - billed on the list to watch, cosmetic, never counted)
-    f: f.map((x, i) => ({ id: `p${i}`, sub: x.sub, name: x.name, side: i, lv: x.lv ?? 1, cl: x.cl ?? null, rating: x.rating ?? null, title: x.title ?? null, banner: bannerClaim(x.banner), in: false })),
+    f: f.map((x, i) => ({ id: `p${i}`, sub: x.sub, name: x.name, side: i, lv: x.lv ?? 1, cl: x.cl ?? null, rating: x.rating ?? null, title: x.title ?? null, banner: bannerClaim(x.banner), in: false, ...(typeof x.tk === 'string' && ARENA_TICKET_RE.test(x.tk) ? { tk: x.tk } : {}) })),   // AUDIT ARENA-LADDER: `tk` a ladder attempt's ticket, signed into its receipt
     ai: [], ref: {}, last: {}, gone: {},
     casual: kind === 'pvp' && casual === true,
     equal: kind === 'pvp' && equal === true,   // ARENA6
@@ -92,7 +94,7 @@ export function openBout({ o, kind, f, tier = 0, bout = 0, ex = null, casual = f
     st.ai = ex.opponents.map((x, i) => {
       const body = arenaFoeStats(x.mobile, x.level);
       return { id: `a${i}`, i, mobile: body.mobile, level: body.level, hp: body.hp, dmg: body.dmg, speed: body.speed, every: body.every, windup: body.windup, reach: body.reach, side: i,
-        temper: arenaAiTemper(seed, i, body.mobile), pos: toLevel(marks[i][0]), mv: null, atk: null, nextAt: 0, said: null };
+        temper: arenaAiTemper(seed, i, body.mobile), pos: toLevel(marks[i][0]), mv: null, atk: null, nextAt: 0, said: null, elite: !!body.elite, blowAt: 0 };
     });
     startLaw(st, now);
     return st;
@@ -110,7 +112,7 @@ export function openBout({ o, kind, f, tier = 0, bout = 0, ex = null, casual = f
       const side = L.free ? i + 1 : 1;
       const mark = marks[side][used[side]++];
       return { id: `a${i}`, i, mobile: x.mobile, level: x.level, hp: x.hp, dmg: x.dmg, speed: x.speed, every: x.every, windup: x.windup, reach: x.reach, side,
-        temper: arenaAiTemper(seed, i, x.mobile), pos: toLevel(mark), mv: null, atk: null, nextAt: 0, said: null };
+        temper: arenaAiTemper(seed, i, x.mobile), pos: toLevel(mark), mv: null, atk: null, nextAt: 0, said: null, elite: !!x.elite, blowAt: 0 };
     });
     st.mark0 = marks[0][0];
   }
@@ -153,7 +155,8 @@ function startLaw(st, now) {
     maxHealth: st.kind === 'pvp' ? (st.equal ? ARENA_PRIVATE_VITALITY : pvpVitality(x.lv)) : ladderVitality(x.cl, x.lv, st.tier),
   }));
   for (const a of st.ai) fighters.push({ id: a.id, name: '-', side: a.side, ai: true, temper: a.temper, maxHealth: a.hp });
-  st.b = newBout({ id: st.o, kind: st.kind === 'pvp' ? 'pvp' : st.kind === 'ex' ? 'exhibition' : 'ladder', fighters, ring: { centre: [C[0], C[2]], radius: ARENA_RING_R }, now, tier: st.tier });
+  st.b = newBout({ id: st.o, kind: st.kind === 'pvp' ? 'pvp' : st.kind === 'ex' ? 'exhibition' : 'ladder', fighters, ring: { centre: [C[0], C[2]], radius: ARENA_RING_R }, now, tier: st.tier,
+    judgesFloor: st.kind === 'pve' ? LADDER_JUDGES_SHARE : 0 });   // AUDIT ARENA-LADDER: the ladder's judges' floor - one blow and the clock walked away from wins no card
   for (const x of fighters) st.ref[x.id] = { bucket: ARENA_BUCKET_DEPTH, bucketAt: now, hits: [], spells: [], q: -1, qAt: -Infinity };
 }
 
@@ -364,13 +367,16 @@ function aiStep(st, a, now, rng) {
   const out = [];
   const me = boutFighter(st.b, a.id);
   if (!me || me.out) { if (a.mv) { a.pos = aiAt(a, now); a.mv = null; } a.atk = null; return out; }
-  // a blow in flight lands at its moment, on its foe if still in reach
+  // a blow in flight lands at its moment, on its foe if still in reach - AUDIT ARENA-LADDER: a telegraphed one where
+  // its foe stands in its shape (ai/blowShapes.js inBlow, the brain's own verdict), weighed by it
   if (a.atk && now >= a.atk.at) {
-    const tg = a.atk.tg;
+    const { tg, s, yw, ox, oz } = a.atk;
     a.atk = null;
     const t = boutFighter(st.b, tg), p = whereIs(st, tg, now), here = aiAt(a, now);
-    if (t && !t.out && p && Math.hypot(p[0] - here[0], p[1] - here[1]) <= a.reach + ARENA_POSE_SLACK * 0.5) {
-      const dmg = a.dmg[0] + Math.floor(rng() * (a.dmg[1] - a.dmg[0] + 1));
+    const hit = !!(t && !t.out && p) && (s ? inBlow({ kind: s, origin: [ox, 0, oz], yaw: yw }, p[0], p[1]) : Math.hypot(p[0] - here[0], p[1] - here[1]) <= a.reach + ARENA_POSE_SLACK * 0.5);
+    if (hit && t) {
+      const roll = a.dmg[0] + Math.floor(rng() * (a.dmg[1] - a.dmg[0] + 1));
+      const dmg = s ? Math.max(1, Math.round(roll * BLOW[s].mult)) : roll;
       if (tg.startsWith('p')) out.push({ k: 'blow', i: a.id, d: dmg, to: tg });
       land(st, a.id, tg, dmg, now, dmg >= t.maxHealth * 0.15);
     } else boutMiss(st.b, { from: a.id, now });
@@ -382,6 +388,21 @@ function aiStep(st, a, now, rng) {
   if (foe.d <= a.reach * AI_ENGAGE) {
     if (a.mv) { a.pos = aiAt(a, now); a.mv = null; out.push(mvWord(a, now)); }
     if (now >= a.nextAt) {
+      // AUDIT ARENA-LADDER: SOMETIMES A TELEGRAPHED BLOW - a fighter of the tier that telegraphs (its level, or an elite's
+      // - a champion), its cooldown spent, the roll: its shape wound up from where it stands at its foe, a player or
+      // another fighter, every screen drawing it off the word
+      // AUDIT ARENA-LADDER 2: and nobody else winding one up - the brain's one wind-up near its mark (ai/foeBlows.js
+      // windupNear: on the sand, one at a time), so a pair of elite champions never lands two at once
+      const shapes = (a.level >= ARENA_BLOW_TIER_LEVEL || a.elite) && now >= (a.blowAt ?? 0) && !st.ai.some((o) => o !== a && o.atk?.s && o.atk.at > now) ? blowShapesOf(a.mobile) : [];
+      if (shapes.length && rng() < ARENA_BLOW_CHANCE) {
+        const s = shapes[Math.floor(rng() * shapes.length)];
+        const at = aiAt(a, now), yw = Math.atan2(foe.p[0] - at[0], foe.p[1] - at[1]);
+        a.atk = { at: now + Math.round(BLOW[s].windup * 1000), tg: foe.id, s, yw: r2(yw), ox: r2(at[0]), oz: r2(at[1]) };
+        a.blowAt = now + ARENA_BLOW_COOLDOWN_MIN_MS + Math.floor(rng() * (ARENA_BLOW_COOLDOWN_MAX_MS - ARENA_BLOW_COOLDOWN_MIN_MS));
+        a.nextAt = a.atk.at + a.every;
+        out.push({ k: 'atk', i: a.id, at: a.atk.at, x: foe.p[0], z: foe.p[1], tg: foe.id, s, yw: a.atk.yw, ox: a.atk.ox, oz: a.atk.oz });
+        return out;
+      }
       a.atk = { at: now + a.windup, tg: foe.id };
       a.nextAt = now + a.every;
       out.push({ k: 'atk', i: a.id, at: a.atk.at, x: foe.p[0], z: foe.p[1], tg: foe.id });
@@ -411,7 +432,7 @@ function receiptsOwed(st) {
   const r = st.res;
   if (st.kind === 'ex' || st.casual) return [];   // ARENA4b: nor a casual bout - nothing of it is the realm's to keep
   if (st.kind === 'pvp') return [{ a: 'p', j: st.o, f: [st.f[0].sub, st.f[1].sub], r: r.side === 0 ? 0 : r.side === 1 ? 1 : 2, h: r.how === 'judges' && r.side === null ? 'judges' : r.how }];
-  return [{ a: 'l', j: st.o, s: st.f[0].sub, q: st.tier, u: st.bout, r: r.side === 0 ? 1 : 0, h: r.how }];
+  return [{ a: 'l', j: st.o, s: st.f[0].sub, q: st.tier, u: st.bout, r: r.side === 0 ? 1 : 0, h: r.how, ...(st.f[0].tk ? { z: st.f[0].tk } : {}) }];   // AUDIT ARENA-LADDER: the attempt's ticket, signed
 }
 
 /** A fighter's socket went (`gone`) or came back. */

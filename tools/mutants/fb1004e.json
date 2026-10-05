@@ -392,8 +392,8 @@
   {
     "name": "ARENAARROWS-no-refund-at-the-heal",
     "file": "src/scenes/arenaBouts.js",
-    "old": "    if (C.ladder) { deps.heal?.(); deps.say?.(ARENA_TEXT.healed); refundMine(C); C.lastHealth",
-    "new": "    if (C.ladder) { deps.heal?.(); deps.say?.(ARENA_TEXT.healed); C.lastHealth",
+    "old": "    if (C.ladder) { deps.heal?.(); deps.say?.(ARENA_TEXT.healed); refundMine(C); restoreSandHeld(P); C.lastHealth",
+    "new": "    if (C.ladder) { deps.heal?.(); deps.say?.(ARENA_TEXT.healed); restoreSandHeld(P); C.lastHealth",
     "tests": [
       "test/fb1004e_arena.test.js"
     ],

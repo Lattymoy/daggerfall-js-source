@@ -110,8 +110,8 @@
   {
     "name": "ARENA4b-TRUST-BOUT-UNSIGNED",
     "file": "server/src/index.js",
-    "old": "lv: m.lv ?? a.lv ?? 1, cl: a.cl ?? null, title: a.title ?? null, banner: m.b ?? null }]",
-    "new": "lv: m.lv ?? a.lv ?? 1, cl: null, title: a.title ?? null, banner: m.b ?? null }]",
+    "old": "lv: m.lv ?? a.lv ?? 1, cl: a.cl ?? null, title: a.title ?? null, banner: m.b ?? null, tk: m.z }]",
+    "new": "lv: m.lv ?? a.lv ?? 1, cl: null, title: a.title ?? null, banner: m.b ?? null, tk: m.z }]",
     "tests": [
       "test/arena4b_trust.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "ARENA4b-TRUST-WORD-BELIEVED",
     "file": "server/src/index.js",
-    "old": "lv: m.lv ?? a.lv ?? 1, cl: a.cl ?? null, title: a.title ?? null, banner: m.b ?? null }]",
-    "new": "lv: m.lv ?? a.lv ?? 1, cl: m.mh ?? a.cl ?? null, title: a.title ?? null, banner: m.b ?? null }]",
+    "old": "lv: m.lv ?? a.lv ?? 1, cl: a.cl ?? null, title: a.title ?? null, banner: m.b ?? null, tk: m.z }]",
+    "new": "lv: m.lv ?? a.lv ?? 1, cl: m.mh ?? a.cl ?? null, title: a.title ?? null, banner: m.b ?? null, tk: m.z }]",
     "tests": [
       "test/arena4b_trust.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "ARENA4b-TRUST-IN-HEALTH",
     "file": "src/scenes/arenaOnline.js",
-    "old": "bout: bout.bout, lv: Math.max(1, Math.floor(deps.level?.() ?? 1)), ...myBanner() }",
-    "new": "bout: bout.bout, lv: Math.max(1, Math.floor(deps.level?.() ?? 1)), mh: Math.max(1, Math.floor(deps.maxHealth?.() ?? 1)), ...myBanner() }",
+    "old": "lv: Math.max(1, Math.floor(deps.level?.() ?? 1)), ...myBanner(), ...(bout.ticket",
+    "new": "lv: Math.max(1, Math.floor(deps.level?.() ?? 1)), mh: Math.max(1, Math.floor(deps.maxHealth?.() ?? 1)), ...myBanner(), ...(bout.ticket",
     "tests": [
       "test/arena4b_trust.test.js"
     ]

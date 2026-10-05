@@ -31,6 +31,7 @@ import { buildDerivedPicture } from '../formats/derivedTexture.js';
 import { installDetStandIns, MeshBuilder } from './detStandIns.js';
 import { TOWN_PICTURE_ARCHIVE, PICTURE } from './townPictures.js';
 import { registerFlatField } from './flatFields.js';
+import { RMBRP_HILL_SHAPES, SHAPE_BEARINGS, SHAPE_RINGS } from './rmbrpHillShapes.js';   // FIELD BUGS 2026-10-05 HILL-SHAPES: the pack's hills, measured
 import { shareDetailedShipsArt } from '../systems/detailedShips.js';   // Cliffworms' Items (archive 1210): his pictures, the towns' too
 
 const U = 0.025;   // MeshReader.GlobalScale: one classic unit in metres
@@ -207,22 +208,36 @@ export function boulderMesh(w, up, down, l, seed) {
   }
   return m.build();
 }
-/** The pack's hills, by its catalogue's size and surface: [radius, height] in metres and grass or rock. */
+/** The pack's hills and the surface each wears, grass or rock (its prefab's folder). FIELD BUGS 2026-10-05 HILL-SHAPES:
+ *  each drawn at its measured shape (rmbrpHillShapes.js) - this table sized them by the catalogue's Small, Medium and
+ *  Large ([3 | 6 | 10 m, 0.6-3.5 m high]), a fraction of the pack's own, and what the author stood on a hill hung over
+ *  it ("Houses in Ipsham are floating"). */
 export const RMBRP_HILLS = Object.freeze({
-  52012: [3, 1.2, 'grass'], 52018: [10, 3.5, 'grass'], 52022: [3, 1.2, 'grass'], 52025: [6, 2.2, 'grass'], 52028: [10, 3.5, 'grass'],
-  52035: [6, 2.2, 'grass'], 52058: [10, 3.5, 'grass'], 52458: [10, 1.6, 'grass'], 52463: [3, 0.6, 'rock'], 52508: [10, 1.6, 'grass'],
-  52543: [3, 0.6, 'rock'], 52548: [10, 1.6, 'grass'], 52599: [10, 1.6, 'rock'], 52613: [3, 0.6, 'rock'], 52638: [10, 1.6, 'grass'],
-  52663: [3, 0.6, 'rock'], 52683: [3, 1.4, 'rock'], 52703: [3, 1.4, 'rock'], 52713: [3, 1.4, 'rock'], 52725: [6, 1, 'grass'],
-  52758: [10, 1.6, 'grass'], 52816: [6, 1, 'rock'], 52973: [3, 2, 'rock'],
+  52012: 'grass', 52018: 'grass', 52022: 'grass', 52025: 'grass', 52028: 'grass', 52035: 'grass', 52058: 'grass', 52458: 'grass',
+  52463: 'rock', 52508: 'grass', 52543: 'rock', 52548: 'grass', 52599: 'rock', 52613: 'rock', 52638: 'grass', 52663: 'rock',
+  52683: 'rock', 52703: 'rock', 52713: 'rock', 52725: 'grass', 52758: 'grass', 52816: 'rock', 52973: 'rock',
 });
-function hill(r, hgt, surface) {
-  const m = new MeshBuilder(), tex = surface === 'rock' ? ROCK : GRASS, N = 12, R = 4;
-  const P = (k, i) => { const a = (i / N) * Math.PI * 2, t = k / R; const rr = r * Math.cos((t * Math.PI) / 2); return [Math.cos(a) * rr, hgt * Math.sin((t * Math.PI) / 2) - 0.3, Math.sin(a) * rr]; };
-  for (let k = 0; k < R; k++) for (let i = 0; i < N; i++) {
-    const a = P(k, i), b = P(k, i + 1), c = P(k + 1, i + 1), d = P(k + 1, i);
-    const mid = [(a[0] + c[0]) / 2, (a[1] + c[1]) / 2 + r * 0.5, (a[2] + c[2]) / 2], l = Math.hypot(...mid) || 1;
-    const uv = (p) => [p[0] / 4, -p[2] / 4];
-    if (k === R - 1) m.tri(tex, a, b, d, [mid[0] / l, mid[1] / l, mid[2] / l], uv(a), uv(b), uv(d)); else m.quad(tex, a, b, c, d, [mid[0] / l, mid[1] / l, mid[2] / l], [uv(a), uv(b), uv(c), uv(d)]);
+/** HILL-SHAPES: one hill at its measured polar profile - its centre at `top`, SHAPE_RINGS rings out along
+ *  SHAPE_BEARINGS bearings to the rim at the mesh's base (under the block's plane, so no edge stands out of the ground);
+ *  each triangle faces up along its own normal. */
+export function hillMesh(shape, surface) {
+  const m = new MeshBuilder(), tex = surface === 'rock' ? ROCK : GRASS, K = SHAPE_BEARINGS, N = SHAPE_RINGS;
+  const [cx, cz] = shape.c;
+  const P = (k, j) => {
+    if (j === 0) return [cx, shape.top, cz];
+    const b = k % K, a = (b / K) * Math.PI * 2, r = (shape.reach[b] * j) / N;
+    return [cx + Math.cos(a) * r, shape.rings[b][j - 1], cz + Math.sin(a) * r];
+  };
+  const uv = (p) => [p[0] / 4, -p[2] / 4];
+  const face = (a, b, c) => {
+    const u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], v = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
+    const n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]], l = Math.hypot(...n) || 1, sgn = n[1] < 0 ? -1 : 1;
+    m.tri(tex, a, b, c, [(sgn * n[0]) / l, (sgn * n[1]) / l, (sgn * n[2]) / l], uv(a), uv(b), uv(c));
+  };
+  for (let j = 1; j <= N; j++) for (let k = 0; k < K; k++) {
+    const a = P(k, j), b = P(k + 1, j), c = P(k + 1, j - 1), d = P(k, j - 1);
+    if (j === 1) face(a, b, d);
+    else { face(a, b, c); face(a, c, d); }
   }
   return m.build();
 }
@@ -232,12 +247,14 @@ function hill(r, hgt, surface) {
 // blocks (RESIAS08, TVRNAS00, TVRNAS01, TVRNAS03, TEMPASH3, WEAPAS02) stand TEXTURE.504's trees as misc flats on the
 // RMB Resource Pack's hills, at the heights the author read off the pack's own meshes: 130 of them a metre to 13 m over
 // the plane. DFU stands each where it is authored (AddMiscBlockFlats reads no terrain and no model) on the pack's hill,
-// and draws them floating without the pack. The port's mounds are smaller than the pack's (`RMBRP_HILLS`, sized by the
-// catalogue), so 121 of the 130 hung more than 1.5 m over the mound or the ground. While the port draws a block's hills
-// as these stand-ins, a nature flat of that block stands on the top of what is drawn under it - the higher of the
-// ground and the mounds; a hill the port does not draw as its own (no stand-in on) leaves the block as DFU stands it.
+// and draws them floating without the pack. The port's mounds were smaller than the pack's (sized by the catalogue), so
+// 121 of the 130 hung more than 1.5 m over the mound or the ground; drawn at the pack's measured shape since FIELD BUGS
+// 2026-10-05 HILL-SHAPES, one does. While the port draws a block's hills as these stand-ins, a nature flat of that
+// block stands on the top of what is drawn under it - the higher of the ground and the hills (AUDIT FB1005 H4: so the
+// dozen the author left on the plane under a hill, which the pack's hill buries, stand on its slope instead); a hill
+// the port does not draw as its own (no stand-in on) leaves the block as DFU stands it.
 
-/** The mound the port draws for `id` - its stand-in, while the town mods' stand-ins are on (customModelFor, the door the
+/** The hill the port draws for `id` - its stand-in, while the town mods' stand-ins are on (customModelFor, the door the
  *  pipeline asks before any other: scenes/dataPipeline.js buildGpuMesh) - or null: not a hill, or not drawn as ours. */
 export const drawnHillStandIn = (id) => (RMBRP_HILLS[id] ? customModelFor(id) : null);
 
@@ -405,7 +422,7 @@ function dockSteps() {
 
 export const RMBRP_PIECES = Object.freeze({
   ...Object.fromEntries(Object.entries(RMBRP_ROCKS).map(([id, [w, up, down, l]]) => [id, () => boulderMesh(w, up, down, l, Number(id))])),
-  ...Object.fromEntries(Object.entries(RMBRP_HILLS).map(([id, [r, hgt, surface]]) => [id, () => hill(r, hgt, surface)])),
+  ...Object.fromEntries(Object.entries(RMBRP_HILLS).map(([id, surface]) => [id, () => hillMesh(RMBRP_HILL_SHAPES[id], surface)])),   // HILL-SHAPES
   ...Object.fromEntries(Object.entries(RMBRP_STALLS).map(([id, cloth]) => [id, () => stall(cloth)])),
   53160: platform,
   53170: foundation,

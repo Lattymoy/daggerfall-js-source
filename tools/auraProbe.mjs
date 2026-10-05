@@ -325,16 +325,18 @@ try {
   // less half kindled; from the wearer's own eye looking wAhead nothing over the view; as the game mirrors it, the same
   const wg = (eye, t, k, pts, at, swOpts = {}) => page.evaluate(([e, tt, kk, ps, a, l, o]) => window.draw(e, tt, kk, ps, 'seraphwings', a, 0, l, -1, null, { strict: true, ...o }), [eye, t, k, pts, at, LIT, swOpts]);
   const wBehind = [0, 1.6, -4.6], wAt = [0, 1.5, 0];
-  const wGrid = Array.from({ length: 21 * 14 }, (_, i) => [-2 + (i % 21) * 0.2, 0.4 + Math.floor(i / 21) * 0.2, -0.35]);
+  const wGrid = Array.from({ length: 41 * 28 }, (_, i) => [-2 + (i % 41) * 0.1, 0.4 + Math.floor(i / 41) * 0.1, -0.35]);   // WINGS-FIT: every 0.1 m - slim strands fall between a coarser grid's points
   const wBare = await wg(wBehind, 13.2, 1, wGrid, wAt, { none: true }), wWhole = await wg(wBehind, 13.2, 1, wGrid, wAt);
   if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'wings_back.png') });
   check('the wings draw without a GL error', wWhole.error === 0 && wWhole.drawn === 1, `error ${wWhole.error}, drawn ${wWhole.drawn}`);
   const wLit = (f) => f.px.map((c, i) => lum(c) > lum(wBare.px[i]) + 60);
   const wLitNow = wLit(wWhole), wSide = (pred) => wGrid.filter((q, i) => wLitNow[i] && pred(q)).length;
-  check('gold light out to either side of the wearer and over the head', wSide((q) => q[0] < -0.5) >= 12 && wSide((q) => q[0] > 0.5) >= 12 && wSide((q) => q[1] > 2.1) >= 4, `left ${wSide((q) => q[0] < -0.5)}, right ${wSide((q) => q[0] > 0.5)}, over the head ${wSide((q) => q[1] > 2.1)}`);
+  // WINGS-FIT: slim, shorter strands with dark between them (the old blaze lit 12 a side on a grid twice as coarse) - out
+  // past the shoulders either side, and over the crown of the rest pose (CLOAK_H 1.88 m)
+  check('gold light out to either side of the wearer and over the head', wSide((q) => q[0] < -0.5) >= 4 && wSide((q) => q[0] > 0.5) >= 4 && wSide((q) => q[1] > 1.95) >= 4, `left ${wSide((q) => q[0] < -0.5)}, right ${wSide((q) => q[0] > 0.5)}, over the head ${wSide((q) => q[1] > 1.95)}`);
   const wGolds = wWhole.px.filter((c, i) => wLitNow[i]), wGoldN = wGolds.filter((c) => c[0] >= c[1] && c[1] >= c[2]).length, wWarm = wGolds.filter((c) => c[0] > c[2] + 20).length;
   check('in gold - red over green over blue, white only where it burns hottest', wGoldN === wGolds.length && wWarm >= wGolds.length * 0.6, `${wGoldN} gold or white, ${wWarm} warm, of ${wGolds.length}`);
-  const wPast = [[2.6, 1.4, -0.35], [-2.6, 1.4, -0.35], [2.4, 0.6, -0.35], [-2.4, 2.6, -0.35]];
+  const wPast = [[1.8, 1.4, -0.35], [-1.8, 1.4, -0.35], [1.7, 0.6, -0.35], [-1.6, 2.7, -0.35]];   // WINGS-FIT: their shorter reach (1.3 m; at 2.2 m these lay inside it)
   const wPBare = await wg(wBehind, 13.2, 1, wPast, wAt, { none: true }), wPWhole = await wg(wBehind, 13.2, 1, wPast, wAt);
   check('nothing past their reach', wPWhole.px.every((c, i) => Math.abs(lum(c) - lum(wPBare.px[i])) < 12), wPWhole.px.map(lum).join(' '));
   const wLater = await wg(wBehind, 14.7, 1, wGrid, wAt), wFlow = wWhole.px.reduce((a, c, i) => a + Math.abs(lum(c) - lum(wLater.px[i])), 0);

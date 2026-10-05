@@ -103,6 +103,12 @@ export function isBadInteriorModel(blockIndex, recordIndex, modelIdNum) {
   return records !== undefined && records.includes(recordIndex);
 }
 
+/** DaggerfallInterior.AssignBlockData's refusal (DaggerfallInterior.cs:388-389): a building subrecord whose interior
+ *  holds no 3D model cannot be laid out - TransitionInterior says "This house has nothing of value." (PlayerEnterExit.cs
+ *  :719-730). FIELD BUGS 2026-10-05 CRYPT-SALE: the one law the layout refuses by and the house market asks of a door.
+ *  A subrecord with no interior header at all is not known to be empty. */
+export const hasInteriorModels = (sub) => sub?.interior?.header?.num3dObjectRecords !== 0;
+
 /**
  * Assemble one building interior.
  * @param {object} dfBlock - BlocksFile.getBlock output (type Rmb).
@@ -119,7 +125,7 @@ export function isBadInteriorModel(blockIndex, recordIndex, modelIdNum) {
  */
 export function layoutInterior(dfBlock, blockIndex, recordIndex, getModel) {
   const recordData = dfBlock.rmbBlock.subRecords[recordIndex];
-  if (recordData.interior.header.num3dObjectRecords === 0) {
+  if (!hasInteriorModels(recordData)) {
     throw new Error(`No interior 3D models found for record index ${recordIndex}`);
   }
 

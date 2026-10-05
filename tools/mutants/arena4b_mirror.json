@@ -75,8 +75,8 @@
   {
     "name": "ARENA4b-MIR-NO-SWING",
     "file": "src/scenes/arenaBouts.js",
-    "old": "        foe.attack.swingSeq = (foe.attack.swingSeq | 0) + 1;\n",
-    "new": "",
+    "old": "        else { foe.attack.firedRanged = false; foe.attack.swingSeq = (foe.attack.swingSeq | 0) + 1; }\n",
+    "new": "        else { foe.attack.firedRanged = false; }\n",
     "tests": [
       "test/arena4b_mirror.test.js"
     ]

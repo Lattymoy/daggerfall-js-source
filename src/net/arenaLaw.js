@@ -207,24 +207,68 @@ export const ARENA_BEASTS = Object.freeze({
  *  its blow 1 + level/4 to 6 + level (a weapon's range and the level's strength). */
 export const CLASS_HP_BASE = 10;
 export const CLASS_HP_PER_LEVEL = 8;
-/** One AI fighter's body as the relay runs it. Pure. */
-export function arenaFoeStats(mobile, level) {
+/** AUDIT ARENA-LADDER: THE RELAY'S FIGHTERS RUN. At 3.2 m/s (a class) and 3.6 (a beast) an unmodified character walking
+ *  out of reach could not be caught: one blow, then the judges, took 37 of the climb's 40 steps. Now a class fighter
+ *  closes at 5.0 m/s and a beast at 6.0 - above any character's walk, near an average one's run (which spends its
+ *  fatigue). */
+export const ARENA_CLASS_SPEED = 5.0;
+export const ARENA_BEAST_SPEED = 6.0;
+/** AUDIT ARENA-LADDER (the owner's call, "Elite champions"): A TIER'S CHAMPION IS AN ELITE FOE - systems/eliteFoes.js
+ *  ELITE_FOE_HEALTH_MULT and ELITE_FOE_DAMAGE_MULT on its body, pinned equal (this law imports nothing). */
+export const ARENA_ELITE_HP_MULT = 5;
+export const ARENA_ELITE_DMG_MULT = 3;
+/** One AI fighter's body as the relay runs it; `elite` a tier champion's. Pure. */
+export function arenaFoeStats(mobile, level, { elite = false } = {}) {
   const beast = ARENA_BEASTS[mobile] ?? null;
+  const hm = elite ? ARENA_ELITE_HP_MULT : 1, dm = elite ? ARENA_ELITE_DMG_MULT : 1;
   if (beast) {
     const [lv, minH, maxH, minD, maxD] = beast;
-    return { mobile, level: lv, hp: Math.round((minH + maxH) / 2), dmg: [minD, maxD], speed: 3.6, every: 1300, windup: 350, reach: 2.4, beast: true };
+    return { mobile, level: lv, hp: Math.round((minH + maxH) / 2) * hm, dmg: [minD * dm, maxD * dm], speed: ARENA_BEAST_SPEED, every: 1300, windup: 350, reach: 2.4, beast: true, elite };
   }
   const lv = Math.max(1, Math.floor(level ?? 1));
-  return { mobile, level: lv, hp: CLASS_HP_BASE + CLASS_HP_PER_LEVEL * lv, dmg: [1 + Math.floor(lv / 4), 6 + lv], speed: 3.2, every: 1500, windup: 450, reach: 2.3, beast: false };
+  return { mobile, level: lv, hp: (CLASS_HP_BASE + CLASS_HP_PER_LEVEL * lv) * hm, dmg: [(1 + Math.floor(lv / 4)) * dm, (6 + lv) * dm], speed: ARENA_CLASS_SPEED, every: 1500, windup: 450, reach: 2.3, beast: false, elite };
 }
-/** The bout `bout` (0..2, 3 the champion) of `tier` (0..9): its opponents' bodies, and whether it is every fighter for
- *  themselves (the Grand Melee's three bouts - not its champion). Null for no such bout. Pure. */
+/** The bout `bout` (0..2, 3 the champion) of `tier` (0..9): its opponents' bodies (a champion's an elite's), and whether
+ *  it is every fighter for themselves (the Grand Melee's three bouts - not its champion). Null for no such bout. Pure. */
 export function arenaLadderBout(tier, bout) {
   const t = ARENA_LADDER_SPEC[tier];
   const list = t?.[bout];
   if (!list) return null;
-  return { tier, bout, champion: bout === ARENA_TIER_BOUTS, grand: bout === ARENA_TIER_BOUTS && tier === ARENA_TIERS - 1, free: tier === ARENA_FREE_TIER && bout < ARENA_TIER_BOUTS, foes: list.map(([m, l]) => arenaFoeStats(m, l)) };
+  const champion = bout === ARENA_TIER_BOUTS;
+  return { tier, bout, champion, grand: champion && tier === ARENA_TIERS - 1, free: tier === ARENA_FREE_TIER && bout < ARENA_TIER_BOUTS, foes: list.map(([m, l]) => arenaFoeStats(m, l, { elite: champion })) };
 }
+
+// ── AUDIT ARENA-LADDER: THE RELAY'S TELEGRAPHED BLOWS ─────────────────────────────────────────────
+// (the owner, 2026-10-05: "Ensure AI enemies sometimes receive telegraphed attacks"). The relay's fighters throw the
+// foes' three shapes (ai/blowShapes.js - the leaf the relay reads) by the tactics' own law: of the tier that telegraphs
+// (ai/foeBlows.js BLOW_TIER_LEVEL, or an elite - a champion), its cooldown spent, a roll - at whoever it fights, a
+// player or another fighter. The constants are the brain's, pinned equal.
+/** The level from which a fighter telegraphs (ai/foeBlows.js BLOW_TIER_LEVEL). */
+export const ARENA_BLOW_TIER_LEVEL = 10;
+/** The chance a blow begun is a telegraphed one, when one may be (the relay rolls once a blow, the brain a tick). */
+export const ARENA_BLOW_CHANCE = 0.35;
+/** One fighter's telegraphs apart, ms (ai/foeBlows.js BLOW_COOLDOWN_MIN/MAX in seconds). */
+export const ARENA_BLOW_COOLDOWN_MIN_MS = 8000;
+export const ARENA_BLOW_COOLDOWN_MAX_MS = 15000;
+/** The three shapes on the wire. */
+export const ARENA_BLOW_SHAPES = Object.freeze(['lunge', 'sweep', 'slam']);
+
+// ── AUDIT ARENA-LADDER: THE LADDER'S JUDGES ─────────────────────────────────────────────
+/** At the time limit a ladder bout is the player's only when their side took this share of the opponents' whole health
+ *  (systems/arenaBout.js newBout `judgesFloor`): one blow and three minutes walked away was a win on the judges' card. */
+export const LADDER_JUDGES_SHARE = 0.5;
+
+// ── AUDIT ARENA-LADDER: A LADDER ATTEMPT'S TICKET ─────────────────────────────────────────────
+/** The account service's ticket for one attempt at a ladder bout (server-account/src/arena.js arenaAttempt): the relay
+ *  opens a ladder bout only for one and signs it into the receipt (`z`), the service keys the bout's row by it - so a
+ *  loss never claimed is still a loss (a new attempt forfeits the one left open), and no other account's bout can take
+ *  the row. 16 hex, as a bout's id. */
+export const ARENA_TICKET_RE = /^[0-9a-f]{16}$/;
+/** AUDIT ARENA-LADDER 2: A TICKET IS ONE BOUT'S - asked for the room it is fought in (its bout id, the receipt's `j`) and
+ *  good for a receipt the relay signs within this many seconds of it. The relay forgets a finished bout ARENA_KEEP_MS after
+ *  its end and would open another in the same room, so the life is that keep (pinned equal): one ticket, one room, one
+ *  bout - never a loss fought again on it and its receipt dropped. */
+export const ARENA_ATTEMPT_LIFE_S = 600;
 /** A ladder bout's key: `tier * 4 + bout` (0..39) - the climb's one order. */
 export const ladderKey = (tier, bout) => tier * (ARENA_TIER_BOUTS + 1) + bout;
 /**
@@ -363,8 +407,14 @@ export const ARENA_CHEER_MS = 1500;
 export const ARENA_KEEP_MS = 10 * 60_000;
 /** A rated pair's bouts a day the account service counts (the duel's 'pair' bound's shape). */
 export const ARENA_PAIR_DAY_MAX = 5;
-/** The #1 of the season's board must have fought this many rated bouts to wear the laurel. */
-export const ARENA_CHAMPION_MIN_BOUTS = 3;
+/** The #1 of the season's board must have fought this many rated bouts to wear the laurel - AUDIT ARENA-LADDER O2: and
+ *  against this many different accounts. Three bouts against one second account wore it (a registered guest is free,
+ *  and a loser can end a bout in fifteen seconds), so the season's #1 is the board's top over ten bouts and five foes. */
+export const ARENA_CHAMPION_MIN_BOUTS = 10;
+export const ARENA_CHAMPION_MIN_FOES = 5;
+/** AUDIT ARENA-LADDER O2: a rated pair's bouts a season the account service counts - past it a bout is kept unrated
+ *  (the pair's day bound held a pair to five a day, which three second accounts made fifteen rated wins a day). */
+export const ARENA_PAIR_SEASON_MAX = 10;
 /** The bouts a hall lists to watch. */
 export const ARENA_LIVE_MAX = 24;
 /** Why a bout ended, on the wire (systems/arenaBout.js's endings, and the relay's own: a forfeit, a void). */
@@ -455,6 +505,7 @@ export function validArenaIn(m) {
       if (m.lv !== undefined) { if (int(m.lv, 1, 999) == null) return null; out.lv = m.lv; }
       if (m.mh !== undefined) { if (int(m.mh, 1, 99999) == null) return null; out.mh = m.mh; }
       if (bannerClaim(m.b)) out.b = m.b;   // ARENA4b: a ladder fighter's banner, billed on the list to watch
+      if (m.z !== undefined) { if (typeof m.z !== 'string' || !ARENA_TICKET_RE.test(m.z)) return null; out.z = m.z; }   // AUDIT ARENA-LADDER: a ladder attempt's ticket
       return out;
     }
     case 'hit': {
@@ -617,6 +668,11 @@ export function validArenaOut(m) {
     case 'atk': {
       if (typeof m.i !== 'string' || !/^a[0-3]$/.test(m.i) || num(m.at, 1e15) == null || num(m.x, 1e5) == null || num(m.z, 1e5) == null) return null;
       if (typeof m.tg !== 'string' || !FID_RE.test(m.tg)) return null;
+      // AUDIT ARENA-LADDER: a telegraphed blow - its shape, its facing, and where it was wound up (the fighter's feet)
+      if (m.s !== undefined) {
+        if (!ARENA_BLOW_SHAPES.includes(m.s) || num(m.yw, 10) == null || num(m.ox, 1e5) == null || num(m.oz, 1e5) == null) return null;
+        return { k: 'atk', i: m.i, at: m.at, x: m.x, z: m.z, tg: m.tg, s: m.s, yw: m.yw, ox: m.ox, oz: m.oz };
+      }
       return { k: 'atk', i: m.i, at: m.at, x: m.x, z: m.z, tg: m.tg };
     }
     case 'blow': return typeof m.i === 'string' && /^a[0-3]$/.test(m.i) && int(m.d, 0, 9999) != null && typeof m.to === 'string' && /^p[01]$/.test(m.to) ? { k: 'blow', i: m.i, d: m.d, to: m.to } : null;

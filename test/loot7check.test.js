@@ -123,8 +123,8 @@ test('HOVER-PLAIN (CHAMP-HOVER retired): a hostile champion, elite or revenant s
     const esc = done.replace(/[.?]/g, (c) => `\\${c}`);
     assert.match(read(f), new RegExp(String.raw`mobileEntityName\(liveEntityName\(${v}, enemyDisplayName\(${v}\.mobileType\)\), \{ hostile: !!${v}\.ai\?\.isHostile${esc} \}\)`), f);
   }
-  assert.match(read('src/scenes/exteriorFoes.js'), /return t \? \{ title: f\.yielded \|\| f\._pupYield \? `\$\{t\} - beaten` : t \} : null;/, 'the street\'s cue');
-  assert.match(read('src/scenes/dungeonContext.js'), /return t \? \{ title: f\.yielded \? `\$\{t\} - beaten` : t \} : null;/, 'the dungeon\'s cue');
+  assert.match(read('src/scenes/exteriorFoes.js'), /return t \? \{ title: f\.yielded \|\| f\._pupYield \? `\$\{t\} - beaten` : t, subs: questFoeSubs\(f\) \} : null;/, 'the street\'s cue (QUEST-FOE-LINE: and a quest foe\'s line beside it)');
+  assert.match(read('src/scenes/dungeonContext.js'), /return t \? \{ title: f\.yielded \? `\$\{t\} - beaten` : t, subs: questFoeSubs\(f\) \} : null;/, 'the dungeon\'s cue (QUEST-FOE-LINE: and a quest foe\'s line beside it)');
   // WHY THE LINE BELOW EXISTS TOO: the plaque is the enhanced skin's - on the classic skin it never draws a name
   assert.match(strip(read('src/ui/worldPlaque.js')), /_gateOn = isEnhanced\(\) && !isTouchDevice\(\);/, 'the plaque: the enhanced skin\'s');
   assert.match(strip(read('src/ui/worldPlaque.js')), /export const classicPlaqueOn = \(\) => !isEnhanced\(\) && !isTouchDevice\(\) && quickLootOn\(\);/, 'the classic face: quick loot\'s piles alone');
