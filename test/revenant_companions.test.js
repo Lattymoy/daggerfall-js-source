@@ -307,8 +307,8 @@ test('REVENANT-COMPANION the world\'s wiring: the sworn stood by the crew\'s own
   assert.match(w, /const revenantAshore = createCrewAshore\(\{\n\s*party: \(\) => \(playerSpawned \? _revenantParty : null\),\n\s*place: \(\) => companionPlace\(\{ crew: false \}\),/);
   assert.match(w, /function companionPlace\(\{ crew = true \} = \{\}\) \{[^\n]*\n\s*if \(\(crew && !navalOn\(\)\) \|\|/);
   assert.match(w, /applySwornStrength\(rec\.entity, r, \{ fresh: !\(c\.maxHealth > 0\) \}\);/);
-  assert.match(w, /spot: spotOf\(collider\), fx: exteriorFoes\.companionFx \};/);
-  assert.match(w, /spot: spotOf\(modes\?\.interiorCollider\), fx: pool\.companionFx \} : null;/);
+  assert.match(w, /spot: spotOf\(collider\), fx: exteriorFoes\.companionFx, turn: turnIn\(exteriorFoes\) \};/);   // PIN MOVED (RVN11c: and a betrayer's turning, hostile where it stood)
+  assert.match(w, /spot: spotOf\(modes\?\.interiorCollider\), fx: pool\.companionFx, turn: turnIn\(pool\) \} : null;/);   // PIN MOVED (RVN11c)
   assert.match(w, /spot: spotOf\(d\.collider\), fx: d\.companionFx \?\? null,/);
   assert.match(w, /if \(isRevenantCompanionKey\(key\)\) return openSwornPack\(rec\);/);
   assert.match(w, /const sworn = swornCards\?\.\(\) \?\? \[\];/);

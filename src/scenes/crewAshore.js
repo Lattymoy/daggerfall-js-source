@@ -53,7 +53,7 @@ export const companionKeyOf = (c) => c.key ?? `${c.boat}:${c.name}`;
  *     fx?: { arrive?: (rec: any) => void, leave?: (rec: any, done: () => void) => void, jump?: (rec: any, from: number[]) => void } } | null),
  *   leader: () => ({ feet: number[], yaw: number, grounded?: boolean } | null),
  *   now: () => number,
- *   onKnocked?: (c: any) => void,
+ *   onKnocked?: (c: any, by: any) => void,
  *   onStood?: (c: any, rec: any) => void,
  * }} deps
  */
@@ -122,7 +122,7 @@ export function createCrewAshore(deps) {
       const i = list.indexOf(s.c);
       if (rec._knockedOut) {
         stood.delete(k); leave(s);   // COMPANION-PORTAL: carried off through a portal
-        if (party.knock(s.c.boat, s.c.name, now)) deps.onKnocked?.(s.c);
+        if (party.knock(s.c.boat, s.c.name, now)) deps.onKnocked?.(s.c, rec._knockedBy ?? null);   // RVN10 (Feud-Arc.md 21.1): and the foe whose blow it was
         continue;
       }
       // the place swept it - a cull, a remove, or (AUDIT CC-A1) a clear that empties the list and marks nobody (the

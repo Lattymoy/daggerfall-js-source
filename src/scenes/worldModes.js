@@ -114,7 +114,7 @@ import { calculateAttackDamage, dice100 } from '../combat/formulas.js';   // AUD
 import { WEAPON_REACH, weaponPoseOf, applyWeaponPose as setWeaponPose } from '../combat/playerWeapon.js';   // ROAD-B: AttemptExteriorDoorBash rides the SWING's reach, not the click's; HARD2c: the sheath+hand pair, aliased because this host's own seam method carries the same name
 import { inflictPoison } from '../systems/poisons.js';   // AUDIT 39 (#64/#65): a poisoned shaft doses its mark
 import { tallySkill, skillValue, SKILLS, permanentSkillValue } from '../systems/skills.js';
-import { tallySwingSkills, SWING_FATIGUE_COST, playPlayerVoice, playerPainVoice, makeEnemiesHostile, isBowWeapon } from './hostCombat.js';   // AUDIT 21 hosts F8: the swing law, shared with the dungeon and the guards; IF: the pain cry   // ROAD-B: GameManager.MakeEnemiesHostile
+import { tallySwingSkills, SWING_FATIGUE_COST, playPlayerVoice, playerPainVoice, makeEnemiesHostile, isBowWeapon, aimedBlowInfo, playerBlowFrame } from './hostCombat.js';   // AUDIT 21 hosts F8: the swing law, shared with the dungeon and the guards; IF: the pain cry   // ROAD-B: GameManager.MakeEnemiesHostile
 import { createExteriorFoes } from './exteriorFoes.js'; import { INTERIOR_CLEAR } from '../render/renderer.js';   // IF: the ONE foe-pool factory - see interiorFoes below; REVIEW 2026-09-05: the mode frames clear BLACK (CameraClearManager.cs:23-25)
 import { createCityGuards } from './cityGuards.js';   // ROAD-B: SpawnCityGuards' INDOOR arm needs a watch pool in the building
 import { createDroppedLoot, droppedLootHooks, containerDropPos } from './droppedLoot.js';
@@ -123,6 +123,7 @@ import { sparedByPlayer } from '../combat/friendlyFire.js';   // AUDIT CC-B6: th
 import { createHitEffects } from './hitEffects.js';   // HE1: EnemyBlood.ShowBloodSplash, the fourth host
 import { hitSoundFor, ENEMY_HIT_VOLUME, PLAYER_HIT_VOLUME } from '../systems/soundClips.js';   // IF: the blow that lands on the player indoors   // AUDIT 58: DFU's two hit volumes
 import { entityIsParalyzed } from '../systems/effects.js';   // AUDIT 39r: the S19 gate is host-agnostic in DFU - the interior arm owes it too
+import { knockedDown } from '../systems/blowEffects.js';   // TELL6e: knocked down, no swing
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 39r: ShowPlayerDamage - an arrow indoors comes through the same door as a blow
 import { sensesContext, subscribeFoePools } from './shared.js';   // IF: the one senses builder every pool is handed; AUDIT 58: and the magic-round fan-out both of them owe
 import { makeInView } from '../player/cameraView.js';   // IF: the swing's in-view test, the guards' own
@@ -178,6 +179,8 @@ import { STATIC_NPC_ACTIVATION_DISTANCE, DEFAULT_ACTIVATION_DISTANCE, RAY_DISTAN
 // PlayerActivate.ActivateBulletinBoard (:706-739) - the town sign's arm
 import { BULLETIN_BOARD_ACTIVATION_DISTANCE, TOO_FAR_AWAY_TEXT, bulletinBoardRows } from '../systems/bulletinBoard.js';
 import { applyDeathPenalty, deathPenaltyText } from '../systems/deathPenalty.js';   // DEATH-PENALTY: the in-place respawn is an online death too
+import { revenantTakes } from '../systems/revenant.js';   // AUDIT FEUD (RVN8): the in-place respawn's theft, as the world host's
+import { endPlayerFights } from '../systems/harmMark.js';   // AUDIT FEUD (RVN10): ...and its fights ended
 import { tokenRows } from '../ui/messageBox.js';
 import { staticNpcRoute, showsJoinButton, serviceAccess, onPushEffects, NO_POTION_INGREDIENTS, isServiceBox } from '../systems/guildServiceFlow.js';
 import { isIngredient } from '../systems/potions.js';   // F201: MakePotionService's scan
@@ -550,7 +553,7 @@ export function createWorldModes(host) {
    *
    * AUDIT-WH H5. Three hover arms wrote `.Name` - the C# property, as
    * the mod's own source spells it (.cs:764, :725, :777) - and the
-   * record these hosts mint spells it `name` (exterior.js:4087 hands
+   * record these hosts mint spells it `name` (exterior.js:4095 hands
    * `dfLocation`, world.js hands `_questLoc()`; both are the port's
    * location record). `.Name` on it is `undefined`, so all three arms
    * fell to `''`, and `staticDoorName` answers NULL on an empty
@@ -1243,8 +1246,8 @@ export function createWorldModes(host) {
       },
       // C13: the interior's own arrow flight, the seam this host
       // already owns for the player's bow.
-      onArrow: (from, dir, f, aimFoe = null) => {   // ROAD-H tail (review): aimFoe - the foe the archer selected, null for the player
-        interiorArrows.fire(from, dir, { enemy: true, shooterFoe: f, weapon: f.entity.weapon, aimFoe });
+      onArrow: (from, dir, f, aimFoe = null, extra = null) => {   // ROAD-H tail (review): aimFoe - the foe the archer selected, null for the player; TELL6d: extra - an aimed shot's word
+        interiorArrows.fire(from, dir, { enemy: true, shooterFoe: f, weapon: f.entity.weapon, aimFoe, ...(extra ?? {}) });
         audio.play3d(SOUND.ArrowShoot, from, 1, { maxDistance: 16 });
       },
       // AUDIT 39 (#39): the MAGIC half of the same payload. SetEnemySpells
@@ -1257,6 +1260,7 @@ export function createWorldModes(host) {
       spellsByIndex,
       magicHooks: magic ? {
         explodeAt: (...a) => magic.explodeAt(...a),
+        strikePlayer: (spell, casterLevel, foe) => magic.strikePlayerFrom(spell, casterLevel, foe),   // RVN5: a revenant's pyre - its blast on me through the one cast engine
         // world.js's arm, minus its walk-mode gate: the interior frame
         // runs magic.update itself, so a missile loosed here flies.
         fireMissile: (from, spell, casterLevel, foe, aimAt = null) => {   // AUDIT WORLD6b-iii(a) C3: the aim point the executor hands, my LIVE transform otherwise (AUDIT 62 F21) - world.js's law through the ONE helper
@@ -1281,7 +1285,7 @@ export function createWorldModes(host) {
       ...net,
       // WATCH1's law indoors: the watch called into the building rides behind my foes, and a peer's blow on a watchman
       // lands through the watch's own door as no blow of mine
-      watch: { list: () => interiorGuards?.guards ?? [], hurt: (g, dmg, at, dir) => interiorGuards?.hurtGuard(g, dmg, at, dir, { fromPlayer: false, peer: true }) },
+      watch: { list: () => interiorGuards?.guards ?? [], hurt: (g, dmg, at, dir, wc = null, kind = 'melee') => interiorGuards?.hurtGuard(g, dmg, at, dir, { fromPlayer: false, peer: true, wc, kind }) },   // AUDIT TELL P1: a peer's blow's class and kind, as the street's watch takes them (world.js)
     });
     interiorFoes.setQuestShare(host.foesQuestShare?.() ?? null);
     _intNetOn = true;
@@ -1339,8 +1343,8 @@ export function createWorldModes(host) {
     hurt: (n, o) => {
       if (n <= 0) return;
       const fp = o?.fromPlayer ?? fromPlayer;   // AUDIT 68 review: a round's tick says whose it is (effects.js runEffectRound)
-      if (foe._encounter) interiorFoes?.damageFoe(foe, n, player.pos, null, { fromPlayer: fp, kind: 'spell' });
-      else interiorGuards?.hurtGuard(foe, n, player.pos, null, { fromPlayer: fp });
+      if (foe._encounter) interiorFoes?.damageFoe(foe, n, player.pos, null, { fromPlayer: fp, kind: 'spell', whole: !!o?.whole, round: !!o?.round, element: o?.element ?? null });   // TELL1: a later round weighs nothing on a wind-up; RVN3: a Disintegrate's kill a kill (world.js's line), a landing's element
+      else interiorGuards?.hurtGuard(foe, n, player.pos, null, { fromPlayer: fp, kind: 'spell', round: !!o?.round });
     },
     heal: (n) => { if (n > 0) foe.entity.health = Math.min(foe.entity.maxHealth ?? Infinity, foe.entity.health + n); },
     drainMagicka: (n) => { if (n > 0) foe.entity.magicka = Math.max(0, (foe.entity.magicka ?? 0) - n); },
@@ -1357,8 +1361,8 @@ export function createWorldModes(host) {
    *  This host owned two pools and ran NO fan-out at all - no
    *  runMagicRoundsFor, so no tickActiveEffects and no updatePoisons
    *  (worldTick.js:393-394), and no killIfAnyLiveStatZero. Both pools
-   *  READ the effect list every frame (exteriorFoes.js:1336-1339 and
-   *  cityGuards.js:1042-1050 each take `entityIsParalyzed` +
+   *  READ the effect list every frame (exteriorFoes.js:1496-1499 and
+   *  cityGuards.js:1054-1062 each take `entityIsParalyzed` +
    *  `applyEnemyMotorEffectFlags`), and nothing ever ended one: a
    *  Continuous Damage bundle on a foe in a shop never took a round,
    *  a poison inflicted at this host's own onInflictPoison never
@@ -1383,7 +1387,7 @@ export function createWorldModes(host) {
   function makeInteriorGuards(ctx) {
     return createCityGuards({
       renderer, collider: ctx.collider, fetchBytes, getTexture, uploadRecordFrame,
-      playerEntity, audio,
+      playerEntity, audio, shake: (k) => host.shakeCamera?.(k),   // AUDIT TELL H6: a watchman indoors staggered by my blow
       // AUDIT 63 F42: makeInteriorFoes' dep, on the pool standing
       // beside it and over the same collider - ObstacleCheck is
       // EnemyMotor's, so it runs for a watchman in a shop exactly as
@@ -1719,10 +1723,10 @@ export function createWorldModes(host) {
    *  billboard is CENTRE-anchored, so the base ends up ON the marker
    *  inside a building and half a height BELOW it inside a dungeon.
    *  This port's billboard shader is BOTTOM-anchored (position = base,
-   *  the C11 law dungeonContext.js:2322 states), so the same visual
+   *  the C11 law dungeonContext.js:2462 states), so the same visual
    *  result needs the shift on the DUNGEON side - which is exactly the
    *  shift the dungeon's own RDB flats already take
-   *  (dungeonContext.js:2207, `y - size.h / 2`), and which a building's
+   *  (dungeonContext.js:2346, `y - size.h / 2`), and which a building's
    *  flats correctly do not (interiorContext.js passes its centers
    *  straight through).
    *
@@ -7155,6 +7159,15 @@ export function createWorldModes(host) {
       // throw here used to leak the whole build on EVERY E-press at
       // such a door (the callers only log it). Free it first.
       if (!landing) { abandonContext(ctx); throw new Error('no interior landing'); }
+      // AUDIT-E1/E4 (the living world's rooms, scenes/livingIndoors.js): the room's own answers, kept with it - whether it
+      // is a player's own (DFU's AddPeople stands nobody in a house the player owns; HOME1's homes and the private rooms
+      // likewise), and where it is laid out from: the landing of the building's FIRST door (its block's own order),
+      // whichever door was taken - laid out from the player's feet, a load made upstairs, another door or a peer laid it
+      // out anew; a first door with no floor at it, the door taken. Every way in is kept clear of the room's places.
+      ctx.ownedRoom = !!(restore?.privateRoom || hit.sailingCabin || (building && (home !== null || isHouseOwned(playerEntity.houses ?? [], building.regionIndex ?? 0, building.buildingKey))));
+      const waysIn = siblings.map((s) => interiorLanding(doorWorldPosition(s.door), ctx.enterMarkers, ctx.doors, (p) => standsOnFloor(ctx.collider, p)));
+      ctx.landing = [...(waysIn[0] ?? landing)];
+      ctx.waysIn = waysIn.filter(Boolean);
       exitReturn = { siblings };
       exteriorDoor = hit.door;   // IS1: SetExteriorDoors - the save's way back in
       interiorCtx = ctx;
@@ -7348,6 +7361,7 @@ export function createWorldModes(host) {
     // gives a door at 5 - a mis-order that only got louder once the
     // families below started reaching for the ray themselves.
     if (_enemyArm(RAY_DISTANCE, _pick?.distance ?? Infinity)) return true;
+    if (host.livingPersonsAct?.(eye, dir, _pick?.distance ?? Infinity)) return true;   // LW8: a resident in the room, nearer than the ladder's winner - the street's own talk ray (the host's townTalk.tryActivate)
     if (_pick && _pick === _boatPick) { host.csaActivate?.(_pick); return true; }   // CSA-D: RegisterCustomActivation's silent reach - no "too far" of the port's
     const key = _pick?.key ?? null;
     if (key === null) return false;
@@ -8029,8 +8043,11 @@ export function createWorldModes(host) {
                 reviveForPlay(playerEntity, { force: true });   // DEATHLOOP1: the drains go with the heal
                 surfacePlayer();
                 const goldLost = applyDeathPenalty(playerEntity);   // DEATH-PENALTY: Privateer's Hold is an online death like any other
+                endPlayerFights();   // AUDIT FEUD (RVN10): the death ended every fight
+                const took = revenantTakes(playerEntity, { online: true });   // AUDIT FEUD (RVN8, Feud-Arc.md 19): its killer's theft, once a death - the world host's respawn's own
                 ctx.clearDeathOverlay?.();
                 if (goldLost > 0) say(deathPenaltyText(goldLost));
+                if (took?.line) say(took.line);
                 return true;
               }
             }
@@ -8139,7 +8156,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:8463), so the OUTER host's one rides in.
+          // (dungeonContext.js:8706), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:847 -> the
@@ -8440,7 +8457,7 @@ export function createWorldModes(host) {
     // AUDIT 62 F16/F28: TI1's tap-to-lock - see tryExit's twin. This is
     // the ladder the classic start into Privateer's Hold runs through,
     // so it is the one the feature was most missing from; the arm is
-    // scenes/dungeon.js:265's, line for line, over this context's pool.
+    // scenes/dungeon.js:267's, line for line, over this context's pool.
     if (host.activateDir?.() && dungeonCtx) {
       const f = pickFoe(eye, dir, dungeonCtx.foes.filter((f) => f.companion == null), dungeonCtx.collider, LOCK_PICK_DISTANCE);   // AUDIT WK-P2: the street's law underground too (tryExit's note) - dungeon.js's own arm, which stands no companion, keeps its whole pool
       if (f) { host.lockToggle?.(f); return true; }
@@ -8475,7 +8492,7 @@ export function createWorldModes(host) {
         // never drawn, ticked, keyed or clicked in dungeon mode, so a
         // box mounted there orphaned until the next building entry and
         // a line said there opened a second popup column over the
-        // dungeon's own. scenes/dungeon.js:279-280 is the same pair.
+        // dungeon's own. scenes/dungeon.js:281-282 is the same pair.
         hud: (t) => dungeonCtx.hudSay(t),
         modal: (t) => dungeonCtx.hudBox(String(t).split('\n')),
         makeEnemiesHostile: () => makeEnemiesHostile(dungeonCtx.foes.filter((f) => !f.dead)),
@@ -8746,7 +8763,7 @@ export function createWorldModes(host) {
     // the movers kept travelling - all of it under the open menu.
     // DFU UserInterfaceManager.AddWindow (:179-184) calls
     // PauseGame(true) for any PauseWhileOpen window (the default),
-    // which is what dungeon.js:354's `held` already implements.
+    // which is what dungeon.js:356's `held` already implements.
     // AUDIT 39 (#28): and the OUTER host's slot with them. AddWindow
     // pauses for the window, not for the slot it was pushed into -
     // and townTalk's slot really does hold one in these modes: this
@@ -8825,8 +8842,9 @@ export function createWorldModes(host) {
     // jump while the player still falls), and it was standing in for
     // both: a fall opened under a menu completed under it and
     // applyFallLanding charged the damage, a swimmer kept sinking, and
-    // the crouch edge still toggled. dungeon.js:581 is this same gate
+    // the crouch edge still toggled. dungeon.js:583 is this same gate
     // ("no movers, no motor").
+    playerBlowFrame({ motor: player, entity: playerEntity, shake: (k) => betterAmbience.weaponKick(k), hurt: (n) => { hurtPlayer(playerEntity, n); flashPlayerDamage(n); surfacePlayer(); } });   // TELL6e: a landing's push, rattle, knockdown and bleed; AUDIT TELL L6: under a window too, as the street's hosts run it - a building's foes keep their clock there (WINFOE1), and a bleed its ticks, never all at once on the close
     if (!overlayHeld) {
       // Audit F3: crouch stays live while paralyzed (DFU gates movement/jump only)
       // AUDIT 39r: and so does the SPEED-ADJUSTMENT capture. DFU zeroes the
@@ -8951,7 +8969,7 @@ export function createWorldModes(host) {
       if (!overlayHeld) dungeonCtx.reportActivity?.({ running: player.isRunning && !player.standing, runningTally: player.isRunning && !player.riding, standing: !!player.standing, swimming: player.swimming, climbing: !!player.climb?.isClimbing, jumped: player.jumped, parkoured: player.parkoured, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, grip: player.gripShown, fell: player.landedFallDistance, odometer: player.odometer });   // P13 sneak state + P14 fall landing (AUDIT 26 F083: + the climbing arm; MOVE-REAL: + the odometer; CLIMB2: + the grip the context's HUD draws)
       // PlayerMotor.StartRestGroundedCheck (:184-194) reads the LIVE
       // grounded state; dungeonContext's `_grounded` is host-fed and
-      // only dungeon.js:423 fed it, so in a world-hosted dungeon the
+      // only dungeon.js:425 fed it, so in a world-hosted dungeon the
       // rest gate read the initialiser `true` for the whole session
       // and R mid-fall opened the window DFU refuses (TEXT.RSC 355).
       if (!overlayHeld) dungeonCtx.reportMotor?.(player.grounded, player.velY, cam.yaw);
@@ -9144,7 +9162,7 @@ export function createWorldModes(host) {
     if (mode === 'dungeon') {
       if (pendingDungeonExit) { pendingDungeonExit = false; if (aliveUnder()) { exitDungeonNow(); return true; } }   // F-A5: outside any overlay dispatch; AUDIT WB B2: a death taken since is the death's to resolve (the court's casts out before its gate) - never a dead player walked out
       if (pendingDungeonWagonOpen) { pendingDungeonWagonOpen = false; dungeonCtx.openInventoryWithWagon(); }   // DISC21-B: the box is off the slot now
-      if (!overlayHeld) dungeonCtx.actions.update(dt);   // dungeon.js:355's `if (!held)` - a paused game advances no movers
+      if (!overlayHeld) dungeonCtx.actions.update(dt);   // dungeon.js:357's `if (!held)` - a paused game advances no movers
       if (!overlayHeld) dungeonCtx.automapTick?.(dt, cam.pos, fwd);   // A1: the 5 Hz reveal probes ride the same gate
       dungeonCtx.flicker.tick(dt);
       const _deadS = isGateArena(dungeonLoc) ? (host.deadlandsSeconds?.() ?? performance.now() / 1000) : 0;   // WB6b: the sky's clock, for the court's flash and its shards
@@ -9378,6 +9396,7 @@ export function createWorldModes(host) {
         tallySkill(playerEntity, SKILLS.Dodging, 1);
         const dmg = shooter && !shooter.dead ? calculateAttackDamage(shooter.entity, playerEntity, {
           weapon: m.weapon,
+          blowInfo: m.aimed ? aimedBlowInfo(m) : null,   // TELL6d: an aimed shot's x1.4
           onInflictPoison: (att, tgt, pt) => inflictPoison(playerEntity, pt, false, { currentMinute: Math.floor(interiorTicker.ownMinutes) }),
           say: (l) => say(l),
         }) : 0;
@@ -9387,7 +9406,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:16602's own wave-46 note); the interior
+          // a blow (world.js:17365's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -9415,17 +9434,17 @@ export function createWorldModes(host) {
         // host's sinks do (`insideFoeSinks`), so a killed watchman
         // runs the crime and the corpse in the pool that owns it.
         dealDamage: (f, d) => (f._encounter
-          ? interiorFoes?.damageFoe(f, d, player.pos, m.dir, { kind: 'arrow' })   // WORLD6b-iii(e): the kind rides the hit
-          : interiorGuards?.hurtGuard(f, d, player.pos, m.dir)),
+          ? interiorFoes?.damageFoe(f, d, player.pos, m.dir, { kind: 'arrow', weapon: m.weapon ?? null })   // AUDIT FEUD 2: the bow (a metal weakness rides to a puppet's owner)   // WORLD6b-iii(e): the kind rides the hit
+          : interiorGuards?.hurtGuard(f, d, player.pos, m.dir, { kind: 'arrow' })),   // TELL1: a shaft's weight on a wind-up
         audio, hitEffects: interiorHitEffects, say: (l) => say(l),
         onInflictPoison: (att, tgt, pt) => (t._encounter ? interiorFoes?.poisonFoe(t, pt) : inflictPoison(tgt, pt, false, { currentMinute: Math.floor(interiorTicker.ownMinutes) })),   // WORLD6b-iii(e): the pool's one poison door, split by pool as the damage door above
         // AUDIT 58: WeaponManager.cs:630 after the damage fork - a
         // zero-damage shaft still enrages its mark and the room.
         // ROAD-G G1 (review): the interior WATCH carries the pair now
-        // (cityGuards.js:780-785), so this seam splits by pool exactly
+        // (cityGuards.js:783-788), so this seam splits by pool exactly
         // as `dealDamage` above it does rather than dropping the
         // non-encounter half - the zero-damage SWING already reaches
-        // that door (cityGuards.js:1349) and the shaft owes the same.
+        // that door (cityGuards.js:1366) and the shaft owes the same.
         onAttackFromPlayer: (f) => (f._encounter
           ? interiorFoes?.attackFromPlayer(f, player.pos, 'arrow')   // AUDIT WORLD6b-iii(e) A2: the pool's one door, the shaft's kind on it
           : interiorGuards?.handleAttackFromPlayer(f, player.pos)),
@@ -9451,6 +9470,8 @@ export function createWorldModes(host) {
     renderer.drawFoeTelegraphs?.(drawableBlows(tacticsNow(), player.pos));   // TACT4: a foe's wind-up on the ground
     interiorBloodMarks.draw(camRight, UP_Y);
     renderer.drawBillboards([...interiorCtx.billboardBatches, ...(host.extraBillboards?.() ?? [])], camRight, UP_Y);   // ONLINE1: the peers on the interior's own pass
+    const livingInside = host.livingBillboards?.() ?? [];   // LW8: the residents the day has in this building
+    if (livingInside.length) renderer.drawBillboards(livingInside, camRight, UP_Y);
     // HE1: the blood, on the same axis and the same call the exterior
     // host makes for its own pool.
     interiorHitEffects.tick(dt);
@@ -9548,7 +9569,7 @@ export function createWorldModes(host) {
     // above-ground hosts pass (WeaponManager.cs:235-239 - ShowWeapons
     // (false) and no swing). This host's interior rig was handed
     // nothing, so a paralysed player indoors kept swinging.
-    for (const ev of (overlayHeld ? [] : interiorWeapon.frame(dt, { paralyzed }))) {
+    for (const ev of (overlayHeld ? [] : interiorWeapon.frame(dt, { paralyzed: paralyzed || knockedDown() }))) {   // TELL6e: knocked down, no swing
       // AUDIT 23 (combat-2): the bow machine's frame-4 loose sound.
       if (ev === 'bowSound') { audio.playOneShot(SOUND.ArrowShoot, 1.1); continue; }
       if (ev !== 'hit') continue;
@@ -9627,6 +9648,7 @@ export function createWorldModes(host) {
       // indoors.
       host.drawCompanionBars?.({ proj, view, eye: mwv.eye });   // CREW-COMPANIONS: my companions' bars
       host.drawPeerNames?.({ proj, view, eye: mwv.eye });   // ONLINE1: the names over the heads, under the HUD
+      host.livingSpeech?.({ proj, view, eye: mwv.eye, dt });   // LW8b: the room's residents' talk, on the crew's one layer
       // WORLD-HOVER: the plaque, where this host already draws its HUD.
       // It races `interiorActivationTargets()` - the SAME list the
       // press races - so it can never name what the button ignores.
@@ -10105,7 +10127,7 @@ export function createWorldModes(host) {
     // V4 (the first-hour playthrough probe): THE WORLD HOST'S DUNGEON
     // MODE HAD NO COMBAT OR LOOT SURFACE AT ALL. worldModes mounts a
     // real dungeonContext but installed none of the hooks
-    // scenes/dungeon.js:440-495 carries, so a probe could take the
+    // scenes/dungeon.js:442-497 carries, so a probe could take the
     // classic start into Privateer's Hold and then see nothing inside
     // it - no foes, no vitals, no corpses. Same names and same shapes
     // as the standalone host's, so one probe reads either.
@@ -10329,7 +10351,7 @@ export function createWorldModes(host) {
   addEventListener('mousedown', (e) => {
     // AUDIT-MACK F2: THIS HOST DOES NOT FEED THE HELD SET, and MAC-K1
     // briefly made it. `keys` is not this host's - it arrives on the
-    // host bag (`exterior.js:4149`, `world.js`'s twin), and the OUTER
+    // host bag (`exterior.js:4157`, `world.js`'s twin), and the OUTER
     // host's own mousedown writes `keys.add(mouseCode(e.button))`
     // UNGATED, before any mode test, on a listener that is never
     // removed. So the three button codes were already in the Set while
@@ -10343,7 +10365,7 @@ export function createWorldModes(host) {
     // for it is now the real invariant: one feeder per Set, and every
     // reader on a fed one (test/mack_bugs.test.js).
     // I4: a right-click on a window is the WINDOW's (the remove
-    // gesture), never a swing - dungeon.js:263 and both exterior slots
+    // gesture), never a swing - dungeon.js:265 and both exterior slots
     // have always said so, and this host's modal arm had no gate at
     // all. DFU pauses the game under any PauseWhileOpen window
     // (UserInterfaceManager.cs:179-185), so the click never reaches
@@ -12051,6 +12073,8 @@ export function createWorldModes(host) {
     // Q4-v: the world seam's playerInside half + the machine's
     // hot-place callback (deps.world.mountCurrentSiteQuestResources).
     get interiorBuilding() { return interiorBuilding; },
+    /** AUDIT-E7: where the room's quest people stand (the living world's room keeps them clear). */
+    interiorQuestFeet: () => (mode === 'interior' ? questFlats.filter((q) => !q.dead && q.active !== false && Number.isFinite(q.x) && Number.isFinite(q.z)).map((q) => [q.x, q.y ?? 0, q.z]) : []),
     /** HOME-MAGIC: the place's refusal of any cast - a visitor's in another's online home - or null (the world host's
      *  cast engine asks it: hostMagic.js `castRefusal`). */
     castRefusal: () => visitorMagicRefusal(),
@@ -12117,9 +12141,9 @@ export function createWorldModes(host) {
      *  .cs:175-176 writes `weaponDrawn`/`usingLeftHand` off it,
      *  :420-421 restores them onto it. The port has FOUR PlayerWeapons
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
-     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3690-3712), and IS1 routed the inside-a-building save to
+     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3697-3719), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:12376). So an F9 pressed in a shop
+     *  unconditionally (world.js:13126). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -12158,7 +12182,7 @@ export function createWorldModes(host) {
       if (interiorOverlay instanceof DeathScreen) { interiorOverlay.restoreView(); interiorOverlay = null; }
     },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:12739)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:13489)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -12168,8 +12192,8 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:11278`
-     *  and `dungeonContext.js:8475` for its two sibling copies - lines
+     *  HARD2c: this used to spell them out, and named `world.js:12018`
+     *  and `dungeonContext.js:8718` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {

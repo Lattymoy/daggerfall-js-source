@@ -101,6 +101,7 @@ import {
   WEAPON_MATERIAL_MODIFIER, enemyEntityGroup, careerAttackModifier, ENEMY_GROUPS, dice100,
   MATERIAL_INEFFECTIVE_TEXT, SUCCESSFUL_BACKSTAB_TEXT,
   damageEquipment,   // WEAR-VANILLA: DFU's DamageEquipment, the core's wear while the wear module is off
+  silverDoubles,     // RVN2: a Silver-scarred revenant's double gone, in this core as in the stock's
 } from './formulas.js';
 import { meanerMonstersOn } from './pcaaoMeanerMonsters.js';
 import { RR_VENDOR, rrAdjustWeaponHitChanceMod, rrAdjustWeaponAttackDamage } from '../systems/rrRealism.js';   // AUDIT 68 S08-pcaao-archery-duplicate: RR's two archery members, one export
@@ -504,8 +505,8 @@ export function pcaaoWeaponAttackDamage(attacker, target, damageModifier, weapon
   if (!isPlayer(target)) {
     if (target.careerIndex === SKELETAL_WARRIOR) {
       if (((weapon.flags ?? 0) & 0x10) === 0) damage = int(damage / 2);
-      if (weapon.material === 2) damage *= 2;
-    } else if (SILVER_DOUBLED_CAREERS.includes(target.careerIndex) && weapon.material === 2) {
+      if (weapon.material === 2 && silverDoubles(target)) damage *= 2;   // RVN2: unless a veto keeps it plain (formulas.js)
+    } else if (SILVER_DOUBLED_CAREERS.includes(target.careerIndex) && weapon.material === 2 && silverDoubles(target)) {
       damage *= 2;
     }
   }

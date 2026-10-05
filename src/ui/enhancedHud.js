@@ -558,7 +558,13 @@ function build(doc) {
   foeBladeEmpty.style.backgroundImage = `url("${BLADE_EMPTY_URL}")`;
   foeBladeFull.style.backgroundImage = `url("${BLADE_FULL_URL}")`;
   foeBlade.append(foeBladeEmpty, foeBladeFull);
-  foe.append(foeName, foeTrack, foeBlade);
+  // TELL9 (bible/12-Enhanced-AI/Feud-Arc.md 11.1): THE POISE TRACK under the health - a foe's wind-up read: empty, amber
+  // and filling toward its poise, red and hatched "Iron", a white flash "Staggered", "Open"; none for a foe with no brain
+  const foePoise = el('div', 'hud-foepoise');
+  const foePoiseFill = el('i', 'hud-poisefill');
+  const foePoiseWord = el('span', 'hud-poiseword');
+  foePoise.append(foePoiseFill, foePoiseWord);
+  foe.append(foeName, foeTrack, foeBlade, foePoise);
   top.append(foe);
   root.append(top);
 
@@ -822,7 +828,7 @@ function build(doc) {
   cells.main.cell.addEventListener('pointerdown', tap(() => { liveOpts.quickSwitchHand?.(); }));
 
   doc.body.append(root);
-  return { root, bottom, compass, marks, detectMarks: [], partyMarks: [], shipMarks: [], nodeMarks: [], boatMarks: [], gateMark: null, serpentMark: null, questMark: null, foe, foeName, foeFill, foeGhost, foeChunks, foeBladeFull, magicka, health, fatigue,
+  return { root, bottom, compass, marks, detectMarks: [], partyMarks: [], shipMarks: [], nodeMarks: [], boatMarks: [], gateMark: null, serpentMark: null, questMark: null, foe, foeName, foeFill, foeGhost, foeChunks, foeBladeFull, foePoise, foePoiseFill, foePoiseWord, magicka, health, fatigue,
     stat, quickCap: cap, quickDiamond: diamond, top,   // UI3: the status widget, the caption it stands on, the diamond it may stand beside and the top block over it (its band is measured from them)
     renown, renownBox, renownFill, renownGhost, renownNum,
     breath, breathFill, grip, gripFill, readied, reticle, cross, centreWord, cornerWord,
@@ -978,6 +984,7 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
   if (!t) {
     if (last.foe !== null) { last.foe = null; parts.foe.classList.remove('on'); }
     last.foeRef = null;
+    if (last.foePoise !== null) { last.foePoise = null; last.foePoiseRef = null; parts.foe.classList.remove('poised'); parts.foePoise.className = 'hud-foepoise'; }
   } else {
     if (last.foe !== t.name) { last.foe = t.name; parts.foe.classList.add('on'); }
     // FRAME1b: the loss readout follows the FOE, not its name. Keyed on the
@@ -1003,6 +1010,20 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
     if (blade) clipInset(parts.foeBladeFull, 'foeBlade', bladeInset(foePct));
     const o = t.fade < 1 ? String(t.fade.toFixed(2)) : '';
     if (parts.foe.style.opacity !== o) parts.foe.style.opacity = o;
+    // TELL9 (11.1): the poise track - its state a class (the sheet's colour, the hatch, the flash), its fill, its word
+    const p = t.poise;
+    const pk = p ? p.state : '';
+    if (last.foePoise !== pk || last.foePoiseRef !== ref) {
+      // AUDIT TELL U4: the flash is a break's - THIS foe going into its stagger, never the bar turned onto one already in it
+      const flash = pk === 'staggered' && last.foePoiseRef === ref && last.foePoise !== 'staggered';
+      last.foePoise = pk; last.foePoiseRef = ref;
+      parts.foe.classList.toggle('poised', !!p);
+      parts.foePoise.className = `hud-foepoise${p ? ` ${p.state}` : ''}${flash ? ' flash' : ''}`;
+    }
+    if (p) {
+      width(parts.foePoiseFill, 'foePoiseFill', p.fill * 100);
+      put(parts.foePoiseWord, 'foePoiseWord', p.word);
+    }
   }
 
   // THE VITALS. maxFatigue is the (Str+End)x64 ceiling the classic

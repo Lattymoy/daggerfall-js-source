@@ -46,7 +46,8 @@ const PAD_CODE = Object.fromEntries(Object.entries(HELM_DPAD).map(([code, dir]) 
  * stows the sails - held, the square sails alone where the hull carries both kinds (the modifier's chord); down lights
  * or douses the lanterns - held, leaves the helm; left and right step the time scale down and up - held, trim the sails
  * while the trim is the player's (SailingAssist.AutoTrimming off), else left held puts the time back to one. Returns
- * true for a hold the let-go must end (the trim).
+ * true for a hold the let-go must end (the trim). HELM-TIME-ONLINE: with the time dial retired (`h.timeDial` false -
+ * online) left and right step nothing, and held they only trim.
  * @param {'up'|'down'|'left'|'right'} dir @param {'tap'|'hold'|'release'} kind
  * @param {any} h - helmPanelState() @param {{ press: (a: string, w?: string) => void, hold: (a: string, on: boolean) => void }} io
  */
@@ -57,6 +58,7 @@ export function helmPadGesture(dir, kind, h, { press, hold }) {
   if (kind === 'tap') {
     if (dir === 'up') { if (h.hasSails) press(A.sail); }
     else if (dir === 'down') press(A.light);
+    else if (h.timeDial === false) return false;   // HELM-TIME-ONLINE: no dial to step
     else if (dir === 'left') press(A.slower);
     else if (dir === 'right') press(A.faster);
     return false;
@@ -64,17 +66,22 @@ export function helmPadGesture(dir, kind, h, { press, hold }) {
   if (dir === 'up') { if (h.squareToggle) press(A.sail, A.trimModifier); else if (h.hasSails) press(A.sail); return false; }
   if (dir === 'down') { press(A.disembark); return false; }
   if (h.manualTrim && h.hasSails) { hold(trim, true); return true; }
+  if (h.timeDial === false) return false;   // HELM-TIME-ONLINE: no time to put back
   if (dir === 'left') press(A.normal); else press(A.faster);
   return false;
 }
 /** CSA-L: the prompt bar's rows at the helm (the pad's own glyphs, ui/plusPad.js showPrompts). */
 export function helmPadPrompts(h) {
   if (!h) return null;
-  return [
+  const trims = h.manualTrim && h.hasSails;
+  const rows = [
     [[PAD_CODE.up], h.squareToggle ? 'Sails (hold: square sails)' : 'Sails'],
     [[PAD_CODE.down], 'Lanterns (hold: leave the helm)'],
-    [[PAD_CODE.left, PAD_CODE.right], h.manualTrim && h.hasSails ? 'Slower / faster (hold: trim)' : 'Slower / faster (hold left: normal time)'],
   ];
+  // HELM-TIME-ONLINE: online no dial - the pair says the trim alone, where the trim is the player's
+  if (h.timeDial === false) { if (trims) rows.push([[PAD_CODE.left, PAD_CODE.right], 'Trim (hold)']); }
+  else rows.push([[PAD_CODE.left, PAD_CODE.right], trims ? 'Slower / faster (hold: trim)' : 'Slower / faster (hold left: normal time)']);
+  return rows;
 }
 
 /**
@@ -95,7 +102,8 @@ export function helmButtons(h) {
     if (h.hasSquare && !h.squareOnly) out.push({ act: 'squareLeft', label: '◀ Square', kind: 'hold', action: A.trimLeft, withHeld: A.trimModifier }, { act: 'squareRight', label: 'Square ▶', kind: 'hold', action: A.trimRight, withHeld: A.trimModifier });
   }
   out.push({ act: 'light', label: h.light ? 'Douse lanterns' : 'Light lanterns', kind: 'tap', action: A.light });
-  out.push({ act: 'slower', label: '−', kind: 'tap', action: A.slower, disabled: !(h.timeScaleIndex > 0) },
+  // HELM-TIME-ONLINE (2026-10-04, Mac: "Remove the time dial from ships online"): the dial's three only where it turns
+  if (h.timeDial !== false) out.push({ act: 'slower', label: '−', kind: 'tap', action: A.slower, disabled: !(h.timeScaleIndex > 0) },
     { act: 'normal', label: `×${h.timeScale ?? 1}`, kind: 'tap', action: A.normal, disabled: !(h.timeScaleIndex > 0) },
     { act: 'faster', label: '+', kind: 'tap', action: A.faster, disabled: !(h.timeScaleIndex < h.timeScaleMax) });
   if (h.orders) out.push({ act: 'orders', label: 'Orders', kind: 'hook' });   // SHIP-CREW: her captain's orders (the naval arc on)

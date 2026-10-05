@@ -185,8 +185,8 @@
   },
   {
     "name": "DW1-21-one-pick-site-forgets-the-door",
-    "file": "src/scenes/shared.js",
-    "old": "      setDiverseWeaponsSources(names, loadTextureFile);   // DW1: Diverse Weapons' bundle, from the same pick\n",
+    "file": "src/scenes/dataSource.js",
+    "old": "  setDiverseWeaponsSources(names, loadTextureFile);   // DW1: Diverse Weapons' bundle, a sprite set per weapon\n",
     "new": "",
     "tests": [
       "test/dw1_diverseweapons.test.js"
@@ -240,8 +240,8 @@
   {
     "name": "DW3-2-a-gated-vendor-entry-answers-while-off",
     "file": "src/systems/textureReplacement.js",
-    "old": "  if (v) return (!v.gate || v.gate() === true) ? (_decoded.get(key) ?? null) : null;   // SURV2: the port's own, ungated - DW3: unless its registration gates it",
-    "new": "  if (v) return _decoded.get(key) ?? null;",
+    "old": "  if (v) return (!v.gate || v.gate() === true) ? decodedFrom(key, liveEntry(key)) : null;   // SURV2: the port's own, ungated - DW3: unless its registration gates it",
+    "new": "  if (v) return decodedFrom(key, liveEntry(key));",
     "tests": [
       "test/dw3_icons.test.js"
     ]
@@ -295,8 +295,8 @@
   {
     "name": "AUDITDW-F1-the-archive-preload-takes-the-lazy-entries",
     "file": "src/systems/textureReplacement.js",
-    "old": "  const todo = sources.filter(([key, entry]) => entry.archive === Number(archive) && !entry.lazy && !_decoded.has(key));",
-    "new": "  const todo = sources.filter(([key, entry]) => entry.archive === Number(archive) && !_decoded.has(key));",
+    "old": "    if (entry && !entry.lazy && !decodedFrom(key, entry)) todo.push([key, entry]);",
+    "new": "    if (entry && !decodedFrom(key, entry)) todo.push([key, entry]);",
     "tests": [
       "test/dw3_icons.test.js",
       "test/auditdw.test.js"
@@ -314,8 +314,8 @@
   {
     "name": "AUDITDW-F1-a-gated-off-icon-is-fetched",
     "file": "src/systems/textureReplacement.js",
-    "old": "  if (!hasTextureReplacement(archive, record, frame, map, dye)) return Promise.resolve(null);\n  if (!_decoding.has(key)) {\n    const entry = entryFor(key);",
-    "new": "  if (!_decoding.has(key)) {\n    const entry = entryFor(key);\n    if (!entry) return Promise.resolve(null);",
+    "old": "  if (!entry || !hasTextureReplacement(archive, record, frame, map, dye)) return Promise.resolve(null);",
+    "new": "  if (!entry) return Promise.resolve(null);",
     "tests": [
       "test/dw3_icons.test.js"
     ]

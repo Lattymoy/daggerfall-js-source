@@ -1,0 +1,167 @@
+[
+  {
+    "name": "LW-FIX5-keepsake-census",
+    "file": "src/systems/livingWorld/keepsake.js",
+    "old": "    && (it.livingKeepsake.home ?? homeOf?.(it.livingKeepsake.id) ?? null) === home",
+    "new": "    && it.livingKeepsake.home === home",
+    "tests": [
+      "test/lwfix5_deep.test.js",
+      "test/lwfix2_watch.test.js",
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX5-generation",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    const place = String(id ?? '').split('~')[0];",
+    "new": "    const place = String(id ?? '');",
+    "tests": [
+      "test/lwfix5_deep.test.js",
+      "test/lwfix2_watch.test.js",
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX5-resolver-unpassed",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "res.town, res.home, res.id, (id) => this._homeOfPlace(id));",
+    "new": "res.town, res.home, res.id);",
+    "tests": [
+      "test/lwfix5_deep.test.js",
+      "test/lwfix2_watch.test.js",
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX5-marked-on-laying",
+    "file": "src/scenes/deepRemains.js",
+    "old": "          here.set(r.key, { pile, n: deps.count?.(pile) ?? 0 });",
+    "new": "          here.set(r.key, { pile, n: deps.count?.(pile) ?? 0 }); deps.mark(r.key);",
+    "tests": [
+      "test/lwfix5_deep.test.js",
+      "test/lwfix2_watch.test.js",
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX5-count-unread",
+    "file": "src/scenes/deepRemains.js",
+    "old": "(!deps.there(at) || (deps.count?.(h.pile) ?? h.n) < h.n)",
+    "new": "(!deps.there(at) || false)",
+    "tests": [
+      "test/lwfix5_deep.test.js",
+      "test/lwfix2_watch.test.js",
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX5-gone-unread",
+    "file": "src/scenes/deepRemains.js",
+    "old": "(!deps.there(at) || (deps.count?.(h.pile) ?? h.n) < h.n)",
+    "new": "((deps.count?.(h.pile) ?? h.n) < h.n)",
+    "tests": [
+      "test/lwfix5_deep.test.js",
+      "test/lwfix2_watch.test.js",
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX5-visit-unforgotten",
+    "file": "src/scenes/deepRemains.js",
+    "old": "    clear() { told.clear(); here.clear(); arriving = true; },",
+    "new": "    clear() { told.clear(); arriving = true; },",
+    "tests": [
+      "test/lwfix5_deep.test.js",
+      "test/lwfix2_watch.test.js",
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX5-key-unpassed",
+    "file": "src/scenes/deepRemains.js",
+    "old": "          const pile = deps.lay(r.res, at, r.key);",
+    "new": "          const pile = deps.lay(r.res, at);",
+    "tests": [
+      "test/lwfix5_deep.test.js",
+      "test/lwfix2_watch.test.js",
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX5-host-seed",
+    "file": "src/scenes/world.js",
+    "old": "    const rolls = lwRng(textSeed(key), 0x676f6f64);",
+    "new": "    const rolls = lwRng(textSeed(String(Math.random())), 0x676f6f64);",
+    "tests": [
+      "test/lwfix5_deep.test.js",
+      "test/lwfix2_watch.test.js",
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX5-host-mint",
+    "file": "src/scenes/world.js",
+    "old": "if (raw && !isAmmunition(raw)) items.push(mintCondition(setItemFields(raw)));",
+    "new": "if (raw && !isAmmunition(raw)) items.push(raw);",
+    "tests": [
+      "test/lwfix5_deep.test.js",
+      "test/lwfix2_watch.test.js",
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX5-host-arrow",
+    "file": "src/scenes/world.js",
+    "old": "if (raw && !isAmmunition(raw)) items.push(mintCondition(setItemFields(raw)));",
+    "new": "if (raw) items.push(mintCondition(setItemFields(raw)));",
+    "tests": [
+      "test/lwfix5_deep.test.js",
+      "test/lwfix2_watch.test.js",
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX5-host-count",
+    "file": "src/scenes/world.js",
+    "old": "        count: (pile) => pile?.items?.length ?? 0,",
+    "new": "        count: () => 0,",
+    "tests": [
+      "test/lwfix5_deep.test.js",
+      "test/lwfix2_watch.test.js",
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX5-watch-dead-found",
+    "file": "src/scenes/livingWatch.js",
+    "old": "    w.guard ??= guards.find((g) => g.livingFrom === w.from) ?? null;",
+    "new": "    w.guard ??= guards.find((g) => g.livingFrom === w.from || g.dead) ?? null;",
+    "tests": [
+      "test/lwfix5_deep.test.js",
+      "test/lwfix2_watch.test.js",
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX5-swing-body",
+    "file": "src/scenes/cityGuards.js",
+    "old": "    if (stood && best.person?.living) stood.livingFrom = best.person.living;",
+    "new": "    if (stood && best.person) stood.livingFrom = best.person;",
+    "tests": [
+      "test/lwfix5_deep.test.js",
+      "test/lwfix2_watch.test.js",
+      "test/lw6c_keepsake.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX5-trample-body",
+    "file": "src/systems/rrRidingHost.js",
+    "old": "        const from = person.living ?? null;",
+    "new": "        const from = person;",
+    "tests": [
+      "test/lwfix5_deep.test.js",
+      "test/lwfix2_watch.test.js",
+      "test/lw6c_keepsake.test.js"
+    ]
+  }
+]

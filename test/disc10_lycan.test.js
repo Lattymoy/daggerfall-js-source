@@ -406,7 +406,7 @@ test('DISC10-E L3: quick loot takes nothing into a beast\'s pack - it answers "o
 test('DISC10-D H1: every player strike site calls the one dispatcher AFTER its door - the dungeon\'s swing (both arms), the encounter pool\'s, the watch\'s, the civilian\'s, the arrow\'s', () => {
   const d = rd('src/scenes/dungeonContext.js');
   assert.match(d, /attackFromPlayer\(foe, playerFeet\);[^\n]*\n\s*playerWeaponHitEntity\(playerEntity, foe\.entity, \{ mobileType: foe\.mobileType \}\);[^\n]*\n\s*continue;/, 'the dungeon\'s zero-damage connect');
-  assert.match(d, /damageFoe\(foe, damage, playerFeet, lookDir\);[^\n]*\n\s*playerWeaponHitEntity\(playerEntity, foe\.entity, \{ mobileType: foe\.mobileType \}\);/, 'the dungeon\'s damaging connect');
+  assert.match(d, /damageFoe\(foe, damage, playerFeet, lookDir, \{ weapon: playerWeapon\.strikingWeapon \}\);[^\n]*\n\s*playerWeaponHitEntity\(playerEntity, foe\.entity, \{ mobileType: foe\.mobileType \}\);/, 'the dungeon\'s damaging connect');   // PIN MOVED (TELL1: the striking weapon rides the door - a wind-up's poise)
   assert.match(rd('src/combat/arrowFlight.js'), /playerWeaponHitEntity\(playerEntity, foe\.entity, \{ mobileType: foe\.mobileType \?\? null \}\);\n\s*return dmg;/, 'the arrow, last');
 });
 

@@ -259,9 +259,9 @@ test('RAID-GUARDS-NPC: while a raid is on, the town\'s walkers take none of the 
     const body = src.slice(src.indexOf('{\n', at) + 1, src.indexOf("}).catch((e) => console.error('[civil]', e));", at));
     const tail = (r) => {
       const d = { bashed: 0, whoosh: 0, surfaced: 0, tallied: 0 };
-      new Function('r', 'modes', 'audio', 'surfacePlayer', 'tallySwingSkills', 'swingSoundFor', 'weaponRig', 'playerEntity', 'cam', 'lookFwd', 'eye', 'fwd', body)(
+      new Function('r', 'modes', 'audio', 'surfacePlayer', 'tallySwingSkills', 'swingSoundFor', 'weaponRig', 'playerEntity', 'cam', 'lookFwd', 'eye', 'fwd', 'livingStrikeRoad', body)(
         r, { attemptExteriorDoorBash: () => { d.bashed++; return true; } }, { playOneShot: () => { d.whoosh++; } }, () => { d.surfaced++; }, () => { d.tallied++; },
-        () => 'swing', { playerWeapon: {} }, {}, { pos: [0, 0, 0] }, [0, 0, 1], [0, 0, 0], [0, 0, 1]);
+        () => 'swing', { playerWeapon: {} }, {}, { pos: [0, 0, 0] }, [0, 0, 1], [0, 0, 0], [0, 0, 1], () => false);   // LW7: world.js offers a swing that met nobody to the road's travellers first - none here
       return d;
     };
     assert.ok(body.includes(`attemptExteriorDoorBash?.(${doorArgs})`));

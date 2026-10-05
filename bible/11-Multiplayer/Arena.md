@@ -1033,7 +1033,7 @@ potions", "Elite champions", "Relay and service". Four read-only lenses (the tel
 correctness, the online trust), every finding reproduced and fixed here:
 
 - **Telegraphs between fighters.** On the sand a token holder of TACT4's tier winds up at its BOUT-MATE (a fighter of
-  the same live bout on another side, `ai/tactics.js` `blowAim`), the verdict where that fighter stands, the foe-vs-foe
+  the same live bout on another side, `ai/tactics.js` `targetFeet` - `blowAim` until FEUD's merge of main), the verdict where that fighter stands, the foe-vs-foe
   hit paths asking `blowConnects`/`blowScaled`; drawn for the stands to 100 m. A dodged telegraph is a miss for the
   judges (`registerBlowDodgedListener`). The relay's ladder fighters throw the same shapes (`net/arenaBrain.js`, the
   families moved to the leaf `ai/blowShapes.js`), the `atk` word carrying the shape, its facing and its origin.

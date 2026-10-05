@@ -116,11 +116,13 @@ test('DFMOD1 door: names onto the bundle tier by dye and map, xml onto the billb
   await setDfmodSources(names, load, { open, saveIndex });
   assert.equal(opens.length, 0, 'a boot registers from the index alone');
   const c = await preloadTextureRecord(210, 1, 0);
-  assert.equal(c.width, 4, 'the first mod by stored name that carries a name keeps it');
-  assert.equal(decodedTexture(210, 1, 0).colors.length, 4 * 2 * 4);
+  // VE1: the mod loaded LAST answers (TryGetAsset walks EnumerateEnabledModsReverse) - with no dependency between the
+  // two, DFU's load order is the folder's listing, so the later by file name; this pinned the first until VE1
+  assert.equal(c.width, 9, 'the mod loaded last that carries a name answers it');
+  assert.equal(decodedTexture(210, 1, 0).colors.length, 9 * 9 * 4);
   assert.equal((await dfmodImgImage('SCBG04I0.IMG')).width, 3);
   assert.equal((await dfmodCifRciImage('FACES.CIF', 14, 0)).height, 2);
-  assert.deepEqual(opens, ['dfmod/a.dfmod'], 'one open for every picture of one bundle');
+  assert.deepEqual(opens, ['dfmod/b.dfmod', 'dfmod/a.dfmod'], 'one open a bundle, however many of its pictures are drawn');
 
   // idempotent for the same set; a removal re-registers
   const before = dfmodGeneration();
@@ -134,9 +136,10 @@ test('DFMOD1 door: names onto the bundle tier by dye and map, xml onto the billb
 });
 
 test('DFMOD1 wiring: the boot, the pick, the doll, the portraits and the packs card', () => {
-  const shared = src('scenes/shared.js');
-  assert.match(shared, /setDfmodSources\(names, loadTextureFile, \{ saveIndex: saveTextureJson, loadBlob: loadTextureBlob, warm: true \}\)/);
+  // PIN MOVED (AUDIT VE R2): the boot seam calls the store's one registration, which registers the bundles (warmed at a boot)
+  assert.match(src('scenes/shared.js'), /const textures = registerTextureStore\(\)/);
   const ds = src('scenes/dataSource.js');
+  assert.match(ds, /setDfmodSources\(names, loadTextureFile, \{ saveIndex: saveTextureJson, loadBlob: loadTextureBlob, warm \}\)/);
   assert.match(ds, /export async function pickDfmodFiles\(\)/);
   assert.match(ds, /export async function removeStoredDfmod\(key\)/);
   assert.match(ds, /export async function clearStoredMusic\(\)/);
@@ -190,11 +193,13 @@ test('DFMOD2 sources: a Uint8Array or a ranged source reads the same; a Blob is 
 
 test('DFMOD2 wiring: the boot never indexes on its way in, opens by range and warms, asks wait a bounded time, detail is the player\'s', () => {
   const door = src('systems/dfmodTextures.js');
-  assert.match(door, /if \(missing\.length\) \{ if \(background\) indexMissing\(\); else await indexMissing\(\); \}/);
+  // PIN MOVED (AUDIT VE R6): what is indexed in the background is the missing AND the version before's rebuild
+  assert.match(door, /if \(todo\.length\) \{ if \(background\) indexMissing\(\); else await indexMissing\(\); \}/);
   assert.match(door, /if \(blob\?\.size\) return _opener\(blob, \{ maxTextureSize: maxSize\(\), knownTextures: knownOf\(key\) \}\);/);
   assert.match(door, /const b = await Promise\.race\(\[bundleFor\(key\), waited\]\);/);
   assert.match(src('scenes/dataSource.js'), /const index = await indexDfmodBytes\(f\);/, 'an attach reads the picked File by range, not whole');
-  assert.match(src('scenes/shared.js'), /if \(noMods\(\)\) return n;/, 'the ?nomods escape hatch');
+  // PIN MOVED (AUDIT VE R11): the escape hatch is the door's own rule, wherever a registration comes from
+  assert.match(door, /const names = noMods \? \[\] : stored;/, 'the ?nomods escape hatch');
   assert.match(src('ui/enhancedMenu.js'), /label: `Texture detail: \$\{detailLabel\}`/);
 });
 
@@ -325,16 +330,21 @@ test('GROUND1 door: `<archive>-TexArray` is that ground archive\'s tile set - wh
   await setDfmodSources(['dfmod/g.dfmod'], async (k) => stored.get(k) ?? (k === 'dfmod/g.dfmod' ? new Uint8Array(4) : null),
     { open: async () => bundle, saveIndex: async (k, j) => stored.set(k, new TextEncoder().encode(j)), background: false });
   assert.ok(hasDfmodGround(302) && !hasDfmodGround(402));
-  const L = await dfmodGroundLayers(302, 3);
+  // VE2: the hosts hand the classic TEXTURE file - its record count is the depth TryImportTextureArray asks for
+  const tex = (n) => ({ recordCount: n, getDFBitmap: (r) => r, getColor32: () => ({ width: 1, height: 2, colors: new Uint8Array(8) }) });
+  const L = await dfmodGroundLayers(302, tex(3));
   assert.equal(L.length, 3);
   assert.deepEqual([...L[1].colors], [6, 0, 0, 255, 5, 0, 0, 255], 'bottom row first - getColor32\'s order, as the classic layers are');
-  assert.equal(await dfmodGroundLayers(302, 4), null, 'fewer layers than the archive has records: the classic set');
-  assert.equal(await dfmodGroundLayers(402, 3), null);
+  const warn = console.warn; console.warn = () => {};
+  try {
+    assert.equal(await dfmodGroundLayers(302, tex(4)), null, 'an array of another depth is refused, and no record of the archive is carried: the classic set');
+  } finally { console.warn = warn; }
+  assert.equal(await dfmodGroundLayers(402, tex(3)), null);
   setValue('Enhancements', 'AssetInjection', 'False');
-  assert.equal(await dfmodGroundLayers(302, 3), null, 'the gate shut: classic');
+  assert.equal(await dfmodGroundLayers(302, tex(3)), null, 'the gate shut: classic');
   setValue('Enhancements', 'AssetInjection', 'True');
   clearDfmodSources();
   for (const host of ['scenes/world.js', 'scenes/exterior.js']) {
-    assert.match(src(host), /const modLayers = await dfmodGroundLayers\(groundArchive, groundTex\.recordCount\);[\s\S]{0,400}?const layers = modLayers \? carryPuddleMask\(modLayers, markPuddleWater\(classic\)\) : classic;\n\s+renderer\.uploadTileArray\(groundArchive, modLayers \? layers : markPuddleWater\(layers\)\);/, host);   // GROUND1-W: and the puddles' shapes from the classic set
+    assert.match(src(host), /const modLayers = await dfmodGroundLayers\(groundArchive, groundTex\);[\s\S]{0,400}?const layers = modLayers \? carryPuddleMask\(modLayers, markPuddleWater\(classic\)\) : classic;\n\s+renderer\.uploadTileArray\(groundArchive, modLayers \? layers : markPuddleWater\(layers\)\);/, host);   // GROUND1-W: and the puddles' shapes from the classic set
   }
 });

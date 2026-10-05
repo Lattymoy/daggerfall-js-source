@@ -1,0 +1,446 @@
+[
+  {
+    "name": "LW8b-table-m",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "export const TABLE_M = 2.2;",
+    "new": "export const TABLE_M = 2.7;",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-table-max",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "export const TABLE_MAX = 3;",
+    "new": "export const TABLE_MAX = 4;",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-every-one",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "      if (!table.every((k) => apart(j, k) <= TABLE_M)) continue;",
+    "new": "      void 0;",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-nearest-first",
+    "file": "src/scenes/livingIndoors.js",
+    "old": ".sort((a, b) => apart(i, a) - apart(i, b) || a - b);",
+    "new": ";",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-ties",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "apart(i, a) - apart(i, b) || a - b);",
+    "new": "apart(i, a) - apart(i, b) || b - a);",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-deal",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "  for (const i of order) {",
+    "new": "  for (const i of [...order].sort((a, b) => a - b)) {",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-one-table",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "      table.push(j);\n      at[j] = tables.length;",
+    "new": "      table.push(j);",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-opener-mark",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "    const table = [i];\n    at[i] = tables.length;",
+    "new": "    const table = [i];",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-fill-deal",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "order: groups.flat(), tableOf };",
+    "new": "order: dealOf(b.key, spots.length), tableOf };",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-facing-mates",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "        const toward = mates.length > 1",
+    "new": "        const toward = false",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-facing-self",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "        const toward = mates.length > 1",
+    "new": "        const toward = mates.length > 0",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-circle-whole",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "return e ? [{ who: m.res, t0: e.t0, t1: e.t1 }] : [];",
+    "new": "return e ? [{ who: m.res, t0: -Infinity, t1: Infinity }] : [];",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-circle-key",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "spotCircles(`in:${b.key}:${ti}`, present,",
+    "new": "spotCircles(`in:${b.key}`, present,",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-no-circles",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "        if (!beat) continue;\n        let dealt",
+    "new": "        if (true) continue;\n        let dealt",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-round-beat",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "spotCircles(`in:${b.key}:${ti}`, present, t, beat.roundMin);",
+    "new": "spotCircles(`in:${b.key}:${ti}`, present, t, beat.lineMin);",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-room-unread",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "        const ctx = { ...b.town.lineCtx(t), room: roomKindOf(b.town.typeOf(b.key)) };",
+    "new": "        const ctx = { ...b.town.lineCtx(t), room: null };",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-line-beat",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "          const line = circleLine(c, t, beat.lineMin, ctx);",
+    "new": "          const line = circleLine(c, t, beat.lineMin * 2, ctx);",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-reach",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "return seat && Math.hypot(seat.pos[0] - eye[0], seat.pos[2] - eye[2]) <= LINE_RANGE ? seat : null;",
+    "new": "return seat ?? null;",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-greet-circle",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "        if (inCircle.has(id) || Math.hypot(p[0] - feet[0], p[2] - feet[2]) > GREET_RANGE) continue;",
+    "new": "        if (Math.hypot(p[0] - feet[0], p[2] - feet[2]) > GREET_RANGE) continue;",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-greet-range",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "        if (inCircle.has(id) || Math.hypot(p[0] - feet[0], p[2] - feet[2]) > GREET_RANGE) continue;",
+    "new": "        if (inCircle.has(id)) continue;",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-greet-rest",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "        if (last != null && t >= last && t - last < GREET_REST_MIN) continue;",
+    "new": "        void 0;",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-greet-stand",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "words.set(id, { text, until: realNow + GREET_S });",
+    "new": "words.set(id, { text, until: realNow + GREET_S * 3 });",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-greet-expiry",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "        if (!(w.until > realNow)) { words.delete(id); continue; }",
+    "new": "        void 0;",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-greet-asked",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "        const text = b.town.greetingFor?.(s.res, t, false) ?? null;",
+    "new": "        const text = null;",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-greet-stopped",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "        const text = b.town.greetingFor?.(s.res, t, false) ?? null;",
+    "new": "        const text = b.town.greetingFor?.(s.res, t, true) ?? null;",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-ctx-hour",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    const hour = Math.floor((((t % DAY_MIN) + DAY_MIN) % DAY_MIN) / 60);",
+    "new": "    const hour = Math.floor((((this._now % DAY_MIN) + DAY_MIN) % DAY_MIN) / 60);",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-ctx-deeds-minute",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    const deeds = this.deedNews(t);",
+    "new": "    const deeds = this.deedNews();",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-beat",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    return { roundMin: ROUND_S * this._baseRate(), lineMin: lineMinutes(this._baseRate()) };",
+    "new": "    return { roundMin: ROUND_S * 2 * this._baseRate(), lineMin: lineMinutes(this._baseRate()) };",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-type-none",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    return this.places.types.get(key) ?? -1;",
+    "new": "    return this.places.types.get(key) ?? 0;",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-type",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    return this.places.types.get(key) ?? -1;",
+    "new": "    return -1;",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-greet-seen",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    rel?.seen(res.id, day);\n    return fillLine(",
+    "new": "    return fillLine(",
+    "tests": [
+      "test/lw8b_talk.test.js",
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-greet-stranger",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": " && !stopped && (lwSeed(textSeed(res.id), Math.floor(t)) % 4) !== 0) return null;",
+    "new": " && !stopped && false) return null;",
+    "tests": [
+      "test/lw8b_talk.test.js",
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-greet-stopped-ignored",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": " && !stopped && (lwSeed(textSeed(res.id), Math.floor(t)) % 4) !== 0) return null;",
+    "new": " && (lwSeed(textSeed(res.id), Math.floor(t)) % 4) !== 0) return null;",
+    "tests": [
+      "test/lw8b_talk.test.js",
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-room-shares",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "  if (own) pools.splice(0, 1, own, own);",
+    "new": "  if (own) pools.splice(0, 1, own);",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-room-road",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "  const own = !road && room ?",
+    "new": "  const own = room ?",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-room-temple",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "  if (type === BUILDING_TYPES.Temple) return 'temple';",
+    "new": "  if (type === BUILDING_TYPES.Temple) return 'tavern';",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-room-houses",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "  if (type >= BUILDING_TYPES.House1 && type <= BUILDING_TYPES.House6) return 'home';",
+    "new": "  if (type >= BUILDING_TYPES.House1 && type <= BUILDING_TYPES.House4) return 'home';",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-room-shops",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "BUILDING_TYPES.Library, BUILDING_TYPES.PawnShop,",
+    "new": "BUILDING_TYPES.PawnShop,",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-room-none",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "  return SHOP_ROOMS.has(type) ? 'shop' : null;",
+    "new": "  return 'shop';",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-room-street",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "road: ctx.road ?? null, room: ctx.room ?? null });",
+    "new": "road: ctx.road ?? null, room: null });",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-host-hook",
+    "file": "src/scenes/world.js",
+    "old": "    livingSpeech: ({ proj, view, eye, dt }) => livingRoomLines(proj, view, eye, dt),",
+    "new": "    livingSpeech: () => {},",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-host-unstood",
+    "file": "src/scenes/world.js",
+    "old": "    if (!livingIndoors || typeof document === 'undefined') return;",
+    "new": "    if (typeof document === 'undefined') return;",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-host-cover",
+    "file": "src/scenes/world.js",
+    "old": " || !!townTalk.hudHidden || _mode() !== 'interior';",
+    "new": " || !!townTalk.hudHidden;",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-host-head",
+    "file": "src/scenes/world.js",
+    "old": "        const over = [l.person.pos[0], l.person.pos[1] + LIVING_HEAD_M, l.person.pos[2]];",
+    "new": "        const over = [l.person.pos[0], l.person.pos[1], l.person.pos[2]];",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-host-range",
+    "file": "src/scenes/world.js",
+    "old": "        if (d > CREW_SAY_RANGE) continue;\n        const at = projectToScreen(over, w, h, proj, view, rect);\n        if (!at.front || at.x < -80 || at.x > w + 80 || at.y < -40 || at.y > h + 40) continue;\n        const key = `in:${id}`;",
+    "new": "        const at = projectToScreen(over, w, h, proj, view, rect);\n        if (!at.front || at.x < -80 || at.x > w + 80 || at.y < -40 || at.y > h + 40) continue;\n        const key = `in:${id}`;",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-host-sight",
+    "file": "src/scenes/world.js",
+    "old": "        if (crewSight.blocked(player.collider, eye, key, over)) continue;   // behind a wall of the room, unheard",
+    "new": "        void 0;   // behind a wall of the room, unheard",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-host-name",
+    "file": "src/scenes/world.js",
+    "old": "distance: d, name: livingRelations.known(id) ? firstNameOf(l.person.nameNPC) : null });",
+    "new": "distance: d, name: null });",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-host-drawn",
+    "file": "src/scenes/world.js",
+    "old": "    drawCrewLines(points, { covered, dt: gamePaused() ? 0 : dt, scale: enhancedHudScale() });",
+    "new": "    void points;",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW8b-hook-unpassed",
+    "file": "src/scenes/worldModes.js",
+    "old": "      host.livingSpeech?.({ proj, view, eye: mwv.eye, dt });",
+    "new": "      void 0;",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  }
+]

@@ -3,8 +3,10 @@
 // 3. UI Overhaul ... Our first overhaul option will be the file attached. Along with this classic options and
 // enhanced options should be in") - THE OVERHAULS: three panels, each ONE choice out of a set.
 //
-// An option is a WHOLE LOOK, not a new switch. Texture holds the texture packs - none ships yet, so it stands empty
-// (OVH1b). Sound is the port's own sound switches taken together - the Features rows that change what the world
+// An option is a WHOLE LOOK, not a new switch. Texture holds the texture packs - Classic, and Vanilla Enhanced (VE3,
+// systems/vanillaEnhanced.js), which ships with the port since VE4 (systems/vanillaEnhancedPack.js; Port-Doctrine
+// records the exception) and is worn by switching its mods on. Sound is
+// the port's own sound switches taken together - the Features rows that change what the world
 // sounds like, set as Daggerfall has them (Classic) or as the port adds them (Enhanced) - so the panel and the Features
 // home can never disagree: they read and write the same rows, and a mix the player made on Features reads back as
 // "Custom", never as a lie. UI is the skin, and on the classic skin the UI pack worn over it (systems/uiPack.js) -
@@ -20,6 +22,7 @@ import { modSetting, setModSetting } from './modSettings.js';
 import { onlineForcedPref, onlineForcedModSetting } from './onlineLane.js';
 import { uiSkin, setUiSkin, SKIN_NAMES } from './uiSkin.js';
 import { activeUiPack, setUiPack, UI_PACKS, UI_PACK_NONE } from './uiPack.js';
+import { veBase, veAddons, veWorn, classicTexturesWorn, wearVanillaEnhanced, wearClassicTextures, classicBlocked, customTextureNote } from './vanillaEnhanced.js';   // VE3; VE4: its add-ons; AUDIT VE R10: a loose pack's say
 
 const row = (id) => {
   const f = FEATURES.find((x) => x.id === id);
@@ -83,16 +86,38 @@ const uiOption = (id, name, skin, pack, { by, blurb }) => Object.freeze({
   apply: () => ({ reload: true, url: uiChoiceUrl(skin, pack) }),
 });
 
+/** VE3: a texture look - the texture mods switched on or off as one (systems/vanillaEnhanced.js). VE4: `addons` lists
+ *  the look's optional mods, which the card offers as switches while the look is worn; `vendor` names the vendor/
+ *  folder of the pack it wears (the credits' way to it). AUDIT VE R10: `blocked` says what stands in its way now (the
+ *  card offers no Use while it does), or null. */
+const textureOption = (id, name, { by, blurb, isOn, wear, addons = null, vendor = null, blocked = null }) => Object.freeze({
+  id, name, blurb, isOn, addons, vendor, blocked,
+  get by() { return typeof by === 'function' ? by() : by; },
+  apply: () => { wear(); return { reload: false }; },
+});
+
 const G = UI_PACKS.grimoire;
 export const OVERHAUL_PANELS = Object.freeze([
-  // OVH1b (2026-09-24, Mac: "Currently there are no texture packs, it should be empty"): the panel stands, and holds
-  // nothing until the first texture pack ships - it is a pack's door, not a second face on the Features switches.
+  // OVH1b (2026-09-24, Mac: "Currently there are no texture packs, it should be empty"): the panel stood empty until the
+  // first texture pack - it is a pack's door, not a second face on the Features switches. VE3 (2026-10-05): Vanilla
+  // Enhanced is that pack, beside Classic.
   Object.freeze({
     id: 'texture', title: 'Texture Overhaul',
     effect: 'Takes effect when the world next loads.',
     online: null,
-    empty: 'No texture packs yet.',
-    options: Object.freeze([]),
+    get custom() { return customTextureNote(); },   // AUDIT VE R10: a loose pack alone is no mix of mods
+    options: Object.freeze([
+      textureOption('classic', 'Classic', {
+        by: 'Daggerfall',
+        blurb: 'The original textures from Daggerfall for adventurers who want that classic look from the old days.',
+        isOn: classicTexturesWorn, wear: wearClassicTextures, blocked: classicBlocked,
+      }),
+      textureOption('vanilla-enhanced', 'Vanilla Enhanced', {
+        by: () => { const b = veBase(); return b?.version ? `carademono, version ${b.version}` : 'carademono'; },
+        blurb: 'Daggerfall\u2019s own textures remastered for adventurers who want the classic look, sharper: the ground, the trees and rocks, the city walls and the dungeons.',
+        isOn: veWorn, wear: wearVanillaEnhanced, addons: veAddons, vendor: 'vanilla-enhanced',
+      }),
+    ]),
   }),
   Object.freeze({
     id: 'sound', title: 'Sound Overhaul',

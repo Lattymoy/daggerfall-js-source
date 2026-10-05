@@ -11,10 +11,11 @@
 //    companion, its arrival through a portal, its leaving, a fall, a kill, a fight and its farewell when released.
 //  - A BEAST NEVER SPEAKS: the narrator says what it does, in its temperament ("with a nervous whine").
 //
-// `{p}` is the player's first name.
+// `{p}` is the player's first name; RVN12a (bible/12-Enhanced-AI/Feud-Arc.md 23): `{how}` a learned habit, `{item}` a
+// piece it took, `{move}` its signature, `{ally}` the companion it felled (VOICE_PLACEHOLDERS - exactly these).
 
 /** @typedef {'brutal'|'witty'|'humorous'|'arrogant'|'cold'|'zealous'|'unhinged'|'honourable'|'craven'|'weary'} PersonalityId */
-/** @typedef {'taunt_slew'|'taunt_fled'|'taunt_risen'|'flee'|'cornered'|'escape'|'slain'|'rise'|'yield'|'executed'|'spared'|'slip'|'arrive'|'dismiss'|'downed'|'kill'|'battle'|'release'} VoiceEvent */
+/** @typedef {'taunt_slew'|'taunt_fled'|'taunt_risen'|'flee'|'cornered'|'escape'|'slain'|'rise'|'yield'|'executed'|'spared'|'slip'|'arrive'|'dismiss'|'downed'|'kill'|'battle'|'release'|'learned'|'signature'|'laststand'|'stole'|'festered'|'felled_return'|'routed_return'|'deserted'|'betrayed'|'devoted_warn'} VoiceEvent */
 
 /** The ten, with the card's word for each, a line for the page, and a beast's manner. */
 export const PERSONALITIES = Object.freeze({
@@ -38,6 +39,10 @@ export const isPersonality = (id) => typeof id === 'string' && Object.prototype.
 export const VOICE_EVENTS = Object.freeze(/** @type {VoiceEvent[]} */ ([
   'taunt_slew', 'taunt_fled', 'taunt_risen', 'flee', 'cornered', 'escape', 'slain', 'rise',
   'yield', 'executed', 'spared', 'slip', 'arrive', 'dismiss', 'downed', 'kill', 'battle', 'release',
+  // RVN12a (bible/12-Enhanced-AI/Feud-Arc.md 23): what it learned, its signature, its last stand, what it took, its
+  // festering, its return after felling a companion or routing me, a sworn one's desertion and betrayal, a Devoted one's
+  // warning
+  'learned', 'signature', 'laststand', 'stole', 'festered', 'felled_return', 'routed_return', 'deserted', 'betrayed', 'devoted_warn',
 ]));
 
 // ── the words ───────────────────────────────────────────────────────
@@ -62,6 +67,17 @@ const LINES = deepFreeze({
     kill: ['Another one for the pile!', "Ha! That's how it's done!"],
     battle: ['Blood! Finally!', 'Leave the big one to me!'],
     release: ["Free? Then I go where the fighting is. Don't follow.", "Hmph. Next time we meet, maybe I'll kill you."],
+    // RVN12a (bible/12-Enhanced-AI/Feud-Arc.md 23): FEUD's moments
+    learned: ["I know your {how} now, {p}. You won't catch me twice.", "Your {how} again? My scars say I'm ready."],
+    signature: ['Taste {move}!', '{move}! Break!'],
+    laststand: ['Not yet! NOT YET!', "You'll have to cut me apart, {p}!", "I'm still standing. Your mistake."],
+    stole: ['Still miss your {item}, {p}? Come and try me.', "I've bloodied your {item} since we last met."],
+    festered: ['I waited, {p}. The waiting made me hungry.', "Too long, {p}. I'm starving for you."],
+    felled_return: ["Where's {ally}, {p}? I'll break the rest of you.", "{ally} fell easy. You'll fall slower."],
+    routed_return: ["You ran, {p}. Your legs won't save you twice.", 'Run again. I like the chase.'],
+    deserted: ["I'm done fetching for you, {p}.", "Next time we meet, it's your blood I want."],
+    betrayed: ["You're bleeding, {p}. I smell it.", "Weak. I don't follow the weak.", "Your throat's mine now."],
+    devoted_warn: ['Behind you, {p}!', "Back! Something's at your back!"],
   },
   witty: {
     taunt_slew: ['Ah, {p}! Back from the dead? Even Arkay sent you back - he must have found you tiresome too.', 'Last time went so well for me. Shall we?', 'You again? I did enjoy our first dance, {p}.'],
@@ -82,6 +98,17 @@ const LINES = deepFreeze({
     kill: ["Didn't even scuff my boots.", 'One less critic.'],
     battle: ['Ooh, company!', 'Shall we dance, then?'],
     release: ['Free? How novel. Do write.', 'Farewell, {p}. You were almost tolerable.'],
+    // RVN12a (bible/12-Enhanced-AI/Feud-Arc.md 23): FEUD's moments
+    learned: ['Your {how} again? I took notes last time, {p}.', "I've studied your {how}. Rather dull, really."],
+    signature: ['Allow me to introduce {move}.', 'And now, {move}. Do try to keep up.'],
+    laststand: ["Ah, the second act. You didn't think I'd skip it?", 'Down? Merely resting my eyes.', "You'll find I'm terribly hard to finish, {p}."],
+    stole: ['I do your {item} more justice, {p}. Admit that much.', "Lovely {item}. I've been taking excellent care, I promise."],
+    festered: ['You kept me waiting, {p}. Rude.', 'I had time to sharpen my wit and my blade.'],
+    felled_return: ['How is {ally}? Still seeing stars?', '{ally} sends regards. Faintly.'],
+    routed_return: ['Back from your little sprint, {p}?', 'I do admire a strategic retreat. Yours was not one.'],
+    deserted: ["It's been charming, {p}. Truly. Goodbye.", 'Consider this my resignation.'],
+    betrayed: ['Nothing personal, {p}. Mostly.', 'You look tired. Let me help you rest.', "Did you really think I'd stay?"],
+    devoted_warn: ['Do glance behind you, {p}!', 'Your back, {p} - it has company!'],
   },
   humorous: {
     taunt_slew: ['{p}! My favourite corpse! Ha!', "Back again? You're like a bad penny - you keep turning up!", 'Last time you fell so hard, I think you dented the road!'],
@@ -102,6 +129,17 @@ const LINES = deepFreeze({
     kill: ['And stay down! Ha!', 'Did you see that? Tell me you saw that!'],
     battle: ['Party time!', "Ooh, this'll be a good one!"],
     release: ["Free! Ha! Don't forget me, {p}!", "I'll tell everyone about you! Mostly the good bits!"],
+    // RVN12a (bible/12-Enhanced-AI/Feud-Arc.md 23): FEUD's moments
+    learned: ['Ha! Your {how} again? I know that one, {p}!', "Same old {how}? I've seen this act!"],
+    signature: ['Here comes {move}! Hold still!', 'Ta-da! {move}!'],
+    laststand: ['Ha! Did you think that was the end?', 'Encore! Encore!', "You'll have to try harder than that, {p}!"],
+    stole: ['Your {item} makes a lovely joke, {p}!', "I've named your {item}. We get along famously."],
+    festered: ['I got bored waiting, {p}! Bored and bigger!', "All that waiting - I'm bursting with jokes!"],
+    felled_return: ['{ally} went down laughing! Well, I laughed.', 'Tell {ally} I said boo!'],
+    routed_return: ["You ran so fast, {p}! Let's race again!", 'Ha! Run, run, as fast as you can!'],
+    deserted: ["The joke's over, {p}. Ha! I'm leaving.", "Don't wait up for me, {p}!"],
+    betrayed: ['Surprise! Ha!', 'Oh, your face, {p}!', 'The best joke is the last one, {p}!'],
+    devoted_warn: ['Ha! Look behind you, {p}!', 'Duck, {p}! No - turn!'],
   },
   arrogant: {
     taunt_slew: ['Kneel, {p}. You did it so well last time.', 'Did you truly think you could best me twice?', 'I remember your fall, {p}. It was beneath me - as are you.'],
@@ -122,6 +160,17 @@ const LINES = deepFreeze({
     kill: ['As expected.', 'Know your place, wretch.'],
     battle: ['Stand aside. Watch how it is done.', 'They challenge us? Pitiful.'],
     release: ['You release me? I was never truly bound.', 'Remember that I chose to serve you, {p}.'],
+    // RVN12a (bible/12-Enhanced-AI/Feud-Arc.md 23): FEUD's moments
+    learned: ['I am above your {how} now, {p}.', 'I have mastered your {how}. Bow.'],
+    signature: ['Behold {move}!', 'Witness {move}, and despair.'],
+    laststand: ['You cannot fell your betters, {p}.', 'I do not fall to the likes of you!', 'Rise? Of course I rise.'],
+    stole: ['You wasted your {item}, {p}. I do not.', 'My {item} now. Fitting, yes?'],
+    festered: ['You made me wait. I grew greater for it.', 'I do not wait, {p}. I gather.'],
+    felled_return: ["{ally} knelt to me. You'll follow.", 'Your {ally} was the lesser. As are you.'],
+    routed_return: ['You fled from me, {p}. Remember that.', 'Running suits you. Do it again.'],
+    deserted: ['I serve no one, {p}. Least of all you.', 'My oath was a courtesy. It ends.'],
+    betrayed: ["Did you think I'd kneel forever?", 'Your weakness disgusts me, {p}.', 'Bow to me now, {p}.'],
+    devoted_warn: ['At your back, {p}! Turn!', 'Behind you - deal with it!'],
   },
   cold: {
     taunt_slew: ['You died by my hand once. The arithmetic has not changed.', 'I counted your heartbeats as they stopped, {p}.', 'Again, then. Quietly.'],
@@ -142,6 +191,17 @@ const LINES = deepFreeze({
     kill: ['One fewer.', 'Done.'],
     battle: ['Hostiles.', 'Engaging.'],
     release: ['The debt is paid. Farewell, {p}.', 'Then our account is closed.'],
+    // RVN12a (bible/12-Enhanced-AI/Feud-Arc.md 23): FEUD's moments
+    learned: ['I have measured your {how}. Nothing remains.', 'I have adapted to your {how}, {p}.'],
+    signature: ['{move}.', 'Now. {move}.'],
+    laststand: ['Not yet.', 'Your blow was insufficient.', 'I continue.'],
+    stole: ['I still hold your {item}.', 'I have kept your {item}, {p}. To good use.'],
+    festered: ['The waiting changed nothing. Except me.', 'Time has made me more.'],
+    felled_return: ['{ally} fell. You are next.', 'One down. {ally} first, then you.'],
+    routed_return: ['You fled. It was noted.', 'Distance will not help you twice, {p}.'],
+    deserted: ['This arrangement is concluded.', 'I am leaving, {p}. Do not follow.'],
+    betrayed: ['It was always going to end here.', 'You are weak. I am not.', 'Goodbye, {p}.'],
+    devoted_warn: ['Behind you.', '{p}. Your back.'],
   },
   zealous: {
     taunt_slew: ['The gods gave me your life once, {p}. They hunger again!', 'I offered your blood at the altar. It was not enough!', 'Your death was a prayer answered. Pray with me again!'],
@@ -162,6 +222,17 @@ const LINES = deepFreeze({
     kill: ['Judged!', 'Sent to their gods!'],
     battle: ['For the Divines!', 'The heathen approach!'],
     release: ['My vow is fulfilled. The gods walk with you, {p}.', 'I go to spread the word of your mercy.'],
+    // RVN12a (bible/12-Enhanced-AI/Feud-Arc.md 23): FEUD's moments
+    learned: ['The gods taught me your {how}, {p}!', 'Your {how}? A sin the gods forgave me!'],
+    signature: ['By the gods - {move}!', '{move}, by their will!'],
+    laststand: ['The gods will not let me fall!', 'I am lifted up! I rise again!', 'Not by your hand, {p}!'],
+    stole: ['I have consecrated your {item}.', 'The gods gave me your {item}, {p}.'],
+    festered: ['My fervour only grew, {p}.', 'The gods kept me waiting. Now they unleash me.'],
+    felled_return: ['{ally} was judged, {p}. So will you be.', 'The gods struck {ally} down by my hand.'],
+    routed_return: ['You fled judgement, {p}. It caught up.', 'No one outruns the gods, {p}.'],
+    deserted: ['The gods call me elsewhere.', 'My faith was never in you, {p}.'],
+    betrayed: ['The gods have turned from you, {p}!', 'Your judgement has come!', 'I serve a higher power, {p}!'],
+    devoted_warn: ['The gods warn you - behind!', 'Turn, {p}! Behind you!'],
   },
   unhinged: {
     taunt_slew: ['Hee-hee! {p}! You died! I watched! Again, again!', "The voices said you'd come back! They're never wrong, {p}!", 'I kept your scream. In a jar. Want to hear it?'],
@@ -182,6 +253,17 @@ const LINES = deepFreeze({
     kill: ['Broken! All broken! Hahaha!', 'Again! Do it again!'],
     battle: ['Ooh! Playmates!', 'Let me at them! LET ME AT THEM!'],
     release: ['Free! Free as a bird! A mad bird!', "Bye-bye, {p}! I'll visit! In your sleep!"],
+    // RVN12a (bible/12-Enhanced-AI/Feud-Arc.md 23): FEUD's moments
+    learned: ["Hee! I'm not scared of your {how} anymore!", 'I know your {how} now, {p}! Hee hee!'],
+    signature: ['{move}! {move}! {move}!', 'Here it comes - {move}! Hee!'],
+    laststand: ['Hee hee! Not dead! Not DEAD!', 'More! Do it again!', "I'm still laughing, {p}! Hear me?"],
+    stole: ['I sleep with your {item}, {p}! Hee!', 'I hear your {item} whisper at night!'],
+    festered: ['So long! So long I waited! Hee!', 'The waiting made the voices louder, {p}!'],
+    felled_return: ['{ally} broke so nicely! Can I break you?', "Where's {ally}? Ha! Gone! Gone!"],
+    routed_return: ['Run, rabbit, run! Again! Again!', 'You ran! I followed! Hee!'],
+    deserted: ['Bye bye, {p}! Hee hee!', 'The voices say go. So I go!'],
+    betrayed: ['Hee hee! Did you think I liked you?', "You're bleeding so pretty, {p}!", "Now it's MY turn, {p}!"],
+    devoted_warn: ['Behind! Behind! BEHIND!', "{p}! There's one at your back! Hee!"],
   },
   honourable: {
     taunt_slew: ['You fought well, {p}, and you fell well. Let us do it properly again.', 'I bear you no hatred. Only unfinished business.', 'Draw, {p}. Let the better blade decide.'],
@@ -202,6 +284,17 @@ const LINES = deepFreeze({
     kill: ['A clean blow.', 'Rest now, foe.'],
     battle: ['Stand with me!', 'Face me, if you dare!'],
     release: ['My debt is paid. Go with honour, {p}.', 'Farewell, friend. I will not forget your mercy.'],
+    // RVN12a (bible/12-Enhanced-AI/Feud-Arc.md 23): FEUD's moments
+    learned: ['I have learned your {how}, {p}. Fight me fairly.', 'Your {how} will not serve you again.'],
+    signature: ['Guard yourself - {move}!', 'I give you fair warning: {move}!'],
+    laststand: ['I am not yet beaten, {p}.', 'Again, then. On your guard.', 'My honour holds me up.'],
+    stole: ['I earned your {item} as a trophy.', 'Win back your {item}, {p}, if you can.'],
+    festered: ['You did not come. I grew impatient.', 'I waited for an honest fight, {p}.'],
+    felled_return: ['{ally} fought well. Tell them so.', 'I bested {ally} fairly. Now you.'],
+    routed_return: ['You fled the field, {p}. Stand this time.', 'There is no shame in retreat. Once.'],
+    deserted: ['My oath is broken, {p}. I am sorry for it.', 'You have not kept faith with me. I go.'],
+    betrayed: ['You have no honour left to keep me, {p}.', 'Forgive me. I cannot follow you.', 'Face me, then. As enemies.'],
+    devoted_warn: ['Have a care - behind you!', '{p}! Guard your back!'],
   },
   craven: {
     taunt_slew: ['I-I killed you once! I can do it again! Probably!', 'Stay back! Remember what happened last time!', 'Ha! It\'s you! The one I... the one I beat! Yes!'],
@@ -222,6 +315,17 @@ const LINES = deepFreeze({
     kill: ['I did that! Did you see? I did that!', 'Is it dead? Poke it.'],
     battle: ['Oh no. Oh no no no.', 'You go first!'],
     release: ["Free? Truly? I'll never fight again!", "Thank you, {p}! Don't come looking for me!"],
+    // RVN12a (bible/12-Enhanced-AI/Feud-Arc.md 23): FEUD's moments
+    learned: ['I-I know your {how} now, {p}! Ha!', "Your {how} won't scare me... much."],
+    signature: ['Th-there! {move}!', 'Take {move}, and leave me be!'],
+    laststand: ['N-no! Not like this!', "I-I'm not done! I'm not!", "Stay back! I'll fight! I will!"],
+    stole: ['Y-your {item}? Finders keepers!', "I'm keeping your {item}, {p}. Please don't hurt me."],
+    festered: ["I hid for days, {p}. Now I'm angry!", 'All that waiting made me brave. Almost.'],
+    felled_return: ['I-I beat {ally}! Me!', 'Scared, {p}? {ally} was.'],
+    routed_return: ["Even I didn't run that fast, {p}!", 'You ran! From ME! Ha!'],
+    deserted: ["S-sorry, {p}. I'm off.", "It's too dangerous with you!"],
+    betrayed: ["S-sorry, {p}! It's you or me!", "You're losing! I'm with the winners!", "Don't look at me like that!"],
+    devoted_warn: ['B-behind you, {p}!', 'Look out! Your back!'],
   },
   weary: {
     taunt_slew: ['I took your life once, {p}. It brought me no peace.', 'Must we do this again? Yes... I suppose we must.', 'I have dreamt of your fall every night since.'],
@@ -242,6 +346,17 @@ const LINES = deepFreeze({
     kill: ['Another one. Always another.', 'Rest, poor thing.'],
     battle: ['Again. Always again.', "Let's get this over with."],
     release: ["Free. I'll find somewhere quiet, {p}. Thank you.", 'Farewell. May your road be kinder than mine.'],
+    // RVN12a (bible/12-Enhanced-AI/Feud-Arc.md 23): FEUD's moments
+    learned: ['Your {how} again. I learned the hard way.', "I've had enough of your {how}, {p}."],
+    signature: ["Here. {move}. Let's be done.", '{move}, then. If I must.'],
+    laststand: ['Not yet. Somehow, not yet.', 'Will this never end?', "Again, then. I'm so tired, {p}."],
+    stole: ["I still have your {item}. So heavy.", 'Your {item}, {p}? Come for me, then. Please.'],
+    festered: ['Waiting is tiring too, {p}.', 'I got older waiting. And angrier.'],
+    felled_return: ['{ally} needed the rest, {p}.', '{ally} went down. Like we all do.'],
+    routed_return: ['You ran, {p}. I would have too.', "Running's tiring. Stand for once."],
+    deserted: ["I'm tired, {p}. Of all of it.", 'I need to be somewhere quiet.'],
+    betrayed: ["I'm sorry, {p}. I'm just so tired.", "Let's end this. One way or another.", 'You look as tired as I feel.'],
+    devoted_warn: ['Behind you, {p}. Look.', '{p}... your back.'],
   },
 });
 
@@ -266,6 +381,17 @@ const BEAST = deepFreeze({
   kill: 'Stands over its kill {manner}.',
   battle: 'Lunges into the fray {manner}.',
   release: 'Looks back once {manner}, and is gone.',
+  // RVN12a (Feud-Arc.md 23)
+  learned: 'Circles you {manner}. It knows your ways now.',
+  signature: 'Gathers itself {manner} for something terrible.',
+  laststand: 'Rises again {manner}, refusing to die.',
+  stole: 'Circles you {manner}, guarding something of yours.',
+  festered: 'Stalks you {manner}, swollen with long waiting.',
+  felled_return: 'Circles you {manner}. It remembers your companion falling.',
+  routed_return: 'Stalks you {manner}. It remembers you running.',
+  deserted: 'Slinks away through its portal {manner}.',
+  betrayed: 'Turns on you {manner}!',
+  devoted_warn: 'Snarls a warning {manner} - behind you!',
 });
 
 function deepFreeze(o) {
@@ -310,19 +436,27 @@ export function personalityFor(id, mobileType) {
 export const personalityLabel = (id) => (isPersonality(id) ? PERSONALITIES[id].label : null);
 
 // ── what it says ────────────────────────────────────────────────────
-const fill = (s, p) => s.replace(/\{p\}/g, () => p);   // AUDIT (2026-10-02): a `$` in a typed name is a letter, never a pattern
+/** RVN12a (bible/12-Enhanced-AI/Feud-Arc.md 23): THE PLACEHOLDERS, exactly - `{p}` the player's first name, `{how}` a
+ *  learned habit's word ("blade", "arrows", "fire"), `{item}` a piece it took, `{move}` its signature's name, `{ally}` the
+ *  companion it felled. A line naming one its caller did not hand is passed over: none is said with a `{` left in it. */
+export const VOICE_PLACEHOLDERS = Object.freeze(['p', 'how', 'item', 'move', 'ally']);
+const PLACEHOLDER = /\{(p|how|item|move|ally)\}/g;
+const fill = (s, vars) => s.replace(PLACEHOLDER, (_, k) => String(vars[k]));   // AUDIT (2026-10-02): a `$` in a typed name is a letter, never a pattern
+const sayable = (s, vars) => [...s.matchAll(PLACEHOLDER)].every((m) => vars[m[1]] != null && vars[m[1]] !== '');
 /** A name's possessive, one rule for every title ("Varis' Rod", "Grushnak's Shadow"). */
 export const possessive = (name) => `${name}${/s$/i.test(name) ? "'" : "'s"}`;
 /** Every line a personality has for a moment (the page's, the tests'). */
 export const voiceLines = (personality, event) => LINES[isPersonality(personality) ? personality : 'brutal']?.[event] ?? [];
 /**
  * ITS WORDS for a moment, in its own voice: a speaker's quoted line, or null for a beast (`beastBody` says what it
- * does). `p` the player's first name; `rolls` the pick (a moment said twice need not repeat).
+ * does). `p` the player's first name; `rolls` the pick (a moment said twice need not repeat); RVN12a: `how`, `item`,
+ * `move`, `ally` its moment's words (a line needing one not handed is passed over).
  */
-export function voiceLine(personality, event, { p = 'stranger', rolls = Math.random } = {}) {
-  const pool = voiceLines(personality, event);
+export function voiceLine(personality, event, { p = 'stranger', rolls = Math.random, how = null, item = null, move = null, ally = null } = {}) {
+  const vars = { p, how, item, move, ally };
+  const pool = voiceLines(personality, event).filter((l) => sayable(l, vars));   // RVN12a: never a line it cannot fill
   if (!pool.length) return null;
-  return fill(pool[Math.min(pool.length - 1, Math.floor(rolls() * pool.length))], p);
+  return fill(pool[Math.min(pool.length - 1, Math.floor(rolls() * pool.length))], vars);
 }
 /** What a beast does at a moment, in its temperament - the narrator's sentence. */
 export function beastBody(personality, event) {

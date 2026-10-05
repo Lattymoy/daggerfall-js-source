@@ -1,0 +1,319 @@
+[
+  {
+    "name": "VE1-dependency-placed-after-its-dependent",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "      for (const d of depsOf(m)) visit(d);\n      sorted.push(m);",
+    "new": "      sorted.push(m);\n      for (const d of depsOf(m)) visit(d);"
+  },
+  {
+    "name": "VE1-peer-dependency-ordered",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": ".filter(([, , peer]) => !peer).map(([name]) => byName.get(String(name).toLowerCase()))",
+    "new": ".filter(() => true).map(([name]) => byName.get(String(name).toLowerCase()))"
+  },
+  {
+    "name": "VE1-optional-dependency-skipped",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": ".filter(([, , peer]) => !peer).map(([name]) => byName.get(String(name).toLowerCase()))",
+    "new": ".filter(([, optional, peer]) => !peer && !optional).map(([name]) => byName.get(String(name).toLowerCase()))"
+  },
+  {
+    "name": "VE1-dependency-matched-by-case",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "byName.get(String(name).toLowerCase())",
+    "new": "byName.get(String(name))"
+  },
+  {
+    "name": "VE1-cycle-not-thrown",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "    } else if (!sorted.includes(m)) throw new Error('Cyclic dependency found');",
+    "new": "    }"
+  },
+  {
+    "name": "VE1-listing-not-sorted",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "  const base = [...(mods ?? [])].sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));",
+    "new": "  const base = [...(mods ?? [])];"
+  },
+  {
+    "name": "VE1-index-version-left-at-2",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "export const DFMOD_INDEX_VERSION = 3;",
+    "new": "export const DFMOD_INDEX_VERSION = 2;"
+  },
+  {
+    "name": "VE1-peer-read-as-optional",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "[d.Name, d.IsOptional === true, d.IsPeer === true]",
+    "new": "[d.Name, d.IsOptional === true, d.IsOptional === true]"
+  },
+  {
+    "name": "VE1-first-loaded-kept",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "  for (const { key, index, stamp } of [..._mods].reverse()) {",
+    "new": "  for (const { key, index, stamp } of [..._mods]) {"
+  },
+  {
+    "name": "VE1-load-order-not-applied",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "  _mods = dfmodLoadOrder([..._attached, ...liveShipped()]);   // VE1: AutoSortMods' order, not the listing's; VE4: the shipped among them",
+    "new": "  _mods = [..._attached, ...liveShipped()];"
+  },
+  {
+    "name": "VE1-xml-from-the-lowest-mod",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "if (e && e.map === 'Albedo' && !e.dye) ((table[e.archive] ??= {})[e.record] ??= scale);",
+    "new": "if (e && e.map === 'Albedo' && !e.dye) ((table[e.archive] ??= {})[e.record] = scale);"
+  },
+  {
+    "name": "VE3-off-mod-still-installed",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "    if (!dfmodEnabled(key)) continue;   // VE3: EnumerateEnabledModsReverse - a mod switched off answers nothing\n",
+    "new": ""
+  },
+  {
+    "name": "VE3-switch-not-reinstalling",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "  _registered = install();\n  return saved;",
+    "new": "  return saved;"
+  },
+  {
+    "name": "VE3-forget-leaves-the-key",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "  if (off.some((k) => drop.has(k))) setPref(DFMOD_OFF_PREF, off.filter((k) => !drop.has(k)));",
+    "new": "  if (off.some((k) => drop.has(k)) && drop.size > 9) setPref(DFMOD_OFF_PREF, off.filter((k) => !drop.has(k)));"
+  },
+  {
+    "name": "VE3-warm-opens-an-off-mod",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "if (dfmodEnabled(key)) await bundleFor(key);",
+    "new": "await bundleFor(key);"
+  },
+  {
+    "name": "VE3-attach-not-forgetting-off",
+    "file": "src/scenes/dataSource.js",
+    "tests": [
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "    forgetDfmodOff(key);   // VE3: a mod attached is on, whatever an earlier copy of it was\n",
+    "new": ""
+  },
+  {
+    "name": "VE2-array-preferred-over-a-later-record",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "    if (m.names.has(textureKey(a, 0, 0))) return { kind: 'records' };\n",
+    "new": ""
+  },
+  {
+    "name": "VE2-loose-tier-skipped",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "  if (looseTextureExists(a, 0, 0)) return { kind: 'records' };\n",
+    "new": ""
+  },
+  {
+    "name": "VE2-deeper-array-cut-down",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "    if (src.depth === n) {",
+    "new": "    if (src.depth >= n) {"
+  },
+  {
+    "name": "VE2-deeper-array-cut-down-2",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "if (imgs?.length === n && first && imgs.every(",
+    "new": "if (imgs?.length >= n && first && imgs.every("
+  },
+  {
+    "name": "VE2-mismatched-picture-kept",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "(p && p.width === size.width && p.height === size.height ? p : classicAt(",
+    "new": "(p ? p : classicAt("
+  },
+  {
+    "name": "VE2-classic-size-never-taken",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "  const size = pics[0] ?? classicLayer(tex, 0);",
+    "new": "  const size = pics.find(Boolean);"
+  },
+  {
+    "name": "VE2-cache-keyed-without-the-pick",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "  const id = `${Number(archive)}:${n}:${looseTextureGeneration()}`;",
+    "new": "  const id = `${Number(archive)}:${n}`;"
+  },
+  {
+    "name": "VE2-gate-not-read-at-the-ask",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "  if (!n || !textureReplacementEnabled()) return Promise.resolve(null);",
+    "new": "  if (!n) return Promise.resolve(null);"
+  },
+  {
+    "name": "VE2-world-host-hands-the-count",
+    "file": "src/scenes/world.js",
+    "tests": [
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "      const modLayers = await dfmodGroundLayers(groundArchive, groundTex);",
+    "new": "      const modLayers = await dfmodGroundLayers(groundArchive, groundTex.recordCount);"
+  },
+  {
+    "name": "VE2-exterior-host-hands-the-count",
+    "file": "src/scenes/exterior.js",
+    "tests": [
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "    const modLayers = await dfmodGroundLayers(groundArchive, groundTex);",
+    "new": "    const modLayers = await dfmodGroundLayers(groundArchive, groundTex.recordCount);"
+  },
+  {
+    "name": "VE3-classic-switches-the-lighting-mod-off",
+    "file": "src/systems/vanillaEnhanced.js",
+    "tests": [
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "export const textureMods = () => doorMods().filter((m) => !isIilMod(m));",
+    "new": "export const textureMods = () => doorMods();"
+  },
+  {
+    "name": "VE3-classic-spares-a-mod-of-arrays",
+    "file": "src/systems/vanillaEnhanced.js",
+    "tests": [
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "export const textureMods = () => doorMods().filter((m) => !isIilMod(m));",
+    "new": "export const textureMods = () => doorMods().filter((m) => !isIilMod(m) && m.textures > 0);"
+  },
+  {
+    "name": "VE3-replace-game-artwork-not-worn",
+    "file": "src/systems/vanillaEnhanced.js",
+    "tests": [
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "  if (!textureReplacementEnabled()) { setValue('Enhancements', 'AssetInjection', 'True'); saveSettings(); }",
+    "new": "  if (!textureReplacementEnabled()) { saveSettings(); }"
+  },
+  {
+    "name": "VE3-loose-pack-read-as-classic",
+    "file": "src/systems/vanillaEnhanced.js",
+    "tests": [
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "(!textureMods().some((m) => m.enabled) && textureReplacementCount() === 0)",
+    "new": "(!textureMods().some((m) => m.enabled))"
+  },
+  {
+    "name": "VE3-worn-without-being-on",
+    "file": "src/systems/vanillaEnhanced.js",
+    "tests": [
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "export const veWorn = () => textureReplacementEnabled() && veBase()?.enabled === true;",
+    "new": "export const veWorn = () => textureReplacementEnabled() && !!veBase();"
+  },
+  {
+    "name": "VE3-version-not-shown",
+    "file": "src/systems/overhauls.js",
+    "tests": [
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "return b?.version ? `carademono, version ${b.version}` : 'carademono';",
+    "new": "return 'carademono';"
+  },
+  {
+    "name": "VE3-packs-card-loses-the-switch",
+    "file": "src/ui/enhancedMenu.js",
+    "tests": [
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "{ label: m.enabled ? 'Switch off' : 'Switch on', onClick: () => { setDfmodEnabled(m.key, !m.enabled); render(); } },",
+    "new": "{ label: 'Switch off', onClick: () => { setDfmodEnabled(m.key, false); render(); } },"
+  },
+  {
+    "name": "VE3-nothing-registered-read-as-none",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "  if (sig === _sig && load === _load && _registered !== null) {",
+    "new": "  if (sig === _sig && load === _load && _registered) {",
+    "equivalent": true,
+    "why": "AUDIT VE R1/R4: a registration of the same set now reads its indexes first and installs the same walk, which moves no generation (install's walk signature) - with every mod off it closes nothing either, so the truthiness test re-registers at no cost any pin can see. The law it guarded (the same set, no new generation) is held by the walk signature, whose own mutant is AUDITVE-R1-walk-always-new."
+  },
+  {
+    "name": "VE2-every-record-decoded-together",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "  await Promise.all(Array.from({ length: Math.min(PRELOAD_CONCURRENCY, n) }, lane));",
+    "new": "  await Promise.all(Array.from({ length: n }, lane));"
+  }
+]

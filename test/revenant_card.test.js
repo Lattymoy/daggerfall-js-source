@@ -298,7 +298,9 @@ test('REVENANT-DUNGEON, REVENANT-WIRE, the single-location host: a special foe o
   assert.match(d, /const _flee = f\.fleeing \|\| \(!f\._fleeRolled && revenantFleeHealth\(f\.entity\)\) \? revenantFleeStep\(f, _pf, \{ mayRun: !onlineRoom\(\) \|\| !_roomFoe, onMe: /, 'the one flee law - mine alone, never a room\'s shared foe');
   assert.match(d, /if \(_flee === 'escape'\) \{ escapeDungeonFoe\(f\); continue; \}/);
   assert.match(d, /if \(_flee === 'start' \|\| _flee === 'run'\) _tgt = null;/, 'running, it aims at nothing; its walk below');
-  assert.match(d, /function escapeDungeonFoe\(f(?:, \{ slip = false \} = \{\})?\) \{\s*\n\s*questPoolOps\.removeFoe\(f\);/);
+  // PIN MOVED (RVN3: the unbroken's escape - the same door, its own words)
+  // PIN MOVED (RVN7d: its band scatters first - bible/12-Enhanced-AI/Feud-Arc.md 17, 18.4)
+  assert.match(d, /function escapeDungeonFoe\(f(?:, \{ slip = false(?:, unbroken = false)? \} = \{\})?\) \{\s*\n(?:\s*scatterDungeonBand\(f\);[^\n]*\n)?\s*questPoolOps\.removeFoe\(f\);/);
   assert.match(d, /if \(foe\.entity\?\.revenant\) \{ const nr = revenantSlain\(playerEntity, foe\.entity\);/);
   // the wire
   const base = { i: 1, t: 7, x: 0, f: [0, 0, 0], y: 0 };
@@ -309,8 +311,8 @@ test('REVENANT-DUNGEON, REVENANT-WIRE, the single-location host: a special foe o
   assert.equal(validFoeRecord({ ...base, nm: 7 }), null);
   const x = read('src/scenes/exteriorFoes.js');
   assert.match(x, /\.\.\.\(!onWatch && typeof f\.entity\?\.revenant\?\.name === 'string' && f\.entity\.revenant\.name \? \{ nm: /, 'the owner sends it');
-  assert.match(x, /\$\{r\.z \?\? 0\},\$\{r\.nm \?\? ''\}(?:,\$\{r\.yd \?\? 0\},\$\{r\.ex \?\? 0\},\$\{r\.sp \?\? 0\})?`;/, 'a changed name is sent again (REVENANT-FATE: and a kneel, a burning or an oath begun)');
-  assert.match(x, /if \(typeof r\.nm === 'string' && r\.nm && f\.entity\.revenant\?\.name !== r\.nm\) f\.entity\.revenant = \{ id: null, name: r\.nm, rank: 0 \};/, 'the puppet called so');
+  assert.match(x, /\$\{r\.z \?\? 0\},\$\{r\.nm \?\? ''\}(?:,\$\{r\.yd \?\? 0\},\$\{r\.ex \?\? 0\},\$\{r\.sp \?\? 0\})?(?:,\$\{r\.ad \?\? 0\},\$\{r\.wq \?\? -1\},\$\{r\.p2 \?\? 0\},\$\{r\.rt \?\? -1\}(?:,\$\{r\.rb \?\? 0\})?)?(?:\$\{r\.wk !== undefined[^\n]*blowWireKey\(r\)[^\n]*\})?`;/, 'a changed name is sent again (REVENANT-FATE: and a kneel, a burning or an oath begun; PIN MOVED - TELL8: and a wind-up)');   // PIN MOVED (FEUD WIRE: and its blows, `rb`)
+  assert.match(x, /if \(typeof r\.nm === 'string' && r\.nm && f\.entity\.revenant\?\.name !== r\.nm\) \{? ?f\.entity\.revenant = \{ id: null, name: r\.nm, rank: 0 \};/, 'the puppet called so');   // PIN MOVED (RVN13: and its wire's own stood again)
   // the single-location host
   const e = read('src/scenes/exterior.js');
   assert.match(e, /revenantPresence\(exteriorFoes\.foes, \{ now \}\);\s*\n\s*revenantSay\(takeRevenantNotice\(playerEntity\), \(l\) => townTalk\.say\(l\)\);/);

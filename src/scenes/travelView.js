@@ -61,6 +61,7 @@ import {
   TV_RISE_S, TV_FALL_S, TV_ZOOM_STEP, ceilingFor, initialCamera, stepCamera, zoomTarget, orbitBy, turnCamera, blendView,
   anglesOf, rightOf, leanedUp, turnHeading, forwardOf, tvOwnGrow, keysHeading,
 } from '../player/travelCamera.js';
+import { travelRateOf } from '../systems/timeScale.js';   // RATE-LAW: the keys' travel runs at its ground's rate
 
 /** A press that moves further than this (px) before it lifts is a drag (the orbit), not a click (a pick). */
 export const TV_CLICK_SLOP = 6;
@@ -150,16 +151,17 @@ export function travelTripLine({ name = '', share = 0, spot = false, sea = false
  * TV-WASD (2026-09-28, Mac: "Also need to add the ability to travel faster with WASD"): THE KEYS TRAVEL. Under the view
  * the movement keys walked the traveller at walking pace (TV1) - a crawl from 260 m up, beside a click's journey at
  * Travel Options' x10. While the view is up and no journey drives, a held movement key runs the world's clock at the
- * travel speed: the Travel Options panel's own spinner (DefaultStartingAccel until the player turns it, never past its
- * limit), which TV2's governor then holds to what the land raises, as it holds a journey. The clock and not the legs, as
- * a journey's: offline the calendar runs with the walk (the road costs its hours), online the body alone (TO-ONLINE).
+ * travel speed, which TV2's governor then holds to what the land raises, as it holds a journey. RATE-LAW (2026-10-04,
+ * Mac: "Roads now travel at x100 and non roads at x60"): that speed is the ground's, as a journey's is - the road's
+ * rate on a road or a track (`onRoad`, the traveller's feet on the network's lanes), the open rate anywhere else
+ * (systems/timeScale.js travelRateOf); it was the Travel Options panel's spinner. The clock and not the legs, as a
+ * journey's: offline the calendar runs with the walk (the road costs its hours), online the body alone (TO-ONLINE).
  * The body walks on its own feet - swimming, at a helm or aboard a boat, the keys are the sea's. The rate, or 0 while
- * the keys walk at walking pace (Travel Options off: no spinner, no rate).
+ * the keys walk at walking pace (`travels` false - Travel Options off: no fast travel by the keys).
  */
-export function travelWalkRate({ viewUp = false, journey = false, moving = false, onFoot = false, paused = false, accel = 0, limit = 0 } = {}) {
-  if (!viewUp || journey || !moving || !onFoot || paused) return 0;
-  const rate = Math.min(Math.trunc(Number(accel) || 0), Math.trunc(Number(limit) || 0));
-  return rate > 1 ? rate : 0;
+export function travelWalkRate({ viewUp = false, journey = false, moving = false, onFoot = false, paused = false, travels = true, onRoad = false } = {}) {
+  if (!viewUp || journey || !moving || !onFoot || paused || !travels) return 0;
+  return travelRateOf(onRoad);
 }
 
 /** The readout's place line: inside a location's rect its name; on its pixel outside the rect "Near" it; else the

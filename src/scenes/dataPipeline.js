@@ -13,7 +13,7 @@ import { isExteriorWindow } from '../world/climateSwaps.js';
 import { isEmissive, FIRE_WALLS_ARCHIVE } from '../world/emissiveTextures.js';   // TextureReader's auto-emissive table (lit lanterns, fireplaces, fire daedra)
 import { dfMeshToModel } from '../world/meshReader.js'; import { patchSeams } from '../world/arch3dSeams.js';   // DUNGEON-SEAMS (one line: the cites below stand)
 import { fetchBytes, texName } from './shared.js';
-import { decodedTexture, preloadTextureArchive, isVendorArchive, vendorTextureStandIn, setTextureDeriveContext } from '../systems/textureReplacement.js';   // M-TEX: user-supplied textures override the classic ones
+import { decodedTexture, preloadTextureArchive, isVendorArchive, vendorTextureStandIn, setTextureDeriveContext, textureTierEpoch } from '../systems/textureReplacement.js';   // M-TEX: user-supplied textures override the classic ones; AUDIT VE R1: the tiers' epoch
 import { classicRecordRgba } from '../formats/derivedTexture.js';   // WD2: a mod sprite rebuilt from the player's own record
 import { customModelBuilt, customAliasFor, aliasSubMeshes, customModelNeeds } from '../world/customModels.js';   // DS1: models no ARCH3D carries; WD3: a classic model with its pictures swapped
 import { dyeToken, changeDyeBitmap } from '../characters/dyes.js';   // DW3: the per-dye UI variant; DYE-ICON: and the classic arm's ChangeDye
@@ -55,8 +55,29 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
   })());
   const flatCaption = (archive, record) => flats?.caption(archive, record) ?? null;
   const flatFaceIndex = (archive, record) => flatFaceOverride(archive, record) ?? flats?.faceIndex(archive, record) ?? -1;   // RR2: a mod's flatsDict write first
+  // AUDIT VE R1: AN ARCHIVE'S PICTURES ARE CURRENT WITH THE TEXTURE TIERS IT WAS PRELOADED UNDER. The scene caches an
+  // archive once, and its replacements were decoded once with it - so a texture mod switched on mid-game never reached
+  // an archive the scene already held, and every picture drawn from it after the switch stood classic for the page. The
+  // archive's epoch is kept beside it (systems/textureReplacement.js textureTierEpoch); the next ask after a change
+  // decodes what answers now - only the pictures that changed - before it answers.
+  const preloadedAt = new Map();   // archive -> the texture tiers' epoch its pictures were decoded at
+  const refreshing = new Map();    // archive -> its pictures being decoded again, after a change
+  const refresh = (archive) => {
+    if (!refreshing.has(archive)) {
+      const epoch = textureTierEpoch();   // read before the decode: a change while it runs is asked again
+      refreshing.set(archive, preloadTextureArchive(archive).catch(() => {})
+        .then(() => { preloadedAt.set(archive, epoch); refreshing.delete(archive); }));
+    }
+    return refreshing.get(archive);
+  };
+  /** AUDIT VE R1: a synchronous upload of an archive behind the tiers starts its pictures' refresh - the records it
+   *  uploads after that find them (what it uploads now stands as it is, as anything already drawn does). */
+  const freshen = (archive) => { if (preloadedAt.get(archive) !== textureTierEpoch()) refresh(archive); };
   async function getTexture(archive) {
-    if (textureFiles.has(archive)) return textureFiles.get(archive);
+    if (textureFiles.has(archive)) {
+      if (preloadedAt.get(archive) !== textureTierEpoch()) await refresh(archive);   // AUDIT VE R1
+      return textureFiles.get(archive);
+    }
     if (!texturePromises.has(archive)) {
       texturePromises.set(archive, (async () => {
         // SURV2: an archive that exists only as the port's vendored art
@@ -64,7 +85,9 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
         // decode the PNGs and stand a sized shell in for the file, and
         // the swap arm below draws them.
         if (isVendorArchive(archive)) {
+          const epoch = textureTierEpoch();   // AUDIT VE R1
           await preloadTextureArchive(archive).catch(() => {});
+          preloadedAt.set(archive, epoch);
           const v = vendorTextureStandIn(archive);
           textureFiles.set(archive, v);
           return v;
@@ -96,7 +119,9 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
         // visible pop or a missing wall - by the time anything uploads
         // a record its replacement is decoded and waiting, or genuinely
         // absent. Never throws: one bad PNG costs that texture.
+        const epoch = textureTierEpoch();   // AUDIT VE R1
         await preloadTextureArchive(archive).catch(() => {});
+        preloadedAt.set(archive, epoch);
         textureFiles.set(archive, t);
         return t;
       })());
@@ -132,7 +157,7 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
   };
   const _standInMisses = new Set();   // WD3: the stand-in records said once each
   const uploadRecord = (archive, record, { opaque = false, mips, removeMask = false, dye = null, dyeTarget = null } = {}) => {   // DYE-ICON: `dyeTarget` - the swatch the classic arm dyes (itemDye.js itemDyeTarget)   // DW3: `dye` - GetItemImage asks the replacement by the item's dye (ItemHelper.cs:458); the icon uploads under a per-dye variant and answers which   // REVIEW 2026-09-05: `mips: false` for item icons (ImageReader.cs:59 builds UI art with no chain); HM1: `removeMask` = ItemHelper's GetItemImage(removeMask: true), the item icons' door - 0xFF becomes the cutout before the upload
-    const t = textureFiles.get(archive);
+    const t = textureFiles.get(archive); freshen(archive);   // AUDIT VE R1
     const bitmap = t.getDFBitmap(record, 0);
     // Spectral archives (ghost/wraith/Lysandus) take the verbatim
     // TextureReader path: SetSpectral gray remap + eye patch, albedo
@@ -226,7 +251,7 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
   // TextureReader treatment per frame.
   const uploadRecordFrame = (archive, record, frame) => {
     const key = `${record}#${frame}`;
-    const t = textureFiles.get(archive);
+    const t = textureFiles.get(archive); freshen(archive);   // AUDIT VE R1
     if (!t) return;
     const bitmap = t.getDFBitmap(record, frame);
     if (TextureFile.isSpectralArchive(archive)) {

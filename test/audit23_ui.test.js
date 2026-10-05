@@ -45,8 +45,9 @@ test('AUDIT 23 ui-native-3: the talk ray reaches 76.8; each mode gates with the 
     'the ray reach and the ladder\'s own winner are the two silent bounds');
   assert.ok(/function tryActivate\(camPos, fwd, persons, nearerThan = Infinity\)/.test(tt),
     'tryActivate takes the rival distance');
-  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    assert.ok(src(f).includes('townTalk.tryActivate(cam.pos, useFwd, _livePersons, _nonPersonRival)'),
+  // LW3 (2026-10-04): the streaming host's persons are the town's and the road's (`_talkPersons()`), the same rival
+  for (const [f, persons] of [['src/scenes/world.js', '_talkPersons()'], ['src/scenes/exterior.js', '_livePersons']]) {
+    assert.ok(src(f).includes(`townTalk.tryActivate(cam.pos, useFwd, ${persons}, _nonPersonRival)`),
       `${f} hands the person arm a rival with the persons left OUT of it`);
   }
   // R1: the mode moved to the interactionMode singleton (PlayerActivate's

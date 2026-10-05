@@ -860,7 +860,8 @@ test('BLOOD1b: EVERY splash site hands its blow over, so the rate ladder actuall
   // REVENANT-FATE: the nineteenth and twentieth - an execution's burst (exteriorFoes.js executionBurst, dungeonContext.js
   // dungeonFateFrame), a blow of mine and the heaviest there is.
   // ARENA4: the twenty-first - a swing of mine that met my opponent on a relay's sand (dungeonContext.js swingOnRival), their blood.
-  assert.equal(sites.length, 21, `twenty-one splash sites across six files - PEERFX1/PEERFX2's two are the sixteenth and seventeenth, WB11c's swing on his host the eighteenth, REVENANT-FATE's two executions the last (found ${sites.length})`);
+  // LW7: the twenty-second - a traveller of the living world's roads struck down (world.js livingStrikeRoad), the civilian's own rung, LETHAL_HIT.
+  assert.equal(sites.length, 22, `twenty-two splash sites across six files - PEERFX1/PEERFX2's two are the sixteenth and seventeenth, WB11c's swing on his host the eighteenth, REVENANT-FATE's two executions the nineteenth and twentieth, LW7's road the last (found ${sites.length})`);
   for (const [f, args] of sites) {
     assert.ok(/bloodHit\(|LETHAL_HIT/.test(args),
       `${f}: a splash site that hands over no blow - the ladder would read it as a graze`);
@@ -3052,7 +3053,7 @@ import { Collider } from '../src/player/collider.js';
 const IDENTITY = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 
 test('MAC-BUG W5: the ground outside is heightAt, and surfaceHit is the ray that knows it', () => {
-  // exterior.js:621 - `new Collider(() => GROUND_OFFSET * 0.025)`,
+  // exterior.js:622 - `new Collider(() => GROUND_OFFSET * 0.025)`,
   // and not one triangle under the player's feet.
   const outside = new Collider(() => 0);
   assert.equal(outside.raycastHit([0, 2, 0], [0, -1, 0], 8).dist, Infinity,
@@ -3076,7 +3077,7 @@ test('MAC-BUG W5: the ground outside is heightAt, and surfaceHit is the ray that
     'no surface overhead when the "surface" is the ground you are under');
   assert.equal(outside.surfaceHit([0, -3, 0], [0, 1, 0], 8).normal, null);
 
-  // A DUNGEON IS UNCHANGED. dungeonContext.js:426 hands `-Infinity`,
+  // A DUNGEON IS UNCHANGED. dungeonContext.js:436 hands `-Infinity`,
   // so there is no floor to find and the answer is the bucket ray's,
   // byte for byte - which is what keeps this a second door rather
   // than a change to the first.

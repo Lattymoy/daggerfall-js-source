@@ -56,8 +56,8 @@
   {
     "name": "REVENANT-no-cap",
     "file": "src/systems/revenant.js",
-    "old": "    if (living.length > REVENANT_MAX) {",
-    "new": "    if (living.length > REVENANT_MAX * 10) {",
+    "old": "  if (living.length > REVENANT_MAX) {",
+    "new": "  if (living.length > REVENANT_MAX * 10) {",
     "tests": [
       "test/revenant.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "REVENANT-early",
     "file": "src/systems/revenant.js",
-    "old": "  const due = living.filter((r) => r.dueAt <= now)",
-    "new": "  const due = living.filter((r) => r.dueAt <= now + 99999)",
+    "old": "  const due = living.filter((r) => r.dueAt <= now && (night",
+    "new": "  const due = living.filter((r) => r.dueAt <= now + 99999 && (night",
     "tests": [
       "test/revenant.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "REVENANT-out-over-a-load",
     "file": "src/systems/revenant.js",
-    "old": "  getSaveData: () => ({ v: 1, list: _state.list.map((r) => (r.gone ? r : { ...r, out: false, outAt: 0, dueAt: r.out ? Math.max(r.dueAt, nowMinutes() + REVENANT_LOST_MINUTES) : r.dueAt })) }),",
-    "new": "  getSaveData: () => ({ v: 1, list: _state.list.map((r) => (r.gone ? r : { ...r })) }),",
+    "old": "  getSaveData: () => ({ v: 1, list: _state.list.map((r) => (r.gone ? r : { ...r, out: false, outAt: 0, dueAt: r.out ? Math.max(r.dueAt, nowMinutes() + REVENANT_LOST_MINUTES) : r.dueAt })), lastDay: _state.lastDay }),",
+    "new": "  getSaveData: () => ({ v: 1, list: _state.list.map((r) => (r.gone ? r : { ...r })), lastDay: _state.lastDay }),",
     "tests": [
       "test/revenant.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "REVENANT-escape-leaves-a-corpse",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "    f.escaped = true;\n",
-    "new": "    f.escaped = true;\n    f.corpse = true;\n",
+    "old": "    f.fleeing = false;\n    f.escaped = true;\n",
+    "new": "    f.fleeing = false;\n    f.escaped = true;\n    f.corpse = true;\n",
     "tests": [
       "test/revenant.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "REVENANT-WIRE-the-puppet-unnamed",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "    if (typeof r.nm === 'string' && r.nm && f.entity.revenant?.name !== r.nm) f.entity.revenant = { id: null, name: r.nm, rank: 0 };",
-    "new": "    if (false) f.entity.revenant = { id: null, name: r.nm, rank: 0 };",
+    "old": "    if (typeof r.nm === 'string' && r.nm && f.entity.revenant?.name !== r.nm) { f.entity.revenant = { id: null, name: r.nm, rank: 0 }; f._feudWire = null; }",
+    "new": "    if (false) { f.entity.revenant = { id: null, name: r.nm, rank: 0 }; f._feudWire = null; }",
     "tests": [
       "test/revenant_card.test.js"
     ]

@@ -117,7 +117,7 @@ export const attributeLabel = (k) => (k ? k.charAt(0).toUpperCase() + k.slice(1)
  * own words - as ui/settingsCopy.js's are.
  */
 export const ATTRIBUTE_BLURB = Object.freeze({
-  // combat/formulas.js:82-84 damageModifier = floor((strength - 50) / 5),
+  // combat/formulas.js:83-85 damageModifier = floor((strength - 50) / 5),
   // which calculateAttackDamage adds to every landed blow;
   // entityMaxEncumbrance over liveStat strength is the pack's ceiling.
   //
@@ -137,7 +137,7 @@ export const ATTRIBUTE_BLURB = Object.freeze({
   // figure for %mr, and a display is not evidence that a number does
   // anything (LV1's audit).
   willpower: 'Hardens you against magic: a tenth of it goes into every saving throw.',
-  // combat/formulas.js:308-309 statsToHit = floor((your luck - theirs) / 10)
+  // combat/formulas.js:309-310 statsToHit = floor((your luck - theirs) / 10)
   // + floor((your agility - theirs) / 10), read INSIDE the hit roll.
   //
   // LV1's AUDIT CORRECTED THIS ONE TOO. It described `toHitModifier`
@@ -148,12 +148,12 @@ export const ATTRIBUTE_BLURB = Object.freeze({
   agility: 'Rides every swing: a tenth of the gap between your agility and your foe\'s.',
   // systems/chargen.js hitPointsPerLevelUp reads hitPointsModifier = floor(endurance / 10) - 5.
   endurance: 'Rolls into the health you gain at every level from here on.',
-  // combat/formulas.js:894 - merchant reaction takes personality / 5; systems/court.js:538 takes it again.
+  // combat/formulas.js:912 - merchant reaction takes personality / 5; systems/court.js:538 takes it again.
   personality: 'Warms merchants, judges and anyone else weighing what you are worth.',
-  // player/motor.js:630 walkSpeed(stats.speed) is how fast you move;
+  // player/motor.js:641 walkSpeed(stats.speed) is how fast you move;
   // combat/weaponRig.js:542 reads liveStat speed for the swing.
   speed: 'Quickens your weapon and closes the ground between you and a fight.',
-  // combat/formulas.js:308-309 again - the same term agility rides -
+  // combat/formulas.js:309-310 again - the same term agility rides -
   // and systems/unleveledLoot.js:95, where the vendored ladder rolls
   // rarity against the player's luck, which is where a player actually
   // notices it. (AUDIT 28e: a line shorter - at 360 to 375 wide it was the one blurb that ran to a third line, and

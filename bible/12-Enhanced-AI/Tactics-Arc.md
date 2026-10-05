@@ -181,32 +181,45 @@ Every version of the door grief, fixed without asking further (Mac: "stop asking
   1 m ahead, x1.75, 0.9 s). The families: beasts lunge; brutes (giants, the Orc Warlord, Daedroth, the Daedra Lord,
   atronachs, gargoyles, dreugh) slam and sweep; blades (orcs, skeletons, mummies, vampires, frost and fire daedra,
   seducers, lamias, centaurs, every class but the three casters, the watch) sweep and lunge; the casters, the spectral,
-  the small and the flying none. The tier (Mac): level 10 and up, or an elite.
-- **When** - from the brain (`ai/tactics.js`): a melee-token holder in reach of the local player, its cooldown (8-15 s)
+  the small and the flying none. The tier (Mac): level 10 and up, or an elite (since TELL7 a champion and a revenant
+  too, and four more shapes since TELL6 - the ring, the charge, the leap, the aimed shot: `Feud-Arc.md` sections 8-9).
+- **When** - from the brain (`ai/tactics.js`): a melee-token holder in reach of the local player, its cooldown (8-15 s;
+  since TELL7 by its tier, `Feud-Arc.md` section 9)
   spent, no other foe winding up within 20 m of the player, a 1-in-10 roll a classic tick. It STANDS the wind-up, its
-  aim locked; a knock or a paralysis (any classic tick the motor did not let it decide) breaks it. Once begun it is
-  committed - it lands where it was aimed though the target slips out of its sight.
+  aim locked; a paralysis, or a shove no blow's door wrote (a charging horse's), breaks it - a landed blow does not
+  since TELL1 (`Feud-Arc.md` section 3): it holds, and weighs on the foe's poise until the wind-up breaks and the foe is
+  staggered. Once begun it is committed - it lands where it was aimed though the target slips out of its sight.
 - **The landing** - where the player's feet stand (noted each frame) is the verdict; the swing comes at once (the
-  attack component's forced swing, past DFU's clock and reach); the host's own hit resolution asks `blowConnects`
+  attack component's forced swing, past DFU's clock and reach - since TELL2 the swing began with the wind-up and
+  stood held at its raised arm, and the landing releases it, `Feud-Arc.md` section 4.1; since TELL4 a miss leaves
+  its foe overreached, open to an answer, section 6); the host's own hit resolution asks `blowConnects`
   in place of its reach test and `blowScaled` on DFU's damage roll (armour, skill, the party's weighing and all) - in
-  the street's encounters, the watch, and the dungeon (the interior's foes are the street's pool). A blow is only
-  ever at the local player - and, since AUDIT ARENA-LADDER (2026-10-05, the owner: "Ensure AI enemies sometimes recieve
-  telegraphed attacks"), on the arena's sand at a BOUT-MATE: a fighter of the same live bout on another side
-  (`ai/tactics.js` `blowAim`), its verdict where that fighter stands and the foe-vs-foe hit paths asking `blowConnects`
-  and `blowScaled` as the player's do; a dodge is told (`registerBlowDodgedListener`), a miss for the judges. The
-  relay's ladder fighters throw the same shapes (`net/arenaBrain.js`, the families in the leaf `ai/blowShapes.js`).
-  A verdict is its mark's (AUDIT ARENA-LADDER 2, `_blowFor`): a holder whose target changed before its damage frame
-  swings the classic swing, unweighed; on the relay one fighter winds up at a time.
-  Street infighting and a peer's foe still see none. The record: `bible/01-Overview/Audit-Arena-Ladder.md`.
+  the street's encounters, the watch, and the dungeon (the interior's foes are the street's pool). A blow was only
+  ever at the local player until TELL8 (`Feud-Arc.md` section 10): a wind-up rides the foe stream, a foe winds up at
+  the peer it hunts, and each client judges its own feet - and, since AUDIT ARENA-LADDER (2026-10-05, the owner:
+  "Ensure AI enemies sometimes recieve telegraphed attacks"), on the arena's sand at a BOUT-MATE: a fighter of the same
+  live bout on another side (`ai/tactics.js` `targetFeet` - main's `blowAim`, one law with TELL8's since FEUD's merge of
+  main), its verdict where that fighter stands, judged here (`judgedHere` - a peer's is the peer's own), and the
+  foe-vs-foe hit paths asking `blowConnects` and `blowScaled` as the player's do; a dodge is told
+  (`registerBlowDodgedListener`), a miss for the judges. The relay's ladder fighters throw the same shapes
+  (`net/arenaBrain.js`, the families in the leaf `ai/blowShapes.js`). A verdict is its mark's (AUDIT ARENA-LADDER 2,
+  `_blowFor`): a holder whose target changed before its damage frame swings the classic swing, unweighed; on the relay
+  one fighter winds up at a time. Street infighting and a peer's foe still see none. The record:
+  `bible/01-Overview/Audit-Arena-Ladder.md`.
 - **The ground** - `render/foeTelegraph.js` (`renderer.drawFoeTelegraphs`): one flat quad at the foe's feet, the shape
   the fragment's own `inBlow` (pinned point for point), a dim rim at once, filling outward through the wind-up, a
-  flash at the landing; additive, depth-tested, unwritten; drawn under the bodies beside the blood marks in the street,
+  flash at the landing (since TELL2 the world boss's readable line - a keyline, a brighten "now", premultiplied over
+  the floor, never lost near the player, `Feud-Arc.md` section 4.4); depth-tested, unwritten; drawn under the bodies beside the blood marks in the street,
   the building, the dungeon and both standalone hosts.
   `tools/foeTelegraphProbe.mjs` compiles, links and draws the three shapes in a real WebGL2 context (Chromium) and
-  reads the frame back: lit inside, the ground untouched beside and behind, dimmer through the wind-up (12 held).
-- **Not built** - online, a peer does not see another's foe's telegraph (the wind-up does not ride the foe stream yet),
-  and a blow is never at a peer; a block halving it (the port has no player block).
+  reads the frame back: lit inside, the ground untouched beside and behind, dimmer through the wind-up (12 held at
+  TACT4; 34 since AUDIT TELL - every shape, the keyline, iron, the contrast, the shatter).
+- **Not built** - a block halving it (the port has no player block). (Online - a peer seeing another's foe's
+  telegraph, a blow at a peer - was built by TELL8, `Feud-Arc.md` section 10.)
 - Pins `test/tact4.test.js` (13); mutants `tools/mutants/tact4.json` (30), all dead.
+- **Next:** `Feud-Arc.md` (FEUD, 2026-10-04: "player's can easily stun these enemies") - poise and the stagger, a held
+  swing with a glint and cues, iron blows, the punish window, feints and chains, four new shapes, and the wind-ups on
+  the foe stream: TELL1-TELL9 and AUDIT TELL shipped; its records there are the law from them on.
 
 ## AUDIT TACT - 2026-10-02 (Mac: "Audit this and ensure perfection")
 
@@ -244,7 +257,7 @@ proven unchanged by a seeded run against the pre-TACT tree (same hash, same 440 
   the standalone hosts were unwired - all are now.
 - **The hosts and the ground (D).** D2 the location host never noted the player indoors - before every frame branch
   now. D3 a recentre left live wind-ups and the noted player in the old frame - `offsetTactics`. D8 the mark was flat
-  at the feet - fitted to the ground under it (sampled at its foot, ahead and across, to 45 degrees). D9 it glowed
+  at the feet - fitted to the ground under it (sampled at its foot, ahead and across, to 45 degrees). (TELL6c found the sample met no ground outdoors - a ray of meshes alone - and it asks the collider's ground too, `Feud-Arc.md`'s TELL6c record.) D9 it glowed
   through fog - fogged as the ground. D7 the switch's effect line said the next dungeon - the tactics, cover and blows
   are at once; only the navmesh waits. D11 the cover's broad phase built a string a cell a ray - numeric keys, no
   allocation a test. `tools/foeTelegraphProbe.mjs` now holds the fog and the tilt too (14 held).

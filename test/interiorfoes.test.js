@@ -144,8 +144,9 @@ test('IF: an interior swing can now MEET an enemy - the tally and the no-enemy s
   // AUDIT 39r MOVED THIS ANCHOR AGAIN: the interior rig now takes the
   // paralysis flag its two above-ground siblings take (WeaponManager
   // .cs:235-239 - ShowWeapons(false) and no swing), so both ends of
-  // the slice carry the options bag.
-  const swing = WM.slice(WM.indexOf('for (const ev of (overlayHeld ? [] : interiorWeapon.frame(dt, { paralyzed })))'));
+  // the slice carry the options bag. TELL6e MOVED IT ONCE MORE: the flag takes the knockdown beside the paralysis
+  // (systems/blowEffects.js knockedDown - no swing while down).
+  const swing = WM.slice(WM.indexOf('for (const ev of (overlayHeld ? [] : interiorWeapon.frame(dt, { paralyzed: paralyzed || knockedDown() })))'));
   const body = swing.slice(0, swing.indexOf('interiorWeapon.draw({ paralyzed })'));
   assert.match(body, /interiorFoes\?\.resolvePlayerHit\(interiorWeapon\.playerWeapon/, 'the pool is asked FIRST');
   assert.match(body, /tallySwingSkills\(playerEntity, interiorWeapon\.playerWeapon\.weapon\);\n\s+continue;/,

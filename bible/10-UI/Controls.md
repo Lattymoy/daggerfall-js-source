@@ -97,8 +97,9 @@ CSA-G (2026-09-27) reads the last three - one for Mac's read. IncreaseTimeScale 
 of the Beholder's `AutoPerspective`, so the registry's `BoatTimeScaleUp` ships on the keypad's star beside it
 (`NumpadMultiply`; a player who wants the mod's plus can share it with AutoPerspective - law 3's third answer - and at
 the helm both then answer). `BoatTimeScaleDown` and `BoatTimeScaleReset` keep the mod's keypad minus and enter, which
-nothing else holds. The three answer only at the helm, where the mod's sailing arm reads them. The mod's plus, minus
-and enter stay its `shipped` values.
+nothing else holds. The three answer only at the helm, where the mod's sailing arm reads them - and online only with
+why (HELM-TIME-ONLINE, 2026-10-04, Mac: "Remove the time dial from ships online": "Online, time at sea keeps the
+world's pace."; `03-World/Come-Sail-Away.md`). The mod's plus, minus and enter stay its `shipped` values.
 
 CSA-I (2026-09-27): the position reading's map reads raw keys of its own, and only while it is up - the number row's
 1 to 8 for the marker colour, the left and right mouse buttons, Left Shift held for the thin lines, and Escape's
@@ -109,7 +110,8 @@ number row is not the quick slots there, nor Escape the pause menu.
 CSA-L (2026-09-28, a player's ask: "instead of an overuse of keybinds, is there a way we can instead develop enhanced
 plus UI elements?"): on Enhanced Plus the nine are also a HELM PANEL under the compass (`ui/enhancedHelm.js`) - Raise
 or Stow sails, the square sails alone where the modifier's chord would raise them, the trim while it is the player's
-(held), Light or Douse lanterns, the time scale's minus, one and plus, the position reading and Leave the helm - each
+(held), Light or Douse lanterns, the time scale's minus, one and plus (offline: HELM-TIME-ONLINE draws no dial online,
+and the d-pad's left and right then step nothing, held they only trim), the position reading and Leave the helm - each
 button pressing the SAME registry action its key presses, through the mod's own input seam, so the keys stay, and a
 button presses with no key bound. The mouse clicks it while the pointer is free (`FreeMouse`, Y); a finger taps it;
 and at the helm a pad's bare d-pad is the helm's (up the sails, held the square sails; down the lanterns, held leave

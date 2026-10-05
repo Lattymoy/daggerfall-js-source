@@ -166,5 +166,7 @@ test('DUEL1 the world host by source: the wall built in every skin (a shader tha
   const x = rd('src/scenes/exteriorFoes.js');
   assert.match(x, /if \(data\.du !== undefined\) _onDuel\?\.\(from, data\.du, _now\(\)\);/, 'past the owner\'s room test');
   assert.match(x, /_onHccClear\?\.\(\);[^\n]*\n\s*_onDuelClear\?\.\(\);/, 'and cleared with the puppets');
-  assert.match(rd('src/player/motor.js'), /this\._step\(step, input, yaw, pitch\);\s*\n\s*if \(this\.arena\) this\._keepInArena\(\);/, 'the clamp after the collider\'s move, every step');
+  // PIN MOVED (TELL6e: the step's input is emptied while knocked down - `moveInput` - and a blow's push moves the feet
+  // after the step; the clamp stands after both, so no push leaves the ring)
+  assert.match(rd('src/player/motor.js'), /this\._step\(step, moveInput, yaw, pitch\);\s*\n\s*this\._pushStep\(step\);[^\n]*\n\s*if \(this\.arena\) this\._keepInArena\(\);/, 'the clamp after the collider\'s move, every step');
 });

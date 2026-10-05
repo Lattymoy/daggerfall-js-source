@@ -1,0 +1,551 @@
+[
+  {
+    "name": "RVN2-the-lesson-skips-the-lead",
+    "file": "src/systems/revenantFeud.js",
+    "old": "  for (const k of kinds.includes('routed') ? ['routed', ...kinds] : kinds) {\n    const a = k === 'night'",
+    "new": "  for (const k of (kinds.includes('routed') ? ['routed', ...kinds] : kinds).slice(1)) {\n    const a = k === 'night'",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-a-held-one-relearned",
+    "file": "src/systems/revenantFeud.js",
+    "old": "    if (!a || held.has(a)) continue;",
+    "new": "    if (!a) continue;",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-a-held-lead-ends-the-lesson",
+    "file": "src/systems/revenantFeud.js",
+    "old": "    if (!a || held.has(a)) continue;",
+    "new": "    if (!a) continue;\n    if (held.has(a)) return null;",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-silver-anywhere",
+    "file": "src/systems/revenantFeud.js",
+    "old": "    if (a === 'silverScarred' && !SILVER_DOUBLED_KINDS.has(mobileType)) continue;",
+    "new": "    if (a === 'silverScarred' && false) continue;",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-the-career-unread",
+    "file": "src/systems/revenantFeud.js",
+    "old": "    if (ADAPT.RESIST_OF[a] && weaknessShut(ADAPT.RESIST_OF[a], career)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-the-nights-kill-untaught",
+    "file": "src/systems/revenantFeud.js",
+    "old": "(slew ? 'nightStalker' : null)",
+    "new": "null",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-any-night-teaches",
+    "file": "src/systems/revenantFeud.js",
+    "old": "(slew ? 'nightStalker' : null)",
+    "new": "'nightStalker'",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-routed-untaught",
+    "file": "src/systems/revenantFeud.js",
+    "old": "back: 'watchful', routed: 'relentless',",
+    "new": "back: 'watchful',",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-the-cap-ignored",
+    "file": "src/systems/revenantFeud.js",
+    "old": ".slice(-Math.max(1, Math.min(rank | 0, ADAPT_MAX)))",
+    "new": ".slice(-ADAPT_MAX)",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-the-sanitize-cap-ignored",
+    "file": "src/systems/revenantFeud.js",
+    "old": ".slice(-Math.min(rank, ADAPT_MAX)) : [],   // RVN2: at most its rank's",
+    "new": ".slice(-ADAPT_MAX) : [],   // RVN2: at most its rank's",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-the-weakness-touched-class",
+    "file": "src/systems/revenantFeud.js",
+    "old": "if (has(a) && cls !== weak) taken[cls]",
+    "new": "if (has(a)) taken[cls]",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-the-weakness-touched-element",
+    "file": "src/systems/revenantFeud.js",
+    "old": "if (has(a) && el !== weak) resist[el]",
+    "new": "if (has(a)) resist[el]",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-a-silver-weakness-scarred",
+    "file": "src/systems/revenantFeud.js",
+    "old": "silverScarred: has('silverScarred') && weak !== 'silver',",
+    "new": "silverScarred: has('silverScarred'),",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-resist-immunity",
+    "file": "src/systems/revenantFeud.js",
+    "old": "  RESIST: 25,",
+    "new": "  RESIST: 50,",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-mailed-moved",
+    "file": "src/systems/revenantFeud.js",
+    "old": "mailed: Object.freeze(['blade', 0.7])",
+    "new": "mailed: Object.freeze(['blade', 0.8])",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-braced-moved",
+    "file": "src/systems/revenantFeud.js",
+    "old": "braced: Object.freeze(['blunt', 0.75])",
+    "new": "braced: Object.freeze(['blunt', 0.7])",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-a-class-crossed",
+    "file": "src/systems/revenantFeud.js",
+    "old": "hewnHard: Object.freeze(['axe', 0.7])",
+    "new": "hewnHard: Object.freeze(['blade', 0.7])",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-the-floor-moved",
+    "file": "src/systems/revenantFeud.js",
+    "old": "  TAKEN_FLOOR: 0.6,",
+    "new": "  TAKEN_FLOOR: 0.5,",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-braced-poise-dropped",
+    "file": "src/systems/revenantFeud.js",
+    "old": "poise: (has('braced') ? ADAPT.BRACED_POISE : 1)",
+    "new": "poise: (1)",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-steadfast-poise-dropped",
+    "file": "src/systems/revenantFeud.js",
+    "old": " * (has('steadfast') ? ADAPT.STEADFAST_POISE : 1),",
+    "new": " * 1,",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-iron-never",
+    "file": "src/systems/revenantFeud.js",
+    "old": "    iron: has('steadfast') ? ADAPT.STEADFAST_IRON : 0,",
+    "new": "    iron: 0,",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-patient-track",
+    "file": "src/systems/revenantFeud.js",
+    "old": "    track: has('patient') ? ADAPT.PATIENT_TRACK : null,",
+    "new": "    track: null,",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-patient-feint",
+    "file": "src/systems/revenantFeud.js",
+    "old": "    feint: has('patient') ? ADAPT.PATIENT_FEINT : null,",
+    "new": "    feint: null,",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-patient-wind",
+    "file": "src/systems/revenantFeud.js",
+    "old": "    wind: has('patient') ? ADAPT.PATIENT_WIND : null,",
+    "new": "    wind: null,",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-arrow-speed",
+    "file": "src/systems/revenantFeud.js",
+    "old": "farSpeed: has('arrowWise') ? ADAPT.ARROW_SPEED : 0,",
+    "new": "farSpeed: 0,",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-arrow-closes",
+    "file": "src/systems/revenantFeud.js",
+    "old": "closes: has('arrowWise'),",
+    "new": "closes: false,",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-claws-are-fists",
+    "file": "src/systems/revenantFeud.js",
+    "old": "  return attacker?.isPlayer || (attacker?.mobileType ?? -1) >= 128 ? 'h2h' : 'other';",
+    "new": "  return 'h2h';",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-no-lesson",
+    "file": "src/systems/revenant.js",
+    "old": "  if (lesson) r.learned = withLesson(r.learned, lesson, r.rank);\n",
+    "new": "",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-the-lesson-career-unread",
+    "file": "src/systems/revenant.js",
+    "old": "lessonOf(kinds, r.learned, r.mobileType, entity.career ?? null)",
+    "new": "lessonOf(kinds, r.learned, r.mobileType)",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-the-deed-stamp-stale",
+    "file": "src/systems/revenant.js",
+    "old": "  entity.revenant = revenantStamp(r);   // RVN2: and what it learned, at once",
+    "new": "  entity.revenant = { id: r.id, name: r.name, rank: r.rank };",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-the-stand-stamp-stale",
+    "file": "src/systems/revenant.js",
+    "old": "  entity.revenant = revenantStamp(r);   // RVN2: what it learned stands with it",
+    "new": "  entity.revenant = { id: r.id, name: r.name, rank: r.rank, edge: adaptEdge([]) };",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-the-taken-mod-unregistered",
+    "file": "src/systems/revenant.js",
+    "old": "  return edge.taken[adaptBlowClass(attacker, weapon, info?.kind)] ?? 1;",
+    "new": "  return 1;",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-the-fold-unregistered",
+    "file": "src/systems/revenant.js",
+    "old": "  Object.assign(m.resist, edge.resist);\n",
+    "new": "",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-the-veto-unregistered",
+    "file": "src/systems/revenant.js",
+    "old": "registerSilverDoubleVeto('revenant', (target) => target?.revenant?.edge?.silverScarred === true);",
+    "new": "registerSilverDoubleVeto('revenant', () => false);",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-relentless-speed-dropped",
+    "file": "src/systems/revenant.js",
+    "old": "  if (edge.relentless && entity.stats) entity.stats.speed = (entity.stats.speed ?? 0) + ADAPT.RELENTLESS_SPEED;\n",
+    "new": "",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-night-blows-dropped",
+    "file": "src/systems/revenant.js",
+    "old": "  if (edge.nightStalker && skyIsNight()) entity.damageScale *= ADAPT.NIGHT_BLOWS;\n",
+    "new": "",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-a-night-stalker-by-day",
+    "file": "src/systems/revenant.js",
+    "old": "(night || !(r.learned ?? []).includes('nightStalker'))",
+    "new": "true",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-stock-core-ignores-the-veto",
+    "file": "src/combat/formulas.js",
+    "old": "    if (weapon.material === 2 && silverDoubles(target)) damage *= 2;    // Silver (RVN2: unless a veto keeps it plain)",
+    "new": "    if (weapon.material === 2) damage *= 2;",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-pcaao-ignores-the-veto",
+    "file": "src/combat/pcaao.js",
+    "old": "SILVER_DOUBLED_CAREERS.includes(target.careerIndex) && weapon.material === 2 && silverDoubles(target)) {",
+    "new": "SILVER_DOUBLED_CAREERS.includes(target.careerIndex) && weapon.material === 2) {",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-the-veto-inverted",
+    "file": "src/combat/formulas.js",
+    "old": "  for (const fn of _silverVetoes.values()) { try { if (fn(target) === true) return false; }",
+    "new": "  for (const fn of _silverVetoes.values()) { try { if (fn(target) === false) return false; }",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-poise-edge-unread",
+    "file": "src/ai/tells.js",
+    "old": "  if (edge > 0) s *= edge;\n",
+    "new": "",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-iron-share-unread",
+    "file": "src/ai/tells.js",
+    "old": "ent?.revenant?.edge?.iron > 0 ? ent.revenant.edge.iron : 0, ent?.revenant?.p2?.iron",
+    "new": "0, ent?.revenant?.p2?.iron",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-iron-the-smaller-share",
+    "file": "src/ai/tells.js",
+    "old": "  const share = Math.max(isElite(ent)",
+    "new": "  const share = Math.min(isElite(ent)",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-the-band-tells",
+    "file": "src/ai/tells.js",
+    "old": "  const [lo, hi] = ent?.revenant?.edge?.wind ?? TELL.WINDUP_VARY;",
+    "new": "  const [lo, hi] = TELL.WINDUP_VARY;",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-feint-chance-tells",
+    "file": "src/ai/tells.js",
+    "old": "export const feintChance = (ent) => ent?.revenant?.edge?.feint ?? TELL.FEINT_CHANCE;",
+    "new": "export const feintChance = (ent) => TELL.FEINT_CHANCE;",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-track-share-tells",
+    "file": "src/ai/tells.js",
+    "old": "export const trackShare = (ent) => ent?.revenant?.edge?.track ?? TELL.TRACK_SHARE;",
+    "new": "export const trackShare = (ent) => TELL.TRACK_SHARE;",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-the-brain-draws-tells",
+    "file": "src/ai/tactics.js",
+    "old": "Math.random() < feintChance(ent)) {",
+    "new": "Math.random() < TELL.FEINT_CHANCE) {",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-the-brain-tracks-tells",
+    "file": "src/ai/tactics.js",
+    "old": "now < b0.start + trackShare(ai.vitals?.()) * (b0.land - b0.start)",
+    "new": "now < b0.start + TELL.TRACK_SHARE * (b0.land - b0.start)",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-the-charge-rolled",
+    "file": "src/ai/tactics.js",
+    "old": "((!near && ent?.revenant?.edge?.closes === true) || Math.random() < BLOW_CHANCE)",
+    "new": "(Math.random() < BLOW_CHANCE)",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-the-speed-unread",
+    "file": "src/characters/enemyMotor.js",
+    "old": "  get speed() { return enemyMoveSpeed(this._liveSpeed() + this._edgeSpeed()); }",
+    "new": "  get speed() { return enemyMoveSpeed(this._liveSpeed()); }",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-the-speed-at-any-range",
+    "file": "src/characters/enemyMotor.js",
+    "old": "    return e?.farSpeed > 0 && this._dist > e.farAt ? e.farSpeed : 0;",
+    "new": "    return e?.farSpeed > 0 ? e.farSpeed : 0;",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-the-backstab-kept",
+    "file": "src/scenes/hostCombat.js",
+    "old": "  if (foe?.entity?.revenant?.edge?.watchful === true) return 0;   // RVN2",
+    "new": "  if (false) return 0;   // RVN2",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-the-back-weighed",
+    "file": "src/scenes/hostCombat.js",
+    "old": "  const watchful = f.entity?.revenant?.edge?.watchful === true;",
+    "new": "  const watchful = false;",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-unaware-kept",
+    "file": "src/combat/playerWeapon.js",
+    "old": "foe.ai.detected === false && foe.entity?.revenant?.edge?.watchful !== true;",
+    "new": "foe.ai.detected === false;",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-the-cull-kept",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "partyNearFoe(f, _cullAt)) && !_relentless) {",
+    "new": "partyNearFoe(f, _cullAt))) {",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-the-arrow-foe-unread",
+    "file": "src/combat/arrowFlight.js",
+    "old": "backstabChance: backstabChanceOf(playerEntity, back, foe),",
+    "new": "backstabChance: backstabChanceOf(playerEntity, back),",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-the-page-unnamed",
+    "file": "src/ui/revenantPage.js",
+    "old": "    for (const c of chips) { const chip = el('span', 'rvn-chip', c.name); chip.title = c.title; box.append(chip); }\n    text.append(box);\n    text.append(el('span', 'rvn-effects',",
+    "new": "    text.append(box);\n    text.append(el('span', 'rvn-effects',",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-the-page-name-moved",
+    "file": "src/ui/revenantPage.js",
+    "old": "arrowWise: 'Arrow-wise',",
+    "new": "arrowWise: 'Arrowwise',",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-the-dungeon-foe-unread",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "(f) => backstabChanceOf(playerEntity, !!f._backFacing, f)",
+    "new": "(f) => backstabChanceOf(playerEntity, !!f._backFacing)",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-the-street-foe-unread",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "(f) => backstabChanceOf(playerEntity, isBackFacing(f.ai.yaw, f.ai.feet, eye), f)",
+    "new": "(f) => backstabChanceOf(playerEntity, isBackFacing(f.ai.yaw, f.ai.feet, eye))",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  },
+  {
+    "name": "RVN2-the-watch-foe-unread",
+    "file": "src/scenes/cityGuards.js",
+    "old": "(g) => backstabChanceOf(playerEntity, isBackFacing(g.ai.yaw, g.ai.feet, eye), g)",
+    "new": "(g) => backstabChanceOf(playerEntity, isBackFacing(g.ai.yaw, g.ai.feet, eye))",
+    "tests": [
+      "test/rvn2_adapt.test.js"
+    ]
+  }
+]

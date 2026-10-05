@@ -104,7 +104,7 @@ import { getDaggerfallDistance, MatchesCutOff } from '../systems/editDistance.js
 import { checkLocationDiscovered, flipTravelMapFilter, travelMapDotColors } from './travelMapWindow.js';   // MAP-KEY: the classic's filter flip and its dots' colours
 import { readGateMark, gateMarkKey, GATE_RING_CSS, GATE_LEGEND_TEXT } from './gateMapMark.js';   // WB1: the Oblivion Gate's ring, read as the party is (SERPENT1: and the serpent's, by the same reader)
 import { SERPENT_RING_MAP_CSS, SERPENT_LEGEND_TEXT } from './serpentMapMark.js';   // SERPENT1: the sea serpent's ring, in the sea's colours
-import { readBountyMarks, bountyMarksKey, BOUNTY_RING_CSS, BOUNTY_LEGEND_TEXT, BOUNTY_LEGEND_RIM_CSS } from './bountyMapMark.js';   // BOUNTY1: held bounties' black circles, read as the gate's ring is
+import { readBountyMarks, bountyMarksKey, BOUNTY_RING_CSS, BOUNTY_LEGEND_TEXT, BOUNTY_LEGEND_RIM_CSS, REVENANT_RING_CSS, REVENANT_LEGEND_TEXT } from './bountyMapMark.js';   // BOUNTY1: held bounties' black circles, read as the gate's ring is
 import { readRaidMarks, raidMarksKey, placeTip, tipKey, readTip, RAID_MARK_CSS, RAID_LEGEND_TEXT, RAID_HIT_PX, SEAT_TIP_TEXT_MAX } from './eventMapMarks.js';   // EVENT-TIP: the raided towns, and the card a world event answers a hover with
 import { readVendorMark, vendorMarkKey, VENDOR_MARK_CSS, VENDOR_RIM_CSS, VENDOR_LEGEND_TEXT } from './vendorMapMark.js';   // HOME-VENDOR: the trader's waypoint
 import { readQuestMarks, questMarksKey, QUEST_MARK_CSS, QUEST_LEGEND_TEXT, QUEST_HIT_PX, QUEST_MARK_LIFT, QUEST_RAID_LIFT, QUEST_FOLLOWED_TEXT } from './questMarks.js';   // GUIDE5: where the quests point
@@ -643,6 +643,8 @@ export class HeldMapWindow {
     // BOUNTY1: the held bounties' black circles - the host's `bounties`, read on the same poll
     this._bounties = [];
     this._bountiesKey = '';
+    this._revenants = [];   // RVN7c: the revenant lairs heard of - the host's `revenants`, read on the same poll
+    this._revenantsKey = '';
     // EVENT-TIP: the raided towns (the host's `raids`, on the same poll), and the card under the pointer
     this._raids = [];
     this._raidsKey = '';
@@ -1210,6 +1212,7 @@ export class HeldMapWindow {
           gate: this._gate,   // WB1
           serpent: this._serpent,   // SERPENT1
           bounties: this._bounties,   // BOUNTY1
+          revenants: this._revenants,   // RVN7c
           raids: this._raids,   // EVENT-TIP: the towns under attack
           quests: this._quests,   // GUIDE5: where the quests point
           vendor: this._vendor,   // HOME-VENDOR: the trader's waypoint
@@ -1712,6 +1715,10 @@ export class HeldMapWindow {
     const bounties = readBountyMarks(this.deps.bounties, this._size);
     const bKey = bountyMarksKey(bounties);
     if (bKey !== this._bountiesKey) { this._bountiesKey = bKey; this._bounties = bounties; gateMoved = true; this._dirty = true; }
+    // RVN7c: and the lairs heard of - a rumour heard, or a hunt given up, with the map open
+    const lairs = readBountyMarks(this.deps.revenants, this._size, REVENANT_LEGEND_TEXT);
+    const lKey = bountyMarksKey(lairs);
+    if (lKey !== this._revenantsKey) { this._revenantsKey = lKey; this._revenants = lairs; gateMoved = true; this._dirty = true; }
     // EVENT-TIP: the raided towns ride the same poll (a raid begins, withdraws or is cleansed while the map stands
     // open), and the card under a still pointer follows the marks - a countdown's second, a town cleansed under it
     const raids = readRaidMarks(this.deps.raids, this._size);
@@ -1760,7 +1767,7 @@ export class HeldMapWindow {
     if (!leg) return;
     leg.innerHTML = '';
     const trav = this._trav.filter((t) => playerShown(t));   // OW-WHO: the legend speaks for the players the sheet draws
-    if (!this._party.length && !this._gate && !this._serpent && !this._bounties.length && !this._raids.length && !trav.length && !this._quests.length && !this._vendor) { leg.classList.toggle('open', false); leg.style.display = 'none'; return; }
+    if (!this._party.length && !this._gate && !this._serpent && !this._bounties.length && !this._revenants.length && !this._raids.length && !trav.length && !this._quests.length && !this._vendor) { leg.classList.toggle('open', false); leg.style.display = 'none'; return; }
     if (this._party.length) {
       const dot = el('span', 'hmlegdot');
       dot.style.background = this._party.some((m) => m.online) ? PARTY_MARK_CSS : PARTY_OFFLINE_CSS;
@@ -1792,6 +1799,12 @@ export class HeldMapWindow {
       dot.style.background = BOUNTY_RING_CSS;
       dot.style.boxShadow = `0 0 0 1px ${BOUNTY_LEGEND_RIM_CSS}`;   // a black dot needs a pale rim on the dark legend
       leg.append(dot, el('span', 'hmlegtext', BOUNTY_LEGEND_TEXT));
+    }
+    if (this._revenants.length) {   // RVN7c: and a lair's blood-red circle
+      const dot = el('span', 'hmlegdot');
+      dot.style.background = REVENANT_RING_CSS;
+      dot.style.boxShadow = `0 0 0 1px ${BOUNTY_LEGEND_RIM_CSS}`;
+      leg.append(dot, el('span', 'hmlegtext', REVENANT_LEGEND_TEXT));
     }
     if (this._raids.length) {   // EVENT-TIP: and a raided town
       const dot = el('span', 'hmlegdot');

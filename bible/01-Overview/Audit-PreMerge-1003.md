@@ -122,7 +122,7 @@ for the finding's reason (`test/audit1003_server.test.js` 11, `_bouts` 9, `_onli
 |---|---|---|---|
 | M1 | high | MAIN TOOK THE ARENA'S NUMBERS. #547 merged (and deployed) `acct71` and migrations `0071_silver_ways`/`0072_motherlodes`; the branch claimed acct71 and 0071-0073. The merge would have been silent: `wrangler.toml` auto-merged to the same word, the migrations' names differ, every pin says acct71, and nothing held a prefix to one migration. | A third main merge: acct72, `0073_home_layout`, `0074_arena`, `0075_arena4b`, every reference with them; MIGRATION-PREFIX holds the prefixes unique and one apart. |
 | M2 | low | The branch's cite passes moved four struck measurements of `exterior.js` in Port-Status (the page keeps them). | Main's numbers back. |
-| M3, D7 | low | `dataPipeline.js:366` named for patchSeams (it is :303). | Corrected. |
+| M3, D7 | low | `dataPipeline.js:391` named for patchSeams (it is :303). | Corrected. |
 | M4 | low | The service's version note listed "acct47: WD3" (main's acct47 is GUILD1d's). | Said as it was. |
 
 **The record** (`bible/11-Multiplayer/Arena.md`, `bible/03-World/Beautiful-Towns.md`, `bible/02-Formats/World-Data-Patches.md`,
@@ -298,7 +298,7 @@ line moves). And acct72's note names main's HALL-GOLD, which landed under acct71
 - **One account's two tabs in the stands take two seats** (R5's second half) - ONE-SEAT keeps two tabs online apart;
   recorded.
 - **Older stale cites** the merge carried unchanged (153 suspected by M's trace - `Audit-59.md:26` and the like - and
-  D's `dungeonContext.js:3368`, `exterior.js:4274`): wrong on both sides before the merge, not covered by citedrift;
+  D's `dungeonContext.js:3543`, `exterior.js:4282`): wrong on both sides before the merge, not covered by citedrift;
   each needs `citeShift` from its sentence's own commit. Not this pass's.
 
 **What it could not see.** A booted world (no ARENA2): C7's landing and the session's marks are traced and pinned by

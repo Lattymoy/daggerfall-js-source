@@ -1165,9 +1165,11 @@ export const MOD_SETTINGS = Object.freeze({
       // its refusals (scenes/world.js tvRoutesJourneys) - walked in first person, the view not raised. OFF, the default:
       // First-Person Travel is the mod's own straight journey, the original travel option Mac asked back.
       'GeneralOptions.FirstPersonTravelFollowsRoads': Object.freeze({ default: false, description: 'With First Person Travel on, a journey picked on the travel map follows the roads and tracks as the Overworld’s journeys do - planned round the mountains, and refused where no way by land reaches - and is walked in first person, the Overworld view not raised. Off, it walks straight to its destination, as Travel Options does. Takes effect at once. (This port’s own switch - the mod has none.)' }),
-      'TimeAcceleration.DefaultStartingAcceleration': Object.freeze({ default: 4, options: Object.freeze(["1", "2", "3", "5", "10", "15", "20", "25", "30", "40", "50"]), description: "The initial time acceleration used after starting the game" }),
-      'TimeAcceleration.AlwaysUseStartingAcceleration': Object.freeze({ default: false, description: "Always uses the default starting acceleration when initiating a journey, rather than value from the previous journey" }),
-      'TimeAcceleration.AccelerationLimit': Object.freeze({ default: 60, min: 10, max: 100, description: "The maximum limit allowed for time acceleration, road following is limited to half this amount" }),
+      // RATE-LAW (2026-10-04, Mac: "Remove travel options dials" / "Roads now travel at x100 and non roads at x60"): the
+      // mod's TimeAcceleration section (DefaultStartingAcceleration, AlwaysUseStartingAcceleration, AccelerationLimit)
+      // is not declared - the spinner it started and bounded is gone, and a journey runs at its ground's rate
+      // (systems/timeScale.js travelRateOf). The vendored modsettings.json keeps the three; test/to1_travelOptions.test.js
+      // names them as the one section the port leaves out.
       'Teleportation.EnablePaidTeleportation': Object.freeze({ default: false, description: "Enable paid Mages teleportation service for all guild members, before rank 8" }),
       // the shipped file's spacer section "__" carries no keys
       'RoadsIntegration.Enable': Object.freeze({ default: true, description: "Enhances the travel map with larger location dots for cities & towns, and shows roads & tracks with toggle buttons" }),

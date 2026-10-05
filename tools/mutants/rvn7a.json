@@ -1,0 +1,218 @@
+[
+  {
+    "name": "RVN7a-rumour-odds-moved",
+    "file": "src/systems/revenantFeud.js",
+    "old": "export const RUMOR_CHANCE = 0.35;",
+    "new": "export const RUMOR_CHANCE = 0.5;",
+    "tests": [
+      "test/rvn7a_lair.test.js"
+    ]
+  },
+  {
+    "name": "RVN7a-rumour-reach-moved",
+    "file": "src/systems/revenantFeud.js",
+    "old": "export const RUMOR_PX = 20;",
+    "new": "export const RUMOR_PX = 10;",
+    "tests": [
+      "test/rvn7a_lair.test.js"
+    ]
+  },
+  {
+    "name": "RVN7a-gold-moved",
+    "file": "src/systems/revenantFeud.js",
+    "old": "export const LAIR_GOLD = 1.25;",
+    "new": "export const LAIR_GOLD = 1.5;",
+    "tests": [
+      "test/rvn7a_lair.test.js"
+    ]
+  },
+  {
+    "name": "RVN7a-bearing-off-its-id",
+    "file": "src/systems/revenantFeud.js",
+    "old": "  const bearing = idStream(id, 'lair')() * Math.PI * 2;",
+    "new": "  const bearing = idStream('rvn7', 'lair')() * Math.PI * 2;",
+    "tests": [
+      "test/rvn7a_lair.test.js"
+    ]
+  },
+  {
+    "name": "RVN7a-nearest-alone",
+    "file": "src/systems/revenantFeud.js",
+    "old": "    if (a < bestA - 1e-9 || (Math.abs(a - bestA) <= 1e-9 && r < bestR)) { best = d; bestA = a; bestR = r; }",
+    "new": "    if (r < bestR) { best = d; bestA = a; bestR = r; }",
+    "tests": [
+      "test/rvn7a_lair.test.js"
+    ]
+  },
+  {
+    "name": "RVN7a-tie-the-farther",
+    "file": "src/systems/revenantFeud.js",
+    "old": "(Math.abs(a - bestA) <= 1e-9 && r < bestR)",
+    "new": "(Math.abs(a - bestA) <= 1e-9 && r > bestR)",
+    "tests": [
+      "test/rvn7a_lair.test.js"
+    ]
+  },
+  {
+    "name": "RVN7a-north-south-swapped",
+    "file": "src/systems/revenantFeud.js",
+    "old": "    let a = Math.abs(Math.atan2(-dy, dx) - bearing) % (Math.PI * 2);",
+    "new": "    let a = Math.abs(Math.atan2(dy, dx) - bearing) % (Math.PI * 2);",
+    "tests": [
+      "test/rvn7a_lair.test.js"
+    ]
+  },
+  {
+    "name": "RVN7a-unwrapped",
+    "file": "src/systems/revenantFeud.js",
+    "old": "    if (a > Math.PI) a = Math.PI * 2 - a;\n",
+    "new": "",
+    "tests": [
+      "test/rvn7a_lair.test.js"
+    ]
+  },
+  {
+    "name": "RVN7a-junk-kept",
+    "file": "src/systems/revenantFeud.js",
+    "old": "  const list = (Array.isArray(dungeons) ? dungeons : []).filter((d) => sanitizeLair(d));",
+    "new": "  const list = (Array.isArray(dungeons) ? dungeons : []).filter(Boolean);",
+    "tests": [
+      "test/rvn7a_lair.test.js"
+    ]
+  },
+  {
+    "name": "RVN7a-no-pixel-picked",
+    "file": "src/systems/revenantFeud.js",
+    "old": "  if (!list.length || !Number.isInteger(px) || !Number.isInteger(py)) return null;",
+    "new": "  if (!list.length) return null;",
+    "tests": [
+      "test/rvn7a_lair.test.js"
+    ]
+  },
+  {
+    "name": "RVN7a-kept-moved",
+    "file": "src/systems/revenantFeud.js",
+    "old": "  return kept ?? pickLair(r?.id, here.px, here.py, here.dungeons);",
+    "new": "  return pickLair(r?.id, here.px, here.py, here.dungeons) ?? kept;",
+    "tests": [
+      "test/rvn7a_lair.test.js"
+    ]
+  },
+  {
+    "name": "RVN7a-underground-ignored",
+    "file": "src/systems/revenantFeud.js",
+    "old": "  if (here.underground) return sanitizeLair(here.underground) ?? kept;\n",
+    "new": "",
+    "tests": [
+      "test/rvn7a_lair.test.js"
+    ]
+  },
+  {
+    "name": "RVN7a-nothing-wipes",
+    "file": "src/systems/revenantFeud.js",
+    "old": "  if (!here || typeof here !== 'object') return kept;",
+    "new": "  if (!here || typeof here !== 'object') return null;",
+    "tests": [
+      "test/rvn7a_lair.test.js"
+    ]
+  },
+  {
+    "name": "RVN7a-same-by-x-alone",
+    "file": "src/systems/revenantFeud.js",
+    "old": "(!!a && !!b && a.px === b.px && a.py === b.py)",
+    "new": "(!!a && !!b && a.px === b.px)",
+    "tests": [
+      "test/rvn7a_lair.test.js"
+    ]
+  },
+  {
+    "name": "RVN7a-door-unread",
+    "file": "src/systems/revenant.js",
+    "old": "  const lair = lairAfter(r, playerDoor()?.lairHere?.() ?? null);",
+    "new": "  const lair = lairAfter(r, null);",
+    "tests": [
+      "test/rvn7a_lair.test.js"
+    ]
+  },
+  {
+    "name": "RVN7a-known-kept-on-a-move",
+    "file": "src/systems/revenant.js",
+    "old": "  if (!sameLair(lair, r.lair)) { r.lair = lair; r.lairKnown = false; }",
+    "new": "  if (!sameLair(lair, r.lair)) { r.lair = lair; }",
+    "tests": [
+      "test/rvn7a_lair.test.js"
+    ]
+  },
+  {
+    "name": "RVN7a-known-wiped-on-a-stay",
+    "file": "src/systems/revenant.js",
+    "old": "  if (!sameLair(lair, r.lair)) { r.lair = lair; r.lairKnown = false; }",
+    "new": "  r.lair = lair; r.lairKnown = false;",
+    "tests": [
+      "test/rvn7a_lair.test.js"
+    ]
+  },
+  {
+    "name": "RVN7a-world-unwired",
+    "file": "src/scenes/world.js",
+    "old": "      return { px: p.x, py: p.y, dungeons };",
+    "new": "      return null;",
+    "tests": [
+      "test/rvn7a_lair.test.js"
+    ]
+  },
+  {
+    "name": "RVN7a-world-regionless",
+    "file": "src/scenes/world.js",
+    "old": "region: _dungeonRegionPixels.get(`${d.px},${d.py}`) ?? -1 }));",
+    "new": "region: -1 }));",
+    "tests": [
+      "test/rvn7a_lair.test.js"
+    ]
+  },
+  {
+    "name": "RVN7a-world-regions-unindexed",
+    "file": "src/scenes/world.js",
+    "old": "          _dungeonRegionPixels.set(`${p.x},${p.y}`, r);   // RVN7\n",
+    "new": "",
+    "tests": [
+      "test/rvn7a_lair.test.js"
+    ]
+  },
+  {
+    "name": "RVN7a-dungeon-unwired",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      return { underground: { px: p.x, py: p.y, name: String(dfLocation.name), region: dfLocation.regionIndex ?? -1 } };",
+    "new": "      return null;",
+    "tests": [
+      "test/rvn7a_lair.test.js"
+    ]
+  },
+  {
+    "name": "RVN7a-door-shut",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    lairHere: () => { try { return lairHere?.() ?? null; } catch { return null; } },",
+    "new": "    lairHere: () => null,",
+    "tests": [
+      "test/rvn7a_lair.test.js"
+    ]
+  },
+  {
+    "name": "RVN7a-page-unknown-named",
+    "file": "src/ui/revenantPage.js",
+    "old": "  return r.lairKnown ? `Lair: ${r.lair.name} - on your map.` : 'Lair: unknown - the towns about it may have heard.';",
+    "new": "  return `Lair: ${r.lair.name} - on your map.`;",
+    "tests": [
+      "test/rvn7a_lair.test.js"
+    ]
+  },
+  {
+    "name": "RVN7a-page-unwired",
+    "file": "src/ui/revenantPage.js",
+    "old": "  if (!fallen) text.append(el('span', 'rvn-will', lairWords(r)));   // RVN7\n",
+    "new": "",
+    "tests": [
+      "test/rvn7a_lair.test.js"
+    ]
+  }
+]

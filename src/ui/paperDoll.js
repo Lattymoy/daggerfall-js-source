@@ -46,7 +46,7 @@ import { EQUIP_SLOTS, equipTableOf, getItemHands, ITEM_HANDS } from '../systems/
 import { getTemplate, paperdollOrder } from '../characters/paperdoll.js';
 import { applyDyeToIndex, DYE_TARGETS, DYE_COLORS, CLOTHING_DYES } from '../characters/dyes.js';
 import { decodedTextureTopDown, preloadTextureRecord, textureReplacementRect } from '../systems/textureReplacement.js';
-import { dfmodImgImage, dfmodCifRciImage, dfmodGeneration, resampleRgba, attachedDfmods } from '../systems/dfmodTextures.js';   // DFMOD1: an attached mod's backdrop, body, head and hi-res items   // DW3: GetItemImage's import arm, by the item's dye; AUDIT-DW F1: decoded when the doll asks
+import { dfmodImgImage, dfmodCifRciImage, dfmodGeneration, resampleRgba, dfmodCarriesDollArt } from '../systems/dfmodTextures.js';   // DFMOD1: an attached mod's backdrop, body, head and hi-res items   // DW3: GetItemImage's import arm, by the item's dye; AUDIT-DW F1: decoded when the doll asks
 import { itemDyeColor } from '../systems/itemDye.js';   // DW3: DaggerfallUnityItem.dyeColor, as the port's items carry it
 import { customItemClass } from '../systems/rriItems.js';   // RRI1: a custom class's own archive and record on the doll
 import { clampArmorVariant, armorArchive, HUMAN_MORPHOLOGY, ARMOR_MATERIAL } from '../systems/armorMaterials.js';
@@ -304,7 +304,7 @@ function altAt(holder, S) {
  *  nearest-scaled into it exactly as before, and the mod's layers keep four times the detail. Every rect, offset and
  *  click mask stays in the classic 110x184 space; only the pixels are denser. */
 export const PAPERDOLL_HD_SCALE = 4;
-const composeScale = () => (attachedDfmods().length ? PAPERDOLL_HD_SCALE : 1);
+const composeScale = () => (dfmodCarriesDollArt() ? PAPERDOLL_HD_SCALE : 1);   // AUDIT VE R13: a mod switched on carries doll art - not the lighting mod, a mod off, Vanilla Enhanced or a copy of it
 
 export async function preloadPaperDollArt(deps, ident = {}) {
   const { race = 'Breton', gender = 'male' } = ident;

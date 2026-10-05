@@ -166,7 +166,7 @@ next to the player. A party going over the rail is dealt rail spots
    origin/ccr-08848d60-ieuci5-living-crew <merged head> --apply` moved 169
    cites. CD4 named the same seven `world.js` cites again, re-pointed, and
    the modal-frame range's close. mutantdrift named the two survtiers3
-   records again, re-aimed at `world.js:5590` and dead. Every change the
+   records again, re-aimed at `world.js:6143` and dead. Every change the
    cites took is digits alone, checked line by line. The suite line: 16071
    tests across 1695 files.
 4. **Verified on the merged tree.**

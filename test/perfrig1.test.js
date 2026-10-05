@@ -288,7 +288,7 @@ test('PERF-ZONE2 the world frame\'s CPU zones tile in order, and each new mark s
   before('sky.draw(tvf ? tvf.yaw : cam.yaw, tvf ? tvf.pitch : cam.pitch + climbFeel.pitch(), fieldOfView() + climbFeel.fovRad(), worldAspect,', 'ring');   // CLIMB4: the climb's pitch and kick   // TV1: the sky turns to the travel view's eye
   after('arrows', 'arrows.update(foeDt, {');
   after('rig', 'if (walkMode && playerSpawned) {');
-  { const i = frame.indexOf("markCpu('rig')"); const j = frame.indexOf('weaponRig.frame(dt, { paralyzed })', i); const k = frame.indexOf("markCpu('hud')", i); assert.ok(j > i && j < k, 'the rig\'s frame is inside the rig span'); }
+  { const i = frame.indexOf("markCpu('rig')"); const j = frame.indexOf('weaponRig.frame(dt, { paralyzed: paralyzed || knockedDown() })', i);   /* PIN MOVED (TELL6e: no swing knocked down) */ const k = frame.indexOf("markCpu('hud')", i); assert.ok(j > i && j < k, 'the rig\'s frame is inside the rig span'); }
   after('hud', 'const _hfw = [-view[2], -view[10]];');
   { const i = frame.indexOf("markCpu('hud')"); const j = frame.indexOf('drawHud(renderer, canvas, hudArt, playerEntity,', i); const next = frame.indexOf('markCpu(', i + 1); assert.ok(j > i && (next < 0 || j < next), 'the HUD draw is inside the hud span - no other mark between'); }
 });

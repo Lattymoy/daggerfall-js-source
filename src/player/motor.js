@@ -151,6 +151,11 @@ export const SLOWFALL_VELOCITY = SLOWFALL_SPEED * UNITY_FIXED_DT;   // 2.1 m/s
 export const FALL_DAMAGE_THRESHOLD = 5.0;   // AcrobatMotor fallingDamageThreshold (= PlayerHealth's threshold)
 export const FALL_HP_PER_METRE = 5;         // PlayerHealth.ApplyPlayerFallDamage HPPerMetre
 export const GRAVITY = 20.0;
+/** TELL6e (bible/12-Enhanced-AI/Feud-Arc.md 8.2): a blow's push decays at this (m/s/s)... */
+export const BLOW_PUSH_DECAY = 12;
+/** ...and never carries the body over a drop of more than this (m). */
+export const BLOW_PUSH_EDGE = 2;
+const PUSH_DOWN = Object.freeze([0, -1, 0]);
 /** FALL-KEPT (FIELD BUGS 2026-09-30): the most of a fall a save carries (fallSnapshot / restoreFall) - terrainData
  *  .size.y, MaxTerrainHeight at the game's TerrainScale (DaggerfallTerrain.cs:307), the top of any ground the world
  *  streams. No drop that stands on the world is taller, and one begun above it (a Levitate let go over the peaks)
@@ -581,6 +586,12 @@ export class PlayerMotor {
     // PlayerMotor.freezeMotor (:64) - the physics-settle countdown a
     // Teleport action arms; FixedUpdate's block below spends it.
     this.freezeMotor = 0;
+    // TELL6e (bible/12-Enhanced-AI/Feud-Arc.md 8.2): what a telegraphed blow's landing does to the body - the port's own,
+    // set only by systems/blowEffects.js (the Enhanced AI switch's): a push (m/s, decaying), a rattle (a share of the
+    // walk for a while), a knockdown (no move, the eye down and up again)
+    this._pushX = 0; this._pushZ = 0;
+    this._rattleLeft = 0; this._rattleShare = 1;
+    this._downLeft = 0; this._downFor = 0; this._downDrop = 0;
     // P15 (PlayerSpeedChanger): the run/sneak STATES - latched from
     // held input only while grounded; airborne keeps the takeoff
     // state (the swim quirk rides it too: waterWalking's Speed read).
@@ -642,6 +653,43 @@ export class PlayerMotor {
   get toggleAutorun() { return this._autorun; }
   /** CSA-D: `InputManager.Instance.ToggleAutorun = false` - Come Sail Away's StopSailing writes the latch. */
   set toggleAutorun(v) { this._autorun = !!v; }
+
+  /** TELL6e: a blow's push - `vx`, `vz` metres a second, decaying at BLOW_PUSH_DECAY, along the collider (a wall
+   *  stops it) and never over an edge of more than BLOW_PUSH_EDGE. */
+  blowPush(vx, vz) { this._pushX = vx; this._pushZ = vz; }
+  /** TELL6e: a rattle - `seconds` at `share` of the walk. */
+  blowRattle(seconds, share) { this._rattleLeft = Math.max(this._rattleLeft, seconds); this._rattleShare = share; }
+  /** TELL6e: a knockdown - `seconds` with no move, the eye `drop` metres down at once and up again at its end.
+   *  AUDIT TELL L4: refused (false) to a body the hands hold (a climb, a hold, a mantle) or the water or the air does
+   *  (a swim, a levitation) - nothing there goes down; systems/blowEffects.js pushes it instead. */
+  blowKnockDown(seconds, drop) {
+    if (this.climb?.isClimbing || this._wall || this._pkMove || this.swimming || this.levitating) return false;
+    this._downLeft = seconds; this._downFor = seconds; this._downDrop = drop; this._pushX = 0; this._pushZ = 0;
+    return true;
+  }
+  /** TELL6e: is the body down (a knockdown)? */
+  isDown() { return this._downLeft > 0; }
+  /** TELL6e: the eye's drop under a knockdown now - down over its first 0.15 s, up over its last 0.3 s. */
+  _downEye() {
+    if (!(this._downLeft > 0)) return 0;
+    const into = this._downFor - this._downLeft;
+    return this._downDrop * Math.min(1, into / 0.15, this._downLeft / 0.3);
+  }
+  /** TELL6e: the push's step - along the collider, stopped by a drop past BLOW_PUSH_EDGE ahead. */
+  _pushStep(dt) {
+    const v = Math.hypot(this._pushX, this._pushZ);
+    if (!(v > 0)) return;
+    // AUDIT TELL L3: a body the motor holds (a teleport's settle) or the hands do (a climb, a hold, a mantle) takes no
+    // push - it is dropped, never stored for the moment they let go
+    if (this.freezeMotor > 0 || this.climb?.isClimbing || this._wall || this._pkMove) { this._pushX = 0; this._pushZ = 0; return; }
+    const dx = this._pushX * dt, dz = this._pushZ * dt;
+    const o = [this.pos[0] + dx * 4, this.pos[1] + 0.5, this.pos[2] + dz * 4];   // the ground a little ahead of the step
+    const below = this.collider.surfaceHit ? this.collider.surfaceHit(o, PUSH_DOWN, BLOW_PUSH_EDGE + 0.5)?.dist : this.collider.raycast?.(o, PUSH_DOWN, BLOW_PUSH_EDGE + 0.5);
+    if (!Number.isFinite(below)) { this._pushX = 0; this._pushZ = 0; return; }   // an edge: no cliff takes a push
+    this.collider.move(this.pos, dx, 0, dz, this.height, this.grounded && !this.jumping && !this.swimming && !this.levitating);   // AUDIT TELL L3: snapped to the ground only from it - a jump, a swim, a levitation is never pulled down
+    const nv = Math.max(0, v - BLOW_PUSH_DECAY * dt);
+    this._pushX *= nv / v; this._pushZ *= nv / v;
+  }
 
   /** SEA-RISE (2026-09-27): drop both latches, as a held MoveBackwards does (InputManager.cs:1851's clear, and
    *  PlayerSpeedChanger.cs:96-99's on the press). The online respawn's - the port's own teleport: a player raised
@@ -736,7 +784,7 @@ export class PlayerMotor {
     const feetY = (this._eyeFeetY != null && alpha === this._alpha) ? this._eyeFeetY : q[1] + dy * a;
     return [
       q[0] + dx * a + b[0],
-      feetY + this._eyeLevel() + b[1],
+      feetY + this._eyeLevel() + b[1] - this._downEye(),   // TELL6e: knocked down, the eye drops and rises
       q[2] + dz * a + b[2],
     ];
   }
@@ -947,6 +995,7 @@ export class PlayerMotor {
     this._pkOffEdge = null;   // AUDIT CLIMB-ARC L6: nor a run off an edge (a press after it is no late leap)...
     this._pkLeap = null;      // ...nor a leap's flight (the catch looks no old way)
     this._pkRestore = null;   // AUDIT CLIMB2 H1: a placement's own record follows it (restoreFall), never an older one
+    this._pushX = 0; this._pushZ = 0; this._downLeft = 0; this._rattleLeft = 0;   // AUDIT TELL L2: nor a blow's push, knockdown or rattle
     this._heightReset();   // a pending height action does not ride a teleport/load
     this.holdFrame();   // DISC8-G: a landing reported before the warp is not the arrival's
   }
@@ -1458,14 +1507,18 @@ export class PlayerMotor {
     // is exactly FIXED_DT and nothing changes.
     const step = FIXED_DT * scale;
     this._acc = (this._acc ?? 0) + frameDt;
+    const moveInput = this._downLeft > 0 ? { ...input, forward: 0, strafe: 0, back: false, jump: false, autoRun: false, up: false, down: false } : input;   // TELL6e: knocked down - no move
     while (this._acc >= step) {
       this._acc -= step;
+      if (this._rattleLeft > 0) this._rattleLeft = Math.max(0, this._rattleLeft - step);   // TELL6e
+      if (this._downLeft > 0) this._downLeft = Math.max(0, this._downLeft - step);
       // EV1: latch the span's START. Per step, so a multi-step frame
       // interpolates across the LAST step only (the standard
       // fix-your-timestep shape) and a zero-step frame keeps the
       // previous span and just advances alpha.
       this._prevPos[0] = this.pos[0]; this._prevPos[1] = this.pos[1]; this._prevPos[2] = this.pos[2];
-      this._step(step, input, yaw, pitch);
+      this._step(step, moveInput, yaw, pitch);
+      this._pushStep(step);   // TELL6e: a blow's push, after the step's own move
       if (this.arena) this._keepInArena();   // DUEL1: after the collider's move, so both ends of the span stand inside
       this._countOdometer(step);   // MOVE-REAL
     }
@@ -3073,6 +3126,7 @@ export class PlayerMotor {
     // while DFU's own gate, the host flag, stays true, and a proxy on
     // `sunk` would walk the swimmer at the full ground speed.
     if (this.isPlayerSwimming && !this.waterWalking) speed = swimSpeed(speed, this.stats.swimming ?? 0);
+    if (this._rattleLeft > 0) speed *= this._rattleShare;   // TELL6e: a slam, a ring or a leap that landed rattles the walk
     this.speed = speed;   // UpdateSpeed writes the field the getter reads
     this._trackHalfSpeed(input, speed);
     // MW-D26: the frame's movement INPUT and applied speed, reported

@@ -257,7 +257,8 @@ test('REVENANT-FATE the wire and the doors: a record says `yd` kneeling and `ex`
   assert.match(w, /openFate: \(rec\) => openRevenantFate\(rec\),/, 'the street');
   assert.equal((m.match(/openFate: \(rec\) => !!host\.openRevenantFate\?\.\(rec\),/g) ?? []).length, 2, 'a building and a dungeon');
   assert.match(w, /const w = makeInventoryWindow\(\{ fate: model, loot: \{ items: \(\) => \[\], playerOwned: false \} \}\);/, 'the loot window itself');
-  assert.match(d, /if \(opts\.fates && !_whole && \(!onlineRoom\(\) \|\| !isRoomFoe\(foe\)\) && revenantMayYield\(foe\)\) \{ yieldDungeonFoe\(foe\); return; \}/, 'underground: the player\'s alone');
+  // PIN MOVED (RVN3: an unbroken will tears away instead - the same gate)
+  assert.match(d, /if \(opts\.fates && !_whole && \(!onlineRoom\(\) \|\| !isRoomFoe\(foe\)\) && revenantMayYield\(foe\)\) \{ if \(revenantWillHolds\(foe\)\) tearAwayDungeonFoe\(foe\); else yieldDungeonFoe\(foe\); return; \}/, 'underground: the player\'s alone');
   // underground a held foe decides nothing and animates nothing of its own, but is still DRAWN - the kneel, the burn
   const arm = d.slice(d.indexOf('      if (f.mobile) {\n'), d.indexOf('_mobileBatches.push(f.batch);'));
   assert.match(arm, /^      if \(f\.mobile\) \{\n[\s\S]*?\n        if \(!_fateHeld\) \{[^\n]*\n\s*\/\/ A5 - DaedraSeducerMobileBehaviour/, 'the mobile arm draws a held foe; only its own update is skipped');

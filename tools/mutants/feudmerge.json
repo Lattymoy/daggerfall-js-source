@@ -1,0 +1,47 @@
+[
+  {
+    "name": "FM1-shard-range-plain",
+    "file": "src/ai/foeBlows.js",
+    "old": "    if (near && d > (b.sand ? Math.max(range, SAND_DRAW_RANGE) : range)) continue;\n    const t = Math.max(0, Math.min(1, (at - b.start) / (b.land - b.start)));",
+    "new": "    if (near && d > range) continue;\n    const t = Math.max(0, Math.min(1, (at - b.start) / (b.land - b.start)));",
+    "tests": [
+      "test/feudmerge.test.js"
+    ]
+  },
+  {
+    "name": "FM2-peer-judged-here",
+    "file": "src/ai/tactics.js",
+    "old": "const judgedHere = (ai, key) => (key === LOCAL ? !!_me : !ai?.target?.isPeer);",
+    "new": "const judgedHere = (ai, key) => (key === LOCAL ? !!_me : true);",
+    "tests": [
+      "test/feudmerge.test.js"
+    ]
+  },
+  {
+    "name": "FM2-sand-on-a-peer",
+    "file": "src/ai/tactics.js",
+    "old": "  if (b.key !== LOCAL && !ai.target?.isPeer) b.sand = true;",
+    "new": "  if (b.key !== LOCAL) b.sand = true;",
+    "tests": [
+      "test/feudmerge.test.js"
+    ]
+  },
+  {
+    "name": "FM2-effect-for-a-mate",
+    "file": "src/ai/tactics.js",
+    "old": "  ai._blowFx = atMe && verdict ? {",
+    "new": "  ai._blowFx = judged && verdict ? {",
+    "tests": [
+      "test/feudmerge.test.js"
+    ]
+  },
+  {
+    "name": "FM2-no-blowFor",
+    "file": "src/ai/tactics.js",
+    "old": "  ai._blowFor = judged ? (b.key ?? targetKey(ai)) : undefined;",
+    "new": "  ai._blowFor = undefined;",
+    "tests": [
+      "test/feudmerge.test.js"
+    ]
+  }
+]

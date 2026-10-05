@@ -30,7 +30,7 @@ Houseguest", is the other tiger in the pack: a house, and a kill.)
 `scenes/world.js` questShareSeam):
 
 - The quest's own mount stands it on its player's machine alone (`systems/quest/sceneMount.js:124` - only while
-  `killCount < spawnCount`), past the layout's run (`dungeonContext.js:1590` spawnQuestFoe). The room's stream carries
+  `killCount < spawnCount`), past the layout's run (`dungeonContext.js:1609` spawnQuestFoe). The room's stream carries
   the layout alone (`foesFrame`), and a peer's blow past the run is refused (`applyHit`, `i >= _layoutFoes`).
 - Shared with the party (QUEST-PARTY), it rides the room's own lane to the party alone, stood as a puppet for a LINKED
   copy only (DISC28-J's `accepts`), struck only by the party, hunting only the party (`isPrivateQuestFoe`,
@@ -1364,7 +1364,7 @@ pinned red on the branch before its fix (a gap pin's mutants are its claim) and 
 | WR1 | WOD-ROCK | the unfolding's frame was laid along the reference triangle's first edge - often a quad's diagonal - and an in-plane stretch keeps only that direction's angle: on the re-mapped non-rock pieces the textures with a grain turned - a palisade's planks (43001) 54 degrees off the wall, a fort piece's 32, a dock's stone blocks 14 (the rock, the same either way, hid it) | the frame along the texture's own rows (dP/du); every textured face of the 847 within 0.13 degrees |
 | WR2 | WOD-ROCK | one outcrop mixes pebbles under and over the 4x threshold (60610 at 3.01 beside 4.69; 60718 at 3.5 beside 60714 at 1.9): touching faces two to three and a half times each other's density | a rock pebble is unfolded from any real stretch, by the model id the host hands in (`WOD_ROCK_MODELS`) |
 | ROCK-CAP | WOD-ROCK (asked) | at the pebble's density the rock read as rock within some 10 m, a lattice at 30 to 100 m, flat from 300 m - a spire is seen from hundreds of metres. Mac: *"Cap at ~8 m a repeat"* | a rock face no finer than a repeat per 8 m (`WOD_ROCK_MAX_REPEATS_PER_M`) |
-| R | the record | part five's own page and rows: the FRIENDS-SYNC section said no frame changed shape (F5 added the hello's `ps`), 157 dead where 158 died, ORBIT-FREE's repro 20 px across where it was 30, the H1, the preface and Active-Arcs silent on part five, the Ledger row naming one of its two pins, a Testing row overstating its source pins, CAST-USE's audit tags F where the page said CU; and main's struck Ledger row 821, re-aimed by half (its `world.js:2993-2998` now `8855-8867`) | corrected; the cast-use tags CU1-CU3 in the source, the pins and the mutant names |
+| R | the record | part five's own page and rows: the FRIENDS-SYNC section said no frame changed shape (F5 added the hello's `ps`), 157 dead where 158 died, ORBIT-FREE's repro 20 px across where it was 30, the H1, the preface and Active-Arcs silent on part five, the Ledger row naming one of its two pins, a Testing row overstating its source pins, CAST-USE's audit tags F where the page said CU; and main's struck Ledger row 821, re-aimed by half (its `world.js:3491-3496` now `8855-8867`) | corrected; the cast-use tags CU1-CU3 in the source, the pins and the mutant names |
 
 The relay's bytes moved with F1, F2 and F5, before any deploy: world142's LAW row is rewritten in place (never shipped).
 Mutant records re-aimed by content: `soc1.json` S11-state-to-every-tab and `soc2.json` C2-one-half-sent. Pin moved:

@@ -127,7 +127,7 @@ test('SERAPH-WINGS the account card: wearing the wings, the card says their name
 });
 
 test('SERAPH-WINGS token and relay: a token may carry the wings and verifies; the relay - world168 and after, the ones that know the word - reads it out of the signature for everyone near; a token with every glyph and the wings inside the relay\'s bound (mutants: the vocabulary\'s word)', async () => {
-  assert.equal(RELAY_VERSION, 'world169', 'SERAPH-WINGS moved it on (world168): the vocabulary rides the relay\'s bundle; AUDIT ARENA-LADDER after it (world169, the arena ladder audit - PIN MOVED)');
+  assert.equal(RELAY_VERSION, 'world170', 'SERAPH-WINGS moved it on (world168): the vocabulary rides the relay\'s bundle; AUDIT ARENA-LADDER after it (world169, the arena ladder audit - PIN MOVED); FEUD after that (world170, the foe record\'s wind-ups and a revenant\'s fields - PIN MOVED)');
   const kp = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
   const pub = await importPublicKeyB64(Buffer.from(new Uint8Array(await subtle.exportKey('raw', kp.publicKey))).toString('base64url'), { subtle });
   const nowS = 1_760_000_000;

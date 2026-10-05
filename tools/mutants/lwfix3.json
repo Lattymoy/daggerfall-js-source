@@ -1,0 +1,114 @@
+[
+  {
+    "name": "LW-FIX3-census-search",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      if (w.pending) { const gap = walkGap(w.e, playerPos); if (gap < LIVING_RANGE + WALK_STRAY_M) pending.push({ res, gap }); continue; }\n",
+    "new": "",
+    "tests": [
+      "test/lwfix3_town.test.js",
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX3-census-range",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "        if (d < LIVING_RANGE) wanted.push({ res, d });",
+    "new": "        wanted.push({ res, d });",
+    "tests": [
+      "test/lwfix3_town.test.js",
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX3-gap",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "  return Math.hypot(gx, gz);\n}",
+    "new": "  return gx;\n}",
+    "tests": [
+      "test/lwfix3_town.test.js",
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX3-stray",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "export const WALK_STRAY_M = 48;",
+    "new": "export const WALK_STRAY_M = 47;",
+    "tests": [
+      "test/lwfix3_town.test.js",
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX3-census-budget",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "export const CENSUS_PATHS = 4;",
+    "new": "export const CENSUS_PATHS = 5;",
+    "tests": [
+      "test/lwfix3_town.test.js",
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX3-beat-stay",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "        I('watch', beat[i % beat.length], t, rollInt(rng, MIN_STAY, MIN_STAY + 7), until, Infinity);",
+    "new": "        I('watch', beat[i % beat.length], t, rollInt(rng, 3, 8), until, Infinity);",
+    "tests": [
+      "test/lwfix3_town.test.js",
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX3-beat-bound",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "      for (let i = 0, n = Math.ceil((until - from) / MIN_STAY); beat.length && t < until && i < n; i++) {",
+    "new": "      for (let i = 0, n = 64; beat.length && t < until && i < n; i++) {",
+    "tests": [
+      "test/lwfix3_town.test.js",
+      "test/lw2_livingTown.test.js"
+    ],
+    "equivalent": true,
+    "why": "the old bound: 64 stops of MIN_STAY to MIN_STAY + 7 minutes cover a ten-hour shift but on a draw of nearly every stop at its shortest - the shift's own bound makes it certain, and no pin can draw that day"
+  },
+  {
+    "name": "LW-FIX3-trim-eased",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "(Math.abs(eased(a[1], day)) - Math.abs(eased(b[1], day)))",
+    "new": "(Math.abs(a[1].r) - Math.abs(b[1].r))",
+    "tests": [
+      "test/lwfix3_town.test.js",
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX3-trim-keep",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": ".filter(([id]) => id !== keep)",
+    "new": ".filter(() => true)",
+    "tests": [
+      "test/lwfix3_town.test.js",
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX3-sections",
+    "file": "src/ui/enhancedChronicle.js",
+    "old": "    const list = chronicleSections(deps);",
+    "new": "    const list = CHRONICLE_SECTIONS;",
+    "tests": [
+      "test/lwfix3_town.test.js",
+      "test/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX3-walk-held",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "    if (back > 0 && Math.max(cursor, t1) + back > D1) t1 = D1;\n",
+    "new": "",
+    "tests": [
+      "test/lwfix3_town.test.js",
+      "test/lw2_livingTown.test.js"
+    ]
+  }
+]

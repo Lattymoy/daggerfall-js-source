@@ -282,7 +282,7 @@ test('CAMP-REST by source: every time skip is spent through the tick as a rest, 
   assert.match(e, /playerTicker\.advance\(60\);[^\n]*\n\s*runEncounterTick\(walkMode \? player\.pos : cam\.pos, true\);/, 'exterior.js: the collapse hour');
   assert.equal((e.match(/advanceMinutes: \(n\) => \{ playerTicker\.advance\(n\); runEncounterTick\(walkMode \? player\.pos : cam\.pos, true\); \}/g) ?? []).length, 2, 'exterior.js: the camp meal and the rest (LIVED1: one shape now, as world.js\'s camp meal and rest)');
   assert.match(ef, /const campAsleep = f\.campId != null && !!senses\.playerEntity\?\.isResting && !isLocalPlayerTarget\(ai\.target\);/, 'a campmate, not already on the player, while the player rests');
-  assert.match(ef, /noTargetMode: campAsleep,/, 'the target machine leaves the player off its list for it');
+  assert.match(ef, /noTargetMode: campAsleep,[^\n]*\n\s*dropLocal: wildUnaware,/, 'the target machine leaves the player off its list for it (WILD-ALERT: and the local player alone for a wilderness foe that has not noticed a fast traveller - test/wildalert.test.js, test/wildalertfix.test.js)');
 });
 
 // ═══ CAMP-FAR (2026-09-24) ══════════════════════════════════════════

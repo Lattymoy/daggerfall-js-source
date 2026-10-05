@@ -168,7 +168,7 @@ function party() {
       deliver: (from, quest) => quiet(() => sockets[0].receive({ t: 'quest', acct: from, name: from, quest })),
       /** world.js's two partner calls over this seat - its pool's records, its party, the other player beside it */
       defers: (handle, mode = 'interior') => defers({ partnerStandsQuestFoes, handle, _liveSharer, social, peersNear: () => [{ id: `peer-${other}`, feet: [3, 0, 0] }], player: { pos: st.feet }, feet: st.feet, exteriorFoes: { foes: p.foes }, modes: { insideFoes: () => p.foes.filter((f) => !f.dead) } })[mode === 'interior' ? 'indoor' : 'outdoor'],
-      /** CreateFoe.TryPlacement through this seat's host: the party's law first (world.js:16073's), else the pool stands it */
+      /** CreateFoe.TryPlacement through this seat's host: the party's law first (world.js:16836's), else the pool stands it */
       place: (handle) => {
         if (st.defers(handle)) { st.defer++; return true; }
         st.own.push(handle.foe.symbol.name);

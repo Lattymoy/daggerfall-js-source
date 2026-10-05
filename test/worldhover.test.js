@@ -1532,13 +1532,16 @@ test('AUDIT-WH H2: all four hosts race the mobile band, and none of them stands 
     assert.match(read(f), /\n    idOf,\n/, `${f}: ...and the corpse lens takes it`);
   }
   // The two above-ground hosts race the TOWNSFOLK too, off the press's
-  // own scan rather than a second one of their own.
+  // own scan rather than a second one of their own. LW3: the streaming
+  // host's press scans the road's travellers beside the town's people
+  // (`_talkPersons()` - the list its townTalk.tryActivate takes), so its
+  // hover scans that same list.
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const src = read(f);
-    assert.match(src, /const n = nearestPerson\(eye, dir, _livePersons\);/, `${f}: townTalk's own scan`);
+    assert.match(src, /const n = nearestPerson\(eye, dir, (?:_livePersons|_talkPersons\(\))\);/, `${f}: townTalk's own scan`);
     assert.match(src, /key: `mobileNpc:\$\{n\.index\}`, distance: n\.distance, reach: MOBILE_NPC_ACTIVATION_DISTANCE/, `${f}: the ray, the mod's reach`);
     assert.match(src, /person: _hoverPersonPick\(cam\.pos, _hd\),/, `${f}: raced`);
-    assert.match(src, /mobilePersonName\(_livePersons\[Number\(key\.split\(':'\)\[1\]\)\]\?\.person\?\.nameNPC\)/, `${f}: and named`);
+    assert.match(src, /mobilePersonName\((?:_livePersons|_talkPersons\(\))\[Number\(key\.split\(':'\)\[1\]\)\]\?\.person\?\.nameNPC\)/, `${f}: and named`);
   }
   // ONE SCAN, TWO READERS: townTalk's press arm takes the same answer.
   const tt = read('src/scenes/townTalk.js');

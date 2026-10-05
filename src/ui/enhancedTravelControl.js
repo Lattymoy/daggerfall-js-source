@@ -4,7 +4,8 @@
 //
 // So this is the port's OWN, not Hazelnut's. The classic panel
 // (ui/travelControlUI.js) is his 320x27 strip, rect for rect; this is
-// the same five controls in the enhanced skin's language - the brass
+// the same controls (RATE-LAW: the rate a readout now, Map, Camp and
+// Exit) in the enhanced skin's language - the brass
 // and bone of ui/enhancedStyle.js, at the screen's own resolution,
 // with the things a 320-pixel strip had no room to say: the hours and
 // minutes still to go, how far the destination is, what the journey is
@@ -74,19 +75,8 @@ function build(doc, hooks) {
       </div>
       <div class="travelpanel-speed">
         <span class="travelpanel-label">Time</span>
-        <div class="travelpanel-stepper">
-          <button type="button" class="travelpanel-step" data-act="slower" aria-label="Slower">&#8722;</button>
-          <span class="travelpanel-accel">1</span>
-          <button type="button" class="travelpanel-step" data-act="faster" aria-label="Faster">+</button>
-        </div>
-        <div class="travelpanel-foe" hidden>
-          <span class="travelpanel-label">Near enemies</span>
-          <div class="travelpanel-stepper">
-            <button type="button" class="travelpanel-step" data-act="foeSlower" aria-label="Slower near enemies">&#8722;</button>
-            <span class="travelpanel-accel travelpanel-foeaccel">1</span>
-            <button type="button" class="travelpanel-step" data-act="foeFaster" aria-label="Faster near enemies">+</button>
-          </div>
-        </div>
+        <span class="travelpanel-accel">1</span>
+        <span class="travelpanel-ground"></span>
       </div>
       <div class="travelpanel-acts">
         <button type="button" class="travelpanel-act" data-act="map" title="${T.TipMap}">Map</button>
@@ -117,8 +107,7 @@ function build(doc, hooks) {
     name: root.querySelector('.travelpanel-name'),
     sub: root.querySelector('.travelpanel-sub'),
     accel: root.querySelector('.travelpanel-accel'),
-    foe: root.querySelector('.travelpanel-foe'),
-    foeAccel: root.querySelector('.travelpanel-foeaccel'),
+    ground: root.querySelector('.travelpanel-ground'),
     msg: root.querySelector('.travelpanel-msg'),
     junction: root.querySelector('.travelpanel-junction'),
     bar,
@@ -173,17 +162,21 @@ export function paintJunction(canvas, buf, { mapPixel, direction, settings, deps
   const img = ctx.createImageData(w, h);
   const out = new Uint32Array(img.data.buffer);
   // the buffer is bottom-up, as every generated map texture in this
-  // port is (ui/travelMapWindow.js:1575-1582)
+  // port is (ui/travelMapWindow.js:1583-1590)
   for (let row = 0; row < h; row++) out.set(buf.subarray((h - row - 1) * w, (h - row) * w), row * w);
   ctx.putImageData(img, 0, 0);
   return true;
 }
 
+/** RATE-LAW: the readout's word for the ground the rate is the ground's of. */
+export const TRAVEL_GROUND_TEXT = Object.freeze({ road: 'on the road', open: 'off the road' });
+
 /** The panel's frame. `state` is what the journey knows:
- *  { showing, covered, destination, following, accel, message, minutesLeft,
+ *  { showing, covered, destination, following, accel, onRoad, message, minutesLeft,
  *    from, to, junction: { on, mapPixel, direction, settings, deps, buf }, held }
- *  (TV2: `held` the rate the travel view's governor holds the clock to, or null)
- *  `hooks` are the five controls, wired once at build.
+ *  (TV2: `held` the rate the travel view's governor holds the clock to, or null; RATE-LAW: `accel` the rate the
+ *  journey's ground runs at and `onRoad` which ground it is - a readout, no control sets it)
+ *  `hooks` are the three controls, wired once at build.
  *
  *  AUDIT-TO1 F1: THE JUNCTION MAP OUTLIVES THE BAR. In the mod the
  *  mini-map is a child of the HUD's native panel (TravelOptionsMod.cs
@@ -223,26 +216,19 @@ export function drawEnhancedTravelControl(state = {}, hooks = {}) {
   const eta = etaText(state.minutesLeft);
   const dist = distanceText(state.from, state.to);
   put(parts.sub, 'sub', [eta, dist].filter(Boolean).join('  ·  '));
-  // TV2: under the travel view the clock may be HELD under the spinner (systems/travelGovernor.js) - the rate that
-  // runs, then the one asked for; the spinner stays the player's
+  // TV2: the clock may be HELD under the ground's rate (systems/travelGovernor.js: the land loading; OW6: an alerted
+  // enemy near) - the rate that runs, then the ground's. RATE-LAW: the ground's rate is the journey's, a readout - the
+  // spinner and ENEMY-PACE's near-enemies stepper are gone
   const accel = state.accel ?? 1;
   const held = state.held != null && state.held < accel ? state.held : null;
-  // ENEMY-PACE: an enemy near holds the clock - the general readout keeps saying the player's own setting, and a second
-  // stepper under it (shown only while the enemies hold the clock) sets the pace kept near them
   const foesHold = held != null && state.heldWhy === 'foes';
-  const shown = held != null && !foesHold ? held : null;
-  put(parts.accel, 'accel', shown != null ? `×${shown} / ×${accel}` : `×${accel}`);
-  cls(parts.accel, 'accelClass', shown != null ? 'travelpanel-accel held' : 'travelpanel-accel');
+  put(parts.accel, 'accel', held != null ? `×${held} / ×${accel}` : `×${accel}`);
+  cls(parts.accel, 'accelClass', held != null ? 'travelpanel-accel held' : 'travelpanel-accel');
+  put(parts.ground, 'ground', state.onRoad ? TRAVEL_GROUND_TEXT.road : TRAVEL_GROUND_TEXT.open);
   // AUDIT DEEP X-6: and says why, under the pointer (the travel view's own words - they were written, and never shown)
-  const why = shown != null ? TRAVEL_HELD_TEXT(shown, accel, state.heldWhy) : '';
+  const why = held != null ? TRAVEL_HELD_TEXT(held, accel, state.heldWhy) : '';
   if (parts.accel && last.accelTitle !== why) { last.accelTitle = why; parts.accel.title = why; }
-  if (parts.foe && last.foeOn !== foesHold) { last.foeOn = foesHold; parts.foe.hidden = !foesHold; }
   cls(parts.root, 'rootFoe', `travelpanel${state.following ? ' following' : ''}${junctionOnly ? ' junction-only' : ''}${foesHold ? ' foes' : ''}`);
-  if (foesHold) {
-    put(parts.foeAccel, 'foeAccel', `×${state.foeRate ?? held}`);
-    const ft = `Slowest pace with enemies near - the clock is held to ×${held} of ×${accel}`;
-    if (last.foeTitle !== ft) { last.foeTitle = ft; parts.foeAccel.title = ft; }
-  }
   put(parts.msg, 'msg', String(state.message ?? ''));
   cls(parts.msg, 'msgClass', state.message && !junctionOnly ? 'travelpanel-msg show' : 'travelpanel-msg');
   const j = state.junction;

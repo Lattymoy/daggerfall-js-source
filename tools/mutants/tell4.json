@@ -1,0 +1,372 @@
+[
+  {
+    "name": "TELL4-punish-slam",
+    "file": "src/ai/tells.js",
+    "old": "slam: 1.2, ring: 1.0, charge: 1.4, leap: 1.2 }),   // a missed blow's overreach",
+    "new": "slam: 1.0, ring: 1.0, charge: 1.4, leap: 1.2 }),   // a missed blow's overreach",
+    "tests": [
+      "test/tell4_punish.test.js",
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL4-punish-iron",
+    "file": "src/ai/tells.js",
+    "old": "  PUNISH_IRON: 0.3,",
+    "new": "  PUNISH_IRON: 0.2,",
+    "tests": [
+      "test/tell4_punish.test.js",
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL4-punish-taken",
+    "file": "src/ai/tells.js",
+    "old": "  PUNISH_TAKEN: 1.3,",
+    "new": "  PUNISH_TAKEN: 1.25,",
+    "tests": [
+      "test/tell4_punish.test.js",
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL4-late",
+    "file": "src/ai/tells.js",
+    "old": "  TELL_LATE: 0.25,",
+    "new": "  TELL_LATE: 0.1,",
+    "tests": [
+      "test/tell4_punish.test.js",
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL4-perfect-window",
+    "file": "src/ai/tells.js",
+    "old": "  PERFECT_WINDOW: 1.5,",
+    "new": "  PERFECT_WINDOW: 1.25,",
+    "tests": [
+      "test/tell4_punish.test.js",
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL4-iron-unextended",
+    "file": "src/ai/tells.js",
+    "old": "  return (base + (guard === 'iron' ? TELL.PUNISH_IRON : 0)) * (perfect ? TELL.PERFECT_WINDOW : 1);",
+    "new": "  return base * (perfect ? TELL.PERFECT_WINDOW : 1);",
+    "tests": [
+      "test/tell4_punish.test.js"
+    ]
+  },
+  {
+    "name": "TELL4-perfect-unstretched",
+    "file": "src/ai/tells.js",
+    "old": "  return (base + (guard === 'iron' ? TELL.PUNISH_IRON : 0)) * (perfect ? TELL.PERFECT_WINDOW : 1);",
+    "new": "  return base + (guard === 'iron' ? TELL.PUNISH_IRON : 0);",
+    "tests": [
+      "test/tell4_punish.test.js"
+    ]
+  },
+  {
+    "name": "TELL4-no-default-row",
+    "file": "src/ai/tells.js",
+    "old": "  const base = TELL.PUNISH_S[kind] ?? TELL.PUNISH_S.lunge;",
+    "new": "  const base = TELL.PUNISH_S[kind] ?? 0;",
+    "tests": [
+      "test/tell4_punish.test.js"
+    ]
+  },
+  {
+    "name": "TELL4-never-overreach",
+    "file": "src/ai/tactics.js",
+    "old": "  if (!verdict) { const tfo = targetFeet(ai, b.key !== undefined ? b.key : targetKey(ai)); beginOverreach(ai, s, b, now, b.lateIn === true && !(tfo && inBlow(b, tfo[0], tfo[2])), atMe); return true; }",
+    "new": "",
+    "tests": [
+      "test/tell4_punish.test.js"
+    ]
+  },
+  {
+    "name": "TELL4-every-landing",
+    "file": "src/ai/tactics.js",
+    "old": "  if (!verdict) { const tfo = targetFeet(ai, b.key !== undefined ? b.key : targetKey(ai)); beginOverreach(ai, s, b, now, b.lateIn === true && !(tfo && inBlow(b, tfo[0], tfo[2])), atMe); return true; }",
+    "new": "  { const tfo = targetFeet(ai, b.key !== undefined ? b.key : targetKey(ai)); beginOverreach(ai, s, b, now, b.lateIn === true && !(tfo && inBlow(b, tfo[0], tfo[2])), atMe); return true; }",
+    "tests": [
+      "test/tell4_punish.test.js"
+    ]
+  },
+  {
+    "name": "TELL4-never-perfect",
+    "file": "src/ai/tactics.js",
+    "old": "beginOverreach(ai, s, b, now, b.lateIn === true && !(tfo && inBlow(b, tfo[0], tfo[2])), atMe); return true; }",
+    "new": "beginOverreach(ai, s, b, now, false, atMe); return true; }",
+    "tests": [
+      "test/tell4_punish.test.js"
+    ]
+  },
+  {
+    "name": "TELL4-sample-never",
+    "file": "src/ai/tactics.js",
+    "old": "  if (tf && s.blow.lateIn == null && now >= s.blow.land - TELL.TELL_LATE && now < s.blow.land) s.blow.lateIn = inBlow(s.blow, tf[0], tf[2]);",
+    "new": "",
+    "tests": [
+      "test/tell4_punish.test.js"
+    ],
+    "note": "TELL8 (PIN MOVED): re-aimed by content - the owner winds up at a peer it hunts (`tf` its target's feet, `atMe` the damage's gate), a peer's blow carries its class, the relay moved to world162."
+  },
+  {
+    "name": "TELL4-sample-every-tick",
+    "file": "src/ai/tactics.js",
+    "old": "  if (tf && s.blow.lateIn == null && now >= s.blow.land - TELL.TELL_LATE && now < s.blow.land) s.blow.lateIn",
+    "new": "  if (tf && now >= s.blow.land - TELL.TELL_LATE && now < s.blow.land) s.blow.lateIn",
+    "tests": [
+      "test/tell4_punish.test.js"
+    ],
+    "note": "TELL8 (PIN MOVED): re-aimed by content - the owner winds up at a peer it hunts (`tf` its target's feet, `atMe` the damage's gate), a peer's blow carries its class, the relay moved to world162."
+  },
+  {
+    "name": "TELL4-no-lock-field",
+    "file": "src/ai/tactics.js",
+    "old": "  ai.overreachUntil = s.until;\n",
+    "new": "",
+    "tests": [
+      "test/tell4_punish.test.js"
+    ]
+  },
+  {
+    "name": "TELL4-no-entity-field",
+    "file": "src/ai/tactics.js",
+    "old": "  if (ent) ent.overreachUntil = s.until;\n",
+    "new": "",
+    "tests": [
+      "test/tell4_punish.test.js"
+    ]
+  },
+  {
+    "name": "TELL4-no-spent",
+    "file": "src/ai/tactics.js",
+    "old": "  ai._blowHold = 'spent';   // the strike goes out",
+    "new": "  ai._blowHold = false;   // the strike goes out",
+    "tests": [
+      "test/tell4_punish.test.js"
+    ]
+  },
+  {
+    "name": "TELL4-no-stamp",
+    "file": "src/ai/tactics.js",
+    "old": "  if (perfect && atMe) ai._perfectAt = now;",
+    "new": "",
+    "tests": [
+      "test/tell4_punish.test.js"
+    ]
+  },
+  {
+    "name": "TELL4-window-forever",
+    "file": "src/ai/tactics.js",
+    "old": "    if (now < s.until) { ai._tacStrike = false; ai._tacShoot = false; ai.moving = false; return true; }\n    endOverreach(ai);",
+    "new": "    if (true) { ai._tacStrike = false; ai._tacShoot = false; ai.moving = false; return true; }\n    endOverreach(ai);",
+    "tests": [
+      "test/tell4_punish.test.js"
+    ]
+  },
+  {
+    "name": "TELL4-token-kept-after",
+    "file": "src/ai/tactics.js",
+    "old": "    s.backUntil = now + TACT.RECOVER_HOP;\n    handOn(ai, s, now);\n  }",
+    "new": "    s.backUntil = now + TACT.RECOVER_HOP;\n  }",
+    "tests": [
+      "test/tell4_punish.test.js"
+    ]
+  },
+  {
+    "name": "TELL4-punish-no-stagger",
+    "file": "src/ai/tactics.js",
+    "old": "  if (overreachOpen(ai)) return punishStruck(ai, ent, weight);",
+    "new": "  if (overreachOpen(ai)) return null;",
+    "tests": [
+      "test/tell4_punish.test.js"
+    ]
+  },
+  {
+    "name": "TELL4-guard-ignored",
+    "file": "src/ai/tactics.js",
+    "old": "  const s = ai._tac, now = clock();\n  if (now < (s.staggerReady ?? -Infinity)) return null;\n  endOverreach(ai);",
+    "new": "  const s = ai._tac, now = clock();\n  endOverreach(ai);",
+    "tests": [
+      "test/tell4_punish.test.js"
+    ]
+  },
+  {
+    "name": "TELL4-stagger-keeps-window",
+    "file": "src/ai/tactics.js",
+    "old": "  if (now < (s.staggerReady ?? -Infinity)) return null;\n  endOverreach(ai);\n",
+    "new": "  if (now < (s.staggerReady ?? -Infinity)) return null;\n",
+    "tests": [
+      "test/tell4_punish.test.js"
+    ]
+  },
+  {
+    "name": "TELL4-fold-unregistered",
+    "file": "src/ai/tactics.js",
+    "old": "registerBlowTakenMod('tell-overreach', (attacker, target) => (overreachedNow(target) ? TELL.PUNISH_TAKEN : 1));",
+    "new": "",
+    "tests": [
+      "test/tell4_punish.test.js"
+    ]
+  },
+  {
+    "name": "TELL4-release-keeps",
+    "file": "src/ai/tactics.js",
+    "old": "  if (ai._tac?.state === 'overreach') { ai._tac.state = 'wait'; endOverreach(ai); }",
+    "new": "",
+    "tests": [
+      "test/tell4_punish.test.js"
+    ]
+  },
+  {
+    "name": "TELL4-switch-off-open",
+    "file": "src/ai/tactics.js",
+    "old": "  return !!s && s.state === 'overreach' && clock() < s.until && tacticsSwitchOn();",
+    "new": "  return !!s && s.state === 'overreach' && clock() < s.until;",
+    "tests": [
+      "test/tell4_punish.test.js"
+    ]
+  },
+  {
+    "name": "TELL4-end-keeps-pose",
+    "file": "src/ai/tactics.js",
+    "old": "  if (ai._blowHold === 'spent') dropSwing(ai);",
+    "new": "",
+    "tests": [
+      "test/tell4_punish.test.js"
+    ]
+  },
+  {
+    "name": "TELL4-motor-unlocked",
+    "file": "src/characters/enemyMotor.js",
+    "old": "    const locked = staggered || overreached || (this.roarUntil > 0",
+    "new": "    const locked = staggered || (this.roarUntil > 0",
+    "tests": [
+      "test/tell4_punish.test.js",
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL4-motor-hurts",
+    "file": "src/characters/enemyMotor.js",
+    "old": "    this.staggered = staggered;\n",
+    "new": "    this.staggered = staggered || (this.overreachUntil > 0 && tacticsNow() < this.overreachUntil);\n",
+    "tests": [
+      "test/tell4_punish.test.js"
+    ]
+  },
+  {
+    "name": "TELL4-pose-not-held",
+    "file": "src/characters/mobileUnit.js",
+    "old": "      if (this.state === 'attack' && this._heldSwing && this._struck && this._hold === 'spent') return;   // TELL4: the follow-through stands\n",
+    "new": "",
+    "tests": [
+      "test/tell4_punish.test.js"
+    ]
+  },
+  {
+    "name": "TELL4-pose-never-let-go",
+    "file": "src/characters/mobileUnit.js",
+    "old": "    if (this._heldSwing && this._struck && this.state === 'attack' && this._hold === 'spent' && hold !== 'spent') { this._heldSwing = false; this._change('idle'); }\n",
+    "new": "",
+    "tests": [
+      "test/tell4_punish.test.js"
+    ]
+  },
+  {
+    "name": "TELL4-dfu-swing-spent",
+    "file": "src/characters/mobileUnit.js",
+    "old": "      this._heldSwing = this._underHold; this._struck = false;",
+    "new": "      this._heldSwing = true; this._struck = false;",
+    "tests": [
+      "test/tell4_punish.test.js"
+    ]
+  },
+  {
+    "name": "TELL4-never-struck",
+    "file": "src/characters/mobileUnit.js",
+    "old": "this._underHold = false; this._struck = this._heldSwing; }",
+    "new": "this._underHold = false; }",
+    "tests": [
+      "test/tell4_punish.test.js"
+    ]
+  },
+  {
+    "name": "TELL4-door-shut",
+    "file": "src/scenes/hostCombat.js",
+    "old": "  if (f?.ai && overreachOpen(f.ai)) {   // TELL4",
+    "new": "  if (false) {   // TELL4",
+    "tests": [
+      "test/tell4_punish.test.js"
+    ]
+  },
+  {
+    "name": "TELL4-miss-silent",
+    "file": "src/scenes/hostCombat.js",
+    "old": "(landed && c.blow.kind !== 'aimed' && c.blow.kind !== 'pyre' && (ai._blowHold === false || ai._blowHold === 'spent'))",
+    "new": "(landed && c.blow.kind !== 'aimed' && c.blow.kind !== 'pyre' && ai._blowHold === false)",
+    "tests": [
+      "test/tell4_punish.test.js"
+    ]
+  },
+  {
+    "name": "TELL4-ring-missing",
+    "file": "src/scenes/hostCombat.js",
+    "old": "    if (landed && ai._perfectAt != null && ai._perfectAt >= c.blow.land - 1e-6) { play(SOUND.Parry6, TELL.PERFECT_PITCH); showWord(",
+    "new": "    if (landed && ai._perfectAt != null && ai._perfectAt >= c.blow.land - 1e-6) { showWord(",
+    "tests": [
+      "test/tell4_punish.test.js"
+    ],
+    "note": "TELL9 (PIN MOVED): re-aimed by content - the ring shares its line with the word \"Perfect\"; the ring alone goes."
+  },
+  {
+    "name": "TELL4-ring-stale",
+    "file": "src/scenes/hostCombat.js",
+    "old": "    if (landed && ai._perfectAt != null && ai._perfectAt >= c.blow.land - 1e-6) { play(",
+    "new": "    if (landed && ai._perfectAt != null) { play(",
+    "tests": [
+      "test/tell4_punish.test.js"
+    ],
+    "note": "TELL9 (PIN MOVED): re-aimed by content (the ring and the word share its braces)."
+  },
+  {
+    "name": "TELL4-ring-dull",
+    "file": "src/scenes/hostCombat.js",
+    "old": "play(SOUND.Parry6, TELL.PERFECT_PITCH);",
+    "new": "play(SOUND.Parry6, 1);",
+    "tests": [
+      "test/tell4_punish.test.js"
+    ]
+  },
+  {
+    "name": "TELL4-door-guard-f",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "const _tell = (f.ai?._tac?.state !== 'windup' && f.ai?._tac?.state !== 'overreach') ? null",
+    "new": "const _tell = (f.ai?._tac?.state !== 'windup') ? null",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL4-door-guard-foe",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "const _tell = (foe.ai?._tac?.state !== 'windup' && foe.ai?._tac?.state !== 'overreach') ? null",
+    "new": "const _tell = (foe.ai?._tac?.state !== 'windup') ? null",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  },
+  {
+    "name": "TELL4-door-guard-g",
+    "file": "src/scenes/cityGuards.js",
+    "old": "const _tell = (g.ai?._tac?.state !== 'windup' && g.ai?._tac?.state !== 'overreach') ? null",
+    "new": "const _tell = (g.ai?._tac?.state !== 'windup') ? null",
+    "tests": [
+      "test/tell1_poise.test.js"
+    ]
+  }
+]

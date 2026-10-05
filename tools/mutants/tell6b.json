@@ -1,0 +1,223 @@
+[
+  {
+    "name": "TELL6b-len",
+    "file": "src/ai/blowShapes.js",
+    "old": "charge: Object.freeze({ windup: 0.9, len: 9.0, halfW: 0.8, mult: 1.5, cross: 0.45, from: 5, to: 12 }),",
+    "new": "charge: Object.freeze({ windup: 0.9, len: 7.0, halfW: 0.8, mult: 1.5, cross: 0.45, from: 5, to: 12 }),",
+    "tests": [
+      "test/tell6b_charge.test.js"
+    ]
+  },
+  {
+    "name": "TELL6b-halfW",
+    "file": "src/ai/blowShapes.js",
+    "old": "charge: Object.freeze({ windup: 0.9, len: 9.0, halfW: 0.8, mult: 1.5, cross: 0.45, from: 5, to: 12 }),",
+    "new": "charge: Object.freeze({ windup: 0.9, len: 9.0, halfW: 0.6, mult: 1.5, cross: 0.45, from: 5, to: 12 }),",
+    "tests": [
+      "test/tell6b_charge.test.js"
+    ]
+  },
+  {
+    "name": "TELL6b-cross",
+    "file": "src/ai/blowShapes.js",
+    "old": "charge: Object.freeze({ windup: 0.9, len: 9.0, halfW: 0.8, mult: 1.5, cross: 0.45, from: 5, to: 12 }),",
+    "new": "charge: Object.freeze({ windup: 0.9, len: 9.0, halfW: 0.8, mult: 1.5, cross: 0.9, from: 5, to: 12 }),",
+    "tests": [
+      "test/tell6b_charge.test.js"
+    ]
+  },
+  {
+    "name": "TELL6b-from",
+    "file": "src/ai/blowShapes.js",
+    "old": "charge: Object.freeze({ windup: 0.9, len: 9.0, halfW: 0.8, mult: 1.5, cross: 0.45, from: 5, to: 12 }),",
+    "new": "charge: Object.freeze({ windup: 0.9, len: 9.0, halfW: 0.8, mult: 1.5, cross: 0.45, from: 3, to: 12 }),",
+    "tests": [
+      "test/tell6b_charge.test.js"
+    ]
+  },
+  {
+    "name": "TELL6b-to",
+    "file": "src/ai/blowShapes.js",
+    "old": "charge: Object.freeze({ windup: 0.9, len: 9.0, halfW: 0.8, mult: 1.5, cross: 0.45, from: 5, to: 12 }),",
+    "new": "charge: Object.freeze({ windup: 0.9, len: 9.0, halfW: 0.8, mult: 1.5, cross: 0.45, from: 5, to: 15 }),",
+    "tests": [
+      "test/tell6b_charge.test.js"
+    ]
+  },
+  {
+    "name": "TELL6b-lane-lunge",
+    "file": "src/ai/blowShapes.js",
+    "old": "  if (b.kind === 'lunge' || b.kind === 'charge') { const P = BLOW[b.kind];",
+    "new": "  if (b.kind === 'lunge' || b.kind === 'charge') { const P = BLOW.lunge;",
+    "tests": [
+      "test/tell6b_charge.test.js"
+    ],
+    "note": "FEUD's MERGE of main's #586-#622 (PIN MOVED): inBlow lives in the leaf ai/blowShapes.js since AUDIT ARENA-LADDER - the same line, its new file."
+  },
+  {
+    "name": "TELL6b-run-not-near",
+    "file": "src/ai/foeBlows.js",
+    "old": " && !(b.dashUntil > now)) continue;",
+    "new": ") continue;",
+    "tests": [
+      "test/tell6b_charge.test.js"
+    ]
+  },
+  {
+    "name": "TELL6b-mirror-lunge",
+    "file": "src/render/foeTelegraph.js",
+    "old": "  if (kind === 'lunge' || kind === 'charge') {   // TELL6: the charge's lane, the lunge's law\n    const P = BLOW[kind];",
+    "new": "  if (kind === 'lunge' || kind === 'charge') {   // TELL6: the charge's lane, the lunge's law\n    const P = BLOW.lunge;",
+    "tests": [
+      "test/tell6b_charge.test.js"
+    ]
+  },
+  {
+    "name": "TELL6b-quad-short",
+    "file": "src/render/foeTelegraph.js",
+    "old": "ring: BLOW.ring.rOut, charge: BLOW.charge.len,",
+    "new": "ring: BLOW.ring.rOut, charge: BLOW.lunge.len,",
+    "tests": [
+      "test/tell6b_charge.test.js"
+    ]
+  },
+  {
+    "name": "TELL6b-up-lunge",
+    "file": "src/render/foeTelegraph.js",
+    "old": "      if (b.kind === 'lunge' || b.kind === 'charge') gl.uniform4f(U.uP, P.len, P.halfW, 0, 0);",
+    "new": "      if (b.kind === 'lunge') gl.uniform4f(U.uP, P.len, P.halfW, 0, 0);",
+    "tests": [
+      "test/tell6b_charge.test.js"
+    ]
+  },
+  {
+    "name": "TELL6b-never-out-of-reach",
+    "file": "src/ai/tactics.js",
+    "old": "  return near ? all.filter((k) => !GAP_CLOSERS.includes(k)) : all.filter((k) => gapCloses(ai, k, dist, dx, dz, ent));",
+    "new": "  return near ? all.filter((k) => !GAP_CLOSERS.includes(k)) : [];",
+    "tests": [
+      "test/tell6b_charge.test.js"
+    ]
+  },
+  {
+    "name": "TELL6b-charge-in-reach",
+    "file": "src/ai/tactics.js",
+    "old": "  return near ? all.filter((k) => !GAP_CLOSERS.includes(k)) :",
+    "new": "  return near ? all :",
+    "tests": [
+      "test/tell6b_charge.test.js",
+      "test/tell5_patterns.test.js",
+      "test/tell6a_ring.test.js"
+    ]
+  },
+  {
+    "name": "TELL6b-band-ignored",
+    "file": "src/ai/tactics.js",
+    "old": "  if (!(dist >= P.from && dist <= (kind === 'charge' ? P.to : P.range))) return false;",
+    "new": "  if (!(dist >= 0 && dist <= (kind === 'charge' ? 99 : P.range))) return false;",
+    "tests": [
+      "test/tell6b_charge.test.js"
+    ]
+  },
+  {
+    "name": "TELL6b-wall-ignored",
+    "file": "src/ai/tactics.js",
+    "old": "  if (Number.isFinite(wall) && wall < len) return false;\n",
+    "new": "",
+    "tests": [
+      "test/tell6b_charge.test.js"
+    ]
+  },
+  {
+    "name": "TELL6b-cover-ignored",
+    "file": "src/ai/tactics.js",
+    "old": "  if (coverDistance(ai.collider, from, dir, len) < len) return false;\n",
+    "new": "",
+    "tests": [
+      "test/tell6b_charge.test.js"
+    ]
+  },
+  {
+    "name": "TELL6b-no-run",
+    "file": "src/ai/tactics.js",
+    "old": "    if (tf && s.blow.kind === 'charge') { beginDash(ai, s, s.blow, now, cooled); return true; }   // TELL6",
+    "new": "    // TELL6",
+    "tests": [
+      "test/tell6b_charge.test.js"
+    ],
+    "note": "TELL8 (PIN MOVED): re-aimed by content - the owner winds up at a peer it hunts (`tf` its target's feet, `atMe` the damage's gate), a peer's blow carries its class, the relay moved to world162."
+  },
+  {
+    "name": "TELL6b-run-never-hits",
+    "file": "src/ai/tactics.js",
+    "old": "  const hit = !!tf && segDist(",
+    "new": "  const hit = false && segDist(",
+    "tests": [
+      "test/tell6b_charge.test.js"
+    ],
+    "note": "TELL8 (PIN MOVED): re-aimed by content - the owner winds up at a peer it hunts (`tf` its target's feet, `atMe` the damage's gate), a peer's blow carries its class, the relay moved to world162."
+  },
+  {
+    "name": "TELL6b-run-on-through",
+    "file": "src/ai/tactics.js",
+    "old": "  if (hit || now >= d.until || ai._tacBlocked) {",
+    "new": "  if (now >= d.until || ai._tacBlocked) {",
+    "tests": [
+      "test/tell6b_charge.test.js"
+    ]
+  },
+  {
+    "name": "TELL6b-run-slow",
+    "file": "src/ai/tactics.js",
+    "old": "  ai._tacSpeed = (BLOW.charge.len / BLOW.charge.cross) / Math.max(0.1, ai.speed ?? 1);",
+    "new": "  ai._tacSpeed = 1;",
+    "tests": [
+      "test/tell6b_charge.test.js"
+    ]
+  },
+  {
+    "name": "TELL6b-run-chains",
+    "file": "src/ai/tactics.js",
+    "old": "  if (!GAP_CLOSERS.includes(b.kind) && (b.chain ?? 0) < chainMax(ent) &&",
+    "new": "  if ((b.chain ?? 0) < chainMax(ent) &&",
+    "tests": [
+      "test/tell6b_charge.test.js"
+    ]
+  },
+  {
+    "name": "TELL6b-run-dropped",
+    "file": "src/ai/tactics.js",
+    "old": "  if (s.state === 'dash') return dashTurn(ai, s, now, skipped);\n",
+    "new": "",
+    "tests": [
+      "test/tell6b_charge.test.js"
+    ]
+  },
+  {
+    "name": "TELL6b-run-detours",
+    "file": "src/characters/enemyMotor.js",
+    "old": " || this._tac?.state === 'windup' || this._tac?.state === 'dash')) return;",
+    "new": " || this._tac?.state === 'windup')) return;",
+    "tests": [
+      "test/tact2.test.js"
+    ]
+  },
+  {
+    "name": "TELL6b-run-cueless",
+    "file": "src/scenes/hostCombat.js",
+    "old": "s?.state === 'dash' ? s.dash?.blow ?? null : null;",
+    "new": "null;",
+    "tests": [
+      "test/tell6b_charge.test.js"
+    ]
+  },
+  {
+    "name": "TELL6b-pool-unasked",
+    "file": "src/ai/tactics.js",
+    "old": "    const shapes = blowPool(ai, ent, dist, near, tdx, tdz);",
+    "new": "    const shapes = blowPool(ai, ent, dist, true, tdx, tdz);",
+    "tests": [
+      "test/tell6b_charge.test.js"
+    ]
+  }
+]

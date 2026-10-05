@@ -58,6 +58,7 @@ import { setLightSource } from './lightSource.js';   // DISC7: the light in hand
 import { renownHpOf, renownMpOf, offlineVitals } from './renownLayer.js';   // RENOWN1: the online layer never reaches a save
 import { stashedItemLists } from '../net/realmGoldLaw.js';   // AUDIT PRE-MERGE 0929 D3: every list of the character's own things a save carries
 import { DEPOSIT_MAX, depositOrderOk } from '../net/bagLaw.js';   // AUDIT2 BAG1: a deposit's stamp, kept to a deposit's bounds
+import { resetBlowEffects } from './blowEffects.js';   // AUDIT TELL L2: a load forgets the last game's landings
 
 /** One membership book, rows copied (GuildMembership_v1's shape). */
 const copyMembershipBook = (book) => Object.fromEntries(
@@ -652,6 +653,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   defineLiveMaxMagicka(entity);
   defineLiveMaxHealth(entity);   // DISC10-E L4: the same law for MaxHealth - the setter below writes the RAW value
   for (const k of ENTITY_FIELDS) entity[k] = snap[k];
+  resetBlowEffects(entity);   // AUDIT TELL L2: the last game's landings - a bleed, a knockdown, a push queued - are nobody's in this one
   // CHARID1: A LEGACY SAVE IS ADOPTED HERE. An envelope written before
   // the id existed carries none; its character gets one now, and every
   // card of that name that has none is stamped with it - so the next
