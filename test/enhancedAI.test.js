@@ -279,7 +279,7 @@ test('DEGENERATE-BAKE ROOT: every place agents live is kept - a foe’s room wit
 // The field dungeon itself, and Privateer's Hold beside it, through the host's own parameters. The collider is laid
 // out exactly as buildDungeonContext lays it (dungeonContext.js:642-806: every placement's model in the 'dungeon'
 // bucket save the movers and special doors, which the action system files under their own keys with the doors),
-// each model built as the pipeline builds it (dataPipeline.js:373: DUNGEON-SEAMS' patchSeams over the archive's mesh -
+// each model built as the pipeline builds it (dataPipeline.js:398: DUNGEON-SEAMS' patchSeams over the archive's mesh -
 // AUDIT PRE-MERGE 0928 N6: the raw mesh is not the floor a player walks, since the merge brought the seams).
 async function realDungeon(which) {
   const { MapsFile, longitudeLatitudeToMapPixel } = await import('../src/formats/mapsFile.js');

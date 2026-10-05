@@ -202,7 +202,9 @@ test('texture: BOTH packs have a URL door, and one trip can set up both', () => 
 });
 
 test('texture: registration rides the ONE bootstrap, and the row reports it', () => {
-  assert.match(src('scenes/shared.js'), /setTextureReplacements\(names, loadTextureFile\)/);
+  // PIN MOVED (AUDIT VE R2): the bootstrap's registration is the store's one (dataSource.js registerTextureStore)
+  assert.match(src('scenes/shared.js'), /const textures = registerTextureStore\(\)\.catch\(\(\) => 0\);/);
+  assert.match(src('scenes/dataSource.js'), /const n = setTextureReplacements\(names, loadTextureFile\);/);
   assert.match(src('scenes/shared.js'), /Promise\.all\(\[sound, songs, replacements, textures, morrowind\]\)/);
   // FD1: the SettingsWindow and its keyed dialog are gone; the Mods
   // page's packs card offers BOTH picks as buttons and reports what

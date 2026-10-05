@@ -272,7 +272,8 @@ test('SURV2: the mod\'s sixteen icons are vendored, allow-listed, and ride the t
 
 test('SURV2: by source - the pipeline stands a vendor archive in, the weight law adds water, the ladder\'s first arm is ours, the shelf and the kit are gated by the one switch', () => {
   const pipe = read('src/scenes/dataPipeline.js');
-  assert.match(pipe, /if \(isVendorArchive\(archive\)\) \{\s*\n\s*await preloadTextureArchive\(archive\)\.catch\(\(\) => \{\}\);\s*\n\s*const v = vendorTextureStandIn\(archive\);/, 'no TEXTURE file is fetched for the port\'s own archives');
+  // PIN MOVED (AUDIT VE R1): the epoch the archive's pictures are current with is read before, and kept after, the preload
+  assert.match(pipe, /if \(isVendorArchive\(archive\)\) \{\s*\n\s*const epoch = textureTierEpoch\(\);[^\n]*\n\s*await preloadTextureArchive\(archive\)\.catch\(\(\) => \{\}\);\s*\n\s*preloadedAt\.set\(archive, epoch\);\s*\n\s*const v = vendorTextureStandIn\(archive\);/, 'no TEXTURE file is fetched for the port\'s own archives');
   assert.match(read('src/systems/inventory.js'), /if \(Number\.isFinite\(item\.water\) && item\.water > 0\) base \+= item\.water;/);
   assert.match(read('src/systems/useItem.js'), /if \(isSurvivalItem\(item\)\) out = useSurvivalItem\(item, collection, \{ entity, now: nowMinute, rolls, currentDay: Math\.trunc\(nowMinute \/ 1440\), inflict: inflictDisease, rules: survivalRules\(\) \?\? SURVIVAL_RULES\.casual, offMeal: survivalRules\(\) == null \}\);[^\n]*\n[\s\S]*?else if \(isBook\(item\)\)/);   // PIN MOVED (ENDLESS PROVISIONS): Off, offMeal   // SURV-TIERS: the live tier decides the meal's sickness (AUDIT SURV-TIERS: Off eats as Casual - never sickened)
   assert.match(read('src/systems/shopStock.js'), /if \(survivalOn\(\)\) for \(const it of provisionsStock\(quality, rolls, \{ campfires: shelfIndex === 0 \}\)\) items\.push\(it\);/);   // AUDIT REST II H8 (PIN MOVED): the Campfires on the counter's shelf alone

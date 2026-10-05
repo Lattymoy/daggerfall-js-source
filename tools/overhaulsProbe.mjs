@@ -2,7 +2,10 @@
 // side by side at a desktop and stack on a phone with nothing spilling sideways; the arrows browse without wearing; a
 // look worn from its button reads back as the card's look in use; a mix made on Features reads "Custom"; GrimoireUI's
 // card shows the pack's own art (the file served, the picture decoded); and wearing GrimoireUI reloads onto the
-// classic skin with the pack on the shelf, the card saying so.
+// classic skin with the pack on the shelf, the card saying so. VE4 / AUDIT VE: the Texture card reads Vanilla Enhanced
+// in use on a fresh game (Mac: "Ensure this is on by default"); its add-ons stand on the card and switch there; a shipped
+// picture is served under /play/ and decoded by the pack's own WORKER (AUDIT VE P1); Classic puts it away, keeping the
+// add-ons, and Vanilla Enhanced worn again brings them back. A phone takes the add-on rows without spilling.
 //
 //     node tools/overhaulsProbe.mjs          (stands its own dev server; SHOT_DIR for the pictures)
 import { createServer } from 'vite';
@@ -55,8 +58,43 @@ const spills = (page) => page.evaluate(() => {
   let cs = await cards(page);
   check('three cards: Texture, Sound, UI', cs.map((c) => c.panel).join('|') === 'texture|sound|ui', cs.map((c) => c.panel).join('|'));
   check('...side by side at a desktop', new Set(cs.map((c) => Math.round(c.box.top))).size === 1 && cs[0].box.right <= cs[1].box.left, JSON.stringify(cs.map((c) => c.box)));
-  check('the Texture card stands empty - no texture pack ships yet', cs[0].state === 'empty' && !cs[0].name && !cs[0].use && (await page.locator('.look-panel[data-panel="texture"] .look-emptyline', { hasText: 'No texture packs yet.' }).count()) === 1, JSON.stringify(cs[0]));
-  check('a fresh shelf wears Enhanced on Sound and UI', cs.slice(1).every((c) => c.state === 'on' && c.name === 'Enhanced' && c.disabled), JSON.stringify(cs.map((c) => [c.state, c.name])));
+  // AUDIT VE: the Texture card holds Classic and Vanilla Enhanced - the pack that ships, ON by default
+  const veBy = await page.$eval('.look-panel[data-panel="texture"] .look-by', (b) => b.textContent);
+  const shelf = () => page.evaluate(async () => { const p = await import('/src/systems/uiPrefs.js'); return { shipped: p.getPref('dfmodShipped'), kept: p.getPref('veAddons'), inject: (await import('/src/systems/settings.js')).getBool('Enhancements', 'AssetInjection') }; });
+  let sh = await shelf();
+  check('a fresh game wears Vanilla Enhanced: the card reads it in use, the shipped version named, no choice on the shelf', cs[0].state === 'on' && cs[0].name === 'Vanilla Enhanced' && cs[0].disabled && veBy === 'carademono, version 3.4.7' && JSON.stringify(sh.shipped ?? {}) === '{}' && sh.inject === true, `${JSON.stringify(cs[0])} ${veBy} ${JSON.stringify(sh)}`);
+  const rows = () => page.$$eval('.look-panel[data-panel="texture"] .look-colours', (rs) => rs.map((r) => `${r.getAttribute('aria-label')}:${[...r.querySelectorAll('button')].map((b) => `${b.textContent}=${b.getAttribute('aria-pressed')}`).join(',')}`));
+  check('...its two add-ons stand on the card, off', JSON.stringify(await rows()) === JSON.stringify(['Masked Roads:On=false,Off=true', 'Snowless Swamps and Jungles:On=false,Off=true']), JSON.stringify(await rows()));
+  await page.locator('.look-panel[data-panel="texture"] .look-colours[aria-label="Masked Roads"] button', { hasText: 'On' }).click(); await page.waitForTimeout(120);
+  sh = await shelf();
+  check('...and Masked Roads switches on from there, kept for the next wear', (await rows())[0] === 'Masked Roads:On=true,Off=false' && sh.shipped?.['dfmod/vanilla enhanced - masked roads.dfmod'] === true && JSON.stringify(sh.kept) === '["dfmod/vanilla enhanced - masked roads.dfmod"]', JSON.stringify(sh));
+  // the pack's own file, served under the site root and decoded the way a drawn tile is - in the pack's worker
+  const decodeWorkers = [];
+  page.on('worker', (w) => { if (/vanillaEnhancedDecodeWorker/.test(w.url())) decodeWorkers.push(w.url()); });
+  const served = await page.evaluate(async () => {
+    const pack = await import('/src/systems/vanillaEnhancedPack.js');
+    const masked = pack.VE_PACK_MODS.find((m) => m.dir === 'masked-roads');
+    const url = pack.vePackUrl(masked.slices['302-TexArray'][46]);
+    const tiles = await pack.vePackClient(masked).layers('302-TexArray');
+    const tree = await pack.vePackClient(pack.VE_PACK_MODS[0]).rgba('501_13-0', { maxSize: 256 });
+    return { url: url.replace(location.origin, ''), n: tiles.length, size: `${tiles[46].width}x${tiles[46].height}`, tree: `${tree.width}x${tree.height}` };
+  });
+  await page.waitForTimeout(100);
+  check('a road tile is the pack\'s own file under the site root, the 302 set decoded whole and a 457x700 tree at the texture detail - by the decode worker', served.url === '/art/vanilla-enhanced/masked-roads/302-TexArray_46.png' && served.n === 56 && served.size === '256x256' && served.tree === '114x175' && decodeWorkers.length > 0, `${JSON.stringify(served)} workers ${decodeWorkers.length}`);
+  await page.screenshot({ path: `${OUT}/look-desktop-ve.png` });
+  // Classic puts it away - every texture mod off, the add-on kept; Vanilla Enhanced again brings it back
+  await page.locator('.look-panel[data-panel="texture"] .look-arrow').first().click(); await page.waitForTimeout(80);
+  await page.locator('.look-panel[data-panel="texture"] .look-use').click(); await page.waitForTimeout(150);
+  sh = await shelf();
+  const back = (await cards(page)).find((c) => c.panel === 'texture');
+  check('Use Classic switches the pack off - a choice now - and keeps its add-on for the next wear', back.state === 'on' && back.name === 'Classic' && sh.shipped?.['dfmod/vanilla enhanced - base.dfmod'] === false && JSON.stringify(sh.kept) === '["dfmod/vanilla enhanced - masked roads.dfmod"]', `${JSON.stringify(back)} ${JSON.stringify(sh)}`);
+  await page.locator('.look-panel[data-panel="texture"] .look-arrow').last().click(); await page.waitForTimeout(80);
+  await page.locator('.look-panel[data-panel="texture"] .look-use').click(); await page.waitForTimeout(150);
+  check('...and Use Vanilla Enhanced wears it again with Masked Roads', (await cards(page)).find((c) => c.panel === 'texture').state === 'on' && (await rows())[0] === 'Masked Roads:On=true,Off=false', JSON.stringify(await rows()));
+  cs = await cards(page);
+  // the UI card's enhanced look is named Enhanced Plus since PLUS-ONLY (systems/uiSkin.js SKIN_NAMES) - this check read
+  // plain Enhanced on both cards and failed from then on (found by VE3, which ran the probe again)
+  check('a fresh shelf wears Enhanced on Sound and Enhanced Plus on UI', cs.slice(1).map((c) => `${c.state}:${c.name}:${c.disabled}`).join('|') === 'on:Enhanced:true|on:Enhanced Plus:true', JSON.stringify(cs.map((c) => [c.state, c.name])));
   check('no lead paragraph over the cards', (await page.locator('#enhanced-menu .body > p').count()) === 0);
   await page.screenshot({ path: `${OUT}/look-desktop.png` });
 
@@ -124,6 +162,10 @@ const spills = (page) => page.evaluate(() => {
   const arrow = await page.$eval('.look-arrow', (b) => b.getBoundingClientRect().height);
   check('...and a finger\'s 44px arrow', arrow >= 44, `${arrow}`);
   await page.screenshot({ path: `${OUT}/look-phone.png`, fullPage: true });
+  // VE4 / AUDIT VE: Vanilla Enhanced, worn by default on a phone - its add-on rows fit the column
+  const addonRows = await page.locator('.look-panel[data-panel="texture"] .look-colours').count();
+  const sp2 = await spills(page);
+  check('...and Vanilla Enhanced worn there, its add-on rows spill nothing', addonRows === 2 && sp2.length === 0, `${addonRows} rows; ${sp2.slice(0, 5).join(' | ')}`);
   await ctx.close();
 }
 
