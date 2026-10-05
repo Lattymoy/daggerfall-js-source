@@ -145,6 +145,7 @@ export class LivingTown {
    *   sees?: (from: number[], to: number[]) => boolean,
    *   keepsakes?: () => readonly any[],
    *   takeKeepsake?: (item: any) => void,
+   *   extraPeople?: (day: number, town: LivingTown) => readonly Resident[],
    * }} o - LW6c: `keepsakes()` what the player carries (a keepsake carried home), `takeKeepsake(item)` it handed over.
    *   `tripsOf(day)` the roads' word on the town for a day (trips.js through the host's book: who of it is away
    *   when, who of elsewhere stays here), undefined while its ways are still being asked; `armOf(res)` a resident's
@@ -156,7 +157,9 @@ export class LivingTown {
    *   LW7: `holderOf(res, day)` who holds a townsperson's place on a day (lives.js - the census's own, a newcomer after a
    *   death, null while it stands empty; a traveller's come with the roads' word); `deadAt(res, t)` whether a hand took
    *   a resident by the minute; `slay(res, t, seen)` the player struck one down (the host makes the turn); `sees(a, b)`
-   *   a clear line between two points of the location frame (none given: always)
+   *   a clear line between two points of the location frame (none given: always). LEGACY-HOME: `extraPeople(day, town)`
+   *   residents beyond the census who live here (Project Legacy's bloodline, systems/legacy/household.js) - the same
+   *   list while nothing about them changed, so the day's people are kept with it
    */
   constructor(nav, o) {
     this.nav = nav;
@@ -195,7 +198,7 @@ export class LivingTown {
     this._live = [];
     /** @type {{ person: any, out: any }[]} */
     this._rows = [];
-    /** LW4: today's people, kept while the roads' word for the day stands. @type {{ day: number, roads: any, list: Resident[] } | null} */
+    /** LW4: today's people, kept while the roads' word for the day stands (LEGACY-HOME: and the list beyond the census). @type {{ day: number, roads: any, extra?: readonly Resident[]|null, list: Resident[] } | null} */
     this._people = null;
     /** LW5: the crews ashore here from elsewhere, read at each census (LW7: each with its packet). @type {Map<string, { res: Resident, inT: number, outT: number, berth?: { lane: { key: string }, k: number } }>} */
     this._crewOf = new Map();
@@ -286,10 +289,13 @@ export class LivingTown {
   }
 
   /** Everyone the town reads today: its people - LW4: each traveller's place as its holder today (a newcomer after a
-   *  death on the road; nobody while the place stands empty) - and its visitors. @param {number} day */
+   *  death on the road; nobody while the place stands empty) - its visitors, and (LEGACY-HOME) those who live here
+   *  beyond the census (`o.extraPeople`). @param {number} day */
   peopleOf(day) {
     const roads = this._roadsOf(day);
-    if (this._people?.day === day && this._people.roads === roads) return this._people.list;
+    const v = roads?.visitors;
+    const extra = this.o.extraPeople?.(day, this) ?? null;
+    if (this._people?.day === day && this._people.roads === roads && this._people.extra === extra) return this._people.list;
     const h = roads?.holders;
     const hold = this.o.holderOf;
     // the census's own while it holds the place; a newcomer lodged where the place is (the census's home for it). LW7: a
@@ -298,10 +304,16 @@ export class LivingTown {
       const x = h?.has(r.id) ? h.get(r.id) : (hold && r.roll !== 't' ? hold(r, day) : r);
       return !x ? [] : [x.id === r.id ? r : { ...x, home: r.home }];
     }) : this.residents;
-    const v = roads?.visitors;
-    const list = v?.length ? own.concat(v) : own;
-    this._people = { day, roads, list };
+    const list = v?.length || extra?.length ? own.concat(v ?? [], extra ?? []) : own;
+    this._people = { day, roads, extra, list };
     return list;
+  }
+
+  /** LEGACY-HOME: a house of the town LENT to a household from beyond the census (a line with no house of its own, in its
+   *  seat): one of its residences with a door, by `seed`, the same for the same seed - or 0 with none. @param {string} seed */
+  homeFor(seed) {
+    const homes = [...this.places.doors.keys()].filter((k) => isHome(this.places.types.get(k))).sort((a, b) => a - b);
+    return homes.length ? homes[lwSeed(textSeed(String(seed)), 0x686f6d65) % homes.length] : 0;   // 'home'
   }
 
   /** The entry a resident is in at minute `t` (with the one before and the one after), or null. @param {Resident} res @param {number} t */

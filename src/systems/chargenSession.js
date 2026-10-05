@@ -374,7 +374,7 @@ export function createChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {
   //
   // THE FOUR HOSTS RULE, answered here rather than three times over.
   // Three hosts run a new game and all three build their wizard
-  // through this function - world.js:6400, exterior.js:1477,
+  // through this function - world.js:6414, exterior.js:1477,
   // dungeonContext.js:3279 - so the question is asked once, in the
   // seam, and not one of them learns a new word. THE FOURTH HOST,
   // scenes/worldModes.js, IS ACCOUNTED FOR AND ASKS NOTHING: a new game
@@ -544,8 +544,8 @@ function classicChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {}) {
     // the port's only reading of it - without this the thumb could
     // latch on the press and then never move. Every host that runs
     // the wizard already routes a mousemove here: world.js and
-    // exterior.js through `townTalk.hover` (townTalk.js:1318-1329,
-    // the route itself :1327), dungeonContext.js through `overlayHover`
+    // exterior.js through `townTalk.hover` (townTalk.js:1330-1341,
+    // the route itself :1339), dungeonContext.js through `overlayHover`
     // (:9261), which dungeon.js:562 and worldModes.js:11114 both feed.
     // (ROAD-G G4 review: all four were stale - re-resolved by content,
     // against the same six routes G4-11 sweeps.) Hovering never

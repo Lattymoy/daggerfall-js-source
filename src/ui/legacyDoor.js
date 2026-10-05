@@ -75,3 +75,57 @@ export function createSuccessionOverlay(deps) {
   });
   return overlay;
 }
+
+/**
+ * LEGACY-HOME: ONE OF THE LINE, MET IN THE WORLD - the Succession's window (one card, the member's) over the talk's
+ * door: Play as them, Talk (the town's own conversation), Goodbye. Unlike the Succession it is a meeting, not a death:
+ * Escape is Goodbye, and nothing of `successionOpen` is set.
+ * @param {{ title:string, lines:string[], who:any, name:string, sub:string, act:string, why:string|null, faces?:any,
+ *   play:() => {ok:boolean, why?:string}, talk:() => void }} deps
+ * @returns {any} the overlay, or null with no document
+ */
+export function createKinOverlay(deps) {
+  if (typeof document === 'undefined') return null;
+  let fired = false;
+  let view = null;
+  const host = document.createElement('div');
+  host.id = 'legacy-kin-host';
+  host.style.cssText = 'position:fixed;inset:0;z-index:14;background:transparent;overflow:hidden';
+  document.body.append(host);
+  const close = () => {
+    if (fired) return;
+    view?.unmount();
+    view = null;
+    host.remove();
+    fired = true;
+  };
+  const overlay = {
+    isChoiceWindow: true,
+    get done() { return fired; },
+    input(code, e = null) {
+      if (code === 'Escape') { close(); return; }
+      walkButtons(host, code, e);
+    },
+    click() {},
+    wheel() {},
+    hover() {},
+    tick() {},
+    draw() { /* DOM, not canvas */ },
+    dispose() { close(); },
+    repaint() { view?.repaint(); },
+  };
+  mountEnhancedChunk({
+    load: () => import('./legacySuccession.js'),
+    mount: (m) => {
+      view = m.mountSuccession(host, {
+        title: deps.title, lines: deps.lines, faces: deps.faces,
+        choices: [{ key: 'play', who: deps.who, name: deps.name, sub: deps.sub, act: deps.act, why: deps.why }],
+        choose: () => { const r = deps.play(); if (r?.ok) close(); return r; },
+        // Talk: the window down first, then the town's conversation opens in its place
+        acts: [{ key: 'talk', label: 'Talk', act: () => { close(); deps.talk(); } }, { key: 'bye', label: 'Goodbye', act: () => close() }],
+      });
+    },
+    alive: () => !fired, host, onDismiss: () => close(), label: 'legacy-kin',
+  });
+  return overlay;
+}

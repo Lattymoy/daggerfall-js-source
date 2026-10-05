@@ -1,0 +1,155 @@
+[
+  {
+    "name": "LEGACY-HOME-played-stands-too",
+    "file": "src/systems/legacy/household.js",
+    "old": "  if (!family || !p || !isAlive(p) || p.kind !== 'member' || p.id === family.currentId) return null;",
+    "new": "  if (!family || !p || !isAlive(p) || p.kind !== 'member') return null;",
+    "tests": [
+      "test/legacyhome.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY-HOME-journey-stands-at-home",
+    "file": "src/systems/legacy/household.js",
+    "old": "    return parked ? { mapId: parked.mapId, buildingKey: parked.buildingKey, lent: false } : null;",
+    "new": "    if (parked) return { mapId: parked.mapId, buildingKey: parked.buildingKey, lent: false };",
+    "tests": [
+      "test/legacyhome.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY-HOME-home-ignores-mark",
+    "file": "src/systems/legacy/household.js",
+    "old": "  return houses.find((h) => sameHouse(h, family.home))\n    ?? ",
+    "new": "  return ",
+    "tests": [
+      "test/legacyhome.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY-HOME-sync-drops-others",
+    "file": "src/systems/legacy/household.js",
+    "old": "  const others = (family.houses ?? []).filter((h) => h.by !== personId);",
+    "new": "  const others = [];",
+    "tests": [
+      "test/legacyhome.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY-HOME-census-job",
+    "file": "src/systems/legacy/household.js",
+    "old": "export const FAMILY_JOB = 'homemaker';",
+    "new": "export const FAMILY_JOB = 'labourer';",
+    "tests": [
+      "test/legacyhome.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY-HOME-stranger-face",
+    "file": "src/systems/legacy/household.js",
+    "old": "    portrait: { archive: raceArt(p.race, sex).heads, record: Math.max(0, Math.min(FACES_PER_RACE - 1, p.face | 0)) },",
+    "new": "    portrait: null,",
+    "tests": [
+      "test/legacyhome.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY-HOME-dial-ignored",
+    "file": "src/scenes/legacyHost.js",
+    "old": "  const inWorld = () => !!family && deps.on() && !past && legacySettings().familyInWorld;",
+    "new": "  const inWorld = () => !!family && deps.on() && !past;",
+    "tests": [
+      "test/legacyhome.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY-HOME-new-list-every-ask",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (kept?.key === key) return kept.list;\n",
+    "new": "",
+    "tests": [
+      "test/legacyhome.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY-HOME-not-parked",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    p.parked = here && (family.houses ?? []).some((h) => sameHouse(h, here)) ? { mapId: here.mapId, buildingKey: here.buildingKey } : null;",
+    "new": "    p.parked = null;",
+    "tests": [
+      "test/legacyhome.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY-HOME-houses-not-synced",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (deps.heldHouses && syncHouses(family, p.id, deps.heldHouses())) { touch(family); store(); }",
+    "new": "",
+    "tests": [
+      "test/legacyhome.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY-HOME-kin-slain-not-stored",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    recordDeath(family, p.id, { at: deps.now(), cause: 'slain', place: deps.here(), by: me ? fullNameOf(me.given, me.surname) : null });\n    store();",
+    "new": "    recordDeath(family, p.id, { at: deps.now(), cause: 'slain', place: deps.here(), by: me ? fullNameOf(me.given, me.surname) : null });",
+    "tests": [
+      "test/legacyhome.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY-HOME-retired-playable",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    const refusal = p.retired != null ? LEGACY_TEXT.retiredKin(p.given) : switchRefusal(p.id);",
+    "new": "    const refusal = switchRefusal(p.id);",
+    "tests": [
+      "test/legacyhome.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY-HOME-town-keeps-stale-extras",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "this._people.roads === roads && this._people.extra === extra) return this._people.list;",
+    "new": "this._people.roads === roads) return this._people.list;",
+    "tests": [
+      "test/legacyhome.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY-HOME-lent-a-shop",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    const homes = [...this.places.doors.keys()].filter((k) => isHome(this.places.types.get(k))).sort((a, b) => a - b);",
+    "new": "    const homes = [...this.places.doors.keys()].sort((a, b) => a - b);",
+    "tests": [
+      "test/legacyhome.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY-HOME-record-drops-parked",
+    "file": "src/systems/legacy/family.js",
+    "old": "    p.parked = raw.parked && Number.isInteger(raw.parked.mapId) && (raw.parked.buildingKey | 0) > 0 ? { mapId: raw.parked.mapId, buildingKey: raw.parked.buildingKey | 0 } : null;",
+    "new": "    p.parked = null;",
+    "tests": [
+      "test/legacyhome.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY-HOME-talk-before-kin",
+    "file": "src/scenes/townTalk.js",
+    "old": "    if (livingTalk?.kin?.(target.person, () => converse(target))) return;\n",
+    "new": "",
+    "tests": [
+      "test/legacyhome.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY-HOME-born-at-the-seat-always",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    return { ok: play(personOf(family, id), here ? deps.town(deps.here()) : null) };",
+    "new": "    return { ok: play(personOf(family, id), null) };",
+    "tests": [
+      "test/legacyhome.test.js"
+    ]
+  }
+]

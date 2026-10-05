@@ -22,5 +22,6 @@ export function legacySettings() {
     model: (modSetting(LEGACY_MOD, 'Legacy.Model') | 0) === 1 ? MODELS.bloodline : MODELS.enduring,
     tollShare: TOLL_SHARES[toll],
     heirloomChance: (modSetting(LEGACY_MOD, 'Legacy.Heirloom Chance') | 0) / 100,
+    familyInWorld: !!modSetting(LEGACY_MOD, 'Legacy.Family In World'),
   };
 }

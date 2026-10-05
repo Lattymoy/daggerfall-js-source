@@ -102,11 +102,12 @@ export const fullNameOf = (given, sur) => (sur ? `${given} ${sur}` : given);
  *   blood:Record<string,number>, hearth:Record<string,number>, estate:number,
  *   parents:number[], children:number[], spouse:number|null, born:number, died:Death|null,
  *   heir:boolean|null, characterId:string|null, leveling:string|null, kind:'member'|'resident', residentId:string|null,
- *   startAge:number, toll:number, bornOwn:number, lived:number, retired:number|null, bequest?:any[]
+ *   startAge:number, toll:number, bornOwn:number, lived:number, retired:number|null, bequest?:any[],
+ *   parked?:{mapId:number, buildingKey:number}|null
  * }} Person
- * @typedef {{ v:number, id:string, surname:string, model:string, seat:{region:string, loc:string}|null, rev:number,
+ * @typedef {{ v:number, id:string, surname:string, model:string, seat:{region:string, loc:string, mapId?:number}|null, rev:number,
  *   nextId:number, currentId:number, founded:number, ended:number|null, people:Person[], remains:any[], settings?:any,
- *   pending:Pending|null }} Family
+ *   pending:Pending|null, houses?:any[], home?:{mapId:number, buildingKey:number}|null }} Family
  * @typedef {{ fallenId:number, at:number, estate:number, bequest:any[] }} Pending - AUDIT LEGACY: a fall the Succession
  *   has not answered yet, ON THE RECORD - so a tab closed, a crash or a failed birth under the window leaves the line
  *   waiting for its answer, never stranded
@@ -119,7 +120,7 @@ function blankPerson(id) {
     careerIndex: 0, className: CLASS_CAREERS[0], career: null, level: 1, stats: null, skills: null,
     groups: { primary: [], major: [], minor: [] }, blood: {}, hearth: {}, estate: 0,
     parents: [], children: [], spouse: null, born: 0, died: null, heir: null, characterId: null, leveling: null,
-    kind: 'member', residentId: null, startAge: 20, toll: 0, bornOwn: 0, lived: 0, retired: null, bequest: [],
+    kind: 'member', residentId: null, startAge: 20, toll: 0, bornOwn: 0, lived: 0, retired: null, bequest: [], parked: null,
   });
 }
 
@@ -188,7 +189,7 @@ export function writePlayer(person, entity) {
  * surname is the founder's own last word, or "of <seat>" when they carry none (a Redguard). `heir` is rolled ONCE
  * (B12) by the Descendants setting.
  * @param {any} entity
- * @param {{ model?:string, seat?:{region:string,loc:string}|null, at?:number, rng?:() => number, settings?:any, id?:string }} [o]
+ * @param {{ model?:string, seat?:{region:string,loc:string,mapId?:number}|null, at?:number, rng?:() => number, settings?:any, id?:string }} [o]
  * @returns {Family}
  */
 export function foundFamily(entity, { model = MODELS.enduring, seat = null, at = 0, rng = Math.random, settings = {}, id } = {}) {
@@ -201,8 +202,8 @@ export function foundFamily(entity, { model = MODELS.enduring, seat = null, at =
   /** @type {Family} */
   const family = {
     v: FAMILY_VERSION, id: id ?? mintFamilyId(Date.now(), rng), surname: sur, model: isModel(model) ? model : MODELS.enduring,
-    seat: seat ? { region: String(seat.region), loc: String(seat.loc) } : null,
-    rev: 1, nextId: 2, currentId: 1, founded: at, ended: null, people: [founder], remains: [], pending: null,
+    seat: seat ? { region: String(seat.region), loc: String(seat.loc), ...(Number.isInteger(seat.mapId) ? { mapId: seat.mapId } : {}) } : null,
+    rev: 1, nextId: 2, currentId: 1, founded: at, ended: null, people: [founder], remains: [], pending: null, houses: [], home: null,
   };
   return family;
 }
@@ -448,18 +449,24 @@ export function readFamily(rec) {
     p.estate = Math.max(0, Math.floor(Number(raw.estate) || 0));
     p.bequest = Array.isArray(raw.bequest) ? raw.bequest.filter((it) => it && typeof it === 'object') : [];
     p.died = raw.died && typeof raw.died === 'object' ? { at: Number(raw.died.at) || 0, cause: String(raw.died.cause ?? 'unknown'), place: raw.died.place ?? null, by: raw.died.by ?? null } : null;
+    // LEGACY-HOME: the house the member's newest save was made in (household.js homeOf), or none
+    p.parked = raw.parked && Number.isInteger(raw.parked.mapId) && (raw.parked.buildingKey | 0) > 0 ? { mapId: raw.parked.mapId, buildingKey: raw.parked.buildingKey | 0 } : null;
     people.push(p);
   }
   if (!people.length) return null;
   const maxId = Math.max(...people.map((p) => p.id));
   return {
     v: FAMILY_VERSION, id: rec.id, surname: String(rec.surname ?? ''), model: isModel(rec.model) ? rec.model : MODELS.enduring,
-    seat: rec.seat && typeof rec.seat === 'object' ? { region: String(rec.seat.region ?? ''), loc: String(rec.seat.loc ?? '') } : null,
+    seat: rec.seat && typeof rec.seat === 'object' ? { region: String(rec.seat.region ?? ''), loc: String(rec.seat.loc ?? ''), ...(Number.isInteger(rec.seat.mapId) ? { mapId: rec.seat.mapId } : {}) } : null,
     rev: Math.max(1, rec.rev | 0), nextId: Math.max(maxId + 1, rec.nextId | 0),   // D4: ids from the record's own counter, never a constant
     currentId: people.some((p) => p.id === rec.currentId) ? rec.currentId : people[0].id,
     founded: Number(rec.founded) || 0, ended: rec.ended == null ? null : Number(rec.ended), people,
     remains: Array.isArray(rec.remains) ? rec.remains.map(readRemains).filter(Boolean) : [],   // LEGACY4: where the fallen lie
     pending: readPending(rec.pending, people),
+    // LEGACY-HOME: the family's houses (each its holder's deed) and the one marked its home
+    houses: Array.isArray(rec.houses) ? rec.houses.filter((h) => h && Number.isInteger(h.mapId) && (h.buildingKey | 0) > 0)
+      .map((h) => ({ regionIndex: h.regionIndex | 0, mapId: h.mapId, buildingKey: h.buildingKey | 0, location: String(h.location ?? ''), by: Number.isInteger(h.by) ? h.by : null })) : [],
+    home: rec.home && Number.isInteger(rec.home.mapId) ? { mapId: rec.home.mapId, buildingKey: rec.home.buildingKey | 0 } : null,
   };
 }
 

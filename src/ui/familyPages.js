@@ -21,6 +21,7 @@ import { MODELS, personOf, currentOf, isAlive, parentsOf, childrenOf, siblingsOf
 import { ageOf, spanOf, isElder } from '../systems/legacy/age.js';
 import { SKILL_NAMES } from '../systems/skills.js';
 import { STAT_KEYS_ORDER } from '../systems/statMods.js';
+import { homeOf, familyHome, sameHouse } from '../systems/legacy/household.js';   // LEGACY-HOME: where each of the line lives
 
 export const FAMILY_PAGE_SECTIONS = Object.freeze([
   Object.freeze(['tree', 'Family Tree']), Object.freeze(['house', 'The House']), Object.freeze(['hall', 'Hall of Ancestors']),
@@ -49,6 +50,8 @@ export const TREE_ZOOM_STEP = 1.12;
  * @property {() => {ok:boolean, why?:string}} [passMantle]   an Enduring elder retires
  * @property {() => any[]} [hall]   every stored family
  * @property {(minutes:number) => string} [date]   a classic date in words
+ * @property {() => boolean} [inWorld]   LEGACY-HOME: whether the line stands in the world (the "Family In World" dial)
+ * @property {(house:any) => boolean} [markHome]   LEGACY-HOME: make one of the family's houses its home
  */
 let _provider = /** @type {FamilyProvider|null} */ (null);
 /** The host's provider, or null to take the pages down. */
@@ -108,6 +111,7 @@ export const FAMILY_CSS = `
 .px-sys .fam-said { color: #8fc7a0; font-size: 12px; } .px-sys .fam-why { color: #e08a7a; font-size: 12px; }
 .px-sys .fam-hall { display: flex; flex-direction: column; gap: 8px; }
 .px-sys .fam-hallrow { padding: 7px 10px 8px; border-width: 2px; border-style: solid; box-sizing: border-box; text-align: left; }
+.px-sys .fam-hallrow .fam-makehome { margin-top: 6px; }
 @media (max-width: 720px) { .px-sys .fam-wrap { flex-direction: column; align-items: stretch; } .px-sys .fam-card { max-width: none; flex-basis: auto; max-height: none; } }
 `;
 export function ensureFamilyStyle(doc = typeof document === 'undefined' ? null : document) {
@@ -320,6 +324,8 @@ function personCard(el, family, p, livedNow, rerender, door) {
   if (p.died && _provider?.date) fact('Died', _provider.date(p.died.at));
   if (p.died?.place?.loc) fact('Fell at', String(p.died.place.loc));
   if (family.model === MODELS.enduring && (p.toll | 0) > 0) fact('Arkay’s toll', `${p.toll} years`);
+  const lives = livesLine(family, p);
+  if (lives) fact('Lives', lives);
   card.append(facts);
   if (p.stats) {
     card.append(el('p', 'fam-h', 'Attributes'));
@@ -388,6 +394,17 @@ function personCard(el, family, p, livedNow, rerender, door) {
   return card;
 }
 
+/** LEGACY-HOME: where one of the line lives, in words - or null (the dead, the one played, one wed in). */
+export function livesLine(family, p) {
+  if (!isAlive(p) || p.kind !== 'member' || p.id === family.currentId) return null;
+  const home = homeOf(family, p);
+  if (!home) return 'On their own journey';
+  if (home.lent) return `In ${family.seat?.loc ?? 'the family seat'}, among its townsfolk`;
+  const h = (family.houses ?? []).find((x) => sameHouse(x, home));
+  const where = h?.location ? ` in ${h.location}` : '';
+  return sameHouse(home, familyHome(family)) ? `At the family home${where}` : `In their own house${where}`;
+}
+
 const noFamilyLine = (prov) => (!prov ? 'Your family is kept in the world - open this from a game.'
   : !prov.on?.() ? 'Turn on Project Legacy (Features) to found a family and carry your line on.'
     : 'Your family is founded when your character is made, or the first time an older character is loaded.');
@@ -410,6 +427,31 @@ export function drawHousePage(detail, rerender, { el, divider } = /** @type {any
   if (me) fact('Head of the house', fullNameOf(me.given, me.surname));
   if (prov.date && family.founded) fact('Founded', prov.date(family.founded));
   detail.append(g, el('p', 'px-note', modelLine(family.model)));
+  // LEGACY-HOME: THE HOMES - every house one of the line holds, the family home among them (where the never-played and
+  // the retired live, and where a member saved in it waits), the player's to choose
+  detail.append(el('p', 'fam-h', 'The homes'));
+  const houses = family.houses ?? [];
+  if (!houses.length) {
+    detail.append(el('p', 'px-note', family.seat?.loc ? `The line holds no house of its own. Its members live in ${family.seat.loc}, among its townsfolk - buy a house at a bank, and they move in.` : 'The line holds no house of its own, and no seat yet.'));
+  } else {
+    const home = familyHome(family);
+    const list = el('div', 'fam-hall');
+    for (const h of houses) {
+      const row = el('div', 'fam-hallrow');
+      const holder = personOf(family, h.by);
+      row.append(el('div', 'fam-kin', `${h.location || 'A house'}${sameHouse(h, home) ? ' - the family home' : ''}`),
+        el('div', 'fam-sub', holder ? `${fullNameOf(holder.given, holder.surname)}'s deed` : 'A deed of the house'));
+      if (!sameHouse(h, home) && prov.markHome) {
+        const b = el('button', 'act fam-makehome', 'Make this the family home');
+        b.onclick = () => { prov.markHome(h); rerender(); };
+        row.append(b);
+      }
+      list.append(row);
+    }
+    detail.append(list);
+  }
+  if (prov.inWorld && !prov.inWorld()) detail.append(el('p', 'px-note', 'Your family keeps out of sight: "Family In World" is off in Project Legacy\'s settings.'));
+  else detail.append(el('p', 'px-note', 'Your family lives in the world while you play another of them. Speak with one to play as them.'));
   const fallen = family.people.filter((p) => p.died).sort((a, b) => (b.died.at ?? 0) - (a.died.at ?? 0));
   if (fallen.length) {
     detail.append(el('p', 'fam-h', 'The fallen'));
@@ -417,7 +459,7 @@ export function drawHousePage(detail, rerender, { el, divider } = /** @type {any
     for (const p of fallen) {
       const row = el('div', 'fam-hallrow');
       row.append(el('div', 'fam-kin', `${fullNameOf(p.given, p.surname)} - ${identityLine(p)}`),
-        el('div', 'fam-sub', [p.died.cause === 'years' ? 'died of their years' : 'fell', p.died.place?.loc ? `at ${p.died.place.loc}` : '', prov.date ? `on ${prov.date(p.died.at)}` : ''].filter(Boolean).join(' ')));
+        el('div', 'fam-sub', [p.died.cause === 'years' ? 'died of their years' : p.died.cause === 'slain' ? `was slain${p.died.by ? ` by ${p.died.by}` : ''}` : 'fell', p.died.place?.loc ? `at ${p.died.place.loc}` : '', prov.date ? `on ${prov.date(p.died.at)}` : ''].filter(Boolean).join(' ')));
       list.append(row);
     }
     detail.append(list);

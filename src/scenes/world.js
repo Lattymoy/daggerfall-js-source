@@ -161,7 +161,7 @@ import { maxFatigue, FATIGUE_MULTIPLIER, liveStat, STAT_KEYS_ORDER } from '../sy
 // finished since U7; what was missing was a host outside the dungeon
 // that opens one, and CanRest's whole town half.
 import { restDecision, getPreventedRestMessage, REST_TEXT } from '../systems/restSession.js';   // U48: the DISPATCH (DaggerfallUI.cs:651-688) above the rest window   // ROAD-B B5: GetPreventedRestMessage   // PARTY-REST5: enemiesNearby's own textId, for a follower's own relayed break
-import { isHouseOwned, shipCoords, ownsShip, assignShipToPlayer, resetShip, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS, SHIP_TYPES, createBankAccounts, BANK_REGION_COUNT, forgiveLoans, loanAmnestyLines, foldEmpireAccounts, empireAccountLines, goldRegion } from '../systems/banking.js';   // H1: the quest residence filter; GetShipCoords for the map-pixel scene clear; OwnsShip for the travel popup   // AUDIT 58: AssignShipToPlayer's permanent half, which the classic import owed
+import { isHouseOwned, deedStands, shipCoords, ownsShip, assignShipToPlayer, resetShip, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS, SHIP_TYPES, createBankAccounts, BANK_REGION_COUNT, forgiveLoans, loanAmnestyLines, foldEmpireAccounts, empireAccountLines, goldRegion } from '../systems/banking.js';   // H1: the quest residence filter; GetShipCoords for the map-pixel scene clear; OwnsShip for the travel popup   // AUDIT 58: AssignShipToPlayer's permanent half, which the classic import owed
 import {
   clearSceneCache,           // P1: SaveLoadManager.ClearSceneCache, at PlayerGPS's map-pixel seam
   createSceneCache, cacheScene, restoreCachedScene, worldSceneName, LOOT_CONTAINER_TYPES,   // A10: the ship arm's Cache/RestoreCachedScene pair (TransportManager.cs:382-398)
@@ -514,11 +514,12 @@ import { setRaidingPartiesHost, raidFrame as raidingPartiesFrame, raidState, rai
 import { modSaveRecords, restoreModSaveRecords, newGameModSaveRecords, registerModSaveData } from '../systems/modSaveData.js';   // WA1: DFU's per-mod save slot, for the mods after HCC; OH-D: Ocean Holes' OceanHoleSaveData
 import { applyDeathPenalty, deathPenaltyText, stateDeathLoss, statedDeathLoss } from '../systems/deathPenalty.js';   // DEATH-PENALTY: an online death costs a tenth of the purse
 import { createLegacyHost, LEGACY_TEXT, REMAINS_FLAT } from './legacyHost.js';   // LEGACY1: Project Legacy's family - the record, the deaths, the births
-import { legacyOn } from '../systems/legacy/settings.js';
+import { isFamilyRes } from '../systems/legacy/household.js';   // LEGACY-HOME: one of the line among a town's residents
+import { legacyOn, legacySettings } from '../systems/legacy/settings.js';
 import { listFamilies, newestSaveOf } from '../systems/legacy/store.js';
 import { nearestTown, nearestTownAnywhere, isTownEntry, loadSearch } from '../systems/legacy/places.js';
 import { setFamilyProvider, raceWord } from '../ui/familyPages.js';   // LEGACY3: the pause window's Family tab
-import { createSuccessionOverlay, successionOpen } from '../ui/legacyDoor.js';   // LEGACY3: who carries the line on - AUDIT LEGACY: and the death's own screen while it stands
+import { createSuccessionOverlay, successionOpen, createKinOverlay } from '../ui/legacyDoor.js';   // LEGACY3: who carries the line on - AUDIT LEGACY: and the death's own screen while it stands
 import { createFaceLoader } from '../ui/partyPanel.js';   // LEGACY3: a member's portrait, the party HUD's own door
 import { goldPiecesOf as legacyGold, addItem as legacyAddItem, letterOfCredit } from '../systems/inventory.js';   // LEGACY1: the estate
 import { tabStorage } from '../systems/appStorage.js';   // LEGACY1: a birth crosses the reload in the tab's own store
@@ -2327,12 +2328,16 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** LW7: THE HAND DEATHS (lives.js handDeath) - whether a hand took a resident by minute `t`, and the player striking one
    *  down at `t` (the turn at their place and cycle, with whether it was seen and the name they bore). */
   const livingDeadAt = (res, t) => {
+    if (isFamilyRes(res)) return false;   // LEGACY-HOME: one of the line dies in the family's record, and stands no more
     const turns = livingRelations.turns();
     if (!turns.slain.size && !turns.died.size) return false;
     const h = livingPlaceOf(res, livingCycleOf(res, Math.floor((t - 240) / 1440))).hand;
     return h != null && h <= t;
   };
-  const livingSlay = (res, t, seen) => { livingRelations.turn('slain', turnKey(res, livingCycleOf(res, Math.floor((t - 240) / 1440))), { t, seen, who: res.name }); };
+  const livingSlay = (res, t, seen) => {
+    if (isFamilyRes(res)) { legacyHost?.kinSlain(res); return; }   // LEGACY-HOME: kin struck down - the family's record keeps the death
+    livingRelations.turn('slain', turnKey(res, livingCycleOf(res, Math.floor((t - 240) / 1440))), { t, seen, who: res.name });
+  };
   const livingDied = (res, t) => { livingRelations.turn('died', turnKey(res, livingCycleOf(res, Math.floor((t - 240) / 1440))), { t, who: res.name }); };   // LW7b: at the player's side
   /** A traveller's place on a trip, at the trip's own cycle (their town's roster's, by their slot). */
   const livingTripPlace = (res, trip) => {
@@ -2575,7 +2580,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!livingWorldOn() || _mode() !== 'interior') { if (livingIndoors?.size || livingIndoors?.spots().length) livingIndoors.clear(); return; }   // LW-FIX1: a room with nobody in it let go too (a house asleep) - the next way in sounds it again
     livingIndoors ??= createLivingIndoors({
       sprites: createTravellerSprites({ renderer, getTexture, uploadRecordFrame, living: _livingIndoorsDoor }),
-      building: () => { const b = modes?.interiorBuilding; const town = b && !modes?.interiorCtx?.ownedRoom ? livingTownOfMap(b.townMapId ?? 0) : null; return b && town ? { key: b.buildingKey, town } : null; },   // AUDIT-E1: never a player's own room
+      building: () => {
+        const b = modes?.interiorBuilding;
+        const town = b ? livingTownOfMap(b.townMapId ?? 0) : null;
+        if (!b || !town) return null;
+        // LEGACY-HOME: a house of Project Legacy's family holds the line and no one else - the one played's own included
+        if (legacyHost?.isFamilyHouse({ mapId: b.townMapId ?? 0, buildingKey: b.buildingKey })) return { key: b.buildingKey, town, only: isFamilyRes };
+        return modes?.interiorCtx?.ownedRoom ? null : { key: b.buildingKey, town };   // AUDIT-E1: never a player's own room
+      },
       collider: () => modes?.interiorCollider ?? null,
       floorAt: (x, y, z) => { const d = modes?.interiorCollider?.raycast([x, y, z], [0, -1, 0], 3); return Number.isFinite(d) ? y - d : null; },
       origin: () => modes?.interiorCtx?.landing ?? null,   // AUDIT-E4: the landing of the building's first door - a load made inside, another door, a peer: the room laid out the same
@@ -4662,6 +4674,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           relations: () => livingRelations, playerName: () => playerEntity.name ?? '', weather: () => weather,
           townName: dfLocation.name, regionName: dfLocation.regionName ?? '',
           tripsOf: (day) => livingTripsOf(livingTown, day), armOf: livingArmOf,   // LW3: its travellers away and armed, its visitors
+          extraPeople: (day, town) => legacyHost?.residentsOf(livingTown.mapId, (seed) => town.homeFor(seed)) ?? null,   // LEGACY-HOME: Project Legacy's line, at home here
           ashore: (res) => livingAshore(livingTown, res), crews: () => livingCrews(livingTown),   // LW5: its sailors by their ships' clock; the crews lying here
           // LW7: a townsperson's place by the lives, a hand's death, the player's, and the town's own lines of sight
           holderOf: (res, day) => livingPlaceOf(res, livingCycleOf(res, day)).holder, deadAt: livingDeadAt, slay: livingSlay,
@@ -6034,7 +6047,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     renderer, canvas, fetchBytes, playerEntity, palette,
     // LW2: the living world's two doors - an enemy's refusal, and a word noted in the resident's regard (the body's
     // own town answers both: systems/livingWorld/livingTown.js)
-    livingTalk: { refuses: (person) => person?.living?.town?.refuses(person) ?? null, talked: (person) => person?.living?.town?.talked(person), caught: (person) => person?.living?.town?.caught?.(person) },
+    livingTalk: { refuses: (person) => person?.living?.town?.refuses(person) ?? null, talked: (person) => person?.living?.town?.talked(person), caught: (person) => person?.living?.town?.caught?.(person),
+      kin: (person, talk) => legacyMeetKin(person, talk) },   // LEGACY-HOME: one of the player's line, met
     livingTone: (person, tone) => person?.living?.town?.toned?.(person, tone),   // LW7: a question's tone, in a resident's regard
     // RP1: a GETTER, not startLoc's number - see the note above. It is
     // declared below this call, so the arrow defers the read to call
@@ -12828,6 +12842,22 @@ export async function bootWorld(canvas, renderer, params, status) {
   }
   const legacyFullName = (p) => (p.surname ? `${p.given} ${p.surname}` : p.given);
   const legacyIdentity = (p) => `${raceWord(p.race)} ${p.className}${p.characterId ? `, level ${p.level}` : ''}`;
+  /** LEGACY-HOME: ONE OF THE LINE, MET (townTalk's kin door) - their card and greeting; Play as them, the town's own
+   *  conversation (`talk`), or goodbye. Answers whether the meeting took the activation (not one of this line's: the
+   *  town's talk, as anyone's). */
+  function legacyMeetKin(person, talk) {
+    const kin = legacyHost?.kinOfResident(person?.living?.res) ?? null;
+    if (!kin) return false;
+    const ov = createKinOverlay({
+      title: kin.name, lines: [kin.is, ...kin.lines], who: kin.person, name: kin.name, sub: legacyIdentity(kin.person),
+      act: LEGACY_TEXT.playAs(kin.person.given), why: kin.refusal, faces: legacyFaces,
+      play: () => legacyHost?.switchTo(kin.person.id, { here: true }) ?? { ok: false, why: LEGACY_TEXT.notSaved },   // a member never played is born where they were met
+      talk,
+    });
+    if (!ov) return false;
+    townTalk.showOverlay(ov);
+    return true;
+  }
   /** A classic minute as the calendar says it: "14 Last Seed, 3E 405". */
   function legacyDateText(minutes) {
     const d = dateFromClassicMinutes(Math.max(0, Math.floor(minutes)));
@@ -22041,6 +22071,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const dl = mode === 'dungeon' ? modes?.dungeonCtx?.abyss?.location?.() ?? null : null;
     return {
       pixel: { x: px.x, y: px.y }, regionIndex: r, region: REGION_NAMES[r] ?? '', mode, loc: loc?.name ?? null, locationType: loc?.mapTableData?.locationType ?? null,
+      mapId: loc?.mapTableData?.mapId != null ? loc.mapTableData.mapId >>> 0 : null,   // LEGACY-HOME: the seat's town, as its residents know it
       dungeon: dl ? { regionIndex: dl.regionIndex, locationIndex: dl.locationIndex } : null,
       pos: mode === 'dungeon' ? pos : null,
       world: mode === 'exterior' ? state.worldCoords(pos) : null,
@@ -22096,7 +22127,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     own: () => Math.floor(playerTicker.ownMinutes),
     here: legacyHere,
     // the seat and a birth's town: a town is the one standing on the pixel - never a dungeon below it
-    town: (h) => (h && h.mode !== 'dungeon' && h.loc && isTownEntry({ locationType: h.locationType }) ? { region: h.region, loc: h.loc } : null),
+    town: (h) => (h && h.mode !== 'dungeon' && h.loc && isTownEntry({ locationType: h.locationType }) ? { region: h.region, loc: h.loc, ...(h.mapId != null ? { mapId: h.mapId } : {}) } : null),
     nearestTown: (h) => {
       if (!h) return null;
       const hit = nearestTown(maps.getRegion(h.regionIndex), h.region, h.pixel) ?? nearestTownAnywhere(maps, REGION_NAMES, h.pixel);
@@ -22128,6 +22159,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       townTalk.showOverlay(new YesNoBoxWindow({ rows: [`Lay ${name} to rest here?`], onYes: () => { yes(); computeEntityMods(playerEntity); }, onNo: () => {} }));
       return true;
     },
+    // LEGACY-HOME: the houses the one played holds (a deed that stands - banking.js deedStands), and the house they are in
+    heldHouses: () => (playerEntity.houses ?? []).filter((h) => (h?.buildingKey | 0) > 0 && deedStands(h)),
+    houseHere: () => { const b = (modes?.mode ?? 'exterior') === 'interior' ? modes?.interiorBuilding : null; return b?.buildingKey > 0 && b.townMapId ? { mapId: b.townMapId >>> 0, buildingKey: b.buildingKey } : null; },
     takeItem: (it) => { for (const k of ['items', 'wagonItems', 'bagItems']) if (Array.isArray(playerEntity[k])) playerEntity[k] = playerEntity[k].filter((x) => x !== it); },   // LEGACY4: the remains given up at the rest, wherever they were kept
   });
   /** AUDIT LEGACY U4: an act the Family page asked for and the host refused after the pause went down - said on the HUD. */
@@ -22146,6 +22180,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     passMantle: () => legacySaid(legacyPassMantle()),
     hall: () => listFamilies(appStorage()),
     date: (m) => legacyDateText(m),
+    inWorld: () => legacySettings().familyInWorld,   // LEGACY-HOME
+    markHome: (h) => !!legacyHost?.markHome(h),
   });
   if (params.has('legacyborn')) legacyHost.takeBorn(params.get('legacyborn'));   // LEGACY1: the waiting birth, before the new game's mod records are made
   _legacyMade(legacyHost);

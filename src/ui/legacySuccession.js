@@ -8,7 +8,8 @@
 // the fallen. A line with nobody left ends, and the window says so.
 //
 // The same window answers a DEAD LOAD: a Bloodline member's older save loaded after their death is the past, and the
-// window offers the line's living instead.
+// window offers the line's living instead. LEGACY-HOME: and it is where the one played MEETS one of the line in the
+// world (ui/legacyDoor.js createKinOverlay) - the member's card, their greeting, Play as, Talk, Goodbye.
 //
 // THE HOUSE'S SHAPE (the Bounty board's, ui/bountyWindow.js): a lazy chunk the door (ui/legacyDoor.js) mounts in its
 // own host - `mountSuccession(host, deps)` answers `{ repaint, unmount }`. It wears the Enhanced Plus stone and brass on
@@ -35,6 +36,7 @@ export const SUCCESSION_CSS = `
 .lgs-sub { font-size: 12px; color: #b8b0a0; }
 .lgs-acts { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin-top: 6px; }
 .lgs-why { color: #e08a7a; font-size: 13px; margin: 0; }
+.lgs-sub.lgs-shut { color: #e08a7a; }
 @media (max-width: 520px) { .lgs-card { grid-template-columns: 52px 1fr; } .lgs-card .lgs-go { grid-column: 1 / -1; } }
 `;
 const kitCss = () => [SUCCESSION_CSS, scopeRules(frameCss(), (sel) => sel.includes('lgs-'))].join('\n');
@@ -84,8 +86,11 @@ function face(faces, who) {
 
 /**
  * @param {HTMLElement} host
- * @param {{ title:string, lines:string[], choices:Array<{ key:string, name:string, sub:string, who:any, act:string }>,
- *   faces?:any, choose:(key:string) => {ok:boolean, why?:string}, end?:{ label:string, ask:string, act:() => void }|null }} deps
+ * @param {{ title:string, lines:string[], choices:Array<{ key:string, name:string, sub:string, who:any, act:string, why?:string|null }>,
+ *   faces?:any, choose:(key:string) => {ok:boolean, why?:string}, end?:{ label:string, ask:string, act:() => void }|null,
+ *   acts?:Array<{ key:string, label:string, act:() => void }> }} deps - LEGACY-HOME: `acts` the window's other buttons
+ *   (the kin met in the world: Talk, Goodbye), each closing it; a choice's `why` says beforehand why it is refused (its
+ *   button shut, the reason under the card)
  */
 export function mountSuccession(host, deps) {
   injectEnhancedStyle();
@@ -117,13 +122,19 @@ export function mountSuccession(host, deps) {
           if (r?.ok) { busy = true; why = null; } else why = r?.why ?? 'Not now.';
           draw();
         });
-        if (busy) /** @type {HTMLButtonElement} */ (go).disabled = true;
+        if (busy || c.why) /** @type {HTMLButtonElement} */ (go).disabled = true;
+        if (c.why) words.append(el('div', 'lgs-sub lgs-shut', c.why));
         card.append(face(deps.faces, c.who), words, go);
         list.append(card);
       }
       win.append(list);
     }
     if (why) win.append(el('p', 'lgs-why', why));
+    if (deps.acts?.length) {
+      const acts = el('div', 'lgs-acts');
+      for (const a of deps.acts) acts.append(button(`lgs-act lgs-act-${a.key}`, a.label, () => { if (!busy) { busy = true; a.act(); } }));
+      win.append(acts);
+    }
     if (deps.end) {
       const acts = el('div', 'lgs-acts');
       const b = button(`lgs-end${endArmed ? ' primary' : ''}`, endArmed ? deps.end.ask : deps.end.label, () => {
@@ -138,10 +149,10 @@ export function mountSuccession(host, deps) {
     // AUDIT LEGACY U3: the lit button kept across a redraw (the same act's button again), else the first heir - or, with
     // no one to choose, the line's end: a window with nothing lit left a keyboard player no press at all
     const lit = focusKey;
-    setTimeout(() => /** @type {HTMLElement|null} */ ((lit && win.querySelector?.(`.${lit}`)) || win.querySelector?.('.lgs-go') || win.querySelector?.('.lgs-end'))?.focus?.(), 0);
+    setTimeout(() => /** @type {HTMLElement|null} */ ((lit && win.querySelector?.(`.${lit}`)) || win.querySelector?.('.lgs-go:not([disabled])') || win.querySelector?.('.lgs-act') || win.querySelector?.('.lgs-end'))?.focus?.(), 0);
   };
   let focusKey = null;
-  win.addEventListener?.('focusin', (e) => { const t = /** @type {any} */ (e.target); focusKey = [...(t?.classList ?? [])].find((c) => c.startsWith('lgs-go-') || c === 'lgs-end') ?? null; });
+  win.addEventListener?.('focusin', (e) => { const t = /** @type {any} */ (e.target); focusKey = [...(t?.classList ?? [])].find((c) => c.startsWith('lgs-go-') || c.startsWith('lgs-act-') || c === 'lgs-end') ?? null; });
   draw();
   return { repaint: draw, unmount: () => shell.remove() };
 }

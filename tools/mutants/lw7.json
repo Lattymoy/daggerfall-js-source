@@ -668,8 +668,8 @@
   {
     "name": "LW7-host-slay-unseen",
     "file": "src/scenes/world.js",
-    "old": "{ t, seen, who: res.name }); };",
-    "new": "{ t, seen: false, who: res.name }); };",
+    "old": "{ t, seen, who: res.name });\n  };",
+    "new": "{ t, seen: false, who: res.name });\n  };",
     "tests": [
       "test/lw7_deeds.test.js"
     ]

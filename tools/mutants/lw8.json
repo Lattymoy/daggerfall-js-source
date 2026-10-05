@@ -229,8 +229,8 @@
   {
     "name": "LW8-cap",
     "file": "src/scenes/livingIndoors.js",
-    "old": "        inside = b.town.insideAt(b.key, deps.clock()).slice(0, INDOOR_MAX);",
-    "new": "        inside = b.town.insideAt(b.key, deps.clock());",
+    "old": "        inside = b.town.insideAt(b.key, deps.clock()).filter((x) => !b.only || b.only(x.res)).slice(0, INDOOR_MAX);",
+    "new": "        inside = b.town.insideAt(b.key, deps.clock()).filter((x) => !b.only || b.only(x.res));",
     "tests": [
       "test/lw8_indoors.test.js"
     ]
@@ -346,7 +346,7 @@
   {
     "name": "LW8-host-building",
     "file": "src/scenes/world.js",
-    "old": "      building: () => { const b = modes?.interiorBuilding; const town = b && !modes?.interiorCtx?.ownedRoom ? livingTownOfMap(b.townMapId ?? 0) : null; return b && town ? { key: b.buildingKey, town } : null; },",
+    "old": "      building: () => {\n        const b = modes?.interiorBuilding;\n        const town = b ? livingTownOfMap(b.townMapId ?? 0) : null;\n        if (!b || !town) return null;\n        // LEGACY-HOME: a house of Project Legacy's family holds the line and no one else - the one played's own included\n        if (legacyHost?.isFamilyHouse({ mapId: b.townMapId ?? 0, buildingKey: b.buildingKey })) return { key: b.buildingKey, town, only: isFamilyRes };\n        return modes?.interiorCtx?.ownedRoom ? null : { key: b.buildingKey, town };   // AUDIT-E1: never a player's own room\n      },",
     "new": "      building: () => null,",
     "tests": [
       "test/lw8_indoors.test.js"

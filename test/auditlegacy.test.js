@@ -288,7 +288,8 @@ test('AUDIT LEGACY U3: the Succession walks by keyboard - arrows and Tab move, E
   walkButtons(root, 'Tab', { shiftKey: true });
   walkButtons(root, 'Space');
   assert.deepEqual(pressed, ['lgs-go-b', 'lgs-go-a']);
-  assert.match(rd('src/ui/legacySuccession.js'), /\|\| win\.querySelector\?\.\('\.lgs-go'\) \|\| win\.querySelector\?\.\('\.lgs-end'\)\)\?\.focus\?\.\(\)/);
+  // PIN MOVED (LEGACY-HOME): a refused card's button is passed over, and the meeting's own acts (Talk) come before the end
+  assert.match(rd('src/ui/legacySuccession.js'), /\|\| win\.querySelector\?\.\('\.lgs-go:not\(\[disabled\]\)'\) \|\| win\.querySelector\?\.\('\.lgs-act'\) \|\| win\.querySelector\?\.\('\.lgs-end'\)\)\?\.focus\?\.\(\)/);
   assert.match(rd('src/ui/legacyDoor.js'), /input\(code, e = null\) \{ walkButtons\(host, code, e\); \},/);
   void keydown;
 });

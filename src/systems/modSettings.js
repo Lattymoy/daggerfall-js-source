@@ -1310,7 +1310,8 @@ export const MOD_SETTINGS = Object.freeze({
   // and Siblings Probability 0, so a fresh install never rolled a sibling; the port ships 2 and 50. Its "Input" section
   // (the G key and the second key) is the keybinding registry's (KB1, inputActions.js MOD_ACTIONS: LegacyFamily). The
   // "Legacy" section is the port's own: the model a family founded without the chargen's answer takes, Arkay's toll in
-  // an Enduring family, and the heirloom's chance at a Bloodline death. `Enabled` is the port's (MO1: on).
+  // an Enduring family, the heirloom's chance at a Bloodline death, and whether the family stands in the world
+  // (LEGACY-HOME). `Enabled` is the port's (MO1: on).
   'project-legacy': Object.freeze({
     title: 'Project Legacy',
     author: 'Lattymoy, Gh\u00f0\u00a7\u2020 and Positronico',
@@ -1326,6 +1327,8 @@ export const MOD_SETTINGS = Object.freeze({
       'Legacy.Model': Object.freeze({ default: 0, options: Object.freeze(['Enduring', 'Bloodline']), description: 'The model a family takes when it is founded around a character made before this mod (a new character answers at creation). Enduring: a death costs years. Bloodline: a death is final.' }),
       'Legacy.Toll': Object.freeze({ default: 1, options: Object.freeze(['Light', 'Standard', 'Heavy']), description: 'Arkay\u2019s toll in an Enduring family: the years a death takes - 4%, 6% or 10% of the lifespan.' }),
       'Legacy.Heirloom Chance': Object.freeze({ default: 50, min: 0, max: 100, description: 'The chance a Bloodline death leaves an heirloom for the heir to recover.' }),
+      // LEGACY-HOME (Legacy-Arc section 10b; Mac: "itll be default on but can be toggled off").
+      'Legacy.Family In World': Object.freeze({ default: true, description: 'Your living family stands in the world when you are not playing them: at the family home (or in your seat\u2019s town, if the line holds no house), about their day. Speak with one to play as them.' }),
     }),
   }),
 });

@@ -42,6 +42,7 @@ import { rollStats, rollSkills, spendPoolLowest, STAT_KEYS_ORDER } from '../syst
 import { LEVELING_CLASSIC } from '../systems/oblivionLeveling.js';
 import { pickHeirloom, markHeirloom, mintRemainsItem, isRemainsItem, isHeirloom, attuneHeirloom, blessingOf, remainsGoldOf } from '../systems/legacy/heirloom.js';
 import { SKILL_NAMES } from '../systems/skills.js';
+import { syncHouses, householdOf, residentOf, familyResOf, kinGreeting, setFamilyHome, familyHome, sameHouse } from '../systems/legacy/household.js';
 import { goldStack } from '../systems/inventory.js';
 
 /** The reflexes a born member starts with - the wizard's own default (ui/chargenArt.js PLAYER_REFLEXES.Average). */
@@ -71,6 +72,9 @@ export const LEGACY_TEXT = Object.freeze({
   rested: (name, skill) => `${name} is laid to rest. Their blessing stays with you: +3 ${skill}.`,
   attuned: (item, gen) => `${item} remembers the hand that carried it home (generation ${gen}).`,
   ended: (sur) => `The house of ${sur} goes on.`,
+  kinSlain: (name) => `${name} is dead by your hand. The house will remember it.`,   // LEGACY-HOME
+  playAs: (name) => `Play as ${name}`,
+  retiredKin: (given) => `${given} has passed the mantle on, and keeps the house now.`,
 });
 
 /** LEGACY4: the death quest's id prefix in the quest log, and its map ring's radius (the bounty board's). */
@@ -115,10 +119,11 @@ export function mergeFamily(stored, saved, cid) {
  *   killer?:() => (string|null), atPlace?:(place:any) => boolean, openRemains?:(rec:any, items:any[]) => boolean,
  *   atRest?:() => boolean, askRest?:(name:string, yes:() => void) => boolean, takeItem?:(item:any) => void,
  *   carried?:() => any[], giveItems?:(items:any[]) => void,
- *   now:() => number, own:() => number, here:() => any, town:(here:any) => ({region:string, loc:string}|null),
+ *   now:() => number, own:() => number, here:() => any, town:(here:any) => ({region:string, loc:string, mapId?:number}|null),
  *   nearestTown:(here:any) => ({region:string, loc:string}|null), gold:() => number, say:(line:string) => void,
  *   boot:(search:string) => void, search:() => string, loadCharacter:(characterId:string) => boolean,
  *   saveNow:() => boolean, inFight:() => boolean, payEstate?:(gold:number) => void, rng?:() => number,
+ *   heldHouses?:() => any[], houseHere?:() => ({mapId:number, buildingKey:number}|null),
  * }} deps
  */
 export function createLegacyHost(deps) {
@@ -150,6 +155,10 @@ export function createLegacyHost(deps) {
     if (p.characterId && deps.entity.characterId && p.characterId !== String(deps.entity.characterId)) return;   // never another character's into this person
     writePlayer(p, deps.entity);
     p.lived = lived();
+    // LEGACY-HOME: where this save is made - in one of the family's houses the member is PARKED there, and stands in it
+    // while another is played; anywhere else they are on their own journey (systems/legacy/household.js homeOf)
+    const here = deps.houseHere?.() ?? null;
+    p.parked = here && (family.houses ?? []).some((h) => sameHouse(h, here)) ? { mapId: here.mapId, buildingKey: here.buildingKey } : null;
   }
   const cidOf = () => (deps.entity?.characterId ? String(deps.entity.characterId) : null);
   /** The stored family a character is of, or null - a save made before its family was founded (AUDIT LEGACY A3). */
@@ -453,9 +462,9 @@ export function createLegacyHost(deps) {
   }
 
   /** Into the world as `p`: their newest save, or their birth. */
-  function play(p) {
+  function play(p, at = null) {
     if (p.characterId && deps.loadCharacter(p.characterId)) return true;
-    const place = family.seat ?? deps.nearestTown(deps.here()) ?? { region: 'Daggerfall', loc: 'Daggerfall' };
+    const place = at ?? family.seat ?? deps.nearestTown(deps.here()) ?? { region: 'Daggerfall', loc: 'Daggerfall' };
     leaveBirth(deps.tab(), { familyId: family.id, personId: p.id, region: place.region, loc: place.loc, estate: 0 });
     deps.boot(birthSearch(deps.search(), p.id, place));
     return true;
@@ -480,8 +489,9 @@ export function createLegacyHost(deps) {
     return null;
   }
   /** Save the one played where they stand (the mod's anchor, D7), then play the other - never without the save
-   *  (AUDIT LEGACY B6: a refused save on a deck lost the member left behind). */
-  function switchTo(id) {
+   *  (AUDIT LEGACY B6: a refused save on a deck lost the member left behind). LEGACY-HOME: `here` - met in the world, a
+   *  member never played is born in the town they were met in, not the seat's. */
+  function switchTo(id, { here = false } = {}) {
     const why = switchRefusal(id);
     if (why) return { ok: false, why };
     writeCurrent();
@@ -489,7 +499,7 @@ export function createLegacyHost(deps) {
     setCurrent(family, id);
     touch(family);
     store();
-    return { ok: play(personOf(family, id)) };
+    return { ok: play(personOf(family, id), here ? deps.town(deps.here()) : null) };
   }
 
   /** Why the played elder may not pass the mantle now, or null. */
@@ -611,7 +621,13 @@ export function createLegacyHost(deps) {
     if (!family.seat) {
       const t = deps.town(deps.here());
       if (t) { family.seat = t; touch(family); store(); deps.say(LEGACY_TEXT.seat(t.loc)); }
+    } else if (family.seat.mapId == null) {
+      // LEGACY-HOME: a seat noted before it carried its town's map id learns it the next time the house stands there
+      const t = deps.town(deps.here());
+      if (t?.mapId != null && t.loc === family.seat.loc && t.region === family.seat.region) { family.seat.mapId = t.mapId; touch(family); store(); }
     }
+    // LEGACY-HOME: the houses the one played holds are the line's
+    if (deps.heldHouses && syncHouses(family, p.id, deps.heldHouses())) { touch(family); store(); }
     payEstateOf(p);
     remainsStep();
     if (family.model === MODELS.enduring && !elderSaid && isElder(p, lived())) {
@@ -621,8 +637,75 @@ export function createLegacyHost(deps) {
     return null;
   }
 
+  // ---- LEGACY-HOME: the bloodline in the world ----------------------------------------------------------------------
+
+  /** Whether the line stands in the world now: the mod on, its "Family in the world" on, a family, not the past. */
+  const NO_RESIDENTS = Object.freeze([]);
+  const inWorld = () => !!family && deps.on() && !past && legacySettings().familyInWorld;
+  /**
+   * The family's residents of the town `mapId` (systems/legacy/household.js residentOf) - the town's own day plans,
+   * walkers and rooms carry them. `lend(seed)` the town's house lent to a line with no house (a residence of its
+   * census, by the family's id - livingTown.js homeFor), 0 when it has none. The SAME list while nothing of the family
+   * changed (the town keeps its day's people by it).
+   */
+  const residentsKept = new Map();
+  function residentsOf(mapId, lend = null) {
+    const id = mapId >>> 0;
+    if (!inWorld()) { residentsKept.delete(id); return NO_RESIDENTS; }
+    const rows = householdOf(family).filter(({ home }) => (home.mapId >>> 0) === id);
+    const lent = rows.some(({ home }) => home.lent) ? (lend?.(family.id) | 0) : 0;
+    const key = `${family.id}:${family.rev}:${lent}`;
+    const kept = residentsKept.get(id);
+    if (kept?.key === key) return kept.list;
+    const list = rows.map(({ person, home }) => ({ person, key: home.lent ? lent : home.buildingKey }))
+      .filter((x) => x.key > 0).map(({ person, key: k }) => residentOf(family, person, { mapId: id, buildingKey: k }));
+    residentsKept.set(id, { key, list });
+    return list;
+  }
+  /** The person of the line a family resident is, or null (another family's, or none). */
+  function personOfResident(res) {
+    const f = familyResOf(res?.id);
+    return f && family && f.familyId === family.id ? personOf(family, f.personId) : null;
+  }
+  /** A member STRUCK DOWN by the one played (the town's one-hit civilian, livingTown.js slain): dead in the record - a
+   *  world fact, the store's - and gone from the town with it. Answers whether one of the line died. */
+  function kinSlain(res) {
+    const p = personOfResident(res);
+    if (!p || !isAlive(p) || p.id === family.currentId) return false;
+    const me = current();
+    recordDeath(family, p.id, { at: deps.now(), cause: 'slain', place: deps.here(), by: me ? fullNameOf(me.given, me.surname) : null });
+    store();
+    deps.say(LEGACY_TEXT.kinSlain(fullNameOf(p.given, p.surname)));
+    return true;
+  }
+  /** A family resident spoken to: who they are, how they greet the one played, and why Play as is refused (or null). */
+  function kinOfResident(res) {
+    const p = personOfResident(res);
+    const me = current();
+    if (!p || !me) return null;
+    const { word, is, lines } = kinGreeting(family, me, p, { elder: family.model === MODELS.enduring && isElder(p, p.lived) });
+    // a retired elder lives at home and is never played again (LEGACY2); anyone else, the switch's own refusals
+    const refusal = p.retired != null ? LEGACY_TEXT.retiredKin(p.given) : switchRefusal(p.id);
+    return { person: p, word, is, name: fullNameOf(p.given, p.surname), lines, refusal };
+  }
+  /** Whether a building is one of the family's houses, while the line stands in the world (its rooms hold the line). */
+  const isFamilyHouse = (house) => inWorld() && (family.houses ?? []).some((h) => sameHouse(h, house));
+  /** Mark a house of the family's as its home (the House page). */
+  function markHome(house) {
+    if (!family || !setFamilyHome(family, house)) return false;
+    touch(family);
+    store();
+    return true;
+  }
+
   return {
     get family() { return family; },
+    residentsOf,
+    kinOfResident,
+    kinSlain,
+    isFamilyHouse,
+    markHome,
+    familyHome: () => familyHome(family),
     /** The past played back (a dead or retired member's save), or null. */
     get past() { return past; },
     current,

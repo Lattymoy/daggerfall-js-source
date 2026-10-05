@@ -331,6 +331,10 @@ export function talkStripSource(name, arts = { base: _art, categories: _categori
 // and a missing record costs the portrait (warned once), never the
 // conversation.
 export const PORTRAIT_ARCHIVE = Object.freeze({ CommonFaces: 'TFAC00I0.RCI', SpecialFaces: 'FACES.CIF' });
+/** LEGACY-HOME: a race's chargen heads (systems/races.js raceArt `heads`, FACE<nn>I0.CIF - CreateCharFaceSelect's own
+ *  ten records) named as the archive itself - one of Project Legacy's family, spoken to, wears the face they were made
+ *  with, the one the player chose for them at their birth. */
+const HEADS_FILE = /^FACE\d\dI0\.CIF$/;
 export const PORTRAIT_RECT = Object.freeze([119, 65, 64, 64]);
 
 let _portraitDeps = null;
@@ -355,7 +359,7 @@ function _loadPortraitFile(file) {
 
 /** SetNPCPortrait(FacePortraitArchive, recordId) (:360-385). */
 export function setNpcPortrait(archive, recordId) {
-  const file = PORTRAIT_ARCHIVE[archive] ?? PORTRAIT_ARCHIVE.CommonFaces;
+  const file = PORTRAIT_ARCHIVE[archive] ?? (HEADS_FILE.test(String(archive)) ? String(archive) : PORTRAIT_ARCHIVE.CommonFaces);
   const key = `${file}#${recordId}`;
   _portraitKey = key;
   _portrait = _portraitTex.get(key) ?? null;
@@ -499,7 +503,7 @@ export class NativeTalkWindow {
   /** SetListboxTopics' tail (:893-905): a freshly filled list SELECTS
    *  its first row - index 1 when row 0 is the NavigationBack
    *  "previous" row, which this port's flattened lists never carry
-   *  (treeCategories drops them, townTalk.js:805) - and SelectIndex
+   *  (treeCategories drops them, townTalk.js:817) - and SelectIndex
    *  (ListBox.cs:761-770) raises OnSelectItem, so the player-says
    *  label is filled before the player clicks anything.
    *
@@ -877,7 +881,7 @@ export class NativeTalkWindow {
       case 'whereIs': audio.playOneShot(SOUND.ButtonClick, 1); this._talkOption = 'whereIs'; this._reopenCategory(); return true;
       // B5-6: the four pages are live at :313-327 - tellMeAbout, then
       // people/things/work behind the whereIs gate - with three of the
-      // hooks supplied at scenes/townTalk.js:891-893 and Work's OKAY
+      // hooks supplied at scenes/townTalk.js:903-905 and Work's OKAY
       // question shipped alongside them (_askWork :293, ButtonOkay's
       // fake Work ListItem at DaggerfallTalkWindow.cs:1534-1543). Each
       // still falls back to consuming the press when its hook is absent
@@ -928,7 +932,7 @@ export class NativeTalkWindow {
   /** Pointer path (phone taps + mouse): virtual-space hit rects.
    *  AUDIT 65 UI-1: the third and fourth slots are the HOST's, not
    *  this window's. Every overlay slot dispatches
-   *  `click(vx, vy, right, middle)` - townTalk.js:1274,
+   *  `click(vx, vy, right, middle)` - townTalk.js:1286,
    *  worldModes.js:11071, dungeonContext.js:9089 - so the clock that
    *  used to sit in the fourth arrived as `e.button === 1`, a boolean,
    *  and `false ?? Date.now()` kept the `false`: every second click in

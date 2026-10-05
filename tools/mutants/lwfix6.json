@@ -38,8 +38,8 @@
   {
     "name": "LW-FIX6-owned-unread",
     "file": "src/scenes/world.js",
-    "old": "const town = b && !modes?.interiorCtx?.ownedRoom ? livingTownOfMap(",
-    "new": "const town = b ? livingTownOfMap(",
+    "old": "        return modes?.interiorCtx?.ownedRoom ? null : { key: b.buildingKey, town };",
+    "new": "        return { key: b.buildingKey, town };",
     "tests": [
       "test/lwfix6_rooms.test.js"
     ]

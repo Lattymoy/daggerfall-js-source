@@ -270,7 +270,9 @@ save from the family's dates. The years are the family's fiction, the world's cl
 
 ## 10b. THE BLOODLINE IN THE WORLD (LEGACY-HOME)
 
-*Not built yet - the slice that builds it is LEGACY-HOME.*
+*Built: LEGACY-HOME. The law is `systems/legacy/household.js`; the host's half `scenes/legacyHost.js` (`residentsOf`,
+`kinOfResident`, `kinSlain`, `isFamilyHouse`, `markHome`); the wiring `scenes/world.js`; pinned in
+`test/legacyhome.test.js`, mutation-proven in `tools/mutants/legacyhome.json`.*
 
 Mac (2026-10-05): "I think your bloodline should be visible when not playing, and if a house is owned should live in the
 house ... With the ability to switch by interacting with them or by using the ui. Really trying to flesh this out since
@@ -278,29 +280,52 @@ itll be default on but can be toggled off." His three answers decided the open q
 the family seat as townsfolk; with several houses, one is the FAMILY HOME; and members keep a Living World day rather
 than standing still.
 
-- **Who stands in the world.** A living member of the blood who is not the one played - never played, or played and
-  PARKED (their newest save made in one of the player's houses), or retired - and, once LEGACY5 builds it, a spouse. A
-  member whose save stands elsewhere (a dungeon, the road) is on their own journey: not in the world, and their card
-  says where. The rule keeps what is seen and what is saved one thing: switch to a member standing in your house and you
-  take them up in that house.
-- **Where they live.** THE FAMILY HOME - one of the player's houses (offline one a region, `systems/banking.js`; online
-  the character's homes, at most three, `net/homeLaw.js` HOME_CAP): the one the player marks on the Family tab's House
-  page, else the house in the family seat's region, else the first. A parked member lives in the house their save was
-  made in. With NO house, the members live in the family seat as townsfolk - a house of the town's census lent to them
-  for the line, the Living World's own doors.
-- **Their day.** Each keeps a Living World day (`systems/livingWorld/dayPlan.js`): asleep at home by night, about the
-  town by day, home again at dusk - found in the street, at the market or the temple, and in the house. They stand as the
-  town's other people stand (the street's walkers, the room's spots, LW8), drawn as THEMSELVES - their race, sex, face and
-  worn kit, the way an online peer is drawn - never a Breton stand-in.
-- **Talking to them.** A member greets the one played by their kinship ("Brother", "Mother") and says how they fare; the
-  talk window shows their own face. Before the talk, a choice: **Talk**, or **Play as <name>** - the one played is SAVED
-  WHERE THEY STAND (in the house, they are parked there and stay standing in it), and the member is taken up: a member
-  never played is BORN on that spot, one played loads their own save (which, parked, is the same house). The Family
-  tab's Play as goes on working from anywhere.
-- **Online** (until LEGACY7): the members stand in the player's own home, seen by the player alone; Play as says it is
-  offline-only for now.
-- **The switch.** "Family in the world" (Project Legacy's settings), on by default; off, the family lives in the Family
-  tab alone.
+- **Who stands in the world** (`homeOf`). A living member of the blood who is not the one played - never played, or
+  played and PARKED (`parked`: their newest save was made in one of the family's houses, written at every save the host
+  makes of them), or retired. A member whose save stands anywhere else (a dungeon, the road, another town's street) is
+  on their own journey: not in the world, and their card says so. What is seen and what is saved are one thing: Play as
+  a member standing in a house and their own save takes them up in that house. The one played never stands beside
+  themselves. LEGACY5's spouses join them when LEGACY5 builds marriage.
+- **Where they live.** THE FAMILY'S HOUSES are every house a member holds (`family.houses`, each row its holder's - a
+  deed is the character's own, `systems/banking.js`, so the rows are the one played's `houses`, a deed that stands,
+  synced every tick; another member's rows are kept). THE FAMILY HOME is the one marked on the House page, else the one
+  in the family's seat, else the first (`familyHome`). A parked member lives in the house their save was made in; the
+  never-played and the retired in the family home. With NO house, the members live in the family's seat town as its
+  townsfolk, in a residence of the town LENT to the line (`LivingTown.homeFor`, the same house for the same family -
+  House1-House6 with a door; a town with none to lend stands nobody). The seat learns its town's map id the next time
+  the line stands in it.
+- **Their day** (`residentOf`). Each is a resident of their town in the census's own shape (`systems/livingWorld/
+  census.js`), added beside the census through `LivingTown`'s `extraPeople` (one list while nothing of the family
+  changes, so the town keeps its day by it): the homemaker's day (`dayPlan.js` - asleep at home by night, the market
+  and the town by day), found in the street and in the house (LW8's rooms). A HOUSE OF THE FAMILY'S holds the line and
+  no one else (the census's people of that building are not shown inside it, the one played's own house included); every
+  other room of the player's own stays empty, as AUDIT-E1 has it.
+- **How they are drawn.** In the street, in the town's own outfits - DFU's walkers have three tables (Breton, Nord,
+  Redguard) and every townsperson of Daggerfall wears one; the member's race picks the nearer table (the elves and the
+  Bretons the Breton, the beast folk the Redguard), the same one every day. **Departure (recorded):** the design asked for
+  their own race and kit, the way an online peer is drawn; the street's walkers are the census's billboards, and a peer's
+  composite body is the realm's renderer - that is LEGACY7's to bring, with the realm. In the talk window they wear
+  THEIR OWN FACE: the chargen head they were made with (`raceArt(race, sex).heads`, record `face`; `ui/nativeTalk.js`
+  takes a FACE*.CIF as the portrait's archive).
+- **Talking to them.** The talk door meets them first (`townTalk.js` `livingTalk.kin`, after the refusals and the
+  household's moment): the Succession's window with one card (`ui/legacyDoor.js` `createKinOverlay`) - what they are to
+  the one played ("Your sister.", `kinLine`), their greeting by kinship ("Mother! You're home.", `kinGreeting`) and how
+  the house fares, then **Play as <name>**, **Talk** (the town's own conversation, their head in the window) and
+  **Goodbye** (Escape). Play as is the Family tab's switch - saved where they stand first (in a house of the line, the
+  one played is parked there and stays standing in it); a member never played is BORN in the town they were met in, one
+  played loads their own save. It is refused on the card, with its reason, mid-fight, online, while the Succession
+  waits, and for a retired elder ("has passed the mantle on, and keeps the house now").
+- **Struck down.** One of the line killed by the one played (the town's one-hit civilian, LW7) dies IN THE RECORD -
+  `died` with cause `slain` and by whose hand, a world fact, the store's (AUDIT LEGACY's first authority) - said on the
+  HUD, and stands no more; never a death in the town's lives (`livingDeadAt`/`livingSlay` pass them to the host).
+- **Online** (until LEGACY7): the realm's homes are the account service's (`systems/onlineHomes.js`), not yet the line's,
+  so online the family stands in its seat's town; they are this player's own residents, seen by them alone; Play as is
+  refused online.
+- **The switch.** "Family In World" (Project Legacy's settings, `Legacy.Family In World`, on the tile), on by default;
+  off, the family lives in the Family tab alone, and its houses' rooms are the census's again.
+- **The House page** lists the homes - each house, whose deed, the family home marked, "Make this the family home" on
+  the others - and the card says where each member lives ("At the family home in Sentinel", "In their own house",
+  "In Gothway Garden, among its townsfolk", "On their own journey").
 
 ## 11. THE UI (Enhanced Plus)
 
@@ -314,7 +339,8 @@ than standing still.
     fallen, died of years, at peace / lies unclaimed / carried home, retired, elder, has an heir, not yet played) and
     the acts: Play as (a switch: saved first, never mid-fight, never online until LEGACY7) and, for an elder, Pass the
     mantle - each refused on the card before the press, with its reason.
-  - **The house**: its model, its seat, its generations, the living and the fallen (how and where each fell).
+  - **The house**: its model, its seat, its generations, the living and the fallen (how and where each fell), and
+    (LEGACY-HOME) its homes, the family home among them, the player's to choose (section 10b).
   - **The Hall of Ancestors**: every house founded on this machine, living and ended, with its generations and counts.
 - **The Succession** (at a final death, a passing of the mantle, or a save of the past loaded): its own window
   (`ui/legacySuccession.js`, `ui/legacyDoor.js`), the death's own screen while it stands - the fallen's line, then the
@@ -339,4 +365,4 @@ than standing still.
 | LEGACY5 | courting, marriage, children, surnames' cadet branches | not built |
 | LEGACY6 | world influence: the inherited standing and regard, the towns' talk, the killer remembered | not built |
 | LEGACY7 | online: the service's lineage, the tombstone, the heir's realm birth, the house name, two players wed | not built |
-| LEGACY-HOME | the bloodline in the world: the family home, the seat's townsfolk, their day, Play as by talking (section 10b) | not built |
+| LEGACY-HOME | the bloodline in the world: the family home, the seat's townsfolk, their day, Play as by talking (section 10b) | built |

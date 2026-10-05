@@ -68,11 +68,15 @@ test('LW-FIX6 a player\'s own room stands nobody of the living world - DFU\'s Ad
   assert.equal(ask({ hit: { sailingCabin: { uid: 'b1' } }, building: null }), true, 'a cabin');
   assert.equal(ask({ building: null }), false);
   const w = rd('src/scenes/world.js');
-  const building = new Function('modes', 'livingTownOfMap', `return ${lift(w, /\n\s*building: (\(\) => \{ const b = modes\?\.interiorBuilding;[^\n]*?: null; \}),/, 'the host\'s building')}`);
+  // PIN MOVED (LEGACY-HOME): the closure spans lines now, and a house of Project Legacy's family holds the line only
+  const building = new Function('modes', 'livingTownOfMap', 'legacyHost', 'isFamilyRes', `return ${lift(w, /\n\s*building: (\(\) => \{\n\s*const b = modes\?\.interiorBuilding;[\s\S]*?\n\s*\}),\n/, 'the host\'s building')}`);
   const town = { mapId: 5 };
   const modes = (ownedRoom) => ({ interiorBuilding: { buildingKey: 41, townMapId: 5 }, interiorCtx: { ownedRoom } });
-  assert.deepEqual(building(modes(false), () => town)(), { key: 41, town }, 'another\'s: its residents');
-  assert.equal(building(modes(true), () => town)(), null, 'the player\'s own: none');
+  assert.deepEqual(building(modes(false), () => town, null)(), { key: 41, town }, 'another\'s: its residents');
+  assert.equal(building(modes(true), () => town, null)(), null, 'the player\'s own: none');
+  const only = (r) => !!r.kin;
+  const kin = { isFamilyHouse: (h) => h.mapId === 5 && h.buildingKey === 41 };
+  assert.deepEqual(building(modes(true), () => town, kin, only)(), { key: 41, town, only }, 'the family\'s house - the player\'s own too: the line, and only the line');
 });
 
 test('LW-FIX6 the room laid out from the landing of the building\'s first door, whichever door was taken - a load made upstairs, another door or a peer lays out the same room, the same people in the same places; from the feet, the room upstairs; every door\'s landing kept clear (mutants: the first door, a floorless one, the landing unread, the ways in unkept, unpassed, unread, a floorless one kept)', () => {

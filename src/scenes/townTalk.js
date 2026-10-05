@@ -137,7 +137,7 @@ export function rayPersonDistance(camPos, fwd, feet) {
   return t / fl * Math.hypot(fwd[0], fwd[1], fwd[2]);
 }
 
-export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, regionIndex, onCrime = null, topics = null, palette = null, rolls = Math.random, talkEngine = null, onBuildingList = null, otherOverlayActive = null, otherHudCovered = null, questBuildingSource = null, livingTalk = null, livingTone = null }) {   // LW2: `livingTalk` the living world's doors - { refuses(person) -> text|null, talked(person), caught(person) } (bible/06-Systems/Living-World.md); LW7: `livingTone(person, tone)` a question's tone   // AUDIT ENH-NOTICE3 C2: `otherHudCovered` is the mode host's previousWindow-chain answer (modes.hudCovered), for the toasts   // AUDIT 63 F49: PlayerGPS.DiscoverBuilding's quest name-override seam ({ currentMapID, isBuildingQuestResource }), null in a host with no topic tree
+export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, regionIndex, onCrime = null, topics = null, palette = null, rolls = Math.random, talkEngine = null, onBuildingList = null, otherOverlayActive = null, otherHudCovered = null, questBuildingSource = null, livingTalk = null, livingTone = null }) {   // LW2: `livingTalk` the living world's doors - { refuses(person) -> text|null, talked(person), caught(person) } (bible/06-Systems/Living-World.md); LEGACY-HOME: `kin(person, talk)` true when one of the player's line took the activation (`talk` the conversation, should they ask for it); LW7: `livingTone(person, tone)` a question's tone   // AUDIT ENH-NOTICE3 C2: `otherHudCovered` is the mode host's previousWindow-chain answer (modes.hudCovered), for the toasts   // AUDIT 63 F49: PlayerGPS.DiscoverBuilding's quest name-override seam ({ currentMapID, isBuildingQuestResource }), null in a host with no topic tree
   // RP1 - THE REGION IS READ LIVE, NOT CAPTURED AT BOOT.
   //
   // This took a plain number, and the world host had no choice but to
@@ -770,6 +770,18 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // body's town's: livingTown.js moment, the room's door): their words on the parchment, the conversation another time
     const moment = target.person?.living?.town?.moment?.(target.person) ?? null;
     if (moment) { showOverlay(new ActionTextBox(moment)); return; }
+    // LEGACY-HOME: one of the player's own line (Project Legacy's family in the world, systems/legacy/household.js) is
+    // met before the words - Play as them, the town's own conversation (`talk`, below), or goodbye: the host's window
+    if (livingTalk?.kin?.(target.person, () => converse(target))) return;
+    converse(target);
+  }
+
+  /** LEGACY-HOME: a mobile's portrait - a resident's own (one of the line: the chargen head they were made with), else
+   *  TalkManager.cs:817's: a mobile ALWAYS portraits from TFAC00I0.RCI, at the record SetPerson minted for it. */
+  const portraitOf = (person) => person?.living?.res?.portrait ?? { archive: 'CommonFaces', record: person?.personFaceRecordId ?? 0 };
+
+  /** The conversation itself, once nothing stands before it (the activation's gates above). */
+  function converse(target) {
     const eng0 = engine();
     if (eng0?.session) {
       // T3c: the NPC keeps a stable per-person seed for the
@@ -798,7 +810,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
         npcSeed: target.person._talkSeed, npcName: target.person.nameNPC ?? '',
         // TalkManager.cs:817 - a mobile ALWAYS portraits from
         // TFAC00I0.RCI, at the record SetPerson minted for it.
-        portrait: { archive: 'CommonFaces', record: target.person.personFaceRecordId ?? 0 },
+        portrait: portraitOf(target.person),
       });
       return;
     }
@@ -836,7 +848,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // through the verbatim hit rects; the keyed chain is the fallback)
     openTalkWindow(t.text, {
       npcSeed: _talkNpc?._talkSeed ?? 0, npcName: _talkNpc?.nameNPC ?? '',
-      portrait: { archive: 'CommonFaces', record: _talkNpc?.personFaceRecordId ?? 0 },
+      portrait: portraitOf(_talkNpc),
     });
   }
 
