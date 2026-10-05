@@ -4786,7 +4786,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:8149` read, on one physical line:
+`src/scenes/worldModes.js:8132` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -4928,9 +4928,9 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:10308` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:10303` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
-  provenance argument `applySpellToFoe` hands them (`hostMagic.js:505`)
+  provenance argument `applySpellToFoe` hands them (`hostMagic.js:646`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
   Threading it touches four hosts.
 - **A building interior streams no foes at all.** `makeInteriorFoes`
@@ -9523,7 +9523,16 @@ changes to a placed piece.
   table names them - and otherwise the kind numbered in id order. A house container holds things by default; a light
   carries Daggerfall's own light (its range, intensity and colour). The panel's filters are here too: kinds, words
   (every word in the name or the kind), a size band (small under half a metre of radius, large from a metre and a
-  quarter), holds-things, gives-light; most common first, cheapest first, or by name.
+  quarter), holds-things, gives-light; most common first, cheapest first, or by name. DECOR-DUNGEON (FIELD BUGS
+  2026-10-05b, the owner: "a lot of missing decor items"): and the dungeon blocks' furnishings - a model of the furniture
+  families, or one of the 37 things Daggerfall stands outside them (measured: its statues, arms, pedestals, coffins,
+  hangings), that stands doing nothing (no action, never a door), a flat but a marker, an acting flat or nature; found
+  only there, a piece is "Dungeon furniture"; every place's names are numbered after the earlier places' (a room's
+  first), so no room's name moves (`01-Overview/Field-Bugs-2026-10-05b.md`). DECOR-MODS (the same record, the town
+  mods' furnishings): and the pieces it stands in for what Beautiful Villages, Beautiful Cities and Detailed Ships place
+  - 297, measured over their own blocks, a room's or a street's as the mods stand them, never the town's own structure -
+  named and numbered after every place of Daggerfall's (`systems/decorMods.js`), every one catalogued whatever is on and
+  offered while the port stands it (AUDIT 05b A3: asked as the offer is made).
 
 Pinned: `test/decor1.test.js` (4 of its 7) - the law, the store through the real Worker with every migration
 applied, the client's door and the deploy, the catalogue and its filters.
@@ -10042,6 +10051,18 @@ home's alone - they are about other players.
   service with `yard`, paid from the purse and the town's region's account (or the realm record's act).
 - Four hosts: `world.js` WIRED (the yards, the frames, the passes, the eye and the stick); `worldModes.js` and
   `dungeonContext.js` stand no street; `exterior.js` (the bench) FLAGGED - no online homes.
+- **The street and the nature** (DECOR-OUTDOOR, FIELD BUGS 2026-10-05b, the owner: "a lot of missing decor items"): a
+  yard's catalogue holds what Daggerfall stands in its streets - each town block's own models (never a mill, a gate, the
+  town's board or the ladder) and flats, and its buildings' outside flats - and its climate's trees and plants (every
+  record of its set, the set its pixel names); neither is offered indoors. A yard's model stands in its town's climate
+  (its swaps written into the pixel's own table before it stands), a street's animal or flame moves with the town's
+  animator, and a tree or a plant is drawn as the pixel draws its nature: the season's archive of its set, Seasons of the
+  Iliac Bay's picture where the mod re-skins it, the wind's lean; when the pixel is built again (a season's turn, an
+  install) the yard stands again in it. The ghost and the panel's pictures are the season's too. DECOR-LPT (FIELD BUGS
+  2026-10-05b, the owner: "elements should recieve the low poly overhaul style like trees got"): a tree or a plant Low
+  Poly Trees has a tree for stands as the world's do - its 3D tree near the eye (the piece's scale and turn), its own far
+  picture beyond (its handle held while it stands) - and the ghost is the picture it will stand as
+  (`07-Rendering/Low-Poly-Trees.md`).
 - Known limits: the lot is a box round the footprint (a building turned off the grid has a wider lot); yard pieces are
   not activation targets; the street's wandering folk are not steered round them.
 
@@ -10137,7 +10158,8 @@ and `test/decor2b.test.js` (the sale's line, the tap under a flight) and the ACC
   the item, the owner and the town (vendorSearch).
 - **The catalogue** (`systems/decorCatalogue.js`): the people Daggerfall stands in its rooms (`blockPeopleRecords`) are
   catalogue pieces too, kind Vendors (Mac: "People category sounds wrong call it vendors") - placed, one is made the
-  trader.
+  trader. NUDE-HOSTS (FIELD BUGS 2026-10-05b): Show Nudity governs them as it does the world's people - off, no nude
+  figure is offered, and one placed stands, flies and is pictured as its clothed stand-in (`01-Overview/Field-Bugs-2026-10-05b.md`).
 - **The service** (`server-account/src/market.js` over `migrations/0080_home_vendors.sql` - `market_listings.vendor_map`,
   `vendor_id`; routes `/v1/market/vendor`, `/vendors`, `/myvendors`). A listing named at a trader is the owner's
   character's own trader (`vendor-not-yours`), in the HOME's region whatever the client says; it is filtered out of the

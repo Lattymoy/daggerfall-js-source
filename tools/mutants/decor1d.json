@@ -11,7 +11,7 @@
   {
     "name": "DECOR1d-a-dungeon-block-read",
     "file": "src/systems/decorScan.js",
-    "old": "        if (!isTownBlock(blocks.getBlockType(next))) continue;",
+    "old": "        if (!isTownBlock(type) && !isDungeonBlock(type)) continue;   // DECOR-DUNGEON: and a dungeon's furnishings",
     "new": "        if (false) continue;",
     "tests": [
       "test/decor1d.test.js"
@@ -38,11 +38,12 @@
   {
     "name": "DECOR1d-a-zero-radius-kept",
     "file": "src/systems/decorScan.js",
-    "old": "if (Number.isFinite(r) && r > 0) radii.set(key, r);",
-    "new": "if (Number.isFinite(r)) radii.set(key, r);",
+    "old": "if (Number.isFinite(r) && r > 0) { radii.set(key, r);",
+    "new": "if (Number.isFinite(r)) { radii.set(key, r);",
     "tests": [
       "test/decor1d.test.js"
-    ]
+    ],
+    "note": "AUDIT 05b (PIN MOVED): re-aimed by content - the keep counts a radius measured after the scan is done (A3)."
   },
   {
     "name": "DECOR1d-the-lift-unread",
@@ -308,7 +309,7 @@
   {
     "name": "DECOR1d-the-chosen-piece-pictureless",
     "file": "src/ui/decorPanel.js",
-    "old": "      if (e.flat && !thumbs.has(e.key)) askThumb(e);",
+    "old": "      if (e.flat && !thumbs.has(thumbKeyOf(e))) askThumb(e);",
     "new": "      void 0;",
     "tests": [
       "test/decor1d.test.js"

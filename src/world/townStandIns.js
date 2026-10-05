@@ -145,9 +145,14 @@ export function paintingModel({ hang, picture, mirror }) {
 }
 
 // ---- Rosy's other pieces -------------------------------------------------------------------------------------------
+/** The picture each of Rosy's small hangings and rugs wears (world/townPictures.js), by id - the one table its builder
+ *  and its name in the house decorator (systems/decorMods.js decorModNaming) both read (AUDIT 05b A8). */
+export const ROSYS_PICTURES = Object.freeze({
+  69467: PICTURE.smallHanging(0), 69468: PICTURE.smallHanging(1), 69469: PICTURE.smallHanging(2), 69471: PICTURE.rug(2), 69472: PICTURE.rug(3),
+});
 /** Small hangings (69467-69469: two units off a wall, either face out, mostly at half scale) - cloth on a rod. */
-function smallHanging(k) {
-  const m = new MeshBuilder(), tex = [TOWN_PICTURE_ARCHIVE, PICTURE.smallHanging(k)], w = 0.4, h = 0.6, z = 0.004;
+function smallHanging(record) {
+  const m = new MeshBuilder(), tex = [TOWN_PICTURE_ARCHIVE, record], w = 0.4, h = 0.6, z = 0.004;
   for (const side of [1, -1]) {
     const L = (w / 2) * side, n = [0, 0, side];
     m.quad(tex, [L, 0, z * side], [-L, 0, z * side], [-L, -h, z * side], [L, -h, z * side], n, [[0, 0], [1, 0], [1, -1], [0, -1]]);
@@ -156,15 +161,15 @@ function smallHanging(k) {
   return m.build();
 }
 /** A rug (69471 and 69472 are laid as a pair, one of them turned over under the floor): its picture on top. */
-function rug(k) {
-  const m = new MeshBuilder(), tex = [TOWN_PICTURE_ARCHIVE, PICTURE.rug(k)], hw = 0.8, hd = 0.5, t = 0.012;
+function rug(record) {
+  const m = new MeshBuilder(), tex = [TOWN_PICTURE_ARCHIVE, record], hw = 0.8, hd = 0.5, t = 0.012;
   m.quad(tex, [hw, t, -hd], [-hw, t, -hd], [-hw, t, hd], [hw, t, hd], [0, 1, 0], [[0, 0], [1, 0], [1, -1], [0, -1]]);
   m.quad([0, 45], [hw, 0, hd], [-hw, 0, hd], [-hw, 0, -hd], [hw, 0, -hd], [0, -1, 0]);
   return m.build();
 }
 export const ROSYS_PIECES = Object.freeze({
-  69467: () => smallHanging(0), 69468: () => smallHanging(1), 69469: () => smallHanging(2),
-  69471: () => rug(2), 69472: () => rug(3),
+  69467: () => smallHanging(ROSYS_PICTURES[69467]), 69468: () => smallHanging(ROSYS_PICTURES[69468]), 69469: () => smallHanging(ROSYS_PICTURES[69469]),
+  69471: () => rug(ROSYS_PICTURES[69471]), 69472: () => rug(ROSYS_PICTURES[69472]),
 });
 
 // ---- the RMB Resource Pack's crop fields ----------------------------------------------------------------------

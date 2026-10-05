@@ -60,7 +60,7 @@ import { trs, multiply } from './mat4.js';
 
 export const RDB_SIDE = 2048 * GLOBAL_SCALE;
 
-const EXIT_DOOR_MODEL_ID = 70300;
+export const EXIT_DOOR_MODEL_ID = 70300;   // DECOR-DUNGEON: the dungeons' census leaves it out too (test/decordungeon.test.js) - a door, though no action door
 const RED_BRICK_DOOR_MODEL_ID = 72100;
 const MIN_TAPESTRY_ID = 42500;
 const MAX_TAPESTRY_ID = 42571;
@@ -151,7 +151,8 @@ export function isActionDoor(rdb, modelReference) {
     description === 'NEW' || description === 'CAV';
 }
 
-function hasAction(obj) {
+/** Whether a model object acts (its action record's flags set) - DECOR-DUNGEON: the decor catalogue offers none that do. */
+export function rdbModelActs(obj) {
   return obj.resources.modelResource.actionResource.flags !== 0;
 }
 
@@ -288,7 +289,8 @@ function flatAction(obj) {
   return buildAction('FLT', fr.soundIndex, 0, fr.magnitude, fr.magnitude, fr.flags, fr.action, true);
 }
 
-function* rdbObjects(rdb) {
+/** Every object of an RDB block, its groups in order (DECOR-DUNGEON: the decor catalogue walks them too). */
+export function* rdbObjects(rdb) {
   for (const group of rdb.objectRootList) {
     if (!group.rdbObjects) continue; // Skip empty object groups
     yield* group.rdbObjects;
@@ -346,7 +348,7 @@ export function layoutRdbBlock(dfBlock, blockIndex, allowExitDoors, getModel) {
       if (modelIdNum === EXIT_DOOR_MODEL_ID && !allowExitDoors) continue;
 
       const matrix = getModelMatrix(obj);
-      const acts = hasAction(obj);
+      const acts = rdbModelActs(obj);
       const action = acts ? modelAction(rdb, obj) : null;
 
       // Action doors are placed by their own pass, closed.

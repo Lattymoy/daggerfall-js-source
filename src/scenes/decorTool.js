@@ -80,6 +80,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { createDecorScan } from '../systems/decorScan.js';
+import { decorModsLive, DECOR_MODS_LIVE_S } from '../systems/decorMods.js';   // AUDIT 05b A3: the mods' pieces offered while they stand
 import { createDecorRooms } from '../systems/decorRooms.js';   // DECOR-ROOMS: a house's rooms, found in its own walls
 import { createDecorDoorways, decorDoorwaysFree, decorDoorwayAimed, decorDoorFit, decorDoorwayQuad, decorIsDoor } from '../systems/decorDoorways.js';   // HOME-DOORS
 import { writeDecalQuad, clearDecalQuad, DECAL_FLOATS } from '../combat/bloodDecals.js';   // HOME-DOORS: the doorways' marks, on the decal pass
@@ -106,6 +107,7 @@ import { billboardSize } from '../world/rmbFlats.js';
 import { lookAt, perspective, mirrorProjectionX, trs, multiply } from '../world/mat4.js';
 import { isTextEntryTarget } from '../ui/input.js';
 import { walletReserve } from '../net/realmGoldLaw.js';   // MARKET-AUDIT: a refusal gives back exactly what the payment took
+import { drawnFlat } from '../characters/nudeFlats.js';   // NUDE-DECOR: a nude figure shows its clothed stand-in while Show Nudity is off
 
 /** The free camera's pace, metres a second; Run's pace; and how far it may go from where it began. */
 export const DECOR_FLY_SPEED = 3;
@@ -351,9 +353,21 @@ export const eyePoint = (collider, eye, dir, skip = null) => eyeHit(collider, ey
  *                      with `yard` is a home's yard (scenes/homeYards.js): no doors, nothing held, no light
  *   look()           - HOME-LOOK: the painter's door for the house outside - `{ current, season, preview(look), commit(look) }`
  *                      - or null
+ *   flatAs(flat)     - DECOR-OUTDOOR: the picture a flat is here, [archive, record] - a yard's nature in its season
+ *                      (scenes/homeYards.js); none, the flat itself
+ *   flatPicture(flat) - DECOR-LPT: the picture a flat the host stands its own way WILL stand as (a yard's tree - its Low
+ *                      Poly Trees picture, its season's: scenes/yardNature.js picture), a Promise of `{ archive, key,
+ *                      size, mirrors, release }` at scale 1 (`release` lets go of what it holds - called when the ghost
+ *                      goes), or null (none: the flat's own picture, as ever)
+ *   prepareModel(gpu) - AUDIT 05b A5: the host's own law over a model before the decorator draws it with the host's table
+ *                      (a yard's: its town's climate swaps written into the table its pieces draw with - scenes/homeYards.js
+ *                      climateOf), a Promise or nothing; none, drawn at once
  */
 export function createDecorTool(deps) {
   const { renderer, pool } = deps;
+  /** NUDE-DECOR, DECOR-OUTDOOR: THE PICTURE A FLAT DRAWS HERE - the host's (a yard's tree in its season), and a nude figure's
+   *  clothed stand-in while Show Nudity is off - what the room stands it as, so what the ghost and the lists show. */
+  const drawnHere = (flat) => drawnFlat(...(deps.flatAs?.(flat) ?? flat));
   /** @type {any} */ let button = null;
   /** @type {any} */ let panel = null;
   /** @type {any} */ let bar = null;
@@ -400,6 +414,22 @@ export function createDecorTool(deps) {
     return null;
   }
 
+  /** AUDIT 05b A5: A MODEL DRAWN IN THE HOST'S LAW - `deps.prepareModel` asked once for each table the decorator draws a
+   *  model with (the host hands it the table: a yard's pixel's, built again in a new season, is a new one), and the model
+   *  drawn with it only once it answered: the ghost and the preview as the piece will stand, never in the textures a moment
+   *  and the town's the next (a yard's ghost flew in the base climate's wood, then stood in the desert's). */
+  /** @type {WeakMap<object, Map<any, boolean>>} */
+  const inLawOf = new WeakMap();
+  function inLaw(gpu, texRemap) {
+    if (!deps.prepareModel || !texRemap) return true;
+    let seen = inLawOf.get(texRemap);
+    if (!seen) inLawOf.set(texRemap, (seen = new Map()));
+    if (seen.has(gpu)) return seen.get(gpu);
+    seen.set(gpu, false);
+    Promise.resolve().then(() => deps.prepareModel(gpu)).catch(() => {}).then(() => { seen.set(gpu, true); });
+    return false;
+  }
+
   function ensureDom() {
     if (panel || !deps.doc) return;
     const { doc, win, touch = false } = deps;
@@ -414,7 +444,14 @@ export function createDecorTool(deps) {
         // AUDIT DYE-ICON 1: a hung one "In this room" is the pack's picture too, dyed off its numbers as it hangs - asked
         // bare, an Ebony blade previewed as the base metal's (Mac's "daedric but show steel", in the panel)
         if (decorIsMount(entry)) return deps.iconUrl?.(entry.flat[0], entry.flat[1], decorMountDye(entry.item), decorMountDyeTarget(entry.item)) ?? null;
-        return entry.flat ? deps.iconUrl?.(entry.flat[0], entry.flat[1]) ?? null : null;
+        return entry.flat ? deps.iconUrl?.(...drawnHere(entry.flat)) ?? null : null;   // NUDE-DECOR, DECOR-OUTDOOR: the picture it stands as
+      },
+      // NUDE-DECOR: a picture drawn as another is kept under that other's key - the panel keeps a picture for the session,
+      // and the setting turned off after a nude figure's was drawn would go on showing it in "In this room" (DECOR-OUTDOOR:
+      // and a yard's tree its summer self in winter)
+      thumbKeyOf: (entry) => {
+        const drawn = entry.flat && !entry.icon ? drawnHere(entry.flat).join('.') : null;
+        return drawn && drawn !== entry.flat.join('.') ? `${entry.key}>${drawn}` : entry.key;
       },
       onMove: (piece) => beginPlacing(entryOf(piece), piece),
       onRemove: (piece) => { removePiece(piece); },
@@ -438,6 +475,20 @@ export function createDecorTool(deps) {
   }
 
   const ensureScan = () => { scan ??= createDecorScan(deps.scanDeps()); return scan; };
+  // AUDIT 05b A3: THE MODS' PIECES THE PORT STANDS NOW (systems/decorMods.js decorModsLive) - the offer's own
+  // (decorCatalogue.js decorRoomEntries), asked as the panel opens, as the catalogue first stands and every
+  // DECOR_MODS_LIVE_S it is up; never once a session (a mod turned off left its pieces for sale that stood nowhere, one
+  // turned on was never offered). A piece that stands only now is measured then, so priced (decorScan.js remeasure).
+  let modsLive = new Set(), modsLiveIn = 0, modsLiveOf = null;
+  function liveMods() {
+    const s = ensureScan(), list = s.entries();
+    if (modsLiveIn > 0 && modsLiveOf === list) return modsLive;
+    modsLiveIn = DECOR_MODS_LIVE_S;
+    modsLiveOf = list;
+    const now = decorModsLive(list);
+    if (now.size !== modsLive.size || [...now].some((k) => !modsLive.has(k))) { modsLive = now; s.remeasure(now); }
+    return modsLive;
+  }
 
   /** DECOR-ROOMS: the finder for this interior - a new one for another interior's collider (a new visit), the choice
    *  forgotten with the house it was made in. */
@@ -566,18 +617,22 @@ export function createDecorTool(deps) {
     const kept = pool.ownOf?.(piece.id) ?? null;
     return (kept ? itemLongName(kept) : null) || decorItemName(piece.item) || DECOR_KINDS.decor;
   };
+  /** A placed piece's entry IN THE CATALOGUE, or null - one of the owner's own is none of the catalogue's, and none is
+   *  found before the catalogue is read. AUDIT 05b A2: asked for itself - the placed list read an entry's `count` as
+   *  "found", and a tree, a plant or a hall's board is the catalogue's own at a count of 0 (a row of its kind's letters,
+   *  never its picture). */
+  const catalogued = (piece) => (piece.item ? null : scan?.entries()?.find((x) => x.key === decorKey(piece)) ?? null);
   /** A placed piece's catalogue entry - or, until the catalogue is read, the piece's own shape as one. DECOR2a: a piece
    *  of the owner's own is its own entry, free. */
-  function entryOf(piece) {
+  function entryOf(piece, known = catalogued(piece)) {
     if (piece.item) {   // DECOR2b: furniture stands as a look - a model as often as a flat
       return {
         key: `own-piece:${piece.id}`, kind: 'own', model: piece.model ?? null, flat: piece.flat ?? null, item: piece.item, name: ownName(piece), count: 0,
         storage: false, light: decorFlatLight(piece.flat), mount: decorIsMount(piece),   // DECOR2c: a hung one moves as it hangs
       };
     }
+    if (known) return known;
     const key = decorKey(piece);
-    const e = scan?.entries()?.find((x) => x.key === key);
-    if (e) return e;
     // the catalogue not read yet: its kind by its model all the same (AUDIT: a door moved in the first moments of a visit
     // flew as furniture - set on any surface, at any turn - and was still hung as a door)
     const kind = piece.model != null ? modelKind(piece.model) : 'decor';
@@ -620,8 +675,8 @@ export function createDecorTool(deps) {
     const list = roomList();   // DECOR-ROOMS
     return {
       placed: pool.list().map((piece) => {
-        const entry = entryOf(piece);
-        return { piece, entry: entry.count ? entry : null, name: entry.name, holds: !!pool.holdsAny?.(piece.id), own: !!piece.item, room: list ? rooms.roomOf(piecePoint(piece))?.id ?? null : null };
+        const known = catalogued(piece);
+        return { piece, entry: known, name: entryOf(piece, known).name, holds: !!pool.holdsAny?.(piece.id), own: !!piece.item, room: list ? rooms.roomOf(piecePoint(piece))?.id ?? null : null };
       }),
       // DECOR-ROOMS: a house of two rooms or more - each one's name, and the one chosen (the panel's tabs, and its lists)
       rooms: list ? list.map((room) => ({ id: room.id, name: room.name })) : null,
@@ -632,10 +687,11 @@ export function createDecorTool(deps) {
       base: baseRows(),   // BASE-HIDE: the room's own furniture
       where: r?.where ?? '',
       hall: !!r?.hall,   // AUDIT GUILD1d A9: a hall's piece gives its half to the guild's treasury (the panel says so)
-      entries: decorRoomEntries(s.entries(), r),   // HOME-YARD: a door hangs in a doorway, never in a yard; GUILD1e: a hall's board in a hall alone
+      entries: decorRoomEntries(s.entries(), r, null, liveMods()),   // HOME-YARD: a door hangs in a doorway, never in a yard; GUILD1e: a hall's board in a hall alone; AUDIT 05b A3: a mod's piece while it stands
       yard: !!r?.yard,
       progress: s.progress(),
       ready: s.phase() === 'done',
+      sized: s.lateSized(),   // AUDIT 05b A3: a piece measured since - its price, listed
       radiusOf: (e) => s.radiusOf(e),
       priceOf: (e) => { const rad = s.radiusOf(e); return rad ? decorPrice(rad, 1) : null; },
       gold: deps.wallet?.().gold ?? 0,
@@ -782,6 +838,7 @@ export function createDecorTool(deps) {
     if (!deps.room?.() || placing || panel?.isOpen()) return false;
     ensureDom();
     if (!panel) return false;
+    modsLiveIn = 0;   // AUDIT 05b A3: the switches asked again as it opens
     slot = panel.open(view());
     if (slot) deps.openSlot?.(slot);
     return !!slot;
@@ -800,7 +857,7 @@ export function createDecorTool(deps) {
     const eye = flightStart(editing);   // DECOR-ROOMS: in the room chosen - else at the eye, as ever
     placing = {
       entry, radius, editing, free, placer: null, fly: [...eye], start: [...eye], id: editing ? editing.id : mintDecorId(), piece: null,
-      refused: null, busy: false, batch: null, flatSize: null, rise: 0, art: null, decal: null, inside: [],
+      refused: null, busy: false, batch: null, flatSize: null, rise: 0, art: null, decal: null, inside: [], mirrors: true, release: null,   // DECOR-LPT: the host's picture's
       door: entry.kind === 'door', flip: false, marks: null, markSig: '',   // HOME-DOORS: hung in a doorway, its marks
       lotMarks: null, lotSig: '',   // HOME-YARD: the lot's edge
     };
@@ -812,19 +869,33 @@ export function createDecorTool(deps) {
       // MW-ASSIGN: one's own thing set down shows the Morrowind picture it will stand as (the room's own door and cache,
       // scenes/decorRoom.js standPicture) - else its own world picture, as ever
       const mw = entry.kind === 'own' && entry.item ? Promise.resolve(pool.standPicture?.(entry.item) ?? null).catch(() => null) : Promise.resolve(null);
-      Promise.all([deps.getTexture?.(entry.flat[0]), mw]).then(([t, pic]) => {
-        if (placing !== p) return;
+      const [ga, gr] = drawnHere(entry.flat);   // NUDE-DECOR: a figure moved shows the stand-in the room stands it as; DECOR-OUTDOOR: a tree, its season
+      // DECOR-LPT: a flat the host stands its own way shows the picture it will stand as (a yard's tree, Low Poly Trees')
+      const hosted = Promise.resolve(deps.flatPicture?.(entry.flat) ?? null).catch(() => null);
+      // AUDIT 05b A6: each ask fails on its own - a texture that would not load threw the three answers away together,
+      // the host's held picture with them (never let go, no ghost)
+      const tex = Promise.resolve().then(() => deps.getTexture?.(ga)).catch(() => null);
+      Promise.all([tex, mw, hosted]).then(([t, pic, own]) => {
+        if (placing !== p) { own?.release?.(); return; }
+        if (own) {
+          p.flatSize = { ...own.size };
+          p.mirrors = own.mirrors !== false;   // a tree turns in earnest - its picture never mirrors
+          p.release = own.release ?? null;
+          p.placer = createDecorPlacer(entry, { radius, from: editing, free });
+          if (renderer?.createBillboardBatch) p.batch = renderer.createBillboardBatch(own.archive, own.key, { ...p.flatSize }, [[0, 0, 0]]);
+          return;
+        }
         if (pic) {
           p.flatSize = { w: pic.w, h: pic.h };
           p.placer = createDecorPlacer(entry, { radius, from: editing, free });
           if (renderer?.createBillboardBatch) p.batch = renderer.createBillboardBatch(MW_STAND_ARCHIVE, pic.key, { ...p.flatSize }, [[0, 0, 0]]);
           return;
         }
-        if (!t || !(entry.flat[1] < t.recordCount)) return;
-        deps.uploadRecord?.(entry.flat[0], entry.flat[1]);
-        p.flatSize = billboardSize(t, entry.flat[1]);
+        if (!t || !(gr < t.recordCount)) return;
+        deps.uploadRecord?.(ga, gr);
+        p.flatSize = billboardSize(t, gr);
         p.placer = createDecorPlacer(entry, { radius, from: editing, free });
-        if (renderer?.createBillboardBatch) p.batch = renderer.createBillboardBatch(entry.flat[0], entry.flat[1], { ...p.flatSize }, [[0, 0, 0]]);
+        if (renderer?.createBillboardBatch) p.batch = renderer.createBillboardBatch(ga, gr, { ...p.flatSize }, [[0, 0, 0]]);
       }, () => {});
     }
     listen(true);
@@ -878,6 +949,7 @@ export function createDecorTool(deps) {
     if (p?.decal) renderer?.destroyDecalBatch?.(p.decal);   // DECOR2c
     if (p?.marks) renderer?.destroyDecalBatch?.(p.marks);   // HOME-DOORS
     if (p?.lotMarks) renderer?.destroyDecalBatch?.(p.lotMarks);   // HOME-YARD
+    p?.release?.();   // DECOR-LPT: what the host's picture held (a tree's far picture)
     bar?.hide();
     listen(false);
   }
@@ -1272,6 +1344,7 @@ export function createDecorTool(deps) {
       ensureRooms().step();   // DECOR-ROOMS: a few rays a frame until the house's rooms are found
       ensureDoorways()?.step();   // HOME-DOORS: then its doorways, so a door's line can say how many are free
       nameFromCatalogue();
+      modsLiveIn -= dt > 0 ? dt : 0;   // AUDIT 05b A3
       panel.update(view());
       const pointed = panel.pointed();
       if (pointed?.model != null) modelFor(pointed.model);
@@ -1315,7 +1388,7 @@ export function createDecorTool(deps) {
     if (p.batch && p.piece && p.flatSize) {
       const sc = p.piece.scale;
       p.batch.origin = [origin[0] + p.piece.pos[0], origin[1] + p.piece.pos[1], origin[2] + p.piece.pos[2]];
-      p.batch.size = { w: p.flatSize.w * sc * (decorFlatMirrored(p.piece) ? -1 : 1), h: p.flatSize.h * sc };   // DECOR-FLIP: the ghost faces the way it will stand
+      p.batch.size = { w: p.flatSize.w * sc * (p.mirrors !== false && decorFlatMirrored(p.piece) ? -1 : 1), h: p.flatSize.h * sc };   // DECOR-FLIP: the ghost faces the way it will stand (DECOR-LPT: a tree never mirrors)
       if (p.batch.bounds) p.batch.bounds[3] = Math.hypot(p.batch.size.w, p.batch.size.h) * 0.5;
     }
   }
@@ -1413,7 +1486,7 @@ export function createDecorTool(deps) {
     const p = placing;
     if (!p || p.suspended || !p.piece || p.entry.model == null) return false;
     const m = modelFor(p.entry.model);
-    if (!m) return false;
+    if (!m || !inLaw(m.gpu, texRemap)) return false;   // AUDIT 05b A5: in the host's law first
     r?.drawMesh?.(m.gpu, decorMatrix(p.piece, deps.origin?.() ?? [0, 0, 0]), texRemap);
     return true;
   }
@@ -1438,7 +1511,7 @@ export function createDecorTool(deps) {
     const m = modelFor(e.model);
     const box = panel.previewRect();
     const c = deps.canvas?.getBoundingClientRect?.();
-    if (!m || !box || !c || !(c.width > 0) || !(c.height > 0)) return false;
+    if (!m || !box || !c || !(c.width > 0) || !(c.height > 0) || !inLaw(m.gpu, texRemap)) return false;   // AUDIT 05b A5
     const sx = deps.canvas.width / c.width;
     const sy = deps.canvas.height / c.height;
     const rect = { x: (box.left - c.left) * sx, y: (box.top - c.top) * sy, w: box.width * sx, h: box.height * sy };

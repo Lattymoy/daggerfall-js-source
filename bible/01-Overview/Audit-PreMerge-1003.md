@@ -298,7 +298,7 @@ line moves). And acct72's note names main's HALL-GOLD, which landed under acct71
 - **One account's two tabs in the stands take two seats** (R5's second half) - ONE-SEAT keeps two tabs online apart;
   recorded.
 - **Older stale cites** the merge carried unchanged (153 suspected by M's trace - `Audit-59.md:26` and the like - and
-  D's `dungeonContext.js:3543`, `exterior.js:4282`): wrong on both sides before the merge, not covered by citedrift;
+  D's `dungeonContext.js:3543`, `exterior.js:4277`): wrong on both sides before the merge, not covered by citedrift;
   each needs `citeShift` from its sentence's own commit. Not this pass's.
 
 **What it could not see.** A booted world (no ARENA2): C7's landing and the session's marks are traced and pinned by
