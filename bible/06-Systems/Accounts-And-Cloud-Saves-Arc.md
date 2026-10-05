@@ -5143,3 +5143,51 @@ Left, said: the title's contrast (the "Left as they are" above); the classic fac
 having a width, as `~`, `^` and `|` do - no ARENA2 here to read it; a token with every glyph AND `gx` was over the
 relay's 640 before this change (no player holds every glyph). Pins: `test/crystalfist.test.js` (12, rewritten for A2-A10),
 `test/shadowfang.test.js` (A8); `tools/mutants/crystalfist.json` 45, all dead; the probe 71/71.
+
+## SPRITE-FACE — the wings face as the sprite's picture does (2026-10-05)
+
+Mac: "For the wing aura we implemented for developers. The sprite rotation on character input is a little finicky and
+make the aura misallign".
+
+- **The cause.** An Eye of the Beholder sprite is drawn from one of ORIENTATIONS (8) pictures, ANGLE_PER_ORIENTATION
+  (45) degrees apart about the line from the figure to the eye (`player/eotbBillboard.js` orientationFor), and a change
+  of facing reaches the picture only at UpdateOrientation's tenth-of-a-second gate and then DELAYED_FRAMES (3) frames
+  later, when the mod's delayed repaint lands (UpdateBillboardDelayed - the mod's own, ported 1:1 and left as it is).
+  The Seraph Wings and the Shadow Cloak were hung on the facing the walk WANTS (`lastMoveDirection`; a peer's pose
+  facing), which turns at once and smoothly: on a key the wings swung round before the picture did, and at rest they
+  stood up to half a picture (22.5 degrees) off it - sliding as the eye went round while the picture held, then the
+  picture jumped. A peer's (8-way `viewOf` against the pose's smooth facing) and a rider's (the horse's picture, the
+  camera-turned body's yaw standing in) the same.
+- **The law** (`portrayedYaw`, beside orientationFor in `player/eotbBillboard.js`): orientationFor run backwards - the
+  facing a picture SHOWS, seen along the line to the eye: that line's bearing turned back by the picture's angle, the
+  middle of its bucket. A figure facing it is drawn in that picture from every line of sight; any facing portrays its
+  bucket's middle, never more than half a picture off; no line of sight, no facing.
+- **Mine** (`player/eotbBody.js` `facing()`): each frame drawn, `{ yaw, turn }` - `yaw` the picture SHOWN (the repaint
+  that has landed) about the eye of the frame it was drawn in, `turn` the walk's facing (`turnYaw`, WINGS-FIT's facing
+  the eye before any walk). In the saddle too (the horse's picture faces as the rider's does - no figure, no shoulders,
+  but a facing); none in first person (the billboard on the camera faces no bearing) or undrawn. The figure keeps its
+  shoulders and no longer carries a facing. `player/mwView.js` keeps it beside the figure (`mwViewSpriteFacing`).
+- **A peer's** (`net/peerRiders.js` `faceOf`, the walkers' and the riders' layers alike): the view each figure is drawn
+  in about my eye, recorded as it is drawn (`faceDrawn`), with the pose's facing as `turn`; a rider's and a beast's too;
+  none undrawn or with no eye.
+- **The aura** (`render/auraRing.js`): `auraSpritePosed(w, fig, face)` poses a sprite wearer on its picture's facing -
+  with a figure its shoulders, without one (a rider) the rest pose over the saddle; `auraCapeStep` keeps the body's
+  turning beside it (`w.turnYaw`), none for a body drawn as it turns (a rig); `auraMotionStep` swings by the turning, so a
+  picture changing a whole view is no turn - the cloak does not twist and the wing tips' trail does not slide and spring
+  back at each change, and a velocity is read along the body. `scenes/world.js` hangs mine (the gather and the draw) and
+  each peer's on it - a peer's gathered so too, after the layers have drawn them, so the wings' light on the world
+  (auraWingLights, read off the gather) stands where the wings do. THE FOUR HOSTS: world.js WIRED; worldModes.js and dungeonContext.js draw through world.js's pass,
+  unchanged; exterior.js draws no aura - FLAGGED, unchanged.
+- **The sprite's own turning is the mod's** - its eight pictures, its gate, its delayed repaint - and is not changed; the
+  aura now follows it exactly, picture for picture and frame for frame.
+- Pins: `test/spriteface.test.js` (5) - the law (the round trip from every line of sight, the bucket's middle, half a
+  picture at most, no line no facing); my body DRIVEN frame by frame (every frame the picture shown; a key turning the
+  walk first and the picture after the delay, the wings with the picture; the eye going round, the picture changing and
+  the wings with it, the walk still; the saddle; first person; undrawn); a peer's walker, beast and rider driven through
+  the real layers (the view, not the pose; another eye; no eye); the aura's side (posed, kept, the swing unmoved by a
+  picture's change where reading the picture would have twisted it); the wiring. `tools/mutants/spriteface.json` (16,
+  all dead - the first of them the old behaviour itself, the walk's facing hung). Old pins moved: `seraphwings`
+  (the facing off facing(), the wiring), `shadowcloak` (the gather and the draw lines), `climb5`; records re-aimed by
+  content in `seraphwings.json` (5), `shadowcloak.json` (2), `climb5.json` and `auditclimbarc.json`.
+- Left, said: not seen in a running game client - the test drives the real sprite body and the real peer layers frame
+  by frame, no GPU; the wings still stand on a rider at the saddle's rest pose (no shoulders read off a horse's frame).

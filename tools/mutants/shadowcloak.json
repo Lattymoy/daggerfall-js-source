@@ -501,20 +501,22 @@
   {
     "name": "SHADOWCLOAK-my-facing-the-views",
     "file": "src/scenes/world.js",
-    "old": "_auraSelf.yaw = mwViewSpriteFigure()?.yaw ?? player.bodyYawFor(cam.yaw);",
-    "new": "_auraSelf.yaw = mwViewSpriteFigure()?.yaw ?? cam.yaw;",
+    "old": "_auraSelf.yaw = mwViewSpriteFacing()?.yaw ?? player.bodyYawFor(cam.yaw);",
+    "new": "_auraSelf.yaw = mwViewSpriteFacing()?.yaw ?? cam.yaw;",
     "tests": [
       "test/shadowcloak.test.js"
-    ]
+    ],
+    "note": "SPRITE-FACE (re-aimed by content): the facing moved off the figure to facing() - the picture's."
   },
   {
     "name": "SHADOWCLOAK-a-peers-facing-dropped",
     "file": "src/scenes/world.js",
-    "old": "w.yaw = peerBodyYaw(d.shown) ?? 0;",
+    "old": "w.yaw = (peerWalkers?.faceOf?.(d.id) ?? peerRiders?.faceOf?.(d.id))?.yaw ?? peerBodyYaw(d.shown) ?? 0;",
     "new": "w.yaw = 0;",
     "tests": [
       "test/shadowcloak.test.js"
-    ]
+    ],
+    "note": "SPRITE-FACE (re-aimed by content): the gather reads a sprite's picture first, then the pose."
   },
   {
     "name": "SHADOWCLOAK-my-beast-form-ignored",

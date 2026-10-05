@@ -455,7 +455,7 @@ export function mwViewDrawBody(canvas, { proj, view, eye, feet, yaw, viewYaw = y
   // AUDIT CLIMB-ARC N1: the sprite lane's `yaw` is its QUAD's plane and its camera's (eotbBody.js) - the view's - never
   // the body's on the wall (CLIMB5 handed it the body's, and a hanging player looking along the wall saw the sprite
   // edge-on); the Morrowind body below turns to the wall (`yaw`, the body's)
-  if (eotbLane()) { const drawn = drawEotbBody(canvas, { proj, view, eye, feet, yaw: viewYaw, face }); spriteFigure = drawn ? eotbFigure() : null; return drawn; }   // AUDIT DEEP R-2: `face` - the travel view's basis for the quad; SERAPH-WINGS: the figure it drew kept for the aura on its back
+  if (eotbLane()) { const drawn = drawEotbBody(canvas, { proj, view, eye, feet, yaw: viewYaw, face }); spriteFigure = drawn ? eotbFigure() : null; spriteFacing = drawn ? eotbFacing() : null; return drawn; }   // AUDIT DEEP R-2: `face` - the travel view's basis for the quad; SERAPH-WINGS: the figure it drew kept for the aura on its back
   if (!mwCamera.thirdPerson()) return false;
   // AUDIT OW3 J6: OW-BIG's grown traveller is the Morrowind body's too - `face.grow` (player/travelCamera.js tvOwnGrow)
   // reached the sprite body alone, and under the travel view the Morrowind body stood a speck at its own size.
@@ -473,10 +473,16 @@ export function mwViewBodyBones(names) {
  *  null: another lane, or no sprite drawn. */
 let spriteFigure = null;
 export function mwViewSpriteFigure() { return eotbLane() ? spriteFigure : null; }
+/** SPRITE-FACE (2026-10-05): the sprite lane's body's facing as drawn this frame - { yaw, turn }: the way its picture
+ *  faces and the way the body turns (player/eotbBody.js facing()) - or null: another lane, no sprite drawn, first person.
+ *  An aura on the sprite hangs on `yaw`, never on the walk's facing the picture lags (world.js auraFrame, drawAuras). */
+let spriteFacing = null;
+export function mwViewSpriteFacing() { return eotbLane() ? spriteFacing : null; }
 
 /** EOTB5's door, matching `setEotbBodyReady`: the host hands the seam
  *  the one call that paints the mod's sprite. Null until then, which
  *  is why `eotbBodyReady` answers false. */
 let drawEotbBody = () => false;
 let eotbFigure = () => null;   // SERAPH-WINGS: the figure the sprite drew
-export function setEotbDrawBody(fn, figure = null) { drawEotbBody = typeof fn === 'function' ? fn : () => false; eotbFigure = typeof figure === 'function' ? figure : () => null; }
+let eotbFacing = () => null;   // SPRITE-FACE: and the way it faced
+export function setEotbDrawBody(fn, figure = null, facing = null) { drawEotbBody = typeof fn === 'function' ? fn : () => false; eotbFigure = typeof figure === 'function' ? figure : () => null; eotbFacing = typeof facing === 'function' ? facing : () => null; }

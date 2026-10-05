@@ -1478,8 +1478,14 @@ export function auraSpriteBones(fig) {
     'bip01 l calf': null, 'bip01 r calf': null, sunk: at(EOTB_FIGURE.shoulder) < CLOAK_SHOULDER_Y * 0.4, wingBack: WING_SPRITE_BACK * m / EOTB_FIGURE.mpp,
   };
 }
-/** A peer's sprite figure as the pose `auraCapeStep` takes - at the wearer's own feet and facing - or null. Pure. */
-export const auraSpritePosed = (w, fig) => (fig ? { feet: w.at, yaw: w.yaw, bones: auraSpriteBones(fig) } : null);
+/** A peer's sprite figure as the pose `auraCapeStep` takes - at the wearer's own feet - or null. SPRITE-FACE (2026-10-05,
+ *  Mac: "The sprite rotation on character input is a little finicky and make the aura misallign"): FACING AS ITS PICTURE
+ *  DOES - `face` the sprite layer's { yaw, turn } (net/peerRiders.js faceOf): hung on the picture's facing, its eight-way
+ *  view, where the pose's own facing runs up to half a view off it; swung by the pose's (`turn`). A sprite with a face and
+ *  no figure (a rider's, the horse's picture) is faced and hung from the rest pose; neither, null. Pure. */
+export const auraSpritePosed = (w, fig, face = null) => (fig || face
+  ? { feet: w.at, yaw: face ? face.yaw : w.yaw, turn: face ? face.turn : null, bones: fig ? auraSpriteBones(fig) : null }
+  : null);
 /** SERAPH-WINGS: THE WINGS' LIGHT ON THE WORLD - a gold light where they grow, behind the shoulders, for the nearest
  *  wearers of them within `reach` of the eye (at most `max`): `range` (m) as the wings are kindled, `rgb` its colour.
  *  A carried light (no glare of its own, no shadow slot - the torch's law). Outdoors the city's light colour stands
@@ -1517,6 +1523,9 @@ export const AURA_SADDLE_M = 0.81;
  *  for `w`. */
 export function auraCapeStep(w, posed, crouch = 1) {
   if (posed?.feet && Number.isFinite(posed.yaw)) { w.at[0] = posed.feet[0]; w.at[1] = posed.feet[1]; w.at[2] = posed.feet[2]; w.yaw = posed.yaw; }   // where the body is drawn
+  // SPRITE-FACE: and the way the body TURNS, where it is not the way it is drawn (a sprite: its picture faces a view at a
+  // time, behind the walk) - what the swing reads (auraMotionStep); none for a body drawn as it turns
+  w.turnYaw = Number.isFinite(posed?.turn) ? posed.turn : null;
   const o = posed?.bones ? auraCapePose(posed.bones, w.cape && w.cape !== CLOAK_REST_POSE ? w.cape : null) : null;
   if (o) { w.cape = o; return w; }
   const k = Number.isFinite(crouch) ? Math.max(0.4, Math.min(1, crouch)) : 1, lift = w.mounted === true ? AURA_SADDLE_M : 0;   // SERAPH-WINGS: a rider's shoulders over the saddle
@@ -1545,7 +1554,9 @@ const clampTo = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
 export function auraMotionStep(w, t) {
   const S = CLOAK_SWING;
   const m = w.motion ?? (w.motion = { t: null, at: [0, 0, 0], yaw: 0, v: [0, 0, 0], yr: 0, p: [0, 0, 0, 0], q: [0, 0, 0, 0], goal: [0, 0, 0, 0] });
-  const yaw = Number.isFinite(w.yaw) ? w.yaw : 0, at = w.at;
+  // SPRITE-FACE: the body's turning (`turnYaw`, a sprite's walk) where it has one, else the way it is drawn - so a sprite's
+  // picture changing a view is no turn, and its velocity is read along the body, not along the picture's bucket
+  const yaw = Number.isFinite(w.turnYaw) ? w.turnYaw : Number.isFinite(w.yaw) ? w.yaw : 0, at = w.at;
   const dt = m.t === null ? 0 : t - m.t;
   const jump = Math.hypot(at[0] - m.at[0], at[1] - m.at[1], at[2] - m.at[2]);
   if (m.t !== null && dt === 0) return w;   // a frame on the clock's same tick (a coarsened clock): nothing to read, nothing moved
