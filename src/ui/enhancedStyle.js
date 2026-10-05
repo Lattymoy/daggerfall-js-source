@@ -2254,11 +2254,11 @@ ${badgeCss()}
 /* ── SUPPORT1: THE ASKS (Mac, 2026-10-05: "add the patron/kofi ingame on the main menu as 2 icons") ──────────────────
    The door's TOP-LEFT corner, the one it had free - and the only home a pair of icons has at every size without
    standing on something a player presses: the foot's centre runs under the last row of the menu on a 768px screen (the
-   PX8 shape), and a phone's foot is full with the build and About. Patreon's mark and Ko-fi's mug, drawn by
-   ui/supportAsks.js exactly as the website's corner draws them, a 44px target each, in a plaque wearing the About
-   box's own face (ACC1f: two corner marks that look unrelated read as two kinds of thing) - the kit's carved frame
-   under Plus (ui/enhancedFrame.js, the window role). A mark lights in the classic pair's gold under the pointer and
-   the keyboard (the marks' own rule). */
+   PX8 shape), and a phone's foot is full (the build, and Screenshots over About). Patreon's mark and Ko-fi's mug,
+   drawn by ui/supportAsks.js exactly as the website's corner draws them, a 44px target each, in a plaque wearing the
+   About box's own face (ACC1f: two corner marks that look unrelated read as two kinds of thing) - the kit's carved
+   frame under Plus (ui/enhancedFrame.js, the window role). A mark lights in the classic pair's gold under the pointer
+   and the keyboard (the marks' own rule). */
 ${SUPPORT_MARKS_CSS}
 .px-support { position: absolute; top: 16px; left: 18px; z-index: 4; display: flex; gap: 2px; padding: 2px;
   background: rgba(10,12,17,0.55); border: 2px solid #7d7460; }

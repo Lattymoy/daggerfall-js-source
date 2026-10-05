@@ -1108,8 +1108,8 @@ lit one pixel.
 
 THREE CALLS MADE HERE, FOR MAC TO OVERTURN. (1) WHERE: the top-left corner, the one the door had free. Measured at six
 sizes before choosing - the foot's open centre runs under the last menu row on a 1366x768 screen (Overhauls ends at
-y 729, the foot starts at 700: PX8's shape exactly), and a phone's foot is already full with the build and About (the
-iPhone SE leaves 0px between them). (2) THE MUG: U64's cup, its handle redrawn as a RING. Its solid handle read as a
+y 729, the foot starts at 700: PX8's shape exactly), and a phone's foot is already full - the build and About left 0px
+between them on an iPhone SE, and LOAD1 has since stood Screenshots over About there. (2) THE MUG: U64's cup, its handle redrawn as a RING. Its solid handle read as a
 cup beside the words "Support on Ko-fi"; alone as an icon on the door it read as a goblet (both rendered at 12x to
 choose), and the hole is what says mug. The body stays filled - U64's own lesson, whose first draft was a ring and read
 as an 'o'. (3) THE WHOLE DRAWING IS LAID OUT. The first cut laid out the mug's body and let its steam rise above the
@@ -1150,7 +1150,8 @@ whole, the door's room computed from the row, the phone row, no mark of the page
 comments, the AUDIT SITE1 F10 lesson - and every ask the project makes naming the same two), and a new pin on the
 injection (verbatim, after the tokens, the skin wearing the same block). `tools/mutants/support1.json`: 34 mutants, 34
 dead; PATREON1-F1's four still die. Live: `tools/supportAsksProbe.mjs` 16/16 (a press on each icon opens Mac's page
-and leaves the door standing; the band at 176 sizes on both skins) and `tools/landingProbe.mjs` 54/54 (the site's asks
+and leaves the door standing; the band at 176 sizes on both skins, against every foot plaque - About and LOAD1's
+Screenshots) and `tools/landingProbe.mjs` 54/54 (the site's asks
 on desktop and a phone, gold under the pointer, one row clear of the door at 60 sizes from 320px to 1920px). Seen in
 Chromium; not in the desktop app, whose link path is the credits' own.
 

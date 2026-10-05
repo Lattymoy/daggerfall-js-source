@@ -104,7 +104,7 @@ for (const [skin, query, outset] of [['plus', '', OUTSET], ['classic', '&skin=cl
       const stage = document.querySelector('.px-home:not(.px-over) > .px-stage:not(.px-acctstage)');
       const rows = [...document.querySelectorAll('.px-menu button')];
       const out = { img: r(document.querySelector('.px-wordmark img')), support: r(document.querySelector('.px-support')),
-        profile: r(document.querySelector('.px-profile')), about: r(document.querySelector('.px-about')),
+        profile: r(document.querySelector('.px-profile')), foot: [...document.querySelectorAll('.px-foot .px-about')].map(r),
         links: [...document.querySelectorAll('.px-supportlink')].map(r), rows: rows.map(r) };
       // the last row, once the stage is scrolled to its end: does a press at its centre land on it?
       stage.scrollTop = stage.scrollHeight;
@@ -122,7 +122,8 @@ for (const [skin, query, outset] of [['plus', '', OUTSET], ['classic', '&skin=cl
     if (s) onLogo.support.push(`${at}(${s}px²)`);
     const p = logoUnder(g.img, g.profile, outset);
     if (p) (w <= BAND_MAX ? onLogo.profileBand : onLogo.profileBeyond).push(`${at}(${p}px²)`);
-    for (const [name, box] of [['the profile', g.profile], ['About', g.about], ...g.rows.map((b, i) => [`row ${i + 1}`, b])]) {
+    // the foot's plaques: About, and LOAD1's Screenshots beside it in About's own box
+    for (const [name, box] of [['the profile', g.profile], ...g.foot.map((b, i) => [`foot plaque ${i + 1}`, b]), ...g.rows.map((b, i) => [`row ${i + 1}`, b])]) {
       if (meets(g.support, box)) covers.push(`${at}: ${name}`);
     }
     for (const l of g.links) if (l.r - l.l < 44 || l.b - l.t < 44) small.push(`${at}: ${Math.round(l.r - l.l)}x${Math.round(l.b - l.t)}`);
@@ -132,7 +133,7 @@ for (const [skin, query, outset] of [['plus', '', OUTSET], ['classic', '&skin=cl
   }
   check(`${skin}: the asks stand on no opaque pixel of the logo, at ${SIZES.length} sizes`, onLogo.support.length === 0, onLogo.support.join(' '));
   check(`${skin}: below ${BAND_MAX + 1}px the profile mark stands clear of it too`, onLogo.profileBand.length === 0, onLogo.profileBand.join(' '));
-  check(`${skin}: the asks cover no menu row, no About and no profile mark`, covers.length === 0, covers.slice(0, 8).join('; '));
+  check(`${skin}: the asks cover no menu row, no foot plaque and no profile mark`, covers.length === 0, covers.slice(0, 8).join('; '));
   check(`${skin}: each ask is a 44px target`, small.length === 0, small.slice(0, 8).join('; '));
   check(`${skin}: below ${BAND_MAX + 1}px, where the band costs height, the last menu row stands whole and takes a press, scrolled to the end`, unreachable.length === 0, unreachable.join(' '));
   check(`${skin}: no page error`, errors.length === 0, errors.join(' | '));
