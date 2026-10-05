@@ -477,8 +477,10 @@ test('WATER1: a sea clamped to the ocean elevation is WATER through generateTile
   for (const v of td2) if (v === 0) water2++;
   assert.equal(water2, 0, 'a step above the sea is land');
   const src = readFileSync(new URL('../src/world/terrainTiles.js', import.meta.url), 'utf8');
-  assert.match(src, /const height = Math\.fround\(heightmapData\[hy \+ hx \* hDim\] \* MAX_TERRAIN_HEIGHT\);/, 'the height is the reference\'s float');
-  assert.match(src, /if \(height <= SCALED_OCEAN_ELEVATION\) \{/, 'against the reference\'s float threshold');
+  // LW-DRY: the arithmetic one home, the tile job's and the living world's dry ground's (world/dryGround.js) - PIN MOVED
+  assert.match(src, /export const sampleHeight = \(sample\) => Math\.fround\(sample \* MAX_TERRAIN_HEIGHT\);/, 'the height is the reference\'s float');
+  assert.match(src, /export const isWaterHeight = \(height\) => height <= SCALED_OCEAN_ELEVATION;/, 'against the reference\'s float threshold');
+  assert.match(src, /const height = sampleHeight\(heightmapData\[hy \+ hx \* hDim\]\);\s+if \(isWaterHeight\(height\)\) \{/, 'the tile job\'s own');
   assert.equal(SCALED_OCEAN_ELEVATION, Math.fround(27.2), 'which the shared constant IS (WATER-AUDIT: 3.4f * 8 in C#)');
   assert.match(src, /if \(height <= Math\.fround\(SCALED_BEACH_ELEVATION \+ jitter\)\) \{/, 'and the beach the same');
   // WATER-AUDIT: the jitter is float32 per operation, as NextFloat(min, max) is

@@ -110,7 +110,8 @@ import { createRelations, LIVING_WORLD_VENDOR } from '../systems/livingWorld/rel
 import { ResidentWalker } from '../characters/residentWalker.js';
 import { firstNameOf } from '../systems/livingWorld/lines.js';
 import { travellerRoster, mintResident } from '../systems/livingWorld/census.js';   // LW3: a town's travellers, off its MAPS row alone; LW4: a newcomer to a place the road emptied
-import { townTrips, visitorsOf as tripVisitorsOf, awayOf as tripAwayOf, placeCycle, setsOut, newsOf, paceScale, NEWS_DAYS, diversAt, cycleOf, handsOn } from '../systems/livingWorld/trips.js';   // LW3: the roads, pure; LW4: the places' cycles, the town's news; LW7: a townsperson's cycle, a trip's hand deaths
+import { townTrips, visitorsOf as tripVisitorsOf, awayOf as tripAwayOf, placeCycle, setsOut, newsOf, paceScale, NEWS_DAYS, diversAt, cycleOf, handsOn, nativeDry } from '../systems/livingWorld/trips.js';   // LW3: the roads, pure; LW4: the places' cycles, the town's news; LW7: a townsperson's cycle, a trip's hand deaths; LW-DRY: the ground a party stops on
+import { createDryGround } from '../world/dryGround.js';   // LW-DRY: the height map's own dry ground, every client's alike
 import { placeAt, turnKey } from '../systems/livingWorld/lives.js';   // LW4: who holds a traveller's place
 import { peoplePage } from '../systems/livingWorld/people.js';   // LW7c: the chronicle's People page
 import { troubleOf, troubledTrip } from '../systems/livingWorld/trouble.js';   // LW4: trouble on the road
@@ -2257,12 +2258,15 @@ export async function bootWorld(canvas, renderer, params, status) {
   });
   const livingRouteOf = (a, b) => livingWays.wayOf(a, b);
   const _livingRosters = new Map();
+  /** @type {((nx: number, nz: number) => boolean) | null} */
+  let _livingDry = null;
   const livingTripWorld = {
     townsNear: livingTownsNear,
     routeOf: livingRouteOf,
     rosterOf: (t) => { let r = _livingRosters.get(t.mapId); if (!r) { r = travellerRoster(t); _livingRosters.set(t.mapId, r); } return r; },
     templeTown: (t) => t.type === LOCATION_TYPES.ReligionTemple || t.blocks >= 9,
     dungeonsNear: livingDungeonsNear,   // LW6: an adventurer's dives
+    dryAt: (nx, nz) => (_livingDry ??= nativeDry(createDryGround(woods)))(nx, nz),   // LW-DRY: a party's camp, halt and fallen on dry ground
   };
   const _livingTripMemo = new Map();
   let _livingWaysSeen = 0;

@@ -885,6 +885,38 @@ Three causes in the town, each fixed and pinned (`test/lwstand_street.test.js`, 
   The street is the navgrid's, as DFU's walkers read it: what stands on a walkable cell without being on the grid is
   still walked through. Not the town's: the classic lane's pool (DFU's own walkers, kept 1:1).
 
+## LW-DRY - a party stops on dry ground (2026-10-05)
+
+The same report's other half, on the roads ("stuck over bodies of water"). Pinned by `test/lwdry_ground.test.js` and
+`tools/mutants/lwdry.json` (18 dead); PIN MOVED: `terrain` (WATER1's compare, its one home).
+
+- **The cause.** A way is the planner's straight legs between its pixels' centres (`trips.js wayOf`), and the
+  planner's water is a whole pixel's (`travelRoute.js` - a pixel whose WOODS byte is the sea's; the ends never asked).
+  A pixel's ground is the kernel's interpolation with its own byte at its south-east corner, so by a coast a leg runs
+  over the sea's edge - and nothing asked the ground where a party stopped: night camped it there for twelve hours,
+  trouble fought it there (LW4b's foes stood in the water) and its fallen lay there a day. The feet are the scene's
+  ground (`tvSceneOf`): on the seabed Deep Waters carves, or on the sea's clamp.
+- **The ground** (`world/dryGround.js createDryGround`). The terrain cell under a point is dry when its four corners
+  are - each the pixel's own sample (the sampler's kernel, `terrainSampler.js sampleKernel`, the samples the pixel is
+  built from) above the tile job's water (`terrainTiles.js sampleHeight`, `isWaterHeight` - WATER1's float32 compare,
+  one home now): no water shows on its tile. Pure in the height map, every client's alike. Read in the ways' own frame
+  (`trips.js nativeDry`): x east, z north from the map's southern edge, a pixel's row 499 less.
+- **A stop on dry ground** (`trips.js dryStop`, STOP_RING_N, DRY_STEP_N). A stop's middle and a ring of 5 m about it -
+  past the widest ring the roads stand (a beset party's foes, `livingRoads.js FOE_RING_N`) - must stand dry; a stop
+  that does not is sounded on along its way 8 m at a time to the first place that does, within the leg's walk.
+- **The camp** (`trips.js partyAt`). Night finding a party on a wet stretch, it walks on at its pace to that dry ground
+  and camps there; at first light it waits at the camp till the day's walk comes up to it. Never a camp in the water,
+  never a jump. The trouble (`trouble.js troubleOf`) is met on dry ground too: a stretch of the walk at the first dry
+  place on from it, met as the party walks up to it; a camp's at the camp night made - and its fallen lie there.
+  Measured on the synthetic map with a wet band across its ways: 1440 camped minutes and 75 halted minutes in the
+  water over twelve days before, none after; no minute's step past the catch-up's pace.
+- **Left.** A location's flattening is not read (the ground beside a town is the kernel's), nor the Rivers and Streams
+  mod's water, which a player switches on for themselves and would put the parties of two players in two places. A
+  party walking a wet stretch still walks it - a ford, by day.
+- **The four hosts.** `scenes/world.js` - WIRED: the trips' world's `dryAt` (`nativeDry(createDryGround(woods))`).
+  `scenes/exterior.js` - FLAGGED: no roads (one location). `scenes/worldModes.js` and `scenes/dungeonContext.js` - no
+  roads are stood there; the remains and companies they show are the same trips', read through the host.
+
 ## The four hosts
 
 - `scenes/world.js` - WIRED (LW2 the towns, LW3 the roads and the Overworld).

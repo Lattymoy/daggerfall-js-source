@@ -67,12 +67,18 @@ export const SEA_PACE_X = 3;
 export const SEA_TIDE_H = Object.freeze([6, 9]);
 /** The calendar's walking pace (metres a clock minute): DFU's 1.3 m/s over CLASSIC_MINUTES_PER_SECOND. */
 export const CALENDAR_MPM = 1.3 / 0.2;
+/** LW-DRY: the ground a party's stop stands on - its middle and a ring this far about it (native: 5 m, past the widest
+ *  of the road's rings, a beset party's foes - livingRoads.js FOE_RING_N) - and the step a stop is sounded along its way
+ *  for dry ground (native: 8 m). */
+export const STOP_RING_N = 200;
+export const DRY_STEP_N = 320;
 
 /**
  * @typedef {import('./census.js').Resident} Resident
  * @typedef {import('./census.js').LwTown} LwTown
  * @typedef {{ pixels: { x: number, y: number }[], kinds?: string[] }} RoutePlan - travelRoute.js planRoute's answer
- * @typedef {{ pts: number[][], cum: number[], len: number, kinds: string[] }} Way - a route as a walked line (native)
+ * @typedef {{ pts: number[][], cum: number[], len: number, kinds: string[], dry?: (nx: number, nz: number) => boolean }} Way - a
+ *   route as a walked line (native). LW-DRY `dry`: whether the ground at a native point is dry (the world's `dryAt`)
  * @typedef {{
  *   townsNear: (px: number, py: number, rMax: number) => LwTown[],
  *   routeOf: (a: LwTown, b: LwTown) => (RoutePlan | null | undefined),
@@ -83,13 +89,15 @@ export const CALENDAR_MPM = 1.3 / 0.2;
  *   fated?: (res: Resident, k: number) => boolean,
  *   fate?: (trip: Trip) => Trip,
  *   lanesFrom?: (town: LwTown) => ({ to: LwTown, len: number, key: string }[] | undefined),
+ *   dryAt?: (nx: number, nz: number) => boolean,
  * }} TripWorld - the host's: towns near a pixel (the game's own rows, populated); the planner's way between two towns
  *   (undefined while it is being asked, null for none); a town's travellers (census.js travellerRoster). LW4: who holds
  *   a traveller's place in a cycle (lives.js - null while it stands empty; unasked, the census's own), whether its
  *   holder dies that cycle (and so sets out whatever the chance said - a fated death is on the road), and the trouble
  *   a trip meets (trouble.js - the trip as it left it). LW6: the dungeons near a pixel (`dungeon: true` rows - an
  *   adventurer's dives). LW5b: the Bay's lanes from a port town (naval/seaLanes.js: the far port, the lane's length in
- *   metres; none for a town with no harbour; undefined while the map is unread)
+ *   metres; none for a town with no harbour; undefined while the map is unread). LW-DRY: whether the ground at a native
+ *   point is dry (`nativeDry` over world/dryGround.js - the height map's own, every client's alike); unasked, all is dry)
  * @typedef {{ id: string, k?: number, kind: string, leader: Resident, party: Resident[], from: LwTown, to: LwTown, way: Way,
  *   pace: number, outT0: number, outT1: number, backT0: number, backT1: number, trim0: number, trim1: number,
  *   enc?: any, halt?: { t0: number, t1: number, fightEnd: number, s: number, leg: 'out'|'back' },
@@ -133,13 +141,72 @@ export function whenWalked(a, minutes) {
   return t;
 }
 
-/** A planner's route as a walked line through its pixels' centres (native units). @param {RoutePlan} plan @returns {Way} */
-export function wayOf(plan) {
+/**
+ * A planner's route as a walked line through its pixels' centres (native units). LW-DRY: `dry` the ground's (the
+ * world's `dryAt`), read where a party stops.
+ * @param {RoutePlan} plan @param {((nx: number, nz: number) => boolean) | null} [dry] @returns {Way}
+ */
+export function wayOf(plan, dry = null) {
   const pts = (plan?.pixels ?? []).map((p) => [p.x * NATIVE_PIXEL + NATIVE_PIXEL / 2, (499 - p.y) * NATIVE_PIXEL + NATIVE_PIXEL / 2]);
   const cum = [0];
   for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
-  return { pts, cum, len: cum[cum.length - 1] ?? 0, kinds: [...(plan?.kinds ?? [])] };
+  /** @type {Way} */
+  const way = { pts, cum, len: cum[cum.length - 1] ?? 0, kinds: [...(plan?.kinds ?? [])] };
+  if (dry) way.dry = dry;
+  return way;
 }
+
+/**
+ * LW-DRY: a native point's ground through a reader of a map pixel's (world/dryGround.js createDryGround: the pixel, and
+ * the point's fraction east and north across it) - the frame the ways are drawn in: x east from pixel 0, z north from
+ * the map's southern edge (a pixel's row `499 - floor(z / NATIVE_PIXEL)`, trouble.js's own reading).
+ * @param {(px: number, py: number, fx: number, fz: number) => boolean} dry
+ * @returns {(nx: number, nz: number) => boolean}
+ */
+export function nativeDry(dry) {
+  return (nx, nz) => {
+    const gx = nx / NATIVE_PIXEL, gz = nz / NATIVE_PIXEL;
+    const px = Math.floor(gx), pz = Math.floor(gz);
+    return dry(px, 499 - pz, gx - px, gz - pz);
+  };
+}
+
+/** LW-DRY: each way's stops sounded, kept (the same night asked every read). @type {WeakMap<Way, Map<string, number>>} */
+const stopsOf = new WeakMap();
+
+/**
+ * LW-DRY (field, 2026-10-05, Mac: "NPCs will get stuck over bodies of water"): A STOP ON DRY GROUND. A way is the
+ * planner's straight legs between its pixels' centres, and the planner's water is a whole pixel's: by a coast a leg
+ * runs over the sea's edge, and where night or trouble stopped a party there it camped, fought and lay fallen in the
+ * water. The first place at or past `s` along `way`, going `dir` (+1 on the way out, -1 on the way home), within
+ * [`lo`, `hi`], where a stop stands dry - its middle and a ring of STOP_RING_N about it, sounded a DRY_STEP_N at a time;
+ * none, `s` itself. With no `way.dry`, `s`.
+ * @param {Way} way @param {number} s @param {1|-1} dir @param {number} lo @param {number} hi
+ * @returns {number}
+ */
+export function dryStop(way, s, dir, lo, hi) {
+  const dry = way.dry;
+  if (!dry) return s;
+  let kept = stopsOf.get(way);
+  if (!kept) stopsOf.set(way, kept = new Map());
+  const key = `${dir}:${s}:${lo}:${hi}`;
+  const known = kept.get(key);
+  if (known !== undefined) return known;
+  let found = s;
+  for (let at = s; at >= lo && at <= hi; at += dir * DRY_STEP_N) {
+    const p = wayAt(way, at);
+    let ok = dry(p.x, p.z);
+    for (let i = 0; ok && i < 8; i++) ok = dry(p.x + Math.sin((i * Math.PI) / 4) * STOP_RING_N, p.z + Math.cos((i * Math.PI) / 4) * STOP_RING_N);
+    if (ok) { found = at; break; }
+  }
+  kept.set(key, found);
+  return found;
+}
+
+/** LW-DRY: the last minute walking ended (WALK_TO_H) at or before `t`, and the last it began (WALK_FROM_H). @param {number} t */
+const lastDusk = (t) => { const d = Math.floor(t / DAY_MIN) * DAY_MIN + WALK_TO_H * 60; return d <= t ? d : d - DAY_MIN; };
+/** @param {number} t */
+const lastDawn = (t) => { const d = Math.floor(t / DAY_MIN) * DAY_MIN + WALK_FROM_H * 60; return d <= t ? d : d - DAY_MIN; };
 
 /** The point `s` native units along a way, and the way it faces (a world yaw: 0 +z, +PI/2 +x). @param {Way} way @param {number} s */
 export function wayAt(way, s) {
@@ -228,7 +295,7 @@ export function ownTrip(res, home, k, world, { mpm }) {
     const plan = world.routeOf(home, to);
     if (plan === undefined) return undefined;
     if (!plan || !(plan.pixels?.length >= 2)) continue;
-    const way = wayOf(plan);
+    const way = wayOf(plan, world.dryAt);
     const trim0 = Math.min(townTrim(home), way.len * 0.4), trim1 = Math.min(townTrim(/** @type {LwTown} */ (to)), way.len * 0.4);
     const walk = Math.max(0, way.len - trim0 - trim1) / pace;   // minutes of daylight walking, each way
     const estDays = 2 * Math.ceil(walk / ((WALK_TO_H - WALK_FROM_H) * 60)) + stay + 1;
@@ -324,7 +391,7 @@ export function diveTrip(res, home, k, world, { start, len, pace, rng }) {
     const plan = world.routeOf(home, to);
     if (plan === undefined) return undefined;
     if (!plan || !(plan.pixels?.length >= 2)) continue;
-    const way = wayOf(plan);
+    const way = wayOf(plan, world.dryAt);
     const trim0 = Math.min(townTrim(home), way.len * 0.4), trim1 = Math.min(townTrim(to), way.len * 0.4);
     const walk = Math.max(0, way.len - trim0 - trim1) / pace;
     const estDays = 2 * Math.ceil(walk / ((WALK_TO_H - WALK_FROM_H) * 60)) + Math.ceil(inside / DAY_MIN) + 1;
@@ -559,16 +626,35 @@ export function partyAt(trip, t) {
     return { phase, x: p.x, z: p.z, yaw: phase === 'back' ? p.yaw + Math.PI : p.yaw, camp: !daylight(t), s, ...extra };
   };
   if (h && t >= h.t0 && t < h.t1) return placed(h.leg, h.s, { halt: true, fight: t < h.fightEnd });
-  if (trip.turned && h && t >= h.t1) return placed('back', Math.max(trim0, h.s - Math.min(h.s - trim0, pace * walkedMinutes(h.t1, t))));
+  // LW-DRY: a leg walked by day - `sAt(m)` the way walked by minute m, the leg begun at `legT0` - and its camp where
+  // night finds the party: on a wet stretch (a coast's edge) they walk on at their pace to the first dry ground
+  // (`dryStop`) and camp there, and at first light wait at that camp till the day's walk comes up to it. Never a camp in
+  // the water, never a jump. With no ground to read (`way.dry`), where the walk has them.
+  const walked = (/** @type {'out'|'back'} */ phase, /** @type {number} */ legT0, /** @type {(m: number) => number} */ sAt) => {
+    const s = sAt(t);
+    if (!way.dry) return placed(phase, s);
+    const dir = phase === 'out' ? 1 : -1;
+    const lo = trim0, hi = way.len - trim1;
+    if (!daylight(t)) {
+      const c = dryStop(way, s, dir, lo, hi);
+      const on = pace * Math.max(0, t - Math.max(lastDusk(t), legT0));
+      return on >= Math.abs(c - s) ? placed(phase, c) : { ...placed(phase, s + dir * on), camp: false };
+    }
+    const dawn = lastDawn(t);
+    if (legT0 >= dawn) return placed(phase, s);   // set out this morning: no camp behind them
+    const c = dryStop(way, sAt(dawn), dir, lo, hi);
+    return dir * (c - s) > 0 ? { ...placed(phase, c), camp: true } : placed(phase, s);
+  };
+  if (trip.turned && h && t >= h.t1) return walked('back', h.t1, (m) => Math.max(trim0, h.s - Math.min(h.s - trim0, pace * walkedMinutes(h.t1, m))));
   // the lag a halt left - the ground the day's walk would have covered while the party stood - made up at HALT_CATCH_UP
   // again the pace (a party hurrying on, never a sprint); what is still owed at the leg's end is made up at its town
-  const lag = (/** @type {'out'|'back'} */ leg) => {
-    if (!h || h.leg !== leg || t < h.t1) return 0;
-    return Math.max(0, pace * walkedMinutes(h.t0, h.t1) - HALT_CATCH_UP * pace * walkedMinutes(h.t1, t));
+  const lag = (/** @type {'out'|'back'} */ leg, /** @type {number} */ m) => {
+    if (!h || h.leg !== leg || m < h.t1) return 0;
+    return Math.max(0, pace * walkedMinutes(h.t0, h.t1) - HALT_CATCH_UP * pace * walkedMinutes(h.t1, m));
   };
-  if (t < trip.outT1) return placed('out', Math.max(trim0, trim0 + Math.min(walk, pace * walkedMinutes(trip.outT0, t)) - lag('out')));
+  if (t < trip.outT1) return walked('out', trip.outT0, (m) => Math.max(trim0, trim0 + Math.min(walk, pace * walkedMinutes(trip.outT0, m)) - lag('out', m)));
   if (t < trip.backT0) return { phase: 'stay' };
-  return placed('back', Math.min(way.len - trim1, way.len - trim1 - Math.min(walk, pace * walkedMinutes(trip.backT0, t)) + lag('back')));
+  return walked('back', trip.backT0, (m) => Math.min(way.len - trim1, way.len - trim1 - Math.min(walk, pace * walkedMinutes(trip.backT0, m)) + lag('back', m)));
 }
 
 /** LW4: how much faster than its pace a party walks to make up a halt (a half again). */

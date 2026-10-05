@@ -20,7 +20,7 @@
 // where it stood, and never comes to the town it set out for.
 import { lwRng, textSeed } from './seed.js';
 import { DAY_MIN } from './dayPlan.js';
-import { WALK_TO_H, whenWalked, wayAt, NATIVE_PIXEL } from './trips.js';
+import { WALK_TO_H, whenWalked, wayAt, dryStop, NATIVE_PIXEL } from './trips.js';
 
 /** A day's walking's chance of trouble, on middling ground. */
 export const RISK_PER_DAY = 0.09;
@@ -87,7 +87,11 @@ export function troubleOf(trip, world) {
   const dayEnd = Math.floor(firstLight / DAY_MIN) * DAY_MIN + WALK_TO_H * 60;
   const firstDay = Math.max(0, dayEnd - firstLight);
   if (rng() < CAMP_SHARE && firstDay > 0 && firstDay < walkMin) { wm = firstDay; t0 = dayEnd + 4 * 60; camp = true; }
-  const s = leg === 'out' ? trip.trim0 + trip.pace * wm : trip.way.len - trip.trim1 - trip.pace * wm;
+  const s0 = leg === 'out' ? trip.trim0 + trip.pace * wm : trip.way.len - trip.trim1 - trip.pace * wm;
+  // LW-DRY: met on dry ground - on the walk, at the first dry place on from its stretch, met as the party walks up to it;
+  // at a camp, the camp night made on dry ground (trips.js partyAt): the fight, the halt and the fallen out of the water
+  const s = dryStop(trip.way, s0, leg === 'out' ? 1 : -1, trip.trim0, trip.way.len - trip.trim1);
+  if (!camp && s !== s0) t0 = whenWalked(legStart, wm + Math.abs(s - s0) / trip.pace);
   const p = wayAt(trip.way, s);
   const px = Math.floor(p.x / NATIVE_PIXEL), py = 499 - Math.floor(p.z / NATIVE_PIXEL);
   const armed = trip.party.filter((m) => m.cls != null);

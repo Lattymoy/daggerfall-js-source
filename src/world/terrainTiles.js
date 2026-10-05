@@ -129,6 +129,16 @@ export function createLookupTable() {
 const LOOKUP_TABLE = createLookupTable();
 
 /**
+ * WATER1's arithmetic, one home (LW-DRY, 2026-10-05: the living world's dry ground reads it too - world/dryGround.js).
+ * A stored sample's height is the reference's float: the sampler's float32 sample times MaxTerrainHeight, rounded back
+ * to a float as C# does (see generateTileData); at or under the ocean's elevation it is WATER.
+ * @param {number} sample - a normalized height sample as stored (float32)
+ */
+export const sampleHeight = (sample) => Math.fround(sample * MAX_TERRAIN_HEIGHT);
+/** @param {number} height - a sample's height (`sampleHeight`) */
+export const isWaterHeight = (height) => height <= SCALED_OCEAN_ELEVATION;
+
+/**
  * GenerateTileDataJob, sequential: classify the 129x129 corner grid.
  * @param {Float32Array} heightmapData - generateSamples output.
  * @param {number} mapPixelX
@@ -160,9 +170,9 @@ export function generateTileData(heightmapData, mapPixelX, mapPixelY, hDim = HEI
     // rounded to float32 and compared against the reference's float32
     // thresholds (terrainSampler.js: the constants are the floats), which
     // is the arithmetic the reference does.
-    const height = Math.fround(heightmapData[hy + hx * hDim] * MAX_TERRAIN_HEIGHT);
+    const height = sampleHeight(heightmapData[hy + hx * hDim]);
 
-    if (height <= SCALED_OCEAN_ELEVATION) {
+    if (isWaterHeight(height)) {
       tileData[index] = WATER;
       continue;
     }

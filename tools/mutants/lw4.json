@@ -254,8 +254,8 @@
   {
     "name": "LW4-turned-unwalked",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "  if (trip.turned && h && t >= h.t1) return placed('back',",
-    "new": "  if (false && trip.turned && h && t >= h.t1) return placed('back',",
+    "old": "  if (trip.turned && h && t >= h.t1) return walked('back',",
+    "new": "  if (false && trip.turned && h && t >= h.t1) return walked('back',",
     "tests": [
       "test/lw4_trouble.test.js"
     ]
@@ -263,7 +263,7 @@
   {
     "name": "LW4-lag-unpaid",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "    return Math.max(0, pace * walkedMinutes(h.t0, h.t1) - HALT_CATCH_UP * pace * walkedMinutes(h.t1, t));",
+    "old": "    return Math.max(0, pace * walkedMinutes(h.t0, h.t1) - HALT_CATCH_UP * pace * walkedMinutes(h.t1, m));",
     "new": "    return 0;",
     "tests": [
       "test/lw4_trouble.test.js"
