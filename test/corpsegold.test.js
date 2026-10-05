@@ -85,6 +85,7 @@ function restoreHarness(foes) {
     addCorpseFood: () => {}, stampWonWeapons: () => {},   // the body's food and sigils: rolled on the copy, not this seam
     spawnCorpseNow: async () => {},   // the flat's mint; the corpse FLAG is spawnCorpse's own, raised before it
     applyCampMemory: () => {}, clearOwnPuppets: () => {}, respawnFoe: () => false, dropCandidate: () => {}, damageFoe: () => {}, settleLootFlat: () => {},
+    forgetDelveRun: () => {},   // THE DELVE ARC (AUDIT DELVE B3/E8): the restore puts the delve's own state away first - not this seam
     actions: { restoreSaveData: () => {} },
     renderer: { destroyBillboardBatch: () => {} },
     built, nextRoll: () => { roll += 1; return roll; },
