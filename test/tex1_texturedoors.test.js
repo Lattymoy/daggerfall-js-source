@@ -142,10 +142,11 @@ test('TEX1 every door converts at the door: no module under src/ imports toColor
   assert.match(rd('src/combat/weaponWidgetAssets.js'), /try \{ return toScreenOrder\(tex\.rgba\(\)\); \}/, '...and its BUNDLE arm keeps its rows too - the reader answers top-first (DWHD1)');
   assert.match(rd('src/systems/seasonsIliacBayAssets.js'), /const image = toColor32\(await decode\(bytes\)\);/, 'seasons');
   assert.match(rd('src/systems/textureReplacement.js'), /toColor32\(await decode\(bytes\)\)/, 'M-TEX, which had it right all along');
-  // the seasons re-wrap at the two upload sites is gone - H4's own law
-  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    assert.match(rd(host), /renderer\.uploadTexture\(archive, rkey, img, \{ mips: false, variant: '' \}\);/, `${host}: the door's answer, handed over whole`);
-    assert.ok(!/colors: img\.data/.test(rd(host)), `${host}: no re-wrap at the site`);
+  // the seasons re-wrap at the upload site is gone - H4's own law. AUDIT 05b A12: one site now, every host's
+  // (world/naturePicture.js - world.js, exterior.js and the yards ask it)
+  assert.match(rd('src/world/naturePicture.js'), /renderer\.uploadTexture\(archive, key, sib\.texture\.image, \{ mips: false, variant: '' \}\);/, 'the door\'s answer, handed over whole');
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/world/naturePicture.js']) {
+    assert.ok(!/colors: (img|sib\.texture\.image)\.data/.test(rd(host)), `${host}: no re-wrap at the site`);
   }
   // the contract each torch door documents is the one it answers
   assert.match(rd('src/systems/handheldTorches.js'), /loadSprite\(record, frame\) -> Promise<\{width, height, colors\} \| null>/);

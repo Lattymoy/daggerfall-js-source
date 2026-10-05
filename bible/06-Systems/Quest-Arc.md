@@ -3065,7 +3065,7 @@ That is the ninth catch of *a pin that restates the port instead of the
 source* - except this one restated a misreading of the source, which is
 a worse failure and one only a second reader was ever going to find.
 The port carries `mapNameLookup` already, built first-wins at
-`mapsFile.js:498`, so the fix is to use it. Two names differing only in
+`mapsFile.js:499`, so the fix is to use it. Two names differing only in
 CASE still take the last, because the `ToLower` compare matches both
 while the dictionary keys stay exact-case - so the lookup is
 per-iteration, not hoisted.
@@ -5480,7 +5480,7 @@ lesson one host over.
 **What did NOT ship:** PlayerEntity.Update's per-minute *intermittent
 spawn* roll (:486-492) still has no caller on this route. It is not
 this pool's dependency — it is a loop that carries the passive-guard
-spawns and the NPC-guard conversion with it (world.js:9232-9338) — and
+spawns and the NPC-guard conversion with it (world.js:9227-9333) — and
 it is named at the mount so the absence reads as a fact.
 
 **(c) The find-place seam's absence, narrowed to one sentence.**
@@ -5499,15 +5499,15 @@ knows its one city outright.
 This host owns a cast engine of its own, and `worldModes` takes *that
 instance* for the interior mode, so it covers the shops entered from
 `?exterior` too. It passed neither of `EntityEffectManager`'s two
-ready-spell events (`hostMagic.js:108-109`), and those two doors are the
+ready-spell events (`hostMagic.js:112-113`), and those two doors are the
 *only* route into the machine's `CastSpellDo` / `CastEffectDo` latches
 (`machine.js:935`/`:918`; C# subscribes them in the action's
 constructor). Every `cast X spell do` and `cast X effect do` on this
 whole route could therefore never latch and never fire. The pair the
-other two engine-owning hosts wire (`world.js:9828-9829`,
+other two engine-owning hosts wire (`world.js:9823-9824`,
 `dungeonContext.js:3023-3024`) is wired here now, and with it
 `CastSpellDo`'s two world reads — `getClassicSpellEffects` and the
-byte-folded `spellHasMatchForClassicEffect` (`world.js:16419-16422`),
+byte-folded `spellHasMatchForClassicEffect` (`world.js:16412-16415`),
 absent which the action self-completes at *parse*
 (`actions.js:2812`/`:2819`) and the task can never arm at all.
 

@@ -228,11 +228,12 @@
   {
     "name": "HOMEVENDOR-people-read-as-decorations",
     "file": "src/systems/decorCatalogue.js",
-    "old": "c.person ? 'people' : flatKind(c.flat[0])",
-    "new": "flatKind(c.flat[0])",
+    "old": "c.person ? 'people' : flatKind(c.as ?? c.flat[0])",
+    "new": "flatKind(c.as ?? c.flat[0])",
     "tests": [
       "test/decor1.test.js"
-    ]
+    ],
+    "note": "DECOR-MODS (FIELD BUGS 2026-10-05b, PIN MOVED): re-aimed by content - the line now reads a mod's piece's own name and filing too."
   },
   {
     "name": "HOMEVENDOR-a-trader-offered-offline",

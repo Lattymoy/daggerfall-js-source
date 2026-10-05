@@ -44,6 +44,7 @@ import { mirrorOf, mirrorEvents, mirrorHealth, walkAt, walkDone } from '../net/a
 import { ARENA_PUPPET_OWNER, ARENA_CHEER_MS, ARENA_FLOOR_CENTRE } from '../net/arenaLaw.js';   // ARENA4: a bout the relay runs, mirrored here; ARENA4b: the stands' allowance, the relay's frame (the instance's)
 import { crowdShout } from '../systems/arenaCrowd.js';   // ARENA4: the stands' own cheers and boos, heard on every screen
 import { crowdHalves, crowdHalfOf, crowdWash } from '../systems/arenaCrowd.js';   // ARENA5: the crowd's half in a banner's colours
+import { drawnFlat } from '../characters/nudeFlats.js';   // NUDE-HOSTS: Show Nudity off seats a nude figure's clothed stand-in
 import { newRecording, recordTick, recordStrike, recordEvent, finishRecording, keepReplay, replayOk, replayFeed, replayId, replayBoutId, playerMobileOf } from '../systems/arenaReplay.js';   // ARENA5: your ladder replay
 
 /** ARENA-FIX 10: A CRIT is the formula's own critical-strike roll (combat/formulas.js calculateAttackDamage's notes,
@@ -783,8 +784,11 @@ export function createArenaBouts(deps) {
     const groups = new Map();
     for (const s of sat) {
       const side = split ? crowdHalfOf(s.x) : 0;
-      const k = `${s.archive}:${s.record}:${s.phase < 0.5 ? 0 : 1}:${side}`;
-      if (!groups.has(k)) groups.set(k, { archive: s.archive, record: s.record, half: s.phase < 0.5 ? 0 : 1, tint: split ? crowdWash(halves[side]) : null, at: [] });
+      // NUDE-HOSTS: the picture a seat DRAWS - the tiers seat two of the table's figures (the entertainers' 182.48 and the
+      // commoners' 184.6), each its clothed stand-in while Show Nudity is off
+      const [archive, record] = drawnFlat(s.archive, s.record);
+      const k = `${archive}:${record}:${s.phase < 0.5 ? 0 : 1}:${side}`;
+      if (!groups.has(k)) groups.set(k, { archive, record, half: s.phase < 0.5 ? 0 : 1, tint: split ? crowdWash(halves[side]) : null, at: [] });
       groups.get(k).at.push([s.x, s.y, s.z]);
     }
     const batches = [];
