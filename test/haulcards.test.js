@@ -48,7 +48,7 @@ test('HAUL-CARDS the law: a material\'s tier wears the loot\'s colours - 1 and 2
   assert.equal(rankProgress(xpForRank(100) + 5000), 1, 'the top rank');
   assert.ok(HAUL_HOLD_MS > 2500 && LODE_HOLD_MS > HAUL_HOLD_MS);
   assert.deepEqual([HAUL_ICON_BOX, LODE_ICON_BOX], [32, 38]);
-  assert.equal(HAUL_CAPPED_TEXT, `No silver - the day's ${MARKS_COMBAT.perDay} for breaches and towns is reached`);
+  assert.equal(HAUL_CAPPED_TEXT, `No silver - the day's ${MARKS_COMBAT.perDay} for breaches, towns and serpents is reached`);   // SERPENT-SET: the serpents strike under the same cap
 });
 
 test('HAUL-CARDS a harvest\'s cards: the goods one card - "+3", its material\'s name and tier, its picture the pack\'s own item, "Stores 41" (own, bought and gold\'s), the XP on it and the rank\'s bar, a clean act\'s words its head - and a gem and a second find each their own; nothing for an answer it cannot read (mutants: the Stores\' count; the XP off the card; the gem dropped; the head unsaid)', () => {
@@ -269,7 +269,7 @@ const NOON = (() => {
 const memStorage = () => { const m = new Map(); return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, String(v)) }; };
 const OUTSIDE = Object.freeze({ inside: false, insideDungeon: false, insideCastle: false, locationType: 0xffff, inLocationRect: false, hour: 12, climate: WOODS, region: GLENUMBRA, enemiesNear: false, carriedWeight: 0 });
 /** The gathering host over one flat pixel's veins (test/gathersaid.test.js's rig), its card door `haul` the test's. */
-function rig({ answer, haul, live = true }) {
+function rig({ answer, haul, live = true, marks = null }) {
   const day = utcDayOfMs(NOON * 1000);
   const samples = new Float32Array(HEIGHTMAP_DIMENSION * HEIGHTMAP_DIMENSION).fill(0.25);
   const law = veins({ x: 400, y: 150, day, climate: WOODS, region: GLENUMBRA });
@@ -299,7 +299,7 @@ function rig({ answer, haul, live = true }) {
     pixelInfo: () => ({ climate: WOODS, region: GLENUMBRA }), nowMs: () => clock.ms,
     eye: () => ({ pos: [feet[0], feet[1] + 1.6, feet[2]], dir: [Math.sin((view.yaw * Math.PI) / 180), Math.sin((view.pitch * Math.PI) / 180), Math.cos((view.yaw * Math.PI) / 180)] }),
     view: () => view, feet: () => feet, entity: () => entity, keyLabel: () => 'E', input: () => input, active: () => live.ok ?? live,
-    ...(haul ? { haul } : {}),
+    ...(haul ? { haul } : {}), ...(marks ? { marks } : {}),   // SILVER-FINDS: the marks book, a harvest's find said
   });
   const mine = async (i) => {
     const vs = host.nodesOf(400, 150).filter((n) => n.kind === 'mine' && n.what === 'vein');
@@ -475,4 +475,26 @@ test('AUDIT HAUL-CARDS A3: a harvest answered while the world is not live (a win
   await slow.mine(0);
   assert.equal(cards.length, 1, 'no card on a held world');
   assert.equal(slow.said[0], '+3 Iron to your Stores', 'its lines instead');
+}));
+
+test('SILVER-FINDS the gathering host: a harvest\'s find - its card beside the goods\' where the cards stand, else its line; the marks book told it either way (the balance), as gathering\'s; a Motherlode\'s silver never told as a find (mutants: the line said beside the card; the line lost; the book untold; the Motherlode\'s as a find)', outside(async () => {
+  const told = [];
+  const marks = { findLine: (f, kind) => { told.push([f.struck, kind]); return `You find ${f.struck} silver while gathering.`; } };
+  const withFind = (b) => { const r = iron(b); r.data.marks = { struck: 3, balance: 11, today: { found: 3, max: 30 } }; return r; };
+  const cards = [];
+  const r = rig({ answer: withFind, haul: (e) => { cards.push(e); return true; }, marks });
+  await r.stand();
+  await r.mine(0);
+  assert.deepEqual(cards[0].map((c) => [c.haul, c.count]), [['stores', 3], ['silver', 3]], 'the find its own card');
+  assert.equal(r.said.some((t) => /silver/.test(t)), false, 'the card says it');
+  assert.deepEqual(told, [[3, 'gather']], 'the book told: its balance kept');
+  const off = rig({ answer: withFind, haul: () => false, marks });
+  await off.stand();
+  await off.mine(0);
+  assert.ok(off.said.includes('You find 3 silver while gathering.'), 'no card: the line');
+  const lode = rig({ answer: (b) => { const x = withFind(b); x.data.motherlode = true; return x; }, haul: () => false, marks });
+  told.length = 0;
+  await lode.stand();
+  await lode.mine(0);
+  assert.deepEqual(told, [], 'a Motherlode\'s marks are its strike, its kind\'s own to say');
 }));

@@ -1,0 +1,873 @@
+[
+  {
+    "name": "SILVER-FINDS-gather-chance",
+    "file": "src/net/marksLaw.js",
+    "old": "gather: Object.freeze({ chance: 0.1,",
+    "new": "gather: Object.freeze({ chance: 0.2,",
+    "why": "a harvest finds twice as often",
+    "tests": [
+      "test/silverfinds_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-gather-range",
+    "file": "src/net/marksLaw.js",
+    "old": "amount: Object.freeze([2, 5]), perDay: 30 }),",
+    "new": "amount: Object.freeze([2, 6]), perDay: 30 }),",
+    "why": "a harvest finds up to 6",
+    "tests": [
+      "test/silverfinds_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-gather-day",
+    "file": "src/net/marksLaw.js",
+    "old": "amount: Object.freeze([2, 5]), perDay: 30 }),",
+    "new": "amount: Object.freeze([2, 5]), perDay: 40 }),",
+    "why": "forty a day of gathering",
+    "tests": [
+      "test/silverfinds_service.test.js",
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-find-body-chance",
+    "file": "src/net/marksLaw.js",
+    "old": "chance: Object.freeze({ corpse: 0.05,",
+    "new": "chance: Object.freeze({ corpse: 0.1,",
+    "why": "a body holds silver one in ten",
+    "tests": [
+      "test/silverfinds_service.test.js",
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-find-pile-chance",
+    "file": "src/net/marksLaw.js",
+    "old": "pile: 0.12, search: 0.15 })",
+    "new": "pile: 0.15, search: 0.15 })",
+    "why": "a treasure pile as a search's find",
+    "tests": [
+      "test/silverfinds_service.test.js",
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-find-search-chance",
+    "file": "src/net/marksLaw.js",
+    "old": "pile: 0.12, search: 0.15 })",
+    "new": "pile: 0.12, search: 0.2 })",
+    "why": "a search's find one in five",
+    "tests": [
+      "test/silverfinds_service.test.js",
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-find-range",
+    "file": "src/net/marksLaw.js",
+    "old": "amount: Object.freeze([1, 4]), perDay: 20 }),",
+    "new": "amount: Object.freeze([1, 5]), perDay: 20 }),",
+    "why": "a loot find up to 5",
+    "tests": [
+      "test/silverfinds_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-find-day",
+    "file": "src/net/marksLaw.js",
+    "old": "amount: Object.freeze([1, 4]), perDay: 20 }),",
+    "new": "amount: Object.freeze([1, 4]), perDay: 25 }),",
+    "why": "twenty-five a day of loot",
+    "tests": [
+      "test/silverfinds_service.test.js",
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-gather-not-a-mint",
+    "file": "src/net/marksLaw.js",
+    "old": "  gather: 'mint',             // SILVER-FINDS",
+    "new": "  gather: 'move',             // SILVER-FINDS",
+    "why": "a harvest's find read as a move between accounts",
+    "tests": [
+      "test/silverfinds_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-find-not-a-mint",
+    "file": "src/net/marksLaw.js",
+    "old": "  find: 'mint',               // SILVER-FINDS",
+    "new": "  find: 'move',               // SILVER-FINDS",
+    "why": "a loot find read as a move between accounts",
+    "tests": [
+      "test/silverfinds_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-range-short",
+    "file": "src/net/marksLaw.js",
+    "old": "Math.floor(roll * (hi - lo + 1))",
+    "new": "Math.floor(roll * (hi - lo))",
+    "why": "the range's top never reached",
+    "tests": [
+      "test/silverfinds_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-gather-edge",
+    "file": "src/net/marksLaw.js",
+    "old": "(chanceRoll < MARKS_FAUCETS.gather.chance ?",
+    "new": "(chanceRoll <= MARKS_FAUCETS.gather.chance ?",
+    "why": "the chance itself a find",
+    "tests": [
+      "test/silverfinds_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-kinds-short",
+    "file": "src/net/marksLaw.js",
+    "old": "export const FIND_KINDS = Object.freeze(['corpse', 'pile', 'search']);",
+    "new": "export const FIND_KINDS = Object.freeze(['corpse', 'pile']);",
+    "why": "a search's find no find",
+    "tests": [
+      "test/silverfinds_service.test.js",
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-days-shared",
+    "file": "server-account/src/marks.js",
+    "old": "AND kind = '${kind}' AND day = ${d})`;",
+    "new": "AND kind IN ('gather', 'find') AND day = ${d})`;",
+    "why": "a harvest's and a loot's day one count",
+    "tests": [
+      "test/silverfinds_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-last-find-whole",
+    "file": "server-account/src/marks.js",
+    "old": "const pay = `MIN(?2, ?6 - ${earned})`;",
+    "new": "const pay = '?2';",
+    "why": "the day's last find struck whole past the cap",
+    "tests": [
+      "test/silverfinds_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-cap-unread",
+    "file": "server-account/src/marks.js",
+    "old": "    WHERE ${earned} < ?6\n      AND COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) + ${pay} <= ?7",
+    "new": "    WHERE 1\n      AND COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) + ${pay} <= ?7",
+    "why": "the day met, struck all the same",
+    "tests": [
+      "test/silverfinds_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-purse-unread",
+    "file": "server-account/src/marks.js",
+    "old": "      AND COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) + ${pay} <= ?7\n      AND NOT EXISTS (SELECT 1 FROM marks_ledger WHERE actor = ?1 AND rid = ?5)\n      AND ${guard}`)",
+    "new": "      AND NOT EXISTS (SELECT 1 FROM marks_ledger WHERE actor = ?1 AND rid = ?5)\n      AND ${guard}`)",
+    "why": "a purse at its most struck past it",
+    "tests": [
+      "test/silverfinds_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-gather-switch-unread",
+    "file": "server-account/src/marks.js",
+    "old": "  if (!strikesFor(player, env) || !(amount > 0) || typeof rid !== 'string' || typeof nonce !== 'string') return null;",
+    "new": "  if (!(amount > 0) || typeof rid !== 'string' || typeof nonce !== 'string') return null;",
+    "why": "a harvest finds silver with the switch shut",
+    "tests": [
+      "test/silverfinds_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-switch-before-the-line",
+    "file": "server-account/src/marks.js",
+    "old": "  if (accountKind(player) !== 'linked') return null;   // a guest is never struck: no line to look for",
+    "new": "  if (!strikesFor(player, env)) return null;",
+    "why": "a find made, answered \"none\" after the switch shut (AUDIT 28 M2)",
+    "tests": [
+      "test/silverfinds_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-days-crossed-in-answer",
+    "file": "server-account/src/marks.js",
+    "old": "today: { found: line.kind === 'gather' ? today.gathered : today.found,",
+    "new": "today: { found: line.kind === 'gather' ? today.found : today.gathered,",
+    "why": "a harvest's answer says the loot's day",
+    "tests": [
+      "test/silverfinds_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-gather-max-the-loots",
+    "file": "server-account/src/marks.js",
+    "old": "max: MARKS_FAUCETS[line.kind].perDay } };",
+    "new": "max: MARKS_FAUCETS.find.perDay } };",
+    "why": "a harvest's day said against 20",
+    "tests": [
+      "test/silverfinds_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-rid-of-another-act",
+    "file": "server-account/src/marks.js",
+    "old": "if (prior) return prior.kind === 'find' ? answer({ repeat: true }) : { error: 'marks-rid' };",
+    "new": "if (prior) return answer({ repeat: true });",
+    "why": "an id another act took answered as a find",
+    "tests": [
+      "test/silverfinds_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-switch-unread",
+    "file": "server-account/src/marks.js",
+    "old": "  const closed = shut(player, env);\n  if (closed) return closed;\n  if (!FIND_KINDS.includes(kind)) return { error: 'bad-find' };",
+    "new": "  if (!FIND_KINDS.includes(kind)) return { error: 'bad-find' };",
+    "why": "a loot find struck with the switch shut",
+    "tests": [
+      "test/silverfinds_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-kind-unread",
+    "file": "server-account/src/marks.js",
+    "old": "  if (!FIND_KINDS.includes(kind)) return { error: 'bad-find' };",
+    "new": "",
+    "why": "a find of any kind struck",
+    "tests": [
+      "test/silverfinds_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-rate-unasked",
+    "file": "server-account/src/marks.js",
+    "old": "  if (await overRate(ctx, `marks:${player.id}`, MARKS_OPS_MAX, MARKS_OPS_WINDOW_S)) return { error: 'marks-rate' };\n  await decide(findStrikeStatement(",
+    "new": "  await decide(findStrikeStatement(",
+    "why": "finds past the hour's acts",
+    "tests": [
+      "test/silverfinds_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-amount-not-the-dice",
+    "file": "server-account/src/marks.js",
+    "old": "lootFindOf(dice(rand))",
+    "new": "lootFindOf(0)",
+    "why": "every loot find 1",
+    "tests": [
+      "test/silverfinds_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-why-always-cap",
+    "file": "server-account/src/marks.js",
+    "old": "why: today.found >= max ? 'cap' : 'full' };",
+    "new": "why: 'cap' };",
+    "why": "a full purse said as the day met",
+    "tests": [
+      "test/silverfinds_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-card-counts-swapped",
+    "file": "server-account/src/marks.js",
+    "old": "gathered: Number(f?.gathered ?? 0), found: Number(f?.found ?? 0) };",
+    "new": "gathered: Number(f?.found ?? 0), found: Number(f?.gathered ?? 0) };",
+    "why": "the card's finds crossed",
+    "tests": [
+      "test/silverfinds_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-card-maxes",
+    "file": "server-account/src/marks.js",
+    "old": "gathered: today.gathered, gatherMax: MARKS_FAUCETS.gather.perDay, found: today.found, findMax: MARKS_FAUCETS.find.perDay,",
+    "new": "gathered: today.gathered, gatherMax: MARKS_FAUCETS.find.perDay, found: today.found, findMax: MARKS_FAUCETS.find.perDay,",
+    "why": "the gathering's day said against 20",
+    "tests": [
+      "test/silverfinds_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-harvest-amount-fixed",
+    "file": "server-account/src/professions.js",
+    "old": "const silver = gatherFindOf(dice(rand), dice(rand));",
+    "new": "const silver = gatherFindOf(dice(rand), 0);",
+    "why": "every harvest's find 2",
+    "tests": [
+      "test/silverfinds_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-harvest-never-finds",
+    "file": "server-account/src/professions.js",
+    "old": "const find = silver > 0 ? gatherStrikeStatement(ctx, player, env, { rid, nonce, amount: silver }) : null;",
+    "new": "const find = null;",
+    "why": "no harvest finds",
+    "tests": [
+      "test/silverfinds_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-harvest-find-unbatched",
+    "file": "server-account/src/professions.js",
+    "old": "    ...(find ? [find] : []),   // SILVER-FINDS: the find, last",
+    "new": "    ...[],   // SILVER-FINDS: the find, last",
+    "why": "the find never struck",
+    "tests": [
+      "test/silverfinds_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-harvest-find-unsaid",
+    "file": "server-account/src/professions.js",
+    "old": "  return m ? { marks: m } : {};",
+    "new": "  return {};",
+    "why": "a harvest's find never said",
+    "tests": [
+      "test/silverfinds_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-harvest-repeat-unsaid",
+    "file": "server-account/src/professions.js",
+    "old": "if (prior) return harvestAnswer(db, prior, nowS, { repeat: true, ...(await gatherMarksOf(ctx, player, env, rid)) });",
+    "new": "if (prior) return harvestAnswer(db, prior, nowS, { repeat: true });",
+    "why": "a harvest asked again says no find",
+    "tests": [
+      "test/silverfinds_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-harvest-made-unsaid",
+    "file": "server-account/src/professions.js",
+    "old": "{ ...(levy > 0 ? { levy: { qty: levy, key: levyKey } } : {}), ...(await gatherMarksOf(ctx, player, env, rid)) }, rank);",
+    "new": "{ ...(levy > 0 ? { levy: { qty: levy, key: levyKey } } : {}) }, rank);",
+    "why": "a harvest's first answer says no find",
+    "tests": [
+      "test/silverfinds_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-route-unlisted",
+    "file": "server-account/src/service.js",
+    "old": "'/v1/marks/find', ",
+    "new": "",
+    "why": "the route unlisted",
+    "tests": [
+      "test/silverfinds_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-route-unserved",
+    "file": "server-account/src/index.js",
+    "old": "          '/v1/marks/find': () => findMarks(ctx, who.player, env, body),   // SILVER-FINDS: a loot find\n",
+    "new": "",
+    "why": "no door to find through",
+    "tests": [
+      "test/silverfinds_service.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-roll-any-kind",
+    "file": "src/systems/silverFinds.js",
+    "old": "if (!_finder || !FIND_KINDS.includes(kind)) return false;",
+    "new": "if (!_finder) return false;",
+    "why": "a harvest's kind rolled on a loot door",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-roll-again",
+    "file": "src/systems/silverFinds.js",
+    "old": "  if (seen(container)) return false;\n",
+    "new": "",
+    "why": "a container rolled at every open",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-roll-unremembered",
+    "file": "src/systems/silverFinds.js",
+    "old": "  remember(container);\n",
+    "new": "",
+    "why": "a container never remembered",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-roll-edge",
+    "file": "src/systems/silverFinds.js",
+    "old": "if (!(roll() < findChanceOf(kind))) return false;",
+    "new": "if (!(roll() <= findChanceOf(kind))) return false;",
+    "why": "the chance itself a find",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-keys-bound-early",
+    "file": "src/systems/silverFinds.js",
+    "old": "if (_rolledKeys.size > SILVER_FINDS_KEPT)",
+    "new": "if (_rolledKeys.size >= SILVER_FINDS_KEPT)",
+    "why": "one key short of the bound",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-keys-bound",
+    "file": "src/systems/silverFinds.js",
+    "old": "export const SILVER_FINDS_KEPT = 4096;",
+    "new": "export const SILVER_FINDS_KEPT = 4095;",
+    "why": "the bound",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-throw-uncaught",
+    "file": "src/systems/silverFinds.js",
+    "old": "  try { _finder(kind); } catch (e) { console.warn('[silver] a find', /** @type {any} */ (e)?.message ?? e); }",
+    "new": "  _finder(kind);",
+    "why": "a host's throw out through the loot door",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-empty-key",
+    "file": "src/systems/silverFinds.js",
+    "old": " || container === '') return false;",
+    "new": ") return false;",
+    "why": "an empty key a container",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-door-route",
+    "file": "src/net/accountClient.js",
+    "old": "find: (kind, rid) => post('/v1/marks/find', { kind, rid }),",
+    "new": "find: (kind, rid) => post('/v1/marks/found', { kind, rid }),",
+    "why": "the wrong door",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-door-body",
+    "file": "src/net/accountClient.js",
+    "old": "find: (kind, rid) => post('/v1/marks/find', { kind, rid }),",
+    "new": "find: (kind, rid) => post('/v1/marks/find', { kind }),",
+    "why": "no request id sent",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-door-words",
+    "file": "src/net/accountClient.js",
+    "old": "  'bad-find': 'That find could not be read.',",
+    "new": "",
+    "why": "a word without its sentence",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-book-closed-unread",
+    "file": "src/net/marksBook.js",
+    "old": "if (!me || !FIND_KINDS.includes(kind) || state.open === false) return [];",
+    "new": "if (!me || !FIND_KINDS.includes(kind)) return [];",
+    "why": "a closed account asked every find",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-book-kind-unread",
+    "file": "src/net/marksBook.js",
+    "old": "if (!me || !FIND_KINDS.includes(kind) || state.open === false) return [];",
+    "new": "if (!me || state.open === false) return [];",
+    "why": "a kind of none asked",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-book-met-unread",
+    "file": "src/net/marksBook.js",
+    "old": "      if (findsMet?.account === me && findsMet.day === day) return [];\n",
+    "new": "",
+    "why": "the day met, asked every find",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-book-met-any-account",
+    "file": "src/net/marksBook.js",
+    "old": "      if (findsMet?.account === me && findsMet.day === day) return [];",
+    "new": "      if (findsMet && findsMet.day === day) return [];",
+    "why": "one account's day met, every account's",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-book-met-late",
+    "file": "src/net/marksBook.js",
+    "old": "found.today.found >= found.today.max) findsMet = { account: me, day };",
+    "new": "found.today.found > found.today.max) findsMet = { account: me, day };",
+    "why": "the find that met the day not read as meeting it",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-book-owed-any-account",
+    "file": "src/net/marksBook.js",
+    "old": "if (owed[i].account === me) asks.unshift(...owed.splice(i, 1));",
+    "new": "asks.unshift(...owed.splice(i, 1));",
+    "why": "another account's owed asked under this one",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-book-asked-while-down",
+    "file": "src/net/marksBook.js",
+    "old": "const r = down ? null : await ask(() => door.find(f.kind, f.rid));",
+    "new": "const r = await ask(() => door.find(f.kind, f.rid));",
+    "why": "every owed find asked its tries while the network is down",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-book-owed-bound",
+    "file": "src/net/marksBook.js",
+    "old": "if (owed.length < FINDS_OWED_MAX) owed.push(f);",
+    "new": "if (owed.length <= FINDS_OWED_MAX) owed.push(f);",
+    "why": "one past the bound",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-book-never-owed",
+    "file": "src/net/marksBook.js",
+    "old": "} else if (down || RETRY.includes(r?.error)) {",
+    "new": "} else if (down) {",
+    "why": "a find the network lost, lost",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-book-refused-owed",
+    "file": "src/net/marksBook.js",
+    "old": "} else if (down || RETRY.includes(r?.error)) {",
+    "new": "} else {",
+    "why": "a refused find owed and asked for ever",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-book-closed-word",
+    "file": "src/net/marksBook.js",
+    "old": "} else if (r?.error === 'marks-need-account' || r?.error === 'marks-closed') {",
+    "new": "} else if (r?.error === 'marks-need-account') {",
+    "why": "the switch shut asked again",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-book-new-id",
+    "file": "src/net/marksBook.js",
+    "old": "const r = down ? null : await ask(() => door.find(f.kind, f.rid));",
+    "new": "const r = down ? null : await ask(() => door.find(f.kind, rid()));",
+    "why": "every try a new id - a lost answer a second line",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-book-days-crossed",
+    "file": "src/net/marksBook.js",
+    "old": "...(kind === 'gather' ? { gathered: day.found, gatherMax: day.max } : { found: day.found, findMax: day.max })",
+    "new": "...(kind === 'gather' ? { found: day.found, findMax: day.max } : { gathered: day.found, gatherMax: day.max })",
+    "why": "a harvest's find counted as the loot's",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-book-balance-unkept",
+    "file": "src/net/marksBook.js",
+    "old": "      if (Number.isSafeInteger(found.balance)) this.set(found.balance);\n      const day = found.today;",
+    "new": "      const day = found.today;",
+    "why": "the balance a find answered unkept",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-book-words",
+    "file": "src/net/marksBook.js",
+    "old": "`You find ${marksText(n)} ${FIND_WORDS[kind] ?? FIND_WORDS.pile}.",
+    "new": "`You find ${marksText(n)} ${FIND_WORDS.pile}.",
+    "why": "every find among the treasure",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-book-owed-max",
+    "file": "src/net/marksBook.js",
+    "old": "export const FINDS_OWED_MAX = 20;",
+    "new": "export const FINDS_OWED_MAX = 21;",
+    "why": "the bound",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-card-source",
+    "file": "src/ui/haulCards.js",
+    "old": "source: FIND_SOURCE[kind] ?? FIND_SOURCE.pile,",
+    "new": "source: FIND_SOURCE.pile,",
+    "why": "every find found in the treasure",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-card-faucet",
+    "file": "src/ui/haulCards.js",
+    "old": "const faucet = kind === 'gather' ? 'gather' : 'find';",
+    "new": "const faucet = 'find';",
+    "why": "a harvest's find on the loot's bar",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-card-default-max",
+    "file": "src/ui/haulCards.js",
+    "old": "max: Number.isSafeInteger(t.max) ? t.max : MARKS_FAUCETS[faucet].perDay,",
+    "new": "max: Number.isSafeInteger(t.max) ? t.max : 20,",
+    "why": "a harvest's day said against 20",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-card-lode-twice",
+    "file": "src/ui/haulCards.js",
+    "old": "  if (!d.motherlode) { const f = findHaul(d.marks, 'gather'); if (f) out.push(f); }",
+    "new": "  { const f = findHaul(d.marks, 'gather'); if (f) out.push(f); }",
+    "why": "a Motherlode's silver found twice",
+    "tests": [
+      "test/silverfinds_client.test.js",
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-card-no-find",
+    "file": "src/ui/haulCards.js",
+    "old": "  if (!d.motherlode) { const f = findHaul(d.marks, 'gather'); if (f) out.push(f); }",
+    "new": "",
+    "why": "a harvest's find no card",
+    "tests": [
+      "test/silverfinds_client.test.js",
+      "test/haulcards.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-card-bar-words",
+    "file": "src/ui/haulCards.js",
+    "old": "text: l.bar ?? COMBAT_BAR_TEXT,",
+    "new": "text: COMBAT_BAR_TEXT,",
+    "why": "every bar the combat's",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-host-lode-as-find",
+    "file": "src/scenes/gatherHost.js",
+    "old": "const found = !d.motherlode && d.marks ?",
+    "new": "const found = d.marks ?",
+    "why": "a Motherlode's strike told as a find",
+    "tests": [
+      "test/haulcards.test.js",
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-host-line-beside-card",
+    "file": "src/scenes/gatherHost.js",
+    "old": "if (found && !hauled) hud.toast(found);",
+    "new": "if (found) hud.toast(found);",
+    "why": "the line said beside its card",
+    "tests": [
+      "test/haulcards.test.js",
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-host-line-lost",
+    "file": "src/scenes/gatherHost.js",
+    "old": "if (found && !hauled) hud.toast(found);",
+    "new": "if (found && hauled) hud.toast(found);",
+    "why": "no card and no line",
+    "tests": [
+      "test/haulcards.test.js",
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-body-unasked",
+    "file": "src/scenes/corpseMarker.js",
+    "old": "  openWindow(corpseLootHooks(entry));\n  silverFindAt('corpse', entry);\n",
+    "new": "  openWindow(corpseLootHooks(entry));\n",
+    "why": "a body never holds silver",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-body-before-prelude",
+    "file": "src/scenes/corpseMarker.js",
+    "old": "export function openCorpseLoot(entry, { playerEntity, say = () => {}, openWindow = null } = {}) {\n  const answered = corpsePrelude(entry, playerEntity, say);",
+    "new": "export function openCorpseLoot(entry, { playerEntity, say = () => {}, openWindow = null } = {}) {\n  silverFindAt('corpse', entry);\n  const answered = corpsePrelude(entry, playerEntity, say);",
+    "why": "an empty body rolled",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-dungeon-body-unasked",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (source.length && kind === 'corpse') silverFindAt('corpse', foes[i]);\n      else if",
+    "new": "      if (false) silverFindAt('corpse', foes[i]);\n      else if",
+    "why": "a dungeon's body never holds silver",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-dungeon-pile-unasked",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      else if (source.length && kind === 'loot') silverFindAt('pile', lootPiles[i]);\n",
+    "new": "",
+    "why": "a treasure pile never holds silver",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-dungeon-search-unasked",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "{ silverFindAt('search', find); api.takeLoot(`srch:${i}`); }",
+    "new": "{ api.takeLoot(`srch:${i}`); }",
+    "why": "a search's find never holds silver",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-peer-body-unasked",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (n > 0) silverFindAt('corpse', f);",
+    "new": "",
+    "why": "a peer's body never holds silver",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-grave-unasked",
+    "file": "src/scenes/world.js",
+    "old": "        silverFindAt('search', items);",
+    "new": "",
+    "why": "a headstone's find never holds silver",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-finder-line-beside-card",
+    "file": "src/scenes/world.js",
+    "old": "if (!(stands && showHaul([findHaul(f.found, f.kind)]))) chatNotice(f.line);",
+    "new": "showHaul([findHaul(f.found, f.kind)]); chatNotice(f.line);",
+    "why": "the line said beside the card",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-finder-offline",
+    "file": "src/scenes/world.js",
+    "old": "  if (marksBook) {\n    setSilverFinder((kind) => {",
+    "new": "  {\n    setSilverFinder((kind) => {",
+    "why": "a finder with no book",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-host-marks-unhanded",
+    "file": "src/scenes/world.js",
+    "old": "        marks: marksBook,   // SILVER-FINDS: a harvest's find said, its balance kept\n",
+    "new": "",
+    "why": "the gathering host never told",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-book-clock",
+    "file": "src/scenes/world.js",
+    "old": "      nowMs: () => Date.now() + _sharedOffsetMs })   // SILVER-FINDS: the day's finds counted by the shared clock",
+    "new": "      })   // SILVER-FINDS: the day's finds counted by the shared clock",
+    "why": "the device's own clock for the day",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-bank-rows",
+    "file": "src/ui/enhancedPorts.js",
+    "old": "            ['Found in loot today', `${(w.hooks.marks.today()?.found ?? 0)} of ${w.hooks.marks.today()?.findMax ?? MARKS_FAUCETS.find.perDay}`],   // SILVER-FINDS\n",
+    "new": "",
+    "why": "the Bank never says the day's finds",
+    "tests": [
+      "test/silverfinds_client.test.js"
+    ]
+  },
+  {
+    "name": "SILVER-FINDS-bank-serpents",
+    "file": "src/ui/enhancedPorts.js",
+    "old": "['From gates, raids and serpents today',",
+    "new": "['From gates and raids today',",
+    "why": "the serpents unnamed under the cap they share",
+    "tests": [
+      "test/silverways_client.test.js"
+    ]
+  }
+]

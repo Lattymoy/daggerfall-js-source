@@ -85,6 +85,12 @@ export const MARK_SECONDS = 10;
 /** RAID4b, Orcsbane Harness (4): Blood for Blood's stacks - each foe's blow that lands adds one and refreshes them all. */
 export const BLOOD_SECONDS = 8;
 export const BLOOD_STACKS = 5;
+/** SERPENT-SET, Sethrakul's Coilscale (4): Constrict's coil - each weapon blow of mine that lands on the same foe adds a
+ *  stack, up to this many, and they hold this long after the last; a blow that lands on another foe starts it again. */
+export const COIL_STACKS = 5;
+export const COIL_SECONDS = 6;
+/** SERPENT-SET, Sethrakul's Coilscale (6): Shed Skin wakes when a foe's blow takes me below this share of my health. */
+export const SHED_BELOW = 0.35;
 
 /** CARD-FIT (2026-09-28, Discord - Cruor: "New sigil items descriptor is a bit long!"): a tier's BRIEF - what it does in
  *  a few words, one line of the card's row, and every line a tooltip, a trade or a chat post prints of it; `text` stays
@@ -224,6 +230,25 @@ export const SIGIL_SETS = Object.freeze({
       tier(6, 'iron-hide', 'Iron Hide', { ward: [10, 40], recover: [60, 30] },
         (v) => `A kill wards you: the next ${v.ward} damage you take is turned aside. Recovers in ${v.recover} s`,
         (v) => `A kill: a ${v.ward}-point ward`),
+    ]),
+  }),
+  // SERPENT-SET (2026-10-05, Mac: "The serpent boss needs to use the currency from oblivion gate and have its own
+  // equipment rewards"): THE OLD COIL'S OWN - an Aetheric set no world drop, shelf or Broker rolls; a ship that dealt
+  // Sethrakul its share may find a piece in its hoard (systems/serpentSpoils.js). Its patron is no Daedra: Satakal, the
+  // World-Skin the Redguards say sheds the world as a snake sheds its skin (net/serpentLaw.js SERPENT_BOSSES).
+  coilscale: Object.freeze({
+    id: 'coilscale', name: "Sethrakul's Coilscale", prince: 'Satakal', colour: '#3a9ad9', aetheric: true,
+    role: 'The Old Coil, shed and worn',
+    tiers: Object.freeze([
+      tier(2, 'sea-scale', 'Sea-Scale', { frost: [10, 30], endurance: [2, 6] },
+        (v) => `+${v.frost} frost resistance, +${v.endurance} Endurance`,
+        (v) => `+${v.frost} frost resist, +${v.endurance} Endurance`),
+      tier(4, 'constrict', 'Constrict', { stack: [3, 8] },
+        (v) => `Each weapon blow of yours that lands on the same foe tightens the coil: +${v.stack}% weapon damage to it a blow, up to ${COIL_STACKS}, for ${COIL_SECONDS} s after the last. A blow on another foe starts it again`,
+        (v) => `+${v.stack}% a blow on one foe, to ${COIL_STACKS}`),
+      tier(6, 'shed-skin', 'Shed Skin', { heal: [10, 30], recover: [240, 120] },
+        (v) => `When a foe's blow takes you below ${Math.round(SHED_BELOW * 100)}% health, you shed your skin and ${v.heal}% of your health returns. Recovers in ${v.recover} s`,
+        (v) => `Under ${Math.round(SHED_BELOW * 100)}%: shed skin, heal ${v.heal}%`),
     ]),
   }),
 });

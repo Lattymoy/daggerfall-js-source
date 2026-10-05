@@ -64,6 +64,7 @@ import { SOUND } from '../systems/soundClips.js';
 import { lootRarityOn, bestRarity, RARITIES } from '../systems/lootRarity.js';   // LR3: the drop chime asks the body's best tier
 import { CORPSE_ACTIVATION_DISTANCE, RAY_DISTANCE } from '../player/activate.js';
 import { enemyDisplayName } from '../characters/enemyBasics.js';
+import { silverFindAt } from '../systems/silverFinds.js';   // SILVER-FINDS: a body opened holds silver now and then
 
 /** ItemTemplates Arrow - the auto-pickup arm keys on it. */
 export const ARROW_TEMPLATE_INDEX = 131;
@@ -373,6 +374,11 @@ function corpsePrelude(entry, playerEntity, say) {
  *
  * Returns the number of items the body holds, so a caller's "did
  * anything happen" test still reads.
+ *
+ * SILVER-FINDS: a body opened with treasure in it - the window, or the
+ * quick loot the host's door takes through - rolls its silver once
+ * (systems/silverFinds.js); an empty body, a body of arrows and a body
+ * left shut roll none.
  */
 export function openCorpseLoot(entry, { playerEntity, say = () => {}, openWindow = null } = {}) {
   const answered = corpsePrelude(entry, playerEntity, say);
@@ -383,6 +389,7 @@ export function openCorpseLoot(entry, { playerEntity, say = () => {}, openWindow
     return items.length;
   }
   openWindow(corpseLootHooks(entry));
+  silverFindAt('corpse', entry);
   return items.length;
 }
 

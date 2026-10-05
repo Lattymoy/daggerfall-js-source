@@ -58,6 +58,7 @@ import { longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';   // MAC6 
 import { openPixelDial } from '../ui/pixelDial.js';   // PX15b: the Tab compass rose
 import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
 import { searchableKind, searchName, SEARCH_KINDS, SEARCH_REACH, SEARCH_FOES_PER_PLAYER, SEARCH_FOE_SPACING, SEARCH_DOOR_REACH_M, searchKey, searchCooldownLeft, markSearched, isPicked, markPicked, SEARCHED_TEXT, searchLockValue, rollSearchOutcome, pickSearchUndead, pickRosterFoe, rollSearchElite, searchMessage, mintSearchFind, setSearchClock } from '../systems/searchables.js';   // SEARCH1: coffins, shelves, headstones, chests and crates
+import { silverFindAt } from '../systems/silverFinds.js';   // SILVER-FINDS: a body, a treasure pile or a search's find holds silver now and then
 import { interiorLockpickingChance } from '../world/actionSystem.js';   // SEARCH1: a locked chest picks as an interior door does
 import { registerPresenter, messageBox } from '../systems/notify.js';   // ENH-NOTICE3: this context's window stack and its PopupText, offered to the one door every message goes through - and the door itself, for the seams that name a KIND
 import { makeWindowStack, pauseWhileOpen, hidesHud } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this context's one slot; ROAD-tail: and its PAUSE
@@ -301,7 +302,7 @@ const q3 = (v) => Math.round(v * 1000) / 1000; const GENDER_BIT = ['male', 'fema
 const HIT_POS_MAX = 1e6;
 // AUDIT FOES FOE5: the most damage one peer's blow may claim. The host TRUSTS the number (it never recomputes - the
 // striker's own calc is the game's), so without a bound any joiner could one-shot every foe in the room and empty it
-// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:2705); the dungeon
+// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:2707); the dungeon
 // had none. Past anything a legal swing, shaft or blast can roll.
 const HIT_DMG_MAX = 10000;
 /** REST-SYNC: a joiner's ask is answered - or given up on - inside this long: its rest breaks once, at the next hour. */
@@ -2169,7 +2170,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:16822 / exterior.js:3980), set
+  // host's own townTalk sink (world.js:16827 / exterior.js:3980), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -4279,7 +4280,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:27980,
+              // playerArrowHitFoe is the one copy world.js:28004,
               // exterior.js:5644 and worldModes.js:9412 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
@@ -5160,7 +5161,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const i = data.i | 0, dmg = Number(data.dmg);
     const xs = data.xs === 1;   // REST-SYNC: a shared encounter, by the room's number - not a layout index
     const f = xs ? (_sharedById.get(i) ?? null) : foes[i];
-    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:2705). The number is a peer's
+    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:2707). The number is a peer's
     // word and the host trusts it without recomputing, so an unbounded one let any joiner one-shot every foe in the
     // room - and, through the kill door, empty it. 10000 is past anything a legal swing, shaft or blast can roll.
     if (!f || (!xs && i >= _layoutFoes) || f.dead || !Number.isFinite(dmg) || dmg < 0 || dmg > HIT_DMG_MAX) return false;
@@ -5739,7 +5740,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // InstantiatePrefab's a fresh GameObject per saved record, so
     // EnemyEntity's `PickpocketByPlayerAttempted` default is the loaded
     // truth for every enemy. The re-minting pools match that by
-    // construction (exteriorFoes.js:2056's restoreWorld goes through
+    // construction (exteriorFoes.js:2057's restoreWorld goes through
     // spawnFoe), but this host patches the LIVE foes in place, so a
     // same-dungeon reload kept a raised latch and a failed pickpocket
     // could never be retried - falsifying the law
@@ -7601,7 +7602,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       };
     } else if (outcome === 'loot') {
       rows = searchMessage(sb.kind, 'loot');
-      onClose = () => { if (!_ctxDead && sb.items.length) api.takeLoot(`srch:${i}`); };   // the find opens as the loot window over the room's list
+      // the find opens as the loot window over the room's list; SILVER-FINDS: and this search's find rolls its silver - once
+      // a search (its own list), so the thing searched again after its five hours rolls again
+      onClose = () => { if (!_ctxDead && sb.items.length) { silverFindAt('search', find); api.takeLoot(`srch:${i}`); } };
     } else rows = searchMessage(sb.kind, 'nothing');
     pushDungeonWindow(new ActionTextBox(rows, { onClose }));
     return 1;
@@ -9446,6 +9449,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // its body's window and opens the next through here in one click,
       // before the frame's drain empties the slot (openBookHook's law).
       if (activeOverlay && !activeOverlay.done) return source.length;
+      // SILVER-FINDS: a body or a treasure pile opened with something in it - by the window or the quick door - rolls its
+      // silver once (systems/silverFinds.js); a search's find rolls at its search (activateSearchable), a pile the player
+      // or a reward dropped never
+      if (source.length && kind === 'corpse') silverFindAt('corpse', foes[i]);
+      else if (source.length && kind === 'loot') silverFindAt('pile', lootPiles[i]);
       // WORLD4: opening one of the room's containers CLAIMS it - the room hears this client's list before a single
       // item moves, so a second reader opening the same pile a moment later reads the room's and not their own roll.
       // AUDIT WORLD4 C6: after the mount, never before it - openInventory REFUSES a transformed lycanthrope

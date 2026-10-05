@@ -275,6 +275,7 @@ export const REFUSALS = Object.freeze({
   'guild-marks-short': 'The treasury does not hold that much silver.',
   'guild-marks-full': `A guild's treasury holds at most ${MARKS_MAX.toLocaleString('en-US')} silver.`,
   'marks-rate': 'You have moved a great deal of silver this hour. Try again later.',
+  'bad-find': 'That find could not be read.',   // SILVER-FINDS: a loot find of no kind the service knows
   'not-developer': 'Only a developer may do that.',   // MARKS1's report, NOTICE1's notices, CUSTOMS-PASS's grant
   // SEAT1a: the seats' registry (server-account/src/townSeats.js)
   'seats-need-account': 'The seats are witnessed by registered accounts. Add a username to witness one.',
@@ -1229,9 +1230,9 @@ function waitedPost({ fetch, storage }, ms) {
 
 /**
  * MARKS1: MARKS (server-account/src/marks.js) through the one door - the balance, the Bank's exchange (Marks for gold,
- * never the other way), a guild's Marks treasury and the developers' report. Every act carries its own request id, so an
- * answer lost and asked again is answered again, never charged twice. Every answer is `call`'s shape; each is waited
- * for ACCOUNT_ACT_WAIT_MS at most. `account()` is the account this device is signed in as (AUDIT 28 M2: a kept sale is
+ * never the other way), a guild's Marks treasury, the developers' report and (SILVER-FINDS) a loot find. Every act
+ * carries its own request id, so an answer lost and asked again is answered again, never charged twice. Every answer is
+ * `call`'s shape; each is waited for ACCOUNT_ACT_WAIT_MS at most. `account()` is the account this device is signed in as (AUDIT 28 M2: a kept sale is
  * asked again only under the account that made it).
  */
 export function accountMarks({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
@@ -1243,6 +1244,7 @@ export function accountMarks({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
     guildDeposit: (character, marks, rid) => post('/v1/marks/guild/deposit', { character, marks, rid }),
     guildWithdraw: (character, marks, rid) => post('/v1/marks/guild/withdraw', { character, marks, rid }),
     report: () => post('/v1/marks/report', {}),
+    find: (kind, rid) => post('/v1/marks/find', { kind, rid }),   // SILVER-FINDS: a loot find the device rolled
   };
 }
 

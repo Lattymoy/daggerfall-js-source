@@ -16,8 +16,10 @@
 // THE PRICE IS PAID TWICE-CHECKED. The embers are the pack's (the Deadlands Embers a breach pays - one a breach closed,
 // and one more to each who broke its faithful's rite, WB12d), taken on this side as any ware's are; and the service will
 // not record a sale the account's own embers could not have paid for - its gate_kills rows' `stones` (AUDIT WB12d A4: one
-// a row before the rite) less what its insignia already cost (`insignia_spent`). An ember is never made anywhere but a
-// breach, so an honest pack never holds more than that; a client that skips its own half still cannot buy past them.
+// a row before the rite) and (SERPENT-SET) its serpent_kills rows' - a sea serpent's hoard pays the gate's currency too -
+// less what its insignia already cost (`insignia_spent`). An ember is made by a breach or a serpent's hoard alone, and the
+// service counts both, so an honest pack never holds more than that; a client that skips its own half still cannot buy
+// past them.
 //
 // Pure: the offers, their prices, and the column's words. Not a DFU member. Ledger A (WB).
 import { TITLES, AURAS } from './identityToken.js';

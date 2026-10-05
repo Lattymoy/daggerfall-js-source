@@ -344,6 +344,7 @@ import { travellerMarkOf, travellerWorldOf, travellerDue, createTravellerBook, i
 import { RainCurtainsRenderer, curtainsOf, CURTAIN_FOOT_MARGIN_M } from '../render/rainCurtains.js';   // TV4: the weather's curtains, stood in the world for the view
 import { RANGE_PIXELS as TV_BODY_RANGE } from '../net/wire.js';   // TV3: within the pose range a traveller is their body, not a mark
 import { quickLootWheel, quickLootTake, quickLootArm, plaqueActionFor, plaqueActionSelection, plaqueLightFirst, plaqueStep } from '../systems/quickLoot.js'; import { showPickups, showHaul } from '../ui/pickupFeed.js'; import { claimHauls } from '../ui/haulCards.js';   // QUICK-LOOT B4: the wheel, the take, and the two keys that arm what the next activate means; PICKUP-FEED: what a take moved, as cards (the take's `took`)
+import { findHaul } from '../ui/haulCards.js'; import { setSilverFinder, silverFindAt } from '../systems/silverFinds.js';   // SILVER-FINDS: a loot find's card; the finder every host's loot door asks, and a headstone's find
 import { lootPile } from '../player/lootStack.js';   // LOOT-STACK: the pile under the reticle, as the loot window's tabs
 import { composeContents } from '../systems/worldHover.js';   // WORLD-HOVER: the contents ladder's one law (AUDIT-WH H3)
 import { mobilePersonName, lootPileName } from '../systems/worldTooltips.js';   // WORLD-HOVER H2: MobilePersonNPC.NameNPC (.cs:299-302); M5: a dropped pile's word (.cs:534-548), outdoors too
@@ -928,6 +929,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     else if (name === 'eventide') audio.playOneShotId(SPELL_CAST_SOUND[4], 1);
     else if (name === 'mark') audio.playOneShot(SOUND.DrawWeapon, 1);   // RAID4b: No Escape - a blade drawn for the next of them
     else if (name === 'ward') audio.playOneShot(SOUND.EquipMaceOrHammer, 1);   // RAID4b: Iron Hide - iron closing over you
+    else if (name === 'shed') audio.playOneShot(SOUND.SplashLarge, 1);   // SERPENT-SET: Shed Skin - the old skin into the sea
   } });
   // A1: THE TEXTURE SEASON IS THE CALENDAR'S, NOT A URL PARAM.
   // Every production site in the reference reads the world clock -
@@ -1284,7 +1286,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   // MARKS1 (PROF0 10.5): the account's Marks as this page knows them - the balance, the Bank's sale carried to its end
   // (a sale whose answer was lost is kept and settled), a guild's Marks moved (net/marksBook.js). Online only.
   const marksBook = params.has('online')
-    ? createMarksBook({ door: accountMarks({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }), store: { get: (k) => _spoilsStore.get(k), set: (k, v) => _spoilsStore.set(k, v) }, character: () => characterIdOf(playerEntity) })   // AUDIT WB A6's one store, reached at bank time (it is made below)
+    ? createMarksBook({ door: accountMarks({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }), store: { get: (k) => _spoilsStore.get(k), set: (k, v) => _spoilsStore.set(k, v) }, character: () => characterIdOf(playerEntity),   // AUDIT WB A6's one store, reached at bank time (it is made below)
+      nowMs: () => Date.now() + _sharedOffsetMs })   // SILVER-FINDS: the day's finds counted by the shared clock
     : null;
   // NOTICE1 (PROF0 10.1): this device's Notice Boards - each town's board read through a minute's cache, what has been
   // read of it (the count over the board is the rest), a note pinned with its own request id (net/noticeBook.js).
@@ -9227,6 +9230,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         built: () => built, pixelTranslation: (x, y, out) => state.pixelTranslation(x, y, out),
         pixelInfo: (x, y) => { try { return { climate: maps.getClimateIndex(x, y), region: maps.getRegionIndexAt(x, y) }; } catch { return null; } }, settled: (pos) => { const wc = state.worldCoords(pos), p = worldCoordToMapPixel(wc.x, wc.z), loc = locationIndex.get(`${p.x},${p.y}`); return !!loc?.exterior?.exteriorData && isPlayerInTown(loc.mapTableData?.locationType, { mustBeInLocationRect: true, mustBeOutside: true, inLocationRect: isInLocationRect(wc.x, wc.z, locationWorldRect(loc, p.x, p.y)), inside: false }); },   // SETTLE-STAND: the acts' own settlement check (Foraging's 'town'), asked of a node's place
         nowMs: () => Date.now() + _sharedOffsetMs, haul: (entries) => showHaul(entries),   // HAUL-CARDS: a harvest's goods and XP as one card (the enhanced skin's)
+        marks: marksBook,   // SILVER-FINDS: a harvest's find said, its balance kept
         eye: () => ({ pos: cam.pos, dir: [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)] }),
         // AUDIT 29 C1: a node seen - the eye's ray to it through the place's collider (the street's, or the dungeon's own)
         clear: (from, to, underground) => {
@@ -9646,7 +9650,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:3086 mounts the same one, gated on
+  // and dungeonContext.js:3087 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:7286
@@ -9745,7 +9749,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:572-577) never looks the record up in `foes`, and
+    // (exteriorFoes.js:573-578) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
     // got exactly what removeGuard (cityGuards.js:1632-1650) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
@@ -12392,7 +12396,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:8449), so exterior mode and a
+    // composer, dungeonContext.js:8452), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -15716,6 +15720,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       onClose = () => {
         const pile = droppedLoot.dropPile(items, dropFeet(), `${playerTravelPixel().x},${playerTravelPixel().y}`);
         if (!pile) return;
+        silverFindAt('search', items);   // SILVER-FINDS: this search's find rolls its silver once (the stone searched again after its hours, again)
         const w = makeInventoryWindow({ onClose: () => droppedLoot.releaseEmptied(), loot: droppedLootHooks(pile) });
         if (w) townTalk.showOverlay(w);   // a refused pack is null - the find stays on the ground
       };
@@ -19155,6 +19160,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     store: _spoilsStore,
     say: (text) => chatNotice(text),
     onSpoils: (entry) => grantSerpentSpoils(entry),
+    onMarks: (data) => { showHaul(claimHauls(data, 'serpent')); return marksBook?.claimLines(data, 'serpent') ?? null; },   // SERPENT-SET: the serpent's silver, the raids' own door
     onRecorded: (data) => {
       if (data?.renown?.character !== characterIdOf(playerEntity)) return;   // RENOWN-CHAR: the character that fought the serpent adopts its Renown, no other
       const a = renownAnswer({ ...data.renown, order: data.order ?? null }, data.renown.credited ?? 0, renownSaid);
@@ -19164,6 +19170,22 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (a.announce !== null) { renownSaid = a.announce; townTalk.say(`Your Renown is now ${a.announce}.`); }
     },
   }) : null;
+  // SILVER-FINDS (bible/06-Systems/Professions-Arc.md 10.5): A LOOT FIND - every host's loot door rolls its container once
+  // (systems/silverFinds.js: a body, a treasure pile, a search's find) and a find asks the marks book, whose service's
+  // dice strike it under the day's count. Each answered find its card where the feed stands (the world walked, nothing
+  // over it - a loot window open as the answer lands takes the feed down: AUDIT HAUL-CARDS A3), else its line in the
+  // chat. Online only: offline, and on the bench, nothing is found.
+  if (marksBook) {
+    setSilverFinder((kind) => {
+      marksBook.find(kind).then((finds) => {
+        for (const f of finds) {
+          if (!f.line) continue;
+          const stands = walkMode && !gamePaused() && pointerSurfaces.size === 0 && !travelView?.active;
+          if (!(stands && showHaul([findHaul(f.found, f.kind)]))) chatNotice(f.line);
+        }
+      }, (e) => console.warn('[silver] a find', e?.message ?? e));
+    });
+  }
   const gateLink = params.has('online') ? createGateLink({
     now: () => Date.now() + _sharedOffsetMs,
     say: (text) => setMidScreenText(text),
@@ -19179,7 +19201,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** WB5: a spoil into the pack - the gold to the purse, an item to the items (the one door the spew, the gather and
    *  a crash's recovery all take). */
   const takeSpoil = (p) => { if (p.kind === 'gold') addGoldPieces(playerEntity, p.gold); else if (p.item) addItem(playerEntity.items, p.item); };
-  /** WB12c: a breach's spoil into the pack - and the first ember brings On the Burning Doors (systems/breachBook.js). */
+  /** WB12c: a breach's spoil into the pack - and the first ember brings On the Burning Doors (systems/breachBook.js).
+   *  SERPENT-SET: a serpent's hoard pays the gate's embers too, and takes its spoils by this door - a first ember won at
+   *  sea brings the book as a breach's does. */
   const takeGateSpoil = (p) => {
     takeSpoil(p);
     const book = p.kind === 'item' ? breachBookFor(p.item) : null;
@@ -19218,7 +19242,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** SERPENT1: THE OLD COIL'S HOARD (systems/serpentSpoils.js) - the raids' door, under keys of its own: no floor, no word
    *  to the hub, the crash's records a save clears. Made online or not, as the pools are. */
   const serpentSpoils = createSpoilsPool({
-    ray: () => null, now: () => Date.now() + _sharedOffsetMs, take: takeSpoil, say: (text) => setMidScreenText(text),
+    ray: () => null, now: () => Date.now() + _sharedOffsetMs, take: takeGateSpoil, say: (text) => setMidScreenText(text),   // SERPENT-SET: its embers, the book with the first
     store: _spoilsStore, who: () => characterIdOf(playerEntity), keys: SERPENT_SPOILS_KEYS, recordsMax: SERPENT_SPOILS_RECORDS_MAX,
   });
   onSlotSaved((characterId) => { try { serpentSpoils.saved(characterId); } catch (e) { console.warn('[serpent] spoils', e?.message ?? e); } });   // SERPENT1
@@ -19299,7 +19323,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     _spoilsAskedFor = who;
     try { if (recoverSpoils(_spoilsStore, takeGateSpoil, { who, saves: enumerateSaves().info.values(), onHanded: (rec) => spoilsPool.adopt(rec), inSave: _spoilsInSave })) setMidScreenText(SPOILS_TEXT.gathered); } catch (e) { console.warn('[gate] spoils', e?.message ?? e); }   // AUDIT WBX S3: in the pack now - the next save clears it
     try { if (recoverSpoils(_spoilsStore, takeSpoil, { who, saves: enumerateSaves().info.values(), onHanded: (rec) => raidSpoils.adopt(rec), key: RAID_SPOILS_KEYS.store, inSave: _spoilsInSave })) setMidScreenText(RAID_SPOILS_TEXT.recovered); } catch (e) { console.warn('[raid] spoils', e?.message ?? e); }   // RAID4b: a town's thanks, the same door
-    try { if (recoverSpoils(_spoilsStore, takeSpoil, { who, saves: enumerateSaves().info.values(), onHanded: (rec) => serpentSpoils.adopt(rec), key: SERPENT_SPOILS_KEYS.store, inSave: _spoilsInSave })) setMidScreenText(SERPENT_SPOILS_TEXT.recovered); } catch (e) { console.warn('[serpent] spoils', e?.message ?? e); }   // SERPENT1: the Old Coil's hoard, the same door
+    try { if (recoverSpoils(_spoilsStore, takeGateSpoil, { who, saves: enumerateSaves().info.values(), onHanded: (rec) => serpentSpoils.adopt(rec), key: SERPENT_SPOILS_KEYS.store, inSave: _spoilsInSave })) setMidScreenText(SERPENT_SPOILS_TEXT.recovered); } catch (e) { console.warn('[serpent] spoils', e?.message ?? e); }   // SERPENT1: the Old Coil's hoard, the same door; SERPENT-SET: its embers by the gate's
     _spoilsInSave = null;   // AUDIT RESCUE-SAVE A1: the boot's load alone - a load in the session is its own pack
   };
   // AUDIT ONLINE2 F3 (AUDIT RAID R8d): A LOAD IN THE SESSION IS A STAND-UP - the pack is the loaded save's, so the pools

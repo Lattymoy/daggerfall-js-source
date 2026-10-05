@@ -67,7 +67,9 @@ src/net/nodeLaw.js (the nodes). Appendix B lists them in one place.
    (`src/systems/lootRarity.js`); Sigil Sets are online set gear (`11-Multiplayer/Sigil-Sets.md`). DECIDED: a craft
    reaches **Rare** at most (a Masterwork); Legendary, Aetheric, Artifact and Sigil pieces are never craftable.
 8. **MARKS, NOT GOLD** - DECIDED (Mac: "New currency"). Everything this arc prices between players is in Marks
-   (10.5), which only the server holds and only server-witnessed acts mint. GOLD-MARKET (10.8, Mac: "Gold listings,
+   (10.5), which only the server holds and only server-witnessed acts mint - SILVER-FINDS (10.5, Mac: "Silver should be
+   more accessible"): a harvest's find and a loot find aside, two faucets BOUNDED BY THE DAY instead, since neither act
+   can be witnessed. GOLD-MARKET (10.8, Mac: "Gold listings,
    walled"): a realm character's gold is its record's on the service now (REALM P2), so a market listing may be priced
    in it - and gold still never becomes Marks: what gold bought is walled from every Marks-earning act.
 
@@ -850,13 +852,17 @@ save's" - GUILD1), so anything paid in purse gold can be paid by a client that n
 - **Held by the service**: one balance **per account** (all its characters share it), at most 10,000,000; a
   **Marks treasury** per guild beside its gold one (deposits from any member's balance; withdrawals by the
   Guildmaster alone - GUILD1's law); one ledger for every movement.
-- **Where Marks come from** (the faucets) - only acts a server witnessed:
+- **Where Marks come from** (the faucets) - acts a server witnessed, each capped; SILVER-FINDS' two (a gathering's
+  find, a loot find) are bounded by the UTC day instead (below):
 
 | Faucet | Amount | Cap |
 |---|---|---|
 | Court writs (section 11) | their pay | 3 an account a day |
-| Oblivion Gate receipts | 50 a receipt (100 under a Daedric Incursion, SEAT0 9.3) | ~~**2 a UTC day** an account~~ SILVER-WAYS: the day's **combat cap**, 150 an account a UTC day with the raids' (below) - FACT, a gate rises every game day, twelve a real day, and `gate_kills` keys on the game day, so the gate's own law allows twelve |
-| Towns defended (SILVER-WAYS) | 30 a raid's receipt (RAID3's `w1`, counted once a raid and account - RAID4) | the day's **combat cap** with the gates': 150 an account a UTC day, the day's last strike what it has left |
+| Oblivion Gate receipts | 50 a receipt (100 under a Daedric Incursion, SEAT0 9.3) | ~~**2 a UTC day** an account~~ SILVER-WAYS: the day's **combat cap**, 150 an account a UTC day with the raids' and (SERPENT-SET) the serpents' (below) - FACT, a gate rises every game day, twelve a real day, and `gate_kills` keys on the game day, so the gate's own law allows twelve |
+| Towns defended (SILVER-WAYS) | 30 a raid's receipt (RAID3's `w1`, counted once a raid and account - RAID4) | the day's **combat cap** with the gates' and the serpents': 150 an account a UTC day, the day's last strike what it has left |
+| Sea serpents slain (SERPENT-SET) | 40 a serpent's receipt (SERPENT1's `l1`, counted once a serpent day and account), a ship that stood 20 | the day's **combat cap** with the gates' and the raids' - the ceiling unmoved (`11-Multiplayer/Sea-Serpent.md` section 8) |
+| A gathering's find (SILVER-FINDS) | 2-5, the service's dice in one counted harvest of ten - any of the five acts | **30** an account a UTC day, the day's last find what is left - bounded, not witnessed |
+| A loot find (SILVER-FINDS) | 1-4, the service's dice; the device rolls each container once - a foe's body 5%, a treasure pile 12%, a search's find 15% | **20** an account a UTC day, the day's last find what is left - bounded, not witnessed |
 | Guild deeds (SILVER-WAYS) | 25 into the guild's treasury, never an account's | where 3 of a guild's accounts - each a character 7 days in it - claimed one raid or one gate; 4 a guild a UTC day |
 | Siege Honours (SEAT0 6.8) | 50 / 25 | one a siege |
 | Motherlodes (PROF2b - BUILT, section 38) | 10 a find | 1 an account a day (3 Motherlodes a day server-wide, 20 strikers each) |
@@ -881,6 +887,49 @@ save's" - GUILD1), so anything paid in purse gold can be paid by a client that n
   the gate's counted receipt as the first faucet; the Bank's sale paid into the account at that bank (a sale whose
   answer was lost is kept and settled - `src/net/marksBook.js`); the report a developer's (`/v1/marks/report`; the
   materials' median prices join it with the market, PROF5). Behind MARKS_OPEN, shipped at `dev`.
+- **As built (SILVER-FINDS, 2026-10-05)** - Mac: "Silver should be more accessible in more forms of interactions like
+  foraging and different activities, also needs to be sometimes lootable". DECIDED (the record's, at Mac's call): law
+  8 bends for TWO faucets, each **bounded, not witnessed** - a gathering's find and a loot find - because neither act
+  can be witnessed (a harvest is the client's word on its node, as a hide is - section 6; the service cannot see a
+  body), so the UTC day is the bound, the line the law draws instead of the witness: the most a client that lies is
+  paid is the cap (50 silver a day of both, 400 gold of play at the Bank's 8), and the amount is always the service's
+  dice, never the client's word (`src/net/marksLaw.js` SILVER-FINDS).
+  - **A gathering's find**: every counted harvest - an herb patch, a vein or a boulder, a tree, a body, a net - rolls
+    the service's own dice AFTER every other draw, so each of them is what it was: one in ten finds **2-5 silver**,
+    struck in the harvest's own batch and only by the row this claim stamped (`gather:<rid>`; a harvest the day refused
+    finds nothing), at most **30 an account a UTC day**, the day's last find what is left; the answer says it as
+    `marks` (`server-account/src/professions.js` harvestNode; `server-account/src/marks.js` gatherStrikeStatement). A
+    Motherlode's strike is its own (section 38).
+  - **A loot find**: the DEVICE rolls each container it opens, once a session - a foe's body one in twenty, a
+    treasure pile 12 in a hundred, a search's find 15 (`marksLaw.js` findChanceOf; `src/systems/silverFinds.js`, a key
+    or the container's own object, bounded) - and a find asks `/v1/marks/find` (`marks.js` findMarks): the service's
+    dice strike **1-4**, at most **20 an account a UTC day**, one of the Marks acts an hour. Its own request id, so a
+    lost answer asked again is the line it made - and a line made is answered WHATEVER THE SWITCH SAYS NOW (AUDIT 28
+    M2's law; the first cut's `findLineAnswer` asked the switch before the line and answered "none" to a find made
+    before it shut - the pin was written against it). The marks book (`src/net/marksBook.js` find) keeps a find the
+    network never answered OWED, asked again with its id by the same account's next find, and once one goes
+    unanswered the rest wait owed unasked (a dropped line costs a find one ask's tries, never twenty's); it asks no
+    more for the day once the service says the day is met, and none at all where silver is not the account's.
+  - **The doors (THE FOUR HOSTS)**: `scenes/dungeonContext.js` - takeLoot (a body or a treasure pile opened with
+    something in it, by the window or the quick door alike; a pile the player or a reward dropped never) and
+    activateSearchable (a search's find, each search its own roll, so a thing searched again after its hours rolls
+    again); `scenes/world.js` - activateGrave (a headstone's find) and the finder itself, registered there online alone
+    (the book's ask; each answered find its card where the feed stands - the world walked, nothing over it - else its
+    line in the chat); the street's, the watch's and an interior's bodies through `scenes/corpseMarker.js`
+    openCorpseLoot (`scenes/exteriorFoes.js` and `scenes/cityGuards.js` open through it), and a peer's body at
+    `exteriorFoes.js`'s grant; `scenes/worldModes.js` (interiors) holds no door of its own - its bodies are the corpse
+    door's, its dungeons `dungeonContext.js`'s - and a stranger's cupboard is NO find: theft is its own law (PT1);
+    `scenes/exterior.js` (the offline town page) opens its bodies through the same corpse door and registers no finder,
+    so offline, and on the bench, nothing is found.
+  - **What it says**: a harvest's find its own card beside the goods' (`src/ui/haulCards.js` findHaul, through
+    `scenes/gatherHost.js`), else its line; a loot find's card the same coin - where it was found its source, its
+    faucet's day its bar (the loot's 20, the gathering's 30). The Bank's card says the day's finds beside the combat's
+    (whose row names the serpents now).
+  - Pinned: `test/silverfinds_service.test.js`, `test/silverfinds_client.test.js` and a gathering-host pin in
+    `test/haulcards.test.js`; `tools/mutants/silverfinds.json` (86, all dead - the first run's one survivor, the book's
+    kind check, lived under a pin whose scripted door answered nothing either way; the pin now asks whether the door
+    was asked). ACCOUNT_VERSION acct83, with SERPENT-SET. Forcing every harvest to find (the chance at 1) left all 139
+    harvest pins green - none reads a balance a find could move.
 
 ### 10.6 Player notes
 
@@ -1053,8 +1102,8 @@ and reproduced each finding before it was fixed (`test/marketaudit.test.js`, `to
   pure function of the day, the region and `active`, the count the crown's scale reads - SEAT0 7.1), so the supply
   grows with the server: 45 such regions post 270 a day at up to a hundred active accounts, 810 at three hundred. A
   writ asks for a material from the region's own **witnessed** tables - metals, wood, herbs (4.1-4.3) and stone (4.5),
-  never hides or fish, which are bounded, not witnessed (section 6), since a Mark is minted only for a witnessed act
-  (law 8) - mostly tiers 1-4, one a day of tier 5-6; **10-50** units, fewer at higher tiers. **Pay**: units x the material's Marks value x
+  never hides or fish, which are bounded, not witnessed (section 6), since a writ's Marks are minted only for a
+  witnessed act (law 8; SILVER-FINDS' two finds are bounded by the day instead, 10.5) - mostly tiers 1-4, one a day of tier 5-6; **10-50** units, fewer at higher tiers. **Pay**: units x the material's Marks value x
   1.2, and Renown XP 25 x tier x units / 10 (MERGE 2: at main's RENOWN-ACCOUNT rate, three quarters floored -
   `net/professionLaw.js` writRenown - and to the delivering character's own track since RENOWN-CHAR; MERGE 2 had paid
   the ACCOUNT's one Renown). Each writ is filled once, by the first to deliver; at most **3** an
@@ -1095,11 +1144,12 @@ of Makers; commissions; regional prices to haul between; and every seat on the m
 | A save-edited item enters the economy | The Stores are one-way (law 3); only a provenance id's owner lists it, one listing at a time (10.2, 18) |
 | A save-edited or looted material deposited from the Materials Bag | Only the service's carried count moves into the Stores, cut to what the pack holds and never raised (law 3 restated; `Materials-Bag.md` 5) |
 | Fake gold buys the market | The market is in Marks (10.5); a gold listing is a realm character's alone, bought off its record on the service in the sale's own batch, and what gold bought never becomes Marks (10.8) |
-| Marks inflate | Faucets only from witnessed acts, each capped; the weekly report; the Bank's spread and every fee burn |
+| Marks inflate | Faucets from witnessed acts, each capped - SILVER-FINDS' two bounded by the day (30 and 20 an account, 10.5); the weekly report; the Bank's spread and every fee burn |
+| A modified client claims loot finds it never opened | SILVER-FINDS: bounded, not witnessed - the service's dice say what a find strikes, and 20 silver an account a UTC day is the most a lie is paid (10.5) |
 | Bots farm nodes | Per-character nodes, daily caps, travel |
 | A modified client claims a rich node on a pixel nobody walks | The witnessed world: an unconfirmed pixel yields tiers 1-2 only (section 6) |
-| A modified client claims kills it never made | Hunting is bounded, not witnessed: 30 hides a day, 3 of tiers 5-6 (section 6); hides mint no Marks (no Court writ asks for them, section 11) |
-| A modified client claims hauls from water it is not in | Fishing is bounded: 40 hauls a day an account; no Pearl or Slaughterfish on an unconfirmed pixel; fish mint no Marks (section 6, 11) |
+| A modified client claims kills it never made | Hunting is bounded, not witnessed: 30 hides a day, 3 of tiers 5-6 (section 6); hides mint no writ's Marks (no Court writ asks for them, section 11) - a hunt finds silver only as every harvest may (SILVER-FINDS: the service's dice, 30 an account a UTC day, 10.5) |
+| A modified client claims hauls from water it is not in | Fishing is bounded: 40 hauls a day an account; no Pearl or Slaughterfish on an unconfirmed pixel; fish mint no writ's Marks (section 6, 11) - a haul finds silver only as every harvest may (SILVER-FINDS, 10.5) |
 | ~~A modified client gathers at night~~ | RETIRED (ANY-HOUR, 2026-10-01): every client gathers at night - no hour is refused |
 | Marks buy influence (materials bought at their value, then delivered to a seat) | Only **own** units count at their value; bought units at Tribute's rate inside its cap; counter goods never (section 7, 11) |
 | Marks buy XP (a counter's endless goods, each recipe made once for its first-craft bonus - AUDIT 32 S1) | A recipe made wholly of goods only a counter sells earns its craft's XP and no first-craft bonus (3.2) |

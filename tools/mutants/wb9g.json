@@ -111,11 +111,12 @@
   {
     "name": "WB9g-the-gates-never-counted",
     "file": "server-account/src/accounts.js",
-    "old": "       AND (SELECT COALESCE(SUM(stones), 0) FROM gate_kills WHERE account = ?1) - insignia_spent >= ?3\n",
+    "old": "       AND ${EMBERS_EARNED_SQL} - insignia_spent >= ?3\n",
     "new": "",
     "tests": [
       "test/wb9g_insignia.test.js"
-    ]
+    ],
+    "note": "SERPENT-SET / SILVER-FINDS (PIN MOVED): the sale reads the embers' one sum (EMBERS_EARNED_SQL) - re-aimed by content."
   },
   {
     "name": "WB9g-the-spend-never-added",

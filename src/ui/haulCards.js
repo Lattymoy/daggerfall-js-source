@@ -16,7 +16,8 @@
 // pack - GATHER-SAID's reports), and the XP on the same card, its rank's
 // progress a bar; silver a coin, its source and the balance, a combat
 // strike the day's 150 a bar; a Motherlode one card, its ore and its
-// silver and its twenty.
+// silver and its twenty. SILVER-FINDS: a find's silver - a loot find's
+// or a harvest's - its own card, the day's finds its bar.
 //
 // PURE: an answer in, the cards' data out - no DOM, no clock (the feed
 // draws them). Every builder answers [] for an answer it cannot read, and
@@ -27,10 +28,11 @@ import { material } from '../net/nodeLaw.js';
 import { materialCountLabel, mintMaterialItem } from '../systems/profItems.js';
 import { inventoryItemImage } from '../systems/itemTemplates.js';
 import { lootRarityOn } from '../systems/lootRarity.js';
-import { MARKS_COMBAT } from '../net/marksLaw.js';
+import { MARKS_COMBAT, MARKS_FAUCETS } from '../net/marksLaw.js';
 
-/** A strike the day's combat cap refused, as its muted card says it - the chat's own line keeps the whole of it. */
-export const HAUL_CAPPED_TEXT = `No silver - the day's ${MARKS_COMBAT.perDay} for breaches and towns is reached`;
+/** A strike the day's combat cap refused, as its muted card says it - the chat's own line keeps the whole of it.
+ *  SERPENT-SET: the serpents strike under the same cap. */
+export const HAUL_CAPPED_TEXT = `No silver - the day's ${MARKS_COMBAT.perDay} for breaches, towns and serpents is reached`;
 /** A gather card holds a little longer than a pickup's (ui/pickupFeed.js PICKUP_FEED_HOLD_MS) - it says more. */
 export const HAUL_HOLD_MS = 3200;
 /** A Motherlode's card stands longer still - the day's one. */
@@ -118,7 +120,9 @@ export function harvestHauls(d, { name = null, note = null } = {}) {
     main.miners = Number.isSafeInteger(d.lode?.struck) ? `${d.lode.struck} / ${d.lode.strikers ?? 20} miners` : null;
     main.hold = LODE_HOLD_MS;
   }
-  const out = [main];
+  const out = /** @type {any[]} */ ([main]);   // the goods' card, then each find's - a gem's, a second find's, silver's
+  // SILVER-FINDS: a harvest's find - the service's dice in the harvest (a Motherlode's `marks` is its own strike, above)
+  if (!d.motherlode) { const f = findHaul(d.marks, 'gather'); if (f) out.push(f); }
   // AUDIT HAUL-CARDS B1: "a gem" only for a gem - a tree's `gem` is its Heartwood, a body's its DFU part (a Big Tooth);
   // B3: each find its own Stores count, as the answer carries it (`gemStore`, `extraStore`)
   if (d.gem) { const g = storesHaul(d.gem, came(d.gem, 1), { held: heldOf(carried ? d.gemCarried : d.gemStore), sub: material(d.gem)?.family === 'gems' ? 'a gem' : null, where }); if (g) out.push(g); }
@@ -127,31 +131,58 @@ export function harvestHauls(d, { name = null, note = null } = {}) {
 }
 
 /** The silver a strike answered, as a card - `source` its words ("Town defended"); a combat strike its day's bar; a
- *  strike the day's cap refused, a muted card that says so; nothing for no silver at all. */
-export function silverHaul(marks, { source = '', combat = false, cappedText = null } = {}) {
+ *  strike the day's cap refused, a muted card that says so; nothing for no silver at all. SILVER-FINDS: `day` a find's
+ *  own bar - `{ earned, max, text }`, its faucet's day. */
+export function silverHaul(marks, { source = '', combat = false, cappedText = null, day = null } = {}) {
   if (!marks || typeof marks !== 'object') return null;
   const n = Math.trunc(Number(marks.struck) || 0);
   if (n <= 0) {
     return marks.why === 'cap' && cappedText ? { key: 'silver\u0002capped', haul: 'note', text: cappedText, count: 1, hold: HAUL_HOLD_MS } : null;
   }
-  const c = combat && Number.isSafeInteger(marks.combat?.earned) ? marks.combat : null;
+  const c = combat && Number.isSafeInteger(marks.combat?.earned) ? { earned: marks.combat.earned, max: marks.combat.max ?? MARKS_COMBAT.perDay, text: COMBAT_BAR_TEXT }
+    : day && Number.isSafeInteger(day.earned) && day.max > 0 ? day : null;
   return {
     key: `silver\u0002${source}`, haul: 'silver', count: n, source, balance: Number.isSafeInteger(marks.balance) ? marks.balance : null,
-    ...(c ? { earned: c.earned, max: c.max ?? MARKS_COMBAT.perDay } : {}),
+    ...(c ? { earned: c.earned, max: c.max, bar: c.text } : {}),
     hold: HAUL_HOLD_MS, adds: ['count'], latest: ['balance', 'earned', 'max'],
   };
 }
 
+/** A combat strike's bar, as its card says it. */
+export const COMBAT_BAR_TEXT = 'Combat today';
+/** SILVER-FINDS: a find's source and its day's bar, as its card says them - a loot find's kind (marksLaw.js FIND_KINDS)
+ *  and a harvest's (`gather`), each faucet's day its own (MARKS_FAUCETS.find, .gather). */
+export const FIND_SOURCE = Object.freeze({ corpse: 'Found on the body', pile: 'Found in the treasure', search: 'Found in the search', gather: 'Found while gathering' });
+export const FIND_BAR_TEXT = Object.freeze({ find: 'Finds today', gather: 'Gathering finds today' });
 /**
- * A COUNTED CLAIM'S SILVER AS ITS CARDS (a raid's or a gate's answer - net/marksBook.js claimLines' own data): its strike
- * (the day's combat bar on it, or the cap's muted card), the guild deed it completed (into the treasury - brass, never
- * the account's coin) and each contract that paid it. The chat keeps its lines; these are what the eye catches.
- * @param {any} data @param {'raid'|'gate'} kind
+ * SILVER-FINDS: A FIND'S SILVER AS ITS CARD - a loot find's answer (net/marksBook.js find's `found`) or a harvest's
+ * `marks`: `+3 silver`, where it was found, the balance, its faucet's day a bar; nothing where it struck none (a find
+ * the day's cap met is no find to show - the chat says nothing of it either).
+ * @param {any} found @param {'corpse'|'pile'|'search'|'gather'} kind
+ */
+export function findHaul(found, kind) {
+  if (!found || typeof found !== 'object' || !(Number(found.struck) > 0)) return null;
+  const faucet = kind === 'gather' ? 'gather' : 'find';
+  const t = found.today;
+  return silverHaul(found, {
+    source: FIND_SOURCE[kind] ?? FIND_SOURCE.pile,
+    day: Number.isSafeInteger(t?.found) ? { earned: t.found, max: Number.isSafeInteger(t.max) ? t.max : MARKS_FAUCETS[faucet].perDay, text: FIND_BAR_TEXT[faucet] } : null,
+  });
+}
+
+/** A combat claim's source, as its silver card says it. SERPENT-SET: a serpent slain. */
+export const CLAIM_SOURCE = Object.freeze({ gate: 'Breach closed', raid: 'Town defended', serpent: 'Serpent slain' });
+/**
+ * A COUNTED CLAIM'S SILVER AS ITS CARDS (a raid's, a gate's or - SERPENT-SET - a serpent's answer: net/marksBook.js
+ * claimLines' own data): its strike (the day's combat bar on it, or the cap's muted card), the guild deed it completed
+ * (into the treasury - brass, never the account's coin) and each contract that paid it. The chat keeps its lines; these
+ * are what the eye catches.
+ * @param {any} data @param {'raid'|'gate'|'serpent'} kind
  */
 export function claimHauls(data, kind = 'gate') {
   if (!data || typeof data !== 'object') return [];
   const out = [];
-  const strike = silverHaul(data.marks, { source: kind === 'raid' ? 'Town defended' : 'Breach closed', combat: true, cappedText: HAUL_CAPPED_TEXT });
+  const strike = silverHaul(data.marks, { source: CLAIM_SOURCE[kind] ?? CLAIM_SOURCE.gate, combat: true, cappedText: HAUL_CAPPED_TEXT });
   if (strike) out.push(strike);
   const deed = data.deed;
   if (deed && Number.isSafeInteger(deed.struck) && deed.struck > 0) {
@@ -181,7 +212,7 @@ export const LODE_ICON_BOX = 38;
 export function haulWords(l) {
   if (l.haul === 'note') return { note: String(l.text ?? '') };
   if (l.haul === 'silver') {
-    const row = Number.isSafeInteger(l.earned) && l.max > 0 ? { text: 'Combat today', fill: Math.max(0, Math.min(1, l.earned / l.max)), end: `${num(l.earned)} / ${num(l.max)}` } : null;
+    const row = Number.isSafeInteger(l.earned) && l.max > 0 ? { text: l.bar ?? COMBAT_BAR_TEXT, fill: Math.max(0, Math.min(1, l.earned / l.max)), end: `${num(l.earned)} / ${num(l.max)}` } : null;   // SILVER-FINDS: a find's day its own words
     return { head: '', plus: `+${num(l.count)}`, name: 'silver', sub: l.source || '', tag: '', end: Number.isSafeInteger(l.balance) ? num(l.balance) : '', row, lode: null };
   }
   const name = l.name ?? materialCountLabel(l.material, l.count);

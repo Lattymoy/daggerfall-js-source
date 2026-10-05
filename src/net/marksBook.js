@@ -30,10 +30,19 @@
 // guild move keeps its id until an answer comes, so a press after a lost
 // answer is the same move, never a second.
 //
+// SILVER-FINDS (2026-10-05): A LOOT FIND - the device rolled it
+// (systems/silverFinds.js), the service strikes what its own dice say
+// under the day's count. Each find carries its own id too, asked again
+// with it while the network or the service falters; one never answered
+// is OWED - asked first, with the same id, by the next find the same
+// account asks - so a lost answer is the line it made, never a second,
+// and a find the asks never reached is not lost to a dropped line. A
+// harvest's find rides the harvest's own answer (`findLine`).
+//
 // Pure - the door, the store and the ids are handed in - so the pins drive
 // it without a network.
 // ═══════════════════════════════════════════════════════════════════
-import { MARKS_BANK, MARKS_COMBAT, MARKS_MOVE_MAX, marksAmountOk, marksText, exchangeGold } from './marksLaw.js';
+import { MARKS_BANK, MARKS_COMBAT, MARKS_MOVE_MAX, marksAmountOk, marksText, exchangeGold, FIND_KINDS, utcDay } from './marksLaw.js';
 import { accountRefusalText } from './accountClient.js';
 import { jittered } from './backoff.js';   // SCALE1: a press's asks spread out
 
@@ -51,14 +60,21 @@ export const MARKS_TRIES = 3;
 export const MARKS_RETRY_MS = Object.freeze([400, 1500]);
 /** The answers a sale is asked again after (the service did not say no): the network, the service's own fault. */
 const RETRY = Object.freeze(['offline', 'server']);
+/** SILVER-FINDS: where a find was found, as its line says it - a loot find's kind (marksLaw.js FIND_KINDS), or a
+ *  harvest's (`gather`). */
+export const FIND_WORDS = Object.freeze({ corpse: 'on the body', pile: 'among the treasure', search: 'tucked in with the find', gather: 'while gathering' });
+/** SILVER-FINDS: the finds a book keeps owed at most - asks never answered, asked again by the next find; past it a
+ *  find is let go (the service's day bounds what they could strike: marksLaw.js MARKS_FAUCETS.find). */
+export const FINDS_OWED_MAX = 20;
 
 /** The words. */
 export const MARKS_TEXT = Object.freeze({
   struck: (n, balance) => `${marksText(n)} struck to your account. You hold ${marksText(balance)}.`,
   // WB12a; WB13b: the record's own line says it is recorded; SILVER: the currency's name; SILVER-WAYS: the day's cap is
-  // the gates' and the raids' together
-  capped: `No silver for this breach. The counting-houses strike ${marksText(MARKS_COMBAT.perDay)} a day for breaches closed and towns defended.`,
-  cappedRaid: `No silver for this town. The counting-houses strike ${marksText(MARKS_COMBAT.perDay)} a day for breaches closed and towns defended.`,
+  // the gates' and the raids' together - SERPENT-SET: and the serpents'
+  capped: `No silver for this breach. The counting-houses strike ${marksText(MARKS_COMBAT.perDay)} a day for breaches closed, towns defended and serpents slain.`,
+  cappedRaid: `No silver for this town. The counting-houses strike ${marksText(MARKS_COMBAT.perDay)} a day for breaches closed, towns defended and serpents slain.`,
+  cappedSerpent: `No silver for this serpent. The counting-houses strike ${marksText(MARKS_COMBAT.perDay)} a day for breaches closed, towns defended and serpents slain.`,
   /** SILVER-WAYS: a guild deed this claim completed - three of the guild's accounts on one raid or gate. */
   deed: (n, guild) => `A deed for ${guild?.name ?? 'your guild'}: three of its members stood together. ${marksText(n)} struck to its treasury.`,
   /** SILVER-WAYS: a guild contract's pay for a town defended. */
@@ -68,6 +84,8 @@ export const MARKS_TEXT = Object.freeze({
   settled: (marks, gold) => `The Bank has finished counting: ${marksText(marks)} bought for ${gold.toLocaleString('en-US')} gold, paid into your account.`,
   movedIn: (marks) => `${marksText(marks)} put in.`,
   movedOut: (marks) => `${marksText(marks)} taken out.`,
+  /** SILVER-FINDS: a find struck - a loot find's or a harvest's (`kind`, FIND_WORDS) - and the balance after it. */
+  found: (n, balance, kind) => `You find ${marksText(n)} ${FIND_WORDS[kind] ?? FIND_WORDS.pile}.${Number.isSafeInteger(balance) ? ` You hold ${marksText(balance)}.` : ''}`,
 });
 
 /** A request id: `m` and fifteen of base 36, from the handed-in randomness (crypto's by default). */
@@ -84,10 +102,12 @@ export function mintMarksRid(rand = (b) => globalThis.crypto.getRandomValues(b))
  *   character?: () => (string|null),
  *   rid?: () => string,
  *   sleep?: (ms: number) => Promise<void>,
+ *   nowMs?: () => number,
  * }} deps `character` the character this device plays now (a kept sale pays only it); `sleep` the wait between a
- *   press's asks (SCALE1 - the pins pass their own)
+ *   press's asks (SCALE1 - the pins pass their own); `nowMs` the clock the day's finds are counted by (SILVER-FINDS -
+ *   the host's shared one)
  */
-export function createMarksBook({ door, store = null, character = () => null, rid = () => mintMarksRid(), sleep = (ms) => new Promise((r) => setTimeout(r, ms)) }) {
+export function createMarksBook({ door, store = null, character = () => null, rid = () => mintMarksRid(), sleep = (ms) => new Promise((r) => setTimeout(r, ms)), nowMs = () => Date.now() }) {
   const state = { balance: /** @type {number|null} */ (null), today: /** @type {any} */ (null), open: /** @type {boolean|null} */ (null) };
   const account = () => { try { return door.account?.() ?? null; } catch { return null; } };
   /** The table as the store holds it - a store that refused a write is read from memory, and only then (AUDIT 28 M1:
@@ -127,6 +147,12 @@ export function createMarksBook({ door, store = null, character = () => null, ri
   };
   /** Guild moves whose answers did not come, by what they move - a press after a lost answer is the same move. */
   const moving = new Map();
+  /** SILVER-FINDS: the finds whose asks were never answered (the network, the service's own fault) - `{ rid, kind,
+   *  account }`, asked again with the same id by the next find that account asks; FINDS_OWED_MAX at most. */
+  const owed = [];
+  /** SILVER-FINDS: the account and the UTC day (the book's clock) the service said that account's finds were met - none
+   *  is asked again until the day turns (another account signed in asks its own). */
+  let findsMet = /** @type {{ account: string, day: number }|null} */ (null);
 
   /** Asks one act until the service answers it (or says no), at most MARKS_TRIES times. */
   async function ask(fn) {
@@ -151,14 +177,14 @@ export function createMarksBook({ door, store = null, character = () => null, ri
     /** The balance a gate's strike or an account card answered. */
     set(balance) { if (Number.isSafeInteger(balance)) { state.balance = balance; state.open = true; } },
     /** The line a gate claim's `marks` says, or null for none (a service from before it, or Marks not this account's).
-     *  SILVER-WAYS: `kind` the claim's - a raid's capped line names the town. */
+     *  SILVER-WAYS: `kind` the claim's - a raid's capped line names the town; SERPENT-SET: a serpent's, the serpent. */
     strikeLine(marks, kind = 'gate') {
       if (!marks || typeof marks !== 'object') return null;
       if (Number.isSafeInteger(marks.balance)) this.set(marks.balance);
       // SILVER-WAYS: the day's combat silver as the strike answered it - the Bank's card reads it
       if (Number.isSafeInteger(marks.combat?.earned)) state.today = { ...(state.today ?? {}), combat: marks.combat.earned, combatMax: marks.combat.max };
       if (marks.struck > 0) return MARKS_TEXT.struck(marks.struck, marks.balance);
-      return marks.why === 'cap' ? (kind === 'raid' ? MARKS_TEXT.cappedRaid : MARKS_TEXT.capped) : null;
+      return marks.why === 'cap' ? (kind === 'raid' ? MARKS_TEXT.cappedRaid : kind === 'serpent' ? MARKS_TEXT.cappedSerpent : MARKS_TEXT.capped) : null;
     },
     /** SILVER-WAYS: every silver line a counted claim's answer says - its strike (strikeLine), the guild deed it
      *  completed, the contracts that paid it - in that order; none for a service from before them. */
@@ -170,6 +196,54 @@ export function createMarksBook({ door, store = null, character = () => null, ri
       if (data.deed && Number.isSafeInteger(data.deed.struck) && data.deed.struck > 0) out.push(MARKS_TEXT.deed(data.deed.struck, data.deed.guild));
       for (const c of Array.isArray(data.contracts) ? data.contracts : []) {
         if (c && Number.isSafeInteger(c.pay) && c.pay > 0) out.push(MARKS_TEXT.contract(c.pay, c.guild));
+      }
+      return out;
+    },
+    /** SILVER-FINDS: a find's line - a loot find's (`kind` its FIND_KINDS) or a harvest's (`gather`: the answer's
+     *  `marks`) - or null where it struck none (the day's met, a purse at its most); the balance and the day's count
+     *  kept either way. */
+    findLine(found, kind = 'gather') {
+      if (!found || typeof found !== 'object') return null;
+      if (Number.isSafeInteger(found.balance)) this.set(found.balance);
+      const day = found.today;
+      if (Number.isSafeInteger(day?.found)) {
+        state.today = { ...(state.today ?? {}), ...(kind === 'gather' ? { gathered: day.found, gatherMax: day.max } : { found: day.found, findMax: day.max }) };
+      }
+      return Number.isSafeInteger(found.struck) && found.struck > 0 ? MARKS_TEXT.found(found.struck, found.balance, kind) : null;
+    },
+    /**
+     * SILVER-FINDS: A LOOT FIND ASKED (systems/silverFinds.js rolled it) - the service strikes what its own dice say,
+     * under the day's count (server-account/src/marks.js findMarks). Its own request id, asked again with it while the
+     * network or the service falters (MARKS_TRIES); one never answered is OWED, asked first by this account's next find
+     * - and once one goes unanswered the rest wait owed, unasked, so a dropped line costs a find one ask's tries.
+     * Answers every find this ask settled, the owed first - `{ kind, found, line }`, `found` the service's answer and
+     * `line` its words (null where it struck none) - and none where Marks are not this account's (no session, a guest,
+     * the switch shut) or its day's finds are met.
+     * @param {string} kind @returns {Promise<Array<{ kind: string, found: any, line: string|null }>>}
+     */
+    async find(kind) {
+      const me = account();
+      if (!me || !FIND_KINDS.includes(kind) || state.open === false) return [];
+      const day = utcDay(Math.floor(nowMs() / 1000));
+      if (findsMet?.account === me && findsMet.day === day) return [];
+      const asks = [];
+      for (let i = owed.length - 1; i >= 0; i--) if (owed[i].account === me) asks.unshift(...owed.splice(i, 1));
+      asks.push({ rid: rid(), kind, account: me });
+      const out = [];
+      let down = false;   // an ask the network never answered: the rest are owed unasked - one find's tries, never twenty's
+      for (const f of asks) {
+        const r = down ? null : await ask(() => door.find(f.kind, f.rid));
+        if (r?.ok) {
+          const found = r.data ?? {};
+          if (Number.isSafeInteger(found.today?.found) && found.today.found >= found.today.max) findsMet = { account: me, day };
+          out.push({ kind: f.kind, found, line: this.findLine(found, f.kind) });
+        } else if (r?.error === 'marks-need-account' || r?.error === 'marks-closed') {
+          state.open = false; state.balance = null;   // not this account's: refresh's own reading, and nothing asked again
+          return out;
+        } else if (down || RETRY.includes(r?.error)) {
+          down = true;
+          if (owed.length < FINDS_OWED_MAX) owed.push(f);   // never answered: owed
+        }
       }
       return out;
     },

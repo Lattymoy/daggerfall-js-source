@@ -84,6 +84,7 @@ on:
       - "src/net/legalLaw.js"
       - "src/net/raidReceipt.js"
       - "src/net/serpentReceipt.js"
+      - "src/net/serpentHoardLaw.js"
       - "src/net/arenaReceipt.js"
       - "src/net/arenaLaw.js"
       - "src/net/wire.js"

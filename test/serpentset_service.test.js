@@ -1,0 +1,126 @@
+// SERPENT-SET (2026-10-05, Mac: "The serpent boss needs to use the currency from oblivion gate and have its own equipment
+// rewards"; with SILVER-FINDS: "Silver should be more accessible in more forms of interactions ... different
+// activities"): THE SERVICE'S HALF - a serpent's row says the embers its hoard paid (migration 0083), the insignia's
+// purse and its sale count them with a breach's, and a serpent slain strikes its silver under the day's combat cap with
+// the gates and the raids. Driven through the real Worker over node:sqlite with every migration applied
+// (test/accountDb.mjs). bible/11-Multiplayer/Sea-Serpent.md section 8; bible/06-Systems/Professions-Arc.md 10.5.
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+
+import { standService, T0 } from './accountDb.mjs';
+import { mintSerpentReceipt } from '../src/net/serpentReceipt.js';
+import { MARKS_FAUCETS, MARKS_COMBAT, serpentStrikeOf, utcDay } from '../src/net/marksLaw.js';
+import { SERPENT_EMBERS } from '../src/net/serpentHoardLaw.js';
+import { INSIGNIA } from '../src/net/insignia.js';
+import { ACCOUNT_VERSION } from '../server-account/src/service.js';
+
+const { subtle } = globalThis.crypto;
+const src = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
+let _now = T0;
+const realNow = Date.now;
+const clock = (s) => { _now = s; Date.now = () => _now * 1000; };
+test.after(() => { Date.now = realNow; });
+clock(T0);
+const DAY = 363;   // a serpent day (SERPENT_EVERY_DAYS 2, phase 1) - +2 a serpent's next
+const CH = 'char-0001';
+
+async function stand(extra = {}) {
+  const s = await standService({ MARKS_OPEN: 'on', ...extra });
+  const raw = s.env.DB._raw;
+  const serpent = async (who, day, x = 'dealt') => s.call('/v1/serpent/claim', {
+    receipt: await mintSerpentReceipt({ d: day, b: 'sethrakul', s: who.id, c: 99, x, h: 4, l: 20 }, s.gateKey, { subtle, nowS: _now }), character: CH, name: who.handle,
+  }, who.secret);
+  const balance = (who) => Number(raw.prepare('SELECT balance FROM marks WHERE account = ?').get(who.id)?.balance ?? 0);
+  const lines = (kind) => raw.prepare('SELECT * FROM marks_ledger WHERE kind = ? ORDER BY seq').all(kind);
+  return { ...s, raw, serpent, balance, lines };
+}
+
+test('SERPENT-SET the law: a serpent strikes 40 silver, a ship that stood half; it is a combat faucet, under the day\'s 150 with the gates and the raids - the ceiling unmoved; its line a mint (mutants: the amount; the stood share; the cap\'s kinds)', () => {
+  assert.deepEqual(MARKS_FAUCETS.serpent, { amount: 40, stood: 0.5 });
+  assert.deepEqual([serpentStrikeOf('dealt'), serpentStrikeOf('stood'), serpentStrikeOf(undefined)], [40, 20, 40]);
+  assert.deepEqual(MARKS_COMBAT, { kinds: ['gate', 'raid', 'serpent'], perDay: 150 });
+  assert.equal(SERPENT_EMBERS, 1);
+});
+
+test('SERPENT-SET the claim: a counted serpent\'s row says its embers (SERPENT_EMBERS, dealt or stood); a row from before migration 0083 says none - its hoard paid none (mutants: the embers unwritten; the default)', async () => {
+  clock(T0);
+  const s = await stand();
+  const ann = await s.registered('Anna', { character: CH });
+  const bo = await s.registered('Bors', { character: CH });
+  assert.equal((await s.serpent(ann, DAY)).body.recorded, true);
+  assert.equal((await s.serpent(bo, DAY, 'stood')).body.recorded, true);
+  const rows = s.raw.prepare('SELECT account, stones FROM serpent_kills ORDER BY account').all();
+  assert.deepEqual(rows.map((r) => r.stones), [SERPENT_EMBERS, SERPENT_EMBERS]);
+  s.raw.prepare('INSERT INTO serpent_kills (day, account, boss, hull, char_id, xp, nonce, at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').run(DAY - 2, ann.id, 'sethrakul', 4, CH, 0, 'n0', T0);
+  assert.equal(s.raw.prepare('SELECT stones FROM serpent_kills WHERE day = ? AND account = ?').get(DAY - 2, ann.id).stones, 0, 'a serpent from before paid no ember');
+  assert.match(src('server-account/migrations/0083_serpent_embers.sql'), /^ALTER TABLE serpent_kills ADD COLUMN stones INTEGER NOT NULL DEFAULT 0;$/m);
+});
+
+test('SERPENT-SET the insignia: the purse counts a serpent\'s embers with a breach\'s, and the sale reads the same sum - an account that has only fought serpents buys with them; never past them (mutants: the gates alone; the purse and the sale apart)', async () => {
+  clock(T0);
+  const s = await stand();
+  const ann = await s.registered('Anna', { character: CH });
+  const title = INSIGNIA.find((o) => o.kind === 'title');
+  for (let i = 0; i < title.price; i++) s.raw.prepare('INSERT INTO serpent_kills (day, account, boss, hull, char_id, xp, nonce, at, stones) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    .run(1001 + 2 * i, ann.id, 'sethrakul', 4, CH, 0, `n${i}`, T0, SERPENT_EMBERS);
+  const bought = await s.call('/v1/account/insignia', { item: title.id }, ann.secret);
+  assert.equal(bought.status, 200, JSON.stringify(bought.body));
+  assert.equal(bought.body.purse, 0, 'every ember of thirty serpents spent');
+  const aura = INSIGNIA.find((o) => o.kind === 'aura');
+  const short = await s.call('/v1/account/insignia', { item: aura.id }, ann.secret);
+  assert.deepEqual([short.status, short.body.error], [409, 'short']);
+  assert.match(src('server-account/src/accounts.js'), /const EMBERS_EARNED_SQL = '\(\(SELECT COALESCE\(SUM\(stones\), 0\) FROM gate_kills WHERE account = \?1\) \+ \(SELECT COALESCE\(SUM\(stones\), 0\) FROM serpent_kills WHERE account = \?1\)\)';/);
+  assert.equal((src('server-account/src/accounts.js').match(/\$\{EMBERS_EARNED_SQL\}/g) ?? []).length, 2, 'the purse and the sale, one sum');
+});
+
+test('SERPENT-SET the silver: a serpent counted strikes 40 (a ship that stood 20), said as `marks` with the day\'s combat bar; under the one cap with the gates - the day\'s last strike what it has left, then `cap`; claimed twice, struck once; its line `serpent:<day>` (mutants: the guard unread; the cap apart; the amount)', async () => {
+  clock(T0);
+  const s = await stand();
+  const ann = await s.registered('Anna', { character: CH });
+  const one = await s.serpent(ann, DAY);
+  assert.equal(one.status, 200, JSON.stringify(one.body));
+  assert.deepEqual(one.body.marks, { struck: 40, balance: 40, combat: { earned: 40, max: 150 } });
+  assert.equal('day' in one.body || 'struck' in one.body, false, 'the service\'s own words stay home');
+  const again = await s.serpent(ann, DAY);
+  assert.deepEqual([again.body.recorded, again.body.why, again.body.marks], [false, 'claimed', undefined], 'claimed twice: struck once');
+  assert.equal((await s.claim(ann, 500, _now)).body.marks.struck, 50);
+  assert.equal((await s.claim(ann, 501, _now)).body.marks.struck, 50);
+  const three = await s.serpent(ann, DAY + 2, 'stood');
+  assert.deepEqual(three.body.marks, { struck: 10, balance: 150, combat: { earned: 150, max: 150 } }, 'a stander\'s 20, cut to what the day had left');
+  const four = await s.serpent(ann, DAY + 4);
+  assert.equal(four.body.recorded, true, 'counted all the same');
+  assert.deepEqual(four.body.marks, { struck: 0, balance: 150, combat: { earned: 150, max: 150 }, why: 'cap' });
+  assert.deepEqual(s.lines('serpent').map((l) => [l.amount, l.rid, l.day]), [[40, `serpent:${DAY}`, utcDay(T0)], [10, `serpent:${DAY + 2}`, utcDay(T0)]]);
+  clock(T0 + 86400);
+  const bo = await s.registered('Bors', { character: CH });
+  assert.equal((await s.serpent(bo, DAY + 6, 'stood')).body.marks.struck, 20, 'a stander: half');
+  clock(T0);
+});
+
+test('SERPENT-SET the switch and the guest: no silver while it is shut, nor for a guest - the serpent counted (or not) all the same (mutants: the switch unread; a guest struck)', async () => {
+  clock(T0);
+  const shut = await stand({ MARKS_OPEN: 'off' });
+  const a = await shut.registered('Anna', { character: CH });
+  const r = await shut.serpent(a, DAY);
+  assert.deepEqual([r.body.recorded, r.body.marks], [true, null], 'counted, and silver not this account\'s');
+  assert.equal(shut.lines('serpent').length, 0);
+  shut.env.MARKS_OPEN = 'on';
+  const retry = await shut.serpent(a, DAY);
+  assert.deepEqual([retry.body.recorded, retry.body.why], [false, 'claimed']);
+  assert.equal(shut.lines('serpent').length, 0, 'a claim that wrote no row strikes nothing, the switch open or not - the strike is the row\'s own');
+  const s = await stand();
+  const g = await s.guest();
+  const gr = await s.call('/v1/serpent/claim', { receipt: await mintSerpentReceipt({ d: DAY, b: 'sethrakul', s: g.id, c: 99, x: 'dealt', h: 4, l: 20 }, s.gateKey, { subtle, nowS: _now }), character: CH }, g.secret);
+  assert.deepEqual([gr.body.recorded, gr.body.why, 'marks' in gr.body], [false, 'guest', false]);
+  assert.equal(s.lines('serpent').length, 0);
+});
+
+test('SERPENT-SET the deploy: acct83 in the Worker and its config; the account deploy watches the hoard\'s law; the RELAY never reads it - its version untouched, its graph without it (mutants: the version unmoved; the deploy blind to the law)', () => {
+  assert.equal(ACCOUNT_VERSION, 'acct83');
+  assert.match(src('server-account/wrangler.toml'), /^ACCOUNT_VERSION = "acct83"$/m);
+  assert.match(src('.github/workflows/account-deploy.yml'), /^\s+- "src\/net\/serpentHoardLaw\.js"$/m);
+  assert.match(src('server-account/src/serpents.js'), /import \{ SERPENT_EMBERS \} from '\.\.\/\.\.\/src\/net\/serpentHoardLaw\.js';/);
+  assert.doesNotMatch(src('src/net/serpentLaw.js'), /SERPENT_EMBERS/, 'never in the relay\'s serpent law');
+  assert.doesNotMatch(src('test/relayversion.test.js'), /serpentHoardLaw/, 'the relay\'s graph never reaches it');
+});
