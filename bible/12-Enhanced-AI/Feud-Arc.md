@@ -1669,6 +1669,13 @@ With 22 and 23 as recommended together (measured): the will 100 / 90 / 12%, the 
   carries it. `ui/enhancedHud.js` draws it under the health (`.hud-foepoise`, its state a class, its fill, its word
   beside it): amber; red and HATCHED for iron (never by colour alone); a white flash at a break (none under reduced
   motion); "Open" with a gold rim. The quest card clears the taller bar (+12 px at the HUD's scale).
+  POISE-BOX (field, 2026-10-05, the owner's screenshot - "enemies seem to have this black transparent bar"): the state
+  classes were bare words, and the idle state's `empty` took the sheet's `.empty` component (`ui/enhancedStyle.js`, the
+  windows' "nothing here" box: a dashed border, 26 px of padding), so every foe at rest wore a 54 px dark box under its
+  health where the 6 px track should be - measured in Chromium, the other states untouched. Every class the track wears
+  is its own now (`poise-<state>`, `poise-flash`), and `tell9_screen`'s POISE-BOX pin reads the producer's states and
+  the HUD's own class line and holds that no sheet rule styles one of them off the track (mutants:
+  `tools/mutants/tell9.json` POISE-BOX-bare-states, POISE-BOX-bare-flash).
 - **The words on the hit** - `ui/hitNumbers.js HIT_TAGS`, `tagHit`, `showWord`: the door decides after the formula
   reports, so the door's word joins the number my last HIT raised on that same foe inside `TAG_JOIN_MS` (250 ms),
   beside a backstab's own; none such (a spell's landing raised no number, a miss is no blow) and it rises alone.

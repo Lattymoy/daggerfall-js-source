@@ -2880,23 +2880,25 @@ html.plus-pad-prompts-visible .px-over > .px-stage:not(.px-acctstage):not(.px-ti
    outside one; amber, filling toward its poise; red and HATCHED for iron (never by colour alone); a white flash at a
    break, "Staggered"; "Open" through an overreach. AUDIT TELL U3: the word stands centred UNDER the track (beside it, it
    ran past the bar's right under a narrow screen's quest card), and the card clears it (the --qt-clear rules below).
-   U4: the flash plays on THIS foe's break alone (its flash class, enhancedHud.js) - never on a bar turned onto a staggered one. */
+   U4: the flash plays on THIS foe's break alone (its flash class, enhancedHud.js) - never on a bar turned onto a staggered one.
+   POISE-BOX (field, 2026-10-05): every state class is the track's own, poise-<state> and poise-flash - the bare word
+   'empty' took the sheet's .empty component above (a dashed box, 26px of padding), and the idle track stood 54px tall. */
 .hud-foepoise { display: none; position: relative; width: min(280px, 40vw); height: 6px;
   background: rgba(10,12,17,0.6); border: 1px solid rgba(125,116,96,0.45); }
 .hud-foe.poised .hud-foepoise { display: block; }
 .hud-poisefill { display: block; height: 100%; width: 0; background: transparent; }
-.hud-foepoise.windup .hud-poisefill { background: #e0a43a; }
-.hud-foepoise.iron .hud-poisefill { background: repeating-linear-gradient(135deg, #d8342c 0 4px, #7a1410 4px 6px); }
-.hud-foepoise.staggered .hud-poisefill { background: #fff; }
-.hud-foepoise.staggered.flash .hud-poisefill { animation: hud-poise-flash 0.45s ease-out; }
-.hud-foepoise.open { border-color: rgba(241,192,79,0.9); }
+.hud-foepoise.poise-windup .hud-poisefill { background: #e0a43a; }
+.hud-foepoise.poise-iron .hud-poisefill { background: repeating-linear-gradient(135deg, #d8342c 0 4px, #7a1410 4px 6px); }
+.hud-foepoise.poise-staggered .hud-poisefill { background: #fff; }
+.hud-foepoise.poise-staggered.poise-flash .hud-poisefill { animation: hud-poise-flash 0.45s ease-out; }
+.hud-foepoise.poise-open { border-color: rgba(241,192,79,0.9); }
 .hud-poiseword { position: absolute; left: 50%; top: calc(100% + 3px); transform: translateX(-50%); white-space: nowrap; line-height: 13px;
   font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; }
-.hud-foepoise.iron .hud-poiseword { color: #ff6a5a; }
-.hud-foepoise.staggered .hud-poiseword { color: #fff; }
-.hud-foepoise.open .hud-poiseword { color: #f1c04f; }
+.hud-foepoise.poise-iron .hud-poiseword { color: #ff6a5a; }
+.hud-foepoise.poise-staggered .hud-poiseword { color: #fff; }
+.hud-foepoise.poise-open .hud-poiseword { color: #f1c04f; }
 @keyframes hud-poise-flash { 0% { box-shadow: 0 0 10px 3px rgba(255,255,255,0.9); } 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); } }
-@media (prefers-reduced-motion: reduce) { .hud-foepoise.staggered.flash .hud-poisefill { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .hud-foepoise.poise-staggered.poise-flash .hud-poisefill { animation: none; } }
 
 /* THE VITALS. Magicka, health, fatigue - the reference's own order and
    DFU's own three, each with its number beside it. */

@@ -1018,7 +1018,9 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
       const flash = pk === 'staggered' && last.foePoiseRef === ref && last.foePoise !== 'staggered';
       last.foePoise = pk; last.foePoiseRef = ref;
       parts.foe.classList.toggle('poised', !!p);
-      parts.foePoise.className = `hud-foepoise${p ? ` ${p.state}` : ''}${flash ? ' flash' : ''}`;
+      // POISE-BOX (field, 2026-10-05): the state classes are the track's own, `poise-` each - as bare words, 'empty'
+      // took the sheet's `.empty` component (a dashed box with 26px of padding) and the idle track stood 54px tall
+      parts.foePoise.className = `hud-foepoise${p ? ` poise-${p.state}` : ''}${flash ? ' poise-flash' : ''}`;
     }
     if (p) {
       width(parts.foePoiseFill, 'foePoiseFill', p.fill * 100);

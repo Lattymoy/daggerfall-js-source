@@ -11,7 +11,7 @@
 import './modsOff.js';
 import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { setPref, PREF_DEFAULTS } from '../src/systems/uiPrefs.js';
 import { Collider } from '../src/player/collider.js';
 import { EnemyAI } from '../src/characters/enemyMotor.js';
@@ -366,13 +366,39 @@ test('TELL9: the enhanced HUD draws the track under the foe\'s health - its stat
   assert.match(hud, /put\(parts\.foePoiseWord, 'foePoiseWord', p\.word\);/);
   const css = rd('src/ui/enhancedStyle.js');
   assert.match(css, /\.hud-foe\.poised \.hud-foepoise \{ display: block; \}/);
-  assert.match(css, /\.hud-foepoise\.windup \.hud-poisefill \{ background: #e0a43a; \}/);
-  assert.match(css, /\.hud-foepoise\.iron \.hud-poisefill \{ background: repeating-linear-gradient\(/, 'iron never by colour alone');
+  assert.match(css, /\.hud-foepoise\.poise-windup \.hud-poisefill \{ background: #e0a43a; \}/);   // PIN MOVED (POISE-BOX): the state classes are the track's own
+  assert.match(css, /\.hud-foepoise\.poise-iron \.hud-poisefill \{ background: repeating-linear-gradient\(/, 'iron never by colour alone');
   // PIN MOVED (AUDIT TELL U3/U4): the flash on THIS foe's break alone; the word under the track, which the card clears
-  assert.match(css, /\.hud-foepoise\.staggered \.hud-poisefill \{ background: #fff; \}\n\.hud-foepoise\.staggered\.flash \.hud-poisefill \{ animation: hud-poise-flash/);
-  assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{ \.hud-foepoise\.staggered\.flash \.hud-poisefill \{ animation: none; \} \}/);
+  assert.match(css, /\.hud-foepoise\.poise-staggered \.hud-poisefill \{ background: #fff; \}\n\.hud-foepoise\.poise-staggered\.poise-flash \.hud-poisefill \{ animation: hud-poise-flash/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{ \.hud-foepoise\.poise-staggered\.poise-flash \.hud-poisefill \{ animation: none; \} \}/);
   assert.match(css, /body:has\(\.hud-foe\.on\.poised\) \.qtrack \{ --qt-clear: calc\(18px \+ 28px \* var\(--hud-scale, 1\) \+ 30px \+ 74px \* var\(--hud-scale, 1\)\); \}/);
   assert.match(css, /\.hitnum-word \{/);
   assert.match(css, /\.hitnum-perfect \{/);
   assert.match(rd('src/scenes/hostCombat.js'), /setFoePoiseReader\(\(f\) => poiseTrack\(f\?\.ai\)\);/, 'the host registers the brain\'s reading (the HUD imports no brain)');
+});
+
+test('POISE-BOX (field, 2026-10-05, the owner\'s screenshot of a black box under a foe\'s health): every class the poise track wears is its own - no rule in the sheets styles one of them off the track. As bare words the idle state\'s \'empty\' took the sheet\'s .empty component (a dashed box, 26px of padding) and the 6px track stood 54px tall over the world (mutants: the bare state classes; the bare flash)', () => {
+  // the states the producer mints (the inputs of the law's own test above)
+  const blow = (o = {}) => ({ guard: 'poise', ...o });
+  const states = [{ state: 'engage' }, { state: 'windup', blow: blow() }, { state: 'windup', blow: blow({ guard: 'iron' }) }, { state: 'staggered' }, { state: 'overreach' }]
+    .map((tac) => poiseTrack({ _tac: tac }).state);
+  assert.deepEqual(states, ['empty', 'windup', 'iron', 'staggered', 'open']);
+  // the classes the HUD writes for them
+  const write = /parts\.foePoise\.className = `hud-foepoise\$\{p \? ` ([\w-]*)\$\{p\.state\}` : ''\}\$\{flash \? ' ([\w-]+)' : ''\}`;/.exec(rd('src/ui/enhancedHud.js'));
+  assert.ok(write, 'the HUD no longer writes the track\'s classes in the shape this pin reads');
+  const worn = [...states.map((s) => write[1] + s), write[2]];
+  // every rule naming one of them names it ON the track - in every UI module, each of which may inject a sheet
+  const sheets = readdirSync(new URL('../src/ui/', import.meta.url)).filter((f) => f.endsWith('.js')).map((f) => [`src/ui/${f}`, rd(`src/ui/${f}`)]);
+  assert.ok(sheets.length > 100 && sheets.some(([f]) => f === 'src/ui/enhancedStyle.js'), `the scan must see the UI's modules (${sheets.length})`);
+  const off = [];
+  for (const [file, css] of sheets) {
+    for (const cls of worn) {
+      for (const m of css.matchAll(new RegExp(`\\.${cls}(?![\\w-])`, 'g'))) {
+        const before = css.slice(Math.max(0, m.index - 120), m.index);
+        if (!/\.hud-foepoise(?:\.[\w-]+)*$/.test(before)) off.push(`${file}:${css.slice(0, m.index).split('\n').length} .${cls}`);
+      }
+    }
+  }
+  assert.deepEqual(off, [], 'a sheet rule styles a class the poise track wears, off the track');
+  assert.ok(worn.every((c) => c.startsWith('poise-')), worn.join(' '));
 });
