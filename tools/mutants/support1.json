@@ -186,28 +186,28 @@
   {
     "name": "SUPPORT1-band-threshold",
     "file": "src/ui/enhancedStyle.js",
-    "old": "@media (min-width: 481px) and (max-width: 783px) {",
-    "new": "@media (min-width: 481px) and (max-width: 784px) {",
+    "old": "@media (min-width: 481px) and (max-width: 1007px) {",
+    "new": "@media (min-width: 481px) and (max-width: 1008px) {",
     "tests": [
       "test/support1_asks.test.js"
     ],
-    "note": "The band's width no longer the asks' reach."
+    "note": "The band's width no longer the larger mark's reach."
   },
   {
     "name": "SUPPORT1-band-top-on-the-marks",
     "file": "src/ui/enhancedStyle.js",
-    "old": "    padding: 84px 24px 76px; }",
-    "new": "    padding: 74px 24px 76px; }",
+    "old": "{ padding: 84px 24px 76px; }",
+    "new": "{ padding: 80px 24px 76px; }",
     "tests": [
       "test/support1_asks.test.js"
     ],
-    "note": "The wordmark under the profile's frame."
+    "note": "The wordmark against the profile's frame (16 + 58 + 6)."
   },
   {
     "name": "SUPPORT1-band-foot-short",
     "file": "src/ui/enhancedStyle.js",
-    "old": "    padding: 84px 24px 76px; }",
-    "new": "    padding: 84px 24px 60px; }",
+    "old": "{ padding: 84px 24px 76px; }",
+    "new": "{ padding: 84px 24px 60px; }",
     "tests": [
       "test/support1_asks.test.js"
     ],
@@ -222,16 +222,6 @@
       "test/support1_asks.test.js"
     ],
     "note": "On a phone the wordmark under the asks."
-  },
-  {
-    "name": "SUPPORT1-band-no-centring",
-    "file": "src/ui/enhancedStyle.js",
-    "old": "> :first-child { margin-top: auto; }",
-    "new": "> :first-child { margin-top: 0; }",
-    "tests": [
-      "test/support1_asks.test.js"
-    ],
-    "note": "The door stops centring where it fits."
   },
   {
     "name": "SUPPORT1-no-plus-frame",
@@ -342,5 +332,75 @@
       "test/landing.test.js"
     ],
     "note": "SUPPORT.md names one ask of two."
+  },
+  {
+    "name": "SUPPORT1-door-fit-no-centring",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "> :first-child { margin-top: auto; }",
+    "new": "> :first-child { margin-top: 0; }",
+    "tests": [
+      "test/support1_asks.test.js"
+    ],
+    "note": "The door stops centring where it fits - every fitting door moves up (DOOR-FIT)."
+  },
+  {
+    "name": "SUPPORT1-door-fit-bottom-margin",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "> :last-child { margin-bottom: auto; }",
+    "new": "> :last-child { margin-bottom: 0; }",
+    "tests": [
+      "test/support1_asks.test.js"
+    ],
+    "note": "The free room all goes over the door: a fitting door sinks to the foot."
+  },
+  {
+    "name": "SUPPORT1-door-fit-no-scroll",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "{ justify-content: flex-start; overflow-y: auto; }",
+    "new": "{ justify-content: flex-start; overflow-y: visible; }",
+    "tests": [
+      "test/support1_asks.test.js"
+    ],
+    "note": "PX8's finding back: a short desktop window's last rows past the screen with nothing to scroll."
+  },
+  {
+    "name": "SUPPORT1-door-fit-on-a-phone",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "@media (min-width: 481px) {\n  .px-home:not(.px-over) > .px-stage:not(.px-acctstage) { justify-content: flex-start; overflow-y: auto; }",
+    "new": "@media (min-width: 0px) {\n  .px-home:not(.px-over) > .px-stage:not(.px-acctstage) { justify-content: flex-start; overflow-y: auto; }",
+    "tests": [
+      "test/support1_asks.test.js"
+    ],
+    "note": "A phone's door centred - PX8 starts it at the top."
+  },
+  {
+    "name": "SUPPORT1-caption-line-unbounded",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".px-home:not(.px-over) .px-profilesub { max-width: min(22ch, 140px); }",
+    "new": ".px-home:not(.px-over) .px-profilesub { max-width: 22ch; }",
+    "tests": [
+      "test/support1_asks.test.js"
+    ],
+    "note": "The caption's reach the font's again (158px in Pixelify Sans) - no band can be derived from it."
+  },
+  {
+    "name": "SUPPORT1-caption-bound-the-fonts",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "min(22ch, 140px)",
+    "new": "min(22ch, 158px)",
+    "tests": [
+      "test/support1_asks.test.js"
+    ],
+    "note": "A bound as wide as the font's: the band would have to reach 1043 and a 1024x768 door would scroll."
+  },
+  {
+    "name": "SUPPORT1-caption-name-unbounded",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".px-home:not(.px-over) .px-profilename { max-width: min(14ch, 140px); }",
+    "new": ".px-home:not(.px-over) .px-profilename { max-width: 14ch; }",
+    "tests": [
+      "test/support1_asks.test.js"
+    ],
+    "note": "The name's reach the font's."
   }
 ]

@@ -2248,6 +2248,12 @@ ${badgeCss()}
   max-width: 22ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   font-size: 12px; letter-spacing: 0.04em; color: #9d957f;
 }
+/* SUPPORT1: ON THE FRONT DOOR THE CAPTION IS BOUNDED IN PIXELS. Its two lines' 14ch and 22ch are the font's - up to
+   158px in Pixelify Sans - and a reach that is the font's cannot be the band's (THE CORNERS' BAND, below). 140px keeps
+   "No character yet" whole (123px) and holds the mark's reach to 234px, so the band ends at 1007 and a 1024x768 door
+   still fits without a scroll; a character's longer line ends in its ellipsis three letters sooner. */
+.px-home:not(.px-over) .px-profilename { max-width: min(14ch, 140px); }
+.px-home:not(.px-over) .px-profilesub { max-width: min(22ch, 140px); }
 .px-profile:hover .px-profilename, .px-profile:focus-visible .px-profilename {
   color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
 
@@ -2455,19 +2461,28 @@ ${SUPPORT_MARKS_CSS}
   /* Keep the ordinary pause panel above the clock; its body remains the scroller. */
   .px-over > .px-stage:not(.px-acctstage):not(.px-timersstage) > .px-win { max-height: calc(100dvh - max(7dvh, 64px) - 64px); }
 }
-/* SUPPORT1: THE CORNERS' BAND - the front door's twin of AUDIT TIMERS1 UI-2 (below), which stands the pause window
-   clear of the corner marks over a game. With a mark in each top corner, the door's stage starts below them wherever
-   the wordmark is wide enough to reach under the asks: they reach 122px in (18, their 98, the Plus frame's 6), and
-   (vw - min(540px, 84vw)) / 2 is less than that at every width under 784 - and on a phone, where the marks stand 10px
-   in, always. Measured rather than argued: tools/supportAsksProbe.mjs maps the logo's own opaque pixels onto the
-   screen across 176 sizes. Between 481 and 783 the door still centres where it fits (auto margins take the room left
-   and none that is not) and starts at the top and scrolls where it does not, because the band costs height and a row
-   it pushes off the screen must stay reachable (PX8's law, above). The bottom keeps the one-row foot's 68px. */
-@media (min-width: 481px) and (max-width: 783px) {
-  .px-home:not(.px-over) > .px-stage:not(.px-acctstage) { justify-content: flex-start; overflow-y: auto;
-    padding: 84px 24px 76px; }
+/* DOOR-FIT (2026-10-05, Mac: "Fix these now", of SUPPORT1's finding): THE FRONT DOOR NEVER CUTS ITSELF OFF. Its stage
+   centred by justify-content and scrolled only under PX8's 560px, a threshold set before the door grew to eight rows,
+   so a desktop window from 561 to about 690px tall (the eight-row door's own height) ran off BOTH ends of the screen
+   with nothing to scroll - the wordmark's top, and under about 620px the whole last row (1366x568, 1280x568). At every width the phone rule does not
+   take, it now starts at the top, scrolls, and centres by auto margins, which take the room that is left and none that
+   is not: where the door fits nothing moves, and where it does not every row can be reached. */
+@media (min-width: 481px) {
+  .px-home:not(.px-over) > .px-stage:not(.px-acctstage) { justify-content: flex-start; overflow-y: auto; }
   .px-home:not(.px-over) > .px-stage:not(.px-acctstage) > :first-child { margin-top: auto; }
   .px-home:not(.px-over) > .px-stage:not(.px-acctstage) > :last-child { margin-bottom: auto; }
+}
+/* SUPPORT1: THE CORNERS' BAND - the front door's twin of AUDIT TIMERS1 UI-2 (below), which stands the pause window
+   clear of the corner marks over a game. With a mark in each top corner, the door's stage starts below them wherever
+   the wordmark is wide enough to reach under either: the asks reach 122px in (18, their 98, the Plus frame's 6), the
+   profile 234 (18, its 58px portrait, the 12px gap, its caption's 140px bound, the frame's 6), and
+   (vw - min(540px, 84vw)) / 2 is less than 234 at every width under 1008 - and on a phone, where the marks stand 10px
+   in and the caption is hidden, always. Measured rather than argued: tools/supportAsksProbe.mjs maps the logo's own
+   opaque pixels onto the screen across 192 sizes, a caption at its bound among them. The band costs height, and where
+   the door no longer fits it scrolls (DOOR-FIT, above); its foot keeps the one-row foot's 68px, so the last row can be
+   scrolled clear of About and Screenshots. */
+@media (min-width: 481px) and (max-width: 1007px) {
+  .px-home:not(.px-over) > .px-stage:not(.px-acctstage) { padding: 84px 24px 76px; }
 }
 @media (max-width: 480px) {
   .px-home:not(.px-over) > .px-stage:not(.px-acctstage) { padding-top: max(7dvh, 72px); }

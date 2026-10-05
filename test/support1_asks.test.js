@@ -6,9 +6,10 @@
 // their drawings (ui/supportAsks.js); the skin draws the game's icons from it and the site has the same rules injected.
 // Here: the asks, the drawings pixel for pixel, the rules the drawings become, the door drawn by the REAL menu against
 // the repo's fake document (boot and pause), and the corners' band - the door's stage starting below its corner marks
-// wherever the wordmark reaches under them - derived from the marks' own numbers rather than restated, so a plaque that
-// grows without its band fails here. In a real browser: tools/supportAsksProbe.mjs (the presses, and the logo's own
-// pixels under the marks at 176 sizes).
+// wherever the wordmark reaches under either - derived from the marks' own numbers rather than restated, so a mark that
+// grows without its band fails here; and DOOR-FIT (Mac: "Fix these now"), the door that never cuts itself off. In a
+// real browser: tools/supportAsksProbe.mjs (the presses; the logo's own pixels under the marks, a caption at its bound
+// among them; and DOOR-FIT's top, last row and centring, at 192 sizes on both skins).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import './chargenDom.mjs';
@@ -157,40 +158,72 @@ test('SUPPORT1: the skin carries the one drawing, the plaque in the corner the p
   }
 });
 
-test('SUPPORT1: the corners\' band - the door\'s stage starts below its corner marks wherever the wordmark reaches under the asks, and every number is the marks\' own', () => {
-  // the asks' reach from the left edge: their offset, the plaque (borders, padding, two cells and the gap), the Plus
+test('SUPPORT1: the corners\' band - the door\'s stage starts below its corner marks wherever the wordmark reaches under either, and every number is the marks\' own', () => {
+  const stage = '.px-home:not(.px-over) > .px-stage:not(.px-acctstage)';
+  // THE ASKS' reach from the left edge: their offset, the plaque (borders, padding, two cells and the gap), the Plus
   // frame's outset beyond it
   const plaque = rule('.px-support'), icon = rule('.px-supportlink');
   const border = 2 * Number(plaque.match(/border: (\d+)px solid/)[1]);
   const width = border + 2 * px(plaque, 'padding') + SUPPORT_ASKS.length * px(icon, 'width') + (SUPPORT_ASKS.length - 1) * px(plaque, 'gap');
   const height = border + 2 * px(plaque, 'padding') + px(icon, 'height');
-  const reach = px(plaque, 'left') + width + OUTSET;
-  assert.equal(reach, 122);
-  // the wordmark is min(540px, 84vw) wide and centred, so it reaches under the asks at every width under 540 + 2 * reach
+  const asks = px(plaque, 'left') + width + OUTSET;
+  assert.equal(asks, 122);
+  // THE PROFILE'S from the right: its offset, the portrait, the gap, the caption at the door's bound, the outset. The
+  // bound is in PIXELS: the caption's own 14ch and 22ch are the font's (158px in Pixelify Sans), and a reach that is
+  // the font's cannot be the band's
+  const profile = rule('.px-profile');
+  const name = rule('.px-home:not(.px-over) .px-profilename').match(/max-width: min\(14ch, (\d+)px\);/);
+  const line = rule('.px-home:not(.px-over) .px-profilesub').match(/max-width: min\(22ch, (\d+)px\);/);
+  assert.ok(name && line, 'both caption lines are bounded in px on the door');
+  const caption = Math.max(Number(name[1]), Number(line[1]));
+  assert.equal(caption, 140, 'a new player\'s "No character yet" (123px) stands whole under it');
+  const reach = Math.max(asks, px(profile, 'right') + px(rule('.px-portrait'), 'width') + px(profile, 'gap') + caption + OUTSET);
+  assert.equal(reach, 234, 'the profile reaches further in than the asks');
+  // the wordmark is min(540px, 84vw) wide and centred, so it reaches under a mark at every width under 540 + 2 * reach;
+  // a 1024x768 door, which fits unscrolled, stays outside the band - the reason the bound is 140 and not 158
   assert.match(rule('.px-wordmark:has(.brand-logo)'), /width: min\(540px, 84vw\);/);
-  const stage = '.px-home:not(.px-over) > .px-stage:not(.px-acctstage)';
-  const band = mediaRule(`(min-width: 481px) and (max-width: ${540 + 2 * reach - 1}px)`, stage);
-  // ...it starts below the taller of the two marks there - the asks, or the profile's 58px portrait - with air
-  const portrait = px(rule('.px-portrait'), 'height');
-  const top = Number(band.match(/padding: (\d+)px 24px (\d+)px;/)[1]);
-  assert.ok(top > px(plaque, 'top') + height + OUTSET && top > px(rule('.px-profile'), 'top') + portrait + OUTSET, `${top}px clears both marks`);
+  const edge = 540 + 2 * reach - 1;
+  assert.ok(edge < 1024, `the band ends at ${edge}px, short of 1024`);
+  const band = mediaRule(`(min-width: 481px) and (max-width: ${edge}px)`, stage);
+  // ...it starts below the taller mark - the asks' plaque, or the profile's portrait - with air
+  const [, top, bottom] = band.match(/padding: (\d+)px 24px (\d+)px;/).map(Number);
+  assert.ok(top > px(plaque, 'top') + height + OUTSET && top > px(profile, 'top') + px(rule('.px-portrait'), 'height') + OUTSET, `${top}px clears both marks`);
   assert.equal(top, 84);
-  // ...it keeps the one-row foot's height at its foot, so a row the band pushed down can be scrolled clear of it, and
-  // it scrolls rather than cutting a row off (PX8's law)
-  const bottom = Number(band.match(/padding: (\d+)px 24px (\d+)px;/)[2]);
+  // ...and keeps the one-row foot's height at its foot, so a row the band pushed down scrolls clear of About and
+  // Screenshots (DOOR-FIT, the next test, is what lets it scroll)
   const foot = 2 * px(rule('.px-foot'), 'padding') + px(rule('.px-about'), 'min-height');
   assert.ok(bottom >= foot, `${bottom}px holds the ${foot}px foot`);
-  assert.match(band, /justify-content: flex-start; overflow-y: auto;/);
-  // ...and it still centres where it fits: auto margins take the room left and none that is not
-  assert.match(mediaRule(`(min-width: 481px) and (max-width: ${540 + 2 * reach - 1}px)`, `${stage} > :first-child`), /margin-top: auto;/);
-  assert.match(mediaRule(`(min-width: 481px) and (max-width: ${540 + 2 * reach - 1}px)`, `${stage} > :last-child`), /margin-bottom: auto;/);
-  // on a phone the marks stand 10px in and the wordmark is 84vw - under them always: the band's floor there
+  // on a phone the marks stand 10px in, the caption is hidden and the wordmark is 84vw - under them always: the band's
+  // floor there
+  assert.match(mediaRule('(max-width: 480px)', '.px-profiletext'), /display: none;/, 'a phone\'s profile is its portrait');
   const phone = mediaRule('(max-width: 480px)', stage).match(/padding-top: max\(7dvh, (\d+)px\);/);
   assert.ok(phone, 'the phone\'s stage keeps PX8\'s 7dvh, floored');
   const floor = Number(phone[1]);
   assert.ok(floor > 10 + height + OUTSET && floor > 10 + px(mediaRule('(max-width: 480px)', '.px-portrait'), 'height') + OUTSET, `${floor}px clears both marks on a phone`);
   assert.equal(floor, 72);
-  // the band is the FRONT door's: the pause face (PX4, AUDIT TIMERS1 UI-2's own rule) and the account window's stage
-  // keep theirs
+  // the band and the bound are the FRONT door's: the pause face (PX4, AUDIT TIMERS1 UI-2's own rule) and the account
+  // window's stage keep theirs, and the pause face's caption its own 22ch
   assert.doesNotMatch(ENHANCED_CSS, /\n\s*\.px-stage \{[^}]*padding: 84px/, 'never every stage');
+  assert.match(rule('.px-profilesub'), /max-width: 22ch;/, 'the caption\'s own bound, where no wordmark stands');
+});
+
+test('DOOR-FIT: the front door never cuts itself off - at every width the phone rule leaves it scrolls, and centres by auto margins where it fits (Mac: "Fix these now")', () => {
+  // PX8's stage scrolled only under 560px tall, a threshold set before the door grew to eight rows: a desktop window
+  // from 561 to about 690px tall (the eight-row door's own height) ran off BOTH ends with nothing to scroll - the
+  // wordmark's top, and under about 620px the whole last row (1366x568). Now the door's stage is a scroller at every
+  // width PX8's phone rule does not take...
+  const stage = '.px-home:not(.px-over) > .px-stage:not(.px-acctstage)';
+  assert.match(mediaRule('(min-width: 481px)', stage), /justify-content: flex-start; overflow-y: auto;/);
+  // ...and centres by auto margins, which take the room that is left and none that is not: where the door fits it did
+  // not move, and where it does not it starts at the top and every row can be scrolled to
+  assert.match(mediaRule('(min-width: 481px)', `${stage} > :first-child`), /margin-top: auto;/);
+  assert.match(mediaRule('(min-width: 481px)', `${stage} > :last-child`), /margin-bottom: auto;/);
+  // the base stage still centres the old way - the pause face and the account window keep it; the rule above is the
+  // front door's alone
+  assert.match(rule('.px-stage'), /justify-content: center;/);
+  // and a phone keeps PX8's door: from the top, never centred (the band floors its top)
+  const phoneBlocks = [...ENHANCED_CSS.matchAll(/@media \(max-width: 480px\) \{\n([\s\S]*?)\n\}/g)].map((m) => m[1]).join('\n');
+  assert.doesNotMatch(phoneBlocks, /:first-child \{ margin-top: auto; \}/, 'a phone\'s door is not centred');
+  // in a browser: tools/supportAsksProbe.mjs - the wordmark's top on the screen and the last row whole and pressed,
+  // scrolled to the end, at 192 sizes, and where the door fits the room over it equal to the room under it
 });

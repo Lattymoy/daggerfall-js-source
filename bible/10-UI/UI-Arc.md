@@ -1118,42 +1118,50 @@ whole drawing (`MARK_BODY_ROWS`, five, says which rows are its body): the site c
 to keep PATREON1's 46px, and the door stands both on their feet so the two bodies centre in their cells.
 
 THE CORNERS' BAND. With a mark in each top corner, the front door's stage starts below them wherever the wordmark is
-wide enough to reach under the asks - the front door's twin of AUDIT TIMERS1 UI-2, which stands the pause window clear
+wide enough to reach under either - the front door's twin of AUDIT TIMERS1 UI-2, which stands the pause window clear
 of the corner marks over a game. Measured rather than argued: `tools/supportAsksProbe.mjs` reads the logo PNG's alpha,
 maps it onto the screen through the <img>'s own box and counts the opaque pixels under each mark (the Plus frame's
-outset included) at 176 viewport sizes. Without the band the asks stood on the logo at every phone width and at
+outset included) at 192 viewport sizes. Without the band the asks stood on the logo at every phone width and at
 540-700px (up to 1,965px²); and the PROFILE MARK ALREADY DID - at every phone width, and up to 5,247px² at 540-900px,
-where its "Sign in" caption sits on the logo's top-right. The band's numbers are the marks' own (pinned that way): the
-asks reach 122px in (18, the plaque's 98, the frame's 6), and (vw - min(540px, 84vw)) / 2 is under that below 784px,
-so between 481 and 783px the stage starts at 84px (over both marks' 74 and 80), keeps the one-row foot's 68px at its
-foot, scrolls where the band costs it the room (PX8's law: a row is never cut off) and still centres where it fits -
-by auto margins, which take the room that is left and none that is not; on a phone, where the marks stand 10px in,
-PX8's 7dvh is floored at 72px. With it: the asks on the logo at none of the 176 sizes on either skin, and the profile
-mark at none below 784px.
+where its "Sign in" caption sits on the logo's top-right; with a long name and character line, out to 1,024px. The
+band's numbers are the marks' own (pinned that way): the asks reach 122px in (18, the plaque's 98, the frame's 6), the
+profile 234 (18, its 58px portrait, the 12px gap, its caption, the frame's 6), and (vw - min(540px, 84vw)) / 2 is under
+234 below 1,008px, so between 481 and 1,007px the stage starts at 84px (over both marks' 74 and 80) and keeps the
+one-row foot's 68px at its foot; on a phone, where the marks stand 10px in and the caption is hidden, PX8's 7dvh is
+floored at 72px. THE CAPTION IS BOUNDED IN PIXELS on the door for it: its two lines' 14ch and 22ch are the font's (158px
+in Pixelify Sans, measured), and a reach that is the font's cannot be the band's - and at 158 the band would reach
+1,043px and push a 1,024x768 door, which fits unscrolled, into a scroll. 140px keeps a new player's "No character yet"
+(123px) whole; a character's line longer than about nineteen letters ends in its ellipsis three letters sooner than it
+did. The pause face, with no wordmark over it, keeps the caption's own 22ch. With it: neither mark on the logo at any of
+the 192 sizes on either skin, the caption at its bound included.
 
-FOUND, NOT FIXED - recorded for Mac, outside this slice (one feature at a time). (1) PX8'S THRESHOLD IS STALE: its
-stage scrolls only under 560px tall, a number set before the door grew to eight rows. Under Plus, at 784px wide and
-up, 561 to about 700px tall, the centred door overflows BOTH ends with no way to scroll - the wordmark's top off the
-screen (45px at 1280x600) and the last row's foot, and under about 620px the WHOLE Overhauls row (1366x568, 1280x568:
-pressable by nothing). The classic rail's five rows still fit. A 720p screen's browser window is in that range. The
-fix is the band's own mechanism at every width - the door's stage scrolling and centred by auto margins - and it moves
-nothing on a screen where the door fits. (2) THE PROFILE MARK'S CAPTION meets the logo from 784px to about 900px wide
-on short windows (2,017px² at 800x568); its reach is its text's, so the band (derived from the asks') cannot know it.
-Both print on every run of `tools/supportAsksProbe.mjs` as the profile's own and PX8's, and do not fail it.
+DOOR-FIT (2026-10-05, Mac: "Fix these now", of what SUPPORT1's probe found). THE FRONT DOOR NEVER CUTS ITSELF OFF. Its
+stage centred by justify-content and scrolled only under PX8's 560px - a threshold set before the door grew to eight
+rows - so under Plus a desktop window from 561 to about 690px tall (the eight-row door's own height) ran off BOTH ends
+of the screen with nothing to scroll: the wordmark's top (61px of it at 1366x568), the last row's foot, and under about 620px the WHOLE Overhauls row
+(1366x568, 1280x568: pressable by nothing). A 720p screen's browser window is in that range; the classic rail's five
+rows fit. Now the door's stage is a scroller at every width PX8's phone rule does not take, starting at the top and
+centred by auto margins, which take the room that is left and none that is not - so where the door fits nothing moved
+(the probe holds the room over it equal to the room under it), and where it does not, every row can be scrolled to. A
+phone keeps PX8's door, from the top. Against the CSS before the fix the same probe fails seven of its checks (the
+profile on the logo, with and without the long caption, the 159px caption, and the clipped top and last row); with it
+all pass.
 
-Pins: `test/support1_asks.test.js` (6) - the asks deepEqual Mac's addresses; the drawings pixel for pixel; `markCss`
+Pins: `test/support1_asks.test.js` (7) - the asks deepEqual Mac's addresses; the drawings pixel for pixel; `markCss`
 painting each pixel once on the 4px grid and laying out the whole drawing; the REAL front door mounted on the fake
 document drawing the two links (`_blank`, `noopener`, titled, labelled, marks aria-hidden) and the pause face none; the
-skin's plaque, cells, phone offsets, frame and motion; the band derived from the marks' numbers. `test/landing.test.js`:
-the PATREON1 pin rewritten as U64 + PATREON1 + SUPPORT1 (the two asks in order at the module's addresses, each plaque
+skin's plaque, cells, phone offsets, frame and motion; the band derived from both marks' numbers and the caption's px
+bound (the band's edge short of 1,024); and DOOR-FIT (the door's own scroller and auto margins over 480px, the base
+stage still centred for the pause face and the account window, a phone never centred). `test/landing.test.js`: the
+PATREON1 pin rewritten as U64 + PATREON1 + SUPPORT1 (the two asks in order at the module's addresses, each plaque
 whole, the door's room computed from the row, the phone row, no mark of the page's own - read off its rules, not its
 comments, the AUDIT SITE1 F10 lesson - and every ask the project makes naming the same two), and a new pin on the
-injection (verbatim, after the tokens, the skin wearing the same block). `tools/mutants/support1.json`: 34 mutants, 34
-dead; PATREON1-F1's four still die. Live: `tools/supportAsksProbe.mjs` 16/16 (a press on each icon opens Mac's page
-and leaves the door standing; the band at 176 sizes on both skins, against every foot plaque - About and LOAD1's
-Screenshots) and `tools/landingProbe.mjs` 54/54 (the site's asks
-on desktop and a phone, gold under the pointer, one row clear of the door at 60 sizes from 320px to 1920px). Seen in
-Chromium; not in the desktop app, whose link path is the credits' own.
+injection (verbatim, after the tokens, the skin wearing the same block). `tools/mutants/support1.json`: 40 mutants, 40
+dead; PATREON1-F1's four still die. Live: `tools/supportAsksProbe.mjs` 22/22 (a press on each icon opens Mac's page
+and leaves the door standing; the band, the caption and DOOR-FIT at 192 sizes on both skins, against every foot plaque
+- About and LOAD1's Screenshots) and `tools/landingProbe.mjs` 54/54 (the site's asks on desktop and a phone, gold under
+the pointer, one row clear of the door at 60 sizes from 320px to 1920px). Seen in Chromium; not in the desktop app,
+whose link path is the credits' own.
 
 ## U63 THE SITE WEARS THE GAME'S FACE (2026-08-27, Mac's call)
 

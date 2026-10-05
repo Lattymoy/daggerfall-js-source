@@ -6,30 +6,27 @@
 // face draws none (PX4: no foot, no corner asks over a game) is pinned in node, where it mounts without a world
 // (test/support1_asks.test.js).
 //
-// Then the band.
-// The front door carries a mark in each top corner - the asks (Patreon, Ko-fi) top-left, the profile top-right - over
-// a stage whose wordmark is a picture as wide as 540px or 84% of the screen. Whether a mark stands ON the logo is a
-// question about the logo's own pixels (its corners are transparent), so this answers it the way the bible's
-// ground-truth probes do: the logo PNG's alpha is read here, mapped onto the screen through the <img>'s own box, and
-// every opaque pixel under a mark's box (the Plus frame's outset included) is counted. Swept across 176 viewport
-// sizes on one page (a resize, not a reload), under the Plus skin and the classic one.
+// Then the door's two laws, swept across 192 viewport sizes on one page (a resize, not a reload), under the Plus skin
+// and the classic one.
 //
-// It also proves the band costs nothing it must not: the asks cover no menu row, no About and no profile mark, each
-// ask is a 44px target, and where the band applies the LAST menu row stands whole on the screen once the stage is
-// scrolled to its end (PX8's law - a row the band pushed down must stay reachable).
+// THE CORNERS' BAND: the door carries a mark in each top corner - the asks top-left, the profile top-right - over a
+// stage whose wordmark is a picture up to 540px or 84% of the screen wide. Whether a mark stands ON the logo is a
+// question about the logo's own pixels (its corners are transparent), so it is answered the way the bible's
+// ground-truth probes answer: the logo PNG's alpha is read here, mapped onto the screen through the <img>'s own box,
+// and every opaque pixel under a mark's box (the Plus frame's outset included) is counted. Neither mark may stand on
+// one at any size - the profile measured twice, with its caption as a new player sees it and with a caption at its
+// bound (a long name and a long character line, ellipsised at the door's 140px).
+//
+// DOOR-FIT: the door never cuts itself off. At every size the wordmark's top is on the screen and the LAST menu row,
+// once the stage is scrolled to its end, stands whole and takes a press; and where the door fits, it is centred -
+// the auto margins over and under it equal - so a door that fits did not move.
+//
+// It also proves the asks cost nothing they must not: they cover no menu row, no foot plaque and no profile mark,
+// and each is a 44px target.
 //
 // Run against a dev server:
 //     npx vite --port 5199 &
 //     node tools/supportAsksProbe.mjs
-//
-// THE CLAIM IS SCOPED, AND SO IS THE CHECK. The band (ui/enhancedStyle.js, SUPPORT1) is derived from the asks' reach,
-// so it holds BOTH marks clear of the logo below 784px and the asks clear everywhere. The profile mark's caption
-// reaches further in than the asks (its width is its text's), and where it meets the logo above 783px it did before
-// SUPPORT1 too: those are counted and printed as the profile's own, and do not fail this probe. So are the short
-// desktop windows (784px and wider, 561 to about 700 tall) where the door, centred and not a scroller, overflows BOTH
-// ends - the wordmark's top off the screen, and the last row's foot, or under about 620 the whole row, with no way to
-// scroll to it. That is PX8's 560px threshold, set before the menu grew to eight rows (the classic rail's five still
-// fit), and the band does not reach those widths: printed, not failed.
 import { chromium } from 'playwright';
 import { readFileSync } from 'node:fs';
 import { PNG } from 'pngjs';
@@ -37,7 +34,8 @@ import { OUTSET } from '../src/ui/enhancedFrame.js';
 import { SUPPORT_ASKS } from '../src/ui/supportAsks.js';
 
 const BASE = process.env.PROBE_BASE ?? 'http://127.0.0.1:5199';
-const BAND_MAX = 783;   // the band's own media query (ui/enhancedStyle.js, SUPPORT1)
+const LONG_NAME = 'Wolfgangheimer';   // fourteen letters, the name's own 14ch
+const LONG_LINE = 'Wolfgangheimer the Nightblade · level 30';   // past the 140px the door bounds a caption line at
 const logo = PNG.sync.read(readFileSync(new URL('../src/assets/branding/daggerfall-online.png', import.meta.url)));
 const opaque = (x, y) => logo.data[(y * logo.width + x) * 4 + 3] > 40;
 
@@ -48,7 +46,7 @@ const check = (name, ok, detail = '') => {
 };
 
 const SIZES = [];
-for (const w of [320, 360, 375, 390, 412, 430, 480, 540, 600, 700, 768, 800, 900, 1024, 1280, 1366, 1920]) for (const h of [568, 640, 667, 720, 768, 844, 900, 1080]) SIZES.push([w, h]);
+for (const w of [320, 360, 375, 390, 412, 430, 480, 540, 600, 700, 768, 800, 900, 1007, 1008, 1024, 1280, 1366, 1920]) for (const h of [568, 640, 667, 720, 768, 844, 900, 1080]) SIZES.push([w, h]);
 for (const w of [568, 640, 667, 740, 812, 851, 915, 932]) for (const h of [320, 360, 375, 393, 414]) SIZES.push([w, h]);
 
 /** CSS px² of opaque logo under a box (the frame's outset added when the skin draws one). */
@@ -94,51 +92,70 @@ for (const [skin, query, outset] of [['plus', '', OUTSET], ['classic', '&skin=cl
   await page.waitForSelector('.px-menu button', { timeout: 90000 });
   if (await page.locator('.px-acctstage').count()) { await page.keyboard.press('Escape'); await page.waitForTimeout(300); }
   await page.waitForFunction(() => document.querySelector('.px-wordmark img')?.complete);
-  const onLogo = { support: [], profileBand: [], profileBeyond: [] };
-  const covers = [], small = [], unreachable = [], clipped = [];
+  const onLogo = { support: [], profile: [], profileLong: [] };
+  const covers = [], small = [], cut = [], moved = [], wide = [];
   for (const [w, h] of SIZES) {
     await page.setViewportSize({ width: w, height: h });
     await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
-    const g = await page.evaluate(() => {
+    const g = await page.evaluate(([longName, longLine]) => {
       const r = (e) => { if (!e) return null; const b = e.getBoundingClientRect(); return { l: b.left, t: b.top, r: b.right, b: b.bottom }; };
       const stage = document.querySelector('.px-home:not(.px-over) > .px-stage:not(.px-acctstage)');
       const rows = [...document.querySelectorAll('.px-menu button')];
       const out = { img: r(document.querySelector('.px-wordmark img')), support: r(document.querySelector('.px-support')),
         profile: r(document.querySelector('.px-profile')), foot: [...document.querySelectorAll('.px-foot .px-about')].map(r),
         links: [...document.querySelectorAll('.px-supportlink')].map(r), rows: rows.map(r) };
-      // the last row, once the stage is scrolled to its end: does a press at its centre land on it?
+      // DOOR-FIT: the wordmark's top on the screen as the door opens; and where the stage does not scroll, centred -
+      // the room over the first child (its auto margin) equal to the room under the last
+      out.wordmarkTop = document.querySelector('.px-wordmark').getBoundingClientRect().top;
+      const cs = getComputedStyle(stage), sb = stage.getBoundingClientRect();
+      out.fits = stage.scrollHeight <= stage.clientHeight;
+      out.over = stage.firstElementChild.getBoundingClientRect().top - (sb.top + parseFloat(cs.paddingTop));
+      out.under = (sb.bottom - parseFloat(cs.paddingBottom)) - stage.lastElementChild.getBoundingClientRect().bottom;
+      // ...and the last row, once the stage is scrolled to its end: whole on the screen, a press at its middle its own
       stage.scrollTop = stage.scrollHeight;
       const last = rows.at(-1).getBoundingClientRect();
-      // pressed where it SHOWS: the row's middle, or the last on-screen line of it
       const hit = document.elementFromPoint(last.left + last.width / 2, Math.min(last.top + last.height / 2, innerHeight - 1));
       out.lastPressed = !!hit && rows.at(-1).contains(hit);
-      out.lastWhole = last.bottom <= innerHeight;
+      out.lastWhole = last.bottom <= innerHeight && last.top >= 0;
       stage.scrollTop = 0;
-      out.wordmarkTop = document.querySelector('.px-wordmark').getBoundingClientRect().top;
+      // THE CAPTION AT ITS BOUND: a long name and a long character line written in, measured, and put back
+      const name = document.querySelector('.px-profilename'), line = document.querySelector('.px-profilesub');
+      const was = [name?.textContent, line?.textContent];
+      if (name && line) {
+        name.textContent = longName; line.textContent = longLine;
+        out.profileLong = r(document.querySelector('.px-profile'));
+        out.captionLong = document.querySelector('.px-profiletext').getBoundingClientRect().width;
+        name.textContent = was[0]; line.textContent = was[1];
+      }
       return out;
-    });
+    }, [LONG_NAME, LONG_LINE]);
     const at = `${w}x${h}`;
     const s = logoUnder(g.img, g.support, outset);
     if (s) onLogo.support.push(`${at}(${s}px²)`);
     const p = logoUnder(g.img, g.profile, outset);
-    if (p) (w <= BAND_MAX ? onLogo.profileBand : onLogo.profileBeyond).push(`${at}(${p}px²)`);
+    if (p) onLogo.profile.push(`${at}(${p}px²)`);
+    if (g.profileLong) {
+      const q = logoUnder(g.img, g.profileLong, outset);
+      if (q) onLogo.profileLong.push(`${at}(${q}px²)`);
+      if (w > 480 && g.captionLong > 140.5) wide.push(`${at}: ${g.captionLong.toFixed(1)}px`);
+    }
     // the foot's plaques: About, and LOAD1's Screenshots beside it in About's own box
     for (const [name, box] of [['the profile', g.profile], ...g.foot.map((b, i) => [`foot plaque ${i + 1}`, b]), ...g.rows.map((b, i) => [`row ${i + 1}`, b])]) {
       if (meets(g.support, box)) covers.push(`${at}: ${name}`);
     }
     for (const l of g.links) if (l.r - l.l < 44 || l.b - l.t < 44) small.push(`${at}: ${Math.round(l.r - l.l)}x${Math.round(l.b - l.t)}`);
-    if (w <= BAND_MAX && (!g.lastPressed || !g.lastWhole)) unreachable.push(at);
-    else if (!g.lastPressed) clipped.push(`${at}(row off the screen)`);
-    else if (!g.lastWhole || g.wordmarkTop < 0) clipped.push(at);
+    if (g.wordmarkTop < 0 || !g.lastWhole || !g.lastPressed) cut.push(`${at}(${g.wordmarkTop < 0 ? 'top ' : ''}${!g.lastWhole ? 'last row not whole ' : ''}${!g.lastPressed ? 'last row not pressed' : ''})`.replace(' )', ')'));
+    if (w > 480 && g.fits && Math.abs(g.over - g.under) > 1) moved.push(`${at}: ${Math.round(g.over)} over, ${Math.round(g.under)} under`);
   }
   check(`${skin}: the asks stand on no opaque pixel of the logo, at ${SIZES.length} sizes`, onLogo.support.length === 0, onLogo.support.join(' '));
-  check(`${skin}: below ${BAND_MAX + 1}px the profile mark stands clear of it too`, onLogo.profileBand.length === 0, onLogo.profileBand.join(' '));
+  check(`${skin}: nor does the profile mark, as a new player sees it`, onLogo.profile.length === 0, onLogo.profile.join(' '));
+  check(`${skin}: nor with its caption at its bound - a long name, a long line`, onLogo.profileLong.length === 0, onLogo.profileLong.join(' '));
+  check(`${skin}: the door's caption is held to 140px however long its line`, wide.length === 0, wide.slice(0, 8).join('; '));
   check(`${skin}: the asks cover no menu row, no foot plaque and no profile mark`, covers.length === 0, covers.slice(0, 8).join('; '));
   check(`${skin}: each ask is a 44px target`, small.length === 0, small.slice(0, 8).join('; '));
-  check(`${skin}: below ${BAND_MAX + 1}px, where the band costs height, the last menu row stands whole and takes a press, scrolled to the end`, unreachable.length === 0, unreachable.join(' '));
+  check(`${skin}: DOOR-FIT - the wordmark's top on the screen, and the last row whole and pressed scrolled to the end, at every size`, cut.length === 0, cut.join(' '));
+  check(`${skin}: DOOR-FIT - where the door fits it is centred, the room over it the room under it`, moved.length === 0, moved.slice(0, 8).join('; '));
   check(`${skin}: no page error`, errors.length === 0, errors.join(' | '));
-  console.log(`  (the profile's own, from ${BAND_MAX + 1}px up - its caption's reach, not the band's: ${onLogo.profileBeyond.length ? onLogo.profileBeyond.join(' ') : 'none'})`);
-  console.log(`  (PX8's, outside the band - the door overflowing a short window at both ends: ${clipped.length ? clipped.join(' ') : 'none'})`);
   await page.close();
 }
 await browser.close();
