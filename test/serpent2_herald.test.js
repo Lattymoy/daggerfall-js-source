@@ -15,7 +15,7 @@ import {
 import { foldGateSite, HERALD_RETRY_MS, HERALD_FELL_KEEP_MS, GATE_SITE_SKEW_MS } from '../src/net/gateHerald.js';
 import { serpentTimes, serpentAt, serpentPhase, SERPENT_DIVE_MS, SERPENT_EVERY_DAYS, SERPENT_SURFACE_MS } from '../src/net/serpentLaw.js';
 import {
-  validSerpentIn, parseClient, relaySupportsSerpentSite, SERPENT_SITE_RELAY_MIN, SERPENT_KINDS, SERPENT_INTERNAL_FELL, SOCIAL_ROOM, RELAY_VERSION, POSE_BOUND, ACCOUNT_SWEEP_MS,
+  validSerpentIn, parseClient, relaySupportsSerpentSite, SERPENT_SITE_RELAY_MIN, SERPENT_KINDS, SERPENT_INTERNAL_FELL, SOCIAL_ROOM, RELAY_VERSION, POSE_BOUND, ACCOUNT_SWEEP_MS, SD_KEY,
 } from '../src/net/wire.js';
 import { createSerpentOmen } from '../src/systems/serpentOmen.js';
 import { eventTimerRows } from '../src/systems/eventTimers.js';
@@ -140,6 +140,10 @@ async function withHerald(fn, { env = { GATE_DISCORD_WEBHOOK: HOOK, GATE_DISCORD
   r.room._heraldBeat = async () => {}; r.room._heraldNextAt = () => null;
   const realNow = Date.now, realFetch = globalThis.fetch;
   let clock = start;
+  // SD3: the Super dungeon's director beats on the hub's one alarm too (server/src/index.js _sdBeat) - its record seeded
+  // with a rise ten years off, so this harness's alarms are the sweep's and the heralds' alone (the director's own are
+  // sd3_relay.test.js's)
+  r.store.set(SD_KEY, { s: 0, ph: 'gone', r: -1, at: clock, until: clock, next: clock + 10 * 365 * 86_400_000 });
   const posts = [];
   const discord = { answer: () => ({ ok: true, status: 204 }) };
   Date.now = () => clock;

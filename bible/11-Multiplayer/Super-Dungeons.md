@@ -558,4 +558,9 @@ Sections 2-4 and 14 on the relay - `world172` (`world171` on the branch; main's 
 Pins: `test/sd3_relay.test.js` (7 - the wire, the director end to end over fake objects, the census's rest, the find,
 the realm and its Worker, the session, the seams by source); `tools/mutants/sd3.json` (28, all dead - one survivor at
 first: the cell's pose check, which the hub's own check hid while the hub was up; the far claim is now said with the
-hub down). Wired by nothing in the world yet: SD2b stands the Hollow and says the find.
+hub down). PINS MOVED at the whole suite: the hub's one alarm carries the director now, so the sweep's and the heralds'
+harnesses (`test/auditsoc.test.js`, `test/discordgates.test.js`, `test/serpent2_herald.test.js`) seed its record with a
+rise ten years off and test their own duties alone; `test/scale2b.test.js` counts twelve calls between rooms, nine on
+ROOM_CALL_MS; `test/raid3_raidLedger.test.js` pins `_alarmRest`'s raid line with the find's re-arm; and `parseClient`'s
+doc names `sd` (`test/auditworld2.test.js` derives the list from its arms). Wired by nothing in the world yet: SD2b
+stands the Hollow and says the find.
