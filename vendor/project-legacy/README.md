@@ -26,9 +26,9 @@ mod that I want to integrate").**
 - **Not here: the seven pictures.** `PJLFTBG`, `PJLFTFrame` and `PJLFT` (the parchment, its frame and the tree's
   branches), `PJLFTPN`, `PJLFTPNP` and `PJLFTPNSKP` (the card's panels) and `SCLTLK` (a talk window the code never
   draws). The card's grey stone and `SCLTLK`'s chrome read as cuts of the classic interface, and a render of game data
-  is game data (Port-Doctrine), so none is committed until their provenance is Mac's word. The classic family window
-  reads them from the player's own attached `.dfmod` (the texture door, `systems/dfmodTextures.js`); every skin has
-  the Enhanced Plus window without them.
+  is game data (Port-Doctrine), so none is committed until their provenance is Mac's word. The port draws no window
+  with them: every skin has the Enhanced Plus Family tab of the pause window (AUDIT LEGACY F2 - this README promised a
+  classic window reading them from an attached `.dfmod`, which was never built).
 - **Not here: the C# source**, which the bundle does not carry. It was read back with ILSpy 8.2 for reading; the IL
   dump is the record.
 

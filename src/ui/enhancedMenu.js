@@ -150,7 +150,7 @@ import { vendorPageShown, VENDOR_PAGE_SECTIONS, drawVendorPage } from './vendorP
 import { REVENANT_PAGE_SECTIONS, revenantPageShown, drawRevenantsPage } from './revenantPage.js';
 import { COMPANION_PAGE_SECTIONS, companionPageShown, drawCompanionsPage, resetCompanionRoster } from './companionRoster.js';   // COMPANION-ROSTER: the sworn and the slots
 import { STABLE_PAGE_SECTIONS, stablePageShown, drawStablePage, resetHoldingsPages } from './holdingsPages.js';   // HOLDINGS: the horse and the wagon
-import { FAMILY_PAGE_SECTIONS, drawTreePage, drawHousePage, drawHallPage, resetFamilyPages } from './familyPages.js';   // LEGACY3: Project Legacy's Family tab
+import { FAMILY_PAGE_SECTIONS, drawTreePage, drawHousePage, drawHallPage, resetFamilyPages, disarmFamilyPages } from './familyPages.js';   // LEGACY3: Project Legacy's Family tab
 import { legacyOn } from '../systems/legacy/settings.js';   // LEGACY3: ...drawn while the mod is on
 import { FLEET_PAGE_SECTIONS, fleetPageShown, drawFleetPage, resetFleetPage } from './fleetPage.js';   // HOLDINGS: the ships
 import { swornBodyOf } from '../systems/revenantCompanions.js';   // COMPANION-ROSTER: a sworn one's live health
@@ -3599,7 +3599,7 @@ function pauseWindow() {
   for (const [id, label] of PAUSE_TABS.filter(([id]) => pauseTabShown(id))) {
     const b = el('button', id === pauseTab ? 'on' : null);
     b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(label), el('span', 'px-c', '\u25c6'));
-    b.onclick = () => { if (id !== 'system') discardControlsStaging(); pauseTab = id; render(); };
+    b.onclick = () => { if (id !== 'system') discardControlsStaging(); disarmFamilyPages(); pauseTab = id; render(); };
     tabs.append(b);
   }
   win.append(tabs);
@@ -3663,13 +3663,15 @@ function pauseFamily(body) {
   for (const [id, label] of FAMILY_PAGE_SECTIONS) {
     const b = el('button', `px-qrow${id === famSec ? ' on' : ''}`);
     b.append(el('span', 'px-c', '◆'), document.createTextNode(label));
-    b.onclick = () => { famSec = id; render(); };
+    b.onclick = () => { famSec = id; disarmFamilyPages(); render(); };   // AUDIT LEGACY U8: an armed act never waits for the way back
     rail.append(b);
   }
   wrap.append(rail);
   const detail = el('div', 'px-qdetail px-sys');
   // an act that takes the player out of the game (a switch's load, a birth, the mantle's Succession): the pause goes down
   // first, as the Fleet's doors do, and comes back if the act did nothing
+  // AUDIT LEGACY U4: a refused act is refused on the card before the press (switchRefusal, mantleRefusal); one refused
+  // after it (a save that would not take) is said on the HUD by the host, and the world resumes under it
   const kit = { el, divider: pxDivider, door: (fn) => { onAction('handoff'); const r = fn(); if (!r?.ok) onAction('resume'); return r; } };
   ({ tree: drawTreePage, house: drawHousePage, hall: drawHallPage })[famSec](detail, render, kit);
   wrap.append(detail);

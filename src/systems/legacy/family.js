@@ -45,10 +45,12 @@ export const CAREER_INHERIT_CHANCE = 0.5;
 export const BLOOD_MAX = 3;
 /** THE HEARTH: a primary or major skill's gift is `floor(parent / 20)`, held to 0..3. */
 export const HEARTH_MAX = 3;
-/** THE ESTATE: a quarter of the purse the dead carried, at most the online birth's liquid ceiling
- *  (net/realmGoldLaw.js REALM_BIRTH_WEALTH_MAX - restated, and pinned equal, so this leaf imports no net code). */
+/** THE ESTATE: a quarter of the purse the dead carried, at most what fits under the online birth's liquid ceiling
+ *  beside the gold every birth carries (net/realmGoldLaw.js REALM_BIRTH_WEALTH_MAX less systems/startingGear.js
+ *  STARTING_GOLD - restated, and pinned equal, so this leaf imports no net code). AUDIT LEGACY H7: it was the ceiling
+ *  itself, and a born heir's first save would have carried 10,100. */
 export const ESTATE_SHARE = 0.25;
-export const ESTATE_MAX = 10_000;
+export const ESTATE_MAX = 9_900;
 
 const RACE_KEYS = Object.freeze(Object.keys(RACES));
 
@@ -100,10 +102,14 @@ export const fullNameOf = (given, sur) => (sur ? `${given} ${sur}` : given);
  *   blood:Record<string,number>, hearth:Record<string,number>, estate:number,
  *   parents:number[], children:number[], spouse:number|null, born:number, died:Death|null,
  *   heir:boolean|null, characterId:string|null, leveling:string|null, kind:'member'|'resident', residentId:string|null,
- *   startAge:number, toll:number, bornOwn:number, lived:number, retired:number|null
+ *   startAge:number, toll:number, bornOwn:number, lived:number, retired:number|null, bequest?:any[]
  * }} Person
  * @typedef {{ v:number, id:string, surname:string, model:string, seat:{region:string, loc:string}|null, rev:number,
- *   nextId:number, currentId:number, founded:number, ended:number|null, people:Person[], remains:any[], settings?:any }} Family
+ *   nextId:number, currentId:number, founded:number, ended:number|null, people:Person[], remains:any[], settings?:any,
+ *   pending:Pending|null }} Family
+ * @typedef {{ fallenId:number, at:number, estate:number, bequest:any[] }} Pending - AUDIT LEGACY: a fall the Succession
+ *   has not answered yet, ON THE RECORD - so a tab closed, a crash or a failed birth under the window leaves the line
+ *   waiting for its answer, never stranded
  */
 
 /** A blank person - every field present, so a record read back is the shape a record written is. */
@@ -113,7 +119,7 @@ function blankPerson(id) {
     careerIndex: 0, className: CLASS_CAREERS[0], career: null, level: 1, stats: null, skills: null,
     groups: { primary: [], major: [], minor: [] }, blood: {}, hearth: {}, estate: 0,
     parents: [], children: [], spouse: null, born: 0, died: null, heir: null, characterId: null, leveling: null,
-    kind: 'member', residentId: null, startAge: 20, toll: 0, bornOwn: 0, lived: 0, retired: null,
+    kind: 'member', residentId: null, startAge: 20, toll: 0, bornOwn: 0, lived: 0, retired: null, bequest: [],
   });
 }
 
@@ -196,7 +202,7 @@ export function foundFamily(entity, { model = MODELS.enduring, seat = null, at =
   const family = {
     v: FAMILY_VERSION, id: id ?? mintFamilyId(Date.now(), rng), surname: sur, model: isModel(model) ? model : MODELS.enduring,
     seat: seat ? { region: String(seat.region), loc: String(seat.loc) } : null,
-    rev: 1, nextId: 2, currentId: 1, founded: at, ended: null, people: [founder], remains: [],
+    rev: 1, nextId: 2, currentId: 1, founded: at, ended: null, people: [founder], remains: [], pending: null,
   };
   return family;
 }
@@ -396,16 +402,19 @@ export function successors(family) {
     .sort((a, b) => a.gen - b.gen || a.id - b.id);
 }
 
-/** May a newborn heir be asked for, for the fallen? Bloodline: the heir answer (B12). The line's living members are
- *  always the other way on. */
-export const newbornAllowed = (family, fallen) => !!fallen && fallen.heir === true;
+/** May a newborn heir be asked for, for the fallen? The heir answer rolled at their birth (B12) - or the Descendants
+ *  setting standing at "Always" NOW: the mod's HandlePlayerDeath reads `alwaysHaveDescendants` at the death
+ *  (IL_17ce-17ed), so a dial turned to Always later answers for everyone already born (AUDIT LEGACY F5). The line's
+ *  living members are always the other way on. */
+export const newbornAllowed = (family, fallen, settings = null) => !!fallen
+  && (fallen.heir === true || (settings?.descendants ?? DESCENDANTS.random) === DESCENDANTS.always);
 
 /** Does the line go on after `fallen` - any successor, or a newborn heir? */
-export const lineContinues = (family, fallen) => successors(family).length > 0 || newbornAllowed(family, fallen);
+export const lineContinues = (family, fallen, settings = null) => successors(family).length > 0 || newbornAllowed(family, fallen, settings);
 
-/** Close an extinct line (the Hall keeps it). */
+/** Close an extinct line (the Hall keeps it) - its waiting Succession answered with the end. */
 export function endFamily(family, at = 0) {
-  if (family.ended == null) { family.ended = at; touch(family); }
+  if (family.ended == null) { family.ended = at; family.pending = null; touch(family); }
   return family;
 }
 
@@ -428,7 +437,17 @@ export function readFamily(rec) {
     const p = Object.assign(blankPerson(raw.id), raw);
     p.parents = Array.isArray(raw.parents) ? raw.parents.filter(Number.isInteger) : [];
     p.children = Array.isArray(raw.children) ? raw.children.filter(Number.isInteger) : [];
-    p.groups = { primary: [], major: [], minor: [], ...(raw.groups ?? {}) };
+    // AUDIT LEGACY A7: every nested list held to its shape - a damaged group threw "not iterable" inside the
+    // Succession's choose (hearthOf), a damaged remains row inside every tick
+    const ids = (a) => (Array.isArray(a) ? a.filter((n) => Number.isInteger(n) && n >= 0 && n < SKILL_COUNT) : []);
+    p.groups = { primary: ids(raw.groups?.primary), major: ids(raw.groups?.major), minor: ids(raw.groups?.minor) };
+    p.stats = raw.stats && typeof raw.stats === 'object' ? raw.stats : null;
+    p.skills = Array.isArray(raw.skills) ? raw.skills.map((v) => Number(v) || 0) : null;
+    p.blood = raw.blood && typeof raw.blood === 'object' ? raw.blood : {};
+    p.hearth = raw.hearth && typeof raw.hearth === 'object' ? raw.hearth : {};
+    p.estate = Math.max(0, Math.floor(Number(raw.estate) || 0));
+    p.bequest = Array.isArray(raw.bequest) ? raw.bequest.filter((it) => it && typeof it === 'object') : [];
+    p.died = raw.died && typeof raw.died === 'object' ? { at: Number(raw.died.at) || 0, cause: String(raw.died.cause ?? 'unknown'), place: raw.died.place ?? null, by: raw.died.by ?? null } : null;
     people.push(p);
   }
   if (!people.length) return null;
@@ -439,7 +458,33 @@ export function readFamily(rec) {
     rev: Math.max(1, rec.rev | 0), nextId: Math.max(maxId + 1, rec.nextId | 0),   // D4: ids from the record's own counter, never a constant
     currentId: people.some((p) => p.id === rec.currentId) ? rec.currentId : people[0].id,
     founded: Number(rec.founded) || 0, ended: rec.ended == null ? null : Number(rec.ended), people,
-    remains: Array.isArray(rec.remains) ? rec.remains.filter((r) => r && typeof r.id === 'string') : [],   // LEGACY4: where the fallen lie
+    remains: Array.isArray(rec.remains) ? rec.remains.map(readRemains).filter(Boolean) : [],   // LEGACY4: where the fallen lie
+    pending: readPending(rec.pending, people),
+  };
+}
+
+/** The states remains pass through: lying where the fallen fell (their list the record's own), carried by the heir,
+ *  laid to rest. */
+export const REMAINS_STATES = Object.freeze(['lying', 'taken', 'rested']);
+/** A remains row held to its shape, or null. */
+function readRemains(r) {
+  if (!r || typeof r !== 'object' || typeof r.id !== 'string' || !Number.isInteger(r.of)) return null;
+  return {
+    ...r,
+    name: String(r.name ?? ''), place: r.place && typeof r.place === 'object' ? r.place : null,
+    items: Array.isArray(r.items) ? r.items.filter((it) => it && typeof it === 'object') : [],
+    state: REMAINS_STATES.includes(r.state) ? r.state : 'lying',
+    by: Number.isInteger(r.by) ? r.by : null,
+    killer: r.killer == null ? null : String(r.killer),
+    at: Number(r.at) || 0,
+  };
+}
+/** The waiting Succession held to its shape - its fallen a person of the record - or null. */
+function readPending(p, people) {
+  if (!p || typeof p !== 'object' || !people.some((x) => x.id === p.fallenId)) return null;
+  return {
+    fallenId: p.fallenId, at: Number(p.at) || 0, estate: Math.max(0, Math.floor(Number(p.estate) || 0)),
+    bequest: Array.isArray(p.bequest) ? p.bequest.filter((it) => it && typeof it === 'object') : [],
   };
 }
 

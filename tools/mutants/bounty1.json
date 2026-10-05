@@ -226,13 +226,14 @@
   {
     "name": "DEATH-PENALTY-5-privateers-hold-is-free",
     "file": "src/scenes/worldModes.js",
-    "old": "                const goldLost = applyDeathPenalty(playerEntity);   // DEATH-PENALTY: Privateer's Hold",
+    "old": "                const goldLost = online ? applyDeathPenalty(playerEntity) : 0;   // DEATH-PENALTY: Privateer's Hold",
     "new": "                const goldLost = 0;   // DEATH-PENALTY: Privateer's Hold",
     "tests": [
       "test/deathpenalty.test.js",
       "test/donline1_respawn.test.js",
       "test/risestuck.test.js"
-    ]
+    ],
+    "note": "AUDIT LEGACY (PIN MOVED): its line changed with the audit's fixes (the death at the door, the Succession the death's screen, Privateer's Hold's Legacy arm); re-aimed by content. "
   },
   {
     "name": "DEATH-PENALTY-6-times-a-tenth",

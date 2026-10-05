@@ -8032,7 +8032,11 @@ export function createWorldModes(host) {
             const px = mt && Number.isFinite(mt.longitude) && Number.isFinite(mt.latitude)
               ? longitudeLatitudeToMapPixel(mt.longitude, mt.latitude) : null;
             const isPrivateersHold = !!px && px.x === getInt('Startup', 'StartCellX') && px.y === getInt('Startup', 'StartCellY');
-            if (isPrivateersHold && (host.dungeonOnline?.() ?? false)) {
+            // AUDIT LEGACY B5: an offline death Project Legacy will raise is a respawn too - here, at the start marker,
+            // never a city or temple a fresh character has not walked to (D-ONLINE2's own reason)
+            const legacyRise = host.legacyWillRise?.() ?? false;
+            const online = host.dungeonOnline?.() ?? false;
+            if (isPrivateersHold && (online || legacyRise)) {
               // preferEnterMarker: true - the SAME marker a fresh classic
               // start opens on (dungeon.js/tryEnterDungeon's own default),
               // which is what "where you started" means for this one dungeon.
@@ -8042,12 +8046,14 @@ export function createWorldModes(host) {
                 player.stopAutorun();   // AUDIT 27h S2: SEA-RISE's law for every rise
                 reviveForPlay(playerEntity, { force: true });   // DEATHLOOP1: the drains go with the heal
                 surfacePlayer();
-                const goldLost = applyDeathPenalty(playerEntity);   // DEATH-PENALTY: Privateer's Hold is an online death like any other
+                const goldLost = online ? applyDeathPenalty(playerEntity) : 0;   // DEATH-PENALTY: Privateer's Hold is an online death like any other; offline there is none
                 endPlayerFights();   // AUDIT FEUD (RVN10): the death ended every fight
-                const took = revenantTakes(playerEntity, { online: true });   // AUDIT FEUD (RVN8, Feud-Arc.md 19): its killer's theft, once a death - the world host's respawn's own
+                const took = online ? revenantTakes(playerEntity, { online: true }) : null;   // AUDIT FEUD (RVN8, Feud-Arc.md 19): its killer's theft, once a death - the world host's respawn's own
+                const rise = legacyRise ? host.legacyRiseLine?.() ?? null : null;   // AUDIT LEGACY B5: the toll's word, the outcome presented
                 ctx.clearDeathOverlay?.();
                 if (goldLost > 0) say(deathPenaltyText(goldLost));
                 if (took?.line) say(took.line);
+                if (rise) say(rise);
                 return true;
               }
             }
@@ -9406,7 +9412,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:17483's own wave-46 note); the interior
+          // a blow (world.js:17503's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -12100,6 +12106,16 @@ export function createWorldModes(host) {
      *  interior arm it was missing. The dungeon mints through its own
      *  pool and answers the open thunk; the interior mints through
      *  ITS pool now; exterior alone falls through to the world host. */
+    /** AUDIT LEGACY H1: a list the caller owns, opened as a container on this mode's ground - Project Legacy's remains;
+     *  nothing is laid in the world (scenes/world.js legacyOpenRemains). Answers whether it opened. */
+    openLootList(items, hooks) {
+      if (mode === 'dungeon') return !!dungeonCtx?.openLootList?.(items, hooks);
+      if (mode !== 'interior' || !interiorCtx) return false;
+      if (interiorOverlay && !interiorOverlay.done) return false;
+      const w = interiorInventory({ loot: hooks });
+      mountInterior(w);
+      return !!w;
+    },
     mintRewardPile(dfItem) {
       if (mode === 'dungeon' && dungeonCtx?.offerRewardLoot) return dungeonCtx.offerRewardLoot(dfItem);
       if (mode === 'interior' && interiorCtx) {
@@ -12143,7 +12159,7 @@ export function createWorldModes(host) {
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
      *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3697-3719), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:13244). So an F9 pressed in a shop
+     *  unconditionally (world.js:13264). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -12182,7 +12198,7 @@ export function createWorldModes(host) {
       if (interiorOverlay instanceof DeathScreen) { interiorOverlay.restoreView(); interiorOverlay = null; }
     },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:13607)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:13627)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -12192,7 +12208,7 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:12052`
+     *  HARD2c: this used to spell them out, and named `world.js:12059`
      *  and `dungeonContext.js:8718` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */

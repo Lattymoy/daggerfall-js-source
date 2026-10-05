@@ -3,6 +3,7 @@
 // laws, and is built from the producer's own output (family.js's records, legacyHost's answers) - never a hand-built
 // literal the running game would not mint.
 import { test } from 'node:test';
+import { STARTING_GOLD } from '../src/systems/startingGear.js';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
@@ -12,7 +13,7 @@ import {
   RACE_INHERIT_CHANCE, CAREER_INHERIT_CHANCE, BLOOD_MAX, HEARTH_MAX, personOf,
 } from '../src/systems/legacy/family.js';
 import { ageOf, payToll, spanOf, startAgeOf, tollYears, isElder, isSpent, YEAR_MINUTES, SPANS } from '../src/systems/legacy/age.js';
-import { loadFamily, storeFamily, leaveBirth, takeBirth, listFamilies, newestSaveOf, BIRTH_MAX_AGE_MS } from '../src/systems/legacy/store.js';
+import { loadFamily, storeFamily, leaveBirth, readBirth, clearBirth, listFamilies, newestSaveOf, BIRTH_MAX_AGE_MS } from '../src/systems/legacy/store.js';
 import { birthSearch, loadSearch, nearestTown, townAt } from '../src/systems/legacy/places.js';
 import { layoutTree } from '../src/systems/legacy/tree.js';
 import { createLegacyHost } from '../src/scenes/legacyHost.js';
@@ -92,7 +93,9 @@ test('LEGACY1 B3: the blood and the hearth - the parent hands something down, wi
 });
 
 test('LEGACY1: the estate is a quarter of the purse, held to the online birth\'s liquid ceiling', () => {
-  assert.equal(ESTATE_MAX, REALM_BIRTH_WEALTH_MAX, 'the restated ceiling is the realm law\'s');
+  // AUDIT LEGACY H7: what fits UNDER the realm's birth ceiling beside the gold every birth carries - the ceiling itself
+  // gave a born heir 10,100 of liquid wealth, over the law it claimed to meet
+  assert.equal(ESTATE_MAX + STARTING_GOLD, REALM_BIRTH_WEALTH_MAX, 'the restated ceiling is the realm law\'s, less the starting purse');
   assert.equal(estateOf(1000), 250);
   assert.equal(estateOf(1003), 250);
   assert.equal(estateOf(100_000), ESTATE_MAX);
@@ -210,7 +213,7 @@ test('LEGACY2: the span and Arkay\'s toll - an Enduring death costs years, and t
   assert.equal(spanOf('Imperial'), 90, 'an unknown race reads as a Breton\'s span');
 });
 
-test('LEGACY1: the store keeps the newer copy, and a birth crosses the reload once, for its own person', () => {
+test('LEGACY1: the store keeps the newer copy, and a birth waits across the reload for its own person until the born member is saved', () => {
   const s = memStore(), tab = memStore();
   const f = foundFamily(entity(), { id: 'fam-st' });
   assert.equal(storeFamily(s, f), true);
@@ -218,12 +221,13 @@ test('LEGACY1: the store keeps the newer copy, and a birth crosses the reload on
   assert.equal(loadFamily(s, 'fam-st').rev, f.rev);
   assert.deepEqual(listFamilies(s).map((x) => x.id), ['fam-st']);
   leaveBirth(tab, { familyId: 'fam-st', personId: 4, region: 'Daggerfall', loc: 'Gothway Garden', estate: 0 }, 1000);
-  assert.equal(takeBirth(tab, 5, 1001), null, 'another person\'s address births nobody - and spends the handoff');
-  leaveBirth(tab, { familyId: 'fam-st', personId: 4, region: 'Daggerfall', loc: 'Gothway Garden', estate: 0 }, 1000);
-  assert.equal(takeBirth(tab, 4, 1000 + BIRTH_MAX_AGE_MS + 1), null, 'a stale handoff is never taken');
-  leaveBirth(tab, { familyId: 'fam-st', personId: 4, region: 'Daggerfall', loc: 'Gothway Garden', estate: 0 }, 1000);
-  assert.deepEqual(takeBirth(tab, 4, 2000), { familyId: 'fam-st', personId: 4, region: 'Daggerfall', loc: 'Gothway Garden', estate: 0 });
-  assert.equal(takeBirth(tab, 4, 2000), null, 'taken once - a reload of the born world births nobody twice');
+  assert.equal(readBirth(tab, 5, 1001), null, 'another person\'s address births nobody');
+  assert.equal(readBirth(tab, 4, 1000 + BIRTH_MAX_AGE_MS + 1), null, 'a stale handoff is never read');
+  const born = { familyId: 'fam-st', personId: 4, region: 'Daggerfall', loc: 'Gothway Garden', estate: 0 };
+  assert.deepEqual(readBirth(tab, 4, 2000), born);
+  assert.deepEqual(readBirth(tab, 4, 2000), born, 'AUDIT LEGACY B7: read, not taken - a birth whose boot failed is there to retry');
+  clearBirth(tab);
+  assert.equal(readBirth(tab, 4, 2000), null, 'the born member saved, the handoff is answered');
   const info = new Map([[3, { characterId: 'a', dateAndTime: { realTime: 5 } }], [7, { characterId: 'a', dateAndTime: { realTime: 9 } }], [8, { characterId: 'b', dateAndTime: { realTime: 99 } }]]);
   assert.equal(newestSaveOf(info, 'a'), 7);
   assert.equal(newestSaveOf(info, 'z'), -1);
@@ -296,9 +300,14 @@ test('LEGACY3 U2: the dead, the played and the not-yet-played each wear their ow
 });
 
 test('LEGACY2: the model question offers Enduring first - Enter without reading never costs a character', () => {
-  const o = legacyModelOptions();
+  const o = legacyModelOptions({ online: false, tollShare: 0.06 });
   assert.deepEqual(o.map((x) => x.id), [MODELS.enduring, MODELS.bloodline]);
   assert.ok(o.every((x) => !x.locked));
+  assert.match(o[0].lines[1], /Arkay takes 6% of a lifespan/);
+  assert.match(legacyModelOptions({ online: false, tollShare: 0.1 })[0].lines[1], /Arkay takes 10% of a lifespan/, 'AUDIT LEGACY U7: the toll a death will charge, not the Standard\'s');
+  const on = legacyModelOptions({ online: true, tollShare: 0.06 });
+  assert.deepEqual(on.map((x) => [x.id, x.locked]), [[MODELS.enduring, false], [MODELS.bloodline, true]], 'AUDIT LEGACY B4: online Bloodline is shut until the realm keeps lineages');
+  assert.match(on[1].lockNote, /Enduring until the realm keeps its lineages/);
 });
 
 test('LEGACY-KEY: the family tree is its own action with a free default, and the mod\'s keys are the registry\'s', () => {
@@ -324,7 +333,7 @@ function hostWorld({ model = MODELS.bloodline, gold = 1000, online = false } = {
     here: () => ({ pixel: { x: 10, y: 20 }, region: 'Daggerfall', mode: 'exterior', loc: 'Gothway Garden', locationType: LOCATION_TYPES.TownCity }),
     town: (h) => ({ region: h.region, loc: h.loc }), nearestTown: () => ({ region: 'Daggerfall', loc: 'Gothway Garden' }),
     gold: () => gold, say: (l) => said.push(l), boot: (s) => booted.push(s), search: () => '?world',
-    loadCharacter: (cid) => { loads.push(cid); return true; }, saveNow: () => said.push('saved'),
+    loadCharacter: (cid) => { loads.push(cid); return true; }, saveNow: () => { said.push('saved'); return true; },
     inFight: () => world.fight, payEstate: (n) => said.push(`estate ${n}`), rng: familyRng(99),
   });
   host.found(model);
@@ -341,16 +350,18 @@ test('LEGACY1: a Bloodline death falls - written dead, the estate set aside, the
   assert.equal(out.estate, 250);
   assert.ok(fam.people[0].died, 'B13: the fallen is written dead');
   assert.equal(loadFamily(w.storage, fam.id).people[0].died.cause, 'fell', 'and the store knows it');
-  assert.equal(w.host.deathOutcome().kind, 'none', 'a second reset asks nothing of a dead member');
+  assert.equal(loadFamily(w.storage, fam.id).pending.estate, 250, 'AUDIT LEGACY A4: the Succession waits ON THE RECORD');
+  assert.equal(w.host.deathOutcome().kind, 'fall', 'a second reset presents the waiting Succession again - never the classic end over a line that goes on');
   // a newborn heir of the fallen: a child, the estate on them, the boot asked with their birth
-  assert.equal(w.host.succeed({ newborn: true }, { estate: out.estate, fallenId: 1 }), true);
+  assert.equal(w.host.succeed({ newborn: true }), true);
+  assert.equal(fam.pending, null, 'answered');
   const heir = w.host.current();
   assert.deepEqual(heir.parents, [1]);
   assert.equal(heir.estate, 250);
   const q = new URLSearchParams(w.booted.at(-1));
   assert.equal(q.get('legacyborn'), String(heir.id));
   assert.equal(q.get('loc'), 'Gothway Garden', 'born at the family seat');
-  assert.equal(takeBirth(w.tab, heir.id).familyId, fam.id);
+  assert.equal(readBirth(w.tab, heir.id).familyId, fam.id);
 });
 
 test('LEGACY1: a member already played is LOADED, one never played is BORN - the switch is a save first, never mid-fight', () => {
@@ -406,7 +417,9 @@ test('LEGACY1: the save carries the family and a newer store copy wins at the lo
   w.host.deathOutcome();
   restoreModSaveRecords({ ProjectLegacy: rec });
   assert.ok(w.host.family.people[0].died, 'the store\'s newer copy stands over the save\'s');
-  assert.ok(w.host.tick()?.deadLoad, 'and the dead member\'s save is answered as the past');
+  const said = w.host.tick();
+  assert.equal(said?.past?.id, 1, 'and the dead member\'s save is answered as the past');
+  assert.equal(said.fall?.kind, 'fall', '...with the line\'s waiting Succession');
 });
 
 test('LEGACY1: THE FOUR HOSTS - the street and the modal hosts all reset a death through Project Legacy first', () => {

@@ -6,8 +6,11 @@
 // (the remains), registered at import as the port's own custom items are.
 //
 //  - THE HEIRLOOM: at a final death, the most valuable weapon or armour the fallen WORE - an heirloom already worn is
-//    always the one (an heirloom is handed down, not found again) - never a quest item, an Aetheric or artifact piece,
-//    or a sigil's. Marked `heirloom: { line, house, of, from, gen, base }` and named for the house.
+//    always the one (an heirloom is handed down, not found again) - never a quest item, an Aetheric or artifact piece
+//    (AUDIT LEGACY H5: an artifact is minted `artifact: true` with no `rarity` - rarityOf reads both), a sigil's or a
+//    summoned piece (its timer would take the copy the moment it was picked up). Marked
+//    `heirloom: { line, house, of, from, gen, base }`; its long name carries the house (systems/itemInfo.js
+//    itemNameParts: "Hlaalu's Dwarven Longsword", the maker's mark's shape).
 //  - IT GROWS: each generation that carries it home counts (`gen`, at most HEIRLOOM_GEN_MAX): a weapon +5% damage a
 //    generation, armour +2 on the parts it covers a generation - folded onto whoever wears it.
 //  - THE REMAINS: what lies where the fallen fell - the heirloom, the remains themselves (an item of the port's own,
@@ -18,13 +21,19 @@ import { registerCustomTemplates, setItemFields, mintCondition, itemValueOf, tem
 import { registerEntityFold, registerWeaponDamageMod, newMods, EMPTY_MODS } from '../entityMods.js';
 import { armorBodyParts } from '../equip.js';
 import { SKILL_COUNT } from '../skills.js';
+import { rarityOf } from '../lootRarity.js';
+import { isSummoned } from '../inventory.js';
 
 export const HEIRLOOM_GEN_MAX = 5;
 /** A weapon's damage per generation, percent; armour's points per generation on its parts. */
 export const HEIRLOOM_DAMAGE_PER_GEN = 5;
 export const HEIRLOOM_ARMOR_PER_GEN = 2;
-/** The share of the fallen's purse that lies with them (the rest is the estate's - family.js ESTATE_SHARE). */
+/** The share of the fallen's purse that lies with them - a tenth, at most REMAINS_GOLD_MAX (AUDIT LEGACY H7: it had
+ *  no ceiling). A quarter more is the estate (family.js ESTATE_SHARE); the rest is the fallen's save's, and the past's. */
 export const REMAINS_GOLD_SHARE = 0.1;
+export const REMAINS_GOLD_MAX = 2_500;
+/** The gold lying with the fallen, of the purse they carried. */
+export const remainsGoldOf = (gold) => Math.min(REMAINS_GOLD_MAX, Math.max(0, Math.floor((Number(gold) || 0) * REMAINS_GOLD_SHARE)));
 /** The blessing: points on the fallen's best skill. */
 export const BLESSING_POINTS = 3;
 /** ...and the most the house's blessings give one skill, however many ancestors are laid to rest: three blessings'
@@ -47,8 +56,8 @@ const NEVER_RARITY = new Set(['aetheric', 'artifact']);
 
 /** Whether a worn piece may become an heirloom. */
 export function heirloomEligible(it) {
-  return !!it && it.equipSlot != null && HEIR_GROUPS.has(it.group) && !it.questItem && !NEVER_RARITY.has(it.rarity)
-    && it.sigil == null && it.aetheric == null;
+  return !!it && it.equipSlot != null && HEIR_GROUPS.has(it.group) && !it.questItem
+    && !NEVER_RARITY.has(it.rarity) && !NEVER_RARITY.has(rarityOf(it)) && it.sigil == null && it.aetheric == null && !isSummoned(it);
 }
 
 /** THE PIECE: an heirloom already worn, else the most valuable eligible worn piece (value, then condition). */
@@ -69,13 +78,12 @@ export function pickHeirloom(items) {
 const baseNameOf = (it) => it.heirloom?.base ?? it.name ?? templateByIndex(it.templateIndex)?.name ?? 'heirloom';
 
 /** Mark a piece as the line's heirloom (keeping its generation if it is one already) - a COPY, for the remains; the
- *  fallen's own bag is their save's. Named "Hlaalu's Steel Longsword". */
+ *  fallen's own bag is their save's. Its own name is kept: the long name puts the house before it (itemNameParts). */
 export function markHeirloom(it, { line, house, of, from }) {
   const base = baseNameOf(it);
   const copy = JSON.parse(JSON.stringify(it));
   delete copy.equipSlot;
   copy.heirloom = { line: String(line), house: String(house), of: of | 0, from: String(from), gen: Math.min(HEIRLOOM_GEN_MAX, it.heirloom?.gen | 0), base };
-  copy.name = house ? `${house}'s ${base}` : base;
   return copy;
 }
 

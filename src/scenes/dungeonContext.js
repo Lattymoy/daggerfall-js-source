@@ -2307,7 +2307,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:17703 / exterior.js:3987), set
+  // host's own townTalk sink (world.js:17723 / exterior.js:3987), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -3540,7 +3540,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1129 against :1159; worldModes.js:8705 against :8725).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1129 against :1159; worldModes.js:8711 against :8731).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -4453,8 +4453,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:29044,
-              // exterior.js:5654 and worldModes.js:9431 already ran;
+              // playerArrowHitFoe is the one copy world.js:29082,
+              // exterior.js:5654 and worldModes.js:9437 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -6708,7 +6708,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // The three-argument door is the IMPORT (hurtEntity, :26), not
         // this file's one-argument hurtPlayer wrapper (:1030) that
         // shadows its name: called through the wrapper the entity
-        // arrived as `dmg`, playerEntity.js:120's `!(dmg > 0)` guard read
+        // arrived as `dmg`, playerEntity.js:140's `!(dmg > 0)` guard read
         // NaN and returned, and dungeon drowning never dealt a point.
         // bypassShield because SetHealth(0) is a kill, not damage.
         hurtEntity(playerEntity, playerEntity.health, { bypassShield: true });   // SetHealth(0): drowned
@@ -9728,6 +9728,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (_w) activeOverlay = _w;   // DISC10-E L3: a refused pack is null - and its box already holds the slot
       if (_w && _k) { _lootOpenKey = _k; publishLoot(_k, { claim: true }); }
       return source.length;
+    },
+    /** AUDIT LEGACY H1: A LIST THE CALLER OWNS, opened as a container here - Project Legacy's remains (scenes/legacyHost.js):
+     *  the window takes from `items` itself and nothing is laid in the room, so what is left stays the caller's. `hooks`
+     *  the container's identity (its picture). Answers whether it opened. */
+    openLootList(items, hooks = null) {
+      if (activeOverlay && !activeOverlay.done) return false;
+      const w = openInventory(items, null, { lootHooks: hooks });
+      if (w) activeOverlay = w;
+      return !!w;
     },
     /** RW1: GivePc's reward container (GivePc.cs:167-171) - a dropped
      *  pile at the player's feet, "CreateDroppedLootContainer(

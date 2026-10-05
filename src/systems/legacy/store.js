@@ -62,12 +62,22 @@ export function leaveBirth(tab, birth, now = Date.now()) {
   try { tab.setItem(BIRTH_KEY, JSON.stringify({ v: FAMILY_VERSION, ...birth, at: now })); return true; } catch { return false; }
 }
 
-/** The boot's read of the waiting birth for `personId` - TAKEN (removed), so a reload of the born world never births
- *  the heir twice. Null when none waits, it is stale, or it names another person. */
-export function takeBirth(tab, personId, now = Date.now()) {
+/** The boot's read of the waiting birth for `personId`, LEFT where it waits - AUDIT LEGACY B7: it was taken at the
+ *  read, so a birth whose boot failed (a game file that would not load) left nothing to retry and the line orphaned.
+ *  The born member's first save clears it (clearBirth); a reload of the born world then births no one twice, because
+ *  the person carries their character id. Null when none waits, it is stale, or it names another person. */
+export function readBirth(tab, personId, now = Date.now()) {
   if (!tab) return null;
   let b = null;
-  try { b = JSON.parse(tab.getItem(BIRTH_KEY) ?? 'null'); tab.removeItem(BIRTH_KEY); } catch { return null; }
+  try { b = JSON.parse(tab.getItem(BIRTH_KEY) ?? 'null'); } catch { return null; }
+  return birthOf(b, personId, now);
+}
+/** The birth answered - the born member stands and is saved. */
+export function clearBirth(tab) {
+  try { tab?.removeItem(BIRTH_KEY); } catch { /* a storage that throws holds nothing to clear */ }
+}
+
+function birthOf(b, personId, now) {
   if (!b || b.v !== FAMILY_VERSION || typeof b.familyId !== 'string') return null;
   if (!(now - (Number(b.at) || 0) <= BIRTH_MAX_AGE_MS)) return null;
   if (String(b.personId) !== String(personId)) return null;

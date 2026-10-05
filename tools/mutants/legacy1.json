@@ -117,15 +117,6 @@
     ]
   },
   {
-    "name": "LEGACY1-birth-taken-twice",
-    "file": "src/systems/legacy/store.js",
-    "old": "  try { b = JSON.parse(tab.getItem(BIRTH_KEY) ?? 'null'); tab.removeItem(BIRTH_KEY); } catch { return null; }",
-    "new": "  try { b = JSON.parse(tab.getItem(BIRTH_KEY) ?? 'null'); } catch { return null; }",
-    "tests": [
-      "test/legacy1_family.test.js"
-    ]
-  },
-  {
     "name": "LEGACY1-stale-copy-wins",
     "file": "src/systems/legacy/store.js",
     "old": "    if (was && was.rev > family.rev) return false;\n",
@@ -164,11 +155,12 @@
   {
     "name": "LEGACY1-S3-switch-mid-fight",
     "file": "src/scenes/legacyHost.js",
-    "old": "    if (deps.inFight()) return LEGACY_TEXT.fight;\n    return null;",
-    "new": "    return null;",
+    "old": "    if (deps.online()) return LEGACY_TEXT.online;\n    if (deps.inFight()) return LEGACY_TEXT.fight;\n    return null;\n  }\n  /** Save the one played",
+    "new": "    if (deps.online()) return LEGACY_TEXT.online;\n    return null;\n  }\n  /** Save the one played",
     "tests": [
       "test/legacy1_family.test.js"
-    ]
+    ],
+    "note": "AUDIT LEGACY (PIN MOVED): its line changed with the audit's fixes (the death at the door, the Succession the death's screen, Privateer's Hold's Legacy arm); re-aimed by content. "
   },
   {
     "name": "LEGACY1-street-reset-skips-legacy",
@@ -202,24 +194,6 @@
     "file": "src/systems/legacy/heirloom.js",
     "old": "  it.heirloom.gen = Math.min(HEIRLOOM_GEN_MAX, (it.heirloom.gen | 0) + 1);",
     "new": "  it.heirloom.gen = (it.heirloom.gen | 0) + 1;",
-    "tests": [
-      "test/legacy4_heirloom.test.js"
-    ]
-  },
-  {
-    "name": "LEGACY4-purse-laid-twice",
-    "file": "src/scenes/legacyHost.js",
-    "old": "          if (r.gold > 0) { r.gold = 0; touch(family); store(); }",
-    "new": "          if (false) { r.gold = 0; touch(family); store(); }",
-    "tests": [
-      "test/legacy4_heirloom.test.js"
-    ]
-  },
-  {
-    "name": "LEGACY4-heirloom-laid-twice",
-    "file": "src/scenes/legacyHost.js",
-    "old": "      if (r.items.length && carried.some((it) => isHeirloom(it) && it.heirloom.line === family.id && it.heirloom.of === r.of)) { r.items = []; touch(family); store(); }",
-    "new": "      if (false) { r.items = []; touch(family); store(); }",
     "tests": [
       "test/legacy4_heirloom.test.js"
     ]

@@ -12,7 +12,8 @@ sure how to handle this)".
 
 **Project Legacy** (0.4.1, GUID `a3cbfd81-bd91-485c-a3bc-171251ef7ac8`) is Mac's own Daggerfall Unity mod, written
 with Ghð§† and Positronico. It is vendored in `vendor/project-legacy/` - the manifest, the settings, the DLL byte for
-byte, its IL dump and the seven pictures - and read off the DLL's IL (decompiled to C# by ILSpy 8.2 for reading; the
+byte and its IL dump; NOT its seven pictures, which are cuts of the classic UI's own stone panels (Port-Doctrine:
+renders of game data are game data) - and read off the DLL's IL (decompiled to C# by ILSpy 8.2 for reading; the
 citations below are the DLL's types and members, `Project_Legacy.SaveCharacterManager.SaveCurrentCharacter`). The
 author is the port's owner, so the permission line is his own.
 
@@ -38,6 +39,11 @@ author is the port's owner, so the permission line is his own.
 - **Switching** (the card double-clicked, then Yes): to a LIVING sibling - the current character's stats, skills,
   kit and gold written back to their record and their place kept as an anchor, the sibling's poured onto the entity,
   and the player teleported to the sibling's anchor (or a random one of the forty, the first time).
+- **What it leaves out, and what the port does not keep** (AUDIT LEGACY F8): the heir keeps the dead's WHOLE purse
+  (`ClearInventory` clears items, `AddGold` adds - IL_50f3-50fa; the port's estate is a quarter, section 5); Max
+  Siblings 0 with a non-zero probability still makes ONE sibling (`Random.Range(1, 0 + 1)`, IL_5195-5199 - the port makes
+  none: zero means zero); the family tree's second-key chord and its "Unknown" partner on a married branch are not
+  kept (one key, the registry's - Ledger A; a branch with no recorded partner draws none).
 
 ## 2. The bugs (every one fixed in the port; the root, not the symptom)
 
@@ -59,7 +65,7 @@ The fix column names the law in this arc that removes the cause.
 | B12 | "Random descendants" re-rolls on every death and ignores the saved answer | `HandlePlayerDeath` rolls `hasDescendants` afresh | the answer is rolled ONCE per person at birth and kept on the record (`heir`) |
 | B13 | A death without an heir records nothing - the dead stay "alive" on the tree | the record is only written on the heir branch | every death is written before the heir is asked for |
 | B14 | Siblings never appear on a fresh install | both sibling settings ship at 0 | the defaults are 2 and 50% |
-| D1 | Migrating a save older than 0.0.3 throws on an empty list | the loop reads `CharacterData` before its null check | the port's record has one version and its own reader (no DFU save is read) |
+| D1 | Migrating a save older than 0.0.3 throws on a NULL list | the loop enumerates `CharacterData` (IL_07ff-0804) before its null check (IL_0846) | the port's record has one version and its own reader (no DFU save is read) |
 | D2 | Migrating a 0.4.0 save writes the gold onto a character that is not loaded yet | `MigrateData` runs before `RestoreSaveData` assigns `currentCharacterData` | (same) |
 | D3 | A migrated generation is the largest ID | `Max(c => c.ID)` | generation is the parent's plus one, always |
 | D4 | A save with records but no current character mints a second ID 1 | `firstTime ? 1 : next` | ids come from the record's own counter, never a constant |
@@ -70,10 +76,10 @@ The fix column names the law in this arc that removes the cause.
 | D9 | The tree starts at the first save, not at the character's birth | `OnSave` writes the first record | the founder is written at birth (and at the first load of an older save) |
 | S1 | A switch carries the old character's max health, effects and spells | B1's root | THE ONE FAMILY, MANY CHARACTERS (section 3) |
 | S2 | A custom class switches to the current character's career | the lookup by name misses and nothing else runs | a person is played from their own save, which carries their career |
-| S3 | A switch is free fast travel, even mid-fight | the anchor teleport | a switch is a save and a load; a fight refuses it (`legacySwitchRefusal`) |
+| S3 | A switch is free fast travel, even mid-fight | the anchor teleport | a switch is a save and a load; a fight refuses it (`legacyHost.js switchRefusal`) |
 | S4 | Yes pops three windows: the box, the card, and whatever was under the tree | `PopWindow` inside the switch plus two closes and a pop | one close, the overlay slot's |
 | U1 | The wheel zooms about the corner and reads the wheel under other windows | no re-centre after the rebuild; `Input.mouseScrollDelta` read raw | zoom about the pointer, inside the window's own handler |
-| U2 | The dead and the living, the one played and the rest, look the same | `P_DEAD`/`P_ACTIVE` frames are never drawn | the living, the dead, the played one and the heir each drawn so |
+| U2 | The dead and the living, the one played and the rest, look the same | `P_DEAD`/`P_ACTIVE` frames are never drawn | the dead and the played one marked on their plates; the card's chips name the living, the dead, the elder, the heir answer ("Has an heir") and the remains' state |
 | U3 | Skill labels read "HandToHand", "CriticalStrike" | `Enum.GetName` | `SKILL_NAMES` |
 | U4 | The card reads its character before its null check | Setup is lazy and the data is sent after the push | the card is built with its person |
 | U5 | A second tree window shares the first's root | `static FamilyNode root` | the layout is a pure function of the record |
@@ -86,29 +92,39 @@ their own quests and regard (Living World decision 6). Pouring one into another 
 S1. So in the port:
 
 - **A family is its own record**, `legacy/family.js`: the line's surname, its model (section 6), and a PERSON for
-  every member - played or not - with their identity, their eight stats and thirty-five skills as last known, their
-  career and its skill groups, their parents, children and spouse, their birth and death, and once played their
-  `characterId`. Ids are minted from the record's own counter.
-- **Where it lives.** Offline: in app storage under `dagger.legacy.family.<familyId>` - the family outlives any one
-  save - and as a copy in every member's save (`modData.ProjectLegacy`), the newer by `rev` winning on load, so a
-  save carried to another machine brings its family. Online: on the account service (section 9), the save's copy a
-  courtesy.
+  every member - played or not - with their identity, their career and its skill groups, their blood and hearth
+  (section 5), their parents, children and spouse, their birth and death, and once played their `characterId` and their
+  eight stats and thirty-five skills as last played (a member never played has none yet: they are rolled at their birth,
+  section 4). Ids are minted from the record's own counter.
+- **Where it lives - two authorities** (AUDIT LEGACY's root). In app storage under `dagger.legacy.family.<familyId>` -
+  the family outlives any one save - and as a copy in every member's save (`modData.ProjectLegacy`). THE STORE answers
+  the world's facts: who lived, who died, Arkay's toll, who is played, which remains exist - a death is decided at the
+  death door (`characters/playerEntity.js setDeathListener`) and no reload undoes it; a fall's Succession waits on the
+  record (`pending`). A SAVE answers what its character was given: the estate and the bequest paid, the remains opened,
+  taken or laid to rest (`legacyHost.js mergeFamily`) - a reload rewinds those with the bag they went into. A save of a
+  dead or retired member is THE PAST: refused for as long as it stands, the line's Succession or its living offered.
+  Online (LEGACY7, not built) the account service will hold the lineage (section 9).
+- **The fixed city keeps DFU's death** (FLAGGED, `scenes/world.js`): `?exterior`, a dev route, streams no world for an
+  heir to be born into.
 - **A person is played by being loaded.** Switching to a member who has been played loads their newest save; to one
   who never has, boots them BORN (section 4). The member left keeps their place in their own save, which is what the
   mod's anchor was reaching for (D7, S3).
 
 ## 4. THE HEIR IS BORN
 
-A new member enters play through the same door a new character does - `chargenSession.applyHeadlessChargen`, which
-now takes a person's identity and rolled values (`{ person }`) and runs the whole construction seam: the career from
-its CLASS*.CFG, `applyCharacter`'s derived health, magicka, fatigue, tallies and level-up anchor, the starting spells,
-DFU's starting kit, the faction store and the region bootstrap, the leveling system. Nothing of the dead rides along
-but what section 5 hands down.
+A new member enters play through the same door a new character does - `chargenSession.finishChargen`, THE ONE
+CONSTRUCTION SEAM, over a result built from the person (`legacyHost.bornResult`: their career from its CLASS*.CFG or a
+custom one whole, DFU's own roll for it, the blood and the hearth on top, their identity and their parent's leveling
+system) - `applyCharacter`'s derived health, magicka, fatigue, tallies and level-up anchor, the starting spells, DFU's
+starting kit, the faction store and the region bootstrap. Nothing of the dead rides along but what section 5 hands down.
 
-The boot: `?legacyborn=<personId>&region=<r>&loc=<l>` - the pending birth is held in session storage
-(`legacy/handoff.js`), the boot's chargen arm builds the person instead of opening the wizard, and the family's record
-is the new game's `ProjectLegacy` save data. The heir is born in a TOWN: the family's seat - the town of the founder's
-first save - else the nearest town to where the parent fell (B11's root, a coordinate pair that is no place, gone).
+The boot: `?world&legacyborn=<personId>&region=<r>&loc=<l>` (the world host's scene door, so the front door never clears
+it) - the pending birth is held in session storage (`legacy/store.js leaveBirth`/`readBirth`), the boot's chargen arm
+builds the person instead of opening the wizard, and the family's record is the new game's `ProjectLegacy` save data.
+The born member is SAVED at once (the mod's `SaveCurrentCharacter(firstTime)`): the handoff is answered then, and the
+page's address becomes that save's load. A birth that cannot be made goes back to the menu, said - the line waits. The
+heir is born in a TOWN: the family's seat - the first town its founder stands in - else the nearest town to where the
+parent fell (B11's root, a coordinate pair that is no place, gone).
 
 ## 5. INHERITANCE - the blood and the hearth
 
@@ -140,9 +156,10 @@ safety of the other.
 
 **BLOODLINE (permadeath).** A death is final. The fallen is recorded dead (cause, place, date) and the mantle passes:
 the player chooses who carries the line on - any living adult member, or a newborn heir of the fallen (when the heir
-answer allows). No member, no heir: THE LINE ENDS - the family is closed as extinct, its tree kept in the Hall of
-Ancestors (the menu's Legacy pane), and the next character founds a new one. The heirloom roll is the mod's 50% here
-(section 7) and the remains always lie where the fallen fell.
+answer allows - rolled at their birth, or "Always" on the Mods pane at the death). No member, no heir: THE LINE ENDS - the
+family is closed as extinct and kept in the Hall of Ancestors (the Family tab's third page), and the next character
+founds a new one. The heirloom roll is the port's own Legacy.Heirloom Chance (50% by default; the mod has no
+heirlooms - section 7) and the remains always lie where the fallen fell.
 
 **ENDURING (not permadeath) - the answer to "somehow a persistent model".** A death is not final, but it is not free:
 it costs YEARS. Every member has an age and a span (THE SPAN: Breton, Nord 90, Redguard 80, Khajiit, Argonian 85,
@@ -154,12 +171,15 @@ three quarters of the span the card names them an ELDER and the HUD says so once
 is the last: they die of their years, and the mantle passes exactly as in Bloodline - so an Enduring line still turns,
 at its own pace, roughly a dozen deaths a generation. And at any time an Elder may PASS THE MANTLE from the family
 window: they retire to the family's seat (alive, kept on the tree, no longer played) and the player chooses an heir.
-The heirloom in Enduring is the retiring or the fallen elder's to hand down (section 7) - always one, no quest, or the
-quest when they died of their years away from home.
+The heirloom in Enduring is the elder's to hand down - always one: a retiring elder's BEQUEST (their best worn piece,
+paid to whoever takes the mantle, no quest), a fallen elder's lying with their remains (section 7).
 
 **Offline with Project Legacy off** nothing changes: DFU's death and its title menu. **Online without a family** (a
 character made before this arc): the character is founded into an Enduring family at its next load, which changes
-nothing about its death but the toll - a player never wakes into permadeath they did not choose.
+nothing about its death but the toll - a player never wakes into permadeath they did not choose. **Online until LEGACY7**
+(AUDIT LEGACY B4): a house is Enduring (the question shows Bloodline shut), an offline Bloodline played online dies the
+room's death, a spent Enduring life rises at the last breath, and no Succession is answered - permadeath has no
+authority online until the realm keeps the lineage and its tombstone (section 9).
 
 ## 7. HEIRLOOMS AND THE DEATH QUEST
 
@@ -171,21 +191,28 @@ nothing about its death but the toll - a player never wakes into permadeath they
 - **The heirloom grows.** Each generation that carries it home adds one to its power (`heirloom.gen`, at most 5): a
   weapon +5% damage a generation (the weapon-damage seam, `registerWeaponDamageMod`), armour +2 a generation on the
   parts it covers (the entity fold, `registerEntityFold`, as the Loot arc's affixes ride it) - at five, +25% and +10.
-- **The remains** lie where the fallen fell - in a dungeon, at their last position on its floor (LW6b's `restAt` and
-  `layRemains`, the same pile); in the open or a town, at their last position on the ground; in a building, at its
-  door outside. The pile carries the heirloom, the fallen's REMAINS (a keepsake-kind item: "The remains of Ysolde
-  Hlaalu", LW6c's template shape) and a part of their purse.
-- **The death quest**, "The Bones of <name>", is the heir's from their first day: the journal names where, the Quest
-  Guide's tracker follows it (GUIDE4) and the marks point at it (GUIDE5); the journal names the killer. THE KILLER
-  STILL STANDS - a revenant or champion that slew the fallen waiting by the remains (Revenants' own record, "Slew") -
-  is LEGACY6's, with the world's memory of the house. Taking the remains completes the first half; the second is to lay them to rest at any temple (talk: "Lay
-  <name> to rest"), or at the family's seat.
+- **The remains** lie where the fallen fell: in a dungeon, within six paces of their last position on its floor; in the
+  open, within sixty metres of where they fell; a death in a building, anywhere on its town's pixel in the street. With
+  them: their bones ("The remains of Ysolde Hlaalu", the port's own item, template 1810), the heirloom and a tenth of
+  their purse (at most 2,500 gold). They are a LIST THE RECORD OWNS, opened as a container where they lie - the
+  inventory window over it, in any mode (`openLootList`) - once a visit, never in a fight: what the heir leaves stays
+  with them, and nothing is ever laid in the world twice (AUDIT LEGACY H1). The bones are always somewhere - in the list
+  or in the heir's keeping (the pack, the wagon or the Materials Bag); gone from both (sold, dropped), they lie again
+  where the fallen fell.
+- **The death quest**, "The Bones of <name>", is the heir's from their first day: the journal names where and the
+  killer, the Quest Guide's tracker follows it (GUIDE4) and the marks point at it (GUIDE5). THE KILLER STILL STANDS - a
+  revenant or champion that slew the fallen waiting by the remains (Revenants' own record, "Slew") - is LEGACY6's, with
+  the world's memory of the house. Taking the bones completes the first half; the second is to carry them into any
+  temple or to the family's seat, where the player is asked "Lay <name> to rest here?".
 - **The rest.** Laid to rest, the fallen's BLESSING: +3 to the fallen's highest skill for the heir - at most +9 on
-  any one skill however many are laid to rest (`BLESSING_SKILL_MAX`: a long line is honoured, never a build) - the heirloom attuned (its generation counted), and the tree's portrait of the fallen marked at
-  peace. Unclaimed remains lie for good (they are the family's, not the world's); a Bloodline heir carries one death
-  quest per fallen.
+  any one skill however many are laid to rest (`BLESSING_SKILL_MAX`: a long line is honoured, never a build) - the
+  heirloom attuned (its generation counted), and the tree's card of the fallen marked "At peace" (else "Lies
+  unclaimed" or "Carried home"). Unclaimed remains lie for good (they are the family's, not the world's). Every final
+  death leaves remains and its quest, wherever it happened.
 
 ## 8. MARRIAGE, CHILDREN AND SURNAMES
+
+*LEGACY5's - NOT BUILT yet: the design this section states is the plan, in the present tense of the slice that builds it.*
 
 - **Courting** a Living World resident: an adult whose regard of the player is FRIEND (`FRIEND_AT`, 40) and who is not
   wed. The enhanced talk's "Court" adds affection once a day (by Personality and Etiquette, like a word's tone); at
@@ -205,6 +232,8 @@ nothing about its death but the toll - a player never wakes into permadeath they
 
 ## 9. ONLINE
 
+*LEGACY7's - NOT BUILT yet: the design this section states is the plan, in the present tense of the slice that builds it.*
+
 - **The model is the family's**, chosen at the founder's online chargen. Enduring is the default; Bloodline is marked
   on the online roster and over the player's name (a small skull beside the house name).
 - **The service holds the line** (`server-account/src/legacy.js`, migration `0083_legacy.sql`): a `lineages` row per
@@ -222,6 +251,8 @@ nothing about its death but the toll - a player never wakes into permadeath they
 
 ## 10. WORLD INFLUENCE
 
+*LEGACY6's - NOT BUILT yet: the design this section states is the plan, in the present tense of the slice that builds it.*
+
 - **House standing.** The family carries, per region, the sum of its members' deeds there: DFU's regional reputation
   and the Living World's regard events, folded into one number (`legacy/influence.js`). An heir is BORN with a part of
   the line's standing: a quarter of each regional reputation and faction standing the parent held, and the Living World
@@ -237,30 +268,40 @@ nothing about its death but the toll - a player never wakes into permadeath they
 jump; online the clock is the world's and cannot be moved, and offline a jump would desynchronise every member's own
 save from the family's dates. The years are the family's fiction, the world's clock its own.
 
-## 11. THE UI (Enhanced Plus, and the classic skin's own)
+## 11. THE UI (Enhanced Plus)
 
-- **The Family window** (G, KB1 action `LegacyFamily`): on Enhanced Plus `ui/legacyWindow.js` in the house's carved
-  frame - the TREE (generations as rows, couples joined, children hung beneath, the living, the dead, the one played,
-  the elders and the heir each drawn as such, pan and zoom about the pointer), THE CARD (face, age and span, the eight
-  stats, the career's skills by name, the deeds, the heirloom, Switch / Pass the mantle), THE HOUSE (surname, model,
-  generations, standing by region, the heirlooms, the open death quests). On the classic skin the mod's own window,
-  1:1 off its IL, in its own art (`PJLFTBG`, `PJLFTFrame`, `PJLFT`, `PJLFTPN`, `PJLFTPNP`, `PJLFTPNSKP`), with U1-U5
-  fixed.
-- **The Succession** (at a final death or a passing of the mantle): the enhanced death screen's own second page - the
-  fallen's line, then the living who may carry it, then "A newborn heir" - one press; the classic skin the mod's own
-  message box text over a list.
-- **The model's question** at the founder's chargen (both skins), beside the leveling system's.
-- **The HUD**: the age and the elder's word on the character sheet; Arkay's toll in the respawn's own box.
-- **The Hall of Ancestors**: the menu's Legacy pane - every family, living and ended, its tree read-only.
+- **The Family tab** of the pause window (Mac: "implement it into the pause menu as a new tab"; KB1 action
+  `LegacyFamily`, the keypad's slash), drawn while Project Legacy is on, on either skin (the pause window is the
+  enhanced one; Ledger A row (9)) - `ui/familyPages.js`, three pages on the rail:
+  - **The tree**: generations as rows, couples joined, children hung beneath; the dead and the one played marked on
+    their plates; pan by dragging, zoom about the pointer or with the tools (top right), centre on the one played; a
+    plate pressed opens **the card** - face, age and span, Arkay's toll, the blood and the hearth, the eight stats and
+    the career's skills by name once played, parents, spouse, siblings and children as links, its chips (played,
+    fallen, died of years, at peace / lies unclaimed / carried home, retired, elder, has an heir, not yet played) and
+    the acts: Play as (a switch: saved first, never mid-fight, never online until LEGACY7) and, for an elder, Pass the
+    mantle - each refused on the card before the press, with its reason.
+  - **The house**: its model, its seat, its generations, the living and the fallen (how and where each fell).
+  - **The Hall of Ancestors**: every house founded on this machine, living and ended, with its generations and counts.
+- **The Succession** (at a final death, a passing of the mantle, or a save of the past loaded): its own window
+  (`ui/legacySuccession.js`, `ui/legacyDoor.js`), the death's own screen while it stands - the fallen's line, then the
+  living who may carry it, then "A child of <name>" - one press; the keyboard and the pad walk it; Escape answers
+  nothing (a death must be answered).
+- **The model's question** at the founder's chargen, after the leveling system's, on its screen (both skins): Enduring
+  first, the toll a death will charge said, Bloodline shown shut online.
+- **The HUD**: the founding, the seat, the elder's word once, Arkay's toll at a rise, the estate and the bequest, the
+  remains found, carried and laid to rest.
+- **Not built** (recorded): the mod's classic 1:1 window in its own art (its pictures are the classic UI's own cuts,
+  section 1), an age on the character sheet, a house's standing by region (LEGACY6).
 
 ## 12. The slices
 
-| Slice | What |
-|---|---|
-| LEGACY1 | vendored; the family record and its store; the save data; inheritance; the heir born through the seam; Bloodline's death and succession offline; the switch; the settings, the Features row and the key |
-| LEGACY2 | Enduring: the span, the toll, the offline respawn, the elder, passing the mantle; the model's chargen question |
-| LEGACY3 | the Family window (Enhanced Plus) and the classic window 1:1; the Succession page; the Hall |
-| LEGACY4 | heirlooms, the remains, the death quest, the rest and the blessing |
-| LEGACY5 | courting, marriage, children, surnames' cadet branches |
-| LEGACY6 | world influence: the inherited standing and regard, the towns' talk, the killer remembered |
-| LEGACY7 | online: the service's lineage, the tombstone, the heir's realm birth, the house name, two players wed |
+| Slice | What | Status |
+|---|---|---|
+| LEGACY1 | vendored; the family record and its store; the save data; inheritance; the heir born through the seam; Bloodline's death and succession offline; the switch; the settings, the Features row and the key | built |
+| LEGACY2 | Enduring: the span, the toll, the offline respawn, the elder, passing the mantle; the model's chargen question | built |
+| LEGACY3 | the Family tab (Enhanced Plus); the Succession; the Hall | built |
+| LEGACY4 | heirlooms, the remains, the death quest, the rest and the blessing | built |
+| AUDIT LEGACY | the five-lens audit of LEGACY1-4 (`01-Overview/Audit-Legacy.md`) - the two authorities, the death at the door | built |
+| LEGACY5 | courting, marriage, children, surnames' cadet branches | not built |
+| LEGACY6 | world influence: the inherited standing and regard, the towns' talk, the killer remembered | not built |
+| LEGACY7 | online: the service's lineage, the tombstone, the heir's realm birth, the house name, two players wed | not built |

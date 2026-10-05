@@ -6,8 +6,9 @@ import assert from 'node:assert/strict';
 import {
   pickHeirloom, markHeirloom, attuneHeirloom, heirloomEligible, isHeirloom, mintRemainsItem, isRemainsItem, bestSkillOf,
   blessingOf, legacyFold, heirloomWeaponDamage, heirloomLine, HEIRLOOM_GEN_MAX, HEIRLOOM_DAMAGE_PER_GEN,
-  HEIRLOOM_ARMOR_PER_GEN, BLESSING_POINTS, BLESSING_SKILL_MAX, REMAINS_TEMPLATE, REMAINS_GOLD_SHARE,
+  HEIRLOOM_ARMOR_PER_GEN, BLESSING_POINTS, BLESSING_SKILL_MAX, REMAINS_TEMPLATE, REMAINS_GOLD_SHARE, REMAINS_GOLD_MAX, remainsGoldOf,
 } from '../src/systems/legacy/heirloom.js';
+import { itemLongName } from '../src/systems/itemInfo.js';
 import { familyRng, MODELS } from '../src/systems/legacy/family.js';
 import { createLegacyHost, LEGACY_QUEST_PREFIX } from '../src/scenes/legacyHost.js';
 import { _resetModSaveData } from '../src/systems/modSaveData.js';
@@ -36,22 +37,34 @@ test('LEGACY4: the heirloom is the most valuable WORN weapon or armour - never a
   assert.equal(pickHeirloom([]), null);
 });
 
-test('LEGACY4: marked for the house - a copy named for it, its generation kept, growing to a ceiling', () => {
+test('LEGACY4: marked for the house - a copy carrying it, its generation kept, growing to a ceiling; the long name puts the house first', () => {
   const sword = piece('Weapons', 120, 4, 1);
   const h = markHeirloom(sword, { line: 'fam-1', house: 'Hlaalu', of: 3, from: 'Ysolde Hlaalu' });
   assert.notEqual(h, sword, 'a copy for the remains - the fallen\'s own bag is their save\'s');
   assert.equal(h.equipSlot, undefined);
-  assert.equal(h.name, `Hlaalu's ${sword.name}`);
-  assert.deepEqual(h.heirloom, { line: 'fam-1', house: 'Hlaalu', of: 3, from: 'Ysolde Hlaalu', gen: 0, base: sword.name });
+  assert.equal(h.name, sword.name, 'its own name kept');
+  assert.deepEqual(h.heirloom, { line: 'fam-1', house: 'Hlaalu', of: 3, from: 'Ysolde Hlaalu', gen: 0, base: sword.name ?? 'heirloom' });
   assert.ok(isHeirloom(h));
+  // AUDIT LEGACY H9: "Hlaalu's Dwarven Longsword" - the house before the whole long name, the maker's mark's shape
+  const long = itemLongName(h);
+  assert.match(long, /^Hlaalu's \S+ /, long);
+  assert.ok(long.endsWith(itemLongName(sword)), `${long} is the house's ${itemLongName(sword)}`);
+  assert.equal(itemLongName({ ...h, heirloom: { ...h.heirloom, house: 'of Daggerfall' } }), `${itemLongName(sword)} of the house of Daggerfall`, 'a house named for its seat, after');
   for (let i = 0; i < 7; i++) attuneHeirloom(h);
   assert.equal(h.heirloom.gen, HEIRLOOM_GEN_MAX);
   assert.equal(HEIRLOOM_GEN_MAX, 5);
   const again = markHeirloom({ ...h, equipSlot: 1 }, { line: 'fam-1', house: 'Hlaalu', of: 9, from: 'Riadell Hlaalu' });
   assert.equal(again.heirloom.gen, 5, 'a second death keeps its generations');
-  assert.equal(again.name, h.name, 'named once - never "Hlaalu\'s Hlaalu\'s"');
+  assert.equal(itemLongName(again), itemLongName(h), 'named once - never "Hlaalu\'s Hlaalu\'s"');
   assert.match(heirloomLine(again), /Heirloom of the house of Hlaalu, first borne by Riadell Hlaalu - carried home 5 times\./);
   assert.equal(heirloomLine(sword), null);
+});
+
+test('AUDIT LEGACY H5: an artifact (minted `artifact: true`, no rarity) and a summoned piece are never an heirloom', () => {
+  const sword = piece('Weapons', 120, 4, 1);
+  assert.equal(heirloomEligible({ ...sword, artifact: true }), false, 'Chrysamere is never copied');
+  assert.equal(heirloomEligible({ ...sword, timeForItemToDisappear: 99 }), false, 'its timer would take the copy at the pickup');
+  assert.equal(pickHeirloom([{ ...sword, artifact: true, value: 1e6 }, sword]), sword);
 });
 
 test('LEGACY4: an heirloom\'s power rides the entity\'s own folds - a weapon\'s damage, armour on its parts, a blessing on a skill', () => {
@@ -86,8 +99,6 @@ test('LEGACY4: the remains - an item of the port\'s own, marking whose, beside t
   assert.deepEqual(blessingOf({ id: 4, skills: [1, 2, 90] }, 'Ysolde'), { of: 4, name: 'Ysolde', skill: 2, value: 3 });
 });
 
-// ---- the host: the death quest end to end --------------------------------------------------------------------------
-
 function quest({ model = MODELS.bloodline } = {}) {
   _resetModSaveData();
   const mem = () => { const m = new Map(); return { get length() { return m.size; }, key: (i) => [...m.keys()][i] ?? null, getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => { m.set(k, String(v)); }, removeItem: (k) => { m.delete(k); } }; };
@@ -95,34 +106,48 @@ function quest({ model = MODELS.bloodline } = {}) {
   const sword = piece('Weapons', 120, 4, 1);
   const e = {
     name: 'Ysolde Hlaalu', gender: 'female', race: 'DarkElf', faceIndex: 3, careerIndex: 5, career: { name: 'Nightblade', primarySkills: [28], majorSkills: [], minorSkills: [] },
-    level: 9, characterId: 'c-y', chargenDone: true, stats: { strength: 60, intelligence: 50, willpower: 50, agility: 50, endurance: 50, personality: 50, speed: 50, luck: 50 },
-    skills: Array.from({ length: 35 }, (_, i) => (i === 28 ? 80 : 20)), items: [sword],
+    level: 9, characterId: 'c-y', chargenDone: true, health: 0, stats: { strength: 60, intelligence: 50, willpower: 50, agility: 50, endurance: 50, personality: 50, speed: 50, luck: 50 },
+    skills: Array.from({ length: 35 }, (_, i) => (i === 28 ? 80 : 20)), items: [sword], wagonItems: [],
   };
-  const w = { at: false, rest: false, laid: [], said: [], asked: [] };
+  const w = { at: false, rest: false, opened: [], said: [], asked: [], shown: true, fight: false };
   const host = createLegacyHost({
     entity: e, storage: () => storage, tab: () => tab, on: () => true, online: () => false, now: () => 500, own: () => 0,
     here: () => ({ pixel: { x: 40, y: 60 }, region: 'Daggerfall', regionIndex: 17, mode: 'dungeon', loc: 'Castle Daggerfall', locationType: LOCATION_TYPES.DungeonKeep, dungeon: { regionIndex: 17, locationIndex: 3 }, pos: [1, 2, 3], world: null }),
     town: () => null, nearestTown: () => ({ region: 'Daggerfall', loc: 'Daggerfall' }), gold: () => 1000, say: (l) => w.said.push(l),
-    boot: () => {}, search: () => '?world', loadCharacter: () => false, saveNow: () => {}, inFight: () => false, rng: () => 0,
-    killer: () => 'the Vampire Ancient', atPlace: () => w.at, layRemains: (rec, items) => { w.laid.push(items); return true; },
-    atRest: () => w.rest, askRest: (name, yes) => { w.asked.push(name); w.yes = yes; }, takeItem: (it) => { e.items = e.items.filter((x) => x !== it); },
+    boot: () => {}, search: () => '?world', loadCharacter: () => false, saveNow: () => true, inFight: () => w.fight, rng: () => 0,
+    killer: () => 'the Vampire Ancient', atPlace: () => w.at, openRemains: (rec, items) => { w.opened.push(items); return w.shown; },
+    carried: () => [...e.items, ...e.wagonItems],
+    atRest: () => w.rest, askRest: (name, yes) => { if (!w.shown) return false; w.asked.push(name); w.yes = yes; return true; },
+    takeItem: (it) => { e.items = e.items.filter((x) => x !== it); e.wagonItems = e.wagonItems.filter((x) => x !== it); },
   });
   host.found(model);
-  return { host, e, w, sword };
+  return { host, e, w, sword, storage };
+}
+/** The heir takes the mantle: a newborn of the fallen, played by the same test entity under the heir's own id. */
+function heirOf(t) {
+  assert.equal(t.host.succeed({ newborn: true }), true);
+  t.e.characterId = 'c-heir';
+  t.e.name = `Heir ${t.host.family.surname}`;
+  t.e.items = [];
+  t.e.health = 50;
+  t.host.current().characterId = 'c-heir';
+  return t.host.current();
 }
 
-test('LEGACY4: a Bloodline death leaves the remains where the fallen fell, the heirloom and a tenth of the purse with them', () => {
+test('LEGACY4: a Bloodline death leaves the remains where the fallen fell - their bones, the heirloom and a tenth of the purse, a list the record owns', () => {
   const { host, e, sword } = quest();
   assert.equal(host.deathOutcome().kind, 'fall');
   const r = host.family.remains[0];
   assert.equal(r.state, 'lying');
   assert.equal(r.killer, 'the Vampire Ancient');
-  assert.equal(r.gold, Math.floor(1000 * REMAINS_GOLD_SHARE));
   assert.deepEqual(r.place.dungeon, { regionIndex: 17, locationIndex: 3 });
   assert.deepEqual(r.place.pos, [1, 2, 3]);
-  assert.equal(r.items.length, 1, 'rng 0 < the chance: an heirloom');
-  assert.equal(r.items[0].heirloom.of, 1);
+  assert.deepEqual(r.items.map((it) => it.templateIndex), [REMAINS_TEMPLATE, 120, r.items[2].templateIndex], 'the bones, the heirloom (rng 0 < the chance), the purse');
+  assert.equal(r.items[1].heirloom.of, 1);
+  assert.equal(r.items[2].stackCount, Math.floor(1000 * REMAINS_GOLD_SHARE), 'a tenth of the purse');
+  assert.deepEqual(r.first, r.items, 'the list as laid, kept');
   assert.ok(e.items.includes(sword), 'a copy - the fallen\'s own bag is untouched');
+  assert.equal(remainsGoldOf(10_000_000), REMAINS_GOLD_MAX, 'AUDIT LEGACY H7: a ceiling on the purse that lies');
   // the death quest in the log and on the maps
   const q = host.questLogEntries();
   assert.equal(q[0].id, `${LEGACY_QUEST_PREFIX}r1`);
@@ -132,32 +157,51 @@ test('LEGACY4: a Bloodline death leaves the remains where the fallen fell, the h
   assert.deepEqual(host.mapMarks().map((m) => [m.cx, m.cy, m.place]), [[40.5, 60.5, true]]);
 });
 
-test('LEGACY4: found, taken, laid to rest - the pile laid once a visit, the purse once, the heirloom attuned, the blessing given', () => {
-  const { host, e, w } = quest();
+test('LEGACY4 + AUDIT LEGACY H1/H4/H6/H8: found, taken, laid to rest - the list opened once a visit and never laid twice, the bones always somewhere, the rest asked once shown', () => {
+  const t = quest();
+  const { host, w } = t;
   host.deathOutcome();
   const r = host.family.remains[0];
-  // the heir (the same entity, for the test) arrives where they fell
-  host.family.people[0].died = null;   // the tick reads a living played member
+  const heir = heirOf(t);
+  const e = t.e;
+  // the heir arrives where they fell: the remains' own list, opened - never a world pile
   w.at = true;
   host.tick();
-  assert.equal(w.laid.length, 1);
-  const pile = w.laid[0];
-  assert.deepEqual(pile.map((it) => it.templateIndex), [120, REMAINS_TEMPLATE, w.laid[0][2].templateIndex]);
-  assert.equal(r.gold, 0, 'the purse lies once');
+  assert.equal(w.opened.length, 1);
+  assert.equal(w.opened[0], r.items, 'THE RECORD\'S LIST - what is left in it stays with the remains');
+  assert.equal(r.by, heir.id, 'opened: the heir\'s claim');
   host.tick();
-  assert.equal(w.laid.length, 1, 'once a visit');
-  w.at = false; host.tick(); w.at = true; host.tick();
-  assert.equal(w.laid.length, 2, 'a new visit lays them again');
-  assert.equal(w.laid[1].length, 2, '- the bones and the heirloom, never a second purse');
-  // the heir takes the heirloom and the remains
-  e.items.push(pile[0], pile[1]);
+  assert.equal(w.opened.length, 1, 'once a visit');
+  w.fight = true; w.at = false; host.tick(); w.at = true; host.tick();
+  assert.equal(w.opened.length, 1, 'never mid-fight');
+  w.fight = false; host.tick();
+  assert.equal(w.opened.length, 2, 'a new visit opens the same list again - nothing was ever laid twice');
+  // the heir takes the gold and the heirloom from the window (the window moves them), leaves the bones
+  const [bones, heirloom, gold] = r.items;
+  r.items.splice(1, 2); e.items.push(heirloom, gold);
   host.tick();
-  assert.equal(r.items.length, 0, 'what was taken is the heir\'s - never laid again');
+  assert.deepEqual(r.items, [bones], 'what was taken is gone from the list for good; the bones lie on');
+  assert.equal(r.state, 'lying');
+  // then the bones - into the wagon, which keeps them as well as the pack (H4)
+  r.items.splice(0, 1); e.wagonItems.push(bones);
+  host.tick();
   assert.equal(r.state, 'taken');
   assert.match(host.questLogEntries()[0].messages[0][0], /You carry the remains/);
   assert.deepEqual(host.mapMarks(), [], 'no ring once carried');
-  // at a temple: asked, then laid to rest
-  w.rest = true;
+  // sold or dropped: the bones are no longer carried - they lie again where the fallen fell, never stranded (H4)
+  e.wagonItems = [];
+  host.tick();
+  assert.equal(r.state, 'lying');
+  assert.equal(r.items.filter(isRemainsItem).length, 1, 'the bones back in the list, once');
+  assert.ok(w.said.some((l) => /no longer with you/.test(l)));
+  r.items.splice(0, 1); e.items.push(bones);
+  host.tick();
+  assert.equal(r.state, 'taken');
+  // at a temple: a rest asked under another window is asked again (H8), then once a visit
+  w.rest = true; w.shown = false;
+  host.tick();
+  assert.deepEqual(w.asked, []);
+  w.shown = true;
   host.tick();
   assert.deepEqual(w.asked, ['Ysolde Hlaalu']);
   host.tick();
@@ -165,7 +209,7 @@ test('LEGACY4: found, taken, laid to rest - the pile laid once a visit, the purs
   w.yes();
   assert.equal(r.state, 'rested');
   assert.ok(!e.items.some(isRemainsItem), 'the remains given up');
-  assert.equal(pile[0].heirloom.gen, 1, 'the heirloom carried home attuned');
+  assert.equal(heirloom.heirloom.gen, 1, 'the heirloom carried home attuned');
   assert.deepEqual(e.legacyBlessings, [{ of: 1, name: 'Ysolde Hlaalu', skill: 28, value: 3 }]);
   assert.deepEqual(host.questLogEntries(), [], 'the quest is done');
 });
@@ -177,6 +221,6 @@ test('LEGACY4: an Enduring rise leaves no remains; a death of years always leave
   const b = quest({ model: MODELS.enduring });
   b.host.current().toll = 999;
   assert.equal(b.host.deathOutcome().kind, 'fall');
-  assert.equal(b.host.family.remains[0].items.length, 1);
+  assert.equal(b.host.family.remains[0].items.filter(isHeirloom).length, 1);
   void familyRng;
 });

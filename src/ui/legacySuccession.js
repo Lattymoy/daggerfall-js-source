@@ -35,6 +35,7 @@ export const SUCCESSION_CSS = `
 .lgs-sub { font-size: 12px; color: #b8b0a0; }
 .lgs-acts { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin-top: 6px; }
 .lgs-why { color: #e08a7a; font-size: 13px; margin: 0; }
+@media (max-width: 520px) { .lgs-card { grid-template-columns: 52px 1fr; } .lgs-card .lgs-go { grid-column: 1 / -1; } }
 `;
 const kitCss = () => [SUCCESSION_CSS, scopeRules(frameCss(), (sel) => sel.includes('lgs-'))].join('\n');
 function injectSkin(doc = document) {
@@ -92,6 +93,7 @@ export function mountSuccession(host, deps) {
   injectSkin();
   const shell = el('div', 'lgs-shell');
   shell.setAttribute('role', 'dialog');
+  shell.setAttribute('aria-modal', 'true');   // AUDIT LEGACY U10
   shell.setAttribute('aria-label', deps.title);
   const win = el('div', 'lgs-win');
   shell.append(win);
@@ -133,8 +135,13 @@ export function mountSuccession(host, deps) {
       acts.append(b);
       win.append(acts);
     }
-    setTimeout(() => /** @type {HTMLElement|null} */ (win.querySelector?.('.lgs-go'))?.focus?.(), 0);
+    // AUDIT LEGACY U3: the lit button kept across a redraw (the same act's button again), else the first heir - or, with
+    // no one to choose, the line's end: a window with nothing lit left a keyboard player no press at all
+    const lit = focusKey;
+    setTimeout(() => /** @type {HTMLElement|null} */ ((lit && win.querySelector?.(`.${lit}`)) || win.querySelector?.('.lgs-go') || win.querySelector?.('.lgs-end'))?.focus?.(), 0);
   };
+  let focusKey = null;
+  win.addEventListener?.('focusin', (e) => { const t = /** @type {any} */ (e.target); focusKey = [...(t?.classList ?? [])].find((c) => c.startsWith('lgs-go-') || c === 'lgs-end') ?? null; });
   draw();
   return { repaint: draw, unmount: () => shell.remove() };
 }

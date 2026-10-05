@@ -1792,9 +1792,11 @@ ${badgeCss()}
    its host clips: under ~720 px both end tabs were cut); tighter under 900 px and 660 px, wrapped as a last resort, never cut */
 .px-tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px;
   border-bottom: 2px solid rgba(125,116,96,0.55); padding: 6px 8px 2px; }
-.px-tabs button { font: inherit; font-size: 20px; letter-spacing: 0.16em; text-indent: 0.16em;
+/* AUDIT LEGACY U5: five tabs (Project Legacy's Family) - the spacing a step tighter, so the five stand on one row in the
+   window's 920 px; the narrower steps below are unchanged */
+.px-tabs button { font: inherit; font-size: 20px; letter-spacing: 0.12em; text-indent: 0.12em;
   text-transform: uppercase; color: #d8cfae; background: none; border: 0; cursor: pointer;
-  min-height: 44px; padding: 6px 18px; display: flex; align-items: center; gap: 12px;
+  min-height: 44px; padding: 6px 12px; display: flex; align-items: center; gap: 8px;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.8); transition: none; }
 .px-tabs button .px-c { font-size: 15px; color: rgb(243,239,44); visibility: hidden;
   text-shadow: 2px 2px 0 rgb(93,77,12); }

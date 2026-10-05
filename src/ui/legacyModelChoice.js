@@ -8,7 +8,8 @@
 // them a character.
 import { LevelingChoiceScreen } from './levelingChoice.js';
 import { MODELS } from '../systems/legacy/family.js';
-import { TOLL_SHARES } from '../systems/legacy/settings.js';
+import { legacySettings } from '../systems/legacy/settings.js';
+import { isOnlinePage } from '../systems/onlineLane.js';
 
 export const LEGACY_MODEL_TEXT = Object.freeze({ title: 'HOW WILL YOUR LINE ENDURE?', lines: Object.freeze(['Choose your family’s way with death.', 'It cannot be changed later.']) });
 export const LEGACY_MODEL_FACE = Object.freeze({
@@ -20,9 +21,14 @@ export const LEGACY_MODEL_FACE = Object.freeze({
 });
 export const LEGACY_MODEL_TAGS = Object.freeze({ [MODELS.enduring]: 'Not permadeath', [MODELS.bloodline]: 'Permadeath' });
 
-/** The two answers, Enduring first. The toll is the Mods pane's Standard, said as a share. */
-export function legacyModelOptions() {
-  const pct = Math.round(TOLL_SHARES[1] * 100);
+/** Bloodline's word online, shut: its permadeath has no authority until the realm keeps lineages (LEGACY7). */
+export const BLOODLINE_ONLINE_NOTE = 'Online, a house is Enduring until the realm keeps its lineages.';
+
+/** The two answers, Enduring first. AUDIT LEGACY U7: the toll said is the one a death will charge - the Mods pane's
+ *  Legacy.Toll as it stands. AUDIT LEGACY B4/F1: ONLINE, Bloodline is shown and SHUT (the leveling question's own
+ *  LEVEL-ONLINE shape) - a permadeath the realm cannot hold is no permadeath. */
+export function legacyModelOptions({ online = isOnlinePage(), tollShare = legacySettings().tollShare } = {}) {
+  const pct = Math.round(tollShare * 100);
   return Object.freeze([
     Object.freeze({ id: MODELS.enduring, title: 'Enduring', locked: false, lockNote: null, lines: Object.freeze([
       'A death is not the end - but it costs years.',
@@ -30,7 +36,7 @@ export function legacyModelOptions() {
       'and when the span is spent the mantle passes on',
       'to an heir. Elders may pass it on at any time.',
     ]) }),
-    Object.freeze({ id: MODELS.bloodline, title: 'Bloodline', locked: false, lockNote: null, lines: Object.freeze([
+    Object.freeze({ id: MODELS.bloodline, title: 'Bloodline', locked: !!online, lockNote: online ? BLOODLINE_ONLINE_NOTE : null, lines: Object.freeze([
       'A death is final. Your heir takes your place -',
       'a sibling, a child, or a newborn of your blood -',
       'and may recover what you lost from your remains.',

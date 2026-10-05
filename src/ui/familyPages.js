@@ -44,6 +44,7 @@ export const TREE_ZOOM_STEP = 1.12;
  * @property {() => number} lived   the played member's own minutes lived
  * @property {(pose:any) => Promise<{width:number, height:number, colors:Uint8Array}|null>} [faces]   a portrait
  * @property {(id:number) => string|null} switchRefusal   why playing `id` is refused, or null
+ * @property {() => string|null} [mantleRefusal]   AUDIT LEGACY U4: why the played elder may not pass the mantle now, or null
  * @property {(id:number) => {ok:boolean, why?:string}} switchTo
  * @property {() => {ok:boolean, why?:string}} [passMantle]   an Enduring elder retires
  * @property {() => any[]} [hall]   every stored family
@@ -62,10 +63,12 @@ let _said = null;     // { ok, text } - the last act's word
 let _armed = null;    // 'switch:<id>' | 'mantle' - a press that asks again before it acts
 /** A fresh visit: nothing pressed, the tree centred, no word left over. */
 export function resetFamilyPages() { _sel = null; _zoom = 1; _pan = null; _said = null; _armed = null; }
+/** AUDIT LEGACY U8: another page or tab pressed - an armed act and its word never wait for the way back. */
+export function disarmFamilyPages() { _said = null; _armed = null; }
 
 export const FAMILY_CSS = `
-.px-sys .fam-wrap { display: flex; gap: 12px; align-items: stretch; min-height: 360px; }
-.px-sys .fam-view { position: relative; flex: 1 1 auto; min-width: 0; min-height: 340px; overflow: hidden; cursor: grab;
+.px-sys .fam-wrap { display: flex; gap: 12px; align-items: flex-start; min-height: 360px; }   /* AUDIT LEGACY U6: the tree no taller than its own height - the card scrolls, the tree's tools stay in view */
+.px-sys .fam-view { position: relative; flex: 1 1 auto; min-width: 0; height: min(400px, 62vh); min-height: 260px; overflow: hidden; cursor: grab;
   border-width: 2px; border-style: solid; box-sizing: border-box; touch-action: none; user-select: none; }
 .px-sys .fam-view.dragging { cursor: grabbing; }
 .px-sys .fam-stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
@@ -83,10 +86,10 @@ export const FAMILY_CSS = `
 .px-sys .fam-nname { font-size: 11px; line-height: 1.1; color: #e2d9c4; text-align: center; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .px-sys .fam-mark { position: absolute; top: 2px; right: 3px; font-size: 11px; color: #c08a3e; }
 .px-sys .fam-mark.dead { color: #b8b0a0; }
-.px-sys .fam-tools { position: absolute; right: 6px; bottom: 6px; display: flex; gap: 4px; }
+.px-sys .fam-tools { position: absolute; right: 6px; top: 6px; display: flex; gap: 4px; z-index: 1; }
 .px-sys .fam-tools .act { min-width: 30px; padding: 2px 6px; }
 .px-sys .fam-card { flex: 0 0 268px; max-width: 268px; box-sizing: border-box; padding: 9px 11px 10px; border-width: 2px; border-style: solid;
-  display: flex; flex-direction: column; gap: 6px; text-align: left; overflow-y: auto; max-height: 520px; }
+  display: flex; flex-direction: column; gap: 6px; text-align: left; overflow-y: auto; max-height: min(400px, 62vh); }
 .px-sys .fam-card .fam-top { display: grid; grid-template-columns: 60px 1fr; gap: 9px; align-items: center; }
 .px-sys .fam-card .fam-face { width: 60px; height: 64px; border-width: 2px; border-style: solid; box-sizing: border-box; }
 .px-sys .fam-card h3 { margin: 0; font-size: 16px; color: #f3cf86; overflow-wrap: anywhere; }
@@ -105,7 +108,7 @@ export const FAMILY_CSS = `
 .px-sys .fam-said { color: #8fc7a0; font-size: 12px; } .px-sys .fam-why { color: #e08a7a; font-size: 12px; }
 .px-sys .fam-hall { display: flex; flex-direction: column; gap: 8px; }
 .px-sys .fam-hallrow { padding: 7px 10px 8px; border-width: 2px; border-style: solid; box-sizing: border-box; text-align: left; }
-@media (max-width: 720px) { .px-sys .fam-wrap { flex-direction: column; } .px-sys .fam-card { max-width: none; flex-basis: auto; max-height: none; } }
+@media (max-width: 720px) { .px-sys .fam-wrap { flex-direction: column; align-items: stretch; } .px-sys .fam-card { max-width: none; flex-basis: auto; max-height: none; } }
 `;
 export function ensureFamilyStyle(doc = typeof document === 'undefined' ? null : document) {
   if (!doc?.getElementById || doc.getElementById(FAMILY_STYLE_ID)) return;
@@ -124,16 +127,22 @@ export const modelLine = (m) => (m === MODELS.bloodline
   ? 'A Bloodline: every death is final. When one of the house falls, the mantle passes to another of the blood - or the line ends.'
   : 'An Enduring line: a death is not the end, but it costs years. When a life’s span is spent, the mantle passes on.');
 
-/** The chips a person wears: played, dead, elder, heir, spouse. Pure. */
+/** The chips a person wears: played, dead (and at peace, or lying unclaimed), elder, heir, spouse. Pure. */
 export function personChips(family, p, livedNow) {
   const out = [];
   if (!p) return out;
   if (p.died) out.push({ cls: 'dead', text: p.died.cause === 'years' ? 'Died of years' : 'Fallen' });
+  // AUDIT LEGACY H9: the death quest on the tree - laid to rest, or still lying where they fell
+  const rest = p.died ? (family.remains ?? []).find((r) => r.of === p.id) : null;
+  if (rest?.state === 'rested') out.push({ cls: '', text: 'At peace' });
+  else if (rest) out.push({ cls: 'dead', text: rest.state === 'taken' ? 'Carried home' : 'Lies unclaimed' });
   else if (p.id === family.currentId) out.push({ cls: '', text: 'Played' });
   else if (p.retired != null) out.push({ cls: 'elder', text: 'Retired' });
   if (!p.died && family.model === MODELS.enduring && isElder(p, p.id === family.currentId ? livedNow : p.lived)) out.push({ cls: 'elder', text: 'Elder' });
   if (p.kind === 'resident') out.push({ cls: '', text: 'Wed into the house' });
   if (!p.died && p.characterId == null && p.id !== family.currentId && p.kind === 'member') out.push({ cls: 'blood', text: 'Not yet played' });
+  // U2: the heir answer (B12), drawn - a Bloodline member who would leave a newborn heir
+  if (!p.died && p.kind === 'member' && family.model === MODELS.bloodline && p.heir === true) out.push({ cls: 'blood', text: 'Has an heir' });
   return out;
 }
 
@@ -254,11 +263,15 @@ export function drawTreePage(detail, rerender, { el, divider, door = (fn) => fn(
     _pan = n ? centreOn(n, w, h, _zoom) : { x: 12, y: 12 };
   };
   let drag = null;
-  view.onpointerdown = (e) => { drag = { x: e.clientX, y: e.clientY, px: _pan?.x ?? 0, py: _pan?.y ?? 0 }; moved = false; view.classList.add('dragging'); view.setPointerCapture?.(e.pointerId); };
+  // AUDIT LEGACY U2: the pointer is CAPTURED only once a drag is under way (past four pixels) - captured at the press,
+  // the click went to the view and no plate and no zoom button could be pressed with a mouse or a finger
+  view.onpointerdown = (e) => { if (e.target?.closest?.('.fam-tools')) return; drag = { x: e.clientX, y: e.clientY, px: _pan?.x ?? 0, py: _pan?.y ?? 0, id: e.pointerId, held: false }; moved = false; };
   view.onpointermove = (e) => {
     if (!drag || !_pan) return;
     const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
-    if (Math.abs(dx) + Math.abs(dy) > 4) moved = true;
+    if (!moved && Math.abs(dx) + Math.abs(dy) <= 4) return;
+    moved = true;
+    if (!drag.held) { drag.held = true; view.classList.add('dragging'); view.setPointerCapture?.(drag.id); }
     _pan = { x: drag.px + dx, y: drag.py + dy };
     apply();
   };
@@ -273,7 +286,7 @@ export function drawTreePage(detail, rerender, { el, divider, door = (fn) => fn(
     apply();
   };
   const tools = el('div', 'fam-tools');
-  const tool = (label, title, fn) => { const b = el('button', 'act', label); b.title = title; b.onclick = (e) => { e.stopPropagation?.(); fn(); }; return b; };
+  const tool = (label, title, fn) => { const b = el('button', 'act', label); b.title = title; b.setAttribute('aria-label', title); b.onclick = (e) => { e.stopPropagation?.(); fn(); }; return b; };   // AUDIT LEGACY U10: named for a reader, not by a glyph
   const zoomCentre = (f) => { ensurePan(); const w = view.clientWidth || 520, h = view.clientHeight || 340; const v = zoomAbout({ zoom: _zoom, x: _pan.x, y: _pan.y }, f, w / 2, h / 2); _zoom = v.zoom; _pan = { x: v.x, y: v.y }; apply(); };
   tools.append(tool('+', 'Zoom in', () => zoomCentre(TREE_ZOOM_STEP)), tool('−', 'Zoom out', () => zoomCentre(1 / TREE_ZOOM_STEP)),
     tool('◎', 'Centre on the one you play', () => { _sel = family.currentId; _pan = null; rerender(); }));
@@ -359,6 +372,9 @@ function personCard(el, family, p, livedNow, rerender, door) {
     const armed = _armed === 'mantle';
     const b = el('button', `act${armed ? ' primary' : ''}`, armed ? 'Yes - pass the mantle' : 'Pass the mantle');
     b.title = `${p.given} retires to the family seat, and you choose who carries the line on.`;
+    // AUDIT LEGACY U4: why not, said on the card before the press - pressed, the act takes the pause down first
+    const why = _provider?.mantleRefusal?.() ?? null;
+    if (why && why !== 'none') { /** @type {any} */ (b).disabled = true; b.title = why; card.append(el('p', 'fam-why', why)); }
     b.onclick = () => {
       if (!armed) { _armed = 'mantle'; _said = { ok: true, text: `${p.given} will retire to the family seat for good. Press again to choose who carries the line on.` }; rerender(); return; }
       _armed = null;
